@@ -60,6 +60,7 @@ class RecruiterProfileSerializer(serializers.ModelSerializer):
             'marketing_decided_at',
             'phone_verified_at',
             'dpa_accepted_at',
+            'dpa_grace_expires_at',
             'onboarding',
             'verification_case',
             'job_workspace_ready',

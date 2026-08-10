@@ -25461,6 +25461,11 @@ components:
           format: date-time
           readOnly: true
           nullable: true
+        dpa_grace_expires_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
         onboarding:
           type: string
           readOnly: true
@@ -25501,6 +25506,7 @@ components:
       - contact_phone
       - created_at
       - dpa_accepted_at
+      - dpa_grace_expires_at
       - dpa_status
       - dpa_policy
       - gender

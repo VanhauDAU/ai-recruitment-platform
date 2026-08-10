@@ -139,6 +139,27 @@ describe('EmployerDataProtectionForm', () => {
     expect(acceptEmployerDpa).not.toHaveBeenCalled()
   })
 
+  it('shows the exact grace deadline without adding unrelated verification badges', async () => {
+    getEmployerProfile.mockResolvedValue({
+      dpa_status: 'grace',
+      dpa_grace_expires_at: '2026-09-09T17:00:00Z',
+      dpa_policy: {
+        available: true,
+        policy_version: 'test-dpa-v2',
+        document_sha256: 'b'.repeat(64),
+        document_url: 'https://example.test/dpa/test-dpa-v2',
+      },
+      onboarding: { candidate_dpa_submitted: false, dpa_accepted: false },
+    })
+    getEmployerCompanyDocuments.mockResolvedValue([])
+
+    renderForm()
+
+    expect(await screen.findByText('Cần cập nhật DPA trước 00:00:00 10/09/2026')).toBeVisible()
+    expect(screen.getByText(/Workspace vẫn hoạt động trong thời gian gia hạn/)).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Xác nhận' })).toBeDisabled()
+  })
+
   it('opens a public DOCX in Google Viewer and only opens replacement controls on edit', async () => {
     getEmployerProfile.mockResolvedValue({
       dpa_accepted_at: '2026-07-19T15:28:37Z',

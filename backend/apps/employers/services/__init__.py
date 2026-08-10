@@ -30,18 +30,24 @@ from .companies import (
 )
 from .company_update_locks import lock_company_update_request
 from .compliance import (
+    apply_dpa_hold,
+    apply_expired_dpa_holds_batch,
     apply_verification_hold,
     lock_or_create_verification_identity,
     lock_verification_identity,
     recruiter_has_active_compliance_hold,
+    release_dpa_holds,
     release_verification_holds,
 )
 from .document_preview import render_office_document_preview
 from .dpa import (
+    DpaGraceConflict,
     DpaPolicyChanged,
     DpaPolicyUnavailable,
     accept_recruiter_dpa,
+    apply_expired_recruiter_dpa_hold,
     current_dpa_policy,
+    start_recruiter_dpa_grace,
 )
 from .onboarding import phone_taken_by_other, send_phone_otp, verify_phone_otp
 from .phone_challenges import (
@@ -99,6 +105,7 @@ __all__ = [
     'EmployerWorkspaceBlocked',
     'EmployerUploadStructureError',
     'DpaPolicyChanged',
+    'DpaGraceConflict',
     'DpaPolicyUnavailable',
     'InitialRecruitmentNeedAlreadyExists',
     'SENSITIVE_FIELDS',
@@ -107,6 +114,9 @@ __all__ = [
     'REQUESTER_EDITABLE_COMPANY_UPDATE_STATUSES',
     'UPDATABLE_COMPANY_FIELDS',
     'accept_recruiter_dpa',
+    'apply_dpa_hold',
+    'apply_expired_dpa_holds_batch',
+    'apply_expired_recruiter_dpa_hold',
     'current_dpa_policy',
     'apply_verification_hold',
     'apply_update_request',
@@ -154,7 +164,9 @@ __all__ = [
     'recruiter_requires_approved_verification',
     'review_verification_document',
     'release_verification_holds',
+    'release_dpa_holds',
     'start_verification_review',
+    'start_recruiter_dpa_grace',
     'snapshot_company_update_request',
     'start_company_update_review',
     'validate_company_update_revision',

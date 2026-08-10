@@ -407,6 +407,8 @@ không có evidence là `legacy_unversioned`; acceptance khác exact version/has
 hiện hành là `outdated`. `GET /api/employer/me/::dpa_policy` công bố policy
 server; `POST /api/employer/dpa/accept/` bắt buộc gửi lại version/hash đó, stale
 trả `409 DPA_POLICY_CHANGED`, thiếu cấu hình trả `503 DPA_POLICY_UNAVAILABLE`.
+`dpa_grace_expires_at` là timestamp ISO-8601 nullable của cohort rollout; server
+vẫn là nguồn quyết định `grace|hold`, client không tự so giờ để mở quyền.
 
 - Job/campaign read hoặc write bị chặn trả HTTP 403,
   `code=EMPLOYER_WORKSPACE_BLOCKED`.

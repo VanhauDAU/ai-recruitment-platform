@@ -93,6 +93,8 @@ if len(EMPLOYER_DPA_DOCUMENT_SHA256) != 64 or any(
     _errors.append('EMPLOYER_DPA_DOCUMENT_SHA256 phải là SHA-256 lowercase hợp lệ.')
 if urlparse(EMPLOYER_DPA_DOCUMENT_URL).scheme != 'https':
     _errors.append('EMPLOYER_DPA_DOCUMENT_URL production phải dùng HTTPS.')
+if EMPLOYER_DPA_GRACE_DAYS != 30:
+    _errors.append('EMPLOYER_DPA_GRACE_DAYS production phải đúng quyết định 30 ngày.')
 
 if EMPLOYER_SMS_OTP_ENABLED:
     if EMPLOYER_SMS_PROVIDER != 'http':

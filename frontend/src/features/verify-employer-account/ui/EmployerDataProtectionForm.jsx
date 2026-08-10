@@ -160,6 +160,8 @@ export default function EmployerDataProtectionForm() {
   const currentDpaAccepted = profileQuery.data?.dpa_status
     ? profileQuery.data.dpa_status === 'current'
     : Boolean(verification.dpa_accepted)
+  const dpaStatus = profileQuery.data?.dpa_status
+  const graceExpiresAt = formatAgreementAcceptedAt(profileQuery.data?.dpa_grace_expires_at)
   const documents = (Array.isArray(documentsQuery.data) ? documentsQuery.data : []).filter(
     (item) => (
       item.doc_type === 'data_processing_agreement'
@@ -249,6 +251,25 @@ export default function EmployerDataProtectionForm() {
         </div>
         <p className="mt-5 text-sm leading-6 text-slate-600">Nhằm tuân thủ Luật Bảo vệ dữ liệu cá nhân số 91/2025/QH15, {siteName} chính thức triển khai Thỏa thuận về xử lý dữ liệu cá nhân trên hệ thống. Thỏa thuận này làm rõ vai trò, trách nhiệm của Quý đơn vị và {siteName} đối với các hồ sơ ứng viên được chuyển vào Không gian làm việc (Workspace) của Quý đơn vị. Vui lòng đọc kỹ và xác nhận đồng ý để đảm bảo tiến trình tuyển dụng diễn ra hợp pháp, minh bạch và không bị gián đoạn.</p>
         <a href={platformDpaUrl} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1 text-sm font-medium !text-emerald-600 hover:!text-emerald-700">Xem nội dung đầy đủ của văn bản <LinkOutlined /></a>
+
+        {dpaStatus === 'grace' && (
+          <Alert
+            className="mt-4"
+            type="warning"
+            showIcon
+            title={graceExpiresAt ? `Cần cập nhật DPA trước ${graceExpiresAt}` : 'DPA đang trong thời gian gia hạn cập nhật'}
+            description="Workspace vẫn hoạt động trong thời gian gia hạn. Quyền xem dữ liệu ứng viên và duyệt tin chỉ được mở lại sau khi xác nhận DPA hiện hành."
+          />
+        )}
+        {dpaStatus === 'hold' && (
+          <Alert
+            className="mt-4"
+            type="error"
+            showIcon
+            title="DPA đã quá hạn cập nhật"
+            description="Hãy đọc và xác nhận DPA hiện hành để gỡ giới hạn do DPA. Các giới hạn xác thực khác, nếu có, vẫn được giữ nguyên."
+          />
+        )}
 
         {currentDpaAccepted ? (
           <p className="mt-4 text-sm text-emerald-700">{agreementAcceptedAt ? `Bạn đã xác nhận vào ${agreementAcceptedAt}.` : 'Bạn đã xác nhận thỏa thuận này.'}</p>

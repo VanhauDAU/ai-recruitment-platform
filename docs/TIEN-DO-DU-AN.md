@@ -13,8 +13,8 @@ Decision log:
 > PostgreSQL Docker và real ClamAV local gate đạt; còn Chrome branch QA và
 > production-like staging/strict rollout;
 > ER-4 đã hoàn tất lifecycle V2, revision/event bất biến,
-> exact-object final review và conflict handling; ER-6A đã merge hạ
-> tầng SMS provider-neutral nhưng live workflow còn mở.
+> exact-object final review và conflict handling; ER-6B evidence/grace/hold đã
+> Verified; ER-6A đã merge hạ tầng SMS provider-neutral nhưng live workflow còn mở.
 
 | Phase | Nội dung | Trạng thái |
 | --- | --- | --- |
@@ -24,7 +24,7 @@ Decision log:
 | ER-3 | Upload session, quarantine, malware scan và retention | 🟨 Đang làm — Docker/ClamAV local đạt; còn Chrome + staging/strict rollout |
 | ER-4 | Company update request V2, revision và conflict handling | ✅ Hoàn tất |
 | ER-5 | Verification final decision, blockers và compliance holds | ✅ Hoàn tất |
-| ER-6 | SMS provider adapter và DPA evidence/version/grace | 🟨 Đang làm — SMS foundation + DPA evidence core đã đạt |
+| ER-6 | SMS provider adapter và DPA evidence/version/grace | 🟨 Đang làm — ER-6B Verified; SMS live/provider còn mở |
 | ER-7 | Company unlink, notification center và activity | ⬜ Chưa làm |
 | ER-8 | Rollout, reconciliation, compatibility cleanup và audit closure | ⬜ Chưa làm |
 
@@ -198,9 +198,14 @@ Decision log:
   3 migration tests; sau merge, ma trận SMS + migration đạt 25/25. Full Ruff,
   format, import-linter, layering, Django check, migration drift, docs và
   rendered Compose đều đạt.
-- Residual: PR workflow riêng cho account mới/change/reverify, endpoint/UI,
-  provider sandbox/production và gate outage/rate-limit/replay/uniqueness. ER-6B
-  đã có evidence core; grace timer, hold rollout và exact-source release còn mở.
+- ER-6B đã hoàn tất evidence append-only, grace đúng 30 ngày, expired DPA hold,
+  campaign/job linkage và exact-source release khi re-consent. Command rollout
+  dry-run mặc định, có batch/cursor và không tự apply dữ liệu thật.
+- Evidence ER-6B cuối: PostgreSQL Docker `127.0.0.1:5433` đạt 248/248 employer;
+  frontend 257/257 file và 994/994 test; Ruff/format, import-linter, layering,
+  Django check, migration drift, architecture, build và bundle budget đạt.
+- Residual ER-6 chỉ còn workflow SMS live cho account mới/change/reverify,
+  provider sandbox/production và gate outage/rate-limit/replay/uniqueness.
 
 </details>
 

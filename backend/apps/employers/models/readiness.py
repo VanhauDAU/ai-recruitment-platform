@@ -9,6 +9,7 @@ from enum import StrEnum
 
 from django.conf import settings
 from django.db.models import Exists, OuterRef, Q
+from django.utils import timezone
 
 from apps.accounts.models import User
 
@@ -56,14 +57,20 @@ def current_dpa_status(recruiter):
     policy_version = recruiter.dpa_policy_version
     document_sha256 = recruiter.dpa_document_sha256
     if not policy_version or not document_sha256:
-        return DpaStatus.LEGACY_UNVERSIONED
-    current_version = settings.EMPLOYER_DPA_POLICY_VERSION
-    current_hash = settings.EMPLOYER_DPA_DOCUMENT_SHA256
-    if not current_version or len(current_hash) != 64:
-        return DpaStatus.UNKNOWN
-    if policy_version == current_version and document_sha256 == current_hash:
-        return DpaStatus.CURRENT
-    return DpaStatus.OUTDATED
+        base_status = DpaStatus.LEGACY_UNVERSIONED
+    else:
+        current_version = settings.EMPLOYER_DPA_POLICY_VERSION
+        current_hash = settings.EMPLOYER_DPA_DOCUMENT_SHA256
+        if not current_version or len(current_hash) != 64:
+            return DpaStatus.UNKNOWN
+        if policy_version == current_version and document_sha256 == current_hash:
+            return DpaStatus.CURRENT
+        base_status = DpaStatus.OUTDATED
+    if recruiter.dpa_grace_expires_at:
+        if recruiter.dpa_grace_expires_at > timezone.now():
+            return DpaStatus.GRACE
+        return DpaStatus.HOLD
+    return base_status
 
 
 def is_registration_placeholder_company(recruiter, *, has_company_industry=None):

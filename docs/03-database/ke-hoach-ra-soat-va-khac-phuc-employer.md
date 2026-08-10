@@ -1,7 +1,7 @@
 # Kế hoạch rà soát và khắc phục toàn bộ luồng Nhà tuyển dụng
 
 > **Trạng thái:** ER-0, ER-1, ER-2, ER-4 và ER-5 đã Verified;
-> ER-3/ER-6–ER-8 vẫn đang triển khai
+> ER-6B đã Verified; ER-3, ER-6A live và ER-7–ER-8 vẫn đang triển khai
 > **Ngày lập:** 2026-08-10
 > **Ngày phê duyệt:** 2026-08-10
 > **Phiên bản kế hoạch:** 1.1
@@ -881,7 +881,8 @@ thái `In progress`.
 
 #### ER-6B — DPA evidence
 
-**Nhánh:** `feature/employer-dpa-evidence`
+**Nhánh evidence:** `feature/employer-dpa-evidence`
+**Nhánh grace/hold:** `feature/employer-dpa-grace-holds`
 **Phụ thuộc:** ER-2, ER-5 và ER-O03
 
 - Append-only version/hash/actor/time/IP/session evidence.
@@ -890,13 +891,17 @@ thái `In progress`.
 - Re-consent và release đúng hold source.
 - Legacy row không được bịa hash/IP/session.
 
-**Evidence core 2026-08-10:** `EmployerDpaAcceptance` append-only và migration
+**Evidence Verified 2026-08-10:** `EmployerDpaAcceptance` append-only và migration
 không backfill đã triển khai trên `feature/employer-dpa-evidence`; API/UI khóa
 exact version/hash, lưu IP/session + hash User-Agent, phân loại timestamp cũ là
 `legacy_unversioned` và bản khác current là `outdated`. PostgreSQL Docker đạt
-243/243 full employer; frontend 25/25; static/layering/migration gates đạt. ER-6B vẫn
-`In progress` vì grace timer, DPA hold rollout và release theo exact source chưa
-đóng gate.
+243/243 full employer; frontend 25/25; static/layering/migration gates đạt.
+Slice grace/hold bổ sung migration `employers.0040`, deadline đúng 30 ngày,
+command dry-run/batch/cursor, DPA hold liên kết campaign/job và re-consent chỉ
+release exact DPA source. PostgreSQL Docker đạt 248/248 full employer; frontend
+257 file/994 test; Ruff/format, import-linter, Django/migration, architecture,
+build và bundle budget đều đạt. ER-6B chuyển `Verified`; rollout dữ liệu thật
+vẫn thuộc gate ops ER-8 và không được tự chạy `--apply`.
 
 **Gate ER-6:** SMS outage/rate-limit/replay và DPA
 current/outdated/grace/expired/re-consent/legacy scenarios.
@@ -1151,7 +1156,7 @@ Trạng thái thực hiện hiện tại:
 | ER-3 | In progress | Employer/candidate Docker và real ClamAV local đạt; còn Chrome branch QA cùng production-like staging/strict rollout |
 | ER-4 | Verified | Revision/event bất biến, lifecycle/resubmit/withdraw/cancel, exact admin review và field-level conflict đã đạt gate Docker/FE |
 | ER-5 | Verified | Backend state/hold/race và admin final-decision/job blocker UI đã đạt gate |
-| ER-6 | In progress | SMS foundation đã merge; DPA evidence core đã đạt, còn SMS live/provider và DPA grace/hold rollout |
+| ER-6 | In progress | ER-6B DPA evidence/grace/hold Verified; ER-6A còn SMS live/provider |
 | ER-7 | Planned | Phụ thuộc event catalog ổn định |
 | ER-8 | Planned | Chỉ bắt đầu khi các phase chức năng verified |
 

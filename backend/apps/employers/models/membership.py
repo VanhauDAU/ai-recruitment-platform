@@ -66,6 +66,9 @@ class RecruiterProfile(models.Model):
     dpa_accepted_at = models.DateTimeField(null=True, blank=True)
     dpa_policy_version = models.CharField(max_length=64, blank=True)
     dpa_document_sha256 = models.CharField(max_length=64, blank=True)
+    dpa_grace_started_at = models.DateTimeField(null=True, blank=True)
+    dpa_grace_expires_at = models.DateTimeField(null=True, blank=True)
+    dpa_grace_rollout_id = models.CharField(max_length=64, blank=True)
     # Legacy compatibility only. Completion is derived from registration,
     # verified email and a RecruitmentNeed; new code must not read/write this.
     onboarding_completed_at = models.DateTimeField(null=True, blank=True)
@@ -78,6 +81,24 @@ class RecruiterProfile(models.Model):
                 fields=['verified_phone'],
                 condition=models.Q(verified_phone__isnull=False) & ~models.Q(verified_phone=''),
                 name='uniq_recruiter_verified_phone',
+            ),
+            models.CheckConstraint(
+                condition=(
+                    models.Q(
+                        dpa_grace_started_at__isnull=True,
+                        dpa_grace_expires_at__isnull=True,
+                        dpa_grace_rollout_id='',
+                    )
+                    | (
+                        models.Q(
+                            dpa_grace_started_at__isnull=False,
+                            dpa_grace_expires_at__isnull=False,
+                        )
+                        & ~models.Q(dpa_grace_rollout_id='')
+                        & models.Q(dpa_grace_expires_at__gt=models.F('dpa_grace_started_at'))
+                    )
+                ),
+                name='employer_dpa_grace_state_consistent',
             ),
         ]
 

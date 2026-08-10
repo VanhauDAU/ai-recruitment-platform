@@ -359,9 +359,11 @@ candidate-data nghiêm ngặt hơn. Workspace bị chặn trả
 `CANDIDATE_DATA_BLOCKED`.
 
 `dpa_status` có contract
-`missing|current|legacy_unversioned|outdated|grace|hold|unknown`. Cơ sở dữ liệu
-hiện tại mới chứng minh được `missing|current`; evidence version/hash/IP/session
-và các trạng thái còn lại thuộc ER-6, không suy diễn cho tài khoản cũ.
+`missing|current|legacy_unversioned|outdated|grace|hold|unknown`. Acceptance mới
+lưu evidence version/hash/IP/session append-only. Timestamp cũ không được bịa
+evidence và được phân loại `legacy_unversioned`; rollout được duyệt cho đúng 30
+ngày grace rồi mới áp DPA hold. Re-consent chỉ gỡ hold nguồn DPA và không gỡ
+verification/account/moderation hold.
 
 ### Cấp xác thực trên sidebar
 

@@ -16,6 +16,18 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
   fail closed khi policy stale/misconfigured. Frontend khóa xác nhận khi chưa có
   policy hiện hành và yêu cầu re-consent cho `legacy_unversioned|outdated`.
 
+#### Added — Employer DPA grace và compliance hold
+
+- Thêm grace 30 ngày có deadline/rollout ID cho DPA legacy hoặc outdated;
+  hết hạn chuyển sang `hold`, khóa workspace/candidate-data/job approval theo
+  canonical readiness và liên kết hold với campaign/job hiện hữu.
+- Thêm command rollout dry-run mặc định, batch/cursor idempotent và query phẳng;
+  chỉ `--apply` sau ops review. Tái đồng ý exact DPA hiện hành chỉ gỡ hold nguồn
+  DPA, giữ nguyên verification/account/moderation hold.
+- `GET /api/employer/me/` trả `dpa_grace_expires_at`; trang DPA hiển thị đúng
+  deadline hoặc trạng thái quá hạn tại đúng workflow, không thêm badge vào
+  checklist xác thực.
+
 #### Fixed — Employer verification và company settings UX
 
 - Route job/campaign/application bị chặn do chưa đủ readiness nay điều hướng về

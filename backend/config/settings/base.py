@@ -749,6 +749,7 @@ EMPLOYER_DPA_DOCUMENT_URL = config(
     'EMPLOYER_DPA_DOCUMENT_URL',
     default='https://tuyendung.topcv.vn/data-processing-agreement',
 ).strip()
+EMPLOYER_DPA_GRACE_DAYS = config('EMPLOYER_DPA_GRACE_DAYS', default=30, cast=int)
 REQUIRE_APPROVED_EMPLOYER_VERIFICATION = config(
     'REQUIRE_APPROVED_EMPLOYER_VERIFICATION',
     default=False,

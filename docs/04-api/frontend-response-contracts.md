@@ -59,6 +59,7 @@ permission admin.
   "verification_approved": true,
   "candidate_data_access": false,
   "dpa_status": "outdated",
+  "dpa_grace_expires_at": null,
   "dpa_policy": {
     "available": true,
     "policy_version": "2026-08",
@@ -83,6 +84,9 @@ permission admin.
   version/hash khác cấu hình hiện hành là `outdated`. Client chỉ gọi accept với
   exact `dpa_policy.policy_version` + `document_sha256`; `available=false` phải
   khóa checkbox/nút xác nhận.
+- `dpa_grace_expires_at` là ISO-8601 nullable. Field chỉ có giá trị khi
+  `dpa_status=grace|hold`; client hiển thị deadline tại workflow DPA, không dùng
+  deadline phía client để tự cấp quyền.
 - Action hiện hành gồm `contact_support`, `complete_onboarding`, `verify_phone`,
   `link_company`, `upload_business_document`, `upload_candidate_dpa`,
   `open_verification`, `accept_dpa`, `accept_current_dpa`. Frontend map action

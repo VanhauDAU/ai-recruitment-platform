@@ -45,7 +45,7 @@ review DPA.
 | ER-F07 | Nghiêm trọng | Job approval chưa có đầy đủ authoritative verification/DPA blocker ở mọi đường | Closed ER-1C/ER-5 backend | ER-1C/ER-5 |
 | ER-F08 | Nghiêm trọng | Candidate data access chưa tách nhất quán khỏi workspace/feature flag | Closed ER-2/ER-5 backend | ER-2/ER-5 |
 | ER-F09 | Cao | Phone OTP nghiệp vụ được gửi qua email, không phải possession proof của phone | In remediation — adapter foundation merged; live workflow open | ER-6A |
-| ER-F10 | Cao | DPA chỉ có timestamp, thiếu version/hash/actor/IP/session | Open | ER-6B |
+| ER-F10 | Cao | DPA chỉ có timestamp, thiếu version/hash/actor/IP/session | Closed ER-6B | ER-6B |
 | ER-F11 | Trung bình | Notification/activity workspace chưa có outbox/read/deep-link/audit contract | Open | ER-7 |
 | ER-F12 | Trung bình | Tài liệu canonical cũ mâu thuẫn quyền, ngày gửi và publish blocker | In remediation | ER-0–ER-8 |
 
@@ -498,7 +498,7 @@ toàn bộ retest criteria outage/rate-limit/replay/uniqueness đạt.
 
 ### ER-F10 — DPA evidence
 
-**Trạng thái:** Evidence core closed; grace/hold rollout còn mở trong ER-6B.
+**Trạng thái:** Closed ER-6B; apply cohort production vẫn qua ops gate ER-8.
 
 **Evidence**
 
@@ -518,10 +518,11 @@ toàn bộ retest criteria outage/rate-limit/replay/uniqueness đạt.
 - Không backfill giả dữ liệu cũ; legacy policy theo ER-O03.
 - Material update block candidate data/admin approval và áp hold đúng grace.
 
-**Retest 2026-08-10:** 243 backend test trên PostgreSQL Docker `127.0.0.1:5433`
-và 25 frontend test đạt; Ruff/format, import-linter, migration drift,
-lint/architecture đạt. Còn phải retest cohort grace/hold/re-consent release
-trước khi đóng toàn bộ ER-F10.
+**Retest 2026-08-10:** evidence core đạt 243 backend và 25 frontend test. Slice
+grace/hold đạt 248/248 employer test trên PostgreSQL Docker `127.0.0.1:5433`,
+frontend 257 file/994 test; bao phủ legacy → grace → hold, batch query phẳng,
+idempotency và re-consent chỉ release DPA source. Ruff/format, import-linter,
+layering, migration drift, lint/architecture/build/bundle budget đều đạt.
 
 ## 4. Accepted risks và residual-risk process
 
