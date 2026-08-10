@@ -86,6 +86,38 @@ class DpaPolicyUnavailableResponse(APIException):
     }
 
 
+class PhoneChallengeResponse(APIException):
+    """Map stable SMS domain failures to a machine-readable HTTP contract."""
+
+    default_code = 'PHONE_CHALLENGE_ERROR'
+
+    def __init__(self, error):
+        self.status_code = {
+            'RESOURCE_NOT_FOUND': status.HTTP_404_NOT_FOUND,
+            'PHONE_SMS_DISABLED': status.HTTP_503_SERVICE_UNAVAILABLE,
+            'PHONE_OTP_COOLDOWN': status.HTTP_429_TOO_MANY_REQUESTS,
+            'PHONE_CHALLENGE_NOT_READY': status.HTTP_409_CONFLICT,
+            'PHONE_UNAVAILABLE': status.HTTP_409_CONFLICT,
+            'PHONE_CHALLENGE_EXPIRED': status.HTTP_410_GONE,
+            'PHONE_CHALLENGE_INVALIDATED': status.HTTP_409_CONFLICT,
+            'PHONE_CHALLENGE_USED': status.HTTP_409_CONFLICT,
+            'PHONE_ATTEMPTS_EXHAUSTED': status.HTTP_429_TOO_MANY_REQUESTS,
+        }.get(error.code, status.HTTP_400_BAD_REQUEST)
+        detail = {
+            'code': error.code,
+            'message': error.message,
+            'retryable': error.retryable,
+        }
+        if error.retry_after_seconds is not None:
+            detail['retry_after_seconds'] = error.retry_after_seconds
+        super().__init__(detail=detail, code=error.code)
+        # DRF turns scalar values in ``detail`` into ``ErrorDetail`` strings.
+        # Preserve the documented machine contract for non-text fields.
+        self.detail['retryable'] = bool(error.retryable)
+        if error.retry_after_seconds is not None:
+            self.detail['retry_after_seconds'] = int(error.retry_after_seconds)
+
+
 class EmployerUploadSessionResponse(APIException):
     """Preserve safe shared-upload codes at an employer business boundary."""
 

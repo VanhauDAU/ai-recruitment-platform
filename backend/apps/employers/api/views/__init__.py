@@ -22,6 +22,7 @@ from .memberships import JoinCompanyView
 from .onboarding import (
     AcceptDpaView,
     PhoneAvailabilityView,
+    PhoneChallengeView,
     RecruiterMeView,
     SendPhoneOtpView,
     VerifyPhoneOtpView,
@@ -58,6 +59,7 @@ __all__ = [
     'JoinCompanyView',
     'MyCompanyView',
     'PhoneAvailabilityView',
+    'PhoneChallengeView',
     'RecruiterMeView',
     'RecruitmentCampaignDetailView',
     'RecruitmentCampaignActivityView',

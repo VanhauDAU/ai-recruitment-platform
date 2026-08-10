@@ -214,7 +214,9 @@ chấp nhận theo phiên bản/mã băm thay vì chỉ `dpa_accepted_at`.
 - **Tạo công ty mới: có hiệu lực ngay.** Hệ thống tạo `companies` với `verification_status=unverified`, đồng thời gán người tạo là `owner`. Xác thực pháp nhân qua `company_documents` là workflow độc lập; không chặn việc HR tham gia công ty.
 - **Chỉ yêu cầu cập nhật công ty phải chờ duyệt.** Thay đổi được lưu tại `company_update_requests` với `pending/approved/rejected`; khi thay đổi MST hoặc tên công ty thì cần lý do và giấy tờ đính kèm.
 - **Đăng tin: công ty nào cũng được đăng, nhưng từng tin phải chờ duyệt.** Job tạo ra ở `status=pending`, admin duyệt → `active`. Không chặn theo `verification_status` của công ty; nhãn "Tin xác thực" vẫn suy từ công ty đã verified.
-- **OTP: dùng email trước** (chưa có SMS gateway trong môi trường thesis), schema `phone_otps` giữ nguyên để chuyển sang SMS sau mà không đổi DB.
+- **Lịch sử (đã superseded bởi ER-6A):** luồng OTP qua email đã bị xóa. Contract
+  hiện hành dùng actor-bound SMS challenge; production fail closed khi gateway
+  chưa được bật và tuyệt đối không fallback email.
 
 ## 6. Kế hoạch tái cấu trúc mã nguồn `backend/apps`
 

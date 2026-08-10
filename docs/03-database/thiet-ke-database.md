@@ -41,7 +41,7 @@ Thiết kế onboarding và preference tìm việc cho ứng viên:
 | `upload_sessions`, `upload_assets`, `upload_scan_attempts` | `backend/apps/uploads` | Upload tạm owner-scoped, private clean asset và lịch sử malware scan; business app chỉ consume qua clean one-time claim |
 | `company_update_requests` | `backend/apps/employers` | Cập nhật công ty chờ duyệt; đổi MST/tên bắt buộc lý do + giấy tờ; có `submitted_at` và partial unique một request `pending` trên mỗi `(company, requested_by)` |
 | `recruiter_profiles` | `backend/apps/employers` | 1-1 user, FK company (PROTECT, gán rồi không đổi); membership owner/member + trạng thái duyệt; `verified_phone` partial unique |
-| `phone_otps` | `backend/apps/employers` | OTP xác thực SĐT (hash, expires, attempts) — gửi qua email trước khi có SMS gateway |
+| `phone_otps` | `backend/apps/employers` | SMS challenge actor-bound: purpose/state, OTP HMAC, TTL/attempt budget, encrypted destination và dispatch lifecycle; legacy email rows chỉ giữ lịch sử |
 | `job_categories`, `job_category_localizations` | `backend/apps/jobs` | Taxonomy 3 cấp có public identity; localization/alias 4 ngôn ngữ cấu hình trong admin, picker CV chỉ đọc vị trí chuyên môn và `name_vi` |
 | `locations` | `backend/apps/locations` | 2 cấp tỉnh/xã, seed thật qua `seed_locations` (provinces.open-api.vn) |
 | `cv_templates` | `backend/apps/cv_templates` | Identity/catalogue; version published hiện hành, localization và legacy dual-read fields |

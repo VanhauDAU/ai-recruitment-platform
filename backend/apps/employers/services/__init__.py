@@ -49,12 +49,16 @@ from .dpa import (
     current_dpa_policy,
     start_recruiter_dpa_grace,
 )
-from .onboarding import phone_taken_by_other, send_phone_otp, verify_phone_otp
 from .phone_challenges import (
+    PhoneChallengeError,
     challenge_code_matches,
     create_sms_phone_challenge,
     enqueue_sms_phone_challenge,
+    get_sms_phone_challenge,
     normalize_vietnamese_mobile,
+    phone_challenge_snapshot,
+    start_sms_phone_verification,
+    verify_sms_phone_challenge,
 )
 from .profiles import (
     CandidateDataBlocked,
@@ -101,6 +105,7 @@ from .verification import (
 __all__ = [
     'CompanyTaxCodeConflict',
     'CompanyUpdateConflict',
+    'PhoneChallengeError',
     'CandidateDataBlocked',
     'EmployerWorkspaceBlocked',
     'EmployerUploadStructureError',
@@ -133,6 +138,7 @@ __all__ = [
     'ensure_recruiter_candidate_data_access',
     'ensure_recruiter_job_workspace',
     'enqueue_sms_phone_challenge',
+    'get_sms_phone_challenge',
     'confirm_verification_decision',
     'confirm_verification_lifecycle_action',
     'record_campaign_activity',
@@ -159,6 +165,7 @@ __all__ = [
     'ensure_company_tax_code_can_be_verified',
     'mark_company_verified',
     'normalize_vietnamese_mobile',
+    'phone_challenge_snapshot',
     'review_company_update_document',
     'recruiter_is_approved',
     'recruiter_requires_approved_verification',
@@ -167,6 +174,7 @@ __all__ = [
     'release_dpa_holds',
     'start_verification_review',
     'start_recruiter_dpa_grace',
+    'start_sms_phone_verification',
     'snapshot_company_update_request',
     'start_company_update_review',
     'validate_company_update_revision',
@@ -174,11 +182,9 @@ __all__ = [
     'verification_decision_impact',
     'verification_lifecycle_impact',
     'unlock_verification_resubmission',
-    'phone_taken_by_other',
-    'send_phone_otp',
     'set_company_industries',
     'update_campaign',
     'verify_company',
-    'verify_phone_otp',
+    'verify_sms_phone_challenge',
     'validate_employer_upload_structure',
 ]

@@ -21,7 +21,7 @@ hoặc cấu trúc database.
 | Màn hình / use case | Endpoint | DTO đọc | Field chính frontend sử dụng |
 |---|---|---|---|
 | Header, guard, tài khoản | `GET /api/auth/me/` | `SessionUserSerializer` | `public_id`, `email`, `role`, `full_name`, `phone`, `avatar_url`, `email_verified`, `two_factor_enabled`, `job_preferences_configured`; employer có `employer_job_workspace_ready` canonical và field legacy trong compatibility window |
-| Sửa thông tin tài khoản | `PATCH /api/auth/me/` | `ProfileUpdateSerializer` → session DTO | request `full_name`, `phone`; response thống nhất như `/me` |
+| Sửa thông tin tài khoản | `PATCH /api/auth/me/` | `ProfileUpdateSerializer` → session DTO | candidate dùng `full_name`, `phone`; employer chỉ đổi `full_name`, phone bắt buộc qua SMS challenge |
 | Onboarding / cài đặt gợi ý | `GET/PATCH /api/candidate/profile/` | `CandidateProfileReadSerializer` / `CandidateProfileUpdateSerializer` | `gender` |
 | Onboarding / cài đặt gợi ý | `GET/PUT /api/candidate/job-preferences/` | `CandidateJobPreferenceSerializer` | vị trí chuyên môn, vị trí khác, lương, kinh nghiệm, tỉnh, relocate và hai consent |
 | Cài đặt email candidate | `GET/PATCH /api/candidate/email-notification-settings/` | `CandidateEmailNotificationSettingsSerializer` | 12 boolean preference mặc định bật; PATCH chỉ gửi field vừa đổi, không có field email giao dịch bảo mật |
@@ -109,6 +109,29 @@ cho applications. Known denial điều hướng về `employer-verify`; checking
 không redirect và vẫn fail-closed với loading/retry.
 Query candidate-data phải tắt khi checking/error/denied và UI phải bỏ cả PII đã
 cache; aggregate không chứa danh tính vẫn được hiển thị.
+
+### Contract SMS challenge nhà tuyển dụng
+
+- `POST /api/employer/phone/send-otp/` nhận `{phone,password}`, trả `202` với
+  `{public_id,purpose,status,failure_code,expires_at,attempts_remaining,`
+  `can_verify,can_retry}`. `purpose` là
+  `initial_verification|phone_change|reverify`; client không tự gửi purpose.
+- Frontend poll `GET /api/employer/phone/challenges/{public_id}/` trong các
+  trạng thái `queued|dispatching|retry_pending`. Resource khác actor trả `404`.
+  Response không có phone, destination hint, OTP, provider message ID hoặc
+  ciphertext.
+- Chỉ `status=sent` và `can_verify=true` mới mở ô nhập mã. Verify gửi exact
+  `{challenge_id,code}`; không tìm “OTP mới nhất” và không retry challenge đã
+  `verified|expired|invalidated`.
+- `PHONE_OTP_COOLDOWN` trả `retry_after_seconds`; `PHONE_SMS_DISABLED`,
+  provider failure, stale/replay và attempt exhaustion đều fail closed. Client
+  không fallback email.
+- Availability endpoint chỉ còn compatibility format check và luôn generic.
+  Uniqueness được backend recheck sau mã đúng trong transaction. UI không gọi
+  endpoint này để tô trạng thái “số đã được dùng”.
+- Khi đổi số, UI vẫn hiển thị proof hiện tại tới khi challenge số mới thành
+  công. Self-reverify là hành động tự nguyện; pending/failure không thu hồi
+  proof. Employer không được đổi phone qua `PATCH /api/auth/me/`.
 
 ### Contract yêu cầu cập nhật công ty
 
