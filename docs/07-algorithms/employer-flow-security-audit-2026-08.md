@@ -39,8 +39,8 @@ review DPA.
 | ER-F01 | Cao | Thẻ cá nhân dùng company-wide request, hiện ngày giả và che fetch error | Closed ER-1A | ER-1A |
 | ER-F02 | Cao | Shared pending request có thể bị member khác upsert/đổi requester; admin có thể mở sai request cùng company | Safety closed ER-4; lifecycle follow-up | ER-1B/ER-4 |
 | ER-F03 | Nghiêm trọng | Document queryset/content permission cho member rộng hơn binary-file policy | Closed ER-1B | ER-1B |
-| ER-F04 | Cao | Upload đi thẳng storage, thiếu quarantine/malware scan/fail-closed submit | In remediation — shared core merged; domain/staging open | ER-3 |
-| ER-F05 | Cao | Partial upload có thể để request/file dở dang nhưng UI báo thành công | Open — domain/UI integration | ER-3 |
+| ER-F04 | Cao | Upload đi thẳng storage, thiếu quarantine/malware scan/fail-closed submit | In remediation — employer closed; candidate/staging open | ER-3 |
+| ER-F05 | Cao | Partial upload có thể để request/file dở dang nhưng UI báo thành công | Closed ER-3 employer slice | ER-3 |
 | ER-F06 | Cao | Document/prerequisite reconciliation có thể tự approve verification/company | Closed ER-5 | ER-5 |
 | ER-F07 | Nghiêm trọng | Job approval chưa có đầy đủ authoritative verification/DPA blocker ở mọi đường | Closed ER-1C/ER-5 backend | ER-1C/ER-5 |
 | ER-F08 | Nghiêm trọng | Candidate data access chưa tách nhất quán khỏi workspace/feature flag | Closed ER-2/ER-5 backend | ER-2/ER-5 |
@@ -244,19 +244,37 @@ review DPA.
   check, migration drift, static OpenAPI refs và production Compose render đều
   đạt trong phạm vi slice.
 
+**ER-3 employer-domain evidence (2026-08-10)**
+
+- Commit `ec1ac428` nối upload session vào giấy tờ verification/DPA/company
+  update và logo/cover/gallery. API chỉ claim session cùng owner, đúng purpose,
+  `clean`, chưa claim; `CompanyDocument` và `CompanyMediaUpload` giữ reference
+  audit tới private original. Public image chỉ là derivative sau clean claim.
+- Employer post-scan parser boundary dùng pypdf strict cho PDF, Pillow
+  format+verify cho ảnh và bounded DOCX validator của core. Invalid content trả
+  validation error, rollback claim và không tạo business record.
+- Frontend pre-scan toàn bộ tập file trước company/update request, attach tuần
+  tự và không còn `Promise.allSettled`/partial-success. Scanner rejection,
+  timeout hoặc error không được fallback raw; compatibility raw chỉ dùng khi API
+  trả exact `UPLOAD_PIPELINE_DISABLED` và bị khóa bởi strict rollout flag.
+- Backend affected suite đạt 283/283 trên PostgreSQL Docker 16 tại
+  `127.0.0.1:5433`; frontend targeted 48/48, full coverage 256 file/974 test và
+  E2E upload 3/3 desktop/tablet/mobile. Các gate architecture/layering,
+  migration drift, build và bundle budget đều đạt.
+
 **Residual/status**
 
-- ER-F04 đang được khắc phục một phần, chưa `Closed`: core chưa được nối vào
-  employer verification/company update, frontend hay candidate import/assets.
-  Audit ER-O06 đã xác nhận candidate CV dùng cùng unsafe default/private
+- ER-F04 chưa `Closed` toàn hệ thống: employer workflow đã đóng nhưng candidate
+  import/assets chưa nối shared core. Audit ER-O06 xác nhận candidate CV dùng
+  cùng unsafe default/private
   storage, nên integration candidate là residual bắt buộc trong slice riêng qua
   shared core, không tạo coupling `cvs → employers`. Real ClamAV
   staging/readiness/EICAR và rollout flag vẫn mở.
-- ER-F05 vẫn `Open`: business record hiện hành chưa bị ràng buộc end-to-end vào
-  explicit clean claim, và UI partial-upload success chưa được thay thế bằng
-  upload-session workflow.
-- Parser-specific structural validation cho PDF/image vẫn là residual riêng;
-  không dùng malware-clean verdict để tuyên bố file hợp lệ ở cấp parser.
+- ER-F05 đã `Closed` cho employer: business request không được tạo trước khi tập
+  file clean, attach lỗi không có success toast. Candidate workflow sẽ có finding
+  riêng trong slice ER-O06, không làm reopen closure theo domain này.
+- Candidate parser-specific validation vẫn là residual; không suy diễn employer
+  parser boundary cho app `cvs`.
 
 ### ER-F06 — Verification auto-finalization
 

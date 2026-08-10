@@ -557,7 +557,8 @@ revoked và account hold trước khi merge frontend.
 **Shared backend core:** `feature/upload-quarantine-core` — đã merge vào `dev`
 tại `99b34781`
 **Domain backend integration:** `feature/employer-upload-quarantine`
-**Frontend:** `feature/employer-upload-session-ui`
+**Frontend:** tích hợp cùng `feature/employer-upload-quarantine` để khóa contract
+backend/UI trong một gate
 **Phụ thuộc:** ER-2
 
 Đã merge:
@@ -616,21 +617,42 @@ Evidence shared core:
 - Production Compose render giữ worker queues
   `default,auth-email,auth-sms,cv-export,speech-artifacts,upload-scan`.
 
+Employer domain/frontend slice hoàn tất về code tại `ec1ac428`:
+
+- Giấy phép doanh nghiệp, DPA, giấy tờ yêu cầu cập nhật, logo, cover và gallery
+  đều tạo upload session, gửi byte vào quarantine, poll tới `clean` rồi mới gọi
+  endpoint nghiệp vụ. Owner, purpose, trạng thái và one-time claim được recheck
+  trong transaction; business record không được tạo từ session sai scope,
+  chưa clean hoặc đã claim.
+- `CompanyDocument.upload_asset` và `CompanyMediaUpload` giữ liên kết audit từ
+  business object/public derivative tới private original đã quét; binary
+  private vẫn chỉ đi qua endpoint có authorization, không phát storage URL.
+- Sau malware verdict, employer boundary còn parse PDF bằng pypdf strict và ảnh
+  bằng Pillow verify/format match. DOCX tiếp tục dùng bounded validator của
+  shared core. File clean nhưng hỏng cấu trúc bị từ chối và claim rollback.
+- Frontend pre-scan toàn bộ tập file trước khi tạo company/update request, attach
+  tuần tự và chỉ báo thành công khi mọi attach hoàn tất. UI hiển thị rõ
+  uploading/quarantined/scanning/clean/rejected/error/expired; retry chỉ bounded.
+  Raw fallback chỉ xảy ra với exact `UPLOAD_PIPELINE_DISABLED` trong cửa sổ
+  tương thích, không fallback cho scanner error/rejection/timeout.
+- Rollout additive dùng `EMPLOYER_UPLOAD_SESSION_REQUIRED=False` trước; sau khi
+  ClamAV staging đạt mới bật quarantine rồi bật strict flag. Production từ chối
+  cấu hình strict khi quarantine chưa bật.
+- Evidence: PostgreSQL Docker 16 tại `127.0.0.1:5433`, backend affected suite
+  283/283; frontend targeted 48/48, full coverage 256 file/974 test, smoke
+  upload 3/3 desktop/tablet/mobile; Ruff, format, import-linter 2/2, Django
+  check, migration drift, Oxlint, architecture, build và bundle budget đều đạt.
+
 Còn mở trước khi ER-3 được `Verified`:
 
-- Tích hợp shared core vào employer verification, company update và các đường
-  upload employer; chỉ tạo business record/attach sau explicit clean claim.
 - Candidate import/assets integration là residual bắt buộc vì audit ER-O06 đã
   xác nhận CV dùng cùng unsafe default/private storage. Thực hiện trong slice
   riêng qua shared core, không tạo coupling `cvs → employers`; purpose
   `candidate_cv` trong core chưa đồng nghĩa workflow đã tích hợp.
-- Frontend hiển thị uploading/quarantine/scanning/clean/rejected/error/expired,
-  retry/cancel và fail-closed submit; không báo thành công khi partial upload lỗi.
 - Chạy real ClamAV staging readiness/EICAR/outage/retry/cleanup, duyệt rollout
   rồi mới bật feature flag.
-- Bổ sung parser-specific structural validation cho PDF/image tại domain
-  integration phù hợp; verdict malware `clean` không được mô tả là file hợp lệ
-  ở cấp parser.
+- Candidate PDF/DOCX/image parser boundary phải có structural validation riêng;
+  không suy diễn employer validator cho app `cvs`.
 
 **Gate ER-3:** clean, malware, timeout, scanner unavailable, retry, cancel,
 expiry, quota/cleanup failure, claim/release/hold, domain submit và legacy
@@ -1040,7 +1062,7 @@ Trạng thái thực hiện hiện tại:
 | ER-0 | Verified | Đã khóa quyết định; Markdown link và whitespace gate đạt |
 | ER-1 | Verified | ER-1A, ER-1B và ER-1C đã đạt quality gate; follow-up lịch sử/tên thương mại đã có regression |
 | ER-2 | Verified | Canonical readiness, backend capability enforcement, frontend guards/redaction và corrective redirect 3-viewport đều đạt |
-| ER-3 | In progress | Storage boundary và shared quarantine/scan/retention core đã merge; domain integration, frontend, parser-specific PDF/image validation và real ClamAV staging còn mở |
+| ER-3 | In progress | Employer domain/frontend và PDF/image structural validation đã đạt gate; candidate import/assets cùng real ClamAV staging còn mở |
 | ER-4 | In progress | Safety slice exact-object/lock/redaction đạt; lifecycle V2 còn mở |
 | ER-5 | Verified | Backend state/hold/race và admin final-decision/job blocker UI đã đạt gate |
 | ER-6 | In progress | Provider-neutral SMS foundation đã merge; live endpoint/UI/provider và toàn bộ DPA evidence vẫn mở |

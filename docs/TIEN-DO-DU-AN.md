@@ -7,9 +7,9 @@
 Decision log:
 [`employer-remediation-decision-log.md`](02-tong-quan/employer-remediation-decision-log.md).
 
-> Cập nhật lần cuối: 2026-08-10 — ER-2 và ER-5 verified; corrective UX guard/checklist đã đạt gate; ER-3 đã merge storage boundary
-> và shared quarantine/scan/retention core nhưng domain integration, frontend và
-> real ClamAV staging còn mở; ER-4 đã hoàn tất safety slice cho lock order,
+> Cập nhật lần cuối: 2026-08-10 — ER-2 và ER-5 verified; corrective UX guard/checklist đã đạt gate; ER-3 đã hoàn tất employer
+> domain/frontend upload-session nhưng candidate import/assets và real ClamAV
+> staging còn mở; ER-4 đã hoàn tất safety slice cho lock order,
 > exact-object review và redaction nhưng lifecycle V2 còn mở; ER-6A đã merge hạ
 > tầng SMS provider-neutral nhưng live workflow còn mở.
 
@@ -18,7 +18,7 @@ Decision log:
 | ER-0 | Audit baseline, permission/state matrix và khóa quyết định | ✅ Hoàn tất |
 | ER-1 | Empty/error state, document IDOR và job approval guard | ✅ Hoàn tất |
 | ER-2 | Readiness/permission contract và frontend guards | ✅ Hoàn tất |
-| ER-3 | Upload session, quarantine, malware scan và retention | 🟨 Đang làm — shared core đã merge |
+| ER-3 | Upload session, quarantine, malware scan và retention | 🟨 Đang làm — employer domain/UI đã đạt gate |
 | ER-4 | Company update request V2, revision và conflict handling | 🟨 Đang làm — review safety |
 | ER-5 | Verification final decision, blockers và compliance holds | ✅ Hoàn tất |
 | ER-6 | SMS provider adapter và DPA evidence/version/grace | 🟨 Đang làm — adapter foundation đã merge |
@@ -124,12 +124,19 @@ Decision log:
   Ruff/format, import-linter 2/2, Django check, migration drift, static OpenAPI
   1.492 reference/0 unresolved và production Compose render đều đạt trong phạm
   vi slice. Generated OpenAPI vẫn có baseline 416 warning/122 error ngoài ER-3.
-- Phase chưa hoàn tất: còn nối core vào employer verification/company update,
-  candidate import/assets bắt buộc theo ER-O06 trong slice riêng không coupling
-  `cvs → employers`, frontend session UI và real ClamAV
-  staging/readiness/EICAR trước khi bật flag. PDF/image mới chỉ được kiểm
-  MIME/dung lượng/magic signature và malware scan; parser-specific structural
-  validation còn là residual, không được suy diễn từ verdict `clean`.
+- Commit `ec1ac428` đã nối core vào verification, company update, DPA và
+  logo/cover/gallery. Frontend pre-scan cả tập file trước business submit, poll
+  state/retry bounded, attach tuần tự và không còn báo thành công khi upload một
+  phần lỗi. Backend recheck owner/purpose/clean/claim, liên kết business object
+  với `UploadAsset`, parse strict PDF và verify ảnh sau scan; file clean nhưng
+  hỏng cấu trúc bị reject trong transaction.
+- Gate slice employer trên PostgreSQL Docker 16 tại `127.0.0.1:5433`: backend
+  283/283; frontend targeted 48/48, full coverage 256 file/974 test, upload smoke
+  3/3 desktop/tablet/mobile. Ruff/format, import-linter 2/2, Django check,
+  migration drift, Oxlint, architecture, build và bundle budget đều xanh.
+- Phase chưa hoàn tất: candidate import/assets bắt buộc theo ER-O06 trong slice
+  riêng không coupling `cvs → employers`, cùng real ClamAV
+  staging/readiness/EICAR/outage/cleanup trước khi bật strict rollout.
 
 </details>
 

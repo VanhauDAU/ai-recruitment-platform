@@ -53,6 +53,23 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 - OpenAPI, contract frontend và admin UI cùng enforce workflow hai bước; UI
   không tự suy eligibility hoặc gọi confirm khi chưa có signed impact token.
 
+#### Added — Employer upload-session integration ER-3
+
+- Nối upload session/quarantine vào giấy tờ xác thực, DPA, yêu cầu cập nhật công
+  ty và logo/cover/gallery. Backend recheck owner, purpose, clean state và
+  one-time claim trong transaction; business document/media giữ liên kết audit
+  tới private `UploadAsset` đã quét.
+- Thêm post-scan structural validation: PDF parse strict, ảnh verify bằng Pillow
+  và DOCX dùng bounded container validator. File malware-clean nhưng sai/hỏng
+  định dạng vẫn bị từ chối, không tạo business record.
+- Frontend pre-scan toàn bộ tập file trước khi tạo company/update request, hiển
+  thị trạng thái scan, retry bounded và attach tuần tự; bỏ partial-success khi
+  một file lỗi. Raw fallback chỉ còn cho exact `UPLOAD_PIPELINE_DISABLED` trong
+  compatibility window; strict rollout dùng `EMPLOYER_UPLOAD_SESSION_REQUIRED`.
+- OpenAPI/runbook bổ sung contract upload-session, machine errors và thứ tự bật
+  quarantine → staging gate → strict raw-upload lock. ER-3 vẫn đang thực hiện do
+  candidate CV integration và real ClamAV staging chưa hoàn tất.
+
 #### Added — Shared upload quarantine core ER-3
 
 - Thêm shared app `uploads` với session/asset/scan-attempt state machine,

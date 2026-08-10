@@ -1,8 +1,11 @@
 # ER-3 storage-boundary rollout runbook
 
-This runbook activates the P0 public/private/quarantine boundary. It does not
-claim malware scanning is complete; raw DOC/DOCX pre-submit preview remains
-disabled with `UPLOAD_SCAN_REQUIRED` until a clean upload-session path exists.
+This runbook activates the P0 public/private/quarantine boundary and the
+employer upload-session consumer. Raw DOC/DOCX pre-submit preview remains
+disabled with `UPLOAD_SCAN_REQUIRED`; Office bytes are never parsed before a
+clean verdict. Candidate CV integration and real-scanner staging are separate
+remaining gates, so ER-3 is not complete merely because employer strict mode is
+enabled.
 
 ## Invariants
 
@@ -78,10 +81,11 @@ retains both objects for manual reconciliation.
   cache-only counter. The active-byte limit must be at least `UPLOAD_MAX_BYTES`.
   Expired/rejected rows with a persisted quarantine key, and expired clean rows
   with an unclaimed private key, continue consuming quota until cleanup succeeds.
-- DOCX receives bounded container checks before scan. PDF/image validation is
-  currently limited to MIME, declared/actual size and magic signature;
-  parser-specific PDF/image validation remains an explicit residual and the
-  scanner verdict must not be treated as a structural-parser verdict.
+- DOCX receives bounded container checks before scan. At the employer business
+  boundary, clean PDF is parsed strict with pypdf and clean image is verified
+  with Pillow against declared format before claim is committed. Candidate CV
+  paths need their own parser gate; a scanner verdict alone is never structural
+  validity.
 - Render production Compose and assert the worker consumes `upload-scan`; both
   the direct scan task and Beat reconciliation/expiry tasks are routed there:
 
@@ -97,6 +101,33 @@ retains both objects for manual reconciliation.
   `python manage.py check` and
   `python manage.py check_upload_scanner_readiness --json`; production startup
   must fail for a fake backend, empty purpose allowlist or missing ClamAV host.
+
+## Employer domain activation sequence
+
+1. Deploy migrations and backend while
+   `UPLOAD_QUARANTINE_ENABLED=false` and
+   `EMPLOYER_UPLOAD_SESSION_REQUIRED=false`. This is additive; existing clients
+   may still send multipart raw files.
+2. Deploy the frontend session consumer. It attempts the secure path first and
+   only falls back to raw when create-session returns exact
+   `UPLOAD_PIPELINE_DISABLED`. Rejection, timeout, scanner outage and malformed
+   file must remain fail closed.
+3. Configure real ClamAV, start a worker consuming `upload-scan`, then enable
+   `UPLOAD_QUARANTINE_ENABLED=true`. Run readiness, clean, EICAR, timeout,
+   outage, retry, expiry and cleanup probes. Confirm employer document/media
+   attaches include an `UploadAsset` audit link.
+4. After telemetry shows no supported client needs raw upload, set
+   `EMPLOYER_UPLOAD_SESSION_REQUIRED=true`. Production startup intentionally
+   fails if strict is true while quarantine is false. Probe raw document and
+   media requests for `409 UPLOAD_SESSION_REQUIRED`.
+5. Do not mark ER-3 verified until candidate imports/assets use the shared core
+   and the staging evidence has been approved.
+
+Strict-mode rollback may set `EMPLOYER_UPLOAD_SESSION_REQUIRED=false` while the
+pipeline remains enabled. Do not disable quarantine as a response to scanner
+errors and do not expose private/direct URLs. A frontend fallback is permitted
+only when the entire pipeline is deliberately disabled during the additive
+compatibility window.
 
 ## Rollback
 
