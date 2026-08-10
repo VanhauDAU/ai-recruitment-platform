@@ -21,6 +21,10 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
   không còn toast thành công giả cho diff rỗng.
 - Update request không còn tự thêm hoặc bắt sửa tên thương mại legacy khi người
   dùng chỉ thay đổi trường khác.
+- Form GPKD/DPA chỉ đọc `scope=mine`; summary trạng thái lấy đúng current file
+  đang hiển thị, không bị một tài liệu của member khác làm hiện “bị từ chối”.
+- Nút Google ở cổng employer giữ nền sáng và contrast chữ đạt mức đọc được kể
+  cả khi HTML còn class dark từ portal khác.
 
 #### Added — Employer verification final-decision backend ER-5
 

@@ -44,6 +44,34 @@ const INCOMPLETE_EMPLOYER_READINESS = Object.freeze({
   ],
 })
 
+async function elementContrastRatio(locator) {
+  return locator.evaluate((element) => {
+    const canvas = document.createElement('canvas')
+    canvas.width = 1
+    canvas.height = 1
+    const context = canvas.getContext('2d', { willReadFrequently: true })
+    const style = getComputedStyle(element)
+    const readColor = (color, base = [255, 255, 255]) => {
+      context.clearRect(0, 0, 1, 1)
+      context.fillStyle = `rgb(${base.join(' ')})`
+      context.fillRect(0, 0, 1, 1)
+      context.fillStyle = color
+      context.fillRect(0, 0, 1, 1)
+      return [...context.getImageData(0, 0, 1, 1).data.slice(0, 3)]
+    }
+    const background = readColor(style.backgroundColor)
+    const foreground = readColor(style.color, background)
+    const luminance = (rgb) => rgb
+      .map((value) => value / 255)
+      .map((value) => value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4)
+      .reduce((sum, value, index) => sum + value * [0.2126, 0.7152, 0.0722][index], 0)
+    const foregroundLuminance = luminance(foreground)
+    const backgroundLuminance = luminance(background)
+    return (Math.max(foregroundLuminance, backgroundLuminance) + 0.05)
+      / (Math.min(foregroundLuminance, backgroundLuminance) + 0.05)
+  })
+}
+
 test('employer smoke: marketing pages render', async ({ page }) => {
   await mockPublicApi(page)
   const isMobile = page.viewportSize().width < 1024
@@ -109,6 +137,14 @@ test('employer smoke: login loads and dashboard stays role-protected', async ({ 
   await mockPublicApi(page)
   await page.goto('/tuyendung/app/login')
   await expect(page.getByRole('heading', { name: 'Chào mừng bạn quay trở lại' })).toBeVisible()
+  const googleLogin = page.getByRole('button', { name: 'Đăng nhập bằng Google' })
+  await page.locator('html').evaluate((root) => root.classList.add('dark'))
+  await expect(googleLogin).toHaveCSS('background-color', 'rgb(255, 255, 255)')
+  await expect.poll(() => elementContrastRatio(googleLogin)).toBeGreaterThanOrEqual(4.5)
+  if (page.viewportSize().width >= 1024) {
+    await googleLogin.hover()
+    await expect.poll(() => elementContrastRatio(googleLogin)).toBeGreaterThanOrEqual(4.5)
+  }
   await expectAnimatedLoginButton(page)
   await expectNoHorizontalOverflow(page)
 
@@ -485,6 +521,60 @@ test('employer company settings: a new member sees only the personal request sta
     .toHaveCount(0)
   await expect(page.getByText('Lịch sử yêu cầu của công ty')).toHaveCount(0)
   await expect.poll(() => requestedScopes).toEqual(['mine'])
+  await expectNoHorizontalOverflow(page)
+})
+
+test('employer business license: personal scope keeps the summary and displayed file consistent', async ({ page }) => {
+  await mockPublicApi(page)
+  await setEmployerSession(page, {
+    email_verified: true,
+    employer_onboarding_required: false,
+    employer_onboarding_step: 'complete',
+  })
+  await page.route('http://localhost:8000/api/employer/me/', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        public_id: 'rec_business_scope',
+        company_role: 'owner',
+        onboarding: { company_linked: true, business_doc_submitted: true },
+        company: { public_id: 'co_business_scope', company_name: 'Công ty phạm vi chuẩn' },
+      }),
+    })
+  })
+  let requestedScope = null
+  await page.route(/http:\/\/localhost:8000\/api\/employer\/company\/documents\/(?:\?.*)?$/, async (route) => {
+    requestedScope = new URL(route.request().url()).searchParams.get('scope')
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify([
+        {
+          id: 1,
+          public_id: 'doc_current_approved',
+          doc_type: 'business_registration',
+          file_name: 'gpkd-hien-tai.pdf',
+          is_current: true,
+          status: 'approved',
+        },
+        {
+          id: 2,
+          public_id: 'doc_unrelated_rejected',
+          doc_type: 'business_registration',
+          file_name: 'gpkd-khong-thuoc-ho-so.pdf',
+          is_current: true,
+          status: 'rejected',
+        },
+      ]),
+    })
+  })
+
+  await page.goto('/tuyendung/app/account/settings/gpkd')
+
+  await expect.poll(() => requestedScope).toBe('mine')
+  await expect(page.getByText('Đã duyệt')).toHaveCount(2)
+  await expect(page.getByText('Có file bị từ chối')).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Xem tệp đã nộp: Giấy đăng ký doanh nghiệp' }))
+    .toBeVisible()
   await expectNoHorizontalOverflow(page)
 })
 

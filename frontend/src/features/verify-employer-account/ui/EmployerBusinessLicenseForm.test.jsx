@@ -77,6 +77,30 @@ describe('EmployerBusinessLicenseForm', () => {
     expect(getEmployerCompanyDocuments).toHaveBeenCalledWith({ scope: 'mine' })
   })
 
+  it('keeps the summary aligned with the one displayed business document', async () => {
+    getEmployerProfile.mockResolvedValue({ onboarding: { company_linked: true } })
+    getEmployerCompanyDocuments.mockResolvedValue([
+      {
+        id: 1,
+        doc_type: 'business_registration',
+        file_name: 'gpkd-hien-tai.pdf',
+        status: 'approved',
+      },
+      {
+        id: 2,
+        doc_type: 'business_registration',
+        file_name: 'gpkd-khong-thuoc-ho-so.pdf',
+        status: 'rejected',
+      },
+    ])
+
+    renderForm()
+
+    expect(await screen.findAllByText('Đã duyệt')).toHaveLength(2)
+    expect(screen.queryByText('Có file bị từ chối')).not.toBeInTheDocument()
+    expect(getEmployerCompanyDocuments).toHaveBeenCalledWith({ scope: 'mine' })
+  })
+
   it('keeps saving disabled until company information is updated', async () => {
     getEmployerProfile.mockResolvedValue({ onboarding: { company_linked: false } })
 

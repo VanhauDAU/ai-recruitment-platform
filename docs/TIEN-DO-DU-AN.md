@@ -30,6 +30,8 @@ Decision log:
 
 ### Corrective UX 2026-08-10
 
+- GPKD/DPA dùng document scope cá nhân và summary chỉ phản ánh file current đang
+  hiển thị; Google employer login giữ contrast an toàn dưới stale dark theme.
 - Known-denied job/campaign/application route điều hướng về trang
   `employer-verify`; lỗi readiness vẫn retry fail-closed.
 - Trang verify bỏ hai banner readiness/case status trùng checklist.
