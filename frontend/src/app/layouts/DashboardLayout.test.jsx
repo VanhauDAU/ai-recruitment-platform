@@ -9,10 +9,12 @@ import DashboardLayout from './DashboardLayout'
 const {
   getAdminAccountSummary,
   getAdminCompanySummary,
+  getAdminEmployerVerificationSummary,
   useSession,
 } = vi.hoisted(() => ({
   getAdminAccountSummary: vi.fn(),
   getAdminCompanySummary: vi.fn(),
+  getAdminEmployerVerificationSummary: vi.fn(),
   useSession: vi.fn(),
 }))
 vi.mock('@/entities/session', () => ({ useSession }))
@@ -23,6 +25,10 @@ vi.mock('@/entities/admin-account', async (importOriginal) => ({
 vi.mock('@/entities/admin-company', async (importOriginal) => ({
   ...(await importOriginal()),
   getAdminCompanySummary,
+}))
+vi.mock('@/entities/admin-employer-verification', async (importOriginal) => ({
+  ...(await importOriginal()),
+  getAdminEmployerVerificationSummary,
 }))
 vi.mock('@/entities/site-settings', () => ({
   BrandLogo: () => <span>Logo</span>,
@@ -47,17 +53,11 @@ function renderDashboard(ui) {
 describe('DashboardLayout admin access', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    getAdminAccountSummary.mockImplementation(({ scope }) => Promise.resolve(
-      scope === 'recruiters'
-        ? {
-          totals: { restricted: 2 },
-          verification: { pending: 3 },
-        }
-        : {
-          totals: { restricted: 4 },
-          queues: { pending_admin_invitations: 5 },
-        },
-    ))
+    getAdminAccountSummary.mockResolvedValue({
+      totals: { restricted: 4 },
+      queues: { pending_admin_invitations: 5 },
+    })
+    getAdminEmployerVerificationSummary.mockResolvedValue({ pending: 3 })
     getAdminCompanySummary.mockResolvedValue({
       verification: { pending: 6 },
       pending_update_requests: 7,
@@ -224,7 +224,7 @@ describe('DashboardLayout admin access', () => {
     expect(contentSection).toHaveAttribute('aria-expanded', 'false')
   })
 
-  it('shows highlighted two-digit queue counts in submenu items', async () => {
+  it('shows compact queue counts in submenu items', async () => {
     const user = userEvent.setup()
     useSession.mockReturnValue({
       user: {
@@ -243,7 +243,7 @@ describe('DashboardLayout admin access', () => {
     const usersMenu = screen.getByRole('button', { name: /Người dùng/ })
     expect(
       await within(usersMenu).findByLabelText('5 mục đang chờ'),
-    ).toHaveTextContent('05')
+    ).toHaveTextContent('5')
 
     const businessMenu = screen.getByRole('button', { name: /Doanh nghiệp/ })
     expect(
@@ -253,12 +253,12 @@ describe('DashboardLayout admin access', () => {
     expect(within(businessMenu).queryByLabelText('16 mục đang chờ')).not.toBeInTheDocument()
 
     const recruiterMenu = screen.getByRole('button', { name: /^Nhà tuyển dụng/ })
-    expect(within(recruiterMenu).getByLabelText('3 mục đang chờ')).toHaveTextContent('03')
+    expect(within(recruiterMenu).getByLabelText('3 mục đang chờ')).toHaveTextContent('3')
     await user.click(recruiterMenu)
     expect(within(recruiterMenu).queryByLabelText('3 mục đang chờ')).not.toBeInTheDocument()
 
     const badge = await screen.findByLabelText('3 mục đang chờ')
-    expect(badge).toHaveTextContent('03')
+    expect(badge).toHaveTextContent('3')
     expect(badge).toHaveClass('admin-nav__count')
 
     const restrictedRecruiters = screen.getByRole('button', { name: 'NTD bị hạn chế' })

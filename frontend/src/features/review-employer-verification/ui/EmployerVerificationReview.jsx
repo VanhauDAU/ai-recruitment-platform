@@ -3,14 +3,13 @@ import {
   EyeOutlined,
   FileProtectOutlined,
   ReloadOutlined,
-  WarningOutlined,
 } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   Alert,
   Button,
   Card,
-  Descriptions,
+  Collapse,
   Empty,
   Form,
   Input,
@@ -22,9 +21,9 @@ import {
   Typography,
 } from 'antd'
 import { useEffect, useMemo, useState } from 'react'
+import { adminCompanyKeys } from '@/entities/admin-company'
 import {
   adminEmployerVerificationKeys,
-  documentStatusMeta,
   downloadAdminEmployerDocument,
   getAdminEmployerDocumentContent,
   getAdminEmployerVerification,
@@ -39,20 +38,20 @@ import {
   documentPreviewKind,
   resolveDocumentMimeType,
 } from '../model/document-preview'
-import { groupVerificationDocuments } from '../model/document-groups'
 import { buildVerificationTimeline } from '../model/event-timeline'
 import CompanyUpdateReviewPanel from './CompanyUpdateReviewPanel'
 import DocumentImageViewer from './DocumentImageViewer'
 import TaxLookupEvidenceCard from './TaxLookupEvidenceCard'
+import VerificationDocumentBoard from './VerificationDocumentBoard'
 import VerificationFinalDecisionPanel from './VerificationFinalDecisionPanel'
 import VerificationJourney from './VerificationJourney'
 import './employer-verification-review.css'
 
-const DECISIONS = [
-  { value: 'approved', label: 'Duyệt', tone: 'primary' },
-  { value: 'changes_requested', label: 'Yêu cầu bổ sung', tone: 'default' },
-  { value: 'rejected', label: 'Từ chối', tone: 'danger' },
-]
+const DOCUMENT_DECISION_LABELS = {
+  approved: 'Đã duyệt',
+  changes_requested: 'Cần bổ sung',
+  rejected: 'Từ chối',
+}
 
 function formatDate(value) {
   if (!value) return 'Chưa có'
@@ -60,11 +59,6 @@ function formatDate(value) {
     dateStyle: 'short',
     timeStyle: 'short',
   }).format(new Date(value))
-}
-
-function StatusTag({ status, document = false }) {
-  const meta = document ? documentStatusMeta(status) : verificationStatusMeta(status)
-  return <Tag color={meta.color}>{meta.label}</Tag>
 }
 
 function DocumentPreview({ verificationCase, document, canViewSensitive }) {
@@ -276,9 +270,9 @@ function DocumentPreview({ verificationCase, document, canViewSensitive }) {
   return null
 }
 
-function DecisionModal({ open, title, lockVersion, onClose, onSubmit, loading }) {
+function DecisionModal({ state, lockVersion, onClose, onSubmit, loading }) {
   const [form] = Form.useForm()
-  const selectedDecision = Form.useWatch('decision', form)
+  const decision = state?.decision
 
   const reset = () => {
     form.resetFields()
@@ -287,19 +281,19 @@ function DecisionModal({ open, title, lockVersion, onClose, onSubmit, loading })
 
   const submit = async () => {
     const values = await form.validateFields()
-    const payload = { ...values, lock_version: lockVersion }
+    const payload = { ...values, decision, lock_version: lockVersion }
     await onSubmit(payload)
     reset()
   }
 
   return (
     <Modal
-      open={open}
-      title={title}
+      open={Boolean(state)}
+      title={`Chuyển sang “${DOCUMENT_DECISION_LABELS[decision] || ''}”`}
       okText="Xác nhận"
       cancelText="Hủy"
       confirmLoading={loading}
-      okButtonProps={{ danger: selectedDecision === 'rejected' }}
+      okButtonProps={{ danger: decision === 'rejected' }}
       onCancel={reset}
       onOk={submit}
       destroyOnHidden
@@ -308,31 +302,23 @@ function DecisionModal({ open, title, lockVersion, onClose, onSubmit, loading })
         form={form}
         layout="vertical"
         requiredMark={false}
-        initialValues={{ decision: 'approved', reason: '' }}
+        initialValues={{ reason: '' }}
         scrollToFirstError={{ focus: true }}
       >
-        <Form.Item name="decision" label="Kết quả xử lý" rules={[{ required: true }]}>
-          <div className="verification-decision-options">
-            {DECISIONS.map((item) => (
-              <Button
-                key={item.value}
-                type={selectedDecision === item.value ? 'primary' : 'default'}
-                danger={item.tone === 'danger'}
-                onClick={() => form.setFieldValue('decision', item.value)}
-              >
-                {item.label}
-              </Button>
-            ))}
-          </div>
-        </Form.Item>
+        <Alert
+          className="mb-4"
+          type={decision === 'approved' ? 'info' : 'warning'}
+          showIcon
+          title={`${state?.document?.doc_type_label || 'Giấy tờ'} sẽ chuyển sang trạng thái ${DOCUMENT_DECISION_LABELS[decision] || ''}.`}
+          description="Thay đổi chỉ được ghi nhận sau khi bạn xác nhận."
+        />
         <Form.Item
           name="reason"
           label="Lý do / hướng dẫn bổ sung"
-          dependencies={['decision']}
           rules={[
-            ({ getFieldValue }) => ({
+            () => ({
               validator(_, value) {
-                if (getFieldValue('decision') === 'approved' || value?.trim()) {
+                if (decision === 'approved' || value?.trim()) {
                   return Promise.resolve()
                 }
                 return Promise.reject(new Error('Nhập lý do để NTD biết bước tiếp theo.'))
@@ -375,10 +361,6 @@ export default function EmployerVerificationReview({
     () => (verificationCase?.documents || []).filter((item) => item.is_current),
     [verificationCase],
   )
-  const documentGroups = useMemo(
-    () => groupVerificationDocuments(currentDocuments),
-    [currentDocuments],
-  )
   const timelineEvents = useMemo(
     () => buildVerificationTimeline(
       verificationCase?.events || [],
@@ -398,6 +380,10 @@ export default function EmployerVerificationReview({
       }),
       queryClient.invalidateQueries({
         queryKey: adminEmployerVerificationKeys.summary,
+        exact: true,
+      }),
+      queryClient.invalidateQueries({
+        queryKey: adminCompanyKeys.summary,
         exact: true,
       }),
       queryClient.invalidateQueries({
@@ -501,12 +487,11 @@ export default function EmployerVerificationReview({
             <Space wrap>
               <Tag color={caseMeta.color}>{caseMeta.label}</Tag>
               {verificationCase.revision > 1 && (
-                <Tag color="blue">{`Phiên nộp lại ${verificationCase.revision}`}</Tag>
+                <Tag>{`Phiên nộp lại ${verificationCase.revision}`}</Tag>
               )}
               {pendingDocumentCount > 0 && (
-                <Tag color="gold">{`${pendingDocumentCount} file chờ duyệt`}</Tag>
+                <Tag>{`${pendingDocumentCount} giấy tờ chờ duyệt`}</Tag>
               )}
-              <Typography.Text code>{verificationCase.public_id}</Typography.Text>
             </Space>
             <Typography.Title level={4} className="!mb-1 !mt-3">
               {verificationCase.company?.name || 'Chưa liên kết công ty'}
@@ -529,26 +514,24 @@ export default function EmployerVerificationReview({
             </Space>
           )}
         </div>
-        <Descriptions className="mt-4" bordered size="small" column={{ xs: 1, md: 2, xl: 3 }}>
-          <Descriptions.Item label="Phương thức">
-            {verificationCase.verification_method_label || 'Chưa chọn'}
-          </Descriptions.Item>
-          <Descriptions.Item label="Phiên hồ sơ">
-            {verificationCase.revision}
-          </Descriptions.Item>
-          <Descriptions.Item label="Nộp gần nhất">
-            {formatDate(verificationCase.submitted_at)}
-          </Descriptions.Item>
-          <Descriptions.Item label="Người xử lý">
-            {verificationCase.reviewer_email || 'Chưa phân công'}
-          </Descriptions.Item>
-          <Descriptions.Item label="Mã số thuế">
-            {verificationCase.company?.tax_code || 'Chưa cập nhật'}
-          </Descriptions.Item>
-          <Descriptions.Item label="Điện thoại">
-            {verificationCase.phone_verified ? 'Đã xác minh' : 'Chưa xác minh'}
-          </Descriptions.Item>
-        </Descriptions>
+        <dl className="verification-case-facts">
+          <div>
+            <dt>Nộp gần nhất</dt>
+            <dd>{formatDate(verificationCase.submitted_at)}</dd>
+          </div>
+          <div>
+            <dt>Người xử lý</dt>
+            <dd>{verificationCase.reviewer_email || 'Chưa phân công'}</dd>
+          </div>
+          <div>
+            <dt>Mã số thuế</dt>
+            <dd>{verificationCase.company?.tax_code || 'Chưa cập nhật'}</dd>
+          </div>
+          <div>
+            <dt>Điện thoại</dt>
+            <dd>{verificationCase.phone_verified ? 'Đã xác minh' : 'Chưa xác minh'}</dd>
+          </div>
+        </dl>
         {verificationCase.company?.duplicate_tax_code_company_count > 0 && (
           <Alert
             className="mt-4"
@@ -587,92 +570,51 @@ export default function EmployerVerificationReview({
       <section className="verification-review-workspace">
         <div className="verification-review-main">
           <section className="verification-workbench">
-        <Card
-          size="small"
-          title={`Bộ giấy tờ (${currentDocuments.length})`}
-          className="account-detail-card verification-document-list"
-        >
-          <div className="verification-document-items">
-            {currentDocuments.length === 0 && (
-              <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Chưa có giấy tờ hiện hành" />
-            )}
-            {documentGroups.map((group) => (
-              <section className="verification-document-group" key={group.key}>
-                <header className="verification-document-group__header">
-                  <span>
-                    <strong>{group.title}</strong>
-                    <small>{group.description}</small>
-                  </span>
-                  <Tag>{group.documents.length}</Tag>
-                </header>
-                {group.documents.map((document) => {
-                  const active = selectedDocument?.public_id === document.public_id
-                  return (
-                    <div
-                      className={`verification-document-item${active ? ' is-selected' : ''}`}
-                      key={document.public_id}
-                    >
-                      <button
-                        className="verification-document-item__select"
-                        type="button"
-                        onClick={() => setSelectedDocumentId(document.public_id)}
-                      >
-                        <span className="verification-document-item__title">
-                          <span>{document.doc_type_label}</span>
-                          <StatusTag status={document.status} document />
-                        </span>
-                        <span className="verification-document-item__description">
-                          {`${document.file_name} · v${document.version} · ${formatDate(document.created_at)}`}
-                          {document.duplicate_company_count > 0 && (
-                            <Tag className="ml-2" color="red" icon={<WarningOutlined />}>
-                              Trùng hash công ty khác
-                            </Tag>
-                          )}
-                        </span>
-                      </button>
-                      {canReviewDocuments && (
-                        <Button
-                          type="link"
-                          onClick={(event) => {
-                            event.stopPropagation()
-                            setDocumentDecision(document)
-                          }}
-                        >
-                          Xử lý
-                        </Button>
-                      )}
-                    </div>
-                  )
-                })}
-              </section>
-            ))}
-          </div>
-        </Card>
-        <Card
-          size="small"
-          title={selectedDocument ? `Đối chiếu: ${selectedDocument.doc_type_label}` : 'Preview'}
-          className="account-detail-card verification-preview"
-          extra={selectedDocument && (
-            <Button
+            <Card
               size="small"
-              icon={<ReloadOutlined />}
-              onClick={() => queryClient.invalidateQueries({
-                queryKey: adminEmployerVerificationKeys.document(
-                  casePublicId,
-                  selectedDocument.public_id,
-                ),
-              })}
+              title={`1. Xử lý giấy tờ (${currentDocuments.length})`}
+              className="account-detail-card verification-document-board-card"
+              extra={canReviewDocuments && (
+                <Typography.Text type="secondary" className="verification-board-hint">
+                  Kéo thả hoặc dùng menu trên từng giấy tờ
+                </Typography.Text>
+              )}
             >
-              Tải lại
-            </Button>
-          )}
-        >
-          <DocumentPreview
-            verificationCase={verificationCase}
-            document={selectedDocument}
-            canViewSensitive={canViewSensitive}
-          />
-        </Card>
+              <VerificationDocumentBoard
+                documents={currentDocuments}
+                selectedDocumentId={selectedDocument?.public_id}
+                canReview={canReviewDocuments}
+                onSelect={setSelectedDocumentId}
+                onDecision={(document, decision) => {
+                  setDocumentDecision({ document, decision })
+                }}
+              />
+            </Card>
+            <Card
+              size="small"
+              title={selectedDocument ? `Đối chiếu: ${selectedDocument.doc_type_label}` : 'Bản xem trước'}
+              className="account-detail-card verification-preview"
+              extra={selectedDocument && (
+                <Button
+                  size="small"
+                  icon={<ReloadOutlined />}
+                  onClick={() => queryClient.invalidateQueries({
+                    queryKey: adminEmployerVerificationKeys.document(
+                      casePublicId,
+                      selectedDocument.public_id,
+                    ),
+                  })}
+                >
+                  Tải lại
+                </Button>
+              )}
+            >
+              <DocumentPreview
+                verificationCase={verificationCase}
+                document={selectedDocument}
+                canViewSensitive={canViewSensitive}
+              />
+            </Card>
           </section>
 
           <TaxLookupEvidenceCard
@@ -691,61 +633,73 @@ export default function EmployerVerificationReview({
             canRevoke={canRevokeVerification}
             canUnlockResubmission={canUnlockVerificationResubmission}
             canTaxOverride={canOverrideVerificationTax}
+            taxEvidence={verificationCase.tax_lookup_evidence}
             onChanged={refresh}
           />
 
-          <Card
-            size="small"
-            className="account-detail-card verification-progress-card"
-          >
-            <VerificationJourney checks={verificationCase.checks} />
-          </Card>
+          <Collapse
+            className="verification-secondary-collapse"
+            items={[{
+              key: 'conditions',
+              label: 'Xem điều kiện xác thực',
+              children: <VerificationJourney checks={verificationCase.checks} />,
+            }]}
+          />
         </aside>
       </section>
 
-      <Card size="small" title="Lịch sử xử lý" className="account-detail-card verification-history-card">
-        <div
-          className="verification-timeline-scroll"
-          role="region"
-          aria-label="Danh sách lịch sử xử lý"
-          tabIndex={0}
-        >
-          <Timeline
-            items={timelineEvents.map((event) => ({
-              color: event.event_type === 'rejected' ? 'red' : 'blue',
-              content: (
-                <div>
-                  <strong>
-                    {event.title}
-                    {event.count > 1 && (
-                      <Tag className="ml-2" color="blue">{`${event.count} lượt`}</Tag>
-                    )}
-                  </strong>
-                  {event.documentLabel && (
-                    <p className="verification-timeline-document">
-                      {event.documentLabel}
-                    </p>
-                  )}
-                  <p className="mb-0 text-xs text-slate-500">
-                    {`${formatDate(event.created_at)} · ${event.actor_email || 'Hệ thống'}`}
-                  </p>
-                </div>
-              ),
-            }))}
-          />
-        </div>
-      </Card>
+      <Collapse
+        className="verification-secondary-collapse verification-history-collapse"
+        destroyOnHidden
+        items={[{
+          key: 'history',
+          label: `Lịch sử xử lý (${timelineEvents.length})`,
+          children: (
+            <div
+              className="verification-timeline-scroll"
+              role="region"
+              aria-label="Danh sách lịch sử xử lý"
+              tabIndex={0}
+            >
+              <Timeline
+                items={timelineEvents.map((event) => ({
+                  color: event.event_type === 'rejected' ? 'red' : 'gray',
+                  content: (
+                    <div>
+                      <strong>
+                        {event.title}
+                        {event.count > 1 && (
+                          <span className="verification-timeline-count">
+                            {`${event.count} lượt`}
+                          </span>
+                        )}
+                      </strong>
+                      {event.documentLabel && (
+                        <p className="verification-timeline-document">
+                          {event.documentLabel}
+                        </p>
+                      )}
+                      <p className="mb-0 text-xs text-slate-500">
+                        {`${formatDate(event.created_at)} · ${event.actor_email || 'Hệ thống'}`}
+                      </p>
+                    </div>
+                  ),
+                }))}
+              />
+            </div>
+          ),
+        }]}
+      />
 
       <DecisionModal
-        open={Boolean(documentDecision)}
-        title={`Xử lý ${documentDecision?.doc_type_label || 'giấy tờ'}`}
+        state={documentDecision}
         lockVersion={verificationCase.lock_version}
         loading={documentMutation.isPending}
         onClose={() => setDocumentDecision(null)}
         onSubmit={async (payload) => {
           try {
             await documentMutation.mutateAsync({
-              documentId: documentDecision.public_id,
+              documentId: documentDecision.document.public_id,
               payload,
             })
           } catch (error) {

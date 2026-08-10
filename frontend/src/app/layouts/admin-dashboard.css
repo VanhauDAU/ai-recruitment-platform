@@ -351,11 +351,11 @@
 
 .admin-nav__count {
   align-items: center;
-  background: linear-gradient(135deg, #ef4444, #dc2626);
-  border: 1px solid rgba(254, 202, 202, 0.32);
+  background: #334155;
+  border: 1px solid #475569;
   border-radius: 999px;
-  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.28);
-  color: #ffffff;
+  box-shadow: none;
+  color: #f8fafc;
   display: inline-flex;
   flex: 0 0 auto;
   font-size: 10px;
@@ -370,9 +370,9 @@
 }
 
 .admin-nav__leaf--active .admin-nav__count {
-  box-shadow:
-    0 0 0 3px rgba(239, 68, 68, 0.12),
-    0 5px 14px rgba(220, 38, 38, 0.34);
+  background: #1e293b;
+  border-color: #64748b;
+  box-shadow: none;
 }
 
 .admin-nav__search-results .admin-nav__leaf {

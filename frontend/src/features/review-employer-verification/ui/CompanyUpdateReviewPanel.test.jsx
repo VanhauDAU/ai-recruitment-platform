@@ -185,6 +185,7 @@ describe('CompanyUpdateReviewPanel', () => {
     const dialog = screen.getByRole('dialog', { name: 'Đối chiếu yêu cầu sửa thông tin công ty' })
     expect(within(dialog).getByText('1 giấy tờ đang chờ nhà tuyển dụng bổ sung')).toBeInTheDocument()
     expect(within(dialog).getByText('Ảnh bị mờ, vui lòng tải bản rõ đủ bốn góc.')).toBeInTheDocument()
+    await userEvent.click(within(dialog).getByRole('button', { name: /Xem dữ liệu đối chiếu/ }))
     expect(within(dialog).getByText('VietQR.io')).toBeInTheDocument()
     expect(within(dialog).getAllByText('Khớp')).toHaveLength(2)
     expect(within(dialog).getByText('Cần bổ sung')).toBeInTheDocument()

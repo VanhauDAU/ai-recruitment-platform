@@ -1,5 +1,4 @@
 import {
-  CheckCircleOutlined,
   ClockCircleOutlined,
   StopOutlined,
   UnlockOutlined,
@@ -14,7 +13,6 @@ import {
   Form,
   Input,
   Modal,
-  Space,
   Tag,
   Typography,
 } from 'antd'
@@ -29,6 +27,7 @@ import {
 } from '@/entities/admin-employer-verification'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { message } from '@/shared/lib/toast'
+import { getTaxReviewState } from '../model/tax-review-state'
 import VerificationDecisionImpactSummary from './VerificationDecisionImpactSummary'
 
 const DECISION_ACTIONS = {
@@ -64,6 +63,7 @@ export default function VerificationFinalDecisionPanel({
   canRevoke,
   canUnlockResubmission,
   canTaxOverride,
+  taxEvidence,
   onChanged,
 }) {
   const [form] = Form.useForm()
@@ -181,6 +181,9 @@ export default function VerificationFinalDecisionPanel({
   const isResubmissionLocked = Boolean(verificationCase.resubmission_locked_at)
   const rejectionCount = Number(verificationCase.final_rejection_count || 0)
   const rejectionLimit = Number(verificationCase.rejection_limit || 3)
+  const taxReview = getTaxReviewState(taxEvidence)
+  const manualApprovalUnavailable = taxReview.requiresManualApproval && !canTaxOverride
+  const approvalUnavailable = taxReview.blocksApproval || manualApprovalUnavailable
   const modalMeta = mode?.type === 'unlock'
     ? { label: 'Mở khóa nộp lại', icon: <UnlockOutlined /> }
     : mode?.type === 'lifecycle'
@@ -191,17 +194,13 @@ export default function VerificationFinalDecisionPanel({
     <Card
       size="small"
       className="account-detail-card verification-final-decision-card"
-      title="Quyết định cuối hồ sơ"
+      title="2. Quyết định hồ sơ"
       extra={<Tag color={statusMeta.color}>{statusMeta.label}</Tag>}
     >
       {isReviewing && (
-        <Alert
-          showIcon
-          type="info"
-          icon={<CheckCircleOutlined />}
-          title="Giấy tờ và hồ sơ là hai lớp quyết định độc lập"
-          description="Duyệt hết giấy tờ không tự duyệt hồ sơ. Hãy preview tác động trước quyết định cuối."
-        />
+        <Typography.Paragraph className="!mb-0" type="secondary">
+          Duyệt từng giấy tờ trước, sau đó ra một quyết định chung cho hồ sơ.
+        </Typography.Paragraph>
       )}
       {isApproved && (
         <Alert
@@ -254,12 +253,19 @@ export default function VerificationFinalDecisionPanel({
         </Typography.Text>
       )}
 
-      <Space wrap className="verification-final-actions mt-4">
+      <div className="verification-final-actions mt-4">
         {isReviewing && canReview && Object.entries(DECISION_ACTIONS).map(([action, meta]) => (
           <Button
             key={action}
+            className={`verification-final-action is-${action}`}
             type={meta.color}
             danger={meta.danger}
+            disabled={action === 'approved' && approvalUnavailable}
+            title={action === 'approved' && approvalUnavailable
+              ? taxReview.blocksApproval
+                ? taxReview.message
+                : 'Bạn không có quyền duyệt thủ công khi nguồn thuế chưa xác nhận được hồ sơ.'
+              : undefined}
             onClick={() => openWorkflow('decision', action)}
           >
             {meta.label}
@@ -268,6 +274,7 @@ export default function VerificationFinalDecisionPanel({
         {isApproved && canRevoke && Object.entries(LIFECYCLE_ACTIONS).map(([action, meta]) => (
           <Button
             key={action}
+            className={`verification-final-action is-${action}`}
             danger={meta.danger}
             icon={meta.icon}
             aria-label={meta.label}
@@ -278,13 +285,14 @@ export default function VerificationFinalDecisionPanel({
         ))}
         {isResubmissionLocked && canUnlockResubmission && (
           <Button
+            className="verification-final-action is-unlock"
             icon={<UnlockOutlined />}
             onClick={() => openWorkflow('unlock', 'unlock')}
           >
             Mở khóa nộp lại
           </Button>
         )}
-      </Space>
+      </div>
 
       {verificationCase.decision_reason && (
         <Typography.Paragraph className="!mb-0 !mt-4" type="secondary">
@@ -298,7 +306,9 @@ export default function VerificationFinalDecisionPanel({
         title={modalMeta?.label || 'Xử lý xác thực'}
         okText={mode?.type === 'unlock'
           ? 'Xác nhận mở khóa'
-          : impact ? 'Xác nhận quyết định' : 'Xem tác động'}
+          : impact
+            ? mode?.action === 'approved' ? 'Xác nhận duyệt hồ sơ' : 'Xác nhận quyết định'
+            : mode?.action === 'approved' ? 'Kiểm tra trước khi duyệt' : 'Xem tác động'}
         cancelText="Hủy"
         okButtonProps={{ danger: Boolean(modalMeta?.danger) }}
         confirmLoading={previewMutation.isPending || confirmMutation.isPending}
@@ -335,20 +345,37 @@ export default function VerificationFinalDecisionPanel({
             <Input.TextArea rows={3} maxLength={2000} showCount />
           </Form.Item>
 
-          {mode?.type === 'decision' && mode.action === 'approved' && canTaxOverride && (
+          {mode?.type === 'decision'
+            && mode.action === 'approved'
+            && taxReview.requiresManualApproval && (
             <>
-              <Form.Item name="tax_override" valuePropName="checked">
-                <Checkbox>Cho phép override kết quả tra cứu thuế advisory</Checkbox>
+              <Alert
+                className="mb-4"
+                showIcon
+                type="warning"
+                title="Cần xác nhận duyệt thủ công"
+                description={`${taxReview.message} Chỉ tiếp tục nếu bạn đã đối chiếu giấy tờ pháp lý gốc và chịu trách nhiệm về quyết định này.`}
+              />
+              <Form.Item
+                name="tax_override"
+                valuePropName="checked"
+                rules={[{
+                  validator: (_, value) => value
+                    ? Promise.resolve()
+                    : Promise.reject(new Error('Xác nhận đã đối chiếu giấy tờ gốc trước khi tiếp tục.')),
+                }]}
+              >
+                <Checkbox>Tôi đã đối chiếu giấy tờ gốc và muốn tiếp tục duyệt</Checkbox>
               </Form.Item>
               {taxOverride && (
                 <Form.Item
                   name="tax_override_reason"
-                  label="Lý do override mã số thuế"
+                  label="Lý do duyệt thủ công"
                   rules={[
                     {
                       validator: (_, value) => value?.trim()
                         ? Promise.resolve()
-                        : Promise.reject(new Error('Nhập lý do override để lưu audit.')),
+                        : Promise.reject(new Error('Nhập căn cứ duyệt thủ công để lưu audit.')),
                     },
                     { max: 2000, message: 'Tối đa 2.000 ký tự.' },
                   ]}
