@@ -66,6 +66,7 @@
 | ER-D25 | Website bell/history/deep-link/read status; decision email luôn bật | Outbox + notification center |
 | ER-D26 | Business/security activity hiển thị 24 tháng | Retention + redaction contract |
 | ER-D50 | Notification website ghi cùng transaction và dedupe theo recipient/event; email quyết định giữ outbox riêng có retry | Không mất event, không gửi email trùng do UI |
+| ER-D51 | ER-8 dùng audit report aggregate-only, strict fail-closed và rollout dry-run trước; local không bịa DPA version/hash khi chưa có artifact pháp lý | Production activation cần exact legal artifact/SMS gateway; legacy cohort chỉ cảnh báo và không được tự nâng trust |
 | ER-D28 | Existing holds rollout phải dry-run, ops review rồi apply/notify | Batch command + reconciliation evidence |
 
 ### Các lựa chọn mở đã được khóa

@@ -47,10 +47,23 @@ review DPA.
 | ER-F09 | Cao | Phone OTP nghiệp vụ được gửi qua email, không phải possession proof của phone | Closed — live actor-bound SMS challenge; production activation qua ER-8 | ER-6A |
 | ER-F10 | Cao | DPA chỉ có timestamp, thiếu version/hash/actor/IP/session | Closed ER-6B | ER-6B |
 | ER-F11 | Trung bình | Notification/activity workspace chưa có outbox/read/deep-link/audit contract | Closed — idempotent event, scoped read, allowlisted deep-link/metadata, retention | ER-7 |
-| ER-F12 | Trung bình | Tài liệu canonical cũ mâu thuẫn quyền, ngày gửi và publish blocker | In remediation | ER-0–ER-8 |
+| ER-F12 | Trung bình | Tài liệu canonical cũ mâu thuẫn quyền, ngày gửi và publish blocker | Closed — canonical plan/decision log/API/runbook đồng bộ; historical baseline giữ nguyên | ER-0–ER-8 |
 | ER-F13 | Cao | Direct/relink có thể tái gắn case cũ và trộn proof giữa hai company; admin edit từng bypass service | Closed — strict clean unlink + append-only audit | ER-7 |
 
 ## 3. Evidence và retest criteria
+
+### ER-F12 — Rollout audit và tài liệu canonical
+
+- Flag trong canonical/runbook khớp exact settings được code đọc; không còn tên
+  flag đề xuất nhưng không tồn tại.
+- Command readiness chỉ xuất aggregate count, strict fail-closed và không có
+  write path. Legacy DPA/verification/upload chỉ là warning, không được nâng
+  trust hoặc bịa evidence.
+- Metric notification chỉ có event/status/count allowlist; regression log
+  không chứa message, file URL, storage key hoặc hash.
+- Markdown 200 destination, env-sync, migration drift/plan và Docker targeted
+  gate được ghi cùng branch ER-8. Production apply/soak vẫn là operational gate,
+  không phải lý do mở lại finding tài liệu.
 
 ### ER-F11 — Notification và activity
 

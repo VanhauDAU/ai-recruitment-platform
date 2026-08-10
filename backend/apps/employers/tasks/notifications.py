@@ -4,6 +4,8 @@ from celery import shared_task
 from django.conf import settings
 from django.utils import timezone
 
+from common.metrics import record_metric
+
 from ..models import EmployerActivity, EmployerNotification, EmployerVerificationNotification
 
 
@@ -21,6 +23,11 @@ def purge_expired_employer_event_history():
             EmployerVerificationNotification.Status.FAILED,
         ],
     ).delete()
+    record_metric(
+        'employer_notification_retention',
+        value=notification_count + activity_count + email_outbox_count,
+        status='purged',
+    )
     return {
         'notifications': notification_count,
         'activities': activity_count,

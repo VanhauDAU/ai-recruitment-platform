@@ -34,6 +34,7 @@
 | [06-deployment](06-deployment/) | [announcement-staging-evidence-2026-07-29.md](06-deployment/announcement-staging-evidence-2026-07-29.md) | AN-P5: bằng chứng rehearsal bốn surface, priority, kill switch và Redis failure |
 | [06-deployment](06-deployment/) | [employer-upload-storage-boundary-runbook.md](06-deployment/employer-upload-storage-boundary-runbook.md) | ER-3: tách public/private/quarantine, copy legacy, cutover và rollback |
 | [06-deployment](06-deployment/) | [employer-dpa-evidence-rollout.md](06-deployment/employer-dpa-evidence-rollout.md) | ER-6B: cấu hình exact DPA, migration không bịa evidence, rollout và rollback |
+| [06-deployment](06-deployment/) | [employer-hardening-rollout-runbook.md](06-deployment/employer-hardening-rollout-runbook.md) | ER-8: readiness audit, rollout tuần tự, monitoring, Chrome QA và rollback employer |
 | [07-algorithms](07-algorithms/) | [thuat-toan-ai.md](07-algorithms/thuat-toan-ai.md)               | Thuật toán AI: trích xuất kỹ năng, matching CV-Job, chấm điểm phỏng vấn |
 | [07-algorithms](07-algorithms/) | [employer-flow-security-audit-2026-08.md](07-algorithms/employer-flow-security-audit-2026-08.md) | Baseline finding, evidence và retest criteria cho luồng Nhà tuyển dụng |
 | [08-frontend](08-frontend/)     | [cau-truc-frontend.md](08-frontend/cau-truc-frontend.md)         | Cấu trúc frontend, component, quy ước code                              |

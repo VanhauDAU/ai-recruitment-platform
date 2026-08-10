@@ -8,6 +8,16 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-08-10
 
+#### Added — Employer rollout readiness và monitoring
+
+- Thêm audit command chỉ đọc, xuất JSON aggregate-only cho schema, upload,
+  scanner, SMS, DPA, Celery, retention và legacy cohort; strict mode fail-closed
+  và không tự backfill/apply.
+- Thêm metric PII-free cho notification create/dedupe/retention và runbook ER-8
+  mô tả rollout tuần tự, Chrome QA, ngưỡng dừng, rollback và compatibility soak.
+- Giữ migration notification đã phát hành ở `0042`; tách preference/email
+  outbox dedupe sang `0043` additive để DB Docker cũ và fresh install cùng an toàn.
+
 #### Added — Employer notification center và activity log
 
 - Bật chuông topbar có unread badge, popover, trang thông báo phân trang, trạng

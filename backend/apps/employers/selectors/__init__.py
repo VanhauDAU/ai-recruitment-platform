@@ -45,6 +45,7 @@ from .readiness import (
     evaluate_employer_readiness,
 )
 from .recruitment_needs import first_recruitment_need
+from .rollout import employer_rollout_counters
 
 __all__ = [
     'build_employer_onboarding_steps',
@@ -79,4 +80,5 @@ __all__ = [
     'current_dpa_status',
     'employer_readiness_queryset',
     'evaluate_employer_readiness',
+    'employer_rollout_counters',
 ]

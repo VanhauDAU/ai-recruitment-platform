@@ -15,7 +15,8 @@ Decision log:
 > ER-4 đã hoàn tất lifecycle V2, revision/event bất biến,
 > exact-object final review và conflict handling; ER-6B evidence/grace/hold đã
 > Verified; ER-6A live SMS đã code-complete và đạt targeted gate, activation
-> gateway production thuộc ER-8.
+> gateway production thuộc ER-8. ER-8 đã có readiness audit/runbook và local
+> rehearsal; activation thật vẫn fail-closed tới khi có legal artifact/gateway.
 
 | Phase | Nội dung | Trạng thái |
 | --- | --- | --- |
@@ -27,7 +28,23 @@ Decision log:
 | ER-5 | Verification final decision, blockers và compliance holds | ✅ Hoàn tất |
 | ER-6 | SMS provider adapter và DPA evidence/version/grace | ✅ Hoàn tất code — production SMS activation thuộc ER-8 |
 | ER-7 | Company unlink, notification center và activity | ✅ Hoàn tất code |
-| ER-8 | Rollout, reconciliation, compatibility cleanup và audit closure | ⬜ Chưa làm |
+| ER-8 | Rollout, reconciliation, compatibility cleanup và audit closure | 🟨 Code complete — chờ staging/production activation và soak |
+
+<details>
+<summary>Ghi chú ER-8</summary>
+
+- `audit_employer_workflow_rollout` là command chỉ đọc, JSON aggregate-only;
+  strict mode kiểm schema, upload flags/purpose/scanner, SMS, DPA, Celery và
+  retention, không tự apply/backfill.
+- PostgreSQL Docker targeted đạt 95 test, 2 opt-in scanner skip; ClamAV local
+  readiness thật trả `ready`. Migration Docker local đã apply `0043` additive.
+- Chrome đã xác minh các corrective UX, notification/activity và admin final
+  decision/resubmission. File chooser chưa chạy được vì Chrome extension chưa
+  bật quyền file URL; không bypass bằng browser khác.
+- DPA local vẫn fail-closed vì chưa có exact legal artifact version/SHA-256;
+  SMS production vẫn tắt tới khi chọn gateway/template/sender và secret riêng.
+
+</details>
 
 ### Corrective UX 2026-08-10
 
