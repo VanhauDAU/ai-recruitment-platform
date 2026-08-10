@@ -179,6 +179,15 @@ Người phụ trách sản phẩm đã xác nhận toàn bộ kế hoạch và 
 cần hỏi lại; ER-D48 tổng hợp các quyết định ER-O01/ER-O02 cùng phản hồi UX trực
 tiếp ngày 2026-08-10.
 
+## Session 2026-08-10 — Company link recovery
+
+| ID | Quyết định | Hệ quả triển khai |
+| --- | --- | --- |
+| ER-D49 | Admin chỉ được gỡ company chọn nhầm cho `member` chưa phát sinh bất kỳ document, update request, verification/tax history, recruitment need, campaign, job hoặc active compliance hold; owner không thuộc recovery này | Permission riêng không grant mặc định; signed impact preview + reason + stale recheck; detach clean draft case, giữ company và append-only audit, tuyệt đối không chuyển proof sang company mới |
+
+Chủ dự án đã xác nhận toàn bộ kế hoạch và yêu cầu tiếp tục không cần hỏi lại;
+ER-D49 cụ thể hóa tiêu chí “account/company relation còn clean” của ER-D27.
+
 ## Tài liệu/mô tả bị thay thế
 
 | Tài liệu/mô tả cũ | Phần bị thay thế |

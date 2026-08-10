@@ -28,6 +28,12 @@ from .companies import (
     validate_company_update_revision,
     verify_company,
 )
+from .company_recovery import (
+    COMPANY_UNLINK_PERMISSION,
+    CompanyUnlinkError,
+    company_unlink_impact,
+    confirm_company_unlink,
+)
 from .company_update_locks import lock_company_update_request
 from .compliance import (
     apply_dpa_hold,
@@ -104,6 +110,10 @@ from .verification import (
 
 __all__ = [
     'CompanyTaxCodeConflict',
+    'COMPANY_UNLINK_PERMISSION',
+    'CompanyUnlinkError',
+    'company_unlink_impact',
+    'confirm_company_unlink',
     'CompanyUpdateConflict',
     'PhoneChallengeError',
     'CandidateDataBlocked',

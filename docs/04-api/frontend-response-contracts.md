@@ -133,6 +133,21 @@ cache; aggregate không chứa danh tính vẫn được hiển thị.
   công. Self-reverify là hành động tự nguyện; pending/failure không thu hồi
   proof. Employer không được đổi phone qua `PATCH /api/auth/me/`.
 
+### Contract khôi phục liên kết công ty
+
+- `POST /api/admin/accounts/{user_public_id}/company-unlink-impact/` nhận
+  `{reason}` và trả `target`, các `counts`, blocker code canonical, `can_apply`
+  cùng signed `impact_token` khi relation còn clean.
+- Chỉ `company_role=member` và toàn bộ count document/update request/
+  verification event/tax evidence/recruitment need/campaign/job/active hold bằng
+  0 mới có thể confirm. Owner hoặc account đã hoạt động không được unlink.
+- `POST .../unlink-company/` gửi lại exact `{reason,impact_token}`; backend lock
+  và recompute. State thay đổi sau preview trả `409`, UI phải bỏ token cũ và
+  yêu cầu preview lại.
+- Success tách recruiter cùng clean draft case khỏi company cũ, không xóa
+  company/evidence và không tự liên kết company mới. UI refetch account context;
+  lịch sử nằm trong append-only audit, không render raw snapshot cho recruiter.
+
 ### Contract yêu cầu cập nhật công ty
 
 `CompanyUpdateRequestSerializer` trả các field chính: `public_id`,

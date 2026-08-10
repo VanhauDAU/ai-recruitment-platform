@@ -264,6 +264,12 @@ ADMIN_PERMISSIONS = (
         'description': 'Quyền Compliance Lead được gán tường minh để override bằng chứng thuế advisory kèm lý do.',
     },
     {
+        'code': 'employer_verification.unlink_company',
+        'module': 'employer_verification',
+        'label': 'Gỡ liên kết công ty nhà tuyển dụng',
+        'description': 'Quyền rủi ro cao để gỡ liên kết chọn nhầm khi tài khoản chưa phát sinh dữ liệu nghiệp vụ.',
+    },
+    {
         'code': 'employer_verification.view',
         'module': 'employer_verification',
         'label': 'Xem xác thực nhà tuyển dụng',
@@ -393,6 +399,7 @@ ADMIN_PERMISSION_DEPENDENCIES = {
         'employer_verification.view',
         'employer_verification.review',
     ),
+    'employer_verification.unlink_company': ('employer_verification.view',),
     'job_moderation.approve': ('job_moderation.view',),
     'job_moderation.enforce_visibility': ('job_moderation.view',),
     'job_moderation.reject': ('job_moderation.view',),

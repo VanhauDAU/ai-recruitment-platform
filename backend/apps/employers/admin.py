@@ -8,6 +8,7 @@ from .models import (
     CompanyUpdateEvent,
     CompanyUpdateRequest,
     CompanyUpdateRevision,
+    EmployerCompanyLinkEvent,
     EmployerPhoneVerificationEvent,
     Industry,
     RecruiterProfile,
@@ -107,6 +108,18 @@ class CompanyUpdateEventAdmin(WorkflowReadOnlyAdmin, admin.ModelAdmin):
     list_display = ['public_id', 'update_request', 'event_type', 'revision_number', 'created_at']
     list_filter = ['event_type']
     search_fields = ['public_id', 'update_request__public_id', 'actor__email']
+
+
+@admin.register(EmployerCompanyLinkEvent)
+class EmployerCompanyLinkEventAdmin(WorkflowReadOnlyAdmin, admin.ModelAdmin):
+    list_display = ['public_id', 'recruiter', 'company', 'event_type', 'actor', 'created_at']
+    list_filter = ['event_type']
+    search_fields = [
+        'public_id',
+        'recruiter__user__email',
+        'company__company_name',
+        'actor__email',
+    ]
 
 
 @admin.register(RecruiterProfile)

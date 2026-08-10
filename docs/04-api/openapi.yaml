@@ -294,6 +294,64 @@ paths:
               schema:
                 $ref: '#/components/schemas/ManagedAccount'
           description: ''
+  /api/admin/accounts/{public_id}/company-unlink-impact/:
+    post:
+      operationId: admin_accounts_company_unlink_impact_create
+      summary: Xem tác động trước khi gỡ liên kết công ty chọn nhầm
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmployerCompanyUnlinkImpactRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployerCompanyUnlinkImpact'
+          description: Signed token chỉ có khi relation còn clean.
+        '403':
+          description: Thiếu permission employer_verification.unlink_company.
+  /api/admin/accounts/{public_id}/unlink-company/:
+    post:
+      operationId: admin_accounts_unlink_company_create
+      summary: Xác nhận gỡ liên kết công ty chọn nhầm
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmployerCompanyUnlinkConfirmRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ManagedAccountDetail'
+          description: Relation clean đã được unlink và audit; company không bị xóa.
+        '409':
+          description: Impact token stale hoặc state thay đổi sau preview.
   /api/admin/accounts/{public_id}/activity/:
     get:
       operationId: admin_accounts_activity_retrieve
@@ -19485,6 +19543,53 @@ components:
       description: |-
         Stable public DPA lifecycle. Timestamp cũ không có evidence được phân loại
         `legacy_unversioned`; evidence khác version/hash hiện hành là `outdated`.
+    EmployerCompanyUnlinkConfirmRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+          maxLength: 500
+        impact_token:
+          type: string
+      required:
+      - impact_token
+      - reason
+    EmployerCompanyUnlinkImpact:
+      type: object
+      properties:
+        operation:
+          type: string
+        target:
+          type: object
+          additionalProperties: true
+        counts:
+          type: object
+          additionalProperties:
+            type: integer
+            minimum: 0
+        blockers:
+          type: array
+          items:
+            type: string
+        can_apply:
+          type: boolean
+        impact_token:
+          type: string
+      required:
+      - blockers
+      - can_apply
+      - counts
+      - impact_token
+      - operation
+      - target
+    EmployerCompanyUnlinkImpactRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+          maxLength: 500
+      required:
+      - reason
     EmployerDpaAcceptanceRequest:
       type: object
       required:

@@ -44,6 +44,8 @@ Xác thực trong Swagger UI: gọi `POST /api/auth/login/` lấy `access`, bấ
 | GET/PATCH | `/api/candidate/email-notification-settings/` | Đọc/cập nhật từng phần 12 preference email candidate. GET chưa có row trả defaults bật mà không ghi DB; PATCH partial tạo khi ghi lần đầu. Email xác thực/reset mật khẩu/2FA là email giao dịch, không thuộc contract hay UI preference. |
 | GET/PATCH | `/api/candidate/recruiter-visibility/` | Đọc/bật-tắt consent để NTD tìm thấy hồ sơ; bật yêu cầu xác nhận và mọi quyết định được audit. |
 | GET/PATCH | `/api/employer/me/` | Hồ sơ nhà tuyển dụng của tôi + canonical `job_workspace_ready`, `verification_approved`, `candidate_data_access`, `dpa_status`, `blockers[]` (chỉ `position_title` sửa được). |
+| POST | `/api/admin/accounts/{public_id}/company-unlink-impact/` | Admin permission riêng xem tác động gỡ company chọn nhầm; reason bắt buộc, chỉ trả signed token khi relation clean |
+| POST | `/api/admin/accounts/{public_id}/unlink-company/` | Confirm bằng exact reason + impact token; stale trả 409, relation đã có dữ liệu bị khóa, company/history không bị xóa |
 | POST | `/api/employer/register/` | Đăng ký employer, tạo atomically user/recruiter/consent, trả JWT và gửi email xác thực. **Không tự tạo hoặc liên kết company**; company chỉ có sau thao tác rõ ràng ở settings |
 | POST | `/api/employer/onboarding/registration/` | Hoàn thiện profile bắt buộc cho employer mới qua Google |
 | GET/POST | `/api/employer/consulting-need/` | Đọc hoặc tạo **một lần** nhu cầu tuyển dụng ưu tiên; POST lặp lại trả `400` |

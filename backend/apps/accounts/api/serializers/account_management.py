@@ -437,6 +437,23 @@ class RevokeSessionsSerializer(ReasonSerializer):
     impact_token = serializers.CharField(trim_whitespace=True)
 
 
+class EmployerCompanyUnlinkImpactSerializer(ReasonSerializer):
+    pass
+
+
+class EmployerCompanyUnlinkConfirmSerializer(EmployerCompanyUnlinkImpactSerializer):
+    impact_token = serializers.CharField(trim_whitespace=True)
+
+
+class EmployerCompanyUnlinkImpactResponseSerializer(serializers.Serializer):
+    operation = serializers.CharField()
+    target = serializers.DictField()
+    counts = serializers.DictField(child=serializers.IntegerField(min_value=0))
+    blockers = serializers.ListField(child=serializers.CharField())
+    can_apply = serializers.BooleanField()
+    impact_token = serializers.CharField(allow_blank=True)
+
+
 class AccountRecoverySerializer(ReasonSerializer):
     verification_evidence = serializers.CharField(
         min_length=20,

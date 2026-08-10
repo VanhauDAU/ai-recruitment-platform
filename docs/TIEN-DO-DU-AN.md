@@ -26,7 +26,7 @@ Decision log:
 | ER-4 | Company update request V2, revision và conflict handling | ✅ Hoàn tất |
 | ER-5 | Verification final decision, blockers và compliance holds | ✅ Hoàn tất |
 | ER-6 | SMS provider adapter và DPA evidence/version/grace | ✅ Hoàn tất code — production SMS activation thuộc ER-8 |
-| ER-7 | Company unlink, notification center và activity | ⬜ Chưa làm |
+| ER-7 | Company unlink, notification center và activity | 🟨 Đang làm — company recovery Verified |
 | ER-8 | Rollout, reconciliation, compatibility cleanup và audit closure | ⬜ Chưa làm |
 
 ### Corrective UX 2026-08-10
@@ -61,6 +61,19 @@ Decision log:
   dấu đóng và chưa tuyên bố test code đã đạt trong ER-0.
 - Gate ER-0: Markdown link check kiểm 189 internal destination trên 64 file và
   `git diff --check` đều đạt.
+
+</details>
+
+<details>
+<summary>Ghi chú ER-7</summary>
+
+- Company recovery chỉ mở cho permission
+  `employer_verification.unlink_company`, không grant mặc định.
+- Impact preview/confirm ký số và fail stale; chỉ member chưa phát sinh dữ liệu
+  nghiệp vụ được unlink. Company/proof/history không bị xóa hoặc chuyển sang
+  company mới; action có link event append-only và admin audit.
+- PostgreSQL Docker đạt 4/4 backend, frontend API/UI đạt 8/8, migration drift
+  sạch. Notification center và activity log là slice kế tiếp.
 
 </details>
 
