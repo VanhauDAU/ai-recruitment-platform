@@ -932,6 +932,16 @@ current/outdated/grace/expired/re-consent/legacy scenarios.
 - Activity business/security giữ 24 tháng, redacted và không chứa secret/hash/
   storage key.
 
+**Company recovery Verified (2026-08-10):** admin account detail có workflow
+preview/confirm ký số với permission riêng không grant mặc định. Backend khóa
+User → Recruiter → VerificationCase → Company, recheck snapshot trước confirm
+và chỉ cho unlink `member` chưa có document, update request, verification/tax
+history, recruitment need, campaign, job hoặc compliance hold. Action giữ công
+ty, ghi `EmployerCompanyLinkEvent` append-only cùng admin audit và tách case
+draft sạch khỏi company cũ; không chuyển proof/evidence sang company mới.
+PostgreSQL Docker đạt 4/4 backend và frontend đạt 8/8 targeted; migration drift
+sạch. Notification/activity vẫn là phần tiếp theo của ER-7.
+
 **Gate ER-7:** duplicate event, outbox retry, unread consistency, inaccessible
 deep link, retention và permission scenarios.
 
@@ -1167,7 +1177,7 @@ Trạng thái thực hiện hiện tại:
 | ER-4 | Verified | Revision/event bất biến, lifecycle/resubmit/withdraw/cancel, exact admin review và field-level conflict đã đạt gate Docker/FE |
 | ER-5 | Verified | Backend state/hold/race và admin final-decision/job blocker UI đã đạt gate |
 | ER-6 | Verified | ER-6A live SMS và ER-6B DPA evidence/grace/hold đã đạt code gate; production SMS activation thuộc ER-8 |
-| ER-7 | Planned | Phụ thuộc event catalog ổn định |
+| ER-7 | In progress | Company recovery Verified; notification API/UI và activity còn triển khai |
 | ER-8 | Planned | Chỉ bắt đầu khi các phase chức năng verified |
 
 ## 17. Changelog

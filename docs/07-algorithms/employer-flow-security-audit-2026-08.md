@@ -48,8 +48,21 @@ review DPA.
 | ER-F10 | Cao | DPA chỉ có timestamp, thiếu version/hash/actor/IP/session | Closed ER-6B | ER-6B |
 | ER-F11 | Trung bình | Notification/activity workspace chưa có outbox/read/deep-link/audit contract | Open | ER-7 |
 | ER-F12 | Trung bình | Tài liệu canonical cũ mâu thuẫn quyền, ngày gửi và publish blocker | In remediation | ER-0–ER-8 |
+| ER-F13 | Cao | Direct/relink có thể tái gắn case cũ và trộn proof giữa hai company; admin edit từng bypass service | Closed — strict clean unlink + append-only audit | ER-7 |
 
 ## 3. Evidence và retest criteria
+
+### ER-F13 — Company unlink/relink proof boundary
+
+Recruiter/company fields trong Django admin đã read-only. Recovery mới chỉ qua
+admin account API có permission riêng, reason, signed impact preview và stale
+recheck dưới lock. Owner hoặc recruiter đã có bất kỳ document, case/tax event,
+update request, recruitment resource hay active hold đều bị khóa. Clean draft
+case được detach khỏi company cũ; `EmployerCompanyLinkEvent` giữ exact previous
+company và snapshot redacted, nên lần link sau không tái gắn proof cũ.
+
+Evidence: PostgreSQL Docker `127.0.0.1:5433` đạt 4/4 API/service regressions;
+frontend API/workflow đạt 8/8; migration drift sạch.
 
 ### ER-F01 — Actor scope, empty state và fetch error
 

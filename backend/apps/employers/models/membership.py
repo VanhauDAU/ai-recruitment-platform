@@ -109,3 +109,45 @@ class RecruiterProfile(models.Model):
 
     def __str__(self):
         return f'{self.user_id}:{self.company_id or "no-company"}'
+
+
+class EmployerCompanyLinkEvent(models.Model):
+    """Append-only audit trail for high-risk recruiter/company recovery."""
+
+    class EventType(models.TextChoices):
+        ADMIN_UNLINKED = 'admin_unlinked', 'Admin gỡ liên kết công ty'
+
+    public_id = models.CharField(max_length=50, unique=True, editable=False)
+    recruiter = models.ForeignKey(
+        RecruiterProfile,
+        on_delete=models.PROTECT,
+        related_name='company_link_events',
+    )
+    company = models.ForeignKey(
+        Company,
+        on_delete=models.PROTECT,
+        related_name='+',
+    )
+    actor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name='+',
+    )
+    event_type = models.CharField(max_length=32, choices=EventType.choices)
+    reason = models.TextField()
+    impact_snapshot = models.JSONField(default=dict)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at', '-id']
+        indexes = [
+            models.Index(
+                fields=['recruiter', '-created_at'],
+                name='emp_link_event_actor_time_idx',
+            ),
+        ]
+
+    def save(self, *args, **kwargs):
+        if not self.public_id:
+            self.public_id = generate_public_id('ele')
+        super().save(*args, **kwargs)

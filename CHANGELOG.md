@@ -8,6 +8,16 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-08-10
 
+#### Added — Employer company link recovery
+
+- Thêm admin impact-preview và confirm có signed token để gỡ liên kết công ty
+  chọn nhầm khi recruiter còn hoàn toàn clean; reason và audit event bắt buộc.
+- Khóa thao tác nếu là company owner hoặc đã có giấy tờ, verification/tax
+  history, update request, nhu cầu, campaign, job hay compliance hold; không
+  xóa công ty hoặc tái sử dụng proof của công ty cũ.
+- Thêm permission rủi ro cao `employer_verification.unlink_company`, không cấp
+  mặc định cho role quản trị.
+
 #### Added — Employer SMS verification live workflow
 
 - Chuyển endpoint xác thực phone từ OTP email legacy sang challenge SMS có

@@ -8,7 +8,7 @@ from .compliance import (
     EmployerComplianceHoldJob,
 )
 from .dpa import EmployerDpaAcceptance
-from .membership import RecruiterProfile
+from .membership import EmployerCompanyLinkEvent, RecruiterProfile
 from .otp import EmployerPhoneVerificationEvent, PhoneOtp
 from .readiness import DpaStatus
 from .recruitment_need import RecruitmentNeed
@@ -46,6 +46,7 @@ __all__ = [
     'Industry',
     'PhoneOtp',
     'RecruiterProfile',
+    'EmployerCompanyLinkEvent',
     'RecruitmentCampaign',
     'RecruitmentNeed',
 ]
