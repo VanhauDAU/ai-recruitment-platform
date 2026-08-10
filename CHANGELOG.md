@@ -99,13 +99,26 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 - Admin phải xem impact trước khi xác nhận approve/changes-requested/reject,
   revoke hoặc expire; stale impact tải lại hồ sơ và bắt preview lại.
-- Company/capability/resource impact được trình bày trong modal; tax override
-  và lifecycle action bắt buộc quyền/lý do audit tương ứng.
+- Company/capability/resource impact được trình bày trong modal; trường hợp
+  nguồn thuế chưa đủ kết luận được diễn đạt thành **duyệt thủ công**, bắt buộc
+  quyền, xác nhận đã đối chiếu giấy tờ gốc và lý do audit.
 - Màn kiểm duyệt tin giữ nút duyệt disabled theo blocker backend và hiện link
   exact recruiter verification chỉ cho actor có quyền xem màn đích.
-- Thiết kế lại tab Xác thực thành bàn xử lý: giấy tờ/đối chiếu ở vùng chính,
-  quyết định cuối và hành trình ở rail, lịch sử ở cuối; hồ sơ nộp lại có action
-  **Nhận xử lý lại** thay vì mắc kẹt sau lần từ chối.
+- Thiết kế lại tab Xác thực thành bàn xử lý gọn: bộ giấy tờ theo bốn cột trạng
+  thái có kéo thả và menu tương đương, preview ở vùng chính, quyết định cuối ở
+  rail, điều kiện/lịch sử thu gọn; hồ sơ nộp lại có action **Nhận xử lý lại**.
+- Cụm quyết định cuối dùng lưới hành động ổn định, nút chính chiếm toàn hàng và
+  không xuống dòng trên desktop, tablet hoặc mobile.
+
+#### Fixed — Employer verification impact token và admin counters
+
+- Chuẩn hóa thứ tự mọi collection trong decision integrity fingerprint trước
+  khi ký và xác nhận. Nhiều bản ghi tra cứu thuế không còn gây `409 stale` giả
+  khi admin từ chối hồ sơ mà dữ liệu thực tế không đổi; thay đổi nội dung thật
+  vẫn bị chặn và yêu cầu xem tác động lại.
+- Badge sidebar quản trị dùng đúng summary query theo domain, cập nhật sau
+  mutation, khi focus lại cửa sổ và theo chu kỳ 30 giây; số 0 không còn thêm
+  padding và số lớn được rút gọn thành `99+`.
 
 #### Fixed — Employer verification resubmit và giới hạn từ chối
 

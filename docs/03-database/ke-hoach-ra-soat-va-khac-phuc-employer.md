@@ -841,6 +841,18 @@ frontend full coverage 256/256 file và 983/983 test; admin verification smoke
 3/3 desktop/tablet/mobile; lint/architecture/build đạt. Migration drift sạch,
 OpenAPI parse 1.544 local schema ref/0 unresolved và Markdown 196 link đạt.
 
+**UX và stale-token follow-up (2026-08-10):** nhánh
+`feature/admin-employer-verification-workflow-ui` thay danh sách giấy tờ rời
+rạc bằng bảng bốn cột trạng thái có kéo thả và menu accessible; quyết định cuối
+dùng grid không wrap, điều kiện/lịch sử thu gọn và copy “duyệt thủ công” thay
+thuật ngữ advisory/override trên giao diện. Sidebar dùng canonical summary cache
+và tự refetch. Decision fingerprint được sắp theo PK trước khi ký/xác nhận để
+không phát sinh `409 stale` chỉ vì preview và confirm tải cùng dữ liệu theo thứ
+tự khác nhau; thay đổi dữ liệu thật vẫn fail closed. Regression chạy PostgreSQL
+Docker `127.0.0.1:5433` đạt 64/64; frontend full coverage 265/265 file,
+1.017/1.017 test và smoke UI đạt 3/3 desktop/tablet/mobile. Lint, architecture,
+build, bundle budget, migration drift và 203 Markdown link đạt.
+
 ### ER-6 — SMS và DPA evidence
 
 #### ER-6A — SMS adapter

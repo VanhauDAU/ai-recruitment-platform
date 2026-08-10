@@ -170,6 +170,15 @@ Decision log:
   983/983 test; smoke tab Xác thực 3/3 desktop/tablet/mobile; lint,
   architecture 1.148 module/2.306 dependency và production build đạt. OpenAPI
   parse 1.544 local schema reference/0 unresolved; Markdown 196 internal link.
+- UX follow-up trên `feature/admin-employer-verification-workflow-ui`: tab Xác
+  thực dùng bảng bốn cột trạng thái giấy tờ, copy thuế thuần nghiệp vụ, phần
+  điều kiện/lịch sử thu gọn và cụm quyết định cuối dạng grid không wrap. Badge
+  sidebar được nối đúng cache summary và tự refresh. Backend chuẩn hóa thứ tự
+  decision fingerprint, sửa `409 stale` giả khi có nhiều tax evidence nhưng
+  giữ nguyên fail-closed cho thay đổi thật. Regression backend chạy PostgreSQL
+  Docker `127.0.0.1:5433` đạt 64/64; frontend full coverage 265/265 file,
+  1.017/1.017 test và smoke UI đạt 3/3 desktop/tablet/mobile. Lint,
+  architecture, build, bundle budget, migration drift và 203 Markdown link đạt.
 
 </details>
 
