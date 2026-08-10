@@ -7,12 +7,14 @@ import {
   createEmployerCompanyUpdateRequest,
   employerProfileKeys,
   getEmployerCompanyDocuments,
+  prepareEmployerUpload,
   saveEmployerCompanyTradeNameWebsite,
   uploadEmployerCompanyDocument,
   uploadEmployerCompanyImage,
   uploadEmployerCompanyLogo,
 } from '@/entities/employer-profile'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
+import { getUploadStatePresentation } from '@/shared/api/upload-session'
 import { message } from '@/shared/lib/toast'
 import RichTextEditor from '@/shared/ui/RichTextEditor'
 import {
@@ -78,6 +80,7 @@ export default function CompanyForm({ catalogs, industries, disabled, company = 
   const [identityFile, setIdentityFile] = useState(null)
   const [isSensitiveModalOpen, setSensitiveModalOpen] = useState(false)
   const [pendingSubmitValues, setPendingSubmitValues] = useState(null)
+  const [uploadState, setUploadState] = useState(null)
   const websiteBackup = useRef(company?.website_url || '')
   const tradeNameBackup = useRef(company?.trade_name || '')
   const initialValues = useMemo(
@@ -152,22 +155,20 @@ export default function CompanyForm({ catalogs, industries, disabled, company = 
   }
 
   const hasDraftChanges = !isEdit || hasEditDraftChanges(watchedValues)
+  const uploadStateMeta = getUploadStatePresentation(uploadState)
 
   const saveMutation = useMutation({
     mutationFn: save,
-    onSuccess: async ({ partialFailures = [] }) => {
+    onSuccess: async () => {
       setSensitiveModalOpen(false)
       setPendingSubmitValues(null)
+      setUploadState(null)
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: employerProfileKeys.company }),
         queryClient.invalidateQueries({ queryKey: ['employer', 'profile'] }),
         queryClient.invalidateQueries({ queryKey: ['employer-dashboard'] }),
       ])
-      if (partialFailures.length) {
-        message.warning(`Thông tin công ty đã được lưu, nhưng ${partialFailures.length} tệp chưa tải lên thành công. Bạn có thể mở Chỉnh sửa để thử lại.`)
-      } else {
-        message.success(isEdit ? 'Đã gửi yêu cầu cập nhật thông tin công ty.' : 'Đã tạo và liên kết hồ sơ công ty.')
-      }
+      message.success(isEdit ? 'Đã gửi yêu cầu cập nhật thông tin công ty.' : 'Đã tạo và liên kết hồ sơ công ty.')
       await onCompleted?.()
     },
     onError: (error) => message.error(getApiErrorMessage(error, isEdit ? 'Không thể gửi yêu cầu cập nhật.' : 'Không thể tạo hồ sơ công ty.')),
@@ -186,6 +187,31 @@ export default function CompanyForm({ catalogs, industries, disabled, company = 
       trade_name: formValues.trade_name_same_as_registered ? formValues.company_name : formValues.trade_name,
       employee_benefits: formValues.employee_benefits || '',
     }
+    const documentPurpose = isEdit ? 'employer_company_update' : 'employer_verification'
+    const filesToPrepare = [
+      logoFile && { file: logoFile, purpose: 'employer_company_update' },
+      ...galleryFiles.map((file) => ({ file, purpose: 'employer_company_update' })),
+      pendingTradeProof?.source_type === 'file'
+        ? { file: pendingTradeProof.file, purpose: documentPurpose }
+        : null,
+      isSensitive && sensitiveProofType === 'business_registration' && businessProofFile
+        ? { file: businessProofFile, purpose: documentPurpose }
+        : null,
+      isSensitive && sensitiveProofType === 'authorization_and_id' && authorizationFile
+        ? { file: authorizationFile, purpose: documentPurpose }
+        : null,
+      isSensitive && sensitiveProofType === 'authorization_and_id' && identityFile
+        ? { file: identityFile, purpose: documentPurpose }
+        : null,
+    ].filter(Boolean)
+    const uploadSessions = new Map(await Promise.all(
+      filesToPrepare.map(async ({ file, purpose }) => [
+        file,
+        await prepareEmployerUpload(file, purpose, {
+          onStateChange: setUploadState,
+        }),
+      ]),
+    ))
     let updateRequest = null
     if (isEdit) {
       const changes = buildCompanyChanges(normalized, company, {
@@ -208,21 +234,53 @@ export default function CompanyForm({ catalogs, industries, disabled, company = 
       })
     }
 
-    const uploads = []
-    if (logoFile) uploads.push(uploadEmployerCompanyLogo(logoFile, { updateRequest: updateRequest?.public_id }))
-    for (const file of galleryFiles) uploads.push(uploadEmployerCompanyImage(file, { updateRequest: updateRequest?.public_id }))
-    if (pendingTradeProof?.source_type === 'file') uploads.push(uploadEmployerCompanyDocument('trade_name_proof', pendingTradeProof.file, { updateRequest: updateRequest?.public_id }))
-    if (pendingTradeProof?.source_type === 'website') uploads.push(saveEmployerCompanyTradeNameWebsite(pendingTradeProof.file_url, { updateRequest: updateRequest?.public_id }))
+    const requestOptions = (file) => ({
+      updateRequest: updateRequest?.public_id,
+      uploadSession: uploadSessions.get(file),
+    })
+    if (logoFile) await uploadEmployerCompanyLogo(logoFile, requestOptions(logoFile))
+    for (const file of galleryFiles) {
+      await uploadEmployerCompanyImage(file, requestOptions(file))
+    }
+    if (pendingTradeProof?.source_type === 'file') {
+      await uploadEmployerCompanyDocument(
+        'trade_name_proof',
+        pendingTradeProof.file,
+        requestOptions(pendingTradeProof.file),
+      )
+    }
+    if (pendingTradeProof?.source_type === 'website') {
+      await saveEmployerCompanyTradeNameWebsite(
+        pendingTradeProof.file_url,
+        { updateRequest: updateRequest?.public_id },
+      )
+    }
     if (isSensitive && updateRequest) {
       if (sensitiveProofType === 'business_registration') {
-        if (businessProofFile) uploads.push(uploadEmployerCompanyDocument('business_registration', businessProofFile, { updateRequest: updateRequest.public_id }))
+        if (businessProofFile) {
+          await uploadEmployerCompanyDocument(
+            'business_registration',
+            businessProofFile,
+            requestOptions(businessProofFile),
+          )
+        }
       } else {
-        if (authorizationFile) uploads.push(uploadEmployerCompanyDocument('authorization_letter', authorizationFile, { updateRequest: updateRequest.public_id }))
-        if (identityFile) uploads.push(uploadEmployerCompanyDocument('identity_document', identityFile, { updateRequest: updateRequest.public_id }))
+        if (authorizationFile) {
+          await uploadEmployerCompanyDocument(
+            'authorization_letter',
+            authorizationFile,
+            requestOptions(authorizationFile),
+          )
+        }
+        if (identityFile) {
+          await uploadEmployerCompanyDocument(
+            'identity_document',
+            identityFile,
+            requestOptions(identityFile),
+          )
+        }
       }
     }
-    const results = await Promise.allSettled(uploads)
-    return { partialFailures: results.filter((item) => item.status === 'rejected') }
   }
 
   function addGalleryFiles(files) {
@@ -504,6 +562,11 @@ export default function CompanyForm({ catalogs, industries, disabled, company = 
         </div>
       </section>
 
+      {uploadStateMeta && (
+        <p className={`mb-3 text-sm ${uploadStateMeta.tone}`} role="status">
+          {uploadStateMeta.text}
+        </p>
+      )}
       <div className="company-form-actions">
         {onCancel && (
           <Button
@@ -550,6 +613,11 @@ export default function CompanyForm({ catalogs, industries, disabled, company = 
           title="Bạn đang thay đổi tên đăng ký hoặc mã số thuế"
           description="Nhập lý do và cung cấp hồ sơ chứng minh. Dữ liệu hiện tại chỉ thay đổi sau khi quản trị viên phê duyệt."
         />
+        {uploadStateMeta && (
+          <p className={`mb-4 text-sm ${uploadStateMeta.tone}`} role="status">
+            {uploadStateMeta.text}
+          </p>
+        )}
         {documentsRequiringReplacement.length > 0 && (
           <Alert
             className="mb-4"

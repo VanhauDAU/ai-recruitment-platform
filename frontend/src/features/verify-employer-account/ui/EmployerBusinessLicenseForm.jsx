@@ -8,6 +8,7 @@ import {
   getEmployerProfile,
   getEmployerCompanyDocuments,
   getEmployerCompanyDocumentContent,
+  prepareEmployerUpload,
   uploadEmployerBusinessDocument,
   uploadEmployerCompanyDocument,
 } from '@/entities/employer-profile'
@@ -42,6 +43,7 @@ export default function EmployerBusinessLicenseForm() {
   const [replacementFiles, setReplacementFiles] = useState({})
   const [submissionConfirmed, setSubmissionConfirmed] = useState(false)
   const [editingDocuments, setEditingDocuments] = useState(false)
+  const [uploadState, setUploadState] = useState(null)
   const queryClient = useQueryClient()
   const { siteName } = useSiteSettings()
   const profileQuery = useQuery({ queryKey: ['employer', 'profile'], queryFn: getEmployerProfile })
@@ -66,16 +68,31 @@ export default function EmployerBusinessLicenseForm() {
       replacements,
       preserveExisting,
     }) => {
+      const filesToPrepare = preserveExisting || replacements.length
+        ? [...replacements.map(({ file }) => file), ...identityFiles]
+        : selectedMethod === 'business_registration'
+          ? [businessFile]
+          : [...authorizationFiles, ...identityFiles]
+      const uploadSessions = new Map(await Promise.all(
+        filesToPrepare.filter(Boolean).map(async (file) => [
+          file,
+          await prepareEmployerUpload(file, 'employer_verification', {
+            onStateChange: setUploadState,
+          }),
+        ]),
+      ))
       if (preserveExisting || replacements.length) {
         const replacementDocuments = []
         for (const { document, file } of replacements) {
           const savedDocument = document.doc_type === 'business_registration'
-            ? await uploadEmployerBusinessDocument(file, {
+              ? await uploadEmployerBusinessDocument(file, {
                 replaceDocument: document.public_id,
+                uploadSession: uploadSessions.get(file),
               })
             : await uploadEmployerCompanyDocument(document.doc_type, file, {
                 replaceDocument: document.public_id,
                 verificationMethod: selectedMethod,
+                uploadSession: uploadSessions.get(file),
               })
           replacementDocuments.push(savedDocument)
         }
@@ -83,22 +100,27 @@ export default function EmployerBusinessLicenseForm() {
           replacementDocuments.push(await uploadEmployerCompanyDocument(
             'identity_document',
             file,
-            { append: true },
+            { append: true, uploadSession: uploadSessions.get(file) },
           ))
         }
         return replacementDocuments
       }
       if (selectedMethod === 'business_registration') {
-        return uploadEmployerBusinessDocument(businessFile)
+        return uploadEmployerBusinessDocument(businessFile, {
+          uploadSession: uploadSessions.get(businessFile),
+        })
       }
       const authorizationDocuments = await uploadDocumentSet(
         'authorization_letter',
         authorizationFiles,
+        undefined,
+        { uploadSessions },
       )
       const identityDocuments = await uploadDocumentSet(
         'identity_document',
         identityFiles,
         'authorization_and_id',
+        { uploadSessions },
       )
       return [...authorizationDocuments, ...identityDocuments]
     },
@@ -135,6 +157,7 @@ export default function EmployerBusinessLicenseForm() {
       setIdentityFiles([])
       setReplacementFiles({})
       setEditingDocuments(false)
+      setUploadState(null)
       setSubmissionConfirmed(true)
       await refreshDashboard()
     },
@@ -317,6 +340,7 @@ export default function EmployerBusinessLicenseForm() {
               editing={preservingCurrentMethod}
               replacementFiles={replacementFiles}
               onReplacementFilesChange={updateReplacementFiles}
+              uploadState={uploadState}
             />
           </div>
         )}
@@ -341,6 +365,7 @@ export default function EmployerBusinessLicenseForm() {
               editing={preservingCurrentMethod}
               replacementFiles={replacementFiles}
               onReplacementFilesChange={updateReplacementFiles}
+              uploadState={uploadState}
             />
             <EmployerBusinessDocumentCard
               label="Giấy tờ định danh (CCCD/ Hộ chiếu)"
@@ -358,6 +383,7 @@ export default function EmployerBusinessLicenseForm() {
               replacementFiles={replacementFiles}
               onReplacementFilesChange={updateReplacementFiles}
               allowNewFiles={preservingCurrentMethod}
+              uploadState={uploadState}
             />
           </div>
         )}

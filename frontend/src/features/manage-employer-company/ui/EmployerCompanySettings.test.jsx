@@ -26,6 +26,7 @@ const api = vi.hoisted(() => ({
   uploadEmployerCompanyImage: vi.fn(),
   uploadEmployerCompanyLogo: vi.fn(),
   getEmployerCompanyUpdateRequests: vi.fn(),
+  prepareEmployerUpload: vi.fn(),
 }))
 
 vi.mock('@/entities/employer-profile', () => api)
@@ -51,6 +52,9 @@ describe('EmployerCompanySettings', () => {
       }],
     })
     api.getEmployerCompanyUpdateRequests.mockResolvedValue([])
+    api.prepareEmployerUpload.mockImplementation(async (file) => ({
+      public_id: `ups_${file.name}`,
+    }))
   })
 
   it('shows the two option cards and loads recent companies without a search action', async () => {

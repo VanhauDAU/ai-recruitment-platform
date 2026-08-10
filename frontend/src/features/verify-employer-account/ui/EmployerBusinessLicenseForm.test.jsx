@@ -10,6 +10,7 @@ const {
   getEmployerProfile,
   getEmployerCompanyDocuments,
   getEmployerCompanyDocumentContent,
+  prepareEmployerUpload,
   uploadEmployerBusinessDocument,
   uploadEmployerCompanyDocument,
 } = vi.hoisted(() => ({
@@ -19,6 +20,7 @@ const {
   getEmployerProfile: vi.fn(),
   getEmployerCompanyDocuments: vi.fn(),
   getEmployerCompanyDocumentContent: vi.fn(),
+  prepareEmployerUpload: vi.fn(),
   uploadEmployerBusinessDocument: vi.fn(),
   uploadEmployerCompanyDocument: vi.fn(),
 }))
@@ -28,6 +30,7 @@ vi.mock('@/entities/employer-profile', () => ({
   getEmployerProfile,
   getEmployerCompanyDocuments,
   getEmployerCompanyDocumentContent,
+  prepareEmployerUpload,
   uploadEmployerBusinessDocument,
   uploadEmployerCompanyDocument,
 }))
@@ -53,6 +56,10 @@ describe('EmployerBusinessLicenseForm', () => {
     getEmployerProfile.mockReset()
     getEmployerCompanyDocuments.mockReset()
     getEmployerCompanyDocumentContent.mockReset()
+    prepareEmployerUpload.mockReset()
+    prepareEmployerUpload.mockImplementation(async (file) => ({
+      public_id: `ups_${file.name}`,
+    }))
     uploadEmployerBusinessDocument.mockReset()
     uploadEmployerCompanyDocument.mockReset()
     getEmployerCompanyDocuments.mockResolvedValue([])
@@ -84,7 +91,10 @@ describe('EmployerBusinessLicenseForm', () => {
     expect(saveButton).toBeEnabled()
     await user.click(saveButton)
 
-    await waitFor(() => expect(uploadEmployerBusinessDocument).toHaveBeenCalledWith(file))
+    await waitFor(() => expect(uploadEmployerBusinessDocument).toHaveBeenCalledWith(
+      file,
+      expect.objectContaining({ uploadSession: { public_id: 'ups_business.pdf' } }),
+    ))
     expect(await screen.findByRole('dialog')).toHaveTextContent(
       'ProCV đã nhận được bộ giấy tờ xác thực của bạn và sẽ kiểm duyệt trong 24 giờ (trừ thứ bảy, chủ nhật, ngày nghỉ lễ, tết theo quy định).',
     )
@@ -207,7 +217,10 @@ describe('EmployerBusinessLicenseForm', () => {
 
     await waitFor(() => expect(uploadEmployerBusinessDocument).toHaveBeenCalledWith(
       replacement,
-      { replaceDocument: undefined },
+      expect.objectContaining({
+        replaceDocument: undefined,
+        uploadSession: { public_id: 'ups_gpkd-moi.pdf' },
+      }),
     ))
     expect(await screen.findByRole('button', { name: 'Xem tệp đã nộp: Giấy đăng ký doanh nghiệp' })).toBeVisible()
   })
@@ -261,18 +274,25 @@ describe('EmployerBusinessLicenseForm', () => {
       1,
       'authorization_letter',
       authorizationFile,
+      expect.objectContaining({ uploadSession: { public_id: 'ups_uy-quyen-moi.pdf' } }),
     ))
     expect(uploadEmployerCompanyDocument).toHaveBeenNthCalledWith(
       2,
       'identity_document',
       identityFront,
-      { verificationMethod: 'authorization_and_id' },
+      expect.objectContaining({
+        verificationMethod: 'authorization_and_id',
+        uploadSession: { public_id: 'ups_cccd-mat-truoc.png' },
+      }),
     )
     expect(uploadEmployerCompanyDocument).toHaveBeenNthCalledWith(
       3,
       'identity_document',
       identityBack,
-      { append: true },
+      expect.objectContaining({
+        append: true,
+        uploadSession: { public_id: 'ups_cccd-mat-sau.png' },
+      }),
     )
     expect(await screen.findByRole('button', { name: 'Xem tệp đã nộp: Giấy ủy quyền' })).toBeVisible()
     expect(screen.getByRole('button', { name: 'Xem tệp đã nộp: Giấy tờ định danh 1' })).toBeVisible()
@@ -408,6 +428,7 @@ describe('EmployerBusinessLicenseForm', () => {
       {
         replaceDocument: 'doc_back',
         verificationMethod: 'authorization_and_id',
+        uploadSession: { public_id: 'ups_cccd-sau-moi.png' },
       },
     ))
   }, 15_000)

@@ -2,6 +2,7 @@ import mimetypes
 from io import BytesIO
 from pathlib import PurePosixPath
 
+from django.conf import settings
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.core.validators import URLValidator
 from django.db import transaction
@@ -28,7 +29,7 @@ from ...services import (
     queue_company_tax_lookup,
     render_office_document_preview,
 )
-from ..exceptions import UploadPreviewScanRequiredResponse
+from ..exceptions import UploadPreviewScanRequiredResponse, UploadSessionRequiredResponse
 from ..serializers import CompanyDocumentSerializer, CompanyUpdateRequestSerializer
 from .memberships import (
     VERIFICATION_METHOD_DOCUMENT_TYPES,
@@ -45,7 +46,7 @@ class CompanyDocumentListCreateView(generics.ListCreateAPIView):
     # Tài liệu vẫn thuộc phiên employer đang đăng nhập, nhưng không bắt buộc
     # MFA/xác thực lại: mọi tệp đều quay về trạng thái chờ duyệt khi được thay.
     permission_classes = [IsEmployer]
-    parser_classes = [parsers.MultiPartParser]
+    parser_classes = [parsers.JSONParser, parsers.MultiPartParser]
     pagination_class = None
 
     def get_recruiter(self):
@@ -79,6 +80,7 @@ class CompanyDocumentListCreateView(generics.ListCreateAPIView):
             fields={
                 'doc_type': serializers.ChoiceField(choices=CompanyDocument.DocType.choices),
                 'file': serializers.FileField(required=False),
+                'upload_session': serializers.CharField(required=False),
                 'source_type': serializers.ChoiceField(choices=['file', 'website'], required=False),
                 'website_url': serializers.URLField(required=False),
                 'update_request': serializers.CharField(required=False),
@@ -98,6 +100,7 @@ class CompanyDocumentListCreateView(generics.ListCreateAPIView):
         if doc_type not in CompanyDocument.DocType.values:
             raise ValidationError({'doc_type': 'Loại giấy tờ không hợp lệ.'})
         upload = request.FILES.get('file')
+        upload_session_public_id = (request.data.get('upload_session') or '').strip()
         source_type = request.data.get('source_type', 'file')
         if source_type not in {'file', 'website'}:
             raise ValidationError({'source_type': 'Nguồn chứng minh không hợp lệ.'})
@@ -105,10 +108,20 @@ class CompanyDocumentListCreateView(generics.ListCreateAPIView):
             raise ValidationError(
                 {'source_type': 'Chỉ chứng minh tên thương mại được dùng Website.'}
             )
-        if source_type == 'file' and not upload:
+        if source_type == 'file' and not upload and not upload_session_public_id:
             raise ValidationError({'file': 'Vui lòng chọn tệp chứng minh.'})
+        if upload and upload_session_public_id:
+            raise ValidationError(
+                {'upload_session': 'Không thể gửi đồng thời file thô và upload session.'}
+            )
+        if upload and settings.EMPLOYER_UPLOAD_SESSION_REQUIRED:
+            raise UploadSessionRequiredResponse()
         if source_type == 'website' and upload:
             raise ValidationError({'file': 'Không tải tệp khi chọn nguồn Website.'})
+        if source_type == 'website' and upload_session_public_id:
+            raise ValidationError(
+                {'upload_session': 'Không dùng upload session khi chọn nguồn Website.'}
+            )
         verification_method = request.data.get('verification_method')
         if (
             verification_method
@@ -212,6 +225,7 @@ class CompanyDocumentListCreateView(generics.ListCreateAPIView):
                 None,
                 doc_type,
                 upload,
+                upload_session_public_id=upload_session_public_id,
                 recruiter=recruiter,
                 replace_document_public_id=replace_document_public_id,
             )
@@ -223,6 +237,7 @@ class CompanyDocumentListCreateView(generics.ListCreateAPIView):
                     company,
                     doc_type,
                     upload,
+                    upload_session_public_id=upload_session_public_id,
                     update_request=update_request,
                     recruiter=recruiter,
                     verification_method=verification_method or '',

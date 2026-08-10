@@ -1,7 +1,7 @@
 """Public model API for the employers Django app."""
 
 from .campaign import CampaignActivity, RecruitmentCampaign
-from .company import Company, CompanyImage, CompanyIndustry, Industry
+from .company import Company, CompanyImage, CompanyIndustry, CompanyMediaUpload, Industry
 from .compliance import (
     EmployerComplianceHold,
     EmployerComplianceHoldCampaign,
@@ -26,6 +26,7 @@ __all__ = [
     'CompanyTaxLookupEvidence',
     'CompanyImage',
     'CompanyIndustry',
+    'CompanyMediaUpload',
     'CompanyUpdateRequest',
     'DpaStatus',
     'EmployerVerificationCase',

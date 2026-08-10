@@ -56,6 +56,7 @@ from .tax_lookup import (
     refresh_company_update_tax_lookup,
     refresh_verification_tax_lookup,
 )
+from .upload_validation import EmployerUploadStructureError, validate_employer_upload_structure
 from .verification import (
     confirm_verification_decision,
     confirm_verification_lifecycle_action,
@@ -77,6 +78,7 @@ __all__ = [
     'CompanyTaxCodeConflict',
     'CandidateDataBlocked',
     'EmployerWorkspaceBlocked',
+    'EmployerUploadStructureError',
     'InitialRecruitmentNeedAlreadyExists',
     'SENSITIVE_FIELDS',
     'UPDATABLE_COMPANY_FIELDS',
@@ -133,4 +135,5 @@ __all__ = [
     'update_campaign',
     'verify_company',
     'verify_phone_otp',
+    'validate_employer_upload_structure',
 ]

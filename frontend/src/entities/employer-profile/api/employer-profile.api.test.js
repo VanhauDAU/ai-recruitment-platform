@@ -73,31 +73,37 @@ describe('employer profile API', () => {
     expect(post).toHaveBeenCalledWith('/employer/dpa/accept/')
   })
 
-  it('uploads a business registration document as multipart data', async () => {
+  it('attaches a scanned business registration session as multipart data', async () => {
     post.mockResolvedValue({ data: { id: 1, status: 'pending' } })
     const file = new File(['registration'], 'business.pdf', { type: 'application/pdf' })
 
-    await expect(uploadEmployerBusinessDocument(file)).resolves.toMatchObject({ status: 'pending' })
+    await expect(uploadEmployerBusinessDocument(file, {
+      uploadSession: { public_id: 'ups_business' },
+    })).resolves.toMatchObject({ status: 'pending' })
 
     expect(post).toHaveBeenCalledTimes(1)
     const [url, formData] = post.mock.calls[0]
     expect(url).toBe('/employer/company/documents/')
     expect(formData.get('doc_type')).toBe('business_registration')
     expect(formData.get('verification_method')).toBe('business_registration')
-    expect(formData.get('file')).toBe(file)
+    expect(formData.get('upload_session')).toBe('ups_business')
+    expect(formData.get('file')).toBeNull()
   })
 
   it('marks additional identity images as part of the current document set', async () => {
     post.mockResolvedValue({ data: { id: 2, status: 'pending' } })
     const file = new File(['back'], 'cccd-mat-sau.png', { type: 'image/png' })
 
-    await uploadEmployerCompanyDocument('identity_document', file, { append: true })
+    await uploadEmployerCompanyDocument('identity_document', file, {
+      append: true,
+      uploadSession: { public_id: 'ups_identity' },
+    })
 
     const [url, formData] = post.mock.calls[0]
     expect(url).toBe('/employer/company/documents/')
     expect(formData.get('doc_type')).toBe('identity_document')
     expect(formData.get('append')).toBe('true')
-    expect(formData.get('file')).toBe(file)
+    expect(formData.get('upload_session')).toBe('ups_identity')
   })
 
   it('targets one current document when uploading a replacement', async () => {
@@ -106,6 +112,7 @@ describe('employer profile API', () => {
 
     await uploadEmployerCompanyDocument('identity_document', file, {
       replaceDocument: 'doc_rejected',
+      uploadSession: { public_id: 'ups_replacement' },
     })
 
     const [, formData] = post.mock.calls[0]
@@ -159,7 +166,9 @@ describe('employer profile API', () => {
       proof_type: 'business_registration',
       business_registration_file: file,
     })
-    await uploadEmployerDataProcessingAgreement(file)
+    await uploadEmployerDataProcessingAgreement(file, {
+      uploadSession: { public_id: 'ups_dpa' },
+    })
 
     expect(get).toHaveBeenNthCalledWith(2, '/employer/company/search/', { params: { q: 'Acme' } })
     expect(post).toHaveBeenCalledWith('/employer/company/create/', { company_name: 'Acme' })

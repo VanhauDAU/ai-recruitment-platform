@@ -1,4 +1,22 @@
 import api from '@/shared/api/client'
+import { prepareCleanUpload } from '@/shared/api/upload-session'
+
+const LEGACY_UPLOAD_FALLBACK = Object.freeze({ legacy_file: true })
+
+function apiErrorCode(error) {
+  return error?.response?.data?.code || error?.response?.data?.detail?.code || error?.code
+}
+
+export async function prepareEmployerUpload(file, purpose, options = {}) {
+  try {
+    return await prepareCleanUpload(file, purpose, options)
+  } catch (error) {
+    if (apiErrorCode(error) === 'UPLOAD_PIPELINE_DISABLED') {
+      return LEGACY_UPLOAD_FALLBACK
+    }
+    throw error
+  }
+}
 
 export async function getEmployerProfile() {
   const { data } = await api.get('/employer/me/')
@@ -53,9 +71,17 @@ export async function previewEmployerDataProcessingAgreement(file) {
 }
 
 export async function uploadEmployerCompanyDocument(docType, file, options = {}) {
+  const purpose = options.updateRequest
+    ? 'employer_company_update'
+    : 'employer_verification'
+  const uploadSession = options.uploadSession || await prepareEmployerUpload(file, purpose, {
+    onStateChange: options.onUploadStateChange,
+    signal: options.signal,
+  })
   const formData = new FormData()
   formData.append('doc_type', docType)
-  formData.append('file', file)
+  if (uploadSession.legacy_file) formData.append('file', file)
+  else formData.append('upload_session', uploadSession.public_id)
   if (options.updateRequest) formData.append('update_request', options.updateRequest)
   if (options.verificationMethod) formData.append('verification_method', options.verificationMethod)
   if (options.append) formData.append('append', 'true')
@@ -110,8 +136,17 @@ export async function createEmployerCompany(payload) {
 }
 
 async function uploadEmployerCompanyMedia(endpoint, file, options = {}) {
+  const uploadSession = options.uploadSession || await prepareEmployerUpload(
+    file,
+    'employer_company_update',
+    {
+      onStateChange: options.onUploadStateChange,
+      signal: options.signal,
+    },
+  )
   const formData = new FormData()
-  formData.append('file', file)
+  if (uploadSession.legacy_file) formData.append('file', file)
+  else formData.append('upload_session', uploadSession.public_id)
   if (options.updateRequest) formData.append('update_request', options.updateRequest)
   const { data } = await api.post(endpoint, formData)
   return data
