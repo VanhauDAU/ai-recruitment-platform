@@ -101,6 +101,40 @@ retains both objects for manual reconciliation.
   `python manage.py check_upload_scanner_readiness --json`; production startup
   must fail for a fake backend, empty purpose allowlist or missing ClamAV host.
 
+### Local real-scanner profile
+
+ClamAV is opt-in because its signature engine needs roughly 3–4 GB RAM. The
+official feature tag is pinned and TCP 3310 is available only inside the
+private Compose network (see the
+[official ClamAV Docker guidance](https://docs.clamav.net/manual/Installing/Docker.html)):
+
+```bash
+docker compose --profile scanner up -d clamav
+docker compose --profile scanner exec \
+  -e UPLOAD_QUARANTINE_ENABLED=true -e CLAMAV_HOST=clamav \
+  -e UPLOAD_SCANNER_BACKEND=apps.uploads.services.scanners.ClamAVStreamScanner \
+  backend \
+  python manage.py check_upload_scanner_readiness --json
+```
+
+The `1.4_base` image persists signatures in `clamav_db`; Apple Silicon uses the
+explicit `linux/amd64` platform unless `CLAMAV_PLATFORM` is overridden with an
+approved arm64 build. Do not add a host port for clamd. Run the opt-in pipeline
+probe only after the container is healthy:
+
+```bash
+docker compose --profile scanner exec \
+  -e RUN_REAL_CLAMAV_TESTS=1 -e UPLOAD_QUARANTINE_ENABLED=true \
+  -e CLAMAV_HOST=clamav \
+  -e UPLOAD_SCANNER_BACKEND=apps.uploads.services.scanners.ClamAVStreamScanner \
+  backend pytest apps/uploads/tests/test_real_clamav.py -q
+```
+
+The probe must promote a clean candidate PDF, reject a structurally valid DOCX
+containing the standard EICAR test string, remove quarantine bytes and retain
+only hashed threat evidence. Stop the profile after local verification; keep
+the signature volume for the next run.
+
 ## Employer domain activation sequence
 
 1. Deploy migrations and backend while

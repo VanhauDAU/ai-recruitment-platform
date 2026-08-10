@@ -63,6 +63,19 @@ docker compose up
 # Frontend: http://localhost:5173 · API: http://localhost:8000/api · Swagger: /api/docs/
 ```
 
+Scanner malware thật là profile riêng vì ClamAV cần khoảng 3–4 GB RAM:
+
+```bash
+docker compose --profile scanner up -d clamav
+docker compose --profile scanner exec \
+  -e UPLOAD_QUARANTINE_ENABLED=true -e CLAMAV_HOST=clamav \
+  backend python manage.py check_upload_scanner_readiness --json
+```
+
+ClamAV chỉ mở cổng 3310 trong private Compose network, không publish ra host.
+Trên Apple Silicon image chính thức 1.4 chạy qua `linux/amd64` emulation; có thể
+đổi bằng `CLAMAV_PLATFORM` khi registry được duyệt đã phát hành arm64.
+
 Postgres của compose mở ở host cổng **5433** (`postgres/postgres`, DB `ai_career_coach`)
 để không trùng Postgres cài trực tiếp trên máy ở 5432 — hai DB trùng tên nên rất
 dễ nối lẫn khi mở bằng DBeaver/psql.

@@ -81,8 +81,8 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
   một file lỗi. Raw fallback chỉ còn cho exact `UPLOAD_PIPELINE_DISABLED` trong
   compatibility window; strict rollout dùng `EMPLOYER_UPLOAD_SESSION_REQUIRED`.
 - OpenAPI/runbook bổ sung contract upload-session, machine errors và thứ tự bật
-  quarantine → staging gate → strict raw-upload lock. ER-3 vẫn đang thực hiện do
-  backend Docker candidate gate và real ClamAV staging chưa hoàn tất.
+  quarantine → staging gate → strict raw-upload lock. PostgreSQL Docker và real
+  ClamAV local gate đã đạt; ER-3 còn Chrome và production-like staging/strict.
 
 #### Added — Candidate CV upload quarantine integration ER-3
 
@@ -114,6 +114,10 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 #### Security — Upload validation và rollout boundary ER-3
 
+- Thêm Compose profile `scanner` dùng image chính thức
+  `clamav/clamav:1.4_base`, signature volume riêng, không publish TCP 3310 và
+  opt-in integration test cho clean PDF cùng DOCX chứa EICAR. Apple Silicon
+  chạy image pin qua `linux/amd64` emulation.
 - DOCX pre-scan validation nay kiểm bounded ZIP metadata, required parts,
   encryption, traversal/symlink, duplicate entry, entry/uncompressed/ratio
   limits và không extract Office content trước scan. PDF/image mới chỉ kiểm
@@ -122,8 +126,8 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 - Shared core đã merge tại `99b34781`; employer và candidate business workflow
   hiện đều tích hợp qua public service boundary của shared app `uploads`, không
   tạo coupling `cvs → employers`. Production flag tiếp tục tắt cho tới khi real
-  ClamAV staging/readiness/EICAR cùng candidate Docker/Chrome runtime đạt gate;
-  ER-3 vẫn `In progress`.
+  production-like ClamAV staging cùng candidate Chrome runtime đạt gate; ER-3
+  vẫn `In progress`.
 
 #### Added — Employer SMS provider-neutral foundation ER-6A
 

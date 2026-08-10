@@ -296,21 +296,22 @@ review DPA.
   cho exact `UPLOAD_PIPELINE_DISABLED`; strict production flag fail nếu
   quarantine hoặc purpose allowlist chưa sẵn sàng.
 - Frontend targeted 23/23, full coverage 256 file/988 test, lint, architecture,
-  build và bundle budget đạt; backend static/layering/migration gate đạt. Backend
-  integration trên Docker `127.0.0.1:5433` còn phải rerun vì sandbox desktop chặn
-  TCP và refresh token cấp quyền của công cụ đã bị thu hồi; không coi lần chạy
-  bị chặn là test failure hoặc evidence pass.
+  build và bundle budget đạt; backend static/layering/migration gate đạt.
+  PostgreSQL Docker `127.0.0.1:5433` đạt 68 shared/candidate regression; hai
+  real-scanner test được skip mặc định và đạt riêng 2/2 khi opt-in.
+  ClamAV thật đạt readiness/clean/EICAR/outage và 2/2 pipeline integration;
+  scanner không publish port ra host, signature DB giữ trong volume riêng.
 
 **Residual/status**
 
-- ER-F04 chưa `Closed` toàn hệ thống: employer workflow đã đóng và candidate
-  integration code đã nối shared core, nhưng backend Docker rerun cùng real
-  ClamAV staging/readiness/EICAR/outage/cleanup và strict rollout vẫn mở.
+- ER-F04 chưa `Closed` toàn hệ thống: employer/candidate workflow, Docker và
+  real ClamAV local gate đã đạt; Chrome branch QA và strict production rollout
+  vẫn mở. Vite local thiếu reCAPTCHA site key nên không được bypass đăng nhập.
 - ER-F05 đã `Closed` cho employer: business request không được tạo trước khi tập
   file clean, attach lỗi không có success toast. Candidate workflow sẽ có finding
   riêng trong slice ER-O06, không làm reopen closure theo domain này.
-- Candidate parser boundary đã tách riêng trong app `cvs`; real-scanner staging
-  vẫn là điều kiện bắt buộc trước khi đổi finding thành `Closed`.
+- Candidate parser boundary đã tách riêng trong app `cvs`; Chrome/production
+  rollout evidence vẫn là điều kiện trước khi đổi finding thành `Closed`.
 
 ### ER-F06 — Verification auto-finalization
 

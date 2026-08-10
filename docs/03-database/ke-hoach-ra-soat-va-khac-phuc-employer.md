@@ -670,24 +670,29 @@ Candidate domain/frontend slice đã hoàn tất code trên
 - Evidence hiện có: frontend targeted 23/23, full coverage 256 file/988 test,
   lint, architecture 1.148 module/2.312 dependency, build và bundle budget
   JS 301,2/320 KiB, CSS 34,4/35 KiB đều đạt; backend Ruff/format,
-  compile, Django check, migration drift và import-linter 2/2 đạt. Bộ backend
-  Docker PostgreSQL `127.0.0.1:5433` chưa được tính evidence vì desktop sandbox
-  chặn TCP và phiên cấp quyền của công cụ đã hết hiệu lực; phải chạy lại sau khi
-  đăng nhập lại Codex.
+  compile, Django check, migration drift và import-linter 2/2 đạt. PostgreSQL
+  Docker 16 tại `127.0.0.1:5433` đạt 68 test shared-upload + candidate
+  quarantine (2 real-ClamAV test opt-in được skip mặc định và đạt riêng 2/2);
+  CV V2 rộng đạt 47 test và có một lỗi môi trường ngoài diff do host thiếu
+  native `libgobject` cho WeasyPrint. Migration drift trên DB persistent sạch.
+- Profile `scanner` dùng image chính thức `clamav/clamav:1.4_base`, database
+  volume riêng, không publish TCP 3310. Readiness thật trả `ready`, clean PDF
+  trả `clean`, EICAR trả `malicious`, outage trả `scanner_unavailable`; hai
+  integration test pipeline thật (clean promotion và DOCX/EICAR cleanup) đạt.
 
 Còn mở trước khi ER-3 được `Verified`:
 
-- Chạy backend candidate import/avatar/retention suite trên PostgreSQL Docker
-  của repo tại `127.0.0.1:5433`; không thay bằng SQLite hoặc DB cổng khác.
-- Chạy real ClamAV staging readiness/EICAR/outage/retry/cleanup, duyệt rollout
-  rồi mới bật feature flag.
 - QA Chrome với candidate session thật sau khi pipeline staging được bật, bao
   gồm library import, create-from-template, apply job và avatar.
+- Lặp lại readiness/clean/EICAR/outage trên production-like staging, duyệt
+  telemetry/worker queue rồi mới bật hai strict flag; local Docker pass không
+  tự động cấp quyền rollout production.
 
 **Gate ER-3:** clean, malware, timeout, scanner unavailable, retry, cancel,
 expiry, quota/cleanup failure, claim/release/hold, domain submit và legacy
-download scenarios đều phải có evidence end-to-end. Shared-core gate đã đạt;
-candidate backend Docker, Chrome staging và real-scanner gate chưa đạt.
+download scenarios đều phải có evidence end-to-end. Shared-core, candidate
+Docker và real-scanner local gate đã đạt; Chrome branch QA còn bị chặn
+vì local Vite không có reCAPTCHA site key và không được phép bypass.
 
 ### ER-4 — Company update request V2
 
@@ -1135,7 +1140,7 @@ Trạng thái thực hiện hiện tại:
 | ER-0 | Verified | Đã khóa quyết định; Markdown link và whitespace gate đạt |
 | ER-1 | Verified | ER-1A, ER-1B và ER-1C đã đạt quality gate; follow-up lịch sử/tên thương mại đã có regression |
 | ER-2 | Verified | Canonical readiness, backend capability enforcement, frontend guards/redaction và corrective redirect 3-viewport đều đạt |
-| ER-3 | In progress | Employer đạt gate; candidate integration code/frontend gate đã xong, còn backend Docker rerun và real ClamAV staging |
+| ER-3 | In progress | Employer/candidate Docker và real ClamAV local đạt; còn Chrome branch QA cùng production-like staging/strict rollout |
 | ER-4 | Verified | Revision/event bất biến, lifecycle/resubmit/withdraw/cancel, exact admin review và field-level conflict đã đạt gate Docker/FE |
 | ER-5 | Verified | Backend state/hold/race và admin final-decision/job blocker UI đã đạt gate |
 | ER-6 | In progress | Provider-neutral SMS foundation đã merge; live endpoint/UI/provider và toàn bộ DPA evidence vẫn mở |

@@ -20,6 +20,8 @@ x-service-hosts: &service-hosts
   PUBLIC_MEDIA_ROOT: /app/public-media
   PRIVATE_MEDIA_ROOT: /app/private-media
   UPLOAD_QUARANTINE_ROOT: /app/quarantine
+  CLAMAV_HOST: ${CLAMAV_HOST:-clamav}
+  CLAMAV_PORT: ${CLAMAV_PORT:-3310}
 
 # json-file mặc định tăng vô hạn và thường là phần dung lượng khó phát hiện nhất
 # trên VPS. Mọi service đều dùng cùng chính sách xoay log, override được qua .env.
@@ -79,6 +81,27 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+    logging: *default-logging
+
+  # Scanner thật chỉ bật theo profile để không giữ 3-4 GB RAM trong mọi phiên
+  # development. Không publish TCP 3310 ra host; backend/worker kết nối qua
+  # private Compose network. Feature tag được pin để không tự nhảy major/minor.
+  clamav:
+    image: clamav/clamav:1.4_base
+    # Official 1.4 image is amd64-only; Docker Desktop on Apple Silicon runs it
+    # through emulation. Override on a registry/image that publishes arm64.
+    platform: ${CLAMAV_PLATFORM:-linux/amd64}
+    profiles: [scanner]
+    environment:
+      CLAMAV_NO_MILTERD: 'true'
+      CLAMD_STARTUP_TIMEOUT: ${CLAMD_STARTUP_TIMEOUT:-900}
+      FRESHCLAM_CHECKS: ${FRESHCLAM_CHECKS:-12}
+    volumes:
+      - clamav_db:/var/lib/clamav
+    mem_limit: ${CLAMAV_MEMORY_LIMIT:-4g}
+    cpus: ${CLAMAV_CPU_LIMIT:-2}
+    init: true
+    restart: unless-stopped
     logging: *default-logging
 
   backend:
@@ -239,6 +262,7 @@ volumes:
   backend_public_media:
   backend_private_media:
   backend_quarantine:
+  clamav_db:
   frontend_node_modules:
   tts_huggingface_cache:
   tts_audio_cache:
