@@ -15,6 +15,7 @@ const {
 } = vi.hoisted(() => ({
   employerProfileKeys: {
     companyDocuments: ['employer', 'company', 'documents'],
+    companyDocumentList: (scope) => ['employer', 'company', 'documents', { scope }],
   },
   getEmployerProfile: vi.fn(),
   getEmployerCompanyDocuments: vi.fn(),
@@ -176,6 +177,30 @@ describe('EmployerBusinessLicenseForm', () => {
 
     expect(screen.getByRole('button', { name: 'Hủy' })).toBeVisible()
     expect(screen.getByRole('heading', { name: /Giấy đăng ký doanh nghiệp hoặc Giấy tờ tương đương khác/ })).toBeVisible()
+  })
+
+  it('keeps the summary aligned with the one displayed business document', async () => {
+    getEmployerProfile.mockResolvedValue({ onboarding: { company_linked: true } })
+    getEmployerCompanyDocuments.mockResolvedValue([
+      {
+        id: 1,
+        doc_type: 'business_registration',
+        file_name: 'gpkd-hien-tai.pdf',
+        status: 'approved',
+      },
+      {
+        id: 2,
+        doc_type: 'business_registration',
+        file_name: 'gpkd-khong-thuoc-ho-so.pdf',
+        status: 'rejected',
+      },
+    ])
+
+    renderForm()
+
+    expect(await screen.findAllByText('Đã duyệt')).toHaveLength(2)
+    expect(screen.queryByText('Có file bị từ chối')).not.toBeInTheDocument()
+    expect(getEmployerCompanyDocuments).toHaveBeenCalledWith({ scope: 'mine' })
   })
 
   it('shows the replacement returned by the upload immediately after editing', async () => {

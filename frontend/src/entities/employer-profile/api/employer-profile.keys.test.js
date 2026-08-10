@@ -8,6 +8,10 @@ describe('employer profile query keys', () => {
       ...employerProfileKeys.company,
       'documents',
     ])
+    expect(employerProfileKeys.companyDocumentList('mine')).toEqual([
+      ...employerProfileKeys.companyDocuments,
+      { scope: 'mine' },
+    ])
   })
 
   it('isolates personal and company update-request caches under one root', () => {

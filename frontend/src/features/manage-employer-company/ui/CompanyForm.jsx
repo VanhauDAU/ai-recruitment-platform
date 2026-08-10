@@ -386,10 +386,6 @@ export default function CompanyForm({ catalogs, industries, disabled, company = 
           >
             Quay lại thông tin công ty
           </Button>
-          <div>
-            <h2>Cập nhật thông tin công ty</h2>
-            <p>Thông tin này sẽ hiển thị với ứng viên trên tin tuyển dụng của bạn.</p>
-          </div>
         </header>
       )}
       {documentsRequiringReplacement.length > 0 && (

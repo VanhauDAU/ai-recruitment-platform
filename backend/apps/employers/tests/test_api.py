@@ -1348,6 +1348,53 @@ class CompanyUpdateRequestTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(b''.join(response.streaming_content), PDF_BYTES)
 
+    def test_company_document_mine_scope_excludes_members_verification_files(self):
+        owner_document = CompanyDocument.objects.create(
+            company=self.company,
+            recruiter=self.recruiter,
+            uploaded_by=self.user,
+            doc_type=CompanyDocument.DocType.BUSINESS_REGISTRATION,
+            file_url='employers/private/owner-registration.pdf',
+            file_name='owner-registration.pdf',
+            status=CompanyDocument.Status.APPROVED,
+        )
+        member_user, member = make_employer('scoped-document-member@example.com')
+        member.company = self.company
+        member.company_role = RecruiterProfile.CompanyRole.MEMBER
+        member.save(update_fields=['company', 'company_role', 'updated_at'])
+        member_document = CompanyDocument.objects.create(
+            company=self.company,
+            recruiter=member,
+            uploaded_by=member_user,
+            doc_type=CompanyDocument.DocType.BUSINESS_REGISTRATION,
+            file_url='employers/private/member-rejected-registration.pdf',
+            file_name='member-rejected-registration.pdf',
+            status=CompanyDocument.Status.REJECTED,
+        )
+
+        visible = self.client.get(reverse('employer-company-documents'))
+        mine = self.client.get(reverse('employer-company-documents'), {'scope': 'mine'})
+
+        self.assertEqual(visible.status_code, status.HTTP_200_OK, visible.data)
+        self.assertSetEqual(
+            {item['public_id'] for item in visible.data},
+            {owner_document.public_id, member_document.public_id},
+        )
+        self.assertEqual(mine.status_code, status.HTTP_200_OK, mine.data)
+        self.assertEqual(
+            [item['public_id'] for item in mine.data],
+            [owner_document.public_id],
+        )
+
+    def test_company_document_rejects_unknown_scope(self):
+        response = self.client.get(
+            reverse('employer-company-documents'),
+            {'scope': 'unknown'},
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('scope', response.data)
+
     def test_member_cannot_attach_document_to_another_request(self):
         update_request = CompanyUpdateRequest.objects.create(
             company=self.company,

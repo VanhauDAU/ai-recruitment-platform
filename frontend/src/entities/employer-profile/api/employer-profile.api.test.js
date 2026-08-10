@@ -177,6 +177,16 @@ describe('employer profile API', () => {
     expect(get).toHaveBeenCalledWith('/employer/company/documents/12/content/', { responseType: 'blob' })
   })
 
+  it('loads only documents belonging to the current recruiter when requested', async () => {
+    get.mockResolvedValue({ data: [{ id: 1, status: 'approved' }] })
+
+    await expect(getEmployerCompanyDocuments({ scope: 'mine' })).resolves.toHaveLength(1)
+
+    expect(get).toHaveBeenCalledWith('/employer/company/documents/', {
+      params: { scope: 'mine' },
+    })
+  })
+
   it('loads actor and company update-request scopes explicitly', async () => {
     get
       .mockResolvedValueOnce({ data: { results: [{ public_id: 'cur_mine' }] } })

@@ -46,8 +46,8 @@ export default function EmployerBusinessLicenseForm() {
   const { siteName } = useSiteSettings()
   const profileQuery = useQuery({ queryKey: ['employer', 'profile'], queryFn: getEmployerProfile })
   const documentsQuery = useQuery({
-    queryKey: employerProfileKeys.companyDocuments,
-    queryFn: getEmployerCompanyDocuments,
+    queryKey: employerProfileKeys.companyDocumentList('mine'),
+    queryFn: () => getEmployerCompanyDocuments({ scope: 'mine' }),
   })
 
   async function refreshDashboard() {
@@ -108,7 +108,7 @@ export default function EmployerBusinessLicenseForm() {
       preserveExisting,
     }) => {
       const uploadedDocuments = savedDocumentsFromResponse(response)
-      queryClient.setQueryData(employerProfileKeys.companyDocuments, (cachedDocuments) => {
+      queryClient.setQueryData(employerProfileKeys.companyDocumentList('mine'), (cachedDocuments) => {
         if (!preserveExisting) {
           return replaceCachedDocuments(cachedDocuments, uploadedDocuments, selectedMethod)
         }

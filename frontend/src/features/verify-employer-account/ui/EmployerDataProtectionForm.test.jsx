@@ -17,6 +17,7 @@ const {
   acceptEmployerDpa: vi.fn(),
   employerProfileKeys: {
     companyDocuments: ['employer', 'company', 'documents'],
+    companyDocumentList: (scope) => ['employer', 'company', 'documents', { scope }],
   },
   getEmployerCompanyDocumentContent: vi.fn(),
   getEmployerCompanyDocuments: vi.fn(),
