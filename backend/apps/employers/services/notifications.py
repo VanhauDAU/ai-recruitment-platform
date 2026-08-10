@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from django.db import transaction
 
+from common.metrics import record_metric
+
 from ..models import EmployerActivity, EmployerNotification, EmployerNotificationPreference
 
 VERIFY_PATH = '/tuyendung/app/employer-verify'
@@ -85,7 +87,7 @@ def emit_employer_event(
     title, action_path = EVENT_PRESENTATION[event_type]
     normalized_message = str(message or '').strip()[:2000]
     safe_metadata = _safe_metadata(metadata)
-    notification, _ = EmployerNotification.objects.get_or_create(
+    notification, notification_created = EmployerNotification.objects.get_or_create(
         recipient=recipient,
         dedupe_key=normalized_dedupe,
         defaults={
@@ -96,7 +98,7 @@ def emit_employer_event(
             'metadata': safe_metadata,
         },
     )
-    activity, _ = EmployerActivity.objects.get_or_create(
+    activity, activity_created = EmployerActivity.objects.get_or_create(
         recipient=recipient,
         dedupe_key=normalized_dedupe,
         defaults={
@@ -106,5 +108,10 @@ def emit_employer_event(
             'subject_public_id': str(subject_public_id or '')[:50],
             'metadata': safe_metadata,
         },
+    )
+    record_metric(
+        'employer_notification_event',
+        event=event_type,
+        status=('created' if notification_created and activity_created else 'deduplicated'),
     )
     return notification, activity

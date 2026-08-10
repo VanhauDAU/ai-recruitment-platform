@@ -42,8 +42,9 @@ class EmployerNotificationApiTests(APITestCase):
         )
 
     def test_emit_is_idempotent_and_redacts_unknown_metadata(self):
-        first_notice, first_activity = self.emit()
-        second_notice, second_activity = self.emit()
+        with self.assertLogs('product.metrics', level='INFO') as metric_logs:
+            first_notice, first_activity = self.emit()
+            second_notice, second_activity = self.emit()
 
         self.assertEqual(first_notice.pk, second_notice.pk)
         self.assertEqual(first_activity.pk, second_activity.pk)
@@ -52,6 +53,10 @@ class EmployerNotificationApiTests(APITestCase):
         self.assertEqual(first_notice.metadata, {'case_public_id': 'evc_approved'})
         self.assertNotIn('sha256', str(first_activity.metadata))
         self.assertTrue(first_notice.action_path.startswith('/tuyendung/app/'))
+        rendered_metrics = '\n'.join(metric_logs.output)
+        self.assertIn('product_metric', rendered_metrics)
+        self.assertNotIn('must-not-leak', rendered_metrics)
+        self.assertNotIn('private/', rendered_metrics)
 
     def test_list_unread_read_and_read_all_are_scoped_to_recipient(self):
         first_notice, _ = self.emit(dedupe_key='case:1:approved')

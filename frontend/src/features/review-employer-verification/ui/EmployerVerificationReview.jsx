@@ -713,7 +713,7 @@ export default function EmployerVerificationReview({
           <Timeline
             items={timelineEvents.map((event) => ({
               color: event.event_type === 'rejected' ? 'red' : 'blue',
-              children: (
+              content: (
                 <div>
                   <strong>
                     {event.title}

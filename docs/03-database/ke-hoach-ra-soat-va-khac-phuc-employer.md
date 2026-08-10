@@ -1,7 +1,7 @@
 # Kế hoạch rà soát và khắc phục toàn bộ luồng Nhà tuyển dụng
 
 > **Trạng thái:** ER-0, ER-1, ER-2, ER-4, ER-5, ER-6 và ER-7 đã Verified;
-> ER-3 còn gate staging/Chrome, ER-8 đang triển khai
+> ER-8 đã code-complete, ER-3/ER-8 còn gate Chrome upload và activation staging/production
 > **Ngày lập:** 2026-08-10
 > **Ngày phê duyệt:** 2026-08-10
 > **Phiên bản kế hoạch:** 1.1
@@ -959,19 +959,35 @@ deep link, retention và permission scenarios.
 **Rollout:** `chore/employer-workflow-rollout`
 **Cleanup sau soak:** `refactor/employer-workflow-compat-cleanup`
 **Phụ thuộc:** ER-1 đến ER-7
+**Trạng thái:** `Code complete — awaiting operational rollout`
 
-Feature flags đề xuất:
+Feature flags canonical đang được code sử dụng:
 
 ```text
-EMPLOYER_UPLOAD_SCAN_REQUIRED
-EMPLOYER_COMPANY_UPDATE_V2_ENABLED
-EMPLOYER_VERIFICATION_V2_ENABLED
+UPLOAD_QUARANTINE_ENABLED
+EMPLOYER_UPLOAD_SESSION_REQUIRED
+CANDIDATE_UPLOAD_SESSION_REQUIRED
 EMPLOYER_SMS_OTP_ENABLED
-EMPLOYER_NOTIFICATION_CENTER_ENABLED
 ```
 
 IDOR permission, quarantine download denial và admin approval guard luôn
 fail-closed; không có flag cho phép bypass.
+
+Đã bổ sung command read-only `audit_employer_workflow_rollout` trả JSON chỉ có
+flag/blocker/số đếm tổng hợp, strict mode yêu cầu schema, DPA, upload purpose,
+real scanner probe, SMS, Celery route/beat và retention đều sẵn sàng. Metric
+`employer_notification_event|retention` không chứa PII; runbook canonical mô tả
+rollout tuần tự, ngưỡng dừng, rollback và điều kiện mở cleanup branch.
+
+Evidence local 2026-08-10: PostgreSQL Docker targeted đạt 95 test, 2 real-
+scanner test opt-in skip; scanner thật trả `ready` trong 1 ms. Migration lineage
+được giữ đúng `0042` đã apply và `0043` additive cho preference/outbox dedupe,
+tránh fake migration. Chrome xác minh notification/activity empty state, trang
+verify không có badge thừa, candidate-data denial redirect đúng checklist,
+company form không có company history, có Back và submit diff-rỗng disabled;
+admin revision 4 vẫn có document review và final-decision riêng. Upload qua
+Chrome còn chặn bởi extension chưa được cấp quyền file URL; production DPA/SMS
+vẫn fail-closed cho tới khi có exact legal artifact/gateway.
 
 Rollout:
 
@@ -1185,7 +1201,7 @@ Trạng thái thực hiện hiện tại:
 | ER-5 | Verified | Backend state/hold/race và admin final-decision/job blocker UI đã đạt gate |
 | ER-6 | Verified | ER-6A live SMS và ER-6B DPA evidence/grace/hold đã đạt code gate; production SMS activation thuộc ER-8 |
 | ER-7 | Verified | Company recovery, notification center, email outbox sweep và activity retention đã đạt code gate |
-| ER-8 | Planned | Chỉ bắt đầu khi các phase chức năng verified |
+| ER-8 | Code complete | Readiness audit, PII-free metrics, runbook và local rehearsal đạt; production activation/soak và compatibility cleanup là ops gate riêng |
 
 ## 17. Changelog
 
