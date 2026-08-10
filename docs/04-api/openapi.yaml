@@ -4765,8 +4765,11 @@ paths:
   /api/employer/company/cover/:
     post:
       operationId: employer_company_cover_create
-      description: 'Upload ảnh cho công ty: logo, cover hoặc ảnh giới thiệu (`kind`).'
-      summary: Upload ảnh công ty vào storage nội bộ
+      description: >-
+        Gắn ảnh đã ở trạng thái clean từ upload session và tạo public derivative.
+        Multipart file thô chỉ còn trong cửa sổ tương thích khi
+        EMPLOYER_UPLOAD_SESSION_REQUIRED=false.
+      summary: Gắn ảnh công ty đã quét an toàn
       tags:
       - employer
       requestBody:
@@ -4784,6 +4787,18 @@ paths:
               schema:
                 $ref: '#/components/schemas/Company'
           description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadError'
+          description: Session chưa clean, sai purpose, đã claim hoặc file thô bị khóa.
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadError'
+          description: Pipeline quarantine chưa được bật.
     delete:
       operationId: employer_company_cover_destroy
       description: 'Upload ảnh cho công ty: logo, cover hoặc ảnh giới thiệu (`kind`).'
@@ -4847,10 +4862,21 @@ paths:
           description: ''
     post:
       operationId: employer_company_documents_create
-      description: Giấy tờ của công ty tôi, gồm file và URL chứng minh tên thương
-        mại.
+      description: >-
+        Gắn giấy tờ clean từ upload session; URL chỉ dùng cho chứng minh tên
+        thương mại. Multipart file thô chỉ còn trong cửa sổ tương thích khi
+        EMPLOYER_UPLOAD_SESSION_REQUIRED=false.
       tags:
       - employer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompanyDocumentUploadRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CompanyDocumentUploadRequestRequest'
+        required: true
       security:
       - jwtAuth: []
       responses:
@@ -4860,6 +4886,18 @@ paths:
               schema:
                 $ref: '#/components/schemas/CompanyDocument'
           description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadError'
+          description: Session chưa clean, sai purpose, đã claim hoặc file thô bị khóa.
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadError'
+          description: Pipeline quarantine chưa được bật.
   /api/employer/company/documents/{id}/content/:
     get:
       operationId: employer_company_documents_content_retrieve
@@ -4886,9 +4924,10 @@ paths:
   /api/employer/company/documents/preview/:
     post:
       operationId: employer_company_documents_preview_create
-      description: Convert an unpersisted Word agreement to PDF for local pre-submit
-        preview.
-      summary: Xem trước tệp Word thỏa thuận trước khi tải lên
+      description: >-
+        Luôn fail closed; backend không parse/convert Office file thô trước
+        malware scan. Frontend chỉ cho tải tệp local đã chọn để tự kiểm tra.
+      summary: Raw Office preview đã bị khóa trước scan
       tags:
       - employer-verification
       requestBody:
@@ -4900,18 +4939,19 @@ paths:
       security:
       - jwtAuth: []
       responses:
-        '200':
+        '409':
           content:
-            application/pdf:
+            application/json:
               schema:
-                type: string
-                format: binary
-          description: ''
+                $ref: '#/components/schemas/UploadError'
+          description: UPLOAD_SCAN_REQUIRED.
   /api/employer/company/images/:
     post:
       operationId: employer_company_images_create
-      description: 'Upload ảnh cho công ty: logo, cover hoặc ảnh giới thiệu (`kind`).'
-      summary: Upload ảnh công ty vào storage nội bộ
+      description: >-
+        Gắn ảnh clean từ upload session và tạo public derivative; file thô chỉ
+        còn trong cửa sổ tương thích.
+      summary: Gắn ảnh giới thiệu đã quét an toàn
       tags:
       - employer
       requestBody:
@@ -4929,6 +4969,18 @@ paths:
               schema:
                 $ref: '#/components/schemas/Company'
           description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadError'
+          description: Session chưa clean, sai purpose, đã claim hoặc file thô bị khóa.
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadError'
+          description: Pipeline quarantine chưa được bật.
   /api/employer/company/images/{id}/:
     delete:
       operationId: employer_company_images_destroy
@@ -4974,8 +5026,10 @@ paths:
   /api/employer/company/logo/:
     post:
       operationId: employer_company_logo_create
-      description: 'Upload ảnh cho công ty: logo, cover hoặc ảnh giới thiệu (`kind`).'
-      summary: Upload ảnh công ty vào storage nội bộ
+      description: >-
+        Gắn logo clean từ upload session và tạo public derivative; file thô chỉ
+        còn trong cửa sổ tương thích.
+      summary: Gắn logo công ty đã quét an toàn
       tags:
       - employer
       requestBody:
@@ -4993,6 +5047,18 @@ paths:
               schema:
                 $ref: '#/components/schemas/Company'
           description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadError'
+          description: Session chưa clean, sai purpose, đã claim hoặc file thô bị khóa.
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadError'
+          description: Pipeline quarantine chưa được bật.
     delete:
       operationId: employer_company_logo_destroy
       description: 'Upload ảnh cho công ty: logo, cover hoặc ảnh giới thiệu (`kind`).'
@@ -16838,6 +16904,39 @@ components:
           format: binary
       required:
       - file
+    CompanyDocumentUploadRequestRequest:
+      type: object
+      description: >-
+        Với source_type=file, gửi đúng một trong upload_session hoặc file.
+        upload_session là contract chuẩn; file chỉ dành cho compatibility window.
+      properties:
+        doc_type:
+          $ref: '#/components/schemas/DocTypeEnum'
+        upload_session:
+          type: string
+          description: public_id của UploadSession đã clean, đúng owner và purpose.
+        file:
+          type: string
+          format: binary
+          description: File thô legacy; bị từ chối khi strict rollout đã bật.
+        source_type:
+          type: string
+          enum: [file, website]
+          default: file
+        website_url:
+          type: string
+          format: uri
+        update_request:
+          type: string
+          description: public_id của yêu cầu cập nhật thuộc chính requester.
+        verification_method:
+          type: string
+        append:
+          type: boolean
+        replaces:
+          type: string
+      required:
+      - doc_type
     CompanyImage:
       type: object
       properties:
@@ -16869,13 +16968,20 @@ components:
           minimum: 0
     CompanyImageUploadRequestRequest:
       type: object
+      description: >-
+        Gửi đúng một trong upload_session hoặc file. upload_session là contract
+        chuẩn; file chỉ dành cho compatibility window.
       properties:
+        upload_session:
+          type: string
+          description: public_id của UploadSession clean purpose employer_company_update.
         file:
           type: string
           format: binary
-          description: Ảnh JPG, PNG, GIF hoặc WebP, tối đa 5MB
-      required:
-      - file
+          description: Ảnh JPG, PNG hoặc WebP tối đa 5MB; file thô chỉ dùng trong cửa sổ tương thích.
+        update_request:
+          type: string
+          description: public_id của yêu cầu cập nhật thuộc chính requester.
     CompanyRequest:
       type: object
       description: |-

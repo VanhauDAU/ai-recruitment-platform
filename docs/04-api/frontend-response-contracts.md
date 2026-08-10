@@ -128,6 +128,31 @@ cache; aggregate không chứa danh tính vẫn được hiển thị.
   `file_name=""`, `mime_type=""`, `file_size=0`; direct content trả `404`.
   Requester/uploader và company owner nhận content URL sau authorization.
 
+### Contract upload session cho employer
+
+- Frontend tạo `POST /api/uploads/sessions/` với purpose
+  `employer_verification` hoặc `employer_company_update`, gửi byte qua
+  `.../{public_id}/content/` rồi poll owner-scoped detail tới khi
+  `ready_for_submit=true`. Chỉ `clean` được chuyển vào endpoint nghiệp vụ.
+- `POST /api/employer/company/documents/` nhận `upload_session`; logo, cover và
+  gallery nhận cùng field. Client không gửi đồng thời `file` và
+  `upload_session`. Backend recheck owner, purpose, state và one-time claim;
+  không tin trạng thái UI.
+- UI map machine state sang copy cố định cho
+  `uploading|quarantined|scanning|clean|rejected|error|expired`. Retry chỉ khi
+  `retryable=true`, một lần tự động; timeout/rejection/scanner error khóa submit
+  và không được báo thành công.
+- Với form nhiều file, tất cả file phải clean trước khi tạo company/update
+  request; attach chạy tuần tự để lỗi có vị trí rõ. Không dùng
+  `Promise.allSettled` để nuốt lỗi hoặc lưu business request một phần.
+- Compatibility window: client chỉ fallback multipart raw khi create session
+  trả exact `UPLOAD_PIPELINE_DISABLED`. Mọi lỗi khác fail closed. Sau khi staging
+  scanner đạt gate, backend bật `EMPLOYER_UPLOAD_SESSION_REQUIRED=true` và raw
+  trả `409 UPLOAD_SESSION_REQUIRED`.
+- Raw Office preview luôn trả `409 UPLOAD_SCAN_REQUIRED`; client không gửi DOCX
+  chưa scan để backend/LibreOffice parse. Có thể cho người dùng tải tệp local đã
+  chọn để tự kiểm tra trước khi nộp.
+
 ### Contract admin review yêu cầu cập nhật công ty
 
 - Queue phải truyền exact `request.public_id`; consumer gọi

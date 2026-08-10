@@ -235,6 +235,11 @@ IMAGE_UPLOAD_MAX_SIZE = config('IMAGE_UPLOAD_MAX_SIZE', default=5 * 1024 * 1024,
 # Shared upload-session quarantine. The HTTP/service surface remains fail-closed
 # until this flag is enabled with a real scanner and an explicit purpose allowlist.
 UPLOAD_QUARANTINE_ENABLED = config('UPLOAD_QUARANTINE_ENABLED', default=False, cast=bool)
+EMPLOYER_UPLOAD_SESSION_REQUIRED = config(
+    'EMPLOYER_UPLOAD_SESSION_REQUIRED',
+    default=False,
+    cast=bool,
+)
 UPLOAD_SCANNER_BACKEND = config(
     'UPLOAD_SCANNER_BACKEND',
     default='apps.uploads.services.scanners.ClamAVStreamScanner',

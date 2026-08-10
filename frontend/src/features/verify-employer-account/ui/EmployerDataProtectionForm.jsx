@@ -12,7 +12,6 @@ import {
   getEmployerCompanyDocumentContent,
   getEmployerCompanyDocuments,
   getEmployerProfile,
-  previewEmployerDataProcessingAgreement,
   uploadEmployerDataProcessingAgreement,
 } from '@/entities/employer-profile'
 import { useSiteSettings } from '@/entities/site-settings'
@@ -69,6 +68,7 @@ export default function EmployerDataProtectionForm() {
   const [candidateAgreementAccepted, setCandidateAgreementAccepted] = useState(false)
   const [editingCandidateAgreement, setEditingCandidateAgreement] = useState(false)
   const [platformAgreementAccepted, setPlatformAgreementAccepted] = useState(false)
+  const [uploadState, setUploadState] = useState(null)
   const profileQuery = useQuery({ queryKey: ['employer', 'profile'], queryFn: getEmployerProfile })
   const documentsQuery = useQuery({
     queryKey: employerProfileKeys.companyDocuments,
@@ -86,7 +86,10 @@ export default function EmployerDataProtectionForm() {
   const documentMutation = useMutation({
     mutationFn: ({ file, replaces }) => uploadEmployerDataProcessingAgreement(
       file,
-      replaces ? { replaceDocument: replaces } : {},
+      {
+        ...(replaces ? { replaceDocument: replaces } : {}),
+        onUploadStateChange: setUploadState,
+      },
     ),
     onSuccess: async () => {
       message.success('Thông báo', {
@@ -95,6 +98,7 @@ export default function EmployerDataProtectionForm() {
       setFiles([])
       setCandidateAgreementAccepted(false)
       setEditingCandidateAgreement(false)
+      setUploadState(null)
       await refresh()
     },
     onError: (error) => message.error(getApiErrorMessage(error, 'Không thể tải văn bản lên.')),
@@ -121,15 +125,6 @@ export default function EmployerDataProtectionForm() {
     onError: (error, { previewWindow }) => {
       previewWindow.close()
       message.error(getApiErrorMessage(error, 'Không thể mở tệp đã nộp. Vui lòng thử lại.'))
-    },
-  })
-  const selectedDocumentPreviewMutation = useMutation({
-    mutationFn: previewEmployerDataProcessingAgreement,
-    onError: (error) => {
-      message.error(getApiErrorMessage(
-        error,
-        'Không thể tạo bản xem trước. Vui lòng kiểm tra lại tệp Word.',
-      ))
     },
   })
   const acceptMutation = useMutation({
@@ -211,15 +206,14 @@ export default function EmployerDataProtectionForm() {
             onCancel={candidateAgreementSubmitted ? () => { setFiles([]); setCandidateAgreementAccepted(false); setEditingCandidateAgreement(false) } : null}
             onFilesChange={setFiles}
             onOpenDocument={openPrivateDocument}
-            onPreviewSelectedFile={selectedDocumentPreviewMutation.mutateAsync}
             onSave={() => documentMutation.mutate({
               file: selectedFile,
               replaces: candidateAgreementDocument?.public_id,
             })}
             openingDocument={documentPreviewMutation.isPending}
-            previewingSelectedFile={selectedDocumentPreviewMutation.isPending}
             siteName={siteName}
             submitting={documentMutation.isPending}
+            uploadState={uploadState}
           />
         ) : candidateAgreementDocument ? (
           <div className="mt-4 grid min-w-0 items-center gap-6 rounded-lg border border-slate-200 p-4 sm:grid-cols-[minmax(0,1fr)_220px] sm:p-6">

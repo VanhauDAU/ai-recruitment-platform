@@ -58,6 +58,7 @@ export function EmployerBusinessDocumentCard({
   replacementFiles = {},
   onReplacementFilesChange,
   allowNewFiles = false,
+  uploadState,
 }) {
   const [expandedReplacements, setExpandedReplacements] = useState({})
   const [addingFiles, setAddingFiles] = useState(false)
@@ -164,6 +165,7 @@ export function EmployerBusinessDocumentCard({
                                   nextFiles,
                                 )}
                                 uploadHint={UPLOAD_HINT}
+                                uploadState={uploadState}
                               />
                             </>
                           )}
@@ -200,6 +202,7 @@ export function EmployerBusinessDocumentCard({
                         maxCount={MAX_FILES_PER_DOCUMENT_TYPE - submittedDocuments.length}
                         multiple
                         uploadHint={`${UPLOAD_HINT}; tối đa ${MAX_FILES_PER_DOCUMENT_TYPE} tệp`}
+                        uploadState={uploadState}
                       />
                     </>
                   )}
@@ -219,6 +222,7 @@ export function EmployerBusinessDocumentCard({
                 uploadHint={`${UPLOAD_HINT}${supportsMultipleFiles
                   ? `; tối đa ${MAX_FILES_PER_DOCUMENT_TYPE} tệp`
                   : ''}`}
+                uploadState={uploadState}
               />
               <UploadNotice documentName={noticeDocument} />
             </>

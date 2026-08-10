@@ -187,3 +187,52 @@ class CompanyImage(models.Model):
 
     def __str__(self):
         return f'{self.company_id}:{self.image_url[:50]}'
+
+
+class CompanyMediaUpload(models.Model):
+    """Audit link from a scanned private original to its public image derivative."""
+
+    class Kind(models.TextChoices):
+        LOGO = 'logo', 'Logo'
+        COVER = 'cover', 'Ảnh bìa'
+        GALLERY = 'gallery', 'Ảnh giới thiệu'
+
+    public_id = models.CharField(max_length=50, unique=True, editable=False)
+    company = models.ForeignKey(
+        Company,
+        on_delete=models.PROTECT,
+        related_name='media_upload_records',
+    )
+    uploaded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name='+',
+    )
+    update_request = models.ForeignKey(
+        'CompanyUpdateRequest',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='media_upload_records',
+    )
+    upload_asset = models.OneToOneField(
+        'uploads.UploadAsset',
+        on_delete=models.PROTECT,
+        related_name='employer_company_media',
+    )
+    kind = models.CharField(max_length=20, choices=Kind.choices)
+    public_path = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(
+                fields=['company', 'kind', '-created_at'],
+                name='emp_media_company_kind_idx',
+            ),
+        ]
+
+    def save(self, *args, **kwargs):
+        if not self.public_id:
+            self.public_id = generate_public_id('cma')
+        super().save(*args, **kwargs)

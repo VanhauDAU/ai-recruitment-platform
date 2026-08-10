@@ -36,7 +36,9 @@ Thiết kế onboarding và preference tìm việc cho ứng viên:
 | `companies` | `backend/apps/employers` | Pháp nhân tuyển dụng (doanh nghiệp/hộ kinh doanh), `tax_code` unique, `verification_status`; thay thế `employer_profiles` cũ — dữ liệu đổ qua migration `0007` (gộp theo tax_code), bảng cũ đã xóa ở migration `0008` ([kế hoạch](./ke-hoach-thiet-ke-lai-cong-ty-nha-tuyen-dung.md)) |
 | `company_industries` | `backend/apps/employers` | M2M công ty–lĩnh vực + `is_primary` (partial unique: đúng 1 lĩnh vực chính/công ty) |
 | `company_images` | `backend/apps/employers` | Ảnh giới thiệu công ty, khuyến nghị 3:2 |
-| `company_documents` | `backend/apps/employers` | Giấy tờ xác thực (ĐKDN, ủy quyền, định danh, DLCN) + luồng duyệt |
+| `company_documents` | `backend/apps/employers` | Giấy tờ xác thực (ĐKDN, ủy quyền, định danh, DLCN) + luồng duyệt; `upload_asset` liên kết one-to-one tới private original đã quét |
+| `employers_companymediaupload` | `backend/apps/employers` | Audit link từ logo/cover/gallery public derivative tới `UploadAsset` private original, actor và update request |
+| `upload_sessions`, `upload_assets`, `upload_scan_attempts` | `backend/apps/uploads` | Upload tạm owner-scoped, private clean asset và lịch sử malware scan; business app chỉ consume qua clean one-time claim |
 | `company_update_requests` | `backend/apps/employers` | Cập nhật công ty chờ duyệt; đổi MST/tên bắt buộc lý do + giấy tờ; có `submitted_at` và partial unique một request `pending` trên mỗi `(company, requested_by)` |
 | `recruiter_profiles` | `backend/apps/employers` | 1-1 user, FK company (PROTECT, gán rồi không đổi); membership owner/member + trạng thái duyệt; `verified_phone` partial unique |
 | `phone_otps` | `backend/apps/employers` | OTP xác thực SĐT (hash, expires, attempts) — gửi qua email trước khi có SMS gateway |
@@ -71,6 +73,10 @@ Thiết kế onboarding và preference tìm việc cho ứng viên:
   `(company_id, requested_by_id)` khi `status='pending'`. Vì vậy nhiều member
   cùng company có thể gửi song song; identity `requested_by` bất biến qua
   resubmit và được khóa read-only ở Django admin.
+- Migration `employers.0035` thêm liên kết audit từ document/media employer tới
+  `uploads.UploadAsset`. Không backfill file cũ thành clean: record legacy giữ
+  trạng thái lịch sử, không bịa scanner evidence. Media public chỉ là derivative;
+  original đã claim tiếp tục nằm private theo retention/legal-hold policy.
 - PRD mục 13.2 không liệt kê app riêng cho `job_categories`/`locations`/`skills`/`employer_profiles` — đã tách thành app Django riêng (`jobs` chứa job_categories, `locations`, `skills`, `employers`) để tránh phụ thuộc vòng và rõ trách nhiệm từng app.
 - `posted_by` là ranh giới quyền: chỉ người tạo tin nhìn/sửa tin và các ứng tuyển của tin, kể cả khi nhiều recruiter cùng company. Tin đi theo `draft → pending → active|rejected`; admin duyệt/từ chối tại API moderation, lý do từ chối lưu trên `jobs.rejected_reason` và audit tại `job_status_history`.
 - Các trường ảnh (`avatar_url`, `Company.logo_url`/`cover_image_url`, `CompanyImage.image_url`, `CompanyDocument.file_url`, `JobCategory.logo_url`, `Banner.image_url`, `SiteSetting` kiểu image, `UserCv.*_url`) lưu **storage key** chứ không phải URL tuyệt đối — URL công khai được resolve khi trả API theo domain/CDN hiện tại. Xem quy ước media ở [../04-api/tai-lieu-api.md](../04-api/tai-lieu-api.md).

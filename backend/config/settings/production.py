@@ -173,6 +173,10 @@ _errors.extend(
         production=True,
     )
 )
+if EMPLOYER_UPLOAD_SESSION_REQUIRED and not UPLOAD_QUARANTINE_ENABLED:
+    _errors.append(
+        'EMPLOYER_UPLOAD_SESSION_REQUIRED chỉ được bật khi upload quarantine đã sẵn sàng.'
+    )
 if not AUTH_REFRESH_COOKIE_SECURE:
     _errors.append('AUTH_REFRESH_COOKIE_SECURE phải bật ở production.')
 if AUTH_REFRESH_COOKIE_SAMESITE not in {'Lax', 'Strict'}:

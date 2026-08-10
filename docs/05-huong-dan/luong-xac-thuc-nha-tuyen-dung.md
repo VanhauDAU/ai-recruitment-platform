@@ -240,9 +240,11 @@ nhận JPEG/JPG/PNG/PDF tối đa 5 MB, có minh họa local tại
 ủy quyền.
 
 Sau khi đã liên kết công ty, nút **Lưu** bật khi đủ tệp theo phương thức đã
-chọn: một tệp ĐKDN, hoặc cả giấy ủy quyền và CCCD/hộ chiếu. UI gọi
-`POST /api/employer/company/documents/` cho từng tài liệu, hiển thị tiến trình
-trong lúc gửi, popup xác nhận “`{site_name}` đã nhận được Giấy đăng ký doanh
+chọn: một tệp ĐKDN, hoặc cả giấy ủy quyền và CCCD/hộ chiếu. UI tạo upload
+session cho toàn bộ tập tệp, đợi từng session `clean` rồi mới gọi
+`POST /api/employer/company/documents/` bằng `upload_session`. Nếu một tệp bị
+reject/error/expired thì chưa tạo hồ sơ nghiệp vụ và không hiện thông báo thành
+công. Sau khi attach toàn bộ thành công, popup xác nhận “`{site_name}` đã nhận được Giấy đăng ký doanh
 nghiệp của bạn và sẽ kiểm duyệt trong 24 giờ (trừ thứ bảy, chủ nhật, ngày nghỉ
 lễ, tết theo quy định)” và refresh checklist xác thực. Khi chưa liên kết công
 ty, nút vẫn disabled kèm liên kết đến phần cập nhật công ty; không tạo trạng
@@ -257,6 +259,11 @@ Hai phương thức giấy tờ là loại trừ nhau. Nếu người dùng đ�
 xóa. Với phương thức hai tệp, hệ thống chỉ xóa bộ cũ sau khi cả giấy ủy quyền
 và giấy tờ định danh đều tải lên thành công.
 
+Backend không dựa vào trạng thái client: lúc attach luôn recheck authenticated
+owner, purpose `employer_verification`, trạng thái `clean` và one-time claim.
+PDF/ảnh còn phải vượt structural parser validation sau malware scan. Tệp clean
+nhưng hỏng cấu trúc vẫn bị từ chối và không tạo `CompanyDocument`.
+
 Ở trạng thái đã lưu, hai radio vẫn hiện ở chế độ chỉ đọc và từng thẻ giấy tờ giữ
 nguyên bố cục minh họa/mẫu như trước khi lưu. Tên mỗi tệp đã nộp là hành động
 **Xem tệp đã nộp**; frontend lấy nội dung qua endpoint riêng tư đã xác thực rồi
@@ -269,19 +276,24 @@ Trang `/tuyendung/app/account/settings/personal-data-protection` có hai mốc
 độc lập. Khối đầu là văn bản thỏa thuận **Ứng viên – Nhà tuyển dụng**: có link
 hướng dẫn, link tải mẫu DOCX tại
 `frontend/public/documents/topcv-mau-van-ban-thong-bao-dong-y-xu-ly-dlcn.docx`,
-ô tải lên DOC/DOCX/PDF tối đa 5 MB và cam đoan trước khi bấm **Lưu**. Mỗi lần
+ô tải lên DOCX/PDF tối đa 5 MB và cam đoan trước khi bấm **Lưu**. Mỗi lần
 chỉ có một tệp cục bộ; chọn tệp mới để thay thế tệp cũ. Backend lưu văn bản này
 theo `RecruiterProfile` (không bắt buộc company), reset trạng thái duyệt khi
 thay tệp, và vẫn đọc văn bản DLCN lịch sử đã từng gắn company. Việc nộp hoặc
 thay thế tài liệu chỉ cần phiên đăng nhập nhà tuyển dụng còn hợp lệ, không bắt
 MFA hoặc xác thực lại; tệp mới luôn chờ admin duyệt.
 
+Trước khi lưu, frontend đưa tệp vào quarantine và chỉ attach khi upload session
+đã `clean`. DOCX được kiểm bounded container structure, PDF được parse strict
+sau scan. Raw DOC/DOCX preview endpoint không còn chạy LibreOffice; với tệp
+local chưa nộp, UI chỉ cho tải lại đúng byte local để người dùng tự kiểm tra.
+
 Sau khi lưu, trang hiển thị nhãn **Hệ thống đang xử lý**, toast xác nhận đã
 nhận giấy tờ và nút **Chỉnh sửa**. Form thay tệp chỉ mở khi chọn nút này, có
 **Lưu** và **Hủy** cạnh nhau. Khi cả bản DLCN lịch sử của company và bản mới
-của recruiter cùng tồn tại, API luôn ưu tiên bản recruiter mới nhất. DOC/DOCX
-qua URL HTTPS storage công khai/S3 có chữ ký mở bằng Google Docs Viewer; PDF
-và URL localhost mở trực tiếp theo định dạng.
+của recruiter cùng tồn tại, API luôn ưu tiên bản recruiter mới nhất. Tài liệu
+đã nộp chỉ được tải/xem qua endpoint binary có authorization và no-store; UI
+không nhận hoặc mở direct storage URL.
 Khối **Văn bản mẫu** và nút tải mẫu vẫn hiện cạnh tệp đã nộp; trạng thái chỉ hiển thị một lần tại tiêu đề. Khi thỏa thuận nền tảng được chấp nhận, trang
 hiển thị chính xác giờ-phút-giây và ngày xác nhận theo múi giờ Việt Nam.
 

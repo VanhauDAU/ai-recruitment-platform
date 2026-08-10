@@ -11,16 +11,21 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.accounts.permissions import IsEmployer
+from apps.uploads.services import UploadServiceError, claim_clean_upload
+from common.public_id import generate_public_id
 from common.r2_storage import private_media_storage
 
 from ...models import Company, CompanyDocument, RecruiterProfile
 from ...selectors import has_explicit_company_link
 from ...services import (
+    EmployerUploadStructureError,
     get_or_create_recruiter,
     get_or_create_verification_case,
     lock_company_update_request,
     record_verification_upload,
+    validate_employer_upload_structure,
 )
+from ..exceptions import EmployerUploadSessionResponse
 from ..serializers import RecruiterProfileSerializer
 
 DOCUMENT_SIGNATURES = {
@@ -33,6 +38,15 @@ DOCUMENT_SIGNATURES = {
         {'application/vnd.openxmlformats-officedocument.wordprocessingml.document'},
     ),
 }
+
+DOCUMENT_CONTENT_TYPES = {
+    CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT: {
+        'application/pdf',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    },
+}
+DEFAULT_DOCUMENT_CONTENT_TYPES = {'application/pdf', 'image/jpeg', 'image/png'}
+EMPLOYER_DOCUMENT_CLAIM_SCOPE = 'employer_document'
 
 VERIFICATION_METHOD_DOCUMENT_TYPES = {
     'business_registration': {CompanyDocument.DocType.BUSINESS_REGISTRATION},
@@ -90,7 +104,8 @@ def _save_document(
     request,
     company,
     doc_type,
-    upload,
+    upload=None,
+    upload_session_public_id='',
     update_request=None,
     recruiter=None,
     verification_method='',
@@ -173,22 +188,71 @@ def _save_document(
         or 0
     )
 
-    digest = hashlib.sha256()
-    for chunk in upload.chunks():
-        digest.update(chunk)
-    upload.seek(0)
-    path = _save_document_file(
-        upload,
-        directory,
-        doc_type,
-    )
+    upload_asset = None
+    document_public_id = generate_public_id('doc')
+    if upload_session_public_id:
+        expected_purpose = (
+            'employer_company_update' if update_request is not None else 'employer_verification'
+        )
+        try:
+            upload_asset = claim_clean_upload(
+                owner=request.user,
+                public_id=upload_session_public_id,
+                expected_purpose=expected_purpose,
+                claim_scope=EMPLOYER_DOCUMENT_CLAIM_SCOPE,
+                claim_reference=document_public_id,
+            )
+        except UploadServiceError as error:
+            raise EmployerUploadSessionResponse(error) from error
+        max_size = getattr(settings, 'IMAGE_UPLOAD_MAX_SIZE', 5 * 1024 * 1024)
+        if upload_asset.size_bytes > max_size:
+            raise ValidationError({'upload_session': 'Giấy tờ phải nhỏ hơn 5 MB.'})
+        allowed_content_types = DOCUMENT_CONTENT_TYPES.get(
+            doc_type,
+            DEFAULT_DOCUMENT_CONTENT_TYPES,
+        )
+        if upload_asset.content_type not in allowed_content_types:
+            allowed = (
+                'PDF hoặc DOCX'
+                if doc_type == CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT
+                else 'JPG, PNG hoặc PDF'
+            )
+            raise ValidationError(
+                {'upload_session': f'Chỉ chấp nhận tệp {allowed} đã quét an toàn.'}
+            )
+        try:
+            validate_employer_upload_structure(upload_asset)
+        except EmployerUploadStructureError as error:
+            raise ValidationError(
+                {'upload_session': 'Nội dung tệp bị lỗi hoặc không đúng định dạng khai báo.'}
+            ) from error
+        path = upload_asset.storage_key
+        mime_type = upload_asset.content_type
+        file_size = upload_asset.size_bytes
+        checksum = upload_asset.checksum_sha256
+        original_name = upload_asset.original_filename
+    else:
+        digest = hashlib.sha256()
+        for chunk in upload.chunks():
+            digest.update(chunk)
+        upload.seek(0)
+        path = _save_document_file(
+            upload,
+            directory,
+            doc_type,
+        )
+        mime_type = upload.content_type or ''
+        file_size = upload.size
+        checksum = digest.hexdigest()
+        original_name = upload.name
     document_name = (
         'Thỏa thuận xử lý DLCN'
         if doc_type == CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT
-        else upload.name
+        else original_name
     )
 
     document = CompanyDocument.objects.create(
+        public_id=document_public_id,
         company=company,
         uploaded_by=request.user,
         update_request=update_request,
@@ -199,9 +263,10 @@ def _save_document(
         doc_type=doc_type,
         file_url=path,
         file_name=document_name,
-        mime_type=upload.content_type or '',
-        file_size=upload.size,
-        sha256=digest.hexdigest(),
+        mime_type=mime_type,
+        file_size=file_size,
+        sha256=checksum,
+        upload_asset=upload_asset,
     )
     if verification_case is not None:
         record_verification_upload(

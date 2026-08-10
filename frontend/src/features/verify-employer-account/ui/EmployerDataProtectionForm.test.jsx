@@ -11,7 +11,6 @@ const {
   getEmployerCompanyDocumentContent,
   getEmployerCompanyDocuments,
   getEmployerProfile,
-  previewEmployerDataProcessingAgreement,
   uploadEmployerDataProcessingAgreement,
 } = vi.hoisted(() => ({
   acceptEmployerDpa: vi.fn(),
@@ -21,7 +20,6 @@ const {
   getEmployerCompanyDocumentContent: vi.fn(),
   getEmployerCompanyDocuments: vi.fn(),
   getEmployerProfile: vi.fn(),
-  previewEmployerDataProcessingAgreement: vi.fn(),
   uploadEmployerDataProcessingAgreement: vi.fn(),
 }))
 const { message } = vi.hoisted(() => ({ message: { error: vi.fn(), success: vi.fn() } }))
@@ -32,7 +30,6 @@ vi.mock('@/entities/employer-profile', () => ({
   getEmployerCompanyDocumentContent,
   getEmployerCompanyDocuments,
   getEmployerProfile,
-  previewEmployerDataProcessingAgreement,
   uploadEmployerDataProcessingAgreement,
 }))
 vi.mock('@/entities/site-settings', () => ({ useSiteSettings: () => ({ siteName: 'TopCV' }) }))
@@ -65,7 +62,6 @@ describe('EmployerDataProtectionForm', () => {
     getEmployerCompanyDocumentContent.mockReset()
     getEmployerCompanyDocuments.mockReset()
     getEmployerProfile.mockReset()
-    previewEmployerDataProcessingAgreement.mockReset()
     uploadEmployerDataProcessingAgreement.mockReset()
     message.error.mockReset()
     message.success.mockReset()
@@ -161,16 +157,13 @@ describe('EmployerDataProtectionForm', () => {
     const preview = await screen.findByTitle('Xem trước thoa-thuan.pdf')
     expect(preview).toHaveAttribute('src', 'http://localhost/selected-pdf')
     expect(createObjectURL).toHaveBeenCalledWith(file)
-    expect(previewEmployerDataProcessingAgreement).not.toHaveBeenCalled()
   })
 
-  it('converts a selected Word agreement to PDF for preview before upload', async () => {
+  it('keeps a selected Word agreement local and offers a download preview', async () => {
     getEmployerProfile.mockResolvedValue({
       onboarding: { candidate_dpa_submitted: false, dpa_accepted: false },
     })
     getEmployerCompanyDocuments.mockResolvedValue([])
-    const convertedPreview = new Blob(['%PDF-preview'], { type: 'application/pdf' })
-    previewEmployerDataProcessingAgreement.mockResolvedValue(convertedPreview)
     const { createObjectURL } = stubObjectUrl('http://localhost/selected-word-preview')
     const user = userEvent.setup()
     const { container } = renderForm()
@@ -182,13 +175,10 @@ describe('EmployerDataProtectionForm', () => {
     await user.upload(container.querySelector('input[type="file"]'), file)
     await user.click(screen.getByRole('button', { name: 'Xem trước tệp thoa-thuan.docx' }))
 
-    await waitFor(() => expect(previewEmployerDataProcessingAgreement).toHaveBeenCalled())
-    expect(previewEmployerDataProcessingAgreement.mock.calls[0][0]).toBe(file)
-    expect(await screen.findByTitle('Xem trước thoa-thuan.docx')).toHaveAttribute(
-      'src',
-      'http://localhost/selected-word-preview',
-    )
-    expect(createObjectURL).toHaveBeenCalledWith(convertedPreview)
+    const download = await screen.findByRole('link', { name: 'Tải tệp đã chọn' })
+    expect(download).toHaveAttribute('href', 'http://localhost/selected-word-preview')
+    expect(download).toHaveAttribute('download', 'thoa-thuan.docx')
+    expect(createObjectURL).toHaveBeenCalledWith(file)
   })
 
   it('rejects an agreement larger than 5MB before submission', async () => {
@@ -340,7 +330,7 @@ describe('EmployerDataProtectionForm', () => {
 
     await waitFor(() => expect(uploadEmployerDataProcessingAgreement).toHaveBeenCalledWith(
       replacement,
-      { replaceDocument: 'doc_dpa_rejected' },
+      expect.objectContaining({ replaceDocument: 'doc_dpa_rejected' }),
     ))
   })
 

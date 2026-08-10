@@ -392,6 +392,13 @@ class CompanyDocument(models.Model):
     mime_type = models.CharField(max_length=120, blank=True)
     file_size = models.PositiveBigIntegerField(default=0)
     sha256 = models.CharField(max_length=64, blank=True, db_index=True)
+    upload_asset = models.OneToOneField(
+        'uploads.UploadAsset',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='employer_document',
+    )
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
     reviewed_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='+'
