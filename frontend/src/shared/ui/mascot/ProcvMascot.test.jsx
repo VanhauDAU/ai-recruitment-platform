@@ -69,4 +69,20 @@ describe('ProcvMascot', () => {
       expect.stringContaining('robot-hand-left-grip-front.webp'),
     ]))
   })
+
+  it('hỗ trợ hướng nhìn xuống và các pose riêng cho form xác thực', () => {
+    const { container, rerender } = render(<ProcvMascot gaze="down" pose="frameGrip" />)
+    expect(container.querySelector('.procv-mascot')).toHaveAttribute('data-gaze', 'down')
+    expect(container.querySelector('.procv-mascot')).toHaveAttribute('data-pose', 'frameGrip')
+    expect(container.querySelector('.procv-mascot__eyes-current')).toHaveAttribute(
+      'src',
+      expect.stringContaining('robot-eyes-look-down.webp'),
+    )
+
+    rerender(<ProcvMascot pose="coverEyes" />)
+    expect(container.querySelectorAll('.procv-mascot__face-arm')).toHaveLength(2)
+
+    rerender(<ProcvMascot pose="peek" />)
+    expect(container.querySelectorAll('.procv-mascot__face-arm')).toHaveLength(1)
+  })
 })

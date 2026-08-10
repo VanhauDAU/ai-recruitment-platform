@@ -3,7 +3,8 @@ import { MASCOT_ASSETS } from './mascot-assets'
 import './mascot.css'
 
 const EMOTIONS = new Set(['neutral', 'happy', 'thinking', 'success', 'error'])
-const POSES = new Set(['neutral', 'wave', 'thumbsUp', 'microphone', 'checklist'])
+const GAZES = new Set(['neutral', 'down'])
+const POSES = new Set(['neutral', 'wave', 'thumbsUp', 'microphone', 'checklist', 'frameGrip', 'coverEyes', 'peek'])
 const SHADOWS = new Set(['floating', 'ground', 'none'])
 
 function Layer({ className = '', src, style }) {
@@ -15,6 +16,7 @@ export default function ProcvMascot({
   className = '',
   emotion = 'neutral',
   float = false,
+  gaze = 'neutral',
   pose = 'neutral',
   shadow = 'none',
   size = 56,
@@ -22,6 +24,7 @@ export default function ProcvMascot({
 }) {
   const [blinkDelay] = useState(() => `${-(Math.random() * 4.5).toFixed(2)}s`)
   const resolvedEmotion = EMOTIONS.has(emotion) ? emotion : 'neutral'
+  const resolvedGaze = GAZES.has(gaze) ? gaze : 'neutral'
   const resolvedPose = POSES.has(pose) ? pose : 'neutral'
   const resolvedShadow = SHADOWS.has(shadow) ? shadow : 'none'
   const arms = MASCOT_ASSETS.arms[resolvedPose]
@@ -31,6 +34,7 @@ export default function ProcvMascot({
       aria-hidden="true"
       className={`procv-mascot ${float ? 'procv-mascot--float' : ''} ${className}`}
       data-emotion={resolvedEmotion}
+      data-gaze={resolvedGaze}
       data-pose={resolvedPose}
       style={{ height: size, width: size }}
     >
@@ -41,16 +45,16 @@ export default function ProcvMascot({
         />
       )}
       <Layer src={MASCOT_ASSETS.body} />
-      <Layer src={arms.right} />
-      <Layer className={resolvedPose === 'wave' ? 'procv-mascot__arm-wave' : ''} src={arms.left} />
+      {arms.right && <Layer src={arms.right} />}
+      {arms.left && <Layer className={resolvedPose === 'wave' ? 'procv-mascot__arm-wave' : ''} src={arms.left} />}
       {arms.prop && <Layer className="procv-mascot__held-prop" src={arms.prop} />}
       {[].concat(arms.front ?? []).map((hand) => (
         <Layer key={hand} className="procv-mascot__hand-front" src={hand} />
       ))}
       <Layer src={MASCOT_ASSETS.head} />
       <Layer
-        className={blink ? 'procv-mascot__eyes-base' : ''}
-        src={MASCOT_ASSETS.eyes[resolvedEmotion]}
+        className={`procv-mascot__eyes-current ${blink ? 'procv-mascot__eyes-base' : ''}`}
+        src={resolvedGaze === 'down' ? MASCOT_ASSETS.eyes.lookDown : MASCOT_ASSETS.eyes[resolvedEmotion]}
         style={blink ? { animationDelay: blinkDelay } : undefined}
       />
       {blink && (
@@ -65,6 +69,13 @@ export default function ProcvMascot({
         src={MASCOT_ASSETS.mouths[resolvedEmotion]}
       />
       {talking && <Layer className="procv-mascot__mouth-talk" src={MASCOT_ASSETS.mouths.happy} />}
+      {(arms.face ?? []).map(({ side, src }) => (
+        <Layer
+          key={src}
+          className={`procv-mascot__face-arm procv-mascot__face-arm--${side}`}
+          src={src}
+        />
+      ))}
     </span>
   )
 }

@@ -5,7 +5,8 @@
 Phase 1 tích hợp mascot vào portal ứng viên đã gồm:
 
 - rig ghép layer với năm cảm xúc (`neutral`, `happy`, `thinking`, `success`,
-  `error`), năm pose (`neutral`, `wave`, `thumbsUp`, `microphone`, `checklist`),
+  `error`), tám pose (`neutral`, `wave`, `thumbsUp`, `microphone`, `checklist`,
+  `frameGrip`, `coverEyes`, `peek`), hướng nhìn xuống,
   blink, talk, float và hai loại shadow;
 - trợ lý mẫu sticky, panel lazy-load, hội thoại theo từ khóa, quick action điều
   hướng thật và liên hệ lấy từ site settings;
@@ -22,6 +23,9 @@ Phase 1 tích hợp mascot vào portal ứng viên đã gồm:
   hiện — tránh chồng hai bộ mắt hoặc hai khẩu hình (rõ nhất ở `success`);
 - xử lý va chạm với banner cookie theo chiều cao thực tế, thanh ứng tuyển mobile
   và `prefers-reduced-motion`;
+- form đăng nhập/đăng ký ứng viên: mắt nhìn xuống khi nhập email, che hai mắt
+  khi nhập mật khẩu ẩn và hé một mắt khi người dùng bật hiển thị mật khẩu; robot
+  nằm ngoài card và dùng hai bàn tay bám vào mép trên nên không chiếm chỗ form;
 - unit/regression test và smoke test responsive cho workflow trợ lý.
 
 Phase này không thay đổi backend, API payload, route, auth guard, storage token

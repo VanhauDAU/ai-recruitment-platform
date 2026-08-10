@@ -19,6 +19,8 @@ import { useSession } from '@/entities/session'
 import { settingText, useSiteSettings } from '@/entities/site-settings'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { EMPLOYER_ACCOUNT_VERIFY_URL, EMPLOYER_COMPLETE_PROFILE_URL, employerAppPath } from '@/shared/config/portals'
+import { toastSoundOptions } from '@/shared/lib/sound-effects'
+import { message } from '@/shared/lib/toast'
 import { shouldSubmitRegistrationOnEnter } from './registration-keyboard'
 
 const REGISTRATION_FIELDS = new Set([
@@ -178,6 +180,7 @@ export default function EmployerRegister() {
         captcha_token: captchaToken,
       })
       setCurrentUser(result.user)
+      message.success('Đăng ký thành công.', toastSoundOptions('done'))
       sessionStorage.removeItem('employer_registration_consent')
       navigate(`${EMPLOYER_ACCOUNT_VERIFY_URL}?registered=1`, { replace: true })
     } catch (err) {

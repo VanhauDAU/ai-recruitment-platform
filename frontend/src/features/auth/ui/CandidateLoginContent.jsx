@@ -31,7 +31,12 @@ export default function CandidateLoginContent({ onSuccess }) {
         <div className="divider-line" />
       </div>
 
-      <LoginForm portal="main" expectedRoles={['candidate']} onSuccess={onSuccess} />
+      <LoginForm
+        portal="main"
+        expectedRoles={['candidate']}
+        onSuccess={onSuccess}
+        withMascot={!onSuccess}
+      />
 
       {/* Register link */}
       <div className="login-field mt-6 text-center">

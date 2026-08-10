@@ -4,10 +4,14 @@ import { useEffect, useState } from 'react'
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
+import { toastSoundOptions } from '@/shared/lib/sound-effects'
+import { message } from '@/shared/lib/toast'
 import {
   AuthLogo,
+  AuthMascot,
   checkRegistrationEmail,
   getAuthDestination,
+  getPasswordRequirements,
   getReturnUrl,
   PasswordRequirements,
   passwordValidationRule,
@@ -26,10 +30,23 @@ export default function Register() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [mode, setMode] = useState('social')
+  const [activeMascotField, setActiveMascotField] = useState(null)
+  const [passwordVisibility, setPasswordVisibility] = useState({ password: false, confirm_password: false })
+  const [validationFailed, setValidationFailed] = useState(false)
   const [emailCheck, setEmailCheck] = useState({ status: 'idle', message: '' })
   const [form] = Form.useForm()
   const password = Form.useWatch('password', form) || ''
   const email = Form.useWatch('email', form) || ''
+  const confirmPassword = Form.useWatch('confirm_password', form) || ''
+  const fullName = Form.useWatch('full_name', form) || ''
+  const termsAccepted = Boolean(Form.useWatch('terms', form))
+  const registrationReady = (
+    fullName.trim().length > 0
+    && emailCheck.status === 'available'
+    && Object.values(getPasswordRequirements(password)).every(Boolean)
+    && confirmPassword === password
+    && termsAccepted
+  )
 
   useEffect(() => {
     const normalized = email.trim().toLowerCase()
@@ -65,6 +82,11 @@ export default function Register() {
     form.resetFields(['password', 'confirm_password'])
   }
 
+  function focusMascotField(field) {
+    setValidationFailed(false)
+    setActiveMascotField(field)
+  }
+
   async function onFinish(values) {
     if (emailCheck.status === 'taken') {
       form.setFields([{ name: 'email', errors: ['Email này đã được sử dụng. Vui lòng dùng email khác.'] }])
@@ -76,6 +98,8 @@ export default function Register() {
       return
     }
     setError('')
+    setValidationFailed(false)
+    setActiveMascotField(null)
     setLoading(true)
     try {
       const captchaToken = await executeRecaptcha('register')
@@ -87,6 +111,7 @@ export default function Register() {
       const result = await register({ ...payload, role: 'candidate', captcha_token: captchaToken, portal: 'main' })
       // Đăng ký xong đăng nhập luôn; email chưa xác thực -> banner nhắc xác thực ở layout.
       setCurrentUser(result.user)
+      message.success('Đăng ký thành công.', toastSoundOptions('done'))
       navigate(getAuthDestination({ user: result.user, returnUrl: getReturnUrl(searchParams) }), { replace: true })
     } catch (err) {
       clearPasswords()
@@ -142,6 +167,15 @@ export default function Register() {
         </p>
       </div>
 
+      <AuthMascot
+        activeField={activeMascotField === 'email' ? 'email' : activeMascotField ? 'password' : null}
+        error={Boolean(error)}
+        invalid={validationFailed}
+        loading={loading}
+        passwordVisible={Boolean(activeMascotField && passwordVisibility[activeMascotField])}
+        success={registrationReady}
+      />
+
       {mode === 'social' ? (
         <>
           <div className="reg-field mb-3">
@@ -174,7 +208,17 @@ export default function Register() {
             <Alert type="error" message={error} showIcon className="mb-4 !rounded-xl reg-field" closable onClose={() => setError('')} />
           )}
 
-          <Form form={form} layout="vertical" onFinish={onFinish} onFinishFailed={clearPasswords} requiredMark={false}>
+          <Form
+            form={form}
+            layout="vertical"
+            onFinish={onFinish}
+            onFinishFailed={() => {
+              clearPasswords()
+              setActiveMascotField(null)
+              setValidationFailed(true)
+            }}
+            requiredMark={false}
+          >
             <div className="reg-field">
               <Form.Item
                 name="full_name"
@@ -208,6 +252,8 @@ export default function Register() {
                   autoComplete="email"
                   prefix={<MailOutlined className="text-[var(--brand-primary)]" />}
                   placeholder="ten@email.com"
+                  onFocus={() => focusMascotField('email')}
+                  onBlur={() => setActiveMascotField(null)}
                   className="!rounded-full !h-11 !text-base"
                 />
               </Form.Item>
@@ -228,6 +274,15 @@ export default function Register() {
                   autoComplete="new-password"
                   prefix={<LockOutlined className="text-[var(--brand-primary)]" />}
                   placeholder="Nhập mật khẩu"
+                  onFocus={() => focusMascotField('password')}
+                  onBlur={() => setActiveMascotField(null)}
+                  visibilityToggle={{
+                    visible: passwordVisibility.password,
+                    onVisibleChange: (visible) => {
+                      setPasswordVisibility((current) => ({ ...current, password: visible }))
+                      focusMascotField('password')
+                    },
+                  }}
                   className="!rounded-full !h-11 !text-base"
                 />
               </Form.Item>
@@ -255,6 +310,15 @@ export default function Register() {
                   autoComplete="new-password"
                   prefix={<LockOutlined className="text-[var(--brand-primary)]" />}
                   placeholder="Nhập lại mật khẩu"
+                  onFocus={() => focusMascotField('confirm_password')}
+                  onBlur={() => setActiveMascotField(null)}
+                  visibilityToggle={{
+                    visible: passwordVisibility.confirm_password,
+                    onVisibleChange: (visible) => {
+                      setPasswordVisibility((current) => ({ ...current, confirm_password: visible }))
+                      focusMascotField('confirm_password')
+                    },
+                  }}
                   className="!rounded-full !h-11 !text-base"
                 />
               </Form.Item>

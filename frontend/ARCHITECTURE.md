@@ -213,6 +213,10 @@ app/router
   (asset MP3 đã có sẵn), `playSpeechStream` và chính sách chờ 429/503. Đặt ở
   `shared` vì cả blog lẫn các bề mặt khác đều dùng, mà feature thì không được
   import feature.
+- `shared/lib/sound-effects` là registry cho UI sound ngắn dùng lại được;
+  `shared/ui/ToastSoundEffect` preload và phát âm thanh theo semantic class của
+  Sonner. Workflow chỉ chọn sound qua toast options; lỗi audio luôn best-effort,
+  không được chặn submit, navigation hoặc cập nhật session.
 - `entities/speech` sở hữu contract session/status dùng lại được nhưng không
   import blog: `createBlogSpeechSession` cho bài viết đã đăng,
   `createTextSpeechSession` bắt buộc surface và `getSpeechAdminOverview` cho

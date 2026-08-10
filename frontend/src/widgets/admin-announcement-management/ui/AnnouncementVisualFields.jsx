@@ -1,10 +1,11 @@
 import { DeleteOutlined, UploadOutlined } from '@ant-design/icons'
-import { Button, ColorPicker, Form, Input, Select, Space, Upload, message } from 'antd'
+import { Button, ColorPicker, Form, Input, Select, Space, Upload } from 'antd'
 import { useState } from 'react'
 import {
   ANNOUNCEMENT_THEME_MODES,
   uploadAdminAnnouncementBackground,
 } from '@/entities/announcement'
+import { message } from '@/shared/lib/toast'
 import {
   BG_FIT_OPTIONS,
   BG_OVERLAY_OPTIONS,
