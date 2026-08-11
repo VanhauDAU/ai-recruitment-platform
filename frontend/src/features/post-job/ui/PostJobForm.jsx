@@ -139,7 +139,7 @@ export default function PostJobForm({
       onFieldsChange={(_, allFields) => updateInvalidSections(allFields)}
       onFinishFailed={({ errorFields }) => updateInvalidSections(errorFields)}
     >
-      <div className="grid items-start gap-4 bg-[#fafafa] p-4 sm:p-5 xl:pt-0 xl:grid-cols-[280px_minmax(0,1fr)] 2xl:grid-cols-[280px_minmax(0,1fr)_300px]">
+      <div className="grid items-start gap-4 bg-[#fafafa] p-4 sm:p-5 xl:pt-4 xl:grid-cols-[280px_minmax(0,1fr)] 2xl:grid-cols-[280px_minmax(0,1fr)_300px]">
         <div className="post-job-sticky-col min-w-0">
           <JobFormProgress
             sections={sections}

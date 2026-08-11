@@ -42,16 +42,18 @@
 
  /*
  * Cột trái (tiến độ) sticky từ xl, cột phải (xem trước) từ 2xl — cùng bám theo chiều cao vùng cuộn.
- * top: 0 khớp với xl:pt-0 của vùng cuộn và lưới nên vị trí trước/sau khi dính là một.
+ * top: 16px khớp với xl:pt-4 của lưới nên giữ dải nền phía trên và vị trí
+ * trước/sau khi dính là một.
  * --workspace-viewport do EmployerWorkspaceLayout công bố theo đúng chiều cao
  * scrollport. Không dùng 100% ở đây: phần trăm sẽ bám theo grid cao bằng toàn form.
- * Trừ thêm 56px cho padding dưới và khoảng thở để footer luôn nằm trong viewport.
+ * Trừ thêm 72px cho top gutter, padding dưới và khoảng thở để footer luôn nằm
+ * trong viewport.
  */
 @media (min-width: 1280px) {
   .post-job-sticky-col {
     position: sticky;
-    top: 0;
-    max-height: calc(var(--workspace-viewport, 100dvh) - 56px);
+    top: 16px;
+    max-height: calc(var(--workspace-viewport, 100dvh) - 72px);
     overflow-y: auto;
     scrollbar-width: thin;
   }
@@ -61,8 +63,8 @@
 @media (min-width: 1536px) {
   .post-job-preview-col {
     position: sticky;
-    top: 0;
-    height: calc(var(--workspace-viewport, 100dvh) - 56px);
+    top: 16px;
+    height: calc(var(--workspace-viewport, 100dvh) - 72px);
     min-height: 0;
   }
 

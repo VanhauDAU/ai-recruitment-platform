@@ -17,6 +17,28 @@ async function expectVisibleActionBackground(locator) {
   })).toBe(true)
 }
 
+async function expectJobFormTopBackground(page) {
+  const scroller = page
+    .getByTestId('employer-workspace')
+    .locator('main.ant-layout-content')
+  const form = page.locator('form.post-job-form')
+  const grid = form.locator(':scope > div')
+  const firstColumn = grid.locator(':scope > div').first()
+
+  await scroller.evaluate((element) => { element.scrollTop = 0 })
+  await expect(grid).toHaveCSS('background-color', 'rgb(250, 250, 250)')
+  await expect.poll(async () => grid.evaluate((element) => (
+    Number.parseFloat(getComputedStyle(element).paddingTop)
+  ))).toBeGreaterThanOrEqual(16)
+  await expect.poll(async () => {
+    const [gridRect, firstColumnRect] = await Promise.all([
+      grid.evaluate((element) => element.getBoundingClientRect().toJSON()),
+      firstColumn.evaluate((element) => element.getBoundingClientRect().toJSON()),
+    ])
+    return Math.round(firstColumnRect.top - gridRect.top)
+  }).toBeGreaterThanOrEqual(16)
+}
+
 async function expectJobPreviewPinned(page) {
   const scroller = page
     .getByTestId('employer-workspace')
@@ -1038,6 +1060,7 @@ test('employer jobs: manual job form exposes the complete five-section workflow'
   await initialCatalogResponses
 
   await expect(page.getByLabel('Tiêu đề tin')).toBeVisible()
+  await expectJobFormTopBackground(page)
   if (hasDesktopPreview) {
     await expectJobPreviewPinned(page)
     const jobListPreview = page.getByRole('radio', { name: 'Danh sách việc làm' })
@@ -1135,6 +1158,7 @@ test('employer jobs: manual job form exposes the complete five-section workflow'
   await expect(page.getByLabel('Đến mức')).toHaveValue('7.000.000')
   await expect(page.getByLabel('Từ thứ')).toHaveCount(0)
   await expect(page.getByLabel('Mô tả thời gian làm việc')).toHaveValue('Làm việc linh hoạt theo lịch của đội ngũ.')
+  await expectJobFormTopBackground(page)
   if (hasDesktopPreview) await expectJobPreviewPinned(page)
 })
 
