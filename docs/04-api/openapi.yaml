@@ -6279,6 +6279,126 @@ paths:
               schema:
                 $ref: '#/components/schemas/AdminJobReport'
           description: ''
+  /api/jobs/alerts/:
+    get:
+      operationId: candidate_job_alert_list
+      tags:
+      - jobs
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobAlertListResponse'
+          description: ''
+    post:
+      operationId: candidate_job_alert_create
+      tags:
+      - jobs
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JobAlertCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/JobAlertCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/JobAlertCreateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobAlertRead'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+          description: Lỗi validation theo field, hoặc lỗi nghiệp vụ có `code` ổn định
+            (`duplicate_alert`, `alert_limit_reached`, `email_unverified`).
+  /api/jobs/alerts/{public_id}/:
+    get:
+      operationId: candidate_job_alert_retrieve
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - jobs
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobAlertRead'
+          description: ''
+    patch:
+      operationId: candidate_job_alert_update
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - jobs
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedJobAlertWriteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedJobAlertWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedJobAlertWriteRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobAlertRead'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+          description: Lỗi validation theo field, hoặc lỗi nghiệp vụ có `code` ổn định
+            (`duplicate_alert`, `email_unverified`).
+    delete:
+      operationId: candidate_job_alert_delete
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - jobs
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
   /api/jobs/benefits/:
     get:
       operationId: jobs_benefits_list
@@ -17197,6 +17317,16 @@ components:
         * `feature` - Feature
         * `position` - Position
         * `audience` - Audience
+    CategoryTypeF20Enum:
+      enum:
+      - occupation_group
+      - domain
+      - specialization
+      type: string
+      description: |-
+        * `occupation_group` - Nhóm nghề
+        * `domain` - Kiến thức chuyên ngành
+        * `specialization` - Vị trí chuyên môn
     CategoryWriteRequest:
       type: object
       properties:
@@ -21110,6 +21240,14 @@ components:
           maxLength: 500
       required:
       - content
+    FrequencyEnum:
+      enum:
+      - daily
+      - weekly
+      type: string
+      description: |-
+        * `daily` - Hằng ngày
+        * `weekly` - Hằng tuần
     GenderEnum:
       enum:
       - male
@@ -21230,6 +21368,227 @@ components:
       required:
       - code
       - name
+    JobAlertCategoryRead:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        category_type:
+          $ref: '#/components/schemas/CategoryTypeF20Enum'
+      required:
+      - category_type
+      - id
+      - name
+    JobAlertCreateRequest:
+      type: object
+      description: 'POST contract: newly created alerts are active and cannot choose
+        state.'
+      properties:
+        keyword:
+          type: string
+          minLength: 1
+          maxLength: 255
+        keyword_scope:
+          $ref: '#/components/schemas/KeywordScopeEnum'
+        category_ids:
+          type: array
+          items:
+            type: integer
+        province_id:
+          type: integer
+          nullable: true
+        ward_id:
+          type: integer
+          nullable: true
+        salary_bucket:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/SalaryBucketEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        experience_years:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/ExperienceYearsEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        work_type:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/WorkTypeEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        employment_type:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/EmploymentTypeEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        frequency:
+          $ref: '#/components/schemas/FrequencyEnum'
+      required:
+      - keyword
+    JobAlertListResponse:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/JobAlertRead'
+        limit:
+          type: integer
+        remaining:
+          type: integer
+      required:
+      - limit
+      - remaining
+      - results
+    JobAlertLocationRead:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        level:
+          $ref: '#/components/schemas/LocationLevelEnum'
+      required:
+      - id
+      - level
+      - name
+    JobAlertRead:
+      type: object
+      properties:
+        public_id:
+          type: string
+          readOnly: true
+        keyword:
+          type: string
+          readOnly: true
+        keyword_scope:
+          allOf:
+          - $ref: '#/components/schemas/KeywordScopeEnum'
+          readOnly: true
+        keyword_scope_label:
+          type: string
+          readOnly: true
+        category_ids:
+          type: array
+          items:
+            type: integer
+          readOnly: true
+        categories:
+          type: array
+          items:
+            $ref: '#/components/schemas/JobAlertCategoryRead'
+          readOnly: true
+        province_id:
+          type: integer
+          readOnly: true
+          nullable: true
+        province:
+          allOf:
+          - $ref: '#/components/schemas/JobAlertLocationRead'
+          nullable: true
+          readOnly: true
+        ward_id:
+          type: integer
+          readOnly: true
+          nullable: true
+        ward:
+          allOf:
+          - $ref: '#/components/schemas/JobAlertLocationRead'
+          nullable: true
+          readOnly: true
+        salary_bucket:
+          readOnly: true
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/SalaryBucketEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        salary_bucket_label:
+          type: string
+          readOnly: true
+          nullable: true
+        experience_years:
+          readOnly: true
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/ExperienceYearsEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        experience_years_label:
+          type: string
+          readOnly: true
+          nullable: true
+        work_type:
+          readOnly: true
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/WorkTypeEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        work_type_label:
+          type: string
+          readOnly: true
+          nullable: true
+        employment_type:
+          readOnly: true
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/EmploymentTypeEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        employment_type_label:
+          type: string
+          readOnly: true
+          nullable: true
+        frequency:
+          allOf:
+          - $ref: '#/components/schemas/FrequencyEnum'
+          readOnly: true
+        frequency_label:
+          type: string
+          readOnly: true
+        is_active:
+          type: boolean
+          readOnly: true
+        next_delivery_at:
+          type: string
+          format: date-time
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - categories
+      - category_ids
+      - created_at
+      - employment_type
+      - employment_type_label
+      - experience_years
+      - experience_years_label
+      - frequency
+      - frequency_label
+      - is_active
+      - keyword
+      - keyword_scope
+      - keyword_scope_label
+      - next_delivery_at
+      - province
+      - province_id
+      - public_id
+      - salary_bucket
+      - salary_bucket_label
+      - updated_at
+      - ward
+      - ward_id
+      - work_type
+      - work_type_label
     JobApplicationContact:
       type: object
       properties:
@@ -22264,6 +22623,16 @@ components:
           description: public_id công ty
       required:
       - company
+    KeywordScopeEnum:
+      enum:
+      - title
+      - company
+      - both
+      type: string
+      description: |-
+        * `title` - Tên việc làm
+        * `company` - Tên công ty
+        * `both` - Tên việc làm hoặc công ty
     Language:
       type: object
       properties:
@@ -24324,6 +24693,53 @@ components:
           type: string
           minLength: 1
           nullable: true
+    PatchedJobAlertWriteRequest:
+      type: object
+      properties:
+        keyword:
+          type: string
+          minLength: 1
+          maxLength: 255
+        keyword_scope:
+          $ref: '#/components/schemas/KeywordScopeEnum'
+        category_ids:
+          type: array
+          items:
+            type: integer
+        province_id:
+          type: integer
+          nullable: true
+        ward_id:
+          type: integer
+          nullable: true
+        salary_bucket:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/SalaryBucketEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        experience_years:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/ExperienceYearsEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        work_type:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/WorkTypeEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        employment_type:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/EmploymentTypeEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        frequency:
+          $ref: '#/components/schemas/FrequencyEnum'
+        is_active:
+          type: boolean
     PatchedManagedAccountRequest:
       type: object
       properties:
@@ -26364,6 +26780,24 @@ components:
         * `candidate` - candidate
         * `employer` - employer
         * `admin` - admin
+    SalaryBucketEnum:
+      enum:
+      - u10
+      - 10-15
+      - 15-20
+      - 20-25
+      - 25-30
+      - 30-50
+      - o50
+      type: string
+      description: |-
+        * `u10` - Dưới 10 triệu
+        * `10-15` - 10 - 15 triệu
+        * `15-20` - 15 - 20 triệu
+        * `20-25` - 20 - 25 triệu
+        * `25-30` - 25 - 30 triệu
+        * `30-50` - 30 - 50 triệu
+        * `o50` - Trên 50 triệu
     SalaryTypeEnum:
       enum:
       - negotiable

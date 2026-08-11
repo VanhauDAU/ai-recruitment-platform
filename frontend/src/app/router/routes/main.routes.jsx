@@ -16,6 +16,7 @@ import {
   ForgotPasswordPage,
   HomePage,
   JobDetailPage,
+  JobAlertSettingsPage,
   JobListPage,
   KnowledgeCategoryPage,
   KnowledgeDetailPage,
@@ -53,6 +54,7 @@ const ACCOUNT_PAGE_BY_KEY = {
   'suggestion-settings': JobPreferenceSettingsPage,
   'change-password': ChangePasswordPage,
   'email-settings': EmailNotificationSettingsPage,
+  'job-notifications': JobAlertSettingsPage,
   'matching-jobs': MatchingJobsPage,
   security: SecuritySettingsPage,
 }

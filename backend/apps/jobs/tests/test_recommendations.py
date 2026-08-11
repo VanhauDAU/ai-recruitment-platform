@@ -13,6 +13,7 @@ from apps.candidates.models import (
 from apps.cvs.models import UserCv
 from apps.cvs.services import create_initial_document
 from apps.employers.models import Company
+from apps.employers.tests.readiness_helpers import make_employer_ready
 from apps.skills.models import Skill
 
 from ..models import Job, JobCategory, JobCategoryAssignment, JobSkill
@@ -34,6 +35,7 @@ class CvJobRecommendationApiTests(APITestCase):
             company_name='Recommendation Co',
             created_by=self.employer,
         )
+        make_employer_ready(self.employer, company=self.company, candidate_data=True)
         self.specialization = JobCategory.objects.create(
             name='Fullstack Developer',
             category_type=JobCategory.CategoryType.SPECIALIZATION,

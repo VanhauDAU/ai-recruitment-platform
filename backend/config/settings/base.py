@@ -594,6 +594,7 @@ CELERY_TASK_ROUTES = {
     'apps.cvs.tasks.*': {'queue': 'cv-export'},
     'apps.speech.tasks.*': {'queue': 'speech-artifacts'},
     'apps.uploads.tasks.*': {'queue': 'upload-scan'},
+    'apps.jobs.tasks.*': {'queue': 'candidate-email'},
 }
 CELERY_TASK_ACKS_LATE = True
 CELERY_TASK_REJECT_ON_WORKER_LOST = True
@@ -601,6 +602,18 @@ CELERY_TASK_TIME_LIMIT = 60
 CELERY_TASK_SOFT_TIME_LIMIT = 50
 EMPLOYER_EVENT_RETENTION_DAYS = config('EMPLOYER_EVENT_RETENTION_DAYS', default=730, cast=int)
 CELERY_BEAT_SCHEDULE = {
+    'prepare-due-candidate-job-digests': {
+        'task': 'apps.jobs.tasks.prepare_due_candidate_job_digests',
+        'schedule': 300.0,
+    },
+    'dispatch-pending-candidate-job-digests': {
+        'task': 'apps.jobs.tasks.dispatch_pending_candidate_job_digests',
+        'schedule': 300.0,
+    },
+    'purge-candidate-job-digest-history': {
+        'task': 'apps.jobs.tasks.purge_candidate_job_digest_history',
+        'schedule': 86400.0,
+    },
     'dispatch-pending-auth-email-jobs': {
         'task': 'apps.accounts.tasks.auth_email.dispatch_pending_auth_email_jobs',
         'schedule': 60.0,

@@ -7,7 +7,8 @@ import {
   StopOutlined,
   TeamOutlined,
 } from '@ant-design/icons'
-import { Button, Dropdown, Modal, Tooltip } from 'antd'
+import { Button, Dropdown, Tooltip } from 'antd'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router'
 import { employerAppPath } from '@/shared/config/portals'
 import { employerJobApplicationsPath } from './job-list-presentation'
@@ -27,26 +28,9 @@ function primaryAction(job) {
   return null
 }
 
-function confirmClose(job, onClose) {
-  Modal.confirm({
-    title: 'Đóng tin tuyển dụng?',
-    content: 'Tin sẽ ngừng hiển thị với ứng viên.',
-    okText: 'Đóng tin',
-    cancelText: 'Hủy',
-    okButtonProps: { danger: true },
-    onOk: () => onClose(job.public_id),
-  })
-}
-
-function confirmDelete(job, onDelete) {
-  Modal.confirm({
-    title: 'Xóa bản nháp này?',
-    content: 'Thao tác này không thể hoàn tác.',
-    okText: 'Xóa bản nháp',
-    cancelText: 'Hủy',
-    okButtonProps: { danger: true },
-    onOk: () => onDelete(job.public_id),
-  })
+function jobDisplayTitle(job) {
+  if (job.title) return job.title
+  return job.status === 'draft' ? 'Tin nháp chưa đặt tên' : 'Tin tuyển dụng chưa đặt tên'
 }
 
 function menuItems(job, {
@@ -54,7 +38,10 @@ function menuItems(job, {
   onClose,
   onDelete,
   onDuplicate,
+  closeMenu,
+  queueConfirmation,
 }) {
+  const jobTitle = jobDisplayTitle(job)
   const items = [
     {
       key: 'detail',
@@ -80,7 +67,10 @@ function menuItems(job, {
     key: 'duplicate',
     icon: <CopyOutlined />,
     label: 'Sao chép thành bản nháp',
-    onClick: () => onDuplicate(job.public_id),
+    onClick: () => {
+      closeMenu()
+      onDuplicate(job.public_id)
+    },
   })
   if (job.status === 'active' && !job.is_expired) {
     items.push(
@@ -90,7 +80,20 @@ function menuItems(job, {
         danger: true,
         icon: <StopOutlined />,
         label: 'Đóng tin',
-        onClick: () => confirmClose(job, onClose),
+        onClick: () => queueConfirmation({
+          cancelText: 'Đóng',
+          confirmText: 'Đóng tin',
+          danger: true,
+          description: (
+            <>
+              Bạn có chắc muốn đóng tin tuyển dụng <strong>{jobTitle}</strong> không?
+              <br />
+              Tin sẽ ngừng hiển thị với ứng viên.
+            </>
+          ),
+          onConfirm: () => onClose(job.public_id),
+          title: 'Đóng tin tuyển dụng',
+        }),
       },
     )
   }
@@ -102,7 +105,20 @@ function menuItems(job, {
         danger: true,
         icon: <DeleteOutlined />,
         label: 'Xóa bản nháp',
-        onClick: () => confirmDelete(job, onDelete),
+        onClick: () => queueConfirmation({
+          cancelText: 'Đóng',
+          confirmText: 'Xóa bản nháp',
+          danger: true,
+          description: (
+            <>
+              Bạn có chắc muốn xóa bản nháp <strong>{jobTitle}</strong> không?
+              <br />
+              Bản nháp sẽ bị xóa vĩnh viễn và không thể hoàn tác.
+            </>
+          ),
+          onConfirm: () => onDelete(job.public_id),
+          title: 'Xóa bản nháp',
+        }),
       },
     )
   }
@@ -149,9 +165,22 @@ export default function JobListActions({
   onClose,
   onDelete,
   onDuplicate,
+  requestConfirmation,
   candidateDataAccess = false,
 }) {
   const action = primaryAction(job)
+  const jobTitle = jobDisplayTitle(job)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const confirmationTimer = useRef(null)
+
+  useEffect(() => () => window.clearTimeout(confirmationTimer.current), [])
+
+  const queueConfirmation = (options) => {
+    setMenuOpen(false)
+    window.clearTimeout(confirmationTimer.current)
+    confirmationTimer.current = window.setTimeout(() => requestConfirmation(options))
+  }
+
   return (
     <div data-testid="job-mobile-actions" className="relative ml-auto flex items-center justify-end gap-1">
       {!action && <QuickActions job={job} candidateDataAccess={candidateDataAccess} />}
@@ -167,17 +196,21 @@ export default function JobListActions({
         menu={{
           items: menuItems(job, {
             candidateDataAccess,
+            closeMenu: () => setMenuOpen(false),
             onClose,
             onDelete,
             onDuplicate,
+            queueConfirmation,
           }),
         }}
+        open={menuOpen}
+        onOpenChange={setMenuOpen}
         placement="bottomRight"
         trigger={['click']}
       >
         <Button
           type="text"
-          aria-label={`Mở thao tác cho ${job.title}`}
+          aria-label={`Mở thao tác cho ${jobTitle}`}
           className="!h-8 !w-8 !rounded-lg !p-0 !text-slate-500 hover:!bg-slate-100 hover:!text-slate-900"
           icon={<MoreOutlined />}
           loading={closing || deleting || duplicating}

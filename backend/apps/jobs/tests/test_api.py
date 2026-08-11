@@ -51,6 +51,7 @@ class JobSuggestionApiTests(APITestCase):
             role=User.Role.EMPLOYER,
         )
         company = Company.objects.create(company_name='Acme', created_by=user)
+        make_employer_ready(user, company=company, candidate_data=True)
         Job.objects.create(
             posted_by=user,
             company=company,
@@ -73,6 +74,11 @@ class JobViewTrackingApiTests(APITestCase):
             role=User.Role.EMPLOYER,
         )
         self.company = Company.objects.create(company_name='Views Inc.', created_by=self.user)
+        self.recruiter = make_employer_ready(
+            self.user,
+            company=self.company,
+            candidate_data=True,
+        )
         self.job = Job.objects.create(
             posted_by=self.user,
             company=self.company,
@@ -89,9 +95,8 @@ class JobViewTrackingApiTests(APITestCase):
         self.assertEqual(self.job.view_count, 0)
 
     def test_paused_campaign_hides_job_from_every_public_read_and_tracking_surface(self):
-        recruiter = RecruiterProfile.objects.create(user=self.user, company=self.company)
         campaign = RecruitmentCampaign.objects.create(
-            owner=recruiter,
+            owner=self.recruiter,
             company=self.company,
             name='Visibility campaign',
             status=RecruitmentCampaign.Status.ACTIVE,
@@ -273,6 +278,7 @@ class JobSalaryBucketFilterTests(APITestCase):
             role=User.Role.EMPLOYER,
         )
         self.company = Company.objects.create(company_name='Acme', created_by=self.user)
+        make_employer_ready(self.user, company=self.company, candidate_data=True)
 
     def create_job(self, title, salary_min, salary_max):
         return Job.objects.create(

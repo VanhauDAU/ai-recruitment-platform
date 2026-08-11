@@ -1,6 +1,6 @@
 import { BankOutlined, CheckCircleFilled, EditOutlined, LinkOutlined, SafetyCertificateOutlined, UploadOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Alert, Avatar, Button, Image, Modal, Skeleton, Tag } from 'antd'
+import { Alert, Avatar, Button, Image, Skeleton, Tag } from 'antd'
 import { useState } from 'react'
 import {
   changeEmployerCompanyUpdateRequestLifecycle,
@@ -10,6 +10,7 @@ import {
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { sanitizeHtml } from '@/shared/lib/sanitize-html'
 import { message } from '@/shared/lib/toast'
+import ConfirmAction from '@/shared/ui/ConfirmAction'
 import CompanyForm from './CompanyForm'
 
 const VERIFICATION_STATUS = {
@@ -162,24 +163,27 @@ export default function LinkedCompanyPanel({ profile, catalogs, industries, onRe
                         : 'Tạo yêu cầu'}
                 </Button>
                 {activeRequest?.allowed_actions?.includes('withdraw') && (
-                  <Button
-                    type="link"
+                  <ConfirmAction
+                    title="Rút yêu cầu cập nhật"
+                    description={(
+                      <>
+                        Bạn có chắc muốn rút yêu cầu cập nhật công ty không?
+                        <br />
+                        Yêu cầu sẽ dừng xử lý. Bạn có thể tạo yêu cầu mới sau đó.
+                      </>
+                    )}
+                    confirmText="Rút yêu cầu"
+                    cancelText="Đóng"
                     danger
-                    disabled={writeLocked}
-                    onClick={() => Modal.confirm({
-                      title: 'Rút yêu cầu cập nhật?',
-                      content: 'Yêu cầu sẽ dừng xử lý. Bạn có thể tạo yêu cầu mới sau đó.',
-                      okText: 'Rút yêu cầu',
-                      okButtonProps: { danger: true },
-                      cancelText: 'Quay lại',
-                      onOk: () => closeMutation.mutateAsync({
-                        request: activeRequest,
-                        action: 'withdraw',
-                      }),
+                    onConfirm={() => closeMutation.mutateAsync({
+                      request: activeRequest,
+                      action: 'withdraw',
                     })}
                   >
-                    Rút yêu cầu
-                  </Button>
+                    <Button type="link" danger disabled={writeLocked}>
+                      Rút yêu cầu
+                    </Button>
+                  </ConfirmAction>
                 )}
               </div>
             )}

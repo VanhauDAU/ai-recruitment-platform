@@ -399,6 +399,49 @@ describe('EmployerCompanySettings', () => {
     expect(screen.queryByText('Lý do từ chối của yêu cầu cũ.')).not.toBeInTheDocument()
   })
 
+  it('confirms withdrawing an update request in the shared accessible dialog', async () => {
+    api.getEmployerProfile.mockResolvedValue({
+      onboarding: { company_linked: true },
+      company_role: 'owner',
+      company: {
+        public_id: 'co_linked',
+        company_name: 'Công ty đã liên kết',
+        tax_code: '0101234567',
+        verification_status: 'verified',
+        industries_detail: [],
+        images: [],
+      },
+    })
+    api.getEmployerCompanyUpdateRequests.mockResolvedValue([{
+      public_id: 'cur_submitted',
+      status: 'submitted',
+      lock_version: 4,
+      changes: { address: 'Đà Nẵng' },
+      allowed_actions: ['withdraw'],
+      submitted_at: '2026-08-10T00:00:00Z',
+    }])
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter><EmployerCompanySettings /></MemoryRouter>
+      </QueryClientProvider>,
+    )
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Rút yêu cầu' }))
+    const dialog = await screen.findByRole('dialog', { name: 'Rút yêu cầu cập nhật' })
+    expect(within(dialog).getByText(/Yêu cầu sẽ dừng xử lý/)).toBeInTheDocument()
+
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Rút yêu cầu' }))
+    await waitFor(() => {
+      expect(api.changeEmployerCompanyUpdateRequestLifecycle).toHaveBeenCalledWith(
+        'cur_submitted',
+        'withdraw',
+        { lock_version: 4 },
+      )
+    })
+  })
+
   it('shows gallery images uploaded in the previous pending revision', async () => {
     api.getEmployerProfile.mockResolvedValue({
       onboarding: { company_linked: true },

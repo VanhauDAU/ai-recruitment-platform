@@ -96,6 +96,7 @@ export default function JobListCard({
   onClose,
   onDelete,
   onDuplicate,
+  requestConfirmation,
   candidateDataAccess = false,
 }) {
   const status = jobStatusMeta(job)
@@ -161,6 +162,7 @@ export default function JobListCard({
           onClose={onClose}
           onDelete={onDelete}
           onDuplicate={onDuplicate}
+          requestConfirmation={requestConfirmation}
         />
       </div>
     </article>

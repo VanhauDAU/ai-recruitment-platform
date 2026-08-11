@@ -7,7 +7,7 @@ import {
   UserOutlined,
 } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
-import { Avatar, Button, ConfigProvider, Drawer, Layout, Popconfirm, Typography } from 'antd'
+import { Avatar, Button, ConfigProvider, Drawer, Layout, Typography } from 'antd'
 import viVN from 'antd/locale/vi_VN'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { matchPath, Outlet, useLocation, useNavigate } from 'react-router'
@@ -31,6 +31,7 @@ import { ANNOUNCEMENT_SURFACES } from '@/entities/announcement'
 import { useSession } from '@/entities/session'
 import { BrandLogo } from '@/entities/site-settings'
 import { adminPath } from '@/shared/config/portals'
+import ConfirmAction from '@/shared/ui/ConfirmAction'
 import { AnnouncementStrip } from '@/widgets/announcement-strip'
 import { ADMIN_ROUTES } from '../router/admin/admin-routes.config'
 import { ADMIN_NAVIGATION } from '../router/admin/admin-navigation.config'
@@ -320,14 +321,13 @@ export default function DashboardLayout() {
                   </div>
                 </div>
               </button>
-              <Popconfirm
-                title="Đăng xuất khỏi phiên này?"
-                description="Bạn sẽ cần đăng nhập lại để tiếp tục quản lý hệ thống."
-                okText="Đăng xuất"
+              <ConfirmAction
+                title="Đăng xuất"
+                description="Bạn có chắc muốn đăng xuất khỏi phiên này? Bạn sẽ cần đăng nhập lại để tiếp tục quản lý hệ thống."
+                confirmText="Đăng xuất"
                 cancelText="Ở lại"
-                okButtonProps={{ danger: true }}
+                danger
                 onConfirm={logout}
-                placement="bottomRight"
               >
                 <Button
                   className="admin-icon-button"
@@ -335,7 +335,7 @@ export default function DashboardLayout() {
                   aria-label="Đăng xuất"
                   title="Đăng xuất"
                 />
-              </Popconfirm>
+              </ConfirmAction>
             </div>
           </Header>
           <AnnouncementStrip

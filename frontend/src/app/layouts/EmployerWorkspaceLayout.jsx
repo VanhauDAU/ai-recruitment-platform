@@ -298,7 +298,7 @@ export default function EmployerWorkspaceLayout() {
                 selectedKeys={[employerSelectedMenuKey(pathname)]}
                 items={EMPLOYER_NAV_ITEMS}
                 onClick={navigateFromMenu}
-                className="!border-0 !bg-white [&_.ant-menu-item]:!mx-2 [&_.ant-menu-item]:!my-0.5 [&_.ant-menu-item]:!h-10 [&_.ant-menu-item]:!w-auto [&_.ant-menu-item]:!rounded-lg [&_.ant-menu-item]:!px-3 [&_.ant-menu-item]:!text-xs [&_.ant-menu-item-divider]:!my-2 [&_.ant-menu-item-selected]:!bg-emerald-50 [&_.ant-menu-item-selected]:!font-bold [&_.ant-menu-item-selected]:!text-emerald-600 [&.ant-menu-inline-collapsed_.ant-menu-item]:!flex [&.ant-menu-inline-collapsed_.ant-menu-item]:!w-12 [&.ant-menu-inline-collapsed_.ant-menu-item]:!items-center [&.ant-menu-inline-collapsed_.ant-menu-item]:!justify-center [&.ant-menu-inline-collapsed_.ant-menu-item]:!px-0 [&.ant-menu-inline-collapsed_.ant-menu-item_.anticon]:!mr-0 [&.ant-menu-inline-collapsed_.ant-menu-item_.anticon]:!text-xl"
+                className="!border-0 !bg-white [&>.ant-menu-item]:!px-3 [&>.ant-menu-submenu>.ant-menu-submenu-title]:!px-3 [&_.ant-menu-item]:!mx-2 [&_.ant-menu-item]:!my-0.5 [&_.ant-menu-item]:!h-10 [&_.ant-menu-item]:!w-auto [&_.ant-menu-item]:!rounded-lg [&_.ant-menu-item]:!text-xs [&_.ant-menu-sub_.ant-menu-item]:!pl-8 [&_.ant-menu-item-divider]:!my-2 [&_.ant-menu-item-selected]:!bg-emerald-50 [&_.ant-menu-item-selected]:!font-bold [&_.ant-menu-item-selected]:!text-emerald-600 [&.ant-menu-inline-collapsed_.ant-menu-item]:!flex [&.ant-menu-inline-collapsed_.ant-menu-item]:!w-12 [&.ant-menu-inline-collapsed_.ant-menu-item]:!items-center [&.ant-menu-inline-collapsed_.ant-menu-item]:!justify-center [&.ant-menu-inline-collapsed_.ant-menu-item]:!px-0 [&.ant-menu-inline-collapsed_.ant-menu-item_.anticon]:!mr-0 [&.ant-menu-inline-collapsed_.ant-menu-item_.anticon]:!text-xl"
               />
             </div>
 
@@ -350,7 +350,12 @@ export default function EmployerWorkspaceLayout() {
             )}
           </div>
           <Content
-            className="min-h-0 min-w-0 overflow-x-hidden overflow-y-auto bg-[#edf1f5] p-2.5 pt-0 [--workspace-viewport:100%] sm:p-5 sm:pt-0 xl:p-6 xl:pt-0"
+            className="min-h-0 min-w-0 overflow-x-hidden overflow-y-auto bg-[#edf1f5] p-2.5 pt-0 sm:p-5 sm:pt-0 xl:p-6 xl:pt-0"
+            style={{
+              // 56px topbar + 48px route bar. A percentage here would resolve
+              // against each descendant's containing block, not this scrollport.
+              '--workspace-viewport': 'calc(100dvh - 104px - var(--announcement-strip-height, 0px))',
+            }}
           >
             <div className="mx-auto w-full max-w-[1320px]">
               <Outlet />

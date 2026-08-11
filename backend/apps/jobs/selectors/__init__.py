@@ -1,5 +1,6 @@
 """Public read/query API for the jobs domain."""
 
+from .alerts import candidate_job_alerts
 from .employer import (
     attach_job_candidate_previews,
     employer_job_detail_queryset,
@@ -19,6 +20,7 @@ from .verification_badge import badge_criteria_payload, job_badge_criteria
 
 __all__ = [
     'attach_job_candidate_previews',
+    'candidate_job_alerts',
     'build_job_list_queryset',
     'build_job_stats',
     'employer_job_detail_queryset',

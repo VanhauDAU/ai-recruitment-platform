@@ -53,7 +53,7 @@ export function createJobFormValues(initialValues = {}) {
     category_assignments: [primary || { role: 'primary_specialization', sort_order: 0 }],
     domain_category_ids: domains.map((item) => item.category),
     work_areas: groupedAreas.size ? [...groupedAreas.values()] : [{ workplaces: [{}] }],
-    work_schedules: initialValues.work_schedules?.length
+    work_schedules: Array.isArray(initialValues.work_schedules)
       ? initialValues.work_schedules.map((item) => ({
           ...item,
           start_time: item.start_time ? dayjs(`2000-01-01T${item.start_time}`) : null,

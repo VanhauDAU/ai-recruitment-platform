@@ -91,6 +91,22 @@ describe('manual job form values', () => {
     })
   })
 
+  it('keeps an explicitly empty work schedule empty when reopening a job for editing', () => {
+    const values = createJobFormValues({
+      work_schedules: [],
+      work_schedule_note: 'Làm việc linh hoạt theo lịch của đội ngũ.',
+    })
+
+    expect(values.work_schedules).toEqual([])
+    expect(values.work_schedule_note).toBe('Làm việc linh hoạt theo lịch của đội ngũ.')
+  })
+
+  it('provides one default work schedule only for a new job', () => {
+    expect(createJobFormValues().work_schedules).toEqual([
+      { weekday_from: 1, weekday_to: 5, sort_order: 0 },
+    ])
+  })
+
   it('builds the nested write payload and clears salary fields that do not match the selected type', () => {
     const payload = buildJobPayload({
       title: 'Backend Engineer',

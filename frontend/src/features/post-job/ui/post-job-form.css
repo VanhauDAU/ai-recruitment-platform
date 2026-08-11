@@ -40,11 +40,12 @@
   flex: none;
 }
 
-/*
+ /*
  * Cột trái (tiến độ) sticky từ xl, cột phải (xem trước) từ 2xl — cùng bám theo chiều cao vùng cuộn.
- * top: 0 để khoảng hở trên chỉ còn đúng padding 24px của vùng cuộn (xl:p-6), khớp với xl:pt-0 của lưới
- * nên vị trí lúc chưa cuộn và lúc đã dính vào nhau là một.
- * Chiều cao khả dụng = --workspace-viewport - 24 (padding trên) - 24 (padding dưới) - 8 (khoảng thở).
+ * top: 0 khớp với xl:pt-0 của vùng cuộn và lưới nên vị trí trước/sau khi dính là một.
+ * --workspace-viewport do EmployerWorkspaceLayout công bố theo đúng chiều cao
+ * scrollport. Không dùng 100% ở đây: phần trăm sẽ bám theo grid cao bằng toàn form.
+ * Trừ thêm 56px cho padding dưới và khoảng thở để footer luôn nằm trong viewport.
  */
 @media (min-width: 1280px) {
   .post-job-sticky-col {

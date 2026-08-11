@@ -10,6 +10,7 @@ import {
   runAdminKnowledgeArticleLifecycle,
 } from '@/entities/knowledgebase'
 import { message } from '@/shared/lib/toast'
+import ConfirmAction from '@/shared/ui/ConfirmAction'
 
 export default function KnowledgePublishActions({ article, canPublish, onArticleChange, disabled }) {
   const queryClient = useQueryClient()
@@ -58,14 +59,26 @@ export default function KnowledgePublishActions({ article, canPublish, onArticle
           </Button>
         )}
         {article.lifecycle_state === 'ACTIVE' ? (
-          <Button danger icon={<InboxOutlined />} disabled={disabled} onClick={() => Modal.confirm({
-            title: 'Lưu trữ bài viết?',
-            content: article.published_revision_number ? 'Bài viết sẽ biến mất khỏi trung tâm trợ giúp công khai.' : 'Bài nháp sẽ được chuyển vào kho lưu trữ.',
-            okText: 'Lưu trữ',
-            okButtonProps: { danger: true },
-            cancelText: 'Hủy',
-            onOk: () => lifecycleMutation.mutate('archive'),
-          })}>Lưu trữ</Button>
+          <ConfirmAction
+            cancelText="Hủy"
+            confirmText="Lưu trữ"
+            danger
+            description={(
+              <>
+                Bạn có chắc muốn lưu trữ <strong>{article.title}</strong>?
+                {' '}
+                {article.published_revision_number
+                  ? 'Bài viết sẽ biến mất khỏi trung tâm trợ giúp công khai.'
+                  : 'Bài nháp sẽ được chuyển vào kho lưu trữ.'}
+              </>
+            )}
+            onConfirm={() => lifecycleMutation.mutateAsync('archive')}
+            title="Lưu trữ bài viết"
+          >
+            <Button danger icon={<InboxOutlined />} disabled={disabled || lifecycleMutation.isPending}>
+              Lưu trữ
+            </Button>
+          </ConfirmAction>
         ) : (
           <Button icon={<RollbackOutlined />} disabled={disabled} loading={lifecycleMutation.isPending} onClick={() => lifecycleMutation.mutate('restore')}>Khôi phục</Button>
         )}

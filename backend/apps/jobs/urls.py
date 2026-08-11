@@ -10,6 +10,8 @@ from .api.views import (
     AdminJobReportReverseView,
     AdminJobReviewView,
     BenefitListView,
+    CandidateJobAlertDetailView,
+    CandidateJobAlertListCreateView,
     CandidateJobRecommendationView,
     CvJobRecommendationView,
     EmployerJobCloseView,
@@ -35,6 +37,12 @@ from .api.views import (
 )
 
 urlpatterns = [
+    path('alerts/', CandidateJobAlertListCreateView.as_view(), name='candidate-job-alert-list'),
+    path(
+        'alerts/<str:public_id>/',
+        CandidateJobAlertDetailView.as_view(),
+        name='candidate-job-alert-detail',
+    ),
     path(
         'admin/moderation/', AdminJobModerationListView.as_view(), name='admin-job-moderation-list'
     ),

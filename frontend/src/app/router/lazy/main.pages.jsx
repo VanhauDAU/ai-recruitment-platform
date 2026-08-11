@@ -16,6 +16,7 @@ export const TwoFactorAuthenticationPage = lazy(() => import('@/pages/main/accou
 export const SecuritySettingsPage = lazy(() => import('@/pages/main/account/SecuritySettings'))
 export const ChangePasswordPage = lazy(() => import('@/pages/main/account/ChangePassword'))
 export const EmailNotificationSettingsPage = lazy(() => import('@/pages/main/account/EmailNotificationSettings'))
+export const JobAlertSettingsPage = lazy(() => import('@/pages/main/account/JobAlertSettings'))
 export const MatchingJobsPage = lazy(() => import('@/pages/main/account/MatchingJobs'))
 export const JobPreferenceSettingsPage = lazy(() => import('@/pages/main/account/JobPreferenceSettings'))
 export const AppliedJobsPage = lazy(() => import('@/pages/main/account/AppliedJobs'))

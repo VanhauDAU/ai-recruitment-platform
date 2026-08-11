@@ -166,6 +166,22 @@ cho lý do ngoại lệ. Không tạo bridge/re-export tạm thời để né ru
   `tests/e2e/smoke/employer.spec.js`, gồm kiểm tra hiển thị và không tràn ngang ở
   cả ba Playwright project.
 
+## Xác nhận hành động trong ứng dụng
+
+- Xác nhận nhị phân trong giao diện phải dùng
+  `@/shared/ui/ConfirmAction`, `ConfirmActionModal` hoặc
+  `use-confirm-action`; không tạo thêm `Popconfirm`, `Modal.confirm` hay
+  `window.confirm` trong luồng in-app.
+- Tiêu đề nói rõ hành động; nội dung phải nêu đích bị tác động và
+  hệ quả. Hành động không thể hoàn tác dùng `danger`, nút an toàn mặc
+  định là `Đóng`.
+- Callback bất đồng bộ phải trả Promise để modal khóa đóng, chặn gửi
+  trùng và chỉ đóng sau khi thành công. Phân biệt `onDismiss` với
+  `onCancel` nếu nút hủy cũng thực hiện một thay đổi dữ liệu.
+- Modal có form, OTP, impact preview, consent hoặc quy trình nhiều bước vẫn
+  thuộc feature sở hữu; không ép vào component xác nhận đơn giản. Cảnh báo
+  `beforeunload` khi đóng/reload tab phải dùng hộp thoại native của trình duyệt.
+
 ## Bảng dữ liệu quản trị
 
 - Mọi cột dữ liệu của bảng quản trị phải có sorter và icon tăng/giảm rõ ràng.
@@ -475,10 +491,12 @@ widgets/employer-campaign-workspace/CampaignJobsPanel
 
 ```text
 app/router
-  → pages/main/account/EmailNotificationSettings|ChangePassword|MatchingJobs
-    + pages/main/jobs/SavedJobs
-    → features/configure-email-notifications, change-password, saved-jobs
-      → entities/candidate-notification-preferences, job, session
+  → pages/main/account/EmailNotificationSettings|JobAlertSettings|ChangePassword|MatchingJobs
+    + pages/main/jobs/JobList|SavedJobs
+    → features/configure-email-notifications, manage-job-alerts,
+      change-password, saved-jobs
+      → entities/candidate-job-alert, candidate-notification-preferences,
+        job, location, session
         → shared/api
 
 widgets/main-header/CandidateUserMenu
@@ -491,6 +509,21 @@ widgets/main-header/CandidateUserMenu
 - `entities/candidate-notification-preferences` sở hữu GET/PATCH preference email.
   Feature email điều phối optimistic auto-save/rollback; page chỉ compose header
   và feature. Email bảo mật luôn bật không thuộc DTO preference.
+- `entities/candidate-job-alert` sở hữu HTTP contract CRUD và query key cho tối
+  đa năm bộ tiêu chí. `features/manage-job-alerts` sở hữu list/modal, cache
+  optimistic, giới hạn, xác thực email và các error code nghiệp vụ; account page
+  chỉ compose feature. Modal tạo được public API của cùng feature để `JobList`
+  mở tại chỗ sau login mà không điều hướng sang account.
+- Taxonomy ba cấp và picker multi-select thuộc `entities/job` vì được dùng chung
+  bởi bộ lọc công khai và job alert. Selection lưu danh sách node rút gọn;
+  `category_ids` được OR, còn backend mở rộng node cha xuống các cấp con. CTA từ
+  danh sách việc làm chỉ prefill tiêu chí biểu diễn chính xác, giữ toàn bộ `cat`
+  multi-select và không suy diễn range tùy chỉnh thành salary bucket.
+- Job alert chỉ gửi qua email đăng nhập đã xác thực. Công tắc
+  `configured_job_alerts` và `suitable_job_recommendations` dùng chung query
+  cache preference với trang email; optimistic PATCH phải rollback khi lỗi.
+  Suitable recommendation vẫn phụ thuộc consent/job preferences ở workflow
+  hiện hữu, không xin consent trong UI job alert.
 - `features/change-password` dùng chung hai portal và không chứa redirect/copy
   riêng của employer. Page portal truyền `successRedirect` khi cần; candidate
   giữ nguyên route và có thể hiển thị email read-only.
