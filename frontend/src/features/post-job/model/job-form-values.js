@@ -5,6 +5,12 @@ export { normalizeRichTextHtml } from '@/shared/lib/rich-text-html'
 
 const hasText = (value) => String(value || '').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim().length > 0
 
+export const DEFAULT_AUTO_REJECTION_EMAIL = `Cảm ơn bạn đã ứng tuyển vị trí {job_title} tại {company_name}.
+
+Sau {auto_reject_weeks} tuần kể từ ngày ứng tuyển, chúng tôi chưa thể phản hồi hồ sơ của bạn. Điều này thường có nghĩa là hồ sơ hiện chưa phù hợp với vị trí này.
+
+Tuy nhiên, thông tin của bạn đã được lưu trong hệ thống của {company_name} và nhà tuyển dụng vẫn có thể liên hệ nếu có vị trí phù hợp hơn sau này.`
+
 export function capitalizeTitleWords(value) {
   if (typeof value !== 'string') return value
   return value.replace(/(^|[\s/(-])(\p{L})/gu, (_, separator, letter) => (
@@ -40,6 +46,9 @@ export function createJobFormValues(initialValues = {}) {
   return {
     number_of_vacancies: 1,
     ...initialValues,
+    auto_reject_stale_applications: initialValues.auto_reject_stale_applications ?? true,
+    auto_reject_after_days: initialValues.auto_reject_after_days ?? 21,
+    auto_rejection_email_body: initialValues.auto_rejection_email_body ?? DEFAULT_AUTO_REJECTION_EMAIL,
     currency: initialValues.currency || 'VND',
     description: normalizeRichTextHtml(initialValues.description),
     requirements: normalizeRichTextHtml(initialValues.requirements),
@@ -104,6 +113,7 @@ export function buildJobPayload(values) {
 
   return {
     ...persistedValues,
+    auto_rejection_email_body: values.auto_rejection_email_body?.trim() || '',
     currency: values.currency || 'VND',
     salary_type: normalizedSalaryType,
     description: normalizeRichTextHtml(values.description),

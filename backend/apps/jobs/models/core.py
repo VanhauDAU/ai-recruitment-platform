@@ -113,6 +113,21 @@ class JobCategoryLocalization(models.Model):
 class Job(models.Model):
     """A job posting / Job Description (DB doc section 2.12)."""
 
+    AUTO_REJECTION_AFTER_DAY_CHOICES = (
+        (14, '2 tuần'),
+        (21, '3 tuần'),
+        (28, '4 tuần'),
+        (42, '6 tuần'),
+        (56, '8 tuần'),
+    )
+    DEFAULT_AUTO_REJECTION_EMAIL = (
+        'Cảm ơn bạn đã ứng tuyển vị trí {job_title} tại {company_name}.\n\n'
+        'Sau {auto_reject_weeks} tuần kể từ ngày ứng tuyển, chúng tôi chưa thể phản hồi '
+        'hồ sơ của bạn. Điều này thường có nghĩa là hồ sơ hiện chưa phù hợp với vị trí này.\n\n'
+        'Tuy nhiên, thông tin của bạn đã được lưu trong hệ thống của {company_name} và nhà '
+        'tuyển dụng vẫn có thể liên hệ nếu có vị trí phù hợp hơn sau này.'
+    )
+
     class WorkType(models.TextChoices):
         ONSITE = 'onsite', 'Onsite'
         REMOTE = 'remote', 'Remote'
@@ -276,6 +291,19 @@ class Job(models.Model):
     )
     currency = models.CharField(max_length=20, choices=Currency.choices, default=Currency.VND)
     deadline = models.DateField(null=True, blank=True)
+    auto_reject_stale_applications = models.BooleanField(
+        default=True,
+        help_text='Tự chuyển hồ sơ chờ xử lý quá hạn sang trạng thái từ chối.',
+    )
+    auto_reject_after_days = models.PositiveSmallIntegerField(
+        choices=AUTO_REJECTION_AFTER_DAY_CHOICES,
+        default=21,
+    )
+    auto_rejection_email_body = models.TextField(
+        max_length=1000,
+        default=DEFAULT_AUTO_REJECTION_EMAIL,
+        help_text='Nội dung email gửi ứng viên ba ngày sau khi hồ sơ bị tự động từ chối.',
+    )
     # Hạng tin + nhãn dịch vụ (admin gán). Nhãn "xác thực" không lưu ở đây vì
     # suy ra từ company.verified_at; nhãn "Mới"/"Sắp hết hạn" tính từ ngày.
     tier = models.CharField(max_length=20, choices=Tier.choices, default=Tier.STANDARD)

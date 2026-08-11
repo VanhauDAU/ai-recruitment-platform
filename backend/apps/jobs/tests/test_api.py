@@ -686,6 +686,37 @@ class EmployerJobSerializerTests(APITestCase):
         self.assertEqual(job.language_requirements.count(), 1)
         self.assertEqual(job.application_contact.emails.count(), 1)
 
+    def test_create_and_edit_contract_persists_automatic_application_status_settings(self):
+        payload = self.payload()
+        payload.update(
+            auto_reject_stale_applications=True,
+            auto_reject_after_days=28,
+            auto_rejection_email_body='Cảm ơn bạn đã ứng tuyển {job_title}.',
+        )
+        serializer = EmployerJobWriteSerializer(data=payload)
+
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+        job = serializer.save(posted_by=self.user, company=self.company)
+        detail = EmployerJobWriteSerializer(job).data
+
+        self.assertTrue(detail['auto_reject_stale_applications'])
+        self.assertEqual(detail['auto_reject_after_days'], 28)
+        self.assertEqual(
+            detail['auto_rejection_email_body'],
+            'Cảm ơn bạn đã ứng tuyển {job_title}.',
+        )
+
+    def test_enabled_automatic_status_requires_candidate_email_content(self):
+        payload = self.payload()
+        payload.update(
+            auto_reject_stale_applications=True,
+            auto_rejection_email_body='   ',
+        )
+        serializer = EmployerJobWriteSerializer(data=payload)
+
+        self.assertFalse(serializer.is_valid())
+        self.assertIn('auto_rejection_email_body', serializer.errors)
+
     def test_draft_accepts_incomplete_salary_and_partial_contact(self):
         serializer = EmployerJobDraftSerializer(
             data={

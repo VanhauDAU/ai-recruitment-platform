@@ -627,6 +627,9 @@ class EmployerJobWriteSerializer(JobSerializer):
             'campaign',
             'campaign_name',
             'is_expired',
+            'auto_reject_stale_applications',
+            'auto_reject_after_days',
+            'auto_rejection_email_body',
             'submitted_at',
             'approved_at',
             'rejected_reason',
@@ -636,6 +639,26 @@ class EmployerJobWriteSerializer(JobSerializer):
             'approved_at',
             'rejected_reason',
         ]
+
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        enabled = attrs.get(
+            'auto_reject_stale_applications',
+            getattr(self.instance, 'auto_reject_stale_applications', True),
+        )
+        email_body = attrs.get(
+            'auto_rejection_email_body',
+            getattr(
+                self.instance,
+                'auto_rejection_email_body',
+                Job.DEFAULT_AUTO_REJECTION_EMAIL,
+            ),
+        )
+        if enabled and not email_body.strip():
+            raise serializers.ValidationError(
+                {'auto_rejection_email_body': 'Nhập nội dung email thông báo cho ứng viên.'}
+            )
+        return attrs
 
     def validate_campaign(self, campaign):
         if campaign is None:

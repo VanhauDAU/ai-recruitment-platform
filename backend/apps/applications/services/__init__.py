@@ -10,6 +10,7 @@ from .applications import (
     reapplication_error,
     update_application_status,
 )
+from .automatic_rejection import process_automatic_application_rejections
 
 __all__ = [
     'InvalidApplicationStatusTransition',
@@ -20,4 +21,5 @@ __all__ = [
     'mark_application_viewed',
     'reapplication_error',
     'update_application_status',
+    'process_automatic_application_rejections',
 ]

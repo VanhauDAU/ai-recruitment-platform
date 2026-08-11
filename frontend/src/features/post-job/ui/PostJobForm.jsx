@@ -15,6 +15,7 @@ import {
   getJobFormProgress,
 } from '../model/job-form-values'
 import ApplicationInfoFields from './ApplicationInfoFields'
+import AutomaticApplicationStatusFields from './AutomaticApplicationStatusFields'
 import BasicJobService from './BasicJobService'
 import CandidateExpectationFields from './CandidateExpectationFields'
 import JobDescriptionFields from './JobDescriptionFields'
@@ -110,6 +111,9 @@ export default function PostJobForm({
       number_of_vacancies: 'application',
       campaign: 'application',
       application_contact: 'application',
+      auto_reject_stale_applications: 'application',
+      auto_reject_after_days: 'application',
+      auto_rejection_email_body: 'application',
     }
     const next = new Set()
     const nextFieldNames = new Set()
@@ -205,6 +209,7 @@ export default function PostJobForm({
               creatingCampaign={creatingCampaign}
               onCreateCampaign={onCreateCampaign}
             />
+            <AutomaticApplicationStatusFields />
           </JobFormSection>
           <JobFormSection
             id="services"

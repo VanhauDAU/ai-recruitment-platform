@@ -29,6 +29,7 @@ STATUS_TIMESTAMP_FIELD = {
 
 MAX_APPLICATIONS_PER_JOB = 3
 REAPPLICATION_COOLDOWN = timedelta(minutes=5)
+AUTO_REJECTION_EMAIL_GRACE = timedelta(days=3)
 
 # An employer may skip an intermediate review step, but cannot reopen or move a
 # terminal decision backwards. Keeping this graph here gives API and future
@@ -251,6 +252,13 @@ def update_application_status(serializer, *, changed_by=None):
     serializer.instance = application
     current_status = application.status
     next_status = serializer.validated_data.get('status', current_status)
+    now = timezone.now()
+    reversible_auto_rejection = bool(
+        current_status == Application.Status.REJECTED
+        and application.auto_rejected_at
+        and application.auto_rejection_email_sent_at is None
+        and application.auto_rejected_at + AUTO_REJECTION_EMAIL_GRACE > now
+    )
     candidate = application.candidate.__class__.objects.select_for_update().get(
         pk=application.candidate_id
     )
@@ -266,6 +274,7 @@ def update_application_status(serializer, *, changed_by=None):
     if (
         next_status != current_status
         and next_status not in ALLOWED_STATUS_TRANSITIONS[current_status]
+        and not reversible_auto_rejection
     ):
         raise InvalidApplicationStatusTransition(
             f'Cannot change application status from {current_status} to {next_status}.',
@@ -274,7 +283,19 @@ def update_application_status(serializer, *, changed_by=None):
     timestamp_field = (
         STATUS_TIMESTAMP_FIELD.get(next_status) if next_status != current_status else None
     )
-    application = serializer.save(**({timestamp_field: timezone.now()} if timestamp_field else {}))
+    save_values = {timestamp_field: now} if timestamp_field else {}
+    if next_status != current_status:
+        save_values.update(
+            status_updated_at=now,
+            auto_rejection_reminder_sent_at=None,
+        )
+        if reversible_auto_rejection:
+            save_values.update(
+                rejected_at=None,
+                auto_rejected_at=None,
+                auto_rejection_email_sent_at=None,
+            )
+    application = serializer.save(**save_values)
     if next_status != current_status and getattr(application, 'pk', None):
         ApplicationStatusHistory.objects.create(
             application=application,
@@ -316,7 +337,17 @@ def mark_application_viewed(application, *, changed_by):
         return application
     application.status = Application.Status.VIEWED
     application.viewed_at = timezone.now()
-    application.save(update_fields=['status', 'viewed_at', 'updated_at'])
+    application.status_updated_at = application.viewed_at
+    application.auto_rejection_reminder_sent_at = None
+    application.save(
+        update_fields=[
+            'status',
+            'viewed_at',
+            'status_updated_at',
+            'auto_rejection_reminder_sent_at',
+            'updated_at',
+        ]
+    )
     ApplicationStatusHistory.objects.create(
         application=application,
         from_status=Application.Status.SUBMITTED,

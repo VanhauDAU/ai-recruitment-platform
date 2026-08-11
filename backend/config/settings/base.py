@@ -595,6 +595,7 @@ CELERY_TASK_ROUTES = {
     'apps.speech.tasks.*': {'queue': 'speech-artifacts'},
     'apps.uploads.tasks.*': {'queue': 'upload-scan'},
     'apps.jobs.tasks.*': {'queue': 'candidate-email'},
+    'apps.applications.tasks.*': {'queue': 'candidate-email'},
 }
 CELERY_TASK_ACKS_LATE = True
 CELERY_TASK_REJECT_ON_WORKER_LOST = True
@@ -602,6 +603,10 @@ CELERY_TASK_TIME_LIMIT = 60
 CELERY_TASK_SOFT_TIME_LIMIT = 50
 EMPLOYER_EVENT_RETENTION_DAYS = config('EMPLOYER_EVENT_RETENTION_DAYS', default=730, cast=int)
 CELERY_BEAT_SCHEDULE = {
+    'process-automatic-application-rejections': {
+        'task': 'apps.applications.tasks.process_automatic_application_rejections',
+        'schedule': 300.0,
+    },
     'prepare-due-candidate-job-digests': {
         'task': 'apps.jobs.tasks.prepare_due_candidate_job_digests',
         'schedule': 300.0,

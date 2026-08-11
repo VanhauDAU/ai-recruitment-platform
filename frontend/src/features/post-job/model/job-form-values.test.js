@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildJobPayload, capitalizeTitleWords, createJobFormValues, getJobFormProgress, normalizeRichTextHtml } from './job-form-values'
+import { buildJobPayload, capitalizeTitleWords, createJobFormValues, DEFAULT_AUTO_REJECTION_EMAIL, getJobFormProgress, normalizeRichTextHtml } from './job-form-values'
 
 describe('manual job form values', () => {
   it('capitalizes the first letter of each title word without lowercasing the remaining characters', () => {
@@ -107,6 +107,17 @@ describe('manual job form values', () => {
     ])
   })
 
+  it('enables stale application handling with a three-week default for new jobs', () => {
+    expect(createJobFormValues()).toMatchObject({
+      auto_reject_stale_applications: true,
+      auto_reject_after_days: 21,
+      auto_rejection_email_body: DEFAULT_AUTO_REJECTION_EMAIL,
+    })
+    expect(createJobFormValues({ auto_reject_stale_applications: false })).toMatchObject({
+      auto_reject_stale_applications: false,
+    })
+  })
+
   it('builds the nested write payload and clears salary fields that do not match the selected type', () => {
     const payload = buildJobPayload({
       title: 'Backend Engineer',
@@ -184,6 +195,7 @@ describe('manual job form values', () => {
       is_required: true,
       sort_order: 0,
     })
+    expect(payload.auto_rejection_email_body).toBe('')
   })
 
   it.each([
