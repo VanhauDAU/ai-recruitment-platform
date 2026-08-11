@@ -5,11 +5,24 @@ export const EMPLOYER_ACCOUNT_VERIFICATION_LEVEL_STEPS = [
 ]
 
 const TOTAL_LEVELS = 3
+const INVALIDATING_CASE_STATUSES = new Set([
+  'changes_requested',
+  'rejected',
+  'revoked',
+  'expired',
+])
 
-export function getEmployerAccountVerificationLevel(verification = {}) {
+export function isEmployerVerificationInvalidated(verificationCase = {}) {
+  return INVALIDATING_CASE_STATUSES.has(verificationCase.status)
+}
+
+export function getEmployerAccountVerificationLevel(verification = {}, verificationCase = {}) {
   const emailVerified = Boolean(verification.email_verified)
   const phoneVerified = Boolean(verification.phone_verified)
-  const businessDocumentApproved = Boolean(verification.business_doc_approved)
+  const businessDocumentApproved = Boolean(
+    verification.business_doc_approved
+    && !isEmployerVerificationInvalidated(verificationCase),
+  )
   const noReportHistory = Boolean(verification.no_report_history)
 
   let level = 0

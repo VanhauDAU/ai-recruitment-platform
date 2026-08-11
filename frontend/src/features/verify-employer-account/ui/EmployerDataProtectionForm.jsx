@@ -21,6 +21,7 @@ import CandidateAgreementUploadForm, {
   CandidateAgreementTemplate,
 } from './CandidateAgreementUploadForm'
 import { CandidateAgreementDocumentLink } from './CandidateAgreementDocumentLink'
+import EmployerVerificationLifecycleAlert from './EmployerVerificationLifecycleAlert'
 
 const CANDIDATE_DPA_GUIDE_URL = 'https://tuyendung.topcv.vn/help/tong-quan/thoa-thuan-xu-ly-du-lieu-ca-nhan-ung-vien/'
 const PLATFORM_DPA_URL = 'https://tuyendung.topcv.vn/data-processing-agreement'
@@ -150,6 +151,7 @@ export default function EmployerDataProtectionForm() {
   if (profileQuery.isLoading) return <Skeleton active paragraph={{ rows: 12 }} />
 
   const verification = profileQuery.data?.onboarding || {}
+  const verificationCase = profileQuery.data?.verification_case || {}
   const dpaPolicy = profileQuery.data?.dpa_policy
   const dpaPolicyAvailable = Boolean(
     dpaPolicy?.available
@@ -180,6 +182,7 @@ export default function EmployerDataProtectionForm() {
 
   return (
     <div className="space-y-4">
+      <EmployerVerificationLifecycleAlert verificationCase={verificationCase} />
       <section className="min-w-0 rounded-lg border border-slate-200 p-4 sm:p-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>

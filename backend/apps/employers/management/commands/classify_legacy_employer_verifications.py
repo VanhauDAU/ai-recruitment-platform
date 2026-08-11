@@ -6,7 +6,6 @@ from django.db import transaction
 from django.db.models import Prefetch
 
 from apps.employers.models import (
-    Company,
     EmployerVerificationCase,
     EmployerVerificationEvent,
 )
@@ -36,22 +35,9 @@ def classify_case(case):
     return EmployerVerificationCase.DecisionSource.LEGACY_UNKNOWN
 
 
-def classify_company(company):
-    sources = {
-        case.decision_source or classify_case(case)
-        for case in company.recruiter_verification_cases.all()
-        if case.status == EmployerVerificationCase.Status.APPROVED
-    }
-    if EmployerVerificationCase.DecisionSource.EXPLICIT_ADMIN in sources:
-        return Company.VerificationSource.EXPLICIT_ADMIN
-    if EmployerVerificationCase.DecisionSource.LEGACY_AUTO in sources:
-        return Company.VerificationSource.LEGACY_AUTO
-    return Company.VerificationSource.LEGACY_UNKNOWN
-
-
 class Command(BaseCommand):
     help = (
-        'Dry-run/report and optionally classify legacy approved employer cases/companies. '
+        'Dry-run/report and optionally classify legacy approved employer cases. '
         'The command never creates actor/evidence or compliance holds.'
     )
 
@@ -92,33 +78,7 @@ class Command(BaseCommand):
                 case.decision_source = source
                 case_counts[source] += 1
 
-        company_queryset = Company.objects.filter(
-            pk__gt=options['company_cursor'],
-            verification_status=Company.VerificationStatus.VERIFIED,
-            verification_source='',
-        )
-        if lock:
-            company_queryset = company_queryset.select_for_update(of=('self',))
-        companies = list(
-            company_queryset.prefetch_related(
-                Prefetch(
-                    'recruiter_verification_cases',
-                    queryset=EmployerVerificationCase.objects.prefetch_related(
-                        Prefetch('events', queryset=events)
-                    ),
-                )
-            ).order_by('pk')[:batch_size]
-        )
-        company_counts = Counter()
-        for company in companies:
-            source = classify_company(company)
-            if not lock or Company.objects.filter(
-                pk=company.pk,
-                verification_source='',
-            ).update(verification_source=source):
-                company.verification_source = source
-                company_counts[source] += 1
-        return cases, companies, case_counts, company_counts
+        return cases, case_counts
 
     def handle(self, *args, **options):
         batch_size = options['batch_size']
@@ -126,12 +86,12 @@ class Command(BaseCommand):
             raise CommandError('--batch-size phải trong khoảng 1..5000.')
         if options['apply']:
             with transaction.atomic():
-                cases, companies, case_counts, company_counts = self._classify(
+                cases, case_counts = self._classify(
                     options=options,
                     lock=True,
                 )
         else:
-            cases, companies, case_counts, company_counts = self._classify(
+            cases, case_counts = self._classify(
                 options=options,
                 lock=False,
             )
@@ -139,9 +99,9 @@ class Command(BaseCommand):
         report = {
             'mode': 'apply' if options['apply'] else 'dry_run',
             'cases': dict(sorted(case_counts.items())),
-            'companies': dict(sorted(company_counts.items())),
+            'companies': {},
             'next_case_cursor': cases[-1].pk if cases else options['case_cursor'],
-            'next_company_cursor': (companies[-1].pk if companies else options['company_cursor']),
+            'next_company_cursor': options['company_cursor'],
             'holds_created': 0,
             'evidence_created': 0,
         }

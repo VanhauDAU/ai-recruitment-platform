@@ -175,8 +175,12 @@ class EmployerVerificationStateMachineTests(APITestCase):
             ),
         )
 
+    def _company_snapshot(self):
+        return Company.objects.filter(pk=self.company.pk).values().get()
+
     def _approve(self, *, actor=None, tax_override=False, tax_override_reason=''):
         actor = actor or self.superadmin
+        company_snapshot = self._company_snapshot()
         self.case.refresh_from_db()
         impact = verification_decision_impact(
             self.case,
@@ -186,6 +190,7 @@ class EmployerVerificationStateMachineTests(APITestCase):
             tax_override=tax_override,
             tax_override_reason=tax_override_reason,
         )
+        self.assertNotIn('company_impact', impact)
         self.case = confirm_verification_decision(
             self.case,
             actor=actor,
@@ -195,9 +200,12 @@ class EmployerVerificationStateMachineTests(APITestCase):
             tax_override=tax_override,
             tax_override_reason=tax_override_reason,
         )
+        self.assertNotIn('company_impact', self.case.decision_snapshot)
+        self.assertEqual(self._company_snapshot(), company_snapshot)
         return impact
 
     def _revoke(self, *, action=EmployerVerificationCase.Status.REVOKED):
+        company_snapshot = self._company_snapshot()
         self.case.refresh_from_db()
         impact = verification_lifecycle_impact(
             self.case,
@@ -205,6 +213,7 @@ class EmployerVerificationStateMachineTests(APITestCase):
             action=action,
             reason='Bằng chứng đại diện không còn hiệu lực.',
         )
+        self.assertNotIn('company_impact', impact)
         self.case = confirm_verification_lifecycle_action(
             self.case,
             actor=self.compliance_lead,
@@ -212,6 +221,8 @@ class EmployerVerificationStateMachineTests(APITestCase):
             reason='Bằng chứng đại diện không còn hiệu lực.',
             impact_token=impact['impact_token'],
         )
+        self.assertNotIn('company_impact', self.case.decision_snapshot)
+        self.assertEqual(self._company_snapshot(), company_snapshot)
         return impact
 
     def _decide_nonapproval(self, decision):
@@ -222,6 +233,7 @@ class EmployerVerificationStateMachineTests(APITestCase):
             decision=decision,
             reason='Cần bổ sung bằng chứng đại diện.',
         )
+        self.assertNotIn('company_impact', impact)
         self.case = confirm_verification_decision(
             self.case,
             actor=self.reviewer,
@@ -229,6 +241,7 @@ class EmployerVerificationStateMachineTests(APITestCase):
             reason='Cần bổ sung bằng chứng đại diện.',
             impact_token=impact['impact_token'],
         )
+        self.assertNotIn('company_impact', self.case.decision_snapshot)
 
     def _replace_business_document_and_resubmit(self):
         current = self.case.documents.get(
@@ -256,7 +269,7 @@ class EmployerVerificationStateMachineTests(APITestCase):
         )
         return replacement
 
-    def test_document_decision_never_decides_case_or_company(self):
+    def test_document_decision_never_decides_recruiter_case(self):
         document = self.case.documents.get(doc_type=CompanyDocument.DocType.BUSINESS_REGISTRATION)
         document.status = CompanyDocument.Status.PENDING
         document.save(update_fields=['status', 'updated_at'])
@@ -269,9 +282,7 @@ class EmployerVerificationStateMachineTests(APITestCase):
             lock_version=self.case.lock_version,
         )
 
-        self.company.refresh_from_db()
         self.assertEqual(case.status, EmployerVerificationCase.Status.IN_REVIEW)
-        self.assertEqual(self.company.verification_status, Company.VerificationStatus.UNVERIFIED)
         self.assertFalse(
             case.events.filter(event_type=EmployerVerificationEvent.EventType.APPROVED).exists()
         )
@@ -748,9 +759,9 @@ class EmployerVerificationStateMachineTests(APITestCase):
         self.client.force_authenticate(self.compliance_lead)
         allowed = self.client.post(url, {'reason': 'Rà soát lại.'}, format='json')
         self.assertEqual(allowed.status_code, status.HTTP_200_OK, allowed.data)
-        self.assertFalse(allowed.data['company_impact']['will_downgrade'])
+        self.assertNotIn('company_impact', allowed.data)
 
-    def test_revoke_hides_public_job_and_blocks_data_without_downgrading_company(self):
+    def test_revoke_updates_recruiter_case_and_holds_without_company_impact(self):
         self._approve()
         visible = self.client.get(reverse('job-list'))
         self.assertEqual(visible.data['count'], 1)
@@ -758,7 +769,6 @@ class EmployerVerificationStateMachineTests(APITestCase):
         impact = self._revoke()
 
         self.case.refresh_from_db()
-        self.company.refresh_from_db()
         self.job.refresh_from_db()
         hold = EmployerComplianceHold.objects.get(
             recruiter=self.recruiter,
@@ -766,9 +776,9 @@ class EmployerVerificationStateMachineTests(APITestCase):
             status=EmployerComplianceHold.Status.ACTIVE,
         )
         self.assertEqual(self.case.status, EmployerVerificationCase.Status.REVOKED)
-        self.assertEqual(self.company.verification_status, Company.VerificationStatus.VERIFIED)
         self.assertEqual(self.job.status, Job.Status.ACTIVE)
         self.assertTrue(hold.job_links.filter(job=self.job).exists())
+        self.assertNotIn('company_impact', impact)
         self.assertEqual(impact['resources']['active_jobs_hidden_from_public'], 1)
         self.assertEqual(self.client.get(reverse('job-list')).data['count'], 0)
         _, readiness = recruiter_readiness_state(self.employer)
@@ -845,19 +855,17 @@ class EmployerVerificationStateMachineTests(APITestCase):
         self.assertEqual(impact['resources']['job_count'], 6)
         self.assertEqual(impact['resources']['active_jobs_hidden_from_public'], 1)
 
-    def test_manual_expire_uses_expired_hold_and_keeps_company_verified(self):
+    def test_manual_expire_updates_recruiter_case_and_uses_expired_hold(self):
         self._approve()
         self._revoke(action=EmployerVerificationCase.Status.EXPIRED)
 
         self.case.refresh_from_db()
-        self.company.refresh_from_db()
         hold = EmployerComplianceHold.objects.get(recruiter=self.recruiter)
         self.assertEqual(self.case.status, EmployerVerificationCase.Status.EXPIRED)
         self.assertEqual(
             hold.reason,
             EmployerComplianceHold.Reason.VERIFICATION_EXPIRED,
         )
-        self.assertEqual(self.company.verification_status, Company.VerificationStatus.VERIFIED)
 
     def test_verification_hold_release_requires_nonblank_audit_reason(self):
         self._approve()
@@ -949,6 +957,7 @@ class EmployerVerificationStateMachineTests(APITestCase):
         )
         self.assertEqual(preview['verification_hold_impact']['hold_count'], 1)
         self.assertEqual(preview['verification_hold_impact']['active_jobs_to_unhide'], 0)
+        company_snapshot = self._company_snapshot()
         self.case = confirm_verification_decision(
             self.case,
             actor=self.reviewer,
@@ -956,6 +965,9 @@ class EmployerVerificationStateMachineTests(APITestCase):
             reason='',
             impact_token=preview['impact_token'],
         )
+        self.assertNotIn('company_impact', preview)
+        self.assertNotIn('company_impact', self.case.decision_snapshot)
+        self.assertEqual(self._company_snapshot(), company_snapshot)
 
         self.assertFalse(
             EmployerComplianceHold.objects.filter(
@@ -1193,15 +1205,10 @@ class EmployerVerificationStateMachineTests(APITestCase):
                 impact_token=preview['impact_token'],
             )
 
-    def test_legacy_classification_is_dry_run_idempotent_and_creates_no_evidence(self):
+    def test_legacy_classification_only_updates_case_and_creates_no_evidence(self):
         self.case.status = EmployerVerificationCase.Status.APPROVED
         self.case.decision_source = ''
         self.case.save(update_fields=['status', 'decision_source', 'updated_at'])
-        self.company.verification_status = Company.VerificationStatus.VERIFIED
-        self.company.verification_source = ''
-        self.company.save(
-            update_fields=['verification_status', 'verification_source', 'updated_at']
-        )
         EmployerVerificationEvent.objects.create(
             verification_case=self.case,
             actor=self.reviewer,
@@ -1221,14 +1228,9 @@ class EmployerVerificationStateMachineTests(APITestCase):
             stdout=applied,
         )
         self.case.refresh_from_db()
-        self.company.refresh_from_db()
         self.assertEqual(
             self.case.decision_source,
             EmployerVerificationCase.DecisionSource.LEGACY_AUTO,
-        )
-        self.assertEqual(
-            self.company.verification_source,
-            Company.VerificationSource.LEGACY_AUTO,
         )
         rerun = StringIO()
         call_command('classify_legacy_employer_verifications', '--apply', stdout=rerun)
@@ -1240,11 +1242,6 @@ class EmployerVerificationStateMachineTests(APITestCase):
         self.case.status = EmployerVerificationCase.Status.APPROVED
         self.case.decision_source = ''
         self.case.save(update_fields=['status', 'decision_source', 'updated_at'])
-        self.company.verification_status = Company.VerificationStatus.VERIFIED
-        self.company.verification_source = ''
-        self.company.save(
-            update_fields=['verification_status', 'verification_source', 'updated_at']
-        )
 
         def concurrent_explicit_decision(case):
             EmployerVerificationCase.objects.filter(pk=case.pk).update(
@@ -1259,14 +1256,9 @@ class EmployerVerificationStateMachineTests(APITestCase):
             call_command('classify_legacy_employer_verifications', '--apply', stdout=StringIO())
 
         self.case.refresh_from_db()
-        self.company.refresh_from_db()
         self.assertEqual(
             self.case.decision_source,
             EmployerVerificationCase.DecisionSource.EXPLICIT_ADMIN,
-        )
-        self.assertEqual(
-            self.company.verification_source,
-            Company.VerificationSource.EXPLICIT_ADMIN,
         )
 
 

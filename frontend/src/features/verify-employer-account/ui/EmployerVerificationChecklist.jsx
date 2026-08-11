@@ -19,6 +19,7 @@ import {
   EMPLOYER_PHONE_VERIFY_URL,
 } from '@/shared/config/portals'
 import { getEmployerVerificationProgress } from '../model/verification-progress'
+import EmployerVerificationLifecycleAlert from './EmployerVerificationLifecycleAlert'
 
 const STEP_DEFINITIONS = [
   { key: 'phone_verified', title: 'Xác thực số điện thoại', description: 'Tăng bảo mật và độ tin cậy khi liên hệ ứng viên.', icon: PhoneOutlined, to: EMPLOYER_PHONE_VERIFY_URL },
@@ -54,6 +55,10 @@ export default function EmployerVerificationChecklist({ profile, onContinue }) {
 
   return (
     <div>
+      <EmployerVerificationLifecycleAlert
+        className="mb-6"
+        verificationCase={profile?.verification_case}
+      />
       <div className="mb-7 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-lg font-extrabold text-slate-900">Xác thực thông tin</h2>

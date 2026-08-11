@@ -49,4 +49,15 @@ describe('employer account verification level', () => {
       no_report_history: true,
     })).toEqual({ level: 3, total: 3, percent: 100 })
   })
+
+  it('drops a revoked account below document-verification levels', () => {
+    expect(getEmployerAccountVerificationLevel({
+      email_verified: true,
+      phone_verified: true,
+      business_doc_approved: true,
+      no_report_history: true,
+    }, {
+      status: 'revoked',
+    })).toEqual({ level: 1, total: 3, percent: 33 })
+  })
 })

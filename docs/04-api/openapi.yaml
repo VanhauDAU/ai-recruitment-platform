@@ -1616,8 +1616,8 @@ paths:
       summary: Xác nhận quyết định cuối hồ sơ xác thực
       description: >-
         Bước 2/2. Yêu cầu employer_verification.review và impact_token còn
-        hiệu lực. Server khóa rồi tính lại toàn bộ hồ sơ, tax evidence,
-        company, campaign, job và compliance hold; trả 409 khi preview stale.
+        hiệu lực. Server khóa rồi tính lại toàn bộ hồ sơ NTD, tax evidence,
+        campaign, job và compliance hold; trả 409 khi preview stale.
       parameters:
       - in: path
         name: public_id
@@ -1657,10 +1657,8 @@ paths:
           content:
             application/json:
               schema:
-                oneOf:
-                - $ref: '#/components/schemas/AdminVerificationStaleError'
-                - $ref: '#/components/schemas/AdminVerificationTaxConflictError'
-          description: Preview stale hoặc mã số thuế đã thuộc company khác.
+                $ref: '#/components/schemas/AdminVerificationStaleError'
+          description: Preview stale; client phải preview lại.
   /api/admin/employer-verifications/{public_id}/decision-impact/:
     post:
       operationId: admin_employer_verifications_decision_impact_create
@@ -1703,12 +1701,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/AdminVerificationPermissionError'
           description: Thiếu quyền review hoặc tax override.
-        '409':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AdminVerificationTaxConflictError'
-          description: Mã số thuế đã thuộc company khác.
   /api/admin/employer-verifications/{public_id}/unlock-resubmission/:
     post:
       operationId: admin_employer_verifications_unlock_resubmission_create
@@ -12918,11 +12910,6 @@ components:
         tax_code:
           type: string
           readOnly: true
-        verification_status:
-          $ref: '#/components/schemas/VerificationStatusEnum'
-        verification_status_label:
-          type: string
-          readOnly: true
         owners:
           type: string
           readOnly: true
@@ -12981,12 +12968,6 @@ components:
           type: boolean
           description: Bật trang thương hiệu — tin tuyển dụng hiển thị dưới URL /brand/...
             với header công ty
-        verified_at:
-          type: string
-          format: date-time
-          nullable: true
-        rejected_reason:
-          type: string
         industries:
           type: string
           readOnly: true
@@ -13016,7 +12997,6 @@ components:
       - recruiter_verification_summary
       - tax_code
       - updated_at
-      - verification_status_label
     AdminCompanyList:
       type: object
       properties:
@@ -13038,11 +13018,6 @@ components:
           type: string
           readOnly: true
         tax_code:
-          type: string
-          readOnly: true
-        verification_status:
-          $ref: '#/components/schemas/VerificationStatusEnum'
-        verification_status_label:
           type: string
           readOnly: true
         owners:
@@ -13085,7 +13060,6 @@ components:
       - recruiter_verification_summary
       - tax_code
       - updated_at
-      - verification_status_label
     AdminCompanyUpdateEvent:
       type: object
       properties:
@@ -13653,9 +13627,6 @@ components:
         company_name:
           type: string
           readOnly: true
-        company_verification_status:
-          type: string
-          readOnly: true
         employer_public_id:
           type: string
           readOnly: true
@@ -13948,7 +13919,6 @@ components:
       - company_public_id
       - company_role
       - company_role_label
-      - company_verification_status
       - created_at
       - deadline
       - description
@@ -14010,9 +13980,6 @@ components:
           type: string
           readOnly: true
         company_name:
-          type: string
-          readOnly: true
-        company_verification_status:
           type: string
           readOnly: true
         employer_public_id:
@@ -14141,7 +14108,6 @@ components:
       - company_public_id
       - company_role
       - company_role_label
-      - company_verification_status
       - deadline
       - employer_account_status
       - employer_email
@@ -15415,15 +15381,6 @@ components:
           $ref: '#/components/schemas/AdminVerificationTaxAdvisory'
         tax_override: {type: boolean}
         tax_override_reason: {type: string}
-        company_impact:
-          type: object
-          additionalProperties: false
-          properties:
-            company_public_id: {type: string, nullable: true}
-            current_status: {type: string, nullable: true}
-            will_mark_verified: {type: boolean}
-            will_downgrade: {type: boolean}
-          required: [company_public_id, current_status, will_mark_verified, will_downgrade]
         capability_impact:
           type: object
           additionalProperties: false
@@ -15455,7 +15412,6 @@ components:
       - tax_advisory
       - tax_override
       - tax_override_reason
-      - company_impact
       - capability_impact
       - verification_hold_impact
       - rejection_impact
@@ -15606,14 +15562,6 @@ components:
         lock_version: {type: integer, minimum: 0}
         action: {type: string, enum: [revoked, expired]}
         reason: {type: string}
-        company_impact:
-          type: object
-          additionalProperties: false
-          properties:
-            company_public_id: {type: string, nullable: true}
-            current_status: {type: string, nullable: true}
-            will_downgrade: {type: boolean}
-          required: [company_public_id, current_status, will_downgrade]
         capability_impact:
           type: object
           additionalProperties: false
@@ -15638,7 +15586,6 @@ components:
       - lock_version
       - action
       - reason
-      - company_impact
       - capability_impact
       - resources
       - impact_token
@@ -15661,7 +15608,6 @@ components:
           $ref: '#/components/schemas/AdminVerificationTaxAdvisory'
         tax_override: {type: boolean}
         tax_override_reason: {type: string}
-        company_impact: {type: object}
         capability_impact: {type: object}
         verification_hold_impact: {type: object}
         rejection_impact:
@@ -15728,13 +15674,6 @@ components:
       additionalProperties: false
       properties:
         code: {type: string, enum: [admin_resource_changed]}
-        message: {type: string}
-      required: [code, message]
-    AdminVerificationTaxConflictError:
-      type: object
-      additionalProperties: false
-      properties:
-        code: {type: string, enum: [company_tax_code_conflict]}
         message: {type: string}
       required: [code, message]
     AdminVerificationDocument:
@@ -17451,18 +17390,6 @@ components:
           readOnly: true
           description: Bật trang thương hiệu — tin tuyển dụng hiển thị dưới URL /brand/...
             với header công ty
-        verification_status:
-          allOf:
-          - $ref: '#/components/schemas/VerificationStatusEnum'
-          readOnly: true
-        verified_at:
-          type: string
-          format: date-time
-          readOnly: true
-          nullable: true
-        rejected_reason:
-          type: string
-          readOnly: true
         images:
           type: array
           items:
@@ -17492,12 +17419,9 @@ components:
       - phone
       - primary_industry_id
       - public_id
-      - rejected_reason
       - slug
       - tax_code
       - updated_at
-      - verification_status
-      - verified_at
     CompanyCatalogResponse:
       type: object
       properties:
@@ -17803,8 +17727,6 @@ components:
           items:
             $ref: '#/components/schemas/Industry'
           readOnly: true
-        verification_status:
-          $ref: '#/components/schemas/VerificationStatusEnum'
       required:
       - company_name
       - industries_detail
@@ -17882,6 +17804,9 @@ components:
         review_note:
           type: string
           readOnly: true
+        rejection_reason:
+          type: string
+          readOnly: true
         documents:
           type: array
           items:
@@ -17922,6 +17847,7 @@ components:
       - media_previews
       - public_id
       - requested_by_summary
+      - rejection_reason
       - review_note
       - revision
       - status
@@ -20138,7 +20064,7 @@ components:
           nullable: true
         company_name:
           type: string
-        company_verification_status:
+        recruiter_verification_status:
           type: string
         company_size:
           type: string
@@ -20150,7 +20076,7 @@ components:
       - company_name
       - company_public_id
       - company_size
-      - company_verification_status
+      - recruiter_verification_status
       - recruiter_public_id
       - verification
       - work_location_name
@@ -27792,18 +27718,6 @@ components:
       - registration_completed
       - representative_verified
       - verification_completed
-    VerificationStatusEnum:
-      enum:
-      - unverified
-      - pending
-      - verified
-      - rejected
-      type: string
-      description: |-
-        * `unverified` - Chưa xác thực
-        * `pending` - Chờ duyệt
-        * `verified` - Đã xác thực
-        * `rejected` - Bị từ chối
     VerifyConfirm:
       type: object
       properties:

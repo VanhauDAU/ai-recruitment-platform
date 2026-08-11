@@ -55,4 +55,24 @@ describe('EmployerVerificationChecklist', () => {
     expect(screen.queryByText('Đang thẩm định')).not.toBeInTheDocument()
     expect(screen.queryByText(/Hồ sơ lần/)).not.toBeInTheDocument()
   })
+
+  it('shows the exceptional revoked lifecycle state and its reason', () => {
+    render(
+      <MemoryRouter>
+        <EmployerVerificationChecklist
+          profile={{
+            onboarding: {},
+            verification_case: {
+              status: 'revoked',
+              decision_reason: 'Không còn đủ điều kiện xác thực.',
+            },
+          }}
+          onContinue={vi.fn()}
+        />
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByText('Xác thực nhà tuyển dụng đã bị thu hồi')).toBeVisible()
+    expect(screen.getByText(/Không còn đủ điều kiện xác thực/)).toBeVisible()
+  })
 })

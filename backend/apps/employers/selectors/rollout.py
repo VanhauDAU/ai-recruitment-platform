@@ -6,7 +6,6 @@ from django.utils import timezone
 from apps.uploads.models import UploadAsset, UploadSession, UploadTrustStatus
 
 from ..models import (
-    Company,
     EmployerComplianceHold,
     EmployerNotification,
     EmployerVerificationCase,
@@ -40,13 +39,6 @@ def employer_rollout_counters():
             decision_source__in={
                 EmployerVerificationCase.DecisionSource.LEGACY_AUTO,
                 EmployerVerificationCase.DecisionSource.LEGACY_UNKNOWN,
-            },
-        ).count(),
-        'legacy_verified_companies': Company.objects.filter(
-            verification_status=Company.VerificationStatus.VERIFIED,
-            verification_source__in={
-                Company.VerificationSource.LEGACY_AUTO,
-                Company.VerificationSource.LEGACY_UNKNOWN,
             },
         ).count(),
         'legacy_upload_assets': UploadAsset.objects.filter(

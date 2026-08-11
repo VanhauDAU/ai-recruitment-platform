@@ -219,7 +219,7 @@ export default function JobCard({
               {job.title}
             </Link>
             {job.company_verified && (
-              <Tooltip title="Tin đã xác thực — công ty được kiểm chứng">
+              <Tooltip title="Nhà tuyển dụng đã xác thực">
                 <CheckCircleFilled className="ml-1.5 translate-y-[-1px] align-middle text-sm !text-emerald-500" />
               </Tooltip>
             )}

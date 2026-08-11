@@ -34,11 +34,6 @@ from ..models import (
     EmployerVerificationNotification,
 )
 from ..models.readiness import current_dpa_status
-from .companies import (
-    CompanyTaxCodeConflict,
-    ensure_company_tax_code_can_be_verified,
-    mark_company_verified,
-)
 from .compliance import (
     LockedVerificationScope,
     apply_verification_hold,
@@ -247,8 +242,6 @@ def _integrity_fingerprint(case, *, scope=None):
         'company': (
             [
                 company.public_id,
-                company.verification_status,
-                company.verification_source,
                 _privacy_safe_hash(company.tax_code),
                 _privacy_safe_hash(company.company_name),
                 _timestamp_marker(company.updated_at),
@@ -953,8 +946,8 @@ def reconcile_verification_case(case, *, source='reconciliation'):
     """Compatibility hook that deliberately never makes a final decision.
 
     Prerequisite changes may make the case eligible for an administrator's
-    explicit decision, but ER-D14 forbids this hook from approving the case or
-    company. ``source`` remains accepted so old callers can migrate without a
+    explicit decision, but ER-D14 forbids this hook from approving the case.
+    ``source`` remains accepted so old callers can migrate without a
     risky all-at-once contract change.
     """
 
@@ -1132,10 +1125,6 @@ def _prepare_final_decision(
                     'TAX_OVERRIDE_REASON_REQUIRED',
                     'Cần nhập lý do override kết quả tra cứu thuế.',
                 )
-        if enforce_current_state and case.company_id:
-            ensure_company_tax_code_can_be_verified(case.company)
-
-    company = case.company if case.company_id else None
     hold_impact = _verification_hold_impact(case, scope=scope)
     snapshot = {
         'case_public_id': case.public_id,
@@ -1147,16 +1136,6 @@ def _prepare_final_decision(
         'tax_advisory': tax,
         'tax_override': effective_override,
         'tax_override_reason': normalized_override_reason,
-        'company_impact': {
-            'company_public_id': company.public_id if company else None,
-            'current_status': company.verification_status if company else None,
-            'will_mark_verified': bool(
-                company
-                and decision == EmployerVerificationCase.Status.APPROVED
-                and company.verification_status != company.VerificationStatus.VERIFIED
-            ),
-            'will_downgrade': False,
-        },
         'capability_impact': {
             'candidate_data_access': (
                 'eligible_after_recompute'
@@ -1256,7 +1235,7 @@ def confirm_verification_decision(
             tax_override_reason=tax_override_reason,
             scope=scope,
         )
-    except (ValidationError, CompanyTaxCodeConflict) as current_state_error:
+    except ValidationError as current_state_error:
         payload, snapshot = _prepare_final_decision(
             case,
             actor=actor,
@@ -1285,8 +1264,6 @@ def confirm_verification_decision(
 
     released_holds = []
     if decision == EmployerVerificationCase.Status.APPROVED:
-        if scope.company is not None:
-            mark_company_verified(scope.company)
         released_holds = release_verification_holds(
             scope,
             actor=actor,
@@ -1450,7 +1427,6 @@ def _prepare_lifecycle_action(case, *, actor, action, reason, scope=None):
             'VERIFICATION_REASON_REQUIRED',
             'Cần nhập lý do cho thay đổi hiệu lực xác thực.',
         )
-    company = scope.company if scope else (case.company if case.company_id else None)
     _, jobs, campaigns, _ = _resource_rows(case, scope=scope)
     campaign_count = len(campaigns)
     job_count = len(jobs)
@@ -1461,11 +1437,6 @@ def _prepare_lifecycle_action(case, *, actor, action, reason, scope=None):
         'lock_version': case.lock_version,
         'action': action,
         'reason': reason,
-        'company_impact': {
-            'company_public_id': company.public_id if company else None,
-            'current_status': company.verification_status if company else None,
-            'will_downgrade': False,
-        },
         'capability_impact': {
             'candidate_data_access': 'blocked',
             'job_approval': 'blocked',
@@ -1570,7 +1541,6 @@ def confirm_verification_lifecycle_action(
         payload={
             'reason': payload['reason'],
             'revision': case.revision,
-            'company_status_unchanged': True,
         },
     )
     if created:
@@ -1594,7 +1564,6 @@ def confirm_verification_lifecycle_action(
         payload={
             'reason': payload['reason'],
             'hold_public_id': hold.public_id,
-            'company_status_unchanged': True,
         },
     )
     _queue_verification_notification(case, event_type=action, reason=reason)

@@ -5,46 +5,69 @@ from django.utils import timezone
 from rest_framework.test import APITestCase
 
 from apps.accounts.models import User
-from apps.employers.models import Company, CompanyDocument, RecruiterProfile
-from apps.sitecontent.models import SiteSetting
+from apps.employers.models import (
+    Company,
+    CompanyDocument,
+    EmployerVerificationCase,
+    RecruiterProfile,
+)
 
 from ..models import Job, JobReport
 from ..selectors.verification_badge import job_badge_criteria
-from ..services import (
-    resolve_job_report,
-    reverse_job_report,
-    submit_job_report,
-)
 
 
-def _fully_verified_company(suffix='1', *, months_old=12):
-    """Nhà tuyển dụng đạt cả năm điều kiện, dùng làm mốc cho từng phép phủ định."""
+def _employer_with_verification_case(
+    suffix='1',
+    *,
+    company=None,
+    company_role=RecruiterProfile.CompanyRole.OWNER,
+    status=EmployerVerificationCase.Status.APPROVED,
+    method=EmployerVerificationCase.VerificationMethod.BUSINESS_REGISTRATION,
+):
     user = User.objects.create_user(
         email=f'hr@congty{suffix}.vn',
         password='Password@123',
         role=User.Role.EMPLOYER,
         email_verified=True,
     )
-    user.date_joined = timezone.now() - timedelta(days=30 * months_old)
+    # Giữ đủ các tín hiệu của huy hiệu cũ để chứng minh chúng không còn có thể
+    # vượt qua quyết định cuối cùng trên EmployerVerificationCase.
+    user.date_joined = timezone.now() - timedelta(days=365)
     user.save(update_fields=['date_joined'])
-    company = Company.objects.create(
-        company_name=f'Công ty {suffix}',
-        email=f'contact@congty{suffix}.vn',
-        created_by=user,
+    company = company or Company.objects.create(
+        company_name=f'Công ty {suffix}', email=f'contact@congty{suffix}.vn', created_by=user
     )
-    RecruiterProfile.objects.create(
+    recruiter = RecruiterProfile.objects.create(
         user=user,
         company=company,
+        company_role=company_role,
         phone_verified_at=timezone.now(),
     )
-    CompanyDocument.objects.create(
+    case = EmployerVerificationCase.objects.create(
+        recruiter=recruiter,
         company=company,
-        doc_type=CompanyDocument.DocType.BUSINESS_REGISTRATION,
-        status=CompanyDocument.Status.APPROVED,
-        file_url='docs/gpkd.pdf',
-        uploaded_by=user,
+        status=status,
+        verification_method=method,
     )
-    return user, company
+    doc_types = (
+        [CompanyDocument.DocType.BUSINESS_REGISTRATION]
+        if method == EmployerVerificationCase.VerificationMethod.BUSINESS_REGISTRATION
+        else [
+            CompanyDocument.DocType.AUTHORIZATION_LETTER,
+            CompanyDocument.DocType.IDENTITY_DOCUMENT,
+        ]
+    )
+    for doc_type in doc_types:
+        CompanyDocument.objects.create(
+            company=company,
+            recruiter=recruiter,
+            verification_case=case,
+            doc_type=doc_type,
+            status=CompanyDocument.Status.APPROVED,
+            file_url=f'docs/{suffix}-{doc_type}.pdf',
+            uploaded_by=user,
+        )
+    return user, company, recruiter, case
 
 
 def _job_for(user, company, suffix=''):
@@ -58,151 +81,83 @@ def _job_for(user, company, suffix=''):
 
 
 class EmployerBadgeCriteriaTests(APITestCase):
-    def test_all_five_criteria_met_grants_the_badge(self):
-        user, company = _fully_verified_company()
+    def test_only_an_approved_recruiter_case_grants_the_badge(self):
+        user, company, _, case = _employer_with_verification_case(
+            status=EmployerVerificationCase.Status.PENDING
+        )
+        job = _job_for(user, company)
+
+        criteria = job_badge_criteria(job)
+        self.assertFalse(criteria['verified'])
+        self.assertFalse(criteria['employer_verification_approved'])
+
+        case.status = EmployerVerificationCase.Status.APPROVED
+        case.save(update_fields=['status', 'updated_at'])
+        criteria = job_badge_criteria(job)
+        self.assertTrue(criteria['verified'])
+        self.assertTrue(criteria['employer_verification_approved'])
+
+        case.status = EmployerVerificationCase.Status.REJECTED
+        case.save(update_fields=['status', 'updated_at'])
+        criteria = job_badge_criteria(job)
+        self.assertFalse(criteria['verified'])
+        self.assertFalse(criteria['employer_verification_approved'])
+
+    def test_approved_authorization_case_grants_the_badge_without_business_registration(self):
+        user, company, _, _ = _employer_with_verification_case(
+            'authorization',
+            company_role=RecruiterProfile.CompanyRole.MEMBER,
+            method=EmployerVerificationCase.VerificationMethod.AUTHORIZATION_AND_ID,
+        )
         job = _job_for(user, company)
 
         criteria = job_badge_criteria(job)
 
         self.assertTrue(criteria['verified'])
-        self.assertTrue(criteria['email_domain_verified'])
-        self.assertTrue(criteria['phone_verified'])
-        self.assertTrue(criteria['business_doc_approved'])
-        self.assertTrue(criteria['account_age_reached'])
-        self.assertTrue(criteria['no_report_history'])
-
-    def test_public_mailbox_fails_the_company_domain_criterion(self):
-        user, company = _fully_verified_company('2')
-        user.email = 'nguoidung@gmail.com'
-        user.save(update_fields=['email'])
-        job = _job_for(user, company)
-
-        criteria = job_badge_criteria(job)
-
-        self.assertFalse(criteria['email_domain_verified'])
-        self.assertFalse(criteria['verified'])
-
-    def test_company_without_business_email_fails_the_domain_criterion(self):
-        # Quy tắc cũ cho mọi tên miền không công khai đi qua khi công ty bỏ trống
-        # email, nên `hr@ten-mien-bat-ky.vn` cũng đạt tiêu chí.
-        user, company = _fully_verified_company('3')
-        company.email = ''
-        company.save(update_fields=['email'])
-        job = _job_for(user, company)
-
-        criteria = job_badge_criteria(job)
-
-        self.assertFalse(criteria['email_domain_verified'])
-        self.assertFalse(criteria['verified'])
-
-    def test_account_younger_than_the_configured_threshold_fails(self):
-        user, company = _fully_verified_company('4', months_old=1)
-        job = _job_for(user, company)
-
-        self.assertFalse(job_badge_criteria(job)['account_age_reached'])
-
-    def test_threshold_of_zero_months_accepts_a_brand_new_account(self):
-        SiteSetting.objects.create(
-            key='employer_badge_min_account_months',
-            label='Tuổi tài khoản tối thiểu',
-            value=0,
-        )
-        user, company = _fully_verified_company('5', months_old=0)
-        job = _job_for(user, company)
-
-        criteria = job_badge_criteria(job)
-
-        self.assertTrue(criteria['account_age_reached'])
-        self.assertTrue(criteria['verified'])
-
-    def test_only_an_upheld_report_removes_the_badge(self):
-        user, company = _fully_verified_company('6')
-        dismissed_job = _job_for(user, company, 'bị bác')
-        upheld_job = _job_for(user, company, 'vi phạm')
-        first_reporter = User.objects.create_user(
-            email='ungvien-1@example.com', password='Password@123', role=User.Role.CANDIDATE
-        )
-        second_reporter = User.objects.create_user(
-            email='ungvien-2@example.com', password='Password@123', role=User.Role.CANDIDATE
-        )
-        dismissed = submit_job_report(
-            job=dismissed_job,
-            reporter=first_reporter,
-            reason=JobReport.Reason.SCAM,
+        self.assertFalse(
+            CompanyDocument.objects.filter(
+                verification_case__recruiter__user=user,
+                doc_type=CompanyDocument.DocType.BUSINESS_REGISTRATION,
+            ).exists()
         )
 
-        self.assertTrue(job_badge_criteria(upheld_job)['no_report_history'])
-
-        resolve_job_report(
-            report=dismissed,
-            status=JobReport.Status.DISMISSED,
-            actor=user,
-        )
-        self.assertTrue(job_badge_criteria(upheld_job)['no_report_history'])
-
-        upheld = submit_job_report(
-            job=upheld_job,
-            reporter=second_reporter,
-            reason=JobReport.Reason.SCAM,
-        )
-        resolve_job_report(report=upheld, status=JobReport.Status.UPHELD, actor=user)
-        criteria = job_badge_criteria(dismissed_job)
-        self.assertFalse(criteria['no_report_history'])
-        self.assertFalse(criteria['verified'])
-
-        reverse_job_report(report=upheld, actor=user, note='Đã xác minh lại chứng cứ.')
-        self.assertTrue(job_badge_criteria(dismissed_job)['no_report_history'])
-        self.assertTrue(job_badge_criteria(dismissed_job)['verified'])
-
-    def test_two_recruiters_in_one_company_have_independent_badges(self):
-        owner, company = _fully_verified_company('shared')
-        member = User.objects.create_user(
-            email='member@congtyshared.vn',
-            password='Password@123',
-            role=User.Role.EMPLOYER,
-            email_verified=True,
-        )
-        member.date_joined = timezone.now() - timedelta(days=365)
-        member.save(update_fields=['date_joined'])
-        RecruiterProfile.objects.create(
-            user=member,
+    def test_owner_and_member_in_one_company_have_independent_case_badges(self):
+        owner, company, _, _ = _employer_with_verification_case('shared-owner')
+        member, _, _, member_case = _employer_with_verification_case(
+            'shared-member',
             company=company,
-            phone_verified_at=timezone.now(),
+            company_role=RecruiterProfile.CompanyRole.MEMBER,
+            status=EmployerVerificationCase.Status.PENDING,
+            method=EmployerVerificationCase.VerificationMethod.AUTHORIZATION_AND_ID,
         )
         owner_job = _job_for(owner, company, 'owner')
         member_job = _job_for(member, company, 'member')
 
         self.assertTrue(job_badge_criteria(owner_job)['verified'])
-        self.assertFalse(job_badge_criteria(member_job)['business_doc_approved'])
-
-        CompanyDocument.objects.create(
-            company=company,
-            doc_type=CompanyDocument.DocType.BUSINESS_REGISTRATION,
-            status=CompanyDocument.Status.APPROVED,
-            file_url='docs/member-gpkd.pdf',
-            uploaded_by=member,
-        )
-        self.assertTrue(job_badge_criteria(member_job)['verified'])
-
-        reporter = User.objects.create_user(
-            email='candidate-shared@example.com',
-            password='Password@123',
-            role=User.Role.CANDIDATE,
-        )
-        report = submit_job_report(
-            job=member_job,
-            reporter=reporter,
-            reason=JobReport.Reason.WRONG_INFO,
-        )
-        resolve_job_report(report=report, status=JobReport.Status.UPHELD, actor=owner)
-
-        self.assertTrue(job_badge_criteria(owner_job)['verified'])
         self.assertFalse(job_badge_criteria(member_job)['verified'])
+
+        member_case.status = EmployerVerificationCase.Status.APPROVED
+        member_case.save(update_fields=['status', 'updated_at'])
+        self.assertTrue(job_badge_criteria(member_job)['verified'])
+        self.assertTrue(job_badge_criteria(owner_job)['verified'])
+
+    def test_approved_case_for_an_old_company_does_not_badge_a_new_company_job(self):
+        user, old_company, recruiter, _ = _employer_with_verification_case('old-company')
+        new_company = Company.objects.create(
+            company_name='Công ty mới',
+            created_by=user,
+        )
+        recruiter.company = new_company
+        recruiter.save(update_fields=['company', 'updated_at'])
+        job = _job_for(user, new_company)
+
+        self.assertFalse(job_badge_criteria(job)['verified'])
+        self.assertNotEqual(old_company.pk, new_company.pk)
 
 
 class JobBadgeApiTests(APITestCase):
-    def test_detail_endpoint_lists_every_criterion_with_its_state(self):
-        user, company = _fully_verified_company('7')
+    def test_detail_endpoint_exposes_approved_recruiter_under_legacy_field_names(self):
+        user, company, _, _ = _employer_with_verification_case('7')
         job = Job.objects.create(
             posted_by=user,
             company=company,
@@ -218,20 +173,15 @@ class JobBadgeApiTests(APITestCase):
         criteria = response.data['company_verification']['criteria']
         self.assertEqual(
             [item['key'] for item in criteria],
-            [
-                'email_domain_verified',
-                'phone_verified',
-                'business_doc_approved',
-                'account_age_reached',
-                'no_report_history',
-            ],
+            ['employer_verification_approved'],
         )
         self.assertTrue(all(item['passed'] for item in criteria))
-        self.assertIn('6 tháng', criteria[3]['label'])
+        self.assertIn('nhà tuyển dụng', criteria[0]['label'])
+        self.assertIn('người đăng tin', criteria[0]['label'])
 
     def test_list_endpoint_keeps_badge_queries_flat_across_companies(self):
         for index in range(4):
-            user, company = _fully_verified_company(f'list{index}')
+            user, company, _, _ = _employer_with_verification_case(f'list{index}')
             Job.objects.create(
                 posted_by=user,
                 company=company,
@@ -240,16 +190,35 @@ class JobBadgeApiTests(APITestCase):
                 status=Job.Status.ACTIVE,
             )
 
-        with self.assertNumQueries(9):
+        with self.assertNumQueries(6):
             response = self.client.get(reverse('job-list'))
 
         self.assertEqual(response.status_code, 200)
         self.assertTrue(all(item['company_verified'] for item in response.data['results']))
 
+    def test_list_endpoint_does_not_share_one_recruiters_approval_across_company(self):
+        owner, company, _, _ = _employer_with_verification_case('api-owner')
+        member, _, _, _ = _employer_with_verification_case(
+            'api-member',
+            company=company,
+            company_role=RecruiterProfile.CompanyRole.MEMBER,
+            status=EmployerVerificationCase.Status.PENDING,
+            method=EmployerVerificationCase.VerificationMethod.AUTHORIZATION_AND_ID,
+        )
+        owner_job = _job_for(owner, company, 'owner API')
+        member_job = _job_for(member, company, 'member API')
+
+        response = self.client.get(reverse('job-list'))
+
+        self.assertEqual(response.status_code, 200, response.data)
+        badges = {item['public_id']: item['company_verified'] for item in response.data['results']}
+        self.assertTrue(badges[owner_job.public_id])
+        self.assertFalse(badges[member_job.public_id])
+
 
 class JobReportApiTests(APITestCase):
     def setUp(self):
-        self.owner, self.company = _fully_verified_company('report')
+        self.owner, self.company, _, _ = _employer_with_verification_case('report')
         self.job = Job.objects.create(
             posted_by=self.owner,
             company=self.company,

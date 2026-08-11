@@ -20,7 +20,7 @@ export default function DashboardHeader({
   jobActionTarget,
   candidateActionTarget,
 }) {
-  const companyVerified = account.company_verification_status === 'verified'
+  const employerVerified = Boolean(account.verification?.representative_verified)
 
   return (
     <header className="relative overflow-hidden rounded-[24px] bg-[linear-gradient(120deg,#0f172a_0%,#123d3a_58%,#087a55_115%)] px-5 py-6 text-white shadow-[0_18px_50px_-24px_rgba(15,23,42,.65)] sm:px-7 sm:py-7">
@@ -33,8 +33,8 @@ export default function DashboardHeader({
             <span className="inline-flex items-center gap-1.5"><ClockCircleOutlined /> {fullDateFormatter.format(new Date())}</span>
             <span aria-hidden="true" className="h-1 w-1 rounded-full bg-emerald-200/50" />
             <span className="inline-flex items-center gap-1.5">
-              <CheckCircleFilled className={companyVerified ? 'text-emerald-300' : 'text-amber-300'} />
-              {companyVerified ? 'Doanh nghiệp đã xác thực' : 'Đang hoàn thiện xác thực'}
+              <CheckCircleFilled className={employerVerified ? 'text-emerald-300' : 'text-amber-300'} />
+              {employerVerified ? 'Nhà tuyển dụng đã xác thực' : 'Đang hoàn thiện xác thực NTD'}
             </span>
           </div>
           <h1 className="mt-3 text-2xl font-black tracking-[-.025em] text-white sm:text-[32px] sm:leading-tight">

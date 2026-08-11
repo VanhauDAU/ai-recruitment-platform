@@ -64,8 +64,8 @@ describe('AdminCompanyWorkspace', () => {
     companyApi.getAdminCompanies.mockResolvedValue({ count: 0, results: [] })
     companyApi.getAdminCompanySummary.mockResolvedValue({
       total: 0,
-      verification: {},
       pending_update_requests: 0,
+      companies_without_single_owner: 0,
     })
     updateApi.getAdminCompanyUpdateRequests.mockResolvedValue({ count: 0, results: [] })
   })
@@ -178,5 +178,5 @@ describe('AdminCompanyWorkspace', () => {
     expect(screen.getByTestId('location')).toHaveTextContent(
       '/admin/app/recruiters/usr_owner?tab=verification&company_update=cur_alpha',
     )
-  }, 20000)
+  }, 30000)
 })

@@ -1,7 +1,7 @@
 from unittest.mock import Mock, patch
 
 from django.core.cache import cache
-from django.test import TestCase, override_settings
+from django.test import SimpleTestCase, TestCase, override_settings
 from django.utils import timezone
 
 from apps.accounts.models import User
@@ -13,15 +13,38 @@ from ..models import (
     EmployerVerificationCase,
     RecruiterProfile,
 )
-from ..services import get_or_create_verification_case, record_verification_upload
+from ..services import (
+    get_or_create_verification_case,
+    normalize_company_tax_code,
+    record_verification_upload,
+)
 from ..services.tax_lookup import (
     TaxLookupRateLimited,
     TaxLookupResult,
     lookup_company_tax,
+    normalize_tax_code,
     queue_company_tax_lookup,
     refresh_verification_tax_lookup,
 )
 from ..tasks.tax_lookup import lookup_company_tax_evidence
+
+
+class CompanyTaxCodeNormalizationTests(SimpleTestCase):
+    def test_company_and_lookup_normalizers_accept_only_canonical_ascii_digits(self):
+        for normalizer in (normalize_company_tax_code, normalize_tax_code):
+            with self.subTest(normalizer=normalizer.__name__, length=10):
+                self.assertEqual(normalizer('0316794479'), '0316794479')
+            with self.subTest(normalizer=normalizer.__name__, length=13):
+                self.assertEqual(normalizer('0316794479001'), '0316794479001')
+            for invalid in (
+                '0316794479-001',
+                '031 679 4479',
+                '０３１６７９４４７９',
+                '031679447A',
+            ):
+                with self.subTest(normalizer=normalizer.__name__, invalid=invalid):
+                    with self.assertRaises(ValueError):
+                        normalizer(invalid)
 
 
 @override_settings(
@@ -76,6 +99,28 @@ class CompanyTaxLookupTests(TestCase):
         self.assertEqual(first.registered_name, 'CÔNG TY TNHH CASSO')
         self.assertEqual(first.response_hash, second.response_hash)
         get.assert_called_once()
+
+    @patch('apps.employers.services.tax_lookup.requests.get')
+    def test_lookup_formats_13_digit_branch_code_and_canonicalizes_provider_response(self, get):
+        response = Mock(status_code=200, headers={})
+        response.json.return_value = {
+            'code': '00',
+            'desc': 'Success',
+            'data': {
+                'id': '0316794479-001',
+                'name': 'CHI NHÁNH CÔNG TY CASSO',
+            },
+        }
+        get.return_value = response
+
+        result = lookup_company_tax('0316794479001')
+
+        self.assertEqual(result.status, CompanyTaxLookupEvidence.Status.FOUND)
+        self.assertEqual(result.returned_tax_code, '0316794479001')
+        self.assertEqual(
+            get.call_args.args[0],
+            'https://api.vietqr.io/v2/business/0316794479-001',
+        )
 
     @patch('apps.employers.services.tax_lookup.cache.set', side_effect=ConnectionError)
     @patch('apps.employers.services.tax_lookup.cache.get', side_effect=ConnectionError)

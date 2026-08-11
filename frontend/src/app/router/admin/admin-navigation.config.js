@@ -21,14 +21,6 @@ export const ADMIN_NAVIGATION = [
             access: { allOf: ['company.view'] },
           },
           {
-            key: 'company-pending',
-            label: 'Chờ xác thực',
-            badgeKey: 'company_pending',
-            routeRef: 'companies',
-            query: { verification_status: 'pending' },
-            access: { allOf: ['company.view'] },
-          },
-          {
             key: 'company-updates',
             label: 'Yêu cầu cập nhật',
             badgeKey: 'company_updates',

@@ -25,7 +25,10 @@ import {
 } from '@/entities/employer-profile'
 import { useSession } from '@/entities/session'
 import { BrandLogo } from '@/entities/site-settings'
-import { getEmployerAccountVerificationLevel } from '@/features/verify-employer-account'
+import {
+  getEmployerAccountVerificationLevel,
+  isEmployerVerificationInvalidated,
+} from '@/features/verify-employer-account'
 import { AnnouncementStrip } from '@/widgets/announcement-strip'
 import { EmployerNotificationBell } from '@/widgets/employer-notification-center'
 import {
@@ -87,7 +90,14 @@ export default function EmployerWorkspaceLayout() {
   } = useEmployerReadiness()
   const profile = profileData || {}
   const verification = profile.onboarding || {}
-  const accountVerificationLevel = getEmployerAccountVerificationLevel(verification)
+  const verificationCase = profile.verification_case || {}
+  const effectiveVerification = isEmployerVerificationInvalidated(verificationCase)
+    ? { ...verification, business_doc_approved: false, representative_verified: false }
+    : verification
+  const accountVerificationLevel = getEmployerAccountVerificationLevel(
+    verification,
+    verificationCase,
+  )
   // "An toàn" ở đây gắn với bảo mật đăng nhập: bật một trong các phương thức xác
   // thực 2 yếu tố (hiện có email) là đủ để ẩn cảnh báo đỏ ở sidebar.
   const accountSecure = Boolean(user?.two_factor_enabled)
@@ -273,7 +283,7 @@ export default function EmployerWorkspaceLayout() {
                       trigger={['hover', 'focus']}
                       placement="rightTop"
                       styles={{ container: { padding: 12 } }}
-                      content={<EmployerAccountVerificationPopover verification={verification} level={accountVerificationLevel} />}
+                      content={<EmployerAccountVerificationPopover verification={effectiveVerification} level={accountVerificationLevel} />}
                     >
                       <button type="button" aria-label="Xem chi tiết cấp xác thực tài khoản" className="inline-flex cursor-help text-slate-400 transition hover:text-slate-600"><QuestionCircleFilled /></button>
                     </Popover>

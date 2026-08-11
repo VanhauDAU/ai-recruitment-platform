@@ -51,7 +51,6 @@ DECISION_SNAPSHOT_FIELDS = (
     'tax_advisory',
     'tax_override',
     'tax_override_reason',
-    'company_impact',
     'capability_impact',
     'verification_hold_impact',
     'rejection_impact',
@@ -62,7 +61,6 @@ LIFECYCLE_SNAPSHOT_FIELDS = (
     'lock_version',
     'action',
     'reason',
-    'company_impact',
     'capability_impact',
     'resources',
 )
@@ -102,15 +100,6 @@ def _public_decision_snapshot(value):
             ('tax_code', 'company_name'),
         )
         snapshot['tax_advisory'] = tax_advisory
-        snapshot['company_impact'] = _allowlisted_mapping(
-            snapshot.get('company_impact'),
-            (
-                'company_public_id',
-                'current_status',
-                'will_mark_verified',
-                'will_downgrade',
-            ),
-        )
         snapshot['capability_impact'] = _allowlisted_mapping(
             snapshot.get('capability_impact'),
             ('candidate_data_access', 'job_approval', 'job_workspace'),
@@ -129,10 +118,6 @@ def _public_decision_snapshot(value):
         EmployerVerificationCase.Status.EXPIRED,
     }:
         snapshot = _allowlisted_mapping(value, LIFECYCLE_SNAPSHOT_FIELDS)
-        snapshot['company_impact'] = _allowlisted_mapping(
-            snapshot.get('company_impact'),
-            ('company_public_id', 'current_status', 'will_downgrade'),
-        )
         snapshot['capability_impact'] = _allowlisted_mapping(
             snapshot.get('capability_impact'),
             (
@@ -375,16 +360,9 @@ class AdminVerificationCaseListSerializer(serializers.ModelSerializer):
             'public_id': obj.company.public_id,
             'name': obj.company.company_name,
             'tax_code': tax_code,
-            'verification_status': obj.company.verification_status,
-            'verification_source': obj.company.verification_source,
             'duplicate_tax_code_company_count': getattr(
                 obj,
                 'duplicate_tax_code_company_count',
-                0,
-            ),
-            'verified_duplicate_tax_code_company_count': getattr(
-                obj,
-                'verified_duplicate_tax_code_company_count',
                 0,
             ),
         }
@@ -602,25 +580,6 @@ class AdminVerificationTaxAdvisorySerializer(serializers.Serializer):
     requires_override = serializers.BooleanField()
 
 
-class AdminVerificationDecisionCompanyImpactSerializer(serializers.Serializer):
-    company_public_id = serializers.CharField(allow_null=True)
-    current_status = serializers.ChoiceField(
-        choices=['unverified', 'pending', 'verified', 'rejected'],
-        allow_null=True,
-    )
-    will_mark_verified = serializers.BooleanField()
-    will_downgrade = serializers.BooleanField()
-
-
-class AdminVerificationLifecycleCompanyImpactSerializer(serializers.Serializer):
-    company_public_id = serializers.CharField(allow_null=True)
-    current_status = serializers.ChoiceField(
-        choices=['unverified', 'pending', 'verified', 'rejected'],
-        allow_null=True,
-    )
-    will_downgrade = serializers.BooleanField()
-
-
 class AdminVerificationDecisionCapabilityImpactSerializer(serializers.Serializer):
     candidate_data_access = serializers.ChoiceField(choices=['eligible_after_recompute', 'blocked'])
     job_approval = serializers.ChoiceField(choices=['eligible_after_recompute', 'blocked'])
@@ -670,7 +629,6 @@ class AdminVerificationDecisionImpactSerializer(serializers.Serializer):
     tax_advisory = AdminVerificationTaxAdvisorySerializer()
     tax_override = serializers.BooleanField()
     tax_override_reason = serializers.CharField(allow_blank=True)
-    company_impact = AdminVerificationDecisionCompanyImpactSerializer()
     capability_impact = AdminVerificationDecisionCapabilityImpactSerializer()
     verification_hold_impact = AdminVerificationHoldImpactSerializer()
     rejection_impact = AdminVerificationRejectionImpactSerializer()
@@ -689,7 +647,6 @@ class AdminVerificationLifecycleImpactSerializer(serializers.Serializer):
         ]
     )
     reason = serializers.CharField()
-    company_impact = AdminVerificationLifecycleCompanyImpactSerializer()
     capability_impact = AdminVerificationLifecycleCapabilityImpactSerializer()
     resources = AdminVerificationLifecycleResourcesSerializer()
     impact_token = serializers.CharField()
@@ -711,7 +668,6 @@ class AdminVerificationStoredDecisionSnapshotSerializer(serializers.Serializer):
     tax_advisory = AdminVerificationTaxAdvisorySerializer()
     tax_override = serializers.BooleanField()
     tax_override_reason = serializers.CharField(allow_blank=True)
-    company_impact = AdminVerificationDecisionCompanyImpactSerializer()
     capability_impact = AdminVerificationDecisionCapabilityImpactSerializer()
     verification_hold_impact = AdminVerificationHoldImpactSerializer()
     rejection_impact = AdminVerificationRejectionImpactSerializer()
@@ -728,7 +684,6 @@ class AdminVerificationStoredLifecycleSnapshotSerializer(serializers.Serializer)
         ]
     )
     reason = serializers.CharField()
-    company_impact = AdminVerificationLifecycleCompanyImpactSerializer()
     capability_impact = AdminVerificationLifecycleCapabilityImpactSerializer()
     resources = AdminVerificationLifecycleResourcesSerializer()
 
@@ -796,11 +751,6 @@ class AdminVerificationPermissionErrorSerializer(serializers.Serializer):
 
 class AdminVerificationStaleErrorSerializer(serializers.Serializer):
     code = serializers.ChoiceField(choices=['admin_resource_changed'])
-    message = serializers.CharField()
-
-
-class AdminVerificationTaxConflictErrorSerializer(serializers.Serializer):
-    code = serializers.ChoiceField(choices=['company_tax_code_conflict'])
     message = serializers.CharField()
 
 

@@ -163,6 +163,36 @@ describe('EmployerWorkspaceLayout', () => {
     expect(businessDocumentStep.querySelector('.anticon-check-circle')).not.toBeInTheDocument()
   })
 
+  it('drops the sidebar from level 3 after verification is revoked', () => {
+    useSession.mockReturnValue({
+      user: { full_name: 'Nguyễn An', email: 'hr@example.com' },
+      logout: vi.fn(),
+    })
+    profileQueryState.data.onboarding = {
+      ...profileQueryState.data.onboarding,
+      email_verified: true,
+      phone_verified: true,
+      company_linked: true,
+      business_doc_submitted: true,
+      business_doc_approved: true,
+      no_report_history: true,
+    }
+    profileQueryState.data.verification_case = { status: 'revoked' }
+
+    render(
+      <MemoryRouter initialEntries={['/tuyendung/app/dashboard']}>
+        <Routes>
+          <Route element={<EmployerWorkspaceLayout />}>
+            <Route path="/tuyendung/app/dashboard" element={<p>Bảng tin</p>} />
+          </Route>
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByText('Cấp 1/3')).toBeInTheDocument()
+    expect(screen.queryByText('Cấp 3/3')).not.toBeInTheDocument()
+  })
+
   it('opens the account information settings tab from the sidebar profile', () => {
     useSession.mockReturnValue({
       user: { full_name: 'Nguyễn An', email: 'hr@example.com' },

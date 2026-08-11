@@ -16,6 +16,34 @@ export const DEFAULT_COMPANY_FORM = {
   employee_benefits: '',
 }
 
+export const COMPANY_DESCRIPTION_MIN_LENGTH = 500
+
+export function companyTaxCodeValidationError(value) {
+  const taxCode = String(value ?? '')
+  if (!taxCode.trim()) return 'Nhập mã số thuế.'
+  if (!/^\d+$/.test(taxCode)) return 'Mã số thuế chỉ được gồm chữ số.'
+  if (![10, 13].includes(taxCode.length)) return 'Mã số thuế phải gồm đúng 10 hoặc 13 chữ số.'
+  return ''
+}
+
+export function companyDescriptionTextLength(value) {
+  const html = String(value ?? '')
+  if (typeof DOMParser === 'undefined') {
+    return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().length
+  }
+  const document = new DOMParser().parseFromString(html, 'text/html')
+  return (document.body.textContent || '').replace(/\s+/g, ' ').trim().length
+}
+
+export function companyDescriptionValidationError(value) {
+  const length = companyDescriptionTextLength(value)
+  if (!length) return 'Nhập mô tả công ty.'
+  if (length < COMPANY_DESCRIPTION_MIN_LENGTH) {
+    return `Mô tả công ty phải có ít nhất ${COMPANY_DESCRIPTION_MIN_LENGTH} ký tự (hiện có ${length}).`
+  }
+  return ''
+}
+
 export function companyToForm(company = {}, pendingChanges = {}) {
   const base = {
     ...DEFAULT_COMPANY_FORM,

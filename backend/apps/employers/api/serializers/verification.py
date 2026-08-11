@@ -6,11 +6,15 @@ from drf_spectacular.utils import extend_schema_field, inline_serializer
 from rest_framework import serializers
 
 from common.media_storage import media_url_from_value
-from common.rich_text import rich_text_plain_text, sanitize_rich_text
 
 from ...models import Company, CompanyDocument, CompanyUpdateRequest, Industry, RecruiterProfile
 from ...selectors import can_access_employer_document_content
-from ...services import SENSITIVE_FIELDS, UPDATABLE_COMPANY_FIELDS
+from ...services import (
+    SENSITIVE_FIELDS,
+    UPDATABLE_COMPANY_FIELDS,
+    normalize_company_rich_text,
+    normalize_company_tax_code,
+)
 
 
 class CompanyDocumentSerializer(serializers.ModelSerializer):
@@ -97,6 +101,7 @@ class CompanyUpdateRequestSerializer(serializers.ModelSerializer):
         allow_null=True,
     )
     allowed_actions = serializers.SerializerMethodField()
+    rejection_reason = serializers.SerializerMethodField()
     base_company_updated_at = serializers.DateTimeField(required=False)
 
     class Meta:
@@ -112,6 +117,7 @@ class CompanyUpdateRequestSerializer(serializers.ModelSerializer):
             'proof_type',
             'status',
             'review_note',
+            'rejection_reason',
             'documents',
             'media_previews',
             'submitted_at',
@@ -129,12 +135,19 @@ class CompanyUpdateRequestSerializer(serializers.ModelSerializer):
             'is_sensitive',
             'status',
             'review_note',
+            'rejection_reason',
             'submitted_at',
             'created_at',
             'updated_at',
             'revision',
             'lock_version',
         ]
+
+    @extend_schema_field(serializers.CharField(allow_blank=True))
+    def get_rejection_reason(self, obj):
+        if obj.status == CompanyUpdateRequest.Status.REJECTED:
+            return obj.review_note or ''
+        return ''
 
     @extend_schema_field(serializers.ListField(child=serializers.CharField()))
     def get_allowed_actions(self, obj):
@@ -309,12 +322,10 @@ class CompanyUpdateRequestSerializer(serializers.ModelSerializer):
                 ) from error
 
         if 'tax_code' in cleaned:
-            tax_code = re.sub(r'\s+', '', str(cleaned['tax_code'] or ''))
-            if not re.fullmatch(r'\d{10}(?:-\d{3})?', tax_code):
-                raise serializers.ValidationError(
-                    {'tax_code': 'Mã số thuế phải gồm 10 chữ số hoặc có dạng 10 chữ số-3 chữ số.'}
-                )
-            cleaned['tax_code'] = tax_code
+            try:
+                cleaned['tax_code'] = normalize_company_tax_code(cleaned['tax_code'])
+            except ValueError as error:
+                raise serializers.ValidationError({'tax_code': str(error)}) from error
 
         for field, required, label in (
             ('description', True, 'Mô tả công ty'),
@@ -322,14 +333,14 @@ class CompanyUpdateRequestSerializer(serializers.ModelSerializer):
         ):
             if field not in cleaned:
                 continue
-            cleaned[field] = sanitize_rich_text(cleaned[field])
-            visible = rich_text_plain_text(cleaned[field])
-            if required and not visible:
-                raise serializers.ValidationError({field: f'{label} là bắt buộc.'})
-            if len(visible) > 10_000:
-                raise serializers.ValidationError(
-                    {field: f'{label} không được vượt quá 10.000 ký tự.'}
+            try:
+                cleaned[field] = normalize_company_rich_text(
+                    cleaned[field],
+                    required=required,
+                    label=label,
                 )
+            except ValueError as error:
+                raise serializers.ValidationError({field: str(error)}) from error
 
         if 'markets' in cleaned:
             invalid = set(cleaned['markets']) - set(Company.Market.values)

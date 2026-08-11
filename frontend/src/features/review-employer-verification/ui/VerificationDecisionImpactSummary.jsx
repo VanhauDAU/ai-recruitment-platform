@@ -10,16 +10,6 @@ const TAX_STATUS_LABELS = {
   invalid: 'Bằng chứng không hợp lệ',
 }
 
-function companyImpactCopy(impact) {
-  if (impact?.company_impact?.will_mark_verified) {
-    return 'Công ty sẽ được đánh dấu đã xác thực khi xác nhận.'
-  }
-  if (impact?.company_impact?.will_downgrade === false) {
-    return 'Trạng thái pháp lý của công ty không bị hạ.'
-  }
-  return 'Không thay đổi trạng thái pháp lý của công ty.'
-}
-
 export default function VerificationDecisionImpactSummary({ impact, lifecycle }) {
   const resources = impact.resources || impact.verification_hold_impact || {}
   const rejection = impact.rejection_impact
@@ -29,7 +19,7 @@ export default function VerificationDecisionImpactSummary({ impact, lifecycle })
         showIcon
         type="warning"
         title="Kiểm tra tác động trước khi xác nhận"
-        description={companyImpactCopy(impact)}
+        description="Quyết định chỉ áp dụng cho nhà tuyển dụng đang được duyệt; hồ sơ Công ty không thay đổi."
       />
       <Descriptions bordered size="small" column={1}>
         {impact.tax_advisory && (

@@ -44,5 +44,9 @@ describe('AccountTable', () => {
     expect(screen.getByRole('columnheader', { name: 'Thiết lập ban đầu' })).toBeInTheDocument()
     expect(screen.getByText('Thiếu: Nhu cầu tuyển dụng')).toBeInTheDocument()
     expect(screen.getByText('Trang NTD: Nhu cầu tư vấn')).toBeInTheDocument()
+    expect(screen.getByText('Chưa khai báo chức danh tại công ty')).toHaveAttribute(
+      'title',
+      'Nhà tuyển dụng chưa khai báo chức danh tại công ty.',
+    )
   })
 })

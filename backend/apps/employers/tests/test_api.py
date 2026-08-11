@@ -47,6 +47,7 @@ PNG_BYTES = (
 PDF_BYTES = b'%PDF-1.4\n1 0 obj<</Type/Catalog>>endobj\n%%EOF'
 DOCX_BYTES = b'PK\x03\x04' + (b'\x00' * 64)
 TEST_MEDIA_ROOT = tempfile.mkdtemp()
+VALID_COMPANY_DESCRIPTION = 'A' * 500
 
 
 def make_employer(email='employer@example.com', phone_verified=True):
@@ -79,7 +80,7 @@ def company_payload(industry, **overrides):
         'phone': '02412345678',
         'address': 'Hà Nội',
         'company_size': '25-99',
-        'description': 'Công ty phần mềm.',
+        'description': VALID_COMPANY_DESCRIPTION,
         'industries': [industry.id],
         'primary_industry': industry.id,
     }
@@ -514,7 +515,7 @@ class PhoneOtpTests(APITestCase):
         self.assertEqual(self.recruiter.verified_phone, '+84912345678')
         self.assertIsNotNone(self.recruiter.phone_verified_at)
 
-    def test_verifying_phone_last_does_not_approve_a_fully_reviewed_case(self):
+    def test_verifying_phone_last_does_not_auto_approve_recruiter_case(self):
         now = timezone.now()
         self.user.email_verified = True
         self.user.save(update_fields=['email_verified', 'updated_at'])
@@ -587,9 +588,7 @@ class PhoneOtpTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
         verification_case.refresh_from_db()
-        company.refresh_from_db()
         self.assertEqual(verification_case.status, EmployerVerificationCase.Status.IN_REVIEW)
-        self.assertNotEqual(company.verification_status, Company.VerificationStatus.VERIFIED)
 
     def test_sms_dispatch_is_deferred_until_commit(self):
         """Challenge ID only enters the broker after the database commit."""
@@ -664,16 +663,22 @@ class CompanyCreateTests(APITestCase):
         self.industry = Industry.objects.create(name='Công nghệ thông tin')
         authenticate_employer(self.client, self.user)
 
-    def test_create_company_links_recruiter_as_approved_owner(self):
+    def test_create_company_links_recruiter_as_owner_without_verification_fields(self):
         response = self.client.post(
             reverse('employer-company-create'), company_payload(self.industry), format='json'
         )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.data)
+        for removed_field in (
+            'verification_status',
+            'verification_source',
+            'verified_at',
+            'rejected_reason',
+        ):
+            self.assertNotIn(removed_field, response.data)
 
         self.recruiter.refresh_from_db()
         company = self.recruiter.company
         self.assertEqual(company.company_name, 'Acme Corp')
-        self.assertEqual(company.verification_status, Company.VerificationStatus.UNVERIFIED)
         self.assertEqual(self.recruiter.company_role, RecruiterProfile.CompanyRole.OWNER)
         self.assertTrue(company.company_industries.get(industry=self.industry).is_primary)
 
@@ -716,7 +721,7 @@ class CompanyCreateTests(APITestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
-    def test_duplicate_tax_code_and_company_name_are_accepted_for_admin_review(self):
+    def test_duplicate_tax_code_and_company_name_are_accepted_without_verification_claim(self):
         self.client.post(
             reverse('employer-company-create'), company_payload(self.industry), format='json'
         )
@@ -730,7 +735,6 @@ class CompanyCreateTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.data)
         duplicate = Company.objects.get(public_id=response.data['public_id'])
         self.assertEqual(duplicate.tax_code, '0101234567')
-        self.assertEqual(duplicate.verification_status, Company.VerificationStatus.UNVERIFIED)
 
         user3, _ = make_employer('hr3@example.com')
         authenticate_employer(self.client, user3)
@@ -755,18 +759,65 @@ class CompanyCreateTests(APITestCase):
         same_name = Company.objects.get(public_id=same_name_response.data['public_id'])
         self.assertNotEqual(original.slug, same_name.slug)
 
-    def test_tax_code_is_normalized_and_rich_text_is_sanitized(self):
+    def test_numeric_tax_code_and_rich_text_are_sanitized(self):
+        safe_suffix = 'A' * 500
         payload = company_payload(
             self.industry,
-            tax_code='010 123 4567',
-            description='<p onclick="steal()">Công ty <strong>an toàn</strong><script>alert(1)</script></p>',
+            tax_code='0101234567',
+            description=(
+                '<p onclick="steal()">Công ty <strong>an toàn</strong>. '
+                f'{safe_suffix}<script>alert(1)</script></p>'
+            ),
         )
         response = self.client.post(reverse('employer-company-create'), payload, format='json')
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.data)
         company = Company.objects.get(public_id=response.data['public_id'])
         self.assertEqual(company.tax_code, '0101234567')
-        self.assertEqual(company.description, '<p>Công ty <strong>an toàn</strong></p>')
+        self.assertEqual(
+            company.description,
+            f'<p>Công ty <strong>an toàn</strong>. {safe_suffix}</p>',
+        )
+
+    def test_description_requires_at_least_500_visible_characters(self):
+        response = self.client.post(
+            reverse('employer-company-create'),
+            company_payload(self.industry, description=f'<p>{"A" * 499}</p>'),
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST, response.data)
+        self.assertIn('description', response.data)
+        self.assertIn('500', str(response.data['description']))
+
+    def test_tax_code_accepts_only_10_or_13_digits(self):
+        for invalid_tax_code in (
+            '010123456A',
+            '123456789',
+            '12345678901234',
+            '010 123 4567',
+            '0101234567-001',
+            '０１０１２３４５６７８９',
+        ):
+            with self.subTest(tax_code=invalid_tax_code):
+                response = self.client.post(
+                    reverse('employer-company-create'),
+                    company_payload(self.industry, tax_code=invalid_tax_code),
+                    format='json',
+                )
+                self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST, response.data)
+                self.assertIn('tax_code', response.data)
+
+        accepted = self.client.post(
+            reverse('employer-company-create'),
+            company_payload(self.industry, tax_code='0101234567001'),
+            format='json',
+        )
+        self.assertEqual(accepted.status_code, status.HTTP_201_CREATED, accepted.data)
+        self.assertEqual(
+            Company.objects.get(public_id=accepted.data['public_id']).tax_code,
+            '0101234567001',
+        )
 
     def test_company_catalogs_are_server_driven(self):
         response = self.client.get(reverse('employer-company-catalogs'))
@@ -830,6 +881,41 @@ class JoinCompanyTests(APITestCase):
             response = self.client.get(reverse('employer-company-search'), {'q': q})
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             self.assertEqual(response.data['results'][0]['public_id'], self.company.public_id)
+            self.assertNotIn('verification_status', response.data['results'][0])
+
+    def test_search_returns_every_catalog_company_without_recruiter_status_gating(self):
+        approved_user, approved_recruiter = make_employer('approved-catalog@example.com')
+        approved_company = Company.objects.create(
+            company_name='Catalog có NTD đã duyệt',
+            tax_code='0201234567',
+            created_by=approved_user,
+        )
+        approved_recruiter.company = approved_company
+        approved_recruiter.company_role = RecruiterProfile.CompanyRole.OWNER
+        approved_recruiter.save(update_fields=['company', 'company_role', 'updated_at'])
+        EmployerVerificationCase.objects.create(
+            recruiter=approved_recruiter,
+            company=approved_company,
+            status=EmployerVerificationCase.Status.APPROVED,
+            submitted_at=timezone.now(),
+            decided_at=timezone.now(),
+        )
+        unreviewed_user, _ = make_employer('unreviewed-catalog@example.com')
+        unreviewed_company = Company.objects.create(
+            company_name='Catalog chưa có hồ sơ NTD',
+            tax_code='0301234567',
+            created_by=unreviewed_user,
+        )
+
+        response = self.client.get(reverse('employer-company-search'), {'q': 'Catalog'})
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+        self.assertSetEqual(
+            {item['public_id'] for item in response.data['results']},
+            {approved_company.public_id, unreviewed_company.public_id},
+        )
+        for item in response.data['results']:
+            self.assertNotIn('verification_status', item)
 
     def test_blank_search_returns_six_recent_real_companies_and_excludes_placeholder(self):
         for index in range(7):
@@ -862,10 +948,7 @@ class JoinCompanyTests(APITestCase):
         self.assertEqual(self.recruiter.company, self.company)
         self.assertEqual(self.recruiter.company_role, RecruiterProfile.CompanyRole.MEMBER)
 
-    def test_joining_verified_company_does_not_inherit_other_recruiter_documents(self):
-        self.company.verification_status = Company.VerificationStatus.VERIFIED
-        self.company.verified_at = timezone.now()
-        self.company.save(update_fields=['verification_status', 'verified_at', 'updated_at'])
+    def test_joining_company_does_not_inherit_other_recruiter_documents(self):
         for doc_type in (
             CompanyDocument.DocType.BUSINESS_REGISTRATION,
             CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT,
@@ -1173,6 +1256,16 @@ class CompanyUpdateRequestTests(APITestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('reason', response.data)
+
+    def test_update_rejects_non_string_company_description(self):
+        response = self.client.post(
+            reverse('employer-company-update-requests'),
+            {'changes': {'description': 123}},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST, response.data)
+        self.assertIn('description', response.data)
 
     def test_repeated_submit_updates_the_same_pending_request(self):
         payload = {'changes': {'website_url': 'https://example.com/abc'}}

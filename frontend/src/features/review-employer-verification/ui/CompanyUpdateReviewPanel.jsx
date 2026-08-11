@@ -124,8 +124,7 @@ export default function CompanyUpdateReviewPanel({
       const errorMessage = getApiErrorMessage(error)
       if (
         error.response?.status === 409
-        && ['company_tax_code_conflict', 'company_update_base_conflict']
-          .includes(error.response?.data?.code)
+        && error.response?.data?.code === 'company_update_base_conflict'
       ) {
         setRequestConflict(errorMessage)
       }

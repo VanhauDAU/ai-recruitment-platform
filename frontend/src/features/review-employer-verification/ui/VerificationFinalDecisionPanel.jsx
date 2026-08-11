@@ -207,7 +207,7 @@ export default function VerificationFinalDecisionPanel({
           showIcon
           type="success"
           title="Hồ sơ đang có hiệu lực"
-          description="Thu hồi hoặc đánh dấu hết hiệu lực không hạ trạng thái pháp lý của công ty."
+          description="Quyết định này áp dụng riêng cho nhà tuyển dụng đang được duyệt."
         />
       )}
       {isInactive && (

@@ -51,12 +51,12 @@ describe('getApiErrorMessage', () => {
       response: {
         status: 409,
         data: {
-          code: 'company_tax_code_conflict',
-          message: 'Mã số thuế đã thuộc một công ty được xác thực.',
+          code: 'business_rule_conflict',
+          message: 'Dữ liệu đã thay đổi. Vui lòng tải lại trước khi tiếp tục.',
         },
       },
     }
 
-    expect(getApiErrorMessage(error)).toBe('Mã số thuế đã thuộc một công ty được xác thực.')
+    expect(getApiErrorMessage(error)).toBe('Dữ liệu đã thay đổi. Vui lòng tải lại trước khi tiếp tục.')
   })
 })

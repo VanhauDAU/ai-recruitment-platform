@@ -1,4 +1,4 @@
-import { BankOutlined, CheckCircleFilled, EditOutlined, LinkOutlined, SafetyCertificateOutlined, UploadOutlined } from '@ant-design/icons'
+import { BankOutlined, EditOutlined, LinkOutlined, UploadOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Alert, Avatar, Button, Image, Skeleton, Tag } from 'antd'
 import { useState } from 'react'
@@ -12,13 +12,6 @@ import { sanitizeHtml } from '@/shared/lib/sanitize-html'
 import { message } from '@/shared/lib/toast'
 import ConfirmAction from '@/shared/ui/ConfirmAction'
 import CompanyForm from './CompanyForm'
-
-const VERIFICATION_STATUS = {
-  verified: ['success', 'Đã xác thực'],
-  pending: ['processing', 'Đang xác thực'],
-  rejected: ['error', 'Bị từ chối'],
-  unverified: ['default', 'Chưa xác thực'],
-}
 
 const UPDATE_REQUEST_STATUS = {
   pending: ['processing', 'Đang xử lý'],
@@ -119,8 +112,12 @@ export default function LinkedCompanyPanel({ profile, catalogs, industries, onRe
     )
   }
 
-  const [statusColor, statusText] = VERIFICATION_STATUS[company.verification_status] || VERIFICATION_STATUS.unverified
   const latestSubmittedAt = formatDateTime(latestRequest?.submitted_at)
+  const rejectionReason = latestRequest?.status === 'rejected'
+    ? latestRequest.rejection_reason
+      || latestRequest.review_note
+      || 'Quản trị viên chưa cung cấp lý do.'
+    : ''
 
   return (
     <div className="linked-company-panel">
@@ -135,6 +132,9 @@ export default function LinkedCompanyPanel({ profile, catalogs, industries, onRe
               <h2>Yêu cầu của tôi</h2>
               {mineQuery.isError && <p>Không thể xác định trạng thái yêu cầu hiện tại.</p>}
               {!mineQuery.isError && latestSubmittedAt && <p>Ngày gửi gần nhất: {latestSubmittedAt}</p>}
+              {!mineQuery.isError && rejectionReason && (
+                <p className="company-update-request__rejection">Lý do từ chối: {rejectionReason}</p>
+              )}
             </div>
             {!mineQuery.isError && canRequestUpdate && (
               <div className="company-update-request__actions">
@@ -219,7 +219,7 @@ export default function LinkedCompanyPanel({ profile, catalogs, industries, onRe
         <header className="linked-company-card__header">
           <Avatar shape="square" size={60} src={company.logo_url || undefined} icon={<BankOutlined />} className="linked-company-card__logo" />
           <div className="min-w-0">
-            <div className="linked-company-card__name"><h2>{company.company_name}</h2><Tag color={statusColor} icon={company.verification_status === 'verified' ? <CheckCircleFilled /> : <SafetyCertificateOutlined />}>{statusText}</Tag></div>
+            <div className="linked-company-card__name"><h2>{company.company_name}</h2></div>
             <p>{company.address || 'Địa chỉ chưa cập nhật'} <span aria-hidden="true">|</span> {company.company_size ? `${company.company_size} nhân viên` : 'Quy mô chưa cập nhật'}</p>
             <p className="linked-company-card__fixed-note">Liên kết này là cố định; tài khoản không thể chuyển sang công ty khác.</p>
           </div>

@@ -59,7 +59,6 @@ describe('DashboardLayout admin access', () => {
     })
     getAdminEmployerVerificationSummary.mockResolvedValue({ pending: 3 })
     getAdminCompanySummary.mockResolvedValue({
-      verification: { pending: 6 },
       pending_update_requests: 7,
     })
   })
@@ -247,10 +246,10 @@ describe('DashboardLayout admin access', () => {
 
     const businessMenu = screen.getByRole('button', { name: /Doanh nghiệp/ })
     expect(
-      await within(businessMenu).findByLabelText('16 mục đang chờ'),
-    ).toHaveTextContent('16')
+      await within(businessMenu).findByLabelText('10 mục đang chờ'),
+    ).toHaveTextContent('10')
     await user.click(businessMenu)
-    expect(within(businessMenu).queryByLabelText('16 mục đang chờ')).not.toBeInTheDocument()
+    expect(within(businessMenu).queryByLabelText('10 mục đang chờ')).not.toBeInTheDocument()
 
     const recruiterMenu = screen.getByRole('button', { name: /^Nhà tuyển dụng/ })
     expect(within(recruiterMenu).getByLabelText('3 mục đang chờ')).toHaveTextContent('3')

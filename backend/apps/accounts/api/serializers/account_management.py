@@ -5,6 +5,7 @@ from rest_framework import serializers
 
 from apps.employers.selectors import build_employer_initial_onboarding
 from apps.employers.services import verification_checks
+from common.media_storage import media_url_from_value
 
 from ...constants import ADMIN_PERMISSION_CODES
 from ...models import (
@@ -41,6 +42,7 @@ def role_payload(role):
 
 
 class ManagedAccountSerializer(serializers.ModelSerializer):
+    avatar_url = serializers.SerializerMethodField()
     active_session_count = serializers.IntegerField(read_only=True)
     last_activity_at = serializers.DateTimeField(
         source='last_session_seen_at',
@@ -79,6 +81,12 @@ class ManagedAccountSerializer(serializers.ModelSerializer):
 
     def get_has_usable_password(self, obj):
         return obj.has_usable_password()
+
+    def get_avatar_url(self, obj):
+        return media_url_from_value(
+            obj.avatar_url,
+            request=self.context.get('request'),
+        )
 
     def get_mfa_methods(self, obj):
         return {
@@ -152,7 +160,6 @@ class ManagedAccountSerializer(serializers.ModelSerializer):
                         'tax_code': (f'***{tax_code[-4:]}' if len(tax_code) > 4 else '****')
                         if tax_code
                         else '',
-                        'verification_status': company.verification_status,
                     }
                     if company
                     else None

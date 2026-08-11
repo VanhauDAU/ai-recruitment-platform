@@ -33,14 +33,15 @@ Thiết kế onboarding và preference tìm việc cho ứng viên:
 | `candidate_job_preferences`, `candidate_desired_specializations`, `candidate_preferred_provinces` | `backend/apps/candidates` | Nhu cầu việc làm chuẩn hóa làm nguồn chính cho onboarding và recommendation |
 | `candidate_consents`, `candidate_consent_events` | `backend/apps/candidates` | Quyết định hiện hành và audit trail bất biến cho gợi ý/hiển thị với NTD |
 | `candidate_email_notification_settings` | `backend/apps/candidates` | 12 preference email candidate, one-to-one profile, mặc định bật; email giao dịch bảo mật không thuộc bảng |
-| `companies` | `backend/apps/employers` | Pháp nhân tuyển dụng (doanh nghiệp/hộ kinh doanh), `tax_code` unique, `verification_status`; thay thế `employer_profiles` cũ — dữ liệu đổ qua migration `0007` (gộp theo tax_code), bảng cũ đã xóa ở migration `0008` ([kế hoạch](./ke-hoach-thiet-ke-lai-cong-ty-nha-tuyen-dung.md)) |
+| `companies` | `backend/apps/employers` | Hồ sơ/catalogue công ty dùng chung cho nhiều recruiter. `tax_code` được chuẩn hóa thành 10 hoặc 13 chữ số ở API nhưng không phải unique claim trong DB; bảng không có verification lifecycle. Thay thế `employer_profiles` cũ — dữ liệu đổ qua migration `0007` (gộp theo tax_code), bảng cũ đã xóa ở migration `0008` ([kế hoạch](./ke-hoach-thiet-ke-lai-cong-ty-nha-tuyen-dung.md)) |
 | `company_industries` | `backend/apps/employers` | M2M công ty–lĩnh vực + `is_primary` (partial unique: đúng 1 lĩnh vực chính/công ty) |
 | `company_images` | `backend/apps/employers` | Ảnh giới thiệu công ty, khuyến nghị 3:2 |
-| `company_documents` | `backend/apps/employers` | Giấy tờ xác thực (ĐKDN, ủy quyền, định danh, DLCN) + luồng duyệt; `upload_asset` liên kết one-to-one tới private original đã quét |
+| `company_documents` | `backend/apps/employers` | Giấy tờ phục vụ case xác thực recruiter hoặc yêu cầu cập nhật company (ĐKDN, ủy quyền, định danh, DLCN) + luồng duyệt; `upload_asset` liên kết one-to-one tới private original đã quét |
 | `employers_companymediaupload` | `backend/apps/employers` | Audit link từ logo/cover/gallery public derivative tới `UploadAsset` private original, actor và update request |
 | `upload_sessions`, `upload_assets`, `upload_scan_attempts` | `backend/apps/uploads` | Upload tạm owner-scoped, private clean asset và lịch sử malware scan; business app chỉ consume qua clean one-time claim |
 | `company_update_requests` | `backend/apps/employers` | Cập nhật công ty chờ duyệt; đổi MST/tên bắt buộc lý do + giấy tờ; có `submitted_at` và partial unique một request `pending` trên mỗi `(company, requested_by)` |
 | `recruiter_profiles` | `backend/apps/employers` | 1-1 user, FK company (PROTECT, gán rồi không đổi); membership owner/member + trạng thái duyệt; `verified_phone` partial unique |
+| `employer_verification_cases`, `employer_verification_events` | `backend/apps/employers` | State machine và audit xác thực theo từng recruiter: `draft → pending → in_review → approved|rejected`, cùng các trạng thái bổ sung `changes_requested`, `revoked`, `expired`. FK company chỉ lưu ngữ cảnh pháp nhân mà recruiter xin đại diện; quyết định không thay đổi company |
 | `phone_otps` | `backend/apps/employers` | SMS challenge actor-bound: purpose/state, OTP HMAC, TTL/attempt budget, encrypted destination và dispatch lifecycle; legacy email rows chỉ giữ lịch sử |
 | `job_categories`, `job_category_localizations` | `backend/apps/jobs` | Taxonomy 3 cấp có public identity; localization/alias 4 ngôn ngữ cấu hình trong admin, picker CV chỉ đọc vị trí chuyên môn và `name_vi` |
 | `locations` | `backend/apps/locations` | 2 cấp tỉnh/xã, seed thật qua `seed_locations` (provinces.open-api.vn) |
@@ -68,6 +69,13 @@ Thiết kế onboarding và preference tìm việc cho ứng viên:
 | `blog_pinnedpost` | `backend/apps/blog` | Bài ghim theo `placement` (khối "Tài liệu hỗ trợ tìm việc"), FK trỏ thẳng bài viết |
 
 **Ghi chú triển khai khác PRD/DB doc:**
+- Theo ER-D52, `Company` không có các cột trạng thái/nguồn/thời điểm/lý do từ
+  chối xác thực và không có unique constraint MST phụ thuộc trạng thái xác thực.
+  Company luôn là hồ sơ có thể tìm kiếm/liên kết; chỉ
+  `EmployerVerificationCase` mang trạng thái và nguồn quyết định của recruiter.
+  Migration `employers.0044` bỏ các field khỏi Django state nhưng tạm giữ cột
+  legacy cùng DB default trong một rolling-deploy window; contract migration
+  sau mới xóa vật lý khi toàn bộ worker cũ đã được rút.
 - Migration `employers.0030` backfill `submitted_at=created_at`, bỏ constraint
   pending theo company và thay bằng conditional unique
   `(company_id, requested_by_id)` khi `status='pending'`. Vì vậy nhiều member

@@ -82,7 +82,7 @@ export default function AdminJobReviewPanels({ job, tab, canViewEmployerProfile 
   }
 
   const warningCount = [
-    job.company_verification_status !== 'verified',
+    !job.employer_verification_completed,
     !job.employer_email_verified,
     !job.employer_phone_verified,
     Number(job.employer_account_level || 0) < 3,
@@ -91,13 +91,13 @@ export default function AdminJobReviewPanels({ job, tab, canViewEmployerProfile 
   return (
     <AdminJobPanel
       badge={warningCount ? `${warningCount} lưu ý` : 'Ổn định'}
-      description="Pháp nhân, tài khoản và lịch sử đăng tin"
+      description="Tài khoản và lịch sử đăng tin"
       icon={<SafetyCertificateOutlined />}
       title="Tín hiệu nhà tuyển dụng"
     >
       <div className="admin-job-trust-signals">
-        <TrustSignal ok={job.company_verification_status === 'verified'}>
-          Pháp nhân: {job.company_verification_status === 'verified' ? 'đã xác thực' : 'chưa xác thực'}
+        <TrustSignal ok={job.employer_verification_completed}>
+          Hồ sơ NTD: {job.employer_verification_completed ? 'đã xác thực' : 'chưa xác thực'}
         </TrustSignal>
         <TrustSignal ok={job.employer_email_verified}>
           Email: {job.employer_email_verified ? 'đã xác thực' : 'chưa xác thực'}

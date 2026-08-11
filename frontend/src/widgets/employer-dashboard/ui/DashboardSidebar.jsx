@@ -13,7 +13,6 @@ import {
 } from '@ant-design/icons'
 import { Link } from 'react-router'
 import {
-  EMPLOYER_COMPANY_SETTINGS_URL,
   EMPLOYER_RECRUITMENT_DEMAND_URL,
   EMPLOYER_VERIFY_URL,
   employerAppPath,
@@ -43,7 +42,7 @@ export default function DashboardSidebar({
   candidateActionTarget,
   jobWorkspaceReady,
 }) {
-  const companyVerified = account.company_verification_status === 'verified'
+  const employerVerified = Boolean(account.verification?.representative_verified)
 
   return (
     <aside className="space-y-4">
@@ -71,11 +70,11 @@ export default function DashboardSidebar({
             to={jobWorkspaceReady ? employerAppPath('/jobs') : EMPLOYER_VERIFY_URL}
           />
           <PriorityAction
-            icon={companyVerified ? CheckCircleFilled : FormOutlined}
-            label={companyVerified ? 'Doanh nghiệp đã xác thực' : 'Hoàn thiện hồ sơ xác thực'}
-            detail={companyVerified ? 'Thông tin pháp lý đã được duyệt' : 'Mở thêm quyền cho workspace'}
-            tone={companyVerified ? 'bg-emerald-50 text-emerald-600' : 'bg-violet-50 text-violet-600'}
-            to={companyVerified ? EMPLOYER_COMPANY_SETTINGS_URL : EMPLOYER_VERIFY_URL}
+            icon={employerVerified ? CheckCircleFilled : FormOutlined}
+            label={employerVerified ? 'Nhà tuyển dụng đã xác thực' : 'Hoàn thiện hồ sơ xác thực'}
+            detail={employerVerified ? 'Hồ sơ nhà tuyển dụng đã được duyệt' : 'Mở thêm quyền cho workspace'}
+            tone={employerVerified ? 'bg-emerald-50 text-emerald-600' : 'bg-violet-50 text-violet-600'}
+            to={EMPLOYER_VERIFY_URL}
           />
         </div>
       </section>
@@ -110,8 +109,8 @@ export default function DashboardSidebar({
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600"><BankOutlined /></span>
           <div className="min-w-0 flex-1">
             <h2 id="company-summary-title" className="truncate text-sm font-black text-slate-900">{account.company_name || 'Doanh nghiệp của bạn'}</h2>
-            <span className={`mt-1.5 inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-bold ${companyVerified ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
-              {companyVerified && <CheckCircleFilled />}{companyVerified ? 'Đã xác thực pháp lý' : 'Chưa xác thực pháp lý'}
+            <span className="mt-1.5 inline-flex items-center rounded-full bg-slate-100 px-2 py-1 text-[10px] font-bold text-slate-600">
+              Hồ sơ công ty
             </span>
           </div>
         </div>

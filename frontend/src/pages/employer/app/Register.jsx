@@ -230,7 +230,7 @@ export default function EmployerRegister() {
       >
         {step === 1 ? (
           <section className="login-field">
-            <RegistrationSectionTitle title="Tạo thông tin đăng nhập" description="Dùng email công ty nếu có để việc xác thực doanh nghiệp thuận lợi hơn." />
+            <RegistrationSectionTitle title="Tạo thông tin đăng nhập" description="Dùng email công ty nếu có để việc xác thực nhà tuyển dụng thuận lợi hơn." />
             <div className="border-b border-slate-100 pb-5">
               <p className="mb-3 text-sm font-semibold text-slate-700">Trước khi tiếp tục, vui lòng xác nhận lựa chọn của bạn</p>
               <EmployerConsentFields compact />

@@ -294,8 +294,6 @@ class EmployerAccountVerificationTests(APITestCase):
         self.assertEqual(document.status, CompanyDocument.Status.APPROVED)
         self.assertEqual(self.first_case.status, EmployerVerificationCase.Status.IN_REVIEW)
         self.assertEqual(self.first_case.lock_version, 2)
-        self.company.refresh_from_db()
-        self.assertEqual(self.company.verification_status, Company.VerificationStatus.UNVERIFIED)
         self.assertFalse(
             EmployerVerificationNotification.objects.filter(
                 verification_case=self.first_case,
@@ -386,9 +384,9 @@ class EmployerAccountVerificationTests(APITestCase):
             'Văn bản DLCN thiếu chữ ký.',
         )
 
-    def test_admin_can_approve_one_of_multiple_unverified_companies_with_same_tax_code(self):
+    def test_admin_can_approve_recruiter_when_another_company_has_same_tax_code(self):
         duplicate_company = Company.objects.create(
-            company_name='Công ty trùng MST chưa xác thực',
+            company_name='Công ty trùng mã số thuế',
             tax_code=self.company.tax_code,
             created_by=self.second_user,
         )
@@ -403,6 +401,8 @@ class EmployerAccountVerificationTests(APITestCase):
             registered_name=duplicate_company.company_name,
         )
         self._put_in_review(self.second_case)
+        original_company_updated_at = self.company.updated_at
+        duplicate_company_updated_at = duplicate_company.updated_at
         self.client.force_authenticate(self.admin)
 
         detail = self.client.get(
@@ -413,9 +413,11 @@ class EmployerAccountVerificationTests(APITestCase):
         )
         self.assertEqual(detail.status_code, 200, detail.data)
         self.assertEqual(detail.data['company']['duplicate_tax_code_company_count'], 1)
-        self.assertEqual(
-            detail.data['company']['verified_duplicate_tax_code_company_count'],
-            0,
+        self.assertNotIn('verification_status', detail.data['company'])
+        self.assertNotIn('verification_source', detail.data['company'])
+        self.assertNotIn(
+            'verified_duplicate_tax_code_company_count',
+            detail.data['company'],
         )
 
         impact = self.client.post(
@@ -427,6 +429,7 @@ class EmployerAccountVerificationTests(APITestCase):
             format='json',
         )
         self.assertEqual(impact.status_code, 200, impact.data)
+        self.assertNotIn('company_impact', impact.data)
         response = self.client.post(
             reverse(
                 'admin-employer-verification-decision',
@@ -441,67 +444,61 @@ class EmployerAccountVerificationTests(APITestCase):
         )
 
         self.assertEqual(response.status_code, 200, response.data)
+        self.first_case.refresh_from_db()
+        self.second_case.refresh_from_db()
         duplicate_company.refresh_from_db()
         self.company.refresh_from_db()
-        self.assertEqual(
-            duplicate_company.verification_status,
-            Company.VerificationStatus.VERIFIED,
-        )
-        self.assertEqual(
-            self.company.verification_status,
-            Company.VerificationStatus.UNVERIFIED,
-        )
+        self.assertEqual(self.second_case.status, EmployerVerificationCase.Status.APPROVED)
+        self.assertEqual(self.first_case.status, EmployerVerificationCase.Status.PENDING)
         self.assertEqual(duplicate_company.tax_code, self.company.tax_code)
+        self.assertEqual(duplicate_company.updated_at, duplicate_company_updated_at)
+        self.assertEqual(self.company.updated_at, original_company_updated_at)
 
-    def test_verified_company_with_same_tax_code_blocks_approval_with_conflict(self):
-        self.company.verification_status = Company.VerificationStatus.VERIFIED
-        self.company.verified_at = timezone.now()
-        self.company.save(update_fields=['verification_status', 'verified_at', 'updated_at'])
-        duplicate_company = Company.objects.create(
-            company_name='Công ty chờ duyệt trùng MST',
-            tax_code=self.company.tax_code,
-            created_by=self.second_user,
-        )
-        self.second.company = duplicate_company
-        self.second.save(update_fields=['company', 'updated_at'])
-        self.second_case.company = duplicate_company
-        self.second_case.save(update_fields=['company', 'updated_at'])
-        self.second_case.documents.update(company=duplicate_company)
-        self.second_case.tax_lookup_evidences.update(
-            company=duplicate_company,
-            submitted_company_name=duplicate_company.company_name,
-            registered_name=duplicate_company.company_name,
-        )
-        self._put_in_review(self.second_case)
+    def test_rejecting_recruiter_case_does_not_change_shared_company_or_other_case(self):
+        self._put_in_review(self.first_case)
+        company_updated_at = self.company.updated_at
         self.client.force_authenticate(self.admin)
 
-        response = self.client.post(
+        impact = self.client.post(
             reverse(
                 'admin-employer-verification-decision-impact',
-                kwargs={'public_id': self.second_case.public_id},
+                kwargs={'public_id': self.first_case.public_id},
             ),
-            {'decision': EmployerVerificationCase.Status.APPROVED, 'reason': ''},
+            {
+                'decision': EmployerVerificationCase.Status.REJECTED,
+                'reason': 'Không xác minh được thông tin người tuyển dụng.',
+            },
+            format='json',
+        )
+        self.assertEqual(impact.status_code, 200, impact.data)
+        self.assertNotIn('company_impact', impact.data)
+        response = self.client.post(
+            reverse(
+                'admin-employer-verification-decision',
+                kwargs={'public_id': self.first_case.public_id},
+            ),
+            {
+                'decision': EmployerVerificationCase.Status.REJECTED,
+                'reason': 'Không xác minh được thông tin người tuyển dụng.',
+                'impact_token': impact.data['impact_token'],
+            },
             format='json',
         )
 
-        self.assertEqual(response.status_code, 409, response.data)
-        self.assertEqual(response.data['code'], 'company_tax_code_conflict')
-        self.assertIn('đã thuộc một công ty được xác thực', response.data['message'])
-        duplicate_company.refresh_from_db()
+        self.assertEqual(response.status_code, 200, response.data)
+        self.company.refresh_from_db()
+        self.first_case.refresh_from_db()
         self.second_case.refresh_from_db()
-        self.assertEqual(
-            duplicate_company.verification_status,
-            Company.VerificationStatus.UNVERIFIED,
-        )
+        self.assertEqual(self.first_case.status, EmployerVerificationCase.Status.REJECTED)
         self.assertEqual(
             self.second_case.status,
-            EmployerVerificationCase.Status.IN_REVIEW,
+            EmployerVerificationCase.Status.PENDING,
         )
+        self.assertEqual(self.company.company_name, 'Công ty dùng chung')
+        self.assertEqual(self.company.tax_code, '0109999999')
+        self.assertEqual(self.company.updated_at, company_updated_at)
 
-    def test_final_document_approval_does_not_evaluate_company_tax_claim(self):
-        self.company.verification_status = Company.VerificationStatus.VERIFIED
-        self.company.verified_at = timezone.now()
-        self.company.save(update_fields=['verification_status', 'verified_at', 'updated_at'])
+    def test_final_document_approval_stays_in_review_with_duplicate_company_tax_code(self):
         duplicate_company = Company.objects.create(
             company_name='Công ty duyệt giấy tờ trùng MST',
             tax_code=self.company.tax_code,
@@ -516,6 +513,7 @@ class EmployerAccountVerificationTests(APITestCase):
         document.status = CompanyDocument.Status.PENDING
         document.save(update_fields=['status', 'updated_at'])
         self._put_in_review(self.second_case)
+        duplicate_company_updated_at = duplicate_company.updated_at
         self.client.force_authenticate(self.admin)
 
         response = self.client.post(
@@ -540,13 +538,11 @@ class EmployerAccountVerificationTests(APITestCase):
         self.second_case.refresh_from_db()
         self.assertEqual(document.status, CompanyDocument.Status.APPROVED)
         self.assertEqual(
-            duplicate_company.verification_status,
-            Company.VerificationStatus.UNVERIFIED,
-        )
-        self.assertEqual(
             self.second_case.status,
             EmployerVerificationCase.Status.IN_REVIEW,
         )
+        self.assertEqual(duplicate_company.tax_code, self.company.tax_code)
+        self.assertEqual(duplicate_company.updated_at, duplicate_company_updated_at)
 
     def test_reconciliation_never_creates_a_final_decision(self):
         reconciled = reconcile_completed_verification_cases()
@@ -771,7 +767,6 @@ class EmployerAccountVerificationTests(APITestCase):
             'tax_advisory': {},
             'tax_override': False,
             'tax_override_reason': '',
-            'company_impact': {},
             'capability_impact': {},
             'verification_hold_impact': {},
             'integrity_fingerprint': 'internal-fingerprint',
@@ -810,6 +805,7 @@ class EmployerAccountVerificationTests(APITestCase):
         self.assertEqual(detail.status_code, 200, detail.data)
         self.assertEqual(content.status_code, 403, content.data)
         self.assertEqual(detail.data['tax_lookup_evidence']['response_hash'], '')
+        self.assertNotIn('company_impact', detail.data['decision_snapshot'])
         self.assertNotIn('integrity_fingerprint', detail.data['decision_snapshot'])
         self.assertNotIn('future_unknown_field', detail.data['decision_snapshot'])
         event_payload = next(
@@ -1230,14 +1226,10 @@ class EmployerAccountVerificationTests(APITestCase):
         self.company.refresh_from_db()
         self.assertEqual(self.company.company_name, 'Công ty dùng chung mới')
 
-    def test_verified_company_tax_code_blocks_company_update_with_conflict_response(self):
-        self.company.verification_status = Company.VerificationStatus.VERIFIED
-        self.company.verified_at = timezone.now()
-        self.company.save(update_fields=['verification_status', 'verified_at', 'updated_at'])
+    def test_duplicate_company_tax_code_does_not_block_company_update(self):
         existing_company = Company.objects.create(
-            company_name='Công ty đã xác thực',
+            company_name='Công ty đã dùng mã số thuế',
             tax_code='0402189757',
-            verification_status=Company.VerificationStatus.VERIFIED,
             created_by=self.second_user,
         )
         update_request = CompanyUpdateRequest.objects.create(
@@ -1254,59 +1246,8 @@ class EmployerAccountVerificationTests(APITestCase):
             uploaded_by=self.first_user,
             update_request=update_request,
             doc_type=CompanyDocument.DocType.BUSINESS_REGISTRATION,
-            file_url='employers/update-requests/verified-tax-conflict.pdf',
-            file_name='verified-tax-conflict.pdf',
-            mime_type='application/pdf',
-            status=CompanyDocument.Status.APPROVED,
-        )
-        update_request = self._put_company_update_in_review(update_request)
-        self.client.force_authenticate(self.admin)
-
-        response = self.client.post(
-            reverse(
-                'admin-company-update-request-review',
-                kwargs={'public_id': update_request.public_id},
-            ),
-            {
-                'decision': CompanyUpdateRequest.Status.APPROVED,
-                'note': '',
-                'lock_version': update_request.lock_version,
-                'revision_public_id': update_request.current_revision.public_id,
-            },
-            format='json',
-        )
-
-        self.assertEqual(response.status_code, 409, response.data)
-        self.assertEqual(response.data['code'], 'company_tax_code_conflict')
-        self.assertIn('đã thuộc một công ty được xác thực', response.data['message'])
-        self.company.refresh_from_db()
-        update_request.refresh_from_db()
-        self.assertEqual(self.company.tax_code, '0109999999')
-        self.assertEqual(update_request.status, CompanyUpdateRequest.Status.IN_REVIEW)
-
-    def test_unverified_companies_keep_duplicate_tax_codes_when_update_is_approved(self):
-        existing_company = Company.objects.create(
-            company_name='Công ty chưa xác thực',
-            tax_code='0402189757',
-            verification_status=Company.VerificationStatus.UNVERIFIED,
-            created_by=self.second_user,
-        )
-        update_request = CompanyUpdateRequest.objects.create(
-            company=self.company,
-            requested_by=self.first_user,
-            changes={'tax_code': existing_company.tax_code},
-            is_sensitive=True,
-            reason='Đổi mã số thuế theo đăng ký doanh nghiệp',
-            proof_type=CompanyUpdateRequest.ProofType.BUSINESS_REGISTRATION,
-        )
-        CompanyDocument.objects.create(
-            company=self.company,
-            recruiter=self.first,
-            uploaded_by=self.first_user,
-            update_request=update_request,
-            doc_type=CompanyDocument.DocType.BUSINESS_REGISTRATION,
-            file_url='employers/update-requests/unverified-tax-claim.pdf',
-            file_name='unverified-tax-claim.pdf',
+            file_url='employers/update-requests/duplicate-tax-code.pdf',
+            file_name='duplicate-tax-code.pdf',
             mime_type='application/pdf',
             status=CompanyDocument.Status.APPROVED,
         )
@@ -1334,6 +1275,45 @@ class EmployerAccountVerificationTests(APITestCase):
         self.assertEqual(self.company.tax_code, '0402189757')
         self.assertEqual(existing_company.tax_code, '0402189757')
         self.assertEqual(update_request.status, CompanyUpdateRequest.Status.APPROVED)
+
+    def test_employer_sees_company_update_rejection_reason(self):
+        update_request = CompanyUpdateRequest.objects.create(
+            company=self.company,
+            requested_by=self.first_user,
+            changes={'website_url': 'https://example.com/new'},
+        )
+        update_request = self._put_company_update_in_review(update_request)
+        self.client.force_authenticate(self.admin)
+
+        response = self.client.post(
+            reverse(
+                'admin-company-update-request-review',
+                kwargs={'public_id': update_request.public_id},
+            ),
+            {
+                'decision': CompanyUpdateRequest.Status.REJECTED,
+                'note': 'Không liên hệ được khách hàng.',
+                'lock_version': update_request.lock_version,
+                'revision_public_id': update_request.current_revision.public_id,
+            },
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 200, response.data)
+        self.client.force_authenticate(self.first_user)
+        employer_response = self.client.get(reverse('employer-company-update-requests'))
+
+        self.assertEqual(employer_response.status_code, 200, employer_response.data)
+        employer_request = next(
+            item for item in employer_response.data if item['public_id'] == update_request.public_id
+        )
+        self.company.refresh_from_db()
+        self.assertEqual(employer_request['status'], CompanyUpdateRequest.Status.REJECTED)
+        self.assertEqual(
+            employer_request['rejection_reason'],
+            'Không liên hệ được khách hàng.',
+        )
+        self.assertEqual(self.company.website_url, '')
 
     def test_admin_can_refresh_company_update_tax_lookup(self):
         update_request = CompanyUpdateRequest.objects.create(
@@ -1476,4 +1456,35 @@ class EmployerAccountVerificationTests(APITestCase):
 
         self.assertEqual(response.status_code, 409, response.data)
         update_request.refresh_from_db()
+        self.assertEqual(update_request.status, CompanyUpdateRequest.Status.IN_REVIEW)
+
+    def test_admin_cannot_approve_legacy_short_company_description(self):
+        original_description = self.company.description
+        update_request = CompanyUpdateRequest.objects.create(
+            company=self.company,
+            requested_by=self.first_user,
+            changes={'description': f'<p>{"A" * 499}</p>'},
+        )
+        update_request = self._put_company_update_in_review(update_request)
+        self.client.force_authenticate(self.admin)
+
+        response = self.client.post(
+            reverse(
+                'admin-company-update-request-review',
+                kwargs={'public_id': update_request.public_id},
+            ),
+            {
+                'decision': CompanyUpdateRequest.Status.APPROVED,
+                'note': '',
+                'lock_version': update_request.lock_version,
+                'revision_public_id': update_request.current_revision.public_id,
+            },
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 400, response.data)
+        self.assertIn('description', response.data)
+        self.company.refresh_from_db()
+        update_request.refresh_from_db()
+        self.assertEqual(self.company.description, original_description)
         self.assertEqual(update_request.status, CompanyUpdateRequest.Status.IN_REVIEW)
