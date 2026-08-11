@@ -1038,7 +1038,15 @@ test('employer jobs: manual job form exposes the complete five-section workflow'
   await initialCatalogResponses
 
   await expect(page.getByLabel('Tiêu đề tin')).toBeVisible()
-  if (hasDesktopPreview) await expectJobPreviewPinned(page)
+  if (hasDesktopPreview) {
+    await expectJobPreviewPinned(page)
+    const jobListPreview = page.getByRole('radio', { name: 'Danh sách việc làm' })
+    const jobDetailPreview = page.getByRole('radio', { name: 'Chi tiết tin tuyển dụng' })
+    await expect(jobListPreview).toBeChecked()
+    await jobDetailPreview.locator('..').click()
+    await expect(jobDetailPreview).toBeChecked()
+    await jobListPreview.locator('..').click()
+  }
   await page.getByLabel('Vị trí chuyên môn').click()
   await expect(page.locator('.ant-cascader-dropdown:visible').getByText('Công nghệ thông tin')).toBeVisible()
   await page.locator('.ant-cascader-dropdown:visible').getByText('Công nghệ thông tin').click()
@@ -1089,8 +1097,12 @@ test('employer jobs: manual job form exposes the complete five-section workflow'
   await expect(page.getByLabel('Từ thứ')).toBeVisible()
   await expect(page.getByLabel('Đến thứ')).toBeVisible()
   await expect(page.getByLabel('Mô tả thời gian làm việc')).toBeVisible()
+  await page.getByLabel('Mô tả thời gian làm việc').fill('Làm việc linh hoạt theo lịch của đội ngũ.')
   await page.getByRole('button', { name: 'Thêm thời gian' }).click()
   await expect(page.getByLabel('Từ thứ')).toHaveCount(2)
+  await page.getByRole('button', { name: /Xóa khung giờ/ }).first().click()
+  await page.getByRole('button', { name: /Xóa khung giờ/ }).first().click()
+  await expect(page.getByLabel('Từ thứ')).toHaveCount(0)
   await expect(page.getByText('Kỹ năng cần có', { exact: true })).toBeVisible()
   await expect(page.locator('#expectations').getByText('Ngoại ngữ', { exact: true })).toBeVisible()
   await expect(page.getByLabel('Họ và tên người nhận')).toHaveValue('Nguyễn An')
@@ -1118,6 +1130,8 @@ test('employer jobs: manual job form exposes the complete five-section workflow'
   await expect(page).toHaveURL(/\/tuyendung\/app\/jobs\/job_draft\/edit$/)
   await expect(page.getByLabel('Từ mức thu nhập')).toHaveValue('')
   await expect(page.getByLabel('Đến mức')).toHaveValue('7.000.000')
+  await expect(page.getByLabel('Từ thứ')).toHaveCount(0)
+  await expect(page.getByLabel('Mô tả thời gian làm việc')).toHaveValue('Làm việc linh hoạt theo lịch của đội ngũ.')
   if (hasDesktopPreview) await expectJobPreviewPinned(page)
 })
 

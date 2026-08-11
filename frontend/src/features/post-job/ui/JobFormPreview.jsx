@@ -10,7 +10,7 @@ import {
   UserOutlined,
   WalletOutlined,
 } from '@ant-design/icons'
-import { Modal, Select } from 'antd'
+import { Modal, Radio } from 'antd'
 import dayjs from 'dayjs'
 import { useMemo, useState } from 'react'
 import {
@@ -443,20 +443,28 @@ export default function JobFormPreview({
       <div className="flex max-h-full flex-col overflow-hidden rounded-lg border border-slate-200 bg-white">
         <div className="shrink-0 border-b border-slate-200 bg-white p-3">
           <h2 className="text-sm font-extrabold text-slate-800">Xem trước tin đăng</h2>
-          <label className="mt-2 flex items-center justify-between gap-2 text-xs text-slate-500">
-            <span>Trên trang:</span>
-            <Select
+          <div className="mt-2">
+            <span className="text-[11px] font-medium text-slate-500">Trên trang:</span>
+            <Radio.Group
               aria-label="Vị trí hiển thị tin xem trước"
-              className="w-[190px]"
-              size="small"
+              className="mt-1.5 flex w-full"
               value={previewPage}
-              onChange={setPreviewPage}
-              options={[
-                { value: 'job-list', label: 'Danh sách việc làm' },
-                { value: 'job-detail', label: 'Chi tiết tin tuyển dụng' },
-              ]}
-            />
-          </label>
+              onChange={(event) => setPreviewPage(event.target.value)}
+            >
+              <Radio.Button
+                className="!flex !h-9 !min-w-0 !flex-1 !items-center !justify-center !rounded-l-lg !px-2 !text-center !text-[11px] !font-semibold"
+                value="job-list"
+              >
+                Danh sách việc làm
+              </Radio.Button>
+              <Radio.Button
+                className="!flex !h-9 !min-w-0 !flex-1 !items-center !justify-center !rounded-r-lg !px-2 !text-center !text-[11px] !font-semibold"
+                value="job-detail"
+              >
+                Chi tiết tin tuyển dụng
+              </Radio.Button>
+            </Radio.Group>
+          </div>
         </div>
 
         <div className="post-job-preview-scroll min-h-0 flex-1 overflow-y-auto bg-slate-50 p-3">
