@@ -94,7 +94,7 @@ def send_due_application_reminders(*, now=None, batch_size=200):
         recipients = list(dict.fromkeys(recipients or [job.posted_by.email]))
         count = len(applications)
         body = (
-            f'{count} hồ sơ ứng tuyển vị trí {job.title} sẽ tự động chuyển sang “Không đạt” '
+            f'{count} hồ sơ ứng tuyển vị trí {job.title} sẽ tự động chuyển sang “Từ chối” '
             f'trong vòng 3 ngày nếu chưa được cập nhật trạng thái.'
         )
         action_url = (
@@ -160,7 +160,7 @@ def reject_due_applications(*, now=None, batch_size=200):
                 application=application,
                 from_status=previous_status,
                 to_status=Application.Status.REJECTED,
-                note='Tự động chuyển sang Không đạt do quá hạn xử lý.',
+                note='Tự động chuyển sang Từ chối do quá hạn xử lý.',
             )
             rejected += 1
     return rejected

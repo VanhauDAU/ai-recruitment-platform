@@ -33,7 +33,7 @@ export default function AutomaticApplicationStatusFields() {
       <div className="space-y-5 px-4 py-5 sm:px-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <p className="m-0 min-w-0 flex-1 text-sm leading-6 text-slate-700">
-            Nếu bạn chưa cập nhật trạng thái, hồ sơ tự động chuyển sang <strong>“Không đạt”</strong> sau
+            Nếu bạn chưa cập nhật trạng thái, hồ sơ tự động chuyển sang <strong>“Từ chối”</strong> sau
           </p>
           <Form.Item name="auto_reject_after_days" noStyle>
             <Select
@@ -54,7 +54,7 @@ export default function AutomaticApplicationStatusFields() {
         <div className="border-t border-slate-200 pt-5">
           <h4 className="m-0 text-sm font-bold text-slate-800">Email thông báo cho ứng viên</h4>
           <p className="mb-0 mt-1 text-sm leading-6 text-slate-500">
-            Email chỉ được gửi 3 ngày sau khi hồ sơ tự chuyển sang “Không đạt”. Trong thời gian này, bạn vẫn có thể đổi lại trạng thái hồ sơ.
+            Email chỉ được gửi 3 ngày sau khi hồ sơ tự chuyển sang “Từ chối”. Trong thời gian này, bạn vẫn có thể đổi lại trạng thái hồ sơ.
           </p>
           <Form.Item
             className="!mb-0 !mt-4"
