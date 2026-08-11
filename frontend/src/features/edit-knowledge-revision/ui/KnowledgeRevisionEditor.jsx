@@ -1,6 +1,6 @@
 import { FileAddOutlined } from '@ant-design/icons'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Alert, Button, Drawer, Form, Modal } from 'antd'
+import { Alert, Button, Drawer, Form } from 'antd'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import {
@@ -15,6 +15,7 @@ import {
 } from '@/entities/knowledgebase'
 import { adminPath } from '@/shared/config/portals'
 import { message } from '@/shared/lib/toast'
+import useConfirmAction from '@/shared/ui/use-confirm-action'
 import {
   draftStorageKey,
   editorCompletion,
@@ -39,6 +40,7 @@ export default function KnowledgeRevisionEditor({
   const [form] = Form.useForm()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const { confirmationModal, requestConfirmation } = useConfirmAction()
   const [previewOpen, setPreviewOpen] = useState(false)
   const [revisionDialogOpen, setRevisionDialogOpen] = useState(false)
   const [revisionSummary, setRevisionSummary] = useState('')
@@ -90,21 +92,27 @@ export default function KnowledgeRevisionEditor({
     try {
       const local = JSON.parse(raw)
       if (!local?.values || (article && local.revision_token !== article.revision_token)) return
-      Modal.confirm({
-        title: 'Khôi phục nội dung chưa lưu?',
-        content: `Có một bản cục bộ từ ${new Date(local.saved_at).toLocaleString('vi-VN')}.`,
-        okText: 'Khôi phục',
-        cancelText: 'Bỏ bản cục bộ',
-        onOk: () => {
+      requestConfirmation({
+        title: 'Khôi phục nội dung chưa lưu',
+        description: (
+          <>
+            Bạn có muốn khôi phục bản cục bộ từ{' '}
+            <strong>{new Date(local.saved_at).toLocaleString('vi-VN')}</strong> không?
+            <br />
+            Nếu đóng, bản cục bộ vẫn được giữ để bạn quyết định sau.
+          </>
+        ),
+        confirmText: 'Khôi phục',
+        cancelText: 'Đóng',
+        onConfirm: () => {
           form.setFieldsValue(local.values)
           setDirty(true)
         },
-        onCancel: () => localStorage.removeItem(storageKey),
       })
     } catch {
       localStorage.removeItem(storageKey)
     }
-  }, [article, canEdit, form, storageKey])
+  }, [article, canEdit, form, requestConfirmation, storageKey])
 
   useEffect(() => () => window.clearTimeout(localSaveTimer.current), [])
 
@@ -223,12 +231,13 @@ export default function KnowledgeRevisionEditor({
   }
 
   return (
-    <Form
-      className="knowledge-editor"
-      form={form}
-      layout="vertical"
-      onValuesChange={handleValuesChange}
-    >
+    <>
+      <Form
+        className="knowledge-editor"
+        form={form}
+        layout="vertical"
+        onValuesChange={handleValuesChange}
+      >
       {conflict && (
         <Alert
           className="knowledge-editor__alert"
@@ -288,6 +297,8 @@ export default function KnowledgeRevisionEditor({
         onConfirm={createRevision}
         onTouch={() => setRevisionSummaryTouched(true)}
       />
-    </Form>
+      </Form>
+      {confirmationModal}
+    </>
   )
 }

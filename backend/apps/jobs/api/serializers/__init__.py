@@ -1,5 +1,11 @@
 """Public serializers grouped by jobs use case."""
 
+from .alerts import (
+    JobAlertCreateSerializer,
+    JobAlertListResponseSerializer,
+    JobAlertReadSerializer,
+    JobAlertWriteSerializer,
+)
 from .catalogs import BenefitSerializer, LanguageSerializer
 from .jobs import (
     EmployerJobDetailSerializer,
@@ -67,6 +73,10 @@ __all__ = [
     'EmployerJobPostingContextSerializer',
     'EmployerJobWriteSerializer',
     'JobApplicationContactSerializer',
+    'JobAlertReadSerializer',
+    'JobAlertCreateSerializer',
+    'JobAlertListResponseSerializer',
+    'JobAlertWriteSerializer',
     'JobApplicationEmailSerializer',
     'JobBenefitSerializer',
     'JobCategoryAssignmentSerializer',

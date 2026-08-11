@@ -335,8 +335,12 @@ describe('DashboardLayout admin access', () => {
 
     await user.click(screen.getByRole('button', { name: 'Đăng xuất' }))
 
-    expect(await screen.findByText('Đăng xuất khỏi phiên này?')).toBeInTheDocument()
+    const confirmation = await screen.findByRole('dialog', { name: 'Đăng xuất' })
+    expect(within(confirmation).getByText(/Bạn có chắc muốn đăng xuất khỏi phiên này/)).toBeInTheDocument()
     expect(logout).not.toHaveBeenCalled()
+
+    await user.click(within(confirmation).getByRole('button', { name: 'Đăng xuất' }))
+    expect(logout).toHaveBeenCalledOnce()
   })
 
   it('inherits the primary color from the application theme', () => {

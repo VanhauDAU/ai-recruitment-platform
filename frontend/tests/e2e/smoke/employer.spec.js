@@ -17,6 +17,36 @@ async function expectVisibleActionBackground(locator) {
   })).toBe(true)
 }
 
+async function expectJobPreviewPinned(page) {
+  const scroller = page
+    .getByTestId('employer-workspace')
+    .locator('main.ant-layout-content')
+  const preview = page.getByRole('complementary', { name: 'Xem trước tin tuyển dụng' })
+  const fullPreviewButton = preview.getByRole('button', { name: 'Mở bản xem trước đầy đủ' })
+
+  await scroller.evaluate((element) => { element.scrollTop = 0 })
+  await expect(preview).toHaveCSS('position', 'sticky')
+  await expect(fullPreviewButton).toBeInViewport()
+
+  const initialTop = await preview.evaluate((element) => element.getBoundingClientRect().top)
+  await expect.poll(async () => {
+    const [buttonRect, scrollerRect] = await Promise.all([
+      fullPreviewButton.evaluate((element) => element.getBoundingClientRect().toJSON()),
+      scroller.evaluate((element) => element.getBoundingClientRect().toJSON()),
+    ])
+    return buttonRect.bottom <= scrollerRect.bottom + 1
+  }).toBe(true)
+
+  await scroller.evaluate((element) => { element.scrollTop = 600 })
+  await expect.poll(() => scroller.evaluate((element) => element.scrollTop)).toBeGreaterThan(0)
+  await expect.poll(async () => Math.abs(
+    (await preview.evaluate((element) => element.getBoundingClientRect().top)) - initialTop,
+  )).toBeLessThanOrEqual(1)
+  await expect(fullPreviewButton).toBeInViewport()
+
+  await scroller.evaluate((element) => { element.scrollTop = 0 })
+}
+
 const READY_EMPLOYER_READINESS = Object.freeze({
   job_workspace_ready: true,
   verification_approved: true,
@@ -914,7 +944,9 @@ test('employer jobs: compact list keeps candidate previews and contextual action
   await expect.poll(() => lastJobsQuery.get('q')).toBe('Frontend')
 })
 
-test('employer jobs: manual job form exposes the complete five-section workflow', async ({ page }) => {
+test('employer jobs: manual job form exposes the complete five-section workflow', async ({ page }, testInfo) => {
+  const hasDesktopPreview = testInfo.project.name === 'desktop-chromium'
+  if (hasDesktopPreview) await page.setViewportSize({ width: 1728, height: 900 })
   let savedDraft = null
   await mockPublicApi(page)
   await setEmployerSession(page, {
@@ -1006,6 +1038,7 @@ test('employer jobs: manual job form exposes the complete five-section workflow'
   await initialCatalogResponses
 
   await expect(page.getByLabel('Tiêu đề tin')).toBeVisible()
+  if (hasDesktopPreview) await expectJobPreviewPinned(page)
   await page.getByLabel('Vị trí chuyên môn').click()
   await expect(page.locator('.ant-cascader-dropdown:visible').getByText('Công nghệ thông tin')).toBeVisible()
   await page.locator('.ant-cascader-dropdown:visible').getByText('Công nghệ thông tin').click()
@@ -1085,6 +1118,7 @@ test('employer jobs: manual job form exposes the complete five-section workflow'
   await expect(page).toHaveURL(/\/tuyendung\/app\/jobs\/job_draft\/edit$/)
   await expect(page.getByLabel('Từ mức thu nhập')).toHaveValue('')
   await expect(page.getByLabel('Đến mức')).toHaveValue('7.000.000')
+  if (hasDesktopPreview) await expectJobPreviewPinned(page)
 })
 
 test('employer jobs: detail workspace is compact, actionable and responsive', async ({ page }) => {

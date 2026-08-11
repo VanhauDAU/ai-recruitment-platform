@@ -16,11 +16,13 @@ import { KnowledgeRevisionEditor } from '@/features/edit-knowledge-revision'
 import { KnowledgePublishActions } from '@/features/publish-knowledge-article'
 import { KnowledgeRevisionReview } from '@/features/review-knowledge-revision'
 import { adminPath } from '@/shared/config/portals'
+import useConfirmAction from '@/shared/ui/use-confirm-action'
 import './admin-knowledgebase-management.css'
 
 export default function AdminKnowledgeArticleWorkspace({ publicId }) {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const { confirmationModal, requestConfirmation } = useConfirmAction()
   const { user } = useSession()
   const access = useAdminAccess(user)
   const [dirty, setDirty] = useState(false)
@@ -35,14 +37,26 @@ export default function AdminKnowledgeArticleWorkspace({ publicId }) {
   const lifecycle = KNOWLEDGE_LIFECYCLE_STATUS[article?.lifecycle_state]
   const sync = (saved) => queryClient.setQueryData(adminKnowledgeKeys.article(saved.public_id), saved)
   const goBack = () => {
-    if (!dirty || window.confirm('Bạn có thay đổi chưa lưu. Rời khỏi trang và giữ bản khôi phục cục bộ?')) navigate(adminPath('/knowledgebase'))
+    if (!dirty) {
+      navigate(adminPath('/knowledgebase'))
+      return
+    }
+    requestConfirmation({
+      cancelText: 'Ở lại',
+      confirmText: 'Rời khỏi trang',
+      danger: true,
+      description: 'Bạn có chắc muốn rời khỏi trang khi vẫn còn thay đổi chưa lưu? Bản khôi phục cục bộ sẽ được giữ để bạn có thể tiếp tục sau.',
+      onConfirm: () => navigate(adminPath('/knowledgebase')),
+      title: 'Rời khỏi trình soạn thảo',
+    })
   }
 
   if (publicId && articleQuery.isLoading) return <div className="knowledge-workspace-loading"><Skeleton active paragraph={{ rows: 12 }} /></div>
   if (publicId && articleQuery.isError) return <Alert type="error" showIcon message="Không thể mở bài viết" description="Bài viết có thể đã bị xóa hoặc bạn không còn quyền truy cập." action={<Button onClick={() => articleQuery.refetch()}>Thử lại</Button>} />
 
   return (
-    <div className="knowledge-article-workspace">
+    <>
+      <div className="knowledge-article-workspace">
       <header className="knowledge-article-workspace__header">
         <div className="knowledge-article-workspace__identity">
           <Button type="text" aria-label="Quay lại danh sách" icon={<ArrowLeftOutlined />} onClick={goBack} />
@@ -80,6 +94,8 @@ export default function AdminKnowledgeArticleWorkspace({ publicId }) {
         onArticleChange={sync}
         onDirtyChange={setDirty}
       />
-    </div>
+      </div>
+      {confirmationModal}
+    </>
   )
 }

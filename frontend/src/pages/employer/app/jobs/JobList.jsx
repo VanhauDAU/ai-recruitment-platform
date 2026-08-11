@@ -14,6 +14,7 @@ import { useEmployerReadiness } from '@/entities/employer-profile'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { employerAppPath } from '@/shared/config/portals'
 import { message } from '@/shared/lib/toast'
+import useConfirmAction from '@/shared/ui/use-confirm-action'
 import JobListCard from './JobListCard'
 import { JOB_STATUS_FILTERS } from './job-list-presentation'
 
@@ -35,6 +36,7 @@ export default function JobList() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [searchValue, setSearchValue] = useState(searchParams.get('q') || '')
   const queryClient = useQueryClient()
+  const { confirmationModal, requestConfirmation } = useConfirmAction()
   const status = searchParams.get('status') || ''
   const query = searchParams.get('q') || ''
   const page = Math.max(Number(searchParams.get('page')) || 1, 1)
@@ -193,9 +195,10 @@ export default function JobList() {
                 closing={closeMutation.isPending && closeMutation.variables === job.public_id}
                 deleting={deleteMutation.isPending && deleteMutation.variables === job.public_id}
                 duplicating={duplicateMutation.isPending && duplicateMutation.variables === job.public_id}
-                onClose={(publicId) => closeMutation.mutate(publicId)}
-                onDelete={(publicId) => deleteMutation.mutate(publicId)}
+                onClose={(publicId) => closeMutation.mutateAsync(publicId)}
+                onDelete={(publicId) => deleteMutation.mutateAsync(publicId)}
                 onDuplicate={(publicId) => duplicateMutation.mutate(publicId)}
+                requestConfirmation={requestConfirmation}
               />
             ))}
           </div>
@@ -213,6 +216,7 @@ export default function JobList() {
           </div>
         )}
       </div>
+      {confirmationModal}
     </section>
   )
 }

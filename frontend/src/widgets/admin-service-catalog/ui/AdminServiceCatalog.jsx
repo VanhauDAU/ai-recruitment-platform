@@ -11,7 +11,6 @@ import {
   Input,
   InputNumber,
   Modal,
-  Popconfirm,
   Select,
   Space,
   Switch,
@@ -30,6 +29,7 @@ import {
   updateAdminServicePackage,
 } from '@/entities/service-package'
 import { message } from '@/shared/lib/toast'
+import ConfirmAction from '@/shared/ui/ConfirmAction'
 import { AdminDataActions, AdminPanel } from '@/shared/ui/admin'
 
 const CATEGORY_DEFAULTS = { order: 0, is_active: true }
@@ -129,6 +129,7 @@ export default function AdminServiceCatalog() {
       await load()
     } catch (error) {
       message.error(error?.response?.data?.detail || 'Không thể xoá dữ liệu này.')
+      throw error
     }
   }
 
@@ -141,9 +142,15 @@ export default function AdminServiceCatalog() {
         <Button icon={<EditOutlined />} size="small" onClick={() => openEditor(type, row)}>
           Sửa
         </Button>
-        <Popconfirm title="Xác nhận xoá?" onConfirm={() => remove(type, row.id)}>
+        <ConfirmAction
+          confirmText="Xoá"
+          danger
+          description={<>Bạn có chắc muốn xoá <strong>{row.name_vi}</strong>? Bạn sẽ không thể khôi phục {type === 'category' ? 'danh mục' : 'gói dịch vụ'} này sau khi xoá.</>}
+          onConfirm={() => remove(type, row.id)}
+          title={type === 'category' ? 'Xoá danh mục' : 'Xoá gói dịch vụ'}
+        >
           <Button icon={<DeleteOutlined />} size="small" danger>Xoá</Button>
-        </Popconfirm>
+        </ConfirmAction>
       </Space>
     ),
   })

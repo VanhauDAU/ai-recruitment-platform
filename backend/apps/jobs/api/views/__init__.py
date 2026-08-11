@@ -1,5 +1,6 @@
 """Public HTTP views grouped by jobs use case."""
 
+from .alerts import CandidateJobAlertDetailView, CandidateJobAlertListCreateView
 from .catalogs import BenefitListView, JobCategoryListView, LanguageListView
 from .employer import (
     EmployerJobCloseView,
@@ -50,6 +51,8 @@ __all__ = [
     'AdminJobReviewView',
     'JobReportCreateView',
     'CandidateJobRecommendationView',
+    'CandidateJobAlertDetailView',
+    'CandidateJobAlertListCreateView',
     'CvJobRecommendationView',
     'EmployerJobCloseView',
     'EmployerJobDetailView',

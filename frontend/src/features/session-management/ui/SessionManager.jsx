@@ -1,9 +1,10 @@
 import { DesktopOutlined, EnvironmentOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Button, Empty, Popconfirm, Skeleton, Tag } from 'antd'
+import { Button, Empty, Skeleton, Tag } from 'antd'
 import { listSessions, revokeOtherSessions, revokeSession } from '../api/session-management.api'
 import { groupSessions } from '../model/group-sessions'
 import { message } from '@/shared/lib/toast'
+import ConfirmAction from '@/shared/ui/ConfirmAction'
 
 function timeAgo(iso) {
   const mins = Math.floor((Date.now() - new Date(iso).getTime()) / 60000)
@@ -43,13 +44,15 @@ export default function SessionManager() {
           <p className="text-sm text-slate-500">Các phiên đang hoạt động của tài khoản này. Đăng xuất thiết bị bạn không nhận ra.</p>
         </div>
         {hasOthers && (
-          <Popconfirm
-            title="Đăng xuất khỏi tất cả thiết bị khác?"
-            okText="Đăng xuất" cancelText="Hủy"
-            onConfirm={() => revokeOthers.mutate()}
+          <ConfirmAction
+            title="Đăng xuất thiết bị khác"
+            description="Bạn có chắc muốn đăng xuất khỏi tất cả thiết bị khác không? Các thiết bị đó sẽ phải đăng nhập lại để tiếp tục."
+            confirmText="Đăng xuất"
+            danger
+            onConfirm={() => revokeOthers.mutateAsync()}
           >
             <Button danger loading={revokeOthers.isPending}>Đăng xuất thiết bị khác</Button>
-          </Popconfirm>
+          </ConfirmAction>
         )}
       </div>
 
@@ -73,13 +76,15 @@ export default function SessionManager() {
                 </div>
               </div>
               {!session.current && (
-                <Popconfirm
-                  title="Đăng xuất thiết bị này?"
-                  okText="Đăng xuất" cancelText="Hủy"
-                  onConfirm={() => revokeOne.mutate(session.id)}
+                <ConfirmAction
+                  title="Đăng xuất thiết bị"
+                  description={<>Bạn có chắc muốn đăng xuất thiết bị <strong>{session.device_label}</strong> không?</>}
+                  confirmText="Đăng xuất"
+                  danger
+                  onConfirm={() => revokeOne.mutateAsync(session.id)}
                 >
                   <Button size="small" danger loading={revokeOne.isPending}>Đăng xuất</Button>
-                </Popconfirm>
+                </ConfirmAction>
               )}
             </li>
           ))}

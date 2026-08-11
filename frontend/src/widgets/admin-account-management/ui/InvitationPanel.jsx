@@ -12,7 +12,6 @@ import {
   Form,
   Input,
   Modal,
-  Popconfirm,
   Select,
   Space,
   Table,
@@ -34,6 +33,7 @@ import {
 } from '@/entities/admin-account'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { message } from '@/shared/lib/toast'
+import ConfirmAction from '@/shared/ui/ConfirmAction'
 import { InvitationStatusTag } from './AccountStatusTag'
 
 const INVITATION_QUERY_KEYS = {
@@ -271,6 +271,7 @@ export default function InvitationPanel({ departments, roles: allRoles, isSuperu
       await queryClient.invalidateQueries({ queryKey: adminAccountKeys.all })
     } catch (error) {
       message.error(getApiErrorMessage(error, 'Không thể gửi lại lời mời.'))
+      throw error
     }
   }
 
@@ -386,17 +387,17 @@ export default function InvitationPanel({ departments, roles: allRoles, isSuperu
               onClick={() => openEditor(row)}
             />
           </Tooltip>
-          <Popconfirm
-            title="Gửi lại lời mời?"
-            description="Liên kết cũ sẽ mất hiệu lực ngay."
-            okText="Gửi lại"
+          <ConfirmAction
+            title="Gửi lại lời mời"
+            description={<>Bạn có chắc muốn gửi lại lời mời tới <strong>{row.user.email}</strong>? Liên kết hiện tại sẽ mất hiệu lực và được thay bằng liên kết mới.</>}
+            confirmText="Gửi lại"
             cancelText="Hủy"
             onConfirm={() => resend(row)}
           >
             <Tooltip title="Gửi lại lời mời">
               <Button type="text" aria-label="Gửi lại lời mời" icon={<ReloadOutlined />} />
             </Tooltip>
-          </Popconfirm>
+          </ConfirmAction>
           <Tooltip title="Thu hồi lời mời">
             <Button
               danger

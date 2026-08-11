@@ -33,6 +33,7 @@ ALLOWED_METRICS = {
     'employer_sms_retention',
     'employer_notification_event',
     'employer_notification_retention',
+    'candidate_job_digest',
 }
 
 

@@ -1,12 +1,13 @@
 import { SettingOutlined } from '@ant-design/icons'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Alert, Button, Modal, Skeleton, Tag, Tabs, Typography } from 'antd'
+import { Alert, Button, Skeleton, Tag, Tabs, Typography } from 'antd'
 import { useSearchParams } from 'react-router'
 import { useSiteSettings } from '@/entities/site-settings'
 import { getAdminSettings, SettingField, updateAdminSettings } from '@/features/manage-site-settings'
 import { SpeechRuntimeOverview } from '@/features/manage-speech-runtime'
 import { message } from '@/shared/lib/toast'
 import { AdminDataActions, AdminPageHeader, AdminPanel } from '@/shared/ui/admin'
+import useConfirmAction from '@/shared/ui/use-confirm-action'
 
 const isEqual = (a, b) => JSON.stringify(a) === JSON.stringify(b)
 
@@ -24,6 +25,7 @@ function SettingsPageHeader() {
 
 export default function AdminSettings() {
   const [searchParams, setSearchParams] = useSearchParams()
+  const { confirmationModal, requestConfirmation } = useConfirmAction()
   const { retry: refreshSiteSettings } = useSiteSettings()
   const [groups, setGroups] = useState(null)
   const [values, setValues] = useState({})
@@ -148,12 +150,12 @@ export default function AdminSettings() {
     }
     const current = groups.find((g) => g.key === activeGroup)
     if (current && dirtyInGroup(current)) {
-      Modal.confirm({
-        title: 'Thay đổi chưa lưu',
-        content: 'Nhóm hiện tại có thay đổi chưa lưu. Chuyển tab sẽ giữ nguyên thay đổi (chưa mất), tiếp tục?',
-        okText: 'Chuyển tab',
+      requestConfirmation({
+        title: 'Chuyển nhóm cài đặt',
+        description: 'Nhóm hiện tại có thay đổi chưa lưu. Bạn có muốn chuyển tab? Các thay đổi vẫn được giữ lại.',
+        confirmText: 'Chuyển tab',
         cancelText: 'Ở lại',
-        onOk: commitGroup,
+        onConfirm: commitGroup,
       })
     } else {
       commitGroup()
@@ -238,17 +240,20 @@ export default function AdminSettings() {
   }))
 
   return (
-    <div className="space-y-5">
-      <SettingsPageHeader />
-      <AdminPanel>
-        <Tabs
-          tabPlacement="top"
-          activeKey={activeGroup}
-          onChange={handleTabChange}
-          items={items}
-          className="[&_.ant-tabs-tab]:!py-2"
-        />
-      </AdminPanel>
-    </div>
+    <>
+      <div className="space-y-5">
+        <SettingsPageHeader />
+        <AdminPanel>
+          <Tabs
+            tabPlacement="top"
+            activeKey={activeGroup}
+            onChange={handleTabChange}
+            items={items}
+            className="[&_.ant-tabs-tab]:!py-2"
+          />
+        </AdminPanel>
+      </div>
+      {confirmationModal}
+    </>
   )
 }

@@ -5,7 +5,7 @@ import {
   PlusOutlined,
 } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Button, Drawer, Empty, Form, Input, InputNumber, Modal, Space, Switch, Tag } from 'antd'
+import { Button, Drawer, Empty, Form, Input, InputNumber, Space, Switch, Tag } from 'antd'
 import { useState } from 'react'
 import {
   adminKnowledgeKeys,
@@ -17,6 +17,7 @@ import {
   updateAdminKnowledgeCategory,
 } from '@/entities/knowledgebase'
 import { message } from '@/shared/lib/toast'
+import useConfirmAction from '@/shared/ui/use-confirm-action'
 import './knowledge-category-manager.css'
 
 function categoryPayload(values) {
@@ -33,6 +34,7 @@ function categoryPayload(values) {
 export default function KnowledgeCategoryManager({ open, onClose, canManage, canPublish }) {
   const [form] = Form.useForm()
   const queryClient = useQueryClient()
+  const { confirmationModal, requestConfirmation } = useConfirmAction()
   const [editing, setEditing] = useState(null)
   const categoriesQuery = useQuery({
     queryKey: adminKnowledgeKeys.categories,
@@ -96,7 +98,8 @@ export default function KnowledgeCategoryManager({ open, onClose, canManage, can
   }
 
   return (
-    <Drawer
+    <>
+      <Drawer
       className="knowledge-category-drawer"
       width={720}
       open={open}
@@ -194,13 +197,13 @@ export default function KnowledgeCategoryManager({ open, onClose, canManage, can
                   loading={stateMutation.isPending}
                   onChange={(active) => {
                     if (!active && category.public_article_count) {
-                      Modal.confirm({
-                        title: `Ẩn chuyên mục “${category.name}”?`,
-                        content: `${category.public_article_count} bài công khai sẽ không còn xuất hiện trong trung tâm trợ giúp.`,
-                        okText: 'Ẩn chuyên mục',
-                        okButtonProps: { danger: true },
+                      requestConfirmation({
+                        title: 'Ẩn chuyên mục',
+                        description: <>Bạn có chắc muốn ẩn <strong>{category.name}</strong>? {category.public_article_count} bài công khai sẽ không còn xuất hiện trong trung tâm trợ giúp.</>,
+                        confirmText: 'Ẩn chuyên mục',
+                        danger: true,
                         cancelText: 'Giữ hiển thị',
-                        onOk: () => stateMutation.mutate({ category, active }),
+                        onConfirm: () => stateMutation.mutateAsync({ category, active }),
                       })
                     } else stateMutation.mutate({ category, active })
                   }}
@@ -213,6 +216,8 @@ export default function KnowledgeCategoryManager({ open, onClose, canManage, can
           <Empty description="Chưa có chuyên mục" />
         )}
       </div>
-    </Drawer>
+      </Drawer>
+      {confirmationModal}
+    </>
   )
 }

@@ -289,7 +289,7 @@ test('candidate smoke: WYSIWYG CV editor uses the V2 draft lifecycle', async ({ 
     if (request.url().endsWith('/api/v2/cvs/cv_1/save-version/')) saveVersionRequested = true
   })
   await page.getByRole('button', { name: 'Lưu CV' }).click()
-  await expect(page.getByRole('dialog', { name: 'Lưu ý' })).toBeVisible()
+  await expect(page.getByRole('dialog', { name: 'Lưu CV chưa hoàn thiện' })).toBeVisible()
   await page.getByRole('button', { name: 'Lưu CV, tôi sẽ hoàn thiện sau' }).click()
   await expect(page).toHaveURL('/save-cv-success/cv_1?type=create')
   await expect(page.getByRole('heading', { name: 'Lưu CV thành công!' })).toBeVisible()
@@ -377,7 +377,7 @@ test('candidate smoke: CV library permanently deletes a CV through V2', async ({
   await page.getByRole('button', { name: 'Thao tác CV' }).click()
   const deleteMenuItem = page.getByRole('menuitem', { name: 'Xoá' })
   await expect(deleteMenuItem).toBeVisible()
-  const deleteDialog = page.getByRole('dialog', { name: 'Xóa CV của bạn?' })
+  const deleteDialog = page.getByRole('dialog', { name: 'Xóa CV' })
   // Ant Design renders the menu in a moving portal. On a busy mobile CI worker
   // the sticky header can briefly intercept pointer events while it settles;
   // keyboard activation exercises the same accessible menu action without
@@ -386,7 +386,7 @@ test('candidate smoke: CV library permanently deletes a CV through V2', async ({
   await expect(deleteDialog).toBeVisible({ timeout: 10_000 })
   const deleteRequest = page.waitForRequest((request) => request.url().endsWith('/api/v2/cvs/cv_1/') && request.method() === 'DELETE')
   await deleteDialog
-    .getByRole('button', { name: 'Xóa vĩnh viễn', exact: true })
+    .getByRole('button', { name: 'Xóa', exact: true })
     .press('Enter')
   await deleteRequest
   await expect(page.getByText('CV cần xóa', { exact: true })).toHaveCount(0)

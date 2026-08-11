@@ -4,7 +4,7 @@ from ..models import CandidateEmailNotificationSettings
 
 
 def candidate_email_notification_settings_for_user(user):
-    """Return persisted settings or an unsaved object with enabled defaults."""
+    """Return persisted settings or an unsaved object with model-safe defaults."""
     settings = CandidateEmailNotificationSettings.objects.filter(
         candidate_profile__user=user
     ).first()
