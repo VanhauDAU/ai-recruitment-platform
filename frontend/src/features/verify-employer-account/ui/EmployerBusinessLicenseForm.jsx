@@ -25,6 +25,7 @@ import {
   uploadDocumentSet,
 } from '../model/business-document-set'
 import { EmployerBusinessDocumentCard } from './EmployerBusinessDocumentCard'
+import EmployerVerificationLifecycleAlert from './EmployerVerificationLifecycleAlert'
 
 const UPLOAD_GUIDE_URL = 'https://drive.google.com/file/d/1yYXQMXUjW7_vF3dlpsQd0EBo8WinH9K-/view'
 
@@ -285,6 +286,10 @@ export default function EmployerBusinessLicenseForm() {
 
   return (
     <div>
+      <EmployerVerificationLifecycleAlert
+        className="mb-5"
+        verificationCase={verificationCase}
+      />
       {resubmissionLocked && (
         <Alert
           className="mb-5"

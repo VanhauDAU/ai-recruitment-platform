@@ -3,7 +3,11 @@ import { useQuery } from '@tanstack/react-query'
 import { Skeleton } from 'antd'
 import { Link } from 'react-router'
 import { getEmployerProfile } from '@/entities/employer-profile'
-import { getEmployerAccountVerificationLevel } from '@/features/verify-employer-account'
+import {
+  EmployerVerificationLifecycleAlert,
+  getEmployerAccountVerificationLevel,
+  isEmployerVerificationInvalidated,
+} from '@/features/verify-employer-account'
 import {
   EMPLOYER_BUSINESS_LICENSE_URL,
   EMPLOYER_COMPANY_SETTINGS_URL,
@@ -29,7 +33,9 @@ export default function EmployerAccountVerificationCard() {
   }
 
   const verification = profileQuery.data?.onboarding || {}
-  const level = getEmployerAccountVerificationLevel(verification)
+  const verificationCase = profileQuery.data?.verification_case || {}
+  const verificationInvalidated = isEmployerVerificationInvalidated(verificationCase)
+  const level = getEmployerAccountVerificationLevel(verification, verificationCase)
   const percent = level.percent
   const nextLevel = Math.min(level.level + 1, level.total)
   const verifiedJobQuotaUnlocked = (
@@ -38,6 +44,10 @@ export default function EmployerAccountVerificationCard() {
 
   return (
     <div className="mb-5 rounded-sm border border-slate-200 bg-white p-5 sm:p-6">
+      <EmployerVerificationLifecycleAlert
+        className="mb-5"
+        verificationCase={verificationCase}
+      />
       <h2 className="text-base font-bold text-slate-800">
         Tài khoản xác thực: <span className="text-emerald-600">Cấp {level.level}/{level.total}</span>
       </h2>
@@ -76,7 +86,10 @@ export default function EmployerAccountVerificationCard() {
 
       <div className="mt-4 divide-y divide-slate-100">
         {STEPS.map((step) => {
-          const completed = Boolean(verification[step.key])
+          const completed = Boolean(
+            verification[step.key]
+            && !(verificationInvalidated && step.key === 'business_doc_approved'),
+          )
           return (
             <Link
               key={step.key}

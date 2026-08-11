@@ -13,7 +13,12 @@ from rest_framework.test import APITestCase
 
 from apps.accounts.models import AdminPermission, AdminRole, Department
 from apps.accounts.services import assign_membership
-from apps.employers.models import Company, CompanyDocument, RecruiterProfile
+from apps.employers.models import (
+    Company,
+    CompanyDocument,
+    EmployerVerificationCase,
+    RecruiterProfile,
+)
 
 from ..models import Job, JobReport, JobReportResolutionEvent
 from ..selectors.verification_badge import job_badge_criteria
@@ -35,13 +40,20 @@ def _employer_job(suffix):
         email=f'contact@company-{suffix}.vn',
         created_by=employer,
     )
-    RecruiterProfile.objects.create(
+    recruiter = RecruiterProfile.objects.create(
         user=employer,
         company=company,
         phone_verified_at=timezone.now(),
     )
+    verification_case = EmployerVerificationCase.objects.create(
+        recruiter=recruiter,
+        company=company,
+        status=EmployerVerificationCase.Status.APPROVED,
+    )
     CompanyDocument.objects.create(
         company=company,
+        recruiter=recruiter,
+        verification_case=verification_case,
         uploaded_by=employer,
         doc_type=CompanyDocument.DocType.BUSINESS_REGISTRATION,
         status=CompanyDocument.Status.APPROVED,
@@ -250,7 +262,7 @@ class JobReportAdminApiTests(APITestCase):
         self.assertEqual(resolved.status_code, status.HTTP_200_OK, resolved.data)
         self.assertEqual(resolved.data['status'], JobReport.Status.UPHELD)
         self.assertEqual(len(resolved.data['resolution_history']), 1)
-        self.assertFalse(job_badge_criteria(self.job)['verified'])
+        self.assertTrue(job_badge_criteria(self.job)['verified'])
 
         missing_note = self.client.post(self.reverse_url(), {'note': ''}, format='json')
         self.assertEqual(missing_note.status_code, status.HTTP_400_BAD_REQUEST)

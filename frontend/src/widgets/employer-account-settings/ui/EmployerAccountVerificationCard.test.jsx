@@ -111,4 +111,32 @@ describe('EmployerAccountVerificationCard', () => {
     expect(screen.getByText(/Quota sẽ được mở tự động/)).toBeInTheDocument()
     expect(screen.queryByText(/admin duyệt cuối cùng/)).not.toBeInTheDocument()
   })
+
+  it('does not show level 3 after verification is revoked', () => {
+    queryState.data = {
+      onboarding: {
+        email_verified: true,
+        phone_verified: true,
+        company_linked: true,
+        business_doc_submitted: true,
+        business_doc_approved: true,
+        no_report_history: true,
+        representative_verified: true,
+      },
+      verification_case: {
+        status: 'revoked',
+        decision_reason: 'Giấy phép không còn hiệu lực.',
+      },
+    }
+
+    renderCard()
+
+    expect(screen.getByText('Cấp 1/3')).toBeInTheDocument()
+    expect(screen.queryByText('Cấp 3/3')).not.toBeInTheDocument()
+    expect(screen.getByText('Xác thực nhà tuyển dụng đã bị thu hồi')).toBeVisible()
+    const businessDocumentStep = screen.getByRole('link', {
+      name: /Xác thực Giấy đăng ký doanh nghiệp/,
+    })
+    expect(businessDocumentStep.querySelector('.anticon-check-circle')).not.toBeInTheDocument()
+  })
 })

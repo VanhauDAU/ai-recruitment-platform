@@ -21,8 +21,6 @@ const company = {
   business_type: 'enterprise',
   business_type_label: 'Doanh nghiệp',
   tax_code: '0101234567',
-  verification_status: 'pending',
-  verification_status_label: 'Chờ duyệt',
   owners: [{
     public_id: 'rec_owner',
     user_public_id: 'usr_owner',
@@ -63,7 +61,7 @@ test('admin company directory: three-level navigation, detail and owner roster',
   page,
 }, testInfo) => {
   const usesDrawer = testInfo.project.name !== 'desktop-chromium'
-  await page.route('http://localhost:8000/api/**', async (route) => {
+  await page.route(/^http:\/\/(?:localhost|127\.0\.0\.1):(?:5173|8000)\/api\//, async (route) => {
     const path = new URL(route.request().url()).pathname
     const body = path === '/api/auth/refresh/'
       ? { access: 'e2e-access' }
@@ -127,6 +125,8 @@ test('admin company directory: three-level navigation, detail and owner roster',
     'aria-selected',
     'true',
   )
+  await expect(page.getByRole('columnheader', { name: 'Hồ sơ pháp nhân' })).toHaveCount(0)
+  await expect(page.getByRole('combobox', { name: 'Lọc trạng thái công ty' })).toHaveCount(0)
   await expect(page.getByLabel('Công ty Alpha chưa cập nhật logo')).toBeVisible()
 
   if (usesDrawer) {
@@ -151,10 +151,15 @@ test('admin company directory: three-level navigation, detail and owner roster',
   await expect(page.getByRole('heading', { name: 'Công ty Alpha' })).toBeVisible()
   await expect(page.locator('.company-directory__rich-text strong')).toHaveText('công nghệ')
   await expect(page.locator('.company-directory__rich-text script')).toHaveCount(0)
+  await page.getByRole('tab', { name: 'Xác thực NTD' }).click()
+  await expect(page.getByText('Xác thực nhà tuyển dụng')).toBeVisible()
+  await expect(page.getByText('Trạng thái pháp lý công ty')).toHaveCount(0)
   await page.getByRole('tab', { name: /Nhà tuyển dụng/ }).click()
   await expect(page.getByText('HR Manager')).toBeVisible()
   await expect(page.getByLabel('Ảnh đại diện Owner chính')).toBeVisible()
-  await expect(page.getByText('Đã xác thực', { exact: true })).toBeVisible()
+  await expect(
+    page.getByLabel('Nhà tuyển dụng (2)').getByText('Đã xác thực', { exact: true }),
+  ).toBeVisible()
 
   await page.goto('/admin/app/companies?tab=updates&company=co_alpha')
   await expect(page.getByRole('tab', { name: 'Yêu cầu cập nhật' })).toHaveAttribute(

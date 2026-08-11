@@ -75,6 +75,8 @@ class JobSerializer(serializers.ModelSerializer):
     language_requirements = JobLanguageRequirementSerializer(many=True, required=False)
     company_name = serializers.CharField(source='company.company_name', read_only=True)
     company_logo_url = serializers.SerializerMethodField()
+    # Legacy HTTP name: value belongs to the recruiter who posted this job,
+    # not to Company. Keep until clients migrate to an employer-scoped key.
     company_verified = serializers.SerializerMethodField()
     brand_slug = serializers.SerializerMethodField()
     company_cover_url = serializers.SerializerMethodField()
@@ -432,6 +434,7 @@ class JobDetailSerializer(JobSerializer):
     """
 
     category_name = serializers.SerializerMethodField()
+    # Legacy HTTP name paired with ``company_verified``; payload is recruiter-scoped.
     company_verification = serializers.SerializerMethodField()
     company_size = serializers.CharField(source='company.company_size', read_only=True)
     company_address = serializers.CharField(source='company.address', read_only=True)
@@ -506,7 +509,7 @@ class JobDetailSerializer(JobSerializer):
         read_only_fields = fields
 
     def get_company_verification(self, obj):
-        return badge_criteria_payload(obj)
+        return self._badge_payload(obj)
 
     def get_category_name(self, obj):
         assignment = self._primary_assignment(obj)

@@ -25,17 +25,6 @@ def admin_verification_cases_queryset(*, params=None, include_detail=False):
         .annotate(total=Count('id'))
         .values('total')[:1]
     )
-    verified_duplicate_tax_code_companies = (
-        Company.objects.filter(
-            tax_code=OuterRef('company__tax_code'),
-            verification_status=Company.VerificationStatus.VERIFIED,
-        )
-        .exclude(tax_code__isnull=True)
-        .exclude(pk=OuterRef('company_id'))
-        .values('tax_code')
-        .annotate(total=Count('id'))
-        .values('total')[:1]
-    )
     duplicate_companies = (
         CompanyDocument.objects.filter(
             sha256=OuterRef('sha256'),
@@ -93,13 +82,6 @@ def admin_verification_cases_queryset(*, params=None, include_detail=False):
         .annotate(
             duplicate_tax_code_company_count=Coalesce(
                 Subquery(duplicate_tax_code_companies, output_field=IntegerField()),
-                Value(0),
-            ),
-            verified_duplicate_tax_code_company_count=Coalesce(
-                Subquery(
-                    verified_duplicate_tax_code_companies,
-                    output_field=IntegerField(),
-                ),
                 Value(0),
             ),
             current_document_count=Count(

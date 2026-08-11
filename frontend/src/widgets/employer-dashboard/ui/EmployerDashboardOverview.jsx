@@ -10,6 +10,7 @@ import {
   useEmployerReadiness,
 } from '@/entities/employer-profile'
 import { useSession } from '@/entities/session'
+import { EmployerVerificationLifecycleAlert } from '@/features/verify-employer-account'
 import { employerAppPath } from '@/shared/config/portals'
 import ApplicationActivityCard from './ApplicationActivityCard'
 import DashboardHeader from './DashboardHeader'
@@ -76,6 +77,9 @@ export default function EmployerDashboardOverview() {
         account={account}
         jobActionTarget={jobActionTarget}
         candidateActionTarget={candidateActionTarget}
+      />
+      <EmployerVerificationLifecycleAlert
+        verificationCase={{ status: account.recruiter_verification_status }}
       />
       <DashboardComplianceNotice readiness={readiness} />
 

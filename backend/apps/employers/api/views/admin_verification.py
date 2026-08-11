@@ -36,7 +36,6 @@ from ...models import (
 )
 from ...selectors import admin_verification_cases_queryset, admin_verification_summary
 from ...services import (
-    CompanyTaxCodeConflict,
     CompanyUpdateConflict,
     apply_update_request,
     confirm_verification_decision,
@@ -52,7 +51,7 @@ from ...services import (
     verification_decision_impact,
     verification_lifecycle_impact,
 )
-from ..exceptions import CompanyTaxCodeConflictResponse, CompanyUpdateConflictResponse
+from ..exceptions import CompanyUpdateConflictResponse
 from ..serializers.admin_verification import (
     AdminCompanyUpdateRequestSerializer,
     AdminCompanyUpdateReviewSerializer,
@@ -73,7 +72,6 @@ from ..serializers.admin_verification import (
     AdminVerificationPermissionErrorSerializer,
     AdminVerificationResubmissionUnlockSerializer,
     AdminVerificationStaleErrorSerializer,
-    AdminVerificationTaxConflictErrorSerializer,
 )
 
 GENERIC_CONTENT_TYPES = {'', 'application/octet-stream', 'binary/octet-stream'}
@@ -118,14 +116,6 @@ ADMIN_VERIFICATION_LIFECYCLE_BAD_REQUEST_SCHEMA = PolymorphicProxySerializer(
     serializers=[
         AdminVerificationLifecycleWorkflowErrorSerializer,
         AdminVerificationLifecycleFieldErrorSerializer,
-    ],
-    resource_type_field_name=None,
-)
-ADMIN_VERIFICATION_DECISION_CONFLICT_SCHEMA = PolymorphicProxySerializer(
-    component_name='AdminVerificationDecisionConflict',
-    serializers=[
-        AdminVerificationStaleErrorSerializer,
-        AdminVerificationTaxConflictErrorSerializer,
     ],
     resource_type_field_name=None,
 )
@@ -194,45 +184,6 @@ ADMIN_VERIFICATION_PERMISSION_RESPONSE = OpenApiResponse(
             value={
                 'code': 'admin_permission_denied',
                 'message': 'Bạn không có quyền thực hiện hành động này.',
-            },
-            response_only=True,
-        )
-    ],
-)
-ADMIN_VERIFICATION_DECISION_CONFLICT_RESPONSE = OpenApiResponse(
-    response=ADMIN_VERIFICATION_DECISION_CONFLICT_SCHEMA,
-    description=(
-        'Preview đã stale (`admin_resource_changed`) hoặc mã số thuế đã '
-        'được xác thực cho công ty khác (`company_tax_code_conflict`).'
-    ),
-    examples=[
-        OpenApiExample(
-            'Stale impact preview',
-            value={
-                'code': 'admin_resource_changed',
-                'message': ('Dữ liệu đã thay đổi. Vui lòng xem lại tác động trước khi tiếp tục.'),
-            },
-            response_only=True,
-        ),
-        OpenApiExample(
-            'Company tax code conflict',
-            value={
-                'code': 'company_tax_code_conflict',
-                'message': 'Mã số thuế đã thuộc một công ty được xác thực.',
-            },
-            response_only=True,
-        ),
-    ],
-)
-ADMIN_VERIFICATION_TAX_CONFLICT_RESPONSE = OpenApiResponse(
-    response=AdminVerificationTaxConflictErrorSerializer,
-    description='Mã số thuế đã được xác thực cho công ty khác.',
-    examples=[
-        OpenApiExample(
-            'Company tax code conflict',
-            value={
-                'code': 'company_tax_code_conflict',
-                'message': 'Mã số thuế đã thuộc một công ty được xác thực.',
             },
             response_only=True,
         )
@@ -372,11 +323,6 @@ class AdminEmployerVerificationViewSet(viewsets.ReadOnlyModelViewSet):
             )
         except StaleImpactToken as error:
             raise AdminResourceChanged() from error
-        except CompanyTaxCodeConflict as error:
-            raise CompanyTaxCodeConflictResponse(
-                error.tax_code,
-                claim_status=error.claim_status,
-            ) from error
         current = admin_verification_cases_queryset(include_detail=True).get(pk=case.pk)
         return Response(
             AdminVerificationCaseDetailSerializer(
@@ -399,7 +345,6 @@ class AdminEmployerVerificationViewSet(viewsets.ReadOnlyModelViewSet):
             200: AdminVerificationDecisionImpactSerializer,
             400: ADMIN_VERIFICATION_DECISION_BAD_REQUEST_RESPONSE,
             403: ADMIN_VERIFICATION_PERMISSION_RESPONSE,
-            409: ADMIN_VERIFICATION_TAX_CONFLICT_RESPONSE,
         },
     )
     @action(detail=True, methods=['post'], url_path='decision-impact')
@@ -407,20 +352,14 @@ class AdminEmployerVerificationViewSet(viewsets.ReadOnlyModelViewSet):
         serializer = AdminVerificationDecisionPreviewSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         values = serializer.validated_data
-        try:
-            impact = verification_decision_impact(
-                self.get_object(),
-                actor=request.user,
-                decision=values['decision'],
-                reason=values.get('reason', ''),
-                tax_override=values.get('tax_override', False),
-                tax_override_reason=values.get('tax_override_reason', ''),
-            )
-        except CompanyTaxCodeConflict as error:
-            raise CompanyTaxCodeConflictResponse(
-                error.tax_code,
-                claim_status=error.claim_status,
-            ) from error
+        impact = verification_decision_impact(
+            self.get_object(),
+            actor=request.user,
+            decision=values['decision'],
+            reason=values.get('reason', ''),
+            tax_override=values.get('tax_override', False),
+            tax_override_reason=values.get('tax_override_reason', ''),
+        )
         return Response(impact)
 
     @extend_schema(
@@ -429,15 +368,15 @@ class AdminEmployerVerificationViewSet(viewsets.ReadOnlyModelViewSet):
             'Bước 2/2. `impact_token` bắt buộc và được ràng buộc với '
             'revision, request và snapshot đã preview. Trả `409 '
             'admin_resource_changed` nếu bất kỳ dữ liệu ảnh hưởng nào thay đổi; '
-            'client phải preview lại. Approve xác thực company nhưng reapprove '
-            'chỉ gỡ compliance hold nguồn verification.'
+            'client phải preview lại. Approve chỉ xác thực recruiter; reapprove '
+            'đồng thời gỡ compliance hold nguồn verification.'
         ),
         request=AdminVerificationDecisionConfirmationSerializer,
         responses={
             200: AdminVerificationCaseDetailSerializer,
             400: ADMIN_VERIFICATION_DECISION_BAD_REQUEST_RESPONSE,
             403: ADMIN_VERIFICATION_PERMISSION_RESPONSE,
-            409: ADMIN_VERIFICATION_DECISION_CONFLICT_RESPONSE,
+            409: ADMIN_VERIFICATION_STALE_RESPONSE,
         },
     )
     @action(detail=True, methods=['post'])
@@ -459,11 +398,6 @@ class AdminEmployerVerificationViewSet(viewsets.ReadOnlyModelViewSet):
             raise AdminResourceChanged() from error
         except InvalidImpactToken as error:
             raise ValidationError({'impact_token': str(error)}) from error
-        except CompanyTaxCodeConflict as error:
-            raise CompanyTaxCodeConflictResponse(
-                error.tax_code,
-                claim_status=error.claim_status,
-            ) from error
         current = admin_verification_cases_queryset(include_detail=True).get(pk=case.pk)
         return Response(
             AdminVerificationCaseDetailSerializer(
@@ -485,7 +419,7 @@ class AdminEmployerVerificationViewSet(viewsets.ReadOnlyModelViewSet):
             200: AdminVerificationCaseDetailSerializer,
             400: ADMIN_VERIFICATION_DECISION_BAD_REQUEST_RESPONSE,
             403: ADMIN_VERIFICATION_PERMISSION_RESPONSE,
-            409: ADMIN_VERIFICATION_DECISION_CONFLICT_RESPONSE,
+            409: ADMIN_VERIFICATION_STALE_RESPONSE,
         },
     )
     @action(detail=True, methods=['post'], url_path='unlock-resubmission')
@@ -549,7 +483,7 @@ class AdminEmployerVerificationViewSet(viewsets.ReadOnlyModelViewSet):
         description=(
             'Bước 1/2, không ghi dữ liệu. Yêu cầu '
             '`employer_verification.revoke`; chỉ case `approved` hợp lệ. '
-            'Thu hồi không downgrade company, nhưng khi confirm sẽ chặn '
+            'Khi confirm sẽ chặn '
             'candidate-data/job approval và ẩn active public jobs thuộc recruiter.'
         ),
         request=AdminVerificationLifecyclePreviewSerializer,
@@ -568,7 +502,7 @@ class AdminEmployerVerificationViewSet(viewsets.ReadOnlyModelViewSet):
         description=(
             'Bước 2/2. Yêu cầu `employer_verification.revoke` và '
             '`impact_token` còn hiệu lực. Tạo compliance hold nguồn verification '
-            'với reason `verification_revoked`; không thay đổi company verification.'
+            'với reason `verification_revoked` cho recruiter.'
         ),
         request=AdminVerificationLifecycleConfirmationSerializer,
         responses={
@@ -586,8 +520,7 @@ class AdminEmployerVerificationViewSet(viewsets.ReadOnlyModelViewSet):
         summary='Preview tác động đánh dấu xác thực hết hiệu lực',
         description=(
             'Bước 1/2, thao tác manual của ER-5 và không ghi dữ liệu. '
-            'Yêu cầu `employer_verification.revoke`; chỉ case `approved` hợp lệ. '
-            'Company không bị downgrade.'
+            'Yêu cầu `employer_verification.revoke`; chỉ case `approved` hợp lệ.'
         ),
         request=AdminVerificationLifecyclePreviewSerializer,
         responses={
@@ -605,7 +538,7 @@ class AdminEmployerVerificationViewSet(viewsets.ReadOnlyModelViewSet):
         description=(
             'Bước 2/2. Yêu cầu `employer_verification.revoke` và '
             '`impact_token` còn hiệu lực. Tạo compliance hold nguồn verification '
-            'với reason `verification_expired`; không thay đổi company verification.'
+            'với reason `verification_expired` cho recruiter.'
         ),
         request=AdminVerificationLifecycleConfirmationSerializer,
         responses={
@@ -866,11 +799,6 @@ class AdminCompanyUpdateRequestViewSet(viewsets.ReadOnlyModelViewSet):
             )
         except StaleImpactToken as error:
             raise AdminResourceChanged() from error
-        except CompanyTaxCodeConflict as error:
-            raise CompanyTaxCodeConflictResponse(
-                error.tax_code,
-                claim_status=error.claim_status,
-            ) from error
         except CompanyUpdateConflict as error:
             raise CompanyUpdateConflictResponse(error.fields) from error
         current = self.get_queryset().get(pk=update_request.pk)

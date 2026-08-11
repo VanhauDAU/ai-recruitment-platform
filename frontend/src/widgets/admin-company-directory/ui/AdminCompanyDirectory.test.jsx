@@ -37,7 +37,6 @@ const company = {
   business_type: 'enterprise',
   business_type_label: 'Doanh nghiệp',
   tax_code: '***4567',
-  verification_status: 'pending',
   owners: [{
     public_id: 'rec_owner',
     user_public_id: 'usr_owner',
@@ -114,27 +113,27 @@ describe('admin company directory', () => {
     getAdminCompanyRecruiters.mockResolvedValue({ count: 0, results: [] })
     getAdminCompanySummary.mockResolvedValue({
       total: 1,
-      verification: { pending: 1, verified: 0 },
       pending_update_requests: 1,
       companies_without_single_owner: 0,
     })
   })
 
-  it('keeps company and recruiter verification status visually separate', async () => {
+  it('shows recruiter verification without company verification controls', async () => {
     renderWithApp(
       <AdminCompanyDirectory />,
       '/admin/app/companies?verification_status=pending',
     )
 
     expect(await screen.findByText('Công ty Alpha')).toBeInTheDocument()
-    expect(screen.getAllByText('Chờ duyệt')).toHaveLength(3)
     expect(screen.getByText('Chưa có hồ sơ · 1')).toBeInTheDocument()
     expect(screen.getByText('Đã xác thực · 1')).toBeInTheDocument()
     expect(screen.getByLabelText('Công ty Alpha chưa cập nhật logo')).toHaveTextContent('A')
     expect(screen.getByRole('columnheader', { name: 'Xác thực NTD' })).toBeInTheDocument()
+    expect(screen.queryByRole('columnheader', { name: 'Hồ sơ pháp nhân' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('combobox', { name: 'Lọc trạng thái công ty' })).not.toBeInTheDocument()
     expect(screen.queryByRole('combobox', { name: 'Lọc owner' })).not.toBeInTheDocument()
     expect(getAdminCompanies).toHaveBeenCalledWith(
-      expect.objectContaining({ verification_status: 'pending' }),
+      expect.not.objectContaining({ verification_status: expect.anything() }),
       expect.any(Object),
     )
   })
@@ -142,7 +141,6 @@ describe('admin company directory', () => {
   it('uses server summary instead of the current company page', async () => {
     getAdminCompanySummary.mockResolvedValue({
       total: 47,
-      verification: { pending: 8, verified: 31 },
       pending_update_requests: 6,
       companies_without_single_owner: 2,
     })
@@ -150,9 +148,9 @@ describe('admin company directory', () => {
 
     expect(await screen.findByText('Công ty Alpha')).toBeInTheDocument()
     expect(screen.getByLabelText('Tóm tắt công ty')).toHaveTextContent('47')
-    expect(screen.getByLabelText('Tóm tắt công ty')).toHaveTextContent('31')
-    expect(screen.getByLabelText('Tóm tắt công ty')).toHaveTextContent('8')
+    expect(screen.getByLabelText('Tóm tắt công ty')).toHaveTextContent('2')
     expect(screen.getByLabelText('Tóm tắt công ty')).toHaveTextContent('6')
+    expect(screen.getByLabelText('Tóm tắt công ty')).toHaveTextContent('Cần kiểm tra owner')
   })
 
   it('opens the read-only company detail', async () => {
@@ -233,4 +231,20 @@ describe('admin company directory', () => {
       '/admin/app/recruiters/usr_owner',
     )
   }, 15_000)
+
+  it('keeps the verification tab scoped to recruiter cases', async () => {
+    renderWithApp(
+      <AdminCompanyDetail publicId="co_alpha" />,
+      '/admin/app/companies/co_alpha?tab=verification',
+    )
+
+    expect(await screen.findByRole('tab', { name: 'Xác thực NTD' })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    )
+    expect(screen.getByText('Xác thực nhà tuyển dụng')).toBeInTheDocument()
+    expect(screen.getByText('Đã xác thực')).toBeInTheDocument()
+    expect(screen.queryByText('Trạng thái pháp lý công ty')).not.toBeInTheDocument()
+    expect(screen.queryByText('Pháp nhân đã xác thực')).not.toBeInTheDocument()
+  })
 })

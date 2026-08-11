@@ -76,11 +76,10 @@ class CompanyAdmin(WorkflowReadOnlyAdmin, admin.ModelAdmin):
         'company_name',
         'tax_code',
         'business_type',
-        'verification_status',
         'has_brand_page',
         'created_at',
     ]
-    list_filter = ['verification_status', 'business_type', 'has_brand_page']
+    list_filter = ['business_type', 'has_brand_page']
     search_fields = ['company_name', 'trade_name', 'tax_code', 'slug']
     inlines = [CompanyIndustryInline, CompanyImageInline]
 

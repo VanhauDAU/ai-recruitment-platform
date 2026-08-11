@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import {
   buildCompanyChanges,
+  COMPANY_DESCRIPTION_MIN_LENGTH,
+  companyDescriptionTextLength,
+  companyDescriptionValidationError,
+  companyTaxCodeValidationError,
   companyToForm,
   hasCompanyFormValueChanges,
   validateCompanyImage,
@@ -101,5 +105,23 @@ describe('company form model', () => {
     expect(validateCompanyImage(new File(['ok'], 'office.webp', { type: 'image/webp' }))).toBe('')
     expect(validateCompanyImage(new File(['bad'], 'office.gif', { type: 'image/gif' }))).toMatch(/JPG/)
     expect(validateCompanyImage({ type: 'image/png', size: 5 * 1024 * 1024 + 1 })).toMatch(/5 MB/)
+  })
+
+  it('accepts only 10 or 13 numeric characters for a company tax code', () => {
+    expect(companyTaxCodeValidationError('0101234567')).toBe('')
+    expect(companyTaxCodeValidationError('0101234567890')).toBe('')
+    expect(companyTaxCodeValidationError('0101234567-890')).toBe('Mã số thuế chỉ được gồm chữ số.')
+    expect(companyTaxCodeValidationError('01012345678')).toBe('Mã số thuế phải gồm đúng 10 hoặc 13 chữ số.')
+    expect(companyTaxCodeValidationError('')).toBe('Nhập mã số thuế.')
+  })
+
+  it('requires 500 visible description characters without counting HTML markup', () => {
+    const tooShort = `<p>${'a'.repeat(COMPANY_DESCRIPTION_MIN_LENGTH - 1)}</p>`
+    const valid = `<p>${'a'.repeat(250)}</p><p>${'b'.repeat(250)}</p>`
+
+    expect(companyDescriptionTextLength(tooShort)).toBe(499)
+    expect(companyDescriptionValidationError(tooShort)).toContain('hiện có 499')
+    expect(companyDescriptionTextLength(valid)).toBe(COMPANY_DESCRIPTION_MIN_LENGTH)
+    expect(companyDescriptionValidationError(valid)).toBe('')
   })
 })

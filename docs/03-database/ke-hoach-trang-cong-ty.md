@@ -8,6 +8,11 @@
 > recruiter chỉ đọc request của mình; nhiều member được gửi request riêng và
 > admin review exact immutable revision.
 
+> **Superseded cho xác thực Company (2026-08-12):** theo ER-D52, Company là
+> catalogue và không có verification lifecycle, badge hoặc filter xác thực.
+> Mọi đoạn lịch sử nói về `Company.verification_status`, `verified_at`,
+> `rejected_reason` hay tác động xác thực cấp công ty không còn là contract.
+
 > Trạng thái: **đã chốt toàn bộ, triển khai được ngay.** Không còn quyết định treo (§5.0).
 > Thay thế bản nháp trước đó.
 > Ngày chốt hiện trạng: 2026-07-29.
@@ -65,7 +70,7 @@ Public DTO trả về **danh sách section có kiểu**, ngay từ V1:
   "public_id": "co_...",
   "slug": "acme",
   "canonical_path": "/cong-ty/acme",
-  "identity": { "display_name": "...", "logo_url": "...", "legal_verification": {...} },
+  "identity": { "display_name": "...", "logo_url": "..." },
   "sections": [
     { "type": "about", "title": "Giới thiệu", "body_html": "..." },
     { "type": "benefits", "title": "Phúc lợi", "body_html": "..." },
@@ -81,25 +86,15 @@ Lợi ích: khi V2 giới thiệu block editor thật, backend đổi nguồn d�
 
 Ràng buộc để giữ lời hứa đó: FE tuyệt đối không được suy luận từ tên cột `Company`; chỉ được đọc `sections[].type`. Thêm test hợp đồng khóa shape này.
 
-### 1.3. Hai huy hiệu xác thực, hai nhãn khác nhau — không được trộn
+### 1.3. Chỉ xác thực Nhà tuyển dụng, không xác thực Company
 
-Repo hiện có **hai** khái niệm "đã xác thực" khác nhau về ngữ nghĩa:
-
-| Khái niệm | Nguồn | Ý nghĩa |
-|---|---|---|
-| Pháp nhân | `Company.verification_status` — [company.py:105](../../backend/apps/employers/models/company.py) | Admin đã duyệt hồ sơ pháp lý của **công ty** |
-| Người đăng tin | `company_verified` — [verification_badge.py:39](../../backend/apps/jobs/selectors/verification_badge.py) | Tính theo cặp `(company, posted_by)` từ 5 tiêu chí: email domain, SĐT đã xác thực, GPKD **do chính người đó** nộp, tuổi tài khoản, không có report upheld |
-
-Hai cái này có thể lệch nhau: một công ty đã verified vẫn có recruiter chưa đủ 5 tiêu chí. Nếu trang công ty và job card cùng dùng chữ "Đã xác thực" thì người dùng sẽ thấy mâu thuẫn ngay trong một màn hình.
-
-**Chốt:**
-
-- Trang công ty và danh bạ **chỉ** hiển thị huy hiệu pháp nhân, nhãn **"Pháp nhân đã xác thực"**, tooltip nêu rõ: đã đối chiếu giấy đăng ký doanh nghiệp, kèm `verified_at`.
-- Job card giữ nguyên logic hiện tại, đổi nhãn thành **"Người đăng đã xác thực"**, tooltip liệt kê 5 tiêu chí như hiện có.
-- Filter `verified=1` trong danh bạ ánh xạ tới `Company.verification_status`.
-- Không có huy hiệu nào dùng chung màu/icon với nhãn gói trả phí.
-
-Lưu ý vận hành: hiện 11/11 công ty đều verified nên filter này chưa phân loại được gì. Vẫn làm để không phải sửa API sau, nhưng **ẩn filter khỏi UI cho tới khi tỉ lệ verified < 90%**.
+`Company` không có badge hoặc filter xác thực. Trang công ty và danh bạ chỉ
+trình bày dữ liệu catalogue. Trên tin tuyển dụng, huy hiệu **"Nhà tuyển dụng đã
+xác thực"** phản ánh `EmployerVerificationCase.status=approved` của chính
+`posted_by`; owner/member và loại hồ sơ GPKD/ủy quyền được xử lý như nhau.
+Tên field API legacy có thể được giữ để tương thích, nhưng không được diễn giải
+thành độ tin cậy chung của toàn công ty. Huy hiệu gói trả phí tiếp tục dùng màu,
+icon và copy riêng.
 
 ### 1.4. Ranh giới tenant `posted_by` được giữ nguyên
 
@@ -233,9 +228,10 @@ Riêng `MyCompanyView`, [CompanyForm.jsx:83](../../frontend/src/features/manage-
 
 #### Vấn đề mức thấp
 
-**`MyCompanyView` trả hồ sơ đầy đủ cho member.** [companies.py:15](../../backend/apps/employers/api/views/companies.py) dùng `_require_company` và `CompanySerializer`, nên member đọc được `tax_code`, `email`, `phone` và `rejected_reason` — trường cuối là ghi chú của admin về lý do từ chối xác thực. Sửa bằng một serializer rút gọn cho member.
+**`MyCompanyView` trả hồ sơ đầy đủ cho member.** [companies.py](../../backend/apps/employers/api/views/companies.py) dùng `_require_company` và `CompanySerializer`, nên policy che MST/email/phone của member vẫn là quyết định privacy riêng; không còn trường hay ghi chú xác thực cấp công ty.
 
-**Duyệt hồ sơ một cá nhân lại là quyết định cấp công ty.** [verification.py:452](../../backend/apps/employers/services/verification.py) — khi admin duyệt `EmployerVerificationCase` của một recruiter, hàm gọi `mark_company_verified(case.company, ...)`, tức cả công ty chuyển sang `verified`. Vì join là mở, một người bất kỳ có thể gia nhập công ty chưa xác thực rồi nộp hồ sơ của chính mình, và nếu admin duyệt thì công ty được xác thực theo. **Không phải lỗ hổng** — admin vẫn là chốt chặn — nhưng màn hình duyệt phải nói rõ hệ quả cấp công ty, nếu không admin đang ra một quyết định mà họ không biết mình đang ra.
+**Đã giải quyết bởi ER-D52:** duyệt hồ sơ một NTD chỉ đổi case của NTD đó và
+không nâng/hạ trạng thái của Company hay thành viên khác.
 
 #### Nguyên nhân gốc
 
@@ -251,7 +247,7 @@ Ghi lại để không phải audit lại các bề mặt này:
 |---|---|
 | `CompanyGalleryDeleteView`, các view upload ảnh | `_require_owner` + queryset lọc theo công ty của owner — không IDOR dù dùng `<int:pk>` |
 | `RecruiterProfileSerializer` | `read_only_fields = [f for f in fields if f != 'position_title']` — member không tự nâng thành owner |
-| `CompanySerializer` | `has_brand_page`, `verification_status`, `verified_at`, `rejected_reason` read-only — không tự xác thực |
+| `CompanySerializer` | Không có field xác thực cấp công ty; `has_brand_page` vẫn read-only |
 | `MyCompanyView` | `RetrieveAPIView`, không có đường `PATCH` trực tiếp vào `Company` |
 | Mutation tin tuyển dụng | Mọi hàm trong `posting.py` kiểm `job.posted_by_id != user.id` |
 | Hồ sơ ứng tuyển | `Application.objects.filter(job__posted_by=employer)` |

@@ -11,14 +11,14 @@ class RecruiterProfile(models.Model):
 
     Đã gán công ty thì không đổi được (enforce ở tầng service: chỉ set khi
     đang null). Owner tạo công ty mới hoặc member chọn công ty có sẵn đều có
-    hiệu lực ngay. Việc xác thực pháp nhân và các thay đổi thông tin công ty
-    là workflow riêng, không phải workflow duyệt thành viên.
+    hiệu lực ngay. Xác thực từng nhà tuyển dụng và thay đổi thông tin công ty
+    là các workflow riêng, không phải workflow duyệt thành viên.
 
     Các bước onboarding suy ra từ dữ liệu, không có bảng riêng. Xác thực số
     điện thoại và chọn/tạo công ty là hai bước độc lập; company không yêu cầu
     `phone_verified_at`:
     1) phone_verified_at  2) company IS NOT NULL
-    3) CompanyDocument(business_registration)  4) văn bản DLCN ứng viên
+    3) GPKD hoặc ủy quyền + định danh  4) văn bản DLCN ứng viên
     5) dpa_accepted_at với nền tảng  6) tồn tại Job của user.
     """
 

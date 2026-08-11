@@ -38,7 +38,6 @@ async function setEmployerSession(page) {
         company: {
           public_id: 'co_upload',
           company_name: 'Công ty Upload',
-          verification_status: 'unverified',
         },
       }),
     })

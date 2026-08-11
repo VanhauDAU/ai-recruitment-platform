@@ -15,10 +15,6 @@ def _masked_tax_code(value):
 class AdminCompanyListSerializer(serializers.ModelSerializer):
     logo_url = serializers.SerializerMethodField()
     business_type_label = serializers.CharField(source='get_business_type_display', read_only=True)
-    verification_status_label = serializers.CharField(
-        source='get_verification_status_display',
-        read_only=True,
-    )
     tax_code = serializers.SerializerMethodField()
     owners = serializers.SerializerMethodField()
     recruiter_count = serializers.IntegerField(read_only=True)
@@ -37,8 +33,6 @@ class AdminCompanyListSerializer(serializers.ModelSerializer):
             'business_type',
             'business_type_label',
             'tax_code',
-            'verification_status',
-            'verification_status_label',
             'owners',
             'recruiter_count',
             'owner_count',
@@ -102,8 +96,6 @@ class AdminCompanyDetailSerializer(AdminCompanyListSerializer):
             'target_customers',
             'founded_year',
             'has_brand_page',
-            'verified_at',
-            'rejected_reason',
             'industries',
             'images',
             'created_by',

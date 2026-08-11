@@ -83,7 +83,7 @@ describe('admin navigation tree', () => {
       tree,
       '/admin/app/companies',
       '?verification_status=pending',
-    )?.key).toBe('company-pending')
+    )?.key).toBe('company-list')
     expect(findActiveAdminNavigation(
       tree,
       '/admin/app/companies/co_123',
@@ -179,11 +179,11 @@ describe('admin navigation tree', () => {
     const tree = buildAdminNavigation(
       ADMIN_NAVIGATION,
       ADMIN_ROUTES,
-      access(['company.view', 'company_recruiter.view']),
+      access(['company.view', 'company_recruiter.view', 'employer_verification.view']),
     )
     const results = searchAdminNavigation(tree, 'xác thực')
 
-    expect(results.map((leaf) => leaf.key)).toContain('company-pending')
+    expect(results.map((leaf) => leaf.key)).toContain('employer-verification')
     expect(results[0].breadcrumb).toHaveLength(3)
     expect(searchAdminNavigation(tree, 'phân quyền')).toEqual([])
   })

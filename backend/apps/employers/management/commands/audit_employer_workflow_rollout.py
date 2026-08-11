@@ -103,7 +103,7 @@ class Command(BaseCommand):
 
         migration_applied = MigrationRecorder.Migration.objects.filter(
             app='employers',
-            name='0043_employer_notification_preferences_and_outbox_dedupe',
+            name='0044_remove_company_verification',
         ).exists()
         if not migration_applied:
             blockers.append('employer_schema_not_expanded')
@@ -114,7 +114,6 @@ class Command(BaseCommand):
         for counter_name in (
             'legacy_dpa_acceptances',
             'legacy_verification_cases',
-            'legacy_verified_companies',
             'legacy_upload_assets',
         ):
             if counters[counter_name]:

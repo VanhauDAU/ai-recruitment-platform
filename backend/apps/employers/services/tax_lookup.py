@@ -15,10 +15,11 @@ from django.utils import timezone
 from apps.accounts.services import record_admin_action
 
 from ..models import CompanyTaxLookupEvidence, EmployerVerificationEvent
+from .companies import normalize_company_tax_code
 from .company_update_locks import lock_company_update_request
 from .compliance import lock_verification_identity
 
-TAX_CODE_PATTERN = re.compile(r'\d{10}(?:-\d{3})?')
+PROVIDER_TAX_CODE_PATTERN = re.compile(r'(?:[0-9]{10}|[0-9]{10}-[0-9]{3}|[0-9]{13})')
 
 
 class TaxLookupError(Exception):
@@ -60,10 +61,27 @@ class TaxLookupResult:
 
 
 def normalize_tax_code(value):
-    normalized = re.sub(r'\s+', '', str(value or ''))
-    if not TAX_CODE_PATTERN.fullmatch(normalized):
-        raise ValueError('invalid_tax_code')
-    return normalized
+    try:
+        return normalize_company_tax_code(value)
+    except ValueError as error:
+        raise ValueError('invalid_tax_code') from error
+
+
+def _provider_tax_code(canonical_tax_code):
+    """Format a canonical branch identifier for VietQR without changing storage."""
+
+    if len(canonical_tax_code) == 13:
+        return f'{canonical_tax_code[:10]}-{canonical_tax_code[10:]}'
+    return canonical_tax_code
+
+
+def _normalize_provider_tax_code(value):
+    """Accept VietQR's 10, contiguous-13, or conventional 10-3 representation."""
+
+    normalized = re.sub(r'\s+', '', _bounded_text(value, 100))
+    if not PROVIDER_TAX_CODE_PATTERN.fullmatch(normalized):
+        raise ValueError('invalid_provider_tax_code')
+    return normalized.replace('-', '')
 
 
 def _response_hash(payload):
@@ -105,7 +123,10 @@ def lookup_company_tax(tax_code):
     if not settings.VIETQR_TAX_LOOKUP_ENABLED:
         raise TaxLookupUnavailable('vietqr_disabled')
 
-    endpoint = f'{settings.VIETQR_TAX_LOOKUP_BASE_URL.rstrip("/")}/{quote(tax_code, safe="-")}'
+    provider_tax_code = _provider_tax_code(tax_code)
+    endpoint = (
+        f'{settings.VIETQR_TAX_LOOKUP_BASE_URL.rstrip("/")}/{quote(provider_tax_code, safe="-")}'
+    )
     try:
         response = requests.get(
             endpoint,
@@ -167,7 +188,17 @@ def lookup_company_tax(tax_code):
         _cache_set(cache_key, result.as_dict(), settings.VIETQR_TAX_LOOKUP_NEGATIVE_TTL)
         return result
 
-    returned_tax_code = re.sub(r'\s+', '', _bounded_text(data.get('id'), 100))
+    raw_returned_tax_code = re.sub(r'\s+', '', _bounded_text(data.get('id'), 100))
+    try:
+        returned_tax_code = _normalize_provider_tax_code(raw_returned_tax_code)
+    except ValueError:
+        return TaxLookupResult(
+            status=CompanyTaxLookupEvidence.Status.INVALID_RESPONSE,
+            returned_tax_code=raw_returned_tax_code,
+            provider_code=provider_code,
+            provider_description='VietQR trả về mã số thuế không hợp lệ.',
+            response_hash=_response_hash(payload),
+        )
     if returned_tax_code != tax_code:
         return TaxLookupResult(
             status=CompanyTaxLookupEvidence.Status.INVALID_RESPONSE,

@@ -456,7 +456,6 @@ test('admin employer detail: company media and compact verification comparison r
       },
       company: {
         public_id: 'co_1', name: 'FPT Software', tax_code: '***4567',
-        verification_status: 'verified',
       },
     },
   }
@@ -572,7 +571,6 @@ test('admin employer detail: company media and compact verification comparison r
         markets: ['domestic', 'asia'],
         target_customers: ['b2b'],
         has_brand_page: true,
-        verification_status: 'verified',
         industries: [{ id: 1, name: 'IT - Phần mềm', is_primary: true }],
         description: '<p>Công ty công nghệ</p>',
         employee_benefits: '<p>Chế độ phúc lợi đầy đủ</p>',
@@ -645,12 +643,6 @@ test('admin employer detail: company media and compact verification comparison r
         },
         tax_override: false,
         tax_override_reason: '',
-        company_impact: {
-          company_public_id: 'co_1',
-          current_status: 'verified',
-          will_mark_verified: false,
-          will_downgrade: false,
-        },
         capability_impact: {
           candidate_data_access: 'eligible_after_recompute',
           job_approval: 'eligible_after_recompute',
@@ -737,7 +729,7 @@ test('admin employer detail: company media and compact verification comparison r
   await page.getByRole('button', { name: 'Duyệt hồ sơ' }).click()
   const finalDecisionDialog = page.getByRole('dialog', { name: 'Duyệt hồ sơ' })
   await finalDecisionDialog.getByRole('button', { name: 'Kiểm tra trước khi duyệt' }).click()
-  await expect(finalDecisionDialog.getByText('Trạng thái pháp lý của công ty không bị hạ.'))
+  await expect(finalDecisionDialog.getByText(/chỉ áp dụng cho nhà tuyển dụng/))
     .toBeVisible()
   await finalDecisionDialog.getByRole('button', { name: 'Xác nhận duyệt hồ sơ' }).click()
   await expect(page.getByText('Hồ sơ đang có hiệu lực')).toBeVisible()
@@ -1060,13 +1052,13 @@ test('admin job management: list, detail and revision-bound approval workflow', 
     title: 'Backend Engineer',
     company_public_id: 'co_1',
     company_name: 'Công ty Mẫu',
-    company_verification_status: 'verified',
     employer_public_id: 'usr_employer',
     employer_name: 'Nguyễn Nhà Tuyển Dụng',
     employer_email: 'employer@example.com',
     employer_account_status: 'active',
     employer_email_verified: true,
     employer_phone_verified: true,
+    employer_verification_completed: true,
     company_role_label: 'Chủ sở hữu',
     status: 'pending',
     status_label: 'Chờ duyệt',

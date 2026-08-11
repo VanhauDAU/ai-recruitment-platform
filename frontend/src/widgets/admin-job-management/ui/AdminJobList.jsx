@@ -130,9 +130,7 @@ export default function AdminJobList() {
       render: (value, job) => (
         <div>
           <span className="font-medium text-slate-800">{value}</span>
-          <span className="mt-1 block text-xs text-slate-500">
-            {job.company_verification_status === 'verified' ? 'Đã xác thực pháp nhân' : 'Chưa xác thực pháp nhân'}
-          </span>
+          <span className="mt-1 block font-mono text-xs text-slate-500">{job.company_public_id}</span>
         </div>
       ),
     },

@@ -68,9 +68,6 @@ class JobModerationEventSerializer(serializers.ModelSerializer):
 class AdminJobManagementListSerializer(serializers.ModelSerializer):
     company_public_id = serializers.CharField(source='company.public_id', read_only=True)
     company_name = serializers.CharField(source='company.company_name', read_only=True)
-    company_verification_status = serializers.CharField(
-        source='company.verification_status', read_only=True
-    )
     employer_public_id = serializers.CharField(source='posted_by.public_id', read_only=True)
     employer_name = serializers.SerializerMethodField()
     employer_email = serializers.EmailField(source='posted_by.email', read_only=True)
@@ -102,7 +99,6 @@ class AdminJobManagementListSerializer(serializers.ModelSerializer):
             'title',
             'company_public_id',
             'company_name',
-            'company_verification_status',
             'employer_public_id',
             'employer_name',
             'employer_email',

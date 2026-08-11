@@ -592,7 +592,6 @@ test('employer company settings: a new member sees only the personal request sta
           public_id: 'co_shared',
           company_name: 'Công ty dùng chung',
           tax_code: '0101234567',
-          verification_status: 'unverified',
           industries_detail: [],
           images: [],
         },
@@ -707,7 +706,6 @@ test('employer company settings: document revision request shows reason and repl
           trade_name: 'FPT Software',
           trade_name_same_as_registered: true,
           tax_code: '0101234567',
-          verification_status: 'verified',
           industries_detail: [{ id: 1, name: 'IT - Phần mềm', is_primary: true }],
           images: [],
         },
@@ -1813,7 +1811,7 @@ test('employer company settings: recent catalogue and full create form are respo
         results: [{
           public_id: 'co_recent', company_name: 'Công ty mới nhất', trade_name: 'Recent Co',
           tax_code: '0101234567', address: 'Hà Nội', company_size: '25-99', logo_url: '',
-          industries_detail: [{ id: 1, name: 'IT - Phần mềm' }], verification_status: 'unverified',
+          industries_detail: [{ id: 1, name: 'IT - Phần mềm' }],
         }],
       }),
     })
@@ -1871,7 +1869,6 @@ test('employer company settings: pending values remain editable without creating
     industries_detail: [{ id: 1, name: 'Tài chính', is_primary: true }],
     primary_industry_id: 1,
     images: [],
-    verification_status: 'verified',
   }
   await page.route('http://localhost:8000/api/employer/me/', async (route) => {
     await route.fulfill({

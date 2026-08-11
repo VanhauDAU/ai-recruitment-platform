@@ -1,6 +1,6 @@
 export default function AdminJobReviewSummary({ job }) {
   const warningCount = [
-    job.company_verification_status !== 'verified',
+    !job.employer_verification_completed,
     !job.employer_email_verified,
     !job.employer_phone_verified,
     Number(job.employer_account_level || 0) < 3,

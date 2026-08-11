@@ -50,7 +50,7 @@
 | ER-D18 | Candidate data có access gate riêng | Applications/CV/export không dùng workspace guard |
 | ER-D19 | Recruiting data tiếp tục recruiter-owned | Company member không thấy jobs/campaigns/applications của nhau |
 | ER-D20 | Verification/DPA tạo hold theo source; chỉ gỡ đúng hold | Không dùng một boolean hold dùng chung |
-| ER-D21 | Approve recruiter đồng thời verify company | Admin UI hiển thị company-level impact |
+| ER-D21 | `SUPERSEDED IN PART BY ER-D52` — Approve recruiter đồng thời verify company | Phần company-level verification không còn hiệu lực; quyết định recruiter tiếp tục được audit theo case của recruiter |
 | ER-D27 | Chọn nhầm company xử lý qua admin unlink nếu account sạch | Impact preview + audited action |
 
 ### Quyết định upload, dữ liệu và retention
@@ -87,6 +87,22 @@
 | ER-AR01 | Company search tiếp tục hỗ trợ kết quả đầy đủ, kể cả MST/địa chỉ theo contract hiện tại | Authentication, audit và rate limit hiện hữu |
 | ER-AR02 | Company payload cho member không bị thu hẹp ngoài file/storage secret | Serializer redaction và object permission |
 | ER-AR03 | MFA không bắt buộc toàn bộ recruiter | Step-up cho thao tác bảo mật nhạy cảm |
+
+## Session 2026-08-12 — Ranh giới xác thực Company/Recruiter
+
+### Bối cảnh
+
+- `Company` là hồ sơ dùng chung để định danh, tìm kiếm và liên kết nhiều
+  recruiter, không phải chủ thể có vòng đời xác thực.
+- Hồ sơ pháp lý do một recruiter nộp chỉ chứng minh quyền đại diện của recruiter
+  đó; kết quả duyệt không được nâng hoặc hạ độ tin cậy của toàn bộ thành viên
+  đang liên kết với cùng company.
+
+### Quyết định đã xác nhận
+
+| ID | Quyết định | Hệ quả triển khai |
+| --- | --- | --- |
+| ER-D52 | `Company` chỉ là hồ sơ/catalogue và không có verification lifecycle; approve, reject, revoke hoặc expire chỉ tác động `EmployerVerificationCase` của từng recruiter. Quyết định này supersede phần company-status của ER-D21, ER-D35 và ER-D36 | Bỏ status/source/time/rejection cấp company và unique claim MST theo trạng thái xác thực; company tiếp tục được tìm kiếm/liên kết độc lập với case. Legacy API badge `company_verified/company_verification` nếu còn giữ tên để tương thích phải suy từ case `approved` của chính `posted_by`, không từ Company hoặc bộ 5 tiêu chí cũ. Legacy classification, hold, decision snapshot và audit chỉ gắn với recruiter case |
 
 ## Session 2026-08-10 — Gate ER-2/ER-3/ER-6
 
@@ -126,8 +142,8 @@ Người phụ trách sản phẩm xác nhận toàn bộ các quyết định t
 
 | ID | Quyết định | Hệ quả triển khai |
 | --- | --- | --- |
-| ER-D35 | Recruiter revoked/expired không tự downgrade company verified | Company legal status chỉ đổi qua workflow company riêng; impact UI vẫn cảnh báo company scope |
-| ER-D36 | Grandfather case/company auto-approved lịch sử thành `legacy_auto/legacy_unknown`, report ops | Không bịa admin decision, không reset cohort hoặc apply hold tự động |
+| ER-D35 | `SUPERSEDED IN PART BY ER-D52` — Recruiter revoked/expired không tự downgrade company verified | Company không còn verification status; revoke/expire chỉ thay đổi recruiter case và các hold do case đó sở hữu |
+| ER-D36 | `SUPERSEDED IN PART BY ER-D52` — Grandfather case/company auto-approved lịch sử thành `legacy_auto/legacy_unknown`, report ops | Chỉ recruiter case giữ nguồn legacy để audit; không phân loại hoặc nâng trust cho company |
 | ER-D37 | Revoke/expire khóa candidate-data và job approval, ẩn active public jobs; workspace/create/edit/submit vẫn mở | Hold gắn source/reason riêng, không đổi business status của job/campaign |
 | ER-D38 | Tax `pending` bắt buộc chờ; mismatch/not_found/unavailable/invalid/missing cần `tax_override` + reason | Impact/confirm recompute evidence và audit override; không coi lookup là quyết định pháp lý |
 | ER-D39 | Tách permission review/revoke/tax_override; revoke/override chỉ Super Admin hoặc Compliance Lead được gán rõ | Không trao high-risk permission mặc định cho reviewer thường |
@@ -163,7 +179,7 @@ cần hỏi lại ngày 2026-08-10.
 | ID | Quyết định | Hệ quả triển khai |
 | --- | --- | --- |
 | ER-D42 | Known-denied job/campaign/application route điều hướng tới `employer-verify`; readiness fetch error vẫn retry fail-closed | Không render blocker page tùy tiện ở URL nghiệp vụ; backend permission vẫn authoritative |
-| ER-D43 | `employer-verify` chỉ hiển thị checklist/progress, không lặp readiness và case-status banner | Trạng thái chi tiết tiếp tục nằm tại bước/workflow sở hữu, không chèn badge tổng hợp |
+| ER-D43 | `employer-verify` chỉ hiển thị checklist/progress, không lặp readiness và case-status banner; ngoại lệ bắt buộc là `revoked`/`expired` phải có cảnh báo hiệu lực nổi bật trên checklist, dashboard và các trang giấy tờ | Trạng thái chi tiết tiếp tục nằm tại bước/workflow sở hữu. Kết quả duyệt từng tài liệu được giữ lại cho audit, nhưng UI phải nói rõ không đại diện cho hiệu lực case và không được tính Cấp 2/3 khi case đã bị vô hiệu |
 | ER-D44 | `SUPERSEDED` — Company settings có history section `scope=company` | Bị thay thế bởi ER-D46 theo phản hồi trực tiếp sau khi review UI |
 | ER-D45 | Untouched legacy trade name không được validate/submit như thay đổi mới | Diff giữ minimal; chỉ đồng bộ tên thương mại khi người dùng đổi tên/cờ liên quan |
 | ER-D46 | Employer company settings không hiển thị hoặc tải lịch sử `scope=company`; form update phải có thay đổi thật và có nút quay lại | Backend `scope=company` vẫn giữ cho admin/audit/compatibility; UI recruiter chỉ đọc `scope=mine` |
@@ -198,6 +214,7 @@ ER-D49 cụ thể hóa tiêu chí “account/company relation còn clean” củ
 | `ke-hoach-trang-cong-ty.md` | Owner-only create request; member không được tạo request riêng |
 | `TIEN-DO-DU-AN.md` các ghi chú publish tức thì | Tin được tạo/gửi trước approval nhưng chỉ admin approval/publish khi blockers sạch |
 | Guard `verification_completed` tổng | Tách workspace readiness, verification approval, candidate-data access và DPA status; known denial điều hướng về checklist theo ER-D42 |
+| ER-D21, phần company-status của ER-D35/ER-D36 | Bị ER-D52 thay thế: Company không có verification lifecycle; mọi quyết định xác thực thuộc recruiter case |
 
 Các phần lịch sử khác của tài liệu cũ vẫn được giữ cho tới khi phase tương ứng
 cập nhật chúng; không xóa dấu vết quyết định cũ.

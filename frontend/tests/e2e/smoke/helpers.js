@@ -50,8 +50,8 @@ export async function mockPublicApi(page) {
           ? {
               account: {
                 recruiter_public_id: 'rec_test', company_name: 'Công ty Acme',
-                company_verification_status: 'unverified', company_size: '25-99', work_location_name: 'Hà Nội',
-                verification: { email_verified: true, phone_verified: false, company_linked: false, business_doc_submitted: false, candidate_dpa_submitted: false, dpa_accepted: false, first_job_posted: false },
+                company_size: '25-99', work_location_name: 'Hà Nội',
+                verification: { email_verified: true, phone_verified: false, company_linked: false, business_doc_submitted: false, candidate_dpa_submitted: false, dpa_accepted: false, representative_verified: false, first_job_posted: false },
               },
               summary: { jobs_total: 0, jobs_active: 0, jobs_pending: 0, jobs_draft: 0, job_views: 0, applications_total: 0, applications_new: 0, applications_shortlisted: 0, applications_interviewed: 0 },
               application_activity: Array.from({ length: 7 }, (_, index) => ({ date: `2026-07-${String(12 + index).padStart(2, '0')}`, count: 0 })),

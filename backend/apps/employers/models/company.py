@@ -27,7 +27,7 @@ class Industry(models.Model):
 
 class Company(models.Model):
     """Pháp nhân tuyển dụng — tách khỏi tài khoản nhà tuyển dụng để nhiều HR
-    dùng chung một công ty đã xác thực. Xem kế hoạch:
+    dùng chung một hồ sơ công ty. Xem kế hoạch:
     docs/03-database/ke-hoach-thiet-ke-lai-cong-ty-nha-tuyen-dung.md.
 
     """
@@ -47,17 +47,6 @@ class Company(models.Model):
         S5000_PLUS = '5000+', '5000+ nhân viên'
         S10000_PLUS = '10000+', '10000+ nhân viên'
 
-    class VerificationStatus(models.TextChoices):
-        UNVERIFIED = 'unverified', 'Chưa xác thực'
-        PENDING = 'pending', 'Chờ duyệt'
-        VERIFIED = 'verified', 'Đã xác thực'
-        REJECTED = 'rejected', 'Bị từ chối'
-
-    class VerificationSource(models.TextChoices):
-        EXPLICIT_ADMIN = 'explicit_admin', 'Quyết định quản trị tường minh'
-        LEGACY_AUTO = 'legacy_auto', 'Tự duyệt lịch sử'
-        LEGACY_UNKNOWN = 'legacy_unknown', 'Không xác định nguồn lịch sử'
-
     class Market(models.TextChoices):
         DOMESTIC = 'domestic', 'Nội địa'
         ASIA = 'asia', 'Châu Á'
@@ -76,9 +65,8 @@ class Company(models.Model):
     business_type = models.CharField(
         max_length=20, choices=BusinessType.choices, default=BusinessType.ENTERPRISE
     )
-    # Với hộ kinh doanh là MST người đại diện. Hồ sơ chưa xác thực được phép
-    # trùng MST; chỉ công ty đã xác thực mới giữ quyền duy nhất với MST đó.
-    # Chuỗi rỗng được chuẩn hoá về NULL ở save().
+    # Với hộ kinh doanh là MST người đại diện. Chuỗi rỗng được chuẩn hoá về
+    # NULL ở save(); API chỉ nhận mã 10 hoặc 13 chữ số.
     tax_code = models.CharField(max_length=100, null=True, blank=True)
     company_name = models.CharField(max_length=255)
     trade_name = models.CharField(max_length=255, blank=True)
@@ -106,16 +94,6 @@ class Company(models.Model):
         default=False,
         help_text='Bật trang thương hiệu — tin tuyển dụng hiển thị dưới URL /brand/... với header công ty',
     )
-    verification_status = models.CharField(
-        max_length=20, choices=VerificationStatus.choices, default=VerificationStatus.UNVERIFIED
-    )
-    verification_source = models.CharField(
-        max_length=24,
-        choices=VerificationSource.choices,
-        blank=True,
-    )
-    verified_at = models.DateTimeField(null=True, blank=True)
-    rejected_reason = models.TextField(blank=True)
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='companies_created'
     )
@@ -124,13 +102,6 @@ class Company(models.Model):
 
     class Meta:
         verbose_name_plural = 'companies'
-        constraints = [
-            models.UniqueConstraint(
-                fields=['tax_code'],
-                condition=models.Q(verification_status='verified'),
-                name='uniq_verified_company_tax_code',
-            ),
-        ]
 
     def save(self, *args, **kwargs):
         if not self.public_id:

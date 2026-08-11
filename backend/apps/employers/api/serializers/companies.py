@@ -5,14 +5,17 @@ from django.core.validators import URLValidator
 from rest_framework import serializers
 
 from common.media_storage import media_url_from_value
-from common.rich_text import rich_text_plain_text, sanitize_rich_text
 
 from ...models import (
     Company,
     CompanyImage,
     Industry,
 )
-from ...services import set_company_industries
+from ...services import (
+    normalize_company_rich_text,
+    normalize_company_tax_code,
+    set_company_industries,
+)
 
 
 class IndustrySerializer(serializers.ModelSerializer):
@@ -82,9 +85,6 @@ class CompanySerializer(serializers.ModelSerializer):
             'founded_year',
             'has_brand_page',
             'logo_pending',
-            'verification_status',
-            'verified_at',
-            'rejected_reason',
             'images',
             'created_at',
             'updated_at',
@@ -94,9 +94,6 @@ class CompanySerializer(serializers.ModelSerializer):
             'public_id',
             'slug',
             'has_brand_page',
-            'verification_status',
-            'verified_at',
-            'rejected_reason',
             'created_at',
             'updated_at',
         ]
@@ -145,12 +142,10 @@ class CompanySerializer(serializers.ModelSerializer):
         return self._validate_enum_list(value, Company.TargetCustomer, 'khách hàng mục tiêu')
 
     def validate_tax_code(self, value):
-        value = re.sub(r'\s+', '', value or '')
-        if not re.fullmatch(r'\d{10}(?:-\d{3})?', value):
-            raise serializers.ValidationError(
-                'Mã số thuế phải gồm 10 chữ số hoặc có dạng 10 chữ số-3 chữ số.'
-            )
-        return value
+        try:
+            return normalize_company_tax_code(value)
+        except ValueError as error:
+            raise serializers.ValidationError(str(error)) from error
 
     def validate_company_name(self, value):
         value = (value or '').strip()
@@ -174,13 +169,10 @@ class CompanySerializer(serializers.ModelSerializer):
         return value
 
     def _validate_rich_text(self, value, *, required, label):
-        sanitized = sanitize_rich_text(value)
-        visible = rich_text_plain_text(sanitized)
-        if required and not visible:
-            raise serializers.ValidationError(f'{label} là bắt buộc.')
-        if len(visible) > 10_000:
-            raise serializers.ValidationError(f'{label} không được vượt quá 10.000 ký tự.')
-        return sanitized
+        try:
+            return normalize_company_rich_text(value, required=required, label=label)
+        except ValueError as error:
+            raise serializers.ValidationError(str(error)) from error
 
     def validate_description(self, value):
         return self._validate_rich_text(value, required=True, label='Mô tả công ty')
@@ -254,7 +246,6 @@ class CompanySearchSerializer(serializers.ModelSerializer):
             'company_size',
             'logo_url',
             'industries_detail',
-            'verification_status',
         ]
 
     def get_logo_url(self, obj):

@@ -85,7 +85,7 @@ describe('JobModeration', () => {
         public_id: 'job_pending',
         title: 'Backend Engineer',
         company_name: 'Acme',
-        company_verification_status: 'verified',
+        employer_verification_completed: true,
         employer_name: 'Nguyễn An',
         employer_email: 'an@example.com',
         status: 'pending',

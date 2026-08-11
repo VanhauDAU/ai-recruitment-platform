@@ -121,7 +121,7 @@ export default function DashboardLayout() {
   )
   const needsCompaniesSummary = hasBadgeKey(
     navigation,
-    ['company_pending', 'company_updates'],
+    ['company_updates'],
   )
   const usersSummary = useQuery({
     queryKey: adminAccountKeys.summary(usersSummaryParams),
@@ -150,7 +150,6 @@ export default function DashboardLayout() {
   const navigationWithBadges = useMemo(() => attachBadgeCounts(navigation, {
     admin_invitations: usersSummary.data?.queues?.pending_admin_invitations,
     recruiter_verification: recruitersSummary.data?.pending,
-    company_pending: companiesSummary.data?.verification?.pending,
     company_updates: companiesSummary.data?.pending_update_requests,
   }), [companiesSummary.data, navigation, recruitersSummary.data, usersSummary.data])
   const hasNoDepartment = (

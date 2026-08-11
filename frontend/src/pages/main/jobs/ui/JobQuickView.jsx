@@ -111,7 +111,7 @@ export default function JobQuickView({ job, onClose, isAuthenticated = true, onR
           <h2 className="text-lg font-bold leading-snug text-gray-900">
             {job.title}
             {job.company_verified && (
-              <Tooltip title="Tin đã xác thực — công ty được kiểm chứng">
+              <Tooltip title="Nhà tuyển dụng đã xác thực">
                 <CheckCircleFilled className="ml-1.5 translate-y-[-1px] align-middle text-sm !text-emerald-500" />
               </Tooltip>
             )}

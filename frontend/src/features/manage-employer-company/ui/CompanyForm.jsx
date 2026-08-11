@@ -19,6 +19,9 @@ import { message } from '@/shared/lib/toast'
 import RichTextEditor from '@/shared/ui/RichTextEditor'
 import {
   buildCompanyChanges,
+  COMPANY_DESCRIPTION_MIN_LENGTH,
+  companyDescriptionValidationError,
+  companyTaxCodeValidationError,
   companyToForm,
   DEFAULT_COMPANY_FORM,
   hasCompanyFormValueChanges,
@@ -351,6 +354,20 @@ export default function CompanyForm({ catalogs, industries, disabled, company = 
     return Promise.resolve()
   }
 
+  function validateTaxCode(_, value) {
+    const keepsLegacyTaxCode = isEdit && value === initialValues.tax_code
+    if (keepsLegacyTaxCode) return Promise.resolve()
+    const error = companyTaxCodeValidationError(value)
+    return error ? Promise.reject(new Error(error)) : Promise.resolve()
+  }
+
+  function validateDescription(_, value) {
+    const keepsLegacyDescription = isEdit && value === initialValues.description
+    if (keepsLegacyDescription) return Promise.resolve()
+    const error = companyDescriptionValidationError(value)
+    return error ? Promise.reject(new Error(error)) : Promise.resolve()
+  }
+
   function submitCompanyForm(values) {
     if (disabled || saveMutation.isPending) return
     if (isEdit && !hasEditDraftChanges(values)) {
@@ -513,7 +530,7 @@ export default function CompanyForm({ catalogs, industries, disabled, company = 
           title={businessType === 'household' ? 'Nhập thông tin đúng với đăng ký thuế của người đại diện hộ kinh doanh.' : 'Nhập đúng tên và mã số thuế trên Giấy chứng nhận đăng ký doanh nghiệp.'}
         />
         <Row gutter={[16, 0]}>
-          <Col xs={24} md={12}><Form.Item name="tax_code" label={<RequiredLabel>{businessType === 'household' ? 'Mã số thuế người đại diện' : 'Mã số thuế'}</RequiredLabel>} rules={[{ required: true, message: 'Nhập mã số thuế.' }, { pattern: /^\d{10}(-\d{3})?$/, message: 'Nhập 10 chữ số hoặc dạng 10 chữ số-3 chữ số.' }]}><Input size="large" placeholder="0101234567" /></Form.Item></Col>
+          <Col xs={24} md={12}><Form.Item name="tax_code" label={<RequiredLabel>{businessType === 'household' ? 'Mã số thuế người đại diện' : 'Mã số thuế'}</RequiredLabel>} rules={[{ validator: validateTaxCode }]}><Input size="large" inputMode="numeric" maxLength={13} placeholder="0101234567" /></Form.Item></Col>
           <Col xs={24} md={12}><Form.Item name="company_name" label={<RequiredLabel>{businessType === 'household' ? 'Tên hộ kinh doanh' : 'Tên công ty'}</RequiredLabel>} rules={[{ required: true, whitespace: true, message: `Nhập tên ${entityLabel}.` }]}><Input size="large" onChange={(event) => sameTradeName && form.setFieldValue('trade_name', event.target.value)} /></Form.Item></Col>
           <Col span={24}><Form.Item name="trade_name_same_as_registered" valuePropName="checked"><Checkbox onChange={changeSameTradeName}>Tên thương mại trùng với tên đăng ký kinh doanh</Checkbox></Form.Item></Col>
           <Col xs={24} md={12}><Form.Item name="trade_name" label={tradeNameRequired ? <RequiredLabel>Tên thương mại</RequiredLabel> : 'Tên thương mại'} rules={[{ required: tradeNameRequired, whitespace: true, message: 'Nhập tên thương mại.' }]}><Input size="large" disabled={sameTradeName} onChange={() => setTradeNameTouched(true)} /></Form.Item></Col>
@@ -556,7 +573,7 @@ export default function CompanyForm({ catalogs, industries, disabled, company = 
 
       <section className="company-form-section">
         <h2 className="company-form-section__title">Giới thiệu và phúc lợi</h2>
-        <Form.Item name="description" label={<RequiredLabel>Mô tả công ty</RequiredLabel>} extra="Nên có ít nhất 500 ký tự để ứng viên hiểu rõ về công ty." rules={[{ required: true, message: 'Nhập mô tả công ty.' }]}><EditorField disabled={disabled || saveMutation.isPending} maxLength={10000} placeholder="Giới thiệu lĩnh vực, sản phẩm, văn hóa và môi trường làm việc…" /></Form.Item>
+        <Form.Item name="description" label={<RequiredLabel>Mô tả công ty</RequiredLabel>} extra={`Ít nhất ${COMPANY_DESCRIPTION_MIN_LENGTH} ký tự để ứng viên hiểu rõ về công ty.`} rules={[{ validator: validateDescription }]}><EditorField disabled={disabled || saveMutation.isPending} maxLength={10000} placeholder="Giới thiệu lĩnh vực, sản phẩm, văn hóa và môi trường làm việc…" /></Form.Item>
         <Form.Item name="employee_benefits" label="Phúc lợi nhân viên"><EditorField disabled={disabled || saveMutation.isPending} maxLength={10000} placeholder="Mô tả chính sách đãi ngộ và phúc lợi…" /></Form.Item>
       </section>
 

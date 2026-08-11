@@ -14,7 +14,7 @@ from common.media_storage import delete_local_media_url, save_image_upload, vali
 from common.public_id import generate_public_id
 from common.r2_storage import private_media_storage
 
-from ...models import Company, CompanyImage, CompanyMediaUpload, CompanyUpdateRequest
+from ...models import CompanyImage, CompanyMediaUpload, CompanyUpdateRequest
 from ...services import (
     REQUESTER_EDITABLE_COMPANY_UPDATE_STATUSES,
     EmployerUploadStructureError,
@@ -32,11 +32,7 @@ EMPLOYER_MEDIA_CLAIM_SCOPE = 'employer_company_media'
 
 def _approval_is_required(company):
     """Initial onboarding may upload media directly; later edits need a request."""
-    return (
-        company.verification_status != Company.VerificationStatus.UNVERIFIED
-        or company.recruiter_verification_cases.exists()
-        or company.update_requests.exists()
-    )
+    return company.recruiter_verification_cases.exists() or company.update_requests.exists()
 
 
 def _get_update_request(request, company):

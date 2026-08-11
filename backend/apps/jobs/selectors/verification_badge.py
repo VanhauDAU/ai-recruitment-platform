@@ -6,7 +6,6 @@ from ..models.badge_queries import (
     badge_criteria_payload,
     badge_verified_map,
     job_badge_criteria,
-    minimum_account_age_months,
     prime_badge_cache,
 )
 
@@ -16,6 +15,5 @@ __all__ = [
     'badge_criteria_payload',
     'badge_verified_map',
     'job_badge_criteria',
-    'minimum_account_age_months',
     'prime_badge_cache',
 ]

@@ -305,7 +305,7 @@ class Job(models.Model):
         help_text='Nội dung email gửi ứng viên ba ngày sau khi hồ sơ bị tự động từ chối.',
     )
     # Hạng tin + nhãn dịch vụ (admin gán). Nhãn "xác thực" không lưu ở đây vì
-    # suy ra từ company.verified_at; nhãn "Mới"/"Sắp hết hạn" tính từ ngày.
+    # được tính từ các tiêu chí của recruiter đăng tin; nhãn thời gian tính từ ngày.
     tier = models.CharField(max_length=20, choices=Tier.choices, default=Tier.STANDARD)
     is_hot = models.BooleanField(default=False, help_text='Nhãn HOT (đỏ) trên card')
     is_urgent = models.BooleanField(default=False, help_text='Nhãn GẤP / tuyển gấp (cam) trên card')

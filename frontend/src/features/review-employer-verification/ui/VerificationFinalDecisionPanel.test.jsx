@@ -26,7 +26,6 @@ const approvedImpact = {
   impact_token: 'decision-token',
   tax_advisory: { status: 'matched' },
   tax_override: false,
-  company_impact: { will_mark_verified: true, will_downgrade: false },
   capability_impact: {
     candidate_data_access: 'eligible_after_recompute',
     job_approval: 'eligible_after_recompute',
@@ -42,7 +41,6 @@ const approvedImpact = {
 
 const lifecycleImpact = {
   impact_token: 'lifecycle-token',
-  company_impact: { will_downgrade: false },
   capability_impact: {
     candidate_data_access: 'blocked',
     job_approval: 'blocked',
@@ -122,7 +120,7 @@ describe('VerificationFinalDecisionPanel', () => {
       tax_override: false,
       tax_override_reason: '',
     })
-    expect(await within(dialog).findByText('Công ty sẽ được đánh dấu đã xác thực khi xác nhận.'))
+    expect(await within(dialog).findByText(/chỉ áp dụng cho nhà tuyển dụng/))
       .toBeInTheDocument()
 
     await user.click(within(dialog).getByRole('button', { name: 'Xác nhận duyệt hồ sơ' }))
@@ -175,7 +173,7 @@ describe('VerificationFinalDecisionPanel', () => {
     )
   })
 
-  it('shows lifecycle impact and keeps company status independent', async () => {
+  it('shows lifecycle impact for the recruiter and affected resources', async () => {
     const user = userEvent.setup()
     api.getAdminEmployerLifecycleImpact.mockResolvedValue(lifecycleImpact)
     api.changeAdminEmployerVerificationLifecycle.mockResolvedValue({ status: 'revoked' })
@@ -191,7 +189,7 @@ describe('VerificationFinalDecisionPanel', () => {
       'revoked',
       { reason: 'Giấy ủy quyền không còn hiệu lực' },
     )
-    expect(await within(dialog).findByText('Trạng thái pháp lý của công ty không bị hạ.'))
+    expect(await within(dialog).findByText(/hồ sơ Công ty không thay đổi/))
       .toBeInTheDocument()
     expect(within(dialog).getByText(/3 tin active sẽ bị ẩn/)).toBeInTheDocument()
 

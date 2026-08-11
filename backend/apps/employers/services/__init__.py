@@ -8,25 +8,24 @@ from .campaigns import (
 )
 from .companies import (
     ACTIVE_COMPANY_UPDATE_STATUSES,
+    COMPANY_DESCRIPTION_MIN_LENGTH,
     PRE_REVIEW_COMPANY_UPDATE_STATUSES,
     REQUESTER_EDITABLE_COMPANY_UPDATE_STATUSES,
     SENSITIVE_FIELDS,
     UPDATABLE_COMPANY_FIELDS,
-    CompanyTaxCodeConflict,
     CompanyUpdateConflict,
     apply_update_request,
     capture_company_update_base_values,
     close_company_update_before_review,
     company_update_conflicting_fields,
     current_company_update_revision,
-    ensure_company_tax_code_can_be_verified,
-    mark_company_verified,
+    normalize_company_rich_text,
+    normalize_company_tax_code,
     review_company_update_document,
     set_company_industries,
     snapshot_company_update_request,
     start_company_update_review,
     validate_company_update_revision,
-    verify_company,
 )
 from .company_recovery import (
     COMPANY_UNLINK_PERMISSION,
@@ -110,8 +109,8 @@ from .verification import (
 )
 
 __all__ = [
-    'CompanyTaxCodeConflict',
     'COMPANY_UNLINK_PERMISSION',
+    'COMPANY_DESCRIPTION_MIN_LENGTH',
     'CompanyUnlinkError',
     'company_unlink_impact',
     'confirm_company_unlink',
@@ -175,8 +174,8 @@ __all__ = [
     'refresh_company_update_tax_lookup',
     'refresh_verification_tax_lookup',
     'record_verification_upload',
-    'ensure_company_tax_code_can_be_verified',
-    'mark_company_verified',
+    'normalize_company_rich_text',
+    'normalize_company_tax_code',
     'normalize_vietnamese_mobile',
     'phone_challenge_snapshot',
     'review_company_update_document',
@@ -197,7 +196,6 @@ __all__ = [
     'unlock_verification_resubmission',
     'set_company_industries',
     'update_campaign',
-    'verify_company',
     'verify_sms_phone_challenge',
     'validate_employer_upload_structure',
 ]

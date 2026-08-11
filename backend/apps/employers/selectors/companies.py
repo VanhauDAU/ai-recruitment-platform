@@ -9,7 +9,9 @@ from ..models import Company
 
 def search_companies(text):
     text = (text or '').strip()
-    # Bản ghi placeholder của luồng đăng ký cũ không phải công ty catalogue.
+    # Không lọc theo trạng thái xác thực: mọi hồ sơ công ty hợp lệ đều có thể
+    # được tìm và chọn. Chỉ bỏ placeholder rỗng của luồng đăng ký legacy vì đó
+    # không phải một bản ghi catalogue có thể liên kết.
     queryset = Company.objects.exclude(
         Q(tax_code__isnull=True)
         & Q(has_no_logo=True)

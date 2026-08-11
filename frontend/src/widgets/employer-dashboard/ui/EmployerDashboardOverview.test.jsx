@@ -65,7 +65,6 @@ describe('EmployerDashboardOverview', () => {
       account: {
         recruiter_public_id: 'rec_1',
         company_name: 'Công ty Acme',
-        company_verification_status: 'unverified',
         company_size: '25-99',
         work_location_name: 'Hà Nội',
         verification: {
@@ -75,6 +74,7 @@ describe('EmployerDashboardOverview', () => {
           business_doc_submitted: false,
           candidate_dpa_submitted: false,
           dpa_accepted: false,
+          representative_verified: false,
           first_job_posted: true,
         },
       },
@@ -122,6 +122,58 @@ describe('EmployerDashboardOverview', () => {
     expect(screen.getByLabelText('Đăng tin tuyển dụng đầu tiên')).toHaveAttribute('href', '/tuyendung/app/jobs/new')
     expect(screen.getAllByRole('link', { name: /Đăng tin mới/ })[0]).toHaveAttribute('href', '/tuyendung/app/jobs/new')
     expect(screen.getByRole('link', { name: /Quản lý hồ sơ/ })).toHaveAttribute('href', '/tuyendung/app/applications')
+  })
+
+  it('opens the recruiter-verification surface from an approved recruiter status', async () => {
+    useSession.mockReturnValue({ user: { full_name: 'Nguyễn An' } })
+    getEmployerDashboard.mockResolvedValue({
+      account: {
+        recruiter_public_id: 'rec_verified',
+        company_name: 'Công ty Acme',
+        recruiter_verification_status: 'approved',
+        verification: { representative_verified: true },
+      },
+      summary: {},
+      application_activity: [],
+      recent_jobs: [],
+      recent_applications: [],
+    })
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+
+    render(
+      <QueryClientProvider client={client}>
+        <MemoryRouter><EmployerDashboardOverview /></MemoryRouter>
+      </QueryClientProvider>,
+    )
+
+    expect(await screen.findByRole('link', { name: /Nhà tuyển dụng đã xác thực/ }))
+      .toHaveAttribute('href', '/tuyendung/app/employer-verify')
+  })
+
+  it('shows a visible warning after recruiter verification is revoked', async () => {
+    useSession.mockReturnValue({ user: { full_name: 'Nguyễn An' } })
+    getEmployerDashboard.mockResolvedValue({
+      account: {
+        recruiter_public_id: 'rec_revoked',
+        company_name: 'Công ty Acme',
+        recruiter_verification_status: 'revoked',
+        verification: { representative_verified: true },
+      },
+      summary: {},
+      application_activity: [],
+      recent_jobs: [],
+      recent_applications: [],
+    })
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+
+    render(
+      <QueryClientProvider client={client}>
+        <MemoryRouter><EmployerDashboardOverview /></MemoryRouter>
+      </QueryClientProvider>,
+    )
+
+    expect(await screen.findByText('Xác thực nhà tuyển dụng đã bị thu hồi')).toBeVisible()
+    expect(screen.getByText(/không có nghĩa xác thực tài khoản còn hiệu lực/)).toBeVisible()
   })
 
   it('keeps aggregates but never mounts cached recent candidate PII when access is denied', async () => {
