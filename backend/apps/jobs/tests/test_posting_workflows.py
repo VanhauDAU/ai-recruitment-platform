@@ -324,7 +324,7 @@ class JobPostingWorkflowTests(TestCase):
         self.assertEqual(job.status, Job.Status.ACTIVE)
 
     def test_visibility_extension_uses_immutable_cycle_anchor(self):
-        job = self.make_active_job(deadline=timezone.localdate() + timedelta(days=45))
+        job = self.make_active_job(deadline=timezone.localdate() + timedelta(days=35))
         anchor = timezone.now() - timedelta(days=10)
         job.first_approved_at = anchor
         job.visibility_starts_at = anchor
@@ -350,6 +350,55 @@ class JobPostingWorkflowTests(TestCase):
         self.assertEqual(extended.visibility_starts_at, anchor)
         self.assertEqual(extended.visibility_ends_at, anchor + timedelta(days=45))
         self.assertEqual(extended.requested_visibility_days, 45)
+
+    def test_deadline_extension_cannot_exceed_internal_visibility(self):
+        today = timezone.localdate()
+        job = self.make_active_job(deadline=today + timedelta(days=5))
+        anchor = timezone.now()
+        job.first_approved_at = anchor
+        job.visibility_starts_at = anchor
+        job.visibility_ends_at = anchor + timedelta(days=10)
+        job.save(
+            update_fields=[
+                'first_approved_at',
+                'visibility_starts_at',
+                'visibility_ends_at',
+            ]
+        )
+
+        with self.assertRaises(ValidationError) as context:
+            extend_job_deadline(job, self.user, today + timedelta(days=11))
+
+        self.assertIn('deadline', context.exception.detail)
+        job.refresh_from_db()
+        self.assertEqual(job.deadline, today + timedelta(days=5))
+
+    def test_deadline_and_visibility_can_be_extended_atomically(self):
+        today = timezone.localdate()
+        job = self.make_active_job(deadline=today + timedelta(days=5))
+        anchor = timezone.now()
+        job.first_approved_at = anchor
+        job.visibility_starts_at = anchor
+        job.visibility_ends_at = anchor + timedelta(days=10)
+        job.requested_visibility_days = 10
+        job.save(
+            update_fields=[
+                'first_approved_at',
+                'visibility_starts_at',
+                'visibility_ends_at',
+                'requested_visibility_days',
+            ]
+        )
+
+        extended = extend_job_deadline(
+            job,
+            self.user,
+            today + timedelta(days=14),
+            requested_visibility_days=14,
+        )
+
+        self.assertEqual(extended.deadline, today + timedelta(days=14))
+        self.assertEqual(extended.visibility_ends_at, anchor + timedelta(days=14))
 
     def test_serializer_accepts_application_deadline_and_ignores_internal_visibility(self):
         deadline = timezone.localdate() + timedelta(days=20)

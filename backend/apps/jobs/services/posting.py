@@ -656,6 +656,24 @@ def extend_job_deadline(job, user, deadline, *, requested_visibility_days=None):
                     )
                 }
             )
+
+    effective_visibility_end = job.visibility_ends_at
+    if requested_visibility_days is not None and job.visibility_starts_at is not None:
+        effective_visibility_end = job.visibility_starts_at + timedelta(
+            days=requested_visibility_days
+        )
+    if (
+        effective_visibility_end is not None
+        and deadline > lifecycle_local_date(effective_visibility_end)
+    ):
+        raise ValidationError(
+            {
+                'deadline': (
+                    'Hạn nhận hồ sơ vượt thời gian công khai của tin. '
+                    'Vui lòng dùng quyền gia hạn tin trước.'
+                )
+            }
+        )
     if job.campaign_id:
         if job.campaign.status != job.campaign.Status.ACTIVE:
             raise ValidationError({'deadline': 'Chỉ có thể gia hạn trong chiến dịch đang chạy.'})
