@@ -1,7 +1,9 @@
 from datetime import timedelta
 from unittest.mock import ANY, patch
 
+from django.db import connection
 from django.test import override_settings
+from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework.test import APITestCase
@@ -535,6 +537,164 @@ class JobSalaryBucketFilterTests(APITestCase):
         saved = self.client.get(reverse('saved-job-list-create'))
         self.assertEqual(saved.status_code, 200)
         self.assertEqual(saved.data[0]['job_detail']['presentation'], item['presentation'])
+
+
+@override_settings(
+    JOB_PRESENTATION_V2_ENABLED=True,
+    SPONSORED_JOB_DISTRIBUTION_ENABLED=True,
+)
+class SponsoredJobDistributionApiTests(APITestCase):
+    def setUp(self):
+        self.now = timezone.now()
+        self.category = ServiceCategory.objects.create(
+            key='sponsored-distribution', name_vi='Sponsored distribution'
+        )
+        package = ServicePackage.objects.create(
+            category=self.category,
+            slug='sponsored-distribution',
+            name_vi='Sponsored distribution',
+        )
+        version = create_package_version(package=package, price=299000)
+        add_package_version_item(
+            package_version=version,
+            capability=ServiceCapability.objects.get(code='sponsored_placement'),
+            duration_days=14,
+            configuration={'placement': 'search_sponsored'},
+        )
+        self.version = publish_package_version(package_version=version)
+        self.sponsored_titles = []
+        for index in range(3):
+            employer = User.objects.create_user(
+                email=f'sponsored-distribution-{index}@example.com',
+                password='Password@123',
+                role=User.Role.EMPLOYER,
+            )
+            company = Company.objects.create(
+                company_name=f'Sponsored Company {index}', created_by=employer
+            )
+            make_employer_ready(employer, company=company, candidate_data=True)
+            job = self.create_public_job(
+                employer=employer,
+                company=company,
+                title=f'Sponsored Job {index}',
+                salary=30_000_000 - index,
+            )
+            unit = grant_package_units(
+                company=company,
+                package_version=self.version,
+                quantity=1,
+                actor=employer,
+                grant_key=f'sponsored-distribution-{index}',
+                granted_at=self.now,
+            )[0]
+            activate_job_service(
+                unit=unit,
+                job=job,
+                actor=employer,
+                idempotency_key=f'sponsored-distribution-{index}',
+                activated_at=self.now,
+            )
+            self.sponsored_titles.append(job.title)
+
+        organic_employer = User.objects.create_user(
+            email='organic-distribution@example.com',
+            password='Password@123',
+            role=User.Role.EMPLOYER,
+        )
+        organic_company = Company.objects.create(
+            company_name='Organic Company', created_by=organic_employer
+        )
+        make_employer_ready(organic_employer, company=organic_company, candidate_data=True)
+        for index in range(12):
+            self.create_public_job(
+                employer=organic_employer,
+                company=organic_company,
+                title=f'Organic Job {index}',
+                salary=10_000_000 + index,
+            )
+
+    def create_public_job(self, *, employer, company, title, salary):
+        return Job.objects.create(
+            posted_by=employer,
+            company=company,
+            title=title,
+            description='Description',
+            salary_min=salary,
+            salary_max=salary,
+            salary_type=Job.SalaryType.FIXED,
+            status=Job.Status.ACTIVE,
+            deadline=timezone.localdate() + timedelta(days=30),
+            requested_visibility_days=30,
+            first_approved_at=self.now,
+            visibility_starts_at=self.now,
+            visibility_ends_at=self.now + timedelta(days=30),
+            published_at=self.now,
+        )
+
+    def test_default_distribution_caps_sponsored_ratio_and_keeps_pagination_stable(self):
+        first = self.client.get(reverse('job-list'), {'page_size': 10, 'page': 1})
+        second = self.client.get(reverse('job-list'), {'page_size': 10, 'page': 2})
+
+        self.assertEqual(first.status_code, 200, first.data)
+        self.assertEqual(first.data['count'], 15)
+        first_sponsored = [
+            item for item in first.data['results'] if item['presentation']['sponsored']
+        ]
+        self.assertLessEqual(len(first_sponsored), 2)
+        self.assertEqual(len({item['company_name'] for item in first_sponsored}), 2)
+        first_ids = {item['public_id'] for item in first.data['results']}
+        second_ids = {item['public_id'] for item in second.data['results']}
+        self.assertFalse(first_ids & second_ids)
+        self.assertEqual(len(first_ids | second_ids), 15)
+
+    def test_explicit_salary_sort_is_not_interleaved(self):
+        response = self.client.get(
+            reverse('job-list'),
+            {'page_size': 10, 'ordering': 'salary_desc'},
+        )
+
+        salaries = [item['salary_max'] for item in response.data['results']]
+        self.assertEqual(salaries, sorted(salaries, reverse=True))
+
+    def test_search_relevance_filters_before_sponsored_distribution(self):
+        response = self.client.get(
+            reverse('job-list'),
+            {'page_size': 10, 'search': 'Organic'},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.data['results'])
+        self.assertTrue(
+            all(item['title'].startswith('Organic Job') for item in response.data['results'])
+        )
+
+    @override_settings(JOB_PRESENTATION_V2_ENABLED=False)
+    def test_distribution_flag_cannot_run_ahead_of_presentation_flag(self):
+        response = self.client.get(reverse('job-list'), {'page_size': 10})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(
+            any(item['presentation']['sponsored'] for item in response.data['results'])
+        )
+
+    def test_distribution_query_count_is_flat_as_eligible_jobs_grow(self):
+        with CaptureQueriesContext(connection) as baseline_queries:
+            baseline = self.client.get(reverse('job-list'), {'page_size': 10})
+        self.assertEqual(baseline.status_code, 200)
+
+        employer = User.objects.get(email='organic-distribution@example.com')
+        for index in range(20):
+            self.create_public_job(
+                employer=employer,
+                company=employer.recruiter_profile.company,
+                title=f'Expanded Organic Job {index}',
+                salary=9_000_000 + index,
+            )
+        with CaptureQueriesContext(connection) as expanded_queries:
+            expanded = self.client.get(reverse('job-list'), {'page_size': 10})
+
+        self.assertEqual(expanded.status_code, 200)
+        self.assertEqual(len(expanded_queries), len(baseline_queries))
 
 
 class EmployerJobSerializerTests(APITestCase):

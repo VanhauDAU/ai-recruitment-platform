@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import OpenApiTypes, extend_schema, inline_serializer
@@ -13,6 +14,7 @@ from apps.privacy.services import load_consent
 from common.metrics import record_metric
 
 from ...models import Job, SavedJob
+from ...selectors.distribution import distribute_sponsored_job_page
 from ...selectors.listing import (
     active_job_detail_queryset,
     active_job_tracking_queryset,
@@ -58,6 +60,45 @@ class JobListView(generics.ListAPIView):
         return build_job_list_queryset(
             self.request.query_params,
             include_preview=self.request.query_params.get('view') == 'preview',
+        )
+
+    def list(self, request, *args, **kwargs):
+        explicit_ordering = bool(request.query_params.get('ordering'))
+        if (
+            not getattr(settings, 'SPONSORED_JOB_DISTRIBUTION_ENABLED', False)
+            or not getattr(settings, 'JOB_PRESENTATION_V2_ENABLED', False)
+            or explicit_ordering
+        ):
+            return super().list(request, *args, **kwargs)
+
+        queryset = self.filter_queryset(self.get_queryset())
+        paginator = self.paginator
+        page_size = paginator.get_page_size(request) if paginator else 20
+        try:
+            page_number = int(request.query_params.get('page', 1))
+        except (TypeError, ValueError):
+            page_number = 1
+        distributed = distribute_sponsored_job_page(
+            queryset,
+            page=page_number,
+            page_size=page_size,
+        )
+        serializer = self.get_serializer(distributed.items, many=True)
+        query = request.query_params.copy()
+
+        def page_url(number):
+            if number < 1 or number > distributed.total_pages:
+                return None
+            query['page'] = number
+            return request.build_absolute_uri(f'{request.path}?{query.urlencode()}')
+
+        return Response(
+            {
+                'count': distributed.total,
+                'next': page_url(distributed.page + 1),
+                'previous': page_url(distributed.page - 1),
+                'results': serializer.data,
+            }
         )
 
 
