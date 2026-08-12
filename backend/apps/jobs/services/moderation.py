@@ -19,6 +19,7 @@ from apps.employers.services import recruiter_job_approval_state
 
 from ..models import Job, JobModerationEvent, JobStatusHistory
 from .content_snapshot import build_job_content_snapshot
+from .lifecycle import initialize_job_visibility
 from .posting import _record_status, job_deadline_error
 
 REVIEW_OPERATION = 'job.moderation.mutate'
@@ -222,6 +223,7 @@ def approve_job(*, job, user, review_token='', deadline=None):
         'approved_snapshot_at',
         'updated_at',
     ]
+    update_fields.extend(initialize_job_visibility(job, approved_at=now))
     if new_deadline and new_deadline != job.deadline:
         note = f'Duyệt kèm gia hạn hạn nhận hồ sơ đến {new_deadline:%d/%m/%Y}.'
         job.deadline = new_deadline

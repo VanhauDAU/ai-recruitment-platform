@@ -1,6 +1,7 @@
 from datetime import timedelta
 from unittest.mock import patch
 
+from django.test import override_settings
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework.test import APITestCase
@@ -93,6 +94,34 @@ class JobViewTrackingApiTests(APITestCase):
         self.assertEqual(response.status_code, 200)
         self.job.refresh_from_db()
         self.assertEqual(self.job.view_count, 0)
+
+    @override_settings(JOB_LIFECYCLE_V2_MODE='enforce')
+    def test_enforced_lifecycle_hides_job_outside_visibility_window(self):
+        self.job.deadline = timezone.localdate() + timedelta(days=10)
+        self.job.visibility_starts_at = timezone.now() - timedelta(days=10)
+        self.job.visibility_ends_at = timezone.now() - timedelta(seconds=1)
+        self.job.save(
+            update_fields=['deadline', 'visibility_starts_at', 'visibility_ends_at', 'updated_at']
+        )
+
+        response = self.client.get(reverse('job-list'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['count'], 0)
+
+    @override_settings(JOB_LIFECYCLE_V2_MODE='legacy')
+    def test_legacy_lifecycle_ignores_shadow_visibility_window(self):
+        self.job.deadline = timezone.localdate() + timedelta(days=10)
+        self.job.visibility_starts_at = timezone.now() - timedelta(days=10)
+        self.job.visibility_ends_at = timezone.now() - timedelta(seconds=1)
+        self.job.save(
+            update_fields=['deadline', 'visibility_starts_at', 'visibility_ends_at', 'updated_at']
+        )
+
+        response = self.client.get(reverse('job-list'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['count'], 1)
 
     def test_paused_campaign_hides_job_from_every_public_read_and_tracking_surface(self):
         campaign = RecruitmentCampaign.objects.create(
@@ -416,6 +445,12 @@ class EmployerJobSerializerTests(APITestCase):
                 'locations_detail',
                 'employment_type',
                 'deadline',
+                'application_deadline',
+                'requested_visibility_days',
+                'first_approved_at',
+                'visibility_starts_at',
+                'visibility_ends_at',
+                'is_visibility_expired',
                 'status',
                 'is_expired',
                 'campaign',
@@ -444,6 +479,26 @@ class EmployerJobSerializerTests(APITestCase):
         )
         self.assertEqual(item['candidate_count'], 0)
         self.assertEqual(item['candidate_previews'], [])
+
+    def test_posting_context_exposes_safe_lifecycle_rollout_contract(self):
+        self.client.force_authenticate(self.user)
+
+        response = self.client.get(reverse('employer-job-posting-context'))
+
+        self.assertEqual(response.status_code, 200, response.data)
+        self.assertEqual(
+            response.data['lifecycle_policy'],
+            {
+                'mode': 'legacy',
+                'default_visibility_days': 30,
+                'max_visibility_days': 90,
+                'timezone': 'Asia/Ho_Chi_Minh',
+            },
+        )
+        self.assertEqual(
+            response.data['services'],
+            {'catalog_v2_enabled': False, 'activation_enabled': False},
+        )
 
     def test_new_or_dpa_held_employer_cannot_read_job_workspace_directly(self):
         legacy_user = User.objects.create_user(

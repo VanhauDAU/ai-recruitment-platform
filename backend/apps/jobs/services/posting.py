@@ -31,6 +31,7 @@ from ..models import (
     JobWorkSchedule,
 )
 from .ai_generation import apply_job_ai_generation_to_draft
+from .lifecycle import job_lifecycle_policy, visibility_days_error
 
 FREE_JOB_QUOTA = 3
 VERIFIED_LEVEL_THREE_JOB_QUOTA = 100
@@ -341,6 +342,8 @@ def _validate_publishable(job):
         errors['category_assignments'] = 'Chọn một vị trí chuyên môn chính.'
     if deadline_error := job_deadline_error(job.deadline, today=today):
         errors['deadline'] = deadline_error
+    if visibility_error := visibility_days_error(job.requested_visibility_days):
+        errors['requested_visibility_days'] = visibility_error
     contact = getattr(job, 'application_contact', None)
     if contact is None:
         errors['application_contact'] = 'Nhập thông tin người nhận hồ sơ.'
@@ -383,6 +386,11 @@ def employer_job_posting_context(user):
         )
     return {
         **job_deadline_policy(),
+        'lifecycle_policy': job_lifecycle_policy(),
+        'services': {
+            'catalog_v2_enabled': bool(getattr(settings, 'SERVICE_CATALOG_V2_ENABLED', False)),
+            'activation_enabled': bool(getattr(settings, 'SERVICE_ACTIVATION_ENABLED', False)),
+        },
         'verification_completed': entitlement['verification_completed'],
         'admin_approved': entitlement['admin_approved'],
         'account_level': entitlement['account_level'],

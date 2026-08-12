@@ -23,7 +23,7 @@ from ...selectors.verification_badge import (
     badge_criteria_payload,
     prime_badge_cache,
 )
-from ...services import job_deadline_error
+from ...services import job_deadline_error, visibility_days_error
 from .supporting import (
     JobApplicationContactSerializer,
     JobApplicationEmailSerializer,
@@ -87,6 +87,7 @@ class JobSerializer(serializers.ModelSerializer):
     locations_detail = serializers.SerializerMethodField()
     short_description = serializers.SerializerMethodField()
     is_salary_visible = serializers.SerializerMethodField()
+    application_deadline = serializers.SerializerMethodField()
 
     NESTED_RELATIONS = {
         'job_skills': (JobSkill, 'job_skills'),
@@ -133,6 +134,11 @@ class JobSerializer(serializers.ModelSerializer):
             'currency',
             'is_salary_visible',
             'deadline',
+            'application_deadline',
+            'requested_visibility_days',
+            'first_approved_at',
+            'visibility_starts_at',
+            'visibility_ends_at',
             'status',
             'view_count',
             'tier',
@@ -170,6 +176,9 @@ class JobSerializer(serializers.ModelSerializer):
             'view_count',
             'application_count',
             'published_at',
+            'first_approved_at',
+            'visibility_starts_at',
+            'visibility_ends_at',
             'created_at',
             'updated_at',
         ]
@@ -362,6 +371,9 @@ class JobSerializer(serializers.ModelSerializer):
     def get_is_salary_visible(self, obj):
         return obj.salary_type != Job.SalaryType.NEGOTIABLE
 
+    def get_application_deadline(self, obj):
+        return obj.deadline
+
 
 class PublicJobListSerializer(JobSerializer):
     """Compact contract for public search, related jobs, and saved-job cards."""
@@ -422,6 +434,8 @@ class PublicJobPreviewSerializer(PublicJobListSerializer):
             'job_benefits',
             'number_of_vacancies',
             'deadline',
+            'application_deadline',
+            'visibility_ends_at',
         ]
 
 
@@ -485,6 +499,8 @@ class JobDetailSerializer(JobSerializer):
             'income_display_type',
             'currency',
             'deadline',
+            'application_deadline',
+            'visibility_ends_at',
             'view_count',
             'is_hot',
             'is_urgent',
@@ -629,6 +645,11 @@ class EmployerJobWriteSerializer(JobSerializer):
         required=False,
         max_length=50,
     )
+    application_deadline = serializers.DateField(
+        source='deadline',
+        required=False,
+        allow_null=True,
+    )
 
     class Meta(JobSerializer.Meta):
         fields = JobSerializer.Meta.fields + [
@@ -651,6 +672,16 @@ class EmployerJobWriteSerializer(JobSerializer):
         ]
 
     def validate(self, attrs):
+        legacy_deadline = self.initial_data.get('deadline')
+        application_deadline = self.initial_data.get('application_deadline')
+        if (
+            legacy_deadline is not None
+            and application_deadline is not None
+            and legacy_deadline != application_deadline
+        ):
+            raise serializers.ValidationError(
+                {'application_deadline': 'Hạn nhận hồ sơ không khớp trường deadline cũ.'}
+            )
         attrs = super().validate(attrs)
         if self.instance is not None and attrs.get('ai_generation_public_id'):
             raise serializers.ValidationError(
@@ -678,6 +709,14 @@ class EmployerJobWriteSerializer(JobSerializer):
         if deadline_error := job_deadline_error(deadline, required=False):
             raise serializers.ValidationError(deadline_error)
         return deadline
+
+    def validate_application_deadline(self, deadline):
+        return self.validate_deadline(deadline)
+
+    def validate_requested_visibility_days(self, value):
+        if error := visibility_days_error(value):
+            raise serializers.ValidationError(error)
+        return value
 
     def validate_campaign(self, campaign):
         if campaign is None:
@@ -770,6 +809,12 @@ class EmployerJobListSerializer(PublicJobListSerializer):
             'locations_detail',
             'employment_type',
             'deadline',
+            'application_deadline',
+            'requested_visibility_days',
+            'first_approved_at',
+            'visibility_starts_at',
+            'visibility_ends_at',
+            'is_visibility_expired',
             'status',
             'is_expired',
             'campaign',
@@ -812,10 +857,24 @@ class EmployerPostingBlockerSerializer(serializers.Serializer):
     action = serializers.CharField()
 
 
+class EmployerJobLifecyclePolicySerializer(serializers.Serializer):
+    mode = serializers.ChoiceField(choices=('legacy', 'shadow', 'enforce'))
+    default_visibility_days = serializers.IntegerField(min_value=1)
+    max_visibility_days = serializers.IntegerField(min_value=1)
+    timezone = serializers.CharField()
+
+
+class EmployerJobServicesContextSerializer(serializers.Serializer):
+    catalog_v2_enabled = serializers.BooleanField()
+    activation_enabled = serializers.BooleanField()
+
+
 class EmployerJobPostingContextSerializer(serializers.Serializer):
     default_deadline_days = serializers.IntegerField(min_value=1)
     max_deadline_days = serializers.IntegerField(min_value=1)
     max_public_lifetime_days = serializers.IntegerField(min_value=1)
+    lifecycle_policy = EmployerJobLifecyclePolicySerializer()
+    services = EmployerJobServicesContextSerializer()
     verification_completed = serializers.BooleanField()
     admin_approved = serializers.BooleanField()
     account_level = serializers.IntegerField(min_value=0)

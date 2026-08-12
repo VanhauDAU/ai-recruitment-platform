@@ -291,6 +291,17 @@ class Job(models.Model):
     )
     currency = models.CharField(max_length=20, choices=Currency.choices, default=Currency.VND)
     deadline = models.DateField(null=True, blank=True)
+    requested_visibility_days = models.PositiveSmallIntegerField(
+        default=30,
+        help_text='Số ngày công khai NTD yêu cầu cho public cycle hiện tại.',
+    )
+    first_approved_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text='Mốc duyệt đầu tiên bất biến của public cycle hiện tại.',
+    )
+    visibility_starts_at = models.DateTimeField(null=True, blank=True)
+    visibility_ends_at = models.DateTimeField(null=True, blank=True)
     auto_reject_stale_applications = models.BooleanField(
         default=True,
         help_text='Tự chuyển hồ sơ chờ xử lý quá hạn sang trạng thái từ chối.',
@@ -366,6 +377,10 @@ class Job(models.Model):
             models.Index(fields=['education_level']),
             models.Index(fields=['status', 'published_at']),
             models.Index(
+                fields=['status', 'visibility_ends_at'],
+                name='jobs_status_visibility_end_idx',
+            ),
+            models.Index(
                 fields=['status', '-created_at', '-id'],
                 name='jobs_status_created_desc_idx',
             ),
@@ -416,6 +431,21 @@ class Job(models.Model):
                 ),
                 name='chk_jobs_salary_range',
             ),
+            models.CheckConstraint(
+                condition=models.Q(
+                    requested_visibility_days__gte=1,
+                    requested_visibility_days__lte=90,
+                ),
+                name='chk_jobs_visibility_days_range',
+            ),
+            models.CheckConstraint(
+                condition=(
+                    models.Q(visibility_starts_at__isnull=True)
+                    | models.Q(visibility_ends_at__isnull=True)
+                    | models.Q(visibility_ends_at__gt=models.F('visibility_starts_at'))
+                ),
+                name='chk_jobs_visibility_window',
+            ),
         ]
 
     def save(self, *args, **kwargs):
@@ -437,4 +467,12 @@ class Job(models.Model):
             self.status == self.Status.ACTIVE
             and self.deadline is not None
             and self.deadline < timezone.localdate()
+        )
+
+    @property
+    def is_visibility_expired(self):
+        return bool(
+            self.status == self.Status.ACTIVE
+            and self.visibility_ends_at is not None
+            and self.visibility_ends_at <= timezone.now()
         )

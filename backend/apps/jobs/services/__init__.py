@@ -40,6 +40,11 @@ from .engagement import (
     record_consented_job_view,
     set_viewer_cookie,
 )
+from .lifecycle import (
+    initialize_job_visibility,
+    job_lifecycle_policy,
+    visibility_days_error,
+)
 from .moderation import (
     JobModerationStale,
     approve_job,
@@ -86,6 +91,9 @@ __all__ = [
     'execute_job_ai_generation',
     'extend_job_deadline',
     'job_deadline_error',
+    'initialize_job_visibility',
+    'job_lifecycle_policy',
+    'visibility_days_error',
     'job_deadline_policy',
     'fail_job_ai_generation',
     'publish_job',

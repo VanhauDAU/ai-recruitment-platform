@@ -323,6 +323,45 @@ class JobPostingWorkflowTests(TestCase):
         self.assertEqual(job.deadline, today + timedelta(days=10))
         self.assertEqual(job.status, Job.Status.ACTIVE)
 
+    def test_serializer_accepts_application_deadline_alias_and_visibility_duration(self):
+        deadline = timezone.localdate() + timedelta(days=20)
+        serializer = EmployerJobWriteSerializer(
+            self.make_publishable_job(),
+            data={
+                'application_deadline': deadline.isoformat(),
+                'requested_visibility_days': 45,
+            },
+            partial=True,
+        )
+
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+        job = serializer.save()
+        self.assertEqual(job.deadline, deadline)
+        self.assertEqual(job.requested_visibility_days, 45)
+
+    def test_serializer_rejects_conflicting_deadline_aliases(self):
+        serializer = EmployerJobWriteSerializer(
+            self.make_publishable_job(),
+            data={
+                'deadline': (timezone.localdate() + timedelta(days=10)).isoformat(),
+                'application_deadline': (timezone.localdate() + timedelta(days=11)).isoformat(),
+            },
+            partial=True,
+        )
+
+        self.assertFalse(serializer.is_valid())
+        self.assertIn('application_deadline', serializer.errors)
+
+    def test_serializer_rejects_visibility_duration_over_policy(self):
+        serializer = EmployerJobWriteSerializer(
+            self.make_publishable_job(),
+            data={'requested_visibility_days': 91},
+            partial=True,
+        )
+
+        self.assertFalse(serializer.is_valid())
+        self.assertIn('requested_visibility_days', serializer.errors)
+
     def test_deadline_extension_accepts_ninety_day_boundary_and_rejects_later_date(self):
         today = timezone.localdate()
         accepted = self.make_active_job(

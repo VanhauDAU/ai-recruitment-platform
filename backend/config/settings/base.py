@@ -531,6 +531,20 @@ JOB_POSTING_MAX_PUBLIC_LIFETIME_DAYS = config(
     'JOB_POSTING_MAX_PUBLIC_LIFETIME_DAYS', default=90, cast=int
 )
 
+# Job lifecycle V2 is deployed expand-first. ``legacy`` keeps the current
+# candidate availability contract, ``shadow`` computes V2 evidence without
+# changing responses, and ``enforce`` makes the visibility timestamps canonical.
+JOB_LIFECYCLE_V2_MODE = config('JOB_LIFECYCLE_V2_MODE', default='legacy').strip().lower()
+JOB_PRESENTATION_V2_ENABLED = config('JOB_PRESENTATION_V2_ENABLED', default=False, cast=bool)
+SERVICE_CATALOG_V2_ENABLED = config('SERVICE_CATALOG_V2_ENABLED', default=False, cast=bool)
+SERVICE_ACTIVATION_ENABLED = config('SERVICE_ACTIVATION_ENABLED', default=False, cast=bool)
+SPONSORED_JOB_DISTRIBUTION_ENABLED = config(
+    'SPONSORED_JOB_DISTRIBUTION_ENABLED', default=False, cast=bool
+)
+JOB_PROMOTION_REFRESH_ENABLED = config('JOB_PROMOTION_REFRESH_ENABLED', default=False, cast=bool)
+JOB_PROMOTION_ALERT_ENABLED = config('JOB_PROMOTION_ALERT_ENABLED', default=False, cast=bool)
+SAVED_JOB_REMARKETING_ENABLED = config('SAVED_JOB_REMARKETING_ENABLED', default=False, cast=bool)
+
 # SecurityMiddleware protects Django Admin/session cookies as well as API responses.
 SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=IS_PRODUCTION, cast=bool)
 SECURE_PROXY_SSL_HEADER = (

@@ -51,6 +51,8 @@ if not 1 <= JOB_POSTING_DEFAULT_DEADLINE_DAYS <= JOB_POSTING_MAX_DEADLINE_DAYS:
     _errors.append('JOB_POSTING_DEFAULT_DEADLINE_DAYS phải từ 1 đến JOB_POSTING_MAX_DEADLINE_DAYS.')
 if JOB_POSTING_MAX_DEADLINE_DAYS > JOB_POSTING_MAX_PUBLIC_LIFETIME_DAYS:
     _errors.append('JOB_POSTING_MAX_DEADLINE_DAYS không được vượt quá vòng đời công khai tối đa.')
+if JOB_LIFECYCLE_V2_MODE not in {'legacy', 'shadow', 'enforce'}:
+    _errors.append('JOB_LIFECYCLE_V2_MODE phải là legacy, shadow hoặc enforce.')
 
 _ai_provider_backends = {'gemini_developer', 'vertex'}
 if AI_PROVIDER_BACKEND not in _ai_provider_backends:

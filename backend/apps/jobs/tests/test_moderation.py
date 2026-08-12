@@ -146,6 +146,12 @@ class JobModerationApiTests(JobModerationFixture, APITestCase):
         self.assertEqual(self.job.status, Job.Status.ACTIVE)
         self.assertIsNotNone(self.job.approved_at)
         self.assertIsNotNone(self.job.published_at)
+        self.assertEqual(self.job.first_approved_at, self.job.approved_at)
+        self.assertEqual(self.job.visibility_starts_at, self.job.first_approved_at)
+        self.assertEqual(
+            self.job.visibility_ends_at,
+            self.job.visibility_starts_at + timedelta(days=30),
+        )
         history = self.job.status_history.get()
         self.assertEqual(history.actor_role, JobStatusHistory.ActorRole.ADMIN)
         self.assertEqual(history.to_status, Job.Status.ACTIVE)
