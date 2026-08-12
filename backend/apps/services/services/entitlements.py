@@ -16,7 +16,9 @@ from apps.jobs.services import (
 from ..models import (
     JobServiceActivation,
     JobServiceActivationItem,
+    JobServiceUsageEvent,
     ServiceAuditEvent,
+    ServiceCapability,
     ServiceEntitlementUnit,
     ServicePackageVersion,
 )
@@ -420,6 +422,95 @@ def activate_job_service_with_confirmed_extension(
         idempotency_key=idempotency_key,
         activated_at=activated_at,
     )
+
+
+@transaction.atomic
+def refresh_promoted_job(*, activation, actor, idempotency_key, occurred_at=None):
+    """Consume one refresh without changing publication or lifecycle timestamps."""
+    idempotency_key = str(idempotency_key or '').strip()
+    if not idempotency_key:
+        raise ValidationError({'idempotency_key': 'Thiếu khóa chống làm mới trùng.'})
+
+    company = Company.objects.select_for_update().get(pk=activation.company_id)
+    _validate_actor_company(actor=actor, company_id=company.pk)
+    existing = JobServiceUsageEvent.objects.filter(
+        company=company,
+        idempotency_key=idempotency_key,
+    ).first()
+    if existing:
+        if (
+            existing.activation_id != activation.pk
+            or existing.event_type != JobServiceUsageEvent.EventType.REFRESH
+        ):
+            raise ValidationError(
+                {'idempotency_key': 'Khóa sử dụng đã được dùng cho yêu cầu khác.'}
+            )
+        return existing
+
+    locked_job = Job.objects.select_for_update(of=('self',)).get(pk=activation.job_id)
+    locked_activation = JobServiceActivation.objects.select_for_update().get(pk=activation.pk)
+    if (
+        locked_activation.company_id != company.pk
+        or locked_activation.job_id != locked_job.pk
+        or locked_job.company_id != company.pk
+    ):
+        raise ValidationError('Dịch vụ và tin tuyển dụng không cùng doanh nghiệp.')
+
+    occurred_at = occurred_at or timezone.now()
+    if (
+        locked_activation.status != JobServiceActivation.Status.ACTIVE
+        or locked_activation.starts_at > occurred_at
+        or locked_activation.ends_at <= occurred_at
+    ):
+        raise ValidationError('Dịch vụ không còn trong thời gian hiệu lực.')
+    if not job_is_publicly_available(job_id=locked_job.pk):
+        raise ValidationError('Chỉ có thể làm mới tin đang công khai và không bị hold.')
+
+    refresh_item = (
+        JobServiceActivationItem.objects.select_for_update()
+        .select_related('capability')
+        .filter(
+            activation=locked_activation,
+            capability__code=ServiceCapability.Code.JOB_REFRESH,
+            starts_at__lte=occurred_at,
+            ends_at__gt=occurred_at,
+        )
+        .first()
+    )
+    if refresh_item is None:
+        raise ValidationError('Dịch vụ này không có quyền lợi làm mới đang hiệu lực.')
+    if refresh_item.remaining_quantity < 1:
+        raise ValidationError('Quyền lợi làm mới của dịch vụ này đã được sử dụng hết.')
+
+    refresh_item.remaining_quantity -= 1
+    refresh_item.save(update_fields=['remaining_quantity'])
+    usage = JobServiceUsageEvent.objects.create(
+        activation=locked_activation,
+        activation_item=refresh_item,
+        company=company,
+        job=locked_job,
+        event_type=JobServiceUsageEvent.EventType.REFRESH,
+        idempotency_key=idempotency_key,
+        occurred_at=occurred_at,
+        actor=actor,
+        metadata={'remaining_quantity': refresh_item.remaining_quantity},
+    )
+    record_service_audit_event(
+        event_type=ServiceAuditEvent.EventType.CAPABILITY_USED,
+        actor=actor,
+        company=company,
+        package_version=locked_activation.unit.package_version,
+        unit=locked_activation.unit,
+        activation=locked_activation,
+        metadata={
+            'capability': ServiceCapability.Code.JOB_REFRESH,
+            'job_public_id': locked_job.public_id,
+            'usage_public_id': usage.public_id,
+            'remaining_quantity': refresh_item.remaining_quantity,
+        },
+        occurred_at=occurred_at,
+    )
+    return usage
 
 
 @transaction.atomic

@@ -6,8 +6,10 @@ import BasicJobService from './BasicJobService'
 
 const serviceApi = vi.hoisted(() => ({
   activateEmployerService: vi.fn(),
+  getEmployerActiveServices: vi.fn(),
   getEmployerServiceInventory: vi.fn(),
   previewEmployerServiceActivation: vi.fn(),
+  refreshEmployerJobService: vi.fn(),
 }))
 const toast = vi.hoisted(() => ({
   message: { error: vi.fn(), success: vi.fn() },
@@ -32,6 +34,42 @@ describe('BasicJobService', () => {
     Object.values(serviceApi).forEach((mock) => mock.mockReset())
     Object.values(toast.message).forEach((mock) => mock.mockReset())
     serviceApi.getEmployerServiceInventory.mockResolvedValue([])
+    serviceApi.getEmployerActiveServices.mockResolvedValue([])
+  })
+
+  it('shows an active service and confirms one refresh without changing job dates', async () => {
+    const user = userEvent.setup()
+    serviceApi.getEmployerActiveServices.mockResolvedValue([{
+      public_id: 'jsa_1',
+      package_name: 'Nổi bật',
+      job_title: 'Backend Engineer',
+      ends_at: '2026-08-26T00:00:00Z',
+      items: [{
+        capability: 'job_refresh',
+        name: 'Làm mới tin',
+        quantity: 4,
+        remaining_quantity: 3,
+      }],
+    }])
+    serviceApi.refreshEmployerJobService.mockResolvedValue({ remaining_quantity: 2 })
+
+    renderService({
+      jobPublicId: 'job_1',
+      jobStatus: 'active',
+      activationEnabled: true,
+      refreshEnabled: true,
+    })
+
+    expect(await screen.findByText('Dịch vụ đang chạy')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: /Làm mới tin/ }))
+    expect(await screen.findByText(/không thay đổi ngày đăng hoặc hạn nhận hồ sơ/i)).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Dùng 1 lượt' }))
+
+    await waitFor(() => expect(serviceApi.refreshEmployerJobService).toHaveBeenCalledWith(
+      'jsa_1',
+      expect.any(String),
+    ))
+    expect(toast.message.success).toHaveBeenCalledWith('Tin đã được làm mới trong nhóm tài trợ.')
   })
 
   it('keeps the basic service concise when the company has no available unit', async () => {

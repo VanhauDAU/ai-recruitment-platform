@@ -1,14 +1,17 @@
-import { CheckCircleFilled, ClockCircleOutlined, RocketOutlined } from '@ant-design/icons'
+import { CheckCircleFilled, ClockCircleOutlined, RocketOutlined, SyncOutlined } from '@ant-design/icons'
 import { useCallback, useEffect, useState } from 'react'
 import { Alert, Button, Checkbox, Empty, Modal, Radio, Skeleton, Tag } from 'antd'
 import { Link } from 'react-router'
 import {
   activateEmployerService,
+  getEmployerActiveServices,
   getEmployerServiceInventory,
   previewEmployerServiceActivation,
+  refreshEmployerJobService,
 } from '@/entities/service-package'
 import { employerMarketingPath } from '@/shared/config/portals'
 import { message } from '@/shared/lib/toast'
+import useConfirmAction from '@/shared/ui/use-confirm-action'
 
 function formatDate(value) {
   return new Date(value).toLocaleDateString('vi-VN')
@@ -25,8 +28,14 @@ function errorMessage(error, fallback) {
   return fallback
 }
 
-export default function BasicJobService({ jobPublicId, jobStatus, activationEnabled = false }) {
+export default function BasicJobService({
+  jobPublicId,
+  jobStatus,
+  activationEnabled = false,
+  refreshEnabled = false,
+}) {
   const [units, setUnits] = useState([])
+  const [activations, setActivations] = useState([])
   const [loading, setLoading] = useState(true)
   const [selectedId, setSelectedId] = useState()
   const [preview, setPreview] = useState(null)
@@ -34,18 +43,24 @@ export default function BasicJobService({ jobPublicId, jobStatus, activationEnab
   const [activating, setActivating] = useState(false)
   const [confirmed, setConfirmed] = useState(false)
   const canActivate = Boolean(jobPublicId && jobStatus === 'active')
+  const { confirmationModal, requestConfirmation } = useConfirmAction()
 
   const load = useCallback(async () => {
     if (!activationEnabled) {
       setUnits([])
+      setActivations([])
       setLoading(false)
       return
     }
     setLoading(true)
     try {
-      const inventory = await getEmployerServiceInventory()
+      const [inventory, activeServices] = await Promise.all([
+        getEmployerServiceInventory(),
+        jobPublicId ? getEmployerActiveServices(jobPublicId) : Promise.resolve([]),
+      ])
       const available = inventory.filter((unit) => unit.is_activatable !== false && unit.status === 'available')
       setUnits(available)
+      setActivations(activeServices)
       setSelectedId((current) => available.some((unit) => unit.public_id === current)
         ? current
         : available[0]?.public_id)
@@ -54,7 +69,7 @@ export default function BasicJobService({ jobPublicId, jobStatus, activationEnab
     } finally {
       setLoading(false)
     }
-  }, [activationEnabled])
+  }, [activationEnabled, jobPublicId])
 
   useEffect(() => { load() }, [load])
 
@@ -93,6 +108,26 @@ export default function BasicJobService({ jobPublicId, jobStatus, activationEnab
     }
   }
 
+  const requestRefresh = (activation, refreshItem) => {
+    requestConfirmation({
+      title: 'Làm mới tin tuyển dụng',
+      confirmText: 'Dùng 1 lượt',
+      cancelText: 'Đóng',
+      children: (
+        <div className="space-y-2 text-sm text-slate-600">
+          <p>Tin <strong className="text-slate-900">{activation.job_title}</strong> sẽ được đưa lên đầu nhóm tin tài trợ phù hợp.</p>
+          <p>Thao tác dùng 1 lượt làm mới, không thay đổi ngày đăng hoặc hạn nhận hồ sơ. Hiện còn <strong>{refreshItem.remaining_quantity} lượt</strong>.</p>
+        </div>
+      ),
+      onConfirm: async () => {
+        await refreshEmployerJobService(activation.public_id, activationKey())
+        message.success('Tin đã được làm mới trong nhóm tài trợ.')
+        await load()
+      },
+      onConfirmError: (error) => message.error(errorMessage(error, 'Không thể làm mới tin.')),
+    })
+  }
+
   if (loading) return <Skeleton active paragraph={{ rows: 2 }} />
 
   return (
@@ -107,6 +142,46 @@ export default function BasicJobService({ jobPublicId, jobStatus, activationEnab
           <Tag color="green" icon={<CheckCircleFilled />}>Đang áp dụng</Tag>
         </div>
       </div>
+
+      {activations.length > 0 && (
+        <div className="rounded-xl border border-sky-100 bg-sky-50/40 p-4 sm:p-5">
+          <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
+              <h3 className="font-bold text-slate-900">Dịch vụ đang chạy</h3>
+              <p className="mt-1 text-sm text-slate-500">Quyền lợi được tính độc lập, không làm thay đổi ngày đăng của tin.</p>
+            </div>
+            <Tag color="blue">{activations.length} dịch vụ</Tag>
+          </div>
+          <div className="grid gap-3">
+            {activations.map((activation) => {
+              const refreshItem = activation.items.find((item) => item.capability === 'job_refresh')
+              return (
+                <div key={activation.public_id} className="flex min-w-0 flex-col gap-3 rounded-lg border border-sky-100 bg-white p-3 sm:flex-row sm:items-center">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-semibold text-slate-900">{activation.package_name}</p>
+                    <p className="mt-1 text-xs text-slate-500"><ClockCircleOutlined /> Kết thúc {formatDate(activation.ends_at)}</p>
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {activation.items.map((item) => (
+                        <Tag key={item.capability}>{item.name}{item.quantity > 1 ? ` · còn ${item.remaining_quantity}/${item.quantity}` : ''}</Tag>
+                      ))}
+                    </div>
+                  </div>
+                  {refreshEnabled && refreshItem && (
+                    <Button
+                      className="w-full shrink-0 sm:w-auto"
+                      icon={<SyncOutlined />}
+                      disabled={!canActivate || refreshItem.remaining_quantity < 1}
+                      onClick={() => requestRefresh(activation, refreshItem)}
+                    >
+                      {refreshItem.remaining_quantity > 0 ? 'Làm mới tin' : 'Đã dùng hết lượt'}
+                    </Button>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       {activationEnabled && units.length ? (
         <div className="rounded-xl border border-slate-200 p-4 sm:p-5">
@@ -131,10 +206,14 @@ export default function BasicJobService({ jobPublicId, jobStatus, activationEnab
           {!canActivate && <Alert className="mt-3" type="info" showIcon message="Lưu và chờ tin được duyệt trước khi kích hoạt dịch vụ." />}
           <Button className="mt-4 w-full sm:w-auto" type="primary" disabled={!canActivate || !selectedId} loading={previewing} onClick={openPreview}>Xem trước và kích hoạt</Button>
         </div>
-      ) : activationEnabled ? (
+      ) : activationEnabled && activations.length === 0 ? (
         <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Chưa có lượt dịch vụ khả dụng">
           <Link target="_blank" rel="noreferrer" to={employerMarketingPath('/bao-gia')}><Button>Xem gói dịch vụ</Button></Link>
         </Empty>
+      ) : activationEnabled ? (
+        <div className="text-center">
+          <Link target="_blank" rel="noreferrer" to={employerMarketingPath('/bao-gia')}><Button>Xem thêm gói dịch vụ</Button></Link>
+        </div>
       ) : (
         <div className="text-center">
           <Link target="_blank" rel="noreferrer" to={employerMarketingPath('/bao-gia')}><Button>Xem các gói gia tăng hiệu quả</Button></Link>
@@ -171,6 +250,7 @@ export default function BasicJobService({ jobPublicId, jobStatus, activationEnab
           )}
         </div>}
       </Modal>
+      {confirmationModal}
     </div>
   )
 }

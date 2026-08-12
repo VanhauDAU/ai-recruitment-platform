@@ -64,6 +64,12 @@ class EmployerActivationApiTests(TestCase):
             duration_days=14,
             configuration={'placement': 'search_sponsored'},
         )
+        add_package_version_item(
+            package_version=version,
+            capability=ServiceCapability.objects.get(code='job_refresh'),
+            quantity=2,
+            duration_days=14,
+        )
         version = publish_package_version(package_version=version, actor=self.admin)
         self.unit = grant_package_units(
             company=self.company,
@@ -137,6 +143,53 @@ class EmployerActivationApiTests(TestCase):
         self.assertEqual(len(expanded.data), 21)
         self.assertEqual(len(expanded_queries), len(baseline_queries))
         self.assertLessEqual(len(expanded_queries), 8)
+
+    @override_settings(JOB_PROMOTION_REFRESH_ENABLED=True)
+    def test_active_services_and_refresh_are_scoped_idempotent_and_keep_recency(self):
+        created = self.client.post(
+            reverse('services-employer-activation-create'),
+            self.payload(confirm_extension=True),
+            format='json',
+            HTTP_IDEMPOTENCY_KEY='activation-for-refresh',
+        )
+        self.assertEqual(created.status_code, status.HTTP_201_CREATED, created.data)
+        published_at = self.job.published_at
+
+        active = self.client.get(
+            reverse('services-employer-active-services'),
+            {'job_public_id': self.job.public_id},
+        )
+        self.assertEqual(active.status_code, status.HTTP_200_OK)
+        self.assertEqual(active.data[0]['public_id'], created.data['public_id'])
+        refresh_url = reverse(
+            'services-employer-refresh',
+            kwargs={'public_id': created.data['public_id']},
+        )
+        first = self.client.post(refresh_url, HTTP_IDEMPOTENCY_KEY='api-refresh-1')
+        retry = self.client.post(refresh_url, HTTP_IDEMPOTENCY_KEY='api-refresh-1')
+
+        self.assertEqual(first.status_code, status.HTTP_201_CREATED, first.data)
+        self.assertEqual(first.data['public_id'], retry.data['public_id'])
+        self.assertEqual(first.data['remaining_quantity'], 1)
+        self.job.refresh_from_db()
+        self.assertEqual(self.job.published_at, published_at)
+
+    def test_refresh_endpoint_is_hidden_behind_its_own_kill_switch(self):
+        created = self.client.post(
+            reverse('services-employer-activation-create'),
+            self.payload(confirm_extension=True),
+            format='json',
+            HTTP_IDEMPOTENCY_KEY='activation-hidden-refresh',
+        )
+        response = self.client.post(
+            reverse(
+                'services-employer-refresh',
+                kwargs={'public_id': created.data['public_id']},
+            ),
+            HTTP_IDEMPOTENCY_KEY='hidden-refresh',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     @override_settings(SERVICE_ACTIVATION_ENABLED=False)
     def test_activation_endpoints_are_hidden_while_kill_switch_is_off(self):

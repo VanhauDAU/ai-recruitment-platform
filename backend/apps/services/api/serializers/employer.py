@@ -3,7 +3,7 @@ from rest_framework import serializers
 
 from apps.jobs.models import Job
 
-from ...models import JobServiceActivation, ServiceEntitlementUnit
+from ...models import JobServiceActivation, JobServiceUsageEvent, ServiceEntitlementUnit
 
 
 class EmployerServiceUnitSerializer(serializers.ModelSerializer):
@@ -50,6 +50,8 @@ class EmployerActivationRequestSerializer(serializers.Serializer):
 class EmployerActivationSerializer(serializers.ModelSerializer):
     unit_public_id = serializers.CharField(source='unit.public_id')
     job_public_id = serializers.CharField(source='job.public_id')
+    job_title = serializers.CharField(source='job.title')
+    package_name = serializers.CharField(source='unit.package_version.package.name_vi')
     items = serializers.SerializerMethodField()
 
     class Meta:
@@ -58,6 +60,8 @@ class EmployerActivationSerializer(serializers.ModelSerializer):
             'public_id',
             'unit_public_id',
             'job_public_id',
+            'job_title',
+            'package_name',
             'status',
             'starts_at',
             'ends_at',
@@ -75,4 +79,19 @@ class EmployerActivationSerializer(serializers.ModelSerializer):
                 'ends_at': item.ends_at,
             }
             for item in obj.items.all()
+        ]
+
+
+class EmployerUsageSerializer(serializers.ModelSerializer):
+    activation_public_id = serializers.CharField(source='activation.public_id')
+    remaining_quantity = serializers.IntegerField(source='activation_item.remaining_quantity')
+
+    class Meta:
+        model = JobServiceUsageEvent
+        fields = [
+            'public_id',
+            'activation_public_id',
+            'event_type',
+            'occurred_at',
+            'remaining_quantity',
         ]

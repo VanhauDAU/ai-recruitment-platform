@@ -245,7 +245,7 @@ class JobServiceActivationItem(models.Model):
     remaining_quantity = models.PositiveSmallIntegerField(validators=[MinValueValidator(0)])
     starts_at = models.DateTimeField()
     ends_at = models.DateTimeField()
-    configuration = models.JSONField(default=dict)
+    configuration = models.JSONField(default=dict, blank=True)
 
     IMMUTABLE_FIELDS = (
         'activation_id',
@@ -296,6 +296,83 @@ class JobServiceActivationItem(models.Model):
         return super().save(*args, **kwargs)
 
 
+class JobServiceUsageEvent(models.Model):
+    """Append-only evidence for one consumed activation capability."""
+
+    class EventType(models.TextChoices):
+        REFRESH = 'refresh', 'Làm mới tin'
+        JOB_ALERT = 'job_alert', 'Gửi Job Alert'
+
+    public_id = models.CharField(max_length=50, unique=True, editable=False)
+    activation = models.ForeignKey(
+        JobServiceActivation,
+        on_delete=models.PROTECT,
+        related_name='usage_events',
+    )
+    activation_item = models.ForeignKey(
+        JobServiceActivationItem,
+        on_delete=models.PROTECT,
+        related_name='usage_events',
+    )
+    company = models.ForeignKey(
+        'employers.Company',
+        on_delete=models.PROTECT,
+        related_name='job_service_usage_events',
+    )
+    job = models.ForeignKey(
+        'jobs.Job',
+        on_delete=models.PROTECT,
+        related_name='service_usage_events',
+    )
+    event_type = models.CharField(max_length=20, choices=EventType.choices)
+    idempotency_key = models.CharField(max_length=100)
+    occurred_at = models.DateTimeField(default=timezone.now)
+    actor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='job_service_usage_events',
+    )
+    metadata = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-occurred_at', '-id']
+        indexes = [
+            models.Index(
+                fields=['activation', 'event_type', 'occurred_at'],
+                name='services_usage_activation_idx',
+            ),
+            models.Index(
+                fields=['job', 'event_type', 'occurred_at'],
+                name='services_usage_job_idx',
+            ),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=['company', 'idempotency_key'],
+                name='services_usage_company_idempotency',
+            ),
+        ]
+        verbose_name = 'Lần sử dụng quyền lợi'
+        verbose_name_plural = 'Lần sử dụng quyền lợi'
+
+    def save(self, *args, **kwargs):
+        if self.pk:
+            raise ValidationError('Lần sử dụng quyền lợi không được sửa.')
+        if not self.public_id:
+            self.public_id = generate_public_id('jsu')
+        self.full_clean()
+        return super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        raise ValidationError('Lịch sử sử dụng quyền lợi không được xóa.')
+
+    def __str__(self):
+        return f'{self.event_type}:{self.public_id}'
+
+
 class ServiceAuditEvent(models.Model):
     """Append-only commercial audit log; metadata stores human-readable context only."""
 
@@ -307,6 +384,7 @@ class ServiceAuditEvent(models.Model):
         UNIT_CONSUMED = 'unit_consumed', 'Sử dụng lượt'
         ACTIVATION_CREATED = 'activation_created', 'Kích hoạt dịch vụ'
         ACTIVATION_EXPIRED = 'activation_expired', 'Dịch vụ kết thúc'
+        CAPABILITY_USED = 'capability_used', 'Sử dụng quyền lợi'
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     event_type = models.CharField(max_length=32, choices=EventType.choices)

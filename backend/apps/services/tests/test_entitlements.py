@@ -15,6 +15,7 @@ from apps.jobs.services import lifecycle_local_date
 
 from ..models import (
     JobServiceActivation,
+    JobServiceUsageEvent,
     ServiceAuditEvent,
     ServiceCapability,
     ServiceCategory,
@@ -31,6 +32,7 @@ from ..services import (
     grant_package_units,
     preview_job_service_activation,
     publish_package_version,
+    refresh_promoted_job,
     revoke_entitlement_unit,
 )
 
@@ -66,6 +68,12 @@ class EntitlementLedgerTests(TestCase):
             capability=ServiceCapability.objects.get(code='sponsored_placement'),
             duration_days=14,
             configuration={'placement': 'search_sponsored'},
+        )
+        add_package_version_item(
+            package_version=self.version,
+            capability=ServiceCapability.objects.get(code='job_refresh'),
+            quantity=2,
+            duration_days=14,
         )
         self.version = publish_package_version(
             package_version=self.version,
@@ -147,7 +155,10 @@ class EntitlementLedgerTests(TestCase):
         self.assertGreater(activation.ends_at, unit.activate_by)
         unit.refresh_from_db()
         self.assertEqual(unit.status, ServiceEntitlementUnit.Status.CONSUMED)
-        self.assertEqual(activation.items.get().remaining_quantity, 1)
+        self.assertEqual(
+            activation.items.get(capability__code='sponsored_placement').remaining_quantity,
+            1,
+        )
         self.job.refresh_from_db()
         self.assertEqual(self.job.tier, Job.Tier.STANDARD)
         self.assertFalse(self.job.is_urgent)
@@ -251,6 +262,65 @@ class EntitlementLedgerTests(TestCase):
 
         unit.refresh_from_db()
         self.assertEqual(unit.status, ServiceEntitlementUnit.Status.AVAILABLE)
+
+    def test_refresh_consumes_one_right_idempotently_without_resetting_publication(self):
+        unit = self.grant_one(key='refresh-ledger')
+        activation = activate_job_service(
+            unit=unit,
+            job=self.job,
+            actor=self.employer,
+            idempotency_key='refresh-activation',
+        )
+        published_at = self.job.published_at
+
+        first = refresh_promoted_job(
+            activation=activation,
+            actor=self.employer,
+            idempotency_key='refresh-use-1',
+        )
+        retry = refresh_promoted_job(
+            activation=activation,
+            actor=self.employer,
+            idempotency_key='refresh-use-1',
+        )
+
+        self.assertEqual(first.pk, retry.pk)
+        self.assertEqual(JobServiceUsageEvent.objects.count(), 1)
+        refresh_item = activation.items.get(capability__code='job_refresh')
+        self.assertEqual(refresh_item.remaining_quantity, 1)
+        self.job.refresh_from_db()
+        self.assertEqual(self.job.published_at, published_at)
+        self.assertTrue(
+            ServiceAuditEvent.objects.filter(
+                event_type=ServiceAuditEvent.EventType.CAPABILITY_USED,
+                activation=activation,
+                metadata__capability='job_refresh',
+            ).exists()
+        )
+
+    def test_refresh_cannot_exceed_the_activated_quantity(self):
+        unit = self.grant_one(key='refresh-exhausted')
+        activation = activate_job_service(
+            unit=unit,
+            job=self.job,
+            actor=self.employer,
+            idempotency_key='refresh-exhausted-activation',
+        )
+        for index in range(2):
+            refresh_promoted_job(
+                activation=activation,
+                actor=self.employer,
+                idempotency_key=f'refresh-exhausted-{index}',
+            )
+
+        with self.assertRaises(ValidationError):
+            refresh_promoted_job(
+                activation=activation,
+                actor=self.employer,
+                idempotency_key='refresh-exhausted-3',
+            )
+
+        self.assertEqual(JobServiceUsageEvent.objects.count(), 2)
 
     def test_revoke_is_audited_and_history_is_append_only(self):
         unit = self.grant_one(key='revoke-unit')
@@ -359,12 +429,34 @@ class ConcurrentEntitlementConsumptionTests(TransactionTestCase):
             slug='concurrent-priority',
             name_vi='Ưu tiên concurrent',
         )
+        sponsored_capability, _ = ServiceCapability.objects.get_or_create(
+            code=ServiceCapability.Code.SPONSORED_PLACEMENT,
+            defaults={
+                'name_vi': 'Vị trí tài trợ',
+                'scope': ServiceCapability.Scope.JOB,
+                'effect_type': ServiceCapability.EffectType.PLACEMENT,
+            },
+        )
+        refresh_capability, _ = ServiceCapability.objects.get_or_create(
+            code=ServiceCapability.Code.JOB_REFRESH,
+            defaults={
+                'name_vi': 'Làm mới tin',
+                'scope': ServiceCapability.Scope.JOB,
+                'effect_type': ServiceCapability.EffectType.REFRESH,
+            },
+        )
         version = create_package_version(package=package, price=299000)
         add_package_version_item(
             package_version=version,
-            capability=ServiceCapability.objects.get(code='sponsored_placement'),
+            capability=sponsored_capability,
             duration_days=14,
             configuration={'placement': 'search_sponsored'},
+        )
+        add_package_version_item(
+            package_version=version,
+            capability=refresh_capability,
+            quantity=1,
+            duration_days=14,
         )
         version = publish_package_version(package_version=version, actor=self.admin)
         self.unit = grant_package_units(
@@ -404,3 +496,39 @@ class ConcurrentEntitlementConsumptionTests(TransactionTestCase):
         self.assertEqual(JobServiceActivation.objects.count(), 1)
         self.unit.refresh_from_db()
         self.assertEqual(self.unit.status, ServiceEntitlementUnit.Status.CONSUMED)
+
+    def test_two_concurrent_refreshes_cannot_consume_one_right_twice(self):
+        activation = activate_job_service(
+            unit=self.unit,
+            job=self.job,
+            actor=self.employer,
+            idempotency_key='concurrent-refresh-activation',
+        )
+        barrier = Barrier(2)
+
+        def consume(idempotency_key):
+            close_old_connections()
+            try:
+                current_activation = JobServiceActivation.objects.get(pk=activation.pk)
+                actor = get_user_model().objects.get(pk=self.employer.pk)
+                barrier.wait(timeout=5)
+                usage = refresh_promoted_job(
+                    activation=current_activation,
+                    actor=actor,
+                    idempotency_key=idempotency_key,
+                )
+                return ('created', usage.pk)
+            except ValidationError:
+                return ('rejected', None)
+            finally:
+                close_old_connections()
+
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            results = list(executor.map(consume, ('refresh-a', 'refresh-b')))
+
+        self.assertEqual(sorted(result[0] for result in results), ['created', 'rejected'])
+        self.assertEqual(JobServiceUsageEvent.objects.count(), 1)
+        self.assertEqual(
+            activation.items.get(capability__code='job_refresh').remaining_quantity,
+            0,
+        )

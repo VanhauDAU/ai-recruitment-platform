@@ -1,10 +1,16 @@
 from dataclasses import dataclass
 from math import ceil
 
-from django.db.models import Exists, OuterRef
+from django.conf import settings
+from django.db.models import DateTimeField, Exists, F, OuterRef, Subquery
+from django.db.models.functions import Coalesce
 from django.utils import timezone
 
-from apps.services.models import JobServiceActivationItem, ServiceCapability
+from apps.services.models import (
+    JobServiceActivationItem,
+    JobServiceUsageEvent,
+    ServiceCapability,
+)
 
 
 @dataclass(frozen=True)
@@ -14,6 +20,29 @@ class DistributedJobPage:
     total_pages: int
     page: int
     page_size: int
+
+
+def _with_promotion_recency(queryset, *, at):
+    if not getattr(settings, 'JOB_PROMOTION_REFRESH_ENABLED', False):
+        return queryset.annotate(promotion_recency=F('lifecycle_recency'))
+    latest_refresh = (
+        JobServiceUsageEvent.objects.filter(
+            job_id=OuterRef('pk'),
+            event_type=JobServiceUsageEvent.EventType.REFRESH,
+            activation__status='active',
+            activation__starts_at__lte=at,
+            activation__ends_at__gt=at,
+            occurred_at__lte=at,
+        )
+        .order_by('-occurred_at', '-id')
+        .values('occurred_at')[:1]
+    )
+    return queryset.annotate(
+        promotion_recency=Coalesce(
+            Subquery(latest_refresh, output_field=DateTimeField()),
+            'lifecycle_recency',
+        )
+    )
 
 
 def _sponsored_representative_ids(queryset, *, at):
@@ -26,13 +55,16 @@ def _sponsored_representative_ids(queryset, *, at):
         starts_at__lte=at,
         ends_at__gt=at,
     )
-    eligible = queryset.annotate(_has_active_sponsorship=Exists(active_sponsorship)).filter(
-        _has_active_sponsorship=True
+    eligible = _with_promotion_recency(
+        queryset.annotate(_has_active_sponsorship=Exists(active_sponsorship)).filter(
+            _has_active_sponsorship=True
+        ),
+        at=at,
     )
     # PostgreSQL DISTINCT ON selects one deterministic sponsored representative
     # per company. Other paid jobs remain in the organic lane rather than being hidden.
     return (
-        eligible.order_by('company_id', '-lifecycle_recency', '-created_at', '-id')
+        eligible.order_by('company_id', '-promotion_recency', '-created_at', '-id')
         .distinct('company_id')
         .values('pk')
     )
@@ -78,9 +110,10 @@ def distribute_sponsored_job_page(queryset, *, page, page_size, at=None):
         )
 
     representative_ids = _sponsored_representative_ids(queryset, at=at)
-    sponsored_queryset = queryset.filter(pk__in=representative_ids).order_by(
-        '-lifecycle_recency', '-created_at', '-id'
-    )
+    sponsored_queryset = _with_promotion_recency(
+        queryset.filter(pk__in=representative_ids),
+        at=at,
+    ).order_by('-promotion_recency', '-created_at', '-id')
     organic_queryset = queryset.exclude(pk__in=representative_ids)
     sponsored_total = sponsored_queryset.count()
     organic_total = organic_queryset.count()

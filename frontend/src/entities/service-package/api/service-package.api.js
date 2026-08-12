@@ -114,6 +114,14 @@ export async function getEmployerServiceInventory() {
   return Array.isArray(inventory) ? inventory : []
 }
 
+export async function getEmployerActiveServices(jobPublicId) {
+  const { data } = await client.get('/services/mine/activations/', {
+    params: jobPublicId ? { job_public_id: jobPublicId } : {},
+  })
+  const activations = collection(data)
+  return Array.isArray(activations) ? activations : []
+}
+
 export async function previewEmployerServiceActivation(payload) {
   const { data } = await client.post('/services/activations/preview/', payload)
   return data
@@ -123,5 +131,14 @@ export async function activateEmployerService(payload, idempotencyKey) {
   const { data } = await client.post('/services/activations/', payload, {
     headers: { 'Idempotency-Key': idempotencyKey },
   })
+  return data
+}
+
+export async function refreshEmployerJobService(activationPublicId, idempotencyKey) {
+  const { data } = await client.post(
+    `/services/activations/${activationPublicId}/refresh/`,
+    {},
+    { headers: { 'Idempotency-Key': idempotencyKey } },
+  )
   return data
 }

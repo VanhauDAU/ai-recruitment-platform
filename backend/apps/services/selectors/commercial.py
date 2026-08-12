@@ -1,4 +1,7 @@
+from django.utils import timezone
+
 from ..models import (
+    JobServiceActivation,
     ServiceAuditEvent,
     ServiceCapability,
     ServiceEntitlementUnit,
@@ -84,3 +87,23 @@ def admin_service_audit_queryset(*, company_public_id='', event_type='', orderin
         SERVICE_AUDIT_ORDERING_FIELDS,
         '-occurred_at',
     )
+
+
+def employer_active_job_service_activations(*, company, job_public_id='', at=None):
+    at = at or timezone.now()
+    queryset = (
+        JobServiceActivation.objects.select_related(
+            'job',
+            'unit__package_version__package',
+        )
+        .prefetch_related('items__capability')
+        .filter(
+            company=company,
+            status=JobServiceActivation.Status.ACTIVE,
+            starts_at__lte=at,
+            ends_at__gt=at,
+        )
+    )
+    if job_public_id:
+        queryset = queryset.filter(job__public_id=job_public_id)
+    return queryset.order_by('ends_at', 'id')

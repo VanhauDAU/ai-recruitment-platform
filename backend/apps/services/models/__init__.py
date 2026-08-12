@@ -9,6 +9,7 @@ from .commercial import (
 from .entitlements import (
     JobServiceActivation,
     JobServiceActivationItem,
+    JobServiceUsageEvent,
     ServiceAuditEvent,
     ServiceEntitlementUnit,
 )
@@ -17,6 +18,7 @@ __all__ = [
     'ConsultationLead',
     'JobServiceActivation',
     'JobServiceActivationItem',
+    'JobServiceUsageEvent',
     'ServiceAuditEvent',
     'ServiceCapability',
     'ServiceCategory',

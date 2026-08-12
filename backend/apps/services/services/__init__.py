@@ -14,6 +14,7 @@ from .entitlements import (
     package_version_snapshot,
     preview_job_service_activation,
     record_service_audit_event,
+    refresh_promoted_job,
     revoke_entitlement_unit,
 )
 
@@ -30,6 +31,7 @@ __all__ = [
     'publish_package_version',
     'preview_job_service_activation',
     'record_service_audit_event',
+    'refresh_promoted_job',
     'revoke_entitlement_unit',
     'save_package_version_draft',
 ]

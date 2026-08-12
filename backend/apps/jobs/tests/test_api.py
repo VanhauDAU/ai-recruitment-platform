@@ -27,6 +27,7 @@ from apps.services.services import (
     create_package_version,
     grant_package_units,
     publish_package_version,
+    refresh_promoted_job,
 )
 from apps.skills.models import Skill, SkillGroup
 
@@ -561,8 +562,15 @@ class SponsoredJobDistributionApiTests(APITestCase):
             duration_days=14,
             configuration={'placement': 'search_sponsored'},
         )
+        add_package_version_item(
+            package_version=version,
+            capability=ServiceCapability.objects.get(code='job_refresh'),
+            quantity=2,
+            duration_days=14,
+        )
         self.version = publish_package_version(package_version=version)
         self.sponsored_titles = []
+        self.sponsored_activations = []
         for index in range(3):
             employer = User.objects.create_user(
                 email=f'sponsored-distribution-{index}@example.com',
@@ -587,7 +595,7 @@ class SponsoredJobDistributionApiTests(APITestCase):
                 grant_key=f'sponsored-distribution-{index}',
                 granted_at=self.now,
             )[0]
-            activate_job_service(
+            activation = activate_job_service(
                 unit=unit,
                 job=job,
                 actor=employer,
@@ -595,6 +603,7 @@ class SponsoredJobDistributionApiTests(APITestCase):
                 activated_at=self.now,
             )
             self.sponsored_titles.append(job.title)
+            self.sponsored_activations.append(activation)
 
         organic_employer = User.objects.create_user(
             email='organic-distribution@example.com',
@@ -655,6 +664,23 @@ class SponsoredJobDistributionApiTests(APITestCase):
 
         salaries = [item['salary_max'] for item in response.data['results']]
         self.assertEqual(salaries, sorted(salaries, reverse=True))
+
+    @override_settings(JOB_PROMOTION_REFRESH_ENABLED=True)
+    def test_refresh_changes_only_the_sponsored_lane_recency(self):
+        activation = self.sponsored_activations[0]
+        original_published_at = activation.job.published_at
+        refresh_promoted_job(
+            activation=activation,
+            actor=activation.created_by,
+            idempotency_key='distribution-refresh',
+        )
+
+        response = self.client.get(reverse('job-list'), {'page_size': 10})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['results'][0]['title'], self.sponsored_titles[0])
+        activation.job.refresh_from_db()
+        self.assertEqual(activation.job.published_at, original_published_at)
 
     def test_search_relevance_filters_before_sponsored_distribution(self):
         response = self.client.get(

@@ -16,9 +16,11 @@ from .api.views import (
     AdminServicePackageDetailView,
     AdminServicePackageListCreateView,
     ConsultationLeadCreateView,
+    EmployerActiveServiceListView,
     EmployerServiceActivationCreateView,
     EmployerServiceActivationPreviewView,
     EmployerServiceInventoryView,
+    EmployerServiceRefreshView,
     PublicServicePackageListView,
 )
 
@@ -39,6 +41,16 @@ urlpatterns = [
         'activations/',
         EmployerServiceActivationCreateView.as_view(),
         name='services-employer-activation-create',
+    ),
+    path(
+        'mine/activations/',
+        EmployerActiveServiceListView.as_view(),
+        name='services-employer-active-services',
+    ),
+    path(
+        'activations/<str:public_id>/refresh/',
+        EmployerServiceRefreshView.as_view(),
+        name='services-employer-refresh',
     ),
     path(
         'admin/capabilities/',

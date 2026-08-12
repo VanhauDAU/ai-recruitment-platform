@@ -23,6 +23,7 @@ from .employer import (
     EmployerActivationRequestSerializer,
     EmployerActivationSerializer,
     EmployerServiceUnitSerializer,
+    EmployerUsageSerializer,
 )
 
 __all__ = [
@@ -44,6 +45,7 @@ __all__ = [
     'EmployerActivationRequestSerializer',
     'EmployerActivationSerializer',
     'EmployerServiceUnitSerializer',
+    'EmployerUsageSerializer',
     'PublicServiceCategorySerializer',
     'PublicServicePackageSerializer',
 ]
