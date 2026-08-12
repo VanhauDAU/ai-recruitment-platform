@@ -368,6 +368,16 @@ class JobPostingWorkflowTests(TestCase):
         self.assertEqual(job.requested_visibility_days, 30)
         self.assertNotIn('requested_visibility_days', serializer.validated_data)
 
+    def test_basic_job_deadline_cannot_exceed_thirty_days(self):
+        serializer = EmployerJobWriteSerializer(
+            self.make_publishable_job(),
+            data={'application_deadline': (timezone.localdate() + timedelta(days=31)).isoformat()},
+            partial=True,
+        )
+
+        self.assertFalse(serializer.is_valid())
+        self.assertIn('application_deadline', serializer.errors)
+
     def test_serializer_rejects_conflicting_deadline_aliases(self):
         serializer = EmployerJobWriteSerializer(
             self.make_publishable_job(),

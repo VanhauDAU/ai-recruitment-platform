@@ -215,9 +215,15 @@ export default function JobDetail() {
         'day',
       )
     : maximumByToday
-  const latestDeadline = maximumByPublicLifetime.isBefore(maximumByToday, 'day')
+  const maximumByVisibility = job.visibility_ends_at
+    ? dayjs(job.visibility_ends_at).startOf('day')
+    : maximumByPublicLifetime
+  const maximumByPolicy = maximumByPublicLifetime.isBefore(maximumByToday, 'day')
     ? maximumByPublicLifetime
     : maximumByToday
+  const latestDeadline = maximumByVisibility.isBefore(maximumByPolicy, 'day')
+    ? maximumByVisibility
+    : maximumByPolicy
   const earliestDeadline = deadlineAction === 'extend' && job.deadline
     ? dayjs(job.deadline).startOf('day')
     : today

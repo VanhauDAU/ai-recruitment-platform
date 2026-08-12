@@ -43,6 +43,7 @@ from .engagement import (
 from .lifecycle import (
     initialize_job_visibility,
     job_lifecycle_policy,
+    lifecycle_local_date,
     visibility_days_error,
 )
 from .moderation import (
@@ -93,6 +94,7 @@ __all__ = [
     'job_deadline_error',
     'initialize_job_visibility',
     'job_lifecycle_policy',
+    'lifecycle_local_date',
     'visibility_days_error',
     'job_deadline_policy',
     'fail_job_ai_generation',

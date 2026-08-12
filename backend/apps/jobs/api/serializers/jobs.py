@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django.db import transaction
 from django.utils.html import strip_tags
 from rest_framework import serializers
@@ -24,7 +26,7 @@ from ...selectors.verification_badge import (
     badge_criteria_payload,
     prime_badge_cache,
 )
-from ...services import job_deadline_error
+from ...services import job_deadline_error, job_deadline_policy, lifecycle_local_date
 from .supporting import (
     JobApplicationContactSerializer,
     JobApplicationEmailSerializer,
@@ -718,6 +720,16 @@ class EmployerJobWriteSerializer(JobSerializer):
     def validate_deadline(self, deadline):
         if deadline_error := job_deadline_error(deadline, required=False):
             raise serializers.ValidationError(deadline_error)
+        current_deadline = getattr(self.instance, 'deadline', None)
+        first_approved_at = getattr(self.instance, 'first_approved_at', None)
+        if deadline != current_deadline and first_approved_at is None:
+            maximum_days = int(job_deadline_policy()['default_deadline_days'])
+            today = lifecycle_local_date()
+            if deadline and deadline > today + timedelta(days=maximum_days):
+                raise serializers.ValidationError(
+                    f'Tin cơ bản chỉ nhận hồ sơ tối đa {maximum_days} ngày. '
+                    'Hãy dùng dịch vụ gia hạn cho nhu cầu dài hơn.'
+                )
         return deadline
 
     def validate_application_deadline(self, deadline):
