@@ -277,6 +277,7 @@ export default function PostJobForm({
               jobStatus={initialValues?.status}
               activationEnabled={postingContext?.services?.activation_enabled === true}
               refreshEnabled={postingContext?.services?.refresh_enabled === true}
+              metricsEnabled={postingContext?.services?.metrics_enabled === true}
             />
           </JobFormSection>
 

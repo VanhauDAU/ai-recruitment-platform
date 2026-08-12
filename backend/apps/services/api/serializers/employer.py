@@ -53,6 +53,7 @@ class EmployerActivationSerializer(serializers.ModelSerializer):
     job_title = serializers.CharField(source='job.title')
     package_name = serializers.CharField(source='unit.package_version.package.name_vi')
     items = serializers.SerializerMethodField()
+    metrics = serializers.SerializerMethodField()
 
     class Meta:
         model = JobServiceActivation
@@ -66,6 +67,7 @@ class EmployerActivationSerializer(serializers.ModelSerializer):
             'starts_at',
             'ends_at',
             'items',
+            'metrics',
         ]
 
     def get_items(self, obj):
@@ -80,6 +82,14 @@ class EmployerActivationSerializer(serializers.ModelSerializer):
             }
             for item in obj.items.all()
         ]
+
+    def get_metrics(self, obj):
+        return {
+            'impressions': getattr(obj, 'promotion_impressions', 0),
+            'views': getattr(obj, 'promotion_views', 0),
+            'saves': getattr(obj, 'promotion_saves', 0),
+            'applies': getattr(obj, 'promotion_applies', 0),
+        }
 
 
 class EmployerUsageSerializer(serializers.ModelSerializer):

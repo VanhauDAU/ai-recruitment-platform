@@ -17,6 +17,7 @@ from .entitlements import (
     refresh_promoted_job,
     revoke_entitlement_unit,
 )
+from .metrics import record_job_promotion_metrics
 
 __all__ = [
     'add_package_version_item',
@@ -32,6 +33,7 @@ __all__ = [
     'preview_job_service_activation',
     'record_service_audit_event',
     'refresh_promoted_job',
+    'record_job_promotion_metrics',
     'revoke_entitlement_unit',
     'save_package_version_draft',
 ]

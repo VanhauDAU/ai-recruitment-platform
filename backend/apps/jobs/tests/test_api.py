@@ -210,7 +210,8 @@ class JobViewTrackingApiTests(APITestCase):
             format='json',
         )
 
-        response = self.client.post(reverse('job-view-create', kwargs={'slug': self.job.slug}))
+        with patch('apps.jobs.api.views.public.record_job_promotion_metrics') as promotion_metric:
+            response = self.client.post(reverse('job-view-create', kwargs={'slug': self.job.slug}))
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data, {'counted': True, 'view_count': 1})
@@ -220,6 +221,7 @@ class JobViewTrackingApiTests(APITestCase):
         daily = JobEngagementDaily.objects.get(job=self.job)
         self.assertEqual(daily.view_count, 1)
         self.assertEqual(daily.impression_count, 0)
+        promotion_metric.assert_called_once_with(job_ids=[self.job.pk], event='view')
 
     def test_impression_batch_requires_analytics_consent(self):
         response = self.client.post(
@@ -242,11 +244,12 @@ class JobViewTrackingApiTests(APITestCase):
             format='json',
         )
 
-        response = self.client.post(
-            reverse('job-impression-batch-create'),
-            {'slugs': [self.job.slug, self.job.slug, 'missing-job']},
-            format='json',
-        )
+        with patch('apps.jobs.api.views.public.record_job_promotion_metrics') as promotion_metric:
+            response = self.client.post(
+                reverse('job-impression-batch-create'),
+                {'slugs': [self.job.slug, self.job.slug, 'missing-job']},
+                format='json',
+            )
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
@@ -261,6 +264,10 @@ class JobViewTrackingApiTests(APITestCase):
         self.assertEqual(self.job.impression_count, 1)
         daily = JobEngagementDaily.objects.get(job=self.job)
         self.assertEqual(daily.impression_count, 1)
+        promotion_metric.assert_called_once_with(
+            job_ids=[self.job.pk],
+            event='impression',
+        )
 
     @patch('apps.jobs.services.engagement._claim_first_view', return_value=None)
     def test_redis_failure_does_not_increment_impression(self, _claim):

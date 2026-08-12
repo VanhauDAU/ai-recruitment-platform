@@ -11,6 +11,7 @@ from rest_framework.views import APIView
 from apps.accounts.permissions import IsCandidate
 from apps.cvs.models import UserCv
 from apps.privacy.services import load_consent
+from apps.services.services import record_job_promotion_metrics
 from common.metrics import record_metric
 
 from ...models import Job, SavedJob
@@ -338,6 +339,8 @@ class JobViewCreateView(APIView):
             )
 
         result = record_consented_job_view(request, job)
+        if result.get('counted'):
+            record_job_promotion_metrics(job_ids=[job.pk], event='view')
         viewer_id = result.pop('viewer_id', None)
         response = Response(result)
         set_viewer_cookie(response, viewer_id)
@@ -388,6 +391,11 @@ class JobImpressionBatchCreateView(APIView):
         jobs = [jobs_by_slug[slug] for slug in slugs if slug in jobs_by_slug]
         record_metric('job_impression_batch_size', len(slugs), reason='accepted')
         result = record_consented_job_impressions(request, jobs)
+        counted_slugs = {item['slug'] for item in result['results'] if item.get('counted')}
+        record_job_promotion_metrics(
+            job_ids=[job.pk for job in jobs if job.slug in counted_slugs],
+            event='impression',
+        )
         tracked_by_slug = {item['slug']: item for item in result['results']}
         response = Response(
             {

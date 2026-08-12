@@ -5,7 +5,7 @@ from threading import Barrier
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import close_old_connections
-from django.test import TestCase, TransactionTestCase
+from django.test import TestCase, TransactionTestCase, override_settings
 from django.utils import timezone
 
 from apps.employers.models import Company
@@ -14,6 +14,7 @@ from apps.jobs.models import Job
 from apps.jobs.services import lifecycle_local_date
 
 from ..models import (
+    JobPromotionMetricDaily,
     JobServiceActivation,
     JobServiceUsageEvent,
     ServiceAuditEvent,
@@ -32,6 +33,7 @@ from ..services import (
     grant_package_units,
     preview_job_service_activation,
     publish_package_version,
+    record_job_promotion_metrics,
     refresh_promoted_job,
     revoke_entitlement_unit,
 )
@@ -321,6 +323,44 @@ class EntitlementLedgerTests(TestCase):
             )
 
         self.assertEqual(JobServiceUsageEvent.objects.count(), 2)
+
+    @override_settings(JOB_PROMOTION_METRICS_ENABLED=True)
+    def test_metrics_are_aggregated_without_candidate_identity(self):
+        unit = self.grant_one(key='promotion-metrics')
+        activation = activate_job_service(
+            unit=unit,
+            job=self.job,
+            actor=self.employer,
+            idempotency_key='promotion-metrics-activation',
+        )
+
+        record_job_promotion_metrics(job_ids=[self.job.pk], event='impression')
+        record_job_promotion_metrics(job_ids=[self.job.pk], event='impression')
+        record_job_promotion_metrics(job_ids=[self.job.pk], event='view')
+        record_job_promotion_metrics(job_ids=[self.job.pk], event='save')
+        record_job_promotion_metrics(job_ids=[self.job.pk], event='apply')
+
+        metric = JobPromotionMetricDaily.objects.get(activation=activation)
+        self.assertEqual(metric.impression_count, 2)
+        self.assertEqual(metric.view_count, 1)
+        self.assertEqual(metric.save_count, 1)
+        self.assertEqual(metric.apply_count, 1)
+        self.assertFalse(hasattr(metric, 'candidate_id'))
+
+    def test_metrics_kill_switch_defaults_to_no_write(self):
+        unit = self.grant_one(key='promotion-metrics-off')
+        activate_job_service(
+            unit=unit,
+            job=self.job,
+            actor=self.employer,
+            idempotency_key='promotion-metrics-off-activation',
+        )
+
+        self.assertEqual(
+            record_job_promotion_metrics(job_ids=[self.job.pk], event='view'),
+            0,
+        )
+        self.assertFalse(JobPromotionMetricDaily.objects.exists())
 
     def test_revoke_is_audited_and_history_is_append_only(self):
         unit = self.grant_one(key='revoke-unit')

@@ -543,6 +543,7 @@ SPONSORED_JOB_DISTRIBUTION_ENABLED = config(
 )
 JOB_PROMOTION_REFRESH_ENABLED = config('JOB_PROMOTION_REFRESH_ENABLED', default=False, cast=bool)
 JOB_PROMOTION_ALERT_ENABLED = config('JOB_PROMOTION_ALERT_ENABLED', default=False, cast=bool)
+JOB_PROMOTION_METRICS_ENABLED = config('JOB_PROMOTION_METRICS_ENABLED', default=False, cast=bool)
 SAVED_JOB_REMARKETING_ENABLED = config('SAVED_JOB_REMARKETING_ENABLED', default=False, cast=bool)
 
 # SecurityMiddleware protects Django Admin/session cookies as well as API responses.

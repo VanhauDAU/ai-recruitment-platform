@@ -7,6 +7,7 @@ from .commercial import (
     ServicePackageVersionItem,
 )
 from .entitlements import (
+    JobPromotionMetricDaily,
     JobServiceActivation,
     JobServiceActivationItem,
     JobServiceUsageEvent,
@@ -19,6 +20,7 @@ __all__ = [
     'JobServiceActivation',
     'JobServiceActivationItem',
     'JobServiceUsageEvent',
+    'JobPromotionMetricDaily',
     'ServiceAuditEvent',
     'ServiceCapability',
     'ServiceCategory',

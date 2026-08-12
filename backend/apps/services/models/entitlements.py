@@ -373,6 +373,38 @@ class JobServiceUsageEvent(models.Model):
         return f'{self.event_type}:{self.public_id}'
 
 
+class JobPromotionMetricDaily(models.Model):
+    """Privacy-safe aggregate measured while one sponsored activation is effective."""
+
+    activation = models.ForeignKey(
+        JobServiceActivation,
+        on_delete=models.PROTECT,
+        related_name='promotion_metrics',
+    )
+    date = models.DateField()
+    impression_count = models.PositiveBigIntegerField(default=0)
+    view_count = models.PositiveBigIntegerField(default=0)
+    save_count = models.PositiveBigIntegerField(default=0)
+    apply_count = models.PositiveBigIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['date', 'id']
+        indexes = [models.Index(fields=['date'], name='services_promo_metric_date_idx')]
+        constraints = [
+            models.UniqueConstraint(
+                fields=['activation', 'date'],
+                name='services_promo_metric_activation_date',
+            ),
+        ]
+        verbose_name = 'Số liệu dịch vụ tin theo ngày'
+        verbose_name_plural = 'Số liệu dịch vụ tin theo ngày'
+
+    def __str__(self):
+        return f'{self.activation_id}:{self.date}'
+
+
 class ServiceAuditEvent(models.Model):
     """Append-only commercial audit log; metadata stores human-readable context only."""
 

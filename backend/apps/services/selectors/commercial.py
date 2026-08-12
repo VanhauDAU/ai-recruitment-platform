@@ -1,3 +1,4 @@
+from django.db.models import Sum
 from django.utils import timezone
 
 from ..models import (
@@ -102,6 +103,12 @@ def employer_active_job_service_activations(*, company, job_public_id='', at=Non
             status=JobServiceActivation.Status.ACTIVE,
             starts_at__lte=at,
             ends_at__gt=at,
+        )
+        .annotate(
+            promotion_impressions=Sum('promotion_metrics__impression_count', default=0),
+            promotion_views=Sum('promotion_metrics__view_count', default=0),
+            promotion_saves=Sum('promotion_metrics__save_count', default=0),
+            promotion_applies=Sum('promotion_metrics__apply_count', default=0),
         )
     )
     if job_public_id:

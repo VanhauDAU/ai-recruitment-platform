@@ -33,6 +33,7 @@ export default function BasicJobService({
   jobStatus,
   activationEnabled = false,
   refreshEnabled = false,
+  metricsEnabled = false,
 }) {
   const [units, setUnits] = useState([])
   const [activations, setActivations] = useState([])
@@ -165,6 +166,21 @@ export default function BasicJobService({
                         <Tag key={item.capability}>{item.name}{item.quantity > 1 ? ` · còn ${item.remaining_quantity}/${item.quantity}` : ''}</Tag>
                       ))}
                     </div>
+                    {metricsEnabled && activation.metrics && (
+                      <dl className="mt-3 grid grid-cols-2 gap-2 text-xs sm:grid-cols-4">
+                        {[
+                          ['Hiển thị', activation.metrics.impressions],
+                          ['Lượt xem', activation.metrics.views],
+                          ['Lưu tin', activation.metrics.saves],
+                          ['Ứng tuyển', activation.metrics.applies],
+                        ].map(([label, value]) => (
+                          <div key={label} className="rounded-md bg-slate-50 px-2 py-1.5">
+                            <dt className="text-slate-500">{label}</dt>
+                            <dd className="mt-0.5 font-bold text-slate-800">{Number(value || 0).toLocaleString('vi-VN')}</dd>
+                          </div>
+                        ))}
+                      </dl>
+                    )}
                   </div>
                   {refreshEnabled && refreshItem && (
                     <Button

@@ -44,6 +44,7 @@ describe('BasicJobService', () => {
       package_name: 'Nổi bật',
       job_title: 'Backend Engineer',
       ends_at: '2026-08-26T00:00:00Z',
+      metrics: { impressions: 1250, views: 120, saves: 18, applies: 6 },
       items: [{
         capability: 'job_refresh',
         name: 'Làm mới tin',
@@ -58,9 +59,12 @@ describe('BasicJobService', () => {
       jobStatus: 'active',
       activationEnabled: true,
       refreshEnabled: true,
+      metricsEnabled: true,
     })
 
     expect(await screen.findByText('Dịch vụ đang chạy')).toBeInTheDocument()
+    expect(screen.getByText('1.250')).toBeInTheDocument()
+    expect(screen.getByText('Ứng tuyển')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: /Làm mới tin/ }))
     expect(await screen.findByText(/không thay đổi ngày đăng hoặc hạn nhận hồ sơ/i)).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Dùng 1 lượt' }))
