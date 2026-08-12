@@ -3,6 +3,7 @@
 from copy import copy
 from datetime import timedelta
 
+from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 from django.utils.text import slugify
@@ -29,12 +30,63 @@ from ..models import (
     JobStatusHistory,
     JobWorkSchedule,
 )
+from .ai_generation import apply_job_ai_generation_to_draft
 
 FREE_JOB_QUOTA = 3
 VERIFIED_LEVEL_THREE_JOB_QUOTA = 100
-MAX_DEADLINE_DAYS = 30
+DEFAULT_DEADLINE_DAYS = 30
+MAX_DEADLINE_DAYS = 90
 MAX_PUBLIC_LIFETIME_DAYS = 90
 EXPIRED_JOB_RENEWAL_GRACE_DAYS = 30
+
+
+def job_deadline_policy():
+    """Return the validated deadline contract shared with employer clients."""
+    maximum_days = max(
+        int(getattr(settings, 'JOB_POSTING_MAX_DEADLINE_DAYS', MAX_DEADLINE_DAYS)),
+        1,
+    )
+    default_days = min(
+        max(
+            int(
+                getattr(
+                    settings,
+                    'JOB_POSTING_DEFAULT_DEADLINE_DAYS',
+                    DEFAULT_DEADLINE_DAYS,
+                )
+            ),
+            1,
+        ),
+        maximum_days,
+    )
+    maximum_public_lifetime_days = max(
+        int(
+            getattr(
+                settings,
+                'JOB_POSTING_MAX_PUBLIC_LIFETIME_DAYS',
+                MAX_PUBLIC_LIFETIME_DAYS,
+            )
+        ),
+        maximum_days,
+    )
+    return {
+        'default_deadline_days': default_days,
+        'max_deadline_days': maximum_days,
+        'max_public_lifetime_days': maximum_public_lifetime_days,
+    }
+
+
+def job_deadline_error(deadline, *, required=True, today=None):
+    """Return a localized validation error, keeping date rules in one place."""
+    if deadline is None:
+        return 'Chọn hạn nhận hồ sơ.' if required else ''
+    today = today or timezone.localdate()
+    if deadline < today:
+        return 'Hạn nhận hồ sơ phải từ hôm nay trở đi.'
+    maximum_days = job_deadline_policy()['max_deadline_days']
+    if deadline > today + timedelta(days=maximum_days):
+        return f'Hạn nhận hồ sơ không được quá {maximum_days} ngày kể từ hôm nay.'
+    return ''
 
 
 def _locked_recruiter(user):
@@ -287,10 +339,8 @@ def _validate_publishable(job):
         role=JobCategoryAssignment.Role.PRIMARY_SPECIALIZATION
     ).exists():
         errors['category_assignments'] = 'Chọn một vị trí chuyên môn chính.'
-    if job.deadline is None or job.deadline < today:
-        errors['deadline'] = 'Hạn nộp phải từ hôm nay trở đi.'
-    elif job.deadline > today + timedelta(days=MAX_DEADLINE_DAYS):
-        errors['deadline'] = f'Hạn nộp không được quá {MAX_DEADLINE_DAYS} ngày kể từ hôm nay.'
+    if deadline_error := job_deadline_error(job.deadline, today=today):
+        errors['deadline'] = deadline_error
     contact = getattr(job, 'application_contact', None)
     if contact is None:
         errors['application_contact'] = 'Nhập thông tin người nhận hồ sơ.'
@@ -332,6 +382,7 @@ def employer_job_posting_context(user):
             limit=limit,
         )
     return {
+        **job_deadline_policy(),
         'verification_completed': entitlement['verification_completed'],
         'admin_approved': entitlement['admin_approved'],
         'account_level': entitlement['account_level'],
@@ -366,6 +417,13 @@ def save_job_draft(serializer, user):
         if requested_campaign is not None:
             serializer.validated_data['campaign'] = locked_campaign
         job = serializer.save(posted_by=user, company=recruiter.company, status=Job.Status.DRAFT)
+        generation_public_id = getattr(serializer, '_ai_generation_public_id', '')
+        if generation_public_id:
+            apply_job_ai_generation_to_draft(
+                public_id=generation_public_id,
+                job=job,
+                user=user,
+            )
         _record_job_assignment(job, previous_campaign=None, user=user)
         _record_status(job, from_status='', to_status=Job.Status.DRAFT, user=user)
         return job
@@ -498,8 +556,8 @@ def reopen_job(job, user, deadline):
         raise ValidationError('Chỉ có thể mở lại tin đã đóng của bạn.')
     _validate_job_for_write(job)
     _validate_campaign_for_write(job.campaign, recruiter=recruiter)
-    if deadline < timezone.localdate():
-        raise ValidationError({'deadline': 'Hạn nộp phải từ hôm nay trở đi.'})
+    if deadline_error := job_deadline_error(deadline):
+        raise ValidationError({'deadline': deadline_error})
     job.deadline = deadline
     job.status = Job.Status.PENDING
     job.published_at = None
@@ -530,10 +588,8 @@ def extend_job_deadline(job, user, deadline):
     today = timezone.localdate()
     if job.deadline is None or deadline <= job.deadline:
         raise ValidationError({'deadline': 'Hạn gia hạn phải sau hạn nộp hiện tại.'})
-    if deadline > today + timedelta(days=MAX_DEADLINE_DAYS):
-        raise ValidationError(
-            {'deadline': f'Hạn gia hạn không được quá {MAX_DEADLINE_DAYS} ngày kể từ hôm nay.'}
-        )
+    if deadline_error := job_deadline_error(deadline, today=today):
+        raise ValidationError({'deadline': deadline_error})
     if job.deadline < today - timedelta(days=EXPIRED_JOB_RENEWAL_GRACE_DAYS):
         raise ValidationError(
             {
@@ -545,12 +601,13 @@ def extend_job_deadline(job, user, deadline):
         )
     if job.published_at:
         published_date = timezone.localdate(job.published_at)
-        if deadline > published_date + timedelta(days=MAX_PUBLIC_LIFETIME_DAYS):
+        maximum_lifetime_days = job_deadline_policy()['max_public_lifetime_days']
+        if deadline > published_date + timedelta(days=maximum_lifetime_days):
             raise ValidationError(
                 {
                     'deadline': (
                         'Tổng thời gian công khai của tin không được quá '
-                        f'{MAX_PUBLIC_LIFETIME_DAYS} ngày.'
+                        f'{maximum_lifetime_days} ngày.'
                     )
                 }
             )

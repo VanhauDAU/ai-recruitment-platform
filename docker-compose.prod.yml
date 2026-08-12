@@ -22,6 +22,7 @@ services:
       CELERY_BROKER_URL: redis://redis:6379/1
       DJANGO_SETTINGS_MODULE: config.settings.production
       FRONTEND_SHELL_URL: http://frontend/
+      AI_RUNTIME_ENABLED: ${AI_RUNTIME_ENABLED:-false}
       SPEECH_RUNTIME_ENABLED: ${SPEECH_RUNTIME_ENABLED:-false}
     volumes: !override
       - backend_media:/app/legacy-media:ro
@@ -38,12 +39,23 @@ services:
       REDIS_URL: redis://redis:6379/1
       CELERY_BROKER_URL: redis://redis:6379/1
       DJANGO_SETTINGS_MODULE: config.settings.production
+      AI_RUNTIME_ENABLED: ${AI_RUNTIME_ENABLED:-false}
       SPEECH_RUNTIME_ENABLED: ${SPEECH_RUNTIME_ENABLED:-false}
     volumes: !override
       - backend_media:/app/legacy-media:ro
       - backend_public_media:/app/public-media
       - backend_private_media:/app/private-media
       - backend_quarantine:/app/quarantine
+
+  ai-worker:
+    restart: unless-stopped
+    environment:
+      DB_HOST: db
+      REDIS_URL: redis://redis:6379/1
+      CELERY_BROKER_URL: redis://redis:6379/1
+      DJANGO_SETTINGS_MODULE: config.settings.production
+      AI_RUNTIME_ENABLED: ${AI_RUNTIME_ENABLED:-false}
+    volumes: !reset []
 
   beat:
     restart: unless-stopped
@@ -52,6 +64,7 @@ services:
       REDIS_URL: redis://redis:6379/1
       CELERY_BROKER_URL: redis://redis:6379/1
       DJANGO_SETTINGS_MODULE: config.settings.production
+      AI_RUNTIME_ENABLED: ${AI_RUNTIME_ENABLED:-false}
       SPEECH_RUNTIME_ENABLED: ${SPEECH_RUNTIME_ENABLED:-false}
     volumes: !reset []
 

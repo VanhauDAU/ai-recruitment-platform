@@ -14,6 +14,10 @@ from .api.views import (
     CandidateJobAlertListCreateView,
     CandidateJobRecommendationView,
     CvJobRecommendationView,
+    EmployerJobAiGenerationCancelView,
+    EmployerJobAiGenerationCreateView,
+    EmployerJobAiGenerationDetailView,
+    EmployerJobAiGenerationFeedbackView,
     EmployerJobCloseView,
     EmployerJobDetailView,
     EmployerJobDuplicateView,
@@ -94,6 +98,26 @@ urlpatterns = [
     path('saved/', SavedJobListCreateView.as_view(), name='saved-job-list-create'),
     path('saved/<str:public_id>/', SavedJobDestroyView.as_view(), name='saved-job-destroy'),
     path('mine/', EmployerJobListCreateView.as_view(), name='employer-job-list-create'),
+    path(
+        'mine/ai-generations/',
+        EmployerJobAiGenerationCreateView.as_view(),
+        name='employer-job-ai-generation-create',
+    ),
+    path(
+        'mine/ai-generations/<str:public_id>/',
+        EmployerJobAiGenerationDetailView.as_view(),
+        name='employer-job-ai-generation-detail',
+    ),
+    path(
+        'mine/ai-generations/<str:public_id>/cancel/',
+        EmployerJobAiGenerationCancelView.as_view(),
+        name='employer-job-ai-generation-cancel',
+    ),
+    path(
+        'mine/ai-generations/<str:public_id>/feedback/',
+        EmployerJobAiGenerationFeedbackView.as_view(),
+        name='employer-job-ai-generation-feedback',
+    ),
     path(
         'mine/posting-context/',
         EmployerJobPostingContextView.as_view(),

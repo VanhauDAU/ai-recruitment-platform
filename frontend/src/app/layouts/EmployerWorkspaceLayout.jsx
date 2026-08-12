@@ -360,7 +360,8 @@ export default function EmployerWorkspaceLayout() {
             )}
           </div>
           <Content
-            className="min-h-0 min-w-0 overflow-x-hidden overflow-y-auto bg-[#edf1f5] p-2.5 pt-0 sm:p-5 sm:pt-0 xl:p-6 xl:pt-0"
+            data-testid="employer-workspace-content"
+            className="min-h-0 min-w-0 overflow-x-hidden overflow-y-auto bg-[#edf1f5] p-2.5 pt-3 sm:p-5 sm:pt-4 xl:p-6 xl:pt-4"
             style={{
               // 56px topbar + 48px route bar. A percentage here would resolve
               // against each descendant's containing block, not this scrollport.

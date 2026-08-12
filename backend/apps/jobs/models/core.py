@@ -366,6 +366,10 @@ class Job(models.Model):
             models.Index(fields=['education_level']),
             models.Index(fields=['status', 'published_at']),
             models.Index(
+                fields=['status', '-created_at', '-id'],
+                name='jobs_status_created_desc_idx',
+            ),
+            models.Index(
                 fields=['company', 'status', '-created_at'], name='jobs_job_company_status_idx'
             ),
             models.Index(fields=['campaign', 'status'], name='jobs_job_campaign_status_idx'),

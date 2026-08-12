@@ -1,5 +1,6 @@
 """Settings shared by every Django environment."""
 
+import json
 from datetime import timedelta
 from pathlib import Path
 
@@ -401,6 +402,7 @@ REST_FRAMEWORK = {
         'announcement_event': '240/hour',
         'announcement_runtime': '60/hour',
         'cv_import': '10/hour',
+        'ai_job_generation': '3/min',
         'speech_catalog': '120/hour',
         'speech_session': '60/hour',
         'speech_adhoc': '90/hour',
@@ -518,6 +520,17 @@ JOB_VIEWER_COOKIE_MAX_AGE = 365 * 24 * 60 * 60
 JOB_VIEWER_COOKIE_SECURE = IS_PRODUCTION
 JOB_VIEWER_COOKIE_SAMESITE = 'Lax'
 
+# Job deadline policy is exposed by the employer posting-context API so every
+# client uses the same boundaries as the domain service. The default keeps the
+# familiar 30-day suggestion while allowing longer hiring processes up to 90 days.
+JOB_POSTING_DEFAULT_DEADLINE_DAYS = config(
+    'JOB_POSTING_DEFAULT_DEADLINE_DAYS', default=30, cast=int
+)
+JOB_POSTING_MAX_DEADLINE_DAYS = config('JOB_POSTING_MAX_DEADLINE_DAYS', default=90, cast=int)
+JOB_POSTING_MAX_PUBLIC_LIFETIME_DAYS = config(
+    'JOB_POSTING_MAX_PUBLIC_LIFETIME_DAYS', default=90, cast=int
+)
+
 # SecurityMiddleware protects Django Admin/session cookies as well as API responses.
 SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=IS_PRODUCTION, cast=bool)
 SECURE_PROXY_SSL_HEADER = (
@@ -594,6 +607,7 @@ CELERY_TASK_ROUTES = {
     'apps.cvs.tasks.*': {'queue': 'cv-export'},
     'apps.speech.tasks.*': {'queue': 'speech-artifacts'},
     'apps.uploads.tasks.*': {'queue': 'upload-scan'},
+    'apps.jobs.tasks.ai_generation.*': {'queue': 'ai-generation'},
     'apps.jobs.tasks.*': {'queue': 'candidate-email'},
     'apps.applications.tasks.*': {'queue': 'candidate-email'},
 }
@@ -603,6 +617,18 @@ CELERY_TASK_TIME_LIMIT = 60
 CELERY_TASK_SOFT_TIME_LIMIT = 50
 EMPLOYER_EVENT_RETENTION_DAYS = config('EMPLOYER_EVENT_RETENTION_DAYS', default=730, cast=int)
 CELERY_BEAT_SCHEDULE = {
+    'purge-expired-ai-runtime-metadata': {
+        'task': 'apps.ai_core.tasks.purge_expired_ai_metadata',
+        'schedule': 86400.0,
+    },
+    'recover-stale-job-ai-generations': {
+        'task': 'apps.jobs.tasks.ai_generation.recover_stale_job_generations',
+        'schedule': 5.0,
+    },
+    'purge-expired-job-ai-generation-content': {
+        'task': 'apps.jobs.tasks.ai_generation.purge_job_generation_content',
+        'schedule': 86400.0,
+    },
     'process-automatic-application-rejections': {
         'task': 'apps.applications.tasks.process_automatic_application_rejections',
         'schedule': 300.0,
@@ -668,6 +694,58 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': 86400.0,
     },
 }
+
+# Generative AI runtime. The environment flag is the hard kill switch; site
+# settings can only narrow access further. Production therefore stays disabled
+# until credentials, the dedicated worker and rollout gates are ready.
+AI_RUNTIME_ENABLED = config('AI_RUNTIME_ENABLED', default=not IS_PRODUCTION, cast=bool)
+AI_PROVIDER_BACKEND = config('AI_PROVIDER_BACKEND', default='gemini_developer').strip()
+AI_JOB_GENERATION_MODEL = config(
+    'AI_JOB_GENERATION_MODEL',
+    default='gemini-3.5-flash-lite',
+).strip()
+AI_JOB_GENERATION_MODEL_ALLOWLIST = tuple(
+    model.strip()
+    for model in config(
+        'AI_JOB_GENERATION_MODEL_ALLOWLIST',
+        default='gemini-3.5-flash-lite',
+        cast=Csv(),
+    )
+    if model.strip()
+)
+AI_JOB_GENERATION_DAILY_LIMIT = config(
+    'AI_JOB_GENERATION_DAILY_LIMIT',
+    default=10,
+    cast=int,
+)
+AI_JOB_GENERATION_CONTENT_RETENTION_DAYS = config(
+    'AI_JOB_GENERATION_CONTENT_RETENTION_DAYS',
+    default=90,
+    cast=int,
+)
+AI_INVOCATION_METADATA_RETENTION_DAYS = config(
+    'AI_INVOCATION_METADATA_RETENTION_DAYS',
+    default=365,
+    cast=int,
+)
+AI_JOB_GENERATION_LEASE_SECONDS = config(
+    'AI_JOB_GENERATION_LEASE_SECONDS',
+    default=85,
+    cast=int,
+)
+AI_PROVIDER_TIMEOUT_SECONDS = config('AI_PROVIDER_TIMEOUT_SECONDS', default=40, cast=float)
+AI_PROVIDER_MAX_ATTEMPTS = config('AI_PROVIDER_MAX_ATTEMPTS', default=2, cast=int)
+AI_PROVIDER_RETRY_BASE_SECONDS = config(
+    'AI_PROVIDER_RETRY_BASE_SECONDS',
+    default=0.5,
+    cast=float,
+)
+AI_PROVIDER_API_VERSION = config('AI_PROVIDER_API_VERSION', default='v1').strip()
+AI_MODEL_PRICING_USD = config('AI_MODEL_PRICING_USD', default='{}', cast=json.loads)
+AI_POLICY_CACHE_SECONDS = config('AI_POLICY_CACHE_SECONDS', default=60, cast=int)
+GEMINI_API_KEY = config('GEMINI_API_KEY', default='').strip()
+GOOGLE_CLOUD_PROJECT = config('GOOGLE_CLOUD_PROJECT', default='').strip()
+GOOGLE_CLOUD_LOCATION = config('GOOGLE_CLOUD_LOCATION', default='global').strip()
 
 # VieNeu-TTS chạy trong process riêng để không nhân model theo số Gunicorn/Celery
 # worker. Django chỉ cấp session ngắn hạn sau khi đã resolve nội dung public.

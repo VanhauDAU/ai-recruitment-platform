@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Alert, Button, Skeleton, Tag, Tabs, Typography } from 'antd'
 import { useSearchParams } from 'react-router'
 import { useSiteSettings } from '@/entities/site-settings'
+import { AiRuntimeOverview } from '@/features/manage-ai-runtime'
 import { getAdminSettings, SettingField, updateAdminSettings } from '@/features/manage-site-settings'
 import { SpeechRuntimeOverview } from '@/features/manage-speech-runtime'
 import { message } from '@/shared/lib/toast'
@@ -193,7 +194,12 @@ export default function AdminSettings() {
     ),
     children: (
       <div className="max-w-3xl">
-        {group.key === 'ai' && <SpeechRuntimeOverview />}
+        {group.key === 'ai' && (
+          <>
+            <AiRuntimeOverview />
+            <SpeechRuntimeOverview />
+          </>
+        )}
         <div className="divide-y divide-gray-100">
           {group.settings.map((setting) => (
             <div key={setting.key} className="flex flex-col gap-2 py-4 sm:flex-row sm:items-start">

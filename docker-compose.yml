@@ -23,6 +23,7 @@ x-service-hosts: &service-hosts
   UPLOAD_QUARANTINE_ROOT: /app/quarantine
   CLAMAV_HOST: ${CLAMAV_HOST:-clamav}
   CLAMAV_PORT: ${CLAMAV_PORT:-3310}
+  AI_RUNTIME_ENABLED: ${AI_RUNTIME_ENABLED:-true}
 
 # json-file mặc định tăng vô hạn và thường là phần dung lượng khó phát hiện nhất
 # trên VPS. Mọi service đều dùng cùng chính sách xoay log, override được qua .env.
@@ -168,6 +169,27 @@ services:
         condition: service_healthy
       media-init:
         condition: service_completed_successfully
+
+  # Generative AI is isolated from email/export/scan workloads so provider
+  # latency cannot exhaust the shared worker pool. Low prefetch keeps cancel
+  # and recovery predictable; two processes are the production capacity gate.
+  ai-worker:
+    <<: *backend-image
+    command: celery -A config worker --loglevel=info -Q ai-generation --concurrency=2 --prefetch-multiplier=1 --max-tasks-per-child=${AI_WORKER_MAX_TASKS_PER_CHILD:-100}
+    env_file: ./backend/.env
+    environment:
+      <<: *service-hosts
+    volumes:
+      - ./backend:/app
+    init: true
+    pids_limit: ${AI_WORKER_PIDS_LIMIT:-128}
+    stop_grace_period: 100s
+    logging: *default-logging
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
 
   beat:
     <<: *backend-image

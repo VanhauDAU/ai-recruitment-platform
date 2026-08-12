@@ -60,14 +60,14 @@ VALID_FERNET_KEY = 'MDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA='
 class SmsDeploymentConfigTests(SimpleTestCase):
     def test_compose_worker_consumes_every_configured_task_queue(self):
         compose = (Path(settings.BASE_DIR).parent / 'docker-compose.yml').read_text()
-        worker_section = compose.split('\n  worker:', 1)[1].split('\n  beat:', 1)[0]
-        command_line = next(
-            line.strip()
-            for line in worker_section.splitlines()
-            if line.strip().startswith('command: celery ')
+        queue_arguments = re.findall(
+            r'celery -A config worker[^\n]* -Q ([^\s]+)', compose
         )
-        queue_argument = command_line.split(' -Q ', 1)[1].split(' ', 1)[0]
-        worker_queues = set(queue_argument.split(','))
+        worker_queues = {
+            queue
+            for queue_argument in queue_arguments
+            for queue in queue_argument.split(',')
+        }
         routed_queues = {
             route['queue']
             for route in settings.CELERY_TASK_ROUTES.values()

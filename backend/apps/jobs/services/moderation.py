@@ -1,7 +1,6 @@
 """Administrative moderation workflows for submitted job postings."""
 
 import hashlib
-from datetime import timedelta
 from http import HTTPStatus
 
 from django.db import transaction
@@ -20,7 +19,7 @@ from apps.employers.services import recruiter_job_approval_state
 
 from ..models import Job, JobModerationEvent, JobStatusHistory
 from .content_snapshot import build_job_content_snapshot
-from .posting import MAX_DEADLINE_DAYS, _record_status
+from .posting import _record_status, job_deadline_error
 
 REVIEW_OPERATION = 'job.moderation.mutate'
 
@@ -160,13 +159,8 @@ def _approval_deadline(deadline, *, required):
         if required:
             raise ValidationError({'deadline': 'Chọn hạn nhận hồ sơ mới để duyệt tin đã quá hạn.'})
         return None
-    today = timezone.localdate()
-    if deadline < today:
-        raise ValidationError({'deadline': 'Hạn nộp phải từ hôm nay trở đi.'})
-    if deadline > today + timedelta(days=MAX_DEADLINE_DAYS):
-        raise ValidationError(
-            {'deadline': f'Hạn nộp không được quá {MAX_DEADLINE_DAYS} ngày kể từ hôm nay.'}
-        )
+    if deadline_error := job_deadline_error(deadline):
+        raise ValidationError({'deadline': deadline_error})
     return deadline
 
 

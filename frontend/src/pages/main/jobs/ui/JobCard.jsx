@@ -184,7 +184,7 @@ export default function JobCard({
     >
       <div className="relative shrink-0">
         <div
-          className={`flex items-center justify-center overflow-hidden rounded-lg border border-gray-100 bg-white ${
+          className={`flex items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white p-1 shadow-sm transition-colors duration-200 group-hover:border-[var(--brand-primary)]/60 ${
             compact ? 'h-14 w-14' : 'h-20 w-20 md:h-24 md:w-24'
           }`}
         >

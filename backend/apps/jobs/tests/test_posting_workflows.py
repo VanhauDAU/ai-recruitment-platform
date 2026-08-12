@@ -287,18 +287,28 @@ class JobPostingWorkflowTests(TestCase):
         self.assertEqual(revised.status_history.get().from_status, Job.Status.ACTIVE)
 
     @patch('apps.jobs.services.posting.recruiter_job_posting_entitlement')
-    def test_publish_rejects_a_deadline_more_than_thirty_days_away(self, entitlement):
+    def test_publish_accepts_ninety_days_and_rejects_day_ninety_one(self, entitlement):
         entitlement.return_value = (self.recruiter, self.free_entitlement)
-        job = self.make_publishable_job()
-        job.deadline = timezone.localdate() + timedelta(days=31)
-        job.save(update_fields=['deadline'])
+        today = timezone.localdate()
+        accepted = self.make_publishable_job(title='Accepted 90-day deadline')
+        accepted.deadline = today + timedelta(days=90)
+        accepted.save(update_fields=['deadline'])
+
+        published = publish_job(accepted, self.user)
+
+        self.assertEqual(published.status, Job.Status.PENDING)
+        self.assertEqual(published.deadline, today + timedelta(days=90))
+
+        rejected = self.make_publishable_job(title='Rejected 91-day deadline')
+        rejected.deadline = today + timedelta(days=91)
+        rejected.save(update_fields=['deadline'])
 
         with self.assertRaises(ValidationError) as context:
-            publish_job(job, self.user)
+            publish_job(rejected, self.user)
 
         self.assertIn('deadline', context.exception.detail)
-        job.refresh_from_db()
-        self.assertEqual(job.status, Job.Status.DRAFT)
+        rejected.refresh_from_db()
+        self.assertEqual(rejected.status, Job.Status.DRAFT)
 
     def test_deadline_extension_requires_a_strictly_later_deadline(self):
         today = timezone.localdate()
@@ -313,24 +323,24 @@ class JobPostingWorkflowTests(TestCase):
         self.assertEqual(job.deadline, today + timedelta(days=10))
         self.assertEqual(job.status, Job.Status.ACTIVE)
 
-    def test_deadline_extension_accepts_thirty_day_boundary_and_rejects_later_date(self):
+    def test_deadline_extension_accepts_ninety_day_boundary_and_rejects_later_date(self):
         today = timezone.localdate()
         accepted = self.make_active_job(
             deadline=today + timedelta(days=10),
-            published_at=timezone.now() - timedelta(days=10),
+            published_at=timezone.now(),
         )
 
-        extended = extend_job_deadline(accepted, self.user, today + timedelta(days=30))
+        extended = extend_job_deadline(accepted, self.user, today + timedelta(days=90))
 
-        self.assertEqual(extended.deadline, today + timedelta(days=30))
+        self.assertEqual(extended.deadline, today + timedelta(days=90))
         self.assertEqual(extended.status, Job.Status.ACTIVE)
 
         rejected = self.make_active_job(
             deadline=today + timedelta(days=10),
-            published_at=timezone.now() - timedelta(days=10),
+            published_at=timezone.now(),
         )
         with self.assertRaises(ValidationError):
-            extend_job_deadline(rejected, self.user, today + timedelta(days=31))
+            extend_job_deadline(rejected, self.user, today + timedelta(days=91))
         rejected.refresh_from_db()
         self.assertEqual(rejected.deadline, today + timedelta(days=10))
 
@@ -451,6 +461,19 @@ class JobPostingWorkflowTests(TestCase):
         self.assertEqual(history.to_status, Job.Status.PENDING)
         self.assertEqual(history.changed_by, self.user)
 
+    def test_active_edit_rejects_an_out_of_policy_deadline_before_mutating_the_job(self):
+        job = self.make_active_job()
+        serializer = EmployerJobWriteSerializer(
+            job,
+            data={'deadline': timezone.localdate() + timedelta(days=91)},
+            partial=True,
+        )
+
+        self.assertFalse(serializer.is_valid())
+        self.assertIn('deadline', serializer.errors)
+        job.refresh_from_db()
+        self.assertEqual(job.status, Job.Status.ACTIVE)
+
     @patch('apps.jobs.services.posting.recruiter_job_posting_entitlement')
     def test_another_recruiter_cannot_publish_or_duplicate_the_job(self, entitlement):
         entitlement.return_value = (self.recruiter, self.free_entitlement)
@@ -482,6 +505,25 @@ class JobPostingWorkflowTests(TestCase):
                 (Job.Status.ACTIVE, Job.Status.CLOSED),
             ],
         )
+
+    def test_reopen_accepts_ninety_days_and_rejects_day_ninety_one(self):
+        today = timezone.localdate()
+        accepted = self.make_active_job()
+        accepted = close_job(accepted, self.user)
+
+        reopened = reopen_job(accepted, self.user, today + timedelta(days=90))
+
+        self.assertEqual(reopened.status, Job.Status.PENDING)
+        self.assertEqual(reopened.deadline, today + timedelta(days=90))
+
+        rejected = self.make_active_job()
+        rejected = close_job(rejected, self.user)
+        with self.assertRaises(ValidationError) as context:
+            reopen_job(rejected, self.user, today + timedelta(days=91))
+
+        self.assertIn('deadline', context.exception.detail)
+        rejected.refresh_from_db()
+        self.assertEqual(rejected.status, Job.Status.CLOSED)
 
     @patch('apps.jobs.services.posting.recruiter_job_posting_entitlement')
     def test_stale_job_instances_cannot_overwrite_a_completed_transition(self, entitlement):

@@ -34,6 +34,15 @@ ALLOWED_METRICS = {
     'employer_notification_event',
     'employer_notification_retention',
     'candidate_job_digest',
+    'ai_generation_request',
+    'ai_generation_completion',
+    'ai_generation_latency_ms',
+    'ai_generation_queue_delay_ms',
+    'ai_generation_provider_call',
+    'ai_generation_tokens',
+    'ai_generation_cost_microusd',
+    'ai_generation_quota_rejection',
+    'ai_generation_apply',
 }
 
 
@@ -62,6 +71,10 @@ def record_metric(name, value=1, **tags):
             'state',
             'purpose',
             'provider',
+            'use_case',
+            'model',
+            'phase',
+            'attempt',
         }
     }
     logger.info(

@@ -1,5 +1,6 @@
 """Public model API for the jobs Django app."""
 
+from .ai_generation import JobAiGeneration
 from .alerts import (
     CandidateJobDigest,
     CandidateJobDigestItem,
@@ -29,6 +30,7 @@ __all__ = [
     'CandidateJobEmailReceipt',
     'CandidateJobEmailSuppression',
     'Job',
+    'JobAiGeneration',
     'JobAlert',
     'JobAlertCategory',
     'JobApplicationContact',

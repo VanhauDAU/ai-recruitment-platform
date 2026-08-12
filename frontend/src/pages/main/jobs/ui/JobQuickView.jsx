@@ -204,7 +204,7 @@ export default function JobQuickView({ job, onClose, isAuthenticated = true, onR
 
             {/* ── Thẻ công ty ── */}
             <div className="flex items-center gap-3 rounded-lg border border-gray-100 bg-gray-50 p-3.5">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-gray-100 bg-white">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white p-1 shadow-sm">
                 {job.company_logo_url ? (
                   <img src={job.company_logo_url} alt={job.company_name} className="h-full w-full object-contain p-0.5" loading="lazy" />
                 ) : (

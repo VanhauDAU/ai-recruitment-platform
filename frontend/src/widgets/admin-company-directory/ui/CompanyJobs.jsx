@@ -13,7 +13,7 @@ import { CompanyPanel } from './CompanyPanel'
 import { createCompanyJobColumns } from './CompanyJobColumns'
 
 const EMPTY_PAGE = { count: 0, results: [] }
-const DEFAULT_ORDERING = '-updated_at'
+const DEFAULT_ORDERING = '-created_at'
 
 function scopeParams(scope) {
   if (!scope || scope === 'all') return {}

@@ -25,7 +25,7 @@ function salaryIsComplete(values) {
   return values.salary_min != null
 }
 
-export function createJobFormValues(initialValues = {}) {
+export function createJobFormValues(initialValues = {}, { defaultDeadlineDays = null } = {}) {
   const assignments = initialValues.category_assignments || []
   const primary = assignments.find((item) => item.role === 'primary_specialization')
   const domains = assignments.filter((item) => item.role === 'domain_knowledge')
@@ -58,7 +58,11 @@ export function createJobFormValues(initialValues = {}) {
       : initialValues.work_type ? [initialValues.work_type] : [],
     salary_type: editableSalaryType,
     income_display_type: initialValues.income_display_type || 'income',
-    deadline: initialValues.deadline ? dayjs(initialValues.deadline) : null,
+    deadline: initialValues.deadline
+      ? dayjs(initialValues.deadline)
+      : Number.isInteger(defaultDeadlineDays) && defaultDeadlineDays > 0
+        ? dayjs().startOf('day').add(defaultDeadlineDays, 'day')
+        : null,
     category_assignments: [primary || { role: 'primary_specialization', sort_order: 0 }],
     domain_category_ids: domains.map((item) => item.category),
     work_areas: groupedAreas.size ? [...groupedAreas.values()] : [{ workplaces: [{}] }],
@@ -87,6 +91,62 @@ export function createJobFormValues(initialValues = {}) {
   }
 }
 
+const AI_GENERATED_SCALAR_FIELDS = [
+  'title',
+  'description',
+  'requirements',
+  'benefits',
+  'position_level',
+  'employment_type',
+  'education_level',
+  'experience_years',
+]
+
+export function createAiJobFormPatch(suggestion = {}) {
+  const patch = {}
+  AI_GENERATED_SCALAR_FIELDS.forEach((field) => {
+    if (suggestion[field] === undefined || suggestion[field] === null) return
+    patch[field] = ['description', 'requirements', 'benefits'].includes(field)
+      ? normalizeRichTextHtml(suggestion[field])
+      : suggestion[field]
+  })
+
+  if (Array.isArray(suggestion.work_types)) patch.work_types = suggestion.work_types
+
+  if (Array.isArray(suggestion.category_assignments)) {
+    const primary = suggestion.category_assignments.find((item) => item.role === 'primary_specialization')
+    const domains = suggestion.category_assignments
+      .filter((item) => item.role === 'domain_knowledge' && item.category != null)
+      .map((item) => item.category)
+    if (primary?.category != null) {
+      patch.category_assignments = [{
+        category: primary.category,
+        role: 'primary_specialization',
+        sort_order: 0,
+      }]
+    }
+    if (domains.length) patch.domain_category_ids = [...new Set(domains)]
+  }
+
+  if (Array.isArray(suggestion.job_skills)) {
+    patch.required_skill_ids = [...new Set(suggestion.job_skills
+      .filter((item) => item.importance === 'required' && item.skill != null)
+      .map((item) => item.skill))]
+    patch.preferred_skill_ids = [...new Set(suggestion.job_skills
+      .filter((item) => item.importance === 'preferred' && item.skill != null)
+      .map((item) => item.skill))]
+      .filter((skillId) => !patch.required_skill_ids.includes(skillId))
+  }
+
+  if (Array.isArray(suggestion.job_benefits)) {
+    patch.benefit_ids = [...new Set(suggestion.job_benefits
+      .filter((item) => item.benefit != null)
+      .map((item) => item.benefit))]
+  }
+
+  return patch
+}
+
 export function buildJobPayload(values) {
   const salaryType = values.salary_type || 'range'
   const salaryMinimum = values.salary_min ?? null
@@ -110,6 +170,7 @@ export function buildJobPayload(values) {
   delete persistedValues.benefit_ids
   delete persistedValues.domain_category_ids
   delete persistedValues.work_areas
+  delete persistedValues.ai_generation_public_id
 
   return {
     ...persistedValues,

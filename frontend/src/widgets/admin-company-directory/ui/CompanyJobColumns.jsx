@@ -67,7 +67,7 @@ export function createCompanyJobColumns({ ordering, openJob }) {
       },
     },
     {
-      title: 'Hạn nộp',
+      title: 'Hạn nhận hồ sơ',
       dataIndex: 'deadline',
       key: 'deadline',
       sorter: true,
@@ -76,7 +76,16 @@ export function createCompanyJobColumns({ ordering, openJob }) {
       render: formatAdminJobDate,
     },
     {
-      title: 'Gửi duyệt',
+      title: 'Tạo lúc',
+      dataIndex: 'created_at',
+      key: 'created_at',
+      sorter: true,
+      sortOrder: sorterOrder(ordering, 'created_at'),
+      width: 175,
+      render: formatAdminJobDateTime,
+    },
+    {
+      title: 'Gửi duyệt lúc',
       dataIndex: 'submitted_at',
       key: 'submitted_at',
       sorter: true,
@@ -117,7 +126,7 @@ export function createCompanyJobColumns({ ordering, openJob }) {
       ),
     },
     {
-      title: 'Cập nhật',
+      title: 'Cập nhật lúc',
       dataIndex: 'updated_at',
       key: 'updated_at',
       sorter: true,

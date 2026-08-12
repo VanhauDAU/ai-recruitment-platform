@@ -364,6 +364,53 @@ cho job failed chưa vượt ba attempt. Bucket throttle là `cv_import=10/hour`
 
 V1 chỉ nhận `.pdf/.docx`, 5 MB, PDF tối đa 20 trang. `scanned_pdf_ocr_unavailable`
 nghĩa là PDF scan chưa có text layer; OCR không được giả lập trong release này.
+
+### AI tạo tin tuyển dụng
+
+Mọi endpoint generation yêu cầu employer và owner-scope. Create dùng burst
+`3/min`, quota mặc định 10 generation mới/ngày/NTD; replay cùng idempotency key
+và cùng payload không trừ lượt. Retry provider bên trong cùng generation tối đa
+hai lần gọi và không tạo quota mới.
+
+| Method | Endpoint | Mô tả |
+| --- | --- | --- |
+| POST | `/api/jobs/mine/ai-generations/` | Tạo generation bất đồng bộ; trả `202 {public_id,status,phase,quota_remaining}`. |
+| GET | `/api/jobs/mine/ai-generations/{public_id}/` | Poll trạng thái/phase, suggestion đã resolve, warning, field thủ công và quota còn lại. |
+| POST | `/api/jobs/mine/ai-generations/{public_id}/cancel/` | Hủy queued/processing; terminal call là idempotent. |
+| POST | `/api/jobs/mine/ai-generations/{public_id}/feedback/` | Đánh giá kết quả completed bằng `helpful\|not_helpful` và optional reason enum. |
+| GET | `/api/ai/admin/overview/?days=30` | Superuser-only: hard/soft switch, provider/model, queue, success/error/P95/token/cost/quota và apply rate 7/30 ngày; không trả prompt, input/result hoặc allowlist ID. |
+
+Brief request:
+
+```json
+{
+  "mode": "ai_brief",
+  "idempotency_key": "client-generated-uuid",
+  "locale": "vi-VN",
+  "brief": {
+    "position": "Kỹ sư Backend Python",
+    "responsibilities": ["Xây dựng API tuyển dụng"],
+    "requirements": ["Có kinh nghiệm Django"],
+    "preferred_skills": ["Google Cloud"],
+    "notes": "Văn phong rõ ràng"
+  }
+}
+```
+
+JD request dùng `mode=jd_text`, bỏ `brief` và gửi `source_text` tối đa 20.000
+ký tự. Backend loại email, số điện thoại, URL/contact handle và xem toàn bộ input
+là dữ liệu không tin cậy trước khi gọi provider.
+
+Status completed chỉ trả field AI được phép trong `suggestion`; lương, địa điểm,
+lịch, deadline, số lượng, campaign, thông tin nhận hồ sơ, auto-reject, tuổi và
+giới tính luôn nằm ngoài suggestion. `POST /api/jobs/mine/?as=draft` có thể nhận
+write-only `ai_generation_public_id`; backend chỉ ghi provenance sau khi kiểm tra
+owner, company, trạng thái completed và không cho dùng lại cho tin khác.
+
+Mã lỗi ổn định gồm `JOB_AI_DAILY_QUOTA_EXCEEDED` (429),
+`JOB_AI_IDEMPOTENCY_CONFLICT` (409), generation unavailable (503), validation
+400 và owner mismatch 404. Provider message/raw content không được trả cho client.
+
 | GET | `/api/v2/cv-sample-contents/?locale=&experience_level=` | Compatibility catalogue cho client cũ; frontend mới không dùng endpoint này làm nguồn dropdown. |
 | GET | `/api/v2/cv-sample-contents/{public_id}/` | Compatibility detail cho client cũ dùng `sample_content_public_id`. |
 | GET/POST | `/api/v2/cvs/` | Candidate lifecycle V2. POST nhận template, language, optional sample/position/`source_cv_public_id` và optional màu; các source loại trừ nhau. |
@@ -386,7 +433,7 @@ nghĩa là PDF scan chưa có text layer; OCR không được giả lập trong 
 | GET/POST | `/api/privacy/consent/` | Đọc/lưu lựa chọn cookie ký số (`preferences`, `analytics`, `marketing`); necessary luôn bật, rút Analytics sẽ xóa viewer cookie. |
 | GET/POST | `/api/jobs/mine/` | Workspace recruiter owner-only và yêu cầu `job_workspace_ready=true`. `POST ?as=draft` lưu nháp thiếu dữ liệu; POST thường validate form/quota rồi tạo `pending`. Form giữ contract nested hiện hữu. Candidate preview chỉ gắn khi `candidate_data_access=true`. |
 | GET/PATCH/DELETE | `/api/jobs/mine/{public_id}/` | Chỉ người tạo và workspace-ready được đọc/sửa; chỉ xóa nháp. Cập nhật tin `active` quay lại `pending`. |
-| GET | `/api/jobs/mine/posting-context/` | Endpoint compliance không bị workspace guard để luôn trả quota + `job_workspace_ready`, `candidate_data_access`, `dpa_status`, `blockers[]`, `job_postable` và `block_reason`. |
+| GET | `/api/jobs/mine/posting-context/` | Endpoint compliance không bị workspace guard để luôn trả quota + `job_workspace_ready`, `candidate_data_access`, `dpa_status`, `blockers[]`, `job_postable`, `block_reason` và policy hạn hồ sơ (`default_deadline_days`, `max_deadline_days`, `max_public_lifetime_days`). |
 | POST | `/api/jobs/mine/{public_id}/submit/` | Gửi nháp/tin bị từ chối để duyệt lại; cập nhật tin pending giữ hàng chờ. |
 | POST | `/api/jobs/mine/{public_id}/close/`, `/reopen/`, `/extend/`, `/duplicate/` | Đóng, mở lại (trở về `pending`, body `{deadline}`), gia hạn tin active hoặc tạo nháp sao chép. |
 | GET | `/api/jobs/admin/moderation/?status=pending` | **Admin**: danh sách tin để kiểm duyệt, gồm người tạo, công ty, thời điểm gửi và lý do từ chối (nếu có). |

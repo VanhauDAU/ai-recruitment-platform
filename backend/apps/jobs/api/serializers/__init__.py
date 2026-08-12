@@ -1,5 +1,13 @@
 """Public serializers grouped by jobs use case."""
 
+from .ai_generation import (
+    JobAiGenerationCreateResponseSerializer,
+    JobAiGenerationCreateSerializer,
+    JobAiGenerationErrorSerializer,
+    JobAiGenerationFeedbackResponseSerializer,
+    JobAiGenerationFeedbackSerializer,
+    JobAiGenerationSerializer,
+)
 from .alerts import (
     JobAlertCreateSerializer,
     JobAlertListResponseSerializer,
@@ -78,6 +86,12 @@ __all__ = [
     'JobAlertListResponseSerializer',
     'JobAlertWriteSerializer',
     'JobApplicationEmailSerializer',
+    'JobAiGenerationCreateResponseSerializer',
+    'JobAiGenerationCreateSerializer',
+    'JobAiGenerationErrorSerializer',
+    'JobAiGenerationFeedbackResponseSerializer',
+    'JobAiGenerationFeedbackSerializer',
+    'JobAiGenerationSerializer',
     'JobBenefitSerializer',
     'JobCategoryAssignmentSerializer',
     'JobCategoryListSerializer',
