@@ -1,5 +1,5 @@
 from datetime import timedelta
-from unittest.mock import patch
+from unittest.mock import ANY, patch
 
 from django.test import override_settings
 from django.urls import reverse
@@ -383,8 +383,41 @@ class JobSalaryBucketFilterTests(APITestCase):
                 'is_hot',
                 'is_urgent',
                 'has_flash_badge',
+                'presentation',
                 'published_at',
                 'created_at',
+            },
+        )
+
+    def test_list_presentation_is_semantic_and_keeps_legacy_fields_for_rollback(self):
+        job = self.create_job('Presented job', 10_000_000, 15_000_000)
+        job.tier = Job.Tier.FEATURED
+        job.is_urgent = True
+        job.has_flash_badge = True
+        job.deadline = timezone.localdate() + timedelta(days=10)
+        job.save(update_fields=['tier', 'is_urgent', 'has_flash_badge', 'deadline'])
+
+        response = self.client.get(reverse('job-list'))
+
+        item = next(job for job in response.data['results'] if job['title'] == 'Presented job')
+        self.assertEqual(item['tier'], Job.Tier.FEATURED)
+        self.assertEqual(
+            item['presentation'],
+            {
+                'sponsored': True,
+                'card_tone': 'orange',
+                'labels': [
+                    {'code': 'sponsored', 'text': 'Tài trợ', 'tone': 'sponsored'},
+                    {'code': 'urgent', 'text': 'GẤP', 'tone': 'warning'},
+                    {
+                        'code': 'fast_response',
+                        'text': 'Phản hồi nhanh',
+                        'tone': 'success',
+                    },
+                ],
+                'display_reason': '',
+                'active_until': ANY,
+                'placement': 'legacy_priority',
             },
         )
         self.assertTrue(

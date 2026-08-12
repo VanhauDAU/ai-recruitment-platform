@@ -7,6 +7,7 @@ import {
   companyInitial,
   formatNumber as fmt,
   formatSalary,
+  JobPresentationLabels,
   jobDetailPath,
 } from '@/entities/job'
 import { JobImpressionBoundary } from '@/features/track-job-engagement'
@@ -116,6 +117,7 @@ export default function LatestJobsFeed({ jobs, enabled }) {
               <div className="min-w-0">
                 <p className="text-sm font-medium truncate">{item.job.title}</p>
                 <p className="text-xs text-green-100/70 truncate">{item.job.company_name}</p>
+                <JobPresentationLabels job={item.job} compact className="mt-1" />
               </div>
             </JobImpressionBoundary>
           </Tooltip>

@@ -18,6 +18,7 @@ from ...models import (
     JobSkill,
     JobWorkSchedule,
 )
+from ...selectors.presentation import job_presentation
 from ...selectors.verification_badge import (
     BADGE_CACHE_KEY,
     badge_criteria_payload,
@@ -88,6 +89,7 @@ class JobSerializer(serializers.ModelSerializer):
     short_description = serializers.SerializerMethodField()
     is_salary_visible = serializers.SerializerMethodField()
     application_deadline = serializers.SerializerMethodField()
+    presentation = serializers.SerializerMethodField()
 
     NESTED_RELATIONS = {
         'job_skills': (JobSkill, 'job_skills'),
@@ -145,6 +147,7 @@ class JobSerializer(serializers.ModelSerializer):
             'is_hot',
             'is_urgent',
             'has_flash_badge',
+            'presentation',
             'company_verified',
             'application_count',
             'job_skills',
@@ -173,6 +176,7 @@ class JobSerializer(serializers.ModelSerializer):
             'is_hot',
             'is_urgent',
             'has_flash_badge',
+            'presentation',
             'view_count',
             'application_count',
             'published_at',
@@ -374,6 +378,9 @@ class JobSerializer(serializers.ModelSerializer):
     def get_application_deadline(self, obj):
         return obj.deadline
 
+    def get_presentation(self, obj):
+        return job_presentation(obj)
+
 
 class PublicJobListSerializer(JobSerializer):
     """Compact contract for public search, related jobs, and saved-job cards."""
@@ -409,6 +416,7 @@ class PublicJobListSerializer(JobSerializer):
             'is_hot',
             'is_urgent',
             'has_flash_badge',
+            'presentation',
             'published_at',
             'created_at',
         ]
@@ -504,6 +512,7 @@ class JobDetailSerializer(JobSerializer):
             'view_count',
             'is_hot',
             'is_urgent',
+            'presentation',
             'job_locations',
             'work_schedules',
             'language_requirements',

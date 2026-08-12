@@ -16,6 +16,7 @@ import {
   formatNumber,
   formatSalary,
   getSalaryDisplayNote,
+  JobPresentationLabels,
 } from '@/entities/job'
 import { formatJobDate } from '../../lib/job-detail-presentation'
 import VerifiedEmployerBadge from './VerifiedEmployerBadge'
@@ -56,8 +57,7 @@ export function JobHero({ job, saved, applicationStatus, onApply, onSave, onShar
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
             <div className="mb-2 flex flex-wrap items-center gap-2">
-              {job.is_hot && <StatusBadge className="bg-red-50 text-red-600 ring-red-100">HOT</StatusBadge>}
-              {job.is_urgent && <StatusBadge className="bg-orange-50 text-orange-600 ring-orange-100">TUYỂN GẤP</StatusBadge>}
+              <JobPresentationLabels job={job} />
               {published && <span className="text-xs text-gray-400">{published}</span>}
             </div>
             <h1 className="text-xl font-bold leading-snug text-slate-900 sm:text-2xl">
@@ -113,10 +113,6 @@ function LatestApplicationNotice({ application }) {
         : <span className="font-semibold text-slate-700">Xem CV đã nộp</span>}
     </p>
   )
-}
-
-function StatusBadge({ children, className }) {
-  return <span className={`rounded px-2 py-0.5 text-[10px] font-bold ring-1 ${className}`}>{children}</span>
 }
 
 function HeroMetric({ icon, label, value, note, highlight = false, className = '' }) {
