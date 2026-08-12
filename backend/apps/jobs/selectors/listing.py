@@ -11,6 +11,7 @@ from ..models.querysets import (
     filter_salary_bucket_queryset,
     publicly_available_job_filter,
 )
+from .presentation import with_effective_service_presentations
 
 __all__ = [
     'SALARY_BUCKETS',
@@ -32,7 +33,7 @@ def filter_salary_bucket(queryset, bucket_key):
 
 def active_job_detail_queryset():
     """Return active jobs with every relation required by the detail serializer."""
-    return (
+    queryset = (
         Job.objects.filter(publicly_available_job_filter())
         .select_related('company', 'campaign', 'posted_by', 'posted_by__recruiter_profile')
         .prefetch_related(
@@ -45,6 +46,7 @@ def active_job_detail_queryset():
             'company__industries',
         )
     )
+    return with_effective_service_presentations(queryset)
 
 
 def active_job_tracking_queryset(slugs):
@@ -149,7 +151,9 @@ def _order_jobs(queryset, ordering):
 
 def build_job_list_queryset(params, include_preview=False):
     """Apply public job-list filters and ordering to the active job queryset."""
-    queryset = active_jobs_queryset(include_preview=include_preview)
+    queryset = with_effective_service_presentations(
+        active_jobs_queryset(include_preview=include_preview)
+    )
     if categories := params.getlist('category'):
         queryset = _filter_categories(queryset, categories)
     if locations := params.getlist('location'):

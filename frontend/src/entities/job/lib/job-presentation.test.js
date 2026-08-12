@@ -24,4 +24,10 @@ describe('job candidate presentation', () => {
       ],
     })
   })
+
+  it('supports the strongest commercial card tone without package-name mapping', () => {
+    expect(jobCardToneClass({
+      presentation: { card_tone: 'green_strong', labels: [], sponsored: true },
+    })).toContain('bg-emerald-100')
+  })
 })

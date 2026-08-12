@@ -8,6 +8,7 @@ describe('JobPresentationLabels', () => {
       <JobPresentationLabels
         job={{
           presentation: {
+            display_reason: 'Tin được tài trợ bởi nhà tuyển dụng.',
             labels: [
               { code: 'sponsored', text: 'Tài trợ', tone: 'sponsored' },
               { code: 'urgent', text: 'GẤP', tone: 'warning' },
@@ -18,7 +19,10 @@ describe('JobPresentationLabels', () => {
       />,
     )
 
-    expect(screen.getByText('Tài trợ')).toBeVisible()
+    expect(screen.getByText('Tài trợ')).toHaveAttribute(
+      'title',
+      'Tin được tài trợ bởi nhà tuyển dụng.',
+    )
     expect(screen.getByText('GẤP')).toBeVisible()
     expect(screen.getByText('Phản hồi nhanh')).toBeVisible()
   })

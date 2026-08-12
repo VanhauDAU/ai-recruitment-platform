@@ -8,6 +8,7 @@ from rest_framework.views import APIView
 from apps.accounts.permissions import IsCandidate
 
 from ...selectors import recommend_jobs_from_saved
+from ...selectors.presentation import prime_effective_service_presentations
 from ...selectors.verification_badge import prime_badge_cache
 from ..serializers import (
     PublicJobListSerializer,
@@ -26,6 +27,7 @@ def _serialize_results(payload, request):
         context,
         {(item['job'].company_id, item['job'].posted_by_id) for item in payload['results']},
     )
+    prime_effective_service_presentations(item['job'] for item in payload['results'])
     results = []
     for item in payload['results']:
         job = PublicJobListSerializer(item['job'], context=context).data

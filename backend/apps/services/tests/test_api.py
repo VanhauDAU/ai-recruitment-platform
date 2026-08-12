@@ -95,6 +95,7 @@ class PublicPackagesApiTests(APITestCase):
         self.assertEqual(packages[0]['benefits_vi'], ['Quyền lợi 1'])
         self.assertIsNone(packages[0]['published_version'])
 
+    @override_settings(SERVICE_CATALOG_V2_ENABLED=True)
     def test_includes_the_structured_published_version_without_breaking_legacy_fields(self):
         category = make_category()
         package = make_package(category)

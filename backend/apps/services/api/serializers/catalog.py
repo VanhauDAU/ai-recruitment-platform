@@ -1,5 +1,6 @@
 import re
 
+from django.conf import settings
 from rest_framework import serializers
 
 from ...models import ConsultationLead, ServiceCategory, ServicePackage
@@ -55,6 +56,8 @@ class PublicServicePackageSerializer(serializers.ModelSerializer):
         fields = [*PACKAGE_PUBLIC_FIELDS, 'published_version']
 
     def get_published_version(self, obj):
+        if not getattr(settings, 'SERVICE_CATALOG_V2_ENABLED', False):
+            return None
         versions = getattr(obj, 'published_versions', [])
         if not versions:
             return None

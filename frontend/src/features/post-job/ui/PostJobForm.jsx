@@ -275,6 +275,7 @@ export default function PostJobForm({
             <BasicJobService
               jobPublicId={initialValues?.public_id}
               jobStatus={initialValues?.status}
+              activationEnabled={postingContext?.services?.activation_enabled === true}
             />
           </JobFormSection>
 

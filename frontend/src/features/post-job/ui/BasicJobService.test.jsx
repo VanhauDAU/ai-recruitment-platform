@@ -38,7 +38,8 @@ describe('BasicJobService', () => {
     renderService()
 
     expect(await screen.findByText('Tin đăng cơ bản')).toBeInTheDocument()
-    expect(screen.getByText('Chưa có lượt dịch vụ khả dụng')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Xem các gói gia tăng hiệu quả' })).toBeInTheDocument()
+    expect(serviceApi.getEmployerServiceInventory).not.toHaveBeenCalled()
     expect(screen.queryByText(/Thời gian hiển thị/)).not.toBeInTheDocument()
   })
 
@@ -59,7 +60,7 @@ describe('BasicJobService', () => {
     })
     serviceApi.activateEmployerService.mockResolvedValue({ public_id: 'act_1' })
 
-    renderService({ jobPublicId: 'job_1', jobStatus: 'active' })
+    renderService({ jobPublicId: 'job_1', jobStatus: 'active', activationEnabled: true })
 
     await user.click(await screen.findByRole('button', { name: 'Xem trước và kích hoạt' }))
     expect(await screen.findByText('Cần gia hạn tin để dịch vụ chạy đủ thời lượng')).toBeInTheDocument()

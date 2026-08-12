@@ -6,8 +6,11 @@ field/relation mới làm tăng số query, cập nhật con số kèm giải th
 tăng không giải thích = regression.
 """
 
+from datetime import timedelta
+
 from django.test import override_settings
 from django.urls import reverse
+from django.utils import timezone
 from rest_framework.test import APITestCase
 
 from apps.accounts.models import User
@@ -15,6 +18,14 @@ from apps.applications.models import Application
 from apps.cvs.models import CvVersion, UserCv
 from apps.employers.models import Company
 from apps.employers.tests.readiness_helpers import make_employer_ready
+from apps.services.models import ServiceCapability, ServiceCategory, ServicePackage
+from apps.services.services import (
+    activate_job_service,
+    add_package_version_item,
+    create_package_version,
+    grant_package_units,
+    publish_package_version,
+)
 from apps.skills.models import Skill
 
 from ..models import Job, JobCategory, JobCategoryAssignment, JobSkill, SavedJob
@@ -27,6 +38,7 @@ from ..models import Job, JobCategory, JobCategoryAssignment, JobSkill, SavedJob
 # Query này chạy một lần cho cả response nên tổng vẫn phẳng theo số bản ghi.
 BADGE_QUERY_BUDGET = 1
 JOB_LIST_QUERY_BUDGET = 5 + BADGE_QUERY_BUDGET
+JOB_LIST_COMMERCIAL_PRESENTATION_QUERY_BUDGET = JOB_LIST_QUERY_BUDGET + 2
 ADMIN_JOB_LIST_QUERY_BUDGET = 2
 EMPLOYER_JOB_LIST_QUERY_BUDGET = 5
 SAVED_JOB_SIMILARITY_QUERY_BUDGET = 8 + BADGE_QUERY_BUDGET
@@ -61,6 +73,60 @@ class JobListQueryBudgetTests(APITestCase):
     def test_job_list_query_count_is_flat_regardless_of_row_count(self):
         with self.assertNumQueries(JOB_LIST_QUERY_BUDGET):
             response = self.client.get(reverse('job-list'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data['results']), 5)
+
+    @override_settings(JOB_PRESENTATION_V2_ENABLED=True)
+    def test_commercial_presentation_query_count_is_flat(self):
+        now = timezone.now()
+        job = Job.objects.order_by('pk').first()
+        job.deadline = timezone.localdate() + timedelta(days=30)
+        job.requested_visibility_days = 30
+        job.first_approved_at = now
+        job.visibility_starts_at = now
+        job.visibility_ends_at = now + timedelta(days=30)
+        job.save(
+            update_fields=[
+                'deadline',
+                'requested_visibility_days',
+                'first_approved_at',
+                'visibility_starts_at',
+                'visibility_ends_at',
+            ]
+        )
+        category = ServiceCategory.objects.create(
+            key='job-query-budget', name_vi='Job query budget'
+        )
+        package = ServicePackage.objects.create(
+            category=category, slug='job-query-budget', name_vi='Job query budget'
+        )
+        version = create_package_version(package=package, price=299000)
+        add_package_version_item(
+            package_version=version,
+            capability=ServiceCapability.objects.get(code='sponsored_placement'),
+            duration_days=14,
+            configuration={'placement': 'search_sponsored'},
+        )
+        version = publish_package_version(package_version=version, actor=self.user)
+        unit = grant_package_units(
+            company=self.company,
+            package_version=version,
+            quantity=1,
+            actor=self.user,
+            grant_key='job-query-budget-grant',
+            granted_at=now,
+        )[0]
+        activate_job_service(
+            unit=unit,
+            job=job,
+            actor=self.user,
+            idempotency_key='job-query-budget-activation',
+            activated_at=now,
+        )
+
+        with self.assertNumQueries(JOB_LIST_COMMERCIAL_PRESENTATION_QUERY_BUDGET):
+            response = self.client.get(reverse('job-list'))
+
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.data['results']), 5)
 

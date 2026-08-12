@@ -11,6 +11,7 @@ const CARD_TONE_CLASSES = {
   neutral: 'border-slate-200 bg-white',
   orange: 'border-orange-200 bg-orange-50/60',
   green: 'border-emerald-300 bg-emerald-50/70',
+  green_strong: 'border-emerald-400 bg-emerald-100/80',
 }
 
 export function resolveJobPresentation(job = {}) {

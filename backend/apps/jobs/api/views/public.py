@@ -20,6 +20,7 @@ from ...selectors.listing import (
     publicly_available_job_filter,
     suggest_job_search_terms,
 )
+from ...selectors.presentation import prime_effective_service_presentations
 from ...selectors.recommendations import (
     RecommendationConsentRequired,
     recommend_jobs_for_candidate,
@@ -182,6 +183,7 @@ def _serialize_recommendation_results(payload, request):
         context,
         {(item['job'].company_id, item['job'].posted_by_id) for item in payload['results']},
     )
+    prime_effective_service_presentations(item['job'] for item in payload['results'])
     results = []
     for item in payload['results']:
         serialized = PublicJobListSerializer(item['job'], context=context).data
@@ -385,6 +387,11 @@ class SavedJobListCreateView(generics.ListCreateAPIView):
                 'job__job_skills__skill',
             )
         )
+
+    def list(self, request, *args, **kwargs):
+        saved_jobs = list(self.filter_queryset(self.get_queryset()))
+        prime_effective_service_presentations(saved.job for saved in saved_jobs)
+        return Response(self.get_serializer(saved_jobs, many=True).data)
 
     def perform_create(self, serializer):
         serializer.save(candidate=self.request.user)

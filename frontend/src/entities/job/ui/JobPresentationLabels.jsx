@@ -8,7 +8,8 @@ const LABEL_CLASSES = {
 }
 
 export default function JobPresentationLabels({ job, compact = false, className = '' }) {
-  const labels = resolveJobPresentation(job).labels || []
+  const presentation = resolveJobPresentation(job)
+  const labels = presentation.labels || []
   if (!labels.length) return null
 
   return (
@@ -17,6 +18,7 @@ export default function JobPresentationLabels({ job, compact = false, className 
         <span
           key={label.code}
           data-job-label={label.code}
+          title={label.code === 'sponsored' ? presentation.display_reason || undefined : undefined}
           className={`inline-flex items-center rounded font-bold ring-1 ${
             compact ? 'px-1.5 py-0.5 text-[10px] leading-none' : 'px-2 py-0.5 text-[11px]'
           } ${LABEL_CLASSES[label.tone] || LABEL_CLASSES.sponsored}`}

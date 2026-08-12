@@ -1,6 +1,7 @@
+from django.conf import settings
 from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import status
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -26,6 +27,11 @@ def _company_for(request):
     return recruiter.company
 
 
+def _require_activation_enabled():
+    if not getattr(settings, 'SERVICE_ACTIVATION_ENABLED', False):
+        raise NotFound('Dịch vụ kích hoạt đang được triển khai theo từng nhóm doanh nghiệp.')
+
+
 def _raise_domain_validation(error):
     detail = getattr(error, 'message_dict', None) or getattr(error, 'messages', None)
     raise ValidationError(detail or str(error)) from error
@@ -35,6 +41,7 @@ class EmployerServiceInventoryView(APIView):
     permission_classes = [IsEmployer]
 
     def get(self, request):
+        _require_activation_enabled()
         company = _company_for(request)
         units = (
             ServiceEntitlementUnit.objects.select_related('package_version__package')
@@ -48,6 +55,7 @@ class EmployerServiceActivationPreviewView(APIView):
     permission_classes = [IsEmployer]
 
     def post(self, request):
+        _require_activation_enabled()
         _company_for(request)
         serializer = EmployerActivationRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -66,6 +74,7 @@ class EmployerServiceActivationCreateView(APIView):
     permission_classes = [IsEmployer]
 
     def post(self, request):
+        _require_activation_enabled()
         _company_for(request)
         idempotency_key = request.headers.get('Idempotency-Key', '').strip()
         if not idempotency_key:

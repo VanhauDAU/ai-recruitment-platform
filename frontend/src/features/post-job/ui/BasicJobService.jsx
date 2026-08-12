@@ -25,7 +25,7 @@ function errorMessage(error, fallback) {
   return fallback
 }
 
-export default function BasicJobService({ jobPublicId, jobStatus }) {
+export default function BasicJobService({ jobPublicId, jobStatus, activationEnabled = false }) {
   const [units, setUnits] = useState([])
   const [loading, setLoading] = useState(true)
   const [selectedId, setSelectedId] = useState()
@@ -36,6 +36,11 @@ export default function BasicJobService({ jobPublicId, jobStatus }) {
   const canActivate = Boolean(jobPublicId && jobStatus === 'active')
 
   const load = useCallback(async () => {
+    if (!activationEnabled) {
+      setUnits([])
+      setLoading(false)
+      return
+    }
     setLoading(true)
     try {
       const inventory = await getEmployerServiceInventory()
@@ -49,7 +54,7 @@ export default function BasicJobService({ jobPublicId, jobStatus }) {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [activationEnabled])
 
   useEffect(() => { load() }, [load])
 
@@ -103,7 +108,7 @@ export default function BasicJobService({ jobPublicId, jobStatus }) {
         </div>
       </div>
 
-      {units.length ? (
+      {activationEnabled && units.length ? (
         <div className="rounded-xl border border-slate-200 p-4 sm:p-5">
           <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -126,10 +131,14 @@ export default function BasicJobService({ jobPublicId, jobStatus }) {
           {!canActivate && <Alert className="mt-3" type="info" showIcon message="Lưu và chờ tin được duyệt trước khi kích hoạt dịch vụ." />}
           <Button className="mt-4 w-full sm:w-auto" type="primary" disabled={!canActivate || !selectedId} loading={previewing} onClick={openPreview}>Xem trước và kích hoạt</Button>
         </div>
-      ) : (
+      ) : activationEnabled ? (
         <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Chưa có lượt dịch vụ khả dụng">
           <Link target="_blank" rel="noreferrer" to={employerMarketingPath('/bao-gia')}><Button>Xem gói dịch vụ</Button></Link>
         </Empty>
+      ) : (
+        <div className="text-center">
+          <Link target="_blank" rel="noreferrer" to={employerMarketingPath('/bao-gia')}><Button>Xem các gói gia tăng hiệu quả</Button></Link>
+        </div>
       )}
 
       <Modal

@@ -18,6 +18,14 @@ from apps.employers.models import (
 )
 from apps.employers.tests.readiness_helpers import make_employer_ready
 from apps.locations.models import Location
+from apps.services.models import ServiceCapability, ServiceCategory, ServicePackage
+from apps.services.services import (
+    activate_job_service,
+    add_package_version_item,
+    create_package_version,
+    grant_package_units,
+    publish_package_version,
+)
 from apps.skills.models import Skill, SkillGroup
 
 from ..api.serializers import (
@@ -25,7 +33,7 @@ from ..api.serializers import (
     EmployerJobWriteSerializer,
     JobDetailSerializer,
 )
-from ..models import Benefit, Job, JobCategory, JobEngagementDaily, Language
+from ..models import Benefit, Job, JobCategory, JobEngagementDaily, Language, SavedJob
 
 
 class JobCategoryApiTests(APITestCase):
@@ -431,6 +439,102 @@ class JobSalaryBucketFilterTests(APITestCase):
                 'updated_at',
             }.isdisjoint(item)
         )
+
+    @override_settings(JOB_PRESENTATION_V2_ENABLED=True)
+    def test_published_activation_drives_presentation_without_package_name_rules(self):
+        now = timezone.now()
+        job = self.create_job('Commercial presentation', 10_000_000, 15_000_000)
+        job.deadline = timezone.localdate() + timedelta(days=30)
+        job.requested_visibility_days = 30
+        job.first_approved_at = now
+        job.visibility_starts_at = now
+        job.visibility_ends_at = now + timedelta(days=30)
+        job.save(
+            update_fields=[
+                'deadline',
+                'requested_visibility_days',
+                'first_approved_at',
+                'visibility_starts_at',
+                'visibility_ends_at',
+            ]
+        )
+        category = ServiceCategory.objects.create(
+            key='commercial-presentation', name_vi='Commercial presentation'
+        )
+        package = ServicePackage.objects.create(
+            category=category,
+            slug='package-name-must-not-drive-presentation',
+            name_vi='Tên gói tùy ý',
+        )
+        version = create_package_version(package=package, price=799000)
+        for order, (code, configuration) in enumerate(
+            (
+                ('sponsored_placement', {'placement': 'best_jobs_eligible'}),
+                ('card_tone', {'tone': 'green_strong'}),
+                ('urgent_label', {}),
+            )
+        ):
+            add_package_version_item(
+                package_version=version,
+                capability=ServiceCapability.objects.get(code=code),
+                duration_days=14,
+                configuration=configuration,
+                order=order,
+            )
+        version = publish_package_version(package_version=version, actor=self.user)
+        unit = grant_package_units(
+            company=self.company,
+            package_version=version,
+            quantity=1,
+            actor=self.user,
+            grant_key='commercial-presentation-grant',
+            granted_at=now,
+        )[0]
+        activate_job_service(
+            unit=unit,
+            job=job,
+            actor=self.user,
+            idempotency_key='commercial-presentation-activation',
+            activated_at=now,
+        )
+
+        response = self.client.get(reverse('job-list'))
+
+        item = next(
+            result
+            for result in response.data['results']
+            if result['title'] == 'Commercial presentation'
+        )
+        self.assertEqual(item['tier'], Job.Tier.STANDARD)
+        self.assertEqual(
+            item['presentation'],
+            {
+                'sponsored': True,
+                'card_tone': 'green_strong',
+                'labels': [
+                    {'code': 'sponsored', 'text': 'Tài trợ', 'tone': 'sponsored'},
+                    {'code': 'urgent', 'text': 'GẤP', 'tone': 'warning'},
+                ],
+                'display_reason': 'Tin được tài trợ bởi nhà tuyển dụng.',
+                'active_until': ANY,
+                'placement': 'best_jobs_eligible',
+            },
+        )
+
+        detail = self.client.get(reverse('job-detail', kwargs={'slug': job.slug}))
+        self.assertEqual(detail.status_code, 200)
+        self.assertEqual(detail.data['presentation'], item['presentation'])
+
+        candidate = User.objects.create_user(
+            email='commercial-presentation-candidate@example.com',
+            password='Password@123',
+            role=User.Role.CANDIDATE,
+        )
+        SavedJob.objects.create(candidate=candidate, job=job)
+        self.client.force_authenticate(candidate)
+        saved = self.client.get(reverse('saved-job-list-create'))
+        self.assertEqual(saved.status_code, 200)
+        self.assertEqual(saved.data[0]['job_detail']['presentation'], item['presentation'])
 
 
 class EmployerJobSerializerTests(APITestCase):

@@ -2,7 +2,7 @@ from datetime import timedelta
 
 from django.contrib.auth import get_user_model
 from django.db import connection
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from django.utils import timezone
@@ -22,6 +22,7 @@ from ..services import (
 )
 
 
+@override_settings(SERVICE_ACTIVATION_ENABLED=True)
 class EmployerActivationApiTests(TestCase):
     def setUp(self):
         user_model = get_user_model()
@@ -136,3 +137,13 @@ class EmployerActivationApiTests(TestCase):
         self.assertEqual(len(expanded.data), 21)
         self.assertEqual(len(expanded_queries), len(baseline_queries))
         self.assertLessEqual(len(expanded_queries), 8)
+
+    @override_settings(SERVICE_ACTIVATION_ENABLED=False)
+    def test_activation_endpoints_are_hidden_while_kill_switch_is_off(self):
+        inventory = self.client.get(reverse('services-employer-inventory'))
+        preview = self.client.post(
+            reverse('services-employer-activation-preview'), self.payload(), format='json'
+        )
+
+        self.assertEqual(inventory.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(preview.status_code, status.HTTP_404_NOT_FOUND)
