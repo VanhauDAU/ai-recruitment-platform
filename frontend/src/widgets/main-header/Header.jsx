@@ -46,7 +46,7 @@ function HeaderActions({ isAuthenticated, logout, navigate, user }) {
         <CandidateUserMenu user={user} logout={logout} />
         <div className="hidden border-l border-gray-200 pl-4 leading-tight lg:block">
           <p className="text-xs text-gray-500">Bạn là nhà tuyển dụng?</p>
-          <a href={EMPLOYER_PORTAL_URL} className="text-sm font-semibold text-[var(--brand-primary)] hover:underline">
+          <a href={EMPLOYER_PORTAL_URL} className="text-sm font-semibold !text-[var(--brand-primary)] transition-colors hover:!text-[var(--brand-primary-hover)] hover:underline">
             Đăng tuyển ngay »
           </a>
         </div>
@@ -67,7 +67,7 @@ function MobileActions({ isAuthenticated, navigate, onClose, user }) {
       {!isAuthenticated ? (
         <GuestActions mobile onSelect={onClose} navigate={navigate} />
       ) : user?.role === 'candidate' ? (
-        <a href={EMPLOYER_PORTAL_URL} className="text-center text-sm font-semibold text-[var(--brand-primary)]">
+        <a href={EMPLOYER_PORTAL_URL} className="text-center text-sm font-semibold !text-[var(--brand-primary)] transition-colors hover:!text-[var(--brand-primary-hover)]">
           Bạn là nhà tuyển dụng? Đăng tuyển ngay »
         </a>
       ) : (
