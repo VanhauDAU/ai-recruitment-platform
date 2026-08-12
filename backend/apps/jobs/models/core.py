@@ -1,3 +1,5 @@
+from zoneinfo import ZoneInfo
+
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
@@ -461,13 +463,18 @@ class Job(models.Model):
 
     @property
     def is_expired(self):
-        from django.utils import timezone
-
-        return bool(
+        application_expired = bool(
             self.status == self.Status.ACTIVE
             and self.deadline is not None
-            and self.deadline < timezone.localdate()
+            and self.deadline < timezone.localdate(timezone=ZoneInfo('Asia/Ho_Chi_Minh'))
         )
+        visibility_expired = bool(
+            self.status == self.Status.ACTIVE
+            and (self.visibility_ends_at is None or self.visibility_ends_at <= timezone.now())
+        )
+        if str(getattr(settings, 'JOB_LIFECYCLE_V2_MODE', 'legacy')).lower() == 'enforce':
+            return application_expired or visibility_expired
+        return application_expired
 
     @property
     def is_visibility_expired(self):

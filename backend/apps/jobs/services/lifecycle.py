@@ -1,17 +1,28 @@
 from datetime import timedelta
+from zoneinfo import ZoneInfo
 
 from django.conf import settings
+from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
 LIFECYCLE_MODES = frozenset({'legacy', 'shadow', 'enforce'})
 DEFAULT_VISIBILITY_DAYS = 30
 MAX_VISIBILITY_DAYS = 90
+LIFECYCLE_TIME_ZONE = ZoneInfo('Asia/Ho_Chi_Minh')
+
+
+def lifecycle_mode():
+    mode = str(getattr(settings, 'JOB_LIFECYCLE_V2_MODE', 'legacy')).strip().lower()
+    return mode if mode in LIFECYCLE_MODES else 'legacy'
+
+
+def lifecycle_local_date(value=None):
+    value = value or timezone.now()
+    return timezone.localtime(value, timezone=LIFECYCLE_TIME_ZONE).date()
 
 
 def job_lifecycle_policy():
-    mode = str(getattr(settings, 'JOB_LIFECYCLE_V2_MODE', 'legacy')).strip().lower()
-    if mode not in LIFECYCLE_MODES:
-        mode = 'legacy'
+    mode = lifecycle_mode()
     maximum_days = min(
         MAX_VISIBILITY_DAYS,
         max(
@@ -70,6 +81,25 @@ def initialize_job_visibility(job, *, approved_at):
     if job.visibility_ends_at is None:
         job.visibility_ends_at = job.visibility_starts_at + timedelta(
             days=job.requested_visibility_days
+        )
+        changed_fields.append('visibility_ends_at')
+    return changed_fields
+
+
+def extend_job_visibility(job, *, requested_visibility_days):
+    """Extend the current public cycle without moving its immutable anchor."""
+    if error := visibility_days_error(requested_visibility_days):
+        raise ValidationError({'requested_visibility_days': error})
+    if requested_visibility_days <= job.requested_visibility_days:
+        raise ValidationError(
+            {'requested_visibility_days': 'Thời gian hiển thị mới phải dài hơn hiện tại.'}
+        )
+
+    job.requested_visibility_days = requested_visibility_days
+    changed_fields = ['requested_visibility_days']
+    if job.visibility_starts_at is not None:
+        job.visibility_ends_at = job.visibility_starts_at + timedelta(
+            days=requested_visibility_days
         )
         changed_fields.append('visibility_ends_at')
     return changed_fields

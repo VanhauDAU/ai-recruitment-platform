@@ -6,7 +6,7 @@ import {
   TeamOutlined,
 } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Alert, DatePicker, Modal, Select, Skeleton, Tabs } from 'antd'
+import { Alert, Select, Skeleton, Tabs } from 'antd'
 import dayjs from 'dayjs'
 import { useMemo, useState } from 'react'
 import { useParams, useSearchParams } from 'react-router'
@@ -32,6 +32,7 @@ import { message } from '@/shared/lib/toast'
 import JobApplicationsWorkspace from './JobApplicationsWorkspace'
 import JobDetailHeader from './JobDetailHeader'
 import JobInformationPanel from './JobInformationPanel'
+import JobLifecycleModal from './JobLifecycleModal'
 
 const CONNECTED_STATUSES = new Set(['considering', 'shortlisted', 'interviewed', 'accepted'])
 const VALID_TABS = new Set(['apply_cv', 'viewed_job', 'job', 'cv_label'])
@@ -103,6 +104,7 @@ export default function JobDetail() {
   const queryClient = useQueryClient()
   const [deadlineAction, setDeadlineAction] = useState(null)
   const [newDeadline, setNewDeadline] = useState(null)
+  const [newVisibilityDays, setNewVisibilityDays] = useState(null)
   const {
     readiness,
     profileQuery,
@@ -157,16 +159,19 @@ export default function JobDetail() {
     },
   })
   const deadlineMutation = useMutation({
-    mutationFn: ({ action, deadline }) => (
+    mutationFn: ({ action, deadline, requestedVisibilityDays }) => (
       action === 'reopen'
         ? reopenEmployerJob(publicId, deadline)
-        : extendEmployerJob(publicId, deadline)
+        : requestedVisibilityDays == null
+          ? extendEmployerJob(publicId, deadline)
+          : extendEmployerJob(publicId, deadline, requestedVisibilityDays)
     ),
     onSuccess: () => {
       invalidate()
       setDeadlineAction(null)
       setNewDeadline(null)
-      message.success('Đã cập nhật hạn nộp và trạng thái tin.')
+      setNewVisibilityDays(null)
+      message.success('Đã cập nhật thời gian của tin tuyển dụng.')
     },
     onError: (error) => message.error(
       getApiErrorMessage(error, 'Không thể cập nhật hạn nhận hồ sơ.'),
@@ -177,14 +182,30 @@ export default function JobDetail() {
   function openDeadlineAction(action) {
     setDeadlineAction(action)
     setNewDeadline(jobQuery.data?.deadline ? dayjs(jobQuery.data.deadline) : null)
+    setNewVisibilityDays(jobQuery.data?.requested_visibility_days || 30)
   }
 
   function submitDeadlineAction() {
     if (!newDeadline) {
-      message.error('Chọn hạn nộp mới.')
+      message.error('Chọn hạn nhận hồ sơ.')
       return
     }
-    deadlineMutation.mutate({ action: deadlineAction, deadline: newDeadline.format('YYYY-MM-DD') })
+    const currentVisibilityDays = Number(jobQuery.data?.requested_visibility_days || 30)
+    const requestedVisibilityDays = deadlineAction === 'extend'
+      && Number(newVisibilityDays) > currentVisibilityDays
+      ? Number(newVisibilityDays)
+      : undefined
+    const deadlineExtended = !jobQuery.data?.deadline
+      || newDeadline.isAfter(dayjs(jobQuery.data.deadline), 'day')
+    if (deadlineAction === 'extend' && !deadlineExtended && !requestedVisibilityDays) {
+      message.error('Hãy tăng hạn nhận hồ sơ hoặc số ngày hiển thị.')
+      return
+    }
+    deadlineMutation.mutate({
+      action: deadlineAction,
+      deadline: newDeadline.format('YYYY-MM-DD'),
+      requestedVisibilityDays,
+    })
   }
 
   function selectTab(tab) {
@@ -199,8 +220,8 @@ export default function JobDetail() {
   const deadlinePolicy = postingContextQuery.data || FALLBACK_DEADLINE_POLICY
   const today = dayjs().startOf('day')
   const maximumByToday = today.add(deadlinePolicy.max_deadline_days, 'day')
-  const maximumByPublicLifetime = deadlineAction === 'extend' && job.published_at
-    ? dayjs(job.published_at).startOf('day').add(
+  const maximumByPublicLifetime = deadlineAction === 'extend' && job.first_approved_at
+    ? dayjs(job.first_approved_at).startOf('day').add(
         deadlinePolicy.max_public_lifetime_days,
         'day',
       )
@@ -209,8 +230,9 @@ export default function JobDetail() {
     ? maximumByPublicLifetime
     : maximumByToday
   const earliestDeadline = deadlineAction === 'extend' && job.deadline
-    ? dayjs(job.deadline).startOf('day').add(1, 'day')
+    ? dayjs(job.deadline).startOf('day')
     : today
+  const maxVisibilityDays = deadlinePolicy.lifecycle_policy?.max_visibility_days || 90
 
   const tabs = [
     {
@@ -299,28 +321,23 @@ export default function JobDetail() {
         />
       </div>
 
-      <Modal
-        open={Boolean(deadlineAction)}
-        title={deadlineAction === 'reopen' ? 'Mở lại tin tuyển dụng' : 'Gia hạn tin tuyển dụng'}
-        okText={deadlineAction === 'reopen' ? 'Mở lại tin' : 'Gia hạn'}
-        confirmLoading={deadlineMutation.isPending}
-        onCancel={() => setDeadlineAction(null)}
-        onOk={submitDeadlineAction}
-      >
-        <p className="mb-3 text-sm text-slate-600">
-          Chọn từ {earliestDeadline.format('DD/MM/YYYY')} đến {latestDeadline.format('DD/MM/YYYY')}.
-        </p>
-        <DatePicker
-          className="!w-full"
-          value={newDeadline}
-          disabledDate={(current) => current && (
-            current.isBefore(earliestDeadline, 'day')
-            || current.isAfter(latestDeadline, 'day')
-          )}
-          format="DD/MM/YYYY"
-          onChange={setNewDeadline}
-        />
-      </Modal>
+      <JobLifecycleModal
+        action={deadlineAction}
+        deadline={newDeadline}
+        earliestDeadline={earliestDeadline}
+        latestDeadline={latestDeadline}
+        loading={deadlineMutation.isPending}
+        maxVisibilityDays={maxVisibilityDays}
+        minimumVisibilityDays={job.requested_visibility_days || 30}
+        visibilityDays={newVisibilityDays}
+        onCancel={() => {
+          setDeadlineAction(null)
+          setNewVisibilityDays(null)
+        }}
+        onDeadlineChange={setNewDeadline}
+        onSubmit={submitDeadlineAction}
+        onVisibilityDaysChange={setNewVisibilityDays}
+      />
     </section>
   )
 }

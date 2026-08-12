@@ -332,6 +332,20 @@ class JobSalaryBucketFilterTests(APITestCase):
         titles = {job['title'] for job in response.data['results']}
         self.assertEqual(titles, {'Under 10'})
 
+    def test_urgent_ordering_uses_urgent_label_not_flash_badge(self):
+        urgent = self.create_job('Urgent semantic', 10_000_000, 15_000_000)
+        urgent.is_urgent = True
+        urgent.save(update_fields=['is_urgent'])
+        flash = self.create_job('Fast response badge', 10_000_000, 15_000_000)
+        flash.has_flash_badge = True
+        flash.save(update_fields=['has_flash_badge'])
+
+        response = self.client.get(reverse('job-list'), {'ordering': 'urgent'})
+
+        self.assertEqual(response.status_code, 200)
+        titles = [job['title'] for job in response.data['results']]
+        self.assertLess(titles.index('Urgent semantic'), titles.index('Fast response badge'))
+
     def test_list_contract_contains_card_fields_only(self):
         self.create_job('Contract job', 10_000_000, 15_000_000)
 

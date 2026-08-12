@@ -1,4 +1,5 @@
 from django.db.models import Case, F, IntegerField, Q, When
+from django.db.models.functions import Coalesce
 from rest_framework.exceptions import ValidationError
 
 from common.db.search import fold_accents, search_q
@@ -126,10 +127,15 @@ def _filter_search(queryset, params):
 
 
 def _order_jobs(queryset, ordering):
+    queryset = queryset.annotate(
+        lifecycle_recency=Coalesce('first_approved_at', 'published_at', 'created_at')
+    )
     if ordering == 'salary_desc':
-        return queryset.order_by(F('salary_max').desc(nulls_last=True), '-published_at')
+        return queryset.order_by(
+            F('salary_max').desc(nulls_last=True), '-lifecycle_recency', '-created_at', '-id'
+        )
     if ordering == 'urgent':
-        return queryset.order_by('-has_flash_badge', '-published_at', '-created_at')
+        return queryset.order_by('-is_urgent', '-lifecycle_recency', '-created_at', '-id')
     tier_weight = Case(
         When(tier=Job.Tier.TOP, then=2),
         When(tier=Job.Tier.FEATURED, then=1),
@@ -137,7 +143,7 @@ def _order_jobs(queryset, ordering):
         output_field=IntegerField(),
     )
     return queryset.annotate(tier_weight=tier_weight).order_by(
-        '-tier_weight', '-published_at', '-created_at'
+        '-tier_weight', '-lifecycle_recency', '-created_at', '-id'
     )
 
 

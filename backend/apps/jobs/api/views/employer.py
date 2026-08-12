@@ -161,7 +161,25 @@ class EmployerJobCloseView(generics.GenericAPIView):
 
 
 class DeadlineSerializer(serializers.Serializer):
-    deadline = serializers.DateField()
+    deadline = serializers.DateField(required=False)
+    application_deadline = serializers.DateField(required=False)
+    requested_visibility_days = serializers.IntegerField(min_value=1, max_value=90, required=False)
+
+    def validate(self, attrs):
+        legacy_deadline = attrs.get('deadline')
+        application_deadline = attrs.get('application_deadline')
+        if (
+            legacy_deadline is not None
+            and application_deadline is not None
+            and legacy_deadline != application_deadline
+        ):
+            raise serializers.ValidationError(
+                {'application_deadline': 'Hạn nhận hồ sơ không khớp trường deadline cũ.'}
+            )
+        attrs['deadline'] = application_deadline or legacy_deadline
+        if attrs['deadline'] is None and 'requested_visibility_days' not in attrs:
+            raise serializers.ValidationError('Chọn nội dung cần gia hạn.')
+        return attrs
 
 
 class EmployerJobReopenView(generics.GenericAPIView):
@@ -170,6 +188,8 @@ class EmployerJobReopenView(generics.GenericAPIView):
     def post(self, request, public_id):
         serializer = DeadlineSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        if serializer.validated_data['deadline'] is None:
+            raise serializers.ValidationError({'application_deadline': 'Chọn hạn nhận hồ sơ.'})
         job = reopen_job(
             get_object_or_404(employer_job_detail_queryset(request.user), public_id=public_id),
             request.user,
@@ -190,6 +210,7 @@ class EmployerJobExtendView(generics.GenericAPIView):
             get_object_or_404(employer_job_detail_queryset(request.user), public_id=public_id),
             request.user,
             serializer.validated_data['deadline'],
+            requested_visibility_days=serializer.validated_data.get('requested_visibility_days'),
         )
         return Response(
             EmployerJobDetailSerializer(job, context=self.get_serializer_context()).data

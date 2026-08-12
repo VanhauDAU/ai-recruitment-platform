@@ -1009,7 +1009,17 @@ test('employer jobs: creation chooser leads to the complete manual five-section 
   await page.route('http://localhost:8000/api/jobs/mine/posting-context/', async (route) => {
     await route.fulfill({
       contentType: 'application/json',
-      body: JSON.stringify({ job_postable: true, free_publish_limit: 3, free_publish_remain: 3 }),
+      body: JSON.stringify({
+        job_postable: true,
+        free_publish_limit: 3,
+        free_publish_remain: 3,
+        lifecycle_policy: {
+          mode: 'legacy',
+          default_visibility_days: 30,
+          max_visibility_days: 90,
+          timezone: 'Asia/Ho_Chi_Minh',
+        },
+      }),
     })
   })
   await page.route(/http:\/\/localhost:8000\/api\/jobs\/mine\/\?as=draft$/, async (route) => {
@@ -1067,6 +1077,7 @@ test('employer jobs: creation chooser leads to the complete manual five-section 
   await expect(page).toHaveURL(/campaign=camp_q3/)
   await expect(page).toHaveURL(/mode=manual/)
   await expect(page.getByLabel('Tiêu đề tin')).toBeVisible()
+  await expect(page.getByLabel('Tiêu đề tin')).toHaveAttribute('maxlength', '255')
   await expectJobFormTopBackground(page)
   if (hasDesktopPreview) {
     await expectJobPreviewPinned(page)
@@ -1107,6 +1118,8 @@ test('employer jobs: creation chooser leads to the complete manual five-section 
   await expect(page.locator('#description').getByRole('heading', { name: 'Mô tả công việc' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Kỳ vọng về ứng viên' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Thông tin nhận hồ sơ' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Thời gian hiển thị tin' })).toBeVisible()
+  await expect(page.getByLabel('Số ngày hiển thị')).toHaveValue('30')
   await expect(page.getByRole('heading', { name: 'Tự động cập nhật trạng thái hồ sơ' })).toBeVisible()
   await expect(page.getByRole('switch', { name: 'Bật tự động cập nhật trạng thái hồ sơ' })).toBeChecked()
   await expect(page.locator('#application').getByTitle('3 tuần')).toBeVisible()
@@ -1145,6 +1158,7 @@ test('employer jobs: creation chooser leads to the complete manual five-section 
   await expectNoHorizontalOverflow(page)
   await page.getByRole('button', { name: 'Lưu nháp' }).click()
   await expect.poll(() => savedDraft).toMatchObject({
+    requested_visibility_days: 30,
     salary_type: 'up_to',
     salary_min: null,
     salary_max: 7000000,
@@ -1340,6 +1354,10 @@ test('employer jobs: detail workspace is compact, actionable and responsive', as
         public_id: 'jb_workspace', title: 'Kỹ sư Frontend React', status: 'active',
         campaign: 'camp_product', campaign_name: 'Tuyển đội ngũ sản phẩm',
         deadline: '2026-08-31', view_count: 36,
+        requested_visibility_days: 30,
+        first_approved_at: '2026-08-01T02:00:00Z',
+        visibility_starts_at: '2026-08-01T02:00:00Z',
+        visibility_ends_at: '2026-08-31T02:00:00Z',
         application_count: 2, number_of_vacancies: 2, salary_type: 'range',
         salary_min: 18000000, salary_max: 30000000, employment_type: 'full_time',
         work_type: 'hybrid', work_types: ['hybrid', 'onsite'], experience_years: '2',
@@ -1381,6 +1399,12 @@ test('employer jobs: detail workspace is compact, actionable and responsive', as
   await expect(page.getByRole('link', { name: 'Mở chiến dịch Tuyển đội ngũ sản phẩm' }))
     .toHaveAttribute('href', '/tuyendung/app/campaigns/camp_product?active_tab=job')
   await expect(page.getByRole('button', { name: /Chỉnh sửa/ })).toBeVisible()
+  await page.getByRole('button', { name: 'Gia hạn' }).click()
+  const extensionDialog = page.getByRole('dialog', { name: 'Gia hạn tin tuyển dụng' })
+  await expect(extensionDialog.getByLabel('Hạn nhận hồ sơ')).toBeVisible()
+  await expect(extensionDialog.getByLabel('Tổng thời gian hiển thị từ lần duyệt đầu')).toHaveValue('30')
+  await expectNoHorizontalOverflow(page)
+  await extensionDialog.getByRole('button', { name: 'Hủy' }).click()
   await expect(page.getByTestId('job-metric-total-cvs')).toContainText('2')
   await expect(page.getByTestId('job-metric-applied-cvs')).toContainText('1')
   await expect(page.getByTestId('job-metric-connected-cvs')).toContainText('1')

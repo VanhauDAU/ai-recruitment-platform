@@ -19,7 +19,7 @@ from apps.employers.services import recruiter_job_approval_state
 
 from ..models import Job, JobModerationEvent, JobStatusHistory
 from .content_snapshot import build_job_content_snapshot
-from .lifecycle import initialize_job_visibility
+from .lifecycle import initialize_job_visibility, lifecycle_local_date, lifecycle_mode
 from .posting import _record_status, job_deadline_error
 
 REVIEW_OPERATION = 'job.moderation.mutate'
@@ -79,8 +79,19 @@ def job_moderation_state(job, *, employer_approval_state=None):
         blocked.append({'code': 'policy_hold', 'label': job.get_policy_hold_display()})
     if job.moderation_hold:
         blocked.append({'code': 'moderation_hold', 'label': job.get_moderation_hold_display()})
-    if job.deadline and job.deadline < timezone.localdate():
+    if job.deadline and job.deadline < lifecycle_local_date():
         blocked.append({'code': 'deadline_expired', 'label': 'Hạn nhận hồ sơ đã qua.'})
+    if (
+        lifecycle_mode() == 'enforce'
+        and job.visibility_ends_at is not None
+        and job.visibility_ends_at <= timezone.now()
+    ):
+        blocked.append(
+            {
+                'code': 'visibility_expired',
+                'label': 'Tin đã hết vòng đời hiển thị và cần một lượt đăng mới.',
+            }
+        )
     if job.campaign_id:
         if job.campaign.policy_hold:
             blocked.append(

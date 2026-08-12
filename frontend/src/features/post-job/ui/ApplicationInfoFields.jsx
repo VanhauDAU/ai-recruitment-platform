@@ -1,3 +1,4 @@
+import { ClockCircleOutlined } from '@ant-design/icons'
 import { Button, DatePicker, Form, Input, InputNumber, Modal, Select } from 'antd'
 import dayjs from 'dayjs'
 import { useState } from 'react'
@@ -8,6 +9,8 @@ export default function ApplicationInfoFields({
   campaigns,
   creatingCampaign,
   maxDeadlineDays = FALLBACK_MAX_DEADLINE_DAYS,
+  maxVisibilityDays = 90,
+  visibilityLocked = false,
   onCreateCampaign,
 }) {
   const form = Form.useFormInstance()
@@ -41,6 +44,38 @@ export default function ApplicationInfoFields({
 
   return (
     <>
+      <div className="mb-4 rounded-xl border border-blue-100 bg-blue-50/70 p-4">
+        <div className="flex items-start gap-3">
+          <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-blue-600 shadow-sm">
+            <ClockCircleOutlined />
+          </span>
+          <div className="min-w-0 flex-1">
+            <h3 className="text-sm font-bold text-slate-800">Thời gian hiển thị tin</h3>
+            <p className="mt-1 text-xs leading-5 text-slate-600">
+              Tính từ lần quản trị viên duyệt đầu tiên. Tin sẽ dừng sớm hơn nếu hết hạn nhận hồ sơ hoặc chiến dịch kết thúc.
+            </p>
+            <Form.Item
+              className="!mb-0 !mt-3"
+              name="requested_visibility_days"
+              label="Số ngày hiển thị"
+              rules={[{ required: true, type: 'number', min: 1, max: maxVisibilityDays }]}
+            >
+              <InputNumber
+                className="!w-full sm:!w-56"
+                min={1}
+                max={maxVisibilityDays}
+                suffix="ngày"
+                disabled={visibilityLocked}
+              />
+            </Form.Item>
+            {visibilityLocked && (
+              <p className="mt-2 text-xs text-slate-500">
+                Tin đã được duyệt. Hãy dùng thao tác Gia hạn tại trang quản lý tin để thay đổi mốc này.
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
       <div className="grid gap-x-4 md:grid-cols-2">
         <Form.Item
           name="deadline"

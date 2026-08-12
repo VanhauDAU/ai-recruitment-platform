@@ -1,7 +1,9 @@
 """Read queries owned by an employer for the jobs domain."""
 
 from collections import defaultdict
+from zoneinfo import ZoneInfo
 
+from django.conf import settings
 from django.db.models import (
     BooleanField,
     Case,
@@ -76,6 +78,11 @@ def attach_job_candidate_previews(jobs, *, limit=4):
 
 def employer_job_list_queryset(user, *, status=None, campaign=None, q=None):
     """Compact query for the employer management table."""
+    now = timezone.now()
+    today = timezone.localdate(now, timezone=ZoneInfo('Asia/Ho_Chi_Minh'))
+    expired_filter = Q(deadline__lt=today)
+    if str(getattr(settings, 'JOB_LIFECYCLE_V2_MODE', 'legacy')).lower() == 'enforce':
+        expired_filter |= Q(visibility_ends_at__isnull=True) | Q(visibility_ends_at__lte=now)
     candidate_count = (
         Application.objects.filter(job_id=OuterRef('pk'))
         .values('job_id')
@@ -98,7 +105,7 @@ def employer_job_list_queryset(user, *, status=None, campaign=None, q=None):
                 0,
             ),
             is_expired_value=Case(
-                When(status=Job.Status.ACTIVE, deadline__lt=timezone.localdate(), then=Value(True)),
+                When(Q(status=Job.Status.ACTIVE) & expired_filter, then=Value(True)),
                 default=Value(False),
                 output_field=BooleanField(),
             ),
@@ -106,13 +113,11 @@ def employer_job_list_queryset(user, *, status=None, campaign=None, q=None):
         .order_by('-created_at', '-id')
     )
     if status == 'expired':
-        queryset = queryset.filter(status=Job.Status.ACTIVE, deadline__lt=timezone.localdate())
+        queryset = queryset.filter(Q(status=Job.Status.ACTIVE) & expired_filter)
     elif status:
         queryset = queryset.filter(status=status)
         if status == Job.Status.ACTIVE:
-            queryset = queryset.filter(
-                Q(deadline__isnull=True) | Q(deadline__gte=timezone.localdate())
-            )
+            queryset = queryset.exclude(expired_filter)
     if campaign:
         queryset = queryset.filter(campaign__public_id=campaign)
     if q:

@@ -23,7 +23,10 @@ WHERE visibility_starts_at IS NULL
 UPDATE jobs_job
 SET visibility_ends_at = CASE
     WHEN deadline IS NOT NULL THEN
-        ((deadline + 1)::timestamp AT TIME ZONE 'Asia/Ho_Chi_Minh')
+        GREATEST(
+            ((deadline + 1)::timestamp AT TIME ZONE 'Asia/Ho_Chi_Minh'),
+            visibility_starts_at + INTERVAL '1 day'
+        )
     ELSE visibility_starts_at + INTERVAL '30 days'
 END
 WHERE visibility_ends_at IS NULL

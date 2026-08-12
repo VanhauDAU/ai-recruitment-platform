@@ -1,5 +1,7 @@
 """Pure job-query primitives shared by selectors and delivery services."""
 
+from zoneinfo import ZoneInfo
+
 from django.conf import settings
 from django.db.models import F, Q
 from django.db.models.functions import Coalesce
@@ -21,7 +23,7 @@ SALARY_BUCKETS = [
 def job_public_time_filter(*, now=None, today=None, mode=None):
     """Return the active time-window predicate for the configured rollout mode."""
     now = now or timezone.now()
-    today = today or timezone.localdate(now)
+    today = today or timezone.localdate(now, timezone=ZoneInfo('Asia/Ho_Chi_Minh'))
     mode = mode or getattr(settings, 'JOB_LIFECYCLE_V2_MODE', 'legacy')
     if str(mode).strip().lower() == 'enforce':
         return (Q(deadline__isnull=True) | Q(deadline__gte=today)) & Q(

@@ -146,8 +146,12 @@ export async function reopenEmployerJob(publicId, deadline) {
   return data
 }
 
-export async function extendEmployerJob(publicId, deadline) {
-  const { data } = await api.post(`/jobs/mine/${publicId}/extend/`, { deadline })
+export async function extendEmployerJob(publicId, deadline, requestedVisibilityDays) {
+  const payload = { deadline }
+  if (requestedVisibilityDays != null) {
+    payload.requested_visibility_days = requestedVisibilityDays
+  }
+  const { data } = await api.post(`/jobs/mine/${publicId}/extend/`, payload)
   return data
 }
 

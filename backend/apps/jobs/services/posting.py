@@ -31,7 +31,13 @@ from ..models import (
     JobWorkSchedule,
 )
 from .ai_generation import apply_job_ai_generation_to_draft
-from .lifecycle import job_lifecycle_policy, visibility_days_error
+from .lifecycle import (
+    extend_job_visibility,
+    job_lifecycle_policy,
+    lifecycle_local_date,
+    lifecycle_mode,
+    visibility_days_error,
+)
 
 FREE_JOB_QUOTA = 3
 VERIFIED_LEVEL_THREE_JOB_QUOTA = 100
@@ -81,7 +87,7 @@ def job_deadline_error(deadline, *, required=True, today=None):
     """Return a localized validation error, keeping date rules in one place."""
     if deadline is None:
         return 'Chọn hạn nhận hồ sơ.' if required else ''
-    today = today or timezone.localdate()
+    today = today or lifecycle_local_date()
     if deadline < today:
         return 'Hạn nhận hồ sơ phải từ hôm nay trở đi.'
     maximum_days = job_deadline_policy()['max_deadline_days']
@@ -297,7 +303,7 @@ def _move_public_revision_to_review(job, *, user, note='', update_fields=()):
 
 def _validate_publishable(job):
     errors = {}
-    today = timezone.localdate()
+    today = lifecycle_local_date()
     if not job.title.strip():
         errors['title'] = 'Nhập tiêu đề tin tuyển dụng.'
     if not job.description.strip():
@@ -532,6 +538,19 @@ def update_employer_job(serializer, user):
     _validate_campaign_for_write(locked_requested_campaign, recruiter=recruiter)
     if 'campaign' in serializer.validated_data:
         serializer.validated_data['campaign'] = locked_requested_campaign
+    requested_visibility_days = serializer.validated_data.get('requested_visibility_days')
+    if (
+        serializer.instance.first_approved_at is not None
+        and requested_visibility_days is not None
+        and requested_visibility_days != serializer.instance.requested_visibility_days
+    ):
+        raise ValidationError(
+            {
+                'requested_visibility_days': (
+                    'Dùng thao tác gia hạn để thay đổi thời gian hiển thị của tin đã duyệt.'
+                )
+            }
+        )
     job = serializer.save()
     _record_job_assignment(job, previous_campaign=previous_campaign, user=user)
     if previous_status == Job.Status.ACTIVE:
@@ -566,6 +585,17 @@ def reopen_job(job, user, deadline):
     _validate_campaign_for_write(job.campaign, recruiter=recruiter)
     if deadline_error := job_deadline_error(deadline):
         raise ValidationError({'deadline': deadline_error})
+    if (
+        lifecycle_mode() == 'enforce'
+        and job.visibility_ends_at is not None
+        and job.visibility_ends_at <= timezone.now()
+    ):
+        raise ValidationError(
+            {
+                'code': 'JOB_VISIBILITY_EXPIRED',
+                'detail': 'Tin đã hết vòng đời hiển thị. Cần một lượt đăng mới để tiếp tục.',
+            }
+        )
     job.deadline = deadline
     job.status = Job.Status.PENDING
     job.published_at = None
@@ -586,16 +616,22 @@ def reopen_job(job, user, deadline):
 
 
 @transaction.atomic
-def extend_job_deadline(job, user, deadline):
+def extend_job_deadline(job, user, deadline, *, requested_visibility_days=None):
     recruiter = _locked_recruiter(user)
     job, _ = _locked_job(job)
     if job.posted_by_id != user.id or job.status != Job.Status.ACTIVE:
         raise ValidationError('Chỉ có thể gia hạn tin đang tuyển của bạn.')
     _validate_job_for_write(job)
     _validate_campaign_for_write(job.campaign, recruiter=recruiter)
-    today = timezone.localdate()
-    if job.deadline is None or deadline <= job.deadline:
+    today = lifecycle_local_date()
+    deadline = deadline or job.deadline
+    deadline_extended = bool(
+        deadline is not None and (job.deadline is None or deadline > job.deadline)
+    )
+    if not deadline_extended and requested_visibility_days is None:
         raise ValidationError({'deadline': 'Hạn gia hạn phải sau hạn nộp hiện tại.'})
+    if job.deadline is not None and deadline is not None and deadline < job.deadline:
+        raise ValidationError({'deadline': 'Không thể rút ngắn hạn nhận hồ sơ khi gia hạn.'})
     if deadline_error := job_deadline_error(deadline, today=today):
         raise ValidationError({'deadline': deadline_error})
     if job.deadline < today - timedelta(days=EXPIRED_JOB_RENEWAL_GRACE_DAYS):
@@ -607,8 +643,9 @@ def extend_job_deadline(job, user, deadline):
                 )
             }
         )
-    if job.published_at:
-        published_date = timezone.localdate(job.published_at)
+    lifecycle_anchor = job.first_approved_at or job.published_at
+    if lifecycle_anchor:
+        published_date = lifecycle_local_date(lifecycle_anchor)
         maximum_lifetime_days = job_deadline_policy()['max_public_lifetime_days']
         if deadline > published_date + timedelta(days=maximum_lifetime_days):
             raise ValidationError(
@@ -627,16 +664,23 @@ def extend_job_deadline(job, user, deadline):
                 {'deadline': 'Hạn gia hạn không được sau ngày kết thúc chiến dịch.'}
             )
 
-    was_expired = job.deadline < today
+    lifecycle_update_fields = []
+    if requested_visibility_days is not None:
+        lifecycle_update_fields = extend_job_visibility(
+            job,
+            requested_visibility_days=requested_visibility_days,
+        )
+
+    was_expired = bool(job.deadline and job.deadline < today)
     job.deadline = deadline
     if was_expired:
         return _move_public_revision_to_review(
             job,
             user=user,
             note='Gia hạn tin đã hết hạn',
-            update_fields=('deadline',),
+            update_fields=('deadline', *lifecycle_update_fields),
         )
-    job.save(update_fields=['deadline', 'updated_at'])
+    job.save(update_fields=['deadline', *lifecycle_update_fields, 'updated_at'])
     if job.campaign_id:
         record_campaign_activity(
             campaign=job.campaign,
@@ -672,6 +716,9 @@ def duplicate_job(job, user):
     duplicate.published_at = None
     duplicate.closed_at = None
     duplicate.approved_at = None
+    duplicate.first_approved_at = None
+    duplicate.visibility_starts_at = None
+    duplicate.visibility_ends_at = None
     duplicate.rejected_reason = ''
     duplicate.policy_hold = Job.PolicyHold.NONE
     duplicate.policy_held_at = None

@@ -120,7 +120,9 @@ export default function JobForm() {
         defaultDeadlineDays={!publicId
           ? postingContextQuery.data?.default_deadline_days ?? 30
           : null}
+        defaultVisibilityDays={postingContextQuery.data?.lifecycle_policy?.default_visibility_days ?? 30}
         maxDeadlineDays={postingContextQuery.data?.max_deadline_days ?? 90}
+        maxVisibilityDays={postingContextQuery.data?.lifecycle_policy?.max_visibility_days ?? 90}
         isDraft={isDraft}
         requiresNewCredit={requiresNewCredit}
         submitLabel={submitLabel}
