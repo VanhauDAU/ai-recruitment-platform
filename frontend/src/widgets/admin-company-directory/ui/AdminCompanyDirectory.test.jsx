@@ -11,12 +11,14 @@ const {
   getAdminCompany,
   getAdminCompanyRecruiters,
   getAdminCompanySummary,
+  getAdminJobs,
   useSession,
 } = vi.hoisted(() => ({
   getAdminCompanies: vi.fn(),
   getAdminCompany: vi.fn(),
   getAdminCompanyRecruiters: vi.fn(),
   getAdminCompanySummary: vi.fn(),
+  getAdminJobs: vi.fn(),
   useSession: vi.fn(),
 }))
 
@@ -26,6 +28,10 @@ vi.mock('@/entities/admin-company', async (importOriginal) => ({
   getAdminCompany,
   getAdminCompanyRecruiters,
   getAdminCompanySummary,
+}))
+vi.mock('@/entities/admin-job', async (importOriginal) => ({
+  ...await importOriginal(),
+  getAdminJobs,
 }))
 vi.mock('@/entities/session', () => ({ useSession }))
 
@@ -93,6 +99,10 @@ function renderWithApp(element, initialEntry) {
             path="/admin/app/recruiters/:publicId"
             element={<LocationProbe />}
           />
+          <Route
+            path="/admin/app/job-moderation/:publicId"
+            element={<LocationProbe />}
+          />
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>,
@@ -111,6 +121,7 @@ describe('admin company directory', () => {
     getAdminCompanies.mockResolvedValue({ count: 1, results: [company] })
     getAdminCompany.mockResolvedValue(company)
     getAdminCompanyRecruiters.mockResolvedValue({ count: 0, results: [] })
+    getAdminJobs.mockResolvedValue({ count: 0, results: [] })
     getAdminCompanySummary.mockResolvedValue({
       total: 1,
       pending_update_requests: 1,
@@ -246,5 +257,78 @@ describe('admin company directory', () => {
     expect(screen.getByText('Đã xác thực')).toBeInTheDocument()
     expect(screen.queryByText('Trạng thái pháp lý công ty')).not.toBeInTheDocument()
     expect(screen.queryByText('Pháp nhân đã xác thực')).not.toBeInTheDocument()
+  })
+
+  it('loads company jobs on demand and keeps the company as the API scope', async () => {
+    const user = userEvent.setup()
+    getAdminJobs.mockResolvedValue({
+      count: 1,
+      results: [{
+        public_id: 'job_alpha',
+        title: 'Backend Engineer',
+        employer_name: 'Owner chính',
+        employer_email: 'owner@example.com',
+        status: 'active',
+        status_label: 'Đang tuyển',
+        is_expired: false,
+        policy_hold: '',
+        moderation_hold: '',
+        deadline: '2026-08-30',
+        submitted_at: '2026-08-01T08:00:00Z',
+        application_count: 4,
+        view_count: 25,
+        pending_report_count: 0,
+        updated_at: '2026-08-02T08:00:00Z',
+      }],
+    })
+    renderWithApp(
+      <AdminCompanyDetail publicId="co_alpha" />,
+      '/admin/app/companies/co_alpha',
+    )
+
+    expect(getAdminJobs).not.toHaveBeenCalled()
+    await user.click(await screen.findByRole('tab', { name: 'Tin tuyển dụng' }))
+
+    expect(await screen.findByText('Backend Engineer')).toBeInTheDocument()
+    await waitFor(() => expect(getAdminJobs).toHaveBeenCalledWith(
+      {
+        company: 'co_alpha',
+        page: 1,
+        ordering: '-updated_at',
+      },
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    ))
+    expect(screen.getByRole('columnheader', { name: 'Nhà tuyển dụng' })).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: 'Cập nhật' })).toHaveAttribute(
+      'aria-sort',
+      'descending',
+    )
+
+    await user.click(screen.getByText('Backend Engineer'))
+    expect(screen.getByTestId('location')).toHaveTextContent(
+      '/admin/app/job-moderation/job_alpha',
+    )
+  })
+
+  it('explains the required permission instead of requesting company jobs', async () => {
+    useSession.mockReturnValue({
+      user: {
+        role: 'admin',
+        admin_access: {
+          is_superuser: false,
+          permissions: ['company.view'],
+          memberships: [],
+        },
+      },
+    })
+    renderWithApp(
+      <AdminCompanyDetail publicId="co_alpha" />,
+      '/admin/app/companies/co_alpha?tab=jobs',
+    )
+
+    expect(await screen.findByText(
+      'Bạn chưa có quyền xem tin tuyển dụng của công ty',
+    )).toBeInTheDocument()
+    expect(getAdminJobs).not.toHaveBeenCalled()
   })
 })

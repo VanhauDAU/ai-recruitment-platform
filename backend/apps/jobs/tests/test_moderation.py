@@ -221,6 +221,32 @@ class JobModerationApiTests(JobModerationFixture, APITestCase):
         self.assertIn('moderation_events', detail.data)
         self.assertEqual(approval_state.call_count, 1)
 
+    def test_management_list_filters_jobs_by_company_public_id(self):
+        other_company = Company.objects.create(
+            company_name='Other Job Company',
+            created_by=self.employer,
+        )
+        other_job = Job.objects.create(
+            posted_by=self.employer,
+            company=other_company,
+            title='Job from another company',
+            status=Job.Status.DRAFT,
+        )
+        self.client.force_authenticate(self.admin)
+
+        response = self.client.get(
+            reverse('admin-job-moderation-list'),
+            {'company': self.company.public_id, 'ordering': '-updated_at'},
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+        self.assertEqual(response.data['count'], 1)
+        self.assertEqual(
+            [item['public_id'] for item in response.data['results']],
+            [str(self.job.public_id)],
+        )
+        self.assertNotEqual(str(other_job.public_id), response.data['results'][0]['public_id'])
+
     def test_unapproved_verification_blocks_canonical_and_compatibility_approval(self):
         self.verification_case.status = EmployerVerificationCase.Status.IN_REVIEW
         self.verification_case.save(update_fields=['status', 'updated_at'])

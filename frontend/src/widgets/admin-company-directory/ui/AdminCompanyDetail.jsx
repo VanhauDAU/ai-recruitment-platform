@@ -33,6 +33,7 @@ import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { adminPath } from '@/shared/config/portals'
 import { sanitizeHtml } from '@/shared/lib/sanitize-html'
 import CompanyLogo from './CompanyLogo'
+import CompanyJobs from './CompanyJobs'
 import { CompanyPanel } from './CompanyPanel'
 import RecruiterStatusTag from './RecruiterStatusTag'
 import '../admin-company-directory.css'
@@ -474,6 +475,7 @@ export default function AdminCompanyDetail({ publicId }) {
   const { user } = useSession()
   const { has, isSuperuser } = useAdminAccess(user)
   const canViewRecruiters = isSuperuser || has('company_recruiter.view')
+  const canViewJobs = isSuperuser || has('job_moderation.view')
   const [searchParams, setSearchParams] = useSearchParams()
   const requestedTab = searchParams.get('tab') || 'overview'
   const activeTab = TAB_KEYS.has(requestedTab) ? requestedTab : 'overview'
@@ -542,14 +544,13 @@ export default function AdminCompanyDetail({ publicId }) {
     },
     {
       key: 'jobs',
-      label: (
-        <Space size={6}>
-          Tin tuyển dụng
-          <Tag>Sắp ra mắt</Tag>
-        </Space>
+      label: 'Tin tuyển dụng',
+      children: (
+        <CompanyJobs
+          company={company}
+          enabled={canViewJobs && activeTab === 'jobs'}
+        />
       ),
-      disabled: true,
-      children: null,
     },
   ]
 
