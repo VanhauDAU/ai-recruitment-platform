@@ -7,10 +7,32 @@ from .catalog import (
     PublicServiceCategorySerializer,
     PublicServicePackageSerializer,
 )
+from .commercial import (
+    AdminEntitlementGrantSerializer,
+    AdminEntitlementQuerySerializer,
+    AdminEntitlementRevokeSerializer,
+    AdminEntitlementUnitSerializer,
+    AdminPackageVersionQuerySerializer,
+    AdminPackageVersionSerializer,
+    AdminPackageVersionWriteSerializer,
+    AdminServiceAuditQuerySerializer,
+    AdminServiceAuditSerializer,
+    AdminServiceCapabilitySerializer,
+)
 
 __all__ = [
     'AdminConsultationLeadQuerySerializer',
     'AdminConsultationLeadSerializer',
+    'AdminEntitlementGrantSerializer',
+    'AdminEntitlementQuerySerializer',
+    'AdminEntitlementRevokeSerializer',
+    'AdminEntitlementUnitSerializer',
+    'AdminPackageVersionQuerySerializer',
+    'AdminPackageVersionSerializer',
+    'AdminPackageVersionWriteSerializer',
+    'AdminServiceAuditQuerySerializer',
+    'AdminServiceAuditSerializer',
+    'AdminServiceCapabilitySerializer',
     'AdminServiceCategorySerializer',
     'AdminServicePackageSerializer',
     'ConsultationLeadCreateSerializer',

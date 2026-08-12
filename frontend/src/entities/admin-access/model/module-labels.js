@@ -12,5 +12,7 @@ export const MODULE_LABELS = {
   job_moderation: 'Kiểm duyệt tin',
   knowledgebase: 'FAQ & hướng dẫn',
   service_catalog: 'Dịch vụ nhà tuyển dụng',
+  service_audit: 'Lịch sử dịch vụ',
+  service_entitlement: 'Kho lượt dịch vụ',
   site_setting: 'Cài đặt hệ thống',
 }

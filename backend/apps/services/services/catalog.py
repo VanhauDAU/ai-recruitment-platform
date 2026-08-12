@@ -35,6 +35,23 @@ def create_package_version(
 
 
 @transaction.atomic
+def create_package_version_draft(*, package, values, items):
+    version = create_package_version(
+        package=package,
+        price=values['price'],
+        currency=values.get('currency', 'VND'),
+        activate_within_days=values.get('activate_within_days', 90),
+        terms_vi=values.get('terms_vi', ''),
+        terms_en=values.get('terms_en', ''),
+    )
+    return save_package_version_draft(
+        package_version=version,
+        values=values,
+        items=items,
+    )
+
+
+@transaction.atomic
 def publish_package_version(*, package_version: ServicePackageVersion, actor=None):
     version = (
         ServicePackageVersion.objects.select_for_update()
@@ -93,3 +110,36 @@ def add_package_version_item(
         configuration=configuration or {},
         order=order,
     )
+
+
+@transaction.atomic
+def save_package_version_draft(*, package_version, values, items):
+    version = (
+        ServicePackageVersion.objects.select_for_update()
+        .select_related('package')
+        .get(pk=package_version.pk)
+    )
+    if version.status != ServicePackageVersion.Status.DRAFT:
+        raise ValidationError('Chỉ có thể sửa phiên bản nháp.')
+
+    for field in (
+        'price',
+        'currency',
+        'activate_within_days',
+        'terms_vi',
+        'terms_en',
+    ):
+        if field in values:
+            setattr(version, field, values[field])
+    version.save()
+    version.items.all().delete()
+    for order, item in enumerate(items):
+        add_package_version_item(
+            package_version=version,
+            capability=item['capability'],
+            quantity=item.get('quantity', 1),
+            duration_days=item.get('duration_days'),
+            configuration=item.get('configuration', {}),
+            order=item.get('order', order),
+        )
+    return version

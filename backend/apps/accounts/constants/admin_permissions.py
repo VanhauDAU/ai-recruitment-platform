@@ -336,16 +336,46 @@ ADMIN_PERMISSIONS = (
         'description': 'Xem bài, revision, preview và lịch sử vận hành nội dung trợ giúp.',
     },
     {
+        'code': 'service_audit.view',
+        'module': 'service_audit',
+        'label': 'Xem lịch sử dịch vụ',
+        'description': 'Xem lịch sử phát hành, cấp, thu hồi và kích hoạt dịch vụ.',
+    },
+    {
+        'code': 'service_catalog.draft.manage',
+        'module': 'service_catalog',
+        'label': 'Quản lý phiên bản nháp dịch vụ',
+        'description': 'Tạo và chỉnh sửa quyền lợi có cấu trúc trước khi phát hành.',
+    },
+    {
         'code': 'service_catalog.manage',
         'module': 'service_catalog',
         'label': 'Quản lý gói dịch vụ',
         'description': 'Tạo, sửa hoặc xoá nhóm và gói dịch vụ nhà tuyển dụng.',
     },
     {
+        'code': 'service_catalog.publish',
+        'module': 'service_catalog',
+        'label': 'Phát hành phiên bản gói dịch vụ',
+        'description': 'Khóa và phát hành một phiên bản quyền lợi thương mại mới.',
+    },
+    {
         'code': 'service_catalog.view',
         'module': 'service_catalog',
         'label': 'Xem gói dịch vụ',
         'description': 'Xem catalogue dịch vụ nhà tuyển dụng.',
+    },
+    {
+        'code': 'service_entitlement.manage',
+        'module': 'service_entitlement',
+        'label': 'Cấp và thu hồi lượt dịch vụ',
+        'description': 'Cấp thủ công, thu hồi hoặc bù lượt dịch vụ cho doanh nghiệp.',
+    },
+    {
+        'code': 'service_entitlement.view',
+        'module': 'service_entitlement',
+        'label': 'Xem kho lượt dịch vụ',
+        'description': 'Xem lượt dịch vụ và trạng thái kích hoạt của doanh nghiệp.',
     },
     {
         'code': 'site_setting.manage',
@@ -409,6 +439,11 @@ ADMIN_PERMISSION_DEPENDENCIES = {
     'knowledgebase.publish': ('knowledgebase.view',),
     'knowledgebase.review': ('knowledgebase.view',),
     'service_catalog.manage': ('service_catalog.view',),
+    'service_catalog.draft.manage': ('service_catalog.view',),
+    'service_catalog.publish': ('service_catalog.view',),
+    'service_entitlement.manage': ('service_entitlement.view',),
+    'service_entitlement.view': ('service_catalog.view',),
+    'service_audit.view': ('service_catalog.view',),
     'site_setting.manage': ('site_setting.view',),
 }
 

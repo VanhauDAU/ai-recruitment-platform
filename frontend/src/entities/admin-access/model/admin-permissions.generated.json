@@ -329,6 +329,15 @@
     "requires": []
   },
   {
+    "code": "employer_verification.resubmission_unlock",
+    "module": "employer_verification",
+    "label": "Mở khóa nộp lại xác thực nhà tuyển dụng",
+    "description": "Cho phép mở khóa ngoại lệ sau khi hồ sơ đạt giới hạn từ chối cuối, bắt buộc kèm lý do audit.",
+    "requires": [
+      "employer_verification.view"
+    ]
+  },
+  {
     "code": "employer_verification.review",
     "module": "employer_verification",
     "label": "Duyệt xác thực nhà tuyển dụng",
@@ -354,6 +363,15 @@
     "requires": [
       "employer_verification.view",
       "employer_verification.review"
+    ]
+  },
+  {
+    "code": "employer_verification.unlink_company",
+    "module": "employer_verification",
+    "label": "Gỡ liên kết công ty nhà tuyển dụng",
+    "description": "Quyền rủi ro cao để gỡ liên kết chọn nhầm khi tài khoản chưa phát sinh dữ liệu nghiệp vụ.",
+    "requires": [
+      "employer_verification.view"
     ]
   },
   {
@@ -450,10 +468,37 @@
     "requires": []
   },
   {
+    "code": "service_audit.view",
+    "module": "service_audit",
+    "label": "Xem lịch sử dịch vụ",
+    "description": "Xem lịch sử phát hành, cấp, thu hồi và kích hoạt dịch vụ.",
+    "requires": [
+      "service_catalog.view"
+    ]
+  },
+  {
+    "code": "service_catalog.draft.manage",
+    "module": "service_catalog",
+    "label": "Quản lý phiên bản nháp dịch vụ",
+    "description": "Tạo và chỉnh sửa quyền lợi có cấu trúc trước khi phát hành.",
+    "requires": [
+      "service_catalog.view"
+    ]
+  },
+  {
     "code": "service_catalog.manage",
     "module": "service_catalog",
     "label": "Quản lý gói dịch vụ",
     "description": "Tạo, sửa hoặc xoá nhóm và gói dịch vụ nhà tuyển dụng.",
+    "requires": [
+      "service_catalog.view"
+    ]
+  },
+  {
+    "code": "service_catalog.publish",
+    "module": "service_catalog",
+    "label": "Phát hành phiên bản gói dịch vụ",
+    "description": "Khóa và phát hành một phiên bản quyền lợi thương mại mới.",
     "requires": [
       "service_catalog.view"
     ]
@@ -464,6 +509,24 @@
     "label": "Xem gói dịch vụ",
     "description": "Xem catalogue dịch vụ nhà tuyển dụng.",
     "requires": []
+  },
+  {
+    "code": "service_entitlement.manage",
+    "module": "service_entitlement",
+    "label": "Cấp và thu hồi lượt dịch vụ",
+    "description": "Cấp thủ công, thu hồi hoặc bù lượt dịch vụ cho doanh nghiệp.",
+    "requires": [
+      "service_entitlement.view"
+    ]
+  },
+  {
+    "code": "service_entitlement.view",
+    "module": "service_entitlement",
+    "label": "Xem kho lượt dịch vụ",
+    "description": "Xem lượt dịch vụ và trạng thái kích hoạt của doanh nghiệp.",
+    "requires": [
+      "service_catalog.view"
+    ]
   },
   {
     "code": "site_setting.manage",

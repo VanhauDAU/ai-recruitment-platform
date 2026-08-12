@@ -4,6 +4,13 @@ from .api.views import (
     AdminConsultationLeadDetailView,
     AdminConsultationLeadExportView,
     AdminConsultationLeadListView,
+    AdminEntitlementUnitListCreateView,
+    AdminEntitlementUnitRevokeView,
+    AdminPackageVersionDetailView,
+    AdminPackageVersionListCreateView,
+    AdminPackageVersionPublishView,
+    AdminServiceAuditListView,
+    AdminServiceCapabilityListView,
     AdminServiceCategoryDetailView,
     AdminServiceCategoryListCreateView,
     AdminServicePackageDetailView,
@@ -15,6 +22,41 @@ from .api.views import (
 urlpatterns = [
     path('packages/', PublicServicePackageListView.as_view(), name='services-packages'),
     path('consultations/', ConsultationLeadCreateView.as_view(), name='services-consultations'),
+    path(
+        'admin/capabilities/',
+        AdminServiceCapabilityListView.as_view(),
+        name='services-admin-capabilities',
+    ),
+    path(
+        'admin/package-versions/',
+        AdminPackageVersionListCreateView.as_view(),
+        name='services-admin-package-versions',
+    ),
+    path(
+        'admin/package-versions/<int:pk>/',
+        AdminPackageVersionDetailView.as_view(),
+        name='services-admin-package-version-detail',
+    ),
+    path(
+        'admin/package-versions/<int:pk>/publish/',
+        AdminPackageVersionPublishView.as_view(),
+        name='services-admin-package-version-publish',
+    ),
+    path(
+        'admin/entitlements/',
+        AdminEntitlementUnitListCreateView.as_view(),
+        name='services-admin-entitlements',
+    ),
+    path(
+        'admin/entitlements/<str:public_id>/revoke/',
+        AdminEntitlementUnitRevokeView.as_view(),
+        name='services-admin-entitlement-revoke',
+    ),
+    path(
+        'admin/audit/',
+        AdminServiceAuditListView.as_view(),
+        name='services-admin-audit',
+    ),
     path(
         'admin/categories/',
         AdminServiceCategoryListCreateView.as_view(),
