@@ -247,6 +247,42 @@ class JobModerationApiTests(JobModerationFixture, APITestCase):
         )
         self.assertNotEqual(str(other_job.public_id), response.data['results'][0]['public_id'])
 
+    def test_management_list_defaults_to_newest_created_with_a_stable_tie_breaker(self):
+        first_newest = Job.objects.create(
+            posted_by=self.employer,
+            company=self.company,
+            title='Newest A',
+            status=Job.Status.PENDING,
+            submitted_at=timezone.now(),
+        )
+        second_newest = Job.objects.create(
+            posted_by=self.employer,
+            company=self.company,
+            title='Newest B',
+            status=Job.Status.PENDING,
+            submitted_at=timezone.now(),
+        )
+        newest_at = timezone.now()
+        Job.objects.filter(pk__in=[first_newest.pk, second_newest.pk]).update(created_at=newest_at)
+        Job.objects.filter(pk=self.job.pk).update(created_at=newest_at - timedelta(days=1))
+        self.client.force_authenticate(self.admin)
+
+        default_response = self.client.get(reverse('admin-job-moderation-list'))
+        invalid_response = self.client.get(
+            reverse('admin-job-moderation-list'),
+            {'ordering': 'unsupported'},
+        )
+        expected = [second_newest.public_id, first_newest.public_id, self.job.public_id]
+
+        for response in (default_response, invalid_response):
+            with self.subTest(path=response.request['QUERY_STRING']):
+                self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+                self.assertEqual(
+                    [item['public_id'] for item in response.data['results']],
+                    [str(public_id) for public_id in expected],
+                )
+                self.assertTrue(response.data['results'][0]['created_at'])
+
     def test_unapproved_verification_blocks_canonical_and_compatibility_approval(self):
         self.verification_case.status = EmployerVerificationCase.Status.IN_REVIEW
         self.verification_case.save(update_fields=['status', 'updated_at'])
@@ -522,7 +558,7 @@ class JobRevisionReviewTests(JobModerationFixture, APITestCase):
             {
                 'action': 'approve',
                 'review_token': self.client.get(self.detail_url()).data['review_token'],
-                'deadline': (today + timedelta(days=7)).isoformat(),
+                'deadline': (today + timedelta(days=90)).isoformat(),
             },
             format='json',
         )
@@ -537,7 +573,29 @@ class JobRevisionReviewTests(JobModerationFixture, APITestCase):
         self.assertEqual(with_deadline.status_code, status.HTTP_200_OK, with_deadline.data)
         self.job.refresh_from_db()
         self.assertEqual(self.job.status, Job.Status.ACTIVE)
-        self.assertEqual(self.job.deadline, today + timedelta(days=7))
+        self.assertEqual(self.job.deadline, today + timedelta(days=90))
+
+    def test_expired_pending_job_rejects_a_deadline_beyond_ninety_days(self):
+        today = timezone.localdate()
+        self.job.deadline = today - timedelta(days=1)
+        self.job.save(update_fields=['deadline', 'updated_at'])
+        self.client.force_authenticate(self.admin)
+        detail = self.client.get(self.detail_url())
+
+        response = self.client.post(
+            self.decision_url(),
+            {
+                'action': 'approve',
+                'review_token': detail.data['review_token'],
+                'deadline': (today + timedelta(days=91)).isoformat(),
+            },
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST, response.data)
+        self.assertIn('deadline', response.data)
+        self.job.refresh_from_db()
+        self.assertEqual(self.job.status, Job.Status.PENDING)
 
     def test_public_visibility_flag_tracks_the_candidate_facing_predicate(self):
         self.client.force_authenticate(self.admin)

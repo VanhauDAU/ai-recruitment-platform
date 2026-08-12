@@ -31,6 +31,7 @@ urlpatterns = [
     path('api/v2/cvs/', include('apps.cvs.urls_v2')),
     path('api/v2/', include('apps.cv_templates.urls_v2')),
     path('api/jobs/', include('apps.jobs.urls')),
+    path('api/ai/', include('apps.jobs.urls_ai')),
     path('api/dashboard/', include('apps.dashboard.urls')),
     path('api/v2/', include('apps.applications.urls_v2')),
     path('api/locations/', include('apps.locations.urls')),

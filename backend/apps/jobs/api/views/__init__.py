@@ -1,5 +1,11 @@
 """Public HTTP views grouped by jobs use case."""
 
+from .ai_generation import (
+    EmployerJobAiGenerationCancelView,
+    EmployerJobAiGenerationCreateView,
+    EmployerJobAiGenerationDetailView,
+    EmployerJobAiGenerationFeedbackView,
+)
 from .alerts import CandidateJobAlertDetailView, CandidateJobAlertListCreateView
 from .catalogs import BenefitListView, JobCategoryListView, LanguageListView
 from .employer import (
@@ -55,6 +61,10 @@ __all__ = [
     'CandidateJobAlertListCreateView',
     'CvJobRecommendationView',
     'EmployerJobCloseView',
+    'EmployerJobAiGenerationCancelView',
+    'EmployerJobAiGenerationCreateView',
+    'EmployerJobAiGenerationDetailView',
+    'EmployerJobAiGenerationFeedbackView',
     'EmployerJobDetailView',
     'EmployerJobDuplicateView',
     'EmployerJobExtendView',

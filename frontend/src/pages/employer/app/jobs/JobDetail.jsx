@@ -18,6 +18,7 @@ import {
   closeEmployerJob,
   extendEmployerJob,
   getEmployerJob,
+  getJobPostingContext,
   jobKeys,
   reopenEmployerJob,
 } from '@/entities/job'
@@ -26,6 +27,7 @@ import {
   EmployerReadinessGateState,
   useEmployerReadiness,
 } from '@/entities/employer-profile'
+import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { message } from '@/shared/lib/toast'
 import JobApplicationsWorkspace from './JobApplicationsWorkspace'
 import JobDetailHeader from './JobDetailHeader'
@@ -34,6 +36,11 @@ import JobInformationPanel from './JobInformationPanel'
 const CONNECTED_STATUSES = new Set(['considering', 'shortlisted', 'interviewed', 'accepted'])
 const VALID_TABS = new Set(['apply_cv', 'viewed_job', 'job', 'cv_label'])
 const EMPTY_APPLICATIONS = []
+const FALLBACK_DEADLINE_POLICY = {
+  default_deadline_days: 30,
+  max_deadline_days: 90,
+  max_public_lifetime_days: 90,
+}
 
 function MetricCard({ icon, label, value, helper, tone = 'emerald', testId }) {
   const tones = {
@@ -109,6 +116,10 @@ export default function JobDetail() {
     queryKey: jobKeys.employerDetail(publicId),
     queryFn: () => getEmployerJob(publicId),
   })
+  const postingContextQuery = useQuery({
+    queryKey: jobKeys.postingContext,
+    queryFn: getJobPostingContext,
+  })
   const applicationsQuery = useQuery({
     queryKey: applicationKeys.recruiterList({ job: publicId }),
     queryFn: () => getRecruiterApplications({ job: publicId }),
@@ -157,6 +168,10 @@ export default function JobDetail() {
       setNewDeadline(null)
       message.success('Đã cập nhật hạn nộp và trạng thái tin.')
     },
+    onError: (error) => message.error(
+      getApiErrorMessage(error, 'Không thể cập nhật hạn nhận hồ sơ.'),
+      { id: 'job-deadline-action-error' },
+    ),
   })
 
   function openDeadlineAction(action) {
@@ -181,6 +196,21 @@ export default function JobDetail() {
   if (jobQuery.isLoading) return <Skeleton active paragraph={{ rows: 12 }} />
   if (jobQuery.isError) return <Alert type="error" showIcon title="Không thể tải tin tuyển dụng." />
   const job = jobQuery.data
+  const deadlinePolicy = postingContextQuery.data || FALLBACK_DEADLINE_POLICY
+  const today = dayjs().startOf('day')
+  const maximumByToday = today.add(deadlinePolicy.max_deadline_days, 'day')
+  const maximumByPublicLifetime = deadlineAction === 'extend' && job.published_at
+    ? dayjs(job.published_at).startOf('day').add(
+        deadlinePolicy.max_public_lifetime_days,
+        'day',
+      )
+    : maximumByToday
+  const latestDeadline = maximumByPublicLifetime.isBefore(maximumByToday, 'day')
+    ? maximumByPublicLifetime
+    : maximumByToday
+  const earliestDeadline = deadlineAction === 'extend' && job.deadline
+    ? dayjs(job.deadline).startOf('day').add(1, 'day')
+    : today
 
   const tabs = [
     {
@@ -277,11 +307,17 @@ export default function JobDetail() {
         onCancel={() => setDeadlineAction(null)}
         onOk={submitDeadlineAction}
       >
-        <p className="mb-3 text-sm text-slate-600">Hạn nộp mới phải từ hôm nay trở đi.</p>
+        <p className="mb-3 text-sm text-slate-600">
+          Chọn từ {earliestDeadline.format('DD/MM/YYYY')} đến {latestDeadline.format('DD/MM/YYYY')}.
+        </p>
         <DatePicker
           className="!w-full"
           value={newDeadline}
-          disabledDate={(current) => current && current < dayjs().startOf('day')}
+          disabledDate={(current) => current && (
+            current.isBefore(earliestDeadline, 'day')
+            || current.isAfter(latestDeadline, 'day')
+          )}
+          format="DD/MM/YYYY"
           onChange={setNewDeadline}
         />
       </Modal>

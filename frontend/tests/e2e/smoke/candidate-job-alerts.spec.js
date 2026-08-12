@@ -39,6 +39,49 @@ const WARDS = [
   { id: 12, name: 'Phường Ba Đình', level: 'ward', parent: 1 },
 ]
 
+const JOB_DETAIL = {
+  public_id: 'job_similar_alert_1',
+  slug: 'nhan-vien-kinh-doanh',
+  title: 'Nhân viên kinh doanh tại Hà Nội - Thu nhập hấp dẫn',
+  company_name: 'Công ty Kinh doanh Mẫu',
+  company_verified: false,
+  category: 6,
+  category_name: 'Nhân viên kinh doanh',
+  primary_specialization: { id: 6, name: 'Nhân viên kinh doanh', slug: 'nhan-vien-kinh-doanh' },
+  domain_knowledge: [],
+  locations_detail: [PROVINCES[0]],
+  workplace_groups: [{
+    province_id: 1,
+    province_name: 'Hà Nội',
+    addresses: [{
+      ward_id: 11,
+      ward_name: 'Phường Hoàn Kiếm',
+      address_detail: '12 Tràng Tiền',
+      display: '12 Tràng Tiền, Phường Hoàn Kiếm',
+    }],
+  }],
+  description: '<p>Tìm kiếm và chăm sóc khách hàng.</p>',
+  requirements: '<p>Chủ động trong công việc.</p>',
+  benefits: '<p>Thưởng theo hiệu quả kinh doanh.</p>',
+  requirement_tags: ['Không yêu cầu kinh nghiệm'],
+  benefit_tags: [],
+  required_skills: [],
+  preferred_skills: [],
+  benefit_groups: [],
+  work_schedules: [],
+  language_requirements: [],
+  salary_type: 'range',
+  salary_min: 30_000_000,
+  salary_max: 50_000_000,
+  currency: 'VND',
+  experience_years: 'none',
+  work_type: 'onsite',
+  employment_type: 'full_time',
+  view_count: 12,
+  status: 'active',
+  published_at: '2026-08-11T08:00:00+07:00',
+}
+
 function alertFixture(overrides = {}) {
   return {
     public_id: 'alert_1',
@@ -181,6 +224,8 @@ async function mockCandidateJobAlertsApi(page, options = {}) {
       body = emailNotifications
     } else if (pathname === ALERTS_PATH) {
       body = { results: alerts, limit: 5, remaining: Math.max(0, 5 - alerts.length) }
+    } else if (pathname === '/api/jobs/nhan-vien-kinh-doanh/') {
+      body = JOB_DETAIL
     } else if (pathname === '/api/jobs/categories/') {
       body = { count: CATEGORIES.length, next: null, previous: null, results: CATEGORIES }
     } else if (pathname === '/api/locations/' && url.searchParams.get('level') === 'ward') {
@@ -190,6 +235,10 @@ async function mockCandidateJobAlertsApi(page, options = {}) {
       body = PROVINCES
     } else if (pathname === '/api/jobs/') {
       body = { count: 0, next: null, previous: null, results: [] }
+    } else if (pathname === '/api/jobs/saved/') {
+      body = []
+    } else if (pathname === '/api/v2/applications/') {
+      body = { results: [] }
     } else if (pathname === '/api/employer/industries/' || pathname === '/api/site/banners/') {
       body = []
     } else if (pathname === '/api/site/settings/') {
@@ -254,6 +303,20 @@ test('candidate job alerts: job-list CTA asks a guest to sign in without losing 
   await expect(page.getByRole('heading', { name: 'Chào mừng quay trở lại' })).toBeVisible()
   await expect(page.getByTestId('login-submit')).toBeVisible()
   await expect(page).toHaveURL(/\/viec-lam\?search=Backend%20Developer&search_by=title$/)
+})
+
+test('candidate job alerts: job-detail CTA asks a guest to sign in without losing the job', async ({ page }) => {
+  const api = await mockCandidateJobAlertsApi(page, { authenticated: false })
+  await page.goto('/viec-lam/nhan-vien-kinh-doanh')
+
+  await page.getByRole('button', { name: 'Gửi tôi việc làm tương tự' }).click()
+
+  await expect(page.getByRole('heading', { name: 'Chào mừng quay trở lại' })).toBeVisible()
+  await expect(page.getByTestId('login-submit')).toBeVisible()
+  await expect(page).toHaveURL(/\/viec-lam\/nhan-vien-kinh-doanh$/)
+  expect(api.writes.filter(({ pathname, method }) => (
+    pathname === ALERTS_PATH && method === 'POST'
+  ))).toHaveLength(0)
 })
 
 test('candidate job alerts: creates an email alert and keeps global and per-alert switches independent', async ({ page }) => {
@@ -434,4 +497,51 @@ test('candidate job alerts: job-list CTA prefills exact filters and every select
   await expect(dialog).toContainText('2 năm')
   await expect(dialog).toContainText('Làm việc linh hoạt / Hybrid')
   await expect(dialog).toContainText('Toàn thời gian')
+})
+
+test('candidate job alerts: job-detail CTA creates an alert from exact job criteria', async ({ page }) => {
+  await mockCandidateJobAlertsApi(page)
+  await page.goto('/viec-lam/nhan-vien-kinh-doanh')
+
+  const similarJobButton = page.getByRole('button', { name: 'Gửi tôi việc làm tương tự' })
+  const similarJobButtonBox = await similarJobButton.boundingBox()
+  expect(similarJobButtonBox).not.toBeNull()
+  expect(similarJobButtonBox.width).toBeLessThan(240)
+  expect(similarJobButtonBox.height).toBe(40)
+  await similarJobButton.click()
+  const dialog = page.getByRole('dialog', { name: 'Tạo thông báo việc làm mới' })
+  await expect(dialog).toBeVisible()
+  await expect(dialog.getByRole('textbox', { name: 'Từ khóa tìm kiếm', exact: true }))
+    .toHaveValue('Nhân viên kinh doanh')
+  await expect(dialog).toContainText('Nhân viên kinh doanh')
+  await expect(dialog).toContainText('Hà Nội')
+  await expect(dialog).toContainText('Phường Hoàn Kiếm')
+  await expect(dialog).toContainText('30 - 50 triệu')
+  await expect(dialog).toContainText('Không yêu cầu')
+  await expect(dialog).toContainText('Làm việc tại văn phòng / Onsite')
+  await expect(dialog).toContainText('Toàn thời gian')
+
+  const createRequest = page.waitForRequest((request) => (
+    new URL(request.url()).pathname === ALERTS_PATH && request.method() === 'POST'
+  ))
+  await dialog.getByRole('button', { name: 'Tạo thông báo' }).click()
+  const request = await createRequest
+
+  expect(request.postDataJSON()).toEqual({
+    keyword: 'Nhân viên kinh doanh',
+    keyword_scope: 'title',
+    category_ids: [6],
+    province_id: 1,
+    ward_id: 11,
+    salary_bucket: '30-50',
+    experience_years: 'none',
+    work_type: 'onsite',
+    employment_type: 'full_time',
+    frequency: 'daily',
+  })
+  await expect(dialog).toHaveCount(0)
+  await expect(page).toHaveURL(/\/viec-lam\/nhan-vien-kinh-doanh$/)
+  expect(await page.evaluate(
+    () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
+  )).toBe(false)
 })

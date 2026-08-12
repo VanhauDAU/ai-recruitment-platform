@@ -103,7 +103,7 @@ def employer_job_list_queryset(user, *, status=None, campaign=None, q=None):
                 output_field=BooleanField(),
             ),
         )
-        .order_by('-created_at')
+        .order_by('-created_at', '-id')
     )
     if status == 'expired':
         queryset = queryset.filter(status=Job.Status.ACTIVE, deadline__lt=timezone.localdate())
@@ -134,5 +134,5 @@ def employer_job_detail_queryset(user):
             'language_requirements__language',
             'application_contact__emails',
         )
-        .order_by('-created_at')
+        .order_by('-created_at', '-id')
     )

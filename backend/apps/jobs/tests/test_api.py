@@ -474,6 +474,9 @@ class EmployerJobSerializerTests(APITestCase):
         posting_context = self.client.get(reverse('employer-job-posting-context'))
         self.assertEqual(posting_context.status_code, 200, posting_context.data)
         self.assertFalse(posting_context.data['job_workspace_ready'])
+        self.assertEqual(posting_context.data['default_deadline_days'], 30)
+        self.assertEqual(posting_context.data['max_deadline_days'], 90)
+        self.assertEqual(posting_context.data['max_public_lifetime_days'], 90)
 
         self.client.force_authenticate(self.user)
         with patch(

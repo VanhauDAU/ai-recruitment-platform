@@ -1,13 +1,15 @@
 import { HeartFilled, HeartOutlined } from '@ant-design/icons'
 import { Button, Result } from 'antd'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import { useLoginPrompt } from '@/features/auth'
 import { ApplyForJobModal, useJobApplicationStatus } from '@/features/apply-for-job'
+import { CreateJobAlertModal } from '@/features/manage-job-alerts'
 import { ReportJobModal } from '@/features/report-job'
 import { useSession } from '@/entities/session'
 import { useSavedJob } from '@/features/saved-jobs'
 import { message } from '@/shared/lib/toast'
+import { buildJobDetailAlertPrefill } from './lib/job-detail-alert-prefill'
 import JobDetailContent from './ui/job-detail/JobDetailContent'
 import { JobBreadcrumbs, JobDetailSkeleton, JobHero } from './ui/job-detail/JobDetailOverview'
 import JobDetailSearchBar from './ui/job-detail/JobDetailSearchBar'
@@ -19,12 +21,15 @@ import useJobDetailPageData from './model/use-job-detail-page-data'
 export default function JobDetail() {
   const { slug, companySlug } = useParams()
   const navigate = useNavigate()
-  const { isAuthenticated, user } = useSession()
+  const { isAuthenticated, loading: sessionLoading, user } = useSession()
   const { promptLogin } = useLoginPrompt()
   const { job, relatedJobs, loading, notFound } = useJobDetailPageData({ slug, companySlug, navigate })
   const [saved, toggleSaved, savePending] = useSavedJob(job?.public_id, job)
   const [applyOpen, setApplyOpen] = useState(false)
+  const [createAlertOpen, setCreateAlertOpen] = useState(false)
   const [reportOpen, setReportOpen] = useState(false)
+  const jobAlertInitialValues = useMemo(() => buildJobDetailAlertPrefill(job), [job])
+  const canCreateJobAlert = !sessionLoading && (!isAuthenticated || user?.role === 'candidate')
   const applicationStatus = useJobApplicationStatus({
     jobPublicId: job?.public_id,
     enabled: isAuthenticated && user?.role === 'candidate',
@@ -58,6 +63,15 @@ export default function JobDetail() {
   function handleSave() {
     if (!requireCandidate()) return
     toggleSaved()
+  }
+
+  function handleCreateSimilarJobAlert() {
+    if (!canCreateJobAlert) return
+    if (!isAuthenticated) {
+      promptLogin(() => setCreateAlertOpen(true))
+      return
+    }
+    setCreateAlertOpen(true)
   }
 
   function handleReport() {
@@ -95,7 +109,15 @@ export default function JobDetail() {
           <JobBreadcrumbs job={job} />
           <div className="mt-4 grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
             <div className="min-w-0 space-y-5">
-              <JobHero job={job} saved={saved} applicationStatus={applicationStatus} onApply={handleApply} onSave={handleSave} onShare={handleShare} savePending={savePending} />
+              <JobHero
+                job={job}
+                saved={saved}
+                applicationStatus={applicationStatus}
+                onApply={handleApply}
+                onSave={handleSave}
+                onShare={handleShare}
+                savePending={savePending}
+              />
               <JobDetailContent
                 job={job}
                 relatedJobs={relatedJobs}
@@ -103,7 +125,9 @@ export default function JobDetail() {
                 savePending={savePending}
                 isAuthenticated={isAuthenticated}
                 applicationStatus={applicationStatus}
+                canCreateJobAlert={canCreateJobAlert}
                 onApply={handleApply}
+                onCreateJobAlert={handleCreateSimilarJobAlert}
                 onSave={handleSave}
                 onReport={handleReport}
                 onRequireLogin={promptLogin}
@@ -127,6 +151,11 @@ export default function JobDetail() {
         isReapplication={applicationStatus.hasApplied}
         retriesRemaining={applicationStatus.retriesRemaining}
         onSubmitted={applicationStatus.recordSubmission}
+      />
+      <CreateJobAlertModal
+        open={createAlertOpen}
+        initialValues={jobAlertInitialValues}
+        onClose={() => setCreateAlertOpen(false)}
       />
       <ReportJobModal
         jobPublicId={job.public_id}

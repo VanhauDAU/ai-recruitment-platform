@@ -19,7 +19,7 @@ import AdminJobPublicLink from './AdminJobPublicLink'
 
 const EMPTY_PAGE = { count: 0, results: [] }
 const DEFAULT_SCOPE = 'pending'
-const DEFAULT_ORDERING = 'submitted_at'
+const DEFAULT_ORDERING = '-created_at'
 
 function sorterOrder(ordering, field) {
   if (ordering === field) return 'ascend'
@@ -183,7 +183,7 @@ export default function AdminJobList() {
       ),
     },
     {
-      title: 'Hạn nộp',
+      title: 'Hạn nhận hồ sơ',
       dataIndex: 'deadline',
       key: 'deadline',
       sorter: true,
@@ -192,7 +192,16 @@ export default function AdminJobList() {
       render: formatAdminJobDate,
     },
     {
-      title: 'Gửi duyệt',
+      title: 'Tạo lúc',
+      dataIndex: 'created_at',
+      key: 'created_at',
+      sorter: true,
+      sortOrder: sorterOrder(ordering, 'created_at'),
+      width: 175,
+      render: formatAdminJobDateTime,
+    },
+    {
+      title: 'Gửi duyệt lúc',
       dataIndex: 'submitted_at',
       key: 'submitted_at',
       sorter: true,
@@ -293,6 +302,7 @@ export default function AdminJobList() {
                 { key: 'company_name', label: 'Công ty' },
                 { label: 'Trạng thái', value: (row) => row.status_label || row.status },
                 { key: 'deadline', label: 'Hạn nộp' },
+                { key: 'created_at', label: 'Tạo lúc' },
                 { key: 'submitted_at', label: 'Gửi duyệt lúc' },
                 { key: 'application_count', label: 'Số lượt ứng tuyển' },
                 { key: 'pending_report_count', label: 'Báo cáo đang chờ' },
@@ -340,7 +350,7 @@ export default function AdminJobList() {
               total: jobs.count || 0,
             }}
             rowKey="public_id"
-            scroll={{ x: 1580 }}
+            scroll={{ x: 1755 }}
           />
         </div>
         {summaryQuery.isError && (

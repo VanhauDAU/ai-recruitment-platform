@@ -1,4 +1,4 @@
-import { DownOutlined, HeartFilled, HeartOutlined, UpOutlined } from '@ant-design/icons'
+import { BellOutlined, DownOutlined, HeartFilled, HeartOutlined, UpOutlined } from '@ant-design/icons'
 import { useEffect, useRef, useState } from 'react'
 import { formatDeadline } from '@/entities/job'
 import { formatJobDate } from '../../lib/job-detail-presentation'
@@ -20,7 +20,20 @@ const APPLY_GUIDE = 'Ứng viên nộp hồ sơ trực tuyến bằng cách bấ
 const MOBILE_COLLAPSED_HEIGHT = 520
 const DESKTOP_COLLAPSED_HEIGHT = 640
 
-export default function JobDetailContent({ job, relatedJobs, saved, savePending, isAuthenticated, applicationStatus, onApply, onSave, onReport, onRequireLogin }) {
+export default function JobDetailContent({
+  job,
+  relatedJobs,
+  saved,
+  savePending,
+  isAuthenticated,
+  applicationStatus,
+  canCreateJobAlert = false,
+  onApply,
+  onCreateJobAlert,
+  onSave,
+  onReport,
+  onRequireLogin,
+}) {
   const [detailsExpanded, setDetailsExpanded] = useState(false)
   const [detailsOverflowing, setDetailsOverflowing] = useState(false)
   const detailsRef = useRef(null)
@@ -50,7 +63,21 @@ export default function JobDetailContent({ job, relatedJobs, saved, savePending,
 
   return (
     <>
-      <DetailSection id="job-detail-content" title="Chi tiết tin tuyển dụng">
+      <DetailSection
+        id="job-detail-content"
+        title="Chi tiết tin tuyển dụng"
+        action={canCreateJobAlert && (
+          <button
+            type="button"
+            aria-haspopup="dialog"
+            onClick={onCreateJobAlert}
+            className="ml-auto inline-flex h-10 shrink-0 cursor-pointer items-center justify-end gap-1.5 rounded-md bg-white p-0 text-sm font-normal text-[var(--brand-primary)] transition-colors hover:text-[var(--brand-primary-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2 motion-reduce:transition-none"
+          >
+            <BellOutlined aria-hidden="true" className="text-[var(--brand-primary)]" />
+            <span>Gửi tôi việc làm tương tự</span>
+          </button>
+        )}
+      >
         <div className="relative">
           <div
             ref={detailsRef}
@@ -103,8 +130,16 @@ export default function JobDetailContent({ job, relatedJobs, saved, savePending,
   )
 }
 
-function DetailSection({ id, title, children }) {
-  return <section id={id} className="scroll-mt-20 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6"><h2 className="border-l-4 border-[var(--brand-primary)] pl-3 text-base font-bold text-slate-800 sm:text-lg">{title}</h2><div className="mt-5 space-y-6">{children}</div></section>
+function DetailSection({ id, title, action, children }) {
+  return (
+    <section id={id} className="scroll-mt-20 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+        <h2 className="border-l-4 border-[var(--brand-primary)] pl-3 text-base font-bold text-slate-800 sm:text-lg">{title}</h2>
+        {action}
+      </div>
+      <div className="mt-5 space-y-6">{children}</div>
+    </section>
+  )
 }
 
 function JobText({ id, title, content, children }) {

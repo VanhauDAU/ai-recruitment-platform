@@ -102,6 +102,27 @@ describe('EmployerWorkspaceLayout', () => {
     expect(sidebar).toHaveClass('ant-layout-sider-collapsed')
   })
 
+  it('keeps shared breathing room between the route header and every employer page', () => {
+    useSession.mockReturnValue({
+      user: { full_name: 'Nguyễn An', email: 'hr@example.com' },
+      logout: vi.fn(),
+    })
+
+    render(
+      <MemoryRouter initialEntries={['/tuyendung/app/dashboard']}>
+        <Routes>
+          <Route element={<EmployerWorkspaceLayout />}>
+            <Route path="/tuyendung/app/dashboard" element={<p>Bảng tin</p>} />
+          </Route>
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    const content = screen.getByTestId('employer-workspace-content')
+    expect(content).toHaveClass('pt-3', 'sm:pt-4', 'xl:pt-4')
+    expect(content).not.toHaveClass('pt-0', 'sm:pt-0', 'xl:pt-0')
+  })
+
   it('shows the three-level account verification popover from the sidebar question mark', async () => {
     useSession.mockReturnValue({
       user: { full_name: 'Nguyễn An', email: 'hr@example.com' },

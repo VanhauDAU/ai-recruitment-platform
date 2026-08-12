@@ -122,6 +122,7 @@ class AdminJobManagementListSerializer(serializers.ModelSerializer):
             'is_urgent',
             'has_flash_badge',
             'deadline',
+            'created_at',
             'submitted_at',
             'published_at',
             'approved_at',
@@ -170,7 +171,7 @@ class AdminJobModerationSerializer(AdminJobManagementListSerializer):
     description = serializers.CharField(read_only=True)
 
     class Meta(AdminJobManagementListSerializer.Meta):
-        fields = [*AdminJobManagementListSerializer.Meta.fields, 'description', 'created_at']
+        fields = [*AdminJobManagementListSerializer.Meta.fields, 'description']
 
 
 class AdminJobDetailSerializer(AdminJobManagementListSerializer):
@@ -235,7 +236,6 @@ class AdminJobDetailSerializer(AdminJobManagementListSerializer):
             'pending_changes',
             'employer_account_level',
             'employer_verification_completed',
-            'created_at',
         ]
 
     def get_application_contact(self, obj):

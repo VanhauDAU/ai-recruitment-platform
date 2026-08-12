@@ -36,15 +36,16 @@ thay đổi; không cần sửa `VITE_API_BASE_URL`, CORS hoặc `ALLOWED_HOSTS`
 - Muốn backend chạy ngoài Docker dùng DB trong Docker thì đặt `DB_PORT=5433`
   trong `backend/.env` (mặc định `5432` = Postgres local).
 - Service: `db` (postgres 16), `redis`, `backend` (runserver + auto migrate),
-  `worker` (celery), `beat` (celery beat), `tts` (VieNeu-TTS/ONNX) và
-  `frontend` (vite).
+  `worker` (Celery tác vụ chung), `ai-worker` (chỉ queue `ai-generation`,
+  concurrency 2), `beat` (Celery beat), `tts` (VieNeu-TTS/ONNX) và `frontend`
+  (vite).
 - `frontend_node_modules` được giữ trong named volume. Entrypoint chỉ chạy
   `npm ci` khi `package-lock.json` thay đổi hoặc volume còn trống, nên restart
   frontend không còn cài lại toàn bộ dependency.
-- **Queue Celery**: settings route task sang 6 queue (`default`, `auth-email`,
-  `auth-sms`, `cv-export`, `speech-artifacts`, `upload-scan`). Worker trong
-  compose khai đủ cả sáu; bỏ queue tương ứng thì email, SMS, export CV, upload
-  MP3 TTS hoặc malware scan/cleanup có thể không chạy.
+- **Queue Celery**: worker chung nghe `default`, `auth-email`, `auth-sms`,
+  `cv-export`, `speech-artifacts`, `upload-scan` và `candidate-email`.
+  `ai-generation` chỉ do `ai-worker` nghe để provider latency không chiếm pool
+  email/export/scan. Không gộp queue AI vào worker chung khi lên production.
 - **`CELERY_BROKER_URL` được override tường minh** trong compose: settings chỉ
   fallback về `REDIS_URL` khi biến vắng mặt, mà `.env` lại set sẵn `127.0.0.1`.
 
@@ -143,7 +144,7 @@ docker compose exec db pg_dump -U postgres ai_career_coach > backup-$(date +%F).
 cat backup-YYYY-MM-DD.sql | docker compose exec -T db psql -U postgres ai_career_coach
 
 # Log
-docker compose logs -f backend worker
+docker compose logs -f backend worker ai-worker
 
 # Rollback code: checkout commit cũ rồi build lại
 git checkout <commit> && docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
@@ -155,6 +156,8 @@ Compose đã đặt các mặc định an toàn, có thể override trong file `
 
 | Biến | Dev | Production | Ý nghĩa |
 | --- | ---: | ---: | --- |
+| `AI_RUNTIME_ENABLED` | `true` | `false` | Hard switch toàn generative AI; Site Setting chỉ được thu hẹp rollout. |
+| AI worker concurrency | `2` | `2` | Được pin trong Compose V1 để chặn chi phí và tải provider; đổi phải qua capacity review. |
 | `SPEECH_RUNTIME_ENABLED` | `true` | `false` | Hard switch chung backend/TTS; Site Setting không thể vượt qua. |
 | `TTS_CPU_LIMIT` | `2.5` | `2.5` | Trần CPU container inference; thử `3.5` chỉ khi benchmark chưa đạt. |
 | `TTS_ONNX_THREADS` | `2` | `2` | Thread ONNX/OMP; thử `3` trước khi tăng CPU. |

@@ -23,6 +23,7 @@ from ...selectors.verification_badge import (
     badge_criteria_payload,
     prime_badge_cache,
 )
+from ...services import job_deadline_error
 from .supporting import (
     JobApplicationContactSerializer,
     JobApplicationEmailSerializer,
@@ -623,6 +624,11 @@ class EmployerJobWriteSerializer(JobSerializer):
     )
     campaign_name = serializers.CharField(source='campaign.name', read_only=True)
     is_expired = serializers.BooleanField(read_only=True)
+    ai_generation_public_id = serializers.CharField(
+        write_only=True,
+        required=False,
+        max_length=50,
+    )
 
     class Meta(JobSerializer.Meta):
         fields = JobSerializer.Meta.fields + [
@@ -630,6 +636,7 @@ class EmployerJobWriteSerializer(JobSerializer):
             'campaign',
             'campaign_name',
             'is_expired',
+            'ai_generation_public_id',
             'auto_reject_stale_applications',
             'auto_reject_after_days',
             'auto_rejection_email_body',
@@ -645,6 +652,10 @@ class EmployerJobWriteSerializer(JobSerializer):
 
     def validate(self, attrs):
         attrs = super().validate(attrs)
+        if self.instance is not None and attrs.get('ai_generation_public_id'):
+            raise serializers.ValidationError(
+                {'ai_generation_public_id': 'Chỉ liên kết kết quả AI khi tạo tin mới.'}
+            )
         enabled = attrs.get(
             'auto_reject_stale_applications',
             getattr(self.instance, 'auto_reject_stale_applications', True),
@@ -663,6 +674,11 @@ class EmployerJobWriteSerializer(JobSerializer):
             )
         return attrs
 
+    def validate_deadline(self, deadline):
+        if deadline_error := job_deadline_error(deadline, required=False):
+            raise serializers.ValidationError(deadline_error)
+        return deadline
+
     def validate_campaign(self, campaign):
         if campaign is None:
             return campaign
@@ -680,6 +696,7 @@ class EmployerJobWriteSerializer(JobSerializer):
 
     @transaction.atomic
     def create(self, validated_data):
+        self._ai_generation_public_id = validated_data.pop('ai_generation_public_id', '')
         contact = validated_data.pop('application_contact', None)
         job = super().create(validated_data)
         self._replace_contact(job, contact)
@@ -796,6 +813,9 @@ class EmployerPostingBlockerSerializer(serializers.Serializer):
 
 
 class EmployerJobPostingContextSerializer(serializers.Serializer):
+    default_deadline_days = serializers.IntegerField(min_value=1)
+    max_deadline_days = serializers.IntegerField(min_value=1)
+    max_public_lifetime_days = serializers.IntegerField(min_value=1)
     verification_completed = serializers.BooleanField()
     admin_approved = serializers.BooleanField()
     account_level = serializers.IntegerField(min_value=0)

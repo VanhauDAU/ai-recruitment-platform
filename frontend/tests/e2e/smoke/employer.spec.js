@@ -964,7 +964,7 @@ test('employer jobs: compact list keeps candidate previews and contextual action
   await expect.poll(() => lastJobsQuery.get('q')).toBe('Frontend')
 })
 
-test('employer jobs: manual job form exposes the complete five-section workflow', async ({ page }, testInfo) => {
+test('employer jobs: creation chooser leads to the complete manual five-section workflow', async ({ page }, testInfo) => {
   const hasDesktopPreview = testInfo.project.name === 'desktop-chromium'
   if (hasDesktopPreview) await page.setViewportSize({ width: 1728, height: 900 })
   let savedDraft = null
@@ -1055,8 +1055,17 @@ test('employer jobs: manual job form exposes the complete five-section workflow'
   ])
 
   await page.goto('/tuyendung/app/jobs/new?campaign=camp_q3')
+  await expect(page.getByRole('heading', { name: 'Bạn muốn bắt đầu theo cách nào?' })).toBeVisible()
+  await expect(page.getByRole('button', { name: /Mở form/ })).toBeVisible()
+  await expect(page.getByRole('button', { name: /Tạo với AI/ })).toBeVisible()
+  await expect(page.getByRole('button', { name: /Dán nội dung JD/ })).toBeVisible()
+  await expect(page).toHaveURL(/campaign=camp_q3/)
+  await expectNoHorizontalOverflow(page)
+  await page.getByRole('button', { name: /Mở form/ }).click()
   await initialCatalogResponses
 
+  await expect(page).toHaveURL(/campaign=camp_q3/)
+  await expect(page).toHaveURL(/mode=manual/)
   await expect(page.getByLabel('Tiêu đề tin')).toBeVisible()
   await expectJobFormTopBackground(page)
   if (hasDesktopPreview) {
@@ -1133,7 +1142,6 @@ test('employer jobs: manual job form exposes the complete five-section workflow'
   await expect(page.locator('#application').getByText('hr@example.com', { exact: true })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Lưu nháp' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Gửi duyệt tin' })).toBeVisible()
-  await expect(page.getByText('Đăng tin bằng AI')).toHaveCount(0)
   await expectNoHorizontalOverflow(page)
   await page.getByRole('button', { name: 'Lưu nháp' }).click()
   await expect.poll(() => savedDraft).toMatchObject({
@@ -1158,6 +1166,153 @@ test('employer jobs: manual job form exposes the complete five-section workflow'
   await expect(page.getByLabel('Mô tả thời gian làm việc')).toHaveValue('Làm việc linh hoạt theo lịch của đội ngũ.')
   await expectJobFormTopBackground(page)
   if (hasDesktopPreview) await expectJobPreviewPinned(page)
+})
+
+test('employer jobs: direct AI modes preserve campaign, resume generation and attribute the saved draft', async ({ page }) => {
+  let createdGenerationPayload = null
+  let savedAiDraft = null
+  await mockPublicApi(page)
+  await setEmployerSession(page, {
+    email_verified: true,
+    employer_onboarding_required: false,
+    employer_onboarding_step: 'complete',
+    employer_verification_completed: true,
+  })
+  await page.route('http://localhost:8000/api/employer/me/', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        public_id: 'rec_verified',
+        ...READY_EMPLOYER_READINESS,
+        onboarding: { verification_completed: true },
+      }),
+    })
+  })
+  await page.route(/http:\/\/localhost:8000\/api\/jobs\/categories\/.*/, async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify([
+        { id: 10, name: 'Công nghệ thông tin', parent: null, category_type: 'occupation_group' },
+        { id: 18, name: 'IT - Phần mềm', parent: 10, category_type: 'domain' },
+        { id: 12, name: 'Backend Engineer', parent: 18, category_type: 'specialization' },
+      ]),
+    })
+  })
+  await page.route('http://localhost:8000/api/employer/campaigns/options/', async (route) => {
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify([{ public_id: 'camp_ai', name: 'Chiến dịch AI' }]) })
+  })
+  await page.route('http://localhost:8000/api/jobs/mine/posting-context/', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({ job_postable: true, free_publish_limit: 3, free_publish_remain: 3 }),
+    })
+  })
+  await page.route('http://localhost:8000/api/jobs/benefits/', async (route) => {
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify([{ id: 1, name: 'Bảo hiểm' }]) })
+  })
+  await page.route('http://localhost:8000/api/jobs/languages/', async (route) => {
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify([{ id: 2, name: 'Tiếng Anh' }]) })
+  })
+  await page.route('http://localhost:8000/api/skills/', async (route) => {
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify([{ id: 3, name: 'Python' }]) })
+  })
+  await page.route(/http:\/\/localhost:8000\/api\/locations\/.*/, async (route) => {
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify([{ id: 1, name: 'Đà Nẵng', level: 'province' }]) })
+  })
+  await page.route('http://localhost:8000/api/jobs/mine/ai-generations/', async (route) => {
+    createdGenerationPayload = route.request().postDataJSON()
+    await route.fulfill({
+      status: 202,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        public_id: 'generation_e2e',
+        status: 'queued',
+        phase: 'queued',
+        quota_remaining: 9,
+      }),
+    })
+  })
+  await page.route('http://localhost:8000/api/jobs/mine/ai-generations/generation_e2e/', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        public_id: 'generation_e2e',
+        mode: 'ai_brief',
+        status: 'completed',
+        phase: 'completed',
+        suggestion: {
+          title: 'Kỹ sư Backend AI',
+          description: '<ul><li>Xây dựng API tuyển dụng.</li></ul>',
+          requirements: '<ul><li>Thành thạo Python.</li></ul>',
+          benefits: '',
+          work_types: ['hybrid'],
+          employment_type: 'full_time',
+          experience_years: '2',
+          position_level: 'employee',
+          education_level: 'university',
+          category_assignments: [{ category: 12, category_name: 'Backend Engineer', role: 'primary_specialization', sort_order: 0 }],
+          job_skills: [{ skill: 3, skill_name: 'Python', importance: 'required', min_level: '' }],
+          job_benefits: [],
+        },
+        warnings: ['benefits_without_source_removed'],
+        unresolved_suggestions: { categories: [], skills: [], benefits: [] },
+        manual_fields: ['salary_type', 'salary_min', 'salary_max', 'job_locations', 'deadline', 'campaign', 'application_contact'],
+        quota_remaining: 9,
+      }),
+    })
+  })
+  await page.route(/http:\/\/localhost:8000\/api\/jobs\/mine\/\?as=draft$/, async (route) => {
+    savedAiDraft = route.request().postDataJSON()
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({ public_id: 'job_ai_draft', status: 'draft', ...savedAiDraft }),
+    })
+  })
+  await page.route('http://localhost:8000/api/jobs/mine/job_ai_draft/', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({ public_id: 'job_ai_draft', status: 'draft', ...savedAiDraft }),
+    })
+  })
+
+  await page.goto('/tuyendung/app/jobs/new?mode=manual&campaign=camp_ai')
+  await expect(page.getByLabel('Tiêu đề tin')).toBeVisible()
+  await expect(page).toHaveURL(/mode=manual/)
+  await expect(page).toHaveURL(/campaign=camp_ai/)
+  await expectNoHorizontalOverflow(page)
+
+  await page.goto('/tuyendung/app/jobs/new?mode=jd_text&campaign=camp_ai')
+  await expect(page.getByLabel('Nội dung JD hiện có')).toBeVisible()
+  await expect(page).toHaveURL(/mode=jd_text/)
+  await expect(page).toHaveURL(/campaign=camp_ai/)
+  await expectNoHorizontalOverflow(page)
+
+  await page.goto('/tuyendung/app/jobs/new?mode=ai_brief&campaign=camp_ai')
+  await page.getByLabel('Vị trí cần tuyển').fill('Kỹ sư Backend')
+  await page.getByRole('button', { name: 'Tạo bản nháp bằng AI' }).click()
+  await expect.poll(() => createdGenerationPayload).toMatchObject({
+    mode: 'ai_brief',
+    locale: 'vi-VN',
+    brief: { position: 'Kỹ sư Backend' },
+  })
+  await expect(page).toHaveURL(/mode=ai_brief/)
+  await expect(page).toHaveURL(/campaign=camp_ai/)
+  await expect(page).toHaveURL(/generation=generation_e2e/)
+  await expect(page.getByLabel('Tiêu đề tin')).toHaveValue('Kỹ sư Backend AI')
+  await expect(page.getByRole('region', { name: 'Tạo tin tuyển dụng bằng AI' })).toHaveCount(0)
+  await expect(page.getByText('Bản nháp AI đã được điền vào form')).toHaveCount(0)
+  await expectNoHorizontalOverflow(page)
+
+  await page.reload()
+  await expect(page.getByLabel('Tiêu đề tin')).toHaveValue('Kỹ sư Backend AI')
+  await expect(page.getByRole('region', { name: 'Tạo tin tuyển dụng bằng AI' })).toHaveCount(0)
+  await expect(page).toHaveURL(/generation=generation_e2e/)
+  await page.getByRole('button', { name: 'Lưu nháp' }).click()
+  await expect.poll(() => savedAiDraft).toMatchObject({
+    title: 'Kỹ sư Backend AI',
+    campaign: 'camp_ai',
+    ai_generation_public_id: 'generation_e2e',
+  })
 })
 
 test('employer jobs: detail workspace is compact, actionable and responsive', async ({ page }) => {

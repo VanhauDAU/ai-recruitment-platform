@@ -47,6 +47,58 @@ if not RECAPTCHA_SECRET_KEY:
 if SPEECH_TTS_INTERNAL_TOKEN in {'', 'dev-tts-internal-token-change-me'}:
     _errors.append('SPEECH_TTS_INTERNAL_TOKEN production phải là secret riêng.')
 
+if not 1 <= JOB_POSTING_DEFAULT_DEADLINE_DAYS <= JOB_POSTING_MAX_DEADLINE_DAYS:
+    _errors.append('JOB_POSTING_DEFAULT_DEADLINE_DAYS phải từ 1 đến JOB_POSTING_MAX_DEADLINE_DAYS.')
+if JOB_POSTING_MAX_DEADLINE_DAYS > JOB_POSTING_MAX_PUBLIC_LIFETIME_DAYS:
+    _errors.append('JOB_POSTING_MAX_DEADLINE_DAYS không được vượt quá vòng đời công khai tối đa.')
+
+_ai_provider_backends = {'gemini_developer', 'vertex'}
+if AI_PROVIDER_BACKEND not in _ai_provider_backends:
+    _errors.append(
+        'AI_PROVIDER_BACKEND phải là gemini_developer hoặc vertex; không có fallback provider.'
+    )
+if not AI_JOB_GENERATION_MODEL_ALLOWLIST:
+    _errors.append('AI_JOB_GENERATION_MODEL_ALLOWLIST phải có ít nhất một model đã duyệt.')
+elif AI_JOB_GENERATION_MODEL not in AI_JOB_GENERATION_MODEL_ALLOWLIST:
+    _errors.append('AI_JOB_GENERATION_MODEL phải nằm trong model allowlist production.')
+if AI_JOB_GENERATION_DAILY_LIMIT <= 0:
+    _errors.append('AI_JOB_GENERATION_DAILY_LIMIT phải lớn hơn 0.')
+if AI_PROVIDER_TIMEOUT_SECONDS <= 0 or AI_PROVIDER_TIMEOUT_SECONDS > 40:
+    _errors.append('AI_PROVIDER_TIMEOUT_SECONDS phải trong khoảng (0, 40].')
+if AI_PROVIDER_MAX_ATTEMPTS not in {1, 2}:
+    _errors.append('AI_PROVIDER_MAX_ATTEMPTS chỉ được là 1 hoặc 2.')
+if AI_PROVIDER_RETRY_BASE_SECONDS <= 0 or AI_PROVIDER_RETRY_BASE_SECONDS > 5:
+    _errors.append('AI_PROVIDER_RETRY_BASE_SECONDS phải trong khoảng (0, 5].')
+if AI_JOB_GENERATION_LEASE_SECONDS != 85:
+    _errors.append('AI_JOB_GENERATION_LEASE_SECONDS production phải là 85 giây.')
+if AI_JOB_GENERATION_CONTENT_RETENTION_DAYS != 90:
+    _errors.append('Nội dung AI job generation production phải giữ đúng 90 ngày.')
+if AI_INVOCATION_METADATA_RETENTION_DAYS != 365:
+    _errors.append('Metadata AI production phải giữ đúng 365 ngày.')
+if AI_RUNTIME_ENABLED:
+    _model_pricing = (
+        AI_MODEL_PRICING_USD.get(AI_JOB_GENERATION_MODEL)
+        if isinstance(AI_MODEL_PRICING_USD, dict)
+        else None
+    )
+    if not isinstance(_model_pricing, dict) or not {'input', 'output'} <= set(_model_pricing):
+        _errors.append('AI_MODEL_PRICING_USD phải có giá input/output cho model đang bật.')
+    else:
+        try:
+            _pricing_values = [float(_model_pricing['input']), float(_model_pricing['output'])]
+        except (TypeError, ValueError):
+            _errors.append('Giá token AI_MODEL_PRICING_USD phải là số.')
+        else:
+            if any(value < 0 for value in _pricing_values) or not any(_pricing_values):
+                _errors.append('Giá token AI phải không âm và có ít nhất một giá lớn hơn 0.')
+    if AI_PROVIDER_BACKEND == 'gemini_developer' and not GEMINI_API_KEY:
+        _errors.append('GEMINI_API_KEY là bắt buộc khi bật Gemini Developer API.')
+    if AI_PROVIDER_BACKEND == 'vertex':
+        if not GOOGLE_CLOUD_PROJECT:
+            _errors.append('GOOGLE_CLOUD_PROJECT là bắt buộc khi bật Vertex AI.')
+        if not GOOGLE_CLOUD_LOCATION:
+            _errors.append('GOOGLE_CLOUD_LOCATION là bắt buộc khi bật Vertex AI.')
+
 _announcement_surfaces = {
     'candidate',
     'employer_marketing',

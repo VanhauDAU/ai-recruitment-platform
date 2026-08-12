@@ -35,6 +35,7 @@ describe('JobDetailContent', () => {
 
   it('fades long details, expands them fully, and offers a collapse action', async () => {
     const onReport = vi.fn()
+    const onCreateJobAlert = vi.fn()
     render(
       <JobDetailContent
         job={job}
@@ -43,7 +44,9 @@ describe('JobDetailContent', () => {
         savePending={false}
         isAuthenticated={false}
         applicationStatus={{ hasApplied: false, isLimitReached: false }}
+        canCreateJobAlert
         onApply={vi.fn()}
+        onCreateJobAlert={onCreateJobAlert}
         onSave={vi.fn()}
         onReport={onReport}
         onRequireLogin={vi.fn()}
@@ -66,5 +69,11 @@ describe('JobDetailContent', () => {
     expect(screen.getByText('Báo cáo tin tuyển dụng:', { exact: true }).parentElement).toHaveClass('bg-[#F2F4F5]')
     fireEvent.click(reportButton)
     expect(onReport).toHaveBeenCalledOnce()
+
+    const alertButton = screen.getByRole('button', { name: 'Gửi tôi việc làm tương tự' })
+    expect(alertButton).toHaveAttribute('aria-haspopup', 'dialog')
+    expect(alertButton).not.toHaveClass('w-full')
+    fireEvent.click(alertButton)
+    expect(onCreateJobAlert).toHaveBeenCalledOnce()
   })
 })

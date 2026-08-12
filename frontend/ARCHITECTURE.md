@@ -412,6 +412,34 @@ pages/main/jobs/JobDetail
 - `features/apply-for-job` sở hữu tải CV/version, cảnh báo publish và submit
   explicit `version_public_id`. Page chỉ kiểm tra session/role rồi mở feature.
 
+## Ownership map — Employer job editor và AI generation
+
+```text
+pages/employer/app/jobs/JobForm
+  → widgets/employer-job-editor
+    → features/post-job + features/generate-job-post
+      → entities/job + shared/ui/mascot + shared/api
+```
+
+- Page chỉ đọc job id/`campaign`, tải dữ liệu route và compose widget; không poll
+  AI hoặc giữ Ant Form instance. Widget sở hữu URL state `mode`/`generation` và
+  luôn bảo toàn các query khác khi chuyển mode.
+- `widgets/employer-job-editor` sở hữu một controlled form dùng chung cho create
+  thủ công, brief AI và dán JD. Widget compose generation với `PostJobForm`;
+  form áp whitelist patch đúng một lần theo generation key, giữ nguyên trường
+  NTD phải tự nhập và chuyển draft cuối cùng cho `post-job`.
+- `features/generate-job-post` sở hữu create/status/cancel/feedback, resume sau
+  reload và presentation theo phase thật. Feature không import `post-job`;
+  composition và mapping suggestion vào form thuộc widget.
+- `features/post-job` chỉ sở hữu mutation lưu tin và validation form canonical.
+  `ai_generation_public_id` là provenance write-only, không biến generation
+  thành job và không cho phép tự publish.
+- AI không có mặt ở route edit V1. Query `campaign` phải được bảo toàn khi đổi
+  `mode=manual|ai_brief|jd_text`; mode không hợp lệ fallback thủ công.
+- Mascot dùng `shared/ui/mascot`, phase có nhãn văn bản độc lập với animation,
+  và tắt motion theo `prefers-reduced-motion`. Lỗi/cancel luôn giữ đường lui về
+  form thủ công; reload phải resume từ public id đã lưu, không tạo lượt mới.
+
 ## Ownership map — Quản lý tin tuyển dụng quản trị
 
 ```text

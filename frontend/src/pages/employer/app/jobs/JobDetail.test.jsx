@@ -6,6 +6,7 @@ import JobDetail from './JobDetail'
 
 const mocks = vi.hoisted(() => ({
   getEmployerJob: vi.fn(),
+  getJobPostingContext: vi.fn(),
   getRecruiterApplications: vi.fn(),
   readinessState: {
     readiness: {
@@ -37,8 +38,10 @@ vi.mock('@/entities/job', () => ({
   closeEmployerJob: vi.fn(),
   extendEmployerJob: vi.fn(),
   getEmployerJob: mocks.getEmployerJob,
+  getJobPostingContext: mocks.getJobPostingContext,
   jobKeys: {
     employerDetail: (id) => ['jobs', 'employer-detail', id],
+    postingContext: ['jobs', 'posting-context'],
   },
   reopenEmployerJob: vi.fn(),
 }))
@@ -89,6 +92,11 @@ describe('JobDetail candidate-data boundary', () => {
       status: 'active',
       application_count: 8,
       view_count: 20,
+    })
+    mocks.getJobPostingContext.mockReset().mockResolvedValue({
+      default_deadline_days: 30,
+      max_deadline_days: 90,
+      max_public_lifetime_days: 90,
     })
     mocks.getRecruiterApplications.mockReset().mockResolvedValue([{
       public_id: 'application_1',

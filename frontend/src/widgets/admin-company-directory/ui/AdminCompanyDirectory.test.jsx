@@ -274,6 +274,7 @@ describe('admin company directory', () => {
         policy_hold: '',
         moderation_hold: '',
         deadline: '2026-08-30',
+        created_at: '2026-07-31T08:00:00Z',
         submitted_at: '2026-08-01T08:00:00Z',
         application_count: 4,
         view_count: 25,
@@ -294,12 +295,12 @@ describe('admin company directory', () => {
       {
         company: 'co_alpha',
         page: 1,
-        ordering: '-updated_at',
+        ordering: '-created_at',
       },
       expect.objectContaining({ signal: expect.any(AbortSignal) }),
     ))
     expect(screen.getByRole('columnheader', { name: 'Nhà tuyển dụng' })).toBeInTheDocument()
-    expect(screen.getByRole('columnheader', { name: 'Cập nhật' })).toHaveAttribute(
+    expect(screen.getByRole('columnheader', { name: 'Tạo lúc' })).toHaveAttribute(
       'aria-sort',
       'descending',
     )
