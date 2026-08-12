@@ -59,6 +59,7 @@ export default function JobPreviewPanel({
     { label: 'Số lượng tuyển', value: job.number_of_vacancies ? `${job.number_of_vacancies} người` : null },
   ].filter((item) => item.value)
   const sections = [
+    { title: 'Lý do nên ứng tuyển', lines: job.application_reasons || [] },
     { title: 'Mô tả công việc', lines: jobContentLines(job.description || job.short_description) },
     { title: 'Yêu cầu ứng viên', lines: jobContentLines(job.requirements) },
     { title: 'Quyền lợi', lines: previewBenefitLines(job) },

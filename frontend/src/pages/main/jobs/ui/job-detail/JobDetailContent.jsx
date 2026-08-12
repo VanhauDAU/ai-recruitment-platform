@@ -84,6 +84,7 @@ export default function JobDetailContent({
             id="job-detail-collapsible-content"
             className={detailsExpanded ? 'space-y-6' : 'max-h-[520px] space-y-6 overflow-hidden sm:max-h-[640px]'}
           >
+            <ApplicationReasons items={job.application_reasons} />
             <div className="space-y-3">
               <RequirementTags tags={job.requirement_tags} />
               <SpecialtyTags primary={job.primary_specialization} domains={job.domain_knowledge} />
@@ -127,6 +128,23 @@ export default function JobDetailContent({
       <JobQualityRating jobId={job.public_id} />
       <RelatedJobs jobs={relatedJobs} isAuthenticated={isAuthenticated} onRequireLogin={onRequireLogin} />
     </>
+  )
+}
+
+function ApplicationReasons({ items = [] }) {
+  if (!items.length) return null
+  return (
+    <section className="rounded-xl border border-emerald-100 bg-emerald-50/60 p-4 sm:p-5">
+      <SectionHeading>Vì sao bạn nên ứng tuyển?</SectionHeading>
+      <ul className="mt-3 grid gap-2 sm:grid-cols-3">
+        {items.map((item, index) => (
+          <li key={`${item}-${index}`} className="flex items-start gap-2 text-sm leading-6 text-slate-700">
+            <span aria-hidden="true" className="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-[10px] font-bold text-white">✓</span>
+            <span>{item}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
   )
 }
 

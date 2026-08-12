@@ -258,6 +258,16 @@ function DetailContent({ data, compact = false }) {
   return (
     <div className={compact ? 'space-y-4' : 'space-y-6'}>
       <RequirementTags data={data} compact={compact} />
+      {(data.values.application_reasons || []).length > 0 && (
+        <section>
+          <SectionTitle compact={compact}>Vì sao nên ứng tuyển?</SectionTitle>
+          <ul className="mt-2 space-y-1 text-slate-600">
+            {data.values.application_reasons.map((reason, index) => (
+              <li key={`${reason}-${index}`} className={compact ? 'text-[10px]' : 'text-sm'}>✓ {reason}</li>
+            ))}
+          </ul>
+        </section>
+      )}
       {data.benefitNames.length > 0 && (
         <div className="flex flex-wrap gap-1.5">{data.benefitNames.map((name) => <Chip key={name}>{name}</Chip>)}</div>
       )}

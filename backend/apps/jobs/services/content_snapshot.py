@@ -22,6 +22,7 @@ SNAPSHOT_FIELDS = (
     ('description', 'Mô tả công việc', 'rich', False),
     ('requirements', 'Yêu cầu ứng viên', 'rich', False),
     ('benefits', 'Quyền lợi', 'rich', False),
+    ('application_reasons', 'Lý do nên ứng tuyển', 'list', False),
     ('salary', 'Thu nhập', 'text', False),
     ('deadline', 'Hạn nhận hồ sơ', 'date', False),
     ('number_of_vacancies', 'Số lượng tuyển', 'text', False),
@@ -139,6 +140,7 @@ def build_job_content_snapshot(job):
         'description': _text(job.description),
         'requirements': _text(job.requirements),
         'benefits': _text(job.benefits),
+        'application_reasons': list(job.application_reasons or []),
         'salary': _salary_text(job),
         'deadline': job.deadline.isoformat() if job.deadline else '',
         'number_of_vacancies': (

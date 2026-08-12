@@ -92,6 +92,11 @@ class JobSerializer(serializers.ModelSerializer):
     is_salary_visible = serializers.SerializerMethodField()
     application_deadline = serializers.SerializerMethodField()
     presentation = serializers.SerializerMethodField()
+    application_reasons = serializers.ListField(
+        child=serializers.CharField(max_length=160, allow_blank=False, trim_whitespace=True),
+        max_length=3,
+        required=False,
+    )
 
     NESTED_RELATIONS = {
         'job_skills': (JobSkill, 'job_skills'),
@@ -120,6 +125,7 @@ class JobSerializer(serializers.ModelSerializer):
             'description',
             'requirements',
             'benefits',
+            'application_reasons',
             'work_schedule_note',
             'work_type',
             'work_types',
@@ -274,6 +280,12 @@ class JobSerializer(serializers.ModelSerializer):
 
         self._validate_nested_uniqueness(attrs)
         return attrs
+
+    def validate_application_reasons(self, value):
+        normalized = [item.strip() for item in value]
+        if len({item.casefold() for item in normalized}) != len(normalized):
+            raise serializers.ValidationError('Các lý do không được trùng nhau.')
+        return normalized
 
     def _validate_nested_uniqueness(self, attrs):
         unique_fields = {
@@ -439,6 +451,7 @@ class PublicJobPreviewSerializer(PublicJobListSerializer):
             'description',
             'requirements',
             'benefits',
+            'application_reasons',
             'work_schedule_note',
             'job_locations',
             'work_schedules',
@@ -497,6 +510,7 @@ class JobDetailSerializer(JobSerializer):
             'description',
             'requirements',
             'benefits',
+            'application_reasons',
             'work_schedule_note',
             'work_type',
             'employment_type',

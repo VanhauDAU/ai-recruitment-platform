@@ -378,6 +378,29 @@ class JobPostingWorkflowTests(TestCase):
         self.assertFalse(serializer.is_valid())
         self.assertIn('application_deadline', serializer.errors)
 
+    def test_application_reasons_are_ordered_and_limited_to_three_unique_items(self):
+        job = self.make_publishable_job()
+        serializer = EmployerJobWriteSerializer(
+            job,
+            data={'application_reasons': ['  Sản phẩm có tác động  ', 'Đội ngũ giàu kinh nghiệm']},
+            partial=True,
+        )
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+        serializer.save()
+        job.refresh_from_db()
+        self.assertEqual(
+            job.application_reasons,
+            ['Sản phẩm có tác động', 'Đội ngũ giàu kinh nghiệm'],
+        )
+
+        invalid = EmployerJobWriteSerializer(
+            job,
+            data={'application_reasons': ['A', 'B', 'C', 'D']},
+            partial=True,
+        )
+        self.assertFalse(invalid.is_valid())
+        self.assertIn('application_reasons', invalid.errors)
+
     def test_serializer_rejects_conflicting_deadline_aliases(self):
         serializer = EmployerJobWriteSerializer(
             self.make_publishable_job(),

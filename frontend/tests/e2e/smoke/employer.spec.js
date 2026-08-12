@@ -1125,6 +1125,8 @@ test('employer jobs: creation chooser leads to the complete manual five-section 
   await expect(page.locator('#application').getByTitle('3 tuần')).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Dịch vụ và gia tăng hiệu quả' })).toBeVisible()
   await expect(page.getByText('Quyền lợi bổ sung', { exact: true })).toBeVisible()
+  await expect(page.getByRole('heading', { name: '3 lý do nên ứng tuyển' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Thêm lý do (0/3)' })).toBeVisible()
   await expect(page.locator('.company-rich-editor__content')).toHaveCount(3)
   await expect(page.locator('.company-rich-editor__content').first()).toHaveCSS('min-height', '230px')
   await page.getByLabel(/Khu vực 1 - Tỉnh\/thành phố/).click()

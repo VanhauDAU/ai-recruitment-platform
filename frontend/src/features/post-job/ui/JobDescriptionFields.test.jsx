@@ -13,6 +13,22 @@ const benefits = [
 const badge = () => screen.getByRole('button', { name: /Thu gọn|Thêm thông tin/ }).querySelector('.bg-emerald-100')
 
 describe('JobDescriptionFields — quyền lợi bổ sung', () => {
+  it('chỉ cho thêm tối đa ba lý do nên ứng tuyển', async () => {
+    const user = userEvent.setup()
+    function Fields() {
+      const form = Form.useFormInstance()
+      return <JobDescriptionFields form={form} provinces={[]} benefits={benefits} />
+    }
+    render(<Form layout="vertical"><Fields /></Form>)
+
+    await user.click(screen.getByRole('button', { name: 'Thêm lý do (0/3)' }))
+    await user.click(screen.getByRole('button', { name: 'Thêm lý do (1/3)' }))
+    await user.click(screen.getByRole('button', { name: 'Thêm lý do (2/3)' }))
+
+    expect(screen.getByRole('button', { name: 'Thêm lý do (3/3)' })).toBeDisabled()
+    expect(screen.getAllByPlaceholderText(/Lý do \d/)).toHaveLength(3)
+  })
+
   it('giữ nguyên quyền lợi đã chọn sau khi thu gọn panel', async () => {
     const user = userEvent.setup()
     const formRef = {}
