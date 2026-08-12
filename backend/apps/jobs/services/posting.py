@@ -662,9 +662,8 @@ def extend_job_deadline(job, user, deadline, *, requested_visibility_days=None):
         effective_visibility_end = job.visibility_starts_at + timedelta(
             days=requested_visibility_days
         )
-    if (
-        effective_visibility_end is not None
-        and deadline > lifecycle_local_date(effective_visibility_end)
+    if effective_visibility_end is not None and deadline > lifecycle_local_date(
+        effective_visibility_end
     ):
         raise ValidationError(
             {

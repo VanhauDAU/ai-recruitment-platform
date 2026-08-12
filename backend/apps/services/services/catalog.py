@@ -35,7 +35,7 @@ def create_package_version(
 
 
 @transaction.atomic
-def publish_package_version(*, package_version: ServicePackageVersion):
+def publish_package_version(*, package_version: ServicePackageVersion, actor=None):
     version = (
         ServicePackageVersion.objects.select_for_update()
         .select_related('package')
@@ -60,6 +60,15 @@ def publish_package_version(*, package_version: ServicePackageVersion):
     version.status = ServicePackageVersion.Status.PUBLISHED
     version.published_at = timezone.now()
     version.save(update_fields=['status', 'published_at', 'updated_at'])
+    from .entitlements import record_service_audit_event
+
+    record_service_audit_event(
+        event_type='package_published',
+        actor=actor,
+        package_version=version,
+        metadata={'package_slug': version.package.slug, 'version': version.version_number},
+        occurred_at=version.published_at,
+    )
     return version
 
 

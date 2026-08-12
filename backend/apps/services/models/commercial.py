@@ -14,6 +14,17 @@ SUPPORTED_CAPABILITY_CODES = (
     'visibility_extension',
 )
 
+CAPABILITY_CONFIGURATION_RULES = {
+    'sponsored_placement': {
+        'key': 'placement',
+        'values': {'search_sponsored', 'best_jobs_eligible'},
+    },
+    'card_tone': {
+        'key': 'tone',
+        'values': {'orange', 'green', 'green_strong'},
+    },
+}
+
 
 class ServiceCapability(models.Model):
     """A closed registry of commercial effects understood by application code."""
@@ -64,6 +75,18 @@ class ServiceCapability(models.Model):
 
     def __str__(self):
         return self.name_vi
+
+    def save(self, *args, **kwargs):
+        if self.pk:
+            original = type(self).objects.filter(pk=self.pk).first()
+            if original and (
+                original.code != self.code
+                or original.scope != self.scope
+                or original.effect_type != self.effect_type
+            ):
+                raise ValidationError('Không thể đổi mã, phạm vi hoặc handler của capability.')
+        self.full_clean()
+        return super().save(*args, **kwargs)
 
 
 class ServicePackageVersion(models.Model):
@@ -207,6 +230,19 @@ class ServicePackageVersionItem(models.Model):
         super().clean()
         if not isinstance(self.configuration, dict):
             raise ValidationError({'configuration': 'Cấu hình phải là một object JSON.'})
+        rule = CAPABILITY_CONFIGURATION_RULES.get(self.capability.code)
+        if rule is None:
+            if self.configuration:
+                raise ValidationError(
+                    {'configuration': 'Quyền lợi này không nhận cấu hình tùy chỉnh.'}
+                )
+            return
+        if set(self.configuration) != {rule['key']}:
+            raise ValidationError(
+                {'configuration': f'Cấu hình chỉ chấp nhận trường {rule["key"]}.'}
+            )
+        if self.configuration[rule['key']] not in rule['values']:
+            raise ValidationError({'configuration': 'Giá trị cấu hình không được hỗ trợ.'})
 
     def save(self, *args, **kwargs):
         if (

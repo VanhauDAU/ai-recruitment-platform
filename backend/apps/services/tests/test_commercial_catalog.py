@@ -101,3 +101,22 @@ class CommercialCatalogTests(TestCase):
 
         self.assertEqual(version.activate_within_days, 120)
         self.assertEqual(version.currency, 'VND')
+
+    def test_capability_configuration_rejects_unknown_execution_values(self):
+        tone = ServiceCapability.objects.get(code=ServiceCapability.Code.CARD_TONE)
+        version = create_package_version(package=self.package, price=799000)
+
+        with self.assertRaises(ValidationError):
+            add_package_version_item(
+                package_version=version,
+                capability=tone,
+                duration_days=14,
+                configuration={'tone': 'arbitrary-css-class'},
+            )
+
+        original_scope = tone.scope
+        tone.scope = ServiceCapability.Scope.COMPANY
+        with self.assertRaises(ValidationError):
+            tone.save()
+        tone.refresh_from_db()
+        self.assertEqual(tone.scope, original_scope)

@@ -624,6 +624,7 @@ CELERY_TASK_ROUTES = {
     'apps.jobs.tasks.ai_generation.*': {'queue': 'ai-generation'},
     'apps.jobs.tasks.*': {'queue': 'candidate-email'},
     'apps.applications.tasks.*': {'queue': 'candidate-email'},
+    'apps.services.tasks.*': {'queue': 'default'},
 }
 CELERY_TASK_ACKS_LATE = True
 CELERY_TASK_REJECT_ON_WORKER_LOST = True
@@ -646,6 +647,10 @@ CELERY_BEAT_SCHEDULE = {
     'process-automatic-application-rejections': {
         'task': 'apps.applications.tasks.process_automatic_application_rejections',
         'schedule': 300.0,
+    },
+    'expire-service-inventory-and-activations': {
+        'task': 'apps.services.tasks.expire_service_inventory_and_activations',
+        'schedule': 60.0,
     },
     'prepare-due-candidate-job-digests': {
         'task': 'apps.jobs.tasks.prepare_due_candidate_job_digests',

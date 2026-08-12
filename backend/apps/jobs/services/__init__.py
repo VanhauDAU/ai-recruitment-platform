@@ -22,6 +22,7 @@ from .alerts import (
     reset_candidate_job_delivery_cursors,
     update_job_alert,
 )
+from .availability import job_is_publicly_available
 from .content_snapshot import (
     build_job_content_snapshot,
     job_pending_changes,
@@ -92,6 +93,7 @@ __all__ = [
     'execute_job_ai_generation',
     'extend_job_deadline',
     'job_deadline_error',
+    'job_is_publicly_available',
     'initialize_job_visibility',
     'job_lifecycle_policy',
     'lifecycle_local_date',
