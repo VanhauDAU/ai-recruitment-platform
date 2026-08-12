@@ -37,9 +37,7 @@ export default function PostJobForm({
   categories = [],
   postingContext,
   defaultDeadlineDays,
-  defaultVisibilityDays,
   maxDeadlineDays,
-  maxVisibilityDays,
   isDraft,
   requiresNewCredit,
   submitLabel,
@@ -65,10 +63,7 @@ export default function PostJobForm({
   const benefitsQuery = useQuery({ queryKey: jobKeys.benefits, queryFn: getJobBenefits })
   const languagesQuery = useQuery({ queryKey: jobKeys.languages, queryFn: getJobLanguages })
   const skillsQuery = useQuery({ queryKey: jobKeys.skills, queryFn: () => getSkills() })
-  const values = Form.useWatch([], form) || createJobFormValues(initialValues, {
-    defaultDeadlineDays,
-    defaultVisibilityDays,
-  })
+  const values = Form.useWatch([], form) || createJobFormValues(initialValues, { defaultDeadlineDays })
   const sections = useMemo(() => getJobFormProgress(values), [values])
 
   useEffect(() => {
@@ -81,7 +76,7 @@ export default function PostJobForm({
     if (!shouldInitialize && !shouldApplyAiSuggestion) return
 
     const nextValues = shouldInitialize
-      ? createJobFormValues(initialValues, { defaultDeadlineDays, defaultVisibilityDays })
+      ? createJobFormValues(initialValues, { defaultDeadlineDays })
       : {}
     if (shouldApplyAiSuggestion) {
       Object.assign(nextValues, createAiJobFormPatch(aiSuggestion))
@@ -98,7 +93,6 @@ export default function PostJobForm({
     aiSuggestion,
     aiSuggestionKey,
     defaultDeadlineDays,
-    defaultVisibilityDays,
     form,
     initialValues,
     onAiSuggestionApplied,
@@ -154,7 +148,6 @@ export default function PostJobForm({
       preferred_skill_ids: 'expectations',
       language_requirements: 'expectations',
       deadline: 'application',
-      requested_visibility_days: 'application',
       number_of_vacancies: 'application',
       campaign: 'application',
       application_contact: 'application',
@@ -265,8 +258,6 @@ export default function PostJobForm({
               campaigns={campaigns}
               creatingCampaign={creatingCampaign}
               maxDeadlineDays={maxDeadlineDays}
-              maxVisibilityDays={maxVisibilityDays}
-              visibilityLocked={Boolean(initialValues?.first_approved_at)}
               onCreateCampaign={onCreateCampaign}
             />
             <AutomaticApplicationStatusFields />

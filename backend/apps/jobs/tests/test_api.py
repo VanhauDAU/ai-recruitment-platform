@@ -470,6 +470,32 @@ class EmployerJobSerializerTests(APITestCase):
         self.benefit, _ = Benefit.objects.get_or_create(name='Bảo hiểm xã hội')
         self.language, _ = Language.objects.get_or_create(name='Tiếng Hàn', code='ko')
 
+    def test_employer_deadline_endpoint_cannot_change_internal_visibility_duration(self):
+        today = timezone.localdate()
+        job = Job.objects.create(
+            posted_by=self.user,
+            company=self.company,
+            title='Tin chỉ gia hạn hồ sơ',
+            description='Nội dung tuyển dụng',
+            status=Job.Status.ACTIVE,
+            deadline=today + timedelta(days=5),
+        )
+        self.client.force_authenticate(self.user)
+
+        response = self.client.post(
+            reverse('employer-job-extend', args=[job.public_id]),
+            {
+                'application_deadline': (today + timedelta(days=10)).isoformat(),
+                'requested_visibility_days': 45,
+            },
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 200, response.data)
+        job.refresh_from_db()
+        self.assertEqual(job.deadline, today + timedelta(days=10))
+        self.assertEqual(job.requested_visibility_days, 30)
+
     def test_employer_list_uses_compact_management_contract(self):
         Job.objects.create(
             posted_by=self.user,

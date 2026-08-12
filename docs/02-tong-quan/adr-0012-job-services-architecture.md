@@ -44,8 +44,10 @@ policy/moderation hold, campaign, hạn nhận hồ sơ và hạn hiển thị.
 - Lần duyệt đầu tạo anchor bất biến của public cycle.
 - Sửa, duyệt lại, đóng và mở lại không đổi anchor, không reset recency và không
   tạo refresh miễn phí.
-- NTD chọn thời lượng 1–90 ngày; UI đề xuất 30 ngày.
-- Gia hạn chỉ được tăng `visibility_ends_at`, không vượt anchor + 90 ngày,
+- Tin cơ bản tự chạy 30 ngày từ lần duyệt đầu; NTD không chọn hoặc chỉnh
+  `visibility_ends_at` trong form tạo/sửa để tránh nhầm với hạn nhận hồ sơ.
+- Gia hạn visibility chỉ do activation dịch vụ hoặc nghiệp vụ quản trị thực hiện,
+  không vượt anchor + 90 ngày,
   campaign end hoặc hạn nhận hồ sơ đã được NTD xác nhận.
 - Tin hết hạn bị loại khỏi mọi candidate surface nhưng giữ job, application và
   audit. Public cycle mới sau khi cycle cũ kết thúc là nghiệp vụ riêng của lượt

@@ -104,7 +104,6 @@ export default function JobDetail() {
   const queryClient = useQueryClient()
   const [deadlineAction, setDeadlineAction] = useState(null)
   const [newDeadline, setNewDeadline] = useState(null)
-  const [newVisibilityDays, setNewVisibilityDays] = useState(null)
   const {
     readiness,
     profileQuery,
@@ -159,19 +158,16 @@ export default function JobDetail() {
     },
   })
   const deadlineMutation = useMutation({
-    mutationFn: ({ action, deadline, requestedVisibilityDays }) => (
+    mutationFn: ({ action, deadline }) => (
       action === 'reopen'
         ? reopenEmployerJob(publicId, deadline)
-        : requestedVisibilityDays == null
-          ? extendEmployerJob(publicId, deadline)
-          : extendEmployerJob(publicId, deadline, requestedVisibilityDays)
+        : extendEmployerJob(publicId, deadline)
     ),
     onSuccess: () => {
       invalidate()
       setDeadlineAction(null)
       setNewDeadline(null)
-      setNewVisibilityDays(null)
-      message.success('Đã cập nhật thời gian của tin tuyển dụng.')
+      message.success('Đã cập nhật hạn nhận hồ sơ.')
     },
     onError: (error) => message.error(
       getApiErrorMessage(error, 'Không thể cập nhật hạn nhận hồ sơ.'),
@@ -182,7 +178,6 @@ export default function JobDetail() {
   function openDeadlineAction(action) {
     setDeadlineAction(action)
     setNewDeadline(jobQuery.data?.deadline ? dayjs(jobQuery.data.deadline) : null)
-    setNewVisibilityDays(jobQuery.data?.requested_visibility_days || 30)
   }
 
   function submitDeadlineAction() {
@@ -190,21 +185,15 @@ export default function JobDetail() {
       message.error('Chọn hạn nhận hồ sơ.')
       return
     }
-    const currentVisibilityDays = Number(jobQuery.data?.requested_visibility_days || 30)
-    const requestedVisibilityDays = deadlineAction === 'extend'
-      && Number(newVisibilityDays) > currentVisibilityDays
-      ? Number(newVisibilityDays)
-      : undefined
     const deadlineExtended = !jobQuery.data?.deadline
       || newDeadline.isAfter(dayjs(jobQuery.data.deadline), 'day')
-    if (deadlineAction === 'extend' && !deadlineExtended && !requestedVisibilityDays) {
-      message.error('Hãy tăng hạn nhận hồ sơ hoặc số ngày hiển thị.')
+    if (deadlineAction === 'extend' && !deadlineExtended) {
+      message.error('Hạn gia hạn phải sau hạn nhận hồ sơ hiện tại.')
       return
     }
     deadlineMutation.mutate({
       action: deadlineAction,
       deadline: newDeadline.format('YYYY-MM-DD'),
-      requestedVisibilityDays,
     })
   }
 
@@ -232,7 +221,6 @@ export default function JobDetail() {
   const earliestDeadline = deadlineAction === 'extend' && job.deadline
     ? dayjs(job.deadline).startOf('day')
     : today
-  const maxVisibilityDays = deadlinePolicy.lifecycle_policy?.max_visibility_days || 90
 
   const tabs = [
     {
@@ -327,16 +315,11 @@ export default function JobDetail() {
         earliestDeadline={earliestDeadline}
         latestDeadline={latestDeadline}
         loading={deadlineMutation.isPending}
-        maxVisibilityDays={maxVisibilityDays}
-        minimumVisibilityDays={job.requested_visibility_days || 30}
-        visibilityDays={newVisibilityDays}
         onCancel={() => {
           setDeadlineAction(null)
-          setNewVisibilityDays(null)
         }}
         onDeadlineChange={setNewDeadline}
         onSubmit={submitDeadlineAction}
-        onVisibilityDaysChange={setNewVisibilityDays}
       />
     </section>
   )

@@ -13,7 +13,7 @@ describe('manual job form values', () => {
     )
 
     expect(created.deadline.diff(today, 'day')).toBe(30)
-    expect(created.requested_visibility_days).toBe(30)
+    expect(created).not.toHaveProperty('requested_visibility_days')
     expect(edited.deadline.format('YYYY-MM-DD')).toBe('2026-12-31')
   })
 
@@ -211,6 +211,7 @@ describe('manual job form values', () => {
       sort_order: 0,
     })
     expect(payload.auto_rejection_email_body).toBe('')
+    expect(payload).not.toHaveProperty('requested_visibility_days')
   })
 
   it.each([
@@ -246,7 +247,7 @@ describe('manual job form values', () => {
       { key: 'general', completed: 1, total: 6 },
       { key: 'description', completed: 0, total: 4 },
       { key: 'expectations', completed: 0, total: 4 },
-      { key: 'application', completed: 2, total: 6 },
+      { key: 'application', completed: 1, total: 5 },
       { key: 'services', completed: 0, total: 0 },
     ])
   })

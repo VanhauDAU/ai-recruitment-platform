@@ -163,7 +163,6 @@ class EmployerJobCloseView(generics.GenericAPIView):
 class DeadlineSerializer(serializers.Serializer):
     deadline = serializers.DateField(required=False)
     application_deadline = serializers.DateField(required=False)
-    requested_visibility_days = serializers.IntegerField(min_value=1, max_value=90, required=False)
 
     def validate(self, attrs):
         legacy_deadline = attrs.get('deadline')
@@ -177,8 +176,8 @@ class DeadlineSerializer(serializers.Serializer):
                 {'application_deadline': 'Hạn nhận hồ sơ không khớp trường deadline cũ.'}
             )
         attrs['deadline'] = application_deadline or legacy_deadline
-        if attrs['deadline'] is None and 'requested_visibility_days' not in attrs:
-            raise serializers.ValidationError('Chọn nội dung cần gia hạn.')
+        if attrs['deadline'] is None:
+            raise serializers.ValidationError('Chọn hạn nhận hồ sơ.')
         return attrs
 
 
@@ -210,7 +209,6 @@ class EmployerJobExtendView(generics.GenericAPIView):
             get_object_or_404(employer_job_detail_queryset(request.user), public_id=public_id),
             request.user,
             serializer.validated_data['deadline'],
-            requested_visibility_days=serializer.validated_data.get('requested_visibility_days'),
         )
         return Response(
             EmployerJobDetailSerializer(job, context=self.get_serializer_context()).data

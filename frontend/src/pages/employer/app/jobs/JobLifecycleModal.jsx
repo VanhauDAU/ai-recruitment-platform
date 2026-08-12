@@ -1,4 +1,4 @@
-import { DatePicker, InputNumber, Modal } from 'antd'
+import { DatePicker, Modal } from 'antd'
 
 export default function JobLifecycleModal({
   action,
@@ -6,21 +6,16 @@ export default function JobLifecycleModal({
   earliestDeadline,
   latestDeadline,
   loading,
-  maxVisibilityDays,
-  minimumVisibilityDays,
-  visibilityDays,
   onCancel,
   onDeadlineChange,
   onSubmit,
-  onVisibilityDaysChange,
 }) {
-  const extending = action === 'extend'
-
   return (
     <Modal
       open={Boolean(action)}
       title={action === 'reopen' ? 'Mở lại tin tuyển dụng' : 'Gia hạn tin tuyển dụng'}
       okText={action === 'reopen' ? 'Mở lại tin' : 'Gia hạn'}
+      cancelText="Hủy"
       confirmLoading={loading}
       width={520}
       onCancel={onCancel}
@@ -49,28 +44,6 @@ export default function JobLifecycleModal({
             Có thể chọn đến {latestDeadline.format('DD/MM/YYYY')}.
           </p>
         </div>
-        {extending && (
-          <div className="rounded-xl border border-blue-100 bg-blue-50/70 p-4">
-            <label
-              className="mb-1.5 block text-sm font-semibold text-slate-700"
-              htmlFor="job-extension-visibility-days"
-            >
-              Tổng thời gian hiển thị từ lần duyệt đầu
-            </label>
-            <InputNumber
-              id="job-extension-visibility-days"
-              className="!w-full"
-              min={minimumVisibilityDays}
-              max={maxVisibilityDays}
-              value={visibilityDays}
-              suffix="ngày"
-              onChange={onVisibilityDaysChange}
-            />
-            <p className="mt-2 text-xs leading-5 text-slate-500">
-              Gia hạn không làm tin thành “tin mới” và không thay đổi mốc duyệt đầu tiên.
-            </p>
-          </div>
-        )}
       </div>
     </Modal>
   )

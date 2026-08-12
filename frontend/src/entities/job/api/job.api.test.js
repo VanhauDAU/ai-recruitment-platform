@@ -90,7 +90,7 @@ describe('CV job recommendations API', () => {
     await expect(publishEmployerJob({ title: 'Đã sửa' }, 'job_1')).resolves.toEqual({ public_id: 'job_published' })
     await expect(closeEmployerJob('job_1')).resolves.toEqual({ public_id: 'job_closed' })
     await expect(reopenEmployerJob('job_1', '2026-08-01')).resolves.toEqual({ public_id: 'job_reopened' })
-    await expect(extendEmployerJob('job_1', '2026-08-08', 45)).resolves.toEqual({ public_id: 'job_extended' })
+    await expect(extendEmployerJob('job_1', '2026-08-08')).resolves.toEqual({ public_id: 'job_extended' })
     await expect(duplicateEmployerJob('job_1')).resolves.toEqual({ public_id: 'job_copy' })
 
     expect(get).toHaveBeenNthCalledWith(1, '/jobs/mine/', { params: { status: 'draft' } })
@@ -103,10 +103,7 @@ describe('CV job recommendations API', () => {
     expect(post).toHaveBeenNthCalledWith(3, '/jobs/mine/job_1/submit/')
     expect(post).toHaveBeenNthCalledWith(4, '/jobs/mine/job_1/close/')
     expect(post).toHaveBeenNthCalledWith(5, '/jobs/mine/job_1/reopen/', { deadline: '2026-08-01' })
-    expect(post).toHaveBeenNthCalledWith(6, '/jobs/mine/job_1/extend/', {
-      deadline: '2026-08-08',
-      requested_visibility_days: 45,
-    })
+    expect(post).toHaveBeenNthCalledWith(6, '/jobs/mine/job_1/extend/', { deadline: '2026-08-08' })
     expect(post).toHaveBeenNthCalledWith(7, '/jobs/mine/job_1/duplicate/')
   })
 

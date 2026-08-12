@@ -24,7 +24,7 @@ from ...selectors.verification_badge import (
     badge_criteria_payload,
     prime_badge_cache,
 )
-from ...services import job_deadline_error, visibility_days_error
+from ...services import job_deadline_error
 from .supporting import (
     JobApplicationContactSerializer,
     JobApplicationEmailSerializer,
@@ -177,6 +177,7 @@ class JobSerializer(serializers.ModelSerializer):
             'is_urgent',
             'has_flash_badge',
             'presentation',
+            'requested_visibility_days',
             'view_count',
             'application_count',
             'published_at',
@@ -721,11 +722,6 @@ class EmployerJobWriteSerializer(JobSerializer):
 
     def validate_application_deadline(self, deadline):
         return self.validate_deadline(deadline)
-
-    def validate_requested_visibility_days(self, value):
-        if error := visibility_days_error(value):
-            raise serializers.ValidationError(error)
-        return value
 
     def validate_campaign(self, campaign):
         if campaign is None:

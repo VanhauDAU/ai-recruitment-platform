@@ -34,8 +34,8 @@ API ghi/đọc job bổ sung:
 
 - Trong expand release, `deadline` vẫn trả cùng giá trị với
   `application_deadline` và được đánh dấu deprecated.
-- Employer chỉ gửi `requested_visibility_days` và `application_deadline`;
-  starts/ends do server quyết định.
+- Employer chỉ gửi `application_deadline`; toàn bộ thời gian visibility là
+  read-only và do lifecycle/service activation quản lý.
 - Candidate API không cần trả internal maximum.
 
 ### `GET /api/jobs/mine/posting-context/`

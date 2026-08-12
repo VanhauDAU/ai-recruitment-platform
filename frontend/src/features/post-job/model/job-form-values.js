@@ -27,7 +27,7 @@ function salaryIsComplete(values) {
 
 export function createJobFormValues(
   initialValues = {},
-  { defaultDeadlineDays = null, defaultVisibilityDays = 30 } = {},
+  { defaultDeadlineDays = null } = {},
 ) {
   const assignments = initialValues.category_assignments || []
   const primary = assignments.find((item) => item.role === 'primary_specialization')
@@ -48,7 +48,6 @@ export function createJobFormValues(
   })
   return {
     number_of_vacancies: 1,
-    requested_visibility_days: defaultVisibilityDays,
     ...initialValues,
     auto_reject_stale_applications: initialValues.auto_reject_stale_applications ?? true,
     auto_reject_after_days: initialValues.auto_reject_after_days ?? 21,
@@ -175,6 +174,7 @@ export function buildJobPayload(values) {
   delete persistedValues.domain_category_ids
   delete persistedValues.work_areas
   delete persistedValues.ai_generation_public_id
+  delete persistedValues.requested_visibility_days
 
   return {
     ...persistedValues,
@@ -280,7 +280,6 @@ export function getJobFormProgress(values = {}) {
       key: 'application',
       label: 'Thông tin nhận hồ sơ',
       items: [
-        { label: 'Thời gian hiển thị', done: Number(values.requested_visibility_days) > 0, errorFields: ['requested_visibility_days'] },
         { label: 'Hạn nhận hồ sơ', done: Boolean(values.deadline), errorFields: ['deadline'] },
         { label: 'Số lượng tuyển', done: Number(values.number_of_vacancies) > 0, errorFields: ['number_of_vacancies'] },
         { label: 'Người nhận hồ sơ', done: hasText(values.application_contact?.recipient_name), errorFields: ['application_contact.recipient_name'] },

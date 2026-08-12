@@ -351,7 +351,7 @@ class JobPostingWorkflowTests(TestCase):
         self.assertEqual(extended.visibility_ends_at, anchor + timedelta(days=45))
         self.assertEqual(extended.requested_visibility_days, 45)
 
-    def test_serializer_accepts_application_deadline_alias_and_visibility_duration(self):
+    def test_serializer_accepts_application_deadline_and_ignores_internal_visibility(self):
         deadline = timezone.localdate() + timedelta(days=20)
         serializer = EmployerJobWriteSerializer(
             self.make_publishable_job(),
@@ -365,7 +365,8 @@ class JobPostingWorkflowTests(TestCase):
         self.assertTrue(serializer.is_valid(), serializer.errors)
         job = serializer.save()
         self.assertEqual(job.deadline, deadline)
-        self.assertEqual(job.requested_visibility_days, 45)
+        self.assertEqual(job.requested_visibility_days, 30)
+        self.assertNotIn('requested_visibility_days', serializer.validated_data)
 
     def test_serializer_rejects_conflicting_deadline_aliases(self):
         serializer = EmployerJobWriteSerializer(
@@ -380,15 +381,15 @@ class JobPostingWorkflowTests(TestCase):
         self.assertFalse(serializer.is_valid())
         self.assertIn('application_deadline', serializer.errors)
 
-    def test_serializer_rejects_visibility_duration_over_policy(self):
+    def test_serializer_does_not_expose_visibility_duration_as_an_employer_write(self):
         serializer = EmployerJobWriteSerializer(
             self.make_publishable_job(),
             data={'requested_visibility_days': 91},
             partial=True,
         )
 
-        self.assertFalse(serializer.is_valid())
-        self.assertIn('requested_visibility_days', serializer.errors)
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+        self.assertNotIn('requested_visibility_days', serializer.validated_data)
 
     def test_deadline_extension_accepts_ninety_day_boundary_and_rejects_later_date(self):
         today = timezone.localdate()
@@ -528,7 +529,7 @@ class JobPostingWorkflowTests(TestCase):
         self.assertEqual(history.to_status, Job.Status.PENDING)
         self.assertEqual(history.changed_by, self.user)
 
-    def test_active_job_visibility_duration_can_only_change_through_extension(self):
+    def test_active_job_visibility_duration_is_ignored_by_the_write_serializer(self):
         job = self.make_active_job()
         job.first_approved_at = job.approved_at
         job.visibility_starts_at = job.approved_at
@@ -539,13 +540,8 @@ class JobPostingWorkflowTests(TestCase):
             data={'requested_visibility_days': 45},
             partial=True,
         )
-        serializer.is_valid(raise_exception=True)
-
-        with self.assertRaises(ValidationError) as context:
-            update_employer_job(serializer, self.user)
-
-        self.assertIn('requested_visibility_days', context.exception.detail)
-        job.refresh_from_db()
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+        self.assertNotIn('requested_visibility_days', serializer.validated_data)
         self.assertEqual(job.requested_visibility_days, 30)
         self.assertEqual(job.status, Job.Status.ACTIVE)
 

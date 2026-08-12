@@ -1084,9 +1084,9 @@ test('employer jobs: creation chooser leads to the complete manual five-section 
     const jobListPreview = page.getByRole('radio', { name: 'Danh sách việc làm' })
     const jobDetailPreview = page.getByRole('radio', { name: 'Chi tiết tin tuyển dụng' })
     await expect(jobListPreview).toBeChecked()
-    await jobDetailPreview.locator('..').click()
+    await page.getByText('Chi tiết tin tuyển dụng', { exact: true }).click()
     await expect(jobDetailPreview).toBeChecked()
-    await jobListPreview.locator('..').click()
+    await page.getByText('Danh sách việc làm', { exact: true }).click()
   }
   await page.getByLabel('Vị trí chuyên môn').click()
   await expect(page.locator('.ant-cascader-dropdown:visible').getByText('Công nghệ thông tin')).toBeVisible()
@@ -1118,8 +1118,8 @@ test('employer jobs: creation chooser leads to the complete manual five-section 
   await expect(page.locator('#description').getByRole('heading', { name: 'Mô tả công việc' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Kỳ vọng về ứng viên' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Thông tin nhận hồ sơ' })).toBeVisible()
-  await expect(page.getByRole('heading', { name: 'Thời gian hiển thị tin' })).toBeVisible()
-  await expect(page.getByLabel('Số ngày hiển thị')).toHaveValue('30')
+  await expect(page.getByText('Thời gian hiển thị tin', { exact: true })).toHaveCount(0)
+  await expect(page.getByLabel('Số ngày hiển thị')).toHaveCount(0)
   await expect(page.getByRole('heading', { name: 'Tự động cập nhật trạng thái hồ sơ' })).toBeVisible()
   await expect(page.getByRole('switch', { name: 'Bật tự động cập nhật trạng thái hồ sơ' })).toBeChecked()
   await expect(page.locator('#application').getByTitle('3 tuần')).toBeVisible()
@@ -1157,8 +1157,8 @@ test('employer jobs: creation chooser leads to the complete manual five-section 
   await expect(page.getByRole('button', { name: 'Gửi duyệt tin' })).toBeVisible()
   await expectNoHorizontalOverflow(page)
   await page.getByRole('button', { name: 'Lưu nháp' }).click()
+  await expect.poll(() => savedDraft).not.toHaveProperty('requested_visibility_days')
   await expect.poll(() => savedDraft).toMatchObject({
-    requested_visibility_days: 30,
     salary_type: 'up_to',
     salary_min: null,
     salary_max: 7000000,
@@ -1353,7 +1353,7 @@ test('employer jobs: detail workspace is compact, actionable and responsive', as
       body: JSON.stringify({
         public_id: 'jb_workspace', title: 'Kỹ sư Frontend React', status: 'active',
         campaign: 'camp_product', campaign_name: 'Tuyển đội ngũ sản phẩm',
-        deadline: '2026-08-31', view_count: 36,
+        deadline: '2026-08-01', is_expired: true, view_count: 36,
         requested_visibility_days: 30,
         first_approved_at: '2026-08-01T02:00:00Z',
         visibility_starts_at: '2026-08-01T02:00:00Z',
@@ -1402,7 +1402,7 @@ test('employer jobs: detail workspace is compact, actionable and responsive', as
   await page.getByRole('button', { name: 'Gia hạn' }).click()
   const extensionDialog = page.getByRole('dialog', { name: 'Gia hạn tin tuyển dụng' })
   await expect(extensionDialog.getByLabel('Hạn nhận hồ sơ')).toBeVisible()
-  await expect(extensionDialog.getByLabel('Tổng thời gian hiển thị từ lần duyệt đầu')).toHaveValue('30')
+  await expect(extensionDialog.getByLabel('Tổng thời gian hiển thị từ lần duyệt đầu')).toHaveCount(0)
   await expectNoHorizontalOverflow(page)
   await extensionDialog.getByRole('button', { name: 'Hủy' }).click()
   await expect(page.getByTestId('job-metric-total-cvs')).toContainText('2')
