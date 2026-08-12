@@ -19,6 +19,11 @@ from .commercial import (
     AdminServiceAuditSerializer,
     AdminServiceCapabilitySerializer,
 )
+from .employer import (
+    EmployerActivationRequestSerializer,
+    EmployerActivationSerializer,
+    EmployerServiceUnitSerializer,
+)
 
 __all__ = [
     'AdminConsultationLeadQuerySerializer',
@@ -36,6 +41,9 @@ __all__ = [
     'AdminServiceCategorySerializer',
     'AdminServicePackageSerializer',
     'ConsultationLeadCreateSerializer',
+    'EmployerActivationRequestSerializer',
+    'EmployerActivationSerializer',
+    'EmployerServiceUnitSerializer',
     'PublicServiceCategorySerializer',
     'PublicServicePackageSerializer',
 ]

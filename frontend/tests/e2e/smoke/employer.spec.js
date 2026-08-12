@@ -1022,6 +1022,9 @@ test('employer jobs: creation chooser leads to the complete manual five-section 
       }),
     })
   })
+  await page.route('http://localhost:8000/api/services/mine/inventory/', async (route) => {
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify([]) })
+  })
   await page.route(/http:\/\/localhost:8000\/api\/jobs\/mine\/\?as=draft$/, async (route) => {
     savedDraft = route.request().postDataJSON()
     await route.fulfill({
@@ -1062,6 +1065,7 @@ test('employer jobs: creation chooser leads to the complete manual five-section 
     page.waitForResponse((response) => new URL(response.url()).pathname === '/api/jobs/languages/' && response.status() === 200),
     page.waitForResponse((response) => new URL(response.url()).pathname === '/api/skills/' && response.status() === 200),
     page.waitForResponse((response) => new URL(response.url()).pathname === '/api/locations/' && response.status() === 200),
+    page.waitForResponse((response) => new URL(response.url()).pathname === '/api/services/mine/inventory/' && response.status() === 200),
   ])
 
   await page.goto('/tuyendung/app/jobs/new?campaign=camp_q3')
@@ -1124,7 +1128,8 @@ test('employer jobs: creation chooser leads to the complete manual five-section 
   await expect(page.getByRole('switch', { name: 'Bật tự động cập nhật trạng thái hồ sơ' })).toBeChecked()
   await expect(page.locator('#application').getByTitle('3 tuần')).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Dịch vụ và gia tăng hiệu quả' })).toBeVisible()
-  await expect(page.getByText('Quyền lợi bổ sung', { exact: true })).toBeVisible()
+  await expect(page.getByText('Tin đăng cơ bản', { exact: true })).toBeVisible()
+  await expect(page.getByText('Chưa có lượt dịch vụ khả dụng', { exact: true })).toBeVisible()
   await expect(page.getByRole('heading', { name: '3 lý do nên ứng tuyển' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Thêm lý do (0/3)' })).toBeVisible()
   await expect(page.locator('.company-rich-editor__content')).toHaveCount(3)

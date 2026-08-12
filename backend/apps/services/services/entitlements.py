@@ -1,4 +1,5 @@
 from datetime import timedelta
+from math import ceil
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
@@ -6,7 +7,11 @@ from django.utils import timezone
 
 from apps.employers.models import Company
 from apps.jobs.models import Job
-from apps.jobs.services import job_is_publicly_available, lifecycle_local_date
+from apps.jobs.services import (
+    extend_job_deadline,
+    job_is_publicly_available,
+    lifecycle_local_date,
+)
 
 from ..models import (
     JobServiceActivation,
@@ -197,13 +202,13 @@ def activate_job_service(
             )
         return existing
 
+    locked_job = (
+        Job.objects.select_for_update(of=('self',)).select_related('campaign').get(pk=job.pk)
+    )
     locked_unit = (
         ServiceEntitlementUnit.objects.select_for_update()
         .select_related('company', 'package_version__package')
         .get(pk=unit.pk)
-    )
-    locked_job = (
-        Job.objects.select_for_update(of=('self',)).select_related('campaign').get(pk=job.pk)
     )
     if locked_unit.company_id != company.pk or locked_job.company_id != company.pk:
         raise ValidationError('Lượt dịch vụ và tin tuyển dụng không cùng doanh nghiệp.')
@@ -301,6 +306,120 @@ def activate_job_service(
         occurred_at=starts_at,
     )
     return activation
+
+
+def preview_job_service_activation(*, unit, job, actor, activated_at=None):
+    _validate_actor_company(actor=actor, company_id=unit.company_id)
+    if unit.company_id != job.company_id:
+        raise ValidationError('Lượt dịch vụ và tin tuyển dụng không cùng doanh nghiệp.')
+    starts_at = activated_at or timezone.now()
+    blockers = []
+    if unit.status != ServiceEntitlementUnit.Status.AVAILABLE:
+        blockers.append('Lượt dịch vụ không còn khả dụng.')
+    if starts_at > unit.activate_by:
+        blockers.append('Lượt dịch vụ đã quá hạn bắt đầu sử dụng.')
+    if not job_is_publicly_available(job_id=job.pk):
+        blockers.append('Tin phải đang công khai và không bị hold.')
+
+    items = list(unit.package_version.items.select_related('capability').order_by('order', 'id'))
+    maximum_duration = max((item.duration_days or 0 for item in items), default=0)
+    ends_at = starts_at + timedelta(days=maximum_duration)
+    required_deadline = lifecycle_local_date(ends_at)
+    anchor = job.visibility_starts_at or starts_at
+    required_visibility_days = max(
+        job.requested_visibility_days,
+        ceil(max((ends_at - anchor).total_seconds(), 0) / 86400),
+    )
+    if required_visibility_days > 90:
+        blockers.append('Dịch vụ sẽ vượt vòng đời công khai tối đa 90 ngày của tin.')
+    if (
+        job.campaign_id
+        and job.campaign.target_date
+        and required_deadline > job.campaign.target_date
+    ):
+        blockers.append('Dịch vụ sẽ vượt ngày kết thúc chiến dịch tuyển dụng.')
+
+    visibility_extension_days = max(
+        required_visibility_days - job.requested_visibility_days,
+        0,
+    )
+    deadline_extension_required = bool(job.deadline is None or job.deadline < required_deadline)
+    return {
+        'can_activate': not blockers,
+        'blockers': blockers,
+        'starts_at': starts_at,
+        'ends_at': ends_at,
+        'required_application_deadline': required_deadline,
+        'deadline_extension_required': deadline_extension_required,
+        'required_visibility_days': required_visibility_days,
+        'visibility_extension_days': visibility_extension_days,
+        'items': [
+            {
+                'capability': item.capability.code,
+                'name': item.capability.name_vi,
+                'quantity': item.quantity,
+                'duration_days': item.duration_days,
+            }
+            for item in items
+        ],
+    }
+
+
+@transaction.atomic
+def activate_job_service_with_confirmed_extension(
+    *,
+    unit,
+    job,
+    actor,
+    idempotency_key,
+    confirm_extension=False,
+    activated_at=None,
+):
+    company = Company.objects.select_for_update().get(pk=unit.company_id)
+    existing = JobServiceActivation.objects.filter(
+        company=company,
+        idempotency_key=idempotency_key,
+    ).first()
+    if existing:
+        if existing.unit_id != unit.pk or existing.job_id != job.pk:
+            raise ValidationError(
+                {'idempotency_key': 'Khóa kích hoạt đã được dùng cho yêu cầu khác.'}
+            )
+        return existing
+    preview = preview_job_service_activation(
+        unit=unit,
+        job=job,
+        actor=actor,
+        activated_at=activated_at,
+    )
+    if not preview['can_activate']:
+        raise ValidationError({'blockers': preview['blockers']})
+    extension_required = (
+        preview['deadline_extension_required'] or preview['visibility_extension_days'] > 0
+    )
+    if extension_required and not confirm_extension:
+        raise ValidationError(
+            {'confirm_extension': 'Xác nhận gia hạn tin và kích hoạt trong cùng giao dịch.'}
+        )
+    if extension_required:
+        requested_visibility_days = (
+            preview['required_visibility_days']
+            if preview['visibility_extension_days'] > 0
+            else None
+        )
+        job = extend_job_deadline(
+            job,
+            actor,
+            preview['required_application_deadline'],
+            requested_visibility_days=requested_visibility_days,
+        )
+    return activate_job_service(
+        unit=unit,
+        job=job,
+        actor=actor,
+        idempotency_key=idempotency_key,
+        activated_at=activated_at,
+    )
 
 
 @transaction.atomic

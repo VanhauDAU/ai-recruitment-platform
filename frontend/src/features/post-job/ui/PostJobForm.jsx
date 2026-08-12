@@ -272,7 +272,10 @@ export default function PostJobForm({
             active={activeSection === 'services'}
             onToggle={() => toggleSection('services')}
           >
-            <BasicJobService />
+            <BasicJobService
+              jobPublicId={initialValues?.public_id}
+              jobStatus={initialValues?.status}
+            />
           </JobFormSection>
 
           <div className="sticky bottom-3 z-10 flex flex-col-reverse gap-2 rounded-lg border border-slate-200 bg-white/95 p-3 backdrop-blur sm:flex-row sm:justify-end">

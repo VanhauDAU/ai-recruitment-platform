@@ -2,7 +2,12 @@
 
 from django.db.models import Count, Prefetch, Q
 
-from ..models import ConsultationLead, ServiceCategory, ServicePackage
+from ..models import (
+    ConsultationLead,
+    ServiceCategory,
+    ServicePackage,
+    ServicePackageVersion,
+)
 
 ADMIN_LEAD_ORDERING_FIELDS = {
     'created_at': 'created_at',
@@ -17,10 +22,24 @@ ADMIN_LEAD_ORDERING_FIELDS = {
 
 def active_public_categories_queryset():
     """Nhóm dịch vụ active kèm gói active đã sắp thứ tự (to_attr=active_packages)."""
+    published_versions = ServicePackageVersion.objects.filter(
+        status=ServicePackageVersion.Status.PUBLISHED,
+    ).prefetch_related('items__capability')
+    active_packages = (
+        ServicePackage.objects.filter(is_active=True)
+        .order_by('order', 'slug')
+        .prefetch_related(
+            Prefetch(
+                'versions',
+                queryset=published_versions,
+                to_attr='published_versions',
+            )
+        )
+    )
     return ServiceCategory.objects.filter(is_active=True).prefetch_related(
         Prefetch(
             'packages',
-            queryset=ServicePackage.objects.filter(is_active=True).order_by('order', 'slug'),
+            queryset=active_packages,
             to_attr='active_packages',
         )
     )

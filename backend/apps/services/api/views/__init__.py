@@ -18,6 +18,11 @@ from .commercial import (
     AdminServiceAuditListView,
     AdminServiceCapabilityListView,
 )
+from .employer import (
+    EmployerServiceActivationCreateView,
+    EmployerServiceActivationPreviewView,
+    EmployerServiceInventoryView,
+)
 
 __all__ = [
     'AdminConsultationLeadDetailView',
@@ -35,5 +40,8 @@ __all__ = [
     'AdminServicePackageDetailView',
     'AdminServicePackageListCreateView',
     'ConsultationLeadCreateView',
+    'EmployerServiceActivationCreateView',
+    'EmployerServiceActivationPreviewView',
+    'EmployerServiceInventoryView',
     'PublicServicePackageListView',
 ]

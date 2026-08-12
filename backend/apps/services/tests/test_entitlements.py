@@ -11,6 +11,7 @@ from django.utils import timezone
 from apps.employers.models import Company
 from apps.employers.tests.readiness_helpers import make_employer_ready
 from apps.jobs.models import Job
+from apps.jobs.services import lifecycle_local_date
 
 from ..models import (
     JobServiceActivation,
@@ -22,11 +23,13 @@ from ..models import (
 )
 from ..services import (
     activate_job_service,
+    activate_job_service_with_confirmed_extension,
     add_package_version_item,
     create_package_version,
     expire_due_entitlement_units,
     expire_due_job_service_activations,
     grant_package_units,
+    preview_job_service_activation,
     publish_package_version,
     revoke_entitlement_unit,
 )
@@ -183,6 +186,46 @@ class EntitlementLedgerTests(TestCase):
         self.assertEqual(unit.status, ServiceEntitlementUnit.Status.AVAILABLE)
         self.assertFalse(JobServiceActivation.objects.exists())
         self.assertFalse(ServiceAuditEvent.objects.filter(event_type='unit_consumed').exists())
+
+    def test_confirmed_extension_and_activation_are_atomic(self):
+        short_job = self.make_active_job(visibility_days=10)
+        short_job.requested_visibility_days = 10
+        short_job.save(update_fields=['requested_visibility_days'])
+        unit = self.grant_one(key='atomic-extension')
+
+        preview = preview_job_service_activation(
+            unit=unit,
+            job=short_job,
+            actor=self.employer,
+        )
+        self.assertTrue(preview['can_activate'])
+        self.assertTrue(preview['deadline_extension_required'])
+        self.assertGreater(preview['visibility_extension_days'], 0)
+
+        with self.assertRaises(ValidationError):
+            activate_job_service_with_confirmed_extension(
+                unit=unit,
+                job=short_job,
+                actor=self.employer,
+                idempotency_key='without-confirmation',
+            )
+        unit.refresh_from_db()
+        short_job.refresh_from_db()
+        self.assertEqual(unit.status, ServiceEntitlementUnit.Status.AVAILABLE)
+        self.assertEqual(short_job.requested_visibility_days, 10)
+
+        activation = activate_job_service_with_confirmed_extension(
+            unit=unit,
+            job=short_job,
+            actor=self.employer,
+            idempotency_key='confirmed-extension',
+            confirm_extension=True,
+        )
+        short_job.refresh_from_db()
+        unit.refresh_from_db()
+        self.assertEqual(unit.status, ServiceEntitlementUnit.Status.CONSUMED)
+        self.assertGreaterEqual(short_job.visibility_ends_at, activation.ends_at)
+        self.assertGreaterEqual(short_job.deadline, lifecycle_local_date(activation.ends_at))
 
     def test_cross_company_activation_is_rejected(self):
         other_employer = get_user_model().objects.create_user(

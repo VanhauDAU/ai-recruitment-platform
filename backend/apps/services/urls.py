@@ -16,12 +16,30 @@ from .api.views import (
     AdminServicePackageDetailView,
     AdminServicePackageListCreateView,
     ConsultationLeadCreateView,
+    EmployerServiceActivationCreateView,
+    EmployerServiceActivationPreviewView,
+    EmployerServiceInventoryView,
     PublicServicePackageListView,
 )
 
 urlpatterns = [
     path('packages/', PublicServicePackageListView.as_view(), name='services-packages'),
     path('consultations/', ConsultationLeadCreateView.as_view(), name='services-consultations'),
+    path(
+        'mine/inventory/',
+        EmployerServiceInventoryView.as_view(),
+        name='services-employer-inventory',
+    ),
+    path(
+        'activations/preview/',
+        EmployerServiceActivationPreviewView.as_view(),
+        name='services-employer-activation-preview',
+    ),
+    path(
+        'activations/',
+        EmployerServiceActivationCreateView.as_view(),
+        name='services-employer-activation-create',
+    ),
     path(
         'admin/capabilities/',
         AdminServiceCapabilityListView.as_view(),

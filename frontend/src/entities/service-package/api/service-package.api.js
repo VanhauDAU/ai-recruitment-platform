@@ -107,3 +107,21 @@ export async function getAdminServiceAudit(params = {}) {
   const { data } = await client.get('/services/admin/audit/', { params })
   return data
 }
+
+export async function getEmployerServiceInventory() {
+  const { data } = await client.get('/services/mine/inventory/')
+  const inventory = collection(data)
+  return Array.isArray(inventory) ? inventory : []
+}
+
+export async function previewEmployerServiceActivation(payload) {
+  const { data } = await client.post('/services/activations/preview/', payload)
+  return data
+}
+
+export async function activateEmployerService(payload, idempotencyKey) {
+  const { data } = await client.post('/services/activations/', payload, {
+    headers: { 'Idempotency-Key': idempotencyKey },
+  })
+  return data
+}

@@ -28,10 +28,37 @@ PACKAGE_PUBLIC_FIELDS = [
 ]
 
 
+class PublicPackageVersionItemSerializer(serializers.Serializer):
+    capability = serializers.CharField(source='capability.code')
+    name_vi = serializers.CharField(source='capability.name_vi')
+    name_en = serializers.CharField(source='capability.name_en')
+    quantity = serializers.IntegerField()
+    duration_days = serializers.IntegerField(allow_null=True)
+    configuration = serializers.JSONField()
+
+
+class PublicPackageVersionSerializer(serializers.Serializer):
+    version_number = serializers.IntegerField()
+    price = serializers.DecimalField(max_digits=14, decimal_places=0)
+    currency = serializers.CharField()
+    activate_within_days = serializers.IntegerField()
+    terms_vi = serializers.CharField()
+    terms_en = serializers.CharField()
+    items = PublicPackageVersionItemSerializer(many=True)
+
+
 class PublicServicePackageSerializer(serializers.ModelSerializer):
+    published_version = serializers.SerializerMethodField()
+
     class Meta:
         model = ServicePackage
-        fields = PACKAGE_PUBLIC_FIELDS
+        fields = [*PACKAGE_PUBLIC_FIELDS, 'published_version']
+
+    def get_published_version(self, obj):
+        versions = getattr(obj, 'published_versions', [])
+        if not versions:
+            return None
+        return PublicPackageVersionSerializer(versions[0]).data
 
 
 class PublicServiceCategorySerializer(serializers.ModelSerializer):

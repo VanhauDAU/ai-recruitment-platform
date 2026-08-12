@@ -24,7 +24,17 @@ from apps.accounts.models import (
 from apps.accounts.services import assign_membership
 from apps.sitecontent.models import LinkGroup, LinkItem
 
-from ..models import ConsultationLead, ServiceCategory, ServicePackage
+from ..models import (
+    ConsultationLead,
+    ServiceCapability,
+    ServiceCategory,
+    ServicePackage,
+)
+from ..services import (
+    add_package_version_item,
+    create_package_version,
+    publish_package_version,
+)
 from ..signals import PUBLIC_PACKAGES_CACHE_KEY
 
 LOCAL_CACHE = {
@@ -83,6 +93,41 @@ class PublicPackagesApiTests(APITestCase):
         packages = response.data[0]['packages']
         self.assertEqual([p['slug'] for p in packages], ['top-max'])
         self.assertEqual(packages[0]['benefits_vi'], ['Quyền lợi 1'])
+        self.assertIsNone(packages[0]['published_version'])
+
+    def test_includes_the_structured_published_version_without_breaking_legacy_fields(self):
+        category = make_category()
+        package = make_package(category)
+        version = create_package_version(package=package, price=299000)
+        add_package_version_item(
+            package_version=version,
+            capability=ServiceCapability.objects.get(code='sponsored_placement'),
+            duration_days=14,
+            configuration={'placement': 'search_sponsored'},
+        )
+        draft_response = self.client.get(reverse('services-packages'))
+        self.assertIsNone(draft_response.data[0]['packages'][0]['published_version'])
+
+        with self.captureOnCommitCallbacks(execute=True):
+            publish_package_version(package_version=version)
+
+        response = self.client.get(reverse('services-packages'))
+
+        package_data = response.data[0]['packages'][0]
+        self.assertEqual(package_data['slug'], 'top-max')
+        self.assertEqual(package_data['published_version']['price'], '299000')
+        self.assertEqual(package_data['published_version']['activate_within_days'], 90)
+        self.assertEqual(
+            package_data['published_version']['items'][0],
+            {
+                'capability': 'sponsored_placement',
+                'name_vi': 'Vị trí tài trợ',
+                'name_en': '',
+                'quantity': 1,
+                'duration_days': 14,
+                'configuration': {'placement': 'search_sponsored'},
+            },
+        )
 
     def test_cache_invalidated_when_package_changes(self):
         category = make_category()
