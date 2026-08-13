@@ -534,11 +534,17 @@ widgets/employer-campaign-workspace/CampaignJobsPanel
 ```text
 app/router
   → pages/main/account/EmailNotificationSettings|JobAlertSettings|ChangePassword|MatchingJobs
-    + pages/main/jobs/JobList|SavedJobs
+    + pages/main/jobs/JobList|SavedJobs + pages/main/home/Home
     → features/configure-email-notifications, manage-job-alerts,
       change-password, saved-jobs
       → entities/candidate-job-alert, candidate-notification-preferences,
         job, location, session
+        → shared/api
+
+pages/main/account/MatchingJobs + pages/main/home/Home
+  → widgets/candidate-job-recommendations
+    → features/hide-job-recommendation, saved-jobs, track-job-engagement
+      → entities/job, session
         → shared/api
 
 widgets/main-header/CandidateUserMenu
@@ -576,9 +582,11 @@ widgets/main-header/CandidateUserMenu
   page (prop `onReauth`) vì feature không import feature khác — `features/auth`
   sở hữu `startOAuthReauth`, dùng lại full-page redirect của luồng đăng nhập.
 - `entities/job` sở hữu contract/keys của feed recommendation. Trang matching
-  chỉ hiển thị `status`, `sources`, score và reasons do backend trả; không tự
-  tính điểm hoặc tuyên bố dùng search activity. Lưu job và impression tiếp tục
-  đi qua feature tương ứng.
+  và lane đề xuất trong danh sách công khai. `widgets/candidate-job-recommendations`
+  compose feed cho trang tài khoản và section trang chủ; chỉ hiển thị lý do mạnh
+  do backend trả, không hiển thị điểm hoặc tự tuyên bố dùng CV/search activity.
+  `features/hide-job-recommendation` sở hữu thao tác ẩn/hoàn tác và invalidation;
+  lưu job và impression tiếp tục đi qua feature tương ứng.
 - `features/saved-jobs` sở hữu GET/POST/DELETE danh sách lưu, cache optimistic
   và feed `/recommendations/by-saved/`. `pages/main/jobs/SavedJobs` chỉ compose
   danh sách, empty/error state và metadata strategy server trả; không tự chọn

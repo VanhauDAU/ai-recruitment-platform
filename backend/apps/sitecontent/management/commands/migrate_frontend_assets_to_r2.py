@@ -12,7 +12,6 @@ from django.core.management.base import BaseCommand, CommandError
 from common.r2_storage import public_media_storage
 
 LEGACY_ASSETS = {
-    'frontend/legacy/onboarding/bg-step-1.png': 'https://static.topcv.vn/v4/image/onboard-user/bg-step-1.png',
     'frontend/legacy/icons/shield-check.png': 'https://static.topcv.vn/v4/image/icon/icon-shield-check.png',
     'frontend/legacy/icons/shield-gears.png': 'https://static.topcv.vn/v4/image/icon/icon-shield-gears.png',
     'frontend/legacy/welcome/section-header-before.png': 'https://static.topcv.vn/v4/image/welcome/section-header/section_header_before_bg.png',
@@ -23,8 +22,10 @@ LEGACY_ASSETS = {
     'frontend/legacy/blog/search-tool-v2.png': 'https://static.topcv.vn/v4/image/blog/blog-detail/search_tool_v2.png',
     'frontend/legacy/blog/cv-tool-v2.png': 'https://static.topcv.vn/v4/image/blog/blog-detail/cv_tool_v2.png',
     'frontend/legacy/blog/survey-tool-v2.png': 'https://static.topcv.vn/v4/image/blog/blog-detail/survey_tool_v2.png',
-    'frontend/legacy/home/hotline-bg.png': 'https://static.topcv.vn/v4/image/job-new/hotline_bg.png',
     'frontend/legacy/welcome/dashboard-item.png': 'https://static.topcv.vn/v4/image/welcome/dashboard/dashboard-item.png',
+    'frontend/legacy/home/hotline-bg.png': 'https://static.topcv.vn/v4/image/job-new/hotline_bg.png',
+    'frontend/legacy/welcome/procv-ai-robot-market.png': 'https://pub-8375cfb0dcca48ed8459003b91080f08.r2.dev/frontend/legacy/welcome/procv-ai-robot-market.png',
+    'frontend/legacy/welcome/procv-ai-robot-market-v2.png': 'https://pub-8375cfb0dcca48ed8459003b91080f08.r2.dev/frontend/legacy/welcome/procv-ai-robot-market-v2.png',
     'frontend/legacy/welcome/flash-badge-cover.png': 'https://static.topcv.vn/v4/image/welcome/box-flash-badge/cover.png',
     'frontend/legacy/welcome/flash-badge-intro.png': 'https://static.topcv.vn/v4/image/welcome/box-flash-badge/flash-badge-intro.png',
 }

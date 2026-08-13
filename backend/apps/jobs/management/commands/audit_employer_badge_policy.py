@@ -21,13 +21,16 @@ class Command(BaseCommand):
             'policy_only': 0,
             'neither': 0,
         }
-        failures = {key: 0 for key in (
-            'email_domain_verified',
-            'phone_verified',
-            'business_doc_approved',
-            'account_age_reached',
-            'no_report_history',
-        )}
+        failures = {
+            key: 0
+            for key in (
+                'email_domain_verified',
+                'phone_verified',
+                'business_doc_approved',
+                'account_age_reached',
+                'no_report_history',
+            )
+        }
         for state in states.values():
             if state['legacy_verified'] and state['policy_verified']:
                 cohorts['legacy_and_policy'] += 1

@@ -1,5 +1,6 @@
-"""Deterministic CV-to-job ranking used immediately after a candidate saves."""
+"""Deterministic job ranking for explicit preferences and saved CVs."""
 
+import hashlib
 import re
 from decimal import Decimal
 from math import ceil
@@ -33,6 +34,8 @@ EXPERIENCE_RANK = {
 # This prevents a fresh but unrelated job from filling an otherwise short list.
 MIN_RECOMMENDATION_SCORE = 20
 MAX_SCORING_CANDIDATES = 500
+INLINE_RECOMMENDATION_RATE_PERCENT = 40
+INLINE_RECOMMENDATION_POOL_SIZE = 8
 
 
 class RecommendationConsentRequired(Exception):
@@ -92,6 +95,8 @@ def _preference_state(user):
         CandidateJobPreference.objects.select_related('candidate_profile')
         .prefetch_related(
             'desired_specializations__job_category',
+            'desired_position_others',
+            'preferred_skills__skill',
             'preferred_provinces__location',
             'candidate_profile__consents',
         )
@@ -211,36 +216,31 @@ def _cv_context(user, public_id):
     }
 
 
-def _candidate_context(preference, cv):
+def _candidate_context(preference):
+    """Build ranking context only from the candidate's explicit job preferences."""
     desired_categories = list(preference.desired_specializations.all())
     position_labels = [item.job_category.name for item in desired_categories]
-    if preference.desired_position_other:
-        position_labels.append(preference.desired_position_other)
+    position_labels.extend(item.name for item in preference.desired_position_others.all())
+    # Retain compatibility for preferences created before custom positions were
+    # normalized. New writes use ``desired_position_others`` exclusively.
+    legacy_position = str(preference.desired_position_other or '').strip()
+    if legacy_position and _normalized(legacy_position) not in {
+        _normalized(label) for label in position_labels
+    }:
+        position_labels.append(legacy_position)
 
-    skills, skill_ids, cv_labels = set(), set(), []
-    if cv:
-        content, headline = _cv_content(cv)
-        skills, skill_ids = _cv_skills(cv, content)
-        title_position = _position_from_cv_title(cv.title)
-        cv_labels = [
-            headline,
-            cv.position.name if cv.position_id else '',
-            title_position,
-        ]
-
-    all_position_labels = [*position_labels, *cv_labels]
+    preferred_skills = list(preference.preferred_skills.all())
+    skills = {_normalized(item.skill.name) for item in preferred_skills}
+    skill_ids = {item.skill_id for item in preferred_skills}
     focus_keyword = next((label for label in position_labels if label), '')
-    if not focus_keyword:
-        focus_keyword = next((label for label in cv_labels if label), '')
     return {
-        'cv': cv,
+        'cv': None,
         'skills': skills,
         'skill_ids': skill_ids,
-        'category_ids': {item.job_category_id for item in desired_categories}
-        or ({cv.position_id} if cv and cv.position_id else set()),
+        'category_ids': {item.job_category_id for item in desired_categories},
         'position_labels': position_labels,
-        'position_terms': {_normalized(label) for label in all_position_labels if label},
-        'position_query_labels': all_position_labels,
+        'position_terms': {_normalized(label) for label in position_labels if label},
+        'position_query_labels': position_labels,
         'position_reason': 'Khớp vị trí bạn quan tâm',
         'focus_keyword': focus_keyword,
         **_preference_values(preference),
@@ -316,6 +316,7 @@ def _ranking_candidates(
     published_before=None,
     exclude_saved=False,
     exclude_emailed=False,
+    excluded_public_ids=(),
 ):
     """Prefilter by strong signals, then score a bounded, relation-prefetched pool."""
     signal_filter = Q()
@@ -334,7 +335,9 @@ def _ranking_candidates(
 
     queryset = active_jobs_queryset().filter(signal_filter)
     if user is not None:
-        queryset = queryset.exclude(applications__candidate=user)
+        queryset = queryset.exclude(
+            Q(applications__candidate=user) | Q(hidden_by_candidates__candidate=user)
+        )
         if exclude_saved:
             queryset = queryset.exclude(saved_by__candidate=user)
         if exclude_emailed:
@@ -351,6 +354,8 @@ def _ranking_candidates(
                 already_emailed=Exists(emailed_job),
                 already_claimed=Exists(in_flight),
             ).filter(already_emailed=False, already_claimed=False)
+    if excluded_public_ids:
+        queryset = queryset.exclude(public_id__in=excluded_public_ids)
     if published_after is not None:
         queryset = queryset.filter(published_at__gt=published_after)
     if published_before is not None:
@@ -358,6 +363,16 @@ def _ranking_candidates(
     return list(
         queryset.distinct().order_by('-published_at', '-created_at', '-pk')[:MAX_SCORING_CANDIDATES]
     )
+
+
+def _presentation_match_reasons(details):
+    codes = {item['code'] for item in details}
+    reasons = []
+    if codes & {'category', 'position'}:
+        reasons.append('Phù hợp với tìm kiếm của bạn')
+    if 'skills' in codes:
+        reasons.append('Phù hợp với kỹ năng của bạn')
+    return reasons
 
 
 def _rank_jobs(context, *, user=None, **candidate_filters):
@@ -371,7 +386,7 @@ def _rank_jobs(context, *, user=None, **candidate_filters):
                 'job': job,
                 'match_score': score,
                 'match_details': details,
-                'match_reasons': [item['label'] for item in details],
+                'match_reasons': _presentation_match_reasons(details),
             }
         )
     tier_rank = {Job.Tier.TOP: 2, Job.Tier.FEATURED: 1}
@@ -411,11 +426,11 @@ def recommend_jobs_for_cv(user, public_id, *, limit=6):
 
 
 def recommend_jobs_for_candidate(user, *, page=1, page_size=10):
-    """Rank candidate-wide opportunities from explicit preferences and default CV."""
+    """Rank candidate-wide opportunities from explicit job preferences only."""
     profile, preference = _preference_state(user)
     preferences_ready = bool(profile and profile.job_preferences_configured and preference)
     base = {
-        'strategy': 'candidate-profile-rule-v1',
+        'strategy': 'candidate-preference-rule-v2',
         'minimum_match_score': MIN_RECOMMENDATION_SCORE,
         'preference_configured': preferences_ready,
         'sources': {
@@ -453,32 +468,19 @@ def recommend_jobs_for_candidate(user, *, page=1, page_size=10):
             'pagination': empty_pagination,
         }
 
-    cv = _candidate_cvs(user).first()
-    context = _candidate_context(preference, cv)
+    context = _candidate_context(preference)
     ranked = _rank_jobs(context, user=user)
     total = len(ranked)
     total_pages = ceil(total / page_size) if total else 0
     start = (page - 1) * page_size
     selected = ranked[start : start + page_size]
-    source_cv = (
-        {
-            'public_id': cv.public_id,
-            'title': cv.title,
-            'is_default': cv.is_default,
-        }
-        if cv
-        else None
-    )
     return {
         **base,
         'status': 'ready',
         'needs_setup': False,
         'consent_required': False,
-        'sources': {
-            **base['sources'],
-            'cv': bool(cv),
-        },
-        'source_cv': source_cv,
+        'sources': base['sources'],
+        'source_cv': None,
         'focus_keyword': context['focus_keyword'],
         'related_positions': _related_positions(context['position_labels']),
         'results': selected,
@@ -500,15 +502,14 @@ def recommend_new_jobs_for_candidate_email(
     published_before,
     limit=50,
 ):
-    """Rank newly public jobs for email, checking consent before reading any CV."""
+    """Rank newly public jobs for email from explicit preferences only."""
     profile, preference = _preference_state(user)
     if not profile or not profile.job_preferences_configured or not preference:
         return {'status': 'preferences_required', 'results': []}
     if not _ai_recommendation_allowed(profile):
         return {'status': 'consent_required', 'results': []}
 
-    cv = _candidate_cvs(user).first()
-    context = _candidate_context(preference, cv)
+    context = _candidate_context(preference)
     ranked = _rank_jobs(
         context,
         user=user,
@@ -518,3 +519,60 @@ def recommend_new_jobs_for_candidate_email(
         exclude_emailed=True,
     )
     return {'status': 'ready', 'results': ranked[:limit]}
+
+
+def _inline_random_bytes(user, ranking_seed, page):
+    value = f'inline-recommendation-v1:{user.pk}:{ranking_seed}:{page}'.encode()
+    return hashlib.sha256(value).digest()
+
+
+def recommend_inline_jobs_for_candidate(
+    user,
+    *,
+    page,
+    ranking_seed,
+    excluded_public_ids=(),
+):
+    """Return a deterministic occasional recommendation lane for a search-result page."""
+    profile, preference = _preference_state(user)
+    if not profile or not profile.job_preferences_configured or not preference:
+        return {
+            'status': 'preferences_required',
+            'after_result_index': None,
+            'results': [],
+        }
+    if not _ai_recommendation_allowed(profile):
+        return {
+            'status': 'consent_required',
+            'after_result_index': None,
+            'results': [],
+        }
+
+    random_bytes = _inline_random_bytes(user, ranking_seed, page)
+    display_bucket = int.from_bytes(random_bytes[:4], 'big') % 100
+    if display_bucket >= INLINE_RECOMMENDATION_RATE_PERCENT:
+        return {
+            'status': 'not_shown',
+            'after_result_index': None,
+            'results': [],
+        }
+
+    context = _candidate_context(preference)
+    ranked = _rank_jobs(
+        context,
+        user=user,
+        excluded_public_ids=excluded_public_ids,
+    )
+    pool = ranked[:INLINE_RECOMMENDATION_POOL_SIZE]
+    if not pool:
+        return {'status': 'ready', 'after_result_index': None, 'results': []}
+
+    requested_count = 1 + (random_bytes[4] % 2)
+    result_count = min(requested_count, len(pool))
+    start = int.from_bytes(random_bytes[5:9], 'big') % len(pool)
+    selected = [pool[(start + offset) % len(pool)] for offset in range(result_count)]
+    return {
+        'status': 'ready',
+        'after_result_index': 3 + (random_bytes[9] % 5),
+        'results': selected,
+    }

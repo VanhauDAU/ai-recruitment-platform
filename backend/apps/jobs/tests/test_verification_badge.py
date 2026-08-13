@@ -222,9 +222,9 @@ class EmployerBadgeCriteriaTests(APITestCase):
     def test_current_required_legal_document_must_remain_approved(self):
         user, company, _, case = _employer_with_verification_case('legal-revoked')
         job = _job_for(user, company)
-        case.documents.filter(
-            doc_type=CompanyDocument.DocType.BUSINESS_REGISTRATION
-        ).update(status=CompanyDocument.Status.REJECTED)
+        case.documents.filter(doc_type=CompanyDocument.DocType.BUSINESS_REGISTRATION).update(
+            status=CompanyDocument.Status.REJECTED
+        )
 
         state = job_badge_criteria(job)
 
@@ -237,9 +237,7 @@ class EmployerBadgeCriteriaTests(APITestCase):
             method=EmployerVerificationCase.VerificationMethod.AUTHORIZATION_AND_ID,
         )
         job = _job_for(user, company)
-        case.documents.filter(
-            doc_type=CompanyDocument.DocType.IDENTITY_DOCUMENT
-        ).delete()
+        case.documents.filter(doc_type=CompanyDocument.DocType.IDENTITY_DOCUMENT).delete()
 
         state = job_badge_criteria(job)
 

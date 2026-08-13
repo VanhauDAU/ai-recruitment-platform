@@ -5,7 +5,7 @@
 // tiếng thì vẫn đọc được đúng câu hỏi đó. `answer` dựng đáp án của ứng viên
 // thành một tin nhắn để lịch sử hội thoại đọc lại được như chat thật.
 
-import { EXPERIENCE_OPTIONS } from '@/features/configure-job-preferences'
+import { EXPERIENCE_OPTIONS, normalizeDesiredPositionOthers } from '@/features/configure-job-preferences'
 
 /** Backend chặn text đọc ad-hoc ở 600 ký tự (`SPEECH_MAX_ADHOC_TEXT_CHARS`). */
 export const MAX_SPEECH_CHARS = 600
@@ -29,14 +29,14 @@ export const INTERVIEW_STEPS = [
   {
     id: 'specialization',
     needsCatalog: true,
-    fields: ['desired_specialization_ids', 'desired_position_other'],
+    fields: ['desired_specialization_ids', 'desired_position_others', 'desired_position_other'],
     label: 'Lĩnh vực',
     hint: 'Chọn tối đa 5 vị trí chuyên môn. Không thấy vị trí của bạn thì gõ thêm bên dưới nhé.',
     question: 'Đầu tiên, bạn muốn làm ở lĩnh vực nào? Bạn chọn tối đa năm vị trí chuyên môn nhé.',
     retry: 'Bạn chọn giúp mình ít nhất một vị trí chuyên môn nhé.',
     answer: (values, catalog) => [
       ...specializationNames(values.desired_specialization_ids, catalog),
-      values.desired_position_other?.trim(),
+      ...normalizeDesiredPositionOthers(values.desired_position_others ?? values.desired_position_other),
     ].filter(Boolean).join(' · '),
   },
   {
@@ -134,7 +134,10 @@ export function salarySpeech(amount) {
 
 /** Câu chốt cá nhân hoá, dựng từ chính nhu cầu vừa lưu. */
 export function buildReadySpeech(preference, user) {
-  const jobs = joinNames(preference?.desired_specializations, 'lĩnh vực')
+  const customPositions = normalizeDesiredPositionOthers(
+    preference?.desired_position_others ?? preference?.desired_position_other,
+  ).map((name) => ({ name }))
+  const jobs = joinNames([...(preference?.desired_specializations || []), ...customPositions], 'lĩnh vực')
   const places = joinNames(preference?.preferred_provinces, 'tỉnh thành')
   const salary = salarySpeech(preference?.desired_salary_vnd)
 

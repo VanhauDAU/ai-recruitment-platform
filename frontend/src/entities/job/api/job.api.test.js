@@ -11,6 +11,7 @@ import {
   getEmployerJobPage,
   getEmployerJobs,
   getHomepageBestJobs,
+  getInlineJobRecommendations,
   getJobBenefits,
   getJobLanguages,
   getJobPostingContext,
@@ -62,6 +63,25 @@ describe('CV job recommendations API', () => {
     })
     expect(get).toHaveBeenCalledWith('/jobs/recommendations/for-me/', {
       params: { page: 2, page_size: 10 },
+    })
+  })
+
+  it('loads a separate inline lane without changing canonical job-list pagination', async () => {
+    get.mockResolvedValue({
+      data: { status: 'ready', after_result_index: 4, results: [{ public_id: 'job_extra' }] },
+    })
+
+    await expect(getInlineJobRecommendations({
+      page: 3,
+      ranking_seed: 'session_seed',
+      excludedJobIds: ['job_1', 'job_2'],
+    })).resolves.toMatchObject({ results: [{ public_id: 'job_extra' }] })
+    expect(get).toHaveBeenCalledWith('/jobs/recommendations/inline/', {
+      params: {
+        page: 3,
+        ranking_seed: 'session_seed',
+        excluded: 'job_1,job_2',
+      },
     })
   })
 

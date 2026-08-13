@@ -24,11 +24,18 @@ export default function JobResults({
   ordering,
   page,
   quickViewJob,
+  recommendationInsertAfter,
+  recommendedJobs = [],
   results,
   searchBy,
   suggestedWards,
   wardSuggestionInsertIndex,
 }) {
+  const recommendedInsertIndex = Math.min(
+    Math.max(Number(recommendationInsertAfter) || 0, 0),
+    Math.max(results.length - 1, 0),
+  )
+
   return (
     <div className="min-w-0 lg:col-span-1">
       <div className={quickViewJob ? 'hidden' : 'mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between'}>
@@ -108,6 +115,20 @@ export default function JobResults({
                 <WardSuggestionCard wards={suggestedWards} onSelect={onSelectSuggestedWard} />
               )}
               {!quickViewJob && insertAfter[index + 1]}
+              {!quickViewJob && recommendedJobs.length > 0 && index === recommendedInsertIndex && (
+                <div className="space-y-3" aria-label="Việc làm đề xuất cho bạn">
+                  {recommendedJobs.map((recommendedJob) => (
+                    <JobCard
+                      key={`recommended-${recommendedJob.public_id}`}
+                      job={recommendedJob}
+                      isAuthenticated={isAuthenticated}
+                      onRequireLogin={onRequireLogin}
+                      onQuickView={onSetQuickViewJob}
+                      recommendationLabel="Đề xuất cho bạn"
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           ))}
         </div>

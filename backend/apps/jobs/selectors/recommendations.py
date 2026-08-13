@@ -3,6 +3,7 @@
 from ..models.recommendation_queries import (
     MIN_RECOMMENDATION_SCORE,
     RecommendationConsentRequired,
+    recommend_inline_jobs_for_candidate,
     recommend_jobs_for_candidate,
     recommend_jobs_for_cv,
     recommend_new_jobs_for_candidate_email,
@@ -11,6 +12,7 @@ from ..models.recommendation_queries import (
 __all__ = [
     'MIN_RECOMMENDATION_SCORE',
     'RecommendationConsentRequired',
+    'recommend_inline_jobs_for_candidate',
     'recommend_jobs_for_candidate',
     'recommend_jobs_for_cv',
     'recommend_new_jobs_for_candidate_email',

@@ -75,6 +75,7 @@ from .promotion_alerts import (
     candidate_still_allows_promoted_job_alert,
     matching_job_alert_recipient_page,
 )
+from .recommendations import hide_recommended_job, restore_recommended_job
 from .reports import resolve_job_report, reverse_job_report, submit_job_report
 
 __all__ = [
@@ -111,6 +112,7 @@ __all__ = [
     'publish_job',
     'pending_candidate_job_digest_ids',
     'hide_job_visibility',
+    'hide_recommended_job',
     'job_moderation_state',
     'job_ai_policy',
     'job_ai_quota_remaining',
@@ -128,6 +130,7 @@ __all__ = [
     'release_candidate_job_digest_claim',
     'recover_stale_job_ai_generations',
     'restore_job_visibility',
+    'restore_recommended_job',
     'reopen_job',
     'resolve_job_report',
     'reverse_job_report',

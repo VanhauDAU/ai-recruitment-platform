@@ -39,6 +39,9 @@ from .public import (
     SavedJobListCreateView,
 )
 from .recommendations import (
+    HiddenJobCreateView,
+    HiddenJobDestroyView,
+    InlineJobRecommendationView,
     SavedJobRecommendationView,
     SavedJobRemarketingImpressionView,
     SavedJobRemarketingLaneView,
@@ -66,6 +69,9 @@ __all__ = [
     'CandidateJobAlertListCreateView',
     'CvJobRecommendationView',
     'HomepageBestJobListView',
+    'HiddenJobCreateView',
+    'HiddenJobDestroyView',
+    'InlineJobRecommendationView',
     'EmployerJobCloseView',
     'EmployerJobAiGenerationCancelView',
     'EmployerJobAiGenerationCreateView',

@@ -26,7 +26,10 @@ from .api.views import (
     EmployerJobPostingContextView,
     EmployerJobReopenView,
     EmployerJobSubmitView,
+    HiddenJobCreateView,
+    HiddenJobDestroyView,
     HomepageBestJobListView,
+    InlineJobRecommendationView,
     JobCategoryListView,
     JobDetailView,
     JobImpressionBatchCreateView,
@@ -93,6 +96,21 @@ urlpatterns = [
         'recommendations/by-cv/<str:cv_public_id>/',
         CvJobRecommendationView.as_view(),
         name='cv-job-recommendations',
+    ),
+    path(
+        'recommendations/inline/',
+        InlineJobRecommendationView.as_view(),
+        name='inline-job-recommendations',
+    ),
+    path(
+        'recommendations/hidden/',
+        HiddenJobCreateView.as_view(),
+        name='hidden-job-create',
+    ),
+    path(
+        'recommendations/hidden/<str:job_public_id>/',
+        HiddenJobDestroyView.as_view(),
+        name='hidden-job-destroy',
     ),
     path(
         'recommendations/by-saved/',

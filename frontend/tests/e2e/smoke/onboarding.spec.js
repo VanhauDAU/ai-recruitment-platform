@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test'
 
+const API_ROUTE = /^https?:\/\/[^/]+\/api\/.*$/
 const CATEGORIES = [
   { id: 1, name: 'Công nghệ thông tin', parent: null, category_type: 'occupation_group' },
   { id: 2, name: 'Phát triển phần mềm', parent: 1, category_type: 'domain' },
@@ -10,18 +11,20 @@ const PROVINCES = [{ id: 9, name: 'Thành phố Đà Nẵng', level: 'province' 
 const SAVED_PREFERENCE = {
   ai_recommendation_consent: true,
   desired_position_other: '',
+  desired_position_others: [],
   desired_salary_vnd: 15000000,
   desired_specializations: [{ id: 3, name: 'Lập trình viên' }],
   experience_level: '2',
   job_preferences_configured: true,
   preferred_provinces: [{ id: 9, name: 'Thành phố Đà Nẵng' }],
+  preferred_skills: [],
   recruiter_visibility_consent: false,
   willing_to_relocate: false,
 }
 
 async function mockOnboardingApi(page) {
   let speechRequests = 0
-  await page.route('http://localhost:8000/api/**', async (route) => {
+  await page.route(API_ROUTE, async (route) => {
     const request = route.request()
     const path = new URL(request.url()).pathname
 
@@ -49,7 +52,7 @@ async function mockOnboardingApi(page) {
           job_preferences_configured: false,
         }
         : path === '/api/candidate/job-preferences/'
-          ? { desired_specializations: [], preferred_provinces: [], job_preferences_configured: false }
+          ? { desired_position_others: [], desired_specializations: [], preferred_provinces: [], preferred_skills: [], job_preferences_configured: false }
           : path === '/api/jobs/categories/'
             ? { count: CATEGORIES.length, results: CATEGORIES }
             : path === '/api/locations/'
@@ -126,6 +129,13 @@ test.describe('onboarding trò chuyện với robot', () => {
     await expect(botTranscript(page).last()).toContainText('ít nhất một vị trí chuyên môn')
     await expect(page.locator('.procv-mascot').first()).toHaveAttribute('data-emotion', 'error')
     await expect(page.getByText('Câu 1/5')).toBeVisible()
+
+    const customPositionInput = page.getByRole('combobox', { name: 'Nhập vị trí chuyên môn không có trong danh mục' })
+    await customPositionInput.fill('Kỹ sư dữ liệu')
+    await customPositionInput.press('Tab')
+    await expect(page.getByRole('button', { name: 'Xóa vị trí Kỹ sư dữ liệu' })).toBeVisible()
+    await page.getByRole('button', { name: 'Gửi', exact: true }).click()
+    await expect(page.getByText('Câu 2/5')).toBeVisible()
 
     await page.getByRole('button', { name: 'Hoàn thiện sau' }).click()
     await expect(page).toHaveURL('/')

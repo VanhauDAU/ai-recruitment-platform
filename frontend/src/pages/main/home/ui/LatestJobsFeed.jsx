@@ -59,9 +59,9 @@ function Mascot() {
   return (
     <div className="flex justify-center">
       <img
-        src={legacyAsset('welcome/dashboard-item.png')}
+        src={legacyAsset('welcome/procv-ai-robot-market-v2.png')}
         alt="Thị trường việc làm"
-        className="w-36 h-auto object-contain drop-shadow-md"
+        className="h-auto w-full max-w-[260px] object-contain drop-shadow-md"
         loading="lazy"
       />
     </div>

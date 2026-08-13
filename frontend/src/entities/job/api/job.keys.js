@@ -27,6 +27,8 @@ export const jobKeys = {
   employerDetail: (publicId) => ['jobs', 'employer-detail', publicId],
   candidateRecommendationsRoot: ['jobs', 'candidate-recommendations'],
   candidateRecommendations: (params = {}) => ['jobs', 'candidate-recommendations', params],
+  inlineRecommendationsRoot: ['jobs', 'inline-recommendations'],
+  inlineRecommendations: (params = {}) => ['jobs', 'inline-recommendations', params],
   postingContext: ['jobs', 'posting-context'],
   adminModeration: (params = {}) => ['jobs', 'admin-moderation', params],
 }

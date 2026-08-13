@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { MAX_DESIRED_SPECIALIZATIONS, toFormValues } from '@/features/configure-job-preferences'
+import { desiredPositionValidationError, toFormValues } from '@/features/configure-job-preferences'
 import { INTERVIEW_STEPS, stepById } from './interview-script'
 
 /** Robot "lọc việc" đủ lâu để câu chốt không nhảy ra ngay sau cú bấm cuối. */
@@ -9,10 +9,8 @@ const LAST_INDEX = INTERVIEW_STEPS.length - 1
 
 /** Cùng bộ điều kiện với `rules` của JobPreferencesForm, chỉ tách theo lượt hỏi. */
 const STEP_VALIDATORS = {
-  specialization: ({ desired_specialization_ids: ids }) => {
-    if (!ids?.length) return 'Vui lòng chọn ít nhất một vị trí chuyên môn.'
-    if (ids.length > MAX_DESIRED_SPECIALIZATIONS) return `Chỉ được chọn tối đa ${MAX_DESIRED_SPECIALIZATIONS} vị trí chuyên môn.`
-    return ''
+  specialization: ({ desired_position_others: customPositions, desired_specialization_ids: ids }) => {
+    return desiredPositionValidationError(ids, customPositions)
   },
   experience: ({ experience_level: level }) => (level ? '' : 'Vui lòng chọn kinh nghiệm.'),
   salary: ({ desired_salary_vnd: salary }) => {

@@ -25,6 +25,16 @@ export async function getCandidateJobRecommendations(params = {}) {
   return data
 }
 
+export async function getInlineJobRecommendations({ excludedJobIds = [], ...params } = {}) {
+  const { data } = await api.get('/jobs/recommendations/inline/', {
+    params: {
+      ...params,
+      excluded: excludedJobIds.join(','),
+    },
+  })
+  return data
+}
+
 export async function getSavedJobRemarketingLane() {
   const { data } = await api.get('/jobs/remarketing/saved/')
   return data
