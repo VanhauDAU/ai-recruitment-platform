@@ -19,8 +19,16 @@ export {
   startAdminEmployerVerificationReview,
   startAdminCompanyUpdateReview,
   unlockAdminEmployerVerificationResubmission,
+  decideAdminCompanyDomainClaim,
+  getAdminCompanyDomainClaimImpact,
+  getAdminCompanyDomainClaim,
+  getAdminCompanyDomainClaims,
+  getAdminCompanyDomainClaimSummary,
 } from './api/admin-employer-verification.api'
-export { adminEmployerVerificationKeys } from './api/admin-employer-verification.keys'
+export {
+  adminCompanyDomainClaimKeys,
+  adminEmployerVerificationKeys,
+} from './api/admin-employer-verification.keys'
 export {
   documentStatusMeta,
   EMPLOYER_VERIFICATION_STATUS,

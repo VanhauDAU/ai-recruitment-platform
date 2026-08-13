@@ -3,7 +3,13 @@ from rest_framework import serializers
 
 from ...models import DpaStatus, RecruiterProfile
 from ...selectors import build_employer_onboarding_steps, build_employer_readiness
-from ...services import DpaPolicyUnavailable, current_dpa_policy, verification_checks
+from ...services import (
+    DpaPolicyUnavailable,
+    current_dpa_policy,
+    recruiter_badge_eligibility,
+    recruiter_job_posting_entitlement,
+    verification_checks,
+)
 from .companies import CompanySerializer
 
 
@@ -30,6 +36,28 @@ class EmployerDpaAcceptanceSerializer(serializers.Serializer):
     document_sha256 = serializers.RegexField(r'^[0-9a-f]{64}$')
 
 
+class EmployerBadgeCriterionSerializer(serializers.Serializer):
+    key = serializers.CharField()
+    label = serializers.CharField()
+    passed = serializers.BooleanField()
+    action = serializers.CharField()
+
+
+class EmployerBadgeEligibilitySerializer(serializers.Serializer):
+    verified = serializers.BooleanField()
+    criteria = EmployerBadgeCriterionSerializer(many=True)
+    minimum_account_months = serializers.IntegerField(min_value=1, max_value=60)
+    eligible_at = serializers.DateTimeField(allow_null=True)
+
+
+class EmployerAccountVerificationSerializer(serializers.Serializer):
+    level = serializers.IntegerField(min_value=0, max_value=3)
+    account_level = serializers.IntegerField(min_value=0, max_value=3)
+    admin_approved = serializers.BooleanField()
+    dpa_current = serializers.BooleanField()
+    verified_job_quota_eligible = serializers.BooleanField()
+
+
 class RecruiterProfileSerializer(serializers.ModelSerializer):
     company = CompanySerializer(read_only=True)
     work_location = serializers.SerializerMethodField()
@@ -41,6 +69,8 @@ class RecruiterProfileSerializer(serializers.ModelSerializer):
     dpa_status = serializers.SerializerMethodField()
     blockers = serializers.SerializerMethodField()
     dpa_policy = serializers.SerializerMethodField()
+    badge_eligibility = serializers.SerializerMethodField()
+    account_verification = serializers.SerializerMethodField()
 
     class Meta:
         model = RecruiterProfile
@@ -69,6 +99,8 @@ class RecruiterProfileSerializer(serializers.ModelSerializer):
             'dpa_status',
             'dpa_policy',
             'blockers',
+            'badge_eligibility',
+            'account_verification',
             'created_at',
         ]
         read_only_fields = [f for f in fields if f != 'position_title']
@@ -91,7 +123,18 @@ class RecruiterProfileSerializer(serializers.ModelSerializer):
         if cached is None:
             cached = self._onboarding_cache = {}
         if obj.pk not in cached:
-            cached[obj.pk] = build_employer_onboarding_steps(obj)
+            cached[obj.pk] = build_employer_onboarding_steps(
+                obj,
+                badge_eligibility=self._badge_eligibility(obj),
+            )
+        return cached[obj.pk]
+
+    def _badge_eligibility(self, obj):
+        cached = getattr(self, '_badge_eligibility_cache', None)
+        if cached is None:
+            cached = self._badge_eligibility_cache = {}
+        if obj.pk not in cached:
+            cached[obj.pk] = recruiter_badge_eligibility(obj)
         return cached[obj.pk]
 
     def _readiness(self, obj):
@@ -135,6 +178,22 @@ class RecruiterProfileSerializer(serializers.ModelSerializer):
     @extend_schema_field(EmployerReadinessBlockerSerializer(many=True))
     def get_blockers(self, obj) -> list[dict]:
         return self._readiness(obj)['blockers']
+
+    @extend_schema_field(EmployerBadgeEligibilitySerializer)
+    def get_badge_eligibility(self, obj) -> dict:
+        return self._badge_eligibility(obj)
+
+    @extend_schema_field(EmployerAccountVerificationSerializer)
+    def get_account_verification(self, obj) -> dict:
+        _, entitlement = recruiter_job_posting_entitlement(obj.user)
+        level = entitlement['account_level']
+        return {
+            'level': level,
+            'account_level': level,
+            'admin_approved': entitlement['admin_approved'],
+            'dpa_current': entitlement.get('dpa_current', False),
+            'verified_job_quota_eligible': entitlement['verified_job_quota_eligible'],
+        }
 
     def get_verification_case(self, obj):
         case = getattr(obj, 'verification_case', None)

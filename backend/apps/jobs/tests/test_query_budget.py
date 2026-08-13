@@ -33,10 +33,10 @@ from ..models import Job, JobCategory, JobCategoryAssignment, JobSkill, SavedJob
 # 1 COUNT (pagination) + 1 SELECT jobs + 3 prefetch (categories, locations,
 # skills). select_related company nằm trong SELECT chính.
 #
-# +1 cho huy hiệu xác thực nhà tuyển dụng (`company_verified`): gom các
-# EmployerVerificationCase đã approved theo đúng cặp (công ty, người đăng).
-# Query này chạy một lần cho cả response nên tổng vẫn phẳng theo số bản ghi.
-BADGE_QUERY_BUDGET = 1
+# +3 cho huy hiệu tin cậy nhà tuyển dụng (`company_verified`): setting tuổi,
+# recruiter + correlated legal/report evidence, và active domain claims. Các
+# query chạy một lần cho cả response nên tổng vẫn phẳng theo số bản ghi.
+BADGE_QUERY_BUDGET = 3
 JOB_LIST_QUERY_BUDGET = 5 + BADGE_QUERY_BUDGET
 JOB_LIST_COMMERCIAL_PRESENTATION_QUERY_BUDGET = JOB_LIST_QUERY_BUDGET + 2
 ADMIN_JOB_LIST_QUERY_BUDGET = 2

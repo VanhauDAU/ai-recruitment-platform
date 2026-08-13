@@ -1,4 +1,4 @@
-import { CheckCircleFilled, CloseOutlined, HeartFilled, HeartOutlined, RightOutlined } from '@ant-design/icons'
+import { CloseOutlined, HeartFilled, HeartOutlined, RightOutlined } from '@ant-design/icons'
 import { Skeleton, Tooltip } from 'antd'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
@@ -14,6 +14,7 @@ import {
   getJobDetail,
   jobDetailPath,
   SavedJobTooltipContent,
+  VerifiedEmployerBadge,
 } from '@/entities/job'
 import { useSavedJob } from '@/features/saved-jobs'
 import { useJobView } from '@/features/track-job-engagement'
@@ -110,11 +111,12 @@ export default function JobQuickView({ job, onClose, isAuthenticated = true, onR
         <div className="flex items-start justify-between gap-3">
           <h2 className="text-lg font-bold leading-snug text-gray-900">
             {job.title}
-            {job.company_verified && (
-              <Tooltip title="Nhà tuyển dụng đã xác thực">
-                <CheckCircleFilled className="ml-1.5 translate-y-[-1px] align-middle text-sm !text-emerald-500" />
-              </Tooltip>
-            )}
+            <VerifiedEmployerBadge
+              verification={d.company_verification}
+              verified={d.company_verified ?? job.company_verified}
+              showCriteria={Boolean(d.company_verification)}
+              className="ml-1.5 translate-y-[-1px]"
+            />
           </h2>
           <button
             type="button"

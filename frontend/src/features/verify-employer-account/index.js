@@ -3,6 +3,7 @@ export { default as EmployerPhoneVerification } from './ui/EmployerPhoneVerifica
 export { default as EmployerBusinessLicenseForm } from './ui/EmployerBusinessLicenseForm'
 export { default as EmployerDataProtectionForm } from './ui/EmployerDataProtectionForm'
 export { default as EmployerVerificationLifecycleAlert } from './ui/EmployerVerificationLifecycleAlert'
+export { default as EmployerTrustBadgeEligibility } from './ui/EmployerTrustBadgeEligibility'
 export { getEmployerVerificationProgress } from './model/verification-progress'
 export {
   EMPLOYER_ACCOUNT_VERIFICATION_LEVEL_STEPS,

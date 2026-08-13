@@ -197,6 +197,43 @@ export async function createEmployerCompanyUpdateRequest(payload) {
   return data
 }
 
+export async function getEmployerCompanyDomainClaims() {
+  const { data } = await api.get('/employer/company/domain-claims/')
+  return data?.results || data || []
+}
+
+export async function createEmployerCompanyDomainClaim() {
+  const { data } = await api.post('/employer/company/domain-claims/', {})
+  return data
+}
+
+export async function verifyEmployerCompanyDomainClaim(publicId) {
+  const { data } = await api.post(
+    `/employer/company/domain-claims/${encodeURIComponent(publicId)}/verify/`,
+    {},
+  )
+  return data
+}
+
+export async function rotateEmployerCompanyDomainClaim(publicId, lockVersion) {
+  const { data } = await api.post(
+    `/employer/company/domain-claims/${encodeURIComponent(publicId)}/rotate/`,
+    { lock_version: lockVersion },
+  )
+  return data
+}
+
+export async function requestEmployerCompanyDomainManualReview(
+  publicId,
+  { lockVersion, reason },
+) {
+  const { data } = await api.post(
+    `/employer/company/domain-claims/${encodeURIComponent(publicId)}/request-manual-review/`,
+    { lock_version: lockVersion, reason },
+  )
+  return data
+}
+
 export async function changeEmployerCompanyUpdateRequestLifecycle(
   publicId,
   action,

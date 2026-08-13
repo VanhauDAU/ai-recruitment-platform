@@ -49,6 +49,14 @@ export const ADMIN_NAVIGATION = [
             access: { allOf: ['employer_verification.view'] },
           },
           {
+            key: 'employer-domain-verification',
+            label: 'Xác minh tên miền',
+            badgeKey: 'domain_verification',
+            routeRef: 'recruiters',
+            query: { tab: 'domain-verification' },
+            access: { allOf: ['employer_domain.view'] },
+          },
+          {
             key: 'employer-restricted',
             label: 'NTD bị hạn chế',
             routeRef: 'recruiters',

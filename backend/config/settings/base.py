@@ -399,6 +399,7 @@ REST_FRAMEWORK = {
         'consent': '20/hour',
         'job_view': '120/hour',
         'job_impression': '240/hour',
+        'job_report': '10/hour',
         'announcement_event': '240/hour',
         'announcement_runtime': '60/hour',
         'cv_import': '10/hour',
@@ -413,6 +414,14 @@ REST_FRAMEWORK = {
         'employer_phone_send': '5/min',
         'employer_phone_verify': '10/min',
         'employer_phone_status': '120/min',
+        # Account limits protect one recruiter; IP limits are deliberately
+        # broader because offices and local Docker users commonly share an IP.
+        'employer_domain_claim_issue_account': '10/day',
+        'employer_domain_claim_issue_ip': '60/hour',
+        'employer_domain_claim_verify_account': '30/hour',
+        'employer_domain_claim_verify_ip': '120/hour',
+        'employer_domain_claim_manual_account': '3/day',
+        'employer_domain_claim_manual_ip': '30/hour',
     },
 }
 
@@ -535,6 +544,7 @@ JOB_POSTING_MAX_PUBLIC_LIFETIME_DAYS = config(
 # candidate availability contract, ``shadow`` computes V2 evidence without
 # changing responses, and ``enforce`` makes the visibility timestamps canonical.
 JOB_LIFECYCLE_V2_MODE = config('JOB_LIFECYCLE_V2_MODE', default='legacy').strip().lower()
+EMPLOYER_BADGE_POLICY_MODE = config('EMPLOYER_BADGE_POLICY_MODE', default='shadow').strip().lower()
 JOB_PRESENTATION_V2_ENABLED = config('JOB_PRESENTATION_V2_ENABLED', default=False, cast=bool)
 SERVICE_CATALOG_V2_ENABLED = config('SERVICE_CATALOG_V2_ENABLED', default=False, cast=bool)
 SERVICE_ACTIVATION_ENABLED = config('SERVICE_ACTIVATION_ENABLED', default=False, cast=bool)
@@ -626,6 +636,7 @@ CELERY_TASK_ROUTES = {
     'apps.accounts.tasks.auth_email.*': {'queue': 'auth-email'},
     'apps.employers.tasks.phone_sms.*': {'queue': 'auth-sms'},
     'apps.employers.tasks.tax_lookup.*': {'queue': 'default'},
+    'apps.employers.tasks.domain_claims.*': {'queue': 'default'},
     'apps.cvs.tasks.*': {'queue': 'cv-export'},
     'apps.speech.tasks.*': {'queue': 'speech-artifacts'},
     'apps.uploads.tasks.*': {'queue': 'upload-scan'},
@@ -642,6 +653,12 @@ CELERY_TASK_REJECT_ON_WORKER_LOST = True
 CELERY_TASK_TIME_LIMIT = 60
 CELERY_TASK_SOFT_TIME_LIMIT = 50
 EMPLOYER_EVENT_RETENTION_DAYS = config('EMPLOYER_EVENT_RETENTION_DAYS', default=730, cast=int)
+EMPLOYER_DOMAIN_DNS_TIMEOUT_SECONDS = config(
+    'EMPLOYER_DOMAIN_DNS_TIMEOUT_SECONDS', default=3.0, cast=float
+)
+EMPLOYER_DOMAIN_RECHECK_BATCH_SIZE = config(
+    'EMPLOYER_DOMAIN_RECHECK_BATCH_SIZE', default=100, cast=int
+)
 CELERY_BEAT_SCHEDULE = {
     'purge-expired-ai-runtime-metadata': {
         'task': 'apps.ai_core.tasks.purge_expired_ai_metadata',
@@ -729,6 +746,10 @@ CELERY_BEAT_SCHEDULE = {
     },
     'purge-expired-employer-event-history': {
         'task': 'apps.employers.tasks.notifications.purge_expired_employer_event_history',
+        'schedule': 86400.0,
+    },
+    'reconcile-company-domain-claims': {
+        'task': 'apps.employers.tasks.domain_claims.reconcile_company_domain_claims',
         'schedule': 86400.0,
     },
 }

@@ -1,3 +1,4 @@
+from .domain_claims import reconcile_company_domain_claims
 from .notifications import purge_expired_employer_event_history
 from .phone_sms import (
     dispatch_employer_sms_challenge,
@@ -18,4 +19,5 @@ __all__ = [
     'purge_employer_sms_verification_data',
     'recover_stale_employer_sms_dispatches',
     'purge_expired_employer_event_history',
+    'reconcile_company_domain_claims',
 ]

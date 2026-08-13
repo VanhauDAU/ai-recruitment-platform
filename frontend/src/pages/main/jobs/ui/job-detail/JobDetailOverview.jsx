@@ -18,9 +18,9 @@ import {
   formatSalary,
   getSalaryDisplayNote,
   JobPresentationLabels,
+  VerifiedEmployerBadge,
 } from '@/entities/job'
 import { formatJobDate } from '../../lib/job-detail-presentation'
-import VerifiedEmployerBadge from './VerifiedEmployerBadge'
 
 const EMPTY_LABEL = 'Chưa cập nhật'
 
@@ -59,6 +59,7 @@ export function JobHero({ job, saved, applicationStatus, onApply, onSave, onShar
               <VerifiedEmployerBadge
                 verification={job.company_verification}
                 verified={job.company_verified}
+                showCriteria
               />
             </h1>
             <p className="mt-1 text-sm font-medium text-gray-600">{job.company_name}</p>

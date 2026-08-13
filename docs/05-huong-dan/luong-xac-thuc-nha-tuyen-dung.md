@@ -80,6 +80,38 @@ backend mới ghi welcome job vào transactional outbox. Vì vậy đăng ký b�
 không nhận thư chào mừng trước thư xác thực. Token đã dùng, request confirm lặp
 lại và thao tác gửi lại link không tạo thêm thư chào mừng.
 
+### Xác minh tên miền công ty cho dấu tick công khai
+
+Xác thực mailbox ở trên chỉ chứng minh recruiter kiểm soát địa chỉ email; nó
+chưa chứng minh company kiểm soát tên miền. Sau khi liên kết company, recruiter
+có email công việc đã xác thực có thể tạo domain claim tại
+`POST /api/employer/company/domain-claims/`. Backend luôn suy exact domain từ
+email hiện tại, chuẩn hóa IDNA và không nhận domain tùy ý từ request.
+
+Luồng DNS:
+
+1. backend tạo challenge entropy cao, chỉ lưu SHA-256 và trả TXT value đúng một
+   lần trong response create/rotate;
+2. quản trị DNS thêm TXT tại `_procv-verification.<exact-domain>`;
+3. recruiter bấm xác minh; resolver có timeout hữu hạn và chỉ đọc DNS, không
+   gọi URL do người dùng cung cấp;
+4. bằng chứng được kiểm lại mỗi 30 ngày. Lỗi DNS tạm thời chuyển sang `grace`
+   tối đa 7 ngày; quá hạn thì mất hiệu lực. Parent domain không tự xác minh cho
+   subdomain.
+
+Nếu không thể thao tác DNS, recruiter có thể yêu cầu admin review thủ công.
+Admin phải có quyền domain riêng, xem impact rồi confirm bằng token chống stale,
+ghi lý do và dựa trên hồ sơ pháp lý đã duyệt. Bằng chứng thủ công hết hạn sau 12
+tháng. Pending claim không giữ chỗ domain toàn cục; tại thời điểm approve/verify,
+database chỉ cho một company có active claim trên exact domain. Dữ liệu email
+công ty cũ chỉ được phân loại `legacy_inferred`, tuyệt đối không tự nâng thành
+verified.
+
+Danh sách/domain detail chỉ đọc evidence đã lưu; API public job không truy vấn
+DNS trực tiếp. Đổi email, mất `email_verified`, đổi company hoặc revoke/expire
+claim làm tiêu chí domain của recruiter fail ngay. Public API không tiết lộ
+tiêu chí đang thiếu; checklist chi tiết chỉ dành cho chính recruiter và admin.
+
 ## Đăng ký bằng Google
 
 Nút Google chỉ bật sau khi người dùng đồng ý điều khoản bắt buộc. OAuth dùng
@@ -369,16 +401,25 @@ verification/account/moderation hold.
 
 Sidebar không hiển thị tiến độ của sáu mốc checklist. Nó dùng thang **Cấp 0/3 →
 Cấp 3/3**: chưa xác thực email là Cấp 0; xác thực email là Cấp 1; xác thực thêm
-số điện thoại và được duyệt bộ giấy tờ doanh nghiệp là Cấp 2; tài khoản đã đạt
-Cấp 2 và không có lịch sử báo cáo tin đăng là Cấp 3. Bộ tệp **Chờ duyệt** chỉ có
+số điện thoại và được duyệt đủ bộ giấy tờ theo phương thức GPKD hoặc ủy quyền +
+giấy tờ định danh là Cấp 2; tài khoản đạt Cấp 2 và có
+`EmployerVerificationCase.status=approved` đúng recruiter/company là Cấp 3.
+Bộ tệp **Chờ duyệt** chỉ có
 dấu hoàn thành tại bước “Cập nhật Giấy đăng ký doanh nghiệp” của checklist
 `employer-verify`; nó chưa được tính là giấy tờ đã xác thực, vì vậy tài khoản
-vẫn ở **Cấp 1 – 33%**. Khi giấy tờ được duyệt và tài khoản chưa có lịch sử báo
-cáo tin đăng, hệ thống lần lượt thỏa điều kiện Cấp 2 rồi đạt **Cấp 3 – 100%**.
+vẫn ở **Cấp 1 – 33%**. Khi giấy tờ được duyệt, hệ thống đạt Cấp 2; chỉ quyết
+định cuối của admin mới nâng lên **Cấp 3 – 100%**.
 Hover hoặc focus vào dấu `?` cạnh nhãn “Tài khoản xác thực” mở popover, hiển thị
 phần trăm hoàn thành, trạng thái từng điều kiện và liên kết đi thẳng tới action
 phù hợp. DLCN và đăng tin đầu tiên vẫn hiển thị riêng ở checklist đầy đủ, không
 làm thay đổi cấp sidebar.
+
+Cấp sidebar không phải dấu tick công khai và không quyết định quota. Dấu tick
+trên tin cần đồng thời năm điều kiện riêng: email công việc thuộc domain đã xác
+minh, số điện thoại đã xác minh, case và bộ giấy tờ pháp lý đã duyệt, đủ tuổi
+tài khoản theo số tháng lịch cấu hình, và không có report trust đang `upheld`.
+Quota/candidate-data tiếp tục dựa trên case, workspace readiness và DPA hiện
+hành; domain, tuổi tài khoản hoặc report của badge không tự khóa quota.
 
 Backend trả `employer_job_workspace_ready` trong session. Field cũ
 `employer_verification_completed` vẫn tồn tại trong compatibility window và

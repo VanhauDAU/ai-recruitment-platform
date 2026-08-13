@@ -20,6 +20,7 @@ vi.mock('@/entities/job', () => ({
     candidateRecommendations: (params) => ['jobs', 'candidate-recommendations', params],
   },
   JobPresentationLabels: () => null,
+  VerifiedEmployerBadge: ({ verified }) => verified ? <span>Nhà tuyển dụng đã xác thực</span> : null,
 }))
 
 vi.mock('@/features/saved-jobs', () => ({

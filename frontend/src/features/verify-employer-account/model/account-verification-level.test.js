@@ -41,12 +41,27 @@ describe('employer account verification level', () => {
     })).toEqual({ level: 2, total: 3, percent: 67 })
   })
 
-  it('assigns level 3 after approval when there is no job-report history', () => {
+  it('assigns level 3 only after the recruiter verification case is approved', () => {
+    expect(getEmployerAccountVerificationLevel({
+      email_verified: true,
+      phone_verified: true,
+      business_doc_approved: true,
+      no_report_history: false,
+    }, { status: 'approved' })).toEqual({ level: 3, total: 3, percent: 100 })
+  })
+
+  it('does not use job-report history to calculate the account level', () => {
     expect(getEmployerAccountVerificationLevel({
       email_verified: true,
       phone_verified: true,
       business_doc_approved: true,
       no_report_history: true,
+    }, { status: 'in_review' })).toEqual({ level: 2, total: 3, percent: 67 })
+  })
+
+  it('prefers an authoritative account level supplied by the backend', () => {
+    expect(getEmployerAccountVerificationLevel({}, {}, {
+      level: 3,
     })).toEqual({ level: 3, total: 3, percent: 100 })
   })
 

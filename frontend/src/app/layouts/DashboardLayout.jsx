@@ -24,7 +24,9 @@ import {
   getAdminCompanySummary,
 } from '@/entities/admin-company'
 import {
+  adminCompanyDomainClaimKeys,
   adminEmployerVerificationKeys,
+  getAdminCompanyDomainClaimSummary,
   getAdminEmployerVerificationSummary,
 } from '@/entities/admin-employer-verification'
 import { ANNOUNCEMENT_SURFACES } from '@/entities/announcement'
@@ -119,6 +121,7 @@ export default function DashboardLayout() {
     navigation,
     ['recruiter_verification'],
   )
+  const needsDomainSummary = hasBadgeKey(navigation, ['domain_verification'])
   const needsCompaniesSummary = hasBadgeKey(
     navigation,
     ['company_updates'],
@@ -139,6 +142,14 @@ export default function DashboardLayout() {
     refetchOnWindowFocus: 'always',
     staleTime: 10_000,
   })
+  const domainSummary = useQuery({
+    queryKey: adminCompanyDomainClaimKeys.summary,
+    queryFn: ({ signal }) => getAdminCompanyDomainClaimSummary({ signal }),
+    enabled: user?.role === 'admin' && needsDomainSummary,
+    refetchInterval: 10_000,
+    refetchOnWindowFocus: 'always',
+    staleTime: 0,
+  })
   const companiesSummary = useQuery({
     queryKey: adminCompanyKeys.summary,
     queryFn: ({ signal }) => getAdminCompanySummary({ signal }),
@@ -150,8 +161,15 @@ export default function DashboardLayout() {
   const navigationWithBadges = useMemo(() => attachBadgeCounts(navigation, {
     admin_invitations: usersSummary.data?.queues?.pending_admin_invitations,
     recruiter_verification: recruitersSummary.data?.pending,
+    domain_verification: domainSummary.data?.manual_pending,
     company_updates: companiesSummary.data?.pending_update_requests,
-  }), [companiesSummary.data, navigation, recruitersSummary.data, usersSummary.data])
+  }), [
+    companiesSummary.data,
+    domainSummary.data,
+    navigation,
+    recruitersSummary.data,
+    usersSummary.data,
+  ])
   const hasNoDepartment = (
     user?.role === 'admin'
     && !adminAccess.isSuperuser

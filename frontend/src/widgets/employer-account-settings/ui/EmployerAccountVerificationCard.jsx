@@ -35,11 +35,20 @@ export default function EmployerAccountVerificationCard() {
   const verification = profileQuery.data?.onboarding || {}
   const verificationCase = profileQuery.data?.verification_case || {}
   const verificationInvalidated = isEmployerVerificationInvalidated(verificationCase)
-  const level = getEmployerAccountVerificationLevel(verification, verificationCase)
+  const authoritativeAccountVerification = profileQuery.data?.account_verification
+    ?? profileQuery.data?.employer_account_level
+  const level = getEmployerAccountVerificationLevel(
+    verification,
+    verificationCase,
+    authoritativeAccountVerification,
+  )
   const percent = level.percent
   const nextLevel = Math.min(level.level + 1, level.total)
-  const verifiedJobQuotaUnlocked = (
-    level.level === level.total && verification.representative_verified
+  const verifiedJobQuotaUnlocked = Boolean(
+    profileQuery.data?.posting_context?.verified_job_quota_eligible
+    ?? profileQuery.data?.verified_job_quota_eligible
+    ?? profileQuery.data?.account_verification?.verified_job_quota_eligible
+    ?? (level.level === level.total && verification.dpa_accepted),
   )
 
   return (
@@ -59,12 +68,12 @@ export default function EmployerAccountVerificationCard() {
             Bạn còn tối đa <strong className="text-slate-800">3 tin đăng miễn phí</strong>.{' '}
             {level.level < level.total ? (
               <>
-                Hoàn tất <strong className="text-slate-800">Cấp {nextLevel}/{level.total}</strong> và xác thực đủ hồ sơ để nhận{' '}
+                Hoàn tất <strong className="text-slate-800">Cấp {nextLevel}/{level.total}</strong> và thỏa thuận DPA để nhận{' '}
                 <strong className="text-emerald-600">quota 100 tin đăng</strong>.
               </>
             ) : (
               <>
-                Quota sẽ được mở tự động khi mọi giấy tờ và điều kiện xác thực hoàn tất:{' '}
+                Quota sẽ được mở tự động sau khi thỏa thuận DPA còn hiệu lực:{' '}
                 <strong className="text-emerald-600">quota 100 tin đăng</strong>.
               </>
             )}

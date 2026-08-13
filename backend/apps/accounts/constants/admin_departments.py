@@ -104,6 +104,7 @@ ADMIN_DEPARTMENTS = (
                     'company_recruiter.view',
                     'company_update.view',
                     'employer_verification.view',
+                    'employer_domain.view',
                 ),
             },
             {
@@ -121,6 +122,8 @@ ADMIN_DEPARTMENTS = (
                     'company_update.review',
                     'employer_verification.view',
                     'employer_verification.review',
+                    'employer_domain.view',
+                    'employer_domain.review',
                 ),
             },
         ),

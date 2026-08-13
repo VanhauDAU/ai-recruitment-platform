@@ -1,7 +1,6 @@
-from datetime import timedelta
-
 from django.db import transaction
 from django.utils.html import strip_tags
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from apps.employers.models import DpaStatus, RecruitmentCampaign
@@ -26,7 +25,7 @@ from ...selectors.verification_badge import (
     badge_criteria_payload,
     prime_badge_cache,
 )
-from ...services import job_deadline_error, job_deadline_policy, lifecycle_local_date
+from ...services import job_deadline_error
 from .supporting import (
     JobApplicationContactSerializer,
     JobApplicationEmailSerializer,
@@ -41,6 +40,17 @@ from .supporting import (
     PublicJobLocationSerializer,
     PublicJobWorkScheduleSerializer,
 )
+
+
+class JobVerificationCriterionSerializer(serializers.Serializer):
+    key = serializers.CharField()
+    label = serializers.CharField()
+    passed = serializers.BooleanField()
+
+
+class JobVerificationSerializer(serializers.Serializer):
+    verified = serializers.BooleanField()
+    criteria = JobVerificationCriterionSerializer(many=True)
 
 
 class JobListSkillSerializer(serializers.ModelSerializer):
@@ -342,6 +352,7 @@ class JobSerializer(serializers.ModelSerializer):
             cache[key] = badge_criteria_payload(obj)
         return cache[key]
 
+    @extend_schema_field(serializers.BooleanField)
     def get_company_verified(self, obj):
         cached = self.context.get(BADGE_CACHE_KEY, {})
         key = (obj.company_id, obj.posted_by_id)
@@ -526,6 +537,7 @@ class JobDetailSerializer(JobSerializer):
             'currency',
             'deadline',
             'application_deadline',
+            'first_approved_at',
             'visibility_ends_at',
             'view_count',
             'is_hot',
@@ -552,6 +564,7 @@ class JobDetailSerializer(JobSerializer):
         ]
         read_only_fields = fields
 
+    @extend_schema_field(JobVerificationSerializer)
     def get_company_verification(self, obj):
         return self._badge_payload(obj)
 
@@ -735,16 +748,6 @@ class EmployerJobWriteSerializer(JobSerializer):
     def validate_deadline(self, deadline):
         if deadline_error := job_deadline_error(deadline, required=False):
             raise serializers.ValidationError(deadline_error)
-        current_deadline = getattr(self.instance, 'deadline', None)
-        first_approved_at = getattr(self.instance, 'first_approved_at', None)
-        if deadline != current_deadline and first_approved_at is None:
-            maximum_days = int(job_deadline_policy()['default_deadline_days'])
-            today = lifecycle_local_date()
-            if deadline and deadline > today + timedelta(days=maximum_days):
-                raise serializers.ValidationError(
-                    f'Tin cơ bản chỉ nhận hồ sơ tối đa {maximum_days} ngày. '
-                    'Hãy dùng dịch vụ gia hạn cho nhu cầu dài hơn.'
-                )
         return deadline
 
     def validate_application_deadline(self, deadline):

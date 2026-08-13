@@ -7,6 +7,7 @@ from .compliance import (
     EmployerComplianceHoldCampaign,
     EmployerComplianceHoldJob,
 )
+from .domain_claim import CompanyDomainClaim, CompanyDomainClaimEvent
 from .dpa import EmployerDpaAcceptance
 from .membership import EmployerCompanyLinkEvent, RecruiterProfile
 from .notifications import (
@@ -31,6 +32,8 @@ from .verification import (
 __all__ = [
     'Company',
     'CompanyDocument',
+    'CompanyDomainClaim',
+    'CompanyDomainClaimEvent',
     'CompanyTaxLookupEvidence',
     'CompanyImage',
     'CompanyIndustry',

@@ -90,8 +90,13 @@ Ràng buộc để giữ lời hứa đó: FE tuyệt đối không được suy
 
 `Company` không có badge hoặc filter xác thực. Trang công ty và danh bạ chỉ
 trình bày dữ liệu catalogue. Trên tin tuyển dụng, huy hiệu **"Nhà tuyển dụng đã
-xác thực"** phản ánh `EmployerVerificationCase.status=approved` của chính
-`posted_by`; owner/member và loại hồ sơ GPKD/ủy quyền được xử lý như nhau.
+xác thực"** phản ánh read-model trust của chính `posted_by`, chỉ bật khi email
+công việc thuộc exact domain claim đang hiệu lực của company, số điện thoại đã
+xác minh, case cùng bộ giấy tờ current theo phương thức GPKD hoặc ủy quyền + ID
+đã được duyệt, tài khoản đủ số tháng lịch cấu hình và không có report trust
+`upheld` đang hiệu lực. Domain claim được dùng chung làm bằng chứng của company
+nhưng không biến Company thành chủ thể có verification lifecycle; bốn điều kiện
+còn lại vẫn recruiter-scoped.
 Tên field API legacy có thể được giữ để tương thích, nhưng không được diễn giải
 thành độ tin cậy chung của toàn công ty. Huy hiệu gói trả phí tiếp tục dùng màu,
 icon và copy riêng.

@@ -107,6 +107,19 @@ class JobViewTrackingApiTests(APITestCase):
         self.job.refresh_from_db()
         self.assertEqual(self.job.view_count, 0)
 
+    def test_detail_exposes_first_approval_as_the_stable_posted_date(self):
+        first_approved_at = timezone.now() - timedelta(days=2)
+        latest_published_at = timezone.now()
+        self.job.first_approved_at = first_approved_at
+        self.job.published_at = latest_published_at
+        self.job.save(update_fields=['first_approved_at', 'published_at'])
+
+        response = self.client.get(reverse('job-detail', kwargs={'slug': self.job.slug}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(parse_datetime(response.data['first_approved_at']), first_approved_at)
+        self.assertEqual(parse_datetime(response.data['published_at']), latest_published_at)
+
     @override_settings(JOB_LIFECYCLE_V2_MODE='enforce')
     def test_enforced_lifecycle_hides_job_outside_visibility_window(self):
         self.job.deadline = timezone.localdate() + timedelta(days=10)

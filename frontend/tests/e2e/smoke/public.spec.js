@@ -52,7 +52,7 @@ test('public smoke: home and jobs routes load', async ({ page }, testInfo) => {
   await expect(page.getByRole('heading', { name: /Tuyển dụng/ })).toBeVisible()
 })
 
-test('public smoke: reapproval keeps the original posted date on job cards', async ({ page }) => {
+test('public smoke: reapproval keeps the original posted date on job cards and detail', async ({ page }) => {
   await mockPublicApi(page)
   const latestApproval = new Date()
   const firstApproval = new Date(latestApproval.getTime() - 2 * 86_400_000)
@@ -77,10 +77,37 @@ test('public smoke: reapproval keeps the original posted date on job cards', asy
       }],
     }),
   }))
+  await page.route(/\/api\/jobs\/backend-engineer-job-reapproved\/$/, (route) => route.fulfill({
+    contentType: 'application/json',
+    body: JSON.stringify({
+      public_id: 'job_reapproved',
+      slug: 'backend-engineer-job-reapproved',
+      title: 'Backend Engineer duyệt lại',
+      company_name: 'ProCV',
+      company_logo_url: '',
+      company_verified: false,
+      locations_detail: [],
+      job_locations: [],
+      work_schedules: [],
+      language_requirements: [],
+      application_reasons: [],
+      salary_type: 'negotiable',
+      currency: 'VND',
+      view_count: 0,
+      first_approved_at: firstApproval.toISOString(),
+      published_at: latestApproval.toISOString(),
+    }),
+  }))
 
   await page.goto('/viec-lam')
 
   await expect(page.getByRole('link', { name: 'Backend Engineer duyệt lại' })).toBeVisible()
+  await expect(page.getByText('Đăng 2 ngày trước')).toBeVisible()
+  await expect(page.getByText('Đăng hôm nay')).toHaveCount(0)
+
+  await page.goto('/viec-lam/backend-engineer-job-reapproved')
+
+  await expect(page.getByRole('heading', { name: 'Backend Engineer duyệt lại' })).toBeVisible()
   await expect(page.getByText('Đăng 2 ngày trước')).toBeVisible()
   await expect(page.getByText('Đăng hôm nay')).toHaveCount(0)
 })

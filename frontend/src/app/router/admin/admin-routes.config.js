@@ -162,6 +162,7 @@ export const ADMIN_ROUTES = [
       'account.employer.view',
       'account.view',
       'employer_verification.view',
+      'employer_domain.view',
     ],
     showInNav: true,
   },

@@ -439,8 +439,13 @@ class SavedJobListCreateView(generics.ListCreateAPIView):
 
     def list(self, request, *args, **kwargs):
         saved_jobs = list(self.filter_queryset(self.get_queryset()))
+        context = self.get_serializer_context()
+        prime_badge_cache(
+            context,
+            {(saved.job.company_id, saved.job.posted_by_id) for saved in saved_jobs},
+        )
         prime_effective_service_presentations(saved.job for saved in saved_jobs)
-        return Response(self.get_serializer(saved_jobs, many=True).data)
+        return Response(self.get_serializer(saved_jobs, many=True, context=context).data)
 
     def perform_create(self, serializer):
         serializer.save(candidate=self.request.user)

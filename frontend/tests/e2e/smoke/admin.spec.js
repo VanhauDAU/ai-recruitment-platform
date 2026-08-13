@@ -66,7 +66,7 @@ test('admin account management: filters, table actions and quick detail are resp
     admin_access: null,
     invitation: null,
   }
-  await page.route('http://localhost:8000/api/**', async (route) => {
+  await page.route(/^https?:\/\/[^/]+\/api\//, async (route) => {
     const requestUrl = new URL(route.request().url())
     const path = requestUrl.pathname
     const body = path === '/api/auth/refresh/'
@@ -134,6 +134,25 @@ test('admin account management: filters, table actions and quick detail are resp
                   ],
                 }
               })()
+          : path === '/api/admin/company-domain-claims/'
+            ? {
+                count: 1,
+                next: null,
+                previous: null,
+                results: [{
+                  public_id: 'dmc_manual',
+                  domain: 'company.vn',
+                  company: 'cmp_test',
+                  company_name: 'Công ty Domain',
+                  requested_by: 'usr_pending',
+                  requested_by_email: 'hr@company.vn',
+                  method: 'admin_manual',
+                  status: 'pending',
+                  manual_review_requested_at: '2026-07-28T10:00:00Z',
+                  lock_version: 2,
+                  revision: 2,
+                }],
+              }
           : path === '/api/privacy/consent/'
             ? { consent: { necessary: true, preferences: false, analytics: false, marketing: false } }
           : path === '/api/admin/departments/' || path === '/api/admin/roles/'
@@ -192,6 +211,17 @@ test('admin account management: filters, table actions and quick detail are resp
   await expect.poll(() => page.getByRole('tabpanel', { name: /Chờ xác thực NTD/ })
     .locator('.account-management-tab-content')
     .evaluate((element) => getComputedStyle(element).paddingTop)).toBe(isMobile ? '16px' : '24px')
+  await expect(page.locator('html')).toHaveJSProperty(
+    'scrollWidth',
+    await page.locator('html').evaluate((element) => element.clientWidth),
+  )
+
+  await page.goto('/admin/app/recruiters?tab=domain-verification')
+  const domainTab = page.getByRole('tab', { name: 'Xác minh domain' })
+  await expect(domainTab).toHaveAttribute('aria-selected', 'true')
+  await expect(page.getByText('company.vn', { exact: true })).toBeVisible()
+  await expect(page.getByText('Công ty Domain')).toBeVisible()
+  await expect(page.getByRole('button', { name: /Duyệt thủ công/ })).toBeVisible()
   await expect(page.locator('html')).toHaveJSProperty(
     'scrollWidth',
     await page.locator('html').evaluate((element) => element.clientWidth),

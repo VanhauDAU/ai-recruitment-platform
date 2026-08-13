@@ -268,13 +268,16 @@ test('employer auth: registration has employer fields and consent-gated Google s
 })
 
 async function setEmployerSession(page, overrides = {}) {
-  await page.route('http://localhost:8000/api/auth/refresh/', async (route) => {
+  await page.route('**/api/employer/company/domain-claims/', async (route) => {
+    await route.fulfill({ contentType: 'application/json', body: '[]' })
+  })
+  await page.route('**/api/auth/refresh/', async (route) => {
     await route.fulfill({
       contentType: 'application/json',
       body: JSON.stringify({ access: 'e2e-access' }),
     })
   })
-  await page.route('http://localhost:8000/api/auth/me/', async (route) => {
+  await page.route('**/api/auth/me/', async (route) => {
     const currentOverrides = typeof overrides === 'function' ? overrides() : overrides
     await route.fulfill({
       contentType: 'application/json',
@@ -288,6 +291,70 @@ async function setEmployerSession(page, overrides = {}) {
     })
   })
 }
+
+test('employer domain verification creates a one-time DNS challenge responsively', async ({ page }) => {
+  await setEmployerSession(page, {
+    email_verified: true,
+    employer_onboarding_required: false,
+    employer_onboarding_step: 'complete',
+  })
+  await page.route('**/api/privacy/consent/', async (route) => {
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify({
+      consent: { necessary: true, preferences: false, analytics: false, marketing: false },
+    }) })
+  })
+  await page.route('**/api/employer/me/', async (route) => {
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify({
+      public_id: 'rec_domain',
+      ...INCOMPLETE_EMPLOYER_READINESS,
+      company: { public_id: 'cmp_domain', company_name: 'Công ty Domain' },
+      onboarding: {
+        email_verified: true,
+        phone_verified: true,
+        company_linked: true,
+        business_doc_approved: true,
+        representative_verified: true,
+        dpa_accepted: true,
+      },
+      verification_case: { status: 'approved' },
+      account_verification: { level: 3, verified_job_quota_eligible: true },
+      badge_eligibility: {
+        verified: false,
+        minimum_account_months: 6,
+        eligible_at: null,
+        criteria: [
+          { key: 'email_domain_verified', label: 'Email tên miền công ty đã được xác minh', passed: false, action: 'verify_domain' },
+        ],
+      },
+    }) })
+  })
+  await page.route('**/api/employer/company/domain-claims/', async (route) => {
+    if (route.request().method() === 'POST') {
+      await route.fulfill({ contentType: 'application/json', body: JSON.stringify({
+        public_id: 'dmc_e2e',
+        domain: 'company.vn',
+        method: 'dns_txt',
+        status: 'pending',
+        txt_name: '_procv-verification.company.vn',
+        txt_value: 'procv-verification=e2e-secret',
+        lock_version: 1,
+        allowed_actions: ['verify', 'rotate', 'request_manual_review'],
+      }) })
+      return
+    }
+    await route.fulfill({ contentType: 'application/json', body: '[]' })
+  })
+
+  await page.goto('/tuyendung/app/account/settings/account-info')
+
+  await expect(page.getByRole('heading', { name: 'Xác minh tên miền công ty' })).toBeVisible()
+  await expect(page.getByText('Tên miền công ty chưa được xác minh')).toBeVisible()
+  await page.getByRole('button', { name: 'Tạo mã xác minh' }).click()
+  await expect(page.getByText('company.vn', { exact: true })).toBeVisible()
+  await expect(page.getByText('procv-verification=e2e-secret')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Kiểm tra DNS' })).toBeVisible()
+  await expectNoHorizontalOverflow(page)
+})
 
 test('employer auth: unverified session is redirected to account verification', async ({ page }) => {
   await mockPublicApi(page)

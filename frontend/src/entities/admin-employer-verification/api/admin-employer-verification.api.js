@@ -5,6 +5,48 @@ async function data(request) {
   return response.data
 }
 
+function adminDomainClaimUrl(publicId, action = '') {
+  const base = `/admin/company-domain-claims/${encodeURIComponent(publicId)}/`
+  return action ? `${base}${action}/` : base
+}
+
+export function getAdminCompanyDomainClaims(params = {}, { signal } = {}) {
+  return data(client.get('/admin/company-domain-claims/', { params, signal }))
+}
+
+export function getAdminCompanyDomainClaimSummary({ signal } = {}) {
+  return data(client.get('/admin/company-domain-claims/summary/', { signal }))
+}
+
+export function getAdminCompanyDomainClaim(publicId, { signal } = {}) {
+  return data(client.get(adminDomainClaimUrl(publicId), { signal }))
+}
+
+export function getAdminCompanyDomainClaimImpact(publicId, action, reason) {
+  if (!['approve_manual', 'reject_manual', 'revoke'].includes(action)) {
+    throw new Error('Unsupported company domain review action.')
+  }
+  const endpoint = action === 'revoke' ? 'revoke-impact' : 'manual-review-impact'
+  const payload = action === 'revoke' ? { reason } : { decision: action, reason }
+  return data(client.post(adminDomainClaimUrl(publicId, endpoint), payload))
+}
+
+export function decideAdminCompanyDomainClaim(
+  publicId,
+  { action, reason, impactToken },
+) {
+  const endpoint = {
+    approve_manual: 'approve-manual',
+    reject_manual: 'reject-manual',
+    revoke: 'revoke',
+  }[action]
+  if (!endpoint) throw new Error('Unsupported company domain review action.')
+  return data(client.post(adminDomainClaimUrl(publicId, endpoint), {
+    reason,
+    impact_token: impactToken,
+  }))
+}
+
 export function getAdminEmployerVerifications(params = {}, { signal } = {}) {
   return data(client.get('/admin/employer-verifications/', { params, signal }))
 }

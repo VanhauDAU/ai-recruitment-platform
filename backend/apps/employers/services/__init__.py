@@ -45,6 +45,19 @@ from .compliance import (
     release_verification_holds,
 )
 from .document_preview import render_office_document_preview
+from .domain_claims import (
+    DomainClaimError,
+    confirm_domain_claim_admin_action,
+    create_domain_claim,
+    domain_claim_admin_impact,
+    domain_claim_txt_name,
+    normalize_company_domain,
+    reconcile_domain_claim,
+    request_manual_domain_review,
+    rotate_domain_claim,
+    verified_email_domain,
+    verify_domain_claim,
+)
 from .dpa import (
     DpaGraceConflict,
     DpaPolicyChanged,
@@ -89,6 +102,14 @@ from .tax_lookup import (
     refresh_company_update_tax_lookup,
     refresh_verification_tax_lookup,
 )
+from .trust_badge import (
+    BADGE_CRITERIA,
+    TRUST_REPORT_REASONS,
+    account_badge_eligible_at,
+    employer_badge_payload,
+    employer_badge_state_map,
+    recruiter_badge_eligibility,
+)
 from .upload_validation import EmployerUploadStructureError, validate_employer_upload_structure
 from .verification import (
     confirm_verification_decision,
@@ -109,6 +130,8 @@ from .verification import (
 )
 
 __all__ = [
+    'BADGE_CRITERIA',
+    'TRUST_REPORT_REASONS',
     'COMPANY_UNLINK_PERMISSION',
     'COMPANY_DESCRIPTION_MIN_LENGTH',
     'CompanyUnlinkError',
@@ -131,6 +154,7 @@ __all__ = [
     'REQUESTER_EDITABLE_COMPANY_UPDATE_STATUSES',
     'UPDATABLE_COMPANY_FIELDS',
     'accept_recruiter_dpa',
+    'account_badge_eligible_at',
     'apply_dpa_hold',
     'apply_expired_dpa_holds_batch',
     'apply_expired_recruiter_dpa_hold',
@@ -147,8 +171,21 @@ __all__ = [
     'create_initial_recruitment_need',
     'create_sms_phone_challenge',
     'render_office_document_preview',
+    'DomainClaimError',
+    'confirm_domain_claim_admin_action',
+    'create_domain_claim',
+    'domain_claim_admin_impact',
+    'domain_claim_txt_name',
+    'normalize_company_domain',
+    'reconcile_domain_claim',
+    'request_manual_domain_review',
+    'rotate_domain_claim',
+    'verified_email_domain',
+    'verify_domain_claim',
     'ensure_recruiter_candidate_data_access',
     'ensure_recruiter_job_workspace',
+    'employer_badge_payload',
+    'employer_badge_state_map',
     'enqueue_sms_phone_challenge',
     'get_sms_phone_challenge',
     'confirm_verification_decision',
@@ -158,6 +195,7 @@ __all__ = [
     'recruiter_candidate_data_access_allowed',
     'recruiter_has_active_compliance_hold',
     'recruiter_job_approval_state',
+    'recruiter_badge_eligibility',
     'recruiter_job_posting_entitlement',
     'get_or_create_verification_case',
     'reconcile_completed_verification_cases',

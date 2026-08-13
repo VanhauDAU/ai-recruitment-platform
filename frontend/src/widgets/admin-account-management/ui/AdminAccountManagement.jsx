@@ -15,7 +15,12 @@ import {
   getAdminRoles,
   useAdminAccess,
 } from '@/entities/admin-access'
+import {
+  adminCompanyDomainClaimKeys,
+  getAdminCompanyDomainClaimSummary,
+} from '@/entities/admin-employer-verification'
 import { useSession } from '@/entities/session'
+import { AdminCompanyDomainReview } from '@/features/review-company-domain'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { adminPath } from '@/shared/config/portals'
 import { message } from '@/shared/lib/toast'
@@ -155,9 +160,17 @@ export default function AdminAccountManagement({ scope = 'accounts' }) {
   const canViewEmployerVerifications = recruiterScope && (
     isSuperuser || has('employer_verification.view')
   )
+  const canViewDomainClaims = recruiterScope && (
+    isSuperuser || has('employer_domain.view')
+  )
+  const canReviewDomainClaims = isSuperuser || has('employer_domain.review')
+  const canRevokeDomainClaims = isSuperuser || has('employer_domain.revoke')
   const canBrowseAccounts = recruiterScope
     ? canBrowseRecruiters
     : canViewCandidates || canViewAdmins
+  // Domain review has its own endpoint and permission boundary. Do not call
+  // the account summary API for a domain-only operator because that endpoint
+  // intentionally does not accept `employer_domain.view`.
   const canReadAccounts = canBrowseAccounts || canViewEmployerVerifications || canInvite
   const navigate = useNavigate()
   const location = useLocation()
@@ -181,6 +194,7 @@ export default function AdminAccountManagement({ scope = 'accounts' }) {
   const fallbackTab = (
     accountTabs[0]
     || (canViewEmployerVerifications ? 'verification' : '')
+    || (canViewDomainClaims ? 'domain-verification' : '')
     || (canInvite ? 'invitations' : '')
   )
   const requestedTab = searchParams.get('tab') || (
@@ -189,6 +203,7 @@ export default function AdminAccountManagement({ scope = 'accounts' }) {
   const allowedTabs = [
     ...accountTabs,
     ...(canViewEmployerVerifications ? ['verification'] : []),
+    ...(canViewDomainClaims ? ['domain-verification'] : []),
     ...(canInvite ? ['invitations'] : []),
   ]
   const activeTab = allowedTabs.includes(requestedTab) ? requestedTab : fallbackTab
@@ -208,6 +223,14 @@ export default function AdminAccountManagement({ scope = 'accounts' }) {
     queryKey: adminAccountKeys.summary(summaryParams),
     queryFn: ({ signal }) => getAdminAccountSummary(summaryParams, { signal }),
     enabled: canReadAccounts,
+  })
+  const domainSummaryQuery = useQuery({
+    queryKey: adminCompanyDomainClaimKeys.summary,
+    queryFn: ({ signal }) => getAdminCompanyDomainClaimSummary({ signal }),
+    enabled: canViewDomainClaims,
+    refetchInterval: 10_000,
+    refetchOnWindowFocus: 'always',
+    staleTime: 0,
   })
   const accountsQuery = useQuery({
     queryKey: adminAccountKeys.list(params),
@@ -454,6 +477,22 @@ export default function AdminAccountManagement({ scope = 'accounts' }) {
         </QueueTabLabel>
       ),
       children: <div className="account-management-tab-content"><VerificationQueuePanel /></div>,
+    }] : []),
+    ...(canViewDomainClaims ? [{
+      key: 'domain-verification',
+      label: (
+        <QueueTabLabel count={domainSummaryQuery.data?.manual_pending}>
+          Xác minh domain
+        </QueueTabLabel>
+      ),
+      children: (
+        <div className="account-management-tab-content">
+          <AdminCompanyDomainReview
+            canReview={canReviewDomainClaims}
+            canRevoke={canRevokeDomainClaims}
+          />
+        </div>
+      ),
     }] : []),
     ...(canInvite ? [{
       key: 'invitations',
