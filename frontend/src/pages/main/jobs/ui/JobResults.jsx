@@ -1,6 +1,7 @@
 import { Button, Pagination, Select } from 'antd'
 import { SEARCH_BY_TABS } from '@/features/search-jobs'
 import { MascotEmpty } from '@/shared/ui/mascot'
+import { JOB_SORT_OPTIONS } from '../lib/job-sort-options'
 import { PAGE_SIZE } from '../lib/job-list-params'
 import JobCard from './JobCard'
 import JobCardSkeleton from './JobCardSkeleton'
@@ -58,11 +59,7 @@ export default function JobResults({
             value={ordering}
             onChange={onSortChange}
             className="w-40"
-            options={[
-              { value: '', label: 'Mới nhất' },
-              { value: 'salary_desc', label: 'Lương cao nhất' },
-              { value: 'urgent', label: 'Cần tuyển gấp' },
-            ]}
+            options={JOB_SORT_OPTIONS}
           />
         </div>
       </div>

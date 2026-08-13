@@ -10,6 +10,7 @@ import {
   getEmployerJob,
   getEmployerJobPage,
   getEmployerJobs,
+  getHomepageBestJobs,
   getJobBenefits,
   getJobLanguages,
   getJobPostingContext,
@@ -62,6 +63,14 @@ describe('CV job recommendations API', () => {
     expect(get).toHaveBeenCalledWith('/jobs/recommendations/for-me/', {
       params: { page: 2, page_size: 10 },
     })
+  })
+
+  it('loads the dedicated homepage Best Jobs surface', async () => {
+    const params = new URLSearchParams('page=1&rotation_seed=home_seed')
+    get.mockResolvedValue({ data: { count: 12, results: [] } })
+
+    await expect(getHomepageBestJobs(params)).resolves.toEqual({ count: 12, results: [] })
+    expect(get).toHaveBeenCalledWith('/jobs/best/', { params })
   })
 
   it('uses owner-scoped job workflow endpoints and persists draft data before publishing it', async () => {

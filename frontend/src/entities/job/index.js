@@ -1,5 +1,7 @@
 export * from './api/job.api'
 export * from './api/job.keys'
+export * from './model/job-list-ranking-sync'
+export { default as JobListRankingSync } from './model/JobListRankingSync'
 export * from './lib/job-paths'
 export * from './lib/job-posted-at'
 export * from './lib/job-category-tree'

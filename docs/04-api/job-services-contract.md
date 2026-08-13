@@ -104,6 +104,62 @@ Default an toàn khi presentation V2 tắt:
 
 `presentation` không chứa package name, price hoặc priority weight nội bộ.
 
+### `GET /api/jobs/` — ordering và pagination
+
+Candidate list áp dụng availability, filter và hard relevance floor trước khi
+xếp hạng. `ordering` có contract sau:
+
+| Giá trị | Semantics |
+| --- | --- |
+| Bỏ trống | Stream mặc định paid-tier-first: Premium → trả phí tiêu chuẩn → tin thường; refresh ưu tiên trong tầng, sau đó luân phiên bằng `ranking_seed` |
+| `newest` | Mới đăng theo lifecycle recency; refresh và paid tier không override |
+| `salary_desc` | Lương cao nhất; refresh và paid tier không override |
+| `urgent` | Active urgent label trước, không dùng flash badge; refresh và paid tier không override |
+
+Trong stream mặc định, server resolve
+`latest_eligible_refresh(job_id)` từ usage event `refresh` của chính job, lấy
+`occurred_at DESC` rồi `usage_event.id DESC`. Trong mỗi commercial tier, các tin
+có refresh còn hiệu lực đứng trước phần chưa refresh; vì đây là state per-job,
+refresh B sau A đưa B lên trên A nhưng không xóa mốc boost của A. Job dùng gói
+refresh-only nhận cùng hiệu ứng trong tầng tin thường dù
+`presentation.sponsored=false`; refresh-only không nâng tin sang tầng trả phí.
+
+Mỗi request list capture một clock `at` duy nhất và dùng clock đó cho
+availability, refresh eligibility, sponsored eligibility và presentation. Nhờ
+vậy một activation ở đúng biên expiry không thể vừa được dùng để rank nhưng lại
+không còn disclosure trong cùng response.
+
+Commercial tier được resolve độc lập với refresh. `best_jobs_eligible` và legacy
+`Job.Tier.TOP` thuộc tầng Premium; `search_sponsored` và legacy
+`Job.Tier.FEATURED` thuộc tầng trả phí tiêu chuẩn; các tin còn lại thuộc tầng
+thường. Tất cả tin trả phí còn hiệu lực được xếp thành một prefix liên tục trước
+tin thường, không còn quota 2/10 hoặc representative duy nhất theo company.
+Nhiều tin cùng company vẫn giữ rank độc lập và disclosure
+`presentation.sponsored=true`. Refresh không tự biến một job thành sponsored
+hoặc nâng commercial tier.
+
+Default response bổ sung `ranking_seed`; `next` và `previous` giữ nguyên seed.
+Seed là chuỗi opaque 1–64 ký tự `[A-Za-z0-9_-]`. Frontend tạo một seed cho mỗi
+lần tải ứng dụng, giữ seed đó khi đổi filter/page và tạo seed mới khi F5. Cùng
+seed và cùng ranking state cho cùng thứ tự; seed mới luân phiên phần tin chưa
+refresh trong từng commercial tier nhưng không làm tin thường vượt tin trả phí.
+Explicit ordering không gửi hoặc sử dụng seed.
+
+Box “Việc làm tốt nhất” trên trang chủ dùng endpoint riêng
+`GET /api/jobs/best/`, không dùng ranking nêu trên. Pool chỉ gồm tin còn public
+và có active `sponsored_placement=best_jobs_eligible` (cộng legacy
+`Job.Tier.TOP` trong compatibility window), sau đó luân phiên theo
+`rotation_seed`; refresh, giá gói và ngày đăng không quyết định thứ tự box.
+Response dùng pagination chuẩn và trả lại `rotation_seed`. Frontend giữ seed khi
+đổi trang/filter, tạo seed mới khi F5.
+
+Response vẫn dùng offset pagination với `page`, `page_size`, `count`, `next`,
+`previous`, `results`, chưa có database snapshot token. Nếu có refresh, publish,
+đóng/mở, expiry hoặc capability mutation giữa hai request thì offset vẫn có thể
+dịch chuyển. Client phải reset về page 1 và invalidate các page đã cache sau
+ranking-relevant mutation. F5 chỉ đổi seed hiển thị, không tạo refresh usage
+event và không thay đổi ngày đăng của bất kỳ tin nào.
+
 ## 4. Catalogue V2
 
 ### `GET /api/services/packages/`
@@ -309,6 +365,36 @@ lường; UI phải hiển thị `—`, không biến “chưa có dữ liệu�
 
 Refresh và confirm Job Alert cần `Idempotency-Key`; mọi action đều recheck
 activation đang hiệu lực, feature flag và quyền owner của tin.
+
+#### Refresh semantics
+
+`POST /api/services/activations/{public_id}/refresh/` không nhận payload nghiệp
+vụ ngoài header `Idempotency-Key`. Response canonical:
+
+```json
+{
+  "public_id": "jsu_...",
+  "activation_public_id": "jsa_...",
+  "event_type": "refresh",
+  "occurred_at": "2026-08-13T03:00:00Z",
+  "remaining_quantity": 1
+}
+```
+
+Mỗi lần thành công append một `JobServiceUsageEvent` bất biến cho đúng job và
+consume một quantity; retry cùng key không tạo event thứ hai. Refresh không sửa
+`created_at`, `published_at`, `first_approved_at`, `visibility_starts_at`,
+`visibility_ends_at`, application deadline, status hoặc public-cycle anchor.
+Nó chỉ cung cấp mốc ranking riêng cho job trong default stream.
+
+Khi resolve nhiều event của cùng job, server lấy event eligible mới nhất theo
+`occurred_at DESC`, rồi database usage-event `id DESC` để deterministic tie.
+Read path được hỗ trợ bởi composite index
+`(job_id, event_type, occurred_at DESC, id DESC)`.
+Event của job B không thay thế event của job A. Eligibility của refresh không
+phụ thuộc job có `sponsored_placement`; commercial tier vẫn được resolve riêng
+theo policy phân phối. Refresh-only chỉ đổi rank trong tầng thường, không nâng
+tin thành trả phí.
 
 ### Giao diện employer
 

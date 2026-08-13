@@ -123,7 +123,7 @@ Không bật hai bước có thay đổi hành vi lớn trong cùng cửa sổ d
 
 ### Distribution
 
-- sponsored share, empty slot, company concentration;
+- sponsored share theo commercial tier và company concentration;
 - impression/view/save/apply theo activation/surface;
 - P50/P95 latency, query count và pagination anomaly.
 
@@ -162,7 +162,7 @@ Dừng rollout ngay khi:
 - reconciliation không bằng 0;
 - error rate vượt baseline đã duyệt;
 - P95 endpoint chính tăng trên 20%;
-- sponsored share vượt 20%;
+- sponsored share hoặc company concentration lệch mạnh khỏi baseline đã duyệt;
 - cùng một effective state có presentation khác nhau giữa surface.
 
 ## 8. Legacy retirement

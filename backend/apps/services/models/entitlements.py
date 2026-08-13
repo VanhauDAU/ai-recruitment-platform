@@ -345,8 +345,8 @@ class JobServiceUsageEvent(models.Model):
                 name='services_usage_activation_idx',
             ),
             models.Index(
-                fields=['job', 'event_type', 'occurred_at'],
-                name='services_usage_job_idx',
+                fields=['job', 'event_type', '-occurred_at', '-id'],
+                name='services_usage_job_rank_idx',
             ),
         ]
         constraints = [

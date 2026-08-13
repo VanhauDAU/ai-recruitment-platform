@@ -93,6 +93,7 @@ Xác thực trong Swagger UI: gọi `POST /api/auth/login/` lấy `access`, bấ
 | GET | `/api/jobs/benefits/` | Danh mục quyền lợi chuẩn hóa (đang active), public, không phân trang |
 | GET | `/api/jobs/languages/` | Danh mục ngoại ngữ (đang active), public, không phân trang |
 | GET | `/api/jobs/stats/` | Thống kê thị trường việc làm cho dashboard trang chủ (số job/công ty, job mới 24h, tăng trưởng 7 ngày, nhu cầu theo ngành, job mới nhất), public |
+| GET | `/api/jobs/best/?rotation_seed=&page=&page_size=` | Box Việc làm tốt nhất trang chủ: chỉ tin public có quyền lợi `best_jobs_eligible`/legacy TOP, luân phiên ổn định theo seed riêng và không kế thừa ranking/refresh của danh sách việc làm |
 | GET | `/api/jobs/recommendations/for-me/?page=&page_size=` | Candidate-only: feed preference-first có phân trang, CV active bổ sung, trạng thái setup/consent, nguồn dữ liệu và lý do/điểm khớp. Loại job đã ứng tuyển và CV archived/failed; không dùng search activity trong phiên bản hiện tại. |
 | GET | `/api/jobs/recommendations/by-cv/{cv_public_id}/` | Candidate owner-only: tối đa 6 việc làm giải thích được cho CV vừa lưu; yêu cầu consent gợi ý trước khi đọc nội dung CV, thiếu consent trả `403` và client hiển thị CTA tới cài đặt. |
 | GET | `/api/jobs/recommendations/by-saved/?limit=` | Candidate-only: so pairwise tối đa 20 tin lưu gần nhất, trả similarity score/details/reasons, loại tin đã lưu/đã ứng tuyển/không còn public; fallback tin active mới nhất khi chưa có tín hiệu. `limit` từ 1–20, mặc định 12. |

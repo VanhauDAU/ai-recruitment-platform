@@ -4,8 +4,10 @@ import {
   SyncOutlined,
   ThunderboltOutlined,
 } from '@ant-design/icons'
+import { useQueryClient } from '@tanstack/react-query'
 import { Button, Tag } from 'antd'
 import { Link } from 'react-router'
+import { isDefaultJobListQuery, publishJobListRankingChanged } from '@/entities/job'
 import { refreshEmployerJobService } from '@/entities/service-package'
 import { employerAppPath } from '@/shared/config/portals'
 import { message } from '@/shared/lib/toast'
@@ -34,6 +36,7 @@ export default function ServiceActivationCard({
   refreshEnabled = false,
   onChanged,
 }) {
+  const queryClient = useQueryClient()
   const { confirmationModal, requestConfirmation } = useConfirmAction()
   const items = activation.items || []
   const refreshItem = items.find((item) => item.capability === 'job_refresh')
@@ -58,8 +61,9 @@ export default function ServiceActivationCard({
       cancelText: 'Đóng',
       children: (
         <div className="space-y-2 text-sm text-slate-600">
-          <p>Tin <strong className="text-slate-900">{activation.job_title}</strong> sẽ được đưa lên đầu nhóm tin tài trợ phù hợp.</p>
-          <p>Thao tác dùng 1 lượt làm mới và không thay đổi ngày đăng. Hiện còn <strong>{refreshItem.remaining_quantity} lượt</strong>.</p>
+          <p>Mỗi lần làm mới tạo một mốc ưu tiên mới cho tin <strong className="text-slate-900">{activation.job_title}</strong>.</p>
+          <p>Trong chế độ sắp xếp Mặc định, tin trả phí được xếp theo tầng gói trước tin thường. Trong cùng một tầng, nếu tin B được làm mới sau tin A thì B được ưu tiên trước; A vẫn giữ mốc ưu tiên trước đó. Các tin còn lại được luân phiên sau mỗi lần tải lại trang.</p>
+          <p>Thao tác dùng 1 lượt và không thay đổi ngày đăng. Hiện còn <strong>{refreshItem.remaining_quantity} lượt</strong>.</p>
         </div>
       ),
       onConfirm: async () => {
@@ -67,7 +71,9 @@ export default function ServiceActivationCard({
           activation.public_id,
           serviceActionKey('job-refresh'),
         )
-        message.success('Tin đã được làm mới trong nhóm tài trợ.')
+        await queryClient.invalidateQueries({ predicate: isDefaultJobListQuery })
+        publishJobListRankingChanged()
+        message.success('Đã tạo mốc ưu tiên mới cho tin trong sắp xếp Mặc định; các tin làm mới trước vẫn giữ mốc của mình.')
         await onChanged?.()
       },
       onConfirmError: (error) => message.error(

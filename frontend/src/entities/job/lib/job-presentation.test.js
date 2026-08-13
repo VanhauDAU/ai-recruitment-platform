@@ -26,8 +26,12 @@ describe('job candidate presentation', () => {
   })
 
   it('supports the strongest commercial card tone without package-name mapping', () => {
-    expect(jobCardToneClass({
+    const toneClass = jobCardToneClass({
       presentation: { card_tone: 'green_strong', labels: [], sponsored: true },
-    })).toContain('bg-emerald-100')
+    })
+
+    expect(toneClass).toContain('from-white')
+    expect(toneClass).toContain('green-100/35')
+    expect(toneClass).not.toContain('bg-emerald-100/80')
   })
 })

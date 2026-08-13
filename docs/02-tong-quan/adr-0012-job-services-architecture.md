@@ -182,7 +182,7 @@ thanh toán hoặc PII không cần thiết.
 | `JOB_PRESENTATION_V2_ENABLED` | `false` | Bật projection mới |
 | `SERVICE_CATALOG_V2_ENABLED` | `false` | Bật versioned catalogue |
 | `SERVICE_ACTIVATION_ENABLED` | `false` | Cho NTD consume unit |
-| `SPONSORED_JOB_DISTRIBUTION_ENABLED` | `false` | Kill switch slot tài trợ |
+| `SPONSORED_JOB_DISTRIBUTION_ENABLED` | `false` | Kill switch phân tầng trả phí |
 | `JOB_PROMOTION_REFRESH_ENABLED` | `false` | Kill switch refresh |
 | `JOB_PROMOTION_ALERT_ENABLED` | `false` | Kill switch Job Alert |
 | `SAVED_JOB_REMARKETING_ENABLED` | `false` | Kill switch remarketing |

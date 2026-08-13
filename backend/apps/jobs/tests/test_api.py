@@ -1,3 +1,4 @@
+import hashlib
 from datetime import timedelta
 from unittest.mock import ANY, patch
 
@@ -378,6 +379,14 @@ class JobSalaryBucketFilterTests(APITestCase):
         titles = [job['title'] for job in response.data['results']]
         self.assertLess(titles.index('Urgent semantic'), titles.index('Fast response badge'))
 
+    def test_unknown_ordering_is_rejected(self):
+        self.create_job('Ordering validation', 10_000_000, 15_000_000)
+
+        response = self.client.get(reverse('job-list'), {'ordering': 'unknown'})
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('ordering', response.data)
+
     def test_list_contract_contains_card_fields_only(self):
         self.create_job('Contract job', 10_000_000, 15_000_000)
 
@@ -676,23 +685,289 @@ class SponsoredJobDistributionApiTests(APITestCase):
             published_at=self.now,
         )
 
-    def test_default_distribution_caps_sponsored_ratio_and_keeps_pagination_stable(self):
-        first = self.client.get(reverse('job-list'), {'page_size': 10, 'page': 1})
-        second = self.client.get(reverse('job-list'), {'page_size': 10, 'page': 2})
+    def activate_refresh_only(self, *, job, suffix):
+        package = ServicePackage.objects.create(
+            category=self.category,
+            slug=f'refresh-only-{suffix}',
+            name_vi=f'Refresh only {suffix}',
+        )
+        version = create_package_version(package=package, price=99000)
+        add_package_version_item(
+            package_version=version,
+            capability=ServiceCapability.objects.get(code='job_refresh'),
+            quantity=1,
+            duration_days=14,
+        )
+        version = publish_package_version(package_version=version)
+        unit = grant_package_units(
+            company=job.company,
+            package_version=version,
+            quantity=1,
+            actor=job.posted_by,
+            grant_key=f'refresh-only-{suffix}',
+            granted_at=self.now,
+        )[0]
+        return activate_job_service(
+            unit=unit,
+            job=job,
+            actor=job.posted_by,
+            idempotency_key=f'refresh-only-{suffix}',
+            activated_at=self.now,
+        )
+
+    def activate_sponsored_job(self, *, job, suffix):
+        unit = grant_package_units(
+            company=job.company,
+            package_version=self.version,
+            quantity=1,
+            actor=job.posted_by,
+            grant_key=f'sponsored-{suffix}',
+            granted_at=self.now,
+        )[0]
+        return activate_job_service(
+            unit=unit,
+            job=job,
+            actor=job.posted_by,
+            idempotency_key=f'sponsored-{suffix}',
+            activated_at=self.now,
+        )
+
+    def activate_premium_job(self, *, job, suffix):
+        package = ServicePackage.objects.create(
+            category=self.category,
+            slug=f'premium-placement-{suffix}',
+            name_vi=f'Premium placement {suffix}',
+        )
+        version = create_package_version(package=package, price=799000)
+        add_package_version_item(
+            package_version=version,
+            capability=ServiceCapability.objects.get(code='sponsored_placement'),
+            duration_days=14,
+            configuration={'placement': 'best_jobs_eligible'},
+        )
+        version = publish_package_version(package_version=version)
+        unit = grant_package_units(
+            company=job.company,
+            package_version=version,
+            quantity=1,
+            actor=job.posted_by,
+            grant_key=f'premium-{suffix}',
+            granted_at=self.now,
+        )[0]
+        return activate_job_service(
+            unit=unit,
+            job=job,
+            actor=job.posted_by,
+            idempotency_key=f'premium-{suffix}',
+            activated_at=self.now,
+        )
+
+    def test_default_distribution_places_all_paid_jobs_before_organic_jobs(self):
+        first = self.client.get(
+            reverse('job-list'),
+            {'page_size': 10, 'page': 1, 'ranking_seed': 'stable-page-seed'},
+        )
+        second = self.client.get(
+            reverse('job-list'),
+            {'page_size': 10, 'page': 2, 'ranking_seed': 'stable-page-seed'},
+        )
 
         self.assertEqual(first.status_code, 200, first.data)
         self.assertEqual(first.data['count'], 15)
+        self.assertEqual(first.data['ranking_seed'], 'stable-page-seed')
+        self.assertIn('ranking_seed=stable-page-seed', first.data['next'])
         first_sponsored = [
             item for item in first.data['results'] if item['presentation']['sponsored']
         ]
-        self.assertLessEqual(len(first_sponsored), 2)
-        self.assertEqual(len({item['company_name'] for item in first_sponsored}), 2)
+        self.assertEqual(len(first_sponsored), 3)
+        self.assertTrue(
+            all(item['presentation']['sponsored'] for item in first.data['results'][:3])
+        )
+        self.assertTrue(
+            all(not item['presentation']['sponsored'] for item in first.data['results'][3:])
+        )
+        self.assertTrue(
+            all(not item['presentation']['sponsored'] for item in second.data['results'])
+        )
         first_ids = {item['public_id'] for item in first.data['results']}
         second_ids = {item['public_id'] for item in second.data['results']}
         self.assertFalse(first_ids & second_ids)
         self.assertEqual(len(first_ids | second_ids), 15)
 
-    def test_explicit_salary_sort_is_not_interleaved(self):
+    def test_new_ranking_seed_rotates_each_tier_without_changing_membership(self):
+        def fetch_sequence(seed):
+            responses = [
+                self.client.get(
+                    reverse('job-list'),
+                    {'page_size': 10, 'page': page, 'ranking_seed': seed},
+                )
+                for page in (1, 2)
+            ]
+            for response in responses:
+                self.assertEqual(response.status_code, 200, response.data)
+            return [item for response in responses for item in response.data['results']]
+
+        first_snapshot = fetch_sequence('browser-load-one')
+        repeated_snapshot = fetch_sequence('browser-load-one')
+        rotated_snapshot = fetch_sequence('browser-load-two')
+
+        first_ids = [item['public_id'] for item in first_snapshot]
+        repeated_ids = [item['public_id'] for item in repeated_snapshot]
+        rotated_ids = [item['public_id'] for item in rotated_snapshot]
+        self.assertEqual(first_ids, repeated_ids)
+        self.assertNotEqual(first_ids, rotated_ids)
+        self.assertEqual(set(first_ids), set(rotated_ids))
+        self.assertEqual(len(first_ids), len(set(first_ids)))
+        self.assertEqual(len(rotated_ids), len(set(rotated_ids)))
+        self.assertTrue(all(item['presentation']['sponsored'] for item in first_snapshot[:3]))
+        self.assertTrue(all(item['presentation']['sponsored'] for item in rotated_snapshot[:3]))
+
+    def test_invalid_ranking_seed_is_rejected(self):
+        response = self.client.get(
+            reverse('job-list'),
+            {'ranking_seed': 'invalid seed with spaces'},
+        )
+
+        self.assertEqual(response.status_code, 400, response.data)
+        self.assertIn('ranking_seed', response.data)
+
+    def test_homepage_best_jobs_only_admits_best_placement_or_legacy_top(self):
+        organic_jobs = list(Job.objects.filter(title__startswith='Organic Job').order_by('pk'))
+        commercial_best = organic_jobs[0]
+        legacy_top = organic_jobs[1]
+        self.activate_premium_job(job=commercial_best, suffix='homepage-eligibility')
+        legacy_top.tier = Job.Tier.TOP
+        legacy_top.save(update_fields=['tier'])
+
+        response = self.client.get(
+            reverse('homepage-best-job-list'),
+            {'page_size': 20, 'rotation_seed': 'homepage-eligibility'},
+        )
+
+        self.assertEqual(response.status_code, 200, response.data)
+        self.assertEqual(response.data['rotation_seed'], 'homepage-eligibility')
+        self.assertEqual(
+            {item['public_id'] for item in response.data['results']},
+            {commercial_best.public_id, legacy_top.public_id},
+        )
+        self.assertNotIn(
+            self.sponsored_titles[0], [item['title'] for item in response.data['results']]
+        )
+
+    @override_settings(JOB_PROMOTION_REFRESH_ENABLED=True)
+    def test_homepage_best_jobs_use_seeded_rotation_not_main_feed_recency(self):
+        eligible_jobs = list(Job.objects.filter(title__startswith='Organic Job').order_by('pk')[:8])
+        for index, job in enumerate(eligible_jobs):
+            Job.objects.filter(pk=job.pk).update(
+                tier=Job.Tier.TOP,
+                first_approved_at=self.now - timedelta(days=index),
+                published_at=self.now - timedelta(days=index),
+            )
+        refresh_activation = self.activate_refresh_only(
+            job=eligible_jobs[-1], suffix='homepage-independent-refresh'
+        )
+        refresh_promoted_job(
+            activation=refresh_activation,
+            actor=eligible_jobs[-1].posted_by,
+            idempotency_key='homepage-independent-refresh',
+            occurred_at=self.now,
+        )
+
+        def expected_ids(seed):
+            return [
+                job.public_id
+                for job in sorted(
+                    eligible_jobs,
+                    key=lambda item: hashlib.md5(
+                        f'{seed}:{item.pk}'.encode(), usedforsecurity=False
+                    ).hexdigest(),
+                )
+            ]
+
+        def fetch(seed):
+            response = self.client.get(
+                reverse('homepage-best-job-list'),
+                {'page_size': 20, 'rotation_seed': seed},
+            )
+            self.assertEqual(response.status_code, 200, response.data)
+            return [item['public_id'] for item in response.data['results']]
+
+        first = fetch('homepage-load-one')
+        repeated = fetch('homepage-load-one')
+        rotated = fetch('homepage-load-two')
+
+        self.assertEqual(first, expected_ids('homepage-load-one'))
+        self.assertEqual(repeated, first)
+        self.assertEqual(rotated, expected_ids('homepage-load-two'))
+        self.assertNotEqual(rotated, first)
+        self.assertEqual(set(rotated), set(first))
+
+    def test_invalid_homepage_rotation_seed_is_rejected(self):
+        response = self.client.get(
+            reverse('homepage-best-job-list'),
+            {'rotation_seed': 'invalid seed with spaces'},
+        )
+
+        self.assertEqual(response.status_code, 400, response.data)
+        self.assertIn('rotation_seed', response.data)
+
+    @override_settings(JOB_PROMOTION_REFRESH_ENABLED=True)
+    def test_premium_paid_tier_stays_above_a_more_recent_standard_paid_refresh(self):
+        standard_activation = self.sponsored_activations[0]
+        organic_employer = User.objects.get(email='organic-distribution@example.com')
+        premium_job = self.create_public_job(
+            employer=organic_employer,
+            company=organic_employer.recruiter_profile.company,
+            title='Premium Paid Job',
+            salary=8_000_000,
+        )
+        self.activate_premium_job(job=premium_job, suffix='tier-order')
+        old_lifecycle = self.now - timedelta(days=7)
+        Job.objects.filter(pk=premium_job.pk).update(
+            first_approved_at=old_lifecycle,
+            published_at=old_lifecycle,
+        )
+        refresh_promoted_job(
+            activation=standard_activation,
+            actor=standard_activation.created_by,
+            idempotency_key='standard-paid-newer-refresh',
+            occurred_at=self.now,
+        )
+
+        response = self.client.get(reverse('job-list'), {'page_size': 20})
+
+        self.assertEqual(response.status_code, 200, response.data)
+        titles = [item['title'] for item in response.data['results']]
+        self.assertLess(
+            titles.index(premium_job.title), titles.index(standard_activation.job.title)
+        )
+
+    @override_settings(JOB_PROMOTION_REFRESH_ENABLED=False)
+    def test_refresh_kill_switch_preserves_legacy_sponsored_tie_order(self):
+        expected = self.sponsored_activations[0].job
+        same_company_job = self.create_public_job(
+            employer=expected.posted_by,
+            company=expected.company,
+            title='Legacy sponsored tie',
+            salary=29_000_000,
+        )
+        self.activate_sponsored_job(job=same_company_job, suffix='legacy-tie')
+        lifecycle_recency = self.now - timedelta(days=1)
+        Job.objects.update(
+            first_approved_at=lifecycle_recency,
+            published_at=lifecycle_recency,
+        )
+        # Deliberately make id and creation recency disagree. Legacy ordering
+        # must use created_at before id while the refresh kill switch is off.
+        Job.objects.filter(pk=expected.pk).update(created_at=self.now + timedelta(minutes=1))
+        Job.objects.filter(pk=same_company_job.pk).update(created_at=self.now)
+
+        response = self.client.get(reverse('job-list'), {'page_size': 10})
+
+        self.assertEqual(response.status_code, 200, response.data)
+        self.assertEqual(response.data['results'][0]['public_id'], expected.public_id)
+
+    def test_explicit_salary_sort_is_not_overridden_by_paid_tier(self):
         response = self.client.get(
             reverse('job-list'),
             {'page_size': 10, 'ordering': 'salary_desc'},
@@ -702,7 +977,7 @@ class SponsoredJobDistributionApiTests(APITestCase):
         self.assertEqual(salaries, sorted(salaries, reverse=True))
 
     @override_settings(JOB_PROMOTION_REFRESH_ENABLED=True)
-    def test_refresh_changes_only_the_sponsored_lane_recency(self):
+    def test_refresh_changes_recency_within_the_paid_tier(self):
         activation = self.sponsored_activations[0]
         original_published_at = activation.job.published_at
         refresh_promoted_job(
@@ -711,12 +986,287 @@ class SponsoredJobDistributionApiTests(APITestCase):
             idempotency_key='distribution-refresh',
         )
 
-        response = self.client.get(reverse('job-list'), {'page_size': 10})
+        response = self.client.get(
+            reverse('job-list'),
+            {'page_size': 10, 'ranking_seed': 'single-paid-refresh'},
+        )
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data['results'][0]['title'], self.sponsored_titles[0])
         activation.job.refresh_from_db()
         self.assertEqual(activation.job.published_at, original_published_at)
+
+    @override_settings(JOB_PROMOTION_REFRESH_ENABLED=True)
+    def test_same_company_refresh_tie_keeps_both_jobs_above_unrefreshed_organic_jobs(self):
+        activation_b = self.sponsored_activations[0]
+        job_b = activation_b.job
+        job_a = self.create_public_job(
+            employer=activation_b.created_by,
+            company=activation_b.company,
+            title='Same Company Job A',
+            salary=29_000_000,
+        )
+        unit_a = grant_package_units(
+            company=activation_b.company,
+            package_version=self.version,
+            quantity=1,
+            actor=activation_b.created_by,
+            grant_key='same-company-job-a',
+            granted_at=self.now,
+        )[0]
+        activation_a = activate_job_service(
+            unit=unit_a,
+            job=job_a,
+            actor=activation_b.created_by,
+            idempotency_key='same-company-job-a',
+            activated_at=self.now,
+        )
+        lifecycle_recency = self.now - timedelta(days=7)
+        Job.objects.update(
+            first_approved_at=lifecycle_recency,
+            published_at=lifecycle_recency,
+        )
+        job_a.refresh_from_db()
+        job_b.refresh_from_db()
+        original_published_at_a = job_a.published_at
+        original_published_at_b = job_b.published_at
+
+        refresh_promoted_job(
+            activation=activation_a,
+            actor=activation_a.created_by,
+            idempotency_key='same-company-job-a-refresh',
+            occurred_at=self.now,
+        )
+        refresh_promoted_job(
+            activation=activation_b,
+            actor=activation_b.created_by,
+            idempotency_key='same-company-job-b-refresh',
+            occurred_at=self.now,
+        )
+
+        response = self.client.get(
+            reverse('job-list'),
+            {'page_size': 10, 'ranking_seed': 'same-company-refresh'},
+        )
+
+        self.assertEqual(response.status_code, 200, response.data)
+        titles = [item['title'] for item in response.data['results']]
+        job_a_position = titles.index(job_a.title)
+        self.assertLess(titles.index(job_b.title), job_a_position)
+        self.assertEqual(titles[:2], [job_b.title, job_a.title])
+        organic_positions = [
+            index for index, title in enumerate(titles) if title.startswith('Organic Job')
+        ]
+        self.assertTrue(organic_positions)
+        self.assertLess(job_a_position, min(organic_positions))
+        job_a_card = next(item for item in response.data['results'] if item['title'] == job_a.title)
+        self.assertTrue(job_a_card['presentation']['sponsored'])
+        # Every eligible paid job stays in the contiguous paid tier, including
+        # multiple jobs from one company.
+        self.assertEqual(
+            sum(item['presentation']['sponsored'] for item in response.data['results']),
+            4,
+        )
+        job_a.refresh_from_db()
+        job_b.refresh_from_db()
+        self.assertEqual(job_a.published_at, original_published_at_a)
+        self.assertEqual(job_b.published_at, original_published_at_b)
+
+    @override_settings(JOB_PROMOTION_REFRESH_ENABLED=True)
+    def test_different_company_refreshes_are_adjacent_within_the_paid_tier(self):
+        activation_a = self.sponsored_activations[0]
+        activation_b = self.sponsored_activations[1]
+        lifecycle_recency = self.now - timedelta(days=7)
+        Job.objects.update(
+            first_approved_at=lifecycle_recency,
+            published_at=lifecycle_recency,
+        )
+        refresh_promoted_job(
+            activation=activation_a,
+            actor=activation_a.created_by,
+            idempotency_key='different-company-a-refresh',
+            occurred_at=self.now,
+        )
+        refresh_promoted_job(
+            activation=activation_b,
+            actor=activation_b.created_by,
+            idempotency_key='different-company-b-refresh',
+            occurred_at=self.now,
+        )
+
+        response = self.client.get(
+            reverse('job-list'),
+            {'page_size': 10, 'ranking_seed': 'different-company-refresh'},
+        )
+
+        self.assertEqual(response.status_code, 200, response.data)
+        titles = [item['title'] for item in response.data['results']]
+        self.assertEqual(titles[:2], [activation_b.job.title, activation_a.job.title])
+
+    @override_settings(JOB_PROMOTION_REFRESH_ENABLED=True)
+    def test_refresh_only_activation_boosts_the_default_listing(self):
+        target = Job.objects.get(title='Organic Job 0')
+        unrefreshed = Job.objects.get(title='Organic Job 1')
+        recent_lifecycle = self.now - timedelta(days=1)
+        old_lifecycle = self.now - timedelta(days=7)
+        Job.objects.filter(title__startswith='Organic Job').update(
+            first_approved_at=recent_lifecycle,
+            published_at=recent_lifecycle,
+        )
+        Job.objects.filter(pk=target.pk).update(
+            first_approved_at=old_lifecycle,
+            published_at=old_lifecycle,
+        )
+        target.refresh_from_db()
+        original_published_at = target.published_at
+        activation = self.activate_refresh_only(job=target, suffix='default-list')
+
+        before_refresh = self.client.get(reverse('job-list'), {'page_size': 20})
+        before_titles = [item['title'] for item in before_refresh.data['results']]
+        self.assertLess(before_titles.index(unrefreshed.title), before_titles.index(target.title))
+
+        refresh_promoted_job(
+            activation=activation,
+            actor=activation.created_by,
+            idempotency_key='refresh-only-default-list-usage',
+            occurred_at=self.now,
+        )
+        after_refresh = self.client.get(
+            reverse('job-list'),
+            {'page_size': 20, 'ranking_seed': 'refresh-only-default-list'},
+        )
+
+        self.assertEqual(after_refresh.status_code, 200, after_refresh.data)
+        after_titles = [item['title'] for item in after_refresh.data['results']]
+        self.assertLess(after_titles.index(target.title), after_titles.index(unrefreshed.title))
+        paid_positions = [
+            index
+            for index, item in enumerate(after_refresh.data['results'])
+            if item['presentation']['sponsored']
+        ]
+        self.assertTrue(paid_positions)
+        self.assertLess(max(paid_positions), after_titles.index(target.title))
+        target_item = next(
+            item for item in after_refresh.data['results'] if item['title'] == target.title
+        )
+        self.assertFalse(target_item['presentation']['sponsored'])
+        target.refresh_from_db()
+        self.assertEqual(target.published_at, original_published_at)
+
+    @override_settings(JOB_PROMOTION_REFRESH_ENABLED=True)
+    def test_eligible_refresh_stays_above_an_unrefreshed_new_publication(self):
+        target = Job.objects.get(title='Organic Job 0')
+        newer = Job.objects.get(title='Organic Job 1')
+        old_lifecycle = self.now - timedelta(days=7)
+        Job.objects.filter(pk=target.pk).update(
+            first_approved_at=old_lifecycle,
+            published_at=old_lifecycle,
+        )
+        activation = self.activate_refresh_only(job=target, suffix='effective-recency')
+        refresh_promoted_job(
+            activation=activation,
+            actor=activation.created_by,
+            idempotency_key='refresh-only-effective-recency-usage',
+            occurred_at=self.now,
+        )
+        newer_lifecycle = timezone.now()
+        Job.objects.filter(pk=newer.pk).update(
+            first_approved_at=newer_lifecycle,
+            published_at=newer_lifecycle,
+        )
+
+        response = self.client.get(
+            reverse('job-list'),
+            {'page_size': 20, 'ranking_seed': 'refresh-versus-publication'},
+        )
+
+        self.assertEqual(response.status_code, 200, response.data)
+        titles = [item['title'] for item in response.data['results']]
+        self.assertLess(titles.index(target.title), titles.index(newer.title))
+
+    @override_settings(JOB_PROMOTION_REFRESH_ENABLED=True)
+    def test_refresh_boost_expires_at_the_activation_boundary(self):
+        target = Job.objects.get(title='Organic Job 0')
+        unrefreshed = Job.objects.get(title='Organic Job 1')
+        recent_lifecycle = self.now - timedelta(days=1)
+        old_lifecycle = self.now - timedelta(days=7)
+        Job.objects.filter(title__startswith='Organic Job').update(
+            first_approved_at=recent_lifecycle,
+            published_at=recent_lifecycle,
+        )
+        Job.objects.filter(pk=target.pk).update(
+            first_approved_at=old_lifecycle,
+            published_at=old_lifecycle,
+        )
+        activation = self.activate_refresh_only(job=target, suffix='expiry-boundary')
+        refresh_promoted_job(
+            activation=activation,
+            actor=activation.created_by,
+            idempotency_key='refresh-only-expiry-boundary-usage',
+            occurred_at=self.now,
+        )
+
+        with patch(
+            'apps.jobs.api.views.public.JobListView._snapshot_at',
+            return_value=activation.ends_at - timedelta(microseconds=1),
+        ):
+            active_response = self.client.get(reverse('job-list'), {'page_size': 20})
+        with patch(
+            'apps.jobs.api.views.public.JobListView._snapshot_at',
+            return_value=activation.ends_at,
+        ):
+            expired_response = self.client.get(reverse('job-list'), {'page_size': 20})
+
+        active_titles = [item['title'] for item in active_response.data['results']]
+        expired_titles = [item['title'] for item in expired_response.data['results']]
+        self.assertLess(active_titles.index(target.title), active_titles.index(unrefreshed.title))
+        self.assertLess(
+            expired_titles.index(unrefreshed.title),
+            expired_titles.index(target.title),
+        )
+
+    @override_settings(JOB_PROMOTION_REFRESH_ENABLED=True)
+    def test_explicit_orderings_ignore_refresh_recency(self):
+        target = Job.objects.get(title='Organic Job 0')
+        newer = Job.objects.get(title='Organic Job 1')
+        old_lifecycle = self.now - timedelta(days=7)
+        newer_lifecycle = self.now - timedelta(days=1)
+        Job.objects.filter(pk=target.pk).update(
+            first_approved_at=old_lifecycle,
+            published_at=old_lifecycle,
+        )
+        Job.objects.filter(pk=newer.pk).update(
+            first_approved_at=newer_lifecycle,
+            published_at=newer_lifecycle,
+            is_urgent=True,
+        )
+        target.refresh_from_db()
+        original_published_at = target.published_at
+        activation = self.activate_refresh_only(job=target, suffix='newest-ordering')
+        refresh_promoted_job(
+            activation=activation,
+            actor=activation.created_by,
+            idempotency_key='refresh-only-newest-ordering-usage',
+            occurred_at=self.now,
+        )
+
+        default_response = self.client.get(reverse('job-list'), {'page_size': 20})
+        self.assertEqual(default_response.status_code, 200, default_response.data)
+        default_titles = [item['title'] for item in default_response.data['results']]
+        self.assertLess(default_titles.index(target.title), default_titles.index(newer.title))
+        for ordering in ('newest', 'salary_desc', 'urgent'):
+            with self.subTest(ordering=ordering):
+                ordered_response = self.client.get(
+                    reverse('job-list'),
+                    {'page_size': 20, 'ordering': ordering},
+                )
+                self.assertEqual(ordered_response.status_code, 200, ordered_response.data)
+                ordered_titles = [item['title'] for item in ordered_response.data['results']]
+                self.assertLess(
+                    ordered_titles.index(newer.title), ordered_titles.index(target.title)
+                )
+        target.refresh_from_db()
+        self.assertEqual(target.published_at, original_published_at)
 
     def test_search_relevance_filters_before_sponsored_distribution(self):
         response = self.client.get(
@@ -739,7 +1289,15 @@ class SponsoredJobDistributionApiTests(APITestCase):
             any(item['presentation']['sponsored'] for item in response.data['results'])
         )
 
-    def test_distribution_query_count_is_flat_as_eligible_jobs_grow(self):
+    @override_settings(JOB_PROMOTION_REFRESH_ENABLED=True)
+    def test_distribution_query_count_is_flat_as_eligible_jobs_and_refreshes_grow(self):
+        for index, activation in enumerate(self.sponsored_activations):
+            refresh_promoted_job(
+                activation=activation,
+                actor=activation.created_by,
+                idempotency_key=f'query-budget-refresh-{index}',
+                occurred_at=self.now + timedelta(microseconds=index),
+            )
         with CaptureQueriesContext(connection) as baseline_queries:
             baseline = self.client.get(reverse('job-list'), {'page_size': 10})
         self.assertEqual(baseline.status_code, 200)

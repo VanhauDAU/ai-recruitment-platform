@@ -2,6 +2,7 @@ import { Outlet, useLocation } from 'react-router'
 import { EmailVerificationBanner, LoginPromptProvider } from '@/features/auth'
 import { SavedJobsProvider } from '@/features/saved-jobs'
 import { ANNOUNCEMENT_SURFACES } from '@/entities/announcement'
+import { JobListRankingSync } from '@/entities/job'
 import { AnnouncementStrip } from '@/widgets/announcement-strip'
 import { CandidateAssistant } from '@/widgets/candidate-assistant'
 import { FloatingActions } from '@/widgets/floating-actions'
@@ -17,6 +18,7 @@ export default function MainLayout() {
   if (isCvRoute) {
     return (
       <SavedJobsProvider>
+        <JobListRankingSync />
         <LoginPromptProvider>
           <div className="flex h-dvh flex-col overflow-hidden bg-gray-50">
             <Header editorMode />
@@ -37,6 +39,7 @@ export default function MainLayout() {
 
   return (
     <SavedJobsProvider>
+      <JobListRankingSync />
       <LoginPromptProvider>
         <div className="min-h-screen flex flex-col bg-gray-50">
           <Header />

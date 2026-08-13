@@ -3,6 +3,7 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { jobKeys } from '@/entities/job'
 import JobServiceManager from './JobServiceManager'
 
 const serviceApi = vi.hoisted(() => ({
@@ -34,13 +35,14 @@ function renderManager(props = {}) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   })
-  return render(
+  const view = render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter>
         <JobServiceManager {...props} />
       </MemoryRouter>
     </QueryClientProvider>,
   )
+  return { ...view, queryClient }
 }
 
 describe('JobServiceManager', () => {
@@ -70,13 +72,18 @@ describe('JobServiceManager', () => {
     }] })
     serviceApi.refreshEmployerJobService.mockResolvedValue({ remaining_quantity: 2 })
 
-    renderManager({
+    const { queryClient } = renderManager({
       jobPublicId: 'job_1',
       jobStatus: 'active',
       activationEnabled: true,
       refreshEnabled: true,
       metricsEnabled: true,
     })
+    queryClient.setQueryData(jobKeys.list({ page: 1 }), { results: [{ public_id: 'job_1' }] })
+    queryClient.setQueryData(jobKeys.list({ page: 2 }), { results: [{ public_id: 'job_2' }] })
+    queryClient.setQueryData(jobKeys.list({ ordering: 'newest' }), { results: [{ public_id: 'job_3' }] })
+    queryClient.setQueryData(jobKeys.employerList({ page: 1 }), { results: [{ public_id: 'job_1' }] })
+    const invalidateQueries = vi.spyOn(queryClient, 'invalidateQueries')
 
     fireEvent.click((await screen.findByText('Chi tiết', { exact: true })).closest('button'))
     expect(await screen.findByText('1.250')).toBeInTheDocument()
@@ -92,6 +99,15 @@ describe('JobServiceManager', () => {
       'jsa_1',
       expect.any(String),
     ))
+    await waitFor(() => {
+      expect(invalidateQueries).toHaveBeenCalledTimes(1)
+      expect(queryClient.getQueryState(jobKeys.list({ page: 1 }))?.isInvalidated).toBe(true)
+      expect(queryClient.getQueryState(jobKeys.list({ page: 2 }))?.isInvalidated).toBe(true)
+      expect(queryClient.getQueryState(jobKeys.list({ ordering: 'newest' }))?.isInvalidated)
+        .toBe(false)
+      expect(queryClient.getQueryState(jobKeys.employerList({ page: 1 }))?.isInvalidated).toBe(false)
+    })
+    expect(toast.message.success).toHaveBeenCalledWith(expect.stringContaining('sắp xếp Mặc định'))
   }, 15_000)
 
   it('does not turn a disabled rollout into a false zero-service state', () => {

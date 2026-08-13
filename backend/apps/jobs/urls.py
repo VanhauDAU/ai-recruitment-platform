@@ -26,6 +26,7 @@ from .api.views import (
     EmployerJobPostingContextView,
     EmployerJobReopenView,
     EmployerJobSubmitView,
+    HomepageBestJobListView,
     JobCategoryListView,
     JobDetailView,
     JobImpressionBatchCreateView,
@@ -76,6 +77,7 @@ urlpatterns = [
     path('benefits/', BenefitListView.as_view(), name='benefit-list'),
     path('languages/', LanguageListView.as_view(), name='language-list'),
     path('stats/', JobStatsView.as_view(), name='job-stats'),
+    path('best/', HomepageBestJobListView.as_view(), name='homepage-best-job-list'),
     path('suggest/', JobSuggestView.as_view(), name='job-suggest'),
     path(
         'impressions/',

@@ -39,6 +39,9 @@ from ..models import Job, JobCategory, JobCategoryAssignment, JobSkill, SavedJob
 BADGE_QUERY_BUDGET = 3
 JOB_LIST_QUERY_BUDGET = 5 + BADGE_QUERY_BUDGET
 JOB_LIST_COMMERCIAL_PRESENTATION_QUERY_BUDGET = JOB_LIST_QUERY_BUDGET + 2
+# Homepage preview adds two relation prefetches (benefits + schedules) while
+# keeping eligibility in the main SQL through EXISTS.
+HOMEPAGE_BEST_JOB_LIST_QUERY_BUDGET = JOB_LIST_COMMERCIAL_PRESENTATION_QUERY_BUDGET + 2
 ADMIN_JOB_LIST_QUERY_BUDGET = 2
 EMPLOYER_JOB_LIST_QUERY_BUDGET = 5
 SAVED_JOB_SIMILARITY_QUERY_BUDGET = 8 + BADGE_QUERY_BUDGET
@@ -126,6 +129,66 @@ class JobListQueryBudgetTests(APITestCase):
 
         with self.assertNumQueries(JOB_LIST_COMMERCIAL_PRESENTATION_QUERY_BUDGET):
             response = self.client.get(reverse('job-list'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data['results']), 5)
+
+    @override_settings(JOB_PRESENTATION_V2_ENABLED=True)
+    def test_homepage_best_jobs_query_count_is_flat(self):
+        Job.objects.update(tier=Job.Tier.TOP)
+        now = timezone.now()
+        job = Job.objects.order_by('pk').first()
+        job.deadline = timezone.localdate() + timedelta(days=30)
+        job.requested_visibility_days = 30
+        job.first_approved_at = now
+        job.visibility_starts_at = now
+        job.visibility_ends_at = now + timedelta(days=30)
+        job.save(
+            update_fields=[
+                'deadline',
+                'requested_visibility_days',
+                'first_approved_at',
+                'visibility_starts_at',
+                'visibility_ends_at',
+            ]
+        )
+        category = ServiceCategory.objects.create(
+            key='homepage-best-query-budget', name_vi='Homepage best query budget'
+        )
+        package = ServicePackage.objects.create(
+            category=category,
+            slug='homepage-best-query-budget',
+            name_vi='Homepage best query budget',
+        )
+        version = create_package_version(package=package, price=799000)
+        add_package_version_item(
+            package_version=version,
+            capability=ServiceCapability.objects.get(code='sponsored_placement'),
+            duration_days=14,
+            configuration={'placement': 'best_jobs_eligible'},
+        )
+        version = publish_package_version(package_version=version, actor=self.user)
+        unit = grant_package_units(
+            company=self.company,
+            package_version=version,
+            quantity=1,
+            actor=self.user,
+            grant_key='homepage-best-query-budget',
+            granted_at=now,
+        )[0]
+        activate_job_service(
+            unit=unit,
+            job=job,
+            actor=self.user,
+            idempotency_key='homepage-best-query-budget',
+            activated_at=now,
+        )
+
+        with self.assertNumQueries(HOMEPAGE_BEST_JOB_LIST_QUERY_BUDGET):
+            response = self.client.get(
+                reverse('homepage-best-job-list'),
+                {'page_size': 12, 'rotation_seed': 'query-budget'},
+            )
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.data['results']), 5)

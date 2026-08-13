@@ -28,6 +28,7 @@ from .moderation import (
 from .public import (
     CandidateJobRecommendationView,
     CvJobRecommendationView,
+    HomepageBestJobListView,
     JobDetailView,
     JobImpressionBatchCreateView,
     JobListView,
@@ -64,6 +65,7 @@ __all__ = [
     'CandidateJobAlertDetailView',
     'CandidateJobAlertListCreateView',
     'CvJobRecommendationView',
+    'HomepageBestJobListView',
     'EmployerJobCloseView',
     'EmployerJobAiGenerationCancelView',
     'EmployerJobAiGenerationCreateView',
