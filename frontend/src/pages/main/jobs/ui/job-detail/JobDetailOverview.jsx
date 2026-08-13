@@ -13,22 +13,16 @@ import { Link } from 'react-router'
 import {
   EXPERIENCE_YEARS_LABELS,
   formatDeadline,
+  formatJobPostedLabel,
   formatNumber,
   formatSalary,
   getSalaryDisplayNote,
+  JobPresentationLabels,
 } from '@/entities/job'
 import { formatJobDate } from '../../lib/job-detail-presentation'
 import VerifiedEmployerBadge from './VerifiedEmployerBadge'
 
 const EMPTY_LABEL = 'Chưa cập nhật'
-
-function publishedLabel(value) {
-  if (!value) return null
-  const diff = Math.floor((Date.now() - new Date(value)) / 86_400_000)
-  if (diff <= 0) return 'Đăng hôm nay'
-  if (diff < 7) return `Đăng ${diff} ngày trước`
-  return `Đăng ${Math.floor(diff / 7)} tuần trước`
-}
 
 export function JobBreadcrumbs({ job }) {
   return (
@@ -47,7 +41,7 @@ export function JobHero({ job, saved, applicationStatus, onApply, onSave, onShar
   const locations = job.locations_detail?.map((location) => location.name).join(' · ') || EMPTY_LABEL
   const deadline = formatDeadline(job.deadline)
   const experience = EXPERIENCE_YEARS_LABELS[job.experience_years] || EMPTY_LABEL
-  const published = publishedLabel(job.published_at || job.created_at)
+  const published = formatJobPostedLabel(job)
 
   return (
     <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
@@ -56,8 +50,7 @@ export function JobHero({ job, saved, applicationStatus, onApply, onSave, onShar
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
             <div className="mb-2 flex flex-wrap items-center gap-2">
-              {job.is_hot && <StatusBadge className="bg-red-50 text-red-600 ring-red-100">HOT</StatusBadge>}
-              {job.is_urgent && <StatusBadge className="bg-orange-50 text-orange-600 ring-orange-100">TUYỂN GẤP</StatusBadge>}
+              <JobPresentationLabels job={job} />
               {published && <span className="text-xs text-gray-400">{published}</span>}
             </div>
             <h1 className="text-xl font-bold leading-snug text-slate-900 sm:text-2xl">
@@ -113,10 +106,6 @@ function LatestApplicationNotice({ application }) {
         : <span className="font-semibold text-slate-700">Xem CV đã nộp</span>}
     </p>
   )
-}
-
-function StatusBadge({ children, className }) {
-  return <span className={`rounded px-2 py-0.5 text-[10px] font-bold ring-1 ${className}`}>{children}</span>
 }
 
 function HeroMetric({ icon, label, value, note, highlight = false, className = '' }) {

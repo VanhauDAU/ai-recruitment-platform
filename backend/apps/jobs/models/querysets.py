@@ -1,5 +1,8 @@
 """Pure job-query primitives shared by selectors and delivery services."""
 
+from zoneinfo import ZoneInfo
+
+from django.conf import settings
 from django.db.models import F, Q
 from django.db.models.functions import Coalesce
 from django.utils import timezone
@@ -15,6 +18,18 @@ SALARY_BUCKETS = [
     ('30-50', '30 - 50 triệu', 30_000_000, 50_000_000),
     ('o50', 'Trên 50 triệu', 50_000_000, None),
 ]
+
+
+def job_public_time_filter(*, now=None, today=None, mode=None):
+    """Return the active time-window predicate for the configured rollout mode."""
+    now = now or timezone.now()
+    today = today or timezone.localdate(now, timezone=ZoneInfo('Asia/Ho_Chi_Minh'))
+    mode = mode or getattr(settings, 'JOB_LIFECYCLE_V2_MODE', 'legacy')
+    if str(mode).strip().lower() == 'enforce':
+        return (Q(deadline__isnull=True) | Q(deadline__gte=today)) & Q(
+            visibility_starts_at__lte=now, visibility_ends_at__gt=now
+        )
+    return Q(deadline__isnull=True) | Q(deadline__gte=today)
 
 
 def publicly_available_job_filter():
@@ -34,7 +49,7 @@ def publicly_available_job_filter():
             Q(posted_by__recruiter_profile__verification_case__isnull=True)
             | Q(posted_by__recruiter_profile__verification_case__company_id=F('company_id'))
         )
-        & (Q(deadline__isnull=True) | Q(deadline__gte=timezone.localdate()))
+        & job_public_time_filter()
         & (
             Q(campaign__isnull=True)
             | Q(

@@ -21,6 +21,7 @@ from .moderation import (
 )
 from .reports import ADMIN_JOB_REPORT_ORDERING_FIELDS, job_report_queryset
 from .saved_recommendations import recommend_jobs_from_saved
+from .saved_remarketing import saved_job_remarketing_lane
 from .stats import build_job_stats
 from .verification_badge import badge_criteria_payload, job_badge_criteria
 
@@ -45,4 +46,5 @@ __all__ = [
     'ADMIN_JOB_REPORT_ORDERING_FIELDS',
     'job_report_queryset',
     'recommend_jobs_from_saved',
+    'saved_job_remarketing_lane',
 ]

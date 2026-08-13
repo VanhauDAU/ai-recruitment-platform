@@ -5,9 +5,11 @@ import { useNavigate } from 'react-router'
 import {
   formatLocations,
   formatSalary,
+  jobCardToneClass,
   JOB_LOGO_TINTS,
   jobDetailPath,
   JobPreviewPanel,
+  JobPresentationLabels,
   SavedJobTooltipContent,
   stripCompanyPrefix,
 } from '@/entities/job'
@@ -106,7 +108,7 @@ export default function BestJobsResults({ animKey, jobs, loading }) {
               href={jobDetailPath(job)}
               target="_blank"
               rel="noreferrer"
-              className="group relative flex h-full flex-col !bg-white rounded-2xl border border-gray-100 p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-[var(--brand-primary)] hover:shadow-lg"
+              className={`group relative flex h-full flex-col rounded-2xl border p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-[var(--brand-primary)] hover:shadow-lg ${jobCardToneClass(job)}`}
             >
               {/* Row 1: Logo + tiêu đề/công ty cùng hàng */}
               <div className="flex min-w-0 items-start gap-3">
@@ -139,6 +141,7 @@ export default function BestJobsResults({ animKey, jobs, loading }) {
                     {job.title}
                   </h3>
                   <p className="mt-0.5 truncate text-xs text-gray-500">{job.company_name}</p>
+                  <JobPresentationLabels job={job} compact className="mt-1.5" />
                 </div>
               </div>
 

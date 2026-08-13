@@ -37,7 +37,11 @@ from .public import (
     SavedJobDestroyView,
     SavedJobListCreateView,
 )
-from .recommendations import SavedJobRecommendationView
+from .recommendations import (
+    SavedJobRecommendationView,
+    SavedJobRemarketingImpressionView,
+    SavedJobRemarketingLaneView,
+)
 from .reports import (
     AdminJobReportListView,
     AdminJobReportResolveView,
@@ -83,4 +87,6 @@ __all__ = [
     'SavedJobDestroyView',
     'SavedJobListCreateView',
     'SavedJobRecommendationView',
+    'SavedJobRemarketingLaneView',
+    'SavedJobRemarketingImpressionView',
 ]

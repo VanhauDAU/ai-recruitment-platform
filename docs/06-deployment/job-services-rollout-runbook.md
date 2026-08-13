@@ -1,6 +1,6 @@
 # Runbook rollout — Job lifecycle và Employer Services
 
-**Trạng thái:** Giai đoạn 0; dùng cho các release Giai đoạn 1–8  
+**Trạng thái:** Giai đoạn 8 hardening; mọi hành vi mới mặc định tắt
 **ADR:** [ADR-0012](../02-tong-quan/adr-0012-job-services-architecture.md)
 
 ## 1. Baseline legacy
@@ -84,6 +84,11 @@ IDs dưới dạng public ID, checksum và tuyệt đối không chứa PII.
 10. Sponsored distribution canary.
 11. Remarketing saved sau consent/frequency-cap verification.
 
+Trước bước 6, chạy `python manage.py seed_services`: command này nay đồng bộ
+catalog chọn lọc và dọn seed mẫu cũ. Không chạy lại seed TopCV cũ. Draft mới
+không xuất hiện công khai cho tới khi admin publish version và bật
+`SERVICE_CATALOG_V2_ENABLED`.
+
 Không bật hai bước có thay đổi hành vi lớn trong cùng cửa sổ deploy.
 
 ## 4. Readiness gate mỗi release
@@ -134,6 +139,11 @@ Thứ tự tắt khi có sự cố:
 4. `SERVICE_ACTIVATION_ENABLED=false`;
 5. `JOB_PRESENTATION_V2_ENABLED=false` nếu projection lỗi;
 6. lifecycle từ `enforce` về `shadow`, rồi `legacy` nếu cần.
+
+Không bật remarketing nếu cookie consent marketing chưa hoạt động trên đúng
+domain/SameSite. History chỉ là frequency cap purpose-limited, retention mặc
+định 90 ngày; bỏ lưu, đã ứng tuyển, hết hạn hoặc rút consent đều dừng delivery
+ngay cả khi history chưa purge.
 
 Không reverse-delete ledger/schema. Sau rollback:
 

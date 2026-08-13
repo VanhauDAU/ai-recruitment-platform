@@ -61,6 +61,24 @@ EMPLOYER_DPA_POLICY_VERSION = 'test-dpa-v1'
 EMPLOYER_DPA_DOCUMENT_SHA256 = 'a' * 64
 EMPLOYER_DPA_DOCUMENT_URL = 'https://example.test/employer-dpa/test-dpa-v1'
 
+# Behaviour flags must be deterministic in tests.  The base settings load a
+# developer's ``backend/.env`` before this module, so leaving these values
+# unpinned makes the same suite pass or fail depending on which pilot features
+# happen to be enabled locally.  Tests for an enabled feature opt in explicitly
+# with ``override_settings``.
+EMPLOYER_DPA_GRACE_DAYS = 30
+EMPLOYER_UPLOAD_SESSION_REQUIRED = False
+CANDIDATE_UPLOAD_SESSION_REQUIRED = False
+JOB_LIFECYCLE_V2_MODE = 'legacy'
+JOB_PRESENTATION_V2_ENABLED = False
+SERVICE_CATALOG_V2_ENABLED = False
+SERVICE_ACTIVATION_ENABLED = False
+SPONSORED_JOB_DISTRIBUTION_ENABLED = False
+JOB_PROMOTION_REFRESH_ENABLED = False
+JOB_PROMOTION_ALERT_ENABLED = False
+JOB_PROMOTION_METRICS_ENABLED = False
+SAVED_JOB_REMARKETING_ENABLED = False
+
 # Announcement tests exercise every surface by default. Individual kill-switch
 # tests override this setting explicitly.
 ANNOUNCEMENT_REMOTE_ENABLED_SURFACES = (

@@ -2,7 +2,7 @@ from datetime import timedelta
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
@@ -323,6 +323,156 @@ class JobPostingWorkflowTests(TestCase):
         self.assertEqual(job.deadline, today + timedelta(days=10))
         self.assertEqual(job.status, Job.Status.ACTIVE)
 
+    def test_visibility_extension_uses_immutable_cycle_anchor(self):
+        job = self.make_active_job(deadline=timezone.localdate() + timedelta(days=35))
+        anchor = timezone.now() - timedelta(days=10)
+        job.first_approved_at = anchor
+        job.visibility_starts_at = anchor
+        job.visibility_ends_at = anchor + timedelta(days=30)
+        job.requested_visibility_days = 30
+        job.save(
+            update_fields=[
+                'first_approved_at',
+                'visibility_starts_at',
+                'visibility_ends_at',
+                'requested_visibility_days',
+            ]
+        )
+
+        extended = extend_job_deadline(
+            job,
+            self.user,
+            job.deadline,
+            requested_visibility_days=45,
+        )
+
+        self.assertEqual(extended.first_approved_at, anchor)
+        self.assertEqual(extended.visibility_starts_at, anchor)
+        self.assertEqual(extended.visibility_ends_at, anchor + timedelta(days=45))
+        self.assertEqual(extended.requested_visibility_days, 45)
+
+    def test_deadline_extension_cannot_exceed_internal_visibility(self):
+        today = timezone.localdate()
+        job = self.make_active_job(deadline=today + timedelta(days=5))
+        anchor = timezone.now()
+        job.first_approved_at = anchor
+        job.visibility_starts_at = anchor
+        job.visibility_ends_at = anchor + timedelta(days=10)
+        job.save(
+            update_fields=[
+                'first_approved_at',
+                'visibility_starts_at',
+                'visibility_ends_at',
+            ]
+        )
+
+        with self.assertRaises(ValidationError) as context:
+            extend_job_deadline(job, self.user, today + timedelta(days=11))
+
+        self.assertIn('deadline', context.exception.detail)
+        job.refresh_from_db()
+        self.assertEqual(job.deadline, today + timedelta(days=5))
+
+    def test_deadline_and_visibility_can_be_extended_atomically(self):
+        today = timezone.localdate()
+        job = self.make_active_job(deadline=today + timedelta(days=5))
+        anchor = timezone.now()
+        job.first_approved_at = anchor
+        job.visibility_starts_at = anchor
+        job.visibility_ends_at = anchor + timedelta(days=10)
+        job.requested_visibility_days = 10
+        job.save(
+            update_fields=[
+                'first_approved_at',
+                'visibility_starts_at',
+                'visibility_ends_at',
+                'requested_visibility_days',
+            ]
+        )
+
+        extended = extend_job_deadline(
+            job,
+            self.user,
+            today + timedelta(days=14),
+            requested_visibility_days=14,
+        )
+
+        self.assertEqual(extended.deadline, today + timedelta(days=14))
+        self.assertEqual(extended.visibility_ends_at, anchor + timedelta(days=14))
+
+    def test_serializer_accepts_application_deadline_and_ignores_internal_visibility(self):
+        deadline = timezone.localdate() + timedelta(days=20)
+        serializer = EmployerJobWriteSerializer(
+            self.make_publishable_job(),
+            data={
+                'application_deadline': deadline.isoformat(),
+                'requested_visibility_days': 45,
+            },
+            partial=True,
+        )
+
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+        job = serializer.save()
+        self.assertEqual(job.deadline, deadline)
+        self.assertEqual(job.requested_visibility_days, 30)
+        self.assertNotIn('requested_visibility_days', serializer.validated_data)
+
+    def test_basic_job_deadline_cannot_exceed_thirty_days(self):
+        serializer = EmployerJobWriteSerializer(
+            self.make_publishable_job(),
+            data={'application_deadline': (timezone.localdate() + timedelta(days=31)).isoformat()},
+            partial=True,
+        )
+
+        self.assertFalse(serializer.is_valid())
+        self.assertIn('application_deadline', serializer.errors)
+
+    def test_application_reasons_are_ordered_and_limited_to_three_unique_items(self):
+        job = self.make_publishable_job()
+        serializer = EmployerJobWriteSerializer(
+            job,
+            data={'application_reasons': ['  Sản phẩm có tác động  ', 'Đội ngũ giàu kinh nghiệm']},
+            partial=True,
+        )
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+        serializer.save()
+        job.refresh_from_db()
+        self.assertEqual(
+            job.application_reasons,
+            ['Sản phẩm có tác động', 'Đội ngũ giàu kinh nghiệm'],
+        )
+
+        invalid = EmployerJobWriteSerializer(
+            job,
+            data={'application_reasons': ['A', 'B', 'C', 'D']},
+            partial=True,
+        )
+        self.assertFalse(invalid.is_valid())
+        self.assertIn('application_reasons', invalid.errors)
+
+    def test_serializer_rejects_conflicting_deadline_aliases(self):
+        serializer = EmployerJobWriteSerializer(
+            self.make_publishable_job(),
+            data={
+                'deadline': (timezone.localdate() + timedelta(days=10)).isoformat(),
+                'application_deadline': (timezone.localdate() + timedelta(days=11)).isoformat(),
+            },
+            partial=True,
+        )
+
+        self.assertFalse(serializer.is_valid())
+        self.assertIn('application_deadline', serializer.errors)
+
+    def test_serializer_does_not_expose_visibility_duration_as_an_employer_write(self):
+        serializer = EmployerJobWriteSerializer(
+            self.make_publishable_job(),
+            data={'requested_visibility_days': 91},
+            partial=True,
+        )
+
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+        self.assertNotIn('requested_visibility_days', serializer.validated_data)
+
     def test_deadline_extension_accepts_ninety_day_boundary_and_rejects_later_date(self):
         today = timezone.localdate()
         accepted = self.make_active_job(
@@ -461,6 +611,22 @@ class JobPostingWorkflowTests(TestCase):
         self.assertEqual(history.to_status, Job.Status.PENDING)
         self.assertEqual(history.changed_by, self.user)
 
+    def test_active_job_visibility_duration_is_ignored_by_the_write_serializer(self):
+        job = self.make_active_job()
+        job.first_approved_at = job.approved_at
+        job.visibility_starts_at = job.approved_at
+        job.visibility_ends_at = job.approved_at + timedelta(days=30)
+        job.save(update_fields=['first_approved_at', 'visibility_starts_at', 'visibility_ends_at'])
+        serializer = EmployerJobWriteSerializer(
+            job,
+            data={'requested_visibility_days': 45},
+            partial=True,
+        )
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+        self.assertNotIn('requested_visibility_days', serializer.validated_data)
+        self.assertEqual(job.requested_visibility_days, 30)
+        self.assertEqual(job.status, Job.Status.ACTIVE)
+
     def test_active_edit_rejects_an_out_of_policy_deadline_before_mutating_the_job(self):
         job = self.make_active_job()
         serializer = EmployerJobWriteSerializer(
@@ -525,6 +691,22 @@ class JobPostingWorkflowTests(TestCase):
         rejected.refresh_from_db()
         self.assertEqual(rejected.status, Job.Status.CLOSED)
 
+    @override_settings(JOB_LIFECYCLE_V2_MODE='enforce')
+    def test_reopen_cannot_reset_an_expired_visibility_cycle(self):
+        job = self.make_active_job()
+        job.first_approved_at = timezone.now() - timedelta(days=31)
+        job.visibility_starts_at = job.first_approved_at
+        job.visibility_ends_at = timezone.now() - timedelta(days=1)
+        job.save(update_fields=['first_approved_at', 'visibility_starts_at', 'visibility_ends_at'])
+        closed = close_job(job, self.user)
+
+        with self.assertRaises(ValidationError) as context:
+            reopen_job(closed, self.user, timezone.localdate() + timedelta(days=20))
+
+        self.assertEqual(context.exception.detail['code'], 'JOB_VISIBILITY_EXPIRED')
+        closed.refresh_from_db()
+        self.assertEqual(closed.status, Job.Status.CLOSED)
+
     @patch('apps.jobs.services.posting.recruiter_job_posting_entitlement')
     def test_stale_job_instances_cannot_overwrite_a_completed_transition(self, entitlement):
         entitlement.return_value = (self.recruiter, self.free_entitlement)
@@ -569,12 +751,25 @@ class JobPostingWorkflowTests(TestCase):
         contact = job.application_contact
         contact.emails.update(sort_order=2)
         job.rejected_reason = 'Lý do cũ không được sao chép.'
-        job.save(update_fields=['rejected_reason'])
+        job.first_approved_at = timezone.now() - timedelta(days=5)
+        job.visibility_starts_at = job.first_approved_at
+        job.visibility_ends_at = job.visibility_starts_at + timedelta(days=30)
+        job.save(
+            update_fields=[
+                'rejected_reason',
+                'first_approved_at',
+                'visibility_starts_at',
+                'visibility_ends_at',
+            ]
+        )
 
         duplicate = duplicate_job(job, self.user)
 
         self.assertEqual(duplicate.status, Job.Status.DRAFT)
         self.assertIsNone(duplicate.submitted_at)
+        self.assertIsNone(duplicate.first_approved_at)
+        self.assertIsNone(duplicate.visibility_starts_at)
+        self.assertIsNone(duplicate.visibility_ends_at)
         self.assertEqual(duplicate.rejected_reason, '')
         self.assertEqual(duplicate.application_contact.recipient_name, contact.recipient_name)
         self.assertEqual(duplicate.application_contact.phone, contact.phone)

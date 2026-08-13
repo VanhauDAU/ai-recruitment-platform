@@ -1,6 +1,6 @@
 # ADR-0012: Vòng đời tin và dịch vụ gia tăng tuyển dụng
 
-**Trạng thái:** Đề xuất để review  
+**Trạng thái:** Đã chấp nhận; đang triển khai theo feature flag
 **Ngày:** 12/08/2026  
 **Owner:** Jobs, Employer Services, Candidate Discovery  
 **Nhánh:** `docs/job-services-architecture`
@@ -44,8 +44,10 @@ policy/moderation hold, campaign, hạn nhận hồ sơ và hạn hiển thị.
 - Lần duyệt đầu tạo anchor bất biến của public cycle.
 - Sửa, duyệt lại, đóng và mở lại không đổi anchor, không reset recency và không
   tạo refresh miễn phí.
-- NTD chọn thời lượng 1–90 ngày; UI đề xuất 30 ngày.
-- Gia hạn chỉ được tăng `visibility_ends_at`, không vượt anchor + 90 ngày,
+- Tin cơ bản tự chạy 30 ngày từ lần duyệt đầu; NTD không chọn hoặc chỉnh
+  `visibility_ends_at` trong form tạo/sửa để tránh nhầm với hạn nhận hồ sơ.
+- Gia hạn visibility chỉ do activation dịch vụ hoặc nghiệp vụ quản trị thực hiện,
+  không vượt anchor + 90 ngày,
   campaign end hoặc hạn nhận hồ sơ đã được NTD xác nhận.
 - Tin hết hạn bị loại khỏi mọi candidate surface nhưng giữ job, application và
   audit. Public cycle mới sau khi cycle cũ kết thúc là nghiệp vụ riêng của lượt
@@ -82,14 +84,13 @@ hình capability có sẵn, không nhập code thực thi tùy ý.
 
 | Code | Scope | Loại | Giai đoạn đầu |
 | --- | --- | --- | --- |
-| `job.sponsored_distribution` | job | duration | Có |
-| `job.card_tone_amber` | job | duration | Có |
-| `job.card_tone_green` | job | duration | Có |
-| `job.best_jobs_eligible` | job | duration | Có |
-| `job.refresh` | job | quantity | Có |
-| `job.alert_delivery` | job | quantity | Có |
-| `job.label_urgent` | job | duration | Có |
-| `job.remarketing_saved` | job | duration | Sau distribution |
+| `sponsored_placement` | job | duration | Có |
+| `card_tone` | job | duration | Có; tone thuộc allowlist |
+| `job_refresh` | job | quantity | Có |
+| `job_alert` | job | quantity | Có |
+| `urgent_label` | job | duration | Có |
+| `saved_remarketing` | job | duration | Có; lane riêng + consent |
+| `visibility_extension` | job | duration | Có; chỉ lifecycle handler |
 | `placement.banner` | placement | duration | Epic riêng |
 | `company.career_page` | company | duration | Epic riêng |
 
@@ -185,9 +186,21 @@ Chi phí: thêm schema, migration nhiều release, admin workflow và observabil
 Trong compatibility window phải duy trì dual-read/shadow compare; không được
 dual-write không có reconciliation.
 
-## 6. Điều kiện chuyển sang Giai đoạn 1
+## 6. Tiến độ triển khai đối chiếu ngày 13/08/2026
 
-- ADR, API contract, promotion policy và runbook được review.
-- Mọi capability/permission/event/flag có owner rõ ràng.
-- Baseline legacy được xuất trên môi trường có DB bằng truy vấn trong runbook.
-- Không còn quyết định sản phẩm chưa khóa cho lifecycle expand migration.
+| Giai đoạn | Trạng thái code | Ghi chú rollout |
+| --- | --- | --- |
+| 0. Contract/architecture | Hoàn tất | ADR, API, policy, runbook đã có |
+| 1. Lifecycle V2 | Hoàn tất sau flag | Không có input “Thời gian hiển thị” trên form |
+| 2. Presentation | Hoàn tất sau flag | Projection dùng chung candidate surfaces |
+| 3. Commercial core | Hoàn tất | Version/unit/activation/audit bất biến |
+| 4. Admin pilot | Hoàn tất | Draft/publish/grant/revoke/audit |
+| 5. Employer activation | Hoàn tất | Preview và gia hạn atomic |
+| 6. Sponsored distribution | Hoàn tất code | Có refresh, metrics và Job Alert outbox |
+| 7. Saved remarketing | Hoàn tất code | Consent, 1/ngày, 3/7 ngày, retention 90 ngày |
+| 8. Hardening/cutover | Đang thực hiện | Cần Docker PostgreSQL, load/query-budget và staging rehearsal |
+
+Catalogue release đầu chỉ còn: Ưu tiên, Nổi bật, Tăng tốc, Nhãn GẤP, Làm mới
+tin và Remarketing tin đã lưu. TOP MAX/TOP ECO, combo mẫu, AI credits, banner và
+branded page cũ không thuộc release lõi; migration xóa bản ghi chưa tham chiếu và
+chỉ vô hiệu hóa bản ghi đã có lịch sử để bảo toàn audit.

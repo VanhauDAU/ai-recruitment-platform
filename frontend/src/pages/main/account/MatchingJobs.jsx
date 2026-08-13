@@ -17,9 +17,11 @@ import { Link } from 'react-router'
 import {
   formatLocations,
   formatSalary,
+  jobCardToneClass,
   getCandidateJobRecommendations,
   jobDetailPath,
   jobKeys,
+  JobPresentationLabels,
 } from '@/entities/job'
 import { useSavedJob } from '@/features/saved-jobs'
 import { JobImpressionBoundary } from '@/features/track-job-engagement'
@@ -60,7 +62,7 @@ function MatchingJobCard({ job }) {
 
   return (
     <JobImpressionBoundary slug={job.slug}>
-      <article className="group rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_12px_30px_rgba(16,185,129,0.1)]">
+      <article className={`group rounded-2xl border p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_12px_30px_rgba(16,185,129,0.1)] ${jobCardToneClass(job)}`}>
         <div className="flex gap-3 sm:gap-4">
           <Link
             to={detailPath}
@@ -91,6 +93,7 @@ function MatchingJobCard({ job }) {
                     <CheckCircleFilled className="ml-1 text-sky-500" title="Nhà tuyển dụng đã xác thực" />
                   )}
                 </p>
+                <JobPresentationLabels job={job} compact className="mt-1.5" />
               </div>
               <button
                 type="button"

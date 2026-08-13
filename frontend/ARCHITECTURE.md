@@ -489,6 +489,20 @@ pages/admin/app/EmployerServices + CvCatalogue
 - Catalogue dịch vụ và CV hiện là contract không phân trang nên widget chỉ
   search/sort dữ liệu đã tải. CSV phía client phải ghi rõ phạm vi tab/dữ liệu
   đang hiển thị; không được gọi đó là xuất toàn bộ dữ liệu hệ thống.
+- `entities/service-package` sở hữu cả contract marketing tương thích và
+  contract thương mại có cấu trúc: capability đóng, package version, entitlement
+  và audit. `widgets/admin-service-catalog` tách tab catalogue marketing khỏi
+  tab phiên bản vận hành; publish không sửa version cũ. Kho lượt và audit phân
+  trang/sort phía server, còn danh sách version của một catalogue nhỏ tiếp tục
+  là contract không phân trang.
+- `entities/service-package` cũng sở hữu contract kho lượt, dịch vụ đang chạy và
+  sự kiện sử dụng quyền lợi của NTD. `features/post-job` chỉ compose preview,
+  kích hoạt và xác nhận làm mới tại mục dịch vụ; làm mới tiêu thụ ledger riêng,
+  không được sửa `published_at`, hạn nhận hồ sơ hoặc vòng đời của tin.
+- Quyền admin tách `service_catalog.draft.manage`, `service_catalog.publish`,
+  `service_entitlement.view|manage` và `service_audit.view`; ẩn nút ở frontend
+  chỉ là UX, backend luôn kiểm tra từng mutation. HOT, RED, huy hiệu phản hồi
+  nhanh và title 255 không xuất hiện trong capability thương mại.
 - Upload hình nền CV là asset workflow, không phải bulk import. Không hiển thị
   nút nhập dữ liệu cho tới khi có contract dry-run, validate, idempotency,
   permission và audit phía server.

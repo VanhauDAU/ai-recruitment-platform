@@ -16,6 +16,7 @@ from apps.employers.services import (
     record_campaign_activity,
 )
 from apps.jobs.models import Job
+from apps.services.services import record_job_promotion_metrics
 
 from ..models import Application, ApplicationStatusHistory
 
@@ -185,6 +186,7 @@ def create_application_record(
         to_status=Application.Status.SUBMITTED,
     )
     job.__class__.objects.filter(pk=job.pk).update(application_count=F('application_count') + 1)
+    record_job_promotion_metrics(job_ids=[job.pk], event='apply')
     if job.campaign_id:
         record_campaign_activity(
             campaign=job.campaign,
@@ -221,6 +223,7 @@ def create_application(serializer, candidate):
     application.job.__class__.objects.filter(pk=application.job_id).update(
         application_count=F('application_count') + 1
     )
+    record_job_promotion_metrics(job_ids=[application.job_id], event='apply')
     if application.job.campaign_id:
         record_campaign_activity(
             campaign=application.job.campaign,

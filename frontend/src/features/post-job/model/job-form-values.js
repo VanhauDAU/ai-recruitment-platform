@@ -25,7 +25,10 @@ function salaryIsComplete(values) {
   return values.salary_min != null
 }
 
-export function createJobFormValues(initialValues = {}, { defaultDeadlineDays = null } = {}) {
+export function createJobFormValues(
+  initialValues = {},
+  { defaultDeadlineDays = null } = {},
+) {
   const assignments = initialValues.category_assignments || []
   const primary = assignments.find((item) => item.role === 'primary_specialization')
   const domains = assignments.filter((item) => item.role === 'domain_knowledge')
@@ -53,6 +56,9 @@ export function createJobFormValues(initialValues = {}, { defaultDeadlineDays = 
     description: normalizeRichTextHtml(initialValues.description),
     requirements: normalizeRichTextHtml(initialValues.requirements),
     benefits: normalizeRichTextHtml(initialValues.benefits),
+    application_reasons: Array.isArray(initialValues.application_reasons)
+      ? initialValues.application_reasons.slice(0, 3)
+      : [],
     work_types: initialValues.work_types?.length
       ? initialValues.work_types
       : initialValues.work_type ? [initialValues.work_type] : [],
@@ -171,6 +177,7 @@ export function buildJobPayload(values) {
   delete persistedValues.domain_category_ids
   delete persistedValues.work_areas
   delete persistedValues.ai_generation_public_id
+  delete persistedValues.requested_visibility_days
 
   return {
     ...persistedValues,
@@ -180,6 +187,10 @@ export function buildJobPayload(values) {
     description: normalizeRichTextHtml(values.description),
     requirements: normalizeRichTextHtml(values.requirements),
     benefits: normalizeRichTextHtml(values.benefits),
+    application_reasons: (values.application_reasons || [])
+      .map((item) => String(item || '').trim())
+      .filter(Boolean)
+      .slice(0, 3),
     work_type: values.work_types?.[0] || values.work_type || '',
     deadline: values.deadline?.format('YYYY-MM-DD') || null,
     salary_min: ['range', 'fixed', 'from'].includes(normalizedSalaryType) ? salaryMinimum : null,

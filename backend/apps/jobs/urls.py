@@ -38,6 +38,8 @@ from .api.views import (
     SavedJobDestroyView,
     SavedJobListCreateView,
     SavedJobRecommendationView,
+    SavedJobRemarketingImpressionView,
+    SavedJobRemarketingLaneView,
 )
 
 urlpatterns = [
@@ -94,6 +96,16 @@ urlpatterns = [
         'recommendations/by-saved/',
         SavedJobRecommendationView.as_view(),
         name='saved-job-recommendations',
+    ),
+    path(
+        'remarketing/saved/',
+        SavedJobRemarketingLaneView.as_view(),
+        name='saved-job-remarketing-lane',
+    ),
+    path(
+        'remarketing/saved/impressions/',
+        SavedJobRemarketingImpressionView.as_view(),
+        name='saved-job-remarketing-impression',
     ),
     path('saved/', SavedJobListCreateView.as_view(), name='saved-job-list-create'),
     path('saved/<str:public_id>/', SavedJobDestroyView.as_view(), name='saved-job-destroy'),

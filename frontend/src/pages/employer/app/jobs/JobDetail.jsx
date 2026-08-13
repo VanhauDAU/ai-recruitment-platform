@@ -6,7 +6,7 @@ import {
   TeamOutlined,
 } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Alert, DatePicker, Modal, Select, Skeleton, Tabs } from 'antd'
+import { Alert, Select, Skeleton, Tabs } from 'antd'
 import dayjs from 'dayjs'
 import { useMemo, useState } from 'react'
 import { useParams, useSearchParams } from 'react-router'
@@ -32,6 +32,7 @@ import { message } from '@/shared/lib/toast'
 import JobApplicationsWorkspace from './JobApplicationsWorkspace'
 import JobDetailHeader from './JobDetailHeader'
 import JobInformationPanel from './JobInformationPanel'
+import JobLifecycleModal from './JobLifecycleModal'
 
 const CONNECTED_STATUSES = new Set(['considering', 'shortlisted', 'interviewed', 'accepted'])
 const VALID_TABS = new Set(['apply_cv', 'viewed_job', 'job', 'cv_label'])
@@ -166,7 +167,7 @@ export default function JobDetail() {
       invalidate()
       setDeadlineAction(null)
       setNewDeadline(null)
-      message.success('Đã cập nhật hạn nộp và trạng thái tin.')
+      message.success('Đã cập nhật hạn nhận hồ sơ.')
     },
     onError: (error) => message.error(
       getApiErrorMessage(error, 'Không thể cập nhật hạn nhận hồ sơ.'),
@@ -181,10 +182,19 @@ export default function JobDetail() {
 
   function submitDeadlineAction() {
     if (!newDeadline) {
-      message.error('Chọn hạn nộp mới.')
+      message.error('Chọn hạn nhận hồ sơ.')
       return
     }
-    deadlineMutation.mutate({ action: deadlineAction, deadline: newDeadline.format('YYYY-MM-DD') })
+    const deadlineExtended = !jobQuery.data?.deadline
+      || newDeadline.isAfter(dayjs(jobQuery.data.deadline), 'day')
+    if (deadlineAction === 'extend' && !deadlineExtended) {
+      message.error('Hạn gia hạn phải sau hạn nhận hồ sơ hiện tại.')
+      return
+    }
+    deadlineMutation.mutate({
+      action: deadlineAction,
+      deadline: newDeadline.format('YYYY-MM-DD'),
+    })
   }
 
   function selectTab(tab) {
@@ -199,17 +209,23 @@ export default function JobDetail() {
   const deadlinePolicy = postingContextQuery.data || FALLBACK_DEADLINE_POLICY
   const today = dayjs().startOf('day')
   const maximumByToday = today.add(deadlinePolicy.max_deadline_days, 'day')
-  const maximumByPublicLifetime = deadlineAction === 'extend' && job.published_at
-    ? dayjs(job.published_at).startOf('day').add(
+  const maximumByPublicLifetime = deadlineAction === 'extend' && job.first_approved_at
+    ? dayjs(job.first_approved_at).startOf('day').add(
         deadlinePolicy.max_public_lifetime_days,
         'day',
       )
     : maximumByToday
-  const latestDeadline = maximumByPublicLifetime.isBefore(maximumByToday, 'day')
+  const maximumByVisibility = job.visibility_ends_at
+    ? dayjs(job.visibility_ends_at).startOf('day')
+    : maximumByPublicLifetime
+  const maximumByPolicy = maximumByPublicLifetime.isBefore(maximumByToday, 'day')
     ? maximumByPublicLifetime
     : maximumByToday
+  const latestDeadline = maximumByVisibility.isBefore(maximumByPolicy, 'day')
+    ? maximumByVisibility
+    : maximumByPolicy
   const earliestDeadline = deadlineAction === 'extend' && job.deadline
-    ? dayjs(job.deadline).startOf('day').add(1, 'day')
+    ? dayjs(job.deadline).startOf('day')
     : today
 
   const tabs = [
@@ -299,28 +315,18 @@ export default function JobDetail() {
         />
       </div>
 
-      <Modal
-        open={Boolean(deadlineAction)}
-        title={deadlineAction === 'reopen' ? 'Mở lại tin tuyển dụng' : 'Gia hạn tin tuyển dụng'}
-        okText={deadlineAction === 'reopen' ? 'Mở lại tin' : 'Gia hạn'}
-        confirmLoading={deadlineMutation.isPending}
-        onCancel={() => setDeadlineAction(null)}
-        onOk={submitDeadlineAction}
-      >
-        <p className="mb-3 text-sm text-slate-600">
-          Chọn từ {earliestDeadline.format('DD/MM/YYYY')} đến {latestDeadline.format('DD/MM/YYYY')}.
-        </p>
-        <DatePicker
-          className="!w-full"
-          value={newDeadline}
-          disabledDate={(current) => current && (
-            current.isBefore(earliestDeadline, 'day')
-            || current.isAfter(latestDeadline, 'day')
-          )}
-          format="DD/MM/YYYY"
-          onChange={setNewDeadline}
-        />
-      </Modal>
+      <JobLifecycleModal
+        action={deadlineAction}
+        deadline={newDeadline}
+        earliestDeadline={earliestDeadline}
+        latestDeadline={latestDeadline}
+        loading={deadlineMutation.isPending}
+        onCancel={() => {
+          setDeadlineAction(null)
+        }}
+        onDeadlineChange={setNewDeadline}
+        onSubmit={submitDeadlineAction}
+      />
     </section>
   )
 }

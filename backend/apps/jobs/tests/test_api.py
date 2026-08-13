@@ -1,8 +1,12 @@
 from datetime import timedelta
-from unittest.mock import patch
+from unittest.mock import ANY, patch
 
+from django.db import connection
+from django.test import override_settings
+from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.dateparse import parse_datetime
 from rest_framework.test import APITestCase
 
 from apps.accounts.models import User
@@ -17,6 +21,15 @@ from apps.employers.models import (
 )
 from apps.employers.tests.readiness_helpers import make_employer_ready
 from apps.locations.models import Location
+from apps.services.models import ServiceCapability, ServiceCategory, ServicePackage
+from apps.services.services import (
+    activate_job_service,
+    add_package_version_item,
+    create_package_version,
+    grant_package_units,
+    publish_package_version,
+    refresh_promoted_job,
+)
 from apps.skills.models import Skill, SkillGroup
 
 from ..api.serializers import (
@@ -24,7 +37,7 @@ from ..api.serializers import (
     EmployerJobWriteSerializer,
     JobDetailSerializer,
 )
-from ..models import Benefit, Job, JobCategory, JobEngagementDaily, Language
+from ..models import Benefit, Job, JobCategory, JobEngagementDaily, Language, SavedJob
 
 
 class JobCategoryApiTests(APITestCase):
@@ -93,6 +106,34 @@ class JobViewTrackingApiTests(APITestCase):
         self.assertEqual(response.status_code, 200)
         self.job.refresh_from_db()
         self.assertEqual(self.job.view_count, 0)
+
+    @override_settings(JOB_LIFECYCLE_V2_MODE='enforce')
+    def test_enforced_lifecycle_hides_job_outside_visibility_window(self):
+        self.job.deadline = timezone.localdate() + timedelta(days=10)
+        self.job.visibility_starts_at = timezone.now() - timedelta(days=10)
+        self.job.visibility_ends_at = timezone.now() - timedelta(seconds=1)
+        self.job.save(
+            update_fields=['deadline', 'visibility_starts_at', 'visibility_ends_at', 'updated_at']
+        )
+
+        response = self.client.get(reverse('job-list'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['count'], 0)
+
+    @override_settings(JOB_LIFECYCLE_V2_MODE='legacy')
+    def test_legacy_lifecycle_ignores_shadow_visibility_window(self):
+        self.job.deadline = timezone.localdate() + timedelta(days=10)
+        self.job.visibility_starts_at = timezone.now() - timedelta(days=10)
+        self.job.visibility_ends_at = timezone.now() - timedelta(seconds=1)
+        self.job.save(
+            update_fields=['deadline', 'visibility_starts_at', 'visibility_ends_at', 'updated_at']
+        )
+
+        response = self.client.get(reverse('job-list'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['count'], 1)
 
     def test_paused_campaign_hides_job_from_every_public_read_and_tracking_surface(self):
         campaign = RecruitmentCampaign.objects.create(
@@ -170,7 +211,8 @@ class JobViewTrackingApiTests(APITestCase):
             format='json',
         )
 
-        response = self.client.post(reverse('job-view-create', kwargs={'slug': self.job.slug}))
+        with patch('apps.jobs.api.views.public.record_job_promotion_metrics') as promotion_metric:
+            response = self.client.post(reverse('job-view-create', kwargs={'slug': self.job.slug}))
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data, {'counted': True, 'view_count': 1})
@@ -180,6 +222,7 @@ class JobViewTrackingApiTests(APITestCase):
         daily = JobEngagementDaily.objects.get(job=self.job)
         self.assertEqual(daily.view_count, 1)
         self.assertEqual(daily.impression_count, 0)
+        promotion_metric.assert_called_once_with(job_ids=[self.job.pk], event='view')
 
     def test_impression_batch_requires_analytics_consent(self):
         response = self.client.post(
@@ -202,11 +245,12 @@ class JobViewTrackingApiTests(APITestCase):
             format='json',
         )
 
-        response = self.client.post(
-            reverse('job-impression-batch-create'),
-            {'slugs': [self.job.slug, self.job.slug, 'missing-job']},
-            format='json',
-        )
+        with patch('apps.jobs.api.views.public.record_job_promotion_metrics') as promotion_metric:
+            response = self.client.post(
+                reverse('job-impression-batch-create'),
+                {'slugs': [self.job.slug, self.job.slug, 'missing-job']},
+                format='json',
+            )
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
@@ -221,6 +265,10 @@ class JobViewTrackingApiTests(APITestCase):
         self.assertEqual(self.job.impression_count, 1)
         daily = JobEngagementDaily.objects.get(job=self.job)
         self.assertEqual(daily.impression_count, 1)
+        promotion_metric.assert_called_once_with(
+            job_ids=[self.job.pk],
+            event='impression',
+        )
 
     @patch('apps.jobs.services.engagement._claim_first_view', return_value=None)
     def test_redis_failure_does_not_increment_impression(self, _claim):
@@ -303,6 +351,20 @@ class JobSalaryBucketFilterTests(APITestCase):
         titles = {job['title'] for job in response.data['results']}
         self.assertEqual(titles, {'Under 10'})
 
+    def test_urgent_ordering_uses_urgent_label_not_flash_badge(self):
+        urgent = self.create_job('Urgent semantic', 10_000_000, 15_000_000)
+        urgent.is_urgent = True
+        urgent.save(update_fields=['is_urgent'])
+        flash = self.create_job('Fast response badge', 10_000_000, 15_000_000)
+        flash.has_flash_badge = True
+        flash.save(update_fields=['has_flash_badge'])
+
+        response = self.client.get(reverse('job-list'), {'ordering': 'urgent'})
+
+        self.assertEqual(response.status_code, 200)
+        titles = [job['title'] for job in response.data['results']]
+        self.assertLess(titles.index('Urgent semantic'), titles.index('Fast response badge'))
+
     def test_list_contract_contains_card_fields_only(self):
         self.create_job('Contract job', 10_000_000, 15_000_000)
 
@@ -340,8 +402,56 @@ class JobSalaryBucketFilterTests(APITestCase):
                 'is_hot',
                 'is_urgent',
                 'has_flash_badge',
+                'presentation',
+                'first_approved_at',
                 'published_at',
                 'created_at',
+            },
+        )
+
+    def test_list_exposes_first_approval_as_the_stable_posted_date(self):
+        first_approved_at = timezone.now() - timedelta(days=2)
+        latest_published_at = timezone.now()
+        job = self.create_job('Reapproved job', 10_000_000, 15_000_000)
+        job.first_approved_at = first_approved_at
+        job.published_at = latest_published_at
+        job.save(update_fields=['first_approved_at', 'published_at'])
+
+        response = self.client.get(reverse('job-list'))
+
+        item = next(item for item in response.data['results'] if item['public_id'] == job.public_id)
+        self.assertEqual(parse_datetime(item['first_approved_at']), first_approved_at)
+        self.assertEqual(parse_datetime(item['published_at']), latest_published_at)
+
+    def test_list_presentation_is_semantic_and_keeps_legacy_fields_for_rollback(self):
+        job = self.create_job('Presented job', 10_000_000, 15_000_000)
+        job.tier = Job.Tier.FEATURED
+        job.is_urgent = True
+        job.has_flash_badge = True
+        job.deadline = timezone.localdate() + timedelta(days=10)
+        job.save(update_fields=['tier', 'is_urgent', 'has_flash_badge', 'deadline'])
+
+        response = self.client.get(reverse('job-list'))
+
+        item = next(job for job in response.data['results'] if job['title'] == 'Presented job')
+        self.assertEqual(item['tier'], Job.Tier.FEATURED)
+        self.assertEqual(
+            item['presentation'],
+            {
+                'sponsored': True,
+                'card_tone': 'orange',
+                'labels': [
+                    {'code': 'sponsored', 'text': 'Tài trợ', 'tone': 'sponsored'},
+                    {'code': 'urgent', 'text': 'GẤP', 'tone': 'warning'},
+                    {
+                        'code': 'fast_response',
+                        'text': 'Phản hồi nhanh',
+                        'tone': 'success',
+                    },
+                ],
+                'display_reason': '',
+                'active_until': ANY,
+                'placement': 'legacy_priority',
             },
         )
         self.assertTrue(
@@ -355,6 +465,285 @@ class JobSalaryBucketFilterTests(APITestCase):
                 'updated_at',
             }.isdisjoint(item)
         )
+
+    @override_settings(JOB_PRESENTATION_V2_ENABLED=True)
+    def test_published_activation_drives_presentation_without_package_name_rules(self):
+        now = timezone.now()
+        job = self.create_job('Commercial presentation', 10_000_000, 15_000_000)
+        job.deadline = timezone.localdate() + timedelta(days=30)
+        job.requested_visibility_days = 30
+        job.first_approved_at = now
+        job.visibility_starts_at = now
+        job.visibility_ends_at = now + timedelta(days=30)
+        job.save(
+            update_fields=[
+                'deadline',
+                'requested_visibility_days',
+                'first_approved_at',
+                'visibility_starts_at',
+                'visibility_ends_at',
+            ]
+        )
+        category = ServiceCategory.objects.create(
+            key='commercial-presentation', name_vi='Commercial presentation'
+        )
+        package = ServicePackage.objects.create(
+            category=category,
+            slug='package-name-must-not-drive-presentation',
+            name_vi='Tên gói tùy ý',
+        )
+        version = create_package_version(package=package, price=799000)
+        for order, (code, configuration) in enumerate(
+            (
+                ('sponsored_placement', {'placement': 'best_jobs_eligible'}),
+                ('card_tone', {'tone': 'green_strong'}),
+                ('urgent_label', {}),
+            )
+        ):
+            add_package_version_item(
+                package_version=version,
+                capability=ServiceCapability.objects.get(code=code),
+                duration_days=14,
+                configuration=configuration,
+                order=order,
+            )
+        version = publish_package_version(package_version=version, actor=self.user)
+        unit = grant_package_units(
+            company=self.company,
+            package_version=version,
+            quantity=1,
+            actor=self.user,
+            grant_key='commercial-presentation-grant',
+            granted_at=now,
+        )[0]
+        activate_job_service(
+            unit=unit,
+            job=job,
+            actor=self.user,
+            idempotency_key='commercial-presentation-activation',
+            activated_at=now,
+        )
+
+        response = self.client.get(reverse('job-list'))
+
+        item = next(
+            result
+            for result in response.data['results']
+            if result['title'] == 'Commercial presentation'
+        )
+        self.assertEqual(item['tier'], Job.Tier.STANDARD)
+        self.assertEqual(
+            item['presentation'],
+            {
+                'sponsored': True,
+                'card_tone': 'green_strong',
+                'labels': [
+                    {'code': 'sponsored', 'text': 'Tài trợ', 'tone': 'sponsored'},
+                    {'code': 'urgent', 'text': 'GẤP', 'tone': 'warning'},
+                ],
+                'display_reason': 'Tin được tài trợ bởi nhà tuyển dụng.',
+                'active_until': ANY,
+                'placement': 'best_jobs_eligible',
+            },
+        )
+
+        detail = self.client.get(reverse('job-detail', kwargs={'slug': job.slug}))
+        self.assertEqual(detail.status_code, 200)
+        self.assertEqual(detail.data['presentation'], item['presentation'])
+
+        candidate = User.objects.create_user(
+            email='commercial-presentation-candidate@example.com',
+            password='Password@123',
+            role=User.Role.CANDIDATE,
+        )
+        SavedJob.objects.create(candidate=candidate, job=job)
+        self.client.force_authenticate(candidate)
+        saved = self.client.get(reverse('saved-job-list-create'))
+        self.assertEqual(saved.status_code, 200)
+        self.assertEqual(saved.data[0]['job_detail']['presentation'], item['presentation'])
+
+
+@override_settings(
+    JOB_PRESENTATION_V2_ENABLED=True,
+    SPONSORED_JOB_DISTRIBUTION_ENABLED=True,
+)
+class SponsoredJobDistributionApiTests(APITestCase):
+    def setUp(self):
+        self.now = timezone.now()
+        self.category = ServiceCategory.objects.create(
+            key='sponsored-distribution', name_vi='Sponsored distribution'
+        )
+        package = ServicePackage.objects.create(
+            category=self.category,
+            slug='sponsored-distribution',
+            name_vi='Sponsored distribution',
+        )
+        version = create_package_version(package=package, price=299000)
+        add_package_version_item(
+            package_version=version,
+            capability=ServiceCapability.objects.get(code='sponsored_placement'),
+            duration_days=14,
+            configuration={'placement': 'search_sponsored'},
+        )
+        add_package_version_item(
+            package_version=version,
+            capability=ServiceCapability.objects.get(code='job_refresh'),
+            quantity=2,
+            duration_days=14,
+        )
+        self.version = publish_package_version(package_version=version)
+        self.sponsored_titles = []
+        self.sponsored_activations = []
+        for index in range(3):
+            employer = User.objects.create_user(
+                email=f'sponsored-distribution-{index}@example.com',
+                password='Password@123',
+                role=User.Role.EMPLOYER,
+            )
+            company = Company.objects.create(
+                company_name=f'Sponsored Company {index}', created_by=employer
+            )
+            make_employer_ready(employer, company=company, candidate_data=True)
+            job = self.create_public_job(
+                employer=employer,
+                company=company,
+                title=f'Sponsored Job {index}',
+                salary=30_000_000 - index,
+            )
+            unit = grant_package_units(
+                company=company,
+                package_version=self.version,
+                quantity=1,
+                actor=employer,
+                grant_key=f'sponsored-distribution-{index}',
+                granted_at=self.now,
+            )[0]
+            activation = activate_job_service(
+                unit=unit,
+                job=job,
+                actor=employer,
+                idempotency_key=f'sponsored-distribution-{index}',
+                activated_at=self.now,
+            )
+            self.sponsored_titles.append(job.title)
+            self.sponsored_activations.append(activation)
+
+        organic_employer = User.objects.create_user(
+            email='organic-distribution@example.com',
+            password='Password@123',
+            role=User.Role.EMPLOYER,
+        )
+        organic_company = Company.objects.create(
+            company_name='Organic Company', created_by=organic_employer
+        )
+        make_employer_ready(organic_employer, company=organic_company, candidate_data=True)
+        for index in range(12):
+            self.create_public_job(
+                employer=organic_employer,
+                company=organic_company,
+                title=f'Organic Job {index}',
+                salary=10_000_000 + index,
+            )
+
+    def create_public_job(self, *, employer, company, title, salary):
+        return Job.objects.create(
+            posted_by=employer,
+            company=company,
+            title=title,
+            description='Description',
+            salary_min=salary,
+            salary_max=salary,
+            salary_type=Job.SalaryType.FIXED,
+            status=Job.Status.ACTIVE,
+            deadline=timezone.localdate() + timedelta(days=30),
+            requested_visibility_days=30,
+            first_approved_at=self.now,
+            visibility_starts_at=self.now,
+            visibility_ends_at=self.now + timedelta(days=30),
+            published_at=self.now,
+        )
+
+    def test_default_distribution_caps_sponsored_ratio_and_keeps_pagination_stable(self):
+        first = self.client.get(reverse('job-list'), {'page_size': 10, 'page': 1})
+        second = self.client.get(reverse('job-list'), {'page_size': 10, 'page': 2})
+
+        self.assertEqual(first.status_code, 200, first.data)
+        self.assertEqual(first.data['count'], 15)
+        first_sponsored = [
+            item for item in first.data['results'] if item['presentation']['sponsored']
+        ]
+        self.assertLessEqual(len(first_sponsored), 2)
+        self.assertEqual(len({item['company_name'] for item in first_sponsored}), 2)
+        first_ids = {item['public_id'] for item in first.data['results']}
+        second_ids = {item['public_id'] for item in second.data['results']}
+        self.assertFalse(first_ids & second_ids)
+        self.assertEqual(len(first_ids | second_ids), 15)
+
+    def test_explicit_salary_sort_is_not_interleaved(self):
+        response = self.client.get(
+            reverse('job-list'),
+            {'page_size': 10, 'ordering': 'salary_desc'},
+        )
+
+        salaries = [item['salary_max'] for item in response.data['results']]
+        self.assertEqual(salaries, sorted(salaries, reverse=True))
+
+    @override_settings(JOB_PROMOTION_REFRESH_ENABLED=True)
+    def test_refresh_changes_only_the_sponsored_lane_recency(self):
+        activation = self.sponsored_activations[0]
+        original_published_at = activation.job.published_at
+        refresh_promoted_job(
+            activation=activation,
+            actor=activation.created_by,
+            idempotency_key='distribution-refresh',
+        )
+
+        response = self.client.get(reverse('job-list'), {'page_size': 10})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['results'][0]['title'], self.sponsored_titles[0])
+        activation.job.refresh_from_db()
+        self.assertEqual(activation.job.published_at, original_published_at)
+
+    def test_search_relevance_filters_before_sponsored_distribution(self):
+        response = self.client.get(
+            reverse('job-list'),
+            {'page_size': 10, 'search': 'Organic'},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.data['results'])
+        self.assertTrue(
+            all(item['title'].startswith('Organic Job') for item in response.data['results'])
+        )
+
+    @override_settings(JOB_PRESENTATION_V2_ENABLED=False)
+    def test_distribution_flag_cannot_run_ahead_of_presentation_flag(self):
+        response = self.client.get(reverse('job-list'), {'page_size': 10})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(
+            any(item['presentation']['sponsored'] for item in response.data['results'])
+        )
+
+    def test_distribution_query_count_is_flat_as_eligible_jobs_grow(self):
+        with CaptureQueriesContext(connection) as baseline_queries:
+            baseline = self.client.get(reverse('job-list'), {'page_size': 10})
+        self.assertEqual(baseline.status_code, 200)
+
+        employer = User.objects.get(email='organic-distribution@example.com')
+        for index in range(20):
+            self.create_public_job(
+                employer=employer,
+                company=employer.recruiter_profile.company,
+                title=f'Expanded Organic Job {index}',
+                salary=9_000_000 + index,
+            )
+        with CaptureQueriesContext(connection) as expanded_queries:
+            expanded = self.client.get(reverse('job-list'), {'page_size': 10})
+
+        self.assertEqual(expanded.status_code, 200)
+        self.assertEqual(len(expanded_queries), len(baseline_queries))
 
 
 class EmployerJobSerializerTests(APITestCase):
@@ -394,6 +783,32 @@ class EmployerJobSerializerTests(APITestCase):
         self.benefit, _ = Benefit.objects.get_or_create(name='Bảo hiểm xã hội')
         self.language, _ = Language.objects.get_or_create(name='Tiếng Hàn', code='ko')
 
+    def test_employer_deadline_endpoint_cannot_change_internal_visibility_duration(self):
+        today = timezone.localdate()
+        job = Job.objects.create(
+            posted_by=self.user,
+            company=self.company,
+            title='Tin chỉ gia hạn hồ sơ',
+            description='Nội dung tuyển dụng',
+            status=Job.Status.ACTIVE,
+            deadline=today + timedelta(days=5),
+        )
+        self.client.force_authenticate(self.user)
+
+        response = self.client.post(
+            reverse('employer-job-extend', args=[job.public_id]),
+            {
+                'application_deadline': (today + timedelta(days=10)).isoformat(),
+                'requested_visibility_days': 45,
+            },
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 200, response.data)
+        job.refresh_from_db()
+        self.assertEqual(job.deadline, today + timedelta(days=10))
+        self.assertEqual(job.requested_visibility_days, 30)
+
     def test_employer_list_uses_compact_management_contract(self):
         Job.objects.create(
             posted_by=self.user,
@@ -416,6 +831,12 @@ class EmployerJobSerializerTests(APITestCase):
                 'locations_detail',
                 'employment_type',
                 'deadline',
+                'application_deadline',
+                'requested_visibility_days',
+                'first_approved_at',
+                'visibility_starts_at',
+                'visibility_ends_at',
+                'is_visibility_expired',
                 'status',
                 'is_expired',
                 'campaign',
@@ -444,6 +865,32 @@ class EmployerJobSerializerTests(APITestCase):
         )
         self.assertEqual(item['candidate_count'], 0)
         self.assertEqual(item['candidate_previews'], [])
+
+    def test_posting_context_exposes_safe_lifecycle_rollout_contract(self):
+        self.client.force_authenticate(self.user)
+
+        response = self.client.get(reverse('employer-job-posting-context'))
+
+        self.assertEqual(response.status_code, 200, response.data)
+        self.assertEqual(
+            response.data['lifecycle_policy'],
+            {
+                'mode': 'legacy',
+                'default_visibility_days': 30,
+                'max_visibility_days': 90,
+                'timezone': 'Asia/Ho_Chi_Minh',
+            },
+        )
+        self.assertEqual(
+            response.data['services'],
+            {
+                'catalog_v2_enabled': False,
+                'activation_enabled': False,
+                'refresh_enabled': False,
+                'alert_enabled': False,
+                'metrics_enabled': False,
+            },
+        )
 
     def test_new_or_dpa_held_employer_cannot_read_job_workspace_directly(self):
         legacy_user = User.objects.create_user(

@@ -1,9 +1,27 @@
+from zoneinfo import ZoneInfo
+
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
 from django.utils.text import slugify
 
 from common.public_id import generate_public_id
+
+
+def validate_application_reasons(value):
+    if not isinstance(value, list):
+        raise ValidationError('Lý do nên ứng tuyển phải là một danh sách.')
+    if len(value) > 3:
+        raise ValidationError('Chỉ được nhập tối đa 3 lý do nên ứng tuyển.')
+    normalized = []
+    for item in value:
+        text = item.strip() if isinstance(item, str) else ''
+        if not text or len(text) > 160:
+            raise ValidationError('Mỗi lý do phải có từ 1 đến 160 ký tự.')
+        normalized.append(text.casefold())
+    if len(normalized) != len(set(normalized)):
+        raise ValidationError('Các lý do nên ứng tuyển không được trùng nhau.')
 
 
 class JobCategory(models.Model):
@@ -240,6 +258,12 @@ class Job(models.Model):
     description = models.TextField()
     requirements = models.TextField(blank=True)
     benefits = models.TextField(blank=True)
+    application_reasons = models.JSONField(
+        default=list,
+        blank=True,
+        validators=[validate_application_reasons],
+        help_text='Tối đa ba lý do có thứ tự để ứng viên cân nhắc ứng tuyển.',
+    )
     work_schedule_note = models.TextField(
         blank=True,
         help_text='Mô tả lịch không thể hiện hết bằng các khung giờ có cấu trúc.',
@@ -291,6 +315,17 @@ class Job(models.Model):
     )
     currency = models.CharField(max_length=20, choices=Currency.choices, default=Currency.VND)
     deadline = models.DateField(null=True, blank=True)
+    requested_visibility_days = models.PositiveSmallIntegerField(
+        default=30,
+        help_text='Số ngày công khai NTD yêu cầu cho public cycle hiện tại.',
+    )
+    first_approved_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text='Mốc duyệt đầu tiên bất biến của public cycle hiện tại.',
+    )
+    visibility_starts_at = models.DateTimeField(null=True, blank=True)
+    visibility_ends_at = models.DateTimeField(null=True, blank=True)
     auto_reject_stale_applications = models.BooleanField(
         default=True,
         help_text='Tự chuyển hồ sơ chờ xử lý quá hạn sang trạng thái từ chối.',
@@ -366,6 +401,10 @@ class Job(models.Model):
             models.Index(fields=['education_level']),
             models.Index(fields=['status', 'published_at']),
             models.Index(
+                fields=['status', 'visibility_ends_at'],
+                name='jobs_status_visibility_end_idx',
+            ),
+            models.Index(
                 fields=['status', '-created_at', '-id'],
                 name='jobs_status_created_desc_idx',
             ),
@@ -416,6 +455,21 @@ class Job(models.Model):
                 ),
                 name='chk_jobs_salary_range',
             ),
+            models.CheckConstraint(
+                condition=models.Q(
+                    requested_visibility_days__gte=1,
+                    requested_visibility_days__lte=90,
+                ),
+                name='chk_jobs_visibility_days_range',
+            ),
+            models.CheckConstraint(
+                condition=(
+                    models.Q(visibility_starts_at__isnull=True)
+                    | models.Q(visibility_ends_at__isnull=True)
+                    | models.Q(visibility_ends_at__gt=models.F('visibility_starts_at'))
+                ),
+                name='chk_jobs_visibility_window',
+            ),
         ]
 
     def save(self, *args, **kwargs):
@@ -431,10 +485,23 @@ class Job(models.Model):
 
     @property
     def is_expired(self):
-        from django.utils import timezone
-
-        return bool(
+        application_expired = bool(
             self.status == self.Status.ACTIVE
             and self.deadline is not None
-            and self.deadline < timezone.localdate()
+            and self.deadline < timezone.localdate(timezone=ZoneInfo('Asia/Ho_Chi_Minh'))
+        )
+        visibility_expired = bool(
+            self.status == self.Status.ACTIVE
+            and (self.visibility_ends_at is None or self.visibility_ends_at <= timezone.now())
+        )
+        if str(getattr(settings, 'JOB_LIFECYCLE_V2_MODE', 'legacy')).lower() == 'enforce':
+            return application_expired or visibility_expired
+        return application_expired
+
+    @property
+    def is_visibility_expired(self):
+        return bool(
+            self.status == self.Status.ACTIVE
+            and self.visibility_ends_at is not None
+            and self.visibility_ends_at <= timezone.now()
         )

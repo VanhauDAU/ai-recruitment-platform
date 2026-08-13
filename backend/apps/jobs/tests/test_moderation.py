@@ -146,6 +146,12 @@ class JobModerationApiTests(JobModerationFixture, APITestCase):
         self.assertEqual(self.job.status, Job.Status.ACTIVE)
         self.assertIsNotNone(self.job.approved_at)
         self.assertIsNotNone(self.job.published_at)
+        self.assertEqual(self.job.first_approved_at, self.job.approved_at)
+        self.assertEqual(self.job.visibility_starts_at, self.job.first_approved_at)
+        self.assertEqual(
+            self.job.visibility_ends_at,
+            self.job.visibility_starts_at + timedelta(days=30),
+        )
         history = self.job.status_history.get()
         self.assertEqual(history.actor_role, JobStatusHistory.ActorRole.ADMIN)
         self.assertEqual(history.to_status, Job.Status.ACTIVE)
@@ -492,6 +498,22 @@ class JobRevisionReviewTests(JobModerationFixture, APITestCase):
         self.job.refresh_from_db()
         self.assertEqual(self.job.approved_snapshot['title'], 'Backend Engineer')
         self.assertIsNotNone(self.job.approved_snapshot_at)
+
+    def test_reapproval_preserves_the_original_visibility_cycle(self):
+        self.approve_current_revision()
+        self.job.refresh_from_db()
+        first_approved_at = self.job.first_approved_at
+        visibility_starts_at = self.job.visibility_starts_at
+        visibility_ends_at = self.job.visibility_ends_at
+        self.send_back_to_review(title='Backend Engineer (reviewed)')
+
+        response = self.approve_current_revision()
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+        self.job.refresh_from_db()
+        self.assertEqual(self.job.first_approved_at, first_approved_at)
+        self.assertEqual(self.job.visibility_starts_at, visibility_starts_at)
+        self.assertEqual(self.job.visibility_ends_at, visibility_ends_at)
 
     def test_detail_lists_what_the_employer_changed_since_the_last_approval(self):
         self.approve_current_revision()

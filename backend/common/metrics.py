@@ -13,6 +13,8 @@ ALLOWED_METRICS = {
     'cv_snapshot_failure',
     'job_engagement',
     'job_impression_batch_size',
+    'job_promotion_alert',
+    'saved_job_remarketing',
     'campaign_job_performance_duration_ms',
     'announcement_analytics',
     'announcement_event_batch_size',

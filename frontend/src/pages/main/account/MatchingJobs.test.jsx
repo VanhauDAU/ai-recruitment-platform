@@ -13,11 +13,13 @@ const mocks = vi.hoisted(() => ({
 vi.mock('@/entities/job', () => ({
   formatLocations: (job) => job.location,
   formatSalary: (job) => job.salary,
+  jobCardToneClass: () => 'border-slate-200 bg-white',
   getCandidateJobRecommendations: mocks.getCandidateJobRecommendations,
   jobDetailPath: (job) => `/viec-lam/${job.slug}`,
   jobKeys: {
     candidateRecommendations: (params) => ['jobs', 'candidate-recommendations', params],
   },
+  JobPresentationLabels: () => null,
 }))
 
 vi.mock('@/features/saved-jobs', () => ({

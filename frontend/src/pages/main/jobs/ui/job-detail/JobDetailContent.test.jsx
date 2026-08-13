@@ -9,6 +9,7 @@ const job = {
   description: '<p>Mô tả công việc dài.</p>',
   requirements: '<p>Yêu cầu ứng viên dài.</p>',
   benefits: '<p>Quyền lợi ứng viên.</p>',
+  application_reasons: ['Sản phẩm có tác động', 'Đội ngũ hỗ trợ tốt'],
   requirement_tags: [],
   domain_knowledge: [],
   required_skills: [],
@@ -54,6 +55,8 @@ describe('JobDetailContent', () => {
     )
 
     const expandButton = await screen.findByRole('button', { name: /Xem đầy đủ mô tả công việc/ })
+    expect(screen.getByText('Vì sao bạn nên ứng tuyển?')).toBeVisible()
+    expect(screen.getByText('Sản phẩm có tác động')).toBeVisible()
     const content = document.getElementById('job-detail-collapsible-content')
     expect(expandButton).toHaveAttribute('aria-expanded', 'false')
     expect(content).toHaveClass('overflow-hidden')

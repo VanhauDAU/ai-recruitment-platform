@@ -22,6 +22,7 @@ from .alerts import (
     reset_candidate_job_delivery_cursors,
     update_job_alert,
 )
+from .availability import job_is_publicly_available
 from .content_snapshot import (
     build_job_content_snapshot,
     job_pending_changes,
@@ -39,6 +40,12 @@ from .engagement import (
     record_consented_job_impressions,
     record_consented_job_view,
     set_viewer_cookie,
+)
+from .lifecycle import (
+    initialize_job_visibility,
+    job_lifecycle_policy,
+    lifecycle_local_date,
+    visibility_days_error,
 )
 from .moderation import (
     JobModerationStale,
@@ -63,6 +70,10 @@ from .posting import (
     save_job_draft,
     update_employer_job,
 )
+from .promotion_alerts import (
+    candidate_still_allows_promoted_job_alert,
+    matching_job_alert_recipient_page,
+)
 from .reports import resolve_job_report, reverse_job_report, submit_job_report
 
 __all__ = [
@@ -75,6 +86,7 @@ __all__ = [
     'create_job_ai_generation',
     'approve_job',
     'build_job_content_snapshot',
+    'candidate_still_allows_promoted_job_alert',
     'create_job_review_token',
     'create_pending_job',
     'delete_job_draft',
@@ -86,6 +98,12 @@ __all__ = [
     'execute_job_ai_generation',
     'extend_job_deadline',
     'job_deadline_error',
+    'job_is_publicly_available',
+    'initialize_job_visibility',
+    'job_lifecycle_policy',
+    'lifecycle_local_date',
+    'matching_job_alert_recipient_page',
+    'visibility_days_error',
     'job_deadline_policy',
     'fail_job_ai_generation',
     'publish_job',

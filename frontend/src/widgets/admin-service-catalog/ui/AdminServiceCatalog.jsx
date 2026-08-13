@@ -18,6 +18,8 @@ import {
   Tabs,
   Tag,
 } from 'antd'
+import { useAdminAccess } from '@/entities/admin-access'
+import { useSession } from '@/entities/session'
 import {
   createAdminServiceCategory,
   createAdminServicePackage,
@@ -31,6 +33,8 @@ import {
 import { message } from '@/shared/lib/toast'
 import ConfirmAction from '@/shared/ui/ConfirmAction'
 import { AdminDataActions, AdminPanel } from '@/shared/ui/admin'
+import CommercialVersionsPanel from './CommercialVersionsPanel'
+import ServiceInventoryPanel from './ServiceInventoryPanel'
 
 const CATEGORY_DEFAULTS = { order: 0, is_active: true }
 const PACKAGE_DEFAULTS = { currency: 'VND', cta_type: 'contact', order: 0, is_active: true, is_highlight: false }
@@ -51,8 +55,18 @@ function compareNumber(field) {
 }
 
 export default function AdminServiceCatalog() {
+  const { user } = useSession()
+  const access = useAdminAccess(user)
   const [searchParams, setSearchParams] = useSearchParams()
-  const activeTab = searchParams.get('tab') === 'packages' ? 'packages' : 'categories'
+  const canManageCatalog = access.has('service_catalog.manage')
+  const canDraft = access.has('service_catalog.draft.manage')
+  const canPublish = access.has('service_catalog.publish')
+  const canViewInventory = access.has('service_entitlement.view')
+  const canManageInventory = access.has('service_entitlement.manage')
+  const canViewAudit = access.has('service_audit.view')
+  const requestedTab = searchParams.get('tab') || 'categories'
+  const allowedTabs = ['categories', 'packages', 'versions', ...(canViewInventory ? ['inventory'] : [])]
+  const activeTab = allowedTabs.includes(requestedTab) ? requestedTab : 'categories'
   const rawQuery = searchParams.get('q') || ''
   const query = rawQuery.trim().toLocaleLowerCase('vi')
   const [searchDraft, setSearchDraft] = useState(rawQuery)
@@ -137,7 +151,7 @@ export default function AdminServiceCatalog() {
     title: 'Thao tác',
     width: 150,
     fixed: 'right',
-    render: (_, row) => (
+    render: (_, row) => canManageCatalog ? (
       <Space>
         <Button icon={<EditOutlined />} size="small" onClick={() => openEditor(type, row)}>
           Sửa
@@ -152,7 +166,7 @@ export default function AdminServiceCatalog() {
           <Button icon={<DeleteOutlined />} size="small" danger>Xoá</Button>
         </ConfirmAction>
       </Space>
-    ),
+    ) : 'Chỉ đọc',
   })
 
   const categoryColumns = [
@@ -239,7 +253,7 @@ export default function AdminServiceCatalog() {
                       refreshing={loading}
                       rows={filteredCategories}
                     />
-                    <Button icon={<PlusOutlined />} type="primary" onClick={() => openEditor('category')}>Thêm danh mục</Button>
+                    {canManageCatalog && <Button icon={<PlusOutlined />} type="primary" onClick={() => openEditor('category')}>Thêm danh mục</Button>}
                   </Space>
                 </div>
                 <div className="overflow-x-auto"><Table rowKey="id" loading={loading} dataSource={filteredCategories} columns={categoryColumns} pagination={false} scroll={{ x: 1300 }} showSorterTooltip={{ target: 'sorter-icon' }} /></div>
@@ -281,13 +295,34 @@ export default function AdminServiceCatalog() {
                       refreshing={loading}
                       rows={filteredPackages}
                     />
-                    <Button icon={<PlusOutlined />} type="primary" disabled={!categories.length} onClick={() => openEditor('package')}>Thêm gói dịch vụ</Button>
+                    {canManageCatalog && <Button icon={<PlusOutlined />} type="primary" disabled={!categories.length} onClick={() => openEditor('package')}>Thêm gói dịch vụ</Button>}
                   </Space>
                 </div>
                 <div className="overflow-x-auto"><Table rowKey="id" loading={loading} dataSource={filteredPackages} columns={packageColumns} pagination={false} scroll={{ x: 1300 }} showSorterTooltip={{ target: 'sorter-icon' }} /></div>
               </div>
             ),
           },
+          {
+            key: 'versions',
+            label: 'Phiên bản vận hành',
+            children: (
+              <CommercialVersionsPanel
+                packages={packages}
+                canDraft={canDraft}
+                canPublish={canPublish}
+              />
+            ),
+          },
+          ...(canViewInventory ? [{
+            key: 'inventory',
+            label: 'Kho lượt & lịch sử',
+            children: (
+              <ServiceInventoryPanel
+                canManage={canManageInventory}
+                canViewAudit={canViewAudit}
+              />
+            ),
+          }] : []),
         ]} />
       </AdminPanel>
 

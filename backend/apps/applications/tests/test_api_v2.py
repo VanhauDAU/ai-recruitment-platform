@@ -266,6 +266,11 @@ class CandidateApplicationV2Tests(APITestCase):
         self.company = Company.objects.create(
             company_name='Apply Company', created_by=self.employer
         )
+        RecruiterProfile.objects.create(
+            user=self.employer,
+            company=self.company,
+            company_role=RecruiterProfile.CompanyRole.OWNER,
+        )
         self.job = Job.objects.create(
             posted_by=self.employer,
             company=self.company,
