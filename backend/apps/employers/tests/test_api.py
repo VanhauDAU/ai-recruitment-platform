@@ -482,6 +482,10 @@ class RecruitmentNeedTests(APITestCase):
 )
 class PhoneOtpTests(APITestCase):
     def setUp(self):
+        # The SMS boundary intentionally composes account and trusted-IP
+        # throttles. LocMem cache outlives each rolled-back APITestCase method,
+        # so isolate rate-limit buckets just like the registration tests do.
+        cache.clear()
         self.user, self.recruiter = make_employer(phone_verified=False)
         self.client.force_authenticate(user=self.user)
 

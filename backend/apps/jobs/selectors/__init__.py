@@ -23,7 +23,11 @@ from .reports import ADMIN_JOB_REPORT_ORDERING_FIELDS, job_report_queryset
 from .saved_recommendations import recommend_jobs_from_saved
 from .saved_remarketing import saved_job_remarketing_lane
 from .stats import build_job_stats
-from .verification_badge import badge_criteria_payload, job_badge_criteria
+from .verification_badge import (
+    badge_criteria_payload,
+    job_badge_criteria,
+    recruiter_badge_eligibility,
+)
 
 __all__ = [
     'job_ai_admin_policy_overview',
@@ -41,6 +45,7 @@ __all__ = [
     'admin_job_management_queryset',
     'admin_job_management_summary',
     'job_badge_criteria',
+    'recruiter_badge_eligibility',
     'job_ai_admin_overview',
     'job_moderation_queryset',
     'ADMIN_JOB_REPORT_ORDERING_FIELDS',

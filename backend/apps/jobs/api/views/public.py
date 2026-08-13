@@ -1,9 +1,12 @@
+import re
+
 from django.conf import settings
 from django.http import Http404
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from drf_spectacular.utils import OpenApiTypes, extend_schema, inline_serializer
 from rest_framework import generics, permissions, serializers
-from rest_framework.exceptions import PermissionDenied
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
@@ -16,6 +19,10 @@ from common.metrics import record_metric
 
 from ...models import Job, SavedJob
 from ...selectors.distribution import distribute_sponsored_job_page
+from ...selectors.homepage import (
+    DEFAULT_BEST_JOBS_ROTATION_SEED,
+    build_homepage_best_jobs_queryset,
+)
 from ...selectors.listing import (
     active_job_detail_queryset,
     active_job_tracking_queryset,
@@ -50,6 +57,19 @@ from ..serializers import (
 class JobListView(generics.ListAPIView):
     permission_classes = [permissions.AllowAny]
 
+    RANKING_SEED_PATTERN = re.compile(r'^[A-Za-z0-9_-]{1,64}$')
+
+    def _snapshot_at(self):
+        if not hasattr(self, '_job_list_snapshot_at'):
+            self._job_list_snapshot_at = timezone.now()
+        return self._job_list_snapshot_at
+
+    def _ranking_seed(self):
+        ranking_seed = self.request.query_params.get('ranking_seed', '')
+        if ranking_seed and not self.RANKING_SEED_PATTERN.fullmatch(ranking_seed):
+            raise ValidationError({'ranking_seed': 'Invalid ranking seed.'})
+        return ranking_seed
+
     def get_serializer_class(self):
         return (
             PublicJobPreviewSerializer
@@ -61,6 +81,7 @@ class JobListView(generics.ListAPIView):
         return build_job_list_queryset(
             self.request.query_params,
             include_preview=self.request.query_params.get('view') == 'preview',
+            at=self._snapshot_at(),
         )
 
     def list(self, request, *args, **kwargs):
@@ -79,10 +100,13 @@ class JobListView(generics.ListAPIView):
             page_number = int(request.query_params.get('page', 1))
         except (TypeError, ValueError):
             page_number = 1
+        ranking_seed = self._ranking_seed()
         distributed = distribute_sponsored_job_page(
             queryset,
             page=page_number,
             page_size=page_size,
+            at=self._snapshot_at(),
+            ranking_seed=ranking_seed,
         )
         serializer = self.get_serializer(distributed.items, many=True)
         query = request.query_params.copy()
@@ -98,9 +122,43 @@ class JobListView(generics.ListAPIView):
                 'count': distributed.total,
                 'next': page_url(distributed.page + 1),
                 'previous': page_url(distributed.page - 1),
+                'ranking_seed': ranking_seed,
                 'results': serializer.data,
             }
         )
+
+
+class HomepageBestJobListView(generics.ListAPIView):
+    """Independently rotated jobs admitted to the homepage Best Jobs box."""
+
+    permission_classes = [permissions.AllowAny]
+    serializer_class = PublicJobPreviewSerializer
+    ROTATION_SEED_PATTERN = re.compile(r'^[A-Za-z0-9_-]{1,64}$')
+
+    def _snapshot_at(self):
+        if not hasattr(self, '_homepage_best_jobs_snapshot_at'):
+            self._homepage_best_jobs_snapshot_at = timezone.now()
+        return self._homepage_best_jobs_snapshot_at
+
+    def _rotation_seed(self):
+        rotation_seed = self.request.query_params.get(
+            'rotation_seed', DEFAULT_BEST_JOBS_ROTATION_SEED
+        )
+        if not self.ROTATION_SEED_PATTERN.fullmatch(rotation_seed):
+            raise ValidationError({'rotation_seed': 'Invalid rotation seed.'})
+        return rotation_seed
+
+    def get_queryset(self):
+        return build_homepage_best_jobs_queryset(
+            self.request.query_params,
+            at=self._snapshot_at(),
+            rotation_seed=self._rotation_seed(),
+        )
+
+    def list(self, request, *args, **kwargs):
+        response = super().list(request, *args, **kwargs)
+        response.data['rotation_seed'] = self._rotation_seed()
+        return response
 
 
 class JobStatsView(APIView):
@@ -439,8 +497,13 @@ class SavedJobListCreateView(generics.ListCreateAPIView):
 
     def list(self, request, *args, **kwargs):
         saved_jobs = list(self.filter_queryset(self.get_queryset()))
+        context = self.get_serializer_context()
+        prime_badge_cache(
+            context,
+            {(saved.job.company_id, saved.job.posted_by_id) for saved in saved_jobs},
+        )
         prime_effective_service_presentations(saved.job for saved in saved_jobs)
-        return Response(self.get_serializer(saved_jobs, many=True).data)
+        return Response(self.get_serializer(saved_jobs, many=True, context=context).data)
 
     def perform_create(self, serializer):
         serializer.save(candidate=self.request.user)

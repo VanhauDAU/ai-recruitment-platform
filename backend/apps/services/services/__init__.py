@@ -16,6 +16,7 @@ from .entitlements import (
     record_service_audit_event,
     refresh_promoted_job,
     revoke_entitlement_unit,
+    terminate_job_service_activation,
 )
 from .job_alerts import (
     create_job_service_alert_dispatch,
@@ -58,4 +59,5 @@ __all__ = [
     'purge_saved_job_remarketing_history',
     'revoke_entitlement_unit',
     'save_package_version_draft',
+    'terminate_job_service_activation',
 ]

@@ -49,6 +49,14 @@ export const ADMIN_NAVIGATION = [
             access: { allOf: ['employer_verification.view'] },
           },
           {
+            key: 'employer-domain-verification',
+            label: 'Xác minh tên miền',
+            badgeKey: 'domain_verification',
+            routeRef: 'recruiters',
+            query: { tab: 'domain-verification' },
+            access: { allOf: ['employer_domain.view'] },
+          },
+          {
             key: 'employer-restricted',
             label: 'NTD bị hạn chế',
             routeRef: 'recruiters',
@@ -203,6 +211,13 @@ export const ADMIN_NAVIGATION = [
         children: [
           { key: 'service-categories', label: 'Danh mục', routeRef: 'services' },
           { key: 'service-packages', label: 'Gói dịch vụ', routeRef: 'services', query: { tab: 'packages' } },
+          {
+            key: 'service-activations',
+            label: 'Dịch vụ đang chạy',
+            routeRef: 'services',
+            query: { tab: 'activations' },
+            access: { allOf: ['service_entitlement.view'] },
+          },
         ],
       },
       {

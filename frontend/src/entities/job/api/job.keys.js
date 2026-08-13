@@ -12,7 +12,9 @@ function normalizeListParams(params) {
 // một cache (vd. job stats được cả Home lẫn sidebar Jobs đọc).
 export const jobKeys = {
   all: ['jobs'],
-  list: (params) => ['jobs', 'list', normalizeListParams(params)],
+  publicLists: () => [...jobKeys.all, 'list'],
+  list: (params) => [...jobKeys.publicLists(), normalizeListParams(params)],
+  homepageBest: (params) => [...jobKeys.all, 'homepage-best', normalizeListParams(params)],
   detail: (slug) => ['jobs', 'detail', slug],
   stats: ['jobs', 'stats'],
   categories: ['jobs', 'categories'],
@@ -27,4 +29,13 @@ export const jobKeys = {
   candidateRecommendations: (params = {}) => ['jobs', 'candidate-recommendations', params],
   postingContext: ['jobs', 'posting-context'],
   adminModeration: (params = {}) => ['jobs', 'admin-moderation', params],
+}
+
+export function isDefaultJobListQuery(query) {
+  const [domain, kind, params] = query.queryKey
+  if (domain !== 'jobs' || kind !== 'list') return false
+  if (typeof params === 'string') {
+    return !new URLSearchParams(params).get('ordering')
+  }
+  return !params?.ordering
 }

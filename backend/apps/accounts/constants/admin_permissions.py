@@ -240,6 +240,24 @@ ADMIN_PERMISSIONS = (
         'description': 'Xem bảng điều khiển quản trị.',
     },
     {
+        'code': 'employer_domain.view',
+        'module': 'employer_domain',
+        'label': 'Xem xác minh tên miền doanh nghiệp',
+        'description': 'Xem hàng chờ và lịch sử xác minh tên miền công ty.',
+    },
+    {
+        'code': 'employer_domain.review',
+        'module': 'employer_domain',
+        'label': 'Duyệt xác minh tên miền doanh nghiệp',
+        'description': 'Duyệt hoặc từ chối yêu cầu xác minh tên miền thủ công.',
+    },
+    {
+        'code': 'employer_domain.revoke',
+        'module': 'employer_domain',
+        'label': 'Thu hồi xác minh tên miền doanh nghiệp',
+        'description': 'Quyền rủi ro cao để thu hồi quyền sở hữu tên miền công ty.',
+    },
+    {
         'code': 'employer_verification.review',
         'module': 'employer_verification',
         'label': 'Duyệt xác thực nhà tuyển dụng',
@@ -422,6 +440,8 @@ ADMIN_PERMISSION_DEPENDENCIES = {
     'cv_template.delete': ('cv_template.view',),
     'cv_template.edit': ('cv_template.view',),
     'cv_template.publish': ('cv_template.view',),
+    'employer_domain.review': ('employer_domain.view',),
+    'employer_domain.revoke': ('employer_domain.view',),
     'employer_verification.review': ('employer_verification.view',),
     'employer_verification.revoke': ('employer_verification.view',),
     'employer_verification.resubmission_unlock': ('employer_verification.view',),

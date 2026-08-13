@@ -13,9 +13,11 @@ from ...models import (
     ServicePackageVersion,
 )
 from ...selectors import (
+    ACTIVATION_ORDERING_FIELDS,
     ENTITLEMENT_ORDERING_FIELDS,
     SERVICE_AUDIT_ORDERING_FIELDS,
 )
+from .employer import EmployerActivationSerializer
 
 
 def _ordering_choices(fields):
@@ -187,6 +189,44 @@ class AdminEntitlementUnitSerializer(serializers.ModelSerializer):
 
 class AdminEntitlementRevokeSerializer(serializers.Serializer):
     reason = serializers.CharField(max_length=500, trim_whitespace=True)
+
+
+class AdminServiceActivationQuerySerializer(serializers.Serializer):
+    company_public_id = serializers.CharField(max_length=50, required=False)
+    status = serializers.ChoiceField(
+        choices=JobServiceActivation.Status.choices,
+        required=False,
+    )
+    job_public_id = serializers.CharField(max_length=50, required=False)
+    campaign_public_id = serializers.CharField(max_length=50, required=False)
+    ordering = serializers.ChoiceField(
+        choices=_ordering_choices(ACTIVATION_ORDERING_FIELDS),
+        default='-created_at',
+        required=False,
+    )
+
+
+class AdminServiceActivationSummaryQuerySerializer(serializers.Serializer):
+    company_public_id = serializers.CharField(max_length=50, required=False)
+    job_public_id = serializers.CharField(max_length=50, required=False)
+    campaign_public_id = serializers.CharField(max_length=50, required=False)
+
+
+class AdminServiceActivationTerminateSerializer(serializers.Serializer):
+    reason = serializers.CharField(max_length=500, trim_whitespace=True)
+
+
+class AdminServiceActivationSerializer(EmployerActivationSerializer):
+    company_public_id = serializers.CharField(source='company.public_id')
+    company_name = serializers.CharField(source='company.company_name')
+
+    class Meta(EmployerActivationSerializer.Meta):
+        fields = [
+            'public_id',
+            'company_public_id',
+            'company_name',
+            *EmployerActivationSerializer.Meta.fields[1:],
+        ]
 
 
 class AdminServiceAuditQuerySerializer(serializers.Serializer):

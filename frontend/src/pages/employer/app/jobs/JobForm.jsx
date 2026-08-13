@@ -120,7 +120,7 @@ export default function JobForm() {
         defaultDeadlineDays={!publicId
           ? postingContextQuery.data?.default_deadline_days ?? 30
           : null}
-        maxDeadlineDays={postingContextQuery.data?.default_deadline_days ?? 30}
+        maxDeadlineDays={postingContextQuery.data?.max_deadline_days ?? 90}
         isDraft={isDraft}
         requiresNewCredit={requiresNewCredit}
         submitLabel={submitLabel}

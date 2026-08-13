@@ -1,8 +1,10 @@
 from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
+from importlib import import_module
 from threading import Barrier
 from unittest.mock import patch
 
+from django.apps import apps as django_apps
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import close_old_connections
@@ -12,11 +14,13 @@ from django.utils import timezone
 from apps.employers.models import Company
 from apps.employers.tests.readiness_helpers import make_employer_ready
 from apps.jobs.models import Job
+from apps.jobs.selectors.presentation import job_presentation, prime_effective_service_presentations
 from apps.jobs.services import create_job_alert, lifecycle_local_date
 
 from ..models import (
     JobPromotionMetricDaily,
     JobServiceActivation,
+    JobServiceActivationItem,
     JobServiceAlertDispatch,
     JobServiceAlertRecipient,
     JobServiceUsageEvent,
@@ -82,13 +86,11 @@ class EntitlementLedgerTests(TestCase):
             package_version=self.version,
             capability=ServiceCapability.objects.get(code='job_refresh'),
             quantity=2,
-            duration_days=14,
         )
         add_package_version_item(
             package_version=self.version,
             capability=ServiceCapability.objects.get(code='job_alert'),
             quantity=1,
-            duration_days=14,
         )
         self.version = publish_package_version(
             package_version=self.version,
@@ -124,6 +126,58 @@ class EntitlementLedgerTests(TestCase):
             grant_key=key,
             granted_at=granted_at,
         )[0]
+
+    def make_version(self, *, slug, name, items):
+        package = ServicePackage.objects.create(
+            category=self.version.package.category,
+            slug=slug,
+            name_vi=name,
+        )
+        version = create_package_version(package=package, price=799000)
+        for order, item in enumerate(items):
+            add_package_version_item(
+                package_version=version,
+                capability=ServiceCapability.objects.get(code=item['capability']),
+                quantity=item.get('quantity', 1),
+                duration_days=item.get('duration_days'),
+                configuration=item.get('configuration', {}),
+                order=order,
+            )
+        return publish_package_version(package_version=version, actor=self.admin)
+
+    def force_legacy_activation(self, *, unit, version, starts_at, ends_at, key):
+        activation = JobServiceActivation.objects.create(
+            unit=unit,
+            company=self.company,
+            job=self.job,
+            idempotency_key=key,
+            starts_at=starts_at,
+            ends_at=ends_at,
+            snapshot=unit.snapshot,
+            created_by=self.employer,
+        )
+        JobServiceActivationItem.objects.bulk_create(
+            [
+                JobServiceActivationItem(
+                    activation=activation,
+                    capability=item.capability,
+                    total_quantity=item.quantity,
+                    remaining_quantity=item.quantity,
+                    starts_at=starts_at,
+                    ends_at=(
+                        starts_at + timedelta(days=item.duration_days)
+                        if item.duration_days is not None
+                        else ends_at
+                    ),
+                    configuration=item.configuration,
+                )
+                for item in version.items.select_related('capability').order_by('order', 'id')
+            ]
+        )
+        unit.status = ServiceEntitlementUnit.Status.CONSUMED
+        unit.consumed_at = starts_at
+        unit.save(update_fields=['status', 'consumed_at', 'updated_at'])
+        return activation
 
     def test_grant_creates_independent_units_and_is_idempotent(self):
         granted_at = timezone.now()
@@ -174,9 +228,73 @@ class EntitlementLedgerTests(TestCase):
             activation.items.get(capability__code='sponsored_placement').remaining_quantity,
             1,
         )
+        self.assertEqual(
+            activation.items.get(capability__code='job_refresh').ends_at,
+            activation.ends_at,
+        )
+        self.assertEqual(
+            activation.items.get(capability__code='job_alert').ends_at,
+            activation.ends_at,
+        )
         self.job.refresh_from_db()
         self.assertEqual(self.job.tier, Job.Tier.STANDARD)
         self.assertFalse(self.job.is_urgent)
+
+    def test_quantity_only_add_on_remains_usable_for_current_public_cycle(self):
+        package = ServicePackage.objects.create(
+            category=self.version.package.category,
+            slug='refresh-once-regression',
+            name_vi='Làm mới tin một lượt',
+        )
+        version = create_package_version(package=package, price=49000)
+        add_package_version_item(
+            package_version=version,
+            capability=ServiceCapability.objects.get(code='job_refresh'),
+            quantity=1,
+        )
+        version = publish_package_version(package_version=version, actor=self.admin)
+        unit = grant_package_units(
+            company=self.company,
+            package_version=version,
+            quantity=1,
+            actor=self.admin,
+            grant_key='quantity-only-refresh',
+        )[0]
+
+        activation = activate_job_service(
+            unit=unit,
+            job=self.job,
+            actor=self.employer,
+            idempotency_key='quantity-only-refresh-activation',
+        )
+
+        self.assertEqual(activation.ends_at, self.job.visibility_ends_at)
+        self.assertEqual(activation.items.get().ends_at, self.job.visibility_ends_at)
+        refresh_promoted_job(
+            activation=activation,
+            actor=self.employer,
+            idempotency_key='quantity-only-refresh-use',
+        )
+        self.assertEqual(activation.items.get().remaining_quantity, 0)
+
+    def test_data_migration_repairs_existing_zero_length_quantity_window(self):
+        unit = self.grant_one(key='repair-existing-quantity-window')
+        activation = activate_job_service(
+            unit=unit,
+            job=self.job,
+            actor=self.employer,
+            idempotency_key='repair-existing-quantity-window-activation',
+        )
+        alert_item = activation.items.get(capability__code='job_alert')
+        type(alert_item).objects.filter(pk=alert_item.pk).update(ends_at=activation.starts_at)
+
+        migration = import_module(
+            'apps.services.migrations.0010_repair_quantity_activation_windows'
+        )
+        migration.repair_quantity_activation_windows(django_apps, None)
+
+        alert_item.refresh_from_db()
+        self.assertEqual(alert_item.ends_at, activation.ends_at)
 
     def test_activation_retry_returns_same_record(self):
         unit = self.grant_one()
@@ -195,6 +313,129 @@ class EntitlementLedgerTests(TestCase):
 
         self.assertEqual(first.pk, second.pk)
         self.assertEqual(JobServiceActivation.objects.count(), 1)
+
+    def test_duration_effect_cannot_overlap_but_quantity_rights_remain_additive(self):
+        first_unit = self.grant_one(key='exclusive-first')
+        activate_job_service(
+            unit=first_unit,
+            job=self.job,
+            actor=self.employer,
+            idempotency_key='exclusive-first-activation',
+        )
+        duplicate_unit = self.grant_one(key='exclusive-duplicate')
+
+        preview = preview_job_service_activation(
+            unit=duplicate_unit,
+            job=self.job,
+            actor=self.employer,
+        )
+
+        self.assertFalse(preview['can_activate'])
+        self.assertEqual(
+            [conflict['capability'] for conflict in preview['conflicts']],
+            ['sponsored_placement'],
+        )
+        self.assertIn('Ưu tiên 14 ngày', preview['blockers'][0])
+        with self.assertRaises(ValidationError):
+            activate_job_service(
+                unit=duplicate_unit,
+                job=self.job,
+                actor=self.employer,
+                idempotency_key='exclusive-duplicate-activation',
+            )
+        duplicate_unit.refresh_from_db()
+        self.assertEqual(duplicate_unit.status, ServiceEntitlementUnit.Status.AVAILABLE)
+
+        refresh_version = self.make_version(
+            slug='refresh-additive-overlap',
+            name='Làm mới cộng dồn',
+            items=({'capability': 'job_refresh', 'quantity': 1},),
+        )
+        refresh_units = grant_package_units(
+            company=self.company,
+            package_version=refresh_version,
+            quantity=2,
+            actor=self.admin,
+            grant_key='refresh-additive-overlap',
+        )
+        for index, unit in enumerate(refresh_units):
+            activate_job_service(
+                unit=unit,
+                job=self.job,
+                actor=self.employer,
+                idempotency_key=f'refresh-additive-overlap-{index}',
+            )
+
+        self.assertEqual(
+            JobServiceActivationItem.objects.filter(
+                activation__job=self.job,
+                activation__status=JobServiceActivation.Status.ACTIVE,
+                capability__code='job_refresh',
+            ).count(),
+            3,
+        )
+
+    @override_settings(
+        JOB_PRESENTATION_V2_ENABLED=True,
+        JOB_PROMOTION_METRICS_ENABLED=True,
+    )
+    def test_legacy_overlap_uses_effect_priority_for_presentation_and_metrics(self):
+        now = timezone.now()
+        base_unit = self.grant_one(key='legacy-priority-base')
+        activate_job_service(
+            unit=base_unit,
+            job=self.job,
+            actor=self.employer,
+            idempotency_key='legacy-priority-base',
+            activated_at=now,
+        )
+        accelerate_version = self.make_version(
+            slug='legacy-accelerate-priority',
+            name='Tăng tốc legacy',
+            items=(
+                {
+                    'capability': 'sponsored_placement',
+                    'duration_days': 28,
+                    'configuration': {'placement': 'best_jobs_eligible'},
+                },
+                {
+                    'capability': 'card_tone',
+                    'duration_days': 28,
+                    'configuration': {'tone': 'green_strong'},
+                },
+            ),
+        )
+        accelerate_unit = grant_package_units(
+            company=self.company,
+            package_version=accelerate_version,
+            quantity=1,
+            actor=self.admin,
+            grant_key='legacy-accelerate-priority',
+        )[0]
+        accelerate = self.force_legacy_activation(
+            unit=accelerate_unit,
+            version=accelerate_version,
+            starts_at=now,
+            ends_at=now + timedelta(days=28),
+            key='legacy-accelerate-priority',
+        )
+
+        [job] = prime_effective_service_presentations([self.job], at=now + timedelta(seconds=1))
+        presentation = job_presentation(job)
+        self.assertEqual(presentation['placement'], 'best_jobs_eligible')
+        self.assertEqual(presentation['card_tone'], 'green_strong')
+
+        record_job_promotion_metrics(
+            job_ids=[self.job.pk],
+            event='impression',
+            occurred_at=now + timedelta(seconds=1),
+        )
+        self.assertTrue(
+            JobPromotionMetricDaily.objects.filter(
+                activation=accelerate,
+                impression_count=1,
+            ).exists()
+        )
 
     def test_insufficient_job_time_rolls_back_without_consuming_unit(self):
         short_job = self.make_active_job(visibility_days=10)
@@ -226,6 +467,8 @@ class EntitlementLedgerTests(TestCase):
         )
         self.assertTrue(preview['can_activate'])
         self.assertTrue(preview['deadline_extension_required'])
+        self.assertTrue(preview['extension_required'])
+        self.assertEqual(preview['current_application_deadline'], short_job.deadline)
         self.assertGreater(preview['visibility_extension_days'], 0)
 
         with self.assertRaises(ValidationError):

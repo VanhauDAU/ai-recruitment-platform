@@ -2,20 +2,24 @@
 
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema
-from rest_framework import generics, permissions, status
+from rest_framework import generics, status
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
-from apps.accounts.permissions import HasAdminPermission
+from apps.accounts.permissions import HasAdminPermission, IsCandidate
+from common.throttling import ClientIPScopedRateThrottle
 
 from ...models import Job, JobReport
 from ...selectors import job_report_queryset
+from ...selectors.listing import publicly_available_job_filter
 from ...services import resolve_job_report, reverse_job_report, submit_job_report
 from ..serializers import (
     AdminJobReportQuerySerializer,
     AdminJobReportResolveSerializer,
     AdminJobReportReverseSerializer,
     AdminJobReportSerializer,
+    JobReportCreatedSerializer,
     JobReportCreateSerializer,
 )
 
@@ -23,16 +27,23 @@ from ..serializers import (
 @extend_schema(
     summary='Ứng viên báo cáo một tin tuyển dụng',
     request=JobReportCreateSerializer,
-    responses={201: AdminJobReportSerializer},
+    responses={201: JobReportCreatedSerializer},
     tags=['jobs'],
 )
 class JobReportCreateView(APIView):
     # Bắt buộc đăng nhập: báo cáo ẩn danh không truy vết được và dễ bị lạm dụng
     # để hạ huy hiệu của đối thủ.
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsCandidate]
+    # Separate account and trusted-IP buckets prevent both one-account spam and
+    # one-origin account rotation.
+    throttle_classes = [ScopedRateThrottle, ClientIPScopedRateThrottle]
+    throttle_scope = 'job_report'
 
     def post(self, request, public_id):
-        job = get_object_or_404(Job, public_id=public_id)
+        job = get_object_or_404(
+            Job.objects.filter(publicly_available_job_filter()),
+            public_id=public_id,
+        )
         serializer = JobReportCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         report = submit_job_report(
@@ -42,7 +53,7 @@ class JobReportCreateView(APIView):
             detail=serializer.validated_data.get('detail', ''),
         )
         return Response(
-            AdminJobReportSerializer(report).data,
+            JobReportCreatedSerializer(report).data,
             status=status.HTTP_201_CREATED,
         )
 

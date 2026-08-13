@@ -49,6 +49,7 @@ from .lifecycle import (
 )
 from .moderation import (
     JobModerationStale,
+    apply_confirmed_report_hold,
     approve_job,
     create_job_review_token,
     hide_job_visibility,
@@ -79,6 +80,7 @@ from .reports import resolve_job_report, reverse_job_report, submit_job_report
 __all__ = [
     'JOB_ALERT_LIMIT',
     'apply_job_ai_generation_to_draft',
+    'apply_confirmed_report_hold',
     'cancel_job_ai_generation',
     'close_job',
     'claim_due_candidate_job_digest_candidates',

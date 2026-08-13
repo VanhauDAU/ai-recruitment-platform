@@ -135,6 +135,7 @@ def recruiter_job_posting_entitlement(user):
         return recruiter, {
             'verification_completed': False,
             'admin_approved': False,
+            'dpa_current': False,
             'account_level': 0,
             'verified_job_quota_eligible': False,
         }
@@ -150,33 +151,47 @@ def recruiter_job_posting_entitlement(user):
             verification_case=verification_case,
             company_id=recruiter.company_id,
             is_current=True,
-            doc_type__in=[
+            status=CompanyDocument.Status.APPROVED,
+        )
+        if (
+            verification_case.verification_method
+            == EmployerVerificationCase.VerificationMethod.AUTHORIZATION_AND_ID
+        ):
+            approved_types = set(
+                business_documents.filter(
+                    doc_type__in=(
+                        CompanyDocument.DocType.AUTHORIZATION_LETTER,
+                        CompanyDocument.DocType.IDENTITY_DOCUMENT,
+                    )
+                ).values_list('doc_type', flat=True)
+            )
+            business_document_approved = approved_types == {
                 CompanyDocument.DocType.AUTHORIZATION_LETTER,
-                CompanyDocument.DocType.BUSINESS_REGISTRATION,
                 CompanyDocument.DocType.IDENTITY_DOCUMENT,
-            ],
-        )
-        business_document_approved = (
-            business_documents.exists()
-            and not business_documents.exclude(
-                status=CompanyDocument.Status.APPROVED,
+            }
+        else:
+            business_document_approved = business_documents.filter(
+                doc_type=CompanyDocument.DocType.BUSINESS_REGISTRATION
             ).exists()
-        )
 
     account_level = 0
     if recruiter.user.email_verified:
         account_level = 1
-    if account_level == 1 and recruiter.phone_verified_at and business_document_approved:
+    phone_verified = bool(
+        recruiter.phone_verified_at
+        and recruiter.verified_phone
+        and recruiter.contact_phone == recruiter.verified_phone
+        and recruiter.user.phone == recruiter.verified_phone
+    )
+    if account_level == 1 and phone_verified and business_document_approved:
         account_level = 2
-    # The current product model has no report-history record yet. This is kept
-    # aligned with the employer portal's Cấp 3 read-model until that workflow
-    # is introduced.
-    if account_level == 2:
+    if account_level == 2 and admin_approved:
         account_level = 3
 
     return recruiter, {
         'verification_completed': verification_completed,
         'admin_approved': admin_approved,
+        'dpa_current': readiness['dpa_status'] == 'current',
         'account_level': account_level,
         'verified_job_quota_eligible': (
             verification_completed

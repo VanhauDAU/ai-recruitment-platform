@@ -146,6 +146,7 @@ class EmployerReadinessContractTests(APITestCase):
             password='Password@123',
             role=User.Role.EMPLOYER,
             email_verified=True,
+            phone='0911222333',
         )
         self.company = Company.objects.create(
             company_name='Công ty Readiness',
@@ -159,6 +160,7 @@ class EmployerReadinessContractTests(APITestCase):
             registration_completed_at=timezone.now(),
             phone_verified_at=timezone.now(),
             verified_phone='0911222333',
+            contact_phone='0911222333',
             dpa_accepted_at=timezone.now(),
             dpa_policy_version=settings.EMPLOYER_DPA_POLICY_VERSION,
             dpa_document_sha256=settings.EMPLOYER_DPA_DOCUMENT_SHA256,

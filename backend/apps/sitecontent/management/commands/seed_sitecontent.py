@@ -324,8 +324,8 @@ SETTINGS = [
         6,
         False,
         'Một trong năm điều kiện gắn dấu tick "đã xác thực" lên tin tuyển dụng. '
-        'Đặt 0 để bỏ qua điều kiện tuổi tài khoản khi hệ thống mới vận hành.',
-        {},
+        'Giá trị là số tháng lịch nguyên từ 1 đến 60.',
+        {'integer': True, 'min': 1, 'max': 60, 'step': 1},
     ),
     (
         'employer_allow_logo_upload',

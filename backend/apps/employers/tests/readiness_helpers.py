@@ -46,6 +46,7 @@ def make_employer_ready(user, *, company=None, candidate_data=False):
     )
     recruiter.registration_completed_at = timezone.now()
     recruiter.verified_phone = f'09{user.pk:08d}'
+    recruiter.contact_phone = recruiter.verified_phone
     recruiter.phone_verified_at = timezone.now()
     recruiter.dpa_accepted_at = timezone.now()
     recruiter.dpa_policy_version = settings.EMPLOYER_DPA_POLICY_VERSION
@@ -55,6 +56,7 @@ def make_employer_ready(user, *, company=None, candidate_data=False):
             'company',
             'company_role',
             'registration_completed_at',
+            'contact_phone',
             'verified_phone',
             'phone_verified_at',
             'dpa_accepted_at',
@@ -63,6 +65,9 @@ def make_employer_ready(user, *, company=None, candidate_data=False):
             'updated_at',
         ]
     )
+    if user.phone != recruiter.verified_phone:
+        user.phone = recruiter.verified_phone
+        user.save(update_fields=['phone', 'updated_at'])
     EmployerDpaAcceptance.objects.get_or_create(
         recruiter=recruiter,
         policy_version=settings.EMPLOYER_DPA_POLICY_VERSION,

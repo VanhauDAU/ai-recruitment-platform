@@ -1,6 +1,7 @@
 const employerProfileRoot = ['employer']
 const employerCompanyRoot = [...employerProfileRoot, 'company']
 const employerCompanyUpdateRequestsRoot = [...employerCompanyRoot, 'update-requests']
+const employerCompanyDomainClaimsRoot = [...employerCompanyRoot, 'domain-claims']
 
 export const employerProfileKeys = {
   all: employerProfileRoot,
@@ -12,4 +13,5 @@ export const employerProfileKeys = {
   companyDocumentList: (scope) => [...employerCompanyRoot, 'documents', { scope }],
   companyUpdateRequests: employerCompanyUpdateRequestsRoot,
   companyUpdateRequestList: (scope) => [...employerCompanyUpdateRequestsRoot, { scope }],
+  companyDomainClaims: employerCompanyDomainClaimsRoot,
 }

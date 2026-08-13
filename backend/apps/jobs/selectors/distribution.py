@@ -2,15 +2,26 @@ from dataclasses import dataclass
 from math import ceil
 
 from django.conf import settings
-from django.db.models import DateTimeField, Exists, F, OuterRef, Subquery
-from django.db.models.functions import Coalesce
+from django.db.models import (
+    Case,
+    CharField,
+    Exists,
+    F,
+    IntegerField,
+    OuterRef,
+    Q,
+    Value,
+    When,
+)
+from django.db.models.functions import MD5, Cast, Concat
 from django.utils import timezone
 
 from apps.services.models import (
     JobServiceActivationItem,
-    JobServiceUsageEvent,
     ServiceCapability,
 )
+
+from ..models import Job
 
 
 @dataclass(frozen=True)
@@ -22,121 +33,103 @@ class DistributedJobPage:
     page_size: int
 
 
-def _with_promotion_recency(queryset, *, at):
-    if not getattr(settings, 'JOB_PROMOTION_REFRESH_ENABLED', False):
-        return queryset.annotate(promotion_recency=F('lifecycle_recency'))
-    latest_refresh = (
-        JobServiceUsageEvent.objects.filter(
-            job_id=OuterRef('pk'),
-            event_type=JobServiceUsageEvent.EventType.REFRESH,
-            activation__status='active',
-            activation__starts_at__lte=at,
-            activation__ends_at__gt=at,
-            occurred_at__lte=at,
+def _active_sponsorship(*, at, placement=None):
+    filters = {
+        'activation__job_id': OuterRef('pk'),
+        'activation__status': 'active',
+        'activation__starts_at__lte': at,
+        'activation__ends_at__gt': at,
+        'capability__code': ServiceCapability.Code.SPONSORED_PLACEMENT,
+        'starts_at__lte': at,
+        'ends_at__gt': at,
+    }
+    if placement:
+        filters['configuration__placement'] = placement
+    return JobServiceActivationItem.objects.filter(**filters)
+
+
+def _with_commercial_tier(queryset, *, at):
+    """Resolve the paid-first tier without changing the job lifecycle clock.
+
+    `best_jobs_eligible` and legacy TOP jobs form the premium tier;
+    `search_sponsored` and legacy FEATURED jobs form the standard paid tier.
+    Every eligible paid job remains in its tier -- there is no sparse slot quota
+    and no winner-takes-all representative per company.
+    """
+    queryset = queryset.alias(
+        _has_premium_placement=Exists(_active_sponsorship(at=at, placement='best_jobs_eligible')),
+        _has_active_sponsorship=Exists(_active_sponsorship(at=at)),
+    )
+    return queryset.alias(
+        commercial_tier_weight=Case(
+            When(
+                Q(_has_premium_placement=True) | Q(tier=Job.Tier.TOP),
+                then=2,
+            ),
+            When(
+                Q(_has_active_sponsorship=True) | Q(tier=Job.Tier.FEATURED),
+                then=1,
+            ),
+            default=0,
+            output_field=IntegerField(),
         )
-        .order_by('-occurred_at', '-id')
-        .values('occurred_at')[:1]
     )
-    return queryset.annotate(
-        promotion_recency=Coalesce(
-            Subquery(latest_refresh, output_field=DateTimeField()),
-            'lifecycle_recency',
+
+
+def _with_seeded_rotation(queryset, *, ranking_seed):
+    if not ranking_seed:
+        return queryset
+    return queryset.alias(
+        rotation_key=MD5(
+            Concat(
+                Value(ranking_seed),
+                Value(':'),
+                Cast('pk', output_field=CharField()),
+            )
         )
     )
 
 
-def _sponsored_representative_ids(queryset, *, at):
-    active_sponsorship = JobServiceActivationItem.objects.filter(
-        activation__job_id=OuterRef('pk'),
-        activation__status='active',
-        activation__starts_at__lte=at,
-        activation__ends_at__gt=at,
-        capability__code=ServiceCapability.Code.SPONSORED_PLACEMENT,
-        starts_at__lte=at,
-        ends_at__gt=at,
-    )
-    eligible = _with_promotion_recency(
-        queryset.annotate(_has_active_sponsorship=Exists(active_sponsorship)).filter(
-            _has_active_sponsorship=True
-        ),
-        at=at,
-    )
-    # PostgreSQL DISTINCT ON selects one deterministic sponsored representative
-    # per company. Other paid jobs remain in the organic lane rather than being hidden.
-    return (
-        eligible.order_by('company_id', '-promotion_recency', '-created_at', '-id')
-        .distinct('company_id')
-        .values('pk')
-    )
+def _commercial_ordering(*, ranking_seed):
+    ordering = ['-commercial_tier_weight']
+    if getattr(settings, 'JOB_PROMOTION_REFRESH_ENABLED', False):
+        ordering.extend(
+            [
+                F('latest_refresh_at').desc(nulls_last=True),
+                F('latest_refresh_event_id').desc(nulls_last=True),
+            ]
+        )
+    if ranking_seed:
+        ordering.append('rotation_key')
+    ordering.extend(['-lifecycle_recency', '-created_at', '-id'])
+    return ordering
 
 
-def _interleave(organic, sponsored, page_size):
-    sponsored = list(sponsored)
-    organic = list(organic)
-    if not sponsored:
-        return organic
-    sponsored_positions = {min(index * 5, page_size - 1) for index in range(len(sponsored))}
-    result = []
-    sponsored_index = 0
-    organic_index = 0
-    for position in range(page_size):
-        if position in sponsored_positions and sponsored_index < len(sponsored):
-            result.append(sponsored[sponsored_index])
-            sponsored_index += 1
-        elif organic_index < len(organic):
-            result.append(organic[organic_index])
-            organic_index += 1
-        elif sponsored_index < len(sponsored):
-            result.append(sponsored[sponsored_index])
-            sponsored_index += 1
-    return result
+def distribute_sponsored_job_page(
+    queryset,
+    *,
+    page,
+    page_size,
+    at=None,
+    ranking_seed='',
+):
+    """Return one paid-tier-first page for the default candidate feed.
 
-
-def distribute_sponsored_job_page(queryset, *, page, page_size, at=None):
-    """Return a stable page with at most two sponsored jobs per ten results."""
+    Commercial priority is a contiguous tier, not a pair of injected positions:
+    premium paid jobs, then standard paid jobs, then organic jobs.  Filtering and
+    hard relevance have already been applied by the caller.
+    """
     at = at or timezone.now()
     page = max(int(page), 1)
     page_size = max(int(page_size), 1)
-    sponsored_quota = page_size // 5
-    if sponsored_quota == 0:
-        total = queryset.count()
-        start = (page - 1) * page_size
-        return DistributedJobPage(
-            items=list(queryset[start : start + page_size]),
-            total=total,
-            total_pages=ceil(total / page_size) if total else 0,
-            page=page,
-            page_size=page_size,
-        )
-
-    representative_ids = _sponsored_representative_ids(queryset, at=at)
-    sponsored_queryset = _with_promotion_recency(
-        queryset.filter(pk__in=representative_ids),
-        at=at,
-    ).order_by('-promotion_recency', '-created_at', '-id')
-    organic_queryset = queryset.exclude(pk__in=representative_ids)
-    sponsored_total = sponsored_queryset.count()
-    organic_total = organic_queryset.count()
-    total = sponsored_total + organic_total
-
-    sponsored_before = min(sponsored_total, (page - 1) * sponsored_quota)
-    sponsored_count = min(sponsored_quota, sponsored_total - sponsored_before)
-    organic_before = max((page - 1) * page_size - sponsored_before, 0)
-    organic_count = page_size - sponsored_count
-    sponsored_ids = list(
-        sponsored_queryset.values_list('pk', flat=True)[
-            sponsored_before : sponsored_before + sponsored_count
-        ]
-    )
-    organic_ids = list(
-        organic_queryset.values_list('pk', flat=True)[
-            organic_before : organic_before + organic_count
-        ]
-    )
-    ordered_ids = _interleave(organic_ids, sponsored_ids, page_size)
-    jobs_by_id = {job.pk: job for job in queryset.filter(pk__in=ordered_ids)}
+    ranked = _with_commercial_tier(queryset, at=at)
+    ranked = _with_seeded_rotation(ranked, ranking_seed=ranking_seed)
+    ranked = ranked.order_by(*_commercial_ordering(ranking_seed=ranking_seed))
+    total = ranked.count()
+    start = (page - 1) * page_size
+    items = list(ranked[start : start + page_size])
     return DistributedJobPage(
-        items=[jobs_by_id[job_id] for job_id in ordered_ids],
+        items=items,
         total=total,
         total_pages=ceil(total / page_size) if total else 0,
         page=page,

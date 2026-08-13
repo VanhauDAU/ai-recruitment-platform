@@ -34,6 +34,7 @@ import { message } from '@/shared/lib/toast'
 import ConfirmAction from '@/shared/ui/ConfirmAction'
 import { AdminDataActions, AdminPanel } from '@/shared/ui/admin'
 import CommercialVersionsPanel from './CommercialVersionsPanel'
+import ServiceActivationsPanel from './ServiceActivationsPanel'
 import ServiceInventoryPanel from './ServiceInventoryPanel'
 
 const CATEGORY_DEFAULTS = { order: 0, is_active: true }
@@ -65,7 +66,12 @@ export default function AdminServiceCatalog() {
   const canManageInventory = access.has('service_entitlement.manage')
   const canViewAudit = access.has('service_audit.view')
   const requestedTab = searchParams.get('tab') || 'categories'
-  const allowedTabs = ['categories', 'packages', 'versions', ...(canViewInventory ? ['inventory'] : [])]
+  const allowedTabs = [
+    'categories',
+    'packages',
+    'versions',
+    ...(canViewInventory ? ['activations', 'inventory'] : []),
+  ]
   const activeTab = allowedTabs.includes(requestedTab) ? requestedTab : 'categories'
   const rawQuery = searchParams.get('q') || ''
   const query = rawQuery.trim().toLocaleLowerCase('vi')
@@ -313,6 +319,11 @@ export default function AdminServiceCatalog() {
               />
             ),
           },
+          ...(canViewInventory ? [{
+            key: 'activations',
+            label: 'Dịch vụ đang chạy',
+            children: <ServiceActivationsPanel canManage={canManageInventory} />,
+          }] : []),
           ...(canViewInventory ? [{
             key: 'inventory',
             label: 'Kho lượt & lịch sử',

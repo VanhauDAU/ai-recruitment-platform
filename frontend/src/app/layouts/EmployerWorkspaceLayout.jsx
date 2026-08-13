@@ -97,6 +97,7 @@ export default function EmployerWorkspaceLayout() {
   const accountVerificationLevel = getEmployerAccountVerificationLevel(
     verification,
     verificationCase,
+    profile.account_verification ?? profile.employer_account_level,
   )
   // "An toàn" ở đây gắn với bảo mật đăng nhập: bật một trong các phương thức xác
   // thực 2 yếu tố (hiện có email) là đủ để ẩn cảnh báo đỏ ở sidebar.

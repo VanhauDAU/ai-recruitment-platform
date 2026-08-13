@@ -59,4 +59,19 @@ describe('getApiErrorMessage', () => {
 
     expect(getApiErrorMessage(error)).toBe('Dữ liệu đã thay đổi. Vui lòng tải lại trước khi tiếp tục.')
   })
+
+  it('localizes a throttled response and formats its retry duration', () => {
+    const error = {
+      response: {
+        status: 429,
+        data: {
+          detail: 'Request was throttled. Expected available in 86035 seconds.',
+        },
+      },
+    }
+
+    expect(getApiErrorMessage(error)).toBe(
+      'Bạn đã thao tác quá số lần cho phép. Vui lòng thử lại sau 23 giờ 54 phút.',
+    )
+  })
 })

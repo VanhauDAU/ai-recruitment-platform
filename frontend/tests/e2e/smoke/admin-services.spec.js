@@ -46,3 +46,142 @@ test('admin services: version workspace stays clear and responsive', async ({ pa
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)
   expect(overflow).toBeLessThanOrEqual(1)
 })
+
+test('admin services: activation workspace reports usage and requires a termination reason', async ({ page }) => {
+  const activeActivation = {
+    public_id: 'act_top_job_001',
+    company_public_id: 'company_acme',
+    company_name: 'Công ty Acme',
+    job_public_id: 'job_ai_engineer',
+    job_title: 'Kỹ sư AI',
+    job_status: 'published',
+    campaign_public_id: 'campaign_q3',
+    campaign_name: 'Tuyển đội AI quý 3',
+    package_name: 'Top Job 14 ngày',
+    version_number: 2,
+    status: 'active',
+    is_effective: true,
+    starts_at: '2026-08-10T02:00:00Z',
+    ends_at: '2026-08-24T02:00:00Z',
+    terminated_at: null,
+    termination_reason: '',
+    metrics: {
+      available: true,
+      impressions: 1250,
+      views: 186,
+      saves: 21,
+      applies: 14,
+    },
+    items: [{
+      capability: 'sponsored_placement',
+      name: 'Ưu tiên hiển thị',
+      quantity: 1,
+      remaining_quantity: 1,
+      starts_at: '2026-08-10T02:00:00Z',
+      ends_at: '2026-08-24T02:00:00Z',
+      configuration: { placement: 'search_sponsored' },
+    }],
+  }
+  let terminated = false
+  let terminationRequest = null
+
+  await page.route(/^http:\/\/(?:localhost|127\.0\.0\.1):(?:5173|8000)\/api\//, async (route) => {
+    const request = route.request()
+    const path = new URL(request.url()).pathname
+    const activation = terminated
+      ? {
+          ...activeActivation,
+          status: 'terminated',
+          is_effective: false,
+          terminated_at: '2026-08-13T09:00:00Z',
+          termination_reason: 'Chiến dịch đã dừng theo yêu cầu doanh nghiệp',
+        }
+      : activeActivation
+
+    if (
+      path === '/api/services/admin/activations/act_top_job_001/terminate/'
+      && request.method() === 'POST'
+    ) {
+      terminationRequest = request.postDataJSON()
+      terminated = true
+      await route.fulfill({ contentType: 'application/json', body: JSON.stringify({
+        ...activation,
+        status: 'terminated',
+        is_effective: false,
+        terminated_at: '2026-08-13T09:00:00Z',
+        termination_reason: terminationRequest.reason,
+      }) })
+      return
+    }
+
+    const body = path === '/api/auth/refresh/'
+      ? { access: 'services-activation-e2e-access' }
+      : path === '/api/auth/me/'
+        ? adminUser
+        : path === '/api/services/admin/categories/'
+          ? []
+          : path === '/api/services/admin/packages/'
+            ? []
+            : path === '/api/services/admin/activations/summary/'
+              ? {
+                  activation_counts: {
+                    total: 1,
+                    active: terminated ? 0 : 1,
+                    expired: 0,
+                    terminated: terminated ? 1 : 0,
+                  },
+                  active_total: terminated ? 0 : 1,
+                  metrics: {
+                    available: true,
+                    impressions: 1250,
+                    views: 186,
+                    saves: 21,
+                    applies: 14,
+                  },
+                  unit_counts: { available: 2, consumed: 1, expired: 0, revoked: 0 },
+                }
+              : path === '/api/services/admin/activations/'
+                ? { count: 1, next: null, previous: null, results: [activation] }
+                : path === '/api/admin/companies/'
+                  ? {
+                      count: 1,
+                      results: [{ public_id: 'company_acme', company_name: 'Công ty Acme' }],
+                    }
+                  : path === '/api/privacy/consent/'
+                    ? { consent: { necessary: true, preferences: false, analytics: false, marketing: false } }
+                    : {}
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) })
+  })
+
+  await page.goto('/admin/app/services?tab=activations')
+
+  await expect(page.getByRole('heading', { name: 'Dịch vụ nhà tuyển dụng' })).toBeVisible()
+  await expect(page.getByRole('tab', { name: 'Dịch vụ đang chạy' })).toHaveAttribute('aria-selected', 'true')
+  await expect(page.getByRole('region', { name: 'Tổng quan kích hoạt dịch vụ' })).toContainText('Đang chạy thực tế')
+  await expect(page.getByText('1.250', { exact: true })).toBeVisible()
+
+  const activationRow = page.getByRole('row').filter({ hasText: 'Kỹ sư AI' })
+  await expect(activationRow).toContainText('Công ty Acme')
+  await expect(activationRow).toContainText('Tuyển đội AI quý 3')
+  await expect(activationRow).toContainText('Đang chạy')
+  await activationRow.getByRole('button', { name: 'Dừng dịch vụ' }).click()
+
+  const dialog = page.getByRole('dialog', { name: 'Dừng dịch vụ đang chạy' })
+  await expect(dialog).toBeVisible()
+  await expect(dialog).toContainText('Quyền lợi chưa dùng sẽ không được hoàn lại vào kho lượt.')
+  const confirmButton = dialog.getByRole('button', { name: 'Dừng dịch vụ' })
+  await expect(confirmButton).toBeDisabled()
+
+  await dialog.getByLabel('Lý do dừng dịch vụ').fill('Chiến dịch đã dừng theo yêu cầu doanh nghiệp')
+  await expect(confirmButton).toBeEnabled()
+  await confirmButton.click()
+
+  await expect.poll(() => terminationRequest).toEqual({
+    reason: 'Chiến dịch đã dừng theo yêu cầu doanh nghiệp',
+  })
+  await expect(page.getByText('Đã dừng dịch vụ và ghi nhận vào lịch sử.')).toBeVisible()
+  await expect(activationRow).toContainText('Đã dừng')
+
+  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)
+  expect(overflow).toBeLessThanOrEqual(1)
+})

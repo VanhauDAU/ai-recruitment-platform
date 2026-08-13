@@ -9,9 +9,9 @@ export const JOB_LOGO_TINTS = [
 
 const CARD_TONE_CLASSES = {
   neutral: 'border-slate-200 bg-white',
-  orange: 'border-orange-200 bg-orange-50/60',
-  green: 'border-emerald-300 bg-emerald-50/70',
-  green_strong: 'border-emerald-400 bg-emerald-100/80',
+  orange: 'border-amber-200/80 bg-gradient-to-br from-white via-amber-50/25 to-orange-50/40',
+  green: 'border-emerald-200/80 bg-gradient-to-br from-white via-emerald-50/25 to-teal-50/40',
+  green_strong: 'border-emerald-300/80 bg-gradient-to-br from-white via-emerald-50/40 to-green-100/35',
 }
 
 export function resolveJobPresentation(job = {}) {

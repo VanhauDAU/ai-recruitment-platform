@@ -18,6 +18,15 @@ class JobReportCreateSerializer(serializers.Serializer):
         return attrs
 
 
+class JobReportCreatedSerializer(serializers.ModelSerializer):
+    """Minimal candidate response; moderation evidence remains admin-only."""
+
+    class Meta:
+        model = JobReport
+        fields = ['public_id', 'status', 'created_at']
+        read_only_fields = fields
+
+
 class JobReportResolutionEventSerializer(serializers.ModelSerializer):
     actor_email = serializers.EmailField(source='actor.email', read_only=True, default='')
 
@@ -114,6 +123,14 @@ class AdminJobReportQuerySerializer(serializers.Serializer):
 class AdminJobReportResolveSerializer(serializers.Serializer):
     status = serializers.ChoiceField(choices=[JobReport.Status.UPHELD, JobReport.Status.DISMISSED])
     note = serializers.CharField(required=False, allow_blank=True, max_length=1000)
+
+    def validate(self, attrs):
+        if (
+            attrs.get('status') == JobReport.Status.UPHELD
+            and not attrs.get('note', '').strip()
+        ):
+            raise serializers.ValidationError({'note': 'Nhập căn cứ xác nhận vi phạm.'})
+        return attrs
 
 
 class AdminJobReportReverseSerializer(serializers.Serializer):

@@ -3,6 +3,7 @@ from math import ceil
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.db.models import Q
 from django.utils import timezone
 
 from apps.employers.models import Company
@@ -14,6 +15,7 @@ from apps.jobs.services import (
 )
 
 from ..models import (
+    EXCLUSIVE_CAPABILITY_CODES,
     JobServiceActivation,
     JobServiceActivationItem,
     JobServiceUsageEvent,
@@ -178,6 +180,101 @@ def _validate_actor_company(*, actor, company_id):
         raise ValidationError('Bạn không có quyền kích hoạt dịch vụ của doanh nghiệp này.')
 
 
+def _validate_actor_job_owner(*, actor, job):
+    if getattr(actor, 'role', '') == 'admin' or getattr(actor, 'is_superuser', False):
+        return
+    if job.posted_by_id != actor.pk:
+        raise ValidationError('Bạn chỉ có thể quản lý dịch vụ trên tin do mình đăng.')
+
+
+def _activation_item_windows(*, items, job, starts_at):
+    """Resolve one coherent activation window for duration and quantity rights.
+
+    Quantity capabilities intentionally omit ``duration_days`` in the commercial
+    catalogue. They remain usable for the activation's effective window instead
+    of expiring at the exact instant the activation is created.
+    """
+    explicit_ends_at = [
+        starts_at + timedelta(days=item.duration_days)
+        for item in items
+        if item.duration_days is not None
+    ]
+    if explicit_ends_at:
+        activation_ends_at = max(explicit_ends_at)
+    elif job.visibility_ends_at and job.visibility_ends_at > starts_at:
+        # A quantity-only add-on (for example one refresh) does not extend the
+        # job lifecycle. It can be consumed until the current public cycle ends.
+        activation_ends_at = job.visibility_ends_at
+    else:
+        raise ValidationError('Tin chưa có thời hạn công khai để sử dụng quyền lợi theo lượt.')
+
+    return (
+        [
+            (
+                item,
+                starts_at + timedelta(days=item.duration_days)
+                if item.duration_days is not None
+                else activation_ends_at,
+            )
+            for item in items
+        ],
+        activation_ends_at,
+    )
+
+
+def _overlapping_exclusive_capabilities(*, job, item_windows, starts_at):
+    """Return active duration effects that the proposed activation would duplicate."""
+    exclusive_windows = [
+        (item, ends_at)
+        for item, ends_at in item_windows
+        if item.capability.code in EXCLUSIVE_CAPABILITY_CODES
+    ]
+    if not exclusive_windows:
+        return []
+
+    overlap_filter = Q()
+    for item, ends_at in exclusive_windows:
+        overlap_filter |= Q(
+            capability_id=item.capability_id,
+            starts_at__lt=ends_at,
+            ends_at__gt=starts_at,
+        )
+    conflicts = (
+        JobServiceActivationItem.objects.filter(
+            activation__job_id=job.pk,
+            activation__status=JobServiceActivation.Status.ACTIVE,
+        )
+        .filter(overlap_filter)
+        .select_related(
+            'capability',
+            'activation__unit__package_version__package',
+        )
+        .order_by('capability__code', '-ends_at', '-activation_id')
+    )
+    return [
+        {
+            'capability': conflict.capability.code,
+            'name': conflict.capability.name_vi,
+            'active_activation_public_id': conflict.activation.public_id,
+            'active_package_name': conflict.activation.unit.package_version.package.name_vi,
+            'active_until': conflict.ends_at,
+        }
+        for conflict in conflicts
+    ]
+
+
+def _overlap_blockers(conflicts):
+    return [
+        (
+            f'Quyền lợi “{conflict["name"]}” đang chạy trong gói '
+            f'“{conflict["active_package_name"]}” đến '
+            f'{timezone.localtime(conflict["active_until"]):%d/%m/%Y %H:%M}. '
+            'Hãy đợi dịch vụ kết thúc hoặc chọn tin khác.'
+        )
+        for conflict in conflicts
+    ]
+
+
 @transaction.atomic
 def activate_job_service(
     *,
@@ -193,6 +290,7 @@ def activate_job_service(
 
     company = Company.objects.select_for_update().get(pk=unit.company_id)
     _validate_actor_company(actor=actor, company_id=company.pk)
+    _validate_actor_job_owner(actor=actor, job=job)
     existing = JobServiceActivation.objects.filter(
         company=company,
         idempotency_key=idempotency_key,
@@ -207,6 +305,7 @@ def activate_job_service(
     locked_job = (
         Job.objects.select_for_update(of=('self',)).select_related('campaign').get(pk=job.pk)
     )
+    _validate_actor_job_owner(actor=actor, job=locked_job)
     locked_unit = (
         ServiceEntitlementUnit.objects.select_for_update()
         .select_related('company', 'package_version__package')
@@ -228,16 +327,18 @@ def activate_job_service(
     )
     if not version_items:
         raise ValidationError('Lượt dịch vụ không có quyền lợi để kích hoạt.')
-    item_windows = [
-        (
-            item,
-            starts_at + timedelta(days=item.duration_days)
-            if item.duration_days is not None
-            else starts_at,
-        )
-        for item in version_items
-    ]
-    ends_at = max(end for _, end in item_windows)
+    item_windows, ends_at = _activation_item_windows(
+        items=version_items,
+        job=locked_job,
+        starts_at=starts_at,
+    )
+    conflicts = _overlapping_exclusive_capabilities(
+        job=locked_job,
+        item_windows=item_windows,
+        starts_at=starts_at,
+    )
+    if conflicts:
+        raise ValidationError({'blockers': _overlap_blockers(conflicts)})
 
     if locked_job.visibility_ends_at is None or locked_job.visibility_ends_at < ends_at:
         raise ValidationError(
@@ -312,6 +413,7 @@ def activate_job_service(
 
 def preview_job_service_activation(*, unit, job, actor, activated_at=None):
     _validate_actor_company(actor=actor, company_id=unit.company_id)
+    _validate_actor_job_owner(actor=actor, job=job)
     if unit.company_id != job.company_id:
         raise ValidationError('Lượt dịch vụ và tin tuyển dụng không cùng doanh nghiệp.')
     starts_at = activated_at or timezone.now()
@@ -324,8 +426,22 @@ def preview_job_service_activation(*, unit, job, actor, activated_at=None):
         blockers.append('Tin phải đang công khai và không bị hold.')
 
     items = list(unit.package_version.items.select_related('capability').order_by('order', 'id'))
-    maximum_duration = max((item.duration_days or 0 for item in items), default=0)
-    ends_at = starts_at + timedelta(days=maximum_duration)
+    item_windows = []
+    try:
+        item_windows, ends_at = _activation_item_windows(
+            items=items,
+            job=job,
+            starts_at=starts_at,
+        )
+    except ValidationError as error:
+        blockers.extend(error.messages)
+        ends_at = starts_at
+    conflicts = _overlapping_exclusive_capabilities(
+        job=job,
+        item_windows=item_windows,
+        starts_at=starts_at,
+    )
+    blockers.extend(_overlap_blockers(conflicts))
     required_deadline = lifecycle_local_date(ends_at)
     anchor = job.visibility_starts_at or starts_at
     required_visibility_days = max(
@@ -346,13 +462,18 @@ def preview_job_service_activation(*, unit, job, actor, activated_at=None):
         0,
     )
     deadline_extension_required = bool(job.deadline is None or job.deadline < required_deadline)
+    extension_required = deadline_extension_required or visibility_extension_days > 0
     return {
         'can_activate': not blockers,
         'blockers': blockers,
+        'conflicts': conflicts,
         'starts_at': starts_at,
         'ends_at': ends_at,
+        'current_application_deadline': job.deadline,
+        'current_visibility_ends_at': job.visibility_ends_at,
         'required_application_deadline': required_deadline,
         'deadline_extension_required': deadline_extension_required,
+        'extension_required': extension_required,
         'required_visibility_days': required_visibility_days,
         'visibility_extension_days': visibility_extension_days,
         'items': [
@@ -378,6 +499,8 @@ def activate_job_service_with_confirmed_extension(
     activated_at=None,
 ):
     company = Company.objects.select_for_update().get(pk=unit.company_id)
+    _validate_actor_company(actor=actor, company_id=company.pk)
+    _validate_actor_job_owner(actor=actor, job=job)
     existing = JobServiceActivation.objects.filter(
         company=company,
         idempotency_key=idempotency_key,
@@ -396,12 +519,15 @@ def activate_job_service_with_confirmed_extension(
     )
     if not preview['can_activate']:
         raise ValidationError({'blockers': preview['blockers']})
-    extension_required = (
-        preview['deadline_extension_required'] or preview['visibility_extension_days'] > 0
-    )
+    extension_required = preview['extension_required']
     if extension_required and not confirm_extension:
         raise ValidationError(
-            {'confirm_extension': 'Xác nhận gia hạn tin và kích hoạt trong cùng giao dịch.'}
+            {
+                'confirm_extension': (
+                    'Hệ thống không tự gia hạn tin. Hãy xác nhận rõ việc gia hạn '
+                    'và kích hoạt trong cùng giao dịch.'
+                )
+            }
         )
     if extension_required:
         requested_visibility_days = (
@@ -433,6 +559,7 @@ def refresh_promoted_job(*, activation, actor, idempotency_key, occurred_at=None
 
     company = Company.objects.select_for_update().get(pk=activation.company_id)
     _validate_actor_company(actor=actor, company_id=company.pk)
+    _validate_actor_job_owner(actor=actor, job=activation.job)
     existing = JobServiceUsageEvent.objects.filter(
         company=company,
         idempotency_key=idempotency_key,
@@ -448,6 +575,7 @@ def refresh_promoted_job(*, activation, actor, idempotency_key, occurred_at=None
         return existing
 
     locked_job = Job.objects.select_for_update(of=('self',)).get(pk=activation.job_id)
+    _validate_actor_job_owner(actor=actor, job=locked_job)
     locked_activation = JobServiceActivation.objects.select_for_update().get(pk=activation.pk)
     if (
         locked_activation.company_id != company.pk
@@ -511,6 +639,52 @@ def refresh_promoted_job(*, activation, actor, idempotency_key, occurred_at=None
         occurred_at=occurred_at,
     )
     return usage
+
+
+@transaction.atomic
+def terminate_job_service_activation(*, activation, actor, reason, terminated_at=None):
+    reason = str(reason or '').strip()
+    if not reason:
+        raise ValidationError({'reason': 'Cần ghi rõ lý do dừng dịch vụ.'})
+
+    locked_activation = (
+        JobServiceActivation.objects.select_for_update()
+        .select_related('company', 'job', 'unit__package_version')
+        .get(pk=activation.pk)
+    )
+    _validate_actor_company(actor=actor, company_id=locked_activation.company_id)
+    terminated_at = terminated_at or timezone.now()
+    if (
+        locked_activation.status != JobServiceActivation.Status.ACTIVE
+        or not locked_activation.starts_at <= terminated_at < locked_activation.ends_at
+    ):
+        raise ValidationError('Chỉ có thể dừng dịch vụ đang ở trạng thái hoạt động.')
+
+    locked_activation.status = JobServiceActivation.Status.TERMINATED
+    locked_activation.terminated_at = terminated_at
+    locked_activation.termination_reason = reason
+    locked_activation.save(
+        update_fields=[
+            'status',
+            'terminated_at',
+            'termination_reason',
+            'updated_at',
+        ]
+    )
+    record_service_audit_event(
+        event_type=ServiceAuditEvent.EventType.ACTIVATION_TERMINATED,
+        actor=actor,
+        company=locked_activation.company,
+        package_version=locked_activation.unit.package_version,
+        unit=locked_activation.unit,
+        activation=locked_activation,
+        metadata={
+            'job_public_id': locked_activation.job.public_id,
+            'reason': reason,
+        },
+        occurred_at=terminated_at,
+    )
+    return locked_activation
 
 
 @transaction.atomic

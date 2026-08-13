@@ -1082,6 +1082,7 @@ class EmployerAccountVerificationTests(APITestCase):
         recruiter_admin = RecruiterProfileAdmin(RecruiterProfile, AdminSite())
         self.assertIn('company', recruiter_admin.get_readonly_fields(None, self.first))
         self.assertIn('company_role', recruiter_admin.get_readonly_fields(None, self.first))
+        self.assertIn('contact_phone', recruiter_admin.get_readonly_fields(None, self.first))
 
         forged_company = Company.objects.create(
             company_name='Công ty giả mạo qua Django admin',

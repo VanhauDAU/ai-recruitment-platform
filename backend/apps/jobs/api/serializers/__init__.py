@@ -46,6 +46,7 @@ from .reports import (
     AdminJobReportResolveSerializer,
     AdminJobReportReverseSerializer,
     AdminJobReportSerializer,
+    JobReportCreatedSerializer,
     JobReportCreateSerializer,
 )
 from .saved import SavedJobSerializer
@@ -105,6 +106,7 @@ __all__ = [
     'AdminJobReportReverseSerializer',
     'AdminJobReportSerializer',
     'JobReportCreateSerializer',
+    'JobReportCreatedSerializer',
     'JobSerializer',
     'JobSkillSerializer',
     'JobStatusHistoryAdminSerializer',

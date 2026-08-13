@@ -345,8 +345,8 @@ class JobServiceUsageEvent(models.Model):
                 name='services_usage_activation_idx',
             ),
             models.Index(
-                fields=['job', 'event_type', 'occurred_at'],
-                name='services_usage_job_idx',
+                fields=['job', 'event_type', '-occurred_at', '-id'],
+                name='services_usage_job_rank_idx',
             ),
         ]
         constraints = [
@@ -589,6 +589,7 @@ class ServiceAuditEvent(models.Model):
         UNIT_CONSUMED = 'unit_consumed', 'Sử dụng lượt'
         ACTIVATION_CREATED = 'activation_created', 'Kích hoạt dịch vụ'
         ACTIVATION_EXPIRED = 'activation_expired', 'Dịch vụ kết thúc'
+        ACTIVATION_TERMINATED = 'activation_terminated', 'Dịch vụ bị dừng'
         CAPABILITY_USED = 'capability_used', 'Sử dụng quyền lợi'
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)

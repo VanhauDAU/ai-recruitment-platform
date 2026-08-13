@@ -6,6 +6,7 @@ from unittest.mock import Mock, patch
 
 import requests
 from django.conf import settings
+from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.management import CommandError, call_command
 from django.test import SimpleTestCase, TestCase, override_settings
@@ -337,6 +338,7 @@ class SmsChallengeLifecycleTests(TestCase):
 @override_settings(**SMS_SETTINGS)
 class SmsLiveWorkflowApiTests(APITestCase):
     def setUp(self):
+        cache.clear()
         self.user = User.objects.create_user(
             email='sms-live@example.com',
             password='Password@123',

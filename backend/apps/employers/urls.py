@@ -8,6 +8,10 @@ from .api.views import (
     CompanyDocumentContentView,
     CompanyDocumentListCreateView,
     CompanyDocumentUploadPreviewView,
+    CompanyDomainClaimListCreateView,
+    CompanyDomainClaimManualReviewView,
+    CompanyDomainClaimRotateView,
+    CompanyDomainClaimVerifyView,
     CompanyGalleryDeleteView,
     CompanyGalleryUploadView,
     CompanyLogoUploadView,
@@ -140,6 +144,26 @@ urlpatterns = [
     path('company/search/', CompanySearchView.as_view(), name='employer-company-search'),
     path('company/catalogs/', CompanyCatalogView.as_view(), name='employer-company-catalogs'),
     path('company/join/', JoinCompanyView.as_view(), name='employer-company-join'),
+    path(
+        'company/domain-claims/',
+        CompanyDomainClaimListCreateView.as_view(),
+        name='employer-company-domain-claims',
+    ),
+    path(
+        'company/domain-claims/<str:public_id>/verify/',
+        CompanyDomainClaimVerifyView.as_view(),
+        name='employer-company-domain-claim-verify',
+    ),
+    path(
+        'company/domain-claims/<str:public_id>/rotate/',
+        CompanyDomainClaimRotateView.as_view(),
+        name='employer-company-domain-claim-rotate',
+    ),
+    path(
+        'company/domain-claims/<str:public_id>/request-manual-review/',
+        CompanyDomainClaimManualReviewView.as_view(),
+        name='employer-company-domain-claim-request-manual-review',
+    ),
     path('company/logo/', CompanyLogoUploadView.as_view(), name='employer-company-logo-upload'),
     path('company/cover/', CompanyCoverUploadView.as_view(), name='employer-company-cover-upload'),
     path(

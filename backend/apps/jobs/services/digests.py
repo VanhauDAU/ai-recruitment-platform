@@ -17,6 +17,7 @@ from apps.candidates.models import (
     CandidateJobPreference,
     CandidateProfile,
 )
+from apps.employers.services import employer_badge_state_map
 from apps.sitecontent.models import SiteSetting
 from common.email import send_html_email
 from common.metrics import record_metric
@@ -31,7 +32,6 @@ from ..models import (
     JobAlert,
 )
 from ..models.alert_queries import strict_job_alert_matches
-from ..models.badge_queries import badge_verified_map
 from ..models.querysets import active_jobs_queryset
 from ..models.recommendation_queries import recommend_new_jobs_for_candidate_email
 from .alerts import next_job_alert_run
@@ -762,7 +762,12 @@ def _email_context(digest, items):
             },
         )
     }
-    badge_map = badge_verified_map({(item.job.company_id, item.job.posted_by_id) for item in items})
+    badge_map = {
+        key: state['verified']
+        for key, state in employer_badge_state_map(
+            {(item.job.company_id, item.job.posted_by_id) for item in items}
+        ).items()
+    }
     jobs = []
     for item in items:
         job = item.job

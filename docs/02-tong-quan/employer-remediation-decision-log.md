@@ -104,6 +104,32 @@
 | --- | --- | --- |
 | ER-D52 | `Company` chỉ là hồ sơ/catalogue và không có verification lifecycle; approve, reject, revoke hoặc expire chỉ tác động `EmployerVerificationCase` của từng recruiter. Quyết định này supersede phần company-status của ER-D21, ER-D35 và ER-D36 | Bỏ status/source/time/rejection cấp company và unique claim MST theo trạng thái xác thực; company tiếp tục được tìm kiếm/liên kết độc lập với case. Legacy API badge `company_verified/company_verification` nếu còn giữ tên để tương thích phải suy từ case `approved` của chính `posted_by`, không từ Company hoặc bộ 5 tiêu chí cũ. Legacy classification, hold, decision snapshot và audit chỉ gắn với recruiter case |
 
+## Session 2026-08-13 — Chính sách dấu tick Nhà tuyển dụng
+
+### Bối cảnh
+
+- Setting tuổi tài khoản tối thiểu vẫn tồn tại nhưng không còn được đọc ở
+  runtime; dấu tick công khai hiện chỉ cần case của recruiter ở trạng thái
+  `approved`.
+- Kiểm tra domain hiện tại chỉ so chuỗi email do recruiter tự khai, không có
+  bằng chứng sở hữu, lifecycle hoặc audit.
+- Luồng báo cáo đã có trạng thái `upheld`/đảo quyết định nhưng không còn tác
+  động đến dấu tick; UI, API, test và tài liệu đang mô tả nhiều policy khác
+  nhau.
+
+### Quyết định đã xác nhận
+
+| ID | Quyết định | Hệ quả triển khai |
+| --- | --- | --- |
+| ER-D53 | Dấu tick công khai là read-model của chính recruiter `posted_by` và chỉ bật khi đồng thời đạt năm điều kiện: (1) mailbox công việc hiện tại đã xác thực và khớp chính xác một domain claim đang hiệu lực của company hiện tại; (2) số điện thoại đã xác thực; (3) `EmployerVerificationCase` đúng recruiter/company đã `approved` và toàn bộ tài liệu current theo phương thức GPKD hoặc ủy quyền + giấy tờ định danh đã được duyệt; (4) tài khoản đủ số tháng lịch cấu hình; (5) không có report `upheld` đang hiệu lực thuộc nhóm ảnh hưởng trust | Phần câu cuối ER-D52 yêu cầu badge chỉ suy từ case `approved` bị supersede; phần Company chỉ là catalogue và verification/recruiting-data vẫn recruiter-scoped tiếp tục có hiệu lực. Account bị khóa/xóa, liên kết company sai hoặc evidence mâu thuẫn phải fail closed như invariant an toàn, không phải tiêu chí hiển thị thứ sáu |
+| ER-D54 | Domain claim là bằng chứng dùng chung ở company nhưng mailbox và kết quả badge vẫn theo recruiter. Mặc định xác minh bằng DNS TXT tại `_procv-verification.<domain>`; admin fallback cần quyền riêng, lý do và audit. Match exact domain đã chuẩn hóa IDNA; subdomain phải claim riêng, không suy bằng suffix. Không auto-verify dữ liệu legacy | Một company được có nhiều domain; chỉ một company được giữ một active verified claim cho cùng domain. Pending không khóa domain toàn cục. DNS được recheck định kỳ, có grace hữu hạn; admin fallback hết hạn sau 12 tháng. Đổi mailbox/company, revoke hoặc expire claim làm evidence mất hiệu lực ngay |
+| ER-D55 | Chỉ report current `upheld` với lý do `fake_company`, `scam` hoặc `wrong_info` làm mất dấu tick trên toàn bộ tin của recruiter; pending, dismissed, duplicate và expired không ảnh hưởng. Reverse phục hồi điều kiện badge | Upheld trust report tự tạo moderation hold `confirmed_violation` và ẩn tin vi phạm nếu đang public. Reverse không tự public lại tin; khôi phục visibility là thao tác admin riêng. Candidate report phải có role, public-job guard, throttle; quyết định ảnh hưởng trust cần reason và audit bền vững |
+| ER-D56 | Badge, cấp tài khoản và quota là ba policy có tên riêng dùng chung trust signals, không dùng một boolean lẫn lộn. Cấp 3 dựa trên case recruiter đã approved; quota/candidate-data tiếp tục cần DPA/readiness hiện hành. Domain, tuổi và report chỉ gate dấu tick | Không khóa quota hoặc dữ liệu ứng viên trong sáu tháng vì chính sách badge. Setting `employer_badge_min_account_months` là số nguyên 1–60, mặc định 6, tính theo tháng lịch và mọi thay đổi admin phải có audit |
+| ER-D57 | Giữ tên HTTP legacy `company_verified/company_verification` trong compatibility window nhưng semantics là recruiter verified. Public API chỉ trả breakdown năm nhãn khi đã đạt đủ; khi chưa đạt trả `verified=false, criteria=[]`. Rollout chạy shadow 7 ngày rồi enforce, không grandfather | Thêm contract serializer/schema rõ kiểu dữ liệu, self/admin endpoint mới được trả failure codes và hành động khắc phục. Có metric chênh lệch, dry-run, kill switch và query budget phẳng; không thực hiện DNS trực tiếp trong request danh sách/detail tin |
+
+Người phụ trách sản phẩm xác nhận ER-D53 đến ER-D57 và yêu cầu triển khai ngày
+2026-08-13.
+
 ## Session 2026-08-10 — Gate ER-2/ER-3/ER-6
 
 ### Bối cảnh
@@ -215,6 +241,7 @@ ER-D49 cụ thể hóa tiêu chí “account/company relation còn clean” củ
 | `TIEN-DO-DU-AN.md` các ghi chú publish tức thì | Tin được tạo/gửi trước approval nhưng chỉ admin approval/publish khi blockers sạch |
 | Guard `verification_completed` tổng | Tách workspace readiness, verification approval, candidate-data access và DPA status; known denial điều hướng về checklist theo ER-D42 |
 | ER-D21, phần company-status của ER-D35/ER-D36 | Bị ER-D52 thay thế: Company không có verification lifecycle; mọi quyết định xác thực thuộc recruiter case |
+| ER-D52, phần badge chỉ suy từ case `approved` | Bị ER-D53–ER-D57 thay thế bằng policy năm điều kiện recruiter-scoped, domain claim có bằng chứng, report trust và rollout riêng; ranh giới Company catalogue của ER-D52 không thay đổi |
 
 Các phần lịch sử khác của tài liệu cũ vẫn được giữ cho tới khi phase tương ứng
 cập nhật chúng; không xóa dấu vết quyết định cũ.

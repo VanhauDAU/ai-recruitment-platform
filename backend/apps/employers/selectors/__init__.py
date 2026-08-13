@@ -28,6 +28,12 @@ from .documents import (
     employer_document_content_queryset,
     employer_document_metadata_queryset,
 )
+from .domain_claims import (
+    admin_domain_claims_queryset,
+    company_domain_claims_queryset,
+    domain_claim_allowed_actions,
+    effective_company_domain_claims,
+)
 from .notifications import (
     employer_activity_queryset,
     employer_notification_queryset,
@@ -74,6 +80,10 @@ __all__ = [
     'can_access_employer_document_content',
     'employer_document_content_queryset',
     'employer_document_metadata_queryset',
+    'admin_domain_claims_queryset',
+    'company_domain_claims_queryset',
+    'domain_claim_allowed_actions',
+    'effective_company_domain_claims',
     'search_companies',
     'DpaStatus',
     'build_employer_readiness',

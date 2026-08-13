@@ -268,13 +268,16 @@ test('employer auth: registration has employer fields and consent-gated Google s
 })
 
 async function setEmployerSession(page, overrides = {}) {
-  await page.route('http://localhost:8000/api/auth/refresh/', async (route) => {
+  await page.route('**/api/employer/company/domain-claims/', async (route) => {
+    await route.fulfill({ contentType: 'application/json', body: '[]' })
+  })
+  await page.route('**/api/auth/refresh/', async (route) => {
     await route.fulfill({
       contentType: 'application/json',
       body: JSON.stringify({ access: 'e2e-access' }),
     })
   })
-  await page.route('http://localhost:8000/api/auth/me/', async (route) => {
+  await page.route('**/api/auth/me/', async (route) => {
     const currentOverrides = typeof overrides === 'function' ? overrides() : overrides
     await route.fulfill({
       contentType: 'application/json',
@@ -288,6 +291,70 @@ async function setEmployerSession(page, overrides = {}) {
     })
   })
 }
+
+test('employer domain verification creates a one-time DNS challenge responsively', async ({ page }) => {
+  await setEmployerSession(page, {
+    email_verified: true,
+    employer_onboarding_required: false,
+    employer_onboarding_step: 'complete',
+  })
+  await page.route('**/api/privacy/consent/', async (route) => {
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify({
+      consent: { necessary: true, preferences: false, analytics: false, marketing: false },
+    }) })
+  })
+  await page.route('**/api/employer/me/', async (route) => {
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify({
+      public_id: 'rec_domain',
+      ...INCOMPLETE_EMPLOYER_READINESS,
+      company: { public_id: 'cmp_domain', company_name: 'Công ty Domain' },
+      onboarding: {
+        email_verified: true,
+        phone_verified: true,
+        company_linked: true,
+        business_doc_approved: true,
+        representative_verified: true,
+        dpa_accepted: true,
+      },
+      verification_case: { status: 'approved' },
+      account_verification: { level: 3, verified_job_quota_eligible: true },
+      badge_eligibility: {
+        verified: false,
+        minimum_account_months: 6,
+        eligible_at: null,
+        criteria: [
+          { key: 'email_domain_verified', label: 'Email tên miền công ty đã được xác minh', passed: false, action: 'verify_domain' },
+        ],
+      },
+    }) })
+  })
+  await page.route('**/api/employer/company/domain-claims/', async (route) => {
+    if (route.request().method() === 'POST') {
+      await route.fulfill({ contentType: 'application/json', body: JSON.stringify({
+        public_id: 'dmc_e2e',
+        domain: 'company.vn',
+        method: 'dns_txt',
+        status: 'pending',
+        txt_name: '_procv-verification.company.vn',
+        txt_value: 'procv-verification=e2e-secret',
+        lock_version: 1,
+        allowed_actions: ['verify', 'rotate', 'request_manual_review'],
+      }) })
+      return
+    }
+    await route.fulfill({ contentType: 'application/json', body: '[]' })
+  })
+
+  await page.goto('/tuyendung/app/account/settings/account-info')
+
+  await expect(page.getByRole('heading', { name: 'Xác minh tên miền công ty' })).toBeVisible()
+  await expect(page.getByText('Tên miền công ty chưa được xác minh')).toBeVisible()
+  await page.getByRole('button', { name: 'Tạo mã xác minh' }).click()
+  await expect(page.getByText('company.vn', { exact: true })).toBeVisible()
+  await expect(page.getByText('procv-verification=e2e-secret')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Kiểm tra DNS' })).toBeVisible()
+  await expectNoHorizontalOverflow(page)
+})
 
 test('employer auth: unverified session is redirected to account verification', async ({ page }) => {
   await mockPublicApi(page)
@@ -1379,6 +1446,31 @@ test('employer jobs: detail workspace is compact, actionable and responsive', as
       }),
     })
   })
+  await page.route('http://localhost:8000/api/jobs/mine/posting-context/', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        default_deadline_days: 30,
+        max_deadline_days: 90,
+        max_public_lifetime_days: 90,
+        services: {
+          activation_enabled: true,
+          refresh_enabled: true,
+          alert_enabled: true,
+          metrics_enabled: true,
+        },
+      }),
+    })
+  })
+  await page.route(/http:\/\/localhost:8000\/api\/services\/mine\/inventory\/.*/, async (route) => {
+    await route.fulfill({ contentType: 'application/json', body: '[]' })
+  })
+  await page.route(/http:\/\/localhost:8000\/api\/services\/mine\/activation-history\/.*/, async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({ count: 0, next: null, previous: null, results: [] }),
+    })
+  })
   await page.route(/http:\/\/localhost:8000\/api\/v2\/recruiter\/applications\/.*/, async (route) => {
     await route.fulfill({
       contentType: 'application/json',
@@ -1435,6 +1527,150 @@ test('employer jobs: detail workspace is compact, actionable and responsive', as
   await expect(page.getByText('Phường Hải Châu')).toBeVisible()
   await expect(page.getByText('React', { exact: true })).toBeVisible()
   await expect(page.getByText('Bảo hiểm sức khỏe', { exact: true })).toBeVisible()
+  await expectNoHorizontalOverflow(page)
+
+  if (usesCompactTabs) {
+    await page.getByRole('combobox', { name: 'Chọn nội dung quản lý tin' }).click()
+    await page.locator('.ant-select-dropdown:visible').getByText('Dịch vụ & hiệu quả', { exact: true }).click()
+  } else {
+    await page.getByRole('tab', { name: /Dịch vụ & hiệu quả/ }).click()
+  }
+  await expect(page.getByText('Quy tắc kết hợp dịch vụ')).toBeVisible()
+  await expect(page.getByText(/Hiệu ứng cùng loại không được kích hoạt chồng thời gian/)).toBeVisible()
+  await expectNoHorizontalOverflow(page)
+})
+
+test('employer jobs: refreshing a job explains and applies default-list priority', async ({ page }) => {
+  await mockPublicApi(page)
+  await setEmployerSession(page, {
+    email_verified: true,
+    employer_onboarding_required: false,
+    employer_onboarding_step: 'complete',
+    employer_verification_completed: true,
+  })
+  await page.route('**/api/privacy/consent/', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        consent: {
+          necessary: true,
+          preferences: false,
+          analytics: false,
+          marketing: false,
+        },
+      }),
+    })
+  })
+  await page.route('**/api/employer/me/', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        public_id: 'rec_refresh',
+        ...READY_EMPLOYER_READINESS,
+        onboarding: { verification_completed: true },
+      }),
+    })
+  })
+  await page.route('**/api/jobs/mine/jb_refresh/', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        public_id: 'jb_refresh',
+        title: 'Kỹ sư dữ liệu',
+        status: 'active',
+        application_count: 0,
+        view_count: 18,
+      }),
+    })
+  })
+  await page.route(/http:\/\/localhost:8000\/api\/v2\/recruiter\/applications\/(?:\?.*)?$/, async (route) => {
+    await route.fulfill({ contentType: 'application/json', body: '[]' })
+  })
+  await page.route('**/api/jobs/mine/posting-context/', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        default_deadline_days: 30,
+        max_deadline_days: 90,
+        max_public_lifetime_days: 90,
+        services: {
+          activation_enabled: true,
+          refresh_enabled: true,
+          alert_enabled: false,
+          metrics_enabled: false,
+        },
+      }),
+    })
+  })
+  await page.route(/\/api\/services\/mine\/inventory\/(?:\?.*)?$/, async (route) => {
+    await route.fulfill({ contentType: 'application/json', body: '[]' })
+  })
+  await page.route(/\/api\/services\/mine\/activation-history\/(?:\?.*)?$/, async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        count: 1,
+        next: null,
+        previous: null,
+        results: [{
+          public_id: 'act_refresh_001',
+          package_name: 'Gói làm mới tin',
+          job_public_id: 'jb_refresh',
+          job_title: 'Kỹ sư dữ liệu',
+          job_status: 'active',
+          status: 'active',
+          is_effective: true,
+          starts_at: '2026-08-10T02:00:00Z',
+          ends_at: '2026-08-27T02:00:00Z',
+          items: [{
+            capability: 'job_refresh',
+            name: 'Làm mới tin',
+            quantity: 4,
+            remaining_quantity: 3,
+          }],
+        }],
+      }),
+    })
+  })
+
+  let refreshRequest = null
+  await page.route('**/api/services/activations/act_refresh_001/refresh/', async (route) => {
+    const request = route.request()
+    refreshRequest = {
+      body: request.postDataJSON(),
+      idempotencyKey: request.headers()['idempotency-key'],
+      method: request.method(),
+    }
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({ remaining_quantity: 2 }),
+    })
+  })
+
+  await page.goto('/tuyendung/app/jobs/jb_refresh')
+  await expect(page.getByRole('heading', { name: 'Kỹ sư dữ liệu' })).toBeVisible()
+
+  if (page.viewportSize().width < 640) {
+    await page.getByRole('combobox', { name: 'Chọn nội dung quản lý tin' }).click()
+    await page.locator('.ant-select-dropdown:visible').getByText('Dịch vụ & hiệu quả', { exact: true }).click()
+  } else {
+    await page.getByRole('tab', { name: /Dịch vụ & hiệu quả/ }).click()
+  }
+
+  await expect(page.getByText('Gói làm mới tin')).toBeVisible()
+  const serviceRow = page.getByRole('row').filter({ hasText: 'Gói làm mới tin' })
+  await serviceRow.getByRole('button', { name: /Chi tiết/ }).click()
+  await page.getByRole('button', { name: 'Làm mới tin' }).click()
+
+  const dialog = page.getByRole('dialog', { name: 'Làm mới tin tuyển dụng' })
+  await expect(dialog).toContainText('Trong chế độ sắp xếp Mặc định')
+  await expect(dialog).toContainText('A vẫn giữ mốc ưu tiên trước đó')
+  await expect(dialog).toContainText('luân phiên sau mỗi lần tải lại trang')
+  await dialog.getByRole('button', { name: 'Dùng 1 lượt' }).click()
+
+  await expect.poll(() => refreshRequest).toMatchObject({ method: 'POST', body: {} })
+  expect(refreshRequest.idempotencyKey).toBeTruthy()
+  await expect(page.getByText('Đã tạo mốc ưu tiên mới cho tin trong sắp xếp Mặc định; các tin làm mới trước vẫn giữ mốc của mình.')).toBeVisible()
   await expectNoHorizontalOverflow(page)
 })
 

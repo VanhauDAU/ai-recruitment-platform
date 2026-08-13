@@ -9,11 +9,13 @@ import DashboardLayout from './DashboardLayout'
 const {
   getAdminAccountSummary,
   getAdminCompanySummary,
+  getAdminCompanyDomainClaimSummary,
   getAdminEmployerVerificationSummary,
   useSession,
 } = vi.hoisted(() => ({
   getAdminAccountSummary: vi.fn(),
   getAdminCompanySummary: vi.fn(),
+  getAdminCompanyDomainClaimSummary: vi.fn(),
   getAdminEmployerVerificationSummary: vi.fn(),
   useSession: vi.fn(),
 }))
@@ -28,6 +30,7 @@ vi.mock('@/entities/admin-company', async (importOriginal) => ({
 }))
 vi.mock('@/entities/admin-employer-verification', async (importOriginal) => ({
   ...(await importOriginal()),
+  getAdminCompanyDomainClaimSummary,
   getAdminEmployerVerificationSummary,
 }))
 vi.mock('@/entities/site-settings', () => ({
@@ -58,6 +61,7 @@ describe('DashboardLayout admin access', () => {
       queues: { pending_admin_invitations: 5 },
     })
     getAdminEmployerVerificationSummary.mockResolvedValue({ pending: 3 })
+    getAdminCompanyDomainClaimSummary.mockResolvedValue({ manual_pending: 2 })
     getAdminCompanySummary.mockResolvedValue({
       pending_update_requests: 7,
     })
@@ -246,19 +250,21 @@ describe('DashboardLayout admin access', () => {
 
     const businessMenu = screen.getByRole('button', { name: /Doanh nghiệp/ })
     expect(
-      await within(businessMenu).findByLabelText('10 mục đang chờ'),
-    ).toHaveTextContent('10')
+      await within(businessMenu).findByLabelText('12 mục đang chờ'),
+    ).toHaveTextContent('12')
     await user.click(businessMenu)
     expect(within(businessMenu).queryByLabelText('10 mục đang chờ')).not.toBeInTheDocument()
 
     const recruiterMenu = screen.getByRole('button', { name: /^Nhà tuyển dụng/ })
-    expect(within(recruiterMenu).getByLabelText('3 mục đang chờ')).toHaveTextContent('3')
+    expect(within(recruiterMenu).getByLabelText('5 mục đang chờ')).toHaveTextContent('5')
     await user.click(recruiterMenu)
     expect(within(recruiterMenu).queryByLabelText('3 mục đang chờ')).not.toBeInTheDocument()
 
     const badge = await screen.findByLabelText('3 mục đang chờ')
     expect(badge).toHaveTextContent('3')
     expect(badge).toHaveClass('admin-nav__count')
+    expect(screen.getByRole('button', { name: /Xác minh tên miền/ }))
+      .toHaveTextContent('2')
 
     const restrictedRecruiters = screen.getByRole('button', { name: 'NTD bị hạn chế' })
     expect(restrictedRecruiters.querySelector('.admin-nav__count')).toBeNull()

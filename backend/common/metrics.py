@@ -35,6 +35,8 @@ ALLOWED_METRICS = {
     'employer_sms_retention',
     'employer_notification_event',
     'employer_notification_retention',
+    'employer_badge_policy_shadow',
+    'employer_domain_claim_reconciliation',
     'candidate_job_digest',
     'ai_generation_request',
     'ai_generation_completion',
@@ -77,6 +79,8 @@ def record_metric(name, value=1, **tags):
             'model',
             'phase',
             'attempt',
+            'legacy_verified',
+            'policy_verified',
         }
     }
     logger.info(

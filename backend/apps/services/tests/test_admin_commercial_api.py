@@ -1,20 +1,28 @@
+from datetime import timedelta
+
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APIClient
 
 from apps.accounts.models import AdminPermission, AdminRole, Department
 from apps.accounts.services import assign_membership
-from apps.employers.models import Company
+from apps.employers.models import Company, RecruitmentCampaign
+from apps.employers.tests.readiness_helpers import make_employer_ready
+from apps.jobs.models import Job
 
 from ..models import (
+    JobPromotionMetricDaily,
+    JobServiceActivation,
     ServiceAuditEvent,
     ServiceCategory,
     ServiceEntitlementUnit,
     ServicePackage,
     ServicePackageVersion,
 )
+from ..services import activate_job_service, grant_package_units
 
 
 class AdminCommercialApiTests(TestCase):
@@ -61,6 +69,59 @@ class AdminCommercialApiTests(TestCase):
         self.company = Company.objects.create(
             company_name='Commercial Company',
             created_by=employer,
+        )
+        self.employer = employer
+        self.recruiter = make_employer_ready(employer, company=self.company)
+
+    def publish_version(self):
+        draft = self.create_version()
+        response = self.client.post(
+            reverse('services-admin-package-version-publish', args=[draft['id']]),
+            {},
+            format='json',
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+        return ServicePackageVersion.objects.get(pk=draft['id'])
+
+    def create_public_job(
+        self, *, owner=None, company=None, campaign=None, title='Admin service job'
+    ):
+        owner = owner or self.employer
+        company = company or self.company
+        now = timezone.now()
+        return Job.objects.create(
+            posted_by=owner,
+            company=company,
+            campaign=campaign,
+            title=title,
+            description='Backend platform',
+            requirements='PostgreSQL',
+            benefits='Good team',
+            status=Job.Status.ACTIVE,
+            deadline=timezone.localdate() + timedelta(days=30),
+            requested_visibility_days=30,
+            first_approved_at=now,
+            visibility_starts_at=now,
+            visibility_ends_at=now + timedelta(days=30),
+            published_at=now,
+            approved_at=now,
+        )
+
+    def grant_and_activate(self, *, version, job, actor=None, company=None, key):
+        company = company or self.company
+        actor = actor or self.employer
+        unit = grant_package_units(
+            company=company,
+            package_version=version,
+            quantity=1,
+            actor=self.admin,
+            grant_key=f'{key}-grant',
+        )[0]
+        return activate_job_service(
+            unit=unit,
+            job=job,
+            actor=actor,
+            idempotency_key=f'{key}-activation',
         )
 
     def version_payload(self, **overrides):
@@ -214,3 +275,194 @@ class AdminCommercialApiTests(TestCase):
 
         self.assertEqual(denied_publish.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(denied_grant.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_admin_activation_list_is_filterable_and_returns_rich_contract(self):
+        version = self.publish_version()
+        campaign = RecruitmentCampaign.objects.create(
+            owner=self.recruiter,
+            company=self.company,
+            name='Commercial campaign',
+            target_date=timezone.localdate() + timedelta(days=30),
+            status=RecruitmentCampaign.Status.ACTIVE,
+        )
+        activation = self.grant_and_activate(
+            version=version,
+            job=self.create_public_job(campaign=campaign, title='Filtered paid job'),
+            key='admin-filtered',
+        )
+        other_employer = get_user_model().objects.create_user(
+            email='commercial-other-employer@example.com',
+            password='Password@123',
+            role='employer',
+        )
+        other_company = Company.objects.create(
+            company_name='Other Commercial Company',
+            created_by=other_employer,
+        )
+        make_employer_ready(other_employer, company=other_company)
+        self.grant_and_activate(
+            version=version,
+            job=self.create_public_job(
+                owner=other_employer,
+                company=other_company,
+                title='Other paid job',
+            ),
+            actor=other_employer,
+            company=other_company,
+            key='admin-other-company',
+        )
+
+        response = self.client.get(
+            reverse('services-admin-activations'),
+            {
+                'company_public_id': self.company.public_id,
+                'campaign_public_id': campaign.public_id,
+                'job_public_id': activation.job.public_id,
+                'status': JobServiceActivation.Status.ACTIVE,
+                'ordering': 'job_title',
+            },
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['count'], 1)
+        result = response.data['results'][0]
+        self.assertEqual(result['public_id'], activation.public_id)
+        self.assertEqual(result['company_public_id'], self.company.public_id)
+        self.assertEqual(result['company_name'], self.company.company_name)
+        self.assertEqual(result['job_status'], Job.Status.ACTIVE)
+        self.assertEqual(result['campaign_public_id'], campaign.public_id)
+        self.assertEqual(result['campaign_name'], campaign.name)
+        self.assertEqual(result['package_slug'], self.package.slug)
+        self.assertTrue(result['items'])
+        self.assertEqual(result['metrics']['impressions'], 0)
+        self.assertIsNone(result['terminated_at'])
+
+        invalid = self.client.get(
+            reverse('services-admin-activations'),
+            {'ordering': 'secret'},
+        )
+        self.assertEqual(invalid.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_admin_activation_summary_scopes_counts_units_and_metrics(self):
+        version = self.publish_version()
+        job = self.create_public_job(title='Summary paid job')
+        active = self.grant_and_activate(
+            version=version,
+            job=job,
+            key='admin-summary-active',
+        )
+        expired = self.grant_and_activate(
+            version=version,
+            job=self.create_public_job(title='Summary expired job'),
+            key='admin-summary-expired',
+        )
+        expired.status = JobServiceActivation.Status.EXPIRED
+        expired.save(update_fields=['status', 'updated_at'])
+        grant_package_units(
+            company=self.company,
+            package_version=version,
+            quantity=1,
+            actor=self.admin,
+            grant_key='admin-summary-available',
+        )
+        JobPromotionMetricDaily.objects.create(
+            activation=active,
+            date=timezone.localdate(),
+            impression_count=100,
+            view_count=20,
+            save_count=5,
+            apply_count=2,
+        )
+
+        response = self.client.get(
+            reverse('services-admin-activation-summary'),
+            {'company_public_id': self.company.public_id},
+        )
+        job_scope = self.client.get(
+            reverse('services-admin-activation-summary'),
+            {'job_public_id': job.public_id},
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            response.data['activation_counts'],
+            {'total': 2, 'active': 1, 'expired': 1, 'terminated': 0},
+        )
+        self.assertEqual(response.data['active_total'], 1)
+        self.assertEqual(
+            response.data['metrics'],
+            {
+                'available': True,
+                'impressions': 100,
+                'views': 20,
+                'saves': 5,
+                'applies': 2,
+            },
+        )
+        self.assertEqual(response.data['unit_counts']['available'], 1)
+        self.assertEqual(response.data['unit_counts']['consumed'], 2)
+        self.assertEqual(job_scope.data['activation_counts']['total'], 1)
+        self.assertEqual(job_scope.data['metrics']['impressions'], 100)
+
+    def test_admin_can_terminate_active_service_with_audit_but_viewer_cannot(self):
+        version = self.publish_version()
+        activation = self.grant_and_activate(
+            version=version,
+            job=self.create_public_job(title='Terminate paid job'),
+            key='admin-terminate',
+        )
+        terminate_url = reverse(
+            'services-admin-activation-terminate',
+            args=[activation.public_id],
+        )
+
+        response = self.client.post(
+            terminate_url,
+            {'reason': 'Dừng do sự cố phân phối.'},
+            format='json',
+        )
+        retry = self.client.post(
+            terminate_url,
+            {'reason': 'Không được dừng lần hai.'},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+        self.assertEqual(response.data['status'], JobServiceActivation.Status.TERMINATED)
+        self.assertEqual(response.data['termination_reason'], 'Dừng do sự cố phân phối.')
+        self.assertIsNotNone(response.data['terminated_at'])
+        self.assertEqual(retry.status_code, status.HTTP_400_BAD_REQUEST)
+        audit = ServiceAuditEvent.objects.get(
+            event_type=ServiceAuditEvent.EventType.ACTIVATION_TERMINATED,
+            activation=activation,
+        )
+        self.assertEqual(audit.actor, self.admin)
+        self.assertEqual(audit.metadata['reason'], 'Dừng do sự cố phân phối.')
+
+        viewer = get_user_model().objects.create_user(
+            email='commercial-activation-viewer@example.com',
+            password='Password@123',
+            role='admin',
+        )
+        department = Department.objects.create(code='activation-viewer', name='Activation viewer')
+        role = AdminRole.objects.create(department=department, code='viewer', name='Viewer')
+        role.permissions.add(AdminPermission.objects.get(code='service_entitlement.view'))
+        assign_membership(viewer, role, actor=self.admin)
+        second = self.grant_and_activate(
+            version=version,
+            job=self.create_public_job(title='Viewer denied paid job'),
+            key='admin-viewer-denied',
+        )
+        self.client.force_authenticate(viewer)
+
+        allowed_list = self.client.get(reverse('services-admin-activations'))
+        allowed_summary = self.client.get(reverse('services-admin-activation-summary'))
+        denied_terminate = self.client.post(
+            reverse('services-admin-activation-terminate', args=[second.public_id]),
+            {'reason': 'Không đủ quyền.'},
+            format='json',
+        )
+
+        self.assertEqual(allowed_list.status_code, status.HTTP_200_OK)
+        self.assertEqual(allowed_summary.status_code, status.HTTP_200_OK)
+        self.assertEqual(denied_terminate.status_code, status.HTTP_403_FORBIDDEN)

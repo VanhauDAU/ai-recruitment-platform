@@ -16,4 +16,15 @@ describe('EmployerWorkspaceNavigation', () => {
     expect(employerRouteTitle('/tuyendung/app/notifications')).toBe('Thông báo hệ thống')
     expect(employerSelectedMenuKey('/tuyendung/app/activities')).toBe('/tuyendung/app/activities')
   })
+
+  it('exposes service management as a real workspace route', () => {
+    const services = EMPLOYER_NAV_ITEMS.find(
+      (item) => item.key === '/tuyendung/app/services',
+    )
+
+    expect(services).toMatchObject({ label: 'Dịch vụ của tôi' })
+    expect(services.disabled).not.toBe(true)
+    expect(employerRouteTitle('/tuyendung/app/services')).toBe('Dịch vụ của tôi')
+    expect(employerSelectedMenuKey('/tuyendung/app/services')).toBe('/tuyendung/app/services')
+  })
 })

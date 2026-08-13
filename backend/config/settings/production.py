@@ -55,6 +55,8 @@ if JOB_POSTING_MAX_PUBLIC_LIFETIME_DAYS > 90:
     _errors.append('JOB_POSTING_MAX_PUBLIC_LIFETIME_DAYS không được vượt quá 90 ngày.')
 if JOB_LIFECYCLE_V2_MODE not in {'legacy', 'shadow', 'enforce'}:
     _errors.append('JOB_LIFECYCLE_V2_MODE phải là legacy, shadow hoặc enforce.')
+if EMPLOYER_BADGE_POLICY_MODE not in {'shadow', 'enforce'}:
+    _errors.append('EMPLOYER_BADGE_POLICY_MODE phải là shadow hoặc enforce.')
 if not 1 <= JOB_PROMOTION_ALERT_SELECTION_BATCH_SIZE <= 1000:
     _errors.append('JOB_PROMOTION_ALERT_SELECTION_BATCH_SIZE phải từ 1 đến 1000.')
 if not 7 <= SAVED_JOB_REMARKETING_RETENTION_DAYS <= 365:

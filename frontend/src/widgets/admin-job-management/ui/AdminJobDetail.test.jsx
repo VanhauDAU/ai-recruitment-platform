@@ -41,13 +41,13 @@ const job = {
   pending_changes: { has_baseline: false, changed_count: 0, changes: [] },
 }
 
-function renderDetail() {
+function renderDetail({ permissions = [], serviceContent = null } = {}) {
   getAdminJob.mockResolvedValue(job)
-  useSession.mockReturnValue({ user: { admin_access: { permissions: [] } } })
+  useSession.mockReturnValue({ user: { admin_access: { permissions } } })
   return render(
     <QueryClientProvider client={new QueryClient()}>
       <MemoryRouter>
-        <AdminJobDetail publicId="jb_1" />
+        <AdminJobDetail publicId="jb_1" serviceContent={serviceContent} />
       </MemoryRouter>
     </QueryClientProvider>,
   )
@@ -96,5 +96,25 @@ describe('AdminJobDetail', () => {
 
     await waitFor(() => expect(screen.getByText('Thay đổi cần duyệt')).toBeVisible())
     expect(screen.getByRole('tab', { name: /Thay đổi/ })).toHaveAttribute('aria-selected', 'true')
+  })
+
+  it('does not expose the service tab when the route does not provide authorized content', async () => {
+    renderDetail()
+
+    await waitFor(() => expect(screen.getByText('Nội dung tuyển dụng')).toBeVisible())
+    expect(screen.queryByRole('tab', { name: 'Dịch vụ' })).not.toBeInTheDocument()
+    expect(screen.queryByTestId('job-service-activations')).not.toBeInTheDocument()
+  })
+
+  it('opens the job service content supplied by the route composition', async () => {
+    renderDetail({
+      serviceContent: <div data-testid="job-service-activations">Dịch vụ của Backend Engineer</div>,
+    })
+    await waitFor(() => expect(screen.getByText('Nội dung tuyển dụng')).toBeVisible())
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Dịch vụ' }))
+
+    const panel = screen.getByTestId('job-service-activations')
+    expect(panel).toHaveTextContent('Dịch vụ của Backend Engineer')
   })
 })

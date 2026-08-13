@@ -1,11 +1,14 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import JobDetail from './JobDetail'
 
 const mocks = vi.hoisted(() => ({
   getEmployerJob: vi.fn(),
+  getEmployerActiveServices: vi.fn(),
+  getEmployerServiceHistory: vi.fn(),
+  getEmployerServiceInventory: vi.fn(),
   getJobPostingContext: vi.fn(),
   getRecruiterApplications: vi.fn(),
   readinessState: {
@@ -49,6 +52,16 @@ vi.mock('@/entities/employer-profile', async (importOriginal) => ({
   ...await importOriginal(),
   useEmployerReadiness: () => mocks.readinessState,
 }))
+vi.mock('@/entities/service-package', () => ({
+  activateEmployerService: vi.fn(),
+  createEmployerJobAlert: vi.fn(),
+  getEmployerActiveServices: mocks.getEmployerActiveServices,
+  getEmployerServiceHistory: mocks.getEmployerServiceHistory,
+  getEmployerServiceInventory: mocks.getEmployerServiceInventory,
+  previewEmployerJobAlert: vi.fn(),
+  previewEmployerServiceActivation: vi.fn(),
+  refreshEmployerJobService: vi.fn(),
+}))
 vi.mock('./JobApplicationsWorkspace', () => ({
   default: ({ applications }) => (
     <div>{applications.map((application) => (
@@ -64,13 +77,13 @@ function LocationProbe() {
   return <output data-testid="job-detail-location">{location.pathname}{location.search}</output>
 }
 
-function renderPage() {
+function renderPage(activeTab = 'apply_cv') {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   })
   const view = render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={['/tuyendung/app/jobs/job_1?active_tab=apply_cv']}>
+      <MemoryRouter initialEntries={[`/tuyendung/app/jobs/job_1?active_tab=${activeTab}`]}>
         <Routes>
           <Route path="/tuyendung/app/jobs/:publicId" element={<><JobDetail /><LocationProbe /></>} />
         </Routes>
@@ -97,7 +110,16 @@ describe('JobDetail candidate-data boundary', () => {
       default_deadline_days: 30,
       max_deadline_days: 90,
       max_public_lifetime_days: 90,
+      services: {
+        activation_enabled: false,
+        refresh_enabled: false,
+        alert_enabled: false,
+        metrics_enabled: false,
+      },
     })
+    mocks.getEmployerActiveServices.mockReset().mockResolvedValue([])
+    mocks.getEmployerServiceHistory.mockReset().mockResolvedValue({ count: 0, results: [] })
+    mocks.getEmployerServiceInventory.mockReset().mockResolvedValue([])
     mocks.getRecruiterApplications.mockReset().mockResolvedValue([{
       public_id: 'application_1',
       candidate_name: 'Nguyễn Minh Anh',
@@ -147,5 +169,43 @@ describe('JobDetail candidate-data boundary', () => {
     await waitFor(() => expect(screen.queryByText('Nguyễn Minh Anh')).not.toBeInTheDocument())
     expect(mocks.getRecruiterApplications).toHaveBeenCalledTimes(1)
     expect(screen.getByText('Dữ liệu ứng viên đang được bảo vệ')).toBeInTheDocument()
+  })
+
+  it('shows active paid-service attribution in the dedicated job tab', async () => {
+    mocks.getJobPostingContext.mockResolvedValue({
+      default_deadline_days: 30,
+      max_deadline_days: 90,
+      max_public_lifetime_days: 90,
+      services: {
+        activation_enabled: true,
+        refresh_enabled: false,
+        alert_enabled: false,
+        metrics_enabled: true,
+      },
+    })
+    mocks.getEmployerServiceHistory.mockResolvedValue({ count: 1, results: [{
+      public_id: 'jsa_featured',
+      package_name: 'Tin nổi bật 14 ngày',
+      job_public_id: 'job_1',
+      job_title: 'Kỹ sư Frontend',
+      job_status: 'active',
+      status: 'active',
+      starts_at: '2026-08-13T00:00:00Z',
+      ends_at: '2026-08-27T00:00:00Z',
+      items: [{ capability: 'sponsored_placement', name: 'Vị trí tài trợ', quantity: 1, remaining_quantity: 1 }],
+      metrics: { available: true, impressions: 420, views: 35, saves: 8, applies: 3 },
+    }] })
+
+    renderPage('services')
+
+    expect(await screen.findByText('Tin nổi bật 14 ngày')).toBeVisible()
+    fireEvent.click(screen.getByText('Chi tiết', { exact: true }).closest('button'))
+    expect(screen.getByText('420')).toBeVisible()
+    expect(screen.getByText(/không phải mức tăng thuần/i)).toBeVisible()
+    expect(mocks.getEmployerServiceHistory).toHaveBeenCalledWith({
+      job_public_id: 'job_1',
+      ordering: '-starts_at',
+      page_size: 100,
+    })
   })
 })

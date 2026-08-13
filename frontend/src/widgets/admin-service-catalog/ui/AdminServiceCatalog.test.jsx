@@ -75,6 +75,7 @@ describe('AdminServiceCatalog', () => {
 
     await waitFor(() => expect(document.body).toHaveTextContent('Tin tuyển dụng nổi bật'))
     expect(document.body).toHaveTextContent('Sửa')
+    expect(screen.getByText('Dịch vụ đang chạy')).toBeInTheDocument()
     expect(document.querySelector('.ant-modal')).toBeNull()
   })
 

@@ -16,6 +16,7 @@ from apps.accounts.services import assign_membership
 from apps.employers.models import (
     Company,
     CompanyDocument,
+    CompanyDomainClaim,
     EmployerVerificationCase,
     RecruiterProfile,
 )
@@ -34,7 +35,8 @@ def _employer_job(suffix):
         email_verified=True,
     )
     employer.date_joined = timezone.now() - timedelta(days=365)
-    employer.save(update_fields=['date_joined'])
+    employer.phone = f'09{employer.pk:08d}'
+    employer.save(update_fields=['date_joined', 'phone'])
     company = Company.objects.create(
         company_name=f'Company {suffix}',
         email=f'contact@company-{suffix}.vn',
@@ -43,12 +45,22 @@ def _employer_job(suffix):
     recruiter = RecruiterProfile.objects.create(
         user=employer,
         company=company,
+        contact_phone=employer.phone,
+        verified_phone=employer.phone,
         phone_verified_at=timezone.now(),
     )
     verification_case = EmployerVerificationCase.objects.create(
         recruiter=recruiter,
         company=company,
         status=EmployerVerificationCase.Status.APPROVED,
+        verification_method=EmployerVerificationCase.VerificationMethod.BUSINESS_REGISTRATION,
+    )
+    CompanyDomainClaim.objects.create(
+        company=company,
+        requested_by=employer,
+        domain=f'company-{suffix}.vn',
+        status=CompanyDomainClaim.Status.VERIFIED,
+        verified_at=timezone.now(),
     )
     CompanyDocument.objects.create(
         company=company,
@@ -262,7 +274,12 @@ class JobReportAdminApiTests(APITestCase):
         self.assertEqual(resolved.status_code, status.HTTP_200_OK, resolved.data)
         self.assertEqual(resolved.data['status'], JobReport.Status.UPHELD)
         self.assertEqual(len(resolved.data['resolution_history']), 1)
-        self.assertTrue(job_badge_criteria(self.job)['verified'])
+        self.assertFalse(job_badge_criteria(self.job)['verified'])
+        self.job.refresh_from_db()
+        self.assertEqual(
+            self.job.moderation_hold,
+            Job.ModerationHold.CONFIRMED_VIOLATION,
+        )
 
         missing_note = self.client.post(self.reverse_url(), {'note': ''}, format='json')
         self.assertEqual(missing_note.status_code, status.HTTP_400_BAD_REQUEST)
@@ -285,10 +302,51 @@ class JobReportAdminApiTests(APITestCase):
             ],
         )
         self.assertTrue(job_badge_criteria(self.job)['verified'])
+        self.job.refresh_from_db()
+        self.assertEqual(
+            self.job.moderation_hold,
+            Job.ModerationHold.CONFIRMED_VIOLATION,
+        )
         self.assertEqual(
             JobReportResolutionEvent.objects.filter(report=self.report).count(),
             2,
         )
+
+    def test_upheld_operational_reasons_do_not_affect_trust_badge_or_visibility(self):
+        user_model = get_user_model()
+        for index, reason in enumerate(
+            (JobReport.Reason.DUPLICATE, JobReport.Reason.EXPIRED, JobReport.Reason.OTHER)
+        ):
+            with self.subTest(reason=reason):
+                job = Job.objects.create(
+                    posted_by=self.employer,
+                    company=self.job.company,
+                    title=f'Operational report {index}',
+                    description='Still a legitimate employer.',
+                    status=Job.Status.ACTIVE,
+                )
+                candidate = user_model.objects.create_user(
+                    email=f'operational-{index}@example.com',
+                    password='Password@123',
+                    role=user_model.Role.CANDIDATE,
+                )
+                report = submit_job_report(
+                    job=job,
+                    reporter=candidate,
+                    reason=reason,
+                    detail='Cần xử lý vận hành.',
+                )
+
+                resolve_job_report(
+                    report=report,
+                    status=JobReport.Status.UPHELD,
+                    actor=self.resolver,
+                    note='Đã xác nhận vấn đề vận hành.',
+                )
+
+                job.refresh_from_db()
+                self.assertEqual(job.moderation_hold, Job.ModerationHold.NONE)
+                self.assertTrue(job_badge_criteria(job)['verified'])
 
 
 class JobReportConcurrencyTests(TransactionTestCase):
@@ -324,6 +382,7 @@ class JobReportConcurrencyTests(TransactionTestCase):
                         report=stale_report,
                         status=JobReport.Status.UPHELD,
                         actor=self.admin,
+                        note='Đã xác nhận bằng chứng vi phạm.',
                     )
                 except ValidationError:
                     return 'already-resolved'

@@ -18,7 +18,6 @@ import {
 } from '../model/job-form-values'
 import ApplicationInfoFields from './ApplicationInfoFields'
 import AutomaticApplicationStatusFields from './AutomaticApplicationStatusFields'
-import BasicJobService from './BasicJobService'
 import CandidateExpectationFields from './CandidateExpectationFields'
 import JobDescriptionFields from './JobDescriptionFields'
 import JobFormPreview from './JobFormPreview'
@@ -36,6 +35,7 @@ export default function PostJobForm({
   campaigns = [],
   categories = [],
   postingContext,
+  serviceContent,
   defaultDeadlineDays,
   maxDeadlineDays,
   isDraft,
@@ -272,14 +272,7 @@ export default function PostJobForm({
             active={activeSection === 'services'}
             onToggle={() => toggleSection('services')}
           >
-            <BasicJobService
-              jobPublicId={initialValues?.public_id}
-              jobStatus={initialValues?.status}
-              activationEnabled={postingContext?.services?.activation_enabled === true}
-              refreshEnabled={postingContext?.services?.refresh_enabled === true}
-              alertEnabled={postingContext?.services?.alert_enabled === true}
-              metricsEnabled={postingContext?.services?.metrics_enabled === true}
-            />
+            {serviceContent}
           </JobFormSection>
 
           <div className="sticky bottom-3 z-10 flex flex-col-reverse gap-2 rounded-lg border border-slate-200 bg-white/95 p-3 backdrop-blur sm:flex-row sm:justify-end">

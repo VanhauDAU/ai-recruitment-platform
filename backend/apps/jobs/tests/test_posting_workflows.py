@@ -186,12 +186,16 @@ class JobPostingWorkflowTests(TestCase):
         self.company.save(update_fields=['tax_code'])
         self.recruiter.company_role = RecruiterProfile.CompanyRole.MEMBER
         self.recruiter.verified_phone = '0901234567'
+        self.recruiter.contact_phone = self.recruiter.verified_phone
+        self.user.phone = self.recruiter.verified_phone
+        self.user.save(update_fields=['phone', 'updated_at'])
         self.recruiter.phone_verified_at = timezone.now()
         self.recruiter.registration_completed_at = timezone.now()
         self.recruiter.dpa_accepted_at = timezone.now()
         self.recruiter.save(
             update_fields=[
                 'company_role',
+                'contact_phone',
                 'verified_phone',
                 'phone_verified_at',
                 'registration_completed_at',
@@ -417,10 +421,19 @@ class JobPostingWorkflowTests(TestCase):
         self.assertEqual(job.requested_visibility_days, 30)
         self.assertNotIn('requested_visibility_days', serializer.validated_data)
 
-    def test_basic_job_deadline_cannot_exceed_thirty_days(self):
+    def test_basic_job_deadline_accepts_the_configured_ninety_day_maximum(self):
         serializer = EmployerJobWriteSerializer(
             self.make_publishable_job(),
-            data={'application_deadline': (timezone.localdate() + timedelta(days=31)).isoformat()},
+            data={'application_deadline': (timezone.localdate() + timedelta(days=90)).isoformat()},
+            partial=True,
+        )
+
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+
+    def test_basic_job_deadline_rejects_day_after_the_configured_maximum(self):
+        serializer = EmployerJobWriteSerializer(
+            self.make_publishable_job(),
+            data={'application_deadline': (timezone.localdate() + timedelta(days=91)).isoformat()},
             partial=True,
         )
 

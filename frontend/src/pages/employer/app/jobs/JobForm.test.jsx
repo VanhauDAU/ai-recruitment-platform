@@ -47,9 +47,12 @@ vi.mock('@/entities/session', () => ({
 vi.mock('@/shared/lib/toast', () => ({ message: mocks.message }))
 
 vi.mock('@/widgets/employer-job-editor', () => ({
-  EmployerJobEditor: ({ errorMessage, onPublish, onSaveDraft }) => (
+  EmployerJobEditor: ({ defaultDeadlineDays, errorMessage, maxDeadlineDays, onPublish, onSaveDraft }) => (
     <div>
       {errorMessage && <p>{errorMessage}</p>}
+      <p data-testid="deadline-policy">
+        {defaultDeadlineDays}/{maxDeadlineDays}
+      </p>
       <button type="button" onClick={() => onPublish({ title: 'Backend Engineer' }, null)}>
         Mô phỏng gửi duyệt
       </button>
@@ -104,6 +107,18 @@ describe('JobForm submission feedback', () => {
     ))
     expect(await screen.findByText('Hạn nhận hồ sơ phải là một ngày trong tương lai.'))
       .toBeInTheDocument()
+  })
+
+  it('uses the posting default as the suggestion and the maximum as the selectable limit', async () => {
+    mocks.getJobPostingContext.mockResolvedValue({
+      job_postable: true,
+      default_deadline_days: 30,
+      max_deadline_days: 90,
+    })
+
+    renderPage()
+
+    expect(await screen.findByTestId('deadline-policy')).toHaveTextContent('30/90')
   })
 
   it('shows a toast when saving a draft fails', async () => {

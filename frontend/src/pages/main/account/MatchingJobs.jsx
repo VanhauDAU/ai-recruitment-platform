@@ -1,6 +1,5 @@
 import {
   ArrowRightOutlined,
-  CheckCircleFilled,
   CompassOutlined,
   EnvironmentOutlined,
   HeartFilled,
@@ -22,6 +21,7 @@ import {
   jobDetailPath,
   jobKeys,
   JobPresentationLabels,
+  VerifiedEmployerBadge,
 } from '@/entities/job'
 import { useSavedJob } from '@/features/saved-jobs'
 import { JobImpressionBoundary } from '@/features/track-job-engagement'
@@ -89,9 +89,7 @@ function MatchingJobCard({ job }) {
                 </Link>
                 <p className="mt-0.5 truncate text-sm text-slate-500">
                   {job.company_name}
-                  {job.company_verified && (
-                    <CheckCircleFilled className="ml-1 text-sky-500" title="Nhà tuyển dụng đã xác thực" />
-                  )}
+                  <VerifiedEmployerBadge verified={job.company_verified} className="ml-1" />
                 </p>
                 <JobPresentationLabels job={job} compact className="mt-1.5" />
               </div>

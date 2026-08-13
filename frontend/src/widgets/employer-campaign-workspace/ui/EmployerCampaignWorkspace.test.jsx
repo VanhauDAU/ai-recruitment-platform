@@ -9,6 +9,8 @@ const mocks = vi.hoisted(() => ({
   applyCvPanel: vi.fn(),
   getCampaign: vi.fn(),
   getCampaignReport: vi.fn(),
+  getEmployerActiveServices: vi.fn(),
+  getJobPostingContext: vi.fn(),
   readinessState: {
     readiness: {
       jobWorkspaceReady: true,
@@ -42,6 +44,20 @@ vi.mock('@/entities/campaign', () => ({
 vi.mock('@/entities/employer-profile', async (importOriginal) => ({
   ...await importOriginal(),
   useEmployerReadiness: () => mocks.readinessState,
+}))
+vi.mock('@/entities/job', () => ({
+  getJobPostingContext: mocks.getJobPostingContext,
+  jobKeys: { postingContext: ['jobs', 'posting-context'] },
+}))
+vi.mock('@/entities/service-package', () => ({
+  activateEmployerService: vi.fn(),
+  createEmployerJobAlert: vi.fn(),
+  getEmployerActiveServices: mocks.getEmployerActiveServices,
+  getEmployerServiceHistory: vi.fn(),
+  getEmployerServiceInventory: vi.fn(),
+  previewEmployerJobAlert: vi.fn(),
+  previewEmployerServiceActivation: vi.fn(),
+  refreshEmployerJobService: vi.fn(),
 }))
 vi.mock('@/features/manage-campaigns', () => ({
   CampaignNameForm: () => null,
@@ -102,6 +118,15 @@ describe('EmployerCampaignWorkspace candidate-data boundary', () => {
       application_pair_count: 4,
       jobs: { total: 2 },
     })
+    mocks.getJobPostingContext.mockReset().mockResolvedValue({
+      services: {
+        activation_enabled: false,
+        refresh_enabled: false,
+        alert_enabled: false,
+        metrics_enabled: false,
+      },
+    })
+    mocks.getEmployerActiveServices.mockReset().mockResolvedValue([])
   })
 
   it.each([
@@ -149,5 +174,38 @@ describe('EmployerCampaignWorkspace candidate-data boundary', () => {
     await waitFor(() => expect(screen.queryByText('Nguyễn Minh Anh')).not.toBeInTheDocument())
     expect(mocks.applyCvPanel).toHaveBeenCalledTimes(1)
     expect(screen.getByText('Dữ liệu ứng viên đang được bảo vệ')).toBeInTheDocument()
+  })
+
+  it('shows campaign-scoped running services separately from organic performance', async () => {
+    mocks.getJobPostingContext.mockResolvedValue({
+      services: {
+        activation_enabled: true,
+        refresh_enabled: false,
+        alert_enabled: false,
+        metrics_enabled: true,
+      },
+    })
+    mocks.getEmployerActiveServices.mockResolvedValue([{
+      public_id: 'jsa_campaign',
+      package_name: 'Ưu tiên chiến dịch',
+      job_public_id: 'job_1',
+      job_title: 'Frontend Engineer',
+      job_status: 'active',
+      campaign_public_id: 'camp_1',
+      campaign_name: 'Chiến dịch Frontend',
+      status: 'active',
+      starts_at: '2026-08-13T00:00:00Z',
+      ends_at: '2026-08-27T00:00:00Z',
+      items: [{ capability: 'sponsored_placement', name: 'Vị trí tài trợ', quantity: 1, remaining_quantity: 1 }],
+      metrics: { available: true, impressions: 210, views: 18, saves: 4, applies: 2 },
+    }])
+
+    renderPage('services')
+
+    expect(await screen.findByText('Ưu tiên chiến dịch')).toBeVisible()
+    expect(screen.getByText('210')).toBeVisible()
+    expect(mocks.getEmployerActiveServices).toHaveBeenCalledWith({
+      campaign_public_id: 'camp_1',
+    })
   })
 })

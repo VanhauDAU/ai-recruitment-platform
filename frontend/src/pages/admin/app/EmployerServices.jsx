@@ -8,7 +8,7 @@ export default function AdminEmployerServices() {
       <AdminPageHeader
         eyebrow="Nội dung & dịch vụ"
         title="Dịch vụ nhà tuyển dụng"
-        description="Quản lý danh mục, gói dịch vụ, giá và trạng thái hiển thị trên cổng nhà tuyển dụng."
+        description="Quản lý catalogue, kho lượt, dịch vụ đang chạy và hiệu quả theo tin tuyển dụng."
         icon={<SolutionOutlined />}
       />
       <AdminServiceCatalog />

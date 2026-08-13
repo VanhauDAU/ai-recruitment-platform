@@ -361,6 +361,45 @@ def hide_job_visibility(
 
 
 @transaction.atomic
+def apply_confirmed_report_hold(*, job, actor, report, note):
+    """Apply the durable visibility hold caused by an upheld trust report.
+
+    This intentionally has no inverse in the report reversal flow: reversing a
+    moderation conclusion restores badge eligibility, while republishing a job
+    remains an explicit, separately audited administrator decision.
+    """
+    job = (
+        Job.objects.select_for_update(of=('self',))
+        .select_related('posted_by', 'campaign')
+        .get(pk=job.pk)
+    )
+    if report.job_id != job.pk:
+        raise ValidationError({'report': 'Báo cáo không thuộc tin này.'})
+    if job.status != Job.Status.ACTIVE:
+        return job
+    if job.moderation_hold == Job.ModerationHold.CONFIRMED_VIOLATION:
+        return job
+
+    fingerprint = job_content_fingerprint(job)
+    previous_hold = job.moderation_hold
+    job.moderation_hold = Job.ModerationHold.CONFIRMED_VIOLATION
+    job.moderation_held_at = timezone.now()
+    job.save(update_fields=['moderation_hold', 'moderation_held_at', 'updated_at'])
+    _record_moderation_event(
+        job=job,
+        action=JobModerationEvent.Action.HIDE,
+        actor=actor,
+        fingerprint=fingerprint,
+        reason_code=JobModerationEvent.Reason.CONFIRMED_REPORT,
+        note=note,
+        from_hold=previous_hold,
+        to_hold=Job.ModerationHold.CONFIRMED_VIOLATION,
+        source_report=report,
+    )
+    return job
+
+
+@transaction.atomic
 def restore_job_visibility(*, job, user, note, review_token):
     job = (
         Job.objects.select_for_update(of=('self',))

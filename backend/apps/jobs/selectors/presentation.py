@@ -5,13 +5,16 @@ from django.conf import settings
 from django.db.models import Prefetch, prefetch_related_objects
 from django.utils import timezone
 
-from apps.services.models import JobServiceActivation, JobServiceActivationItem
+from apps.services.models import (
+    CARD_TONE_PRIORITY,
+    PLACEMENT_PRIORITY,
+    JobServiceActivation,
+    JobServiceActivationItem,
+)
 
 from ..models import Job
 
 VIETNAM_TIME_ZONE = ZoneInfo('Asia/Ho_Chi_Minh')
-CARD_TONE_PRIORITY = {'neutral': 0, 'orange': 1, 'green': 2, 'green_strong': 3}
-PLACEMENT_PRIORITY = {'organic': 0, 'search_sponsored': 1, 'best_jobs_eligible': 2}
 
 
 def effective_service_presentations_prefetch(*, lookup='service_activations', at=None):
@@ -102,30 +105,61 @@ def job_presentation(job):
     commercial_active_until = []
     commercial_urgent = False
     if getattr(settings, 'JOB_PRESENTATION_V2_ENABLED', False):
+        winning_items = {}
         for activation in getattr(job, 'effective_service_activations', ()):
-            for item in getattr(activation, 'effective_presentation_items', ()):
+            items = list(getattr(activation, 'effective_presentation_items', ()))
+            placement_priority = max(
+                (
+                    PLACEMENT_PRIORITY.get(item.configuration.get('placement', 'organic'), 0)
+                    for item in items
+                    if item.capability.code == 'sponsored_placement'
+                ),
+                default=0,
+            )
+            tone_priority = max(
+                (
+                    CARD_TONE_PRIORITY.get(item.configuration.get('tone', 'neutral'), 0)
+                    for item in items
+                    if item.capability.code == 'card_tone'
+                ),
+                default=0,
+            )
+            activation_priority = (
+                placement_priority,
+                tone_priority,
+                activation.ends_at,
+                activation.pk,
+            )
+            for item in items:
                 code = item.capability.code
-                if code == 'sponsored_placement':
-                    sponsored = True
-                    next_placement = item.configuration.get('placement', 'search_sponsored')
-                    if PLACEMENT_PRIORITY.get(next_placement, 0) > PLACEMENT_PRIORITY.get(
-                        placement, 0
-                    ):
-                        placement = next_placement
-                    display_reason = 'Tin được tài trợ bởi nhà tuyển dụng.'
-                    commercial_active_until.append(item.ends_at)
-                elif code == 'card_tone':
-                    sponsored = True
-                    display_reason = 'Tin được tài trợ bởi nhà tuyển dụng.'
-                    next_tone = item.configuration.get('tone', 'neutral')
-                    if CARD_TONE_PRIORITY.get(next_tone, 0) > CARD_TONE_PRIORITY.get(card_tone, 0):
-                        card_tone = next_tone
-                    commercial_active_until.append(item.ends_at)
-                elif code == 'urgent_label':
-                    sponsored = True
-                    display_reason = 'Tin được tài trợ bởi nhà tuyển dụng.'
-                    commercial_urgent = True
-                    commercial_active_until.append(item.ends_at)
+                if code not in {'sponsored_placement', 'card_tone', 'urgent_label'}:
+                    continue
+                current = winning_items.get(code)
+                if current is None or activation_priority > current[0]:
+                    winning_items[code] = (activation_priority, item)
+
+        sponsored_item = winning_items.get('sponsored_placement')
+        tone_item = winning_items.get('card_tone')
+        urgent_item = winning_items.get('urgent_label')
+        if sponsored_item:
+            sponsored = True
+            placement = sponsored_item[1].configuration.get(
+                'placement',
+                'search_sponsored',
+            )
+            commercial_active_until.append(sponsored_item[1].ends_at)
+        if tone_item:
+            sponsored = True
+            next_tone = tone_item[1].configuration.get('tone', 'neutral')
+            if CARD_TONE_PRIORITY.get(next_tone, 0) > CARD_TONE_PRIORITY.get(card_tone, 0):
+                card_tone = next_tone
+            commercial_active_until.append(tone_item[1].ends_at)
+        if urgent_item:
+            sponsored = True
+            commercial_urgent = True
+            commercial_active_until.append(urgent_item[1].ends_at)
+        if winning_items:
+            display_reason = 'Tin được tài trợ bởi nhà tuyển dụng.'
 
     labels = []
     if sponsored:

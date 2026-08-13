@@ -153,6 +153,7 @@ class RecruiterProfileAdmin(admin.ModelAdmin):
     readonly_fields = [
         'company',
         'company_role',
+        'contact_phone',
         'verified_phone',
         'phone_verified_at',
         'registration_completed_at',

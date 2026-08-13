@@ -73,8 +73,15 @@ ServicePackage
 - Package có số lượng N tạo N unit độc lập.
 - `activate_by` mặc định 90 ngày nhưng cấu hình theo version.
 - Activation ngày cuối vẫn chạy đủ duration nếu job đủ điều kiện.
+- Capability theo lượt không khai báo duration riêng sẽ kế thừa thời hạn của
+  activation. Với add-on chỉ có lượt, activation kéo dài đến cuối public cycle
+  hiện tại của tin và không tự gia hạn vòng đời tin.
 - Preview không giữ chỗ; confirm luôn revalidate trong transaction, khóa unit và
   job, đồng thời dùng idempotency key.
+- Capability theo thời gian là độc quyền theo `(job, capability, time window)`:
+  một gói có bất kỳ item nào chồng với activation đang chạy sẽ bị chặn toàn bộ,
+  không consume unit. `job_refresh` và `job_alert` là quyền lợi theo lượt nên
+  được phép cộng dồn qua nhiều activation.
 - Không hard-delete catalogue/version/unit/activation đã được tham chiếu.
 
 ### 2.4. Capability registry
@@ -122,6 +129,13 @@ legacy. Relevance là điều kiện đầu vào của sponsored distribution; t
 không biến một tin không phù hợp thành kết quả phù hợp. Tất cả tin trả phí có
 disclosure bằng chữ “Tài trợ”, không truyền nghĩa chỉ bằng màu.
 
+Với dữ liệu legacy đã có overlap, backend chọn hiệu ứng theo capability thay vì
+tên/giá gói: `best_jobs_eligible > search_sponsored > organic`, sau đó
+`green_strong > green > orange > neutral`, rồi ưu tiên activation có thời điểm
+kết thúc muộn hơn và ID mới hơn để tie-break ổn định. Presentation và attribution
+metrics phải dùng cùng thứ tự này. Chính sách này chỉ để đọc dữ liệu legacy;
+activation mới vẫn bị overlap guard chặn.
+
 ### 2.6. Ownership và dependency
 
 - `apps.jobs`: public lifecycle, availability, job content và candidate query.
@@ -168,7 +182,7 @@ thanh toán hoặc PII không cần thiết.
 | `JOB_PRESENTATION_V2_ENABLED` | `false` | Bật projection mới |
 | `SERVICE_CATALOG_V2_ENABLED` | `false` | Bật versioned catalogue |
 | `SERVICE_ACTIVATION_ENABLED` | `false` | Cho NTD consume unit |
-| `SPONSORED_JOB_DISTRIBUTION_ENABLED` | `false` | Kill switch slot tài trợ |
+| `SPONSORED_JOB_DISTRIBUTION_ENABLED` | `false` | Kill switch phân tầng trả phí |
 | `JOB_PROMOTION_REFRESH_ENABLED` | `false` | Kill switch refresh |
 | `JOB_PROMOTION_ALERT_ENABLED` | `false` | Kill switch Job Alert |
 | `SAVED_JOB_REMARKETING_ENABLED` | `false` | Kill switch remarketing |

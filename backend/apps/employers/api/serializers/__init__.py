@@ -23,6 +23,17 @@ from .companies import (
     CompanySerializer,
     IndustrySerializer,
 )
+from .domain_claims import (
+    AdminCompanyDomainClaimDetailSerializer,
+    AdminCompanyDomainClaimSerializer,
+    AdminCompanyDomainClaimSummarySerializer,
+    AdminDomainClaimConfirmationSerializer,
+    AdminDomainClaimImpactResponseSerializer,
+    AdminDomainClaimImpactSerializer,
+    CompanyDomainClaimManualRequestSerializer,
+    CompanyDomainClaimRotateSerializer,
+    CompanyDomainClaimSerializer,
+)
 from .notifications import (
     EmployerActivitySerializer,
     EmployerNotificationPreferenceSerializer,
@@ -47,6 +58,15 @@ __all__ = [
     'AdminVerificationDecisionSerializer',
     'AdminVerificationDocumentReviewSerializer',
     'CompanyImageSerializer',
+    'AdminCompanyDomainClaimSerializer',
+    'AdminCompanyDomainClaimDetailSerializer',
+    'AdminCompanyDomainClaimSummarySerializer',
+    'AdminDomainClaimConfirmationSerializer',
+    'AdminDomainClaimImpactSerializer',
+    'AdminDomainClaimImpactResponseSerializer',
+    'CompanyDomainClaimManualRequestSerializer',
+    'CompanyDomainClaimRotateSerializer',
+    'CompanyDomainClaimSerializer',
     'CompanySearchSerializer',
     'CompanySerializer',
     'CompanyUpdateRequestSerializer',

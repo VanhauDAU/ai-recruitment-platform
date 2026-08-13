@@ -2,6 +2,7 @@ import { Form } from 'antd'
 import { useCallback, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import { AI_JOB_MODES, AiJobGenerationPanel } from '@/features/generate-job-post'
+import { JobServiceManager } from '@/features/manage-job-services'
 import { createJobFormValues, PostJobForm } from '@/features/post-job'
 import useConfirmAction from '@/shared/ui/use-confirm-action'
 import JobCreationModeChooser from './JobCreationModeChooser'
@@ -127,6 +128,17 @@ export default function EmployerJobEditor({
           aiSuggestionKey={generatedResult?.public_id}
           form={form}
           initialValues={initialValues}
+          serviceContent={(
+            <JobServiceManager
+              jobPublicId={initialValues?.public_id}
+              jobStatus={initialValues?.status}
+              activationEnabled={formProps.postingContext?.services?.activation_enabled === true}
+              refreshEnabled={formProps.postingContext?.services?.refresh_enabled === true}
+              alertEnabled={formProps.postingContext?.services?.alert_enabled === true}
+              metricsEnabled={formProps.postingContext?.services?.metrics_enabled === true}
+              showInventory
+            />
+          )}
           onAiSuggestionApplied={() => setFormDirty(false)}
           onValuesChange={() => setFormDirty(true)}
           onSaveDraft={(payload) => onSaveDraft(payload, attributedGenerationId)}

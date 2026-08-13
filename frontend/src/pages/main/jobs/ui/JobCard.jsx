@@ -1,4 +1,4 @@
-import { CheckCircleFilled, HeartFilled, HeartOutlined } from '@ant-design/icons'
+import { HeartFilled, HeartOutlined } from '@ant-design/icons'
 import { Tooltip } from 'antd'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
@@ -18,6 +18,7 @@ import {
   JobPresentationLabels,
   resolveJobPresentation,
   SavedJobTooltipContent,
+  VerifiedEmployerBadge,
 } from '@/entities/job'
 import { useSavedJob } from '@/features/saved-jobs'
 import { useJobImpression } from '@/features/track-job-engagement'
@@ -180,11 +181,10 @@ export default function JobCard({
             >
               {job.title}
             </Link>
-            {job.company_verified && (
-              <Tooltip title="Nhà tuyển dụng đã xác thực">
-                <CheckCircleFilled className="ml-1.5 translate-y-[-1px] align-middle text-sm !text-emerald-500" />
-              </Tooltip>
-            )}
+            <VerifiedEmployerBadge
+              verified={job.company_verified}
+              className="ml-1.5 translate-y-[-1px]"
+            />
           </h3>
           <span className="shrink-0 text-sm font-semibold text-[var(--brand-primary)]">{formatSalary(job)}</span>
         </div>
