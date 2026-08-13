@@ -432,6 +432,7 @@ class PublicJobListSerializer(JobSerializer):
             'is_urgent',
             'has_flash_badge',
             'presentation',
+            'first_approved_at',
             'published_at',
             'created_at',
         ]

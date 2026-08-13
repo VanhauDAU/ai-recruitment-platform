@@ -24,19 +24,39 @@ ADMIN_LEAD_ORDERING_FIELDS = {
 def active_public_categories_queryset():
     """Nhóm dịch vụ active kèm gói active đã sắp thứ tự (to_attr=active_packages)."""
     if not getattr(settings, 'SERVICE_CATALOG_V2_ENABLED', False):
-        return ServiceCategory.objects.filter(is_active=True).prefetch_related(
-            Prefetch(
-                'packages',
-                queryset=ServicePackage.objects.filter(is_active=True).order_by('order', 'slug'),
-                to_attr='active_packages',
+        legacy_or_published_packages = (
+            ServicePackage.objects.filter(is_active=True)
+            .filter(
+                Q(versions__isnull=True)
+                | Q(versions__status=ServicePackageVersion.Status.PUBLISHED)
+            )
+            .order_by('order', 'slug')
+            .distinct()
+        )
+        return (
+            ServiceCategory.objects.filter(
+                is_active=True,
+                packages__in=legacy_or_published_packages,
+            )
+            .distinct()
+            .prefetch_related(
+                Prefetch(
+                    'packages',
+                    queryset=legacy_or_published_packages,
+                    to_attr='active_packages',
+                )
             )
         )
     published_versions = ServicePackageVersion.objects.filter(
         status=ServicePackageVersion.Status.PUBLISHED,
     ).prefetch_related('items__capability')
     active_packages = (
-        ServicePackage.objects.filter(is_active=True)
+        ServicePackage.objects.filter(
+            is_active=True,
+            versions__status=ServicePackageVersion.Status.PUBLISHED,
+        )
         .order_by('order', 'slug')
+        .distinct()
         .prefetch_related(
             Prefetch(
                 'versions',
@@ -45,11 +65,15 @@ def active_public_categories_queryset():
             )
         )
     )
-    return ServiceCategory.objects.filter(is_active=True).prefetch_related(
-        Prefetch(
-            'packages',
-            queryset=active_packages,
-            to_attr='active_packages',
+    return (
+        ServiceCategory.objects.filter(is_active=True, packages__in=active_packages)
+        .distinct()
+        .prefetch_related(
+            Prefetch(
+                'packages',
+                queryset=active_packages,
+                to_attr='active_packages',
+            )
         )
     )
 

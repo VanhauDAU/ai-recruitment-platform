@@ -15,6 +15,7 @@ import HomeHeroMascot from './ui/HomeHeroMascot'
 import { LocationFilter } from '@/entities/location'
 import MarketStats from './ui/MarketStats'
 import { SearchDropdown, saveHistory } from '@/features/search-jobs'
+import { SavedJobRemarketingLane } from '@/features/saved-job-remarketing'
 import './home-mascot.css'
 
 const SUGGESTED_JOBS = [
@@ -237,6 +238,8 @@ export default function Home() {
       <section className="max-w-6xl mx-auto px-4 pt-8">
         <BestJobs categories={categories} />
       </section>
+
+      <SavedJobRemarketingLane />
 
       <section className="pt-8">
         <div className="bg-white py-8">

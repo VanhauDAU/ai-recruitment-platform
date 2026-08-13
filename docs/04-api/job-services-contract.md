@@ -1,6 +1,6 @@
 # Hợp đồng API dự kiến — Job lifecycle và Employer Services V2
 
-**Trạng thái:** Design-first, chưa phải API runtime  
+**Trạng thái:** Runtime contract; compatibility fields vẫn còn
 **ADR:** [ADR-0012](../02-tong-quan/adr-0012-job-services-architecture.md)
 
 Tài liệu khóa shape và semantics trước khi tạo model. Khi triển khai phải cập
@@ -257,3 +257,18 @@ dụng unit chưa consume; activation đã chạy dùng terminate/compensation w
 - OpenAPI validate trong CI; examples trên trở thành schema/example tests.
 - Candidate presentation default phải ổn định khi services DB không có dữ liệu.
 - Endpoint list giữ query count phẳng theo số row.
+
+## 9. Job Alert và remarketing đã triển khai
+
+- `POST /api/services/activations/{activation}/job-alerts/preview/` kiểm tra còn
+  lượt và có ít nhất một Job Alert phù hợp.
+- `POST /api/services/activations/{activation}/job-alerts/` consume idempotent
+  một lượt, sau đó outbox chọn/gửi theo batch. Trước SMTP luôn kiểm tra lại trạng
+  thái tin, email, auth revision, opt-out và Job Alert nguồn.
+- `GET /api/jobs/remarketing/saved/` chỉ trả lane khi user là candidate đăng
+  nhập, feature flag bật và signed consent cookie cho phép marketing.
+- `POST /api/jobs/remarketing/saved/impressions/` ghi frequency cap; request gồm
+  `job_public_id`, `activation_public_id`. Server revalidate saved state,
+  application, availability và activation trong transaction.
+- Remarketing chỉ dùng `SavedJob`; không dùng aggregate view count và không tạo
+  lịch sử viewed-job ngầm.

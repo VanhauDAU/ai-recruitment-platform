@@ -1015,7 +1015,10 @@ class CandidateJobAlertTaskContractTests(SimpleTestCase):
             settings.CELERY_TASK_ROUTES['apps.jobs.tasks.*']['queue'],
             'candidate-email',
         )
-        compose = (Path(settings.BASE_DIR).parent / 'docker-compose.yml').read_text()
+        compose_path = Path(__file__).resolve().parents[4] / 'docker-compose.yml'
+        if not compose_path.exists():
+            self.skipTest('Repository root is not mounted in this backend runtime.')
+        compose = compose_path.read_text(encoding='utf-8')
         self.assertIn('upload-scan,candidate-email', compose)
 
     @patch('apps.jobs.tasks.alerts.prepare_candidate_job_digest.delay')

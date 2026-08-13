@@ -3,7 +3,12 @@ from rest_framework import serializers
 
 from apps.jobs.models import Job
 
-from ...models import JobServiceActivation, JobServiceUsageEvent, ServiceEntitlementUnit
+from ...models import (
+    JobServiceActivation,
+    JobServiceAlertDispatch,
+    JobServiceUsageEvent,
+    ServiceEntitlementUnit,
+)
 
 
 class EmployerServiceUnitSerializer(serializers.ModelSerializer):
@@ -104,4 +109,25 @@ class EmployerUsageSerializer(serializers.ModelSerializer):
             'event_type',
             'occurred_at',
             'remaining_quantity',
+        ]
+
+
+class EmployerAlertDispatchSerializer(serializers.ModelSerializer):
+    activation_public_id = serializers.CharField(source='activation.public_id')
+    job_public_id = serializers.CharField(source='job.public_id')
+
+    class Meta:
+        model = JobServiceAlertDispatch
+        fields = [
+            'public_id',
+            'activation_public_id',
+            'job_public_id',
+            'status',
+            'selection_finished',
+            'recipient_count',
+            'sent_count',
+            'cancelled_count',
+            'failed_count',
+            'created_at',
+            'completed_at',
         ]

@@ -142,3 +142,19 @@ export async function refreshEmployerJobService(activationPublicId, idempotencyK
   )
   return data
 }
+
+export async function previewEmployerJobAlert(activationPublicId) {
+  const { data } = await client.post(
+    `/services/activations/${activationPublicId}/job-alerts/preview/`,
+  )
+  return data
+}
+
+export async function createEmployerJobAlert(activationPublicId, idempotencyKey) {
+  const { data } = await client.post(
+    `/services/activations/${activationPublicId}/job-alerts/`,
+    {},
+    { headers: { 'Idempotency-Key': idempotencyKey } },
+  )
+  return data
+}

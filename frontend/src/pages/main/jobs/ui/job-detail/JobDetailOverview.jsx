@@ -13,6 +13,7 @@ import { Link } from 'react-router'
 import {
   EXPERIENCE_YEARS_LABELS,
   formatDeadline,
+  formatJobPostedLabel,
   formatNumber,
   formatSalary,
   getSalaryDisplayNote,
@@ -22,14 +23,6 @@ import { formatJobDate } from '../../lib/job-detail-presentation'
 import VerifiedEmployerBadge from './VerifiedEmployerBadge'
 
 const EMPTY_LABEL = 'Chưa cập nhật'
-
-function publishedLabel(value) {
-  if (!value) return null
-  const diff = Math.floor((Date.now() - new Date(value)) / 86_400_000)
-  if (diff <= 0) return 'Đăng hôm nay'
-  if (diff < 7) return `Đăng ${diff} ngày trước`
-  return `Đăng ${Math.floor(diff / 7)} tuần trước`
-}
 
 export function JobBreadcrumbs({ job }) {
   return (
@@ -48,7 +41,7 @@ export function JobHero({ job, saved, applicationStatus, onApply, onSave, onShar
   const locations = job.locations_detail?.map((location) => location.name).join(' · ') || EMPTY_LABEL
   const deadline = formatDeadline(job.deadline)
   const experience = EXPERIENCE_YEARS_LABELS[job.experience_years] || EMPTY_LABEL
-  const published = publishedLabel(job.published_at || job.created_at)
+  const published = formatJobPostedLabel(job)
 
   return (
     <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">

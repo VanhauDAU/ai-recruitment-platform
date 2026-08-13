@@ -12,15 +12,11 @@ class UploadDeploymentContractTests(SimpleTestCase):
         if not compose_path.exists():
             self.skipTest('Repository root is not mounted in this backend runtime.')
         compose = compose_path.read_text(encoding='utf-8')
-        worker_queue_matches = re.findall(
-            r'celery -A config worker[^\n]* -Q ([^\s]+)', compose
-        )
+        worker_queue_matches = re.findall(r'celery -A config worker[^\n]* -Q ([^\s]+)', compose)
 
         self.assertTrue(worker_queue_matches)
         consumed_queues = {
-            queue
-            for queue_argument in worker_queue_matches
-            for queue in queue_argument.split(',')
+            queue for queue_argument in worker_queue_matches for queue in queue_argument.split(',')
         }
         routed_queues = {
             route['queue']

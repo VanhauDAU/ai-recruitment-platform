@@ -6,9 +6,11 @@ import BasicJobService from './BasicJobService'
 
 const serviceApi = vi.hoisted(() => ({
   activateEmployerService: vi.fn(),
+  createEmployerJobAlert: vi.fn(),
   getEmployerActiveServices: vi.fn(),
   getEmployerServiceInventory: vi.fn(),
   previewEmployerServiceActivation: vi.fn(),
+  previewEmployerJobAlert: vi.fn(),
   refreshEmployerJobService: vi.fn(),
 }))
 const toast = vi.hoisted(() => ({
@@ -83,6 +85,50 @@ describe('BasicJobService', () => {
     expect(screen.getByRole('link', { name: 'Xem các gói gia tăng hiệu quả' })).toBeInTheDocument()
     expect(serviceApi.getEmployerServiceInventory).not.toHaveBeenCalled()
     expect(screen.queryByText(/Thời gian hiển thị/)).not.toBeInTheDocument()
+  })
+
+  it('previews and creates one consent-aware Job Alert dispatch', async () => {
+    const user = userEvent.setup()
+    serviceApi.getEmployerActiveServices
+      .mockResolvedValueOnce([{
+        public_id: 'jsa_alert',
+        package_name: 'Nổi bật',
+        job_title: 'Backend Engineer',
+        ends_at: '2026-08-26T00:00:00Z',
+        items: [{
+          capability: 'job_alert',
+          name: 'Job Alert',
+          quantity: 1,
+          remaining_quantity: 1,
+        }],
+      }])
+      .mockResolvedValueOnce([])
+    serviceApi.previewEmployerJobAlert.mockResolvedValue({
+      can_dispatch: true,
+      blockers: [],
+      remaining_quantity: 1,
+      message: 'Chỉ gửi cho ứng viên đã chủ động tạo Job Alert phù hợp.',
+    })
+    serviceApi.createEmployerJobAlert.mockResolvedValue({ public_id: 'jad_1' })
+
+    renderService({
+      jobPublicId: 'job_1',
+      jobStatus: 'active',
+      activationEnabled: true,
+      alertEnabled: true,
+    })
+
+    await user.click(await screen.findByRole('button', { name: /Gửi Job Alert/ }))
+    expect(await screen.findByText('Không cam kết số hồ sơ ứng tuyển')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Dùng 1 lượt và gửi' }))
+
+    await waitFor(() => expect(serviceApi.createEmployerJobAlert).toHaveBeenCalledWith(
+      'jsa_alert',
+      expect.any(String),
+    ))
+    expect(toast.message.success).toHaveBeenCalledWith(
+      'Đã tạo đợt gửi Job Alert. Hệ thống sẽ chỉ gửi tới ứng viên phù hợp.',
+    )
   })
 
   it('previews, confirms the required extension, and activates atomically', async () => {

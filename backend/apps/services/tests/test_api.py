@@ -107,7 +107,7 @@ class PublicPackagesApiTests(APITestCase):
             configuration={'placement': 'search_sponsored'},
         )
         draft_response = self.client.get(reverse('services-packages'))
-        self.assertIsNone(draft_response.data[0]['packages'][0]['published_version'])
+        self.assertEqual(draft_response.data, [])
 
         with self.captureOnCommitCallbacks(execute=True):
             publish_package_version(package_version=version)
@@ -556,15 +556,16 @@ class SeedServicesTests(APITestCase):
         self.assertGreater(categories, 0)
         self.assertGreater(packages, 0)
 
-        top_max = ServicePackage.objects.get(slug='top-max')
-        top_max.price = 9999999
-        top_max.save()
+        priority = ServicePackage.objects.get(slug='priority-14-days')
+        priority.price = 9999999
+        priority.save()
 
         call_command('seed_services', verbosity=0)
         self.assertEqual(ServiceCategory.objects.count(), categories)
         self.assertEqual(ServicePackage.objects.count(), packages)
-        top_max.refresh_from_db()
-        self.assertEqual(int(top_max.price), 9999999)
+        priority.refresh_from_db()
+        self.assertEqual(int(priority.price), 9999999)
+        self.assertFalse(ServicePackage.objects.filter(slug='top-max').exists())
 
 
 class EmployerFooterLinkFixTests(APITestCase):

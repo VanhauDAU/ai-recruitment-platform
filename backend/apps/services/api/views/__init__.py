@@ -22,6 +22,8 @@ from .employer import (
     EmployerActiveServiceListView,
     EmployerServiceActivationCreateView,
     EmployerServiceActivationPreviewView,
+    EmployerServiceAlertCreateView,
+    EmployerServiceAlertPreviewView,
     EmployerServiceInventoryView,
     EmployerServiceRefreshView,
 )
@@ -44,6 +46,8 @@ __all__ = [
     'ConsultationLeadCreateView',
     'EmployerServiceActivationCreateView',
     'EmployerServiceActivationPreviewView',
+    'EmployerServiceAlertCreateView',
+    'EmployerServiceAlertPreviewView',
     'EmployerActiveServiceListView',
     'EmployerServiceInventoryView',
     'EmployerServiceRefreshView',

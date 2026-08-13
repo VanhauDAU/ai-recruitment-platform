@@ -22,6 +22,7 @@ from .commercial import (
 from .employer import (
     EmployerActivationRequestSerializer,
     EmployerActivationSerializer,
+    EmployerAlertDispatchSerializer,
     EmployerServiceUnitSerializer,
     EmployerUsageSerializer,
 )
@@ -44,6 +45,7 @@ __all__ = [
     'ConsultationLeadCreateSerializer',
     'EmployerActivationRequestSerializer',
     'EmployerActivationSerializer',
+    'EmployerAlertDispatchSerializer',
     'EmployerServiceUnitSerializer',
     'EmployerUsageSerializer',
     'PublicServiceCategorySerializer',

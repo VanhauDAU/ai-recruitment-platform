@@ -12,12 +12,15 @@ from ...models import ServiceEntitlementUnit
 from ...selectors import employer_active_job_service_activations
 from ...services import (
     activate_job_service_with_confirmed_extension,
+    create_job_service_alert_dispatch,
     preview_job_service_activation,
+    preview_job_service_alert_dispatch,
     refresh_promoted_job,
 )
 from ..serializers import (
     EmployerActivationRequestSerializer,
     EmployerActivationSerializer,
+    EmployerAlertDispatchSerializer,
     EmployerServiceUnitSerializer,
     EmployerUsageSerializer,
 )
@@ -39,6 +42,12 @@ def _require_refresh_enabled():
     _require_activation_enabled()
     if not getattr(settings, 'JOB_PROMOTION_REFRESH_ENABLED', False):
         raise NotFound('Quyền lợi làm mới tin đang được triển khai theo từng nhóm doanh nghiệp.')
+
+
+def _require_alert_enabled():
+    _require_activation_enabled()
+    if not getattr(settings, 'JOB_PROMOTION_ALERT_ENABLED', False):
+        raise NotFound('Quyền lợi Job Alert đang được triển khai theo từng nhóm doanh nghiệp.')
 
 
 def _raise_domain_validation(error):
@@ -148,3 +157,56 @@ class EmployerServiceRefreshView(APIView):
             _raise_domain_validation(error)
         usage = type(usage).objects.select_related('activation', 'activation_item').get(pk=usage.pk)
         return Response(EmployerUsageSerializer(usage).data, status=status.HTTP_201_CREATED)
+
+
+class EmployerServiceAlertPreviewView(APIView):
+    permission_classes = [IsEmployer]
+
+    def post(self, request, public_id):
+        _require_alert_enabled()
+        company = _company_for(request)
+        activation = (
+            employer_active_job_service_activations(company=company)
+            .filter(public_id=public_id)
+            .first()
+        )
+        if activation is None:
+            raise NotFound('Không tìm thấy dịch vụ đang chạy.')
+        try:
+            preview = preview_job_service_alert_dispatch(
+                activation=activation,
+                actor=request.user,
+            )
+        except DjangoValidationError as error:
+            _raise_domain_validation(error)
+        return Response(preview)
+
+
+class EmployerServiceAlertCreateView(APIView):
+    permission_classes = [IsEmployer]
+
+    def post(self, request, public_id):
+        _require_alert_enabled()
+        company = _company_for(request)
+        activation = (
+            employer_active_job_service_activations(company=company)
+            .filter(public_id=public_id)
+            .first()
+        )
+        if activation is None:
+            raise NotFound('Không tìm thấy dịch vụ đang chạy.')
+        idempotency_key = request.headers.get('Idempotency-Key', '').strip()
+        if not idempotency_key:
+            raise ValidationError({'idempotency_key': 'Thiếu header Idempotency-Key.'})
+        try:
+            dispatch = create_job_service_alert_dispatch(
+                activation=activation,
+                actor=request.user,
+                idempotency_key=idempotency_key,
+            )
+        except DjangoValidationError as error:
+            _raise_domain_validation(error)
+        return Response(
+            EmployerAlertDispatchSerializer(dispatch).data,
+            status=status.HTTP_201_CREATED,
+        )

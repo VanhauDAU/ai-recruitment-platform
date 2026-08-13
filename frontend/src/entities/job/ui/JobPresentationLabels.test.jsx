@@ -26,4 +26,25 @@ describe('JobPresentationLabels', () => {
     expect(screen.getByText('GẤP')).toBeVisible()
     expect(screen.getByText('Phản hồi nhanh')).toBeVisible()
   })
+
+  it('gives commercial and urgency labels distinct, high-contrast treatments', () => {
+    render(
+      <JobPresentationLabels
+        job={{
+          presentation: {
+            card_tone: 'orange',
+            labels: [
+              { code: 'sponsored', text: 'Tài trợ', tone: 'sponsored' },
+              { code: 'hot', text: 'HOT', tone: 'danger' },
+              { code: 'urgent', text: 'GẤP', tone: 'warning' },
+            ],
+          },
+        }}
+      />,
+    )
+
+    expect(screen.getByText('Tài trợ')).toHaveClass('rounded-full', 'bg-orange-100')
+    expect(screen.getByText('HOT')).toHaveClass('border-rose-200')
+    expect(screen.getByText('GẤP')).toHaveClass('border-amber-200')
+  })
 })

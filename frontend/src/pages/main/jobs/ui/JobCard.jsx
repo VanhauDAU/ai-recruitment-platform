@@ -10,6 +10,7 @@ import {
   WORK_TYPE_LABELS,
   companyInitial,
   formatEducation,
+  formatJobPostedLabel,
   formatLocations,
   formatSalary,
   jobCardToneClass,
@@ -20,17 +21,6 @@ import {
 } from '@/entities/job'
 import { useSavedJob } from '@/features/saved-jobs'
 import { useJobImpression } from '@/features/track-job-engagement'
-
-// "Đăng hôm nay" / "Đăng 3 ngày trước" / "Đăng 2 tuần trước"…
-function postedLabel(job) {
-  const at = job.published_at || job.created_at
-  if (!at) return null
-  const days = Math.floor((Date.now() - new Date(at)) / 86_400_000)
-  if (days <= 0) return 'Đăng hôm nay'
-  if (days < 7) return `Đăng ${days} ngày trước`
-  if (days < 30) return `Đăng ${Math.floor(days / 7)} tuần trước`
-  return `Đăng ${Math.floor(days / 30)} tháng trước`
-}
 
 function savedLabel(value) {
   const savedAt = new Date(value)
@@ -105,7 +95,7 @@ export default function JobCard({
   const presentation = resolveJobPresentation(job)
   const elevated = presentation.card_tone !== 'neutral'
   const skills = (job.job_skills || []).map((s) => s.skill_name).filter(Boolean)
-  const posted = postedLabel(job)
+  const posted = formatJobPostedLabel(job)
   const savedAtLabel = savedLabel(savedAt)
   const ageRequirement = job.age_min && job.age_max
     ? `${job.age_min} - ${job.age_max} tuổi`
@@ -180,13 +170,13 @@ export default function JobCard({
 
       <div className="min-w-0 flex-1">
         <div className={`flex items-start justify-between gap-3 ${compact ? 'flex-col gap-1' : ''}`}>
-          <h3 className="min-w-0 font-semibold text-gray-900 leading-snug line-clamp-2 transition-colors group-hover:text-[var(--brand-primary)]">
+          <h3 className="min-w-0 font-semibold leading-snug text-slate-950 line-clamp-2">
             <Link
               to={jobDetailPath(job)}
               target="_blank"
               rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}
-              className="hover:underline underline-offset-2"
+              className="!text-slate-950 no-underline transition-colors hover:!text-slate-950 hover:underline underline-offset-2 focus-visible:rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]/40"
             >
               {job.title}
             </Link>

@@ -6,6 +6,7 @@ from django.test import override_settings
 from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.dateparse import parse_datetime
 from rest_framework.test import APITestCase
 
 from apps.accounts.models import User
@@ -402,10 +403,25 @@ class JobSalaryBucketFilterTests(APITestCase):
                 'is_urgent',
                 'has_flash_badge',
                 'presentation',
+                'first_approved_at',
                 'published_at',
                 'created_at',
             },
         )
+
+    def test_list_exposes_first_approval_as_the_stable_posted_date(self):
+        first_approved_at = timezone.now() - timedelta(days=2)
+        latest_published_at = timezone.now()
+        job = self.create_job('Reapproved job', 10_000_000, 15_000_000)
+        job.first_approved_at = first_approved_at
+        job.published_at = latest_published_at
+        job.save(update_fields=['first_approved_at', 'published_at'])
+
+        response = self.client.get(reverse('job-list'))
+
+        item = next(item for item in response.data['results'] if item['public_id'] == job.public_id)
+        self.assertEqual(parse_datetime(item['first_approved_at']), first_approved_at)
+        self.assertEqual(parse_datetime(item['published_at']), latest_published_at)
 
     def test_list_presentation_is_semantic_and_keeps_legacy_fields_for_rollback(self):
         job = self.create_job('Presented job', 10_000_000, 15_000_000)
@@ -867,7 +883,13 @@ class EmployerJobSerializerTests(APITestCase):
         )
         self.assertEqual(
             response.data['services'],
-            {'catalog_v2_enabled': False, 'activation_enabled': False},
+            {
+                'catalog_v2_enabled': False,
+                'activation_enabled': False,
+                'refresh_enabled': False,
+                'alert_enabled': False,
+                'metrics_enabled': False,
+            },
         )
 
     def test_new_or_dpa_held_employer_cannot_read_job_workspace_directly(self):

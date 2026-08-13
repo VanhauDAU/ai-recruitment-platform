@@ -545,6 +545,13 @@ JOB_PROMOTION_REFRESH_ENABLED = config('JOB_PROMOTION_REFRESH_ENABLED', default=
 JOB_PROMOTION_ALERT_ENABLED = config('JOB_PROMOTION_ALERT_ENABLED', default=False, cast=bool)
 JOB_PROMOTION_METRICS_ENABLED = config('JOB_PROMOTION_METRICS_ENABLED', default=False, cast=bool)
 SAVED_JOB_REMARKETING_ENABLED = config('SAVED_JOB_REMARKETING_ENABLED', default=False, cast=bool)
+SAVED_JOB_REMARKETING_RETENTION_DAYS = config(
+    'SAVED_JOB_REMARKETING_RETENTION_DAYS', default=90, cast=int
+)
+JOB_PROMOTION_ALERT_SELECTION_BATCH_SIZE = config(
+    'JOB_PROMOTION_ALERT_SELECTION_BATCH_SIZE', default=200, cast=int
+)
+SAVED_JOB_REMARKETING_ENABLED = config('SAVED_JOB_REMARKETING_ENABLED', default=False, cast=bool)
 
 # SecurityMiddleware protects Django Admin/session cookies as well as API responses.
 SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=IS_PRODUCTION, cast=bool)
@@ -625,6 +632,9 @@ CELERY_TASK_ROUTES = {
     'apps.jobs.tasks.ai_generation.*': {'queue': 'ai-generation'},
     'apps.jobs.tasks.*': {'queue': 'candidate-email'},
     'apps.applications.tasks.*': {'queue': 'candidate-email'},
+    'apps.services.tasks.prepare_job_service_alert_dispatch': {'queue': 'candidate-email'},
+    'apps.services.tasks.deliver_job_service_alert_recipient': {'queue': 'candidate-email'},
+    'apps.services.tasks.dispatch_pending_job_service_alerts': {'queue': 'candidate-email'},
     'apps.services.tasks.*': {'queue': 'default'},
 }
 CELERY_TASK_ACKS_LATE = True
@@ -652,6 +662,14 @@ CELERY_BEAT_SCHEDULE = {
     'expire-service-inventory-and-activations': {
         'task': 'apps.services.tasks.expire_service_inventory_and_activations',
         'schedule': 60.0,
+    },
+    'dispatch-pending-job-service-alerts': {
+        'task': 'apps.services.tasks.dispatch_pending_job_service_alerts',
+        'schedule': 60.0,
+    },
+    'purge-saved-job-remarketing-history': {
+        'task': 'apps.services.tasks.purge_saved_job_remarketing_history',
+        'schedule': 86400.0,
     },
     'prepare-due-candidate-job-digests': {
         'task': 'apps.jobs.tasks.prepare_due_candidate_job_digests',

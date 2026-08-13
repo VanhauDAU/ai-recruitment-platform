@@ -1,6 +1,7 @@
 from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
 from threading import Barrier
+from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
@@ -11,11 +12,13 @@ from django.utils import timezone
 from apps.employers.models import Company
 from apps.employers.tests.readiness_helpers import make_employer_ready
 from apps.jobs.models import Job
-from apps.jobs.services import lifecycle_local_date
+from apps.jobs.services import create_job_alert, lifecycle_local_date
 
 from ..models import (
     JobPromotionMetricDaily,
     JobServiceActivation,
+    JobServiceAlertDispatch,
+    JobServiceAlertRecipient,
     JobServiceUsageEvent,
     ServiceAuditEvent,
     ServiceCapability,
@@ -27,11 +30,15 @@ from ..services import (
     activate_job_service,
     activate_job_service_with_confirmed_extension,
     add_package_version_item,
+    create_job_service_alert_dispatch,
     create_package_version,
+    deliver_job_service_alert_recipient,
     expire_due_entitlement_units,
     expire_due_job_service_activations,
     grant_package_units,
+    prepare_job_service_alert_dispatch,
     preview_job_service_activation,
+    preview_job_service_alert_dispatch,
     publish_package_version,
     record_job_promotion_metrics,
     refresh_promoted_job,
@@ -75,6 +82,12 @@ class EntitlementLedgerTests(TestCase):
             package_version=self.version,
             capability=ServiceCapability.objects.get(code='job_refresh'),
             quantity=2,
+            duration_days=14,
+        )
+        add_package_version_item(
+            package_version=self.version,
+            capability=ServiceCapability.objects.get(code='job_alert'),
+            quantity=1,
             duration_days=14,
         )
         self.version = publish_package_version(
@@ -362,6 +375,84 @@ class EntitlementLedgerTests(TestCase):
         )
         self.assertFalse(JobPromotionMetricDaily.objects.exists())
 
+    def _create_matching_candidate_alert(self):
+        candidate = get_user_model().objects.create_user(
+            email='job-alert-candidate@example.com',
+            password='Password@123',
+            role='candidate',
+            email_verified=True,
+        )
+        return candidate, create_job_alert(candidate, {'keyword': 'Backend'})
+
+    def test_job_alert_consumes_once_and_rechecks_candidate_before_send(self):
+        candidate, alert = self._create_matching_candidate_alert()
+        unit = self.grant_one(key='job-alert-outbox')
+        activation = activate_job_service(
+            unit=unit,
+            job=self.job,
+            actor=self.employer,
+            idempotency_key='job-alert-activation',
+        )
+        preview = preview_job_service_alert_dispatch(activation=activation, actor=self.employer)
+        self.assertTrue(preview['can_dispatch'], preview)
+
+        dispatch = create_job_service_alert_dispatch(
+            activation=activation,
+            actor=self.employer,
+            idempotency_key='job-alert-dispatch',
+        )
+        retry = create_job_service_alert_dispatch(
+            activation=activation,
+            actor=self.employer,
+            idempotency_key='job-alert-dispatch',
+        )
+        self.assertEqual(dispatch.pk, retry.pk)
+        self.assertEqual(
+            activation.items.get(capability__code='job_alert').remaining_quantity,
+            0,
+        )
+
+        prepared = prepare_job_service_alert_dispatch(dispatch_id=dispatch.pk)
+        self.assertTrue(prepared['selection_finished'])
+        recipient = JobServiceAlertRecipient.objects.get(dispatch=dispatch, candidate=candidate)
+        self.assertEqual(recipient.matched_alert_public_ids, [alert.public_id])
+
+        alert.is_active = False
+        alert.save(update_fields=['is_active', 'updated_at'])
+        self.assertEqual(
+            deliver_job_service_alert_recipient(recipient.pk),
+            JobServiceAlertRecipient.Status.CANCELLED,
+        )
+        dispatch.refresh_from_db()
+        self.assertEqual(dispatch.status, JobServiceAlertDispatch.Status.CANCELLED)
+        self.assertEqual(dispatch.cancelled_count, 1)
+
+    @patch('apps.services.services.job_alerts.send_html_email')
+    def test_job_alert_delivery_uses_retry_safe_message_id(self, send_email):
+        candidate, _ = self._create_matching_candidate_alert()
+        unit = self.grant_one(key='job-alert-send')
+        activation = activate_job_service(
+            unit=unit,
+            job=self.job,
+            actor=self.employer,
+            idempotency_key='job-alert-send-activation',
+        )
+        dispatch = create_job_service_alert_dispatch(
+            activation=activation,
+            actor=self.employer,
+            idempotency_key='job-alert-send-dispatch',
+        )
+        prepared = prepare_job_service_alert_dispatch(dispatch_id=dispatch.pk)
+        recipient = JobServiceAlertRecipient.objects.get(pk=prepared['recipient_ids'][0])
+
+        self.assertEqual(
+            deliver_job_service_alert_recipient(recipient.pk),
+            JobServiceAlertRecipient.Status.SENT,
+        )
+        send_email.assert_called_once()
+        self.assertEqual(send_email.call_args.kwargs['to'], candidate.email)
+        self.assertEqual(send_email.call_args.kwargs['headers']['Message-ID'], recipient.message_id)
+
     def test_revoke_is_audited_and_history_is_append_only(self):
         unit = self.grant_one(key='revoke-unit')
 
@@ -485,6 +576,14 @@ class ConcurrentEntitlementConsumptionTests(TransactionTestCase):
                 'effect_type': ServiceCapability.EffectType.REFRESH,
             },
         )
+        alert_capability, _ = ServiceCapability.objects.get_or_create(
+            code=ServiceCapability.Code.JOB_ALERT,
+            defaults={
+                'name_vi': 'Job Alert',
+                'scope': ServiceCapability.Scope.JOB,
+                'effect_type': ServiceCapability.EffectType.ALERT,
+            },
+        )
         version = create_package_version(package=package, price=299000)
         add_package_version_item(
             package_version=version,
@@ -495,6 +594,12 @@ class ConcurrentEntitlementConsumptionTests(TransactionTestCase):
         add_package_version_item(
             package_version=version,
             capability=refresh_capability,
+            quantity=1,
+            duration_days=14,
+        )
+        add_package_version_item(
+            package_version=version,
+            capability=alert_capability,
             quantity=1,
             duration_days=14,
         )
@@ -570,5 +675,48 @@ class ConcurrentEntitlementConsumptionTests(TransactionTestCase):
         self.assertEqual(JobServiceUsageEvent.objects.count(), 1)
         self.assertEqual(
             activation.items.get(capability__code='job_refresh').remaining_quantity,
+            0,
+        )
+
+    def test_two_concurrent_job_alerts_cannot_consume_one_right_twice(self):
+        candidate = get_user_model().objects.create_user(
+            email='concurrent-alert-candidate@example.com',
+            password='Password@123',
+            role='candidate',
+            email_verified=True,
+        )
+        create_job_alert(candidate, {'keyword': 'Concurrency'})
+        activation = activate_job_service(
+            unit=self.unit,
+            job=self.job,
+            actor=self.employer,
+            idempotency_key='concurrent-alert-activation',
+        )
+        barrier = Barrier(2)
+
+        def consume(idempotency_key):
+            close_old_connections()
+            try:
+                current_activation = JobServiceActivation.objects.get(pk=activation.pk)
+                actor = get_user_model().objects.get(pk=self.employer.pk)
+                barrier.wait(timeout=5)
+                dispatch = create_job_service_alert_dispatch(
+                    activation=current_activation,
+                    actor=actor,
+                    idempotency_key=idempotency_key,
+                )
+                return ('created', dispatch.pk)
+            except ValidationError:
+                return ('rejected', None)
+            finally:
+                close_old_connections()
+
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            results = list(executor.map(consume, ('alert-a', 'alert-b')))
+
+        self.assertEqual(sorted(result[0] for result in results), ['created', 'rejected'])
+        self.assertEqual(JobServiceAlertDispatch.objects.count(), 1)
+        self.assertEqual(
+            activation.items.get(capability__code='job_alert').remaining_quantity,
             0,
         )

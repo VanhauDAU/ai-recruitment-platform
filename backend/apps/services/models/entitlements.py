@@ -405,6 +405,179 @@ class JobPromotionMetricDaily(models.Model):
         return f'{self.activation_id}:{self.date}'
 
 
+class JobServiceAlertDispatch(models.Model):
+    """One paid, retryable Job Alert send to candidates with matching alerts."""
+
+    class Status(models.TextChoices):
+        PENDING = 'pending', 'Đang chuẩn bị'
+        READY = 'ready', 'Sẵn sàng gửi'
+        SENT = 'sent', 'Đã gửi'
+        EMPTY = 'empty', 'Không có người nhận phù hợp'
+        CANCELLED = 'cancelled', 'Đã hủy'
+        FAILED = 'failed', 'Gửi thất bại'
+
+    public_id = models.CharField(max_length=50, unique=True, editable=False)
+    usage_event = models.OneToOneField(
+        JobServiceUsageEvent,
+        on_delete=models.PROTECT,
+        related_name='alert_dispatch',
+    )
+    activation = models.ForeignKey(
+        JobServiceActivation,
+        on_delete=models.PROTECT,
+        related_name='alert_dispatches',
+    )
+    activation_item = models.ForeignKey(
+        JobServiceActivationItem,
+        on_delete=models.PROTECT,
+        related_name='alert_dispatches',
+    )
+    company = models.ForeignKey(
+        'employers.Company',
+        on_delete=models.PROTECT,
+        related_name='job_service_alert_dispatches',
+    )
+    job = models.ForeignKey(
+        'jobs.Job',
+        on_delete=models.PROTECT,
+        related_name='service_alert_dispatches',
+    )
+    status = models.CharField(max_length=16, choices=Status.choices, default=Status.PENDING)
+    selection_cursor = models.PositiveBigIntegerField(default=0)
+    selection_finished = models.BooleanField(default=False)
+    recipient_count = models.PositiveIntegerField(default=0)
+    sent_count = models.PositiveIntegerField(default=0)
+    cancelled_count = models.PositiveIntegerField(default=0)
+    failed_count = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at', '-id']
+        indexes = [
+            models.Index(
+                fields=['status', 'selection_finished', 'created_at'],
+                name='services_alert_dispatch_idx',
+            ),
+            models.Index(fields=['activation', 'created_at'], name='services_alert_activation_idx'),
+        ]
+        verbose_name = 'Đợt gửi Job Alert'
+        verbose_name_plural = 'Đợt gửi Job Alert'
+
+    def save(self, *args, **kwargs):
+        if not self.public_id:
+            self.public_id = generate_public_id('jad')
+        self.full_clean()
+        return super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        raise ValidationError('Đợt gửi Job Alert không được xóa.')
+
+
+class JobServiceAlertRecipient(models.Model):
+    """Per-candidate email outbox row; source criteria are rechecked before send."""
+
+    class Status(models.TextChoices):
+        PENDING = 'pending', 'Đang chờ gửi'
+        SENDING = 'sending', 'Đang gửi'
+        SENT = 'sent', 'Đã gửi'
+        CANCELLED = 'cancelled', 'Đã hủy'
+        FAILED = 'failed', 'Gửi thất bại'
+
+    public_id = models.CharField(max_length=50, unique=True, editable=False)
+    dispatch = models.ForeignKey(
+        JobServiceAlertDispatch,
+        on_delete=models.PROTECT,
+        related_name='recipients',
+    )
+    candidate = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='service_job_alert_recipients',
+    )
+    recipient_email = models.EmailField()
+    recipient_auth_revision = models.PositiveBigIntegerField()
+    matched_alert_public_ids = models.JSONField(default=list, blank=True)
+    message_id = models.CharField(max_length=255, unique=True, editable=False)
+    status = models.CharField(max_length=16, choices=Status.choices, default=Status.PENDING)
+    attempts = models.PositiveSmallIntegerField(default=0)
+    last_error = models.TextField(blank=True)
+    started_at = models.DateTimeField(null=True, blank=True)
+    sent_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['id']
+        indexes = [
+            models.Index(fields=['status', 'created_at'], name='services_alert_recipient_idx'),
+            models.Index(fields=['candidate', 'created_at'], name='services_alert_candidate_idx'),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=['dispatch', 'candidate'],
+                name='services_alert_dispatch_candidate',
+            ),
+        ]
+        verbose_name = 'Người nhận Job Alert'
+        verbose_name_plural = 'Người nhận Job Alert'
+
+    def save(self, *args, **kwargs):
+        if not self.public_id:
+            self.public_id = generate_public_id('jar')
+        if not self.message_id:
+            self.message_id = f'<job-alert.{self.public_id}@procv.vn>'
+        self.full_clean()
+        return super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        raise ValidationError('Lịch sử gửi Job Alert không được xóa.')
+
+
+class SavedJobRemarketingImpression(models.Model):
+    """Purpose-limited delivery history for the paid saved-job lane."""
+
+    candidate = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='saved_job_remarketing_impressions',
+    )
+    activation = models.ForeignKey(
+        JobServiceActivation,
+        on_delete=models.PROTECT,
+        related_name='saved_remarketing_impressions',
+    )
+    job = models.ForeignKey(
+        'jobs.Job',
+        on_delete=models.CASCADE,
+        related_name='saved_remarketing_impressions',
+    )
+    shown_on = models.DateField()
+    shown_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        ordering = ['-shown_at', '-id']
+        indexes = [
+            models.Index(
+                fields=['candidate', 'shown_at'],
+                name='svc_saved_rem_cand_idx',
+            ),
+            models.Index(
+                fields=['activation', 'shown_at'],
+                name='svc_saved_rem_act_idx',
+            ),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=['candidate', 'job', 'shown_on'],
+                name='services_saved_rem_once_per_day',
+            ),
+        ]
+        verbose_name = 'Lượt hiển thị lại tin đã lưu'
+        verbose_name_plural = 'Lượt hiển thị lại tin đã lưu'
+
+
 class ServiceAuditEvent(models.Model):
     """Append-only commercial audit log; metadata stores human-readable context only."""
 

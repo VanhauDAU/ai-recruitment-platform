@@ -19,6 +19,8 @@ from .api.views import (
     EmployerActiveServiceListView,
     EmployerServiceActivationCreateView,
     EmployerServiceActivationPreviewView,
+    EmployerServiceAlertCreateView,
+    EmployerServiceAlertPreviewView,
     EmployerServiceInventoryView,
     EmployerServiceRefreshView,
     PublicServicePackageListView,
@@ -51,6 +53,16 @@ urlpatterns = [
         'activations/<str:public_id>/refresh/',
         EmployerServiceRefreshView.as_view(),
         name='services-employer-refresh',
+    ),
+    path(
+        'activations/<str:public_id>/job-alerts/preview/',
+        EmployerServiceAlertPreviewView.as_view(),
+        name='services-employer-alert-preview',
+    ),
+    path(
+        'activations/<str:public_id>/job-alerts/',
+        EmployerServiceAlertCreateView.as_view(),
+        name='services-employer-alert-create',
     ),
     path(
         'admin/capabilities/',

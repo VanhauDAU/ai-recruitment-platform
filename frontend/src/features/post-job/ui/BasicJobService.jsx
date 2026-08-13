@@ -12,6 +12,7 @@ import {
 import { employerMarketingPath } from '@/shared/config/portals'
 import { message } from '@/shared/lib/toast'
 import useConfirmAction from '@/shared/ui/use-confirm-action'
+import JobAlertAction from './JobAlertAction'
 
 function formatDate(value) {
   return new Date(value).toLocaleDateString('vi-VN')
@@ -25,6 +26,8 @@ function errorMessage(error, fallback) {
   const detail = error?.response?.data?.detail
   if (typeof detail === 'string') return detail
   if (Array.isArray(detail)) return detail.join(' ')
+  const blockers = error?.response?.data?.blockers
+  if (Array.isArray(blockers)) return blockers.join(' ')
   return fallback
 }
 
@@ -33,6 +36,7 @@ export default function BasicJobService({
   jobStatus,
   activationEnabled = false,
   refreshEnabled = false,
+  alertEnabled = false,
   metricsEnabled = false,
 }) {
   const [units, setUnits] = useState([])
@@ -156,6 +160,7 @@ export default function BasicJobService({
           <div className="grid gap-3">
             {activations.map((activation) => {
               const refreshItem = activation.items.find((item) => item.capability === 'job_refresh')
+              const alertItem = activation.items.find((item) => item.capability === 'job_alert')
               return (
                 <div key={activation.public_id} className="flex min-w-0 flex-col gap-3 rounded-lg border border-sky-100 bg-white p-3 sm:flex-row sm:items-center">
                   <div className="min-w-0 flex-1">
@@ -182,16 +187,26 @@ export default function BasicJobService({
                       </dl>
                     )}
                   </div>
-                  {refreshEnabled && refreshItem && (
-                    <Button
-                      className="w-full shrink-0 sm:w-auto"
-                      icon={<SyncOutlined />}
-                      disabled={!canActivate || refreshItem.remaining_quantity < 1}
-                      onClick={() => requestRefresh(activation, refreshItem)}
-                    >
-                      {refreshItem.remaining_quantity > 0 ? 'Làm mới tin' : 'Đã dùng hết lượt'}
-                    </Button>
-                  )}
+                  <div className="flex w-full shrink-0 flex-col gap-2 sm:w-auto">
+                    {refreshEnabled && refreshItem && (
+                      <Button
+                        className="w-full sm:w-auto"
+                        icon={<SyncOutlined />}
+                        disabled={!canActivate || refreshItem.remaining_quantity < 1}
+                        onClick={() => requestRefresh(activation, refreshItem)}
+                      >
+                        {refreshItem.remaining_quantity > 0 ? 'Làm mới tin' : 'Đã dùng hết lượt'}
+                      </Button>
+                    )}
+                    {alertEnabled && alertItem && (
+                      <JobAlertAction
+                        activation={activation}
+                        item={alertItem}
+                        canUse={canActivate}
+                        onSent={load}
+                      />
+                    )}
+                  </div>
                 </div>
               )
             })}

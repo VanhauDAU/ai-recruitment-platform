@@ -62,6 +62,7 @@ def strict_job_alert_matches(
     limit=50,
     job_ids=None,
     exclude_digest_id=None,
+    ignore_cursor=False,
 ):
     """Match one saved alert using only explicit criteria, never profile/CV consent."""
     emailed_job = CandidateJobEmailSuppression.objects.filter(
@@ -77,16 +78,15 @@ def strict_job_alert_matches(
         in_flight = in_flight.exclude(digest_id=exclude_digest_id)
     queryset = (
         active_jobs_queryset()
-        .filter(
-            published_at__gt=alert.cursor_at,
-            published_at__lte=published_before,
-        )
+        .filter(published_at__lte=published_before)
         .exclude(applications__candidate=alert.candidate)
         .exclude(saved_by__candidate=alert.candidate)
         .annotate(already_emailed=Exists(emailed_job))
         .annotate(already_claimed=Exists(in_flight))
         .filter(already_emailed=False, already_claimed=False)
     )
+    if not ignore_cursor:
+        queryset = queryset.filter(published_at__gt=alert.cursor_at)
     if job_ids is not None:
         queryset = queryset.filter(pk__in=job_ids)
 
