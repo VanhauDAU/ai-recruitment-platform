@@ -2,6 +2,7 @@ import {
   EyeOutlined,
   FileTextOutlined,
   LinkOutlined,
+  RocketOutlined,
   TagsOutlined,
   TeamOutlined,
 } from '@ant-design/icons'
@@ -27,6 +28,7 @@ import {
   EmployerReadinessGateState,
   useEmployerReadiness,
 } from '@/entities/employer-profile'
+import { JobServiceManager } from '@/features/manage-job-services'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { message } from '@/shared/lib/toast'
 import JobApplicationsWorkspace from './JobApplicationsWorkspace'
@@ -35,7 +37,7 @@ import JobInformationPanel from './JobInformationPanel'
 import JobLifecycleModal from './JobLifecycleModal'
 
 const CONNECTED_STATUSES = new Set(['considering', 'shortlisted', 'interviewed', 'accepted'])
-const VALID_TABS = new Set(['apply_cv', 'viewed_job', 'job', 'cv_label'])
+const VALID_TABS = new Set(['apply_cv', 'viewed_job', 'job', 'services', 'cv_label'])
 const EMPTY_APPLICATIONS = []
 const FALLBACK_DEADLINE_POLICY = {
   default_deadline_days: 30,
@@ -262,6 +264,23 @@ export default function JobDetail() {
       children: <JobInformationPanel job={job} />,
     },
     {
+      key: 'services',
+      label: <span className="inline-flex items-center gap-2"><RocketOutlined /> Dịch vụ & hiệu quả</span>,
+      children: (
+        <div className="p-4 sm:p-5">
+          <JobServiceManager
+            jobPublicId={job.public_id}
+            jobStatus={job.status}
+            activationEnabled={postingContextQuery.data?.services?.activation_enabled === true}
+            refreshEnabled={postingContextQuery.data?.services?.refresh_enabled === true}
+            alertEnabled={postingContextQuery.data?.services?.alert_enabled === true}
+            metricsEnabled={postingContextQuery.data?.services?.metrics_enabled === true}
+            showInventory
+          />
+        </div>
+      ),
+    },
+    {
       key: 'cv_label',
       label: <span className="inline-flex items-center gap-2"><TagsOutlined /> Nhãn</span>,
       children: <LabelsPanel />,
@@ -302,6 +321,7 @@ export default function JobDetail() {
               { value: 'apply_cv', label: `CV ứng tuyển (${metrics.applied})` },
               { value: 'viewed_job', label: 'Ứng viên đã xem tin' },
               { value: 'job', label: 'Thông tin tuyển dụng' },
+              { value: 'services', label: 'Dịch vụ & hiệu quả' },
               { value: 'cv_label', label: 'Nhãn' },
             ]}
             onChange={selectTab}

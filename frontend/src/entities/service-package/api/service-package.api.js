@@ -108,18 +108,48 @@ export async function getAdminServiceAudit(params = {}) {
   return data
 }
 
+export async function getAdminServiceActivations(params = {}) {
+  const { data } = await client.get('/services/admin/activations/', { params })
+  return data
+}
+
+export async function getAdminServiceActivationSummary(params = {}) {
+  const { data } = await client.get('/services/admin/activations/summary/', { params })
+  return data
+}
+
+export async function terminateAdminServiceActivation(publicId, reason) {
+  const { data } = await client.post(
+    `/services/admin/activations/${publicId}/terminate/`,
+    { reason },
+  )
+  return data
+}
+
 export async function getEmployerServiceInventory() {
   const { data } = await client.get('/services/mine/inventory/')
   const inventory = collection(data)
   return Array.isArray(inventory) ? inventory : []
 }
 
-export async function getEmployerActiveServices(jobPublicId) {
+function normalizeActivationParams(scope) {
+  if (typeof scope === 'string') {
+    return scope ? { job_public_id: scope } : {}
+  }
+  return scope && typeof scope === 'object' ? scope : {}
+}
+
+export async function getEmployerActiveServices(scope = {}) {
   const { data } = await client.get('/services/mine/activations/', {
-    params: jobPublicId ? { job_public_id: jobPublicId } : {},
+    params: normalizeActivationParams(scope),
   })
   const activations = collection(data)
   return Array.isArray(activations) ? activations : []
+}
+
+export async function getEmployerServiceHistory(params = {}) {
+  const { data } = await client.get('/services/mine/activation-history/', { params })
+  return data
 }
 
 export async function previewEmployerServiceActivation(payload) {

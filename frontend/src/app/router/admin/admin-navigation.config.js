@@ -211,6 +211,13 @@ export const ADMIN_NAVIGATION = [
         children: [
           { key: 'service-categories', label: 'Danh mục', routeRef: 'services' },
           { key: 'service-packages', label: 'Gói dịch vụ', routeRef: 'services', query: { tab: 'packages' } },
+          {
+            key: 'service-activations',
+            label: 'Dịch vụ đang chạy',
+            routeRef: 'services',
+            query: { tab: 'activations' },
+            access: { allOf: ['service_entitlement.view'] },
+          },
         ],
       },
       {

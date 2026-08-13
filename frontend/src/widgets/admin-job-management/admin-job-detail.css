@@ -287,6 +287,10 @@
   grid-template-columns: minmax(0, 1.75fr) minmax(310px, 0.8fr);
 }
 
+.admin-job-detail__layout--wide {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .admin-job-panel__header {
   align-items: center;
   border-bottom: 1px solid #edf2f7;
@@ -769,4 +773,3 @@
   .admin-job-info-grid { grid-template-columns: 1fr; }
   .admin-job-change__columns { grid-template-columns: 1fr; }
 }
-

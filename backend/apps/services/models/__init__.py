@@ -2,6 +2,10 @@
 
 from .catalog import ConsultationLead, ServiceCategory, ServicePackage
 from .commercial import (
+    ADDITIVE_CAPABILITY_CODES,
+    CARD_TONE_PRIORITY,
+    EXCLUSIVE_CAPABILITY_CODES,
+    PLACEMENT_PRIORITY,
     ServiceCapability,
     ServicePackageVersion,
     ServicePackageVersionItem,
@@ -19,6 +23,8 @@ from .entitlements import (
 )
 
 __all__ = [
+    'ADDITIVE_CAPABILITY_CODES',
+    'CARD_TONE_PRIORITY',
     'ConsultationLead',
     'JobServiceActivation',
     'JobServiceActivationItem',
@@ -34,4 +40,6 @@ __all__ = [
     'ServicePackage',
     'ServicePackageVersion',
     'ServicePackageVersionItem',
+    'EXCLUSIVE_CAPABILITY_CODES',
+    'PLACEMENT_PRIORITY',
 ]

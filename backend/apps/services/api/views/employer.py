@@ -7,9 +7,13 @@ from rest_framework.views import APIView
 
 from apps.accounts.permissions import IsEmployer
 from apps.employers.services import ensure_recruiter_job_workspace
+from common.pagination import StandardPagination
 
 from ...models import ServiceEntitlementUnit
-from ...selectors import employer_active_job_service_activations
+from ...selectors import (
+    employer_active_job_service_activations,
+    employer_job_service_activation_history,
+)
 from ...services import (
     activate_job_service_with_confirmed_extension,
     create_job_service_alert_dispatch,
@@ -18,8 +22,10 @@ from ...services import (
     refresh_promoted_job,
 )
 from ..serializers import (
+    EmployerActivationHistoryQuerySerializer,
     EmployerActivationRequestSerializer,
     EmployerActivationSerializer,
+    EmployerActiveActivationQuerySerializer,
     EmployerAlertDispatchSerializer,
     EmployerServiceUnitSerializer,
     EmployerUsageSerializer,
@@ -75,11 +81,32 @@ class EmployerActiveServiceListView(APIView):
     def get(self, request):
         _require_activation_enabled()
         company = _company_for(request)
+        query = EmployerActiveActivationQuerySerializer(data=request.query_params)
+        query.is_valid(raise_exception=True)
         activations = employer_active_job_service_activations(
             company=company,
-            job_public_id=request.query_params.get('job_public_id', '').strip(),
+            owner=request.user,
+            **query.validated_data,
         )
         return Response(EmployerActivationSerializer(activations, many=True).data)
+
+
+class EmployerServiceActivationHistoryView(APIView):
+    permission_classes = [IsEmployer]
+
+    def get(self, request):
+        _require_activation_enabled()
+        company = _company_for(request)
+        query = EmployerActivationHistoryQuerySerializer(data=request.query_params)
+        query.is_valid(raise_exception=True)
+        activations = employer_job_service_activation_history(
+            company=company,
+            owner=request.user,
+            **query.validated_data,
+        )
+        paginator = StandardPagination()
+        page = paginator.paginate_queryset(activations, request, view=self)
+        return paginator.get_paginated_response(EmployerActivationSerializer(page, many=True).data)
 
 
 class EmployerServiceActivationPreviewView(APIView):
@@ -138,7 +165,7 @@ class EmployerServiceRefreshView(APIView):
         _require_refresh_enabled()
         company = _company_for(request)
         activation = (
-            employer_active_job_service_activations(company=company)
+            employer_active_job_service_activations(company=company, owner=request.user)
             .filter(public_id=public_id)
             .first()
         )
@@ -166,7 +193,7 @@ class EmployerServiceAlertPreviewView(APIView):
         _require_alert_enabled()
         company = _company_for(request)
         activation = (
-            employer_active_job_service_activations(company=company)
+            employer_active_job_service_activations(company=company, owner=request.user)
             .filter(public_id=public_id)
             .first()
         )
@@ -189,7 +216,7 @@ class EmployerServiceAlertCreateView(APIView):
         _require_alert_enabled()
         company = _company_for(request)
         activation = (
-            employer_active_job_service_activations(company=company)
+            employer_active_job_service_activations(company=company, owner=request.user)
             .filter(public_id=public_id)
             .first()
         )

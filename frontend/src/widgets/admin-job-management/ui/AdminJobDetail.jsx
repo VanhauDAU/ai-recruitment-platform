@@ -27,13 +27,14 @@ const TABS = [
   { key: 'employer', label: 'Nhà tuyển dụng' },
   { key: 'contact', label: 'Nhận hồ sơ' },
   { key: 'reports', label: 'Báo cáo' },
+  { key: 'services', label: 'Dịch vụ', requiresServiceContent: true },
   { key: 'history', label: 'Lịch sử' },
 ]
 
 const CONTENT_TABS = ['content', 'conditions', 'workplace']
 const REVIEW_TABS = ['employer', 'contact', 'reports']
 
-export default function AdminJobDetail({ publicId }) {
+export default function AdminJobDetail({ publicId, serviceContent = null }) {
   const { user } = useSession()
   const adminAccess = useAdminAccess(user)
   const location = useLocation()
@@ -58,24 +59,29 @@ export default function AdminJobDetail({ publicId }) {
     'employer_verification.view',
     'company_update.view',
   ])
+  const visibleTabs = TABS.filter((item) => !item.requiresServiceContent || serviceContent)
 
   useEffect(() => {
     if (!jobPublicId) return
     setActiveTab(changeCount > 0 ? 'changes' : 'content')
   }, [changeCount, jobPublicId])
 
+  useEffect(() => {
+    if (!serviceContent && activeTab === 'services') setActiveTab('content')
+  }, [activeTab, serviceContent])
+
   // Roving focus so the tab strip behaves like a standard tablist.
   function handleTabKeys(event) {
     const step = { ArrowRight: 1, ArrowLeft: -1 }[event.key]
     if (!step && event.key !== 'Home' && event.key !== 'End') return
     event.preventDefault()
-    const index = TABS.findIndex((item) => item.key === activeTab)
+    const index = visibleTabs.findIndex((item) => item.key === activeTab)
     const nextIndex = event.key === 'Home'
       ? 0
       : event.key === 'End'
-        ? TABS.length - 1
-        : (index + step + TABS.length) % TABS.length
-    const next = TABS[nextIndex].key
+        ? visibleTabs.length - 1
+        : (index + step + visibleTabs.length) % visibleTabs.length
+    const next = visibleTabs[nextIndex].key
     setActiveTab(next)
     document.getElementById(`admin-job-tab-${next}`)?.focus()
   }
@@ -124,7 +130,7 @@ export default function AdminJobDetail({ publicId }) {
         <AdminJobDecisionDock job={job} />
         <nav aria-label="Phần hồ sơ tin tuyển dụng" className="admin-job-section-nav">
           <div className="admin-job-section-nav__items" onKeyDown={handleTabKeys} role="tablist">
-            {TABS.map((item) => (
+            {visibleTabs.map((item) => (
               <button
                 aria-controls="admin-job-tabpanel"
                 aria-selected={activeTab === item.key}
@@ -144,7 +150,7 @@ export default function AdminJobDetail({ publicId }) {
         </nav>
       </div>
 
-      <div className="admin-job-detail__layout">
+      <div className={`admin-job-detail__layout${activeTab === 'services' ? ' admin-job-detail__layout--wide' : ''}`}>
         <section
           aria-labelledby={`admin-job-tab-${activeTab}`}
           className="min-w-0"
@@ -164,8 +170,9 @@ export default function AdminJobDetail({ publicId }) {
             />
           )}
           {activeTab === 'history' && <AdminJobHistory job={job} />}
+          {activeTab === 'services' && serviceContent}
         </section>
-        <AdminJobReviewSummary job={job} />
+        {activeTab !== 'services' && <AdminJobReviewSummary job={job} />}
       </div>
     </div>
   )

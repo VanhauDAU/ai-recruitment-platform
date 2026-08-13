@@ -6,21 +6,9 @@ import {
   previewEmployerJobAlert,
 } from '@/entities/service-package'
 import { message } from '@/shared/lib/toast'
+import { serviceActionKey, serviceErrorMessage } from '../model/service-presentation'
 
-function dispatchKey() {
-  return globalThis.crypto?.randomUUID?.() || `job-alert-${Date.now()}-${Math.random()}`
-}
-
-function errorMessage(error, fallback) {
-  const detail = error?.response?.data?.detail
-  if (typeof detail === 'string') return detail
-  if (Array.isArray(detail)) return detail.join(' ')
-  const blockers = error?.response?.data?.blockers
-  if (Array.isArray(blockers)) return blockers.join(' ')
-  return fallback
-}
-
-export default function JobAlertAction({ activation, item, canUse, onSent }) {
+export default function JobAlertAction({ activation, item, canUse, onChanged }) {
   const [preview, setPreview] = useState(null)
   const [previewing, setPreviewing] = useState(false)
   const [sending, setSending] = useState(false)
@@ -30,7 +18,7 @@ export default function JobAlertAction({ activation, item, canUse, onSent }) {
     try {
       setPreview(await previewEmployerJobAlert(activation.public_id))
     } catch (error) {
-      message.error(errorMessage(error, 'Không thể kiểm tra điều kiện gửi Job Alert.'))
+      message.error(serviceErrorMessage(error, 'Không thể kiểm tra điều kiện gửi Job Alert.'))
     } finally {
       setPreviewing(false)
     }
@@ -39,12 +27,12 @@ export default function JobAlertAction({ activation, item, canUse, onSent }) {
   const send = async () => {
     setSending(true)
     try {
-      await createEmployerJobAlert(activation.public_id, dispatchKey())
+      await createEmployerJobAlert(activation.public_id, serviceActionKey('job-alert'))
       message.success('Đã tạo đợt gửi Job Alert. Hệ thống sẽ chỉ gửi tới ứng viên phù hợp.')
       setPreview(null)
-      await onSent()
+      await onChanged?.()
     } catch (error) {
-      message.error(errorMessage(error, 'Không thể tạo đợt gửi Job Alert.'))
+      message.error(serviceErrorMessage(error, 'Không thể tạo đợt gửi Job Alert.'))
     } finally {
       setSending(false)
     }
@@ -78,7 +66,7 @@ export default function JobAlertAction({ activation, item, canUse, onSent }) {
               <Alert
                 type="warning"
                 showIcon
-                message="Chưa thể gửi Job Alert"
+                title="Chưa thể gửi Job Alert"
                 description={preview.blockers.join(' ')}
               />
             )}
@@ -89,7 +77,7 @@ export default function JobAlertAction({ activation, item, canUse, onSent }) {
             <Alert
               type="info"
               showIcon
-              message="Không cam kết số hồ sơ ứng tuyển"
+              title="Không cam kết số hồ sơ ứng tuyển"
               description="Một lượt chỉ tạo một đợt gửi. Ứng viên có thể tắt nhận email trước thời điểm hệ thống xử lý."
             />
           </div>

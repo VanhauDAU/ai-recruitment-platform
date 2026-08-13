@@ -8,10 +8,12 @@ from rest_framework.views import APIView
 from apps.accounts.permissions import HasAdminPermission
 from common.pagination import StandardPagination
 
-from ...models import ServiceEntitlementUnit
+from ...models import JobServiceActivation, ServiceEntitlementUnit
 from ...selectors import (
     admin_capabilities_queryset,
     admin_entitlement_units_queryset,
+    admin_job_service_activation_summary,
+    admin_job_service_activations_queryset,
     admin_package_versions_queryset,
     admin_service_audit_queryset,
 )
@@ -21,6 +23,7 @@ from ...services import (
     publish_package_version,
     revoke_entitlement_unit,
     save_package_version_draft,
+    terminate_job_service_activation,
 )
 from ..serializers import (
     AdminEntitlementGrantSerializer,
@@ -30,6 +33,10 @@ from ..serializers import (
     AdminPackageVersionQuerySerializer,
     AdminPackageVersionSerializer,
     AdminPackageVersionWriteSerializer,
+    AdminServiceActivationQuerySerializer,
+    AdminServiceActivationSerializer,
+    AdminServiceActivationSummaryQuerySerializer,
+    AdminServiceActivationTerminateSerializer,
     AdminServiceAuditQuerySerializer,
     AdminServiceAuditSerializer,
     AdminServiceCapabilitySerializer,
@@ -198,6 +205,48 @@ class AdminEntitlementUnitRevokeView(APIView):
             _raise_service_validation(error)
         unit = admin_entitlement_units_queryset().get(pk=unit.pk)
         return Response(AdminEntitlementUnitSerializer(unit).data)
+
+
+class AdminServiceActivationListView(generics.ListAPIView):
+    serializer_class = AdminServiceActivationSerializer
+    permission_classes = [HasAdminPermission]
+    required_admin_permissions = {'GET': ['service_entitlement.view']}
+    pagination_class = StandardPagination
+
+    def get_queryset(self):
+        query = AdminServiceActivationQuerySerializer(data=self.request.query_params)
+        query.is_valid(raise_exception=True)
+        return admin_job_service_activations_queryset(**query.validated_data)
+
+
+class AdminServiceActivationSummaryView(APIView):
+    permission_classes = [HasAdminPermission]
+    required_admin_permissions = {'GET': ['service_entitlement.view']}
+
+    def get(self, request):
+        query = AdminServiceActivationSummaryQuerySerializer(data=request.query_params)
+        query.is_valid(raise_exception=True)
+        return Response(admin_job_service_activation_summary(**query.validated_data))
+
+
+class AdminServiceActivationTerminateView(APIView):
+    permission_classes = [HasAdminPermission]
+    required_admin_permissions = {'POST': ['service_entitlement.manage']}
+
+    def post(self, request, public_id):
+        activation = get_object_or_404(JobServiceActivation, public_id=public_id)
+        serializer = AdminServiceActivationTerminateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            activation = terminate_job_service_activation(
+                activation=activation,
+                actor=request.user,
+                reason=serializer.validated_data['reason'],
+            )
+        except DjangoValidationError as error:
+            _raise_service_validation(error)
+        activation = admin_job_service_activations_queryset().get(pk=activation.pk)
+        return Response(AdminServiceActivationSerializer(activation).data)
 
 
 class AdminServiceAuditListView(generics.ListAPIView):

@@ -9,6 +9,9 @@ from .api.views import (
     AdminPackageVersionDetailView,
     AdminPackageVersionListCreateView,
     AdminPackageVersionPublishView,
+    AdminServiceActivationListView,
+    AdminServiceActivationSummaryView,
+    AdminServiceActivationTerminateView,
     AdminServiceAuditListView,
     AdminServiceCapabilityListView,
     AdminServiceCategoryDetailView,
@@ -18,6 +21,7 @@ from .api.views import (
     ConsultationLeadCreateView,
     EmployerActiveServiceListView,
     EmployerServiceActivationCreateView,
+    EmployerServiceActivationHistoryView,
     EmployerServiceActivationPreviewView,
     EmployerServiceAlertCreateView,
     EmployerServiceAlertPreviewView,
@@ -48,6 +52,11 @@ urlpatterns = [
         'mine/activations/',
         EmployerActiveServiceListView.as_view(),
         name='services-employer-active-services',
+    ),
+    path(
+        'mine/activation-history/',
+        EmployerServiceActivationHistoryView.as_view(),
+        name='services-employer-activation-history',
     ),
     path(
         'activations/<str:public_id>/refresh/',
@@ -93,6 +102,21 @@ urlpatterns = [
         'admin/entitlements/<str:public_id>/revoke/',
         AdminEntitlementUnitRevokeView.as_view(),
         name='services-admin-entitlement-revoke',
+    ),
+    path(
+        'admin/activations/',
+        AdminServiceActivationListView.as_view(),
+        name='services-admin-activations',
+    ),
+    path(
+        'admin/activations/summary/',
+        AdminServiceActivationSummaryView.as_view(),
+        name='services-admin-activation-summary',
+    ),
+    path(
+        'admin/activations/<str:public_id>/terminate/',
+        AdminServiceActivationTerminateView.as_view(),
+        name='services-admin-activation-terminate',
     ),
     path(
         'admin/audit/',

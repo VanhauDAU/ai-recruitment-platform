@@ -43,7 +43,6 @@ vi.mock('./JobGeneralFields', async () => {
 vi.mock('./JobFormSection', () => ({ default: ({ children }) => <section>{children}</section> }))
 vi.mock('./ApplicationInfoFields', () => ({ default: () => null }))
 vi.mock('./AutomaticApplicationStatusFields', () => ({ default: () => null }))
-vi.mock('./BasicJobService', () => ({ default: () => null }))
 vi.mock('./CandidateExpectationFields', () => ({ default: () => null }))
 vi.mock('./JobDescriptionFields', () => ({ default: () => null }))
 vi.mock('./JobFormPreview', () => ({ default: () => null }))

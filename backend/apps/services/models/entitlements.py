@@ -589,6 +589,7 @@ class ServiceAuditEvent(models.Model):
         UNIT_CONSUMED = 'unit_consumed', 'Sử dụng lượt'
         ACTIVATION_CREATED = 'activation_created', 'Kích hoạt dịch vụ'
         ACTIVATION_EXPIRED = 'activation_expired', 'Dịch vụ kết thúc'
+        ACTIVATION_TERMINATED = 'activation_terminated', 'Dịch vụ bị dừng'
         CAPABILITY_USED = 'capability_used', 'Sử dụng quyền lợi'
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)

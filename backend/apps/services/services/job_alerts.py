@@ -22,7 +22,11 @@ from ..models import (
     ServiceAuditEvent,
     ServiceCapability,
 )
-from .entitlements import _validate_actor_company, record_service_audit_event
+from .entitlements import (
+    _validate_actor_company,
+    _validate_actor_job_owner,
+    record_service_audit_event,
+)
 
 logger = logging.getLogger(__name__)
 MAX_DELIVERY_ATTEMPTS = 4
@@ -61,6 +65,7 @@ def _has_matching_recipient(job):
 def preview_job_service_alert_dispatch(*, activation, actor, at=None):
     at = at or timezone.now()
     _validate_actor_company(actor=actor, company_id=activation.company_id)
+    _validate_actor_job_owner(actor=actor, job=activation.job)
     blockers = []
     if not _activation_is_effective(activation, at):
         blockers.append('Dịch vụ không còn trong thời gian hiệu lực.')
@@ -96,6 +101,7 @@ def create_job_service_alert_dispatch(*, activation, actor, idempotency_key, at=
         .get(pk=activation.pk)
     )
     _validate_actor_company(actor=actor, company_id=locked_activation.company_id)
+    _validate_actor_job_owner(actor=actor, job=locked_activation.job)
     existing_usage = JobServiceUsageEvent.objects.filter(
         company_id=locked_activation.company_id,
         idempotency_key=idempotency_key,

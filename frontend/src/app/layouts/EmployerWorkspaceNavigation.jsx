@@ -118,11 +118,10 @@ export const EMPLOYER_NAV_ITEMS = [
     disabled: true,
   },
   {
-    key: 'coming-services',
+    key: employerAppPath('/services'),
     icon: <ToolOutlined />,
-    label: comingSoonLabel('Dịch vụ của tôi'),
-    title: 'Dịch vụ của tôi — Sắp mở',
-    disabled: true,
+    label: 'Dịch vụ của tôi',
+    title: 'Dịch vụ của tôi',
   },
   {
     key: 'coming-coupons',
@@ -159,6 +158,7 @@ const ROUTE_TITLES = [
   [employerAppPath('/activities'), 'Lịch sử hoạt động'],
   [employerAppPath('/campaigns'), 'Chiến dịch tuyển dụng'],
   [employerAppPath('/jobs'), 'Tin tuyển dụng'],
+  [employerAppPath('/services'), 'Dịch vụ của tôi'],
   [employerAppPath('/applications'), 'Hồ sơ ứng tuyển'],
   [employerAppPath('/employer-verify'), 'Xác thực tài khoản'],
   [employerAppPath('/account/phone-verify'), 'Xác thực số điện thoại'],

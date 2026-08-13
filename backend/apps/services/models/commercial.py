@@ -14,6 +14,28 @@ SUPPORTED_CAPABILITY_CODES = (
     'visibility_extension',
 )
 
+# Duration effects are exclusive per job. Quantity rights stay additive so an
+# employer can buy extra refreshes or Job Alerts without suppressing an
+# existing balance. These codes are also used by the activation guard and the
+# legacy-overlap resolver; keep the policy in the services domain rather than
+# deriving it from package names or prices.
+ADDITIVE_CAPABILITY_CODES = frozenset({'job_refresh', 'job_alert'})
+EXCLUSIVE_CAPABILITY_CODES = frozenset(
+    code for code in SUPPORTED_CAPABILITY_CODES if code not in ADDITIVE_CAPABILITY_CODES
+)
+
+PLACEMENT_PRIORITY = {
+    'organic': 0,
+    'search_sponsored': 1,
+    'best_jobs_eligible': 2,
+}
+CARD_TONE_PRIORITY = {
+    'neutral': 0,
+    'orange': 1,
+    'green': 2,
+    'green_strong': 3,
+}
+
 CAPABILITY_CONFIGURATION_RULES = {
     'sponsored_placement': {
         'key': 'placement',

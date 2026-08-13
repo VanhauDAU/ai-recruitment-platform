@@ -1446,6 +1446,31 @@ test('employer jobs: detail workspace is compact, actionable and responsive', as
       }),
     })
   })
+  await page.route('http://localhost:8000/api/jobs/mine/posting-context/', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        default_deadline_days: 30,
+        max_deadline_days: 90,
+        max_public_lifetime_days: 90,
+        services: {
+          activation_enabled: true,
+          refresh_enabled: true,
+          alert_enabled: true,
+          metrics_enabled: true,
+        },
+      }),
+    })
+  })
+  await page.route(/http:\/\/localhost:8000\/api\/services\/mine\/inventory\/.*/, async (route) => {
+    await route.fulfill({ contentType: 'application/json', body: '[]' })
+  })
+  await page.route(/http:\/\/localhost:8000\/api\/services\/mine\/activation-history\/.*/, async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({ count: 0, next: null, previous: null, results: [] }),
+    })
+  })
   await page.route(/http:\/\/localhost:8000\/api\/v2\/recruiter\/applications\/.*/, async (route) => {
     await route.fulfill({
       contentType: 'application/json',
@@ -1502,6 +1527,16 @@ test('employer jobs: detail workspace is compact, actionable and responsive', as
   await expect(page.getByText('Phường Hải Châu')).toBeVisible()
   await expect(page.getByText('React', { exact: true })).toBeVisible()
   await expect(page.getByText('Bảo hiểm sức khỏe', { exact: true })).toBeVisible()
+  await expectNoHorizontalOverflow(page)
+
+  if (usesCompactTabs) {
+    await page.getByRole('combobox', { name: 'Chọn nội dung quản lý tin' }).click()
+    await page.locator('.ant-select-dropdown:visible').getByText('Dịch vụ & hiệu quả', { exact: true }).click()
+  } else {
+    await page.getByRole('tab', { name: /Dịch vụ & hiệu quả/ }).click()
+  }
+  await expect(page.getByText('Quy tắc kết hợp dịch vụ')).toBeVisible()
+  await expect(page.getByText(/Hiệu ứng cùng loại không được kích hoạt chồng thời gian/)).toBeVisible()
   await expectNoHorizontalOverflow(page)
 })
 

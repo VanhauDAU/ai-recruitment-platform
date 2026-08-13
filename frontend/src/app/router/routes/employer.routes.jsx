@@ -26,6 +26,7 @@ import {
   EmployerLandingPage,
   EmployerLegalPage,
   EmployerLoginPage,
+  EmployerMyServicesPage,
   EmployerOnboardingPage,
   EmployerNotificationsPage,
   EmployerPasswordLoginPage,
@@ -111,6 +112,7 @@ export function employerRoutes() {
             <Route path={employerAppPath('/dashboard')} element={<EmployerDashboardPage />} />
             <Route path={employerAppPath('/notifications')} element={<EmployerNotificationsPage />} />
             <Route path={employerAppPath('/activities')} element={<EmployerActivitiesPage />} />
+            <Route path={employerAppPath('/services')} element={<EmployerMyServicesPage />} />
             <Route element={<JobWorkspaceGuard />}>
               <Route path={employerAppPath('/campaigns')} element={<EmployerCampaignListPage />} />
               <Route path={employerAppPath('/campaigns/:publicId')} element={<EmployerCampaignDetailPage />} />

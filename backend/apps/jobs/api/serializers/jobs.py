@@ -902,6 +902,9 @@ class EmployerJobLifecyclePolicySerializer(serializers.Serializer):
 class EmployerJobServicesContextSerializer(serializers.Serializer):
     catalog_v2_enabled = serializers.BooleanField()
     activation_enabled = serializers.BooleanField()
+    refresh_enabled = serializers.BooleanField()
+    alert_enabled = serializers.BooleanField()
+    metrics_enabled = serializers.BooleanField()
 
 
 class EmployerJobPostingContextSerializer(serializers.Serializer):
