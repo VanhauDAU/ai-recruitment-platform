@@ -41,7 +41,7 @@ describe('interview-script', () => {
     const values = {
       desired_salary_vnd: 15_000_000,
       desired_specialization_ids: [1],
-      desired_position_other: 'Kỹ sư cầu nối',
+      desired_position_others: ['Kỹ sư cầu nối', 'Business Analyst'],
       experience_level: '2',
       preferred_province_ids: [3],
       willing_to_relocate: true,
@@ -49,7 +49,7 @@ describe('interview-script', () => {
       recruiter_visibility_consent: false,
     }
 
-    expect(answerSummary(stepById('specialization'), values, CATALOG)).toBe('Lập trình viên · Kỹ sư cầu nối')
+    expect(answerSummary(stepById('specialization'), values, CATALOG)).toBe('Lập trình viên · Kỹ sư cầu nối · Business Analyst')
     expect(answerSummary(stepById('experience'), values, CATALOG)).toBe('2 năm')
     expect(answerSummary(stepById('salary'), values, CATALOG)).toBe('15.000.000 VND/tháng')
     expect(answerSummary(stepById('location'), values, CATALOG)).toBe('Đà Nẵng · Sẵn sàng đổi nơi làm việc')
@@ -86,6 +86,10 @@ describe('interview-script', () => {
 
   it('vẫn có câu chốt khi thiếu dữ liệu', () => {
     expect(buildReadySpeech(null, null)).toContain('danh sách việc làm phù hợp')
+  })
+
+  it('đưa vị trí tự nhập vào câu chốt sau khi lưu', () => {
+    expect(buildReadySpeech({ desired_position_others: ['Kỹ sư dữ liệu'] }, null)).toContain('Kỹ sư dữ liệu')
   })
 
   it('cắt câu quá dài ở ranh giới từ để không vượt hạn mức backend', () => {

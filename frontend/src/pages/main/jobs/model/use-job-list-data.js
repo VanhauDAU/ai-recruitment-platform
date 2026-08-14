@@ -2,7 +2,7 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { getJobs, jobKeys } from '@/entities/job'
 import { toApiParams } from '../lib/job-list-params'
 
-const JOB_LIST_RANKING_SEED = globalThis.crypto?.randomUUID?.()
+export const JOB_LIST_RANKING_SEED = globalThis.crypto?.randomUUID?.()
   ?? `jobs-${Date.now()}-${Math.random().toString(36).slice(2)}`
 
 export default function useJobListData(searchParams) {
@@ -25,6 +25,7 @@ export default function useJobListData(searchParams) {
     // cards hiện tại để tránh nháy trắng.
     loading: query.isPending || query.isPlaceholderData,
     refreshing: query.isFetching && !query.isPending,
+    rankingSeed: JOB_LIST_RANKING_SEED,
     results: Array.isArray(data) ? data : data.results || [],
     count: Array.isArray(data) ? data.length : data.count || 0,
   }

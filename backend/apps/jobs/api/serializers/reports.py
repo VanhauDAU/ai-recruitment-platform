@@ -125,10 +125,7 @@ class AdminJobReportResolveSerializer(serializers.Serializer):
     note = serializers.CharField(required=False, allow_blank=True, max_length=1000)
 
     def validate(self, attrs):
-        if (
-            attrs.get('status') == JobReport.Status.UPHELD
-            and not attrs.get('note', '').strip()
-        ):
+        if attrs.get('status') == JobReport.Status.UPHELD and not attrs.get('note', '').strip():
             raise serializers.ValidationError({'note': 'Nhập căn cứ xác nhận vi phạm.'})
         return attrs
 

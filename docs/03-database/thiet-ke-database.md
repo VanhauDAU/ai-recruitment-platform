@@ -30,7 +30,7 @@ Thiết kế onboarding và preference tìm việc cho ứng viên:
 | `social_accounts` | `backend/apps/accounts` | Liên kết OAuth (Google/Facebook/LinkedIn) với user; UNIQUE(provider, provider_user_id), lưu `raw_profile` |
 | `skills`, `skill_groups` | `backend/apps/skills` | Nguồn kỹ năng chuẩn duy nhất; nhóm kỹ năng là taxonomy mở thay cho choices IT hard-code |
 | `candidate_profiles` | `backend/apps/candidates` | Tự tạo rỗng khi candidate đăng ký (signal) |
-| `candidate_job_preferences`, `candidate_desired_specializations`, `candidate_preferred_provinces` | `backend/apps/candidates` | Nhu cầu việc làm chuẩn hóa làm nguồn chính cho onboarding và recommendation |
+| `candidate_job_preferences`, `candidate_desired_specializations`, `candidate_desired_position_others`, `candidate_preferred_provinces`, `candidate_preferred_skills` | `backend/apps/candidates` | Nhu cầu việc làm chuẩn hóa làm nguồn chính cho onboarding và recommendation |
 | `candidate_consents`, `candidate_consent_events` | `backend/apps/candidates` | Quyết định hiện hành và audit trail bất biến cho gợi ý/hiển thị với NTD |
 | `candidate_email_notification_settings` | `backend/apps/candidates` | 12 preference email candidate, one-to-one profile, mặc định bật; email giao dịch bảo mật không thuộc bảng |
 | `companies` | `backend/apps/employers` | Hồ sơ/catalogue công ty dùng chung cho nhiều recruiter. `tax_code` được chuẩn hóa thành 10 hoặc 13 chữ số ở API nhưng không phải unique claim trong DB; bảng không có verification lifecycle. Thay thế `employer_profiles` cũ — dữ liệu đổ qua migration `0007` (gộp theo tax_code), bảng cũ đã xóa ở migration `0008` ([kế hoạch](./ke-hoach-thiet-ke-lai-cong-ty-nha-tuyen-dung.md)) |

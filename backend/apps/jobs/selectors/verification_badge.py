@@ -32,10 +32,7 @@ def job_badge_criteria(job):
 
 
 def badge_verified_map(badge_keys):
-    return {
-        key: state['verified']
-        for key, state in employer_badge_state_map(badge_keys).items()
-    }
+    return {key: state['verified'] for key, state in employer_badge_state_map(badge_keys).items()}
 
 
 def prime_badge_cache(context, badge_keys):

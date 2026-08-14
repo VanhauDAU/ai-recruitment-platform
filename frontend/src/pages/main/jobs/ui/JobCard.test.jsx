@@ -57,4 +57,24 @@ describe('JobCard', () => {
     expect(screen.getByText('Đăng 2 ngày trước')).toBeVisible()
     expect(screen.queryByText('Đăng hôm nay')).not.toBeInTheDocument()
   })
+
+  it('shows the candidate recommendation label without replacing sponsored disclosure', () => {
+    render(
+      <MemoryRouter>
+        <JobCard
+          recommendationLabel="Đề xuất cho bạn"
+          job={{
+            public_id: 'job-3',
+            slug: 'sponsored-recommendation-job-3',
+            title: 'Product Engineer',
+            company_name: 'ProCV',
+            tier: 'top',
+          }}
+        />
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByText('Đề xuất cho bạn')).toBeVisible()
+    expect(screen.getByText('Tài trợ')).toBeVisible()
+  })
 })

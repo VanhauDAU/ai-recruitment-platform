@@ -17,8 +17,10 @@ kiểm tra `request.user.role == candidate`.
 
 Các yêu cầu chính:
 
-- Chọn từ 1 đến 5 vị trí chuyên môn trong taxonomy `job_categories`.
-- Có thể nhập thêm một vị trí tự do; chuỗi được `trim`, chuỗi rỗng thành `NULL`.
+- Chọn tối đa 5 vị trí chuyên môn trong taxonomy `job_categories`.
+- Có thể nhập tối đa 5 vị trí tự do; ít nhất một trong hai nhóm vị trí phải có
+  dữ liệu. Chuỗi được trim, loại rỗng và dedupe không phân biệt hoa thường.
+- Chọn tối đa 20 kỹ năng đang hoạt động từ taxonomy `skills`.
 - Lương kỳ vọng là VND/tháng, bắt buộc, là số nguyên lớn hơn 0. Giá trị `0`
   bị từ chối.
 - Kinh nghiệm và ít nhất một tỉnh/thành là bắt buộc khi hoàn thành.
@@ -121,7 +123,7 @@ Quan hệ 1–1 với `candidate_profiles`, là tập preference đang hiệu l�
 | Cột | Kiểu / ràng buộc | Ý nghĩa |
 | --- | --- | --- |
 | `candidate_profile_id` | OneToOne FK, CASCADE | Owner của preference. |
-| `desired_position_other` | varchar(255), nullable | Vị trí nhập thêm, đã trim; không lưu rỗng. |
+| `desired_position_other` | varchar(255), nullable | Trường tương thích legacy; phản chiếu vị trí tự nhập đầu tiên. |
 | `desired_salary_vnd` | bigint nullable, `> 0` | Lương kỳ vọng VND/tháng; optional. |
 | `experience_level` | enum candidate-specific | `no_experience`, `under_1`, `1`…`5`, `over_5`; bắt buộc khi complete. |
 | `willing_to_relocate` | boolean nullable | Ba trạng thái: chưa trả lời / có / không. |
@@ -139,9 +141,22 @@ dụng của `Job`: cùng biểu diễn năm kinh nghiệm nhưng khác ngữ ng
 | `sort_order` | smallint, `>= 0` | Thứ tự người dùng chọn. |
 
 `UNIQUE(job_preference_id, job_category_id)` chặn trùng. API/service xác nhận
-category active, `category_type=specialization` và tổng số phần tử từ 1 đến 5;
-hai điều kiện liên hàng này không thể biểu diễn đáng tin cậy bằng `CHECK`
-chuẩn SQL nên phải được test ở service.
+category active và `category_type=specialization`.
+
+### `candidate_desired_position_others`
+
+| Cột | Kiểu / ràng buộc | Ý nghĩa |
+| --- | --- | --- |
+| `job_preference_id` | FK `candidate_job_preferences`, CASCADE | Preference sở hữu vị trí tự nhập. |
+| `name` | varchar(255) | Tên đã trim; API loại rỗng và trùng không phân biệt hoa thường. |
+| `sort_order` | smallint, `>= 0` | Thứ tự người dùng nhập. |
+
+Đây là nguồn chuẩn cho `desired_position_others: string[]`; text tự nhập không
+tạo `JobCategory`. Taxonomy và custom có hai cap độc lập, mỗi nhóm tối đa 5;
+ít nhất một trong hai nhóm phải có một phần tử.
+Migration `0007` backfill scalar legacy thành phần tử đầu tiên. Khi ghi dữ liệu
+mới, service phản chiếu phần tử đầu vào `desired_position_other` để consumer cũ
+tiếp tục hoạt động.
 
 ### `candidate_preferred_provinces`
 
@@ -154,6 +169,19 @@ chuẩn SQL nên phải được test ở service.
 `UNIQUE(job_preference_id, location_id)` chặn trùng. Service chỉ nhận location
 active có `level=province`; không nhận phường/xã. Không đặt giới hạn tùy tiện
 về số tỉnh ở phase này (tập dữ liệu chỉ gồm các tỉnh/thành).
+
+### `candidate_preferred_skills`
+
+| Cột | Kiểu / ràng buộc | Ý nghĩa |
+| --- | --- | --- |
+| `job_preference_id` | FK `candidate_job_preferences`, CASCADE | Preference sở hữu lựa chọn. |
+| `skill_id` | FK `skills`, PROTECT | Kỹ năng đang hoạt động trong taxonomy dùng chung. |
+| `sort_order` | smallint, `>= 0` | Thứ tự người dùng chọn. |
+
+`UNIQUE(job_preference_id, skill_id)` chặn trùng. API nhận tối đa 20 kỹ năng,
+không tạo skill từ text. `preferred_skill_ids` là field mới optional: PUT có
+field thì replace toàn bộ (kể cả mảng rỗng), client cũ bỏ field thì giữ nguyên
+danh sách kỹ năng hiện có.
 
 ### `candidate_consents`
 
@@ -180,7 +208,7 @@ Các endpoint thuộc `apps/candidates`, yêu cầu `IsCandidate`:
 | Endpoint | Mục đích |
 | --- | --- |
 | `GET /api/candidate/job-preferences/` | Đọc preference, consent effective và `job_preferences_configured`. |
-| `PUT /api/candidate/job-preferences/` | Validate toàn bộ form, thay thế hai danh sách chọn trong một transaction, upsert consent và đặt cờ `job_preferences_configured=true`. Cùng endpoint cho onboarding và trang cài đặt. |
+| `PUT /api/candidate/job-preferences/` | Validate toàn bộ form, thay thế các danh sách được gửi trong một transaction, upsert consent và đặt cờ `job_preferences_configured=true`. Cùng endpoint cho onboarding và trang cài đặt. |
 
 `PUT /api/candidate/job-preferences/` dùng `transaction.atomic()` và khóa row preference/
 profile (`select_for_update`) trước khi replace các bảng liên kết. Nếu một
@@ -190,8 +218,11 @@ thành.
 
 Các lỗi contract tối thiểu:
 
-- `desired_specialization_ids`: bắt buộc, 1–5, không trùng, chỉ specialization active.
-- `desired_position_other`: optional; trim, `null` khi trống, tối đa 255 ký tự.
+- `desired_specialization_ids`: bắt buộc, tối đa 5, không trùng, chỉ specialization active; có thể rỗng nếu có vị trí tự nhập.
+- `desired_position_others`: canonical, optional, tối đa 5; trim, bỏ rỗng/trùng không phân biệt hoa thường, mỗi mục tối đa 255 ký tự.
+- Ít nhất một trong `desired_specialization_ids` hoặc `desired_position_others` phải có dữ liệu; hai giới hạn không cộng gộp.
+- `desired_position_other`: scalar legacy optional; khi canonical bị omit, backend chuyển scalar thành danh sách một phần tử.
+- `preferred_skill_ids`: optional để tương thích client cũ; tối đa 20 skill active, dedupe theo id.
 - `desired_salary_vnd`: bắt buộc, integer `>= 1`, không nhận `null`, float,
   số âm hay `0`.
 - `experience_level`: bắt buộc, thuộc enum candidate.
@@ -231,8 +262,8 @@ nhật nhu cầu.
 
 1. Đã xóa hai artifact onboarding ignored trong `__pycache__`; không thêm chúng
    vào Git.
-2. Tạo migration mới theo mô hình ở mục 3, không đặt lại số migration cũ và
-   không phục hồi migration bytecode.
+2. Migration `0007` thêm vị trí tự nhập chuẩn hóa và kỹ năng ưu tiên; backfill
+   `desired_position_other` thành child row có `sort_order=0`.
 3. Thêm `job_preferences_configured=false` cho mọi candidate hiện có. Không
    redirect họ; label chỉ là lời nhắc để tự mở onboarding. Chỉ đặt `true` sau
    khi preference cấu trúc được validate và lưu trọn vẹn.
@@ -265,7 +296,8 @@ candidate gộp với transaction rõ ràng thay vì làm serializer preference 
 field profile.
 
 Test tối thiểu gồm: candidate-only permission, toàn bộ validation
-list/salary/location, rollback khi payload lỗi, consent không tự grant,
+position/skill/salary/location, rollback khi payload lỗi, tương thích scalar và
+backfill, bảo toàn skill khi client cũ omit field, consent không tự grant,
 backfill cờ `false`, CTA dẫn đúng onboarding cho phiên password, không hiện
 redirect onboarding cho phiên social nhưng vẫn hiện label, CTA skip không làm
 thay đổi cờ, và banner ưu tiên email verification.

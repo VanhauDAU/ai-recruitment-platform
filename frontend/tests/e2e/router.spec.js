@@ -1,7 +1,9 @@
 import { expect, test } from '@playwright/test'
 
+const API_ROUTE = /^https?:\/\/[^/]+\/api\/.*$/
+
 async function mockRouteDependencies(page) {
-  await page.route('http://localhost:8000/api/**', async (route) => {
+  await page.route(API_ROUTE, async (route) => {
     const path = new URL(route.request().url()).pathname
     if (path === '/api/auth/me/' || path === '/api/auth/refresh/') {
       await route.fulfill({ status: 401, contentType: 'application/json', body: '{"detail":"Unauthenticated"}' })
@@ -38,7 +40,7 @@ test.describe('portal route registries', () => {
     await page.goto('/tuyendung/app/login')
     await expect(page.getByRole('heading', { name: 'Chào mừng bạn quay trở lại' })).toBeVisible()
     await page.goto('/admin/app/login')
-    await expect(page.getByRole('heading', { name: 'Đăng nhập Quản trị hệ thống' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Đăng nhập quản trị' })).toBeVisible()
     expect(pageErrors).toEqual([])
   })
 
@@ -56,20 +58,22 @@ test.describe('portal route registries', () => {
   })
 
   test('redirects an authenticated candidate away from login and sign-up', async ({ page }) => {
-    await page.unroute('http://localhost:8000/api/**')
-    await page.route('http://localhost:8000/api/**', async (route) => {
+    await page.unroute(API_ROUTE)
+    await page.route(API_ROUTE, async (route) => {
       const path = new URL(route.request().url()).pathname
-      const body = path === '/api/auth/me/'
-        ? { id: 1, role: 'candidate', email_verified: true, job_preferences_configured: true }
-        : path === '/api/privacy/consent/'
-          ? { consent: { necessary: true, preferences: false, analytics: false, marketing: false } }
-          : path === '/api/jobs/'
-            ? { count: 0, results: [] }
-            : path === '/api/jobs/categories/' || path === '/api/locations/'
-              ? []
-              : path === '/api/site/banners/'
+      const body = path === '/api/auth/refresh/'
+        ? { access: 'e2e-access' }
+        : path === '/api/auth/me/'
+          ? { id: 1, role: 'candidate', email_verified: true, job_preferences_configured: true }
+          : path === '/api/privacy/consent/'
+            ? { consent: { necessary: true, preferences: false, analytics: false, marketing: false } }
+            : path === '/api/jobs/'
+              ? { count: 0, results: [] }
+              : path === '/api/jobs/categories/' || path === '/api/locations/'
                 ? []
-                : {}
+                : path === '/api/site/banners/'
+                  ? []
+                  : {}
       await route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) })
     })
 
@@ -80,10 +84,11 @@ test.describe('portal route registries', () => {
   })
 
   test('renders onboarding for an unconfigured candidate', async ({ page }, testInfo) => {
-    await page.unroute('http://localhost:8000/api/**')
-    await page.route('http://localhost:8000/api/**', async (route) => {
+    await page.unroute(API_ROUTE)
+    await page.route(API_ROUTE, async (route) => {
       const path = new URL(route.request().url()).pathname
       const responseByPath = {
+        '/api/auth/refresh/': { access: 'e2e-access' },
         '/api/auth/me/': {
           id: 1,
           role: 'candidate',
@@ -92,8 +97,10 @@ test.describe('portal route registries', () => {
           job_preferences_configured: false,
         },
         '/api/candidate/job-preferences/': {
+          desired_position_others: [],
           desired_specializations: [],
           preferred_provinces: [],
+          preferred_skills: [],
           job_preferences_configured: false,
           willing_to_relocate: true,
           ai_recommendation_consent: false,
@@ -115,6 +122,7 @@ test.describe('portal route registries', () => {
           ],
         },
         '/api/locations/': { count: 1, results: [{ id: 1, name: 'Hà Nội', level: 'province' }] },
+        '/api/skills/': { count: 0, results: [] },
       }
       await route.fulfill({
         contentType: 'application/json',
@@ -144,7 +152,9 @@ test.describe('portal route registries', () => {
     await expect(page.getByRole('radio', { name: 'Nữ' })).toBeChecked()
     await expect(page.getByRole('checkbox', { name: 'Tôi có thể thay đổi địa điểm làm việc' })).toBeChecked()
     await page.getByRole('button', { name: 'Cập nhật' }).click()
-    await expect(page.getByRole('alert').getByText('Vui lòng chọn ít nhất một vị trí chuyên môn.')).toBeVisible()
+    await expect(page.locator('#desired_specialization_ids_help')).toContainText(
+      'Vui lòng chọn hoặc nhập ít nhất một vị trí chuyên môn.',
+    )
   })
 
   test('renders the not-found route for an unknown URL', async ({ page }) => {

@@ -6817,6 +6817,90 @@ paths:
               schema:
                 $ref: '#/components/schemas/CandidateJobRecommendationResponse'
           description: ''
+  /api/jobs/recommendations/hidden/:
+    post:
+      operationId: jobs_recommendations_hidden_create
+      summary: Ẩn một tin khỏi các bề mặt gợi ý cá nhân
+      tags:
+      - jobs
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HiddenJobCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/HiddenJobCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/HiddenJobCreateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HiddenJobResponse'
+          description: ''
+  /api/jobs/recommendations/hidden/{job_public_id}/:
+    delete:
+      operationId: jobs_recommendations_hidden_destroy
+      summary: Hoàn tác ẩn một tin trên phạm vi ứng viên hiện tại
+      parameters:
+      - in: path
+        name: job_public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - jobs
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HiddenJobResponse'
+          description: ''
+  /api/jobs/recommendations/inline/:
+    get:
+      operationId: jobs_recommendations_inline_retrieve
+      summary: Tin gợi ý chèn ngẫu nhiên trong danh sách việc làm
+      parameters:
+      - in: query
+        name: excluded
+        schema:
+          type: string
+          default: ''
+          maxLength: 2550
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - in: query
+        name: ranking_seed
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: ^[A-Za-z0-9_-]{1,64}$
+        required: true
+      tags:
+      - jobs
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InlineJobRecommendationResponse'
+          description: ''
   /api/jobs/saved/:
     get:
       operationId: jobs_saved_list
@@ -17078,6 +17162,22 @@ components:
           type: boolean
         partner_gifts_and_discounts:
           type: boolean
+    CandidateDesiredSpecializationRead:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+        slug:
+          type: string
+          readOnly: true
+      required:
+      - id
+      - name
+      - slug
     CandidateJobPreference:
       type: object
       description: Read/write contract shared by onboarding and account preference
@@ -17087,6 +17187,12 @@ components:
           type: string
           nullable: true
           maxLength: 255
+        desired_position_others:
+          type: array
+          maxItems: 5
+          items:
+            type: string
+            maxLength: 255
         desired_salary_vnd:
           type: integer
           maximum: 9223372036854775807
@@ -17098,13 +17204,22 @@ components:
           type: boolean
           nullable: true
         desired_specializations:
-          type: string
+          type: array
+          items:
+            $ref: '#/components/schemas/CandidateDesiredSpecializationRead'
           readOnly: true
         preferred_provinces:
-          type: string
+          type: array
+          items:
+            $ref: '#/components/schemas/CandidatePreferredProvinceRead'
+          readOnly: true
+        preferred_skills:
+          type: array
+          items:
+            $ref: '#/components/schemas/CandidatePreferredSkillRead'
           readOnly: true
         job_preferences_configured:
-          type: string
+          type: boolean
           readOnly: true
       required:
       - desired_salary_vnd
@@ -17112,6 +17227,7 @@ components:
       - experience_level
       - job_preferences_configured
       - preferred_provinces
+      - preferred_skills
     CandidateJobPreferenceRequest:
       type: object
       description: Read/write contract shared by onboarding and account preference
@@ -17121,6 +17237,12 @@ components:
           type: string
           nullable: true
           maxLength: 255
+        desired_position_others:
+          type: array
+          maxItems: 5
+          items:
+            type: string
+            maxLength: 255
         desired_salary_vnd:
           type: integer
           maximum: 9223372036854775807
@@ -17133,15 +17255,21 @@ components:
           nullable: true
         desired_specialization_ids:
           type: array
+          maxItems: 5
           items:
             type: integer
-            writeOnly: true
           writeOnly: true
         preferred_province_ids:
           type: array
           items:
             type: integer
             writeOnly: true
+          writeOnly: true
+        preferred_skill_ids:
+          type: array
+          maxItems: 20
+          items:
+            type: integer
           writeOnly: true
         ai_recommendation_consent:
           type: boolean
@@ -17212,6 +17340,38 @@ components:
         * `preferences_required` - preferences_required
         * `consent_required` - consent_required
         * `ready` - ready
+    CandidatePreferredProvinceRead:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+        code:
+          type: string
+          readOnly: true
+      required:
+      - code
+      - id
+      - name
+    CandidatePreferredSkillRead:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+        slug:
+          type: string
+          readOnly: true
+      required:
+      - id
+      - name
+      - slug
     CandidateProfileRead:
       type: object
       description: Minimal profile data rendered by onboarding and job-preference
@@ -21204,6 +21364,40 @@ components:
         * `campaign` - Chiến dịch
         * `job` - Tin tuyển dụng
         * `application` - Ứng viên
+    HiddenJobCreateRequest:
+      type: object
+      properties:
+        job_public_id:
+          type: string
+          minLength: 1
+          maxLength: 50
+          pattern: ^[A-Za-z0-9_-]{1,50}$
+        source:
+          $ref: '#/components/schemas/HiddenJobCreateSourceEnum'
+      required:
+      - job_public_id
+      - source
+    HiddenJobCreateSourceEnum:
+      enum:
+      - matching
+      - homepage
+      - inline
+      type: string
+      description: |-
+        * `matching` - Việc làm phù hợp
+        * `homepage` - Trang chủ
+        * `inline` - Danh sách việc làm
+    HiddenJobResponse:
+      type: object
+      properties:
+        hidden:
+          type: boolean
+        job_public_id:
+          type: string
+          maxLength: 50
+      required:
+      - hidden
+      - job_public_id
     HoldEnum:
       enum:
       - manual_review
@@ -21228,6 +21422,35 @@ components:
       description: |-
         * `income` - Thu nhập
         * `income_at_kpi` - Thu nhập khi đạt 100% KPI
+    InlineJobRecommendationResponse:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/InlineJobRecommendationResponseStatusEnum'
+        after_result_index:
+          type: integer
+          minimum: 0
+          nullable: true
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/PublicJobList'
+      required:
+      - after_result_index
+      - results
+      - status
+    InlineJobRecommendationResponseStatusEnum:
+      enum:
+      - ready
+      - not_shown
+      - preferences_required
+      - consent_required
+      type: string
+      description: |-
+        * `ready` - ready
+        * `not_shown` - not_shown
+        * `preferences_required` - preferences_required
+        * `consent_required` - consent_required
     Industry:
       type: object
       properties:

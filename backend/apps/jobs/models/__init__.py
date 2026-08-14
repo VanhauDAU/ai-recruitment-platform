@@ -15,6 +15,7 @@ from .contacts import JobApplicationContact, JobApplicationEmail
 from .core import Job, JobCategory, JobCategoryLocalization
 from .details import JobCategoryAssignment, JobLocation, JobWorkSchedule
 from .engagement import JobEngagementDaily
+from .hidden import CandidateHiddenJob
 from .history import JobStatusHistory
 from .languages import JobLanguageRequirement, Language
 from .moderation import JobModerationEvent
@@ -29,6 +30,7 @@ __all__ = [
     'CandidateJobDigestSchedule',
     'CandidateJobEmailReceipt',
     'CandidateJobEmailSuppression',
+    'CandidateHiddenJob',
     'Job',
     'JobAiGeneration',
     'JobAlert',

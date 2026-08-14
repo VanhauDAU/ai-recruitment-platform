@@ -27,6 +27,7 @@ import PlacementBanner from './ui/PlacementBanner'
 import QuickExplore from './ui/QuickExplore'
 import RelatedSearchesCard from './ui/RelatedSearchesCard'
 import useJobListData from './model/use-job-list-data'
+import useInlineJobRecommendations from './model/use-inline-job-recommendations'
 import useJobListFilters from './model/use-job-list-filters'
 import useHanoiJobSuggestion from './model/use-hanoi-job-suggestion'
 import useJobLocationData from './model/use-job-location-data'
@@ -60,7 +61,16 @@ export default function JobList() {
     searchBy, searchParamKeyword, searchParams,
     selectedCategories, selectedLocations,
   } = filters
-  const { count, loading, results } = useJobListData(searchParams)
+  const { count, loading, rankingSeed, results } = useJobListData(searchParams)
+  const inlineRecommendations = useInlineJobRecommendations({
+    enabled: !loading
+      && isAuthenticated
+      && user?.role === 'candidate'
+      && user?.job_preferences_configured,
+    excludedJobIds: results.map((job) => job.public_id),
+    page,
+    rankingSeed,
+  })
 
   // Thanh tìm kiếm sticky né header (header tự ẩn khi cuộn xuống); sidebar dính ngay dưới nó.
   const headerVisible = useHideOnScroll()
@@ -405,6 +415,8 @@ export default function JobList() {
               />
             )}
             insertAfter={insertAfter}
+            recommendationInsertAfter={inlineRecommendations.afterResultIndex}
+            recommendedJobs={inlineRecommendations.results}
             isAuthenticated={isAuthenticated}
             loading={loading}
             onClearAll={hasFilters || searchParamKeyword ? filters.clearAllCriteria : undefined}

@@ -38,6 +38,10 @@ from .moderation import (
 from .recommendations import (
     CandidateJobRecommendationResponseSerializer,
     CvJobRecommendationResponseSerializer,
+    HiddenJobCreateSerializer,
+    HiddenJobResponseSerializer,
+    InlineJobRecommendationQuerySerializer,
+    InlineJobRecommendationResponseSerializer,
     RecommendationPermissionDeniedSerializer,
     SavedJobRecommendationResponseSerializer,
 )
@@ -76,6 +80,10 @@ __all__ = [
     'AdminJobManagementListSerializer',
     'CandidateJobRecommendationResponseSerializer',
     'CvJobRecommendationResponseSerializer',
+    'HiddenJobCreateSerializer',
+    'HiddenJobResponseSerializer',
+    'InlineJobRecommendationQuerySerializer',
+    'InlineJobRecommendationResponseSerializer',
     'EmployerJobDetailSerializer',
     'EmployerJobDraftSerializer',
     'EmployerJobListSerializer',

@@ -19,6 +19,7 @@ from .moderation import (
     admin_job_management_summary,
     job_moderation_queryset,
 )
+from .recommendations import recommend_inline_jobs_for_candidate
 from .reports import ADMIN_JOB_REPORT_ORDERING_FIELDS, job_report_queryset
 from .saved_recommendations import recommend_jobs_from_saved
 from .saved_remarketing import saved_job_remarketing_lane
@@ -51,5 +52,6 @@ __all__ = [
     'ADMIN_JOB_REPORT_ORDERING_FIELDS',
     'job_report_queryset',
     'recommend_jobs_from_saved',
+    'recommend_inline_jobs_for_candidate',
     'saved_job_remarketing_lane',
 ]

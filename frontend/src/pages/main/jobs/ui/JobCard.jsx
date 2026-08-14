@@ -87,6 +87,7 @@ export default function JobCard({
   active = false,
   showQuickView = true,
   savedAt,
+  recommendationLabel,
 }) {
   const navigate = useNavigate()
   const [saved, toggleSaved, savePending] = useSavedJob(job.public_id, job)
@@ -170,6 +171,11 @@ export default function JobCard({
       </div>
 
       <div className="min-w-0 flex-1">
+        {recommendationLabel && (
+          <span className="mb-1.5 inline-flex rounded-full bg-violet-100 px-2.5 py-1 text-[11px] font-bold text-violet-700">
+            {recommendationLabel}
+          </span>
+        )}
         <div className={`flex items-start justify-between gap-3 ${compact ? 'flex-col gap-1' : ''}`}>
           <h3 className="min-w-0 font-semibold leading-snug text-slate-950 line-clamp-2">
             <Link
