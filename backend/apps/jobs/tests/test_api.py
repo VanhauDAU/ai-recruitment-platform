@@ -2023,6 +2023,10 @@ class EmployerJobSerializerTests(APITestCase):
                 'Giới tính: Nữ',
             ],
         )
+        self.assertEqual(data['work_types'], ['onsite', 'hybrid'])
+        self.assertEqual(data['age_min'], 22)
+        self.assertEqual(data['age_max'], 30)
+        self.assertEqual(data['gender_requirement'], 'female')
         self.assertEqual(data['required_skills'], ['Giao tiếp'])
         self.assertEqual(data['preferred_skills'], ['Excel'])
         self.assertEqual(
@@ -2062,6 +2066,10 @@ class EmployerJobSerializerTests(APITestCase):
         self.assertEqual(data['domain_knowledge'], [])
         self.assertEqual(data['workplace_groups'], [])
         self.assertEqual(data['requirement_tags'], [])
+        self.assertEqual(data['work_types'], [])
+        self.assertIsNone(data['age_min'])
+        self.assertIsNone(data['age_max'])
+        self.assertEqual(data['gender_requirement'], Job.GenderRequirement.ANY)
         self.assertEqual(data['benefit_tags'], [])
         self.assertEqual(data['required_skills'], [])
         self.assertEqual(data['preferred_skills'], [])

@@ -10,6 +10,7 @@ import { ADMIN_ROUTES } from './admin/admin-routes.config'
 const EXACT_MAIN_TITLES = new Map([
   ['/', 'Trang chủ'],
   ['/viec-lam', 'Việc làm'],
+  ['/so-sanh-viec-lam', 'So sánh việc làm'],
   ['/viec-lam-da-luu', 'Việc làm đã lưu'],
   ['/jobs', 'Việc làm'],
   ['/chinh-sach-cookie', 'Chính sách cookie'],

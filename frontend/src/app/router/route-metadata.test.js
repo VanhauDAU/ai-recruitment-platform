@@ -30,6 +30,9 @@ describe('route metadata', () => {
       .toBe('noindex, nofollow')
     expect(resolveRouteMetadata({ pathname: '/tro-giup', portal: 'main', settings }).robots)
       .toBe('noindex, nofollow')
+    expect(resolveRouteMetadata({ pathname: '/so-sanh-viec-lam', portal: 'main', settings }).robots)
+      .toBe('noindex, nofollow')
+    expect(isIndexableRoute('/so-sanh-viec-lam', 'main')).toBe(false)
   })
 
   it('honors the global indexing kill switch', () => {

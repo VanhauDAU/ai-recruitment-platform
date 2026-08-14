@@ -20,6 +20,7 @@ import {
   SavedJobTooltipContent,
   VerifiedEmployerBadge,
 } from '@/entities/job'
+import { JobCompareButton } from '@/features/compare-jobs'
 import { useSavedJob } from '@/features/saved-jobs'
 import { useJobImpression } from '@/features/track-job-engagement'
 
@@ -88,6 +89,7 @@ export default function JobCard({
   showQuickView = true,
   savedAt,
   recommendationLabel,
+  comparisonEnabled = true,
 }) {
   const navigate = useNavigate()
   const [saved, toggleSaved, savePending] = useSavedJob(job.public_id, job)
@@ -140,7 +142,7 @@ export default function JobCard({
   function handleQuickView(e) {
     e.preventDefault()
     e.stopPropagation()
-    if (onQuickView) onQuickView(job)
+    if (onQuickView) onQuickView({ ...job, comparison_enabled: comparisonEnabled })
     else navigate(jobDetailPath(job))
   }
 
@@ -236,6 +238,7 @@ export default function JobCard({
                 Ứng tuyển
               </button>
             )}
+            {comparisonEnabled && <JobCompareButton job={job} variant="reveal" />}
             <Tooltip title={isAuthenticated ? (saved ? <SavedJobTooltipContent /> : 'Lưu việc làm') : 'Hãy đăng nhập để lưu tin'}>
               <button
                 type="button"

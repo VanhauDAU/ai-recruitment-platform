@@ -26,7 +26,7 @@ export default function FeaturedIndustriesEmployers() {
     <section className="overflow-hidden bg-white py-10">
       <div className="mx-auto max-w-6xl px-4">
         <FeaturedIndustries industries={industries} navigate={navigate} />
-        <FeaturedEmployers employers={logoEmployers} navigate={navigate} />
+        <FeaturedEmployers employers={logoEmployers} navigate={navigate} stats={stats} />
       </div>
     </section>
   )

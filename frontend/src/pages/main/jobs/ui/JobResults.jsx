@@ -125,6 +125,7 @@ export default function JobResults({
                       onRequireLogin={onRequireLogin}
                       onQuickView={onSetQuickViewJob}
                       recommendationLabel="Đề xuất cho bạn"
+                      comparisonEnabled={false}
                     />
                   ))}
                 </div>
