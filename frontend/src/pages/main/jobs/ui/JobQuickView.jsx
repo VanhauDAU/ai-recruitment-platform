@@ -16,6 +16,7 @@ import {
   SavedJobTooltipContent,
   VerifiedEmployerBadge,
 } from '@/entities/job'
+import { JobCompareButton } from '@/features/compare-jobs'
 import { useSavedJob } from '@/features/saved-jobs'
 import { useJobView } from '@/features/track-job-engagement'
 import { normalizeRichTextHtml } from '@/shared/lib/rich-text-html'
@@ -165,6 +166,7 @@ export default function JobQuickView({ job, onClose, isAuthenticated = true, onR
               {saved ? <HeartFilled className="text-[var(--brand-primary)]" /> : <HeartOutlined className="text-[var(--brand-primary)]" />}
             </button>
           </Tooltip>
+          {job.comparison_enabled !== false && <JobCompareButton job={d} variant="reveal" />}
         </div>
       </div>
 

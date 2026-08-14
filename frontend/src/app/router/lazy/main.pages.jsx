@@ -4,6 +4,7 @@ import { lazy } from 'react'
 export const HomePage = lazy(() => import('@/pages/main/home/Home'))
 export const JobListPage = lazy(() => import('@/pages/main/jobs/JobList'))
 export const JobDetailPage = lazy(() => import('@/pages/main/jobs/JobDetail'))
+export const JobComparisonPage = lazy(() => import('@/pages/main/jobs/JobComparison'))
 export const SavedJobsPage = lazy(() => import('@/pages/main/jobs/SavedJobs'))
 export const MainLoginPage = lazy(() => import('@/pages/main/auth/Login'))
 export const MainRegisterPage = lazy(() => import('@/pages/main/auth/Register'))

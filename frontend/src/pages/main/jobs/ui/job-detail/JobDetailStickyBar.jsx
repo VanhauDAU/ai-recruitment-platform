@@ -1,5 +1,6 @@
 import { FileTextOutlined, HeartOutlined, SendOutlined } from '@ant-design/icons'
 import { useEffect, useState } from 'react'
+import { JobCompareButton } from '@/features/compare-jobs'
 import { useHideOnScroll } from '@/shared/hooks/use-hide-on-scroll'
 
 function scrollToSection(id) {
@@ -30,6 +31,7 @@ export default function JobDetailStickyBar({ job, relatedJobs, applicationStatus
           {relatedJobs?.length > 0 && <AnchorButton target="related-jobs">Việc làm liên quan</AnchorButton>}
         </div>
         <div className="hidden shrink-0 items-center gap-2 md:flex">
+          <JobCompareButton job={job} />
           <button type="button" onClick={onSave} disabled={savePending} className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg border border-emerald-200 text-[var(--brand-primary)] hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-60" aria-label="Lưu tin"><HeartOutlined /></button>
           <button type="button" onClick={onApply} disabled={applicationStatus.isLimitReached} className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg bg-[var(--brand-primary)] px-5 text-sm font-bold text-white hover:bg-[var(--brand-primary-hover)] disabled:cursor-not-allowed disabled:opacity-60">{applicationStatus.hasApplied ? <i className="fa-solid fa-arrow-rotate-right" aria-hidden="true" /> : <SendOutlined />} {applicationStatus.hasApplied ? 'Ứng tuyển lại' : 'Ứng tuyển ngay'}</button>
         </div>

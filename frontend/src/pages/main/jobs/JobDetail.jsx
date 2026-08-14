@@ -5,6 +5,7 @@ import { Link, useNavigate, useParams } from 'react-router'
 import { useLoginPrompt } from '@/features/auth'
 import { ApplyForJobModal, useJobApplicationStatus } from '@/features/apply-for-job'
 import { CreateJobAlertModal } from '@/features/manage-job-alerts'
+import { JobCompareButton } from '@/features/compare-jobs'
 import { ReportJobModal } from '@/features/report-job'
 import { useSession } from '@/entities/session'
 import { useSavedJob } from '@/features/saved-jobs'
@@ -138,7 +139,7 @@ export default function JobDetail() {
         </div>
       </main>
 
-      <MobileActions saved={saved} applicationStatus={applicationStatus} onApply={handleApply} onSave={handleSave} savePending={savePending} />
+      <MobileActions job={job} saved={saved} applicationStatus={applicationStatus} onApply={handleApply} onSave={handleSave} savePending={savePending} />
       <ApplyForJobModal
         open={applyOpen}
         onClose={() => setApplyOpen(false)}
@@ -175,10 +176,11 @@ function ApplyButtonLabel({ hasApplied }) {
   return <>{hasApplied && <i className="fa-solid fa-arrow-rotate-right" aria-hidden="true" />} {hasApplied ? 'Ứng tuyển lại' : 'Ứng tuyển ngay'}</>
 }
 
-function MobileActions({ saved, applicationStatus, onApply, onSave, savePending }) {
+function MobileActions({ job, saved, applicationStatus, onApply, onSave, savePending }) {
   return (
     <div className="fixed inset-x-0 bottom-0 z-40 border-t border-gray-200 bg-white/95 p-3 shadow-[0_-8px_24px_rgba(15,23,42,0.08)] backdrop-blur md:hidden">
       <div className="mx-auto flex max-w-6xl gap-2">
+        <JobCompareButton job={job} />
         <button type="button" onClick={onSave} disabled={savePending} aria-label={saved ? 'Bỏ lưu việc làm' : 'Lưu việc làm'} className="flex h-11 w-12 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-emerald-200 text-[var(--brand-primary)] disabled:cursor-not-allowed disabled:opacity-60">{saved ? <HeartFilled /> : <HeartOutlined />}</button>
         <button type="button" onClick={onApply} disabled={applicationStatus.isLimitReached} className="inline-flex h-11 flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg bg-[var(--brand-primary)] px-4 text-sm font-bold text-white shadow-sm transition hover:bg-[var(--brand-primary-hover)] disabled:cursor-not-allowed disabled:opacity-60"><ApplyButtonLabel hasApplied={applicationStatus.hasApplied} /></button>
       </div>

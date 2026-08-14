@@ -529,6 +529,27 @@ widgets/employer-campaign-workspace/CampaignJobsPanel
 - Báo cáo chiến dịch đọc API performance theo kỳ từ `entities/campaign`; không
   tự suy ra tỷ lệ từ lifetime counter ở frontend.
 
+## Ownership map — So sánh việc làm
+
+```text
+app/layouts/MainLayout + pages/main/jobs/JobComparison
+  → features/compare-jobs
+    → entities/job, entities/consent
+      → shared
+```
+
+- `features/compare-jobs` sở hữu selection có thứ tự, giới hạn ba tin, persistence
+  theo consent Sở thích, URL helpers, nút thêm/bỏ, dock/drawer và workspace đối
+  chiếu. Feature không import `saved-jobs` và không ghi nhận impression/view khi
+  chỉ tải trang so sánh.
+- Route public `/so-sanh-viec-lam` dùng query `job` lặp lại làm nguồn chuẩn để
+  reload/chia sẻ. Page chỉ cấu hình metadata `noindex, nofollow` và compose public
+  workspace; detail data tiếp tục do `entities/job` sở hữu và được tải độc lập tối
+  đa ba query.
+- Khi chưa đồng ý hoặc rút consent Sở thích, selection tiếp tục hoạt động trong
+  memory và key `procv_job_comparison_v1` phải được xóa. UI chỉ làm nổi điểm khác
+  nhau bằng tone trung tính, không chấm điểm hay tuyên bố việc làm tốt nhất.
+
 ## Ownership map — Tài khoản và cá nhân hóa ứng viên
 
 ```text

@@ -1,6 +1,6 @@
 import { BellOutlined, DownOutlined, HeartFilled, HeartOutlined, UpOutlined } from '@ant-design/icons'
 import { useEffect, useRef, useState } from 'react'
-import { formatDeadline } from '@/entities/job'
+import { formatDeadline, JobRichContent } from '@/entities/job'
 import { formatJobDate } from '../../lib/job-detail-presentation'
 import JobCard from '../JobCard'
 import {
@@ -14,7 +14,6 @@ import {
   WorkScheduleList,
 } from './JobDetailBlocks'
 import JobQualityRating from './JobQualityRating'
-import RichJobContent from './RichJobContent'
 
 const APPLY_GUIDE = 'Ứng viên nộp hồ sơ trực tuyến bằng cách bấm Ứng tuyển ngay dưới đây.'
 const MOBILE_COLLAPSED_HEIGHT = 520
@@ -162,7 +161,7 @@ function DetailSection({ id, title, action, children }) {
 
 function JobText({ id, title, content, children }) {
   if (!content?.trim()) return null
-  return <section id={id} className={id ? 'scroll-mt-20' : undefined}><SectionHeading>{title}</SectionHeading><RichJobContent html={content} />{children}</section>
+  return <section id={id} className={id ? 'scroll-mt-20' : undefined}><SectionHeading>{title}</SectionHeading><JobRichContent html={content} />{children}</section>
 }
 
 function JobClosingActions({ deadline, saved, savePending, applicationStatus, onApply, onSave, onReport }) {

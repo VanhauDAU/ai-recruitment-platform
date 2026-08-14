@@ -52,6 +52,77 @@ test('public smoke: home and jobs routes load', async ({ page }, testInfo) => {
   await expect(page.getByRole('heading', { name: /Tuyển dụng/ })).toBeVisible()
 })
 
+test('public smoke: featured companies keep platform stats, company search and the logo marquee', async ({ page }) => {
+  await mockPublicApi(page)
+  const logoDataUri = `data:image/svg+xml,${encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40">
+      <rect width="40" height="40" rx="8" fill="#f97316" />
+      <circle cx="20" cy="20" r="10" fill="#ffffff" />
+    </svg>
+  `)}`
+  const featuredEmployers = Array.from({ length: 7 }, (_, index) => ({
+    id: index + 1,
+    public_id: `company_${index + 1}`,
+    company_name: index === 0 ? 'Công ty Alpha & Đối tác' : `Công ty mẫu ${index + 1}`,
+    slug: `cong-ty-mau-${index + 1}`,
+    company_logo_url: logoDataUri,
+    industry: 'Công nghệ',
+    job_count: index === 0 ? 12 : index + 1,
+  }))
+  await page.route(/\/api\/jobs\/stats\/(?:\?.*)?$/, (route) => route.fulfill({
+    contentType: 'application/json',
+    body: JSON.stringify({
+      candidates: 690_167,
+      employers: 67_740,
+      active_jobs: 90_224,
+      new_jobs_24h: 19,
+      growth: [],
+      demand: [],
+      salary_demand: [],
+      latest_jobs: [],
+      featured_employers: featuredEmployers,
+    }),
+  }))
+
+  await page.goto('/')
+
+  const featuredBlock = page.getByTestId('featured-employers-block')
+  await expect(featuredBlock.getByRole('heading', { name: 'Website của chúng tôi có' })).toBeVisible()
+  await expect(featuredBlock.getByText('Ứng viên', { exact: true })).toBeVisible()
+  await expect(featuredBlock.getByText('Việc làm', { exact: true })).toBeVisible()
+  await expect(featuredBlock.getByText('Nhà tuyển dụng', { exact: true })).toBeVisible()
+  await expect(featuredBlock.getByText('690.167', { exact: true })).toBeVisible()
+  await expect(featuredBlock.getByText('90.224', { exact: true })).toBeVisible()
+  await expect(featuredBlock.getByText('67.740', { exact: true })).toBeVisible()
+  await expect(featuredBlock.getByRole('heading', { name: 'Công ty nổi bật' })).toBeVisible()
+
+  const firstCompanyCard = featuredBlock.locator('.featured-employer-card').filter({ hasText: 'Công ty Alpha & Đối tác' })
+  await expect(firstCompanyCard).toBeVisible()
+  await expect(firstCompanyCard.getByText('12 Việc làm', { exact: true })).toBeVisible()
+  await expect(featuredBlock.locator('.employer-logo-full-bleed-marquee')).toHaveCSS(
+    'animation-name',
+    'employerLogoFullBleedMarquee',
+  )
+
+  expect(await page.evaluate(
+    () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
+  )).toBe(false)
+
+  await firstCompanyCard.click()
+  await expect.poll(() => {
+    const url = new URL(page.url())
+    return {
+      pathname: url.pathname,
+      search: url.searchParams.get('search'),
+      searchBy: url.searchParams.get('search_by'),
+    }
+  }).toEqual({
+    pathname: '/viec-lam',
+    search: 'Công ty Alpha & Đối tác',
+    searchBy: 'company',
+  })
+})
+
 test('public smoke: reapproval keeps the original posted date on job cards and detail', async ({ page }) => {
   await mockPublicApi(page)
   const latestApproval = new Date()

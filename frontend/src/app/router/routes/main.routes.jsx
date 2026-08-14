@@ -16,6 +16,7 @@ import {
   ForgotPasswordPage,
   HomePage,
   JobDetailPage,
+  JobComparisonPage,
   JobAlertSettingsPage,
   JobListPage,
   KnowledgeCategoryPage,
@@ -66,6 +67,7 @@ export function mainRoutes() {
       <Route path="/" element={<HomePage />} />
       <Route path="/viec-lam" element={<JobListPage />} />
       <Route path="/viec-lam/tai/:locationSlug" element={<JobListPage />} />
+      <Route path="/so-sanh-viec-lam" element={<JobComparisonPage />} />
       <Route path="/viec-lam/:slug" element={<JobDetailPage />} />
       {/* Tin của công ty có trang thương hiệu — cùng JobDetailPage nhưng kèm
           header thương hiệu + URL riêng /brand/... */}

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import JobCard from './JobCard'
@@ -76,5 +76,35 @@ describe('JobCard', () => {
 
     expect(screen.getByText('Đề xuất cho bạn')).toBeVisible()
     expect(screen.getByText('Tài trợ')).toBeVisible()
+  })
+
+  it('keeps the always-visible comparison action from opening quick view', () => {
+    const onQuickView = vi.fn()
+    render(
+      <MemoryRouter>
+        <JobCard
+          onQuickView={onQuickView}
+          job={{
+            public_id: 'job-4',
+            slug: 'quality-engineer-job-4',
+            title: 'Quality Engineer',
+            company_name: 'ProCV',
+          }}
+        />
+      </MemoryRouter>,
+    )
+
+    const compareButton = screen.getByRole('button', { name: 'Thêm Quality Engineer vào so sánh' })
+    expect(compareButton).toHaveAttribute('aria-pressed', 'false')
+    expect(compareButton).toHaveClass('w-11', 'gap-0', 'hover:w-[7.25rem]', 'hover:gap-2')
+    expect(compareButton.querySelector('.anticon')).toHaveClass('shrink-0')
+    expect(screen.getByText('So sánh')).toHaveClass(
+      'min-w-0',
+      'max-w-0',
+      'overflow-hidden',
+      'group-hover/compare:max-w-20',
+    )
+    fireEvent.click(compareButton)
+    expect(onQuickView).not.toHaveBeenCalled()
   })
 })

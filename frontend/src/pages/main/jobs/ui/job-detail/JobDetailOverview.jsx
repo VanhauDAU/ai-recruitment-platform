@@ -20,6 +20,7 @@ import {
   JobPresentationLabels,
   VerifiedEmployerBadge,
 } from '@/entities/job'
+import { JobCompareButton } from '@/features/compare-jobs'
 import { formatJobDate } from '../../lib/job-detail-presentation'
 
 const EMPTY_LABEL = 'Chưa cập nhật'
@@ -87,6 +88,7 @@ export function JobHero({ job, saved, applicationStatus, onApply, onSave, onShar
             <LatestApplicationNotice application={applicationStatus.latestApplication} />
           </div>
           <button type="button" onClick={onSave} disabled={savePending} className="hidden h-11 cursor-pointer items-center justify-center gap-2 rounded-lg border border-emerald-300 px-4 text-sm font-semibold text-[var(--brand-primary)] transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-60 sm:inline-flex">{saved ? <HeartFilled /> : <HeartOutlined />} {saved ? 'Đã lưu' : 'Lưu tin'}</button>
+          <JobCompareButton job={job} variant="reveal" />
         </div>
       </div>
     </section>

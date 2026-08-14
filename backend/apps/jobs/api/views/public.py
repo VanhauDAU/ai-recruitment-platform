@@ -171,6 +171,8 @@ class JobStatsView(APIView):
         responses=inline_serializer(
             'JobStats',
             fields={
+                'candidates': serializers.IntegerField(),
+                'employers': serializers.IntegerField(),
                 'active_jobs': serializers.IntegerField(),
                 'companies': serializers.IntegerField(),
                 'new_jobs_24h': serializers.IntegerField(),
