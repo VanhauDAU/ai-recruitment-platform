@@ -6,6 +6,7 @@ import {
   RocketOutlined, SafetyCertificateOutlined, SafetyOutlined, SearchOutlined,
   SnippetsOutlined, StarOutlined, UploadOutlined, WalletOutlined,
 } from '@ant-design/icons'
+import { COMPANY_DIRECTORY_PATH } from '@/entities/company'
 
 const job = (name) => ({ label: `Việc làm ${name}`, search: name })
 const soon = (label, icon, badge) => ({ label, icon, badge })
@@ -15,7 +16,7 @@ export const HEADER_NAVIGATION = [
     key: 'jobs',
     label: 'Việc làm',
     to: '/viec-lam',
-    activePaths: ['/jobs'],
+    activePaths: ['/jobs', COMPANY_DIRECTORY_PATH],
     columns: [
       [
         {
@@ -27,7 +28,10 @@ export const HEADER_NAVIGATION = [
             { label: 'Việc làm phù hợp', to: '/tai-khoan/viec-lam-phu-hop', icon: <LikeOutlined /> },
           ],
         },
-        { title: 'Công ty', items: [soon('Danh sách công ty', <BankOutlined />)] },
+        {
+          title: 'Công ty',
+          items: [{ label: 'Danh sách công ty', to: COMPANY_DIRECTORY_PATH, icon: <BankOutlined /> }],
+        },
       ],
       [{
         title: 'Việc làm theo vị trí',

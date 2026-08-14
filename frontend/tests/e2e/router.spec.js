@@ -30,12 +30,30 @@ test.describe('portal route registries', () => {
 
   test('loads direct public and login routes through their portal registries', async ({ page }) => {
     const pageErrors = []
+    let companyRequests = 0
     page.on('pageerror', (error) => pageErrors.push(error.message))
+    page.on('request', (request) => {
+      if (new URL(request.url()).pathname === '/api/companies/') companyRequests += 1
+    })
 
-    for (const path of ['/', '/viec-lam', '/viec-lam/frontend-job', '/login', '/tuyendung']) {
+    for (const path of [
+      '/',
+      '/cong-ty',
+      '/cong-ty/tim-kiem?keyword=Alpha',
+      '/viec-lam',
+      '/viec-lam/frontend-job',
+      '/login',
+      '/tuyendung',
+    ]) {
       await page.goto(path)
       await expect(page.locator('body')).not.toBeEmpty()
     }
+
+    const requestsBeforeBlankSearch = companyRequests
+    await page.goto('/cong-ty/tim-kiem?keyword=%20%20')
+    await expect(page).toHaveURL(/\/cong-ty\/tim-kiem\?keyword=%20%20$/)
+    await expect(page.getByRole('heading', { name: /Tìm kiếm thông tin công ty/ })).toBeVisible()
+    expect(companyRequests).toBe(requestsBeforeBlankSearch)
 
     await page.goto('/tuyendung/app/login')
     await expect(page.getByRole('heading', { name: 'Chào mừng bạn quay trở lại' })).toBeVisible()

@@ -1,5 +1,7 @@
 import { SolutionOutlined, TeamOutlined, UserOutlined } from '@ant-design/icons'
 import { useMemo } from 'react'
+import { Link } from 'react-router'
+import { COMPANY_DIRECTORY_PATH } from '@/entities/company'
 import { formatNumber } from '@/entities/job'
 import ArrowButton from '@/shared/ui/ArrowButton'
 import { logoUrlFor } from '../lib/logo-url'
@@ -8,6 +10,13 @@ import EmployerLogoBelt from './EmployerLogoBelt'
 import { PagedTrack } from './PagedCarousel'
 
 const EMPLOYERS_PER_PAGE = 6
+
+function industryLabel(company) {
+  const names = (company.industries_detail || [])
+    .map((industry) => industry?.name?.trim())
+    .filter(Boolean)
+  return names.join(', ') || 'Đang tuyển dụng'
+}
 
 function PlatformStatistics({ stats }) {
   const items = [
@@ -145,10 +154,10 @@ export default function FeaturedEmployers({ employers, navigate, stats }) {
                       {employer.company_name}
                     </span>
                     <span className="mt-1 line-clamp-1 min-h-4 w-full text-xs text-slate-500">
-                      {employer.industry || 'Đang tuyển dụng'}
+                      {industryLabel(employer)}
                     </span>
                     <span className="mt-2 inline-flex min-h-8 items-center rounded-md bg-emerald-50 px-3 py-2 text-sm font-semibold leading-none text-emerald-700">
-                      {formatNumber(employer.job_count)} Việc làm
+                      {formatNumber(employer.active_public_job_count)} Việc làm
                     </span>
                   </button>
                 ))}
@@ -168,13 +177,12 @@ export default function FeaturedEmployers({ employers, navigate, stats }) {
               />
             ))}
           </div>
-          <button
-            type="button"
-            onClick={() => navigate('/viec-lam')}
+          <Link
+            to={COMPANY_DIRECTORY_PATH}
             className="justify-self-end cursor-pointer text-sm font-semibold text-[var(--brand-primary)] transition hover:text-[var(--brand-primary-hover)] hover:underline focus-visible:rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
           >
             Xem tất cả
-          </button>
+          </Link>
         </div>
       </section>
 

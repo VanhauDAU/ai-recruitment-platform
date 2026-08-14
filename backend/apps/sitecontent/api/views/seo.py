@@ -20,6 +20,10 @@ STATIC_PAGE_METADATA = {
         '',
         'Tìm việc làm, tạo CV chuyên nghiệp và phát triển sự nghiệp cùng AI.',
     ),
+    '/cong-ty': (
+        'Danh sách công ty',
+        'Khám phá danh sách công ty, tìm hiểu doanh nghiệp và các cơ hội việc làm đang tuyển dụng.',
+    ),
     '/chinh-sach-cookie': (
         'Chính sách cookie',
         'Thông tin về cách ProCV sử dụng cookie và bảo vệ lựa chọn riêng tư của bạn.',
@@ -61,16 +65,26 @@ def _title(label, settings):
     return f'{label} | {settings["site_name"]}'
 
 
-def _metadata(request, *, title, description, canonical_path, structured_data=()):
+def _metadata(
+    request,
+    *,
+    title,
+    description,
+    canonical_path,
+    structured_data=(),
+    robots=None,
+):
     settings = resolved_seo_settings()
     image = settings['seo_og_image'] or settings['brand_logo_url']
-    robots = 'index, follow' if settings['seo_robots_index'] else 'noindex, nofollow'
+    resolved_robots = robots or (
+        'index, follow' if settings['seo_robots_index'] else 'noindex, nofollow'
+    )
     return SeoMetadata(
         title=_title(title, settings),
         description=description or settings['seo_default_description'],
         canonical_url=absolute_url(request, canonical_path),
         site_name=settings['site_name'],
-        robots=robots,
+        robots=resolved_robots,
         image_url=absolute_url(request, image),
         google_site_verification=settings['seo_google_site_verification'],
         structured_data=tuple(structured_data),
@@ -123,6 +137,24 @@ class StaticSeoShellView(View):
         )
 
 
+class CompanySearchSeoShellView(View):
+    """Hydration shell for keyword search pages that must never be indexed."""
+
+    def get(self, request):
+        return render_seo_shell(
+            request,
+            _metadata(
+                request,
+                title='Tìm kiếm công ty',
+                description=(
+                    'Tìm kiếm thông tin doanh nghiệp và các cơ hội việc làm đang tuyển dụng.'
+                ),
+                canonical_path='/cong-ty',
+                robots='noindex, nofollow',
+            ),
+        )
+
+
 class RobotsView(View):
     def get(self, request):
         settings = resolved_seo_settings()
@@ -166,6 +198,7 @@ class StaticSitemapView(View):
     def get(self, request):
         paths = [
             '/',
+            '/cong-ty',
             '/viec-lam',
             '/blog',
             '/chinh-sach-cookie',

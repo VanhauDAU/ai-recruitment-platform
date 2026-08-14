@@ -1,5 +1,6 @@
 import { Navigate, Route } from 'react-router'
 import { ACCOUNT_DEFAULT_PATH, ACCOUNT_LAYOUT_ITEMS, ACCOUNT_ROOT } from '@/entities/account'
+import { COMPANY_DIRECTORY_PATH, COMPANY_SEARCH_PATH } from '@/entities/company'
 import { employerAppPath } from '@/shared/config/portals'
 import AuthGuard from '../guards/AuthGuard'
 import GuestGuard from '../guards/GuestGuard'
@@ -12,6 +13,8 @@ import {
   BlogHomePage,
   CandidateAccountLayout,
   ChangePasswordPage,
+  CompanyListPage,
+  CompanySearchPage,
   EmailNotificationSettingsPage,
   ForgotPasswordPage,
   HomePage,
@@ -65,6 +68,8 @@ export function mainRoutes() {
   return [
     <Route key="main" element={<MainLayout />}>
       <Route path="/" element={<HomePage />} />
+      <Route path={COMPANY_DIRECTORY_PATH} element={<CompanyListPage />} />
+      <Route path={COMPANY_SEARCH_PATH} element={<CompanySearchPage />} />
       <Route path="/viec-lam" element={<JobListPage />} />
       <Route path="/viec-lam/tai/:locationSlug" element={<JobListPage />} />
       <Route path="/so-sanh-viec-lam" element={<JobComparisonPage />} />

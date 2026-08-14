@@ -2,6 +2,8 @@
 import { lazy } from 'react'
 
 export const HomePage = lazy(() => import('@/pages/main/home/Home'))
+export const CompanyListPage = lazy(() => import('@/pages/main/companies/CompanyList'))
+export const CompanySearchPage = lazy(() => import('@/pages/main/companies/CompanySearch'))
 export const JobListPage = lazy(() => import('@/pages/main/jobs/JobList'))
 export const JobDetailPage = lazy(() => import('@/pages/main/jobs/JobDetail'))
 export const JobComparisonPage = lazy(() => import('@/pages/main/jobs/JobComparison'))

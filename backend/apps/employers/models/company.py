@@ -1,7 +1,9 @@
 from django.conf import settings
+from django.contrib.postgres.indexes import GinIndex
 from django.db import models
 from django.utils.text import slugify
 
+from common.db.search import fold_accents
 from common.public_id import generate_public_id
 
 
@@ -70,6 +72,10 @@ class Company(models.Model):
     tax_code = models.CharField(max_length=100, null=True, blank=True)
     company_name = models.CharField(max_length=255)
     trade_name = models.CharField(max_length=255, blank=True)
+    # Materialized accent/case-folded names keep public substring search on a
+    # trigram index. They are internal query fields and are never serialized.
+    company_name_search = models.CharField(max_length=255, blank=True, editable=False)
+    trade_name_search = models.CharField(max_length=255, blank=True, editable=False)
     trade_name_same_as_registered = models.BooleanField(default=False)
     logo_url = models.TextField(blank=True)
     has_no_logo = models.BooleanField(default=False)
@@ -102,6 +108,18 @@ class Company(models.Model):
 
     class Meta:
         verbose_name_plural = 'companies'
+        indexes = [
+            GinIndex(
+                fields=['company_name_search'],
+                name='idx_company_name_trgm',
+                opclasses=['gin_trgm_ops'],
+            ),
+            GinIndex(
+                fields=['trade_name_search'],
+                name='idx_trade_name_trgm',
+                opclasses=['gin_trgm_ops'],
+            ),
+        ]
 
     def save(self, *args, **kwargs):
         if not self.public_id:
@@ -112,6 +130,16 @@ class Company(models.Model):
             if Company.objects.filter(slug=base_slug).exclude(pk=self.pk).exists():
                 self.slug = f'{base_slug}-{self.public_id.lower()}'
         self.tax_code = self.tax_code or None
+        self.company_name_search = fold_accents(self.company_name)
+        self.trade_name_search = fold_accents(self.trade_name)
+        update_fields = kwargs.get('update_fields')
+        if update_fields is not None:
+            update_fields = set(update_fields)
+            if 'company_name' in update_fields:
+                update_fields.add('company_name_search')
+            if 'trade_name' in update_fields:
+                update_fields.add('trade_name_search')
+            kwargs['update_fields'] = update_fields
         super().save(*args, **kwargs)
 
     def __str__(self):

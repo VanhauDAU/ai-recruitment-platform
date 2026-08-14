@@ -283,6 +283,63 @@ app/router + app/layouts
   permission được lọc từ leaf lên ancestor. Trạng thái pháp lý của công ty và
   trạng thái xác thực đại diện của từng NTD là hai contract độc lập.
 
+## Ownership map — Danh bạ công ty công khai
+
+```text
+app/router
+  → pages/main/companies
+    → widgets/company-directory
+      → entities/company
+        → shared/api
+```
+
+- `/cong-ty` là route public canonical cho danh sách nổi bật;
+  `/cong-ty/tim-kiem?keyword=...` sở hữu kết quả tìm kiếm và luôn `noindex` với
+  canonical quay về `/cong-ty`. Search route thiếu `keyword` hoặc chỉ có khoảng
+  trắng phải ở nguyên route và chỉ render header/form tìm kiếm; không render
+  kết quả, empty state, sidebar và không phát request công ty nào. Page chỉ đọc
+  route state, đăng ký metadata rồi compose widget; toàn bộ path/query key và
+  HTTP contract công ty công khai thuộc `entities/company`. `keyword` là
+  contract URL, còn entity/widget ánh xạ sang tham số API `q`.
+- `entities/company` chỉ gọi prefix public `/api/companies/`. Không tái sử dụng
+  `entities/admin-company` hoặc `entities/employer-profile`: hai slice đó có
+  quyền và payload nội bộ khác. Public DTO không được chứa MST, email, điện
+  thoại, địa chỉ có thể là nơi ở hộ kinh doanh, danh tính recruiter hoặc trạng
+  thái kiểm duyệt nội bộ.
+- Mọi surface “Công ty nổi bật” công khai, gồm danh bạ `/cong-ty` và khối tương
+  ứng trên trang chủ, phải lấy request không có `q` từ `entities/company`; không
+  lấy cohort `featured_employers` của job stats hoặc dựng lại eligibility/rank
+  ở page. Job stats trên trang chủ chỉ sở hữu thống kê nền tảng và ngành nghề.
+- `widgets/company-directory` sở hữu tìm kiếm và trạng thái loading/empty/error.
+  Request không có `q` chỉ render hữu hạn danh sách công ty nổi bật do API xáo
+  thứ tự; không gắn observer hoặc nút tải thêm. Request có `q` phải trả mọi
+  `Company` khớp tên công ty hoặc tên thương mại, không áp gate
+  xác thực đại diện, logo, cover, ngành nghề hay việc làm của featured; frontend
+  cũng không được lọc lại các kết quả này. Projection public-safe và quy tắc ẩn
+  địa chỉ hộ kinh doanh vẫn do API bắt buộc thực thi. Search dùng cursor và tải
+  trang kế tiếp qua `IntersectionObserver` chỉ trong cột kết quả bên
+  trái. Tổng số kết quả luôn lấy từ `count` của trang tìm kiếm đầu tiên và được
+  dùng trong tiêu đề; không suy ra từ số card đã tải. Khi search hoàn tất với
+  `count = 0` và danh sách rỗng, widget chỉ giữ hero/form, không render toàn bộ
+  section kết quả, empty state hoặc sidebar. Featured dùng grid ba cột có cover;
+  search dùng card ngang một cột, không render cover, và desktop ghép sidebar
+  hai cột logo-only “Nhà tuyển dụng hàng đầu” từ chính featured query. Search đi
+  từ featured phải dùng lại shuffle đã có cho sidebar; direct search tải
+  featured và search song song. Tablet và mobile xếp sidebar sau kết quả, không
+  làm tràn viewport. Xóa keyword đưa
+  search route về trạng thái input-only và không tự chuyển sang featured. Khi
+  thực sự mount lại `/cong-ty`, page phải dùng request key mới để không flash
+  hoặc tái dùng response sidebar cũ trong cache. Cover card featured cố định tỷ
+  lệ nguồn `1024:480` (`aspect-ratio: 32/15`), khai báo dimensions/async decoding
+  và lazy-load ảnh ngoài hàng đầu để tránh CLS; card ngoài viewport dùng
+  `content-visibility` để giữ chi phí render phẳng. Hero featured và search dùng
+  `<picture>` ưu tiên WebP, giữ PNG fallback, khai báo kích thước nguồn và chỉ
+  eager-load illustration thuộc route hiện tại.
+- CTA chưa có route chi tiết công ty phải dùng `companyDirectoryPath(name)` để
+  mở danh bạ đã lọc. Card danh bạ có thể dùng `companyJobsPath(name)` để mở
+  contract tìm việc hiện hữu; không tự sinh route `/cong-ty/:slug` cho tới khi
+  API/page chi tiết được triển khai.
+
 ## Ownership map — Người dùng và nhà tuyển dụng quản trị
 
 ```text
