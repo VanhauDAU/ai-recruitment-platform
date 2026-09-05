@@ -11,7 +11,7 @@ from .campaigns import (
     RecruitmentCampaignStatusView,
 )
 from .catalogs import AllIndustryListView, CompanyCatalogView, IndustryListView
-from .companies import CompanySearchView, CreateCompanyView, MyCompanyView
+from .companies import CompanySearchView, CreateCompanyView, MyCompanyView, PublicCompanyListView
 from .domain_claims import (
     CompanyDomainClaimListCreateView,
     CompanyDomainClaimManualReviewView,
@@ -66,6 +66,7 @@ __all__ = [
     'CompanyGalleryUploadView',
     'CompanyLogoUploadView',
     'CompanySearchView',
+    'PublicCompanyListView',
     'CompanyDomainClaimListCreateView',
     'CompanyDomainClaimManualReviewView',
     'CompanyDomainClaimRotateView',

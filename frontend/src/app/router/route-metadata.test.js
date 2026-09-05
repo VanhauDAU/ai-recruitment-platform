@@ -17,9 +17,12 @@ describe('route metadata', () => {
     expect(canonicalPathForRoute('/brand/acme/tuyen-dung/backend-jb-1'))
       .toBe('/viec-lam/backend-jb-1')
     expect(canonicalPathForRoute('/cv-templates/modern')).toBe('/mau-cv/chi-tiet/modern')
+    expect(canonicalPathForRoute('/cong-ty/tim-kiem')).toBe('/cong-ty')
   })
 
   it('indexes public content and noindexes account/workspace routes', () => {
+    expect(isIndexableRoute('/cong-ty', 'main')).toBe(true)
+    expect(isIndexableRoute('/cong-ty/tim-kiem', 'main')).toBe(false)
     expect(isIndexableRoute('/blog/huong-dan', 'main')).toBe(true)
     expect(isIndexableRoute('/tai-khoan/thong-tin', 'main')).toBe(false)
     expect(isIndexableRoute('/admin/app/dashboard', 'admin')).toBe(false)
@@ -33,6 +36,28 @@ describe('route metadata', () => {
     expect(resolveRouteMetadata({ pathname: '/so-sanh-viec-lam', portal: 'main', settings }).robots)
       .toBe('noindex, nofollow')
     expect(isIndexableRoute('/so-sanh-viec-lam', 'main')).toBe(false)
+  })
+
+  it('publishes company-directory metadata with a stable canonical URL', () => {
+    expect(canonicalPathForRoute('/cong-ty/')).toBe('/cong-ty')
+    expect(resolveRouteMetadata({ pathname: '/cong-ty', portal: 'main', settings }))
+      .toEqual(expect.objectContaining({
+        title: 'Danh sách công ty',
+        description: 'Khám phá danh sách công ty, tìm hiểu doanh nghiệp và các cơ hội việc làm đang tuyển dụng.',
+        canonicalPath: '/cong-ty',
+        robots: 'index, follow',
+      }))
+
+    expect(resolveRouteMetadata({
+      pathname: '/cong-ty/tim-kiem',
+      portal: 'main',
+      settings,
+    })).toEqual(expect.objectContaining({
+      title: 'Tìm kiếm công ty',
+      description: 'Tìm kiếm công ty theo tên và khám phá các vị trí đang tuyển dụng.',
+      canonicalPath: '/cong-ty',
+      robots: 'noindex, nofollow',
+    }))
   })
 
   it('honors the global indexing kill switch', () => {

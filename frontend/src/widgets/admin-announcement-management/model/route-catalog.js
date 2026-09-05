@@ -44,6 +44,7 @@ const ROUTES = Object.freeze({
   [ANNOUNCEMENT_SURFACES.CANDIDATE]: [
     ['Trang chủ', '', ANNOUNCEMENT_ROUTE_ACCESS.PUBLIC],
     ['Danh sách việc làm', '/viec-lam', ANNOUNCEMENT_ROUTE_ACCESS.PUBLIC],
+    ['Danh sách công ty', '/cong-ty', ANNOUNCEMENT_ROUTE_ACCESS.PUBLIC],
     ['Việc làm đã lưu', '/viec-lam-da-luu', ANNOUNCEMENT_ROUTE_ACCESS.AUTHENTICATED],
     ['Việc làm phù hợp', '/tai-khoan/viec-lam-phu-hop', ANNOUNCEMENT_ROUTE_ACCESS.AUTHENTICATED],
     ['Cài đặt gợi ý việc làm', '/tai-khoan/cai-dat-goi-y-viec-lam', ANNOUNCEMENT_ROUTE_ACCESS.AUTHENTICATED],

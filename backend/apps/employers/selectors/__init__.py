@@ -21,7 +21,12 @@ from .campaigns import (
     campaign_report,
     owned_campaign_queryset,
 )
-from .companies import search_companies
+from .companies import (
+    attach_active_public_job_counts,
+    featured_public_companies,
+    public_company_search_queryset,
+    search_companies,
+)
 from .company_status import has_explicit_company_link, is_registration_placeholder_company
 from .documents import (
     can_access_employer_document_content,
@@ -84,6 +89,9 @@ __all__ = [
     'company_domain_claims_queryset',
     'domain_claim_allowed_actions',
     'effective_company_domain_claims',
+    'attach_active_public_job_counts',
+    'featured_public_companies',
+    'public_company_search_queryset',
     'search_companies',
     'DpaStatus',
     'build_employer_readiness',

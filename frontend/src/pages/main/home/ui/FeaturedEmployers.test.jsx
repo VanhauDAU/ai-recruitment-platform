@@ -1,20 +1,24 @@
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
+import { COMPANY_DIRECTORY_PATH } from '@/entities/company'
 import FeaturedEmployers from './FeaturedEmployers'
 
 const EMPLOYERS = [
   {
     public_id: 'company_alpha',
     company_name: 'Công ty A&B',
-    company_logo_url: '/logos/alpha.png',
-    job_count: 1_000,
+    logo_url: '/logos/alpha.png',
+    active_public_job_count: 1_000,
+    industries_detail: [{ id: 1, name: 'Công nghệ', slug: 'cong-nghe' }],
   },
   ...Array.from({ length: 6 }, (_, index) => ({
     public_id: `company_${index + 2}`,
     company_name: `Công ty ${index + 2}`,
-    company_logo_url: `/logos/company-${index + 2}.png`,
-    job_count: index + 2,
+    logo_url: `/logos/company-${index + 2}.png`,
+    active_public_job_count: index + 2,
+    industries_detail: [],
   })),
 ]
 
@@ -28,7 +32,9 @@ describe('FeaturedEmployers', () => {
   it('renders formatted statistics, six cards per page, pagination state and the logo marquee after the panel', async () => {
     const user = userEvent.setup()
     const { container } = render(
-      <FeaturedEmployers employers={EMPLOYERS} navigate={vi.fn()} stats={PLATFORM_STATS} />,
+      <MemoryRouter>
+        <FeaturedEmployers employers={EMPLOYERS} navigate={vi.fn()} stats={PLATFORM_STATS} />
+      </MemoryRouter>,
     )
 
     const statistics = screen.getByRole('region', { name: 'Website của chúng tôi có' })
@@ -47,6 +53,7 @@ describe('FeaturedEmployers', () => {
     expect(cards[0].parentElement).not.toBe(cards[6].parentElement)
     expect(within(panel).getByText('1.000 Việc làm')).toBeInTheDocument()
     expect(within(panel).getByText('7 Việc làm')).toBeInTheDocument()
+    expect(within(panel).getByText('Công nghệ')).toBeInTheDocument()
 
     expect(within(panel).getByRole('button', { name: 'Nhóm công ty trước' })).toBeDisabled()
     expect(within(panel).getByRole('button', { name: 'Nhóm công ty tiếp theo' })).toBeEnabled()
@@ -77,7 +84,11 @@ describe('FeaturedEmployers', () => {
   it('keeps company-card search navigation and the view-all destination', async () => {
     const user = userEvent.setup()
     const navigate = vi.fn()
-    render(<FeaturedEmployers employers={EMPLOYERS} navigate={navigate} stats={PLATFORM_STATS} />)
+    render(
+      <MemoryRouter>
+        <FeaturedEmployers employers={EMPLOYERS} navigate={navigate} stats={PLATFORM_STATS} />
+      </MemoryRouter>,
+    )
 
     const panel = screen.getByRole('region', { name: 'Công ty nổi bật' })
     await user.click(within(panel).getByRole('button', { name: /Công ty A&B/ }))
@@ -85,8 +96,9 @@ describe('FeaturedEmployers', () => {
       '/viec-lam?search=C%C3%B4ng%20ty%20A%26B&search_by=company',
     )
 
-    await user.click(within(panel).getByRole('button', { name: 'Xem tất cả' }))
-    expect(navigate).toHaveBeenLastCalledWith('/viec-lam')
+    expect(within(panel).getByRole('link', { name: 'Xem tất cả' }))
+      .toHaveAttribute('href', COMPANY_DIRECTORY_PATH)
+    expect(navigate).toHaveBeenCalledTimes(1)
   })
 
   it('renders nothing when there are no featured employers', () => {

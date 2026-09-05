@@ -22,6 +22,7 @@ from .companies import (
     CompanySearchSerializer,
     CompanySerializer,
     IndustrySerializer,
+    PublicCompanyListSerializer,
 )
 from .domain_claims import (
     AdminCompanyDomainClaimDetailSerializer,
@@ -69,6 +70,7 @@ __all__ = [
     'CompanyDomainClaimSerializer',
     'CompanySearchSerializer',
     'CompanySerializer',
+    'PublicCompanyListSerializer',
     'CompanyUpdateRequestSerializer',
     'CompanyUpdateRequestCloseSerializer',
     'CampaignStatusSerializer',

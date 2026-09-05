@@ -1,4 +1,5 @@
 import { findActiveAccountItem } from '@/entities/account'
+import { COMPANY_DIRECTORY_PATH, COMPANY_SEARCH_PATH } from '@/entities/company'
 import {
   adminPath,
   employerAppPath,
@@ -9,6 +10,8 @@ import { ADMIN_ROUTES } from './admin/admin-routes.config'
 
 const EXACT_MAIN_TITLES = new Map([
   ['/', 'Trang chủ'],
+  [COMPANY_DIRECTORY_PATH, 'Danh sách công ty'],
+  [COMPANY_SEARCH_PATH, 'Tìm kiếm công ty'],
   ['/viec-lam', 'Việc làm'],
   ['/so-sanh-viec-lam', 'So sánh việc làm'],
   ['/viec-lam-da-luu', 'Việc làm đã lưu'],

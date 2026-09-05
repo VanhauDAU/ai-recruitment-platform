@@ -1,13 +1,14 @@
 import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router'
+import { companyKeys, getPublicCompanies } from '@/entities/company'
 import { getJobStats, jobKeys } from '@/entities/job'
-import { logoUrlFor } from '../lib/logo-url'
 import FeaturedEmployers from './FeaturedEmployers'
 import FeaturedIndustries from './FeaturedIndustries'
 
 // Section "Top ngành nghề" + "Nhà tuyển dụng nổi bật" trên trang chủ.
-// Query key dùng chung với MarketStats nên cả trang chỉ tải stats một lần.
+// Thống kê dùng chung query key với MarketStats. Công ty nổi bật phải lấy từ
+// cùng public API với /cong-ty để không nhân bản eligibility/ranking ở trang chủ.
 export default function FeaturedIndustriesEmployers() {
   const navigate = useNavigate()
   const { data: stats = null } = useQuery({
@@ -15,18 +16,27 @@ export default function FeaturedIndustriesEmployers() {
     queryFn: getJobStats,
     staleTime: 5 * 60_000,
   })
+  const { data: featuredResponse = null } = useQuery({
+    queryKey: companyKeys.featured('homepage'),
+    queryFn: ({ signal }) => getPublicCompanies({}, { signal }),
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: false,
+  })
 
   const industries = useMemo(() => stats?.demand || [], [stats])
-  const employers = useMemo(() => stats?.featured_employers || [], [stats])
-  const logoEmployers = useMemo(() => employers.filter((employer) => logoUrlFor(employer)), [employers])
+  const featuredCompanies = useMemo(
+    () => featuredResponse?.results || [],
+    [featuredResponse],
+  )
 
-  if (!stats || (industries.length === 0 && logoEmployers.length === 0)) return null
+  if (!stats || (industries.length === 0 && featuredCompanies.length === 0)) return null
 
   return (
     <section className="overflow-hidden bg-white py-10">
       <div className="mx-auto max-w-6xl px-4">
         <FeaturedIndustries industries={industries} navigate={navigate} />
-        <FeaturedEmployers employers={logoEmployers} navigate={navigate} stats={stats} />
+        <FeaturedEmployers employers={featuredCompanies} navigate={navigate} stats={stats} />
       </div>
     </section>
   )

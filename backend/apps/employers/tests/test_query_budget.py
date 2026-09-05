@@ -1,6 +1,8 @@
 """Query-count contracts for employer recruitment-need reads."""
 
+import re
 from datetime import timedelta
+from urllib.parse import urlsplit
 
 from django.contrib.auth import get_user_model
 from django.db import connection
@@ -9,12 +11,15 @@ from django.urls import reverse
 from django.utils import timezone
 from rest_framework.test import APITestCase
 
-from apps.jobs.models import JobCategory
+from apps.jobs.models import Job, JobCategory
 
 from ..models import (
     Company,
     CompanyDocument,
+    CompanyIndustry,
     CompanyUpdateRequest,
+    EmployerVerificationCase,
+    Industry,
     RecruiterProfile,
     RecruitmentNeed,
 )
@@ -24,6 +29,131 @@ from ..models import (
 RECRUITMENT_NEED_READ_BUDGET = 2
 COMPANY_UPDATE_REQUEST_LIST_BUDGET = 4
 ADMIN_COMPANY_UPDATE_REQUEST_LIST_BUDGET = 8
+PUBLIC_COMPANY_LIST_QUERY_BUDGET = 5
+
+
+def _canonical_job_table_references(queries):
+    """Count SQL-level job scans, not just the number of ORM round trips."""
+    relation_pattern = re.compile(r'\b(?:FROM|JOIN)\s+"jobs_job"')
+    return sum(len(relation_pattern.findall(query['sql'])) for query in queries.captured_queries)
+
+
+class PublicCompanyListQueryBudgetTests(APITestCase):
+    def setUp(self):
+        self.creator = get_user_model().objects.create_user(
+            email='public-company-budget@example.com',
+            password='Password@123',
+            role='employer',
+        )
+        self.industry = Industry.objects.create(
+            name='Public company budget',
+            slug='public-company-budget',
+        )
+
+    def _company(self, index, *, featured):
+        company = Company.objects.create(
+            company_name=f'Công ty ngân sách {index:02d}',
+            tax_code=f'01000000{index:02d}',
+            created_by=self.creator,
+            logo_url='https://cdn.example.com/logo.png' if featured else '',
+            cover_image_url='https://cdn.example.com/cover.png' if featured else '',
+        )
+        if not featured:
+            return company
+
+        representative = get_user_model().objects.create_user(
+            email=f'public-company-budget-{index}@example.com',
+            password='Password@123',
+            role='employer',
+        )
+        recruiter = RecruiterProfile.objects.create(
+            user=representative,
+            company=company,
+            company_role=RecruiterProfile.CompanyRole.OWNER,
+        )
+        verification_case = EmployerVerificationCase.objects.create(
+            recruiter=recruiter,
+            company=company,
+            verification_method=(EmployerVerificationCase.VerificationMethod.BUSINESS_REGISTRATION),
+            status=EmployerVerificationCase.Status.APPROVED,
+        )
+        CompanyDocument.objects.create(
+            company=company,
+            recruiter=recruiter,
+            uploaded_by=representative,
+            verification_case=verification_case,
+            doc_type=CompanyDocument.DocType.BUSINESS_REGISTRATION,
+            file_url=f'companies/{company.pk}/business-registration.pdf',
+            status=CompanyDocument.Status.APPROVED,
+        )
+        CompanyIndustry.objects.create(company=company, industry=self.industry)
+        Job.objects.create(
+            posted_by=representative,
+            company=company,
+            title=f'Việc làm ngân sách {index:02d}',
+            description='Mô tả.',
+            status=Job.Status.ACTIVE,
+            published_at=timezone.now(),
+            deadline=timezone.localdate() + timedelta(days=30),
+        )
+        return company
+
+    def test_public_featured_company_query_count_stays_flat(self):
+        self._company(0, featured=True)
+        with CaptureQueriesContext(connection) as baseline_queries:
+            baseline = self.client.get(reverse('public-company-list'))
+
+        for index in range(1, 25):
+            self._company(index, featured=True)
+        with CaptureQueriesContext(connection) as expanded_queries:
+            expanded = self.client.get(reverse('public-company-list'))
+
+        self.assertEqual(baseline.status_code, 200, baseline.data)
+        self.assertEqual(expanded.status_code, 200, expanded.data)
+        self.assertEqual(len(baseline.data['results']), 1)
+        self.assertEqual(len(expanded.data['results']), 18)
+        self.assertNotIn('count', baseline.data)
+        self.assertNotIn('count', expanded.data)
+        self.assertEqual(len(baseline_queries), len(expanded_queries))
+        self.assertLessEqual(len(expanded_queries), PUBLIC_COMPANY_LIST_QUERY_BUDGET)
+        self.assertEqual(_canonical_job_table_references(baseline_queries), 1)
+        self.assertEqual(_canonical_job_table_references(expanded_queries), 1)
+
+    def test_public_company_search_query_count_stays_flat(self):
+        self._company(0, featured=False)
+        with CaptureQueriesContext(connection) as baseline_queries:
+            baseline = self.client.get(reverse('public-company-list'), {'q': 'ngan sach'})
+
+        for index in range(1, 25):
+            self._company(index, featured=False)
+        with CaptureQueriesContext(connection) as expanded_queries:
+            expanded = self.client.get(reverse('public-company-list'), {'q': 'ngan sach'})
+
+        self.assertEqual(baseline.status_code, 200, baseline.data)
+        self.assertEqual(expanded.status_code, 200, expanded.data)
+        self.assertEqual(len(baseline.data['results']), 1)
+        self.assertEqual(len(expanded.data['results']), 18)
+        self.assertEqual(baseline.data['count'], 1)
+        self.assertEqual(expanded.data['count'], 25)
+        self.assertEqual(len(baseline_queries), len(expanded_queries))
+        self.assertLessEqual(len(expanded_queries), PUBLIC_COMPANY_LIST_QUERY_BUDGET)
+        self.assertEqual(_canonical_job_table_references(baseline_queries), 1)
+        self.assertEqual(_canonical_job_table_references(expanded_queries), 1)
+
+    def test_public_company_search_cursor_page_omits_total_count_query(self):
+        for index in range(25):
+            self._company(index, featured=False)
+        first = self.client.get(reverse('public-company-list'), {'q': 'ngan sach'})
+        parsed_next = urlsplit(first.data['next'])
+
+        with CaptureQueriesContext(connection) as cursor_queries:
+            cursor_page = self.client.get(f'{parsed_next.path}?{parsed_next.query}')
+
+        self.assertEqual(cursor_page.status_code, 200, cursor_page.data)
+        self.assertNotIn('count', cursor_page.data)
+        self.assertEqual(len(cursor_page.data['results']), 7)
+        self.assertEqual(len(cursor_queries), 3)
+        self.assertEqual(_canonical_job_table_references(cursor_queries), 1)
 
 
 class RecruitmentNeedQueryBudgetTests(APITestCase):

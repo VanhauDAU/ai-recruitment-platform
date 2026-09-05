@@ -408,6 +408,7 @@ REST_FRAMEWORK = {
         'speech_session': '60/hour',
         'speech_adhoc': '90/hour',
         'knowledgebase_public': '120/min',
+        'public_companies': '120/min',
         'upload_session': '30/hour',
         'upload_status': '120/min',
         'upload_content': '20/hour',

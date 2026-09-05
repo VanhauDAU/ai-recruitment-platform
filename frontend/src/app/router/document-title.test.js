@@ -38,6 +38,12 @@ describe('admin route titles', () => {
 })
 
 describe('candidate route titles', () => {
+  it('uses the dedicated title for the public company directory', () => {
+    window.history.replaceState({}, '', '/cong-ty')
+    expect(resolveRouteTitle('/cong-ty')).toBe('Danh sách công ty')
+    expect(resolveRouteTitle('/cong-ty/tim-kiem')).toBe('Tìm kiếm công ty')
+  })
+
   it('uses the dedicated title for the public job comparison route', () => {
     window.history.replaceState({}, '', '/so-sanh-viec-lam')
     expect(resolveRouteTitle('/so-sanh-viec-lam')).toBe('So sánh việc làm')

@@ -5,6 +5,7 @@ from django.core.validators import URLValidator
 from rest_framework import serializers
 
 from common.media_storage import media_url_from_value
+from common.rich_text import rich_text_plain_text
 
 from ...models import (
     Company,
@@ -250,3 +251,50 @@ class CompanySearchSerializer(serializers.ModelSerializer):
 
     def get_logo_url(self, obj):
         return media_url_from_value(obj.logo_url, request=self.context.get('request'))
+
+
+class PublicCompanyListSerializer(serializers.ModelSerializer):
+    """Public-safe summary for company directory cards."""
+
+    DESCRIPTION_EXCERPT_LENGTH = 240
+
+    logo_url = serializers.SerializerMethodField()
+    cover_image_url = serializers.SerializerMethodField()
+    description_excerpt = serializers.SerializerMethodField()
+    headquarters = serializers.SerializerMethodField()
+    active_public_job_count = serializers.IntegerField(read_only=True)
+    company_size_display = serializers.CharField(source='get_company_size_display', read_only=True)
+    industries_detail = IndustrySerializer(source='industries', many=True, read_only=True)
+
+    class Meta:
+        model = Company
+        fields = [
+            'public_id',
+            'slug',
+            'company_name',
+            'trade_name',
+            'logo_url',
+            'cover_image_url',
+            'description_excerpt',
+            'headquarters',
+            'active_public_job_count',
+            'company_size',
+            'company_size_display',
+            'industries_detail',
+        ]
+        read_only_fields = fields
+
+    def get_logo_url(self, obj):
+        return media_url_from_value(obj.logo_url, request=self.context.get('request'))
+
+    def get_cover_image_url(self, obj):
+        return media_url_from_value(obj.cover_image_url, request=self.context.get('request'))
+
+    def get_description_excerpt(self, obj):
+        plain_text = ' '.join(rich_text_plain_text(obj.description).split())
+        return plain_text[: self.DESCRIPTION_EXCERPT_LENGTH]
+
+    def get_headquarters(self, obj):
+        if obj.business_type != Company.BusinessType.ENTERPRISE:
+            return ''
+        return obj.address.strip()

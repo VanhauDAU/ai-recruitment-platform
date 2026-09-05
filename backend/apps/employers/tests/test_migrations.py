@@ -14,6 +14,53 @@ SMS_FOUNDATION_BEFORE = [('employers', '0030_company_update_request_requester_sc
 SMS_FOUNDATION_AFTER = [('employers', '0033_finalize_employer_sms_challenge_id')]
 COMPANY_UPDATE_V2_BEFORE = [('employers', '0036_verification_document_replaced_event')]
 COMPANY_UPDATE_V2_AFTER = [('employers', '0038_backfill_company_update_lifecycle_v2')]
+PUBLIC_SEARCH_BEFORE = [('employers', '0045_companydomainclaim_companydomainclaimevent_and_more')]
+PUBLIC_SEARCH_AFTER = [('employers', '0047_company_public_search_indexes')]
+
+
+class CompanyPublicSearchMigrationTests(TransactionTestCase):
+    def _migrate(self, targets):
+        executor = MigrationExecutor(connection)
+        executor.loader.build_graph()
+        executor.migrate(targets)
+        return executor
+
+    def test_backfills_folded_names_and_creates_concurrent_trigram_indexes(self):
+        before_executor = self._migrate(PUBLIC_SEARCH_BEFORE)
+        old_apps = before_executor.loader.project_state(PUBLIC_SEARCH_BEFORE).apps
+        Company = old_apps.get_model('employers', 'Company')
+        user = get_user_model().objects.create_user(
+            email='company-public-search-migration@example.com',
+            password='Password@123',
+            role='employer',
+        )
+        company = Company.objects.create(
+            public_id='co-public-search-migration',
+            slug='public-search-migration',
+            company_name='Công ty Ánh Dương',
+            trade_name='Mặt Trời Việt',
+            created_by_id=user.pk,
+        )
+
+        after_executor = self._migrate(PUBLIC_SEARCH_AFTER)
+        new_apps = after_executor.loader.project_state(PUBLIC_SEARCH_AFTER).apps
+        SearchableCompany = new_apps.get_model('employers', 'Company')
+        migrated = SearchableCompany.objects.get(pk=company.pk)
+
+        self.assertEqual(migrated.company_name_search, 'cong ty anh duong')
+        self.assertEqual(migrated.trade_name_search, 'mat troi viet')
+        with connection.cursor() as cursor:
+            constraints = connection.introspection.get_constraints(
+                cursor,
+                SearchableCompany._meta.db_table,
+            )
+        self.assertTrue(constraints['idx_company_name_trgm']['index'])
+        self.assertTrue(constraints['idx_trade_name_trgm']['index'])
+
+    def tearDown(self):
+        executor = MigrationExecutor(connection)
+        executor.loader.build_graph()
+        self._migrate(executor.loader.graph.leaf_nodes())
 
 
 class EmployerVerificationMigrationTests(TransactionTestCase):

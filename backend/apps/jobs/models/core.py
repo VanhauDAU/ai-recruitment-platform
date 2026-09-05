@@ -472,6 +472,13 @@ class Job(models.Model):
             ),
         ]
 
+    @classmethod
+    def publicly_available_queryset(cls, *, at=None):
+        """Expose the canonical candidate-visible queryset across app boundaries."""
+        from .querysets import publicly_available_job_filter
+
+        return cls.objects.filter(publicly_available_job_filter(at=at))
+
     def save(self, *args, **kwargs):
         if not self.public_id:
             self.public_id = generate_public_id('jb')
