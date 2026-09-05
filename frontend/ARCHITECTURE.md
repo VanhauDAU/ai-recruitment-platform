@@ -122,7 +122,7 @@ cho lý do ngoại lệ. Không tạo bridge/re-export tạm thời để né ru
   vào `dist/bundle-stats.json`, gồm static import, dynamic import và stylesheet
   trực tiếp của chunk.
 - Hai budget initial giữ nguyên và vẫn là gate fail build: JavaScript gzip
-  `320 KiB`, CSS gzip `35 KiB`.
+  `320 KiB`, CSS gzip `38 KiB`.
 - `dynamicRoutes` đo chi phí tăng thêm của từng lazy entry trong `src/pages`:
   JavaScript/CSS của entry và toàn bộ static import transitively, trừ asset đã
   có trong initial HTML. Asset nhị phân được liệt kê để audit nhưng không cộng
