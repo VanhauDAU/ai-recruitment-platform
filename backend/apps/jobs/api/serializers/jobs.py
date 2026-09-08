@@ -1,8 +1,9 @@
 from django.db import transaction
 from django.utils.html import strip_tags
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
-from apps.employers.models import RecruitmentCampaign
+from apps.employers.models import DpaStatus, RecruitmentCampaign
 from common.media_storage import media_url_from_value
 from common.rich_text import rich_text_plain_text
 
@@ -18,11 +19,13 @@ from ...models import (
     JobSkill,
     JobWorkSchedule,
 )
+from ...selectors.presentation import job_presentation
 from ...selectors.verification_badge import (
     BADGE_CACHE_KEY,
     badge_criteria_payload,
     prime_badge_cache,
 )
+from ...services import job_deadline_error
 from .supporting import (
     JobApplicationContactSerializer,
     JobApplicationEmailSerializer,
@@ -37,6 +40,17 @@ from .supporting import (
     PublicJobLocationSerializer,
     PublicJobWorkScheduleSerializer,
 )
+
+
+class JobVerificationCriterionSerializer(serializers.Serializer):
+    key = serializers.CharField()
+    label = serializers.CharField()
+    passed = serializers.BooleanField()
+
+
+class JobVerificationSerializer(serializers.Serializer):
+    verified = serializers.BooleanField()
+    criteria = JobVerificationCriterionSerializer(many=True)
 
 
 class JobListSkillSerializer(serializers.ModelSerializer):
@@ -75,6 +89,8 @@ class JobSerializer(serializers.ModelSerializer):
     language_requirements = JobLanguageRequirementSerializer(many=True, required=False)
     company_name = serializers.CharField(source='company.company_name', read_only=True)
     company_logo_url = serializers.SerializerMethodField()
+    # Legacy HTTP name: value belongs to the recruiter who posted this job,
+    # not to Company. Keep until clients migrate to an employer-scoped key.
     company_verified = serializers.SerializerMethodField()
     brand_slug = serializers.SerializerMethodField()
     company_cover_url = serializers.SerializerMethodField()
@@ -84,6 +100,13 @@ class JobSerializer(serializers.ModelSerializer):
     locations_detail = serializers.SerializerMethodField()
     short_description = serializers.SerializerMethodField()
     is_salary_visible = serializers.SerializerMethodField()
+    application_deadline = serializers.SerializerMethodField()
+    presentation = serializers.SerializerMethodField()
+    application_reasons = serializers.ListField(
+        child=serializers.CharField(max_length=160, allow_blank=False, trim_whitespace=True),
+        max_length=3,
+        required=False,
+    )
 
     NESTED_RELATIONS = {
         'job_skills': (JobSkill, 'job_skills'),
@@ -112,6 +135,7 @@ class JobSerializer(serializers.ModelSerializer):
             'description',
             'requirements',
             'benefits',
+            'application_reasons',
             'work_schedule_note',
             'work_type',
             'work_types',
@@ -130,12 +154,18 @@ class JobSerializer(serializers.ModelSerializer):
             'currency',
             'is_salary_visible',
             'deadline',
+            'application_deadline',
+            'requested_visibility_days',
+            'first_approved_at',
+            'visibility_starts_at',
+            'visibility_ends_at',
             'status',
             'view_count',
             'tier',
             'is_hot',
             'is_urgent',
             'has_flash_badge',
+            'presentation',
             'company_verified',
             'application_count',
             'job_skills',
@@ -164,9 +194,14 @@ class JobSerializer(serializers.ModelSerializer):
             'is_hot',
             'is_urgent',
             'has_flash_badge',
+            'presentation',
+            'requested_visibility_days',
             'view_count',
             'application_count',
             'published_at',
+            'first_approved_at',
+            'visibility_starts_at',
+            'visibility_ends_at',
             'created_at',
             'updated_at',
         ]
@@ -256,6 +291,12 @@ class JobSerializer(serializers.ModelSerializer):
         self._validate_nested_uniqueness(attrs)
         return attrs
 
+    def validate_application_reasons(self, value):
+        normalized = [item.strip() for item in value]
+        if len({item.casefold() for item in normalized}) != len(normalized):
+            raise serializers.ValidationError('Các lý do không được trùng nhau.')
+        return normalized
+
     def _validate_nested_uniqueness(self, attrs):
         unique_fields = {
             'job_skills': lambda item: item['skill'].pk,
@@ -311,6 +352,7 @@ class JobSerializer(serializers.ModelSerializer):
             cache[key] = badge_criteria_payload(obj)
         return cache[key]
 
+    @extend_schema_field(serializers.BooleanField)
     def get_company_verified(self, obj):
         cached = self.context.get(BADGE_CACHE_KEY, {})
         key = (obj.company_id, obj.posted_by_id)
@@ -359,6 +401,12 @@ class JobSerializer(serializers.ModelSerializer):
     def get_is_salary_visible(self, obj):
         return obj.salary_type != Job.SalaryType.NEGOTIABLE
 
+    def get_application_deadline(self, obj):
+        return obj.deadline
+
+    def get_presentation(self, obj):
+        return job_presentation(obj)
+
 
 class PublicJobListSerializer(JobSerializer):
     """Compact contract for public search, related jobs, and saved-job cards."""
@@ -394,6 +442,8 @@ class PublicJobListSerializer(JobSerializer):
             'is_hot',
             'is_urgent',
             'has_flash_badge',
+            'presentation',
+            'first_approved_at',
             'published_at',
             'created_at',
         ]
@@ -413,12 +463,15 @@ class PublicJobPreviewSerializer(PublicJobListSerializer):
             'description',
             'requirements',
             'benefits',
+            'application_reasons',
             'work_schedule_note',
             'job_locations',
             'work_schedules',
             'job_benefits',
             'number_of_vacancies',
             'deadline',
+            'application_deadline',
+            'visibility_ends_at',
         ]
 
 
@@ -432,6 +485,7 @@ class JobDetailSerializer(JobSerializer):
     """
 
     category_name = serializers.SerializerMethodField()
+    # Legacy HTTP name paired with ``company_verified``; payload is recruiter-scoped.
     company_verification = serializers.SerializerMethodField()
     company_size = serializers.CharField(source='company.company_size', read_only=True)
     company_address = serializers.CharField(source='company.address', read_only=True)
@@ -468,12 +522,17 @@ class JobDetailSerializer(JobSerializer):
             'description',
             'requirements',
             'benefits',
+            'application_reasons',
             'work_schedule_note',
             'work_type',
+            'work_types',
             'employment_type',
             'education_level',
             'experience_years',
             'position_level',
+            'gender_requirement',
+            'age_min',
+            'age_max',
             'number_of_vacancies',
             'salary_type',
             'salary_min',
@@ -481,9 +540,13 @@ class JobDetailSerializer(JobSerializer):
             'income_display_type',
             'currency',
             'deadline',
+            'application_deadline',
+            'first_approved_at',
+            'visibility_ends_at',
             'view_count',
             'is_hot',
             'is_urgent',
+            'presentation',
             'job_locations',
             'work_schedules',
             'language_requirements',
@@ -505,8 +568,9 @@ class JobDetailSerializer(JobSerializer):
         ]
         read_only_fields = fields
 
+    @extend_schema_field(JobVerificationSerializer)
     def get_company_verification(self, obj):
-        return badge_criteria_payload(obj)
+        return self._badge_payload(obj)
 
     def get_category_name(self, obj):
         assignment = self._primary_assignment(obj)
@@ -620,6 +684,16 @@ class EmployerJobWriteSerializer(JobSerializer):
     )
     campaign_name = serializers.CharField(source='campaign.name', read_only=True)
     is_expired = serializers.BooleanField(read_only=True)
+    ai_generation_public_id = serializers.CharField(
+        write_only=True,
+        required=False,
+        max_length=50,
+    )
+    application_deadline = serializers.DateField(
+        source='deadline',
+        required=False,
+        allow_null=True,
+    )
 
     class Meta(JobSerializer.Meta):
         fields = JobSerializer.Meta.fields + [
@@ -627,6 +701,10 @@ class EmployerJobWriteSerializer(JobSerializer):
             'campaign',
             'campaign_name',
             'is_expired',
+            'ai_generation_public_id',
+            'auto_reject_stale_applications',
+            'auto_reject_after_days',
+            'auto_rejection_email_body',
             'submitted_at',
             'approved_at',
             'rejected_reason',
@@ -636,6 +714,48 @@ class EmployerJobWriteSerializer(JobSerializer):
             'approved_at',
             'rejected_reason',
         ]
+
+    def validate(self, attrs):
+        legacy_deadline = self.initial_data.get('deadline')
+        application_deadline = self.initial_data.get('application_deadline')
+        if (
+            legacy_deadline is not None
+            and application_deadline is not None
+            and legacy_deadline != application_deadline
+        ):
+            raise serializers.ValidationError(
+                {'application_deadline': 'Hạn nhận hồ sơ không khớp trường deadline cũ.'}
+            )
+        attrs = super().validate(attrs)
+        if self.instance is not None and attrs.get('ai_generation_public_id'):
+            raise serializers.ValidationError(
+                {'ai_generation_public_id': 'Chỉ liên kết kết quả AI khi tạo tin mới.'}
+            )
+        enabled = attrs.get(
+            'auto_reject_stale_applications',
+            getattr(self.instance, 'auto_reject_stale_applications', True),
+        )
+        email_body = attrs.get(
+            'auto_rejection_email_body',
+            getattr(
+                self.instance,
+                'auto_rejection_email_body',
+                Job.DEFAULT_AUTO_REJECTION_EMAIL,
+            ),
+        )
+        if enabled and not email_body.strip():
+            raise serializers.ValidationError(
+                {'auto_rejection_email_body': 'Nhập nội dung email thông báo cho ứng viên.'}
+            )
+        return attrs
+
+    def validate_deadline(self, deadline):
+        if deadline_error := job_deadline_error(deadline, required=False):
+            raise serializers.ValidationError(deadline_error)
+        return deadline
+
+    def validate_application_deadline(self, deadline):
+        return self.validate_deadline(deadline)
 
     def validate_campaign(self, campaign):
         if campaign is None:
@@ -654,6 +774,7 @@ class EmployerJobWriteSerializer(JobSerializer):
 
     @transaction.atomic
     def create(self, validated_data):
+        self._ai_generation_public_id = validated_data.pop('ai_generation_public_id', '')
         contact = validated_data.pop('application_contact', None)
         job = super().create(validated_data)
         self._replace_contact(job, contact)
@@ -727,6 +848,12 @@ class EmployerJobListSerializer(PublicJobListSerializer):
             'locations_detail',
             'employment_type',
             'deadline',
+            'application_deadline',
+            'requested_visibility_days',
+            'first_approved_at',
+            'visibility_starts_at',
+            'visibility_ends_at',
+            'is_visibility_expired',
             'status',
             'is_expired',
             'campaign',
@@ -756,3 +883,55 @@ class EmployerJobListSerializer(PublicJobListSerializer):
             }
             for preview in getattr(obj, 'candidate_previews', [])
         ]
+
+
+class EmployerPostingBlockerSerializer(serializers.Serializer):
+    code = serializers.CharField()
+    capabilities = serializers.ListField(
+        child=serializers.ChoiceField(
+            choices=('job_workspace', 'verification', 'candidate_data', 'job_approval')
+        )
+    )
+    message = serializers.CharField()
+    action = serializers.CharField()
+
+
+class EmployerJobLifecyclePolicySerializer(serializers.Serializer):
+    mode = serializers.ChoiceField(choices=('legacy', 'shadow', 'enforce'))
+    default_visibility_days = serializers.IntegerField(min_value=1)
+    max_visibility_days = serializers.IntegerField(min_value=1)
+    timezone = serializers.CharField()
+
+
+class EmployerJobServicesContextSerializer(serializers.Serializer):
+    catalog_v2_enabled = serializers.BooleanField()
+    activation_enabled = serializers.BooleanField()
+    refresh_enabled = serializers.BooleanField()
+    alert_enabled = serializers.BooleanField()
+    metrics_enabled = serializers.BooleanField()
+
+
+class EmployerJobPostingContextSerializer(serializers.Serializer):
+    default_deadline_days = serializers.IntegerField(min_value=1)
+    max_deadline_days = serializers.IntegerField(min_value=1)
+    max_public_lifetime_days = serializers.IntegerField(min_value=1)
+    lifecycle_policy = EmployerJobLifecyclePolicySerializer()
+    services = EmployerJobServicesContextSerializer()
+    verification_completed = serializers.BooleanField()
+    admin_approved = serializers.BooleanField()
+    account_level = serializers.IntegerField(min_value=0)
+    verified_job_quota_eligible = serializers.BooleanField()
+    job_workspace_ready = serializers.BooleanField()
+    candidate_data_access = serializers.BooleanField()
+    dpa_status = serializers.ChoiceField(
+        choices=[(status.value, status.value) for status in DpaStatus]
+    )
+    blockers = EmployerPostingBlockerSerializer(many=True)
+    published_jobs_count = serializers.IntegerField(min_value=0)
+    publish_limit = serializers.IntegerField(min_value=0)
+    publish_remain = serializers.IntegerField(min_value=0)
+    free_publish_limit = serializers.IntegerField(min_value=0)
+    free_publish_remain = serializers.IntegerField(min_value=0)
+    job_postable = serializers.BooleanField()
+    approval_required = serializers.BooleanField()
+    block_reason = serializers.CharField(allow_blank=True)

@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test'
 import { mockPublicApi } from './helpers'
 
+const API_ROUTE = /^https?:\/\/[^/]+\/api\/.*$/
 const EMAIL_NOTIFICATION_DEFAULTS = {
   important_system_updates: true,
   employer_viewed_cv: true,
@@ -19,7 +20,7 @@ const EMAIL_NOTIFICATION_DEFAULTS = {
 async function mockCandidatePersonalizationApi(page) {
   let emailNotifications = { ...EMAIL_NOTIFICATION_DEFAULTS }
 
-  await page.route('http://localhost:8000/api/**', async (route) => {
+  await page.route(API_ROUTE, async (route) => {
     const request = route.request()
     const path = new URL(request.url()).pathname
 
@@ -46,8 +47,8 @@ async function mockCandidatePersonalizationApi(page) {
             : path === '/api/jobs/recommendations/for-me/'
               ? {
                 status: 'ready',
-                sources: { job_preferences: true, cv: true, search_activity: false },
-                source_cv: { public_id: 'cv_1', title: 'CV Backend Developer' },
+                sources: { job_preferences: true, cv: false, search_activity: false },
+                source_cv: null,
                 pagination: { page: 1, page_size: 10, total: 1, total_pages: 1 },
                 results: [{
                   public_id: 'job_1',
@@ -61,11 +62,26 @@ async function mockCandidatePersonalizationApi(page) {
                   salary_max: '30000000',
                   currency: 'VND',
                   locations_detail: [{ id: 1, name: 'Hà Nội' }],
+                  presentation: {
+                    sponsored: true,
+                    card_tone: 'green',
+                    labels: [
+                      { code: 'sponsored', text: 'Tài trợ', tone: 'sponsored' },
+                      { code: 'urgent', text: 'GẤP', tone: 'warning' },
+                    ],
+                    display_reason: '',
+                    active_until: '2026-08-31T23:59:59+07:00',
+                    placement: 'legacy_priority',
+                  },
                   match_score: 86,
                   is_high_match: true,
                   match_details: [
                     { code: 'category', label: 'Đúng ngành nghề mong muốn', points: 38 },
                     { code: 'skills', label: 'Khớp kỹ năng Python', points: 18 },
+                  ],
+                  match_reasons: [
+                    'Phù hợp với tìm kiếm của bạn',
+                    'Phù hợp với kỹ năng của bạn',
                   ],
                 }],
               }
@@ -87,6 +103,16 @@ async function mockCandidatePersonalizationApi(page) {
                     currency: 'VND',
                     locations_detail: [{ id: 1, name: 'Hà Nội' }],
                     job_skills: [],
+                    presentation: {
+                      sponsored: true,
+                      card_tone: 'orange',
+                      labels: [
+                        { code: 'sponsored', text: 'Tài trợ', tone: 'sponsored' },
+                      ],
+                      display_reason: '',
+                      active_until: '2026-08-31T23:59:59+07:00',
+                      placement: 'legacy_priority',
+                    },
                     similarity_score: 0,
                     similarity_details: [],
                     similarity_reasons: [],
@@ -136,12 +162,18 @@ test('candidate smoke: personalization pages and compact desktop menu remain usa
     name: 'Việc làm bạn có thể quan tâm',
   })).toBeVisible()
   await expect(page.getByRole('link', { name: 'Python Developer' })).toBeVisible()
+  await expect(page.getByText('Tài trợ')).toBeVisible()
 
   await page.goto('/tai-khoan/viec-lam-phu-hop')
   await expect(page.getByRole('heading', { name: 'Việc làm phù hợp' })).toBeVisible()
   await expect(page.getByRole('link', { name: 'Backend Developer', exact: true })).toBeVisible()
-  await expect(page.getByText('Rất phù hợp')).toBeVisible()
-  await expect(page.getByText('CV: CV Backend Developer')).toBeVisible()
+  await expect(page.getByText('Phù hợp với tìm kiếm của bạn')).toBeVisible()
+  await expect(page.getByText('Phù hợp với kỹ năng của bạn')).toBeVisible()
+  await expect(page.getByText('Dữ liệu đang được dùng')).toHaveCount(0)
+  await expect(page.getByText(/% phù hợp|Rất phù hợp/)).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Ẩn tin tuyển dụng này' })).toBeVisible()
+  await expect(page.getByText('Tài trợ')).toBeVisible()
+  await expect(page.getByText('GẤP')).toBeVisible()
 
   await page.goto('/tai-khoan/doi-mat-khau')
   await expect(page.getByRole('heading', { name: 'Đổi mật khẩu' })).toBeVisible()
@@ -185,7 +217,7 @@ test('candidate smoke: WYSIWYG CV editor uses the V2 draft lifecycle', async ({ 
     layout_json: { schema_version: 1, page: { size: 'A4', margin_mm: 12 }, regions: [{ id: 'main', width_percent: 100, section_instance_ids: ['avatar_1', 'summary_1', 'experience_1', 'skills_1'] }] },
     style_json: { schema_version: 1, theme_color: '#00A66A', font_family: 'Roboto', font_scale: 1, line_height: 1.4, background_asset_id: null, section_overrides: {} },
   }
-  await page.route('http://localhost:8000/api/**', async (route) => {
+  await page.route(API_ROUTE, async (route) => {
     const request = route.request()
     const path = new URL(request.url()).pathname
     const body = path === '/api/auth/refresh/'
@@ -289,7 +321,7 @@ test('candidate smoke: WYSIWYG CV editor uses the V2 draft lifecycle', async ({ 
     if (request.url().endsWith('/api/v2/cvs/cv_1/save-version/')) saveVersionRequested = true
   })
   await page.getByRole('button', { name: 'Lưu CV' }).click()
-  await expect(page.getByRole('dialog', { name: 'Lưu ý' })).toBeVisible()
+  await expect(page.getByRole('dialog', { name: 'Lưu CV chưa hoàn thiện' })).toBeVisible()
   await page.getByRole('button', { name: 'Lưu CV, tôi sẽ hoàn thiện sau' }).click()
   await expect(page).toHaveURL('/save-cv-success/cv_1?type=create')
   await expect(page.getByRole('heading', { name: 'Lưu CV thành công!' })).toBeVisible()
@@ -310,7 +342,7 @@ test('candidate smoke: owner CV view renders an immutable V2 version, not a draf
     layout_json: { regions: [{ id: 'main', width_percent: 100, section_instance_ids: ['summary_1'] }] },
     style_json: { theme_color: '#00A66A', font_family: 'Roboto', font_scale: 1, line_height: 1.4 },
   }
-  await page.route('http://localhost:8000/api/**', async (route) => {
+  await page.route(API_ROUTE, async (route) => {
     const path = new URL(route.request().url()).pathname
     const body = path === '/api/auth/refresh/'
       ? { access: 'e2e-access' }
@@ -352,7 +384,7 @@ test('candidate smoke: CV library permanently deletes a CV through V2', async ({
     layout_json: { regions: [{ id: 'main', width_percent: 100, section_instance_ids: [] }] },
     style_json: { theme_color: '#00A66A', font_family: 'Roboto', font_scale: 1, line_height: 1.4 },
   }
-  await page.route('http://localhost:8000/api/**', async (route) => {
+  await page.route(API_ROUTE, async (route) => {
     const request = route.request()
     const path = new URL(request.url()).pathname
     const body = path === '/api/auth/refresh/'
@@ -377,7 +409,7 @@ test('candidate smoke: CV library permanently deletes a CV through V2', async ({
   await page.getByRole('button', { name: 'Thao tác CV' }).click()
   const deleteMenuItem = page.getByRole('menuitem', { name: 'Xoá' })
   await expect(deleteMenuItem).toBeVisible()
-  const deleteDialog = page.getByRole('dialog', { name: 'Xóa CV của bạn?' })
+  const deleteDialog = page.getByRole('dialog', { name: 'Xóa CV' })
   // Ant Design renders the menu in a moving portal. On a busy mobile CI worker
   // the sticky header can briefly intercept pointer events while it settles;
   // keyboard activation exercises the same accessible menu action without
@@ -386,7 +418,7 @@ test('candidate smoke: CV library permanently deletes a CV through V2', async ({
   await expect(deleteDialog).toBeVisible({ timeout: 10_000 })
   const deleteRequest = page.waitForRequest((request) => request.url().endsWith('/api/v2/cvs/cv_1/') && request.method() === 'DELETE')
   await deleteDialog
-    .getByRole('button', { name: 'Xóa vĩnh viễn', exact: true })
+    .getByRole('button', { name: 'Xóa', exact: true })
     .press('Enter')
   await deleteRequest
   await expect(page.getByText('CV cần xóa', { exact: true })).toHaveCount(0)
@@ -410,7 +442,7 @@ test('candidate smoke: job application submits the selected immutable CV version
     experience_years: 'none', salary_type: 'negotiable', work_type: 'office',
     employment_type: 'full_time', view_count: 0, status: 'active',
   }
-  await page.route('http://localhost:8000/api/**', async (route) => {
+  await page.route(API_ROUTE, async (route) => {
     const request = route.request()
     const path = new URL(request.url()).pathname
     if (path === '/api/v2/applications/' && request.method() === 'POST') {
@@ -548,7 +580,7 @@ test('candidate smoke: verified badge and job report modal work on desktop and m
     status: 'active',
   }
 
-  await page.route('http://localhost:8000/api/**', async (route) => {
+  await page.route(API_ROUTE, async (route) => {
     const request = route.request()
     const path = new URL(request.url()).pathname
     if (path === '/api/jobs/job_report_1/report/' && request.method() === 'POST') {

@@ -16,14 +16,6 @@ import {
 } from 'antd'
 import { useState } from 'react'
 
-const COMPANY_STATUS_OPTIONS = [
-  { value: '', label: 'Tất cả trạng thái công ty' },
-  { value: 'unverified', label: 'Chưa xác thực' },
-  { value: 'pending', label: 'Chờ duyệt' },
-  { value: 'verified', label: 'Đã xác thực' },
-  { value: 'rejected', label: 'Bị từ chối' },
-]
-
 const RECRUITER_STATUS_OPTIONS = [
   { value: '', label: 'Mọi trạng thái NTD' },
   { value: 'none', label: 'Chưa có hồ sơ' },
@@ -72,11 +64,6 @@ export default function CompanyDirectoryFilters({
   ].filter(Boolean).length
   const chips = [
     ['q', 'Từ khóa', filters.q],
-    [
-      'verification_status',
-      'Trạng thái công ty',
-      optionLabel(COMPANY_STATUS_OPTIONS, filters.verification_status),
-    ],
     [
       'recruiter_verification_status',
       'Xác thực NTD',
@@ -128,13 +115,6 @@ export default function CompanyDirectoryFilters({
           placeholder="Tìm tên, mã công ty, mã số thuế hoặc email"
           value={searchInput}
           onChange={onSearchChange}
-        />
-        <Select
-          aria-label="Lọc trạng thái công ty"
-          size="large"
-          value={filters.verification_status}
-          options={COMPANY_STATUS_OPTIONS}
-          onChange={(value) => onPatch({ verification_status: value })}
         />
         <Select
           aria-label="Sắp xếp danh sách công ty"

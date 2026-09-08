@@ -1,0 +1,21 @@
+.company-directory-card {
+  contain: layout paint style;
+  contain-intrinsic-size: auto 410px;
+  content-visibility: auto;
+}
+
+.company-directory-search-card {
+  contain: layout paint style;
+  contain-intrinsic-size: auto 176px;
+  content-visibility: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .company-directory-card > a {
+    transition: none;
+  }
+
+  .company-directory-search-card > a {
+    transition: none;
+  }
+}

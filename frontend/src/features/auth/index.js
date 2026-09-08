@@ -3,6 +3,7 @@
 export { default as LoginPromptProvider } from './model/LoginPromptProvider'
 export { default as useLoginPrompt } from './model/use-login-prompt'
 export { default as AuthLogo } from './ui/AuthLogo'
+export { default as AuthMascot } from './ui/AuthMascot'
 export { default as CandidateLoginContent } from './ui/CandidateLoginContent'
 export { default as EmailVerificationBanner } from './ui/EmailVerificationBanner'
 export { default as LoginForm, AuthFormStyles } from './ui/LoginForm'

@@ -1,4 +1,22 @@
 import api from '@/shared/api/client'
+import { prepareCleanUpload } from '@/shared/api/upload-session'
+
+const LEGACY_UPLOAD_FALLBACK = Object.freeze({ legacy_file: true })
+
+function apiErrorCode(error) {
+  return error?.response?.data?.code || error?.response?.data?.detail?.code || error?.code
+}
+
+export async function prepareEmployerUpload(file, purpose, options = {}) {
+  try {
+    return await prepareCleanUpload(file, purpose, options)
+  } catch (error) {
+    if (apiErrorCode(error) === 'UPLOAD_PIPELINE_DISABLED') {
+      return LEGACY_UPLOAD_FALLBACK
+    }
+    throw error
+  }
+}
 
 export async function getEmployerProfile() {
   const { data } = await api.get('/employer/me/')
@@ -20,13 +38,24 @@ export async function sendEmployerPhoneOtp(phone, password) {
   return data
 }
 
-export async function verifyEmployerPhoneOtp(code) {
-  const { data } = await api.post('/employer/phone/verify/', { code })
+export async function getEmployerPhoneChallenge(publicId) {
+  const { data } = await api.get('/employer/phone/challenges/' + publicId + '/')
   return data
 }
 
-export async function acceptEmployerDpa() {
-  const { data } = await api.post('/employer/dpa/accept/')
+export async function verifyEmployerPhoneOtp(challengeId, code) {
+  const { data } = await api.post('/employer/phone/verify/', {
+    challenge_id: challengeId,
+    code,
+  })
+  return data
+}
+
+export async function acceptEmployerDpa(policy) {
+  const { data } = await api.post('/employer/dpa/accept/', {
+    policy_version: policy.policy_version,
+    document_sha256: policy.document_sha256,
+  })
   return data
 }
 
@@ -53,9 +82,17 @@ export async function previewEmployerDataProcessingAgreement(file) {
 }
 
 export async function uploadEmployerCompanyDocument(docType, file, options = {}) {
+  const purpose = options.updateRequest
+    ? 'employer_company_update'
+    : 'employer_verification'
+  const uploadSession = options.uploadSession || await prepareEmployerUpload(file, purpose, {
+    onStateChange: options.onUploadStateChange,
+    signal: options.signal,
+  })
   const formData = new FormData()
   formData.append('doc_type', docType)
-  formData.append('file', file)
+  if (uploadSession.legacy_file) formData.append('file', file)
+  else formData.append('upload_session', uploadSession.public_id)
   if (options.updateRequest) formData.append('update_request', options.updateRequest)
   if (options.verificationMethod) formData.append('verification_method', options.verificationMethod)
   if (options.append) formData.append('append', 'true')
@@ -70,12 +107,16 @@ export async function saveEmployerCompanyTradeNameWebsite(websiteUrl, options = 
   formData.append('source_type', 'website')
   formData.append('website_url', websiteUrl)
   if (options.updateRequest) formData.append('update_request', options.updateRequest)
+  if (options.replaceDocument) formData.append('replaces', options.replaceDocument)
   const { data } = await api.post('/employer/company/documents/', formData)
   return data
 }
 
-export async function getEmployerCompanyDocuments() {
-  const { data } = await api.get('/employer/company/documents/')
+export async function getEmployerCompanyDocuments({ scope } = {}) {
+  const options = scope ? { params: { scope } } : undefined
+  const { data } = options
+    ? await api.get('/employer/company/documents/', options)
+    : await api.get('/employer/company/documents/')
   return data?.results || data || []
 }
 
@@ -110,8 +151,17 @@ export async function createEmployerCompany(payload) {
 }
 
 async function uploadEmployerCompanyMedia(endpoint, file, options = {}) {
+  const uploadSession = options.uploadSession || await prepareEmployerUpload(
+    file,
+    'employer_company_update',
+    {
+      onStateChange: options.onUploadStateChange,
+      signal: options.signal,
+    },
+  )
   const formData = new FormData()
-  formData.append('file', file)
+  if (uploadSession.legacy_file) formData.append('file', file)
+  else formData.append('upload_session', uploadSession.public_id)
   if (options.updateRequest) formData.append('update_request', options.updateRequest)
   const { data } = await api.post(endpoint, formData)
   return data
@@ -134,13 +184,68 @@ export async function deleteEmployerCompanyImage(id) {
   await api.delete(`/employer/company/images/${id}/`)
 }
 
-export async function getEmployerCompanyUpdateRequests() {
-  const { data } = await api.get('/employer/company/update-requests/')
+export async function getEmployerCompanyUpdateRequests({ scope } = {}) {
+  const request = scope
+    ? api.get('/employer/company/update-requests/', { params: { scope } })
+    : api.get('/employer/company/update-requests/')
+  const { data } = await request
   return data?.results || data || []
 }
 
 export async function createEmployerCompanyUpdateRequest(payload) {
   const { data } = await api.post('/employer/company/update-requests/', payload)
+  return data
+}
+
+export async function getEmployerCompanyDomainClaims() {
+  const { data } = await api.get('/employer/company/domain-claims/')
+  return data?.results || data || []
+}
+
+export async function createEmployerCompanyDomainClaim() {
+  const { data } = await api.post('/employer/company/domain-claims/', {})
+  return data
+}
+
+export async function verifyEmployerCompanyDomainClaim(publicId) {
+  const { data } = await api.post(
+    `/employer/company/domain-claims/${encodeURIComponent(publicId)}/verify/`,
+    {},
+  )
+  return data
+}
+
+export async function rotateEmployerCompanyDomainClaim(publicId, lockVersion) {
+  const { data } = await api.post(
+    `/employer/company/domain-claims/${encodeURIComponent(publicId)}/rotate/`,
+    { lock_version: lockVersion },
+  )
+  return data
+}
+
+export async function requestEmployerCompanyDomainManualReview(
+  publicId,
+  { lockVersion, reason },
+) {
+  const { data } = await api.post(
+    `/employer/company/domain-claims/${encodeURIComponent(publicId)}/request-manual-review/`,
+    { lock_version: lockVersion, reason },
+  )
+  return data
+}
+
+export async function changeEmployerCompanyUpdateRequestLifecycle(
+  publicId,
+  action,
+  payload,
+) {
+  if (!['withdraw', 'cancel'].includes(action)) {
+    throw new Error('Unsupported company update lifecycle action.')
+  }
+  const { data } = await api.post(
+    `/employer/company/update-requests/${publicId}/${action}/`,
+    payload,
+  )
   return data
 }
 

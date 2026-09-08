@@ -10,6 +10,10 @@ env/
 # Django
 backend/staticfiles/
 backend/media/
+backend/legacy-media/
+backend/public-media/
+backend/private-media/
+backend/quarantine/
 db.sqlite3
 celerybeat-schedule*
 *.rdb

@@ -13,7 +13,13 @@ from rest_framework.test import APITestCase
 
 from apps.accounts.models import AdminPermission, AdminRole, Department
 from apps.accounts.services import assign_membership
-from apps.employers.models import Company, CompanyDocument, RecruiterProfile
+from apps.employers.models import (
+    Company,
+    CompanyDocument,
+    CompanyDomainClaim,
+    EmployerVerificationCase,
+    RecruiterProfile,
+)
 
 from ..models import Job, JobReport, JobReportResolutionEvent
 from ..selectors.verification_badge import job_badge_criteria
@@ -29,19 +35,37 @@ def _employer_job(suffix):
         email_verified=True,
     )
     employer.date_joined = timezone.now() - timedelta(days=365)
-    employer.save(update_fields=['date_joined'])
+    employer.phone = f'09{employer.pk:08d}'
+    employer.save(update_fields=['date_joined', 'phone'])
     company = Company.objects.create(
         company_name=f'Company {suffix}',
         email=f'contact@company-{suffix}.vn',
         created_by=employer,
     )
-    RecruiterProfile.objects.create(
+    recruiter = RecruiterProfile.objects.create(
         user=employer,
         company=company,
+        contact_phone=employer.phone,
+        verified_phone=employer.phone,
         phone_verified_at=timezone.now(),
+    )
+    verification_case = EmployerVerificationCase.objects.create(
+        recruiter=recruiter,
+        company=company,
+        status=EmployerVerificationCase.Status.APPROVED,
+        verification_method=EmployerVerificationCase.VerificationMethod.BUSINESS_REGISTRATION,
+    )
+    CompanyDomainClaim.objects.create(
+        company=company,
+        requested_by=employer,
+        domain=f'company-{suffix}.vn',
+        status=CompanyDomainClaim.Status.VERIFIED,
+        verified_at=timezone.now(),
     )
     CompanyDocument.objects.create(
         company=company,
+        recruiter=recruiter,
+        verification_case=verification_case,
         uploaded_by=employer,
         doc_type=CompanyDocument.DocType.BUSINESS_REGISTRATION,
         status=CompanyDocument.Status.APPROVED,
@@ -139,6 +163,105 @@ class JobReportAdminApiTests(APITestCase):
         self.assertEqual(listing.data['results'][0]['job_slug'], self.job.slug)
         self.assertEqual(forbidden.status_code, status.HTTP_403_FORBIDDEN)
 
+    def test_admin_list_filters_and_orders_the_complete_result_set(self):
+        user_model = get_user_model()
+        _, second_job = _employer_job('aaa-filter')
+        second_job.title = 'AAA Data Engineer'
+        second_job.company.company_name = 'AAA Company'
+        second_job.company.save(update_fields=['company_name'])
+        second_job.save(update_fields=['title'])
+        second_candidate = user_model.objects.create_user(
+            email='aaa-report-filter@example.com',
+            password='Password@123',
+            role=user_model.Role.CANDIDATE,
+        )
+        second_report = submit_job_report(
+            job=second_job,
+            reporter=second_candidate,
+            reason=JobReport.Reason.FAKE_COMPANY,
+            detail='AAA chi tiết cần kiểm tra.',
+        )
+        second_report.status = JobReport.Status.DISMISSED
+        second_report.save(update_fields=['status'])
+        JobReport.objects.filter(pk=self.report.pk).update(
+            created_at=timezone.now() - timedelta(days=2)
+        )
+        JobReport.objects.filter(pk=second_report.pk).update(
+            created_at=timezone.now() - timedelta(days=1)
+        )
+        self.client.force_authenticate(self.viewer)
+
+        filtered = self.client.get(
+            reverse('admin-job-report-list'),
+            {
+                'q': 'aaa-report-filter',
+                'reason': JobReport.Reason.FAKE_COMPANY,
+                'status': JobReport.Status.DISMISSED,
+                'created_from': (timezone.localdate() - timedelta(days=2)).isoformat(),
+                'created_to': timezone.localdate().isoformat(),
+            },
+        )
+
+        self.assertEqual(filtered.status_code, status.HTTP_200_OK, filtered.data)
+        self.assertEqual(
+            [item['public_id'] for item in filtered.data['results']],
+            [second_report.public_id],
+        )
+
+        for field in (
+            'job_title',
+            'company_name',
+            'reason',
+            'detail',
+            'reporter_email',
+            'status',
+            'created_at',
+        ):
+            ascending = self.client.get(
+                reverse('admin-job-report-list'),
+                {'ordering': field},
+            )
+            descending = self.client.get(
+                reverse('admin-job-report-list'),
+                {'ordering': f'-{field}'},
+            )
+            self.assertEqual(ascending.status_code, status.HTTP_200_OK, ascending.data)
+            self.assertEqual(descending.status_code, status.HTTP_200_OK, descending.data)
+            ascending_ids = [item['public_id'] for item in ascending.data['results']]
+            descending_ids = [item['public_id'] for item in descending.data['results']]
+            self.assertEqual(descending_ids, list(reversed(ascending_ids)))
+
+    def test_admin_list_validates_query_and_paginates_on_the_server(self):
+        for index in range(20):
+            JobReport.objects.create(
+                job=self.job,
+                reason=JobReport.Reason.OTHER,
+                detail=f'Báo cáo bổ sung {index}',
+            )
+        self.client.force_authenticate(self.viewer)
+
+        second_page = self.client.get(
+            reverse('admin-job-report-list'),
+            {'ordering': 'created_at', 'page': 2},
+        )
+        invalid_ordering = self.client.get(
+            reverse('admin-job-report-list'),
+            {'ordering': 'reporter__password'},
+        )
+        invalid_range = self.client.get(
+            reverse('admin-job-report-list'),
+            {
+                'created_from': timezone.localdate().isoformat(),
+                'created_to': (timezone.localdate() - timedelta(days=1)).isoformat(),
+            },
+        )
+
+        self.assertEqual(second_page.status_code, status.HTTP_200_OK, second_page.data)
+        self.assertEqual(second_page.data['count'], 21)
+        self.assertEqual(len(second_page.data['results']), 1)
+        self.assertEqual(invalid_ordering.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(invalid_range.status_code, status.HTTP_400_BAD_REQUEST)
+
     def test_resolve_and_reverse_keep_an_auditable_history(self):
         self.client.force_authenticate(self.resolver)
 
@@ -152,6 +275,11 @@ class JobReportAdminApiTests(APITestCase):
         self.assertEqual(resolved.data['status'], JobReport.Status.UPHELD)
         self.assertEqual(len(resolved.data['resolution_history']), 1)
         self.assertFalse(job_badge_criteria(self.job)['verified'])
+        self.job.refresh_from_db()
+        self.assertEqual(
+            self.job.moderation_hold,
+            Job.ModerationHold.CONFIRMED_VIOLATION,
+        )
 
         missing_note = self.client.post(self.reverse_url(), {'note': ''}, format='json')
         self.assertEqual(missing_note.status_code, status.HTTP_400_BAD_REQUEST)
@@ -174,10 +302,51 @@ class JobReportAdminApiTests(APITestCase):
             ],
         )
         self.assertTrue(job_badge_criteria(self.job)['verified'])
+        self.job.refresh_from_db()
+        self.assertEqual(
+            self.job.moderation_hold,
+            Job.ModerationHold.CONFIRMED_VIOLATION,
+        )
         self.assertEqual(
             JobReportResolutionEvent.objects.filter(report=self.report).count(),
             2,
         )
+
+    def test_upheld_operational_reasons_do_not_affect_trust_badge_or_visibility(self):
+        user_model = get_user_model()
+        for index, reason in enumerate(
+            (JobReport.Reason.DUPLICATE, JobReport.Reason.EXPIRED, JobReport.Reason.OTHER)
+        ):
+            with self.subTest(reason=reason):
+                job = Job.objects.create(
+                    posted_by=self.employer,
+                    company=self.job.company,
+                    title=f'Operational report {index}',
+                    description='Still a legitimate employer.',
+                    status=Job.Status.ACTIVE,
+                )
+                candidate = user_model.objects.create_user(
+                    email=f'operational-{index}@example.com',
+                    password='Password@123',
+                    role=user_model.Role.CANDIDATE,
+                )
+                report = submit_job_report(
+                    job=job,
+                    reporter=candidate,
+                    reason=reason,
+                    detail='Cần xử lý vận hành.',
+                )
+
+                resolve_job_report(
+                    report=report,
+                    status=JobReport.Status.UPHELD,
+                    actor=self.resolver,
+                    note='Đã xác nhận vấn đề vận hành.',
+                )
+
+                job.refresh_from_db()
+                self.assertEqual(job.moderation_hold, Job.ModerationHold.NONE)
+                self.assertTrue(job_badge_criteria(job)['verified'])
 
 
 class JobReportConcurrencyTests(TransactionTestCase):
@@ -213,6 +382,7 @@ class JobReportConcurrencyTests(TransactionTestCase):
                         report=stale_report,
                         status=JobReport.Status.UPHELD,
                         actor=self.admin,
+                        note='Đã xác nhận bằng chứng vi phạm.',
                     )
                 except ValidationError:
                     return 'already-resolved'

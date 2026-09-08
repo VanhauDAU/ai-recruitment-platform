@@ -1,4 +1,4 @@
-import { CheckCircleFilled, HeartFilled, HeartOutlined, ThunderboltFilled } from '@ant-design/icons'
+import { HeartFilled, HeartOutlined } from '@ant-design/icons'
 import { Tooltip } from 'antd'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
@@ -10,24 +10,19 @@ import {
   WORK_TYPE_LABELS,
   companyInitial,
   formatEducation,
+  formatJobPostedLabel,
   formatLocations,
   formatSalary,
+  jobCardToneClass,
   jobDetailPath,
+  JobPresentationLabels,
+  resolveJobPresentation,
   SavedJobTooltipContent,
+  VerifiedEmployerBadge,
 } from '@/entities/job'
+import { JobCompareButton } from '@/features/compare-jobs'
 import { useSavedJob } from '@/features/saved-jobs'
 import { useJobImpression } from '@/features/track-job-engagement'
-
-// "Đăng hôm nay" / "Đăng 3 ngày trước" / "Đăng 2 tuần trước"…
-function postedLabel(job) {
-  const at = job.published_at || job.created_at
-  if (!at) return null
-  const days = Math.floor((Date.now() - new Date(at)) / 86_400_000)
-  if (days <= 0) return 'Đăng hôm nay'
-  if (days < 7) return `Đăng ${days} ngày trước`
-  if (days < 30) return `Đăng ${Math.floor(days / 7)} tuần trước`
-  return `Đăng ${Math.floor(days / 30)} tháng trước`
-}
 
 function savedLabel(value) {
   const savedAt = new Date(value)
@@ -48,30 +43,6 @@ function Chip({ children, elevated = false }) {
     >
       {children}
     </span>
-  )
-}
-
-// Nền + viền card theo hạng tin (admin gán): thường trắng, nổi bật/TOP xanh nhạt.
-const TIER_CARD_CLASS = {
-  standard: 'border-gray-200 bg-white hover:border-[var(--brand-primary)]',
-  featured: 'border-emerald-300 bg-emerald-50/65 hover:border-[var(--brand-primary)]',
-  top: 'border-emerald-400 bg-emerald-50/80 hover:border-[var(--brand-primary)]',
-}
-
-// Nhãn dịch vụ nhỏ đứng trước tiêu đề (TOP đi theo tier, HOT/GẤP là cờ riêng).
-function TitleBadges({ job }) {
-  return (
-    <>
-      {job.tier === 'top' && (
-        <span className="mr-1.5 inline-block translate-y-[-1px] rounded bg-red-600 px-1.5 py-0.5 align-middle text-[10px] font-bold leading-none text-white">TOP</span>
-      )}
-      {job.is_hot && (
-        <span className="mr-1.5 inline-block translate-y-[-1px] rounded bg-red-50 px-1.5 py-0.5 align-middle text-[10px] font-bold leading-none text-red-600 ring-1 ring-red-200">HOT</span>
-      )}
-      {job.is_urgent && (
-        <span className="mr-1.5 inline-block translate-y-[-1px] rounded bg-orange-50 px-1.5 py-0.5 align-middle text-[10px] font-bold leading-none text-orange-600 ring-1 ring-orange-200">GẤP</span>
-      )}
-    </>
   )
 }
 
@@ -117,15 +88,18 @@ export default function JobCard({
   active = false,
   showQuickView = true,
   savedAt,
+  recommendationLabel,
+  comparisonEnabled = true,
 }) {
   const navigate = useNavigate()
   const [saved, toggleSaved, savePending] = useSavedJob(job.public_id, job)
   const [hovered, setHovered] = useState(false)
   const impressionRef = useJobImpression(job.slug)
   const locationLabel = formatLocations(job)
-  const elevated = job.tier === 'featured' || job.tier === 'top'
+  const presentation = resolveJobPresentation(job)
+  const elevated = presentation.card_tone !== 'neutral'
   const skills = (job.job_skills || []).map((s) => s.skill_name).filter(Boolean)
-  const posted = postedLabel(job)
+  const posted = formatJobPostedLabel(job)
   const savedAtLabel = savedLabel(savedAt)
   const ageRequirement = job.age_min && job.age_max
     ? `${job.age_min} - ${job.age_max} tuổi`
@@ -168,7 +142,7 @@ export default function JobCard({
   function handleQuickView(e) {
     e.preventDefault()
     e.stopPropagation()
-    if (onQuickView) onQuickView(job)
+    if (onQuickView) onQuickView({ ...job, comparison_enabled: comparisonEnabled })
     else navigate(jobDetailPath(job))
   }
 
@@ -180,11 +154,11 @@ export default function JobCard({
       onMouseLeave={() => setHovered(false)}
       className={`group relative flex min-w-0 cursor-pointer gap-4 rounded-xl border transition-colors duration-200 hover:bg-white hover:shadow-md hover:shadow-emerald-600/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]/25 ${
         compact ? 'p-3' : 'p-4'
-      } ${active ? 'border-[var(--brand-primary)] bg-white shadow-md shadow-emerald-600/10' : TIER_CARD_CLASS[job.tier] || TIER_CARD_CLASS.standard}`}
+      } ${active ? 'border-[var(--brand-primary)] bg-white shadow-md shadow-emerald-600/10' : `${jobCardToneClass(job)} hover:border-[var(--brand-primary)]`}`}
     >
       <div className="relative shrink-0">
         <div
-          className={`flex items-center justify-center overflow-hidden rounded-lg border border-gray-100 bg-white ${
+          className={`flex items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white p-1 shadow-sm transition-colors duration-200 group-hover:border-[var(--brand-primary)]/60 ${
             compact ? 'h-14 w-14' : 'h-20 w-20 md:h-24 md:w-24'
           }`}
         >
@@ -196,36 +170,33 @@ export default function JobCard({
             </div>
           )}
         </div>
-        {job.has_flash_badge && (
-          <Tooltip title="Huy hiệu Sấm Chớp — nhà tuyển dụng tương tác nhanh">
-            <span className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-[#ffda00] to-[#ff8c00] text-[10px] text-white ring-2 ring-white">
-              <ThunderboltFilled />
-            </span>
-          </Tooltip>
-        )}
       </div>
 
       <div className="min-w-0 flex-1">
+        {recommendationLabel && (
+          <span className="mb-1.5 inline-flex rounded-full bg-violet-100 px-2.5 py-1 text-[11px] font-bold text-violet-700">
+            {recommendationLabel}
+          </span>
+        )}
         <div className={`flex items-start justify-between gap-3 ${compact ? 'flex-col gap-1' : ''}`}>
-          <h3 className="min-w-0 font-semibold text-gray-900 leading-snug line-clamp-2 transition-colors group-hover:text-[var(--brand-primary)]">
-            <TitleBadges job={job} />
+          <h3 className="min-w-0 font-semibold leading-snug text-slate-950 line-clamp-2">
             <Link
               to={jobDetailPath(job)}
               target="_blank"
               rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}
-              className="hover:underline underline-offset-2"
+              className="!text-slate-950 no-underline transition-colors hover:!text-slate-950 hover:underline underline-offset-2 focus-visible:rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]/40"
             >
               {job.title}
             </Link>
-            {job.company_verified && (
-              <Tooltip title="Tin đã xác thực — công ty được kiểm chứng">
-                <CheckCircleFilled className="ml-1.5 translate-y-[-1px] align-middle text-sm !text-emerald-500" />
-              </Tooltip>
-            )}
+            <VerifiedEmployerBadge
+              verified={job.company_verified}
+              className="ml-1.5 translate-y-[-1px]"
+            />
           </h3>
           <span className="shrink-0 text-sm font-semibold text-[var(--brand-primary)]">{formatSalary(job)}</span>
         </div>
+        <JobPresentationLabels job={job} compact className="mt-1.5" />
         <p className="mt-0.5 truncate text-sm text-gray-500 uppercase">{job.company_name}</p>
 
         <div className="mt-2 flex flex-wrap gap-1.5">
@@ -267,6 +238,7 @@ export default function JobCard({
                 Ứng tuyển
               </button>
             )}
+            {comparisonEnabled && <JobCompareButton job={job} variant="reveal" />}
             <Tooltip title={isAuthenticated ? (saved ? <SavedJobTooltipContent /> : 'Lưu việc làm') : 'Hãy đăng nhập để lưu tin'}>
               <button
                 type="button"

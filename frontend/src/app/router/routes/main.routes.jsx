@@ -1,5 +1,6 @@
 import { Navigate, Route } from 'react-router'
 import { ACCOUNT_DEFAULT_PATH, ACCOUNT_LAYOUT_ITEMS, ACCOUNT_ROOT } from '@/entities/account'
+import { COMPANY_DIRECTORY_PATH, COMPANY_SEARCH_PATH } from '@/entities/company'
 import { employerAppPath } from '@/shared/config/portals'
 import AuthGuard from '../guards/AuthGuard'
 import GuestGuard from '../guards/GuestGuard'
@@ -12,11 +13,18 @@ import {
   BlogHomePage,
   CandidateAccountLayout,
   ChangePasswordPage,
+  CompanyListPage,
+  CompanySearchPage,
   EmailNotificationSettingsPage,
   ForgotPasswordPage,
   HomePage,
   JobDetailPage,
+  JobComparisonPage,
+  JobAlertSettingsPage,
   JobListPage,
+  KnowledgeCategoryPage,
+  KnowledgeDetailPage,
+  KnowledgeHomePage,
   MainLoginPage,
   MainRegisterPage,
   MatchingJobsPage,
@@ -50,6 +58,7 @@ const ACCOUNT_PAGE_BY_KEY = {
   'suggestion-settings': JobPreferenceSettingsPage,
   'change-password': ChangePasswordPage,
   'email-settings': EmailNotificationSettingsPage,
+  'job-notifications': JobAlertSettingsPage,
   'matching-jobs': MatchingJobsPage,
   security: SecuritySettingsPage,
 }
@@ -59,8 +68,11 @@ export function mainRoutes() {
   return [
     <Route key="main" element={<MainLayout />}>
       <Route path="/" element={<HomePage />} />
+      <Route path={COMPANY_DIRECTORY_PATH} element={<CompanyListPage />} />
+      <Route path={COMPANY_SEARCH_PATH} element={<CompanySearchPage />} />
       <Route path="/viec-lam" element={<JobListPage />} />
       <Route path="/viec-lam/tai/:locationSlug" element={<JobListPage />} />
+      <Route path="/so-sanh-viec-lam" element={<JobComparisonPage />} />
       <Route path="/viec-lam/:slug" element={<JobDetailPage />} />
       {/* Tin của công ty có trang thương hiệu — cùng JobDetailPage nhưng kèm
           header thương hiệu + URL riêng /brand/... */}
@@ -73,6 +85,9 @@ export function mainRoutes() {
       <Route path="/blog" element={<BlogHomePage />} />
       <Route path="/blog/danh-muc/:categorySlug" element={<BlogCategoryPage />} />
       <Route path="/blog/:slug" element={<BlogDetailPage />} />
+      <Route path="/tro-giup" element={<KnowledgeHomePage />} />
+      <Route path="/tro-giup/:categorySlug" element={<KnowledgeCategoryPage />} />
+      <Route path="/tro-giup/:categorySlug/:articleSlug" element={<KnowledgeDetailPage />} />
       <Route path="/tai-khoan/xac-thuc-email" element={<VerifyEmailPage />} />
       {/* Kho mẫu CV theo ngôn ngữ — URL đổi theo dropdown ngôn ngữ (kiểu TopCV):
           /mau-cv (vi), /mau-cv-tieng-anh, /mau-cv-tieng-nhat, /mau-cv-tieng-trung.

@@ -1,10 +1,25 @@
 """Public serializers grouped by jobs use case."""
 
+from .ai_generation import (
+    JobAiGenerationCreateResponseSerializer,
+    JobAiGenerationCreateSerializer,
+    JobAiGenerationErrorSerializer,
+    JobAiGenerationFeedbackResponseSerializer,
+    JobAiGenerationFeedbackSerializer,
+    JobAiGenerationSerializer,
+)
+from .alerts import (
+    JobAlertCreateSerializer,
+    JobAlertListResponseSerializer,
+    JobAlertReadSerializer,
+    JobAlertWriteSerializer,
+)
 from .catalogs import BenefitSerializer, LanguageSerializer
 from .jobs import (
     EmployerJobDetailSerializer,
     EmployerJobDraftSerializer,
     EmployerJobListSerializer,
+    EmployerJobPostingContextSerializer,
     EmployerJobWriteSerializer,
     JobDetailSerializer,
     JobSerializer,
@@ -23,13 +38,19 @@ from .moderation import (
 from .recommendations import (
     CandidateJobRecommendationResponseSerializer,
     CvJobRecommendationResponseSerializer,
+    HiddenJobCreateSerializer,
+    HiddenJobResponseSerializer,
+    InlineJobRecommendationQuerySerializer,
+    InlineJobRecommendationResponseSerializer,
     RecommendationPermissionDeniedSerializer,
     SavedJobRecommendationResponseSerializer,
 )
 from .reports import (
+    AdminJobReportQuerySerializer,
     AdminJobReportResolveSerializer,
     AdminJobReportReverseSerializer,
     AdminJobReportSerializer,
+    JobReportCreatedSerializer,
     JobReportCreateSerializer,
 )
 from .saved import SavedJobSerializer
@@ -59,12 +80,27 @@ __all__ = [
     'AdminJobManagementListSerializer',
     'CandidateJobRecommendationResponseSerializer',
     'CvJobRecommendationResponseSerializer',
+    'HiddenJobCreateSerializer',
+    'HiddenJobResponseSerializer',
+    'InlineJobRecommendationQuerySerializer',
+    'InlineJobRecommendationResponseSerializer',
     'EmployerJobDetailSerializer',
     'EmployerJobDraftSerializer',
     'EmployerJobListSerializer',
+    'EmployerJobPostingContextSerializer',
     'EmployerJobWriteSerializer',
     'JobApplicationContactSerializer',
+    'JobAlertReadSerializer',
+    'JobAlertCreateSerializer',
+    'JobAlertListResponseSerializer',
+    'JobAlertWriteSerializer',
     'JobApplicationEmailSerializer',
+    'JobAiGenerationCreateResponseSerializer',
+    'JobAiGenerationCreateSerializer',
+    'JobAiGenerationErrorSerializer',
+    'JobAiGenerationFeedbackResponseSerializer',
+    'JobAiGenerationFeedbackSerializer',
+    'JobAiGenerationSerializer',
     'JobBenefitSerializer',
     'JobCategoryAssignmentSerializer',
     'JobCategoryListSerializer',
@@ -74,9 +110,11 @@ __all__ = [
     'JobModerationEventSerializer',
     'JobLocationSerializer',
     'AdminJobReportResolveSerializer',
+    'AdminJobReportQuerySerializer',
     'AdminJobReportReverseSerializer',
     'AdminJobReportSerializer',
     'JobReportCreateSerializer',
+    'JobReportCreatedSerializer',
     'JobSerializer',
     'JobSkillSerializer',
     'JobStatusHistoryAdminSerializer',

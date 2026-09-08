@@ -1,8 +1,10 @@
 import re
 
+from django.conf import settings
 from rest_framework import serializers
 
 from ...models import ConsultationLead, ServiceCategory, ServicePackage
+from ...selectors import ADMIN_LEAD_ORDERING_FIELDS
 
 _PHONE = re.compile(r'^[0-9+ .()-]{8,20}$')
 
@@ -27,10 +29,39 @@ PACKAGE_PUBLIC_FIELDS = [
 ]
 
 
+class PublicPackageVersionItemSerializer(serializers.Serializer):
+    capability = serializers.CharField(source='capability.code')
+    name_vi = serializers.CharField(source='capability.name_vi')
+    name_en = serializers.CharField(source='capability.name_en')
+    quantity = serializers.IntegerField()
+    duration_days = serializers.IntegerField(allow_null=True)
+    configuration = serializers.JSONField()
+
+
+class PublicPackageVersionSerializer(serializers.Serializer):
+    version_number = serializers.IntegerField()
+    price = serializers.DecimalField(max_digits=14, decimal_places=0)
+    currency = serializers.CharField()
+    activate_within_days = serializers.IntegerField()
+    terms_vi = serializers.CharField()
+    terms_en = serializers.CharField()
+    items = PublicPackageVersionItemSerializer(many=True)
+
+
 class PublicServicePackageSerializer(serializers.ModelSerializer):
+    published_version = serializers.SerializerMethodField()
+
     class Meta:
         model = ServicePackage
-        fields = PACKAGE_PUBLIC_FIELDS
+        fields = [*PACKAGE_PUBLIC_FIELDS, 'published_version']
+
+    def get_published_version(self, obj):
+        if not getattr(settings, 'SERVICE_CATALOG_V2_ENABLED', False):
+            return None
+        versions = getattr(obj, 'published_versions', [])
+        if not versions:
+            return None
+        return PublicPackageVersionSerializer(versions[0]).data
 
 
 class PublicServiceCategorySerializer(serializers.ModelSerializer):
@@ -132,6 +163,36 @@ class ConsultationLeadCreateSerializer(serializers.ModelSerializer):
         if not _PHONE.match(value):
             raise serializers.ValidationError('Số điện thoại không hợp lệ.')
         return value
+
+
+class AdminConsultationLeadQuerySerializer(serializers.Serializer):
+    status = serializers.ChoiceField(
+        choices=ConsultationLead.Status.choices,
+        allow_blank=True,
+        required=False,
+    )
+    q = serializers.CharField(
+        allow_blank=True,
+        max_length=200,
+        required=False,
+        trim_whitespace=True,
+    )
+    created_from = serializers.DateField(required=False)
+    created_to = serializers.DateField(required=False)
+    ordering = serializers.ChoiceField(
+        choices=[value for field in ADMIN_LEAD_ORDERING_FIELDS for value in (field, f'-{field}')],
+        default='-created_at',
+        required=False,
+    )
+
+    def validate(self, attrs):
+        created_from = attrs.get('created_from')
+        created_to = attrs.get('created_to')
+        if created_from and created_to and created_from > created_to:
+            raise serializers.ValidationError(
+                {'created_to': 'Ngày kết thúc phải từ ngày bắt đầu trở đi.'}
+            )
+        return attrs
 
 
 class AdminConsultationLeadSerializer(serializers.ModelSerializer):

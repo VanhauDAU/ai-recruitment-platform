@@ -1,5 +1,18 @@
 # Kế hoạch thiết kế lại: Công ty & Nhà tuyển dụng
 
+> **Superseded cho company-update workflow (2026-08-10):** các mô tả
+> `pending/approved/rejected`, owner-only/member-read-only và một pending trên
+> toàn company trong tài liệu lịch sử này không còn là contract triển khai.
+> Nguồn canonical là ER-D46/ER-D48 và mục ER-4 tại
+> [kế hoạch rà soát employer](./ke-hoach-ra-soat-va-khac-phuc-employer.md): mỗi
+> requester có một active request, nhiều member gửi song song, revision/event
+> bất biến, exact final review và recruiter UI không hiển thị company history.
+
+> **Superseded cho xác thực Company (2026-08-12):** mọi mô tả về
+> `Company.verification_status`, xác thực pháp nhân hoặc huy hiệu xác thực cấp
+> công ty bên dưới chỉ là lịch sử thiết kế. Theo ER-D52, `Company` là
+> catalogue; approve/reject/revoke/expire chỉ thuộc hồ sơ xác thực của từng NTD.
+
 Nguồn yêu cầu: `document_project_ai/Công ty và nhà tuyển dụng.docx` (tham khảo luồng TopCV).
 
 > **Trạng thái (2026-07-11): đã triển khai xong cả 3 giai đoạn A + B + C** — schema + data migration, jobs chuyển sang company, API `/api/employer/*` + admin duyệt, frontend cổng NTD chuyển sang API mới và bảng `employer_profiles` đã xóa (migration `employers.0008`).
@@ -10,7 +23,7 @@ Nguồn yêu cầu: `document_project_ai/Công ty và nhà tuyển dụng.docx` 
 
 `employer_profiles` đang gộp **2 khái niệm khác nhau** vào một bảng, 1-1 với `users`:
 
-- **Công ty** (pháp nhân): tên, MST, logo, quy mô, lĩnh vực, trạng thái xác thực.
+- **Công ty** (pháp nhân): tên, MST, logo, quy mô, lĩnh vực và nội dung giới thiệu.
 - **Nhà tuyển dụng** (con người): tài khoản đăng nhập, người đăng tin.
 
 Hệ quả:
@@ -32,14 +45,14 @@ users 1─1 recruiter_profiles N─1 companies 1─N jobs
                 └── phone_otps
 ```
 
-### 2.1 `companies` — pháp nhân, xác thực một lần dùng chung
+### 2.1 `companies` — hồ sơ pháp nhân/catalogue dùng chung
 
 | Trường | Kiểu | Ghi chú |
 |---|---|---|
 | `public_id` | char, unique | prefix `co` (kế thừa từ employer_profiles) |
 | `slug` | slug, unique | từ `company_name` |
 | `business_type` | choices | `enterprise` (Doanh nghiệp) / `household` (Hộ kinh doanh) |
-| `tax_code` | char, **unique** | MST; với hộ kinh doanh là MST người đại diện. Unique là chốt chặn chống trùng công ty |
+| `tax_code` | char | MST; với hộ kinh doanh là MST người đại diện; API nhận đúng 10 hoặc 13 chữ số ASCII |
 | `company_name` | char | Tên đăng ký kinh doanh (khớp Cục Thuế) |
 | `trade_name` | char, blank | Tên thương mại; `trade_name_same_as_registered` bool |
 | `logo_url` | text, blank | storage key; `has_no_logo` bool (checkbox "Tôi không có logo") |
@@ -53,12 +66,11 @@ users 1─1 recruiter_profiles N─1 companies 1─N jobs
 | `target_customers` | JSONField list | enum: `b2b/b2c/b2g` |
 | `founded_year` | int, null | giữ |
 | `has_brand_page` | bool | giữ (trang thương hiệu) |
-| `verification_status` | choices | `unverified` → `pending` → `verified` / `rejected` |
-| `verified_at`, `rejected_reason` | | giữ |
 | `created_by` | FK users, PROTECT | người tạo hồ sơ công ty đầu tiên |
 | `created_at`, `updated_at` | | |
 
-> Nguyên tắc TopCV áp dụng: **tạo công ty mới thì có hiệu lực ngay** (`unverified`, được hiển thị kèm nhãn chưa xác thực), nhưng **cập nhật sau đó phải qua duyệt** (mục 2.6).
+> Tạo công ty mới có hiệu lực ngay và xuất hiện trong catalogue, không có nhãn
+> hoặc vòng đời xác thực cấp công ty. Cập nhật sau đó vẫn phải qua duyệt (mục 2.6).
 
 > Quy tắc hệ thống 2026-07-20: xác thực số điện thoại không phải điều kiện tiên quyết để tạo/chọn công ty. Sau lần tạo hoặc chọn đầu tiên, recruiter bị khóa với đúng công ty đó ở cả UI và API. Thao tác gán dùng khóa hàng trong giao dịch để ngăn hai request đồng thời vượt quy tắc.
 
@@ -174,7 +186,7 @@ chấp nhận theo phiên bản/mã băm thay vì chỉ `dpa_accepted_at`.
 - `employer_profile` FK → **`company`** FK (tin thuộc công ty).
 - `employer` FK users → đổi tên ngữ nghĩa thành **`posted_by`** (người đăng cụ thể) — giữ cột, rename ở model.
 - Index `(company, status, -created_at)` thay cho index theo employer_profile.
-- Nhãn "Tin xác thực" suy từ `company.verification_status`.
+- Nhãn xác thực trên tin suy từ case `approved` của chính NTD đăng tin.
 
 ## 3. Kế hoạch migration (3 giai đoạn, không downtime)
 
@@ -186,7 +198,7 @@ chấp nhận theo phiên bản/mã băm thay vì chỉ `dpa_accepted_at`.
 ### Giai đoạn B — Chuyển jobs & API
 4. Thêm `jobs.company` (null tạm), data migration map từ `employer_profile.company`, rồi siết NOT NULL + index mới, xóa FK cũ.
 5. API: giữ `/employer/profile/` trả dữ liệu ghép (company + recruiter) để frontend cũ không vỡ; thêm mới `/employer/company/`, `/employer/company/search/?q=` (tìm theo tên, tên thương mại, MST — trả tên, MST, địa chỉ, quy mô, lĩnh vực), `/employer/company/update-requests/`, `/employer/onboarding/` (trạng thái 5 bước), `/employer/phone/send-otp|verify/`.
-6. Admin: duyệt company, duyệt update request (diff `changes` với giá trị hiện tại), duyệt documents.
+6. Admin: duyệt hồ sơ xác thực NTD và company update request (diff `changes` với giá trị hiện tại), duyệt documents.
 
 ### Giai đoạn C — Dọn dẹp
 7. **Đã hoàn tất:** Frontend chuyển sang API mới; `employer_profiles` và endpoint tương thích đã được gỡ.
@@ -196,17 +208,19 @@ chấp nhận theo phiên bản/mã băm thay vì chỉ `dpa_accepted_at`.
 
 1. **P1**: Company/RecruiterProfile + migration dữ liệu + API tương thích (nền móng, chưa đổi UX).
 2. **P2**: Onboarding 5 bước — OTP SĐT, form tạo công ty mới (đủ trường mục 2.1), tìm & chọn công ty có sẵn.
-3. **P3**: Upload giấy tờ + admin duyệt xác thực công ty.
+3. **P3**: Upload giấy tờ + admin duyệt xác thực từng NTD.
 4. **P4**: Yêu cầu cập nhật thông tin công ty + luồng duyệt (kèm reason/giấy tờ khi đổi MST/tên).
 5. **P5**: Ảnh công ty, thị trường/khách hàng mục tiêu/phúc lợi trên trang công ty public.
 
 ## 5. Các quyết định đã cập nhật (2026-07-20)
 
 - **HR join công ty có sẵn: có hiệu lực ngay.** Thao tác chỉ gán `recruiter_profiles.company_id` và `company_role=member`; không tạo membership request, không yêu cầu giấy tờ và không có admin duyệt. Liên kết vẫn cố định sau lần chọn đầu tiên.
-- **Tạo công ty mới: có hiệu lực ngay.** Hệ thống tạo `companies` với `verification_status=unverified`, đồng thời gán người tạo là `owner`. Xác thực pháp nhân qua `company_documents` là workflow độc lập; không chặn việc HR tham gia công ty.
+- **Tạo công ty mới: có hiệu lực ngay.** Hệ thống tạo `companies`, đồng thời gán người tạo là `owner`; không có trạng thái xác thực cấp công ty.
 - **Chỉ yêu cầu cập nhật công ty phải chờ duyệt.** Thay đổi được lưu tại `company_update_requests` với `pending/approved/rejected`; khi thay đổi MST hoặc tên công ty thì cần lý do và giấy tờ đính kèm.
-- **Đăng tin: công ty nào cũng được đăng, nhưng từng tin phải chờ duyệt.** Job tạo ra ở `status=pending`, admin duyệt → `active`. Không chặn theo `verification_status` của công ty; nhãn "Tin xác thực" vẫn suy từ công ty đã verified.
-- **OTP: dùng email trước** (chưa có SMS gateway trong môi trường thesis), schema `phone_otps` giữ nguyên để chuyển sang SMS sau mà không đổi DB.
+- **Đăng tin: công ty nào cũng được đăng, nhưng từng tin phải chờ duyệt.** Job tạo ra ở `status=pending`, admin duyệt → `active`. Huy hiệu xác thực, nếu hiển thị, phản ánh case `approved` của NTD đăng tin.
+- **Lịch sử (đã superseded bởi ER-6A):** luồng OTP qua email đã bị xóa. Contract
+  hiện hành dùng actor-bound SMS challenge; production fail closed khi gateway
+  chưa được bật và tuyệt đối không fallback email.
 
 ## 6. Kế hoạch tái cấu trúc mã nguồn `backend/apps`
 
@@ -467,16 +481,16 @@ Mỗi giai đoạn phải là một pull request/commit độc lập. Không th�
 
 ### 8.1 Nguồn dữ liệu catalogue
 
-- `Company` là catalogue nội bộ dùng chung. Bản ghi mới do owner tạo xuất hiện ngay với `verification_status=unverified`; dữ liệu lịch sử/import/admin vẫn dùng cùng model.
+- `Company` là catalogue nội bộ dùng chung. Mọi bản ghi hợp lệ, gồm bản ghi mới do owner tạo, xuất hiện ngay và không bị lọc theo xác thực.
 - `GET /api/employer/company/search/` trả sáu bản ghi/trang. Không có `q` thì sắp `-created_at, -id`; có `q` thì tìm không dấu theo `company_name`, `trade_name`, `tax_code`.
-- Company placeholder từ shortcut đăng ký cũ bị loại bằng tiêu chí sparse (không MST, không logo/website, không lĩnh vực). Công ty thật chưa xác thực vẫn được trả.
+- Company placeholder từ shortcut đăng ký cũ bị loại bằng tiêu chí sparse (không MST, không logo/website, không lĩnh vực); mọi hồ sơ công ty hợp lệ đều được trả.
 - Cục Thuế chỉ là link tra cứu thủ công. Hệ thống không scrape và không phụ thuộc API/CSV bên thứ ba.
 
 ### 8.2 Validation và rich text
 
-- MST chuẩn hóa khoảng trắng, nhận `10 chữ số` hoặc `10 chữ số-3 chữ số`, unique toàn catalogue.
+- MST chỉ nhận đúng `10` hoặc `13` chữ số ASCII; dạng chữ, khoảng trắng, dấu gạch nối và độ dài khác đều bị từ chối.
 - Tên đăng ký, email, điện thoại, địa chỉ, quy mô, mô tả, ít nhất một lĩnh vực và lĩnh vực chính là bắt buộc. Website/logo/tên thương mại tuân theo checkbox phụ thuộc.
-- `description` và `employee_benefits` lưu HTML đã sanitize, chỉ cho `p/br/strong/em/u/ul/ol/li`, không giữ attribute. Script/style và nội dung bên trong bị loại; giới hạn 10.000 ký tự tính theo text nhìn thấy.
+- `description` và `employee_benefits` lưu HTML đã sanitize, chỉ cho `p/br/strong/em/u/ul/ol/li`, không giữ attribute. Script/style và nội dung bên trong bị loại; `description` có tối thiểu 500 và tối đa 10.000 ký tự nhìn thấy.
 - Public job detail chuyển HTML mô tả công ty về plain text để consumer cũ không hiển thị tag.
 
 ### 8.3 Media và quyền sửa

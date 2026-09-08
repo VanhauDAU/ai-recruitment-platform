@@ -1,10 +1,10 @@
-import re
 import shutil
 import tempfile
 from datetime import timedelta
+from io import BytesIO
 from unittest.mock import patch
 
-from django.core import mail
+from django.conf import settings
 from django.core.cache import cache
 from django.core.files.base import ContentFile
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -28,12 +28,15 @@ from ..models import (
     CompanyImage,
     CompanyTaxLookupEvidence,
     CompanyUpdateRequest,
+    EmployerDpaAcceptance,
     EmployerVerificationCase,
     Industry,
     PhoneOtp,
     RecruiterProfile,
     RecruitmentNeed,
 )
+from ..services.phone_challenges import dispatch_sms_phone_challenge
+from ..services.sms_provider import FakeSmsProvider
 
 PNG_BYTES = (
     b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01'
@@ -44,6 +47,7 @@ PNG_BYTES = (
 PDF_BYTES = b'%PDF-1.4\n1 0 obj<</Type/Catalog>>endobj\n%%EOF'
 DOCX_BYTES = b'PK\x03\x04' + (b'\x00' * 64)
 TEST_MEDIA_ROOT = tempfile.mkdtemp()
+VALID_COMPANY_DESCRIPTION = 'A' * 500
 
 
 def make_employer(email='employer@example.com', phone_verified=True):
@@ -76,7 +80,7 @@ def company_payload(industry, **overrides):
         'phone': '02412345678',
         'address': 'Hà Nội',
         'company_size': '25-99',
-        'description': 'Công ty phần mềm.',
+        'description': VALID_COMPANY_DESCRIPTION,
         'industries': [industry.id],
         'primary_industry': industry.id,
     }
@@ -469,35 +473,53 @@ class RecruitmentNeedTests(APITestCase):
         self.assertIsNone(response.data['target_date'])
 
 
+@override_settings(
+    EMPLOYER_SMS_OTP_ENABLED=True,
+    EMPLOYER_SMS_PROVIDER='fake',
+    EMPLOYER_SMS_SENDER='ProCV',
+    EMPLOYER_SMS_TEMPLATE_ID='employer-phone-otp-v1',
+    IS_PRODUCTION=False,
+)
 class PhoneOtpTests(APITestCase):
     def setUp(self):
+        # The SMS boundary intentionally composes account and trusted-IP
+        # throttles. LocMem cache outlives each rolled-back APITestCase method,
+        # so isolate rate-limit buckets just like the registration tests do.
+        cache.clear()
         self.user, self.recruiter = make_employer(phone_verified=False)
         self.client.force_authenticate(user=self.user)
 
     def _send_otp(self, phone='0912345678', password='Password@123'):
-        # Email OTP được enqueue trong transaction.on_commit; TestCase không bao
-        # giờ commit nên phải chạy callback thủ công (CELERY_TASK_ALWAYS_EAGER
-        # khiến task chạy ngay và email rơi vào mail.outbox).
-        with self.captureOnCommitCallbacks(execute=True):
-            return self.client.post(
-                reverse('employer-phone-send-otp'), {'phone': phone, 'password': password}
+        with (
+            patch(
+                'apps.employers.services.phone_challenges.secrets.randbelow', return_value=123456
+            ),
+            patch('apps.employers.services.phone_challenges.current_app.send_task'),
+            self.captureOnCommitCallbacks(execute=True),
+        ):
+            response = self.client.post(
+                reverse('employer-phone-send-otp'),
+                {'phone': phone, 'password': password},
             )
+        if response.status_code == status.HTTP_202_ACCEPTED:
+            self.challenge_id = response.data['public_id']
+            dispatch_sms_phone_challenge(self.challenge_id, provider=FakeSmsProvider())
+        return response
 
     def test_send_and_verify_otp_marks_phone_verified(self):
         response = self._send_otp()
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(mail.outbox), 1)
-
-        # Lấy mã từ nội dung email (đúng 6 chữ số liền nhau — SĐT dài 10 số nên không khớp nhầm).
-        code = re.search(r'\b(\d{6})\b', mail.outbox[0].body).group(1)
-        response = self.client.post(reverse('employer-phone-verify'), {'code': code})
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+        response = self.client.post(
+            reverse('employer-phone-verify'),
+            {'challenge_id': self.challenge_id, 'code': '123456'},
+        )
         self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
 
         self.recruiter.refresh_from_db()
-        self.assertEqual(self.recruiter.verified_phone, '0912345678')
+        self.assertEqual(self.recruiter.verified_phone, '+84912345678')
         self.assertIsNotNone(self.recruiter.phone_verified_at)
 
-    def test_verifying_phone_last_approves_a_fully_reviewed_case(self):
+    def test_verifying_phone_last_does_not_auto_approve_recruiter_case(self):
         now = timezone.now()
         self.user.email_verified = True
         self.user.save(update_fields=['email_verified', 'updated_at'])
@@ -563,28 +585,31 @@ class PhoneOtpTests(APITestCase):
             )
 
         self._send_otp()
-        code = re.search(r'\b(\d{6})\b', mail.outbox[0].body).group(1)
-        response = self.client.post(reverse('employer-phone-verify'), {'code': code})
+        response = self.client.post(
+            reverse('employer-phone-verify'),
+            {'challenge_id': self.challenge_id, 'code': '123456'},
+        )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
         verification_case.refresh_from_db()
-        self.assertEqual(verification_case.status, EmployerVerificationCase.Status.APPROVED)
+        self.assertEqual(verification_case.status, EmployerVerificationCase.Status.IN_REVIEW)
 
-    def test_otp_email_is_deferred_until_commit(self):
-        """Mã chỉ được gửi sau khi hàng PhoneOtp thực sự commit, không sớm hơn."""
+    def test_sms_dispatch_is_deferred_until_commit(self):
+        """Challenge ID only enters the broker after the database commit."""
         with self.captureOnCommitCallbacks(execute=False) as callbacks:
             response = self.client.post(
                 reverse('employer-phone-send-otp'),
                 {'phone': '0912345678', 'password': 'Password@123'},
             )
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        # Response đã trả về nhưng email chưa gửi -> SMTP không nằm trong request.
-        self.assertEqual(len(mail.outbox), 0)
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
         self.assertEqual(len(callbacks), 1)
 
     def test_wrong_otp_rejected_and_attempts_counted(self):
         self._send_otp()
-        response = self.client.post(reverse('employer-phone-verify'), {'code': '000000'})
+        response = self.client.post(
+            reverse('employer-phone-verify'),
+            {'challenge_id': self.challenge_id, 'code': '000000'},
+        )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(PhoneOtp.objects.get(user=self.user).attempts, 1)
 
@@ -594,22 +619,25 @@ class PhoneOtpTests(APITestCase):
         other.phone_verified_at = timezone.now()
         other.save()
 
-        response = self._send_otp()
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn('nhà tuyển dụng khác', str(response.data['phone']))
+        self._send_otp()
+        response = self.client.post(
+            reverse('employer-phone-verify'),
+            {'challenge_id': self.challenge_id, 'code': '123456'},
+        )
+        self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
+        self.assertEqual(response.data['code'], 'PHONE_UNAVAILABLE')
 
     def test_send_otp_rejects_wrong_password(self):
         response = self._send_otp(password='Wrong@123')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn('password', response.data)
-        self.assertEqual(len(mail.outbox), 0)
+        self.assertEqual(response.data['code'], 'PHONE_REAUTH_FAILED')
 
     def test_send_otp_requires_password(self):
         response = self.client.post(reverse('employer-phone-send-otp'), {'phone': '0912345678'})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn('password', response.data)
+        self.assertEqual(response.data['code'], 'PHONE_REAUTH_FAILED')
 
-    def test_phone_availability_flags_taken_and_free_numbers(self):
+    def test_phone_availability_does_not_disclose_taken_numbers(self):
         other_user, other = make_employer('other@example.com', phone_verified=False)
         other.verified_phone = '0912345678'
         other.phone_verified_at = timezone.now()
@@ -617,7 +645,7 @@ class PhoneOtpTests(APITestCase):
 
         taken = self.client.get(reverse('employer-phone-check'), {'phone': '0912345678'})
         self.assertEqual(taken.status_code, status.HTTP_200_OK)
-        self.assertFalse(taken.data['available'])
+        self.assertTrue(taken.data['available'])
 
         free = self.client.get(reverse('employer-phone-check'), {'phone': '0987654321'})
         self.assertEqual(free.status_code, status.HTTP_200_OK)
@@ -630,7 +658,7 @@ class PhoneOtpTests(APITestCase):
         response = self._send_otp()
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn('password', response.data)
+        self.assertEqual(response.data['code'], 'PHONE_REAUTH_REQUIRED')
 
 
 class CompanyCreateTests(APITestCase):
@@ -639,16 +667,22 @@ class CompanyCreateTests(APITestCase):
         self.industry = Industry.objects.create(name='Công nghệ thông tin')
         authenticate_employer(self.client, self.user)
 
-    def test_create_company_links_recruiter_as_approved_owner(self):
+    def test_create_company_links_recruiter_as_owner_without_verification_fields(self):
         response = self.client.post(
             reverse('employer-company-create'), company_payload(self.industry), format='json'
         )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.data)
+        for removed_field in (
+            'verification_status',
+            'verification_source',
+            'verified_at',
+            'rejected_reason',
+        ):
+            self.assertNotIn(removed_field, response.data)
 
         self.recruiter.refresh_from_db()
         company = self.recruiter.company
         self.assertEqual(company.company_name, 'Acme Corp')
-        self.assertEqual(company.verification_status, Company.VerificationStatus.UNVERIFIED)
         self.assertEqual(self.recruiter.company_role, RecruiterProfile.CompanyRole.OWNER)
         self.assertTrue(company.company_industries.get(industry=self.industry).is_primary)
 
@@ -691,7 +725,7 @@ class CompanyCreateTests(APITestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
-    def test_duplicate_tax_code_and_company_name_are_accepted_for_admin_review(self):
+    def test_duplicate_tax_code_and_company_name_are_accepted_without_verification_claim(self):
         self.client.post(
             reverse('employer-company-create'), company_payload(self.industry), format='json'
         )
@@ -705,7 +739,6 @@ class CompanyCreateTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.data)
         duplicate = Company.objects.get(public_id=response.data['public_id'])
         self.assertEqual(duplicate.tax_code, '0101234567')
-        self.assertEqual(duplicate.verification_status, Company.VerificationStatus.UNVERIFIED)
 
         user3, _ = make_employer('hr3@example.com')
         authenticate_employer(self.client, user3)
@@ -730,18 +763,65 @@ class CompanyCreateTests(APITestCase):
         same_name = Company.objects.get(public_id=same_name_response.data['public_id'])
         self.assertNotEqual(original.slug, same_name.slug)
 
-    def test_tax_code_is_normalized_and_rich_text_is_sanitized(self):
+    def test_numeric_tax_code_and_rich_text_are_sanitized(self):
+        safe_suffix = 'A' * 500
         payload = company_payload(
             self.industry,
-            tax_code='010 123 4567',
-            description='<p onclick="steal()">Công ty <strong>an toàn</strong><script>alert(1)</script></p>',
+            tax_code='0101234567',
+            description=(
+                '<p onclick="steal()">Công ty <strong>an toàn</strong>. '
+                f'{safe_suffix}<script>alert(1)</script></p>'
+            ),
         )
         response = self.client.post(reverse('employer-company-create'), payload, format='json')
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.data)
         company = Company.objects.get(public_id=response.data['public_id'])
         self.assertEqual(company.tax_code, '0101234567')
-        self.assertEqual(company.description, '<p>Công ty <strong>an toàn</strong></p>')
+        self.assertEqual(
+            company.description,
+            f'<p>Công ty <strong>an toàn</strong>. {safe_suffix}</p>',
+        )
+
+    def test_description_requires_at_least_500_visible_characters(self):
+        response = self.client.post(
+            reverse('employer-company-create'),
+            company_payload(self.industry, description=f'<p>{"A" * 499}</p>'),
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST, response.data)
+        self.assertIn('description', response.data)
+        self.assertIn('500', str(response.data['description']))
+
+    def test_tax_code_accepts_only_10_or_13_digits(self):
+        for invalid_tax_code in (
+            '010123456A',
+            '123456789',
+            '12345678901234',
+            '010 123 4567',
+            '0101234567-001',
+            '０１０１２３４５６７８９',
+        ):
+            with self.subTest(tax_code=invalid_tax_code):
+                response = self.client.post(
+                    reverse('employer-company-create'),
+                    company_payload(self.industry, tax_code=invalid_tax_code),
+                    format='json',
+                )
+                self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST, response.data)
+                self.assertIn('tax_code', response.data)
+
+        accepted = self.client.post(
+            reverse('employer-company-create'),
+            company_payload(self.industry, tax_code='0101234567001'),
+            format='json',
+        )
+        self.assertEqual(accepted.status_code, status.HTTP_201_CREATED, accepted.data)
+        self.assertEqual(
+            Company.objects.get(public_id=accepted.data['public_id']).tax_code,
+            '0101234567001',
+        )
 
     def test_company_catalogs_are_server_driven(self):
         response = self.client.get(reverse('employer-company-catalogs'))
@@ -805,6 +885,41 @@ class JoinCompanyTests(APITestCase):
             response = self.client.get(reverse('employer-company-search'), {'q': q})
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             self.assertEqual(response.data['results'][0]['public_id'], self.company.public_id)
+            self.assertNotIn('verification_status', response.data['results'][0])
+
+    def test_search_returns_every_catalog_company_without_recruiter_status_gating(self):
+        approved_user, approved_recruiter = make_employer('approved-catalog@example.com')
+        approved_company = Company.objects.create(
+            company_name='Catalog có NTD đã duyệt',
+            tax_code='0201234567',
+            created_by=approved_user,
+        )
+        approved_recruiter.company = approved_company
+        approved_recruiter.company_role = RecruiterProfile.CompanyRole.OWNER
+        approved_recruiter.save(update_fields=['company', 'company_role', 'updated_at'])
+        EmployerVerificationCase.objects.create(
+            recruiter=approved_recruiter,
+            company=approved_company,
+            status=EmployerVerificationCase.Status.APPROVED,
+            submitted_at=timezone.now(),
+            decided_at=timezone.now(),
+        )
+        unreviewed_user, _ = make_employer('unreviewed-catalog@example.com')
+        unreviewed_company = Company.objects.create(
+            company_name='Catalog chưa có hồ sơ NTD',
+            tax_code='0301234567',
+            created_by=unreviewed_user,
+        )
+
+        response = self.client.get(reverse('employer-company-search'), {'q': 'Catalog'})
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+        self.assertSetEqual(
+            {item['public_id'] for item in response.data['results']},
+            {approved_company.public_id, unreviewed_company.public_id},
+        )
+        for item in response.data['results']:
+            self.assertNotIn('verification_status', item)
 
     def test_blank_search_returns_six_recent_real_companies_and_excludes_placeholder(self):
         for index in range(7):
@@ -837,10 +952,7 @@ class JoinCompanyTests(APITestCase):
         self.assertEqual(self.recruiter.company, self.company)
         self.assertEqual(self.recruiter.company_role, RecruiterProfile.CompanyRole.MEMBER)
 
-    def test_joining_verified_company_does_not_inherit_other_recruiter_documents(self):
-        self.company.verification_status = Company.VerificationStatus.VERIFIED
-        self.company.verified_at = timezone.now()
-        self.company.save(update_fields=['verification_status', 'verified_at', 'updated_at'])
+    def test_joining_company_does_not_inherit_other_recruiter_documents(self):
         for doc_type in (
             CompanyDocument.DocType.BUSINESS_REGISTRATION,
             CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT,
@@ -1106,11 +1218,8 @@ class JoinCompanyTests(APITestCase):
         self.assertEqual(preview['Content-Type'], 'application/pdf')
         self.assertEqual(b''.join(preview.streaming_content), b'%PDF-private-preview')
 
-    @patch(
-        'apps.employers.api.views.verification.render_office_upload_preview',
-        return_value=b'%PDF-selected-preview',
-    )
-    def test_selected_word_agreement_can_be_previewed_without_persisting_it(self, render_preview):
+    @patch('apps.employers.services.document_preview.subprocess.run')
+    def test_raw_word_agreement_preview_requires_scan_without_running_office(self, soffice_run):
         upload = SimpleUploadedFile(
             'thoa-thuan.docx',
             DOCX_BYTES,
@@ -1123,17 +1232,10 @@ class JoinCompanyTests(APITestCase):
             format='multipart',
         )
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.content, b'%PDF-selected-preview')
-        self.assertEqual(response['Content-Type'], 'application/pdf')
-        self.assertEqual(response['Cache-Control'], 'private, no-store')
-        render_preview.assert_called_once()
-        preview_upload, preview_content_type = render_preview.call_args.args
-        self.assertEqual(preview_upload.name, 'thoa-thuan.docx')
-        self.assertEqual(
-            preview_content_type,
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        )
+        self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
+        self.assertEqual(response.data['code'], 'UPLOAD_SCAN_REQUIRED')
+        self.assertIn('quét an toàn', response.data['message'])
+        soffice_run.assert_not_called()
         self.assertFalse(CompanyDocument.objects.filter(recruiter=self.recruiter).exists())
 
 
@@ -1158,6 +1260,16 @@ class CompanyUpdateRequestTests(APITestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('reason', response.data)
+
+    def test_update_rejects_non_string_company_description(self):
+        response = self.client.post(
+            reverse('employer-company-update-requests'),
+            {'changes': {'description': 123}},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST, response.data)
+        self.assertIn('description', response.data)
 
     def test_repeated_submit_updates_the_same_pending_request(self):
         payload = {'changes': {'website_url': 'https://example.com/abc'}}
@@ -1202,7 +1314,240 @@ class CompanyUpdateRequestTests(APITestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.data)
-        self.assertEqual(response.data['status'], CompanyUpdateRequest.Status.PENDING)
+        self.assertEqual(response.data['status'], CompanyUpdateRequest.Status.SUBMITTED)
+
+    def test_members_keep_independent_pending_requests_and_requester_is_immutable(self):
+        owner_response = self.client.post(
+            reverse('employer-company-update-requests'),
+            {'changes': {'website_url': 'https://owner.example.com'}},
+            format='json',
+        )
+        member_user, member = make_employer('independent-member@example.com')
+        member_user.full_name = 'Nguyễn Minh Anh'
+        member_user.save(update_fields=['full_name'])
+        member.company = self.company
+        member.company_role = RecruiterProfile.CompanyRole.MEMBER
+        member.save(update_fields=['company', 'company_role', 'updated_at'])
+        authenticate_employer(self.client, member_user)
+
+        member_response = self.client.post(
+            reverse('employer-company-update-requests'),
+            {'changes': {'address': 'Đà Nẵng'}},
+            format='json',
+        )
+        member_update = self.client.post(
+            reverse('employer-company-update-requests'),
+            {'changes': {'address': 'Huế'}},
+            format='json',
+        )
+        mine = self.client.get(reverse('employer-company-update-requests'), {'scope': 'mine'})
+        company = self.client.get(reverse('employer-company-update-requests'))
+
+        self.assertEqual(owner_response.status_code, status.HTTP_201_CREATED, owner_response.data)
+        self.assertEqual(member_response.status_code, status.HTTP_201_CREATED, member_response.data)
+        self.assertEqual(member_update.status_code, status.HTTP_200_OK, member_update.data)
+        self.assertNotEqual(owner_response.data['public_id'], member_response.data['public_id'])
+        self.assertEqual(member_update.data['public_id'], member_response.data['public_id'])
+        owner_request = CompanyUpdateRequest.objects.get(public_id=owner_response.data['public_id'])
+        member_request = CompanyUpdateRequest.objects.get(
+            public_id=member_response.data['public_id']
+        )
+        self.assertEqual(owner_request.requested_by, self.user)
+        self.assertEqual(owner_request.changes['website_url'], 'https://owner.example.com')
+        self.assertEqual(member_request.requested_by, member_user)
+        self.assertEqual(member_request.changes['address'], 'Huế')
+        self.assertIsNotNone(member_request.submitted_at)
+        self.assertEqual([item['public_id'] for item in mine.data], [member_request.public_id])
+        self.assertEqual(len(company.data), 2)
+        summary = mine.data[0]['requested_by_summary']
+        self.assertEqual(summary['public_id'], member_user.public_id)
+        self.assertEqual(summary['display_name'], 'Nguyễn Minh Anh')
+        self.assertNotIn('email', summary)
+        owner_summary = next(
+            item['requested_by_summary']
+            for item in company.data
+            if item['requested_by_summary']['public_id'] == self.user.public_id
+        )
+        self.assertEqual(owner_summary['display_name'], 'Thành viên công ty')
+
+    def test_company_history_redacts_other_members_private_files_and_media(self):
+        update_request = CompanyUpdateRequest.objects.create(
+            company=self.company,
+            requested_by=self.user,
+            changes={
+                'logo_url': 'employers/private/staged-logo.png',
+                'gallery_additions': ['employers/private/staged-office.png'],
+            },
+            submitted_at=timezone.now(),
+        )
+        document = CompanyDocument.objects.create(
+            company=self.company,
+            recruiter=self.recruiter,
+            uploaded_by=self.user,
+            update_request=update_request,
+            doc_type=CompanyDocument.DocType.BUSINESS_REGISTRATION,
+            file_url='employers/private/business-registration.pdf',
+            file_name='mst-0101234567.pdf',
+            mime_type='application/pdf',
+            file_size=1234,
+        )
+        member_user, member = make_employer('history-member@example.com')
+        member.company = self.company
+        member.company_role = RecruiterProfile.CompanyRole.MEMBER
+        member.save(update_fields=['company', 'company_role', 'updated_at'])
+        authenticate_employer(self.client, member_user)
+
+        history = self.client.get(
+            reverse('employer-company-update-requests'),
+            {'scope': 'company'},
+        )
+        with patch('apps.employers.api.views.verification.private_media_storage') as storage:
+            content = self.client.get(
+                reverse('employer-company-document-content', kwargs={'pk': document.pk})
+            )
+
+        self.assertEqual(history.status_code, status.HTTP_200_OK, history.data)
+        item = history.data[0]
+        self.assertIsNone(item['changes']['logo_url'])
+        self.assertEqual(item['changes']['gallery_additions'], [])
+        self.assertEqual(item['media_previews'], {})
+        self.assertIsNone(item['documents'][0]['file_url'])
+        self.assertEqual(item['documents'][0]['file_name'], '')
+        self.assertEqual(item['documents'][0]['mime_type'], '')
+        self.assertEqual(item['documents'][0]['file_size'], 0)
+        self.assertEqual(content.status_code, status.HTTP_404_NOT_FOUND)
+        storage.assert_not_called()
+
+        authenticate_employer(self.client, self.user)
+        owner_history = self.client.get(
+            reverse('employer-company-update-requests'),
+            {'scope': 'company'},
+        )
+        owner_item = owner_history.data[0]
+        self.assertEqual(owner_item['changes']['logo_url'], 'employers/private/staged-logo.png')
+        self.assertIn(
+            '/media/employers/private/staged-logo.png', owner_item['media_previews']['logo_url']
+        )
+        self.assertIsNotNone(owner_item['documents'][0]['file_url'])
+
+    def test_company_owner_can_open_a_members_private_document(self):
+        member_user, member = make_employer('owner-readable-member@example.com')
+        member.company = self.company
+        member.company_role = RecruiterProfile.CompanyRole.MEMBER
+        member.save(update_fields=['company', 'company_role', 'updated_at'])
+        document = CompanyDocument.objects.create(
+            company=self.company,
+            recruiter=member,
+            uploaded_by=member_user,
+            doc_type=CompanyDocument.DocType.BUSINESS_REGISTRATION,
+            file_url='employers/private/member-registration.pdf',
+            file_name='member-registration.pdf',
+            mime_type='application/pdf',
+        )
+        authenticate_employer(self.client, self.user)
+
+        with (
+            patch('apps.employers.api.views.verification.private_media_storage') as storage,
+            patch(
+                'apps.employers.api.views.verification.render_office_document_preview',
+                return_value=None,
+            ),
+        ):
+            storage.return_value.open.return_value = BytesIO(PDF_BYTES)
+            listed = self.client.get(reverse('employer-company-documents'))
+            response = self.client.get(
+                reverse('employer-company-document-content', kwargs={'pk': document.pk})
+            )
+
+        owner_document = next(
+            item for item in listed.data if item['public_id'] == document.public_id
+        )
+        self.assertIsNotNone(owner_document['file_url'])
+        self.assertEqual(owner_document['file_name'], 'member-registration.pdf')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(b''.join(response.streaming_content), PDF_BYTES)
+
+    def test_company_document_mine_scope_excludes_members_verification_files(self):
+        owner_document = CompanyDocument.objects.create(
+            company=self.company,
+            recruiter=self.recruiter,
+            uploaded_by=self.user,
+            doc_type=CompanyDocument.DocType.BUSINESS_REGISTRATION,
+            file_url='employers/private/owner-registration.pdf',
+            file_name='owner-registration.pdf',
+            status=CompanyDocument.Status.APPROVED,
+        )
+        member_user, member = make_employer('scoped-document-member@example.com')
+        member.company = self.company
+        member.company_role = RecruiterProfile.CompanyRole.MEMBER
+        member.save(update_fields=['company', 'company_role', 'updated_at'])
+        member_document = CompanyDocument.objects.create(
+            company=self.company,
+            recruiter=member,
+            uploaded_by=member_user,
+            doc_type=CompanyDocument.DocType.BUSINESS_REGISTRATION,
+            file_url='employers/private/member-rejected-registration.pdf',
+            file_name='member-rejected-registration.pdf',
+            status=CompanyDocument.Status.REJECTED,
+        )
+
+        visible = self.client.get(reverse('employer-company-documents'))
+        mine = self.client.get(reverse('employer-company-documents'), {'scope': 'mine'})
+
+        self.assertEqual(visible.status_code, status.HTTP_200_OK, visible.data)
+        self.assertSetEqual(
+            {item['public_id'] for item in visible.data},
+            {owner_document.public_id, member_document.public_id},
+        )
+        self.assertEqual(mine.status_code, status.HTTP_200_OK, mine.data)
+        self.assertEqual(
+            [item['public_id'] for item in mine.data],
+            [owner_document.public_id],
+        )
+
+    def test_company_document_rejects_unknown_scope(self):
+        response = self.client.get(
+            reverse('employer-company-documents'),
+            {'scope': 'unknown'},
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('scope', response.data)
+
+    def test_member_cannot_attach_document_to_another_request(self):
+        update_request = CompanyUpdateRequest.objects.create(
+            company=self.company,
+            requested_by=self.user,
+            changes={'company_name': 'Acme mới'},
+            submitted_at=timezone.now(),
+        )
+        member_user, member = make_employer('document-write-member@example.com')
+        member.company = self.company
+        member.company_role = RecruiterProfile.CompanyRole.MEMBER
+        member.save(update_fields=['company', 'company_role', 'updated_at'])
+        authenticate_employer(self.client, member_user)
+
+        response = self.client.post(
+            reverse('employer-company-documents'),
+            {
+                'doc_type': CompanyDocument.DocType.BUSINESS_REGISTRATION,
+                'update_request': update_request.public_id,
+                'file': SimpleUploadedFile('proof.pdf', PDF_BYTES, content_type='application/pdf'),
+            },
+            format='multipart',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST, response.data)
+        self.assertFalse(CompanyDocument.objects.filter(update_request=update_request).exists())
+
+    def test_invalid_update_request_scope_is_rejected(self):
+        response = self.client.get(
+            reverse('employer-company-update-requests'),
+            {'scope': 'unknown'},
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('scope', response.data)
 
     def test_admin_approval_applies_changes(self):
         self.client.post(
@@ -1231,6 +1576,12 @@ class CompanyUpdateRequestTests(APITestCase):
             file_name='update-proof.pdf',
             status=CompanyDocument.Status.APPROVED,
         )
+        services.start_company_update_review(
+            update_request,
+            actor=admin,
+            lock_version=update_request.lock_version,
+            revision_public_id=update_request.current_revision.public_id,
+        )
         services.apply_update_request(update_request, admin, approve=True)
 
         self.company.refresh_from_db()
@@ -1258,6 +1609,12 @@ class CompanyUpdateRequestTests(APITestCase):
         admin = User.objects.create_superuser(
             email='approval-admin@example.com',
             password='Password@123',
+        )
+        services.start_company_update_review(
+            update_request,
+            actor=admin,
+            lock_version=update_request.lock_version,
+            revision_public_id=update_request.current_revision.public_id,
         )
 
         with self.assertRaisesMessage(
@@ -1312,12 +1669,22 @@ class CompanyUpdateRequestTests(APITestCase):
         self.user.save(update_fields=['email_verified', 'updated_at'])
         self.recruiter.registration_completed_at = now
         self.recruiter.dpa_accepted_at = now
+        self.recruiter.dpa_policy_version = settings.EMPLOYER_DPA_POLICY_VERSION
+        self.recruiter.dpa_document_sha256 = settings.EMPLOYER_DPA_DOCUMENT_SHA256
         self.recruiter.save(
             update_fields=[
                 'registration_completed_at',
                 'dpa_accepted_at',
+                'dpa_policy_version',
+                'dpa_document_sha256',
                 'updated_at',
             ]
+        )
+        EmployerDpaAcceptance.objects.create(
+            recruiter=self.recruiter,
+            policy_version=settings.EMPLOYER_DPA_POLICY_VERSION,
+            document_sha256=settings.EMPLOYER_DPA_DOCUMENT_SHA256,
+            document_url=settings.EMPLOYER_DPA_DOCUMENT_URL,
         )
         category = JobCategory.objects.create(
             name='Chuyên viên tuyển dụng',
@@ -1784,11 +2151,18 @@ class CompanyImageUploadTests(APITestCase):
             email='media-reviewer@example.com',
             password='Password@123',
         )
+        update_request = services.start_company_update_review(
+            update_request,
+            actor=admin,
+            lock_version=update_request.lock_version,
+            revision_public_id=update_request.current_revision.public_id,
+        )
         services.apply_update_request(
             update_request,
             admin,
             approve=True,
             lock_version=update_request.lock_version,
+            revision_public_id=update_request.current_revision.public_id,
         )
         self.company.refresh_from_db()
         self.assertEqual(self.company.logo_url, update_request.changes['logo_url'])
@@ -1849,3 +2223,28 @@ class CompanyImageUploadTests(APITestCase):
             reverse('employer-company-logo-upload'), {'file': upload}, format='multipart'
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_owner_cannot_mutate_media_on_a_members_update_request(self):
+        member, member_recruiter = make_employer('media-request-owner@example.com')
+        member_recruiter.company = self.company
+        member_recruiter.company_role = RecruiterProfile.CompanyRole.MEMBER
+        member_recruiter.save(update_fields=['company', 'company_role', 'updated_at'])
+        update_request = CompanyUpdateRequest.objects.create(
+            company=self.company,
+            requested_by=member,
+            changes={'logo_pending': True},
+            submitted_at=timezone.now(),
+        )
+
+        response = self.client.post(
+            reverse('employer-company-logo-upload'),
+            {
+                'file': SimpleUploadedFile('logo.png', PNG_BYTES, content_type='image/png'),
+                'update_request': update_request.public_id,
+            },
+            format='multipart',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST, response.data)
+        update_request.refresh_from_db()
+        self.assertEqual(update_request.changes, {'logo_pending': True})

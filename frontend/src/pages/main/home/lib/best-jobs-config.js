@@ -5,6 +5,17 @@ export const BEST_JOBS_ROTATE_MS = 8000
 export const BEST_JOBS_PREVIEW_DELAY_MS = 500
 const OTHER_WARDS_VALUE = '__other_wards__'
 
+function createRotationSeed() {
+  if (globalThis.crypto?.randomUUID) {
+    return globalThis.crypto.randomUUID().replaceAll('-', '')
+  }
+  return `${Date.now().toString(36)}${Math.random().toString(36).slice(2)}`
+}
+
+// Một application load dùng cùng seed để phân trang không lặp; F5 tải module
+// lại và tạo seed mới, nên tập/thứ tự card được luân phiên như box của TopCV.
+export const BEST_JOBS_ROTATION_SEED = createRotationSeed()
+
 export const BEST_JOBS_DIMENSIONS = [
   { key: 'location', label: 'Địa điểm' },
   { key: 'salary', label: 'Mức lương' },
@@ -52,7 +63,7 @@ export function buildBestJobsChips(dimension, { featuredWards, parents, province
       }
     })
     return [
-      { value: null, label: 'Tất cả' },
+      { value: null, label: 'Ngẫu nhiên' },
       ...[...provinceChips, ...wardChips].slice(0, LOCATION_CHIP_LIMIT),
       { value: OTHER_WARDS_VALUE, label: 'Các phường/xã còn lại', action: 'openLocations' },
     ]
@@ -71,11 +82,11 @@ export function buildBestJobsChips(dimension, { featuredWards, parents, province
   ]
 }
 
-export function buildBestJobsParams(filters, page) {
+export function buildBestJobsParams(filters, page, rotationSeed = BEST_JOBS_ROTATION_SEED) {
   const params = new URLSearchParams({
     page: String(page),
     page_size: String(BEST_JOBS_PAGE_SIZE),
-    view: 'preview',
+    rotation_seed: rotationSeed,
   })
   if (filters.location) params.append('location', filters.location)
   if (filters.category) params.append('category', filters.category)

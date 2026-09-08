@@ -1,4 +1,5 @@
 import { findActiveAccountItem } from '@/entities/account'
+import { COMPANY_DIRECTORY_PATH, COMPANY_SEARCH_PATH } from '@/entities/company'
 import {
   adminPath,
   employerAppPath,
@@ -9,7 +10,10 @@ import { ADMIN_ROUTES } from './admin/admin-routes.config'
 
 const EXACT_MAIN_TITLES = new Map([
   ['/', 'Trang chủ'],
+  [COMPANY_DIRECTORY_PATH, 'Danh sách công ty'],
+  [COMPANY_SEARCH_PATH, 'Tìm kiếm công ty'],
   ['/viec-lam', 'Việc làm'],
+  ['/so-sanh-viec-lam', 'So sánh việc làm'],
   ['/viec-lam-da-luu', 'Việc làm đã lưu'],
   ['/jobs', 'Việc làm'],
   ['/chinh-sach-cookie', 'Chính sách cookie'],
@@ -20,6 +24,7 @@ const EXACT_MAIN_TITLES = new Map([
   ['/register', 'Đăng ký tài khoản'],
   ['/forgot-password', 'Quên mật khẩu'],
   ['/reset-password', 'Đặt lại mật khẩu'],
+  ['/tro-giup', 'Trung tâm trợ giúp'],
   ['/oauth/callback', 'Đang xác thực tài khoản'],
 ])
 
@@ -87,6 +92,11 @@ function mainTitle(pathname) {
   if (pathname === '/blog') return 'Cẩm nang nghề nghiệp'
   if (pathname.startsWith('/blog/danh-muc/')) return 'Danh mục cẩm nang nghề nghiệp'
   if (pathname.startsWith('/blog/')) return 'Bài viết nghề nghiệp'
+  if (pathname.startsWith('/tro-giup/')) {
+    return pathname.split('/').filter(Boolean).length >= 3
+      ? 'Nội dung trợ giúp'
+      : 'Chuyên mục trợ giúp'
+  }
   if (pathname.startsWith('/mau-cv') || pathname.startsWith('/cv-templates')) {
     if (pathname.includes('/chi-tiet/') || pathname.match(/^\/cv-templates\/[^/]+$/)) return 'Chi tiết mẫu CV'
     return 'Mẫu CV chuyên nghiệp'

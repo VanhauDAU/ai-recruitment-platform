@@ -86,7 +86,7 @@ export default function AdminAccountSettings() {
         </nav>
       </aside>
 
-      <main
+      <section
         id={`admin-account-panel-${activeKey}`}
         className="admin-account-settings__content"
         role="tabpanel"
@@ -94,7 +94,7 @@ export default function AdminAccountSettings() {
         tabIndex={0}
       >
         <activeTab.Panel />
-      </main>
+      </section>
     </section>
   )
 }

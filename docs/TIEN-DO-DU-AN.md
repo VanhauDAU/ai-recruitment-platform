@@ -1,5 +1,315 @@
 # Tiến độ dự án
 
+## Epic rà soát và hardening cổng Nhà tuyển dụng (ER, 2026-08-10)
+
+Đặc tả canonical:
+[`ke-hoach-ra-soat-va-khac-phuc-employer.md`](03-database/ke-hoach-ra-soat-va-khac-phuc-employer.md).
+Decision log:
+[`employer-remediation-decision-log.md`](02-tong-quan/employer-remediation-decision-log.md).
+
+> Cập nhật lần cuối: 2026-08-10 — ER-2 và ER-5 verified; corrective UX, luồng
+> resubmit/review lại và policy ba final rejection đã đạt gate; ER-3 đã hoàn tất employer
+> domain/frontend upload-session; candidate import/assets đã code-complete,
+> PostgreSQL Docker và real ClamAV local gate đạt; còn Chrome branch QA và
+> production-like staging/strict rollout;
+> ER-4 đã hoàn tất lifecycle V2, revision/event bất biến,
+> exact-object final review và conflict handling; ER-6B evidence/grace/hold đã
+> Verified; ER-6A live SMS đã code-complete và đạt targeted gate, activation
+> gateway production thuộc ER-8. ER-8 đã có readiness audit/runbook và local
+> rehearsal; activation thật vẫn fail-closed tới khi có legal artifact/gateway.
+
+| Phase | Nội dung | Trạng thái |
+| --- | --- | --- |
+| ER-0 | Audit baseline, permission/state matrix và khóa quyết định | ✅ Hoàn tất |
+| ER-1 | Empty/error state, document IDOR và job approval guard | ✅ Hoàn tất |
+| ER-2 | Readiness/permission contract và frontend guards | ✅ Hoàn tất |
+| ER-3 | Upload session, quarantine, malware scan và retention | 🟨 Đang làm — Docker/ClamAV local đạt; còn Chrome + staging/strict rollout |
+| ER-4 | Company update request V2, revision và conflict handling | ✅ Hoàn tất |
+| ER-5 | Verification final decision, blockers và compliance holds | ✅ Hoàn tất |
+| ER-6 | SMS provider adapter và DPA evidence/version/grace | ✅ Hoàn tất code — production SMS activation thuộc ER-8 |
+| ER-7 | Company unlink, notification center và activity | ✅ Hoàn tất code |
+| ER-8 | Rollout, reconciliation, compatibility cleanup và audit closure | 🟨 Code complete — chờ staging/production activation và soak |
+
+<details>
+<summary>Ghi chú ER-8</summary>
+
+- `audit_employer_workflow_rollout` là command chỉ đọc, JSON aggregate-only;
+  strict mode kiểm schema, upload flags/purpose/scanner, SMS, DPA, Celery và
+  retention, không tự apply/backfill.
+- PostgreSQL Docker targeted đạt 95 test, 2 opt-in scanner skip; ClamAV local
+  readiness thật trả `ready`. Migration Docker local đã apply `0043` additive.
+- Chrome đã xác minh các corrective UX, notification/activity và admin final
+  decision/resubmission. File chooser chưa chạy được vì Chrome extension chưa
+  bật quyền file URL; không bypass bằng browser khác.
+- DPA local vẫn fail-closed vì chưa có exact legal artifact version/SHA-256;
+  SMS production vẫn tắt tới khi chọn gateway/template/sender và secret riêng.
+
+</details>
+
+### Corrective UX 2026-08-10
+
+- GPKD/DPA dùng document scope cá nhân và summary chỉ phản ánh file current đang
+  hiển thị; Google employer login giữ contrast an toàn dưới stale dark theme.
+- Known-denied job/campaign/application route điều hướng về trang
+  `employer-verify`; lỗi readiness vẫn retry fail-closed.
+- Trang verify bỏ hai banner readiness/case status trùng checklist.
+- Company settings không tải/render history `scope=company`, chỉ hiển thị yêu
+  cầu của actor. Form không gửi/toast thành công khi diff rỗng, có nút quay lại,
+  và không kéo tên thương mại legacy chưa sửa vào update request.
+- Evidence: 25/25 targeted unit/component; 6/6 smoke trên desktop/tablet/mobile;
+  full coverage 253/253 file và 958/958 test; edge regression cuối chạy lại
+  17/17. Oxlint không lỗi, architecture, production build, bundle budget và
+  Markdown link gate đều đạt.
+- Corrective ER-D46: 19/19 unit/component, 6/6 smoke desktop/tablet/mobile và
+  full coverage 253/253 file, 961/961 test. Oxlint không lỗi; architecture
+  1142 module/2293 dependency, production build và bundle budget
+  JS 299,9/320 KiB, CSS 34,4/35 KiB đều đạt.
+
+<details>
+<summary>Ghi chú ER-0</summary>
+
+- Chủ dự án đã xác nhận ngày 2026-08-10: một active request/requester/company;
+  nhiều requester được gửi song song; conflict không partial apply; DPA cũ là
+  `legacy_unversioned` với block/grace đã mô tả trong đặc tả.
+- Xác nhận `dev` là integration branch, `dev → main` là release flow và CI cần
+  chạy cho Pull Request vào `dev`.
+- Account phone cũ giữ nguyên; account mới/change/reverify chuyển sang SMS.
+- Baseline audit ghi finding trước remediation; chưa có finding nào được đánh
+  dấu đóng và chưa tuyên bố test code đã đạt trong ER-0.
+- Gate ER-0: Markdown link check kiểm 189 internal destination trên 64 file và
+  `git diff --check` đều đạt.
+
+</details>
+
+<details>
+<summary>Ghi chú ER-7</summary>
+
+- Company recovery chỉ mở cho permission
+  `employer_verification.unlink_company`, không grant mặc định.
+- Impact preview/confirm ký số và fail stale; chỉ member chưa phát sinh dữ liệu
+  nghiệp vụ được unlink. Company/proof/history không bị xóa hoặc chuyển sang
+  company mới; action có link event append-only và admin audit.
+- Company recovery đạt 4/4 backend trên PostgreSQL Docker và frontend 8/8.
+  Notification/activity có event idempotent + metadata allowlist, list/unread/
+  read-one/read-all, deep-link, bell/popover, hai trang responsive, email outbox
+  sweep và retention 730 ngày. Regression tích hợp backend 40/40, frontend
+  targeted 16/16, smoke desktop/tablet/mobile 3/3 và full coverage 1009/1009;
+  migration drift sạch.
+
+</details>
+
+<details>
+<summary>Ghi chú ER-4</summary>
+
+- Safety slice `fix/employer-company-request-review-safety` đã chuẩn hóa lock
+  order `Company → CompanyUpdateRequest → CompanyDocument` cho các mutation
+  hiện hành và khóa Django admin thành read-only cho ba model này.
+- Admin queue truyền exact `request.public_id`; detail gọi
+  `GET /api/admin/company-update-requests/{public_id}/` và fail-closed nếu
+  requester/company/status không khớp, không còn duyệt mù `results[0]`.
+- User chỉ có `company_update.view` nhận metadata tài liệu đã che; binary vẫn
+  cần thêm `account.sensitive.view`. Deep-link dùng query
+  `company_update=cur_*`, không suy request từ company.
+- Evidence: backend 108/108, frontend 10/10; scoped Ruff/format,
+  import-linter, layering, Django check, migration drift, lint và architecture
+  đạt. Merge `ddb8a47f` giữ nguyên thay đổi local của người dùng.
+- Lifecycle V2 bổ sung revision snapshot bất biến, event append-only, base field
+  snapshot, exact current revision và state
+  `submitted/in_review/changes_requested/approved/rejected/withdrawn/cancelled`.
+- Admin phải nhận review trước khi duyệt tài liệu/quyết định cuối; recruiter
+  sửa/gửi lại/rút trước review, owner hủy trước review. Apply chỉ conflict các
+  field thay đổi đồng thời và không ghi partial.
+- Employer page chỉ tải `scope=mine`, không hiển thị lịch sử công ty; diff rỗng
+  không được gửi, tên thương mại legacy không bị thêm ngoài ý muốn và form luôn
+  có nút quay lại.
+- Migrations `employers.0037` (schema) và `0038` (backfill) chạy riêng; backfill
+  giữ requester, tạo revision 1/event migrated và không gọi storage/provider/
+  Celery. Gate chạy trên PostgreSQL Docker `127.0.0.1:5433`.
+- Evidence cuối: backend employer 237/237; Ruff/format, import-linter 863 file/
+  1622 dependency, layering, Django/migration drift đạt. Frontend 256/256 file,
+  985/985 test; lint/architecture 1148 module/2308 dependency/build/bundle
+  budget đạt; company/admin smoke 15/15 trên ba viewport. OpenAPI contract,
+  198 Markdown links và Chrome visual QA tab Xác thực admin đều đạt.
+
+</details>
+
+<details>
+<summary>Ghi chú ER-5</summary>
+
+- Backend đã tách document review khỏi final decision; prerequisite mutation
+  không tự approve case/company. Decision/revoke/expire bắt buộc preview rồi
+  confirm bằng signed impact token và recompute dưới lock.
+- Thêm `revoked`/`expired`, reapprove event, tax advisory override có quyền/lý
+  do riêng, verification compliance hold theo source và public-job fail closed.
+  Company không bị downgrade; workspace/tạo/sửa/gửi tin vẫn mở.
+- Migration `accounts.0023` chỉ seed permission, không grant mặc định;
+  `employers.0034` thêm state/hold schema. Legacy classifier dry-run mặc định,
+  không bịa actor/decision và không tự reset/hold cohort cũ.
+- Docker PostgreSQL `127.0.0.1:5433`: 235 test unaffected đạt, expectation auto
+  approve legacy được đảo và regression mới đạt 1/1. Query budget 4/5/7,
+  Ruff/format, import-linter, layering, Django/migration/OpenAPI, permission
+  registry, frontend lint/architecture và Markdown gate đều đạt.
+- Frontend admin đã consume impact trước confirm cho final decision và
+  revoke/expire, hiện company/resource/capability impact, bắt reason cho tax
+  override/lifecycle và reload fail-closed khi impact stale.
+- Job moderation giữ approve disabled theo blocker canonical; deep-link exact
+  recruiter verification chỉ hiện khi actor có quyền màn đích, không parse
+  message backend.
+- Evidence frontend sau sync dev: 17/17 targeted; full coverage 255/255 file,
+  971/971 test; smoke 6/6 desktop/tablet/mobile; Oxlint, architecture 1.146
+  module/2.301 dependency, build và bundle budget JS 299,9/320 KiB, CSS
+  34,4/35 KiB đều đạt. ER-5 được đánh dấu `Verified`.
+- Corrective resubmit giữ cùng case: recruiter thay đủ bộ current document cần
+  sửa thì case về `pending`, `revision++`; admin có **Nhận xử lý lại**, document
+  review và final decision mới. Chỉ final `rejected` tăng count; lần thứ ba
+  khóa nộp lại, không tự ban tài khoản. Unlock là permission riêng, cần reason
+  + lock version và không xóa lịch sử.
+- Evidence corrective: PostgreSQL Docker `127.0.0.1:5433` đạt 138/138 backend
+  state/API regression; migration drift sạch và plan đúng
+  `accounts.0024`/`employers.0036`. Frontend full coverage 256/256 file,
+  983/983 test; smoke tab Xác thực 3/3 desktop/tablet/mobile; lint,
+  architecture 1.148 module/2.306 dependency và production build đạt. OpenAPI
+  parse 1.544 local schema reference/0 unresolved; Markdown 196 internal link.
+- UX follow-up trên `feature/admin-employer-verification-workflow-ui`: tab Xác
+  thực dùng bảng bốn cột trạng thái giấy tờ, copy thuế thuần nghiệp vụ, phần
+  điều kiện/lịch sử thu gọn và cụm quyết định cuối dạng grid không wrap. Badge
+  sidebar được nối đúng cache summary và tự refresh. Backend chuẩn hóa thứ tự
+  decision fingerprint, sửa `409 stale` giả khi có nhiều tax evidence nhưng
+  giữ nguyên fail-closed cho thay đổi thật. Regression backend chạy PostgreSQL
+  Docker `127.0.0.1:5433` đạt 64/64; frontend full coverage 265/265 file,
+  1.017/1.017 test và smoke UI đạt 3/3 desktop/tablet/mobile. Lint,
+  architecture, build, bundle budget, migration drift và 203 Markdown link đạt.
+
+</details>
+
+<details>
+<summary>Ghi chú ER-3</summary>
+
+- Slice `fix/media-storage-boundaries` tách public/private/quarantine cho local
+  và R2, khóa direct URL/private media serving, thêm công cụ copy legacy
+  idempotent batch/cursor và vô hiệu raw Office preview trước scan.
+- Shared core merge `99b34781` thêm upload-session state machine, owner-scoped
+  API, purpose/role capability, owner-row transactional quota, ClamAV INSTREAM
+  adapter và queue `upload-scan`, clean-only expected-purpose claim, explicit
+  release, retention/legal hold, privacy scrub và bounded DOCX ZIP validation.
+- Evidence chạy trên PostgreSQL Docker 16.14 của repo tại
+  `127.0.0.1:5433 → container:5432`: 83/83 targeted test đạt, gồm ba concurrency
+  regression và regression Compose worker giữ cả `auth-sms` lẫn `upload-scan`.
+  Ruff/format, import-linter 2/2, Django check, migration drift, static OpenAPI
+  1.492 reference/0 unresolved và production Compose render đều đạt trong phạm
+  vi slice. Generated OpenAPI vẫn có baseline 416 warning/122 error ngoài ER-3.
+- Commit `ec1ac428` đã nối core vào verification, company update, DPA và
+  logo/cover/gallery. Frontend pre-scan cả tập file trước business submit, poll
+  state/retry bounded, attach tuần tự và không còn báo thành công khi upload một
+  phần lỗi. Backend recheck owner/purpose/clean/claim, liên kết business object
+  với `UploadAsset`, parse strict PDF và verify ảnh sau scan; file clean nhưng
+  hỏng cấu trúc bị reject trong transaction.
+- Gate slice employer trên PostgreSQL Docker 16 tại `127.0.0.1:5433`: backend
+  283/283; frontend targeted 48/48, full coverage 256 file/974 test, upload smoke
+  3/3 desktop/tablet/mobile. Ruff/format, import-linter 2/2, Django check,
+  migration drift, Oxlint, architecture, build và bundle budget đều xanh.
+- Slice `feature/candidate-upload-quarantine` đã nối import PDF/DOCX có/không
+  template và avatar vào purpose `candidate_cv`. Parser/Pillow chỉ chạy sau
+  clean claim; delete/expiry release claim nhưng giữ evidence 730 ngày; frontend
+  library/template/application/avatar chờ scan và chỉ fallback raw khi pipeline
+  tắt bằng exact machine code.
+- Candidate frontend/static gate: targeted 23/23, full coverage 256 file/988
+  test, lint, architecture 1.148 module/2.312 dependency, build, bundle budget,
+  Ruff/format, compile, Django check, migration drift và import-linter đều đạt.
+- PostgreSQL Docker 16 tại `127.0.0.1:5433` đạt 68 shared/candidate upload
+  regression (2 real-scanner test skip mặc định); migration drift sạch. Real
+  ClamAV profile đạt readiness, clean,
+  EICAR, outage và 2/2 integration pipeline. Phase còn mở Chrome branch QA vì
+  Vite local chưa có reCAPTCHA site key; không bypass captcha.
+
+</details>
+
+<details>
+<summary>Ghi chú ER-6</summary>
+
+- ER-6A foundation đã merge provider-neutral adapter, challenge purpose/state,
+  queue `auth-sms`, bounded retry/recovery, retention, redacted event/metric và
+  production readiness validation. Runbook:
+  [`employer-sms-provider-adapter.md`](06-deployment/employer-sms-provider-adapter.md).
+- Production vẫn giữ `EMPLOYER_SMS_OTP_ENABLED=False` và fail closed cho tới khi
+  chọn provider/sender/template. Live endpoint, frontend và OpenAPI đã chuyển
+  sang exact SMS challenge; không còn email fallback hoặc availability oracle.
+- Migration giữ nguyên phone proof hiện hữu: không marker, deadline, hold hay
+  backfill proof cho account cũ. ER-6B vẫn phải nhận diện DPA cũ mà không bịa
+  version/hash/IP/session.
+- Evidence code: `d58ad837`, `78f12be2`, `72468831`, `201e2829`; merge
+  `03ac8640`. Trên nhánh triển khai, 181 employer tests đạt, gồm 22 SMS tests và
+  3 migration tests; sau merge, ma trận SMS + migration đạt 25/25. Full Ruff,
+  format, import-linter, layering, Django check, migration drift, docs và
+  rendered Compose đều đạt.
+- ER-6B đã hoàn tất evidence append-only, grace đúng 30 ngày, expired DPA hold,
+  campaign/job linkage và exact-source release khi re-consent. Command rollout
+  dry-run mặc định, có batch/cursor và không tự apply dữ liệu thật.
+- Evidence ER-6B cuối: PostgreSQL Docker `127.0.0.1:5433` đạt 248/248 employer;
+  frontend 257/257 file và 994/994 test; Ruff/format, import-linter, layering,
+  Django check, migration drift, architecture, build và bundle budget đạt.
+- Live workflow account mới/change/reverify đã hoàn tất: challenge actor-bound,
+  poll redacted, cooldown, TTL, năm lần sai, replay protection và employer
+  profile PATCH bypass đều có regression. PostgreSQL Docker đạt 85/85 targeted
+  backend; frontend 21/21 targeted; static gate đạt.
+- Residual vận hành chỉ còn chọn provider/sender/template, sandbox smoke và bật
+  flag production có giám sát; được theo dõi tại ER-8.
+
+</details>
+
+<details>
+<summary>Ghi chú ER-1</summary>
+
+- **ER-1A verified:** thẻ cá nhân chỉ đọc `scope=mine`; corrective ER-D46 bỏ
+  consumer `scope=company` khỏi employer page. Không còn ngày/status giả hoặc
+  request member khác trong thẻ “Yêu cầu của tôi”. Lỗi initial/background query
+  actor scope hiện retry và khóa create/edit/upload/delete/submit.
+- **ER-1C verified:** backend chặn duyệt tin nếu verification case chưa
+  `approved` đúng company hoặc DPA chưa hợp lệ; canonical và compatibility API
+  cùng dùng một guard và recompute dưới transaction lock.
+- **ER-1B verified:** metadata và private binary giấy tờ dùng hai permission
+  scope riêng; member khác nhận metadata redacted và content `404`, còn
+  uploader/requester và company owner được mở file. Request công ty giới hạn
+  một pending/requester/company, giữ `requested_by` bất biến, có `submitted_at`
+  và hỗ trợ `scope=mine|company`.
+- Evidence ER-1B: commit `609b3e47`; 108 employer test trước đồng bộ và 127
+  employer + job-moderation test sau merge `dev`; list budget 4 query;
+  Ruff/format/import-linter/Django check/migration drift đạt.
+- Evidence ER-1C: 20 moderation/query-budget tests + 1 regression DPA/duplicate
+  blocker + 4 frontend tests; Ruff/format/import-linter/migration drift đạt.
+- Evidence ER-1A: commit `828a8d0e`; 24/24 unit/API/query-key regression, 9/9
+  E2E của ba workflow company settings trên desktop/tablet/mobile; Oxlint không
+  lỗi, architecture, production build, Markdown links và whitespace gate đạt.
+- ER-1 hoàn tất ở mức `Verified`; release/deploy smoke và audit production vẫn
+  thuộc rollout ER-8.
+
+</details>
+
+<details>
+<summary>Ghi chú ER-2</summary>
+
+- `/api/employer/me/` trả năm field canonical; `/api/auth/me/` trả
+  `employer_job_workspace_ready`. Canonical present thắng legacy; partial,
+  malformed và contract tự mâu thuẫn đều fail closed.
+- Backend dùng cùng capability policy cho job/campaign mutations và mọi đường
+  candidate list/export/status/history/snapshot/asset; recruiter CV asset token
+  được audience-bound và luôn live reauthorize.
+- Frontend tách `JobWorkspaceGuard` và `CandidateDataGuard`, giữ direct URL khi
+  denied, render blocker/retry qua action allowlist, tắt query nhạy cảm và không
+  render PII đã cache khi checking/error/denied. Aggregate không chứa danh tính
+  vẫn hiển thị.
+- Evidence backend: commits `b5a50c45`, `49f11065`, `f1408e43`, `916d2bfb`,
+  merge-sync `8e01389e`; 206 integration test và direct/read/query matrix 31/31;
+  Ruff/import-linter/layering/migration/query-budget/race gates đạt.
+- Evidence frontend: commits `cc4e3085`, `59307148`, `7c97cc7c`, `44da5635`,
+  `ab1c003e`, `d84760ba`; coverage gate đạt 253 test file/953 test; readiness
+  model có ma trận sáu trạng thái; 9/9 E2E readiness desktop/tablet/mobile;
+  Oxlint, architecture 1.142 module/2.293 dependency và build đạt.
+- Residual: ER-5 sở hữu post-approval revoke/hold reconciliation; ER-6 sở hữu
+  DPA version/hash/IP/session và trạng thái legacy/outdated/grace/hold thật.
+
+</details>
+
 ## Cập nhật 2026-08-05 — Onboarding gộp thành một cuộc trò chuyện (1.24i)
 
 Phản hồi: onboarding cũ bắt thao tác quá nhiều (trang chào → 5 bước bấm "Tiếp
@@ -14,9 +324,8 @@ một trang duy nhất dưới dạng chat** giữa robot và ứng viên. Backe
   ngược hội thoại; huỷ thì trả lại giá trị trước đó.
 - **Transcript suy ra từ state** (`chat-transcript.js`) chứ không lưu riêng, nên
   sửa một đáp án là bong bóng tương ứng đổi theo và **không tin nhắn nào biến
-  mất giữa chừng**. `id` tin nhắn cố định vì đó cũng là khoá `speakOnce` — cuộn
-  lại lịch sử không đốt hạn mức TTS.
-- **Lỗi cũng là một lượt nói.** Trả lời thiếu thì robot nhắc bằng tin nhắn và
+  mất giữa chừng**. `id` tin nhắn cố định để giữ đúng identity khi dựng lại.
+- **Lỗi cũng là một tin nhắn.** Trả lời thiếu thì robot nhắc bằng tin nhắn và
   câu nhắc **ở lại trong lịch sử** (đúng như chat thật); backend từ chối field
   nào thì robot xin lỗi trong hội thoại rồi mở lại đúng ô đó với nút "Gửi lại".
 - **Lưu và chốt cũng nằm trong luồng chat:** bong bóng "đang lọc việc làm" kèm
@@ -24,9 +333,9 @@ một trang duy nhất dưới dạng chat** giữa robot và ứng viên. Backe
   chuyển màn. `/onboard-user-setting` redirect về `/onboard-user` để link cũ
   không chết; xoá `OnboardUserSetting`, `PersonalizingScreen`, `ReadyScreen`,
   `OnboardingInterview`, `InterviewMascot`, `use-interview-flow`.
-- **Chỉ tin nhắn mới nhất mới đọc và chạy chữ**, tin cũ hiện nguyên văn ngay.
-  Giữ nhịp "robot đang gõ" 420ms trước mỗi lượt nói; ô soạn hiện ngay khi bong
-  bóng xuất hiện chứ không chờ đọc xong, để không bao giờ có ngõ cụt.
+- **Chỉ tin nhắn mới nhất chạy chữ**, tin cũ hiện nguyên văn ngay. Giữ nhịp
+  "robot đang gõ" 420ms trước mỗi tin nhắn; ô soạn hiện ngay khi bong bóng xuất
+  hiện để không bao giờ có ngõ cụt.
 - **Sửa lỗi tự gây:** `aliveRef` chỉ gán ở cleanup nên StrictMode (mount →
   cleanup → mount) tắt cờ vĩnh viễn, câu chốt không bao giờ hiện ở dev. E2E chạy
   trên dev server bắt được, unit test (không bọc StrictMode) thì không.
@@ -42,29 +351,20 @@ vẫn đỏ ở Initial CSS như trước thay đổi (35.2 → 35.0 KiB, ngư�
 ## Cập nhật 2026-08-05 — Robot phỏng vấn onboarding ứng viên (1.24f)
 
 Onboarding ứng viên đổi từ một form 8 trường sang **cuộc phỏng vấn 5 câu do
-mascot ProCV dẫn bằng giọng nói**. Tận dụng đúng hai thứ đã có sẵn trong repo mà
-onboarding chưa dùng: rig mascot (`shared/ui/mascot`) và TTS tiếng Việt
-(`features/speak-text`). **Backend không đổi một dòng** — payload
+mascot ProCV dẫn dắt**. Tận dụng rig mascot (`shared/ui/mascot`) đã có sẵn trong
+repo. **Backend không đổi một dòng** — payload
 `PUT /api/candidate/job-preferences/`, cờ `job_preferences_configured` và route
 giữ nguyên.
 
-- **`widgets/onboarding-interview` (mới).** Phải là widget vì ghép hai feature
-  (`speak-text` + `configure-job-preferences`) mà depcruise cấm feature import
-  feature. Gồm kịch bản tĩnh, state machine 5 bước, bản đồ trạng thái mascot và
-  provider giọng đọc.
-- **Provider giọng đọc mount ở `OnboardingLayout`, không ở page.** AudioContext
-  chỉ mở được trong cử chỉ người dùng (nút "Bắt đầu" ở `/onboard-user`), mà page
-  unmount là `useSpeak` destroy player — đặt trong page thì sang bước phỏng vấn
-  robot sẽ câm. Robot đọc ngay, không có nút "bật tiếng"; trường hợp vào thẳng
-  URL thì listener một lần resume audio ở thao tác đầu tiên bất kỳ.
+- **`widgets/onboarding-interview` (mới).** Widget compose
+  `configure-job-preferences`, gồm kịch bản tĩnh, state machine 5 bước và bản đồ
+  trạng thái mascot.
 - **Pose `checklist` (mới)** nối bộ tay `arms/hold` + `props/robot-prop-checklist`
   đang bỏ trống. `ProcvMascot` nay đỡ được **hai** bàn tay trước (`front` dạng
-  mảng); pose `microphone` một tay chạy y cũ.
+  mảng).
 - **Sửa lỗi rig có sẵn:** khi `talking`, lớp miệng theo emotion không bị ẩn nên
   hai khẩu hình chồng nhau (rõ nhất ở `success`). Nay dùng cặp animation nghịch
-  đảo như mắt chớp, kèm nhịp nói chia không đều cho tự nhiên hơn.
-- **Không cắt lời robot:** `PersonalizingScreen` và `ReadyScreen` chỉ chuyển
-  tiếp sau khi mascot báo đã nói dứt câu (có chốt chặn 9s/14s phòng audio treo).
+  đảo như mắt chớp, kèm nhịp chuyển miệng chia không đều cho tự nhiên hơn.
 - **Tách model dùng chung khỏi `JobPreferencesForm`** (`job-preferences-fields`,
   `use-job-preference-catalog`, `save-job-preferences`) để phỏng vấn và form
   settings dùng chung một bộ validate/submit/map lỗi field; xoá nhánh
@@ -202,6 +502,23 @@ Thứ tự giai đoạn theo tài liệu database v1.4 (mục 7), đã đối ch
 | 8 — Deployment | 0/2 | ⬜ |
 | **Tổng** | **64/88 + 1 phần** | |
 
+## Epic FAQ và hướng dẫn sử dụng (KB, 2026-08-05)
+
+Đặc tả canonical:
+[FAQ và hướng dẫn sử dụng](./03-database/ke-hoach-faq-huong-dan.md). Triển khai
+trên nhánh `codex/feat-faq-help-center`, giữ revision đã publish độc lập với bản
+sửa và rollout public qua capability switch.
+
+| Phase | Nội dung | Trạng thái |
+| --- | --- | --- |
+| KB-P0 | Chốt route, taxonomy, lifecycle, media, RBAC, SEO và rollout | ✅ |
+| KB-P1 | Backend foundation: common sanitizer, model/migration, 7 category và permission | ✅ |
+| KB-P2 | Workflow, media, admin API, audit và OpenAPI | ✅ |
+| KB-P3 | Workspace quản trị, editor, preview, diff và media library | ✅ |
+| KB-P4 | Help center public, search, detail và SEO noindex | ✅ |
+| KB-P5 | Nội dung đã xác minh và nối các entry point | ✅ |
+| KB-P6 | Hardening, observability, sitemap, runbook và rollback rehearsal | ✅ |
+
 ## Epic thông báo chạy đa cổng (AN, 2026-07-29)
 
 Thiết kế canonical:
@@ -218,6 +535,22 @@ chỉ bắt đầu sau khi phase trước merge và quality gate đạt.
 | AN-P4 | Dismiss/snooze, consent-aware analytics, Redis dedupe và metrics | ✅ |
 | AN-P5 | Hardening, kill switch, staging rollout, changelog và runbook | 🟡 Rehearsal cô lập đạt; chờ merge fix + staging thật/soak |
 | AN-P6 | Xóa compatibility legacy sau tối thiểu một release ổn định | ⬜ |
+
+## Epic nâng cấp visual thông báo đa cổng (AN-V, 2026-08-06)
+
+Thiết kế:
+[ke-hoach-nang-cap-thong-bao-visual-theme.md](./03-database/ke-hoach-nang-cap-thong-bao-visual-theme.md).
+Nhánh: `feat/announcement-visual-theme`. Bổ sung **theme màu (kind/preset/custom)**
+và **ảnh nền strip** (vd. 980×31) kèm overlay; **responsive** và **preview admin**
+là bắt buộc ở phase frontend. Không đổi namespace API, priority tier hay lifecycle.
+
+| Phase | Nội dung | Trạng thái |
+| --- | --- | --- |
+| AN-V0 | Đặc tả visual, chốt hybrid màu + ảnh/overlay + responsive/preview | ✅ |
+| AN-V1 | Backend: migration revision theme/background, validate, DTO public/admin, tests | ✅ |
+| AN-V2 | Upload background + form admin + **live preview** desktop/tablet/mobile | ✅ |
+| AN-V3 | Runtime strip apply theme/bg, FE contract, responsive touch targets | ✅ |
+| AN-V4 | Runbook, seed ví dụ, đồng bộ doc runtime | ⬜ |
 
 ## Epic hoàn thiện CV Builder (2026-07-15)
 
@@ -362,8 +695,8 @@ Theo *Kế hoạch tái cấu trúc ProCV sau merge main (2026-07-12)* — 11 gi
 | 1.22 | Khung layout 3 cột trang tài khoản ứng viên `/tai-khoan/*` (sidebar accordion + cột phải hồ sơ + 11 route placeholder) | ✅ |
 | 1.23 | Trang "Cài đặt thông tin cá nhân": PATCH `/auth/me/` sửa họ tên + SĐT (nhiều lần), email read-only | ✅ |
 | 1.24 | Onboarding và cài đặt gợi ý việc làm: form preference dùng chung, giới tính tại settings, modal chọn vị trí responsive, feedback validation/toast và sidebar hồ sơ sticky | ✅ |
-| 1.24b | Kết thúc onboarding kiểu TopCV: màn "đang cá nhân hoá" (progress) → màn "đã sẵn sàng" (đếm ngược + nút đi ngay; từ 1.24f đồng hồ chỉ chạy sau khi robot nói dứt câu) → redirect `/viec-lam` với bộ lọc dựng từ preference (`cat` + `search` + `locations` + path `/tai/<slug>`) | ✅ |
-| 1.24f | Robot phỏng vấn onboarding: tách form 8 trường thành 5 câu hỏi do mascot dẫn bằng giọng nói tiếng Việt (VieNeu-TTS), phụ đề chạy theo audio, mascot đổi emotion/pose theo ngữ cảnh (`microphone` khi nói, `checklist` mới khi chờ trả lời, `error`/`success`/`thinking`), câu chốt cá nhân hoá từ nhu cầu vừa lưu; payload `PUT` và cờ `job_preferences_configured` giữ nguyên | ✅ |
+| 1.24b | Kết thúc onboarding kiểu TopCV: màn "đang cá nhân hoá" (progress) → màn "đã sẵn sàng" (đếm ngược + nút đi ngay; từ 1.24f đồng hồ chỉ chạy sau khi tin nhắn chốt hiện đầy đủ) → redirect `/viec-lam` với bộ lọc dựng từ preference (`cat` + `search` + `locations` + path `/tai/<slug>`) | ✅ |
+| 1.24f | Robot phỏng vấn onboarding: tách form 8 trường thành 5 câu hỏi do mascot dẫn dắt, tin nhắn chạy theo typewriter, mascot đổi emotion/pose theo ngữ cảnh (`checklist`, `error`, `success`, `thinking`), câu chốt cá nhân hoá từ nhu cầu vừa lưu; payload `PUT` và cờ `job_preferences_configured` giữ nguyên | ✅ |
 | 1.24c | Empty state trang việc làm kiểu TopCV: dưới "Rất tiếc..." hiện banner admin cấu hình (placement `job_empty`) + khối "Việc làm có thể bạn sẽ quan tâm" gợi ý theo preference đã lưu, nới lỏng 3 tầng | ✅ |
 | 1.24d | Bổ sung trang việc làm theo khảo sát TopCV: banner chèn giữa danh sách (placement `job_list_inline`), card "Ứng viên cũng tìm kiếm", chip "Danh mục Nghề liên quan", box CTA nhận thông báo, khảo sát hài lòng 1 chạm (Feedback.satisfaction), SEO text theo nhánh nghề, sort "Cần tuyển gấp" | ✅ |
 | 1.24e | Tối ưu menu tài khoản desktop: click, single accordion, tự mở route active, cuộn trong viewport và giữ logout hiển thị | ✅ |
@@ -991,7 +1324,29 @@ Cập nhật 2026-07-19b (CHỐT: Tài khoản tách theo cổng giống TopCV �
 
 Cập nhật 2026-07-19 (Đa vai — một tài khoản dùng cả cổng ứng viên lẫn NTD) — **ĐÃ THAY bằng bản 2026-07-19b ở trên**: bỏ mô hình `User.role` đơn trị làm cổng authorization. Năng lực suy từ hồ sơ (không thêm cột, không migration): `has_employer_capability`=`is_employer or có recruiter_profile`, `has_candidate_capability`=`is_candidate or có candidate_profile`, `available_roles` suy từ đó. Vai đang hoạt động = role trong JWT của từng cổng (token lưu tách cổng); `get_token/issue_tokens` nhận `active_role`, one-time-code OAuth và challenge 2FA mang `portal`; `/auth/me/` trả active role theo `request.auth['role']` nên guard/redirect FE chạy đúng mà không decode JWT. OAuth `resolve_user` bỏ chặn `wrong_portal` → `_ensure_portal_capability` tự cấp `recruiter_profile` (cổng NTD) / `candidate_profile` (cổng ứng viên) rồi vào onboarding sẵn có. Permissions capability-based (`IsEmployer`/`IsCandidate`); password-login KHÔNG tự cấp năng lực (chỉ Google/đăng ký), đối xứng hai chiều; admin vẫn cấp tay, không tự phục vụ. FE: nút "Chuyển sang Nhà tuyển dụng" trong menu tài khoản ứng viên khi đã có năng lực NTD. Verify: `apps.accounts` 53/53 test xanh, toàn bộ test permission ở candidates/cvs/jobs/applications/employers xanh, lint + architecture pass. Còn lại là lỗi độc lập ngoài phạm vi: 5 lỗi `apps.applications.tests_migrations` (InvalidCursorName trong `cv_snapshot_preflight`) và 2 lỗi `contact_phone` của feature "cho trùng SĐT" đang làm dở song song (migration 0011 chưa commit, model còn `unique=True`).
 
-Cập nhật lần cuối: 2026-07-29m (AN-P2/AN-P3 equal-tier UX follow-up — Docker
+Cập nhật lần cuối: 2026-08-06c (AN-V3 — runtime strip áp theme/ảnh nền:
+`normalizeAnnouncement` nhận `theme`/`background`; `buildAnnouncementStripVisual`
+set CSS vars + layers ảnh/overlay; class `announcement-strip--has-bg` tắt sheen;
+mobile nút điều khiển 44×44. System banner vẫn theo kind. Unit contract/strip
+visual pass. AN-V4 runbook còn lại.)
+
+Cập nhật 2026-08-06b (AN-V2 — upload ảnh nền + form/preview admin:
+`POST /api/site/admin/announcements/backgrounds/` (JPEG/PNG/WebP, 640–2400×24–120,
+≤1MB); editor bước “Loại & CTA” có theme kind/preset/custom, ColorPicker, upload
+nền, fit/overlay; preview Desktop/Tablet/Mobile áp token màu shared
+`resolveAnnouncementThemeTokens`, line-clamp 2 trên mobile, height theo content.
+AN-V3 còn: wire runtime strip. Nhánh `feat/announcement-visual-theme`.)
+
+Cập nhật 2026-08-06 (AN-V0/AN-V1 — nâng cấp visual thông báo đa cổng:
+chốt hybrid theme kind/preset/custom hex + một ảnh nền strip (ví dụ 980×31)
+kèm overlay contrast; height strip luôn theo content (cấm khóa 31px). AN-V1
+backend: migration `sitecontent.0017`, validate storage key/hex, public DTO
+`theme`/`background`, admin revision fields, tests visual + regression
+announcement xanh. Bắt buộc AN-V2 live preview admin (desktop/tablet/mobile)
+và AN-V3 runtime responsive. Nhánh `feat/announcement-visual-theme`. Doc:
+`03-database/ke-hoach-nang-cap-thong-bao-visual-theme.md`. AN-P5/AN-P6 không đổi.)
+
+Cập nhật 2026-07-29m (AN-P2/AN-P3 equal-tier UX follow-up — Docker
 selector xác nhận hai thông báo info cùng hạng 6/priority 300 đều được trả cho
 candidate authenticated tại `/viec-lam`; runtime chủ đích chỉ hiển thị một item
 mỗi lần và luân phiên theo 5/6 giây. Sửa dismissal chuẩn hóa queue index và
@@ -1235,6 +1590,156 @@ Cập nhật 2026-07-31b (Thông báo đa cổng — hiện lại cho người �
 
 Cập nhật 2026-08-03a (UI — linh vật ProCV thay spinner chờ): thay spinner CSS hình tròn ở `PageLoading` và dot mặc định của antd `Spin` bằng ảnh động linh vật ProCV. Asset gốc là GIF 500×500, 172 frame, **6,66 MB** — quá nặng cho một chỉ báo chờ hiển thị ở mọi lần chuyển route lazy, nên tối ưu qua ffmpeg + `gif2webp`: cắt 1 giây đầu (đoạn zoom cận cảnh, lặp lại mỗi 5,7s trông rất lạ và là phần nén tốn bit nhất), hạ còn 192px/17fps/180 màu, xuất animated WebP `public/images/loading/procv-loader.webp` **260 KB** (giảm 96%, 80 frame, loop vô hạn, nền trong suốt giữ nguyên) kèm poster tĩnh `procv-loader-static.webp` 7,6 KB cho `prefers-reduced-motion`. Thêm `shared/ui/BrandLoader.jsx`: `size` dạng số thì set inline, bỏ trống thì để CSS quyết định — cần thiết vì `ConfigProvider spin={{indicator}}` chỉ nhận một node duy nhất, không biết `size` của từng `<Spin>`. Component phải nuốt prop `percent` do antd tiêm vào lúc `cloneElement`, nếu không sẽ rơi xuống thẻ `img` thành attribute lạ. `PageLoading` chuyển sang `BrandLoader size={128}`, phủ luôn `Suspense fallback` của `AppRouter`, `AuthGuard`/`GuestGuard`/`PermissionGuard`, `OAuthCallback`, `JobPreferenceSettings`, `OnboardUserSetting`. Kích thước indicator bám theo `size` của antd qua `.procv-spin-dot` (28/40/60px cho small/default/large) trong `index.css`; phải dùng `!important` vì antd chèn `.ant-spin .ant-spin-dot { width: 1em }` bằng CSS-in-JS lúc runtime, không đảm bảo thứ tự so với stylesheet. Đo trên browser thật phát hiện thêm một lỗi: Preflight đặt `img { max-width: 100% }` mà `.ant-spin` lại rộng 0 nên ảnh co về **0×40px** — thêm `max-width: none !important` mới ra đúng 28/40/60 vuông. Giữ nguyên 70 file dùng `Skeleton` (giữ được layout, đổi sang ảnh động sẽ gây nhảy layout). Verify: oxlint sạch, dependency-cruiser 1000 module không vi phạm, 784 test/211 file vitest (thêm 4 test `BrandLoader`), build production, 168/168 Playwright smoke; đo trực tiếp trong DOM xác nhận ba cỡ indicator đúng số. Lưu ý còn lại: WebP thừa hưởng alpha 1-bit của GIF gốc nên viền có thể hơi gắt trên nền tối, và asset 260 KB chưa được preload nên lần tải nguội đầu tiên chỉ hiện dòng chữ trước khi ảnh về.
 
-Cập nhật 2026-08-04a (TTS — mở giọng đọc cho mọi bề mặt, không riêng blog): hạ tầng đọc đã có sẵn và tốt (tts-service nhận text thô, single-flight theo `artifact_key`, cache, `PcmStreamPlayer` Web Audio), nhưng contract public bị khoá cứng vào bài viết: `SpeechSessionRequestSerializer` chỉ nhận `source_type='blog_post'`, view bắt buộc `published_blog_post_for_speech()`, normalizer nhận **model `Post`** và parse HTML, còn engine phát audio thì nằm trong `features/listen-to-blog-post/model/` nên slice khác không được import (feature không import feature). Mở thêm `source_type='text'` trên chính endpoint cũ: normalizer generic `plain_text_speech_script` (`plain-speech-v1`, mỗi dòng là một block để giữ nhịp ngắt, vẫn chạy HTML parser để không đọc to thẻ và không announce "đoạn mã được lược bỏ" như luồng bài viết), service `create_text_speech_session` **không** đăng ký `BlogSpeechAsset` và không bắn Celery finalizer — câu nói quá ngắn và quá nhiều để trả giá 1 row DB + 1 MP3 mỗi lượt, nên chỉ chạy live stream. `source_revision` ghim hằng `text:v1` để cùng một câu từ bất kỳ bề mặt nào rơi vào **một** artifact identity (đo thực tế: lần đọc thứ hai trả `cached: true`, trùng `artifact_key`). Rào chắn cho input đến từ client: `SPEECH_MAX_ADHOC_TEXT_CHARS=600` và scope throttle riêng `speech_adhoc` 90/hour (`get_throttles()` chọn scope theo `source_type`) để robot nói nhiều không ăn hết hạn ngạch 60/hour của người đang nghe blog — engine chỉ có `TTS_MAX_CONCURRENT_STREAMS=1` worker. Frontend: nâng `PcmStreamPlayer`/`NativeAudioPlayer`/`pcm-stream-format` + chính sách chờ 429/503 lên `shared/lib/speech/`, gom vòng retry mở luồng thành `playSpeechStream` dùng chung (blog và ad-hoc không còn copy nhau), thêm `createTextSpeechSession` vào `entities/speech` và feature mới `features/speak-text` với `useSpeak()` — `speak(text)` là đủ. Ràng buộc không bỏ được: AudioContext chỉ mở trong cử chỉ người dùng nên lần phát đầu phải nằm trong handler click/tap; bề mặt tự nói (trợ lý) gọi `unlock()` ở lần bấm đầu tiên rồi `speak()` tự do. Verify: ruff/ruff format/lint-imports/makemigrations sạch, 30/30 test app speech (thêm test cho throttle scope tách biệt, chặn text rỗng/quá dài, markup không được đọc to, không sinh artifact), 720 pass backend + coverage 86,31%; oxlint/dependency-cruiser (1026 module, 0 vi phạm)/build, 803 vitest (217 file, thêm 9 test `useSpeak`), 173/174 Playwright smoke. Đo trên stack docker thật: POST text → 201 + 230 KB WAV 48 kHz mono trong 0,83 s, lặp lại → `cached: true`, text rỗng và 700 ký tự đều 400. Nợ đã biết: 8 test `apps/jobs/test_posting_workflows.py` đang đỏ sẵn từ trước (deadline windows, không liên quan) và `blog-admin-permissions.spec.js` flaky (chạy lại xanh).
+Cập nhật 2026-08-05a (FAQ/Help Center KB-P1): hoàn tất app skeleton,
+common HTML sanitizer, model/migration, seed bảy category và bốn permission với
+role mapping `content-cv`. Targeted test, Ruff, migration drift,
+import-linter/layering đều xanh; KB-P2 là bước tiếp theo.
 
-Cập nhật 2026-08-04b (Trợ lý ứng viên — robot đọc câu trả lời): nối `useSpeak()` vào `widgets/candidate-assistant` qua hook `useAssistantVoice(messages)`. Chỉ đọc câu trả lời cho tin nhắn người dùng vừa gửi: mốc `spokenIdRef` khởi tạo bằng ID tin nhắn cuối lúc mount nên **lời chào không bao giờ được đọc** — panel là lazy chunk, lúc nó mount thì cử chỉ mở đã kết thúc và trình duyệt chặn autoplay, mà tự phát tiếng khi người dùng chưa hỏi gì cũng là hành vi gây khó chịu. `voice.prepare()` gọi `unlock()` ngay trong handler submit — cử chỉ hợp lệ duy nhất trước khi câu trả lời về sau ~1,1s. Giọng cố định `north-female-news` (Mai Anh). Nút loa trong header panel bật/tắt, lưu `procv_assistant_voice_v1` ở localStorage, tắt thì `stop()` ngay và không đọc các câu sau; bật lại cũng là cử chỉ hợp lệ để mở Web Audio. Bật tiếng giữa chừng không đọc lại câu cũ. Mascot dùng `talking={typing || voice.speaking}` và dòng trạng thái thêm "Đang đọc câu trả lời…". Verify: oxlint sạch, dependency-cruiser 1030 module 0 vi phạm, 820 test/219 file vitest (thêm 9 test `useAssistantVoice` + 2 test tích hợp trong `CandidateAssistant`), build, 174/174 Playwright smoke. Kiểm chứng trên browser thật với stack docker: gửi câu hỏi → POST `/api/speech/sessions/` 201 → stream `/tts/v1/streams/...` phát hết bài rồi tự về trạng thái nghỉ, patch `AbortController` xác nhận **0 lần abort** từ phía client (dòng `ERR_ABORTED` trong network panel chỉ là cách devtools ghi nhận response streaming dài); bấm tắt tiếng → `aria-pressed=false`, localStorage `off`, câu sau không phát.
+Cập nhật 2026-08-05b (FAQ/Help Center KB-P2): hoàn tất service state
+machine draft → review → approve/reject → publish/rollback, archive/restore,
+optimistic concurrency, media JPEG/PNG/WebP, admin API/RBAC, audit và OpenAPI.
+22 targeted/regression test, query budget 3, Ruff/import-linter/layering đều xanh;
+KB-P3 là bước tiếp theo.
+
+Cập nhật 2026-08-05c (FAQ/Help Center KB-P3): hoàn tất entity API +
+renderer, bốn feature biên tập/category/review/publish, widget danh sách và
+workspace editor, ba page lazy admin cùng navigation/RBAC. Danh sách giữ filter,
+sort và page trong URL; editor không autosave server, có dirty guard, local
+recovery, preview, media JPEG/PNG/WebP, diff, history và optimistic token 409.
+Lint phần thay đổi sạch, architecture/build xanh, 13 targeted test pass và smoke
+workflow lưu → gửi duyệt → duyệt → xuất bản pass trên desktop/tablet/mobile.
+KB-P4 public help center là bước tiếp theo.
+
+Cập nhật 2026-08-05d (FAQ/Help Center KB-P4): hoàn tất public selector
+không lộ draft/rejected/archived/inactive, ba API browse/search/detail có
+throttle/cache/ETag/kill switch và SEO shell canonical + Article/BreadcrumbList
+giữ `noindex`. Frontend có ba route `/tro-giup`, search/type/page lấy URL làm
+nguồn chuẩn, trạng thái loading/empty/error/404, layout sidebar + question list
+responsive và renderer ảnh lỗi an toàn. 28/28 test knowledgebase backend, 9
+frontend regression, lint/architecture/build và E2E public ở ba viewport đều
+pass. KB-P5 nội dung đã xác minh và entry point là bước tiếp theo.
+
+Cập nhật 2026-08-05e (FAQ/Help Center KB-P5): thêm bảy bài ProCV
+approved/published, mỗi category active có một bài; nội dung được đối chiếu với
+route, component và hành vi đăng ký/khôi phục, bảo mật, tìm việc, ứng tuyển, CV,
+báo cáo rủi ro và hỗ trợ. Data migration additive có ID ổn định, không ghi đè
+bài đã có và không xóa dữ liệu khi reverse. Public site-settings expose
+`knowledgebase_public_enabled` từ backend kill switch; hai mục trong floating
+actions và mục hướng dẫn CV trên header chỉ hiện khi capability bật, điều hướng
+tới route canonical thay cho toast sắp ra mắt. 26 backend test và 4 frontend
+regression test pass; Ruff, oxlint và architecture gate sạch. KB-P6 hardening,
+observability, sitemap/index và runbook là bước tiếp theo.
+
+Cập nhật lần cuối: 2026-08-05f (FAQ/Help Center KB-P6): thêm index switch riêng
+mặc định tắt, đồng bộ SEO shell/client metadata, search page noindex và sitemap
+knowledgebase chỉ xuất hiện khi public + index + global SEO cùng bật. Bổ sung
+command readiness JSON kiểm 7 category, bài public, source/SEO, review, hạn,
+link canonical, media/alt; structured metric request/latency public/admin,
+zero-result và content state không chứa raw query/PII. Runbook khóa trình tự mở
+public rồi index, tiêu chí quan sát và rollback không reverse migration. Test
+diễn tập bật → đọc ID → tắt → 404 → bật lại xác nhận cùng dữ liệu. 48 backend
+và 14 frontend regression test mục tiêu đều xanh. Full gate đạt 769 backend test
+(coverage 86,36%), 886 frontend test, 191 E2E smoke pass và 4 ca theo viewport
+không áp dụng được skip; Ruff/format/import-linter/migration drift,
+oxlint/architecture/build đều xanh. Toàn bộ KB-P0 đến KB-P6 hoàn tất.
+
+Cập nhật 2026-08-05g (FAQ — tinh giản UX ứng viên): bỏ search server-side trên
+UI, type filter, topic cards và counter trên `/tro-giup`; giao diện chỉ còn
+sidebar chuyên mục cố định và danh sách câu hỏi gọn với một input lọc cục bộ
+không ghi URL/gọi search API. Mặc định item chỉ có title; khi nhập, bộ lọc khớp
+title/excerpt không phân biệt dấu, highlight phần trùng và hiện excerpt đầu nội
+dung trên một dòng có ellipsis. Bỏ item “Tất cả chủ đề”; API `q`/`type` vẫn giữ
+để không phá contract. Bỏ ràng buộc ảnh phải upload vào media ProCV: revision nhận URL
+HTTPS hoặc đường dẫn nội bộ an toàn, vẫn sanitize và bắt buộc alt; readiness chỉ
+kiểm tra file tồn tại với ảnh thuộc media storage nội bộ. Editor FAQ có tab
+**Từ URL** để chèn trực tiếp ảnh HTTPS mà không qua upload. Workspace biên tập
+đưa “Bước tiếp theo” cùng nút gửi duyệt/duyệt/yêu cầu sửa lên đầu, đồng thời giữ
+Lưu/Xem trước trên thanh sticky; topbar admin, thanh hành động và toolbar
+rich-text có offset/z-index riêng nên không chồng hoặc cắt nội dung khi cuộn.
+Detail FAQ hiển thị ảnh, giờ cập nhật và nhãn “Câu hỏi tiếp”. Verify: 48 backend
+regression, 889 frontend coverage, 6 targeted
+unit cho thay đổi tìm kiếm và 6 E2E public/admin trên desktop/tablet/mobile;
+Ruff/format/import-linter/migration drift, lint/architecture/build đều xanh.
+
+Cập nhật 2026-08-05h (FAQ — tìm kiếm toàn bộ chuyên mục): thay bộ lọc cục bộ của
+bản 08-05g bằng một truy vấn global tối giản: input debounce 250 ms, gửi `q` tới
+API nhưng không gửi category và không ghi từ khóa lên URL. Khi có từ khóa, UI
+hiển thị `Tìm thấy N kết quả cho “…”`; mỗi item đặt nhãn chuyên mục phía trên
+title, tiếp theo là excerpt một dòng, đồng thời highlight phần khớp không phân
+biệt dấu trong title/excerpt. Eyebrow “Chuyên mục” dùng `--brand-primary` được
+provider sinh từ site setting `brand_primary_color`, không tạo accessor setting
+song song. Unit 6/6 và smoke public 3/3 trên desktop/tablet/mobile đều pass.
+
+Cập nhật 2026-08-05i (FAQ — revision UX và danh sách tách thẻ): bỏ nền/viền của
+khung danh sách câu hỏi, giữ từng item nền trắng với gap và hover độc lập. Sửa
+luồng tạo revision bài đã publish bị kẹt do `change_summary` bắt buộc nhưng form
+đang chỉ đọc: modal tạo revision nhận tóm tắt trước, API clone draft rồi editor
+mở lại để tiếp tục chỉnh. Scope lại CSS workflow, nút gửi duyệt/duyệt/yêu cầu
+sửa còn cao 30 px và không full-width trên mobile. Targeted unit 5/5, smoke
+admin 3/3 và public 3/3 trên desktop/tablet/mobile đều pass; lint sạch.
+
+Cập nhật 2026-08-05j (FAQ — giữ vị trí item sidebar): đổi eyebrow “Trong chuyên
+mục này” thành “Tên chuyên mục”. Public compact article bổ sung `order`; sidebar
+chi tiết ghép bài hiện tại với related articles rồi sắp xếp theo cùng contract
+của danh sách. Vì vậy click bài chỉ đổi active state, không còn đẩy item lên đầu
+và làm người đọc lạc vị trí. Public API 9/9 và frontend unit 2/2 pass.
+Smoke public 3/3 trên desktop/tablet/mobile pass.
+
+Cập nhật 2026-08-06 (JOB-REVIEW — duyệt tin biết rõ thay đổi và không mất nút
+Duyệt): thêm `Job.approved_snapshot`/`approved_snapshot_at` (migration
+`jobs.0034`) — mỗi lần duyệt lưu lại bản nội dung được công khai, nên khi nhà
+tuyển dụng sửa tin đang tuyển và tin quay về `pending`, trang duyệt hiển thị mục
+**Thay đổi cần duyệt** đối chiếu từng trường trước/sau (tiêu đề, mô tả rich text,
+thu nhập, hạn, kỹ năng, địa điểm, liên hệ…), badge “Bản cập nhật · N thay đổi” và
+chip điều hướng có số đếm; thay đổi thuộc thông tin liên hệ chỉ hiện với quyền
+`job_moderation.view_sensitive_contact`, người thiếu quyền thấy số lượng bị ẩn.
+Tin chưa có bản gốc nói rõ “Chưa có bản đã duyệt để so sánh” thay vì báo không có
+thay đổi; command `backfill_job_snapshots` gieo baseline cho tin đang tuyển.
+`deadline_expired` không còn ẩn nút Duyệt: nó thành `approve_requirements`, admin
+duyệt kèm chọn hạn nhận hồ sơ mới (ghi vào lịch sử kiểm duyệt), còn các điều kiện
+chặn thật (policy/moderation hold, tài khoản bị hạn chế, chiến dịch dừng) trả về
+`approve_blockers` khiến nút hiện dạng disabled kèm tooltip lý do thay vì biến
+mất. Gọn lại layout: nút Quay lại thành text nhỏ căn trái, cảnh báo chặn công
+khai còn một dòng, thu nhỏ quick-fact/disclosure header. Verify: backend
+784/784 pytest (coverage 86,31%), import-linter + migration check sạch, frontend
+lint/architecture/build xanh, unit 905/905 (thêm 3 test diff + 3 test hành động
+duyệt), kiểm mắt desktop 1512px và mobile 420px trên preview.
+
+Cập nhật 2026-08-06b (JOB-REVIEW UI — thanh "Đi nhanh đến" theo chuẩn hệ thống):
+đổi từ dãy chip bo tròn nhiều màu (nền xanh brand khi active, badge số tròn đỏ)
+sang một thanh segmented vuông vức: khung viền bo 8px, ô nhãn nền `#f8fafc` ngăn
+bằng divider, mỗi mục cao 36px vuông góc cách nhau bằng đường 1px, active dùng
+nền `#f1f5f9` + gạch chân `inset 0 -2px 0 #334155` thay vì đổi màu chữ sang brand,
+badge đếm là chip xám bo 4px (`#e2e8f0`, active đảo thành `#334155`). Mobile ẩn ô
+nhãn và giữ dải mục cuộn ngang trong khung. Chỉ CSS, không đổi markup/aria.
+Verify: lint sạch, build xanh, unit widget 4/4 pass, kiểm mắt 1512px và 420px.
+
+Cập nhật 2026-08-06c (JOB-REVIEW UI — chuyển trang duyệt sang mô hình tab):
+thay chuỗi disclosure thả xuống bằng tab thật — mỗi tab render đúng một panel nội
+dung (`AdminJobPanel` header tĩnh + body), không còn mở/đóng nhiều khối cùng lúc.
+Tablist theo chuẩn ARIA (`role="tablist"/"tab"/"tabpanel"`, `aria-selected`,
+roving `tabIndex`, phím ←/→/Home/End). Sidebar phải rút còn thẻ **Tóm tắt kiểm
+tra** dính (sticky); ba mục Nhà tuyển dụng/Nhận hồ sơ/Báo cáo chuyển thành panel
+chính (`AdminJobReviewPanels`). Tách `AdminJobDecisionDock` khỏi
+`AdminJobOverview` để dock quyết định và thanh tab nằm chung một khối sticky
+`admin-job-sticky-bar`, offset tính bằng `--admin-topbar-height +
+--announcement-strip-height` nên không bị thanh thông báo che; mobile ≤639px trả
+về tĩnh vì dock xếp dọc. Bỏ nút Mở tất cả/Thu gọn tất cả (vô nghĩa với tab). Tab
+mặc định là **Thay đổi** khi có diff, ngược lại là **Nội dung**. Verify: lint +
+architecture sạch, build xanh, unit 907/907 (thêm 2 test chuyển tab), kiểm mắt
+desktop 1512px và mobile 420px.
+
+Cập nhật 2026-08-06d (JOB-ADMIN — link trang công khai + rút gọn danh sách tin):
+backend annotate `is_publicly_visible` cho `_admin_job_queryset` bằng chính
+`publicly_available_job_filter()` (predicate dùng cho mọi bề mặt ứng viên) rồi
+phơi ra ở serializer list/detail, nên link admin không bao giờ trỏ tới trang 404.
+Frontend thêm `AdminJobPublicLink`: ở chi tiết là link chữ "Xem trang công khai"
+nằm cùng hàng với nút Quay lại; ở bảng danh sách chỉ là icon `ExportOutlined`
+cạnh tiêu đề (không thêm dòng), có Tooltip; tin chưa công khai hiện icon xám
+không bấm được kèm lý do. Dải 5 thẻ thống kê màu (AdminStatCard) ở trang danh
+sách đổi thành một thanh segmented xám trung tính: nhãn viết hoa nhỏ, số lớn,
+dòng chi tiết mờ, mục đang chọn nền `slate-100` + gạch chân — vẫn là bộ lọc scope
+như cũ. Không đụng `AdminStatCard` dùng chung (Dashboard vẫn giữ nguyên). Verify:
+backend 785/785 pytest coverage 86,31% (thêm test `is_publicly_visible` bám sát
+predicate công khai), ruff/format/import-linter sạch; frontend lint/architecture
+xanh, unit 907/907, build xanh, kiểm mắt danh sách + chi tiết trên preview.

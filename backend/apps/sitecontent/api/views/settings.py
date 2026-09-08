@@ -1,6 +1,8 @@
 import json
+import math
 import re
 
+from django.conf import settings
 from django.core.cache import cache
 from django.db import transaction
 from drf_spectacular.utils import OpenApiTypes, extend_schema, extend_schema_view
@@ -11,6 +13,7 @@ from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
 from apps.accounts.permissions import HasAdminPermission
+from apps.accounts.services import record_admin_action
 from common.media_storage import (
     delete_local_media_url,
     media_storage_path,
@@ -57,12 +60,17 @@ class SiteSettingListView(APIView):
             cache.set(PUBLIC_SETTINGS_CACHE_KEY, data, 60 * 60)
         # Cache storage keys, không cache URL tuyệt đối. Nhờ vậy thay domain/CDN
         # không làm database hay cache giữ lại localhost/domain cũ.
-        return Response(
-            {
-                key: media_url_from_value(value, request=request) if is_image else value
-                for key, (value, is_image) in data.items()
-            }
+        response_data = {
+            key: media_url_from_value(value, request=request) if is_image else value
+            for key, (value, is_image) in data.items()
+        }
+        # Capability vận hành phải theo backend kill switch, không phải một row
+        # SiteSetting mà admin có thể vô tình bật lệch với public API/SEO shell.
+        response_data['knowledgebase_public_enabled'] = bool(settings.KNOWLEDGEBASE_PUBLIC_ENABLED)
+        response_data['knowledgebase_search_index_enabled'] = bool(
+            settings.KNOWLEDGEBASE_PUBLIC_ENABLED and settings.KNOWLEDGEBASE_SEARCH_INDEX_ENABLED
         )
+        return Response(response_data)
 
 
 class LocaleListView(generics.ListAPIView):
@@ -106,10 +114,22 @@ def _validate_value(setting, value):
         return None, 'Giá trị này cấu hình qua .env, không sửa được qua API.'
     if setting.value_type == vt.BOOLEAN and not isinstance(value, bool):
         return None, 'Giá trị phải là true/false.'
-    if setting.value_type == vt.NUMBER and (
-        isinstance(value, bool) or not isinstance(value, (int, float))
-    ):
-        return None, 'Giá trị phải là số.'
+    if setting.value_type == vt.NUMBER:
+        if (
+            isinstance(value, bool)
+            or not isinstance(value, (int, float))
+            or not math.isfinite(value)
+        ):
+            return None, 'Giá trị phải là số hữu hạn.'
+        options = setting.options if isinstance(setting.options, dict) else {}
+        if options.get('integer') and not isinstance(value, int):
+            return None, 'Giá trị phải là số nguyên.'
+        minimum = options.get('min')
+        maximum = options.get('max')
+        if isinstance(minimum, (int, float)) and value < minimum:
+            return None, f'Giá trị nhỏ nhất là {minimum}.'
+        if isinstance(maximum, (int, float)) and value > maximum:
+            return None, f'Giá trị lớn nhất là {maximum}.'
     if setting.value_type == vt.COLOR and not (isinstance(value, str) and _HEX_COLOR.match(value)):
         return None, 'Giá trị phải là mã màu hex, vd: #00b14f.'
     if setting.value_type == vt.SELECT:
@@ -201,6 +221,13 @@ class AdminSiteSettingView(APIView):
                         old_value = setting.value
                         setting.value = value
                         setting.save(update_fields=['value', 'updated_at'])
+                        record_admin_action(
+                            actor=request.user,
+                            action='site_setting_update',
+                            target_type='site_setting',
+                            target_public_id=setting.key,
+                            payload={'before': old_value, 'after': value},
+                        )
                         # Chỉ xoá file cũ sau khi transaction đã commit. URL ngoài
                         # hệ thống sẽ không bao giờ bị động tới.
                         if media_storage_path(old_value) != media_storage_path(value):

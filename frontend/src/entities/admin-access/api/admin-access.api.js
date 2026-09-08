@@ -98,8 +98,25 @@ export function restoreAdminRole(publicId, impactToken) {
   }))
 }
 
-export function getAdminMemberships(params = {}, { signal } = {}) {
-  return data(client.get('/admin/memberships/', { params, signal }))
+export function getAdminMemberships({
+  q = '',
+  department = '',
+  role = '',
+  status = 'active',
+  ordering = '-assigned_at',
+  page = 1,
+} = {}, { signal } = {}) {
+  return data(client.get('/admin/memberships/', {
+    params: {
+      page,
+      status,
+      ordering,
+      ...(q ? { q } : {}),
+      ...(department ? { department } : {}),
+      ...(role ? { role } : {}),
+    },
+    signal,
+  }))
 }
 
 export function getMembershipAssignmentImpact(payload) {

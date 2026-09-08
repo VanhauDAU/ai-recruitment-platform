@@ -31,6 +31,7 @@ import {
   campaignKeys,
   getCampaigns,
 } from '@/entities/campaign'
+import { useEmployerReadiness } from '@/entities/employer-profile'
 import {
   CampaignLifecycleActions,
   CreateCampaignModal,
@@ -153,7 +154,23 @@ function CampaignCandidateAvatars({ campaign }) {
   )
 }
 
-function CampaignCandidateSummary({ campaign }) {
+function CampaignCandidateSummary({ campaign, candidateDataAccess }) {
+  const applicationCount = campaign.application_pair_count
+    ?? campaign.application_submission_count
+    ?? campaign.application_count
+    ?? 0
+  if (!candidateDataAccess) {
+    return (
+      <div className="min-w-36 text-slate-700">
+        <span className="block text-sm font-semibold">
+          {Number(campaign.candidate_count) || 0} ứng viên
+        </span>
+        <span className="mt-1 block text-xs text-slate-500">
+          {applicationCount} hồ sơ ứng tuyển
+        </span>
+      </div>
+    )
+  }
   return (
     <Link
       to={employerAppPath(`/campaigns/${campaign.public_id}?active_tab=apply_cv`)}
@@ -161,10 +178,7 @@ function CampaignCandidateSummary({ campaign }) {
     >
       <CampaignCandidateAvatars campaign={campaign} />
       <span className="mt-1 block text-xs text-slate-500">
-        {campaign.application_pair_count
-          ?? campaign.application_submission_count
-          ?? campaign.application_count
-          ?? 0} hồ sơ ứng tuyển
+        {applicationCount} hồ sơ ứng tuyển
       </span>
       {(campaign.unviewed_count ?? campaign.unviewed_application_count) > 0 && (
         <Tag className="mt-2" color="green">
@@ -198,6 +212,7 @@ export default function CampaignList() {
     queryKey: campaignKeys.list(queryParams),
     queryFn: () => getCampaigns(queryParams),
   })
+  const { canAccessCandidateData } = useEmployerReadiness()
   const pageData = campaignsQuery.data || {
     count: 0,
     next: null,
@@ -241,15 +256,17 @@ export default function CampaignList() {
         >
           Tổng quan
         </CampaignActionButton>
-        <CampaignActionButton
-          icon={<TeamOutlined aria-hidden />}
-          tone="blue"
-          onClick={() => navigate(
-            employerAppPath(`/campaigns/${campaign.public_id}?active_tab=apply_cv`),
-          )}
-        >
-          Xem CV
-        </CampaignActionButton>
+        {canAccessCandidateData && (
+          <CampaignActionButton
+            icon={<TeamOutlined aria-hidden />}
+            tone="blue"
+            onClick={() => navigate(
+              employerAppPath(`/campaigns/${campaign.public_id}?active_tab=apply_cv`),
+            )}
+          >
+            Xem CV
+          </CampaignActionButton>
+        )}
       </ActionRow>
     )
   }
@@ -295,7 +312,12 @@ export default function CampaignList() {
     {
       title: 'Ứng viên / Hồ sơ',
       width: 180,
-      render: (_, campaign) => <CampaignCandidateSummary campaign={campaign} />,
+      render: (_, campaign) => (
+        <CampaignCandidateSummary
+          campaign={campaign}
+          candidateDataAccess={canAccessCandidateData}
+        />
+      ),
     },
     {
       title: 'Hoạt động gần nhất',
@@ -391,7 +413,10 @@ export default function CampaignList() {
               </Tag>
             </div>
             <div className="mt-4 rounded-lg bg-slate-50 p-3">
-              <CampaignCandidateSummary campaign={campaign} />
+              <CampaignCandidateSummary
+                campaign={campaign}
+                candidateDataAccess={canAccessCandidateData}
+              />
             </div>
             <div className="mt-4">
               <CampaignJobsSummary

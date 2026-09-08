@@ -76,7 +76,6 @@ class RecruiterApplicationSnapshotView(APIView):
     permission_classes = [IsEmployer]
 
     def get(self, request, public_id):
-        ensure_recruiter_candidate_data_access(request.user)
         try:
             application = recruiter_application_snapshot_queryset(request.user).get(
                 public_id=public_id
@@ -85,5 +84,11 @@ class RecruiterApplicationSnapshotView(APIView):
             # A 404 deliberately avoids confirming the existence of an
             # application outside the posting recruiter's scope.
             raise Http404 from error
+        ensure_recruiter_candidate_data_access(request.user)
         application = mark_application_viewed(application, changed_by=request.user)
-        return Response(RecruiterApplicationSnapshotSerializer(application).data)
+        return Response(
+            RecruiterApplicationSnapshotSerializer(
+                application,
+                context={'request': request},
+            ).data
+        )

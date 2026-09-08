@@ -136,15 +136,14 @@ export default function CompanyUpdateComparisonModal({
   onOpenDocument,
   onReviewDocument,
   onRejectRequest,
+  onRequestChanges,
   onApproveRequest,
   onRefreshTaxLookup,
 }) {
   if (!updateRequest) return null
   const changes = Object.entries(updateRequest.changes || {})
   const currentDocuments = (updateRequest.documents || []).filter((document) => document.is_current)
-  const documentsRequiringAction = currentDocuments.filter((document) => (
-    document.status === 'changes_requested' || document.status === 'rejected'
-  ))
+  const documentsRequiringAction = currentDocuments.filter(({ status }) => ['changes_requested', 'rejected'].includes(status))
   const industryLabels = updateRequest.industry_labels || {}
   const mediaPreviews = updateRequest.media_previews || {}
 
@@ -159,6 +158,7 @@ export default function CompanyUpdateComparisonModal({
       footer={[
         <Button key="close" onClick={onClose}>Đóng</Button>,
         ...(canReview ? [
+          <Button key="changes" onClick={onRequestChanges}>Yêu cầu chỉnh sửa</Button>,
           <Button key="reject" danger onClick={onRejectRequest}>Từ chối yêu cầu</Button>,
           <Button
             key="approve"
@@ -166,7 +166,7 @@ export default function CompanyUpdateComparisonModal({
             disabled={!canApply || Boolean(requestConflict)}
             title={
               requestConflict
-                ? 'Yêu cầu đang có xung đột mã số thuế.'
+                ? 'Dữ liệu nền đã thay đổi. Vui lòng tải lại trước khi duyệt.'
                 : canApply
                   ? undefined
                   : 'Duyệt đủ giấy tờ chứng minh trước khi áp dụng.'
@@ -193,7 +193,11 @@ export default function CompanyUpdateComparisonModal({
           <Descriptions.Item label="Công ty">{updateRequest.company?.name || 'Chưa có'}</Descriptions.Item>
           <Descriptions.Item label="Người gửi">{updateRequest.requested_by_email}</Descriptions.Item>
           <Descriptions.Item label="Cập nhật lúc">{formatDate(updateRequest.updated_at)}</Descriptions.Item>
-          <Descriptions.Item label="Trạng thái"><Tag color="gold">Chờ duyệt</Tag></Descriptions.Item>
+          <Descriptions.Item label="Trạng thái">
+            <Tag color={updateRequest.status === 'in_review' ? 'blue' : 'gold'}>
+              {updateRequest.status_label || updateRequest.status}
+            </Tag>
+          </Descriptions.Item>
           <Descriptions.Item label="Phiên yêu cầu">{`Lần gửi ${updateRequest.revision}`}</Descriptions.Item>
           <Descriptions.Item label="Số thay đổi">{`${changes.length} mục`}</Descriptions.Item>
         </Descriptions>

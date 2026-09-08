@@ -15,7 +15,7 @@ docker compose up
 
 ### Kiểm thử bằng điện thoại trong mạng LAN
 
-Frontend dev proxy cả `/api`, `/media` và `/tts`, vì vậy điện thoại không cần
+Frontend dev proxy cả `/api` và `/media`, vì vậy điện thoại không cần
 truy cập trực tiếp các cổng backend. Kết nối điện thoại và máy dev vào cùng một
 mạng Wi-Fi, lấy IP LAN của máy dev rồi mở:
 
@@ -36,14 +36,15 @@ thay đổi; không cần sửa `VITE_API_BASE_URL`, CORS hoặc `ALLOWED_HOSTS`
 - Muốn backend chạy ngoài Docker dùng DB trong Docker thì đặt `DB_PORT=5433`
   trong `backend/.env` (mặc định `5432` = Postgres local).
 - Service: `db` (postgres 16), `redis`, `backend` (runserver + auto migrate),
-  `worker` (celery), `beat` (celery beat), `tts` (VieNeu-TTS/ONNX) và
-  `frontend` (vite).
+  `worker` (Celery tác vụ chung), `ai-worker` (chỉ queue `ai-generation`,
+  concurrency 2), `beat` (Celery beat) và `frontend` (vite).
 - `frontend_node_modules` được giữ trong named volume. Entrypoint chỉ chạy
   `npm ci` khi `package-lock.json` thay đổi hoặc volume còn trống, nên restart
   frontend không còn cài lại toàn bộ dependency.
-- **Queue Celery**: settings route task sang 4 queue (`default`, `auth-email`,
-  `cv-export`, `speech-artifacts`). Worker trong compose khai đủ cả bốn; bỏ
-  queue tương ứng thì email, export CV hoặc upload MP3 TTS có thể không chạy.
+- **Queue Celery**: worker chung nghe `default`, `auth-email`, `auth-sms`,
+  `cv-export`, `upload-scan` và `candidate-email`.
+  `ai-generation` chỉ do `ai-worker` nghe để provider latency không chiếm pool
+  email/export/scan. Không gộp queue AI vào worker chung khi lên production.
 - **`CELERY_BROKER_URL` được override tường minh** trong compose: settings chỉ
   fallback về `REDIS_URL` khi biến vắng mặt, mà `.env` lại set sẵn `127.0.0.1`.
 
@@ -67,12 +68,16 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 ```
 
 - `nginx` (cổng 80/443) reverse proxy: `/` → frontend tĩnh, `/api` + `/admin` →
-  gunicorn, `/static` + `/media` serve trực tiếp từ volume. Django không đăng
+  gunicorn, `/static` và **public-only** `/media` serve trực tiếp từ volume.
+  Private, quarantine và legacy volumes không được mount vào nginx. Django không đăng
   ký `/admin/` trong production nên đường dẫn này luôn trả 404; production
   settings từ chối khởi động nếu `DJANGO_ADMIN_ENABLED=True`.
 - DB và Redis **không** expose ra ngoài host ở production.
 - Cấu hình nginx: `deploy/nginx/procv.conf`. TLS: thêm server block 443 +
   certbot khi trỏ domain.
+- Trước lần cutover storage ER-3, bắt buộc làm theo
+  [storage-boundary runbook](employer-upload-storage-boundary-runbook.md); không
+  bật traffic nếu copy report còn conflict hoặc chưa hết cursor.
 
 ## Seed dữ liệu (lần đầu — DB Docker khởi tạo rỗng)
 
@@ -138,7 +143,7 @@ docker compose exec db pg_dump -U postgres ai_career_coach > backup-$(date +%F).
 cat backup-YYYY-MM-DD.sql | docker compose exec -T db psql -U postgres ai_career_coach
 
 # Log
-docker compose logs -f backend worker
+docker compose logs -f backend worker ai-worker
 
 # Rollback code: checkout commit cũ rồi build lại
 git checkout <commit> && docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
@@ -150,20 +155,10 @@ Compose đã đặt các mặc định an toàn, có thể override trong file `
 
 | Biến | Dev | Production | Ý nghĩa |
 | --- | ---: | ---: | --- |
-| `TTS_CPU_LIMIT` | `4.0` | `4.0` | Trần CPU của container inference; Docker hiển thị 400% = 4 core. |
-| `TTS_ONNX_THREADS` | `4` | `4` | Số thread ONNX/OMP, phải không lớn hơn đáng kể so với CPU limit. |
-| `TTS_MEMORY_LIMIT` | `2g` | `2g` | Trần RAM của model. |
-| `TTS_MAX_CONCURRENT_STREAMS` | `1` | `1` | Một inference vật lý; request trùng dùng single-flight. |
-| `TTS_CACHE_MAX_GB` | `2` | `5` | Trần cache audio tái tạo được trong volume local. |
-| `TTS_CACHE_TTL_SECONDS` | `86400` | `259200` | TTL cache local: 1 ngày dev, 3 ngày production. MP3 bền vững vẫn ở R2. |
+| `AI_RUNTIME_ENABLED` | `true` | `false` | Hard switch toàn generative AI; Site Setting chỉ được thu hẹp rollout. |
+| AI worker concurrency | `2` | `2` | Được pin trong Compose V1 để chặn chi phí và tải provider; đổi phải qua capacity review. |
 | `DOCKER_LOG_MAX_SIZE` | `10m` | `10m` | Kích thước mỗi file log container. |
 | `DOCKER_LOG_MAX_FILES` | `3` | `3` | Số file log giữ cho mỗi container. |
-
-Cache TTS local là cache nóng, không phải nguồn dữ liệu chính. Khi MP3 đã
-`READY` trên R2, xóa cache audio local không làm mất bài đọc. Volume
-`tts_huggingface_cache` chứa model đã tải; nên giữ để tránh tải và warm-up lại.
-Service tự xóa WAV/PCM/MP3 local theo TTL + quota và dọn file `.part` bị bỏ lại
-sau hard-kill khi chúng cũ hơn một giờ.
 
 ### Theo dõi và dọn Docker an toàn
 
@@ -179,17 +174,9 @@ sh scripts/docker_maintenance.sh
 ```
 
 Không chạy `docker system prune --volumes` trên máy production: lệnh đó có thể
-xóa nhầm Postgres, media và model cache. Nếu cần đo riêng hai cache TTS:
-
-```bash
-docker run --rm -v ai-recruitment-platform_tts_audio_cache:/data alpine du -sh /data
-docker run --rm -v ai-recruitment-platform_tts_huggingface_cache:/data alpine du -sh /data
-```
-
-Dockerfile backend, frontend và TTS dùng BuildKit cache mount. Riêng TTS tách
-layer dependency AI khỏi source ứng dụng, nên sửa code không còn cài lại
-`vieneu`/ONNX. Build cache vẫn nên được đo và prune định kỳ ở CI/VPS vì nó chỉ
-hỗ trợ build nhanh, không được sử dụng lúc container đang chạy.
+xóa nhầm Postgres và media. Dockerfile backend/frontend dùng BuildKit cache
+mount; build cache vẫn nên được đo và prune định kỳ ở CI/VPS vì nó chỉ hỗ trợ
+build nhanh, không được sử dụng lúc container đang chạy.
 
 ## Kiểm chứng đã chạy (2026-07-21)
 

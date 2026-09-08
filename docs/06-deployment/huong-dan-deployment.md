@@ -7,18 +7,30 @@ Phạm vi (theo PRD mục 8.4 — Docker chỉ đưa vào ở giai đoạn cuố
 
 Chưa triển khai — sẽ làm sau khi các module chính (CV, jobs, applications, AI) hoàn thiện.
 
-## Static/media storage nội bộ
+## Static và storage media tách quyền
 
 - Asset cố định của frontend (logo hệ thống, favicon, icon) đặt trong `frontend/public/`, ví dụ `/images/logo/logo_proCV_2000_600.png`, `/favicon-32.png`, `/apple-touch-icon.png`. Khi build frontend, web server/CDN có thể serve trực tiếp các file này với cache dài.
-- File người dùng upload (CV, avatar, logo/cover công ty) lưu qua Django `default_storage` vào `MEDIA_ROOT`, mặc định là `backend/media/`. Database chỉ lưu **storage key** như `users/avatars/<uuid>.png`, không lưu `http://localhost...` hay domain production.
-- API resolve storage key thành URL dưới `MEDIA_URL` (`/media/`) ở thời điểm trả response. Vì vậy đổi domain/CDN không cần sửa database.
-- Biến `MEDIA_PUBLIC_BASE_URL` dùng khi production có domain static/media riêng. Ví dụ `https://static.example.com` khiến API trả `https://static.example.com/media/...`.
+- Presentation media công khai (avatar, logo/cover/gallery, knowledgebase,
+  template) dùng `public_media` tại `PUBLIC_MEDIA_ROOT`, mặc định
+  `backend/public-media/`. Chỉ root này được phép resolve URL `/media/` hoặc
+  public R2 URL.
+- CV, export, tài liệu pháp lý và candidate asset dùng `default`/
+  `private_media` tại `PRIVATE_MEDIA_ROOT`. Upload chưa được scanner quyết định
+  dùng `quarantine` tại `UPLOAD_QUARANTINE_ROOT`. Hai backend này cố ý từ chối
+  `.url()`; browser chỉ tải qua API đã kiểm quyền.
+- Database tiếp tục chỉ lưu **storage key**, không lưu filesystem path,
+  credential hoặc signed URL. `MEDIA_PUBLIC_BASE_URL` chỉ áp dụng cho public
+  media; không được dùng để tạo URL private.
+- `LEGACY_MEDIA_ROOT` là nguồn copy/checksum read-only của layout cũ, không phải
+  active storage và không được Django/Vite/nginx phục vụ. Làm theo
+  [ER-3 storage-boundary runbook](employer-upload-storage-boundary-runbook.md)
+  trước khi chuyển traffic.
 - Với dữ liệu legacy, chạy `python manage.py normalize_media_references` để xem trước và thêm `--apply` để chuyển các URL localhost cũ sang storage key.
-- Nếu self-host bằng Nginx, cần serve media trực tiếp:
+- Nếu self-host bằng Nginx, chỉ mount và serve public volume:
 
 ```nginx
 location /media/ {
-    alias /app/backend/media/;
+    alias /srv/backend-public-media/;
     expires 30d;
     add_header Cache-Control "public";
 }

@@ -3,9 +3,9 @@ import { MemoryRouter, Route, Routes, useLocation } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import EmployerWorkspaceLayout from './EmployerWorkspaceLayout'
 
-const { useSession, getEmployerProfile, profileQueryState } = vi.hoisted(() => ({
+const { useSession, profileQueryState, useEmployerReadiness } = vi.hoisted(() => ({
   useSession: vi.fn(),
-  getEmployerProfile: vi.fn(),
+  useEmployerReadiness: vi.fn(),
   profileQueryState: {
     data: undefined,
     isSuccess: true,
@@ -14,8 +14,13 @@ const { useSession, getEmployerProfile, profileQueryState } = vi.hoisted(() => (
 
 vi.mock('@tanstack/react-query', () => ({
   useQuery: () => profileQueryState,
+  useQueryClient: () => ({ invalidateQueries: vi.fn() }),
+  useMutation: () => ({ mutate: vi.fn(), isPending: false }),
 }))
-vi.mock('@/entities/employer-profile', () => ({ getEmployerProfile }))
+vi.mock('@/entities/employer-profile', async (importOriginal) => ({
+  ...await importOriginal(),
+  useEmployerReadiness,
+}))
 vi.mock('@/entities/session', () => ({ useSession }))
 vi.mock('@/entities/campaign', () => ({
   campaignKeys: {
@@ -45,6 +50,24 @@ describe('EmployerWorkspaceLayout', () => {
         dpa_accepted: false,
       },
     }
+    useEmployerReadiness.mockImplementation(() => ({
+      profile: profileQueryState.data,
+      profileQuery: { isSuccess: true, refetch: vi.fn() },
+      readiness: {
+        jobWorkspaceReady: true,
+        verificationApproved: false,
+        candidateDataAccess: false,
+        dpaStatus: 'outdated',
+        blockers: [{
+          code: 'dpa_outdated',
+          capabilities: ['candidate_data'],
+          message: 'Chấp thuận DPA không còn là phiên bản hiện hành.',
+          action: 'accept_dpa',
+        }],
+      },
+      isAccessError: false,
+      isChecking: false,
+    }))
   })
 
   it('temporarily opens the compact desktop icon rail on hover and collapses it when leaving', () => {
@@ -77,6 +100,27 @@ describe('EmployerWorkspaceLayout', () => {
 
     fireEvent.mouseLeave(sidebar)
     expect(sidebar).toHaveClass('ant-layout-sider-collapsed')
+  })
+
+  it('keeps shared breathing room between the route header and every employer page', () => {
+    useSession.mockReturnValue({
+      user: { full_name: 'Nguyễn An', email: 'hr@example.com' },
+      logout: vi.fn(),
+    })
+
+    render(
+      <MemoryRouter initialEntries={['/tuyendung/app/dashboard']}>
+        <Routes>
+          <Route element={<EmployerWorkspaceLayout />}>
+            <Route path="/tuyendung/app/dashboard" element={<p>Bảng tin</p>} />
+          </Route>
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    const content = screen.getByTestId('employer-workspace-content')
+    expect(content).toHaveClass('pt-3', 'sm:pt-4', 'xl:pt-4')
+    expect(content).not.toHaveClass('pt-0', 'sm:pt-0', 'xl:pt-0')
   })
 
   it('shows the three-level account verification popover from the sidebar question mark', async () => {
@@ -138,6 +182,36 @@ describe('EmployerWorkspaceLayout', () => {
       name: /Xác thực Giấy đăng ký doanh nghiệp/,
     })
     expect(businessDocumentStep.querySelector('.anticon-check-circle')).not.toBeInTheDocument()
+  })
+
+  it('drops the sidebar from level 3 after verification is revoked', () => {
+    useSession.mockReturnValue({
+      user: { full_name: 'Nguyễn An', email: 'hr@example.com' },
+      logout: vi.fn(),
+    })
+    profileQueryState.data.onboarding = {
+      ...profileQueryState.data.onboarding,
+      email_verified: true,
+      phone_verified: true,
+      company_linked: true,
+      business_doc_submitted: true,
+      business_doc_approved: true,
+      no_report_history: true,
+    }
+    profileQueryState.data.verification_case = { status: 'revoked' }
+
+    render(
+      <MemoryRouter initialEntries={['/tuyendung/app/dashboard']}>
+        <Routes>
+          <Route element={<EmployerWorkspaceLayout />}>
+            <Route path="/tuyendung/app/dashboard" element={<p>Bảng tin</p>} />
+          </Route>
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByText('Cấp 1/3')).toBeInTheDocument()
+    expect(screen.queryByText('Cấp 3/3')).not.toBeInTheDocument()
   })
 
   it('opens the account information settings tab from the sidebar profile', () => {

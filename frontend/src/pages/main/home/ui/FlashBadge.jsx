@@ -97,26 +97,23 @@ export default function FlashBadge() {
   const navigate = useNavigate()
   const [jobs, setJobs] = useState([])
   const [count, setCount] = useState(0)
+  const [loaded, setLoaded] = useState(false)
   const { h, m, s } = useCountdown()
   const displayCount = useCountUp(count)
   const items = useJobQueue(jobs)
 
   useEffect(() => {
-    // Chỉ lấy tin có huy hiệu Sấm Chớp (admin gán); môi trường chưa gán tin nào
-    // thì rơi về tin mới nhất để section không trống.
     getJobs({ flash_badge: 1, page_size: 20 })
-      .then((data) => {
-        const results = data.results || data
-        if (results.length > 0) return data
-        return getJobs({ page_size: 20 })
-      })
       .then((data) => {
         const results = data.results || data
         setJobs(results)
         setCount(data.count ?? results.length)
       })
       .catch(() => {})
+      .finally(() => setLoaded(true))
   }, [])
+
+  if (loaded && jobs.length === 0) return null
 
   // Tổng chiều cao container cố định
   const containerH = VISIBLE * ITEM_H + (VISIBLE - 1) * GAP

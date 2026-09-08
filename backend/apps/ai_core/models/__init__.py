@@ -1,1 +1,5 @@
-"""ai_core chưa có model — sẽ thêm khi làm Giai đoạn AI (GĐ 2/3/7)."""
+"""Public persistence contracts for the shared AI runtime."""
+
+from .invocations import AiInvocation, AiUsageDaily
+
+__all__ = ['AiInvocation', 'AiUsageDaily']

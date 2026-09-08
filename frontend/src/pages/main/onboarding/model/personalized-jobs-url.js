@@ -2,6 +2,8 @@
 // từ nhu cầu vừa lưu — danh mục chuyên môn đã chọn (`cat`), vị trí tự nhập
 // làm từ khoá tìm kiếm (`search`) và tỉnh/thành đầu tiên (`locations` + path
 // dạng /viec-lam/tai/<slug> giống link chia sẻ của trang việc làm).
+import { normalizeDesiredPositionOthers } from '@/features/configure-job-preferences'
+
 function slugifyVietnamese(text = '') {
   return text
     .normalize('NFD')
@@ -19,7 +21,9 @@ export function buildPersonalizedJobsUrl(preference) {
   const categoryIds = (preference?.desired_specializations || []).map((item) => item.id)
   if (categoryIds.length) params.set('cat', categoryIds.join(','))
 
-  const keyword = (preference?.desired_position_other || '').trim()
+  const [keyword] = normalizeDesiredPositionOthers(
+    preference?.desired_position_others ?? preference?.desired_position_other,
+  )
   if (keyword) params.set('search', keyword)
 
   let pathname = '/viec-lam'

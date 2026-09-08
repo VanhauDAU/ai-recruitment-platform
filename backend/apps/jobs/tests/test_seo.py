@@ -4,6 +4,7 @@ from django.urls import reverse
 
 from apps.accounts.models import User
 from apps.employers.models import Company
+from apps.employers.tests.readiness_helpers import make_employer_ready
 from apps.jobs.models import Job
 
 SHELL = (
@@ -26,6 +27,7 @@ class JobSeoTests(TestCase):
             website_url='https://company.example',
             created_by=employer,
         )
+        make_employer_ready(employer, company=cls.company, candidate_data=True)
         cls.job = Job.objects.create(
             posted_by=employer,
             company=cls.company,

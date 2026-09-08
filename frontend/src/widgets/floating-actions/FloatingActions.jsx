@@ -21,6 +21,7 @@ import { useSiteSettings } from '@/entities/site-settings'
 import { FeedbackModal } from '@/features/submit-feedback'
 import { useVisualViewportBottomInset } from '@/shared/hooks/use-visual-viewport-bottom-inset'
 import { message } from '@/shared/lib/toast'
+import { knowledgebaseSupportLinks } from './knowledgebase-support-links'
 
 export default function FloatingActions() {
   const navigate = useNavigate()
@@ -65,6 +66,12 @@ export default function FloatingActions() {
 
   const zaloUrl = settings.contact_zalo_url
   const hotline = settings.hotline
+  const knowledgebaseEnabled = settings.knowledgebase_public_enabled === true
+
+  function openKnowledgebase(path) {
+    setSupportOpen(false)
+    navigate(path)
+  }
 
   function openZalo() {
     if (!zaloUrl) {
@@ -75,8 +82,11 @@ export default function FloatingActions() {
   }
 
   const supportItems = [
-    { key: 'safety', icon: <SafetyOutlined />, label: 'Hướng dẫn tìm việc an toàn', required: true, onClick: () => message.info('Nội dung sẽ sớm ra mắt.') },
-    { key: 'faq', icon: <QuestionCircleOutlined />, label: 'Các câu hỏi thường gặp', onClick: () => message.info('Nội dung sẽ sớm ra mắt.') },
+    ...knowledgebaseSupportLinks(knowledgebaseEnabled).map((item) => ({
+      ...item,
+      icon: item.key === 'safety' ? <SafetyOutlined /> : <QuestionCircleOutlined />,
+      onClick: () => openKnowledgebase(item.path),
+    })),
     { key: 'zalo', icon: <MessageOutlined />, label: 'Hỗ trợ qua Zalo', onClick: openZalo },
     {
       key: 'contact',

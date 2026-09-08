@@ -1,11 +1,12 @@
 from datetime import timedelta
 
 from django.contrib.postgres.aggregates import StringAgg
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.db.models.functions import Coalesce
 from django.utils import timezone
 from django.utils.html import strip_tags
 
+from apps.accounts.models import User
 from apps.employers.models import Company
 from common.media_storage import media_url_from_value
 
@@ -160,13 +161,26 @@ def _featured_employers(active_jobs, request):
     ]
 
 
+def _platform_account_counts():
+    return User.objects.filter(
+        is_active=True,
+        is_deleted=False,
+        status=User.Status.ACTIVE,
+    ).aggregate(
+        candidates=Count('id', filter=Q(role=User.Role.CANDIDATE)),
+        employers=Count('id', filter=Q(role=User.Role.EMPLOYER)),
+    )
+
+
 def build_job_stats(request):
     """Build the homepage market dashboard payload."""
     now = timezone.now()
     active_jobs = Job.objects.filter(publicly_available_job_filter()).annotate(
         published=Coalesce('published_at', 'created_at')
     )
+    account_counts = _platform_account_counts()
     return {
+        **account_counts,
         'active_jobs': active_jobs.count(),
         'companies': active_jobs.values('company').distinct().count(),
         'new_jobs_24h': active_jobs.filter(published__gte=now - timedelta(days=1)).count(),

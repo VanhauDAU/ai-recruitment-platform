@@ -324,8 +324,8 @@ SETTINGS = [
         6,
         False,
         'Một trong năm điều kiện gắn dấu tick "đã xác thực" lên tin tuyển dụng. '
-        'Đặt 0 để bỏ qua điều kiện tuổi tài khoản khi hệ thống mới vận hành.',
-        {},
+        'Giá trị là số tháng lịch nguyên từ 1 đến 60.',
+        {'integer': True, 'min': 1, 'max': 60, 'step': 1},
     ),
     (
         'employer_allow_logo_upload',
@@ -793,6 +793,70 @@ SETTINGS = [
     ('ai_job_match_enabled', 'AI gợi ý việc phù hợp', G.AI, T.BOOLEAN, True, True, '', {}),
     ('ai_interview_enabled', 'AI luyện phỏng vấn', G.AI, T.BOOLEAN, False, True, '', {}),
     ('ai_daily_request_limit', 'Giới hạn request AI/ngày/người', G.AI, T.NUMBER, 50, False, '', {}),
+    (
+        'ai_job_generation_enabled',
+        'Bật AI tạo tin tuyển dụng',
+        G.AI,
+        T.BOOLEAN,
+        False,
+        True,
+        'Soft switch theo use case; hard switch AI_RUNTIME_ENABLED luôn có quyền ưu tiên.',
+        {},
+    ),
+    (
+        'ai_job_generation_model',
+        'Model tạo tin tuyển dụng',
+        G.AI,
+        T.SELECT,
+        'gemini-3.5-flash-lite',
+        False,
+        'Chỉ chọn model có trong cả allowlist môi trường và allowlist bên dưới.',
+        {
+            'choices': [
+                {'value': 'gemini-3.5-flash-lite', 'label': 'Gemini 3.5 Flash Lite'},
+            ]
+        },
+    ),
+    (
+        'ai_job_generation_model_allowlist',
+        'Model allowlist cho tạo tin',
+        G.AI,
+        T.JSON,
+        ['gemini-3.5-flash-lite'],
+        False,
+        'Chỉ được thu hẹp allowlist cấu hình qua môi trường, không thể mở rộng nó.',
+        {},
+    ),
+    (
+        'ai_job_generation_daily_limit',
+        'Lượt tạo tin/ngày/nhà tuyển dụng',
+        G.AI,
+        T.NUMBER,
+        10,
+        False,
+        'Internal retry không tạo thêm lượt quota.',
+        {},
+    ),
+    (
+        'ai_job_generation_rollout_percent',
+        'Tỷ lệ rollout tạo tin AI (%)',
+        G.AI,
+        T.NUMBER,
+        0,
+        False,
+        'Phân bucket ổn định theo công ty; allowlist luôn được xét trước tỷ lệ.',
+        {},
+    ),
+    (
+        'ai_job_generation_company_allowlist',
+        'Công ty allowlist tạo tin AI',
+        G.AI,
+        T.JSON,
+        [],
+        False,
+        'Danh sách public ID công ty được pilot trước rollout phần trăm.',
+        {},
+    ),
 ]
 
 # (key, title, source, order, [items]) — items chỉ dùng cho source=manual.

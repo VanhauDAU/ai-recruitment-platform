@@ -1,6 +1,6 @@
+import math
 import re
 
-from django.conf import settings
 from django.utils.html import strip_tags
 from django.utils.text import Truncator
 from rest_framework import serializers
@@ -8,6 +8,9 @@ from rest_framework import serializers
 from common.media_storage import media_url_from_value
 
 from ...models import BlogMediaAsset, PinnedPost, Post, PostCategory, Tag
+
+DEFAULT_AUTHOR_NAME = 'Biên tập ProCV'
+WORDS_PER_MINUTE = 200
 
 
 class BlogMediaAssetSerializer(serializers.ModelSerializer):
@@ -88,8 +91,9 @@ class PostDetailSerializer(serializers.ModelSerializer):
     tags = TagSerializer(many=True, read_only=True)
     thumbnail_url = serializers.SerializerMethodField()
     related_job_category = serializers.SerializerMethodField()
-    speech_default = serializers.SerializerMethodField()
-    speech_assets = serializers.SerializerMethodField()
+    related_posts = serializers.SerializerMethodField()
+    author = serializers.SerializerMethodField()
+    reading_time_minutes = serializers.SerializerMethodField()
 
     class Meta:
         model = Post
@@ -103,8 +107,9 @@ class PostDetailSerializer(serializers.ModelSerializer):
             'category',
             'tags',
             'related_job_category',
-            'speech_default',
-            'speech_assets',
+            'related_posts',
+            'author',
+            'reading_time_minutes',
             'published_at',
             'seo_title',
             'seo_description',
@@ -119,38 +124,30 @@ class PostDetailSerializer(serializers.ModelSerializer):
         cat = obj.related_job_category
         return {'id': cat.id, 'name': cat.name, 'slug': cat.slug}
 
-    def get_speech_default(self, obj):
-        assets = self._current_speech_assets(obj)
-        asset = next(
-            (
-                item
-                for item in assets
-                if item.voice_id == settings.SPEECH_DEFAULT_VOICE_ID
-                and item.style == settings.SPEECH_DEFAULT_STYLE
-            ),
-            None,
+    def get_related_posts(self, obj):
+        related = getattr(obj, 'prefetched_related_posts', None)
+        if related is None:
+            related = self.context.get('related_posts') or []
+        return PostListSerializer(related, many=True, context=self.context).data
+
+    def get_author(self, obj):
+        author = getattr(obj, 'author', None)
+        if author is None:
+            return {'name': DEFAULT_AUTHOR_NAME}
+        name = (author.full_name or '').strip() or (author.email or '').strip()
+        return {'name': name or DEFAULT_AUTHOR_NAME}
+
+    def get_reading_time_minutes(self, obj):
+        html = re.sub(
+            r'</(?:p|div|h[1-6]|li|br)\s*>',
+            ' ',
+            obj.content or '',
+            flags=re.IGNORECASE,
         )
-        if asset is None:
-            return None
-        return self._speech_asset_payload(asset)
-
-    def get_speech_assets(self, obj):
-        return [self._speech_asset_payload(asset) for asset in self._current_speech_assets(obj)]
-
-    @staticmethod
-    def _current_speech_assets(obj):
-        assets = getattr(obj, 'prefetched_ready_speech_assets', ())
-        return [item for item in assets if item.post_revision == obj.edit_revision]
-
-    def _speech_asset_payload(self, asset):
-        return {
-            'status': 'ready',
-            'url': media_url_from_value(asset.storage_key, request=self.context.get('request')),
-            'voice_id': asset.voice_id,
-            'style': asset.style,
-            'mime_type': asset.mime_type,
-            'duration_ms': asset.duration_ms,
-        }
+        words = len(strip_tags(html).split())
+        if words <= 0:
+            return 1
+        return max(1, math.ceil(words / WORDS_PER_MINUTE))
 
 
 class PinnedPostSerializer(serializers.ModelSerializer):

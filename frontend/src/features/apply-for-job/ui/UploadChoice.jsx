@@ -1,5 +1,6 @@
 import { DeleteOutlined, FileTextOutlined, UploadOutlined } from '@ant-design/icons'
 import { Button, Input, Spin } from 'antd'
+import { getUploadStatePresentation } from '@/shared/api/upload-session'
 import { UPLOAD_CHOICE_ID } from '../model/use-apply-form'
 
 function RequiredLabel({ children }) {
@@ -13,6 +14,7 @@ function RequiredLabel({ children }) {
 export default function UploadChoice({
   selected,
   uploading,
+  uploadState,
   file,
   onSelect,
   onChooseFile,
@@ -25,6 +27,7 @@ export default function UploadChoice({
   onContactEmailChange,
   onContactPhoneChange,
 }) {
+  const uploadStateMeta = getUploadStatePresentation(uploadState)
   return (
     <div
       onClick={onSelect}
@@ -53,6 +56,11 @@ export default function UploadChoice({
             </span>
           </div>
           <p className="mt-1 text-sm text-slate-400">Hỗ trợ định dạng PDF, DOCX có kích thước dưới 5MB</p>
+          {uploadStateMeta && (
+            <p role="status" className={`mt-1 text-xs font-medium ${uploadStateMeta.tone}`}>
+              {uploadStateMeta.text}
+            </p>
+          )}
           <Button
             disabled={uploading}
             onClick={(event) => {

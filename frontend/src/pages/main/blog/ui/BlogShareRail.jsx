@@ -1,54 +1,101 @@
-import { FacebookFilled, LinkOutlined, PrinterOutlined, TwitterOutlined, UnorderedListOutlined } from '@ant-design/icons'
+import {
+  FacebookFilled,
+  LinkOutlined,
+  PrinterOutlined,
+  ShareAltOutlined,
+  TwitterOutlined,
+  UnorderedListOutlined,
+} from '@ant-design/icons'
+import { useMemo } from 'react'
 import { message } from '@/shared/lib/toast'
+import {
+  absoluteBlogShareUrl,
+  buildBlogShareTargets,
+  canUseWebShare,
+  openShareWindow,
+  shareViaWebApi,
+} from './blog-share'
+import './blog-share-rail.css'
 
-function shareUrl(network) {
-  const url = encodeURIComponent(window.location.href)
-  const title = encodeURIComponent(document.title)
-  if (network === 'facebook') return `https://www.facebook.com/sharer/sharer.php?u=${url}`
-  return `https://twitter.com/intent/tweet?url=${url}&text=${title}`
-}
-
-// Cột thao tác dính bên trái bài viết, gom 2 nhóm khung bo tròn riêng:
-// (1) chia sẻ: copy link, FB, in, Twitter — (2) mục lục.
-export default function BlogShareRail({ onToggleToc, hasToc, speechControl }) {
-  function share(network) {
-    window.open(shareUrl(network), '_blank', 'noopener,noreferrer,width=640,height=520')
-  }
+/**
+ * Cột công cụ bài viết: chia sẻ + mục lục.
+ * Desktop: sticky dưới header+category (z thấp hơn category nav).
+ * Mobile: không sticky — cuộn theo nội dung, không che thanh danh mục.
+ */
+export default function BlogShareRail({
+  onToggleToc,
+  hasToc,
+  sharePath,
+  title = '',
+  description = '',
+}) {
+  const shareUrl = useMemo(
+    () => absoluteBlogShareUrl(sharePath || (typeof window !== 'undefined' ? window.location.pathname : '')),
+    [sharePath],
+  )
+  const targets = useMemo(
+    () => buildBlogShareTargets({ url: shareUrl, title }),
+    [shareUrl, title],
+  )
+  const webShare = canUseWebShare()
 
   async function copyLink() {
     try {
-      await navigator.clipboard.writeText(window.location.href)
+      await navigator.clipboard.writeText(shareUrl)
       message.success('Đã sao chép đường dẫn bài viết.')
     } catch {
       message.info('Bạn có thể sao chép đường dẫn trên thanh địa chỉ.')
     }
   }
 
-  return (
-    <div className="flex flex-row gap-3 lg:sticky lg:top-32 lg:flex-col" aria-label="Công cụ bài viết">
-      {speechControl}
-      <RailGroup label="Chia sẻ">
-        <RailButton label="Sao chép liên kết" onClick={copyLink}><LinkOutlined /></RailButton>
-        <RailButton label="Chia sẻ qua Facebook" onClick={() => share('facebook')}><FacebookFilled /></RailButton>
-        <RailButton label="In bài viết" onClick={() => window.print()}><PrinterOutlined /></RailButton>
-        <RailButton label="Chia sẻ qua Twitter" onClick={() => share('twitter')}><TwitterOutlined /></RailButton>
-      </RailGroup>
-      {hasToc && (
-        <RailGroup label="Mục lục">
-          <RailButton label="Mở mục lục" onClick={onToggleToc}><UnorderedListOutlined /></RailButton>
-        </RailGroup>
-      )}
-    </div>
-  )
-}
+  function shareFacebook() {
+    openShareWindow(targets.facebook)
+  }
 
-function RailGroup({ label, children }) {
+  function shareTwitter() {
+    openShareWindow(targets.twitter)
+  }
+
+  async function shareNative() {
+    const shared = await shareViaWebApi({
+      url: shareUrl,
+      title,
+      text: description || title,
+    })
+    if (!shared) {
+      // Fallback khi Web Share không dùng được: copy link.
+      await copyLink()
+    }
+  }
+
   return (
-    <div
-      aria-label={label}
-      className="flex flex-row gap-1.5 rounded-full border border-slate-200 bg-white p-1.5 shadow-sm lg:flex-col"
-    >
-      {children}
+    <div className="blog-share-rail" aria-label="Công cụ bài viết">
+      <div className="blog-share-rail__group" aria-label="Chia sẻ">
+        <RailButton label="Sao chép liên kết" onClick={copyLink}>
+          <LinkOutlined aria-hidden />
+        </RailButton>
+        {webShare && (
+          <RailButton label="Chia sẻ thiết bị" onClick={shareNative}>
+            <ShareAltOutlined aria-hidden />
+          </RailButton>
+        )}
+        <RailButton label="Chia sẻ qua Facebook" onClick={shareFacebook}>
+          <FacebookFilled aria-hidden />
+        </RailButton>
+        <RailButton label="Chia sẻ qua X (Twitter)" onClick={shareTwitter}>
+          <TwitterOutlined aria-hidden />
+        </RailButton>
+        <RailButton label="In bài viết" onClick={() => window.print()}>
+          <PrinterOutlined aria-hidden />
+        </RailButton>
+      </div>
+      {hasToc && (
+        <div className="blog-share-rail__group" aria-label="Mục lục">
+          <RailButton label="Mở mục lục" onClick={onToggleToc}>
+            <UnorderedListOutlined aria-hidden />
+          </RailButton>
+        </div>
+      )}
     </div>
   )
 }
@@ -57,10 +104,10 @@ function RailButton({ label, onClick, children }) {
   return (
     <button
       type="button"
+      className="blog-share-rail__button"
       aria-label={label}
       title={label}
       onClick={onClick}
-      className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full text-slate-500 transition-all duration-200 hover:bg-[var(--brand-primary-soft)] hover:text-[var(--brand-primary)]"
     >
       {children}
     </button>

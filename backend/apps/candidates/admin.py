@@ -2,10 +2,12 @@ from django.contrib import admin
 
 from .models import (
     CandidateConsent,
+    CandidateDesiredPositionOther,
     CandidateDesiredSpecialization,
     CandidateEmailNotificationSettings,
     CandidateJobPreference,
     CandidatePreferredProvince,
+    CandidatePreferredSkill,
     CandidateProfile,
 )
 
@@ -34,9 +36,21 @@ class CandidateDesiredSpecializationAdmin(admin.ModelAdmin):
     list_display = ['job_preference', 'job_category', 'sort_order']
 
 
+@admin.register(CandidateDesiredPositionOther)
+class CandidateDesiredPositionOtherAdmin(admin.ModelAdmin):
+    list_display = ['job_preference', 'name', 'sort_order']
+    search_fields = ['job_preference__candidate_profile__user__email', 'name']
+
+
 @admin.register(CandidatePreferredProvince)
 class CandidatePreferredProvinceAdmin(admin.ModelAdmin):
     list_display = ['job_preference', 'location', 'sort_order']
+
+
+@admin.register(CandidatePreferredSkill)
+class CandidatePreferredSkillAdmin(admin.ModelAdmin):
+    list_display = ['job_preference', 'skill', 'sort_order']
+    search_fields = ['job_preference__candidate_profile__user__email', 'skill__name']
 
 
 @admin.register(CandidateConsent)

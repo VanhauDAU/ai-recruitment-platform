@@ -2,6 +2,8 @@ import { useEffect, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { completeOAuth, getAuthDestination, getSafeReturnUrl, withReturnUrl } from '@/features/auth'
 import { useSession } from '@/entities/session'
+import { toastSoundOptions } from '@/shared/lib/sound-effects'
+import { message } from '@/shared/lib/toast'
 import PageLoading from '@/shared/ui/PageLoading'
 
 /**
@@ -32,6 +34,7 @@ export default function OAuthCallback({ portal = 'main', loginPath = '/login' })
       .then((result) => {
         const { user } = result
         setCurrentUser(user)
+        message.success('Đăng nhập thành công.', toastSoundOptions('done'))
         const safeNext = getSafeReturnUrl(params.get('next'))
         navigate(getAuthDestination({ user, returnUrl: safeNext }), { replace: true })
       })

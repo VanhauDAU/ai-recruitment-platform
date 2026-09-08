@@ -139,7 +139,7 @@ function ApplicationCard({ application, expanded, onToggle }) {
               className="mt-4 [&_.ant-timeline-item-last]:!pb-0"
               items={timeline.map((item, index) => ({
                 color: index === 0 ? 'green' : 'gray',
-                children: (
+                content: (
                   <>
                     <span className="block text-sm text-slate-700">{item.label}</span>
                     <span className="block text-xs text-slate-400">{formatDateTime(item.occurred_at)}</span>

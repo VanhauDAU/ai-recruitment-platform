@@ -1,5 +1,6 @@
 """Settings shared by every Django environment."""
 
+import json
 from datetime import timedelta
 from pathlib import Path
 
@@ -85,7 +86,8 @@ INSTALLED_APPS = [
     'apps.blog',
     'apps.privacy',
     'apps.services',
-    'apps.speech',
+    'apps.knowledgebase',
+    'apps.uploads',
 ]
 
 MIDDLEWARE = [
@@ -182,18 +184,33 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
-# Media files are split deliberately: R2 public is only for published visual
-# assets; default/private storage is for documents and candidate data.
+# MEDIA_ROOT remains a compatibility alias for the public root. Sensitive and
+# untrusted files have independent roots that are never served by web routes.
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+LEGACY_MEDIA_ROOT = Path(
+    config('LEGACY_MEDIA_ROOT', default=str(BASE_DIR / 'media')).strip()
+).expanduser()
+PUBLIC_MEDIA_ROOT = Path(
+    config('PUBLIC_MEDIA_ROOT', default=str(BASE_DIR / 'public-media')).strip()
+).expanduser()
+MEDIA_ROOT = PUBLIC_MEDIA_ROOT
+PRIVATE_MEDIA_ROOT = Path(
+    config('PRIVATE_MEDIA_ROOT', default=str(BASE_DIR / 'private-media')).strip()
+).expanduser()
+UPLOAD_QUARANTINE_ROOT = Path(
+    config('UPLOAD_QUARANTINE_ROOT', default=str(BASE_DIR / 'quarantine')).strip()
+).expanduser()
 R2_ENDPOINT_URL = config('R2_ENDPOINT_URL', default='').strip()
 R2_REGION_NAME = config('R2_REGION_NAME', default='auto').strip() or 'auto'
 R2_PUBLIC_ACCESS_KEY_ID = config('R2_PUBLIC_ACCESS_KEY_ID', default='').strip()
 R2_PUBLIC_SECRET_ACCESS_KEY = config('R2_PUBLIC_SECRET_ACCESS_KEY', default='').strip()
 R2_PRIVATE_ACCESS_KEY_ID = config('R2_PRIVATE_ACCESS_KEY_ID', default='').strip()
 R2_PRIVATE_SECRET_ACCESS_KEY = config('R2_PRIVATE_SECRET_ACCESS_KEY', default='').strip()
+R2_QUARANTINE_ACCESS_KEY_ID = config('R2_QUARANTINE_ACCESS_KEY_ID', default='').strip()
+R2_QUARANTINE_SECRET_ACCESS_KEY = config('R2_QUARANTINE_SECRET_ACCESS_KEY', default='').strip()
 R2_PUBLIC_BUCKET = config('R2_PUBLIC_BUCKET', default='procv-public-media').strip()
 R2_PRIVATE_BUCKET = config('R2_PRIVATE_BUCKET', default='procv-private-files').strip()
+R2_QUARANTINE_BUCKET = config('R2_QUARANTINE_BUCKET', default='procv-upload-quarantine').strip()
 R2_PUBLIC_BASE_URL = config('R2_PUBLIC_BASE_URL', default='').strip().rstrip('/')
 R2_ENABLED = bool(
     R2_ENDPOINT_URL
@@ -203,18 +220,93 @@ R2_ENABLED = bool(
     and R2_PRIVATE_SECRET_ACCESS_KEY
     and R2_PUBLIC_BASE_URL
 )
+R2_QUARANTINE_ENABLED = bool(
+    R2_ENABLED
+    and R2_QUARANTINE_ACCESS_KEY_ID
+    and R2_QUARANTINE_SECRET_ACCESS_KEY
+    and R2_QUARANTINE_BUCKET
+)
 
 # Kept as a compatibility setting for media helpers and deployments that still
 # use local disk.  With R2, URLs are produced by the public storage backend.
 MEDIA_PUBLIC_BASE_URL = R2_PUBLIC_BASE_URL or config('MEDIA_PUBLIC_BASE_URL', default='').strip()
 IMAGE_UPLOAD_MAX_SIZE = config('IMAGE_UPLOAD_MAX_SIZE', default=5 * 1024 * 1024, cast=int)
 
+# Shared upload-session quarantine. The HTTP/service surface remains fail-closed
+# until this flag is enabled with a real scanner and an explicit purpose allowlist.
+UPLOAD_QUARANTINE_ENABLED = config('UPLOAD_QUARANTINE_ENABLED', default=False, cast=bool)
+EMPLOYER_UPLOAD_SESSION_REQUIRED = config(
+    'EMPLOYER_UPLOAD_SESSION_REQUIRED',
+    default=False,
+    cast=bool,
+)
+CANDIDATE_UPLOAD_SESSION_REQUIRED = config(
+    'CANDIDATE_UPLOAD_SESSION_REQUIRED',
+    default=False,
+    cast=bool,
+)
+UPLOAD_SCANNER_BACKEND = config(
+    'UPLOAD_SCANNER_BACKEND',
+    default='apps.uploads.services.scanners.ClamAVStreamScanner',
+).strip()
+UPLOAD_SESSION_ALLOWED_PURPOSES = tuple(
+    config(
+        'UPLOAD_SESSION_ALLOWED_PURPOSES',
+        default='employer_verification,employer_company_update,candidate_cv',
+        cast=Csv(),
+    )
+)
+UPLOAD_ALLOWED_CONTENT_TYPES = (
+    'application/pdf',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'image/gif',
+    'image/jpeg',
+    'image/png',
+    'image/webp',
+)
+UPLOAD_MAX_BYTES = config('UPLOAD_MAX_BYTES', default=25 * 1024 * 1024, cast=int)
+UPLOAD_OWNER_MAX_ACTIVE_SESSIONS = config('UPLOAD_OWNER_MAX_ACTIVE_SESSIONS', default=10, cast=int)
+UPLOAD_OWNER_MAX_ACTIVE_BYTES = config(
+    'UPLOAD_OWNER_MAX_ACTIVE_BYTES', default=100 * 1024 * 1024, cast=int
+)
+UPLOAD_SPOOL_MEMORY_BYTES = config('UPLOAD_SPOOL_MEMORY_BYTES', default=5 * 1024 * 1024, cast=int)
+UPLOAD_DOCX_MAX_ENTRIES = config('UPLOAD_DOCX_MAX_ENTRIES', default=500, cast=int)
+UPLOAD_DOCX_MAX_UNCOMPRESSED_BYTES = config(
+    'UPLOAD_DOCX_MAX_UNCOMPRESSED_BYTES', default=100 * 1024 * 1024, cast=int
+)
+UPLOAD_DOCX_MAX_COMPRESSION_RATIO = config(
+    'UPLOAD_DOCX_MAX_COMPRESSION_RATIO', default=100, cast=float
+)
+UPLOAD_SESSION_TTL_SECONDS = config('UPLOAD_SESSION_TTL_SECONDS', default=86400, cast=int)
+UPLOAD_WRITE_LEASE_SECONDS = config('UPLOAD_WRITE_LEASE_SECONDS', default=120, cast=int)
+UPLOAD_SCAN_LEASE_SECONDS = config('UPLOAD_SCAN_LEASE_SECONDS', default=120, cast=int)
+UPLOAD_SCAN_MAX_ATTEMPTS = config('UPLOAD_SCAN_MAX_ATTEMPTS', default=4, cast=int)
+UPLOAD_SCAN_RETRY_BASE_SECONDS = config('UPLOAD_SCAN_RETRY_BASE_SECONDS', default=30, cast=int)
+UPLOAD_CLEAN_RETENTION_DAYS = config('UPLOAD_CLEAN_RETENTION_DAYS', default=730, cast=int)
+UPLOAD_EVIDENCE_RETENTION_DAYS = config('UPLOAD_EVIDENCE_RETENTION_DAYS', default=730, cast=int)
+UPLOAD_CLEANUP_BATCH_SIZE = config('UPLOAD_CLEANUP_BATCH_SIZE', default=100, cast=int)
+CLAMAV_HOST = config('CLAMAV_HOST', default='').strip()
+CLAMAV_PORT = config('CLAMAV_PORT', default=3310, cast=int)
+CLAMAV_CONNECT_TIMEOUT_SECONDS = config('CLAMAV_CONNECT_TIMEOUT_SECONDS', default=2, cast=float)
+CLAMAV_READ_TIMEOUT_SECONDS = config('CLAMAV_READ_TIMEOUT_SECONDS', default=60, cast=float)
+CLAMAV_STREAM_CHUNK_BYTES = config('CLAMAV_STREAM_CHUNK_BYTES', default=1024 * 1024, cast=int)
+
 _LOCAL_MEDIA_STORAGE = {
     'BACKEND': 'django.core.files.storage.FileSystemStorage',
-    'OPTIONS': {'location': MEDIA_ROOT, 'base_url': MEDIA_URL},
+    'OPTIONS': {'location': PUBLIC_MEDIA_ROOT, 'base_url': MEDIA_URL},
+}
+_LOCAL_PRIVATE_MEDIA_STORAGE = {
+    'BACKEND': 'common.private_storage.PrivateFileSystemStorage',
+    'OPTIONS': {'location': PRIVATE_MEDIA_ROOT, 'base_url': None},
+}
+_LOCAL_QUARANTINE_STORAGE = {
+    'BACKEND': 'common.private_storage.QuarantineFileSystemStorage',
+    'OPTIONS': {'location': UPLOAD_QUARANTINE_ROOT, 'base_url': None},
 }
 STORAGES = {
-    'default': _LOCAL_MEDIA_STORAGE,
+    'default': _LOCAL_PRIVATE_MEDIA_STORAGE,
+    'private_media': _LOCAL_PRIVATE_MEDIA_STORAGE,
+    'quarantine': _LOCAL_QUARANTINE_STORAGE,
     'public_media': _LOCAL_MEDIA_STORAGE,
     'staticfiles': {'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage'},
 }
@@ -226,7 +318,7 @@ if R2_ENABLED:
         'file_overwrite': False,
     }
     STORAGES['default'] = {
-        'BACKEND': 'storages.backends.s3.S3Storage',
+        'BACKEND': 'common.private_storage.PrivateS3Storage',
         'OPTIONS': {
             **_R2_COMMON_OPTIONS,
             'bucket_name': R2_PRIVATE_BUCKET,
@@ -235,6 +327,18 @@ if R2_ENABLED:
             'querystring_auth': False,
         },
     }
+    STORAGES['private_media'] = STORAGES['default']
+    if R2_QUARANTINE_ENABLED:
+        STORAGES['quarantine'] = {
+            'BACKEND': 'common.private_storage.QuarantineS3Storage',
+            'OPTIONS': {
+                **_R2_COMMON_OPTIONS,
+                'bucket_name': R2_QUARANTINE_BUCKET,
+                'access_key': R2_QUARANTINE_ACCESS_KEY_ID,
+                'secret_key': R2_QUARANTINE_SECRET_ACCESS_KEY,
+                'querystring_auth': True,
+            },
+        }
     STORAGES['public_media'] = {
         'BACKEND': 'storages.backends.s3.S3Storage',
         'OPTIONS': {
@@ -294,12 +398,27 @@ REST_FRAMEWORK = {
         'consent': '20/hour',
         'job_view': '120/hour',
         'job_impression': '240/hour',
+        'job_report': '10/hour',
         'announcement_event': '240/hour',
         'announcement_runtime': '60/hour',
         'cv_import': '10/hour',
-        'speech_catalog': '120/hour',
-        'speech_session': '60/hour',
-        'speech_adhoc': '90/hour',
+        'ai_job_generation': '3/min',
+        'knowledgebase_public': '120/min',
+        'public_companies': '120/min',
+        'upload_session': '30/hour',
+        'upload_status': '120/min',
+        'upload_content': '20/hour',
+        'employer_phone_send': '5/min',
+        'employer_phone_verify': '10/min',
+        'employer_phone_status': '120/min',
+        # Account limits protect one recruiter; IP limits are deliberately
+        # broader because offices and local Docker users commonly share an IP.
+        'employer_domain_claim_issue_account': '10/day',
+        'employer_domain_claim_issue_ip': '60/hour',
+        'employer_domain_claim_verify_account': '30/hour',
+        'employer_domain_claim_verify_ip': '120/hour',
+        'employer_domain_claim_manual_account': '3/day',
+        'employer_domain_claim_manual_ip': '30/hour',
     },
 }
 
@@ -407,6 +526,40 @@ JOB_VIEWER_COOKIE_MAX_AGE = 365 * 24 * 60 * 60
 JOB_VIEWER_COOKIE_SECURE = IS_PRODUCTION
 JOB_VIEWER_COOKIE_SAMESITE = 'Lax'
 
+# Job deadline policy is exposed by the employer posting-context API so every
+# client uses the same boundaries as the domain service. The default keeps the
+# familiar 30-day suggestion while allowing longer hiring processes up to 90 days.
+JOB_POSTING_DEFAULT_DEADLINE_DAYS = config(
+    'JOB_POSTING_DEFAULT_DEADLINE_DAYS', default=30, cast=int
+)
+JOB_POSTING_MAX_DEADLINE_DAYS = config('JOB_POSTING_MAX_DEADLINE_DAYS', default=90, cast=int)
+JOB_POSTING_MAX_PUBLIC_LIFETIME_DAYS = config(
+    'JOB_POSTING_MAX_PUBLIC_LIFETIME_DAYS', default=90, cast=int
+)
+
+# Job lifecycle V2 is deployed expand-first. ``legacy`` keeps the current
+# candidate availability contract, ``shadow`` computes V2 evidence without
+# changing responses, and ``enforce`` makes the visibility timestamps canonical.
+JOB_LIFECYCLE_V2_MODE = config('JOB_LIFECYCLE_V2_MODE', default='legacy').strip().lower()
+EMPLOYER_BADGE_POLICY_MODE = config('EMPLOYER_BADGE_POLICY_MODE', default='shadow').strip().lower()
+JOB_PRESENTATION_V2_ENABLED = config('JOB_PRESENTATION_V2_ENABLED', default=False, cast=bool)
+SERVICE_CATALOG_V2_ENABLED = config('SERVICE_CATALOG_V2_ENABLED', default=False, cast=bool)
+SERVICE_ACTIVATION_ENABLED = config('SERVICE_ACTIVATION_ENABLED', default=False, cast=bool)
+SPONSORED_JOB_DISTRIBUTION_ENABLED = config(
+    'SPONSORED_JOB_DISTRIBUTION_ENABLED', default=False, cast=bool
+)
+JOB_PROMOTION_REFRESH_ENABLED = config('JOB_PROMOTION_REFRESH_ENABLED', default=False, cast=bool)
+JOB_PROMOTION_ALERT_ENABLED = config('JOB_PROMOTION_ALERT_ENABLED', default=False, cast=bool)
+JOB_PROMOTION_METRICS_ENABLED = config('JOB_PROMOTION_METRICS_ENABLED', default=False, cast=bool)
+SAVED_JOB_REMARKETING_ENABLED = config('SAVED_JOB_REMARKETING_ENABLED', default=False, cast=bool)
+SAVED_JOB_REMARKETING_RETENTION_DAYS = config(
+    'SAVED_JOB_REMARKETING_RETENTION_DAYS', default=90, cast=int
+)
+JOB_PROMOTION_ALERT_SELECTION_BATCH_SIZE = config(
+    'JOB_PROMOTION_ALERT_SELECTION_BATCH_SIZE', default=200, cast=int
+)
+SAVED_JOB_REMARKETING_ENABLED = config('SAVED_JOB_REMARKETING_ENABLED', default=False, cast=bool)
+
 # SecurityMiddleware protects Django Admin/session cookies as well as API responses.
 SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=IS_PRODUCTION, cast=bool)
 SECURE_PROXY_SSL_HEADER = (
@@ -478,16 +631,71 @@ CELERY_TIMEZONE = TIME_ZONE
 CELERY_TASK_DEFAULT_QUEUE = 'default'
 CELERY_TASK_ROUTES = {
     'apps.accounts.tasks.auth_email.*': {'queue': 'auth-email'},
-    'apps.employers.tasks.phone_otp.*': {'queue': 'auth-email'},
+    'apps.employers.tasks.phone_sms.*': {'queue': 'auth-sms'},
     'apps.employers.tasks.tax_lookup.*': {'queue': 'default'},
+    'apps.employers.tasks.domain_claims.*': {'queue': 'default'},
     'apps.cvs.tasks.*': {'queue': 'cv-export'},
-    'apps.speech.tasks.*': {'queue': 'speech-artifacts'},
+    'apps.uploads.tasks.*': {'queue': 'upload-scan'},
+    'apps.jobs.tasks.ai_generation.*': {'queue': 'ai-generation'},
+    'apps.jobs.tasks.*': {'queue': 'candidate-email'},
+    'apps.applications.tasks.*': {'queue': 'candidate-email'},
+    'apps.services.tasks.prepare_job_service_alert_dispatch': {'queue': 'candidate-email'},
+    'apps.services.tasks.deliver_job_service_alert_recipient': {'queue': 'candidate-email'},
+    'apps.services.tasks.dispatch_pending_job_service_alerts': {'queue': 'candidate-email'},
+    'apps.services.tasks.*': {'queue': 'default'},
 }
 CELERY_TASK_ACKS_LATE = True
 CELERY_TASK_REJECT_ON_WORKER_LOST = True
 CELERY_TASK_TIME_LIMIT = 60
 CELERY_TASK_SOFT_TIME_LIMIT = 50
+EMPLOYER_EVENT_RETENTION_DAYS = config('EMPLOYER_EVENT_RETENTION_DAYS', default=730, cast=int)
+EMPLOYER_DOMAIN_DNS_TIMEOUT_SECONDS = config(
+    'EMPLOYER_DOMAIN_DNS_TIMEOUT_SECONDS', default=3.0, cast=float
+)
+EMPLOYER_DOMAIN_RECHECK_BATCH_SIZE = config(
+    'EMPLOYER_DOMAIN_RECHECK_BATCH_SIZE', default=100, cast=int
+)
 CELERY_BEAT_SCHEDULE = {
+    'purge-expired-ai-runtime-metadata': {
+        'task': 'apps.ai_core.tasks.purge_expired_ai_metadata',
+        'schedule': 86400.0,
+    },
+    'recover-stale-job-ai-generations': {
+        'task': 'apps.jobs.tasks.ai_generation.recover_stale_job_generations',
+        'schedule': 5.0,
+    },
+    'purge-expired-job-ai-generation-content': {
+        'task': 'apps.jobs.tasks.ai_generation.purge_job_generation_content',
+        'schedule': 86400.0,
+    },
+    'process-automatic-application-rejections': {
+        'task': 'apps.applications.tasks.process_automatic_application_rejections',
+        'schedule': 300.0,
+    },
+    'expire-service-inventory-and-activations': {
+        'task': 'apps.services.tasks.expire_service_inventory_and_activations',
+        'schedule': 60.0,
+    },
+    'dispatch-pending-job-service-alerts': {
+        'task': 'apps.services.tasks.dispatch_pending_job_service_alerts',
+        'schedule': 60.0,
+    },
+    'purge-saved-job-remarketing-history': {
+        'task': 'apps.services.tasks.purge_saved_job_remarketing_history',
+        'schedule': 86400.0,
+    },
+    'prepare-due-candidate-job-digests': {
+        'task': 'apps.jobs.tasks.prepare_due_candidate_job_digests',
+        'schedule': 300.0,
+    },
+    'dispatch-pending-candidate-job-digests': {
+        'task': 'apps.jobs.tasks.dispatch_pending_candidate_job_digests',
+        'schedule': 300.0,
+    },
+    'purge-candidate-job-digest-history': {
+        'task': 'apps.jobs.tasks.purge_candidate_job_digest_history',
+        'schedule': 86400.0,
+    },
     'dispatch-pending-auth-email-jobs': {
         'task': 'apps.accounts.tasks.auth_email.dispatch_pending_auth_email_jobs',
         'schedule': 60.0,
@@ -504,49 +712,87 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'apps.cvs.tasks.purge_expired_cv_import_sources',
         'schedule': 86400.0,
     },
-    'reconcile-speech-artifacts': {
-        'task': 'apps.speech.tasks.assets.reconcile_speech_artifacts',
+    'dispatch-pending-upload-scans': {
+        'task': 'apps.uploads.tasks.dispatch_pending_upload_scans',
+        'schedule': 30.0,
+    },
+    'expire-and-clean-upload-sessions': {
+        'task': 'apps.uploads.tasks.expire_and_clean_upload_sessions',
+        'schedule': 300.0,
+    },
+    'recover-stale-employer-sms-dispatches': {
+        'task': 'apps.employers.tasks.phone_sms.recover_stale_employer_sms_dispatches',
         'schedule': 60.0,
     },
-    'purge-obsolete-speech-artifacts': {
-        'task': 'apps.speech.tasks.assets.purge_obsolete_speech_artifacts',
+    'purge-employer-sms-verification-data': {
+        'task': 'apps.employers.tasks.phone_sms.purge_employer_sms_verification_data',
+        'schedule': 86400.0,
+    },
+    'dispatch-pending-employer-verification-notifications': {
+        'task': 'apps.employers.tasks.verification_notification.dispatch_pending_employer_verification_notifications',
+        'schedule': 60.0,
+    },
+    'purge-expired-employer-event-history': {
+        'task': 'apps.employers.tasks.notifications.purge_expired_employer_event_history',
+        'schedule': 86400.0,
+    },
+    'reconcile-company-domain-claims': {
+        'task': 'apps.employers.tasks.domain_claims.reconcile_company_domain_claims',
         'schedule': 86400.0,
     },
 }
 
-# VieNeu-TTS chạy trong process riêng để không nhân model theo số Gunicorn/Celery
-# worker. Django chỉ cấp session ngắn hạn sau khi đã resolve nội dung public.
-SPEECH_TTS_BASE_URL = config('SPEECH_TTS_BASE_URL', default='http://127.0.0.1:8001').strip()
-SPEECH_TTS_INTERNAL_TOKEN = config(
-    'SPEECH_TTS_INTERNAL_TOKEN', default='dev-tts-internal-token-change-me'
+# Generative AI runtime. The environment flag is the hard kill switch; site
+# settings can only narrow access further. Production therefore stays disabled
+# until credentials, the dedicated worker and rollout gates are ready.
+AI_RUNTIME_ENABLED = config('AI_RUNTIME_ENABLED', default=not IS_PRODUCTION, cast=bool)
+AI_PROVIDER_BACKEND = config('AI_PROVIDER_BACKEND', default='gemini_developer').strip()
+AI_JOB_GENERATION_MODEL = config(
+    'AI_JOB_GENERATION_MODEL',
+    default='gemini-3.5-flash-lite',
 ).strip()
-SPEECH_TTS_CONNECT_TIMEOUT_SECONDS = config(
-    'SPEECH_TTS_CONNECT_TIMEOUT_SECONDS', default=0.5, cast=float
+AI_JOB_GENERATION_MODEL_ALLOWLIST = tuple(
+    model.strip()
+    for model in config(
+        'AI_JOB_GENERATION_MODEL_ALLOWLIST',
+        default='gemini-3.5-flash-lite',
+        cast=Csv(),
+    )
+    if model.strip()
 )
-SPEECH_TTS_READ_TIMEOUT_SECONDS = config('SPEECH_TTS_READ_TIMEOUT_SECONDS', default=2.0, cast=float)
-SPEECH_GENERATION_TIMEOUT_SECONDS = config(
-    'SPEECH_GENERATION_TIMEOUT_SECONDS', default=900.0, cast=float
+AI_JOB_GENERATION_DAILY_LIMIT = config(
+    'AI_JOB_GENERATION_DAILY_LIMIT',
+    default=10,
+    cast=int,
 )
-SPEECH_ARTIFACT_POLL_INTERVAL_SECONDS = config(
-    'SPEECH_ARTIFACT_POLL_INTERVAL_SECONDS', default=2.0, cast=float
+AI_JOB_GENERATION_CONTENT_RETENTION_DAYS = config(
+    'AI_JOB_GENERATION_CONTENT_RETENTION_DAYS',
+    default=90,
+    cast=int,
 )
-SPEECH_ARTIFACT_DOWNLOAD_TIMEOUT_SECONDS = config(
-    'SPEECH_ARTIFACT_DOWNLOAD_TIMEOUT_SECONDS', default=120.0, cast=float
+AI_INVOCATION_METADATA_RETENTION_DAYS = config(
+    'AI_INVOCATION_METADATA_RETENTION_DAYS',
+    default=365,
+    cast=int,
 )
-SPEECH_ARTIFACT_RETENTION_DAYS = config('SPEECH_ARTIFACT_RETENTION_DAYS', default=30, cast=int)
-SPEECH_CAPABILITIES_CACHE_SECONDS = config(
-    'SPEECH_CAPABILITIES_CACHE_SECONDS', default=300, cast=int
+AI_JOB_GENERATION_LEASE_SECONDS = config(
+    'AI_JOB_GENERATION_LEASE_SECONDS',
+    default=85,
+    cast=int,
 )
-SPEECH_MAX_TEXT_CHARS = config('SPEECH_MAX_TEXT_CHARS', default=30_000, cast=int)
-# Ad-hoc text arrives from the client instead of from published editorial
-# content, so it is capped at roughly one spoken paragraph. The synthesis pool
-# runs a single model worker; a long request would block every other listener.
-SPEECH_MAX_ADHOC_TEXT_CHARS = config('SPEECH_MAX_ADHOC_TEXT_CHARS', default=600, cast=int)
-SPEECH_DEFAULT_VOICE_ID = config('SPEECH_DEFAULT_VOICE_ID', default='north-male-natural').strip()
-SPEECH_DEFAULT_STYLE = config('SPEECH_DEFAULT_STYLE', default='tu_nhien').strip()
-SPEECH_MODEL_REVISION = config(
-    'SPEECH_MODEL_REVISION', default='vieneu-3.2.3-v3-turbo-int8'
-).strip()
+AI_PROVIDER_TIMEOUT_SECONDS = config('AI_PROVIDER_TIMEOUT_SECONDS', default=40, cast=float)
+AI_PROVIDER_MAX_ATTEMPTS = config('AI_PROVIDER_MAX_ATTEMPTS', default=2, cast=int)
+AI_PROVIDER_RETRY_BASE_SECONDS = config(
+    'AI_PROVIDER_RETRY_BASE_SECONDS',
+    default=0.5,
+    cast=float,
+)
+AI_PROVIDER_API_VERSION = config('AI_PROVIDER_API_VERSION', default='v1').strip()
+AI_MODEL_PRICING_USD = config('AI_MODEL_PRICING_USD', default='{}', cast=json.loads)
+AI_POLICY_CACHE_SECONDS = config('AI_POLICY_CACHE_SECONDS', default=60, cast=int)
+GEMINI_API_KEY = config('GEMINI_API_KEY', default='').strip()
+GOOGLE_CLOUD_PROJECT = config('GOOGLE_CLOUD_PROJECT', default='').strip()
+GOOGLE_CLOUD_LOCATION = config('GOOGLE_CLOUD_LOCATION', default='global').strip()
 
 # Email — nhà cung cấp SMTP tuỳ ý (Gmail, SendGrid, Amazon SES, Mailgun, Postmark...).
 # Chưa điền EMAIL_HOST_USER -> in ra console cho dev; điền credential vào .env là
@@ -593,6 +839,16 @@ FRONTEND_SHELL_CACHE_SECONDS = config(
     default=30,
     cast=int,
 )
+KNOWLEDGEBASE_PUBLIC_ENABLED = config(
+    'KNOWLEDGEBASE_PUBLIC_ENABLED',
+    default=not IS_PRODUCTION,
+    cast=bool,
+)
+KNOWLEDGEBASE_SEARCH_INDEX_ENABLED = config(
+    'KNOWLEDGEBASE_SEARCH_INDEX_ENABLED',
+    default=False,
+    cast=bool,
+)
 ADMIN_INVITATION_PATH = config('ADMIN_INVITATION_PATH', default='/admin/app/invitation')
 ADMIN_PASSWORD_RESET_PATH = config('ADMIN_PASSWORD_RESET_PATH', default='/admin/app/reset-password')
 EMPLOYER_EMAIL_VERIFICATION_PATH = config(
@@ -602,6 +858,13 @@ EMPLOYER_PASSWORD_RESET_PATH = config(
     'EMPLOYER_PASSWORD_RESET_PATH', default='/tuyendung/app/reset-password'
 )
 EMPLOYER_TERMS_POLICY_VERSION = config('EMPLOYER_TERMS_POLICY_VERSION', default='2026-07-18')
+EMPLOYER_DPA_POLICY_VERSION = config('EMPLOYER_DPA_POLICY_VERSION', default='').strip()
+EMPLOYER_DPA_DOCUMENT_SHA256 = config('EMPLOYER_DPA_DOCUMENT_SHA256', default='').strip().lower()
+EMPLOYER_DPA_DOCUMENT_URL = config(
+    'EMPLOYER_DPA_DOCUMENT_URL',
+    default='https://tuyendung.topcv.vn/data-processing-agreement',
+).strip()
+EMPLOYER_DPA_GRACE_DAYS = config('EMPLOYER_DPA_GRACE_DAYS', default=30, cast=int)
 REQUIRE_APPROVED_EMPLOYER_VERIFICATION = config(
     'REQUIRE_APPROVED_EMPLOYER_VERIFICATION',
     default=False,
@@ -612,6 +875,30 @@ REQUIRE_APPROVED_EMPLOYER_CANDIDATE_ACCESS = config(
     default=False,
     cast=bool,
 )
+
+# Provider-neutral employer phone verification. Production remains disabled
+# until Ops/Product explicitly select a gateway, sender and approved template.
+EMPLOYER_SMS_OTP_ENABLED = config('EMPLOYER_SMS_OTP_ENABLED', default=False, cast=bool)
+EMPLOYER_SMS_PROVIDER = config('EMPLOYER_SMS_PROVIDER', default='disabled').strip().lower()
+EMPLOYER_SMS_ENDPOINT_URL = config('EMPLOYER_SMS_ENDPOINT_URL', default='').strip()
+EMPLOYER_SMS_API_TOKEN = config('EMPLOYER_SMS_API_TOKEN', default='').strip()
+EMPLOYER_SMS_SENDER = config('EMPLOYER_SMS_SENDER', default='').strip()
+EMPLOYER_SMS_TEMPLATE_ID = config('EMPLOYER_SMS_TEMPLATE_ID', default='').strip()
+EMPLOYER_SMS_PAYLOAD_ENCRYPTION_KEY = config(
+    'EMPLOYER_SMS_PAYLOAD_ENCRYPTION_KEY', default=''
+).strip()
+EMPLOYER_SMS_CHALLENGE_HMAC_KEY = config('EMPLOYER_SMS_CHALLENGE_HMAC_KEY', default='').strip()
+EMPLOYER_SMS_CONNECT_TIMEOUT_SECONDS = config(
+    'EMPLOYER_SMS_CONNECT_TIMEOUT_SECONDS', default=2.0, cast=float
+)
+EMPLOYER_SMS_READ_TIMEOUT_SECONDS = config(
+    'EMPLOYER_SMS_READ_TIMEOUT_SECONDS', default=5.0, cast=float
+)
+EMPLOYER_SMS_DISPATCH_STALE_SECONDS = config(
+    'EMPLOYER_SMS_DISPATCH_STALE_SECONDS', default=300, cast=int
+)
+EMPLOYER_SMS_CHALLENGE_RETENTION_DAYS = 30
+EMPLOYER_SMS_EVENT_RETENTION_DAYS = 730
 
 # Xác thực email: TTL token (24h) và thời gian chờ giữa 2 lần gửi lại (giây).
 EMAIL_VERIFICATION_TTL = config('EMAIL_VERIFICATION_TTL', default=60 * 60 * 24, cast=int)

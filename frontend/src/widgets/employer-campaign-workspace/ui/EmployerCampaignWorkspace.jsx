@@ -4,6 +4,7 @@ import {
   FileTextOutlined,
   HistoryOutlined,
   TeamOutlined,
+  ToolOutlined,
 } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Alert, Button, Modal, Select, Skeleton } from 'antd'
@@ -15,6 +16,13 @@ import {
   getCampaignReport,
   updateCampaign,
 } from '@/entities/campaign'
+import {
+  EMPLOYER_CAPABILITIES,
+  EmployerReadinessGateState,
+  useEmployerReadiness,
+} from '@/entities/employer-profile'
+import { getJobPostingContext, jobKeys } from '@/entities/job'
+import { JobServiceManager } from '@/features/manage-job-services'
 import {
   CampaignNameForm,
 } from '@/features/manage-campaigns'
@@ -30,6 +38,7 @@ const TABS = [
   { key: 'overview', label: 'Tổng quan', icon: AppstoreOutlined },
   { key: 'apply_cv', label: 'CV ứng tuyển', icon: TeamOutlined },
   { key: 'job', label: 'Tin tuyển dụng', icon: FileTextOutlined },
+  { key: 'services', label: 'Dịch vụ', icon: ToolOutlined },
   { key: 'activity', label: 'Lịch sử hoạt động', icon: HistoryOutlined },
 ]
 
@@ -48,6 +57,13 @@ export default function EmployerCampaignWorkspace({ publicId }) {
   const [editing, setEditing] = useState(false)
   const tabRefs = useRef([])
   const queryClient = useQueryClient()
+  const {
+    readiness,
+    profileQuery,
+    isChecking: readinessChecking,
+    isAccessError: readinessError,
+    canAccessCandidateData,
+  } = useEmployerReadiness()
   const campaignQuery = useQuery({
     queryKey: campaignKeys.detail(publicId),
     queryFn: () => getCampaign(publicId),
@@ -57,6 +73,10 @@ export default function EmployerCampaignWorkspace({ publicId }) {
     queryKey: campaignKeys.report(publicId),
     queryFn: () => getCampaignReport(publicId),
     enabled: Boolean(publicId),
+  })
+  const postingContextQuery = useQuery({
+    queryKey: jobKeys.postingContext,
+    queryFn: getJobPostingContext,
   })
   const updateMutation = useMutation({
     mutationFn: (values) => updateCampaign(publicId, values),
@@ -216,9 +236,53 @@ export default function EmployerCampaignWorkspace({ publicId }) {
               reportLoading={reportQuery.isLoading}
             />
           )}
-          {activeTab === 'apply_cv' && <CampaignApplyCvPanel publicId={publicId} />}
-          {activeTab === 'job' && <CampaignJobsPanel publicId={publicId} campaign={campaign} />}
-          {activeTab === 'activity' && <CampaignActivityPanel publicId={publicId} />}
+          {activeTab === 'apply_cv' && (canAccessCandidateData ? (
+            <CampaignApplyCvPanel publicId={publicId} />
+          ) : (
+            <div className="p-4 sm:p-5">
+              <EmployerReadinessGateState
+                compact
+                capability={EMPLOYER_CAPABILITIES.CANDIDATE_DATA}
+                checking={readinessChecking}
+                error={readinessError}
+                readiness={readiness}
+                onRetry={profileQuery.refetch}
+              />
+            </div>
+          ))}
+          {activeTab === 'job' && (
+            <CampaignJobsPanel
+              publicId={publicId}
+              campaign={campaign}
+              candidateDataAccess={canAccessCandidateData}
+            />
+          )}
+          {activeTab === 'services' && (
+            <div className="p-4 sm:p-5">
+              <JobServiceManager
+                campaignPublicId={publicId}
+                activationEnabled={postingContextQuery.data?.services?.activation_enabled === true}
+                refreshEnabled={postingContextQuery.data?.services?.refresh_enabled === true}
+                alertEnabled={postingContextQuery.data?.services?.alert_enabled === true}
+                metricsEnabled={postingContextQuery.data?.services?.metrics_enabled === true}
+                showInventory={false}
+              />
+            </div>
+          )}
+          {activeTab === 'activity' && (canAccessCandidateData ? (
+            <CampaignActivityPanel publicId={publicId} />
+          ) : (
+            <div className="p-4 sm:p-5">
+              <EmployerReadinessGateState
+                compact
+                capability={EMPLOYER_CAPABILITIES.CANDIDATE_DATA}
+                checking={readinessChecking}
+                error={readinessError}
+                readiness={readiness}
+                onRetry={profileQuery.refetch}
+              />
+            </div>
+          ))}
         </div>
       </section>
 

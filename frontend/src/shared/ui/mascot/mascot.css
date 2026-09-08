@@ -38,12 +38,26 @@
   transform-origin: 64% 62%;
 }
 
+.procv-mascot[data-gaze='down'] .procv-mascot__eyes-current {
+  animation: procvMascotLookDown 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.procv-mascot__face-arm--right {
+  animation: procvMascotCoverRight 0.46s cubic-bezier(0.2, 1.35, 0.38, 1) both;
+  transform-origin: 63% 65%;
+}
+
+.procv-mascot__face-arm--left {
+  animation: procvMascotCoverLeft 0.46s 0.04s cubic-bezier(0.2, 1.35, 0.38, 1) both;
+  transform-origin: 37% 65%;
+}
+
 /*
  * Miệng nói dùng cặp animation nghịch đảo như mắt chớp: lớp miệng theo emotion
  * phải tắt đúng lúc lớp miệng mở bật lên, nếu không hai khẩu hình chồng nhau
  * (rõ nhất ở `success`, miệng cười rộng thò ra ngoài miệng happy).
  *
- * Nhịp chia không đều để đọc ra như đang nói chứ không phải máy đếm nhịp.
+ * Nhịp chia không đều để chuyển động tự nhiên hơn máy đếm nhịp.
  */
 .procv-mascot__mouth-talk {
   animation: procvMascotTalk 0.62s steps(1, end) infinite;
@@ -101,6 +115,21 @@
 @keyframes procvMascotWave {
   from { transform: rotate(-10deg); }
   to { transform: rotate(12deg); }
+}
+
+@keyframes procvMascotLookDown {
+  from { opacity: 0; transform: translateY(-2px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes procvMascotCoverRight {
+  from { opacity: 0; transform: translate(10px, 18px) rotate(24deg); }
+  to { opacity: 1; transform: translate(0, 0) rotate(0); }
+}
+
+@keyframes procvMascotCoverLeft {
+  from { opacity: 0; transform: translate(-10px, 18px) rotate(-24deg); }
+  to { opacity: 1; transform: translate(0, 0) rotate(0); }
 }
 
 @keyframes procvMascotTalk {

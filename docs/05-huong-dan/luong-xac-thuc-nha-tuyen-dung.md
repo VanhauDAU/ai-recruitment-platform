@@ -80,6 +80,38 @@ backend mới ghi welcome job vào transactional outbox. Vì vậy đăng ký b�
 không nhận thư chào mừng trước thư xác thực. Token đã dùng, request confirm lặp
 lại và thao tác gửi lại link không tạo thêm thư chào mừng.
 
+### Xác minh tên miền công ty cho dấu tick công khai
+
+Xác thực mailbox ở trên chỉ chứng minh recruiter kiểm soát địa chỉ email; nó
+chưa chứng minh company kiểm soát tên miền. Sau khi liên kết company, recruiter
+có email công việc đã xác thực có thể tạo domain claim tại
+`POST /api/employer/company/domain-claims/`. Backend luôn suy exact domain từ
+email hiện tại, chuẩn hóa IDNA và không nhận domain tùy ý từ request.
+
+Luồng DNS:
+
+1. backend tạo challenge entropy cao, chỉ lưu SHA-256 và trả TXT value đúng một
+   lần trong response create/rotate;
+2. quản trị DNS thêm TXT tại `_procv-verification.<exact-domain>`;
+3. recruiter bấm xác minh; resolver có timeout hữu hạn và chỉ đọc DNS, không
+   gọi URL do người dùng cung cấp;
+4. bằng chứng được kiểm lại mỗi 30 ngày. Lỗi DNS tạm thời chuyển sang `grace`
+   tối đa 7 ngày; quá hạn thì mất hiệu lực. Parent domain không tự xác minh cho
+   subdomain.
+
+Nếu không thể thao tác DNS, recruiter có thể yêu cầu admin review thủ công.
+Admin phải có quyền domain riêng, xem impact rồi confirm bằng token chống stale,
+ghi lý do và dựa trên hồ sơ pháp lý đã duyệt. Bằng chứng thủ công hết hạn sau 12
+tháng. Pending claim không giữ chỗ domain toàn cục; tại thời điểm approve/verify,
+database chỉ cho một company có active claim trên exact domain. Dữ liệu email
+công ty cũ chỉ được phân loại `legacy_inferred`, tuyệt đối không tự nâng thành
+verified.
+
+Danh sách/domain detail chỉ đọc evidence đã lưu; API public job không truy vấn
+DNS trực tiếp. Đổi email, mất `email_verified`, đổi company hoặc revoke/expire
+claim làm tiêu chí domain của recruiter fail ngay. Public API không tiết lộ
+tiêu chí đang thiếu; checklist chi tiết chỉ dành cho chính recruiter và admin.
+
 ## Đăng ký bằng Google
 
 Nút Google chỉ bật sau khi người dùng đồng ý điều khoản bắt buộc. OAuth dùng
@@ -196,6 +228,46 @@ danh. Mọi thay đổi tên pháp lý, MST hoặc thông tin công ty đi qua *
 nhật công ty** riêng và không được suy ra từ thẻ đối chiếu MST. Nguồn đối chiếu
 chỉ mang tính bổ trợ; quyết định cuối cùng dựa trên giấy tờ pháp lý và audit.
 
+### Quyết định cuối và thay đổi hiệu lực
+
+- Admin phải **Nhận xử lý** để case vào `in_review`. Duyệt/từ chối/yêu cầu bổ
+  sung từng document không tự đổi case thành `approved` và không tự xác thực
+  company.
+- Quyết định cuối luôn theo hai bước: preview `decision-impact`, xem tax/company/
+  capability/hold impact, rồi confirm bằng `impact_token`. Nếu hồ sơ hoặc tài
+  nguyên thay đổi, API trả `409` và admin phải preview lại.
+- Tax `pending` phải chờ. Các kết quả advisory không đủ tin cậy chỉ được override
+  bởi actor có quyền riêng và phải ghi lý do audit.
+- Case đã duyệt có thể bị `revoked` hoặc `expired` thủ công qua preview/confirm.
+  Company vẫn giữ trạng thái pháp nhân; recruiter mất candidate-data và quyền
+  duyệt job, active job bị ẩn khỏi public nhưng workspace/tạo/sửa/gửi tin còn mở.
+- Recruiter xử lý lại trên cùng case với `revision++`, resubmit về `pending`,
+  admin nhận xử lý rồi có thể `reapproved`. Reapprove chỉ gỡ hold nguồn
+  verification, không gỡ DPA/account/moderation hold khác.
+- Sau final decision `rejected`, recruiter phải thay toàn bộ giấy tờ hiện hành
+  đang bị `rejected` hoặc `changes_requested`. Thay một phần chỉ lưu phiên bản
+  giấy tờ mới; case chỉ về `pending` và tăng `revision` khi cả bộ cần sửa đã
+  được thay. Admin có thể **Nhận xử lý lại**, duyệt từng giấy tờ và đưa ra một
+  final decision mới.
+- Chỉ final decision `rejected` tăng số lần từ chối. Từ chối/yêu cầu bổ sung
+  một document không tính lượt. Lần final reject thứ ba khóa nộp lại và các
+  capability nhạy cảm, nhưng không tự ban tài khoản: recruiter vẫn đăng nhập,
+  xem lý do và liên hệ hỗ trợ/khiếu nại. Admin có quyền
+  `employer_verification.resubmission_unlock` có thể mở khóa ngoại lệ với lý do
+  và `lock_version`; lịch sử/số lần từ chối không bị xóa.
+- Hồ sơ auto-approved lịch sử được phân loại nguồn `legacy_auto` hoặc
+  `legacy_unknown` bằng command dry-run/apply; không bịa actor/quyết định và
+  không tự reset hoặc áp hold.
+
+Trên giao diện admin, trang Xác thực dùng một bàn xử lý: bộ giấy tờ/đối chiếu ở
+vùng chính, quyết định cuối và hành trình ở rail, lịch sử ở cuối trang. Khối
+**Quyết định cuối hồ sơ** chỉ hiện action mà actor có quyền và luôn hiển thị số
+lần từ chối. Mỗi action mở modal **Xem tác động** trước; nút xác nhận chỉ xuất
+hiện sau khi nhận `impact_token`. Final reject thứ ba phải cảnh báo tác động
+khóa nộp lại. Nếu hồ sơ/tài nguyên thay đổi, modal xóa preview, tải lại detail
+và yêu cầu xem tác động lại. Từ màn kiểm duyệt tin, blocker xác thực/DPA chỉ
+tạo link tới đúng recruiter khi actor có quyền xem hồ sơ xác thực.
+
 Mỗi action mở một route account nội bộ, không rời workspace. Tài khoản Google
 chưa có mật khẩu sẽ thấy hộp thoại an toàn và liên kết đặt mật khẩu trước khi
 tới bước OTP. Trang công ty có hai tab độc lập: tìm theo tên/tên thương mại/MST
@@ -214,9 +286,11 @@ nhận JPEG/JPG/PNG/PDF tối đa 5 MB, có minh họa local tại
 ủy quyền.
 
 Sau khi đã liên kết công ty, nút **Lưu** bật khi đủ tệp theo phương thức đã
-chọn: một tệp ĐKDN, hoặc cả giấy ủy quyền và CCCD/hộ chiếu. UI gọi
-`POST /api/employer/company/documents/` cho từng tài liệu, hiển thị tiến trình
-trong lúc gửi, popup xác nhận “`{site_name}` đã nhận được Giấy đăng ký doanh
+chọn: một tệp ĐKDN, hoặc cả giấy ủy quyền và CCCD/hộ chiếu. UI tạo upload
+session cho toàn bộ tập tệp, đợi từng session `clean` rồi mới gọi
+`POST /api/employer/company/documents/` bằng `upload_session`. Nếu một tệp bị
+reject/error/expired thì chưa tạo hồ sơ nghiệp vụ và không hiện thông báo thành
+công. Sau khi attach toàn bộ thành công, popup xác nhận “`{site_name}` đã nhận được Giấy đăng ký doanh
 nghiệp của bạn và sẽ kiểm duyệt trong 24 giờ (trừ thứ bảy, chủ nhật, ngày nghỉ
 lễ, tết theo quy định)” và refresh checklist xác thực. Khi chưa liên kết công
 ty, nút vẫn disabled kèm liên kết đến phần cập nhật công ty; không tạo trạng
@@ -231,6 +305,11 @@ Hai phương thức giấy tờ là loại trừ nhau. Nếu người dùng đ�
 xóa. Với phương thức hai tệp, hệ thống chỉ xóa bộ cũ sau khi cả giấy ủy quyền
 và giấy tờ định danh đều tải lên thành công.
 
+Backend không dựa vào trạng thái client: lúc attach luôn recheck authenticated
+owner, purpose `employer_verification`, trạng thái `clean` và one-time claim.
+PDF/ảnh còn phải vượt structural parser validation sau malware scan. Tệp clean
+nhưng hỏng cấu trúc vẫn bị từ chối và không tạo `CompanyDocument`.
+
 Ở trạng thái đã lưu, hai radio vẫn hiện ở chế độ chỉ đọc và từng thẻ giấy tờ giữ
 nguyên bố cục minh họa/mẫu như trước khi lưu. Tên mỗi tệp đã nộp là hành động
 **Xem tệp đã nộp**; frontend lấy nội dung qua endpoint riêng tư đã xác thực rồi
@@ -243,19 +322,24 @@ Trang `/tuyendung/app/account/settings/personal-data-protection` có hai mốc
 độc lập. Khối đầu là văn bản thỏa thuận **Ứng viên – Nhà tuyển dụng**: có link
 hướng dẫn, link tải mẫu DOCX tại
 `frontend/public/documents/topcv-mau-van-ban-thong-bao-dong-y-xu-ly-dlcn.docx`,
-ô tải lên DOC/DOCX/PDF tối đa 5 MB và cam đoan trước khi bấm **Lưu**. Mỗi lần
+ô tải lên DOCX/PDF tối đa 5 MB và cam đoan trước khi bấm **Lưu**. Mỗi lần
 chỉ có một tệp cục bộ; chọn tệp mới để thay thế tệp cũ. Backend lưu văn bản này
 theo `RecruiterProfile` (không bắt buộc company), reset trạng thái duyệt khi
 thay tệp, và vẫn đọc văn bản DLCN lịch sử đã từng gắn company. Việc nộp hoặc
 thay thế tài liệu chỉ cần phiên đăng nhập nhà tuyển dụng còn hợp lệ, không bắt
 MFA hoặc xác thực lại; tệp mới luôn chờ admin duyệt.
 
+Trước khi lưu, frontend đưa tệp vào quarantine và chỉ attach khi upload session
+đã `clean`. DOCX được kiểm bounded container structure, PDF được parse strict
+sau scan. Raw DOC/DOCX preview endpoint không còn chạy LibreOffice; với tệp
+local chưa nộp, UI chỉ cho tải lại đúng byte local để người dùng tự kiểm tra.
+
 Sau khi lưu, trang hiển thị nhãn **Hệ thống đang xử lý**, toast xác nhận đã
 nhận giấy tờ và nút **Chỉnh sửa**. Form thay tệp chỉ mở khi chọn nút này, có
 **Lưu** và **Hủy** cạnh nhau. Khi cả bản DLCN lịch sử của company và bản mới
-của recruiter cùng tồn tại, API luôn ưu tiên bản recruiter mới nhất. DOC/DOCX
-qua URL HTTPS storage công khai/S3 có chữ ký mở bằng Google Docs Viewer; PDF
-và URL localhost mở trực tiếp theo định dạng.
+của recruiter cùng tồn tại, API luôn ưu tiên bản recruiter mới nhất. Tài liệu
+đã nộp chỉ được tải/xem qua endpoint binary có authorization và no-store; UI
+không nhận hoặc mở direct storage URL.
 Khối **Văn bản mẫu** và nút tải mẫu vẫn hiện cạnh tệp đã nộp; trạng thái chỉ hiển thị một lần tại tiêu đề. Khi thỏa thuận nền tảng được chấp nhận, trang
 hiển thị chính xác giờ-phút-giây và ngày xác nhận theo múi giờ Việt Nam.
 
@@ -268,34 +352,81 @@ Khối thứ hai là thỏa thuận **nền tảng – Nhà tuyển dụng**: ng
 đầy đủ ở `/data-processing-agreement`, tích xác nhận rồi bấm **Xác nhận** ngay
 trên trang. Cả Lưu và Xác nhận đều hoạt động khi nhà tuyển dụng chưa cập nhật
 thông tin công ty; hai trạng thái `candidate_dpa_submitted` và `dpa_accepted`
-vẫn được tính độc lập. Sau khi đủ năm điều kiện, recruiter có thể tạo nháp và
-gửi tin vào hàng chờ admin duyệt; tin chỉ hiển thị với ứng viên khi được duyệt.
+vẫn được lưu độc lập. Tài liệu chỉ mở readiness của workspace khi thuộc đúng
+recruiter và công ty đang liên kết; tài liệu từ công ty trước không được kế
+thừa sau khi relink. Sau khi đủ điều kiện workspace, recruiter có thể đọc/tạo
+nháp và gửi tin vào hàng chờ admin duyệt; tin chỉ hiển thị với ứng viên khi
+được duyệt.
 Tài khoản có ba lượt gửi duyệt lần đầu miễn phí trọn đời mặc định; gửi lại tin
 bị từ chối không tiêu thêm lượt. Người dùng vẫn có thể chọn “xác thực thêm sau”
-để vào dashboard, nhưng mỗi lần mở trang tin tuyển dụng sẽ được kiểm tra lại và
-chuyển về checklist nếu chưa đủ năm điều kiện.
+để vào dashboard. Route job/campaign vẫn giữ URL contract; backend trả blocker
+authoritative. Nếu readiness tải thành công nhưng workspace bị từ
+chối, frontend điều hướng về `/tuyendung/app/employer-verify`; lỗi tải readiness
+không redirect mà giữ retry fail-closed. Trang verify chỉ hiển thị checklist và
+progress, không lặp banner readiness/case status.
+
+### Readiness và quyền dữ liệu ứng viên
+
+Backend tách ba quyết định, không dùng một boolean chung:
+
+- `job_workspace_ready`: quyền vào/đọc/ghi job và campaign workspace;
+- `verification_approved`: case đại diện đã được admin duyệt đúng recruiter và
+  công ty hiện tại;
+- `candidate_data_access`: chỉ true khi workspace ready, verification approved
+  và DPA current.
+
+`GET /api/employer/me/` trả ba field trên cùng `dpa_status` và `blockers[]`.
+Blocker có `code`, `capabilities`, `message`, `action`; frontend map `action`
+qua allowlist route/action nội bộ, không tin URL động và không tự ghép từ
+checklist. Verification còn pending, rejected
+hoặc changes-requested không tự khóa workspace nếu các điều kiện workspace vẫn
+hợp lệ, nhưng luôn khóa dữ liệu ứng viên và admin approval.
+
+Job/campaign list/detail/options/report/activity và mọi mutation đều recheck
+workspace ở backend; direct API không thể bỏ qua frontend guard.
+Posting-context là ngoại lệ để tài khoản chưa ready vẫn đọc được blocker và
+đường khắc phục. Application list/detail/export/history/CV snapshot dùng gate
+candidate-data nghiêm ngặt hơn. Workspace bị chặn trả
+`EMPLOYER_WORKSPACE_BLOCKED`; candidate data bị chặn trả
+`CANDIDATE_DATA_BLOCKED`.
+
+`dpa_status` có contract
+`missing|current|legacy_unversioned|outdated|grace|hold|unknown`. Acceptance mới
+lưu evidence version/hash/IP/session append-only. Timestamp cũ không được bịa
+evidence và được phân loại `legacy_unversioned`; rollout được duyệt cho đúng 30
+ngày grace rồi mới áp DPA hold. Re-consent chỉ gỡ hold nguồn DPA và không gỡ
+verification/account/moderation hold.
 
 ### Cấp xác thực trên sidebar
 
 Sidebar không hiển thị tiến độ của sáu mốc checklist. Nó dùng thang **Cấp 0/3 →
 Cấp 3/3**: chưa xác thực email là Cấp 0; xác thực email là Cấp 1; xác thực thêm
-số điện thoại và được duyệt bộ giấy tờ doanh nghiệp là Cấp 2; tài khoản đã đạt
-Cấp 2 và không có lịch sử báo cáo tin đăng là Cấp 3. Bộ tệp **Chờ duyệt** chỉ có
+số điện thoại và được duyệt đủ bộ giấy tờ theo phương thức GPKD hoặc ủy quyền +
+giấy tờ định danh là Cấp 2; tài khoản đạt Cấp 2 và có
+`EmployerVerificationCase.status=approved` đúng recruiter/company là Cấp 3.
+Bộ tệp **Chờ duyệt** chỉ có
 dấu hoàn thành tại bước “Cập nhật Giấy đăng ký doanh nghiệp” của checklist
 `employer-verify`; nó chưa được tính là giấy tờ đã xác thực, vì vậy tài khoản
-vẫn ở **Cấp 1 – 33%**. Khi giấy tờ được duyệt và tài khoản chưa có lịch sử báo
-cáo tin đăng, hệ thống lần lượt thỏa điều kiện Cấp 2 rồi đạt **Cấp 3 – 100%**.
+vẫn ở **Cấp 1 – 33%**. Khi giấy tờ được duyệt, hệ thống đạt Cấp 2; chỉ quyết
+định cuối của admin mới nâng lên **Cấp 3 – 100%**.
 Hover hoặc focus vào dấu `?` cạnh nhãn “Tài khoản xác thực” mở popover, hiển thị
 phần trăm hoàn thành, trạng thái từng điều kiện và liên kết đi thẳng tới action
 phù hợp. DLCN và đăng tin đầu tiên vẫn hiển thị riêng ở checklist đầy đủ, không
 làm thay đổi cấp sidebar.
 
-Backend trả thêm `employer_verification_completed` trong session. Trạng thái này
-bằng `true` khi đã xác thực điện thoại, liên kết công ty với membership được
-duyệt, nộp ĐKDN, nộp thỏa thuận DLCN ứng viên và chấp nhận thỏa thuận nền tảng.
-Nó không phụ thuộc bước đăng tin đầu tiên; bước đó chỉ được ghi nhận sau khi
-tin đầu tiên thực sự xuất bản. Sau đăng nhập, tài khoản có trạng thái `false` vào `/employer-verify`; trạng thái
-`true` vào thẳng dashboard hoặc deep-link an toàn.
+Cấp sidebar không phải dấu tick công khai và không quyết định quota. Dấu tick
+trên tin cần đồng thời năm điều kiện riêng: email công việc thuộc domain đã xác
+minh, số điện thoại đã xác minh, case và bộ giấy tờ pháp lý đã duyệt, đủ tuổi
+tài khoản theo số tháng lịch cấu hình, và không có report trust đang `upheld`.
+Quota/candidate-data tiếp tục dựa trên case, workspace readiness và DPA hiện
+hành; domain, tuổi tài khoản hoặc report của badge không tự khóa quota.
+
+Backend trả `employer_job_workspace_ready` trong session. Field cũ
+`employer_verification_completed` vẫn tồn tại trong compatibility window và
+không được dùng làm nguồn mới cho candidate-data permission. Nó không phụ
+thuộc bước đăng tin đầu tiên; bước đó chỉ được ghi nhận sau khi tin đầu tiên
+thực sự xuất bản. Client mới dùng workspace field cho route job/campaign và
+đọc canonical blocker từ `/api/employer/me/`.
 
 Dashboard dùng shell quản trị riêng, responsive desktop/mobile. Cấu trúc shell
 gồm dải cảnh báo tuân thủ theo trạng thái DLCN, topbar tối chứa hành động nhanh,
@@ -309,6 +440,27 @@ trên response phân trang. Workspace chiếm đúng `100dvh`, chỉ vùng nội
 để header/sidebar không bị cắt. Menu dịch vụ/bảng giá và các workflow chưa làm
 được hiển thị disabled “Sắp mở”, không điều hướng sang landing marketing và
 không mô phỏng thao tác thành công khi backend chưa tồn tại.
+
+### Luồng yêu cầu cập nhật thông tin công ty
+
+Mỗi recruiter đã liên kết công ty được có tối đa một yêu cầu active của chính
+mình; các member khác vẫn được gửi yêu cầu riêng song song. Trang recruiter chỉ
+gọi `scope=mine`, không hiển thị hoặc tải lịch sử yêu cầu của toàn công ty.
+
+State machine chuẩn là `submitted → in_review →
+approved|changes_requested|rejected`; từ `changes_requested`, recruiter thay
+tài liệu/field cần thiết rồi resubmit thành revision mới. Trước khi admin nhận
+review, requester được sửa hoặc rút và owner được hủy; khi `in_review`, request
+read-only. Form không cho gửi nếu diff rỗng, luôn có nút quay lại và chỉ gửi
+field thực sự thay đổi, nên tên thương mại legacy không bị kéo vào request khi
+người dùng không sửa.
+
+Mỗi submit/resubmit tạo snapshot `CompanyUpdateRevision` bất biến và event
+append-only. Admin mở exact request public ID, bấm **Nhận thẩm định**, rồi duyệt
+tài liệu của exact revision. Quyết định tài liệu không tự quyết định toàn yêu
+cầu; admin phải ra quyết định cuối tường minh. Apply chạy transaction, so
+base snapshot theo từng field: field bị thay đồng thời trả conflict và không
+partial apply; field không overlap vẫn được áp dụng.
 
 ## Route frontend
 
@@ -349,12 +501,28 @@ không mô phỏng thao tác thành công khi backend chưa tồn tại.
   này, không phải điều kiện lọc danh sách.
 - `GET /api/dashboard/employer/`: summary, activity 7 ngày, nhu cầu, tin và hồ sơ gần đây.
 - `POST /api/auth/verify/send/`, `POST /api/auth/verify/confirm/`: email.
-- `POST /api/employer/phone/send-otp/`, `POST /api/employer/phone/verify/`: OTP.
+- `POST /api/employer/phone/send-otp/`: re-auth bằng mật khẩu, tạo challenge
+  actor-bound và enqueue SMS; không gửi OTP qua email.
+- `GET /api/employer/phone/challenges/<public_id>/`: poll trạng thái
+  `queued|dispatching|retry_pending|sent|failed|disabled|verified|expired` của
+  chính actor.
+- `POST /api/employer/phone/verify/`: gửi exact `{challenge_id, code}`. Gửi mã
+  mới vô hiệu mã cũ; mã đã dùng không replay được; năm lần sai khóa challenge.
+- Account mới xác thực lần đầu; account đã có proof có thể đổi số hoặc tự xác
+  minh lại. Đổi số giữ proof/readiness cũ cho tới khi số mới thành công.
+- `GET /api/employer/phone/check/` chỉ kiểm format và luôn trả kết quả generic;
+  uniqueness được recheck trong transaction sau khi actor chứng minh sở hữu số.
+- `PATCH /api/auth/me/` không cho employer đổi phone trực tiếp; candidate vẫn
+  dùng contract profile hiện hành.
 - `GET /api/employer/company/search/`, `POST /api/employer/company/create/`,
   `POST /api/employer/company/join/`: hai luồng liên kết công ty rõ ràng.
 - `GET|POST /api/employer/company/documents/`: ĐKDN chấp nhận JPG/PNG/PDF;
   `candidate_dpa` chấp nhận PDF/DOC/DOCX và được theo dõi riêng.
-- `POST /api/employer/dpa/accept/`: đồng ý thỏa thuận ProCV–nhà tuyển dụng.
+- `POST /api/employer/dpa/accept/`: gửi exact version/hash do
+  `GET /api/employer/me/::dpa_policy` công bố. Bằng chứng mới là append-only và
+  giữ thời điểm, IP, phiên đăng nhập cùng hash User-Agent. Timestamp lịch sử
+  không được backfill giả các trường này và hiển thị `legacy_unversioned` cho
+  tới khi nhà tuyển dụng đồng ý DPA hiện hành.
 - `POST /api/auth/password-reset/`, validate và confirm: recovery dùng chung
   backend nhưng URL email/route frontend tách theo role.
 
