@@ -4,7 +4,7 @@ import './mascot.css'
 
 const EMOTIONS = new Set(['neutral', 'happy', 'thinking', 'success', 'error'])
 const GAZES = new Set(['neutral', 'down'])
-const POSES = new Set(['neutral', 'wave', 'thumbsUp', 'microphone', 'checklist', 'frameGrip', 'coverEyes', 'peek'])
+const POSES = new Set(['neutral', 'wave', 'thumbsUp', 'checklist', 'frameGrip', 'coverEyes', 'peek'])
 const SHADOWS = new Set(['floating', 'ground', 'none'])
 
 function Layer({ className = '', src, style }) {

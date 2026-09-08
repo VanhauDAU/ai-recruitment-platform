@@ -1,16 +1,11 @@
 // Kịch bản trò chuyện onboarding.
 //
-// Mỗi bước là một lượt hỏi của robot. `question` vừa là câu robot đọc vừa là
-// nội dung bong bóng chat — cùng một chuỗi nên chữ chạy khớp tiếng, và tắt
-// tiếng thì vẫn đọc được đúng câu hỏi đó. `answer` dựng đáp án của ứng viên
-// thành một tin nhắn để lịch sử hội thoại đọc lại được như chat thật.
+// Mỗi bước là một lượt hỏi của robot. `question` là nội dung bong bóng chat;
+// `answer` dựng đáp án của ứng viên thành một tin nhắn trong lịch sử hội thoại.
 
 import { EXPERIENCE_OPTIONS, normalizeDesiredPositionOthers } from '@/features/configure-job-preferences'
 
-/** Backend chặn text đọc ad-hoc ở 600 ký tự (`SPEECH_MAX_ADHOC_TEXT_CHARS`). */
-export const MAX_SPEECH_CHARS = 600
-
-/** Lời chào chỉ có một cử chỉ trả lời — cũng là cử chỉ mở Web Audio. */
+/** Câu trả lời mở đầu cuộc trò chuyện. */
 export const START_REPLY = 'Bắt đầu thôi!'
 
 function specializationNames(ids = [], catalog) {
@@ -89,13 +84,13 @@ export const INTERVIEW_STEPS = [
   },
 ]
 
-export const SAVING_SPEECH = 'Chờ mình một chút, mình đang lọc việc làm phù hợp cho bạn.'
+export const SAVING_MESSAGE = 'Chờ mình một chút, mình đang lọc việc làm phù hợp cho bạn.'
 
 export function candidateName(user) {
   return user?.full_name?.trim() || 'bạn'
 }
 
-export function greetingSpeech(user) {
+export function greetingMessage(user) {
   return `Chào ${candidateName(user)}! Mình là trợ lý ProCV. Mình hỏi bạn năm câu thật nhanh rồi lọc sẵn việc làm hợp gu cho bạn nhé.`
 }
 
@@ -107,15 +102,6 @@ export function answerSummary(step, values, catalog) {
   return step?.answer?.(values || {}, catalog || {}) || ''
 }
 
-/** Cắt ở ranh giới câu/từ gần nhất để không đọc dở một chữ. */
-export function clampSpeech(text, max = MAX_SPEECH_CHARS) {
-  const value = String(text || '').trim()
-  if (value.length <= max) return value
-  const head = value.slice(0, max)
-  const cut = Math.max(head.lastIndexOf('. '), head.lastIndexOf(', '), head.lastIndexOf(' '))
-  return (cut > 0 ? head.slice(0, cut) : head).trim()
-}
-
 function joinNames(items = [], moreNoun = '', limit = 2) {
   const names = items.map((item) => item?.name).filter(Boolean)
   if (!names.length) return ''
@@ -124,8 +110,8 @@ function joinNames(items = [], moreNoun = '', limit = 2) {
   return rest > 0 ? `${head} cùng ${rest} ${moreNoun} khác` : head
 }
 
-/** "15 triệu" đọc trôi hơn "15.000.000"; số lẻ mới đọc theo đồng. */
-export function salarySpeech(amount) {
+/** Rút gọn số tiền tròn triệu cho câu tóm tắt. */
+export function salarySummary(amount) {
   const value = Number(amount)
   if (!Number.isFinite(value) || value < 1) return ''
   if (value % 1_000_000 === 0) return `${value / 1_000_000} triệu`
@@ -133,13 +119,13 @@ export function salarySpeech(amount) {
 }
 
 /** Câu chốt cá nhân hoá, dựng từ chính nhu cầu vừa lưu. */
-export function buildReadySpeech(preference, user) {
+export function buildReadyMessage(preference, user) {
   const customPositions = normalizeDesiredPositionOthers(
     preference?.desired_position_others ?? preference?.desired_position_other,
   ).map((name) => ({ name }))
   const jobs = joinNames([...(preference?.desired_specializations || []), ...customPositions], 'lĩnh vực')
   const places = joinNames(preference?.preferred_provinces, 'tỉnh thành')
-  const salary = salarySpeech(preference?.desired_salary_vnd)
+  const salary = salarySummary(preference?.desired_salary_vnd)
 
   const details = [
     jobs && `việc làm ${jobs}`,
@@ -151,5 +137,5 @@ export function buildReadySpeech(preference, user) {
     ? `mình đã lọc sẵn ${details} cho bạn`
     : 'mình đã lọc sẵn danh sách việc làm phù hợp cho bạn'
 
-  return clampSpeech(`Xong rồi ${candidateName(user)}! Theo những gì bạn vừa chia sẻ, ${body}. Cùng xem ngay nhé!`)
+  return `Xong rồi ${candidateName(user)}! Theo những gì bạn vừa chia sẻ, ${body}. Cùng xem ngay nhé!`
 }

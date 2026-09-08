@@ -310,42 +310,6 @@ Decision log:
 
 </details>
 
-## Cập nhật 2026-08-07 — Tối ưu TTS production Giai đoạn 0–2
-
-- **Giai đoạn 0 hoàn thành về công cụ:** benchmark chính thức đo cache
-  miss/hit, ba artifact đồng thời, singleflight mười listener, TTFA/RTF/queue,
-  CPU/RAM/cache/rejection và ảnh hưởng Web API. Benchmark thật chưa chạy vì máy
-  hiện tại không có model/runtime production; đây vẫn là rollout gate, không
-  được coi số minh hoạ trong README là kết quả.
-- **Giai đoạn 1 hoàn thành:** hard switch production default off; admission tối
-  đa ba generation; status nội bộ có token; policy theo Site Setting, voice/
-  style cố định theo surface, quota ngày user/IP fail-closed cho cache miss;
-  aggregate `SpeechUsageDaily`; admin overview degraded-safe được compose vào
-  tab AI hiện có. Seed idempotent không ghi đè giá trị admin.
-- **Giai đoạn 2 hoàn thành:** blog click-to-play với durable R2; chatbot bỏ
-  auto-speak/global toggle và điều khiển từng message; onboarding mặc định off;
-  interview không có code chờ. Text workflow luôn hoạt động khi TTS disabled,
-  hết quota hoặc unavailable. Cache local PCM 24h, WAV/MP3/meta 72h, tối đa
-  5 GB; prune ngoài inference path. Artifact lỗi/revision cũ dọn sau 30 ngày.
-- Baseline deploy: host 4 vCPU/8 GB, một TTS worker, 2.5 CPU, 2 GB RAM, hai ONNX
-  threads, model snapshot + revision pin SHA. Production vẫn **chưa bật**.
-- Verify hoàn tất: TTS 17/17; backend 796/796 với coverage 86,21%,
-  import-linter, DRF layer, migration drift, Django check và query/regression
-  đều đạt; frontend 892/892, lint, architecture, production build và bundle
-  budget đều đạt. Smoke TTS cô lập 15/15 trên desktop/tablet/mobile (blog,
-  chatbot, onboarding); OpenAPI YAML và link Markdown hợp lệ.
-- Full `./scripts/check_all.sh` dừng ở nợ Ruff ngoài phạm vi TTS: import
-  `BytesIO` chưa dùng trong `sitecontent/services/announcement_media.py` và hai
-  ca `pytest.raises(Exception)` trong
-  `sitecontent/tests/test_announcement_visual_theme.py`; format check còn báo
-  năm file `sitecontent/blog` có sẵn. Full E2E không được chứng nhận vì Vite/
-  Node dev server abort khi tải chunk Ant Design trong lượt chạy song song;
-  trước thời điểm abort còn hai smoke admin cũ timeout. Không sửa lan các lỗi
-  này trong nhánh TTS.
-- Tiếp theo có điều kiện: **Giai đoạn 3** prepared audio onboarding (không có
-  placeholder trong nhánh này); **Giai đoạn 4** chạy benchmark trên production,
-  quan sát chi phí rồi mới bật hard switch/surface.
-
 ## Cập nhật 2026-08-05 — Onboarding gộp thành một cuộc trò chuyện (1.24i)
 
 Phản hồi: onboarding cũ bắt thao tác quá nhiều (trang chào → 5 bước bấm "Tiếp
@@ -360,9 +324,8 @@ một trang duy nhất dưới dạng chat** giữa robot và ứng viên. Backe
   ngược hội thoại; huỷ thì trả lại giá trị trước đó.
 - **Transcript suy ra từ state** (`chat-transcript.js`) chứ không lưu riêng, nên
   sửa một đáp án là bong bóng tương ứng đổi theo và **không tin nhắn nào biến
-  mất giữa chừng**. `id` tin nhắn cố định vì đó cũng là khoá `speakOnce` — cuộn
-  lại lịch sử không đốt hạn mức TTS.
-- **Lỗi cũng là một lượt nói.** Trả lời thiếu thì robot nhắc bằng tin nhắn và
+  mất giữa chừng**. `id` tin nhắn cố định để giữ đúng identity khi dựng lại.
+- **Lỗi cũng là một tin nhắn.** Trả lời thiếu thì robot nhắc bằng tin nhắn và
   câu nhắc **ở lại trong lịch sử** (đúng như chat thật); backend từ chối field
   nào thì robot xin lỗi trong hội thoại rồi mở lại đúng ô đó với nút "Gửi lại".
 - **Lưu và chốt cũng nằm trong luồng chat:** bong bóng "đang lọc việc làm" kèm
@@ -370,9 +333,9 @@ một trang duy nhất dưới dạng chat** giữa robot và ứng viên. Backe
   chuyển màn. `/onboard-user-setting` redirect về `/onboard-user` để link cũ
   không chết; xoá `OnboardUserSetting`, `PersonalizingScreen`, `ReadyScreen`,
   `OnboardingInterview`, `InterviewMascot`, `use-interview-flow`.
-- **Chỉ tin nhắn mới nhất mới đọc và chạy chữ**, tin cũ hiện nguyên văn ngay.
-  Giữ nhịp "robot đang gõ" 420ms trước mỗi lượt nói; ô soạn hiện ngay khi bong
-  bóng xuất hiện chứ không chờ đọc xong, để không bao giờ có ngõ cụt.
+- **Chỉ tin nhắn mới nhất chạy chữ**, tin cũ hiện nguyên văn ngay. Giữ nhịp
+  "robot đang gõ" 420ms trước mỗi tin nhắn; ô soạn hiện ngay khi bong bóng xuất
+  hiện để không bao giờ có ngõ cụt.
 - **Sửa lỗi tự gây:** `aliveRef` chỉ gán ở cleanup nên StrictMode (mount →
   cleanup → mount) tắt cờ vĩnh viễn, câu chốt không bao giờ hiện ở dev. E2E chạy
   trên dev server bắt được, unit test (không bọc StrictMode) thì không.
@@ -388,29 +351,20 @@ vẫn đỏ ở Initial CSS như trước thay đổi (35.2 → 35.0 KiB, ngư�
 ## Cập nhật 2026-08-05 — Robot phỏng vấn onboarding ứng viên (1.24f)
 
 Onboarding ứng viên đổi từ một form 8 trường sang **cuộc phỏng vấn 5 câu do
-mascot ProCV dẫn bằng giọng nói**. Tận dụng đúng hai thứ đã có sẵn trong repo mà
-onboarding chưa dùng: rig mascot (`shared/ui/mascot`) và TTS tiếng Việt
-(`features/speak-text`). **Backend không đổi một dòng** — payload
+mascot ProCV dẫn dắt**. Tận dụng rig mascot (`shared/ui/mascot`) đã có sẵn trong
+repo. **Backend không đổi một dòng** — payload
 `PUT /api/candidate/job-preferences/`, cờ `job_preferences_configured` và route
 giữ nguyên.
 
-- **`widgets/onboarding-interview` (mới).** Phải là widget vì ghép hai feature
-  (`speak-text` + `configure-job-preferences`) mà depcruise cấm feature import
-  feature. Gồm kịch bản tĩnh, state machine 5 bước, bản đồ trạng thái mascot và
-  provider giọng đọc.
-- **Provider giọng đọc mount ở `OnboardingLayout`, không ở page.** AudioContext
-  chỉ mở được trong cử chỉ người dùng (nút "Bắt đầu" ở `/onboard-user`), mà page
-  unmount là `useSpeak` destroy player — đặt trong page thì sang bước phỏng vấn
-  robot sẽ câm. Robot đọc ngay, không có nút "bật tiếng"; trường hợp vào thẳng
-  URL thì listener một lần resume audio ở thao tác đầu tiên bất kỳ.
+- **`widgets/onboarding-interview` (mới).** Widget compose
+  `configure-job-preferences`, gồm kịch bản tĩnh, state machine 5 bước và bản đồ
+  trạng thái mascot.
 - **Pose `checklist` (mới)** nối bộ tay `arms/hold` + `props/robot-prop-checklist`
   đang bỏ trống. `ProcvMascot` nay đỡ được **hai** bàn tay trước (`front` dạng
-  mảng); pose `microphone` một tay chạy y cũ.
+  mảng).
 - **Sửa lỗi rig có sẵn:** khi `talking`, lớp miệng theo emotion không bị ẩn nên
   hai khẩu hình chồng nhau (rõ nhất ở `success`). Nay dùng cặp animation nghịch
-  đảo như mắt chớp, kèm nhịp nói chia không đều cho tự nhiên hơn.
-- **Không cắt lời robot:** `PersonalizingScreen` và `ReadyScreen` chỉ chuyển
-  tiếp sau khi mascot báo đã nói dứt câu (có chốt chặn 9s/14s phòng audio treo).
+  đảo như mắt chớp, kèm nhịp chuyển miệng chia không đều cho tự nhiên hơn.
 - **Tách model dùng chung khỏi `JobPreferencesForm`** (`job-preferences-fields`,
   `use-job-preference-catalog`, `save-job-preferences`) để phỏng vấn và form
   settings dùng chung một bộ validate/submit/map lỗi field; xoá nhánh
@@ -741,8 +695,8 @@ Theo *Kế hoạch tái cấu trúc ProCV sau merge main (2026-07-12)* — 11 gi
 | 1.22 | Khung layout 3 cột trang tài khoản ứng viên `/tai-khoan/*` (sidebar accordion + cột phải hồ sơ + 11 route placeholder) | ✅ |
 | 1.23 | Trang "Cài đặt thông tin cá nhân": PATCH `/auth/me/` sửa họ tên + SĐT (nhiều lần), email read-only | ✅ |
 | 1.24 | Onboarding và cài đặt gợi ý việc làm: form preference dùng chung, giới tính tại settings, modal chọn vị trí responsive, feedback validation/toast và sidebar hồ sơ sticky | ✅ |
-| 1.24b | Kết thúc onboarding kiểu TopCV: màn "đang cá nhân hoá" (progress) → màn "đã sẵn sàng" (đếm ngược + nút đi ngay; từ 1.24f đồng hồ chỉ chạy sau khi robot nói dứt câu) → redirect `/viec-lam` với bộ lọc dựng từ preference (`cat` + `search` + `locations` + path `/tai/<slug>`) | ✅ |
-| 1.24f | Robot phỏng vấn onboarding: tách form 8 trường thành 5 câu hỏi do mascot dẫn bằng giọng nói tiếng Việt (VieNeu-TTS), phụ đề chạy theo audio, mascot đổi emotion/pose theo ngữ cảnh (`microphone` khi nói, `checklist` mới khi chờ trả lời, `error`/`success`/`thinking`), câu chốt cá nhân hoá từ nhu cầu vừa lưu; payload `PUT` và cờ `job_preferences_configured` giữ nguyên | ✅ |
+| 1.24b | Kết thúc onboarding kiểu TopCV: màn "đang cá nhân hoá" (progress) → màn "đã sẵn sàng" (đếm ngược + nút đi ngay; từ 1.24f đồng hồ chỉ chạy sau khi tin nhắn chốt hiện đầy đủ) → redirect `/viec-lam` với bộ lọc dựng từ preference (`cat` + `search` + `locations` + path `/tai/<slug>`) | ✅ |
+| 1.24f | Robot phỏng vấn onboarding: tách form 8 trường thành 5 câu hỏi do mascot dẫn dắt, tin nhắn chạy theo typewriter, mascot đổi emotion/pose theo ngữ cảnh (`checklist`, `error`, `success`, `thinking`), câu chốt cá nhân hoá từ nhu cầu vừa lưu; payload `PUT` và cờ `job_preferences_configured` giữ nguyên | ✅ |
 | 1.24c | Empty state trang việc làm kiểu TopCV: dưới "Rất tiếc..." hiện banner admin cấu hình (placement `job_empty`) + khối "Việc làm có thể bạn sẽ quan tâm" gợi ý theo preference đã lưu, nới lỏng 3 tầng | ✅ |
 | 1.24d | Bổ sung trang việc làm theo khảo sát TopCV: banner chèn giữa danh sách (placement `job_list_inline`), card "Ứng viên cũng tìm kiếm", chip "Danh mục Nghề liên quan", box CTA nhận thông báo, khảo sát hài lòng 1 chạm (Feedback.satisfaction), SEO text theo nhánh nghề, sort "Cần tuyển gấp" | ✅ |
 | 1.24e | Tối ưu menu tài khoản desktop: click, single accordion, tự mở route active, cuộn trong viewport và giữ logout hiển thị | ✅ |
@@ -1635,10 +1589,6 @@ Cập nhật 2026-07-31a (CV Builder — dữ liệu mẫu template + lọc danh
 Cập nhật 2026-07-31b (Thông báo đa cổng — hiện lại cho người đã đóng): báo cáo "tạo thông báo nhưng không hiển thị" hóa ra không phải lỗi target/rollout — backend trả đúng 1 item cho cả bốn surface với guest/candidate/employer/admin, và `VITE_ANNOUNCEMENT_ROLLOUT_SURFACES` + `ANNOUNCEMENT_REMOTE_ENABLED_SURFACES` đều đủ bốn cổng. Nguyên nhân: người dùng đã bấm ✕ đóng thông báo đó; dismissal được khóa theo `(announcement, dismissal_version)` ở `AnnouncementUserState` và theo key local storage `announcement-strip:{id}:v{version}` ở trình duyệt khách, nhưng **`dismissal_version` chưa từng được tăng ở bất kỳ đâu trong repo** — `publish_announcement` chỉ tăng `revision_token`. Hệ quả: ai đã đóng một thông báo thì vĩnh viễn không thấy lại, dù admin sửa và publish bao nhiêu revision. Trường này vốn có sẵn check constraint, nằm trong unique constraint và được serialize xuống client làm khóa cache — tức năng lực "hiện lại" đã thiết kế sẵn nhưng chưa nối dây ở server. Bổ sung service `reset_announcement_dismissals` (khóa hàng, kiểm `revision_token`, chỉ cho phép khi `published`, giữ lại state row cũ làm lịch sử), endpoint `POST /api/site/admin/announcements/{public_id}/reset-dismissals/` dưới `announcement.publish`, audit action `announcement_reset_dismissals`, nút **Hiện lại cho người đã đóng** kèm hộp thoại xác nhận trong drawer chi tiết, và hiển thị **Phiên bản hiển thị lại** để chẩn đoán. Chọn action riêng thay vì tự tăng mỗi lần publish: sửa lỗi chính tả không nên làm phiền lại toàn bộ người đọc. Verify: ruff/ruff format/lint-imports sạch, 59/59 test sitecontent (thêm 2 test: revision mới không đủ để hiện lại, và chặn stale token/draft), 728 vitest (201 file, thêm test API cho cả 5 lifecycle action), oxlint/dependency-cruiser xanh; kiểm chứng trực tiếp trên DB docker: đóng → feed rỗng, POST reset → `dismissal_version` 1→2 và feed hiện lại, token cũ trả 409, thông báo archived trả 400.
 
 Cập nhật 2026-08-03a (UI — linh vật ProCV thay spinner chờ): thay spinner CSS hình tròn ở `PageLoading` và dot mặc định của antd `Spin` bằng ảnh động linh vật ProCV. Asset gốc là GIF 500×500, 172 frame, **6,66 MB** — quá nặng cho một chỉ báo chờ hiển thị ở mọi lần chuyển route lazy, nên tối ưu qua ffmpeg + `gif2webp`: cắt 1 giây đầu (đoạn zoom cận cảnh, lặp lại mỗi 5,7s trông rất lạ và là phần nén tốn bit nhất), hạ còn 192px/17fps/180 màu, xuất animated WebP `public/images/loading/procv-loader.webp` **260 KB** (giảm 96%, 80 frame, loop vô hạn, nền trong suốt giữ nguyên) kèm poster tĩnh `procv-loader-static.webp` 7,6 KB cho `prefers-reduced-motion`. Thêm `shared/ui/BrandLoader.jsx`: `size` dạng số thì set inline, bỏ trống thì để CSS quyết định — cần thiết vì `ConfigProvider spin={{indicator}}` chỉ nhận một node duy nhất, không biết `size` của từng `<Spin>`. Component phải nuốt prop `percent` do antd tiêm vào lúc `cloneElement`, nếu không sẽ rơi xuống thẻ `img` thành attribute lạ. `PageLoading` chuyển sang `BrandLoader size={128}`, phủ luôn `Suspense fallback` của `AppRouter`, `AuthGuard`/`GuestGuard`/`PermissionGuard`, `OAuthCallback`, `JobPreferenceSettings`, `OnboardUserSetting`. Kích thước indicator bám theo `size` của antd qua `.procv-spin-dot` (28/40/60px cho small/default/large) trong `index.css`; phải dùng `!important` vì antd chèn `.ant-spin .ant-spin-dot { width: 1em }` bằng CSS-in-JS lúc runtime, không đảm bảo thứ tự so với stylesheet. Đo trên browser thật phát hiện thêm một lỗi: Preflight đặt `img { max-width: 100% }` mà `.ant-spin` lại rộng 0 nên ảnh co về **0×40px** — thêm `max-width: none !important` mới ra đúng 28/40/60 vuông. Giữ nguyên 70 file dùng `Skeleton` (giữ được layout, đổi sang ảnh động sẽ gây nhảy layout). Verify: oxlint sạch, dependency-cruiser 1000 module không vi phạm, 784 test/211 file vitest (thêm 4 test `BrandLoader`), build production, 168/168 Playwright smoke; đo trực tiếp trong DOM xác nhận ba cỡ indicator đúng số. Lưu ý còn lại: WebP thừa hưởng alpha 1-bit của GIF gốc nên viền có thể hơi gắt trên nền tối, và asset 260 KB chưa được preload nên lần tải nguội đầu tiên chỉ hiện dòng chữ trước khi ảnh về.
-
-Cập nhật 2026-08-04a (TTS — mở giọng đọc cho mọi bề mặt, không riêng blog): hạ tầng đọc đã có sẵn và tốt (tts-service nhận text thô, single-flight theo `artifact_key`, cache, `PcmStreamPlayer` Web Audio), nhưng contract public bị khoá cứng vào bài viết: `SpeechSessionRequestSerializer` chỉ nhận `source_type='blog_post'`, view bắt buộc `published_blog_post_for_speech()`, normalizer nhận **model `Post`** và parse HTML, còn engine phát audio thì nằm trong `features/listen-to-blog-post/model/` nên slice khác không được import (feature không import feature). Mở thêm `source_type='text'` trên chính endpoint cũ: normalizer generic `plain_text_speech_script` (`plain-speech-v1`, mỗi dòng là một block để giữ nhịp ngắt, vẫn chạy HTML parser để không đọc to thẻ và không announce "đoạn mã được lược bỏ" như luồng bài viết), service `create_text_speech_session` **không** đăng ký `BlogSpeechAsset` và không bắn Celery finalizer — câu nói quá ngắn và quá nhiều để trả giá 1 row DB + 1 MP3 mỗi lượt, nên chỉ chạy live stream. `source_revision` ghim hằng `text:v1` để cùng một câu từ bất kỳ bề mặt nào rơi vào **một** artifact identity (đo thực tế: lần đọc thứ hai trả `cached: true`, trùng `artifact_key`). Rào chắn cho input đến từ client: `SPEECH_MAX_ADHOC_TEXT_CHARS=600` và scope throttle riêng `speech_adhoc` 90/hour (`get_throttles()` chọn scope theo `source_type`) để robot nói nhiều không ăn hết hạn ngạch 60/hour của người đang nghe blog — engine chỉ có `TTS_MAX_CONCURRENT_STREAMS=1` worker. Frontend: nâng `PcmStreamPlayer`/`NativeAudioPlayer`/`pcm-stream-format` + chính sách chờ 429/503 lên `shared/lib/speech/`, gom vòng retry mở luồng thành `playSpeechStream` dùng chung (blog và ad-hoc không còn copy nhau), thêm `createTextSpeechSession` vào `entities/speech` và feature mới `features/speak-text` với `useSpeak()` — `speak(text)` là đủ. Ràng buộc không bỏ được: AudioContext chỉ mở trong cử chỉ người dùng nên lần phát đầu phải nằm trong handler click/tap; bề mặt tự nói (trợ lý) gọi `unlock()` ở lần bấm đầu tiên rồi `speak()` tự do. Verify: ruff/ruff format/lint-imports/makemigrations sạch, 30/30 test app speech (thêm test cho throttle scope tách biệt, chặn text rỗng/quá dài, markup không được đọc to, không sinh artifact), 720 pass backend + coverage 86,31%; oxlint/dependency-cruiser (1026 module, 0 vi phạm)/build, 803 vitest (217 file, thêm 9 test `useSpeak`), 173/174 Playwright smoke. Đo trên stack docker thật: POST text → 201 + 230 KB WAV 48 kHz mono trong 0,83 s, lặp lại → `cached: true`, text rỗng và 700 ký tự đều 400. Nợ đã biết: 8 test `apps/jobs/test_posting_workflows.py` đang đỏ sẵn từ trước (deadline windows, không liên quan) và `blog-admin-permissions.spec.js` flaky (chạy lại xanh).
-
-Cập nhật 2026-08-04b (Trợ lý ứng viên — robot đọc câu trả lời): nối `useSpeak()` vào `widgets/candidate-assistant` qua hook `useAssistantVoice(messages)`. Chỉ đọc câu trả lời cho tin nhắn người dùng vừa gửi: mốc `spokenIdRef` khởi tạo bằng ID tin nhắn cuối lúc mount nên **lời chào không bao giờ được đọc** — panel là lazy chunk, lúc nó mount thì cử chỉ mở đã kết thúc và trình duyệt chặn autoplay, mà tự phát tiếng khi người dùng chưa hỏi gì cũng là hành vi gây khó chịu. `voice.prepare()` gọi `unlock()` ngay trong handler submit — cử chỉ hợp lệ duy nhất trước khi câu trả lời về sau ~1,1s. Giọng cố định `north-female-news` (Mai Anh). Nút loa trong header panel bật/tắt, lưu `procv_assistant_voice_v1` ở localStorage, tắt thì `stop()` ngay và không đọc các câu sau; bật lại cũng là cử chỉ hợp lệ để mở Web Audio. Bật tiếng giữa chừng không đọc lại câu cũ. Mascot dùng `talking={typing || voice.speaking}` và dòng trạng thái thêm "Đang đọc câu trả lời…". Verify: oxlint sạch, dependency-cruiser 1030 module 0 vi phạm, 820 test/219 file vitest (thêm 9 test `useAssistantVoice` + 2 test tích hợp trong `CandidateAssistant`), build, 174/174 Playwright smoke. Kiểm chứng trên browser thật với stack docker: gửi câu hỏi → POST `/api/speech/sessions/` 201 → stream `/tts/v1/streams/...` phát hết bài rồi tự về trạng thái nghỉ, patch `AbortController` xác nhận **0 lần abort** từ phía client (dòng `ERR_ABORTED` trong network panel chỉ là cách devtools ghi nhận response streaming dài); bấm tắt tiếng → `aria-pressed=false`, localStorage `off`, câu sau không phát.
 
 Cập nhật 2026-08-05a (FAQ/Help Center KB-P1): hoàn tất app skeleton,
 common HTML sanitizer, model/migration, seed bảy category và bốn permission với

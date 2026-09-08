@@ -5,7 +5,6 @@ from django.utils.html import strip_tags
 from django.utils.text import Truncator
 from rest_framework import serializers
 
-from apps.speech.services import speech_surface_config
 from common.media_storage import media_url_from_value
 
 from ...models import BlogMediaAsset, PinnedPost, Post, PostCategory, Tag
@@ -92,8 +91,6 @@ class PostDetailSerializer(serializers.ModelSerializer):
     tags = TagSerializer(many=True, read_only=True)
     thumbnail_url = serializers.SerializerMethodField()
     related_job_category = serializers.SerializerMethodField()
-    speech_default = serializers.SerializerMethodField()
-    speech_assets = serializers.SerializerMethodField()
     related_posts = serializers.SerializerMethodField()
     author = serializers.SerializerMethodField()
     reading_time_minutes = serializers.SerializerMethodField()
@@ -113,8 +110,6 @@ class PostDetailSerializer(serializers.ModelSerializer):
             'related_posts',
             'author',
             'reading_time_minutes',
-            'speech_default',
-            'speech_assets',
             'published_at',
             'seo_title',
             'seo_description',
@@ -153,40 +148,6 @@ class PostDetailSerializer(serializers.ModelSerializer):
         if words <= 0:
             return 1
         return max(1, math.ceil(words / WORDS_PER_MINUTE))
-
-    def get_speech_default(self, obj):
-        assets = self._current_speech_assets(obj)
-        speech_config = speech_surface_config('blog')
-        asset = next(
-            (
-                item
-                for item in assets
-                if item.voice_id == speech_config['voice_id']
-                and item.style == speech_config['style']
-            ),
-            None,
-        )
-        if asset is None:
-            return None
-        return self._speech_asset_payload(asset)
-
-    def get_speech_assets(self, obj):
-        return [self._speech_asset_payload(asset) for asset in self._current_speech_assets(obj)]
-
-    @staticmethod
-    def _current_speech_assets(obj):
-        assets = getattr(obj, 'prefetched_ready_speech_assets', ())
-        return [item for item in assets if item.post_revision == obj.edit_revision]
-
-    def _speech_asset_payload(self, asset):
-        return {
-            'status': 'ready',
-            'url': media_url_from_value(asset.storage_key, request=self.context.get('request')),
-            'voice_id': asset.voice_id,
-            'style': asset.style,
-            'mime_type': asset.mime_type,
-            'duration_ms': asset.duration_ms,
-        }
 
 
 class PinnedPostSerializer(serializers.ModelSerializer):

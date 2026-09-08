@@ -1,4 +1,3 @@
-import { ReloadOutlined, SoundOutlined, StopOutlined } from '@ant-design/icons'
 import { useLayoutEffect } from 'react'
 import { ProcvMascot } from '@/shared/ui/mascot'
 import { useMediaQuery } from '@/shared/hooks/use-media-query'
@@ -10,19 +9,14 @@ export default function AssistantMessage({
   onAction,
   onContentProgress,
   progressive = false,
-  speech,
   text,
 }) {
   const assistant = from === 'assistant'
-  const speechActive = Boolean(speech?.active)
   const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)')
   const reveal = useProgressiveReply({
     active: assistant && progressive,
-    elapsed: 0,
-    enabled: false,
     progressive: assistant && progressive,
     reducedMotion,
-    status: speech?.status,
     text,
   })
 
@@ -56,7 +50,7 @@ export default function AssistantMessage({
             </>
           ) : text}
         </div>
-        {assistant && (actions.length > 0 || speech?.available) && reveal.complete && (
+        {assistant && actions.length > 0 && reveal.complete && (
           <div className="assistant-message__actions assistant-message__actions--ready">
             {actions.map((action) => (
               <button
@@ -68,23 +62,6 @@ export default function AssistantMessage({
                 {action.label}
               </button>
             ))}
-            {speech?.available && (
-              <button
-                type="button"
-                onClick={speech.onToggle}
-                aria-label={speechActive && speech.speaking ? 'Dừng đọc tin nhắn' : 'Nghe tin nhắn'}
-                className="assistant-message__action"
-              >
-                {speechActive && speech.speaking
-                  ? <StopOutlined />
-                  : speechActive && speech.status === 'ended'
-                    ? <ReloadOutlined />
-                    : <SoundOutlined />}
-                {speechActive && speech.speaking
-                  ? 'Dừng'
-                  : speechActive && speech.status === 'ended' ? 'Phát lại' : 'Nghe'}
-              </button>
-            )}
           </div>
         )}
       </div>

@@ -329,24 +329,6 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
   trong transaction; lỗi trả `JOB_APPROVAL_BLOCKED` cùng blocker code ổn định
   `verification_required`/`dpa_outdated`.
 
-### 2026-08-07
-
-#### Added — TTS production optimization Giai đoạn 0–2
-
-- Thêm benchmark cache miss/hit, tải ba artifact, singleflight và ảnh hưởng Web
-  API; status nội bộ có token với capacity, queue, TTFA/RTF, RAM/CPU và cache.
-- Thêm hard switch production mặc định tắt, admission tối đa ba generation,
-  quota ngày user/IP cache-first, policy surface/voice/style phía server,
-  aggregate `SpeechUsageDaily` và admin overview trong tab AI hiện có.
-- Chuyển blog/chatbot/onboarding sang opt-in: blog giữ một giọng và durable R2;
-  chatbot click-to-listen theo message; onboarding mặc định off; interview vẫn
-  tắt. Khi TTS lỗi/tắt/hết quota, các workflow văn bản không bị chặn.
-- Đặt baseline một worker, 2.5 CPU/2 GB, hai ONNX threads; cache 5 GB với TTL
-  PCM 24h, WAV/MP3/meta 72h; artifact lỗi/post hoặc model revision cũ dọn sau
-  30 ngày. Model production phải pin snapshot và revision theo commit SHA.
-- Chưa bật TTS production và chưa triển khai prepared onboarding audio; hai
-  việc này chỉ thực hiện sau benchmark/rollout gate.
-
 ### 2026-08-06
 
 #### Added — Announcement visual theme (AN-V0 / AN-V1 / AN-V2)

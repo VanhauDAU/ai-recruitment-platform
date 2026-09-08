@@ -23,18 +23,10 @@ const SAVED_PREFERENCE = {
 }
 
 async function mockOnboardingApi(page) {
-  let speechRequests = 0
   await page.route(API_ROUTE, async (route) => {
     const request = route.request()
     const path = new URL(request.url()).pathname
 
-    // Robot im lặng trong smoke test: engine TTS không chạy ở CI, phụ đề vẫn
-    // phải hiện đủ nhờ typewriter dự phòng.
-    if (path === '/api/speech/sessions/') {
-      speechRequests += 1
-      await route.fulfill({ status: 503, contentType: 'application/json', body: '{"detail":"unavailable"}' })
-      return
-    }
     if (path === '/api/candidate/job-preferences/' && request.method() === 'PUT') {
       await route.fulfill({ contentType: 'application/json', body: JSON.stringify(SAVED_PREFERENCE) })
       return
@@ -62,7 +54,6 @@ async function mockOnboardingApi(page) {
                 : {}
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) })
   })
-  return () => speechRequests
 }
 
 /** Phụ đề đầy đủ của robot, không phụ thuộc chữ đang chạy dần trong bong bóng. */
@@ -72,7 +63,7 @@ function botTranscript(page) {
 
 test.describe('onboarding trò chuyện với robot', () => {
   test('cả cuộc trò chuyện diễn ra trên một trang rồi chốt bằng nhu cầu vừa lưu', async ({ page }) => {
-    const speechRequests = await mockOnboardingApi(page)
+    await mockOnboardingApi(page)
 
     await page.goto('/onboard-user')
     await expect(botTranscript(page).first()).toContainText('Chào Nguyễn An!')
@@ -114,7 +105,6 @@ test.describe('onboarding trò chuyện với robot', () => {
 
     // Đáp án cũ vẫn nằm nguyên trong lịch sử hội thoại.
     await expect(page.getByText('15.000.000 VND/tháng')).toBeVisible()
-    expect(speechRequests()).toBe(0)
   })
 
   test('robot nhắc ngay trong hội thoại khi chưa trả lời và cho bỏ qua onboarding', async ({ page }) => {

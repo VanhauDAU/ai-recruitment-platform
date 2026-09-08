@@ -9229,95 +9229,6 @@ paths:
                 items:
                   $ref: '#/components/schemas/SkillGroup'
           description: ''
-  /api/speech/admin/overview/:
-    get:
-      operationId: speech_admin_overview_retrieve
-      tags:
-      - speech-admin
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                type: object
-                additionalProperties: {}
-          description: Effective policy, runtime health, artifact totals and 7/30-day usage.
-        '403':
-          description: Requires superuser and site_setting.view permission.
-  /api/speech/sessions/:
-    post:
-      operationId: speech_sessions_create
-      tags:
-      - speech
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SpeechSessionRequestRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/SpeechSessionRequestRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/SpeechSessionRequestRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      - {}
-      responses:
-        '201':
-          content:
-            application/json:
-              schema:
-                type: object
-                additionalProperties: {}
-          description: ''
-        '404':
-          content:
-            application/json:
-              schema:
-                type: object
-                additionalProperties: {}
-          description: ''
-        '429':
-          content:
-            application/json:
-              schema:
-                type: object
-                additionalProperties: {}
-          description: Daily quota exhausted; Retry-After is returned.
-        '503':
-          content:
-            application/json:
-              schema:
-                type: object
-                additionalProperties: {}
-          description: ''
-  /api/speech/voices/:
-    get:
-      operationId: speech_voices_retrieve
-      tags:
-      - speech
-      security:
-      - jwtAuth: []
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                type: object
-                additionalProperties: {}
-          description: ''
-        '503':
-          content:
-            application/json:
-              schema:
-                type: object
-                additionalProperties: {}
-          description: ''
   /api/uploads/sessions/:
     post:
       operationId: uploads_sessions_create
@@ -25211,12 +25122,6 @@ components:
         related_job_category:
           type: string
           readOnly: true
-        speech_default:
-          type: string
-          readOnly: true
-        speech_assets:
-          type: string
-          readOnly: true
         published_at:
           type: string
           format: date-time
@@ -25235,8 +25140,6 @@ components:
       - content
       - public_id
       - related_job_category
-      - speech_assets
-      - speech_default
       - tags
       - thumbnail_url
       - title
@@ -27477,37 +27380,6 @@ components:
         * `applied` - Applied
         * `recommended` - Recommended
         * `invited` - Invited
-    SourceTypeEnum:
-      enum:
-      - blog_post
-      - text
-      type: string
-      description: |-
-        * `blog_post` - blog_post
-        * `text` - text
-    SpeechSessionRequestRequest:
-      type: object
-      properties:
-        source_type:
-          $ref: '#/components/schemas/SourceTypeEnum'
-        source_public_id:
-          type: string
-          minLength: 1
-          default: ''
-          pattern: ^[A-Za-z0-9_-]{3,50}$
-        text:
-          type: string
-          default: ''
-          maxLength: 600
-        surface:
-          enum:
-          - onboarding
-          - chatbot
-          - interview
-          type: string
-          description: Required when source_type is text. Voice and style are selected server-side.
-      required:
-      - source_type
     Status399Enum:
       enum:
       - draft

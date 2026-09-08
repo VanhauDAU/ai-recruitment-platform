@@ -18,14 +18,13 @@ import {
 import './blog-share-rail.css'
 
 /**
- * Cột công cụ bài viết: robot TTS + chia sẻ + mục lục.
+ * Cột công cụ bài viết: chia sẻ + mục lục.
  * Desktop: sticky dưới header+category (z thấp hơn category nav).
  * Mobile: không sticky — cuộn theo nội dung, không che thanh danh mục.
  */
 export default function BlogShareRail({
   onToggleToc,
   hasToc,
-  speechControl,
   sharePath,
   title = '',
   description = '',
@@ -71,7 +70,6 @@ export default function BlogShareRail({
 
   return (
     <div className="blog-share-rail" aria-label="Công cụ bài viết">
-      {speechControl}
       <div className="blog-share-rail__group" aria-label="Chia sẻ">
         <RailButton label="Sao chép liên kết" onClick={copyLink}>
           <LinkOutlined aria-hidden />

@@ -168,5 +168,5 @@ Xác nhận rendered Compose trước rollout:
 
 ```bash
 docker compose config
-docker compose config | grep 'default,auth-email,auth-sms,cv-export,speech-artifacts'
+docker compose config | grep 'default,auth-email,auth-sms,cv-export,upload-scan'
 ```

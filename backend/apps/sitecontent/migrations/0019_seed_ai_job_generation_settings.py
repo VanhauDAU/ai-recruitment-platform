@@ -113,7 +113,7 @@ def seed_ai_job_generation_settings(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-    dependencies = [('sitecontent', '0018_seed_speech_settings')]
+    dependencies = [('sitecontent', '0017_announcement_revision_visual_theme')]
 
     operations = [
         migrations.RunPython(seed_ai_job_generation_settings, migrations.RunPython.noop),

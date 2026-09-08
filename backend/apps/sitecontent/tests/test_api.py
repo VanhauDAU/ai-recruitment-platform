@@ -107,25 +107,6 @@ class SiteSettingCacheInvalidationTests(TestCase):
         self.assertIs(response.data['knowledgebase_public_enabled'], False)
         self.assertIs(response.data['knowledgebase_search_index_enabled'], False)
 
-    @override_settings(SPEECH_RUNTIME_ENABLED=False)
-    def test_public_speech_flags_are_fail_closed_by_runtime_switch(self):
-        for key in (
-            'speech_enabled',
-            'speech_live_enabled',
-            'speech_blog_enabled',
-            'speech_chatbot_enabled',
-        ):
-            SiteSetting.objects.filter(key=key).update(value=True, is_public=True)
-        cache.clear()
-
-        response = self.client.get(reverse('site-settings'))
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIs(response.data['speech_enabled'], False)
-        self.assertIs(response.data['speech_live_enabled'], False)
-        self.assertIs(response.data['speech_blog_enabled'], False)
-        self.assertIs(response.data['speech_chatbot_enabled'], False)
-
 
 @override_settings(MEDIA_ROOT=TEST_MEDIA_ROOT, ALLOWED_HOSTS=['testserver'], CACHES=LOCAL_CACHE)
 class SiteSettingImageUploadTests(APITransactionTestCase):

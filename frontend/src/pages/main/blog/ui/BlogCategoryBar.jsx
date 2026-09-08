@@ -127,7 +127,7 @@ export default function BlogCategoryBar({ categories, activeSlug }) {
 }
 
 // Sticky ngay dưới header (h-16 / top-16). z-40: dưới header (z-50), trên share rail (z-10)
-// để cụm TTS/share khi sticky không che mất thanh danh mục.
+// để cụm share khi sticky không che mất thanh danh mục.
 export function BlogCategoryNav({ categories, activeSlug }) {
   return (
     <div className="sticky top-16 z-40 border-b border-slate-100/80 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/90">

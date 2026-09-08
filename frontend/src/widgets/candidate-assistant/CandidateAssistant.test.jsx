@@ -2,13 +2,10 @@ import { act, fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import CandidateAssistant from './CandidateAssistant'
-import { INITIAL_MESSAGE } from './model/assistant-script'
-import { findAssistantReply } from './model/use-assistant-script'
 
-const { promptLogin, siteSettings, speech, useConsent } = vi.hoisted(() => ({
+const { promptLogin, siteSettings, useConsent } = vi.hoisted(() => ({
   promptLogin: vi.fn(),
-  siteSettings: { contact_zalo_url: '', hotline: '', speech_chatbot_enabled: true },
-  speech: { speak: vi.fn(), speaking: false, status: 'idle', stop: vi.fn() },
+  siteSettings: { contact_zalo_url: '', hotline: '' },
   useConsent: vi.fn(),
 }))
 
@@ -18,7 +15,6 @@ vi.mock('@/entities/site-settings', () => ({
   useSiteSettings: () => ({ settings: siteSettings }),
 }))
 vi.mock('@/features/auth', () => ({ useLoginPrompt: () => ({ promptLogin }) }))
-vi.mock('@/features/speak-text', () => ({ useSpeak: () => speech }))
 
 function renderAssistant(path = '/') {
   return render(
@@ -33,7 +29,6 @@ describe('CandidateAssistant', () => {
     window.sessionStorage.clear()
     window.localStorage.clear()
     useConsent.mockReturnValue({ isDecided: true, isEnabled: true })
-    siteSettings.speech_chatbot_enabled = true
   })
 
   afterEach(() => {
@@ -54,34 +49,6 @@ describe('CandidateAssistant', () => {
     useConsent.mockReturnValue({ isDecided: false, isEnabled: true })
     const { container } = renderAssistant('/')
     expect(container.firstChild).toHaveStyle({ bottom: 'calc(160px + 0px + env(safe-area-inset-bottom, 0px))' })
-  })
-
-  it('chỉ đọc câu trả lời sau khi người dùng bấm Nghe', async () => {
-    renderAssistant('/')
-    fireEvent.click(screen.getByRole('button', { name: 'Mở trợ lý ProCV' }))
-    await screen.findByRole('dialog', { name: 'Trợ lý ProCV' })
-
-    fireEvent.change(screen.getByLabelText('Nhập câu hỏi cho trợ lý'), {
-      target: { value: 'tìm việc' },
-    })
-    fireEvent.click(screen.getByRole('button', { name: 'Gửi câu hỏi' }))
-
-    expect(speech.speak).not.toHaveBeenCalled()
-    expect(await screen.findByText(findAssistantReply('tìm việc').reply, {}, { timeout: 2500 })).toBeInTheDocument()
-    const [listenButton] = screen.getAllByRole('button', { name: 'Nghe tin nhắn' })
-    fireEvent.click(listenButton)
-
-    expect(speech.speak).toHaveBeenCalledWith(INITIAL_MESSAGE.text)
-  })
-
-  it('ẩn toàn bộ hành động nghe khi policy chatbot đang tắt', async () => {
-    siteSettings.speech_chatbot_enabled = false
-    renderAssistant('/')
-    fireEvent.click(screen.getByRole('button', { name: 'Mở trợ lý ProCV' }))
-    await screen.findByRole('dialog', { name: 'Trợ lý ProCV' })
-
-    expect(screen.queryByRole('button', { name: 'Nghe tin nhắn' })).not.toBeInTheDocument()
-    expect(speech.speak).not.toHaveBeenCalled()
   })
 
   it('chỉ hiện lời chào một lần trong phiên', () => {

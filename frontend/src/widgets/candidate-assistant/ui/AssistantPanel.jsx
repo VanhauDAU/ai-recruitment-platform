@@ -8,7 +8,6 @@ import { message } from '@/shared/lib/toast'
 import { ProcvMascot } from '@/shared/ui/mascot'
 import { ASSISTANT_ACTIONS } from '../model/assistant-script'
 import { useAssistantScript } from '../model/use-assistant-script'
-import { useAssistantVoice } from '../model/use-assistant-voice'
 import AssistantMessage from './AssistantMessage'
 import '../candidate-assistant.css'
 
@@ -20,7 +19,6 @@ export default function AssistantPanel({ onClose }) {
   const { isAuthenticated } = useSession()
   const { settings } = useSiteSettings()
   const { emotion, messages, sendMessage, typing } = useAssistantScript()
-  const voice = useAssistantVoice(settings.speech_chatbot_enabled === true)
   const [input, setInput] = useState('')
   const listRef = useRef(null)
   const inputRef = useRef(null)
@@ -84,13 +82,13 @@ export default function AssistantPanel({ onClose }) {
     >
       <header className="assistant-panel__header">
         <span className="assistant-panel__avatar">
-          <ProcvMascot size={43} emotion={emotion} blink talking={typing || voice.speaking} />
+          <ProcvMascot size={43} emotion={emotion} blink talking={typing} />
         </span>
         <div className="assistant-panel__identity">
           <h2 className="assistant-panel__title">Trợ lý ProCV</h2>
           <p className="assistant-panel__status">
             <span className="assistant-panel__status-dot" />
-            {typing ? 'Đang soạn câu trả lời…' : voice.speaking ? 'Đang đọc câu trả lời…' : 'Sẵn sàng hỗ trợ bạn'}
+            {typing ? 'Đang soạn câu trả lời…' : 'Sẵn sàng hỗ trợ bạn'}
           </p>
         </div>
         <button type="button" aria-label="Đóng trợ lý" onClick={onClose} className="assistant-panel__close">
@@ -106,13 +104,6 @@ export default function AssistantPanel({ onClose }) {
             actions={(item.actions || []).map((actionId) => ({ id: actionId, ...ASSISTANT_ACTIONS[actionId] })).filter((action) => action.label)}
             onAction={runAction}
             onContentProgress={keepLatestMessageVisible}
-            speech={{
-              active: item.id === voice.activeMessageId,
-              available: voice.available,
-              onToggle: () => voice.toggleMessage(item.id, item.text),
-              speaking: voice.speaking,
-              status: voice.status,
-            }}
           />
         ))}
         {typing && (

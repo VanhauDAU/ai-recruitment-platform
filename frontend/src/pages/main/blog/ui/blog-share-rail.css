@@ -85,8 +85,3 @@
 .blog-share-rail__button svg {
   fill: currentColor;
 }
-
-/* Speech launcher nằm cùng rail: không tạo stacking context đè category nav. */
-.blog-share-rail .blog-speech {
-  z-index: 1;
-}

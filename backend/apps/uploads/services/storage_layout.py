@@ -11,7 +11,6 @@ PUBLIC_PREFIXES = (
     'cvs/backgrounds/',
     'frontend/legacy/',
     'migrations/external-media/',
-    'speech/artifacts/',
     # Historical product policy; changing avatar visibility is a separate flow.
     'users/avatars/',
 )

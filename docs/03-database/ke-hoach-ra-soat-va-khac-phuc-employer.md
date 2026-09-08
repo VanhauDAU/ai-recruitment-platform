@@ -618,7 +618,7 @@ Evidence shared core:
   generated-schema gate exit 0 nhưng repo vẫn có baseline 416 warning/122 error
   ngoài ER-3, vì vậy không tuyên bố OpenAPI toàn repo sạch.
 - Production Compose render giữ worker queues
-  `default,auth-email,auth-sms,cv-export,speech-artifacts,upload-scan`.
+  `default,auth-email,auth-sms,cv-export,upload-scan`.
 
 Employer domain/frontend slice hoàn tất về code tại `ec1ac428`:
 

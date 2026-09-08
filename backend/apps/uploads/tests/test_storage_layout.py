@@ -150,7 +150,6 @@ class StorageLayoutClassificationTests(SimpleTestCase):
             'knowledgebase/content/guide.png',
             'frontend/legacy/onboarding/step.png',
             'migrations/external-media/blog/post/1/thumbnail/image.png',
-            'speech/artifacts/v2/article.mp3',
         )
         for key in public_keys:
             with self.subTest(key=key):

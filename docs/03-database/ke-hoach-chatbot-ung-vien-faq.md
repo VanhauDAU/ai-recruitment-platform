@@ -26,7 +26,7 @@ FAQ publish (semantic search), **không** sinh câu trả lời tự do bằng L
 | --- | --- |
 | Help Center public `/tro-giup` | Đã ship (`apps.knowledgebase`, KB-P0…P6) |
 | Public search FAQ | `search_q` (unaccent) trên title/body publish |
-| UI trợ lý | `widgets/candidate-assistant` (launcher, panel, mascot, progressive text, TTS) |
+| UI trợ lý | `widgets/candidate-assistant` (launcher, panel, mascot, progressive text) |
 | Logic trả lời | Kịch bản keyword tĩnh trong `model/assistant-script.js` — **chưa gọi API** |
 | Architecture note | Panel lazy-load; phase 1 hiện tại “không gọi API chatbot” (cần cập nhật khi ship CB-P2) |
 | Embedding / pgvector / Ollama | **Chưa có** trong repo |
@@ -93,7 +93,6 @@ Mở rộng whitelist sau phải cập nhật doc + env/setting allowlist + rein
 | Nguồn kiến thức | Chỉ revision **APPROVED + published** + category active | Re-export từ `knowledgebase.services` |
 | Auth | `AllowAny` + throttle IP | Khách + ứng viên |
 | Transcript | Chỉ memory UI (session panel) | Không bảng chat message |
-| TTS | Giữ `useAssistantVoice` hiện có | Đọc text trả về (đã có) |
 
 ### 3.1. Vì sao không generate LLM ở MVP
 
@@ -174,7 +173,7 @@ trước khi code lệch.
 ### 4.3. Frontend (FSD)
 
 ```text
-widgets/candidate-assistant     # UI panel, mascot, voice (giữ)
+widgets/candidate-assistant     # UI panel, mascot, progressive text
   → features/ask-candidate-assistant   # send message, map DTO → messages
   → entities/chatbot                   # API client, types, query keys
   → entities/knowledgebase             # (tuỳ chọn) deep-link helper /tro-giup
@@ -358,7 +357,7 @@ Giữ nguyên:
 
 - Launcher + greeting bubble + lazy `AssistantPanel`
 - Mascot emotion / talking
-- Progressive reply + TTS (`useAssistantVoice`)
+- Progressive reply
 - Quick actions
 
 Thay đổi:
