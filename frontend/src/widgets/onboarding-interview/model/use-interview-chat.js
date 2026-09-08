@@ -44,7 +44,7 @@ export function useInterviewChat({ onSubmit, preference }) {
   const [phase, setPhase] = useState('greeting')
   const [editing, setEditing] = useState(null)
   // Câu robot nhắc khi ứng viên gửi thiếu; giữ luôn trong lịch sử chat vì đó
-  // cũng là một lượt nói thật của robot.
+  // cũng là một tin nhắn thật của robot.
   const [nagged, setNagged] = useState({})
   const [failure, setFailure] = useState(null)
 

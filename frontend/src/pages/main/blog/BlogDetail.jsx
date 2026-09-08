@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Drawer, Result, Skeleton, Tag } from 'antd'
 import { Link, useParams } from 'react-router'
 import { BLOG_ROOT, BlogPostContent, blogCategoryPath, formatBlogDate, getBlogCategories, getBlogPost } from '@/entities/blog'
@@ -11,10 +11,6 @@ import BlogRelatedPosts from './ui/BlogRelatedPosts'
 import BlogShareRail from './ui/BlogShareRail'
 import BlogSidebar from './ui/BlogSidebar'
 import BlogToc from './ui/BlogToc'
-
-const BlogSpeechPlayer = lazy(() => import('@/features/listen-to-blog-post').then(
-  ({ BlogSpeechPlayer: Component }) => ({ default: Component }),
-))
 
 export default function BlogDetail() {
   const { slug } = useParams()
@@ -130,14 +126,6 @@ export default function BlogDetail() {
                   sharePath={canonicalPath}
                   title={shareTitle}
                   description={shareDescription}
-                  speechControl={(
-                    <Suspense fallback={<SpeechPlayerSkeleton />}>
-                      <BlogSpeechPlayer
-                        defaultAsset={post.speech_default}
-                        postPublicId={post.public_id}
-                      />
-                    </Suspense>
-                  )}
                 />
               </div>
 
@@ -220,15 +208,6 @@ export default function BlogDetail() {
         <BlogToc toc={toc} collapsible={false} onNavigate={() => setTocDrawerOpen(false)} />
       </Drawer>
     </div>
-  )
-}
-
-function SpeechPlayerSkeleton() {
-  return (
-    <div
-      className="h-12 w-12 animate-pulse rounded-full border border-emerald-100 bg-emerald-50/70"
-      aria-hidden="true"
-    />
   )
 }
 

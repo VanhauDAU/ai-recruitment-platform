@@ -22,7 +22,7 @@ const CATEGORIES = [
 ]
 const PROVINCES = [{ id: 9, name: 'Đà Nẵng' }]
 
-/** Câu robot nói nằm ở lớp phụ đề đầy đủ, không phải phần chữ đang chạy dần. */
+/** Nội dung đầy đủ nằm ở lớp hỗ trợ screen reader, không phải phần chữ đang chạy dần. */
 function botSaid(pattern) {
   return [...document.querySelectorAll('.onboarding-chat__sr')]
     .some((node) => pattern.test(node.textContent))

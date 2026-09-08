@@ -23,7 +23,6 @@ services:
       DJANGO_SETTINGS_MODULE: config.settings.production
       FRONTEND_SHELL_URL: http://frontend/
       AI_RUNTIME_ENABLED: ${AI_RUNTIME_ENABLED:-false}
-      SPEECH_RUNTIME_ENABLED: ${SPEECH_RUNTIME_ENABLED:-false}
     volumes: !override
       - backend_media:/app/legacy-media:ro
       - backend_public_media:/app/public-media
@@ -40,7 +39,6 @@ services:
       CELERY_BROKER_URL: redis://redis:6379/1
       DJANGO_SETTINGS_MODULE: config.settings.production
       AI_RUNTIME_ENABLED: ${AI_RUNTIME_ENABLED:-false}
-      SPEECH_RUNTIME_ENABLED: ${SPEECH_RUNTIME_ENABLED:-false}
     volumes: !override
       - backend_media:/app/legacy-media:ro
       - backend_public_media:/app/public-media
@@ -65,30 +63,7 @@ services:
       CELERY_BROKER_URL: redis://redis:6379/1
       DJANGO_SETTINGS_MODULE: config.settings.production
       AI_RUNTIME_ENABLED: ${AI_RUNTIME_ENABLED:-false}
-      SPEECH_RUNTIME_ENABLED: ${SPEECH_RUNTIME_ENABLED:-false}
     volumes: !reset []
-
-  tts:
-    restart: unless-stopped
-    environment:
-      TTS_ENVIRONMENT: production
-      SPEECH_RUNTIME_ENABLED: ${SPEECH_RUNTIME_ENABLED:-false}
-      TTS_INTERNAL_TOKEN: ${TTS_INTERNAL_TOKEN}
-      TTS_CACHE_DIR: /var/cache/procv-tts
-      TTS_CACHE_MAX_GB: ${TTS_CACHE_MAX_GB:-5}
-      TTS_PCM_CACHE_TTL_SECONDS: ${TTS_PCM_CACHE_TTL_SECONDS:-86400}
-      TTS_WAV_CACHE_TTL_SECONDS: ${TTS_WAV_CACHE_TTL_SECONDS:-259200}
-      TTS_ARTIFACT_CACHE_TTL_SECONDS: ${TTS_ARTIFACT_CACHE_TTL_SECONDS:-259200}
-      TTS_MAX_ACTIVE_SESSIONS: ${TTS_MAX_ACTIVE_SESSIONS:-1000}
-      TTS_MAX_ACTIVE_GENERATIONS: ${TTS_MAX_ACTIVE_GENERATIONS:-3}
-      TTS_MAX_CONCURRENT_STREAMS: ${TTS_MAX_CONCURRENT_STREAMS:-1}
-      TTS_ONNX_THREADS: ${TTS_ONNX_THREADS:-2}
-      OMP_NUM_THREADS: ${TTS_ONNX_THREADS:-2}
-      OMP_WAIT_POLICY: PASSIVE
-      TTS_MODEL_SOURCE: ${TTS_MODEL_SOURCE:?Pin TTS_MODEL_SOURCE to a local model snapshot}
-      TTS_MODEL_REVISION: ${TTS_MODEL_REVISION:?Set TTS_MODEL_REVISION to the snapshot commit SHA}
-      HF_HOME: /var/cache/huggingface
-    ports: !reset []
 
   frontend:
     # Prod: build tĩnh + nginx thay cho vite dev server.
@@ -128,7 +103,6 @@ services:
     depends_on:
       - backend
       - frontend
-      - tts
     init: true
     pids_limit: ${NGINX_PIDS_LIMIT:-128}
     healthcheck:

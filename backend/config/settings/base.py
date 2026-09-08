@@ -86,7 +86,6 @@ INSTALLED_APPS = [
     'apps.blog',
     'apps.privacy',
     'apps.services',
-    'apps.speech',
     'apps.knowledgebase',
     'apps.uploads',
 ]
@@ -404,9 +403,6 @@ REST_FRAMEWORK = {
         'announcement_runtime': '60/hour',
         'cv_import': '10/hour',
         'ai_job_generation': '3/min',
-        'speech_catalog': '120/hour',
-        'speech_session': '60/hour',
-        'speech_adhoc': '90/hour',
         'knowledgebase_public': '120/min',
         'public_companies': '120/min',
         'upload_session': '30/hour',
@@ -639,7 +635,6 @@ CELERY_TASK_ROUTES = {
     'apps.employers.tasks.tax_lookup.*': {'queue': 'default'},
     'apps.employers.tasks.domain_claims.*': {'queue': 'default'},
     'apps.cvs.tasks.*': {'queue': 'cv-export'},
-    'apps.speech.tasks.*': {'queue': 'speech-artifacts'},
     'apps.uploads.tasks.*': {'queue': 'upload-scan'},
     'apps.jobs.tasks.ai_generation.*': {'queue': 'ai-generation'},
     'apps.jobs.tasks.*': {'queue': 'candidate-email'},
@@ -715,14 +710,6 @@ CELERY_BEAT_SCHEDULE = {
     },
     'purge-expired-cv-import-sources': {
         'task': 'apps.cvs.tasks.purge_expired_cv_import_sources',
-        'schedule': 86400.0,
-    },
-    'reconcile-speech-artifacts': {
-        'task': 'apps.speech.tasks.assets.reconcile_speech_artifacts',
-        'schedule': 60.0,
-    },
-    'purge-obsolete-speech-artifacts': {
-        'task': 'apps.speech.tasks.assets.purge_obsolete_speech_artifacts',
         'schedule': 86400.0,
     },
     'dispatch-pending-upload-scans': {
@@ -806,45 +793,6 @@ AI_POLICY_CACHE_SECONDS = config('AI_POLICY_CACHE_SECONDS', default=60, cast=int
 GEMINI_API_KEY = config('GEMINI_API_KEY', default='').strip()
 GOOGLE_CLOUD_PROJECT = config('GOOGLE_CLOUD_PROJECT', default='').strip()
 GOOGLE_CLOUD_LOCATION = config('GOOGLE_CLOUD_LOCATION', default='global').strip()
-
-# VieNeu-TTS chạy trong process riêng để không nhân model theo số Gunicorn/Celery
-# worker. Django chỉ cấp session ngắn hạn sau khi đã resolve nội dung public.
-SPEECH_RUNTIME_ENABLED = config('SPEECH_RUNTIME_ENABLED', default=not IS_PRODUCTION, cast=bool)
-SPEECH_TTS_BASE_URL = config('SPEECH_TTS_BASE_URL', default='http://127.0.0.1:8001').strip()
-SPEECH_TTS_INTERNAL_TOKEN = config(
-    'SPEECH_TTS_INTERNAL_TOKEN', default='dev-tts-internal-token-change-me'
-).strip()
-SPEECH_TTS_CONNECT_TIMEOUT_SECONDS = config(
-    'SPEECH_TTS_CONNECT_TIMEOUT_SECONDS', default=0.5, cast=float
-)
-SPEECH_TTS_READ_TIMEOUT_SECONDS = config('SPEECH_TTS_READ_TIMEOUT_SECONDS', default=2.0, cast=float)
-SPEECH_GENERATION_TIMEOUT_SECONDS = config(
-    'SPEECH_GENERATION_TIMEOUT_SECONDS', default=900.0, cast=float
-)
-SPEECH_ARTIFACT_POLL_INTERVAL_SECONDS = config(
-    'SPEECH_ARTIFACT_POLL_INTERVAL_SECONDS', default=2.0, cast=float
-)
-SPEECH_ARTIFACT_DOWNLOAD_TIMEOUT_SECONDS = config(
-    'SPEECH_ARTIFACT_DOWNLOAD_TIMEOUT_SECONDS', default=120.0, cast=float
-)
-SPEECH_ARTIFACT_RETENTION_DAYS = config('SPEECH_ARTIFACT_RETENTION_DAYS', default=30, cast=int)
-SPEECH_CAPABILITIES_CACHE_SECONDS = config(
-    'SPEECH_CAPABILITIES_CACHE_SECONDS', default=300, cast=int
-)
-SPEECH_POLICY_CACHE_SECONDS = config('SPEECH_POLICY_CACHE_SECONDS', default=60, cast=int)
-SPEECH_GENERATION_RESERVATION_SECONDS = config(
-    'SPEECH_GENERATION_RESERVATION_SECONDS', default=180, cast=int
-)
-SPEECH_MAX_TEXT_CHARS = config('SPEECH_MAX_TEXT_CHARS', default=30_000, cast=int)
-# Ad-hoc text arrives from the client instead of from published editorial
-# content, so it is capped at roughly one spoken paragraph. The synthesis pool
-# runs a single model worker; a long request would block every other listener.
-SPEECH_MAX_ADHOC_TEXT_CHARS = config('SPEECH_MAX_ADHOC_TEXT_CHARS', default=600, cast=int)
-SPEECH_DEFAULT_VOICE_ID = config('SPEECH_DEFAULT_VOICE_ID', default='north-male-natural').strip()
-SPEECH_DEFAULT_STYLE = config('SPEECH_DEFAULT_STYLE', default='tu_nhien').strip()
-SPEECH_MODEL_REVISION = config(
-    'SPEECH_MODEL_REVISION', default='vieneu-3.2.3-v3-turbo-int8'
-).strip()
 
 # Email — nhà cung cấp SMTP tuỳ ý (Gmail, SendGrid, Amazon SES, Mailgun, Postmark...).
 # Chưa điền EMAIL_HOST_USER -> in ra console cho dev; điền credential vào .env là

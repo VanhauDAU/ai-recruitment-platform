@@ -216,47 +216,17 @@ phòng hờ.
 ```text
 app/router
   → pages/main/blog + pages/admin/app/Blog*
-    → features/edit-blog-post, manage-blog-content, manage-blog-tags,
-      listen-to-blog-post
-      → entities/blog, job, speech
+    → features/edit-blog-post, manage-blog-content, manage-blog-tags
+      → entities/blog, job
         → shared/api, shared/ui
 ```
 
 - `entities/blog` sở hữu public/admin HTTP contract, formatter và renderer HTML
   đã sanitize dùng chung giữa trang ứng viên với preview admin.
-- `shared/lib/speech` sở hữu hạ tầng phát audio không biết domain:
-  `PcmStreamPlayer` (Web Audio cho luồng chưa biết độ dài), `NativeAudioPlayer`
-  (asset MP3 đã có sẵn), `playSpeechStream` và chính sách chờ 429/503. Đặt ở
-  `shared` vì cả blog lẫn các bề mặt khác đều dùng, mà feature thì không được
-  import feature.
 - `shared/lib/sound-effects` là registry cho UI sound ngắn dùng lại được;
   `shared/ui/ToastSoundEffect` preload và phát âm thanh theo semantic class của
   Sonner. Workflow chỉ chọn sound qua toast options; lỗi audio luôn best-effort,
   không được chặn submit, navigation hoặc cập nhật session.
-- `entities/speech` sở hữu contract session/status dùng lại được nhưng không
-  import blog: `createBlogSpeechSession` cho bài viết đã đăng,
-  `createTextSpeechSession` bắt buộc surface và `getSpeechAdminOverview` cho
-  workflow quản trị. Voice/style production do backend chọn theo surface,
-  không phải input hoặc catalogue của client.
-- `features/listen-to-blog-post` phát artifact mặc định đã được tạo từ lượt
-  nghe trước bằng native audio; chỉ tạo session streaming khi artifact đó chưa
-  sẵn sàng. Feature tự giữ
-  lifecycle native/Web Audio và AbortController, nhận `postPublicId` từ page;
-  nội dung bài không được gửi từ browser sang dịch vụ TTS. Session API là
-  control-plane resolve source/rate-limit; các listener cùng artifact identity
-  bám một live inference, và MP3 được encode từ chính live PCM đó.
-- `features/speak-text` sở hữu `useSpeak({ surface })` — `speak(text)` cho
-  chatbot/onboarding. Câu nói KHÔNG sinh artifact lâu dài: quá ngắn và quá
-  nhiều để lưu, nên chỉ chạy live stream và ăn cache của engine khi lặp lại.
-  Backend giới hạn riêng bằng scope `speech_adhoc` và
-  `SPEECH_MAX_ADHOC_TEXT_CHARS`. Chatbot chỉ phát theo nút trên từng message;
-  onboarding mặc định off và chỉ gọi live TTS sau khi người dùng chủ động bật.
-  Mọi lần phát đầu nằm trong cử chỉ click/tap để mở Web Audio hợp lệ.
-- `features/manage-speech-runtime` là admin workflow được Settings page compose
-  ngay trong tab AI hiện có. Feature đọc overview qua `entities/speech`, hiển
-  thị policy/capacity/cache/usage và không sở hữu route, permission hoặc thao
-  tác xóa cache mới. Public flags vẫn thuộc `entities/site-settings` và chỉ tối
-  ưu UX; backend luôn enforce hard switch + DB policy.
 - `features/edit-blog-post` sở hữu autosave, optimistic revision, upload media,
   preview, chọn/tạo nhanh thẻ và workflow gửi/duyệt/gỡ bài.
   `features/manage-blog-content` sở hữu các tab danh sách, danh mục và bài ghim;
@@ -385,15 +355,11 @@ app/layouts/OnboardingLayout + pages/main/onboarding
   editor. Vị trí launcher phải tránh banner cookie theo chiều cao thực tế và
   thanh ứng tuyển mobile ở trang chi tiết việc làm.
 - `widgets/onboarding-interview` sở hữu cuộc phỏng vấn onboarding: kịch bản
-  tĩnh, state machine năm bước, bản đồ trạng thái mascot và provider giọng đọc.
-  Phải là widget vì ghép hai feature (`speak-text` và `configure-job-preferences`)
-  mà feature không được import feature. `OnboardingVoiceProvider` mount ở
-  `OnboardingLayout` chứ không phải trong page: AudioContext chỉ mở được trong
-  cử chỉ người dùng ở `/onboard-user`, mà page unmount là player bị destroy.
-  Bước phỏng vấn giữ nguyên tên trường và payload `PUT` của form một trang.
-- `shared/hooks/use-progressive-reply` sở hữu đồng hồ hiện chữ theo tiến độ
-  audio, dùng chung cho trợ lý và onboarding; nằm ở `shared` vì hai widget khác
-  nhau đều cần và widget không được import widget.
+  tĩnh, state machine năm bước và bản đồ trạng thái mascot. Widget compose
+  `configure-job-preferences`; bước phỏng vấn giữ nguyên tên trường và payload
+  `PUT` của form một trang.
+- `shared/hooks/use-progressive-reply` sở hữu hiệu ứng typewriter dùng chung cho
+  trợ lý và onboarding; nằm ở `shared` vì hai widget khác nhau đều cần.
 - WebP trong `public/images/mascot` được tái tạo bằng
   `npm run build:mascot-assets -- --src <folder>`; không commit PNG nguồn hoặc
   các ảnh `states/` có thể dựng lại bằng rig.

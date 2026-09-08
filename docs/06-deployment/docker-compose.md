@@ -15,7 +15,7 @@ docker compose up
 
 ### Kiểm thử bằng điện thoại trong mạng LAN
 
-Frontend dev proxy cả `/api`, `/media` và `/tts`, vì vậy điện thoại không cần
+Frontend dev proxy cả `/api` và `/media`, vì vậy điện thoại không cần
 truy cập trực tiếp các cổng backend. Kết nối điện thoại và máy dev vào cùng một
 mạng Wi-Fi, lấy IP LAN của máy dev rồi mở:
 
@@ -37,13 +37,12 @@ thay đổi; không cần sửa `VITE_API_BASE_URL`, CORS hoặc `ALLOWED_HOSTS`
   trong `backend/.env` (mặc định `5432` = Postgres local).
 - Service: `db` (postgres 16), `redis`, `backend` (runserver + auto migrate),
   `worker` (Celery tác vụ chung), `ai-worker` (chỉ queue `ai-generation`,
-  concurrency 2), `beat` (Celery beat), `tts` (VieNeu-TTS/ONNX) và `frontend`
-  (vite).
+  concurrency 2), `beat` (Celery beat) và `frontend` (vite).
 - `frontend_node_modules` được giữ trong named volume. Entrypoint chỉ chạy
   `npm ci` khi `package-lock.json` thay đổi hoặc volume còn trống, nên restart
   frontend không còn cài lại toàn bộ dependency.
 - **Queue Celery**: worker chung nghe `default`, `auth-email`, `auth-sms`,
-  `cv-export`, `speech-artifacts`, `upload-scan` và `candidate-email`.
+  `cv-export`, `upload-scan` và `candidate-email`.
   `ai-generation` chỉ do `ai-worker` nghe để provider latency không chiếm pool
   email/export/scan. Không gộp queue AI vào worker chung khi lên production.
 - **`CELERY_BROKER_URL` được override tường minh** trong compose: settings chỉ
@@ -158,52 +157,8 @@ Compose đã đặt các mặc định an toàn, có thể override trong file `
 | --- | ---: | ---: | --- |
 | `AI_RUNTIME_ENABLED` | `true` | `false` | Hard switch toàn generative AI; Site Setting chỉ được thu hẹp rollout. |
 | AI worker concurrency | `2` | `2` | Được pin trong Compose V1 để chặn chi phí và tải provider; đổi phải qua capacity review. |
-| `SPEECH_RUNTIME_ENABLED` | `true` | `false` | Hard switch chung backend/TTS; Site Setting không thể vượt qua. |
-| `TTS_CPU_LIMIT` | `2.5` | `2.5` | Trần CPU container inference; thử `3.5` chỉ khi benchmark chưa đạt. |
-| `TTS_ONNX_THREADS` | `2` | `2` | Thread ONNX/OMP; thử `3` trước khi tăng CPU. |
-| `TTS_MEMORY_LIMIT` | `2g` | `2g` | Trần RAM của model. |
-| `TTS_MAX_CONCURRENT_STREAMS` | `1` | `1` | Một inference vật lý; request trùng dùng single-flight. |
-| `TTS_MAX_ACTIVE_GENERATIONS` | `3` | `3` | Artifact mới thứ tư bị từ chối `503` + `Retry-After: 2`; không tăng worker. |
-| `TTS_CACHE_MAX_GB` | `5` | `5` | Trần cache audio tái tạo được trong volume local. |
-| `TTS_PCM_CACHE_TTL_SECONDS` | `86400` | `86400` | PCM giữ 24 giờ. |
-| `TTS_WAV_CACHE_TTL_SECONDS` | `259200` | `259200` | Full WAV giữ 72 giờ. |
-| `TTS_ARTIFACT_CACHE_TTL_SECONDS` | `259200` | `259200` | MP3/meta local giữ 72 giờ. |
 | `DOCKER_LOG_MAX_SIZE` | `10m` | `10m` | Kích thước mỗi file log container. |
 | `DOCKER_LOG_MAX_FILES` | `3` | `3` | Số file log giữ cho mỗi container. |
-
-Cache TTS local là cache nóng, không phải nguồn dữ liệu chính. Khi MP3 đã
-`READY` trên R2, xóa cache audio local không làm mất bài đọc. Volume
-`tts_huggingface_cache` chứa model đã tải; nên giữ để tránh tải và warm-up lại.
-Service tự xóa WAV/PCM/MP3 local theo TTL + quota và dọn file `.part` bị bỏ lại
-sau hard-kill khi chúng cũ hơn một giờ.
-
-### Rollout TTS production
-
-Máy ban đầu cần 4 vCPU/8 GB RAM; riêng container TTS bị chặn ở 2.5 CPU/2 GB và
-chạy đúng một worker. Production compose yêu cầu `TTS_MODEL_SOURCE` trỏ tới
-snapshot đã pin trong image/volume và `TTS_MODEL_REVISION` là commit SHA tương
-ứng; không dùng revision label trôi nổi. Giữ `SPEECH_RUNTIME_ENABLED=false`
-trong lúc migrate/deploy và giữ toàn bộ switch speech trong
-`/admin/app/settings?group=ai` ở trạng thái tắt.
-
-Quy trình bật:
-
-1. Chạy benchmark theo `tts-service/README.md` trên đúng máy dự kiến; xác nhận
-   toàn bộ gate TTFA/RTF/queue/RAM/rejection/Web API đạt.
-2. Nếu không đạt, thử threads `2 → 3`, sau đó CPU `2.5 → 3.5` và đo lại. Không
-   tăng worker hoặc replica.
-3. Bật hard switch, kiểm tra admin overview ở tab AI, rồi bật master/live và
-   từng surface theo thứ tự blog → chatbot → onboarding. Interview tiếp tục tắt.
-4. Rollback tức thời bằng `SPEECH_RUNTIME_ENABLED=false`; text workflow không
-   phụ thuộc TTS nên vẫn hoạt động.
-
-Blog dùng policy `durable`: stream cache miss rồi lưu MP3 immutable lên R2.
-Artifact thuộc model revision hiện tại được giữ dài hạn. Celery beat tự xóa
-artifact `FAILED`, post revision cũ hoặc model revision cũ sau 30 ngày; không
-cần và không cung cấp nút xóa toàn bộ cache. Chatbot/onboarding dùng
-`cache_only`, không encode/upload MP3. Cấu hình lifecycle bucket R2 bên ngoài
-ứng dụng phải nhất quán với grace 30 ngày, không xóa prefix của revision hiện
-tại.
 
 ### Theo dõi và dọn Docker an toàn
 
@@ -219,17 +174,9 @@ sh scripts/docker_maintenance.sh
 ```
 
 Không chạy `docker system prune --volumes` trên máy production: lệnh đó có thể
-xóa nhầm Postgres, media và model cache. Nếu cần đo riêng hai cache TTS:
-
-```bash
-docker run --rm -v ai-recruitment-platform_tts_audio_cache:/data alpine du -sh /data
-docker run --rm -v ai-recruitment-platform_tts_huggingface_cache:/data alpine du -sh /data
-```
-
-Dockerfile backend, frontend và TTS dùng BuildKit cache mount. Riêng TTS tách
-layer dependency AI khỏi source ứng dụng, nên sửa code không còn cài lại
-`vieneu`/ONNX. Build cache vẫn nên được đo và prune định kỳ ở CI/VPS vì nó chỉ
-hỗ trợ build nhanh, không được sử dụng lúc container đang chạy.
+xóa nhầm Postgres và media. Dockerfile backend/frontend dùng BuildKit cache
+mount; build cache vẫn nên được đo và prune định kỳ ở CI/VPS vì nó chỉ hỗ trợ
+build nhanh, không được sử dụng lúc container đang chạy.
 
 ## Kiểm chứng đã chạy (2026-07-21)
 

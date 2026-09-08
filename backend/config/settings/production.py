@@ -44,9 +44,6 @@ if set(ALLOWED_HOSTS).issubset({'localhost', '127.0.0.1'}):
     _errors.append('ALLOWED_HOSTS production phải chứa domain hợp lệ.')
 if not RECAPTCHA_SECRET_KEY:
     _errors.append('RECAPTCHA_SECRET_KEY là bắt buộc ở production.')
-if SPEECH_TTS_INTERNAL_TOKEN in {'', 'dev-tts-internal-token-change-me'}:
-    _errors.append('SPEECH_TTS_INTERNAL_TOKEN production phải là secret riêng.')
-
 if not 1 <= JOB_POSTING_DEFAULT_DEADLINE_DAYS <= JOB_POSTING_MAX_DEADLINE_DAYS:
     _errors.append('JOB_POSTING_DEFAULT_DEADLINE_DAYS phải từ 1 đến JOB_POSTING_MAX_DEADLINE_DAYS.')
 if JOB_POSTING_MAX_DEADLINE_DAYS > JOB_POSTING_MAX_PUBLIC_LIFETIME_DAYS:

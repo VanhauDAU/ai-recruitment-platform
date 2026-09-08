@@ -19,7 +19,7 @@
 
 ### Bối cảnh
 
-- UI `widgets/candidate-assistant` đã có launcher/panel/mascot/TTS và kịch bản
+- UI `widgets/candidate-assistant` đã có launcher/panel/mascot và kịch bản
   keyword tĩnh.
 - Knowledgebase public đã ship; epic FAQ không gồm chatbot.
 - Cần kế hoạch module chatbot **chỉ ứng viên**, liên quan **tìm việc / FAQ**.

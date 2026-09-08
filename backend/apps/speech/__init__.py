@@ -1,1 +1,0 @@
-"""Speech synthesis domain."""

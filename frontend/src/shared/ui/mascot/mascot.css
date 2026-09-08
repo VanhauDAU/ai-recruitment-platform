@@ -57,7 +57,7 @@
  * phải tắt đúng lúc lớp miệng mở bật lên, nếu không hai khẩu hình chồng nhau
  * (rõ nhất ở `success`, miệng cười rộng thò ra ngoài miệng happy).
  *
- * Nhịp chia không đều để đọc ra như đang nói chứ không phải máy đếm nhịp.
+ * Nhịp chia không đều để chuyển động tự nhiên hơn máy đếm nhịp.
  */
 .procv-mascot__mouth-talk {
   animation: procvMascotTalk 0.62s steps(1, end) infinite;

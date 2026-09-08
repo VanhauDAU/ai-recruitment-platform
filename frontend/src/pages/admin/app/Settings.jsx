@@ -5,7 +5,6 @@ import { useSearchParams } from 'react-router'
 import { useSiteSettings } from '@/entities/site-settings'
 import { AiRuntimeOverview } from '@/features/manage-ai-runtime'
 import { getAdminSettings, SettingField, updateAdminSettings } from '@/features/manage-site-settings'
-import { SpeechRuntimeOverview } from '@/features/manage-speech-runtime'
 import { message } from '@/shared/lib/toast'
 import { AdminDataActions, AdminPageHeader, AdminPanel } from '@/shared/ui/admin'
 import useConfirmAction from '@/shared/ui/use-confirm-action'
@@ -116,10 +115,7 @@ export default function AdminSettings() {
             )),
           })))
         }
-        if (
-          updated.includes('brand_primary_color')
-          || updated.some((key) => key.startsWith('speech_'))
-        ) await refreshSiteSettings()
+        if (updated.includes('brand_primary_color')) await refreshSiteSettings()
         message.success('Đã lưu cấu hình.')
       }
     } catch {
@@ -195,10 +191,7 @@ export default function AdminSettings() {
     children: (
       <div className="max-w-3xl">
         {group.key === 'ai' && (
-          <>
-            <AiRuntimeOverview />
-            <SpeechRuntimeOverview />
-          </>
+          <AiRuntimeOverview />
         )}
         <div className="divide-y divide-gray-100">
           {group.settings.map((setting) => (

@@ -24,9 +24,8 @@ export default defineConfig({
   server: {
     // PORT do tool preview cấp khi 5173 bận; dev bình thường vẫn là 5173.
     port: Number(process.env.PORT) || 5173,
-    // Giữ stream cùng origin ở dev để Web Audio không cần CORS và frontend
-    // không biết địa chỉ private của model service. API/media cũng đi cùng
-    // origin để thiết bị thật trong LAN chỉ cần truy cập một địa chỉ Vite.
+    // API/media đi cùng origin để thiết bị thật trong LAN chỉ cần truy cập một
+    // địa chỉ Vite.
     proxy: {
       '/api': {
         target: apiProxyTarget,
@@ -37,10 +36,6 @@ export default defineConfig({
       },
       '/media': {
         target: apiProxyTarget,
-        changeOrigin: false,
-      },
-      '/tts': {
-        target: process.env.TTS_PROXY_TARGET || 'http://127.0.0.1:8001',
         changeOrigin: false,
       },
     },
