@@ -18,6 +18,11 @@ db.sqlite3
 celerybeat-schedule*
 *.rdb
 
+# Runtime media at repository root
+/public-media/
+/private-media/
+/quarantine/
+
 # Python tooling
 .coverage
 .coverage.*
@@ -34,6 +39,12 @@ node_modules/
 frontend/dist/
 frontend/dist-ssr/
 .vite/
+
+# Frontend test/build artifacts
+/test-results/
+/playwright-report/
+frontend/test-results/
+frontend/playwright-report/
 
 # Env files
 .env
