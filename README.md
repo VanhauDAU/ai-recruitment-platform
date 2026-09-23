@@ -40,7 +40,7 @@ backend/
   config/       Django settings, urls (root)
   common/       Tiện ích hạ tầng dùng chung, không phải Django app
   apps/         Toàn bộ Django app: accounts, skills, candidates, employers, locations,
-                cv_templates, cvs, jobs, applications, interviews, ai_core, dashboard
+                cv_templates, cvs, jobs, applications, ai_core, dashboard
 frontend/
   src/
     app/        Composition root: providers, layouts, guards, router/lazy registry

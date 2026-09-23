@@ -34,6 +34,8 @@ node_modules/
 frontend/dist/
 frontend/dist-ssr/
 .vite/
+test-results/
+playwright-report/
 
 # Env files
 .env

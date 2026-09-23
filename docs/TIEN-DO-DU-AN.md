@@ -498,9 +498,8 @@ Thứ tự giai đoạn theo tài liệu database v1.4 (mục 7), đã đối ch
 | 4 — CV nâng cao | 0/2 | ⬜ |
 | 5 — Tuyển dụng nâng cao | 1/3 | 🟡 |
 | 6 — Thương mại & quản trị | 14/16 | 🟡 |
-| 7 — Phỏng vấn AI | 0/4 | ⬜ |
-| 8 — Deployment | 0/2 | ⬜ |
-| **Tổng** | **64/88 + 1 phần** | |
+| 7 — Deployment | 0/2 | ⬜ |
+| **Tổng** | **64/84 + 1 phần** | |
 
 ## Epic FAQ và hướng dẫn sử dụng (KB, 2026-08-05)
 
@@ -923,7 +922,7 @@ RoleGuard(candidate)`; mobile đưa sidebar vào Drawer và dồn cột phải x
 <details>
 <summary><b>1.23</b> — Trang "Cài đặt thông tin cá nhân"</summary>
 
-Trang thật đầu tiên trong khung 1.22 (thay `AccountPlaceholder`). **Backend:** `MeView` nâng từ `RetrieveAPIView` → `RetrieveUpdateAPIView` (`http_method_names=['get','patch']`), thêm `ProfileUpdateSerializer` chỉ nhận `full_name` + `phone` (email KHÔNG đổi ở đây — đổi email đi qua luồng `ChangeEmailSerializer` có xác thực), validate SĐT VN `^(0|\+84)\d{9,10}$` + họ tên ≥2 ký tự; PATCH trả về `UserSerializer` đầy đủ để frontend cập nhật thẳng auth context. Sửa được **nhiều lần**. **Frontend:** `pages/main/candidate/pages/PersonalInfo.jsx` (AntD Form, validation client khớp backend, ô Email `disabled` + ghi chú, nút Lưu; lỗi 400 theo field gắn vào đúng ô qua `form.setFields`); `authService.updateProfile()` PATCH `/auth/me/`; sau lưu gọi `setAuthenticatedUser(updated)` → cột phải (ProfileSidebar) đổi tên **live**. Route map theo `item.key` (`ACCOUNT_PAGE_BY_KEY` trong MainRoutes) — key nào chưa có trang thật thì vẫn dùng placeholder. Verify: 6/6 test `ProfileUpdateTests` (sửa tên/SĐT, nhiều lần, email read-only, SĐT sai → 400, tên rỗng → 400, cần đăng nhập); build + lint pass; browser: đăng nhập candidate demo → sửa tên + SĐT hợp lệ lưu thành công (DB đổi, email giữ nguyên), SĐT sai hiện lỗi đỏ, cột phải cập nhật live, responsive mobile 375px, console sạch.
+Trang thông tin cá nhân trong khung 1.22. **Backend:** `MeView` nâng từ `RetrieveAPIView` → `RetrieveUpdateAPIView` (`http_method_names=['get','patch']`), thêm `ProfileUpdateSerializer` chỉ nhận `full_name` + `phone` (email KHÔNG đổi ở đây — đổi email đi qua luồng `ChangeEmailSerializer` có xác thực), validate SĐT VN `^(0|\+84)\d{9,10}$` + họ tên ≥2 ký tự; PATCH trả về `UserSerializer` đầy đủ để frontend cập nhật thẳng auth context. Sửa được **nhiều lần**. **Frontend:** `pages/main/candidate/pages/PersonalInfo.jsx` (AntD Form, validation client khớp backend, ô Email `disabled` + ghi chú, nút Lưu; lỗi 400 theo field gắn vào đúng ô qua `form.setFields`); `authService.updateProfile()` PATCH `/auth/me/`; sau lưu gọi `setAuthenticatedUser(updated)` → cột phải (ProfileSidebar) đổi tên **live**. Route map theo `item.key` (`ACCOUNT_PAGE_BY_KEY` trong MainRoutes). Verify: 6/6 test `ProfileUpdateTests` (sửa tên/SĐT, nhiều lần, email read-only, SĐT sai → 400, tên rỗng → 400, cần đăng nhập); build + lint pass; browser: đăng nhập candidate demo → sửa tên + SĐT hợp lệ lưu thành công (DB đổi, email giữ nguyên), SĐT sai hiện lỗi đỏ, cột phải cập nhật live, responsive mobile 375px, console sạch.
 
 </details>
 
@@ -1296,21 +1295,12 @@ App Django mới `apps/blog` (4 model: `PostCategory` taxonomy phẳng 1 cấp, 
 
 </details>
 
-## Giai đoạn 7 — Phỏng vấn AI
+## Giai đoạn 7 — Deployment
 
 | # | Công việc | Trạng thái |
 | --- | --- | --- |
-| 7.1 | Bảng `interview_question_bank` | ⬜ |
-| 7.2 | Bảng `interview_sessions` | ⬜ |
-| 7.3 | Bảng `interview_questions` | ⬜ |
-| 7.4 | Bảng `interview_answers` + chấm điểm rule-based | ⬜ |
-
-## Giai đoạn 8 — Deployment
-
-| # | Công việc | Trạng thái |
-| --- | --- | --- |
-| 8.1 | Dockerfile backend + docker-compose (backend + PostgreSQL) | ⬜ |
-| 8.2 | Deploy (Vercel + Render/Railway hoặc Docker tự host) | ⬜ |
+| 7.1 | Dockerfile backend + docker-compose (backend + PostgreSQL) | ⬜ |
+| 7.2 | Deploy (Vercel + Render/Railway hoặc Docker tự host) | ⬜ |
 
 ---
 

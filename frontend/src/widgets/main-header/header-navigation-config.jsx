@@ -1,10 +1,10 @@
 import {
   AppstoreOutlined, BankOutlined, BookOutlined, BulbOutlined, CalculatorOutlined,
   CompassOutlined, DollarOutlined, EditOutlined, ExperimentOutlined, FileDoneOutlined,
-  FileProtectOutlined, HighlightOutlined, IdcardOutlined, LikeOutlined, LineChartOutlined,
+  HighlightOutlined, IdcardOutlined, LikeOutlined, LineChartOutlined,
   MobileOutlined, OrderedListOutlined, ProfileOutlined, ReadOutlined, RiseOutlined,
   RocketOutlined, SafetyCertificateOutlined, SafetyOutlined, SearchOutlined,
-  SnippetsOutlined, StarOutlined, UploadOutlined, WalletOutlined,
+  StarOutlined, UploadOutlined, WalletOutlined,
 } from '@ant-design/icons'
 import { COMPANY_DIRECTORY_PATH } from '@/entities/company'
 
@@ -86,8 +86,6 @@ export const HEADER_NAVIGATION = [
             icon: <EditOutlined />,
             requiresKnowledgebase: true,
           },
-          soon('Quản lý Cover Letter', <FileProtectOutlined />),
-          soon('Mẫu Cover Letter', <SnippetsOutlined />),
         ],
       }],
     ],

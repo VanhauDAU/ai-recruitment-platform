@@ -1,7 +1,7 @@
 # 04 - API
 
 Phạm vi:
-- Danh sách endpoint theo module (auth, candidate, employer, cv, jobs, applications, ai, interviews)
+- Danh sách endpoint theo module (auth, candidate, employer, cv, jobs, applications, ai)
 - Request/response mẫu, mã lỗi
 
 Contract field theo từng màn hình: [frontend-response-contracts.md](frontend-response-contracts.md).

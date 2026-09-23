@@ -241,7 +241,7 @@ Các điểm nóng hiện tại:
 | `services.py` | Tên quá rộng; trong `jobs` chủ yếu là truy vấn thống kê, trong `employers` vừa OTP vừa duyệt | Tách thành service theo hành động cụ thể |
 | `tests.py` | Một file lớn cho toàn app | Tách test theo API/service/model |
 | Import chéo | `employers` dùng hàm search của `jobs`; `accounts` đọc `sitecontent`; `sitecontent` model tự query `jobs`/`locations` | Đưa utility dùng chung về `common`, đặt truy vấn phối hợp ở selector/service |
-| `ai_core`, `dashboard`, `interviews` | Mới là app khung, chưa có domain hoàn chỉnh | Không mở rộng cấu trúc sớm; hoặc ghi rõ owner/phạm vi, hoặc bỏ khỏi `INSTALLED_APPS` đến khi triển khai |
+| `ai_core`, `dashboard` | Mới là app khung, chưa có domain hoàn chỉnh | Không mở rộng cấu trúc sớm; hoặc ghi rõ owner/phạm vi, hoặc bỏ khỏi `INSTALLED_APPS` đến khi triển khai |
 
 ### 6.2. Quyết định kiến trúc
 
@@ -265,7 +265,6 @@ backend/
 │   ├── employers/                # company + recruiter membership/onboarding
 │   ├── jobs/                     # job catalog + job posting
 │   ├── applications/             # quy trình ứng tuyển
-│   ├── interviews/               # phỏng vấn (khi triển khai)
 │   ├── cvs/                      # CV của ứng viên
 │   ├── cv_templates/             # mẫu CV
 │   ├── skills/                   # danh mục kỹ năng
@@ -451,7 +450,7 @@ Các module `api.views.*`, `api.serializers.*`, helper bắt đầu bằng `_` v
 - `accounts`: giữ `views/` hiện có; nhóm `oauth`, `password_reset`, `verification` vào service tương ứng, không gom lại thành một `services.py` lớn.
 - `applications`, `cvs`, `sitecontent`: tách khi file vượt ngưỡng hoặc có từ hai use case độc lập trở lên.
 - `skills`, `locations`, `cv_templates`: tiếp tục cấu trúc gọn hiện tại; không tạo package rỗng.
-- `ai_core`, `dashboard`, `interviews`: xác định rõ phạm vi trước khi thêm code; app chưa dùng không cần models/migrations/tests placeholder.
+- `ai_core`, `dashboard`: xác định rõ phạm vi trước khi thêm code; app chưa dùng không cần models/migrations/tests placeholder.
 
 ### 6.8. Checklist hoàn tất cho mỗi giai đoạn
 

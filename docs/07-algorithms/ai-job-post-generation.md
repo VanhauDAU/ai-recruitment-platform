@@ -4,9 +4,8 @@
 
 Dùng Gemini qua SDK `google-genai` với structured output; không train model ở
 V1. Provider adapter nằm trong `ai_core`, còn prompt/schema/taxonomy/policy của
-tin tuyển dụng thuộc `jobs`. Cách tách này cho phép dùng cùng runtime cho CV,
-matching hoặc interview sau này mà không biến các use case thành phụ thuộc lẫn
-nhau.
+tin tuyển dụng thuộc `jobs`. Cách tách này cho phép dùng cùng runtime cho CV
+hoặc matching mà không biến các use case thành phụ thuộc lẫn nhau.
 
 Luồng chuẩn:
 
