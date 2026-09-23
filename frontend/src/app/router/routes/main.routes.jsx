@@ -6,7 +6,6 @@ import AuthGuard from '../guards/AuthGuard'
 import GuestGuard from '../guards/GuestGuard'
 import RoleGuard from '../guards/RoleGuard'
 import {
-  AccountPlaceholderPage,
   AppliedJobsPage,
   BlogCategoryPage,
   BlogDetailPage,
@@ -48,8 +47,7 @@ import {
 } from '../lazy/main.pages'
 import { AuthLayout, MainLayout, OnboardingLayout } from '../lazy/layouts'
 
-// Trang tài khoản đã xây thật, map theo item.key trong candidate-menu; key nào
-// chưa có ở đây thì dùng AccountPlaceholderPage.
+// Trang tài khoản đã xây thật, map theo item.key trong candidate-menu.
 const ACCOUNT_PAGE_BY_KEY = {
   'applied-jobs': AppliedJobsPage,
   'personal-info': PersonalInfoPage,
@@ -62,6 +60,11 @@ const ACCOUNT_PAGE_BY_KEY = {
   'matching-jobs': MatchingJobsPage,
   security: SecuritySettingsPage,
 }
+
+const ACCOUNT_ROUTES = ACCOUNT_LAYOUT_ITEMS.flatMap((item) => {
+  const Page = ACCOUNT_PAGE_BY_KEY[item.key]
+  return Page ? [{ item, Page }] : []
+})
 
 // Route cổng main (ứng viên + khách). Xem thêm employer.routes/admin.routes.
 export function mainRoutes() {
@@ -113,8 +116,7 @@ export function mainRoutes() {
       <Route path="/cv/share/:token" element={<CvSharedViewPage />} />
 
       {/* Cụm trang tài khoản ứng viên — layout 3 cột, chỉ candidate đã đăng
-          nhập. Route con sinh từ entities/account/config (một nguồn duy nhất);
-          khi xây trang thật thì thay AccountPlaceholderPage bằng component riêng. */}
+          nhập. Chỉ item có page thật trong registry mới được tạo route. */}
       <Route element={<AuthGuard />}>
         <Route element={<RoleGuard allowedRoles={['candidate']} />}>
           <Route path="/viec-lam-da-luu" element={<SavedJobsPage />} />
@@ -123,13 +125,12 @@ export function mainRoutes() {
           <Route path="/cvs/:publicId/view" element={<CvOwnerViewPage />} />
           <Route element={<CandidateAccountLayout />}>
             <Route path={ACCOUNT_ROOT} element={<Navigate to={ACCOUNT_DEFAULT_PATH} replace />} />
-            {ACCOUNT_LAYOUT_ITEMS.map((item) => {
-              const Page = ACCOUNT_PAGE_BY_KEY[item.key]
+            {ACCOUNT_ROUTES.map(({ item, Page }) => {
               return (
                 <Route
                   key={item.key}
                   path={item.path}
-                  element={Page ? <Page /> : <AccountPlaceholderPage title={item.label} />}
+                  element={<Page />}
                 />
               )
             })}

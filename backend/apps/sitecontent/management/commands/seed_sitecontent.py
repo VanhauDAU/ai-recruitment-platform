@@ -791,7 +791,6 @@ SETTINGS = [
     ),
     ('ai_cv_review_enabled', 'AI chấm/review CV', G.AI, T.BOOLEAN, True, True, '', {}),
     ('ai_job_match_enabled', 'AI gợi ý việc phù hợp', G.AI, T.BOOLEAN, True, True, '', {}),
-    ('ai_interview_enabled', 'AI luyện phỏng vấn', G.AI, T.BOOLEAN, False, True, '', {}),
     ('ai_daily_request_limit', 'Giới hạn request AI/ngày/người', G.AI, T.NUMBER, 50, False, '', {}),
     (
         'ai_job_generation_enabled',

@@ -79,7 +79,6 @@ INSTALLED_APPS = [
     'apps.cvs',
     'apps.jobs',
     'apps.applications',
-    'apps.interviews',
     'apps.ai_core',
     'apps.dashboard',
     'apps.sitecontent',
