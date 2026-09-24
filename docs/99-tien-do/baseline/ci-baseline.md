@@ -39,14 +39,23 @@ P1 phải tái hiện failure đầu tiên trên SHA mới trước khi sửa ho
 
 ## Run tại SHA P0
 
-Khi chốt tài liệu, run PR-generated cho merge commit
-`dddf4455c4e4cdd8b82424fadf9f1f774f8ee09d` vẫn đang chạy:
+Hai lượt chạy cho merge commit
+`dddf4455c4e4cdd8b82424fadf9f1f774f8ee09d` và PR P0 xác nhận lỗi có thể tái
+hiện ở hai SHA liên tiếp:
 
-- Backend [35832791531](https://github.com/VanhauDAU/ai-recruitment-platform/actions/runs/35832791531): backend checks in progress.
-- Frontend [35832791662](https://github.com/VanhauDAU/ai-recruitment-platform/actions/runs/35832791662): static/build/budget đạt, audit fail, coverage và E2E in progress.
+| SHA | Backend | Frontend |
+| --- | --- | --- |
+| `dddf4455` | [35832791531](https://github.com/VanhauDAU/ai-recruitment-platform/actions/runs/35832791531): backend checks bị hủy sau 35m23s; quality fail | [35832791662](https://github.com/VanhauDAU/ai-recruitment-platform/actions/runs/35832791662): coverage bị hủy ở 15m19s; E2E bị hủy ở 20m16s; audit fail do advisory Tiptap mức high |
+| `b9b4ad2b` | [35834504533](https://github.com/VanhauDAU/ai-recruitment-platform/actions/runs/35834504533): backend checks bị hủy sau 35m21s; pytest chạy khoảng 34m18s mà chưa xuất JUnit/coverage hoàn chỉnh | [35834504407](https://github.com/VanhauDAU/ai-recruitment-platform/actions/runs/35834504407): static/build/budget đạt; coverage bị hủy ở 15m17s; E2E fail sau 19m45s; audit được skip đúng detector |
 
-Không ghi “CI đạt” cho SHA P0. P1 phải cập nhật kết quả cuối và thu log/timing
-trên chính SHA hoặc SHA con tái hiện được.
+Ở lượt E2E của PR P0, lần đầu chạy 276 test: 236 pass, 34 fail, 6 skip trong
+13,4 phút. Workflow sau đó chạy lại 34 test lỗi: 1 pass và 33 fail trong 5,5
+phút. Việc rerun toàn bộ lỗi không tạo tín hiệu ổn định và tiêu tốn gần sáu phút.
+
+Không ghi “CI đạt” cho SHA P0. P1 phải bổ sung diagnostics trước, tái hiện failure
+đầu tiên và phân biệt timeout, fixture, mock thiếu với bug ứng dụng. Advisory
+dependency được ghi nhận nhưng nâng dependency vẫn là nhánh bảo trì riêng theo
+phạm vi kế hoạch.
 
 ## Branch protection và required checks
 
@@ -72,4 +81,3 @@ trên chính SHA hoặc SHA con tái hiện được.
    integration backend thật.
 5. Chỉ chuyển P2 khi test trọng yếu lặp ba lượt không flaky và suite hoàn tất hoặc
    phần chậm đã được khoanh chính xác.
-
