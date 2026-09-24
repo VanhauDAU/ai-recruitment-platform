@@ -1,9 +1,9 @@
 import {
   answerSummary,
-  buildReadySpeech,
-  greetingSpeech,
+  buildReadyMessage,
+  greetingMessage,
   INTERVIEW_STEPS,
-  SAVING_SPEECH,
+  SAVING_MESSAGE,
   START_REPLY,
 } from './interview-script'
 
@@ -11,11 +11,10 @@ import {
  * Lịch sử hội thoại được suy ra từ trạng thái, không lưu riêng: sửa một đáp án
  * là bong bóng tương ứng đổi theo, và không có tin nhắn nào biến mất giữa chừng.
  *
- * Mỗi tin nhắn có `id` cố định vì đó cũng là khoá "chỉ đọc một lần" của giọng
- * đọc (`speakOnce`) — nghe lại lịch sử thì không đốt hạn mức TTS.
+ * Mỗi tin nhắn có `id` cố định để React giữ đúng identity khi dựng lại lịch sử.
  */
 export function buildTranscript({ catalog, failure, index, nagged = {}, phase, savedPreference, user, values }) {
-  const items = [{ id: 'greeting', role: 'bot', text: greetingSpeech(user) }]
+  const items = [{ id: 'greeting', role: 'bot', text: greetingMessage(user) }]
   if (phase === 'greeting') return items
 
   items.push({ id: 'start', role: 'user', text: START_REPLY })
@@ -38,12 +37,12 @@ export function buildTranscript({ catalog, failure, index, nagged = {}, phase, s
 
   if (asking) return items
 
-  items.push({ id: 'saving', role: 'bot', kind: 'saving', text: SAVING_SPEECH })
+  items.push({ id: 'saving', role: 'bot', kind: 'saving', text: SAVING_MESSAGE })
   if (phase === 'retry' && failure) {
     items.push({ id: `failure-${failure.stepId}`, role: 'bot', text: failure.text })
   }
   if (phase === 'ready') {
-    items.push({ id: 'ready', role: 'bot', kind: 'ready', text: buildReadySpeech(savedPreference, user) })
+    items.push({ id: 'ready', role: 'bot', kind: 'ready', text: buildReadyMessage(savedPreference, user) })
   }
   return items
 }

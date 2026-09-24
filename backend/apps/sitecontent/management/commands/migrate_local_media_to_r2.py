@@ -8,25 +8,8 @@ from django.conf import settings
 from django.core.files import File
 from django.core.management.base import BaseCommand, CommandError
 
+from apps.uploads.services import classify_legacy_storage_key
 from common.r2_storage import private_media_storage, public_media_storage
-
-PUBLIC_PREFIXES = (
-    'site/',
-    'blog/',
-    'jobs/',
-    'cv-templates/',
-    'cvs/backgrounds/',
-    # Profile avatars have historically been public profile media; changing
-    # their access policy requires a product-level viewer/consent workflow.
-    'users/avatars/',
-)
-PUBLIC_EMPLOYER_SEGMENTS = ('/logos/', '/covers/', '/gallery/')
-
-
-def is_public_key(key: str) -> bool:
-    return key.startswith(PUBLIC_PREFIXES) or (
-        key.startswith('employers/') and any(segment in key for segment in PUBLIC_EMPLOYER_SEGMENTS)
-    )
 
 
 class Command(BaseCommand):
@@ -43,7 +26,7 @@ class Command(BaseCommand):
                 'R2 is not configured. Set all R2_* variables in the local backend .env first.'
             )
 
-        root = Path(settings.MEDIA_ROOT)
+        root = Path(settings.LEGACY_MEDIA_ROOT)
         if not root.exists():
             self.stdout.write(self.style.WARNING('No local media directory exists.'))
             return
@@ -51,7 +34,9 @@ class Command(BaseCommand):
         total = public_count = private_count = copied = missing = 0
         for path in sorted(item for item in root.rglob('*') if item.is_file()):
             key = path.relative_to(root).as_posix()
-            storage = public_storage if is_public_key(key) else private_storage
+            storage = (
+                public_storage if classify_legacy_storage_key(key) == 'public' else private_storage
+            )
             is_public = storage is public_storage
             total += 1
             public_count += int(is_public)

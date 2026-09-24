@@ -226,6 +226,7 @@ export default function SavedJobs() {
                           job={job}
                           isAuthenticated
                           showQuickView={false}
+                          comparisonEnabled={false}
                         />
                       ))}
                   {!recommendationsLoading

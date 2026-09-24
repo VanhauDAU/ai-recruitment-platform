@@ -6,7 +6,7 @@ import {
   PhoneOutlined,
   SafetyCertificateOutlined,
 } from '@ant-design/icons'
-import { Alert, Button, Modal, Progress, Tag } from 'antd'
+import { Button, Modal, Progress } from 'antd'
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useSession } from '@/entities/session'
@@ -19,6 +19,7 @@ import {
   EMPLOYER_PHONE_VERIFY_URL,
 } from '@/shared/config/portals'
 import { getEmployerVerificationProgress } from '../model/verification-progress'
+import EmployerVerificationLifecycleAlert from './EmployerVerificationLifecycleAlert'
 
 const STEP_DEFINITIONS = [
   { key: 'phone_verified', title: 'Xác thực số điện thoại', description: 'Tăng bảo mật và độ tin cậy khi liên hệ ứng viên.', icon: PhoneOutlined, to: EMPLOYER_PHONE_VERIFY_URL },
@@ -34,7 +35,6 @@ export default function EmployerVerificationChecklist({ profile, onContinue }) {
   const navigate = useNavigate()
   const [passwordPromptOpen, setPasswordPromptOpen] = useState(false)
   const verification = profile?.onboarding || {}
-  const verificationCase = profile?.verification_case || {}
   const progress = getEmployerVerificationProgress(verification)
   const hotline = settingText(settings.hotline, '1900 1234')
   const supportEmail = settingText(settings.support_email, 'cskh@procv.vn')
@@ -55,6 +55,10 @@ export default function EmployerVerificationChecklist({ profile, onContinue }) {
 
   return (
     <div>
+      <EmployerVerificationLifecycleAlert
+        className="mb-6"
+        verificationCase={profile?.verification_case}
+      />
       <div className="mb-7 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-lg font-extrabold text-slate-900">Xác thực thông tin</h2>
@@ -63,29 +67,6 @@ export default function EmployerVerificationChecklist({ profile, onContinue }) {
         <strong className="text-sm text-emerald-600">Hoàn thành {progress.percent}%</strong>
       </div>
       <Progress percent={progress.percent} showInfo={false} strokeColor="#00b14f" railColor="#e8edf2" className="!mb-6" />
-
-      {verificationCase.status !== 'draft' && (
-        <Alert
-          className="!mb-5"
-          showIcon
-          type={{
-            approved: 'success',
-            rejected: 'error',
-            changes_requested: 'warning',
-          }[verificationCase.status] || 'info'}
-          title={(
-            <span>
-              {verificationCase.status_label}
-              <Tag className="ml-2">{`Hồ sơ lần ${verificationCase.revision || 1}`}</Tag>
-            </span>
-          )}
-          description={verificationCase.decision_reason || (
-            verificationCase.status === 'pending' || verificationCase.status === 'in_review'
-              ? 'Hồ sơ đang được kiểm tra. Bạn vẫn có thể dùng dashboard và chỉnh sửa tin nháp.'
-              : 'Hoàn thiện các bước còn thiếu để gửi hồ sơ xác thực.'
-          )}
-        />
-      )}
 
       <div className="divide-y divide-slate-100">
         {STEP_DEFINITIONS.map((step) => {

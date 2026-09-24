@@ -30,6 +30,7 @@ import {
   updateAdminBlogTag,
 } from '@/entities/blog'
 import { message } from '@/shared/lib/toast'
+import useConfirmAction from '@/shared/ui/use-confirm-action'
 import { findSimilarTagGroups } from '../model/tag-groups'
 
 function apiError(error, fallback) {
@@ -39,6 +40,7 @@ function apiError(error, fallback) {
 
 export default function BlogTagManagement({ canManage = false }) {
   const queryClient = useQueryClient()
+  const { confirmationModal, requestConfirmation } = useConfirmAction()
   const [query, setQuery] = useState('')
   const [visibility, setVisibility] = useState('all')
   const [editing, setEditing] = useState(null)
@@ -98,12 +100,12 @@ export default function BlogTagManagement({ canManage = false }) {
     form.resetFields()
     form.setFieldsValue({ name: tag.name, slug: tag.slug, is_active: tag.is_active ?? true })
   }
-  const confirmDelete = (tag) => Modal.confirm({
-    title: `Xóa thẻ “${tag.name}”?`,
-    content: 'Chỉ thẻ chưa được bài viết hoặc bản sửa nào sử dụng mới có thể xóa.',
-    okText: 'Xóa thẻ',
-    okButtonProps: { danger: true },
-    onOk: () => deleteMutation.mutateAsync(tag.public_id),
+  const confirmDelete = (tag) => requestConfirmation({
+    title: 'Xóa thẻ',
+    description: <>Bạn có chắc muốn xóa thẻ <strong>{tag.name}</strong>? Chỉ thẻ chưa được bài viết hoặc bản sửa nào sử dụng mới có thể xóa.</>,
+    confirmText: 'Xóa thẻ',
+    danger: true,
+    onConfirm: () => deleteMutation.mutateAsync(tag.public_id),
   })
 
   const columns = [
@@ -115,7 +117,8 @@ export default function BlogTagManagement({ canManage = false }) {
   ]
 
   return (
-    <section className="space-y-4">
+    <>
+      <section className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div><h2 className="text-lg font-semibold text-slate-900">Quản lý thẻ bài viết</h2><p className="mt-1 text-sm text-slate-500">Chuẩn hóa, gộp và kiểm soát thẻ dùng trong Cẩm nang nghề nghiệp.</p></div>
         {canManage && <Button type="primary" icon={<PlusOutlined />} onClick={() => openEditor()}>Thêm thẻ</Button>}
@@ -144,6 +147,8 @@ export default function BlogTagManagement({ canManage = false }) {
         <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="merge-target">Thẻ đích</label>
         <Select id="merge-target" className="w-full" showSearch optionFilterProp="label" value={mergeTarget} onChange={setMergeTarget} placeholder="Chọn thẻ muốn giữ lại" options={tags.filter((tag) => tag.public_id !== merging?.public_id).map((tag) => ({ value: tag.public_id, label: `${tag.name} · ${tag.usage_count} lượt dùng` }))} />
       </Modal>
-    </section>
+      </section>
+      {confirmationModal}
+    </>
   )
 }

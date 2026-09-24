@@ -1,7 +1,8 @@
-import { CheckCircleFilled, CloseOutlined, HeartFilled, HeartOutlined, RightOutlined } from '@ant-design/icons'
+import { CloseOutlined, HeartFilled, HeartOutlined, RightOutlined } from '@ant-design/icons'
 import { Skeleton, Tooltip } from 'antd'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
+import { companyDirectoryPath } from '@/entities/company'
 import {
   EDUCATION_LEVEL_LABELS,
   EMPLOYMENT_TYPE_LABELS,
@@ -14,7 +15,9 @@ import {
   getJobDetail,
   jobDetailPath,
   SavedJobTooltipContent,
+  VerifiedEmployerBadge,
 } from '@/entities/job'
+import { JobCompareButton } from '@/features/compare-jobs'
 import { useSavedJob } from '@/features/saved-jobs'
 import { useJobView } from '@/features/track-job-engagement'
 import { normalizeRichTextHtml } from '@/shared/lib/rich-text-html'
@@ -110,11 +113,12 @@ export default function JobQuickView({ job, onClose, isAuthenticated = true, onR
         <div className="flex items-start justify-between gap-3">
           <h2 className="text-lg font-bold leading-snug text-gray-900">
             {job.title}
-            {job.company_verified && (
-              <Tooltip title="Tin đã xác thực — công ty được kiểm chứng">
-                <CheckCircleFilled className="ml-1.5 translate-y-[-1px] align-middle text-sm !text-emerald-500" />
-              </Tooltip>
-            )}
+            <VerifiedEmployerBadge
+              verification={d.company_verification}
+              verified={d.company_verified ?? job.company_verified}
+              showCriteria={Boolean(d.company_verification)}
+              className="ml-1.5 translate-y-[-1px]"
+            />
           </h2>
           <button
             type="button"
@@ -163,6 +167,7 @@ export default function JobQuickView({ job, onClose, isAuthenticated = true, onR
               {saved ? <HeartFilled className="text-[var(--brand-primary)]" /> : <HeartOutlined className="text-[var(--brand-primary)]" />}
             </button>
           </Tooltip>
+          {job.comparison_enabled !== false && <JobCompareButton job={d} variant="reveal" />}
         </div>
       </div>
 
@@ -204,7 +209,7 @@ export default function JobQuickView({ job, onClose, isAuthenticated = true, onR
 
             {/* ── Thẻ công ty ── */}
             <div className="flex items-center gap-3 rounded-lg border border-gray-100 bg-gray-50 p-3.5">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-gray-100 bg-white">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white p-1 shadow-sm">
                 {job.company_logo_url ? (
                   <img src={job.company_logo_url} alt={job.company_name} className="h-full w-full object-contain p-0.5" loading="lazy" />
                 ) : (
@@ -215,9 +220,7 @@ export default function JobQuickView({ job, onClose, isAuthenticated = true, onR
                 <p className="truncate text-sm font-semibold text-gray-900">{job.company_name}</p>
                 <button
                   type="button"
-                  onClick={() =>
-                    navigate(`/viec-lam?search=${encodeURIComponent(job.company_name)}&search_by=company`)
-                  }
+                  onClick={() => navigate(companyDirectoryPath(job))}
                   className="cursor-pointer text-xs font-medium text-[var(--brand-primary)] hover:underline"
                 >
                   Xem trang công ty ↗

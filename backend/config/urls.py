@@ -19,6 +19,7 @@ urlpatterns = [
     # their explicit public paths ahead of API and Django-admin composition.
     path('', include('apps.jobs.urls_seo')),
     path('', include('apps.blog.urls_seo')),
+    path('', include('apps.knowledgebase.urls_seo')),
     path('', include('apps.cv_templates.urls_seo')),
     path('', include('apps.sitecontent.urls_seo')),
     path('api/health/', health_check, name='health-check'),
@@ -26,10 +27,12 @@ urlpatterns = [
     path('api/admin/', include('apps.accounts.urls_admin')),
     path('api/admin/', include('apps.employers.urls_admin')),
     path('api/candidate/', include('apps.candidates.urls')),
+    path('api/companies/', include('apps.employers.urls_public')),
     path('api/employer/', include('apps.employers.urls')),
     path('api/v2/cvs/', include('apps.cvs.urls_v2')),
     path('api/v2/', include('apps.cv_templates.urls_v2')),
     path('api/jobs/', include('apps.jobs.urls')),
+    path('api/ai/', include('apps.jobs.urls_ai')),
     path('api/dashboard/', include('apps.dashboard.urls')),
     path('api/v2/', include('apps.applications.urls_v2')),
     path('api/locations/', include('apps.locations.urls')),
@@ -38,7 +41,8 @@ urlpatterns = [
     path('api/services/', include('apps.services.urls')),
     path('api/blog/', include('apps.blog.urls')),
     path('api/privacy/', include('apps.privacy.urls')),
-    path('api/speech/', include('apps.speech.urls')),
+    path('api/knowledgebase/', include('apps.knowledgebase.urls')),
+    path('api/uploads/', include('apps.uploads.urls')),
 ]
 
 if settings.DJANGO_ADMIN_ENABLED:
@@ -52,4 +56,4 @@ if settings.API_DOCS_ENABLED:
     ]
 
 if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.PUBLIC_MEDIA_ROOT)

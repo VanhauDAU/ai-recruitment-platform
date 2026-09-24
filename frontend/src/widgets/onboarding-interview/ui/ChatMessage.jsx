@@ -2,31 +2,21 @@ import { useEffect, useLayoutEffect } from 'react'
 import { useMediaQuery } from '@/shared/hooks/use-media-query'
 import { useProgressiveReply } from '@/shared/hooks/use-progressive-reply'
 import { ProcvMascot } from '@/shared/ui/mascot'
-import { useOnboardingVoice } from '../model/onboarding-voice-context'
 import '../onboarding-interview.css'
 
 const BUBBLE_CLASS = 'onboarding-chat__bubble'
 
 /**
- * Lượt nói của robot. Chỉ tin nhắn mới nhất (`live`) mới đọc và hiện dần theo
- * tiến độ audio; tắt tiếng hoặc audio lỗi thì `useProgressiveReply` rơi về
- * typewriter nên chữ không bao giờ kẹt. Tin nhắn cũ hiện nguyên văn ngay.
+ * Tin nhắn mới nhất của robot hiện dần theo typewriter; tin nhắn cũ hiện nguyên
+ * văn ngay.
  */
 function BotMessage({ emotion, live, message, onContentProgress, onRevealed }) {
-  const { elapsed, enabled, speakOnce, speaking, status } = useOnboardingVoice()
   const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)')
-
-  useEffect(() => {
-    if (live) speakOnce(message.id, message.text)
-  }, [live, message.id, message.text, speakOnce])
 
   const reveal = useProgressiveReply({
     active: live,
-    elapsed,
-    enabled,
     progressive: live,
     reducedMotion,
-    status,
     text: message.text,
   })
 
@@ -43,7 +33,7 @@ function BotMessage({ emotion, live, message, onContentProgress, onRevealed }) {
   return (
     <div className="flex items-end gap-2">
       <span className="mb-0.5 shrink-0">
-        <ProcvMascot blink emotion={emotion} size={38} talking={live && speaking} />
+        <ProcvMascot blink emotion={emotion} size={38} talking={live && reveal.typing} />
       </span>
       <div className={`${BUBBLE_CLASS} rounded-bl-md border border-slate-200 bg-white text-slate-800 shadow-sm`}>
         <span className="onboarding-chat__sr">{message.text}</span>

@@ -6,9 +6,11 @@ from django.utils import timezone
 from ..models import (
     CandidateConsent,
     CandidateConsentEvent,
+    CandidateDesiredPositionOther,
     CandidateDesiredSpecialization,
     CandidateJobPreference,
     CandidatePreferredProvince,
+    CandidatePreferredSkill,
     CandidateProfile,
 )
 
@@ -48,16 +50,19 @@ def update_candidate_profile(serializer):
 @transaction.atomic
 def replace_candidate_job_preferences(profile, validated_data):
     """Atomically replace normalized selections and persist current consents."""
+    validated_data = dict(validated_data)
     locked_profile = CandidateProfile.objects.select_for_update().get(pk=profile.pk)
     preference, _ = CandidateJobPreference.objects.select_for_update().get_or_create(
         candidate_profile=locked_profile,
     )
     specializations = validated_data.pop('desired_specialization_ids')
+    custom_positions = validated_data.pop('desired_position_others')
     provinces = validated_data.pop('preferred_province_ids')
+    preferred_skills = validated_data.pop('preferred_skill_ids', None)
     ai_consent = validated_data.pop('ai_recommendation_consent')
     recruiter_consent = validated_data.pop('recruiter_visibility_consent')
 
-    preference.desired_position_other = validated_data['desired_position_other']
+    preference.desired_position_other = custom_positions[0] if custom_positions else None
     preference.desired_salary_vnd = validated_data.get('desired_salary_vnd')
     preference.experience_level = validated_data['experience_level']
     preference.willing_to_relocate = validated_data.get('willing_to_relocate')
@@ -72,6 +77,17 @@ def replace_candidate_job_preferences(profile, validated_data):
             for index, category in enumerate(specializations)
         ]
     )
+    CandidateDesiredPositionOther.objects.filter(job_preference=preference).delete()
+    CandidateDesiredPositionOther.objects.bulk_create(
+        [
+            CandidateDesiredPositionOther(
+                job_preference=preference,
+                name=position,
+                sort_order=index,
+            )
+            for index, position in enumerate(custom_positions)
+        ]
+    )
     CandidatePreferredProvince.objects.filter(job_preference=preference).delete()
     CandidatePreferredProvince.objects.bulk_create(
         [
@@ -81,6 +97,20 @@ def replace_candidate_job_preferences(profile, validated_data):
             for index, province in enumerate(provinces)
         ]
     )
+    # New-field omission is deliberate legacy-client compatibility. Sending an
+    # explicit empty list still clears the current preferred-skill selection.
+    if preferred_skills is not None:
+        CandidatePreferredSkill.objects.filter(job_preference=preference).delete()
+        CandidatePreferredSkill.objects.bulk_create(
+            [
+                CandidatePreferredSkill(
+                    job_preference=preference,
+                    skill=skill,
+                    sort_order=index,
+                )
+                for index, skill in enumerate(preferred_skills)
+            ]
+        )
 
     now = timezone.now()
     for consent_type, allowed in (

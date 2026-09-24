@@ -240,8 +240,13 @@ export default function AccountTable({
           <Tag color={row.context?.company_role === 'owner' ? 'blue' : 'default'}>
             {row.context?.company_role_label || 'Chưa có vai trò'}
           </Tag>
-          <Typography.Text type="secondary" ellipsis className="!block !text-xs">
-            {row.context?.position_title || 'Chưa cập nhật chức danh'}
+          <Typography.Text
+            type="secondary"
+            ellipsis
+            className="!block !text-xs"
+            title={row.context?.position_title || 'Nhà tuyển dụng chưa khai báo chức danh tại công ty.'}
+          >
+            {row.context?.position_title || 'Chưa khai báo chức danh tại công ty'}
           </Typography.Text>
         </div>
       ),

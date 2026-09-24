@@ -2,10 +2,35 @@ import { Button, DatePicker, Form, Input, InputNumber, Modal, Select } from 'ant
 import dayjs from 'dayjs'
 import { useState } from 'react'
 
-export default function ApplicationInfoFields({ campaigns, creatingCampaign, onCreateCampaign }) {
+const FALLBACK_MAX_DEADLINE_DAYS = 90
+
+export default function ApplicationInfoFields({
+  campaigns,
+  creatingCampaign,
+  maxDeadlineDays = FALLBACK_MAX_DEADLINE_DAYS,
+  onCreateCampaign,
+}) {
   const form = Form.useFormInstance()
   const [quickCreateOpen, setQuickCreateOpen] = useState(false)
   const [quickCreateForm] = Form.useForm()
+  const today = dayjs().startOf('day')
+  const normalizedMaxDays = Number.isInteger(maxDeadlineDays) && maxDeadlineDays > 0
+    ? maxDeadlineDays
+    : FALLBACK_MAX_DEADLINE_DAYS
+  const latestDeadline = today.add(normalizedMaxDays, 'day')
+
+  function validateDeadline(_, deadline) {
+    if (!deadline) return Promise.resolve()
+    if (deadline.isBefore(today, 'day')) {
+      return Promise.reject(new Error('Hạn nhận hồ sơ phải từ hôm nay trở đi.'))
+    }
+    if (deadline.isAfter(latestDeadline, 'day')) {
+      return Promise.reject(
+        new Error(`Hạn nhận hồ sơ không được quá ${normalizedMaxDays} ngày kể từ hôm nay.`),
+      )
+    }
+    return Promise.resolve()
+  }
 
   async function createQuickCampaign({ name }) {
     const campaign = await onCreateCampaign(name.trim())
@@ -17,8 +42,23 @@ export default function ApplicationInfoFields({ campaigns, creatingCampaign, onC
   return (
     <>
       <div className="grid gap-x-4 md:grid-cols-2">
-        <Form.Item name="deadline" label="Hạn nhận hồ sơ" rules={[{ required: true, message: 'Chọn hạn nhận hồ sơ.' }]}>
-          <DatePicker className="!w-full" disabledDate={(date) => date && date.isBefore(dayjs().startOf('day'))} format="DD/MM/YYYY" placeholder="-- Chọn hạn nhận hồ sơ --" />
+        <Form.Item
+          name="deadline"
+          label="Hạn nhận hồ sơ"
+          extra={`Chọn đến ${latestDeadline.format('DD/MM/YYYY')} (tối đa ${normalizedMaxDays} ngày).`}
+          rules={[
+            { required: true, message: 'Chọn hạn nhận hồ sơ.' },
+            { validator: validateDeadline },
+          ]}
+        >
+          <DatePicker
+            className="!w-full"
+            disabledDate={(date) => date && (
+              date.isBefore(today, 'day') || date.isAfter(latestDeadline, 'day')
+            )}
+            format="DD/MM/YYYY"
+            placeholder="-- Chọn hạn nhận hồ sơ --"
+          />
         </Form.Item>
         <Form.Item name="number_of_vacancies" label="Số lượng tuyển" rules={[{ required: true, type: 'number', min: 1, message: 'Số lượng tuyển phải từ 1.' }]}>
           <InputNumber min={1} className="!w-full" placeholder="Nhập số lượng tuyển" />

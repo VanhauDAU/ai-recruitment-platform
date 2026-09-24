@@ -18,6 +18,7 @@ export {
   getAdminAccounts,
   getAdminAccountSummary,
   getAdminInvitations,
+  getEmployerCompanyUnlinkImpact,
   getAvailableAdminInvitationRoles,
   getProvisioningScopeImpact,
   getProvisioningScopes,
@@ -32,6 +33,7 @@ export {
   updateAdminAccount,
   updateAdminAccountProfile,
   updateAdminInvitation,
+  unlinkEmployerCompany,
   validateAdminInvitation,
 } from './api/admin-account.api'
 export {

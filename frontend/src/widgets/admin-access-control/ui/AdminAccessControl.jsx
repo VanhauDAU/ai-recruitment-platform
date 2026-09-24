@@ -22,7 +22,13 @@ import {
 import { useSession } from '@/entities/session'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { message } from '@/shared/lib/toast'
-import { activeRoleOptions, pagedResults } from '../model/access-control-view'
+import {
+  activeRoleOptions,
+  pagedResults,
+  staffListStateFromSearchParams,
+  staffMembershipParams,
+  withStaffListSearchParams,
+} from '../model/access-control-view'
 import { generateAccessCode } from '../model/generate-access-code'
 import { confirmImpact, fetchImpact } from '../model/impact-actions'
 import AccessControlModals from './AccessControlModals'
@@ -46,13 +52,16 @@ export default function AdminAccessControl() {
   const [permissionEditor, setPermissionEditor] = useState(null)
   const [permissionCodes, setPermissionCodes] = useState([])
   const [assignmentEditor, setAssignmentEditor] = useState(null)
-  const [staffSearch, setStaffSearch] = useState('')
-  const deferredStaffSearch = useDeferredValue(staffSearch.trim())
+  const [assignmentStaffSearch, setAssignmentStaffSearch] = useState('')
+  const deferredAssignmentStaffSearch = useDeferredValue(assignmentStaffSearch.trim())
   const [roleFilter, setRoleFilter] = useState('')
-  const [includeRevoked, setIncludeRevoked] = useState(false)
-  const [membershipPage, setMembershipPage] = useState(1)
   const [saving, setSaving] = useState(false)
   const [danger, setDanger] = useState(null)
+  const staffListState = useMemo(
+    () => staffListStateFromSearchParams(searchParams),
+    [searchParams],
+  )
+  const deferredMembershipSearch = useDeferredValue(staffListState.q)
 
   const departmentsQuery = useQuery({
     queryKey: adminAccessKeys.departments,
@@ -62,10 +71,10 @@ export default function AdminAccessControl() {
     queryKey: adminAccessKeys.roles(roleFilter),
     queryFn: ({ signal }) => getAdminRoles(roleFilter, { signal }),
   })
-  const membershipsParams = useMemo(() => ({
-    page: membershipPage,
-    include_revoked: includeRevoked,
-  }), [includeRevoked, membershipPage])
+  const membershipsParams = useMemo(
+    () => staffMembershipParams(staffListState, deferredMembershipSearch),
+    [deferredMembershipSearch, staffListState],
+  )
   const membershipsQuery = useQuery({
     queryKey: adminAccessKeys.memberships(membershipsParams),
     queryFn: ({ signal }) => getAdminMemberships(membershipsParams, { signal }),
@@ -77,26 +86,30 @@ export default function AdminAccessControl() {
     enabled: Boolean(permissionEditor),
   })
   const staffQuery = useQuery({
-    queryKey: adminAccessKeys.staff(deferredStaffSearch),
-    queryFn: ({ signal }) => getAdminStaff(deferredStaffSearch, { signal }),
+    queryKey: adminAccessKeys.staff(deferredAssignmentStaffSearch),
+    queryFn: ({ signal }) => getAdminStaff(deferredAssignmentStaffSearch, { signal }),
     enabled: Boolean(assignmentEditor),
   })
-  const assignmentRolesQuery = useQuery({
+  const staffRolesQuery = useQuery({
     queryKey: adminAccessKeys.roles(''),
     queryFn: ({ signal }) => getAdminRoles('', { signal }),
-    enabled: Boolean(assignmentEditor),
+    enabled: isSuperuser && (activeTab === 'staff' || Boolean(assignmentEditor)),
   })
 
   const departments = departmentsQuery.data || []
   const roles = rolesQuery.data || []
-  const assignmentRoles = assignmentRolesQuery.data || []
+  const staffRoles = staffRolesQuery.data || []
   const memberships = pagedResults(membershipsQuery.data)
-  const staff = pagedResults(staffQuery.data)
+  const staff = pagedResults(staffQuery.data).results
   const roleOptions = activeRoleOptions(
     departments,
-    assignmentRoles,
+    staffRoles,
     assignmentEditor?.member?.role.public_id,
   )
+
+  const updateStaffListState = (patch) => {
+    setSearchParams(withStaffListSearchParams(searchParams, patch))
+  }
 
   const invalidateAll = async () => {
     await queryClient.invalidateQueries({ queryKey: adminAccessKeys.all })
@@ -240,7 +253,7 @@ export default function AdminAccessControl() {
   const openAssignment = (member = null) => {
     assignmentForm.resetFields()
     if (member) assignmentForm.setFieldsValue({ user_public_id: member.user.public_id })
-    setStaffSearch('')
+    setAssignmentStaffSearch('')
     setAssignmentEditor({ member })
   }
 
@@ -281,15 +294,12 @@ export default function AdminAccessControl() {
             onImpact: loadImpact,
           }}
           membership={{
-            items: memberships,
+            data: memberships,
             query: membershipsQuery,
-            page: membershipPage,
-            includeRevoked,
-            onPageChange: setMembershipPage,
-            onIncludeRevokedChange: (checked) => {
-              setIncludeRevoked(checked)
-              setMembershipPage(1)
-            },
+            departments,
+            roles: staffRoles,
+            filters: staffListState,
+            onFiltersChange: updateStaffListState,
             onAssign: () => openAssignment(),
             onReplace: openAssignment,
             onImpact: loadImpact,
@@ -327,11 +337,11 @@ export default function AdminAccessControl() {
           form: assignmentForm,
           staff,
           staffQuery,
-          rolesQuery: assignmentRolesQuery,
+          rolesQuery: staffRolesQuery,
           roleOptions,
           onClose: () => setAssignmentEditor(null),
           onPreview: previewAssignment,
-          onSearch: setStaffSearch,
+          onSearch: setAssignmentStaffSearch,
         }}
         impact={{
           value: danger,

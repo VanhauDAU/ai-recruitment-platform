@@ -68,6 +68,9 @@ from ..serializers.account_management import (
     AdminInvitationSerializer,
     AdminInvitationTokenSerializer,
     AdminInvitationUpdateSerializer,
+    EmployerCompanyUnlinkConfirmSerializer,
+    EmployerCompanyUnlinkImpactResponseSerializer,
+    EmployerCompanyUnlinkImpactSerializer,
     InvitationRoleSerializer,
     ManagedAccountDetailSerializer,
     ManagedAccountSerializer,
@@ -225,6 +228,8 @@ class AdminAccountViewSet(
         'change_email': ['account.email.manage'],
         'mfa_impact': ['account.mfa.reset'],
         'reset_mfa': ['account.mfa.reset'],
+        'company_unlink_impact': ['employer_verification.unlink_company'],
+        'unlink_company': ['employer_verification.unlink_company'],
     }
 
     def get_queryset(self):
@@ -592,6 +597,62 @@ class AdminAccountViewSet(
             actor=request.user,
         )
         return Response({'detail': 'Đã xếp lịch gửi email xác minh.'})
+
+    @extend_schema(
+        request=EmployerCompanyUnlinkImpactSerializer,
+        responses={200: EmployerCompanyUnlinkImpactResponseSerializer},
+        summary='Xem tác động trước khi gỡ liên kết công ty chọn nhầm',
+    )
+    @action(detail=True, methods=['post'], url_path='company-unlink-impact')
+    def company_unlink_impact(self, request, public_id=None):
+        serializer = EmployerCompanyUnlinkImpactSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        from apps.employers.services import CompanyUnlinkError, company_unlink_impact
+
+        try:
+            impact = company_unlink_impact(
+                self.get_object(),
+                actor=request.user,
+                **serializer.validated_data,
+            )
+        except CompanyUnlinkError as error:
+            raise ValidationError(
+                {
+                    'code': error.code,
+                    'detail': error.message,
+                    'blockers': list(error.blockers),
+                }
+            ) from error
+        return Response(impact)
+
+    @extend_schema(
+        request=EmployerCompanyUnlinkConfirmSerializer,
+        responses={200: ManagedAccountDetailSerializer},
+        summary='Xác nhận gỡ liên kết công ty chọn nhầm khi account còn clean',
+    )
+    @action(detail=True, methods=['post'], url_path='unlink-company')
+    def unlink_company(self, request, public_id=None):
+        serializer = EmployerCompanyUnlinkConfirmSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        from apps.employers.services import CompanyUnlinkError, confirm_company_unlink
+
+        target = self.get_object()
+        try:
+            _confirmed_call(
+                confirm_company_unlink,
+                user=target,
+                actor=request.user,
+                **serializer.validated_data,
+            )
+        except CompanyUnlinkError as error:
+            raise ValidationError(
+                {
+                    'code': error.code,
+                    'detail': error.message,
+                    'blockers': list(error.blockers),
+                }
+            ) from error
+        return Response(_serialize_account(target, request.user, detail=True))
 
 
 class AdminInvitationViewSet(

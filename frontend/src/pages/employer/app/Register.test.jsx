@@ -11,12 +11,14 @@ const {
   getProvinces,
   registerEmployer,
   setCurrentUser,
+  success,
 } = vi.hoisted(() => ({
   checkRegistrationEmail: vi.fn(),
   executeRecaptcha: vi.fn(),
   getProvinces: vi.fn(),
   registerEmployer: vi.fn(),
   setCurrentUser: vi.fn(),
+  success: vi.fn(),
 }))
 
 vi.mock('react-google-recaptcha-v3', () => ({
@@ -43,6 +45,9 @@ vi.mock('@/entities/site-settings', () => ({
     settings: { hotline: '' },
     siteName: 'ProCV',
   }),
+}))
+vi.mock('@/shared/lib/toast', () => ({
+  message: { success },
 }))
 
 function renderPage() {
@@ -106,5 +111,8 @@ describe('EmployerRegister', () => {
       marketing_opt_in: false,
       captcha_token: 'captcha-token',
     }))
+    expect(success).toHaveBeenCalledWith('Đăng ký thành công.', {
+      className: 'app-toast--sound-done',
+    })
   })
 })

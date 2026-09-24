@@ -85,12 +85,13 @@ describe('JobModeration', () => {
         public_id: 'job_pending',
         title: 'Backend Engineer',
         company_name: 'Acme',
-        company_verification_status: 'verified',
+        employer_verification_completed: true,
         employer_name: 'Nguyễn An',
         employer_email: 'an@example.com',
         status: 'pending',
         status_label: 'Chờ duyệt',
         deadline: '2026-08-30',
+        created_at: '2026-07-22T08:00:00Z',
         submitted_at: '2026-07-22T09:00:00Z',
         application_count: 0,
         pending_report_count: 0,
@@ -114,9 +115,10 @@ describe('JobModeration', () => {
 
     expect(await screen.findByText('Backend Engineer')).toBeInTheDocument()
     expect(getAdminJobs).toHaveBeenCalledWith(
-      { ordering: 'submitted_at', page: 1, status: 'pending' },
+      { ordering: '-created_at', page: 1, status: 'pending' },
       expect.any(Object),
     )
+    expect(screen.getByRole('button', { name: 'Sắp xếp created_at' })).toBeVisible()
     expect(screen.queryByRole('button', { name: 'Duyệt tin' })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Xem chi tiết' })).toBeVisible()
   })

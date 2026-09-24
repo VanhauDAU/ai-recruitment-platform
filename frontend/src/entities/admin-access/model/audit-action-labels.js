@@ -30,6 +30,24 @@ export const AUDIT_ACTION_LABELS = {
   restore_system_role: 'Khôi phục chức danh mặc định',
   sync_permission_catalog: 'Đồng bộ danh mục quyền',
 
+  // Trung tâm FAQ & hướng dẫn.
+  knowledge_category_create: 'Tạo chuyên mục trợ giúp',
+  knowledge_category_update: 'Cập nhật chuyên mục trợ giúp',
+  knowledge_category_reorder: 'Sắp xếp chuyên mục trợ giúp',
+  knowledge_category_activate: 'Hiển thị chuyên mục trợ giúp',
+  knowledge_category_deactivate: 'Ẩn chuyên mục trợ giúp',
+  knowledge_article_create: 'Tạo bài viết trợ giúp',
+  knowledge_article_update: 'Cập nhật bài viết trợ giúp',
+  knowledge_article_reorder: 'Sắp xếp bài viết trợ giúp',
+  knowledge_revision_create: 'Tạo revision trợ giúp',
+  knowledge_revision_update: 'Sửa revision trợ giúp',
+  knowledge_revision_submit: 'Gửi duyệt revision trợ giúp',
+  knowledge_revision_approve: 'Duyệt revision trợ giúp',
+  knowledge_revision_reject: 'Từ chối revision trợ giúp',
+  knowledge_article_publish: 'Xuất bản bài viết trợ giúp',
+  knowledge_article_archive: 'Lưu trữ bài viết trợ giúp',
+  knowledge_article_restore: 'Khôi phục bài viết trợ giúp',
+
   // Quản lý tài khoản và cấp phát Admin.
   create_admin_invitation: 'Mời tài khoản Admin',
   update_admin_invitation: 'Đổi chức danh lời mời',

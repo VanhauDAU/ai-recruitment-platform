@@ -1,7 +1,7 @@
 import { SaveOutlined, SendOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
 import { Alert, Button, Form } from 'antd'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   getJobBenefits,
   getJobLanguages,
@@ -9,13 +9,15 @@ import {
   jobKeys,
 } from '@/entities/job'
 import { getProvinces } from '@/entities/location'
+import { message } from '@/shared/lib/toast'
 import {
   buildJobPayload,
+  createAiJobFormPatch,
   createJobFormValues,
   getJobFormProgress,
 } from '../model/job-form-values'
 import ApplicationInfoFields from './ApplicationInfoFields'
-import BasicJobService from './BasicJobService'
+import AutomaticApplicationStatusFields from './AutomaticApplicationStatusFields'
 import CandidateExpectationFields from './CandidateExpectationFields'
 import JobDescriptionFields from './JobDescriptionFields'
 import JobFormPreview from './JobFormPreview'
@@ -26,10 +28,16 @@ import PostingQuotaNotice from './PostingQuotaNotice'
 import './post-job-form.css'
 
 export default function PostJobForm({
+  aiSuggestion,
+  aiSuggestionKey,
+  form: providedForm,
   initialValues,
   campaigns = [],
   categories = [],
   postingContext,
+  serviceContent,
+  defaultDeadlineDays,
+  maxDeadlineDays,
   isDraft,
   requiresNewCredit,
   submitLabel,
@@ -38,10 +46,15 @@ export default function PostJobForm({
   creatingCampaign,
   onCreateCampaign,
   onCreateSkill,
+  onAiSuggestionApplied,
   onSaveDraft,
   onPublish,
+  onValuesChange,
 }) {
-  const [form] = Form.useForm()
+  const [internalForm] = Form.useForm()
+  const form = providedForm || internalForm
+  const initializedFormRef = useRef(null)
+  const appliedAiSuggestionRef = useRef(null)
   const [activeSection, setActiveSection] = useState('general')
   const [openSections, setOpenSections] = useState(() => new Set(['general', 'description', 'expectations', 'application', 'services']))
   const [invalidSections, setInvalidSections] = useState(() => new Set())
@@ -50,12 +63,40 @@ export default function PostJobForm({
   const benefitsQuery = useQuery({ queryKey: jobKeys.benefits, queryFn: getJobBenefits })
   const languagesQuery = useQuery({ queryKey: jobKeys.languages, queryFn: getJobLanguages })
   const skillsQuery = useQuery({ queryKey: jobKeys.skills, queryFn: () => getSkills() })
-  const values = Form.useWatch([], form) || createJobFormValues(initialValues)
+  const values = Form.useWatch([], form) || createJobFormValues(initialValues, { defaultDeadlineDays })
   const sections = useMemo(() => getJobFormProgress(values), [values])
 
   useEffect(() => {
-    form.setFieldsValue(createJobFormValues(initialValues))
-  }, [form, initialValues])
+    const shouldInitialize = initializedFormRef.current !== form
+    const shouldApplyAiSuggestion = Boolean(
+      aiSuggestion
+      && aiSuggestionKey
+      && appliedAiSuggestionRef.current !== aiSuggestionKey,
+    )
+    if (!shouldInitialize && !shouldApplyAiSuggestion) return
+
+    const nextValues = shouldInitialize
+      ? createJobFormValues(initialValues, { defaultDeadlineDays })
+      : {}
+    if (shouldApplyAiSuggestion) {
+      Object.assign(nextValues, createAiJobFormPatch(aiSuggestion))
+    }
+
+    form.setFieldsValue(nextValues)
+    initializedFormRef.current = form
+
+    if (shouldApplyAiSuggestion) {
+      appliedAiSuggestionRef.current = aiSuggestionKey
+      onAiSuggestionApplied?.(aiSuggestionKey)
+    }
+  }, [
+    aiSuggestion,
+    aiSuggestionKey,
+    defaultDeadlineDays,
+    form,
+    initialValues,
+    onAiSuggestionApplied,
+  ])
 
   const primaryCategory = categories.find((item) => item.id === values.category_assignments?.[0]?.category)
   const domainNames = categories
@@ -110,6 +151,9 @@ export default function PostJobForm({
       number_of_vacancies: 'application',
       campaign: 'application',
       application_contact: 'application',
+      auto_reject_stale_applications: 'application',
+      auto_reject_after_days: 'application',
+      auto_rejection_email_body: 'application',
     }
     const next = new Set()
     const nextFieldNames = new Set()
@@ -125,6 +169,15 @@ export default function PostJobForm({
     setInvalidFieldNames(nextFieldNames)
   }, [])
 
+  const handleFinishFailed = useCallback(({ errorFields = [] }) => {
+    updateInvalidSections(errorFields)
+    const firstError = errorFields.flatMap((field) => field.errors || []).find(Boolean)
+    message.warning(
+      firstError || 'Vui lòng hoàn thiện các trường bắt buộc trước khi gửi duyệt.',
+      { duration: 5000, id: 'post-job-validation-error' },
+    )
+  }, [updateInvalidSections])
+
   return (
     <Form
       className="post-job-form"
@@ -133,9 +186,10 @@ export default function PostJobForm({
       scrollToFirstError={{ behavior: 'smooth', block: 'center' }}
       onFinish={(formValues) => onPublish(buildJobPayload(formValues))}
       onFieldsChange={(_, allFields) => updateInvalidSections(allFields)}
-      onFinishFailed={({ errorFields }) => updateInvalidSections(errorFields)}
+      onFinishFailed={handleFinishFailed}
+      onValuesChange={onValuesChange}
     >
-      <div className="grid items-start gap-4 bg-[#fafafa] p-4 sm:p-5 xl:pt-0 xl:grid-cols-[280px_minmax(0,1fr)] 2xl:grid-cols-[280px_minmax(0,1fr)_300px]">
+      <div className="grid items-start gap-4 bg-[#fafafa] p-4 sm:p-5 xl:pt-4 xl:grid-cols-[280px_minmax(0,1fr)] 2xl:grid-cols-[280px_minmax(0,1fr)_300px]">
         <div className="post-job-sticky-col min-w-0">
           <JobFormProgress
             sections={sections}
@@ -203,8 +257,10 @@ export default function PostJobForm({
             <ApplicationInfoFields
               campaigns={campaigns}
               creatingCampaign={creatingCampaign}
+              maxDeadlineDays={maxDeadlineDays}
               onCreateCampaign={onCreateCampaign}
             />
+            <AutomaticApplicationStatusFields />
           </JobFormSection>
           <JobFormSection
             id="services"
@@ -216,7 +272,7 @@ export default function PostJobForm({
             active={activeSection === 'services'}
             onToggle={() => toggleSection('services')}
           >
-            <BasicJobService />
+            {serviceContent}
           </JobFormSection>
 
           <div className="sticky bottom-3 z-10 flex flex-col-reverse gap-2 rounded-lg border border-slate-200 bg-white/95 p-3 backdrop-blur sm:flex-row sm:justify-end">

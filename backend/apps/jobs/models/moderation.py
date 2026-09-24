@@ -59,6 +59,11 @@ class JobModerationEvent(models.Model):
         ]
 
     def save(self, *args, **kwargs):
+        if self.pk and type(self).objects.filter(pk=self.pk).exists():
+            raise ValueError('JobModerationEvent là lịch sử bất biến.')
         if not self.public_id:
             self.public_id = generate_public_id('jmev')
         super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        raise ValueError('JobModerationEvent là lịch sử bất biến.')

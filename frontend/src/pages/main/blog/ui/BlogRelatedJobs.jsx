@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { EnvironmentOutlined } from '@ant-design/icons'
 import { Link, useNavigate } from 'react-router'
-import { companyInitial, formatLocations, formatSalary, getJobs, JOB_LOGO_TINTS, jobDetailPath, JobPreviewPanel, stripCompanyPrefix } from '@/entities/job'
+import { companyInitial, formatLocations, formatSalary, getJobs, jobCardToneClass, JOB_LOGO_TINTS, jobDetailPath, JobPresentationLabels, JobPreviewPanel, stripCompanyPrefix } from '@/entities/job'
 import { JobImpressionBoundary } from '@/features/track-job-engagement'
 
 // Khối "Danh sách việc làm ..." trong bài, lấy theo danh mục nghề liên quan.
@@ -63,7 +63,7 @@ export default function BlogRelatedJobs({ jobCategory }) {
               to={jobDetailPath(job)}
               target="_blank"
               rel="noopener"
-              className="group flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 transition-all duration-200 hover:-translate-y-0.5 hover:border-[var(--brand-primary)] hover:shadow-md"
+              className={`group flex items-center gap-3 rounded-xl border p-3 transition-all duration-200 hover:-translate-y-0.5 hover:border-[var(--brand-primary)] hover:shadow-md ${jobCardToneClass(job)}`}
             >
               <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-100 bg-slate-50 text-sm font-bold text-slate-500">
                 {job.company_logo_url ? (
@@ -73,6 +73,7 @@ export default function BlogRelatedJobs({ jobCategory }) {
               <span className="min-w-0 flex-1">
                 <span className="block line-clamp-2 text-sm font-semibold leading-5 text-slate-800 transition group-hover:text-[var(--brand-primary)]">{job.title}</span>
                 <span className="block truncate text-xs text-slate-500">{job.company_name}</span>
+                <JobPresentationLabels job={job} compact className="mt-1" />
               </span>
               <span className="hidden shrink-0 text-right text-xs sm:block">
                 <span className="block font-semibold text-[var(--brand-primary)]">{formatSalary(job)}</span>

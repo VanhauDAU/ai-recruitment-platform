@@ -30,10 +30,6 @@ vi.mock('@/shared/lib/toast', () => ({
   },
 }))
 
-vi.mock('@/widgets/admin-workspace', () => ({
-  AdminPanel: ({ children }) => <section>{children}</section>,
-}))
-
 describe('AdminSettings', () => {
   beforeEach(() => {
     Object.values(mocks).forEach((mock) => mock.mockReset())

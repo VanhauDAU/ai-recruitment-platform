@@ -36,6 +36,7 @@ import { useAdminAccess } from '@/entities/admin-access'
 import { useSession } from '@/entities/session'
 import { AdminAccountProfileModal } from '@/features/edit-admin-account-profile'
 import { AdminAccountSecurityActions } from '@/features/manage-admin-account-security'
+import { EmployerCompanyLinkRecovery } from '@/features/recover-employer-company-link'
 import { EmployerVerificationReview } from '@/features/review-employer-verification'
 import {
   canRecoverAccountIdentity,
@@ -574,6 +575,13 @@ export default function AdminAccountDetail({ publicId, routeScope = 'users' }) {
   })
   const canViewVerification = isSuperuser || has('employer_verification.view')
   const canReviewVerification = isSuperuser || has('employer_verification.review')
+  const canRevokeVerification = isSuperuser || has('employer_verification.revoke')
+  const canUnlockVerificationResubmission = isSuperuser
+    || has('employer_verification.resubmission_unlock')
+  const canOverrideVerificationTax = isSuperuser
+    || has('employer_verification.tax_override')
+  const canUnlinkEmployerCompany = isSuperuser
+    || has('employer_verification.unlink_company')
   const canViewCompanyUpdates = isSuperuser || has('company_update.view')
   const canReviewCompanyUpdates = isSuperuser || has('company_update.review')
   const canViewSensitiveDocument = canReveal
@@ -600,12 +608,20 @@ export default function AdminAccountDetail({ publicId, routeScope = 'users' }) {
     />
   )
   const companyPanel = account && (
-    <AccountProfilePanel
-      publicId={publicId}
-      account={account}
-      canReveal={canReveal}
-      section="company"
-    />
+    <>
+      <AccountProfilePanel
+        publicId={publicId}
+        account={account}
+        canReveal={canReveal}
+        section="company"
+      />
+      <EmployerCompanyLinkRecovery
+        publicId={publicId}
+        company={account.context?.company}
+        companyRole={account.context?.company_role}
+        enabled={canUnlinkEmployerCompany}
+      />
+    </>
   )
   const security = account && (
     <SecurityPanel
@@ -631,15 +647,26 @@ export default function AdminAccountDetail({ publicId, routeScope = 'users' }) {
         { key: 'overview', label: 'Tổng quan' },
         { key: 'profile', label: 'Hồ sơ NTD', children: profilePanel },
         { key: 'company', label: 'Công ty', children: companyPanel },
-        ...((canViewVerification || canReviewVerification || canViewCompanyUpdates || canReviewCompanyUpdates) ? [{
+        ...((canViewVerification
+          || canReviewVerification
+          || canRevokeVerification
+          || canUnlockVerificationResubmission
+          || canOverrideVerificationTax
+          || canViewCompanyUpdates
+          || canReviewCompanyUpdates) ? [{
           key: 'verification',
           label: 'Xác thực',
           children: (
             <EmployerVerificationReview
               casePublicId={account.context?.verification?.public_id}
               companyPublicId={account.context?.company?.public_id}
+              companyUpdateRequestPublicId={searchParams.get('company_update') || ''}
+              companyUpdateRequesterPublicId={publicId}
               canViewVerification={canViewVerification}
               canReviewVerification={canReviewVerification}
+              canRevokeVerification={canRevokeVerification}
+              canUnlockVerificationResubmission={canUnlockVerificationResubmission}
+              canOverrideVerificationTax={canOverrideVerificationTax}
               canViewCompanyUpdates={canViewCompanyUpdates}
               canReviewCompanyUpdates={canReviewCompanyUpdates}
               canViewSensitive={canViewSensitiveDocument}
@@ -770,6 +797,7 @@ export default function AdminAccountDetail({ publicId, routeScope = 'users' }) {
             const next = new URLSearchParams(searchParams)
             if (tab === 'overview') next.delete('tab')
             else next.set('tab', tab)
+            if (tab !== 'verification') next.delete('company_update')
             setSearchParams(next)
           }}
           tabBarGutter={22}

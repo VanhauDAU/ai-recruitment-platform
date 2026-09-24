@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from django.utils import timezone
 
 from common.public_id import generate_public_id
 
@@ -70,6 +71,10 @@ class Application(models.Model):
     interviewed_at = models.DateTimeField(null=True, blank=True)
     rejected_at = models.DateTimeField(null=True, blank=True)
     accepted_at = models.DateTimeField(null=True, blank=True)
+    status_updated_at = models.DateTimeField(default=timezone.now)
+    auto_rejection_reminder_sent_at = models.DateTimeField(null=True, blank=True)
+    auto_rejected_at = models.DateTimeField(null=True, blank=True)
+    auto_rejection_email_sent_at = models.DateTimeField(null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
@@ -97,6 +102,10 @@ class Application(models.Model):
             ),
             models.Index(fields=['job']),
             models.Index(fields=['status']),
+            models.Index(
+                fields=['status', 'status_updated_at'],
+                name='app_auto_status_due_idx',
+            ),
             models.Index(fields=['submitted_cv_version'], name='idx_app_submitted_cv_version'),
         ]
 

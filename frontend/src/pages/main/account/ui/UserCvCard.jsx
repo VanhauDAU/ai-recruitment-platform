@@ -14,6 +14,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import { CvDocumentPreview, getCvOwnerView } from '@/entities/cv'
 import { usePreviewFitZoom } from '@/shared/hooks/use-preview-fit-zoom'
+import ConfirmActionModal from '@/shared/ui/ConfirmActionModal'
 import { useCvCardActions } from '../model/use-cv-card-actions'
 
 export default function UserCvCard({ cv, onRefresh }) {
@@ -238,18 +239,18 @@ export default function UserCvCard({ cv, onRefresh }) {
         </div>
       </Modal>
 
-      <Modal
-        title="Xóa CV của bạn?"
+      <ConfirmActionModal
+        title="Xóa CV"
         open={actions.deleteConfirmation.open}
-        onOk={actions.deleteConfirmation.submit}
         onCancel={actions.deleteConfirmation.close}
-        okText="Xóa vĩnh viễn"
-        okButtonProps={{ danger: true }}
-        cancelText="Hủy"
-        destroyOnHidden
+        onConfirm={actions.deleteConfirmation.submit}
+        confirmLoading={actions.deleteConfirmation.pending}
+        confirmText="Xóa"
+        danger
       >
-        CV, bản nháp, liên kết chia sẻ và file xuất sẽ bị xóa vĩnh viễn. Hành động này không thể hoàn tác.
-      </Modal>
+        <p>Bạn có chắc muốn xóa CV <strong>{actions.title}</strong> không?</p>
+        <p className="mt-1">CV, bản nháp, liên kết chia sẻ và file xuất sẽ bị xóa vĩnh viễn và không thể hoàn tác.</p>
+      </ConfirmActionModal>
     </div>
   )
 }

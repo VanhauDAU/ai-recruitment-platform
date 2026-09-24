@@ -4,6 +4,7 @@ from .public import (
     pinned_posts,
     published_post_detail_queryset,
     published_posts_queryset,
+    related_published_posts,
 )
 
 __all__ = [
@@ -19,6 +20,7 @@ __all__ = [
     'pinned_posts',
     'published_post_detail_queryset',
     'published_posts_queryset',
+    'related_published_posts',
 ]
 from .admin import (
     admin_categories_queryset,

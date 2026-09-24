@@ -2,7 +2,7 @@ from datetime import timedelta
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
@@ -15,6 +15,8 @@ from apps.employers.models import (
     RecruitmentCampaign,
     RecruitmentNeed,
 )
+from apps.employers.services import recruiter_job_posting_entitlement
+from apps.employers.tests.readiness_helpers import make_employer_ready
 from apps.locations.models import Location
 
 from ..api.serializers import EmployerJobWriteSerializer
@@ -47,7 +49,8 @@ class JobPostingWorkflowTests(TestCase):
             email='posting-other@example.com', password='password', role='employer'
         )
         self.company = Company.objects.create(company_name='Posting Co', created_by=self.user)
-        self.recruiter = RecruiterProfile.objects.create(user=self.user, company=self.company)
+        self.recruiter = make_employer_ready(self.user, company=self.company)
+        make_employer_ready(self.other_user, company=self.company)
         self.category = JobCategory.objects.create(
             name='Backend', category_type=JobCategory.CategoryType.SPECIALIZATION
         )
@@ -183,12 +186,16 @@ class JobPostingWorkflowTests(TestCase):
         self.company.save(update_fields=['tax_code'])
         self.recruiter.company_role = RecruiterProfile.CompanyRole.MEMBER
         self.recruiter.verified_phone = '0901234567'
+        self.recruiter.contact_phone = self.recruiter.verified_phone
+        self.user.phone = self.recruiter.verified_phone
+        self.user.save(update_fields=['phone', 'updated_at'])
         self.recruiter.phone_verified_at = timezone.now()
         self.recruiter.registration_completed_at = timezone.now()
         self.recruiter.dpa_accepted_at = timezone.now()
         self.recruiter.save(
             update_fields=[
                 'company_role',
+                'contact_phone',
                 'verified_phone',
                 'phone_verified_at',
                 'registration_completed_at',
@@ -204,21 +211,17 @@ class JobPostingWorkflowTests(TestCase):
             budget_source=RecruitmentNeed.BudgetSource.COMPANY,
             completed_at=timezone.now(),
         )
-        verification_case = EmployerVerificationCase.objects.create(
-            recruiter=self.recruiter,
-            company=self.company,
-            status=EmployerVerificationCase.Status.APPROVED,
-        )
+        verification_case = self.recruiter.verification_case
+        verification_case.status = EmployerVerificationCase.Status.APPROVED
+        verification_case.save(update_fields=['status', 'updated_at'])
         for doc_type in (
             CompanyDocument.DocType.BUSINESS_REGISTRATION,
             CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT,
         ):
-            CompanyDocument.objects.create(
-                company=self.company,
-                recruiter=self.recruiter,
-                uploaded_by=self.user,
+            CompanyDocument.objects.filter(
                 verification_case=verification_case,
                 doc_type=doc_type,
+            ).update(
                 file_url=f'employers/posting/{doc_type}.pdf',
                 file_name=f'{doc_type}.pdf',
                 mime_type='application/pdf',
@@ -243,6 +246,33 @@ class JobPostingWorkflowTests(TestCase):
         published = publish_job(self.make_publishable_job(title='Job after upgrade'), self.user)
         self.assertEqual(published.status, Job.Status.PENDING)
 
+    def test_previous_company_evidence_cannot_unlock_entitlement_or_posting_context(self):
+        previous_case = self.recruiter.verification_case
+        previous_case.status = EmployerVerificationCase.Status.APPROVED
+        previous_case.save(update_fields=['status', 'updated_at'])
+        previous_case.documents.update(status=CompanyDocument.Status.APPROVED)
+        replacement = Company.objects.create(
+            company_name='Replacement Posting Co',
+            tax_code='0109998877',
+            created_by=self.other_user,
+        )
+        self.recruiter.company = replacement
+        self.recruiter.company_role = RecruiterProfile.CompanyRole.MEMBER
+        self.recruiter.save(update_fields=['company', 'company_role', 'updated_at'])
+
+        _, entitlement = recruiter_job_posting_entitlement(self.user)
+        context = employer_job_posting_context(self.user)
+
+        self.assertFalse(entitlement['verification_completed'])
+        self.assertFalse(entitlement['admin_approved'])
+        self.assertFalse(entitlement['verified_job_quota_eligible'])
+        self.assertFalse(context['job_workspace_ready'])
+        self.assertFalse(context['job_postable'])
+        self.assertIn(
+            'business_document_required',
+            [blocker['code'] for blocker in context['blockers']],
+        )
+
     @patch('apps.jobs.services.posting.recruiter_job_posting_entitlement')
     def test_active_job_returns_to_pending_when_its_owner_resubmits_a_revision(self, entitlement):
         entitlement.return_value = (self.recruiter, self.free_entitlement)
@@ -261,18 +291,28 @@ class JobPostingWorkflowTests(TestCase):
         self.assertEqual(revised.status_history.get().from_status, Job.Status.ACTIVE)
 
     @patch('apps.jobs.services.posting.recruiter_job_posting_entitlement')
-    def test_publish_rejects_a_deadline_more_than_thirty_days_away(self, entitlement):
+    def test_publish_accepts_ninety_days_and_rejects_day_ninety_one(self, entitlement):
         entitlement.return_value = (self.recruiter, self.free_entitlement)
-        job = self.make_publishable_job()
-        job.deadline = timezone.localdate() + timedelta(days=31)
-        job.save(update_fields=['deadline'])
+        today = timezone.localdate()
+        accepted = self.make_publishable_job(title='Accepted 90-day deadline')
+        accepted.deadline = today + timedelta(days=90)
+        accepted.save(update_fields=['deadline'])
+
+        published = publish_job(accepted, self.user)
+
+        self.assertEqual(published.status, Job.Status.PENDING)
+        self.assertEqual(published.deadline, today + timedelta(days=90))
+
+        rejected = self.make_publishable_job(title='Rejected 91-day deadline')
+        rejected.deadline = today + timedelta(days=91)
+        rejected.save(update_fields=['deadline'])
 
         with self.assertRaises(ValidationError) as context:
-            publish_job(job, self.user)
+            publish_job(rejected, self.user)
 
         self.assertIn('deadline', context.exception.detail)
-        job.refresh_from_db()
-        self.assertEqual(job.status, Job.Status.DRAFT)
+        rejected.refresh_from_db()
+        self.assertEqual(rejected.status, Job.Status.DRAFT)
 
     def test_deadline_extension_requires_a_strictly_later_deadline(self):
         today = timezone.localdate()
@@ -287,24 +327,183 @@ class JobPostingWorkflowTests(TestCase):
         self.assertEqual(job.deadline, today + timedelta(days=10))
         self.assertEqual(job.status, Job.Status.ACTIVE)
 
-    def test_deadline_extension_accepts_thirty_day_boundary_and_rejects_later_date(self):
+    def test_visibility_extension_uses_immutable_cycle_anchor(self):
+        job = self.make_active_job(deadline=timezone.localdate() + timedelta(days=35))
+        anchor = timezone.now() - timedelta(days=10)
+        job.first_approved_at = anchor
+        job.visibility_starts_at = anchor
+        job.visibility_ends_at = anchor + timedelta(days=30)
+        job.requested_visibility_days = 30
+        job.save(
+            update_fields=[
+                'first_approved_at',
+                'visibility_starts_at',
+                'visibility_ends_at',
+                'requested_visibility_days',
+            ]
+        )
+
+        extended = extend_job_deadline(
+            job,
+            self.user,
+            job.deadline,
+            requested_visibility_days=45,
+        )
+
+        self.assertEqual(extended.first_approved_at, anchor)
+        self.assertEqual(extended.visibility_starts_at, anchor)
+        self.assertEqual(extended.visibility_ends_at, anchor + timedelta(days=45))
+        self.assertEqual(extended.requested_visibility_days, 45)
+
+    def test_deadline_extension_cannot_exceed_internal_visibility(self):
+        today = timezone.localdate()
+        job = self.make_active_job(deadline=today + timedelta(days=5))
+        anchor = timezone.now()
+        job.first_approved_at = anchor
+        job.visibility_starts_at = anchor
+        job.visibility_ends_at = anchor + timedelta(days=10)
+        job.save(
+            update_fields=[
+                'first_approved_at',
+                'visibility_starts_at',
+                'visibility_ends_at',
+            ]
+        )
+
+        with self.assertRaises(ValidationError) as context:
+            extend_job_deadline(job, self.user, today + timedelta(days=11))
+
+        self.assertIn('deadline', context.exception.detail)
+        job.refresh_from_db()
+        self.assertEqual(job.deadline, today + timedelta(days=5))
+
+    def test_deadline_and_visibility_can_be_extended_atomically(self):
+        today = timezone.localdate()
+        job = self.make_active_job(deadline=today + timedelta(days=5))
+        anchor = timezone.now()
+        job.first_approved_at = anchor
+        job.visibility_starts_at = anchor
+        job.visibility_ends_at = anchor + timedelta(days=10)
+        job.requested_visibility_days = 10
+        job.save(
+            update_fields=[
+                'first_approved_at',
+                'visibility_starts_at',
+                'visibility_ends_at',
+                'requested_visibility_days',
+            ]
+        )
+
+        extended = extend_job_deadline(
+            job,
+            self.user,
+            today + timedelta(days=14),
+            requested_visibility_days=14,
+        )
+
+        self.assertEqual(extended.deadline, today + timedelta(days=14))
+        self.assertEqual(extended.visibility_ends_at, anchor + timedelta(days=14))
+
+    def test_serializer_accepts_application_deadline_and_ignores_internal_visibility(self):
+        deadline = timezone.localdate() + timedelta(days=20)
+        serializer = EmployerJobWriteSerializer(
+            self.make_publishable_job(),
+            data={
+                'application_deadline': deadline.isoformat(),
+                'requested_visibility_days': 45,
+            },
+            partial=True,
+        )
+
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+        job = serializer.save()
+        self.assertEqual(job.deadline, deadline)
+        self.assertEqual(job.requested_visibility_days, 30)
+        self.assertNotIn('requested_visibility_days', serializer.validated_data)
+
+    def test_basic_job_deadline_accepts_the_configured_ninety_day_maximum(self):
+        serializer = EmployerJobWriteSerializer(
+            self.make_publishable_job(),
+            data={'application_deadline': (timezone.localdate() + timedelta(days=90)).isoformat()},
+            partial=True,
+        )
+
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+
+    def test_basic_job_deadline_rejects_day_after_the_configured_maximum(self):
+        serializer = EmployerJobWriteSerializer(
+            self.make_publishable_job(),
+            data={'application_deadline': (timezone.localdate() + timedelta(days=91)).isoformat()},
+            partial=True,
+        )
+
+        self.assertFalse(serializer.is_valid())
+        self.assertIn('application_deadline', serializer.errors)
+
+    def test_application_reasons_are_ordered_and_limited_to_three_unique_items(self):
+        job = self.make_publishable_job()
+        serializer = EmployerJobWriteSerializer(
+            job,
+            data={'application_reasons': ['  Sản phẩm có tác động  ', 'Đội ngũ giàu kinh nghiệm']},
+            partial=True,
+        )
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+        serializer.save()
+        job.refresh_from_db()
+        self.assertEqual(
+            job.application_reasons,
+            ['Sản phẩm có tác động', 'Đội ngũ giàu kinh nghiệm'],
+        )
+
+        invalid = EmployerJobWriteSerializer(
+            job,
+            data={'application_reasons': ['A', 'B', 'C', 'D']},
+            partial=True,
+        )
+        self.assertFalse(invalid.is_valid())
+        self.assertIn('application_reasons', invalid.errors)
+
+    def test_serializer_rejects_conflicting_deadline_aliases(self):
+        serializer = EmployerJobWriteSerializer(
+            self.make_publishable_job(),
+            data={
+                'deadline': (timezone.localdate() + timedelta(days=10)).isoformat(),
+                'application_deadline': (timezone.localdate() + timedelta(days=11)).isoformat(),
+            },
+            partial=True,
+        )
+
+        self.assertFalse(serializer.is_valid())
+        self.assertIn('application_deadline', serializer.errors)
+
+    def test_serializer_does_not_expose_visibility_duration_as_an_employer_write(self):
+        serializer = EmployerJobWriteSerializer(
+            self.make_publishable_job(),
+            data={'requested_visibility_days': 91},
+            partial=True,
+        )
+
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+        self.assertNotIn('requested_visibility_days', serializer.validated_data)
+
+    def test_deadline_extension_accepts_ninety_day_boundary_and_rejects_later_date(self):
         today = timezone.localdate()
         accepted = self.make_active_job(
             deadline=today + timedelta(days=10),
-            published_at=timezone.now() - timedelta(days=10),
+            published_at=timezone.now(),
         )
 
-        extended = extend_job_deadline(accepted, self.user, today + timedelta(days=30))
+        extended = extend_job_deadline(accepted, self.user, today + timedelta(days=90))
 
-        self.assertEqual(extended.deadline, today + timedelta(days=30))
+        self.assertEqual(extended.deadline, today + timedelta(days=90))
         self.assertEqual(extended.status, Job.Status.ACTIVE)
 
         rejected = self.make_active_job(
             deadline=today + timedelta(days=10),
-            published_at=timezone.now() - timedelta(days=10),
+            published_at=timezone.now(),
         )
         with self.assertRaises(ValidationError):
-            extend_job_deadline(rejected, self.user, today + timedelta(days=31))
+            extend_job_deadline(rejected, self.user, today + timedelta(days=91))
         rejected.refresh_from_db()
         self.assertEqual(rejected.deadline, today + timedelta(days=10))
 
@@ -425,6 +624,35 @@ class JobPostingWorkflowTests(TestCase):
         self.assertEqual(history.to_status, Job.Status.PENDING)
         self.assertEqual(history.changed_by, self.user)
 
+    def test_active_job_visibility_duration_is_ignored_by_the_write_serializer(self):
+        job = self.make_active_job()
+        job.first_approved_at = job.approved_at
+        job.visibility_starts_at = job.approved_at
+        job.visibility_ends_at = job.approved_at + timedelta(days=30)
+        job.save(update_fields=['first_approved_at', 'visibility_starts_at', 'visibility_ends_at'])
+        serializer = EmployerJobWriteSerializer(
+            job,
+            data={'requested_visibility_days': 45},
+            partial=True,
+        )
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+        self.assertNotIn('requested_visibility_days', serializer.validated_data)
+        self.assertEqual(job.requested_visibility_days, 30)
+        self.assertEqual(job.status, Job.Status.ACTIVE)
+
+    def test_active_edit_rejects_an_out_of_policy_deadline_before_mutating_the_job(self):
+        job = self.make_active_job()
+        serializer = EmployerJobWriteSerializer(
+            job,
+            data={'deadline': timezone.localdate() + timedelta(days=91)},
+            partial=True,
+        )
+
+        self.assertFalse(serializer.is_valid())
+        self.assertIn('deadline', serializer.errors)
+        job.refresh_from_db()
+        self.assertEqual(job.status, Job.Status.ACTIVE)
+
     @patch('apps.jobs.services.posting.recruiter_job_posting_entitlement')
     def test_another_recruiter_cannot_publish_or_duplicate_the_job(self, entitlement):
         entitlement.return_value = (self.recruiter, self.free_entitlement)
@@ -456,6 +684,41 @@ class JobPostingWorkflowTests(TestCase):
                 (Job.Status.ACTIVE, Job.Status.CLOSED),
             ],
         )
+
+    def test_reopen_accepts_ninety_days_and_rejects_day_ninety_one(self):
+        today = timezone.localdate()
+        accepted = self.make_active_job()
+        accepted = close_job(accepted, self.user)
+
+        reopened = reopen_job(accepted, self.user, today + timedelta(days=90))
+
+        self.assertEqual(reopened.status, Job.Status.PENDING)
+        self.assertEqual(reopened.deadline, today + timedelta(days=90))
+
+        rejected = self.make_active_job()
+        rejected = close_job(rejected, self.user)
+        with self.assertRaises(ValidationError) as context:
+            reopen_job(rejected, self.user, today + timedelta(days=91))
+
+        self.assertIn('deadline', context.exception.detail)
+        rejected.refresh_from_db()
+        self.assertEqual(rejected.status, Job.Status.CLOSED)
+
+    @override_settings(JOB_LIFECYCLE_V2_MODE='enforce')
+    def test_reopen_cannot_reset_an_expired_visibility_cycle(self):
+        job = self.make_active_job()
+        job.first_approved_at = timezone.now() - timedelta(days=31)
+        job.visibility_starts_at = job.first_approved_at
+        job.visibility_ends_at = timezone.now() - timedelta(days=1)
+        job.save(update_fields=['first_approved_at', 'visibility_starts_at', 'visibility_ends_at'])
+        closed = close_job(job, self.user)
+
+        with self.assertRaises(ValidationError) as context:
+            reopen_job(closed, self.user, timezone.localdate() + timedelta(days=20))
+
+        self.assertEqual(context.exception.detail['code'], 'JOB_VISIBILITY_EXPIRED')
+        closed.refresh_from_db()
+        self.assertEqual(closed.status, Job.Status.CLOSED)
 
     @patch('apps.jobs.services.posting.recruiter_job_posting_entitlement')
     def test_stale_job_instances_cannot_overwrite_a_completed_transition(self, entitlement):
@@ -501,12 +764,25 @@ class JobPostingWorkflowTests(TestCase):
         contact = job.application_contact
         contact.emails.update(sort_order=2)
         job.rejected_reason = 'Lý do cũ không được sao chép.'
-        job.save(update_fields=['rejected_reason'])
+        job.first_approved_at = timezone.now() - timedelta(days=5)
+        job.visibility_starts_at = job.first_approved_at
+        job.visibility_ends_at = job.visibility_starts_at + timedelta(days=30)
+        job.save(
+            update_fields=[
+                'rejected_reason',
+                'first_approved_at',
+                'visibility_starts_at',
+                'visibility_ends_at',
+            ]
+        )
 
         duplicate = duplicate_job(job, self.user)
 
         self.assertEqual(duplicate.status, Job.Status.DRAFT)
         self.assertIsNone(duplicate.submitted_at)
+        self.assertIsNone(duplicate.first_approved_at)
+        self.assertIsNone(duplicate.visibility_starts_at)
+        self.assertIsNone(duplicate.visibility_ends_at)
         self.assertEqual(duplicate.rejected_reason, '')
         self.assertEqual(duplicate.application_contact.recipient_name, contact.recipient_name)
         self.assertEqual(duplicate.application_contact.phone, contact.phone)
@@ -514,3 +790,30 @@ class JobPostingWorkflowTests(TestCase):
             list(duplicate.application_contact.emails.values_list('email', 'sort_order')),
             [('hr@example.com', 2)],
         )
+
+    def test_duplicate_rejects_job_or_campaign_holds_without_clearing_evidence(self):
+        job = self.make_publishable_job()
+        job.policy_hold = Job.PolicyHold.TEMPORARY_LOCK
+        job.save(update_fields=['policy_hold', 'updated_at'])
+
+        with self.assertRaises(ValidationError) as job_hold:
+            duplicate_job(job, self.user)
+        self.assertEqual(str(job_hold.exception.detail['code']), 'RECRUITMENT_HOLD_ACTIVE')
+
+        job.policy_hold = Job.PolicyHold.NONE
+        campaign = RecruitmentCampaign.objects.create(
+            owner=self.recruiter,
+            company=self.company,
+            name='Held campaign',
+            policy_hold=RecruitmentCampaign.PolicyHold.TEMPORARY_LOCK,
+        )
+        job.campaign = campaign
+        job.save(update_fields=['campaign', 'policy_hold', 'updated_at'])
+
+        with self.assertRaises(ValidationError) as campaign_hold:
+            duplicate_job(job, self.user)
+        self.assertEqual(
+            str(campaign_hold.exception.detail['code']),
+            'RECRUITMENT_HOLD_ACTIVE',
+        )
+        self.assertFalse(Job.objects.filter(title=f'{job.title} (bản sao)').exists())

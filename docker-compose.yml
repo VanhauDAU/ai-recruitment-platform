@@ -6,15 +6,16 @@
 # khi biến này vắng mặt, mà .env lại set sẵn 127.0.0.1 -> worker không thấy broker.
 x-service-hosts: &service-hosts
   DB_HOST: db
+  DB_PORT: 5432
   REDIS_URL: redis://redis:6379/1
   CELERY_BROKER_URL: redis://redis:6379/1
-  SPEECH_TTS_BASE_URL: http://tts:8001
-  SPEECH_TTS_INTERNAL_TOKEN: ${TTS_INTERNAL_TOKEN:-dev-tts-internal-token-change-me}
-  SPEECH_MODEL_REVISION: ${TTS_MODEL_REVISION:-vieneu-3.2.3-v3-turbo-int8}
-  SPEECH_GENERATION_TIMEOUT_SECONDS: ${SPEECH_GENERATION_TIMEOUT_SECONDS:-900}
-  SPEECH_ARTIFACT_POLL_INTERVAL_SECONDS: ${SPEECH_ARTIFACT_POLL_INTERVAL_SECONDS:-2}
-  SPEECH_ARTIFACT_DOWNLOAD_TIMEOUT_SECONDS: ${SPEECH_ARTIFACT_DOWNLOAD_TIMEOUT_SECONDS:-120}
-  SPEECH_ARTIFACT_RETENTION_DAYS: ${SPEECH_ARTIFACT_RETENTION_DAYS:-30}
+  LEGACY_MEDIA_ROOT: /app/legacy-media
+  PUBLIC_MEDIA_ROOT: /app/public-media
+  PRIVATE_MEDIA_ROOT: /app/private-media
+  UPLOAD_QUARANTINE_ROOT: /app/quarantine
+  CLAMAV_HOST: ${CLAMAV_HOST:-clamav}
+  CLAMAV_PORT: ${CLAMAV_PORT:-3310}
+  AI_RUNTIME_ENABLED: ${AI_RUNTIME_ENABLED:-true}
 
 # json-file mặc định tăng vô hạn và thường là phần dung lượng khó phát hiện nhất
 # trên VPS. Mọi service đều dùng cùng chính sách xoay log, override được qua .env.
@@ -33,14 +34,16 @@ x-backend-image: &backend-image
 
 services:
   # Named volumes are initially owned by root, while Django deliberately runs
-  # as appuser. Initialise the private-media volume before any service tries
-  # to persist uploads (business documents, CV exports, and similar files).
+  # as appuser. Initialise only the active isolated roots. The retained legacy
+  # volume is mounted read-only by application services for copy/verification.
   media-init:
     <<: *backend-image
     user: '0:0'
-    command: sh -c 'mkdir -p /app/media && chown -R appuser:appuser /app/media'
+    command: sh -c 'chown -R appuser:appuser /app/public-media /app/private-media /app/quarantine'
     volumes:
-      - backend_media:/app/media
+      - backend_public_media:/app/public-media
+      - backend_private_media:/app/private-media
+      - backend_quarantine:/app/quarantine
     logging: *default-logging
 
   db:
@@ -74,6 +77,27 @@ services:
       retries: 10
     logging: *default-logging
 
+  # Scanner thật chỉ bật theo profile để không giữ 3-4 GB RAM trong mọi phiên
+  # development. Không publish TCP 3310 ra host; backend/worker kết nối qua
+  # private Compose network. Feature tag được pin để không tự nhảy major/minor.
+  clamav:
+    image: clamav/clamav:1.4_base
+    # Official 1.4 image is amd64-only; Docker Desktop on Apple Silicon runs it
+    # through emulation. Override on a registry/image that publishes arm64.
+    platform: ${CLAMAV_PLATFORM:-linux/amd64}
+    profiles: [scanner]
+    environment:
+      CLAMAV_NO_MILTERD: 'true'
+      CLAMD_STARTUP_TIMEOUT: ${CLAMD_STARTUP_TIMEOUT:-900}
+      FRESHCLAM_CHECKS: ${FRESHCLAM_CHECKS:-12}
+    volumes:
+      - clamav_db:/var/lib/clamav
+    mem_limit: ${CLAMAV_MEMORY_LIMIT:-4g}
+    cpus: ${CLAMAV_CPU_LIMIT:-2}
+    init: true
+    restart: unless-stopped
+    logging: *default-logging
+
   backend:
     <<: *backend-image
     command: sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
@@ -83,7 +107,10 @@ services:
       FRONTEND_SHELL_URL: http://frontend:5173/
     volumes:
       - ./backend:/app
-      - backend_media:/app/media
+      - backend_media:/app/legacy-media:ro
+      - backend_public_media:/app/public-media
+      - backend_private_media:/app/private-media
+      - backend_quarantine:/app/quarantine
     ports:
       - '8000:8000'
     init: true
@@ -105,21 +132,20 @@ services:
 
   worker:
     <<: *backend-image
-    # -Q bắt buộc: settings route task sang auth-email/cv-export; worker không
-    # khai queue sẽ chỉ nghe 'default' -> email xác thực và export CV chết lặng.
-    # speech-artifacts chỉ sao chép MP3 đã được live inference tạo; model không
-    # nạp và tuyệt đối không inference trong Celery.
-    # Dùng worker sẵn có ở local để không tốn thêm ~1 container RAM.
+    # -Q bắt buộc: settings route task sang auth-email/auth-sms/cv-export/upload-scan;
+    # worker không khai queue sẽ chỉ nghe 'default' -> auth, export hoặc scan chết lặng.
     # Docker Desktop nhìn thấy toàn bộ CPU host nên Celery mặc định fork 10
-    # process dù máy dev hầu như không có backlog. Hai process đủ tách một job
-    # speech dài khỏi các job thường và giảm mạnh RAM/PID khi idle.
-    command: celery -A config worker --loglevel=info -Q default,auth-email,cv-export,speech-artifacts --concurrency=${CELERY_WORKER_CONCURRENCY:-2} --prefetch-multiplier=1 --max-tasks-per-child=${CELERY_WORKER_MAX_TASKS_PER_CHILD:-200}
+    # process dù máy dev hầu như không có backlog.
+    command: celery -A config worker --loglevel=info -Q default,auth-email,auth-sms,cv-export,upload-scan,candidate-email --concurrency=${CELERY_WORKER_CONCURRENCY:-2} --prefetch-multiplier=1 --max-tasks-per-child=${CELERY_WORKER_MAX_TASKS_PER_CHILD:-200}
     env_file: ./backend/.env
     environment:
       <<: *service-hosts
     volumes:
       - ./backend:/app
-      - backend_media:/app/media
+      - backend_media:/app/legacy-media:ro
+      - backend_public_media:/app/public-media
+      - backend_private_media:/app/private-media
+      - backend_quarantine:/app/quarantine
     init: true
     pids_limit: ${WORKER_PIDS_LIMIT:-256}
     stop_grace_period: 30s
@@ -131,6 +157,27 @@ services:
         condition: service_healthy
       media-init:
         condition: service_completed_successfully
+
+  # Generative AI is isolated from email/export/scan workloads so provider
+  # latency cannot exhaust the shared worker pool. Low prefetch keeps cancel
+  # and recovery predictable; two processes are the production capacity gate.
+  ai-worker:
+    <<: *backend-image
+    command: celery -A config worker --loglevel=info -Q ai-generation --concurrency=2 --prefetch-multiplier=1 --max-tasks-per-child=${AI_WORKER_MAX_TASKS_PER_CHILD:-100}
+    env_file: ./backend/.env
+    environment:
+      <<: *service-hosts
+    volumes:
+      - ./backend:/app
+    init: true
+    pids_limit: ${AI_WORKER_PIDS_LIMIT:-128}
+    stop_grace_period: 100s
+    logging: *default-logging
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
 
   beat:
     <<: *backend-image
@@ -147,47 +194,6 @@ services:
       redis:
         condition: service_healthy
 
-  # VieNeu v3 Turbo chạy ONNX/CPU trong process riêng. Model và audio cache dùng
-  # named volume nên chỉ tải/generate một lần qua các lần restart.
-  tts:
-    build: ./tts-service
-    # ONNX với threads=auto sẽ chiếm toàn bộ CPU Docker Desktop. Giới hạn
-    # cứng + thread pool giúp web/DB luôn còn headroom khi đang synthesize.
-    cpus: ${TTS_CPU_LIMIT:-4.0}
-    cpu_shares: 512
-    mem_limit: ${TTS_MEMORY_LIMIT:-2g}
-    pids_limit: 128
-    environment:
-      TTS_INTERNAL_TOKEN: ${TTS_INTERNAL_TOKEN:-dev-tts-internal-token-change-me}
-      TTS_ENVIRONMENT: ${ENVIRONMENT:-development}
-      TTS_CACHE_DIR: /var/cache/procv-tts
-      TTS_CACHE_MAX_GB: ${TTS_CACHE_MAX_GB:-2}
-      TTS_CACHE_TTL_SECONDS: ${TTS_CACHE_TTL_SECONDS:-86400}
-      TTS_MAX_ACTIVE_SESSIONS: ${TTS_MAX_ACTIVE_SESSIONS:-1000}
-      TTS_MAX_CONCURRENT_STREAMS: ${TTS_MAX_CONCURRENT_STREAMS:-1}
-      TTS_ONNX_THREADS: ${TTS_ONNX_THREADS:-4}
-      TTS_BACKEND: onnx
-      TTS_PRECISION: int8
-      TTS_MODEL_SOURCE: ${TTS_MODEL_SOURCE:-pnnbao-ump/VieNeu-TTS-v3-Turbo}
-      TTS_MODEL_REVISION: ${TTS_MODEL_REVISION:-vieneu-3.2.3-v3-turbo-int8}
-      OMP_NUM_THREADS: ${TTS_ONNX_THREADS:-4}
-      OMP_WAIT_POLICY: PASSIVE
-      HF_HOME: /var/cache/huggingface
-    volumes:
-      - tts_huggingface_cache:/var/cache/huggingface
-      - tts_audio_cache:/var/cache/procv-tts
-    ports:
-      - '8001:8001'
-    init: true
-    healthcheck:
-      test: ['CMD', 'python', '-c', 'import urllib.request; urllib.request.urlopen("http://127.0.0.1:8001/readyz", timeout=2)']
-      interval: 15s
-      timeout: 5s
-      retries: 20
-      start_period: 60s
-    stop_grace_period: 20s
-    logging: *default-logging
-
   frontend:
     image: node:22-alpine
     working_dir: /app
@@ -202,7 +208,6 @@ services:
       VITE_API_BASE_URL: /api
       API_PROXY_TARGET: http://backend:8000
       VITE_ANNOUNCEMENT_ROLLOUT_SURFACES: ${VITE_ANNOUNCEMENT_ROLLOUT_SURFACES:-}
-      TTS_PROXY_TARGET: http://tts:8001
     init: true
     pids_limit: ${FRONTEND_PIDS_LIMIT:-256}
     healthcheck:
@@ -215,7 +220,10 @@ services:
 
 volumes:
   pgdata:
+  # Existing shared media is retained as read-only migration/rollback input.
   backend_media:
+  backend_public_media:
+  backend_private_media:
+  backend_quarantine:
+  clamav_db:
   frontend_node_modules:
-  tts_huggingface_cache:
-  tts_audio_cache:

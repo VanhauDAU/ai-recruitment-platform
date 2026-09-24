@@ -91,6 +91,7 @@ class ProfileUpdateTests(APITestCase):
                 'employer_onboarding_required',
                 'employer_onboarding_step',
                 'employer_verification_completed',
+                'employer_job_workspace_ready',
                 'admin_access',
             },
         )
@@ -98,6 +99,7 @@ class ProfileUpdateTests(APITestCase):
         self.assertIs(response.data['job_preferences_configured'], False)
         self.assertIs(response.data['has_usable_password'], True)
         self.assertIs(response.data['employer_verification_completed'], False)
+        self.assertIs(response.data['employer_job_workspace_ready'], False)
         self.assertTrue(
             {
                 'id',
@@ -142,6 +144,26 @@ class ProfileUpdateTests(APITestCase):
         self.client.force_authenticate(user=None)
         response = self.client.patch(self.url, {'full_name': 'X'})
         self.assertIn(response.status_code, (401, 403))
+
+    def test_employer_cannot_bypass_sms_when_changing_phone(self):
+        employer = User.objects.create_user(
+            email='employer-phone-change@example.com',
+            password='Password@123',
+            role=User.Role.EMPLOYER,
+            full_name='Nhà tuyển dụng',
+            phone='0912345678',
+        )
+        self.client.force_authenticate(user=employer)
+
+        response = self.client.patch(
+            self.url,
+            {'full_name': 'Nhà tuyển dụng', 'phone': '0987654321'},
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('phone', response.data)
+        employer.refresh_from_db()
+        self.assertEqual(employer.phone, '0912345678')
 
 
 class PasswordChangeTests(APITestCase):

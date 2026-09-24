@@ -1,13 +1,15 @@
 import { Navigate, Route } from 'react-router'
 import { employerAppPath, employerMarketingPath } from '@/shared/config/portals'
 import AuthGuard from '../guards/AuthGuard'
+import CandidateDataGuard from '../guards/CandidateDataGuard'
 import EmployerOnboardingGuard from '../guards/EmployerOnboardingGuard'
-import EmployerVerificationGuard from '../guards/EmployerVerificationGuard'
 import GuestGuard from '../guards/GuestGuard'
+import JobWorkspaceGuard from '../guards/JobWorkspaceGuard'
 import RoleGuard from '../guards/RoleGuard'
 import EmployerLegacyVerifyRedirect from '../redirects/EmployerLegacyVerifyRedirect'
 import {
   EmployerAboutPage,
+  EmployerActivitiesPage,
   EmployerApplicationListPage,
   EmployerAccountInformationPage,
   EmployerBusinessLicensePage,
@@ -24,7 +26,9 @@ import {
   EmployerLandingPage,
   EmployerLegalPage,
   EmployerLoginPage,
+  EmployerMyServicesPage,
   EmployerOnboardingPage,
+  EmployerNotificationsPage,
   EmployerPasswordLoginPage,
   EmployerPersonalDataProtectionPage,
   EmployerRecruitmentDemandPage,
@@ -106,14 +110,19 @@ export function employerRoutes() {
             <Route path={employerAppPath('/account/settings/recruitment-demand')} element={<EmployerRecruitmentDemandPage />} />
             <Route path={employerAppPath('/account/settings/general-setting')} element={<EmployerGeneralSettingsPage />} />
             <Route path={employerAppPath('/dashboard')} element={<EmployerDashboardPage />} />
-            <Route element={<EmployerVerificationGuard />}>
+            <Route path={employerAppPath('/notifications')} element={<EmployerNotificationsPage />} />
+            <Route path={employerAppPath('/activities')} element={<EmployerActivitiesPage />} />
+            <Route path={employerAppPath('/services')} element={<EmployerMyServicesPage />} />
+            <Route element={<JobWorkspaceGuard />}>
               <Route path={employerAppPath('/campaigns')} element={<EmployerCampaignListPage />} />
               <Route path={employerAppPath('/campaigns/:publicId')} element={<EmployerCampaignDetailPage />} />
               <Route path={employerAppPath('/jobs')} element={<EmployerJobListPage />} />
               <Route path={employerAppPath('/jobs/new')} element={<EmployerJobFormPage />} />
               <Route path={employerAppPath('/jobs/:publicId/edit')} element={<EmployerJobFormPage />} />
               <Route path={employerAppPath('/jobs/:publicId')} element={<EmployerJobDetailPage />} />
-              <Route path={employerAppPath('/applications')} element={<EmployerApplicationListPage />} />
+              <Route element={<CandidateDataGuard />}>
+                <Route path={employerAppPath('/applications')} element={<EmployerApplicationListPage />} />
+              </Route>
             </Route>
           </Route>
         </Route>

@@ -4,13 +4,20 @@ from io import BytesIO
 
 from django.core import signing
 from django.core.files.base import ContentFile
+from django.db import transaction
 from django.urls import reverse
 from PIL import Image, ImageOps
 from rest_framework.exceptions import ValidationError
 
+from common.public_id import generate_public_id
 from common.r2_storage import private_media_storage, public_media_storage
 
 from ..models import CvAsset, CvVersion
+from .upload_claims import (
+    CV_AVATAR_CLAIM_SCOPE,
+    claim_candidate_upload,
+    open_clean_candidate_upload,
+)
 
 MAX_AVATAR_BYTES = 5 * 1024 * 1024
 ASSET_TOKEN_MAX_AGE = 300
@@ -69,6 +76,49 @@ def create_avatar_asset(*, actor, upload):
     asset.full_clean()
     asset.save()
     return asset
+
+
+def create_avatar_asset_from_session(*, actor, upload_session_public_id):
+    """Decode and re-encode an avatar only after a clean scanner verdict."""
+    storage_key = ''
+    try:
+        with transaction.atomic():
+            asset_public_id = generate_public_id('cva')
+            source_asset = claim_candidate_upload(
+                owner=actor,
+                session_public_id=upload_session_public_id,
+                claim_scope=CV_AVATAR_CLAIM_SCOPE,
+                claim_reference=asset_public_id,
+            )
+            with open_clean_candidate_upload(source_asset) as upload:
+                payload, extension, content_type, width, height = _encode_avatar(upload)
+            checksum = sha256(payload).hexdigest()
+            storage_key = private_media_storage().save(
+                f'cvs/assets/{actor.public_id}/{checksum}.{extension}',
+                ContentFile(payload),
+            )
+            asset = CvAsset(
+                public_id=asset_public_id,
+                owner=actor,
+                kind=CvAsset.Kind.AVATAR,
+                title='',
+                storage_key=storage_key,
+                content_type=content_type,
+                size_bytes=len(payload),
+                width=width,
+                height=height,
+                checksum_sha256=checksum,
+            )
+            asset.full_clean()
+            asset.save()
+            return asset
+    except Exception:
+        if storage_key:
+            try:
+                private_media_storage().delete(storage_key)
+            except Exception:  # noqa: BLE001 - storage reconciliation owns orphan cleanup
+                pass
+        raise
 
 
 def create_background_asset(*, upload, title='', is_active=True):
@@ -157,15 +207,24 @@ def validate_document_assets(*, owner, content_json, style_json):
             raise ValidationError({'style_json.background_asset_id': 'Background is unavailable.'})
 
 
-def sign_asset(asset, version=None):
-    value = json.dumps(
-        {'asset': asset.public_id, 'version': version.public_id if version else None},
-        separators=(',', ':'),
-    )
+def sign_asset(asset, version=None, *, audience='', subject='', resource=''):
+    payload = {
+        'asset': asset.public_id,
+        'version': version.public_id if version else None,
+    }
+    if audience:
+        payload.update(
+            {
+                'audience': audience,
+                'subject': subject,
+                'resource': resource,
+            }
+        )
+    value = json.dumps(payload, separators=(',', ':'))
     return signing.TimestampSigner(salt=ASSET_TOKEN_SALT).sign(value)
 
 
-def resolve_asset_token(token):
+def resolve_asset_token(token, *, include_context=False):
     try:
         value = signing.TimestampSigner(salt=ASSET_TOKEN_SALT).unsign(
             token, max_age=ASSET_TOKEN_MAX_AGE
@@ -182,10 +241,21 @@ def resolve_asset_token(token):
             raise CvAsset.DoesNotExist from error
         if asset.public_id not in document_asset_ids(version.content_json, version.style_json):
             raise CvAsset.DoesNotExist
+    if include_context:
+        return asset, payload
     return asset
 
 
-def asset_map(*, content_json, style_json, request=None, owner=None, version=None, signed=False):
+def asset_map(
+    *,
+    content_json,
+    style_json,
+    request=None,
+    owner=None,
+    version=None,
+    signed=False,
+    token_context=None,
+):
     requested = document_asset_ids(content_json, style_json)
     assets = CvAsset.objects.filter(public_id__in=requested, is_active=True)
     result = {}
@@ -194,7 +264,8 @@ def asset_map(*, content_json, style_json, request=None, owner=None, version=Non
             continue
         path = reverse('cv-v2-asset-content', kwargs={'asset_public_id': asset.public_id})
         if signed:
-            path = f'{path}?token={sign_asset(asset, version)}'
+            token_context = token_context or {}
+            path = f'{path}?token={sign_asset(asset, version, **token_context)}'
         url = request.build_absolute_uri(path) if request else path
         result[asset.public_id] = {
             'url': url,

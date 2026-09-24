@@ -330,6 +330,26 @@
   width: 96px;
 }
 
+.rich-image-library__external {
+  display: grid;
+  gap: 10px;
+  margin: 20px auto 0;
+  max-width: 680px;
+}
+
+.rich-image-library__external label {
+  color: #334155;
+  font-size: 13px;
+  font-weight: 600;
+  margin-top: 6px;
+}
+
+.rich-image-library__field-error {
+  color: #dc2626;
+  font-size: 12px;
+  margin: -4px 0 0;
+}
+
 .rich-image-library__skeleton {
   display: grid;
   gap: 12px;

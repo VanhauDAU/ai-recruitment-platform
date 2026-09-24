@@ -15,8 +15,11 @@ describe('employer verification presentation', () => {
       'changes_requested',
       'rejected',
       'approved',
+      'revoked',
+      'expired',
     ])
     expect(verificationStatusMeta('changes_requested').label).toBe('Cần bổ sung')
+    expect(verificationStatusMeta('revoked').label).toBe('Đã thu hồi')
     expect(documentStatusMeta('approved').label).toBe('Đã duyệt')
   })
 

@@ -5,6 +5,12 @@ export { normalizeRichTextHtml } from '@/shared/lib/rich-text-html'
 
 const hasText = (value) => String(value || '').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim().length > 0
 
+export const DEFAULT_AUTO_REJECTION_EMAIL = `Cảm ơn bạn đã ứng tuyển vị trí {job_title} tại {company_name}.
+
+Sau {auto_reject_weeks} tuần kể từ ngày ứng tuyển, chúng tôi chưa thể phản hồi hồ sơ của bạn. Điều này thường có nghĩa là hồ sơ hiện chưa phù hợp với vị trí này.
+
+Tuy nhiên, thông tin của bạn đã được lưu trong hệ thống của {company_name} và nhà tuyển dụng vẫn có thể liên hệ nếu có vị trí phù hợp hơn sau này.`
+
 export function capitalizeTitleWords(value) {
   if (typeof value !== 'string') return value
   return value.replace(/(^|[\s/(-])(\p{L})/gu, (_, separator, letter) => (
@@ -19,7 +25,10 @@ function salaryIsComplete(values) {
   return values.salary_min != null
 }
 
-export function createJobFormValues(initialValues = {}) {
+export function createJobFormValues(
+  initialValues = {},
+  { defaultDeadlineDays = null } = {},
+) {
   const assignments = initialValues.category_assignments || []
   const primary = assignments.find((item) => item.role === 'primary_specialization')
   const domains = assignments.filter((item) => item.role === 'domain_knowledge')
@@ -40,20 +49,30 @@ export function createJobFormValues(initialValues = {}) {
   return {
     number_of_vacancies: 1,
     ...initialValues,
+    auto_reject_stale_applications: initialValues.auto_reject_stale_applications ?? true,
+    auto_reject_after_days: initialValues.auto_reject_after_days ?? 21,
+    auto_rejection_email_body: initialValues.auto_rejection_email_body ?? DEFAULT_AUTO_REJECTION_EMAIL,
     currency: initialValues.currency || 'VND',
     description: normalizeRichTextHtml(initialValues.description),
     requirements: normalizeRichTextHtml(initialValues.requirements),
     benefits: normalizeRichTextHtml(initialValues.benefits),
+    application_reasons: Array.isArray(initialValues.application_reasons)
+      ? initialValues.application_reasons.slice(0, 3)
+      : [],
     work_types: initialValues.work_types?.length
       ? initialValues.work_types
       : initialValues.work_type ? [initialValues.work_type] : [],
     salary_type: editableSalaryType,
     income_display_type: initialValues.income_display_type || 'income',
-    deadline: initialValues.deadline ? dayjs(initialValues.deadline) : null,
+    deadline: initialValues.deadline
+      ? dayjs(initialValues.deadline)
+      : Number.isInteger(defaultDeadlineDays) && defaultDeadlineDays > 0
+        ? dayjs().startOf('day').add(defaultDeadlineDays, 'day')
+        : null,
     category_assignments: [primary || { role: 'primary_specialization', sort_order: 0 }],
     domain_category_ids: domains.map((item) => item.category),
     work_areas: groupedAreas.size ? [...groupedAreas.values()] : [{ workplaces: [{}] }],
-    work_schedules: initialValues.work_schedules?.length
+    work_schedules: Array.isArray(initialValues.work_schedules)
       ? initialValues.work_schedules.map((item) => ({
           ...item,
           start_time: item.start_time ? dayjs(`2000-01-01T${item.start_time}`) : null,
@@ -76,6 +95,62 @@ export function createJobFormValues(initialValues = {}) {
       emails: (contact.emails || []).map((item) => item.email),
     },
   }
+}
+
+const AI_GENERATED_SCALAR_FIELDS = [
+  'title',
+  'description',
+  'requirements',
+  'benefits',
+  'position_level',
+  'employment_type',
+  'education_level',
+  'experience_years',
+]
+
+export function createAiJobFormPatch(suggestion = {}) {
+  const patch = {}
+  AI_GENERATED_SCALAR_FIELDS.forEach((field) => {
+    if (suggestion[field] === undefined || suggestion[field] === null) return
+    patch[field] = ['description', 'requirements', 'benefits'].includes(field)
+      ? normalizeRichTextHtml(suggestion[field])
+      : suggestion[field]
+  })
+
+  if (Array.isArray(suggestion.work_types)) patch.work_types = suggestion.work_types
+
+  if (Array.isArray(suggestion.category_assignments)) {
+    const primary = suggestion.category_assignments.find((item) => item.role === 'primary_specialization')
+    const domains = suggestion.category_assignments
+      .filter((item) => item.role === 'domain_knowledge' && item.category != null)
+      .map((item) => item.category)
+    if (primary?.category != null) {
+      patch.category_assignments = [{
+        category: primary.category,
+        role: 'primary_specialization',
+        sort_order: 0,
+      }]
+    }
+    if (domains.length) patch.domain_category_ids = [...new Set(domains)]
+  }
+
+  if (Array.isArray(suggestion.job_skills)) {
+    patch.required_skill_ids = [...new Set(suggestion.job_skills
+      .filter((item) => item.importance === 'required' && item.skill != null)
+      .map((item) => item.skill))]
+    patch.preferred_skill_ids = [...new Set(suggestion.job_skills
+      .filter((item) => item.importance === 'preferred' && item.skill != null)
+      .map((item) => item.skill))]
+      .filter((skillId) => !patch.required_skill_ids.includes(skillId))
+  }
+
+  if (Array.isArray(suggestion.job_benefits)) {
+    patch.benefit_ids = [...new Set(suggestion.job_benefits
+      .filter((item) => item.benefit != null)
+      .map((item) => item.benefit))]
+  }
+
+  return patch
 }
 
 export function buildJobPayload(values) {
@@ -101,14 +176,21 @@ export function buildJobPayload(values) {
   delete persistedValues.benefit_ids
   delete persistedValues.domain_category_ids
   delete persistedValues.work_areas
+  delete persistedValues.ai_generation_public_id
+  delete persistedValues.requested_visibility_days
 
   return {
     ...persistedValues,
+    auto_rejection_email_body: values.auto_rejection_email_body?.trim() || '',
     currency: values.currency || 'VND',
     salary_type: normalizedSalaryType,
     description: normalizeRichTextHtml(values.description),
     requirements: normalizeRichTextHtml(values.requirements),
     benefits: normalizeRichTextHtml(values.benefits),
+    application_reasons: (values.application_reasons || [])
+      .map((item) => String(item || '').trim())
+      .filter(Boolean)
+      .slice(0, 3),
     work_type: values.work_types?.[0] || values.work_type || '',
     deadline: values.deadline?.format('YYYY-MM-DD') || null,
     salary_min: ['range', 'fixed', 'from'].includes(normalizedSalaryType) ? salaryMinimum : null,

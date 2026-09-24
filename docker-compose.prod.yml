@@ -7,11 +7,11 @@
 services:
   db:
     restart: unless-stopped
-    ports: []          # không expose DB ra ngoài host ở production
+    ports: !reset []   # không expose DB ra ngoài host ở production
 
   redis:
     restart: unless-stopped
-    ports: []
+    ports: !reset []
 
   backend:
     restart: unless-stopped
@@ -22,10 +22,14 @@ services:
       CELERY_BROKER_URL: redis://redis:6379/1
       DJANGO_SETTINGS_MODULE: config.settings.production
       FRONTEND_SHELL_URL: http://frontend/
-    volumes:
-      - backend_media:/app/media
+      AI_RUNTIME_ENABLED: ${AI_RUNTIME_ENABLED:-false}
+    volumes: !override
+      - backend_media:/app/legacy-media:ro
+      - backend_public_media:/app/public-media
+      - backend_private_media:/app/private-media
+      - backend_quarantine:/app/quarantine
       - backend_static:/app/staticfiles
-    ports: []          # đi qua nginx, không expose trực tiếp
+    ports: !reset []   # đi qua nginx, không expose trực tiếp
 
   worker:
     restart: unless-stopped
@@ -34,8 +38,22 @@ services:
       REDIS_URL: redis://redis:6379/1
       CELERY_BROKER_URL: redis://redis:6379/1
       DJANGO_SETTINGS_MODULE: config.settings.production
-    volumes:
-      - backend_media:/app/media
+      AI_RUNTIME_ENABLED: ${AI_RUNTIME_ENABLED:-false}
+    volumes: !override
+      - backend_media:/app/legacy-media:ro
+      - backend_public_media:/app/public-media
+      - backend_private_media:/app/private-media
+      - backend_quarantine:/app/quarantine
+
+  ai-worker:
+    restart: unless-stopped
+    environment:
+      DB_HOST: db
+      REDIS_URL: redis://redis:6379/1
+      CELERY_BROKER_URL: redis://redis:6379/1
+      DJANGO_SETTINGS_MODULE: config.settings.production
+      AI_RUNTIME_ENABLED: ${AI_RUNTIME_ENABLED:-false}
+    volumes: !reset []
 
   beat:
     restart: unless-stopped
@@ -44,24 +62,8 @@ services:
       REDIS_URL: redis://redis:6379/1
       CELERY_BROKER_URL: redis://redis:6379/1
       DJANGO_SETTINGS_MODULE: config.settings.production
-    volumes: []
-
-  tts:
-    restart: unless-stopped
-    environment:
-      TTS_ENVIRONMENT: production
-      TTS_INTERNAL_TOKEN: ${TTS_INTERNAL_TOKEN}
-      TTS_CACHE_DIR: /var/cache/procv-tts
-      TTS_CACHE_MAX_GB: ${TTS_CACHE_MAX_GB:-5}
-      TTS_CACHE_TTL_SECONDS: ${TTS_CACHE_TTL_SECONDS:-259200}
-      TTS_MAX_ACTIVE_SESSIONS: ${TTS_MAX_ACTIVE_SESSIONS:-1000}
-      TTS_MAX_CONCURRENT_STREAMS: ${TTS_MAX_CONCURRENT_STREAMS:-1}
-      TTS_ONNX_THREADS: ${TTS_ONNX_THREADS:-4}
-      OMP_NUM_THREADS: ${TTS_ONNX_THREADS:-4}
-      OMP_WAIT_POLICY: PASSIVE
-      TTS_MODEL_REVISION: ${TTS_MODEL_REVISION:-vieneu-3.2.3-v3-turbo-int8}
-      HF_HOME: /var/cache/huggingface
-    ports: !reset []
+      AI_RUNTIME_ENABLED: ${AI_RUNTIME_ENABLED:-false}
+    volumes: !reset []
 
   frontend:
     # Prod: build tĩnh + nginx thay cho vite dev server.
@@ -77,9 +79,9 @@ services:
     command: !reset null
     working_dir: !reset null
     restart: unless-stopped
-    volumes: []
+    volumes: !reset []
     environment: {}
-    ports: []
+    ports: !reset []
     healthcheck:
       test: ['CMD', 'wget', '--quiet', '--tries=1', '--spider', 'http://127.0.0.1:80/']
       interval: 15s
@@ -96,12 +98,11 @@ services:
     volumes:
       - ./deploy/nginx/procv.conf:/etc/nginx/conf.d/default.conf:ro
       - backend_static:/srv/backend-static:ro
-      - backend_media:/srv/backend-media:ro
+      - backend_public_media:/srv/backend-public-media:ro
       # TLS cert mount tại đây khi có domain (letsencrypt/certbot)
     depends_on:
       - backend
       - frontend
-      - tts
     init: true
     pids_limit: ${NGINX_PIDS_LIMIT:-128}
     healthcheck:

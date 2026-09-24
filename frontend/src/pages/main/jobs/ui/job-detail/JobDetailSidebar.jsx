@@ -1,11 +1,13 @@
-import { ArrowRightOutlined, BankOutlined, CheckCircleFilled, ClockCircleOutlined, EnvironmentOutlined, GlobalOutlined, ReadOutlined, SolutionOutlined, TagsOutlined, TeamOutlined } from '@ant-design/icons'
+import { ArrowRightOutlined, BankOutlined, ClockCircleOutlined, EnvironmentOutlined, GlobalOutlined, ReadOutlined, SolutionOutlined, TagsOutlined, TeamOutlined } from '@ant-design/icons'
 import { Link } from 'react-router'
+import { companyDirectoryPath } from '@/entities/company'
 import {
   EDUCATION_LEVEL_LABELS,
   EMPLOYMENT_TYPE_LABELS,
   POSITION_LEVEL_LABELS,
   WORK_TYPE_LABELS,
   companyInitial,
+  VerifiedEmployerBadge,
 } from '@/entities/job'
 import JobSafetyTips from './JobSafetyTips'
 import JobSidebarPromos from './JobSidebarPromos'
@@ -25,14 +27,14 @@ export default function JobDetailSidebar({ job }) {
 
 function CompanyCard({ job }) {
   const companyAddress = job.company_address
-  const companyPath = `/viec-lam?search=${encodeURIComponent(job.company_name)}&search_by=company`
-  return <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">{job.company_cover_url && <div className="h-16 bg-cover bg-center" style={{ backgroundImage: `url(${job.company_cover_url})` }} />}<div className={`p-5 ${job.company_cover_url ? '-mt-7' : ''}`}><div className="flex items-start gap-3"><CompanyLogo job={job} /><div className="min-w-0 pt-1"><p className="line-clamp-2 text-sm font-bold leading-5 text-slate-800">{job.company_name}</p>{job.company_verified && <p className="mt-1 text-xs font-medium text-emerald-600"><CheckCircleFilled /> Đã xác thực</p>}</div></div><div className="mt-5 space-y-3 border-t border-gray-100 pt-4"><CompanyInfo icon={<TeamOutlined />} label="Quy mô" value={job.company_size} /><CompanyInfo icon={<BankOutlined />} label="Lĩnh vực" value={job.company_industries?.join(', ')} /><CompanyInfo icon={<EnvironmentOutlined />} label="Địa chỉ" value={companyAddress} /></div>{job.company_description && <p className="mt-4 line-clamp-3 text-xs leading-5 text-gray-500">{job.company_description}</p>}<CompanyPageLink websiteUrl={job.company_website_url} companyPath={companyPath} /></div></section>
+  const companyPath = companyDirectoryPath(job)
+  return <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">{job.company_cover_url && <div className="h-16 bg-cover bg-center" style={{ backgroundImage: `url(${job.company_cover_url})` }} />}<div className={`p-5 ${job.company_cover_url ? '-mt-7' : ''}`}><div className="flex items-start gap-3"><CompanyLogo job={job} /><div className="min-w-0 pt-1"><p className="line-clamp-2 text-sm font-bold leading-5 text-slate-800">{job.company_name}</p><VerifiedEmployerBadge verification={job.company_verification} verified={job.company_verified} showCriteria appearance="label" className="mt-1" /></div></div><div className="mt-5 space-y-3 border-t border-gray-100 pt-4"><CompanyInfo icon={<TeamOutlined />} label="Quy mô" value={job.company_size} /><CompanyInfo icon={<BankOutlined />} label="Lĩnh vực" value={job.company_industries?.join(', ')} /><CompanyInfo icon={<EnvironmentOutlined />} label="Địa chỉ" value={companyAddress} /></div>{job.company_description && <p className="mt-4 line-clamp-3 text-xs leading-5 text-gray-500">{job.company_description}</p>}<CompanyPageLink websiteUrl={job.company_website_url} companyPath={companyPath} /></div></section>
 }
 
 function CompanyPageLink({ websiteUrl, companyPath }) {
   // Nền phải dùng `!bg-*`: reset của antd đặt `a { background-color: transparent }` ngoài layer nên thắng utility thường.
   const className = 'group mt-5 flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-emerald-200 !bg-emerald-50 text-sm font-semibold !text-[var(--brand-primary)] transition hover:border-transparent hover:!bg-[var(--brand-primary)] hover:!text-white hover:shadow-md'
-  const content = <>{websiteUrl ? <GlobalOutlined /> : <BankOutlined />}Xem trang công ty<ArrowRightOutlined className="text-xs transition-transform group-hover:translate-x-0.5" /></>
+  const content = <>{websiteUrl ? <GlobalOutlined /> : <BankOutlined />}{websiteUrl ? 'Website công ty' : 'Xem trang công ty'}<ArrowRightOutlined className="text-xs transition-transform group-hover:translate-x-0.5" /></>
   return websiteUrl
     ? <a href={websiteUrl} target="_blank" rel="noopener noreferrer" className={className}>{content}</a>
     : <Link to={companyPath} className={className}>{content}</Link>

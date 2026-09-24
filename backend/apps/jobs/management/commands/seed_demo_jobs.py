@@ -159,8 +159,6 @@ class Command(BaseCommand):
                 company_size=size,
                 # Vài công ty lớn bật trang thương hiệu để demo luồng URL /brand/...
                 has_brand_page=i in BRAND_COMPANY_INDEXES,
-                verification_status=Company.VerificationStatus.VERIFIED,
-                verified_at=now,
                 created_by=user,
             )
             industry_obj, _ = Industry.objects.get_or_create(name=industry)

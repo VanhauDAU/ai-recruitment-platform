@@ -14,6 +14,11 @@ from ...models import (
     Department,
     User,
 )
+from ...selectors import (
+    MEMBERSHIP_DEFAULT_ORDERING,
+    MEMBERSHIP_ORDERING_FIELDS,
+    MEMBERSHIP_STATUS_CHOICES,
+)
 
 
 class StrippedTextMixin:
@@ -174,6 +179,27 @@ class AdminMembershipReadSerializer(serializers.ModelSerializer):
             'name': obj.role.name,
             'rank': obj.role.rank,
         }
+
+
+class AdminMembershipQuerySerializer(serializers.Serializer):
+    q = serializers.CharField(
+        allow_blank=True,
+        max_length=120,
+        required=False,
+        trim_whitespace=True,
+    )
+    department = serializers.CharField(allow_blank=True, max_length=64, required=False)
+    role = serializers.CharField(allow_blank=True, max_length=64, required=False)
+    user = serializers.CharField(allow_blank=True, max_length=64, required=False)
+    status = serializers.ChoiceField(choices=MEMBERSHIP_STATUS_CHOICES, required=False)
+    include_revoked = serializers.BooleanField(required=False)
+    ordering = serializers.ChoiceField(
+        choices=[value for field in MEMBERSHIP_ORDERING_FIELDS for value in (field, f'-{field}')],
+        default=MEMBERSHIP_DEFAULT_ORDERING,
+        required=False,
+    )
+    page = serializers.IntegerField(min_value=1, required=False)
+    page_size = serializers.IntegerField(max_value=60, min_value=1, required=False)
 
 
 class AdminMembershipCreateSerializer(serializers.Serializer):

@@ -1,7 +1,6 @@
 import {
   FilterOutlined,
   PlusOutlined,
-  ReloadOutlined,
   SearchOutlined,
 } from '@ant-design/icons'
 import { Button, Input, Select, Space } from 'antd'
@@ -14,11 +13,10 @@ import {
 export default function AnnouncementFilters({
   canCreate,
   filters,
-  loading,
+  actions,
   onChange,
   onCreate,
   onReset,
-  onRetry,
   searchInput,
   onSearchChange,
   total,
@@ -33,9 +31,7 @@ export default function AnnouncementFilters({
           <p>Lọc và sắp xếp được xử lý trên toàn bộ dữ liệu phía server.</p>
         </div>
         <Space wrap>
-          <Button icon={<ReloadOutlined />} loading={loading} onClick={onRetry}>
-            Làm mới
-          </Button>
+          {actions}
           {canCreate && (
             <Button type="primary" icon={<PlusOutlined />} onClick={onCreate}>
               Tạo thông báo

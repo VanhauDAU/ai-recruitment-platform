@@ -41,6 +41,7 @@ from ...services import (
 from ..serializers.admin_access import (
     AdminAuditLogSerializer,
     AdminMembershipCreateSerializer,
+    AdminMembershipQuerySerializer,
     AdminMembershipReadSerializer,
     AdminPermissionSerializer,
     AdminRoleCreateSerializer,
@@ -411,13 +412,22 @@ class AdminMembershipViewSet(
     }
 
     def get_queryset(self):
-        include_revoked = self.action != 'list' or self.request.query_params.get(
-            'include_revoked', ''
-        ).lower() in {'1', 'true', 'yes'}
+        if self.action != 'list':
+            return memberships_queryset(include_revoked=True)
+
+        query = AdminMembershipQuerySerializer(data=self.request.query_params)
+        query.is_valid(raise_exception=True)
+        filters = query.validated_data
+        status_filter = filters.get('status')
+        if status_filter is None:
+            status_filter = 'all' if filters.get('include_revoked', False) else 'active'
         return memberships_queryset(
-            department_code=self.request.query_params.get('department'),
-            user_public_id=self.request.query_params.get('user'),
-            include_revoked=include_revoked,
+            department_public_id=filters.get('department'),
+            role_public_id=filters.get('role'),
+            user_public_id=filters.get('user'),
+            query=filters.get('q', ''),
+            status=status_filter,
+            ordering=filters['ordering'],
         )
 
     def get_serializer_class(self):

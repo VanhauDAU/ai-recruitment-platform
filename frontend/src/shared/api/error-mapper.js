@@ -46,6 +46,31 @@ function explicitApiMessage(data) {
   return ''
 }
 
+function retryAfterSeconds(response) {
+  const headers = response?.headers
+  const headerValue = typeof headers?.get === 'function'
+    ? headers.get('retry-after')
+    : headers?.['retry-after']
+  const detail = typeof response?.data?.detail === 'string' ? response.data.detail : ''
+  const detailValue = detail.match(/(?:in|sau)\s+(\d+)\s+seconds?/i)?.[1]
+  const value = Number(headerValue ?? response?.data?.wait ?? detailValue)
+  return Number.isFinite(value) && value > 0 ? Math.ceil(value) : 0
+}
+
+function formatRetryDuration(seconds) {
+  if (seconds < 60) return `${seconds} giây`
+  const minutes = Math.ceil(seconds / 60)
+  if (minutes < 60) return `${minutes} phút`
+  const hours = Math.floor(minutes / 60)
+  const remainingMinutes = minutes % 60
+  if (hours < 24) {
+    return remainingMinutes ? `${hours} giờ ${remainingMinutes} phút` : `${hours} giờ`
+  }
+  const days = Math.floor(hours / 24)
+  const remainingHours = hours % 24
+  return remainingHours ? `${days} ngày ${remainingHours} giờ` : `${days} ngày`
+}
+
 export function getApiErrorMessage(error, fallback = 'Có lỗi xảy ra, vui lòng thử lại.') {
   const { response } = error || {}
 
@@ -61,6 +86,13 @@ export function getApiErrorMessage(error, fallback = 'Có lỗi xảy ra, vui l�
 
   if (response.status >= 500 || isHtmlResponse(response.data)) {
     return 'Hệ thống đang gặp lỗi. Vui lòng thử lại sau ít phút.'
+  }
+
+  if (response.status === 429) {
+    const seconds = retryAfterSeconds(response)
+    return seconds
+      ? `Bạn đã thao tác quá số lần cho phép. Vui lòng thử lại sau ${formatRetryDuration(seconds)}.`
+      : 'Bạn đã thao tác quá số lần cho phép. Vui lòng thử lại sau.'
   }
 
   const explicitMessage = explicitApiMessage(response.data)

@@ -10,6 +10,11 @@ from django.utils import timezone
 
 from ..models import CvImportJob, UserCv
 from .lifecycle import create_v2_cv
+from .upload_claims import (
+    CV_SOURCE_CLAIM_SCOPE,
+    claim_candidate_upload,
+    open_clean_candidate_upload,
+)
 
 MAX_IMPORT_BYTES = 5 * 1024 * 1024
 
@@ -112,6 +117,80 @@ def queue_cv_import(
     except Exception:
         default_storage.delete(storage_key)
         raise
+
+
+@transaction.atomic
+def queue_cv_import_from_session(
+    *,
+    actor,
+    upload_session_public_id,
+    template,
+    language,
+    theme_color=None,
+    title='',
+    idempotency_key='',
+):
+    """Queue parsing only after the shared scanner marked the source clean."""
+    key = (idempotency_key or uuid4().hex)[:100]
+    actor.__class__.objects.select_for_update().get(pk=actor.pk)
+    existing = (
+        CvImportJob.objects.select_for_update()
+        .select_related('cv')
+        .filter(user=actor, idempotency_key=key)
+        .first()
+    )
+    if existing:
+        return existing.cv, existing, False
+
+    cv = create_v2_cv(
+        actor=actor,
+        title=title or 'CV đã tải lên',
+        template=template,
+        language=language,
+        theme_color=theme_color,
+    )
+    asset = claim_candidate_upload(
+        owner=actor,
+        session_public_id=upload_session_public_id,
+        claim_scope=CV_SOURCE_CLAIM_SCOPE,
+        claim_reference=cv.public_id,
+    )
+    with open_clean_candidate_upload(asset) as upload:
+        file_type = validate_import_upload(upload)
+
+    cv.source = UserCv.Source.IMPORTED
+    cv.cv_type = UserCv.CvType.BUILDER
+    cv.file_url = asset.storage_key
+    cv.file_name = asset.original_filename[:255]
+    cv.file_type = file_type
+    cv.title = title or asset.original_filename
+    cv.status = UserCv.Status.PROCESSING
+    cv.processing_status = UserCv.ProcessingStatus.QUEUED
+    cv.save(
+        update_fields=[
+            'source',
+            'cv_type',
+            'file_url',
+            'file_name',
+            'file_type',
+            'title',
+            'status',
+            'processing_status',
+            'updated_at',
+        ]
+    )
+    job = CvImportJob.objects.create(
+        cv=cv,
+        user=actor,
+        idempotency_key=key,
+        file_checksum_sha256=asset.checksum_sha256,
+        source_expires_at=timezone.now()
+        + timedelta(days=getattr(settings, 'CV_IMPORT_SOURCE_RETENTION_DAYS', 30)),
+    )
+    from ..tasks import process_cv_import_job
+
+    transaction.on_commit(lambda: process_cv_import_job.delay(job.pk))
+    return cv, job, True
 
 
 @transaction.atomic

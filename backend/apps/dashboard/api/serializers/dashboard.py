@@ -25,7 +25,7 @@ class EmployerDashboardAccountSerializer(serializers.Serializer):
     recruiter_public_id = serializers.CharField()
     company_public_id = serializers.CharField(allow_null=True)
     company_name = serializers.CharField(allow_blank=True)
-    company_verification_status = serializers.CharField()
+    recruiter_verification_status = serializers.CharField()
     company_size = serializers.CharField(allow_blank=True)
     work_location_name = serializers.CharField(allow_blank=True)
     verification = VerificationProgressSerializer()

@@ -4,10 +4,15 @@ import { MemoryRouter, Route, Routes, useLocation } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import CampaignList from './CampaignList'
 
-const { changeCampaignStatus, getCampaigns, updateCampaign } = vi.hoisted(() => ({
+const { changeCampaignStatus, getCampaigns, readinessState, updateCampaign } = vi.hoisted(() => ({
   changeCampaignStatus: vi.fn(),
   getCampaigns: vi.fn(),
+  readinessState: { canAccessCandidateData: true },
   updateCampaign: vi.fn(),
+}))
+vi.mock('@/entities/employer-profile', async (importOriginal) => ({
+  ...await importOriginal(),
+  useEmployerReadiness: () => readinessState,
 }))
 
 vi.mock('@/entities/campaign', () => ({
@@ -72,9 +77,32 @@ function renderPage(initialEntry = '/tuyendung/app/campaigns') {
 
 describe('CampaignList', () => {
   beforeEach(() => {
+    readinessState.canAccessCandidateData = true
     changeCampaignStatus.mockReset()
     getCampaigns.mockReset()
     getCampaigns.mockResolvedValue({ count: 0, results: [] })
+  })
+
+  it('keeps aggregate campaign counts but redacts cached candidate previews when denied', async () => {
+    readinessState.canAccessCandidateData = false
+    getCampaigns.mockResolvedValue({
+      count: 1,
+      results: [{
+        public_id: 'camp_private',
+        name: 'Chiến dịch riêng tư',
+        status: 'active',
+        candidate_count: 7,
+        application_pair_count: 2,
+        candidate_previews: [{ public_id: 'candidate_1', full_name: 'Nguyễn Minh Anh' }],
+      }],
+    })
+
+    renderPage()
+
+    expect((await screen.findAllByText('7 ứng viên')).length).toBeGreaterThan(0)
+    expect(screen.queryByText('Nguyễn Minh Anh')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Xem CV' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /hồ sơ ứng tuyển/ })).not.toBeInTheDocument()
   })
 
   it('searches on Enter and sends the query to the API', async () => {

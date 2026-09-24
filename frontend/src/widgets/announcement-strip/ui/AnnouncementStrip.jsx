@@ -16,6 +16,7 @@ import {
 } from '../model/local-dismissal'
 import { resolveAnnouncementQueue } from '../model/priority-resolver'
 import { buildSystemAnnouncements } from '../model/system-announcements'
+import { buildAnnouncementStripVisual } from '../model/strip-visual-style'
 import { useAnnouncementTracking } from '../model/use-announcement-tracking'
 import { useAnnouncementFeed } from '../model/use-announcement-feed'
 import { useReducedMotion } from '../model/use-reduced-motion'
@@ -25,6 +26,8 @@ import AnnouncementStripBoundary from './AnnouncementStripBoundary'
 import './announcement-strip.css'
 
 function AnnouncementStripRuntime({
+  employerReadiness,
+  employerReadinessReady = false,
   employerProfile,
   employerProfileReady = false,
   locale = 'vi',
@@ -53,6 +56,8 @@ function AnnouncementStripRuntime({
     surface,
   })
   const systemItems = useMemo(() => buildSystemAnnouncements({
+    employerReadiness,
+    employerReadinessReady,
     employerProfile,
     employerProfileReady,
     locale,
@@ -60,6 +65,8 @@ function AnnouncementStripRuntime({
     user,
     verificationPath,
   }), [
+    employerReadiness,
+    employerReadinessReady,
     employerProfile,
     employerProfileReady,
     locale,
@@ -179,6 +186,7 @@ function AnnouncementStripRuntime({
     ? ANNOUNCEMENT_ANIMATIONS.STATIC
     : active.animation
   const dismissible = active.dismiss?.mode !== ANNOUNCEMENT_DISMISS_MODES.LOCKED
+  const visual = buildAnnouncementStripVisual(active)
 
   function dismissActive() {
     if (!dismissible) return
@@ -210,8 +218,13 @@ function AnnouncementStripRuntime({
   return (
     <section
       ref={rootRef}
-      className={`announcement-strip announcement-strip--${active.kind}`}
+      className={[
+        'announcement-strip',
+        `announcement-strip--${active.kind}`,
+        visual.className,
+      ].filter(Boolean).join(' ')}
       style={{
+        ...visual.style,
         '--announcement-motion-period': `${active.displaySeconds}s`,
         '--announcement-motion-play-state': paused ? 'paused' : 'running',
         '--announcement-strip-sticky-top': stickyOffset,
@@ -220,6 +233,7 @@ function AnnouncementStripRuntime({
       data-announcement-surface={surface}
       data-announcement-source={active.source}
       data-announcement-remote-enabled={feed?.remoteEnabled ? 'true' : 'false'}
+      data-announcement-has-bg={visual.hasBackgroundImage ? 'true' : 'false'}
       aria-label="Thông báo hệ thống"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}

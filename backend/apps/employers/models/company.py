@@ -1,7 +1,9 @@
 from django.conf import settings
+from django.contrib.postgres.indexes import GinIndex
 from django.db import models
 from django.utils.text import slugify
 
+from common.db.search import fold_accents
 from common.public_id import generate_public_id
 
 
@@ -27,7 +29,7 @@ class Industry(models.Model):
 
 class Company(models.Model):
     """Pháp nhân tuyển dụng — tách khỏi tài khoản nhà tuyển dụng để nhiều HR
-    dùng chung một công ty đã xác thực. Xem kế hoạch:
+    dùng chung một hồ sơ công ty. Xem kế hoạch:
     docs/03-database/ke-hoach-thiet-ke-lai-cong-ty-nha-tuyen-dung.md.
 
     """
@@ -47,12 +49,6 @@ class Company(models.Model):
         S5000_PLUS = '5000+', '5000+ nhân viên'
         S10000_PLUS = '10000+', '10000+ nhân viên'
 
-    class VerificationStatus(models.TextChoices):
-        UNVERIFIED = 'unverified', 'Chưa xác thực'
-        PENDING = 'pending', 'Chờ duyệt'
-        VERIFIED = 'verified', 'Đã xác thực'
-        REJECTED = 'rejected', 'Bị từ chối'
-
     class Market(models.TextChoices):
         DOMESTIC = 'domestic', 'Nội địa'
         ASIA = 'asia', 'Châu Á'
@@ -71,12 +67,15 @@ class Company(models.Model):
     business_type = models.CharField(
         max_length=20, choices=BusinessType.choices, default=BusinessType.ENTERPRISE
     )
-    # Với hộ kinh doanh là MST người đại diện. Hồ sơ chưa xác thực được phép
-    # trùng MST; chỉ công ty đã xác thực mới giữ quyền duy nhất với MST đó.
-    # Chuỗi rỗng được chuẩn hoá về NULL ở save().
+    # Với hộ kinh doanh là MST người đại diện. Chuỗi rỗng được chuẩn hoá về
+    # NULL ở save(); API chỉ nhận mã 10 hoặc 13 chữ số.
     tax_code = models.CharField(max_length=100, null=True, blank=True)
     company_name = models.CharField(max_length=255)
     trade_name = models.CharField(max_length=255, blank=True)
+    # Materialized accent/case-folded names keep public substring search on a
+    # trigram index. They are internal query fields and are never serialized.
+    company_name_search = models.CharField(max_length=255, blank=True, editable=False)
+    trade_name_search = models.CharField(max_length=255, blank=True, editable=False)
     trade_name_same_as_registered = models.BooleanField(default=False)
     logo_url = models.TextField(blank=True)
     has_no_logo = models.BooleanField(default=False)
@@ -101,11 +100,6 @@ class Company(models.Model):
         default=False,
         help_text='Bật trang thương hiệu — tin tuyển dụng hiển thị dưới URL /brand/... với header công ty',
     )
-    verification_status = models.CharField(
-        max_length=20, choices=VerificationStatus.choices, default=VerificationStatus.UNVERIFIED
-    )
-    verified_at = models.DateTimeField(null=True, blank=True)
-    rejected_reason = models.TextField(blank=True)
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='companies_created'
     )
@@ -114,11 +108,16 @@ class Company(models.Model):
 
     class Meta:
         verbose_name_plural = 'companies'
-        constraints = [
-            models.UniqueConstraint(
-                fields=['tax_code'],
-                condition=models.Q(verification_status='verified'),
-                name='uniq_verified_company_tax_code',
+        indexes = [
+            GinIndex(
+                fields=['company_name_search'],
+                name='idx_company_name_trgm',
+                opclasses=['gin_trgm_ops'],
+            ),
+            GinIndex(
+                fields=['trade_name_search'],
+                name='idx_trade_name_trgm',
+                opclasses=['gin_trgm_ops'],
             ),
         ]
 
@@ -131,6 +130,16 @@ class Company(models.Model):
             if Company.objects.filter(slug=base_slug).exclude(pk=self.pk).exists():
                 self.slug = f'{base_slug}-{self.public_id.lower()}'
         self.tax_code = self.tax_code or None
+        self.company_name_search = fold_accents(self.company_name)
+        self.trade_name_search = fold_accents(self.trade_name)
+        update_fields = kwargs.get('update_fields')
+        if update_fields is not None:
+            update_fields = set(update_fields)
+            if 'company_name' in update_fields:
+                update_fields.add('company_name_search')
+            if 'trade_name' in update_fields:
+                update_fields.add('trade_name_search')
+            kwargs['update_fields'] = update_fields
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -177,3 +186,59 @@ class CompanyImage(models.Model):
 
     def __str__(self):
         return f'{self.company_id}:{self.image_url[:50]}'
+
+
+class CompanyMediaUpload(models.Model):
+    """Audit link from a scanned private original to its public image derivative."""
+
+    class Kind(models.TextChoices):
+        LOGO = 'logo', 'Logo'
+        COVER = 'cover', 'Ảnh bìa'
+        GALLERY = 'gallery', 'Ảnh giới thiệu'
+
+    public_id = models.CharField(max_length=50, unique=True, editable=False)
+    company = models.ForeignKey(
+        Company,
+        on_delete=models.PROTECT,
+        related_name='media_upload_records',
+    )
+    uploaded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name='+',
+    )
+    update_request = models.ForeignKey(
+        'CompanyUpdateRequest',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='media_upload_records',
+    )
+    update_revision = models.ForeignKey(
+        'CompanyUpdateRevision',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='attached_media_uploads',
+    )
+    upload_asset = models.OneToOneField(
+        'uploads.UploadAsset',
+        on_delete=models.PROTECT,
+        related_name='employer_company_media',
+    )
+    kind = models.CharField(max_length=20, choices=Kind.choices)
+    public_path = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(
+                fields=['company', 'kind', '-created_at'],
+                name='emp_media_company_kind_idx',
+            ),
+        ]
+
+    def save(self, *args, **kwargs):
+        if not self.public_id:
+            self.public_id = generate_public_id('cma')
+        super().save(*args, **kwargs)

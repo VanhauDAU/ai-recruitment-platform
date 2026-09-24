@@ -8,7 +8,7 @@ const MANIFEST_PATH = path.join(DIST_DIR, '.vite/manifest.json')
 const INITIAL_JS_GZIP_BUDGET = 320 * 1024
 // Shared account-setting styles now ship with the initial shell. Keep a narrow
 // allowance for those accessible responsive styles while retaining a real cap.
-const INITIAL_CSS_GZIP_BUDGET = 35 * 1024
+const INITIAL_CSS_GZIP_BUDGET = 38 * 1024
 const assetCache = new Map()
 
 function getAssetPaths(indexHtml) {

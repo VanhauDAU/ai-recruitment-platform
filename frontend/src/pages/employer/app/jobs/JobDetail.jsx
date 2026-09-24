@@ -2,11 +2,12 @@ import {
   EyeOutlined,
   FileTextOutlined,
   LinkOutlined,
+  RocketOutlined,
   TagsOutlined,
   TeamOutlined,
 } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Alert, DatePicker, Modal, Select, Skeleton, Tabs } from 'antd'
+import { Alert, Select, Skeleton, Tabs } from 'antd'
 import dayjs from 'dayjs'
 import { useMemo, useState } from 'react'
 import { useParams, useSearchParams } from 'react-router'
@@ -18,17 +19,31 @@ import {
   closeEmployerJob,
   extendEmployerJob,
   getEmployerJob,
+  getJobPostingContext,
   jobKeys,
   reopenEmployerJob,
 } from '@/entities/job'
+import {
+  EMPLOYER_CAPABILITIES,
+  EmployerReadinessGateState,
+  useEmployerReadiness,
+} from '@/entities/employer-profile'
+import { JobServiceManager } from '@/features/manage-job-services'
+import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { message } from '@/shared/lib/toast'
 import JobApplicationsWorkspace from './JobApplicationsWorkspace'
 import JobDetailHeader from './JobDetailHeader'
 import JobInformationPanel from './JobInformationPanel'
+import JobLifecycleModal from './JobLifecycleModal'
 
 const CONNECTED_STATUSES = new Set(['considering', 'shortlisted', 'interviewed', 'accepted'])
-const VALID_TABS = new Set(['apply_cv', 'viewed_job', 'job', 'cv_label'])
+const VALID_TABS = new Set(['apply_cv', 'viewed_job', 'job', 'services', 'cv_label'])
 const EMPTY_APPLICATIONS = []
+const FALLBACK_DEADLINE_POLICY = {
+  default_deadline_days: 30,
+  max_deadline_days: 90,
+  max_public_lifetime_days: 90,
+}
 
 function MetricCard({ icon, label, value, helper, tone = 'emerald', testId }) {
   const tones = {
@@ -91,22 +106,47 @@ export default function JobDetail() {
   const queryClient = useQueryClient()
   const [deadlineAction, setDeadlineAction] = useState(null)
   const [newDeadline, setNewDeadline] = useState(null)
+  const {
+    readiness,
+    profileQuery,
+    isChecking: readinessChecking,
+    isAccessError: readinessError,
+    canAccessCandidateData,
+  } = useEmployerReadiness()
   const requestedTab = searchParams.get('active_tab')
   const activeTab = VALID_TABS.has(requestedTab) ? requestedTab : 'apply_cv'
   const jobQuery = useQuery({
     queryKey: jobKeys.employerDetail(publicId),
     queryFn: () => getEmployerJob(publicId),
   })
+  const postingContextQuery = useQuery({
+    queryKey: jobKeys.postingContext,
+    queryFn: getJobPostingContext,
+  })
   const applicationsQuery = useQuery({
     queryKey: applicationKeys.recruiterList({ job: publicId }),
     queryFn: () => getRecruiterApplications({ job: publicId }),
+    enabled: canAccessCandidateData,
   })
-  const applications = applicationsQuery.data || EMPTY_APPLICATIONS
+  const applications = canAccessCandidateData
+    ? applicationsQuery.data || EMPTY_APPLICATIONS
+    : EMPTY_APPLICATIONS
   const metrics = useMemo(() => ({
-    total: applicationsQuery.isLoading ? (jobQuery.data?.application_count || 0) : applications.length,
-    applied: applications.filter((item) => item.source === 'applied').length,
-    connected: applications.filter((item) => CONNECTED_STATUSES.has(item.status)).length,
-  }), [applications, applicationsQuery.isLoading, jobQuery.data?.application_count])
+    total: canAccessCandidateData && !applicationsQuery.isLoading
+      ? applications.length
+      : (jobQuery.data?.application_count || 0),
+    applied: canAccessCandidateData
+      ? applications.filter((item) => item.source === 'applied').length
+      : '—',
+    connected: canAccessCandidateData
+      ? applications.filter((item) => CONNECTED_STATUSES.has(item.status)).length
+      : '—',
+  }), [
+    applications,
+    applicationsQuery.isLoading,
+    canAccessCandidateData,
+    jobQuery.data?.application_count,
+  ])
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: jobKeys.employerDetail(publicId) })
@@ -129,8 +169,12 @@ export default function JobDetail() {
       invalidate()
       setDeadlineAction(null)
       setNewDeadline(null)
-      message.success('Đã cập nhật hạn nộp và trạng thái tin.')
+      message.success('Đã cập nhật hạn nhận hồ sơ.')
     },
+    onError: (error) => message.error(
+      getApiErrorMessage(error, 'Không thể cập nhật hạn nhận hồ sơ.'),
+      { id: 'job-deadline-action-error' },
+    ),
   })
 
   function openDeadlineAction(action) {
@@ -140,10 +184,19 @@ export default function JobDetail() {
 
   function submitDeadlineAction() {
     if (!newDeadline) {
-      message.error('Chọn hạn nộp mới.')
+      message.error('Chọn hạn nhận hồ sơ.')
       return
     }
-    deadlineMutation.mutate({ action: deadlineAction, deadline: newDeadline.format('YYYY-MM-DD') })
+    const deadlineExtended = !jobQuery.data?.deadline
+      || newDeadline.isAfter(dayjs(jobQuery.data.deadline), 'day')
+    if (deadlineAction === 'extend' && !deadlineExtended) {
+      message.error('Hạn gia hạn phải sau hạn nhận hồ sơ hiện tại.')
+      return
+    }
+    deadlineMutation.mutate({
+      action: deadlineAction,
+      deadline: newDeadline.format('YYYY-MM-DD'),
+    })
   }
 
   function selectTab(tab) {
@@ -155,12 +208,50 @@ export default function JobDetail() {
   if (jobQuery.isLoading) return <Skeleton active paragraph={{ rows: 12 }} />
   if (jobQuery.isError) return <Alert type="error" showIcon title="Không thể tải tin tuyển dụng." />
   const job = jobQuery.data
+  const deadlinePolicy = postingContextQuery.data || FALLBACK_DEADLINE_POLICY
+  const today = dayjs().startOf('day')
+  const maximumByToday = today.add(deadlinePolicy.max_deadline_days, 'day')
+  const maximumByPublicLifetime = deadlineAction === 'extend' && job.first_approved_at
+    ? dayjs(job.first_approved_at).startOf('day').add(
+        deadlinePolicy.max_public_lifetime_days,
+        'day',
+      )
+    : maximumByToday
+  const maximumByVisibility = job.visibility_ends_at
+    ? dayjs(job.visibility_ends_at).startOf('day')
+    : maximumByPublicLifetime
+  const maximumByPolicy = maximumByPublicLifetime.isBefore(maximumByToday, 'day')
+    ? maximumByPublicLifetime
+    : maximumByToday
+  const latestDeadline = maximumByVisibility.isBefore(maximumByPolicy, 'day')
+    ? maximumByVisibility
+    : maximumByPolicy
+  const earliestDeadline = deadlineAction === 'extend' && job.deadline
+    ? dayjs(job.deadline).startOf('day')
+    : today
 
   const tabs = [
     {
       key: 'apply_cv',
       label: <span className="inline-flex items-center gap-2"><TeamOutlined /> CV ứng tuyển <strong>{metrics.applied}</strong></span>,
-      children: <JobApplicationsWorkspace jobPublicId={publicId} applications={applications} loading={applicationsQuery.isLoading} />,
+      children: canAccessCandidateData ? (
+        <JobApplicationsWorkspace
+          jobPublicId={publicId}
+          applications={applications}
+          loading={applicationsQuery.isLoading}
+        />
+      ) : (
+        <div className="p-4 sm:p-5">
+          <EmployerReadinessGateState
+            compact
+            capability={EMPLOYER_CAPABILITIES.CANDIDATE_DATA}
+            checking={readinessChecking}
+            error={readinessError}
+            readiness={readiness}
+            onRetry={profileQuery.refetch}
+          />
+        </div>
+      ),
     },
     {
       key: 'viewed_job',
@@ -171,6 +262,23 @@ export default function JobDetail() {
       key: 'job',
       label: <span className="inline-flex items-center gap-2"><FileTextOutlined /> Thông tin tuyển dụng</span>,
       children: <JobInformationPanel job={job} />,
+    },
+    {
+      key: 'services',
+      label: <span className="inline-flex items-center gap-2"><RocketOutlined /> Dịch vụ & hiệu quả</span>,
+      children: (
+        <div className="p-4 sm:p-5">
+          <JobServiceManager
+            jobPublicId={job.public_id}
+            jobStatus={job.status}
+            activationEnabled={postingContextQuery.data?.services?.activation_enabled === true}
+            refreshEnabled={postingContextQuery.data?.services?.refresh_enabled === true}
+            alertEnabled={postingContextQuery.data?.services?.alert_enabled === true}
+            metricsEnabled={postingContextQuery.data?.services?.metrics_enabled === true}
+            showInventory
+          />
+        </div>
+      ),
     },
     {
       key: 'cv_label',
@@ -213,6 +321,7 @@ export default function JobDetail() {
               { value: 'apply_cv', label: `CV ứng tuyển (${metrics.applied})` },
               { value: 'viewed_job', label: 'Ứng viên đã xem tin' },
               { value: 'job', label: 'Thông tin tuyển dụng' },
+              { value: 'services', label: 'Dịch vụ & hiệu quả' },
               { value: 'cv_label', label: 'Nhãn' },
             ]}
             onChange={selectTab}
@@ -226,22 +335,18 @@ export default function JobDetail() {
         />
       </div>
 
-      <Modal
-        open={Boolean(deadlineAction)}
-        title={deadlineAction === 'reopen' ? 'Mở lại tin tuyển dụng' : 'Gia hạn tin tuyển dụng'}
-        okText={deadlineAction === 'reopen' ? 'Mở lại tin' : 'Gia hạn'}
-        confirmLoading={deadlineMutation.isPending}
-        onCancel={() => setDeadlineAction(null)}
-        onOk={submitDeadlineAction}
-      >
-        <p className="mb-3 text-sm text-slate-600">Hạn nộp mới phải từ hôm nay trở đi.</p>
-        <DatePicker
-          className="!w-full"
-          value={newDeadline}
-          disabledDate={(current) => current && current < dayjs().startOf('day')}
-          onChange={setNewDeadline}
-        />
-      </Modal>
+      <JobLifecycleModal
+        action={deadlineAction}
+        deadline={newDeadline}
+        earliestDeadline={earliestDeadline}
+        latestDeadline={latestDeadline}
+        loading={deadlineMutation.isPending}
+        onCancel={() => {
+          setDeadlineAction(null)
+        }}
+        onDeadlineChange={setNewDeadline}
+        onSubmit={submitDeadlineAction}
+      />
     </section>
   )
 }

@@ -122,7 +122,7 @@ cho lý do ngoại lệ. Không tạo bridge/re-export tạm thời để né ru
   vào `dist/bundle-stats.json`, gồm static import, dynamic import và stylesheet
   trực tiếp của chunk.
 - Hai budget initial giữ nguyên và vẫn là gate fail build: JavaScript gzip
-  `320 KiB`, CSS gzip `35 KiB`.
+  `320 KiB`, CSS gzip `38 KiB`.
 - `dynamicRoutes` đo chi phí tăng thêm của từng lazy entry trong `src/pages`:
   JavaScript/CSS của entry và toàn bộ static import transitively, trừ asset đã
   có trong initial HTML. Asset nhị phân được liệt kê để audit nhưng không cộng
@@ -166,6 +166,22 @@ cho lý do ngoại lệ. Không tạo bridge/re-export tạm thời để né ru
   `tests/e2e/smoke/employer.spec.js`, gồm kiểm tra hiển thị và không tràn ngang ở
   cả ba Playwright project.
 
+## Xác nhận hành động trong ứng dụng
+
+- Xác nhận nhị phân trong giao diện phải dùng
+  `@/shared/ui/ConfirmAction`, `ConfirmActionModal` hoặc
+  `use-confirm-action`; không tạo thêm `Popconfirm`, `Modal.confirm` hay
+  `window.confirm` trong luồng in-app.
+- Tiêu đề nói rõ hành động; nội dung phải nêu đích bị tác động và
+  hệ quả. Hành động không thể hoàn tác dùng `danger`, nút an toàn mặc
+  định là `Đóng`.
+- Callback bất đồng bộ phải trả Promise để modal khóa đóng, chặn gửi
+  trùng và chỉ đóng sau khi thành công. Phân biệt `onDismiss` với
+  `onCancel` nếu nút hủy cũng thực hiện một thay đổi dữ liệu.
+- Modal có form, OTP, impact preview, consent hoặc quy trình nhiều bước vẫn
+  thuộc feature sở hữu; không ép vào component xác nhận đơn giản. Cảnh báo
+  `beforeunload` khi đóng/reload tab phải dùng hộp thoại native của trình duyệt.
+
 ## Bảng dữ liệu quản trị
 
 - Mọi cột dữ liệu của bảng quản trị phải có sorter và icon tăng/giảm rõ ràng.
@@ -200,35 +216,17 @@ phòng hờ.
 ```text
 app/router
   → pages/main/blog + pages/admin/app/Blog*
-    → features/edit-blog-post, manage-blog-content, manage-blog-tags,
-      listen-to-blog-post
-      → entities/blog, job, speech
+    → features/edit-blog-post, manage-blog-content, manage-blog-tags
+      → entities/blog, job
         → shared/api, shared/ui
 ```
 
 - `entities/blog` sở hữu public/admin HTTP contract, formatter và renderer HTML
   đã sanitize dùng chung giữa trang ứng viên với preview admin.
-- `shared/lib/speech` sở hữu hạ tầng phát audio không biết domain:
-  `PcmStreamPlayer` (Web Audio cho luồng chưa biết độ dài), `NativeAudioPlayer`
-  (asset MP3 đã có sẵn), `playSpeechStream` và chính sách chờ 429/503. Đặt ở
-  `shared` vì cả blog lẫn các bề mặt khác đều dùng, mà feature thì không được
-  import feature.
-- `entities/speech` sở hữu contract voice/session dùng lại được nhưng không
-  import blog: `createBlogSpeechSession` cho bài viết đã đăng và
-  `createTextSpeechSession` cho một câu bất kỳ.
-- `features/listen-to-blog-post` phát mọi voice/style artifact đã được tạo từ
-  lượt nghe trước bằng native audio; chỉ tạo session streaming khi tổ hợp đó
-  chưa sẵn sàng. Catalogue chỉ tải khi mở bảng tùy chỉnh. Feature tự giữ
-  lifecycle native/Web Audio và AbortController, nhận `postPublicId` từ page;
-  nội dung bài không được gửi từ browser sang dịch vụ TTS. Session API là
-  control-plane resolve source/rate-limit; các listener cùng artifact identity
-  bám một live inference, và MP3 được encode từ chính live PCM đó.
-- `features/speak-text` sở hữu `useSpeak()` — `speak(text)` cho bề mặt bất kỳ
-  (trợ lý, thông báo). Câu nói KHÔNG sinh artifact lâu dài: quá ngắn và quá
-  nhiều để lưu, nên chỉ chạy live stream và ăn cache của engine khi lặp lại.
-  Backend giới hạn riêng bằng scope `speech_adhoc` và
-  `SPEECH_MAX_ADHOC_TEXT_CHARS`. Lần phát đầu phải nằm trong cử chỉ click/tap;
-  bề mặt tự nói thì gọi `unlock()` ở lần bấm đầu tiên.
+- `shared/lib/sound-effects` là registry cho UI sound ngắn dùng lại được;
+  `shared/ui/ToastSoundEffect` preload và phát âm thanh theo semantic class của
+  Sonner. Workflow chỉ chọn sound qua toast options; lỗi audio luôn best-effort,
+  không được chặn submit, navigation hoặc cập nhật session.
 - `features/edit-blog-post` sở hữu autosave, optimistic revision, upload media,
   preview, chọn/tạo nhanh thẻ và workflow gửi/duyệt/gỡ bài.
   `features/manage-blog-content` sở hữu các tab danh sách, danh mục và bài ghim;
@@ -254,6 +252,63 @@ app/router + app/layouts
 - Sidebar quản trị dùng cây `ADMIN_NAVIGATION` tham chiếu route bằng `routeRef`;
   permission được lọc từ leaf lên ancestor. Trạng thái pháp lý của công ty và
   trạng thái xác thực đại diện của từng NTD là hai contract độc lập.
+
+## Ownership map — Danh bạ công ty công khai
+
+```text
+app/router
+  → pages/main/companies
+    → widgets/company-directory
+      → entities/company
+        → shared/api
+```
+
+- `/cong-ty` là route public canonical cho danh sách nổi bật;
+  `/cong-ty/tim-kiem?keyword=...` sở hữu kết quả tìm kiếm và luôn `noindex` với
+  canonical quay về `/cong-ty`. Search route thiếu `keyword` hoặc chỉ có khoảng
+  trắng phải ở nguyên route và chỉ render header/form tìm kiếm; không render
+  kết quả, empty state, sidebar và không phát request công ty nào. Page chỉ đọc
+  route state, đăng ký metadata rồi compose widget; toàn bộ path/query key và
+  HTTP contract công ty công khai thuộc `entities/company`. `keyword` là
+  contract URL, còn entity/widget ánh xạ sang tham số API `q`.
+- `entities/company` chỉ gọi prefix public `/api/companies/`. Không tái sử dụng
+  `entities/admin-company` hoặc `entities/employer-profile`: hai slice đó có
+  quyền và payload nội bộ khác. Public DTO không được chứa MST, email, điện
+  thoại, địa chỉ có thể là nơi ở hộ kinh doanh, danh tính recruiter hoặc trạng
+  thái kiểm duyệt nội bộ.
+- Mọi surface “Công ty nổi bật” công khai, gồm danh bạ `/cong-ty` và khối tương
+  ứng trên trang chủ, phải lấy request không có `q` từ `entities/company`; không
+  lấy cohort `featured_employers` của job stats hoặc dựng lại eligibility/rank
+  ở page. Job stats trên trang chủ chỉ sở hữu thống kê nền tảng và ngành nghề.
+- `widgets/company-directory` sở hữu tìm kiếm và trạng thái loading/empty/error.
+  Request không có `q` chỉ render hữu hạn danh sách công ty nổi bật do API xáo
+  thứ tự; không gắn observer hoặc nút tải thêm. Request có `q` phải trả mọi
+  `Company` khớp tên công ty hoặc tên thương mại, không áp gate
+  xác thực đại diện, logo, cover, ngành nghề hay việc làm của featured; frontend
+  cũng không được lọc lại các kết quả này. Projection public-safe và quy tắc ẩn
+  địa chỉ hộ kinh doanh vẫn do API bắt buộc thực thi. Search dùng cursor và tải
+  trang kế tiếp qua `IntersectionObserver` chỉ trong cột kết quả bên
+  trái. Tổng số kết quả luôn lấy từ `count` của trang tìm kiếm đầu tiên và được
+  dùng trong tiêu đề; không suy ra từ số card đã tải. Khi search hoàn tất với
+  `count = 0` và danh sách rỗng, widget chỉ giữ hero/form, không render toàn bộ
+  section kết quả, empty state hoặc sidebar. Featured dùng grid ba cột có cover;
+  search dùng card ngang một cột, không render cover, và desktop ghép sidebar
+  hai cột logo-only “Nhà tuyển dụng hàng đầu” từ chính featured query. Search đi
+  từ featured phải dùng lại shuffle đã có cho sidebar; direct search tải
+  featured và search song song. Tablet và mobile xếp sidebar sau kết quả, không
+  làm tràn viewport. Xóa keyword đưa
+  search route về trạng thái input-only và không tự chuyển sang featured. Khi
+  thực sự mount lại `/cong-ty`, page phải dùng request key mới để không flash
+  hoặc tái dùng response sidebar cũ trong cache. Cover card featured cố định tỷ
+  lệ nguồn `1024:480` (`aspect-ratio: 32/15`), khai báo dimensions/async decoding
+  và lazy-load ảnh ngoài hàng đầu để tránh CLS; card ngoài viewport dùng
+  `content-visibility` để giữ chi phí render phẳng. Hero featured và search dùng
+  `<picture>` ưu tiên WebP, giữ PNG fallback, khai báo kích thước nguồn và chỉ
+  eager-load illustration thuộc route hiện tại.
+- CTA chưa có route chi tiết công ty phải dùng `companyDirectoryPath(name)` để
+  mở danh bạ đã lọc. Card danh bạ có thể dùng `companyJobsPath(name)` để mở
+  contract tìm việc hiện hữu; không tự sinh route `/cong-ty/:slug` cho tới khi
+  API/page chi tiết được triển khai.
 
 ## Ownership map — Người dùng và nhà tuyển dụng quản trị
 
@@ -300,15 +355,11 @@ app/layouts/OnboardingLayout + pages/main/onboarding
   editor. Vị trí launcher phải tránh banner cookie theo chiều cao thực tế và
   thanh ứng tuyển mobile ở trang chi tiết việc làm.
 - `widgets/onboarding-interview` sở hữu cuộc phỏng vấn onboarding: kịch bản
-  tĩnh, state machine năm bước, bản đồ trạng thái mascot và provider giọng đọc.
-  Phải là widget vì ghép hai feature (`speak-text` và `configure-job-preferences`)
-  mà feature không được import feature. `OnboardingVoiceProvider` mount ở
-  `OnboardingLayout` chứ không phải trong page: AudioContext chỉ mở được trong
-  cử chỉ người dùng ở `/onboard-user`, mà page unmount là player bị destroy.
-  Bước phỏng vấn giữ nguyên tên trường và payload `PUT` của form một trang.
-- `shared/hooks/use-progressive-reply` sở hữu đồng hồ hiện chữ theo tiến độ
-  audio, dùng chung cho trợ lý và onboarding; nằm ở `shared` vì hai widget khác
-  nhau đều cần và widget không được import widget.
+  tĩnh, state machine năm bước và bản đồ trạng thái mascot. Widget compose
+  `configure-job-preferences`; bước phỏng vấn giữ nguyên tên trường và payload
+  `PUT` của form một trang.
+- `shared/hooks/use-progressive-reply` sở hữu hiệu ứng typewriter dùng chung cho
+  trợ lý và onboarding; nằm ở `shared` vì hai widget khác nhau đều cần.
 - WebP trong `public/images/mascot` được tái tạo bằng
   `npm run build:mascot-assets -- --src <folder>`; không commit PNG nguồn hoặc
   các ảnh `states/` có thể dựng lại bằng rig.
@@ -384,6 +435,34 @@ pages/main/jobs/JobDetail
 - `features/apply-for-job` sở hữu tải CV/version, cảnh báo publish và submit
   explicit `version_public_id`. Page chỉ kiểm tra session/role rồi mở feature.
 
+## Ownership map — Employer job editor và AI generation
+
+```text
+pages/employer/app/jobs/JobForm
+  → widgets/employer-job-editor
+    → features/post-job + features/generate-job-post
+      → entities/job + shared/ui/mascot + shared/api
+```
+
+- Page chỉ đọc job id/`campaign`, tải dữ liệu route và compose widget; không poll
+  AI hoặc giữ Ant Form instance. Widget sở hữu URL state `mode`/`generation` và
+  luôn bảo toàn các query khác khi chuyển mode.
+- `widgets/employer-job-editor` sở hữu một controlled form dùng chung cho create
+  thủ công, brief AI và dán JD. Widget compose generation với `PostJobForm`;
+  form áp whitelist patch đúng một lần theo generation key, giữ nguyên trường
+  NTD phải tự nhập và chuyển draft cuối cùng cho `post-job`.
+- `features/generate-job-post` sở hữu create/status/cancel/feedback, resume sau
+  reload và presentation theo phase thật. Feature không import `post-job`;
+  composition và mapping suggestion vào form thuộc widget.
+- `features/post-job` chỉ sở hữu mutation lưu tin và validation form canonical.
+  `ai_generation_public_id` là provenance write-only, không biến generation
+  thành job và không cho phép tự publish.
+- AI không có mặt ở route edit V1. Query `campaign` phải được bảo toàn khi đổi
+  `mode=manual|ai_brief|jd_text`; mode không hợp lệ fallback thủ công.
+- Mascot dùng `shared/ui/mascot`, phase có nhãn văn bản độc lập với animation,
+  và tắt motion theo `prefers-reduced-motion`. Lỗi/cancel luôn giữ đường lui về
+  form thủ công; reload phải resume từ public id đã lưu, không tạo lượt mới.
+
 ## Ownership map — Quản lý tin tuyển dụng quản trị
 
 ```text
@@ -410,6 +489,47 @@ app/router + app/layouts
   ánh quyết định tạm ẩn nội dung. Tin có một trong hai hold không được xuất hiện
   ở bất kỳ bề mặt công khai nào, nhưng vẫn hiện trong workspace quản trị.
 
+## Ownership map — Catalogue và yêu cầu tư vấn quản trị
+
+```text
+pages/admin/app/ConsultationLeads
+  → widgets/admin-consultation-leads
+    → entities/consultation-lead + entities/admin-access + entities/session
+      → shared/api, shared/ui
+
+pages/admin/app/EmployerServices + CvCatalogue
+  → widgets/admin-service-catalog + widgets/admin-cv-catalogue
+    → entities/service-package + entities/cv-template + entities/locale
+      → shared/api, shared/ui
+```
+
+- Page chỉ compose page header và widget; filter, tab, bảng, editor và mutation
+  thuộc widget sở hữu workflow.
+- Danh sách lead dùng URL làm nguồn chuẩn cho tìm kiếm, trạng thái, khoảng ngày,
+  ordering và page; filter/sort/phân trang chạy phía server. Xuất lead phải qua
+  endpoint riêng, đồng thời kiểm tra `consultation_lead.view` và
+  `consultation_lead.export`, giới hạn số dòng và ghi audit không chứa PII.
+- Catalogue dịch vụ và CV hiện là contract không phân trang nên widget chỉ
+  search/sort dữ liệu đã tải. CSV phía client phải ghi rõ phạm vi tab/dữ liệu
+  đang hiển thị; không được gọi đó là xuất toàn bộ dữ liệu hệ thống.
+- `entities/service-package` sở hữu cả contract marketing tương thích và
+  contract thương mại có cấu trúc: capability đóng, package version, entitlement
+  và audit. `widgets/admin-service-catalog` tách tab catalogue marketing khỏi
+  tab phiên bản vận hành; publish không sửa version cũ. Kho lượt và audit phân
+  trang/sort phía server, còn danh sách version của một catalogue nhỏ tiếp tục
+  là contract không phân trang.
+- `entities/service-package` cũng sở hữu contract kho lượt, dịch vụ đang chạy và
+  sự kiện sử dụng quyền lợi của NTD. `features/post-job` chỉ compose preview,
+  kích hoạt và xác nhận làm mới tại mục dịch vụ; làm mới tiêu thụ ledger riêng,
+  không được sửa `published_at`, hạn nhận hồ sơ hoặc vòng đời của tin.
+- Quyền admin tách `service_catalog.draft.manage`, `service_catalog.publish`,
+  `service_entitlement.view|manage` và `service_audit.view`; ẩn nút ở frontend
+  chỉ là UX, backend luôn kiểm tra từng mutation. HOT, RED, huy hiệu phản hồi
+  nhanh và title 255 không xuất hiện trong capability thương mại.
+- Upload hình nền CV là asset workflow, không phải bulk import. Không hiển thị
+  nút nhập dữ liệu cho tới khi có contract dry-run, validate, idempotency,
+  permission và audit phía server.
+
 ## Ownership map — Job engagement
 
 ```text
@@ -432,14 +552,43 @@ widgets/employer-campaign-workspace/CampaignJobsPanel
 - Báo cáo chiến dịch đọc API performance theo kỳ từ `entities/campaign`; không
   tự suy ra tỷ lệ từ lifetime counter ở frontend.
 
+## Ownership map — So sánh việc làm
+
+```text
+app/layouts/MainLayout + pages/main/jobs/JobComparison
+  → features/compare-jobs
+    → entities/job, entities/consent
+      → shared
+```
+
+- `features/compare-jobs` sở hữu selection có thứ tự, giới hạn ba tin, persistence
+  theo consent Sở thích, URL helpers, nút thêm/bỏ, dock/drawer và workspace đối
+  chiếu. Feature không import `saved-jobs` và không ghi nhận impression/view khi
+  chỉ tải trang so sánh.
+- Route public `/so-sanh-viec-lam` dùng query `job` lặp lại làm nguồn chuẩn để
+  reload/chia sẻ. Page chỉ cấu hình metadata `noindex, nofollow` và compose public
+  workspace; detail data tiếp tục do `entities/job` sở hữu và được tải độc lập tối
+  đa ba query.
+- Khi chưa đồng ý hoặc rút consent Sở thích, selection tiếp tục hoạt động trong
+  memory và key `procv_job_comparison_v1` phải được xóa. UI chỉ làm nổi điểm khác
+  nhau bằng tone trung tính, không chấm điểm hay tuyên bố việc làm tốt nhất.
+
 ## Ownership map — Tài khoản và cá nhân hóa ứng viên
 
 ```text
 app/router
-  → pages/main/account/EmailNotificationSettings|ChangePassword|MatchingJobs
-    + pages/main/jobs/SavedJobs
-    → features/configure-email-notifications, change-password, saved-jobs
-      → entities/candidate-notification-preferences, job, session
+  → pages/main/account/EmailNotificationSettings|JobAlertSettings|ChangePassword|MatchingJobs
+    + pages/main/jobs/JobList|SavedJobs + pages/main/home/Home
+    → features/configure-email-notifications, manage-job-alerts,
+      change-password, saved-jobs
+      → entities/candidate-job-alert, candidate-notification-preferences,
+        job, location, session
+        → shared/api
+
+pages/main/account/MatchingJobs + pages/main/home/Home
+  → widgets/candidate-job-recommendations
+    → features/hide-job-recommendation, saved-jobs, track-job-engagement
+      → entities/job, session
         → shared/api
 
 widgets/main-header/CandidateUserMenu
@@ -452,6 +601,21 @@ widgets/main-header/CandidateUserMenu
 - `entities/candidate-notification-preferences` sở hữu GET/PATCH preference email.
   Feature email điều phối optimistic auto-save/rollback; page chỉ compose header
   và feature. Email bảo mật luôn bật không thuộc DTO preference.
+- `entities/candidate-job-alert` sở hữu HTTP contract CRUD và query key cho tối
+  đa năm bộ tiêu chí. `features/manage-job-alerts` sở hữu list/modal, cache
+  optimistic, giới hạn, xác thực email và các error code nghiệp vụ; account page
+  chỉ compose feature. Modal tạo được public API của cùng feature để `JobList`
+  mở tại chỗ sau login mà không điều hướng sang account.
+- Taxonomy ba cấp và picker multi-select thuộc `entities/job` vì được dùng chung
+  bởi bộ lọc công khai và job alert. Selection lưu danh sách node rút gọn;
+  `category_ids` được OR, còn backend mở rộng node cha xuống các cấp con. CTA từ
+  danh sách việc làm chỉ prefill tiêu chí biểu diễn chính xác, giữ toàn bộ `cat`
+  multi-select và không suy diễn range tùy chỉnh thành salary bucket.
+- Job alert chỉ gửi qua email đăng nhập đã xác thực. Công tắc
+  `configured_job_alerts` và `suitable_job_recommendations` dùng chung query
+  cache preference với trang email; optimistic PATCH phải rollback khi lỗi.
+  Suitable recommendation vẫn phụ thuộc consent/job preferences ở workflow
+  hiện hữu, không xin consent trong UI job alert.
 - `features/change-password` dùng chung hai portal và không chứa redirect/copy
   riêng của employer. Page portal truyền `successRedirect` khi cần; candidate
   giữ nguyên route và có thể hiển thị email read-only.
@@ -462,9 +626,11 @@ widgets/main-header/CandidateUserMenu
   page (prop `onReauth`) vì feature không import feature khác — `features/auth`
   sở hữu `startOAuthReauth`, dùng lại full-page redirect của luồng đăng nhập.
 - `entities/job` sở hữu contract/keys của feed recommendation. Trang matching
-  chỉ hiển thị `status`, `sources`, score và reasons do backend trả; không tự
-  tính điểm hoặc tuyên bố dùng search activity. Lưu job và impression tiếp tục
-  đi qua feature tương ứng.
+  và lane đề xuất trong danh sách công khai. `widgets/candidate-job-recommendations`
+  compose feed cho trang tài khoản và section trang chủ; chỉ hiển thị lý do mạnh
+  do backend trả, không hiển thị điểm hoặc tự tuyên bố dùng CV/search activity.
+  `features/hide-job-recommendation` sở hữu thao tác ẩn/hoàn tác và invalidation;
+  lưu job và impression tiếp tục đi qua feature tương ứng.
 - `features/saved-jobs` sở hữu GET/POST/DELETE danh sách lưu, cache optimistic
   và feed `/recommendations/by-saved/`. `pages/main/jobs/SavedJobs` chỉ compose
   danh sách, empty/error state và metadata strategy server trả; không tự chọn
@@ -522,11 +688,13 @@ app/router + EmployerAuthLayout|EmployerSetupLayout|EmployerWorkspaceLayout
     + pages/employer/app/account/PhoneVerify|PasswordLogin|CompanySettings
       |BusinessLicense|PersonalDataProtection
     → widgets/employer-onboarding, employer-consulting-need,
-      employer-verification, employer-dashboard, employer-account-settings
+      employer-verification, employer-dashboard, employer-account-settings,
+      employer-notification-center
       → features/auth, complete-employer-registration,
         capture-employer-recruitment-need, verify-employer-account,
         change-password, manage-employer-company
-          → entities/session, employer-profile, employer-dashboard, job, location
+          → entities/session, employer-profile, employer-dashboard,
+            employer-notification, job, location
             → shared/api, shared/config/portals
 ```
 
@@ -542,7 +710,11 @@ app/router + EmployerAuthLayout|EmployerSetupLayout|EmployerWorkspaceLayout
   sử dụng giữa đăng ký email và bổ sung hồ sơ sau OAuth. Hai workflow chỉ được
   compose ở page/widget, không import feature lẫn nhau.
 - `entities/employer-profile` sở hữu HTTP contract recruiter, nhu cầu ưu tiên,
-  tìm/tạo/liên kết công ty và giấy tờ xác minh.
+  tìm/tạo/liên kết công ty, giấy tờ xác minh và canonical readiness. Readiness
+  chỉ hợp lệ khi đủ năm field `job_workspace_ready`, `verification_approved`,
+  `candidate_data_access`, `dpa_status`, `blockers`; payload canonical partial,
+  sai kiểu hoặc tự mâu thuẫn phải fail closed. Chỉ khi cả năm field đều vắng
+  mới được fallback workspace legacy; candidate-data không fallback legacy.
   `widgets/employer-onboarding` chỉ hoàn thiện hồ sơ Google; widget
   `employer-consulting-need` compose form nhu cầu sau xác thực. Email/phone/DPA
   là workflow bảo mật riêng, không còn bị gộp thành checklist onboarding.
@@ -557,10 +729,25 @@ app/router + EmployerAuthLayout|EmployerSetupLayout|EmployerWorkspaceLayout
   dashboard chỉ sở hữu nội dung bảng tin bên trong shell. Menu/action chưa có
   workflow thật phải ở trạng thái disabled rõ ràng, không đăng ký route hoặc
   toast thành công giả.
+- `entities/employer-notification` sở hữu API/query key và presentation model
+  cho notification/activity. `widgets/employer-notification-center` sở hữu
+  bell badge/popover, list phân trang, mark-read và activity timeline; page
+  `/notifications|/activities` chỉ compose widget. Layout được phép compose
+  bell qua public index của widget nhưng không gọi API notification trực tiếp.
 - Protected employer route giữ thứ tự `AuthGuard → RoleGuard`; dashboard thêm
   `EmployerOnboardingGuard`. State server lần lượt là `registration →
   email_verification → consulting_need → complete`; UI redirect không thay thế
-  guard và backend permission.
+  guard và backend permission. Sau onboarding, `JobWorkspaceGuard` bảo vệ
+  jobs/campaigns và `CandidateDataGuard` bảo vệ applications. Khi readiness tải
+  thành công nhưng capability bị từ chối, route guard điều hướng về
+  `employer-verify`; khi readiness đang tải hoặc lỗi, guard giữ fail-closed và
+  chỉ hiện loading/retry. Redirect không thay thế backend permission.
+- Consumer candidate-data phải dùng `useEmployerReadiness`, tắt query nhạy cảm
+  bằng `enabled=false` khi checking/error/denied và đồng thời không render dữ
+  liệu đã cache. Aggregate không chứa danh tính được phép giữ; tên, avatar,
+  email, CV/link download, preview và activity/deep-link ứng viên phải bị bỏ.
+  Blocker chỉ điều hướng qua machine-action allowlist phía frontend, không dùng
+  URL do backend gửi hoặc parse message để quyết định quyền.
 - `/employer-verify` chỉ là checklist bảo mật sau khi consulting hoàn tất, không
   tạo thêm state onboarding bắt buộc. Checklist không lặp lại email đã xác thực;
   các action mở route account nội bộ và tin đầu tiên chỉ bật sau khi đủ năm điều

@@ -5,23 +5,24 @@
 Phase 1 tích hợp mascot vào portal ứng viên đã gồm:
 
 - rig ghép layer với năm cảm xúc (`neutral`, `happy`, `thinking`, `success`,
-  `error`), năm pose (`neutral`, `wave`, `thumbsUp`, `microphone`, `checklist`),
+  `error`), bảy pose (`neutral`, `wave`, `thumbsUp`, `checklist`,
+  `frameGrip`, `coverEyes`, `peek`), hướng nhìn xuống,
   blink, talk, float và hai loại shadow;
 - trợ lý mẫu sticky, panel lazy-load, hội thoại theo từ khóa, quick action điều
   hướng thật và liên hệ lấy từ site settings;
 - mascot ở hero trang chủ với patrol animation phía trên cụm tìm kiếm, tự đổi
   cảm xúc/pose; cùng các empty state tìm việc, việc đã lưu, CV, hồ sơ đã ứng
   tuyển và việc làm phù hợp;
-- robot cầm micro trong trình đọc bài viết, phản ứng theo trạng thái chuẩn bị,
-  đang đọc, tạm dừng, hoàn tất hoặc lỗi;
-- robot dẫn cuộc phỏng vấn onboarding ứng viên: cầm micro khi đang nói, cầm
-  bảng checklist khi chờ trả lời, mắt/miệng đổi theo trả lời đúng, thiếu thông
-  tin hay đang lưu;
+- robot dẫn cuộc phỏng vấn onboarding ứng viên, đổi mắt/miệng theo trả lời đúng,
+  thiếu thông tin hay đang lưu;
 - blink và talk đều dùng hai animation nghịch đảo: lớp mắt thường ẩn đúng lúc
   lớp mắt nhắm xuất hiện, lớp miệng theo cảm xúc ẩn đúng lúc lớp miệng mở xuất
   hiện — tránh chồng hai bộ mắt hoặc hai khẩu hình (rõ nhất ở `success`);
 - xử lý va chạm với banner cookie theo chiều cao thực tế, thanh ứng tuyển mobile
   và `prefers-reduced-motion`;
+- form đăng nhập/đăng ký ứng viên: mắt nhìn xuống khi nhập email, che hai mắt
+  khi nhập mật khẩu ẩn và hé một mắt khi người dùng bật hiển thị mật khẩu; robot
+  nằm ngoài card và dùng hai bàn tay bám vào mép trên nên không chiếm chỗ form;
 - unit/regression test và smoke test responsive cho workflow trợ lý.
 
 Phase này không thay đổi backend, API payload, route, auth guard, storage token

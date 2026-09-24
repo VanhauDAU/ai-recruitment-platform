@@ -21,8 +21,6 @@ const company = {
   business_type: 'enterprise',
   business_type_label: 'Doanh nghiệp',
   tax_code: '0101234567',
-  verification_status: 'pending',
-  verification_status_label: 'Chờ duyệt',
   owners: [{
     public_id: 'rec_owner',
     user_public_id: 'usr_owner',
@@ -63,8 +61,11 @@ test('admin company directory: three-level navigation, detail and owner roster',
   page,
 }, testInfo) => {
   const usesDrawer = testInfo.project.name !== 'desktop-chromium'
-  await page.route('http://localhost:8000/api/**', async (route) => {
-    const path = new URL(route.request().url()).pathname
+  let companyJobsRequest
+  await page.route(/^http:\/\/(?:localhost|127\.0\.0\.1):(?:5173|8000)\/api\//, async (route) => {
+    const requestUrl = new URL(route.request().url())
+    const path = requestUrl.pathname
+    if (path === '/api/jobs/admin/moderation/') companyJobsRequest = requestUrl
     const body = path === '/api/auth/refresh/'
       ? { access: 'e2e-access' }
       : path === '/api/auth/me/'
@@ -105,7 +106,30 @@ test('admin company directory: three-level navigation, detail and owner roster',
                 }
               : path === '/api/admin/company-update-requests/'
                 ? { count: 0, next: null, previous: null, results: [] }
-              : path === '/api/privacy/consent/'
+                : path === '/api/jobs/admin/moderation/'
+                  ? {
+                      count: 1,
+                      next: null,
+                      previous: null,
+                      results: [{
+                        public_id: 'job_alpha',
+                        title: 'Backend Engineer',
+                        employer_name: 'Owner chính',
+                        employer_email: 'owner@alpha.example',
+                        status: 'active',
+                        status_label: 'Đang tuyển',
+                        is_expired: false,
+                        policy_hold: '',
+                        moderation_hold: '',
+                        deadline: '2026-08-30',
+                        submitted_at: '2026-08-01T08:00:00Z',
+                        application_count: 4,
+                        view_count: 25,
+                        pending_report_count: 0,
+                        updated_at: '2026-08-02T08:00:00Z',
+                      }],
+                    }
+                : path === '/api/privacy/consent/'
                 ? {
                     consent: {
                       necessary: true,
@@ -127,6 +151,8 @@ test('admin company directory: three-level navigation, detail and owner roster',
     'aria-selected',
     'true',
   )
+  await expect(page.getByRole('columnheader', { name: 'Hồ sơ pháp nhân' })).toHaveCount(0)
+  await expect(page.getByRole('combobox', { name: 'Lọc trạng thái công ty' })).toHaveCount(0)
   await expect(page.getByLabel('Công ty Alpha chưa cập nhật logo')).toBeVisible()
 
   if (usesDrawer) {
@@ -151,10 +177,23 @@ test('admin company directory: three-level navigation, detail and owner roster',
   await expect(page.getByRole('heading', { name: 'Công ty Alpha' })).toBeVisible()
   await expect(page.locator('.company-directory__rich-text strong')).toHaveText('công nghệ')
   await expect(page.locator('.company-directory__rich-text script')).toHaveCount(0)
+  await page.getByRole('tab', { name: 'Xác thực NTD' }).click()
+  await expect(page.getByText('Xác thực nhà tuyển dụng')).toBeVisible()
+  await expect(page.getByText('Trạng thái pháp lý công ty')).toHaveCount(0)
   await page.getByRole('tab', { name: /Nhà tuyển dụng/ }).click()
   await expect(page.getByText('HR Manager')).toBeVisible()
   await expect(page.getByLabel('Ảnh đại diện Owner chính')).toBeVisible()
-  await expect(page.getByText('Đã xác thực', { exact: true })).toBeVisible()
+  await expect(
+    page.getByLabel('Nhà tuyển dụng (2)').getByText('Đã xác thực', { exact: true }),
+  ).toBeVisible()
+  await page.getByRole('tab', { name: 'Tin tuyển dụng' }).click()
+  await expect(page.getByText('Backend Engineer', { exact: true })).toBeVisible()
+  await expect.poll(() => companyJobsRequest?.searchParams.get('company')).toBe('co_alpha')
+  expect(companyJobsRequest.searchParams.get('ordering')).toBe('-updated_at')
+  await expect(page.getByRole('columnheader', { name: 'Cập nhật' })).toHaveAttribute(
+    'aria-sort',
+    'descending',
+  )
 
   await page.goto('/admin/app/companies?tab=updates&company=co_alpha')
   await expect(page.getByRole('tab', { name: 'Yêu cầu cập nhật' })).toHaveAttribute(

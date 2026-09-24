@@ -1,8 +1,6 @@
 import {
   ArrowLeftOutlined,
-  BankOutlined,
   EyeOutlined,
-  SafetyCertificateOutlined,
   TeamOutlined,
 } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
@@ -35,8 +33,9 @@ import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { adminPath } from '@/shared/config/portals'
 import { sanitizeHtml } from '@/shared/lib/sanitize-html'
 import CompanyLogo from './CompanyLogo'
+import CompanyJobs from './CompanyJobs'
 import { CompanyPanel } from './CompanyPanel'
-import { CompanyStatusTag, RecruiterStatusTag } from './CompanyStatusTags'
+import RecruiterStatusTag from './RecruiterStatusTag'
 import '../admin-company-directory.css'
 
 const EMPTY_PAGE = { count: 0, results: [] }
@@ -81,7 +80,6 @@ function Overview({ company }) {
               {company.trade_name || company.company_name}
             </h3>
             <div className="mt-2 flex flex-wrap items-center gap-2">
-              <CompanyStatusTag status={company.verification_status} />
               {company.business_type_label && <Tag>{company.business_type_label}</Tag>}
               {company.company_size_label && <Tag>{company.company_size_label}</Tag>}
             </div>
@@ -443,43 +441,31 @@ function RecruiterRoster({ company, enabled }) {
   )
 }
 
-function Verification({ company }) {
+function RecruiterVerification({ company }) {
   const summary = company.recruiter_verification_summary || {}
   return (
-    <div className="grid gap-5 lg:grid-cols-2">
-      <CompanyPanel title="Trạng thái pháp lý công ty">
-        <div className="company-directory__status-card">
-          <BankOutlined />
-          <div>
-            <p className="mb-2 text-sm text-slate-500">Trạng thái công ty</p>
-            <CompanyStatusTag status={company.verification_status} />
-            <p className="mt-3 text-sm leading-6 text-slate-600">
-              Trạng thái này áp dụng cho pháp nhân, không đại diện cho trạng thái
-              xác thực của mọi tài khoản NTD.
-            </p>
-          </div>
-        </div>
-      </CompanyPanel>
-      <CompanyPanel title="Xác thực đại diện NTD">
-        <div className="space-y-3">
-          {Object.entries(summary).map(([status, count]) => {
-            const meta = recruiterVerificationMeta(status)
-            return (
-              <div key={status} className="flex items-center justify-between gap-4">
-                <Tag color={meta.color}>{meta.label}</Tag>
-                <strong>{count}</strong>
-              </div>
-            )
-          })}
-          <Link
-            className="inline-flex pt-2 font-semibold text-emerald-700"
-            to={`${adminPath('/recruiters')}?tab=verification&company=${company.public_id}`}
-          >
-            Mở hàng chờ xác thực NTD
-          </Link>
-        </div>
-      </CompanyPanel>
-    </div>
+    <CompanyPanel
+      title="Xác thực nhà tuyển dụng"
+      description="Theo dõi hồ sơ xác thực riêng của từng owner và member trong công ty."
+    >
+      <div className="max-w-2xl space-y-3">
+        {Object.entries(summary).map(([status, count]) => {
+          const meta = recruiterVerificationMeta(status)
+          return (
+            <div key={status} className="flex items-center justify-between gap-4">
+              <Tag color={meta.color}>{meta.label}</Tag>
+              <strong>{count}</strong>
+            </div>
+          )
+        })}
+        <Link
+          className="inline-flex pt-2 font-semibold text-emerald-700"
+          to={`${adminPath('/recruiters')}?tab=verification&company=${company.public_id}`}
+        >
+          Mở hàng chờ xác thực NTD
+        </Link>
+      </div>
+    </CompanyPanel>
   )
 }
 
@@ -489,6 +475,7 @@ export default function AdminCompanyDetail({ publicId }) {
   const { user } = useSession()
   const { has, isSuperuser } = useAdminAccess(user)
   const canViewRecruiters = isSuperuser || has('company_recruiter.view')
+  const canViewJobs = isSuperuser || has('job_moderation.view')
   const [searchParams, setSearchParams] = useSearchParams()
   const requestedTab = searchParams.get('tab') || 'overview'
   const activeTab = TAB_KEYS.has(requestedTab) ? requestedTab : 'overview'
@@ -538,8 +525,8 @@ export default function AdminCompanyDetail({ publicId }) {
     },
     {
       key: 'verification',
-      label: 'Xác thực',
-      children: <Verification company={company} />,
+      label: 'Xác thực NTD',
+      children: <RecruiterVerification company={company} />,
     },
     {
       key: 'updates',
@@ -557,14 +544,13 @@ export default function AdminCompanyDetail({ publicId }) {
     },
     {
       key: 'jobs',
-      label: (
-        <Space size={6}>
-          Tin tuyển dụng
-          <Tag>Sắp ra mắt</Tag>
-        </Space>
+      label: 'Tin tuyển dụng',
+      children: (
+        <CompanyJobs
+          company={company}
+          enabled={canViewJobs && activeTab === 'jobs'}
+        />
       ),
-      disabled: true,
-      children: null,
     },
   ]
 
@@ -580,11 +566,7 @@ export default function AdminCompanyDetail({ publicId }) {
           <p className="admin-page-header__eyebrow">Hồ sơ công ty</p>
           <h1 className="admin-page-header__title">{company.company_name}</h1>
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            <CompanyStatusTag status={company.verification_status} />
             <Tag icon={<TeamOutlined />}>{company.recruiter_count} NTD</Tag>
-            {company.verification_status === 'verified' && (
-              <Tag color="green" icon={<SafetyCertificateOutlined />}>Pháp nhân đã xác thực</Tag>
-            )}
           </div>
         </div>
       </header>

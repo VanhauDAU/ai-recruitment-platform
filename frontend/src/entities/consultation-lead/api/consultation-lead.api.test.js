@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   createConsultationLead,
+  exportAdminConsultationLeads,
   getAdminConsultationLeads,
   updateAdminConsultationLead,
 } from './consultation-lead.api'
@@ -48,9 +49,14 @@ describe('consultation lead API', () => {
       updateAdminConsultationLead(8, { status: 'contacted' }),
     ).resolves.toMatchObject({ status: 'contacted' })
 
-    expect(consultationLeadKeys.adminList({ status: 'new', page: 2 })).toEqual([
+    expect(consultationLeadKeys.adminList({
+      status: 'new',
+      q: 'alpha',
+      ordering: '-email',
+      page: 2,
+    })).toEqual([
       ...consultationLeadKeys.adminLists,
-      { status: 'new', page: 2 },
+      { status: 'new', q: 'alpha', ordering: '-email', page: 2 },
     ])
     expect(post).toHaveBeenCalledWith('/services/consultations/', {
       full_name: 'Nguyễn An',
@@ -59,5 +65,46 @@ describe('consultation lead API', () => {
       '/services/admin/consultations/8/',
       { status: 'contacted' },
     )
+  })
+
+  it('downloads the filtered admin CSV and exposes export metadata', async () => {
+    const controller = new AbortController()
+    const blob = new Blob(['\ufeffID,Khách hàng'])
+    get.mockResolvedValue({
+      data: blob,
+      headers: {
+        'content-disposition': 'attachment; filename="consultation-leads-2026-08-10.csv"',
+        'x-export-row-limit': '10000',
+        'x-export-truncated': 'true',
+      },
+    })
+
+    await expect(exportAdminConsultationLeads(
+      {
+        status: 'new',
+        q: 'alpha',
+        created_from: '2026-08-01',
+        created_to: '2026-08-10',
+        ordering: '-created_at',
+      },
+      { signal: controller.signal },
+    )).resolves.toEqual({
+      blob,
+      filename: 'consultation-leads-2026-08-10.csv',
+      rowLimit: 10000,
+      truncated: true,
+    })
+
+    expect(get).toHaveBeenCalledWith('/services/admin/consultations/export/', {
+      params: {
+        status: 'new',
+        q: 'alpha',
+        created_from: '2026-08-01',
+        created_to: '2026-08-10',
+        ordering: '-created_at',
+      },
+      responseType: 'blob',
+      signal: controller.signal,
+    })
   })
 })

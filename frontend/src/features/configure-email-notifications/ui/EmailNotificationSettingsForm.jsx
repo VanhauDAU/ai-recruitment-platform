@@ -2,9 +2,12 @@ import {
   ExclamationCircleFilled,
   ReloadOutlined,
 } from '@ant-design/icons'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Button, Skeleton, Switch } from 'antd'
-import { useEffect, useState } from 'react'
 import {
+  candidateNotificationPreferenceKeys,
+  candidateNotificationPreferenceMutationKey,
+  candidateNotificationPreferenceMutationScope,
   getCandidateNotificationPreferences,
   updateCandidateNotificationPreferences,
 } from '@/entities/candidate-notification-preferences'
@@ -34,67 +37,61 @@ function SettingsSkeleton() {
 }
 
 export default function EmailNotificationSettingsForm() {
-  const [preferences, setPreferences] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [loadError, setLoadError] = useState('')
-  const [savingField, setSavingField] = useState('')
-  const [reloadVersion, setReloadVersion] = useState(0)
-
-  useEffect(() => {
-    let active = true
-    setLoading(true)
-    setLoadError('')
-
-    getCandidateNotificationPreferences()
-      .then((data) => {
-        if (!active) return
-        setPreferences(normalizePreferences(data))
-      })
-      .catch((error) => {
-        if (!active) return
-        setLoadError(getApiErrorMessage(
-          error,
-          'Không thể tải cài đặt nhận email. Vui lòng thử lại.',
-        ))
-      })
-      .finally(() => {
-        if (active) setLoading(false)
-      })
-
-    return () => {
-      active = false
-    }
-  }, [reloadVersion])
-
-  async function handlePreferenceChange(field, enabled, label) {
-    if (savingField || !preferences) return
-
-    const previousValue = preferences[field]
-    setPreferences((current) => ({ ...current, [field]: enabled }))
-    setSavingField(field)
-
-    try {
-      const saved = await updateCandidateNotificationPreferences({ [field]: enabled })
-      setPreferences((current) => ({
-        ...current,
+  const queryClient = useQueryClient()
+  const queryKey = candidateNotificationPreferenceKeys.preferences()
+  const query = useQuery({
+    queryKey,
+    queryFn: async () => normalizePreferences(await getCandidateNotificationPreferences()),
+    retry: false,
+  })
+  const mutation = useMutation({
+    mutationKey: candidateNotificationPreferenceMutationKey,
+    scope: candidateNotificationPreferenceMutationScope,
+    mutationFn: ({ field, enabled }) => updateCandidateNotificationPreferences({ [field]: enabled }),
+    onMutate: async ({ field, enabled }) => {
+      await queryClient.cancelQueries({ queryKey })
+      const previousValue = queryClient.getQueryData(queryKey)?.[field]
+      queryClient.setQueryData(queryKey, (current) => ({
+        ...normalizePreferences(current),
+        [field]: enabled,
+      }))
+      return { field, optimisticValue: enabled, previousValue }
+    },
+    onSuccess: (saved, { field, enabled, label }) => {
+      queryClient.setQueryData(queryKey, (current) => ({
+        ...normalizePreferences(current),
         [field]: typeof saved?.[field] === 'boolean' ? saved[field] : enabled,
       }))
       if (enabled) message.success(`Đã bật: ${label}.`)
-    } catch (error) {
-      setPreferences((current) => ({ ...current, [field]: previousValue }))
-      const errorMessage = getApiErrorMessage(
+    },
+    onError: (error, _variables, context) => {
+      queryClient.setQueryData(queryKey, (current) => {
+        if (!context || current?.[context.field] !== context.optimisticValue) return current
+        return { ...normalizePreferences(current), [context.field]: context.previousValue }
+      })
+      message.error(getApiErrorMessage(
         error,
         'Không thể lưu lựa chọn này. Thay đổi đã được hoàn tác.',
-      )
-      message.error(errorMessage)
-    } finally {
-      setSavingField('')
-    }
+      ))
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey }),
+  })
+
+  const preferences = query.data
+  const savingField = mutation.isPending ? mutation.variables?.field : ''
+
+  function handlePreferenceChange(field, enabled, label) {
+    if (savingField || !preferences) return
+    mutation.mutate({ field, enabled, label })
   }
 
-  if (loading) return <SettingsSkeleton />
+  if (query.isPending) return <SettingsSkeleton />
 
-  if (loadError) {
+  if (query.isError) {
+    const loadError = getApiErrorMessage(
+      query.error,
+      'Không thể tải cài đặt nhận email. Vui lòng thử lại.',
+    )
     return (
       <div
         role="alert"
@@ -107,7 +104,8 @@ export default function EmailNotificationSettingsForm() {
           aria-label="Thử lại"
           className="mt-4"
           icon={<ReloadOutlined />}
-          onClick={() => setReloadVersion((version) => version + 1)}
+          loading={query.isFetching}
+          onClick={() => query.refetch()}
         >
           Thử lại
         </Button>

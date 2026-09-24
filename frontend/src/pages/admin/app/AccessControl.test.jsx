@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { MemoryRouter } from 'react-router'
+import { MemoryRouter, useLocation } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import AccessControl from './AccessControl'
 
@@ -243,7 +243,12 @@ function session(superuser) {
   }
 }
 
-function renderPage(superuser = true) {
+function LocationProbe() {
+  const location = useLocation()
+  return <output data-testid="location-search">{location.search}</output>
+}
+
+function renderPage(superuser = true, initialEntry = '/admin/app/access-control') {
   useSession.mockReturnValue(session(superuser))
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -253,8 +258,9 @@ function renderPage(superuser = true) {
   })
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter>
+      <MemoryRouter initialEntries={[initialEntry]}>
         <AccessControl />
+        <LocationProbe />
       </MemoryRouter>
     </QueryClientProvider>,
   )
@@ -290,6 +296,46 @@ describe('AccessControl', () => {
     expect(screen.getByPlaceholderText('Tìm nhân viên hoặc chức danh')).toBeInTheDocument()
     expect(screen.getByLabelText('Gán chức danh')).toBeInTheDocument()
     expect(screen.getByLabelText('Đổi chức danh của Nguyễn Văn A')).toBeInTheDocument()
+  })
+
+  it('uses the namespaced URL as the staff list source of truth', async () => {
+    api.getAdminMemberships.mockResolvedValue({ count: 45, results: [membership] })
+    renderPage(
+      true,
+      '/admin/app/access-control?tab=staff&staff_q=alpha&staff_department=dept_content&staff_role=role_staff&staff_status=all&staff_ordering=user__full_name&staff_page=2',
+    )
+
+    await waitFor(() => {
+      expect(api.getAdminMemberships).toHaveBeenCalledWith({
+        q: 'alpha',
+        department: 'dept_content',
+        role: 'role_staff',
+        status: 'all',
+        ordering: 'user__full_name',
+        page: 2,
+      }, { signal: expect.anything() })
+    })
+    expect(await screen.findByText('45 kết quả')).toBeInTheDocument()
+    const membershipTable = screen.getByText('Nguyễn Văn A').closest('table')
+    expect(membershipTable.querySelectorAll('th.ant-table-column-has-sorters')).toHaveLength(6)
+    expect(within(membershipTable).getByRole('columnheader', { name: /Nhân viên/ }))
+      .toHaveAttribute('aria-sort', 'ascending')
+
+    fireEvent.click(within(membershipTable).getByRole('columnheader', { name: /Chức danh/ }))
+    await waitFor(() => {
+      const url = screen.getByTestId('location-search').textContent
+      expect(url).toContain('staff_ordering=role__name')
+      expect(url).not.toContain('staff_page=')
+    })
+
+    fireEvent.change(screen.getByLabelText('Tìm nhân viên hoặc chức danh'), {
+      target: { value: 'beta' },
+    })
+    await waitFor(() => {
+      const url = screen.getByTestId('location-search').textContent
+      expect(url).toContain('staff_q=beta')
+      expect(url).not.toContain('staff_page=')
+    })
   })
 
   it('derives a department code from its name instead of asking an admin to enter one', async () => {

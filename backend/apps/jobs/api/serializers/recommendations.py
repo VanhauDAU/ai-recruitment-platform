@@ -1,6 +1,13 @@
+import re
+
 from rest_framework import serializers
 
+from ...models import CandidateHiddenJob
 from .jobs import PublicJobListSerializer
+
+RANKING_SEED_PATTERN = re.compile(r'^[A-Za-z0-9_-]{1,64}$')
+PUBLIC_ID_PATTERN = re.compile(r'^[A-Za-z0-9_-]{1,50}$')
+MAX_INLINE_EXCLUDED_JOBS = 50
 
 
 class RecommendationMatchDetailSerializer(serializers.Serializer):
@@ -73,6 +80,61 @@ class CandidateJobRecommendationResponseSerializer(serializers.Serializer):
     related_positions = RelatedPositionSerializer(many=True)
     results = RecommendedJobSerializer(many=True)
     pagination = RecommendationPaginationSerializer()
+
+
+class InlineJobRecommendationQuerySerializer(serializers.Serializer):
+    page = serializers.IntegerField(min_value=1, default=1)
+    ranking_seed = serializers.RegexField(
+        RANKING_SEED_PATTERN,
+        required=True,
+        allow_blank=False,
+        max_length=64,
+        error_messages={'invalid': 'Invalid ranking seed.'},
+    )
+    excluded = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        default='',
+        max_length=2550,
+    )
+
+    def validate(self, attrs):
+        raw_ids = attrs['excluded']
+        public_ids = []
+        seen = set()
+        for raw_id in raw_ids.split(',') if raw_ids else []:
+            public_id = raw_id.strip()
+            if not public_id or not PUBLIC_ID_PATTERN.fullmatch(public_id):
+                raise serializers.ValidationError(
+                    {'excluded': 'Danh sách mã tin tuyển dụng không hợp lệ.'}
+                )
+            if public_id not in seen:
+                seen.add(public_id)
+                public_ids.append(public_id)
+        if len(public_ids) > MAX_INLINE_EXCLUDED_JOBS:
+            raise serializers.ValidationError(
+                {'excluded': f'Chỉ được loại tối đa {MAX_INLINE_EXCLUDED_JOBS} tin.'}
+            )
+        attrs['excluded_public_ids'] = public_ids
+        return attrs
+
+
+class InlineJobRecommendationResponseSerializer(serializers.Serializer):
+    status = serializers.ChoiceField(
+        choices=['ready', 'not_shown', 'preferences_required', 'consent_required']
+    )
+    after_result_index = serializers.IntegerField(min_value=0, allow_null=True)
+    results = PublicJobListSerializer(many=True)
+
+
+class HiddenJobCreateSerializer(serializers.Serializer):
+    job_public_id = serializers.RegexField(PUBLIC_ID_PATTERN, max_length=50)
+    source = serializers.ChoiceField(choices=CandidateHiddenJob.Source.choices)
+
+
+class HiddenJobResponseSerializer(serializers.Serializer):
+    hidden = serializers.BooleanField()
+    job_public_id = serializers.CharField(max_length=50)
 
 
 class RecommendationPermissionDeniedSerializer(serializers.Serializer):

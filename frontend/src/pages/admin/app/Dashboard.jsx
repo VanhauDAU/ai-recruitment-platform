@@ -12,8 +12,9 @@ import {
 import { Link, useOutletContext } from 'react-router'
 import {
   AdminPanel,
+  AdminPageHeader,
   AdminStatCard,
-} from '@/widgets/admin-workspace'
+} from '@/shared/ui/admin'
 
 const ICONS = {
   access: <KeyOutlined />,
@@ -32,7 +33,12 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-5">
-
+      <AdminPageHeader
+        eyebrow="Không gian quản trị"
+        title="Bảng điều khiển"
+        description="Tổng quan phạm vi truy cập và các công cụ quản trị được cấp cho tài khoản hiện tại."
+        icon={<AppstoreOutlined />}
+      />
       <section className="grid gap-4 md:grid-cols-3" aria-label="Tóm tắt quyền truy cập">
         <AdminStatCard
           icon={<AppstoreOutlined />}

@@ -2,11 +2,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   acceptEmployerDpa,
   checkEmployerPhoneAvailability,
+  changeEmployerCompanyUpdateRequestLifecycle,
   completeEmployerRegistration,
   createEmployerCompany,
   getEmployerCompanyDocumentContent,
   getEmployerCompanyDocuments,
+  getEmployerCompanyUpdateRequests,
   getEmployerIndustries,
+  getEmployerPhoneChallenge,
   getEmployerProfile,
   getEmployerRecruitmentNeed,
   joinEmployerCompany,
@@ -62,41 +65,53 @@ describe('employer profile API', () => {
     await completeEmployerRegistration(profile)
     await checkEmployerPhoneAvailability('0912345678')
     await sendEmployerPhoneOtp('0912345678', 'Password@123')
-    await verifyEmployerPhoneOtp('123456')
-    await acceptEmployerDpa()
+    await getEmployerPhoneChallenge('poc_sms')
+    await verifyEmployerPhoneOtp('poc_sms', '123456')
+    const dpaPolicy = { policy_version: '2026-08', document_sha256: 'a'.repeat(64) }
+    await acceptEmployerDpa(dpaPolicy)
 
     expect(post).toHaveBeenCalledWith('/employer/onboarding/registration/', profile)
     expect(get).toHaveBeenCalledWith('/employer/phone/check/', { params: { phone: '0912345678' } })
     expect(post).toHaveBeenCalledWith('/employer/phone/send-otp/', { phone: '0912345678', password: 'Password@123' })
-    expect(post).toHaveBeenCalledWith('/employer/phone/verify/', { code: '123456' })
-    expect(post).toHaveBeenCalledWith('/employer/dpa/accept/')
+    expect(get).toHaveBeenCalledWith('/employer/phone/challenges/poc_sms/')
+    expect(post).toHaveBeenCalledWith('/employer/phone/verify/', {
+      challenge_id: 'poc_sms',
+      code: '123456',
+    })
+    expect(post).toHaveBeenCalledWith('/employer/dpa/accept/', dpaPolicy)
   })
 
-  it('uploads a business registration document as multipart data', async () => {
+  it('attaches a scanned business registration session as multipart data', async () => {
     post.mockResolvedValue({ data: { id: 1, status: 'pending' } })
     const file = new File(['registration'], 'business.pdf', { type: 'application/pdf' })
 
-    await expect(uploadEmployerBusinessDocument(file)).resolves.toMatchObject({ status: 'pending' })
+    await expect(uploadEmployerBusinessDocument(file, {
+      uploadSession: { public_id: 'ups_business' },
+    })).resolves.toMatchObject({ status: 'pending' })
 
     expect(post).toHaveBeenCalledTimes(1)
     const [url, formData] = post.mock.calls[0]
     expect(url).toBe('/employer/company/documents/')
     expect(formData.get('doc_type')).toBe('business_registration')
     expect(formData.get('verification_method')).toBe('business_registration')
-    expect(formData.get('file')).toBe(file)
+    expect(formData.get('upload_session')).toBe('ups_business')
+    expect(formData.get('file')).toBeNull()
   })
 
   it('marks additional identity images as part of the current document set', async () => {
     post.mockResolvedValue({ data: { id: 2, status: 'pending' } })
     const file = new File(['back'], 'cccd-mat-sau.png', { type: 'image/png' })
 
-    await uploadEmployerCompanyDocument('identity_document', file, { append: true })
+    await uploadEmployerCompanyDocument('identity_document', file, {
+      append: true,
+      uploadSession: { public_id: 'ups_identity' },
+    })
 
     const [url, formData] = post.mock.calls[0]
     expect(url).toBe('/employer/company/documents/')
     expect(formData.get('doc_type')).toBe('identity_document')
     expect(formData.get('append')).toBe('true')
-    expect(formData.get('file')).toBe(file)
+    expect(formData.get('upload_session')).toBe('ups_identity')
   })
 
   it('targets one current document when uploading a replacement', async () => {
@@ -105,6 +120,7 @@ describe('employer profile API', () => {
 
     await uploadEmployerCompanyDocument('identity_document', file, {
       replaceDocument: 'doc_rejected',
+      uploadSession: { public_id: 'ups_replacement' },
     })
 
     const [, formData] = post.mock.calls[0]
@@ -131,13 +147,21 @@ describe('employer profile API', () => {
   it('saves a trade-name proof website as multipart data', async () => {
     post.mockResolvedValue({ data: { id: 9, source_type: 'website' } })
 
-    await expect(saveEmployerCompanyTradeNameWebsite('https://example.com/thuong-hieu')).resolves.toMatchObject({ source_type: 'website' })
+    await expect(saveEmployerCompanyTradeNameWebsite(
+      'https://example.com/thuong-hieu',
+      {
+        updateRequest: 'cur_trade_name',
+        replaceDocument: 'doc_trade_name_old',
+      },
+    )).resolves.toMatchObject({ source_type: 'website' })
 
     const [url, formData] = post.mock.calls[0]
     expect(url).toBe('/employer/company/documents/')
     expect(formData.get('doc_type')).toBe('trade_name_proof')
     expect(formData.get('source_type')).toBe('website')
     expect(formData.get('website_url')).toBe('https://example.com/thuong-hieu')
+    expect(formData.get('update_request')).toBe('cur_trade_name')
+    expect(formData.get('replaces')).toBe('doc_trade_name_old')
     expect(formData.get('file')).toBeNull()
   })
 
@@ -158,7 +182,9 @@ describe('employer profile API', () => {
       proof_type: 'business_registration',
       business_registration_file: file,
     })
-    await uploadEmployerDataProcessingAgreement(file)
+    await uploadEmployerDataProcessingAgreement(file, {
+      uploadSession: { public_id: 'ups_dpa' },
+    })
 
     expect(get).toHaveBeenNthCalledWith(2, '/employer/company/search/', { params: { q: 'Acme' } })
     expect(post).toHaveBeenCalledWith('/employer/company/create/', { company_name: 'Acme' })
@@ -174,5 +200,60 @@ describe('employer profile API', () => {
     await expect(getEmployerCompanyDocumentContent({ file_url: '/employer/company/documents/12/content/' })).resolves.toBe(content)
 
     expect(get).toHaveBeenCalledWith('/employer/company/documents/12/content/', { responseType: 'blob' })
+  })
+
+  it('loads the current recruiter document scope explicitly', async () => {
+    get.mockResolvedValue({ data: [{ public_id: 'doc_mine' }] })
+
+    await expect(getEmployerCompanyDocuments({ scope: 'mine' })).resolves.toEqual([
+      { public_id: 'doc_mine' },
+    ])
+
+    expect(get).toHaveBeenCalledWith('/employer/company/documents/', {
+      params: { scope: 'mine' },
+    })
+  })
+
+  it('loads actor and company update-request scopes explicitly', async () => {
+    get
+      .mockResolvedValueOnce({ data: { results: [{ public_id: 'cur_mine' }] } })
+      .mockResolvedValueOnce({ data: [{ public_id: 'cur_company' }] })
+
+    await expect(getEmployerCompanyUpdateRequests({ scope: 'mine' })).resolves.toEqual([
+      { public_id: 'cur_mine' },
+    ])
+    await expect(getEmployerCompanyUpdateRequests({ scope: 'company' })).resolves.toEqual([
+      { public_id: 'cur_company' },
+    ])
+
+    expect(get).toHaveBeenNthCalledWith(1, '/employer/company/update-requests/', {
+      params: { scope: 'mine' },
+    })
+    expect(get).toHaveBeenNthCalledWith(2, '/employer/company/update-requests/', {
+      params: { scope: 'company' },
+    })
+  })
+
+  it('keeps the unscoped update-request request compatible', async () => {
+    get.mockResolvedValue({ data: [] })
+
+    await expect(getEmployerCompanyUpdateRequests()).resolves.toEqual([])
+
+    expect(get).toHaveBeenCalledWith('/employer/company/update-requests/')
+  })
+
+  it('uses the explicit lifecycle endpoint to withdraw an update request', async () => {
+    post.mockResolvedValue({ data: { public_id: 'cur_1', status: 'withdrawn' } })
+
+    await expect(changeEmployerCompanyUpdateRequestLifecycle(
+      'cur_1',
+      'withdraw',
+      { lock_version: 4 },
+    )).resolves.toMatchObject({ status: 'withdrawn' })
+
+    expect(post).toHaveBeenCalledWith(
+      '/employer/company/update-requests/cur_1/withdraw/',
+      { lock_version: 4 },
+    )
   })
 })

@@ -141,6 +141,7 @@ class AdminJobDecisionView(APIView):
                 job=job,
                 user=request.user,
                 review_token=payload['review_token'],
+                deadline=payload.get('deadline'),
             )
         elif action == 'reject':
             reject_job(

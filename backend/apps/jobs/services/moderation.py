@@ -13,13 +13,20 @@ from apps.accounts.services import (
     create_impact_token,
     decode_impact_token,
     is_account_accessible,
-    lock_account_for_write,
 )
+from apps.employers.models import RecruitmentCampaign
+from apps.employers.services import recruiter_job_approval_state
 
 from ..models import Job, JobModerationEvent, JobStatusHistory
-from .posting import _record_status
+from .content_snapshot import build_job_content_snapshot
+from .lifecycle import initialize_job_visibility, lifecycle_local_date, lifecycle_mode
+from .posting import _record_status, job_deadline_error
 
 REVIEW_OPERATION = 'job.moderation.mutate'
+
+# A deadline that lapsed while the job waited in the queue does not hide the
+# approve action: the reviewer sets a new deadline as part of the approval.
+FIXABLE_BLOCK_CODES = {'deadline_expired'}
 
 
 class JobModerationStale(APIException):
@@ -62,7 +69,7 @@ def _verify_review_token(job, review_token):
         raise JobModerationStale()
 
 
-def job_moderation_state(job):
+def job_moderation_state(job, *, employer_approval_state=None):
     blocked = []
     if not is_account_accessible(job.posted_by):
         blocked.append(
@@ -72,8 +79,19 @@ def job_moderation_state(job):
         blocked.append({'code': 'policy_hold', 'label': job.get_policy_hold_display()})
     if job.moderation_hold:
         blocked.append({'code': 'moderation_hold', 'label': job.get_moderation_hold_display()})
-    if job.deadline and job.deadline < timezone.localdate():
+    if job.deadline and job.deadline < lifecycle_local_date():
         blocked.append({'code': 'deadline_expired', 'label': 'Hạn nhận hồ sơ đã qua.'})
+    if (
+        lifecycle_mode() == 'enforce'
+        and job.visibility_ends_at is not None
+        and job.visibility_ends_at <= timezone.now()
+    ):
+        blocked.append(
+            {
+                'code': 'visibility_expired',
+                'label': 'Tin đã hết vòng đời hiển thị và cần một lượt đăng mới.',
+            }
+        )
     if job.campaign_id:
         if job.campaign.policy_hold:
             blocked.append(
@@ -84,16 +102,38 @@ def job_moderation_state(job):
                 {'code': 'campaign_inactive', 'label': 'Chiến dịch hiện không hoạt động.'}
             )
 
+    if employer_approval_state is None:
+        employer_approval_state = recruiter_job_approval_state(
+            job.posted_by,
+            company_id=job.company_id,
+        )
+    blocked.extend(employer_approval_state['approve_blockers'])
+
+    approve_blockers = [item for item in blocked if item['code'] not in FIXABLE_BLOCK_CODES]
+    approve_requirements = [
+        {
+            'code': 'deadline',
+            'label': 'Hạn nhận hồ sơ đã qua — chọn hạn mới để duyệt tin.',
+        }
+        for item in blocked
+        if item['code'] == 'deadline_expired'
+    ]
+
     actions = []
     if job.status == Job.Status.PENDING:
         actions.append('reject')
-        if not blocked:
+        if not approve_blockers:
             actions.insert(0, 'approve')
     if job.status == Job.Status.ACTIVE and not job.moderation_hold:
         actions.append('hide')
     if job.moderation_hold:
         actions.append('restore')
-    return {'state_actions': actions, 'blocked_reasons': blocked}
+    return {
+        'state_actions': actions,
+        'blocked_reasons': blocked,
+        'approve_blockers': approve_blockers,
+        'approve_requirements': approve_requirements,
+    }
 
 
 def _record_moderation_event(
@@ -125,38 +165,93 @@ def _record_moderation_event(
     )
 
 
+def _approval_deadline(deadline, *, required):
+    """Validate the deadline a reviewer sets while approving, if any."""
+    if deadline is None:
+        if required:
+            raise ValidationError({'deadline': 'Chọn hạn nhận hồ sơ mới để duyệt tin đã quá hạn.'})
+        return None
+    if deadline_error := job_deadline_error(deadline):
+        raise ValidationError({'deadline': deadline_error})
+    return deadline
+
+
 @transaction.atomic
-def approve_job(*, job, user, review_token=''):
+def approve_job(*, job, user, review_token='', deadline=None):
     """Make one pending job public after an administrator approves its revision."""
-    lock_account_for_write(job.posted_by)
+    stale_posted_by_id = job.posted_by_id
+    stale_company_id = job.company_id
+    stale_campaign_id = job.campaign_id
+    employer_approval_state = recruiter_job_approval_state(
+        job.posted_by,
+        company_id=stale_company_id,
+        lock=True,
+    )
+    locked_campaign = None
+    if stale_campaign_id:
+        try:
+            locked_campaign = RecruitmentCampaign.objects.select_for_update(of=('self',)).get(
+                pk=stale_campaign_id
+            )
+        except RecruitmentCampaign.DoesNotExist as error:
+            raise JobModerationStale() from error
     job = (
         Job.objects.select_for_update(of=('self',))
         .select_related('posted_by', 'campaign')
         .get(pk=job.pk)
     )
+    if (
+        job.posted_by_id != stale_posted_by_id
+        or job.company_id != stale_company_id
+        or job.campaign_id != stale_campaign_id
+    ):
+        raise JobModerationStale()
+    if locked_campaign is not None:
+        job.campaign = locked_campaign
     _verify_review_token(job, review_token)
     if job.status != Job.Status.PENDING:
         raise ValidationError('Chỉ có thể duyệt tin đang chờ duyệt.')
-    state = job_moderation_state(job)
-    if state['blocked_reasons']:
+    state = job_moderation_state(job, employer_approval_state=employer_approval_state)
+    if state['approve_blockers']:
         raise ValidationError(
-            {'detail': 'Không thể duyệt tin.', 'blocked_reasons': state['blocked_reasons']}
+            {
+                'code': 'JOB_APPROVAL_BLOCKED',
+                'detail': 'Không thể duyệt tin.',
+                'blocked_reasons': state['approve_blockers'],
+            }
         )
+    new_deadline = _approval_deadline(deadline, required=bool(state['approve_requirements']))
 
     fingerprint = job_content_fingerprint(job)
     now = timezone.now()
+    note = ''
+    update_fields = [
+        'status',
+        'approved_at',
+        'published_at',
+        'rejected_reason',
+        'approved_snapshot',
+        'approved_snapshot_at',
+        'updated_at',
+    ]
+    update_fields.extend(initialize_job_visibility(job, approved_at=now))
+    if new_deadline and new_deadline != job.deadline:
+        note = f'Duyệt kèm gia hạn hạn nhận hồ sơ đến {new_deadline:%d/%m/%Y}.'
+        job.deadline = new_deadline
+        update_fields.append('deadline')
     job.status = Job.Status.ACTIVE
     job.approved_at = now
     job.published_at = now
     job.rejected_reason = ''
-    job.save(
-        update_fields=['status', 'approved_at', 'published_at', 'rejected_reason', 'updated_at']
-    )
+    job.approved_snapshot = build_job_content_snapshot(job)
+    job.approved_snapshot_at = now
+    job.save(update_fields=update_fields)
     _record_status(
         job,
         from_status=Job.Status.PENDING,
         to_status=Job.Status.ACTIVE,
         user=user,
+        note=note,
         actor_role=JobStatusHistory.ActorRole.ADMIN,
     )
     _record_moderation_event(
@@ -164,6 +259,7 @@ def approve_job(*, job, user, review_token=''):
         action=JobModerationEvent.Action.APPROVE,
         actor=user,
         fingerprint=fingerprint,
+        note=note,
         from_status=Job.Status.PENDING,
         to_status=Job.Status.ACTIVE,
     )
@@ -260,6 +356,45 @@ def hide_job_visibility(
         from_hold=previous_hold,
         to_hold=hold,
         source_report=source_report,
+    )
+    return job
+
+
+@transaction.atomic
+def apply_confirmed_report_hold(*, job, actor, report, note):
+    """Apply the durable visibility hold caused by an upheld trust report.
+
+    This intentionally has no inverse in the report reversal flow: reversing a
+    moderation conclusion restores badge eligibility, while republishing a job
+    remains an explicit, separately audited administrator decision.
+    """
+    job = (
+        Job.objects.select_for_update(of=('self',))
+        .select_related('posted_by', 'campaign')
+        .get(pk=job.pk)
+    )
+    if report.job_id != job.pk:
+        raise ValidationError({'report': 'Báo cáo không thuộc tin này.'})
+    if job.status != Job.Status.ACTIVE:
+        return job
+    if job.moderation_hold == Job.ModerationHold.CONFIRMED_VIOLATION:
+        return job
+
+    fingerprint = job_content_fingerprint(job)
+    previous_hold = job.moderation_hold
+    job.moderation_hold = Job.ModerationHold.CONFIRMED_VIOLATION
+    job.moderation_held_at = timezone.now()
+    job.save(update_fields=['moderation_hold', 'moderation_held_at', 'updated_at'])
+    _record_moderation_event(
+        job=job,
+        action=JobModerationEvent.Action.HIDE,
+        actor=actor,
+        fingerprint=fingerprint,
+        reason_code=JobModerationEvent.Reason.CONFIRMED_REPORT,
+        note=note,
+        from_hold=previous_hold,
+        to_hold=Job.ModerationHold.CONFIRMED_VIOLATION,
+        source_report=report,
     )
     return job
 

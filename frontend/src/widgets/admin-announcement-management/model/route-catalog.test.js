@@ -37,6 +37,16 @@ describe('announcement route catalog', () => {
     )
   })
 
+  it('offers the company directory as a public candidate CTA', () => {
+    expect(announcementCtaRouteInfo('/cong-ty')).toEqual(
+      expect.objectContaining({
+        access: 'public',
+        surface: ANNOUNCEMENT_SURFACES.CANDIDATE,
+        surfaceLabel: 'Ứng viên',
+      }),
+    )
+  })
+
   it('builds route-prefix choices instead of requiring operators to guess', () => {
     const groups = announcementPrefixRouteGroups([
       ANNOUNCEMENT_SURFACES.CANDIDATE,

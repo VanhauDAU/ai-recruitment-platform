@@ -118,11 +118,10 @@ export const EMPLOYER_NAV_ITEMS = [
     disabled: true,
   },
   {
-    key: 'coming-services',
+    key: employerAppPath('/services'),
     icon: <ToolOutlined />,
-    label: comingSoonLabel('Dịch vụ của tôi'),
-    title: 'Dịch vụ của tôi — Sắp mở',
-    disabled: true,
+    label: 'Dịch vụ của tôi',
+    title: 'Dịch vụ của tôi',
   },
   {
     key: 'coming-coupons',
@@ -133,11 +132,10 @@ export const EMPLOYER_NAV_ITEMS = [
   },
   { type: 'divider' },
   {
-    key: 'coming-activity',
+    key: employerAppPath('/activities'),
     icon: <HistoryOutlined />,
-    label: comingSoonLabel('Lịch sử hoạt động'),
-    title: 'Lịch sử hoạt động — Sắp mở',
-    disabled: true,
+    label: 'Lịch sử hoạt động',
+    title: 'Lịch sử hoạt động',
   },
   {
     key: employerAppPath('/account/settings/account-info'),
@@ -147,18 +145,20 @@ export const EMPLOYER_NAV_ITEMS = [
   },
   { type: 'divider' },
   {
-    key: 'coming-system-notifications',
+    key: employerAppPath('/notifications'),
     icon: <NotificationOutlined />,
-    label: comingSoonLabel('Thông báo hệ thống'),
-    title: 'Thông báo hệ thống — Sắp mở',
-    disabled: true,
+    label: 'Thông báo hệ thống',
+    title: 'Thông báo hệ thống',
   },
 ]
 
 const ROUTE_TITLES = [
   [employerAppPath('/dashboard'), 'Bảng tin'],
+  [employerAppPath('/notifications'), 'Thông báo hệ thống'],
+  [employerAppPath('/activities'), 'Lịch sử hoạt động'],
   [employerAppPath('/campaigns'), 'Chiến dịch tuyển dụng'],
   [employerAppPath('/jobs'), 'Tin tuyển dụng'],
+  [employerAppPath('/services'), 'Dịch vụ của tôi'],
   [employerAppPath('/applications'), 'Hồ sơ ứng tuyển'],
   [employerAppPath('/employer-verify'), 'Xác thực tài khoản'],
   [employerAppPath('/account/phone-verify'), 'Xác thực số điện thoại'],

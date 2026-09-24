@@ -45,6 +45,8 @@ function ensureHook() {
       else node.removeAttribute('style')
     }
     if (node.tagName === 'IMG') {
+      const source = node.getAttribute('src') || ''
+      if (source.startsWith('https://')) node.setAttribute('referrerpolicy', 'no-referrer')
       const width = node.getAttribute('data-width')
       const alignment = node.getAttribute('data-align')
       if (width && !['25%', '50%', '75%', '100%'].includes(width)) node.removeAttribute('data-width')

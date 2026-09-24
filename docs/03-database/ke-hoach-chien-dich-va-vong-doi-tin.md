@@ -14,6 +14,9 @@ tài liệu đó không thay đổi hành vi nào mô tả tại đây.
 - Mỗi chiến dịch, tin tuyển dụng và hồ sơ ứng tuyển thuộc **một recruiter cụ
   thể**. Chỉ người đã tạo tin được xem, sửa, đóng, gia hạn, sao chép tin và xử
   lý các hồ sơ của tin đó. Cùng công ty không tạo quyền xem chung.
+- Kho lượt dịch vụ được cấp cho công ty, nhưng mọi activation, lịch sử và action
+  dịch vụ đều theo owner của tin. Recruiter không thấy hoặc sử dụng activation
+  trên tin do đồng nghiệp cùng công ty đăng.
 - Công ty vẫn là thực thể pháp lý/công khai của tin, nhưng không phải tenant
   nghiệp vụ cho module này.
 - Mọi tin gửi mới phải qua duyệt của admin: `draft → pending → active` hoặc
@@ -31,7 +34,10 @@ tài liệu đó không thay đổi hành vi nào mô tả tại đây.
   được kiểm tra khi gửi tin tuyển dụng để duyệt.
 - Chiến dịch tạo nhanh được mở ngay. Dừng chiến dịch chỉ thay đổi trạng thái
   workspace, **không tự đóng tin tuyển dụng**; vòng đời và kiểm duyệt của từng
-  tin vẫn độc lập. Chiến dịch đã hủy là trạng thái cuối, không được mở lại.
+  tin vẫn độc lập. Dịch vụ đã kích hoạt tiếp tục chạy theo clock, không được hoàn
+  lượt hoặc cộng lại thời gian vì chiến dịch tạm dừng. UI phải hiển thị tác động
+  này trước khi xác nhận. Chiến dịch đã hủy là trạng thái cuối, không được mở
+  lại.
 
 ## Phạm vi sản phẩm sau khi đối chiếu TopCV
 
@@ -50,15 +56,19 @@ lý đó nhưng chỉ hiển thị chức năng đã có domain và dữ liệu 
    tiêu và thao tác xem, đăng tin, dừng/mở lại.
 4. Chi tiết gồm Tổng quan, CV ứng tuyển và Tin tuyển dụng. Tổng quan dùng phễu
    hồ sơ, lượt xem, tiến độ mục tiêu và số CV bảy ngày từ dữ liệu hiện có.
-5. Mobile dùng card theo chiến dịch; desktop dùng bảng. Không bắt người dùng
+5. Tab Dịch vụ trong chiến dịch và tin hiển thị activation còn hiệu lực, quyền
+   lợi còn lại, thời gian chạy và số liệu quy thuộc; dashboard “Dịch vụ của tôi”
+   bổ sung kho lượt và lịch sử của recruiter.
+6. Mobile dùng card theo chiến dịch; desktop dùng bảng. Không bắt người dùng
    cuộn ngang chỉ để thực hiện các thao tác chính trên màn hình nhỏ.
 
 ### Chưa triển khai
 
 - `CV đề xuất`, `CV tìm kiếm`, ứng viên đã xem tin và CV đang theo dõi: chờ
   workflow kết nối ứng viên/kho CV và contract quyền riêng tư hoàn chỉnh.
-- Credit, lượt mở liên hệ, gói dịch vụ đang chạy và kích hoạt dịch vụ: chờ
-  billing/service entitlement, không hiển thị số 0 giả.
+- Thanh toán/checkout, hóa đơn và credit mở liên hệ: chờ billing contract hoàn
+  chỉnh. Kho lượt, activation và lịch sử dịch vụ đã dùng service entitlement
+  thật; không tạo số dư hoặc giao dịch giả.
 - Điểm tối ưu/AI recommendation: chỉ làm khi có bộ tiêu chí giải thích được và
   dữ liệu đo lường; không tự tạo phần trăm mang tính trang trí.
 - Nhãn CV theo chiến dịch và báo cáo chuyển đổi hiển thị→xem→ứng tuyển: chờ
@@ -77,8 +87,14 @@ và [chi tiết chiến dịch](https://tuyendung.topcv.vn/help/dinh-nghia/chi-t
 | `job_status_history` | `Job` | Audit chuyển trạng thái tin, actor (`employer`/`admin`) và ghi chú/lý do từ chối. |
 | `applications.employer_rating` | `Application` | Điểm nội bộ 1–5, không trả cho ứng viên. |
 | `application_status_history` | `Application` | Audit trạng thái, actor, ghi chú nội bộ; được dùng làm timeline ứng viên với DTO đã lọc. |
+| `services_serviceentitlementunit` | `Company` | Một lượt dịch vụ có thể dùng đúng một lần, có nguồn cấp, snapshot phiên bản và hạn bắt đầu `activate_by`. |
+| `services_jobserviceactivation` | `Job.posted_by` qua `Job` | Bản ghi bất biến gắn một unit đã consume với một tin, lưu `starts_at`, `ends_at`, trạng thái và lý do dừng. |
+| `services_jobserviceactivationitem` | `JobServiceActivation` | Snapshot từng capability, tổng số lượng, số còn lại và cửa sổ hiệu lực riêng. |
+| `services_jobpromotionmetricdaily` | `JobServiceActivation` | Aggregate theo ngày cho impression, view, save và apply được quy thuộc vào activation tài trợ. |
+| `services_serviceauditevent` | Nghiệp vụ service | Audit grant/consume/activation/action/terminate; giữ actor, công ty và subject liên quan. |
 
-Các migration liên quan: `employers.0016`–`0018`, `jobs.0020`–`0023`, `applications.0010`.
+Các migration liên quan: `employers.0016`–`0018`, `jobs.0020`–`0023`,
+`applications.0010`, `services.0001`–`0010`.
 
 ## Vòng đời tin
 
@@ -104,6 +120,37 @@ từ chối ── chỉnh sửa và gửi lại ──> chờ duyệt
   thị là “Hết hạn” trong workspace. Nó không nhận thêm ứng tuyển.
 - Chỉnh sửa tin `active` đưa tin về `pending`, nên bản sửa chỉ hiện sau lần
   duyệt tiếp theo. Chỉnh sửa tin `pending` giữ nguyên hàng chờ.
+
+## Vòng đời dịch vụ trên tin và chiến dịch
+
+Ba clock độc lập, không được suy một clock từ clock khác:
+
+| Clock | Mốc canonical | Ý nghĩa runtime |
+| --- | --- | --- |
+| Nhận hồ sơ | `Job.deadline` / projection `application_deadline` | Ngày cuối nhận ứng tuyển theo `Asia/Ho_Chi_Minh`. |
+| Công khai tin | `visibility_starts_at`, `visibility_ends_at`, `max_visibility_ends_at` | Mặc định gợi ý 30 ngày; các lần gia hạn vẫn không vượt tổng public cycle 90 ngày. |
+| Dịch vụ | `ServiceEntitlementUnit.activate_by`, `JobServiceActivation.starts_at`, `ends_at` | Unit phải bắt đầu đúng hạn; activation đã bắt đầu chạy liên tục đến `ends_at`. |
+
+`status=active` trong DB là trạng thái ledger, không đủ để kết luận dịch vụ đang
+chạy. Selector và UI dùng điều kiện `starts_at <= now < ends_at`; vì vậy dữ liệu
+chưa được worker chuyển sang `expired` vẫn được trình bày đúng là đã kết thúc.
+Tương tự, unit có `status=available` nhưng đã qua `activate_by` không thể consume.
+
+Kích hoạt chỉ hợp lệ khi tin thuộc recruiter đang đăng nhập, đang công khai,
+không bị hold, cùng công ty với unit và đủ thời gian cho toàn bộ capability.
+Preview cho biết hạn nhận hồ sơ/thời gian công khai cần tăng; confirm revalidate
+dưới lock và chỉ gia hạn khi recruiter xác nhận. Mọi gia hạn vẫn bị chặn bởi
+public lifetime 90 ngày và `campaign.target_date` nếu tin thuộc chiến dịch.
+
+Dừng/tạm dừng chiến dịch, đóng tin hoặc sửa tin khiến tin tạm ẩn không pause
+activation. Thời gian không được cộng lại và unit đã consume không tự hoàn. Nếu
+gián đoạn do nền tảng cần bù, admin cấp unit mới với source `compensation`; không
+sửa ngược ledger cũ.
+
+Metrics quảng bá được aggregate theo activation và ngày. Các số impression,
+view, save, apply là số event được **quy thuộc vào activation**, không chứng minh
+mức tăng thuần so với organic. Khi chưa có hàng metrics, API trả
+`metrics.available=false` và UI hiển thị `—`, không hiển thị số 0 giả.
 
 ## Pipeline nội bộ và trải nghiệm ứng viên
 
@@ -144,8 +191,10 @@ nhưng sử dụng đúng domain hiện có của hệ thống:
    kỹ năng bắt buộc/ưu tiên và nhiều ngoại ngữ tùy chọn.
 4. **Thông tin nhận hồ sơ:** hạn nhận hồ sơ, số lượng tuyển, họ tên, điện thoại,
    tối đa năm email nhận thông báo và chiến dịch tùy chọn.
-5. **Dịch vụ và gia tăng hiệu quả:** xác nhận tin cơ bản không phát sinh chi
-   phí. Gói trả phí chưa triển khai và không tạo dữ liệu/dịch vụ giả.
+5. **Dịch vụ và gia tăng hiệu quả:** trong lúc tạo chỉ xác nhận tin cơ bản không
+   phát sinh chi phí. Sau khi tin được duyệt và đang công khai, recruiter kích
+   hoạt unit thật tại tab `Dịch vụ & hiệu quả`; không chọn gói trả phí giả trong
+   form tạo tin.
 
 Desktop rộng hiển thị tiến độ theo nhóm và bản xem trước cạnh form; màn hình
 hẹp hơn đưa tiến độ lên trên hoặc dùng hai cột, ẩn preview bên cạnh và không
@@ -156,10 +205,11 @@ duyệt.
 
 - Campaign: `/api/employer/campaigns/` cùng `options/`, `suggestions/`,
   `from-need/{public_id}/`, `{public_id}/status/`, `{public_id}/report/`.
-  Modal tạo nhanh chỉ nhận `name` và có thể submit bằng Enter; không kiểm tra
-  công ty/xác thực. Sau khi tạo, UI yêu cầu chọn hoạt động “Đăng tin tuyển
-  dụng” hoặc mở workspace; không hiển thị CTA tìm CV cho đến khi có workflow
-  kho CV thật.
+  Modal tạo nhanh chỉ nhận `name` và có thể submit bằng Enter. Backend yêu cầu
+  `job_workspace_ready=true` cho cả read workspace và mutation; direct API
+  không thể bỏ qua frontend guard. Sau khi tạo, UI yêu cầu chọn hoạt động “Đăng
+  tin tuyển dụng” hoặc mở workspace; không hiển thị CTA tìm CV cho đến khi có
+  workflow kho CV thật.
 - Job workspace: `/api/jobs/mine/`, `posting-context/`, `submit/`, `close/`,
   `reopen/`, `extend/`, `duplicate/`.
 - Admin moderation: `/api/jobs/admin/moderation/` và
@@ -167,11 +217,47 @@ duyệt.
   kèm `reason`).
 - Candidate: `GET/POST /api/v2/applications/` trả nhãn/timeline công khai.
 - Recruiter: `/api/v2/recruiter/applications/`, detail update, `cv/` snapshot
-  và `history/`. Tất cả truy vấn luôn lọc `job__posted_by=request.user`.
+  và `history/`. Tất cả truy vấn luôn lọc `job__posted_by=request.user` và yêu
+  cầu `candidate_data_access=true`.
+- Employer services: `/api/services/mine/inventory/`, `mine/activations/`,
+  `mine/activation-history/`, `activations/preview/`, `activations/` cùng action
+  `refresh/` và `job-alerts/`. Activation/history/action luôn lọc owner của tin;
+  active list lọc thêm hiệu lực theo clock.
+- Admin services: `/api/services/admin/activations/`, `activations/summary/` và
+  `activations/{public_id}/terminate/`. Admin có thể lọc theo công ty, trạng thái,
+  mã tin hoặc mã chiến dịch; terminate bắt buộc lý do, ghi audit và không tự hoàn
+  unit.
+
+`GET /api/jobs/mine/posting-context/` là endpoint compliance duy nhất của
+workspace vẫn đọc được khi chưa ready; response trả blocker/action để client
+điều hướng khắc phục. Job/campaign list/detail/options/report/performance/
+activity bị chặn authoritative với `EMPLOYER_WORKSPACE_BLOCKED` khi workspace
+không sẵn sàng. Verification chưa approved không tự khóa workspace; nó khóa
+candidate data và admin approval. Candidate preview/activity metadata chỉ có
+PII/deep-link khi candidate access hợp lệ.
+
+Write transaction theo lock order `User → Recruiter → Verification → Campaign
+→ Job → Application`. Nếu campaign đổi hoặc bị xóa giữa scope read và row lock,
+service fail closed bằng stale/resource-changed error thay vì tiếp tục trên row
+không được khóa.
+
+ER-5 bổ sung verification compliance hold theo recruiter và liên kết tường minh
+tới campaign/job. Hold không đổi business status, không ghi đè `policy_hold` hay
+`moderation_hold`; public job filter loại job có verification hold active. Khi
+reapprove, service chỉ release hold cùng source và giữ nguyên mọi DPA/account/
+moderation hold khác. Cả approve job và revoke/expire dùng cùng lock prefix
+`User → Recruiter → Verification`, sau đó khóa campaign/job theo PK để kết quả
+commit trước luôn được đường còn lại đọc và recheck.
 
 Frontend đặt route-level composition ở `pages/employer` và `pages/main`; action
 tạo chiến dịch/đăng tin ở `features`; API/domain dùng lại ở `entities`. Xem
 `frontend/ARCHITECTURE.md` để biết quy tắc import/layer.
+
+Employer có route `/tuyendung/app/services` với ba tab `Đang chạy`, `Chưa sử
+dụng`, `Lịch sử`. Cùng projection được compose trong tab `Dịch vụ & hiệu quả`
+của chi tiết tin và tab `Dịch vụ` của chiến dịch. Admin quản lý danh sách,
+thống kê, filter và dừng activation tại tab `Dịch vụ đang chạy`; cấp/thu hồi
+unit và audit ở `Kho lượt & lịch sử`.
 
 Sidebar “Quản lý CV” là submenu gồm “Quản lý nhãn CV” và “Quản lý yêu cầu kết
 nối CV”. Hai mục được hiển thị disabled rõ ràng khi workflow chưa tồn tại; không
@@ -184,4 +270,18 @@ tạo route hoặc thông báo thành công giả.
   hết hạn và sao chép recipient.
 - Candidate không nộp được tin hết hạn; public list/detail không lộ tin hết hạn.
 - Chuyển pipeline hợp lệ/không hợp lệ, timeline đã lọc cho ứng viên và query
-budget danh sách ứng tuyển.
+  budget danh sách ứng tuyển.
+- Direct GET job/campaign: account mới và DPA hold trả 403; verification
+  pending/changes-requested với DPA current vẫn đọc được workspace.
+- Candidate list/export/history/CV asset: thiếu candidate access trả 403;
+  recruiter khác nhận 404 và token asset recheck quyền live.
+- Inventory cùng công ty không làm mất owner boundary: recruiter khác không
+  preview/activate/xem history hoặc dùng action trên activation của tin.
+- Active service list dùng clock thay vì chỉ dùng status; pause chiến dịch không
+  hoàn unit/thời gian; admin terminate bắt buộc lý do, audit và không hoàn tự
+  động.
+- Metrics chưa có dữ liệu giữ `available=false`; số liệu có dữ liệu được
+  aggregate đúng theo activation và không được trình bày như uplift organic.
+- Query budget employer job list là 5 query và campaign list là 4 query, đều
+  phẳng theo số row; activation list/history cũng phải giữ query count phẳng theo
+  số activation và số item.

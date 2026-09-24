@@ -57,3 +57,19 @@ export async function getAdminAnnouncementMetrics(publicId, params = {}, { signa
   )
   return normalizeAdminAnnouncementMetrics(result)
 }
+
+export async function uploadAdminAnnouncementBackground(file) {
+  const body = new FormData()
+  body.append('file', file)
+  const result = await data(
+    api.post('/site/admin/announcements/backgrounds/', body, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
+  )
+  return {
+    path: result.path || '',
+    url: result.url || '',
+    width: result.width,
+    height: result.height,
+  }
+}

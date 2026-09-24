@@ -35,8 +35,6 @@ const PROFILE = {
       markets: ['domestic', 'asia'],
       target_customers: ['b2b'],
       has_brand_page: true,
-      verification_status: 'verified',
-      rejected_reason: '',
       industries: [{ name: 'Agency (Design/Development)' }],
       description: '<p><strong>Tập đoàn SMBC</strong></p><script>alert(1)</script>',
       employee_benefits: '',
@@ -94,7 +92,6 @@ describe('AccountProfilePanel', () => {
     expect(screen.queryByText('Hồ sơ nhà tuyển dụng')).not.toBeInTheDocument()
     expect(screen.getByText('Doanh nghiệp')).toBeInTheDocument()
     expect(screen.getByText('500 - 1000 nhân viên')).toBeInTheDocument()
-    expect(screen.getByText('Đã xác thực')).toBeInTheDocument()
     // Mảng từng bị lọc bỏ vì `typeof value === 'object'`.
     expect(screen.getByText('Nội địa, Châu Á')).toBeInTheDocument()
     expect(screen.getByText('B2B')).toBeInTheDocument()

@@ -1,6 +1,7 @@
 from .announcements import (
     ActiveAnnouncementListView,
     AdminAnnouncementArchiveView,
+    AdminAnnouncementBackgroundUploadView,
     AdminAnnouncementDetailView,
     AdminAnnouncementDuplicateView,
     AdminAnnouncementListCreateView,
@@ -32,6 +33,7 @@ __all__ = [
     'AnnouncementRuntimeEventView',
     'AnnouncementStateView',
     'AdminAnnouncementArchiveView',
+    'AdminAnnouncementBackgroundUploadView',
     'AdminAnnouncementDetailView',
     'AdminAnnouncementDuplicateView',
     'AdminAnnouncementListCreateView',

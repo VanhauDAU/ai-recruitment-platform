@@ -9,10 +9,14 @@ import DashboardLayout from './DashboardLayout'
 const {
   getAdminAccountSummary,
   getAdminCompanySummary,
+  getAdminCompanyDomainClaimSummary,
+  getAdminEmployerVerificationSummary,
   useSession,
 } = vi.hoisted(() => ({
   getAdminAccountSummary: vi.fn(),
   getAdminCompanySummary: vi.fn(),
+  getAdminCompanyDomainClaimSummary: vi.fn(),
+  getAdminEmployerVerificationSummary: vi.fn(),
   useSession: vi.fn(),
 }))
 vi.mock('@/entities/session', () => ({ useSession }))
@@ -23,6 +27,11 @@ vi.mock('@/entities/admin-account', async (importOriginal) => ({
 vi.mock('@/entities/admin-company', async (importOriginal) => ({
   ...(await importOriginal()),
   getAdminCompanySummary,
+}))
+vi.mock('@/entities/admin-employer-verification', async (importOriginal) => ({
+  ...(await importOriginal()),
+  getAdminCompanyDomainClaimSummary,
+  getAdminEmployerVerificationSummary,
 }))
 vi.mock('@/entities/site-settings', () => ({
   BrandLogo: () => <span>Logo</span>,
@@ -47,19 +56,13 @@ function renderDashboard(ui) {
 describe('DashboardLayout admin access', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    getAdminAccountSummary.mockImplementation(({ scope }) => Promise.resolve(
-      scope === 'recruiters'
-        ? {
-          totals: { restricted: 2 },
-          verification: { pending: 3 },
-        }
-        : {
-          totals: { restricted: 4 },
-          queues: { pending_admin_invitations: 5 },
-        },
-    ))
+    getAdminAccountSummary.mockResolvedValue({
+      totals: { restricted: 4 },
+      queues: { pending_admin_invitations: 5 },
+    })
+    getAdminEmployerVerificationSummary.mockResolvedValue({ pending: 3 })
+    getAdminCompanyDomainClaimSummary.mockResolvedValue({ manual_pending: 2 })
     getAdminCompanySummary.mockResolvedValue({
-      verification: { pending: 6 },
       pending_update_requests: 7,
     })
   })
@@ -123,7 +126,8 @@ describe('DashboardLayout admin access', () => {
     expect(homeButton).toHaveAttribute('aria-current', 'page')
     expect(homeButton).not.toHaveAttribute('aria-expanded')
     expect(personalAccountButton).not.toHaveAttribute('aria-expanded')
-    expect(screen.queryByText('Bảng điều khiển')).not.toBeInTheDocument()
+    const navigation = screen.getByRole('navigation', { name: 'Điều hướng quản trị' })
+    expect(within(navigation).queryByText('Bảng điều khiển')).not.toBeInTheDocument()
     expect(screen.queryByText('Thông tin cá nhân')).not.toBeInTheDocument()
 
     expect(screen.getByText('Nội dung & dịch vụ')).toBeInTheDocument()
@@ -223,7 +227,7 @@ describe('DashboardLayout admin access', () => {
     expect(contentSection).toHaveAttribute('aria-expanded', 'false')
   })
 
-  it('shows highlighted two-digit queue counts in submenu items', async () => {
+  it('shows compact queue counts in submenu items', async () => {
     const user = userEvent.setup()
     useSession.mockReturnValue({
       user: {
@@ -242,23 +246,25 @@ describe('DashboardLayout admin access', () => {
     const usersMenu = screen.getByRole('button', { name: /Người dùng/ })
     expect(
       await within(usersMenu).findByLabelText('5 mục đang chờ'),
-    ).toHaveTextContent('05')
+    ).toHaveTextContent('5')
 
     const businessMenu = screen.getByRole('button', { name: /Doanh nghiệp/ })
     expect(
-      await within(businessMenu).findByLabelText('16 mục đang chờ'),
-    ).toHaveTextContent('16')
+      await within(businessMenu).findByLabelText('12 mục đang chờ'),
+    ).toHaveTextContent('12')
     await user.click(businessMenu)
-    expect(within(businessMenu).queryByLabelText('16 mục đang chờ')).not.toBeInTheDocument()
+    expect(within(businessMenu).queryByLabelText('10 mục đang chờ')).not.toBeInTheDocument()
 
     const recruiterMenu = screen.getByRole('button', { name: /^Nhà tuyển dụng/ })
-    expect(within(recruiterMenu).getByLabelText('3 mục đang chờ')).toHaveTextContent('03')
+    expect(within(recruiterMenu).getByLabelText('5 mục đang chờ')).toHaveTextContent('5')
     await user.click(recruiterMenu)
     expect(within(recruiterMenu).queryByLabelText('3 mục đang chờ')).not.toBeInTheDocument()
 
     const badge = await screen.findByLabelText('3 mục đang chờ')
-    expect(badge).toHaveTextContent('03')
+    expect(badge).toHaveTextContent('3')
     expect(badge).toHaveClass('admin-nav__count')
+    expect(screen.getByRole('button', { name: /Xác minh tên miền/ }))
+      .toHaveTextContent('2')
 
     const restrictedRecruiters = screen.getByRole('button', { name: 'NTD bị hạn chế' })
     expect(restrictedRecruiters.querySelector('.admin-nav__count')).toBeNull()
@@ -334,8 +340,12 @@ describe('DashboardLayout admin access', () => {
 
     await user.click(screen.getByRole('button', { name: 'Đăng xuất' }))
 
-    expect(await screen.findByText('Đăng xuất khỏi phiên này?')).toBeInTheDocument()
+    const confirmation = await screen.findByRole('dialog', { name: 'Đăng xuất' })
+    expect(within(confirmation).getByText(/Bạn có chắc muốn đăng xuất khỏi phiên này/)).toBeInTheDocument()
     expect(logout).not.toHaveBeenCalled()
+
+    await user.click(within(confirmation).getByRole('button', { name: 'Đăng xuất' }))
+    expect(logout).toHaveBeenCalledOnce()
   })
 
   it('inherits the primary color from the application theme', () => {

@@ -1,96 +1,54 @@
-from django.db.models import Case, F, IntegerField, Q, When
+from django.conf import settings
+from django.db.models import (
+    BigIntegerField,
+    Case,
+    DateTimeField,
+    F,
+    IntegerField,
+    OuterRef,
+    Q,
+    Subquery,
+    When,
+)
 from django.db.models.functions import Coalesce
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
+from apps.services.models import JobServiceUsageEvent
 from common.db.search import fold_accents, search_q
 
 from ..models import Job, JobCategory
+from ..models.querysets import (
+    SALARY_BUCKETS,
+    active_jobs_queryset,
+    filter_salary_bucket_queryset,
+    publicly_available_job_filter,
+)
+from .presentation import with_effective_service_presentations
 
-SALARY_BUCKETS = [
-    ('u10', 'Dưới 10 triệu', None, 10_000_000),
-    ('10-15', '10 - 15 triệu', 10_000_000, 15_000_000),
-    ('15-20', '15 - 20 triệu', 15_000_000, 20_000_000),
-    ('20-25', '20 - 25 triệu', 20_000_000, 25_000_000),
-    ('25-30', '25 - 30 triệu', 25_000_000, 30_000_000),
-    ('30-50', '30 - 50 triệu', 30_000_000, 50_000_000),
-    ('o50', 'Trên 50 triệu', 50_000_000, None),
+__all__ = [
+    'SALARY_BUCKETS',
+    'active_jobs_queryset',
+    'filter_job_list_queryset',
+    'filter_salary_bucket',
+    'publicly_available_job_filter',
 ]
+
 TRUTHY_VALUES = {'1', 'true', 'True'}
-
-
-def publicly_available_job_filter():
-    """One canonical availability predicate for every candidate-facing path."""
-    return (
-        Q(status=Job.Status.ACTIVE)
-        & Q(policy_hold=Job.PolicyHold.NONE)
-        & Q(moderation_hold=Job.ModerationHold.NONE)
-        & Q(
-            posted_by__status='active',
-            posted_by__is_active=True,
-            posted_by__is_deleted=False,
-        )
-        & (Q(deadline__isnull=True) | Q(deadline__gte=timezone.localdate()))
-        & (
-            Q(campaign__isnull=True)
-            | Q(
-                campaign__status='active',
-                campaign__policy_hold='',
-                campaign__owner__user__status='active',
-                campaign__owner__user__is_active=True,
-                campaign__owner__user__is_deleted=False,
-            )
-        )
-    )
+JOB_LIST_ORDERINGS = {'newest', 'salary_desc', 'urgent'}
 
 
 def filter_salary_bucket(queryset, bucket_key):
     """Filter jobs by the upper value displayed for a salary band."""
-    bucket = next((item for item in SALARY_BUCKETS if item[0] == bucket_key), None)
-    if not bucket:
-        raise ValidationError({'salary_bucket': 'Invalid salary bucket.'})
-
-    _, _, lower, upper = bucket
-    queryset = (
-        queryset.exclude(salary_type=Job.SalaryType.NEGOTIABLE)
-        .exclude(salary_min__isnull=True, salary_max__isnull=True)
-        .annotate(salary_bucket_value=Coalesce('salary_max', 'salary_min'))
-    )
-    if lower is not None:
-        queryset = queryset.filter(salary_bucket_value__gt=lower)
-    if upper is not None:
-        queryset = queryset.filter(salary_bucket_value__lte=upper)
-    return queryset
-
-
-def active_jobs_queryset(include_preview=False):
-    """Public jobs with only relations required by the selected response contract."""
-    relations = [
-        'category_assignments__category',
-        'job_locations__location__parent',
-        'job_skills__skill',
-    ]
-    if include_preview:
-        relations.extend(['job_benefits__benefit', 'work_schedules'])
-    queryset = (
-        Job.objects.filter(publicly_available_job_filter())
-        .select_related('company', 'campaign', 'posted_by', 'posted_by__recruiter_profile')
-        .prefetch_related(*relations)
-    )
-    if not include_preview:
-        queryset = queryset.defer(
-            'description',
-            'requirements',
-            'benefits',
-            'work_schedule_note',
-            'rejected_reason',
-        )
-    return queryset
+    try:
+        return filter_salary_bucket_queryset(queryset, bucket_key)
+    except ValueError as error:
+        raise ValidationError({'salary_bucket': 'Invalid salary bucket.'}) from error
 
 
 def active_job_detail_queryset():
     """Return active jobs with every relation required by the detail serializer."""
-    return (
+    queryset = (
         Job.objects.filter(publicly_available_job_filter())
         .select_related('company', 'campaign', 'posted_by', 'posted_by__recruiter_profile')
         .prefetch_related(
@@ -103,6 +61,7 @@ def active_job_detail_queryset():
             'company__industries',
         )
     )
+    return with_effective_service_presentations(queryset)
 
 
 def active_job_tracking_queryset(slugs):
@@ -153,6 +112,12 @@ def _filter_salary(queryset, params):
         return queryset.filter(salary_type=Job.SalaryType.NEGOTIABLE)
     if salary_bucket := params.get('salary_bucket'):
         return filter_salary_bucket(queryset, salary_bucket)
+    if params.get('salary_gte') or params.get('salary_lte'):
+        queryset = (
+            queryset.filter(currency=Job.Currency.VND)
+            .exclude(salary_type=Job.SalaryType.NEGOTIABLE)
+            .exclude(salary_min__isnull=True, salary_max__isnull=True)
+        )
     if salary_gte := params.get('salary_gte'):
         queryset = queryset.filter(
             Q(salary_max__gte=salary_gte) | Q(salary_max__isnull=True, salary_min__gte=salary_gte)
@@ -178,25 +143,84 @@ def _filter_search(queryset, params):
     return queryset.filter(search_q('title', search))
 
 
-def _order_jobs(queryset, ordering):
+def _with_latest_refresh(queryset, *, at=None):
+    """Annotate the independent refresh clock used by the default job feed.
+
+    A refresh is append-only commercial evidence.  It must never rewrite the
+    publication/lifecycle clock, and refreshing another job must not erase the
+    previous job's rank.  The event id is the deterministic tie-breaker when two
+    actions share the same timestamp (for example in a bulk operation).
+    """
+    if not getattr(settings, 'JOB_PROMOTION_REFRESH_ENABLED', False):
+        return queryset
+
+    at = at or timezone.now()
+    latest_refresh = JobServiceUsageEvent.objects.filter(
+        job_id=OuterRef('pk'),
+        event_type=JobServiceUsageEvent.EventType.REFRESH,
+        activation__status='active',
+        activation__starts_at__lte=at,
+        activation__ends_at__gt=at,
+        activation_item__starts_at__lte=at,
+        activation_item__ends_at__gt=at,
+        occurred_at__lte=at,
+    ).order_by('-occurred_at', '-id')
+    return queryset.alias(
+        latest_refresh_at=Subquery(
+            latest_refresh.values('occurred_at')[:1],
+            output_field=DateTimeField(),
+        ),
+        latest_refresh_event_id=Subquery(
+            latest_refresh.values('id')[:1],
+            output_field=BigIntegerField(),
+        ),
+    ).alias(effective_recency=Coalesce('latest_refresh_at', 'lifecycle_recency'))
+
+
+def _order_jobs(queryset, ordering, *, at=None):
+    if ordering and ordering not in JOB_LIST_ORDERINGS:
+        raise ValidationError({'ordering': 'Invalid ordering.'})
+
+    queryset = queryset.annotate(
+        lifecycle_recency=Coalesce('first_approved_at', 'published_at', 'created_at')
+    )
+    if ordering == 'newest':
+        return queryset.order_by('-lifecycle_recency', '-created_at', '-id')
     if ordering == 'salary_desc':
-        return queryset.order_by(F('salary_max').desc(nulls_last=True), '-published_at')
+        return queryset.order_by(
+            F('salary_max').desc(nulls_last=True), '-lifecycle_recency', '-created_at', '-id'
+        )
     if ordering == 'urgent':
-        return queryset.order_by('-has_flash_badge', '-published_at', '-created_at')
+        return queryset.order_by('-is_urgent', '-lifecycle_recency', '-created_at', '-id')
     tier_weight = Case(
         When(tier=Job.Tier.TOP, then=2),
         When(tier=Job.Tier.FEATURED, then=1),
         default=0,
         output_field=IntegerField(),
     )
-    return queryset.annotate(tier_weight=tier_weight).order_by(
-        '-tier_weight', '-published_at', '-created_at'
+    queryset = queryset.annotate(tier_weight=tier_weight)
+    if not getattr(settings, 'JOB_PROMOTION_REFRESH_ENABLED', False):
+        return queryset.order_by('-tier_weight', '-lifecycle_recency', '-created_at', '-id')
+
+    # Legacy tiers remain paid-first even while commercial distribution is behind
+    # its kill switch. Within one tier, a later refresh B is above A while A keeps
+    # its own timestamp; a genuinely newer publication can still move ahead.
+    return _with_latest_refresh(queryset, at=at).order_by(
+        '-tier_weight',
+        '-effective_recency',
+        F('latest_refresh_event_id').desc(nulls_last=True),
+        '-lifecycle_recency',
+        '-created_at',
+        '-id',
     )
 
 
-def build_job_list_queryset(params, include_preview=False):
-    """Apply public job-list filters and ordering to the active job queryset."""
-    queryset = active_jobs_queryset(include_preview=include_preview)
+def filter_job_list_queryset(params, include_preview=False, *, at=None):
+    """Apply the public filters shared by candidate job-list surfaces."""
+    queryset = with_effective_service_presentations(
+        active_jobs_queryset(include_preview=include_preview, at=at),
+        at=at,
+    )
     if categories := params.getlist('category'):
         queryset = _filter_categories(queryset, categories)
     if locations := params.getlist('location'):
@@ -223,4 +247,10 @@ def build_job_list_queryset(params, include_preview=False):
 
     queryset = _filter_salary(queryset, params)
     queryset = _filter_search(queryset, params)
-    return _order_jobs(queryset, params.get('ordering'))
+    return queryset
+
+
+def build_job_list_queryset(params, include_preview=False, *, at=None):
+    """Apply public job-list filters and the main search-feed ordering."""
+    queryset = filter_job_list_queryset(params, include_preview=include_preview, at=at)
+    return _order_jobs(queryset, params.get('ordering'), at=at)

@@ -1,9 +1,9 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { ConfigProvider, Modal } from 'antd'
-import { act, render, screen, waitFor, within } from '@testing-library/react'
+import { ConfigProvider } from 'antd'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, useLocation } from 'react-router'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import JobList from './JobList'
 
 const mocks = vi.hoisted(() => ({
@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   deleteEmployerJob: vi.fn(),
   duplicateEmployerJob: vi.fn(),
   getEmployerJobPage: vi.fn(),
+  readinessState: { canAccessCandidateData: true },
   message: { error: vi.fn(), success: vi.fn() },
 }))
 
@@ -28,6 +29,10 @@ vi.mock('@/entities/job', () => ({
 }))
 
 vi.mock('@/shared/lib/toast', () => ({ message: mocks.message }))
+vi.mock('@/entities/employer-profile', async (importOriginal) => ({
+  ...await importOriginal(),
+  useEmployerReadiness: () => mocks.readinessState,
+}))
 
 const ACTIVE_JOB = {
   public_id: 'job_active',
@@ -84,7 +89,7 @@ function renderPage(initialEntry = '/tuyendung/app/jobs') {
       queries: { gcTime: 0, retry: false },
     },
   })
-  return render(
+  const rendered = render(
     <ConfigProvider theme={{ token: { motion: false } }} wave={{ disabled: true }}>
       <QueryClientProvider client={queryClient}>
         <MemoryRouter initialEntries={[initialEntry]}>
@@ -94,20 +99,12 @@ function renderPage(initialEntry = '/tuyendung/app/jobs') {
       </QueryClientProvider>
     </ConfigProvider>,
   )
+  return { ...rendered, queryClient }
 }
 
 describe('JobList', () => {
-  let confirmation
-  let confirmSpy
-
-  afterEach(() => confirmSpy.mockRestore())
-
   beforeEach(() => {
-    confirmation = null
-    confirmSpy = vi.spyOn(Modal, 'confirm').mockImplementation((config) => {
-      confirmation = config
-      return { destroy: vi.fn(), update: vi.fn() }
-    })
+    mocks.readinessState.canAccessCandidateData = true
     mocks.getEmployerJobPage.mockReset().mockResolvedValue({
       count: 2,
       next: null,
@@ -126,6 +123,31 @@ describe('JobList', () => {
     })
     mocks.message.error.mockReset()
     mocks.message.success.mockReset()
+  })
+
+  it('redacts cached candidate identity and application links after access is revoked', async () => {
+    const page = renderPage()
+    const activeCard = await screen.findByTestId('job-list-item-job_active')
+    expect(within(activeCard).getByRole('link', { name: 'Mở hồ sơ Nguyễn Minh Anh' }))
+      .toBeInTheDocument()
+
+    mocks.readinessState.canAccessCandidateData = false
+    page.rerender(
+      <ConfigProvider theme={{ token: { motion: false } }} wave={{ disabled: true }}>
+        <QueryClientProvider client={page.queryClient}>
+          <MemoryRouter initialEntries={['/tuyendung/app/jobs']}>
+            <JobList />
+            <LocationProbe />
+          </MemoryRouter>
+        </QueryClientProvider>
+      </ConfigProvider>,
+    )
+
+    expect(screen.queryByText('Nguyễn Minh Anh')).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /Mở hồ sơ/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Xem hồ sơ ứng tuyển' })).not.toBeInTheDocument()
+    expect(within(screen.getByTestId('job-list-item-job_active')).getByText('3 ứng viên'))
+      .toBeInTheDocument()
   })
 
   it('renders each job as a compact data row with status, deadline and grouped candidate avatars', async () => {
@@ -251,36 +273,64 @@ describe('JobList', () => {
       expect.any(Object),
     ))
     expect(mocks.message.success).toHaveBeenCalledWith('Đã tạo bản nháp sao chép.')
+    await waitFor(() => expect(mocks.getEmployerJobPage).toHaveBeenCalledTimes(2))
 
-    await user.click(within(activeCard).getByRole('button', {
+    const refreshedActiveCard = screen.getByTestId('job-list-item-job_active')
+    await user.click(within(refreshedActiveCard).getByRole('button', {
       name: 'Mở thao tác cho Kỹ sư Frontend',
     }))
     await user.click(await screen.findByRole('menuitem', { name: /Đóng tin/ }))
-    expect(confirmation).toMatchObject({
-      title: 'Đóng tin tuyển dụng?',
-      okText: 'Đóng tin',
-    })
-    await act(async () => confirmation.onOk())
+    const closeDialog = await screen.findByRole('dialog')
+    expect(within(closeDialog).getByRole('heading', { name: 'Đóng tin tuyển dụng' }))
+      .toBeInTheDocument()
+    expect(within(closeDialog).getByText('Kỹ sư Frontend')).toBeInTheDocument()
+    expect(closeDialog).toHaveTextContent('Tin sẽ ngừng hiển thị với ứng viên.')
+    await user.click(within(closeDialog).getByRole('button', { name: 'Đóng tin' }))
     await waitFor(() => expect(mocks.closeEmployerJob).toHaveBeenCalledWith(
       'job_active',
       expect.any(Object),
     ))
     expect(mocks.message.success).toHaveBeenCalledWith('Đã đóng tin tuyển dụng.')
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    })
 
     const draftCard = screen.getByTestId('job-list-item-job_draft')
     await user.click(within(draftCard).getByRole('button', {
       name: 'Mở thao tác cho Backend Developer',
     }))
     await user.click(await screen.findByRole('menuitem', { name: /Xóa bản nháp/ }))
-    expect(confirmation).toMatchObject({
-      title: 'Xóa bản nháp này?',
-      okText: 'Xóa bản nháp',
-    })
-    await act(async () => confirmation.onOk())
+    const deleteDialog = await screen.findByRole('dialog')
+    expect(within(deleteDialog).getByRole('heading', { name: 'Xóa bản nháp' }))
+      .toBeInTheDocument()
+    expect(within(deleteDialog).getByText('Backend Developer')).toBeInTheDocument()
+    expect(within(deleteDialog).getByText(/không thể hoàn tác/)).toBeInTheDocument()
+    await user.click(within(deleteDialog).getByRole('button', { name: 'Xóa bản nháp' }))
     await waitFor(() => expect(mocks.deleteEmployerJob).toHaveBeenCalledWith(
       'job_draft',
       expect.any(Object),
     ))
     expect(mocks.message.success).toHaveBeenCalledWith('Đã xóa bản nháp.')
+  })
+
+  it('uses a clear fallback name when confirming deletion of an untitled draft', async () => {
+    const user = userEvent.setup()
+    mocks.getEmployerJobPage.mockResolvedValue({
+      count: 1,
+      next: null,
+      previous: null,
+      results: [{ ...DRAFT_JOB, title: '' }],
+    })
+    renderPage()
+
+    const draftCard = await screen.findByTestId('job-list-item-job_draft')
+    await user.click(within(draftCard).getByRole('button', {
+      name: 'Mở thao tác cho Tin nháp chưa đặt tên',
+    }))
+    await user.click(await screen.findByRole('menuitem', { name: /Xóa bản nháp/ }))
+
+    const dialog = await screen.findByRole('dialog')
+    expect(within(dialog).getByRole('heading', { name: 'Xóa bản nháp' })).toBeInTheDocument()
+    expect(within(dialog).getByText('Tin nháp chưa đặt tên')).toBeInTheDocument()
   })
 })

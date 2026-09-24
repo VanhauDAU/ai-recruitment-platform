@@ -130,6 +130,111 @@ class AdminAccessG2ApiTests(TestCase):
             self.assertEqual(response.status_code, 403)
             self.assertEqual(response.json()['code'], 'admin_permission_denied')
 
+    def test_membership_list_filters_and_orders_the_full_queryset(self):
+        self.admin.full_name = 'Zulu Manager'
+        self.admin.save(update_fields=['full_name'])
+        governance = Department.objects.create(code='governance', name='Governance')
+        reviewer = AdminRole.objects.create(
+            department=governance,
+            code='reviewer',
+            name='Reviewer',
+        )
+        reviewer.permissions.add(self.business_permission)
+        self.staff.full_name = 'Alpha Staff'
+        self.staff.save(update_fields=['full_name'])
+        active = assign_membership(self.staff, reviewer, actor=self.superuser)
+        revoked_user = User.objects.create_user(
+            'revoked@example.com',
+            'TestPass123',
+            full_name='Beta Revoked',
+            role=User.Role.ADMIN,
+            status=User.Status.ACTIVE,
+        )
+        revoked = AdminMembership.objects.create(
+            user=revoked_user,
+            role=reviewer,
+            assigned_by=self.superuser,
+            is_active=False,
+        )
+        self.authenticate(self.superuser)
+        url = reverse('admin-membership-list')
+
+        response = self.client.get(
+            url,
+            {
+                'department': governance.public_id,
+                'role': reviewer.public_id,
+                'q': 'governance',
+                'status': 'all',
+                'ordering': 'user__full_name',
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['count'], 2)
+        self.assertEqual(
+            [item['public_id'] for item in response.json()['results']],
+            [active.public_id, revoked.public_id],
+        )
+
+        response = self.client.get(
+            url,
+            {'department': governance.code, 'status': 'all'},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['count'], 2)
+
+        response = self.client.get(url, {'status': 'revoked'})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['count'], 1)
+        self.assertEqual(response.json()['results'][0]['public_id'], revoked.public_id)
+
+        response = self.client.get(url, {'include_revoked': 'true'})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['count'], 3)
+
+        self.assertEqual(
+            self.client.get(url, {'status': 'unknown'}).status_code,
+            400,
+        )
+        self.assertEqual(
+            self.client.get(url, {'ordering': 'user__password'}).status_code,
+            400,
+        )
+
+    def test_membership_list_preserves_server_pagination_count(self):
+        users = [
+            User(
+                public_id=generate_public_id('usr'),
+                email=f'page-{index:02d}@example.com',
+                role=User.Role.ADMIN,
+                status=User.Status.ACTIVE,
+            )
+            for index in range(21)
+        ]
+        User.objects.bulk_create(users)
+        AdminMembership.objects.bulk_create(
+            [
+                AdminMembership(
+                    public_id=generate_public_id('amem'),
+                    user=user,
+                    role=self.role,
+                    assigned_by=self.superuser,
+                )
+                for user in users
+            ]
+        )
+        self.authenticate(self.superuser)
+
+        response = self.client.get(
+            reverse('admin-membership-list'),
+            {'page': 2, 'ordering': 'user__full_name'},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['count'], 22)
+        self.assertEqual(len(response.json()['results']), 2)
+
     def test_every_write_and_impact_is_superuser_only(self):
         self.authenticate(self.admin)
         membership = AdminMembership.objects.get(user=self.admin, role=self.role)

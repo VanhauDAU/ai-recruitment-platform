@@ -28,6 +28,12 @@ const CHANGE_FIELD_LABELS = {
   website_url: 'Website',
 }
 
+const STATUS_PRESENTATION = {
+  submitted: ['blue', 'Chờ tiếp nhận'],
+  in_review: ['gold', 'Đang thẩm định'],
+  changes_requested: ['orange', 'Chờ chỉnh sửa'],
+}
+
 function formatDate(value) {
   if (!value) return 'Chưa gửi'
   return new Intl.DateTimeFormat('vi-VN', {
@@ -73,6 +79,15 @@ export default function CompanyUpdateQueueTable({
   onOpen,
 }) {
   const columns = [
+    {
+      title: 'Trạng thái',
+      key: 'status',
+      width: 150,
+      render: (_, row) => {
+        const [color, label] = STATUS_PRESENTATION[row.status] || ['default', row.status_label]
+        return <Tag color={color}>{label || row.status}</Tag>
+      },
+    },
     {
       title: 'Công ty',
       key: 'company__company_name',
@@ -169,7 +184,7 @@ export default function CompanyUpdateQueueTable({
       dataSource={data.results}
       columns={columns}
       className="company-update-queue__table"
-      scroll={{ x: 1160 }}
+      scroll={{ x: 1310 }}
       locale={{
         emptyText: (
           <Empty

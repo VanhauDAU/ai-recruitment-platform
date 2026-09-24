@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { JobHero } from './JobDetailOverview'
 
 const JOB = {
@@ -15,11 +15,11 @@ const JOB = {
   view_count: 6,
 }
 
-function renderHero() {
+function renderHero(job = JOB) {
   return render(
     <MemoryRouter>
       <JobHero
-        job={JOB}
+        job={job}
         saved={false}
         applicationStatus={{ hasApplied: false, isLimitReached: false }}
         onApply={vi.fn()}
@@ -32,6 +32,10 @@ function renderHero() {
 }
 
 describe('JobHero', () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
   it('promotes salary as the primary hero metric', () => {
     renderHero()
 
@@ -42,5 +46,18 @@ describe('JobHero', () => {
     expect(screen.getByText('Khi đạt 100% KPI')).toHaveClass('text-xs', 'text-emerald-700')
     expect(screen.getByRole('group', { name: /Địa điểm: Thành phố Đà Nẵng/ })).toBeInTheDocument()
     expect(screen.getByRole('group', { name: 'Kinh nghiệm: 2 năm' })).toBeInTheDocument()
+  })
+
+  it('shows the first approval date after a job is approved again', () => {
+    vi.spyOn(Date, 'now').mockReturnValue(new Date('2026-08-13T08:00:00Z').getTime())
+
+    renderHero({
+      ...JOB,
+      first_approved_at: '2026-08-11T08:00:00Z',
+      published_at: '2026-08-13T08:00:00Z',
+    })
+
+    expect(screen.getByText('Đăng 2 ngày trước')).toBeVisible()
+    expect(screen.queryByText('Đăng hôm nay')).not.toBeInTheDocument()
   })
 })
