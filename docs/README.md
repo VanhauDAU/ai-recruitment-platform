@@ -46,5 +46,6 @@
 | [07-algorithms](07-algorithms/) | [sponsored-job-distribution-policy.md](07-algorithms/sponsored-job-distribution-policy.md) | Relevance-first, slot 2/10, company diversity và ma trận presentation các surface |
 | [08-frontend](08-frontend/)     | [cau-truc-frontend.md](08-frontend/cau-truc-frontend.md)         | Cấu trúc frontend, component, quy ước code                              |
 | [08-frontend](08-frontend/)     | [dai-thong-bao-da-cong.md](08-frontend/dai-thong-bao-da-cong.md) | Runtime strip đa cổng, priority, accessibility, rollout và rollback     |
+| [99-tien-do](99-tien-do/)       | [ke-hoach-tai-cau-truc.md](99-tien-do/ke-hoach-tai-cau-truc.md) | Kế hoạch P0-P10, baseline và gate tái tổ chức repository |
 
 Nội dung chi tiết sẽ được bổ sung dần theo từng bước triển khai.
