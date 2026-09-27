@@ -23,7 +23,7 @@ chuyển bước sau khi gate của giai đoạn trước có bằng chứng đ�
 | --- | --- | --- | --- | --- |
 | P0 | `chore/procv-baseline` | Kiểm kê, hợp đồng hành vi, số đo CI | Verified | Baseline có SHA và artifact kiểm chứng |
 | P1 | `fix/ci-test-stability` | Chẩn đoán và sửa test lỗi hoặc treo | Implemented | Ba lượt lặp ổn định; không hạ coverage hoặc skip |
-| P2 | `chore/repo-cleanup` | Dọn artifact, media test và ignore | Planned | Test không sinh rác ở root; dữ liệu không mất |
+| P2 | `chore/repo-cleanup` | Dọn artifact, media test và ignore | Implemented | Test không sinh rác ở root; dữ liệu không mất |
 | P3 | `chore/local-only-tooling` | Bỏ cấu hình deploy production, giữ local | Planned | Compose local, API, frontend và worker hoạt động |
 | P4 | `refactor/env-configuration` | Env tối thiểu và catalog optional | Planned | Effective config trước và sau tương đương |
 | P5 | `refactor/backend-organization` | Chuẩn hóa Django theo app | Planned | Schema, migration, quyền và task registry không đổi |
@@ -44,6 +44,8 @@ chuyển bước sau khi gate của giai đoạn trước có bằng chứng đ�
   hủy; timeout không được dùng làm runtime mục tiêu.
 - [Kết quả chẩn đoán P1](p1-ci-test-stability.md), gồm nguyên nhân, số đo mới và
   các gate còn phải hoàn tất trước P2.
+- [Kết quả dọn repository P2](p2-repo-cleanup.md), gồm phân loại media, điểm
+  phục hồi và bằng chứng clean/test không làm mất dữ liệu.
 
 ## Mapping đường dẫn và hành động
 
