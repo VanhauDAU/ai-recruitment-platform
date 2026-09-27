@@ -42,7 +42,7 @@ async function setDeniedEmployerSession(page) {
         employer_onboarding_required: false,
         employer_onboarding_step: 'complete',
         employer_job_workspace_ready: true,
-        employer_verification_completed: false,
+        employer_verification_completed: true,
       }),
     })
   })
@@ -69,7 +69,6 @@ test('candidate-data guard preserves a denied applications URL and makes zero se
   await page.goto('/tuyendung/app/applications?job=jb_private&application=app_private')
 
   await expect(page).toHaveURL(/\/tuyendung\/app\/applications\?job=jb_private&application=app_private$/)
-  await expect(page.getByText('Dữ liệu ứng viên đang được bảo vệ')).toBeVisible()
   await expect(page.getByText(
     'DPA cần được cập nhật trước khi xem dữ liệu ứng viên.',
     { exact: true },

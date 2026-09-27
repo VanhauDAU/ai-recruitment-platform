@@ -73,7 +73,7 @@ jobs:
     needs: changes
     if: ${{ needs.changes.outputs.backend == 'true' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 50
     defaults:
       run:
         working-directory: backend
@@ -145,10 +145,13 @@ jobs:
         run: bash scripts/check_admin_permissions_sync.sh
 
       - name: Test suite + coverage gate (ratchet — chỉ được tăng)
+        id: pytest
         shell: bash
         run: |
           set -o pipefail
-          pytest \
+          # Stop pytest before the job-level timeout so always() diagnostics
+          # still have time to publish the active test and faulthandler output.
+          timeout --signal=TERM --kill-after=30s 47m pytest -vv \
             --cov \
             --cov-fail-under=84 \
             --cov-report=term-missing \
@@ -210,7 +213,7 @@ jobs:
           PY
 
       - name: Upload backend diagnostics
-        if: ${{ failure() }}
+        if: ${{ always() && steps.pytest.outcome != 'success' }}
         uses: actions/upload-artifact@v4
         with:
           name: backend-diagnostics-${{ github.run_id }}-${{ github.run_attempt }}

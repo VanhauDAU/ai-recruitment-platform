@@ -29,7 +29,7 @@ from ..models import (
     JobModerationEvent,
     JobStatusHistory,
 )
-from ..services import JobModerationStale, approve_job, reject_job
+from ..services import JobModerationStale, approve_job, lifecycle_local_date, reject_job
 
 
 def make_approvable_recruiter(*, employer, company):
@@ -564,7 +564,7 @@ class JobRevisionReviewTests(JobModerationFixture, APITestCase):
         self.assertEqual(restricted['changed_count'], privileged['changed_count'])
 
     def test_expired_pending_job_is_approved_together_with_a_new_deadline(self):
-        today = timezone.localdate()
+        today = lifecycle_local_date()
         self.job.deadline = today - timedelta(days=1)
         self.job.save(update_fields=['deadline', 'updated_at'])
         self.client.force_authenticate(self.admin)
@@ -598,7 +598,7 @@ class JobRevisionReviewTests(JobModerationFixture, APITestCase):
         self.assertEqual(self.job.deadline, today + timedelta(days=90))
 
     def test_expired_pending_job_rejects_a_deadline_beyond_ninety_days(self):
-        today = timezone.localdate()
+        today = lifecycle_local_date()
         self.job.deadline = today - timedelta(days=1)
         self.job.save(update_fields=['deadline', 'updated_at'])
         self.client.force_authenticate(self.admin)
@@ -621,7 +621,7 @@ class JobRevisionReviewTests(JobModerationFixture, APITestCase):
 
     def test_public_visibility_flag_tracks_the_candidate_facing_predicate(self):
         self.client.force_authenticate(self.admin)
-        self.job.deadline = timezone.localdate() + timedelta(days=7)
+        self.job.deadline = lifecycle_local_date() + timedelta(days=7)
         self.job.save(update_fields=['deadline', 'updated_at'])
 
         pending = self.client.get(self.detail_url()).data['is_publicly_visible']

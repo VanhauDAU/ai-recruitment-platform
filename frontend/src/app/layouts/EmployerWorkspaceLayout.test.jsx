@@ -3,6 +3,8 @@ import { MemoryRouter, Route, Routes, useLocation } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import EmployerWorkspaceLayout from './EmployerWorkspaceLayout'
 
+vi.mock('@/widgets/announcement-strip', () => ({ AnnouncementStrip: () => null }))
+
 const { useSession, profileQueryState, useEmployerReadiness } = vi.hoisted(() => ({
   useSession: vi.fn(),
   useEmployerReadiness: vi.fn(),
