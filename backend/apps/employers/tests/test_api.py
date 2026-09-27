@@ -59,9 +59,13 @@ def make_employer(email='employer@example.com', phone_verified=True):
     )
     recruiter = RecruiterProfile.objects.create(user=user)
     if phone_verified:
-        recruiter.verified_phone = f'09{abs(hash(email)) % 10**8:08d}'
+        verified_phone = f'09{abs(hash(email)) % 10**8:08d}'
+        user.phone = verified_phone
+        user.save(update_fields=['phone', 'updated_at'])
+        recruiter.contact_phone = verified_phone
+        recruiter.verified_phone = verified_phone
         recruiter.phone_verified_at = timezone.now()
-        recruiter.save()
+        recruiter.save(update_fields=['contact_phone', 'verified_phone', 'phone_verified_at'])
     return user, recruiter
 
 

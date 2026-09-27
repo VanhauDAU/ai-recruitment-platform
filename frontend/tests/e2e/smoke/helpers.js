@@ -1,5 +1,7 @@
 import { expect } from '@playwright/test'
 
+export const API_ROUTE = /^https?:\/\/[^/]+\/api\/.*$/
+
 export async function mockPublicApi(page) {
   const servicePackages = [{
     key: 'featured-jobs', name_vi: 'Tin tuyển dụng nổi bật', name_en: 'Featured job postings',
@@ -13,7 +15,8 @@ export async function mockPublicApi(page) {
     }],
   }]
   await page.route('http://localhost:8000/api/**', async (route) => {
-    const path = new URL(route.request().url()).pathname
+    const url = new URL(route.request().url())
+    const path = url.pathname
     if (
       path === '/api/auth/refresh/'
       && route.request().headers()['x-session-probe'] === '1'
@@ -29,10 +32,28 @@ export async function mockPublicApi(page) {
       })
       return
     }
-    const body = path === '/api/jobs/'
-      ? { count: 0, results: [] }
+    const body = path === '/api/jobs/best/'
+      ? []
+      : path === '/api/jobs/'
+        ? { count: 0, results: [] }
+        : path === '/api/jobs/stats/'
+          ? {
+              candidates: 0,
+              employers: 0,
+              active_jobs: 0,
+              new_jobs_24h: 0,
+              growth: [],
+              demand: [],
+              salary_demand: [],
+              latest_jobs: [],
+              featured_employers: [],
+            }
       : path === '/api/site/banners/'
         ? []
+      : path === '/api/site/link-groups/'
+        ? []
+      : path === '/api/site/announcements/active/'
+        ? { remote_enabled: false, items: [], next_transition_at: null }
       : path === '/api/privacy/consent/'
         // Consent đã quyết định -> banner cookie không che các nút trong smoke test.
         ? { consent: { necessary: true, preferences: false, analytics: false, marketing: false } }
@@ -50,8 +71,12 @@ export async function mockPublicApi(page) {
               recruitment_need: null, recent_jobs: [], recent_applications: [],
             }
         : path === '/api/locations/'
-          ? [{ id: 1, name: 'Hà Nội', level: 'province' }, { id: 2, name: 'TP. Hồ Chí Minh', level: 'province' }]
-          : ['/api/jobs/categories/', '/api/employer/industries/'].includes(path)
+          ? url.searchParams.get('level') === 'ward'
+            ? []
+            : [{ id: 1, name: 'Hà Nội', level: 'province' }, { id: 2, name: 'TP. Hồ Chí Minh', level: 'province' }]
+          : path === '/api/v2/cv-templates/'
+            ? { count: 0, next: null, previous: null, results: [] }
+            : ['/api/jobs/categories/', '/api/employer/industries/'].includes(path)
             ? []
           : path === '/api/auth/sessions/'
             ? []

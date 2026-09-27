@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import { ADMIN_ROUTES } from '../../../src/app/router/admin/admin-routes.config.js'
-import { expectAnimatedLoginButton, mockPublicApi } from './helpers'
+import { API_ROUTE, expectAnimatedLoginButton, mockPublicApi } from './helpers'
 
 test('admin smoke: login loads and dashboard stays role-protected', async ({ page }) => {
   await mockPublicApi(page)
@@ -66,7 +66,7 @@ test('admin account management: filters, table actions and quick detail are resp
     admin_access: null,
     invitation: null,
   }
-  await page.route(/^https?:\/\/[^/]+\/api\//, async (route) => {
+  await page.route(API_ROUTE, async (route) => {
     const requestUrl = new URL(route.request().url())
     const path = requestUrl.pathname
     const body = path === '/api/auth/refresh/'
@@ -267,7 +267,7 @@ test('superuser recovers email, resets MFA, then sends password reset', async ({
     admin_access: null,
     invitation: null,
   }
-  await page.route('http://localhost:8000/api/**', async (route) => {
+  await page.route(API_ROUTE, async (route) => {
     const request = route.request()
     const path = new URL(request.url()).pathname
     const payload = request.postDataJSON() || {}
@@ -642,7 +642,7 @@ test('admin employer detail: company media and compact verification comparison r
     created_at: '2026-07-25T08:00:00Z',
     updated_at: '2026-07-26T09:00:00Z',
   }
-  await page.route('http://localhost:8000/api/**', async (route) => {
+  await page.route(API_ROUTE, async (route) => {
     const path = new URL(route.request().url()).pathname
     let body = {}
     if (path === '/api/auth/refresh/') body = { access: 'e2e-access' }
@@ -849,7 +849,7 @@ test('admin detail: complete effective permissions render in access tab', async 
       },
     },
   }
-  await page.route('http://localhost:8000/api/**', async (route) => {
+  await page.route(API_ROUTE, async (route) => {
     const path = new URL(route.request().url()).pathname
     const body = path === '/api/auth/refresh/'
       ? { access: 'e2e-access' }
@@ -948,7 +948,7 @@ test('admin access control: wide permission picker supports search and dependent
       is_granted_to_role: false,
     },
   ]
-  await page.route('http://localhost:8000/api/**', async (route) => {
+  await page.route(API_ROUTE, async (route) => {
     const url = new URL(route.request().url())
     const path = url.pathname
     let body = {}
@@ -1153,7 +1153,7 @@ test('admin job management: list, detail and revision-bound approval workflow', 
     employer_verification_completed: true,
   }
 
-  await page.route('http://localhost:8000/api/**', async (route) => {
+  await page.route(API_ROUTE, async (route) => {
     const request = route.request()
     const path = new URL(request.url()).pathname
     if (
@@ -1265,7 +1265,7 @@ test('admin job reports: deep link, filter and resolve workflow are permission-g
     resolution_history: [],
   }
 
-  await page.route('http://localhost:8000/api/**', async (route) => {
+  await page.route(API_ROUTE, async (route) => {
     const request = route.request()
     const url = new URL(request.url())
     const path = url.pathname

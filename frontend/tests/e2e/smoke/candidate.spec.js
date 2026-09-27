@@ -234,6 +234,18 @@ test('candidate smoke: WYSIWYG CV editor uses the V2 draft lifecycle', async ({ 
           ? draft
       : path === '/api/v2/cvs/cv_1/draft/' && request.method() === 'PUT'
             ? { ...draft, lock_version: 1 }
+            : path === '/api/uploads/sessions/' && request.method() === 'POST'
+              ? {
+                  public_id: 'ups_avatar_1',
+                  state: 'uploading',
+                  ready_for_submit: false,
+                }
+              : path === '/api/uploads/sessions/ups_avatar_1/content/' && request.method() === 'POST'
+                ? {
+                    public_id: 'ups_avatar_1',
+                    state: 'clean',
+                    ready_for_submit: true,
+                  }
             : path === '/api/v2/cvs/assets/' && request.method() === 'POST'
               ? {
                   public_id: 'avatar_uploaded',
@@ -271,12 +283,10 @@ test('candidate smoke: WYSIWYG CV editor uses the V2 draft lifecycle', async ({ 
   await expect(page.getByRole('dialog', { name: 'Cập nhật ảnh đại diện' })).toBeVisible()
   const avatarInput = page.locator('input[type="file"][accept="image/jpeg,image/png,image/webp"]')
   expect(await avatarInput.count()).toBe(1)
-  await avatarInput.setInputFiles({
-    name: 'avatar.png',
-    mimeType: 'image/png',
-    buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M/wHwAF/gL+XTKxWQAAAABJRU5ErkJggg==', 'base64'),
-  })
-  await expect(page.getByRole('group', { name: 'Vùng căn chỉnh ảnh đại diện' })).toBeVisible()
+  await avatarInput.setInputFiles('public/images/logo/logo-mark.webp')
+  await expect(page.getByRole('group', {
+    name: 'Vùng căn chỉnh ảnh đại diện',
+  })).toBeVisible({ timeout: 15_000 })
   await expect(page.getByRole('img', { name: 'Xem trước ảnh đại diện' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Đổi ảnh' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Xóa ảnh' })).toBeVisible()
@@ -615,8 +625,8 @@ test('candidate smoke: verified badge and job report modal work on desktop and m
 
   await page.goto('/viec-lam/report-job')
   await page.getByRole('button', {
-    name: 'Nhà tuyển dụng đã được xác thực, xem 5 tiêu chí',
-  }).click()
+    name: 'Nhà tuyển dụng đã xác thực, xem 5 tiêu chí',
+  }).first().click()
   await expect(page.getByText('Chưa có tin đăng vi phạm được quản trị viên xác nhận')).toBeVisible()
 
   const reportNotice = page.locator('#job-detail-content')

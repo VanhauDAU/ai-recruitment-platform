@@ -189,8 +189,8 @@ test('admin company directory: three-level navigation, detail and owner roster',
   await page.getByRole('tab', { name: 'Tin tuyển dụng' }).click()
   await expect(page.getByText('Backend Engineer', { exact: true })).toBeVisible()
   await expect.poll(() => companyJobsRequest?.searchParams.get('company')).toBe('co_alpha')
-  expect(companyJobsRequest.searchParams.get('ordering')).toBe('-updated_at')
-  await expect(page.getByRole('columnheader', { name: 'Cập nhật' })).toHaveAttribute(
+  expect(companyJobsRequest.searchParams.get('ordering')).toBe('-created_at')
+  await expect(page.getByRole('columnheader', { name: 'Tạo lúc' })).toHaveAttribute(
     'aria-sort',
     'descending',
   )

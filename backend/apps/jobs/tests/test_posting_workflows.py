@@ -34,6 +34,7 @@ from ..services import (
     duplicate_job,
     employer_job_posting_context,
     extend_job_deadline,
+    lifecycle_local_date,
     publish_job,
     reopen_job,
     update_employer_job,
@@ -83,7 +84,7 @@ class JobPostingWorkflowTests(TestCase):
             education_level=Job.EducationLevel.UNIVERSITY,
             experience_years=Job.ExperienceYears.TWO,
             position_level=Job.PositionLevel.EMPLOYEE,
-            deadline=timezone.localdate() + timedelta(days=14),
+            deadline=lifecycle_local_date() + timedelta(days=14),
             number_of_vacancies=1,
         )
         JobCategoryAssignment.objects.create(
@@ -116,7 +117,7 @@ class JobPostingWorkflowTests(TestCase):
         job = self.make_publishable_job()
         job.campaign = campaign
         job.status = Job.Status.ACTIVE
-        job.deadline = deadline or timezone.localdate() + timedelta(days=14)
+        job.deadline = deadline or lifecycle_local_date() + timedelta(days=14)
         job.submitted_at = published_at
         job.published_at = published_at
         job.approved_at = published_at
@@ -293,7 +294,7 @@ class JobPostingWorkflowTests(TestCase):
     @patch('apps.jobs.services.posting.recruiter_job_posting_entitlement')
     def test_publish_accepts_ninety_days_and_rejects_day_ninety_one(self, entitlement):
         entitlement.return_value = (self.recruiter, self.free_entitlement)
-        today = timezone.localdate()
+        today = lifecycle_local_date()
         accepted = self.make_publishable_job(title='Accepted 90-day deadline')
         accepted.deadline = today + timedelta(days=90)
         accepted.save(update_fields=['deadline'])
@@ -315,7 +316,7 @@ class JobPostingWorkflowTests(TestCase):
         self.assertEqual(rejected.status, Job.Status.DRAFT)
 
     def test_deadline_extension_requires_a_strictly_later_deadline(self):
-        today = timezone.localdate()
+        today = lifecycle_local_date()
         job = self.make_active_job(deadline=today + timedelta(days=10))
 
         for invalid_deadline in (job.deadline, today + timedelta(days=5)):
@@ -328,7 +329,7 @@ class JobPostingWorkflowTests(TestCase):
         self.assertEqual(job.status, Job.Status.ACTIVE)
 
     def test_visibility_extension_uses_immutable_cycle_anchor(self):
-        job = self.make_active_job(deadline=timezone.localdate() + timedelta(days=35))
+        job = self.make_active_job(deadline=lifecycle_local_date() + timedelta(days=35))
         anchor = timezone.now() - timedelta(days=10)
         job.first_approved_at = anchor
         job.visibility_starts_at = anchor
@@ -356,7 +357,7 @@ class JobPostingWorkflowTests(TestCase):
         self.assertEqual(extended.requested_visibility_days, 45)
 
     def test_deadline_extension_cannot_exceed_internal_visibility(self):
-        today = timezone.localdate()
+        today = lifecycle_local_date()
         job = self.make_active_job(deadline=today + timedelta(days=5))
         anchor = timezone.now()
         job.first_approved_at = anchor
@@ -378,7 +379,7 @@ class JobPostingWorkflowTests(TestCase):
         self.assertEqual(job.deadline, today + timedelta(days=5))
 
     def test_deadline_and_visibility_can_be_extended_atomically(self):
-        today = timezone.localdate()
+        today = lifecycle_local_date()
         job = self.make_active_job(deadline=today + timedelta(days=5))
         anchor = timezone.now()
         job.first_approved_at = anchor
@@ -405,7 +406,7 @@ class JobPostingWorkflowTests(TestCase):
         self.assertEqual(extended.visibility_ends_at, anchor + timedelta(days=14))
 
     def test_serializer_accepts_application_deadline_and_ignores_internal_visibility(self):
-        deadline = timezone.localdate() + timedelta(days=20)
+        deadline = lifecycle_local_date() + timedelta(days=20)
         serializer = EmployerJobWriteSerializer(
             self.make_publishable_job(),
             data={
@@ -424,7 +425,9 @@ class JobPostingWorkflowTests(TestCase):
     def test_basic_job_deadline_accepts_the_configured_ninety_day_maximum(self):
         serializer = EmployerJobWriteSerializer(
             self.make_publishable_job(),
-            data={'application_deadline': (timezone.localdate() + timedelta(days=90)).isoformat()},
+            data={
+                'application_deadline': (lifecycle_local_date() + timedelta(days=90)).isoformat()
+            },
             partial=True,
         )
 
@@ -433,7 +436,9 @@ class JobPostingWorkflowTests(TestCase):
     def test_basic_job_deadline_rejects_day_after_the_configured_maximum(self):
         serializer = EmployerJobWriteSerializer(
             self.make_publishable_job(),
-            data={'application_deadline': (timezone.localdate() + timedelta(days=91)).isoformat()},
+            data={
+                'application_deadline': (lifecycle_local_date() + timedelta(days=91)).isoformat()
+            },
             partial=True,
         )
 
@@ -467,8 +472,8 @@ class JobPostingWorkflowTests(TestCase):
         serializer = EmployerJobWriteSerializer(
             self.make_publishable_job(),
             data={
-                'deadline': (timezone.localdate() + timedelta(days=10)).isoformat(),
-                'application_deadline': (timezone.localdate() + timedelta(days=11)).isoformat(),
+                'deadline': (lifecycle_local_date() + timedelta(days=10)).isoformat(),
+                'application_deadline': (lifecycle_local_date() + timedelta(days=11)).isoformat(),
             },
             partial=True,
         )
@@ -487,7 +492,7 @@ class JobPostingWorkflowTests(TestCase):
         self.assertNotIn('requested_visibility_days', serializer.validated_data)
 
     def test_deadline_extension_accepts_ninety_day_boundary_and_rejects_later_date(self):
-        today = timezone.localdate()
+        today = lifecycle_local_date()
         accepted = self.make_active_job(
             deadline=today + timedelta(days=10),
             published_at=timezone.now(),
@@ -508,7 +513,7 @@ class JobPostingWorkflowTests(TestCase):
         self.assertEqual(rejected.deadline, today + timedelta(days=10))
 
     def test_deadline_extension_cannot_exceed_ninety_day_public_lifetime(self):
-        today = timezone.localdate()
+        today = lifecycle_local_date()
         boundary = self.make_active_job(
             deadline=today + timedelta(days=5),
             published_at=timezone.now() - timedelta(days=60),
@@ -528,7 +533,7 @@ class JobPostingWorkflowTests(TestCase):
         self.assertEqual(over_lifetime.deadline, today + timedelta(days=5))
 
     def test_expired_active_job_within_grace_returns_to_review_queue_with_audit(self):
-        today = timezone.localdate()
+        today = lifecycle_local_date()
         campaign = RecruitmentCampaign.objects.create(
             owner=self.recruiter,
             company=self.company,
@@ -563,7 +568,7 @@ class JobPostingWorkflowTests(TestCase):
         )
 
     def test_expired_active_job_outside_thirty_day_grace_cannot_be_renewed(self):
-        today = timezone.localdate()
+        today = lifecycle_local_date()
         job = self.make_active_job(
             deadline=today - timedelta(days=31),
             published_at=timezone.now() - timedelta(days=61),
@@ -579,7 +584,7 @@ class JobPostingWorkflowTests(TestCase):
         self.assertFalse(job.status_history.exists())
 
     def test_campaign_target_caps_extension_and_inactive_campaign_rejects_it(self):
-        today = timezone.localdate()
+        today = lifecycle_local_date()
         campaign = RecruitmentCampaign.objects.create(
             owner=self.recruiter,
             company=self.company,
@@ -644,7 +649,7 @@ class JobPostingWorkflowTests(TestCase):
         job = self.make_active_job()
         serializer = EmployerJobWriteSerializer(
             job,
-            data={'deadline': timezone.localdate() + timedelta(days=91)},
+            data={'deadline': lifecycle_local_date() + timedelta(days=91)},
             partial=True,
         )
 
@@ -671,7 +676,7 @@ class JobPostingWorkflowTests(TestCase):
 
         closed = close_job(job, self.user)
         self.assertEqual(closed.status, Job.Status.CLOSED)
-        reopened_deadline = timezone.localdate() + timedelta(days=21)
+        reopened_deadline = lifecycle_local_date() + timedelta(days=21)
         reopened = reopen_job(closed, self.user, reopened_deadline)
 
         self.assertEqual(reopened.status, Job.Status.PENDING)
@@ -686,7 +691,7 @@ class JobPostingWorkflowTests(TestCase):
         )
 
     def test_reopen_accepts_ninety_days_and_rejects_day_ninety_one(self):
-        today = timezone.localdate()
+        today = lifecycle_local_date()
         accepted = self.make_active_job()
         accepted = close_job(accepted, self.user)
 
@@ -714,7 +719,7 @@ class JobPostingWorkflowTests(TestCase):
         closed = close_job(job, self.user)
 
         with self.assertRaises(ValidationError) as context:
-            reopen_job(closed, self.user, timezone.localdate() + timedelta(days=20))
+            reopen_job(closed, self.user, lifecycle_local_date() + timedelta(days=20))
 
         self.assertEqual(context.exception.detail['code'], 'JOB_VISIBILITY_EXPIRED')
         closed.refresh_from_db()
@@ -738,20 +743,20 @@ class JobPostingWorkflowTests(TestCase):
             extend_job_deadline(
                 stale_for_extend,
                 self.user,
-                timezone.localdate() + timedelta(days=30),
+                lifecycle_local_date() + timedelta(days=30),
             )
 
         stale_for_reopen = Job.objects.get(pk=job.pk)
         reopened = reopen_job(
             Job.objects.get(pk=job.pk),
             self.user,
-            timezone.localdate() + timedelta(days=21),
+            lifecycle_local_date() + timedelta(days=21),
         )
         with self.assertRaises(ValidationError):
             reopen_job(
                 stale_for_reopen,
                 self.user,
-                timezone.localdate() + timedelta(days=28),
+                lifecycle_local_date() + timedelta(days=28),
             )
 
         job.refresh_from_db()

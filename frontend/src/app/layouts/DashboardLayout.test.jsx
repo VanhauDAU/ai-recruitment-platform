@@ -36,6 +36,7 @@ vi.mock('@/entities/admin-employer-verification', async (importOriginal) => ({
 vi.mock('@/entities/site-settings', () => ({
   BrandLogo: () => <span>Logo</span>,
 }))
+vi.mock('@/widgets/announcement-strip', () => ({ AnnouncementStrip: () => null }))
 
 function ThemeProbe() {
   const { token } = antdTheme.useToken()

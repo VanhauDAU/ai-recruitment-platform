@@ -463,6 +463,12 @@ test('employer workspace: verification actions stay inside the 100vh app shell',
       body: JSON.stringify({
         public_id: 'rec_test',
         ...INCOMPLETE_EMPLOYER_READINESS,
+        dpa_policy: {
+          available: true,
+          policy_version: 'test-dpa-v1',
+          document_sha256: 'a'.repeat(64),
+          document_url: 'https://example.test/dpa/test-dpa-v1',
+        },
         company: null,
         contact_phone: '0912345678',
         onboarding: {
@@ -1191,8 +1197,7 @@ test('employer jobs: creation chooser leads to the complete manual five-section 
   await expect(page.getByRole('switch', { name: 'Bật tự động cập nhật trạng thái hồ sơ' })).toBeChecked()
   await expect(page.locator('#application').getByTitle('3 tuần')).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Dịch vụ và gia tăng hiệu quả' })).toBeVisible()
-  await expect(page.getByText('Tin đăng cơ bản', { exact: true })).toBeVisible()
-  await expect(page.getByRole('link', { name: 'Xem các gói gia tăng hiệu quả' })).toBeVisible()
+  await expect(page.getByText('Dịch vụ đang được mở theo từng nhóm doanh nghiệp')).toBeVisible()
   await expect(page.getByRole('heading', { name: '3 lý do nên ứng tuyển' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Thêm lý do (0/3)' })).toBeVisible()
   await expect(page.locator('.company-rich-editor__content')).toHaveCount(3)
@@ -1427,7 +1432,7 @@ test('employer jobs: detail workspace is compact, actionable and responsive', as
         requested_visibility_days: 30,
         first_approved_at: '2026-08-01T02:00:00Z',
         visibility_starts_at: '2026-08-01T02:00:00Z',
-        visibility_ends_at: '2026-08-31T02:00:00Z',
+        visibility_ends_at: '2099-08-31T02:00:00Z',
         application_count: 2, number_of_vacancies: 2, salary_type: 'range',
         salary_min: 18000000, salary_max: 30000000, employment_type: 'full_time',
         work_type: 'hybrid', work_types: ['hybrid', 'onsite'], experience_years: '2',

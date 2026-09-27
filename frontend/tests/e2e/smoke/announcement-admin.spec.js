@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { mockPublicApi } from './helpers'
+import { API_ROUTE, mockPublicApi } from './helpers'
 
 const REVISION = {
   number: 1,
@@ -87,7 +87,7 @@ async function routeAdminApi(page, permissions) {
   let detail = announcementDetail()
   let stalePause = true
   await mockPublicApi(page)
-  await page.route('http://localhost:8000/api/**', async (route) => {
+  await page.route(API_ROUTE, async (route) => {
     const request = route.request()
     const url = new URL(request.url())
     const path = url.pathname

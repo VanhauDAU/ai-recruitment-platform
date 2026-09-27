@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { API_ROUTE } from './helpers'
 
 test('admin blog: list is responsive, public links open a new tab and article slug is server-owned', async ({ page }) => {
   const adminTags = [
@@ -84,7 +85,7 @@ test('admin blog: list is responsive, public links open a new tab and article sl
   }
   const postOrderings = []
 
-  await page.route('http://localhost:8000/api/**', async (route) => {
+  await page.route(API_ROUTE, async (route) => {
     const url = new URL(route.request().url())
     const path = url.pathname
     let body = {}
