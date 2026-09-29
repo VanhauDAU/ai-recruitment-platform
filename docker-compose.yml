@@ -1,6 +1,5 @@
 # Môi trường DEV: docker compose up
 # Backend đọc backend/.env; các biến hostname bị override trỏ vào service nội bộ.
-# Production: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 
 # CELERY_BROKER_URL phải override TƯỜNG MINH: settings chỉ fallback về REDIS_URL
 # khi biến này vắng mặt, mà .env lại set sẵn 127.0.0.1 -> worker không thấy broker.
@@ -17,8 +16,8 @@ x-service-hosts: &service-hosts
   CLAMAV_PORT: ${CLAMAV_PORT:-3310}
   AI_RUNTIME_ENABLED: ${AI_RUNTIME_ENABLED:-true}
 
-# json-file mặc định tăng vô hạn và thường là phần dung lượng khó phát hiện nhất
-# trên VPS. Mọi service đều dùng cùng chính sách xoay log, override được qua .env.
+# json-file mặc định tăng vô hạn và thường là phần dung lượng local khó phát hiện.
+# Mọi service dùng cùng chính sách xoay log, override được qua shell hoặc .env.
 x-default-logging: &default-logging
   driver: json-file
   options:
@@ -160,7 +159,7 @@ services:
 
   # Generative AI is isolated from email/export/scan workloads so provider
   # latency cannot exhaust the shared worker pool. Low prefetch keeps cancel
-  # and recovery predictable; two processes are the production capacity gate.
+  # and recovery predictable; two processes keep local resource use bounded.
   ai-worker:
     <<: *backend-image
     command: celery -A config worker --loglevel=info -Q ai-generation --concurrency=2 --prefetch-multiplier=1 --max-tasks-per-child=${AI_WORKER_MAX_TASKS_PER_CHILD:-100}

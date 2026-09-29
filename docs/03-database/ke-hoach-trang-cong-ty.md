@@ -261,9 +261,9 @@ Ghi lại để không phải audit lại các bề mặt này:
 
 ### 1.6. SEO: shell meta do backend render, không dựng SSR runtime ở V1
 
-Hiện trạng: SPA thuần. [frontend/Dockerfile](../../frontend/Dockerfile) build Vite → nginx tĩnh; [nginx.conf](../../frontend/nginx.conf) `try_files … /index.html`; `VITE_API_BASE_URL` inline lúc build; [index.html](../../frontend/index.html) có `<title>ProCV</title>` cứng và `lang="en"` (sai, site tiếng Việt); toàn bộ SEO hiện chỉ là `document.title` trong [document-title.js](../../frontend/src/app/router/document-title.js). Không có thẻ OG nào.
+Hiện trạng tại thời điểm lập kế hoạch: SPA thuần từng được build Vite và phục vụ bằng nginx tĩnh. Cấu hình production đó đã được loại ở P3 và còn trong tag `procv-pre-local-only-2026-09-27`; `index.html` có `<title>ProCV</title>` cứng và `lang="en"` (sai, site tiếng Việt); toàn bộ SEO hiện chỉ là `document.title` trong [document-title.js](../../frontend/src/app/router/document-title.js). Không có thẻ OG nào.
 
-Dựng SSR đầy đủ trên React 19.2 + react-router 8.3 + **antd 6.5** (CSS-in-JS, phải extract style nếu không muốn FOUC và CLS tăng) + react-query + i18next là một dự án riêng: entry-server, app factory SSR-safe, biến môi trường runtime tách khỏi build-time, container Node mới trong `docker-compose.prod.yml`, cache HTML + purge, bộ test hydration mismatch.
+Dựng SSR đầy đủ trên React 19.2 + react-router 8.3 + **antd 6.5** (CSS-in-JS, phải extract style nếu không muốn FOUC và CLS tăng) + react-query + i18next là một dự án riêng: entry-server, app factory SSR-safe, biến môi trường runtime tách khỏi build-time, container Node production mới, cache HTML + purge, bộ test hydration mismatch.
 
 **V1 làm "SEO shell" thay thế:**
 

@@ -47,3 +47,15 @@ class UploadDeploymentContractTests(SimpleTestCase):
             settings.CELERY_TASK_ROUTES['apps.uploads.tasks.*']['queue'],
             'upload-scan',
         )
+
+    def test_upload_task_names_remain_registered_at_the_stable_package_boundary(self):
+        from config.celery import app
+
+        app.autodiscover_tasks(force=True)
+        self.assertTrue(
+            {
+                'apps.uploads.tasks.scan_upload_session',
+                'apps.uploads.tasks.dispatch_pending_upload_scans',
+                'apps.uploads.tasks.expire_and_clean_upload_sessions',
+            }.issubset(app.tasks)
+        )

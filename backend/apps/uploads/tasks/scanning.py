@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 
 @shared_task(
     bind=True,
+    name='apps.uploads.tasks.scan_upload_session',
     max_retries=None,
     soft_time_limit=int(settings.CLAMAV_READ_TIMEOUT_SECONDS) + 30,
     time_limit=int(settings.CLAMAV_READ_TIMEOUT_SECONDS) + 60,
@@ -41,7 +42,7 @@ def _dispatch(session_id):
         return False
 
 
-@shared_task
+@shared_task(name='apps.uploads.tasks.dispatch_pending_upload_scans')
 def dispatch_pending_upload_scans(limit=None):
     """Recover quarantined/error/stale-scanning sessions after broker or worker loss."""
     now = timezone.now()
@@ -64,7 +65,7 @@ def dispatch_pending_upload_scans(limit=None):
     return sum(_dispatch(session_id) for session_id in ids)
 
 
-@shared_task
+@shared_task(name='apps.uploads.tasks.expire_and_clean_upload_sessions')
 def expire_and_clean_upload_sessions(limit=None):
     """Expire temporary sessions and remove terminal bytes; evidence rows remain."""
     expired = expire_stale_upload_sessions(limit=limit)

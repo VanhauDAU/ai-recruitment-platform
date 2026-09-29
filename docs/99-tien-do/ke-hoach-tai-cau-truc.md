@@ -24,7 +24,7 @@ chuyển bước sau khi gate của giai đoạn trước có bằng chứng đ�
 | P0 | `chore/procv-baseline` | Kiểm kê, hợp đồng hành vi, số đo CI | Verified | Baseline có SHA và artifact kiểm chứng |
 | P1 | `fix/ci-test-stability` | Chẩn đoán và sửa test lỗi hoặc treo | Implemented | Ba lượt lặp ổn định; không hạ coverage hoặc skip |
 | P2 | `chore/repo-cleanup` | Dọn artifact, media test và ignore | Implemented | Test không sinh rác ở root; dữ liệu không mất |
-| P3 | `chore/local-only-tooling` | Bỏ cấu hình deploy production, giữ local | Planned | Compose local, API, frontend và worker hoạt động |
+| P3 | `chore/local-only-tooling` | Bỏ cấu hình deploy production, giữ local | Implemented | Compose local, API, frontend và worker hoạt động |
 | P4 | `refactor/env-configuration` | Env tối thiểu và catalog optional | Planned | Effective config trước và sau tương đương |
 | P5 | `refactor/backend-organization` | Chuẩn hóa Django theo app | Planned | Schema, migration, quyền và task registry không đổi |
 | P6 | `refactor/frontend-organization` | Chuẩn hóa ownership frontend | Planned | Import, route, bundle và UI không đổi |
@@ -46,6 +46,8 @@ chuyển bước sau khi gate của giai đoạn trước có bằng chứng đ�
   các gate còn phải hoàn tất trước P2.
 - [Kết quả dọn repository P2](p2-repo-cleanup.md), gồm phân loại media, điểm
   phục hồi và bằng chứng clean/test không làm mất dữ liệu.
+- [Kết quả chuyển tooling về local-only P3](p3-local-only-tooling.md), gồm
+  checkpoint, danh sách cấu hình production đã bỏ và bằng chứng Compose smoke.
 
 ## Mapping đường dẫn và hành động
 
@@ -53,9 +55,9 @@ chuyển bước sau khi gate của giai đoạn trước có bằng chứng đ�
 | --- | --- | --- | --- | --- | --- |
 | `private-media/`, `public-media/` ở root | Phân loại fixture; chuyển fixture cần thiết về app sở hữu hoặc untrack runtime | Test upload, storage root, bản sao dữ liệu | P2 | Pending | Hai lượt test không sinh lại media ở root |
 | `frontend/test-results/`, `frontend/coverage/` local | Giữ ngoài Git; clean script chỉ xóa artifact tái tạo được | Playwright/Vitest output | P2 | Pending | `git status` sạch sau test |
-| `deploy/nginx/`, `docker-compose.prod.yml` | Bỏ sau checkpoint; lịch sử còn trong Git | README, CI detector, Compose comment, docs | P3 | Pending | Không còn tham chiếu bắt buộc; local smoke đạt |
-| `frontend/Dockerfile`, `frontend/nginx.conf` | Ứng viên xóa sau kiểm tra consumer | Compose, docs, workflow | P3 | Pending | Frontend local/build không đổi |
-| `docker-compose.yml`, `backend/Dockerfile` | Giữ cho local; sửa chú thích production lỗi thời nếu có | Volume/project name, DB, Redis, worker | P3 | Pending | Migrate, health, frontend và worker smoke đạt |
+| `deploy/nginx/`, `docker-compose.prod.yml` | Đã bỏ; lịch sử giữ tại tag checkpoint | README, CI detector, Compose comment, docs | P3 | Implemented | Không còn tham chiếu bắt buộc; local smoke đạt |
+| `frontend/Dockerfile`, `frontend/nginx.conf` | Đã bỏ sau khi kiểm tra consumer | Compose, docs, workflow | P3 | Implemented | Frontend local/build không đổi |
+| `docker-compose.yml`, `backend/Dockerfile` | Giữ cho local; đã sửa chú thích production lỗi thời | Volume/project name, DB, Redis, worker | P3 | Implemented | Migrate, health, frontend và worker smoke đạt |
 | `backend/.env.example` | Mẫu tối thiểu; phần optional sang `.env.optional.example` | Loader, Compose interpolation, CI, Celery | P4 | Pending | Native/Docker và env-sync đạt |
 | `frontend/.env.example` | Mẫu public tối thiểu; optional sang `.env.optional.example` | Vite build-time contract | P4 | Pending | Không có secret; ba cổng giữ nguyên |
 | `scripts/bootstrap-backend.sh`, check thuần backend | Chỉ chuyển vào `backend/scripts/` khi ownership rõ | Docker, CI, README | P5 | Pending | Full backend gate đạt |
