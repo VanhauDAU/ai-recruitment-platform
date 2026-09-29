@@ -21,6 +21,7 @@ import {
   previewLocationLines,
   previewScheduleLines,
 } from '../lib/job-preview-presentation'
+import JobPresentationLabels from './JobPresentationLabels'
 
 // Panel xem nhanh nổi bên cạnh tiêu đề job khi di chuột (dùng trong BestJobs).
 export default function JobPreviewPanel({
@@ -58,6 +59,7 @@ export default function JobPreviewPanel({
     { label: 'Số lượng tuyển', value: job.number_of_vacancies ? `${job.number_of_vacancies} người` : null },
   ].filter((item) => item.value)
   const sections = [
+    { title: 'Lý do nên ứng tuyển', lines: job.application_reasons || [] },
     { title: 'Mô tả công việc', lines: jobContentLines(job.description || job.short_description) },
     { title: 'Yêu cầu ứng viên', lines: jobContentLines(job.requirements) },
     { title: 'Quyền lợi', lines: previewBenefitLines(job) },
@@ -91,6 +93,7 @@ export default function JobPreviewPanel({
         >
           <p className="line-clamp-2 text-base font-semibold leading-snug text-[#17324d]">{job.title}</p>
           <p className="mt-1 truncate text-xs uppercase text-gray-400">{job.company_name}</p>
+          <JobPresentationLabels job={job} compact className="mt-1.5" />
         </div>
 
         <div
@@ -115,6 +118,7 @@ export default function JobPreviewPanel({
           <div className="min-w-0 flex-1">
             <p className="line-clamp-3 text-base font-semibold leading-snug text-[#17324d]">{job.title}</p>
             <p className="mt-1 truncate text-xs uppercase text-gray-400">{job.company_name}</p>
+            <JobPresentationLabels job={job} compact className="mt-1.5" />
             <p className="mt-2 text-sm font-semibold text-[var(--brand-primary)]">{formatSalary(job)}</p>
           </div>
           </div>

@@ -6,9 +6,8 @@ from django.utils import timezone
 class CandidateProfile(models.Model):
     """Candidate details and job-search preferences (DB doc section 2.2.
 
-    Skills are intentionally NOT stored here — they live on the candidate's
-    default CV via cv_skills, so there is one single source of skill data
-    instead of two that can drift apart.
+    CV skills remain attached to a CV. Skills explicitly selected for job
+    recommendations belong to CandidateJobPreference instead of this profile.
     """
 
     class WorkType(models.TextChoices):
@@ -126,6 +125,28 @@ class CandidateDesiredSpecialization(models.Model):
         ]
 
 
+class CandidateDesiredPositionOther(models.Model):
+    """Một vị trí tự nhập, không tạo thêm bản ghi trong taxonomy JobCategory."""
+
+    job_preference = models.ForeignKey(
+        CandidateJobPreference,
+        on_delete=models.CASCADE,
+        related_name='desired_position_others',
+    )
+    name = models.CharField(max_length=255)
+    sort_order = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        db_table = 'candidate_desired_position_others'
+        ordering = ['sort_order', 'id']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['job_preference', 'name'],
+                name='candidate_pref_position_other_unique',
+            ),
+        ]
+
+
 class CandidatePreferredProvince(models.Model):
     """Tỉnh/thành ứng viên mong muốn làm việc (không nhận phường/xã)."""
 
@@ -148,6 +169,32 @@ class CandidatePreferredProvince(models.Model):
             models.UniqueConstraint(
                 fields=['job_preference', 'location'],
                 name='candidate_pref_province_unique',
+            ),
+        ]
+
+
+class CandidatePreferredSkill(models.Model):
+    """Kỹ năng taxonomy ứng viên chủ động chọn cho nhu cầu tìm việc."""
+
+    job_preference = models.ForeignKey(
+        CandidateJobPreference,
+        on_delete=models.CASCADE,
+        related_name='preferred_skills',
+    )
+    skill = models.ForeignKey(
+        'skills.Skill',
+        on_delete=models.PROTECT,
+        related_name='preferred_by_candidates',
+    )
+    sort_order = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        db_table = 'candidate_preferred_skills'
+        ordering = ['sort_order', 'id']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['job_preference', 'skill'],
+                name='candidate_pref_skill_unique',
             ),
         ]
 

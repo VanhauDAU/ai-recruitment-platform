@@ -8,6 +8,9 @@ import EmployerGeneralSettings from './EmployerGeneralSettings'
 vi.mock('@/features/two-factor', () => ({
   TwoFactorMethodsPanel: () => <div data-testid="two-factor-methods-panel" />,
 }))
+vi.mock('@/features/configure-employer-notifications', () => ({
+  EmployerNotificationPreferences: () => <div data-testid="employer-notification-preferences" />,
+}))
 
 describe('EmployerGeneralSettings', () => {
   it('renders the recruiter notification card next to the shared MFA panel', () => {
@@ -19,6 +22,7 @@ describe('EmployerGeneralSettings', () => {
 
     expect(screen.getByText('Thông báo CV ứng tuyển')).toBeInTheDocument()
     expect(screen.getByText('Đang hoạt động')).toBeInTheDocument()
+    expect(screen.getByTestId('employer-notification-preferences')).toBeInTheDocument()
     expect(screen.getByTestId('two-factor-methods-panel')).toBeInTheDocument()
   })
 })

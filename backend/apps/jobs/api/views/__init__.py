@@ -1,5 +1,12 @@
 """Public HTTP views grouped by jobs use case."""
 
+from .ai_generation import (
+    EmployerJobAiGenerationCancelView,
+    EmployerJobAiGenerationCreateView,
+    EmployerJobAiGenerationDetailView,
+    EmployerJobAiGenerationFeedbackView,
+)
+from .alerts import CandidateJobAlertDetailView, CandidateJobAlertListCreateView
 from .catalogs import BenefitListView, JobCategoryListView, LanguageListView
 from .employer import (
     EmployerJobCloseView,
@@ -21,6 +28,7 @@ from .moderation import (
 from .public import (
     CandidateJobRecommendationView,
     CvJobRecommendationView,
+    HomepageBestJobListView,
     JobDetailView,
     JobImpressionBatchCreateView,
     JobListView,
@@ -30,7 +38,14 @@ from .public import (
     SavedJobDestroyView,
     SavedJobListCreateView,
 )
-from .recommendations import SavedJobRecommendationView
+from .recommendations import (
+    HiddenJobCreateView,
+    HiddenJobDestroyView,
+    InlineJobRecommendationView,
+    SavedJobRecommendationView,
+    SavedJobRemarketingImpressionView,
+    SavedJobRemarketingLaneView,
+)
 from .reports import (
     AdminJobReportListView,
     AdminJobReportResolveView,
@@ -50,8 +65,18 @@ __all__ = [
     'AdminJobReviewView',
     'JobReportCreateView',
     'CandidateJobRecommendationView',
+    'CandidateJobAlertDetailView',
+    'CandidateJobAlertListCreateView',
     'CvJobRecommendationView',
+    'HomepageBestJobListView',
+    'HiddenJobCreateView',
+    'HiddenJobDestroyView',
+    'InlineJobRecommendationView',
     'EmployerJobCloseView',
+    'EmployerJobAiGenerationCancelView',
+    'EmployerJobAiGenerationCreateView',
+    'EmployerJobAiGenerationDetailView',
+    'EmployerJobAiGenerationFeedbackView',
     'EmployerJobDetailView',
     'EmployerJobDuplicateView',
     'EmployerJobExtendView',
@@ -70,4 +95,6 @@ __all__ = [
     'SavedJobDestroyView',
     'SavedJobListCreateView',
     'SavedJobRecommendationView',
+    'SavedJobRemarketingLaneView',
+    'SavedJobRemarketingImpressionView',
 ]

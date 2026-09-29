@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { API_ROUTE } from './helpers'
 
 test('admin blog: list is responsive, public links open a new tab and article slug is server-owned', async ({ page }) => {
   const adminTags = [
@@ -84,7 +85,7 @@ test('admin blog: list is responsive, public links open a new tab and article sl
   }
   const postOrderings = []
 
-  await page.route('http://localhost:8000/api/**', async (route) => {
+  await page.route(API_ROUTE, async (route) => {
     const url = new URL(route.request().url())
     const path = url.pathname
     let body = {}
@@ -255,7 +256,7 @@ test('admin blog: list is responsive, public links open a new tab and article sl
   await expect(page.getByRole('button', { name: 'Tiêu đề cấp 3' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Tiêu đề cấp 1' })).toHaveCount(0)
   await expect(page.locator('.company-rich-editor__toolbar')).toHaveCSS('position', 'sticky')
-  await page.getByRole('button', { name: 'Chèn ảnh từ kho' }).click()
+  await page.getByRole('button', { name: 'Chèn hình ảnh' }).click()
   await expect(page.getByRole('dialog', { name: 'Chèn hình ảnh' })).toBeVisible()
   await expect(page.getByText('nghe-sales.webp')).toBeVisible()
   await page.getByRole('option', { name: /nghe-sales.webp/ }).click()

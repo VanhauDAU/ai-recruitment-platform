@@ -5,14 +5,18 @@ from django.core.validators import URLValidator
 from rest_framework import serializers
 
 from common.media_storage import media_url_from_value
-from common.rich_text import rich_text_plain_text, sanitize_rich_text
+from common.rich_text import rich_text_plain_text
 
 from ...models import (
     Company,
     CompanyImage,
     Industry,
 )
-from ...services import set_company_industries
+from ...services import (
+    normalize_company_rich_text,
+    normalize_company_tax_code,
+    set_company_industries,
+)
 
 
 class IndustrySerializer(serializers.ModelSerializer):
@@ -82,9 +86,6 @@ class CompanySerializer(serializers.ModelSerializer):
             'founded_year',
             'has_brand_page',
             'logo_pending',
-            'verification_status',
-            'verified_at',
-            'rejected_reason',
             'images',
             'created_at',
             'updated_at',
@@ -94,9 +95,6 @@ class CompanySerializer(serializers.ModelSerializer):
             'public_id',
             'slug',
             'has_brand_page',
-            'verification_status',
-            'verified_at',
-            'rejected_reason',
             'created_at',
             'updated_at',
         ]
@@ -145,12 +143,10 @@ class CompanySerializer(serializers.ModelSerializer):
         return self._validate_enum_list(value, Company.TargetCustomer, 'khách hàng mục tiêu')
 
     def validate_tax_code(self, value):
-        value = re.sub(r'\s+', '', value or '')
-        if not re.fullmatch(r'\d{10}(?:-\d{3})?', value):
-            raise serializers.ValidationError(
-                'Mã số thuế phải gồm 10 chữ số hoặc có dạng 10 chữ số-3 chữ số.'
-            )
-        return value
+        try:
+            return normalize_company_tax_code(value)
+        except ValueError as error:
+            raise serializers.ValidationError(str(error)) from error
 
     def validate_company_name(self, value):
         value = (value or '').strip()
@@ -174,13 +170,10 @@ class CompanySerializer(serializers.ModelSerializer):
         return value
 
     def _validate_rich_text(self, value, *, required, label):
-        sanitized = sanitize_rich_text(value)
-        visible = rich_text_plain_text(sanitized)
-        if required and not visible:
-            raise serializers.ValidationError(f'{label} là bắt buộc.')
-        if len(visible) > 10_000:
-            raise serializers.ValidationError(f'{label} không được vượt quá 10.000 ký tự.')
-        return sanitized
+        try:
+            return normalize_company_rich_text(value, required=required, label=label)
+        except ValueError as error:
+            raise serializers.ValidationError(str(error)) from error
 
     def validate_description(self, value):
         return self._validate_rich_text(value, required=True, label='Mô tả công ty')
@@ -254,8 +247,54 @@ class CompanySearchSerializer(serializers.ModelSerializer):
             'company_size',
             'logo_url',
             'industries_detail',
-            'verification_status',
         ]
 
     def get_logo_url(self, obj):
         return media_url_from_value(obj.logo_url, request=self.context.get('request'))
+
+
+class PublicCompanyListSerializer(serializers.ModelSerializer):
+    """Public-safe summary for company directory cards."""
+
+    DESCRIPTION_EXCERPT_LENGTH = 240
+
+    logo_url = serializers.SerializerMethodField()
+    cover_image_url = serializers.SerializerMethodField()
+    description_excerpt = serializers.SerializerMethodField()
+    headquarters = serializers.SerializerMethodField()
+    active_public_job_count = serializers.IntegerField(read_only=True)
+    company_size_display = serializers.CharField(source='get_company_size_display', read_only=True)
+    industries_detail = IndustrySerializer(source='industries', many=True, read_only=True)
+
+    class Meta:
+        model = Company
+        fields = [
+            'public_id',
+            'slug',
+            'company_name',
+            'trade_name',
+            'logo_url',
+            'cover_image_url',
+            'description_excerpt',
+            'headquarters',
+            'active_public_job_count',
+            'company_size',
+            'company_size_display',
+            'industries_detail',
+        ]
+        read_only_fields = fields
+
+    def get_logo_url(self, obj):
+        return media_url_from_value(obj.logo_url, request=self.context.get('request'))
+
+    def get_cover_image_url(self, obj):
+        return media_url_from_value(obj.cover_image_url, request=self.context.get('request'))
+
+    def get_description_excerpt(self, obj):
+        plain_text = ' '.join(rich_text_plain_text(obj.description).split())
+        return plain_text[: self.DESCRIPTION_EXCERPT_LENGTH]
+
+    def get_headquarters(self, obj):
+        if obj.business_type != Company.BusinessType.ENTERPRISE:
+            return ''
+        return obj.address.strip()

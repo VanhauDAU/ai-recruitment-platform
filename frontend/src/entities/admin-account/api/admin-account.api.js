@@ -115,6 +115,17 @@ export function resendAdminAccountVerification(publicId) {
   return data(client.post(`/admin/accounts/${publicId}/resend-verification/`))
 }
 
+export function getEmployerCompanyUnlinkImpact(publicId, reason) {
+  return data(client.post(`/admin/accounts/${publicId}/company-unlink-impact/`, { reason }))
+}
+
+export function unlinkEmployerCompany(publicId, reason, impactToken) {
+  return data(client.post(`/admin/accounts/${publicId}/unlink-company/`, {
+    reason,
+    impact_token: impactToken,
+  }))
+}
+
 export function getAdminInvitations(params = {}, { signal } = {}) {
   return data(client.get('/admin/account-invitations/', { params, signal }))
 }

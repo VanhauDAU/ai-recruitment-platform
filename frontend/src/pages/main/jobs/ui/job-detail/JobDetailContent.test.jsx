@@ -9,6 +9,7 @@ const job = {
   description: '<p>Mô tả công việc dài.</p>',
   requirements: '<p>Yêu cầu ứng viên dài.</p>',
   benefits: '<p>Quyền lợi ứng viên.</p>',
+  application_reasons: ['Sản phẩm có tác động', 'Đội ngũ hỗ trợ tốt'],
   requirement_tags: [],
   domain_knowledge: [],
   required_skills: [],
@@ -35,6 +36,7 @@ describe('JobDetailContent', () => {
 
   it('fades long details, expands them fully, and offers a collapse action', async () => {
     const onReport = vi.fn()
+    const onCreateJobAlert = vi.fn()
     render(
       <JobDetailContent
         job={job}
@@ -43,7 +45,9 @@ describe('JobDetailContent', () => {
         savePending={false}
         isAuthenticated={false}
         applicationStatus={{ hasApplied: false, isLimitReached: false }}
+        canCreateJobAlert
         onApply={vi.fn()}
+        onCreateJobAlert={onCreateJobAlert}
         onSave={vi.fn()}
         onReport={onReport}
         onRequireLogin={vi.fn()}
@@ -51,6 +55,8 @@ describe('JobDetailContent', () => {
     )
 
     const expandButton = await screen.findByRole('button', { name: /Xem đầy đủ mô tả công việc/ })
+    expect(screen.getByText('Vì sao bạn nên ứng tuyển?')).toBeVisible()
+    expect(screen.getByText('Sản phẩm có tác động')).toBeVisible()
     const content = document.getElementById('job-detail-collapsible-content')
     expect(expandButton).toHaveAttribute('aria-expanded', 'false')
     expect(content).toHaveClass('overflow-hidden')
@@ -66,5 +72,11 @@ describe('JobDetailContent', () => {
     expect(screen.getByText('Báo cáo tin tuyển dụng:', { exact: true }).parentElement).toHaveClass('bg-[#F2F4F5]')
     fireEvent.click(reportButton)
     expect(onReport).toHaveBeenCalledOnce()
+
+    const alertButton = screen.getByRole('button', { name: 'Gửi tôi việc làm tương tự' })
+    expect(alertButton).toHaveAttribute('aria-haspopup', 'dialog')
+    expect(alertButton).not.toHaveClass('w-full')
+    fireEvent.click(alertButton)
+    expect(onCreateJobAlert).toHaveBeenCalledOnce()
   })
 })

@@ -85,8 +85,7 @@ export default function CandidateUserMenu({ user, logout }) {
 
   function handleItem(it) {
     setOpen(false)
-    if (it.todo || !it.path) message.info('Tính năng sẽ sớm ra mắt.')
-    else if (it.blank) window.open(it.path, '_blank', 'noopener')
+    if (it.blank) window.open(it.path, '_blank', 'noopener')
     else navigate(it.path)
   }
 

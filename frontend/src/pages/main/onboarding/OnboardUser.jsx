@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router'
 import { getCandidateJobPreferences } from '@/entities/candidate-preferences'
+import { jobKeys } from '@/entities/job'
 import { useSession } from '@/entities/session'
 import { OnboardingChat } from '@/widgets/onboarding-interview'
 import PageLoading from '@/shared/ui/PageLoading'
@@ -12,6 +14,7 @@ import { buildPersonalizedJobsUrl } from './model/personalized-jobs-url'
  */
 export default function OnboardUser() {
   const { setCurrentUser, user } = useSession()
+  const queryClient = useQueryClient()
   const navigate = useNavigate()
   const [preference, setPreference] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -34,6 +37,8 @@ export default function OnboardUser() {
       user={user}
       onSaved={(saved) => {
         setCurrentUser({ ...user, job_preferences_configured: saved.job_preferences_configured })
+        queryClient.removeQueries({ queryKey: jobKeys.candidateRecommendationsRoot })
+        queryClient.removeQueries({ queryKey: jobKeys.inlineRecommendationsRoot })
         targetRef.current = buildPersonalizedJobsUrl(saved)
       }}
       onFinish={() => navigate(targetRef.current, { replace: true })}

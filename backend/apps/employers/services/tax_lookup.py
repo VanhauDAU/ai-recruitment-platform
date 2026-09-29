@@ -15,8 +15,11 @@ from django.utils import timezone
 from apps.accounts.services import record_admin_action
 
 from ..models import CompanyTaxLookupEvidence, EmployerVerificationEvent
+from .companies import normalize_company_tax_code
+from .company_update_locks import lock_company_update_request
+from .compliance import lock_verification_identity
 
-TAX_CODE_PATTERN = re.compile(r'\d{10}(?:-\d{3})?')
+PROVIDER_TAX_CODE_PATTERN = re.compile(r'(?:[0-9]{10}|[0-9]{10}-[0-9]{3}|[0-9]{13})')
 
 
 class TaxLookupError(Exception):
@@ -58,10 +61,27 @@ class TaxLookupResult:
 
 
 def normalize_tax_code(value):
-    normalized = re.sub(r'\s+', '', str(value or ''))
-    if not TAX_CODE_PATTERN.fullmatch(normalized):
-        raise ValueError('invalid_tax_code')
-    return normalized
+    try:
+        return normalize_company_tax_code(value)
+    except ValueError as error:
+        raise ValueError('invalid_tax_code') from error
+
+
+def _provider_tax_code(canonical_tax_code):
+    """Format a canonical branch identifier for VietQR without changing storage."""
+
+    if len(canonical_tax_code) == 13:
+        return f'{canonical_tax_code[:10]}-{canonical_tax_code[10:]}'
+    return canonical_tax_code
+
+
+def _normalize_provider_tax_code(value):
+    """Accept VietQR's 10, contiguous-13, or conventional 10-3 representation."""
+
+    normalized = re.sub(r'\s+', '', _bounded_text(value, 100))
+    if not PROVIDER_TAX_CODE_PATTERN.fullmatch(normalized):
+        raise ValueError('invalid_provider_tax_code')
+    return normalized.replace('-', '')
 
 
 def _response_hash(payload):
@@ -103,7 +123,10 @@ def lookup_company_tax(tax_code):
     if not settings.VIETQR_TAX_LOOKUP_ENABLED:
         raise TaxLookupUnavailable('vietqr_disabled')
 
-    endpoint = f'{settings.VIETQR_TAX_LOOKUP_BASE_URL.rstrip("/")}/{quote(tax_code, safe="-")}'
+    provider_tax_code = _provider_tax_code(tax_code)
+    endpoint = (
+        f'{settings.VIETQR_TAX_LOOKUP_BASE_URL.rstrip("/")}/{quote(provider_tax_code, safe="-")}'
+    )
     try:
         response = requests.get(
             endpoint,
@@ -165,7 +188,17 @@ def lookup_company_tax(tax_code):
         _cache_set(cache_key, result.as_dict(), settings.VIETQR_TAX_LOOKUP_NEGATIVE_TTL)
         return result
 
-    returned_tax_code = re.sub(r'\s+', '', _bounded_text(data.get('id'), 100))
+    raw_returned_tax_code = re.sub(r'\s+', '', _bounded_text(data.get('id'), 100))
+    try:
+        returned_tax_code = _normalize_provider_tax_code(raw_returned_tax_code)
+    except ValueError:
+        return TaxLookupResult(
+            status=CompanyTaxLookupEvidence.Status.INVALID_RESPONSE,
+            returned_tax_code=raw_returned_tax_code,
+            provider_code=provider_code,
+            provider_description='VietQR trả về mã số thuế không hợp lệ.',
+            response_hash=_response_hash(payload),
+        )
     if returned_tax_code != tax_code:
         return TaxLookupResult(
             status=CompanyTaxLookupEvidence.Status.INVALID_RESPONSE,
@@ -242,15 +275,14 @@ def latest_tax_lookup_evidence(workflow):
 
 @transaction.atomic
 def refresh_verification_tax_lookup(case, *, actor):
-    # Lock only the case row. ``company`` is nullable on verification cases, so
-    # select_related would add a LEFT OUTER JOIN that PostgreSQL cannot lock.
-    case = type(case).objects.select_for_update().get(pk=case.pk)
-    if case.company_id is None or not case.company.tax_code:
+    scope = lock_verification_identity(case)
+    case = scope.case
+    if scope.company is None or not scope.company.tax_code:
         raise ValueError('company_tax_code_is_required')
     case.lock_version += 1
     case.save(update_fields=['lock_version', 'updated_at'])
     evidence = queue_company_tax_lookup(
-        company=case.company,
+        company=scope.company,
         requested_by=actor,
         verification_case=case,
         workflow_revision=case.revision,
@@ -277,15 +309,12 @@ def refresh_verification_tax_lookup(case, *, actor):
 
 @transaction.atomic
 def refresh_company_update_tax_lookup(update_request, *, actor):
-    update_request = (
-        type(update_request)
-        .objects.select_for_update()
-        .select_related('company')
-        .get(pk=update_request.pk)
+    company, update_request = lock_company_update_request(
+        company_id=update_request.company_id,
+        update_request_id=update_request.pk,
     )
     if not update_request.is_sensitive:
         raise ValueError('tax_lookup_only_applies_to_sensitive_updates')
-    company = update_request.company
     proposed_tax_code = update_request.changes.get('tax_code', company.tax_code)
     if not proposed_tax_code:
         raise ValueError('company_tax_code_is_required')

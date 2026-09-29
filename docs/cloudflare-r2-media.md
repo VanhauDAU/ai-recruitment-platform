@@ -10,20 +10,26 @@ to React, a `VITE_*` variable, a commit, or `backend/.env.example`.
 | --- | --- | --- |
 | `procv-public-media` | Images that can be rendered anonymously | `site/`, `blog/`, `employers/`, `jobs/`, `cv-templates/`, `cvs/backgrounds/`, `migrations/external-media/` |
 | `procv-private-files` | Candidate data and legal documents | `cvs/uploads/`, `cvs/imports/`, `cvs/assets/`, `cvs/exports/`, `cvs/thumbnails/`, `employers/*/documents/` |
+| `procv-upload-quarantine` | Untrusted bytes before a scanner decision | random upload-session keys only; never business/storage keys |
 
 Private object keys are database-only. The browser receives private files only
 through an authorized Django download/preview endpoint; it never receives an
-R2 URL or credential. This includes CV exports/thumbnails/assets and employer
-verification documents. Public media resolves through `R2_PUBLIC_BASE_URL`.
+R2 URL or credential. Both local and R2 private/quarantine backends raise if
+application code calls `.url()`. This includes CV exports/thumbnails/assets and
+employer verification documents. Public media resolves through
+`R2_PUBLIC_BASE_URL`.
 
 ## Runtime configuration
 
 Set these values only in the backend environment: `R2_ENDPOINT_URL`,
 `R2_PUBLIC_ACCESS_KEY_ID`, `R2_PUBLIC_SECRET_ACCESS_KEY`,
 `R2_PRIVATE_ACCESS_KEY_ID`, `R2_PRIVATE_SECRET_ACCESS_KEY`,
-`R2_PUBLIC_BUCKET`, `R2_PRIVATE_BUCKET`, and `R2_PUBLIC_BASE_URL`. Keep
-`R2_REGION_NAME=auto`. The public and private bucket tokens are deliberately
-separate. Production refuses to start if this R2 configuration is incomplete.
+`R2_QUARANTINE_ACCESS_KEY_ID`, `R2_QUARANTINE_SECRET_ACCESS_KEY`,
+`R2_PUBLIC_BUCKET`, `R2_PRIVATE_BUCKET`, `R2_QUARANTINE_BUCKET`, and
+`R2_PUBLIC_BASE_URL`. Keep `R2_REGION_NAME=auto`. All three bucket tokens and
+bucket names are deliberately separate. Production refuses to start if the
+public/private R2 configuration or quarantine configuration is incomplete; it
+must never silently fall back to local storage.
 
 ## Moving existing public URLs
 
@@ -53,12 +59,27 @@ cd backend
 venv/bin/python manage.py migrate_frontend_assets_to_r2 --apply
 ```
 
-If this deployment has an existing `backend/media` directory, copy it before
-switching traffic so old storage keys stay resolvable. This does not delete the
-local source files:
+If this deployment has an existing shared `backend/media` directory, first
+audit and copy it into the isolated destinations. The command is dry-run by
+default, resumable with `--cursor`, bounded by `--batch-size`, verifies content
+hashes, and always retains the unserved legacy source:
+
+```bash
+cd backend
+python manage.py migrate_media_storage_layout --json --batch-size 500
+python manage.py migrate_media_storage_layout --apply --json --batch-size 500
+```
+
+Repeat with the returned `next_cursor` until `has_more=false`, then reconcile
+counts before traffic. For a direct legacy-to-R2 copy, the older command remains
+available:
 
 ```bash
 cd backend
 venv/bin/python manage.py migrate_local_media_to_r2
 venv/bin/python manage.py migrate_local_media_to_r2 --apply
 ```
+
+`LEGACY_MEDIA_ROOT` must not be exposed by Django, Vite or nginx. Only
+`PUBLIC_MEDIA_ROOT` may be served at `/media/`; private and quarantine buckets
+must return 403/404 on direct object requests.

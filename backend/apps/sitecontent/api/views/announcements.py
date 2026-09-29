@@ -5,9 +5,10 @@ from zoneinfo import ZoneInfo
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
-from drf_spectacular.utils import OpenApiResponse, extend_schema, extend_schema_view
+from drf_spectacular.utils import OpenApiResponse, OpenApiTypes, extend_schema, extend_schema_view
 from rest_framework import generics, permissions, status
 from rest_framework.exceptions import ValidationError
+from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
@@ -41,6 +42,7 @@ from ...services import (
     resume_announcement,
     set_announcement_user_state,
     set_announcement_viewer_cookie,
+    upload_announcement_background,
 )
 from ..serializers import (
     ActiveAnnouncementFeedSerializer,
@@ -577,3 +579,28 @@ class AdminAnnouncementMetricView(APIView):
             'daily': [rates(row) for row in daily],
         }
         return Response(AnnouncementMetricReportSerializer(payload).data)
+
+
+@extend_schema(
+    summary='Admin: upload ảnh nền dải thông báo',
+    request={
+        'multipart/form-data': {
+            'type': 'object',
+            'properties': {'file': {'type': 'string', 'format': 'binary'}},
+            'required': ['file'],
+        }
+    },
+    responses={201: OpenApiTypes.OBJECT, 400: OpenApiTypes.OBJECT},
+    tags=['site-announcements-admin'],
+)
+class AdminAnnouncementBackgroundUploadView(APIView):
+    """Upload ảnh nền strip (JPEG/PNG/WebP, ngang hẹp, ≤1 MB)."""
+
+    permission_classes = [HasAdminPermission]
+    required_admin_permissions = {'POST': ['announcement.view', 'announcement.manage']}
+    parser_classes = [MultiPartParser, FormParser]
+
+    def post(self, request):
+        upload = request.FILES.get('file') or request.FILES.get('image')
+        saved = upload_announcement_background(upload=upload, request=request)
+        return Response(saved, status=status.HTTP_201_CREATED)

@@ -1,6 +1,6 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { useEffect, useMemo, useState } from 'react'
-import { getJobs, jobKeys } from '@/entities/job'
+import { getHomepageBestJobs, jobKeys } from '@/entities/job'
 import { getProvinces, getWardsByParents } from '@/entities/location'
 import {
   BEST_JOBS_PAGE_SIZE,
@@ -53,8 +53,8 @@ export default function useBestJobsData(categories) {
   )
 
   const jobsQuery = useQuery({
-    queryKey: jobKeys.list(buildBestJobsParams(filters, page)),
-    queryFn: () => getJobs(buildBestJobsParams(filters, page)),
+    queryKey: jobKeys.homepageBest(buildBestJobsParams(filters, page)),
+    queryFn: () => getHomepageBestJobs(buildBestJobsParams(filters, page)),
     placeholderData: keepPreviousData,
   })
   const jobsData = jobsQuery.data

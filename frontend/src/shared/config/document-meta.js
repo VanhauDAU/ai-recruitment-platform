@@ -67,6 +67,8 @@ export function applyDocumentMetadata(metadata, titleOptions) {
   setMeta('meta[property="og:description"]', { property: 'og:description' }, description)
   setMeta('meta[property="og:url"]', { property: 'og:url' }, canonicalUrl)
   setMeta('meta[property="og:image"]', { property: 'og:image' }, imageUrl)
+  // Gợi ý kích thước card lớn khi có ảnh thumb (crawler vẫn ưu tiên SEO shell server).
+  setMeta('meta[property="og:image:alt"]', { property: 'og:image:alt' }, imageUrl ? title : '')
   setMeta(
     'meta[name="twitter:card"]',
     { name: 'twitter:card' },
@@ -75,6 +77,7 @@ export function applyDocumentMetadata(metadata, titleOptions) {
   setMeta('meta[name="twitter:title"]', { name: 'twitter:title' }, title)
   setMeta('meta[name="twitter:description"]', { name: 'twitter:description' }, description)
   setMeta('meta[name="twitter:image"]', { name: 'twitter:image' }, imageUrl)
+  setMeta('meta[name="twitter:image:alt"]', { name: 'twitter:image:alt' }, imageUrl ? title : '')
   setMeta(
     'meta[name="google-site-verification"]',
     { name: 'google-site-verification' },

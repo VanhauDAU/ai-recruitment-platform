@@ -10,6 +10,11 @@ export async function getJobs(params = {}) {
   return data
 }
 
+export async function getHomepageBestJobs(params = {}) {
+  const { data } = await api.get('/jobs/best/', { params })
+  return data
+}
+
 export async function getCvJobRecommendations(publicId) {
   const { data } = await api.get(`/jobs/recommendations/by-cv/${publicId}/`)
   return data
@@ -17,6 +22,26 @@ export async function getCvJobRecommendations(publicId) {
 
 export async function getCandidateJobRecommendations(params = {}) {
   const { data } = await api.get('/jobs/recommendations/for-me/', { params })
+  return data
+}
+
+export async function getInlineJobRecommendations({ excludedJobIds = [], ...params } = {}) {
+  const { data } = await api.get('/jobs/recommendations/inline/', {
+    params: {
+      ...params,
+      excluded: excludedJobIds.join(','),
+    },
+  })
+  return data
+}
+
+export async function getSavedJobRemarketingLane() {
+  const { data } = await api.get('/jobs/remarketing/saved/')
+  return data
+}
+
+export async function recordSavedJobRemarketingImpression(payload) {
+  const { data } = await api.post('/jobs/remarketing/saved/impressions/', payload)
   return data
 }
 

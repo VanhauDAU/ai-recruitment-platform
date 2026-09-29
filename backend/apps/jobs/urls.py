@@ -10,8 +10,14 @@ from .api.views import (
     AdminJobReportReverseView,
     AdminJobReviewView,
     BenefitListView,
+    CandidateJobAlertDetailView,
+    CandidateJobAlertListCreateView,
     CandidateJobRecommendationView,
     CvJobRecommendationView,
+    EmployerJobAiGenerationCancelView,
+    EmployerJobAiGenerationCreateView,
+    EmployerJobAiGenerationDetailView,
+    EmployerJobAiGenerationFeedbackView,
     EmployerJobCloseView,
     EmployerJobDetailView,
     EmployerJobDuplicateView,
@@ -20,6 +26,10 @@ from .api.views import (
     EmployerJobPostingContextView,
     EmployerJobReopenView,
     EmployerJobSubmitView,
+    HiddenJobCreateView,
+    HiddenJobDestroyView,
+    HomepageBestJobListView,
+    InlineJobRecommendationView,
     JobCategoryListView,
     JobDetailView,
     JobImpressionBatchCreateView,
@@ -32,9 +42,17 @@ from .api.views import (
     SavedJobDestroyView,
     SavedJobListCreateView,
     SavedJobRecommendationView,
+    SavedJobRemarketingImpressionView,
+    SavedJobRemarketingLaneView,
 )
 
 urlpatterns = [
+    path('alerts/', CandidateJobAlertListCreateView.as_view(), name='candidate-job-alert-list'),
+    path(
+        'alerts/<str:public_id>/',
+        CandidateJobAlertDetailView.as_view(),
+        name='candidate-job-alert-detail',
+    ),
     path(
         'admin/moderation/', AdminJobModerationListView.as_view(), name='admin-job-moderation-list'
     ),
@@ -62,6 +80,7 @@ urlpatterns = [
     path('benefits/', BenefitListView.as_view(), name='benefit-list'),
     path('languages/', LanguageListView.as_view(), name='language-list'),
     path('stats/', JobStatsView.as_view(), name='job-stats'),
+    path('best/', HomepageBestJobListView.as_view(), name='homepage-best-job-list'),
     path('suggest/', JobSuggestView.as_view(), name='job-suggest'),
     path(
         'impressions/',
@@ -79,13 +98,58 @@ urlpatterns = [
         name='cv-job-recommendations',
     ),
     path(
+        'recommendations/inline/',
+        InlineJobRecommendationView.as_view(),
+        name='inline-job-recommendations',
+    ),
+    path(
+        'recommendations/hidden/',
+        HiddenJobCreateView.as_view(),
+        name='hidden-job-create',
+    ),
+    path(
+        'recommendations/hidden/<str:job_public_id>/',
+        HiddenJobDestroyView.as_view(),
+        name='hidden-job-destroy',
+    ),
+    path(
         'recommendations/by-saved/',
         SavedJobRecommendationView.as_view(),
         name='saved-job-recommendations',
     ),
+    path(
+        'remarketing/saved/',
+        SavedJobRemarketingLaneView.as_view(),
+        name='saved-job-remarketing-lane',
+    ),
+    path(
+        'remarketing/saved/impressions/',
+        SavedJobRemarketingImpressionView.as_view(),
+        name='saved-job-remarketing-impression',
+    ),
     path('saved/', SavedJobListCreateView.as_view(), name='saved-job-list-create'),
     path('saved/<str:public_id>/', SavedJobDestroyView.as_view(), name='saved-job-destroy'),
     path('mine/', EmployerJobListCreateView.as_view(), name='employer-job-list-create'),
+    path(
+        'mine/ai-generations/',
+        EmployerJobAiGenerationCreateView.as_view(),
+        name='employer-job-ai-generation-create',
+    ),
+    path(
+        'mine/ai-generations/<str:public_id>/',
+        EmployerJobAiGenerationDetailView.as_view(),
+        name='employer-job-ai-generation-detail',
+    ),
+    path(
+        'mine/ai-generations/<str:public_id>/cancel/',
+        EmployerJobAiGenerationCancelView.as_view(),
+        name='employer-job-ai-generation-cancel',
+    ),
+    path(
+        'mine/ai-generations/<str:public_id>/feedback/',
+        EmployerJobAiGenerationFeedbackView.as_view(),
+        name='employer-job-ai-generation-feedback',
+    ),
     path(
         'mine/posting-context/',
         EmployerJobPostingContextView.as_view(),

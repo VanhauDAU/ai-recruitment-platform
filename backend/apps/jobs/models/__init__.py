@@ -1,10 +1,21 @@
 """Public model API for the jobs Django app."""
 
+from .ai_generation import JobAiGeneration
+from .alerts import (
+    CandidateJobDigest,
+    CandidateJobDigestItem,
+    CandidateJobDigestSchedule,
+    CandidateJobEmailReceipt,
+    CandidateJobEmailSuppression,
+    JobAlert,
+    JobAlertCategory,
+)
 from .benefits import Benefit, JobBenefit
 from .contacts import JobApplicationContact, JobApplicationEmail
 from .core import Job, JobCategory, JobCategoryLocalization
 from .details import JobCategoryAssignment, JobLocation, JobWorkSchedule
 from .engagement import JobEngagementDaily
+from .hidden import CandidateHiddenJob
 from .history import JobStatusHistory
 from .languages import JobLanguageRequirement, Language
 from .moderation import JobModerationEvent
@@ -14,7 +25,16 @@ from .skills import JobSkill
 
 __all__ = [
     'Benefit',
+    'CandidateJobDigest',
+    'CandidateJobDigestItem',
+    'CandidateJobDigestSchedule',
+    'CandidateJobEmailReceipt',
+    'CandidateJobEmailSuppression',
+    'CandidateHiddenJob',
     'Job',
+    'JobAiGeneration',
+    'JobAlert',
+    'JobAlertCategory',
     'JobApplicationContact',
     'JobApplicationEmail',
     'JobBenefit',

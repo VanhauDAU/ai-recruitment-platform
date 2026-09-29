@@ -4,7 +4,11 @@ from .profile import CandidateProfile
 
 
 class CandidateEmailNotificationSettings(models.Model):
-    """Candidate-managed email notification categories, enabled by default."""
+    """Candidate-managed email notification categories.
+
+    Recommendation emails are deliberately opt-in because they read profile/CV
+    signals. The remaining categories preserve the historical enabled defaults.
+    """
 
     candidate_profile = models.OneToOneField(
         CandidateProfile,
@@ -20,7 +24,7 @@ class CandidateEmailNotificationSettings(models.Model):
 
     # Thông báo cơ hội việc làm.
     configured_job_alerts = models.BooleanField(default=True)
-    suitable_job_recommendations = models.BooleanField(default=True)
+    suitable_job_recommendations = models.BooleanField(default=False)
     top_candidate_alerts = models.BooleanField(default=True)
     employer_invitations = models.BooleanField(default=True)
     job_and_career_events = models.BooleanField(default=True)

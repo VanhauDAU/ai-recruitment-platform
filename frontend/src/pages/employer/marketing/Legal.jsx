@@ -6,7 +6,7 @@ const termsSections = [
   ['1. Phạm vi dịch vụ', 'Cổng nhà tuyển dụng hỗ trợ tạo hồ sơ doanh nghiệp, đăng tin, quản lý ứng viên và sử dụng các công cụ tuyển dụng được công bố trên từng gói dịch vụ.'],
   ['2. Trách nhiệm tài khoản', 'Nhà tuyển dụng cung cấp thông tin chính xác, bảo mật thông tin đăng nhập và chịu trách nhiệm với hoạt động phát sinh từ tài khoản của mình.'],
   ['3. Nội dung tuyển dụng', 'Tin tuyển dụng phải hợp pháp, minh bạch về vị trí và không thu phí trái quy định từ ứng viên. Hệ thống có quyền tạm ẩn nội dung cần xác minh.'],
-  ['4. Xác thực doanh nghiệp', 'Một số quyền có thể yêu cầu xác thực email, số điện thoại, tư cách thành viên công ty hoặc giấy tờ pháp lý của doanh nghiệp.'],
+  ['4. Xác thực nhà tuyển dụng', 'Một số quyền có thể yêu cầu xác thực email, số điện thoại, tư cách thành viên công ty hoặc quyền đại diện qua giấy tờ pháp lý của doanh nghiệp.'],
   ['5. Dữ liệu ứng viên', 'Nhà tuyển dụng chỉ sử dụng hồ sơ ứng viên cho mục đích tuyển dụng đã thông báo, không chia sẻ trái phép và phải tuân thủ thỏa thuận xử lý dữ liệu.'],
   ['6. Thay đổi và hỗ trợ', 'Điều khoản có thể được cập nhật cùng ngày hiệu lực rõ ràng. Các thay đổi quan trọng sẽ được thông báo trên tài khoản hoặc email đăng ký.'],
 ]

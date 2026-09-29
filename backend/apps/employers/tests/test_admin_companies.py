@@ -33,7 +33,6 @@ class AdminCompanyApiTests(APITestCase):
             email='contact@alpha.example',
             phone='0901234567',
             address='Hà Nội',
-            verification_status=Company.VerificationStatus.PENDING,
             created_by=self.owner_user,
         )
         self.industry = Industry.objects.create(name='Công nghệ', slug='cong-nghe')
@@ -110,24 +109,43 @@ class AdminCompanyApiTests(APITestCase):
         assign_membership(user, role, actor=self.superuser)
         return user
 
-    def test_list_keeps_company_and_recruiter_verification_statuses_separate(self):
+    def test_list_exposes_recruiter_verification_without_company_verification_fields(self):
         self.client.force_authenticate(self.superuser)
 
         response = self.client.get(
             reverse('admin-company-list'),
             {
-                'verification_status': Company.VerificationStatus.PENDING,
                 'recruiter_verification_status': EmployerVerificationCase.Status.APPROVED,
             },
         )
 
         self.assertEqual(response.status_code, 200, response.data)
         item = response.data['results'][0]
-        self.assertEqual(item['verification_status'], 'pending')
+        self.assertNotIn('verification_status', item)
+        self.assertNotIn('verification_status_label', item)
         self.assertEqual(item['recruiter_verification_summary']['approved'], 1)
         self.assertEqual(item['recruiter_verification_summary']['none'], 1)
         self.assertEqual(item['owner_count'], 1)
         self.assertEqual(item['member_count'], 1)
+
+    def test_list_does_not_apply_removed_company_verification_filter(self):
+        other_creator = self._employer('catalog-owner@example.com', 'Owner catalogue')
+        other_company = Company.objects.create(
+            company_name='Công ty Beta',
+            created_by=other_creator,
+        )
+        self.client.force_authenticate(self.superuser)
+
+        response = self.client.get(
+            reverse('admin-company-list'),
+            {'verification_status': 'verified'},
+        )
+
+        self.assertEqual(response.status_code, 200, response.data)
+        self.assertSetEqual(
+            {item['public_id'] for item in response.data['results']},
+            {self.company.public_id, other_company.public_id},
+        )
 
     def test_list_filters_company_without_owner_and_masks_sensitive_values(self):
         no_owner_creator = self._employer('creator@example.com', 'Người tạo')
@@ -159,6 +177,13 @@ class AdminCompanyApiTests(APITestCase):
         self.assertEqual(response.data['tax_code'], '0101234567')
         self.assertEqual(response.data['email'], 'contact@alpha.example')
         self.assertEqual(response.data['phone'], '0901234567')
+        for removed_field in (
+            'verification_status',
+            'verification_status_label',
+            'verified_at',
+            'rejected_reason',
+        ):
+            self.assertNotIn(removed_field, response.data)
 
     def test_recruiter_roster_requires_permission_and_supports_role_and_status_filters(self):
         view_only = self._limited_admin('company.view')
@@ -280,11 +305,6 @@ class AdminCompanyApiTests(APITestCase):
             )
             Company.objects.create(
                 company_name=f'Công ty summary {index}',
-                verification_status=(
-                    Company.VerificationStatus.VERIFIED
-                    if index < 3
-                    else Company.VerificationStatus.UNVERIFIED
-                ),
                 created_by=creator,
             )
         self.client.force_authenticate(self.superuser)
@@ -293,8 +313,7 @@ class AdminCompanyApiTests(APITestCase):
 
         self.assertEqual(response.status_code, 200, response.data)
         self.assertEqual(response.data['total'], 23)
-        self.assertEqual(response.data['verification']['verified'], 3)
-        self.assertEqual(response.data['verification']['pending'], 1)
+        self.assertNotIn('verification', response.data)
         self.assertEqual(response.data['companies_without_single_owner'], 22)
 
     def test_company_update_queue_orders_by_number_of_changed_fields(self):

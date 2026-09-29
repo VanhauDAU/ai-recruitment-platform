@@ -27,7 +27,7 @@ describe('ProcvMascot', () => {
     expect(container.querySelector('.procv-mascot__eyes-blink').style.animationDelay).toBe('-2.25s')
   })
 
-  it('ẩn miệng theo emotion khi đang nói để hai khẩu hình không chồng nhau', () => {
+  it('ẩn miệng theo emotion khi animation chạy để hai khẩu hình không chồng nhau', () => {
     const { container, rerender } = render(<ProcvMascot emotion="success" talking />)
     expect(container.querySelector('.procv-mascot__mouth-base')).toBeInTheDocument()
     expect(container.querySelector('.procv-mascot__mouth-talk')).toBeInTheDocument()
@@ -58,15 +58,19 @@ describe('ProcvMascot', () => {
     ]))
   })
 
-  it('ghép đúng grip, micro và bàn tay trước cho pose đọc bài', () => {
-    const { container } = render(<ProcvMascot pose="microphone" />)
-    const sources = [...container.querySelectorAll('img')].map((image) => image.src)
+  it('hỗ trợ hướng nhìn xuống và các pose riêng cho form xác thực', () => {
+    const { container, rerender } = render(<ProcvMascot gaze="down" pose="frameGrip" />)
+    expect(container.querySelector('.procv-mascot')).toHaveAttribute('data-gaze', 'down')
+    expect(container.querySelector('.procv-mascot')).toHaveAttribute('data-pose', 'frameGrip')
+    expect(container.querySelector('.procv-mascot__eyes-current')).toHaveAttribute(
+      'src',
+      expect.stringContaining('robot-eyes-look-down.webp'),
+    )
 
-    expect(container.querySelector('.procv-mascot')).toHaveAttribute('data-pose', 'microphone')
-    expect(sources).toEqual(expect.arrayContaining([
-      expect.stringContaining('robot-arm-left-grip.webp'),
-      expect.stringContaining('robot-prop-microphone.webp'),
-      expect.stringContaining('robot-hand-left-grip-front.webp'),
-    ]))
+    rerender(<ProcvMascot pose="coverEyes" />)
+    expect(container.querySelectorAll('.procv-mascot__face-arm')).toHaveLength(2)
+
+    rerender(<ProcvMascot pose="peek" />)
+    expect(container.querySelectorAll('.procv-mascot__face-arm')).toHaveLength(1)
   })
 })

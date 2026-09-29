@@ -80,4 +80,25 @@ describe('announcement priority resolver', () => {
       { id: 'broken', priorityTier: 1 },
     ]).map(({ id }) => id)).toEqual(['system-employer-data-compliance'])
   })
+
+  it('maps the canonical blocker action and safe server message into compliance UI', () => {
+    const [compliance] = buildSystemAnnouncements({
+      surface: 'employer_workspace',
+      user: { role: 'employer', email_verified: true },
+      employerReadinessReady: true,
+      employerReadiness: {
+        candidateDataAccess: false,
+        blockers: [{
+          code: 'dpa_outdated',
+          capabilities: ['candidate_data'],
+          message: 'DPA cần được cập nhật theo phiên bản hiện hành.',
+          action: 'accept_current_dpa',
+        }],
+      },
+    })
+
+    expect(compliance.message).toBe('DPA cần được cập nhật theo phiên bản hiện hành.')
+    expect(compliance.cta.label).toBe('Cập nhật DPA hiện hành')
+    expect(compliance.cta.url).toBe('/tuyendung/app/account/settings/personal-data-protection')
+  })
 })

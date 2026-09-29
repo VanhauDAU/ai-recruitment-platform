@@ -228,8 +228,33 @@
   transition: width 180ms ease;
 }
 
+.announcement-preview__viewport.is-tablet {
+  width: min(100%, 768px);
+}
+
 .announcement-preview__viewport.is-mobile {
   width: min(100%, 390px);
+}
+
+.announcement-editor__bg-upload {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.announcement-editor__bg-thumb {
+  width: 100%;
+  height: 40px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+
+.announcement-editor__color-field .ant-space-compact {
+  width: 100%;
 }
 
 .announcement-preview__browser-bar {
@@ -255,6 +280,11 @@
   color: #0c4a6e;
   background: linear-gradient(90deg, #e0f2fe, #f0f9ff);
   font-size: 13px;
+  /* Height theo content — không khóa 31px dù asset nền 980×31 */
+}
+
+.announcement-preview__strip.has-bg {
+  background-color: transparent;
 }
 
 .announcement-preview__strip.is-critical {
@@ -315,6 +345,29 @@
   overflow: hidden;
   font-weight: 600;
   text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.announcement-preview__message.is-mobile,
+.announcement-preview__content.is-mobile {
+  white-space: normal;
+}
+
+.announcement-preview__message.is-mobile {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.announcement-preview__content.is-mobile {
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+.announcement-preview__content.is-tablet .announcement-preview__message {
   white-space: nowrap;
 }
 

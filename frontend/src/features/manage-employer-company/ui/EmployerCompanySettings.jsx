@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Button, Result, Skeleton } from 'antd'
 import { useState } from 'react'
 import {
+  employerProfileKeys,
   getEmployerCompanyCatalogs,
   getEmployerIndustries,
   getEmployerProfile,
@@ -39,7 +40,7 @@ export default function EmployerCompanySettings() {
       profileQuery.refetch(),
       queryClient.invalidateQueries({ queryKey: ['employer-dashboard'] }),
       queryClient.invalidateQueries({ queryKey: ['employer', 'companies'] }),
-      queryClient.invalidateQueries({ queryKey: ['employer', 'company', 'update-requests'] }),
+      queryClient.invalidateQueries({ queryKey: employerProfileKeys.companyUpdateRequests }),
     ])
   }
 

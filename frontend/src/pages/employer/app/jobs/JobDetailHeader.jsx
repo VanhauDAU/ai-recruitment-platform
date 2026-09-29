@@ -25,6 +25,7 @@ export default function JobDetailHeader({ job, publicId, closing, onClose, onDea
   const navigate = useNavigate()
   const status = job.is_expired ? ['Hết hạn', 'orange'] : (STATUS[job.status] || [job.status, 'default'])
   const deadline = job.deadline ? dayjs(job.deadline).format('DD/MM/YYYY') : 'Không giới hạn'
+  const canExtendDeadline = !job.visibility_ends_at || dayjs(job.visibility_ends_at).isAfter(dayjs())
   return (
     <header className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
       <Link to={employerAppPath('/jobs')} className="inline-flex items-center gap-2 text-sm !text-slate-500 hover:!text-[var(--brand-primary)]">
@@ -65,7 +66,7 @@ export default function JobDetailHeader({ job, publicId, closing, onClose, onDea
               {job.status === 'rejected' ? 'Chỉnh sửa và gửi lại' : 'Chỉnh sửa'}
             </Button>
           )}
-          {job.status === 'active' && job.is_expired && (
+          {job.status === 'active' && job.is_expired && canExtendDeadline && (
             <Button className="!w-full sm:!w-auto" type="primary" icon={<SyncOutlined />} onClick={() => onDeadlineAction('extend')}>Gia hạn</Button>
           )}
           {job.status === 'active' && (

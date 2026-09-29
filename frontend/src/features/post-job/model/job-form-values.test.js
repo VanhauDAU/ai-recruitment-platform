@@ -1,7 +1,22 @@
 import { describe, expect, it } from 'vitest'
-import { buildJobPayload, capitalizeTitleWords, createJobFormValues, getJobFormProgress, normalizeRichTextHtml } from './job-form-values'
+import { buildJobPayload, capitalizeTitleWords, createAiJobFormPatch, createJobFormValues, DEFAULT_AUTO_REJECTION_EMAIL, getJobFormProgress, normalizeRichTextHtml } from './job-form-values'
 
 describe('manual job form values', () => {
+  it('suggests a 30-day deadline for a new job without replacing an existing deadline', () => {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+
+    const created = createJobFormValues({}, { defaultDeadlineDays: 30 })
+    const edited = createJobFormValues(
+      { deadline: '2026-12-31' },
+      { defaultDeadlineDays: 30 },
+    )
+
+    expect(created.deadline.diff(today, 'day')).toBe(30)
+    expect(created).not.toHaveProperty('requested_visibility_days')
+    expect(edited.deadline.format('YYYY-MM-DD')).toBe('2026-12-31')
+  })
+
   it('capitalizes the first letter of each title word without lowercasing the remaining characters', () => {
     expect(capitalizeTitleWords('kỹ sư backend iOS - .NET developer')).toBe('Kỹ Sư Backend IOS - .NET Developer')
     expect(capitalizeTitleWords('trưởng/phó phòng (kinh doanh)')).toBe('Trưởng/Phó Phòng (Kinh Doanh)')
@@ -91,6 +106,33 @@ describe('manual job form values', () => {
     })
   })
 
+  it('keeps an explicitly empty work schedule empty when reopening a job for editing', () => {
+    const values = createJobFormValues({
+      work_schedules: [],
+      work_schedule_note: 'Làm việc linh hoạt theo lịch của đội ngũ.',
+    })
+
+    expect(values.work_schedules).toEqual([])
+    expect(values.work_schedule_note).toBe('Làm việc linh hoạt theo lịch của đội ngũ.')
+  })
+
+  it('provides one default work schedule only for a new job', () => {
+    expect(createJobFormValues().work_schedules).toEqual([
+      { weekday_from: 1, weekday_to: 5, sort_order: 0 },
+    ])
+  })
+
+  it('enables stale application handling with a three-week default for new jobs', () => {
+    expect(createJobFormValues()).toMatchObject({
+      auto_reject_stale_applications: true,
+      auto_reject_after_days: 21,
+      auto_rejection_email_body: DEFAULT_AUTO_REJECTION_EMAIL,
+    })
+    expect(createJobFormValues({ auto_reject_stale_applications: false })).toMatchObject({
+      auto_reject_stale_applications: false,
+    })
+  })
+
   it('builds the nested write payload and clears salary fields that do not match the selected type', () => {
     const payload = buildJobPayload({
       title: 'Backend Engineer',
@@ -168,6 +210,8 @@ describe('manual job form values', () => {
       is_required: true,
       sort_order: 0,
     })
+    expect(payload.auto_rejection_email_body).toBe('')
+    expect(payload).not.toHaveProperty('requested_visibility_days')
   })
 
   it.each([
@@ -214,5 +258,54 @@ describe('manual job form values', () => {
     })
 
     expect(progress[1].items.find((item) => item.label === 'Địa điểm làm việc').done).toBe(true)
+  })
+
+  it('maps only allowed AI suggestion fields into the controlled form', () => {
+    const patch = createAiJobFormPatch({
+      title: 'Kỹ sư Backend',
+      description: '<ul><li>Xây API</li></ul>',
+      position_level: 'employee',
+      employment_type: 'full_time',
+      work_types: ['hybrid'],
+      category_assignments: [
+        { category: 12, role: 'primary_specialization' },
+        { category: 18, role: 'domain_knowledge' },
+      ],
+      job_skills: [
+        { skill: 3, importance: 'required' },
+        { skill: 3, importance: 'preferred' },
+        { skill: 4, importance: 'preferred' },
+      ],
+      job_benefits: [{ benefit: 8 }],
+      salary_min: 99_000_000,
+      deadline: '2026-12-31',
+      work_areas: [{ location: 1 }],
+      application_contact: { phone: '0900000000' },
+      gender_requirement: 'male',
+      age_min: 25,
+      ai_generation_public_id: 'should-not-enter-form',
+    })
+
+    expect(patch).toEqual({
+      title: 'Kỹ sư Backend',
+      description: '<ul><li>Xây API</li></ul>',
+      position_level: 'employee',
+      employment_type: 'full_time',
+      work_types: ['hybrid'],
+      category_assignments: [{ category: 12, role: 'primary_specialization', sort_order: 0 }],
+      domain_category_ids: [18],
+      required_skill_ids: [3],
+      preferred_skill_ids: [4],
+      benefit_ids: [8],
+    })
+  })
+
+  it('never leaks an AI generation identifier from form values into a job payload', () => {
+    const payload = buildJobPayload({
+      title: 'Kỹ sư Backend',
+      ai_generation_public_id: 'generation_1',
+    })
+
+    expect(payload).not.toHaveProperty('ai_generation_public_id')
   })
 })

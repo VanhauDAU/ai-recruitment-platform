@@ -11,14 +11,14 @@ class RecruiterProfile(models.Model):
 
     Đã gán công ty thì không đổi được (enforce ở tầng service: chỉ set khi
     đang null). Owner tạo công ty mới hoặc member chọn công ty có sẵn đều có
-    hiệu lực ngay. Việc xác thực pháp nhân và các thay đổi thông tin công ty
-    là workflow riêng, không phải workflow duyệt thành viên.
+    hiệu lực ngay. Xác thực từng nhà tuyển dụng và thay đổi thông tin công ty
+    là các workflow riêng, không phải workflow duyệt thành viên.
 
     Các bước onboarding suy ra từ dữ liệu, không có bảng riêng. Xác thực số
     điện thoại và chọn/tạo công ty là hai bước độc lập; company không yêu cầu
     `phone_verified_at`:
     1) phone_verified_at  2) company IS NOT NULL
-    3) CompanyDocument(business_registration)  4) văn bản DLCN ứng viên
+    3) GPKD hoặc ủy quyền + định danh  4) văn bản DLCN ứng viên
     5) dpa_accepted_at với nền tảng  6) tồn tại Job của user.
     """
 
@@ -61,9 +61,14 @@ class RecruiterProfile(models.Model):
     marketing_decided_at = models.DateTimeField(null=True, blank=True)
     # SĐT đã xác thực OTP; partial unique sinh ra đúng lỗi nghiệp vụ
     # "Đã có nhà tuyển dụng khác xác thực số điện thoại này".
-    verified_phone = models.CharField(max_length=20, blank=True)
+    verified_phone = models.CharField(max_length=20, null=True, blank=True, default=None)
     phone_verified_at = models.DateTimeField(null=True, blank=True)
     dpa_accepted_at = models.DateTimeField(null=True, blank=True)
+    dpa_policy_version = models.CharField(max_length=64, blank=True)
+    dpa_document_sha256 = models.CharField(max_length=64, blank=True)
+    dpa_grace_started_at = models.DateTimeField(null=True, blank=True)
+    dpa_grace_expires_at = models.DateTimeField(null=True, blank=True)
+    dpa_grace_rollout_id = models.CharField(max_length=64, blank=True)
     # Legacy compatibility only. Completion is derived from registration,
     # verified email and a RecruitmentNeed; new code must not read/write this.
     onboarding_completed_at = models.DateTimeField(null=True, blank=True)
@@ -74,8 +79,26 @@ class RecruiterProfile(models.Model):
         constraints = [
             models.UniqueConstraint(
                 fields=['verified_phone'],
-                condition=~models.Q(verified_phone=''),
+                condition=models.Q(verified_phone__isnull=False) & ~models.Q(verified_phone=''),
                 name='uniq_recruiter_verified_phone',
+            ),
+            models.CheckConstraint(
+                condition=(
+                    models.Q(
+                        dpa_grace_started_at__isnull=True,
+                        dpa_grace_expires_at__isnull=True,
+                        dpa_grace_rollout_id='',
+                    )
+                    | (
+                        models.Q(
+                            dpa_grace_started_at__isnull=False,
+                            dpa_grace_expires_at__isnull=False,
+                        )
+                        & ~models.Q(dpa_grace_rollout_id='')
+                        & models.Q(dpa_grace_expires_at__gt=models.F('dpa_grace_started_at'))
+                    )
+                ),
+                name='employer_dpa_grace_state_consistent',
             ),
         ]
 
@@ -86,3 +109,45 @@ class RecruiterProfile(models.Model):
 
     def __str__(self):
         return f'{self.user_id}:{self.company_id or "no-company"}'
+
+
+class EmployerCompanyLinkEvent(models.Model):
+    """Append-only audit trail for high-risk recruiter/company recovery."""
+
+    class EventType(models.TextChoices):
+        ADMIN_UNLINKED = 'admin_unlinked', 'Admin gỡ liên kết công ty'
+
+    public_id = models.CharField(max_length=50, unique=True, editable=False)
+    recruiter = models.ForeignKey(
+        RecruiterProfile,
+        on_delete=models.PROTECT,
+        related_name='company_link_events',
+    )
+    company = models.ForeignKey(
+        Company,
+        on_delete=models.PROTECT,
+        related_name='+',
+    )
+    actor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name='+',
+    )
+    event_type = models.CharField(max_length=32, choices=EventType.choices)
+    reason = models.TextField()
+    impact_snapshot = models.JSONField(default=dict)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at', '-id']
+        indexes = [
+            models.Index(
+                fields=['recruiter', '-created_at'],
+                name='emp_link_event_actor_time_idx',
+            ),
+        ]
+
+    def save(self, *args, **kwargs):
+        if not self.public_id:
+            self.public_id = generate_public_id('ele')
+        super().save(*args, **kwargs)

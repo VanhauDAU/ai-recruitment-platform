@@ -136,7 +136,8 @@
 .company-sensitive-section { display: grid; gap: 18px; }
 .company-form-actions { align-items: center; background: rgba(255, 255, 255, .96); border-top: 1px solid #e2e8f0; bottom: 0; display: flex; gap: 10px; justify-content: flex-end; padding: 14px 0 2px; position: sticky; z-index: 5; }
 
-.company-form-intro { margin: 0 0 10px; }
+.company-form-intro { align-items: flex-start; display: flex; flex-direction: column; gap: 10px; margin: 0 0 10px; }
+.company-form-intro__back { color: #475569; margin-left: -12px; }
 .company-form-intro h2 { color: #1f2937; font-size: 17px; font-weight: 700; margin: 0; }
 .company-form-intro p { color: #64748b; font-size: 14px; margin: 3px 0 0; }
 .company-form-document-request { margin-bottom: 14px; }
@@ -147,6 +148,8 @@
 .company-update-request { align-items: center; border: 1px solid #e5e7eb; display: flex; gap: 14px; justify-content: space-between; padding: 15px 16px; }
 .company-update-request h2 { color: #263238; font-size: 15px; font-weight: 700; margin: 0; }
 .company-update-request p { color: #6b7280; font-size: 12px; margin: 4px 0 0; }
+.company-update-request p.company-update-request__rejection { color: #b42318; font-weight: 600; overflow-wrap: anywhere; }
+.company-update-request__skeleton { width: 100%; }
 .company-update-request__actions { align-items: center; display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
 .company-update-request__actions .ant-tag { margin: 0; }
 .company-update-request .ant-btn { color: #4b5563; font-weight: 500; padding-right: 0; }

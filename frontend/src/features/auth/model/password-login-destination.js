@@ -5,6 +5,7 @@ import {
   EMPLOYER_VERIFY_URL,
   HOME_BY_ROLE,
 } from '@/shared/config/portals'
+import { resolveEmployerSessionWorkspaceReady } from '@/entities/employer-profile'
 
 // All successful auth flows use this policy. An unconfigured candidate must
 // finish onboarding before returning to a requested page or the homepage.
@@ -21,7 +22,7 @@ export function getAuthDestination({ user, returnUrl }) {
     }
     // Chỉ tài khoản còn thiếu bước bảo mật/pháp lý mới quay lại checklist.
     // Khi đã xác thực đầy đủ, tôn trọng deep-link an toàn hoặc vào bảng tin.
-    if (user.employer_verification_completed) {
+    if (resolveEmployerSessionWorkspaceReady(user)) {
       return returnUrl || HOME_BY_ROLE.employer
     }
     return EMPLOYER_VERIFY_URL

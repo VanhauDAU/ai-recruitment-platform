@@ -31,13 +31,15 @@ export function usePagedDrag(totalPages) {
       dragged: false,
     }
     setIsDragging(true)
-    e.currentTarget.setPointerCapture?.(e.pointerId)
   }
 
   function moveDrag(e) {
     if (!dragState.current.active) return
     const delta = e.clientX - dragState.current.startX
-    if (Math.abs(delta) > 5) dragState.current.dragged = true
+    if (Math.abs(delta) > 5 && !dragState.current.dragged) {
+      dragState.current.dragged = true
+      e.currentTarget.setPointerCapture?.(e.pointerId)
+    }
     const limit = Math.max(80, dragState.current.width * 0.35)
     setDragOffset(Math.min(Math.max(delta, -limit), limit))
   }

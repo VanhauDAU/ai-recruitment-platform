@@ -1,5 +1,5 @@
 export function logoUrlFor(employer) {
-  return employer.company_logo_url?.trim() || ''
+  return employer.logo_url?.trim() || employer.company_logo_url?.trim() || ''
 }
 
 export function categoryLogoUrlFor(category) {

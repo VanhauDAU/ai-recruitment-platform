@@ -50,6 +50,25 @@ Backend tuân theo chiều phụ thuộc `api -> services/selectors -> models`:
 
 Endpoint review cũ được giữ để tương thích với client hiện hữu.
 
+### Liên kết compliance ER-5
+
+Backend duyệt tin recompute verification/DPA/campaign trong cùng transaction.
+Khi verification bị revoke/expired, verification compliance hold ẩn active job
+khỏi public mà không đổi business status; reapprove chỉ release exact hold đó.
+
+Frontend ER-5 đã hoàn tất:
+
+- render blocker code canonical, không parse message;
+- chỉ hiện deep-link verification nếu actor có quyền view màn đích;
+- tải exact recruiter/case target, không suy từ company;
+- giữ nút approve disabled khi có blocker và reload detail khi `review_token`
+  hoặc verification impact stale;
+- final-decision UI đã consume `decision-impact`/`decision` và các lifecycle
+  impact/confirm endpoint trước khi ER-5 được đánh dấu Verified.
+
+Evidence: job blocker unit permission/allowlist và admin smoke cùng luồng final
+decision đạt 6/6 trên desktop/tablet/mobile; full frontend coverage đạt 971 test.
+
 ## UI/UX và quyền truy cập
 
 - Dùng cùng `AdminPanel`, `AdminStatCard`, spacing, màu trạng thái và shell điều
@@ -69,4 +88,3 @@ Endpoint review cũ được giữ để tương thích với client hiện hữ
 4. Smoke test các luồng danh sách, chi tiết, duyệt, từ chối, ẩn và khôi phục.
 5. Theo dõi số lượng `409`, tin bị giữ và quyết định theo audit log trong giai
    đoạn đầu sau phát hành.
-

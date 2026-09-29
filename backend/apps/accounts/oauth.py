@@ -265,14 +265,32 @@ def resolve_user(provider, profile, portal, *, include_created=False):
                 raise OAuthError('inactive')
             return result(user, False)
 
-        user = User.objects.filter(email__iexact=email, role=role).first()
+        user = User.objects.select_for_update().filter(email__iexact=email, role=role).first()
         created = False
         if user:
             if not is_account_accessible(user):
                 raise OAuthError('inactive')
-            # Không tự động gắn provider vào tài khoản chỉ vì email trùng. Chủ
-            # tài khoản phải đăng nhập lại rồi đi qua flow liên kết xác nhận.
-            raise OAuthError('link_confirmation_required')
+            # Google attests ownership of this exact email. Link it to the
+            # existing account in the requested portal so accounts originally
+            # created with a password can subsequently use Google login. Keep
+            # other providers behind an explicit linking flow, and never attach
+            # a second Google identity to an already-linked account.
+            if (
+                provider != User.Provider.GOOGLE
+                or user.social_accounts.filter(provider=provider).exists()
+            ):
+                raise OAuthError('link_confirmation_required')
+            SocialAccount.objects.create(
+                user=user,
+                provider=provider,
+                provider_user_id=profile['id'],
+                email=email,
+                raw_profile=profile.get('raw', {}),
+            )
+            if not user.email_verified:
+                user.email_verified = True
+                user.save(update_fields=['email_verified', 'updated_at'])
+            return result(user, False)
         else:
             user = User.objects.create_user(
                 email=email,

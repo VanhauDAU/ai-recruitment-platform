@@ -3,22 +3,19 @@ import { Empty, Segmented, Tag, Timeline } from 'antd'
 import { useState } from 'react'
 import { formatAdminJobDateTime } from '@/entities/admin-job'
 import { adminJobEnumLabel } from '../model/detail-presentation'
-import AdminJobDisclosure from './AdminJobDisclosure'
+import AdminJobPanel from './AdminJobPanel'
 
-export default function AdminJobHistory({ job, openSections, onToggle }) {
+export default function AdminJobHistory({ job }) {
   const [view, setView] = useState('moderation')
   const moderationEvents = job.moderation_events || []
   const statusHistory = job.status_history || []
   const activeEvents = view === 'moderation' ? moderationEvents : statusHistory
 
   return (
-    <AdminJobDisclosure
+    <AdminJobPanel
       badge={`${moderationEvents.length + statusHistory.length} sự kiện`}
       description="Đối chiếu quyết định kiểm duyệt và thay đổi trạng thái"
       icon={<HistoryOutlined />}
-      onToggle={onToggle}
-      open={openSections.has('history')}
-      sectionKey="history"
       title="Lịch sử xử lý"
     >
       <Segmented
@@ -60,7 +57,7 @@ export default function AdminJobHistory({ job, openSections, onToggle }) {
       ) : (
         <Empty className="mt-5" description="Chưa có sự kiện" image={Empty.PRESENTED_IMAGE_SIMPLE} />
       )}
-    </AdminJobDisclosure>
+    </AdminJobPanel>
   )
 }
 

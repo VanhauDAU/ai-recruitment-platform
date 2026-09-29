@@ -6,7 +6,11 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from apps.accounts.models import User
+from apps.applications.models import Application
+from apps.cvs.models import UserCv
+from apps.cvs.services import create_initial_document
 from apps.employers.models import Company, RecruiterProfile, RecruitmentNeed
+from apps.employers.tests.readiness_helpers import make_employer_ready
 from apps.jobs.models import Job, JobCategory
 
 
@@ -19,14 +23,14 @@ class EmployerDashboardApiTests(APITestCase):
             full_name='Nguyễn An',
             email_verified=True,
         )
-        company = Company.objects.create(
+        self.company = Company.objects.create(
             company_name='Công ty Acme',
             tax_code='0101234567',
             created_by=self.user,
         )
-        recruiter = RecruiterProfile.objects.create(
+        self.recruiter = RecruiterProfile.objects.create(
             user=self.user,
-            company=company,
+            company=self.company,
             company_role=RecruiterProfile.CompanyRole.OWNER,
             registration_completed_at=timezone.now(),
         )
@@ -35,7 +39,7 @@ class EmployerDashboardApiTests(APITestCase):
             category_type=JobCategory.CategoryType.SPECIALIZATION,
         )
         RecruitmentNeed.objects.create(
-            recruiter=recruiter,
+            recruiter=self.recruiter,
             position_category=category,
             position_level=RecruitmentNeed.PositionLevel.EMPLOYEE,
             target_date=timezone.localdate() + timedelta(days=30),
@@ -45,7 +49,7 @@ class EmployerDashboardApiTests(APITestCase):
         )
         Job.objects.create(
             posted_by=self.user,
-            company=company,
+            company=self.company,
             title='Nhân viên kinh doanh',
             description='Mô tả công việc',
             status=Job.Status.ACTIVE,
@@ -54,7 +58,7 @@ class EmployerDashboardApiTests(APITestCase):
         )
         Job.objects.create(
             posted_by=self.user,
-            company=company,
+            company=self.company,
             title='Trưởng nhóm bán hàng',
             description='Mô tả công việc',
             status=Job.Status.PENDING,
@@ -91,6 +95,40 @@ class EmployerDashboardApiTests(APITestCase):
         response = self.client.get(reverse('employer-dashboard'))
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_dashboard_keeps_counts_but_redacts_candidate_cards_until_access_is_ready(self):
+        candidate = User.objects.create_user(
+            email='dashboard-candidate@example.com',
+            password='Password@123',
+            role=User.Role.CANDIDATE,
+            full_name='Ứng viên dashboard',
+        )
+        cv = UserCv.objects.create(user=candidate, title='Dashboard CV')
+        snapshot = create_initial_document(cv, candidate)
+        job = Job.objects.filter(posted_by=self.user).first()
+        Application.objects.create(
+            candidate=candidate,
+            job=job,
+            cv=cv,
+            submitted_cv_version=snapshot,
+            submitted_cv_title=cv.title,
+        )
+
+        blocked = self.client.get(reverse('employer-dashboard'))
+        self.assertEqual(blocked.data['summary']['applications_total'], 1)
+        self.assertEqual(blocked.data['recent_applications'], [])
+
+        make_employer_ready(
+            self.user,
+            company=self.company,
+            candidate_data=True,
+        )
+        allowed = self.client.get(reverse('employer-dashboard'))
+        self.assertEqual(allowed.data['summary']['applications_total'], 1)
+        self.assertEqual(
+            allowed.data['recent_applications'][0]['candidate_name'],
+            'Ứng viên dashboard',
+        )
 
     def test_dashboard_repairs_legacy_employer_without_recruiter_profile(self):
         legacy_employer = User.objects.create_user(

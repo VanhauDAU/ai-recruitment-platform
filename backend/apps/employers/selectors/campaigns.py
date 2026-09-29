@@ -8,6 +8,7 @@ from django.utils import timezone
 
 from apps.applications.models import Application
 from apps.jobs.models import Job, JobEngagementDaily
+from apps.services.models import JobServiceActivation
 
 from ..models import CampaignActivity, RecruitmentCampaign
 
@@ -278,8 +279,19 @@ def campaign_activity_queryset(campaign, *, group=None):
 
 def campaign_pause_impact(campaign):
     today = timezone.localdate()
+    now = timezone.now()
     active_jobs = campaign.jobs.filter(status=Job.Status.ACTIVE).filter(
         Q(deadline__isnull=True) | Q(deadline__gte=today)
+    )
+    active_services = (
+        JobServiceActivation.objects.filter(
+            job__campaign=campaign,
+            status=JobServiceActivation.Status.ACTIVE,
+            starts_at__lte=now,
+            ends_at__gt=now,
+        )
+        .select_related('job', 'unit__package_version__package')
+        .order_by('ends_at', 'id')
     )
     return {
         'campaign_public_id': campaign.public_id,
@@ -289,7 +301,16 @@ def campaign_pause_impact(campaign):
         'active_public_jobs': list(
             active_jobs.order_by('-created_at').values('public_id', 'title', 'deadline')[:10]
         ),
-        'active_services': [],
+        'active_services': [
+            {
+                'public_id': activation.public_id,
+                'job_public_id': activation.job.public_id,
+                'job_title': activation.job.title,
+                'package_name': activation.unit.package_version.package.name_vi,
+                'ends_at': activation.ends_at,
+            }
+            for activation in active_services
+        ],
     }
 
 

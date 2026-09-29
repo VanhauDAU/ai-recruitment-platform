@@ -1,9 +1,27 @@
+from zoneinfo import ZoneInfo
+
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
 from django.utils.text import slugify
 
 from common.public_id import generate_public_id
+
+
+def validate_application_reasons(value):
+    if not isinstance(value, list):
+        raise ValidationError('Lý do nên ứng tuyển phải là một danh sách.')
+    if len(value) > 3:
+        raise ValidationError('Chỉ được nhập tối đa 3 lý do nên ứng tuyển.')
+    normalized = []
+    for item in value:
+        text = item.strip() if isinstance(item, str) else ''
+        if not text or len(text) > 160:
+            raise ValidationError('Mỗi lý do phải có từ 1 đến 160 ký tự.')
+        normalized.append(text.casefold())
+    if len(normalized) != len(set(normalized)):
+        raise ValidationError('Các lý do nên ứng tuyển không được trùng nhau.')
 
 
 class JobCategory(models.Model):
@@ -112,6 +130,21 @@ class JobCategoryLocalization(models.Model):
 
 class Job(models.Model):
     """A job posting / Job Description (DB doc section 2.12)."""
+
+    AUTO_REJECTION_AFTER_DAY_CHOICES = (
+        (14, '2 tuần'),
+        (21, '3 tuần'),
+        (28, '4 tuần'),
+        (42, '6 tuần'),
+        (56, '8 tuần'),
+    )
+    DEFAULT_AUTO_REJECTION_EMAIL = (
+        'Cảm ơn bạn đã ứng tuyển vị trí {job_title} tại {company_name}.\n\n'
+        'Sau {auto_reject_weeks} tuần kể từ ngày ứng tuyển, chúng tôi chưa thể phản hồi '
+        'hồ sơ của bạn. Điều này thường có nghĩa là hồ sơ hiện chưa phù hợp với vị trí này.\n\n'
+        'Tuy nhiên, thông tin của bạn đã được lưu trong hệ thống của {company_name} và nhà '
+        'tuyển dụng vẫn có thể liên hệ nếu có vị trí phù hợp hơn sau này.'
+    )
 
     class WorkType(models.TextChoices):
         ONSITE = 'onsite', 'Onsite'
@@ -225,6 +258,12 @@ class Job(models.Model):
     description = models.TextField()
     requirements = models.TextField(blank=True)
     benefits = models.TextField(blank=True)
+    application_reasons = models.JSONField(
+        default=list,
+        blank=True,
+        validators=[validate_application_reasons],
+        help_text='Tối đa ba lý do có thứ tự để ứng viên cân nhắc ứng tuyển.',
+    )
     work_schedule_note = models.TextField(
         blank=True,
         help_text='Mô tả lịch không thể hiện hết bằng các khung giờ có cấu trúc.',
@@ -276,8 +315,32 @@ class Job(models.Model):
     )
     currency = models.CharField(max_length=20, choices=Currency.choices, default=Currency.VND)
     deadline = models.DateField(null=True, blank=True)
+    requested_visibility_days = models.PositiveSmallIntegerField(
+        default=30,
+        help_text='Số ngày công khai NTD yêu cầu cho public cycle hiện tại.',
+    )
+    first_approved_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text='Mốc duyệt đầu tiên bất biến của public cycle hiện tại.',
+    )
+    visibility_starts_at = models.DateTimeField(null=True, blank=True)
+    visibility_ends_at = models.DateTimeField(null=True, blank=True)
+    auto_reject_stale_applications = models.BooleanField(
+        default=True,
+        help_text='Tự chuyển hồ sơ chờ xử lý quá hạn sang trạng thái từ chối.',
+    )
+    auto_reject_after_days = models.PositiveSmallIntegerField(
+        choices=AUTO_REJECTION_AFTER_DAY_CHOICES,
+        default=21,
+    )
+    auto_rejection_email_body = models.TextField(
+        max_length=1000,
+        default=DEFAULT_AUTO_REJECTION_EMAIL,
+        help_text='Nội dung email gửi ứng viên ba ngày sau khi hồ sơ bị tự động từ chối.',
+    )
     # Hạng tin + nhãn dịch vụ (admin gán). Nhãn "xác thực" không lưu ở đây vì
-    # suy ra từ company.verified_at; nhãn "Mới"/"Sắp hết hạn" tính từ ngày.
+    # được tính từ các tiêu chí của recruiter đăng tin; nhãn thời gian tính từ ngày.
     tier = models.CharField(max_length=20, choices=Tier.choices, default=Tier.STANDARD)
     is_hot = models.BooleanField(default=False, help_text='Nhãn HOT (đỏ) trên card')
     is_urgent = models.BooleanField(default=False, help_text='Nhãn GẤP / tuyển gấp (cam) trên card')
@@ -314,6 +377,10 @@ class Job(models.Model):
     published_at = models.DateTimeField(null=True, blank=True)
     closed_at = models.DateTimeField(null=True, blank=True)
     approved_at = models.DateTimeField(null=True, blank=True)
+    # Content made public by the last approval. An employer edit returns the job
+    # to the queue, so reviewers diff the pending revision against this baseline.
+    approved_snapshot = models.JSONField(default=dict, blank=True)
+    approved_snapshot_at = models.DateTimeField(null=True, blank=True)
     rejected_reason = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -333,6 +400,14 @@ class Job(models.Model):
             models.Index(fields=['position_level']),
             models.Index(fields=['education_level']),
             models.Index(fields=['status', 'published_at']),
+            models.Index(
+                fields=['status', 'visibility_ends_at'],
+                name='jobs_status_visibility_end_idx',
+            ),
+            models.Index(
+                fields=['status', '-created_at', '-id'],
+                name='jobs_status_created_desc_idx',
+            ),
             models.Index(
                 fields=['company', 'status', '-created_at'], name='jobs_job_company_status_idx'
             ),
@@ -380,7 +455,29 @@ class Job(models.Model):
                 ),
                 name='chk_jobs_salary_range',
             ),
+            models.CheckConstraint(
+                condition=models.Q(
+                    requested_visibility_days__gte=1,
+                    requested_visibility_days__lte=90,
+                ),
+                name='chk_jobs_visibility_days_range',
+            ),
+            models.CheckConstraint(
+                condition=(
+                    models.Q(visibility_starts_at__isnull=True)
+                    | models.Q(visibility_ends_at__isnull=True)
+                    | models.Q(visibility_ends_at__gt=models.F('visibility_starts_at'))
+                ),
+                name='chk_jobs_visibility_window',
+            ),
         ]
+
+    @classmethod
+    def publicly_available_queryset(cls, *, at=None):
+        """Expose the canonical candidate-visible queryset across app boundaries."""
+        from .querysets import publicly_available_job_filter
+
+        return cls.objects.filter(publicly_available_job_filter(at=at))
 
     def save(self, *args, **kwargs):
         if not self.public_id:
@@ -395,10 +492,23 @@ class Job(models.Model):
 
     @property
     def is_expired(self):
-        from django.utils import timezone
-
-        return bool(
+        application_expired = bool(
             self.status == self.Status.ACTIVE
             and self.deadline is not None
-            and self.deadline < timezone.localdate()
+            and self.deadline < timezone.localdate(timezone=ZoneInfo('Asia/Ho_Chi_Minh'))
+        )
+        visibility_expired = bool(
+            self.status == self.Status.ACTIVE
+            and (self.visibility_ends_at is None or self.visibility_ends_at <= timezone.now())
+        )
+        if str(getattr(settings, 'JOB_LIFECYCLE_V2_MODE', 'legacy')).lower() == 'enforce':
+            return application_expired or visibility_expired
+        return application_expired
+
+    @property
+    def is_visibility_expired(self):
+        return bool(
+            self.status == self.Status.ACTIVE
+            and self.visibility_ends_at is not None
+            and self.visibility_ends_at <= timezone.now()
         )

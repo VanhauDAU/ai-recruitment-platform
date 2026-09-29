@@ -22,7 +22,7 @@ const CATEGORIES = [
 ]
 const PROVINCES = [{ id: 9, name: 'Đà Nẵng' }]
 
-/** Câu robot nói nằm ở lớp phụ đề đầy đủ, không phải phần chữ đang chạy dần. */
+/** Nội dung đầy đủ nằm ở lớp hỗ trợ screen reader, không phải phần chữ đang chạy dần. */
 function botSaid(pattern) {
   return [...document.querySelectorAll('.onboarding-chat__sr')]
     .some((node) => pattern.test(node.textContent))
@@ -135,6 +135,7 @@ describe('OnboardingChat', () => {
     const user = userEvent.setup()
     mocks.updateCandidateJobPreferences.mockResolvedValue({
       job_preferences_configured: true,
+      desired_position_others: [],
       desired_specializations: [{ id: 3, name: 'Lập trình viên' }],
       preferred_provinces: [{ id: 9, name: 'Đà Nẵng' }],
       desired_salary_vnd: 15_000_000,
@@ -154,10 +155,12 @@ describe('OnboardingChat', () => {
     expect(mocks.updateCandidateJobPreferences).toHaveBeenCalledWith(expect.objectContaining({
       ai_recommendation_consent: true,
       desired_position_other: '',
+      desired_position_others: [],
       desired_salary_vnd: 15_000_000,
       desired_specialization_ids: [3],
       experience_level: '2',
       preferred_province_ids: [9],
+      preferred_skill_ids: [],
     }))
     expect(onSaved).toHaveBeenCalledOnce()
 

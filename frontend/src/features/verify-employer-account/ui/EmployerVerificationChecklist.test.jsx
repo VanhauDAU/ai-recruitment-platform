@@ -32,4 +32,47 @@ describe('EmployerVerificationChecklist', () => {
     expect(screen.queryByText('Xác minh email')).not.toBeInTheDocument()
     expect(screen.queryByText('Admin duyệt tài khoản')).not.toBeInTheDocument()
   })
+
+  it('keeps the verification page focused on the checklist without duplicate status banners', () => {
+    render(
+      <MemoryRouter>
+        <EmployerVerificationChecklist
+          profile={{
+            onboarding: {},
+            verification_case: {
+              status: 'in_review',
+              status_label: 'Đang thẩm định',
+              revision: 2,
+            },
+          }}
+          onContinue={vi.fn()}
+        />
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByText('Xác thực thông tin')).toBeInTheDocument()
+    expect(screen.queryByText(/Workspace/)).not.toBeInTheDocument()
+    expect(screen.queryByText('Đang thẩm định')).not.toBeInTheDocument()
+    expect(screen.queryByText(/Hồ sơ lần/)).not.toBeInTheDocument()
+  })
+
+  it('shows the exceptional revoked lifecycle state and its reason', () => {
+    render(
+      <MemoryRouter>
+        <EmployerVerificationChecklist
+          profile={{
+            onboarding: {},
+            verification_case: {
+              status: 'revoked',
+              decision_reason: 'Không còn đủ điều kiện xác thực.',
+            },
+          }}
+          onContinue={vi.fn()}
+        />
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByText('Xác thực nhà tuyển dụng đã bị thu hồi')).toBeVisible()
+    expect(screen.getByText(/Không còn đủ điều kiện xác thực/)).toBeVisible()
+  })
 })

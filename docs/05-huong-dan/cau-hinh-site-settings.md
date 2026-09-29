@@ -228,5 +228,4 @@ cho phép tắt việc ghi log.
 | `ai_api_key_configured` | API key | env | env: `GEMINI_API_KEY` |  |
 | `ai_cv_review_enabled` | AI chấm/review CV | boolean | true | ✓ |
 | `ai_job_match_enabled` | AI gợi ý việc phù hợp | boolean | true | ✓ |
-| `ai_interview_enabled` | AI luyện phỏng vấn | boolean | false | ✓ |
 | `ai_daily_request_limit` | Giới hạn request AI/ngày/người | number | 50 |  |

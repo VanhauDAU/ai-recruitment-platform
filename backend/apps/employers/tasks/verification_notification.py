@@ -38,7 +38,7 @@ def _send(job):
     }
     title = labels.get(job.event_type, 'Trạng thái xác thực đã thay đổi')
     reason = str(job.context.get('reason', '')).strip()
-    action_url = f'{settings.EMPLOYER_FRONTEND_URL.rstrip("/")}/employer/app/verify'
+    action_url = f'{settings.EMPLOYER_FRONTEND_URL.rstrip("/")}/tuyendung/app/employer-verify'
     unlocked = (
         'Bạn đã có thể gửi tin tuyển dụng sang kiểm duyệt và sử dụng các workflow '
         'được phép để xử lý hồ sơ ứng viên.'

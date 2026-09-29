@@ -9,6 +9,7 @@ export function useCvCardActions(cv, onRefresh) {
   const [isRenameOpen, setIsRenameOpen] = useState(false)
   const [newTitle, setNewTitle] = useState(cv.title || '')
   const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   // Đồng bộ lại khi danh sách bên ngoài refresh và truyền cv mới xuống.
   useEffect(() => {
@@ -84,14 +85,16 @@ export function useCvCardActions(cv, onRefresh) {
   }
 
   const deletePermanently = async () => {
+    setIsDeleting(true)
     try {
       await deleteCv(cv.public_id)
       message.success('Đã xóa vĩnh viễn CV.')
+      setIsDeleteConfirmationOpen(false)
       onRefresh?.()
     } catch {
       message.error('Không thể xóa CV.')
     } finally {
-      setIsDeleteConfirmationOpen(false)
+      setIsDeleting(false)
     }
   }
 
@@ -105,8 +108,9 @@ export function useCvCardActions(cv, onRefresh) {
     duplicate,
     deleteConfirmation: {
       open: isDeleteConfirmationOpen,
+      pending: isDeleting,
       show: () => setIsDeleteConfirmationOpen(true),
-      close: () => setIsDeleteConfirmationOpen(false),
+      close: () => { if (!isDeleting) setIsDeleteConfirmationOpen(false) },
       submit: deletePermanently,
     },
     rename: {

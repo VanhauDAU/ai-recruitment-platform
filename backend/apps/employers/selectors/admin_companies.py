@@ -80,7 +80,14 @@ def _company_annotations():
         ),
         'pending_update_count': Count(
             'update_requests',
-            filter=Q(update_requests__status=CompanyUpdateRequest.Status.PENDING),
+            filter=Q(
+                update_requests__status__in=[
+                    CompanyUpdateRequest.Status.PENDING,
+                    CompanyUpdateRequest.Status.SUBMITTED,
+                    CompanyUpdateRequest.Status.IN_REVIEW,
+                    CompanyUpdateRequest.Status.CHANGES_REQUESTED,
+                ]
+            ),
             distinct=True,
         ),
     }
@@ -118,10 +125,6 @@ def admin_companies_queryset(*, params=None):
             | Q(tax_code__icontains=query)
             | Q(email__icontains=query)
         )
-
-    verification_status = params.get('verification_status')
-    if verification_status in Company.VerificationStatus.values:
-        queryset = queryset.filter(verification_status=verification_status)
 
     business_type = params.get('business_type')
     if business_type in Company.BusinessType.values:
@@ -165,8 +168,6 @@ def admin_companies_queryset(*, params=None):
         '-pending_update_count',
         'approved_recruiter_count',
         '-approved_recruiter_count',
-        'verification_status',
-        '-verification_status',
     }
     return queryset.distinct().order_by(
         ordering if ordering in allowed_ordering else '-updated_at',
@@ -176,17 +177,17 @@ def admin_companies_queryset(*, params=None):
 
 def admin_company_summary():
     queryset = _base_companies_queryset()
-    verification = {
-        status: queryset.filter(verification_status=status).count()
-        for status in Company.VerificationStatus.values
-    }
     pending_update_requests = CompanyUpdateRequest.objects.filter(
-        status=CompanyUpdateRequest.Status.PENDING
+        status__in=[
+            CompanyUpdateRequest.Status.PENDING,
+            CompanyUpdateRequest.Status.SUBMITTED,
+            CompanyUpdateRequest.Status.IN_REVIEW,
+            CompanyUpdateRequest.Status.CHANGES_REQUESTED,
+        ]
     ).count()
     companies_without_single_owner = queryset.exclude(owner_count=1).count()
     return {
         'total': queryset.count(),
-        'verification': verification,
         'pending_update_requests': pending_update_requests,
         'companies_without_single_owner': companies_without_single_owner,
     }

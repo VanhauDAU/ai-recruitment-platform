@@ -2,18 +2,127 @@ from django.urls import path
 
 from .api.views import (
     AdminConsultationLeadDetailView,
+    AdminConsultationLeadExportView,
     AdminConsultationLeadListView,
+    AdminEntitlementUnitListCreateView,
+    AdminEntitlementUnitRevokeView,
+    AdminPackageVersionDetailView,
+    AdminPackageVersionListCreateView,
+    AdminPackageVersionPublishView,
+    AdminServiceActivationListView,
+    AdminServiceActivationSummaryView,
+    AdminServiceActivationTerminateView,
+    AdminServiceAuditListView,
+    AdminServiceCapabilityListView,
     AdminServiceCategoryDetailView,
     AdminServiceCategoryListCreateView,
     AdminServicePackageDetailView,
     AdminServicePackageListCreateView,
     ConsultationLeadCreateView,
+    EmployerActiveServiceListView,
+    EmployerServiceActivationCreateView,
+    EmployerServiceActivationHistoryView,
+    EmployerServiceActivationPreviewView,
+    EmployerServiceAlertCreateView,
+    EmployerServiceAlertPreviewView,
+    EmployerServiceInventoryView,
+    EmployerServiceRefreshView,
     PublicServicePackageListView,
 )
 
 urlpatterns = [
     path('packages/', PublicServicePackageListView.as_view(), name='services-packages'),
     path('consultations/', ConsultationLeadCreateView.as_view(), name='services-consultations'),
+    path(
+        'mine/inventory/',
+        EmployerServiceInventoryView.as_view(),
+        name='services-employer-inventory',
+    ),
+    path(
+        'activations/preview/',
+        EmployerServiceActivationPreviewView.as_view(),
+        name='services-employer-activation-preview',
+    ),
+    path(
+        'activations/',
+        EmployerServiceActivationCreateView.as_view(),
+        name='services-employer-activation-create',
+    ),
+    path(
+        'mine/activations/',
+        EmployerActiveServiceListView.as_view(),
+        name='services-employer-active-services',
+    ),
+    path(
+        'mine/activation-history/',
+        EmployerServiceActivationHistoryView.as_view(),
+        name='services-employer-activation-history',
+    ),
+    path(
+        'activations/<str:public_id>/refresh/',
+        EmployerServiceRefreshView.as_view(),
+        name='services-employer-refresh',
+    ),
+    path(
+        'activations/<str:public_id>/job-alerts/preview/',
+        EmployerServiceAlertPreviewView.as_view(),
+        name='services-employer-alert-preview',
+    ),
+    path(
+        'activations/<str:public_id>/job-alerts/',
+        EmployerServiceAlertCreateView.as_view(),
+        name='services-employer-alert-create',
+    ),
+    path(
+        'admin/capabilities/',
+        AdminServiceCapabilityListView.as_view(),
+        name='services-admin-capabilities',
+    ),
+    path(
+        'admin/package-versions/',
+        AdminPackageVersionListCreateView.as_view(),
+        name='services-admin-package-versions',
+    ),
+    path(
+        'admin/package-versions/<int:pk>/',
+        AdminPackageVersionDetailView.as_view(),
+        name='services-admin-package-version-detail',
+    ),
+    path(
+        'admin/package-versions/<int:pk>/publish/',
+        AdminPackageVersionPublishView.as_view(),
+        name='services-admin-package-version-publish',
+    ),
+    path(
+        'admin/entitlements/',
+        AdminEntitlementUnitListCreateView.as_view(),
+        name='services-admin-entitlements',
+    ),
+    path(
+        'admin/entitlements/<str:public_id>/revoke/',
+        AdminEntitlementUnitRevokeView.as_view(),
+        name='services-admin-entitlement-revoke',
+    ),
+    path(
+        'admin/activations/',
+        AdminServiceActivationListView.as_view(),
+        name='services-admin-activations',
+    ),
+    path(
+        'admin/activations/summary/',
+        AdminServiceActivationSummaryView.as_view(),
+        name='services-admin-activation-summary',
+    ),
+    path(
+        'admin/activations/<str:public_id>/terminate/',
+        AdminServiceActivationTerminateView.as_view(),
+        name='services-admin-activation-terminate',
+    ),
+    path(
+        'admin/audit/',
+        AdminServiceAuditListView.as_view(),
+        name='services-admin-audit',
+    ),
     path(
         'admin/categories/',
         AdminServiceCategoryListCreateView.as_view(),
@@ -38,6 +147,11 @@ urlpatterns = [
         'admin/consultations/',
         AdminConsultationLeadListView.as_view(),
         name='services-admin-consultations',
+    ),
+    path(
+        'admin/consultations/export/',
+        AdminConsultationLeadExportView.as_view(),
+        name='services-admin-consultations-export',
     ),
     path(
         'admin/consultations/<int:pk>/',

@@ -10,6 +10,7 @@ from django.utils import timezone
 from common.db.search import search_q
 
 from ..models import Job, JobModerationEvent, JobReport, JobStatusHistory
+from .listing import publicly_available_job_filter
 
 
 def _admin_job_queryset():
@@ -36,6 +37,13 @@ def _admin_job_queryset():
                 deadline__lt=timezone.localdate(),
                 then=Value(True),
             ),
+            default=Value(False),
+            output_field=BooleanField(),
+        ),
+        # Reuse the candidate-facing predicate so the admin link never points at
+        # a page that would 404 for the public.
+        is_publicly_visible=Case(
+            When(publicly_available_job_filter(), then=Value(True)),
             default=Value(False),
             output_field=BooleanField(),
         ),
@@ -97,7 +105,7 @@ def admin_job_management_queryset(*, params=None):
     if deadline_to := params.get('deadline_to'):
         queryset = queryset.filter(deadline__lte=deadline_to)
 
-    ordering = params.get('ordering') or 'submitted_at'
+    ordering = params.get('ordering') or '-created_at'
     descending = ordering.startswith('-')
     ordering_key = ordering.removeprefix('-')
     ordering_fields = {
@@ -106,6 +114,7 @@ def admin_job_management_queryset(*, params=None):
         'employer': 'employer_name_sort',
         'status': 'status',
         'deadline': 'deadline',
+        'created_at': 'created_at',
         'submitted_at': 'submitted_at',
         'published_at': 'published_at',
         'updated_at': 'updated_at',
@@ -115,7 +124,7 @@ def admin_job_management_queryset(*, params=None):
     }
     field = ordering_fields.get(ordering_key)
     if not field:
-        return queryset.order_by('submitted_at', 'created_at', 'id')
+        return queryset.order_by('-created_at', '-id')
     prefix = '-' if descending else ''
     return queryset.order_by(f'{prefix}{field}', f'{prefix}id')
 

@@ -10,15 +10,18 @@ const {
   getEmployerProfile,
   getEmployerCompanyDocuments,
   getEmployerCompanyDocumentContent,
+  prepareEmployerUpload,
   uploadEmployerBusinessDocument,
   uploadEmployerCompanyDocument,
 } = vi.hoisted(() => ({
   employerProfileKeys: {
     companyDocuments: ['employer', 'company', 'documents'],
+    companyDocumentList: (scope) => ['employer', 'company', 'documents', { scope }],
   },
   getEmployerProfile: vi.fn(),
   getEmployerCompanyDocuments: vi.fn(),
   getEmployerCompanyDocumentContent: vi.fn(),
+  prepareEmployerUpload: vi.fn(),
   uploadEmployerBusinessDocument: vi.fn(),
   uploadEmployerCompanyDocument: vi.fn(),
 }))
@@ -28,6 +31,7 @@ vi.mock('@/entities/employer-profile', () => ({
   getEmployerProfile,
   getEmployerCompanyDocuments,
   getEmployerCompanyDocumentContent,
+  prepareEmployerUpload,
   uploadEmployerBusinessDocument,
   uploadEmployerCompanyDocument,
 }))
@@ -53,9 +57,48 @@ describe('EmployerBusinessLicenseForm', () => {
     getEmployerProfile.mockReset()
     getEmployerCompanyDocuments.mockReset()
     getEmployerCompanyDocumentContent.mockReset()
+    prepareEmployerUpload.mockReset()
+    prepareEmployerUpload.mockImplementation(async (file) => ({
+      public_id: `ups_${file.name}`,
+    }))
     uploadEmployerBusinessDocument.mockReset()
     uploadEmployerCompanyDocument.mockReset()
     getEmployerCompanyDocuments.mockResolvedValue([])
+  })
+
+  it('loads only the current recruiter document scope', async () => {
+    getEmployerProfile.mockResolvedValue({ onboarding: { company_linked: true } })
+
+    renderForm()
+
+    await screen.findByRole('heading', {
+      name: /Giấy đăng ký doanh nghiệp hoặc Giấy tờ tương đương khác/,
+    })
+    expect(getEmployerCompanyDocuments).toHaveBeenCalledWith({ scope: 'mine' })
+  })
+
+  it('keeps the summary aligned with the one displayed business document', async () => {
+    getEmployerProfile.mockResolvedValue({ onboarding: { company_linked: true } })
+    getEmployerCompanyDocuments.mockResolvedValue([
+      {
+        id: 1,
+        doc_type: 'business_registration',
+        file_name: 'gpkd-hien-tai.pdf',
+        status: 'approved',
+      },
+      {
+        id: 2,
+        doc_type: 'business_registration',
+        file_name: 'gpkd-khong-thuoc-ho-so.pdf',
+        status: 'rejected',
+      },
+    ])
+
+    renderForm()
+
+    expect(await screen.findAllByText('Đã duyệt')).toHaveLength(2)
+    expect(screen.queryByText('Có file bị từ chối')).not.toBeInTheDocument()
+    expect(getEmployerCompanyDocuments).toHaveBeenCalledWith({ scope: 'mine' })
   })
 
   it('keeps saving disabled until company information is updated', async () => {
@@ -84,7 +127,10 @@ describe('EmployerBusinessLicenseForm', () => {
     expect(saveButton).toBeEnabled()
     await user.click(saveButton)
 
-    await waitFor(() => expect(uploadEmployerBusinessDocument).toHaveBeenCalledWith(file))
+    await waitFor(() => expect(uploadEmployerBusinessDocument).toHaveBeenCalledWith(
+      file,
+      expect.objectContaining({ uploadSession: { public_id: 'ups_business.pdf' } }),
+    ))
     expect(await screen.findByRole('dialog')).toHaveTextContent(
       'ProCV đã nhận được bộ giấy tờ xác thực của bạn và sẽ kiểm duyệt trong 24 giờ (trừ thứ bảy, chủ nhật, ngày nghỉ lễ, tết theo quy định).',
     )
@@ -178,6 +224,30 @@ describe('EmployerBusinessLicenseForm', () => {
     expect(screen.getByRole('heading', { name: /Giấy đăng ký doanh nghiệp hoặc Giấy tờ tương đương khác/ })).toBeVisible()
   })
 
+  it('keeps the summary aligned with the one displayed business document', async () => {
+    getEmployerProfile.mockResolvedValue({ onboarding: { company_linked: true } })
+    getEmployerCompanyDocuments.mockResolvedValue([
+      {
+        id: 1,
+        doc_type: 'business_registration',
+        file_name: 'gpkd-hien-tai.pdf',
+        status: 'approved',
+      },
+      {
+        id: 2,
+        doc_type: 'business_registration',
+        file_name: 'gpkd-khong-thuoc-ho-so.pdf',
+        status: 'rejected',
+      },
+    ])
+
+    renderForm()
+
+    expect(await screen.findAllByText('Đã duyệt')).toHaveLength(2)
+    expect(screen.queryByText('Có file bị từ chối')).not.toBeInTheDocument()
+    expect(getEmployerCompanyDocuments).toHaveBeenCalledWith({ scope: 'mine' })
+  })
+
   it('shows the replacement returned by the upload immediately after editing', async () => {
     getEmployerProfile.mockResolvedValue({ onboarding: { company_linked: true } })
     getEmployerCompanyDocuments.mockResolvedValue([{
@@ -207,7 +277,10 @@ describe('EmployerBusinessLicenseForm', () => {
 
     await waitFor(() => expect(uploadEmployerBusinessDocument).toHaveBeenCalledWith(
       replacement,
-      { replaceDocument: undefined },
+      expect.objectContaining({
+        replaceDocument: undefined,
+        uploadSession: { public_id: 'ups_gpkd-moi.pdf' },
+      }),
     ))
     expect(await screen.findByRole('button', { name: 'Xem tệp đã nộp: Giấy đăng ký doanh nghiệp' })).toBeVisible()
   })
@@ -261,18 +334,25 @@ describe('EmployerBusinessLicenseForm', () => {
       1,
       'authorization_letter',
       authorizationFile,
+      expect.objectContaining({ uploadSession: { public_id: 'ups_uy-quyen-moi.pdf' } }),
     ))
     expect(uploadEmployerCompanyDocument).toHaveBeenNthCalledWith(
       2,
       'identity_document',
       identityFront,
-      { verificationMethod: 'authorization_and_id' },
+      expect.objectContaining({
+        verificationMethod: 'authorization_and_id',
+        uploadSession: { public_id: 'ups_cccd-mat-truoc.png' },
+      }),
     )
     expect(uploadEmployerCompanyDocument).toHaveBeenNthCalledWith(
       3,
       'identity_document',
       identityBack,
-      { append: true },
+      expect.objectContaining({
+        append: true,
+        uploadSession: { public_id: 'ups_cccd-mat-sau.png' },
+      }),
     )
     expect(await screen.findByRole('button', { name: 'Xem tệp đã nộp: Giấy ủy quyền' })).toBeVisible()
     expect(screen.getByRole('button', { name: 'Xem tệp đã nộp: Giấy tờ định danh 1' })).toBeVisible()
@@ -338,6 +418,33 @@ describe('EmployerBusinessLicenseForm', () => {
     expect(await screen.findByText('Có file bị từ chối')).toBeVisible()
     expect(screen.getByText('Từ chối')).toBeVisible()
     expect(screen.getByText('Ảnh giấy tờ không rõ nét.')).toBeVisible()
+  })
+
+  it('keeps documents viewable but blocks editing after three final rejections', async () => {
+    getEmployerProfile.mockResolvedValue({
+      onboarding: { company_linked: true },
+      verification_case: {
+        status: 'rejected',
+        final_rejection_count: 3,
+        rejection_limit: 3,
+        resubmission_locked: true,
+      },
+    })
+    getEmployerCompanyDocuments.mockResolvedValue([{
+      id: 1,
+      public_id: 'doc_locked',
+      doc_type: 'business_registration',
+      file_name: 'gpkd.pdf',
+      status: 'rejected',
+      review_note: 'Hồ sơ không chứng minh được tư cách đại diện.',
+    }])
+
+    renderForm()
+
+    expect(await screen.findByText('Hồ sơ đang bị khóa nộp lại')).toBeVisible()
+    expect(screen.getByText(/3\/3 quyết định từ chối cuối/)).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Chỉnh sửa giấy tờ' })).toBeDisabled()
+    expect(screen.getByText('Hồ sơ không chứng minh được tư cách đại diện.')).toBeVisible()
   })
 
   it('replaces only the rejected identity file and keeps approved files', async () => {
@@ -408,7 +515,64 @@ describe('EmployerBusinessLicenseForm', () => {
       {
         replaceDocument: 'doc_back',
         verificationMethod: 'authorization_and_id',
+        uploadSession: { public_id: 'ups_cccd-sau-moi.png' },
       },
     ))
   }, 15_000)
+
+  it('requires every rejected current document before enabling resubmit', async () => {
+    getEmployerProfile.mockResolvedValue({ onboarding: { company_linked: true } })
+    getEmployerCompanyDocuments.mockResolvedValue([
+      {
+        id: 1,
+        public_id: 'doc_auth',
+        doc_type: 'authorization_letter',
+        file_name: 'uy-quyen.pdf',
+        status: 'approved',
+      },
+      {
+        id: 2,
+        public_id: 'doc_front',
+        doc_type: 'identity_document',
+        file_name: 'cccd-truoc.png',
+        status: 'rejected',
+        review_note: 'Mặt trước bị mờ.',
+      },
+      {
+        id: 3,
+        public_id: 'doc_back',
+        doc_type: 'identity_document',
+        file_name: 'cccd-sau.png',
+        status: 'changes_requested',
+        review_note: 'Mặt sau bị thiếu góc.',
+      },
+    ])
+    const user = userEvent.setup()
+    renderForm()
+
+    await screen.findByText('Có file bị từ chối')
+    await user.click(screen.getByRole('button', { name: 'Chỉnh sửa giấy tờ' }))
+    const replacementHeadings = screen.getAllByRole('heading', {
+      name: /Tệp thay thế cho Giấy tờ định danh/,
+    })
+    const firstInput = replacementHeadings[0].parentElement.querySelector('input[type="file"]')
+    const secondInput = replacementHeadings[1].parentElement.querySelector('input[type="file"]')
+    const saveButton = screen.getByRole('button', { name: 'Lưu' })
+
+    await user.upload(
+      firstInput,
+      new File(['front'], 'cccd-truoc-moi.png', { type: 'image/png' }),
+    )
+    expect(saveButton).toBeDisabled()
+    expect(saveButton).toHaveAttribute(
+      'title',
+      'Thay toàn bộ giấy tờ đang bị yêu cầu bổ sung hoặc từ chối trước khi nộp lại',
+    )
+
+    await user.upload(
+      secondInput,
+      new File(['back'], 'cccd-sau-moi.png', { type: 'image/png' }),
+    )
+    expect(saveButton).toBeEnabled()
+  })
 })

@@ -33,6 +33,7 @@ import {
 } from '@/entities/cv'
 import { useSiteSettings } from '@/entities/site-settings'
 import { useMediaQuery } from '@/shared/hooks/use-media-query'
+import useConfirmAction from '@/shared/ui/use-confirm-action'
 import { useBuilderUi } from '../model/use-builder-ui'
 import { BUILDER_TOOLS } from '../model/builder-tools'
 import useCvDraftEditor from '../model/use-cv-draft-editor'
@@ -95,6 +96,7 @@ function CvWysiwygDraftEditor({ publicId, onSaved }) {
   const editor = useCvDraftEditor(publicId)
   const isDesktop = useMediaQuery('(min-width: 1024px)')
   const builderUi = useBuilderUi(isDesktop ? 0.8 : 0.48)
+  const { confirmationModal, requestConfirmation } = useConfirmAction()
   const [mobilePanelOpen, setMobilePanelOpen] = useState(false)
   const [desktopPanelOpen, setDesktopPanelOpen] = useState(true)
   const [editingTipOpen, setEditingTipOpen] = useState(true)
@@ -180,7 +182,14 @@ function CvWysiwygDraftEditor({ publicId, onSaved }) {
       if (selection?.itemId === itemId) setSelection({ sectionId: instanceId, itemId: null })
     }
     if (!hasContent) remove()
-    else modal.confirm({ title: 'Xóa nội dung này?', content: 'Dữ liệu trong nội dung sẽ bị xóa. Bạn có thể dùng Hoàn tác ngay sau đó nếu cần.', okText: 'Xóa', cancelText: 'Giữ lại', okButtonProps: { danger: true }, onOk: remove })
+    else requestConfirmation({
+      title: 'Xóa nội dung',
+      description: <>Bạn có chắc muốn xóa một nội dung trong mục <strong>{section?.title}</strong> không?<br />Dữ liệu sẽ bị xóa; bạn có thể dùng Hoàn tác ngay sau đó nếu cần.</>,
+      confirmText: 'Xóa',
+      cancelText: 'Giữ lại',
+      danger: true,
+      onConfirm: remove,
+    })
   }
 
   const addSectionAndSelect = (sectionKey, title, placement = null) => {
@@ -262,7 +271,14 @@ function CvWysiwygDraftEditor({ publicId, onSaved }) {
       if (selection?.sectionId === instanceId) setSelection(null)
     }
     if (!hasContent) remove()
-    else modal.confirm({ title: `Xóa mục “${section.title}”?`, content: 'Toàn bộ nội dung trong mục sẽ bị xóa. Bạn có thể dùng Hoàn tác ngay sau đó nếu cần.', okText: 'Xóa mục', cancelText: 'Giữ lại', okButtonProps: { danger: true }, onOk: remove })
+    else requestConfirmation({
+      title: 'Xóa mục CV',
+      description: <><span>Bạn có chắc muốn xóa mục <strong>{section.title}</strong> không?</span><br />Toàn bộ nội dung trong mục sẽ bị xóa. Bạn có thể dùng Hoàn tác ngay sau đó nếu cần.</>,
+      confirmText: 'Xóa mục',
+      cancelText: 'Giữ lại',
+      danger: true,
+      onConfirm: remove,
+    })
   }
 
   const uploadAvatar = async (file) => {
@@ -311,12 +327,16 @@ function CvWysiwygDraftEditor({ publicId, onSaved }) {
       persistCv()
       return
     }
-    modal.confirm({
-      title: 'Lưu ý',
-      content: <p>Một số mục trong CV của bạn chưa có nội dung: <strong>{incompleteSections.join(', ')}</strong>. Bạn nhớ hoàn thiện đầy đủ trước khi ứng tuyển nhé. Khi xem hoặc tải xuống, các mục trống sẽ tự động được ẩn đi để CV luôn gọn gàng và đẹp mắt.</p>,
+    requestConfirmation({
+      title: 'Lưu CV chưa hoàn thiện',
+      description: <p>Một số mục trong CV của bạn chưa có nội dung: <strong>{incompleteSections.join(', ')}</strong>. Các mục trống sẽ tự động được ẩn khi xem hoặc tải CV.</p>,
       cancelText: 'Hoàn thiện tiếp',
-      okText: 'Lưu CV, tôi sẽ hoàn thiện sau',
-      onOk: persistCv,
+      confirmText: 'Lưu CV, tôi sẽ hoàn thiện sau',
+      onConfirm: async () => {
+        const version = await persistCv()
+        if (!version) throw new Error('cv_save_failed')
+        return version
+      },
     })
   }
   const hasUntitledCv = () => {
@@ -409,6 +429,7 @@ function CvWysiwygDraftEditor({ publicId, onSaved }) {
     </div>
     {!isDesktop && <div className="fixed inset-x-0 bottom-0 z-40"><ToolSidebar mobile activeTool={builderUi.activeTool} onChange={chooseTool} /></div>}
     <Drawer placement="bottom" size="large" title={activeTitle} open={!isDesktop && mobilePanelOpen} onClose={() => setMobilePanelOpen(false)} styles={{ body: { padding: 0 } }}>{activePanel}</Drawer>
+    {confirmationModal}
     <Modal open={previewOpen} onCancel={() => setPreviewOpen(false)} afterClose={() => setPreviewDocument(null)} footer={null} width="min(96vw, 1000px)" title="Xem trước CV" styles={{ body: { maxHeight: '82vh', overflow: 'auto', background: '#e2e8f0', padding: 24 } }}><CvDocumentPreview document={previewDocument || editor.document} rendererKey={editor.cv.template_renderer_key || editor.cv.template_version} assets={editor.assets} /></Modal>
   </div><DragOverlay dropAnimation={null}>{dragPreview && <div className="flex max-w-64 items-center gap-2 rounded-lg border-2 border-emerald-500 bg-white px-3 py-2 text-sm font-bold text-slate-800 shadow-xl"><HolderOutlined className="text-emerald-600" /><span className="truncate">{dragPreview}</span></div>}</DragOverlay></DndContext>
 }

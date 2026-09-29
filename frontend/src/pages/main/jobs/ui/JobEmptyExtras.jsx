@@ -26,6 +26,7 @@ export default function JobEmptyExtras({ isAuthenticated, onRequireLogin, onQuic
                   isAuthenticated={isAuthenticated}
                   onRequireLogin={onRequireLogin}
                   onQuickView={onQuickView}
+                  comparisonEnabled={false}
                 />
               ))}
           </div>

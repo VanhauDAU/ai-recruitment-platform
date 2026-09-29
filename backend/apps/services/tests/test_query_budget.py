@@ -10,10 +10,11 @@ from rest_framework.test import APITestCase
 
 from apps.accounts.models import User
 
-from ..models import ServiceCategory, ServicePackage
+from ..models import ConsultationLead, ServiceCategory, ServicePackage
 
 ADMIN_SERVICE_CATEGORY_LIST_QUERY_BUDGET = 1
 ADMIN_SERVICE_CATEGORY_DETAIL_QUERY_BUDGET = 1
+ADMIN_CONSULTATION_LEAD_EXPORT_QUERY_BUDGET = 2
 
 
 class AdminServiceCategoryQueryBudgetTests(APITestCase):
@@ -91,3 +92,26 @@ class AdminServiceCategoryQueryBudgetTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['packages_count'], 4)
+
+    def test_consultation_lead_export_query_count_is_flat(self):
+        ConsultationLead.objects.create(
+            full_name='Lead nền',
+            email='baseline@example.com',
+            phone='0900000000',
+        )
+        export_url = reverse('services-admin-consultations-export')
+
+        with self.assertNumQueries(ADMIN_CONSULTATION_LEAD_EXPORT_QUERY_BUDGET):
+            baseline = self.client.get(export_url, {'ordering': '-email'})
+        self.assertEqual(baseline.status_code, status.HTTP_200_OK)
+
+        for index in range(30):
+            ConsultationLead.objects.create(
+                full_name=f'Lead mở rộng {index}',
+                email=f'expanded-{index}@example.com',
+                phone=f'09{index:08d}',
+            )
+
+        with self.assertNumQueries(ADMIN_CONSULTATION_LEAD_EXPORT_QUERY_BUDGET):
+            expanded = self.client.get(export_url, {'ordering': '-email'})
+        self.assertEqual(expanded.status_code, status.HTTP_200_OK)

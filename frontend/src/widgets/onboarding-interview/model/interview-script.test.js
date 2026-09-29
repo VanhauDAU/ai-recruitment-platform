@@ -1,12 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import {
   answerSummary,
-  buildReadySpeech,
-  clampSpeech,
-  greetingSpeech,
+  buildReadyMessage,
+  greetingMessage,
   INTERVIEW_STEPS,
-  MAX_SPEECH_CHARS,
-  salarySpeech,
+  salarySummary,
   stepById,
 } from './interview-script'
 
@@ -33,15 +31,15 @@ describe('interview-script', () => {
   })
 
   it('chào ứng viên bằng tên trước khi vào câu hỏi đầu tiên', () => {
-    expect(greetingSpeech({ full_name: 'Hậu' })).toContain('Chào Hậu!')
-    expect(greetingSpeech(null)).toContain('Chào bạn!')
+    expect(greetingMessage({ full_name: 'Hậu' })).toContain('Chào Hậu!')
+    expect(greetingMessage(null)).toContain('Chào bạn!')
   })
 
-  it('dựng đáp án thành tin nhắn đọc lại được của ứng viên', () => {
+  it('dựng đáp án thành tin nhắn xem lại được của ứng viên', () => {
     const values = {
       desired_salary_vnd: 15_000_000,
       desired_specialization_ids: [1],
-      desired_position_other: 'Kỹ sư cầu nối',
+      desired_position_others: ['Kỹ sư cầu nối', 'Business Analyst'],
       experience_level: '2',
       preferred_province_ids: [3],
       willing_to_relocate: true,
@@ -49,7 +47,7 @@ describe('interview-script', () => {
       recruiter_visibility_consent: false,
     }
 
-    expect(answerSummary(stepById('specialization'), values, CATALOG)).toBe('Lập trình viên · Kỹ sư cầu nối')
+    expect(answerSummary(stepById('specialization'), values, CATALOG)).toBe('Lập trình viên · Kỹ sư cầu nối · Business Analyst')
     expect(answerSummary(stepById('experience'), values, CATALOG)).toBe('2 năm')
     expect(answerSummary(stepById('salary'), values, CATALOG)).toBe('15.000.000 VND/tháng')
     expect(answerSummary(stepById('location'), values, CATALOG)).toBe('Đà Nẵng · Sẵn sàng đổi nơi làm việc')
@@ -60,37 +58,35 @@ describe('interview-script', () => {
     expect(answerSummary(stepById('consent'), {}, CATALOG)).toBe('Mình chưa đồng ý mục nào.')
   })
 
-  it('đọc lương tròn triệu theo cách nói tự nhiên', () => {
-    expect(salarySpeech(15_000_000)).toBe('15 triệu')
-    expect(salarySpeech(12_500_000)).toBe('12.500.000 đồng')
-    expect(salarySpeech(null)).toBe('')
+  it('rút gọn lương tròn triệu trong câu tóm tắt', () => {
+    expect(salarySummary(15_000_000)).toBe('15 triệu')
+    expect(salarySummary(12_500_000)).toBe('12.500.000 đồng')
+    expect(salarySummary(null)).toBe('')
   })
 
   it('dựng câu chốt từ chính nhu cầu vừa lưu', () => {
-    const speech = buildReadySpeech(PREFERENCE, { full_name: 'Hậu' })
-    expect(speech).toContain('Xong rồi Hậu!')
-    expect(speech).toContain('việc làm Lập trình viên')
-    expect(speech).toContain('tại Đà Nẵng')
-    expect(speech).toContain('15 triệu')
+    const message = buildReadyMessage(PREFERENCE, { full_name: 'Hậu' })
+    expect(message).toContain('Xong rồi Hậu!')
+    expect(message).toContain('việc làm Lập trình viên')
+    expect(message).toContain('tại Đà Nẵng')
+    expect(message).toContain('15 triệu')
   })
 
   it('gộp phần dư khi chọn nhiều lĩnh vực và tỉnh thành', () => {
-    const speech = buildReadySpeech({
+    const message = buildReadyMessage({
       ...PREFERENCE,
       desired_specializations: [1, 2, 3, 4].map((id) => ({ id, name: `Nghề ${id}` })),
       preferred_provinces: [1, 2, 3].map((id) => ({ id, name: `Tỉnh ${id}` })),
     }, null)
-    expect(speech).toContain('Nghề 1 và Nghề 2 cùng 2 lĩnh vực khác')
-    expect(speech).toContain('Tỉnh 1 và Tỉnh 2 cùng 1 tỉnh thành khác')
+    expect(message).toContain('Nghề 1 và Nghề 2 cùng 2 lĩnh vực khác')
+    expect(message).toContain('Tỉnh 1 và Tỉnh 2 cùng 1 tỉnh thành khác')
   })
 
   it('vẫn có câu chốt khi thiếu dữ liệu', () => {
-    expect(buildReadySpeech(null, null)).toContain('danh sách việc làm phù hợp')
+    expect(buildReadyMessage(null, null)).toContain('danh sách việc làm phù hợp')
   })
 
-  it('cắt câu quá dài ở ranh giới từ để không vượt hạn mức backend', () => {
-    const clamped = clampSpeech(`${'Xin chào bạn '.repeat(80)}kết thúc`)
-    expect(clamped.length).toBeLessThanOrEqual(MAX_SPEECH_CHARS)
-    expect(clamped.endsWith('bạn')).toBe(true)
+  it('đưa vị trí tự nhập vào câu chốt sau khi lưu', () => {
+    expect(buildReadyMessage({ desired_position_others: ['Kỹ sư dữ liệu'] }, null)).toContain('Kỹ sư dữ liệu')
   })
 })

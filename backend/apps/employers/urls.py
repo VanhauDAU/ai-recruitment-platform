@@ -8,16 +8,28 @@ from .api.views import (
     CompanyDocumentContentView,
     CompanyDocumentListCreateView,
     CompanyDocumentUploadPreviewView,
+    CompanyDomainClaimListCreateView,
+    CompanyDomainClaimManualReviewView,
+    CompanyDomainClaimRotateView,
+    CompanyDomainClaimVerifyView,
     CompanyGalleryDeleteView,
     CompanyGalleryUploadView,
     CompanyLogoUploadView,
     CompanySearchView,
+    CompanyUpdateRequestLifecycleView,
     CompanyUpdateRequestListCreateView,
     CreateCompanyView,
+    EmployerActivityListView,
+    EmployerNotificationListView,
+    EmployerNotificationPreferenceView,
+    EmployerNotificationReadAllView,
+    EmployerNotificationReadView,
+    EmployerNotificationUnreadCountView,
     IndustryListView,
     JoinCompanyView,
     MyCompanyView,
     PhoneAvailabilityView,
+    PhoneChallengeView,
     RecruiterMeView,
     RecruitmentCampaignActivityView,
     RecruitmentCampaignDetailView,
@@ -36,6 +48,32 @@ from .api.views import (
 from .api.views.registration import CompleteEmployerRegistrationView, EmployerRegisterView
 
 urlpatterns = [
+    path(
+        'notifications/',
+        EmployerNotificationListView.as_view(),
+        name='employer-notification-list',
+    ),
+    path(
+        'notification-preferences/',
+        EmployerNotificationPreferenceView.as_view(),
+        name='employer-notification-preferences',
+    ),
+    path(
+        'notifications/unread-count/',
+        EmployerNotificationUnreadCountView.as_view(),
+        name='employer-notification-unread-count',
+    ),
+    path(
+        'notifications/read-all/',
+        EmployerNotificationReadAllView.as_view(),
+        name='employer-notification-read-all',
+    ),
+    path(
+        'notifications/<str:public_id>/read/',
+        EmployerNotificationReadView.as_view(),
+        name='employer-notification-read',
+    ),
+    path('activities/', EmployerActivityListView.as_view(), name='employer-activity-list'),
     path('campaigns/', RecruitmentCampaignListCreateView.as_view(), name='employer-campaign-list'),
     path(
         'campaigns/options/',
@@ -93,6 +131,11 @@ urlpatterns = [
     path('me/', RecruiterMeView.as_view(), name='employer-me'),
     path('phone/check/', PhoneAvailabilityView.as_view(), name='employer-phone-check'),
     path('phone/send-otp/', SendPhoneOtpView.as_view(), name='employer-phone-send-otp'),
+    path(
+        'phone/challenges/<str:public_id>/',
+        PhoneChallengeView.as_view(),
+        name='employer-phone-challenge',
+    ),
     path('phone/verify/', VerifyPhoneOtpView.as_view(), name='employer-phone-verify'),
     path('dpa/accept/', AcceptDpaView.as_view(), name='employer-dpa-accept'),
     # Công ty
@@ -101,6 +144,26 @@ urlpatterns = [
     path('company/search/', CompanySearchView.as_view(), name='employer-company-search'),
     path('company/catalogs/', CompanyCatalogView.as_view(), name='employer-company-catalogs'),
     path('company/join/', JoinCompanyView.as_view(), name='employer-company-join'),
+    path(
+        'company/domain-claims/',
+        CompanyDomainClaimListCreateView.as_view(),
+        name='employer-company-domain-claims',
+    ),
+    path(
+        'company/domain-claims/<str:public_id>/verify/',
+        CompanyDomainClaimVerifyView.as_view(),
+        name='employer-company-domain-claim-verify',
+    ),
+    path(
+        'company/domain-claims/<str:public_id>/rotate/',
+        CompanyDomainClaimRotateView.as_view(),
+        name='employer-company-domain-claim-rotate',
+    ),
+    path(
+        'company/domain-claims/<str:public_id>/request-manual-review/',
+        CompanyDomainClaimManualReviewView.as_view(),
+        name='employer-company-domain-claim-request-manual-review',
+    ),
     path('company/logo/', CompanyLogoUploadView.as_view(), name='employer-company-logo-upload'),
     path('company/cover/', CompanyCoverUploadView.as_view(), name='employer-company-cover-upload'),
     path(
@@ -130,6 +193,11 @@ urlpatterns = [
         'company/update-requests/',
         CompanyUpdateRequestListCreateView.as_view(),
         name='employer-company-update-requests',
+    ),
+    path(
+        'company/update-requests/<str:public_id>/<str:action>/',
+        CompanyUpdateRequestLifecycleView.as_view(),
+        name='employer-company-update-request-lifecycle',
     ),
     # Danh mục lĩnh vực
     path('industries/', IndustryListView.as_view(), name='employer-industries'),

@@ -6,24 +6,19 @@ from django.db.models import Count, IntegerField, OuterRef, Prefetch, Q, Subquer
 from django.db.models.functions import Coalesce
 from django.utils import timezone
 
-from ..models import Company, CompanyDocument, CompanyTaxLookupEvidence, EmployerVerificationCase
+from ..models import (
+    Company,
+    CompanyDocument,
+    CompanyTaxLookupEvidence,
+    EmployerVerificationCase,
+    EmployerVerificationEvent,
+)
 
 
-def admin_verification_cases_queryset(*, params=None):
+def admin_verification_cases_queryset(*, params=None, include_detail=False):
     params = params or {}
     duplicate_tax_code_companies = (
         Company.objects.filter(tax_code=OuterRef('company__tax_code'))
-        .exclude(tax_code__isnull=True)
-        .exclude(pk=OuterRef('company_id'))
-        .values('tax_code')
-        .annotate(total=Count('id'))
-        .values('total')[:1]
-    )
-    verified_duplicate_tax_code_companies = (
-        Company.objects.filter(
-            tax_code=OuterRef('company__tax_code'),
-            verification_status=Company.VerificationStatus.VERIFIED,
-        )
         .exclude(tax_code__isnull=True)
         .exclude(pk=OuterRef('company_id'))
         .values('tax_code')
@@ -54,6 +49,26 @@ def admin_verification_cases_queryset(*, params=None):
         )
         .order_by('doc_type', '-version', '-created_at')
     )
+    prefetches = [
+        Prefetch('documents', queryset=documents),
+        Prefetch(
+            'recruiter__recruitment_needs',
+            to_attr='verification_recruitment_needs',
+        ),
+    ]
+    if include_detail:
+        prefetches.extend(
+            [
+                Prefetch(
+                    'events',
+                    queryset=EmployerVerificationEvent.objects.select_related('actor'),
+                ),
+                Prefetch(
+                    'tax_lookup_evidences',
+                    queryset=CompanyTaxLookupEvidence.objects.order_by('-created_at', '-id'),
+                ),
+            ]
+        )
     queryset = (
         EmployerVerificationCase.objects.select_related(
             'recruiter__user',
@@ -61,34 +76,12 @@ def admin_verification_cases_queryset(*, params=None):
             'recruiter__work_location',
             'company',
             'reviewer',
+            'tax_override_by',
         )
-        .prefetch_related(
-            Prefetch('documents', queryset=documents),
-            Prefetch(
-                'documents',
-                queryset=CompanyDocument.objects.filter(is_current=True),
-                to_attr='current_documents_for_checks',
-            ),
-            'events__actor',
-            Prefetch(
-                'tax_lookup_evidences',
-                queryset=CompanyTaxLookupEvidence.objects.order_by('-created_at', '-id'),
-            ),
-            Prefetch(
-                'recruiter__recruitment_needs',
-                to_attr='verification_recruitment_needs',
-            ),
-        )
+        .prefetch_related(*prefetches)
         .annotate(
             duplicate_tax_code_company_count=Coalesce(
                 Subquery(duplicate_tax_code_companies, output_field=IntegerField()),
-                Value(0),
-            ),
-            verified_duplicate_tax_code_company_count=Coalesce(
-                Subquery(
-                    verified_duplicate_tax_code_companies,
-                    output_field=IntegerField(),
-                ),
                 Value(0),
             ),
             current_document_count=Count(
@@ -205,4 +198,6 @@ def admin_verification_summary():
         ).count(),
         'approved': base.filter(status=EmployerVerificationCase.Status.APPROVED).count(),
         'rejected': base.filter(status=EmployerVerificationCase.Status.REJECTED).count(),
+        'revoked': base.filter(status=EmployerVerificationCase.Status.REVOKED).count(),
+        'expired': base.filter(status=EmployerVerificationCase.Status.EXPIRED).count(),
     }

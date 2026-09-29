@@ -15,6 +15,8 @@ const { accountApi, accessApi, verificationApi, useSession } = vi.hoisted(() => 
     getAdminRoles: vi.fn(),
   },
   verificationApi: {
+    getAdminCompanyDomainClaims: vi.fn(),
+    getAdminCompanyDomainClaimSummary: vi.fn(),
     getAdminEmployerVerifications: vi.fn(),
   },
   useSession: vi.fn(),
@@ -94,6 +96,11 @@ describe('AdminAccountManagement overview', () => {
     accessApi.getAdminDepartments.mockResolvedValue([])
     accessApi.getAdminRoles.mockResolvedValue([])
     verificationApi.getAdminEmployerVerifications.mockResolvedValue({ count: 0, results: [] })
+    verificationApi.getAdminCompanyDomainClaims.mockResolvedValue({ count: 0, results: [] })
+    verificationApi.getAdminCompanyDomainClaimSummary.mockResolvedValue({
+      total: 3,
+      manual_pending: 2,
+    })
   })
 
   it('shows each account stat with its share of the total', async () => {
@@ -130,6 +137,7 @@ describe('AdminAccountManagement overview', () => {
       'true',
     )
     expect(screen.getByRole('tab', { name: /Danh sách NTD/ })).toBeInTheDocument()
+    expect(await screen.findByRole('tab', { name: /Xác minh domain/ })).toHaveTextContent('2')
     expect(screen.getByLabelText('Tổng quan nhà tuyển dụng')).toBeInTheDocument()
   })
 

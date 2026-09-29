@@ -6,7 +6,6 @@ import {
 import { Button, Empty, Space, Table, Tag, Tooltip } from 'antd'
 import { recruiterVerificationMeta } from '@/entities/admin-company'
 import CompanyLogo from './CompanyLogo'
-import { CompanyStatusTag } from './CompanyStatusTags'
 
 function formatDate(value) {
   if (!value) return 'Chưa cập nhật'
@@ -62,6 +61,11 @@ function CompanyIdentity({ company, onOpen }) {
             Tên giao dịch: {company.trade_name}
           </span>
         )}
+        {company.business_type_label && (
+          <span className="mt-0.5 block truncate text-xs text-slate-400">
+            {company.business_type_label}
+          </span>
+        )}
       </span>
     </button>
   )
@@ -109,21 +113,6 @@ export default function CompanyDirectoryTable({
       sorter: true,
       sortOrder: sorterOrder(ordering, 'company_name'),
       render: (_, company) => <CompanyIdentity company={company} onOpen={onOpen} />,
-    },
-    {
-      title: 'Hồ sơ pháp nhân',
-      key: 'verification_status',
-      width: 180,
-      sorter: true,
-      sortOrder: sorterOrder(ordering, 'verification_status'),
-      render: (_, company) => (
-        <div>
-          <CompanyStatusTag status={company.verification_status} />
-          <div className="mt-2 text-xs text-slate-500">
-            {company.business_type_label || 'Chưa xác định loại hình'}
-          </div>
-        </div>
-      ),
     },
     {
       title: 'Owner & nhà tuyển dụng',
@@ -192,7 +181,7 @@ export default function CompanyDirectoryTable({
           />
         ),
       }}
-      scroll={{ x: 1270 }}
+      scroll={{ x: 1090 }}
       pagination={{
         current: page,
         pageSize: 20,

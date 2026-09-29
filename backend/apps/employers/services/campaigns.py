@@ -2,18 +2,23 @@ from django.db import transaction
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
-from apps.accounts.services import lock_account_for_write
-
-from ..models import CampaignActivity, RecruiterProfile, RecruitmentCampaign
+from ..models import CampaignActivity, RecruitmentCampaign
+from .profiles import ensure_recruiter_job_workspace
 
 
 def _recruiter_for(user):
-    # A campaign is personal workspace data. It can be created as soon as an
-    # employer account exists; company verification is enforced only when the
-    # recruiter submits a job for review.
-    user = lock_account_for_write(user)
-    recruiter, _ = RecruiterProfile.objects.select_related('company').get_or_create(user=user)
+    recruiter, _ = ensure_recruiter_job_workspace(user, lock=True)
     return recruiter
+
+
+def _ensure_campaign_not_held(campaign):
+    if campaign.policy_hold:
+        raise ValidationError(
+            {
+                'code': 'RECRUITMENT_HOLD_ACTIVE',
+                'detail': 'Chiến dịch đang bị policy hold.',
+            }
+        )
 
 
 def record_campaign_activity(
@@ -67,8 +72,10 @@ def create_campaign(*, user, **data):
 @transaction.atomic
 def update_campaign(*, campaign, user, **data):
     recruiter = _recruiter_for(user)
+    campaign = RecruitmentCampaign.objects.select_for_update(of=('self',)).get(pk=campaign.pk)
     if campaign.owner_id != recruiter.id:
         raise ValidationError('Bạn không có quyền chỉnh sửa chiến dịch này.')
+    _ensure_campaign_not_held(campaign)
     changed_fields = list(data)
     for field, value in data.items():
         setattr(campaign, field, value)
@@ -86,9 +93,10 @@ def update_campaign(*, campaign, user, **data):
 @transaction.atomic
 def change_campaign_status(*, campaign, user, status, confirmation_code=''):
     recruiter = _recruiter_for(user)
-    campaign = RecruitmentCampaign.objects.select_for_update().get(pk=campaign.pk)
+    campaign = RecruitmentCampaign.objects.select_for_update(of=('self',)).get(pk=campaign.pk)
     if campaign.owner_id != recruiter.id:
         raise ValidationError('Bạn không có quyền đổi trạng thái chiến dịch này.')
+    _ensure_campaign_not_held(campaign)
     if status == RecruitmentCampaign.Status.PAUSED and confirmation_code != campaign.public_id:
         raise ValidationError({'confirmation_code': 'Nhập đúng mã chiến dịch để xác nhận dừng.'})
     allowed_transitions = {

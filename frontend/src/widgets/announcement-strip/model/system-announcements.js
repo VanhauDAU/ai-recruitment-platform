@@ -5,7 +5,11 @@ import {
   ANNOUNCEMENT_KINDS,
   ANNOUNCEMENT_SURFACES,
 } from '@/entities/announcement'
-import { EMPLOYER_DATA_PROTECTION_URL } from '@/shared/config/portals'
+import {
+  EMPLOYER_CAPABILITIES,
+  employerReadinessAction,
+  employerReadinessBlockersFor,
+} from '@/entities/employer-profile'
 
 const LOCKED = Object.freeze({
   mode: ANNOUNCEMENT_DISMISS_MODES.LOCKED,
@@ -45,8 +49,13 @@ function emailVerification({ locale, verificationPath }) {
   })
 }
 
-function employerCompliance(locale) {
+function employerCompliance(locale, readiness) {
   const english = locale?.toLowerCase().startsWith('en')
+  const blocker = employerReadinessBlockersFor(
+    readiness,
+    EMPLOYER_CAPABILITIES.CANDIDATE_DATA,
+  )[0]
+  const action = employerReadinessAction(blocker?.action || 'accept_dpa')
   return systemItem({
     id: 'system-employer-data-compliance',
     kind: ANNOUNCEMENT_KINDS.COMPLIANCE,
@@ -54,12 +63,12 @@ function employerCompliance(locale) {
     priority: 1000,
     icon: ANNOUNCEMENT_ICONS.SHIELD,
     badge: english ? 'Important' : 'Quan trọng',
-    message: english
-      ? 'Complete the personal data processing agreements to protect candidate profiles.'
-      : 'Hoàn thiện thỏa thuận xử lý dữ liệu cá nhân để bảo vệ hồ sơ ứng viên.',
+    message: blocker?.message || (english
+      ? 'Complete the required verification before accessing candidate data.'
+      : 'Hoàn thiện yêu cầu xác thực để truy cập dữ liệu ứng viên.'),
     cta: {
-      label: english ? 'Complete now' : 'Cập nhật ngay',
-      url: EMPLOYER_DATA_PROTECTION_URL,
+      label: english ? 'Review now' : action.label,
+      url: action.to,
       external: false,
     },
   })
@@ -84,6 +93,8 @@ function jobPreferences() {
 }
 
 export function buildSystemAnnouncements({
+  employerReadiness,
+  employerReadinessReady,
   employerProfile,
   employerProfileReady,
   locale = 'vi',
@@ -97,13 +108,15 @@ export function buildSystemAnnouncements({
   }
   if (
     surface === ANNOUNCEMENT_SURFACES.EMPLOYER_WORKSPACE
-    && employerProfileReady
     && (
-      !employerProfile?.onboarding?.candidate_dpa_submitted
-      || !employerProfile?.onboarding?.dpa_accepted
+      (employerReadinessReady && !employerReadiness?.candidateDataAccess)
+      || (!employerReadiness && employerProfileReady && (
+        !employerProfile?.onboarding?.candidate_dpa_submitted
+        || !employerProfile?.onboarding?.dpa_accepted
+      ))
     )
   ) {
-    items.push(employerCompliance(locale))
+    items.push(employerCompliance(locale, employerReadiness))
   }
   if (
     surface === ANNOUNCEMENT_SURFACES.CANDIDATE

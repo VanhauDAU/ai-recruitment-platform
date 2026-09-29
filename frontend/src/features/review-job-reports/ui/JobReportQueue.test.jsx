@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { App } from 'antd'
+import { MemoryRouter, useLocation } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import JobReportQueue from './JobReportQueue'
 
@@ -48,6 +49,10 @@ vi.mock('@/entities/job-report', () => ({
     upheld: 'red',
     dismissed: 'green',
   },
+  JOB_REPORT_REASON_OPTIONS: [
+    { value: 'fake_company', label: 'Công ty không có thật' },
+    { value: 'scam', label: 'Lừa đảo, thu phí ứng viên' },
+  ],
 }))
 
 vi.mock('@/shared/lib/toast', () => ({
@@ -68,7 +73,12 @@ const REPORT = {
   resolution_history: [],
 }
 
-function renderQueue() {
+function LocationProbe() {
+  const location = useLocation()
+  return <output data-testid="location-search">{location.search}</output>
+}
+
+function renderQueue(initialEntry = '/admin/app/job-moderation?tab=reports') {
   const client = new QueryClient({
     defaultOptions: {
       queries: { retry: false },
@@ -77,9 +87,12 @@ function renderQueue() {
   })
   return render(
     <QueryClientProvider client={client}>
-      <App>
-        <JobReportQueue />
-      </App>
+      <MemoryRouter initialEntries={[initialEntry]}>
+        <App>
+          <JobReportQueue />
+          <LocationProbe />
+        </App>
+      </MemoryRouter>
     </QueryClientProvider>,
   )
 }
@@ -115,6 +128,51 @@ describe('JobReportQueue', () => {
       status: 'upheld',
       note: 'Đã kiểm tra.',
     }))
+  }, 10_000)
+
+  it('keeps filters, ordering and pagination in the namespaced URL', async () => {
+    renderQueue(
+      '/admin/app/job-moderation?tab=reports&report_status=all&report_reason=scam&report_q=Acme&report_created_from=2026-07-01&report_created_to=2026-07-31&report_ordering=job_title&report_page=2',
+    )
+
+    await waitFor(() => expect(mocks.getAdminJobReports).toHaveBeenCalledWith({
+      reason: 'scam',
+      q: 'Acme',
+      created_from: '2026-07-01',
+      created_to: '2026-07-31',
+      ordering: 'job_title',
+      page: 2,
+    }, { signal: expect.anything() }))
+    expect(screen.getByTestId('location-search')).toHaveTextContent('tab=reports')
+    expect(screen.getByTestId('location-search')).toHaveTextContent('report_page=2')
+  })
+
+  it('makes every data column sortable and sends both directions to the server', async () => {
+    renderQueue('/admin/app/job-moderation?tab=reports&report_page=3')
+    await screen.findByText('Backend Engineer')
+
+    const sortableHeaders = document.querySelectorAll('th.ant-table-column-has-sorters')
+    expect(sortableHeaders).toHaveLength(7)
+    expect(screen.getByRole('columnheader', { name: 'Thao tác' }))
+      .not.toHaveClass('ant-table-column-has-sorters')
+
+    fireEvent.click(screen.getByRole('columnheader', { name: /Công ty/ }))
+    await waitFor(() => expect(mocks.getAdminJobReports).toHaveBeenLastCalledWith({
+      status: 'pending',
+      ordering: 'company_name',
+      page: 1,
+    }, { signal: expect.anything() }))
+    expect(screen.getByTestId('location-search')).toHaveTextContent(
+      'report_ordering=company_name',
+    )
+    expect(screen.getByTestId('location-search')).not.toHaveTextContent('report_page=')
+
+    fireEvent.click(screen.getByRole('columnheader', { name: /Công ty/ }))
+    await waitFor(() => expect(mocks.getAdminJobReports).toHaveBeenLastCalledWith({
+      status: 'pending',
+      ordering: '-company_name',
+      page: 1,
+    }, { signal: expect.anything() }))
   })
 
   it('is read-only without resolve permission', async () => {

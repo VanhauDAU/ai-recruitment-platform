@@ -143,11 +143,11 @@
 .company-filters__controls {
   display: grid;
   gap: 10px;
-  grid-template-columns: minmax(240px, 1fr) 190px 220px auto;
+  grid-template-columns: minmax(240px, 1fr) 220px auto;
 }
 
 .company-filters__controls--queue {
-  grid-template-columns: minmax(280px, 1fr) 240px;
+  grid-template-columns: minmax(280px, 1fr) 220px 240px;
 }
 
 .company-filters__controls .ant-select,
@@ -426,21 +426,6 @@
   gap: 12px;
   grid-template-columns: minmax(240px, 2fr) minmax(170px, 1fr) minmax(210px, 1fr);
   margin-bottom: 20px;
-}
-
-.company-directory__status-card {
-  align-items: flex-start;
-  display: flex;
-  gap: 16px;
-}
-
-.company-directory__status-card > .anticon {
-  background: var(--admin-primary-soft);
-  border-radius: 12px;
-  color: var(--admin-primary);
-  flex: 0 0 auto;
-  font-size: 24px;
-  padding: 14px;
 }
 
 @media (max-width: 1100px) {

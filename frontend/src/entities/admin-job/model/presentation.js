@@ -35,9 +35,32 @@ export function adminJobStatusMeta(job) {
 }
 
 export function formatAdminJobDateTime(value) {
-  return value ? new Date(value).toLocaleString('vi-VN') : '—'
+  if (!value) return '—'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return '—'
+  const parts = Object.fromEntries(new Intl.DateTimeFormat('vi-VN', {
+    timeZone: 'Asia/Ho_Chi_Minh',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(date).map(({ type, value: part }) => [type, part]))
+  return `${parts.day}/${parts.month}/${parts.year} · ${parts.hour}:${parts.minute}`
 }
 
 export function formatAdminJobDate(value) {
-  return value ? new Date(`${value}T00:00:00`).toLocaleDateString('vi-VN') : '—'
+  if (!value) return '—'
+  const isoDate = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value)
+  if (isoDate) return `${isoDate[3]}/${isoDate[2]}/${isoDate[1]}`
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return '—'
+  const parts = Object.fromEntries(new Intl.DateTimeFormat('vi-VN', {
+    timeZone: 'Asia/Ho_Chi_Minh',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  }).formatToParts(date).map(({ type, value: part }) => [type, part]))
+  return `${parts.day}/${parts.month}/${parts.year}`
 }

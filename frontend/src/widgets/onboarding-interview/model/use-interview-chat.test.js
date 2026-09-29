@@ -65,12 +65,13 @@ describe('useInterviewChat', () => {
     expect(onSubmit).toHaveBeenCalledTimes(1)
     expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({
       ai_recommendation_consent: false,
-      desired_position_other: '',
+      desired_position_others: [],
       desired_salary_vnd: 15_000_000,
       desired_specialization_ids: [1],
       experience_level: '2',
       preferred_province_ids: [3],
       recruiter_visibility_consent: false,
+      preferred_skill_ids: [],
       willing_to_relocate: false,
     }))
     await waitFor(() => expect(result.current.phase).toBe('ready'), { timeout: 5000 })
@@ -88,6 +89,16 @@ describe('useInterviewChat', () => {
     expect(result.current.editing).toBe(null)
     expect(result.current.index).toBe(1)
     expect(result.current.values.desired_specialization_ids).toEqual([1, 2])
+  })
+
+  it('chấp nhận vị trí tự nhập mà không bắt buộc chọn taxonomy', () => {
+    const { result } = renderHook(() => useInterviewChat({ onSubmit: vi.fn(), preference: null }))
+
+    start(result)
+    act(() => { result.current.send({ desired_position_others: ['Kỹ sư dữ liệu'] }) })
+
+    expect(result.current.index).toBe(1)
+    expect(result.current.values.desired_position_others).toEqual(['Kỹ sư dữ liệu'])
   })
 
   it('huỷ sửa thì trả lại đáp án trước đó', () => {
@@ -126,10 +137,12 @@ describe('useInterviewChat', () => {
       desired_specializations: [{ id: 7, name: 'Kế toán' }],
       experience_level: '3',
       preferred_provinces: [{ id: 1, name: 'Hà Nội' }],
+      preferred_skills: [{ id: 11, name: 'Python' }],
     }
     const { result } = renderHook(() => useInterviewChat({ onSubmit: vi.fn(), preference }))
 
     expect(result.current.values.desired_specialization_ids).toEqual([7])
+    expect(result.current.values.preferred_skill_ids).toEqual([11])
     expect(result.current.total).toBe(INTERVIEW_STEPS.length)
   })
 })

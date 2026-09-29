@@ -265,7 +265,7 @@ describe('CV draft editor', () => {
     await screen.findByLabelText('CV A4 có thể chỉnh sửa')
     fireEvent.click(screen.getByRole('button', { name: 'Lưu CV' }))
 
-    expect(await screen.findByRole('dialog', { name: 'Lưu ý' })).toBeInTheDocument()
+    expect(await screen.findByRole('dialog', { name: 'Lưu CV chưa hoàn thiện' })).toBeInTheDocument()
     expect(screen.getByText(/Vị trí ứng tuyển, Mục tiêu nghề nghiệp, Học vấn, Kinh nghiệm việc làm/)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Hoàn thiện tiếp' })).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Lưu CV, tôi sẽ hoàn thiện sau' }))

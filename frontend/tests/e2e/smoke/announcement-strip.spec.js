@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { mockPublicApi } from './helpers'
+import { API_ROUTE, mockPublicApi } from './helpers'
 
 const FEEDS = {
   candidate: 'Thông báo dành cho ứng viên.',
@@ -38,7 +38,7 @@ async function enableAnnouncementRollout(page) {
 }
 
 async function routeAnnouncementFeed(page, requestedSurfaces = []) {
-  await page.route('http://localhost:8000/api/site/announcements/active/**', async (route) => {
+  await page.route(/\/api\/site\/announcements\/active\//, async (route) => {
     const surface = new URL(route.request().url()).searchParams.get('surface')
     requestedSurfaces.push(surface)
     await route.fulfill({
@@ -124,7 +124,7 @@ test('announcement strip: equal-tier dismiss reveals the next item without a bla
   page.on('pageerror', (error) => pageErrors.push(error.message))
   await enableAnnouncementRollout(page)
   await mockPublicApi(page)
-  await page.route('http://localhost:8000/api/site/announcements/active/**', async (route) => {
+  await page.route(/\/api\/site\/announcements\/active\//, async (route) => {
     await route.fulfill({
       contentType: 'application/json',
       body: JSON.stringify({
@@ -173,13 +173,13 @@ test('announcement strip: employer workspace keeps its measured 100dvh shell', a
   page.on('pageerror', (error) => pageErrors.push(error.message))
   await enableAnnouncementRollout(page)
   await mockPublicApi(page)
-  await page.route('http://localhost:8000/api/auth/refresh/', async (route) => {
+  await page.route(/\/api\/auth\/refresh\/$/, async (route) => {
     await route.fulfill({
       contentType: 'application/json',
       body: JSON.stringify({ access: 'e2e-access' }),
     })
   })
-  await page.route('http://localhost:8000/api/auth/me/', async (route) => {
+  await page.route(/\/api\/auth\/me\/$/, async (route) => {
     await route.fulfill({
       contentType: 'application/json',
       body: JSON.stringify({
@@ -194,11 +194,16 @@ test('announcement strip: employer workspace keeps its measured 100dvh shell', a
       }),
     })
   })
-  await page.route('http://localhost:8000/api/employer/me/', async (route) => {
+  await page.route(/\/api\/employer\/me\/$/, async (route) => {
     await route.fulfill({
       contentType: 'application/json',
       body: JSON.stringify({
         public_id: 'rec_e2e',
+        job_workspace_ready: true,
+        verification_approved: true,
+        candidate_data_access: true,
+        dpa_status: 'current',
+        blockers: [],
         onboarding: {
           email_verified: true,
           phone_verified: true,
@@ -234,7 +239,7 @@ test('announcement strip: admin workspace remains below its responsive topbar', 
   const pageErrors = []
   page.on('pageerror', (error) => pageErrors.push(error.message))
   await enableAnnouncementRollout(page)
-  await page.route('http://localhost:8000/api/**', async (route) => {
+  await page.route(API_ROUTE, async (route) => {
     const requestUrl = new URL(route.request().url())
     const path = requestUrl.pathname
     const body = path === '/api/auth/refresh/'
@@ -294,7 +299,7 @@ test('announcement strip: remote kill switch fails closed without breaking publi
   page.on('pageerror', (error) => pageErrors.push(error.message))
   await enableAnnouncementRollout(page)
   await mockPublicApi(page)
-  await page.route('http://localhost:8000/api/site/announcements/active/**', async (route) => {
+  await page.route(/\/api\/site\/announcements\/active\//, async (route) => {
     const surface = new URL(route.request().url()).searchParams.get('surface')
     await route.fulfill({
       contentType: 'application/json',

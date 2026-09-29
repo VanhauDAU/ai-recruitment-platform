@@ -5,6 +5,8 @@ export const EMPLOYER_VERIFICATION_STATUS = {
   changes_requested: { label: 'Cần bổ sung', color: 'orange' },
   rejected: { label: 'Bị từ chối', color: 'red' },
   approved: { label: 'Đã xác thực', color: 'green' },
+  revoked: { label: 'Đã thu hồi', color: 'red' },
+  expired: { label: 'Hết hiệu lực', color: 'volcano' },
 }
 
 export const DOCUMENT_STATUS = {

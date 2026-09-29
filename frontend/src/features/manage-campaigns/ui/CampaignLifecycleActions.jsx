@@ -14,6 +14,17 @@ import {
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { message } from '@/shared/lib/toast'
 
+const serviceEndDateFormatter = new Intl.DateTimeFormat('vi-VN', {
+  dateStyle: 'short',
+  timeStyle: 'short',
+  timeZone: 'Asia/Ho_Chi_Minh',
+})
+
+function formatServiceEndDate(value) {
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? 'Không xác định' : serviceEndDateFormatter.format(date)
+}
+
 export default function CampaignLifecycleActions({
   campaign,
   block = false,
@@ -47,6 +58,7 @@ export default function CampaignLifecycleActions({
     ),
   })
   const impact = impactQuery.data
+  const activeServices = impact?.active_services || []
   const canToggle = ['active', 'paused'].includes(campaign?.status)
 
   function handleToggle(checked) {
@@ -142,9 +154,40 @@ export default function CampaignLifecycleActions({
                 ))}
               </div>
             )}
-            <div className="rounded-lg bg-slate-50 p-3 text-sm text-slate-600">
-              Dịch vụ đang chạy: <strong>Không có</strong>
+            <div className="overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
+              <div className="flex items-center justify-between gap-3 px-3 py-2 text-sm text-slate-700">
+                <strong>{activeServices.length} dịch vụ đang chạy</strong>
+                <span className="text-xs text-slate-500">Không dừng cùng chiến dịch</span>
+              </div>
+              {activeServices.length > 0 ? (
+                <div className="divide-y divide-slate-200 border-t border-slate-200 bg-white">
+                  {activeServices.map((service) => (
+                    <div key={service.public_id} className="space-y-1 px-3 py-2.5 text-sm">
+                      <strong className="block text-slate-800">{service.package_name}</strong>
+                      <div className="text-slate-600">Tin: {service.job_title}</div>
+                      <time
+                        dateTime={service.ends_at}
+                        className="block text-xs font-medium text-amber-700"
+                      >
+                        Kết thúc: {formatServiceEndDate(service.ends_at)}
+                      </time>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="border-t border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-500">
+                  Không có dịch vụ đang chạy.
+                </div>
+              )}
             </div>
+            {activeServices.length > 0 && (
+              <Alert
+                type="warning"
+                showIcon
+                title="Dịch vụ trả phí vẫn tiếp tục đếm ngược"
+                description="Ngày kết thúc dịch vụ không đổi. Nếu mở lại trước ngày này, dịch vụ vẫn hiển thị “Đang chạy” nhưng chỉ còn phần thời gian chưa trôi qua; nếu đã hết hạn, dịch vụ không được khôi phục."
+              />
+            )}
             <label className="block text-sm font-medium text-slate-700">
               Nhập mã <strong>{campaign?.public_id}</strong> để xác nhận
               <Input

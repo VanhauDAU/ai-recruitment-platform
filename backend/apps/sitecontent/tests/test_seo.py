@@ -26,6 +26,42 @@ class SiteSeoTests(TestCase):
         self.assertContains(sitemap, '/sitemaps/jobs.xml')
         self.assertContains(sitemap, '/sitemaps/blog.xml')
 
+    def test_company_directory_has_indexable_metadata_and_static_sitemap_entry(self):
+        response = self.client.get(reverse('seo-company-directory'))
+        trailing_slash_response = self.client.get('/cong-ty/')
+        sitemap = self.client.get(reverse('seo-sitemap-static'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Danh sách công ty')
+        self.assertContains(
+            response,
+            'Khám phá danh sách công ty, tìm hiểu doanh nghiệp và các cơ hội việc làm đang tuyển dụng.',
+        )
+        self.assertContains(
+            response,
+            'rel="canonical" href="http://testserver/cong-ty"',
+        )
+        self.assertEqual(response['X-Robots-Tag'], 'index, follow')
+        self.assertEqual(trailing_slash_response.status_code, 200)
+        self.assertContains(
+            trailing_slash_response,
+            'rel="canonical" href="http://testserver/cong-ty"',
+        )
+        self.assertEqual(trailing_slash_response['X-Robots-Tag'], 'index, follow')
+        self.assertContains(sitemap, 'http://testserver/cong-ty')
+
+    def test_company_search_shell_is_noindex_and_canonicalizes_to_directory(self):
+        response = self.client.get('/cong-ty/tim-kiem/?keyword=1')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Tìm kiếm công ty')
+        self.assertContains(
+            response,
+            'rel="canonical" href="http://testserver/cong-ty"',
+        )
+        self.assertContains(response, 'name="robots" content="noindex, nofollow"')
+        self.assertEqual(response['X-Robots-Tag'], 'noindex, nofollow')
+
     def test_global_index_switch_updates_robots_and_html_header(self):
         SiteSetting.objects.update_or_create(
             key='seo_robots_index',

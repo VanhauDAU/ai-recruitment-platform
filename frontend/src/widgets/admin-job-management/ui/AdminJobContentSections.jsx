@@ -12,7 +12,7 @@ import {
   adminJobEnumLabel,
   formatAdminJobSalary,
 } from '../model/detail-presentation'
-import AdminJobDisclosure from './AdminJobDisclosure'
+import AdminJobPanel from './AdminJobPanel'
 
 function RichContent({ html }) {
   const safeHtml = useMemo(
@@ -50,7 +50,7 @@ function InfoGrid({ items }) {
   )
 }
 
-export default function AdminJobContentSections({ job, openSections, onToggle }) {
+export default function AdminJobContentSections({ job, tab }) {
   const conditions = [
     { key: 'salary', label: 'Thu nhập', value: formatAdminJobSalary(job) },
     { key: 'deadline', label: 'Hạn nộp', value: formatAdminJobDate(job.deadline) },
@@ -78,52 +78,25 @@ export default function AdminJobContentSections({ job, openSections, onToggle })
     { key: 'languages', label: 'Ngoại ngữ', value: <TagList items={job.language_requirements} labelKey="language_name" /> },
   ]
 
-  return (
-    <div className="space-y-4">
-      <AdminJobDisclosure
-        badge="3 phần"
-        description="Mô tả, yêu cầu và quyền lợi do nhà tuyển dụng gửi"
-        icon={<FileTextOutlined />}
-        onToggle={onToggle}
-        open={openSections.has('content')}
-        sectionKey="content"
-        title="Nội dung tuyển dụng"
-      >
-        <div className="admin-job-copy-sections">
-          <section>
-            <h3>Mô tả công việc</h3>
-            <RichContent html={job.description} />
-          </section>
-          <section>
-            <h3>Yêu cầu ứng viên</h3>
-            <RichContent html={job.requirements} />
-          </section>
-          <section>
-            <h3>Quyền lợi</h3>
-            <RichContent html={job.benefits} />
-          </section>
-        </div>
-      </AdminJobDisclosure>
-
-      <AdminJobDisclosure
+  if (tab === 'conditions') {
+    return (
+      <AdminJobPanel
         badge={`${conditions.length} trường`}
         description="Thu nhập, kinh nghiệm, cấp bậc và phân loại"
         icon={<ProfileOutlined />}
-        onToggle={onToggle}
-        open={openSections.has('conditions')}
-        sectionKey="conditions"
         title="Điều kiện và phân loại"
       >
         <InfoGrid items={conditions} />
-      </AdminJobDisclosure>
+      </AdminJobPanel>
+    )
+  }
 
-      <AdminJobDisclosure
+  if (tab === 'workplace') {
+    return (
+      <AdminJobPanel
         badge={`${job.job_locations?.length || 0} địa điểm`}
         description="Nơi làm việc và ghi chú lịch làm việc"
         icon={<EnvironmentOutlined />}
-        onToggle={onToggle}
-        open={openSections.has('workplace')}
-        sectionKey="workplace"
         title="Địa điểm và lịch làm việc"
       >
         {job.job_locations?.length ? (
@@ -145,8 +118,31 @@ export default function AdminJobContentSections({ job, openSections, onToggle })
             <p>{job.work_schedule_note}</p>
           </div>
         )}
-      </AdminJobDisclosure>
-    </div>
+      </AdminJobPanel>
+    )
+  }
+
+  return (
+    <AdminJobPanel
+      badge="3 phần"
+      description="Mô tả, yêu cầu và quyền lợi do nhà tuyển dụng gửi"
+      icon={<FileTextOutlined />}
+      title="Nội dung tuyển dụng"
+    >
+      <div className="admin-job-copy-sections">
+        <section>
+          <h3>Mô tả công việc</h3>
+          <RichContent html={job.description} />
+        </section>
+        <section>
+          <h3>Yêu cầu ứng viên</h3>
+          <RichContent html={job.requirements} />
+        </section>
+        <section>
+          <h3>Quyền lợi</h3>
+          <RichContent html={job.benefits} />
+        </section>
+      </div>
+    </AdminJobPanel>
   )
 }
-

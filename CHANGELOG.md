@@ -6,6 +6,489 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ## [Unreleased]
 
+### 2026-08-10
+
+#### Added — Employer rollout readiness và monitoring
+
+- Thêm audit command chỉ đọc, xuất JSON aggregate-only cho schema, upload,
+  scanner, SMS, DPA, Celery, retention và legacy cohort; strict mode fail-closed
+  và không tự backfill/apply.
+- Thêm metric PII-free cho notification create/dedupe/retention và runbook ER-8
+  mô tả rollout tuần tự, Chrome QA, ngưỡng dừng, rollback và compatibility soak.
+- Giữ migration notification đã phát hành ở `0042`; tách preference/email
+  outbox dedupe sang `0043` additive để DB Docker cũ và fresh install cùng an toàn.
+
+#### Added — Employer notification center và activity log
+
+- Bật chuông topbar có unread badge, popover, trang thông báo phân trang, trạng
+  thái đã đọc/đọc tất cả và deep-link nội bộ về đúng workflow xác thực/công ty.
+- Thêm activity log riêng cho sự kiện nghiệp vụ quan trọng; event được ghi
+  idempotent cùng transaction, chỉ giữ metadata allowlist và không lộ file,
+  storage key, hash hoặc danh tính quản trị viên.
+- Email quyết định xác thực tiếp tục qua outbox có retry; bổ sung sweep 60 giây
+  và retention 730 ngày cho notification/activity/outbox đã kết thúc.
+
+#### Added — Employer company link recovery
+
+- Thêm admin impact-preview và confirm có signed token để gỡ liên kết công ty
+  chọn nhầm khi recruiter còn hoàn toàn clean; reason và audit event bắt buộc.
+- Khóa thao tác nếu là company owner hoặc đã có giấy tờ, verification/tax
+  history, update request, nhu cầu, campaign, job hay compliance hold; không
+  xóa công ty hoặc tái sử dụng proof của công ty cũ.
+- Thêm permission rủi ro cao `employer_verification.unlink_company`, không cấp
+  mặc định cho role quản trị.
+
+#### Added — Employer SMS verification live workflow
+
+- Chuyển endpoint xác thực phone từ OTP email legacy sang challenge SMS có
+  public ID, trạng thái poll, cooldown, attempt budget và replay protection.
+- Hỗ trợ xác thực lần đầu, đổi số giữ proof cũ tới khi thành công và self-
+  reverify; UI không còn gọi availability oracle hoặc thông báo gửi mã qua email.
+- Chặn employer đổi phone trực tiếp qua `/api/auth/me/`; xóa task/service OTP
+  email legacy và không còn đưa raw phone/OTP vào Celery broker.
+
+#### Added — Employer DPA evidence core
+
+- Thêm bằng chứng DPA append-only theo exact version/SHA-256, thời điểm, IP,
+  phiên đăng nhập và hash User-Agent; không backfill giả dữ liệu lịch sử.
+- `GET /api/employer/me/` công bố `dpa_policy`; `POST /api/employer/dpa/accept/`
+  fail closed khi policy stale/misconfigured. Frontend khóa xác nhận khi chưa có
+  policy hiện hành và yêu cầu re-consent cho `legacy_unversioned|outdated`.
+
+#### Added — Employer DPA grace và compliance hold
+
+- Thêm grace 30 ngày có deadline/rollout ID cho DPA legacy hoặc outdated;
+  hết hạn chuyển sang `hold`, khóa workspace/candidate-data/job approval theo
+  canonical readiness và liên kết hold với campaign/job hiện hữu.
+- Thêm command rollout dry-run mặc định, batch/cursor idempotent và query phẳng;
+  chỉ `--apply` sau ops review. Tái đồng ý exact DPA hiện hành chỉ gỡ hold nguồn
+  DPA, giữ nguyên verification/account/moderation hold.
+- `GET /api/employer/me/` trả `dpa_grace_expires_at`; trang DPA hiển thị đúng
+  deadline hoặc trạng thái quá hạn tại đúng workflow, không thêm badge vào
+  checklist xác thực.
+
+#### Fixed — Employer verification và company settings UX
+
+- Route job/campaign/application bị chặn do chưa đủ readiness nay điều hướng về
+  checklist `employer-verify`, không thay trang nghiệp vụ bằng cảnh báo
+  “Workspace tuyển dụng chưa sẵn sàng”. Lỗi tải readiness vẫn fail-closed với
+  retry.
+- Trang verify bỏ hai banner readiness/case status trùng lặp, giữ checklist và
+  tiến độ làm nội dung chính.
+- Trang thông tin công ty không còn tải/hiển thị lịch sử yêu cầu của member
+  khác. Update form có nút quay lại, khóa gửi khi chưa có thay đổi thật và
+  không còn toast thành công giả cho diff rỗng.
+- Update request không còn tự thêm hoặc bắt sửa tên thương mại legacy khi người
+  dùng chỉ thay đổi trường khác.
+- Form GPKD/DPA chỉ đọc `scope=mine`; summary trạng thái lấy đúng current file
+  đang hiển thị, không bị một tài liệu của member khác làm hiện “bị từ chối”.
+- Nút Google ở cổng employer giữ nền sáng và contrast chữ đạt mức đọc được kể
+  cả khi HTML còn class dark từ portal khác.
+
+#### Added — Employer verification final-decision backend ER-5
+
+- Tách document review khỏi quyết định cuối; thêm preview/confirm có signed
+  impact token cho approve/changes-requested/reject và revoke/expire manual.
+- Thêm tax advisory override có permission/lý do riêng, state
+  `revoked`/`expired`, reapprove event và legacy classifier dry-run mặc định.
+- Thêm verification compliance hold theo source với liên kết campaign/job;
+  revoke/expire chặn candidate-data/job approval và ẩn active public job nhưng
+  không downgrade company hoặc khóa workspace/tạo/sửa/gửi tin.
+
+#### Added — Admin employer final-decision UI ER-5
+
+- Admin phải xem impact trước khi xác nhận approve/changes-requested/reject,
+  revoke hoặc expire; stale impact tải lại hồ sơ và bắt preview lại.
+- Company/capability/resource impact được trình bày trong modal; trường hợp
+  nguồn thuế chưa đủ kết luận được diễn đạt thành **duyệt thủ công**, bắt buộc
+  quyền, xác nhận đã đối chiếu giấy tờ gốc và lý do audit.
+- Màn kiểm duyệt tin giữ nút duyệt disabled theo blocker backend và hiện link
+  exact recruiter verification chỉ cho actor có quyền xem màn đích.
+- Thiết kế lại tab Xác thực thành bàn xử lý gọn: bộ giấy tờ theo bốn cột trạng
+  thái có kéo thả và menu tương đương, preview ở vùng chính, quyết định cuối ở
+  rail, điều kiện/lịch sử thu gọn; hồ sơ nộp lại có action **Nhận xử lý lại**.
+- Cụm quyết định cuối dùng lưới hành động ổn định, nút chính chiếm toàn hàng và
+  không xuống dòng trên desktop, tablet hoặc mobile.
+
+#### Fixed — Employer verification impact token và admin counters
+
+- Chuẩn hóa thứ tự mọi collection trong decision integrity fingerprint trước
+  khi ký và xác nhận. Nhiều bản ghi tra cứu thuế không còn gây `409 stale` giả
+  khi admin từ chối hồ sơ mà dữ liệu thực tế không đổi; thay đổi nội dung thật
+  vẫn bị chặn và yêu cầu xem tác động lại.
+- Badge sidebar quản trị dùng đúng summary query theo domain, cập nhật sau
+  mutation, khi focus lại cửa sổ và theo chu kỳ 30 giây; số 0 không còn thêm
+  padding và số lớn được rút gọn thành `99+`.
+
+#### Fixed — Employer verification resubmit và giới hạn từ chối
+
+- Case bị từ chối chỉ về `pending`/tăng revision sau khi recruiter thay toàn bộ
+  current document cần sửa; admin có thể duyệt giấy tờ và quyết định cuối lại.
+- Chỉ final decision `rejected` tăng bộ đếm. Document reject/changes-requested
+  không tính; final reject thứ ba khóa nộp lại nhưng không tự ban tài khoản.
+- Thêm permission riêng `employer_verification.resubmission_unlock`; mở khóa
+  yêu cầu lý do + lock version, giữ nguyên rejection count và audit history.
+- Employer document API hỗ trợ `scope=mine` để form chỉ đánh giá bộ giấy tờ của
+  actor, không trộn tài liệu của member khác cùng công ty.
+
+#### Security — Verification race, redaction và RBAC ER-5
+
+- Chuẩn hóa lock order từ User/Recruiter/VerificationCase đến company/resource;
+  approve-vs-revoke commit sau luôn recheck và không thể công khai tin dưới
+  verification đã mất hiệu lực.
+- Reapprove chỉ gỡ exact verification hold; giữ nguyên DPA/account/moderation
+  hold. Hai permission revoke/tax override được seed nhưng không grant mặc định.
+- Stored decision snapshot dùng allowlist; response thiếu quyền nhạy cảm không
+  lộ integrity fingerprint, tax response hash hoặc raw document filename.
+- OpenAPI, contract frontend và admin UI cùng enforce workflow hai bước; UI
+  không tự suy eligibility hoặc gọi confirm khi chưa có signed impact token.
+
+#### Added — Employer upload-session integration ER-3
+
+- Nối upload session/quarantine vào giấy tờ xác thực, DPA, yêu cầu cập nhật công
+  ty và logo/cover/gallery. Backend recheck owner, purpose, clean state và
+  one-time claim trong transaction; business document/media giữ liên kết audit
+  tới private `UploadAsset` đã quét.
+- Thêm post-scan structural validation: PDF parse strict, ảnh verify bằng Pillow
+  và DOCX dùng bounded container validator. File malware-clean nhưng sai/hỏng
+  định dạng vẫn bị từ chối, không tạo business record.
+- Frontend pre-scan toàn bộ tập file trước khi tạo company/update request, hiển
+  thị trạng thái scan, retry bounded và attach tuần tự; bỏ partial-success khi
+  một file lỗi. Raw fallback chỉ còn cho exact `UPLOAD_PIPELINE_DISABLED` trong
+  compatibility window; strict rollout dùng `EMPLOYER_UPLOAD_SESSION_REQUIRED`.
+- OpenAPI/runbook bổ sung contract upload-session, machine errors và thứ tự bật
+  quarantine → staging gate → strict raw-upload lock. PostgreSQL Docker và real
+  ClamAV local gate đã đạt; ER-3 còn Chrome và production-like staging/strict.
+
+#### Added — Candidate CV upload quarantine integration ER-3
+
+- Import CV PDF/DOCX có/không template và avatar nay ưu tiên upload session
+  purpose `candidate_cv`; backend chỉ parser/decode sau clean verdict, exact
+  owner/purpose recheck và one-time claim.
+- Import template giữ idempotency; avatar clean được verify/re-encode thành
+  private derivative. File clean nhưng hỏng cấu trúc rollback claim và không tạo
+  CV/asset.
+- Xóa CV hoặc hết hạn source release claim nhưng giữ clean evidence theo minimum
+  retention; không xóa storage byte trực tiếp hoặc bịa scan proof cho file cũ.
+- Frontend library, template import, form ứng tuyển và avatar editor chờ scan;
+  các bề mặt tải CV hiển thị trạng thái an toàn. Compatibility raw chỉ dùng khi
+  pipeline trả exact `UPLOAD_PIPELINE_DISABLED`; strict rollout dùng
+  `CANDIDATE_UPLOAD_SESSION_REQUIRED`.
+
+#### Added — Shared upload quarantine core ER-3
+
+- Thêm shared app `uploads` với session/asset/scan-attempt state machine,
+  owner-scoped API, purpose/role capability map và transactional owner quota.
+  Quarantine/private byte còn tồn tại tiếp tục chiếm quota sau expiry/rejection
+  cho tới khi cleanup thực sự xóa storage key.
+- Thêm ClamAV INSTREAM adapter, bounded retry/lease/reconciliation, expiry,
+  cleanup và evidence purge trên queue `upload-scan`; status polling tách sang
+  `upload_status=120/min`, còn create/cancel/retry giữ `30/hour`.
+- Thêm clean-only claim bắt buộc owner và expected purpose, explicit release,
+  minimum retention 730 ngày, legal hold và privacy scrub metadata sau khi byte
+  cùng claim không còn giữ evidence.
+
+#### Security — Upload validation và rollout boundary ER-3
+
+- Thêm Compose profile `scanner` dùng image chính thức
+  `clamav/clamav:1.4_base`, signature volume riêng, không publish TCP 3310 và
+  opt-in integration test cho clean PDF cùng DOCX chứa EICAR. Apple Silicon
+  chạy image pin qua `linux/amd64` emulation.
+- DOCX pre-scan validation nay kiểm bounded ZIP metadata, required parts,
+  encryption, traversal/symlink, duplicate entry, entry/uncompressed/ratio
+  limits và không extract Office content trước scan. PDF/image mới chỉ kiểm
+  MIME, dung lượng, magic signature và malware; chưa được tuyên bố hợp lệ ở cấp
+  parser.
+- Shared core đã merge tại `99b34781`; employer và candidate business workflow
+  hiện đều tích hợp qua public service boundary của shared app `uploads`, không
+  tạo coupling `cvs → employers`. Production flag tiếp tục tắt cho tới khi real
+  production-like ClamAV staging cùng candidate Chrome runtime đạt gate; ER-3
+  vẫn `In progress`.
+
+#### Added — Employer SMS provider-neutral foundation ER-6A
+
+- Thêm challenge SMS theo purpose (`initial_verification`, `phone_change`,
+  `reverify`), adapter HTTP trung lập, fake provider cho development/test,
+  queue `auth-sms`, recovery bounded, metrics redacted và retention task. Đây
+  mới là hạ tầng; endpoint OTP hiện hành, frontend và nhà cung cấp production
+  chưa được chuyển sang SMS.
+- Thêm readiness command và production startup validation cho HTTPS endpoint,
+  credential, sender, template, Fernet/HMAC key riêng. Production tiếp tục giữ
+  `EMPLOYER_SMS_OTP_ENABLED=False` cho tới khi Product/Ops duyệt provider,
+  sender và template.
+
+#### Security — Employer SMS fail-closed boundary ER-6A
+
+- Destination và OTP của challenge mới được mã hóa; OTP hash gắn với public
+  challenge ID, Celery chỉ nhận opaque ID, HTTP không theo redirect và không
+  ghi raw phone/OTP/provider response. Challenge PII được purge sau 30 ngày;
+  event redacted giữ 730 ngày.
+- Khi SMS tắt hoặc cấu hình/provider lỗi, dispatch fail closed, không fallback
+  email và không giả delivery. Migration không gắn marker, deadline hoặc hold
+  và không thay đổi phone proof của tài khoản cũ.
+
+#### Security — Employer company-update review safety ER-4
+
+- Chuẩn hóa lock order `Company → CompanyUpdateRequest → CompanyDocument` cho
+  create/upload/review/tax-refresh hiện hành và khóa mutation trực tiếp qua
+  Django admin.
+- Admin list/retrieve che filename, MIME, size, SHA, uploader email và source
+  URL nếu thiếu `account.sensitive.view`; binary vẫn yêu cầu đồng thời quyền
+  xem company update và quyền sensitive.
+
+#### Fixed — Exact company-update review ER-4
+
+- Admin queue/deep-link nay truyền exact request public ID và detail gọi
+  retrieve-by-ID; panel từ chối xử lý nếu company, requester hoặc trạng thái
+  không khớp. Không còn lấy `results[0]` từ danh sách company rồi có thể duyệt
+  nhầm yêu cầu của member khác.
+
+#### Added — Employer company-update lifecycle V2 ER-4
+
+- Thêm revision snapshot bất biến, event append-only và state
+  `submitted/in_review/changes_requested/approved/rejected/withdrawn/cancelled`.
+  Nhiều member được gửi request riêng; mỗi requester chỉ có một active request
+  trên company.
+- Recruiter được sửa/gửi lại/rút trước review, owner được hủy trước review;
+  admin phải nhận review exact revision rồi mới duyệt tài liệu hoặc ra quyết
+  định cuối tường minh.
+- Apply dùng field-level base conflict và không partial write. Form company chỉ
+  gửi diff thật, không tự thêm tên thương mại legacy, không hiển thị company
+  request history và luôn có nút quay lại.
+- Tách migration schema `employers.0037` khỏi backfill `0038`; dữ liệu cũ giữ
+  requester, tạo revision 1 và migrated event mà không gọi dịch vụ ngoài.
+
+#### Security — Upload storage boundary ER-3 foundation
+
+- Tách storage public/private/quarantine cho local và Cloudflare R2; chỉ public
+  được phép qua `/media`, private/quarantine không phát direct URL. Root shared
+  cũ trở thành nguồn migration không phục vụ trực tiếp.
+- Sửa production Compose override để không kế thừa bind-mount source hoặc các
+  cổng backend/PostgreSQL/Redis/Vite từ cấu hình development; chỉ nginx publish
+  cổng và chỉ mount public media.
+- Thêm lệnh kiểm kê/copy layout dry-run mặc định, idempotent, batch/cursor và
+  hash verify; unknown key fail-closed về private, đồng thời nhận đúng
+  `gallerys/` và các prefix public hiện hành.
+- Raw DOC/DOCX employer preview trước upload trả `UPLOAD_SCAN_REQUIRED` và
+  không gọi LibreOffice. Preview/download document đã lưu vẫn đi qua endpoint
+  có authorization. Shared upload session/scanner/retention core đã merge;
+  employer/candidate domain integration, frontend và real-scanner staging tiếp
+  tục ở các slice ER-3 kế tiếp.
+
+#### Changed — Employer readiness contract ER-2
+
+- `/api/employer/me/` nay trả năm field readiness canonical và `/api/auth/me/`
+  trả `employer_job_workspace_ready`. Workspace việc làm, verification approval,
+  candidate-data và DPA không còn bị gộp vào một boolean legacy.
+- Frontend tách `JobWorkspaceGuard` khỏi `CandidateDataGuard`, cập nhật login
+  destination, checklist và compliance strip theo machine blocker/action.
+  Direct URL bị từ chối giữ nguyên để hiển thị lý do và retry.
+
+#### Security — Employer candidate-data boundary ER-2
+
+- Backend áp cùng capability policy cho employer job/campaign mutation và mọi
+  đường application list/export/status/history/snapshot, dashboard/job/campaign
+  preview, activity metadata/deep-link và recruiter CV asset content; không còn
+  feature-flag bypass. Recruiter asset token được audience-bound và live
+  reauthorize trước khi mở nội dung.
+- Frontend không mount hoặc query JobDetail applications và campaign Apply CV/
+  Activity khi readiness checking/error/denied; PII, avatar, preview và CV link
+  đã cache cũng bị bỏ ngay khi quyền chuyển `true → false`. Aggregate không chứa
+  danh tính vẫn được giữ lại trong các bề mặt job/campaign/dashboard.
+
+#### Fixed — Employer request state ER-1A
+
+- Thẻ “Yêu cầu của tôi” nay chỉ đọc `scope=mine`; employer page không tải
+  `scope=company`, nên member mới không còn thấy request hoặc ngày của member
+  khác. Ngày chỉ lấy từ `submitted_at` hợp lệ, không fallback
+  sang `created_at`/`updated_at` và không hiển thị placeholder giả.
+- Tách rõ loading/error/empty/has-data. Lỗi tải lần đầu hoặc refresh nền đều
+  hiện retry và khóa fail-closed toàn bộ thao tác tạo, sửa, upload, xóa media và
+  submit cho đến khi actor scope đồng bộ thành công.
+- Contract `scope=company` và redaction vẫn giữ ở backend cho admin/audit và
+  compatibility; không còn component history trong company settings recruiter.
+
+#### Security — Employer document access ER-1B
+
+- Tách quyền xem metadata và quyền mở binary giấy tờ: requester/uploader và
+  company owner được mở file; member khác chỉ nhận metadata đã che và direct
+  content trả `404`. Storage key, tên file, MIME, kích thước và preview media
+  không còn lộ qua lịch sử company cho actor không có quyền.
+- Yêu cầu cập nhật công ty nay giới hạn một `pending` trên mỗi
+  `(company, requester)` nên nhiều member có thể gửi song song mà không ghi đè
+  nhau. `requested_by` bất biến, có `submitted_at`, `scope=mine|company` và
+  requester summary không chứa email.
+
+#### Security — Employer hardening ER-1C
+
+- Job moderation nay fail-closed khi recruiter chưa có verification case đã
+  duyệt đúng company hoặc chưa chấp thuận DPA. Canonical decision,
+  compatibility review và Django-admin service path đều dùng cùng một backend
+  guard; frontend không thể tự bỏ blocker để duyệt.
+- Quyết định approve khóa và đọc lại recruiter, verification case và campaign
+  trong transaction; lỗi trả `JOB_APPROVAL_BLOCKED` cùng blocker code ổn định
+  `verification_required`/`dpa_outdated`.
+
+### 2026-08-06
+
+#### Added — Announcement visual theme (AN-V0 / AN-V1 / AN-V2)
+
+- Mở epic **AN-V** nâng cấp dải thông báo đa cổng: chọn màu hiển thị (mode
+  `kind` / `preset` / `custom` hex) và ảnh nền strip (ví dụ 980×31) kèm overlay
+  contrast. Đặc tả:
+  [`docs/03-database/ke-hoach-nang-cap-thong-bao-visual-theme.md`](docs/03-database/ke-hoach-nang-cap-thong-bao-visual-theme.md).
+- **AN-V1 backend:** migration `sitecontent.0017_announcement_revision_visual_theme`
+  thêm field theme/background trên `AnnouncementRevision`; service
+  `normalize_theme_and_background` (hex `#RRGGBB`, storage key ảnh, ép overlay
+  `dark` khi có ảnh); public feed trả `theme` + `background.image_url`; admin
+  revision đọc/ghi field visual (storage key chỉ admin).
+- **AN-V2 admin:** `POST /api/site/admin/announcements/backgrounds/` upload
+  JPEG/PNG/WebP (640–2400×24–120, ≤1MB); form editor theme + ColorPicker + upload
+  nền; live preview Desktop/Tablet/Mobile với token màu shared
+  (`resolveAnnouncementThemeTokens`), mobile line-clamp 2, height theo content
+  (không khóa 31px).
+- **AN-V3 runtime:** public contract normalize `theme`/`background`; strip áp CSS
+  variables + ảnh/overlay (`buildAnnouncementStripVisual`); tắt sheen khi có
+  ảnh; nút điều khiển mobile 44×44; system banner vẫn palette theo kind.
+- Tests: backend visual/upload + FE contract/theme/strip visual. Cập nhật
+  `docs/TIEN-DO-DU-AN.md`, runtime guide.
+
+### 2026-08-05
+
+#### Changed — Rút gọn FAQ ứng viên và mở ảnh HTTPS
+
+- Rút trang `/tro-giup` về đúng hai khối chuyên mục + danh sách câu hỏi; bỏ hero,
+  type filter, topic cards và counter. Cột phải chỉ giữ một ô tìm kiếm toàn bộ
+  chuyên mục, debounce nhưng không ghi query lên URL. Kết quả hiển thị tổng số,
+  nhãn chuyên mục phía trên tiêu đề, tô sáng phần chữ khớp không phân biệt dấu
+  và hiện mô tả đầu nội dung trên đúng một dòng có dấu “…”. Cột chuyên mục cố
+  định, bỏ mục “Tất cả chủ đề”, giữ nguyên vị trí khi mở chi tiết và lấy màu chữ
+  “Chuyên mục” từ `brand_primary_color` qua CSS variable của hệ thống. Khung
+  danh sách dùng nền trong suốt; từng câu hỏi là thẻ nền trắng có khoảng hở,
+  viền và hover riêng thay vì dính thành một mảng. Sidebar chi tiết đổi nhãn
+  “Trong chuyên mục này” thành “Tên chuyên mục”; bài đang xem chỉ nhận trạng
+  thái active và giữ nguyên vị trí theo `order`, không còn bị đưa lên đầu.
+- Media library trở thành tùy chọn: revision chấp nhận ảnh URL HTTPS hoặc đường
+  dẫn nội bộ an toàn mà không yêu cầu upload vào ProCV trước; sanitizer và alt
+  text vẫn là bắt buộc, readiness chỉ kiểm storage existence cho ảnh media nội
+  bộ. Editor FAQ có thêm tab **Từ URL** để chèn trực tiếp nguồn ảnh hợp lệ.
+- Đưa khối “Bước tiếp theo” và các nút gửi duyệt/duyệt/yêu cầu chỉnh sửa lên đầu
+  workspace biên tập; Lưu/Xem trước nằm trên thanh sticky để không bị che trên
+  mobile. Khi cuộn, topbar admin, thanh hành động và toolbar rich-text được xếp
+  thành các lớp riêng có khoảng cách, không còn chồng/cắt nút hoặc nội dung.
+  Trang chi tiết render ảnh HTTPS/nội bộ, hiển thị cả giờ cập nhật và dùng nhãn
+  “Câu hỏi tiếp” cho điều hướng cuối bài.
+- Sửa deadlock UX khi tạo revision của bài đã xuất bản: form chỉ đọc không còn
+  bị validate trường `change_summary` không thể nhập. Nút tạo revision mở modal
+  nhập tóm tắt bắt buộc, clone nội dung sang draft rồi mở lại toàn bộ trường để
+  tiếp tục sửa. Nút gửi duyệt/duyệt/yêu cầu sửa chuyển sang cụm compact 30 px,
+  selector CSS được scope riêng nên không còn bị style Ant Design lan rộng.
+- Loại bỏ outline lồng trên input con của ô tìm kiếm Ant Design; wrapper vẫn giữ
+  focus state rõ ràng ở portal admin và nhà tuyển dụng.
+- Xác minh: 48 regression backend, 889 unit/coverage frontend, 6 targeted unit
+  cho thay đổi tìm kiếm và 6 smoke E2E FAQ public/admin trên
+  desktop/tablet/mobile đều pass; Ruff, format,
+  import-linter, migration drift, lint, architecture và production build xanh.
+
+#### Added — FAQ/Help Center KB-P1 foundation
+
+- Thêm app Django `knowledgebase` theo ADR-0010 với category, article ổn định,
+  revision có partial unique constraint cho một bản mở và media asset có kích
+  thước xác minh; ID public dùng prefix `kbc/kba/kbr/kbm`.
+- Seed idempotent đúng bảy chuyên mục đã chốt và bốn permission
+  `knowledgebase.view/manage/review/publish`; role `content-cv` staff được biên
+  tập, manager được duyệt/phát hành.
+- Tách sanitizer HTML giàu nội dung dùng chung sang `common/content_html.py`,
+  chặn active content, credential và URL scheme nguy hiểm; blog chuyển sang
+  helper chung mà vẫn giữ policy URL tương thích.
+- Targeted backend test, migration drift check, Ruff, import-linter và backend
+  layering gate đều đạt.
+
+#### Added — FAQ/Help Center KB-P2 workflow và admin API
+
+- Thêm transactional service cho toàn bộ lifecycle revision/article/category,
+  khóa hàng và `revision_token` trả 409 khi stale; bản public tiếp tục ổn định
+  trong lúc bản sửa còn draft/in-review/rejected và hỗ trợ rollback revision đã
+  duyệt.
+- Mở admin API quản lý category, article, revision, reorder, review, publish,
+  archive/restore và media; bốn permission được kiểm độc lập ở backend, response
+  quản trị luôn `private, no-store`.
+- Nội dung được sanitize/canonicalize, sinh plain text + SHA-256, ảnh bắt buộc
+  thuộc media library và có alt; upload chỉ nhận JPEG/PNG/WebP tối đa 5 MB,
+  resize trong 1600×1600 và lưu kích thước sau xử lý.
+- Audit chỉ ghi metadata nhỏ, không ghi body/review note. List admin giữ query
+  budget cố định 3 query cho 5 bài. 22 targeted/regression test cùng Ruff,
+  migration drift, import-linter và layering gate đều đạt.
+
+#### Added — FAQ/Help Center KB-P3 workspace quản trị
+
+- Thêm route lazy `/admin/app/knowledgebase`, trang tạo và workspace biên tập;
+  navigation và permission catalog dùng đủ `view/manage/review/publish`.
+- Danh sách quản trị có dashboard, tìm kiếm, filter category/type/revision/review
+  due, sort và phân trang server-side lấy URL làm nguồn chuẩn; drawer chuyên mục
+  hỗ trợ tạo, sửa, sắp xếp, bật/tắt và cảnh báo ảnh hưởng nội dung công khai.
+- Editor rich text lưu tường minh, dirty guard, local recovery, media library
+  JPEG/PNG/WebP, readiness checklist, preview sanitized, optimistic concurrency
+  và khóa metadata sau lần publish đầu.
+- Workflow revision có diff với bản public, lịch sử, submit/approve/reject có
+  ghi chú, publish với ngày rà soát, archive/restore; action tách feature và ẩn
+  theo RBAC. Modal workflow mobile dùng footer full-width không chồng nút.
+- Lint phần thay đổi và architecture check sạch, production build đạt, 13
+  targeted test pass; smoke lưu → duyệt → xuất bản pass ở desktop/tablet/mobile.
+
+#### Added — FAQ/Help Center KB-P4 public help center
+
+- Mở public API category/article browse, search không dấu nhiều token, filter
+  type, pagination và detail có related/trước/sau; selector fail-closed chỉ lộ
+  revision approved đang publish của article/category active.
+- Thêm throttle IP 120/phút, cache policy public 60 giây + stale-while-revalidate
+  300 giây, ETag/304, generation invalidation sau mutation public và fallback
+  đọc DB khi cache lỗi; kill switch production trả 404 mà không ảnh hưởng admin.
+- Thêm SEO shell thật cho home/category/detail với canonical, Open Graph,
+  Article và BreadcrumbList; 404 có status thật, toàn bộ rollout KB-P4 giữ
+  `noindex, nofollow` và không dùng FAQPage schema.
+- Thêm ba route lazy `/tro-giup`, `/tro-giup/:categorySlug` và detail; giao diện
+  responsive theo mô hình hero search + sidebar category + question rows, URL
+  là nguồn chuẩn cho search/type/page, có loading/empty/error/retry/404 và rich
+  content sanitize với ảnh lazy/broken-image fallback.
+- 28 test knowledgebase backend pass; 9 frontend regression pass; lint,
+  architecture, build pass và smoke browse → search → detail → 404 pass trên
+  desktop/tablet/mobile.
+
+#### Added — FAQ/Help Center KB-P5 verified content và entry points
+
+- Thêm bảy bài ProCV đã đối chiếu với route/component thật, mỗi category active
+  có một revision approved đang publish; bao phủ tài khoản, bảo mật, tìm việc,
+  ứng tuyển, CV, tìm việc an toàn và liên hệ hỗ trợ mà không sao chép nội dung
+  hay tài sản từ website tham chiếu.
+- Data migration dùng public ID ổn định, chỉ thêm khi slug chưa tồn tại, không
+  ghi đè nội dung admin và không reverse-delete dữ liệu/revision sau rollout.
+- Public site-settings expose `knowledgebase_public_enabled` trực tiếp từ
+  backend kill switch và frontend mặc định fail-closed; nối hai mục Help Center
+  trong floating actions cùng mục hướng dẫn CV trên header tới route canonical.
+- 26 backend test và 4 frontend regression test pass; Ruff, oxlint và kiểm tra
+  kiến trúc frontend đều đạt.
+
+#### Added — FAQ/Help Center KB-P6 hardening và rollout
+
+- Thêm `KNOWLEDGEBASE_SEARCH_INDEX_ENABLED` mặc định tắt, độc lập với public
+  kill switch; backend SEO shell, frontend metadata và sitemap chỉ index khi
+  public/index/global SEO cùng bật, còn URL search/filter luôn noindex.
+- Thêm `/sitemaps/knowledgebase.xml`, chỉ chứa home, category có nội dung và
+  article active với revision approved đang publish; sitemap index tự thêm/gỡ
+  theo rollout configuration.
+- Thêm command `check_knowledgebase_readiness --json` kiểm taxonomy, public
+  coverage, source/SEO, hạn review, nội dung an toàn, link route và media/alt;
+  lỗi làm command exit khác 0 để chặn rollout.
+- Ghi metric request/latency public/admin, zero-result bucket và content state
+  qua product metric boundary mà không ghi raw search hay PII; thêm regression
+  xác nhận dữ liệu không mất qua chuỗi bật → tắt → bật lại.
+- Thêm runbook rollout/rollback, ngưỡng quan sát sau khi có baseline và nguyên
+  tắc không reverse-delete migration nội dung. 48 backend và 14 frontend
+  regression test mục tiêu đều đạt; full gate đạt 769 backend test (coverage
+  86,36%), 886 frontend test, 191 E2E smoke pass và 4 ca không áp dụng được
+  skip; lint, format, import/architecture và production build đều đạt.
+
 ### 2026-07-29
 
 #### Added — Account status enforcement theo vai trò
