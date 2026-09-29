@@ -80,7 +80,7 @@ Postgres của compose mở ở host cổng **5433** (`postgres/postgres`, DB `a
 để không trùng Postgres cài trực tiếp trên máy ở 5432 — hai DB trùng tên nên rất
 dễ nối lẫn khi mở bằng DBeaver/psql.
 
-Đầy đủ (gồm production trên VPS): [docs/06-deployment/docker-compose.md](docs/06-deployment/docker-compose.md).
+Chi tiết chạy local bằng Compose: [docs/06-deployment/docker-compose.md](docs/06-deployment/docker-compose.md).
 
 ### Cách 2 — Chạy trực tiếp (venv + PostgreSQL + Redis local)
 
@@ -154,7 +154,7 @@ tới `backend/` hoặc `frontend/`.
 - [Kiến trúc CV Builder](docs/03-database/cv-builder-architecture-foundation.md)
 - [Kế hoạch CV Builder](docs/03-database/ke-hoach-hoan-thien-cv-builder-theo-giai-doan.md)
 
-Xem [docs/README.md](docs/README.md) cho toàn bộ tài liệu: phân tích, tổng quan, database, API, deployment, thuật toán AI, frontend.
+Xem [docs/README.md](docs/README.md) cho toàn bộ tài liệu: phân tích, tổng quan, database, API, hướng dẫn local, thuật toán AI và frontend.
 
 ## Changelog
 

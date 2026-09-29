@@ -27,7 +27,7 @@ is not complete merely because strict application flags are enabled.
    `backend`, `worker` hoặc `nginx` nhận traffic:
 
    ```bash
-   docker compose -f docker-compose.yml -f docker-compose.prod.yml \
+   docker compose \
      up media-init
    ```
 
@@ -35,7 +35,7 @@ is not complete merely because strict application flags are enabled.
    volume read-only và ba destination volume, nhưng không publish port:
 
    ```bash
-   docker compose -f docker-compose.yml -f docker-compose.prod.yml run --rm \
+   docker compose run --rm \
      backend python manage.py migrate_media_storage_layout --json --batch-size 500
    ```
 
@@ -44,10 +44,10 @@ is not complete merely because strict application flags are enabled.
 7. Run the same batch with `--apply`, then resume using the returned cursor:
 
    ```bash
-   docker compose -f docker-compose.yml -f docker-compose.prod.yml run --rm \
+   docker compose run --rm \
      backend python manage.py migrate_media_storage_layout \
      --apply --json --batch-size 500
-   docker compose -f docker-compose.yml -f docker-compose.prod.yml run --rm \
+   docker compose run --rm \
      backend python manage.py migrate_media_storage_layout \
      --apply --json --batch-size 500 --cursor '<next_cursor>'
    ```
@@ -89,8 +89,8 @@ retains both objects for manual reconciliation.
   the direct scan task and Beat reconciliation/expiry tasks are routed there:
 
   ```bash
-  docker compose -f docker-compose.yml -f docker-compose.prod.yml config
-  docker compose -f docker-compose.yml -f docker-compose.prod.yml \
+  docker compose config
+  docker compose \
     exec worker celery -A config inspect active_queues
   ```
 

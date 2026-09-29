@@ -31,7 +31,7 @@
 | [05-huong-dan](05-huong-dan/)   | [social-login.md](05-huong-dan/social-login.md)                 | Cấu hình social login OAuth (lấy key Google/Facebook/LinkedIn)          |
 | [05-huong-dan](05-huong-dan/)   | [quy-trinh-pull-request.md](05-huong-dan/quy-trinh-pull-request.md) | Quy trình Pull Request, review, branch protection và Definition of Done |
 | [05-huong-dan](05-huong-dan/)   | [quan-tri-thong-bao-da-cong.md](05-huong-dan/quan-tri-thong-bao-da-cong.md) | Vận hành editor, priority, revision, lifecycle và audit thông báo |
-| [06-deployment](06-deployment/) | [huong-dan-deployment.md](06-deployment/huong-dan-deployment.md) | Hướng dẫn deploy, Docker, môi trường production                         |
+| [06-deployment](06-deployment/) | [huong-dan-deployment.md](06-deployment/huong-dan-deployment.md) | Thiết kế triển khai lịch sử; không phải cấu hình chạy hiện hành         |
 | [06-deployment](06-deployment/) | [admin-rbac-g1-runbook.md](06-deployment/admin-rbac-g1-runbook.md) | Hai release G1.1/G1.2 và readiness gate cho RBAC admin |
 | [06-deployment](06-deployment/) | [announcement-rollout-runbook.md](06-deployment/announcement-rollout-runbook.md) | AN-P5: rollout tuần tự, kill switch, monitoring và rollback dải thông báo |
 | [06-deployment](06-deployment/) | [announcement-staging-evidence-2026-07-29.md](06-deployment/announcement-staging-evidence-2026-07-29.md) | AN-P5: bằng chứng rehearsal bốn surface, priority, kill switch và Redis failure |

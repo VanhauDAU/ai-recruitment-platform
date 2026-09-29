@@ -1,6 +1,6 @@
-# Chạy dự án bằng Docker Compose
+# Chạy dự án local bằng Docker Compose
 
-## Dev (máy mới chỉ cần Docker)
+## Máy mới chỉ cần Docker
 
 ```bash
 git clone https://github.com/VanhauDAU/ai-recruitment-platform.git
@@ -48,36 +48,9 @@ thay đổi; không cần sửa `VITE_API_BASE_URL`, CORS hoặc `ALLOWED_HOSTS`
 - **`CELERY_BROKER_URL` được override tường minh** trong compose: settings chỉ
   fallback về `REDIS_URL` khi biến vắng mặt, mà `.env` lại set sẵn `127.0.0.1`.
 
-## Production (VPS + Docker Compose)
-
-```bash
-# 1. Chuẩn bị env
-cp backend/.env.example backend/.env
-# Điền: ENVIRONMENT=production, SECRET_KEY, JWT_SIGNING_KEY, DB_PASSWORD,
-# ALLOWED_HOSTS, CORS_ALLOWED_ORIGINS, EMAIL_*, R2_*, RECAPTCHA_SECRET_KEY,
-# TWO_FACTOR_TOTP_ENCRYPTION_KEY và DJANGO_ADMIN_ENABLED=False...
-# Settings production FAIL-FAST: thiếu biến nào sẽ liệt kê đầy đủ khi start.
-
-# 2. Biến build frontend (compose interpolation) — file .env ở root repo
-echo 'VITE_API_BASE_URL=https://<domain>/api' >> .env
-echo 'VITE_RECAPTCHA_SITE_KEY=<site-key>' >> .env
-echo 'VITE_ANNOUNCEMENT_ROLLOUT_SURFACES=none' >> .env
-
-# 3. Chạy
-docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
-```
-
-- `nginx` (cổng 80/443) reverse proxy: `/` → frontend tĩnh, `/api` + `/admin` →
-  gunicorn, `/static` và **public-only** `/media` serve trực tiếp từ volume.
-  Private, quarantine và legacy volumes không được mount vào nginx. Django không đăng
-  ký `/admin/` trong production nên đường dẫn này luôn trả 404; production
-  settings từ chối khởi động nếu `DJANGO_ADMIN_ENABLED=True`.
-- DB và Redis **không** expose ra ngoài host ở production.
-- Cấu hình nginx: `deploy/nginx/procv.conf`. TLS: thêm server block 443 +
-  certbot khi trỏ domain.
-- Trước lần cutover storage ER-3, bắt buộc làm theo
-  [storage-boundary runbook](employer-upload-storage-boundary-runbook.md); không
-  bật traffic nếu copy report còn conflict hoặc chưa hết cursor.
+Repository hiện chỉ duy trì Compose cho phát triển local. Cấu hình production cũ
+được giữ trong tag `procv-pre-local-only-2026-09-27`; việc triển khai lại cần một
+kế hoạch riêng, không ghép vào quy trình local này.
 
 ## Seed dữ liệu (lần đầu — DB Docker khởi tạo rỗng)
 
@@ -145,20 +118,20 @@ cat backup-YYYY-MM-DD.sql | docker compose exec -T db psql -U postgres ai_career
 # Log
 docker compose logs -f backend worker ai-worker
 
-# Rollback code: checkout commit cũ rồi build lại
-git checkout <commit> && docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+# Dựng lại service local sau khi đổi code
+docker compose up -d --build
 ```
 
 ### Giới hạn tài nguyên và dung lượng
 
 Compose đã đặt các mặc định an toàn, có thể override trong file `.env` ở root:
 
-| Biến | Dev | Production | Ý nghĩa |
-| --- | ---: | ---: | --- |
-| `AI_RUNTIME_ENABLED` | `true` | `false` | Hard switch toàn generative AI; Site Setting chỉ được thu hẹp rollout. |
-| AI worker concurrency | `2` | `2` | Được pin trong Compose V1 để chặn chi phí và tải provider; đổi phải qua capacity review. |
-| `DOCKER_LOG_MAX_SIZE` | `10m` | `10m` | Kích thước mỗi file log container. |
-| `DOCKER_LOG_MAX_FILES` | `3` | `3` | Số file log giữ cho mỗi container. |
+| Biến | Mặc định local | Ý nghĩa |
+| --- | ---: | --- |
+| `AI_RUNTIME_ENABLED` | `true` | Hard switch toàn generative AI; Site Setting chỉ được thu hẹp rollout. |
+| AI worker concurrency | `2` | Giới hạn tài nguyên local cho queue AI. |
+| `DOCKER_LOG_MAX_SIZE` | `10m` | Kích thước mỗi file log container. |
+| `DOCKER_LOG_MAX_FILES` | `3` | Số file log giữ cho mỗi container. |
 
 ### Theo dõi và dọn Docker an toàn
 
@@ -173,10 +146,10 @@ docker system df -v
 sh scripts/docker_maintenance.sh
 ```
 
-Không chạy `docker system prune --volumes` trên máy production: lệnh đó có thể
-xóa nhầm Postgres và media. Dockerfile backend/frontend dùng BuildKit cache
-mount; build cache vẫn nên được đo và prune định kỳ ở CI/VPS vì nó chỉ hỗ trợ
-build nhanh, không được sử dụng lúc container đang chạy.
+Không chạy `docker system prune --volumes` trên máy đang giữ dữ liệu local: lệnh
+đó có thể xóa nhầm Postgres và media. Backend Dockerfile dùng BuildKit cache
+mount; build cache chỉ hỗ trợ build nhanh và không được sử dụng lúc container
+đang chạy.
 
 ## Kiểm chứng đã chạy (2026-07-21)
 
@@ -184,7 +157,6 @@ build nhanh, không được sử dụng lúc container đang chạy.
   endpoint v1 trả 404 đúng như sau AR-P3.
 - WeasyPrint render PDF tiếng Việt trong container: OK (4.004 bytes).
 - Worker nhận và chạy task trên cả `cv-export` lẫn `auth-email`.
-- Image prod frontend (vite build → nginx) build thành công.
 
 ## Ghi chú
 
