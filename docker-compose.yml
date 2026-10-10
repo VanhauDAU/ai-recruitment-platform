@@ -14,7 +14,6 @@ x-service-hosts: &service-hosts
   UPLOAD_QUARANTINE_ROOT: /app/quarantine
   CLAMAV_HOST: ${CLAMAV_HOST:-clamav}
   CLAMAV_PORT: ${CLAMAV_PORT:-3310}
-  AI_RUNTIME_ENABLED: ${AI_RUNTIME_ENABLED:-true}
 
 # json-file mặc định tăng vô hạn và thường là phần dung lượng local khó phát hiện.
 # Mọi service dùng cùng chính sách xoay log, override được qua shell hoặc .env.
@@ -206,7 +205,6 @@ services:
       # Cùng origin để điện thoại trong LAN không gọi nhầm localhost của nó.
       VITE_API_BASE_URL: /api
       API_PROXY_TARGET: http://backend:8000
-      VITE_ANNOUNCEMENT_ROLLOUT_SURFACES: ${VITE_ANNOUNCEMENT_ROLLOUT_SURFACES:-}
     init: true
     pids_limit: ${FRONTEND_PIDS_LIMIT:-256}
     healthcheck:

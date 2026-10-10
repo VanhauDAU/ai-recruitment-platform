@@ -18,11 +18,15 @@ bằng chứng nằm tại [p4-env-inventory.csv](../99-tien-do/p4-env-inventory
 | `frontend/.env.example` | Hai biến public tối thiểu cho API và reCAPTCHA local | Theo cơ chế Vite sau khi sao chép |
 | `frontend/.env.optional.example` | Branding, asset, consent, rollout, host ba cổng và tooling Node/Vite | Không |
 | `frontend/.env.local` | Override cá nhân; không commit | Có theo cơ chế Vite |
+| `.env.example` ở root | Catalog tùy chọn chỉ dành cho Docker Compose local | Chỉ sau khi sao chép thành `.env` ở root |
 
 Không tạo `.env` ở root repository để cấp biến cho backend. Compose interpolation
 `${NAME}` đọc process environment hoặc `.env` của Compose ở root theo cơ chế
 Docker, không đọc `backend/.env`. Các service backend vẫn nhận `backend/.env`
 qua `env_file` và các override hostname nội bộ trong `docker-compose.yml`.
+Compose chỉ ghi đè hostname/cổng hạ tầng nội bộ. `AI_RUNTIME_ENABLED` tiếp tục
+thuộc `backend/.env`; `VITE_ANNOUNCEMENT_ROLLOUT_SURFACES` tiếp tục thuộc file
+env của frontend, nên Compose không được cấp một giá trị mặc định thứ hai.
 
 ## Mẫu backend tối thiểu
 
@@ -54,6 +58,13 @@ trong Site Settings cũng được kiểm kê, gồm `EMAIL_HOST_PASSWORD`,
 Gate từ chối tên `VITE_*` có dấu hiệu chứa secret, password, private key, access
 key hoặc API token. `CI` và `import.meta.env.PROD` thuộc runner/Vite nên được ghi
 rõ là ngoại lệ có chủ sở hữu, không khai trong catalog ứng dụng.
+`vite.config.js` dùng `loadEnv` để đọc `API_PROXY_TARGET`, `PORT` và `ANALYZE`
+từ `.env.local`; các giá trị này chỉ cấu hình Vite và không được đưa vào bundle.
+`PLAYWRIGHT_PORT` tiếp tục do process/runner cấp cho Playwright.
+
+`OAUTH_CODE_TTL=120` là override local đã có trước P4; fallback khi biến vắng
+mặt vẫn là 60 giây. Sai lệch này được inventory ghi nhận và không tự thay đổi
+trong nhánh tổ chức env vì đó là thay đổi hành vi xác thực.
 
 ## Ma trận chạy
 
@@ -76,6 +87,8 @@ chế độ. Production cần đặt cả hai nhất quán qua process environme
    feature flag và policy vào `.env.optional.example`.
 3. Không đổi tên biến đang dùng nếu không có migration/fallback có thời hạn.
 4. Chạy `python3 scripts/check_env_sync.py`. Gate kiểm union hai catalog, tên
-   trùng, khai thiếu/thừa, lookup động, Compose interpolation và secret frontend.
+   trùng, khai thiếu/thừa, kiểu/default, lookup động, Compose interpolation và
+   secret frontend. Nếu `.env` local tồn tại, lệnh chỉ báo tên key thiếu, lạ,
+   hết dùng, trùng hoặc rỗng sai; không in giá trị và không tự sửa file.
 5. Chạy test domain bị ảnh hưởng và matrix native/Docker/CI tương ứng. Không ghi
    giá trị secret thật vào tài liệu, log, fixture hoặc Git.
