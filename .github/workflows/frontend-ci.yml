@@ -193,7 +193,7 @@ jobs:
     needs: changes
     if: ${{ needs.changes.result == 'success' && needs.changes.outputs.frontend == 'true' && !cancelled() }}
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     defaults:
       run:
         working-directory: frontend
@@ -215,15 +215,22 @@ jobs:
         run: npm ci --prefer-offline --no-audit
 
       - name: Unit tests and coverage gate
+        id: coverage_tests
         shell: bash
         run: |
           set -o pipefail
-          # Vitest automatically adds its github-actions reporter in CI; it
-          # writes exact file/test counts to $GITHUB_STEP_SUMMARY.
           # Serialize jsdom/Ant Design interaction tests on GitHub-hosted
           # runners. Parallel workers compete for CPU and make otherwise fast
           # interaction tests exceed their per-test timeout under coverage.
-          npm run test:coverage -- --maxWorkers=1 2>&1 | tee coverage.log
+          # Stop before the job timeout so the verbose active-test log and
+          # partial JUnit/coverage artifacts can still be uploaded.
+          timeout --signal=TERM --kill-after=30s 17m \
+            npm run test:coverage -- \
+              --maxWorkers=1 \
+              --reporter=verbose \
+              --reporter=junit \
+              --outputFile.junit=vitest-results.xml \
+              2>&1 | tee coverage.log
 
       - name: Publish coverage summary
         if: ${{ always() }}
@@ -235,7 +242,21 @@ jobs:
           import json
           import os
           import time
+          import xml.etree.ElementTree as ET
           from pathlib import Path
+
+          tests = failures = errors = skipped = 'n/a'
+          junit_path = Path('vitest-results.xml')
+          if junit_path.exists():
+              try:
+                  root = ET.parse(junit_path).getroot()
+                  cases = root.findall('.//testcase')
+                  tests = str(len(cases))
+                  failures = str(sum(case.find('failure') is not None for case in cases))
+                  errors = str(sum(case.find('error') is not None for case in cases))
+                  skipped = str(sum(case.find('skipped') is not None for case in cases))
+              except (OSError, ET.ParseError):
+                  pass
 
           values = {key: 'n/a' for key in ('lines', 'statements', 'functions', 'branches')}
           coverage_path = Path('coverage/coverage-summary.json')
@@ -255,19 +276,22 @@ jobs:
               stream.write('## Frontend coverage\n\n')
               stream.write('| Metric | Value |\n| --- | --- |\n')
               stream.write(f"| Result | {os.environ.get('JOB_STATUS', 'unknown')} |\n")
+              stream.write(f'| Tests | {tests} |\n')
+              stream.write(f'| Failures / errors / skipped | {failures} / {errors} / {skipped} |\n')
               stream.write(f"| Statements / branches | {values['statements']} / {values['branches']} |\n")
               stream.write(f"| Functions / lines | {values['functions']} / {values['lines']} |\n")
               stream.write(f'| Measured checks elapsed | {elapsed}s |\n')
           PY
 
       - name: Upload coverage diagnostics
-        if: ${{ failure() }}
+        if: ${{ always() && steps.coverage_tests.outcome != 'success' }}
         uses: actions/upload-artifact@v4
         with:
           name: frontend-coverage-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             frontend/coverage
             frontend/coverage.log
+            frontend/vitest-results.xml
           if-no-files-found: ignore
           retention-days: 5
 
@@ -277,6 +301,11 @@ jobs:
     if: ${{ needs.changes.result == 'success' && needs.changes.outputs.frontend == 'true' && !cancelled() }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    env:
+      # E2E mocks intercept this stable backend origin. Without an explicit
+      # value, CI has no gitignored frontend/.env and Vite falls back to its
+      # same-origin proxy, bypassing older route fixtures bound to port 8000.
+      VITE_API_BASE_URL: http://localhost:8000/api
     defaults:
       run:
         working-directory: frontend
@@ -301,25 +330,19 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Run portal smoke tests
+        id: e2e
         shell: bash
         env:
           PLAYWRIGHT_JUNIT_OUTPUT_FILE: test-results/e2e-results.xml
         run: |
           set -o pipefail
-          npm run test:e2e:smoke -- --reporter=line,junit 2>&1 | tee e2e.log
-
-      - name: Re-run failed tests with trace for diagnostics
-        if: ${{ failure() }}
-        shell: bash
-        run: |
-          set -o pipefail
-          npm run test:e2e:smoke -- \
-            --last-failed \
-            --last-failed-file=test-results/.last-run.json \
-            --output=test-results/diagnostic \
-            --reporter=line \
-            --trace=on \
-            2>&1 | tee e2e-diagnostic.log
+          # Keep traces from the first failing run. Re-running every failure
+          # used another ~5.5 minutes without producing a stable signal.
+          timeout --signal=TERM --kill-after=30s 17m \
+            npm run test:e2e:smoke -- \
+              --reporter=line,junit \
+              --trace=retain-on-failure \
+            2>&1 | tee e2e.log
 
       - name: Publish E2E summary
         if: ${{ always() }}
@@ -357,7 +380,7 @@ jobs:
           PY
 
       - name: Upload Playwright diagnostics
-        if: ${{ failure() }}
+        if: ${{ always() && steps.e2e.outcome != 'success' }}
         uses: actions/upload-artifact@v4
         with:
           name: playwright-smoke-report-${{ github.run_id }}-${{ github.run_attempt }}
@@ -365,7 +388,6 @@ jobs:
             frontend/playwright-report
             frontend/test-results
             frontend/e2e.log
-            frontend/e2e-diagnostic.log
           if-no-files-found: ignore
           retention-days: 5
 

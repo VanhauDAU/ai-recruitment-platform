@@ -8,6 +8,8 @@ import {
   JOB_LOGO_TINTS,
   jobDetailPath,
   JobPreviewPanel,
+  JobPresentationLabels,
+  resolveJobPresentation,
   SavedJobTooltipContent,
   stripCompanyPrefix,
 } from '@/entities/job'
@@ -15,6 +17,7 @@ import { useLoginPrompt } from '@/features/auth'
 import { useSession } from '@/entities/session'
 import { useSavedJobs } from '@/features/saved-jobs'
 import { JobImpressionBoundary } from '@/features/track-job-engagement'
+import { bestJobCardClass, isTopEmployerJob } from '../lib/best-job-card-presentation'
 import { BEST_JOBS_PAGE_SIZE, BEST_JOBS_PREVIEW_DELAY_MS } from '../lib/best-jobs-config'
 
 function LoadingGrid() {
@@ -94,6 +97,8 @@ export default function BestJobsResults({ animKey, jobs, loading }) {
         const salaryLabel = formatSalary(job)
         const isSaved = savedIds.has(job.public_id)
         const isPending = pendingJobIds.has(job.public_id)
+        const isTopEmployer = isTopEmployerJob(job)
+        const hasLabels = isTopEmployer || Boolean(resolveJobPresentation(job).labels?.length)
 
         return (
           <JobImpressionBoundary
@@ -106,13 +111,13 @@ export default function BestJobsResults({ animKey, jobs, loading }) {
               href={jobDetailPath(job)}
               target="_blank"
               rel="noreferrer"
-              className="group relative flex h-full flex-col !bg-white rounded-2xl border border-gray-100 p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-[var(--brand-primary)] hover:shadow-lg"
+              className={`group relative flex h-full flex-col rounded-2xl border p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-[var(--brand-primary)] hover:shadow-lg ${bestJobCardClass(job)}`}
             >
               {/* Row 1: Logo + tiêu đề/công ty cùng hàng */}
               <div className="flex min-w-0 items-start gap-3">
                 {/* Logo */}
                 <div
-                  className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-gray-100 text-base font-bold shadow-sm"
+                  className="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl border border-gray-100 text-lg font-bold shadow-sm"
                   style={{ background: logoBackground, color: logoColor }}
                 >
                   {job.company_logo_url ? (
@@ -129,6 +134,20 @@ export default function BestJobsResults({ animKey, jobs, loading }) {
 
                 {/* Tiêu đề + tên công ty — chiếm hết chỗ trống */}
                 <div className="min-w-0 flex-1">
+                  {hasLabels && (
+                    <div data-best-job-labels className="mb-1.5 flex flex-wrap items-center gap-1.5">
+                      {isTopEmployer && (
+                        <span
+                          data-job-label="top-employer"
+                          title="Nhà tuyển dụng có trang thương hiệu nổi bật"
+                          className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-100 px-1.5 py-0.5 text-[10px] font-extrabold leading-none tracking-wide text-emerald-800"
+                        >
+                          TOP
+                        </span>
+                      )}
+                      <JobPresentationLabels job={job} compact />
+                    </div>
+                  )}
                   <h3
                     onMouseEnter={(event) =>
                       showPreview(job.public_id, event.currentTarget.getBoundingClientRect())

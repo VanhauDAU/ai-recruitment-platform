@@ -170,7 +170,11 @@ function PausedCampaignAlert({ campaign }) {
   )
 }
 
-export default function CampaignJobsPanel({ publicId, campaign }) {
+export default function CampaignJobsPanel({
+  publicId,
+  campaign,
+  candidateDataAccess = false,
+}) {
   const reportSectionRef = useRef(null)
   const [days, setDays] = useState(7)
   const [jobPublicId, setJobPublicId] = useState('')
@@ -316,12 +320,14 @@ export default function CampaignJobsPanel({ publicId, campaign }) {
           <p className="text-sm leading-6 text-slate-600">
             <strong className="text-slate-800">48 giờ</strong> là khoảng thời gian lý tưởng để phản hồi ứng viên. Hãy kiểm tra và trả lời ứng viên ngay!
           </p>
-          <Link
-            to={employerAppPath(`/applications?campaign=${publicId}`)}
-            className="mt-4 inline-flex h-9 items-center gap-2 rounded bg-emerald-50 px-3 text-sm font-semibold !text-emerald-700 hover:bg-emerald-100"
-          >
-            <FileSearchOutlined /> Kiểm tra CV
-          </Link>
+          {candidateDataAccess && (
+            <Link
+              to={employerAppPath(`/applications?campaign=${publicId}`)}
+              className="mt-4 inline-flex h-9 items-center gap-2 rounded bg-emerald-50 px-3 text-sm font-semibold !text-emerald-700 hover:bg-emerald-100"
+            >
+              <FileSearchOutlined /> Kiểm tra CV
+            </Link>
+          )}
         </aside>
       </div>
 
@@ -392,9 +398,9 @@ export default function CampaignJobsPanel({ publicId, campaign }) {
               title: 'Số lượt ứng tuyển',
               align: 'right',
               render: (_, job) => (
-                job.available
+                job.available && candidateDataAccess
                   ? <Link to={employerAppPath(`/applications?job=${job.public_id}`)} className="font-semibold !text-emerald-700">{formatNumber(job.applications)}</Link>
-                  : <span className="text-slate-400">—</span>
+                  : <span className={job.available ? 'font-semibold text-slate-700' : 'text-slate-400'}>{job.available ? formatNumber(job.applications) : '—'}</span>
               ),
             },
             {

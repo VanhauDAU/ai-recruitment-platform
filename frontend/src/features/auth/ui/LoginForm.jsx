@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3'
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router'
 import { getApiErrorMessage, getOAuthErrorMessage } from '@/shared/api/error-mapper'
+import { toastSoundOptions } from '@/shared/lib/sound-effects'
 import { message } from '@/shared/lib/toast'
 import { MAIN_FORGOT_PASSWORD_URL } from '@/shared/config/portals'
 import { useSession } from '@/entities/session'
@@ -12,6 +13,7 @@ import TwoFactorCodeModal from '@/shared/ui/TwoFactorCodeModal'
 import { getReturnUrl } from '../model/return-url'
 import { getAuthDestination } from '../model/password-login-destination'
 import AuthFormStyles from './AuthFormStyles'
+import AuthMascot from './AuthMascot'
 import LoginSubmitButton from './LoginSubmitButton'
 
 export { AuthFormStyles }
@@ -30,6 +32,7 @@ export default function LoginForm({
   onSuccess,
   forgotPasswordLink = MAIN_FORGOT_PASSWORD_URL,
   passwordHelp = null,
+  withMascot = false,
   appearance = 'default',
   destinationResolver = (user, returnUrl) => getAuthDestination({ user, returnUrl }),
 }) {
@@ -48,10 +51,16 @@ export default function LoginForm({
   const [warning, setWarning] = useState(() => location.state?.authWarning || '')
   const [loading, setLoading] = useState(false)
   const [twoFactorChallenge, setTwoFactorChallenge] = useState(null)
+  const [activeMascotField, setActiveMascotField] = useState(null)
+  const [passwordVisible, setPasswordVisible] = useState(false)
+  const [validationFailed, setValidationFailed] = useState(false)
   const submitLockedRef = useRef(false)
   const [form] = Form.useForm()
+  const emailValue = Form.useWatch('email', form) || ''
+  const passwordValue = Form.useWatch('password', form) || ''
   const returnUrl = getReturnUrl(searchParams)
   const employerAppearance = appearance === 'employer'
+  const credentialsReady = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue.trim()) && passwordValue.length > 0
 
   function navigateAfterLogin(user) {
     navigate(destinationResolver(user, returnUrl), { replace: true })
@@ -59,6 +68,11 @@ export default function LoginForm({
 
   function clearPassword() {
     form.resetFields(['password'])
+  }
+
+  function focusMascotField(field) {
+    setValidationFailed(false)
+    setActiveMascotField(field)
   }
 
   useEffect(() => {
@@ -81,6 +95,8 @@ export default function LoginForm({
       return
     }
     submitLockedRef.current = true
+    setValidationFailed(false)
+    setActiveMascotField(null)
     setError('')
     setLoading(true)
     try {
@@ -98,7 +114,7 @@ export default function LoginForm({
         setError('Tài khoản không có quyền truy cập cổng này.')
         return
       }
-      message.success('Đăng nhập thành công.')
+      message.success('Đăng nhập thành công.', toastSoundOptions('done'))
       if (onSuccess) onSuccess(user)
       else navigateAfterLogin(user)
     } catch (err) {
@@ -129,7 +145,7 @@ export default function LoginForm({
       return
     }
     setTwoFactorChallenge(null)
-    message.success('Đăng nhập thành công.')
+    message.success('Đăng nhập thành công.', toastSoundOptions('done'))
     if (onSuccess) onSuccess(user)
     else navigateAfterLogin(user)
   }
@@ -159,7 +175,29 @@ export default function LoginForm({
         />
       )}
 
-      <Form form={form} layout="vertical" onFinish={onFinish} onFinishFailed={clearPassword} requiredMark={false} className="space-y-0">
+      {withMascot && (
+        <AuthMascot
+          activeField={activeMascotField}
+          error={Boolean(error)}
+          invalid={validationFailed}
+          loading={loading}
+          passwordVisible={passwordVisible}
+          success={credentialsReady}
+        />
+      )}
+
+      <Form
+        form={form}
+        layout="vertical"
+        onFinish={onFinish}
+        onFinishFailed={() => {
+          clearPassword()
+          setActiveMascotField(null)
+          setValidationFailed(true)
+        }}
+        requiredMark={false}
+        className="space-y-0"
+      >
         <div className="login-field">
           <Form.Item
             name="email"
@@ -175,6 +213,8 @@ export default function LoginForm({
               autoComplete="email"
               prefix={<MailOutlined className="text-[var(--brand-primary)]" />}
               placeholder="ten@congty.com"
+              onFocus={() => focusMascotField('email')}
+              onBlur={() => setActiveMascotField(null)}
               className={`${employerAppearance ? '!rounded-lg !h-12' : '!rounded-full !h-11'} !text-base`}
             />
           </Form.Item>
@@ -212,6 +252,15 @@ export default function LoginForm({
               autoComplete="current-password"
               prefix={<LockOutlined className="text-[var(--brand-primary)]" />}
               placeholder="Nhập mật khẩu của bạn"
+              onFocus={() => focusMascotField('password')}
+              onBlur={() => setActiveMascotField(null)}
+              visibilityToggle={{
+                visible: passwordVisible,
+                onVisibleChange: (visible) => {
+                  setPasswordVisible(visible)
+                  focusMascotField('password')
+                },
+              }}
               className={`${employerAppearance ? '!rounded-lg !h-12' : '!rounded-full !h-11'} !text-base`}
             />
           </Form.Item>

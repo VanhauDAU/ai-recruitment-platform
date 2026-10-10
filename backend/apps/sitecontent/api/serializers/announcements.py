@@ -4,6 +4,8 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
+from common.media_storage import media_url_from_value
+
 from ...models import Announcement, AnnouncementRevision
 from ...selectors import PRIORITY_TIER_BY_KIND, presentation_status
 from ...services import normalize_revision_data
@@ -45,9 +47,50 @@ class AnnouncementDismissSerializer(serializers.Serializer):
     version = serializers.IntegerField(min_value=1)
 
 
+class AnnouncementThemeSerializer(serializers.Serializer):
+    mode = serializers.ChoiceField(choices=AnnouncementRevision.ThemeMode.choices)
+    preset = serializers.CharField(allow_null=True, allow_blank=True)
+    accent = serializers.CharField(allow_null=True, allow_blank=True)
+    bg_from = serializers.CharField(allow_null=True, allow_blank=True)
+    bg_to = serializers.CharField(allow_null=True, allow_blank=True)
+    fg = serializers.CharField(allow_null=True, allow_blank=True)
+
+
+class AnnouncementBackgroundSerializer(serializers.Serializer):
+    image_url = serializers.CharField(allow_null=True, allow_blank=True)
+    image_storage_key = serializers.CharField(allow_null=True, allow_blank=True, required=False)
+    fit = serializers.ChoiceField(choices=AnnouncementRevision.BackgroundFit.choices)
+    position = serializers.ChoiceField(choices=AnnouncementRevision.BackgroundPosition.choices)
+    overlay = serializers.ChoiceField(choices=AnnouncementRevision.BackgroundOverlay.choices)
+
+
 class AnnouncementActorSerializer(serializers.Serializer):
     public_id = serializers.CharField()
     name = serializers.CharField()
+
+
+def _theme_payload(revision) -> dict:
+    return {
+        'mode': revision.theme_mode or AnnouncementRevision.ThemeMode.KIND,
+        'preset': revision.theme_preset or None,
+        'accent': revision.color_accent or None,
+        'bg_from': revision.color_bg_from or None,
+        'bg_to': revision.color_bg_to or None,
+        'fg': revision.color_fg or None,
+    }
+
+
+def _background_payload(revision, *, request=None, include_storage_key=False) -> dict:
+    image_key = (revision.background_image or '').strip()
+    payload = {
+        'image_url': media_url_from_value(image_key, request=request) if image_key else None,
+        'fit': revision.background_fit or AnnouncementRevision.BackgroundFit.COVER,
+        'position': revision.background_position or AnnouncementRevision.BackgroundPosition.CENTER,
+        'overlay': revision.background_overlay or AnnouncementRevision.BackgroundOverlay.NONE,
+    }
+    if include_storage_key:
+        payload['image_storage_key'] = image_key or None
+    return payload
 
 
 class ActiveAnnouncementQuerySerializer(serializers.Serializer):
@@ -75,6 +118,8 @@ class ActiveAnnouncementSerializer(serializers.Serializer):
     animation = serializers.SerializerMethodField()
     display_seconds = serializers.SerializerMethodField()
     dismiss = serializers.SerializerMethodField()
+    theme = serializers.SerializerMethodField()
+    background = serializers.SerializerMethodField()
     starts_at = serializers.SerializerMethodField()
     ends_at = serializers.SerializerMethodField()
 
@@ -144,6 +189,17 @@ class ActiveAnnouncementSerializer(serializers.Serializer):
 
     def get_ends_at(self, obj) -> datetime | None:
         return self._revision(obj).ends_at
+
+    @extend_schema_field(AnnouncementThemeSerializer)
+    def get_theme(self, obj) -> dict:
+        return _theme_payload(self._revision(obj))
+
+    @extend_schema_field(AnnouncementBackgroundSerializer)
+    def get_background(self, obj) -> dict:
+        return _background_payload(
+            self._revision(obj),
+            request=self.context.get('request'),
+        )
 
 
 class ActiveAnnouncementFeedSerializer(serializers.Serializer):
@@ -232,6 +288,41 @@ class AnnouncementRevisionWriteSerializer(serializers.Serializer):
         required=False,
         allow_null=True,
         default=None,
+    )
+    theme_mode = serializers.ChoiceField(
+        choices=AnnouncementRevision.ThemeMode.choices,
+        required=False,
+        default=AnnouncementRevision.ThemeMode.KIND,
+    )
+    theme_preset = serializers.CharField(
+        max_length=20,
+        required=False,
+        allow_blank=True,
+        default='',
+    )
+    color_accent = serializers.CharField(max_length=7, required=False, allow_blank=True, default='')
+    color_bg_from = serializers.CharField(
+        max_length=7, required=False, allow_blank=True, default=''
+    )
+    color_bg_to = serializers.CharField(max_length=7, required=False, allow_blank=True, default='')
+    color_fg = serializers.CharField(max_length=7, required=False, allow_blank=True, default='')
+    background_image = serializers.CharField(
+        max_length=2000, required=False, allow_blank=True, default=''
+    )
+    background_fit = serializers.ChoiceField(
+        choices=AnnouncementRevision.BackgroundFit.choices,
+        required=False,
+        default=AnnouncementRevision.BackgroundFit.COVER,
+    )
+    background_position = serializers.ChoiceField(
+        choices=AnnouncementRevision.BackgroundPosition.choices,
+        required=False,
+        default=AnnouncementRevision.BackgroundPosition.CENTER,
+    )
+    background_overlay = serializers.ChoiceField(
+        choices=AnnouncementRevision.BackgroundOverlay.choices,
+        required=False,
+        default=AnnouncementRevision.BackgroundOverlay.NONE,
     )
 
     def validate(self, attrs):
@@ -480,6 +571,8 @@ class AdminAnnouncementListSerializer(serializers.ModelSerializer):
 class AnnouncementRevisionReadSerializer(serializers.ModelSerializer):
     creator = serializers.SerializerMethodField()
     is_active = serializers.SerializerMethodField()
+    theme = serializers.SerializerMethodField()
+    background = serializers.SerializerMethodField()
 
     class Meta:
         model = AnnouncementRevision
@@ -506,6 +599,18 @@ class AnnouncementRevisionReadSerializer(serializers.ModelSerializer):
             'display_seconds',
             'dismiss_mode',
             'snooze_seconds',
+            'theme_mode',
+            'theme_preset',
+            'color_accent',
+            'color_bg_from',
+            'color_bg_to',
+            'color_fg',
+            'background_image',
+            'background_fit',
+            'background_position',
+            'background_overlay',
+            'theme',
+            'background',
             'creator',
             'is_active',
             'published_at',
@@ -518,6 +623,18 @@ class AnnouncementRevisionReadSerializer(serializers.ModelSerializer):
 
     def get_is_active(self, obj) -> bool:
         return obj.announcement.active_revision_id == obj.id
+
+    @extend_schema_field(AnnouncementThemeSerializer)
+    def get_theme(self, obj) -> dict:
+        return _theme_payload(obj)
+
+    @extend_schema_field(AnnouncementBackgroundSerializer)
+    def get_background(self, obj) -> dict:
+        return _background_payload(
+            obj,
+            request=self.context.get('request'),
+            include_storage_key=True,
+        )
 
 
 class AnnouncementAuditEventSerializer(serializers.Serializer):

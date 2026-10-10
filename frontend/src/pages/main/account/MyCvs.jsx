@@ -1,9 +1,10 @@
 import { UploadOutlined } from '@ant-design/icons'
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { importCvFile } from '@/entities/cv'
 import { useSiteSettings } from '@/entities/site-settings'
 import { message } from '@/shared/lib/toast'
+import { getUploadStatePresentation } from '@/shared/api/upload-session'
 import { useMyCvsData } from './model/use-my-cvs-data'
 import CvListSection from './ui/CvListSection'
 import MyCvsBanner from './ui/MyCvsBanner'
@@ -13,21 +14,32 @@ export default function MyCvs() {
   const navigate = useNavigate()
   const { builderCvs, uploadedCvs, loading, refresh } = useMyCvsData()
   const fileInputRef = useRef(null)
+  const [uploading, setUploading] = useState(false)
+  const [uploadState, setUploadState] = useState(null)
+  const uploadStateMeta = getUploadStatePresentation(uploadState)
 
   const handleUploadClick = () => {
+    if (uploading) return
     fileInputRef.current?.click()
   }
 
   const handleFileChange = async (e) => {
     const file = e.target.files?.[0]
     if (!file) return
+    setUploading(true)
+    setUploadState(null)
     try {
-      await importCvFile(file)
+      await importCvFile(file, '', { onUploadStateChange: setUploadState })
       message.success(`Đã tải lên tệp ${file.name} thành công.`)
       refresh()
-    } catch {
-      message.error('Không thể tải CV lên. Chỉ hỗ trợ tệp PDF hoặc DOCX.')
+      setUploadState(null)
+    } catch (error) {
+      message.error(
+        error?.response?.data?.message
+        || 'Không thể tải CV lên. Chỉ hỗ trợ tệp PDF hoặc DOCX.',
+      )
     } finally {
+      setUploading(false)
       e.target.value = ''
     }
   }
@@ -40,10 +52,20 @@ export default function MyCvs() {
         ref={fileInputRef}
         onChange={handleFileChange}
         accept=".pdf,.docx"
+        disabled={uploading}
         className="hidden"
       />
 
-      <MyCvsBanner onCreateCv={() => navigate('/mau-cv')} onUploadCv={handleUploadClick} />
+      <MyCvsBanner
+        onCreateCv={() => navigate('/mau-cv')}
+        onUploadCv={handleUploadClick}
+        uploading={uploading}
+      />
+      {uploadStateMeta && (
+        <p role="status" className={`text-sm font-medium ${uploadStateMeta.tone}`}>
+          {uploadStateMeta.text}
+        </p>
+      )}
 
       <CvListSection
         title={`CV đã tạo trên ${siteName}`}

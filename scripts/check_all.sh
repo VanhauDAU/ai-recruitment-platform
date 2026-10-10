@@ -67,7 +67,7 @@ step "Backend: test suite + coverage gate"
 run_pytest --cov --cov-fail-under=84
 
 # ---- Đồng bộ env ----
-step "Env: .env.example đồng bộ với code"
+step "Env: catalog minimal/optional đồng bộ với code"
 "$ROOT/scripts/check_env_sync.sh"
 
 # ---- Frontend ----

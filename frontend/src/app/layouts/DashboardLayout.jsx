@@ -1,4 +1,5 @@
 import {
+  CloseOutlined,
   LogoutOutlined,
   MenuFoldOutlined,
   MenuOutlined,
@@ -6,9 +7,10 @@ import {
   UserOutlined,
 } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
-import { Avatar, Button, ConfigProvider, Drawer, Layout, Popconfirm, Typography } from 'antd'
+import { Avatar, Button, ConfigProvider, Drawer, Layout, Typography } from 'antd'
+import viVN from 'antd/locale/vi_VN'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Outlet, useLocation, useNavigate } from 'react-router'
+import { matchPath, Outlet, useLocation, useNavigate } from 'react-router'
 import {
   canAccessAdminRoute,
   useAdminAccess,
@@ -21,10 +23,17 @@ import {
   adminCompanyKeys,
   getAdminCompanySummary,
 } from '@/entities/admin-company'
+import {
+  adminCompanyDomainClaimKeys,
+  adminEmployerVerificationKeys,
+  getAdminCompanyDomainClaimSummary,
+  getAdminEmployerVerificationSummary,
+} from '@/entities/admin-employer-verification'
 import { ANNOUNCEMENT_SURFACES } from '@/entities/announcement'
 import { useSession } from '@/entities/session'
 import { BrandLogo } from '@/entities/site-settings'
 import { adminPath } from '@/shared/config/portals'
+import ConfirmAction from '@/shared/ui/ConfirmAction'
 import { AnnouncementStrip } from '@/widgets/announcement-strip'
 import { ADMIN_ROUTES } from '../router/admin/admin-routes.config'
 import { ADMIN_NAVIGATION } from '../router/admin/admin-navigation.config'
@@ -38,7 +47,7 @@ import './admin-dashboard.css'
 
 const { Header, Sider, Content } = Layout
 
-function AdminBrand({ collapsed = false }) {
+function AdminBrand({ collapsed = false, action = null }) {
   return (
     <div className={`admin-sider__brand ${collapsed ? 'admin-sider__brand--collapsed' : ''}`}>
       <BrandLogo
@@ -48,6 +57,7 @@ function AdminBrand({ collapsed = false }) {
         textClassName="text-sm"
       />
       {!collapsed && <span className="admin-sider__product">ProCV - Quản trị</span>}
+      {action}
     </div>
   )
 }
@@ -85,6 +95,7 @@ export default function DashboardLayout() {
   const mainRef = useRef(null)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [sidebarPeek, setSidebarPeek] = useState(false)
+  const [sidebarPeekGroup, setSidebarPeekGroup] = useState('')
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const availableRoutes = useMemo(() => user?.role === 'admin'
     ? ADMIN_ROUTES
@@ -105,43 +116,60 @@ export default function DashboardLayout() {
     [adminAccess],
   )
   const usersSummaryParams = useMemo(() => ({ scope: 'users' }), [])
-  const recruitersSummaryParams = useMemo(() => ({ scope: 'recruiters' }), [])
   const needsUsersSummary = hasBadgeKey(navigation, ['admin_invitations'])
   const needsRecruitersSummary = hasBadgeKey(
     navigation,
     ['recruiter_verification'],
   )
+  const needsDomainSummary = hasBadgeKey(navigation, ['domain_verification'])
   const needsCompaniesSummary = hasBadgeKey(
     navigation,
-    ['company_pending', 'company_updates'],
+    ['company_updates'],
   )
   const usersSummary = useQuery({
     queryKey: adminAccountKeys.summary(usersSummaryParams),
     queryFn: ({ signal }) => getAdminAccountSummary(usersSummaryParams, { signal }),
     enabled: user?.role === 'admin' && needsUsersSummary,
-    refetchInterval: 60_000,
-    staleTime: 30_000,
+    refetchInterval: 30_000,
+    refetchOnWindowFocus: 'always',
+    staleTime: 10_000,
   })
   const recruitersSummary = useQuery({
-    queryKey: adminAccountKeys.summary(recruitersSummaryParams),
-    queryFn: ({ signal }) => getAdminAccountSummary(recruitersSummaryParams, { signal }),
+    queryKey: adminEmployerVerificationKeys.summary,
+    queryFn: ({ signal }) => getAdminEmployerVerificationSummary({ signal }),
     enabled: user?.role === 'admin' && needsRecruitersSummary,
-    refetchInterval: 60_000,
-    staleTime: 30_000,
+    refetchInterval: 30_000,
+    refetchOnWindowFocus: 'always',
+    staleTime: 10_000,
+  })
+  const domainSummary = useQuery({
+    queryKey: adminCompanyDomainClaimKeys.summary,
+    queryFn: ({ signal }) => getAdminCompanyDomainClaimSummary({ signal }),
+    enabled: user?.role === 'admin' && needsDomainSummary,
+    refetchInterval: 10_000,
+    refetchOnWindowFocus: 'always',
+    staleTime: 0,
   })
   const companiesSummary = useQuery({
     queryKey: adminCompanyKeys.summary,
     queryFn: ({ signal }) => getAdminCompanySummary({ signal }),
     enabled: user?.role === 'admin' && needsCompaniesSummary,
-    refetchInterval: 60_000,
-    staleTime: 30_000,
+    refetchInterval: 30_000,
+    refetchOnWindowFocus: 'always',
+    staleTime: 10_000,
   })
   const navigationWithBadges = useMemo(() => attachBadgeCounts(navigation, {
     admin_invitations: usersSummary.data?.queues?.pending_admin_invitations,
-    recruiter_verification: recruitersSummary.data?.verification?.pending,
-    company_pending: companiesSummary.data?.verification?.pending,
+    recruiter_verification: recruitersSummary.data?.pending,
+    domain_verification: domainSummary.data?.manual_pending,
     company_updates: companiesSummary.data?.pending_update_requests,
-  }), [companiesSummary.data, navigation, recruitersSummary.data, usersSummary.data])
+  }), [
+    companiesSummary.data,
+    domainSummary.data,
+    navigation,
+    recruitersSummary.data,
+    usersSummary.data,
+  ])
   const hasNoDepartment = (
     user?.role === 'admin'
     && !adminAccess.isSuperuser
@@ -149,10 +177,7 @@ export default function DashboardLayout() {
   )
   const currentRoute = [...availableRoutes]
     .sort((left, right) => right.path.length - left.path.length)
-    .find((item) => {
-      const staticPath = item.path.replace(/:[^/]+/g, '')
-      return pathname === item.path || pathname.startsWith(staticPath)
-    })
+    .find((item) => matchPath({ path: item.path, end: true }, pathname))
   const activeLeaf = findActiveAdminNavigation(navigation, pathname, search)
   const currentTitle = currentRoute?.segment.includes(':')
     ? currentRoute.title
@@ -160,12 +185,14 @@ export default function DashboardLayout() {
   useEffect(() => {
     mainRef.current?.focus({ preventScroll: true })
     setMobileNavOpen(false)
+    setSidebarPeek(false)
   }, [pathname])
 
   if (user?.role === 'employer') return <EmployerWorkspaceLayout />
 
   return (
     <ConfigProvider
+      locale={viVN}
       theme={{
         token: {
           borderRadius: 10,
@@ -179,7 +206,7 @@ export default function DashboardLayout() {
       <Layout className="admin-shell">
         <a className="admin-skip-link" href="#admin-main">Bỏ qua điều hướng</a>
         <Sider
-          className="admin-sider !hidden lg:!block"
+          className="admin-sider"
           width={280}
           collapsedWidth={80}
           collapsed={sidebarCollapsed}
@@ -194,7 +221,10 @@ export default function DashboardLayout() {
             search={search}
             navigate={navigate}
             collapsed={sidebarCollapsed}
-            onRequestExpand={() => setSidebarPeek(true)}
+            onRequestExpand={(key) => {
+              setSidebarPeekGroup(key)
+              setSidebarPeek(true)
+            }}
           />
           {hasNoDepartment && !sidebarCollapsed && (
             <p className="admin-sider__notice">
@@ -212,6 +242,8 @@ export default function DashboardLayout() {
                 pathname={pathname}
                 search={search}
                 navigate={navigate}
+                requestedOpenKey={sidebarPeekGroup}
+                onNavigate={() => setSidebarPeek(false)}
               />
               {hasNoDepartment && (
                 <p className="admin-sider__notice">
@@ -232,7 +264,17 @@ export default function DashboardLayout() {
           styles={{ body: { padding: 0, background: '#0b172a' } }}
         >
           <div className="admin-sider min-h-full">
-            <AdminBrand />
+            <AdminBrand
+              action={(
+                <Button
+                  aria-label="Đóng điều hướng"
+                  className="admin-sider__close"
+                  icon={<CloseOutlined />}
+                  onClick={() => setMobileNavOpen(false)}
+                  type="text"
+                />
+              )}
+            />
             <AdminNavigation
               navigation={navigationWithBadges}
               pathname={pathname}
@@ -258,7 +300,10 @@ export default function DashboardLayout() {
                 className="admin-icon-button !hidden lg:!inline-flex"
                 icon={sidebarCollapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
                 aria-label={sidebarCollapsed ? 'Mở rộng thanh điều hướng' : 'Thu gọn thanh điều hướng'}
-                onClick={() => setSidebarCollapsed((value) => !value)}
+                onClick={() => {
+                  setSidebarPeek(false)
+                  setSidebarCollapsed((value) => !value)
+                }}
               />
               <div className="admin-topbar__location min-w-0">
                 <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">Không gian làm việc</p>
@@ -293,14 +338,13 @@ export default function DashboardLayout() {
                   </div>
                 </div>
               </button>
-              <Popconfirm
-                title="Đăng xuất khỏi phiên này?"
-                description="Bạn sẽ cần đăng nhập lại để tiếp tục quản lý hệ thống."
-                okText="Đăng xuất"
+              <ConfirmAction
+                title="Đăng xuất"
+                description="Bạn có chắc muốn đăng xuất khỏi phiên này? Bạn sẽ cần đăng nhập lại để tiếp tục quản lý hệ thống."
+                confirmText="Đăng xuất"
                 cancelText="Ở lại"
-                okButtonProps={{ danger: true }}
+                danger
                 onConfirm={logout}
-                placement="bottomRight"
               >
                 <Button
                   className="admin-icon-button"
@@ -308,7 +352,7 @@ export default function DashboardLayout() {
                   aria-label="Đăng xuất"
                   title="Đăng xuất"
                 />
-              </Popconfirm>
+              </ConfirmAction>
             </div>
           </Header>
           <AnnouncementStrip
@@ -317,9 +361,9 @@ export default function DashboardLayout() {
             stickyOffset="var(--admin-topbar-height)"
           />
           <Content>
-            <main id="admin-main" ref={mainRef} tabIndex={-1} className="admin-main">
+            <div id="admin-main" ref={mainRef} tabIndex={-1} className="admin-main">
               <Outlet context={{ availableRoutes: items, adminAccess }} />
-            </main>
+            </div>
           </Content>
         </Layout>
       </Layout>

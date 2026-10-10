@@ -80,7 +80,7 @@ pip install --upgrade pip >/dev/null
 pip install -r requirements.txt
 
 if [ ! -f .env ] && [ -f .env.example ]; then
-  step "Tạo .env từ .env.example (chỉnh DB_* nếu PostgreSQL local khác)"
+  step "Tạo .env tối thiểu (catalog tích hợp: .env.optional.example)"
   cp .env.example .env
 fi
 

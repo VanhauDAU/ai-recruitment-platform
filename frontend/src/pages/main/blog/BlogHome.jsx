@@ -1,23 +1,35 @@
 import { Fragment, useEffect, useState } from 'react'
+import { DownOutlined, LoadingOutlined } from '@ant-design/icons'
 import { Empty, Skeleton } from 'antd'
-import { Link } from 'react-router'
+import { Link, useSearchParams } from 'react-router'
 import { getBanners, settingText, useSiteSettings } from '@/entities/site-settings'
-import { getBlogCategories, getBlogHome } from '@/entities/blog'
+import { BLOG_ROOT, getBlogCategories, getBlogHome, getBlogPosts } from '@/entities/blog'
 import { legacyAsset } from '@/shared/config/assets'
 import { useDocumentMetadata } from '@/shared/hooks/use-document-metadata'
+import BlogCard from './ui/BlogCard'
 import { BlogCategoryNav } from './ui/BlogCategoryBar'
 import BlogInlineBanner from './ui/BlogInlineBanner'
 import CategorySection from './ui/CategorySection'
-import FeaturedPosts from './ui/FeaturedPosts'
+import FeaturedPosts, { SectionHeading } from './ui/FeaturedPosts'
+
+const TAG_PAGE_SIZE = 12
 
 // Trang /blog kiểu magazine: khối nổi bật + mỗi danh mục một section (bố cục
 // xoay vòng, nền xen kẽ), banner "ảnh giả button" chèn giữa các section.
+// Khi có ?tag=<slug> chuyển sang danh sách lọc theo thẻ (cùng API list).
 export default function BlogHome() {
   const { settings } = useSiteSettings()
+  const [searchParams] = useSearchParams()
+  const tagSlug = (searchParams.get('tag') || '').trim()
   const [categories, setCategories] = useState([])
   const [home, setHome] = useState(null)
   const [banners, setBanners] = useState([])
   const [loading, setLoading] = useState(true)
+  const [tagPosts, setTagPosts] = useState([])
+  const [tagPage, setTagPage] = useState(1)
+  const [tagHasMore, setTagHasMore] = useState(false)
+  const [tagLoadingMore, setTagLoadingMore] = useState(false)
+  const [tagTotal, setTagTotal] = useState(0)
 
   const pageTitle = settingText(settings.blog_page_title, 'Cẩm nang nghề nghiệp')
 
@@ -25,29 +37,79 @@ export default function BlogHome() {
     let cancelled = false
     getBlogCategories().then((data) => { if (!cancelled) setCategories(data || []) }).catch(() => {})
     getBanners('blog_inline').then((data) => { if (!cancelled) setBanners(data || []) }).catch(() => {})
-    getBlogHome()
-      .then((data) => { if (!cancelled) setHome(data) })
-      .catch(() => { if (!cancelled) setHome({ featured: [], sections: [] }) })
-      .finally(() => { if (!cancelled) setLoading(false) })
     return () => { cancelled = true }
   }, [])
 
+  useEffect(() => {
+    let cancelled = false
+    setLoading(true)
+    if (tagSlug) {
+      setTagPosts([])
+      setTagPage(1)
+      getBlogPosts({ tag: tagSlug, page: 1, page_size: TAG_PAGE_SIZE })
+        .then((res) => {
+          if (cancelled) return
+          setTagPosts(res.results || [])
+          setTagHasMore(Boolean(res.next))
+          setTagTotal(typeof res.count === 'number' ? res.count : (res.results || []).length)
+          setHome(null)
+        })
+        .catch(() => {
+          if (!cancelled) {
+            setTagPosts([])
+            setTagHasMore(false)
+            setTagTotal(0)
+          }
+        })
+        .finally(() => { if (!cancelled) setLoading(false) })
+    } else {
+      getBlogHome()
+        .then((data) => { if (!cancelled) setHome(data) })
+        .catch(() => { if (!cancelled) setHome({ featured: [], sections: [] }) })
+        .finally(() => { if (!cancelled) setLoading(false) })
+    }
+    return () => { cancelled = true }
+  }, [tagSlug])
+
   useDocumentMetadata(
-    {
-      title: pageTitle,
-      description: 'Kiến thức tìm việc, viết CV, phỏng vấn và phát triển sự nghiệp dành cho ứng viên.',
-      canonicalPath: '/blog',
-    },
+    tagSlug
+      ? {
+          title: `Thẻ: ${tagSlug} — ${pageTitle}`,
+          description: `Các bài viết cẩm nang gắn thẻ ${tagSlug}.`,
+          canonicalPath: `${BLOG_ROOT}?tag=${encodeURIComponent(tagSlug)}`,
+        }
+      : {
+          title: pageTitle,
+          description: 'Kiến thức tìm việc, viết CV, phỏng vấn và phát triển sự nghiệp dành cho ứng viên.',
+          canonicalPath: '/blog',
+        },
   )
 
+  async function loadMoreTagged() {
+    const nextPage = tagPage + 1
+    setTagLoadingMore(true)
+    try {
+      const res = await getBlogPosts({ tag: tagSlug, page: nextPage, page_size: TAG_PAGE_SIZE })
+      setTagPosts((prev) => [...prev, ...(res.results || [])])
+      setTagPage(nextPage)
+      setTagHasMore(Boolean(res.next))
+    } catch {
+      setTagHasMore(false)
+    } finally {
+      setTagLoadingMore(false)
+    }
+  }
+
   const sections = home?.sections || []
+  const tagLabel = tagPosts[0]?.tags?.find?.((item) => item.slug === tagSlug)?.name
+    || tagSlug
 
   return (
     <div className="bg-white">
       {/* ── Hero banner ── */}
       <div
         style={{
-          backgroundImage: `url("${legacyAsset('blog/blog-banner-toppy-3d.png')}"), linear-gradient(180deg, #065f2e 1.52%, #0e964b)`,
+          backgroundImage: `url("${legacyAsset('blog/banner-blog-procv.png')}"), linear-gradient(180deg, #065f2e 1.52%, #0e964b)`,
           backgroundPosition: 'center top, center',
           backgroundRepeat: 'no-repeat, no-repeat',
           backgroundSize: 'cover, cover',
@@ -91,12 +153,59 @@ export default function BlogHome() {
         <nav className="flex min-w-0 items-center overflow-hidden whitespace-nowrap text-xs text-slate-400 sm:text-sm">
           <Link to="/" className="shrink-0 !text-[var(--brand-primary)] hover:!opacity-80">Trang chủ</Link>
           <span className="mx-1.5 shrink-0">›</span>
-          <span className="truncate font-medium text-slate-900">{pageTitle}</span>
+          {tagSlug ? (
+            <>
+              <Link to={BLOG_ROOT} className="shrink-0 !text-[var(--brand-primary)] hover:!opacity-80">{pageTitle}</Link>
+              <span className="mx-1.5 shrink-0">›</span>
+              <span className="truncate font-medium text-slate-900">Thẻ: {tagLabel}</span>
+            </>
+          ) : (
+            <span className="truncate font-medium text-slate-900">{pageTitle}</span>
+          )}
         </nav>
       </div>
 
       {loading ? (
         <HomeSkeleton />
+      ) : tagSlug ? (
+        <Band tone="white">
+          <SectionHeading
+            id="blog-tag-heading"
+            title={`Thẻ: ${tagLabel}`}
+            action={(
+              <Link to={BLOG_ROOT} className="text-sm font-semibold text-[var(--brand-primary)] hover:underline">
+                Xóa bộ lọc
+              </Link>
+            )}
+          />
+          <p className="mb-4 text-sm text-slate-500">
+            {tagTotal > 0 ? `${tagTotal} bài viết` : 'Không có bài viết'}
+          </p>
+          {!tagPosts.length ? (
+            <Empty description="Chưa có bài viết với thẻ này" />
+          ) : (
+            <>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {tagPosts.map((post) => (
+                  <BlogCard key={post.public_id || post.slug} post={post} />
+                ))}
+              </div>
+              {tagHasMore && (
+                <div className="mt-8 flex justify-center">
+                  <button
+                    type="button"
+                    disabled={tagLoadingMore}
+                    onClick={loadMoreTagged}
+                    className="inline-flex min-h-11 items-center gap-2 rounded-full border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)] disabled:opacity-60"
+                  >
+                    {tagLoadingMore ? <LoadingOutlined /> : <DownOutlined />}
+                    Xem thêm
+                  </button>
+                </div>
+              )}
+            </>
+          )}
+        </Band>
       ) : !home?.featured?.length && !sections.length ? (
         <div className="mx-auto max-w-6xl px-4 py-16"><Empty description="Chưa có bài viết nào" /></div>
       ) : (

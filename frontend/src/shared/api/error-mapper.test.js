@@ -51,12 +51,27 @@ describe('getApiErrorMessage', () => {
       response: {
         status: 409,
         data: {
-          code: 'company_tax_code_conflict',
-          message: 'Mã số thuế đã thuộc một công ty được xác thực.',
+          code: 'business_rule_conflict',
+          message: 'Dữ liệu đã thay đổi. Vui lòng tải lại trước khi tiếp tục.',
         },
       },
     }
 
-    expect(getApiErrorMessage(error)).toBe('Mã số thuế đã thuộc một công ty được xác thực.')
+    expect(getApiErrorMessage(error)).toBe('Dữ liệu đã thay đổi. Vui lòng tải lại trước khi tiếp tục.')
+  })
+
+  it('localizes a throttled response and formats its retry duration', () => {
+    const error = {
+      response: {
+        status: 429,
+        data: {
+          detail: 'Request was throttled. Expected available in 86035 seconds.',
+        },
+      },
+    }
+
+    expect(getApiErrorMessage(error)).toBe(
+      'Bạn đã thao tác quá số lần cho phép. Vui lòng thử lại sau 23 giờ 54 phút.',
+    )
   })
 })

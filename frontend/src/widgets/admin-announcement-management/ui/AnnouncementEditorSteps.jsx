@@ -26,6 +26,7 @@ import { simulateAnnouncementPriority } from '../model/priority-simulator'
 import AnnouncementCtaFields from './AnnouncementCtaFields'
 import AnnouncementPreview from './AnnouncementPreview'
 import AnnouncementRouteTargetFields from './AnnouncementRouteTargetFields'
+import AnnouncementVisualFields from './AnnouncementVisualFields'
 
 function OptionCheckboxes({ options, ...groupProps }) {
   return (
@@ -80,7 +81,7 @@ export function ContentStep({ detail }) {
   )
 }
 
-export function TypeStep({ audiences, ctaMode, dismissMode, form, kind, surfaces }) {
+export function TypeStep({ audiences, ctaMode, dismissMode, form, kind, surfaces, themeMode }) {
   return (
     <div className="announcement-editor__grid">
       <Form.Item name="kind" label="Loại thông tin" rules={[{ required: true }]}>
@@ -105,6 +106,7 @@ export function TypeStep({ audiences, ctaMode, dismissMode, form, kind, surfaces
           <InputNumber min={60} className="w-full" />
         </Form.Item>
       )}
+      <AnnouncementVisualFields form={form} themeMode={themeMode} />
     </div>
   )
 }

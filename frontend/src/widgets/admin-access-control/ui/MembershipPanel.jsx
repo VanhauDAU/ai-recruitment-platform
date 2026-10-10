@@ -11,13 +11,17 @@ import {
   Empty,
   Select,
   Space,
-  Switch,
   Table,
   Tag,
   Tooltip,
   Typography,
 } from 'antd'
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
+import {
+  STAFF_DEFAULT_ORDERING,
+  STAFF_DEFAULT_STATUS,
+  STAFF_ORDERING_FIELDS,
+} from '../model/access-control-view'
 import { QueryError, StatusBadge } from './AccessControlFeedback'
 import AccessFilterBar from './AccessFilterBar'
 
@@ -50,72 +54,91 @@ function IconAction({ label, icon, onClick, danger = false }) {
   )
 }
 
+function sorterOrder(ordering, field) {
+  if (ordering === field) return 'ascend'
+  if (ordering === `-${field}`) return 'descend'
+  return null
+}
+
 export default function MembershipPanel({
-  memberships,
+  data,
   query,
-  page,
-  includeRevoked,
-  onPageChange,
-  onIncludeRevokedChange,
+  departments,
+  roles,
+  filters,
+  onFiltersChange,
   onAssign,
   onReplace,
   onImpact,
 }) {
-  const [search, setSearch] = useState('')
-  const [departmentFilter, setDepartmentFilter] = useState('')
-  const [mfaFilter, setMfaFilter] = useState('all')
   const [selectedMember, setSelectedMember] = useState(null)
-  const filteredMemberships = useMemo(() => {
-    const queryText = search.trim().toLocaleLowerCase('vi-VN')
-    return memberships.filter((item) => (
-      (!departmentFilter || item.department.public_id === departmentFilter)
-      && (mfaFilter === 'all' || String(item.user.two_factor_enabled) === mfaFilter)
-      && (!queryText || [
-        item.user.full_name,
-        item.user.email,
-        item.role.name,
-        item.department.name,
-      ].filter(Boolean).join(' ').toLocaleLowerCase('vi-VN').includes(queryText))
-    ))
-  }, [departmentFilter, memberships, mfaFilter, search])
-  const departmentOptions = useMemo(() => {
-    const values = new Map()
-    memberships.forEach((item) => values.set(item.department.public_id, item.department.name))
-    return [...values].map(([value, label]) => ({ value, label }))
-  }, [memberships])
+  const departmentOptions = departments.map((department) => ({
+    value: department.public_id,
+    label: department.name,
+  }))
+  const roleOptions = roles
+    .filter((role) => !filters.department || role.department.public_id === filters.department)
+    .map((role) => ({ value: role.public_id, label: role.name }))
   const columns = [
     {
       title: 'Nhân viên',
+      key: 'user__full_name',
+      sorter: true,
+      sortOrder: sorterOrder(filters.ordering, 'user__full_name'),
       render: (_, row) => (
         <div>
           <Typography.Text strong>{row.user.full_name || row.user.email}</Typography.Text>
           {row.user.full_name && (
             <div><Typography.Text type="secondary">{row.user.email}</Typography.Text></div>
           )}
-          {!row.user.two_factor_enabled && (
-            <div className="mt-1"><Tag color="red">Chưa bật MFA</Tag></div>
-          )}
         </div>
       ),
+    },
+    {
+      title: 'Phòng ban',
+      key: 'role__department__name',
+      sorter: true,
+      sortOrder: sorterOrder(filters.ordering, 'role__department__name'),
+      render: (_, row) => <Tag variant="filled" color="blue">{row.department.name}</Tag>,
     },
     {
       title: 'Chức danh',
+      key: 'role__name',
+      sorter: true,
+      sortOrder: sorterOrder(filters.ordering, 'role__name'),
       render: (_, row) => (
-        <div className="min-w-52">
+        <div className="min-w-40">
           <Typography.Text strong className="text-slate-900">{row.role.name}</Typography.Text>
-          <div className="mt-1"><Tag variant="filled" color="blue">{row.department.name}</Tag></div>
         </div>
       ),
     },
     {
-      title: 'Cấp quyền',
-      width: 180,
+      title: 'MFA',
+      key: 'user__two_factor_enabled',
+      width: 130,
+      sorter: true,
+      sortOrder: sorterOrder(filters.ordering, 'user__two_factor_enabled'),
       render: (_, row) => (
-        <div className="text-sm">
-          <StatusBadge active={row.is_active} />
-          <div className="mt-2 text-slate-500">{formatDateTime(row.assigned_at)}</div>
-        </div>
+        <Tag color={row.user.two_factor_enabled ? 'green' : 'red'}>
+          {row.user.two_factor_enabled ? 'Đã bật' : 'Chưa bật MFA'}
+        </Tag>
       ),
+    },
+    {
+      title: 'Trạng thái',
+      key: 'is_active',
+      width: 130,
+      sorter: true,
+      sortOrder: sorterOrder(filters.ordering, 'is_active'),
+      render: (_, row) => <StatusBadge active={row.is_active} />,
+    },
+    {
+      title: 'Cấp lúc',
+      key: 'assigned_at',
+      width: 170,
+      sorter: true,
+      sortOrder: sorterOrder(filters.ordering, 'assigned_at'),
+      render: (_, row) => <span className="text-sm text-slate-500">{formatDateTime(row.assigned_at)}</span>,
     },
     {
       title: 'Thao tác',
@@ -141,21 +164,19 @@ export default function MembershipPanel({
   return (
     <>
       <AccessFilterBar
-        search={search}
-        onSearchChange={(value) => {
-          setSearch(value)
-          onPageChange(1)
-        }}
+        search={filters.q}
+        onSearchChange={(q) => onFiltersChange({ q })}
         searchLabel="Tìm nhân viên hoặc chức danh"
         searchPlaceholder="Tìm nhân viên hoặc chức danh"
-        resultCount={filteredMemberships.length}
-        activeFilters={Number(Boolean(departmentFilter)) + Number(mfaFilter !== 'all') + Number(includeRevoked)}
-        onClear={() => {
-          setDepartmentFilter('')
-          setMfaFilter('all')
-          onIncludeRevokedChange(false)
-          onPageChange(1)
-        }}
+        resultCount={data.count}
+        activeFilters={Number(Boolean(filters.department)) + Number(Boolean(filters.role)) + Number(filters.status !== STAFF_DEFAULT_STATUS)}
+        onClear={() => onFiltersChange({
+          q: '',
+          department: '',
+          role: '',
+          status: STAFF_DEFAULT_STATUS,
+          ordering: STAFF_DEFAULT_ORDERING,
+        })}
         action={(
           <Tooltip title="Gán chức danh">
             <Button type="primary" className="min-h-11 min-w-11" icon={<PlusOutlined />} aria-label="Gán chức danh" onClick={onAssign} />
@@ -168,41 +189,45 @@ export default function MembershipPanel({
             allowClear
             className="mt-2 w-full"
             placeholder="Tất cả phòng ban"
-            value={departmentFilter || undefined}
+            value={filters.department || undefined}
             onChange={(value) => {
-              setDepartmentFilter(value || '')
-              onPageChange(1)
+              const department = value || ''
+              const selectedRole = roles.find((role) => role.public_id === filters.role)
+              onFiltersChange({
+                department,
+                role: department && selectedRole?.department.public_id !== department
+                  ? ''
+                  : filters.role,
+              })
             }}
             options={departmentOptions}
             aria-label="Lọc nhân viên theo phòng ban"
           />
         </div>
         <div>
-          <Typography.Text strong>MFA</Typography.Text>
+          <Typography.Text strong>Chức danh</Typography.Text>
           <Select
+            allowClear
             className="mt-2 w-full"
-            value={mfaFilter}
-            onChange={(value) => {
-              setMfaFilter(value)
-              onPageChange(1)
-            }}
-            options={[
-              { value: 'all', label: 'Mọi trạng thái MFA' },
-              { value: 'true', label: 'Đã bật MFA' },
-              { value: 'false', label: 'Chưa bật MFA' },
-            ]}
-            aria-label="Lọc trạng thái MFA"
+            placeholder="Tất cả chức danh"
+            value={filters.role || undefined}
+            onChange={(value) => onFiltersChange({ role: value || '' })}
+            options={roleOptions}
+            aria-label="Lọc nhân viên theo chức danh"
           />
         </div>
-        <div className="flex items-center justify-between gap-4 rounded-lg bg-slate-50 px-3 py-2">
-          <div>
-            <Typography.Text strong>Lịch sử thu hồi</Typography.Text>
-            <div className="text-xs text-slate-500">Hiển thị cả chức danh đã thu hồi.</div>
-          </div>
-          <Switch
-            checked={includeRevoked}
-            onChange={onIncludeRevokedChange}
-            aria-label="Hiện cả membership đã thu hồi"
+        <div>
+          <Typography.Text strong>Trạng thái</Typography.Text>
+          <Select
+            className="mt-2 w-full"
+            value={filters.status}
+            onChange={(status) => onFiltersChange({ status })}
+            options={[
+              { value: 'active', label: 'Đang hoạt động' },
+              { value: 'revoked', label: 'Đã thu hồi' },
+              { value: 'all', label: 'Tất cả trạng thái' },
+            ]}
+            aria-label="Lọc trạng thái chức danh nhân viên"
           />
         </div>
       </AccessFilterBar>
@@ -213,20 +238,35 @@ export default function MembershipPanel({
           <Table
             rowKey="public_id"
             loading={query.isLoading}
-            dataSource={filteredMemberships}
+            dataSource={data.results}
             columns={columns}
             className="[&_.ant-table-tbody>tr>td]:py-4 [&_.ant-table-thead>tr>th]:bg-slate-50 [&_.ant-table-thead>tr>th]:text-xs [&_.ant-table-thead>tr>th]:font-semibold [&_.ant-table-thead>tr>th]:uppercase [&_.ant-table-thead>tr>th]:tracking-wide [&_.ant-table-thead>tr>th]:text-slate-500"
             locale={{
               emptyText: <Empty description="Chưa có nhân viên trong cơ cấu phân quyền" />,
             }}
             pagination={{
-              current: page,
-              total: filteredMemberships.length,
+              current: filters.page,
+              total: data.count,
               pageSize: 20,
               showSizeChanger: false,
-              onChange: onPageChange,
             }}
-            scroll={{ x: 900 }}
+            onChange={(pagination, _tableFilters, sorter, extra) => {
+              if (extra.action === 'paginate') {
+                onFiltersChange({ page: pagination.current || 1 })
+                return
+              }
+              if (extra.action !== 'sort') return
+              const selectedSorter = Array.isArray(sorter) ? sorter[0] : sorter
+              const field = selectedSorter?.columnKey
+              if (!STAFF_ORDERING_FIELDS.includes(field)) return
+              const ordering = selectedSorter.order === 'ascend'
+                ? field
+                : selectedSorter.order === 'descend'
+                  ? `-${field}`
+                  : STAFF_DEFAULT_ORDERING
+              onFiltersChange({ ordering })
+            }}
+            scroll={{ x: 1120 }}
           />
         </div>
       )}

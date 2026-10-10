@@ -142,22 +142,14 @@ class CvV2MetadataUpdateSerializer(serializers.Serializer):
 
 
 class CvV2ImportSerializer(serializers.Serializer):
-    file = serializers.FileField()
+    file = serializers.FileField(required=False)
+    upload_session = serializers.CharField(max_length=50, required=False, trim_whitespace=True)
     title = serializers.CharField(
         max_length=255, required=False, allow_blank=False, trim_whitespace=True
     )
     template_public_id = serializers.CharField(max_length=50, required=False)
     language = serializers.CharField(max_length=16, default='vi-VN')
     theme_color = serializers.RegexField(r'^#[0-9A-Fa-f]{6}$', required=False)
-
-    def validate_file(self, value):
-        from ...services.imports import InvalidCvImport, validate_import_upload
-
-        try:
-            validate_import_upload(value)
-        except InvalidCvImport as error:
-            raise serializers.ValidationError(str(error)) from error
-        return value
 
     def validate_template_public_id(self, value):
         try:
@@ -173,6 +165,12 @@ class CvV2ImportSerializer(serializers.Serializer):
         return value
 
     def validate(self, attrs):
+        upload = attrs.get('file')
+        upload_session = attrs.get('upload_session')
+        if bool(upload) == bool(upload_session):
+            raise serializers.ValidationError(
+                {'upload_session': 'Gửi đúng một trong file hoặc upload_session.'}
+            )
         template = attrs.get('template_public_id')
         theme_color = attrs.get('theme_color')
         if theme_color and template is None:
@@ -344,7 +342,15 @@ class CvApplySampleSerializer(serializers.Serializer):
 
 
 class CvAssetUploadSerializer(serializers.Serializer):
-    file = serializers.FileField()
+    file = serializers.FileField(required=False)
+    upload_session = serializers.CharField(max_length=50, required=False, trim_whitespace=True)
+
+    def validate(self, attrs):
+        if bool(attrs.get('file')) == bool(attrs.get('upload_session')):
+            raise serializers.ValidationError(
+                {'upload_session': 'Gửi đúng một trong file hoặc upload_session.'}
+            )
+        return attrs
 
 
 class CvAssetSerializer(serializers.ModelSerializer):
@@ -483,6 +489,7 @@ class CvVersionSerializer(serializers.ModelSerializer):
             owner=obj.cv.user if obj.cv_id else None,
             version=obj,
             signed=True,
+            token_context=self.context.get('asset_token_context'),
         )
 
 

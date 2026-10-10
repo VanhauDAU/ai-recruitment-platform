@@ -12,4 +12,14 @@ export const adminEmployerVerificationKeys = {
     documentPublicId,
   ],
   companyUpdates: (params = {}) => [...root, 'company-updates', params],
+  companyUpdate: (publicId) => [...root, 'company-update', publicId],
+}
+
+const domainClaimsRoot = ['admin-company-domain-claims']
+
+export const adminCompanyDomainClaimKeys = {
+  all: domainClaimsRoot,
+  summary: [...domainClaimsRoot, 'summary'],
+  list: (params = {}) => [...domainClaimsRoot, 'list', params],
+  detail: (publicId) => [...domainClaimsRoot, 'detail', publicId],
 }

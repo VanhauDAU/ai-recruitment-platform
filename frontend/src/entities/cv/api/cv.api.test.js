@@ -23,19 +23,29 @@ import {
   switchCvTemplate,
   renameCv,
   setDefaultCv,
+  uploadCvAsset,
   updateCvDraft,
 } from './cv.api'
-const { get, patch, post, put, remove } = vi.hoisted(() => ({
-  get: vi.fn(), patch: vi.fn(), post: vi.fn(), put: vi.fn(), remove: vi.fn(),
+const { forgetPreparedUpload, get, patch, post, prepareCleanUpload, put, remove } = vi.hoisted(() => ({
+  forgetPreparedUpload: vi.fn(),
+  get: vi.fn(),
+  patch: vi.fn(),
+  post: vi.fn(),
+  prepareCleanUpload: vi.fn(),
+  put: vi.fn(),
+  remove: vi.fn(),
 }))
 
 vi.mock('@/shared/api/client', () => ({ default: { get, patch, post, put, delete: remove } }))
+vi.mock('@/shared/api/upload-session', () => ({ forgetPreparedUpload, prepareCleanUpload }))
 
 describe('CV V2 API', () => {
   beforeEach(() => {
     get.mockReset()
     patch.mockReset()
     post.mockReset()
+    prepareCleanUpload.mockReset()
+    forgetPreparedUpload.mockReset()
     put.mockReset()
     remove.mockReset()
   })
@@ -43,6 +53,7 @@ describe('CV V2 API', () => {
   it('keeps account-library metadata and file imports on V2', async () => {
     patch.mockResolvedValue({ data: { public_id: 'cv_1', title: 'Renamed' } })
     post.mockResolvedValue({ data: { public_id: 'cv_2', source: 'imported' } })
+    prepareCleanUpload.mockResolvedValue({ public_id: 'ups_cv_1' })
     remove.mockResolvedValue({})
     const file = new File(['%PDF-1.4'], 'cv.pdf', { type: 'application/pdf' })
 
@@ -54,7 +65,44 @@ describe('CV V2 API', () => {
     expect(patch).toHaveBeenNthCalledWith(1, '/v2/cvs/cv_1/', { title: 'Renamed' })
     expect(patch).toHaveBeenNthCalledWith(2, '/v2/cvs/cv_1/', { is_default: true })
     expect(post).toHaveBeenCalledWith('/v2/cvs/imports/', expect.any(FormData), { headers: {} })
+    const importBody = post.mock.calls.find(([url]) => url === '/v2/cvs/imports/')[1]
+    expect(importBody.get('upload_session')).toBe('ups_cv_1')
+    expect(importBody.has('file')).toBe(false)
+    expect(prepareCleanUpload).toHaveBeenCalledWith(
+      file,
+      'candidate_cv',
+      { onStateChange: undefined, signal: undefined },
+    )
+    expect(forgetPreparedUpload).toHaveBeenCalledWith(file, 'candidate_cv')
     expect(remove).toHaveBeenCalledWith('/v2/cvs/cv_1/')
+  })
+
+  it('uses the clean-upload contract for candidate avatar assets', async () => {
+    const file = new File(['image'], 'avatar.png', { type: 'image/png' })
+    prepareCleanUpload.mockResolvedValue({ public_id: 'ups_avatar_1' })
+    post.mockResolvedValue({ data: { public_id: 'cva_1' } })
+
+    await expect(uploadCvAsset(file)).resolves.toEqual({ public_id: 'cva_1' })
+
+    const body = post.mock.calls[0][1]
+    expect(post).toHaveBeenCalledWith('/v2/cvs/assets/', expect.any(FormData))
+    expect(body.get('upload_session')).toBe('ups_avatar_1')
+    expect(body.has('file')).toBe(false)
+    expect(forgetPreparedUpload).toHaveBeenCalledWith(file, 'candidate_cv')
+  })
+
+  it('falls back to the legacy multipart body only while the pipeline is disabled', async () => {
+    const file = new File(['%PDF-1.4'], 'cv.pdf', { type: 'application/pdf' })
+    prepareCleanUpload.mockRejectedValue({
+      response: { data: { code: 'UPLOAD_PIPELINE_DISABLED' } },
+    })
+    post.mockResolvedValue({ data: { public_id: 'cv_legacy' } })
+
+    await importCvFile(file)
+
+    const body = post.mock.calls[0][1]
+    expect(body.get('file')).toBe(file)
+    expect(body.has('upload_session')).toBe(false)
   })
 
   it('uses the V2 duplicate contract without an archive or restore API', async () => {

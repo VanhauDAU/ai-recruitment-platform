@@ -1,5 +1,6 @@
 """Public use-case API for site content."""
 
+from .announcement_media import upload_announcement_background
 from .announcements import (
     StaleAnnouncementRevision,
     StaleAnnouncementState,
@@ -40,5 +41,6 @@ __all__ = [
     'resume_announcement',
     'set_announcement_user_state',
     'set_announcement_viewer_cookie',
+    'upload_announcement_background',
     'validate_cta_url',
 ]

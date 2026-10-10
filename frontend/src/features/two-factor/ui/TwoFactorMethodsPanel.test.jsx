@@ -111,6 +111,54 @@ describe('TwoFactorMethodsPanel', () => {
     await waitFor(() => expect(mocks.generateBackupCodes).toHaveBeenCalledWith('123456', 'totp'))
   })
 
+  it('requires the standard confirmation before resetting existing backup codes', async () => {
+    const user = userEvent.setup()
+    useSession.mockReturnValue({
+      user: {
+        email: 'hr@example.com',
+        two_factor_email_enabled: true,
+        two_factor_totp_enabled: false,
+        two_factor_backup_codes_enabled: true,
+      },
+      setCurrentUser: vi.fn(),
+    })
+    mocks.sendBackupCodesCode.mockResolvedValue({ email: 'hr@example.com', expires_in: 180 })
+
+    renderPanel()
+    const row = screen.getByTestId('two-factor-method-backup')
+    await user.click(within(row).getByRole('button', { name: 'Đặt lại mã' }))
+
+    const dialog = await screen.findByRole('dialog', { name: 'Đặt lại mã dự phòng' })
+    expect(mocks.sendBackupCodesCode).not.toHaveBeenCalled()
+    await user.click(within(dialog).getByRole('button', { name: 'Đặt lại mã' }))
+
+    await waitFor(() => expect(mocks.sendBackupCodesCode).toHaveBeenCalledOnce())
+    expect(await screen.findByText('Xác nhận đặt lại mã dự phòng')).toBeInTheDocument()
+  })
+
+  it('keeps the reset confirmation open when sending the verification code fails', async () => {
+    const user = userEvent.setup()
+    useSession.mockReturnValue({
+      user: {
+        email: 'hr@example.com',
+        two_factor_email_enabled: true,
+        two_factor_totp_enabled: false,
+        two_factor_backup_codes_enabled: true,
+      },
+      setCurrentUser: vi.fn(),
+    })
+    mocks.sendBackupCodesCode.mockRejectedValue(new Error('network_error'))
+
+    renderPanel()
+    const row = screen.getByTestId('two-factor-method-backup')
+    await user.click(within(row).getByRole('button', { name: 'Đặt lại mã' }))
+    const dialog = await screen.findByRole('dialog', { name: 'Đặt lại mã dự phòng' })
+    await user.click(within(dialog).getByRole('button', { name: 'Đặt lại mã' }))
+
+    await waitFor(() => expect(mocks.sendBackupCodesCode).toHaveBeenCalledOnce())
+    expect(screen.getByRole('dialog', { name: 'Đặt lại mã dự phòng' })).toBeInTheDocument()
+  })
+
   it('uses Email first and still offers an authenticator app when creating backup codes with both methods enabled', async () => {
     const user = userEvent.setup()
     useSession.mockReturnValue({ user: { email: 'hr@example.com', two_factor_email_enabled: true, two_factor_totp_enabled: true, two_factor_backup_codes_enabled: false }, setCurrentUser: vi.fn() })

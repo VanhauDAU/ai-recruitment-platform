@@ -1,54 +1,115 @@
 import { RiseOutlined } from '@ant-design/icons'
-import { Progress, Tag } from 'antd'
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts'
 
-const dateFormatter = new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit' })
+const axisDateFormatter = new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit' })
+const fullDateFormatter = new Intl.DateTimeFormat('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit' })
+const numberFormatter = new Intl.NumberFormat('vi-VN')
 
-export default function ApplicationActivityCard({ activity = [], summary = {} }) {
-  const maxCount = Math.max(1, ...activity.map((item) => item.count || 0))
-  const pipelineTotal = Math.max(summary.applications_total || 0, 1)
+function parseDate(value) {
+  return new Date(`${value}T00:00:00`)
+}
+
+function ActivityTooltip({ active, payload }) {
+  if (!active || !payload?.length) return null
+  const item = payload[0].payload
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white px-3.5 py-3 shadow-xl">
+      <p className="text-[11px] capitalize text-slate-400">{fullDateFormatter.format(parseDate(item.date))}</p>
+      <p className="mt-1 text-xs text-slate-600"><strong className="text-base text-slate-900">{numberFormatter.format(item.count)}</strong> hồ sơ mới</p>
+    </div>
+  )
+}
+
+export default function ApplicationActivityCard({ activity = [] }) {
+  const weeklyTotal = activity.reduce((total, item) => total + Number(item.count || 0), 0)
+  const peak = Math.max(0, ...activity.map((item) => Number(item.count || 0)))
+  const average = activity.length ? Math.round((weeklyTotal / activity.length) * 10) / 10 : 0
+  const chartData = activity.map((item) => ({ ...item, count: Number(item.count || 0) }))
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6" aria-labelledby="activity-title">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <section className="overflow-hidden rounded-[20px] border border-slate-200/80 bg-white shadow-[0_12px_35px_-24px_rgba(15,23,42,.45)]" aria-labelledby="activity-title">
+      <div className="flex flex-col gap-4 px-5 pb-2 pt-5 sm:flex-row sm:items-start sm:justify-between sm:px-6 sm:pt-6">
         <div>
-          <h2 id="activity-title" className="text-lg font-extrabold text-slate-900">Hiệu quả tuyển dụng</h2>
-          <p className="mt-1 text-sm text-slate-500">Hồ sơ ứng tuyển trong 7 ngày gần nhất</p>
-        </div>
-        <Tag color="green" icon={<RiseOutlined />}>{summary.applications_total || 0} hồ sơ</Tag>
-      </div>
-
-      <div className="mt-7 grid h-48 grid-cols-7 items-end gap-2 border-b border-slate-100 pb-2 sm:gap-3">
-        {activity.map((item) => {
-          const height = item.count ? Math.max(12, Math.round((item.count / maxCount) * 100)) : 4
-          return (
-            <div key={item.date} className="flex h-full min-w-0 flex-col items-center justify-end gap-2">
-              <span className="text-xs font-bold text-slate-600">{item.count || ''}</span>
-              <span
-                className="w-full max-w-10 rounded-t-lg bg-[linear-gradient(180deg,#20c974,#00a34a)] transition-all"
-                style={{ height: `${height}%` }}
-                role="img"
-                aria-label={`${item.count || 0} hồ sơ ngày ${dateFormatter.format(new Date(`${item.date}T00:00:00`))}`}
-              />
-              <span className="truncate text-[10px] text-slate-400 sm:text-xs">{dateFormatter.format(new Date(`${item.date}T00:00:00`))}</span>
+          <div className="flex items-center gap-2">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600"><RiseOutlined /></span>
+            <div>
+              <h2 id="activity-title" className="text-lg font-black text-slate-900">Xu hướng hồ sơ ứng tuyển</h2>
+              <p className="mt-0.5 text-xs text-slate-500">Dữ liệu 7 ngày gần nhất</p>
             </div>
-          )
-        })}
+          </div>
+        </div>
+        <div className="flex items-center gap-5 sm:text-right">
+          <div><span className="block text-[10px] font-bold uppercase tracking-wide text-slate-400">Tuần này</span><strong className="mt-0.5 block text-lg font-black text-slate-900">{numberFormatter.format(weeklyTotal)}</strong></div>
+          <div className="h-8 w-px bg-slate-200" />
+          <div><span className="block text-[10px] font-bold uppercase tracking-wide text-slate-400">Trung bình/ngày</span><strong className="mt-0.5 block text-lg font-black text-slate-900">{numberFormatter.format(average)}</strong></div>
+        </div>
       </div>
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-3">
-        <PipelineStat label="Mới nhận" value={summary.applications_new || 0} total={pipelineTotal} color="#1677ff" />
-        <PipelineStat label="Đã chọn lọc" value={summary.applications_shortlisted || 0} total={pipelineTotal} color="#faad14" />
-        <PipelineStat label="Phỏng vấn" value={summary.applications_interviewed || 0} total={pipelineTotal} color="#00b14f" />
+      <div className="h-[285px] w-full px-1 pb-1 pt-3 sm:px-3" role="img" aria-label={`Biểu đồ đường cong hồ sơ ứng tuyển 7 ngày, tổng ${weeklyTotal} hồ sơ`}>
+        <ResponsiveContainer width="100%" height="100%" minWidth={0} initialDimension={{ width: 760, height: 270 }}>
+          <AreaChart data={chartData} margin={{ top: 12, right: 12, left: -22, bottom: 4 }}>
+            <defs>
+              <linearGradient id="dashboardApplicationGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#10b981" stopOpacity={0.32} />
+                <stop offset="70%" stopColor="#10b981" stopOpacity={0.07} />
+                <stop offset="100%" stopColor="#10b981" stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid vertical={false} stroke="#e8eef3" strokeDasharray="4 6" />
+            <XAxis
+              dataKey="date"
+              axisLine={false}
+              tickLine={false}
+              tick={{ fill: '#94a3b8', fontSize: 11 }}
+              tickFormatter={(value) => axisDateFormatter.format(parseDate(value))}
+              dy={8}
+            />
+            <YAxis
+              allowDecimals={false}
+              axisLine={false}
+              tickLine={false}
+              tick={{ fill: '#94a3b8', fontSize: 11 }}
+              width={42}
+            />
+            <Tooltip content={<ActivityTooltip />} cursor={{ stroke: '#94a3b8', strokeWidth: 1, strokeDasharray: '3 4' }} />
+            <Area
+              type="monotone"
+              dataKey="count"
+              stroke="#059669"
+              strokeWidth={3}
+              fill="url(#dashboardApplicationGradient)"
+              dot={{ r: 3.5, fill: '#fff', stroke: '#059669', strokeWidth: 2 }}
+              activeDot={{ r: 6, fill: '#059669', stroke: '#fff', strokeWidth: 3 }}
+              connectNulls
+              animationDuration={1000}
+              animationEasing="ease-out"
+            />
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
+
+      <div className="grid grid-cols-3 border-t border-slate-100 bg-slate-50/60">
+        <ChartStat label="Cao nhất/ngày" value={peak} />
+        <ChartStat label="Tổng 7 ngày" value={weeklyTotal} />
+        <ChartStat label="Ngày có hồ sơ" value={activity.filter((item) => item.count > 0).length} suffix={`/ ${activity.length || 7}`} />
       </div>
     </section>
   )
 }
 
-function PipelineStat({ label, value, total, color }) {
+function ChartStat({ label, value, suffix = '' }) {
   return (
-    <div>
-      <div className="mb-2 flex items-center justify-between gap-2 text-xs"><span className="font-semibold text-slate-500">{label}</span><strong className="text-slate-800">{value}</strong></div>
-      <Progress percent={Math.round((value / total) * 100)} showInfo={false} strokeColor={color} size="small" />
+    <div className="min-w-0 px-3 py-3 text-center sm:px-5 sm:py-4">
+      <span className="block truncate text-[10px] font-bold uppercase tracking-wide text-slate-400">{label}</span>
+      <strong className="mt-1 block text-sm font-black text-slate-800">{numberFormatter.format(value)}{suffix}</strong>
     </div>
   )
 }

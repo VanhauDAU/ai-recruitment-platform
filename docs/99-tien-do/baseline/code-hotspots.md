@@ -1,0 +1,304 @@
+# Inventory hotspot (baseline tái cấu trúc)
+
+- Tổng file quét: **2049**
+- File ≥ 500 dòng: **76**
+- File 300–499 dòng: **124**
+
+## File ≥ 500 dòng (ưu tiên tách)
+
+- `backend/apps/employers/tests/test_api.py` — 2250 dòng
+- `backend/apps/jobs/tests/test_api.py` — 2076 dòng
+- `backend/apps/employers/services/verification.py` — 1591 dòng
+- `backend/apps/accounts/services/account_management.py` — 1553 dòng
+- `backend/apps/cvs/tests/test_api_v2.py` — 1524 dòng
+- `backend/apps/employers/tests/test_admin_verification.py` — 1491 dòng
+- `backend/apps/employers/tests/test_verification_state_machine.py` — 1465 dòng
+- `backend/apps/accounts/tests/test_admin_access_g2.py` — 1200 dòng
+- `backend/apps/uploads/services/pipeline.py` — 1186 dòng
+- `backend/apps/jobs/services/digests.py` — 1102 dòng
+- `backend/apps/jobs/tests/test_job_alerts.py` — 1099 dòng
+- `backend/apps/accounts/services/admin_access.py` — 1075 dòng
+- `backend/apps/jobs/services/ai_generation.py` — 1074 dòng
+- `backend/apps/sitecontent/management/commands/seed_sitecontent.py` — 1070 dòng
+- `backend/apps/cvs/api/views/v2.py` — 1011 dòng
+- `backend/apps/services/tests/test_entitlements.py` — 965 dòng
+- `backend/config/settings/base.py` — 944 dòng
+- `backend/apps/jobs/api/serializers/jobs.py` — 937 dòng
+- `backend/apps/accounts/tests/test_api_profile.py` — 927 dòng
+- `backend/apps/employers/api/serializers/admin_verification.py` — 924 dòng
+- `backend/apps/accounts/selectors/account_management.py` — 868 dòng
+- `backend/apps/employers/api/views/admin_verification.py` — 861 dòng
+- `backend/apps/accounts/api/views/account_management.py` — 858 dòng
+- `backend/apps/accounts/tests/test_account_management_g3.py` — 851 dòng
+- `frontend/src/features/manage-blog-content/ui/BlogContentManagement.jsx` — 820 dòng
+- `backend/apps/jobs/tests/test_posting_workflows.py` — 819 dòng
+- `frontend/src/widgets/admin-account-detail/ui/AdminAccountDetail.jsx` — 816 dòng
+- `backend/apps/jobs/services/posting.py` — 806 dòng
+- `backend/apps/jobs/tests/test_moderation.py` — 766 dòng
+- `backend/apps/jobs/tests/test_recommendations.py` — 755 dòng
+- `backend/apps/employers/tests/test_campaigns.py` — 735 dòng
+- `backend/apps/services/services/entitlements.py` — 734 dòng
+- `frontend/src/features/manage-employer-company/ui/CompanyForm.jsx` — 728 dòng
+- `backend/apps/employers/services/phone_challenges.py` — 725 dòng
+- `backend/apps/blog/tests/test_admin_api.py` — 718 dòng
+- `frontend/src/features/review-employer-verification/ui/EmployerVerificationReview.jsx` — 714 dòng
+- `backend/apps/accounts/api/views/two_factor.py` — 707 dòng
+- `backend/apps/sitecontent/services/announcements.py` — 693 dòng
+- `frontend/src/features/manage-employer-company/ui/EmployerCompanySettings.test.jsx` — 688 dòng
+- `backend/apps/accounts/api/serializers/account_management.py` — 684 dòng
+- `frontend/src/widgets/admin-service-catalog/ui/ServiceActivationsPanel.jsx` — 683 dòng
+- `backend/apps/sitecontent/api/serializers/announcements.py` — 675 dòng
+- `backend/apps/employers/services/companies.py` — 668 dòng
+- `backend/apps/accounts/selectors/admin_access.py` — 661 dòng
+- `backend/apps/services/models/entitlements.py` — 656 dòng
+- `backend/apps/uploads/tests/test_pipeline.py` — 631 dòng
+- `backend/apps/employers/tests/test_public_companies.py` — 614 dòng
+- `backend/apps/knowledgebase/api/views/admin.py` — 612 dòng
+- `backend/apps/employers/tests/test_phone_sms.py` — 608 dòng
+- `backend/apps/employers/services/domain_claims.py` — 607 dòng
+- `frontend/src/widgets/admin-account-management/ui/AccountDetailView.jsx` — 606 dòng
+- `backend/apps/sitecontent/api/views/announcements.py` — 606 dòng
+- `backend/apps/employers/api/views/verification.py` — 597 dòng
+- `backend/apps/cv_templates/models/template.py` — 596 dòng
+- `backend/apps/services/tests/test_api.py` — 592 dòng
+- `backend/apps/cvs/models/cv.py` — 579 dòng
+- `frontend/src/features/verify-employer-account/ui/EmployerBusinessLicenseForm.test.jsx` — 578 dòng
+- `backend/apps/jobs/models/recommendation_queries.py` — 578 dòng
+- `frontend/src/widgets/admin-company-directory/ui/AdminCompanyDetail.jsx` — 577 dòng
+- `backend/apps/accounts/tests/test_security.py` — 576 dòng
+- `backend/apps/employers/models/verification.py` — 575 dòng
+- `backend/apps/jobs/tests/test_ai_generation.py` — 570 dòng
+- `frontend/src/widgets/admin-account-management/ui/InvitationPanel.jsx` — 562 dòng
+- `backend/apps/cvs/api/serializers/v2.py` — 554 dòng
+- `frontend/src/widgets/admin-account-management/ui/AdminAccountManagement.jsx` — 549 dòng
+- `backend/apps/accounts/api/views/admin_access.py` — 548 dòng
+- `backend/apps/jobs/tests/test_saved_job_recommendations.py` — 546 dòng
+- `backend/apps/cvs/schemas.py` — 536 dòng
+- `backend/apps/jobs/api/views/public.py` — 527 dòng
+- `frontend/src/pages/employer/app/campaigns/CampaignList.jsx` — 519 dòng
+- `backend/apps/applications/tests/test_api_v2.py` — 518 dòng
+- `backend/apps/jobs/models/core.py` — 514 dòng
+- `backend/apps/accounts/tests/test_account_identity_recovery.py` — 513 dòng
+- `backend/apps/employers/services/compliance.py` — 508 dòng
+- `backend/apps/knowledgebase/services/workflow.py` — 504 dòng
+- `frontend/src/features/post-job/ui/JobFormPreview.jsx` — 503 dòng
+
+## File 300–499 dòng (theo dõi)
+
+- `backend/apps/services/tests/test_employer_activation_api.py` — 498 dòng
+- `backend/apps/employers/selectors/campaigns.py` — 490 dòng
+- `backend/apps/accounts/constants/admin_permissions.py` — 483 dòng
+- `frontend/src/features/review-job-reports/ui/JobReportQueue.jsx` — 478 dòng
+- `backend/apps/jobs/tests/test_verification_badge.py` — 477 dòng
+- `backend/apps/candidates/tests/test_api.py` — 475 dòng
+- `frontend/src/pages/admin/app/AccessControl.test.jsx` — 472 dòng
+- `frontend/src/pages/main/jobs/JobList.jsx` — 471 dòng
+- `backend/apps/services/tests/test_admin_commercial_api.py` — 468 dòng
+- `frontend/src/features/verify-employer-account/ui/EmployerBusinessLicenseForm.jsx` — 462 dòng
+- `backend/apps/cv_templates/tests/test_api_v2.py` — 462 dòng
+- `frontend/src/app/layouts/AdminNavigation.jsx` — 455 dòng
+- `frontend/src/features/edit-cv-draft/ui/CvDraftEditor.jsx` — 442 dòng
+- `frontend/src/widgets/employer-campaign-workspace/ui/CampaignJobsPanel.jsx` — 441 dòng
+- `backend/apps/accounts/api/serializers/admin_account_resources.py` — 438 dòng
+- `frontend/src/pages/main/auth/Register.jsx` — 437 dòng
+- `backend/apps/accounts/tests/test_admin_access.py` — 431 dòng
+- `backend/apps/jobs/services/moderation.py` — 430 dòng
+- `backend/apps/employers/api/serializers/verification.py` — 430 dòng
+- `backend/apps/accounts/api/serializers/auth.py` — 430 dòng
+- `backend/apps/accounts/tests/test_account_status_enforcement.py` — 428 dòng
+- `backend/apps/cv_templates/management/commands/_cv_template_catalog.py` — 426 dòng
+- `backend/apps/cv_templates/management/commands/seed_cv_catalog.py` — 425 dòng
+- `backend/apps/services/services/job_alerts.py` — 418 dòng
+- `backend/apps/employers/tests/test_domain_claims.py` — 416 dòng
+- `frontend/src/features/verify-employer-account/ui/EmployerDataProtectionForm.test.jsx` — 414 dòng
+- `backend/apps/employers/models/readiness.py` — 411 dòng
+- `backend/apps/sitecontent/tests/test_announcement_analytics.py` — 406 dòng
+- `frontend/src/features/review-employer-verification/ui/VerificationFinalDecisionPanel.jsx` — 402 dòng
+- `backend/apps/accounts/tests/test_employer_auth_audit.py` — 400 dòng
+- `frontend/src/features/edit-cv-draft/model/use-cv-draft-editor.js` — 399 dòng
+- `backend/apps/jobs/tests/test_reports.py` — 399 dòng
+- `backend/apps/accounts/tests/test_two_factor.py` — 398 dòng
+- `backend/apps/applications/tests/test_services.py` — 396 dòng
+- `backend/apps/employers/tests/test_admin_companies.py` — 387 dòng
+- `backend/apps/sitecontent/models/announcements.py` — 381 dòng
+- `frontend/src/app/layouts/EmployerWorkspaceLayout.jsx` — 380 dòng
+- `frontend/src/app/layouts/DashboardLayout.test.jsx` — 379 dòng
+- `backend/apps/applications/services/applications.py` — 374 dòng
+- `backend/apps/jobs/tests/test_query_budget.py` — 373 dòng
+- `frontend/src/app/layouts/DashboardLayout.jsx` — 372 dòng
+- `backend/apps/accounts/services/two_factor.py` — 370 dòng
+- `frontend/src/features/two-factor/ui/TwoFactorMethodsPanel.jsx` — 368 dòng
+- `backend/apps/jobs/selectors/saved_recommendations.py` — 368 dòng
+- `backend/apps/accounts/services/auth_sessions.py` — 367 dòng
+- `frontend/src/widgets/admin-consultation-leads/ui/AdminConsultationLeads.jsx` — 366 dòng
+- `frontend/src/widgets/admin-job-management/ui/AdminJobList.jsx` — 364 dòng
+- `backend/apps/jobs/admin.py` — 364 dòng
+- `backend/apps/cvs/tasks.py` — 362 dòng
+- `frontend/src/features/edit-cv-draft/ui/CvDraftEditor.test.jsx` — 360 dòng
+- `frontend/src/widgets/admin-service-catalog/ui/AdminServiceCatalog.jsx` — 359 dòng
+- `backend/apps/sitecontent/api/views/settings.py` — 357 dòng
+- `frontend/src/widgets/admin-access-control/ui/AdminAccessControl.jsx` — 355 dòng
+- `frontend/src/widgets/admin-account-management/ui/AccountTable.jsx` — 353 dòng
+- `backend/apps/employers/api/views/memberships.py` — 353 dòng
+- `frontend/src/pages/employer/app/jobs/JobDetail.jsx` — 352 dòng
+- `backend/apps/jobs/management/commands/seed_job_categories.py` — 351 dòng
+- `backend/apps/cvs/services/lifecycle.py` — 350 dòng
+- `backend/apps/blog/api/serializers/admin.py` — 349 dòng
+- `backend/apps/sitecontent/tests/test_announcement_admin_api.py` — 348 dòng
+- `frontend/src/widgets/admin-account-management/ui/VerificationQueuePanel.jsx` — 347 dòng
+- `backend/apps/blog/api/views/admin.py` — 346 dòng
+- `frontend/src/widgets/announcement-strip/ui/AnnouncementStrip.test.jsx` — 344 dòng
+- `frontend/src/features/compare-jobs/ui/JobComparisonWorkspace.jsx` — 341 dòng
+- `backend/apps/jobs/management/commands/seed_demo_jobs.py` — 340 dòng
+- `frontend/src/widgets/admin-announcement-management/ui/AdminAnnouncementManagement.jsx` — 339 dòng
+- `backend/apps/accounts/api/serializers/admin_access.py` — 339 dòng
+- `frontend/src/widgets/admin-access-control/ui/StructurePanels.jsx` — 338 dòng
+- `backend/apps/employers/services/tax_lookup.py` — 338 dòng
+- `frontend/src/pages/main/auth/VerifyEmail.jsx` — 337 dòng
+- `backend/apps/blog/models/post.py` — 337 dòng
+- `frontend/src/pages/employer/app/jobs/JobList.test.jsx` — 336 dòng
+- `frontend/src/entities/cv/model/document.js` — 336 dòng
+- `frontend/src/widgets/admin-company-directory/ui/AdminCompanyDirectory.test.jsx` — 335 dòng
+- `frontend/src/widgets/employer-campaign-workspace/ui/CampaignApplyCvPanel.jsx` — 334 dòng
+- `backend/apps/employers/api/views/media.py` — 334 dòng
+- `frontend/src/widgets/announcement-strip/ui/AnnouncementStrip.jsx` — 332 dòng
+- `frontend/src/widgets/admin-cv-catalogue/ui/AdminCvCatalogue.jsx` — 332 dòng
+- `backend/apps/knowledgebase/api/serializers/admin.py` — 332 dòng
+- `backend/apps/jobs/api/serializers/moderation.py` — 331 dòng
+- `backend/apps/cv_templates/api/views/v2.py` — 331 dòng
+- `backend/apps/cvs/services/pdf_renderer.py` — 329 dòng
+- `frontend/src/app/layouts/EmployerWorkspaceLayout.test.jsx` — 328 dòng
+- `frontend/src/pages/employer/app/Register.jsx` — 327 dòng
+- `backend/apps/jobs/models/alerts.py` — 326 dòng
+- `backend/apps/cv_templates/api/views/admin.py` — 326 dòng
+- `frontend/src/widgets/employer-campaign-workspace/ui/CampaignActivityPanel.jsx` — 323 dòng
+- `frontend/src/shared/ui/RichTextEditorImpl.jsx` — 322 dòng
+- `backend/apps/knowledgebase/tests/test_admin_api.py` — 322 dòng
+- `backend/apps/employers/tests/test_migrations.py` — 322 dòng
+- `frontend/src/widgets/admin-service-catalog/ui/ServiceInventoryPanel.jsx` — 321 dòng
+- `frontend/src/entities/location/ui/LocationFilter.jsx` — 321 dòng
+- `backend/apps/cvs/tests/test_document_services.py` — 321 dòng
+- `frontend/src/features/manage-job-alerts/ui/ManageJobAlerts.jsx` — 320 dòng
+- `frontend/src/entities/cv/model/document.test.js` — 318 dòng
+- `frontend/src/features/manage-job-services/ui/JobServiceManager.jsx` — 317 dòng
+- `backend/apps/employers/tests/test_readiness.py` — 317 dòng
+- `frontend/src/features/verify-company-domain/ui/EmployerCompanyDomainVerification.jsx` — 316 dòng
+- `frontend/src/widgets/admin-service-catalog/ui/CommercialVersionsPanel.jsx` — 315 dòng
+- `frontend/src/widgets/employer-campaign-workspace/ui/CampaignPerformanceChart.jsx` — 314 dòng
+- `frontend/src/widgets/cv-save-success/ui/CvSaveSuccessView.jsx` — 314 dòng
+- `frontend/src/features/post-job/ui/PostJobForm.jsx` — 314 dòng
+- `frontend/src/features/review-employer-verification/ui/CompanyUpdateComparisonModal.jsx` — 313 dòng
+- `backend/apps/accounts/oauth.py` — 312 dòng
+- `frontend/src/features/post-job/model/job-form-values.test.js` — 311 dòng
+- `frontend/src/widgets/employer-campaign-workspace/ui/EmployerCampaignWorkspace.jsx` — 310 dòng
+- `backend/apps/employers/tests/test_query_budget.py` — 309 dòng
+- `frontend/src/features/review-employer-verification/ui/VerificationFinalDecisionPanel.test.jsx` — 307 dòng
+- `backend/apps/employers/tests/test_dpa_grace_holds.py` — 307 dòng
+- `frontend/src/widgets/admin-access-control/ui/MembershipPanel.jsx` — 306 dòng
+- `frontend/src/widgets/employer-campaign-workspace/ui/CampaignOverviewPanel.jsx` — 305 dòng
+- `frontend/src/features/post-job/model/job-form-values.js` — 305 dòng
+- `frontend/src/features/edit-knowledge-revision/ui/KnowledgeRevisionEditor.jsx` — 304 dòng
+- `backend/apps/sitecontent/selectors/announcements.py` — 304 dòng
+- `frontend/src/widgets/admin-access-control/ui/ProvisioningScopePanel.jsx` — 302 dòng
+- `frontend/src/features/change-password/ui/ChangePasswordForm.jsx` — 302 dòng
+- `frontend/src/features/auth/ui/LoginForm.jsx` — 302 dòng
+- `frontend/src/pages/main/home/ui/FlashBadge.jsx` — 301 dòng
+- `frontend/src/features/verify-employer-account/ui/EmployerDataProtectionForm.jsx` — 301 dòng
+- `frontend/src/features/review-employer-verification/ui/CompanyUpdateReviewPanel.jsx` — 301 dòng
+- `backend/apps/sitecontent/models/settings.py` — 301 dòng
+- `backend/apps/employers/api/serializers/companies.py` — 300 dòng
+- `backend/apps/cvs/services/versions.py` — 300 dòng
+- `backend/apps/blog/services/editorial.py` — 300 dòng
+
+## Import nội bộ nóng (module được import ≥ 5 lần)
+
+- `@/shared/lib/toast` — 106 nơi import
+- `@/shared/config/portals` — 78 nơi import
+- `@/shared/api/error-mapper` — 77 nơi import
+- `apps.accounts.models` — 76 nơi import
+- `@/entities/session` — 74 nơi import
+- `apps.jobs.models` — 64 nơi import
+- `@/entities/job` — 57 nơi import
+- `@/entities/site-settings` — 54 nơi import
+- `@/shared/api/client` — 49 nơi import
+- `apps.accounts.permissions` — 45 nơi import
+- `apps.employers.models` — 41 nơi import
+- `apps.accounts.services` — 40 nơi import
+- `common.media_storage` — 36 nơi import
+- `common.public_id` — 33 nơi import
+- `@/features/auth` — 23 nơi import
+- `@/entities/cv` — 23 nơi import
+- `common.metrics` — 23 nơi import
+- `apps.employers.services` — 23 nơi import
+- `@/shared/ui/admin` — 22 nơi import
+- `apps.sitecontent.models` — 22 nơi import
+- `apps.cvs.models` — 22 nơi import
+- `@/entities/admin-access` — 21 nơi import
+- `apps.locations.models` — 21 nơi import
+- `common.r2_storage` — 20 nơi import
+- `@/entities/company` — 18 nơi import
+- `@/entities/location` — 17 nơi import
+- `apps.employers.tests.readiness_helpers` — 16 nơi import
+- `apps.uploads.services` — 15 nơi import
+- `@/entities/employer-profile` — 14 nơi import
+- `@/shared/ui/mascot` — 14 nơi import
+- `apps.applications.models` — 14 nơi import
+- `@/entities/consent` — 13 nơi import
+- `@/shared/hooks/use-document-metadata` — 13 nơi import
+- `apps.uploads.models` — 13 nơi import
+- `common.db.search` — 13 nơi import
+- `@/shared/lib/sanitize-html` — 12 nơi import
+- `apps.skills.models` — 12 nơi import
+- `apps.services.models` — 12 nơi import
+- `common.throttling` — 12 nơi import
+- `common.pagination` — 12 nơi import
+- `@/entities/announcement` — 11 nơi import
+- `@/shared/ui/ConfirmAction` — 11 nơi import
+- `apps.cv_templates.models` — 11 nơi import
+- `@/shared/config/assets` — 10 nơi import
+- `@/shared/ui/use-confirm-action` — 10 nơi import
+- `common.seo` — 10 nơi import
+- `apps.cvs.services` — 10 nơi import
+- `@/shared/hooks/use-media-query` — 9 nơi import
+- `@/shared/api/request-deduplication` — 9 nơi import
+- `@/features/track-job-engagement` — 9 nơi import
+- `@/entities/blog` — 9 nơi import
+- `apps.jobs.services` — 9 nơi import
+- `apps.cvs.schemas` — 9 nơi import
+- `apps.accounts.services.tokens` — 8 nơi import
+- `apps.knowledgebase.models` — 8 nơi import
+- `apps.services.services` — 8 nơi import
+- `@/features/saved-jobs` — 7 nơi import
+- `@/features/compare-jobs` — 7 nơi import
+- `@/shared/ui/PageLoading` — 7 nơi import
+- `@/shared/api/upload-session` — 7 nơi import
+- `@/shared/hooks/use-debounced-value` — 7 nơi import
+- `@/features/verify-employer-account` — 7 nơi import
+- `apps.candidates.models` — 7 nơi import
+- `@/entities/cv-template` — 6 nơi import
+- `@/entities/campaign` — 6 nơi import
+- `@/widgets/employer-account-settings` — 6 nơi import
+- `apps.uploads.tests.helpers` — 6 nơi import
+- `@/features/request-consultation` — 5 nơi import
+- `@/entities/account` — 5 nơi import
+- `@/shared/lib/sound-effects` — 5 nơi import
+- `@/shared/api/token-store` — 5 nơi import
+- `@/entities/candidate-preferences` — 5 nơi import
+- `@/entities/application` — 5 nơi import
+- `@/entities/locale` — 5 nơi import
+- `@/entities/admin-company` — 5 nơi import
+- `@/shared/ui/ArrowButton` — 5 nơi import
+- `../lib/job-list-params` — 5 nơi import
+- `@/features/configure-job-preferences` — 5 nơi import
+- `./CompanyLogo` — 5 nơi import
+- `@/entities/admin-job` — 5 nơi import
+- `apps.cvs.services.composition` — 5 nơi import
+- `apps.sitecontent.selectors` — 5 nơi import
+- `common.email` — 5 nơi import
+- `apps.uploads.tests.fakes` — 5 nơi import
+- `common.rich_text` — 5 nơi import
+- `apps.blog.models` — 5 nơi import
+- `apps.employers.selectors` — 5 nơi import
+- `apps.knowledgebase.services` — 5 nơi import
+- `apps.ai_core.services` — 5 nơi import
+

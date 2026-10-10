@@ -15,6 +15,7 @@ from ...selectors import (
     pinned_posts,
     published_post_detail_queryset,
     published_posts_queryset,
+    related_published_posts,
 )
 from ...services import record_post_view, upload_blog_media
 from ..serializers import (
@@ -45,7 +46,10 @@ class PostDetailView(generics.RetrieveAPIView):
     queryset = published_post_detail_queryset()
 
     def get_object(self):
-        return record_post_view(super().get_object())
+        post = record_post_view(super().get_object())
+        # Gắn related trên instance để SerializerMethodField không query lại.
+        post.prefetched_related_posts = related_published_posts(post, limit=6)
+        return post
 
 
 @extend_schema(

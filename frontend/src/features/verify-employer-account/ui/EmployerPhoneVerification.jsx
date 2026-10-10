@@ -1,19 +1,16 @@
 import {
   CheckCircleFilled,
   CustomerServiceOutlined,
-  LoadingOutlined,
-  LockOutlined,
-  PhoneOutlined,
   RiseOutlined,
   SafetyCertificateOutlined,
 } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Alert, Button, Form, Input, Modal, Result, Skeleton } from 'antd'
+import { Alert, Button, Form, Result, Skeleton } from 'antd'
 import { useState } from 'react'
-import { message } from '@/shared/lib/toast'
 import { Link } from 'react-router'
 import {
-  checkEmployerPhoneAvailability,
+  employerProfileKeys,
+  getEmployerPhoneChallenge,
   getEmployerProfile,
   sendEmployerPhoneOtp,
   verifyEmployerPhoneOtp,
@@ -25,28 +22,30 @@ import {
   EMPLOYER_PASSWORD_SETTINGS_URL,
   EMPLOYER_PHONE_VERIFY_URL,
 } from '@/shared/config/portals'
-import useDebouncedValue from '@/shared/hooks/use-debounced-value'
+import { message } from '@/shared/lib/toast'
 import { getPasswordSetupFromPhoneUrl } from '../model/phone-verification-navigation'
+import { isVietnameseMobile } from '../model/vietnamese-mobile'
+import EmployerPhoneChallengeForm from './EmployerPhoneChallengeForm'
 
 const BANNER_SRC = '/images/employer/phone-verify-banner.png'
-const PHONE_PATTERN = /^(0|\+84)\d{9,10}$/
 const PASSWORD_SETTINGS_FROM_PHONE_URL = getPasswordSetupFromPhoneUrl(
   EMPLOYER_PASSWORD_SETTINGS_URL,
   EMPLOYER_PHONE_VERIFY_URL,
 )
+const ACTIVE_DISPATCH_STATES = new Set(['queued', 'dispatching', 'retry_pending'])
 
 const BENEFITS = [
   {
     icon: SafetyCertificateOutlined,
-    text: 'Tăng cường bảo mật tài khoản nhà tuyển dụng, chống kẻ xấu giả mạo và lợi dụng tài khoản.',
+    text: 'Tăng cường bảo mật tài khoản nhà tuyển dụng, chống giả mạo và chiếm quyền sử dụng.',
   },
   {
     icon: RiseOutlined,
-    text: 'Nâng cao mức độ uy tín của thương hiệu tuyển dụng, tăng khả năng hiển thị tin tuyển dụng với ứng viên phù hợp, tăng tỷ lệ hồ sơ ứng tuyển.',
+    text: 'Nâng cao mức độ tin cậy của thương hiệu tuyển dụng với ứng viên.',
   },
   {
     icon: CustomerServiceOutlined,
-    text: 'Được đội ngũ hỗ trợ nhanh chóng qua số điện thoại đã xác thực khi có vấn đề phát sinh, rút ngắn tối đa thời gian xử lý thắc mắc, khiếu nại.',
+    text: 'Giúp đội ngũ hỗ trợ xác minh chủ tài khoản nhanh hơn khi có sự cố.',
   },
 ]
 
@@ -67,40 +66,52 @@ export default function EmployerPhoneVerification() {
   const queryClient = useQueryClient()
   const [form] = Form.useForm()
   const [passwordForm] = Form.useForm()
-  const [otpSent, setOtpSent] = useState(false)
+  const [challenge, setChallenge] = useState(null)
+  const [flowMode, setFlowMode] = useState(null)
   const [passwordOpen, setPasswordOpen] = useState(false)
 
-  const profileQuery = useQuery({ queryKey: ['employer', 'profile'], queryFn: getEmployerProfile })
+  const profileQuery = useQuery({
+    queryKey: employerProfileKeys.profile,
+    queryFn: getEmployerProfile,
+  })
+  const challengeQuery = useQuery({
+    queryKey: employerProfileKeys.phoneChallenge(challenge?.public_id),
+    queryFn: () => getEmployerPhoneChallenge(challenge.public_id),
+    enabled: Boolean(challenge?.public_id),
+    refetchInterval: (query) => (
+      ACTIVE_DISPATCH_STATES.has(query.state.data?.status || challenge?.status)
+        ? 1500
+        : false
+    ),
+  })
+  const currentChallenge = challengeQuery.data || challenge
+  const canVerify = currentChallenge?.can_verify === true
   const hotline = settingText(settings.hotline, '1900 1234')
   const supportEmail = settingText(settings.support_email, 'cskh@procv.vn')
-
   const phoneValue = (Form.useWatch('phone', form) || '').trim()
-  const debouncedPhone = useDebouncedValue(phoneValue, 500)
-  const isValidPhone = PHONE_PATTERN.test(debouncedPhone)
-  const availabilityQuery = useQuery({
-    queryKey: ['employer', 'phone-check', debouncedPhone],
-    queryFn: () => checkEmployerPhoneAvailability(debouncedPhone),
-    enabled: isValidPhone && !otpSent,
-    staleTime: 30_000,
-  })
-  const isChecking = isValidPhone && availabilityQuery.isFetching
-  const isTaken = availabilityQuery.data?.available === false
-  const isAvailable = availabilityQuery.data?.available === true
+  const validPhone = isVietnameseMobile(phoneValue)
 
   const sendMutation = useMutation({
     mutationFn: ({ phone, password }) => sendEmployerPhoneOtp(phone, password),
-    onSuccess: () => {
-      setOtpSent(true)
+    onSuccess: (data) => {
+      setChallenge(data)
       setPasswordOpen(false)
       passwordForm.resetFields()
-      message.success('Mã xác thực đã được gửi tới email tài khoản.')
+      form.setFieldValue('code', '')
+      message.success('Yêu cầu gửi mã SMS đã được tiếp nhận.')
     },
-    onError: (error) => message.error(getApiErrorMessage(error, 'Không thể gửi mã xác thực.')),
+    onError: (error) => message.error(getApiErrorMessage(error, 'Không thể gửi mã SMS.')),
   })
   const verifyMutation = useMutation({
-    mutationFn: ({ code }) => verifyEmployerPhoneOtp(code),
+    mutationFn: ({ code }) => verifyEmployerPhoneOtp(challenge.public_id, code),
     onSuccess: async () => {
-      message.success('Số điện thoại đã được xác thực.')
+      message.success(
+        flowMode === 'phone_change'
+          ? 'Số điện thoại mới đã được xác thực.'
+          : 'Số điện thoại đã được xác thực.',
+      )
+      setChallenge(null)
+      setFlowMode(null)
       await Promise.all([
         profileQuery.refetch(),
         refreshSession(),
@@ -114,20 +125,42 @@ export default function EmployerPhoneVerification() {
     const { password } = await passwordForm.validateFields()
     sendMutation.mutate({ phone: phoneValue, password })
   }
+  const resetFlow = () => {
+    setChallenge(null)
+    setFlowMode(null)
+    setPasswordOpen(false)
+    form.resetFields()
+    passwordForm.resetFields()
+  }
 
   if (profileQuery.isLoading) {
     return (
       <>
         <VerificationBanner />
+        <div className="p-5 sm:p-8"><Skeleton active paragraph={{ rows: 8 }} /></div>
+      </>
+    )
+  }
+  if (profileQuery.isError) {
+    return (
+      <>
+        <VerificationBanner />
         <div className="p-5 sm:p-8">
-          <Skeleton active paragraph={{ rows: 8 }} />
+          <Alert
+            type="error"
+            showIcon
+            message="Không thể tải trạng thái xác thực"
+            action={<Button onClick={() => profileQuery.refetch()}>Thử lại</Button>}
+          />
         </div>
       </>
     )
   }
 
   const profile = profileQuery.data || {}
-  if (profile.onboarding?.phone_verified) {
+  const verifiedPhone = profile.verified_phone || profile.contact_phone || ''
+  const alreadyVerified = Boolean(profile.onboarding?.phone_verified)
+  if (alreadyVerified && !flowMode) {
     return (
       <>
         <VerificationBanner />
@@ -136,7 +169,29 @@ export default function EmployerPhoneVerification() {
             status="success"
             icon={<CheckCircleFilled className="text-emerald-500" />}
             title="Số điện thoại đã được xác thực"
-            subTitle={profile.verified_phone || profile.contact_phone}
+            subTitle={verifiedPhone}
+            extra={[
+              <Button
+                key="change"
+                type="primary"
+                onClick={() => {
+                  setFlowMode('phone_change')
+                  form.setFieldsValue({ phone: '', code: '' })
+                }}
+              >
+                Đổi số điện thoại
+              </Button>,
+              <Button
+                key="reverify"
+                onClick={() => {
+                  setFlowMode('reverify')
+                  form.setFieldsValue({ phone: verifiedPhone, code: '' })
+                  setPasswordOpen(true)
+                }}
+              >
+                Xác minh lại
+              </Button>,
+            ]}
           />
         </div>
       </>
@@ -151,18 +206,15 @@ export default function EmployerPhoneVerification() {
             type="warning"
             showIcon
             message="Tài khoản chưa có mật khẩu đăng nhập"
-            description={
+            description={(
               <span>
                 Vui lòng{' '}
-                <Link
-                  to={PASSWORD_SETTINGS_FROM_PHONE_URL}
-                  className="font-bold"
-                >
+                <Link to={PASSWORD_SETTINGS_FROM_PHONE_URL} className="font-bold">
                   cập nhật mật khẩu tại đây
                 </Link>{' '}
                 trước khi xác thực số điện thoại. Hỗ trợ: {hotline} · {supportEmail}.
               </span>
-            }
+            )}
           />
         </div>
       </>
@@ -173,99 +225,55 @@ export default function EmployerPhoneVerification() {
     <>
       <VerificationBanner />
       <div className="p-5 sm:p-8">
-        <h2 className="text-xl font-black text-slate-900">Cập nhật và xác thực số điện thoại</h2>
-
-        <Form
-          form={form}
-          layout="vertical"
-          className="mt-5"
-          initialValues={{
-            phone: profile.contact_phone || profile.verified_phone || user?.phone || '',
-          }}
-          onFinish={() => {
-            if (otpSent) verifyMutation.mutate(form.getFieldsValue())
-            else if (isAvailable && !isTaken && !isChecking) setPasswordOpen(true)
-          }}
-        >
-          {!otpSent ? (
-            <>
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
-                <Form.Item
-                  name="phone"
-                  className="mb-0 flex-1"
-                  validateStatus={isTaken ? 'error' : undefined}
-                  rules={[
-                    { required: true, message: 'Nhập số điện thoại' },
-                    { pattern: PHONE_PATTERN, message: 'Số điện thoại không hợp lệ' },
-                  ]}
-                >
-                  <Input
-                    size="large"
-                    prefix={<PhoneOutlined className="text-slate-400" />}
-                    suffix={isChecking ? <LoadingOutlined className="text-emerald-500" /> : null}
-                    inputMode="tel"
-                    placeholder="0912 345 678"
-                    autoComplete="tel"
-                  />
-                </Form.Item>
-                <Button
-                  type="primary"
-                  htmlType="submit"
-                  size="large"
-                  disabled={!isValidPhone || isChecking || isTaken || !isAvailable}
-                  className="sm:w-40"
-                >
-                  Gửi mã xác thực
-                </Button>
-              </div>
-              {isTaken && (
-                <p className="mt-3 text-sm leading-6 text-red-500">
-                  {availabilityQuery.data?.detail ||
-                    'Đã có nhà tuyển dụng khác sử dụng & xác thực số điện thoại này, bạn vui lòng nhập số điện thoại khác và thực hiện lại thao tác.'}{' '}
-                  Nếu bạn gặp khó khăn, vui lòng liên hệ với bộ phận Vận hành dịch vụ qua số Hotline{' '}
-                  <b>{hotline}</b> hoặc gửi email tới địa chỉ {supportEmail}.
-                </p>
-              )}
-            </>
-          ) : (
-            <>
-              <p className="mb-4 text-sm leading-6 text-slate-500">
-                Mã OTP gồm 6 chữ số đã được gửi tới email đăng nhập của bạn.
-              </p>
-              <Form.Item
-                name="code"
-                label="Mã OTP gồm 6 chữ số"
-                rules={[{ required: true, len: 6, message: 'Nhập đủ 6 chữ số' }]}
-              >
-                <Input size="large" inputMode="numeric" maxLength={6} placeholder="000000" />
-              </Form.Item>
-              <div className="flex flex-col gap-2 sm:flex-row">
-                <Button type="primary" htmlType="submit" size="large" loading={verifyMutation.isPending}>
-                  Xác nhận mã OTP
-                </Button>
-                <Button size="large" onClick={() => setPasswordOpen(true)} loading={sendMutation.isPending}>
-                  Gửi lại mã
-                </Button>
-                <Button type="link" onClick={() => setOtpSent(false)}>
-                  Đổi số điện thoại
-                </Button>
-              </div>
-            </>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h2 className="text-xl font-black text-slate-900">
+              {flowMode === 'phone_change'
+                ? 'Đổi số điện thoại đã xác thực'
+                : flowMode === 'reverify'
+                  ? 'Xác minh lại số điện thoại'
+                  : 'Xác thực số điện thoại'}
+            </h2>
+            <p className="mt-1 text-sm leading-6 text-slate-500">
+              Mã xác thực được gửi trực tiếp qua SMS và không được gửi qua email.
+            </p>
+          </div>
+          {alreadyVerified && (
+            <Button onClick={resetFlow}>Quay lại</Button>
           )}
-        </Form>
+        </div>
+
+        <EmployerPhoneChallengeForm
+          form={form}
+          passwordForm={passwordForm}
+          flowMode={flowMode}
+          initialPhone={flowMode === 'reverify'
+            ? verifiedPhone
+            : profile.contact_phone || user?.phone || ''}
+          phoneValue={phoneValue}
+          validPhone={validPhone}
+          challenge={currentChallenge}
+          challengeError={challengeQuery.isError}
+          canVerify={canVerify}
+          passwordOpen={passwordOpen}
+          sendPending={sendMutation.isPending}
+          verifyPending={verifyMutation.isPending}
+          onOpenPassword={() => setPasswordOpen(true)}
+          onClosePassword={() => {
+            setPasswordOpen(false)
+            passwordForm.resetFields()
+          }}
+          onSubmitPassword={submitPassword}
+          onVerify={(values) => verifyMutation.mutate(values)}
+          onClearChallenge={() => setChallenge(null)}
+        />
 
         <div className="mt-8 border-t border-slate-100 pt-6">
-          <p className="font-semibold text-slate-800">Lưu ý:</p>
+          <p className="font-semibold text-slate-800">Lưu ý bảo mật:</p>
           <ul className="mt-2 space-y-1.5 text-sm leading-6 text-slate-500">
-            <li>
-              Số điện thoại bạn cung cấp nên là số điện thoại bạn thường xuyên sử dụng và đã được đăng ký
-              đầy đủ thông tin để tiện cho việc liên lạc sau này.
-            </li>
-            <li>
-              Đường truyền không ổn định có thể sẽ khiến bạn không nhận được mã xác thực, hãy thử lại khi
-              đường truyền ổn định.
-            </li>
-            <li>Nếu hệ thống vẫn chưa gửi mã OTP, hãy nhấn "Gửi lại" sau khi mã OTP cũ hết hiệu lực.</li>
+            <li>Mỗi mã chỉ dùng được cho đúng yêu cầu SMS vừa tạo và hết hạn sau 10 phút.</li>
+            <li>Gửi mã mới sẽ vô hiệu mã cũ; không chia sẻ mã với bất kỳ ai.</li>
+            <li>Đổi số không làm mất xác thực hiện tại cho tới khi số mới được xác thực thành công.</li>
           </ul>
         </div>
 
@@ -284,39 +292,6 @@ export default function EmployerPhoneVerification() {
         </div>
       </div>
 
-      <Modal
-        title="Nhập mật khẩu để xác thực"
-        open={passwordOpen}
-        onOk={submitPassword}
-        onCancel={() => {
-          setPasswordOpen(false)
-          passwordForm.resetFields()
-        }}
-        okText="Xác nhận và gửi mã"
-        cancelText="Hủy"
-        confirmLoading={sendMutation.isPending}
-        destroyOnHidden
-      >
-        <p className="mb-4 text-sm leading-6 text-slate-500">
-          Vì lý do bảo mật, vui lòng nhập mật khẩu đăng nhập của bạn để tiếp tục gửi mã xác thực tới số{' '}
-          <b>{phoneValue}</b>.
-        </p>
-        <Form form={passwordForm} layout="vertical" onFinish={submitPassword}>
-          <Form.Item
-            name="password"
-            label="Mật khẩu đăng nhập"
-            rules={[{ required: true, message: 'Nhập mật khẩu đăng nhập' }]}
-          >
-            <Input.Password
-              size="large"
-              prefix={<LockOutlined className="text-slate-400" />}
-              placeholder="Mật khẩu"
-              autoComplete="current-password"
-              autoFocus
-            />
-          </Form.Item>
-        </Form>
-      </Modal>
     </>
   )
 }

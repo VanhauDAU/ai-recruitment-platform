@@ -175,6 +175,7 @@ class JobLanguageRequirementInline(admin.TabularInline):
 
 @admin.register(Job)
 class JobAdmin(admin.ModelAdmin):
+    ordering = ('-created_at', '-id')
     list_display = [
         'title',
         'company',

@@ -1,4 +1,25 @@
 import api from '@/shared/api/client'
+import { forgetPreparedUpload, prepareCleanUpload } from '@/shared/api/upload-session'
+
+const LEGACY_UPLOAD_FALLBACK = Object.freeze({ legacy_file: true })
+
+function apiErrorCode(error) {
+  return error?.response?.data?.code || error?.response?.data?.detail?.code || error?.code
+}
+
+async function prepareCandidateUpload(file, options = {}) {
+  try {
+    return await prepareCleanUpload(file, 'candidate_cv', {
+      onStateChange: options.onUploadStateChange,
+      signal: options.signal,
+    })
+  } catch (error) {
+    if (apiErrorCode(error) === 'UPLOAD_PIPELINE_DISABLED') {
+      return LEGACY_UPLOAD_FALLBACK
+    }
+    throw error
+  }
+}
 
 export async function getMyCvs() {
   const { data } = await api.get('/v2/cvs/')
@@ -20,16 +41,26 @@ export async function setDefaultCv(publicId, isDefault) {
 }
 
 export async function importCvFile(file, title, options = {}) {
+  const uploadSession = options.uploadSession || await prepareCandidateUpload(file, options)
   const body = new FormData()
-  body.append('file', file)
+  if (uploadSession.legacy_file) body.append('file', file)
+  else body.append('upload_session', uploadSession.public_id)
   if (title) body.append('title', title)
   if (options.templatePublicId) body.append('template_public_id', options.templatePublicId)
   if (options.language) body.append('language', options.language)
   if (options.themeColor) body.append('theme_color', options.themeColor)
-  const { data } = await api.post('/v2/cvs/imports/', body, {
-    headers: options.idempotencyKey ? { 'Idempotency-Key': options.idempotencyKey } : {},
-  })
-  return data
+  try {
+    const { data } = await api.post('/v2/cvs/imports/', body, {
+      headers: options.idempotencyKey ? { 'Idempotency-Key': options.idempotencyKey } : {},
+    })
+    forgetPreparedUpload(file, 'candidate_cv')
+    return data
+  } catch (error) {
+    if (apiErrorCode(error) === 'UPLOAD_ALREADY_SUBMITTED') {
+      forgetPreparedUpload(file, 'candidate_cv')
+    }
+    throw error
+  }
 }
 
 export async function retryCvImport(publicId) {
@@ -147,11 +178,21 @@ export async function applyCvSample(publicId, sampleContentPublicId, lockVersion
   return { ...data, etag: headers.etag }
 }
 
-export async function uploadCvAsset(file) {
+export async function uploadCvAsset(file, options = {}) {
+  const uploadSession = options.uploadSession || await prepareCandidateUpload(file, options)
   const body = new FormData()
-  body.append('file', file)
-  const { data } = await api.post('/v2/cvs/assets/', body)
-  return data
+  if (uploadSession.legacy_file) body.append('file', file)
+  else body.append('upload_session', uploadSession.public_id)
+  try {
+    const { data } = await api.post('/v2/cvs/assets/', body)
+    forgetPreparedUpload(file, 'candidate_cv')
+    return data
+  } catch (error) {
+    if (apiErrorCode(error) === 'UPLOAD_ALREADY_SUBMITTED') {
+      forgetPreparedUpload(file, 'candidate_cv')
+    }
+    throw error
+  }
 }
 
 export async function getCvOwnerView(publicId) {

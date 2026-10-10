@@ -90,11 +90,11 @@ function ApplicationDrawer({ application, onClose }) {
 
 export default function AdminJobApplications({
   job,
-  openSections,
+  openSection,
   onToggle,
   canViewApplications,
 }) {
-  const open = openSections.has('applications')
+  const open = openSection === 'applications'
   const [keyword, setKeyword] = useState('')
   const [status, setStatus] = useState('')
   const [ordering, setOrdering] = useState('newest')

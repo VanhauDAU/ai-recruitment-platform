@@ -4,7 +4,6 @@ from unittest.mock import patch
 
 from django.core.cache import cache
 from django.core.files.base import ContentFile
-from django.core.files.storage import default_storage
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import transaction
 from django.test import TestCase, override_settings
@@ -13,6 +12,7 @@ from rest_framework import status
 from rest_framework.test import APITransactionTestCase
 
 from apps.accounts.models import User
+from common.r2_storage import public_media_storage
 
 from ..api.serializers import AdminSiteSettingSerializer
 from ..models import Locale, SiteSetting
@@ -80,6 +80,33 @@ class SiteSettingCacheInvalidationTests(TestCase):
         self.assertEqual(rollback_callbacks, [])
         self.assertEqual(cache.get(PUBLIC_SETTINGS_CACHE_KEY), committed)
 
+    @override_settings(
+        KNOWLEDGEBASE_PUBLIC_ENABLED=True,
+        KNOWLEDGEBASE_SEARCH_INDEX_ENABLED=True,
+    )
+    def test_public_settings_exposes_backend_knowledgebase_capability(self):
+        response = self.client.get(reverse('site-settings'))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIs(response.data['knowledgebase_public_enabled'], True)
+        self.assertIs(response.data['knowledgebase_search_index_enabled'], True)
+
+    @override_settings(KNOWLEDGEBASE_PUBLIC_ENABLED=False)
+    def test_public_settings_capability_is_fail_closed_and_not_overridden_by_database(self):
+        SiteSetting.objects.create(
+            key='knowledgebase_public_enabled',
+            label='Không dùng làm capability',
+            value=True,
+            value_type=SiteSetting.ValueType.BOOLEAN,
+            is_public=True,
+        )
+
+        response = self.client.get(reverse('site-settings'))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIs(response.data['knowledgebase_public_enabled'], False)
+        self.assertIs(response.data['knowledgebase_search_index_enabled'], False)
+
 
 @override_settings(MEDIA_ROOT=TEST_MEDIA_ROOT, ALLOWED_HOSTS=['testserver'], CACHES=LOCAL_CACHE)
 class SiteSettingImageUploadTests(APITransactionTestCase):
@@ -96,7 +123,9 @@ class SiteSettingImageUploadTests(APITransactionTestCase):
             is_superuser=True,
         )
         self.client.force_authenticate(self.admin)
-        self.old_path = default_storage.save('site/settings/old-logo.png', ContentFile(PNG_BYTES))
+        self.old_path = public_media_storage().save(
+            'site/settings/old-logo.png', ContentFile(PNG_BYTES)
+        )
         self.setting = SiteSetting.objects.create(
             key='brand_logo_url',
             label='Logo đầy đủ',
@@ -120,7 +149,7 @@ class SiteSettingImageUploadTests(APITransactionTestCase):
         self.assertIn('/media/site/settings/', response.data['display_values'][self.setting.key])
         self.setting.refresh_from_db()
         self.assertEqual(self.setting.value, saved_value)
-        self.assertFalse(default_storage.exists(self.old_path))
+        self.assertFalse(public_media_storage().exists(self.old_path))
 
     def test_legacy_upload_endpoint_no_longer_auto_saves_setting(self):
         upload = SimpleUploadedFile('logo.png', PNG_BYTES, content_type='image/png')

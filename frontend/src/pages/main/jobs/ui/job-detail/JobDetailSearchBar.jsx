@@ -2,9 +2,8 @@ import { SearchOutlined } from '@ant-design/icons'
 import { Button, Input } from 'antd'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { getJobCategories } from '@/entities/job'
+import { getJobCategories, JobCategoryTreePicker } from '@/entities/job'
 import { LocationFilter } from '@/entities/location'
-import CategoryPicker from '../CategoryPicker'
 
 // Thanh tìm kiếm độc lập cho trang chi tiết: giữ người dùng trong ngữ cảnh
 // tìm việc, nhưng không mang theo state/phụ thuộc phức tạp của trang danh sách.
@@ -36,8 +35,10 @@ export default function JobDetailSearchBar() {
     <section className="bg-gradient-to-r from-[#087a51] to-[var(--brand-primary)] shadow-sm">
       <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-3 lg:flex-row">
         <div className="lg:w-64 [&_button]:!h-11 [&_button]:!rounded-lg">
-          <CategoryPicker
+          <JobCategoryTreePicker
+            ariaLabel="Danh mục nghề"
             categories={categories}
+            placeholder="Danh mục Nghề"
             value={selectedCategories}
             onChange={setSelectedCategories}
           />

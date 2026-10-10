@@ -1,10 +1,12 @@
 import { MailOutlined } from '@ant-design/icons'
 import { Switch, Tooltip } from 'antd'
 import { TwoFactorMethodsPanel } from '@/features/two-factor'
+import { EmployerNotificationPreferences } from '@/features/configure-employer-notifications'
 
 export default function EmployerGeneralSettings() {
   return (
     <div className="space-y-4">
+      <EmployerNotificationPreferences />
       <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3 rounded-lg border border-slate-200 p-3 sm:gap-4 sm:p-5">
         <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-lg text-slate-600"><MailOutlined /></span>
         <div className="min-w-0 flex-1">

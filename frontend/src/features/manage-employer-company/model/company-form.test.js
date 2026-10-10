@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest'
-import { buildCompanyChanges, companyToForm, validateCompanyImage } from './company-form'
+import {
+  buildCompanyChanges,
+  COMPANY_DESCRIPTION_MIN_LENGTH,
+  companyDescriptionTextLength,
+  companyDescriptionValidationError,
+  companyTaxCodeValidationError,
+  companyToForm,
+  hasCompanyFormValueChanges,
+  validateCompanyImage,
+} from './company-form'
 
 const company = {
   business_type: 'enterprise',
@@ -34,6 +43,41 @@ describe('company form model', () => {
     expect(buildCompanyChanges(values, company)).toEqual({ address: 'TP.HCM' })
   })
 
+  it('does not submit an implicit trade-name change for inconsistent legacy data', () => {
+    const legacyCompany = {
+      ...company,
+      company_name: 'Công ty Cổ phần Acme',
+      trade_name: 'Acme cũ',
+      trade_name_same_as_registered: true,
+    }
+    const values = {
+      ...companyToForm(legacyCompany),
+      address: 'TP.HCM',
+      trade_name: legacyCompany.company_name,
+    }
+
+    expect(buildCompanyChanges(values, legacyCompany)).toEqual({ address: 'TP.HCM' })
+  })
+
+  it('keeps an explicit pending trade-name change when another field is edited', () => {
+    const legacyCompany = {
+      ...company,
+      company_name: 'Công ty Cổ phần Acme',
+      trade_name: 'Acme cũ',
+      trade_name_same_as_registered: true,
+    }
+    const pendingChanges = { trade_name: legacyCompany.company_name }
+    const values = {
+      ...companyToForm(legacyCompany, pendingChanges),
+      address: 'TP.HCM',
+    }
+
+    expect(buildCompanyChanges(values, legacyCompany, { pendingChanges })).toEqual({
+      trade_name: 'Công ty Cổ phần Acme',
+      address: 'TP.HCM',
+    })
+  })
+
   it('uses the latest pending values when reopening an update request', () => {
     expect(companyToForm(company, {
       website_url: 'https://acme.vn/abc',
@@ -46,9 +90,38 @@ describe('company form model', () => {
     })
   })
 
+  it('detects only actual form value changes against the opened draft', () => {
+    const initial = {
+      company_name: 'Công ty ABC',
+      address: 'Hà Nội',
+      markets: [],
+    }
+
+    expect(hasCompanyFormValueChanges({ ...initial }, initial)).toBe(false)
+    expect(hasCompanyFormValueChanges({ ...initial, address: 'TP.HCM' }, initial)).toBe(true)
+  })
+
   it('validates image type and the 5 MB boundary before upload', () => {
     expect(validateCompanyImage(new File(['ok'], 'office.webp', { type: 'image/webp' }))).toBe('')
     expect(validateCompanyImage(new File(['bad'], 'office.gif', { type: 'image/gif' }))).toMatch(/JPG/)
     expect(validateCompanyImage({ type: 'image/png', size: 5 * 1024 * 1024 + 1 })).toMatch(/5 MB/)
+  })
+
+  it('accepts only 10 or 13 numeric characters for a company tax code', () => {
+    expect(companyTaxCodeValidationError('0101234567')).toBe('')
+    expect(companyTaxCodeValidationError('0101234567890')).toBe('')
+    expect(companyTaxCodeValidationError('0101234567-890')).toBe('Mã số thuế chỉ được gồm chữ số.')
+    expect(companyTaxCodeValidationError('01012345678')).toBe('Mã số thuế phải gồm đúng 10 hoặc 13 chữ số.')
+    expect(companyTaxCodeValidationError('')).toBe('Nhập mã số thuế.')
+  })
+
+  it('requires 500 visible description characters without counting HTML markup', () => {
+    const tooShort = `<p>${'a'.repeat(COMPANY_DESCRIPTION_MIN_LENGTH - 1)}</p>`
+    const valid = `<p>${'a'.repeat(250)}</p><p>${'b'.repeat(250)}</p>`
+
+    expect(companyDescriptionTextLength(tooShort)).toBe(499)
+    expect(companyDescriptionValidationError(tooShort)).toContain('hiện có 499')
+    expect(companyDescriptionTextLength(valid)).toBe(COMPANY_DESCRIPTION_MIN_LENGTH)
+    expect(companyDescriptionValidationError(valid)).toBe('')
   })
 })

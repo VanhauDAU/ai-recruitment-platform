@@ -47,12 +47,12 @@ export default function AccessControlTabs({
       label: 'Nhân viên',
       children: (
         <MembershipPanel
-          memberships={membership.items}
+          data={membership.data}
           query={membership.query}
-          page={membership.page}
-          includeRevoked={membership.includeRevoked}
-          onPageChange={membership.onPageChange}
-          onIncludeRevokedChange={membership.onIncludeRevokedChange}
+          departments={membership.departments}
+          roles={membership.roles}
+          filters={membership.filters}
+          onFiltersChange={membership.onFiltersChange}
           onAssign={membership.onAssign}
           onReplace={membership.onReplace}
           onImpact={membership.onImpact}

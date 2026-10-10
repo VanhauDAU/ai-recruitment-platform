@@ -28,7 +28,9 @@ export function currentDocumentSet(documents) {
   const business = verificationDocuments.filter(
     (document) => document.doc_type === 'business_registration',
   )
-  if (business.length) return { method: 'business_registration', documents: business }
+  if (business.length) {
+    return { method: 'business_registration', documents: business.slice(0, 1) }
+  }
 
   const authorization = verificationDocuments.filter(
     (document) => document.doc_type === 'authorization_letter',
@@ -55,14 +57,19 @@ export function filesFromUploadList(files) {
   return files.map((file) => file.originFileObj || file)
 }
 
-export async function uploadDocumentSet(docType, files, verificationMethod) {
+export async function uploadDocumentSet(docType, files, verificationMethod, options = {}) {
   const savedDocuments = []
   for (const [index, file] of files.entries()) {
-    const options = {}
-    if (index === 0 && verificationMethod) options.verificationMethod = verificationMethod
-    if (index > 0) options.append = true
-    const savedDocument = Object.keys(options).length
-      ? await uploadEmployerCompanyDocument(docType, file, options)
+    const documentOptions = {
+      onUploadStateChange: options.onUploadStateChange,
+      uploadSession: options.uploadSessions?.get(file),
+    }
+    if (index === 0 && verificationMethod) {
+      documentOptions.verificationMethod = verificationMethod
+    }
+    if (index > 0) documentOptions.append = true
+    const savedDocument = Object.values(documentOptions).some(Boolean)
+      ? await uploadEmployerCompanyDocument(docType, file, documentOptions)
       : await uploadEmployerCompanyDocument(docType, file)
     savedDocuments.push(savedDocument)
   }

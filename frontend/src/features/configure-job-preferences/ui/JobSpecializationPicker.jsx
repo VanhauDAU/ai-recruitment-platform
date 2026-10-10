@@ -11,7 +11,7 @@ function normalize(value) {
   return String(value || '').toLocaleLowerCase('vi-VN')
 }
 
-export default function JobSpecializationPicker({ categories, disabled, onChange, value = [] }) {
+export default function JobSpecializationPicker({ categories = [], disabled, maxSelections = MAX_DESIRED_SPECIALIZATIONS, onChange, value = [] }) {
   const taxonomy = useMemo(() => buildJobPreferenceTaxonomy(categories), [categories])
   const [open, setOpen] = useState(false)
   const [activeGroupId, setActiveGroupId] = useState(null)
@@ -43,7 +43,7 @@ export default function JobSpecializationPicker({ categories, disabled, onChange
   function canSelect(ids) {
     const nextIds = new Set(selectedIds)
     ids.forEach((id) => nextIds.add(id))
-    return nextIds.size <= MAX_DESIRED_SPECIALIZATIONS
+    return nextIds.size <= maxSelections
   }
 
   function toggleSpecializations(ids) {
@@ -52,7 +52,7 @@ export default function JobSpecializationPicker({ categories, disabled, onChange
       const allSelected = ids.every((id) => current.has(id))
       const next = new Set(current)
       ids.forEach((id) => (allSelected ? next.delete(id) : next.add(id)))
-      if (!allSelected && next.size > MAX_DESIRED_SPECIALIZATIONS) return current
+      if (!allSelected && next.size > maxSelections) return current
       return next
     })
   }
@@ -117,7 +117,7 @@ export default function JobSpecializationPicker({ categories, disabled, onChange
           open
           footer={null}
           onCancel={() => setOpen(false)}
-          title={<div><span>Chọn vị trí chuyên môn</span><span className="ml-2 text-sm font-normal text-slate-400">Tối đa {MAX_DESIRED_SPECIALIZATIONS} vị trí</span></div>}
+          title={<div><span>Chọn vị trí chuyên môn</span><span className="ml-2 text-sm font-normal text-slate-400">Có thể chọn {maxSelections} vị trí trong danh mục</span></div>}
           width={900}
           style={{ maxWidth: 'calc(100vw - 24px)', top: 12 }}
           className="[&_.ant-modal-body]:!p-0"
@@ -152,7 +152,7 @@ export default function JobSpecializationPicker({ categories, disabled, onChange
                       <div className="mt-3 flex flex-wrap gap-2">
                         {specializations.map((specialization) => {
                           const selected = selectedIds.has(specialization.id)
-                          const disabledSpecialization = !selected && selectedIds.size >= MAX_DESIRED_SPECIALIZATIONS
+                          const disabledSpecialization = !selected && selectedIds.size >= maxSelections
                           return <button key={specialization.id} type="button" disabled={disabledSpecialization} onClick={() => toggleSpecializations([specialization.id])} className={`rounded-lg border px-3 py-2 text-left text-sm transition ${selected ? 'border-emerald-600 bg-emerald-600 text-white' : 'border-slate-200 bg-white text-slate-700 hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700'} disabled:cursor-not-allowed disabled:opacity-40`}>{selected && <CheckOutlined className="mr-1.5 text-xs" />}{specialization.name}</button>
                         })}
                       </div>
@@ -164,7 +164,7 @@ export default function JobSpecializationPicker({ categories, disabled, onChange
             </div>
             <div className="flex flex-col gap-3 border-t border-slate-100 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
               <Button type="link" disabled={!selectedIds.size} onClick={() => setSelectedIds(new Set())}>Bỏ chọn tất cả</Button>
-              <div className="flex items-center justify-between gap-3 sm:justify-end"><span className="text-sm text-slate-500">Đã chọn {selectedIds.size}/{MAX_DESIRED_SPECIALIZATIONS}</span><div className="flex gap-2"><Button onClick={() => setOpen(false)}>Hủy</Button><Button type="primary" onClick={apply}>Xác nhận</Button></div></div>
+              <div className="flex items-center justify-between gap-3 sm:justify-end"><span className="text-sm text-slate-500">Đã chọn {selectedIds.size}/{maxSelections}</span><div className="flex gap-2"><Button onClick={() => setOpen(false)}>Hủy</Button><Button type="primary" onClick={apply}>Xác nhận</Button></div></div>
             </div>
           </div>
         </Modal>

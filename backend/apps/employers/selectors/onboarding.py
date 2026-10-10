@@ -3,22 +3,19 @@
 from django.conf import settings
 from django.db.models import Q
 
-from common.company_email import is_company_domain_email
+from apps.jobs.models import JobReport
+from common.company_email import email_domain
 
-from ..models import CompanyDocument, EmployerVerificationCase
+from ..models import CompanyDocument, DpaStatus, EmployerVerificationCase
+from ..models.readiness import current_dpa_status
 from .company_status import has_explicit_company_link
+from .domain_claims import effective_company_domain_claims
 
 INITIAL_ONBOARDING_STEP_LABELS = {
     'registration_completed': 'Hồ sơ đăng ký',
     'email_verified': 'Xác minh email',
     'consulting_need_completed': 'Nhu cầu tuyển dụng',
 }
-
-
-def _is_company_email(recruiter):
-    """Return whether the verified user email belongs to the company domain."""
-    company_email = getattr(recruiter.company, 'email', '') if recruiter.company_id else ''
-    return is_company_domain_email(recruiter.user.email, company_email)
 
 
 def build_employer_initial_onboarding(recruiter, *, has_recruitment_need=None):
@@ -44,7 +41,7 @@ def build_employer_initial_onboarding(recruiter, *, has_recruitment_need=None):
     }
 
 
-def build_employer_onboarding_steps(recruiter):
+def build_employer_onboarding_steps(recruiter, *, badge_eligibility=None):
     """Derive every onboarding/checklist state from its canonical record."""
     initial_onboarding = build_employer_initial_onboarding(recruiter)
     company_linked = has_explicit_company_link(recruiter)
@@ -65,6 +62,7 @@ def build_employer_onboarding_steps(recruiter):
         owned_documents |= Q(verification_case=case)
     case_documents = CompanyDocument.objects.filter(
         owned_documents,
+        company_id=recruiter.company_id,
         is_current=True,
     )
     business_types = {
@@ -72,15 +70,30 @@ def build_employer_onboarding_steps(recruiter):
         CompanyDocument.DocType.BUSINESS_REGISTRATION,
         CompanyDocument.DocType.IDENTITY_DOCUMENT,
     }
-    has_business_doc = case_documents.filter(doc_type__in=business_types).exists()
-    has_approved_business_doc = (
-        has_business_doc
-        and not case_documents.filter(
-            doc_type__in=business_types,
-        )
-        .exclude(status=CompanyDocument.Status.APPROVED)
+    has_business_doc = (
+        case_documents.filter(doc_type__in=business_types)
+        .exclude(status=CompanyDocument.Status.REJECTED)
         .exists()
     )
+    approved_business_types = set(
+        case_documents.filter(
+            doc_type__in=business_types,
+            status=CompanyDocument.Status.APPROVED,
+        ).values_list('doc_type', flat=True)
+    )
+    if (
+        case is not None
+        and case.verification_method
+        == EmployerVerificationCase.VerificationMethod.AUTHORIZATION_AND_ID
+    ):
+        has_approved_business_doc = {
+            CompanyDocument.DocType.AUTHORIZATION_LETTER,
+            CompanyDocument.DocType.IDENTITY_DOCUMENT,
+        }.issubset(approved_business_types)
+    else:
+        has_approved_business_doc = (
+            CompanyDocument.DocType.BUSINESS_REGISTRATION in approved_business_types
+        )
     has_candidate_dpa = (
         case_documents.filter(
             doc_type=CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT,
@@ -95,19 +108,46 @@ def build_employer_onboarding_steps(recruiter):
         status=CompanyDocument.Status.APPROVED,
     ).exists()
     case_approved = case is not None and case.status == EmployerVerificationCase.Status.APPROVED
+    if badge_eligibility is None:
+        domain = email_domain(recruiter.user.email) if recruiter.user.email_verified else ''
+        badge_criteria = {
+            'email_domain_verified': bool(
+                recruiter.company_id
+                and domain
+                and effective_company_domain_claims(
+                    company_id=recruiter.company_id,
+                    domain=domain,
+                ).exists()
+            ),
+            'phone_verified': bool(
+                recruiter.phone_verified_at
+                and recruiter.verified_phone
+                and recruiter.contact_phone == recruiter.verified_phone
+                and recruiter.user.phone == recruiter.verified_phone
+            ),
+            'no_report_history': not JobReport.objects.filter(
+                posted_by_id_snapshot=recruiter.user_id,
+                status=JobReport.Status.UPHELD,
+                reason__in=(
+                    JobReport.Reason.FAKE_COMPANY,
+                    JobReport.Reason.SCAM,
+                    JobReport.Reason.WRONG_INFO,
+                ),
+            ).exists(),
+        }
+    else:
+        badge_criteria = {item['key']: item['passed'] for item in badge_eligibility['criteria']}
     steps = {
         **initial_onboarding['steps'],
-        'phone_verified': recruiter.phone_verified_at is not None,
+        'phone_verified': badge_criteria['phone_verified'],
         'company_linked': company_linked,
         'business_doc_submitted': has_business_doc,
         'business_doc_approved': has_approved_business_doc,
-        'email_domain_verified': recruiter.user.email_verified and _is_company_email(recruiter),
-        # Chưa có model lịch sử báo cáo tin tuyển dụng; giữ cờ tách biệt để
-        # khi bổ sung workflow báo cáo chỉ cần thay nguồn dữ liệu tại đây.
-        'no_report_history': True,
+        'email_domain_verified': badge_criteria['email_domain_verified'],
+        'no_report_history': badge_criteria['no_report_history'],
         'candidate_dpa_submitted': has_candidate_dpa,
         'candidate_dpa_approved': has_approved_candidate_dpa,
-        'dpa_accepted': recruiter.dpa_accepted_at is not None,
+        'dpa_accepted': current_dpa_status(recruiter) == DpaStatus.CURRENT,
         'representative_verified': case_approved,
         'first_job_posted': recruiter.user.posted_jobs.exists(),
     }

@@ -131,16 +131,24 @@ class OAuthFlowTests(APITestCase):
             1,
         )
 
-    def test_same_email_same_role_requires_confirmed_linking(self):
+    def test_verified_google_email_links_existing_password_account(self):
         existing = User.objects.create_user(
             email='social@example.com', password='Password@123', role=User.Role.CANDIDATE
         )
         response = self._callback()
-        self.assertIn('error=link_confirmation_required', response.url)
+        complete = self._complete(response.url)
+
+        self.assertEqual(complete.status_code, status.HTTP_200_OK)
+        self.assertEqual(complete.data['user']['public_id'], existing.public_id)
         existing.refresh_from_db()
-        self.assertFalse(existing.email_verified)
+        self.assertTrue(existing.email_verified)
         self.assertTrue(existing.has_usable_password())
-        self.assertEqual(existing.social_accounts.count(), 0)
+        self.assertTrue(
+            existing.social_accounts.filter(
+                provider='google',
+                provider_user_id=GOOGLE_PROFILE['id'],
+            ).exists()
+        )
 
     def test_google_employer_portal_creates_separate_account_from_candidate(self):
         """Mô hình tách cổng: đã có tài khoản ỨNG VIÊN cùng email; Google cổng NTD

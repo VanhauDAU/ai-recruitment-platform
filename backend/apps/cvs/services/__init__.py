@@ -1,11 +1,12 @@
 """Write workflows for the CV domain."""
 
-from .assets import create_avatar_asset, create_background_asset
+from .assets import create_avatar_asset, create_avatar_asset_from_session, create_background_asset
 from .cvs import (
     UnsupportedCvUpload,
     create_builder_cv,
     duplicate_cv,
     import_v2_cv,
+    import_v2_cv_from_session,
     permanently_delete_cv,
     update_builder_cv,
     update_cv_metadata,
@@ -20,7 +21,13 @@ from .exports import (
     request_cv_export,
     retry_cv_export,
 )
-from .imports import InvalidCvImport, queue_cv_import, retry_import
+from .imports import (
+    InvalidCvImport,
+    queue_cv_import,
+    queue_cv_import_from_session,
+    retry_import,
+    validate_import_upload,
+)
 from .lifecycle import (
     CvLifecyclePolicyError,
     apply_sample_to_draft,
@@ -57,14 +64,18 @@ __all__ = [
     'create_application_snapshot',
     'apply_sample_to_draft',
     'create_avatar_asset',
+    'create_avatar_asset_from_session',
     'create_background_asset',
     'create_builder_cv',
     'duplicate_cv',
     'import_v2_cv',
+    'import_v2_cv_from_session',
     'permanently_delete_cv',
     'InvalidCvImport',
     'queue_cv_import',
+    'queue_cv_import_from_session',
     'retry_import',
+    'validate_import_upload',
     'create_initial_document',
     'create_v2_cv',
     'create_shared_link',

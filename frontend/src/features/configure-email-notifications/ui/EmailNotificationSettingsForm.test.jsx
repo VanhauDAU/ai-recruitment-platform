@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { message } from '@/shared/lib/toast'
@@ -5,6 +6,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import EmailNotificationSettingsForm from './EmailNotificationSettingsForm'
 
 const notificationApi = vi.hoisted(() => ({
+  candidateNotificationPreferenceKeys: {
+    preferences: () => ['candidate-notification-preferences', 'preferences'],
+  },
+  candidateNotificationPreferenceMutationKey: ['candidate-notification-preferences', 'update'],
+  candidateNotificationPreferenceMutationScope: { id: 'candidate-notification-preferences-update' },
   getCandidateNotificationPreferences: vi.fn(),
   updateCandidateNotificationPreferences: vi.fn(),
 }))
@@ -26,6 +32,15 @@ const ALL_ENABLED = {
   partner_gifts_and_discounts: true,
 }
 
+function renderForm() {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  return render(
+    <QueryClientProvider client={client}>
+      <EmailNotificationSettingsForm />
+    </QueryClientProvider>,
+  )
+}
+
 describe('EmailNotificationSettingsForm', () => {
   beforeEach(() => {
     notificationApi.getCandidateNotificationPreferences.mockReset()
@@ -40,7 +55,7 @@ describe('EmailNotificationSettingsForm', () => {
   })
 
   it('renders the three compact groups with every preference enabled by default', async () => {
-    render(<EmailNotificationSettingsForm />)
+    renderForm()
 
     expect(await screen.findByText('Thông báo từ hệ thống')).toBeInTheDocument()
     expect(screen.getByText('Thông báo cơ hội việc làm')).toBeInTheDocument()
@@ -52,10 +67,13 @@ describe('EmailNotificationSettingsForm', () => {
 
   it('saves a disabled preference silently', async () => {
     const user = userEvent.setup()
+    notificationApi.getCandidateNotificationPreferences
+      .mockResolvedValueOnce(ALL_ENABLED)
+      .mockResolvedValue({ ...ALL_ENABLED, suitable_job_recommendations: false })
     notificationApi.updateCandidateNotificationPreferences.mockResolvedValue({
       suitable_job_recommendations: false,
     })
-    render(<EmailNotificationSettingsForm />)
+    renderForm()
 
     const recommendationSwitch = await screen.findByRole(
       'switch',
@@ -63,7 +81,7 @@ describe('EmailNotificationSettingsForm', () => {
     )
     await user.click(recommendationSwitch)
 
-    expect(recommendationSwitch).not.toBeChecked()
+    await waitFor(() => expect(recommendationSwitch).not.toBeChecked())
     await waitFor(() => {
       expect(notificationApi.updateCandidateNotificationPreferences).toHaveBeenCalledWith({
         suitable_job_recommendations: false,
@@ -75,14 +93,16 @@ describe('EmailNotificationSettingsForm', () => {
 
   it('shows a toast only after enabling a preference', async () => {
     const user = userEvent.setup()
-    notificationApi.getCandidateNotificationPreferences.mockResolvedValue({
-      ...ALL_ENABLED,
-      suitable_job_recommendations: false,
-    })
+    notificationApi.getCandidateNotificationPreferences
+      .mockResolvedValueOnce({
+        ...ALL_ENABLED,
+        suitable_job_recommendations: false,
+      })
+      .mockResolvedValue(ALL_ENABLED)
     notificationApi.updateCandidateNotificationPreferences.mockResolvedValue({
       suitable_job_recommendations: true,
     })
-    render(<EmailNotificationSettingsForm />)
+    renderForm()
 
     await user.click(await screen.findByRole('switch', { name: 'Thông báo việc làm phù hợp' }))
 
@@ -96,7 +116,7 @@ describe('EmailNotificationSettingsForm', () => {
     notificationApi.updateCandidateNotificationPreferences.mockRejectedValue({
       response: { status: 400, data: { detail: 'Không thể cập nhật lúc này.' } },
     })
-    render(<EmailNotificationSettingsForm />)
+    renderForm()
 
     const configuredJobSwitch = await screen.findByRole('switch', { name: 'Việc làm theo thiết lập' })
     await user.click(configuredJobSwitch)
@@ -111,7 +131,7 @@ describe('EmailNotificationSettingsForm', () => {
       .mockRejectedValueOnce({ response: { status: 503, data: {} } })
       .mockResolvedValueOnce(ALL_ENABLED)
 
-    render(<EmailNotificationSettingsForm />)
+    renderForm()
 
     expect(await screen.findByText('Chưa tải được cài đặt nhận email')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Thử lại' }))

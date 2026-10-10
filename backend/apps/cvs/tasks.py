@@ -343,7 +343,19 @@ def purge_expired_cv_import_sources():
         .iterator()
     ):
         storage_key = job.cv.file_url
-        if default_storage.exists(storage_key):
+        from .services.upload_claims import (
+            CV_SOURCE_CLAIM_SCOPE,
+            claimed_candidate_upload,
+            release_candidate_cv_source,
+        )
+
+        claimed_source = claimed_candidate_upload(
+            claim_scope=CV_SOURCE_CLAIM_SCOPE,
+            claim_reference=job.cv.public_id,
+        )
+        if claimed_source is not None:
+            release_candidate_cv_source(owner=job.user, cv_public_id=job.cv.public_id)
+        elif default_storage.exists(storage_key):
             default_storage.delete(storage_key)
         UserCv.objects.filter(pk=job.cv_id, file_url=storage_key).update(
             file_url='', updated_at=timezone.now()

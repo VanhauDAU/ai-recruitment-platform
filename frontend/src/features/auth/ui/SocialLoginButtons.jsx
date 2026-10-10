@@ -34,6 +34,13 @@ const PROVIDERS = {
   linkedin: { label: 'LinkedIn', Icon: LinkedInIcon, border: 'border-[#dadce0] hover:border-[#0A66C2] hover:bg-blue-50/40' },
 }
 
+const APPEARANCE_CLASSES = {
+  default: 'rounded-full bg-white text-gray-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-gray-200',
+  // EmployerAuthLayout luôn dùng nền sáng. Không để dark mode của portal khác
+  // làm nút thành nền tối rồi giữ chữ sáng khi hover sang nền Google nhạt.
+  employer: 'rounded-lg bg-white text-slate-700 hover:text-slate-900',
+}
+
 // Đang đứng ở trang auth thì sau OAuth về trang chủ theo role; còn lại quay về trang hiện tại
 // (vd. login nhúng trong modal ở trang việc làm).
 function defaultNext() {
@@ -57,6 +64,7 @@ export default function SocialLoginButtons({
   onBeforeRedirect,
 }) {
   const keys = providers || (portal === 'employer' ? ['google'] : ['google', 'facebook', 'linkedin'])
+  const appearanceClasses = APPEARANCE_CLASSES[appearance] || APPEARANCE_CLASSES.default
 
   return (
     <div className="grid grid-cols-12 gap-3">
@@ -78,7 +86,7 @@ export default function SocialLoginButtons({
               onBeforeRedirect?.()
               window.location.assign(oauthStartUrl(key, { portal, next: next ?? defaultNext() }))
             }}
-            className={`social-oauth-btn ${span} flex h-11 items-center justify-center gap-2 border bg-white px-4 text-sm font-medium text-gray-700 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 dark:bg-zinc-800 dark:text-gray-200 dark:border-zinc-700 ${appearance === 'employer' ? 'rounded-lg' : 'rounded-full'} ${border}`}
+            className={`social-oauth-btn ${span} flex h-11 items-center justify-center gap-2 border px-4 text-sm font-medium cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 ${appearanceClasses} ${border}`}
           >
             <Icon />
             <span>{appearance === 'employer' ? `${action} với ${label}` : label}</span>

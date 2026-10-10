@@ -16,6 +16,34 @@ export const DEFAULT_COMPANY_FORM = {
   employee_benefits: '',
 }
 
+export const COMPANY_DESCRIPTION_MIN_LENGTH = 500
+
+export function companyTaxCodeValidationError(value) {
+  const taxCode = String(value ?? '')
+  if (!taxCode.trim()) return 'Nhập mã số thuế.'
+  if (!/^\d+$/.test(taxCode)) return 'Mã số thuế chỉ được gồm chữ số.'
+  if (![10, 13].includes(taxCode.length)) return 'Mã số thuế phải gồm đúng 10 hoặc 13 chữ số.'
+  return ''
+}
+
+export function companyDescriptionTextLength(value) {
+  const html = String(value ?? '')
+  if (typeof DOMParser === 'undefined') {
+    return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().length
+  }
+  const document = new DOMParser().parseFromString(html, 'text/html')
+  return (document.body.textContent || '').replace(/\s+/g, ' ').trim().length
+}
+
+export function companyDescriptionValidationError(value) {
+  const length = companyDescriptionTextLength(value)
+  if (!length) return 'Nhập mô tả công ty.'
+  if (length < COMPANY_DESCRIPTION_MIN_LENGTH) {
+    return `Mô tả công ty phải có ít nhất ${COMPANY_DESCRIPTION_MIN_LENGTH} ký tự (hiện có ${length}).`
+  }
+  return ''
+}
+
 export function companyToForm(company = {}, pendingChanges = {}) {
   const base = {
     ...DEFAULT_COMPANY_FORM,
@@ -37,13 +65,32 @@ export function companyToForm(company = {}, pendingChanges = {}) {
   }
 }
 
-export function buildCompanyChanges(values, company) {
+export function buildCompanyChanges(values, company, { pendingChanges = {} } = {}) {
   const before = companyToForm(company)
+  const keepsExistingTradeName = (
+    values.trade_name_same_as_registered === true
+    && before.trade_name_same_as_registered === true
+    && values.company_name === before.company_name
+    && !Object.hasOwn(pendingChanges, 'trade_name')
+  )
   return Object.fromEntries(COMPANY_FORM_FIELDS.flatMap((field) => {
+    // Dữ liệu legacy có thể đánh dấu tên thương mại trùng tên pháp lý nhưng hai
+    // chuỗi đang lệch nhau. Không biến việc gửi một trường khác thành yêu cầu
+    // sửa tên thương mại ngoài ý muốn của người dùng.
+    if (field === 'trade_name' && keepsExistingTradeName) return []
     const current = values[field] ?? (Array.isArray(before[field]) ? [] : '')
     const previous = before[field] ?? (Array.isArray(current) ? [] : '')
     return JSON.stringify(current) === JSON.stringify(previous) ? [] : [[field, current]]
   }))
+}
+
+export function hasCompanyFormValueChanges(values = {}, initialValues = {}) {
+  return COMPANY_FORM_FIELDS.some((field) => {
+    const initial = initialValues[field]
+    const current = values[field] ?? (Array.isArray(initial) ? [] : '')
+    const previous = initial ?? (Array.isArray(current) ? [] : '')
+    return JSON.stringify(current) !== JSON.stringify(previous)
+  })
 }
 
 export function validateCompanyImage(file) {

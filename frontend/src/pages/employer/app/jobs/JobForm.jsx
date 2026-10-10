@@ -13,10 +13,10 @@ import {
   publishEmployerJob,
   saveEmployerJob,
 } from '@/entities/job'
-import { PostJobForm } from '@/features/post-job'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { employerAppPath } from '@/shared/config/portals'
 import { message } from '@/shared/lib/toast'
+import { EmployerJobEditor } from '@/widgets/employer-job-editor'
 
 export default function JobForm() {
   const { publicId } = useParams()
@@ -43,6 +43,10 @@ export default function JobForm() {
       message.success(job.status === 'draft' ? 'Đã lưu nháp.' : 'Đã lưu thay đổi.')
       navigate(employerAppPath(`/jobs/${job.public_id}/edit`), { replace: true })
     },
+    onError: (error) => message.error(
+      getApiErrorMessage(error, 'Không thể lưu bản nháp. Vui lòng kiểm tra thông tin và thử lại.'),
+      { duration: 5000, id: 'post-job-draft-error' },
+    ),
   })
   const publishMutation = useMutation({
     mutationFn: (payload) => publishEmployerJob(payload, publicId),
@@ -55,6 +59,10 @@ export default function JobForm() {
       )
       navigate(employerAppPath(`/jobs/${job.public_id}`))
     },
+    onError: (error) => message.error(
+      getApiErrorMessage(error, 'Không thể gửi tin để duyệt. Vui lòng kiểm tra thông tin và thử lại.'),
+      { duration: 5000, id: 'post-job-submit-error' },
+    ),
   })
   const createSkillMutation = useMutation({
     mutationFn: createSkill,
@@ -88,7 +96,14 @@ export default function JobForm() {
     }
   }, [campaignFromUrl, detailQuery.data, user?.email, user?.full_name, user?.phone])
   const mutationError = draftMutation.error || publishMutation.error
-  if (detailQuery.isLoading) return <Skeleton active paragraph={{ rows: 12 }} />
+  const withAiAttribution = (payload, aiGenerationPublicId) => (
+    !publicId && aiGenerationPublicId
+      ? { ...payload, ai_generation_public_id: aiGenerationPublicId }
+      : payload
+  )
+  if (detailQuery.isLoading || postingContextQuery.isLoading) {
+    return <Skeleton active paragraph={{ rows: 12 }} />
+  }
   if (detailQuery.isError) return <Alert type="error" showIcon title="Không thể tải tin tuyển dụng." />
   return (
     <section className="mx-auto max-w-[1480px] space-y-5">
@@ -96,11 +111,16 @@ export default function JobForm() {
       {(categoriesQuery.isError || campaignsQuery.isError || postingContextQuery.isError) && (
         <Alert type="warning" showIcon title="Một số danh mục chưa tải được" description="Bạn có thể tải lại trang để lấy đầy đủ vị trí chuyên môn và chiến dịch." />
       )}
-      <PostJobForm
+      <EmployerJobEditor
         initialValues={initialValues}
+        isEditing={Boolean(publicId)}
         campaigns={campaignsQuery.data || []}
         categories={categoriesQuery.data || []}
         postingContext={postingContextQuery.data}
+        defaultDeadlineDays={!publicId
+          ? postingContextQuery.data?.default_deadline_days ?? 30
+          : null}
+        maxDeadlineDays={postingContextQuery.data?.max_deadline_days ?? 90}
         isDraft={isDraft}
         requiresNewCredit={requiresNewCredit}
         submitLabel={submitLabel}
@@ -109,8 +129,8 @@ export default function JobForm() {
         creatingCampaign={quickCampaignMutation.isPending}
         onCreateCampaign={(name) => quickCampaignMutation.mutateAsync({ name })}
         onCreateSkill={(name) => createSkillMutation.mutateAsync(name)}
-        onSaveDraft={(payload) => draftMutation.mutate(payload)}
-        onPublish={(payload) => publishMutation.mutate(payload)}
+        onSaveDraft={(payload, aiGenerationPublicId) => draftMutation.mutate(withAiAttribution(payload, aiGenerationPublicId))}
+        onPublish={(payload, aiGenerationPublicId) => publishMutation.mutate(withAiAttribution(payload, aiGenerationPublicId))}
       />
     </section>
   )

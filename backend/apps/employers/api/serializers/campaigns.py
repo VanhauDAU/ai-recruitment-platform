@@ -124,6 +124,8 @@ class CampaignActivitySerializer(serializers.ModelSerializer):
     group_label = serializers.CharField(source='get_group_display', read_only=True)
     event_label = serializers.CharField(source='get_event_type_display', read_only=True)
     actor_name = serializers.SerializerMethodField()
+    subject_public_id = serializers.SerializerMethodField()
+    metadata = serializers.SerializerMethodField()
 
     class Meta:
         model = CampaignActivity
@@ -142,7 +144,27 @@ class CampaignActivitySerializer(serializers.ModelSerializer):
     def get_actor_name(self, obj):
         if obj.actor is None:
             return 'Hệ thống'
+        if obj.group == CampaignActivity.Group.APPLICATION and not self.context.get(
+            'candidate_data_access', False
+        ):
+            return 'Người dùng'
         return obj.actor.full_name or obj.actor.email
+
+    def get_subject_public_id(self, obj):
+        if obj.group == CampaignActivity.Group.APPLICATION and not self.context.get(
+            'candidate_data_access', False
+        ):
+            return ''
+        return obj.subject_public_id
+
+    def get_metadata(self, obj):
+        metadata = dict(obj.metadata or {})
+        if obj.group == CampaignActivity.Group.APPLICATION and not self.context.get(
+            'candidate_data_access', False
+        ):
+            safe_fields = ('job_title', 'from_status', 'to_status')
+            metadata = {field: metadata[field] for field in safe_fields if field in metadata}
+        return metadata
 
 
 class CampaignPerformanceQuerySerializer(serializers.Serializer):

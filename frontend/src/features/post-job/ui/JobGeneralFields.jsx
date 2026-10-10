@@ -35,7 +35,11 @@ export default function JobGeneralFields({ form, categories }) {
         normalize={capitalizeTitleWords}
         rules={[{ required: true, whitespace: true, message: 'Nhập tiêu đề tin tuyển dụng.' }]}
       >
-        <Input showCount maxLength={50} placeholder="Ví dụ: Kỹ sư Backend Java - Thu nhập đến 35 triệu" />
+        <Input
+          showCount
+          maxLength={255}
+          placeholder="Ví dụ: Kỹ sư Backend Java - Thu nhập đến 35 triệu"
+        />
       </Form.Item>
       <Form.Item
         name={['category_assignments', 0, 'category']}

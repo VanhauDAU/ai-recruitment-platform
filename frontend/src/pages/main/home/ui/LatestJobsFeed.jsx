@@ -7,6 +7,7 @@ import {
   companyInitial,
   formatNumber as fmt,
   formatSalary,
+  JobPresentationLabels,
   jobDetailPath,
 } from '@/entities/job'
 import { JobImpressionBoundary } from '@/features/track-job-engagement'
@@ -58,9 +59,9 @@ function Mascot() {
   return (
     <div className="flex justify-center">
       <img
-        src={legacyAsset('welcome/dashboard-item.png')}
+        src={legacyAsset('welcome/procv-ai-robot-market-v2.png')}
         alt="Thị trường việc làm"
-        className="w-36 h-auto object-contain drop-shadow-md"
+        className="h-auto w-full max-w-[260px] object-contain drop-shadow-md"
         loading="lazy"
       />
     </div>
@@ -116,6 +117,7 @@ export default function LatestJobsFeed({ jobs, enabled }) {
               <div className="min-w-0">
                 <p className="text-sm font-medium truncate">{item.job.title}</p>
                 <p className="text-xs text-green-100/70 truncate">{item.job.company_name}</p>
+                <JobPresentationLabels job={item.job} compact className="mt-1" />
               </div>
             </JobImpressionBoundary>
           </Tooltip>

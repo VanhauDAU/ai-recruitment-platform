@@ -204,7 +204,11 @@ describe('ApplyForJobModal', () => {
     await user.click(screen.getByRole('checkbox', { name: /Tôi đã đọc và đồng ý/ }))
     await user.click(screen.getByRole('button', { name: 'Nộp hồ sơ ứng tuyển' }))
 
-    await waitFor(() => expect(cvApi.importCvFile).toHaveBeenCalledWith(file, 'candidate.pdf'))
+    await waitFor(() => expect(cvApi.importCvFile).toHaveBeenCalledWith(
+      file,
+      'candidate.pdf',
+      { onUploadStateChange: expect.any(Function) },
+    ))
     expect(applicationApi.submitJobApplication).toHaveBeenCalledWith(expect.objectContaining({
       cvPublicId: 'cv_uploaded',
       versionPublicId: 'cvv_uploaded',

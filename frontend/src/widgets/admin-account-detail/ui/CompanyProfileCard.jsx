@@ -1,6 +1,6 @@
 import { BankOutlined } from '@ant-design/icons'
 import { Card, Empty, Image, Space, Tag, Typography } from 'antd'
-import { companyValueLabel, COMPANY_HTML_FIELDS } from '@/entities/employer-profile'
+import { COMPANY_HTML_FIELDS } from '@/entities/employer-profile'
 import { ProfileFieldGrid, ProfileRichTextBlock } from './profile-field-display'
 
 const IDENTITY_LABELS = {
@@ -32,19 +32,10 @@ const OPERATION_LABELS = {
 }
 
 const SYSTEM_LABELS = {
-  verified_at: 'Xác thực pháp nhân lúc',
   created_by_email: 'Người tạo hồ sơ',
   created_by_public_id: 'Mã người tạo',
   created_at: 'Ngày tạo hồ sơ',
   updated_at: 'Cập nhật gần nhất',
-  rejected_reason: 'Lý do từ chối',
-}
-
-const VERIFICATION_COLORS = {
-  verified: 'green',
-  pending: 'orange',
-  rejected: 'red',
-  unverified: 'default',
 }
 
 function CompanyVisual({ company }) {
@@ -112,21 +103,10 @@ function CompanyGallery({ images = [] }) {
 }
 
 export default function CompanyProfileCard({ company }) {
-  const status = company.verification_status
-  const systemLabels = status === 'rejected'
-    ? SYSTEM_LABELS
-    : Object.fromEntries(Object.entries(SYSTEM_LABELS).filter(([key]) => key !== 'rejected_reason'))
   return (
     <Card
       className="account-profile__card"
-      title={(
-        <div className="account-profile__card-title">
-          <span>Thông tin công ty</span>
-          <Tag color={VERIFICATION_COLORS[status] || 'default'}>
-            {companyValueLabel('verification_status', status) || 'Chưa xác thực'}
-          </Tag>
-        </div>
-      )}
+      title="Thông tin công ty"
     >
       <CompanyVisual company={company} />
       <section className="account-company-section"><h4>Nhận diện và pháp lý</h4><ProfileFieldGrid data={company} labels={IDENTITY_LABELS} /></section>
@@ -141,7 +121,7 @@ export default function CompanyProfileCard({ company }) {
         />
       ))}
       <CompanyGallery images={company.images} />
-      <section className="account-company-section"><h4>Thông tin hệ thống</h4><ProfileFieldGrid data={company} labels={systemLabels} /></section>
+      <section className="account-company-section"><h4>Thông tin hệ thống</h4><ProfileFieldGrid data={company} labels={SYSTEM_LABELS} /></section>
     </Card>
   )
 }

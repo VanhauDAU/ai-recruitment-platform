@@ -3,6 +3,7 @@ from django.urls import path
 from .api.views import (
     ActiveAnnouncementListView,
     AdminAnnouncementArchiveView,
+    AdminAnnouncementBackgroundUploadView,
     AdminAnnouncementDetailView,
     AdminAnnouncementDuplicateView,
     AdminAnnouncementListCreateView,
@@ -51,6 +52,11 @@ urlpatterns = [
         'admin/announcements/',
         AdminAnnouncementListCreateView.as_view(),
         name='site-admin-announcements',
+    ),
+    path(
+        'admin/announcements/backgrounds/',
+        AdminAnnouncementBackgroundUploadView.as_view(),
+        name='site-admin-announcement-backgrounds',
     ),
     path(
         'admin/announcements/<str:public_id>/',

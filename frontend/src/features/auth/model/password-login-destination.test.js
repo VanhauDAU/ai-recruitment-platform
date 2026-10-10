@@ -77,4 +77,28 @@ describe('authentication onboarding destination', () => {
       returnUrl: '/tuyendung/app/account/settings/company?update=true',
     })).toBe('/tuyendung/app/account/settings/company?update=true')
   })
+
+  it('uses canonical job-workspace readiness when the session exposes it', () => {
+    expect(getAuthDestination({
+      user: {
+        role: 'employer',
+        employer_onboarding_required: false,
+        employer_job_workspace_ready: true,
+        employer_verification_completed: false,
+      },
+      returnUrl: '/tuyendung/app/jobs',
+    })).toBe('/tuyendung/app/jobs')
+  })
+
+  it('fails closed when canonical session readiness is present but malformed', () => {
+    expect(getAuthDestination({
+      user: {
+        role: 'employer',
+        employer_onboarding_required: false,
+        employer_job_workspace_ready: 'true',
+        employer_verification_completed: true,
+      },
+      returnUrl: '/tuyendung/app/jobs',
+    })).toBe('/tuyendung/app/employer-verify')
+  })
 })

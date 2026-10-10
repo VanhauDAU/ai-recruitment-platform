@@ -245,6 +245,15 @@
     "requires": []
   },
   {
+    "code": "consultation_lead.export",
+    "module": "consultation_lead",
+    "label": "Xuất lead tư vấn",
+    "description": "Xuất danh sách lead tư vấn theo bộ lọc hiện tại với nhật ký audit.",
+    "requires": [
+      "consultation_lead.view"
+    ]
+  },
+  {
     "code": "consultation_lead.manage",
     "module": "consultation_lead",
     "label": "Xử lý lead tư vấn",
@@ -320,10 +329,72 @@
     "requires": []
   },
   {
+    "code": "employer_domain.review",
+    "module": "employer_domain",
+    "label": "Duyệt xác minh tên miền doanh nghiệp",
+    "description": "Duyệt hoặc từ chối yêu cầu xác minh tên miền thủ công.",
+    "requires": [
+      "employer_domain.view"
+    ]
+  },
+  {
+    "code": "employer_domain.revoke",
+    "module": "employer_domain",
+    "label": "Thu hồi xác minh tên miền doanh nghiệp",
+    "description": "Quyền rủi ro cao để thu hồi quyền sở hữu tên miền công ty.",
+    "requires": [
+      "employer_domain.view"
+    ]
+  },
+  {
+    "code": "employer_domain.view",
+    "module": "employer_domain",
+    "label": "Xem xác minh tên miền doanh nghiệp",
+    "description": "Xem hàng chờ và lịch sử xác minh tên miền công ty.",
+    "requires": []
+  },
+  {
+    "code": "employer_verification.resubmission_unlock",
+    "module": "employer_verification",
+    "label": "Mở khóa nộp lại xác thực nhà tuyển dụng",
+    "description": "Cho phép mở khóa ngoại lệ sau khi hồ sơ đạt giới hạn từ chối cuối, bắt buộc kèm lý do audit.",
+    "requires": [
+      "employer_verification.view"
+    ]
+  },
+  {
     "code": "employer_verification.review",
     "module": "employer_verification",
     "label": "Duyệt xác thực nhà tuyển dụng",
     "description": "Duyệt, yêu cầu bổ sung hoặc từ chối hồ sơ xác thực nhà tuyển dụng.",
+    "requires": [
+      "employer_verification.view"
+    ]
+  },
+  {
+    "code": "employer_verification.revoke",
+    "module": "employer_verification",
+    "label": "Thu hồi xác thực nhà tuyển dụng",
+    "description": "Quyền Compliance Lead được gán tường minh để thu hồi hoặc đánh dấu hết hiệu lực xác thực.",
+    "requires": [
+      "employer_verification.view"
+    ]
+  },
+  {
+    "code": "employer_verification.tax_override",
+    "module": "employer_verification",
+    "label": "Override bằng chứng tra cứu thuế",
+    "description": "Quyền Compliance Lead được gán tường minh để override bằng chứng thuế advisory kèm lý do.",
+    "requires": [
+      "employer_verification.view",
+      "employer_verification.review"
+    ]
+  },
+  {
+    "code": "employer_verification.unlink_company",
+    "module": "employer_verification",
+    "label": "Gỡ liên kết công ty nhà tuyển dụng",
+    "description": "Quyền rủi ro cao để gỡ liên kết chọn nhầm khi tài khoản chưa phát sinh dữ liệu nghiệp vụ.",
     "requires": [
       "employer_verification.view"
     ]
@@ -388,10 +459,71 @@
     ]
   },
   {
+    "code": "knowledgebase.manage",
+    "module": "knowledgebase",
+    "label": "Biên tập trung tâm trợ giúp",
+    "description": "Tạo chuyên mục, bài viết, revision và gửi nội dung đi duyệt.",
+    "requires": [
+      "knowledgebase.view"
+    ]
+  },
+  {
+    "code": "knowledgebase.publish",
+    "module": "knowledgebase",
+    "label": "Phát hành trung tâm trợ giúp",
+    "description": "Xuất bản, rollback, lưu trữ bài và thay đổi nội dung đang công khai.",
+    "requires": [
+      "knowledgebase.view"
+    ]
+  },
+  {
+    "code": "knowledgebase.review",
+    "module": "knowledgebase",
+    "label": "Duyệt nội dung trợ giúp",
+    "description": "Phê duyệt hoặc từ chối revision đang chờ kiểm duyệt.",
+    "requires": [
+      "knowledgebase.view"
+    ]
+  },
+  {
+    "code": "knowledgebase.view",
+    "module": "knowledgebase",
+    "label": "Xem trung tâm trợ giúp",
+    "description": "Xem bài, revision, preview và lịch sử vận hành nội dung trợ giúp.",
+    "requires": []
+  },
+  {
+    "code": "service_audit.view",
+    "module": "service_audit",
+    "label": "Xem lịch sử dịch vụ",
+    "description": "Xem lịch sử phát hành, cấp, thu hồi và kích hoạt dịch vụ.",
+    "requires": [
+      "service_catalog.view"
+    ]
+  },
+  {
+    "code": "service_catalog.draft.manage",
+    "module": "service_catalog",
+    "label": "Quản lý phiên bản nháp dịch vụ",
+    "description": "Tạo và chỉnh sửa quyền lợi có cấu trúc trước khi phát hành.",
+    "requires": [
+      "service_catalog.view"
+    ]
+  },
+  {
     "code": "service_catalog.manage",
     "module": "service_catalog",
     "label": "Quản lý gói dịch vụ",
     "description": "Tạo, sửa hoặc xoá nhóm và gói dịch vụ nhà tuyển dụng.",
+    "requires": [
+      "service_catalog.view"
+    ]
+  },
+  {
+    "code": "service_catalog.publish",
+    "module": "service_catalog",
+    "label": "Phát hành phiên bản gói dịch vụ",
+    "description": "Khóa và phát hành một phiên bản quyền lợi thương mại mới.",
     "requires": [
       "service_catalog.view"
     ]
@@ -402,6 +534,24 @@
     "label": "Xem gói dịch vụ",
     "description": "Xem catalogue dịch vụ nhà tuyển dụng.",
     "requires": []
+  },
+  {
+    "code": "service_entitlement.manage",
+    "module": "service_entitlement",
+    "label": "Cấp và thu hồi lượt dịch vụ",
+    "description": "Cấp thủ công, thu hồi hoặc bù lượt dịch vụ cho doanh nghiệp.",
+    "requires": [
+      "service_entitlement.view"
+    ]
+  },
+  {
+    "code": "service_entitlement.view",
+    "module": "service_entitlement",
+    "label": "Xem kho lượt dịch vụ",
+    "description": "Xem lượt dịch vụ và trạng thái kích hoạt của doanh nghiệp.",
+    "requires": [
+      "service_catalog.view"
+    ]
   },
   {
     "code": "site_setting.manage",

@@ -1,8 +1,8 @@
 import { SearchOutlined } from '@ant-design/icons'
 import { Button, Input } from 'antd'
+import { JobCategoryTreePicker } from '@/entities/job'
 import { LocationFilter } from '@/entities/location'
 import { SearchDropdown } from '@/features/search-jobs'
-import CategoryPicker from './CategoryPicker'
 
 export default function JobSearchBar({
   categories,
@@ -30,7 +30,13 @@ export default function JobSearchBar({
     >
       <div className="max-w-6xl mx-auto flex flex-col gap-2 px-4 py-3 md:flex-row">
         <div className="md:w-64 [&_button]:!h-11 [&_button]:!rounded-lg">
-          <CategoryPicker categories={categories} value={selectedCategories} onChange={onCategoryChange} />
+          <JobCategoryTreePicker
+            ariaLabel="Danh mục nghề"
+            categories={categories}
+            placeholder="Danh mục Nghề"
+            value={selectedCategories}
+            onChange={onCategoryChange}
+          />
         </div>
         <div ref={searchBoxRef} className="relative flex flex-1 flex-col gap-2 md:flex-row">
           <Input

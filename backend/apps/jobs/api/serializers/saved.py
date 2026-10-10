@@ -1,5 +1,7 @@
 from rest_framework import serializers
 
+from apps.services.services import record_job_promotion_metrics
+
 from ...models import Job, SavedJob
 from ...selectors.listing import publicly_available_job_filter
 from .jobs import PublicJobListSerializer
@@ -25,5 +27,7 @@ class SavedJobSerializer(serializers.ModelSerializer):
         return fields
 
     def create(self, validated_data):
-        saved_job, _ = SavedJob.objects.get_or_create(**validated_data)
+        saved_job, created = SavedJob.objects.get_or_create(**validated_data)
+        if created:
+            record_job_promotion_metrics(job_ids=[saved_job.job_id], event='save')
         return saved_job

@@ -1,17 +1,17 @@
+import { BankOutlined } from '@ant-design/icons'
+import { AdminDataActions, AdminPageHeader } from '@/shared/ui/admin'
 import { AdminCompanyWorkspace } from '@/widgets/admin-company-directory'
 
 export default function Companies() {
   return (
     <div className="mx-auto max-w-[1600px] space-y-5">
-      <header className="admin-page-header">
-        <div>
-          <p className="admin-page-header__eyebrow">Doanh nghiệp</p>
-          <h1 className="admin-page-header__title">Quản lý công ty</h1>
-          <p className="admin-page-header__description">
-            Tra cứu pháp nhân, theo dõi đội ngũ nhà tuyển dụng và xử lý các thay đổi trong một nơi.
-          </p>
-        </div>
-      </header>
+      <AdminPageHeader
+        eyebrow="Doanh nghiệp"
+        title="Quản lý công ty"
+        description="Tra cứu pháp nhân, theo dõi đội ngũ nhà tuyển dụng và xử lý các thay đổi trong một nơi."
+        icon={<BankOutlined />}
+        actions={<AdminDataActions allowExport={false} />}
+      />
       <AdminCompanyWorkspace />
     </div>
   )

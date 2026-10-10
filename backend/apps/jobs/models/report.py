@@ -28,7 +28,7 @@ class JobReport(models.Model):
         DISMISSED = 'dismissed', 'Bác bỏ'
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)
-    job = models.ForeignKey('jobs.Job', on_delete=models.CASCADE, related_name='reports')
+    job = models.ForeignKey('jobs.Job', on_delete=models.PROTECT, related_name='reports')
     reporter = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -36,6 +36,11 @@ class JobReport(models.Model):
         blank=True,
         related_name='job_reports',
     )
+    # Durable subject snapshots keep moderation/trust evidence attributable
+    # even if an account or job relationship is later changed or deleted.
+    job_public_id_snapshot = models.CharField(max_length=50, blank=True)
+    company_id_snapshot = models.BigIntegerField(null=True, blank=True)
+    posted_by_id_snapshot = models.BigIntegerField(null=True, blank=True)
     reason = models.CharField(max_length=30, choices=Reason.choices)
     detail = models.TextField(blank=True)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
@@ -63,13 +68,25 @@ class JobReport(models.Model):
         indexes = [
             models.Index(fields=['status', '-created_at'], name='jobs_report_status_idx'),
             models.Index(fields=['job', 'status'], name='jobs_report_job_status_idx'),
+            models.Index(
+                fields=['posted_by_id_snapshot', 'status', 'reason'],
+                name='jobs_report_trust_idx',
+            ),
         ]
         ordering = ['-created_at']
 
     def save(self, *args, **kwargs):
         if not self.public_id:
             self.public_id = generate_public_id('jrep')
+        if self.job_id and not self.job_public_id_snapshot:
+            job = self.job
+            self.job_public_id_snapshot = job.public_id
+            self.company_id_snapshot = job.company_id
+            self.posted_by_id_snapshot = job.posted_by_id
         super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        raise ValueError('JobReport là bằng chứng kiểm duyệt cần được lưu giữ.')
 
     def __str__(self):
         return f'{self.public_id} - {self.job_id} - {self.status}'
@@ -81,7 +98,7 @@ class JobReportResolutionEvent(models.Model):
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     report = models.ForeignKey(
         JobReport,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name='resolution_history',
     )
     from_status = models.CharField(max_length=20, choices=JobReport.Status.choices)
@@ -106,9 +123,14 @@ class JobReportResolutionEvent(models.Model):
         ]
 
     def save(self, *args, **kwargs):
+        if self.pk and type(self).objects.filter(pk=self.pk).exists():
+            raise ValueError('JobReportResolutionEvent là lịch sử bất biến.')
         if not self.public_id:
             self.public_id = generate_public_id('jre')
         super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        raise ValueError('JobReportResolutionEvent là lịch sử bất biến.')
 
     def __str__(self):
         return f'{self.report_id}: {self.from_status} -> {self.to_status}'

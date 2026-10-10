@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="vi">
+  <body style="margin:0;background:#f4f6f8;font-family:Arial,Helvetica,sans-serif;color:#1f2937">
+    <div style="max-width:640px;margin:0 auto;padding:24px 12px">
+      <div style="background:#00b14f;color:#fff;padding:22px 24px;border-radius:14px 14px 0 0">
+        <div style="font-size:24px;font-weight:800">{{ site_name }}</div>
+        <div style="margin-top:6px;font-size:17px;font-weight:700">Việc làm mới dành cho bạn</div>
+      </div>
+      <div style="background:#fff;padding:24px;border-radius:0 0 14px 14px">
+        <p style="margin-top:0">Xin chào <strong>{{ candidate_name }}</strong>,</p>
+        <p>Có {{ jobs|length }} việc làm mới phù hợp với thông báo bạn đã bật.</p>
+        {% for job in jobs %}
+          <div style="margin:16px 0;padding:18px;border:1px solid #e5e7eb;border-radius:10px">
+            {% if job.badges %}
+              <div style="margin-bottom:8px">
+                {% for badge in job.badges %}<span style="display:inline-block;margin:0 5px 5px 0;padding:3px 7px;border-radius:999px;background:#ecfdf3;color:#087443;font-size:11px;font-weight:700">{{ badge }}</span>{% endfor %}
+              </div>
+            {% endif %}
+            <a href="{{ job.url }}" style="color:#111827;text-decoration:none;font-size:17px;font-weight:800">{{ job.title }}</a>
+            <div style="margin-top:6px;color:#4b5563">{{ job.company_name }}</div>
+            {% if job.locations %}<div style="margin-top:8px;font-size:13px;color:#6b7280">{{ job.locations }}</div>{% endif %}
+            <div style="margin-top:5px;font-size:13px;color:#087443;font-weight:700">{{ job.salary }}</div>
+            {% if job.sources %}<div style="margin-top:8px;font-size:12px;color:#9ca3af">Theo: {{ job.sources|join:", " }}</div>{% endif %}
+            <div style="margin-top:14px"><a href="{{ job.url }}" style="display:inline-block;padding:9px 14px;border-radius:7px;background:#00b14f;color:#fff;text-decoration:none;font-weight:700">Xem việc làm</a></div>
+          </div>
+        {% endfor %}
+        <p style="margin:24px 0 0;text-align:center"><a href="{{ manage_url }}" style="color:#087443;font-weight:700">Quản lý thông báo việc làm</a></p>
+        <p style="margin:12px 0 0;text-align:center;font-size:12px;color:#6b7280">Bạn có thể thay đổi lựa chọn tại <a href="{{ email_settings_url }}" style="color:#4b5563">cài đặt nhận email</a>.</p>
+      </div>
+    </div>
+  </body>
+</html>

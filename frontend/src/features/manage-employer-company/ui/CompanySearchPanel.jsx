@@ -6,13 +6,6 @@ import { getEmployerCompanyList, joinEmployerCompany } from '@/entities/employer
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { message } from '@/shared/lib/toast'
 
-const STATUS = {
-  verified: ['success', 'Đã xác thực'],
-  pending: ['processing', 'Đang xác thực'],
-  rejected: ['error', 'Cần cập nhật'],
-  unverified: ['default', 'Chưa xác thực'],
-}
-
 function formatCompanySize(size) {
   if (!size) return 'Quy mô chưa cập nhật'
   return `${size} nhân viên`
@@ -67,7 +60,7 @@ export default function CompanySearchPanel({ onLinked, onCreateInstead }) {
           className="company-search-box__notice"
           type="info"
           showIcon
-          title={<span><strong>Lưu ý!</strong> Để tài khoản được xác thực nhanh chóng, vui lòng sử dụng <strong>Tên công ty</strong> trùng khớp với dữ liệu doanh nghiệp theo Trang thông tin điện tử của Cục Thuế.</span>}
+          title={<span><strong>Lưu ý!</strong> Hãy chọn đúng hồ sơ doanh nghiệp. Nếu tạo mới, vui lòng sử dụng <strong>Tên công ty</strong> trùng khớp với dữ liệu doanh nghiệp theo Trang thông tin điện tử của Cục Thuế.</span>}
         />
       </div>
 
@@ -86,7 +79,6 @@ export default function CompanySearchPanel({ onLinked, onCreateInstead }) {
       {!companiesQuery.isLoading && !companiesQuery.isError && results.length > 0 && <h2 id="company-search-title" className="company-catalog-title">{query ? 'Kết quả tìm kiếm' : 'Công ty mới tạo'}</h2>}
       <div className="company-catalog-grid" aria-busy={companiesQuery.isFetching}>
         {results.map((company) => {
-          const [statusColor, statusLabel] = STATUS[company.verification_status] || STATUS.unverified
           const industrySummary = (company.industries_detail || []).map((item) => item.name).join(' · ')
           return (
             <article key={company.public_id} className="company-catalog-card">
@@ -94,7 +86,6 @@ export default function CompanySearchPanel({ onLinked, onCreateInstead }) {
               <div className="company-catalog-card__content">
                 <div className="company-catalog-card__title-row">
                   <h3 title={company.company_name}>{company.company_name}</h3>
-                  {company.verification_status !== 'unverified' && <Tag color={statusColor} className="company-catalog-card__status">{statusLabel}</Tag>}
                 </div>
                 <p className="company-catalog-card__tax">MST: {company.tax_code || 'chưa cập nhật'}</p>
                 <p className="company-catalog-card__details">

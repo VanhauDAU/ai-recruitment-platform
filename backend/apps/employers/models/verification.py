@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from django.utils import timezone
 
 from common.public_id import generate_public_id
 
@@ -20,6 +21,13 @@ class EmployerVerificationCase(models.Model):
         CHANGES_REQUESTED = 'changes_requested', 'Cần bổ sung'
         REJECTED = 'rejected', 'Bị từ chối'
         APPROVED = 'approved', 'Đã xác thực'
+        REVOKED = 'revoked', 'Đã thu hồi'
+        EXPIRED = 'expired', 'Hết hiệu lực'
+
+    class DecisionSource(models.TextChoices):
+        EXPLICIT_ADMIN = 'explicit_admin', 'Quyết định quản trị tường minh'
+        LEGACY_AUTO = 'legacy_auto', 'Tự duyệt lịch sử'
+        LEGACY_UNKNOWN = 'legacy_unknown', 'Không xác định nguồn lịch sử'
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     recruiter = models.OneToOneField(
@@ -42,6 +50,8 @@ class EmployerVerificationCase(models.Model):
     status = models.CharField(max_length=24, choices=Status.choices, default=Status.DRAFT)
     revision = models.PositiveIntegerField(default=1)
     lock_version = models.PositiveIntegerField(default=0)
+    final_rejection_count = models.PositiveSmallIntegerField(default=0)
+    resubmission_locked_at = models.DateTimeField(null=True, blank=True)
     reviewer = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -53,6 +63,20 @@ class EmployerVerificationCase(models.Model):
     review_started_at = models.DateTimeField(null=True, blank=True)
     decided_at = models.DateTimeField(null=True, blank=True)
     decision_reason = models.TextField(blank=True)
+    decision_source = models.CharField(
+        max_length=24,
+        choices=DecisionSource.choices,
+        blank=True,
+    )
+    decision_snapshot = models.JSONField(default=dict, blank=True)
+    tax_override_reason = models.TextField(blank=True)
+    tax_override_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='+',
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -81,10 +105,17 @@ class EmployerVerificationEvent(models.Model):
         SUBMITTED = 'submitted', 'Đã nộp'
         REVIEW_STARTED = 'review_started', 'Bắt đầu xử lý'
         DOCUMENT_REVIEWED = 'document_reviewed', 'Đã xử lý giấy tờ'
+        DOCUMENT_REPLACED = 'document_replaced', 'Đã thay giấy tờ'
         CHANGES_REQUESTED = 'changes_requested', 'Yêu cầu bổ sung'
         RESUBMITTED = 'resubmitted', 'Đã nộp lại'
+        RESUBMISSION_UNLOCKED = 'resubmission_unlocked', 'Đã mở khóa nộp lại'
         APPROVED = 'approved', 'Đã duyệt'
         REJECTED = 'rejected', 'Đã từ chối'
+        REVOKED = 'revoked', 'Đã thu hồi'
+        EXPIRED = 'expired', 'Hết hiệu lực'
+        REAPPROVED = 'reapproved', 'Đã duyệt lại'
+        HOLD_APPLIED = 'hold_applied', 'Đã áp dụng compliance hold'
+        HOLD_RELEASED = 'hold_released', 'Đã gỡ compliance hold'
         SENSITIVE_VIEWED = 'sensitive_viewed', 'Đã xem dữ liệu nhạy cảm'
         TAX_LOOKUP_REFRESHED = 'tax_lookup_refreshed', 'Đã tra cứu lại mã số thuế'
 
@@ -140,6 +171,7 @@ class EmployerVerificationNotification(models.Model):
         related_name='+',
     )
     event_type = models.CharField(max_length=32)
+    dedupe_key = models.CharField(max_length=160, null=True, blank=True)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
     attempts = models.PositiveSmallIntegerField(default=0)
     context = models.JSONField(default=dict, blank=True)
@@ -150,6 +182,13 @@ class EmployerVerificationNotification(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['recipient', 'dedupe_key'],
+                condition=models.Q(dedupe_key__isnull=False),
+                name='uniq_emp_verify_notice_dedupe',
+            ),
+        ]
         indexes = [
             models.Index(
                 fields=['status', 'created_at'],
@@ -171,9 +210,16 @@ class CompanyUpdateRequest(models.Model):
         AUTHORIZATION_AND_ID = 'authorization_and_id', 'Giấy ủy quyền + giấy tờ định danh'
 
     class Status(models.TextChoices):
+        # ``pending`` chỉ giữ để đọc dữ liệu/consumer cũ trong cửa sổ rollout.
+        # Migration V2 chuyển toàn bộ record hiện hữu sang ``submitted``.
         PENDING = 'pending', 'Chờ duyệt'
+        SUBMITTED = 'submitted', 'Đã gửi'
+        IN_REVIEW = 'in_review', 'Đang thẩm định'
+        CHANGES_REQUESTED = 'changes_requested', 'Cần chỉnh sửa'
         APPROVED = 'approved', 'Đã duyệt'
         REJECTED = 'rejected', 'Từ chối'
+        WITHDRAWN = 'withdrawn', 'Đã rút'
+        CANCELLED = 'cancelled', 'Đã hủy'
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='update_requests')
@@ -185,12 +231,22 @@ class CompanyUpdateRequest(models.Model):
     is_sensitive = models.BooleanField(default=False)
     reason = models.TextField(blank=True)
     proof_type = models.CharField(max_length=30, choices=ProofType.choices, blank=True)
-    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.SUBMITTED)
     revision = models.PositiveIntegerField(default=1)
     lock_version = models.PositiveIntegerField(default=0)
+    current_revision = models.ForeignKey(
+        'CompanyUpdateRevision',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='+',
+    )
+    base_company_updated_at = models.DateTimeField(null=True, blank=True)
+    base_values = models.JSONField(default=dict, blank=True)
     reviewed_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='+'
     )
+    submitted_at = models.DateTimeField(default=timezone.now)
     reviewed_at = models.DateTimeField(null=True, blank=True)
     review_note = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -199,9 +255,11 @@ class CompanyUpdateRequest(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=['company'],
-                condition=models.Q(status='pending'),
-                name='uniq_company_pending_update_request',
+                fields=['company', 'requested_by'],
+                condition=models.Q(
+                    status__in=['pending', 'submitted', 'in_review', 'changes_requested']
+                ),
+                name='uniq_co_requester_pending_upd',
             ),
         ]
 
@@ -212,6 +270,109 @@ class CompanyUpdateRequest(models.Model):
 
     def __str__(self):
         return f'{self.company_id}:{self.status}'
+
+
+class CompanyUpdateRevision(models.Model):
+    """Immutable requester snapshot for one company-update workflow revision."""
+
+    public_id = models.CharField(max_length=50, unique=True, editable=False)
+    update_request = models.ForeignKey(
+        CompanyUpdateRequest,
+        on_delete=models.CASCADE,
+        related_name='revisions',
+    )
+    number = models.PositiveIntegerField()
+    submitted_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name='+',
+    )
+    changes = models.JSONField(default=dict)
+    reason = models.TextField(blank=True)
+    proof_type = models.CharField(
+        max_length=30,
+        choices=CompanyUpdateRequest.ProofType.choices,
+        blank=True,
+    )
+    base_company_updated_at = models.DateTimeField()
+    base_values = models.JSONField(default=dict)
+    documents = models.ManyToManyField(
+        'CompanyDocument',
+        blank=True,
+        related_name='company_update_revisions',
+    )
+    media_uploads = models.ManyToManyField(
+        'CompanyMediaUpload',
+        blank=True,
+        related_name='company_update_revisions',
+    )
+    submitted_at = models.DateTimeField(default=timezone.now)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['update_request', 'number'],
+                name='uniq_company_update_revision_number',
+            ),
+        ]
+        ordering = ['number', 'id']
+
+    def save(self, *args, **kwargs):
+        if self.pk and type(self).objects.filter(pk=self.pk).exists():
+            raise ValueError('CompanyUpdateRevision là snapshot bất biến.')
+        if not self.public_id:
+            self.public_id = generate_public_id('cuv')
+        super().save(*args, **kwargs)
+
+
+class CompanyUpdateEvent(models.Model):
+    """Append-only audit trail for request lifecycle and attachment decisions."""
+
+    class EventType(models.TextChoices):
+        SUBMITTED = 'submitted', 'Đã gửi'
+        RESUBMITTED = 'resubmitted', 'Đã gửi lại'
+        REVISION_CREATED = 'revision_created', 'Đã tạo phiên bản'
+        REVIEW_STARTED = 'review_started', 'Bắt đầu thẩm định'
+        DOCUMENT_REVIEWED = 'document_reviewed', 'Đã xử lý giấy tờ'
+        CHANGES_REQUESTED = 'changes_requested', 'Yêu cầu chỉnh sửa'
+        APPROVED = 'approved', 'Đã duyệt'
+        REJECTED = 'rejected', 'Đã từ chối'
+        WITHDRAWN = 'withdrawn', 'Đã rút'
+        CANCELLED = 'cancelled', 'Đã hủy'
+
+    public_id = models.CharField(max_length=50, unique=True, editable=False)
+    update_request = models.ForeignKey(
+        CompanyUpdateRequest,
+        on_delete=models.CASCADE,
+        related_name='events',
+    )
+    actor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='+',
+    )
+    event_type = models.CharField(max_length=32, choices=EventType.choices)
+    revision_number = models.PositiveIntegerField()
+    payload = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at', 'id']
+        indexes = [
+            models.Index(
+                fields=['update_request', 'created_at'],
+                name='emp_co_update_event_idx',
+            ),
+        ]
+
+    def save(self, *args, **kwargs):
+        if self.pk and type(self).objects.filter(pk=self.pk).exists():
+            raise ValueError('CompanyUpdateEvent là nhật ký bất biến.')
+        if not self.public_id:
+            self.public_id = generate_public_id('cue')
+        super().save(*args, **kwargs)
 
 
 class CompanyTaxLookupEvidence(models.Model):
@@ -342,6 +503,13 @@ class CompanyDocument(models.Model):
         blank=True,
         related_name='documents',
     )
+    update_revision = models.ForeignKey(
+        CompanyUpdateRevision,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='attached_documents',
+    )
     verification_case = models.ForeignKey(
         EmployerVerificationCase,
         on_delete=models.CASCADE,
@@ -364,6 +532,13 @@ class CompanyDocument(models.Model):
     mime_type = models.CharField(max_length=120, blank=True)
     file_size = models.PositiveBigIntegerField(default=0)
     sha256 = models.CharField(max_length=64, blank=True, db_index=True)
+    upload_asset = models.OneToOneField(
+        'uploads.UploadAsset',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='employer_document',
+    )
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
     reviewed_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='+'

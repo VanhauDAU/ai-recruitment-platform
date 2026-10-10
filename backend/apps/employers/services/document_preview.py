@@ -71,22 +71,3 @@ def render_office_document_preview(file_url: str, content_type: str) -> bytes | 
             logger.warning('Employer verification office preview source could not be read.')
             return None
         return _render_source_to_pdf(source_path)
-
-
-def render_office_upload_preview(upload, content_type: str) -> bytes | None:
-    """Render an unpersisted Office upload to PDF for the recruiter's local preview."""
-    suffix = OFFICE_DOCUMENT_SUFFIXES.get(content_type)
-    if not suffix:
-        return None
-
-    with tempfile.TemporaryDirectory(prefix='employer-upload-preview-') as directory:
-        source_path = Path(directory) / f'source{suffix}'
-        try:
-            with source_path.open('wb') as target:
-                for chunk in upload.chunks():
-                    target.write(chunk)
-            upload.seek(0)
-        except OSError:
-            logger.warning('Employer verification upload preview could not be staged.')
-            return None
-        return _render_source_to_pdf(source_path)
