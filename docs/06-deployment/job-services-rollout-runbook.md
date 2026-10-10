@@ -97,7 +97,7 @@ Không bật hai bước có thay đổi hành vi lớn trong cùng cửa sổ d
 - Migration clean DB, upgrade DB và rerun idempotency pass.
 - Query budget list/detail/inventory không phụ thuộc row count.
 - OpenAPI validation và exact contract tests pass.
-- Feature flag tồn tại trong `.env.example`, production validation và runbook.
+- Feature flag tồn tại trong `.env.optional.example`, production validation và runbook.
 - Dashboard/alert đã deploy trước khi bật flag.
 - Reconciliation count unit/activation/audit khớp.
 - Rollback rehearsal trên staging đạt.
