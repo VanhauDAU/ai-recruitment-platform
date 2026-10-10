@@ -11,11 +11,14 @@ from pathlib import Path
 from check_env_sync import (
     BACKEND_CATALOGS,
     BACKEND_PROCESS_KEYS,
+    COMPOSE_APPLICATION_OVERRIDES,
+    COMPOSE_CATALOGS,
     COMPOSE_PROCESS_KEYS,
     FRONTEND_CATALOGS,
     FRONTEND_PROCESS_KEYS,
     ROOT,
     backend_consumers,
+    compose_consumers,
     frontend_consumers,
 )
 
@@ -34,7 +37,9 @@ SENSITIVE_TOKENS = (
 
 def catalog_rows(paths: tuple[Path, ...]):
     for relative_path in paths:
-        action = 'keep-minimal' if relative_path.name == '.env.example' else 'move-optional'
+        action = (
+            'keep-minimal' if relative_path.name == '.env.example' else 'move-optional'
+        )
         for line in (ROOT / relative_path).read_text(encoding='utf-8').splitlines():
             match = DECLARATION_PATTERN.match(line)
             if match:
@@ -60,7 +65,11 @@ def value_type(name: str, value: str) -> str:
 
 def owner(scope: str, name: str) -> str:
     if scope == 'frontend':
-        return 'frontend-tooling' if not name.startswith('VITE_') else 'frontend-runtime'
+        return (
+            'frontend-tooling' if not name.startswith('VITE_') else 'frontend-runtime'
+        )
+    if scope == 'compose':
+        return 'compose-local-tooling'
     groups = (
         (('DB_',), 'database'),
         (('REDIS_', 'CELERY_'), 'cache-worker'),
@@ -98,7 +107,9 @@ def emit_catalog(scope: str, paths: tuple[Path, ...], consumers, writer):
                 locations,
                 value_type(name, value),
                 safe_default(name, value),
-                'local baseline' if action == 'keep-minimal' else 'when enabling/overriding',
+                'local baseline'
+                if action == 'keep-minimal'
+                else 'when enabling/overriding',
                 owner(scope, name),
                 'sensitive'
                 if any(token in name for token in SENSITIVE_TOKENS)
@@ -145,11 +156,23 @@ def main() -> int:
             'proof',
         )
     )
-    emit_catalog('backend', BACKEND_CATALOGS, backend_consumers(), writer)
+    backend_sources = backend_consumers()
+    for name in COMPOSE_APPLICATION_OVERRIDES:
+        backend_sources.setdefault(name, set()).add('docker-compose.yml:service-discovery')
+    emit_catalog('backend', BACKEND_CATALOGS, backend_sources, writer)
     emit_catalog('frontend', FRONTEND_CATALOGS, frontend_consumers(), writer)
+    emit_catalog(
+        'compose',
+        COMPOSE_CATALOGS,
+        {name: {'docker-compose.yml'} for name in compose_consumers()}
+        | {name: {'Docker Compose CLI'} for name in COMPOSE_PROCESS_KEYS},
+        writer,
+    )
     emit_exceptions('backend-process', BACKEND_PROCESS_KEYS, writer)
     emit_exceptions('frontend-process', FRONTEND_PROCESS_KEYS, writer)
-    emit_exceptions('compose-process', COMPOSE_PROCESS_KEYS, writer)
+    emit_exceptions(
+        'compose-application-override', COMPOSE_APPLICATION_OVERRIDES, writer
+    )
     return 0
 
 

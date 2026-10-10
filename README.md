@@ -82,6 +82,8 @@ dễ nối lẫn khi mở bằng DBeaver/psql.
 
 Chi tiết chạy local bằng Compose: [docs/06-deployment/docker-compose.md](docs/06-deployment/docker-compose.md).
 Quy tắc env tối thiểu và catalog tùy chọn: [docs/05-huong-dan/cau-hinh-env.md](docs/05-huong-dan/cau-hinh-env.md).
+Tùy chọn Compose local có catalog riêng tại [`.env.example`](.env.example);
+không đặt secret backend hoặc biến `VITE_*` vào file env ở root.
 
 ### Cách 2 — Chạy trực tiếp (venv + PostgreSQL + Redis local)
 

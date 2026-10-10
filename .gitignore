@@ -45,6 +45,13 @@ coverage/
 
 # Env files
 .env
+.env.*
+!.env.example
+!.env.optional.example
+**/.env
+**/.env.*
+!**/.env.example
+!**/.env.optional.example
 .env.local
 *.env
 
