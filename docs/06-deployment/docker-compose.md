@@ -5,7 +5,7 @@
 ```bash
 git clone https://github.com/VanhauDAU/ai-recruitment-platform.git
 cd ai-recruitment-platform
-cp backend/.env.example backend/.env       # điền tối thiểu SECRET_KEY
+cp backend/.env.example backend/.env       # mẫu local tối thiểu
 docker compose up
 ```
 

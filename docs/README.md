@@ -26,6 +26,7 @@
 | [04-api](04-api/)               | [cookie-consent-va-job-view-tracking.md](04-api/cookie-consent-va-job-view-tracking.md) | Consent cookie, browser storage và job-view tracking |
 | [04-api](04-api/)               | [job-services-contract.md](04-api/job-services-contract.md) | Hợp đồng API dự kiến cho lifecycle V2, inventory, activation và candidate presentation |
 | [05-huong-dan](05-huong-dan/)   | [huong-dan-cai-dat.md](05-huong-dan/huong-dan-cai-dat.md)        | Hướng dẫn cài đặt, chạy dự án local                                     |
+| [05-huong-dan](05-huong-dan/)   | [cau-hinh-env.md](05-huong-dan/cau-hinh-env.md)                  | Mẫu env tối thiểu, catalog optional và ma trận native/Docker/CI         |
 | [05-huong-dan](05-huong-dan/)   | [cau-hinh-site-settings.md](05-huong-dan/cau-hinh-site-settings.md) | Cấu hình site settings (15 nhóm, schema-driven, quy ước env)         |
 | [06-deployment](06-deployment/) | [knowledgebase-rollout-runbook.md](06-deployment/knowledgebase-rollout-runbook.md) | Rollout, readiness, observability và rollback Help Center |
 | [05-huong-dan](05-huong-dan/)   | [social-login.md](05-huong-dan/social-login.md)                 | Cấu hình social login OAuth (lấy key Google/Facebook/LinkedIn)          |

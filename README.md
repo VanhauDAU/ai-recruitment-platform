@@ -58,7 +58,7 @@ docs/       Tài liệu dự án — xem docs/README.md
 ### Cách 1 — Docker Compose (khuyến nghị, chỉ cần Docker)
 
 ```bash
-cp backend/.env.example backend/.env    # điền tối thiểu SECRET_KEY
+cp backend/.env.example backend/.env    # chạy local; thay SECRET_KEY nếu dùng lâu dài
 docker compose up
 # Frontend: http://localhost:5173 · API: http://localhost:8000/api · Swagger: /api/docs/
 ```
@@ -81,6 +81,7 @@ Postgres của compose mở ở host cổng **5433** (`postgres/postgres`, DB `a
 dễ nối lẫn khi mở bằng DBeaver/psql.
 
 Chi tiết chạy local bằng Compose: [docs/06-deployment/docker-compose.md](docs/06-deployment/docker-compose.md).
+Quy tắc env tối thiểu và catalog tùy chọn: [docs/05-huong-dan/cau-hinh-env.md](docs/05-huong-dan/cau-hinh-env.md).
 
 ### Cách 2 — Chạy trực tiếp (venv + PostgreSQL + Redis local)
 
@@ -92,10 +93,11 @@ brew services start redis
 python manage.py runserver 8000        # http://localhost:8000
 
 # Worker Celery (terminal riêng, chạy từ backend/).
-# BẮT BUỘC khai đủ 3 queue: settings route task sang auth-email (email xác thực,
-# 2FA, OTP điện thoại) và cv-export (render PDF, thumbnail); phần còn lại vào
-# default. Thiếu queue nào thì task của queue đó im lặng không chạy.
-celery -A config worker -l info -Q default,auth-email,cv-export
+# Worker thông thường nghe toàn bộ queue không-AI; AI có worker riêng để không
+# chiếm pool email/export/scan. Thiếu queue thì task có thể im lặng không chạy.
+celery -A config worker -l info \
+  -Q default,auth-email,auth-sms,cv-export,upload-scan,candidate-email
+celery -A config worker -l info -Q ai-generation --concurrency=2
 
 # Beat: quét lại job bị gián đoạn + dọn file import hết hạn (terminal riêng)
 celery -A config beat -l info

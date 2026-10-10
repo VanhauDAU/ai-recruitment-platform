@@ -2,7 +2,7 @@
 
 The backend is the only R2 client. Access keys and secret keys belong in the
 runtime `backend/.env` or deployment secret store; they must never be exposed
-to React, a `VITE_*` variable, a commit, or `backend/.env.example`.
+to React, a `VITE_*` variable, a commit, or `backend/.env.optional.example`.
 
 ## Buckets and object layout
 
