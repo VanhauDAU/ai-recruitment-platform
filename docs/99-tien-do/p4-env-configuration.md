@@ -2,8 +2,8 @@
 
 P4 được merge vào `dev` tại commit `610b379e60b9ab1646e2fe157a201d7e0e3e7941`
 ngày 10/10/2026. Follow-up `codex/p4-env-gate-followup` khép các khoảng trống
-phát hiện khi chạy gate, nhưng P4 chỉ chuyển sang Verified sau khi follow-up được
-merge và Docker runtime smoke đạt trên checkout cuối.
+phát hiện khi chạy gate. Docker runtime smoke đạt ngày 11/10/2026; P4 chỉ chuyển
+sang Verified sau khi follow-up được merge và full CI đạt trên SHA cuối.
 
 ## Kết quả triển khai
 
@@ -44,15 +44,12 @@ merge và Docker runtime smoke đạt trên checkout cuối.
 | Build và bundle | Build đạt; initial JavaScript 317,4/320 KiB gzip, CSS 37,4/38 KiB gzip |
 | E2E smoke | 270 pass, 6 skip trên desktop, tablet 834x1112 và mobile Chromium |
 | Tài liệu và repository | 233 link nội bộ đạt; permission sync đạt; clean dry-run và `git diff --check` đạt |
-| Docker runtime | Chưa chạy: Docker daemon không hoạt động. `docker compose config` vẫn parse đủ 9 service và checker xác nhận không còn override hai cờ ứng dụng |
+| Docker runtime | Đạt ngày 11/10/2026: đủ 9 service parse; DB/Redis/backend/frontend healthy; API và frontend phản hồi; backend/worker/AI worker/beat nhận đúng cờ từ backend owner; Vite đọc rollout từ frontend owner; bốn media root còn nguyên; worker thường nghe 6 queue, AI worker chỉ nghe `ai-generation`; task CV đăng ký đúng tên và beat phát lịch |
 
 ## Điều kiện chuyển P4 sang Verified
 
 1. Merge follow-up P4 vào `dev` và chốt SHA.
-2. Bật Docker daemon, chạy native/Docker smoke cho backend, worker, beat và
-   frontend; xác nhận cờ AI/announcement giữ giá trị owner và queue đại diện được
-   worker nhận.
-3. Chạy lại full gate trên cùng SHA. Test PDF trên macOS phải dùng thư viện
+2. Chạy lại full gate trên cùng SHA. Test PDF trên macOS phải dùng thư viện
    Homebrew hiện có hoặc chạy trong image CI đã cài đủ WeasyPrint dependency.
-4. Chỉ xử lý ba key `SPEECH_*` chưa catalog và hai key lặp trong env cá nhân sau
+3. Chỉ xử lý ba key `SPEECH_*` chưa catalog và hai key lặp trong env cá nhân sau
    khi có quyết định cụ thể; không xóa theo wildcard.

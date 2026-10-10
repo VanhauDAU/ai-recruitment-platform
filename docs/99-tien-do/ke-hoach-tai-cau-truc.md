@@ -25,7 +25,7 @@ chuyển bước sau khi gate của giai đoạn trước có bằng chứng đ�
 | P1 | `fix/ci-test-stability` | Chẩn đoán và sửa test lỗi hoặc treo | Implemented | Ba lượt lặp ổn định; không hạ coverage hoặc skip |
 | P2 | `chore/repo-cleanup` | Dọn artifact, media test và ignore | Implemented | Test không sinh rác ở root; dữ liệu không mất |
 | P3 | `chore/local-only-tooling` | Bỏ cấu hình deploy production, giữ local | Implemented | Compose local, API, frontend và worker hoạt động |
-| P4 | `refactor/env-configuration` + follow-up | Env tối thiểu và catalog optional | Implemented | Chờ merge follow-up và Docker runtime smoke để Verified |
+| P4 | `refactor/env-configuration` + follow-up | Env tối thiểu và catalog optional | Implemented | Chờ merge follow-up và full CI cuối để Verified |
 | P5 | `refactor/backend-organization` | Chuẩn hóa Django theo app | Planned | Schema, migration, quyền và task registry không đổi |
 | P6 | `refactor/frontend-organization` | Chuẩn hóa ownership frontend | Planned | Import, route, bundle và UI không đổi |
 | P7 | `docs/procv-consolidation` | Bộ tài liệu và tiến độ thống nhất | Planned | Mọi file cũ có mapping, link check đạt |
@@ -60,7 +60,7 @@ chuyển bước sau khi gate của giai đoạn trước có bằng chứng đ�
 | `deploy/nginx/`, `docker-compose.prod.yml` | Đã bỏ; lịch sử giữ tại tag checkpoint | README, CI detector, Compose comment, docs | P3 | Implemented | Không còn tham chiếu bắt buộc; local smoke đạt |
 | `frontend/Dockerfile`, `frontend/nginx.conf` | Đã bỏ sau khi kiểm tra consumer | Compose, docs, workflow | P3 | Implemented | Frontend local/build không đổi |
 | `docker-compose.yml`, `backend/Dockerfile` | Giữ cho local; đã sửa chú thích production lỗi thời | Volume/project name, DB, Redis, worker | P3 | Implemented | Migrate, health, frontend và worker smoke đạt |
-| `backend/.env.example` | Mẫu tối thiểu; phần optional sang `.env.optional.example` | Loader, Compose interpolation, CI, Celery | P4 | Implemented | Native và env-sync đạt; Docker runtime chờ daemon |
+| `backend/.env.example` | Mẫu tối thiểu; phần optional sang `.env.optional.example` | Loader, Compose interpolation, CI, Celery | P4 | Implemented | Native, Docker và env-sync đạt |
 | `frontend/.env.example` | Mẫu public tối thiểu; optional sang `.env.optional.example` | Vite build-time contract | P4 | Implemented | Không có secret; unit/build/smoke ba viewport đạt |
 | `scripts/bootstrap-backend.sh`, check thuần backend | Chỉ chuyển vào `backend/scripts/` khi ownership rõ | Docker, CI, README | P5 | Pending | Full backend gate đạt |
 | Frontend hiện tại | Chỉ di chuyển file sai owner hoặc trùng thật sự | Public index, lazy loader, router, asset động | P6 | Pending | Lint, architecture, coverage, build, budget, E2E |
