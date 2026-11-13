@@ -29,8 +29,7 @@ class CampaignJobPerformanceTests(TestCase):
             campaign=campaign,
             title='Lập trình viên',
             description='Mô tả công việc.',
-            status=Job.Status.REJECTED,
-            rejected_reason='Thiếu thông tin mức lương.',
+            status=Job.Status.DRAFT,
         )
         client = APIClient()
         client.force_authenticate(user)
@@ -41,4 +40,5 @@ class CampaignJobPerformanceTests(TestCase):
 
         self.assertEqual(response.status_code, 200, response.data)
         self.assertEqual(response.data['jobs'][0]['public_id'], job.public_id)
-        self.assertEqual(response.data['jobs'][0]['rejected_reason'], 'Thiếu thông tin mức lương.')
+        self.assertEqual(response.data['jobs'][0]['status'], Job.Status.DRAFT)
+        self.assertNotIn('rejected_reason', response.data['jobs'][0])

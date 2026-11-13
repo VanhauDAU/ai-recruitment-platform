@@ -223,7 +223,7 @@ class RecruitmentCampaignApiTests(TestCase):
             status=Job.Status.ACTIVE,
             deadline=timezone.localdate() + timedelta(days=10),
         )
-        pending_campaign = RecruitmentCampaign.objects.create(
+        draft_campaign = RecruitmentCampaign.objects.create(
             owner=self.owner_profile,
             company=self.company,
             name='Backend team',
@@ -232,10 +232,10 @@ class RecruitmentCampaignApiTests(TestCase):
         Job.objects.create(
             posted_by=self.owner,
             company=self.company,
-            campaign=pending_campaign,
-            title='Backend pending',
-            description='Pending review.',
-            status=Job.Status.PENDING,
+            campaign=draft_campaign,
+            title='Backend draft',
+            description='Not published yet.',
+            status=Job.Status.DRAFT,
         )
         candidate = get_user_model().objects.create_user(
             email='campaign-candidate@example.com',
@@ -272,7 +272,6 @@ class RecruitmentCampaignApiTests(TestCase):
 
         listed = self.client.get(reverse('employer-campaign-list'))
         needs_review = self.client.get(reverse('employer-campaign-list'), {'scope': 'needs_review'})
-        pending_jobs = self.client.get(reverse('employer-campaign-list'), {'scope': 'pending_jobs'})
         report = self.client.get(
             reverse('employer-campaign-report', kwargs={'public_id': campaign.public_id})
         )
@@ -282,7 +281,9 @@ class RecruitmentCampaignApiTests(TestCase):
         )
         self.assertEqual(item['job_count'], 2)
         self.assertEqual(item['active_job_count'], 2)
-        self.assertEqual(item['pending_job_count'], 0)
+        self.assertEqual(item['draft_job_count'], 0)
+        self.assertNotIn('pending_job_count', item)
+        self.assertNotIn('rejected_job_count', item)
         self.assertEqual(item['expired_job_count'], 0)
         self.assertEqual(item['candidate_count'], 1)
         self.assertEqual(
@@ -301,7 +302,6 @@ class RecruitmentCampaignApiTests(TestCase):
         self.assertEqual(item['unviewed_application_count'], 1)
         self.assertEqual(item['unviewed_count'], 1)
         self.assertEqual(needs_review.data['count'], 1)
-        self.assertEqual(pending_jobs.data['count'], 1)
         self.assertEqual(report.data['jobs']['total'], 2)
         self.assertEqual(report.data['jobs']['active'], 2)
         self.assertEqual(report.data['jobs']['expired'], 0)

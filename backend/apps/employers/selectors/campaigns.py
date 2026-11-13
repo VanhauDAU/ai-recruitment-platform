@@ -70,7 +70,6 @@ def campaign_list_queryset(user, *, status=None, scope=None, q=None, ordering=No
     queryset = queryset.annotate(
         job_count=Count('jobs', distinct=True),
         draft_job_count=Count('jobs', filter=Q(jobs__status='draft'), distinct=True),
-        pending_job_count=Count('jobs', filter=Q(jobs__status='pending'), distinct=True),
         active_job_count=Count(
             'jobs',
             filter=Q(jobs__status='active')
@@ -83,7 +82,6 @@ def campaign_list_queryset(user, *, status=None, scope=None, q=None, ordering=No
             distinct=True,
         ),
         closed_job_count=Count('jobs', filter=Q(jobs__status='closed'), distinct=True),
-        rejected_job_count=Count('jobs', filter=Q(jobs__status='rejected'), distinct=True),
         application_count=Count('jobs__applications', distinct=True),
         application_submission_count=Count('jobs__applications', distinct=True),
         application_pair_count=Coalesce(
@@ -115,8 +113,6 @@ def campaign_list_queryset(user, *, status=None, scope=None, q=None, ordering=No
         queryset = queryset.filter(unviewed_application_count__gt=0)
     elif scope == 'active_jobs':
         queryset = queryset.filter(active_job_count__gt=0)
-    elif scope == 'pending_jobs':
-        queryset = queryset.filter(pending_job_count__gt=0)
     elif scope == 'expired_jobs':
         queryset = queryset.filter(expired_job_count__gt=0)
     order_fields = {
@@ -222,7 +218,7 @@ def campaign_report(campaign):
         .annotate(count=Count('id'))
     }
     jobs = campaign.jobs.all()
-    job_statuses = {state: 0 for state in ('draft', 'pending', 'active', 'closed', 'rejected')}
+    job_statuses = {state: 0 for state in ('draft', 'active', 'closed')}
     job_statuses.update(
         {row['status']: row['count'] for row in jobs.values('status').annotate(count=Count('id'))}
     )
@@ -337,7 +333,6 @@ def campaign_job_performance(campaign, *, days=7, job_public_id=None):
             'slug',
             'title',
             'status',
-            'rejected_reason',
             'deadline',
             'engagement_tracking_started_at',
         )
@@ -406,7 +401,6 @@ def campaign_job_performance(campaign, *, days=7, job_public_id=None):
                 'slug': job['slug'],
                 'title': job['title'],
                 'status': job['status'],
-                'rejected_reason': job['rejected_reason'],
                 'deadline': deadline,
                 'is_expired': bool(
                     job['status'] == Job.Status.ACTIVE and deadline is not None and deadline < today
