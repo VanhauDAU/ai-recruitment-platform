@@ -11,7 +11,9 @@ Quyết định:
 > import-linter, `makemigrations --check` và 1246 test (bỏ riêng test
 > migration, vốn đã đạt ở lần chạy theo app). PM-3 đạt oxlint (0 lỗi), vitest
 > (332 file, 1232 test), build và kiểm tra kiến trúc; **E2E chưa chạy được**
-> vì máy local chưa có đúng bản trình duyệt của Playwright.
+> vì máy local chưa có đúng bản trình duyệt của Playwright. PM-3b (cam kết khi
+> đăng tin, trạng thái tạm ẩn cho nhà tuyển dụng) đã commit sau lần chạy cổng
+> đó nên **chưa được chạy test**; mới qua ruff và kiểm tra phụ thuộc frontend.
 
 | Phase | Nội dung | Trạng thái |
 | --- | --- | --- |
@@ -19,15 +21,17 @@ Quyết định:
 | PM-1 | ADR-0014, ADR-0015, đánh dấu ADR-0012 thay thế một phần | ✅ Hoàn tất |
 | PM-2 | Backend: đăng tin là công khai, gỡ duyệt tin, migration dữ liệu | ✅ Hoàn tất — đạt cổng backend |
 | PM-3 | Frontend: cổng nhà tuyển dụng và quản trị theo hợp đồng API mới | 🟨 Đạt lint, unit test, build — còn chờ E2E |
+| PM-3b | Lưu cam kết chịu trách nhiệm khi đăng và mở lại tin; nhà tuyển dụng thấy tin bị tạm ẩn kèm nhóm lý do | 🟨 Đã commit — chờ chạy lại cổng backend và frontend |
 | PM-4 | Xóa app `services` (gói dịch vụ, quyền lợi, yêu cầu tư vấn) | ⬜ Chưa bắt đầu |
 | PM-5 | Kiểm thử tích hợp ba cổng | ⬜ Chưa bắt đầu |
 | PM-6 | Dọn docs, xóa `99-tien-do`, dựng lại mục lục | ⬜ Chưa bắt đầu |
 | PM-7 | Bổ sung changelog còn thiếu, rút gọn tiến độ, sinh lại OpenAPI | ⬜ Chưa bắt đầu |
 
-Việc còn treo: `docs/04-api/openapi.yaml` chưa được sinh lại. Cam kết trách
-nhiệm hiện là dòng thông báo cạnh nút "Đăng tin", chưa có ô xác nhận được lưu
-ở backend. Nhà tuyển dụng chưa thấy trạng thái "bị tạm ẩn" trên tin của mình,
-vì API cổng nhà tuyển dụng chưa trả `moderation_hold`.
+Việc còn treo: `docs/04-api/openapi.yaml` chưa được sinh lại. Nhà tuyển dụng
+không sửa được tin đang bị tạm ẩn, nên muốn khắc phục nội dung phải liên hệ
+quản trị viên; có mở cho sửa trong lúc tạm ẩn hay không là quyết định chưa
+chốt. Khi `POST /api/jobs/mine/` bị từ chối ở bước đăng, bản nháp vừa tạo vẫn
+được giữ lại (hành vi có từ trước, áp dụng cho mọi lý do từ chối).
 
 ## Epic rà soát và hardening cổng Nhà tuyển dụng (ER, 2026-08-10)
 

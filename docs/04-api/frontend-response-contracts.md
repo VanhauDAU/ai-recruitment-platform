@@ -35,7 +35,7 @@ hoặc cấu trúc database.
 | Job card / kết quả tìm kiếm / việc đã lưu | `GET /api/jobs/` | `PublicJobListSerializer` | định danh public, tiêu đề/công ty, địa điểm, skill, loại việc, kinh nghiệm/cấp bậc/học vấn/tuổi, lương, badge/tier, thời gian đăng |
 | Việc làm tốt nhất trang chủ | `GET /api/jobs/best/?rotation_seed=` | `PublicJobPreviewSerializer` | eligibility pool riêng, pagination + seed luân phiên; không dùng main-list ranking |
 | Chi tiết / quick view việc làm | `GET /api/jobs/{slug}/` | `JobDetailSerializer` | nội dung chi tiết, thông tin công ty tối thiểu, salary/deadline/view, location/schedule/language và các nhóm view-model |
-| Bảng quản lý tin NTD | `GET /api/jobs/mine/` | `EmployerJobListSerializer` | `public_id`, `title`, `company_name`, `locations_detail`, `employment_type`, `deadline`, `status`, `application_count`, timestamps cần hiển thị |
+| Bảng quản lý tin NTD | `GET /api/jobs/mine/` | `EmployerJobListSerializer` | `public_id`, `title`, `company_name`, `locations_detail`, `employment_type`, `deadline`, `status`, `visibility_hold`, `application_count`, timestamps cần hiển thị |
 | Form tin NTD | `POST/PATCH /api/jobs/mine/...` | `EmployerJobWriteSerializer`; response `EmployerJobDetailSerializer` | dữ liệu form và nested relation, gồm liên hệ nhận hồ sơ; endpoint có `IsEmployer` |
 | Admin hậu kiểm tin | `GET /api/jobs/admin/moderation/{public_id}/`, `POST .../decisions/` | `AdminJobDetailSerializer` / `AdminJobDecisionSerializer` | `review_token`, `state_actions` (`hide`/`restore`), `blocked_reasons`, `content_changes`; hành động hợp lệ do backend tính |
 | Readiness nhà tuyển dụng | `GET /api/employer/me/` | `RecruiterProfileSerializer` + readiness selector | Năm field top-level `job_workspace_ready`, `verification_approved`, `candidate_data_access`, `dpa_status`, `blockers`; onboarding legacy chỉ để tương thích |
@@ -342,6 +342,17 @@ blocker fail-closed:
 Khi không đạt, backend trả HTTP 400 với `code=JOB_PUBLICATION_BLOCKED` và
 `blocked_reasons[]`; frontend giữ tin ở bản nháp, hiển thị label từ backend và
 không hiển thị toast thành công. Frontend không tự suy điều kiện đăng.
+
+Trước điều kiện đăng, backend yêu cầu cam kết chịu trách nhiệm. Frontend hiển
+thị `responsibility_statement.text` của posting context dưới dạng ô xác nhận
+ở form đăng tin nháp và hộp thoại mở lại tin, rồi gửi
+`responsibility_statement_version`. Frontend không giữ bản sao nội dung cam
+kết; khi chưa tải được posting context thì không cho đăng. Lưu thay đổi trên
+tin đang tuyển không hiển thị ô xác nhận.
+
+Khi `visibility_hold` khác `null`, cổng nhà tuyển dụng gắn nhãn "Tạm ẩn" cho
+tin đang tuyển, hiển thị tình trạng và nhóm lý do ở trang chi tiết, và không
+hiển thị các thao tác backend sẽ từ chối (sửa, gia hạn, mở lại, sao chép).
 
 Ở trang chi tiết tin của admin, `blocked_reasons[]` giải thích vì sao tin đang
 không hiển thị với ứng viên. Frontend map allowlist

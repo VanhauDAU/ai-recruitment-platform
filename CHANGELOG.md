@@ -8,6 +8,19 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-13
 
+#### Added — Cam kết khi đăng tin và trạng thái tạm ẩn cho nhà tuyển dụng
+
+- Đăng tin nháp và mở lại tin đã đóng yêu cầu `responsibility_statement_version`
+  khớp bản cam kết đang có hiệu lực; thiếu hoặc sai trả
+  `JOB_RESPONSIBILITY_REQUIRED`. Posting context trả `responsibility_statement`;
+  tin lưu `responsibility_accepted_at` và `responsibility_statement_version`
+  (`jobs.0048`). Form đăng tin và hộp thoại mở lại tin có ô xác nhận; trang chi
+  tiết tin của admin hiển thị thời điểm nhà tuyển dụng cam kết.
+- API tin của nhà tuyển dụng trả `visibility_hold` (loại, thời điểm, nhóm lý
+  do, không gồm ghi chú nội bộ); báo cáo hiệu quả tin của chiến dịch trả
+  `visibility_held`. Cổng nhà tuyển dụng gắn nhãn "Tạm ẩn", giải thích ở trang
+  chi tiết và ẩn các thao tác bị từ chối khi tin đang tạm ẩn.
+
 #### Changed — Hậu kiểm tin tuyển dụng thay cho duyệt trước (ADR-0014)
 
 - Nhà tuyển dụng đăng tin là tin công khai ngay: `submit` và `reopen` chuyển
@@ -24,8 +37,8 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 #### Changed — Giao diện theo mô hình hậu kiểm
 
-- Cổng nhà tuyển dụng: nút "Đăng tin" thay "Gửi duyệt tin", có dòng cam kết
-  trách nhiệm trước khi đăng, hiển thị lý do khi backend trả
+- Cổng nhà tuyển dụng: nút "Đăng tin" thay "Gửi duyệt tin", hiển thị lý do khi
+  backend trả
   `JOB_PUBLICATION_BLOCKED`; bỏ nhãn, bộ lọc và số đếm "Chờ duyệt", "Từ chối".
 - Cổng quản trị: danh sách tin mặc định hiển thị tất cả tin, thêm phạm vi "Có
   báo cáo chờ"; trang chi tiết chỉ còn tạm ẩn và khôi phục, tab "Thay đổi" so

@@ -310,6 +310,33 @@ Các mã lý do: `verification_required`, `dpa_outdated`, `compliance_hold_activ
 `campaign_inactive`. `review_token` chỉ khóa revision của job cho thao tác tạm
 ẩn và khôi phục.
 
+Cam kết chịu trách nhiệm được kiểm tra trước điều kiện đăng. Client lấy
+`responsibility_statement` từ posting context, hiển thị `text` cho nhà tuyển
+dụng xác nhận rồi gửi lại `version` trong `responsibility_statement_version`.
+Backend lưu `responsibility_accepted_at` và
+`responsibility_statement_version` trên tin; chi tiết tin của admin trả hai
+field này (rỗng với tin công khai trước khi có cam kết).
+
+Danh sách và chi tiết tin của nhà tuyển dụng trả `visibility_hold`, là `null`
+khi ứng viên nhìn thấy tin:
+
+```json
+{
+  "kind": "moderation",
+  "code": "manual_review",
+  "label": "Tạm ẩn để rà soát nội dung",
+  "held_at": "2026-11-12T08:00:00+07:00",
+  "reason_code": "fraud_risk",
+  "reason_label": "Có dấu hiệu lừa đảo"
+}
+```
+
+`kind=moderation` là tin bị quản trị viên tạm ẩn, kèm nhóm lý do của lần tạm
+ẩn gần nhất; `kind=account` là tin bị giữ theo trạng thái tài khoản và không
+có lý do. Ghi chú của quản trị viên không nằm trong payload này. Báo cáo
+hiệu quả tin của chiến dịch (`.../campaigns/{public_id}/job-performance/`)
+trả cờ `visibility_held` cho từng tin.
+
 ### Admin employer verification — final decision và lifecycle
 
 | Method | Endpoint | Contract |
@@ -449,11 +476,11 @@ Mã lỗi ổn định gồm `JOB_AI_DAILY_QUOTA_EXCEEDED` (429),
 | POST | `/api/jobs/{public_id}/report/` | Candidate-only, chỉ nhận tin đang public và throttle đồng thời theo account/IP; response tối thiểu `{public_id,status,created_at}`. Chỉ admin-UPHELD thuộc `fake_company\|scam\|wrong_info` làm mất tick recruiter và tự tạo hold ẩn tin; reverse phục hồi badge nhưng không tự public lại tin. |
 | POST | `/api/jobs/{slug}/views/` | Ghi nhận lượt xem riêng, chỉ khi Analytics consent hợp lệ; Redis dedupe 24 giờ, response `{counted, view_count, reason?}`. |
 | GET/POST | `/api/privacy/consent/` | Đọc/lưu lựa chọn cookie ký số (`preferences`, `analytics`, `marketing`); necessary luôn bật, rút Analytics sẽ xóa viewer cookie. |
-| GET/POST | `/api/jobs/mine/` | Workspace recruiter owner-only và yêu cầu `job_workspace_ready=true`. `POST ?as=draft` lưu nháp thiếu dữ liệu; POST thường validate form, điều kiện đăng và quota rồi đăng tin ở trạng thái `active`. Form giữ contract nested hiện hữu. Candidate preview chỉ gắn khi `candidate_data_access=true`. |
+| GET/POST | `/api/jobs/mine/` | Workspace recruiter owner-only và yêu cầu `job_workspace_ready=true`. `POST ?as=draft` lưu nháp thiếu dữ liệu; POST thường validate form, cam kết (`responsibility_statement_version`), điều kiện đăng và quota rồi đăng tin ở trạng thái `active`. Form giữ contract nested hiện hữu. Candidate preview chỉ gắn khi `candidate_data_access=true`. Mỗi dòng có `visibility_hold`. |
 | GET/PATCH/DELETE | `/api/jobs/mine/{public_id}/` | Chỉ người tạo và workspace-ready được đọc/sửa; chỉ xóa nháp chưa từng đăng. Cập nhật tin `active` có hiệu lực ngay và không đổi `published_at`. |
-| GET | `/api/jobs/mine/posting-context/` | Endpoint compliance không bị workspace guard để luôn trả quota + `job_workspace_ready`, `candidate_data_access`, `dpa_status`, `blockers[]`, `job_postable`, `block_reason` và policy hạn hồ sơ (`default_deadline_days`, `max_deadline_days`, `max_public_lifetime_days`). |
-| POST | `/api/jobs/mine/{public_id}/submit/` | Đăng một tin nháp: tin công khai ngay (`active`). Trả `400 JOB_PUBLICATION_BLOCKED` kèm `blocked_reasons[]` khi nhà tuyển dụng chưa đạt điều kiện đăng. Gọi lại với tin đã `active` là idempotent. |
-| POST | `/api/jobs/mine/{public_id}/close/`, `/reopen/`, `/extend/`, `/duplicate/` | Đóng, mở lại (tin `active` ngay, body `{deadline}`, cùng điều kiện đăng), gia hạn tin active hoặc tạo nháp sao chép. |
+| GET | `/api/jobs/mine/posting-context/` | Endpoint compliance không bị workspace guard để luôn trả quota + `job_workspace_ready`, `candidate_data_access`, `dpa_status`, `blockers[]`, `job_postable`, `block_reason`, policy hạn hồ sơ (`default_deadline_days`, `max_deadline_days`, `max_public_lifetime_days`) và `responsibility_statement {version, text}` là bản cam kết đang có hiệu lực. |
+| POST | `/api/jobs/mine/{public_id}/submit/` | Đăng một tin nháp: tin công khai ngay (`active`). Body `{responsibility_statement_version}`; thiếu hoặc khác phiên bản đang có hiệu lực trả `400 JOB_RESPONSIBILITY_REQUIRED`. Trả `400 JOB_PUBLICATION_BLOCKED` kèm `blocked_reasons[]` khi nhà tuyển dụng chưa đạt điều kiện đăng. Gọi lại với tin đã `active` là idempotent và không cần cam kết. |
+| POST | `/api/jobs/mine/{public_id}/close/`, `/reopen/`, `/extend/`, `/duplicate/` | Đóng, mở lại (tin `active` ngay, body `{deadline, responsibility_statement_version}`, cùng cam kết và điều kiện đăng), gia hạn tin active hoặc tạo nháp sao chép. Tin đang bị tạm ẩn trả `400 RECRUITMENT_HOLD_ACTIVE` cho sửa, mở lại, gia hạn và sao chép. |
 | GET | `/api/jobs/admin/moderation/?status=pending` | **Admin**: danh sách tin để kiểm duyệt, gồm người tạo, công ty, thời điểm gửi và lý do từ chối (nếu có). |
 | POST | `/api/jobs/admin/moderation/{public_id}/review/` | **Admin**: body `{"action":"approve"}` để thành `active`, hoặc `{"action":"reject","reason":"..."}`. Lý do từ chối bắt buộc và trả cho chủ tin. |
 | GET/POST | `/api/v2/applications/` | Candidate application V2. POST bắt buộc `job_public_id`, `cv_public_id`, `version_public_id`; backend từ chối tin hết hạn, tạo snapshot CV bất biến và trả `candidate_status` cùng timeline đã lọc. |
