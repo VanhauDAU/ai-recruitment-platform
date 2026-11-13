@@ -9,16 +9,16 @@ Quyết định:
 > Cập nhật lần cuối: 2026-11-13 — PM-1 đến PM-3 đã commit trên nhánh
 > `refactor/remove-job-approval-workflow`. PM-2 đạt cổng backend: ruff,
 > import-linter, `makemigrations --check` và 1246 test (bỏ riêng test
-> migration, vốn đã đạt ở lần chạy theo app). PM-3 đã qua kiểm tra kiến trúc
-> (dependency-cruiser, ranh giới feature và API); **chưa chạy oxlint, vitest,
-> build và E2E**.
+> migration, vốn đã đạt ở lần chạy theo app). PM-3 đạt oxlint (0 lỗi), vitest
+> (332 file, 1232 test), build và kiểm tra kiến trúc; **E2E chưa chạy được**
+> vì máy local chưa có đúng bản trình duyệt của Playwright.
 
 | Phase | Nội dung | Trạng thái |
 | --- | --- | --- |
 | PM-0 | Tag `pre-post-moderation`, nhánh làm việc | ✅ Hoàn tất |
 | PM-1 | ADR-0014, ADR-0015, đánh dấu ADR-0012 thay thế một phần | ✅ Hoàn tất |
 | PM-2 | Backend: đăng tin là công khai, gỡ duyệt tin, migration dữ liệu | ✅ Hoàn tất — đạt cổng backend |
-| PM-3 | Frontend: cổng nhà tuyển dụng và quản trị theo hợp đồng API mới | 🟨 Code complete — chờ chạy lint, unit test, build và E2E |
+| PM-3 | Frontend: cổng nhà tuyển dụng và quản trị theo hợp đồng API mới | 🟨 Đạt lint, unit test, build — còn chờ E2E |
 | PM-4 | Xóa app `services` (gói dịch vụ, quyền lợi, yêu cầu tư vấn) | ⬜ Chưa bắt đầu |
 | PM-5 | Kiểm thử tích hợp ba cổng | ⬜ Chưa bắt đầu |
 | PM-6 | Dọn docs, xóa `99-tien-do`, dựng lại mục lục | ⬜ Chưa bắt đầu |
