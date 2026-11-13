@@ -24,7 +24,7 @@ from apps.accounts.models import (
 from apps.accounts.services import StaleImpactToken, assign_membership
 from apps.jobs.models import Job
 from apps.jobs.selectors.listing import active_jobs_queryset
-from apps.jobs.services import approve_job
+from apps.jobs.services import reopen_job
 
 from ..models import (
     Company,
@@ -42,7 +42,7 @@ from ..services import (
     get_or_create_verification_case,
     lock_verification_identity,
     record_verification_upload,
-    recruiter_job_approval_state,
+    recruiter_job_publication_state,
     recruiter_readiness_state,
     release_verification_holds,
     review_verification_document,
@@ -982,12 +982,12 @@ class EmployerVerificationStateMachineTests(APITestCase):
         _, readiness = recruiter_readiness_state(self.employer)
         self.assertFalse(readiness['candidate_data_access'])
         self.assertTrue(readiness['compliance_hold_active'])
-        job_approval = recruiter_job_approval_state(
+        job_publication = recruiter_job_publication_state(
             self.employer,
             company_id=self.company.pk,
         )
         self.assertEqual(
-            [blocker['code'] for blocker in job_approval['approve_blockers']],
+            [blocker['code'] for blocker in job_publication['publish_blockers']],
             ['compliance_hold_active'],
         )
         self.assertTrue(
@@ -1262,7 +1262,7 @@ class EmployerVerificationStateMachineTests(APITestCase):
         )
 
 
-class EmployerVerificationJobApprovalConcurrencyTests(TransactionTestCase):
+class EmployerVerificationJobPublicationConcurrencyTests(TransactionTestCase):
     def setUp(self):
         self.admin = User.objects.create_superuser(
             email='er5-concurrency-admin@example.com',
@@ -1294,10 +1294,11 @@ class EmployerVerificationJobApprovalConcurrencyTests(TransactionTestCase):
             posted_by=self.employer,
             company=self.company,
             campaign=self.campaign,
-            title='ER-5 concurrent approval job',
+            title='ER-5 concurrent publication job',
             description='Exercise the canonical U-R-Case-Company-Campaign-Job locks.',
-            status=Job.Status.PENDING,
+            status=Job.Status.CLOSED,
             submitted_at=timezone.now(),
+            closed_at=timezone.now(),
         )
 
     def _impact(self):
@@ -1309,25 +1310,28 @@ class EmployerVerificationJobApprovalConcurrencyTests(TransactionTestCase):
             reason='Concurrency regression revoke.',
         )
 
-    def _approve_in_thread(self):
+    def _publish_in_thread(self):
+        # Reopening a closed job is a publication: it makes the job public
+        # again behind the same employer gate as the first publish.
         close_old_connections()
         try:
             try:
-                approve_job(
-                    job=Job.objects.get(pk=self.job.pk),
-                    user=self.admin,
+                reopen_job(
+                    Job.objects.get(pk=self.job.pk),
+                    User.objects.get(pk=self.employer.pk),
+                    timezone.localdate() + timedelta(days=14),
                 )
             except ValidationError as error:
                 return error.detail
-            return 'approved'
+            return 'published'
         finally:
             close_old_connections()
 
-    def test_revoke_commits_first_and_concurrent_job_approval_fails_closed(self):
+    def test_revoke_commits_first_and_concurrent_job_publication_fails_closed(self):
         impact = self._impact()
         revoke_locked = Event()
         allow_revoke = Event()
-        approval_attempted = Event()
+        publication_attempted = Event()
         from apps.employers.services.verification import (
             apply_verification_hold as real_apply_verification_hold,
         )
@@ -1338,11 +1342,11 @@ class EmployerVerificationJobApprovalConcurrencyTests(TransactionTestCase):
                 raise AssertionError('Timed out before committing verification revoke.')
             return real_apply_verification_hold(scope, reason=reason, actor=actor)
 
-        real_approval_state = recruiter_job_approval_state
+        from apps.jobs.services.posting import _locked_recruiter as real_locked_recruiter
 
-        def signal_approval_attempt(*args, **kwargs):
-            approval_attempted.set()
-            return real_approval_state(*args, **kwargs)
+        def signal_publication_attempt(*args, **kwargs):
+            publication_attempted.set()
+            return real_locked_recruiter(*args, **kwargs)
 
         def revoke_in_thread():
             close_old_connections()
@@ -1363,35 +1367,38 @@ class EmployerVerificationJobApprovalConcurrencyTests(TransactionTestCase):
                 side_effect=pause_revoke,
             ),
             patch(
-                'apps.jobs.services.moderation.recruiter_job_approval_state',
-                side_effect=signal_approval_attempt,
+                'apps.jobs.services.posting._locked_recruiter',
+                side_effect=signal_publication_attempt,
             ),
             ThreadPoolExecutor(max_workers=2) as pool,
         ):
             revoke = pool.submit(revoke_in_thread)
             self.assertTrue(revoke_locked.wait(timeout=10))
-            approval = pool.submit(self._approve_in_thread)
-            self.assertTrue(approval_attempted.wait(timeout=10))
+            publication = pool.submit(self._publish_in_thread)
+            self.assertTrue(publication_attempted.wait(timeout=10))
             allow_revoke.set()
             self.assertEqual(revoke.result(timeout=10), EmployerVerificationCase.Status.REVOKED)
-            approval_error = approval.result(timeout=10)
+            publication_error = publication.result(timeout=10)
 
-        self.assertEqual(str(approval_error['code']), 'JOB_APPROVAL_BLOCKED')
+        self.assertEqual(str(publication_error['code']), 'JOB_PUBLICATION_BLOCKED')
         self.job.refresh_from_db()
-        self.assertEqual(self.job.status, Job.Status.PENDING)
+        self.assertEqual(self.job.status, Job.Status.CLOSED)
         self.assertFalse(active_jobs_queryset().filter(pk=self.job.pk).exists())
 
-    def test_approval_commits_first_then_revoke_repreviews_links_and_hides_job(self):
+    def test_publication_commits_first_then_revoke_repreviews_links_and_hides_job(self):
         stale_impact = self._impact()
-        approval_locked = Event()
-        allow_approval = Event()
+        publication_locked = Event()
+        allow_publication = Event()
         revoke_attempted = Event()
+        from apps.jobs.services.posting import (
+            _ensure_publication_allowed as real_ensure_publication_allowed,
+        )
 
-        def pause_approval_token(job, review_token):
-            del job, review_token
-            approval_locked.set()
-            if not allow_approval.wait(timeout=10):
-                raise AssertionError('Timed out before committing job approval.')
+        def pause_publication_gate(job, publication_state):
+            publication_locked.set()
+            if not allow_publication.wait(timeout=10):
+                raise AssertionError('Timed out before committing job publication.')
+            return real_ensure_publication_allowed(job, publication_state)
 
         real_lock = lock_verification_identity
 
@@ -1434,8 +1441,8 @@ class EmployerVerificationJobApprovalConcurrencyTests(TransactionTestCase):
 
         with (
             patch(
-                'apps.jobs.services.moderation._verify_review_token',
-                side_effect=pause_approval_token,
+                'apps.jobs.services.posting._ensure_publication_allowed',
+                side_effect=pause_publication_gate,
             ),
             patch(
                 'apps.employers.services.verification.lock_verification_identity',
@@ -1443,12 +1450,12 @@ class EmployerVerificationJobApprovalConcurrencyTests(TransactionTestCase):
             ),
             ThreadPoolExecutor(max_workers=2) as pool,
         ):
-            approval = pool.submit(self._approve_in_thread)
-            self.assertTrue(approval_locked.wait(timeout=10))
+            publication = pool.submit(self._publish_in_thread)
+            self.assertTrue(publication_locked.wait(timeout=10))
             revoke = pool.submit(revoke_with_repreview)
             self.assertTrue(revoke_attempted.wait(timeout=10))
-            allow_approval.set()
-            self.assertEqual(approval.result(timeout=10), 'approved')
+            allow_publication.set()
+            self.assertEqual(publication.result(timeout=10), 'published')
             self.assertEqual(revoke.result(timeout=10), 'stale_then_revoked')
 
         self.job.refresh_from_db()

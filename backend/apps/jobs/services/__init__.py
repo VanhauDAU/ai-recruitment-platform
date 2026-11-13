@@ -25,7 +25,7 @@ from .alerts import (
 from .availability import job_is_publicly_available
 from .content_snapshot import (
     build_job_content_snapshot,
-    job_pending_changes,
+    job_published_content_changes,
 )
 from .digests import (
     claim_due_candidate_job_digest_candidates,
@@ -50,16 +50,13 @@ from .lifecycle import (
 from .moderation import (
     JobModerationStale,
     apply_confirmed_report_hold,
-    approve_job,
     create_job_review_token,
     hide_job_visibility,
     job_moderation_state,
-    reject_job,
     restore_job_visibility,
 )
 from .posting import (
     close_job,
-    create_pending_job,
     delete_job_draft,
     duplicate_job,
     employer_job_posting_context,
@@ -87,11 +84,9 @@ __all__ = [
     'claim_due_candidate_job_digest_candidates',
     'create_job_alert',
     'create_job_ai_generation',
-    'approve_job',
     'build_job_content_snapshot',
     'candidate_still_allows_promoted_job_alert',
     'create_job_review_token',
-    'create_pending_job',
     'delete_job_draft',
     'delete_job_alert',
     'deliver_candidate_job_digest',
@@ -116,7 +111,7 @@ __all__ = [
     'job_moderation_state',
     'job_ai_policy',
     'job_ai_quota_remaining',
-    'job_pending_changes',
+    'job_published_content_changes',
     'JobModerationStale',
     'next_job_alert_run',
     'record_consented_job_view',
@@ -125,7 +120,6 @@ __all__ = [
     'purge_job_ai_generation_content',
     'record_consented_job_impressions',
     'record_job_ai_feedback',
-    'reject_job',
     'reset_candidate_job_delivery_cursors',
     'release_candidate_job_digest_claim',
     'recover_stale_job_ai_generations',

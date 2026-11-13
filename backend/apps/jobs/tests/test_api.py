@@ -1419,7 +1419,6 @@ class EmployerJobSerializerTests(APITestCase):
                 'published_at',
                 'submitted_at',
                 'approved_at',
-                'rejected_reason',
                 'created_at',
                 'updated_at',
             },

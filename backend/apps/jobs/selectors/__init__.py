@@ -17,7 +17,6 @@ from .moderation import (
     admin_job_detail_queryset,
     admin_job_management_queryset,
     admin_job_management_summary,
-    job_moderation_queryset,
 )
 from .recommendations import recommend_inline_jobs_for_candidate
 from .reports import ADMIN_JOB_REPORT_ORDERING_FIELDS, job_report_queryset
@@ -48,7 +47,6 @@ __all__ = [
     'job_badge_criteria',
     'recruiter_badge_eligibility',
     'job_ai_admin_overview',
-    'job_moderation_queryset',
     'ADMIN_JOB_REPORT_ORDERING_FIELDS',
     'job_report_queryset',
     'recommend_jobs_from_saved',

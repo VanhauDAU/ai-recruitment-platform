@@ -707,12 +707,10 @@ class EmployerJobWriteSerializer(JobSerializer):
             'auto_rejection_email_body',
             'submitted_at',
             'approved_at',
-            'rejected_reason',
         ]
         read_only_fields = JobSerializer.Meta.read_only_fields + [
             'submitted_at',
             'approved_at',
-            'rejected_reason',
         ]
 
     def validate(self, attrs):
@@ -865,7 +863,6 @@ class EmployerJobListSerializer(PublicJobListSerializer):
             'published_at',
             'submitted_at',
             'approved_at',
-            'rejected_reason',
             'created_at',
             'updated_at',
         ]
@@ -933,5 +930,4 @@ class EmployerJobPostingContextSerializer(serializers.Serializer):
     free_publish_limit = serializers.IntegerField(min_value=0)
     free_publish_remain = serializers.IntegerField(min_value=0)
     job_postable = serializers.BooleanField()
-    approval_required = serializers.BooleanField()
     block_reason = serializers.CharField(allow_blank=True)

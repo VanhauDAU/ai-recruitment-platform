@@ -1,8 +1,7 @@
-"""Seed the approval baseline for jobs approved before snapshots existed.
+"""Seed the publication baseline for jobs published before snapshots existed.
 
-An active job is showing exactly the content an administrator approved, so its
-current content is a valid baseline. Pending jobs are skipped: their content is
-already the edited revision and the approved one cannot be reconstructed.
+An active job without a snapshot has no recorded baseline, so its current
+content is captured as the published one.
 """
 
 from django.core.management.base import BaseCommand
@@ -47,4 +46,4 @@ class Command(BaseCommand):
         Job.objects.bulk_update(
             updated, ['approved_snapshot', 'approved_snapshot_at'], batch_size=200
         )
-        self.stdout.write(self.style.SUCCESS(f'Đã lưu bản duyệt gốc cho {len(updated)} tin.'))
+        self.stdout.write(self.style.SUCCESS(f'Đã lưu bản đăng gốc cho {len(updated)} tin.'))

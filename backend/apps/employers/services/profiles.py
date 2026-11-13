@@ -14,15 +14,15 @@ from ..models.readiness import (
     missing_employer_readiness,
 )
 
-JOB_APPROVAL_VERIFICATION_BLOCKER = {
+JOB_PUBLICATION_VERIFICATION_BLOCKER = {
     'code': 'verification_required',
     'label': 'Nhà tuyển dụng chưa được duyệt xác thực.',
 }
-JOB_APPROVAL_DPA_BLOCKER = {
+JOB_PUBLICATION_DPA_BLOCKER = {
     'code': 'dpa_outdated',
     'label': 'Nhà tuyển dụng chưa có chấp thuận DPA còn hiệu lực.',
 }
-JOB_APPROVAL_COMPLIANCE_HOLD_BLOCKER = {
+JOB_PUBLICATION_COMPLIANCE_HOLD_BLOCKER = {
     'code': 'compliance_hold_active',
     'label': 'Nhà tuyển dụng đang có một giới hạn tuân thủ còn hiệu lực.',
 }
@@ -202,14 +202,14 @@ def recruiter_job_posting_entitlement(user):
     }
 
 
-def recruiter_job_approval_state(user, *, company_id, lock=False):
-    """Return the fail-closed policy state used by administrator job approval.
+def recruiter_job_publication_state(user, *, company_id, lock=False):
+    """Return the fail-closed policy state that gates making a job public.
 
-    Job approval is intentionally stricter than job-workspace readiness: the
+    Publishing is intentionally stricter than job-workspace readiness: the
     recruiter must have an approved, account-scoped verification case for the
     company publishing the job and a current platform DPA acceptance. ``lock``
     is used by the write workflow so concurrent verification/DPA transitions
-    are serialized with the final approval decision.
+    are serialized with the publish action.
     """
     recruiter, readiness = recruiter_readiness_state(user, lock=lock)
     company_matches = bool(recruiter and recruiter.company_id == company_id)
@@ -223,17 +223,17 @@ def recruiter_job_approval_state(user, *, company_id, lock=False):
     compliance_hold_active = readiness['compliance_hold_active']
     blockers = []
     if not verification_approved:
-        blockers.append(dict(JOB_APPROVAL_VERIFICATION_BLOCKER))
+        blockers.append(dict(JOB_PUBLICATION_VERIFICATION_BLOCKER))
     if not dpa_current:
-        blockers.append(dict(JOB_APPROVAL_DPA_BLOCKER))
+        blockers.append(dict(JOB_PUBLICATION_DPA_BLOCKER))
     if compliance_hold_active:
-        blockers.append(dict(JOB_APPROVAL_COMPLIANCE_HOLD_BLOCKER))
+        blockers.append(dict(JOB_PUBLICATION_COMPLIANCE_HOLD_BLOCKER))
 
     return {
         'verification_approved': verification_approved,
         'dpa_current': dpa_current,
         'compliance_hold_active': compliance_hold_active,
-        'approve_blockers': blockers,
+        'publish_blockers': blockers,
     }
 
 
