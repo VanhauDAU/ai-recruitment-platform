@@ -1,9 +1,3 @@
-export const EMPLOYER_ACCOUNT_VERIFICATION_LEVEL_STEPS = [
-  'email_verified',
-  'phone_and_business_doc_approved',
-  'representative_verified',
-]
-
 const TOTAL_LEVELS = 3
 const INVALIDATING_CASE_STATUSES = new Set([
   'changes_requested',

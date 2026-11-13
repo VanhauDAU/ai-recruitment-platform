@@ -635,7 +635,8 @@ pages/employer/app/campaigns/CampaignList|CampaignDetail
 
 - `entities/campaign` sở hữu HTTP contract, query key, tên và trạng thái.
   Các trường nhu cầu tuyển dụng không thuộc campaign; chúng do
-  `entities/recruitment-need` và feature tương ứng sở hữu.
+  `entities/employer-profile` (HTTP contract) cùng feature
+  `capture-employer-recruitment-need`/`manage-employer-recruitment-needs` sở hữu.
   `entities/application` sở hữu list/export hồ sơ phía server;
   `entities/job` sở hữu contract tin tuyển dụng.
 - `features/manage-campaigns` sở hữu các workflow tạo nhanh, đổi tên,

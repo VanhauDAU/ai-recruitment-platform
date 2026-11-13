@@ -161,7 +161,6 @@ quyền, endpoint RBAC trả:
 | CV catalogue | `cv_template.view/create/edit/publish/archive/delete` theo action |
 | Job moderation | `.view` để đọc, `.enforce_visibility` để tạm ẩn hoặc khôi phục, `.resolve_report` để xử lý báo cáo |
 | `/api/dashboard/` | Vẫn `IsAdmin`, chuyển ở G2 |
-| Blog admin upload | Vẫn legacy `CanEditBlog` + Django Groups, chuyển ở G2 |
 
 Các field lifecycle CV được bảo vệ riêng để quyền `.edit` không thể phát hành
 qua PATCH: `CvTemplate.status/lifecycle_status/current_published_version`,
@@ -523,7 +522,7 @@ nếu các điều kiện workspace khác còn hợp lệ. Posting-context là n
 ER-2 và không kèm candidate PII/deep-link; policy bỏ/giữ count chờ quyết định
 riêng.
 
-**Quy ước ảnh (media):** DB lưu **storage key** (vd `site/settings/logo.png`), không lưu URL tuyệt đối; API resolve ra URL công khai theo domain/CDN hiện tại tại thời điểm trả về. Đổi domain hoặc bật `MEDIA_PUBLIC_BASE_URL` không cần sửa dữ liệu. Chuyển dữ liệu URL cũ sang key bằng `python manage.py normalize_media_references --apply`.
+**Quy ước ảnh (media):** DB lưu **storage key** (vd `site/settings/logo.png`), không lưu URL tuyệt đối; API resolve ra URL công khai theo domain/CDN hiện tại tại thời điểm trả về. Đổi domain hoặc bật `MEDIA_PUBLIC_BASE_URL` không cần sửa dữ liệu.
 
 ## Cutover CV API: V1 → V2
 

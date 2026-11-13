@@ -52,8 +52,6 @@ cd backend
 python3.11 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
-# Chỉ khi phát triển module AI/CV analysis:
-# pip install -r requirements-ai.txt
 cp .env.example .env
 python manage.py migrate
 

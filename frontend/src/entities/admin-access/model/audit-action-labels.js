@@ -87,8 +87,3 @@ export function auditActionLabel(action) {
 export function auditSourceLabel(source) {
   return AUDIT_SOURCE_LABELS[source] || source
 }
-
-/** Các action tự phục vụ — dùng cho bộ lọc "Chỉ thao tác bảo mật". */
-export const SELF_SERVICE_ACTIONS = Object.keys(AUDIT_ACTION_LABELS).filter((code) =>
-  code.startsWith('self_'),
-)

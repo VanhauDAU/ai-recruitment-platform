@@ -1,5 +1,8 @@
 """Fast, isolated settings for Django's test runner and CI."""
 
+import tempfile
+from pathlib import Path
+
 from .base import *
 
 ENVIRONMENT = 'test'
@@ -22,6 +25,15 @@ SIMPLE_JWT = {**SIMPLE_JWT, 'SIGNING_KEY': SECRET_KEY}
 # that cost is paid once per test. Tests only need a hasher that round-trips
 # through set_password/check_password; this setting is test-only.
 PASSWORD_HASHERS = ['django.contrib.auth.hashers.MD5PasswordHasher']
+
+# Test files must never land in a developer's real media roots. Each run gets
+# its own temporary tree; the roots stay distinct and non-nested like production.
+_TEST_MEDIA_BASE = Path(tempfile.mkdtemp(prefix='procv-test-media-'))
+LEGACY_MEDIA_ROOT = _TEST_MEDIA_BASE / 'legacy-media'
+PUBLIC_MEDIA_ROOT = _TEST_MEDIA_BASE / 'public-media'
+MEDIA_ROOT = PUBLIC_MEDIA_ROOT
+PRIVATE_MEDIA_ROOT = _TEST_MEDIA_BASE / 'private-media'
+UPLOAD_QUARANTINE_ROOT = _TEST_MEDIA_BASE / 'quarantine'
 
 # Never let a local .env switch test storage to a real R2 bucket. Tests use the
 # same local media contract as before and must not require network credentials.

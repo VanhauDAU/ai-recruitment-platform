@@ -221,7 +221,7 @@ có giấy tờ hiện hành vừa nộp lại đang chờ.
 - Reapprove chỉ gỡ hold nguồn `verification`; re-consent DPA chỉ gỡ hold nguồn
   `dpa`. Không gỡ moderation/account hold khác (ER-D20).
 - Áp hold cho dữ liệu hiện hữu luôn dry-run, ops review rồi mới apply
-  (`reconcile_employer_verifications`, `rollout_employer_dpa_compliance`).
+  (`rollout_employer_dpa_compliance`).
 
 ### 5.4 Cấp tài khoản và dấu tick
 

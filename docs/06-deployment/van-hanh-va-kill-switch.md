@@ -229,7 +229,6 @@ DPA xem [`employer-dpa-evidence-rollout.md`](./employer-dpa-evidence-rollout.md)
 | `check_employer_sms_readiness [--require-enabled]` | Kiểm cấu hình SMS, không gửi tin. |
 | `rollout_employer_dpa_compliance --phase ... --rollout-id ... [--apply] [--batch-size] [--cursor]` | Ân hạn DPA hoặc áp hold DPA hết hạn; dry-run mặc định, `--rollout-id` bất biến. |
 | `classify_legacy_employer_verifications [--apply] [--batch-size] [--case-cursor] [--company-cursor]` | Phân loại cohort xác thực legacy; dry-run mặc định. |
-| `reconcile_employer_verifications` | Kiểm tương thích; không tự duyệt (quyết định cuối luôn do admin). |
 
 ### Rollback
 

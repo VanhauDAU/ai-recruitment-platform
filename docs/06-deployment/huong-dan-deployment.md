@@ -25,7 +25,6 @@ Chưa triển khai — sẽ làm sau khi các module chính (CV, jobs, applicati
   active storage và không được Django/Vite/nginx phục vụ. Làm theo
   [ER-3 storage-boundary runbook](employer-upload-storage-boundary-runbook.md)
   trước khi chuyển traffic.
-- Với dữ liệu legacy, chạy `python manage.py normalize_media_references` để xem trước và thêm `--apply` để chuyển các URL localhost cũ sang storage key.
 - Nếu self-host bằng Nginx, chỉ mount và serve public volume:
 
 ```nginx
