@@ -5,7 +5,10 @@ import process from 'node:process'
 
 const DIST_DIR = path.resolve('dist')
 const MANIFEST_PATH = path.join(DIST_DIR, '.vite/manifest.json')
-const INITIAL_JS_GZIP_BUDGET = 320 * 1024
+// Security updates on 2026-10-11 moved Axios/Tiptap to their patched releases.
+// CI measured 320.3 KiB after that update, so retain a narrow 1.7 KiB margin
+// without relaxing the CSS or lazy-route accounting.
+const INITIAL_JS_GZIP_BUDGET = 322 * 1024
 // Shared account-setting styles now ship with the initial shell. Keep a narrow
 // allowance for those accessible responsive styles while retaining a real cap.
 const INITIAL_CSS_GZIP_BUDGET = 38 * 1024
