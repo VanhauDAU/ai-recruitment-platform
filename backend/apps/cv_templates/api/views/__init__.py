@@ -4,7 +4,6 @@ from .admin import (
     AdminCvColorViewSet,
     AdminCvContentBlueprintViewSet,
     AdminCvSampleContentViewSet,
-    AdminCvTemplateLocalizationViewSet,
     AdminCvTemplateViewSet,
     AdminModelViewSet,
 )
@@ -25,7 +24,6 @@ __all__ = [
     'AdminCvColorViewSet',
     'AdminCvContentBlueprintViewSet',
     'AdminCvSampleContentViewSet',
-    'AdminCvTemplateLocalizationViewSet',
     'AdminCvTemplateViewSet',
     'AdminModelViewSet',
     'CvCategoryCatalogListView',

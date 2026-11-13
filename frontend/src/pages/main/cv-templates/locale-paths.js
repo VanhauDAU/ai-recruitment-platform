@@ -1,9 +1,16 @@
-// Kho mẫu CV chỉ còn tiếng Việt và tiếng Anh (CVT-0). Path Nhật/Trung và
-// /mau-cv/ngon-ngu/:locale được redirect ở router và SEO shell backend.
-export const CATALOG_LOCALES = [
-  { locale: 'vi-VN', path: '/mau-cv', label: 'Tiếng Việt', shortLabel: 'tiếng Việt', flag: '🇻🇳' },
-  { locale: 'en-US', path: '/mau-cv-tieng-anh', label: 'Tiếng Anh', shortLabel: 'tiếng Anh', flag: '🇬🇧' },
-]
+import { CV_LANGUAGES } from '@/entities/cv-template'
+
+// Đường dẫn kho mẫu CV theo ngôn ngữ (tiếng Việt, tiếng Anh). Path Nhật/Trung
+// và /mau-cv/ngon-ngu/:locale cũ được redirect ở router và SEO shell backend.
+const CATALOG_PATHS = { 'vi-VN': '/mau-cv', 'en-US': '/mau-cv-tieng-anh' }
+
+export const CATALOG_LOCALES = CV_LANGUAGES.map((language) => ({
+  locale: language.code,
+  path: CATALOG_PATHS[language.code],
+  label: language.label,
+  shortLabel: language.inlineLabel,
+  flag: language.flag,
+}))
 
 export function catalogLocaleFromPath(pathname) {
   const match = [...CATALOG_LOCALES]

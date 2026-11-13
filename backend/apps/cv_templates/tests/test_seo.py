@@ -2,7 +2,6 @@ from django.core.cache import cache
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
-from apps.cv_templates.models import CvTemplateLocalization
 from apps.cv_templates.tests.factories import make_published_template
 
 SHELL = (
@@ -18,13 +17,9 @@ class CvTemplateSeoTests(TestCase):
         cls.template, _version = make_published_template(
             name='CV Hiện đại',
             preview_url='/media/templates/modern.png',
-        )
-        CvTemplateLocalization.objects.create(
-            template=cls.template,
-            locale='vi-VN',
-            display_name='CV Hiện đại',
-            description='Mẫu CV rõ ràng và chuyên nghiệp.',
-            seo_title='Mẫu CV hiện đại',
+            display_name_vi='CV Hiện đại',
+            description_vi='Mẫu CV rõ ràng và chuyên nghiệp.',
+            seo_title_vi='Mẫu CV hiện đại',
         )
 
     def setUp(self):

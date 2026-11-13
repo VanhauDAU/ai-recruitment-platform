@@ -9,17 +9,16 @@ from apps.cvs.schemas import empty_content
 from apps.cvs.services.composition import compose_cv_document
 
 from ..management.commands._cv_template_catalog import (
-    LOCALES,
     SECTION_PLANS,
     TEMPLATES,
     layout_capabilities,
     layout_regions,
 )
 from ..models import (
+    CATALOG_LANGUAGES,
     CvCategory,
     CvTemplate,
     CvTemplateColorLink,
-    CvTemplateLocalization,
     CvTemplateSection,
     CvTemplateVersion,
 )
@@ -56,11 +55,12 @@ class SeedCvTemplatesTests(TestCase):
                     contract.allowed_regions,
                 )
 
-    def test_catalogue_is_browsable_in_every_supported_locale(self):
-        for locale in LOCALES:
-            with self.subTest(locale=locale):
-                self.assertEqual(published_template_queryset(locale=locale).count(), len(TEMPLATES))
-        self.assertEqual(CvTemplateLocalization.objects.count(), len(TEMPLATES) * len(LOCALES))
+    def test_catalogue_is_browsable_in_every_supported_language(self):
+        for language in CATALOG_LANGUAGES:
+            with self.subTest(language=language.code):
+                templates = published_template_queryset(locale=language.code)
+                self.assertEqual(templates.count(), len(TEMPLATES))
+                self.assertTrue(all(template.catalog_seo_title for template in templates))
 
     def test_each_template_exposes_taxonomy_and_exactly_one_default_color(self):
         self.assertTrue(CvCategory.objects.filter(category_type='feature').exists())
@@ -115,7 +115,6 @@ class SeedCvTemplatesTests(TestCase):
             CvTemplate.objects.count(),
             CvTemplateVersion.objects.count(),
             CvTemplateSection.objects.count(),
-            CvTemplateLocalization.objects.count(),
             CvTemplateColorLink.objects.count(),
             CvCategory.objects.count(),
         )
@@ -128,7 +127,6 @@ class SeedCvTemplatesTests(TestCase):
                 CvTemplate.objects.count(),
                 CvTemplateVersion.objects.count(),
                 CvTemplateSection.objects.count(),
-                CvTemplateLocalization.objects.count(),
                 CvTemplateColorLink.objects.count(),
                 CvCategory.objects.count(),
             ),

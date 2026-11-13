@@ -21,7 +21,8 @@ vi.mock('@/entities/cv', async (importOriginal) => ({
   renameCv: mocks.renameCv,
 }))
 
-vi.mock('@/entities/cv-template', () => ({
+vi.mock('@/entities/cv-template', async (importOriginal) => ({
+  CV_LANGUAGES: (await importOriginal()).CV_LANGUAGES,
   getCvTemplates: templateMocks.getCvTemplates,
   getCvBackgrounds: templateMocks.getCvBackgrounds,
   getCvSampleContents: templateMocks.getCvSampleContents,

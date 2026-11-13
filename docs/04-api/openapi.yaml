@@ -8708,128 +8708,6 @@ paths:
                 type: object
                 additionalProperties: {}
           description: ''
-  /api/site/admin/locales/:
-    get:
-      operationId: site_admin_locales_list
-      tags:
-      - site
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/AdminLocale'
-          description: ''
-    post:
-      operationId: site_admin_locales_create
-      tags:
-      - site
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AdminLocaleRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/AdminLocaleRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/AdminLocaleRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '201':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AdminLocale'
-          description: ''
-  /api/site/admin/locales/{code}/:
-    get:
-      operationId: site_admin_locales_retrieve
-      parameters:
-      - in: path
-        name: code
-        schema:
-          type: string
-        required: true
-      tags:
-      - site
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AdminLocale'
-          description: ''
-    put:
-      operationId: site_admin_locales_update
-      parameters:
-      - in: path
-        name: code
-        schema:
-          type: string
-        required: true
-      tags:
-      - site
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AdminLocaleRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/AdminLocaleRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/AdminLocaleRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AdminLocale'
-          description: ''
-    patch:
-      operationId: site_admin_locales_partial_update
-      parameters:
-      - in: path
-        name: code
-        schema:
-          type: string
-        required: true
-      tags:
-      - site
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchedAdminLocaleRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PatchedAdminLocaleRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PatchedAdminLocaleRequest'
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AdminLocale'
-          description: ''
   /api/site/admin/settings/:
     get:
       operationId: site_admin_settings_retrieve
@@ -9100,23 +8978,6 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/LinkGroup'
-          description: ''
-  /api/site/locales/:
-    get:
-      operationId: site_locales_list
-      tags:
-      - site
-      security:
-      - jwtAuth: []
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Locale'
           description: ''
   /api/site/settings/:
     get:
@@ -10242,147 +10103,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/CvSampleContentAdmin'
           description: ''
-  /api/v2/admin/cv-template-localizations/:
-    get:
-      operationId: v2_admin_cv_template_localizations_list
-      tags:
-      - v2
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/CvTemplateLocalizationAdmin'
-          description: ''
-    post:
-      operationId: v2_admin_cv_template_localizations_create
-      tags:
-      - v2
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CvTemplateLocalizationAdminRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/CvTemplateLocalizationAdminRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/CvTemplateLocalizationAdminRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '201':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CvTemplateLocalizationAdmin'
-          description: ''
-  /api/v2/admin/cv-template-localizations/{id}/:
-    get:
-      operationId: v2_admin_cv_template_localizations_retrieve
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this cv template localization.
-        required: true
-      tags:
-      - v2
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CvTemplateLocalizationAdmin'
-          description: ''
-    put:
-      operationId: v2_admin_cv_template_localizations_update
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this cv template localization.
-        required: true
-      tags:
-      - v2
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CvTemplateLocalizationAdminRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/CvTemplateLocalizationAdminRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/CvTemplateLocalizationAdminRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CvTemplateLocalizationAdmin'
-          description: ''
-    patch:
-      operationId: v2_admin_cv_template_localizations_partial_update
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this cv template localization.
-        required: true
-      tags:
-      - v2
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchedCvTemplateLocalizationAdminRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PatchedCvTemplateLocalizationAdminRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PatchedCvTemplateLocalizationAdminRequest'
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CvTemplateLocalizationAdmin'
-          description: ''
-    delete:
-      operationId: v2_admin_cv_template_localizations_destroy
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this cv template localization.
-        required: true
-      tags:
-      - v2
-      security:
-      - jwtAuth: []
-      responses:
-        '204':
-          description: No response body
   /api/v2/admin/cv-templates/:
     get:
       operationId: v2_admin_cv_templates_list
@@ -14460,84 +14180,6 @@ components:
           maxLength: 1000
       required:
       - note
-    AdminLocale:
-      type: object
-      properties:
-        code:
-          type: string
-          maxLength: 16
-        label_vi:
-          type: string
-          maxLength: 80
-        native_name:
-          type: string
-          maxLength: 80
-        flag_emoji:
-          type: string
-          maxLength: 16
-        catalog_path:
-          type: string
-          maxLength: 120
-          pattern: ^[-a-zA-Z0-9_]+$
-        is_default:
-          type: boolean
-        is_active:
-          type: boolean
-        sort_order:
-          type: integer
-          maximum: 2147483647
-          minimum: 0
-        created_at:
-          type: string
-          format: date-time
-          readOnly: true
-        updated_at:
-          type: string
-          format: date-time
-          readOnly: true
-      required:
-      - catalog_path
-      - code
-      - created_at
-      - label_vi
-      - native_name
-      - updated_at
-    AdminLocaleRequest:
-      type: object
-      properties:
-        code:
-          type: string
-          minLength: 1
-          maxLength: 16
-        label_vi:
-          type: string
-          minLength: 1
-          maxLength: 80
-        native_name:
-          type: string
-          minLength: 1
-          maxLength: 80
-        flag_emoji:
-          type: string
-          maxLength: 16
-        catalog_path:
-          type: string
-          minLength: 1
-          maxLength: 120
-          pattern: ^[-a-zA-Z0-9_]+$
-        is_default:
-          type: boolean
-        is_active:
-          type: boolean
-        sort_order:
-          type: integer
-          maximum: 2147483647
-          minimum: 0
-      required:
-      - catalog_path
-      - code
-      - label_vi
-      - native_name
     AdminMembershipCreate:
       type: object
       properties:
@@ -18860,8 +18502,7 @@ components:
           type: string
           readOnly: true
         locale:
-          type: string
-          maxLength: 16
+          $ref: '#/components/schemas/LocaleDcaEnum'
         experience_level:
           type: string
           default: unspecified
@@ -18928,9 +18569,7 @@ components:
       description: Protect public lifecycle transitions independently from edit access.
       properties:
         locale:
-          type: string
-          minLength: 1
-          maxLength: 16
+          $ref: '#/components/schemas/LocaleDcaEnum'
         experience_level:
           type: string
           minLength: 1
@@ -19176,8 +18815,7 @@ components:
           type: string
           nullable: true
         locale:
-          type: string
-          maxLength: 16
+          $ref: '#/components/schemas/LocaleDcaEnum'
         experience_level:
           type: string
           maxLength: 30
@@ -19226,9 +18864,7 @@ components:
           minLength: 1
           nullable: true
         locale:
-          type: string
-          minLength: 1
-          maxLength: 16
+          $ref: '#/components/schemas/LocaleDcaEnum'
         experience_level:
           type: string
           minLength: 1
@@ -19258,7 +18894,8 @@ components:
           type: string
           readOnly: true
         locale:
-          type: string
+          allOf:
+          - $ref: '#/components/schemas/LocaleDcaEnum'
           readOnly: true
         experience_level:
           type: string
@@ -19294,7 +18931,8 @@ components:
           type: string
           readOnly: true
         locale:
-          type: string
+          allOf:
+          - $ref: '#/components/schemas/LocaleDcaEnum'
           readOnly: true
         experience_level:
           type: string
@@ -19397,7 +19035,25 @@ components:
           type: string
           maxLength: 255
           pattern: ^[-a-zA-Z0-9_]+$
-        description:
+        display_name_vi:
+          type: string
+          maxLength: 255
+        display_name_en:
+          type: string
+          maxLength: 255
+        description_vi:
+          type: string
+        description_en:
+          type: string
+        seo_title_vi:
+          type: string
+          maxLength: 255
+        seo_title_en:
+          type: string
+          maxLength: 255
+        seo_description_vi:
+          type: string
+        seo_description_en:
           type: string
         thumbnail_url:
           type: string
@@ -19423,15 +19079,9 @@ components:
           items:
             $ref: '#/components/schemas/CvTemplateVersionAdmin'
           readOnly: true
-        localizations:
-          type: array
-          items:
-            $ref: '#/components/schemas/CvTemplateLocalizationAdmin'
-          readOnly: true
       required:
       - current_published_version_id
       - lifecycle_status
-      - localizations
       - name
       - public_id
       - versions
@@ -19447,7 +19097,25 @@ components:
           type: string
           maxLength: 255
           pattern: ^[-a-zA-Z0-9_]+$
-        description:
+        display_name_vi:
+          type: string
+          maxLength: 255
+        display_name_en:
+          type: string
+          maxLength: 255
+        description_vi:
+          type: string
+        description_en:
+          type: string
+        seo_title_vi:
+          type: string
+          maxLength: 255
+        seo_title_en:
+          type: string
+          maxLength: 255
+        seo_description_vi:
+          type: string
+        seo_description_en:
           type: string
         thumbnail_url:
           type: string
@@ -19560,6 +19228,12 @@ components:
         preview_url:
           type: string
           readOnly: true
+        seo_title:
+          type: string
+          readOnly: true
+        seo_description:
+          type: string
+          readOnly: true
         renderer:
           type: string
           readOnly: true
@@ -19577,71 +19251,12 @@ components:
       - public_id
       - renderer
       - sections
+      - seo_description
+      - seo_title
       - slug
       - tags
       - theme_color
       - thumbnail_url
-    CvTemplateLocalizationAdmin:
-      type: object
-      description: Protect public lifecycle transitions independently from edit access.
-      properties:
-        id:
-          type: integer
-          readOnly: true
-        locale:
-          type: string
-          maxLength: 16
-        display_name:
-          type: string
-          maxLength: 255
-        description:
-          type: string
-        seo_title:
-          type: string
-          maxLength: 255
-        seo_description:
-          type: string
-        is_active:
-          type: boolean
-        template:
-          type: integer
-        locale_ref:
-          type: string
-          readOnly: true
-          nullable: true
-      required:
-      - display_name
-      - id
-      - locale
-      - locale_ref
-      - template
-    CvTemplateLocalizationAdminRequest:
-      type: object
-      description: Protect public lifecycle transitions independently from edit access.
-      properties:
-        locale:
-          type: string
-          minLength: 1
-          maxLength: 16
-        display_name:
-          type: string
-          minLength: 1
-          maxLength: 255
-        description:
-          type: string
-        seo_title:
-          type: string
-          maxLength: 255
-        seo_description:
-          type: string
-        is_active:
-          type: boolean
-        template:
-          type: integer
-      required:
-      - display_name
-      - locale
-      - template
     CvTemplateSwitchRequest:
       type: object
       properties:
@@ -19771,7 +19386,8 @@ components:
           type: string
           readOnly: true
         language:
-          type: string
+          allOf:
+          - $ref: '#/components/schemas/LanguageEnum'
           readOnly: true
         cv_type:
           allOf:
@@ -19907,9 +19523,9 @@ components:
           type: string
           maxLength: 50
         language:
-          type: string
+          allOf:
+          - $ref: '#/components/schemas/LanguageEnum'
           default: vi-VN
-          maxLength: 16
         sample_content_public_id:
           type: string
           maxLength: 50
@@ -19937,10 +19553,9 @@ components:
           minLength: 1
           maxLength: 50
         language:
-          type: string
-          minLength: 1
+          allOf:
+          - $ref: '#/components/schemas/LanguageEnum'
           default: vi-VN
-          maxLength: 16
         sample_content_public_id:
           type: string
           minLength: 1
@@ -19986,10 +19601,9 @@ components:
           minLength: 1
           maxLength: 50
         language:
-          type: string
-          minLength: 1
+          allOf:
+          - $ref: '#/components/schemas/LanguageEnum'
           default: vi-VN
-          maxLength: 16
         theme_color:
           type: string
           minLength: 1
@@ -22316,6 +21930,11 @@ components:
       - unresolved_suggestions
       - updated_at
       - warnings
+    JobAiGenerationCreateLocaleEnum:
+      enum:
+      - vi-VN
+      type: string
+      description: '* `vi-VN` - vi-VN'
     JobAiGenerationCreateRequest:
       type: object
       properties:
@@ -22328,7 +21947,7 @@ components:
           pattern: ^[A-Za-z0-9._:-]{1,64}$
         locale:
           allOf:
-          - $ref: '#/components/schemas/LocaleEnum'
+          - $ref: '#/components/schemas/JobAiGenerationCreateLocaleEnum'
           default: vi-VN
         brief:
           $ref: '#/components/schemas/JobAiBriefRequest'
@@ -23807,6 +23426,14 @@ components:
       - code
       - id
       - name
+    LanguageEnum:
+      enum:
+      - vi-VN
+      - en-US
+      type: string
+      description: |-
+        * `vi-VN` - Tiếng Việt
+        * `en-US` - Tiếng Anh
     LifecycleState4f9Enum:
       enum:
       - ACTIVE
@@ -23864,45 +23491,14 @@ components:
         * `manual` - Nhập tay
         * `locations` - Tự sinh từ Khu vực
         * `categories` - Tự sinh từ Ngành nghề
-    Locale:
-      type: object
-      properties:
-        code:
-          type: string
-          maxLength: 16
-        label_vi:
-          type: string
-          maxLength: 80
-        native_name:
-          type: string
-          maxLength: 80
-        flag_emoji:
-          type: string
-          maxLength: 16
-        catalog_path:
-          type: string
-          maxLength: 120
-          pattern: ^[-a-zA-Z0-9_]+$
-        is_default:
-          type: boolean
-        is_active:
-          type: boolean
-          readOnly: true
-        sort_order:
-          type: integer
-          maximum: 2147483647
-          minimum: 0
-      required:
-      - catalog_path
-      - code
-      - is_active
-      - label_vi
-      - native_name
-    LocaleEnum:
+    LocaleDcaEnum:
       enum:
       - vi-VN
+      - en-US
       type: string
-      description: '* `vi-VN` - vi-VN'
+      description: |-
+        * `vi-VN` - Tiếng Việt
+        * `en-US` - Tiếng Anh
     LocationLevelEnum:
       enum:
       - province
@@ -25269,37 +24865,6 @@ components:
           type: string
           minLength: 1
           maxLength: 500
-    PatchedAdminLocaleRequest:
-      type: object
-      properties:
-        code:
-          type: string
-          minLength: 1
-          maxLength: 16
-        label_vi:
-          type: string
-          minLength: 1
-          maxLength: 80
-        native_name:
-          type: string
-          minLength: 1
-          maxLength: 80
-        flag_emoji:
-          type: string
-          maxLength: 16
-        catalog_path:
-          type: string
-          minLength: 1
-          maxLength: 120
-          pattern: ^[-a-zA-Z0-9_]+$
-        is_default:
-          type: boolean
-        is_active:
-          type: boolean
-        sort_order:
-          type: integer
-          maximum: 2147483647
-          minimum: 0
     PatchedAdminPinnedPostRequest:
       type: object
       properties:
@@ -25539,9 +25104,7 @@ components:
       description: Protect public lifecycle transitions independently from edit access.
       properties:
         locale:
-          type: string
-          minLength: 1
-          maxLength: 16
+          $ref: '#/components/schemas/LocaleDcaEnum'
         experience_level:
           type: string
           minLength: 1
@@ -25600,9 +25163,7 @@ components:
           minLength: 1
           nullable: true
         locale:
-          type: string
-          minLength: 1
-          maxLength: 16
+          $ref: '#/components/schemas/LocaleDcaEnum'
         experience_level:
           type: string
           minLength: 1
@@ -25631,7 +25192,25 @@ components:
           type: string
           maxLength: 255
           pattern: ^[-a-zA-Z0-9_]+$
-        description:
+        display_name_vi:
+          type: string
+          maxLength: 255
+        display_name_en:
+          type: string
+          maxLength: 255
+        description_vi:
+          type: string
+        description_en:
+          type: string
+        seo_title_vi:
+          type: string
+          maxLength: 255
+        seo_title_en:
+          type: string
+          maxLength: 255
+        seo_description_vi:
+          type: string
+        seo_description_en:
           type: string
         thumbnail_url:
           type: string
@@ -25645,29 +25224,6 @@ components:
           type: integer
           maximum: 2147483647
           minimum: -2147483648
-    PatchedCvTemplateLocalizationAdminRequest:
-      type: object
-      description: Protect public lifecycle transitions independently from edit access.
-      properties:
-        locale:
-          type: string
-          minLength: 1
-          maxLength: 16
-        display_name:
-          type: string
-          minLength: 1
-          maxLength: 255
-        description:
-          type: string
-        seo_title:
-          type: string
-          maxLength: 255
-        seo_description:
-          type: string
-        is_active:
-          type: boolean
-        template:
-          type: integer
     PatchedCvV2MetadataUpdateRequest:
       type: object
       properties:

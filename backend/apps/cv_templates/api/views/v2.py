@@ -21,10 +21,9 @@ from apps.cvs.services.composition import (
     finalize_preview_document,
 )
 from apps.jobs.models import JobCategory
-from apps.sitecontent.selectors import default_locale_code, is_active_locale
 from common.metrics import record_metric
 
-from ...models import CvTemplate
+from ...models import DEFAULT_CV_LANGUAGE, CvLanguage, CvTemplate
 from ...selectors import (
     active_cv_categories_queryset,
     active_cv_position_options_queryset,
@@ -45,9 +44,9 @@ from ..serializers.v2 import (
 
 
 def requested_locale(request):
-    locale = request.query_params.get('locale', '').strip() or default_locale_code()
-    if not is_active_locale(locale):
-        raise ValidationError({'locale': 'Unknown or inactive locale.'})
+    locale = request.query_params.get('locale', '').strip() or DEFAULT_CV_LANGUAGE
+    if locale not in CvLanguage.values:
+        raise ValidationError({'locale': 'Unsupported locale.'})
     return locale
 
 

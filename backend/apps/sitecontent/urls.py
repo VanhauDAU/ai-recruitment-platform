@@ -13,8 +13,6 @@ from .api.views import (
     AdminAnnouncementResetDismissalsView,
     AdminAnnouncementResumeView,
     AdminAnnouncementRevisionCreateView,
-    AdminLocaleDetailView,
-    AdminLocaleListCreateView,
     AdminSettingUploadView,
     AdminSiteSettingView,
     AnnouncementEventBatchView,
@@ -23,7 +21,6 @@ from .api.views import (
     BannerListView,
     FeedbackCreateView,
     LinkGroupListView,
-    LocaleListView,
     SiteSettingListView,
 )
 
@@ -104,13 +101,6 @@ urlpatterns = [
         name='site-admin-announcement-metrics',
     ),
     path('settings/', SiteSettingListView.as_view(), name='site-settings'),
-    path('locales/', LocaleListView.as_view(), name='site-locales'),
-    path('admin/locales/', AdminLocaleListCreateView.as_view(), name='site-admin-locales'),
-    path(
-        'admin/locales/<str:code>/',
-        AdminLocaleDetailView.as_view(),
-        name='site-admin-locale-detail',
-    ),
     path('admin/settings/', AdminSiteSettingView.as_view(), name='site-admin-settings'),
     path(
         'admin/settings/upload/',

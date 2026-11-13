@@ -1,23 +1,22 @@
 import { ArrowLeftOutlined } from '@ant-design/icons'
-import { Empty, Result, Skeleton } from 'antd'
+import { Empty, Skeleton } from 'antd'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router'
 import { CvDocumentPreview } from '@/entities/cv'
 import {
   CvTemplateCard,
   TemplateColorSwatches,
+  cvLanguage,
   getCvTemplate,
   getRelatedCvTemplates,
   templateColors,
 } from '@/entities/cv-template'
 import { usePreviewFitZoom } from '@/shared/hooks/use-preview-fit-zoom'
 import { useDocumentMetadata } from '@/shared/hooks/use-document-metadata'
-import { useLocales } from '@/entities/locale'
 import { useLoginPrompt } from '@/features/auth'
 import { CvSourcePanel, UseTemplateModal } from '@/features/create-cv-from-template'
 import { catalogLocaleFromPath, catalogPathForCategory } from './locale-paths'
 import {
-  LANGUAGE_LABELS,
   searchParamsFromSelection,
   selectionFromSearchParams,
   templateHeading,
@@ -29,8 +28,7 @@ export default function TemplateDetail() {
   const { pathname } = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
   const { locale, path: basePath } = catalogLocaleFromPath(pathname)
-  const localeLabel = LANGUAGE_LABELS[locale]
-  const { locales, loaded: localesLoaded } = useLocales()
+  const localeLabel = cvLanguage(locale).inlineLabel
   const { promptLogin } = useLoginPrompt()
   const [template, setTemplate] = useState(null)
   const [related, setRelated] = useState([])
@@ -117,10 +115,6 @@ export default function TemplateDetail() {
       style_json: { ...preview.document.style_json, theme_color: selectedColor },
     }
   }, [preview, selectedColor])
-
-  if (localesLoaded && !locales.some((item) => item.code === locale)) {
-    return <Result status="404" title="Ngôn ngữ CV không tồn tại hoặc đã ngừng hoạt động" />
-  }
 
   if (loading) {
     return (

@@ -11,7 +11,6 @@ from PIL import Image
 from rest_framework.test import APITestCase
 
 from apps.cv_templates.models import CvTemplate, CvTemplateVersion
-from apps.sitecontent.models import Locale
 from apps.uploads.models import UploadAsset, UploadState
 from apps.uploads.services import (
     create_upload_session,
@@ -82,15 +81,6 @@ class CandidateCvUploadQuarantineTests(TemporaryUploadStorageMixin, APITestCase)
         self.assertEqual(cv.file_name, 'candidate.pdf')
 
     def test_template_import_claims_once_and_keeps_idempotency(self):
-        Locale.objects.update_or_create(
-            code='vi-VN',
-            defaults={
-                'label_vi': 'Tiếng Việt',
-                'label_en': 'Vietnamese',
-                'is_active': True,
-                'is_default': True,
-            },
-        )
         template = CvTemplate.objects.create(
             name='Quarantine template',
             lifecycle_status=CvTemplate.LifecycleStatus.PUBLISHED,
