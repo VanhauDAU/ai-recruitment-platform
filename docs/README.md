@@ -25,6 +25,7 @@ tại; lịch sử kế hoạch và bằng chứng triển khai nằm trong git 
 | [dac-ta-onboarding-ung-vien.md](01-phan-tich/dac-ta-onboarding-ung-vien.md) | Luồng onboarding và hồ sơ nhu cầu việc làm của ứng viên |
 | [dac-ta-trung-tam-tro-giup.md](01-phan-tich/dac-ta-trung-tam-tro-giup.md) | Trung tâm trợ giúp: bài viết, revision, quyền và API |
 | [dac-ta-thong-bao-da-cong.md](01-phan-tich/dac-ta-thong-bao-da-cong.md) | Thông báo đa cổng: surface, targeting, vòng đời, theme và analytics |
+| [ke-hoach-cv-template-v3.md](01-phan-tich/ke-hoach-cv-template-v3.md) | Kế hoạch làm lại template CV, tạo CV, trích xuất CV upload và quản trị mẫu CV (CVT-0…CVT-7) |
 
 ## 02-tong-quan — Kiến trúc và quyết định
 
