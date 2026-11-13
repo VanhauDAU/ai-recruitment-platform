@@ -40,7 +40,6 @@ from ..models import (
 from ..schemas import empty_content, empty_layout, empty_style
 from ..services.composition import compose_cv_document
 from ..services.pdf_renderer import build_cv_pdf_html, render_cv_version_pdf
-from ..services.versions import sync_legacy_builder_draft
 from ..tasks import (
     ImportProcessingError,
     generate_cv_thumbnail,
@@ -204,8 +203,8 @@ class CvV2ApiTests(APITestCase):
         self.assertEqual(autosave.status_code, 200, autosave.data)
         self.assertEqual(autosave.data['lock_version'], 1)
         self.assertEqual(CvVersion.objects.filter(cv=cv).count(), 1)
-        cv.refresh_from_db()
-        self.assertEqual(cv.cv_data['personal_info']['full_name'], 'Candidate V2')
+        cv.draft.refresh_from_db()
+        self.assertEqual(cv.draft.content_json['personal_info']['full_name'], 'Candidate V2')
 
         stale = self.client.put(
             self.draft_url(cv),
@@ -417,7 +416,6 @@ class CvV2ApiTests(APITestCase):
             cv.draft.content_json['personal_info']['full_name'], 'Nguyen Van Candidate'
         )
         self.assertEqual(cv.draft.style_json['theme_color'], '#2255AA')
-        self.assertEqual(cv.raw_text, '')
 
     def test_import_rejects_spoofed_file_signature_before_persisting(self):
         upload = SimpleUploadedFile(
@@ -923,17 +921,7 @@ class CvV2ApiTests(APITestCase):
         )
         self.assertEqual(response.status_code, 403)
 
-    def test_creation_from_sample_pins_the_current_published_template_version(self):
-        sample_content = empty_content('vi-VN')
-        sample_content['personal_info']['full_name'] = 'Sample Candidate'
-        sample = CvSampleContent.objects.create(
-            position_profile=self.curated_sample_profile(),
-            experience_band='mid',
-            locale='vi-VN',
-            title='Sample content',
-            content_json=sample_content,
-            status=CvSampleContent.Status.PUBLISHED,
-        )
+    def test_creation_pins_the_current_published_template_version(self):
         next_version = CvTemplateVersion.objects.create(
             template=self.template,
             version_number=2,
@@ -949,10 +937,9 @@ class CvV2ApiTests(APITestCase):
         response = self.client.post(
             reverse('cv-v2-list-create'),
             {
-                'title': 'Sample CV',
+                'title': 'Pinned CV',
                 'template_public_id': self.template.public_id,
                 'language': 'vi-VN',
-                'sample_content_public_id': sample.public_id,
             },
             format='json',
         )
@@ -960,7 +947,6 @@ class CvV2ApiTests(APITestCase):
         self.assertEqual(response.status_code, 201, response.data)
         cv = UserCv.objects.get(public_id=response.data['public_id'])
         self.assertEqual(cv.current_template_version_id, next_version.id)
-        self.assertEqual(cv.draft.content_json['personal_info']['full_name'], 'Sample Candidate')
         self.assertEqual(cv.latest_version.template_version_id, next_version.id)
 
     def test_create_blank_builds_usercv_initial_version_and_draft(self):
@@ -984,38 +970,6 @@ class CvV2ApiTests(APITestCase):
         # A mutable draft seeded from the initial document.
         self.assertTrue(CvDraft.objects.filter(cv=cv).exists())
         self.assertEqual(cv.draft.content_json, cv.latest_version.content_json)
-
-    def test_create_from_sample_builds_usercv_initial_version_and_draft(self):
-        sample_content = empty_content('vi-VN')
-        sample_content['personal_info']['full_name'] = 'Sample Person'
-        sample = CvSampleContent.objects.create(
-            position_profile=self.curated_sample_profile(),
-            experience_band='mid',
-            locale='vi-VN',
-            title='Sample',
-            content_json=sample_content,
-            status=CvSampleContent.Status.PUBLISHED,
-        )
-        response = self.client.post(
-            reverse('cv-v2-list-create'),
-            {
-                'title': 'Sample CV',
-                'template_public_id': self.template.public_id,
-                'language': 'vi-VN',
-                'sample_content_public_id': sample.public_id,
-            },
-            format='json',
-        )
-        self.assertEqual(response.status_code, 201, response.data)
-        cv = UserCv.objects.get(public_id=response.data['public_id'])
-        self.assertEqual(CvVersion.objects.filter(cv=cv).count(), 1)
-        self.assertEqual(cv.latest_version.version_kind, CvVersion.VersionKind.INITIAL)
-        self.assertTrue(CvDraft.objects.filter(cv=cv).exists())
-        # Sample content flows into both the immutable baseline and the draft.
-        self.assertEqual(cv.draft.content_json['personal_info']['full_name'], 'Sample Person')
-        self.assertEqual(
-            cv.latest_version.content_json['personal_info']['full_name'], 'Sample Person'
-        )
 
     def test_apply_sample_uses_cas_and_preserves_personal_info_and_style(self):
         cv = self.create_cv()
@@ -1159,25 +1113,6 @@ class CvV2ApiTests(APITestCase):
         self.assertEqual(
             summary['items'][0]['value'], 'Build a career as Customer Service Representative.'
         )
-
-    def test_legacy_dual_write_does_not_discard_a_v2_layout(self):
-        cv = self.create_cv()
-        draft = self.client.get(self.draft_url(cv)).data
-        payload = {
-            key: draft[key]
-            for key in ('schema_version', 'content_json', 'layout_json', 'style_json')
-        }
-        payload['layout_json']['page']['margin_mm'] = 16
-        self.client.put(
-            self.draft_url(cv), payload, format='json', HTTP_IF_MATCH='"lock-version-0"'
-        )
-
-        cv.refresh_from_db()
-        cv.title = 'Changed through legacy metadata flow'
-        cv.save(update_fields=['title'])
-        sync_legacy_builder_draft(cv, self.candidate)
-
-        self.assertEqual(cv.draft.layout_json['page']['margin_mm'], 16)
 
     def test_pdf_export_uses_a_selected_immutable_version_not_the_mutable_draft(self):
         cv = self.create_cv()

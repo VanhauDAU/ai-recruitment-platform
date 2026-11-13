@@ -234,7 +234,7 @@ Chi tiết contract document, renderer và API ở
 
 | Bảng (model) | Mục đích và ràng buộc |
 | --- | --- |
-| `UserCv` | Aggregate CV của ứng viên (builder hoặc upload): metadata, `lifecycle_status`, `processing_status`, `visibility`, con trỏ `current_template_version`/`latest_version`/`published_version`, `lock_version`, `is_default` (partial unique: một CV mặc định chưa xóa mỗi user), soft delete. `cv_data`/`style_config`/`status` là field legacy. |
+| `UserCv` | Aggregate CV của ứng viên (builder hoặc upload): metadata, `lifecycle_status`, `processing_status`, `visibility`, con trỏ `current_template_version`/`latest_version`/`published_version`, `lock_version`, `is_default` (partial unique: một CV mặc định chưa xóa mỗi user), soft delete. Trường matching `experience_years` (giá trị `Job.ExperienceYears`, tính từ mục kinh nghiệm khi tạo version) và `position` (FK `JobCategory`). Không lưu văn bản thô của file upload. |
 | `CvVersion` | Document canonical **bất biến** (`content_json`, `layout_json`, `style_json`, `schema_version`, `content_hash`), `version_kind` initial/manual_save/published/application_snapshot/export_snapshot/imported, ghim `template_version`; unique `(cv, version_number)`. Sửa row đã lưu raise `ImmutableCvVersionError`. |
 | `CvDraft` | Một draft autosave mutable mỗi CV (1-1), `base_version`, `document_hash`, optimistic lock. |
 | `CvAsset` | Ảnh avatar/background bất biến, document chỉ tham chiếu public ID; owner null = asset hệ thống. |
@@ -243,7 +243,7 @@ Chi tiết contract document, renderer và API ở
 | `CvImportJob` | Job nhập PDF/DOCX → canonical (1-1 CV), unique `(user, idempotency_key)`, `result_version`. |
 | `CvAccessLog` | Audit tối thiểu truy cập CV (owner/recruiter/admin/anonymous theo kênh), không lưu payload hay PII thô. |
 | `CvSkill` | Kỹ năng khai báo/AI trích xuất theo CV; unique `(cv, skill)`. |
-| `CvTemplate` | Identity/catalogue mẫu: slug, tên/mô tả/SEO song ngữ `display_name_vi/en`, `description_vi/en`, `seo_title_vi/en`, `seo_description_vi/en` (rỗng ở ngôn ngữ nào thì không hiện ở kho ngôn ngữ đó), `lifecycle_status` draft/published/archived, `status` (công tắc catalogue legacy), `current_published_version`, `is_premium`; M2M category/color qua bảng link. `category`, `layout_config`, `style_config` là field legacy. |
+| `CvTemplate` | Identity/catalogue mẫu: slug, tên/mô tả/SEO song ngữ `display_name_vi/en`, `description_vi/en`, `seo_title_vi/en`, `seo_description_vi/en` (rỗng ở ngôn ngữ nào thì không hiện ở kho ngôn ngữ đó), `lifecycle_status` draft/published/archived (nguồn duy nhất cho hiển thị công khai), `current_published_version`, `is_premium`; M2M category/color qua bảng link, ảnh xem trước theo từng màu nằm ở `CvTemplateColorLink`. |
 | `CvTemplateVersion` | Contract renderer bất biến sau publish: `renderer_key`, `renderer_version`, schema/default layout/style, `capabilities`, `content_contract`, `version_status` draft/published/retired; unique `(template, version_number)`. |
 | `CvSectionDefinition`, `CvTemplateSection` | Registry section key canonical và cấu hình section theo region của từng version (unique version–section). |
 | `CvCategory`, `CvTemplateCategoryLink` | Taxonomy style/feature/position/audience (unique `(category_type, slug)`), link có thứ tự. |
@@ -354,6 +354,4 @@ Consent nghiệp vụ của ứng viên nằm ở `candidate_consents` (mục 8)
 
 - Contract migration xóa vật lý các cột verification legacy của
   `employers_company` (đang giữ với DB default sau `employers.0044`).
-- Xóa field legacy của CV: `UserCv.cv_data`/`style_config`/`status`,
-  `CvTemplate.category`/`layout_config`/`style_config`, `default_style_json.color_variants`.
 - Hợp nhất phân quyền blog trong Django admin (Groups) vào RBAC admin.

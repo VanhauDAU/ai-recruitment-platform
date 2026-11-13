@@ -16,10 +16,6 @@ from ..models import (
 )
 
 
-def active_cv_templates_queryset():
-    return CvTemplate.objects.filter(status=CvTemplate.Status.ACTIVE)
-
-
 def _slugs(value):
     return [slug.strip() for slug in (value or '').split(',') if slug.strip()]
 
@@ -34,7 +30,6 @@ def published_templates_in_language(locale=DEFAULT_CV_LANGUAGE):
     display_name = localized_field('display_name', locale)
     return (
         CvTemplate.objects.filter(
-            status=CvTemplate.Status.ACTIVE,
             lifecycle_status=CvTemplate.LifecycleStatus.PUBLISHED,
             current_published_version__version_status='published',
         )

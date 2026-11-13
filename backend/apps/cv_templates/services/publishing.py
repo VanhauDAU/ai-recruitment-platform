@@ -18,8 +18,7 @@ def publish_template_version(*, template, version):
     version.save(update_fields=['version_status', 'published_at'])
     template.current_published_version = version
     template.lifecycle_status = CvTemplate.LifecycleStatus.PUBLISHED
-    template.status = CvTemplate.Status.ACTIVE
-    template.save(update_fields=['current_published_version', 'lifecycle_status', 'status'])
+    template.save(update_fields=['current_published_version', 'lifecycle_status'])
     return version
 
 

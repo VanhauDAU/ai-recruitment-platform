@@ -1,6 +1,6 @@
 """Seed the CV Builder template catalogue: templates, versions and taxonomy.
 
-``seed_cv_catalog`` seeds starter content (sample contents, blueprints, colors)
+``seed_cv_catalog`` seeds starter content (position profiles, sample contents, colors)
 and can only decorate templates that already exist. This command owns the other
 half — the templates themselves plus their immutable published version, section
 mapping, bilingual names, category links and color links — so the public
@@ -161,13 +161,8 @@ class Command(BaseCommand):
             defaults={
                 'name': spec['names']['vi-VN'],
                 **_bilingual_fields(spec),
-                # The legacy comma-separated column stays empty on purpose:
-                # `seed_cv_catalog` converts it into ad-hoc categories, and this
-                # command already links the real taxonomy rows below.
-                'category': '',
                 'is_premium': spec['is_premium'],
                 'sort_order': sort_order,
-                'status': CvTemplate.Status.INACTIVE,
                 'lifecycle_status': CvTemplate.LifecycleStatus.DRAFT,
             },
         )

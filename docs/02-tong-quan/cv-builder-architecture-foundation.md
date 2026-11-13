@@ -102,8 +102,17 @@ CvTemplate ──< CvTemplateColorLink    >── CvColor
   nhất trước, cùng khoảng cách thì nội dung riêng của vị trí trước nội dung chung;
   nội dung chung được thay `{position}` bằng tên vị trí theo ngôn ngữ. Vị trí mới
   chỉ cần localization tiếng Việt/Anh và profile; không phải tạo sample cho từng
-  template. Thư viện mẫu của editor và `sample_content_public_id` chỉ nhận nội
-  dung riêng của vị trí (nội dung chung còn token).
+  template. Thư viện mẫu của editor (`apply-sample`) chỉ nhận nội dung riêng của
+  vị trí (nội dung chung còn token).
+- Trường matching (CVT-1c): `UserCv.experience_years` là giá trị
+  `Job.ExperienceYears`, tính lại ở mỗi `create_version` từ ngày bắt đầu/kết thúc
+  các mục kinh nghiệm đang bật (gộp khoảng chồng lấn, mục chưa kết thúc tính tới
+  tháng hiện tại) — `apps/cvs/services/matching_profile.py`. Vị trí mục tiêu dùng
+  `UserCv.position` (`JobCategory`). Gợi ý việc làm theo CV dùng giá trị này thay
+  cho khai báo của ứng viên khi CV có kinh nghiệm.
+- `CvTemplate` chỉ dùng `lifecycle_status` để quyết định hiển thị công khai; ảnh
+  xem trước nằm ở `CvTemplateColorLink` (card `thumbnail_url` và detail
+  `preview_url` lấy từ màu mặc định).
 
 ## 5. API V2
 
@@ -133,7 +142,7 @@ Catalogue public (cache control/ETag): `GET /api/v2/cv-templates/` (card gọn,
 không trả layout/style/renderer config, lọc `locale`/`category`/`tag`),
 `/cv-templates/{slug}/`, `/cv-templates/{slug}/related/`, `/cv-categories/`,
 `/cv-backgrounds/`, `/cv-position-options/`, `/cv-position-preview/`,
-`/cv-sample-contents/` (compatibility).
+`/cv-sample-contents/` (thư viện nội dung mẫu riêng theo vị trí của editor).
 
 Ứng tuyển và recruiter:
 
@@ -245,10 +254,6 @@ response shared/recruiter; PDF worker đọc storage nội bộ.
 - Publish template version dùng `header_two_column_v1`, duyệt golden canvas/PDF
   trên bộ mẫu thật, UAT; sau một release ổn định thì gỡ editor legacy và cờ
   `cv_builder_wysiwyg_enabled`.
-- Contract cleanup: xóa field legacy
-  (`UserCv.cv_data`/`style_config`/`status`, `CvTemplate.category`,
-  `default_style_json.color_variants`, `theme_color`/`color_variants` trên card,
-  input `sample_content_public_id`) sau khi đo không còn client đọc.
 - Purge CV archive mềm còn từ dữ liệu cũ (chỉ sau backup và xác nhận riêng).
 - Audit trail chi tiết người publish/retire template và chặn xóa taxonomy đang
   được dùng.

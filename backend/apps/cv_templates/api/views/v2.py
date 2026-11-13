@@ -43,7 +43,6 @@ from ..serializers.v2 import (
     CvCategorySerializer,
     CvPositionOptionSerializer,
     CvSampleContentCardSerializer,
-    CvSampleContentDetailSerializer,
     CvTemplateCardSerializer,
     CvTemplateDetailSerializer,
 )
@@ -152,18 +151,6 @@ class CvSampleContentCatalogListView(PublicCatalogCacheMixin, generics.ListAPIVi
 
     def list(self, request, *args, **kwargs):
         return self.cached_response(self.get_serializer(self.get_queryset(), many=True).data)
-
-
-class CvSampleContentCatalogDetailView(PublicCatalogCacheMixin, generics.RetrieveAPIView):
-    serializer_class = CvSampleContentDetailSerializer
-    permission_classes = [permissions.AllowAny]
-    lookup_field = 'public_id'
-
-    def get_queryset(self):
-        return published_sample_contents_queryset()
-
-    def retrieve(self, request, *args, **kwargs):
-        return self.cached_response(self.get_serializer(self.get_object()).data)
 
 
 class CvPositionOptionListView(PublicCatalogCacheMixin, generics.ListAPIView):

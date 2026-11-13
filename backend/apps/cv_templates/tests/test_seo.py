@@ -16,7 +16,6 @@ class CvTemplateSeoTests(TestCase):
     def setUpTestData(cls):
         cls.template, _version = make_published_template(
             name='CV Hiện đại',
-            preview_url='/media/templates/modern.png',
             display_name_vi='CV Hiện đại',
             description_vi='Mẫu CV rõ ràng và chuyên nghiệp.',
             seo_title_vi='Mẫu CV hiện đại',

@@ -19,13 +19,6 @@ class UserCv(models.Model):
         UPLOADED = 'uploaded', 'Uploaded'
         IMPORTED = 'imported', 'Imported'
 
-    class Status(models.TextChoices):
-        DRAFT = 'draft', 'Draft'
-        UPLOADED = 'uploaded', 'Uploaded'
-        PROCESSING = 'processing', 'Processing'
-        ANALYZED = 'analyzed', 'Analyzed'
-        FAILED = 'failed', 'Failed'
-
     class LifecycleStatus(models.TextChoices):
         DRAFT = 'draft', 'Draft'
         PUBLISHED = 'published', 'Published'
@@ -62,20 +55,15 @@ class UserCv(models.Model):
     cv_type = models.CharField(max_length=50, choices=CvType.choices)
     source = models.CharField(max_length=50, choices=Source.choices, default=Source.BUILDER)
     title = models.CharField(max_length=255)
-    cv_data = models.JSONField(default=dict, blank=True)
-    style_config = models.JSONField(default=dict, blank=True)
     file_url = models.TextField(blank=True)
-    pdf_url = models.TextField(blank=True)
     thumbnail_url = models.TextField(blank=True)
     file_name = models.CharField(max_length=255, blank=True)
     file_type = models.CharField(max_length=50, blank=True, help_text='pdf, docx')
-    raw_text = models.TextField(blank=True)
-    normalized_text = models.TextField(blank=True)
-    current_version = models.IntegerField(default=1)
-    status = models.CharField(max_length=50, choices=Status.choices, default=Status.DRAFT)
     error_message = models.TextField(blank=True)
-    # V2 fields are additive.  `cv_data`, `style_config`, and `status` remain
-    # available while clients dual-read during the migration window.
+    # Trường matching (CVT-1c): giá trị `Job.ExperienceYears`, tính từ mục kinh
+    # nghiệm mỗi khi tạo version (services/matching_profile.py). Không đặt
+    # `choices` ở đây để tránh import vòng cvs ↔ jobs; service bảo đảm giá trị.
+    experience_years = models.CharField(max_length=20, blank=True)
     language = models.CharField(max_length=16, choices=CvLanguage.choices, default=CvLanguage.VI)
     lifecycle_status = models.CharField(
         max_length=20,
@@ -117,7 +105,6 @@ class UserCv(models.Model):
     published_at = models.DateTimeField(null=True, blank=True)
     archived_at = models.DateTimeField(null=True, blank=True)
     is_default = models.BooleanField(default=False)
-    last_analyzed_at = models.DateTimeField(null=True, blank=True)
     last_exported_at = models.DateTimeField(null=True, blank=True)
     is_deleted = models.BooleanField(default=False)
     deleted_at = models.DateTimeField(null=True, blank=True)
@@ -132,12 +119,6 @@ class UserCv(models.Model):
             ),
         ]
         constraints = [
-            models.CheckConstraint(
-                condition=models.Q(
-                    status__in=['draft', 'uploaded', 'processing', 'analyzed', 'failed']
-                ),
-                name='chk_user_cvs_status',
-            ),
             models.UniqueConstraint(
                 fields=['user'],
                 condition=models.Q(is_default=True, is_deleted=False),

@@ -13,7 +13,7 @@ from ...models import (
 )
 
 PROTECTED_LIFECYCLE_FIELDS = {
-    'CvTemplate': ('status', 'lifecycle_status', 'current_published_version'),
+    'CvTemplate': ('lifecycle_status', 'current_published_version'),
     'CvCategory': ('is_active',),
     'CvColor': ('is_active',),
     'CvAsset': ('is_active',),
@@ -24,9 +24,7 @@ PROTECTED_LIFECYCLE_FIELDS = {
 def _is_published_state(field, value):
     if field == 'is_active':
         return value is True
-    if field == 'status':
-        return value in {'active', 'published'}
-    if field == 'lifecycle_status':
+    if field in {'status', 'lifecycle_status'}:
         return value == 'published'
     return value is not None
 
@@ -94,10 +92,7 @@ class CvTemplateAdminSerializer(LifecycleFieldGuardMixin, serializers.ModelSeria
             'seo_title_en',
             'seo_description_vi',
             'seo_description_en',
-            'thumbnail_url',
-            'preview_url',
             'is_premium',
-            'status',
             'sort_order',
             'lifecycle_status',
             'current_published_version_id',

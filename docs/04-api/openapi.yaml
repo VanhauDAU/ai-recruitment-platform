@@ -10405,27 +10405,6 @@ paths:
                 items:
                   $ref: '#/components/schemas/CvSampleContentCard'
           description: ''
-  /api/v2/cv-sample-contents/{public_id}/:
-    get:
-      operationId: v2_cv_sample_contents_retrieve
-      parameters:
-      - in: path
-        name: public_id
-        schema:
-          type: string
-        required: true
-      tags:
-      - v2
-      security:
-      - jwtAuth: []
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CvSampleContentDetail'
-          description: ''
   /api/v2/cv-templates/:
     get:
       operationId: v2_cv_templates_list
@@ -18584,47 +18563,6 @@ components:
       - position_slug
       - public_id
       - title
-    CvSampleContentDetail:
-      type: object
-      properties:
-        public_id:
-          type: string
-          readOnly: true
-        title:
-          type: string
-          readOnly: true
-        locale:
-          allOf:
-          - $ref: '#/components/schemas/LocaleDcaEnum'
-          readOnly: true
-        experience_band:
-          allOf:
-          - $ref: '#/components/schemas/ExperienceBandEnum'
-          readOnly: true
-        position_public_id:
-          type: string
-          readOnly: true
-        position_slug:
-          type: string
-          readOnly: true
-        position_name:
-          type: string
-          readOnly: true
-        content_json:
-          readOnly: true
-        schema_version:
-          type: integer
-          readOnly: true
-      required:
-      - content_json
-      - experience_band
-      - locale
-      - position_name
-      - position_public_id
-      - position_slug
-      - public_id
-      - schema_version
-      - title
     CvSharedLink:
       type: object
       properties:
@@ -18715,14 +18653,8 @@ components:
           type: string
         seo_description_en:
           type: string
-        thumbnail_url:
-          type: string
-        preview_url:
-          type: string
         is_premium:
           type: boolean
-        status:
-          $ref: '#/components/schemas/CvTemplateAdminStatusEnum'
         sort_order:
           type: integer
           maximum: 2147483647
@@ -18777,28 +18709,14 @@ components:
           type: string
         seo_description_en:
           type: string
-        thumbnail_url:
-          type: string
-        preview_url:
-          type: string
         is_premium:
           type: boolean
-        status:
-          $ref: '#/components/schemas/CvTemplateAdminStatusEnum'
         sort_order:
           type: integer
           maximum: 2147483647
           minimum: -2147483648
       required:
       - name
-    CvTemplateAdminStatusEnum:
-      enum:
-      - active
-      - inactive
-      type: string
-      description: |-
-        * `active` - Active
-        * `inactive` - Inactive
     CvTemplateCard:
       type: object
       properties:
@@ -18821,12 +18739,6 @@ components:
         is_premium:
           type: boolean
           readOnly: true
-        theme_color:
-          type: string
-          readOnly: true
-        color_variants:
-          type: string
-          readOnly: true
         colors:
           type: string
           readOnly: true
@@ -18838,7 +18750,6 @@ components:
           readOnly: true
       required:
       - categories
-      - color_variants
       - colors
       - description
       - display_name
@@ -18846,7 +18757,6 @@ components:
       - public_id
       - slug
       - tags
-      - theme_color
       - thumbnail_url
     CvTemplateDetail:
       type: object
@@ -18869,12 +18779,6 @@ components:
           readOnly: true
         is_premium:
           type: boolean
-          readOnly: true
-        theme_color:
-          type: string
-          readOnly: true
-        color_variants:
-          type: string
           readOnly: true
         colors:
           type: string
@@ -18902,7 +18806,6 @@ components:
           readOnly: true
       required:
       - categories
-      - color_variants
       - colors
       - description
       - display_name
@@ -18915,7 +18818,6 @@ components:
       - seo_title
       - slug
       - tags
-      - theme_color
       - thumbnail_url
     CvTemplateSwitchRequest:
       type: object
@@ -19186,9 +19088,6 @@ components:
           allOf:
           - $ref: '#/components/schemas/LanguageEnum'
           default: vi-VN
-        sample_content_public_id:
-          type: string
-          maxLength: 50
         position_public_id:
           type: string
           maxLength: 50
@@ -19220,10 +19119,6 @@ components:
           allOf:
           - $ref: '#/components/schemas/LanguageEnum'
           default: vi-VN
-        sample_content_public_id:
-          type: string
-          minLength: 1
-          maxLength: 50
         position_public_id:
           type: string
           minLength: 1
@@ -24832,14 +24727,8 @@ components:
           type: string
         seo_description_en:
           type: string
-        thumbnail_url:
-          type: string
-        preview_url:
-          type: string
         is_premium:
           type: boolean
-        status:
-          $ref: '#/components/schemas/CvTemplateAdminStatusEnum'
         sort_order:
           type: integer
           maximum: 2147483647

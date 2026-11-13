@@ -7,7 +7,6 @@ particular CV template or UI renderer.
 
 import json
 import re
-from copy import deepcopy
 
 from django.core.exceptions import ValidationError
 
@@ -71,76 +70,6 @@ def empty_style():
         'background_asset_id': None,
         'section_overrides': {},
     }
-
-
-def canonicalize_legacy_cv_data(cv_data, style_config=None, locale='vi-VN'):
-    """Convert the legacy builder payload into a valid V1 canonical document.
-
-    This adapter is intentionally a migration boundary.  New editor code must
-    submit the canonical three-document contract directly.
-    """
-    legacy = cv_data if isinstance(cv_data, dict) else {}
-    if legacy.get('schema_version') == CANONICAL_SCHEMA_VERSION and 'sections' in legacy:
-        content = deepcopy(legacy)
-    else:
-        content = empty_content(legacy.get('locale', locale))
-        personal_info = legacy.get('personal_info', legacy.get('personal', {}))
-        if isinstance(personal_info, dict):
-            content['personal_info'].update(
-                {
-                    key: personal_info.get(key, content['personal_info'][key])
-                    for key in content['personal_info']
-                }
-            )
-        for section_key in (
-            'summary',
-            'experience',
-            'education',
-            'skills',
-            'projects',
-            'certifications',
-            'languages',
-            'awards',
-        ):
-            legacy_items = legacy.get(section_key)
-            if not legacy_items:
-                continue
-            items = legacy_items if isinstance(legacy_items, list) else [legacy_items]
-            content['sections'].append(
-                {
-                    'instance_id': f'legacy_{section_key}_1',
-                    'section_key': section_key,
-                    'title': section_key.replace('_', ' ').title(),
-                    'enabled': True,
-                    'items': [
-                        dict(item, item_id=item.get('item_id', f'legacy_{section_key}_{index + 1}'))
-                        if isinstance(item, dict)
-                        else {'item_id': f'legacy_{section_key}_{index + 1}', 'value': str(item)}
-                        for index, item in enumerate(items)
-                    ],
-                }
-            )
-    content.setdefault('schema_version', CANONICAL_SCHEMA_VERSION)
-    content.setdefault('locale', locale)
-    content.setdefault('personal_info', empty_content(locale)['personal_info'])
-    content.setdefault('sections', [])
-    content.setdefault('custom_fields', {})
-    return content, empty_layout(), _canonical_style(style_config)
-
-
-def _canonical_style(style_config):
-    style = empty_style()
-    if not isinstance(style_config, dict):
-        return style
-    legacy_theme_color = style_config.get('theme_color', style_config.get('color'))
-    if isinstance(legacy_theme_color, str) and HEX_COLOR_RE.fullmatch(legacy_theme_color):
-        style['theme_color'] = legacy_theme_color
-    if style_config.get('font_family') in ALLOWED_FONT_FAMILIES:
-        style['font_family'] = style_config['font_family']
-    for key in ('font_scale', 'line_height', 'background_asset_id', 'section_overrides'):
-        if key in style_config:
-            style[key] = style_config[key]
-    return style
 
 
 def validate_cv_document(*, content_json, layout_json, style_json, schema_version):

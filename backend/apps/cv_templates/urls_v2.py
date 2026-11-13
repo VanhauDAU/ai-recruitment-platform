@@ -14,7 +14,6 @@ from .api.views.v2 import (
     CvCategoryCatalogListView,
     CvPositionOptionListView,
     CvPositionPreviewView,
-    CvSampleContentCatalogDetailView,
     CvSampleContentCatalogListView,
     CvTemplateCatalogDetailView,
     CvTemplateCatalogListView,
@@ -55,10 +54,5 @@ urlpatterns = [
         'cv-sample-contents/',
         CvSampleContentCatalogListView.as_view(),
         name='cv-sample-content-v2-list',
-    ),
-    path(
-        'cv-sample-contents/<str:public_id>/',
-        CvSampleContentCatalogDetailView.as_view(),
-        name='cv-sample-content-v2-detail',
     ),
 ] + router.urls

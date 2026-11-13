@@ -10,8 +10,17 @@ class CvSkillInline(admin.TabularInline):
 
 @admin.register(UserCv)
 class UserCvAdmin(admin.ModelAdmin):
-    list_display = ['title', 'user', 'cv_type', 'status', 'is_default', 'updated_at']
-    list_filter = ['cv_type', 'status', 'is_default']
+    list_display = [
+        'title',
+        'user',
+        'cv_type',
+        'lifecycle_status',
+        'processing_status',
+        'experience_years',
+        'is_default',
+        'updated_at',
+    ]
+    list_filter = ['cv_type', 'lifecycle_status', 'processing_status', 'is_default']
     search_fields = ['title', 'user__email']
     readonly_fields = ['public_id']
     inlines = [CvSkillInline]
