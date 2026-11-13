@@ -208,8 +208,10 @@ describe('CampaignJobsPanel', () => {
     renderPanel()
 
     expect(await screen.findAllByText('Tạm ẩn')).not.toHaveLength(0)
-    expect(screen.getByRole('link', { name: 'Xem tin Kỹ sư Frontend' }))
-      .toHaveAttribute('aria-disabled', 'true')
+    // Without an href the anchor is no longer exposed as a link.
+    const publicPage = screen.getByLabelText('Xem tin Kỹ sư Frontend')
+    expect(publicPage).toHaveAttribute('aria-disabled', 'true')
+    expect(publicPage).not.toHaveAttribute('href')
     expect(screen.queryByRole('link', { name: 'Chỉnh sửa Kỹ sư Frontend' }))
       .not.toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Chỉnh sửa Backend Engineer' })).toBeInTheDocument()

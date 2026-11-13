@@ -27,10 +27,10 @@ Quyết định:
 | PM-6 | Dọn docs, xóa `99-tien-do`, dựng lại mục lục | ⬜ Chưa bắt đầu |
 | PM-7 | Bổ sung changelog còn thiếu, rút gọn tiến độ, sinh lại OpenAPI | ⬜ Chưa bắt đầu |
 
-Việc còn treo: `docs/04-api/openapi.yaml` chưa được sinh lại. Nhà tuyển dụng
-không sửa được tin đang bị tạm ẩn, nên muốn khắc phục nội dung phải liên hệ
-quản trị viên; có mở cho sửa trong lúc tạm ẩn hay không là quyết định chưa
-chốt. Khi `POST /api/jobs/mine/` bị từ chối ở bước đăng, bản nháp vừa tạo vẫn
+Đã chốt (2026-11-13): nhà tuyển dụng không sửa được tin đang bị tạm ẩn; muốn
+khắc phục nội dung phải liên hệ quản trị viên.
+
+Việc còn treo: `docs/04-api/openapi.yaml` chưa được sinh lại. Khi `POST /api/jobs/mine/` bị từ chối ở bước đăng, bản nháp vừa tạo vẫn
 được giữ lại (hành vi có từ trước, áp dụng cho mọi lý do từ chối).
 
 ## Epic rà soát và hardening cổng Nhà tuyển dụng (ER, 2026-08-10)

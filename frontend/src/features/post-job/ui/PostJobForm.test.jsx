@@ -173,7 +173,7 @@ describe('PostJobForm publication commitment', () => {
     await waitFor(() => expect(screen.getByLabelText('Tiêu đề tin')).toHaveValue('Kỹ sư Backend'))
 
     expect(screen.queryByRole('checkbox')).not.toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: 'Lưu và cập nhật' }))
+    fireEvent.click(screen.getByRole('button', { name: /Lưu và cập nhật/ }))
 
     await waitFor(() => expect(onPublish).toHaveBeenCalledTimes(1))
     expect(onPublish.mock.calls[0][1]).toBeUndefined()
