@@ -102,10 +102,3 @@ export function applyDocumentMetadata(metadata, titleOptions) {
     document.head.appendChild(script)
   }
 }
-
-export function setDocumentMetaDescription(value) {
-  if (typeof document === 'undefined') return () => {}
-  const previous = document.head.querySelector('meta[name="description"]')?.content || ''
-  setMeta('meta[name="description"]', { name: 'description' }, value)
-  return () => setMeta('meta[name="description"]', { name: 'description' }, previous)
-}

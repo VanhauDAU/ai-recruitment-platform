@@ -22,7 +22,6 @@ from .alerts import (
     reset_candidate_job_delivery_cursors,
     update_job_alert,
 )
-from .availability import job_is_publicly_available
 from .content_snapshot import (
     build_job_content_snapshot,
     job_published_content_changes,
@@ -30,7 +29,6 @@ from .content_snapshot import (
 from .digests import (
     claim_due_candidate_job_digest_candidates,
     deliver_candidate_job_digest,
-    due_candidate_job_digest_candidate_ids,
     pending_candidate_job_digest_ids,
     prepare_candidate_job_digest,
     purge_candidate_job_digest_history,
@@ -69,10 +67,6 @@ from .posting import (
     save_job_draft,
     update_employer_job,
 )
-from .promotion_alerts import (
-    candidate_still_allows_promoted_job_alert,
-    matching_job_alert_recipient_page,
-)
 from .recommendations import hide_recommended_job, restore_recommended_job
 from .reports import resolve_job_report, reverse_job_report, submit_job_report
 
@@ -87,22 +81,18 @@ __all__ = [
     'create_job_alert',
     'create_job_ai_generation',
     'build_job_content_snapshot',
-    'candidate_still_allows_promoted_job_alert',
     'create_job_review_token',
     'delete_job_draft',
     'delete_job_alert',
     'deliver_candidate_job_digest',
-    'due_candidate_job_digest_candidate_ids',
     'duplicate_job',
     'employer_job_posting_context',
     'execute_job_ai_generation',
     'extend_job_deadline',
     'job_deadline_error',
-    'job_is_publicly_available',
     'initialize_job_visibility',
     'job_lifecycle_policy',
     'lifecycle_local_date',
-    'matching_job_alert_recipient_page',
     'visibility_days_error',
     'job_deadline_policy',
     'fail_job_ai_generation',

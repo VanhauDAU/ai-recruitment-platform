@@ -59,7 +59,6 @@ export const exportAdminCvPositions = (positionIds) => read('/cv-positions/expor
 export const importAdminCvPositions = (payload) => write('post', '/cv-positions/import/', payload)
 export const publishAdminCvSample = (sampleId) => write('post', `/cv-sample-contents/${sampleId}/publish/`)
 export const archiveAdminCvSample = (sampleId) => write('post', `/cv-sample-contents/${sampleId}/archive/`)
-export const previewAdminCvSample = (sampleId, templateId) => write('post', `/cv-sample-contents/${sampleId}/preview/`, { template_public_id: templateId })
 export const generateAdminCvSamples = (payload) => write('post', '/cv-sample-contents/generate/', payload)
 export const getAdminCvGenerations = async (batchId) => results(await read('/cv-sample-generations/', { batch: batchId }))
 export const estimateAdminCvGeneration = (count) => read('/cv-sample-generations/estimate/', { count })

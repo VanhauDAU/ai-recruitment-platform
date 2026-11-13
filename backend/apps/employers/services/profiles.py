@@ -243,9 +243,3 @@ def ensure_recruiter_candidate_data_access(user, *, lock=False):
     if not readiness['candidate_data_access']:
         raise CandidateDataBlocked(readiness)
     return recruiter, readiness
-
-
-def recruiter_candidate_data_access_allowed(user):
-    """Return whether personal candidate data may be included in a response."""
-    _, readiness = recruiter_readiness_state(user)
-    return readiness['candidate_data_access']

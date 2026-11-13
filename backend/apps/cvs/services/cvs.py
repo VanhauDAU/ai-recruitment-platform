@@ -23,17 +23,6 @@ class UnsupportedCvUpload(ValueError):
     """Raised when an upload is not a supported CV document."""
 
 
-@transaction.atomic
-def create_builder_cv(serializer, user):
-    cv = serializer.save(
-        user=user,
-        cv_type=UserCv.CvType.BUILDER,
-        source=UserCv.Source.BUILDER,
-    )
-    create_initial_document(cv, user)
-    return cv
-
-
 def _delete_storage_keys(keys):
     for key in {key for key in keys if key}:
         try:

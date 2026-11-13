@@ -3,7 +3,6 @@
 from .assets import create_avatar_asset, create_avatar_asset_from_session, create_background_asset
 from .cvs import (
     UnsupportedCvUpload,
-    create_builder_cv,
     duplicate_cv,
     import_v2_cv,
     import_v2_cv_from_session,
@@ -72,7 +71,6 @@ __all__ = [
     'create_avatar_asset',
     'create_avatar_asset_from_session',
     'create_background_asset',
-    'create_builder_cv',
     'duplicate_cv',
     'import_v2_cv',
     'import_v2_cv_from_session',
