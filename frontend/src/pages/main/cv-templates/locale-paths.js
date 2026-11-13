@@ -12,12 +12,8 @@ export function catalogLocaleFromPath(pathname) {
   return match || CATALOG_LOCALES[0]
 }
 
-export function catalogLocaleByCode(locale) {
-  return CATALOG_LOCALES.find((item) => item.locale === locale) || CATALOG_LOCALES[0]
-}
-
 export function catalogPathForLocale(locale) {
-  return catalogLocaleByCode(locale).path
+  return (CATALOG_LOCALES.find((item) => item.locale === locale) || CATALOG_LOCALES[0]).path
 }
 
 /**
@@ -41,16 +37,4 @@ export function catalogCategoryFromPath(pathname, basePath) {
   // Bỏ qua segment dành riêng cho detail page
   if (firstSegment === 'chi-tiet') return null
   return firstSegment
-}
-
-export function templateDetailPath(locale, slug) {
-  const base = catalogPathForLocale(locale)
-  return `${base}/chi-tiet/${slug}`
-}
-
-/**
- * Build detail URL từ basePath đã biết (dùng trong component).
- */
-export function buildDetailPath(basePath, slug) {
-  return `${basePath}/chi-tiet/${slug}`
 }

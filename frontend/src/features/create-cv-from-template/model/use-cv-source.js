@@ -20,7 +20,7 @@ import { createCvFromTemplate } from '../api/create-cv.api'
 import { createCvErrorMessage } from '../api/create-cv.errors'
 import { resolvePreviewSelection } from './preview-selection'
 
-export const CV_SOURCES = ['sample', 'previous', 'upload', 'blank']
+const CV_SOURCES = ['sample', 'previous', 'upload', 'blank']
 
 function importFailureMessage(code) {
   if (code === 'scanned_pdf_ocr_unavailable') return 'PDF là bản scan chưa có lớp chữ. Hãy dùng PDF có thể bôi đen chữ hoặc tệp DOCX.'
