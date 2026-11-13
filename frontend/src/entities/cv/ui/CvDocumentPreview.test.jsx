@@ -18,9 +18,9 @@ describe('CV document preview', () => {
   afterEach(() => vi.restoreAllMocks())
 
   it('renders canonical content in the two-column A4 renderer without template-specific content conversion', () => {
-    render(<CvDocumentPreview document={document} rendererKey="classic_two_column_v1" />)
+    render(<CvDocumentPreview document={document} rendererKey="sidebar_right_v1" />)
 
-    expect(screen.getByLabelText('Xem trước CV classic_two_column_v1 trang 1')).toBeInTheDocument()
+    expect(screen.getByLabelText('Xem trước CV sidebar_right_v1 trang 1')).toBeInTheDocument()
     expect(screen.getByText('Nguyễn An')).toBeInTheDocument()
     expect(screen.getByText('Xây sản phẩm hữu ích')).toBeInTheDocument()
     expect(screen.getByText('React')).toBeInTheDocument()
@@ -30,9 +30,9 @@ describe('CV document preview', () => {
     const compactDocument = JSON.parse(JSON.stringify(document))
     compactDocument.layout_json.page = { size: 'A4', margin_mm: 5 }
 
-    render(<CvDocumentPreview document={compactDocument} rendererKey="classic_two_column_v1" />)
+    render(<CvDocumentPreview document={compactDocument} rendererKey="sidebar_right_v1" />)
 
-    expect(screen.getByLabelText('Xem trước CV classic_two_column_v1 trang 1')).toHaveStyle({
+    expect(screen.getByLabelText('Xem trước CV sidebar_right_v1 trang 1')).toHaveStyle({
       padding: '5mm',
     })
   })
@@ -47,9 +47,9 @@ describe('CV document preview', () => {
       items: [{ item_id: `project_item_${index + 1}`, name: `Dự án ${index + 1}`, description: { format: 'rich_text_v1', content: [{ type: 'paragraph', text: 'Nội dung dài '.repeat(50) }] } }],
     })))
     longDocument.layout_json.regions[0].section_instance_ids.push(...longDocument.content_json.sections.filter((section) => section.section_key === 'projects').map((section) => section.instance_id))
-    render(<CvDocumentPreview document={longDocument} rendererKey="classic_two_column_v1" />)
+    render(<CvDocumentPreview document={longDocument} rendererKey="sidebar_right_v1" />)
 
-    expect(screen.getByLabelText('Xem trước CV classic_two_column_v1 trang 2')).toBeInTheDocument()
+    expect(screen.getByLabelText('Xem trước CV sidebar_right_v1 trang 2')).toBeInTheDocument()
     expect(screen.queryByText(/Nội dung có thể bị tràn ở trang/)).not.toBeInTheDocument()
   })
 
@@ -59,7 +59,7 @@ describe('CV document preview', () => {
     responsiveDocument.content_json.personal_info.phone = '0909 123 456'
     responsiveDocument.content_json.sections[1].items[0].name = 'Thiết kế và triển khai hệ thống giao diện phức tạp'
 
-    render(<CvDocumentPreview document={responsiveDocument} rendererKey="classic_two_column_v1" />)
+    render(<CvDocumentPreview document={responsiveDocument} rendererKey="sidebar_right_v1" />)
 
     expect(screen.getByText('nguyen.an.frontend.engineer@example.com')).toHaveClass('break-words')
     expect(screen.getByText('Thiết kế và triển khai hệ thống giao diện phức tạp')).not.toHaveClass('truncate')
@@ -73,7 +73,7 @@ describe('CV document preview', () => {
       description: { format: 'rich_text_v1', content: [] },
     }
 
-    render(<CvDocumentPreview document={fallbackDocument} rendererKey="classic_two_column_v1" />)
+    render(<CvDocumentPreview document={fallbackDocument} rendererKey="sidebar_right_v1" />)
 
     expect(screen.getByText('Mục tiêu vẫn phải xuất hiện trong Preview')).toBeInTheDocument()
   })
@@ -90,7 +90,7 @@ describe('CV document preview', () => {
     }]
     blankDocument.layout_json.regions = [{ id: 'main', width_percent: 100, section_instance_ids: ['summary_1'] }]
 
-    render(<CvDocumentPreview document={blankDocument} rendererKey="classic_two_column_v1" />)
+    render(<CvDocumentPreview document={blankDocument} rendererKey="sidebar_right_v1" />)
 
     expect(screen.queryByText('Mục tiêu nghề nghiệp')).not.toBeInTheDocument()
     expect(screen.queryByText('Họ và tên')).not.toBeInTheDocument()
@@ -111,7 +111,7 @@ describe('CV document preview', () => {
     })
     avatarDocument.layout_json.regions[1].section_instance_ids.unshift('avatar_1')
 
-    render(<CvDocumentPreview document={avatarDocument} rendererKey="classic_two_column_v1" assets={{ avatar_1: { url: '/avatar.jpg' } }} />)
+    render(<CvDocumentPreview document={avatarDocument} rendererKey="sidebar_right_v1" assets={{ avatar_1: { url: '/avatar.jpg' } }} />)
 
     const avatar = screen.getByRole('img', { name: 'Tải ảnh' })
     expect(avatar).toHaveStyle({
@@ -119,5 +119,32 @@ describe('CV document preview', () => {
       transform: 'scale(1.6)',
     })
     expect(avatar.parentElement).toHaveStyle({ width: '36mm', height: '36mm' })
+  })
+
+  it('renders the name as a layout section instead of a hard-coded header', () => {
+    const modern = JSON.parse(JSON.stringify(document))
+    modern.content_json.sections.unshift(
+      { instance_id: 'nameplate_1', section_key: 'nameplate', title: 'Danh thiếp', enabled: true, items: [] },
+      { instance_id: 'contact_1', section_key: 'contact', title: 'Liên hệ', enabled: true, items: [] },
+    )
+    modern.layout_json.regions = [
+      { id: 'header', row: 0, width_percent: 100, section_instance_ids: ['nameplate_1', 'contact_1'] },
+      { id: 'main', row: 1, width_percent: 65, section_instance_ids: ['summary_1'] },
+      { id: 'sidebar', row: 1, width_percent: 35, section_instance_ids: ['skills_1'] },
+    ]
+
+    const { container } = render(<CvDocumentPreview document={modern} rendererKey="header_band_two_column_v1" />)
+
+    expect(screen.getAllByText('Nguyễn An')).toHaveLength(1)
+    expect(container.querySelector('[data-cv-region="header"]')).toHaveClass('cv-region--band', 'cv-region--inline')
+    expect(container.querySelector('[data-cv-region="header"]')).toHaveTextContent('Nguyễn An')
+    expect(container.querySelector('[data-cv-row="top"]')).toBeInTheDocument()
+  })
+
+  it('keeps a name block only for documents created before name sections existed', () => {
+    const { container } = render(<CvDocumentPreview document={document} rendererKey="timeline_v1" />)
+
+    expect(container.querySelector('header[data-cv-row="top"]')).toHaveTextContent('Nguyễn An')
+    expect(container.querySelector('[data-cv-variant="timeline"]')).toBeInTheDocument()
   })
 })

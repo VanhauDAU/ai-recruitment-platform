@@ -245,7 +245,7 @@ class MarkerSectionCompositionTests(TestCase):
 
     def test_header_layout_receives_the_identity_markers_it_maps(self):
         template, _ = self._template(
-            'header_two_column_v1',
+            'header_band_two_column_v1',
             [('nameplate', 'header'), ('contact', 'header'), ('summary', 'main')],
             [
                 {'id': 'header', 'row': 0, 'width_percent': 100, 'section_instance_ids': []},
@@ -266,7 +266,7 @@ class MarkerSectionCompositionTests(TestCase):
     def test_a_layout_with_its_own_header_block_gets_no_markers(self):
         """Adding them would print the candidate's name twice."""
         template, _ = self._template(
-            'classic_single_column_v1',
+            'single_column_v1',
             [('summary', 'main')],
             [{'id': 'main', 'row': 0, 'width_percent': 100, 'section_instance_ids': []}],
         )
@@ -277,7 +277,7 @@ class MarkerSectionCompositionTests(TestCase):
 
     def test_markers_already_present_in_content_are_not_duplicated(self):
         template, _ = self._template(
-            'header_two_column_v1',
+            'header_band_two_column_v1',
             [('nameplate', 'header'), ('contact', 'header')],
             [
                 {'id': 'header', 'row': 0, 'width_percent': 100, 'section_instance_ids': []},

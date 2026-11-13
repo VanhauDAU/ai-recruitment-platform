@@ -14,7 +14,12 @@ from apps.cv_templates.section_registry import get_section_contract
 
 CANONICAL_SCHEMA_VERSION = 1
 MAX_DOCUMENT_BYTES = 256 * 1024
-ALLOWED_FONT_FAMILIES = frozenset({'Arial', 'Calibri', 'Inter', 'Roboto', 'Source Sans Pro'})
+# Font được đóng gói (OFL) và chọn được trong editor (CVT-2).
+CV_FONT_FAMILIES = ('Inter', 'Roboto', 'Be Vietnam Pro', 'Lora')
+# Tên font của tài liệu tạo trước CVT-2. Version và snapshot ứng tuyển là bất
+# biến nên vẫn phải hợp lệ; renderer hiển thị chúng bằng font đóng gói gần nhất.
+LEGACY_FONT_FAMILIES = frozenset({'Arial', 'Calibri', 'Source Sans Pro'})
+ALLOWED_FONT_FAMILIES = frozenset(CV_FONT_FAMILIES) | LEGACY_FONT_FAMILIES
 HEX_COLOR_RE = re.compile(r'^#[0-9A-Fa-f]{6}$')
 YEAR_MONTH_RE = re.compile(r'^\d{4}-(0[1-9]|1[0-2])$')
 SAFE_RICH_TEXT_TYPES = frozenset({'bullet', 'paragraph'})

@@ -37,7 +37,7 @@ vi.mock('@/features/track-job-engagement', () => ({
 }))
 
 const savedVersion = {
-  public_id: 'cvv_2', schema_version: 1, template_renderer_key: 'classic_two_column_v1', assets: {},
+  public_id: 'cvv_2', schema_version: 1, template_renderer_key: 'sidebar_right_v1', assets: {},
   content_json: { personal_info: { full_name: 'Nguyễn An' }, sections: [] },
   layout_json: { page: { size: 'A4', margin_mm: 10 }, regions: [] },
   style_json: { theme_color: '#00A66A', font_family: 'Roboto', font_scale: 1, line_height: 1.4 },
@@ -72,7 +72,7 @@ describe('CV save success page', () => {
     expect(await screen.findByText('Lưu CV thành công!')).toBeInTheDocument()
     expect(screen.getByText('CV của Marketing')).toBeInTheDocument()
     expect(await screen.findByRole('img', { name: 'Ảnh xem trước Marketing' }, { timeout: PREVIEW_CAPTURE_TIMEOUT })).toHaveAttribute('src', 'blob:captured-cv')
-    expect(screen.getByTestId('saved-version-document')).toHaveTextContent('classic_two_column_v1:Nguyễn An')
+    expect(screen.getByTestId('saved-version-document')).toHaveTextContent('sidebar_right_v1:Nguyễn An')
     expect(mocks.getCvVersion).toHaveBeenCalledWith('cv_1', 'cvv_2')
     expect(screen.getByText('Marketing Executive')).toBeInTheDocument()
     expect(screen.getByText('Rất phù hợp')).toBeInTheDocument()
@@ -88,7 +88,7 @@ describe('CV save success page', () => {
     })
 
     expect(await screen.findByRole('img', { name: 'Ảnh xem trước Marketing' }, { timeout: PREVIEW_CAPTURE_TIMEOUT })).toHaveAttribute('src', 'blob:captured-cv')
-    expect(screen.getByTestId('saved-version-document')).toHaveTextContent('classic_two_column_v1:Nguyễn An')
+    expect(screen.getByTestId('saved-version-document')).toHaveTextContent('sidebar_right_v1:Nguyễn An')
     expect(mocks.getCvVersion).not.toHaveBeenCalled()
   })
 
@@ -111,7 +111,7 @@ describe('CV save success page', () => {
       title: 'Marketing', thumbnail_url: null, thumbnail_status: 'pending', latest_version_public_id: 'cvv_2',
     })
     mocks.getCvVersion.mockRejectedValueOnce(new Error('network unavailable')).mockResolvedValueOnce({
-      public_id: 'cvv_2', schema_version: 1, template_renderer_key: 'classic_single_column_v1', assets: {},
+      public_id: 'cvv_2', schema_version: 1, template_renderer_key: 'single_column_v1', assets: {},
       content_json: { personal_info: { full_name: 'Nguyễn An' }, sections: [] }, layout_json: { regions: [] }, style_json: {},
     })
 

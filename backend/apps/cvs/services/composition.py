@@ -14,13 +14,12 @@ from ..schemas import (
     validate_template_layout_capabilities,
 )
 
-# Sections a renderer fills from `personal_info` and the editor refuses to
-# delete, so a document is only complete once they exist. `avatar` is backed by
-# personal info too but stays optional: a candidate opts into the photo.
+# Section lấy dữ liệu từ `personal_info` (tên, liên hệ, ảnh). Layout đặt chúng vào
+# vùng nào thì composition tạo sẵn instance ở đó; ảnh vẫn xóa được trong editor.
 MARKER_SECTION_KEYS = {
     contract.key: contract.display_name
     for contract in SECTION_REGISTRY.values()
-    if contract.personal_info_backed and not contract.deletable
+    if contract.personal_info_backed
 }
 
 
@@ -56,18 +55,17 @@ def _unique_instance_id(content_json, section_key):
 def add_missing_marker_sections(template_version, content_json):
     """Give a template the personal-info markers its layout maps but content lacks.
 
-    Most layouts draw the candidate's name and contact details from a header
-    block the renderer owns.  A header layout instead maps the ``nameplate`` and
-    ``contact`` sections into a region, so without those instances it would
-    render a CV with no name at all.  Starter content is renderer-neutral by
-    design and carries neither, so composition — the one place that knows both
-    the content and the template — materializes them.  The markers hold no
-    content of their own: every renderer reads them from ``personal_info``.
+    No layout has a hard-coded header (CVT-2): the candidate's name, contact
+    details and photo are sections placed in a region by the template version.
+    Starter content is renderer-neutral by design and carries none of them, so
+    composition — the one place that knows both the content and the template —
+    materializes the markers the layout maps. They hold no content of their own:
+    every renderer reads them from ``personal_info``.
     """
-    mapped_keys = {
-        section.section_definition.section_key
-        for section in template_version.sections.select_related('section_definition')
-    }
+    # Theo thứ tự template (ví dụ ảnh trước tên ở vùng đầu trang).
+    mapped_keys = template_version.sections.order_by('default_order').values_list(
+        'section_definition__section_key', flat=True
+    )
     existing_keys = {
         section.get('section_key')
         for section in content_json.get('sections', [])
@@ -75,8 +73,8 @@ def add_missing_marker_sections(template_version, content_json):
     }
     missing = [
         section_key
-        for section_key in MARKER_SECTION_KEYS
-        if section_key in mapped_keys and section_key not in existing_keys
+        for section_key in mapped_keys
+        if section_key in MARKER_SECTION_KEYS and section_key not in existing_keys
     ]
     if not missing:
         return content_json

@@ -244,7 +244,7 @@ Chi tiết contract document, renderer và API ở
 | `CvAccessLog` | Audit tối thiểu truy cập CV (owner/recruiter/admin/anonymous theo kênh), không lưu payload hay PII thô. |
 | `CvSkill` | Kỹ năng khai báo/AI trích xuất theo CV; unique `(cv, skill)`. |
 | `CvTemplate` | Identity/catalogue mẫu: slug, tên/mô tả/SEO song ngữ `display_name_vi/en`, `description_vi/en`, `seo_title_vi/en`, `seo_description_vi/en` (rỗng ở ngôn ngữ nào thì không hiện ở kho ngôn ngữ đó), `lifecycle_status` draft/published/archived (nguồn duy nhất cho hiển thị công khai), `current_published_version`, `is_premium`; M2M category/color qua bảng link, ảnh xem trước theo từng màu nằm ở `CvTemplateColorLink`. |
-| `CvTemplateVersion` | Contract renderer bất biến sau publish: `renderer_key`, `renderer_version`, schema/default layout/style, `capabilities`, `content_contract`, `version_status` draft/published/retired; unique `(template, version_number)`. |
+| `CvTemplateVersion` | Contract renderer bất biến sau publish: `renderer_key` (khóa layout trong registry `apps/cv_templates/layouts.json`), `renderer_version`, schema/default layout/style, `capabilities`, `content_contract`, `version_status` draft/published/retired; unique `(template, version_number)`. |
 | `CvSectionDefinition`, `CvTemplateSection` | Registry section key canonical và cấu hình section theo region của từng version (unique version–section). |
 | `CvCategory`, `CvTemplateCategoryLink` | Taxonomy style/feature/position/audience (unique `(category_type, slug)`), link có thứ tự. |
 | `CvColor`, `CvTemplateColorLink` | Palette dùng lại; link giữ thumbnail/preview, thứ tự, tối đa một màu mặc định mỗi template. |

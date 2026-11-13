@@ -1,7 +1,11 @@
 import { getSectionDefinition, getSectionDisplayName, SECTION_REGISTRY } from './section-registry'
 
 const BASIC_EDITOR_SECTION_KEYS = Object.freeze(['summary', 'experience', 'skills'])
-const ALLOWED_FONTS = new Set(['Arial', 'Calibri', 'Inter', 'Roboto', 'Source Sans Pro'])
+// Font chọn được trong editor (đóng gói OFL, cv-fonts.css). Tên font cũ vẫn hợp
+// lệ cho tài liệu tạo trước CVT-2 và được hiển thị bằng font đóng gói gần nhất.
+export const CV_FONT_FAMILIES = Object.freeze(['Inter', 'Roboto', 'Be Vietnam Pro', 'Lora'])
+const LEGACY_FONT_FAMILIES = Object.freeze({ Arial: 'Inter', Calibri: 'Be Vietnam Pro', 'Source Sans Pro': 'Be Vietnam Pro' })
+const ALLOWED_FONTS = new Set([...CV_FONT_FAMILIES, ...Object.keys(LEGACY_FONT_FAMILIES)])
 const HEX_COLOR = /^#[0-9A-Fa-f]{6}$/
 const YEAR_MONTH = /^\d{4}-(0[1-9]|1[0-2])$/
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -9,11 +13,10 @@ const PHONE = /^[+()\d\s.-]{7,20}$/
 const HTTP_URL = /^https?:\/\/[^\s]+\.[^\s]+$/i
 
 export const CV_FONT_STACKS = Object.freeze({
-  Arial: 'Arial, Helvetica, sans-serif',
-  Calibri: 'Calibri, Candara, "Segoe UI", sans-serif',
-  Inter: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-  Roboto: 'Roboto, Arial, Helvetica, sans-serif',
-  'Source Sans Pro': '"Source Sans Pro", "Trebuchet MS", Arial, sans-serif',
+  Inter: '"Inter", "Be Vietnam Pro", sans-serif',
+  Roboto: '"Roboto", "Inter", sans-serif',
+  'Be Vietnam Pro': '"Be Vietnam Pro", "Inter", sans-serif',
+  Lora: '"Lora", Georgia, serif',
 })
 
 export { BASIC_EDITOR_SECTION_KEYS }
@@ -58,7 +61,7 @@ function newSection(content, sectionKey) {
 }
 
 export function getCvFontStack(fontFamily) {
-  return CV_FONT_STACKS[fontFamily] || CV_FONT_STACKS.Roboto
+  return CV_FONT_STACKS[LEGACY_FONT_FAMILIES[fontFamily] || fontFamily] || CV_FONT_STACKS.Inter
 }
 
 export function changeContentLocale(content, locale) {

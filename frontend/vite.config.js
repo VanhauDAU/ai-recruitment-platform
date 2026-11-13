@@ -32,6 +32,9 @@ export default defineConfig(({ mode }) => {
     server: {
       // PORT do tool preview cấp khi 5173 bận; dev bình thường vẫn là 5173.
       port: Number(setting('PORT')) || 5173,
+      // Backend/worker trong Docker gọi Vite qua hostname service `frontend`
+      // (SEO shell, trang in PDF `cv-print.html`); Vite chặn Host lạ mặc định.
+      allowedHosts: ['frontend'],
       // API/media đi cùng origin để thiết bị thật trong LAN chỉ cần truy cập một
       // địa chỉ Vite.
       proxy: {
@@ -53,6 +56,11 @@ export default defineConfig(({ mode }) => {
       // and the incremental JS/CSS graph of each lazy route.
       manifest: true,
       rollupOptions: {
+        // cv-print.html: trang in PDF do worker mở bằng Chromium (CVT-2).
+        input: {
+          main: path.resolve(import.meta.dirname, 'index.html'),
+          'cv-print': path.resolve(import.meta.dirname, 'cv-print.html'),
+        },
         output: {
           // Chỉ tách core React (dùng ở mọi route, ít đổi) thành vendor chunk riêng
           // để cache tốt qua các lần deploy. KHÔNG gom antd vào 1 chunk: để Vite tự

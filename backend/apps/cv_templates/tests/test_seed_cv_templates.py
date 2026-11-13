@@ -22,7 +22,7 @@ from ..models import (
     CvTemplateSection,
     CvTemplateVersion,
 )
-from ..renderers import validate_renderer_contract
+from ..renderers import get_renderer_contract, validate_renderer_contract
 from ..selectors import published_template_queryset
 
 
@@ -86,28 +86,26 @@ class SeedCvTemplatesTests(TestCase):
                     list(SECTION_PLANS[template.current_published_version.renderer_key]),
                 )
 
-    def test_a_header_layout_always_renders_the_candidate_identity(self):
-        """Header renderers drop the built-in header, so markers must be mapped."""
-        header_templates = CvTemplate.objects.filter(
-            current_published_version__renderer_key='header_two_column_v1'
-        )
-        self.assertTrue(header_templates.exists())
-        for template in header_templates:
+    def test_every_layout_places_the_candidate_identity_in_a_region(self):
+        """There is no hard-coded header any more: identity markers must be placed."""
+        for template in CvTemplate.objects.select_related('current_published_version'):
             with self.subTest(template=template.slug):
                 document = compose_cv_document(
                     template=template, content_json=empty_content('vi-VN')
                 )
-                header = next(
-                    region
+                placed = {
+                    instance_id
                     for region in document['layout_json']['regions']
-                    if region['id'] == 'header'
-                )
-                assigned = {
+                    for instance_id in region['section_instance_ids']
+                }
+                keys = {
                     section['section_key']
                     for section in document['content_json']['sections']
-                    if section['instance_id'] in header['section_instance_ids']
+                    if section['instance_id'] in placed
                 }
-                self.assertEqual(assigned, {'nameplate', 'contact'})
+                self.assertTrue({'nameplate', 'contact'} <= keys)
+                contract = get_renderer_contract(template.current_published_version.renderer_key)
+                self.assertEqual('avatar' in keys, contract.avatar)
 
     def test_rerunning_the_command_changes_nothing(self):
         counts = (
@@ -136,7 +134,7 @@ class CatalogGeometryTests(TestCase):
     def test_region_widths_total_one_hundred_percent_per_row(self):
         for spec in TEMPLATES:
             with self.subTest(template=spec['slug']):
-                regions = layout_regions(spec['renderer_key'], spec.get('sidebar_percent', 35))
+                regions = layout_regions(spec['renderer_key'], spec.get('side_percent'))
                 widths = {}
                 for region in regions:
                     widths[region['row']] = widths.get(region['row'], 0) + region['width_percent']
@@ -145,17 +143,19 @@ class CatalogGeometryTests(TestCase):
     def test_resizable_columns_stay_inside_the_declared_limits(self):
         for spec in TEMPLATES:
             with self.subTest(template=spec['slug']):
-                regions = layout_regions(spec['renderer_key'], spec.get('sidebar_percent', 35))
-                resize = layout_capabilities(spec['renderer_key'], regions)['layout'][
-                    'column_resize'
-                ]
+                regions = layout_regions(spec['renderer_key'], spec.get('side_percent'))
+                resize = layout_capabilities(spec['renderer_key'])['layout']['column_resize']
+                shared_rows = {
+                    region['row']
+                    for region in regions
+                    if sum(other['row'] == region['row'] for other in regions) > 1
+                }
                 if not resize['enabled']:
-                    # A single-column template has no pair to redistribute width
-                    # between; enabling resize would fail canonical validation.
-                    self.assertEqual(len(regions), 1)
+                    # No row holds two regions, so there is no width to redistribute.
+                    self.assertEqual(shared_rows, set())
                     continue
                 for region in regions:
-                    if region['width_percent'] == 100:
+                    if region['row'] not in shared_rows:
                         continue
                     self.assertGreaterEqual(region['width_percent'], resize['min_percent'])
                     self.assertLessEqual(region['width_percent'], resize['max_percent'])

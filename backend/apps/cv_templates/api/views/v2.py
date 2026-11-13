@@ -23,6 +23,7 @@ from apps.cvs.services.composition import (
 from apps.jobs.models import JobCategory
 from common.metrics import record_metric
 
+from ...demo_identity import with_demo_identity
 from ...models import (
     DEFAULT_CV_LANGUAGE,
     DEFAULT_EXPERIENCE_BAND,
@@ -281,15 +282,19 @@ class CvPositionPreviewView(PublicCatalogCacheMixin, APIView):
                 raise ValidationError({'template_public_id': str(error)}) from error
             cache.set(cache_key, base_document, timeout=self.cache_seconds)
 
+        preview = deepcopy(base_document)
+        if source == 'sample' and not request.user.is_authenticated:
+            # Khách xem mẫu giống ảnh catalogue; người đăng nhập thấy danh tính của mình.
+            preview['content_json'] = with_demo_identity(preview['content_json'], locale)
         document = finalize_preview_document(
-            deepcopy(base_document),
+            preview,
             actor=request.user,
             theme_color=theme_color or None,
         )
         revision = sha256(
             json.dumps(
                 {
-                    'document': base_document,
+                    'document': document,
                     'renderer_key': version.renderer_key,
                     'renderer_version': version.renderer_version,
                 },

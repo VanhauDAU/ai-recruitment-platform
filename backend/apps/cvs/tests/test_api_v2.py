@@ -14,7 +14,6 @@ from django.test import override_settings
 from django.urls import reverse
 from django.utils import timezone
 from PIL import Image
-from pypdf import PdfReader
 from rest_framework.test import APITestCase
 
 from apps.cv_templates.models import (
@@ -39,7 +38,7 @@ from ..models import (
 )
 from ..schemas import empty_content, empty_layout, empty_style
 from ..services.composition import compose_cv_document
-from ..services.pdf_renderer import build_cv_pdf_html, render_cv_version_pdf
+from ..services.pdf_renderer import print_payload
 from ..tasks import (
     ImportProcessingError,
     generate_cv_thumbnail,
@@ -78,7 +77,7 @@ class CvV2ApiTests(APITestCase):
             template=self.template,
             version_number=1,
             version_status=CvTemplateVersion.VersionStatus.PUBLISHED,
-            renderer_key='classic_single_column_v1',
+            renderer_key='single_column_v1',
             renderer_version='1',
             default_layout_json=empty_layout(),
             default_style_json=empty_style(),
@@ -140,7 +139,7 @@ class CvV2ApiTests(APITestCase):
             template=template,
             version_number=1,
             version_status=CvTemplateVersion.VersionStatus.PUBLISHED,
-            renderer_key='classic_two_column_v1',
+            renderer_key='sidebar_right_v1',
             renderer_version='1',
             default_layout_json=layout,
             default_style_json=style,
@@ -178,7 +177,7 @@ class CvV2ApiTests(APITestCase):
 
         detail = self.client.get(reverse('cv-v2-detail', kwargs={'public_id': cv.public_id}))
         self.assertEqual(detail.status_code, 200)
-        self.assertEqual(detail.data['template_renderer_key'], 'classic_single_column_v1')
+        self.assertEqual(detail.data['template_renderer_key'], 'single_column_v1')
         self.assertEqual(detail.data['template_renderer_version'], '1')
 
         owner_view = self.client.get(self.owner_view_url(cv))
@@ -611,7 +610,7 @@ class CvV2ApiTests(APITestCase):
         self.assertEqual(response.status_code, 200, response.data)
         self.assertEqual(response['ETag'], '"lock-version-1"')
         self.assertEqual(response.data['draft']['content_json'], original_content)
-        self.assertEqual(response.data['cv']['template_renderer_key'], 'classic_two_column_v1')
+        self.assertEqual(response.data['cv']['template_renderer_key'], 'sidebar_right_v1')
         self.assertEqual(
             response.data['cv']['template_capabilities']['layout']['column_resize']['min_percent'],
             25,
@@ -926,7 +925,7 @@ class CvV2ApiTests(APITestCase):
             template=self.template,
             version_number=2,
             version_status=CvTemplateVersion.VersionStatus.PUBLISHED,
-            renderer_key='classic_single_column_v1',
+            renderer_key='single_column_v1',
             renderer_version='1',
             default_layout_json=empty_layout(),
             default_style_json=empty_style(),
@@ -1156,17 +1155,15 @@ class CvV2ApiTests(APITestCase):
         self.assertEqual(
             cv.draft.content_json['personal_info']['full_name'], 'Draft Must Never Export'
         )
-        self.assertEqual(export.renderer_key, 'classic_single_column_v1')
+        self.assertEqual(export.renderer_key, 'single_column_v1')
         self.assertEqual(export.renderer_version, '1')
         self.assertNotIn('content_json', export.render_config)
         self.assertNotIn('storage_key', response.data)
         self.assertIsNone(response.data['download_url'])
 
-        html = build_cv_pdf_html(export.version)
-        self.assertIn('Frozen Export Candidate', html)
-        self.assertNotIn('Draft Must Never Export', html)
-        self.assertIn('@page { size: A4;', html)
-        self.assertIn('break-inside: avoid-page', html)
+        printed = str(print_payload(export.version)['document'])
+        self.assertIn('Frozen Export Candidate', printed)
+        self.assertNotIn('Draft Must Never Export', printed)
         audit = CvAccessLog.objects.get(cv=cv, access_channel=CvAccessLog.AccessChannel.EXPORT)
         self.assertEqual(audit.version_id, export.version_id)
         self.assertEqual(audit.actor_user_id, self.candidate.id)
@@ -1233,61 +1230,18 @@ class CvV2ApiTests(APITestCase):
         )
         version = CvVersion.objects.get(public_id=saved.data['public_id'])
 
-        html = build_cv_pdf_html(version)
+        printed = print_payload(version)
 
         self.assertEqual(version.template_version_id, alternate_version.id)
-        self.assertIn('data-renderer="classic_two_column_v1"', html)
-        self.assertIn('data-renderer-version="1"', html)
-        self.assertIn('class="region region-main" style="width: 68%;"', html)
-        self.assertIn('class="region region-sidebar" style="width: 32%;"', html)
-        self.assertIn('.region { float: left;', html)
-        self.assertEqual(version.content_json, cv.draft.content_json)
-
-        pdf_text = ''.join(
-            page.extract_text() or ''
-            for page in PdfReader(BytesIO(render_cv_version_pdf(version))).pages
+        self.assertEqual(printed['renderer_key'], 'sidebar_right_v1')
+        self.assertEqual(
+            [
+                (region['id'], region['width_percent'])
+                for region in printed['document']['layout_json']['regions']
+            ],
+            [('main', 68), ('sidebar', 32)],
         )
-        self.assertIn('MỤC TIÊU NGHỀ NGHIỆP', pdf_text.upper())
-
-    def test_pdf_renderer_matches_avatar_size_and_omits_empty_sections(self):
-        cv = self.create_cv()
-        draft = self.client.get(self.draft_url(cv)).data
-        payload = {
-            key: deepcopy(draft[key])
-            for key in ('schema_version', 'content_json', 'layout_json', 'style_json')
-        }
-        payload['content_json']['personal_info']['avatar_size_mm'] = 36
-        payload['content_json']['personal_info']['avatar_zoom'] = 1.6
-        payload['content_json']['sections'].append(
-            {
-                'instance_id': 'empty_summary_1',
-                'section_key': 'summary',
-                'title': 'EMPTY SECTION MUST BE HIDDEN',
-                'enabled': True,
-                'items': [{'item_id': 'empty_summary_item_1', 'value': ''}],
-            }
-        )
-        payload['layout_json']['regions'][0]['section_instance_ids'].append('empty_summary_1')
-        updated = self.client.put(
-            self.draft_url(cv),
-            payload,
-            format='json',
-            HTTP_IF_MATCH='"lock-version-0"',
-        )
-        self.assertEqual(updated.status_code, 200, updated.data)
-        saved = self.client.post(
-            reverse('cv-v2-save-version', kwargs={'public_id': cv.public_id}),
-            format='json',
-            HTTP_IF_MATCH='"lock-version-1"',
-        )
-        version = CvVersion.objects.get(public_id=saved.data['public_id'])
-
-        html = build_cv_pdf_html(version)
-
-        self.assertIn('height: 36mm', html)
-        self.assertIn('width: 36mm', html)
-        self.assertIn('transform: scale(1.6)', html)
-        self.assertNotIn('EMPTY SECTION MUST BE HIDDEN', html)
+        self.assertEqual(printed['document']['content_json'], cv.draft.content_json)
 
     def test_pdf_export_reuses_valid_artifact_and_download_url_is_owner_controlled(self):
         cv = self.create_cv()

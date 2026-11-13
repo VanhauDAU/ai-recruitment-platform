@@ -13,7 +13,7 @@ from ..models import CvTemplate, CvTemplateVersion
 def make_published_template(
     name='Test template',
     *,
-    renderer_key='classic_single_column_v1',
+    renderer_key='single_column_v1',
     capabilities=None,
     **template_overrides,
 ):

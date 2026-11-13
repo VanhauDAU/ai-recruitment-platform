@@ -1,0 +1,83 @@
+{
+  "single_column_v1": {
+    "label": "Một cột",
+    "avatar": false,
+    "variant": "standard",
+    "resize": null,
+    "regions": [
+      { "id": "main", "row": 0, "width": 100, "tone": "plain", "arrange": "stack" }
+    ]
+  },
+  "single_column_photo_v1": {
+    "label": "Một cột có ảnh",
+    "avatar": true,
+    "variant": "standard",
+    "resize": null,
+    "regions": [
+      { "id": "header", "row": 0, "width": 100, "tone": "plain", "arrange": "inline" },
+      { "id": "main", "row": 1, "width": 100, "tone": "plain", "arrange": "stack" }
+    ]
+  },
+  "sidebar_left_v1": {
+    "label": "Cột phụ bên trái",
+    "avatar": false,
+    "variant": "standard",
+    "resize": { "min": 25, "max": 75 },
+    "regions": [
+      { "id": "sidebar", "row": 0, "width": 32, "tone": "tint", "arrange": "stack" },
+      { "id": "main", "row": 0, "width": 68, "tone": "plain", "arrange": "stack" }
+    ]
+  },
+  "sidebar_left_photo_v1": {
+    "label": "Cột phụ trái có ảnh",
+    "avatar": true,
+    "variant": "standard",
+    "resize": { "min": 25, "max": 75 },
+    "regions": [
+      { "id": "sidebar", "row": 0, "width": 34, "tone": "band", "arrange": "stack" },
+      { "id": "main", "row": 0, "width": 66, "tone": "plain", "arrange": "stack" }
+    ]
+  },
+  "sidebar_right_v1": {
+    "label": "Cột phụ bên phải",
+    "avatar": true,
+    "variant": "standard",
+    "resize": { "min": 25, "max": 75 },
+    "regions": [
+      { "id": "main", "row": 0, "width": 65, "tone": "plain", "arrange": "stack" },
+      { "id": "sidebar", "row": 0, "width": 35, "tone": "tint", "arrange": "stack" }
+    ]
+  },
+  "header_band_two_column_v1": {
+    "label": "Dải đầu trang màu, hai cột",
+    "avatar": true,
+    "variant": "standard",
+    "resize": { "min": 25, "max": 75 },
+    "regions": [
+      { "id": "header", "row": 0, "width": 100, "tone": "band", "arrange": "inline" },
+      { "id": "main", "row": 1, "width": 65, "tone": "plain", "arrange": "stack" },
+      { "id": "sidebar", "row": 1, "width": 35, "tone": "plain", "arrange": "stack" }
+    ]
+  },
+  "timeline_v1": {
+    "label": "Dòng thời gian",
+    "avatar": true,
+    "variant": "timeline",
+    "resize": null,
+    "regions": [
+      { "id": "header", "row": 0, "width": 100, "tone": "plain", "arrange": "inline" },
+      { "id": "main", "row": 1, "width": 100, "tone": "plain", "arrange": "stack" }
+    ]
+  },
+  "compact_two_column_v1": {
+    "label": "Hai cột gọn",
+    "avatar": false,
+    "variant": "compact",
+    "resize": { "min": 35, "max": 65 },
+    "regions": [
+      { "id": "header", "row": 0, "width": 100, "tone": "tint", "arrange": "inline" },
+      { "id": "left", "row": 1, "width": 50, "tone": "plain", "arrange": "stack" },
+      { "id": "right", "row": 1, "width": 50, "tone": "plain", "arrange": "stack" }
+    ]
+  }
+}

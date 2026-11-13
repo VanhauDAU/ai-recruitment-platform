@@ -25,12 +25,6 @@ const SECTION_LABELS = Object.freeze({
   'en-US': {
     summary: 'Career objective', experience: 'Work experience', education: 'Education', skills: 'Skills', projects: 'Projects', certifications: 'Certifications', languages: 'Languages', awards: 'Awards', custom: 'Additional information', activities: 'Activities', references: 'References', interests: 'Interests', nameplate: 'Profile', contact: 'Contact information', avatar: 'Profile photo',
   },
-  'ja-JP': {
-    summary: 'キャリア目標', experience: '職務経歴', education: '学歴', skills: 'スキル', projects: 'プロジェクト', certifications: '資格', languages: '語学力', awards: '受賞歴', custom: 'その他', activities: '活動', references: '推薦者', interests: '趣味', nameplate: 'プロフィール', contact: '連絡先', avatar: 'プロフィール写真',
-  },
-  'zh-CN': {
-    summary: '职业目标', experience: '工作经历', education: '教育背景', skills: '技能', projects: '项目经历', certifications: '证书', languages: '语言能力', awards: '荣誉奖项', custom: '其他信息', activities: '活动经历', references: '推荐人', interests: '兴趣爱好', nameplate: '个人资料', contact: '联系方式', avatar: '个人照片',
-  },
 })
 
 const UI_TEXT = Object.freeze({
@@ -47,20 +41,6 @@ const UI_TEXT = Object.freeze({
     section_title: 'Section title', add_item: 'Add content', upload_avatar: 'Upload photo', contact_info: 'Contact information', content_item: 'Content item',
     summary_hint: 'Your career objective, including short and long term goals',
     description_hint: 'Details', description_hint_experience: 'Describe your work experience', description_hint_education: 'Describe your studies or achievements', description_hint_projects: 'Describe the project, your role and the results',
-  },
-  'ja-JP': {
-    full_name: '氏名', headline: '希望職種', email: 'メールアドレス', phone: '電話番号', address: '住所', website: 'ウェブサイト', date_of_birth: '生年月日 (例: 1999-05-20)', start_date: '開始 (例: 2020-01)', end_date: '終了 (例: 2023-12)',
-    role: '役職', company: '会社名', name: '名前', degree: '学位', institution: '学校名', title: 'タイトル', value: '内容', issuer: '発行機関', organization: '団体',
-    section_title: '見出し', add_item: '内容を追加', upload_avatar: '写真をアップロード', contact_info: '連絡先', content_item: '項目',
-    summary_hint: '短期・長期のキャリア目標を記入してください',
-    description_hint: '詳細を記入してください', description_hint_experience: '職務内容を記入してください', description_hint_education: '学習内容や実績を記入してください', description_hint_projects: 'プロジェクト内容・役割・成果を記入してください',
-  },
-  'zh-CN': {
-    full_name: '姓名', headline: '求职意向', email: '电子邮箱', phone: '电话号码', address: '地址', website: '网站', date_of_birth: '出生日期 (如: 1999-05-20)', start_date: '开始 (如: 2020-01)', end_date: '结束 (如: 2023-12)',
-    role: '职位名称', company: '公司', name: '名称', degree: '学历', institution: '学校', title: '标题', value: '内容', issuer: '颁发机构', organization: '组织',
-    section_title: '模块标题', add_item: '添加内容', upload_avatar: '上传照片', contact_info: '联系方式', content_item: '内容项目',
-    summary_hint: '您的职业目标，包括短期和长期目标',
-    description_hint: '详细描述', description_hint_experience: '描述您的工作经历', description_hint_education: '描述您的学习经历或成就', description_hint_projects: '描述项目、职责与成果',
   },
 })
 

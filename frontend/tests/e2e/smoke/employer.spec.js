@@ -1571,7 +1571,7 @@ test('employer applications: grouped CV workspace is clear across responsive lay
         contact_name: 'Lê Văn Hậu', contact_email: 'levanhaum@gmail.com', contact_phone: '0905123456',
         cv: {
           public_id: 'cvv_frontend_2', version_number: 2, schema_version: 1,
-          template_renderer_key: 'classic_single_column_v1', template_renderer_version: '1',
+          template_renderer_key: 'single_column_v1', template_renderer_version: '1',
           content_json: {
             personal_info: {
               full_name: 'Lê Văn Hậu', headline: 'Senior Frontend Developer',
@@ -1611,7 +1611,7 @@ test('employer applications: grouped CV workspace is clear across responsive lay
   await expect(candidateList.getByText('2 CV', { exact: true })).toBeVisible()
   await expect(candidateList.getByRole('button', { name: 'Xem CV Frontend 2026 của Lê Văn Hậu' })).toBeVisible()
   await expect(candidateList.getByRole('button', { name: 'Xem CV Frontend bản đầu của Lê Văn Hậu' })).toBeVisible()
-  await expect(cvPreview.getByLabel('Xem trước CV classic_single_column_v1 trang 1')).toBeVisible()
+  await expect(cvPreview.getByLabel('Xem trước CV single_column_v1 trang 1')).toBeVisible()
   const viewportWidth = page.viewportSize().width
   if (viewportWidth < 768) {
     await expect(inspector).toBeHidden()

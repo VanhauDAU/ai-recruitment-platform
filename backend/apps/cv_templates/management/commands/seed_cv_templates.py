@@ -12,6 +12,7 @@ has a published version is left untouched.
 
 from django.core.management.base import BaseCommand
 from django.db import transaction
+from django.db.models import Max
 
 from apps.cv_templates.models import (
     CATALOG_LANGUAGES,
@@ -72,6 +73,17 @@ def _bilingual_fields(spec):
         fields[f'seo_title_{suffix}'] = name
         fields[f'seo_description_{suffix}'] = description
     return fields
+
+
+def _matches_catalogue(version, spec):
+    """Same layout and same section placement as the catalogue spec."""
+    placed = set(version.sections.values_list('section_definition__section_key', 'region_key'))
+    planned = {
+        (section_key, region_key)
+        for region_key, section_keys in SECTION_PLANS[spec['renderer_key']].items()
+        for section_key in section_keys
+    }
+    return version.renderer_key == spec['renderer_key'] and placed == planned
 
 
 class Command(BaseCommand):
@@ -168,13 +180,19 @@ class Command(BaseCommand):
         )
 
     def _seed_published_version(self, template, spec, definitions):
-        """Create version 1 as a draft, map its sections, then publish it."""
-        if template.current_published_version_id or template.versions.exists():
+        """Publish a version when the current one differs from the catalogue spec.
+
+        CVs keep the version they were created with, so moving a template to a
+        new layout publishes a new version instead of editing the old one.
+        """
+        current = template.current_published_version
+        if current is not None and _matches_catalogue(current, spec):
             return None
-        regions = layout_regions(spec['renderer_key'], spec.get('sidebar_percent', 35))
+        regions = layout_regions(spec['renderer_key'], spec.get('side_percent'))
+        last_number = template.versions.aggregate(number=Max('version_number'))['number'] or 0
         version = CvTemplateVersion.objects.create(
             template=template,
-            version_number=1,
+            version_number=last_number + 1,
             version_status=CvTemplateVersion.VersionStatus.DRAFT,
             renderer_key=spec['renderer_key'],
             renderer_version='1',
@@ -193,7 +211,7 @@ class Command(BaseCommand):
             },
             default_layout_json=_default_layout(spec, regions),
             default_style_json=_default_style(spec),
-            capabilities=layout_capabilities(spec['renderer_key'], regions),
+            capabilities=layout_capabilities(spec['renderer_key']),
             content_contract={'schema': 'canonical_cv_content_v1', 'schema_version': 1},
         )
         for region_key, section_keys in SECTION_PLANS[spec['renderer_key']].items():

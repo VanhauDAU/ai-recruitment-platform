@@ -32,7 +32,6 @@ import {
   toggleBooleanMarkInRange,
   validateCvDocument,
 } from '@/entities/cv'
-import { paginateRendererProjection } from './renderer-contracts'
 
 function baseDocument() {
   return {
@@ -96,9 +95,12 @@ describe('canonical CV editor document', () => {
   })
 
   it('uses deterministic browser font stacks so each supported choice has a usable fallback', () => {
-    expect(getCvFontStack('Arial')).toContain('Arial')
-    expect(getCvFontStack('Inter')).toContain('-apple-system')
-    expect(getCvFontStack('Source Sans Pro')).toContain('Trebuchet MS')
+    expect(getCvFontStack('Inter')).toMatch(/^"Inter"/)
+    expect(getCvFontStack('Lora')).toContain('serif')
+    // Tên font của tài liệu cũ hiển thị bằng font đóng gói gần nhất.
+    expect(getCvFontStack('Arial')).toBe(getCvFontStack('Inter'))
+    expect(getCvFontStack('Source Sans Pro')).toBe(getCvFontStack('Be Vietnam Pro'))
+    expect(getCvFontStack('Unknown')).toBe(getCvFontStack('Inter'))
   })
 
   it('projects exactly the same canonical content through single and two-column renderer contracts', () => {
@@ -115,10 +117,11 @@ describe('canonical CV editor document', () => {
     const contentBeforeRendering = JSON.parse(JSON.stringify(twoColumnDocument.content_json))
     const [summary, experience, skills] = twoColumnDocument.content_json.sections
 
-    const single = projectDocumentForRenderer(singleDocument, 'classic_single_column_v1')
-    const twoColumn = projectDocumentForRenderer(twoColumnDocument, 'classic_two_column_v1')
+    const single = projectDocumentForRenderer(singleDocument, 'single_column_v1')
+    const twoColumn = projectDocumentForRenderer(twoColumnDocument, 'sidebar_right_v1')
 
-    expect(getRendererContract('classic_two_column_v1').columns).toBe(2)
+    expect(getRendererContract('sidebar_right_v1').regions.map((region) => region.id)).toEqual(['main', 'sidebar'])
+    expect(twoColumn.regions.map((region) => [region.id, region.widthPercent, region.tone])).toEqual([['main', 68, 'plain'], ['sidebar', 32, 'tint']])
     expect(single.regions[0].sections.map((section) => section.instance_id)).toEqual([summary.instance_id, experience.instance_id, skills.instance_id])
     expect(twoColumn.regions.map((region) => region.sections.map((section) => section.instance_id))).toEqual([[summary.instance_id, experience.instance_id], [skills.instance_id]])
     expect(singleDocument.content_json).toEqual(twoColumnDocument.content_json)
@@ -199,7 +202,7 @@ describe('canonical CV editor document', () => {
     expect(document.layout_json.item_orders[experience.instance_id]).toEqual([secondItem.item_id, firstItem.item_id])
     expect(validateCvDocument(document)).toEqual([])
 
-    const projection = projectDocumentForRenderer(document, 'classic_two_column_v1')
+    const projection = projectDocumentForRenderer(document, 'sidebar_right_v1')
     const renderedExperience = projection.regions.flatMap((region) => region.sections).find((section) => section.instance_id === experience.instance_id)
     expect(renderedExperience.items.map((item) => item.item_id)).toEqual([secondItem.item_id, firstItem.item_id])
     expect(document.content_json).toEqual(contentBeforePresentationChanges)
@@ -259,7 +262,7 @@ describe('canonical CV editor document', () => {
       }],
     }
     const originalProjection = JSON.parse(JSON.stringify(projection))
-    const pages = paginateRendererProjection(projection, 12)
+    const pages = paginateMeasuredProjection(projection, {}, { page: 600 })
 
     expect(pages.length).toBeGreaterThan(1)
     expect(pages.map((page) => page.number)).toEqual(pages.map((_, index) => index + 1))
@@ -309,10 +312,30 @@ describe('canonical CV editor document', () => {
     const pages = paginateMeasuredProjection(projection, {
       sections: { experience_1: 280 },
       items: { 'experience_1:item_1': 80, 'experience_1:item_2': 80, 'experience_1:item_3': 80 },
-    }, 180)
+    }, { page: 180 })
 
     expect(pages).toHaveLength(3)
     expect(pages.flatMap((page) => page.regions[0].sections.flatMap((item) => item.items.map((entry) => entry.item_id)))).toEqual(['item_1', 'item_2', 'item_3'])
     expect(section.items).toHaveLength(3)
+  })
+
+  it('keeps the header row on page one and reserves its height there', () => {
+    const header = { instance_id: 'name_1', section_key: 'nameplate', items: [] }
+    const body = {
+      instance_id: 'experience_1', section_key: 'experience',
+      items: [1, 2].map((number) => ({ item_id: `item_${number}`, role: `Vai trò ${number}` })),
+    }
+    const projection = { regions: [
+      { id: 'header', row: 0, widthPercent: 100, sections: [header] },
+      { id: 'main', row: 1, widthPercent: 100, sections: [body] },
+    ] }
+    const measurements = { sections: { name_1: 90, experience_1: 200 }, items: { 'experience_1:item_1': 90, 'experience_1:item_2': 90 } }
+
+    const roomy = paginateMeasuredProjection(projection, measurements, { page: 300, firstPageReserved: 0 })
+    const reserved = paginateMeasuredProjection(projection, measurements, { page: 300, firstPageReserved: 150 })
+
+    expect(roomy).toHaveLength(1)
+    expect(reserved).toHaveLength(2)
+    expect(reserved[1].regions[0].sections).toEqual([])
   })
 })

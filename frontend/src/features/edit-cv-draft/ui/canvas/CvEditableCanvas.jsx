@@ -4,7 +4,7 @@ import { useDroppable } from '@dnd-kit/core'
 import { useEffect, useRef, useState } from 'react'
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { CvDocumentPreview, getCvUiText, getOrderedItems, getRendererContract, getSectionDefinition } from '@/entities/cv'
+import { CvDocumentPreview, getCvUiText, getOrderedItems, getSectionDefinition } from '@/entities/cv'
 import InlineText from './InlineText'
 import RichTextArea from './RichTextArea'
 import AvatarUploadModal from './AvatarUploadModal'
@@ -186,6 +186,7 @@ function SortableSection({ section, document, personal, assets, pageNumber, posi
   const sectionClass = `cv-editor-section group/section relative mb-5 rounded-lg outline-none ${sortable.isDragging ? 'opacity-35' : ''} ${sortable.isOver && !sortable.isDragging ? 'ring-2 ring-[var(--cv-theme)]' : ''}`
   const selectionProps = {
     'data-active': selected,
+    'data-section-key': section.section_key,
     onClick: (event) => {
       if (event.target.closest?.('[contenteditable="true"],button,input,textarea,[role="combobox"]')) return
       onSelect(sectionSelection)
@@ -220,7 +221,7 @@ function SortableSection({ section, document, personal, assets, pageNumber, posi
 
 function EditableRegion({ region, document, pageNumber, ...props }) {
   const droppable = useDroppable({ id: `region:${region.id}:${pageNumber}` })
-  return <div key={`${region.id}:${pageNumber}`} ref={droppable.setNodeRef} className={`min-w-0 rounded-lg p-1 transition ${droppable.isOver ? 'bg-emerald-50/80 ring-2 ring-emerald-400' : ''}`}>{droppable.isOver && <div className="mb-1 rounded-md border border-dashed border-emerald-500 bg-emerald-100 px-2 py-1 text-center text-[10px] font-bold text-emerald-800">Thả vào vùng này</div>}<SortableContext items={region.sections.map((section) => `section:${section.instance_id}:${pageNumber}`)} strategy={verticalListSortingStrategy}>{region.sections.map((section, position) => <div key={section.instance_id} data-section-id={section.instance_id}><SortableSection
+  return <div key={`${region.id}:${pageNumber}`} ref={droppable.setNodeRef} className={`cv-region-body min-w-0 rounded-lg p-1 transition ${droppable.isOver ? 'bg-emerald-50/80 ring-2 ring-emerald-400' : ''}`}>{droppable.isOver && <div className="mb-1 rounded-md border border-dashed border-emerald-500 bg-emerald-100 px-2 py-1 text-center text-[10px] font-bold text-emerald-800">Thả vào vùng này</div>}<SortableContext items={region.sections.map((section) => `section:${section.instance_id}:${pageNumber}`)} strategy={verticalListSortingStrategy}>{region.sections.map((section, position) => <div key={section.instance_id} data-section-id={section.instance_id}><SortableSection
     section={section}
     document={document}
     pageNumber={pageNumber}
@@ -239,7 +240,6 @@ function EditableRegion({ region, document, pageNumber, ...props }) {
 
 export default function CvEditableCanvas({ editor, zoom, selection, onSelect, onMoveItemDirection, onMoveSectionDirection, onRenameSection, onItemChange, onAddItem, onRemoveItem, onRemoveSection, onPersonalChange, onAvatarUpload, onInlineTextStyle }) {
   const rendererKey = editor.cv.template_renderer_key || editor.cv.template_version
-  const contract = getRendererContract(rendererKey)
   const personal = editor.document.content_json.personal_info || {}
   const locale = editor.document.content_json.locale
   const inlineTextStyles = editor.document.content_json.inline_text_styles || {}
@@ -251,14 +251,17 @@ export default function CvEditableCanvas({ editor, zoom, selection, onSelect, on
     else editor.undo()
   }
   const personalSelection = { sectionId: 'personal', itemId: null }
-  const header = () => contract.key !== 'header_two_column_v1' ? <header tabIndex={0} aria-label="Thông tin cá nhân trên CV" data-active={selection?.sectionId === 'personal'} onClick={(event) => {
+  // Chỉ tài liệu tạo trước CVT-2 (chưa có section `nameplate`) mới cần header
+  // riêng; mọi layout mới đặt tên/liên hệ thành section trong vùng.
+  const hasNameplate = editor.document.content_json.sections.some((section) => section.section_key === 'nameplate')
+  const header = () => <header tabIndex={0} aria-label="Thông tin cá nhân trên CV" data-active={selection?.sectionId === 'personal'} onClick={(event) => {
     if (event.target.closest?.('[contenteditable="true"],button,input,textarea,[role="combobox"]')) return
     onSelect(personalSelection)
   }} onFocus={(event) => { if (event.currentTarget === event.target) onSelect(personalSelection, { openPanel: false }) }} onKeyDown={(event) => {
     if (event.currentTarget !== event.target || !['Enter', ' '].includes(event.key)) return
     event.preventDefault()
     onSelect(personalSelection)
-  }} className="cv-editor-header mb-6 rounded-lg border-l-4 pl-4 pr-2 outline-none transition hover:bg-emerald-50/70 hover:ring-1 hover:ring-emerald-300 focus-within:bg-white focus-within:ring-2 focus-within:ring-emerald-500 data-[active=true]:bg-emerald-50/70 data-[active=true]:ring-2 data-[active=true]:ring-emerald-500" style={{ borderColor: editor.document.style_json.theme_color }}><InlineText value={personal.full_name || ''} placeholder={getCvUiText('full_name', locale)} ariaLabel="Họ và tên inline" className="text-2xl font-extrabold" onCommit={(full_name) => onPersonalChange({ full_name })} registerPendingEdit={editor.registerPendingEdit} marks={inlineTextStyles[personalStyleId('full_name')]} onMarksChange={(marks) => onInlineTextStyle(personalStyleId('full_name'), marks)} defaultFontFamily={editor.document.style_json.font_family} /><div className="mt-1"><InlineText value={personal.headline || ''} placeholder={getCvUiText('headline', locale)} ariaLabel="Chức danh inline" className="font-semibold text-[var(--cv-theme)]" onCommit={(headline) => onPersonalChange({ headline })} registerPendingEdit={editor.registerPendingEdit} marks={inlineTextStyles[personalStyleId('headline')]} onMarksChange={(marks) => onInlineTextStyle(personalStyleId('headline'), marks)} defaultFontFamily={editor.document.style_json.font_family} /></div><div className="mt-2"><ContactInputs personal={personal} locale={locale} onPersonalChange={onPersonalChange} registerPendingEdit={editor.registerPendingEdit} inlineTextStyles={inlineTextStyles} onInlineTextStyle={onInlineTextStyle} defaultFontFamily={editor.document.style_json.font_family} /></div></header> : null
+  }} className="cv-editor-header mb-6 rounded-lg border-l-4 pl-4 pr-2 outline-none transition hover:bg-emerald-50/70 hover:ring-1 hover:ring-emerald-300 focus-within:bg-white focus-within:ring-2 focus-within:ring-emerald-500 data-[active=true]:bg-emerald-50/70 data-[active=true]:ring-2 data-[active=true]:ring-emerald-500" style={{ borderColor: editor.document.style_json.theme_color }}><InlineText value={personal.full_name || ''} placeholder={getCvUiText('full_name', locale)} ariaLabel="Họ và tên inline" className="text-2xl font-extrabold" onCommit={(full_name) => onPersonalChange({ full_name })} registerPendingEdit={editor.registerPendingEdit} marks={inlineTextStyles[personalStyleId('full_name')]} onMarksChange={(marks) => onInlineTextStyle(personalStyleId('full_name'), marks)} defaultFontFamily={editor.document.style_json.font_family} /><div className="mt-1"><InlineText value={personal.headline || ''} placeholder={getCvUiText('headline', locale)} ariaLabel="Chức danh inline" className="font-semibold text-[var(--cv-theme)]" onCommit={(headline) => onPersonalChange({ headline })} registerPendingEdit={editor.registerPendingEdit} marks={inlineTextStyles[personalStyleId('headline')]} onMarksChange={(marks) => onInlineTextStyle(personalStyleId('headline'), marks)} defaultFontFamily={editor.document.style_json.font_family} /></div><div className="mt-2"><ContactInputs personal={personal} locale={locale} onPersonalChange={onPersonalChange} registerPendingEdit={editor.registerPendingEdit} inlineTextStyles={inlineTextStyles} onInlineTextStyle={onInlineTextStyle} defaultFontFamily={editor.document.style_json.font_family} /></div></header>
 
   return <><div aria-label="CV A4 có thể chỉnh sửa" onKeyDownCapture={historyKey} className="mx-auto origin-top" style={{ width: `${210 * zoom}mm` }}><div className="origin-top-left" style={{ width: '210mm', transform: `scale(${zoom})` }}><CvDocumentPreview
     document={editor.document}
@@ -266,8 +269,8 @@ export default function CvEditableCanvas({ editor, zoom, selection, onSelect, on
     assets={editor.assets}
     editorChrome={false}
     pageLabelVariant="badge"
-    renderHeader={header}
-    renderRegion={(region, pageNumber) => <EditableRegion key={`${region.id}:${pageNumber}`} region={contract.key === 'header_two_column_v1' ? region : { ...region, sections: region.sections.filter((section) => !['nameplate', 'contact'].includes(section.section_key)) }} pageNumber={pageNumber} document={editor.document} personal={personal} assets={editor.assets} selection={selection} onSelect={onSelect} onRenameSection={onRenameSection} onItemChange={onItemChange} onAddItem={onAddItem} onRemoveItem={onRemoveItem} onMoveItem={onMoveItemDirection} onMoveSectionDirection={onMoveSectionDirection} onRemoveSection={onRemoveSection} registerPendingEdit={editor.registerPendingEdit} onPersonalChange={onPersonalChange} onOpenAvatarEditor={() => setAvatarEditorOpen(true)} inlineTextStyles={inlineTextStyles} onInlineTextStyle={onInlineTextStyle} />}
+    renderHeader={hasNameplate ? undefined : header}
+    renderRegion={(region, pageNumber) => <EditableRegion key={`${region.id}:${pageNumber}`} region={region} pageNumber={pageNumber} document={editor.document} personal={personal} assets={editor.assets} selection={selection} onSelect={onSelect} onRenameSection={onRenameSection} onItemChange={onItemChange} onAddItem={onAddItem} onRemoveItem={onRemoveItem} onMoveItem={onMoveItemDirection} onMoveSectionDirection={onMoveSectionDirection} onRemoveSection={onRemoveSection} registerPendingEdit={editor.registerPendingEdit} onPersonalChange={onPersonalChange} onOpenAvatarEditor={() => setAvatarEditorOpen(true)} inlineTextStyles={inlineTextStyles} onInlineTextStyle={onInlineTextStyle} />}
   /></div></div>
   <AvatarUploadModal
     open={avatarEditorOpen}

@@ -1,14 +1,14 @@
 import { getRegionLabel } from '../model/region-labels'
 
 export default function LayoutResizeControls({ regions, capabilities, onResize }) {
-  if (!capabilities.columnResize || regions.length < 2) return null
+  // Chỉ hai vùng cùng hàng mới chia nhau độ rộng (header ở hàng riêng không tham gia).
+  if (!capabilities.columnResize || !regions.some((region, index) => (region.row ?? 0) === (regions[index + 1]?.row ?? -1))) return null
   return (
     <section aria-labelledby="layout-resize-title" className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       <h2 id="layout-resize-title" className="text-lg font-bold text-slate-900">Tỷ lệ cột</h2>
       <p className="mt-1 text-sm text-slate-500">Dùng thanh trượt hoặc phím mũi tên; chỉ layout thay đổi.</p>
       <div className="mt-4 space-y-3">
-        {regions.slice(0, -1).map((region, index) => {
-          const adjacent = regions[index + 1]
+        {regions.map((region, index) => [region, regions[index + 1]]).filter(([region, adjacent]) => adjacent && (region.row ?? 0) === (adjacent.row ?? 0)).map(([region, adjacent]) => {
           const total = region.width_percent + adjacent.width_percent
           const min = Math.max(capabilities.minColumnPercent, total - capabilities.maxColumnPercent)
           const max = Math.min(capabilities.maxColumnPercent, total - capabilities.minColumnPercent)

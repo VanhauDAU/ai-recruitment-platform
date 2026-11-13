@@ -1,31 +1,6 @@
 import { SaveOutlined, SendOutlined } from '@ant-design/icons'
 import { Alert, Button, Select, Skeleton } from 'antd'
-import {
-  addItem,
-  addSection,
-  availableSectionKeys,
-  canDragItems,
-  CvDocumentPreview,
-  getEditorCapabilities,
-  getOrderedItems,
-  getOrderedSections,
-  getSection,
-  moveItemInLayout,
-  moveItemToIndexInLayout,
-  moveSection,
-  moveSectionToRegion,
-  removeItem,
-  removeSection,
-  renameSection,
-  resizeRegionPair,
-  richTextToText,
-  setSectionEnabled,
-  syncItemOrder,
-  updateItem,
-  updatePersonalInfo,
-  updateStyle,
-  updateSummary,
-} from '@/entities/cv'
+import { CV_FONT_FAMILIES, CvDocumentPreview, addItem, addSection, availableSectionKeys, canDragItems, getEditorCapabilities, getOrderedItems, getOrderedSections, getSection, moveItemInLayout, moveItemToIndexInLayout, moveSection, moveSectionToRegion, removeItem, removeSection, renameSection, resizeRegionPair, richTextToText, setSectionEnabled, syncItemOrder, updateItem, updatePersonalInfo, updateStyle, updateSummary } from '@/entities/cv'
 import useCvDraftEditor from '../model/use-cv-draft-editor'
 import CollectionSectionForm from './CollectionSectionForm'
 import EditorHistoryControls from './EditorHistoryControls'
@@ -36,7 +11,7 @@ import SectionManager from './SectionManager'
 import SummaryForm from './SummaryForm'
 import TemplateSwitcher from './TemplateSwitcher'
 
-const FONT_OPTIONS = ['Arial', 'Calibri', 'Inter', 'Roboto', 'Source Sans Pro'].map((font) => ({ value: font, label: font }))
+const FONT_OPTIONS = CV_FONT_FAMILIES.map((font) => ({ value: font, label: font }))
 
 export default function CvLegacyDraftEditor({ publicId }) {
   const editor = useCvDraftEditor(publicId)

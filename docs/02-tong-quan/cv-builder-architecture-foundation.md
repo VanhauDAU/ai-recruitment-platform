@@ -47,10 +47,20 @@ renderer. Create, đổi mẫu, apply sample, position preview, import và snaps
 
 - `CvTemplate` giữ identity/catalogue. `CvTemplateVersion` lưu `renderer_key`,
   `renderer_version`, schema/default layout/style, `capabilities`,
-  `content_contract`. Component không lưu trong DB: `renderer_key` chỉ map tới
-  renderer đã deploy trong `apps/cv_templates/renderers.py` —
-  `classic_single_column_v1`, `classic_two_column_v1`, `header_two_column_v1`
-  (`header` row 0 100%, `main` row 1 60%, `sidebar` row 1 40%).
+  `content_contract`. Component không lưu trong DB: `renderer_key` là khóa trong
+  registry layout `apps/cv_templates/layouts.json` (bản sao giống hệt ở
+  `frontend/src/entities/cv/model/cv-layouts.json`, có test so khớp). Mỗi layout
+  khai báo các vùng theo hàng (`row`, `width`, `tone` plain/tint/band, `arrange`
+  stack/inline), `avatar`, `variant` (standard/timeline/compact) và giới hạn kéo
+  độ rộng cột. Tám layout: `single_column_v1`, `single_column_photo_v1`,
+  `sidebar_left_v1`, `sidebar_left_photo_v1`, `sidebar_right_v1`,
+  `header_band_two_column_v1`, `timeline_v1`, `compact_two_column_v1`.
+- Không layout nào có header dựng cứng: tên (`nameplate`), liên hệ (`contact`) và
+  ảnh (`avatar`) là section lấy dữ liệu từ `personal_info`; template version đặt
+  chúng vào vùng nào thì composition tạo sẵn instance ở đó. Một renderer chung
+  (`CvDocumentPreview`) dựng mọi layout từ registry, dùng cho preview, editor,
+  trang in PDF và ảnh catalogue. Khối tên cũ chỉ còn cho document cũ không có
+  `nameplate`.
 - Version đã published không sửa được renderer/schema/default/capability/section,
   chỉ chuyển sang `retired`. CV ghim version qua `CvVersion.template_version` nên
   publish version mới không đổi cách render CV cũ. Muốn đổi layout cho mẫu cũ thì
@@ -213,8 +223,16 @@ response shared/recruiter; PDF worker đọc storage nội bộ.
 - Tải PDF: POST export với `version_public_id`, poll job, GET download
   owner-only. `CvExport` unique theo version + `render_config`, `storage_key` chỉ
   nội bộ; không tải draft, không dùng URL storage trực tiếp, không tạo PDF trong
-  browser. PDF render phía server qua HTML/WeasyPrint với parity row/marker/
-  rich text/avatar/background.
+  browser. PDF render phía server: worker mở trang in `cv-print.html` của
+  frontend (`CV_PRINT_URL`) bằng Chromium headless (Playwright), đưa document vào
+  bằng `page.evaluate` và in A4, nên PDF dùng đúng renderer của preview. Trang in
+  chỉ được tải tài nguyên cùng origin và `data:` (ảnh nhúng base64); mọi request
+  khác bị chặn để nội dung CV không thể ra ngoài. Chromium chạy trong một luồng
+  riêng của worker vì Playwright sync API làm Django chặn truy vấn DB trong luồng
+  gọi nó.
+- Font CV tự host (OFL qua `@fontsource`): Inter, Roboto, Be Vietnam Pro, Lora.
+  Font cũ (Arial, Calibri, Source Sans Pro) vẫn hợp lệ trong document đã lưu và
+  được map sang font tự host tương ứng.
 - Link chia sẻ bearer gắn một immutable version, có hạn/thu hồi; token thô chỉ
   xuất hiện trong response tạo. Mọi truy cập CV nhạy cảm ghi `CvAccessLog`.
 
@@ -243,16 +261,18 @@ response shared/recruiter; PDF worker đọc storage nội bộ.
   section/item); không yêu cầu sửa raw JSON.
 - Publish chạy trong transaction với row lock, gọi `full_clean()` trước khi đổi
   con trỏ published, đồng thời retire version cũ.
-- Snapshot thumbnail/preview: canonical composer → HTML/WeasyPrint → raster
+- Snapshot thumbnail/preview: canonical composer → trang in Chromium → raster
   trang đầu bằng `pypdfium2`. Fingerprint gồm template/renderer/màu/source
-  revision; worker idempotent, ghi asset mới trước rồi swap pointer trong
-  transaction, chỉ xóa asset cũ sau commit. Worker cần thư mục Fontconfig cache
-  có quyền ghi.
+  revision/phiên bản snapshot; worker idempotent, ghi asset mới trước rồi swap
+  pointer trong transaction, chỉ xóa asset cũ sau commit.
+- Nội dung mẫu không chứa danh tính. Ảnh catalogue và preview cho khách chưa đăng
+  nhập thêm danh tính minh họa lúc hiển thị (`apps/cv_templates/demo_identity.py`,
+  ảnh catalogue kèm ảnh đại diện bóng người); người đăng nhập thấy danh tính của
+  chính họ. Danh tính minh họa không bao giờ ghi vào DB.
 
 ## 10. Việc còn mở
 
-- Publish template version dùng `header_two_column_v1`, duyệt golden canvas/PDF
-  trên bộ mẫu thật, UAT; sau một release ổn định thì gỡ editor legacy và cờ
+- UAT bộ 8 layout trên dữ liệu thật; sau một release ổn định thì gỡ editor legacy và cờ
   `cv_builder_wysiwyg_enabled`.
 - Purge CV archive mềm còn từ dữ liệu cũ (chỉ sau backup và xác nhận riêng).
 - Audit trail chi tiết người publish/retire template và chặn xóa taxonomy đang

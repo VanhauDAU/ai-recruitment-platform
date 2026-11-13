@@ -5,6 +5,7 @@ import logging
 from hashlib import sha256
 from time import monotonic
 from types import SimpleNamespace
+from urllib.parse import quote
 
 from celery import shared_task
 from django.core.files.base import ContentFile
@@ -13,15 +14,25 @@ from django.utils import timezone
 
 from apps.cvs.schemas import empty_content
 from apps.cvs.services.composition import compose_cv_document
-from apps.cvs.services.pdf_renderer import render_cv_version_pdf
+from apps.cvs.services.pdf_renderer import print_payload, render_document_pdf
 from common.metrics import record_metric
 from common.pdf_raster import first_pdf_page_image
 from common.r2_storage import public_media_storage
 
+from .demo_identity import with_demo_identity
 from .models import CATALOG_LANGUAGES, CvSampleContent, CvTemplateColorLink
 
 logger = logging.getLogger(__name__)
-SNAPSHOT_RENDERER_VERSION = 'catalogue-snapshot-v1'
+SNAPSHOT_RENDERER_VERSION = 'catalogue-snapshot-v2'  # v2: Chromium print page (CVT-2)
+
+# Ảnh mẫu có ảnh đại diện minh họa (bóng người trung tính), không phải ảnh thật.
+SNAPSHOT_AVATAR_ID = 'catalogue-avatar'
+SNAPSHOT_AVATAR_URI = 'data:image/svg+xml,' + quote(
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">'
+    '<rect width="120" height="120" fill="#e2e8f0"/>'
+    '<circle cx="60" cy="46" r="22" fill="#94a3b8"/>'
+    '<path d="M18 120c4-26 22-40 42-40s38 14 42 40z" fill="#94a3b8"/></svg>'
+)
 
 
 def _source_content(locale):
@@ -42,6 +53,12 @@ def _source_content(locale):
             'blank-v1',
         )
     )
+
+
+def _snapshot_content(content, locale):
+    content = with_demo_identity(content, locale)
+    content['personal_info']['avatar_asset_id'] = SNAPSHOT_AVATAR_ID
+    return content
 
 
 def snapshot_fingerprint(link):
@@ -102,7 +119,7 @@ def generate_template_color_snapshot(link_id):
     document = compose_cv_document(
         template=link.template,
         template_version=link.template.current_published_version,
-        content_json=content,
+        content_json=_snapshot_content(content, locale),
         theme_color=link.color.hex_code,
     )
     frozen_version = SimpleNamespace(
@@ -110,7 +127,9 @@ def generate_template_color_snapshot(link_id):
         template_version=link.template.current_published_version,
     )
     try:
-        pdf_bytes = render_cv_version_pdf(frozen_version)
+        payload = print_payload(frozen_version)
+        payload['assets'][SNAPSHOT_AVATAR_ID] = {'url': SNAPSHOT_AVATAR_URI}
+        pdf_bytes = render_document_pdf(payload)
         preview_bytes = _first_page_png(pdf_bytes, width=1200)
         thumbnail_bytes = _first_page_png(pdf_bytes, width=600)
         base = f'cv-templates/snapshots/{link.template.public_id}/{fingerprint}'

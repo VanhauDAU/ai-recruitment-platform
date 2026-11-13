@@ -2,11 +2,11 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { createPortal } from 'react-dom'
 import { BoldOutlined, ItalicOutlined, UnorderedListOutlined, UnderlineOutlined } from '@ant-design/icons'
 import { Button, ColorPicker, InputNumber, Select } from 'antd'
-import { setMarkInRange, toRichTextV2, toggleBooleanMarkInRange, toggleBulletBlocks } from '@/entities/cv'
+import { CV_FONT_FAMILIES, setMarkInRange, toRichTextV2, toggleBooleanMarkInRange, toggleBulletBlocks } from '@/entities/cv'
 import { domToRichText, renderRichText, restoreSelectionOffsets, selectionOffsets } from '../../model/rich-text-dom'
 import './RichTextArea.css'
 
-const FONTS = ['Arial', 'Calibri', 'Inter', 'Roboto', 'Source Sans Pro'].map((value) => ({ value, label: value }))
+const FONTS = CV_FONT_FAMILIES.map((value) => ({ value, label: value }))
 const DEFAULT_MARKS = Object.freeze({ font_family: 'Roboto', font_size_pt: 11, color: '#1F2937' })
 
 function selectedBlockRange(value, offsets) {

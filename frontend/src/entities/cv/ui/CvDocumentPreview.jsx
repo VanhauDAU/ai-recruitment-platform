@@ -2,6 +2,7 @@ import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { getRendererContract, paginateMeasuredProjection, projectDocumentForRenderer } from '../model/renderer-contracts'
 import { getCvFontStack } from '../model/document'
 import { getCvUiText, getSectionDefinition, getSectionDisplayName } from '../model/section-registry'
+import './cv-fonts.css'
 import './CvDocumentPreview.css'
 
 function RichTextContent({ value }) {
@@ -107,43 +108,66 @@ function SectionContent({ section, personal, assets, locale, inlineTextStyles = 
 function PreviewSection({ section, themeColor, personal, assets, locale, inlineTextStyles }) {
   if (!section.enabled || !sectionHasVisibleContent(section, personal, assets)) return null
   const definition = getSectionDefinition(section.section_key)
-  return <section data-section-id={section.instance_id} className="cv-document-preview__section mb-5 break-inside-avoid last:mb-0">{!definition?.personalInfoBacked && <h3 className="mb-3 border-b pb-2.5 text-sm font-bold uppercase tracking-wide" style={{ color: themeColor, borderColor: `${themeColor}55` }}>{section.title || getSectionDisplayName(section.section_key, locale)}</h3>}<SectionContent section={section} personal={personal} assets={assets} locale={locale} inlineTextStyles={inlineTextStyles} /></section>
+  return <section data-section-id={section.instance_id} data-section-key={section.section_key} className="cv-document-preview__section mb-5 break-inside-avoid last:mb-0">{!definition?.personalInfoBacked && <h3 className="mb-3 border-b pb-2.5 text-sm font-bold uppercase tracking-wide" style={{ color: themeColor, borderColor: `${themeColor}55` }}>{section.title || getSectionDisplayName(section.section_key, locale)}</h3>}<SectionContent section={section} personal={personal} assets={assets} locale={locale} inlineTextStyles={inlineTextStyles} /></section>
 }
 
-function RegionRows({ regions, contract, document, assets, renderRegion, pageNumber }) {
+function regionClassName(region) {
+  return ['cv-region', `cv-region--${region.tone || 'plain'}`, region.arrange === 'inline' ? 'cv-region--inline' : ''].join(' ')
+}
+
+// Hàng cuối là thân CV (nội dung chảy sang trang sau); các hàng trên chỉ ở trang 1.
+function RegionRows({ regions, document, assets, renderRegion, pageNumber }) {
   const personal = document.content_json.personal_info || {}
-  return <div className="space-y-3">{contract.rows.map((row) => {
-    const rowRegions = row.map((id) => regions.find((region) => region.id === id)).filter(Boolean)
-    if (!rowRegions.length) return null
-    return <div key={row.join(':')} className="grid gap-3" style={{ gridTemplateColumns: rowRegions.map((region) => `${region.widthPercent || 100}fr`).join(' ') }}>{rowRegions.map((region) => renderRegion
+  const rows = [...new Set(regions.map((region) => region.row ?? 0))].sort((left, right) => left - right)
+  const bodyRow = rows.at(-1)
+  return rows.map((row) => {
+    const rowRegions = regions.filter((region) => (region.row ?? 0) === row)
+    if (row !== bodyRow && pageNumber !== 1) return null
+    return <div key={row} data-cv-row={row === bodyRow ? 'body' : 'top'} className="cv-row grid" style={{ gridTemplateColumns: rowRegions.map((region) => `${region.widthPercent || 100}fr`).join(' ') }}>{rowRegions.map((region) => <div key={region.id} data-cv-region={region.id} className={regionClassName(region)}>{renderRegion
       ? renderRegion(region, pageNumber)
-      : <div key={region.id}>{region.sections.map((section) => <PreviewSection key={section.instance_id} section={section} themeColor={document.style_json.theme_color} personal={personal} assets={assets} locale={document.content_json.locale} inlineTextStyles={document.content_json.inline_text_styles} />)}</div>)}</div>
-  })}</div>
+      : region.sections.map((section) => <PreviewSection key={section.instance_id} section={section} themeColor={document.style_json.theme_color} personal={personal} assets={assets} locale={document.content_json.locale} inlineTextStyles={document.content_json.inline_text_styles} />)}</div>)}</div>
+  })
+}
+
+// Tài liệu tạo trước CVT-2 không có section `nameplate` (layout cũ tự vẽ khối tên);
+// vẫn hiển thị khối tên để version và snapshot ứng tuyển bất biến không mất tên.
+function LegacyNameBlock({ document, assets }) {
+  const { content_json, style_json } = document
+  const personal = content_json.personal_info || {}
+  if (content_json.sections.some((section) => section.section_key === 'nameplate')) return null
+  if (!sectionHasVisibleContent({ section_key: 'nameplate' }, personal, assets) && contactValues(personal).length === 0) return null
+  return <header data-cv-row="top" className="mb-6 border-l-4 pl-4" style={{ borderColor: style_json.theme_color }}>
+    {personal.full_name && <h2 className="text-2xl font-extrabold text-slate-900" style={fieldStyle(content_json.inline_text_styles?.['personal:full_name'])}>{personal.full_name}</h2>}
+    {personal.headline && <p className="mt-1 font-semibold" style={{ ...fieldStyle(content_json.inline_text_styles?.['personal:headline']), color: content_json.inline_text_styles?.['personal:headline']?.color || style_json.theme_color }}>{personal.headline}</p>}
+    <div className="mt-2"><PreviewContact personal={personal} inlineTextStyles={content_json.inline_text_styles} /></div>
+  </header>
 }
 
 function A4Page({ page, document, contract, assets, renderRegion, renderHeader, pageAriaLabel, pageLabelVariant }) {
-  const { content_json, style_json } = document
-  const personal = content_json.personal_info || {}
+  const { style_json } = document
   const background = assets?.[style_json.background_asset_id]
   const pageMargin = Math.min(16, Math.max(5, Number(document.layout_json?.page?.margin_mm) || 10))
 
   return (
     <div className="cv-document-preview__page-wrap relative mb-5">
-      <p className={`cv-document-preview__page-label text-xs font-semibold ${pageLabelVariant === 'badge' ? 'absolute -left-3 bottom-2 z-10 rounded-sm bg-emerald-400 px-1.5 py-0.5 text-white' : 'mb-1 text-center text-slate-500'}`}>Trang {page.number}</p>
+      {pageLabelVariant !== 'none' && <p className={`cv-document-preview__page-label text-xs font-semibold ${pageLabelVariant === 'badge' ? 'absolute -left-3 bottom-2 z-10 rounded-sm bg-emerald-400 px-1.5 py-0.5 text-white' : 'mb-1 text-center text-slate-500'}`}>Trang {page.number}</p>}
       <article
         aria-label={pageAriaLabel?.(page.number) || `Xem trước CV ${contract.key} trang ${page.number}`}
-        className="cv-document-preview__page mx-auto h-[297mm] w-[210mm] overflow-hidden bg-white text-[11px] shadow-lg"
-        style={{ padding: `${pageMargin}mm`, fontFamily: getCvFontStack(style_json.font_family), fontSize: `${style_json.font_scale}em`, lineHeight: style_json.line_height, backgroundImage: background?.url ? `url(${background.url})` : undefined, backgroundSize: 'cover', '--cv-theme': style_json.theme_color }}
+        data-cv-page={page.number}
+        data-cv-variant={contract.variant}
+        className="cv-document-preview__page relative mx-auto flex h-[297mm] w-[210mm] flex-col overflow-hidden bg-white text-[11px] shadow-lg"
+        style={{ padding: `${pageMargin}mm`, fontFamily: getCvFontStack(style_json.font_family), fontSize: `${style_json.font_scale}em`, lineHeight: style_json.line_height, backgroundImage: background?.url ? `url(${background.url})` : undefined, backgroundSize: 'cover', '--cv-theme': style_json.theme_color, '--cv-page-margin': `${pageMargin}mm` }}
       >
-        {page.number === 1 && (renderHeader ? renderHeader(page.number) : contract.key !== 'header_two_column_v1' && (sectionHasVisibleContent({ section_key: 'nameplate' }, personal, assets) || contactValues(personal).length > 0) && <header className="mb-6 border-l-4 pl-4" style={{ borderColor: style_json.theme_color }}>
-          {personal.full_name && <h2 className="text-2xl font-extrabold text-slate-900" style={fieldStyle(content_json.inline_text_styles?.['personal:full_name'])}>{personal.full_name}</h2>}
-          {personal.headline && <p className="mt-1 font-semibold" style={{ ...fieldStyle(content_json.inline_text_styles?.['personal:headline']), color: content_json.inline_text_styles?.['personal:headline']?.color || style_json.theme_color }}>{personal.headline}</p>}
-          <div className="mt-2"><PreviewContact personal={personal} inlineTextStyles={content_json.inline_text_styles} /></div>
-        </header>)}
-        <RegionRows regions={page.regions} contract={contract} document={document} assets={assets} renderRegion={renderRegion} pageNumber={page.number} />
+        {page.number === 1 && (renderHeader ? renderHeader(page.number) : <LegacyNameBlock document={document} assets={assets} />)}
+        <RegionRows regions={page.regions} document={document} assets={assets} renderRegion={renderRegion} pageNumber={page.number} />
       </article>
     </div>
   )
+}
+
+function outerHeight(element, edge) {
+  const style = globalThis.getComputedStyle(element)
+  return element.offsetHeight + (Number.parseFloat(style[edge]) || 0)
 }
 
 export default function CvDocumentPreview({ document, rendererKey, assets = {}, renderRegion, renderHeader, pageAriaLabel, className = '', paginateItems = true, editorChrome = true, pageLabelVariant = 'heading' }) {
@@ -151,18 +175,27 @@ export default function CvDocumentPreview({ document, rendererKey, assets = {}, 
   const contract = getRendererContract(rendererKey)
   const previewRef = useRef(null)
   const [measurements, setMeasurements] = useState({ sections: {}, items: {} })
-  const pages = useMemo(() => paginateMeasuredProjection(projection, measurements, contract.key === 'header_two_column_v1' ? 980 : 900), [contract.key, measurements, projection])
+  const pages = useMemo(() => paginateMeasuredProjection(projection, measurements, { page: measurements.page, firstPageReserved: measurements.reserved }), [measurements, projection])
   useLayoutEffect(() => {
     const preview = previewRef.current
     if (!preview) return undefined
     const measure = () => {
       const sections = {}
       for (const element of preview.querySelectorAll('[data-section-id]')) {
-        sections[element.dataset.sectionId] = (sections[element.dataset.sectionId] || 0) + Math.ceil(element.offsetHeight)
+        sections[element.dataset.sectionId] = (sections[element.dataset.sectionId] || 0) + Math.ceil(outerHeight(element, 'marginBottom'))
       }
+      // Sức chứa đo trên chính trang A4 (cùng hệ toạ độ với section, đúng cả khi
+      // preview bị thu phóng); phần trên thân CV ở trang 1 được trừ ra.
+      const firstPage = preview.querySelector('[data-cv-page="1"]')
+      const firstBody = firstPage?.querySelector('[data-cv-row="body"]')
+      const padding = firstPage ? Number.parseFloat(globalThis.getComputedStyle(firstPage).paddingTop) || 0 : 0
       const next = {
         sections,
-        items: paginateItems ? Object.fromEntries([...preview.querySelectorAll('[data-cv-item-id]')].map((element) => [element.dataset.cvItemId, Math.ceil(element.offsetHeight)])) : {},
+        items: paginateItems ? Object.fromEntries([...preview.querySelectorAll('[data-cv-item-id]')].map((element) => [element.dataset.cvItemId, Math.ceil(outerHeight(element, 'marginTop'))])) : {},
+        // jsdom/ẩn: clientHeight = 0 → dùng sức chứa mặc định.
+        page: firstPage?.clientHeight ? Math.floor(firstPage.clientHeight - 2 * padding) - 4 : undefined,
+        // Hàng thân tràn mép (lề âm) có offsetTop < lề trang: không có gì chiếm chỗ.
+        reserved: firstBody ? Math.max(0, Math.ceil(firstBody.offsetTop - padding)) : 0,
       }
       setMeasurements((current) => JSON.stringify(current) === JSON.stringify(next) ? current : next)
     }

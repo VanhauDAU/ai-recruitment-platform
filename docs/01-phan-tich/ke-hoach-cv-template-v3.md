@@ -292,7 +292,7 @@ Rủi ro lớn nhất của 8 layout là viết mỗi layout hai lần (React + 
 - **Phương án A (khuyên dùng):** xuất PDF bằng headless Chromium (Playwright trong worker Celery) render chính trang `/cvs/:id/print` của frontend. Một renderer duy nhất, khớp tuyệt đối. Chi phí: image worker nặng hơn (~400 MB), mỗi PDF ~1–2 s.
 - **Phương án B:** giữ WeasyPrint, viết song song template Django cho từng layout, kèm golden test so ảnh trang đầu (pixel diff ≤ 2%).
 
-Quyết định A/B ở đầu `CVT-2` sau khi đo thời gian xuất trên máy dev (spike 1 ngày).
+**Đã chốt A (CVT-2).** Trang in là entry riêng `cv-print.html` của frontend (không qua router/đăng nhập); worker đưa document vào bằng `page.evaluate`, ảnh nhúng `data:`, trang chỉ được tải tài nguyên cùng origin. Đo trên máy dev: ~0,2 s/PDF khi Chromium đã chạy, ~0,9 s lần đầu; image backend tăng do Chromium headless shell.
 
 ---
 
@@ -624,7 +624,7 @@ Tách hai PR để giữ dưới ngưỡng 60 file của quy trình PR:
   riêng 9 vị trí chuyên môn), gỡ tab/menu "Blueprint" và mục menu "Ngôn ngữ" còn
   sót từ CVT-1a. Danh sách 30 vị trí ưu tiên (I1) chưa có: hồ sơ được tạo cho mọi
   vị trí chuyên môn đang hoạt động.
-- **CVT-1c — Trường matching và dọn legacy (🟨 chờ review PR):** thêm
+- **CVT-1c — Trường matching và dọn legacy (✅ PR #181):** thêm
   `UserCv.experience_years` (giá trị `Job.ExperienceYears`) tính từ mục kinh nghiệm
   ở mỗi `create_version`, gợi ý việc làm theo CV dùng giá trị này; vị trí mục tiêu
   dùng `UserCv.position` có sẵn. Gỡ `UserCv.cv_data/style_config/status/
@@ -650,6 +650,7 @@ không đăng ký section chưa có giao diện dùng.
 - **Công việc:** layout registry BE/FE + test đồng bộ; bỏ header cứng; 8 renderer React lazy-load; avatar; editor kéo thả giữa vùng, kéo độ rộng cột; xuất PDF theo phương án đã chọn; sinh thumbnail theo màu.
 - **Đầu ra:** renderer, contract, test golden ảnh từng layout (3 bộ nội dung: ngắn, trung bình, 3 trang).
 - **Nghiệm thu:** mỗi layout render đúng ở preview, editor, PDF (sai lệch ≤ 2% pixel trang đầu); ngắt trang không cắt đôi dòng; nameplate/contact/avatar đặt được ở mọi vùng layout cho phép.
+- **Thực hiện (🟨 chờ review PR):** thay 8 component lazy bằng một renderer chung đọc registry (mỗi layout chỉ là dữ liệu: hàng, độ rộng, tone, cách xếp, biến thể), nên thêm layout không cần code React mới. Vì PDF in từ chính renderer đó, so pixel preview–PDF không còn cần: e2e `cv-print.spec.js` kiểm từng layout trên trang in (tỉ lệ cột, tên/ảnh đúng vùng, không tràn ngang, nội dung dài sang trang theo từng mục). Font chốt 4 font OFL tự host (I5). Thiết kế 8 layout do dev phác, người dùng duyệt qua ảnh chụp (I2).
 
 ### CVT-3 — Vị trí, trường riêng, nội dung mẫu
 
@@ -782,6 +783,6 @@ Hoặc `./scripts/check_all.sh`. Lệnh `manage.py` chạy qua `docker exec` đ�
 
 ## 19. Câu hỏi còn mở
 
-1. Phương án PDF A (Chromium) hay B (WeasyPrint song song) — chốt sau spike đầu CVT-2.
+1. ~~Phương án PDF A hay B~~ — đã chốt A (Chromium) ở CVT-2.
 2. Có hiển thị số lượt dùng mẫu ("1.2k người đã dùng") trên kho mẫu không.
 3. Có cho ứng viên lưu "vị trí mục tiêu" vào hồ sơ để mặc định chọn sẵn ở trang mẫu không (liên quan onboarding).

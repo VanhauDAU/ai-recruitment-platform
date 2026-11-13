@@ -32,7 +32,7 @@ sequenceDiagram
 
 ## Luồng B — CV Builder lưu & render PDF (cvs)
 
-- ✅ **Render PDF (WeasyPrint) không bao giờ chạy trong request** — chỉ trong
+- ✅ **Render PDF (Chromium, từ CVT-2) không bao giờ chạy trong request** — chỉ trong
   Celery: `generate_cv_thumbnail`, `render_cv_export_job` (soft/hard limit 50/60s
   cho import).
 - ✅ **Chống race autosave**: `CvDraft` compare-and-swap bằng `lock_version`

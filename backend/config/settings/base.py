@@ -793,6 +793,9 @@ ADMIN_FRONTEND_URL = config('ADMIN_FRONTEND_URL', default=FRONTEND_URL)
 # SEO shell fetches the built Vite document from the internal frontend service,
 # then injects route-specific head tags without rendering the React body.
 FRONTEND_SHELL_URL = config('FRONTEND_SHELL_URL', default=FRONTEND_URL).rstrip('/') + '/'
+# Trang in PDF CV (entry `cv-print.html` của frontend). Worker mở trang này bằng
+# Chromium headless và đưa document vào trực tiếp; trang không tải dữ liệu CV.
+CV_PRINT_URL = config('CV_PRINT_URL', default=f'{FRONTEND_SHELL_URL}cv-print.html')
 FRONTEND_SHELL_TIMEOUT_SECONDS = config(
     'FRONTEND_SHELL_TIMEOUT_SECONDS',
     default=2,
