@@ -27,7 +27,6 @@ import {
   updateAdminCvBackground,
   updateAdminCvSample,
 } from '@/entities/cv-template'
-import { getAdminLocales } from '@/entities/locale'
 import { message } from '@/shared/lib/toast'
 import { AdminDataActions, AdminPanel } from '@/shared/ui/admin'
 
@@ -80,13 +79,6 @@ const EXPORT_COLUMNS = {
     { key: 'public_id', label: 'Mã blueprint' },
     { key: 'locale', label: 'Ngôn ngữ' },
     { key: 'experience_level', label: 'Cấp độ' },
-    { key: 'is_active', label: 'Đang bật' },
-  ],
-  locales: [
-    { key: 'code', label: 'Mã ngôn ngữ' },
-    { key: 'label_vi', label: 'Tên' },
-    { key: 'catalog_path', label: 'Đường dẫn catalogue' },
-    { key: 'is_default', label: 'Mặc định' },
     { key: 'is_active', label: 'Đang bật' },
   ],
   taxonomy: [
@@ -177,12 +169,12 @@ function StructuredSampleEditor({ sample, open, onClose, onSaved }) {
 
 export default function AdminCvCatalogue() {
   const [searchParams, setSearchParams] = useSearchParams()
-  const allowedTabs = ['templates', 'samples', 'blueprints', 'locales', 'taxonomy', 'backgrounds']
+  const allowedTabs = ['templates', 'samples', 'blueprints', 'taxonomy', 'backgrounds']
   const requestedTab = searchParams.get('tab') || 'templates'
   const activeTab = allowedTabs.includes(requestedTab) ? requestedTab : 'templates'
   const rawQuery = searchParams.get('q') || ''
   const query = rawQuery.trim().toLocaleLowerCase('vi')
-  const [data, setData] = useState({ templates: [], samples: [], blueprints: [], locales: [], categories: [], colors: [], backgrounds: [] })
+  const [data, setData] = useState({ templates: [], samples: [], blueprints: [], categories: [], colors: [], backgrounds: [] })
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState(null)
   const [searchDraft, setSearchDraft] = useState(rawQuery)
@@ -190,11 +182,11 @@ export default function AdminCvCatalogue() {
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const [templates, samples, blueprints, locales, categories, colors, backgrounds] = await Promise.all([
+      const [templates, samples, blueprints, categories, colors, backgrounds] = await Promise.all([
         getAdminCvTemplates(), getAdminCvSamples(), getAdminCvBlueprints(),
-        getAdminLocales(), getAdminCvCategories(), getAdminCvColors(), getAdminCvBackgrounds(),
+        getAdminCvCategories(), getAdminCvColors(), getAdminCvBackgrounds(),
       ])
-      setData({ templates, samples, blueprints, locales, categories, colors, backgrounds })
+      setData({ templates, samples, blueprints, categories, colors, backgrounds })
     } catch {
       message.error('Không thể tải catalogue CV quản trị.')
     } finally {
@@ -218,7 +210,6 @@ export default function AdminCvCatalogue() {
     templates: filterRows(data.templates, query, ['public_id', 'name', 'lifecycle_status']),
     samples: filterRows(data.samples, query, ['public_id', 'title', 'position_name_vi', 'locale', 'experience_level', 'status']),
     blueprints: filterRows(data.blueprints, query, ['public_id', 'locale', 'experience_level']),
-    locales: filterRows(data.locales, query, ['code', 'label_vi', 'catalog_path']),
     categories: filterRows(data.categories, query, ['public_id', 'name', 'category_type']),
     colors: filterRows(data.colors, query, ['public_id', 'name', 'hex_code']),
     backgrounds: filterRows(data.backgrounds, query, ['public_id', 'title']),
@@ -227,7 +218,6 @@ export default function AdminCvCatalogue() {
     templates: filtered.templates,
     samples: filtered.samples,
     blueprints: filtered.blueprints,
-    locales: filtered.locales,
     taxonomy: [
       ...filtered.categories.map((item) => ({
         ...item,
@@ -312,9 +302,6 @@ export default function AdminCvCatalogue() {
           { title: 'Ngôn ngữ', dataIndex: 'locale', sorter: compareText('locale') }, { title: 'Cấp độ', dataIndex: 'experience_level', sorter: compareText('experience_level') },
           { title: 'Trạng thái', dataIndex: 'is_active', sorter: compareBoolean('is_active'), render: statusTag },
           { title: 'Thao tác', render: (_, row) => <Button icon={<CheckCircleOutlined />} size="small" disabled={row.is_active} onClick={() => act(() => activateAdminCvBlueprint(row.public_id), 'Đã kích hoạt blueprint.')}>Kích hoạt</Button> },
-        ]} /> },
-        { key: 'locales', label: 'Ngôn ngữ', children: <Table rowKey="code" loading={loading} dataSource={filtered.locales} pagination={false} showSorterTooltip={{ target: 'sorter-icon' }} columns={[
-          { title: 'Mã', dataIndex: 'code', sorter: compareText('code') }, { title: 'Tên', dataIndex: 'label_vi', sorter: compareText('label_vi') }, { title: 'Đường dẫn', dataIndex: 'catalog_path', sorter: compareText('catalog_path') }, { title: 'Mặc định', dataIndex: 'is_default', sorter: compareBoolean('is_default'), render: statusTag }, { title: 'Trạng thái', dataIndex: 'is_active', sorter: compareBoolean('is_active'), render: statusTag },
         ]} /> },
         { key: 'taxonomy', label: 'Danh mục & màu', children: <div className="grid gap-5 xl:grid-cols-2"><Table rowKey="public_id" dataSource={filtered.categories} pagination={false} showSorterTooltip={{ target: 'sorter-icon' }} columns={[{ title: 'Danh mục', dataIndex: 'name', sorter: compareText('name') }, { title: 'Loại', dataIndex: 'category_type', sorter: compareText('category_type') }]} /><Table rowKey="public_id" dataSource={filtered.colors} pagination={false} showSorterTooltip={{ target: 'sorter-icon' }} columns={[{ title: 'Màu', dataIndex: 'name', sorter: compareText('name') }, { title: 'Mã HEX', dataIndex: 'hex_code', sorter: compareText('hex_code') }]} /></div> },
         { key: 'backgrounds', label: 'Hình nền', children: <div className="space-y-4"><Upload accept="image/jpeg,image/png,image/webp" showUploadList={false} beforeUpload={async (file) => { await act(() => createAdminCvBackground(file, file.name.replace(/\.[^.]+$/, '')), 'Đã thêm hình nền CV.'); return false }}><Button data-print-hide="true" icon={<UploadOutlined />} type="primary">Tải ảnh nền mới</Button></Upload><Table rowKey="public_id" loading={loading} dataSource={filtered.backgrounds} pagination={false} showSorterTooltip={{ target: 'sorter-icon' }} columns={[

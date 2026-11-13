@@ -498,7 +498,7 @@ app/router + app/layouts
 ```text
 pages/admin/app/CvCatalogue
   → widgets/admin-cv-catalogue
-    → entities/cv-template + entities/locale
+    → entities/cv-template
       → shared/api, shared/ui
 ```
 

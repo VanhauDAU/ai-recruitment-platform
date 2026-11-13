@@ -22,20 +22,13 @@ vi.mock('@/entities/cv', () => ({
 }))
 
 vi.mock('@/entities/cv-template', () => ({
+  CV_LANGUAGES: [
+    { code: 'vi-VN', param: 'vi', label: 'Tiếng Việt' },
+    { code: 'en-US', param: 'en', label: 'Tiếng Anh' },
+  ],
   getBlankCvPreview: mocks.getBlankCvPreview,
   getCvPositionOptions: mocks.getCvPositionOptions,
   getCvPositionPreview: mocks.getCvPositionPreview,
-}))
-
-// Trả mảng mới ở mỗi lần render, giống useLocales thật khi API trả về sau
-// fallback — điều kiện từng làm preview kẹt ở trạng thái chờ.
-vi.mock('@/entities/locale', () => ({
-  useLocales: () => ({
-    locales: [
-      { code: 'vi-VN', label_vi: 'Tiếng Việt', is_default: true },
-      { code: 'en-US', label_vi: 'Tiếng Anh' },
-    ],
-  }),
 }))
 
 vi.mock('@/entities/session', () => ({
@@ -74,7 +67,8 @@ describe('CvSourcePanel', () => {
   it('loads the sample preview on first render without switching sources', async () => {
     const onPreviewChange = vi.fn()
     const { rerender } = renderPanel({ onPreviewChange })
-    // Re-render with new callback/session identities while positions load.
+    // Re-render with new callback/session identities while positions load —
+    // the condition that used to leave the preview waiting before CVT-0.
     rerender(
       <MemoryRouter>
         <CvSourcePanel template={TEMPLATE} locale="vi-VN" onPreviewChange={(value) => onPreviewChange(value)} />

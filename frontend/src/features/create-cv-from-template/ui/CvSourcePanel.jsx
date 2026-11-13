@@ -54,7 +54,7 @@ export default function CvSourcePanel({
 }) {
   const { siteName } = useSiteSettings()
   const {
-    locales,
+    languages,
     source,
     setSource,
     myCvs,
@@ -97,7 +97,7 @@ export default function CvSourcePanel({
           <div>
             <p className="mb-1.5 text-xs font-semibold text-slate-700">Chọn ngôn ngữ</p>
             <div className="flex flex-wrap gap-1.5">
-              {locales.map((item) => (
+              {languages.map((item) => (
                 <button
                   key={item.code}
                   type="button"
@@ -109,7 +109,7 @@ export default function CvSourcePanel({
                       : 'bg-slate-100 text-slate-600 hover:bg-slate-200',
                   ].join(' ')}
                 >
-                  {item.label_vi}
+                  {item.label}
                 </button>
               ))}
             </div>

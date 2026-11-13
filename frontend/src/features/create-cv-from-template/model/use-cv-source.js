@@ -12,8 +12,7 @@ import {
   retryCvImport,
   waitForCvImport,
 } from '@/entities/cv'
-import { getCvPositionOptions } from '@/entities/cv-template'
-import { useLocales } from '@/entities/locale'
+import { CV_LANGUAGES, getCvPositionOptions } from '@/entities/cv-template'
 import { useSession } from '@/entities/session'
 import { message } from '@/shared/lib/toast'
 import { createCvFromTemplate } from '../api/create-cv.api'
@@ -50,7 +49,6 @@ export function useCvSource({
   onRequireLogin,
 }) {
   const { user, isAuthenticated } = useSession()
-  const { locales } = useLocales()
   const candidateId = isAuthenticated && user?.role === 'candidate' ? user.public_id || 'candidate' : null
   const templateId = template.public_id
   const previewChangeRef = useLatest(onPreviewChange)
@@ -266,7 +264,7 @@ export function useCvSource({
   }
 
   return {
-    locales,
+    languages: CV_LANGUAGES,
     source: activeSource,
     setSource,
     myCvs: availableCvs,

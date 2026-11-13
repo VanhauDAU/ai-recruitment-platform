@@ -1,13 +1,12 @@
 // Đồng bộ lựa chọn ở cột phải trang chi tiết mẫu CV với query string.
 // Chỉ đưa dữ liệu không nhạy cảm lên URL: không có mã CV, tên tệp hay dữ liệu
 // cá nhân. Giá trị mặc định bị lược bỏ để URL gọn và canonical ổn định.
+import { CV_LANGUAGES, cvLanguage } from '@/entities/cv-template'
 
 const SOURCE_PARAMS = { sample: 'mau', previous: 'cv-cu', upload: 'tai-len', blank: 'trong' }
 const PARAM_SOURCES = Object.fromEntries(Object.entries(SOURCE_PARAMS).map(([source, param]) => [param, source]))
-const LANGUAGE_PARAMS = { 'vi-VN': 'vi', 'en-US': 'en' }
-const PARAM_LANGUAGES = Object.fromEntries(Object.entries(LANGUAGE_PARAMS).map(([code, param]) => [param, code]))
-
-export const LANGUAGE_LABELS = { 'vi-VN': 'tiếng Việt', 'en-US': 'tiếng Anh' }
+const LANGUAGE_PARAMS = Object.fromEntries(CV_LANGUAGES.map((language) => [language.code, language.param]))
+const PARAM_LANGUAGES = Object.fromEntries(CV_LANGUAGES.map((language) => [language.param, language.code]))
 
 export function selectionFromSearchParams(params, pathLocale) {
   return {
@@ -31,5 +30,5 @@ export function searchParamsFromSelection({ source, positionSlug, sampleLocale, 
 
 export function templateHeading({ templateName, source, positionLabel, language }) {
   const position = source === 'sample' && positionLabel ? `${positionLabel} ` : ''
-  return `Mẫu CV ${position}${LANGUAGE_LABELS[language] || LANGUAGE_LABELS['vi-VN']} - ${templateName}`
+  return `Mẫu CV ${position}${cvLanguage(language).inlineLabel} - ${templateName}`
 }
