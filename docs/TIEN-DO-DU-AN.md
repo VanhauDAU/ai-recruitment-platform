@@ -30,6 +30,12 @@ Quyết định:
 > type, quyền Django, nhật ký admin và bản ghi `django_migrations` của app. Chỉ
 > gộp sau khi `services.0012` đã chạy ở mọi môi trường.
 >
+> PM-6 (PR 5, nhánh `docs/restructure-docs`, tách từ PR 4): kế hoạch đã xong
+> được rút gọn thành 5 đặc tả trong `01-phan-tich` và các tài liệu chính khác;
+> 9 runbook rollout gộp thành `06-deployment/van-hanh-va-kill-switch.md`;
+> `99-tien-do` đã xóa; `docs/README.md` liệt kê đủ mọi file. Nội dung được đối
+> chiếu với code; chỗ kế hoạch cũ lệch code thì theo code.
+>
 > Lưu ý khi chạy E2E local: nếu container frontend Docker đang giữ cổng 5173,
 > Playwright sẽ dùng lại server đó và nhiều test lỗi giả. Chạy
 > `PLAYWRIGHT_PORT=4317 PLAYWRIGHT_WEB_SERVER=preview npm run test:e2e:smoke`.
@@ -44,7 +50,7 @@ Quyết định:
 | PM-4a | Gỡ mọi chỗ dùng `services`, giao diện, quyền admin; migration xóa bảng | ✅ Hoàn tất — đạt cổng, migration đã chạy trên DB local |
 | PM-4b | Xóa thư mục app `services` và cấu hình còn lại | ✅ Hoàn tất — pytest 1176 passed, coverage 87,47% |
 | PM-5 | Kiểm thử tích hợp ba cổng | ⬜ Chưa bắt đầu |
-| PM-6 | Dọn docs, xóa `99-tien-do`, dựng lại mục lục | ⬜ Chưa bắt đầu |
+| PM-6 | Dọn docs, xóa `99-tien-do`, dựng lại mục lục | ✅ Hoàn tất — 88 → 46 file, link check đạt |
 | PM-7 | Bổ sung changelog còn thiếu, rút gọn tiến độ | ⬜ Chưa bắt đầu |
 
 Đã chốt (2026-11-13): nhà tuyển dụng không sửa được tin đang bị tạm ẩn; muốn
