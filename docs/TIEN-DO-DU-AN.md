@@ -85,7 +85,7 @@ Việc còn mở:
 ## Epic rà soát và hardening cổng Nhà tuyển dụng (ER, 2026-08-10)
 
 Đặc tả canonical:
-[`ke-hoach-ra-soat-va-khac-phuc-employer.md`](03-database/ke-hoach-ra-soat-va-khac-phuc-employer.md).
+[`dac-ta-nha-tuyen-dung.md`](01-phan-tich/dac-ta-nha-tuyen-dung.md).
 Decision log:
 [`employer-remediation-decision-log.md`](02-tong-quan/employer-remediation-decision-log.md).
 
@@ -586,7 +586,7 @@ Thứ tự giai đoạn theo tài liệu database v1.4 (mục 7), đã đối ch
 ## Epic FAQ và hướng dẫn sử dụng (KB, 2026-08-05)
 
 Đặc tả canonical:
-[FAQ và hướng dẫn sử dụng](./03-database/ke-hoach-faq-huong-dan.md). Triển khai
+[FAQ và hướng dẫn sử dụng](01-phan-tich/dac-ta-trung-tam-tro-giup.md). Triển khai
 trên nhánh `codex/feat-faq-help-center`, giữ revision đã publish độc lập với bản
 sửa và rollout public qua capability switch.
 
@@ -603,7 +603,7 @@ sửa và rollout public qua capability switch.
 ## Epic thông báo chạy đa cổng (AN, 2026-07-29)
 
 Thiết kế canonical:
-[hệ thống thông báo chạy đa cổng](./03-database/ke-hoach-he-thong-thong-bao-chay.md).
+[hệ thống thông báo chạy đa cổng](01-phan-tich/dac-ta-thong-bao-da-cong.md).
 Mỗi phase dùng một nhánh `feature/announcement-*` tuần tự từ `dev`; phase sau
 chỉ bắt đầu sau khi phase trước merge và quality gate đạt.
 
@@ -620,7 +620,7 @@ chỉ bắt đầu sau khi phase trước merge và quality gate đạt.
 ## Epic nâng cấp visual thông báo đa cổng (AN-V, 2026-08-06)
 
 Thiết kế:
-[ke-hoach-nang-cap-thong-bao-visual-theme.md](./03-database/ke-hoach-nang-cap-thong-bao-visual-theme.md).
+[dac-ta-thong-bao-da-cong.md](01-phan-tich/dac-ta-thong-bao-da-cong.md).
 Nhánh: `feat/announcement-visual-theme`. Bổ sung **theme màu (kind/preset/custom)**
 và **ảnh nền strip** (vd. 980×31) kèm overlay; **responsive** và **preview admin**
 là bắt buộc ở phase frontend. Không đổi namespace API, priority tier hay lifecycle.
@@ -646,7 +646,7 @@ là bắt buộc ở phase frontend. Không đổi namespace API, priority tier 
 | CVB-P6 | Cleanup, rollout, observability | ✅ |
 | CVB-8 | WYSIWYG A4 editor, rich text, DnD, asset, PDF parity, fallback flag | ✅ Code + bật mặc định / 🟡 Theo dõi rollout |
 
-Chi tiết: [kế hoạch CV Builder theo giai đoạn](./03-database/ke-hoach-hoan-thien-cv-builder-theo-giai-doan.md).
+Chi tiết: [kế hoạch CV Builder theo giai đoạn](02-tong-quan/cv-builder-architecture-foundation.md).
 
 ## Epic dọn dẹp & nâng cấp frontend (2026-07-15, nhánh `refactor/*` stacked trên `feature/cv-builder`)
 
@@ -772,7 +772,7 @@ Theo *Kế hoạch tái cấu trúc ProCV sau merge main (2026-07-12)* — 11 gi
 | 1.19 | Đặt lại mật khẩu (quên mật khẩu) qua link email + Redis, token một lần | ✅ |
 | 1.19b | Email không phân biệt hoa/thường (normalize + `iexact` + unique constraint `Lower(email)`) | ✅ |
 | 1.20 | Trang thương hiệu (brand page): URL `/brand/<company>/tuyen-dung/<job>` + header thương hiệu | ✅ |
-| 1.21 | Tách công ty khỏi nhà tuyển dụng ([kế hoạch](./03-database/ke-hoach-thiet-ke-lai-cong-ty-nha-tuyen-dung.md)): **Giai đoạn A + B xong** — (A) models `companies`/`company_industries`/`company_images`/`company_documents`/`company_update_requests`/`recruiter_profiles`/`phone_otps` + migration đổ 9 `employer_profiles` sang (gộp theo tax_code, size chuẩn hóa bucket); (B) `jobs` chuyển FK `employer_profile`→`company`, `employer`→`posted_by` (backfill migration 0014–0016), bộ API mới `/api/employer/*` (onboarding 5 bước, OTP SĐT qua email, tạo/tìm/join công ty kèm giấy tờ, update request chờ duyệt). Từ EMP-P12, `posted_by` là tenant nghiệp vụ: tin/hồ sơ không được chia sẻ theo company, và tin hợp lệ xuất bản ngay không qua admin. (C) xóa model + bảng `employer_profiles` (migration `employers.0008`, phụ thuộc `jobs.0016`). | ✅ |
+| 1.21 | Tách công ty khỏi nhà tuyển dụng ([kế hoạch](01-phan-tich/dac-ta-nha-tuyen-dung.md)): **Giai đoạn A + B xong** — (A) models `companies`/`company_industries`/`company_images`/`company_documents`/`company_update_requests`/`recruiter_profiles`/`phone_otps` + migration đổ 9 `employer_profiles` sang (gộp theo tax_code, size chuẩn hóa bucket); (B) `jobs` chuyển FK `employer_profile`→`company`, `employer`→`posted_by` (backfill migration 0014–0016), bộ API mới `/api/employer/*` (onboarding 5 bước, OTP SĐT qua email, tạo/tìm/join công ty kèm giấy tờ, update request chờ duyệt). Từ EMP-P12, `posted_by` là tenant nghiệp vụ: tin/hồ sơ không được chia sẻ theo company, và tin hợp lệ xuất bản ngay không qua admin. (C) xóa model + bảng `employer_profiles` (migration `employers.0008`, phụ thuộc `jobs.0016`). | ✅ |
 | 1.22 | Khung layout 3 cột trang tài khoản ứng viên `/tai-khoan/*` (sidebar accordion + cột phải hồ sơ + 11 route placeholder) | ✅ |
 | 1.23 | Trang "Cài đặt thông tin cá nhân": PATCH `/auth/me/` sửa họ tên + SĐT (nhiều lần), email read-only | ✅ |
 | 1.24 | Onboarding và cài đặt gợi ý việc làm: form preference dùng chung, giới tính tại settings, modal chọn vị trí responsive, feedback validation/toast và sidebar hồ sơ sticky | ✅ |
@@ -1201,7 +1201,7 @@ build đều pass.
 | 4.5 | Import PDF/DOCX/LinkedIn và AI-assisted authoring | 🟡 — PDF/DOCX đã parse AI thành canonical editable draft; còn LinkedIn, AI writer và review workflow nâng cao |
 | 4.6 | CVB-8 WYSIWYG editor kiểu TopCV | ✅ Code + bật mặc định / 🟡 Theo dõi rollout — shell đúng DOCX gồm header website, action bar, rail 176 px tự co chiều cao, panel 352 px, canvas A4 80% và zoom nổi; toolbar rich text nổi theo selection, hiển thị format hiện tại và không thay đổi kích thước trang; design panel có màu luôn mở, slider theo nấc, locale reset tiêu đề/placeholder chuẩn và font fallback stack; inline/rich text, pagination DOM theo item, row/header, DnD touch/keyboard với overlay/vùng thả, avatar/background, template/sample CAS, PDF parity; editor cũ chỉ còn làm fallback; canvas chrome đối chiếu TopCV: toolbar section gọn trong hàng tiêu đề + toolbar item ở cạnh dưới-phải (không che nội dung), mỗi lúc chỉ một tầng chrome và ẩn khi đang gõ (`:has`, hover chủ động vẫn hiện lại), nút Xóa có nhãn màu ngữ nghĩa, avatar mặc định lên đầu cột phụ khi template không có header, thêm mục tự cuộn + focus ô đầu, summary bỏ ô "Tên" thừa, placeholder ngày dạng ví dụ, nhãn vùng Cột chính/Cột phụ, sửa nút "+ Thêm nội dung" bị antd đè `position` làm lệch layout A4; đợt 2 theo TopCV: nút "+ Thêm" chèn item ngay sau item đang hover, editor mức độ kỹ năng 5 nấc khớp preview, kéo mục mới từ panel Thêm mục thả thẳng vào canvas (DndContext dùng chung cấp editor), panel Bố cục thành sơ đồ mini kéo-thả giữa các cột + click đi tới mục, vùng Mô tả luôn hiển thị với placeholder theo loại mục (trước đây item mới không thể nhập mô tả), toolbar định dạng neo góc phải phía trên item nên không đè lên dòng kế bên |
 
-### Kế hoạch hoàn thiện CV Builder theo giai đoạn ([kế hoạch](./03-database/ke-hoach-hoan-thien-cv-builder-theo-giai-doan.md))
+### Kế hoạch hoàn thiện CV Builder theo giai đoạn ([kế hoạch](02-tong-quan/cv-builder-architecture-foundation.md))
 
 <details>
 <summary><b>CVB-0</b> — Stabilization (runtime + migration + tạo CV)</summary>
@@ -1254,7 +1254,7 @@ frontend unit tests và 22 smoke desktop/mobile.
 <details>
 <summary><b>CVB-1.2</b> — ✅ Category/color từ database và lưu màu vào CV</summary>
 
-`CvTemplate` liên kết nhiều-nhiều với `CvCategory` và `CvColor` qua hai bảng link. Link màu giữ `thumbnail_url`, `preview_url`, `sort_order`, `is_default`; public API trả `colors[]`, card hover/focus đổi đúng asset URL. `POST /api/v2/cvs/` nhận `theme_color`, validate màu active thuộc template rồi ghi vào initial version/draft. Migration `cv_templates.0004` backfill JSON cũ, seed chuyển category legacy và tạo palette; admin quản lý registry + inline link. `theme_color`/`color_variants` vẫn được giữ tương thích trong giai đoạn dual-read, không còn là nguồn chuẩn của frontend mới. Chi tiết và backlog: [kế hoạch CV Builder](./03-database/ke-hoach-hoan-thien-cv-builder-theo-giai-doan.md).
+`CvTemplate` liên kết nhiều-nhiều với `CvCategory` và `CvColor` qua hai bảng link. Link màu giữ `thumbnail_url`, `preview_url`, `sort_order`, `is_default`; public API trả `colors[]`, card hover/focus đổi đúng asset URL. `POST /api/v2/cvs/` nhận `theme_color`, validate màu active thuộc template rồi ghi vào initial version/draft. Migration `cv_templates.0004` backfill JSON cũ, seed chuyển category legacy và tạo palette; admin quản lý registry + inline link. `theme_color`/`color_variants` vẫn được giữ tương thích trong giai đoạn dual-read, không còn là nguồn chuẩn của frontend mới. Chi tiết và backlog: [kế hoạch CV Builder](02-tong-quan/cv-builder-architecture-foundation.md).
 
 </details>
 

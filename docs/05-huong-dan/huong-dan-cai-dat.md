@@ -146,7 +146,7 @@ ANNOUNCEMENT_REMOTE_ENABLED_SURFACES=admin_workspace
 ```
 
 Danh sách và thứ tự production xem
-[runbook AN-P5](../06-deployment/announcement-rollout-runbook.md).
+[vận hành và kill switch](../06-deployment/van-hanh-va-kill-switch.md).
 
 Khi đã cài `node_modules` từ trước, chỉ cần chạy:
 

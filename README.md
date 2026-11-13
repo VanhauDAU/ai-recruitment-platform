@@ -156,7 +156,7 @@ tới `backend/` hoặc `frontend/`.
 
 - [Tài liệu dự án](docs/README.md)
 - [Kiến trúc CV Builder](docs/02-tong-quan/cv-builder-architecture-foundation.md)
-- [Kế hoạch CV Builder](docs/03-database/ke-hoach-hoan-thien-cv-builder-theo-giai-doan.md)
+- [Kiến trúc CV Builder](docs/02-tong-quan/cv-builder-architecture-foundation.md)
 
 Xem [docs/README.md](docs/README.md) cho toàn bộ tài liệu: phân tích, tổng quan, database, API, hướng dẫn local, thuật toán AI và frontend.
 

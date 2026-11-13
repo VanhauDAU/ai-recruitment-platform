@@ -2,7 +2,7 @@
 
 > Tài liệu sống: mỗi quyết định đã xác nhận được ghi ngày, phạm vi và hệ quả.
 > Đặc tả triển khai: [chatbot-ung-vien-faq.md](../07-algorithms/chatbot-ung-vien-faq.md)
-> Nguồn kiến thức: [ke-hoach-faq-huong-dan.md](../03-database/ke-hoach-faq-huong-dan.md) (KB-P6 hoàn tất)
+> Nguồn kiến thức: [dac-ta-trung-tam-tro-giup.md](../01-phan-tich/dac-ta-trung-tam-tro-giup.md) (KB-P6 hoàn tất)
 
 ## Nguyên tắc nền (đã khẳng định qua FAQ)
 

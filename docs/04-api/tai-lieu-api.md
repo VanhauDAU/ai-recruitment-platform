@@ -595,7 +595,7 @@ active hoặc không được gán cho template, API trả `400 theme_color`. M�
 
 > Trạng thái AN-P1: backend foundation và OpenAPI đã triển khai. Runtime UI thuộc
 > AN-P2; dismiss/event/metrics thuộc AN-P4. Nguồn thiết kế canonical:
-> [kế hoạch hệ thống thông báo chạy](../03-database/ke-hoach-he-thong-thong-bao-chay.md).
+> [đặc tả thông báo đa cổng](../01-phan-tich/dac-ta-thong-bao-da-cong.md).
 
 | Method | Endpoint | Quyền | Mục đích |
 | --- | --- | --- | --- |

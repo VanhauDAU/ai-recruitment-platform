@@ -74,5 +74,5 @@ này nó mang nghĩa "được phép đưa tin lên công khai".
   nghiệp tại lúc đăng, quota đăng tin, báo cáo từ ứng viên, tạm ẩn tin và
   khóa tài khoản vi phạm bằng `policy_hold`.
 - Thay thế các phần về duyệt tin trong
-  [`ke-hoach-chien-dich-va-vong-doi-tin.md`](../03-database/ke-hoach-chien-dich-va-vong-doi-tin.md)
+  [`dac-ta-chien-dich-va-tin-tuyen-dung.md`](../01-phan-tich/dac-ta-chien-dich-va-tin-tuyen-dung.md)
   và [`admin-job-management.md`](../08-frontend/admin-job-management.md).

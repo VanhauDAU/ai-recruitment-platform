@@ -3,7 +3,7 @@
 > **Trạng thái:** Baseline kèm remediation evidence; chỉ finding có test đỏ →
 > vá → retest và evidence trong phase tương ứng mới được đổi trạng thái.
 > **Kế hoạch canonical:**
-> [ke-hoach-ra-soat-va-khac-phuc-employer.md](../03-database/ke-hoach-ra-soat-va-khac-phuc-employer.md)  
+> [dac-ta-nha-tuyen-dung.md](../01-phan-tich/dac-ta-nha-tuyen-dung.md)  
 > **Decision log:**
 > [employer-remediation-decision-log.md](employer-remediation-decision-log.md)
 
