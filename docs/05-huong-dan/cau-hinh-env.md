@@ -4,8 +4,8 @@ ProCV dùng mẫu tối thiểu để khởi động local và catalog tùy ch�
 tích hợp. Backend chỉ đọc `backend/.env`; catalog optional không được tự động
 nạp. Biến của process luôn ưu tiên giá trị trong file. Frontend chỉ đưa biến
 `VITE_*` vào bundle, vì vậy không đặt secret backend trong các file frontend.
-Inventory đầy đủ tên, consumer, kiểu, default đã công bố, owner, độ nhạy và
-bằng chứng nằm tại [p4-env-inventory.csv](../99-tien-do/p4-env-inventory.csv).
+Inventory đầy đủ tên, consumer, kiểu, default đã công bố, owner và độ nhạy được
+sinh bằng `python3 scripts/env_inventory.py` (CSV ra stdout, không in giá trị).
 
 ## Các file và chủ sở hữu
 

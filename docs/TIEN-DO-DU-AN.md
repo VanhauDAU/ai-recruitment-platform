@@ -53,6 +53,35 @@ khắc phục nội dung phải liên hệ quản trị viên.
 Việc còn treo: khi `POST /api/jobs/mine/` bị từ chối ở bước đăng, bản nháp vừa tạo vẫn
 được giữ lại (hành vi có từ trước, áp dụng cho mọi lý do từ chối).
 
+## Epic tái cấu trúc ProCV (P0–P10, 2026-09)
+
+Mục tiêu: tổ chức lại repo, CI, env và docs mà không đổi UI, URL, API, dữ liệu,
+quyền hay lịch tác vụ. Baseline: `dev` tại `dddf4455` (23/09/2026).
+
+| Giai đoạn | Đầu ra | Trạng thái |
+| --- | --- | --- |
+| P0 | Kiểm kê repo, hợp đồng hành vi, số đo CI | ✅ Verified |
+| P1 | Chẩn đoán và sửa test lỗi hoặc treo | 🟨 Implemented |
+| P2 | Dọn artifact, media test và ignore | 🟨 Implemented |
+| P3 | Bỏ cấu hình deploy production, giữ Compose local | 🟨 Implemented |
+| P4 | Env tối thiểu (`.env.example`) và catalog optional (`.env.optional.example`) | 🟨 Implemented |
+| P5 | Chuẩn hóa backend theo app | ⬜ Planned |
+| P6 | Chuẩn hóa ownership frontend | ⬜ Planned |
+| P7 | Hợp nhất docs và tiến độ | Thay bằng PM-6, PM-7 của epic hậu kiểm |
+| P8–P9 | Tối ưu thời gian CI: pytest song song, shard unit/E2E | 🟨 Implemented — lượt đo thứ hai chưa có |
+| P10 | Nghiệm thu và hồ sơ bàn giao | ⬜ Planned |
+
+Việc còn mở:
+
+- P1–P4, P8–P9 chỉ chuyển Verified sau khi gộp vào `dev` và full CI đạt trên
+  cùng SHA.
+- E2E CI còn lỗi không ổn định ở một viewport mỗi lượt, chưa rõ nguyên nhân gốc;
+  CI cho phép một lần retry và báo `flaky`.
+- `npm audit fix` cần chạy trên máy có kết nối npm registry.
+- Env cá nhân còn key `SPEECH_*` của TTS đã gỡ và hai key lặp
+  (`EMPLOYER_DOMAIN_DNS_TIMEOUT_SECONDS`, `EMPLOYER_DOMAIN_RECHECK_BATCH_SIZE`);
+  chủ máy tự xóa, không xóa theo wildcard.
+
 ## Epic rà soát và hardening cổng Nhà tuyển dụng (ER, 2026-08-10)
 
 Đặc tả canonical:
