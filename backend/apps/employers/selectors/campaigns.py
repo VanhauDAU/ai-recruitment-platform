@@ -334,6 +334,8 @@ def campaign_job_performance(campaign, *, days=7, job_public_id=None):
             'title',
             'status',
             'deadline',
+            'policy_hold',
+            'moderation_hold',
             'engagement_tracking_started_at',
         )
     )
@@ -405,6 +407,7 @@ def campaign_job_performance(campaign, *, days=7, job_public_id=None):
                 'is_expired': bool(
                     job['status'] == Job.Status.ACTIVE and deadline is not None and deadline < today
                 ),
+                'visibility_held': bool(job['moderation_hold'] or job['policy_hold']),
                 'available': available,
                 'data_available_from': tracking_date,
                 'impressions': impressions,

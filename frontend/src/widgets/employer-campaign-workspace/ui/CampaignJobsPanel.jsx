@@ -51,6 +51,13 @@ function formatRate(value) {
 }
 
 function JobStatus({ job, campaignPaused = false }) {
+  if (job.status === 'active' && job.visibility_held) {
+    return (
+      <Tooltip title="Tin đang bị tạm ẩn. Mở chi tiết tin để xem lý do.">
+        <Tag color="red">Tạm ẩn</Tag>
+      </Tooltip>
+    )
+  }
   if (job.is_expired) return <Tag color="orange">Hết hạn</Tag>
   if (campaignPaused && job.status === 'active') {
     return (
@@ -72,7 +79,10 @@ function JobActions({
   reportSelected = false,
   campaignPaused = false,
 }) {
-  const canViewPublicJob = job.status === 'active' && Boolean(job.slug) && !campaignPaused
+  const canViewPublicJob = job.status === 'active'
+    && Boolean(job.slug)
+    && !campaignPaused
+    && !job.visibility_held
   const actionClassName = 'inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 bg-white !text-slate-600 shadow-sm transition hover:border-emerald-500 hover:bg-emerald-50 hover:!text-emerald-700'
 
   return (
@@ -110,15 +120,17 @@ function JobActions({
           <ExportOutlined />
         </a>
       </Tooltip>
-      <Tooltip title="Chỉnh sửa tin">
-        <Link
-          aria-label={`Chỉnh sửa ${job.title || 'tin tuyển dụng'}`}
-          to={employerAppPath(`/jobs/${job.public_id}/edit`)}
-          className={actionClassName}
-        >
-          <EditOutlined />
-        </Link>
-      </Tooltip>
+      {!job.visibility_held && (
+        <Tooltip title="Chỉnh sửa tin">
+          <Link
+            aria-label={`Chỉnh sửa ${job.title || 'tin tuyển dụng'}`}
+            to={employerAppPath(`/jobs/${job.public_id}/edit`)}
+            className={actionClassName}
+          >
+            <EditOutlined />
+          </Link>
+        </Tooltip>
+      )}
     </div>
   )
 }

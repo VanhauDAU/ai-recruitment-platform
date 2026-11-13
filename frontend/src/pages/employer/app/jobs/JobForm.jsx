@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Alert, Skeleton } from 'antd'
 import { useMemo } from 'react'
-import { useNavigate, useParams, useSearchParams } from 'react-router'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
 import { createCampaign, getCampaignOptions, campaignKeys } from '@/entities/campaign'
 import { useSession } from '@/entities/session'
 import {
@@ -17,6 +17,7 @@ import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { employerAppPath } from '@/shared/config/portals'
 import { message } from '@/shared/lib/toast'
 import { EmployerJobEditor } from '@/widgets/employer-job-editor'
+import JobVisibilityHoldAlert from './JobVisibilityHoldAlert'
 
 // The backend refuses publication with machine-readable reasons; show their
 // labels instead of the generic "cannot publish" detail.
@@ -110,6 +111,17 @@ export default function JobForm() {
     return <Skeleton active paragraph={{ rows: 12 }} />
   }
   if (detailQuery.isError) return <Alert type="error" showIcon title="Không thể tải tin tuyển dụng." />
+  // The backend refuses every edit while a job is held, so do not offer the form.
+  if (detailQuery.data?.visibility_hold) {
+    return (
+      <section className="mx-auto max-w-[1480px] space-y-4">
+        <JobVisibilityHoldAlert hold={detailQuery.data.visibility_hold} />
+        <Link className="inline-block text-sm font-semibold" to={employerAppPath(`/jobs/${publicId}`)}>
+          Quay lại chi tiết tin
+        </Link>
+      </section>
+    )
+  }
   return (
     <section className="mx-auto max-w-[1480px] space-y-5">
 

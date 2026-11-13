@@ -146,6 +146,37 @@ describe('JobDetail candidate-data boundary', () => {
       : screen.getByText('Dữ liệu ứng viên đang được bảo vệ')).toBeInTheDocument()
   })
 
+  it('explains to the owner why candidates cannot see a held job', async () => {
+    mocks.getEmployerJob.mockResolvedValue({
+      public_id: 'job_1',
+      title: 'Kỹ sư Frontend',
+      status: 'active',
+      application_count: 0,
+      view_count: 0,
+      visibility_hold: {
+        kind: 'moderation',
+        code: 'manual_review',
+        label: 'Tạm ẩn để rà soát nội dung',
+        held_at: '2026-11-12T08:00:00+07:00',
+        reason_code: 'fraud_risk',
+        reason_label: 'Có dấu hiệu lừa đảo',
+      },
+    })
+    renderPage('job')
+
+    const notice = await screen.findByTestId('job-visibility-hold')
+    expect(notice).toHaveTextContent('Tin đang bị quản trị viên tạm ẩn')
+    expect(notice).toHaveTextContent('Tạm ẩn để rà soát nội dung')
+    expect(notice).toHaveTextContent('Có dấu hiệu lừa đảo')
+  })
+
+  it('shows no hold notice for a job candidates can see', async () => {
+    renderPage('job')
+
+    expect(await screen.findByRole('heading', { name: 'Kỹ sư Frontend' })).toBeInTheDocument()
+    expect(screen.queryByTestId('job-visibility-hold')).not.toBeInTheDocument()
+  })
+
   it('removes previously rendered candidate PII when access changes from true to false', async () => {
     mocks.readinessState.canAccessCandidateData = true
     mocks.readinessState.readiness.candidateDataAccess = true

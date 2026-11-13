@@ -229,6 +229,39 @@ describe('JobList', () => {
     })
   })
 
+  it('marks a held job as hidden and withholds the actions the backend refuses', async () => {
+    const user = userEvent.setup()
+    mocks.getEmployerJobPage.mockResolvedValue({
+      count: 1,
+      next: null,
+      previous: null,
+      results: [{
+        ...ACTIVE_JOB,
+        visibility_hold: {
+          kind: 'moderation',
+          code: 'manual_review',
+          label: 'Tạm ẩn để rà soát nội dung',
+          held_at: '2026-11-12T08:00:00+07:00',
+          reason_code: 'fraud_risk',
+          reason_label: 'Có dấu hiệu lừa đảo',
+        },
+      }],
+    })
+    renderPage()
+
+    const heldCard = await screen.findByTestId('job-list-item-job_active')
+    expect(within(heldCard).getByText('Tạm ẩn')).toBeInTheDocument()
+    expect(within(heldCard).queryByText('Đang tuyển')).not.toBeInTheDocument()
+    expect(within(heldCard).queryByRole('link', { name: 'Chỉnh sửa tin' })).not.toBeInTheDocument()
+    await user.click(within(heldCard).getByRole('button', {
+      name: 'Mở thao tác cho Kỹ sư Frontend',
+    }))
+    expect(await screen.findByRole('menuitem', { name: /Đóng tin/ })).toBeInTheDocument()
+    expect(screen.queryByRole('menuitem', { name: /Sao chép thành bản nháp/ }))
+      .not.toBeInTheDocument()
+    expect(screen.queryByRole('menuitem', { name: /Chỉnh sửa tin/ })).not.toBeInTheDocument()
+  })
+
   it('derives the API query from URL filters and removes the old page when status changes', async () => {
     const user = userEvent.setup()
     renderPage('/tuyendung/app/jobs?status=active&q=frontend&page=3')

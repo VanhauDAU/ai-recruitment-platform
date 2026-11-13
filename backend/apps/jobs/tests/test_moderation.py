@@ -420,3 +420,123 @@ class JobPublishedContentChangesTests(JobModerationFixture, APITestCase):
         self.assertTrue(listed[self.job.public_id])
         self.assertFalse(listed[draft.public_id])
         self.assertFalse(held)
+
+
+class EmployerVisibilityHoldTests(JobModerationFixture, APITestCase):
+    """The owner must learn that a job is hidden, and why, without admin-only detail."""
+
+    internal_note = 'Người báo cáo cung cấp ảnh chụp yêu cầu đặt cọc.'
+
+    def owner_views(self):
+        self.client.force_authenticate(self.employer)
+        listed = self.client.get(reverse('employer-job-list-create')).data['results']
+        detail = self.client.get(
+            reverse('employer-job-detail', kwargs={'public_id': self.job.public_id})
+        )
+        return listed[0], detail
+
+    def hide_job(self):
+        self.client.force_authenticate(self.admin)
+        token = self.client.get(self.detail_url()).data['review_token']
+        hidden = self.client.post(
+            self.decision_url(),
+            {
+                'action': 'hide',
+                'review_token': token,
+                'reason_code': 'fraud_risk',
+                'hold': Job.ModerationHold.MANUAL_REVIEW,
+                'note': self.internal_note,
+            },
+            format='json',
+        )
+        self.assertEqual(hidden.status_code, status.HTTP_200_OK, hidden.data)
+        return hidden.data['review_token']
+
+    def test_visible_job_reports_no_hold(self):
+        listed, detail = self.owner_views()
+
+        self.assertIsNone(listed['visibility_hold'])
+        self.assertIsNone(detail.data['visibility_hold'])
+
+    def test_owner_sees_the_hold_and_its_reason_category_but_not_the_internal_note(self):
+        review_token = self.hide_job()
+
+        listed, detail = self.owner_views()
+
+        for hold in (listed['visibility_hold'], detail.data['visibility_hold']):
+            self.assertEqual(hold['kind'], 'moderation')
+            self.assertEqual(hold['code'], Job.ModerationHold.MANUAL_REVIEW)
+            self.assertEqual(hold['label'], 'Tạm ẩn để rà soát nội dung')
+            self.assertEqual(hold['reason_code'], 'fraud_risk')
+            self.assertEqual(hold['reason_label'], 'Có dấu hiệu lừa đảo')
+            self.assertIsNotNone(hold['held_at'])
+        self.assertEqual(detail.data['status'], Job.Status.ACTIVE)
+        self.assertNotIn(self.internal_note, detail.content.decode())
+
+        self.client.force_authenticate(self.admin)
+        restored = self.client.post(
+            self.decision_url(),
+            {
+                'action': 'restore',
+                'review_token': review_token,
+                'note': 'Đã xác minh nội dung hợp lệ.',
+            },
+            format='json',
+        )
+        self.assertEqual(restored.status_code, status.HTTP_200_OK, restored.data)
+        listed, detail = self.owner_views()
+        self.assertIsNone(listed['visibility_hold'])
+        self.assertIsNone(detail.data['visibility_hold'])
+
+    def test_reason_comes_from_the_latest_hide_when_a_job_is_hidden_again(self):
+        review_token = self.hide_job()
+        self.client.force_authenticate(self.admin)
+        restored = self.client.post(
+            self.decision_url(),
+            {'action': 'restore', 'review_token': review_token, 'note': 'Khôi phục.'},
+            format='json',
+        )
+        hidden_again = self.client.post(
+            self.decision_url(),
+            {
+                'action': 'hide',
+                'review_token': restored.data['review_token'],
+                'reason_code': 'duplicate_posting',
+                'hold': Job.ModerationHold.MANUAL_REVIEW,
+                'note': 'Trùng với tin đã đăng trước đó.',
+            },
+            format='json',
+        )
+        self.assertEqual(hidden_again.status_code, status.HTTP_200_OK, hidden_again.data)
+
+        listed, detail = self.owner_views()
+
+        self.assertEqual(listed['visibility_hold']['reason_code'], 'duplicate_posting')
+        self.assertEqual(detail.data['visibility_hold']['reason_label'], 'Tin trùng lặp')
+
+    def test_owner_sees_an_account_level_hold(self):
+        held_at = timezone.now()
+        Job.objects.filter(pk=self.job.pk).update(
+            policy_hold=Job.PolicyHold.BAN_REVIEW,
+            policy_held_at=held_at,
+        )
+
+        listed, detail = self.owner_views()
+
+        for hold in (listed['visibility_hold'], detail.data['visibility_hold']):
+            self.assertEqual(hold['kind'], 'account')
+            self.assertEqual(hold['code'], Job.PolicyHold.BAN_REVIEW)
+            self.assertEqual(hold['label'], 'Giữ để rà soát sau cấm')
+            self.assertEqual(hold['reason_code'], '')
+
+    def test_action_response_explains_the_hold_without_the_list_annotation(self):
+        self.hide_job()
+        self.client.force_authenticate(self.employer)
+
+        closed = self.client.post(
+            reverse('employer-job-close', kwargs={'public_id': self.job.public_id})
+        )
+
+        self.assertEqual(closed.status_code, status.HTTP_200_OK, closed.data)
+        self.assertEqual(closed.data['status'], Job.Status.CLOSED)
+        self.assertEqual(closed.data['visibility_hold']['reason_code'], 'fraud_risk')

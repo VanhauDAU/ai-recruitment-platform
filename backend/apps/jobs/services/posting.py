@@ -170,7 +170,7 @@ def _validate_job_for_write(job):
         raise ValidationError(
             {
                 'code': 'RECRUITMENT_HOLD_ACTIVE',
-                'detail': 'Tin tuyển dụng đang bị hold.',
+                'detail': 'Tin tuyển dụng đang bị tạm ẩn nên chưa thể thay đổi.',
             }
         )
 
@@ -707,7 +707,7 @@ def duplicate_job(job, user):
         raise ValidationError(
             {
                 'code': 'RECRUITMENT_HOLD_ACTIVE',
-                'detail': 'Không thể sao chép tin hoặc chiến dịch đang bị hold.',
+                'detail': 'Không thể sao chép khi tin hoặc chiến dịch đang bị tạm giữ.',
             }
         )
     duplicate = copy(job)

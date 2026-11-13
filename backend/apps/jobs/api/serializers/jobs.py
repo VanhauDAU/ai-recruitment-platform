@@ -19,6 +19,7 @@ from ...models import (
     JobSkill,
     JobWorkSchedule,
 )
+from ...selectors.employer import employer_job_visibility_hold
 from ...selectors.presentation import job_presentation
 from ...selectors.verification_badge import (
     BADGE_CACHE_KEY,
@@ -672,7 +673,27 @@ class JobDetailSerializer(JobSerializer):
         ]
 
 
-class EmployerJobWriteSerializer(JobSerializer):
+class EmployerJobVisibilityHoldSerializer(serializers.Serializer):
+    kind = serializers.ChoiceField(choices=('moderation', 'account'))
+    code = serializers.CharField()
+    label = serializers.CharField()
+    held_at = serializers.DateTimeField(allow_null=True)
+    reason_code = serializers.CharField(allow_blank=True)
+    reason_label = serializers.CharField(allow_blank=True)
+
+
+class EmployerJobVisibilityHoldMixin(serializers.Serializer):
+    """Tell the owner when, and why, candidates cannot see one of their jobs."""
+
+    visibility_hold = serializers.SerializerMethodField()
+
+    @extend_schema_field(EmployerJobVisibilityHoldSerializer(allow_null=True))
+    def get_visibility_hold(self, obj):
+        hold = employer_job_visibility_hold(obj)
+        return EmployerJobVisibilityHoldSerializer(hold).data if hold else None
+
+
+class EmployerJobWriteSerializer(EmployerJobVisibilityHoldMixin, JobSerializer):
     """Create/update DTO for the employer job form; never used for public reads."""
 
     application_contact = JobApplicationContactSerializer(required=False, allow_null=True)
@@ -701,6 +722,7 @@ class EmployerJobWriteSerializer(JobSerializer):
             'campaign',
             'campaign_name',
             'is_expired',
+            'visibility_hold',
             'ai_generation_public_id',
             'auto_reject_stale_applications',
             'auto_reject_after_days',
@@ -829,7 +851,7 @@ class EmployerJobDraftSerializer(EmployerJobWriteSerializer):
         }
 
 
-class EmployerJobListSerializer(PublicJobListSerializer):
+class EmployerJobListSerializer(EmployerJobVisibilityHoldMixin, PublicJobListSerializer):
     """Compact management-table DTO; rich job content stays on the detail API."""
 
     campaign = serializers.CharField(source='campaign.public_id', read_only=True, allow_null=True)
@@ -854,6 +876,7 @@ class EmployerJobListSerializer(PublicJobListSerializer):
             'is_visibility_expired',
             'status',
             'is_expired',
+            'visibility_hold',
             'campaign',
             'campaign_name',
             'application_count',

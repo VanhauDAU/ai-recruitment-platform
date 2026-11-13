@@ -21,7 +21,10 @@ const STATUS = {
 
 export default function JobDetailHeader({ job, publicId, closing, onClose, onDeadlineAction }) {
   const navigate = useNavigate()
-  const status = job.is_expired ? ['Hết hạn', 'orange'] : (STATUS[job.status] || [job.status, 'default'])
+  // The backend refuses edits, extensions and reopening while a job is held.
+  const held = Boolean(job.visibility_hold)
+  const status = (held && job.status === 'active' && ['Tạm ẩn', 'red'])
+    || (job.is_expired ? ['Hết hạn', 'orange'] : (STATUS[job.status] || [job.status, 'default']))
   const deadline = job.deadline ? dayjs(job.deadline).format('DD/MM/YYYY') : 'Không giới hạn'
   const canExtendDeadline = !job.visibility_ends_at || dayjs(job.visibility_ends_at).isAfter(dayjs())
   return (
@@ -59,18 +62,18 @@ export default function JobDetailHeader({ job, publicId, closing, onClose, onDea
           </div>
         </div>
         <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:justify-end">
-          {job.status !== 'closed' && (
+          {!held && job.status !== 'closed' && (
             <Button className="!w-full sm:!w-auto" icon={<EditOutlined />} onClick={() => navigate(employerAppPath(`/jobs/${publicId}/edit`))}>
               Chỉnh sửa
             </Button>
           )}
-          {job.status === 'active' && job.is_expired && canExtendDeadline && (
+          {!held && job.status === 'active' && job.is_expired && canExtendDeadline && (
             <Button className="!w-full sm:!w-auto" type="primary" icon={<SyncOutlined />} onClick={() => onDeadlineAction('extend')}>Gia hạn</Button>
           )}
           {job.status === 'active' && (
             <Button className="!w-full sm:!w-auto" danger icon={<StopOutlined />} loading={closing} onClick={onClose}>Đóng tin</Button>
           )}
-          {job.status === 'closed' && (
+          {!held && job.status === 'closed' && (
             <Button className="!w-full sm:!w-auto" type="primary" icon={<SyncOutlined />} onClick={() => onDeadlineAction('reopen')}>Mở lại tin</Button>
           )}
         </div>

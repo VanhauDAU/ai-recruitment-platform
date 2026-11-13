@@ -1410,6 +1410,7 @@ class EmployerJobSerializerTests(APITestCase):
                 'is_visibility_expired',
                 'status',
                 'is_expired',
+                'visibility_hold',
                 'campaign',
                 'campaign_name',
                 'application_count',

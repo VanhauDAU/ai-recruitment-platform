@@ -11,6 +11,7 @@ from .employer import (
     attach_job_candidate_previews,
     employer_job_detail_queryset,
     employer_job_list_queryset,
+    employer_job_visibility_hold,
 )
 from .listing import build_job_list_queryset
 from .moderation import (
@@ -40,6 +41,7 @@ __all__ = [
     'employer_job_detail_queryset',
     'employer_job_ai_generation_queryset',
     'employer_job_list_queryset',
+    'employer_job_visibility_hold',
     'badge_criteria_payload',
     'admin_job_detail_queryset',
     'admin_job_management_queryset',

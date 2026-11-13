@@ -35,6 +35,7 @@ import JobApplicationsWorkspace from './JobApplicationsWorkspace'
 import JobDetailHeader from './JobDetailHeader'
 import JobInformationPanel from './JobInformationPanel'
 import JobLifecycleModal from './JobLifecycleModal'
+import JobVisibilityHoldAlert from './JobVisibilityHoldAlert'
 
 const CONNECTED_STATUSES = new Set(['considering', 'shortlisted', 'interviewed', 'accepted'])
 const VALID_TABS = new Set(['apply_cv', 'viewed_job', 'job', 'services', 'cv_label'])
@@ -296,6 +297,8 @@ export default function JobDetail() {
         onClose={() => closeMutation.mutate(publicId)}
         onDeadlineAction={openDeadlineAction}
       />
+
+      <JobVisibilityHoldAlert hold={job.visibility_hold} />
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <MetricCard testId="job-metric-total-cvs" icon={<TeamOutlined />} label="Tổng lượng CV ứng viên" value={metrics.total} helper="Tất cả nguồn CV của tin" />

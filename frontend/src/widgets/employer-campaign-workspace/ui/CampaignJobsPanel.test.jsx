@@ -199,6 +199,22 @@ describe('CampaignJobsPanel', () => {
     expect(screen.getAllByText('—').length).toBeGreaterThanOrEqual(5)
   })
 
+  it('marks a held job as hidden and offers neither its public page nor editing', async () => {
+    mocks.getCampaignJobPerformance.mockImplementation((_, days) => {
+      const report = performance(days)
+      report.jobs[0].visibility_held = true
+      return Promise.resolve(report)
+    })
+    renderPanel()
+
+    expect(await screen.findAllByText('Tạm ẩn')).not.toHaveLength(0)
+    expect(screen.getByRole('link', { name: 'Xem tin Kỹ sư Frontend' }))
+      .toHaveAttribute('aria-disabled', 'true')
+    expect(screen.queryByRole('link', { name: 'Chỉnh sửa Kỹ sư Frontend' }))
+      .not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Chỉnh sửa Backend Engineer' })).toBeInTheDocument()
+  })
+
   it('keeps the add-job action available when the report cannot load', async () => {
     mocks.getCampaignJobPerformance.mockRejectedValue(new Error('Network error'))
     renderPanel()
