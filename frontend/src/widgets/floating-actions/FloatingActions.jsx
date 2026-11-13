@@ -102,7 +102,7 @@ export default function FloatingActions() {
         data-testid="floating-actions"
         className="fixed left-4 z-30 flex flex-col items-start gap-2.5 md:left-6"
         style={{
-          bottom: `calc(clamp(1.25rem, 3vw, 2rem) + ${viewportBottomInset}px + env(safe-area-inset-bottom, 0px))`,
+          bottom: `calc(clamp(1.25rem, 3vw, 2rem) + ${viewportBottomInset}px + var(--page-bottom-bar-height, 0px) + env(safe-area-inset-bottom, 0px))`,
         }}
       >
         {showScrollTop && (

@@ -15,6 +15,7 @@ from ..models import (
     CvTemplateSection,
     localized_field,
 )
+from ..renderers import layout_registry
 
 
 def _slugs(value):
@@ -44,7 +45,25 @@ def published_templates_in_language(locale=DEFAULT_CV_LANGUAGE):
     )
 
 
-def published_template_queryset(*, locale=DEFAULT_CV_LANGUAGE, category=None, tag=None):
+def layout_keys(*, has_photo=None, columns=None):
+    """Khóa layout khớp bộ lọc kho mẫu: có ảnh đại diện, số cột của hàng thân CV."""
+    keys = []
+    for key, contract in layout_registry().items():
+        width = max(
+            sum(1 for region in contract.regions if region.row == row)
+            for row in {region.row for region in contract.regions}
+        )
+        if has_photo is not None and contract.avatar != has_photo:
+            continue
+        if columns is not None and min(width, 2) != columns:
+            continue
+        keys.append(key)
+    return keys
+
+
+def published_template_queryset(
+    *, locale=DEFAULT_CV_LANGUAGE, category=None, tag=None, has_photo=None, columns=None
+):
     """Public catalogue, always tied to the current published version."""
     categories = (
         CvTemplateCategoryLink.objects.select_related('category')
@@ -83,6 +102,12 @@ def published_template_queryset(*, locale=DEFAULT_CV_LANGUAGE, category=None, ta
         queryset = queryset.filter(
             category_links__category__slug__in=tag_slugs,
             category_links__category__category_type=CvCategory.CategoryType.FEATURE,
+        )
+    if has_photo is not None or columns is not None:
+        queryset = queryset.filter(
+            current_published_version__renderer_key__in=layout_keys(
+                has_photo=has_photo, columns=columns
+            )
         )
     return queryset.distinct()
 

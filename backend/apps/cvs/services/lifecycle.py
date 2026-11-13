@@ -2,6 +2,7 @@
 
 from copy import deepcopy
 
+from django.core.cache import cache
 from django.db import transaction
 from django.db.models import F
 from django.utils import timezone
@@ -27,6 +28,15 @@ from .versions import create_version, document_hash
 
 class CvLifecyclePolicyError(ValueError):
     """The requested lifecycle action violates a CV business policy."""
+
+
+class CvCreateInProgress(RuntimeError):
+    """Một yêu cầu tạo CV cùng Idempotency-Key đang chạy."""
+
+
+# Bấm "Tạo CV" hai lần (hoặc mạng gửi lại) với cùng Idempotency-Key chỉ tạo một CV.
+CREATE_IDEMPOTENCY_TTL_SECONDS = 10 * 60
+_CREATE_PENDING = 'pending'
 
 
 def _content_for_create(position, language, experience_band):
@@ -327,3 +337,29 @@ def apply_sample_to_draft(
     )
     UserCv.objects.filter(pk=cv.pk).update(updated_at=timezone.now())
     return draft
+
+
+def create_v2_cv_once(*, actor, idempotency_key='', **fields):
+    """`create_v2_cv` an toàn khi gửi lại: trả `(cv, replayed)`.
+
+    Khóa gắn với người dùng nên không ai đoán khóa để lấy CV của người khác.
+    """
+    key = (idempotency_key or '').strip()[:100]
+    if not key:
+        return create_v2_cv(actor=actor, **fields), False
+    cache_key = f'cv-create:{actor.pk}:{key}'
+    existing = cache.get(cache_key)
+    if existing and existing != _CREATE_PENDING:
+        cv = UserCv.objects.filter(user=actor, public_id=existing).first()
+        if cv is not None:
+            return cv, True
+        cache.delete(cache_key)  # CV đã bị xóa: cho tạo lại.
+    if not cache.add(cache_key, _CREATE_PENDING, CREATE_IDEMPOTENCY_TTL_SECONDS):
+        raise CvCreateInProgress('A CV with this Idempotency-Key is being created.')
+    try:
+        cv = create_v2_cv(actor=actor, **fields)
+    except Exception:
+        cache.delete(cache_key)
+        raise
+    cache.set(cache_key, cv.public_id, CREATE_IDEMPOTENCY_TTL_SECONDS)
+    return cv, False

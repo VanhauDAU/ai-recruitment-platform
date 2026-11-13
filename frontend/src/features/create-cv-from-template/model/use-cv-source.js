@@ -1,17 +1,13 @@
-// State + nghiệp vụ của bảng chọn nguồn nội dung khi tạo CV từ mẫu.
-// UI (ui/CvSourcePanel.jsx) chỉ render theo giá trị hook trả về.
+// Nghiệp vụ của bảng "Bạn muốn tạo CV từ?" khi tạo CV từ mẫu.
 //
-// Hook không tự reset khi đổi mẫu/ngôn ngữ: component cha phải đặt `key`
-// theo `template.public_id` + `locale` để mount lại. Nhờ vậy không còn effect
-// reset chạy lại khi dữ liệu phụ (ngôn ngữ, phiên đăng nhập) tải xong — nguyên
-// nhân preview kẹt ở trạng thái chờ trước CVT-0.
-import { useEffect, useMemo, useRef, useState } from 'react'
-import {
-  getMyCvs,
-  importCvFile,
-  retryCvImport,
-  waitForCvImport,
-} from '@/entities/cv'
+// Lựa chọn (`selection`: nguồn, vị trí, mức kinh nghiệm, ngôn ngữ nội dung mẫu)
+// do bên ngoài nắm giữ — URL ở trang chi tiết mẫu, state ở hộp "Dùng mẫu" — nên
+// hook không có effect khởi tạo/reset nào. Dữ liệu tải bằng TanStack Query:
+// preview cũ vẫn hiện trong lúc tải bản mới, dữ liệu đến trễ (phiên đăng nhập,
+// danh sách vị trí) tự làm preview hiện ra mà không cần thao tác — lỗi CVT-0.
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { useEffect, useRef, useState } from 'react'
+import { getMyCvs, importCvFile, retryCvImport, waitForCvImport } from '@/entities/cv'
 import { CV_EXPERIENCE_BANDS, CV_LANGUAGES, DEFAULT_CV_EXPERIENCE_BAND, getCvPositionOptions } from '@/entities/cv-template'
 import { useSession } from '@/entities/session'
 import { message } from '@/shared/lib/toast'
@@ -19,7 +15,9 @@ import { createCvFromTemplate } from '../api/create-cv.api'
 import { createCvErrorMessage } from '../api/create-cv.errors'
 import { resolvePreviewSelection } from './preview-selection'
 
-const CV_SOURCES = ['sample', 'previous', 'upload', 'blank']
+export const CV_SOURCES = ['sample', 'previous', 'upload', 'blank']
+const POSITIONS_STALE_MS = 10 * 60_000
+const PREVIEW_STALE_MS = 5 * 60_000
 
 function importFailureMessage(code) {
   if (code === 'scanned_pdf_ocr_unavailable') return 'PDF là bản scan chưa có lớp chữ. Hãy dùng PDF có thể bôi đen chữ hoặc tệp DOCX.'
@@ -28,166 +26,81 @@ function importFailureMessage(code) {
   return 'Không thể phân tích tệp thành CV. Bạn có thể thử lại hoặc tạo CV trống.'
 }
 
-function isAbort(error) {
-  return error?.code === 'ERR_CANCELED' || error?.name === 'CanceledError' || error?.name === 'AbortError'
-}
+const newIdempotencyKey = () => globalThis.crypto?.randomUUID?.() || `cv-${Date.now()}-${Math.random().toString(36).slice(2)}`
 
-function useLatest(value) {
-  const ref = useRef(value)
-  useEffect(() => { ref.current = value })
-  return ref
-}
-
-export function useCvSource({
-  template,
-  locale,
-  themeColor,
-  initialSelection,
-  onSelectionChange,
-  onCreated,
-  onPreviewChange,
-  onRequireLogin,
-}) {
+export function useCvSource({ template, locale, selection, onSelectionChange, themeColor, onCreated, onRequireLogin }) {
   const { user, isAuthenticated } = useSession()
   const candidateId = isAuthenticated && user?.role === 'candidate' ? user.public_id || 'candidate' : null
   const templateId = template.public_id
-  const previewChangeRef = useLatest(onPreviewChange)
-  const selectionChangeRef = useLatest(onSelectionChange)
-  const pendingPositionSlug = useRef(initialSelection?.positionSlug || null)
+  const sampleLocale = selection.sampleLocale || locale
+  const experienceBand = selection.experienceBand || DEFAULT_CV_EXPERIENCE_BAND
 
-  const [source, setSource] = useState(() => (CV_SOURCES.includes(initialSelection?.source) ? initialSelection.source : 'sample'))
-  const [sampleLocale, setSampleLocale] = useState(() => initialSelection?.sampleLocale || locale)
-  const [myCvs, setMyCvs] = useState({ owner: null, items: [] })
   const [selectedCvId, setSelectedCvId] = useState(null)
-  const [positions, setPositions] = useState({ locale: null, items: [] })
-  const [selectedPosition, setSelectedPosition] = useState(null)
-  const [experienceBand, setExperienceBand] = useState(() => initialSelection?.experienceBand || DEFAULT_CV_EXPERIENCE_BAND)
-  const [loadingPreview, setLoadingPreview] = useState(false)
-  const [previewAvailable, setPreviewAvailable] = useState(false)
-  const [previewError, setPreviewError] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [autoCreate, setAutoCreate] = useState(false)
   const [uploadFile, setUploadFile] = useState(null)
   const [importCvId, setImportCvId] = useState(null)
   const [importError, setImportError] = useState('')
   const [uploadState, setUploadState] = useState(null)
 
-  const loadingPositions = positions.locale !== sampleLocale
-  const cvsLoaded = myCvs.owner === candidateId
-  const availableCvs = cvsLoaded ? myCvs.items : []
-  // "CV đã tạo" chỉ hợp lệ khi đã tải xong và có ít nhất một CV.
-  const activeSource = source === 'previous' && (!candidateId || (cvsLoaded && availableCvs.length === 0)) ? 'sample' : source
+  const positionsQuery = useQuery({
+    queryKey: ['cv-position-options', sampleLocale],
+    queryFn: ({ signal }) => getCvPositionOptions(sampleLocale, '', signal),
+    staleTime: POSITIONS_STALE_MS,
+  })
+  const myCvsQuery = useQuery({ queryKey: ['my-cvs', candidateId], queryFn: getMyCvs, enabled: Boolean(candidateId) })
+  const positions = positionsQuery.data || []
+  const myCvs = candidateId ? myCvsQuery.data || [] : []
 
+  // Chưa chọn hoặc slug không hợp lệ → vị trí đầu tiên.
+  const position = positions.find((item) => item.slug === selection.positionSlug) || positions[0] || null
+  const cvId = myCvs.some((cv) => cv.public_id === selectedCvId) ? selectedCvId : myCvs[0]?.public_id || null
+  // "CV đã tạo" chỉ hợp lệ khi có ít nhất một CV.
+  const source = CV_SOURCES.includes(selection.source) && !(selection.source === 'previous' && (!candidateId || (myCvsQuery.isFetched && myCvs.length === 0)))
+    ? selection.source
+    : 'sample'
+
+  // Slug vị trí trên URL không tồn tại → bỏ khỏi URL (vị trí mặc định không ghi
+  // lên URL để trang mặc định giữ canonical, không bị noindex).
+  const invalidPositionSlug = positionsQuery.isSuccess && Boolean(selection.positionSlug) && !positions.some((item) => item.slug === selection.positionSlug)
   useEffect(() => {
-    if (!candidateId) return undefined
-    let cancelled = false
-    getMyCvs()
-      .then((data) => {
-        if (cancelled) return
-        setMyCvs({ owner: candidateId, items: data })
-        setSelectedCvId((current) => current || data[0]?.public_id || null)
-      })
-      .catch(() => !cancelled && setMyCvs({ owner: candidateId, items: [] }))
-    return () => { cancelled = true }
-  }, [candidateId])
+    if (invalidPositionSlug) onSelectionChange({ positionSlug: null })
+  }, [invalidPositionSlug, onSelectionChange])
 
-  useEffect(() => {
-    const controller = new AbortController()
-    getCvPositionOptions(sampleLocale, '', controller.signal)
-      .then((data) => {
-        // Đọc slug từ URL ngoài updater: StrictMode gọi updater hai lần.
-        const wanted = pendingPositionSlug.current
-        pendingPositionSlug.current = null
-        const fromSlug = wanted && data.find((position) => position.slug === wanted)
-        setPositions({ locale: sampleLocale, items: data })
-        setSelectedPosition((current) => {
-          if (fromSlug) return fromSlug.public_id
-          if (current && data.some((position) => position.public_id === current)) return current
-          return data[0]?.public_id || null
-        })
-      })
-      .catch((error) => {
-        if (isAbort(error)) return
-        setPositions({ locale: sampleLocale, items: [] })
-        setSelectedPosition(null)
-      })
-    return () => controller.abort()
-  }, [sampleLocale])
+  const plan = resolvePreviewSelection({
+    source,
+    locale,
+    sampleLocale,
+    positionsLocale: positionsQuery.isFetched ? sampleLocale : null,
+    positions,
+    loadingPositions: positionsQuery.isLoading,
+    selectedPosition: position?.public_id || null,
+    experienceBand,
+    selectedCvId: cvId,
+    templatePublicId: templateId,
+  })
+  const previewQuery = useQuery({
+    queryKey: ['cv-template-preview', templateId, source, source === 'sample' ? [position?.public_id, sampleLocale, experienceBand] : null, source === 'previous' ? cvId : null, locale],
+    queryFn: ({ signal }) => plan.load(signal),
+    enabled: plan.state === 'ready',
+    placeholderData: keepPreviousData,
+    staleTime: PREVIEW_STALE_MS,
+  })
+  const preview = {
+    document: plan.state === 'ready' ? previewQuery.data?.document || null : null,
+    rendererKey: previewQuery.data?.renderer?.key,
+    updating: previewQuery.isFetching,
+    loading: plan.state === 'waiting' || (plan.state === 'ready' && previewQuery.isPending),
+    empty: plan.state === 'empty',
+    unavailable: plan.state === 'unavailable',
+    error: plan.state === 'ready' && previewQuery.isError,
+  }
 
-  useEffect(() => {
-    const notify = (value) => previewChangeRef.current?.(value)
-    const selection = resolvePreviewSelection({
-      source: activeSource,
-      locale,
-      sampleLocale,
-      positionsLocale: positions.locale,
-      positions: positions.items,
-      loadingPositions,
-      selectedPosition,
-      experienceBand,
-      selectedCvId,
-      templatePublicId: templateId,
-    })
-    if (selection.state === 'unavailable') {
-      setPreviewAvailable(false)
-      setPreviewError('')
-      notify({ unavailable: true })
-      return undefined
-    }
-    if (selection.state !== 'ready') {
-      setPreviewAvailable(false)
-      if (selection.state === 'empty') {
-        setPreviewError(activeSource === 'sample'
-          ? 'Chưa có nội dung CV mẫu cho ngôn ngữ này.'
-          : 'Không có dữ liệu CV phù hợp để xem trước.')
-        notify({ empty: true })
-      } else {
-        notify(null)
-      }
-      return undefined
-    }
-    const controller = new AbortController()
-    setLoadingPreview(true)
-    setPreviewAvailable(false)
-    setPreviewError('')
-    selection.load(controller.signal)
-      .then((data) => {
-        setPreviewAvailable(Boolean(data.document))
-        notify(data)
-      })
-      .catch((error) => {
-        if (isAbort(error)) return
-        setPreviewError('Không thể tải bản xem trước. Vui lòng chọn lại nội dung.')
-        notify({ error: true })
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setLoadingPreview(false)
-      })
-    return () => controller.abort()
-  }, [activeSource, locale, sampleLocale, positions, loadingPositions, selectedPosition, experienceBand, selectedCvId, templateId, previewChangeRef])
-
-  const position = useMemo(
-    () => positions.items.find((item) => item.public_id === selectedPosition) || null,
-    [positions.items, selectedPosition],
-  )
-  const positionSlug = position?.slug || null
-  const positionLabel = position?.display_name || position?.name_vi || null
-
-  useEffect(() => {
-    // Chờ danh sách vị trí để không xóa `vi-tri` khỏi URL trong lúc đang tải.
-    if (activeSource === 'sample' && loadingPositions) return
-    selectionChangeRef.current?.({
-      source: activeSource,
-      sampleLocale,
-      experienceBand,
-      position: positionSlug ? { slug: positionSlug, label: positionLabel } : null,
-    })
-  }, [activeSource, sampleLocale, experienceBand, loadingPositions, positionSlug, positionLabel, selectionChangeRef])
-
-  const sourceReady = activeSource === 'blank'
-    || (activeSource === 'sample' && Boolean(selectedPosition))
-    || (activeSource === 'previous' && Boolean(selectedCvId))
-    || (activeSource === 'upload' && Boolean(uploadFile))
-  const canSubmit = sourceReady && (activeSource === 'upload' || previewAvailable)
+  const sourceReady = source === 'blank'
+    || (source === 'sample' && Boolean(position))
+    || (source === 'previous' && Boolean(cvId))
+    || (source === 'upload' && Boolean(uploadFile))
+  const canSubmit = sourceReady && (source === 'upload' || Boolean(preview.document))
 
   const pollImport = async (publicId) => {
     const analyzed = await waitForCvImport(publicId)
@@ -215,9 +128,14 @@ export function useCvSource({
     setImportError('')
   }
 
+  // Một lần bấm = một khóa: bấm lại khi đang gửi bị khóa nút, gửi lại do mạng
+  // không tạo CV thứ hai.
+  const inFlight = useRef(false)
   const submit = async () => {
+    if (inFlight.current) return
     if (!isAuthenticated) {
-      onRequireLogin?.()
+      // Upload: tệp không giữ được qua đăng nhập nên chỉ mở hộp đăng nhập.
+      onRequireLogin?.(() => source !== 'upload' && setAutoCreate(true))
       return
     }
     if (user?.role !== 'candidate') {
@@ -228,72 +146,77 @@ export function useCvSource({
       message.warning('Bạn cần xác thực email trước khi tạo CV.')
       return
     }
+    inFlight.current = true
     setSubmitting(true)
+    const idempotencyKey = newIdempotencyKey()
     try {
-      if (activeSource === 'upload') {
+      if (source === 'upload') {
         setImportError('')
         const queued = await importCvFile(uploadFile, uploadFile.name, {
           templatePublicId: templateId,
-          language: sampleLocale || locale,
+          language: sampleLocale,
           themeColor,
-          idempotencyKey: globalThis.crypto?.randomUUID?.() || `import-${Date.now()}`,
+          idempotencyKey,
           onUploadStateChange: setUploadState,
         })
         setImportCvId(queued.public_id)
         await pollImport(queued.public_id)
         return
       }
+      const positionLabel = position?.display_name || position?.name_vi
       const cv = await createCvFromTemplate({
-        title: positionLabel && activeSource === 'sample'
-          ? `CV ${positionLabel} - ${template.display_name}`
-          : `CV ${template.display_name}`,
+        title: positionLabel && source === 'sample' ? `CV ${positionLabel} – ${template.display_name}` : `CV ${template.display_name}`,
         template_public_id: templateId,
-        language: activeSource === 'sample' ? sampleLocale : locale,
+        language: source === 'sample' ? sampleLocale : locale,
         ...(themeColor ? { theme_color: themeColor } : {}),
-        ...(activeSource === 'sample' ? { position_public_id: selectedPosition, experience_band: experienceBand } : {}),
-        ...(activeSource === 'previous' ? { source_cv_public_id: selectedCvId } : {}),
-      })
+        ...(source === 'sample' ? { position_public_id: position.public_id, experience_band: experienceBand } : {}),
+        ...(source === 'previous' ? { source_cv_public_id: cvId } : {}),
+      }, { idempotencyKey })
       message.success('Đã tạo CV. Bạn có thể bắt đầu chỉnh sửa ngay.')
       onCreated?.(cv)
     } catch (error) {
-      if (activeSource === 'upload') {
-        setImportError(importFailureMessage(error.code))
-      } else {
-        message.error(createCvErrorMessage(error))
-      }
+      if (source === 'upload') setImportError(importFailureMessage(error.code))
+      else message.error(createCvErrorMessage(error))
     } finally {
+      inFlight.current = false
       setSubmitting(false)
     }
   }
 
+  // Đăng nhập xong ngay tại trang (lựa chọn vẫn nằm trên URL): tự bấm Tạo CV một
+  // lần khi phiên đã sẵn sàng và bản xem trước đã có.
+  const submitRef = useRef(submit)
+  useEffect(() => { submitRef.current = submit })
+  useEffect(() => {
+    if (!autoCreate || !isAuthenticated || !user || !canSubmit) return
+    setAutoCreate(false)
+    submitRef.current()
+  }, [autoCreate, isAuthenticated, user, canSubmit])
+
   return {
     languages: CV_LANGUAGES,
-    source: activeSource,
-    setSource,
-    myCvs: availableCvs,
-    selectedCvId,
-    setSelectedCvId,
-    sampleLocale,
-    setSampleLocale,
-    positions: positions.items,
-    loadingPositions,
-    loadingPreview,
-    previewError,
-    selectedPosition,
-    setSelectedPosition,
     experienceBands: CV_EXPERIENCE_BANDS,
+    source,
+    sampleLocale,
     experienceBand,
-    setExperienceBand,
+    position,
+    positions,
+    loadingPositions: positionsQuery.isLoading,
+    myCvs,
+    selectedCvId: cvId,
+    setSelectedCvId,
+    preview,
+    select: onSelectionChange,
     submitting,
+    canSubmit,
+    submit,
     uploadFile,
     setUploadFile,
     clearUpload,
     importCvId,
     importError,
-    uploadState,
     setImportError,
-    canSubmit,
+    uploadState,
     retryUpload,
-    submit,
   }
 }

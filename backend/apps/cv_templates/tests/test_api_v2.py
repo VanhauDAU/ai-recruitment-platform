@@ -142,6 +142,23 @@ class TemplateCatalogV2Tests(TestCase):
         self.assertEqual(response['Cache-Control'], 'public, no-cache')
         self.assertIn('ETag', response)
 
+    def test_catalogue_filters_by_photo_and_column_count(self):
+        from apps.cv_templates.selectors.templates import layout_keys
+
+        self.assertIn('sidebar_left_photo_v1', layout_keys(has_photo=True, columns=2))
+        self.assertNotIn('single_column_v1', layout_keys(has_photo=True))
+        self.assertEqual(
+            set(layout_keys(columns=1)),
+            {'single_column_v1', 'single_column_photo_v1', 'timeline_v1'},
+        )
+        renderer = self.primary.current_published_version.renderer_key
+        one_column = renderer in layout_keys(columns=1)
+        response = self.client.get('/api/v2/cv-templates/', {'locale': 'vi-VN', 'columns': '1'})
+        slugs = [card['slug'] for card in response.data['results']]
+        self.assertEqual(self.primary.slug in slugs, one_column)
+        unfiltered = self.client.get('/api/v2/cv-templates/', {'columns': 'x'})
+        self.assertEqual(unfiltered.status_code, 200)
+
     def test_hiding_a_template_takes_effect_for_a_cached_catalogue_immediately(self):
         """Hồi quy: "Tất cả" trước đây còn hiện mẫu đã ẩn suốt 5 phút cache."""
         params = {'locale': 'vi-VN'}

@@ -522,8 +522,8 @@ test('public smoke: CV template colors change preview and detail offers the crea
           ? []
           : path === '/api/v2/cv-position-options/'
             ? [
-                { public_id: 'jobcat_customer_service', name_vi: 'Nhân viên CSKH' },
-                { public_id: 'jobcat_frontend', name_vi: 'Frontend Developer' },
+                { public_id: 'jobcat_customer_service', slug: 'nhan-vien-cskh', name_vi: 'Nhân viên CSKH', display_name: 'Nhân viên CSKH' },
+                { public_id: 'jobcat_frontend', slug: 'frontend-developer', name_vi: 'Frontend Developer', display_name: 'Frontend Developer' },
               ]
             : path === '/api/v2/cv-position-preview/'
               ? (() => {
@@ -535,7 +535,7 @@ test('public smoke: CV template colors change preview and detail offers the crea
                       full_name: '',
                       headline: locale === 'en-US'
                         ? 'Customer Service Representative'
-                        : 'Nhân viên CSKH',
+                        : url.searchParams.get('position_public_id') === 'jobcat_frontend' ? 'Frontend Developer' : 'Nhân viên CSKH',
                       email: '', phone: '', address: '', avatar_asset_id: null, links: [],
                     },
                     sections: [],
@@ -570,6 +570,8 @@ test('public smoke: CV template colors change preview and detail offers the crea
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) })
   })
 
+  // Ảnh mẫu theo màu (ảnh lỗi sẽ được thay bằng khung minh họa).
+  await page.route('**/*.png', (route) => route.fulfill({ contentType: 'image/png', body: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', 'base64') }))
   await page.goto('/mau-cv')
   await expect(page.getByRole('heading', { name: /Mẫu CV xin việc/ })).toBeVisible()
   await expect(page.getByRole('img', { name: 'Xem trước Modern' })).toHaveAttribute('src', '/green.png')
@@ -595,8 +597,24 @@ test('public smoke: CV template colors change preview and detail offers the crea
   await expect(page.getByText('Customer Service Representative')).toBeVisible()
 
   await page.goto('/mau-cv/chi-tiet/modern')
-  await expect(page.getByRole('heading', { name: 'Modern' })).toBeVisible()
+  await expect(page.getByRole('heading', { level: 1, name: 'Mẫu CV Nhân viên CSKH tiếng Việt - Modern' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Tạo CV', exact: true })).toBeVisible()
+  await expect(page.locator('[data-cv-page="1"]')).toBeVisible()
+  // Vị trí mặc định không ghi lên URL; chọn vị trí khác thì URL, H1, <title> đổi theo.
+  await expect(page).toHaveURL(/\/mau-cv\/chi-tiet\/modern$/)
+  const mobileSheet = page.getByRole('button', { name: /Nhân viên CSKH/ })
+  if (await mobileSheet.isVisible()) await mobileSheet.click()
+  const options = page.getByRole('dialog', { name: 'Bạn muốn tạo CV từ?' }).or(page.locator('aside'))
+  await options.getByRole('combobox').click()
+  await page.getByRole('option', { name: 'Frontend Developer' }).click()
+  await expect(page).toHaveURL(/vi-tri=frontend-developer/)
+  await expect(page.getByRole('heading', { level: 1, name: /Frontend Developer/ })).toBeVisible()
+  await expect(page).toHaveTitle(/Mẫu CV Frontend Developer tiếng Việt - Modern/)
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', /noindex/)
+  await page.reload()
+  await expect(page.getByRole('heading', { level: 1, name: /Frontend Developer/ })).toBeVisible()
+  const noHorizontalScroll = await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)
+  expect(noHorizontalScroll).toBe(true)
 })
 
 test('public smoke: a shared CV link renders its immutable version', async ({ page }) => {

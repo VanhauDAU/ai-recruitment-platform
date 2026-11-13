@@ -11,6 +11,7 @@ from django.http import Http404
 from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, extend_schema
 from rest_framework import generics, permissions
 from rest_framework.exceptions import ValidationError
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -90,13 +91,31 @@ class PublicCatalogCacheMixin:
         return revalidated_response(self.request, data)
 
 
+class CatalogPagination(PageNumberPagination):
+    # 24 chia hết cho lưới 2, 3, 4 cột: trang nào cũng lấp đủ hàng.
+    page_size = 24
+
+
+def _optional_flag(request, name):
+    value = request.query_params.get(name, '').strip().lower()
+    if value in ('1', 'true'):
+        return True
+    if value in ('0', 'false'):
+        return False
+    return None
+
+
 class CvTemplateCatalogListView(PublicCatalogCacheMixin, generics.ListAPIView):
     serializer_class = CvTemplateCardSerializer
     permission_classes = [permissions.AllowAny]
+    pagination_class = CatalogPagination
 
     def get_queryset(self):
+        columns = self.request.query_params.get('columns', '').strip()
         return published_template_queryset(
             locale=requested_locale(self.request),
+            has_photo=_optional_flag(self.request, 'has_photo'),
+            columns=int(columns) if columns in ('1', '2') else None,
             category=self.request.query_params.get('category'),
             tag=self.request.query_params.get('tag'),
         ).order_by('-usage_count', 'sort_order', 'name')

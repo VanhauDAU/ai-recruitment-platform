@@ -28,9 +28,11 @@ from .imports import (
     validate_import_upload,
 )
 from .lifecycle import (
+    CvCreateInProgress,
     CvLifecyclePolicyError,
     apply_sample_to_draft,
     create_v2_cv,
+    create_v2_cv_once,
     save_draft_as_version,
     switch_draft_template,
 )
@@ -58,6 +60,7 @@ __all__ = [
     'unlock_cv',
     'StaleDraftError',
     'UnsupportedCvUpload',
+    'CvCreateInProgress',
     'CvLifecyclePolicyError',
     'CvSharePermissionError',
     'CvShareUnavailableError',
@@ -81,6 +84,7 @@ __all__ = [
     'validate_import_upload',
     'create_initial_document',
     'create_v2_cv',
+    'create_v2_cv_once',
     'create_shared_link',
     'request_cv_export',
     'create_version',

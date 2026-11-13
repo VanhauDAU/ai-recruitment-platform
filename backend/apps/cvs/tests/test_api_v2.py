@@ -315,6 +315,24 @@ class CvV2ApiTests(APITestCase):
         self.assertEqual(invalid.status_code, 400)
         self.assertIn('theme_color', invalid.data)
 
+    def test_create_with_the_same_idempotency_key_returns_the_first_cv(self):
+        """Bấm "Tạo CV" hai lần (hoặc gửi lại) chỉ tạo một CV."""
+        payload = {
+            'title': 'CV một lần',
+            'template_public_id': self.template.public_id,
+            'language': 'vi-VN',
+        }
+        url = reverse('cv-v2-list-create')
+        first = self.client.post(url, payload, format='json', HTTP_IDEMPOTENCY_KEY='click-1')
+        again = self.client.post(url, payload, format='json', HTTP_IDEMPOTENCY_KEY='click-1')
+        other = self.client.post(url, payload, format='json', HTTP_IDEMPOTENCY_KEY='click-2')
+
+        self.assertEqual(first.status_code, 201, first.data)
+        self.assertEqual(again.status_code, 200)
+        self.assertEqual(again.data['public_id'], first.data['public_id'])
+        self.assertEqual(other.status_code, 201)
+        self.assertEqual(UserCv.objects.filter(title='CV một lần').count(), 2)
+
     def test_import_hard_delete_and_metadata_use_v2_without_legacy_storage_urls(self):
         uploaded = SimpleUploadedFile(
             'source.pdf', b'%PDF-1.4 test', content_type='application/pdf'
