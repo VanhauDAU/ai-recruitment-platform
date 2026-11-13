@@ -8,6 +8,47 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-13
 
+#### Removed — Dọn code, asset và lệnh không còn dùng
+
+- Frontend: `AccountDetailView` (thay bằng widget `admin-account-detail`),
+  `AdminJobApplications`/`AdminJobDisclosure` cùng `getAdminJobApplicationPage`
+  và `applicationKeys.adminJobList`; export không ai dùng `SELF_SERVICE_ACTIONS`,
+  `ANNOUNCEMENT_PRESENTATION_STATUSES`, `EMPLOYER_ACCOUNT_VERIFICATION_LEVEL_STEPS`;
+  ảnh public `topcv-v-brand.svg` và hai bản `procv-ai-robot-market.png` trùng nhau
+  (app dùng bản `-v2` trên R2); dependency `@tiptap/extension-link` (StarterKit
+  đã kèm) và npm script `quality`.
+- Backend: `apps/blog/permissions.py` (`CanEditBlog`), lệnh no-op
+  `reconcile_employer_verifications` cùng hàm deprecated
+  `reconcile_completed_verification_cases`, bốn lệnh chuyển media một lần
+  (`migrate_external_media_to_r2`, `migrate_frontend_assets_to_r2`,
+  `migrate_local_media_to_r2`, `normalize_media_references`) và
+  `requirements-ai.txt` không có import nào.
+- `scripts/codebase_inventory.py` không còn ai gọi. Docs liên quan cập nhật theo.
+
+#### Fixed — Chặn artifact tái phát
+
+- Test settings trỏ mọi media root vào thư mục tạm; trước đây pytest ghi PDF và
+  ảnh test vào `backend/private-media` và `backend/public-media` thật.
+- `backend/.dockerignore` loại `.venv`, các media root và cache, để `COPY . .`
+  không đưa virtualenv hay file riêng tư vào image.
+
+#### Changed — Hợp nhất cấu hình env
+
+- Env chỉ còn ở `backend/` và `frontend/`, mỗi nơi một cặp `.env`/`.env.example`.
+  Xóa `.env`/`.env.example` ở root và hai file `.env.optional.example`; nội dung
+  catalog optional gộp vào `.env.example` theo nhóm. Frontend dùng `frontend/.env`
+  thay cho `.env.local`.
+- `docker-compose.yml` không còn interpolation `${...}`: PID limit, log rotation,
+  concurrency Celery và tài nguyên ClamAV cố định trong file. Bật scanner bằng
+  `docker compose --profile scanner up`.
+- Gỡ biến không có consumer: `AI_POLICY_CACHE_SECONDS`,
+  `CV_ARCHIVE_RESTORE_WINDOW_DAYS`, `REQUIRE_APPROVED_EMPLOYER_CANDIDATE_ACCESS`
+  (cờ chưa từng được đọc; test xác nhận nó không có tác dụng đã bỏ).
+- Thêm `scripts/sync_local_env.py` đồng bộ `.env` local theo `.env.example`, giữ
+  giá trị đang có. `check_env_sync` kiểm thêm file env đặt sai chỗ, interpolation
+  trong Compose và key thiếu/thừa/sai kiểu trong `.env` local; bỏ
+  `scripts/env_inventory.py`.
+
 #### Changed — Tối ưu thời gian CI (#162)
 
 - Backend test chạy song song bằng `pytest-xdist` (`-n auto --dist loadfile`;

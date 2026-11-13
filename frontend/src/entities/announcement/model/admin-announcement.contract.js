@@ -28,13 +28,6 @@ export const ANNOUNCEMENT_LIFECYCLE_STATES = Object.freeze({
   ARCHIVED: 'archived',
 })
 
-export const ANNOUNCEMENT_PRESENTATION_STATUSES = Object.freeze({
-  ...ANNOUNCEMENT_LIFECYCLE_STATES,
-  SCHEDULED: 'scheduled',
-  LIVE: 'live',
-  ENDED: 'ended',
-})
-
 export const ANNOUNCEMENT_PRIORITY_TIERS = Object.freeze({
   [ANNOUNCEMENT_KINDS.CRITICAL]: 1,
   [ANNOUNCEMENT_KINDS.SECURITY]: 2,

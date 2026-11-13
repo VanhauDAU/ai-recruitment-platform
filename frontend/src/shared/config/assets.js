@@ -3,7 +3,7 @@
 // theo môi trường chỉ bằng biến VITE_PUBLIC_ASSET_BASE_URL mà không sửa code.
 //
 // `legacyAsset(path)` trỏ tới bộ ảnh UI TopCV legacy đã copy sang R2 dưới tiền tố
-// `frontend/legacy/` (xem backend command migrate_frontend_assets_to_r2).
+// `frontend/legacy/` (đã chuyển một lần, lệnh migrate đã gỡ).
 const PUBLIC_ASSET_BASE_URL = (
   import.meta.env.VITE_PUBLIC_ASSET_BASE_URL || 'https://pub-8375cfb0dcca48ed8459003b91080f08.r2.dev'
 ).replace(/\/+$/, '')

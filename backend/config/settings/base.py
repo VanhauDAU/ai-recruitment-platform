@@ -756,7 +756,6 @@ AI_PROVIDER_RETRY_BASE_SECONDS = config(
 )
 AI_PROVIDER_API_VERSION = config('AI_PROVIDER_API_VERSION', default='v1').strip()
 AI_MODEL_PRICING_USD = config('AI_MODEL_PRICING_USD', default='{}', cast=json.loads)
-AI_POLICY_CACHE_SECONDS = config('AI_POLICY_CACHE_SECONDS', default=60, cast=int)
 GEMINI_API_KEY = config('GEMINI_API_KEY', default='').strip()
 GOOGLE_CLOUD_PROJECT = config('GOOGLE_CLOUD_PROJECT', default='').strip()
 GOOGLE_CLOUD_LOCATION = config('GOOGLE_CLOUD_LOCATION', default='global').strip()
@@ -837,11 +836,6 @@ REQUIRE_APPROVED_EMPLOYER_VERIFICATION = config(
     default=False,
     cast=bool,
 )
-REQUIRE_APPROVED_EMPLOYER_CANDIDATE_ACCESS = config(
-    'REQUIRE_APPROVED_EMPLOYER_CANDIDATE_ACCESS',
-    default=False,
-    cast=bool,
-)
 
 # Provider-neutral employer phone verification. Production remains disabled
 # until Ops/Product explicitly select a gateway, sender and approved template.
@@ -906,7 +900,4 @@ OAUTH_CODE_TTL = config('OAUTH_CODE_TTL', default=60, cast=int)  # one_time_code
 # API docs hữu ích ở local/staging, nhưng không public mặc định ở production.
 API_DOCS_ENABLED = config('API_DOCS_ENABLED', default=DEBUG, cast=bool)
 
-# A soft-deleted CV can only be restored during this explicit retention window.
-# A later retention worker may purge expired archived records independently.
-CV_ARCHIVE_RESTORE_WINDOW_DAYS = config('CV_ARCHIVE_RESTORE_WINDOW_DAYS', default=30, cast=int)
 CV_IMPORT_SOURCE_RETENTION_DAYS = config('CV_IMPORT_SOURCE_RETENTION_DAYS', default=30, cast=int)

@@ -257,9 +257,17 @@ async function mockCandidateJobAlertsApi(page, options = {}) {
   }
 }
 
+// CI runners occasionally drop the click on an Ant Design option. The dropdown
+// renders outside the select, so the select itself only shows the value once
+// it is really chosen; click again until it does.
 async function chooseSelectOption(page, scope, label, option) {
-  await scope.getByRole('combobox', { name: label, exact: true }).click()
-  await page.locator('.ant-select-dropdown:visible').getByText(option, { exact: true }).click()
+  const combobox = scope.getByRole('combobox', { name: label, exact: true })
+  const select = combobox.locator('xpath=ancestor::*[contains(concat(" ", @class, " "), " ant-select ")][1]')
+  await expect(async () => {
+    await combobox.click()
+    await page.locator('.ant-select-dropdown:visible').getByText(option, { exact: true }).click({ timeout: 2_000 })
+    await expect(select).toContainText(option, { timeout: 1_000 })
+  }).toPass()
 }
 
 async function chooseCategoryPositions(page, scope, selections) {

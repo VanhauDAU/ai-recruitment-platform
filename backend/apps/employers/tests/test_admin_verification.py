@@ -41,7 +41,6 @@ from ..services import (
     confirm_verification_decision,
     ensure_recruiter_candidate_data_access,
     get_or_create_verification_case,
-    reconcile_completed_verification_cases,
     reconcile_recruiter_verification,
     recruiter_is_approved,
     recruiter_posting_readiness,
@@ -197,10 +196,7 @@ class EmployerAccountVerificationTests(APITestCase):
         self.assertNotIn('file', str(notification.context).lower())
         self.assertNotIn('sha256', str(notification.context).lower())
 
-    @override_settings(
-        REQUIRE_APPROVED_EMPLOYER_VERIFICATION=True,
-        REQUIRE_APPROVED_EMPLOYER_CANDIDATE_ACCESS=True,
-    )
+    @override_settings(REQUIRE_APPROVED_EMPLOYER_VERIFICATION=True)
     def test_hard_gate_uses_the_recruiters_own_case(self):
         self._put_in_review(self.first_case)
         impact = verification_decision_impact(
@@ -225,16 +221,6 @@ class EmployerAccountVerificationTests(APITestCase):
         with self.assertRaises(CandidateDataBlocked) as blocked:
             ensure_recruiter_candidate_data_access(self.second_user)
         self.assertEqual(str(blocked.exception.detail['code']), 'CANDIDATE_DATA_BLOCKED')
-
-    @override_settings(
-        REQUIRE_APPROVED_EMPLOYER_VERIFICATION=True,
-        REQUIRE_APPROVED_EMPLOYER_CANDIDATE_ACCESS=False,
-    )
-    def test_candidate_access_cannot_be_bypassed_by_feature_flag(self):
-        _, ready = recruiter_posting_readiness(self.second_user)
-        self.assertFalse(ready)
-        with self.assertRaises(CandidateDataBlocked):
-            ensure_recruiter_candidate_data_access(self.second_user)
 
     def test_stale_decision_returns_conflict(self):
         self._put_in_review(self.first_case)
@@ -543,20 +529,6 @@ class EmployerAccountVerificationTests(APITestCase):
         )
         self.assertEqual(duplicate_company.tax_code, self.company.tax_code)
         self.assertEqual(duplicate_company.updated_at, duplicate_company_updated_at)
-
-    def test_reconciliation_never_creates_a_final_decision(self):
-        reconciled = reconcile_completed_verification_cases()
-
-        self.first_case.refresh_from_db()
-        self.assertEqual(reconciled, [])
-        self.assertEqual(self.first_case.status, EmployerVerificationCase.Status.PENDING)
-        self.assertFalse(
-            EmployerVerificationEvent.objects.filter(
-                verification_case=self.first_case,
-                event_type=EmployerVerificationEvent.EventType.APPROVED,
-                payload__source='reconciliation',
-            ).exists()
-        )
 
     @patch('apps.employers.tasks.tax_lookup.lookup_company_tax_evidence.delay')
     def test_admin_can_refresh_verification_tax_lookup(self, delay):

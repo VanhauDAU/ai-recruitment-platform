@@ -74,16 +74,15 @@ docker compose --profile scanner exec \
 
 ClamAV chỉ mở cổng 3310 trong private Compose network, không publish ra host.
 Trên Apple Silicon image chính thức 1.4 chạy qua `linux/amd64` emulation; có thể
-đổi bằng `CLAMAV_PLATFORM` khi registry được duyệt đã phát hành arm64.
+đổi `platform` trong `docker-compose.yml` khi registry được duyệt đã phát hành arm64.
 
 Postgres của compose mở ở host cổng **5433** (`postgres/postgres`, DB `ai_career_coach`)
 để không trùng Postgres cài trực tiếp trên máy ở 5432 — hai DB trùng tên nên rất
 dễ nối lẫn khi mở bằng DBeaver/psql.
 
 Chi tiết chạy local bằng Compose: [docs/06-deployment/docker-compose.md](docs/06-deployment/docker-compose.md).
-Quy tắc env tối thiểu và catalog tùy chọn: [docs/05-huong-dan/cau-hinh-env.md](docs/05-huong-dan/cau-hinh-env.md).
-Tùy chọn Compose local có catalog riêng tại [`.env.example`](.env.example);
-không đặt secret backend hoặc biến `VITE_*` vào file env ở root.
+Env chỉ nằm trong `backend/` và `frontend/` (mỗi nơi một cặp `.env`/`.env.example`);
+quy tắc và lệnh đồng bộ: [docs/05-huong-dan/cau-hinh-env.md](docs/05-huong-dan/cau-hinh-env.md).
 
 ### Cách 2 — Chạy trực tiếp (venv + PostgreSQL + Redis local)
 
@@ -106,6 +105,7 @@ celery -A config beat -l info
 
 # Frontend (terminal khác)
 cd frontend
+cp .env.example .env                   # lần đầu
 npm run dev                            # http://localhost:5173
 ```
 

@@ -64,9 +64,9 @@ quyền hay lịch tác vụ. Baseline: `dev` tại `dddf4455` (23/09/2026).
 | --- | --- | --- |
 | P0 | Kiểm kê repo, hợp đồng hành vi, số đo CI | ✅ Verified |
 | P1 | Chẩn đoán và sửa test lỗi hoặc treo | 🟨 Implemented |
-| P2 | Dọn artifact, media test và ignore | 🟨 Implemented |
+| P2 | Dọn artifact, media test và ignore; đợt 2 (2026-11-13, `chore/repo-cleanup`): test media vào thư mục tạm, siết `backend/.dockerignore`, xóa code/asset/lệnh one-off chết | 🟨 Implemented |
 | P3 | Bỏ cấu hình deploy production, giữ Compose local | 🟨 Implemented |
-| P4 | Env tối thiểu (`.env.example`) và catalog optional (`.env.optional.example`) | 🟨 Implemented |
+| P4 | Mỗi service một cặp `.env`/`.env.example` (backend, frontend), bỏ env root, gỡ biến chết, `sync_local_env.py` | 🟨 Implemented |
 | P5 | Chuẩn hóa backend theo app | ⬜ Planned |
 | P6 | Chuẩn hóa ownership frontend | ⬜ Planned |
 | P7 | Hợp nhất docs và tiến độ | Thay bằng PM-6, PM-7 của epic hậu kiểm |
@@ -150,8 +150,6 @@ Dọn phần còn sót của ADR-0014 và ADR-0015:
 
 - Site setting nhóm `payment` và `email_notify_job_approved` không còn consumer.
 - `RecruitmentNeed.consultation_topics` còn lựa chọn `service_packages`.
-- `widgets/admin-job-management` có `AdminJobApplications.jsx` và
-  `AdminJobDisclosure.jsx` không được trang nào dùng.
 
 Kích hoạt và rollout:
 

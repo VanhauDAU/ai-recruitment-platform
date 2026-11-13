@@ -62,7 +62,7 @@ tại; lịch sử kế hoạch và bằng chứng triển khai nằm trong git 
 | Tài liệu | Nội dung |
 | --- | --- |
 | [huong-dan-cai-dat.md](05-huong-dan/huong-dan-cai-dat.md) | Cài đặt và chạy local, seed, kiểm tra runtime, quy tắc migration |
-| [cau-hinh-env.md](05-huong-dan/cau-hinh-env.md) | Biến môi trường backend, frontend và Compose |
+| [cau-hinh-env.md](05-huong-dan/cau-hinh-env.md) | Biến môi trường backend và frontend |
 | [cau-hinh-site-settings.md](05-huong-dan/cau-hinh-site-settings.md) | Site settings theo nhóm |
 | [social-login.md](05-huong-dan/social-login.md) | Cấu hình đăng nhập Google, Facebook, LinkedIn |
 | [quan-tri-thong-bao-da-cong.md](05-huong-dan/quan-tri-thong-bao-da-cong.md) | Thao tác quản trị thông báo đa cổng |

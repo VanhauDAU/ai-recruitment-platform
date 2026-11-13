@@ -1,5 +1,12 @@
 #!/usr/bin/env python3
-"""Validate env consumers against the minimal and optional catalogs."""
+"""Validate env consumers against backend/.env.example and frontend/.env.example.
+
+Each service owns exactly one template. The gate fails when code reads a key the
+template does not declare, the template declares a key nothing reads, a
+template value cannot satisfy its ``config(cast=...)`` contract or differs from
+the code default, or an env file appears outside ``backend/`` and ``frontend/``.
+Local ``.env`` files are only reported by key name; values are never printed.
+"""
 
 from __future__ import annotations
 
@@ -15,69 +22,41 @@ ROOT = Path(__file__).resolve().parent.parent
 KEY_PATTERN = re.compile(r'^[A-Z][A-Z0-9_]*$')
 DECLARATION_PATTERN = re.compile(r'^([A-Z][A-Z0-9_]*)=(.*)$')
 
-BACKEND_CATALOGS = (
-    Path('backend/.env.example'),
-    Path('backend/.env.optional.example'),
-)
-FRONTEND_CATALOGS = (
-    Path('frontend/.env.example'),
-    Path('frontend/.env.optional.example'),
-)
-COMPOSE_CATALOGS = (Path('.env.example'),)
+BACKEND_TEMPLATE = Path('backend/.env.example')
+FRONTEND_TEMPLATE = Path('frontend/.env.example')
+LOCAL_ENV_FILES = {
+    BACKEND_TEMPLATE: Path('backend/.env'),
+    FRONTEND_TEMPLATE: Path('frontend/.env'),
+}
 
-# Process-owned values are intentionally not copied into application catalogs.
-# Every exception names its owner and why application startup must not own it.
+# Process-owned values are intentionally not declared in a template. Every
+# exception names its owner and why the service env file must not own it.
 BACKEND_PROCESS_KEYS = {
-    'APP_REVISION': 'audit_job_services_legacy: revision metadata supplied by release tooling',
     'DJANGO_SETTINGS_MODULE': 'Django entrypoints/CI: selects settings before backend/.env loads',
     'USER': 'operating system shell: actor label fallback for management commands',
 }
 FRONTEND_PROCESS_KEYS = {
+    'ANALYZE': 'one-off CLI flag: `ANALYZE=1 npm run build` emits the bundle treemap',
     'CI': 'CI runner: selects non-interactive reporting and server reuse policy',
+    'PLAYWRIGHT_PORT': 'Playwright runner: reads process env only, never frontend/.env',
+    'PLAYWRIGHT_WEB_SERVER': 'Playwright runner: `preview` in CI, `dev` locally',
+    'PORT': 'preview tooling: assigns a free port when 5173 is busy',
     'PROD': 'Vite built-in: generated mode flag, not a user-supplied variable',
 }
-COMPOSE_PROCESS_KEYS = {
-    'COMPOSE_PROFILES': 'Docker Compose CLI: selects optional local service profiles',
-}
 
-# These application keys are intentionally replaced only to address service
-# discovery inside the Docker network. Product flags must keep their app-owned
-# env source and therefore do not belong in this allowlist.
-COMPOSE_APPLICATION_OVERRIDES = {
-    'CLAMAV_HOST': 'Docker service discovery: scanner hostname is clamav',
-    'CLAMAV_PORT': 'Docker service discovery: scanner uses its container port',
-}
-
-RETIRED_BACKEND_KEYS = {
-    'SPEECH_TTS_BASE_URL',
-    'SPEECH_TTS_INTERNAL_TOKEN',
-    'SPEECH_TTS_CONNECT_TIMEOUT_SECONDS',
-    'SPEECH_TTS_READ_TIMEOUT_SECONDS',
-    'SPEECH_DEFAULT_VOICE_ID',
-    'SPEECH_DEFAULT_STYLE',
-    'SPEECH_MODEL_REVISION',
-    'SPEECH_MAX_TEXT_CHARS',
-    'SPEECH_MAX_ADHOC_TEXT_CHARS',
-    'SPEECH_GENERATION_TIMEOUT_SECONDS',
-    'SPEECH_ARTIFACT_POLL_INTERVAL_SECONDS',
-    'SPEECH_ARTIFACT_DOWNLOAD_TIMEOUT_SECONDS',
-    'SPEECH_ARTIFACT_RETENTION_DAYS',
-    'SPEECH_CAPABILITIES_CACHE_SECONDS',
-}
-
-# Catalog values may intentionally be operational overrides rather than code
-# fallbacks. Every divergence from the primary base settings must be explicit.
+# Template values that intentionally differ from the code fallback.
 DOCUMENTED_DEFAULT_OVERRIDES = {
     'AI_MODEL_PRICING_USD': 'local zero-price map avoids accidental provider-cost claims',
-    'CELERY_RESULT_BACKEND': 'an empty override preserves the legacy disabled result backend',
+    'CELERY_RESULT_BACKEND': 'an empty override preserves the disabled result backend',
     'EMAIL_FROM_NAME': 'local sample supplies the product display name',
-    'OAUTH_CODE_TTL': 'legacy local contract is 120 seconds; code fallback remains 60 pending auth change',
+    'OAUTH_CODE_TTL': 'local contract is 120 seconds; code fallback remains 60',
 }
+
+SECRET_LIKE_TOKENS = ('SECRET', 'PASSWORD', 'PRIVATE_KEY', 'ACCESS_KEY', 'API_TOKEN')
 
 
 @dataclass(frozen=True)
 class Declaration:
-    path: Path
     line: int
     value: str
 
@@ -93,36 +72,19 @@ class ConfigContract:
 MISSING = object()
 
 
-def catalog_declarations(
-    paths: tuple[Path, ...],
-) -> tuple[dict[str, Declaration], list[str]]:
+def parse_env_file(path: Path) -> tuple[dict[str, Declaration], set[str]]:
+    """Return the last declaration of each key plus the keys declared twice."""
     declarations: dict[str, Declaration] = {}
-    errors: list[str] = []
-    for relative_path in paths:
-        path = ROOT / relative_path
-        if not path.is_file():
-            errors.append(f'missing catalog: {relative_path}')
+    duplicates: set[str] = set()
+    for line_number, line in enumerate(path.read_text(encoding='utf-8').splitlines(), 1):
+        match = DECLARATION_PATTERN.match(line)
+        if not match:
             continue
-        seen_in_file: set[str] = set()
-        for line_number, line in enumerate(
-            path.read_text(encoding='utf-8').splitlines(), 1
-        ):
-            match = DECLARATION_PATTERN.match(line)
-            if not match:
-                continue
-            key = match.group(1)
-            if key in seen_in_file:
-                errors.append(
-                    f'{relative_path}:{line_number}: duplicate declaration {key}'
-                )
-            elif key in declarations:
-                errors.append(
-                    f'{relative_path}:{line_number}: {key} already declared in '
-                    f'{declarations[key].path}:{declarations[key].line}'
-                )
-            seen_in_file.add(key)
-            declarations[key] = Declaration(relative_path, line_number, match.group(2))
-    return declarations, errors
+        key = match.group(1)
+        if key in declarations:
+            duplicates.add(key)
+        declarations[key] = Declaration(line_number, match.group(2))
+    return declarations, duplicates
 
 
 def call_name(node: ast.Call) -> str:
@@ -167,8 +129,7 @@ def backend_consumers() -> dict[str, set[str]]:
             for node in ast.walk(tree):
                 key: str | None = None
                 if isinstance(node, ast.Call) and node.args:
-                    name = call_name(node)
-                    if name in {
+                    if call_name(node) in {
                         'config',
                         '_provider_api_key',
                         'getenv',
@@ -185,9 +146,8 @@ def backend_consumers() -> dict[str, set[str]]:
                 if key:
                     consumers[key].add(f'{relative}:{getattr(node, "lineno", 0)}')
 
-            for match in re.finditer(
-                r"['\"]env_var['\"]\s*:\s*['\"]([A-Z][A-Z0-9_]+)['\"]", text
-            ):
+            # Site Settings of type "env" resolve a key name at runtime.
+            for match in re.finditer(r"['\"]env_var['\"]\s*:\s*['\"]([A-Z][A-Z0-9_]+)['\"]", text):
                 consumers[match.group(1)].add(f'{relative}:dynamic-env-var')
     return consumers
 
@@ -213,11 +173,6 @@ def frontend_consumers() -> dict[str, set[str]]:
     return consumers
 
 
-def compose_consumers() -> set[str]:
-    text = (ROOT / 'docker-compose.yml').read_text(encoding='utf-8')
-    return set(re.findall(r'\$\{([A-Z][A-Z0-9_]*)', text))
-
-
 def config_contracts() -> dict[str, list[ConfigContract]]:
     contracts: dict[str, list[ConfigContract]] = defaultdict(list)
     for path in (ROOT / 'backend/config').rglob('*.py'):
@@ -226,11 +181,7 @@ def config_contracts() -> dict[str, list[ConfigContract]]:
             continue
         tree = ast.parse(path.read_text(encoding='utf-8'))
         for node in ast.walk(tree):
-            if (
-                not isinstance(node, ast.Call)
-                or call_name(node) != 'config'
-                or not node.args
-            ):
+            if not isinstance(node, ast.Call) or call_name(node) != 'config' or not node.args:
                 continue
             key = literal_key(node.args[0])
             if not key:
@@ -241,6 +192,8 @@ def config_contracts() -> dict[str, list[ConfigContract]]:
                 if keyword.arg == 'cast':
                     if isinstance(keyword.value, ast.Name):
                         cast = keyword.value.id
+                    elif isinstance(keyword.value, ast.Attribute):
+                        cast = keyword.value.attr
                     elif isinstance(keyword.value, ast.Call):
                         cast = call_name(keyword.value)
                 elif keyword.arg == 'default':
@@ -266,249 +219,180 @@ def normalized_value(value: str, cast: str | None) -> object:
         return float(value)
     if cast == 'Csv':
         return [part.strip() for part in value.split(',') if part.strip()]
+    if cast == 'loads':
+        return json.loads(value)
     return value
 
 
-def validate_backend_values(
+def invalid_cast_keys(
     declarations: dict[str, Declaration],
     contracts: dict[str, list[ConfigContract]],
-) -> list[str]:
-    errors: list[str] = []
+) -> dict[str, ConfigContract]:
+    invalid: dict[str, ConfigContract] = {}
     for key, declaration in declarations.items():
-        if declaration.value.startswith(('{', '[')):
-            try:
-                json.loads(declaration.value)
-            except json.JSONDecodeError as error:
-                errors.append(
-                    f'{declaration.path}:{declaration.line}: {key} has invalid JSON: {error.msg}'
-                )
         for contract in contracts.get(key, []):
             try:
                 normalized_value(declaration.value, contract.cast)
-            except ValueError as error:
-                errors.append(
-                    f'{declaration.path}:{declaration.line}: {key} cannot satisfy '
-                    f'{contract.cast} at {contract.path}:{contract.line}: {error}'
-                )
+            except ValueError:
+                invalid[key] = contract
+                break
+    return invalid
 
-        primary = [
-            contract
-            for contract in contracts.get(key, [])
-            if contract.path == Path('backend/config/settings/base.py')
-            and contract.default is not MISSING
-        ]
-        if not primary or key in DOCUMENTED_DEFAULT_OVERRIDES:
+
+def validate_backend_template(
+    declarations: dict[str, Declaration],
+    contracts: dict[str, list[ConfigContract]],
+) -> list[str]:
+    errors = [
+        f'{BACKEND_TEMPLATE}:{declarations[key].line}: {key} cannot satisfy '
+        f'cast={contract.cast} at {contract.path}:{contract.line}'
+        for key, contract in sorted(invalid_cast_keys(declarations, contracts).items())
+    ]
+    for key, declaration in declarations.items():
+        if key in DOCUMENTED_DEFAULT_OVERRIDES:
             continue
-        contract = primary[0]
+        primary = next(
+            (
+                contract
+                for contract in contracts.get(key, [])
+                if contract.path == Path('backend/config/settings/base.py')
+                and contract.default is not MISSING
+            ),
+            None,
+        )
+        if primary is None:
+            continue
         try:
-            catalog_value = normalized_value(declaration.value, contract.cast)
+            template_value = normalized_value(declaration.value, primary.cast)
+            code_default = (
+                normalized_value(str(primary.default), 'Csv')
+                if primary.cast == 'Csv' and isinstance(primary.default, str)
+                else primary.default
+            )
         except ValueError:
             continue
-        if contract.cast == 'Csv':
-            code_default = (
-                list(contract.default)
-                if isinstance(contract.default, (list, tuple))
-                else normalized_value(str(contract.default), 'Csv')
-            )
-        else:
-            code_default = contract.default
-        if catalog_value != code_default:
+        if primary.cast == 'Csv' and isinstance(code_default, tuple):
+            code_default = list(code_default)
+        if template_value != code_default:
             errors.append(
-                f'{declaration.path}:{declaration.line}: {key} documents {declaration.value!r} '
-                f'but base.py:{contract.line} defaults to {contract.default!r}; '
-                'document the intentional override before changing either value'
+                f'{BACKEND_TEMPLATE}:{declaration.line}: {key} documents '
+                f'{declaration.value!r} but base.py:{primary.line} defaults to '
+                f'{primary.default!r}; document the intentional override first'
             )
     return errors
 
 
-def local_env_report(
-    label: str,
-    path: Path,
-    allowed: set[str],
-    required: set[str],
-    retired: set[str] | None = None,
-) -> list[str]:
-    if not path.is_file():
-        return []
-    retired = retired or set()
-    keys: dict[str, tuple[int, bool]] = {}
-    duplicate: set[str] = set()
-    for line_number, line in enumerate(
-        path.read_text(encoding='utf-8').splitlines(), 1
-    ):
-        match = DECLARATION_PATTERN.match(line)
-        if not match:
-            continue
-        key, value = match.groups()
-        if key in keys:
-            duplicate.add(key)
-        keys[key] = (line_number, not value.strip())
-
-    messages: list[str] = []
-    checks = (
-        ('missing required key(s)', required - set(keys)),
-        ('unknown key(s)', set(keys) - allowed - retired),
-        ('retired key(s)', set(keys) & retired),
-        ('duplicate key(s)', duplicate),
-        (
-            'required key(s) with an empty value',
-            {key for key in required if key in keys and keys[key][1]},
-        ),
-    )
-    for description, names in checks:
-        if names:
-            messages.append(f'{label}: {description}: {", ".join(sorted(names))}')
-    return messages
-
-
-def report_missing(
+def report_unowned(
     label: str,
     consumers: dict[str, set[str]],
     declared: set[str],
     exceptions: dict[str, str],
 ) -> list[str]:
-    errors: list[str] = []
-    for key in sorted(set(consumers) - declared - set(exceptions)):
-        locations = ', '.join(sorted(consumers[key]))
-        errors.append(f'{label}: {key} is consumed at {locations} but is not cataloged')
+    errors = [
+        f'{label}: {key} is read at {", ".join(sorted(consumers[key]))} but not declared'
+        for key in sorted(set(consumers) - declared - set(exceptions))
+    ]
+    errors.extend(
+        f'{label}: {key} is declared but nothing reads it'
+        for key in sorted(declared - set(consumers))
+    )
+    errors.extend(
+        f'{label}: {key} is process-owned and must not be declared'
+        for key in sorted(declared & set(exceptions))
+    )
     return errors
 
 
-def main() -> int:
-    backend_declared, errors = catalog_declarations(BACKEND_CATALOGS)
-    frontend_declared, frontend_errors = catalog_declarations(FRONTEND_CATALOGS)
-    compose_declared, compose_errors = catalog_declarations(COMPOSE_CATALOGS)
-    errors.extend(frontend_errors)
-    errors.extend(compose_errors)
+def stray_env_files() -> list[str]:
+    """Env files are owned by backend/ and frontend/ only."""
+    allowed = {template.parent for template in LOCAL_ENV_FILES}
+    errors = []
+    for path in ROOT.glob('**/.env*'):
+        relative = path.relative_to(ROOT)
+        if path.is_dir() or {'node_modules', '.git', '.venv', 'venv'} & set(relative.parts):
+            continue
+        if relative.parent not in allowed or relative.name not in {'.env', '.env.example'}:
+            errors.append(f'stray env file: {relative} (only backend/ and frontend/ own .env)')
+    compose = (ROOT / 'docker-compose.yml').read_text(encoding='utf-8')
+    for key in sorted(set(re.findall(r'\$\{([A-Za-z_][A-Za-z0-9_]*)', compose))):
+        errors.append(f'docker-compose.yml interpolates ${{{key}}}; there is no root .env')
+    return errors
 
-    cross_scope = (
-        (set(backend_declared) & set(frontend_declared))
-        | (set(backend_declared) & set(compose_declared))
-        | (set(frontend_declared) & set(compose_declared))
+
+def local_env_report(
+    path: Path,
+    template_keys: list[str],
+    contracts: dict[str, list[ConfigContract]] | None = None,
+) -> list[str]:
+    if not path.is_file():
+        return []
+    declarations, duplicates = parse_env_file(path)
+    checks = (
+        ('missing key(s)', set(template_keys) - set(declarations)),
+        ('unknown key(s)', set(declarations) - set(template_keys)),
+        ('duplicate key(s)', duplicates),
+        ('invalid value for cast', set(invalid_cast_keys(declarations, contracts or {}))),
+        (
+            'order differs from template',
+            set()
+            if [key for key in declarations if key in template_keys]
+            == [key for key in template_keys if key in declarations]
+            else {'run scripts/sync_local_env.py'},
+        ),
     )
-    for key in sorted(cross_scope):
-        errors.append(f'ownership: {key} is declared by more than one env catalog')
+    return [
+        f'{path.relative_to(ROOT) if path.is_relative_to(ROOT) else path}: {label}: '
+        f'{", ".join(sorted(names))}'
+        for label, names in checks
+        if names
+    ]
+
+
+def main() -> int:
+    backend_declared, backend_duplicates = parse_env_file(ROOT / BACKEND_TEMPLATE)
+    frontend_declared, frontend_duplicates = parse_env_file(ROOT / FRONTEND_TEMPLATE)
+    contracts = config_contracts()
+
+    errors = [f'{BACKEND_TEMPLATE}: duplicate {key}' for key in sorted(backend_duplicates)]
+    errors.extend(f'{FRONTEND_TEMPLATE}: duplicate {key}' for key in sorted(frontend_duplicates))
+    errors.extend(
+        f'ownership: {key} is declared by both templates'
+        for key in sorted(set(backend_declared) & set(frontend_declared))
+    )
+    errors.extend(stray_env_files())
 
     backend_read = backend_consumers()
     frontend_read = frontend_consumers()
+    errors.extend(report_unowned('backend', backend_read, set(backend_declared), BACKEND_PROCESS_KEYS))
     errors.extend(
-        report_missing(
-            'backend', backend_read, set(backend_declared), BACKEND_PROCESS_KEYS
-        )
+        report_unowned('frontend', frontend_read, set(frontend_declared), FRONTEND_PROCESS_KEYS)
     )
+    errors.extend(validate_backend_template(backend_declared, contracts))
     errors.extend(
-        report_missing(
-            'frontend', frontend_read, set(frontend_declared), FRONTEND_PROCESS_KEYS
-        )
-    )
-    errors.extend(validate_backend_values(backend_declared, config_contracts()))
-
-    unused_backend = set(backend_declared) - set(backend_read)
-    unused_frontend = set(frontend_declared) - set(frontend_read)
-    unused_compose = (
-        set(compose_declared) - compose_consumers() - set(COMPOSE_PROCESS_KEYS)
-    )
-    for key in sorted(unused_backend):
-        errors.append(
-            f'backend: {key} is cataloged but has no runtime or dynamic consumer'
-        )
-    for key in sorted(unused_frontend):
-        errors.append(
-            f'frontend: {key} is cataloged but has no runtime/tooling consumer'
-        )
-    for key in sorted(unused_compose):
-        errors.append(f'compose: {key} is cataloged but has no Compose consumer')
-
-    forbidden_frontend = sorted(
-        key
-        for key in frontend_declared
-        if key.startswith('VITE_')
-        and any(
-            token in key
-            for token in (
-                'SECRET',
-                'PASSWORD',
-                'PRIVATE_KEY',
-                'ACCESS_KEY',
-                'API_TOKEN',
-            )
-        )
-    )
-    if forbidden_frontend:
-        errors.append(
-            'frontend: secret-like VITE_* declarations: '
-            + ', '.join(forbidden_frontend)
-        )
-
-    compose_read = compose_consumers()
-    compose_known = (
-        set(backend_declared) | set(frontend_declared) | set(compose_declared)
-    )
-    for key in sorted(compose_read - compose_known):
-        errors.append(f'compose: {key} has no application or Compose catalog')
-
-    application_interpolation = compose_read & (
-        set(backend_declared) | set(frontend_declared)
-    )
-    for key in sorted(application_interpolation - set(COMPOSE_APPLICATION_OVERRIDES)):
-        errors.append(
-            f'compose: {key} overrides an application-owned value without a documented '
-            'service-discovery exception'
-        )
-
-    local_messages: list[str] = []
-    local_messages.extend(
-        local_env_report(
-            'backend/.env',
-            ROOT / 'backend/.env',
-            set(backend_declared),
-            set(catalog_declarations((Path('backend/.env.example'),))[0]),
-            RETIRED_BACKEND_KEYS,
-        )
-    )
-    frontend_local = (
-        ROOT / 'frontend/.env.local'
-        if (ROOT / 'frontend/.env.local').is_file()
-        else ROOT / 'frontend/.env'
-    )
-    local_messages.extend(
-        local_env_report(
-            str(frontend_local.relative_to(ROOT)),
-            frontend_local,
-            set(frontend_declared),
-            set(catalog_declarations((Path('frontend/.env.example'),))[0]),
-        )
-    )
-    local_messages.extend(
-        local_env_report(
-            '.env',
-            ROOT / '.env',
-            set(compose_declared),
-            set(),
-        )
+        f'frontend: {key} looks like a secret but VITE_* is bundled publicly'
+        for key in sorted(frontend_declared)
+        if key.startswith('VITE_') and any(token in key for token in SECRET_LIKE_TOKENS)
     )
 
     if errors:
-        print('Env catalog check failed:', file=sys.stderr)
+        print('Env template check failed:', file=sys.stderr)
         for error in errors:
             print(f'  - {error}', file=sys.stderr)
         return 1
 
+    local_messages = local_env_report(
+        ROOT / LOCAL_ENV_FILES[BACKEND_TEMPLATE], list(backend_declared), contracts
+    ) + local_env_report(ROOT / LOCAL_ENV_FILES[FRONTEND_TEMPLATE], list(frontend_declared))
     if local_messages:
-        print('Local env report (informational; values are never printed):')
+        print('Local env report (values are never printed):')
         for message in local_messages:
             print(f'  - {message}')
     else:
-        print(
-            'Local env report: no missing, unknown, retired, duplicate or invalid-empty keys.'
-        )
+        print('Local env files are in sync with their templates (or absent).')
 
     print(
-        'Env catalog check passed: '
-        f'{len(backend_read)} backend consumer(s), {len(backend_declared)} backend declaration(s); '
-        f'{len(frontend_read)} frontend consumer(s), {len(frontend_declared)} frontend declaration(s); '
-        f'{len(compose_read)} Compose interpolation key(s), '
-        f'{len(compose_declared)} Compose declaration(s).'
+        'Env template check passed: '
+        f'backend {len(backend_declared)} key(s), frontend {len(frontend_declared)} key(s).'
     )
     return 0
 

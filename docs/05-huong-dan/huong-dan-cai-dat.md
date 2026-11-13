@@ -52,9 +52,7 @@ cd backend
 python3.11 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
-# Chỉ khi phát triển module AI/CV analysis:
-# pip install -r requirements-ai.txt
-cp .env.example .env   # catalog tích hợp/tuning: .env.optional.example
+cp .env.example .env
 python manage.py migrate
 
 # Seed dữ liệu nền (chạy theo đúng thứ tự này — job_categories cần skills,
@@ -125,19 +123,14 @@ python manage.py runserver 8000
 ```bash
 cd frontend
 npm install
-cp .env.example .env.local
+cp .env.example .env
 npm run dev   # http://localhost:5173
 ```
 
-`frontend/.env.local` tối thiểu dùng proxy cùng origin:
-
-```env
-VITE_API_BASE_URL=/api
-VITE_RECAPTCHA_SITE_KEY=
-```
-
-Branding, host ba cổng, consent, rollout và tooling xem trong
-`frontend/.env.optional.example`; file catalog này không được tự động nạp.
+Mẫu mặc định dùng proxy cùng origin (`VITE_API_BASE_URL=/api`). Khi
+`.env.example` thay đổi, chạy `python3 scripts/sync_local_env.py` ở root để
+đồng bộ `.env` mà vẫn giữ giá trị đang có. Chi tiết:
+[cau-hinh-env.md](cau-hinh-env.md).
 
 Backend remote feed mặc định tắt. Bật theo surface trong `backend/.env`:
 

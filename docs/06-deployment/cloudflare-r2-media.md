@@ -2,7 +2,7 @@
 
 The backend is the only R2 client. Access keys and secret keys belong in the
 runtime `backend/.env` or deployment secret store; they must never be exposed
-to React, a `VITE_*` variable, a commit, or `backend/.env.optional.example`.
+to React, a `VITE_*` variable, a commit, or `backend/.env.example`.
 
 ## Buckets and object layout
 
@@ -31,38 +31,18 @@ bucket names are deliberately separate. Production refuses to start if the
 public/private R2 configuration or quarantine configuration is incomplete; it
 must never silently fall back to local storage.
 
-## Moving existing public URLs
+## Moving existing media
 
-First inspect what will be changed:
+The one-off R2 migration commands (`migrate_external_media_to_r2`,
+`migrate_frontend_assets_to_r2`, `migrate_local_media_to_r2`,
+`normalize_media_references`) were removed in November 2026 after every
+environment had been migrated; recover them from Git history if an old
+deployment still needs them.
 
-```bash
-cd backend
-venv/bin/python manage.py migrate_external_media_to_r2
-```
-
-Then apply the migration:
-
-```bash
-venv/bin/python manage.py migrate_external_media_to_r2 --apply
-```
-
-The command only migrates structured public raster-image fields and is
-idempotent. It deliberately excludes legal documents, CVs, exports and
-candidate avatar assets: those objects are private and must keep their
-authorization boundary.
-
-The legacy frontend illustration set is migrated separately, because those
-assets are compile-time source constants rather than database records:
-
-```bash
-cd backend
-venv/bin/python manage.py migrate_frontend_assets_to_r2 --apply
-```
-
-If this deployment has an existing shared `backend/media` directory, first
-audit and copy it into the isolated destinations. The command is dry-run by
-default, resumable with `--cursor`, bounded by `--batch-size`, verifies content
-hashes, and always retains the unserved legacy source:
+If a deployment still has a shared `backend/media` directory, audit and copy it
+into the isolated destinations. The command is dry-run by default, resumable
+with `--cursor`, bounded by `--batch-size`, verifies content hashes, and always
+retains the unserved legacy source:
 
 ```bash
 cd backend
@@ -71,14 +51,7 @@ python manage.py migrate_media_storage_layout --apply --json --batch-size 500
 ```
 
 Repeat with the returned `next_cursor` until `has_more=false`, then reconcile
-counts before traffic. For a direct legacy-to-R2 copy, the older command remains
-available:
-
-```bash
-cd backend
-venv/bin/python manage.py migrate_local_media_to_r2
-venv/bin/python manage.py migrate_local_media_to_r2 --apply
-```
+counts before traffic.
 
 `LEGACY_MEDIA_ROOT` must not be exposed by Django, Vite or nginx. Only
 `PUBLIC_MEDIA_ROOT` may be served at `/media/`; private and quarantine buckets
