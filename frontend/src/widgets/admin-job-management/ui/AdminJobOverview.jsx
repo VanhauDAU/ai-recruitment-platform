@@ -4,13 +4,33 @@ import {
   DollarOutlined,
   FlagOutlined,
 } from '@ant-design/icons'
-import { Alert, Space, Tag } from 'antd'
+import { Alert, Space, Tag, Tooltip } from 'antd'
 import {
   adminJobStatusMeta,
   formatAdminJobDate,
   formatAdminJobDateTime,
 } from '@/entities/admin-job'
 import { formatAdminJobSalary } from '../model/detail-presentation'
+
+// Evidence that the recruiter took responsibility for the post; jobs made
+// public before the commitment was introduced have none.
+function CommitmentTag({ job }) {
+  if (job.responsibility_accepted_at) {
+    return (
+      <Tooltip title={`Phiên bản cam kết ${job.responsibility_statement_version}`}>
+        <Tag color="green">
+          NTD đã cam kết · {formatAdminJobDateTime(job.responsibility_accepted_at)}
+        </Tag>
+      </Tooltip>
+    )
+  }
+  if (job.status === 'draft') return null
+  return (
+    <Tooltip title="Tin được đăng trước khi áp dụng cam kết chịu trách nhiệm.">
+      <Tag>Chưa ghi nhận cam kết</Tag>
+    </Tooltip>
+  )
+}
 
 function QuickFact({ icon, label, value, danger = false }) {
   return (
@@ -29,7 +49,7 @@ export default function AdminJobOverview({ job }) {
   const holds = [job.policy_hold_label, job.moderation_hold_label].filter(
     (value) => value && value !== 'Không giữ',
   )
-  const changeCount = job.pending_changes?.changed_count || 0
+  const changeCount = job.content_changes?.changed_count || 0
   return (
     <section className="admin-panel admin-job-overview">
       <div className="admin-job-overview__heading">
@@ -39,16 +59,17 @@ export default function AdminJobOverview({ job }) {
         </div>
         <Space wrap>
           <Tag color={statusMeta.color}>{job.status_label || statusMeta.label}</Tag>
-          {changeCount > 0 && <Tag color="blue">Bản cập nhật · {changeCount} thay đổi</Tag>}
+          {changeCount > 0 && <Tag color="blue">Đã sửa sau khi đăng · {changeCount} thay đổi</Tag>}
           {job.is_expired && <Tag color="orange">Quá hạn</Tag>}
           {holds.map((hold) => <Tag color="red" key={hold}>{hold}</Tag>)}
+          <CommitmentTag job={job} />
         </Space>
       </div>
 
       <div className="admin-job-quick-facts">
         <QuickFact icon={<DollarOutlined />} label="Thu nhập" value={formatAdminJobSalary(job)} />
         <QuickFact icon={<CalendarOutlined />} label="Hạn nộp" value={formatAdminJobDate(job.deadline)} />
-        <QuickFact icon={<ClockCircleOutlined />} label="Gửi duyệt" value={formatAdminJobDateTime(job.submitted_at)} />
+        <QuickFact icon={<ClockCircleOutlined />} label="Đăng lần đầu" value={formatAdminJobDateTime(job.submitted_at)} />
         <QuickFact
           danger={Boolean(job.pending_report_count)}
           icon={<FlagOutlined />}

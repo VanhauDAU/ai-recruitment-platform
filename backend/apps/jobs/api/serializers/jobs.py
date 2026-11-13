@@ -19,6 +19,7 @@ from ...models import (
     JobSkill,
     JobWorkSchedule,
 )
+from ...selectors.employer import employer_job_visibility_hold
 from ...selectors.presentation import job_presentation
 from ...selectors.verification_badge import (
     BADGE_CACHE_KEY,
@@ -672,7 +673,27 @@ class JobDetailSerializer(JobSerializer):
         ]
 
 
-class EmployerJobWriteSerializer(JobSerializer):
+class EmployerJobVisibilityHoldSerializer(serializers.Serializer):
+    kind = serializers.ChoiceField(choices=('moderation', 'account'))
+    code = serializers.CharField()
+    label = serializers.CharField()
+    held_at = serializers.DateTimeField(allow_null=True)
+    reason_code = serializers.CharField(allow_blank=True)
+    reason_label = serializers.CharField(allow_blank=True)
+
+
+class EmployerJobVisibilityHoldMixin(serializers.Serializer):
+    """Tell the owner when, and why, candidates cannot see one of their jobs."""
+
+    visibility_hold = serializers.SerializerMethodField()
+
+    @extend_schema_field(EmployerJobVisibilityHoldSerializer(allow_null=True))
+    def get_visibility_hold(self, obj):
+        hold = employer_job_visibility_hold(obj)
+        return EmployerJobVisibilityHoldSerializer(hold).data if hold else None
+
+
+class EmployerJobWriteSerializer(EmployerJobVisibilityHoldMixin, JobSerializer):
     """Create/update DTO for the employer job form; never used for public reads."""
 
     application_contact = JobApplicationContactSerializer(required=False, allow_null=True)
@@ -701,18 +722,17 @@ class EmployerJobWriteSerializer(JobSerializer):
             'campaign',
             'campaign_name',
             'is_expired',
+            'visibility_hold',
             'ai_generation_public_id',
             'auto_reject_stale_applications',
             'auto_reject_after_days',
             'auto_rejection_email_body',
             'submitted_at',
             'approved_at',
-            'rejected_reason',
         ]
         read_only_fields = JobSerializer.Meta.read_only_fields + [
             'submitted_at',
             'approved_at',
-            'rejected_reason',
         ]
 
     def validate(self, attrs):
@@ -831,7 +851,7 @@ class EmployerJobDraftSerializer(EmployerJobWriteSerializer):
         }
 
 
-class EmployerJobListSerializer(PublicJobListSerializer):
+class EmployerJobListSerializer(EmployerJobVisibilityHoldMixin, PublicJobListSerializer):
     """Compact management-table DTO; rich job content stays on the detail API."""
 
     campaign = serializers.CharField(source='campaign.public_id', read_only=True, allow_null=True)
@@ -856,6 +876,7 @@ class EmployerJobListSerializer(PublicJobListSerializer):
             'is_visibility_expired',
             'status',
             'is_expired',
+            'visibility_hold',
             'campaign',
             'campaign_name',
             'application_count',
@@ -865,7 +886,6 @@ class EmployerJobListSerializer(PublicJobListSerializer):
             'published_at',
             'submitted_at',
             'approved_at',
-            'rejected_reason',
             'created_at',
             'updated_at',
         ]
@@ -883,6 +903,22 @@ class EmployerJobListSerializer(PublicJobListSerializer):
             }
             for preview in getattr(obj, 'candidate_previews', [])
         ]
+
+
+class JobResponsibilityAcknowledgementSerializer(serializers.Serializer):
+    """Sent with every request that makes a job public (publish, reopen)."""
+
+    responsibility_statement_version = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        default='',
+        max_length=20,
+    )
+
+
+class JobResponsibilityStatementSerializer(serializers.Serializer):
+    version = serializers.CharField()
+    text = serializers.CharField()
 
 
 class EmployerPostingBlockerSerializer(serializers.Serializer):
@@ -916,6 +952,7 @@ class EmployerJobPostingContextSerializer(serializers.Serializer):
     max_deadline_days = serializers.IntegerField(min_value=1)
     max_public_lifetime_days = serializers.IntegerField(min_value=1)
     lifecycle_policy = EmployerJobLifecyclePolicySerializer()
+    responsibility_statement = JobResponsibilityStatementSerializer()
     services = EmployerJobServicesContextSerializer()
     verification_completed = serializers.BooleanField()
     admin_approved = serializers.BooleanField()
@@ -933,5 +970,4 @@ class EmployerJobPostingContextSerializer(serializers.Serializer):
     free_publish_limit = serializers.IntegerField(min_value=0)
     free_publish_remain = serializers.IntegerField(min_value=0)
     job_postable = serializers.BooleanField()
-    approval_required = serializers.BooleanField()
     block_reason = serializers.CharField(allow_blank=True)

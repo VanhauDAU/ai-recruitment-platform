@@ -6,6 +6,64 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ## [Unreleased]
 
+### 2026-11-13
+
+#### Added — Cam kết khi đăng tin và trạng thái tạm ẩn cho nhà tuyển dụng
+
+- Đăng tin nháp và mở lại tin đã đóng yêu cầu `responsibility_statement_version`
+  khớp bản cam kết đang có hiệu lực; thiếu hoặc sai trả
+  `JOB_RESPONSIBILITY_REQUIRED`. Posting context trả `responsibility_statement`;
+  tin lưu `responsibility_accepted_at` và `responsibility_statement_version`
+  (`jobs.0048`). Form đăng tin và hộp thoại mở lại tin có ô xác nhận; trang chi
+  tiết tin của admin hiển thị thời điểm nhà tuyển dụng cam kết.
+- API tin của nhà tuyển dụng trả `visibility_hold` (loại, thời điểm, nhóm lý
+  do, không gồm ghi chú nội bộ); báo cáo hiệu quả tin của chiến dịch trả
+  `visibility_held`. Cổng nhà tuyển dụng gắn nhãn "Tạm ẩn", giải thích ở trang
+  chi tiết và ẩn các thao tác bị từ chối khi tin đang tạm ẩn.
+
+#### Changed — Hậu kiểm tin tuyển dụng thay cho duyệt trước (ADR-0014)
+
+- Nhà tuyển dụng đăng tin là tin công khai ngay: `submit` và `reopen` chuyển
+  tin sang `active`, khởi tạo hoặc tiếp tục vòng đời hiển thị và chụp snapshot
+  nội dung. Sửa tin đang tuyển có hiệu lực tại chỗ, không đổi `published_at`.
+- Điều kiện trước đây kiểm tra khi duyệt nay chặn ngay thao tác đăng: hồ sơ xác
+  thực đã được chấp nhận cho đúng công ty, DPA còn hiệu lực, không có compliance
+  hold và chiến dịch đang chạy. Không đạt thì API trả `JOB_PUBLICATION_BLOCKED`.
+- Trang quản trị tin chỉ còn tạm ẩn và khôi phục; chi tiết tin trả
+  `content_changes` so với nội dung của lần đăng gần nhất và
+  `published_job_count` thay cho `approved_job_count`.
+- Tin nháp đã từng được đăng không còn xóa được, vì có thể đang giữ hồ sơ ứng
+  tuyển.
+
+#### Changed — Giao diện theo mô hình hậu kiểm
+
+- Cổng nhà tuyển dụng: nút "Đăng tin" thay "Gửi duyệt tin", hiển thị lý do khi
+  backend trả
+  `JOB_PUBLICATION_BLOCKED`; bỏ nhãn, bộ lọc và số đếm "Chờ duyệt", "Từ chối".
+- Cổng quản trị: danh sách tin mặc định hiển thị tất cả tin, thêm phạm vi "Có
+  báo cáo chờ"; trang chi tiết chỉ còn tạm ẩn và khôi phục, tab "Thay đổi" so
+  nội dung hiện tại với bản đã đăng. Xóa feature `review-job-submission`.
+
+#### Removed — Quy trình duyệt tin
+
+- Trạng thái `pending`, `rejected` và cột `rejected_reason` của tin; các hàm
+  `approve_job`, `reject_job`; endpoint `/api/jobs/admin/moderation/{id}/review/`;
+  các field `approve_blockers`, `approve_requirements`, `approval_required`,
+  `jobs_pending`, `pending_job_count`, `rejected_job_count`; scope
+  `pending_jobs` của danh sách chiến dịch.
+- Quyền admin `job_moderation.approve` và `job_moderation.reject`.
+- Site setting `job_auto_approve` chưa từng được dùng.
+
+#### Migration — Chuyển đổi dữ liệu duyệt tin
+
+- `jobs.0046` đưa mọi tin `pending` và `rejected` về `draft` kèm một dòng lịch
+  sử trạng thái; `jobs.0047` xóa hai trạng thái và cột `rejected_reason`.
+- Sau khi migrate, chạy `python manage.py publish_converted_pending_jobs` để
+  xem trước rồi thêm `--apply` để đăng lại các tin từng chờ duyệt. Chỉ tin đạt
+  điều kiện đăng mới công khai; tin còn lại vẫn là bản nháp.
+- `accounts.0028` đánh dấu hai quyền duyệt tin là deprecated;
+  `sitecontent.0021` xóa setting `job_auto_approve`.
+
 ### 2026-08-10
 
 #### Added — Employer rollout readiness và monitoring

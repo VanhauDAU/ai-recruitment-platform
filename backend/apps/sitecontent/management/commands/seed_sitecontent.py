@@ -417,16 +417,6 @@ SETTINGS = [
     ),
     ('jobs_per_page', 'Số tin mỗi trang', G.JOBS, T.NUMBER, 20, True, '', {}),
     (
-        'job_auto_approve',
-        'Tự động duyệt tin',
-        G.JOBS,
-        T.BOOLEAN,
-        False,
-        False,
-        'Bật để tin đăng hiển thị ngay không cần admin duyệt.',
-        {},
-    ),
-    (
         'job_allow_salary_negotiable',
         'Cho phép lương thoả thuận',
         G.JOBS,

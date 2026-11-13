@@ -39,6 +39,7 @@ from ..api.serializers import (
     JobDetailSerializer,
 )
 from ..models import Benefit, Job, JobCategory, JobEngagementDaily, Language, SavedJob
+from ..services import RESPONSIBILITY_STATEMENT_VERSION
 
 
 class JobCategoryApiTests(APITestCase):
@@ -1410,6 +1411,7 @@ class EmployerJobSerializerTests(APITestCase):
                 'is_visibility_expired',
                 'status',
                 'is_expired',
+                'visibility_hold',
                 'campaign',
                 'campaign_name',
                 'application_count',
@@ -1419,7 +1421,6 @@ class EmployerJobSerializerTests(APITestCase):
                 'published_at',
                 'submitted_at',
                 'approved_at',
-                'rejected_reason',
                 'created_at',
                 'updated_at',
             },
@@ -1452,6 +1453,11 @@ class EmployerJobSerializerTests(APITestCase):
                 'timezone': 'Asia/Ho_Chi_Minh',
             },
         )
+        self.assertEqual(
+            response.data['responsibility_statement']['version'],
+            RESPONSIBILITY_STATEMENT_VERSION,
+        )
+        self.assertIn('chịu trách nhiệm', response.data['responsibility_statement']['text'])
         self.assertEqual(
             response.data['services'],
             {

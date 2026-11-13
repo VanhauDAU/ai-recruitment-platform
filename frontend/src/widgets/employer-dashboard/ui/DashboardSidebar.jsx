@@ -64,8 +64,8 @@ export default function DashboardSidebar({
           />
           <PriorityAction
             icon={FileDoneOutlined}
-            label={`${numberFormatter.format(summary.jobs_pending || 0)} tin đang chờ duyệt`}
-            detail={`${numberFormatter.format(summary.jobs_draft || 0)} bản nháp chưa hoàn tất`}
+            label={`${numberFormatter.format(summary.jobs_draft || 0)} bản nháp chưa đăng`}
+            detail="Hoàn thiện và đăng để ứng viên thấy tin"
             tone="bg-amber-50 text-amber-600"
             to={jobWorkspaceReady ? employerAppPath('/jobs') : EMPLOYER_VERIFY_URL}
           />

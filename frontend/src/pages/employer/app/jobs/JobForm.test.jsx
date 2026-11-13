@@ -1,11 +1,12 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { MemoryRouter } from 'react-router'
+import { MemoryRouter, Route, Routes } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import JobForm from './JobForm'
 
 const mocks = vi.hoisted(() => ({
   getCampaignOptions: vi.fn(),
+  getEmployerJob: vi.fn(),
   getJobCategories: vi.fn(),
   getJobPostingContext: vi.fn(),
   publishEmployerJob: vi.fn(),
@@ -21,7 +22,7 @@ vi.mock('@/entities/campaign', () => ({
 
 vi.mock('@/entities/job', () => ({
   createSkill: vi.fn(),
-  getEmployerJob: vi.fn(),
+  getEmployerJob: mocks.getEmployerJob,
   getJobCategories: mocks.getJobCategories,
   getJobPostingContext: mocks.getJobPostingContext,
   jobKeys: {
@@ -53,8 +54,8 @@ vi.mock('@/widgets/employer-job-editor', () => ({
       <p data-testid="deadline-policy">
         {defaultDeadlineDays}/{maxDeadlineDays}
       </p>
-      <button type="button" onClick={() => onPublish({ title: 'Backend Engineer' }, null)}>
-        Mô phỏng gửi duyệt
+      <button type="button" onClick={() => onPublish({ title: 'Backend Engineer' }, null, '2026-11')}>
+        Mô phỏng đăng tin
       </button>
       <button type="button" onClick={() => onSaveDraft({ title: 'Backend Engineer' }, null)}>
         Mô phỏng lưu nháp
@@ -63,7 +64,7 @@ vi.mock('@/widgets/employer-job-editor', () => ({
   ),
 }))
 
-function renderPage() {
+function renderPage(initialEntry = '/tuyendung/app/jobs/new') {
   const queryClient = new QueryClient({
     defaultOptions: {
       mutations: { retry: false },
@@ -72,8 +73,11 @@ function renderPage() {
   })
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={['/tuyendung/app/jobs/new']}>
-        <JobForm />
+      <MemoryRouter initialEntries={[initialEntry]}>
+        <Routes>
+          <Route path="/tuyendung/app/jobs/new" element={<JobForm />} />
+          <Route path="/tuyendung/app/jobs/:publicId/edit" element={<JobForm />} />
+        </Routes>
       </MemoryRouter>
     </QueryClientProvider>,
   )
@@ -82,6 +86,7 @@ function renderPage() {
 describe('JobForm submission feedback', () => {
   beforeEach(() => {
     mocks.getCampaignOptions.mockReset().mockResolvedValue([])
+    mocks.getEmployerJob.mockReset()
     mocks.getJobCategories.mockReset().mockResolvedValue([])
     mocks.getJobPostingContext.mockReset().mockResolvedValue({ job_postable: true })
     mocks.publishEmployerJob.mockReset()
@@ -90,7 +95,7 @@ describe('JobForm submission feedback', () => {
     mocks.message.success.mockReset()
   })
 
-  it('shows the backend error as a toast when sending a job for review fails', async () => {
+  it('shows the backend error as a toast when publishing a job fails', async () => {
     mocks.publishEmployerJob.mockRejectedValue({
       response: {
         status: 400,
@@ -99,7 +104,7 @@ describe('JobForm submission feedback', () => {
     })
     renderPage()
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Mô phỏng gửi duyệt' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Mô phỏng đăng tin' }))
 
     await waitFor(() => expect(mocks.message.error).toHaveBeenCalledWith(
       'Hạn nhận hồ sơ phải là một ngày trong tương lai.',
@@ -107,6 +112,45 @@ describe('JobForm submission feedback', () => {
     ))
     expect(await screen.findByText('Hạn nhận hồ sơ phải là một ngày trong tương lai.'))
       .toBeInTheDocument()
+  })
+
+  it('lists the blocking reasons when the employer may not publish yet', async () => {
+    mocks.publishEmployerJob.mockRejectedValue({
+      response: {
+        status: 400,
+        data: {
+          code: 'JOB_PUBLICATION_BLOCKED',
+          detail: 'Chưa thể đăng tin.',
+          blocked_reasons: [
+            { code: 'verification_required', label: 'Nhà tuyển dụng chưa được duyệt xác thực.' },
+          ],
+        },
+      },
+    })
+    renderPage()
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Mô phỏng đăng tin' }))
+
+    await waitFor(() => expect(mocks.message.error).toHaveBeenCalledWith(
+      'Chưa thể đăng tin. Nhà tuyển dụng chưa được duyệt xác thực.',
+      { duration: 5000, id: 'post-job-submit-error' },
+    ))
+  })
+
+  it('tells the employer the job is public as soon as it is published', async () => {
+    mocks.publishEmployerJob.mockResolvedValue({ public_id: 'job_1', status: 'active' })
+    renderPage()
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Mô phỏng đăng tin' }))
+
+    await waitFor(() => expect(mocks.message.success).toHaveBeenCalledWith(
+      'Đã đăng tin. Ứng viên có thể xem tin ngay.',
+    ))
+    expect(mocks.publishEmployerJob).toHaveBeenCalledWith(
+      { title: 'Backend Engineer' },
+      undefined,
+      '2026-11',
+    )
   })
 
   it('uses the posting default as the suggestion and the maximum as the selectable limit', async () => {
@@ -119,6 +163,28 @@ describe('JobForm submission feedback', () => {
     renderPage()
 
     expect(await screen.findByTestId('deadline-policy')).toHaveTextContent('30/90')
+  })
+
+  it('explains why a held job cannot be edited instead of offering the form', async () => {
+    mocks.getEmployerJob.mockResolvedValue({
+      public_id: 'job_1',
+      status: 'active',
+      visibility_hold: {
+        kind: 'moderation',
+        code: 'manual_review',
+        label: 'Tạm ẩn để rà soát nội dung',
+        held_at: '2026-11-12T08:00:00+07:00',
+        reason_code: 'fraud_risk',
+        reason_label: 'Có dấu hiệu lừa đảo',
+      },
+    })
+    renderPage('/tuyendung/app/jobs/job_1/edit')
+
+    expect(await screen.findByTestId('job-visibility-hold'))
+      .toHaveTextContent('Có dấu hiệu lừa đảo')
+    expect(screen.queryByRole('button', { name: 'Mô phỏng đăng tin' })).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Quay lại chi tiết tin' }))
+      .toHaveAttribute('href', '/tuyendung/app/jobs/job_1')
   })
 
   it('shows a toast when saving a draft fails', async () => {

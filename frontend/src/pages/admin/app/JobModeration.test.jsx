@@ -82,40 +82,39 @@ describe('JobModeration', () => {
     getAdminJobs.mockResolvedValue({
       count: 1,
       results: [{
-        public_id: 'job_pending',
+        public_id: 'job_active',
         title: 'Backend Engineer',
         company_name: 'Acme',
         employer_verification_completed: true,
         employer_name: 'Nguyễn An',
         employer_email: 'an@example.com',
-        status: 'pending',
-        status_label: 'Chờ duyệt',
+        status: 'active',
+        status_label: 'Đang tuyển',
         deadline: '2026-08-30',
         created_at: '2026-07-22T08:00:00Z',
         submitted_at: '2026-07-22T09:00:00Z',
         application_count: 0,
         pending_report_count: 0,
-        approved_job_count: 2,
+        published_job_count: 2,
       }],
     })
     getAdminJobSummary.mockResolvedValue({
       total: 1,
-      pending: 1,
-      active: 0,
+      draft: 0,
+      active: 1,
+      expired: 0,
+      closed: 0,
       held: 0,
-      rejected: 0,
-      overdue: 0,
       pending_reports: 0,
-      sla_hours: 24,
     })
   })
 
-  it('loads the pending queue without exposing direct approval actions in the table', async () => {
+  it('loads every job by default and never offers an approval action', async () => {
     renderPage()
 
     expect(await screen.findByText('Backend Engineer')).toBeInTheDocument()
     expect(getAdminJobs).toHaveBeenCalledWith(
-      { ordering: '-created_at', page: 1, status: 'pending' },
+      { ordering: '-created_at', page: 1 },
       expect.any(Object),
     )
     expect(screen.getByRole('button', { name: 'Sắp xếp created_at' })).toBeVisible()
@@ -130,9 +129,19 @@ describe('JobModeration', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Sắp xếp title' }))
 
     await waitFor(() => expect(getAdminJobs).toHaveBeenLastCalledWith(
-      { ordering: '-title', page: 1, status: 'pending' },
+      { ordering: '-title', page: 1 },
       expect.any(Object),
     ))
+  })
+
+  it('narrows the list to jobs with pending reports from the deep-linked scope', async () => {
+    renderPage('/admin/app/job-moderation?job_scope=reported')
+    await screen.findByText('Backend Engineer')
+
+    expect(getAdminJobs).toHaveBeenCalledWith(
+      { has_reports: 'true', ordering: '-created_at', page: 1 },
+      expect.any(Object),
+    )
   })
 
   it('opens the report queue from the existing deep-linked tab', () => {

@@ -37,7 +37,7 @@ export default function JobCreationModeChooser({ onChoose }) {
             Bạn muốn bắt đầu theo cách nào?
           </h1>
           <p className="mt-2 max-w-2xl break-words text-sm leading-6 text-slate-600 sm:text-base">
-            Dù chọn AI hay nhập thủ công, bạn luôn là người kiểm tra và quyết định lưu hoặc gửi duyệt tin.
+            Dù chọn AI hay nhập thủ công, bạn luôn là người kiểm tra và quyết định lưu hoặc đăng tin.
           </p>
         </div>
         <div className="hidden justify-center lg:flex" aria-hidden="true">

@@ -178,6 +178,7 @@ export function buildJobPayload(values) {
   delete persistedValues.work_areas
   delete persistedValues.ai_generation_public_id
   delete persistedValues.requested_visibility_days
+  delete persistedValues.responsibility_accepted
 
   return {
     ...persistedValues,

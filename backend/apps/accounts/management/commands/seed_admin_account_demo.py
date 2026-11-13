@@ -61,8 +61,6 @@ ROLE_DEFINITIONS = (
         'permissions': (
             'dashboard.view',
             'job_moderation.view',
-            'job_moderation.approve',
-            'job_moderation.reject',
             'job_moderation.resolve_report',
         ),
     },

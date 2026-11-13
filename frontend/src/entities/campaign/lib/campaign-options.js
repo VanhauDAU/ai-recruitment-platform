@@ -18,7 +18,6 @@ export const CAMPAIGN_SCOPE_OPTIONS = [
   { value: '', label: 'Tất cả nhu cầu xử lý' },
   { value: 'needs_review', label: 'Có CV ứng tuyển mới cần xem' },
   { value: 'active_jobs', label: 'Có tin tuyển dụng đang tuyển' },
-  { value: 'pending_jobs', label: 'Có tin tuyển dụng đang chờ duyệt' },
   { value: 'expired_jobs', label: 'Có tin tuyển dụng hết hạn' },
 ]
 

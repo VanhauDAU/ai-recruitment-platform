@@ -48,34 +48,34 @@ function ChangeValue({ change, side }) {
 }
 
 export default function AdminJobChangeReview({ job }) {
-  const pending = job.pending_changes || {}
-  const changes = pending.changes || []
-  const badge = pending.has_baseline
-    ? `${pending.changed_count || 0} thay đổi`
+  const contentChanges = job.content_changes || {}
+  const changes = contentChanges.changes || []
+  const badge = contentChanges.has_baseline
+    ? `${contentChanges.changed_count || 0} thay đổi`
     : 'Chưa có bản gốc'
 
   return (
     <AdminJobPanel
       badge={badge}
-      description="Đối chiếu bản gửi duyệt với nội dung đã được duyệt trước đó"
+      description="Đối chiếu nội dung hiện tại với nội dung của lần đăng gần nhất"
       icon={<DiffOutlined />}
-      title="Thay đổi cần duyệt"
+      title="Thay đổi sau khi đăng"
     >
-      {!pending.has_baseline ? (
+      {!contentChanges.has_baseline ? (
         <Alert
-          description="Tin chưa từng được duyệt trên phiên bản có lưu bản gốc, nên không có gì để đối chiếu. Sau lần duyệt này, mọi chỉnh sửa của nhà tuyển dụng sẽ được liệt kê tại đây."
+          description="Tin chưa có bản nội dung được lưu ở lần đăng, nên không có gì để đối chiếu. Từ lần đăng kế tiếp, mọi chỉnh sửa của nhà tuyển dụng sẽ được liệt kê tại đây."
           showIcon
-          title="Chưa có bản đã duyệt để so sánh"
+          title="Chưa có bản đã đăng để so sánh"
           type="info"
         />
       ) : (
         <>
           <p className="admin-job-change__baseline">
-            So với bản duyệt lúc {formatAdminJobDateTime(pending.baseline_captured_at)}
+            So với bản đăng lúc {formatAdminJobDateTime(contentChanges.baseline_captured_at)}
           </p>
-          {pending.hidden_sensitive_count > 0 && (
+          {contentChanges.hidden_sensitive_count > 0 && (
             <p className="admin-job-change__restricted">
-              <EyeInvisibleOutlined /> {pending.hidden_sensitive_count} thay đổi thuộc thông tin
+              <EyeInvisibleOutlined /> {contentChanges.hidden_sensitive_count} thay đổi thuộc thông tin
               liên hệ bị ẩn theo quyền của bạn.
             </p>
           )}
@@ -86,11 +86,11 @@ export default function AdminJobChangeReview({ job }) {
                   <h3>{change.label}</h3>
                   <div className="admin-job-change__columns">
                     <div className="admin-job-change__side admin-job-change__side--before">
-                      <span>Bản đã duyệt</span>
+                      <span>Bản đã đăng</span>
                       <ChangeValue change={change} side="before" />
                     </div>
                     <div className="admin-job-change__side admin-job-change__side--after">
-                      <span>Bản gửi duyệt</span>
+                      <span>Bản hiện tại</span>
                       <ChangeValue change={change} side="after" />
                     </div>
                   </div>
@@ -99,7 +99,7 @@ export default function AdminJobChangeReview({ job }) {
             </div>
           ) : (
             <Empty
-              description="Nội dung trùng khớp bản đã duyệt"
+              description="Nội dung trùng khớp bản đã đăng"
               image={Empty.PRESENTED_IMAGE_SIMPLE}
             />
           )}

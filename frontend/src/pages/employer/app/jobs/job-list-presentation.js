@@ -4,24 +4,31 @@ import { employerAppPath } from '@/shared/config/portals'
 export const JOB_STATUS_FILTERS = [
   { value: '', label: 'Tất cả' },
   { value: 'active', label: 'Đang tuyển' },
-  { value: 'pending', label: 'Chờ duyệt' },
   { value: 'draft', label: 'Nháp' },
-  { value: 'rejected', label: 'Từ chối' },
   { value: 'expired', label: 'Hết hạn' },
   { value: 'closed', label: 'Đã đóng' },
 ]
 
 const STATUS_META = {
+  held: { label: 'Tạm ẩn', className: 'text-red-700', dot: 'bg-red-500' },
   active: { label: 'Đang tuyển', className: 'text-emerald-700', dot: 'bg-emerald-500' },
-  pending: { label: 'Chờ duyệt', className: 'text-amber-700', dot: 'bg-amber-500' },
   draft: { label: 'Nháp', className: 'text-slate-500', dot: 'bg-slate-400' },
-  rejected: { label: 'Từ chối', className: 'text-rose-700', dot: 'bg-rose-500' },
   expired: { label: 'Hết hạn', className: 'text-orange-700', dot: 'bg-orange-500' },
   closed: { label: 'Đã đóng', className: 'text-slate-500', dot: 'bg-slate-400' },
 }
 
+// A held job stays `active` for the business flow but candidates cannot see it.
+export function isJobHeld(job) {
+  return Boolean(job.visibility_hold)
+}
+
+function jobStatusKey(job) {
+  if (job.status === 'active' && isJobHeld(job)) return 'held'
+  return job.is_expired ? 'expired' : job.status
+}
+
 export function jobStatusMeta(job) {
-  return STATUS_META[job.is_expired ? 'expired' : job.status]
+  return STATUS_META[jobStatusKey(job)]
     || { label: job.status || 'Không xác định', className: 'text-slate-500', dot: 'bg-slate-400' }
 }
 

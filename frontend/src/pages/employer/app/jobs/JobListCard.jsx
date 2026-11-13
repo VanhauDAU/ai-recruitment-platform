@@ -118,7 +118,7 @@ export default function JobListCard({
             >
               {job.title || 'Tin nháp chưa đặt tên'}
             </Link>
-            <Tooltip title={job.status === 'rejected' ? job.rejected_reason : undefined}>
+            <Tooltip title={job.visibility_hold?.reason_label || job.visibility_hold?.label}>
               <span className={`inline-flex shrink-0 items-center gap-1 text-[10px] font-semibold ${status.className}`}>
                 <span aria-hidden className={`h-1.5 w-1.5 rounded-full ${status.dot}`} />
                 {status.label}

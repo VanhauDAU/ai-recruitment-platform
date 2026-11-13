@@ -66,7 +66,7 @@ export async function mockPublicApi(page) {
                 company_size: '25-99', work_location_name: 'Hà Nội',
                 verification: { email_verified: true, phone_verified: false, company_linked: false, business_doc_submitted: false, candidate_dpa_submitted: false, dpa_accepted: false, representative_verified: false, first_job_posted: false },
               },
-              summary: { jobs_total: 0, jobs_active: 0, jobs_pending: 0, jobs_draft: 0, job_views: 0, applications_total: 0, applications_new: 0, applications_shortlisted: 0, applications_interviewed: 0 },
+              summary: { jobs_total: 0, jobs_active: 0, jobs_draft: 0, job_views: 0, applications_total: 0, applications_new: 0, applications_shortlisted: 0, applications_interviewed: 0 },
               application_activity: Array.from({ length: 7 }, (_, index) => ({ date: `2026-07-${String(12 + index).padStart(2, '0')}`, count: 0 })),
               recruitment_need: null, recent_jobs: [], recent_applications: [],
             }
@@ -100,4 +100,14 @@ export async function expectAnimatedLoginButton(page) {
       () => track.evaluate((element) => getComputedStyle(element).transform),
     ).not.toBe('none')
   }
+}
+
+// CI runners occasionally drop a click on an Ant Design tab, leaving the
+// previous tab selected. Click again until the tab reports itself selected.
+export async function selectTab(page, name) {
+  const tab = page.getByRole('tab', { name })
+  await expect(async () => {
+    await tab.click()
+    await expect(tab).toHaveAttribute('aria-selected', 'true', { timeout: 1_000 })
+  }).toPass()
 }

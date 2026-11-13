@@ -199,6 +199,24 @@ describe('CampaignJobsPanel', () => {
     expect(screen.getAllByText('—').length).toBeGreaterThanOrEqual(5)
   })
 
+  it('marks a held job as hidden and offers neither its public page nor editing', async () => {
+    mocks.getCampaignJobPerformance.mockImplementation((_, days) => {
+      const report = performance(days)
+      report.jobs[0].visibility_held = true
+      return Promise.resolve(report)
+    })
+    renderPanel()
+
+    expect(await screen.findAllByText('Tạm ẩn')).not.toHaveLength(0)
+    // Without an href the anchor is no longer exposed as a link.
+    const publicPage = screen.getByLabelText('Xem tin Kỹ sư Frontend')
+    expect(publicPage).toHaveAttribute('aria-disabled', 'true')
+    expect(publicPage).not.toHaveAttribute('href')
+    expect(screen.queryByRole('link', { name: 'Chỉnh sửa Kỹ sư Frontend' }))
+      .not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Chỉnh sửa Backend Engineer' })).toBeInTheDocument()
+  })
+
   it('keeps the add-job action available when the report cannot load', async () => {
     mocks.getCampaignJobPerformance.mockRejectedValue(new Error('Network error'))
     renderPanel()
@@ -225,25 +243,6 @@ describe('CampaignJobsPanel', () => {
     expect(screen.getByLabelText('Xem tin Kỹ sư Frontend')).toHaveAttribute(
       'aria-disabled',
       'true',
-    )
-  })
-
-  it('shows the rejection reason for a rejected job', async () => {
-    const user = userEvent.setup()
-    const rejected = performance()
-    rejected.jobs[0] = {
-      ...rejected.jobs[0],
-      status: 'rejected',
-      rejected_reason: 'Thiếu thông tin về mức lương và quyền lợi.',
-    }
-    mocks.getCampaignJobPerformance.mockResolvedValue(rejected)
-    renderPanel()
-
-    await user.click(await screen.findByRole('button', { name: 'Xem lý do từ chối Kỹ sư Frontend' }))
-    expect(screen.getByText('Thiếu thông tin về mức lương và quyền lợi.')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Chỉnh sửa và gửi lại' })).toHaveAttribute(
-      'href',
-      '/tuyendung/app/jobs/job_1/edit',
     )
   })
 })

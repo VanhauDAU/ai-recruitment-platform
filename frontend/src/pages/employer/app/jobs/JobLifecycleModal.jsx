@@ -1,12 +1,17 @@
-import { DatePicker, Modal } from 'antd'
+import { Checkbox, DatePicker, Modal } from 'antd'
 
+// Reopening makes the job public again, so it asks for the same commitment as
+// publishing. Extending a job that is already public does not.
 export default function JobLifecycleModal({
   action,
+  commitment,
+  commitmentAccepted,
   deadline,
   earliestDeadline,
   latestDeadline,
   loading,
   onCancel,
+  onCommitmentChange,
   onDeadlineChange,
   onSubmit,
 }) {
@@ -44,6 +49,20 @@ export default function JobLifecycleModal({
             Có thể chọn đến {latestDeadline.format('DD/MM/YYYY')}.
           </p>
         </div>
+        {action === 'reopen' && (
+          commitment ? (
+            <Checkbox
+              checked={commitmentAccepted}
+              onChange={(event) => onCommitmentChange(event.target.checked)}
+            >
+              {commitment.text}
+            </Checkbox>
+          ) : (
+            <p className="text-xs font-semibold text-red-600">
+              Chưa tải được nội dung cam kết đăng tin. Tải lại trang để mở lại tin.
+            </p>
+          )
+        )}
       </div>
     </Modal>
   )

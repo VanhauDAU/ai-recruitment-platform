@@ -8,8 +8,9 @@ class JobModerationEvent(models.Model):
     """Immutable evidence for administrator decisions about one job revision."""
 
     class Action(models.TextChoices):
-        APPROVE = 'approve', 'Duyệt tin'
-        REJECT = 'reject', 'Từ chối tin'
+        # Written only before post-moderation (ADR-0014); kept to read old events.
+        APPROVE = 'approve', 'Duyệt tin (lịch sử)'
+        REJECT = 'reject', 'Từ chối tin (lịch sử)'
         HIDE = 'hide', 'Tạm ẩn tin'
         RESTORE = 'restore', 'Khôi phục hiển thị'
 

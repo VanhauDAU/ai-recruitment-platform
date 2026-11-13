@@ -46,7 +46,7 @@ export default function AdminJobDetail({ publicId, serviceContent = null }) {
   })
   const job = query.data
   const jobPublicId = job?.public_id
-  const changeCount = job?.pending_changes?.changed_count || 0
+  const changeCount = job?.content_changes?.changed_count || 0
   const pendingReportCount = job?.pending_report_count || 0
   const fallback = adminPath('/job-moderation')
   const origin = location.state?.origin

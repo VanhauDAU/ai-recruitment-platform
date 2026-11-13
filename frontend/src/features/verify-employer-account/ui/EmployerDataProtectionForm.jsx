@@ -261,7 +261,7 @@ export default function EmployerDataProtectionForm() {
             type="warning"
             showIcon
             title={graceExpiresAt ? `Cần cập nhật DPA trước ${graceExpiresAt}` : 'DPA đang trong thời gian gia hạn cập nhật'}
-            description="Workspace vẫn hoạt động trong thời gian gia hạn. Quyền xem dữ liệu ứng viên và duyệt tin chỉ được mở lại sau khi xác nhận DPA hiện hành."
+            description="Workspace vẫn hoạt động trong thời gian gia hạn. Quyền xem dữ liệu ứng viên và đăng tin chỉ được mở lại sau khi xác nhận DPA hiện hành."
           />
         )}
         {dpaStatus === 'hold' && (

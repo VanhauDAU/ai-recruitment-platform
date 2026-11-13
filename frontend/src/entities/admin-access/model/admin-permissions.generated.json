@@ -407,28 +407,10 @@
     "requires": []
   },
   {
-    "code": "job_moderation.approve",
-    "module": "job_moderation",
-    "label": "Duyệt tin tuyển dụng",
-    "description": "Phê duyệt tin tuyển dụng đã gửi duyệt.",
-    "requires": [
-      "job_moderation.view"
-    ]
-  },
-  {
     "code": "job_moderation.enforce_visibility",
     "module": "job_moderation",
     "label": "Tạm ẩn hoặc khôi phục tin tuyển dụng",
     "description": "Áp dụng hoặc gỡ moderation hold mà không đổi trạng thái nghiệp vụ của tin.",
-    "requires": [
-      "job_moderation.view"
-    ]
-  },
-  {
-    "code": "job_moderation.reject",
-    "module": "job_moderation",
-    "label": "Từ chối tin tuyển dụng",
-    "description": "Từ chối tin tuyển dụng và ghi lý do.",
     "requires": [
       "job_moderation.view"
     ]
@@ -446,7 +428,7 @@
     "code": "job_moderation.view",
     "module": "job_moderation",
     "label": "Xem quản lý tin tuyển dụng",
-    "description": "Xem danh sách, chi tiết, lịch sử và hàng chờ kiểm duyệt tin tuyển dụng.",
+    "description": "Xem danh sách, chi tiết, lịch sử và báo cáo của tin tuyển dụng.",
     "requires": []
   },
   {

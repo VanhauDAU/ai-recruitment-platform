@@ -143,7 +143,7 @@ describe('CampaignList', () => {
         application_pair_count: 2,
         job_count: 2,
         active_job_count: 1,
-        pending_job_count: 1,
+        draft_job_count: 1,
         unviewed_application_count: 1,
         last_activity: {
           label: 'Nhận CV ứng tuyển',
@@ -157,7 +157,7 @@ describe('CampaignList', () => {
     await screen.findAllByRole('link', { name: 'Tuyển Frontend' })
     expect(screen.getAllByText('#camp_frontend').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Đang tuyển 1').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('Chờ duyệt 1').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Nháp 1').length).toBeGreaterThan(0)
     expect(screen.getAllByText('2 hồ sơ ứng tuyển').length).toBeGreaterThan(0)
     expect(screen.queryByText('7 ứng viên')).not.toBeInTheDocument()
     expect(screen.getAllByTitle('Nguyễn Minh Anh').length).toBeGreaterThan(0)
@@ -182,7 +182,7 @@ describe('CampaignList', () => {
         application_count: 3,
         job_count: 2,
         active_job_count: 1,
-        pending_job_count: 1,
+        draft_job_count: 1,
         unviewed_application_count: 1,
         updated_at: '2026-07-22T09:00:00Z',
       }],

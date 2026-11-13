@@ -142,7 +142,11 @@ export default function EmployerJobEditor({
           onAiSuggestionApplied={() => setFormDirty(false)}
           onValuesChange={() => setFormDirty(true)}
           onSaveDraft={(payload) => onSaveDraft(payload, attributedGenerationId)}
-          onPublish={(payload) => onPublish(payload, attributedGenerationId)}
+          onPublish={(payload, acceptedStatementVersion) => onPublish(
+            payload,
+            attributedGenerationId,
+            acceptedStatementVersion,
+          )}
         />
       )}
 

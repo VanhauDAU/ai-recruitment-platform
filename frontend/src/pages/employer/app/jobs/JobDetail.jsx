@@ -35,6 +35,7 @@ import JobApplicationsWorkspace from './JobApplicationsWorkspace'
 import JobDetailHeader from './JobDetailHeader'
 import JobInformationPanel from './JobInformationPanel'
 import JobLifecycleModal from './JobLifecycleModal'
+import JobVisibilityHoldAlert from './JobVisibilityHoldAlert'
 
 const CONNECTED_STATUSES = new Set(['considering', 'shortlisted', 'interviewed', 'accepted'])
 const VALID_TABS = new Set(['apply_cv', 'viewed_job', 'job', 'services', 'cv_label'])
@@ -106,6 +107,7 @@ export default function JobDetail() {
   const queryClient = useQueryClient()
   const [deadlineAction, setDeadlineAction] = useState(null)
   const [newDeadline, setNewDeadline] = useState(null)
+  const [commitmentAccepted, setCommitmentAccepted] = useState(false)
   const {
     readiness,
     profileQuery,
@@ -160,9 +162,9 @@ export default function JobDetail() {
     },
   })
   const deadlineMutation = useMutation({
-    mutationFn: ({ action, deadline }) => (
+    mutationFn: ({ action, deadline, acceptedStatementVersion }) => (
       action === 'reopen'
-        ? reopenEmployerJob(publicId, deadline)
+        ? reopenEmployerJob(publicId, deadline, acceptedStatementVersion)
         : extendEmployerJob(publicId, deadline)
     ),
     onSuccess: () => {
@@ -179,6 +181,7 @@ export default function JobDetail() {
 
   function openDeadlineAction(action) {
     setDeadlineAction(action)
+    setCommitmentAccepted(false)
     setNewDeadline(jobQuery.data?.deadline ? dayjs(jobQuery.data.deadline) : null)
   }
 
@@ -193,9 +196,15 @@ export default function JobDetail() {
       message.error('Hạn gia hạn phải sau hạn nhận hồ sơ hiện tại.')
       return
     }
+    const commitment = postingContextQuery.data?.responsibility_statement
+    if (deadlineAction === 'reopen' && !(commitment && commitmentAccepted)) {
+      message.error('Xác nhận cam kết trước khi mở lại tin.')
+      return
+    }
     deadlineMutation.mutate({
       action: deadlineAction,
       deadline: newDeadline.format('YYYY-MM-DD'),
+      acceptedStatementVersion: deadlineAction === 'reopen' ? commitment.version : undefined,
     })
   }
 
@@ -297,12 +306,7 @@ export default function JobDetail() {
         onDeadlineAction={openDeadlineAction}
       />
 
-      {job.status === 'pending' && (
-        <Alert type="info" showIcon title="Tin đang chờ quản trị viên duyệt" description="Tin chưa hiển thị với ứng viên cho đến khi được duyệt." />
-      )}
-      {job.status === 'rejected' && (
-        <Alert type="error" showIcon title="Tin tuyển dụng bị từ chối" description={job.rejected_reason || 'Quản trị viên chưa cung cấp lý do.'} />
-      )}
+      <JobVisibilityHoldAlert hold={job.visibility_hold} />
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <MetricCard testId="job-metric-total-cvs" icon={<TeamOutlined />} label="Tổng lượng CV ứng viên" value={metrics.total} helper="Tất cả nguồn CV của tin" />
@@ -337,6 +341,8 @@ export default function JobDetail() {
 
       <JobLifecycleModal
         action={deadlineAction}
+        commitment={postingContextQuery.data?.responsibility_statement}
+        commitmentAccepted={commitmentAccepted}
         deadline={newDeadline}
         earliestDeadline={earliestDeadline}
         latestDeadline={latestDeadline}
@@ -344,6 +350,7 @@ export default function JobDetail() {
         onCancel={() => {
           setDeadlineAction(null)
         }}
+        onCommitmentChange={setCommitmentAccepted}
         onDeadlineChange={setNewDeadline}
         onSubmit={submitDeadlineAction}
       />

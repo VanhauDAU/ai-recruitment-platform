@@ -212,10 +212,8 @@ class Job(models.Model):
 
     class Status(models.TextChoices):
         DRAFT = 'draft', 'Nháp'
-        PENDING = 'pending', 'Chờ duyệt'
         ACTIVE = 'active', 'Đang tuyển'
         CLOSED = 'closed', 'Đã đóng'
-        REJECTED = 'rejected', 'Từ chối'
 
     class PolicyHold(models.TextChoices):
         NONE = '', 'Không giữ'
@@ -376,12 +374,17 @@ class Job(models.Model):
     submitted_at = models.DateTimeField(null=True, blank=True)
     published_at = models.DateTimeField(null=True, blank=True)
     closed_at = models.DateTimeField(null=True, blank=True)
+    # The approved_* columns keep their names from the pre-approval era (see
+    # ADR-0014). They now record the latest publication by the recruiter.
     approved_at = models.DateTimeField(null=True, blank=True)
-    # Content made public by the last approval. An employer edit returns the job
-    # to the queue, so reviewers diff the pending revision against this baseline.
+    # Content made public by the last publication. Later edits take effect
+    # immediately, so administrators diff the current content against this.
     approved_snapshot = models.JSONField(default=dict, blank=True)
     approved_snapshot_at = models.DateTimeField(null=True, blank=True)
-    rejected_reason = models.TextField(blank=True)
+    # Evidence that the recruiter accepted the publication commitment the last
+    # time this job went public. Empty for jobs published before ADR-0014.
+    responsibility_accepted_at = models.DateTimeField(null=True, blank=True)
+    responsibility_statement_version = models.CharField(max_length=20, blank=True, default='')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -415,7 +418,7 @@ class Job(models.Model):
         ]
         constraints = [
             models.CheckConstraint(
-                condition=models.Q(status__in=['draft', 'pending', 'active', 'closed', 'rejected']),
+                condition=models.Q(status__in=['draft', 'active', 'closed']),
                 name='chk_jobs_status',
             ),
             models.CheckConstraint(

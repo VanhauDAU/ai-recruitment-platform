@@ -23,7 +23,6 @@ from .moderation import (
     AdminJobModerationDetailView,
     AdminJobModerationListView,
     AdminJobModerationSummaryView,
-    AdminJobReviewView,
 )
 from .public import (
     CandidateJobRecommendationView,
@@ -62,7 +61,6 @@ __all__ = [
     'AdminJobReportListView',
     'AdminJobReportResolveView',
     'AdminJobReportReverseView',
-    'AdminJobReviewView',
     'JobReportCreateView',
     'CandidateJobRecommendationView',
     'CandidateJobAlertDetailView',

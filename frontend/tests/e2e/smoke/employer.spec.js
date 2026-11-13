@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { expectAnimatedLoginButton, mockPublicApi } from './helpers'
+import { expectAnimatedLoginButton, mockPublicApi, selectTab } from './helpers'
 
 async function expectNoHorizontalOverflow(page) {
   await expect.poll(() => page.evaluate(() => {
@@ -1086,6 +1086,10 @@ test('employer jobs: creation chooser leads to the complete manual five-section 
         job_postable: true,
         free_publish_limit: 3,
         free_publish_remain: 3,
+        responsibility_statement: {
+          version: '2026-11',
+          text: 'Tôi cam kết nội dung tin tuyển dụng là đúng sự thật và chịu trách nhiệm về tin đã đăng.',
+        },
         lifecycle_policy: {
           mode: 'legacy',
           default_visibility_days: 30,
@@ -1229,7 +1233,8 @@ test('employer jobs: creation chooser leads to the complete manual five-section 
   await expect(page.getByLabel('Họ và tên người nhận')).toHaveValue('Nguyễn An')
   await expect(page.locator('#application').getByText('hr@example.com', { exact: true })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Lưu nháp' })).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Gửi duyệt tin' })).toBeVisible()
+  await expect(page.getByRole('button', { name: /Đăng tin$/ })).toBeVisible()
+  await expect(page.getByRole('checkbox', { name: /chịu trách nhiệm về tin đã đăng/ })).toBeVisible()
   await expectNoHorizontalOverflow(page)
   await page.getByRole('button', { name: 'Lưu nháp' }).click()
   await expect.poll(() => savedDraft).not.toHaveProperty('requested_visibility_days')
@@ -1293,7 +1298,15 @@ test('employer jobs: direct AI modes preserve campaign, resume generation and at
   await page.route('http://localhost:8000/api/jobs/mine/posting-context/', async (route) => {
     await route.fulfill({
       contentType: 'application/json',
-      body: JSON.stringify({ job_postable: true, free_publish_limit: 3, free_publish_remain: 3 }),
+      body: JSON.stringify({
+        job_postable: true,
+        free_publish_limit: 3,
+        free_publish_remain: 3,
+        responsibility_statement: {
+          version: '2026-11',
+          text: 'Tôi cam kết nội dung tin tuyển dụng là đúng sự thật và chịu trách nhiệm về tin đã đăng.',
+        },
+      }),
     })
   })
   await page.route('http://localhost:8000/api/jobs/benefits/', async (route) => {
@@ -1526,7 +1539,7 @@ test('employer jobs: detail workspace is compact, actionable and responsive', as
     await page.getByRole('combobox', { name: 'Chọn nội dung quản lý tin' }).click()
     await page.locator('.ant-select-dropdown:visible').getByText('Thông tin tuyển dụng', { exact: true }).click()
   } else {
-    await page.getByRole('tab', { name: /Thông tin tuyển dụng/ }).click()
+    await selectTab(page, /Thông tin tuyển dụng/)
   }
   await expect(page.getByText('18 - 30 triệu')).toBeVisible()
   await expect(page.getByText('Phường Hải Châu')).toBeVisible()
@@ -1538,7 +1551,7 @@ test('employer jobs: detail workspace is compact, actionable and responsive', as
     await page.getByRole('combobox', { name: 'Chọn nội dung quản lý tin' }).click()
     await page.locator('.ant-select-dropdown:visible').getByText('Dịch vụ & hiệu quả', { exact: true }).click()
   } else {
-    await page.getByRole('tab', { name: /Dịch vụ & hiệu quả/ }).click()
+    await selectTab(page, /Dịch vụ & hiệu quả/)
   }
   await expect(page.getByText('Quy tắc kết hợp dịch vụ')).toBeVisible()
   await expect(page.getByText(/Hiệu ứng cùng loại không được kích hoạt chồng thời gian/)).toBeVisible()
@@ -1659,7 +1672,7 @@ test('employer jobs: refreshing a job explains and applies default-list priority
     await page.getByRole('combobox', { name: 'Chọn nội dung quản lý tin' }).click()
     await page.locator('.ant-select-dropdown:visible').getByText('Dịch vụ & hiệu quả', { exact: true }).click()
   } else {
-    await page.getByRole('tab', { name: /Dịch vụ & hiệu quả/ }).click()
+    await selectTab(page, /Dịch vụ & hiệu quả/)
   }
 
   await expect(page.getByText('Gói làm mới tin')).toBeVisible()

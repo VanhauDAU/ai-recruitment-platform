@@ -473,7 +473,7 @@ pages/employer/app/jobs/JobForm
 app/router + app/layouts
   → pages/admin/app/JobModeration + JobModerationDetail
     → widgets/admin-job-management
-      → features/review-job-submission + enforce-job-visibility
+      → features/enforce-job-visibility
         → entities/admin-job + entities/admin-access + entities/session
           → shared/api, shared/ui
 ```
@@ -485,10 +485,10 @@ app/router + app/layouts
   phía server, dashboard tổng quan và bề mặt chi tiết đầy đủ. Route danh sách
   giữ `tab=reports` để tương thích hàng đợi báo cáo hiện hành; route chi tiết giữ
   nguồn điều hướng nội bộ để quay lại đúng bộ lọc.
-- `features/review-job-submission` sở hữu duyệt/từ chối tin chờ duyệt;
-  `features/enforce-job-visibility` sở hữu tạm ẩn/khôi phục tin đang tuyển. Hai
-  feature dùng review token của revision đang xem; lỗi `409
-  job_moderation_stale` bắt buộc tải lại, không retry hoặc ghi đè ngầm.
+- Tin không qua duyệt trước (ADR-0014), nên không còn feature duyệt/từ chối.
+  `features/enforce-job-visibility` sở hữu tạm ẩn/khôi phục tin đang tuyển và
+  dùng review token của revision đang xem; lỗi `409 job_moderation_stale` bắt
+  buộc tải lại, không retry hoặc ghi đè ngầm.
 - `policy_hold` phản ánh hạn chế từ tài khoản/chính sách; `moderation_hold` phản
   ánh quyết định tạm ẩn nội dung. Tin có một trong hai hold không được xuất hiện
   ở bất kỳ bề mặt công khai nào, nhưng vẫn hiện trong workspace quản trị.

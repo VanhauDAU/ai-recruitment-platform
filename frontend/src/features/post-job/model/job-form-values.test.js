@@ -30,6 +30,11 @@ describe('manual job form values', () => {
     expect(buildJobPayload({ description: legacyHtml }).description).toBe('<ul><li>Python</li></ul>')
   })
 
+  it('keeps the commitment checkbox out of the job payload', () => {
+    expect(buildJobPayload({ title: 'Kỹ sư Backend', responsibility_accepted: true }))
+      .not.toHaveProperty('responsibility_accepted')
+  })
+
   it('normalizes API detail data for the form without losing domain knowledge or contact emails', () => {
     const values = createJobFormValues({
       deadline: '2026-08-20',

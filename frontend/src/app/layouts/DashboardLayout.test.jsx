@@ -96,7 +96,7 @@ describe('DashboardLayout admin access', () => {
     )
 
     await user.click(screen.getByRole('button', { name: /^Tin tuyển dụng/ }))
-    expect(screen.getByText('Tin chờ duyệt')).toBeInTheDocument()
+    expect(screen.getByText('Tin có báo cáo chờ')).toBeInTheDocument()
     expect(screen.getByText('Tài khoản cá nhân')).toBeInTheDocument()
     expect(screen.queryByText('Hệ thống')).not.toBeInTheDocument()
     expect(screen.getByText('Kiểm duyệt tin · Nhân viên')).toBeInTheDocument()

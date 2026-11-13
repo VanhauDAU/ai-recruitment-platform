@@ -284,9 +284,9 @@ class AdminJobListQueryBudgetTests(APITestCase):
             Job.objects.create(
                 posted_by=self.employer,
                 company=company,
-                title=f'Pending admin job {index}',
+                title=f'Draft admin job {index}',
                 description='Description',
-                status=Job.Status.PENDING,
+                status=Job.Status.DRAFT,
             )
         self.client.force_authenticate(self.admin)
 

@@ -170,15 +170,15 @@ class AdminAccessTests(TestCase):
     def test_snapshot_excludes_inactive_memberships_and_sorts_permissions(self):
         self.assign()
         extra = AdminPermission.objects.create(
-            code='job_moderation.approve',
+            code='job_moderation.enforce_visibility',
             module='job_moderation',
-            label='Duyệt tin',
+            label='Tạm ẩn tin',
         )
         self.role.permissions.add(extra)
         snapshot = admin_access_snapshot(self.admin)
         self.assertEqual(
             snapshot['permissions'],
-            ['job_moderation.approve', 'job_moderation.view'],
+            ['job_moderation.enforce_visibility', 'job_moderation.view'],
         )
         self.assertEqual(snapshot['primary_department']['code'], 'job-moderation')
 
@@ -283,22 +283,22 @@ class AdminAccessTests(TestCase):
         self.assertIn('consultation_lead.export', service_manager['permissions'])
 
     def test_role_permission_service_adds_required_view_permission(self):
-        approve = AdminPermission.objects.create(
-            code='job_moderation.approve',
+        enforce = AdminPermission.objects.create(
+            code='job_moderation.enforce_visibility',
             module='job_moderation',
-            label='Duyệt tin',
+            label='Tạm ẩn tin',
         )
         self.role.permissions.clear()
 
         set_role_permissions(
             self.role,
-            {approve.code},
+            {enforce.code},
             actor=self.other_admin,
         )
 
         self.assertEqual(
             set(self.role.permissions.values_list('code', flat=True)),
-            {'job_moderation.approve', 'job_moderation.view'},
+            {'job_moderation.enforce_visibility', 'job_moderation.view'},
         )
 
     def test_bootstrap_admin_mfa_is_atomic_and_secret_free(self):
@@ -352,8 +352,8 @@ class AdminAccessTests(TestCase):
             AdminEmployerVerificationViewSet,
         )
         from apps.jobs.api.views.moderation import (
+            AdminJobDecisionView,
             AdminJobModerationListView,
-            AdminJobReviewView,
         )
         from apps.jobs.api.views.reports import (
             AdminJobReportListView,
@@ -380,7 +380,7 @@ class AdminAccessTests(TestCase):
             site_settings.AdminSiteSettingView,
             site_settings.AdminSettingUploadView,
             AdminJobModerationListView,
-            AdminJobReviewView,
+            AdminJobDecisionView,
             AdminJobReportListView,
             AdminJobReportResolveView,
             AdminJobReportReverseView,

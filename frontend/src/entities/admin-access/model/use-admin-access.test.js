@@ -6,16 +6,16 @@ describe('createAdminAccess', () => {
     const access = createAdminAccess({
       admin_access: {
         is_superuser: false,
-        permissions: ['job_moderation.view', 'job_moderation.approve'],
+        permissions: ['job_moderation.view', 'job_moderation.enforce_visibility'],
         primary_department: null,
         memberships: [],
       },
     })
 
     expect(access.has('job_moderation.view')).toBe(true)
-    expect(access.hasAny(['site_setting.view', 'job_moderation.approve'])).toBe(true)
-    expect(access.hasAll(['job_moderation.view', 'job_moderation.approve'])).toBe(true)
-    expect(access.hasAll(['job_moderation.view', 'job_moderation.reject'])).toBe(false)
+    expect(access.hasAny(['site_setting.view', 'job_moderation.enforce_visibility'])).toBe(true)
+    expect(access.hasAll(['job_moderation.view', 'job_moderation.enforce_visibility'])).toBe(true)
+    expect(access.hasAll(['job_moderation.view', 'job_moderation.resolve_report'])).toBe(false)
     expect(access.primaryDepartment).toBeNull()
   })
 

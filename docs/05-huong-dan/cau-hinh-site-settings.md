@@ -105,7 +105,6 @@ Hệ thống cài đặt schema-driven: mỗi setting là một row `SiteSetting
 |---|---|---|---|---|
 | `job_expiry_days` | Số ngày hết hạn tin | number | 30 |  |
 | `jobs_per_page` | Số tin mỗi trang | number | 20 | ✓ |
-| `job_auto_approve` | Tự động duyệt tin (legacy, không còn dùng) | boolean | false |  |
 | `job_allow_salary_negotiable` | Cho phép lương thoả thuận | boolean | true | ✓ |
 | `job_require_salary_range` | Bắt buộc khoảng lương | boolean | false |  |
 | `job_allow_urgent_tag` | Cho phép tag tuyển gấp | boolean | true | ✓ |

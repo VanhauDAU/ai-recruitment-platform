@@ -29,7 +29,7 @@ class Command(BaseCommand):
             RecruitmentCampaign.Status.ACTIVE,
             RecruitmentCampaign.Status.PAUSED,
         ]
-        job_nonterminal = [Job.Status.DRAFT, Job.Status.PENDING, Job.Status.ACTIVE]
+        job_nonterminal = [Job.Status.DRAFT, Job.Status.ACTIVE]
 
         banned_campaigns = RecruitmentCampaign.objects.filter(
             owner__user__status=User.Status.BANNED,

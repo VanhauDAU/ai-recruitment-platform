@@ -27,7 +27,15 @@ from ..serializers import (
     EmployerJobListSerializer,
     EmployerJobPostingContextSerializer,
     EmployerJobWriteSerializer,
+    JobResponsibilityAcknowledgementSerializer,
 )
+
+
+def _accepted_statement_version(request):
+    """Read which commitment version the recruiter accepted with this request."""
+    serializer = JobResponsibilityAcknowledgementSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    return serializer.validated_data['responsibility_statement_version']
 
 
 class EmployerJobWorkspaceReadMixin:
@@ -81,7 +89,11 @@ class EmployerJobListCreateView(EmployerJobWorkspaceReadMixin, generics.ListCrea
         serializer.is_valid(raise_exception=True)
         job = save_job_draft(serializer, request.user)
         if not is_draft:
-            job = publish_job(job, request.user)
+            job = publish_job(
+                job,
+                request.user,
+                accepted_statement_version=_accepted_statement_version(request),
+            )
         job = employer_job_detail_queryset(request.user).get(pk=job.pk)
         data = EmployerJobDetailSerializer(job, context=self.get_serializer_context()).data
         return Response(data, status=status.HTTP_201_CREATED)
@@ -141,7 +153,11 @@ class EmployerJobSubmitView(generics.GenericAPIView):
 
     def post(self, request, public_id):
         job = get_object_or_404(employer_job_detail_queryset(request.user), public_id=public_id)
-        job = publish_job(job, request.user)
+        job = publish_job(
+            job,
+            request.user,
+            accepted_statement_version=_accepted_statement_version(request),
+        )
         return Response(
             EmployerJobDetailSerializer(job, context=self.get_serializer_context()).data
         )
@@ -193,6 +209,7 @@ class EmployerJobReopenView(generics.GenericAPIView):
             get_object_or_404(employer_job_detail_queryset(request.user), public_id=public_id),
             request.user,
             serializer.validated_data['deadline'],
+            accepted_statement_version=_accepted_statement_version(request),
         )
         return Response(
             EmployerJobDetailSerializer(job, context=self.get_serializer_context()).data

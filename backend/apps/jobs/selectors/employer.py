@@ -7,6 +7,7 @@ from django.conf import settings
 from django.db.models import (
     BooleanField,
     Case,
+    CharField,
     Count,
     IntegerField,
     OuterRef,
@@ -20,7 +21,59 @@ from django.utils import timezone
 
 from apps.applications.models import Application
 
-from ..models import Job
+from ..models import Job, JobModerationEvent
+
+
+def _latest_hide_reason_codes(job_reference):
+    return (
+        JobModerationEvent.objects.filter(
+            job_id=job_reference,
+            action=JobModerationEvent.Action.HIDE,
+        )
+        .order_by('-created_at', '-id')
+        .values('reason_code')
+    )
+
+
+def _with_hold_reason(queryset):
+    """Annotate the reason of the latest hide so list pages need no extra query."""
+    return queryset.annotate(
+        moderation_hold_reason_code=Coalesce(
+            Subquery(_latest_hide_reason_codes(OuterRef('pk'))[:1], output_field=CharField()),
+            Value(''),
+        )
+    )
+
+
+def employer_job_visibility_hold(job):
+    """Explain to the owner why candidates cannot see a job; ``None`` when nothing holds it.
+
+    Only the reason category is exposed. The administrator's note stays
+    internal because it can quote the person who reported the job.
+    """
+    if job.moderation_hold:
+        reason_code = getattr(job, 'moderation_hold_reason_code', None)
+        if reason_code is None:
+            latest_hide = _latest_hide_reason_codes(job.pk).first()
+            reason_code = latest_hide['reason_code'] if latest_hide else ''
+        return {
+            'kind': 'moderation',
+            'code': job.moderation_hold,
+            'label': job.get_moderation_hold_display(),
+            'held_at': job.moderation_held_at,
+            'reason_code': reason_code,
+            'reason_label': dict(JobModerationEvent.Reason.choices).get(reason_code, ''),
+        }
+    if job.policy_hold:
+        return {
+            'kind': 'account',
+            'code': job.policy_hold,
+            'label': job.get_policy_hold_display(),
+            'held_at': job.policy_held_at,
+            'reason_code': '',
+            'reason_label': '',
+        }
+    return None
 
 
 def attach_job_candidate_previews(jobs, *, limit=4):
@@ -90,7 +143,7 @@ def employer_job_list_queryset(user, *, status=None, campaign=None, q=None):
         .values('total')[:1]
     )
     queryset = (
-        Job.objects.filter(posted_by=user)
+        _with_hold_reason(Job.objects.filter(posted_by=user))
         .select_related('company', 'campaign')
         .prefetch_related('job_locations__location__parent')
         .defer(
@@ -128,7 +181,7 @@ def employer_job_list_queryset(user, *, status=None, campaign=None, q=None):
 def employer_job_detail_queryset(user):
     """Full form query for one employer-owned job."""
     return (
-        Job.objects.filter(posted_by=user)
+        _with_hold_reason(Job.objects.filter(posted_by=user))
         .select_related('company', 'campaign')
         .prefetch_related(
             'category_assignments__category',
