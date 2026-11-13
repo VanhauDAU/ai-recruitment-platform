@@ -88,3 +88,13 @@ export async function expectAnimatedLoginButton(page) {
     ).not.toBe('none')
   }
 }
+
+// CI runners occasionally drop a click on an Ant Design tab, leaving the
+// previous tab selected. Click again until the tab reports itself selected.
+export async function selectTab(page, name) {
+  const tab = page.getByRole('tab', { name })
+  await expect(async () => {
+    await tab.click()
+    await expect(tab).toHaveAttribute('aria-selected', 'true', { timeout: 1_000 })
+  }).toPass()
+}
