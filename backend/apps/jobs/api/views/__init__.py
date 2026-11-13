@@ -42,8 +42,6 @@ from .recommendations import (
     HiddenJobDestroyView,
     InlineJobRecommendationView,
     SavedJobRecommendationView,
-    SavedJobRemarketingImpressionView,
-    SavedJobRemarketingLaneView,
 )
 from .reports import (
     AdminJobReportListView,
@@ -93,6 +91,4 @@ __all__ = [
     'SavedJobDestroyView',
     'SavedJobListCreateView',
     'SavedJobRecommendationView',
-    'SavedJobRemarketingLaneView',
-    'SavedJobRemarketingImpressionView',
 ]
