@@ -11,6 +11,8 @@
 | [02-tong-quan](02-tong-quan/)   | [employer-remediation-decision-log.md](02-tong-quan/employer-remediation-decision-log.md) | Biên bản quyết định canonical cho audit và hardening cổng Nhà tuyển dụng |
 | [02-tong-quan](02-tong-quan/)   | [adr-0012-job-services-architecture.md](02-tong-quan/adr-0012-job-services-architecture.md) | ADR tách vòng đời tin, catalogue versioned, entitlement, activation và presentation tài trợ |
 | [02-tong-quan](02-tong-quan/)   | [adr-0013-public-companies-api.md](02-tong-quan/adr-0013-public-companies-api.md) | ADR tách namespace catalogue công ty công khai khỏi cổng employer riêng tư |
+| [02-tong-quan](02-tong-quan/)   | [adr-0014-job-post-moderation.md](02-tong-quan/adr-0014-job-post-moderation.md) | ADR hậu kiểm tin tuyển dụng: đăng là công khai, báo cáo và tạm ẩn |
+| [02-tong-quan](02-tong-quan/)   | [adr-0015-remove-commercial-services.md](02-tong-quan/adr-0015-remove-commercial-services.md) | ADR gỡ app dịch vụ thương mại và yêu cầu tư vấn |
 | [03-database](03-database/)     | [thiet-ke-database.md](03-database/thiet-ke-database.md)         | Thiết kế database, ERD, quy ước đặt tên                                 |
 | [03-database](03-database/)     | [ke-hoach-ra-soat-va-khac-phuc-employer.md](03-database/ke-hoach-ra-soat-va-khac-phuc-employer.md) | Kế hoạch ER-0…ER-8 cho company, verification, upload, moderation, DPA và notification |
 | [03-database](03-database/)     | [cv-builder-architecture-foundation.md](03-database/cv-builder-architecture-foundation.md) | Canonical document, template/version, taxonomy màu và lifecycle CV V2 |

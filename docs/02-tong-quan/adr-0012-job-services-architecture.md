@@ -1,6 +1,6 @@
 # ADR-0012: Vòng đời tin và dịch vụ gia tăng tuyển dụng
 
-**Trạng thái:** Đã chấp nhận; đang triển khai theo feature flag
+**Trạng thái:** Thay thế một phần — phần duyệt tin bởi [ADR-0014](adr-0014-job-post-moderation.md), phần dịch vụ thương mại bởi [ADR-0015](adr-0015-remove-commercial-services.md); phần vòng đời hiển thị còn hiệu lực
 **Ngày:** 12/08/2026  
 **Owner:** Jobs, Employer Services, Candidate Discovery  
 **Nhánh:** `docs/job-services-architecture`
