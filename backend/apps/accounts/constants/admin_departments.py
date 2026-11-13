@@ -54,18 +54,16 @@ ADMIN_DEPARTMENTS = (
     {
         'code': 'job-moderation',
         'name': 'Kiểm duyệt tin tuyển dụng',
-        'description': 'Kiểm tra và quyết định tin tuyển dụng được phép hiển thị.',
+        'description': 'Hậu kiểm tin tuyển dụng: xử lý báo cáo, tạm ẩn và khôi phục hiển thị.',
         'roles': (
             {
                 'code': 'staff',
                 'name': 'Nhân viên',
-                'description': 'Kiểm tra và xử lý tin tuyển dụng chờ duyệt.',
+                'description': 'Rà soát tin tuyển dụng và xử lý báo cáo vi phạm.',
                 'rank': 10,
                 'permissions': (
                     'dashboard.view',
                     'job_moderation.view',
-                    'job_moderation.approve',
-                    'job_moderation.reject',
                     'job_moderation.resolve_report',
                     'job_moderation.view_sensitive_contact',
                 ),
@@ -78,8 +76,6 @@ ADMIN_DEPARTMENTS = (
                 'permissions': (
                     'dashboard.view',
                     'job_moderation.view',
-                    'job_moderation.approve',
-                    'job_moderation.reject',
                     'job_moderation.resolve_report',
                     'job_moderation.enforce_visibility',
                     'job_moderation.view_sensitive_contact',
