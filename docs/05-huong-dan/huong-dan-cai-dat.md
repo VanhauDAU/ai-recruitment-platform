@@ -1,7 +1,10 @@
 # 05 - Hướng dẫn cài đặt & chạy local
 
 ## Yêu cầu
-- Python 3.11 (khóa qua `.python-version`; dùng đúng major/minor cho local, CI và deploy)
+- Python 3.11, khóa qua `.python-version` ở gốc repo và `backend/.python-version`;
+  local và CI (`.github/workflows/backend-ci.yml`) phải cùng major.minor. Có thể
+  dựng backend bằng `./scripts/bootstrap-backend.sh` (tự kiểm tra Python 3.11) hoặc
+  `pyenv install 3.11`.
 - Node.js 20.19+ hoặc 22.12+ (Vite 8 yêu cầu các bản này)
 - PostgreSQL 16
 - Redis 7+
@@ -63,7 +66,6 @@ python manage.py seed_job_categories
 python manage.py seed_sitecontent
 python manage.py seed_cv_catalog     # nội dung CV mẫu theo vị trí + blueprint + bảng màu
 python manage.py seed_cv_templates   # 10 mẫu CV đã publish — thiếu thì trang /mau-cv rỗng
-python manage.py seed_services       # nhóm/gói dịch vụ cho trang báo giá NTD
 python manage.py sync_admin_permissions
 python manage.py seed_admin_access
 
@@ -152,3 +154,48 @@ Khi đã cài `node_modules` từ trước, chỉ cần chạy:
 cd frontend
 npm run dev
 ```
+
+## Kiểm tra runtime trước khi bàn giao
+
+```bash
+cd backend
+python --version                                    # 3.11.x
+python manage.py check
+python manage.py makemigrations --check --dry-run   # không có migration treo
+pytest --cov --cov-fail-under=84
+```
+
+Toàn repo: `./scripts/check_all.sh`. Khi container backend Docker đang chạy, script
+tự chạy Django/pytest trong container để không nối nhầm PostgreSQL trên host.
+
+## Quy tắc migration: Expand → Backfill → Contract
+
+Thay đổi schema nguy hiểm (đổi NOT NULL, thêm FK bắt buộc, backfill dữ liệu) tách
+thành ba migration:
+
+1. **Expand**: thêm cột hoặc FK ở dạng `null=True`; không backfill, không đổi NOT NULL.
+2. **Backfill**: chỉ đụng dữ liệu (`RunPython`, `atomic = False`), idempotent.
+3. **Contract**: kiểm tra không còn NULL rồi mới `AlterField` NOT NULL và thêm index.
+
+Cách tách này cho các deferred FK trigger event được commit giữa các bước, tránh
+lỗi PostgreSQL `cannot ALTER TABLE ... because it has pending trigger events` trên
+database có dữ liệu cũ. Mẫu tham chiếu:
+`backend/apps/applications/migrations/0004_application_snapshot_expand.py` →
+`0005_application_snapshot_backfill.py` → `0006_application_snapshot_contract.py`,
+kèm test nâng cấp `backend/apps/applications/tests/test_migrations.py`.
+
+Container `backend` của Docker Compose chạy `manage.py migrate` mỗi lần khởi động
+với code của nhánh đang checkout. Sao lưu database local trước khi viết một
+migration xóa dữ liệu:
+
+```bash
+docker compose exec -T db pg_dump -U postgres -d ai_career_coach -Fc > backup.dump
+```
+
+Không được:
+
+- `migrate --fake` để bỏ qua một migration đang lỗi trên dữ liệu thật.
+- Reset hoặc drop database chỉ để migration chạy.
+- Xóa migration đã áp dụng ở môi trường dùng chung.
+- Gộp backfill dữ liệu và `ALTER` constraint nguy hiểm trong cùng một bước.
+- Hard-delete `CvVersion` đang được `Application` tham chiếu.
