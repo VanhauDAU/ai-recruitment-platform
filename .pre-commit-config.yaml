@@ -37,5 +37,5 @@ repos:
         name: .env.example đồng bộ với code
         entry: bash scripts/check_env_sync.sh
         language: system
-        files: (\.env\.example|\.py|\.jsx?)$
+        files: (\.env\.example|docker-compose\.yml|\.py|\.jsx?)$
         pass_filenames: false

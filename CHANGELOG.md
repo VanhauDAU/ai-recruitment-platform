@@ -8,6 +8,23 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-13
 
+#### Changed — Hợp nhất cấu hình env
+
+- Env chỉ còn ở `backend/` và `frontend/`, mỗi nơi một cặp `.env`/`.env.example`.
+  Xóa `.env`/`.env.example` ở root và hai file `.env.optional.example`; nội dung
+  catalog optional gộp vào `.env.example` theo nhóm. Frontend dùng `frontend/.env`
+  thay cho `.env.local`.
+- `docker-compose.yml` không còn interpolation `${...}`: PID limit, log rotation,
+  concurrency Celery và tài nguyên ClamAV cố định trong file. Bật scanner bằng
+  `docker compose --profile scanner up`.
+- Gỡ biến không có consumer: `AI_POLICY_CACHE_SECONDS`,
+  `CV_ARCHIVE_RESTORE_WINDOW_DAYS`, `REQUIRE_APPROVED_EMPLOYER_CANDIDATE_ACCESS`
+  (cờ chưa từng được đọc; test xác nhận nó không có tác dụng đã bỏ).
+- Thêm `scripts/sync_local_env.py` đồng bộ `.env` local theo `.env.example`, giữ
+  giá trị đang có. `check_env_sync` kiểm thêm file env đặt sai chỗ, interpolation
+  trong Compose và key thiếu/thừa/sai kiểu trong `.env` local; bỏ
+  `scripts/env_inventory.py`.
+
 #### Changed — Tối ưu thời gian CI (#162)
 
 - Backend test chạy song song bằng `pytest-xdist` (`-n auto --dist loadfile`;

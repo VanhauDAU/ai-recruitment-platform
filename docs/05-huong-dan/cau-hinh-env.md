@@ -1,94 +1,85 @@
 # Cấu hình biến môi trường ProCV
 
-ProCV dùng mẫu tối thiểu để khởi động local và catalog tùy chọn để tra cứu từng
-tích hợp. Backend chỉ đọc `backend/.env`; catalog optional không được tự động
-nạp. Biến của process luôn ưu tiên giá trị trong file. Frontend chỉ đưa biến
-`VITE_*` vào bundle, vì vậy không đặt secret backend trong các file frontend.
-Inventory đầy đủ tên, consumer, kiểu, default đã công bố, owner và độ nhạy được
-sinh bằng `python3 scripts/env_inventory.py` (CSV ra stdout, không in giá trị).
+Mỗi service sở hữu đúng một cặp file env. Không có file env nào ở root
+repository; Docker Compose không đọc `.env` ở root.
 
-## Các file và chủ sở hữu
-
-| File hoặc nguồn | Vai trò | Tự động nạp |
+| File | Vai trò | Commit |
 | --- | --- | --- |
-| `backend/.env.example` | Cấu hình tối thiểu cho Django, PostgreSQL, ba URL cổng và Redis/Celery local | Chỉ sau khi sao chép thành `backend/.env` |
-| `backend/.env.optional.example` | Catalog AI, OAuth/email/SMS, storage/upload, policy, feature flag và tuning | Không |
-| `backend/.env` | Giá trị cá nhân; không commit | Có, chỉ file này |
-| Process environment | Override cho CI, Docker và lệnh chạy tạm thời | Có, ưu tiên cao nhất |
-| `frontend/.env.example` | Hai biến public tối thiểu cho API và reCAPTCHA local | Theo cơ chế Vite sau khi sao chép |
-| `frontend/.env.optional.example` | Branding, asset, consent, rollout, host ba cổng và tooling Node/Vite | Không |
-| `frontend/.env.local` | Override cá nhân; không commit | Có theo cơ chế Vite |
-| `.env.example` ở root | Catalog tùy chọn chỉ dành cho Docker Compose local | Chỉ sau khi sao chép thành `.env` ở root |
+| `backend/.env.example` | Mẫu đầy đủ mọi biến backend, nhóm theo miền, giá trị mặc định local an toàn | Có |
+| `backend/.env` | Giá trị local của bạn; Django chỉ đọc file này | Không |
+| `frontend/.env.example` | Mẫu đầy đủ biến `VITE_*` và cấu hình Vite dev server | Có |
+| `frontend/.env` | Giá trị local của bạn; Vite tự nạp | Không |
 
-Không tạo `.env` ở root repository để cấp biến cho backend. Compose interpolation
-`${NAME}` đọc process environment hoặc `.env` của Compose ở root theo cơ chế
-Docker, không đọc `backend/.env`. Các service backend vẫn nhận `backend/.env`
-qua `env_file` và các override hostname nội bộ trong `docker-compose.yml`.
-Compose chỉ ghi đè hostname/cổng hạ tầng nội bộ. `AI_RUNTIME_ENABLED` tiếp tục
-thuộc `backend/.env`; `VITE_ANNOUNCEMENT_ROLLOUT_SURFACES` tiếp tục thuộc file
-env của frontend, nên Compose không được cấp một giá trị mặc định thứ hai.
+Thứ tự ưu tiên: process environment (CI, Docker, lệnh chạy tạm) > `.env` >
+default trong code. `backend/.env.example` không bao giờ được tự động nạp.
 
-## Mẫu backend tối thiểu
+## Bắt đầu
 
-| Nhóm | Biến | Kiểu | Mặc định local | Khi bắt buộc | Nhạy cảm | Hành động và gate |
-| --- | --- | --- | --- | --- | --- | --- |
-| Django | `ENVIRONMENT` | enum | `development` | Luôn có trong mẫu | Không | Giữ minimal; test entrypoint development/production |
-| Django | `SECRET_KEY` | string | khóa local mẫu | Production phải thay bằng khóa riêng | Có | Giữ minimal; production fail-fast |
-| Django | `DEBUG`, `DJANGO_ADMIN_ENABLED` | boolean | `True` | Local | Không | Giữ minimal; production từ chối `True` |
-| Database | `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST`, `DB_PORT` | string/port | PostgreSQL local cổng 5432 | Khi giá trị local khác mặc định | `DB_PASSWORD` | Giữ minimal; native và Docker matrix |
-| Cổng | `CORS_ALLOWED_ORIGINS` | CSV URL | hai origin local 5173 | Khi frontend khác origin | Không | Giữ minimal; CORS regression |
-| Cổng | `FRONTEND_URL`, `EMPLOYER_FRONTEND_URL`, `ADMIN_FRONTEND_URL` | URL | `http://localhost:5173` | Khi tách host | Không | Giữ minimal; email/OAuth redirect regression |
-| Queue/cache | `REDIS_URL`, `CELERY_BROKER_URL` | Redis URL | `127.0.0.1:6379/1` | Khi Redis không chạy native local | Có thể chứa credential | Giữ minimal; worker/health smoke |
+```bash
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env
+```
 
-Mọi biến backend còn lại nằm trong catalog optional theo nhóm và giữ default
-hiện hành. Biến không có consumer bị gate từ chối. Lookup động qua `env_var`
-trong Site Settings cũng được kiểm kê, gồm `EMAIL_HOST_PASSWORD`,
-`VNPAY_HASH_SECRET` và `GEMINI_API_KEY`.
+Khi `.env.example` thay đổi (thêm/xóa/sắp lại biến), đồng bộ file local mà vẫn
+giữ nguyên giá trị đang có:
 
-## Mẫu frontend và tooling
+```bash
+python3 scripts/sync_local_env.py           # ghi lại backend/.env và frontend/.env
+python3 scripts/sync_local_env.py --check   # chỉ báo, exit 1 nếu lệch
+```
 
-| Nhóm | Biến | Kiểu/default | Công khai | Hành động và gate |
-| --- | --- | --- | --- | --- |
-| Runtime | `VITE_API_BASE_URL` | URL path, `/api` | Có | Giữ minimal; production build fail nếu thiếu |
-| Runtime | `VITE_RECAPTCHA_SITE_KEY` | public site key, rỗng local | Có | Giữ minimal; không phải secret reCAPTCHA backend |
-| Portal/branding | `VITE_MAIN_HOST`, `VITE_EMPLOYER_HOST`, `VITE_ADMIN_HOST`, `VITE_AUTH_SYNC_COOKIE_DOMAIN`, `VITE_SITE_*`, `VITE_PUBLIC_ASSET_BASE_URL` | rỗng hoặc fallback trong code | Có | Chuyển optional; route/asset tests |
-| Consent/rollout | `VITE_COOKIE_CONSENT_ENABLED`, `VITE_ANNOUNCEMENT_ROLLOUT_SURFACES` | `true`/rỗng | Có | Chuyển optional; unit/E2E hiện hành |
-| Node tooling | `API_PROXY_TARGET`, `PORT`, `PLAYWRIGHT_PORT`, `PLAYWRIGHT_WEB_SERVER`, `ANALYZE` | có default local | Không bundle | Chuyển optional, không đổi thành `VITE_*` |
+Script dựng lại `.env` theo bố cục và comment của mẫu, giữ giá trị local, thêm
+key mới với giá trị mặc định của mẫu và bỏ key mẫu không còn khai báo. Script
+chỉ in tên key, không in giá trị.
 
-Gate từ chối tên `VITE_*` có dấu hiệu chứa secret, password, private key, access
-key hoặc API token. `CI` và `import.meta.env.PROD` thuộc runner/Vite nên được ghi
-rõ là ngoại lệ có chủ sở hữu, không khai trong catalog ứng dụng.
-`vite.config.js` dùng `loadEnv` để đọc `API_PROXY_TARGET`, `PORT` và `ANALYZE`
-từ `.env.local`; các giá trị này chỉ cấu hình Vite và không được đưa vào bundle.
-`PLAYWRIGHT_PORT` tiếp tục do process/runner cấp cho Playwright.
+## Quy tắc
 
-`OAUTH_CODE_TTL=120` là override local đã có trước P4; fallback khi biến vắng
-mặt vẫn là 60 giây. Sai lệch này được inventory ghi nhận và không tự thay đổi
-trong nhánh tổ chức env vì đó là thay đổi hành vi xác thực.
+- Biến `VITE_*` được bundle vào JavaScript công khai: không đặt secret trong
+  `frontend/.env`. Gate từ chối tên `VITE_*` chứa `SECRET`, `PASSWORD`,
+  `PRIVATE_KEY`, `ACCESS_KEY`, `API_TOKEN`.
+- decouple không cắt comment cuối dòng: `EMAIL_VERIFICATION_TTL=86400  # 24h`
+  làm `cast=int` lỗi. Comment luôn đặt ở dòng riêng.
+- Giá trị trong `backend/.env.example` phải bằng default trong
+  `config/settings/base.py`, trừ các override có lý do trong
+  `DOCUMENTED_DEFAULT_OVERRIDES` (`scripts/check_env_sync.py`).
+- Docker Compose chỉ override địa chỉ hạ tầng nội bộ (`DB_HOST`, `REDIS_URL`,
+  `CELERY_BROKER_URL`, media root, `CLAMAV_HOST`); mọi giá trị khác lấy từ
+  `backend/.env`. Tài nguyên container (PID, log, concurrency) cố định trong
+  `docker-compose.yml`.
+
+## Biến do process cấp
+
+Các biến sau không nằm trong `.env.example` vì runner/CLI sở hữu chúng:
+
+| Phạm vi | Biến | Nguồn |
+| --- | --- | --- |
+| Backend | `DJANGO_SETTINGS_MODULE` | Entrypoint/CI; phải có trước khi Django nạp settings. Production đặt `config.settings.production` cùng `ENVIRONMENT=production` |
+| Backend | `USER` | Shell; nhãn actor dự phòng của management command |
+| Frontend | `ANALYZE` | `ANALYZE=1 npm run build` sinh treemap bundle (`json` sinh `dist/stats.json`) |
+| Frontend | `PORT` | Tool preview cấp khi 5173 bận |
+| Frontend | `PLAYWRIGHT_PORT`, `PLAYWRIGHT_WEB_SERVER` | Playwright chỉ đọc process env; CI đặt `PLAYWRIGHT_WEB_SERVER=preview` |
+| Frontend | `CI`, `import.meta.env.PROD` | CI runner / Vite |
 
 ## Ma trận chạy
 
-| Bối cảnh | Django settings | Nguồn DB/Redis | Frontend | Ghi chú |
-| --- | --- | --- | --- | --- |
-| Native local | mặc định `config.settings.development`; `ENVIRONMENT=development` từ `backend/.env` | host 5432 và Redis 6379 trong mẫu minimal | Vite 5173, proxy API tới 8000 | Không cần root `.env` |
-| Docker local | entrypoint development; service nhận `backend/.env` | Compose override host `db`/`redis`, DB nội bộ 5432; host expose 5433 | Compose đặt `/api` và proxy `backend:8000` | Không đổi tên project/volume |
-| CI backend | `DJANGO_SETTINGS_MODULE=config.settings.test` từ job env | job env và PostgreSQL service | Không áp dụng | Test settings khóa cache/email/Celery, không dựa secret local |
-| CI frontend | Vite test/build | Không áp dụng | `VITE_API_BASE_URL` do job hoặc mẫu public cung cấp | Không đọc backend `.env` |
-
-`DJANGO_SETTINGS_MODULE` phải do entrypoint hoặc process environment đặt trước
-khi Django import settings; đặt tên này trong `backend/.env` là quá muộn và không
-được hỗ trợ. `ENVIRONMENT` vẫn nằm trong `backend/.env` để settings kiểm tra đúng
-chế độ. Production cần đặt cả hai nhất quán qua process environment.
+| Bối cảnh | Django settings | DB/Redis | Frontend |
+| --- | --- | --- | --- |
+| Native local | `config.settings.development`, `backend/.env` | PostgreSQL 5432, Redis 6379 theo mẫu | Vite 5173, proxy `/api` tới `API_PROXY_TARGET` |
+| Docker local | Service nhận `backend/.env` qua `env_file` | Compose override sang `db`/`redis`; host expose Postgres 5433 | Compose đặt `VITE_API_BASE_URL=/api`, proxy `backend:8000` |
+| CI backend | `DJANGO_SETTINGS_MODULE=config.settings.test` | Service PostgreSQL của job | — |
+| CI frontend | — | — | `VITE_API_BASE_URL` do job cấp; không có `frontend/.env` |
 
 ## Thêm hoặc đổi biến
 
-1. Xác định owner và consumer trước khi thêm tên mới.
-2. Chỉ đặt biến cần cho local phổ biến vào `.env.example`; tuning, integration,
-   feature flag và policy vào `.env.optional.example`.
-3. Không đổi tên biến đang dùng nếu không có migration/fallback có thời hạn.
-4. Chạy `python3 scripts/check_env_sync.py`. Gate kiểm union hai catalog, tên
-   trùng, khai thiếu/thừa, kiểu/default, lookup động, Compose interpolation và
-   secret frontend. Nếu `.env` local tồn tại, lệnh chỉ báo tên key thiếu, lạ,
-   hết dùng, trùng hoặc rỗng sai; không in giá trị và không tự sửa file.
-5. Chạy test domain bị ảnh hưởng và matrix native/Docker/CI tương ứng. Không ghi
-   giá trị secret thật vào tài liệu, log, fixture hoặc Git.
+1. Đọc biến bằng `config(...)` (backend) hoặc `import.meta.env.VITE_*`
+   (frontend) với default an toàn.
+2. Khai báo cùng tên, đúng nhóm trong `.env.example` của service đó, giá trị
+   bằng default trong code.
+3. Không đổi tên biến đang dùng nếu không có fallback có thời hạn.
+4. Khi xóa tính năng, xóa luôn biến khỏi code và `.env.example`.
+5. Chạy `bash scripts/check_env_sync.sh`. Gate kiểm: biến đọc mà chưa khai báo,
+   khai báo mà không ai đọc, trùng tên, kiểu/default, lookup động `env_var` của
+   Site Settings, secret trong `VITE_*`, file env đặt sai chỗ và interpolation
+   `${...}` trong `docker-compose.yml`. Nếu có `.env` local, gate báo thêm key
+   thiếu/thừa/trùng/sai kiểu (chỉ tên key).
+6. Chạy `python3 scripts/sync_local_env.py` để cập nhật `.env` của bạn.

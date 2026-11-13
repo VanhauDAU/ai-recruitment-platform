@@ -3,7 +3,6 @@ dist/
 .vite/
 .git/
 .env
-.env.local
 coverage/
 playwright-report/
 test-results/

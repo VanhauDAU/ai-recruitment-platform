@@ -43,16 +43,11 @@ playwright-report/
 blob-report/
 coverage/
 
-# Env files
+# Env files: chỉ backend/ và frontend/ có .env (local) và .env.example (commit)
 .env
 .env.*
-!.env.example
-!.env.optional.example
-**/.env
-**/.env.*
-!**/.env.example
-!**/.env.optional.example
-.env.local
+!/backend/.env.example
+!/frontend/.env.example
 *.env
 
 # OS

@@ -32,23 +32,23 @@ class BackendEnvLoaderTests(TestCase):
 
         self.assertEqual(value, 'fallback')
 
-    def test_optional_catalog_is_never_loaded_automatically(self):
+    def test_template_is_never_loaded_automatically(self):
         with TemporaryDirectory() as directory:
             root = Path(directory)
             env_file = root / '.env'
-            env_file.write_text('PROCV_MINIMAL_VALUE=loaded\n', encoding='utf-8')
-            (root / '.env.optional.example').write_text(
-                'PROCV_OPTIONAL_VALUE=must-not-load\n',
+            env_file.write_text('PROCV_LOCAL_VALUE=loaded\n', encoding='utf-8')
+            (root / '.env.example').write_text(
+                'PROCV_TEMPLATE_VALUE=must-not-load\n',
                 encoding='utf-8',
             )
 
             with patch.dict(os.environ, {}, clear=True):
                 resolver = build_config(env_file)
-                minimal = resolver('PROCV_MINIMAL_VALUE')
-                optional = resolver('PROCV_OPTIONAL_VALUE', default='fallback')
+                local = resolver('PROCV_LOCAL_VALUE')
+                template = resolver('PROCV_TEMPLATE_VALUE', default='fallback')
 
-        self.assertEqual(minimal, 'loaded')
-        self.assertEqual(optional, 'fallback')
+        self.assertEqual(local, 'loaded')
+        self.assertEqual(template, 'fallback')
 
     def test_explicit_loader_preserves_legacy_values_and_casts_for_backend_env(self):
         with TemporaryDirectory() as directory:

@@ -25,11 +25,6 @@ REQUIRE_APPROVED_EMPLOYER_VERIFICATION = config(
     default=True,
     cast=bool,
 )
-REQUIRE_APPROVED_EMPLOYER_CANDIDATE_ACCESS = config(
-    'REQUIRE_APPROVED_EMPLOYER_CANDIDATE_ACCESS',
-    default=True,
-    cast=bool,
-)
 
 if not IS_PRODUCTION:
     _errors.append('config.settings.production yêu cầu ENVIRONMENT=production.')

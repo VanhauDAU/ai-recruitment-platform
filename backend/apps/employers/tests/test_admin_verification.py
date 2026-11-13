@@ -197,10 +197,7 @@ class EmployerAccountVerificationTests(APITestCase):
         self.assertNotIn('file', str(notification.context).lower())
         self.assertNotIn('sha256', str(notification.context).lower())
 
-    @override_settings(
-        REQUIRE_APPROVED_EMPLOYER_VERIFICATION=True,
-        REQUIRE_APPROVED_EMPLOYER_CANDIDATE_ACCESS=True,
-    )
+    @override_settings(REQUIRE_APPROVED_EMPLOYER_VERIFICATION=True)
     def test_hard_gate_uses_the_recruiters_own_case(self):
         self._put_in_review(self.first_case)
         impact = verification_decision_impact(
@@ -225,16 +222,6 @@ class EmployerAccountVerificationTests(APITestCase):
         with self.assertRaises(CandidateDataBlocked) as blocked:
             ensure_recruiter_candidate_data_access(self.second_user)
         self.assertEqual(str(blocked.exception.detail['code']), 'CANDIDATE_DATA_BLOCKED')
-
-    @override_settings(
-        REQUIRE_APPROVED_EMPLOYER_VERIFICATION=True,
-        REQUIRE_APPROVED_EMPLOYER_CANDIDATE_ACCESS=False,
-    )
-    def test_candidate_access_cannot_be_bypassed_by_feature_flag(self):
-        _, ready = recruiter_posting_readiness(self.second_user)
-        self.assertFalse(ready)
-        with self.assertRaises(CandidateDataBlocked):
-            ensure_recruiter_candidate_data_access(self.second_user)
 
     def test_stale_decision_returns_conflict(self):
         self._put_in_review(self.first_case)
