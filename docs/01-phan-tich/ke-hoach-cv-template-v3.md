@@ -673,6 +673,7 @@ không đăng ký section chưa có giao diện dùng.
 - **Đầu vào:** layout và API vị trí.
 - **Công việc:** mục 7 đầy đủ: URL state, TanStack Query, panel 4 nguồn, bottom sheet mobile, kho mẫu có bộ lọc mới, tạo CV có idempotency, quay lại đúng URL sau đăng nhập.
 - **Nghiệm thu:** mọi tổ hợp lựa chọn phản ánh đúng ở preview, H1, breadcrumb, `<title>`, URL; đổi màu tức thì; đạt các mục tiêu hiệu năng mục 11 trên Lighthouse mobile.
+- **Thực hiện (🟨 xong code):** `use-template-selection` (trang) đọc/ghi query string; `useCvSource` (feature) nhận lựa chọn từ ngoài nên không còn effect khởi tạo/reset, dữ liệu qua TanStack Query; `CvSourcePanel`/`CvSourcePreview` chỉ hiển thị, dùng chung cho trang chi tiết và hộp "Dùng mẫu". Điều chỉnh: vị trí mặc định không đưa lên URL (giữ trang gốc được lập chỉ mục); "quay lại đúng URL sau đăng nhập" thành đăng nhập bằng hộp thoại ngay tại trang rồi tự tạo CV một lần (upload thì chỉ mở đăng nhập vì tệp không giữ được); idempotency của tạo CV dùng cache 10 phút theo người dùng thay vì cột mới. Lọc kho mẫu theo vị trí chưa làm vì mẫu chưa gắn vị trí; Lighthouse chưa đo (CVT-7).
 
 ### CVT-6 — Upload, trích xuất, rà soát
 

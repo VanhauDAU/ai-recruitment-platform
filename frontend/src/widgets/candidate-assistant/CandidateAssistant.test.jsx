@@ -38,7 +38,7 @@ describe('CandidateAssistant', () => {
 
   it('tránh thanh ứng tuyển mobile và mở panel theo yêu cầu', async () => {
     const { container } = renderAssistant('/viec-lam/frontend-developer')
-    expect(container.firstChild).toHaveStyle({ bottom: 'calc(32px + 0px + env(safe-area-inset-bottom, 0px))' })
+    expect(container.firstChild).toHaveStyle({ bottom: 'calc(32px + 0px + var(--page-bottom-bar-height, 0px) + env(safe-area-inset-bottom, 0px))' })
 
     fireEvent.click(screen.getByRole('button', { name: 'Mở trợ lý ProCV' }))
     expect(await screen.findByRole('dialog', { name: 'Trợ lý ProCV' })).toBeInTheDocument()
@@ -48,7 +48,7 @@ describe('CandidateAssistant', () => {
   it('nâng launcher khi banner cookie đang hiển thị', () => {
     useConsent.mockReturnValue({ isDecided: false, isEnabled: true })
     const { container } = renderAssistant('/')
-    expect(container.firstChild).toHaveStyle({ bottom: 'calc(160px + 0px + env(safe-area-inset-bottom, 0px))' })
+    expect(container.firstChild).toHaveStyle({ bottom: 'calc(160px + 0px + var(--page-bottom-bar-height, 0px) + env(safe-area-inset-bottom, 0px))' })
   })
 
   it('chỉ hiện lời chào một lần trong phiên', () => {

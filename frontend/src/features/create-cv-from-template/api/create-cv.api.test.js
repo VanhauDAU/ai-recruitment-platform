@@ -19,6 +19,13 @@ describe('create CV from template API', () => {
     post.mockResolvedValue({ data: created })
 
     await expect(createCvFromTemplate(payload)).resolves.toEqual(created)
-    expect(post).toHaveBeenCalledWith('/v2/cvs/', payload)
+    expect(post).toHaveBeenCalledWith('/v2/cvs/', payload, undefined)
+  })
+
+  it('sends the idempotency key so a repeated click returns the same CV', async () => {
+    post.mockResolvedValue({ data: { public_id: 'cv_new' } })
+
+    await createCvFromTemplate({ title: 'CV' }, { idempotencyKey: 'click-1' })
+    expect(post).toHaveBeenCalledWith('/v2/cvs/', { title: 'CV' }, { headers: { 'Idempotency-Key': 'click-1' } })
   })
 })
