@@ -105,7 +105,6 @@ class CvTemplateSeoShellView(View):
         self,
         request,
         catalog_path=None,
-        locale_code=None,
         category_slug=None,
         slug=None,
         legacy_slug=None,
@@ -116,7 +115,6 @@ class CvTemplateSeoShellView(View):
 
         locale, category = seo_catalog_context(
             catalog_path=catalog_path,
-            locale_code=locale_code,
             category_slug=category_slug,
         )
         requested_path = request.path.rstrip('/') or '/'

@@ -34,7 +34,7 @@ Những thứ **giữ lại** vì đã tốt: document canonical 3 JSON (`conten
 
 1. Ứng viên chọn mẫu → thấy ngay bản xem trước đúng với lựa chọn → bấm **Tạo CV** → vào editor, không lỗi, không phải thao tác thừa.
 2. CV đa dạng bố cục thật sự: 8 layout, thông tin cá nhân/ảnh/liên hệ đặt được ở nhiều vị trí, kéo thả section giữa các vùng.
-3. Mỗi vị trí công việc có bộ section, trường riêng và nội dung mẫu theo cấp độ.
+3. Mỗi vị trí công việc có bộ section, trường riêng và nội dung mẫu theo nhóm kinh nghiệm; dữ liệu CV cùng từ vựng với JD để làm matching sau này.
 4. Upload CV PDF/DOCX → trích xuất bằng AI → rà soát → điền vào mẫu đã chọn.
 5. Quản trị viên tạo và xuất bản một template mới trong ≤ 10 phút, thấy ngay vị trí nào thiếu nội dung mẫu.
 6. Không lộ thông tin ứng viên ở URL, cache public, log, AI provider hay trang quản trị.
@@ -66,6 +66,7 @@ Những thứ **giữ lại** vì đã tốt: document canonical 3 JSON (`conten
 | D10 | Dữ liệu cũ | Được xóa template, nội dung mẫu và CV cũ, seed lại bộ mới (dữ liệu hiện tại là dữ liệu phát triển) |
 | D11 | Lộ trình | `CVT-0` sửa lỗi trước trên hệ cũ, sau đó làm lại theo giai đoạn |
 | D12 | Tài liệu | Kế hoạch này; khi xong cập nhật kiến trúc CV Builder, database, API, tiến độ |
+| D13 | Hướng matching | Dữ liệu CV dùng chung từ vựng với tin tuyển dụng (JD) ngay từ đầu: cùng taxonomy vị trí, kỹ năng, cùng enum kinh nghiệm/cấp bậc/học vấn — xem mục 5.6 |
 
 ---
 
@@ -169,26 +170,66 @@ Nhãn được **chụp vào document** lúc tạo CV, nên đổi/xóa trườn
 
 ### 5.4 Nội dung mẫu
 
-`CvSampleContent`: unique `(position_profile, experience_level, language)`; `position_profile = null` là nội dung chung.
+`CvSampleContent`: unique `(position_profile, experience_band, language)`; `position_profile = null` là nội dung chung.
 
-- `experience_level` enum: `intern`, `fresher`, `junior`, `middle`, `senior`, `manager`.
+- `experience_band`: 4 nhóm **suy ra từ enum `Job.ExperienceYears` của JD** (không tạo enum riêng): `entry` = `none`/`under_1`, `junior` = `1`/`2`, `mid` = `3`/`4`, `senior` = `5`/`over_5`. Bảng nhóm đặt một chỗ (mục 5.6) để CV, nội dung mẫu và matching dùng chung.
 - `status`: `draft` → `in_review` → `published` → `archived`.
 - `origin`: `ai`, `manual`, `import`; `ai_invocation` FK (nếu sinh bằng AI); `reviewed_by`, `reviewed_at`.
 - Danh tính mẫu cố định, hư cấu (`Nguyễn Văn A`, `nguyenvana@example.com`); validator chặn email/SĐT không thuộc allowlist mẫu để AI không lọt dữ liệu thật.
 
-Thứ tự resolve khi ứng viên chọn vị trí P, cấp độ L, ngôn ngữ G:
-`(P, L, G)` → `(P, any, G)` → `(null, L, G)` với `{position}` thay bằng tên vị trí → `(null, any, G)`. Luôn có kết quả nếu seed nội dung chung đủ 6 cấp độ × 2 ngôn ngữ.
+Thứ tự resolve khi ứng viên chọn vị trí P, nhóm kinh nghiệm L, ngôn ngữ G:
+`(P, L, G)` → `(P, any, G)` → `(null, L, G)` với `{position}` thay bằng tên vị trí → `(null, any, G)`. Luôn có kết quả nếu seed nội dung chung đủ 4 nhóm × 2 ngôn ngữ.
 
 ### 5.5 CV và import
 
 | Model | Thay đổi |
 | --- | --- |
-| `UserCv` | Xóa `cv_data`, `style_config`, `status` legacy (đã ghi trong việc còn mở của CV Builder). `language` dùng enum `vi|en`. Thêm `position_profile` FK nullable, `experience_level` |
+| `UserCv` | Xóa `cv_data`, `style_config`, `status` legacy (đã ghi trong việc còn mở của CV Builder). `language` dùng enum `vi|en`. Thêm các trường matching ở mục 5.6 (`target_category`, `experience_years`, `position_level`, `education_level`) |
 | `CvImportJob` | Thêm trạng thái `awaiting_review`; `extraction_summary` JSON chỉ chứa **metadata** (số section, danh sách đường dẫn trường có độ tin cậy thấp, vị trí gợi ý) — không chứa nội dung; `consent_at`; `source_deleted_at` |
 | `CvDraft` | Nội dung trích xuất nằm trong draft như mọi CV khác; không có bản sao thứ hai |
 | `CvAsset` (avatar) | Thêm `kind=avatar`; xử lý ảnh: bỏ EXIF, cắt vuông, resize 400×400 WebP |
 
 ---
+
+### 5.6 Dữ liệu chuẩn hướng tới matching CV–JD (D13)
+
+Nguyên tắc: **mọi chiều sẽ dùng để so khớp đều là dữ liệu có cấu trúc, cùng
+từ vựng với JD**, được tạo ra ngay ở form, nội dung mẫu và trích xuất upload.
+Không để matching sau này phải đọc lại rich text hay đoán từ chữ tự do.
+
+| Chiều so khớp | Phía JD (đã có) | Phía CV (chuẩn hóa trong kế hoạch này) | Nguồn dữ liệu CV |
+| --- | --- | --- | --- |
+| Vị trí / ngành | `Job` → `JobCategory` | `UserCv.target_category` FK `JobCategory(specialization)` — cùng taxonomy với ô chọn vị trí (`vi-tri` trên URL đã là slug `JobCategory` từ CVT-0) | Vị trí chọn khi tạo CV; AI gợi ý khi upload |
+| Kỹ năng | `JobSkill`: FK `skills.Skill`, `importance`, `min_level` (`beginner/intermediate/advanced`), `min_years_experience` | `CvSkill`: FK `skills.Skill`, `level` (cùng enum), `years_experience`, `source` (`manual/ai_extracted`), `confidence_score` | Item trong section `skills` có `skill_id` (chọn từ taxonomy, gõ tự do thì giữ `name` và vào hàng đợi chuẩn hóa) |
+| Số năm kinh nghiệm | `Job.experience_years` (`ExperienceYears`) | `UserCv.experience_years` cùng enum, **tính tự động** từ ngày bắt đầu/kết thúc các item kinh nghiệm (gộp khoảng chồng lấn) | Section `experience` với ngày dạng `YYYY-MM` bắt buộc hợp lệ |
+| Cấp bậc | `Job.position_level` (`PositionLevel`) | `UserCv.position_level` cùng enum | Ứng viên chọn; AI gợi ý từ chức danh gần nhất |
+| Học vấn | `Job.education_level` (`EducationLevel`) | `UserCv.education_level` cùng enum = bậc cao nhất | Item `education` có `degree_level` (cùng enum) ngoài chữ tự do |
+| Ngoại ngữ | (bổ sung sau nếu JD cần) | Section `languages`: mã ISO 639-1 + trình độ CEFR | Form / AI |
+| Trường riêng theo vị trí | — | `CvPositionField.maps_to` = `skills` \| `none`: trường kiểu `tags` có thể đổ thẳng vào `CvSkill` | Admin cấu hình |
+
+Cách triển khai để không phức tạp từ đầu:
+
+1. **Một nguồn sự thật cho enum:** CV import enum từ `apps/jobs` (qua
+   `apps/jobs/services/__init__.py` theo ADR-0010), không sao chép giá trị.
+   Bảng nhóm `experience_band` ↔ `ExperienceYears` đặt cạnh enum đó.
+2. **Một service dẫn xuất duy nhất:** `apps/cvs/services/matching_profile.py`
+   → `build_matching_profile(content_json)` thuần, deterministic, có test; gọi
+   khi lưu version (`manual_save`, `published`, `imported`,
+   `application_snapshot`) để cập nhật các trường ở `UserCv` và đồng bộ `CvSkill`.
+   Draft autosave không chạy để giữ autosave nhanh.
+3. **Snapshot ứng tuyển** lưu kèm profile tại thời điểm nộp, để điểm match
+   của đơn không đổi khi ứng viên sửa CV sau đó.
+4. **Validator** (`apps/cvs/schemas.py`) bắt buộc kiểu cho các trường trên:
+   ngày `YYYY-MM`, `degree_level`/`level` thuộc enum, `skill_id` tồn tại.
+5. **Trích xuất AI (mục 8.3)** phải trả đúng các trường này: tên kỹ năng được
+   khớp với `Skill` qua bảng alias, kỹ năng chưa có vào hàng đợi chuẩn hóa của
+   admin thay vì tự tạo `Skill` mới.
+6. **Chưa làm thuật toán matching ở epic này.** Epic chỉ bảo đảm dữ liệu sạch và
+   cùng từ vựng; matching (rule-based hiện có hoặc embedding) đọc trực tiếp các
+   trường trên ở giai đoạn AI 2–3.
+
+Giai đoạn: enum và trường ở `CVT-1`; form/section ở `CVT-3`; service dẫn xuất
+và đồng bộ `CvSkill` ở `CVT-3`; AI trả trường chuẩn ở `CVT-6`.
 
 ## 6. Hệ thống bố cục (khung CV đa dạng)
 
@@ -259,7 +300,7 @@ Quyết định A/B ở đầu `CVT-2` sau khi đo thời gian xuất trên máy
 | `/mau-cv/chi-tiet/:slug` | `vi` |
 | `/mau-cv-tieng-anh/chi-tiet/:slug` | `en` |
 
-Bỏ `/mau-cv-tieng-nhat`, `/mau-cv-tieng-trung`, `/mau-cv/ngon-ngu/:locale` → redirect 301 về `/mau-cv` (frontend `Navigate replace` + rule ở web server nếu có).
+Bỏ `/mau-cv-tieng-nhat`, `/mau-cv-tieng-trung`, `/mau-cv/ngon-ngu/:locale` → redirect 301 về `/mau-cv` (SEO shell backend giữ slug mẫu: `/mau-cv-tieng-nhat/chi-tiet/x` → `/mau-cv/chi-tiet/x`; điều hướng trong SPA dùng `Navigate replace`). Đã làm ở CVT-0.
 
 Query string (tiếng Việt không dấu, ngắn, chỉ dữ liệu không nhạy cảm):
 
@@ -267,7 +308,7 @@ Query string (tiếng Việt không dấu, ngắn, chỉ dữ liệu không nh�
 | --- | --- | --- |
 | `nguon` | `mau`, `cv-cu`, `tai-len`, `trong` | `mau` |
 | `vi-tri` | slug `CvPositionProfile` | vị trí đầu tiên theo `sort_order` hoặc vị trí liên quan danh mục mẫu |
-| `cap-do` | `intern`…`manager` | `junior` |
+| `kinh-nghiem` | `entry`, `junior`, `mid`, `senior` | `junior` |
 | `ngon-ngu` | `vi`, `en` | theo path |
 | `mau` | slug `CvColor` | màu mặc định của template |
 
@@ -279,8 +320,8 @@ Query string (tiếng Việt không dấu, ngắn, chỉ dữ liệu không nh�
 
 | Lựa chọn | H1 / breadcrumb cuối / `<title>` |
 | --- | --- |
-| `nguon=mau` | `Mẫu CV {Vị trí} – {Tên mẫu}` (+ ` (tiếng Anh)` khi `ngon-ngu=en`) |
-| Nguồn khác | `Mẫu CV {Tên mẫu}` |
+| `nguon=mau` | `Mẫu CV {Vị trí} {ngôn ngữ} - {Tên mẫu}` (ngôn ngữ theo `ngon-ngu`) |
+| Nguồn khác | `Mẫu CV {ngôn ngữ của path} - {Tên mẫu}` |
 
 Breadcrumb: `Trang chủ / Mẫu CV {tiếng Việt|tiếng Anh} / {Danh mục đầu tiên} / {H1}`. `<link rel="canonical">` luôn là path gốc không có query (tránh trùng lặp nội dung SEO). Mọi trang có query được `noindex` nếu khác mặc định.
 
@@ -288,7 +329,7 @@ Breadcrumb: `Trang chủ / Mẫu CV {tiếng Việt|tiếng Anh} / {Danh mục �
 
 **Panel "Bạn muốn tạo CV từ?"** — 4 nguồn, bỏ "Khôi phục bản chưa lưu":
 
-1. **Nội dung mẫu gợi ý** (mặc định, mở sẵn): ô chọn vị trí có tìm kiếm không dấu, nhóm theo ngành, ghim 8 vị trí phổ biến; chọn cấp độ (segmented); công tắc VI/EN.
+1. **Nội dung mẫu gợi ý** (mặc định, mở sẵn): ô chọn vị trí có tìm kiếm không dấu, nhóm theo ngành, ghim 8 vị trí phổ biến; chọn nhóm kinh nghiệm (segmented, theo mục 5.6); công tắc VI/EN.
 2. **CV đã tạo trước đó** (chỉ hiện khi đăng nhập vai trò ứng viên và có ≥ 1 CV): danh sách cuộn ảo, tối đa 50 CV gần nhất.
 3. **Tải CV từ máy tính**: vùng kéo thả, chỉ nhận PDF/DOCX ≤ 5 MB; kiểm tra phía client trước khi upload; chưa đăng nhập → bấm vào nguồn này mở hộp đăng nhập ngay (file không giữ được qua redirect).
 4. **Tạo CV trống**.
@@ -311,7 +352,7 @@ Viết lại `use-cv-source.js` thành:
 
 | Nguồn | Hành động khi bấm Tạo CV | Đích |
 | --- | --- | --- |
-| Mẫu gợi ý | `POST /api/v2/cvs/` với `{template, language, theme_color, source: sample, position, level}` | `/cvs/:id/edit?mode=create` |
+| Mẫu gợi ý | `POST /api/v2/cvs/` với `{template, language, theme_color, source: sample, position, band}` | `/cvs/:id/edit?mode=create` |
 | CV cũ | `POST /api/v2/cvs/` với `{…, source: copy, source_cv}` (nội dung copy sang CV mới, CV cũ không đổi) | như trên |
 | Trống | `POST /api/v2/cvs/` với `{…, source: blank}` | như trên |
 | Upload | mục 8 | `/cvs/:id/import-review` |
@@ -355,7 +396,7 @@ Tiến trình hiển thị theo bước thật từ job: `Đang tải lên (x%)`
 ### 8.3 Trích xuất bằng AI
 
 - Chuyển `apps/ai_core/services/cv_import.py` sang đi qua runtime `ai_core`: ghi `AiInvocation`, tôn trọng `AI_RUNTIME_ENABLED`, quota ngày theo người dùng và toàn hệ thống (`ai_daily_request_limit` đang seed mà chưa dùng).
-- Structured output theo JSON schema cố định (không cho mô hình tự do): `personal_info`, `summary`, `experience[]`, `education[]`, `skills[]`, `languages[]`, `certifications[]`, `projects[]`, `awards[]`, `activities[]`, `unmapped_text[]`, `suggested_position_slug`, `suggested_level`, và `confidence` (0–1) cho từng trường.
+- Structured output theo JSON schema cố định (không cho mô hình tự do): `personal_info`, `summary`, `experience[]`, `education[]`, `skills[]`, `languages[]`, `certifications[]`, `projects[]`, `awards[]`, `activities[]`, `unmapped_text[]`, `suggested_position_slug`, `experience_years`, `position_level`, `education_level`, `skills[].skill_id`/`name`/`level`, và `confidence` (0–1) cho từng trường.
 - Prompt gồm danh sách `CvPositionField` của vị trí được gợi ý để AI điền trường riêng nếu có.
 - Văn bản CV được đặt trong khối dữ liệu có ranh giới rõ; output luôn qua validator `apps/cvs/schemas.py`. Mọi chỉ dẫn nằm trong CV (prompt injection) không có tác dụng vì output chỉ là dữ liệu đã kiểm tra kiểu.
 - Ngôn ngữ: phát hiện ngôn ngữ CV gốc; nếu khác ngôn ngữ đã chọn thì **giữ nguyên văn bản gốc**, đặt `language` CV theo ngôn ngữ gốc và báo cho ứng viên (không dịch — ngoài phạm vi).
@@ -406,7 +447,7 @@ Xóa `widgets/admin-cv-catalogue` và route `cv-catalogue` cũ. Thay bằng nhó
 
 ### 9.3 Vị trí & nội dung mẫu `/admin/cv/positions`
 
-- Danh sách vị trí nhóm theo ngành, cột **độ phủ**: ma trận nhỏ 6 cấp độ × 2 ngôn ngữ, ô xanh = đã xuất bản, vàng = nháp/chờ duyệt, xám = dùng nội dung chung.
+- Danh sách vị trí nhóm theo ngành, cột **độ phủ**: ma trận nhỏ 4 nhóm kinh nghiệm × 2 ngôn ngữ, ô xanh = đã xuất bản, vàng = nháp/chờ duyệt, xám = dùng nội dung chung.
 - Trang chi tiết vị trí có 3 tab:
   - **Bộ section**: kéo thả thứ tự, bật/tắt, gợi ý vùng chính/phụ.
   - **Trường riêng**: CRUD `CvPositionField`, preview form ứng viên sẽ thấy.
@@ -479,7 +520,7 @@ Xóa: `cv-sample-contents/` public, `cv-position-preview/`, endpoint recoverable
 | `cv-templates/reorder/` | POST danh sách id |
 | `cv-positions/`, `cv-positions/{id}/fields/` | CRUD |
 | `cv-positions/coverage/` | Ma trận độ phủ cho mọi vị trí (1 query tổng hợp) |
-| `cv-sample-contents/` | CRUD, `?position=&level=&lang=&status=` |
+| `cv-sample-contents/` | CRUD, `?position=&band=&lang=&status=` |
 | `cv-sample-contents/generate/` | POST batch → job id |
 | `cv-sample-contents/{id}/review/` | POST `approve` / `reject` |
 | `cv-positions/export/`, `cv-positions/import/` | JSON |
@@ -561,7 +602,7 @@ Thêm:
 ### CVT-1 — Nền tảng dữ liệu
 
 - **Đầu vào:** quyết định D7, D10; `pg_dump` DB local.
-- **Công việc:** enum `CvLanguage`; model mới/sửa theo mục 5; migration xóa bảng/field legacy; xóa dữ liệu template, nội dung mẫu, CV cũ; section registry mới + `schema_version 2` + validator; seed: 8 template (1/layout, sau CVT-2 mới có renderer), 30 vị trí ưu tiên, nội dung chung 6 cấp độ × 2 ngôn ngữ, 10 màu.
+- **Công việc:** enum `CvLanguage`; model mới/sửa theo mục 5; migration xóa bảng/field legacy; xóa dữ liệu template, nội dung mẫu, CV cũ; section registry mới + `schema_version 2` + validator; seed: 8 template (1/layout, sau CVT-2 mới có renderer), 30 vị trí ưu tiên, nội dung chung 4 nhóm kinh nghiệm × 2 ngôn ngữ, 10 màu.
 - **Đầu ra:** migration, lệnh `seed_cv_catalog` mới, test model/validator.
 - **Nghiệm thu:** `makemigrations --check` sạch; seed chạy lại nhiều lần không lỗi (idempotent); resolver nội dung luôn trả kết quả cho mọi tổ hợp vị trí × cấp độ × ngôn ngữ.
 
@@ -577,7 +618,7 @@ Thêm:
 - **Đầu vào:** danh sách 30 vị trí ưu tiên + trường riêng mong muốn (mục 16).
 - **Công việc:** service/selectors cho profile, field, resolver; section `position_details` trong editor (form sinh từ định nghĩa trường); service sinh nội dung mẫu qua runtime `ai_core` + job Celery batch + validator chống PII; import/export JSON.
 - **Đầu ra:** API admin vị trí/nội dung, task sinh AI, test.
-- **Nghiệm thu:** chọn "Kỹ sư phần mềm" và "Nhân viên kinh doanh" cho ra bộ section khác nhau và trường riêng khác nhau; sinh 12 nội dung (1 vị trí × 6 cấp độ × 2 ngôn ngữ) trong < 2 phút, tất cả qua validator.
+- **Nghiệm thu:** chọn "Kỹ sư phần mềm" và "Nhân viên kinh doanh" cho ra bộ section khác nhau và trường riêng khác nhau; sinh 8 nội dung (1 vị trí × 4 nhóm kinh nghiệm × 2 ngôn ngữ) trong < 2 phút, tất cả qua validator.
 
 ### CVT-4 — Cổng quản trị mới
 
@@ -696,7 +737,7 @@ Hoặc `./scripts/check_all.sh`. Lệnh `manage.py` chạy qua `docker exec` đ�
 | Thời gian từ vào trang mẫu đến vào editor | event | trung vị < 30 s |
 | Tỉ lệ import thành công | `CvImportJob` | ≥ 90% (trừ PDF scan) |
 | Tỉ lệ trường bị sửa ở màn rà soát | so sánh trước/sau xác nhận (chỉ đếm số trường, không lưu nội dung) | < 20% |
-| Độ phủ nội dung mẫu | ma trận admin | 100% vị trí ưu tiên × 6 cấp độ × 2 ngôn ngữ |
+| Độ phủ nội dung mẫu | ma trận admin | 100% vị trí ưu tiên × 4 nhóm kinh nghiệm × 2 ngôn ngữ |
 | Thời gian admin xuất bản template | log wizard | < 10 phút |
 
 ---

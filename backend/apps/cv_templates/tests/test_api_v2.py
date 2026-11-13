@@ -199,6 +199,7 @@ class TemplateCatalogV2Tests(TestCase):
             [
                 {
                     'public_id': self.sample_category.public_id,
+                    'slug': self.sample_category.slug,
                     'display_name': 'Kỹ sư AI/Machine Learning',
                     'name_vi': 'Kỹ sư AI/Machine Learning',
                 }

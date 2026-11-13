@@ -90,8 +90,8 @@ export function mainRoutes() {
       <Route path="/tro-giup/:categorySlug" element={<KnowledgeCategoryPage />} />
       <Route path="/tro-giup/:categorySlug/:articleSlug" element={<KnowledgeDetailPage />} />
       <Route path="/tai-khoan/xac-thuc-email" element={<VerifyEmailPage />} />
-      {/* Kho mẫu CV theo ngôn ngữ — URL đổi theo dropdown ngôn ngữ (kiểu TopCV):
-          /mau-cv (vi), /mau-cv-tieng-anh, /mau-cv-tieng-nhat, /mau-cv-tieng-trung.
+      {/* Kho mẫu CV theo ngôn ngữ — chỉ tiếng Việt (/mau-cv) và tiếng Anh
+          (/mau-cv-tieng-anh). Kho Nhật/Trung và route locale động đã gỡ ở CVT-0.
           Khi chọn danh mục: /mau-cv-tieng-anh/mau-it (segment sau basePath).
           TemplateCatalog tự phân biệt category slug vs template slug qua API. */}
       <Route path="/mau-cv" element={<TemplateCatalogPage />} />
@@ -100,15 +100,9 @@ export function mainRoutes() {
       <Route path="/mau-cv-tieng-anh" element={<TemplateCatalogPage />} />
       <Route path="/mau-cv-tieng-anh/:categorySlug" element={<TemplateCatalogPage />} />
       <Route path="/mau-cv-tieng-anh/chi-tiet/:slug" element={<TemplateDetailPage />} />
-      <Route path="/mau-cv-tieng-nhat" element={<TemplateCatalogPage />} />
-      <Route path="/mau-cv-tieng-nhat/:categorySlug" element={<TemplateCatalogPage />} />
-      <Route path="/mau-cv-tieng-nhat/chi-tiet/:slug" element={<TemplateDetailPage />} />
-      <Route path="/mau-cv-tieng-trung" element={<TemplateCatalogPage />} />
-      <Route path="/mau-cv-tieng-trung/:categorySlug" element={<TemplateCatalogPage />} />
-      <Route path="/mau-cv-tieng-trung/chi-tiet/:slug" element={<TemplateDetailPage />} />
-      <Route path="/mau-cv/ngon-ngu/:localeCode" element={<TemplateCatalogPage />} />
-      <Route path="/mau-cv/ngon-ngu/:localeCode/:categorySlug" element={<TemplateCatalogPage />} />
-      <Route path="/mau-cv/ngon-ngu/:localeCode/chi-tiet/:slug" element={<TemplateDetailPage />} />
+      <Route path="/mau-cv-tieng-nhat/*" element={<Navigate to="/mau-cv" replace />} />
+      <Route path="/mau-cv-tieng-trung/*" element={<Navigate to="/mau-cv" replace />} />
+      <Route path="/mau-cv/ngon-ngu/*" element={<Navigate to="/mau-cv" replace />} />
       <Route path="/cv-templates" element={<TemplateCatalogPage />} />
       <Route path="/cv-templates/:slug" element={<TemplateDetailPage />} />
       <Route path="/cv/share/:token" element={<CvSharedViewPage />} />

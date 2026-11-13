@@ -232,62 +232,6 @@ class CvV2ApiTests(APITestCase):
         self.assertEqual(cv.lifecycle_status, UserCv.LifecycleStatus.PUBLISHED)
         self.assertEqual(cv.published_version.public_id, published.data['public_id'])
 
-    def test_latest_recoverable_draft_uses_hash_and_clears_after_manual_save(self):
-        cv = self.create_cv()
-        url = reverse('cv-v2-latest-recoverable-draft')
-        self.assertEqual(self.client.get(url).status_code, 204)
-
-        draft_response = self.client.get(self.draft_url(cv))
-        payload = {
-            key: draft_response.data[key]
-            for key in ('schema_version', 'content_json', 'layout_json', 'style_json')
-        }
-        payload['content_json']['personal_info']['full_name'] = 'Recover me'
-        autosave = self.client.put(
-            self.draft_url(cv),
-            payload,
-            format='json',
-            HTTP_IF_MATCH='"lock-version-0"',
-        )
-        self.assertEqual(autosave.status_code, 200, autosave.data)
-
-        recoverable = self.client.get(url)
-        self.assertEqual(recoverable.status_code, 200, recoverable.data)
-        self.assertEqual(recoverable.data['cv']['public_id'], cv.public_id)
-        self.assertEqual(
-            recoverable.data['draft']['content_json']['personal_info']['full_name'], 'Recover me'
-        )
-
-        saved = self.client.post(
-            reverse('cv-v2-save-version', kwargs={'public_id': cv.public_id}),
-            format='json',
-            HTTP_IF_MATCH='"lock-version-1"',
-        )
-        self.assertEqual(saved.status_code, 201, saved.data)
-        self.assertEqual(self.client.get(url).status_code, 204)
-
-    def test_latest_recoverable_draft_returns_only_most_recent_dirty_cv(self):
-        first = self.create_cv()
-        second = self.create_cv()
-        for cv, name in ((first, 'Older draft'), (second, 'Newest draft')):
-            draft_response = self.client.get(self.draft_url(cv))
-            payload = {
-                key: draft_response.data[key]
-                for key in ('schema_version', 'content_json', 'layout_json', 'style_json')
-            }
-            payload['content_json']['personal_info']['full_name'] = name
-            response = self.client.put(
-                self.draft_url(cv),
-                payload,
-                format='json',
-                HTTP_IF_MATCH='"lock-version-0"',
-            )
-            self.assertEqual(response.status_code, 200, response.data)
-
-        recoverable = self.client.get(reverse('cv-v2-latest-recoverable-draft'))
-        self.assertEqual(recoverable.status_code, 200, recoverable.data)
-        self.assertEqual(recoverable.data['cv']['public_id'], second.public_id)
-
     def test_create_can_copy_owned_draft_into_a_new_template(self):
         source = self.create_cv()
         draft_response = self.client.get(self.draft_url(source))

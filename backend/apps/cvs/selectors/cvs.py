@@ -1,7 +1,5 @@
 """Read queries for candidate-owned CVs."""
 
-from django.db.models import F, Q
-
 from ..models import CvVersion, UserCv
 
 
@@ -41,25 +39,4 @@ def candidate_cv_versions_queryset(user, cv_public_id):
         )
         .select_related('template_version', 'parent_version')
         .order_by('-version_number')
-    )
-
-
-def latest_recoverable_cv(user):
-    """Return the single most recently edited draft that differs from its base version."""
-    return (
-        candidate_cvs_queryset(user)
-        .filter(draft__isnull=False)
-        .filter(
-            Q(draft__base_version__isnull=True)
-            | ~Q(draft__document_hash=F('draft__base_version__content_hash'))
-        )
-        .select_related(
-            'current_template_version',
-            'latest_version',
-            'published_version',
-            'draft',
-            'draft__base_version',
-        )
-        .order_by('-draft__updated_at', '-pk')
-        .first()
     )

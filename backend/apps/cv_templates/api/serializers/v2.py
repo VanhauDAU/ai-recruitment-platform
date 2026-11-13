@@ -195,7 +195,7 @@ class CvPositionOptionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = JobCategory
-        fields = ['public_id', 'display_name', 'name_vi']
+        fields = ['public_id', 'slug', 'display_name', 'name_vi']
         read_only_fields = fields
 
     def get_display_name(self, obj):
