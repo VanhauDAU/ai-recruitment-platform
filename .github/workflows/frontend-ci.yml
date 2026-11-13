@@ -2,6 +2,9 @@ name: Frontend CI
 
 # Six job IDs below are required checks on main. Keep them stable while heavy
 # work becomes path-aware and quality, coverage, and E2E run in parallel.
+# Unit tests and E2E fan out into matrix jobs (`coverage-shard`,
+# `e2e-smoke-shard`); `coverage` and `e2e-smoke` aggregate them so the required
+# contexts and the final gate keep their exact names and skip semantics.
 on:
   pull_request:
   push:
@@ -188,16 +191,99 @@ jobs:
           if-no-files-found: ignore
           retention-days: 5
 
-  coverage:
-    name: coverage
+  coverage-shard:
+    name: coverage-shard (${{ matrix.shard }}/${{ strategy.job-total }})
     needs: changes
     if: ${{ needs.changes.result == 'success' && needs.changes.outputs.frontend == 'true' && !cancelled() }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    strategy:
+      # Let every shard finish so one failure still yields complete diagnostics.
+      fail-fast: false
+      matrix:
+        # Keep UNIT_TEST_SHARDS in the `coverage` job equal to this list's length.
+        shard: [1, 2, 3, 4]
     defaults:
       run:
         working-directory: frontend
     steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci --prefer-offline --no-audit
+
+      - name: Unit tests (shard ${{ matrix.shard }}/${{ strategy.job-total }})
+        id: coverage_tests
+        shell: bash
+        env:
+          SHARD: ${{ matrix.shard }}
+          SHARD_TOTAL: ${{ strategy.job-total }}
+        run: |
+          set -o pipefail
+          # Serialize jsdom/Ant Design interaction tests on GitHub-hosted
+          # runners. Parallel workers compete for CPU and make otherwise fast
+          # interaction tests exceed their per-test timeout under coverage.
+          # Parallelism comes from separate runners instead of extra workers.
+          #
+          # A single shard only sees part of the suite, so the ratchet in
+          # vite.config.js cannot be evaluated here. Thresholds are zeroed for
+          # the shard and enforced once on the merged report by `coverage`.
+          timeout --signal=TERM --kill-after=30s 17m \
+            npm run test:coverage -- \
+              --maxWorkers=1 \
+              --shard="${SHARD}/${SHARD_TOTAL}" \
+              --reporter=verbose \
+              --reporter=blob \
+              --coverage.thresholds.statements=0 \
+              --coverage.thresholds.branches=0 \
+              --coverage.thresholds.functions=0 \
+              --coverage.thresholds.lines=0 \
+              2>&1 | tee coverage.log
+
+      - name: Upload blob report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: vitest-blob-${{ matrix.shard }}
+          path: frontend/.vitest-reports/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Upload shard diagnostics
+        if: ${{ always() && steps.coverage_tests.outcome != 'success' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage-shard-${{ matrix.shard }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: frontend/coverage.log
+          if-no-files-found: ignore
+          retention-days: 5
+
+  coverage:
+    name: coverage
+    needs: [changes, coverage-shard]
+    if: ${{ needs.changes.result == 'success' && needs.changes.outputs.frontend == 'true' && !cancelled() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Require every unit-test shard to pass
+        working-directory: .
+        env:
+          SHARD_RESULT: ${{ needs.coverage-shard.result }}
+        run: |
+          echo "coverage-shard result: $SHARD_RESULT"
+          [[ "$SHARD_RESULT" == success ]]
+
       - uses: actions/checkout@v5
 
       - name: Start job timer
@@ -214,23 +300,50 @@ jobs:
       - name: Install dependencies
         run: npm ci --prefer-offline --no-audit
 
-      - name: Unit tests and coverage gate
+      - name: Download blob reports
+        uses: actions/download-artifact@v4
+        with:
+          pattern: vitest-blob-*
+          path: frontend/.vitest-reports
+          merge-multiple: true
+
+      - name: Merge shards and enforce coverage gate
         id: coverage_tests
         shell: bash
+        env:
+          UNIT_TEST_SHARDS: 4
         run: |
           set -o pipefail
-          # Serialize jsdom/Ant Design interaction tests on GitHub-hosted
-          # runners. Parallel workers compete for CPU and make otherwise fast
-          # interaction tests exceed their per-test timeout under coverage.
-          # Stop before the job timeout so the verbose active-test log and
-          # partial JUnit/coverage artifacts can still be uploaded.
-          timeout --signal=TERM --kill-after=30s 17m \
-            npm run test:coverage -- \
-              --maxWorkers=1 \
-              --reporter=verbose \
-              --reporter=junit \
-              --outputFile.junit=vitest-results.xml \
-              2>&1 | tee coverage.log
+          ls -l .vitest-reports
+          [[ "$(find .vitest-reports -name 'blob-*.json' | wc -l)" -eq "$UNIT_TEST_SHARDS" ]]
+          # No test runs here: Vitest replays the blob reports, merges
+          # their coverage maps and applies the thresholds from vite.config.js.
+          npx vitest run --merge-reports \
+            --coverage \
+            --reporter=default \
+            --reporter=junit \
+            --outputFile.junit=vitest-results.xml \
+            2>&1 | tee coverage.log
+
+      - name: Verify coverage ratchet on merged report
+        run: |
+          # Independent check against the same thresholds object, so the gate
+          # cannot silently disappear if merge-reports behaviour ever changes.
+          node --input-type=module - <<'JS'
+          import { readFileSync } from 'node:fs'
+          import config from './vite.config.js'
+
+          const { thresholds } = config({ mode: 'test', command: 'serve' }).test.coverage
+          const total = JSON.parse(readFileSync('coverage/coverage-summary.json', 'utf8')).total
+          let failed = false
+          for (const [metric, minimum] of Object.entries(thresholds)) {
+            const actual = total[metric]?.pct
+            const ok = typeof actual === 'number' && actual >= minimum
+            console.log(`${ok ? 'ok  ' : 'FAIL'} ${metric}: ${actual}% (threshold ${minimum}%)`)
+            if (!ok) failed = true
+          }
+          process.exit(failed ? 1 : 0)
+          JS
 
       - name: Publish coverage summary
         if: ${{ always() }}
@@ -273,14 +386,14 @@ jobs:
           elapsed = max(0, int(time.time()) - started_at)
           summary = Path(os.environ['GITHUB_STEP_SUMMARY'])
           with summary.open('a') as stream:
-              stream.write('## Frontend coverage\n\n')
+              stream.write('## Frontend coverage (shards merged)\n\n')
               stream.write('| Metric | Value |\n| --- | --- |\n')
               stream.write(f"| Result | {os.environ.get('JOB_STATUS', 'unknown')} |\n")
               stream.write(f'| Tests | {tests} |\n')
               stream.write(f'| Failures / errors / skipped | {failures} / {errors} / {skipped} |\n')
               stream.write(f"| Statements / branches | {values['statements']} / {values['branches']} |\n")
               stream.write(f"| Functions / lines | {values['functions']} / {values['lines']} |\n")
-              stream.write(f'| Measured checks elapsed | {elapsed}s |\n')
+              stream.write(f'| Merge job elapsed | {elapsed}s |\n')
           PY
 
       - name: Upload coverage diagnostics
@@ -295,17 +408,27 @@ jobs:
           if-no-files-found: ignore
           retention-days: 5
 
-  e2e-smoke:
-    name: e2e-smoke
+  e2e-smoke-shard:
+    name: e2e-smoke-shard (${{ matrix.project }})
     needs: changes
     if: ${{ needs.changes.result == 'success' && needs.changes.outputs.frontend == 'true' && !cancelled() }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        # Must list every project in frontend/playwright.config.js; the
+        # e2e-smoke job below fails if the two lists drift apart.
+        project: [desktop-chromium, tablet-chromium, mobile-chromium]
     env:
       # E2E mocks intercept this stable backend origin. Without an explicit
       # value, CI has no gitignored frontend/.env and Vite falls back to its
       # same-origin proxy, bypassing older route fixtures bound to port 8000.
       VITE_API_BASE_URL: http://localhost:8000/api
+      # Smoke-test the production bundle (vite build + vite preview). The
+      # unbundled dev server made multi-route tests exceed their 30s budget on
+      # hosted runners. Set to `dev` to restore the previous behaviour.
+      PLAYWRIGHT_WEB_SERVER: preview
     defaults:
       run:
         working-directory: frontend
@@ -329,17 +452,19 @@ jobs:
       - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium
 
-      - name: Run portal smoke tests
+      - name: Run portal smoke tests (${{ matrix.project }})
         id: e2e
         shell: bash
         env:
           PLAYWRIGHT_JUNIT_OUTPUT_FILE: test-results/e2e-results.xml
+          PROJECT: ${{ matrix.project }}
         run: |
           set -o pipefail
-          # Keep traces from the first failing run. Re-running every failure
-          # used another ~5.5 minutes without producing a stable signal.
+          # Keep traces from every failing attempt, including a first attempt
+          # that later passes on its single retry (see playwright.config.js).
           timeout --signal=TERM --kill-after=30s 17m \
             npm run test:e2e:smoke -- \
+              --project="$PROJECT" \
               --reporter=line,junit \
               --trace=retain-on-failure \
             2>&1 | tee e2e.log
@@ -349,6 +474,7 @@ jobs:
         env:
           JOB_STATUS: ${{ job.status }}
           STARTED_AT: ${{ steps.timer.outputs.epoch }}
+          PROJECT: ${{ matrix.project }}
         run: |
           python3 - <<'PY'
           import os
@@ -370,26 +496,74 @@ jobs:
           elapsed = max(0, int(time.time()) - started_at)
           summary = Path(os.environ['GITHUB_STEP_SUMMARY'])
           with summary.open('a') as stream:
-              stream.write('## Frontend E2E smoke\n\n')
+              stream.write(f"## Frontend E2E smoke — {os.environ.get('PROJECT', 'unknown')}\n\n")
               stream.write('| Metric | Value |\n| --- | --- |\n')
               stream.write(f"| Result | {os.environ.get('JOB_STATUS', 'unknown')} |\n")
               stream.write(f"| Tests | {metrics['tests']} |\n")
               stream.write(f"| Failures / errors / skipped | {metrics['failures']} / {metrics['errors']} / {metrics['skipped']} |\n")
               stream.write(f"| Playwright duration | {metrics['time']}s |\n")
               stream.write(f'| Measured checks elapsed | {elapsed}s |\n')
+
+          # A test that only passed on its retry is not a clean pass. List it
+          # in the summary and raise a warning annotation on the pull request.
+          import re
+          flaky = []
+          log_path = Path('e2e.log')
+          if log_path.exists():
+              lines = re.sub(r'\x1b\[[0-9;]*m', '', log_path.read_text(errors='replace')).splitlines()
+              for index, line in enumerate(lines):
+                  if re.match(r'^\s+\d+ flaky\s*$', line):
+                      for entry in lines[index + 1:]:
+                          if not re.match(r'^\s+\[', entry):
+                              break
+                          flaky.append(entry.strip())
+          with summary.open('a') as stream:
+              stream.write(f'| Flaky (passed on retry) | {len(flaky)} |\n')
+              for entry in flaky:
+                  stream.write(f'\n- `{entry}`')
+              stream.write('\n')
+          for entry in flaky:
+              print(f'::warning title=Flaky E2E test (passed on retry)::{entry}')
           PY
 
       - name: Upload Playwright diagnostics
         if: ${{ always() && steps.e2e.outcome != 'success' }}
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-smoke-report-${{ github.run_id }}-${{ github.run_attempt }}
+          name: playwright-smoke-report-${{ matrix.project }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             frontend/playwright-report
             frontend/test-results
             frontend/e2e.log
           if-no-files-found: ignore
           retention-days: 5
+
+  e2e-smoke:
+    name: e2e-smoke
+    needs: [changes, e2e-smoke-shard]
+    if: ${{ needs.changes.result == 'success' && needs.changes.outputs.frontend == 'true' && !cancelled() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Matrix covers every Playwright project
+        run: |
+          # A project added to playwright.config.js but not to the matrix
+          # would silently stop running; fail instead.
+          configured="$(grep -oE "name: '[a-z0-9-]+'" frontend/playwright.config.js | sed -E "s/name: '(.*)'/\1/" | sort | tr '\n' ' ')"
+          matrix="$(printf '%s\n' desktop-chromium tablet-chromium mobile-chromium | sort | tr '\n' ' ')"
+          echo "playwright.config.js: $configured"
+          echo "workflow matrix:      $matrix"
+          [[ -n "$configured" && "$configured" == "$matrix" ]]
+
+      - name: Require every viewport shard to pass
+        env:
+          SHARD_RESULT: ${{ needs.e2e-smoke-shard.result }}
+        run: |
+          echo "Smoke suite runs per viewport in e2e-smoke-shard; this job preserves the required context." >> "$GITHUB_STEP_SUMMARY"
+          echo "e2e-smoke-shard result: $SHARD_RESULT"
+          [[ "$SHARD_RESULT" == success ]]
 
   audit:
     name: audit

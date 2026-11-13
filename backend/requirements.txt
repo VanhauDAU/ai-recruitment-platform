@@ -24,3 +24,4 @@ import-linter==2.13
 pytest==8.4.2
 pytest-django==4.11.1
 pytest-cov==7.0.0
+pytest-xdist==3.8.0

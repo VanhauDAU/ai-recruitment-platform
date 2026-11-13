@@ -17,6 +17,12 @@ MEDIA_PUBLIC_BASE_URL = ''
 SECRET_KEY = 'test-only-secret-key-at-least-32-characters-long'
 SIMPLE_JWT = {**SIMPLE_JWT, 'SIGNING_KEY': SECRET_KEY}
 
+# Production keeps Django's default PBKDF2 hasher (hundreds of thousands of
+# iterations, ~0.2s per hash). Fixtures create users in almost every setUp, so
+# that cost is paid once per test. Tests only need a hasher that round-trips
+# through set_password/check_password; this setting is test-only.
+PASSWORD_HASHERS = ['django.contrib.auth.hashers.MD5PasswordHasher']
+
 # Never let a local .env switch test storage to a real R2 bucket. Tests use the
 # same local media contract as before and must not require network credentials.
 STORAGES = {

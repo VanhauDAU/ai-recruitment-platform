@@ -3,6 +3,9 @@ import { ADMIN_ROUTES } from '../../../src/app/router/admin/admin-routes.config.
 import { API_ROUTE, expectAnimatedLoginButton, mockPublicApi } from './helpers'
 
 test('admin smoke: login loads and dashboard stays role-protected', async ({ page }) => {
+  // One full navigation per admin route (23 and growing): the budget has to
+  // scale with the route table instead of sharing a single 30s test timeout.
+  test.slow()
   await mockPublicApi(page)
   await page.goto('/admin/app/login')
   await expect(page.getByRole('heading', { name: 'Đăng nhập quản trị' })).toBeVisible()

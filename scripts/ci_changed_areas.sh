@@ -17,6 +17,7 @@ docs=false
 ci=false
 deploy=false
 frontend_audit=false
+backend_migrations=false
 changed_count=0
 
 set_all_areas() {
@@ -25,6 +26,7 @@ set_all_areas() {
   ci=true
   deploy=true
   frontend_audit=true
+  backend_migrations=true
 }
 
 is_commit() {
@@ -64,6 +66,18 @@ classify_path() {
       ;;
     backend/*)
       backend=true
+      # Migration upgrade/recovery tests replay historical schema states and
+      # cost ~19 runner-minutes. They only need to run when something they
+      # exercise can change: migrations, the management commands they call,
+      # the tests themselves, or the settings/dependencies they run under.
+      case "$changed_path" in
+        backend/apps/*/migrations/*|backend/apps/*/management/*|backend/apps/*/tests/test_*migrations*.py)
+          backend_migrations=true
+          ;;
+        backend/requirements*.txt|backend/pyproject.toml|backend/manage.py|backend/config/settings/*)
+          backend_migrations=true
+          ;;
+      esac
       ;;
     frontend/*)
       frontend=true
@@ -79,6 +93,9 @@ classify_path() {
     .github/workflows/backend-ci.yml|scripts/check_backend_layering.sh)
       backend=true
       ci=true
+      if [[ "$changed_path" == .github/workflows/backend-ci.yml ]]; then
+        backend_migrations=true
+      fi
       ;;
     .github/workflows/frontend-ci.yml|scripts/check_api_boundary.sh|scripts/check_feature_boundary.sh)
       frontend=true
@@ -91,6 +108,7 @@ classify_path() {
       ci=true
       if [[ "$changed_path" == scripts/ci_changed_areas.sh ]]; then
         frontend_audit=true
+        backend_migrations=true
       fi
       ;;
     .github/*|.github/**/*|scripts/*)
@@ -147,7 +165,10 @@ case "$event_name" in
     classify_diff "$base_sha" "$head_sha" true
     ;;
   push)
+    # main always replays the full migration suite when backend changed; the
+    # path filter above only trims pull requests.
     frontend_audit=true
+    backend_migrations=true
     if is_zero_sha "$before_sha"; then
       set_all_areas
     else
@@ -172,4 +193,5 @@ printf 'docs=%s\n' "$docs"
 printf 'ci=%s\n' "$ci"
 printf 'deploy=%s\n' "$deploy"
 printf 'frontend_audit=%s\n' "$frontend_audit"
+printf 'backend_migrations=%s\n' "$backend_migrations"
 printf 'changed_count=%s\n' "$changed_count"

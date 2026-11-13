@@ -29,8 +29,8 @@ chuyển bước sau khi gate của giai đoạn trước có bằng chứng đ�
 | P5 | `refactor/backend-organization` | Chuẩn hóa Django theo app | Planned | Schema, migration, quyền và task registry không đổi |
 | P6 | `refactor/frontend-organization` | Chuẩn hóa ownership frontend | Planned | Import, route, bundle và UI không đổi |
 | P7 | `docs/procv-consolidation` | Bộ tài liệu và tiến độ thống nhất | Planned | Mọi file cũ có mapping, link check đạt |
-| P8 | `perf/ci-backend` | Test backend nhanh với coverage đúng | Planned | Cùng manifest test, coverage >=84%, ba lượt ổn định |
-| P9 | `perf/ci-frontend` | Unit, E2E và báo cáo được tối ưu | Planned | Đủ test/coverage, E2E không xanh nhờ retry |
+| P8 | `perf/ci-pipeline-speedup` (gộp P9) | Test backend nhanh với coverage đúng | Implemented | Cùng manifest test, coverage >=84%, ba lượt ổn định |
+| P9 | `perf/ci-pipeline-speedup` (gộp P8) | Unit, E2E và báo cáo được tối ưu | Implemented | Đủ test/coverage, E2E không xanh nhờ retry |
 | P10 | `chore/procv-acceptance` | Nghiệm thu và hồ sơ bàn giao | Planned | Checkout sạch và full gate đạt trên cùng SHA |
 
 ## Bằng chứng P0
@@ -44,6 +44,8 @@ chuyển bước sau khi gate của giai đoạn trước có bằng chứng đ�
   hủy; timeout không được dùng làm runtime mục tiêu.
 - [Kết quả chẩn đoán P1](p1-ci-test-stability.md), gồm nguyên nhân, số đo mới và
   các gate còn phải hoàn tất trước P2.
+- [Tối ưu thời gian CI P8 + P9](p8-p9-ci-performance.md), gồm thay đổi workflow,
+  chốt chặn coverage/E2E và các gate còn phải chạy trên CI thật.
 - [Kết quả dọn repository P2](p2-repo-cleanup.md), gồm phân loại media, điểm
   phục hồi và bằng chứng clean/test không làm mất dữ liệu.
 - [Kết quả chuyển tooling về local-only P3](p3-local-only-tooling.md), gồm
