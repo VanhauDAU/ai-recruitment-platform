@@ -1,9 +1,143 @@
-/* Preview and print use the same A4-safe rules as the immutable export
-   contract. Export itself remains server-side and never captures this DOM. */
-@font-face {
-  font-family: "CVPreviewInter";
-  src: local("Inter"), local("Arial");
-  font-display: swap;
+/* Preview, editor và trang in PDF (cv-print.html) dùng chung các quy tắc này:
+   PDF được Chromium in từ đúng DOM của renderer, không có renderer thứ hai. */
+
+/* ---- Bố cục layout (registry cv-layouts.json) ---- */
+.cv-row {
+  column-gap: 6mm;
+}
+
+.cv-row + .cv-row {
+  margin-top: 5mm;
+}
+
+/* Thân CV kéo hết chiều cao trang để nền cột phụ chạy tới chân trang. */
+.cv-row[data-cv-row='body'] {
+  flex: 1 1 auto;
+}
+
+.cv-region {
+  min-width: 0;
+}
+
+.cv-region--tint {
+  background: color-mix(in srgb, var(--cv-theme) 8%, white);
+  border-radius: 1.5mm;
+  padding: 4mm;
+}
+
+.cv-region--band {
+  background: var(--cv-theme);
+  color: #fff;
+  padding: var(--cv-page-margin);
+}
+
+/* Dải màu tràn sát mép giấy. Lề âm đặt trên HÀNG (phần tử flex của trang), không
+   đặt trên vùng (phần tử grid): chế độ in PDF của Chromium dàn sai lề âm của phần
+   tử grid và làm dải màu đè lên nội dung bên dưới. */
+.cv-row[data-cv-row='top']:has(> .cv-region--band) {
+  margin: calc(-1 * var(--cv-page-margin)) calc(-1 * var(--cv-page-margin)) 0;
+}
+
+/* Cột phụ dải màu ở cạnh trái chạy suốt chiều cao trang; vùng còn lại giữ lề trang. */
+.cv-row[data-cv-row='body']:first-child:has(> .cv-region--band:first-child) {
+  margin: calc(-1 * var(--cv-page-margin));
+}
+
+.cv-row[data-cv-row='body']:first-child:has(> .cv-region--band:first-child) > .cv-region:not(.cv-region--band) {
+  padding: var(--cv-page-margin) var(--cv-page-margin) var(--cv-page-margin) 0;
+}
+
+.cv-region--band :is(section, h2, h3, p, span, div, li, a) {
+  border-color: rgb(255 255 255 / 0.35) !important;
+  color: inherit !important;
+}
+
+/* Ô sửa inline (editor) chỉ hiện khung khi rê chuột hoặc đang gõ, kể cả trên vùng
+   nền màu. Trên dải màu: rê chuột phủ trắng nhẹ, đang gõ nền trắng nên chữ tối. */
+.cv-region [contenteditable]:not(:hover, :focus) {
+  background: transparent !important;
+  border-color: transparent !important;
+}
+
+.cv-region--band [contenteditable]:hover:not(:focus) {
+  background: rgb(255 255 255 / 0.15) !important;
+}
+
+.cv-region--band [contenteditable]:empty::before {
+  color: rgb(255 255 255 / 0.6) !important;
+}
+
+.cv-region--band [contenteditable]:focus {
+  color: #0f172a !important;
+}
+
+.cv-region--band .bg-\[var\(--cv-theme\)\] {
+  background: #fff !important;
+}
+
+.cv-region--band .bg-slate-200 {
+  background: rgb(255 255 255 / 0.35) !important;
+}
+
+/* Vùng xếp ngang (header): ảnh | tên + chức danh | liên hệ. Trong editor các
+   section nằm trong `.cv-region-body` (vùng thả kéo) nên áp cùng quy tắc. */
+.cv-region--inline,
+.cv-region--inline > .cv-region-body {
+  align-items: center;
+  column-gap: 6mm;
+  display: flex;
+  flex-wrap: wrap;
+  row-gap: 2mm;
+}
+
+.cv-region--inline > .cv-region-body {
+  flex: 1 1 100%;
+}
+
+.cv-region--inline :is(.cv-document-preview__section, .cv-editor-section) {
+  margin-bottom: 0;
+}
+
+.cv-region--inline [data-section-key='nameplate'] {
+  flex: 1 1 35%;
+  min-width: 0;
+}
+
+.cv-region--inline [data-section-key='contact'] {
+  flex: 1 1 30%;
+  min-width: 0;
+}
+
+.cv-region--inline [data-section-key='avatar'] {
+  flex: 0 0 auto;
+}
+
+/* Biến thể timeline: kinh nghiệm, học vấn, dự án thành dòng thời gian. */
+[data-cv-variant='timeline'] :is([data-section-key='experience'], [data-section-key='education'], [data-section-key='projects']) [data-cv-item-id] {
+  border-left: 2px solid color-mix(in srgb, var(--cv-theme) 35%, transparent);
+  padding-left: 5mm;
+  position: relative;
+}
+
+[data-cv-variant='timeline'] :is([data-section-key='experience'], [data-section-key='education'], [data-section-key='projects']) [data-cv-item-id]::before {
+  background: var(--cv-theme);
+  border-radius: 9999px;
+  content: '';
+  height: 2.4mm;
+  left: -1.3mm;
+  position: absolute;
+  top: 0.8mm;
+  width: 2.4mm;
+}
+
+/* Biến thể compact: khoảng cách hẹp cho CV nhiều nội dung. */
+[data-cv-variant='compact'] .cv-document-preview__section {
+  margin-bottom: 3mm;
+}
+
+[data-cv-variant='compact'] .cv-document-preview__section h3 {
+  margin-bottom: 1.5mm;
+  padding-bottom: 1mm;
 }
 
 .cv-document-preview__section {
@@ -89,6 +223,7 @@
   }
 }
 
+/* In: mỗi trang A4 đã được renderer chia sẵn nên in đúng một tờ, không co giãn. */
 @media print {
   @page {
     size: A4;
@@ -108,26 +243,16 @@
 
   .cv-document-preview__page-wrap {
     break-after: page;
-    page-break-after: always;
+    margin: 0 !important;
   }
 
   .cv-document-preview__page-wrap:last-child {
     break-after: auto;
-    page-break-after: auto;
   }
 
   .cv-document-preview__page {
-    font-family: "CVPreviewInter", Arial, sans-serif;
-    height: auto !important;
-    min-height: 297mm;
-    overflow: visible !important;
     box-shadow: none !important;
-  }
-
-  .cv-document-preview__section,
-  .cv-document-preview__section > div {
-    break-inside: avoid-page;
-    page-break-inside: avoid;
-    overflow-wrap: anywhere;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
   }
 }

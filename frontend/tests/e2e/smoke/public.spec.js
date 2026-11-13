@@ -517,7 +517,7 @@ test('public smoke: CV template colors change preview and detail offers the crea
     const body = path === '/api/v2/cv-templates/'
       ? { count: 1, results: [card] }
       : path === '/api/v2/cv-templates/modern/'
-        ? { ...card, preview_url: '', renderer: { key: 'classic_single_column_v1', version: '1', schema_version: 1, capabilities: {} }, sections: [] }
+        ? { ...card, preview_url: '', renderer: { key: 'single_column_v1', version: '1', schema_version: 1, capabilities: {} }, sections: [] }
         : path === '/api/v2/cv-templates/modern/related/'
           ? []
           : path === '/api/v2/cv-position-options/'
@@ -560,7 +560,7 @@ test('public smoke: CV template colors change preview and detail offers the crea
                       font_scale: 1, line_height: 1.4, background_asset_id: null, section_overrides: {},
                     },
                   },
-                  renderer: { key: 'classic_single_column_v1', version: '1', schema_version: 1, capabilities: {} },
+                  renderer: { key: 'single_column_v1', version: '1', schema_version: 1, capabilities: {} },
                   revision: `revision-${locale}`,
                 }
                 })()
@@ -608,7 +608,7 @@ test('public smoke: a shared CV link renders its immutable version', async ({ pa
         cv: { title: 'CV được chia sẻ', language: 'vi-VN' },
         version: {
           public_id: 'cvv_shared', version_number: 1, schema_version: 1,
-          template_renderer_key: 'classic_single_column_v1',
+          template_renderer_key: 'single_column_v1',
           content_json: {
             personal_info: { full_name: 'Nguyễn Chia sẻ', headline: 'Designer', email: '', phone: '', address: '' },
             sections: [],
@@ -623,5 +623,5 @@ test('public smoke: a shared CV link renders its immutable version', async ({ pa
   await page.goto('/cv/share/share-token')
   await expect(page.getByRole('heading', { name: 'CV được chia sẻ' })).toBeVisible()
   await expect(page.getByText('Nguyễn Chia sẻ')).toBeVisible()
-  await expect(page.getByLabel('Xem trước CV classic_single_column_v1 trang 1')).toBeVisible()
+  await expect(page.getByLabel('Xem trước CV single_column_v1 trang 1')).toBeVisible()
 })

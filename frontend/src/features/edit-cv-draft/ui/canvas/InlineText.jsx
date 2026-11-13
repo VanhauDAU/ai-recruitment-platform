@@ -2,8 +2,9 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import { BoldOutlined, ItalicOutlined, UnderlineOutlined } from '@ant-design/icons'
 import { Button, ColorPicker, InputNumber, Select } from 'antd'
 import { createPortal } from 'react-dom'
+import { CV_FONT_FAMILIES } from '@/entities/cv'
 
-const FONTS = ['Arial', 'Calibri', 'Inter', 'Roboto', 'Source Sans Pro'].map((value) => ({ value, label: value }))
+const FONTS = CV_FONT_FAMILIES.map((value) => ({ value, label: value }))
 
 export default function InlineText({ value = '', placeholder, ariaLabel, className = '', onCommit, registerPendingEdit, marks = {}, onMarksChange, defaultFontFamily = 'Roboto' }) {
   const rootRef = useRef(null)

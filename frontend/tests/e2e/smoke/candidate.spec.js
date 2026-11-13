@@ -229,7 +229,7 @@ test('candidate smoke: WYSIWYG CV editor uses the V2 draft lifecycle', async ({ 
       : path === '/api/site/settings/'
         ? { cv_builder_wysiwyg_enabled: true }
       : path === '/api/v2/cvs/cv_1/'
-        ? { public_id: 'cv_1', title: 'CV V2', latest_version_public_id: 'version_2', thumbnail_url: null, thumbnail_status: 'pending', template_public_id: 'tpl_1', template_renderer_key: 'classic_single_column_v1', template_capabilities: { layout: { section_drag: true, cross_region_drag: true, item_drag: true } } }
+        ? { public_id: 'cv_1', title: 'CV V2', latest_version_public_id: 'version_2', thumbnail_url: null, thumbnail_status: 'pending', template_public_id: 'tpl_1', template_renderer_key: 'single_column_v1', template_capabilities: { layout: { section_drag: true, cross_region_drag: true, item_drag: true } } }
         : path === '/api/v2/cvs/cv_1/draft/' && request.method() === 'GET'
           ? draft
       : path === '/api/v2/cvs/cv_1/draft/' && request.method() === 'PUT'
@@ -259,7 +259,7 @@ test('candidate smoke: WYSIWYG CV editor uses the V2 draft lifecycle', async ({ 
                   public_id: 'version_2', version_number: 2, version_kind: 'manual_save',
                   schema_version: draft.schema_version, content_json: draft.content_json,
                   layout_json: draft.layout_json, style_json: draft.style_json, assets: {},
-                  template_renderer_key: 'classic_single_column_v1',
+                  template_renderer_key: 'single_column_v1',
                 }
               : path === '/api/jobs/recommendations/by-cv/cv_1/'
                 ? { focus_keyword: 'Developer', strategy: 'profile-rule-v1', related_positions: [{ label: 'Frontend Developer', search: 'Frontend Developer' }], results: [] }
@@ -277,7 +277,7 @@ test('candidate smoke: WYSIWYG CV editor uses the V2 draft lifecycle', async ({ 
   await expect(page.getByRole('textbox', { name: 'Tên CV' })).toHaveText('CV V2')
   await expect(page.getByRole('navigation', { name: 'Công cụ CV' })).toBeVisible()
   await expect(page.getByLabel('CV A4 có thể chỉnh sửa')).toBeVisible()
-  await expect(page.getByLabel('Xem trước CV classic_single_column_v1 trang 1')).toBeVisible()
+  await expect(page.getByLabel('Xem trước CV single_column_v1 trang 1')).toBeVisible()
 
   await page.getByRole('button', { name: 'Cập nhật ảnh đại diện' }).click()
   await expect(page.getByRole('dialog', { name: 'Cập nhật ảnh đại diện' })).toBeVisible()
@@ -344,7 +344,7 @@ test('candidate smoke: WYSIWYG CV editor uses the V2 draft lifecycle', async ({ 
 test('candidate smoke: owner CV view renders an immutable V2 version, not a draft', async ({ page }) => {
   const version = {
     public_id: 'cvv_2', version_number: 2, schema_version: 1,
-    template_renderer_key: 'classic_single_column_v1', template_renderer_version: '1',
+    template_renderer_key: 'single_column_v1', template_renderer_version: '1',
     content_json: {
       personal_info: { full_name: 'Phiên bản bất biến', headline: 'Developer', email: '', phone: '', address: '' },
       sections: [{ instance_id: 'summary_1', section_key: 'summary', title: 'Mục tiêu', enabled: true, items: [{ item_id: 'summary_item_1', value: 'Nội dung đã lưu' }] }],
@@ -361,11 +361,11 @@ test('candidate smoke: owner CV view renders an immutable V2 version, not a draf
       : path === '/api/v2/cvs/cv_1/'
         ? { public_id: 'cv_1', published_version_public_id: 'cvv_2', latest_version_public_id: 'cvv_2' }
         : path === '/api/v2/cvs/cv_1/versions/'
-          ? { count: 1, results: [{ public_id: 'cvv_2', version_number: 2, version_kind: 'published', template_renderer_key: 'classic_single_column_v1' }] }
+          ? { count: 1, results: [{ public_id: 'cvv_2', version_number: 2, version_kind: 'published', template_renderer_key: 'single_column_v1' }] }
       : path === '/api/v2/cvs/cv_1/view/'
         ? { cv: { public_id: 'cv_1', title: 'CV read-only', language: 'vi-VN' }, version }
         : path === '/api/v2/cvs/cv_1/exports/' && route.request().method() === 'POST'
-          ? { public_id: 'cve_1', version_public_id: 'cvv_2', status: 'pending', renderer_key: 'classic_single_column_v1', renderer_version: '1', download_url: null }
+          ? { public_id: 'cve_1', version_public_id: 'cvv_2', status: 'pending', renderer_key: 'single_column_v1', renderer_version: '1', download_url: null }
         : {}
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) })
   })
@@ -374,7 +374,7 @@ test('candidate smoke: owner CV view renders an immutable V2 version, not a draf
   await expect(page.getByRole('heading', { name: 'CV read-only' })).toBeVisible()
   await expect(page.getByText('Phiên bản bất biến')).toBeVisible()
   await expect(page.getByText('Nội dung đã lưu')).toBeVisible()
-  await expect(page.getByLabel('Xem trước CV classic_single_column_v1 trang 1')).toBeVisible()
+  await expect(page.getByLabel('Xem trước CV single_column_v1 trang 1')).toBeVisible()
   const exportRequest = page.waitForRequest((request) => request.url().endsWith('/api/v2/cvs/cv_1/exports/') && request.method() === 'POST')
   await page.getByRole('button', { name: 'Xuất PDF' }).click()
   expect((await exportRequest).postDataJSON()).toEqual({ version_public_id: 'cvv_2' })
@@ -385,11 +385,11 @@ test('candidate smoke: CV library permanently deletes a CV through V2', async ({
   let deleted = false
   const cv = {
     public_id: 'cv_1', title: 'CV cần xóa', cv_type: 'builder', source: 'builder',
-    is_default: false, template_renderer_key: 'classic_single_column_v1', updated_at: '2026-07-15T00:00:00Z',
+    is_default: false, template_renderer_key: 'single_column_v1', updated_at: '2026-07-15T00:00:00Z',
   }
   const version = {
     public_id: 'cvv_1', version_number: 1, schema_version: 1,
-    template_renderer_key: 'classic_single_column_v1', template_renderer_version: '1',
+    template_renderer_key: 'single_column_v1', template_renderer_version: '1',
     content_json: { personal_info: { full_name: 'Candidate', headline: '', email: '', phone: '', address: '' }, sections: [] },
     layout_json: { regions: [{ id: 'main', width_percent: 100, section_instance_ids: [] }] },
     style_json: { theme_color: '#00A66A', font_family: 'Roboto', font_scale: 1, line_height: 1.4 },

@@ -44,7 +44,7 @@ const POSITIONS = [
   { public_id: 'pos_1', slug: 'ke-toan', display_name: 'Kế toán' },
   { public_id: 'pos_2', slug: 'ky-su-ai', display_name: 'Kỹ sư AI' },
 ]
-const PREVIEW = { document: { content_json: {}, style_json: {} }, renderer: { key: 'classic_single_column_v1' } }
+const PREVIEW = { document: { content_json: {}, style_json: {} }, renderer: { key: 'single_column_v1' } }
 
 function renderPanel(props = {}) {
   return render(

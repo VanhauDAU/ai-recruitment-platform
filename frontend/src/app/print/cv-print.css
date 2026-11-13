@@ -1,0 +1,13 @@
+html,
+body {
+  background: #fff;
+  margin: 0;
+}
+
+.cv-document-preview__page-wrap {
+  margin: 0 !important;
+}
+
+.cv-document-preview__page {
+  box-shadow: none !important;
+}

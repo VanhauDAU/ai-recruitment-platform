@@ -21,8 +21,8 @@ cho mỗi role (ràng buộc `(lower(email), role)`), mật khẩu riêng, phiê
 ## Công nghệ
 
 - **Backend**: Python, Django 5.1, Django REST Framework, SimpleJWT,
-  drf-spectacular (OpenAPI), Celery 5 + Redis, WeasyPrint/pypdfium2 (render
-  PDF CV), pypdf/python-docx (trích text import), `google-genai` (AI).
+  drf-spectacular (OpenAPI), Celery 5 + Redis, Playwright Chromium + trang in
+  frontend/pypdfium2 (render PDF và ảnh CV), pypdf/python-docx (trích text import), `google-genai` (AI).
 - **Dữ liệu**: PostgreSQL 16 (tìm kiếm không dấu bằng `unaccent`), Redis 7
   (cache, throttle, broker Celery), lưu file local hoặc Cloudflare R2
   ([`cloudflare-r2-media.md`](../06-deployment/cloudflare-r2-media.md)).

@@ -89,7 +89,7 @@ class CandidateCvUploadQuarantineTests(TemporaryUploadStorageMixin, APITestCase)
             template=template,
             version_number=1,
             version_status=CvTemplateVersion.VersionStatus.PUBLISHED,
-            renderer_key='classic_single_column_v1',
+            renderer_key='single_column_v1',
             renderer_version='1',
             default_layout_json=empty_layout(),
             default_style_json=empty_style(),

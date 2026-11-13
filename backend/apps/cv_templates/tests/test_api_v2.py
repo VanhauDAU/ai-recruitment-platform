@@ -10,6 +10,7 @@ from apps.accounts.services import assign_membership
 from apps.cvs.schemas import empty_content, empty_layout, empty_style
 from apps.jobs.models import JobCategory, JobCategoryLocalization
 
+from ..demo_identity import DEMO_IDENTITY
 from ..management.commands.seed_cv_catalog import build_sample_content
 from ..models import (
     CvCategory,
@@ -41,7 +42,7 @@ class TemplateCatalogV2Tests(TestCase):
             template=template,
             version_number=1,
             version_status=CvTemplateVersion.VersionStatus.PUBLISHED,
-            renderer_key='classic_single_column_v1',
+            renderer_key='single_column_v1',
             renderer_version='1',
             default_layout_json=empty_layout(),
             default_style_json=empty_style(),
@@ -148,7 +149,7 @@ class TemplateCatalogV2Tests(TestCase):
         )
 
         self.assertEqual(detail.status_code, 200)
-        self.assertEqual(detail.data['renderer']['key'], 'classic_single_column_v1')
+        self.assertEqual(detail.data['renderer']['key'], 'single_column_v1')
         self.assertNotIn('default_style_json', detail.data)
         self.assertEqual(related.status_code, 200)
         self.assertEqual([item['slug'] for item in related.data], [self.related.slug])
@@ -221,10 +222,33 @@ class TemplateCatalogV2Tests(TestCase):
         )
 
         self.assertEqual(response.status_code, 200, response.data)
-        self.assertEqual(response.data['document']['content_json'], self.sample.content_json)
+        content = response.data['document']['content_json']
+        self.assertEqual(content['sections'], self.sample.content_json['sections'])
+        # Khách thấy danh tính minh họa như ảnh catalogue; mẫu trong DB không đổi.
+        self.assertEqual(content['personal_info']['full_name'], DEMO_IDENTITY['vi-VN']['full_name'])
+        self.sample.refresh_from_db()
+        self.assertFalse(self.sample.content_json['personal_info'].get('full_name'))
         self.assertEqual(response.data['document']['style_json']['theme_color'], '#2255AA')
-        self.assertEqual(response.data['renderer']['key'], 'classic_single_column_v1')
+        self.assertEqual(response.data['renderer']['key'], 'single_column_v1')
         self.assertTrue(response.data['revision'])
+
+        candidate = User.objects.create_user(
+            email='preview-candidate@example.com',
+            password='Password@123',
+            full_name='Trần Thu Hà',
+        )
+        self.client.force_authenticate(candidate)
+        own = self.client.get(
+            '/api/v2/cv-position-preview/',
+            {
+                'position_public_id': self.sample_category.public_id,
+                'locale': 'vi-VN',
+                'template_public_id': self.primary.public_id,
+            },
+        )
+        personal_info = own.data['document']['content_json']['personal_info']
+        self.assertEqual(personal_info['full_name'], 'Trần Thu Hà')
+        self.assertNotEqual(personal_info['phone'], DEMO_IDENTITY['vi-VN']['phone'])
 
     def _generic_sample(self, locale, band, summary):
         content = empty_content(locale)
@@ -460,15 +484,25 @@ class TemplateCatalogV2Tests(TestCase):
 
     @patch('apps.cv_templates.tasks._save_once')
     @patch('apps.cv_templates.tasks._first_page_png', return_value=b'png')
-    @patch('apps.cv_templates.tasks.render_cv_version_pdf', return_value=b'%PDF-snapshot')
-    def test_snapshot_task_is_fingerprinted_and_write_then_swap(self, _render, _raster, save_once):
-        from apps.cv_templates.tasks import generate_template_color_snapshot
+    @patch('apps.cv_templates.tasks.render_document_pdf', return_value=b'%PDF-snapshot')
+    def test_snapshot_task_is_fingerprinted_and_write_then_swap(self, render, _raster, save_once):
+        from apps.cv_templates.tasks import SNAPSHOT_AVATAR_ID, generate_template_color_snapshot
 
         save_once.side_effect = lambda key, payload: key
         link = self.primary.color_links.select_related('color').order_by('pk').first()
         generate_template_color_snapshot(link.pk)
         link.refresh_from_db()
 
+        # Danh tính minh họa chỉ có trong ảnh mẫu, không ghi vào nội dung mẫu.
+        payload = render.call_args.args[0]
+        personal_info = payload['document']['content_json']['personal_info']
+        self.assertEqual(personal_info['full_name'], DEMO_IDENTITY['vi-VN']['full_name'])
+        self.assertIn(SNAPSHOT_AVATAR_ID, payload['assets'])
+        self.assertFalse(
+            CvSampleContent.objects.filter(
+                content_json__personal_info__full_name=personal_info['full_name']
+            ).exists()
+        )
         self.assertEqual(len(link.snapshot_fingerprint), 64)
         self.assertIn(link.snapshot_fingerprint, link.thumbnail_url)
         self.assertIn(link.snapshot_fingerprint, link.preview_url)

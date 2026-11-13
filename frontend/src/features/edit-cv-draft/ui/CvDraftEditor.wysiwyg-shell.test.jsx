@@ -55,7 +55,7 @@ describe('CV draft editor WYSIWYG shell', () => {
     mocks.getCv.mockResolvedValue({
       title: 'CV thử nghiệm',
       template_public_id: 'tpl_single',
-      template_renderer_key: 'classic_single_column_v1',
+      template_renderer_key: 'single_column_v1',
       template_capabilities: {},
     })
     mocks.getCvDraft.mockResolvedValue(draft())

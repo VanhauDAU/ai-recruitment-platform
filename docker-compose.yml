@@ -12,6 +12,8 @@ x-service-hosts: &service-hosts
   PUBLIC_MEDIA_ROOT: /app/public-media
   PRIVATE_MEDIA_ROOT: /app/private-media
   UPLOAD_QUARANTINE_ROOT: /app/quarantine
+  # Trang in PDF CV (Vite dev server trong compose); worker mở bằng Chromium.
+  CV_PRINT_URL: http://frontend:5173/cv-print.html
   CLAMAV_HOST: clamav
   CLAMAV_PORT: 3310
 

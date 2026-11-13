@@ -170,7 +170,9 @@ vượt khoảng 500 ms kéo dài, hoặc có header overlap/mất nhãn hệ th
 Không có cờ rollout riêng. Điều kiện vận hành:
 
 - Worker nghe queue `cv-export` (thumbnail, export PDF, import). Worker cần
-  quyền ghi media và cache Fontconfig (`XDG_CACHE_HOME`) cho WeasyPrint.
+  quyền ghi media, Chromium của Playwright (có sẵn trong image) và truy cập được
+  trang in `CV_PRINT_URL` của frontend. Trang in chỉ tải tài nguyên cùng origin;
+  nếu frontend không phản hồi, export và snapshot báo lỗi, không lộ nội dung CV.
 - Beat chạy `dispatch-pending-cv-export-jobs`, `dispatch-pending-cv-import-jobs`
   (60 giây) và `purge-expired-cv-import-sources` (hằng ngày, theo
   `CV_IMPORT_SOURCE_RETENTION_DAYS`, mặc định 30).
