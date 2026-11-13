@@ -118,8 +118,8 @@ docker compose --profile scanner exec \
 ```
 
 The `1.4_base` image persists signatures in `clamav_db`; Apple Silicon uses the
-explicit `linux/amd64` platform unless `CLAMAV_PLATFORM` is overridden with an
-approved arm64 build. Do not add a host port for clamd. Run the opt-in pipeline
+explicit `linux/amd64` platform pinned in `docker-compose.yml`; change it there
+only for an approved arm64 build. Do not add a host port for clamd. Run the opt-in pipeline
 probe only after the container is healthy:
 
 ```bash

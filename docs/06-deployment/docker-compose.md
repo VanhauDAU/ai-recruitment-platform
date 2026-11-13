@@ -5,7 +5,7 @@
 ```bash
 git clone https://github.com/VanhauDAU/ai-recruitment-platform.git
 cd ai-recruitment-platform
-cp backend/.env.example backend/.env       # mẫu local tối thiểu
+cp backend/.env.example backend/.env
 docker compose up
 ```
 
@@ -124,14 +124,17 @@ docker compose up -d --build
 
 ### Giới hạn tài nguyên và dung lượng
 
-Compose đã đặt các mặc định an toàn, có thể override trong file `.env` ở root:
+Giới hạn tài nguyên cố định trong `docker-compose.yml` (không có `.env` ở root);
+sửa trực tiếp file đó nếu máy cần khác:
 
-| Biến | Mặc định local | Ý nghĩa |
+| Thiết lập | Giá trị | Ý nghĩa |
 | --- | ---: | --- |
-| `AI_RUNTIME_ENABLED` | `true` | Hard switch toàn generative AI; Site Setting chỉ được thu hẹp rollout. |
-| AI worker concurrency | `2` | Giới hạn tài nguyên local cho queue AI. |
-| `DOCKER_LOG_MAX_SIZE` | `10m` | Kích thước mỗi file log container. |
-| `DOCKER_LOG_MAX_FILES` | `3` | Số file log giữ cho mỗi container. |
+| Worker / AI worker concurrency | `2` / `2` | Giới hạn process Celery local. |
+| `pids_limit` | 256 backend/worker/frontend, 128 AI worker, 64 beat | Chặn fork bomb khi dev. |
+| Log `json-file` | `10m` × `3` file | Xoay log mỗi container. |
+| ClamAV (profile `scanner`) | `4g` RAM, `2` CPU | Chỉ bật khi cần scanner thật. |
+
+`AI_RUNTIME_ENABLED` vẫn thuộc `backend/.env`.
 
 ### Theo dõi và dọn Docker an toàn
 

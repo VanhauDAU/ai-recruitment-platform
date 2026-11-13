@@ -12,21 +12,21 @@ x-service-hosts: &service-hosts
   PUBLIC_MEDIA_ROOT: /app/public-media
   PRIVATE_MEDIA_ROOT: /app/private-media
   UPLOAD_QUARANTINE_ROOT: /app/quarantine
-  CLAMAV_HOST: ${CLAMAV_HOST:-clamav}
-  CLAMAV_PORT: ${CLAMAV_PORT:-3310}
+  CLAMAV_HOST: clamav
+  CLAMAV_PORT: 3310
 
 # json-file mặc định tăng vô hạn và thường là phần dung lượng local khó phát hiện.
-# Mọi service dùng cùng chính sách xoay log, override được qua shell hoặc .env.
+# Mọi service dùng cùng chính sách xoay log.
 x-default-logging: &default-logging
   driver: json-file
   options:
-    max-size: ${DOCKER_LOG_MAX_SIZE:-10m}
-    max-file: ${DOCKER_LOG_MAX_FILES:-3}
+    max-size: 10m
+    max-file: '3'
 
 # Django, Celery worker/beat và job init chạy cùng code/dependency. Dùng chung
 # một image/tag để Compose không tạo bốn image backend giống hệt nhau.
 x-backend-image: &backend-image
-  image: ${BACKEND_IMAGE:-ai-recruitment-platform-backend}
+  image: ai-recruitment-platform-backend
   build:
     context: ./backend
 
@@ -81,17 +81,17 @@ services:
   clamav:
     image: clamav/clamav:1.4_base
     # Official 1.4 image is amd64-only; Docker Desktop on Apple Silicon runs it
-    # through emulation. Override on a registry/image that publishes arm64.
-    platform: ${CLAMAV_PLATFORM:-linux/amd64}
+    # through emulation.
+    platform: linux/amd64
     profiles: [scanner]
     environment:
       CLAMAV_NO_MILTERD: 'true'
-      CLAMD_STARTUP_TIMEOUT: ${CLAMD_STARTUP_TIMEOUT:-900}
-      FRESHCLAM_CHECKS: ${FRESHCLAM_CHECKS:-12}
+      CLAMD_STARTUP_TIMEOUT: 900
+      FRESHCLAM_CHECKS: 12
     volumes:
       - clamav_db:/var/lib/clamav
-    mem_limit: ${CLAMAV_MEMORY_LIMIT:-4g}
-    cpus: ${CLAMAV_CPU_LIMIT:-2}
+    mem_limit: 4g
+    cpus: 2
     init: true
     restart: unless-stopped
     logging: *default-logging
@@ -112,7 +112,7 @@ services:
     ports:
       - '8000:8000'
     init: true
-    pids_limit: ${BACKEND_PIDS_LIMIT:-256}
+    pids_limit: 256
     healthcheck:
       test: ['CMD', 'python', '-c', 'import urllib.request; urllib.request.urlopen("http://127.0.0.1:8000/api/health/", timeout=2)']
       interval: 15s
@@ -134,7 +134,7 @@ services:
     # worker không khai queue sẽ chỉ nghe 'default' -> auth, export hoặc scan chết lặng.
     # Docker Desktop nhìn thấy toàn bộ CPU host nên Celery mặc định fork 10
     # process dù máy dev hầu như không có backlog.
-    command: celery -A config worker --loglevel=info -Q default,auth-email,auth-sms,cv-export,upload-scan,candidate-email --concurrency=${CELERY_WORKER_CONCURRENCY:-2} --prefetch-multiplier=1 --max-tasks-per-child=${CELERY_WORKER_MAX_TASKS_PER_CHILD:-200}
+    command: celery -A config worker --loglevel=info -Q default,auth-email,auth-sms,cv-export,upload-scan,candidate-email --concurrency=2 --prefetch-multiplier=1 --max-tasks-per-child=200
     env_file: ./backend/.env
     environment:
       <<: *service-hosts
@@ -145,7 +145,7 @@ services:
       - backend_private_media:/app/private-media
       - backend_quarantine:/app/quarantine
     init: true
-    pids_limit: ${WORKER_PIDS_LIMIT:-256}
+    pids_limit: 256
     stop_grace_period: 30s
     logging: *default-logging
     depends_on:
@@ -161,14 +161,14 @@ services:
   # and recovery predictable; two processes keep local resource use bounded.
   ai-worker:
     <<: *backend-image
-    command: celery -A config worker --loglevel=info -Q ai-generation --concurrency=2 --prefetch-multiplier=1 --max-tasks-per-child=${AI_WORKER_MAX_TASKS_PER_CHILD:-100}
+    command: celery -A config worker --loglevel=info -Q ai-generation --concurrency=2 --prefetch-multiplier=1 --max-tasks-per-child=100
     env_file: ./backend/.env
     environment:
       <<: *service-hosts
     volumes:
       - ./backend:/app
     init: true
-    pids_limit: ${AI_WORKER_PIDS_LIMIT:-128}
+    pids_limit: 128
     stop_grace_period: 100s
     logging: *default-logging
     depends_on:
@@ -186,7 +186,7 @@ services:
     volumes:
       - ./backend:/app
     init: true
-    pids_limit: ${BEAT_PIDS_LIMIT:-64}
+    pids_limit: 64
     logging: *default-logging
     depends_on:
       redis:
@@ -206,7 +206,7 @@ services:
       VITE_API_BASE_URL: /api
       API_PROXY_TARGET: http://backend:8000
     init: true
-    pids_limit: ${FRONTEND_PIDS_LIMIT:-256}
+    pids_limit: 256
     healthcheck:
       test: ['CMD', 'wget', '--quiet', '--tries=1', '--spider', 'http://127.0.0.1:5173/']
       interval: 15s

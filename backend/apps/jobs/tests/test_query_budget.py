@@ -6,7 +6,6 @@ field/relation mới làm tăng số query, cập nhật con số kèm giải th
 tăng không giải thích = regression.
 """
 
-from django.test import override_settings
 from django.urls import reverse
 from rest_framework.test import APITestCase
 
@@ -79,7 +78,6 @@ class JobListQueryBudgetTests(APITestCase):
         self.assertEqual(len(response.data['results']), 5)
 
 
-@override_settings(REQUIRE_APPROVED_EMPLOYER_CANDIDATE_ACCESS=False)
 class EmployerJobListQueryBudgetTests(APITestCase):
     def setUp(self):
         self.employer = User.objects.create_user(

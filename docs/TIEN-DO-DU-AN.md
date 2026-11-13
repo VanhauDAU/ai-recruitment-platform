@@ -66,7 +66,7 @@ quyền hay lịch tác vụ. Baseline: `dev` tại `dddf4455` (23/09/2026).
 | P1 | Chẩn đoán và sửa test lỗi hoặc treo | 🟨 Implemented |
 | P2 | Dọn artifact, media test và ignore | 🟨 Implemented |
 | P3 | Bỏ cấu hình deploy production, giữ Compose local | 🟨 Implemented |
-| P4 | Env tối thiểu (`.env.example`) và catalog optional (`.env.optional.example`) | 🟨 Implemented |
+| P4 | Mỗi service một cặp `.env`/`.env.example` (backend, frontend), bỏ env root, gỡ biến chết, `sync_local_env.py` | 🟨 Implemented |
 | P5 | Chuẩn hóa backend theo app | ⬜ Planned |
 | P6 | Chuẩn hóa ownership frontend | ⬜ Planned |
 | P7 | Hợp nhất docs và tiến độ | Thay bằng PM-6, PM-7 của epic hậu kiểm |
