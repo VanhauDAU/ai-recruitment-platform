@@ -48,7 +48,7 @@ def send_admin_invitation_email(invitation_public_id, token_version):
             <div><strong>Chức danh:</strong> {escape(role)}</div>
           </div>
           <p style="text-align:center;margin:28px 0"><a href="{escape(link)}" style="background:#0369a1;color:#fff;text-decoration:none;padding:13px 28px;border-radius:9px;font-weight:700;display:inline-block">Hoàn tất tài khoản</a></p>
-          <p style="font-size:13px;color:#64748b">Liên kết có hiệu lực trong 72 giờ và chỉ dùng được một lần. Xác thực hai yếu tố qua email sẽ được bật tự động.</p>
+          <p style="font-size:13px;color:#64748b">Liên kết có hiệu lực trong 72 giờ và chỉ dùng được một lần.</p>
         </div>
       </div>
     </div>'''

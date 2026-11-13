@@ -163,7 +163,10 @@
     position: static;
   }
 
-  .admin-account-settings__status-grid,
+  .admin-account-settings__status-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .admin-account-settings__tabs {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }

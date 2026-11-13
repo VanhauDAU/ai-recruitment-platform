@@ -67,7 +67,7 @@ export default function AccountQuickDrawer({ account, open, onClose, onOpenDetai
         <DetailLine
           icon={<SafetyCertificateOutlined />}
           label="Xác thực"
-          value={`${account.email_verified ? 'Email đã xác minh' : 'Email chưa xác minh'} · ${account.two_factor_enabled ? 'MFA đang bật' : 'Chưa bật MFA'}`}
+          value={account.email_verified ? 'Email đã xác minh' : 'Email chưa xác minh'}
         />
         <DetailLine
           icon={<ClockCircleOutlined />}

@@ -55,7 +55,6 @@ def make_employer(email='employer@example.com', phone_verified=True):
         email=email,
         password='Password@123',
         role=User.Role.EMPLOYER,
-        two_factor_enabled=True,
     )
     recruiter = RecruiterProfile.objects.create(user=user)
     if phone_verified:
@@ -70,7 +69,7 @@ def make_employer(email='employer@example.com', phone_verified=True):
 
 
 def authenticate_employer(client, user):
-    tokens = issue_tokens(user, auth_method='mfa')
+    tokens = issue_tokens(user, auth_method='password')
     client.credentials(HTTP_AUTHORIZATION='Bearer ' + tokens['access'])
 
 
@@ -700,10 +699,7 @@ class CompanyCreateTests(APITestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.data)
 
-    def test_create_does_not_require_mfa(self):
-        self.user.two_factor_enabled = False
-        self.user.save(update_fields=['two_factor_enabled'])
-
+    def test_create_with_password_session(self):
         response = self.client.post(
             reverse('employer-company-create'),
             company_payload(self.industry),
@@ -1035,9 +1031,7 @@ class JoinCompanyTests(APITestCase):
         self.assertEqual(create.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('không thể tạo hoặc đổi công ty khác', str(create.data))
 
-    def test_candidate_dpa_can_be_saved_without_mfa_requirement(self):
-        self.user.two_factor_enabled = False
-        self.user.save(update_fields=['two_factor_enabled'])
+    def test_candidate_dpa_can_be_saved(self):
         media_root = tempfile.mkdtemp()
         try:
             with self.settings(MEDIA_ROOT=media_root):
@@ -1119,10 +1113,7 @@ class JoinCompanyTests(APITestCase):
             f'http://testserver{reverse("employer-company-document-content", kwargs={"pk": current_document.pk})}',
         )
 
-    def test_join_does_not_require_mfa(self):
-        self.user.two_factor_enabled = False
-        self.user.save(update_fields=['two_factor_enabled'])
-
+    def test_join_with_password_session(self):
         response = self._join()
 
         self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
@@ -1300,10 +1291,8 @@ class CompanyUpdateRequestTests(APITestCase):
         self.company.refresh_from_db()
         self.assertNotEqual(self.company.website_url, 'https://example.com/def')
 
-    def test_linked_member_can_create_update_request_without_mfa(self):
+    def test_linked_member_can_create_update_request(self):
         member_user, member = make_employer('member-update@example.com')
-        member_user.two_factor_enabled = False
-        member_user.save(update_fields=['two_factor_enabled'])
         member.company = self.company
         member.company_role = RecruiterProfile.CompanyRole.MEMBER
         member.save(update_fields=['company', 'company_role', 'updated_at'])
@@ -2098,9 +2087,7 @@ class CompanyImageUploadTests(APITestCase):
         self.assertNotIn('://', self.company.logo_url)
         self.assertFalse(self.company.has_no_logo)
 
-    def test_owner_can_upload_company_logo_without_mfa(self):
-        self.user.two_factor_enabled = False
-        self.user.save(update_fields=['two_factor_enabled'])
+    def test_owner_can_upload_company_logo(self):
         upload = SimpleUploadedFile('logo.png', PNG_BYTES, content_type='image/png')
 
         response = self.client.post(

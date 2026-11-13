@@ -11,11 +11,9 @@ import {
   register,
   registerEmployer,
   requestPasswordReset,
-  resendTwoFactorLogin,
   sendVerificationEmail,
   startOAuthReauth,
   validatePasswordResetToken,
-  verifyTwoFactorLogin,
 } from './auth.api'
 import { clearAllPortalSessions, getAccessToken, setTokens } from '@/shared/api/token-store'
 const { get, post } = vi.hoisted(() => ({ get: vi.fn(), post: vi.fn() }))
@@ -95,23 +93,6 @@ describe('auth API session storage', () => {
     expect(post).toHaveBeenCalledWith('/employer/register/', payload)
     expect(getAccessToken('employer')).toBe('employer-access')
     expect(localStorage.getItem('employer_refresh_token')).toBeNull()
-  })
-
-  it('stores tokens in the portal that completed the 2FA login challenge', async () => {
-    post.mockResolvedValue({ data: { access: 'access-token', refresh: 'refresh-token' } })
-
-    await verifyTwoFactorLogin({ challenge: 'challenge-id', code: '123456', portal: 'employer' })
-
-    expect(post).toHaveBeenCalledWith('/auth/two-factor/login/verify/', { challenge: 'challenge-id', code: '123456' })
-    expect(getAccessToken('employer')).toBe('access-token')
-    expect(localStorage.getItem('employer_refresh_token')).toBeNull()
-  })
-
-  it('keeps the 2FA resend endpoint and payload unchanged', async () => {
-    post.mockResolvedValue({ data: { expires_in: 180 } })
-
-    await expect(resendTwoFactorLogin('challenge-id')).resolves.toEqual({ expires_in: 180 })
-    expect(post).toHaveBeenCalledWith('/auth/two-factor/login/resend/', { challenge: 'challenge-id' })
   })
 
   it('keeps email verification and password reset endpoint contracts', async () => {

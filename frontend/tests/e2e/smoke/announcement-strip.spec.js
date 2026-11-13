@@ -190,7 +190,6 @@ test('announcement strip: employer workspace keeps its measured 100dvh shell', a
         email_verified: true,
         employer_onboarding_required: false,
         employer_onboarding_step: 'complete',
-        two_factor_enabled: true,
       }),
     })
   })

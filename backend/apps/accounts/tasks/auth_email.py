@@ -13,7 +13,6 @@ from ..services import (
     admin_invitation_mail,
     email_verification,
     password_reset,
-    two_factor,
     welcome,
 )
 
@@ -27,7 +26,6 @@ def queue_auth_email(kind, user, context=None, *, unique=False):
     if kind in {
         AuthEmailJob.Kind.VERIFICATION,
         AuthEmailJob.Kind.PASSWORD_RESET,
-        AuthEmailJob.Kind.TWO_FACTOR,
     }:
         context.setdefault('email', user.email)
         context.setdefault('auth_revision', user.auth_revision)
@@ -97,23 +95,6 @@ def _send(job):
             expected_auth_revision=queued_revision,
         )
         return True
-    if job.kind == AuthEmailJob.Kind.TWO_FACTOR:
-        queued_email = job.context.get('email')
-        queued_revision = job.context.get('auth_revision')
-        if (
-            not queued_email
-            or not isinstance(queued_revision, int)
-            or job.user.email.lower() != queued_email.lower()
-            or job.user.auth_revision != queued_revision
-        ):
-            return False
-        two_factor.send_two_factor_email(
-            job.user,
-            job.context.get('purpose', two_factor.PURPOSE_LOGIN),
-            target=job.context.get('target'),
-            recipient=queued_email,
-        )
-        return True
     if job.kind == AuthEmailJob.Kind.ADMIN_INVITATION:
         admin_invitation_mail.send_admin_invitation_email(
             job.context.get('invitation_public_id', ''),
@@ -127,14 +108,6 @@ def _send(job):
             new_email=job.context.get('new_email', ''),
             admin_initiated=bool(job.context.get('admin_initiated')),
             recipient=job.context.get('recipient', ''),
-        )
-        return True
-    if job.kind == AuthEmailJob.Kind.MFA_RESET_NOTICE:
-        email_verification.send_mfa_reset_notice(
-            job.user,
-            recipient=job.context.get('recipient', ''),
-            admin_initiated=bool(job.context.get('admin_initiated')),
-            occurred_at=job.context.get('occurred_at', ''),
         )
         return True
     if job.kind == AuthEmailJob.Kind.ACCOUNT_STATUS_NOTICE:

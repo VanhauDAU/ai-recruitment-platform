@@ -44,7 +44,6 @@ export const CANDIDATE_MENU = [
       { key: 'personal-info', label: 'Cài đặt thông tin cá nhân', path: accountPath('thong-tin-ca-nhan') },
       { key: 'security', label: 'Cài đặt bảo mật', path: accountPath('cai-dat-bao-mat') },
       { key: 'change-password', label: 'Đổi mật khẩu', path: accountPath('doi-mat-khau') },
-      { key: 'two-factor', label: 'Xác minh hai bước', path: accountPath('xac-minh-hai-buoc') },
     ],
   },
 ]
@@ -56,15 +55,6 @@ export const ACCOUNT_LAYOUT_ITEMS = CANDIDATE_MENU.flatMap(
 
 // Trang mặc định khi vào thẳng /tai-khoan.
 export const ACCOUNT_DEFAULT_PATH = accountPath('thong-tin-ca-nhan')
-
-export function candidateMenuItemLabel(item, user) {
-  if (item.key === 'two-factor' && !user?.two_factor_enabled) {
-    return `${item.label} (Chưa kích hoạt)`
-  }else if (item.key === 'two-factor' && user?.two_factor_enabled) {
-    return `${item.label} (Đã kích hoạt)`
-  }
-  return item.label
-}
 
 export function findActiveAccountItem(pathname) {
   return ACCOUNT_LAYOUT_ITEMS.find((item) => pathname === item.path) || null

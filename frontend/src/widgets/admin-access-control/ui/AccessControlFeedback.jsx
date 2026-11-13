@@ -60,14 +60,6 @@ export function ImpactDetails({ preview, stale }) {
       {preview.blocking_reason && (
         <Alert showIcon type="error" title="Không thể áp dụng" description={preview.blocking_reason} />
       )}
-      {preview.mfa_warning && (
-        <Alert
-          showIcon
-          type="warning"
-          title="Tài khoản chưa bật MFA"
-          description="Nhân viên sẽ chưa thể đăng nhập cổng quản trị cho đến khi hoàn tất MFA."
-        />
-      )}
 
       <Descriptions bordered size="small" column={{ xs: 1, sm: 2 }}>
         {preview.active_membership_count !== undefined && (

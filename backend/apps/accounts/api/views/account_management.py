@@ -18,7 +18,6 @@ from ...permissions import HasAdminPermission, require_admin_permission
 from ...selectors import (
     account_activity_queryset,
     account_email_change_impact,
-    account_mfa_reset_impact,
     account_resource_hold_impact,
     account_revoke_sessions_impact,
     account_sessions_queryset,
@@ -36,7 +35,6 @@ from ...services import (
     confirm_account_status,
     confirm_provisioning_scope_status,
     confirm_release_account_resource_holds,
-    confirm_reset_account_mfa,
     confirm_revoke_account_sessions,
     create_admin_invitation,
     create_provisioning_scope,
@@ -55,8 +53,6 @@ from ..serializers.account_management import (
     AccountActivitySerializer,
     AccountEmailChangeSerializer,
     AccountEmailImpactSerializer,
-    AccountMfaResetImpactSerializer,
-    AccountMfaResetSerializer,
     AccountResourceHoldChangeSerializer,
     AccountResourceHoldImpactResponseSerializer,
     AccountResourceHoldImpactSerializer,
@@ -226,8 +222,6 @@ class AdminAccountViewSet(
         'resend_verification': ['account.security.manage', 'account.admin.manage'],
         'email_impact': ['account.email.manage'],
         'change_email': ['account.email.manage'],
-        'mfa_impact': ['account.mfa.reset'],
-        'reset_mfa': ['account.mfa.reset'],
         'company_unlink_impact': ['employer_verification.unlink_company'],
         'unlink_company': ['employer_verification.unlink_company'],
     }
@@ -544,31 +538,6 @@ class AdminAccountViewSet(
         user = _confirmed_call(
             confirm_account_email,
             user=user,
-            actor=request.user,
-            **serializer.validated_data,
-        )
-        return Response(_serialize_account(user, request.user, detail=True))
-
-    @action(detail=True, methods=['post'], url_path='mfa-impact')
-    def mfa_impact(self, request, public_id=None):
-        user = self.get_object()
-        serializer = AccountMfaResetImpactSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        _call(
-            ensure_account_recovery_allowed,
-            actor=request.user,
-            user=user,
-            permission='account.mfa.reset',
-        )
-        return Response(account_mfa_reset_impact(user, **serializer.validated_data))
-
-    @action(detail=True, methods=['post'], url_path='reset-mfa')
-    def reset_mfa(self, request, public_id=None):
-        serializer = AccountMfaResetSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        user = _confirmed_call(
-            confirm_reset_account_mfa,
-            user=self.get_object(),
             actor=request.user,
             **serializer.validated_data,
         )

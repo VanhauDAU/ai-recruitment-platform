@@ -62,7 +62,6 @@ export default function AdminAccountSettings() {
 
         <div className="admin-account-settings__status-grid" aria-label="Trạng thái tài khoản">
           <StatusItem icon={<MailOutlined />} label="Email" value={user?.email_verified ? 'Đã xác minh' : 'Chưa xác minh'} positive={Boolean(user?.email_verified)} />
-          <StatusItem icon={<SafetyCertificateOutlined />} label="Xác thực 2 yếu tố" value={user?.two_factor_enabled ? 'Đang bật' : 'Chưa bật'} positive={Boolean(user?.two_factor_enabled)} />
           <StatusItem icon={<KeyOutlined />} label="Quyền truy cập" value={isSuperuser ? 'Superuser' : roleCount ? `${roleCount} vai trò` : 'Chưa được gán'} positive={isSuperuser || roleCount > 0} />
         </div>
 

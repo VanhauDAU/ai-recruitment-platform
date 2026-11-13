@@ -160,38 +160,6 @@ def send_email_changed_notice(
     send_html_email(subject=subject, text=text, html=html, to=recipient)
 
 
-def send_mfa_reset_notice(
-    user,
-    *,
-    recipient=None,
-    admin_initiated=True,
-    occurred_at=None,
-):
-    recipient = recipient or user.email
-    site_name = site_setting('site_name', 'ProCV')
-    support_email = site_setting('support_email', '')
-    portal_label = _portal_label(user)
-    admin_note = ' bởi quản trị viên theo yêu cầu hỗ trợ đã xác minh' if admin_initiated else ''
-    time_note = f' Thời điểm thao tác: {occurred_at}.' if occurred_at else ''
-    subject = f'Xác thực đa yếu tố tài khoản {portal_label} {site_name} vừa được đặt lại'
-    text = (
-        f'Xin chào,\n\nCác phương thức xác thực đa yếu tố của tài khoản {recipient} '
-        f'tại {site_name} vừa được đặt lại{admin_note}. Mọi phiên đăng nhập cũ đã bị '
-        f'thu hồi.{time_note}\n\nNếu bạn không yêu cầu thao tác này, hãy liên hệ ngay '
-        f'{support_email or "bộ phận hỗ trợ"}.'
-    )
-    html = f"""<div style="font-family:Arial,Helvetica,sans-serif;max-width:480px;margin:0 auto;color:#111">
-      <h2 style="color:#dc2626">Xác thực đa yếu tố vừa được đặt lại</h2>
-      <p>Các phương thức xác thực đa yếu tố của tài khoản <strong>{escape(recipient)}</strong>
-      tại {escape(site_name)} vừa được đặt lại{escape(admin_note)}. Mọi phiên đăng nhập cũ đã bị thu hồi.
-      {escape(time_note)}</p>
-      <p style="background:#fef2f2;border-radius:8px;padding:14px 16px;color:#991b1b">
-      Nếu bạn không yêu cầu thao tác này, vui lòng liên hệ ngay
-      {escape(support_email or 'bộ phận hỗ trợ')}.</p>
-    </div>"""
-    send_html_email(subject=subject, text=text, html=html, to=recipient)
-
-
 def send_account_status_notice(
     user,
     *,

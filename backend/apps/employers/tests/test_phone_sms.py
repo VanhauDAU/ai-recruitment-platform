@@ -581,7 +581,6 @@ class SmsReadinessTests(TestCase):
             'EMPLOYER_SMS_API_TOKEN': 'provider-token',
             'EMPLOYER_SMS_PAYLOAD_ENCRYPTION_KEY': VALID_FERNET_KEY,
             'EMPLOYER_SMS_CHALLENGE_HMAC_KEY': 'distinct-hmac-key-at-least-32-characters',
-            'TWO_FACTOR_TOTP_ENCRYPTION_KEY': 'distinct-totp-key',
             'SIMPLE_JWT': {**settings.SIMPLE_JWT, 'SIGNING_KEY': jwt_signing_key},
         }
 
@@ -599,7 +598,7 @@ class SmsReadinessTests(TestCase):
         with override_settings(
             **{
                 **ready_settings,
-                'TWO_FACTOR_TOTP_ENCRYPTION_KEY': VALID_FERNET_KEY,
+                'SIMPLE_JWT': {**settings.SIMPLE_JWT, 'SIGNING_KEY': VALID_FERNET_KEY},
             }
         ):
             errors = sms_configuration_errors(require_enabled=True)

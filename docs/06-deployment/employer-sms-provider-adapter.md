@@ -117,7 +117,7 @@ Yêu cầu production khi bật flag:
 - token, sender, template đều không rỗng;
 - encryption key là Fernet key riêng;
 - HMAC key riêng có ít nhất 32 ký tự;
-- không dùng lại `SECRET_KEY`, JWT signing key hoặc TOTP key.
+- không dùng lại `SECRET_KEY` hoặc JWT signing key.
 
 Production settings fail startup nếu flag bật mà thiếu/sai bất kỳ điều kiện
 nào. Kiểm tra cấu hình trước deploy, không gửi SMS thật:

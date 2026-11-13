@@ -122,8 +122,6 @@ class OAuthCompleteView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
         # Social providers have completed their own identity verification.
-        # Product policy: email 2FA protects password login only, so OAuth
-        # completion always returns a session without an email-code challenge.
         user_data = SessionUserSerializer(user, context={'request': request}).data
         tokens = issue_tokens(user, request, auth_method='oauth')
         response = Response({'user': user_data, 'access': tokens['access']})

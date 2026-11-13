@@ -1,15 +1,13 @@
 import { CaretRightOutlined } from '@ant-design/icons'
 import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router'
-import { CANDIDATE_MENU, candidateMenuItemLabel, findGroupKeyByPath } from '@/entities/account'
-import { useSession } from '@/entities/session'
+import { CANDIDATE_MENU, findGroupKeyByPath } from '@/entities/account'
 
 // Sidebar trái của layout tài khoản: accordion CHỈ MỞ 1 NHÓM một lúc (mở nhóm
 // này thì nhóm kia tự đóng), có animation, hover và trạng thái active theo
 // route hiện tại. Dữ liệu menu dùng chung với dropdown avatar trên header.
 export default function AccountSidebar({ onNavigate }) {
   const { pathname } = useLocation()
-  const { user } = useSession()
   // Mặc định mở nhóm chứa trang đang xem; vào lại trang khác thì mở nhóm đó.
   const [openKey, setOpenKey] = useState(() => findGroupKeyByPath(pathname) || CANDIDATE_MENU[0].key)
 
@@ -31,14 +29,13 @@ export default function AccountSidebar({ onNavigate }) {
           activePath={pathname}
           onToggle={() => setOpenKey((current) => (current === group.key ? null : group.key))}
           onNavigate={onNavigate}
-          user={user}
         />
       ))}
     </nav>
   )
 }
 
-function SidebarGroup({ group, open, activePath, onToggle, onNavigate, user }) {
+function SidebarGroup({ group, open, activePath, onToggle, onNavigate }) {
   const hasActiveChild = group.items.some((item) => item.path === activePath)
 
   return (
@@ -66,7 +63,7 @@ function SidebarGroup({ group, open, activePath, onToggle, onNavigate, user }) {
           <ul className="pb-2">
             {group.items.map((item) => (
               <li key={item.key}>
-                <SidebarItem item={item} user={user} active={item.path === activePath} onNavigate={onNavigate} />
+                <SidebarItem item={item} active={item.path === activePath} onNavigate={onNavigate} />
               </li>
             ))}
           </ul>
@@ -76,7 +73,7 @@ function SidebarGroup({ group, open, activePath, onToggle, onNavigate, user }) {
   )
 }
 
-function SidebarItem({ item, user, active, onNavigate }) {
+function SidebarItem({ item, active, onNavigate }) {
   // Text menu luôn màu đen; active nhận biết bằng nền brand-soft + thanh dọc trái.
   // Dùng `!text-slate-900` vì item là thẻ <a> (Link), nếu không sẽ bị màu link
   // mặc định của AntD đè lên.
@@ -93,7 +90,7 @@ function SidebarItem({ item, user, active, onNavigate }) {
           : 'hover:bg-[var(--brand-primary-soft)]/60'
       }`}
     >
-      {candidateMenuItemLabel(item, user)}
+      {item.label}
     </Link>
   )
 }

@@ -31,7 +31,7 @@ from ..models import (
     AuthSession,
     User,
 )
-from . import auth_sessions, password_reset, two_factor
+from . import auth_sessions, password_reset
 from .admin_access import assign_membership, record_admin_action
 from .tokens import revoke_refresh_tokens
 
@@ -753,15 +753,6 @@ def ensure_account_recovery_allowed(actor, user, permission):
         raise ValidationError('Tài khoản đang chờ kích hoạt phải được xử lý qua quy trình lời mời.')
 
 
-def _mfa_snapshot(user):
-    methods = two_factor.enabled_methods(user)
-    return {
-        'email': methods['email'],
-        'totp': methods['totp'],
-        'backup_codes_remaining': len(user.two_factor_backup_code_hashes or []),
-    }
-
-
 def _email_recovery_snapshot(user, providers):
     return {
         'email': User.objects.normalize_email(user.email),
@@ -769,7 +760,6 @@ def _email_recovery_snapshot(user, providers):
         'has_usable_password': user.has_usable_password(),
         'auth_revision': user.auth_revision,
         'oauth_providers': sorted(set(providers)),
-        'mfa_methods': _mfa_snapshot(user),
     }
 
 
@@ -826,7 +816,6 @@ def confirm_account_email(
                 kind__in={
                     AuthEmailJob.Kind.VERIFICATION,
                     AuthEmailJob.Kind.PASSWORD_RESET,
-                    AuthEmailJob.Kind.TWO_FACTOR,
                 },
             )
         )
@@ -879,7 +868,6 @@ def confirm_account_email(
         cancelled_job_count = _cancel_locked_jobs(jobs)
         revoke_refresh_tokens(user)
         transaction.on_commit(lambda: password_reset.invalidate_tokens(user))
-        transaction.on_commit(lambda: two_factor.invalidate_user_artifacts(user))
 
         queue_auth_email(
             AuthEmailJob.Kind.EMAIL_CHANGED_NOTICE,
@@ -908,106 +896,6 @@ def confirm_account_email(
                 'revoked_oauth_providers': sorted(set(providers)),
                 'cancelled_auth_email_job_count': cancelled_job_count,
                 'password_invalidated': True,
-                'auth_revision_after': user.auth_revision,
-            },
-        )
-        return user
-
-
-def confirm_reset_account_mfa(
-    user,
-    *,
-    reason,
-    verification_evidence,
-    impact_token,
-    actor,
-):
-    from ..tasks import queue_auth_email
-
-    reason = _ensure_reason(reason)
-    verification_evidence = _ensure_verification_evidence(verification_evidence)
-    ensure_account_recovery_allowed(actor, user, 'account.mfa.reset')
-
-    with transaction.atomic():
-        user = User.objects.select_for_update().get(pk=user.pk)
-        ensure_account_recovery_allowed(actor, user, 'account.mfa.reset')
-        sessions = list(
-            AuthSession.objects.select_for_update().filter(
-                user=user,
-                revoked_at__isnull=True,
-            )
-        )
-        jobs = list(
-            AuthEmailJob.objects.select_for_update().filter(
-                user=user,
-                status=AuthEmailJob.Status.PENDING,
-                kind__in={
-                    AuthEmailJob.Kind.PASSWORD_RESET,
-                    AuthEmailJob.Kind.TWO_FACTOR,
-                },
-            )
-        )
-        methods_before = _mfa_snapshot(user)
-        claims = decode_impact_token(
-            impact_token,
-            operation='account.mfa.reset',
-            resource_key=f'account:{user.public_id}',
-            normalized_payload={
-                'reason': reason,
-                'verification_evidence': verification_evidence,
-                'auth_revision': user.auth_revision,
-                'methods': methods_before,
-            },
-        )
-        _assert_revision(claims)
-        if not (
-            methods_before['email']
-            or methods_before['totp']
-            or methods_before['backup_codes_remaining']
-        ):
-            raise ValidationError('Tài khoản không có phương thức MFA nào để đặt lại.')
-
-        user.two_factor_email_enabled = False
-        user.two_factor_totp_secret = ''
-        user.two_factor_backup_code_hashes = []
-        user.two_factor_enabled = False
-        user.auth_revision += 1
-        user.save(
-            update_fields=[
-                'two_factor_email_enabled',
-                'two_factor_totp_secret',
-                'two_factor_backup_code_hashes',
-                'two_factor_enabled',
-                'auth_revision',
-                'updated_at',
-            ]
-        )
-        cancelled_job_count = _cancel_locked_jobs(jobs)
-        revoke_refresh_tokens(user)
-        transaction.on_commit(lambda: password_reset.invalidate_tokens(user))
-        transaction.on_commit(lambda: two_factor.invalidate_user_artifacts(user))
-        queue_auth_email(
-            AuthEmailJob.Kind.MFA_RESET_NOTICE,
-            user,
-            context={
-                'recipient': user.email,
-                'portal': user.role,
-                'occurred_at': timezone.now().isoformat(),
-                'admin_initiated': True,
-            },
-        )
-        record_admin_action(
-            **_actor_kwargs(actor),
-            action='reset_account_mfa',
-            target_type='user',
-            target_public_id=user.public_id,
-            payload={
-                'user_public_id': user.public_id,
-                'methods_before': methods_before,
-                'reason': reason,
-                'verification_evidence': verification_evidence,
-                'revoked_session_count': len(sessions),
-                'cancelled_auth_email_job_count': cancelled_job_count,
                 'auth_revision_after': user.auth_revision,
             },
         )
@@ -1103,7 +991,6 @@ def _confirm_account_status(
                 kind__in={
                     AuthEmailJob.Kind.VERIFICATION,
                     AuthEmailJob.Kind.PASSWORD_RESET,
-                    AuthEmailJob.Kind.TWO_FACTOR,
                 },
             )
         )
@@ -1285,7 +1172,6 @@ def _confirm_account_status(
             revoke_refresh_tokens(user)
             _cancel_locked_jobs(pending_jobs)
             transaction.on_commit(lambda: password_reset.invalidate_tokens(user))
-            transaction.on_commit(lambda: two_factor.invalidate_user_artifacts(user))
 
         if activity_campaign_ids:
             event_type = (

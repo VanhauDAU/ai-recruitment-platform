@@ -20,7 +20,6 @@ class AuthCookieOriginMiddleware:
         '/api/auth/logout-all/',
         '/api/auth/refresh/',
         '/api/auth/oauth/complete/',
-        '/api/auth/two-factor/login/verify/',
         '/api/auth/password/',
         '/api/employer/register/',
     }

@@ -1,7 +1,6 @@
 import json
 from unittest.mock import patch
 
-from django.contrib.auth.hashers import make_password
 from django.core.cache import cache
 from django.test import override_settings
 from django.urls import reverse
@@ -25,7 +24,6 @@ from apps.accounts.services import (
     assign_membership,
     email_verification,
     password_reset,
-    two_factor,
 )
 from apps.accounts.services.refresh_cookies import cookie_name
 from apps.accounts.services.tokens import issue_tokens
@@ -60,25 +58,12 @@ class AccountIdentityRecoveryApiTests(APITestCase):
             status=User.Status.ACTIVE,
             is_active=True,
             email_verified=True,
-            two_factor_enabled=True,
-            two_factor_email_enabled=True,
-            two_factor_totp_secret='encrypted-totp-secret',
-            two_factor_backup_code_hashes=[
-                make_password('12345678'),
-                make_password('87654321'),
-            ],
         )
         self.client.force_authenticate(self.superuser)
 
     def _email_payload(self, email='Identity-New@Example.com'):
         return {
             'email': email,
-            'reason': self.reason,
-            'verification_evidence': self.evidence,
-        }
-
-    def _mfa_payload(self):
-        return {
             'reason': self.reason,
             'verification_evidence': self.evidence,
         }
@@ -108,7 +93,7 @@ class AccountIdentityRecoveryApiTests(APITestCase):
                 format='json',
             )
 
-    def test_email_then_mfa_recovery_invalidates_old_identity_artifacts(self):
+    def test_email_recovery_invalidates_old_identity_artifacts(self):
         SocialAccount.objects.create(
             user=self.target,
             provider=User.Provider.GOOGLE,
@@ -118,13 +103,10 @@ class AccountIdentityRecoveryApiTests(APITestCase):
         )
         tokens = issue_tokens(self.target)
         reset_token = password_reset.issue_token(self.target)
-        challenge = two_factor.start_login_challenge(self.target, 'main')
-        challenge_code = cache.get(two_factor._code_key(self.target.pk, two_factor.PURPOSE_LOGIN))
         oauth_code = oauth.create_one_time_code(self.target)
         for kind in (
             AuthEmailJob.Kind.VERIFICATION,
             AuthEmailJob.Kind.PASSWORD_RESET,
-            AuthEmailJob.Kind.TWO_FACTOR,
         ):
             AuthEmailJob.objects.create(
                 user=self.target,
@@ -142,7 +124,6 @@ class AccountIdentityRecoveryApiTests(APITestCase):
         self.assertTrue(impact['password_reset_required'])
         self.assertTrue(impact['email_verification_required'])
         self.assertEqual(impact['oauth_providers_to_revoke'], ['google'])
-        self.assertEqual(impact['mfa_methods']['backup_codes_remaining'], 2)
         self.assertEqual(impact['active_session_count'], 1)
 
         changed = self._confirm(
@@ -169,7 +150,7 @@ class AccountIdentityRecoveryApiTests(APITestCase):
                 user=self.target,
                 status=AuthEmailJob.Status.CANCELLED,
             ).count(),
-            3,
+            2,
         )
 
         stale_client = APIClient()
@@ -193,18 +174,6 @@ class AccountIdentityRecoveryApiTests(APITestCase):
             stale_client.get(
                 reverse('auth-password-reset-validate'),
                 {'token': reset_token},
-            ).status_code,
-            status.HTTP_400_BAD_REQUEST,
-        )
-        self.assertEqual(
-            stale_client.post(
-                reverse('auth-two-factor-login-verify'),
-                {
-                    'challenge': challenge,
-                    'code': challenge_code,
-                    'method': 'email',
-                },
-                format='json',
             ).status_code,
             status.HTTP_400_BAD_REQUEST,
         )
@@ -238,43 +207,8 @@ class AccountIdentityRecoveryApiTests(APITestCase):
         self.assertEqual(email_audit.payload['revoked_oauth_providers'], ['google'])
         audit_text = json.dumps(email_audit.payload)
         self.assertNotIn('must-not-be-audited', audit_text)
-        self.assertNotIn('encrypted-totp-secret', audit_text)
 
         verification_token = email_verification.issue_token(self.target)
-        new_reset_token = password_reset.issue_token(self.target)
-        mfa_impact = self._impact('mfa-impact', self._mfa_payload())
-        self.assertTrue(mfa_impact['methods_to_disable']['email'])
-        self.assertTrue(mfa_impact['methods_to_disable']['totp'])
-        self.assertEqual(
-            mfa_impact['methods_to_disable']['backup_codes_remaining'],
-            2,
-        )
-        self.assertTrue(mfa_impact['password_will_remain_unchanged'])
-
-        reset = self._confirm(
-            'reset-mfa',
-            self._mfa_payload(),
-            mfa_impact['impact_token'],
-        )
-
-        self.assertEqual(reset.status_code, status.HTTP_200_OK, reset.data)
-        self.target.refresh_from_db()
-        self.assertEqual(self.target.auth_revision, 3)
-        self.assertFalse(self.target.two_factor_enabled)
-        self.assertFalse(self.target.two_factor_email_enabled)
-        self.assertEqual(self.target.two_factor_totp_secret, '')
-        self.assertEqual(self.target.two_factor_backup_code_hashes, [])
-        self.assertFalse(self.target.has_usable_password())
-        self.assertIsNone(password_reset.peek_token(new_reset_token))
-        mfa_notice = AuthEmailJob.objects.get(
-            user=self.target,
-            kind=AuthEmailJob.Kind.MFA_RESET_NOTICE,
-        )
-        self.assertEqual(mfa_notice.context['recipient'], 'identity-new@example.com')
-        self.assertEqual(mfa_notice.context['portal'], User.Role.CANDIDATE)
-        self.assertIn('occurred_at', mfa_notice.context)
-        self.assertNotIn('verification_evidence', mfa_notice.context)
-
         verified = stale_client.post(
             reverse('auth-verify-confirm'),
             {'token': verification_token},
@@ -283,31 +217,6 @@ class AccountIdentityRecoveryApiTests(APITestCase):
         self.assertEqual(verified.status_code, status.HTTP_200_OK, verified.data)
         self.target.refresh_from_db()
         self.assertTrue(self.target.email_verified)
-
-    def test_mfa_reset_preserves_password_oauth_email_and_status(self):
-        social = SocialAccount.objects.create(
-            user=self.target,
-            provider=User.Provider.LINKEDIN,
-            provider_user_id='linkedin-identity-1',
-            email=self.target.email,
-        )
-        before_password = self.target.password
-        impact = self._impact('mfa-impact', self._mfa_payload())
-
-        response = self._confirm(
-            'reset-mfa',
-            self._mfa_payload(),
-            impact['impact_token'],
-        )
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
-        self.target.refresh_from_db()
-        self.assertEqual(self.target.password, before_password)
-        self.assertTrue(self.target.check_password(self.password))
-        self.assertEqual(self.target.email, 'identity-old@example.com')
-        self.assertTrue(self.target.email_verified)
-        self.assertEqual(self.target.status, User.Status.ACTIVE)
-        self.assertTrue(SocialAccount.objects.filter(pk=social.pk).exists())
 
     def test_recovery_validation_permissions_and_stale_preview_fail_closed(self):
         self_recovery = self.client.post(
@@ -345,10 +254,10 @@ class AccountIdentityRecoveryApiTests(APITestCase):
         )
         deleted_response = self.client.post(
             reverse(
-                'admin-account-mfa-impact',
+                'admin-account-email-impact',
                 kwargs={'public_id': deleted.public_id},
             ),
-            self._mfa_payload(),
+            self._email_payload('deleted-new@example.com'),
             format='json',
         )
         self.assertEqual(deleted_response.status_code, status.HTTP_404_NOT_FOUND)
@@ -374,37 +283,16 @@ class AccountIdentityRecoveryApiTests(APITestCase):
         )
         self.assertEqual(duplicate.status_code, status.HTTP_400_BAD_REQUEST)
 
-        impact = self._impact('mfa-impact', self._mfa_payload())
-        self.target.two_factor_backup_code_hashes.append(make_password('11112222'))
-        self.target.save(update_fields=['two_factor_backup_code_hashes', 'updated_at'])
-        stale = self._confirm(
-            'reset-mfa',
-            self._mfa_payload(),
-            impact['impact_token'],
+        payload = self._email_payload()
+        impact = self._impact('email-impact', payload)
+        SocialAccount.objects.create(
+            user=self.target,
+            provider=User.Provider.LINKEDIN,
+            provider_user_id='linkedin-after-preview',
+            email=self.target.email,
         )
+        stale = self._confirm('change-email', payload, impact['impact_token'])
         self.assertEqual(stale.status_code, status.HTTP_409_CONFLICT)
-
-        no_mfa = User.objects.create_user(
-            email='no-mfa@example.com',
-            password=self.password,
-            role=User.Role.CANDIDATE,
-        )
-        no_mfa_impact = self._impact(
-            'mfa-impact',
-            self._mfa_payload(),
-            target=no_mfa,
-        )
-        self.assertFalse(no_mfa_impact['can_apply'])
-        no_mfa_confirm = self._confirm(
-            'reset-mfa',
-            self._mfa_payload(),
-            no_mfa_impact['impact_token'],
-            target=no_mfa,
-        )
-        self.assertEqual(
-            no_mfa_confirm.status_code,
-            status.HTTP_400_BAD_REQUEST,
-        )
 
     def test_non_superuser_cannot_recover_an_admin_target(self):
         email_permission = AdminPermission.objects.get(code='account.email.manage')
@@ -458,7 +346,7 @@ class AccountIdentityRecoveryApiTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_permissions_are_seeded_without_default_role_grants(self):
-        codes = {'account.email.manage', 'account.mfa.reset'}
+        codes = {'account.email.manage'}
         self.assertEqual(
             set(
                 AdminPermission.objects.filter(code__in=codes).values_list(
@@ -469,6 +357,9 @@ class AccountIdentityRecoveryApiTests(APITestCase):
             codes,
         )
         self.assertFalse(AdminRole.objects.filter(permissions__code__in=codes).exists())
+        self.assertFalse(
+            AdminPermission.objects.filter(code='account.mfa.reset', is_active=True).exists()
+        )
 
 
 @override_settings(

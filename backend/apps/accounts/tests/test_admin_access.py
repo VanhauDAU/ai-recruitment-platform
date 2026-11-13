@@ -296,37 +296,25 @@ class AdminAccessTests(TestCase):
             {'job_moderation.enforce_visibility', 'job_moderation.view'},
         )
 
-    def test_bootstrap_admin_mfa_is_atomic_and_secret_free(self):
+    def test_verify_admin_email_marks_once_and_audits_without_secrets(self):
         with self.assertRaises(CommandError):
-            management.call_command(
-                'bootstrap_admin_mfa',
-                self.admin.email,
-                no_input=True,
-            )
-        self.admin.refresh_from_db()
-        self.assertFalse(self.admin.email_verified)
-        self.assertFalse(self.admin.two_factor_enabled)
+            management.call_command('verify_admin_email', 'missing@example.com', no_input=True)
 
         management.call_command(
-            'bootstrap_admin_mfa',
+            'verify_admin_email',
             self.admin.email,
-            mark_email_verified=True,
             actor_email=self.other_admin.email,
             no_input=True,
         )
+        management.call_command('verify_admin_email', self.admin.email, no_input=True)
+
         self.admin.refresh_from_db()
         self.assertTrue(self.admin.email_verified)
-        self.assertTrue(self.admin.two_factor_enabled)
-        self.assertTrue(self.admin.two_factor_email_enabled)
-        audits = AdminAccessAuditLog.objects.filter(target_public_id=self.admin.public_id).order_by(
-            'created_at'
-        )
-        self.assertEqual(
-            list(audits.values_list('action', flat=True)),
-            ['mark_email_verified', 'bootstrap_mfa'],
-        )
+        audits = AdminAccessAuditLog.objects.filter(target_public_id=self.admin.public_id)
+        self.assertEqual(list(audits.values_list('action', flat=True)), ['mark_email_verified'])
+        self.assertEqual(audits.get().actor, self.other_admin)
         payload = json.dumps(list(audits.values_list('payload', flat=True)))
-        for forbidden in ('otp', 'totp', 'secret', 'backup', 'token', 'password'):
+        for forbidden in ('secret', 'token', 'password'):
             self.assertNotIn(forbidden, payload.lower())
 
     def test_registry_codes_follow_the_stable_format(self):

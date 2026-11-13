@@ -39,7 +39,7 @@ describe('admin account management API', () => {
       q: 'an@example.com',
       role: 'admin',
       status: 'active',
-      mfa: 'true',
+      email_verified: 'true',
       department: 'dept_people',
       admin_role: 'arole_hr',
       ordering: '-last_login',

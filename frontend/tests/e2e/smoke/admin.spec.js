@@ -57,8 +57,6 @@ test('admin account management: filters, table actions and quick detail are resp
     role: 'candidate',
     status: 'active',
     email_verified: true,
-    two_factor_enabled: false,
-    mfa_methods: { email: false, totp: false, backup_codes_remaining: 0 },
     has_usable_password: true,
     active_session_count: 1,
     last_activity_at: '2026-07-25T08:00:00Z',
@@ -231,7 +229,7 @@ test('admin account management: filters, table actions and quick detail are resp
   )
 })
 
-test('superuser recovers email, resets MFA, then sends password reset', async ({ page }) => {
+test('superuser recovers email, then sends password reset', async ({ page }) => {
   const calls = []
   const adminUser = {
     public_id: 'usr_root',
@@ -250,8 +248,6 @@ test('superuser recovers email, resets MFA, then sends password reset', async ({
     role: 'candidate',
     status: 'active',
     email_verified: true,
-    two_factor_enabled: true,
-    mfa_methods: { email: true, totp: true, backup_codes_remaining: 2 },
     has_usable_password: true,
     active_session_count: 2,
     last_activity_at: '2026-07-29T08:00:00Z',
@@ -313,7 +309,6 @@ test('superuser recovers email, resets MFA, then sends password reset', async ({
         },
         active_session_count: 2,
         oauth_providers_to_revoke: ['google'],
-        mfa_methods: account.mfa_methods,
         password_reset_required: true,
         password_reset_available: true,
         email_verification_required: true,
@@ -329,30 +324,6 @@ test('superuser recovers email, resets MFA, then sends password reset', async ({
         has_usable_password: false,
         active_session_count: 0,
         section_counts: { ...account.section_counts, active_sessions: 0 },
-      }
-      body = account
-    } else if (path === '/api/admin/accounts/usr_recovery/mfa-impact/') {
-      calls.push({ path, payload })
-      body = {
-        operation: 'account.mfa.reset',
-        target: {
-          public_id: account.public_id,
-          email: account.email,
-          role: account.role,
-          status: account.status,
-        },
-        methods_to_disable: account.mfa_methods,
-        active_session_count: 0,
-        password_will_remain_unchanged: true,
-        can_apply: true,
-        impact_token: 'mfa-impact-token',
-      }
-    } else if (path === '/api/admin/accounts/usr_recovery/reset-mfa/') {
-      calls.push({ path, payload })
-      account = {
-        ...account,
-        two_factor_enabled: false,
-        mfa_methods: { email: false, totp: false, backup_codes_remaining: 0 },
       }
       body = account
     } else if (path === '/api/admin/accounts/usr_recovery/send-password-reset/') {
@@ -399,37 +370,9 @@ test('superuser recovers email, resets MFA, then sends password reset', async ({
   await emailDialog.getByRole('button', { name: 'Xem tác động' }).click()
   await expect(emailDialog.getByText('old-identity@example.com').last()).toBeVisible()
   await expect(emailDialog.getByText('new-identity@example.com')).toBeVisible()
-  await expect(emailDialog.getByText(/cần reset ở bước kế tiếp/)).toBeVisible()
   await emailDialog.getByRole('button', { name: 'Xác nhận thực hiện' }).click()
   await expect(emailDialog).toBeHidden()
-  await expect(page.getByText('new-identity@example.com')).toBeVisible()
-  await expect(page.getByText('Tiếp theo: đặt lại MFA')).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Gửi đặt lại mật khẩu' }))
-    .toHaveCount(0)
-  await expect(page.getByText('Chưa mở')).toBeVisible()
-
-  await page.getByRole('button', { name: 'Đặt lại MFA' }).click()
-  const mfaDialog = page.getByRole('dialog', {
-    name: 'Đặt lại xác thực đa yếu tố',
-  })
-  await expect(mfaDialog.getByText('Nguyễn Cần Hỗ Trợ')).toBeVisible()
-  await expect(mfaDialog.getByText('new-identity@example.com')).toBeVisible()
-  await expect(mfaDialog.locator('label.ant-form-item-required')).toHaveText([
-    'Lý do khôi phục',
-    'Bằng chứng xác minh',
-  ])
-  await mfaDialog.getByLabel('Lý do khôi phục').fill(
-    'Người dùng mất toàn bộ phương thức xác minh',
-  )
-  await mfaDialog.getByLabel('Bằng chứng xác minh').fill(
-    'Đã gọi lại số trên hồ sơ pháp lý và đối chiếu giấy tờ.',
-  )
-  await mfaDialog.getByRole('button', { name: 'Xem tác động' }).click()
-  await expect(mfaDialog.getByText('Giữ nguyên, không bị thay đổi')).toBeVisible()
-  await mfaDialog.getByRole('button', { name: 'Xác nhận thực hiện' }).click()
-  await expect(mfaDialog).toBeHidden()
-  await expect(page.getByText('Chưa bật', { exact: true }).first()).toBeVisible()
-  await expect(page.getByText('0', { exact: true }).first()).toBeVisible()
+  await expect(page.getByText('new-identity@example.com', { exact: true })).toBeVisible()
   await expect(page.getByText('Tiếp theo: gửi link đặt lại mật khẩu'))
     .toBeVisible()
   await expect(page.getByRole('button', { name: 'Gửi đặt lại mật khẩu' }))
@@ -445,7 +388,7 @@ test('superuser recovers email, resets MFA, then sends password reset', async ({
   await expect(resetDialog.locator('label.ant-form-item-required'))
     .toHaveText(['Lý do gửi liên kết'])
   await resetDialog.getByLabel('Lý do gửi liên kết').fill(
-    'Đã hoàn tất đổi email và reset MFA theo runbook',
+    'Đã hoàn tất đổi email theo runbook',
   )
   await resetDialog.getByRole('button', { name: 'Xác nhận gửi' }).click()
   await expect(resetDialog).toBeHidden()
@@ -455,13 +398,10 @@ test('superuser recovers email, resets MFA, then sends password reset', async ({
   expect(calls.map((call) => call.path)).toEqual([
     '/api/admin/accounts/usr_recovery/email-impact/',
     '/api/admin/accounts/usr_recovery/change-email/',
-    '/api/admin/accounts/usr_recovery/mfa-impact/',
-    '/api/admin/accounts/usr_recovery/reset-mfa/',
     '/api/admin/accounts/usr_recovery/send-password-reset/',
   ])
   expect(calls[0].payload.email).toBe('new-identity@example.com')
   expect(calls[1].payload.impact_token).toBe('email-impact-token')
-  expect(calls[3].payload.impact_token).toBe('mfa-impact-token')
 })
 
 test('admin employer detail: company media and compact verification comparison render', async ({ page }) => {
@@ -480,7 +420,6 @@ test('admin employer detail: company media and compact verification comparison r
     role: 'employer',
     status: 'active',
     email_verified: true,
-    two_factor_enabled: false,
     context: {
       kind: 'employer',
       verification: {
@@ -800,8 +739,6 @@ test('admin detail: complete effective permissions render in access tab', async 
     role: 'admin',
     status: 'active',
     email_verified: true,
-    two_factor_enabled: true,
-    mfa_methods: { email: true, totp: true, backup_codes_remaining: 5 },
     has_usable_password: true,
     active_session_count: 1,
     date_joined: '2026-07-01T08:00:00Z',
@@ -992,7 +929,7 @@ test('admin access control: wide permission picker supports search and dependent
   )
 })
 
-test('admin invitation acceptance keeps MFA setup as a separate security step', async ({ page }) => {
+test('admin invitation acceptance activates the account with a password', async ({ page }) => {
   await mockPublicApi(page)
   await page.route('**/api/auth/admin-invitations/**', async (route) => {
     const path = new URL(route.request().url()).pathname
@@ -1018,8 +955,7 @@ test('admin invitation acceptance keeps MFA setup as a separate security step', 
   await page.getByLabel('Xác nhận mật khẩu').fill('StrongPass123')
   await page.getByRole('button', { name: 'Kích hoạt tài khoản' }).click()
   await expect(page.getByText('Tài khoản Admin đã sẵn sàng')).toBeVisible()
-  await expect(page.getByText(/bật xác thực hai yếu tố sau trong phần Bảo mật/)).toBeVisible()
-  await expect(page.getByText('Mã dự phòng')).toBeHidden()
+  await expect(page.getByText(/Đăng nhập cổng quản trị để bắt đầu làm việc/)).toBeVisible()
 })
 
 test('admin password reset stays on the Admin portal', async ({ page }) => {
@@ -1052,7 +988,7 @@ test('admin password reset stays on the Admin portal', async ({ page }) => {
   await page.getByLabel('Nhập lại mật khẩu').fill('StrongPass123')
   await page.getByRole('button', { name: 'Đặt lại mật khẩu' }).click()
   await expect(page.getByRole('heading', { name: 'Đã đổi mật khẩu' })).toBeVisible()
-  await expect(page.getByText(/xác minh MFA email/i)).toBeVisible()
+  await expect(page.getByText(/Đăng nhập lại cổng quản trị để tiếp tục/)).toBeVisible()
 })
 
 test('admin job management: list, detail and revision-bound hide workflow', async ({ page }) => {

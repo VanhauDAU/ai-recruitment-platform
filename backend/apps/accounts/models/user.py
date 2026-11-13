@@ -108,12 +108,6 @@ class User(AbstractUser):
     avatar_url = models.TextField(blank=True)
     status = models.CharField(max_length=50, choices=Status.choices, default=Status.ACTIVE)
     email_verified = models.BooleanField(default=False)
-    two_factor_enabled = models.BooleanField(default=False)
-    # ``two_factor_enabled`` là cờ tổng hợp để giữ tương thích với các guard
-    # cũ. Các field dưới đây mô tả chính xác phương thức đã bật cho employer.
-    two_factor_email_enabled = models.BooleanField(default=False)
-    two_factor_totp_secret = models.TextField(blank=True)
-    two_factor_backup_code_hashes = models.JSONField(default=list, blank=True)
     # Monotonic security boundary for every issued session or pre-auth artifact.
     # Recovery actions bump this value so work already in flight cannot create a
     # usable token after the account identity has changed.
@@ -206,10 +200,8 @@ class AuthEmailJob(models.Model):
         VERIFICATION = 'verification', 'Email verification'
         WELCOME = 'welcome', 'Welcome email'
         PASSWORD_RESET = 'password_reset', 'Password reset'
-        TWO_FACTOR = 'two_factor', 'Two-factor authentication code'
         ADMIN_INVITATION = 'admin_invitation', 'Admin invitation'
         EMAIL_CHANGED_NOTICE = 'email_changed_notice', 'Email changed security notice'
-        MFA_RESET_NOTICE = 'mfa_reset_notice', 'MFA reset security notice'
         ACCOUNT_STATUS_NOTICE = 'account_status_notice', 'Account status security notice'
 
     class Status(models.TextChoices):

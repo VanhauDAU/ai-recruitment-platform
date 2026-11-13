@@ -8,16 +8,14 @@ from rest_framework.views import APIView
 from common.media_storage import delete_local_media_url, save_image_upload
 from common.throttling import ClientIPScopedRateThrottle
 
-from ...models import AuthEmailJob, User
+from ...models import User
 from ...services import (
     queue_verification_email,
     record_admin_self_action,
-    two_factor,
     verify_request_captcha,
 )
 from ...services.refresh_cookies import set_refresh_cookie
 from ...services.tokens import issue_tokens
-from ...tasks import queue_auth_email
 from ..serializers import (
     LoginCredentialsSerializer,
     ProfileUpdateSerializer,
@@ -88,9 +86,6 @@ class RegisterEmailAvailabilityView(APIView):
             fields={
                 'user': SessionUserSerializer(required=False),
                 'access': serializers.CharField(required=False),
-                'two_factor_required': serializers.BooleanField(required=False),
-                'challenge_token': serializers.CharField(required=False),
-                'methods': serializers.DictField(required=False),
                 'detail': serializers.CharField(required=False),
                 'code': serializers.CharField(required=False),
             },
@@ -109,28 +104,6 @@ class LoginView(APIView):
         serializer = self.serializer_class(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
         user = serializer.user
-        methods = two_factor.enabled_methods(user)
-        if user.two_factor_enabled:
-            challenge = two_factor.start_login_challenge(user, serializer.portal)
-            if methods['email']:
-                queue_auth_email(
-                    AuthEmailJob.Kind.TWO_FACTOR,
-                    user,
-                    context={'purpose': two_factor.PURPOSE_LOGIN},
-                )
-            return Response(
-                {
-                    'two_factor_required': True,
-                    'challenge': challenge,
-                    'email': user.email if methods['email'] else '',
-                    'expires_in': two_factor.code_remaining(user, two_factor.PURPOSE_LOGIN)
-                    if methods['email']
-                    else 0,
-                    'methods': methods,
-                    'preferred_method': 'totp' if methods['totp'] else 'email',
-                },
-                status=status.HTTP_202_ACCEPTED,
-            )
         tokens = issue_tokens(user, request, auth_method='password')
         response = Response({'access': tokens['access']})
         return set_refresh_cookie(response, tokens['refresh'], user=user)

@@ -8,6 +8,26 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-13
 
+#### Removed — Gỡ xác thực hai bước (2FA/MFA) ở cả ba cổng
+
+- Theo [ADR-0016](docs/02-tong-quan/adr-0016-remove-two-factor-auth.md): bỏ mã
+  email, ứng dụng xác thực (TOTP), mã dự phòng và challenge khi đăng nhập. Đăng
+  nhập mật khẩu/OAuth cấp token ngay; `/api/auth/me/` không còn
+  `two_factor_*`.
+- Backend: xóa `services/two_factor.py`, mọi route `/api/auth/two-factor/*`, API
+  admin `mfa-impact`/`reset-mfa`, quyền `account.mfa.reset` (deprecated qua
+  migration), bộ lọc `mfa`, ordering `two_factor_enabled`, cảnh báo
+  `mfa_warning`, email `two_factor`/`mfa_reset_notice`, throttle và biến môi
+  trường `TWO_FACTOR_*`. Migration `accounts.0030` xóa bốn field `two_factor_*`
+  trên `User`; `knowledgebase.0004` viết lại bài trợ giúp bảo mật tài khoản
+  (giữ slug cũ để link công khai không gãy).
+- Lệnh `bootstrap_admin_mfa` được thay bằng `verify_admin_email` (chỉ đánh dấu
+  email admin đã xác thực và ghi audit). Seed demo admin không còn mã dự phòng.
+- Frontend: xóa trang "Xác minh hai bước", panel MFA ở cài đặt NTD/admin, modal
+  nhập mã khi đăng nhập, nút "Tài khoản chưa đủ an toàn" ở sidebar NTD, cột/bộ
+  lọc MFA trong quản trị tài khoản và phân quyền; luồng khôi phục danh tính còn
+  đổi email → gửi link đặt lại mật khẩu.
+
 #### Removed — Dọn code, asset và lệnh không còn dùng
 
 - Frontend: `AccountDetailView` (thay bằng widget `admin-account-detail`),

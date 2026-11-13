@@ -15,7 +15,6 @@ export const STAFF_ORDERING_FIELDS = [
   'user__full_name',
   'role__department__name',
   'role__name',
-  'user__two_factor_enabled',
   'is_active',
   'assigned_at',
 ]

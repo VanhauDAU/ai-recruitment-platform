@@ -13,7 +13,7 @@ from rest_framework_simplejwt.tokens import AccessToken
 
 from .. import oauth
 from ..models import AuthEmailJob, User
-from ..services import email_verification, password_reset, two_factor
+from ..services import email_verification, password_reset
 from ..services.refresh_cookies import cookie_name
 from ..services.tokens import issue_tokens
 from ..tasks import deliver_auth_email_job
@@ -35,7 +35,7 @@ class AdminAuthenticationPolicyTests(APITestCase):
             role=User.Role.ADMIN,
         )
 
-    def test_admin_without_mfa_can_login_workspace(self):
+    def test_admin_login_issues_five_minute_access_and_httponly_refresh_cookie(self):
         response = self.client.post(
             reverse('auth-login'),
             {
@@ -47,36 +47,10 @@ class AdminAuthenticationPolicyTests(APITestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn('access', response.data)
-        self.assertIn(cookie_name('admin'), response.cookies)
-
-    def test_admin_mfa_issues_five_minute_access_and_httponly_refresh_cookie(self):
-        self.admin.two_factor_enabled = True
-        self.admin.save(update_fields=['two_factor_enabled'])
-        login = self.client.post(
-            reverse('auth-login'),
-            {
-                'email': self.admin.email,
-                'password': 'Password@123',
-                'captcha_token': 'x',
-                'portal': 'admin',
-            },
-        )
-        code = cache.get(two_factor._code_key(self.admin.pk, two_factor.PURPOSE_LOGIN))
-        verified = self.client.post(
-            reverse('auth-two-factor-login-verify'),
-            {
-                'challenge': login.data['challenge'],
-                'code': code,
-            },
-        )
-
-        self.assertEqual(verified.status_code, status.HTTP_200_OK)
-        access = AccessToken(verified.data['access'])
+        access = AccessToken(response.data['access'])
         self.assertLessEqual(access['exp'] - access['iat'], 5 * 60)
-        self.assertNotIn('refresh', verified.data)
-        cookie = verified.cookies[cookie_name('admin')]
-        self.assertTrue(cookie['httponly'])
+        self.assertNotIn('refresh', response.data)
+        self.assertTrue(response.cookies[cookie_name('admin')]['httponly'])
 
     def test_admin_public_password_reset_is_rejected(self):
         response = self.client.post(

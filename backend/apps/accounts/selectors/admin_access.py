@@ -25,7 +25,6 @@ MEMBERSHIP_ORDERING_FIELDS = (
     'user__full_name',
     'role__department__name',
     'role__name',
-    'user__two_factor_enabled',
     'is_active',
     'assigned_at',
 )
@@ -549,10 +548,7 @@ def membership_assignment_impact(user, role):
         'role_public_id': role.public_id,
     }
     return {
-        'user': {
-            **_user_summary(user),
-            'two_factor_enabled': user.two_factor_enabled,
-        },
+        'user': _user_summary(user),
         'department': _department_summary(role.department),
         'role': {
             'public_id': role.public_id,
@@ -575,7 +571,6 @@ def membership_assignment_impact(user, role):
             if current_membership
             else None
         ),
-        'mfa_warning': not user.two_factor_enabled,
         'impact_token': create_impact_token(
             revision=current_rbac_revision(),
             operation='membership.assign',

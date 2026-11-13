@@ -190,22 +190,6 @@ class OAuthFlowTests(APITestCase):
         self.assertEqual(SocialAccount.objects.count(), 1)
         self.assertEqual(User.objects.filter(email='social@example.com').count(), 1)
 
-    def test_social_login_bypasses_email_two_factor(self):
-        self._complete(self._callback().url)
-        user = User.objects.get(email='social@example.com', role=User.Role.CANDIDATE)
-        user.two_factor_enabled = True
-        user.save(update_fields=['two_factor_enabled'])
-
-        complete = self._complete(self._callback().url)
-
-        self.assertEqual(complete.status_code, status.HTTP_200_OK)
-        self.assertEqual(complete.data['user']['public_id'], str(user.public_id))
-        self.assertIn('access', complete.data)
-        self.assertNotIn('two_factor_required', complete.data)
-        self.assertFalse(
-            AuthEmailJob.objects.filter(user=user, kind=AuthEmailJob.Kind.TWO_FACTOR).exists()
-        )
-
     def test_second_provider_requires_confirmed_linking(self):
         user = oauth.resolve_user('google', dict(GOOGLE_PROFILE), 'main')
         with self.assertRaisesRegex(oauth.OAuthError, 'link_confirmation_required'):

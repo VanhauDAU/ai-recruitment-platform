@@ -20,7 +20,7 @@ hoặc cấu trúc database.
 
 | Màn hình / use case | Endpoint | DTO đọc | Field chính frontend sử dụng |
 |---|---|---|---|
-| Header, guard, tài khoản | `GET /api/auth/me/` | `SessionUserSerializer` | `public_id`, `email`, `role`, `full_name`, `phone`, `avatar_url`, `email_verified`, `two_factor_enabled`, `job_preferences_configured`; employer có `employer_job_workspace_ready` canonical và field legacy trong compatibility window |
+| Header, guard, tài khoản | `GET /api/auth/me/` | `SessionUserSerializer` | `public_id`, `email`, `role`, `full_name`, `phone`, `avatar_url`, `email_verified`, `job_preferences_configured`; employer có `employer_job_workspace_ready` canonical và field legacy trong compatibility window |
 | Sửa thông tin tài khoản | `PATCH /api/auth/me/` | `ProfileUpdateSerializer` → session DTO | candidate dùng `full_name`, `phone`; employer chỉ đổi `full_name`, phone bắt buộc qua SMS challenge |
 | Onboarding / cài đặt gợi ý | `GET/PATCH /api/candidate/profile/` | `CandidateProfileReadSerializer` / `CandidateProfileUpdateSerializer` | `gender` |
 | Onboarding / cài đặt gợi ý | `GET/PUT /api/candidate/job-preferences/` | `CandidateJobPreferenceSerializer` | vị trí chuyên môn taxonomy, danh sách vị trí tự nhập, kỹ năng taxonomy, lương, kinh nghiệm, tỉnh, relocate và hai consent |

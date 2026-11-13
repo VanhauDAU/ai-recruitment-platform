@@ -2,11 +2,12 @@ from django.db import connection
 from django.db.migrations.executor import MigrationExecutor
 from django.test import TransactionTestCase
 
-# Keep employers at its current schema while jobs is migrated backward; see
-# test_lifecycle_migrations for why the historical state needs it.
+# Keep employers and accounts at their current schema while jobs is migrated
+# backward; see test_lifecycle_migrations for why the historical state needs it.
 EMPLOYERS_LEAF = ('employers', '0047_company_public_search_indexes')
-BEFORE = [('jobs', '0045_candidate_hidden_job'), EMPLOYERS_LEAF]
-AFTER = [('jobs', '0047_remove_job_approval_states'), EMPLOYERS_LEAF]
+ACCOUNTS_LEAF = ('accounts', '0030_remove_two_factor')
+BEFORE = [('jobs', '0045_candidate_hidden_job'), EMPLOYERS_LEAF, ACCOUNTS_LEAF]
+AFTER = [('jobs', '0047_remove_job_approval_states'), EMPLOYERS_LEAF, ACCOUNTS_LEAF]
 CONVERSION_NOTE = 'Chuyển về bản nháp khi bỏ quy trình duyệt tin (ADR-0014).'
 
 

@@ -6,12 +6,13 @@ from django.test import TransactionTestCase
 from django.utils import timezone
 
 # Keep unrelated apps at their current schema while jobs is migrated backward.
-# Otherwise the historical project state omits newer Company fields even though
-# their database columns remain applied, and a setUp failure leaves later tests
-# on the old jobs schema.
+# Otherwise the historical project state omits newer Company fields (or keeps
+# removed User fields) even though the database columns already changed, and a
+# setUp failure leaves later tests on the old jobs schema.
 EMPLOYERS_LEAF = ('employers', '0047_company_public_search_indexes')
-BEFORE = [('jobs', '0040_job_status_created_desc_index'), EMPLOYERS_LEAF]
-AFTER = [('jobs', '0042_backfill_job_lifecycle_v2'), EMPLOYERS_LEAF]
+ACCOUNTS_LEAF = ('accounts', '0030_remove_two_factor')
+BEFORE = [('jobs', '0040_job_status_created_desc_index'), EMPLOYERS_LEAF, ACCOUNTS_LEAF]
+AFTER = [('jobs', '0042_backfill_job_lifecycle_v2'), EMPLOYERS_LEAF, ACCOUNTS_LEAF]
 
 
 class JobLifecycleMigrationTests(TransactionTestCase):

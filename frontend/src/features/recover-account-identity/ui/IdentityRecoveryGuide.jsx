@@ -69,21 +69,13 @@ export default function IdentityRecoveryGuide({
   account,
   emailAction,
   emailCompleted = false,
-  mfaAction,
-  mfaCompleted = false,
   passwordResetAction,
   passwordResetSent = false,
 }) {
-  const hasMfa = Boolean(
-    account.mfa_methods.email
-    || account.mfa_methods.totp
-    || account.mfa_methods.backup_codes_remaining > 0,
-  )
   const emailDone = emailCompleted || (
     account.email_verified === false
     && account.has_usable_password === false
   )
-  const mfaDone = mfaCompleted || (emailDone && !hasMfa)
   const userCompleted = passwordResetSent
     && account.email_verified
     && account.has_usable_password
@@ -94,14 +86,7 @@ export default function IdentityRecoveryGuide({
     title: 'Bắt đầu bằng việc đổi email đăng nhập',
     description: 'Hệ thống sẽ thu hồi mật khẩu, phiên và OAuth cũ.',
   }
-  if (emailDone && !mfaDone) {
-    nextStep = {
-      tone: 'border-amber-200 bg-amber-50 text-amber-900',
-      icon: <SafetyCertificateOutlined />,
-      title: 'Tiếp theo: đặt lại MFA',
-      description: 'Chưa gửi link mật khẩu; link gửi trước bước này sẽ hết hiệu lực.',
-    }
-  } else if (emailDone && mfaDone && !passwordResetSent) {
+  if (emailDone && !passwordResetSent) {
     nextStep = {
       tone: 'border-blue-200 bg-blue-50 text-blue-900',
       icon: <KeyOutlined />,
@@ -113,7 +98,7 @@ export default function IdentityRecoveryGuide({
       tone: 'border-emerald-200 bg-emerald-50 text-emerald-900',
       icon: <ClockCircleOutlined />,
       title: 'Đã gửi link — đang chờ người dùng',
-      description: 'Người dùng đặt mật khẩu, đăng nhập lại rồi cấu hình MFA/OAuth.',
+      description: 'Người dùng đặt mật khẩu, đăng nhập lại rồi liên kết lại OAuth nếu cần.',
     }
   } else if (userCompleted) {
     nextStep = {
@@ -125,10 +110,9 @@ export default function IdentityRecoveryGuide({
   }
 
   const emailStatus = emailDone ? 'done' : 'active'
-  const mfaStatus = !emailDone ? 'wait' : (mfaDone ? 'done' : 'active')
   const passwordStatus = passwordResetSent
     ? 'done'
-    : (emailDone && mfaDone ? 'active' : 'wait')
+    : (emailDone ? 'active' : 'wait')
   const finishStatus = userCompleted ? 'done' : (passwordResetSent ? 'active' : 'wait')
 
   return (
@@ -150,7 +134,7 @@ export default function IdentityRecoveryGuide({
             </Typography.Text>
           </div>
         </div>
-        <Tag color="blue">Quy trình bảo mật · 4 bước</Tag>
+        <Tag color="blue">Quy trình bảo mật · 3 bước</Tag>
       </div>
 
       <div className={`mt-4 flex items-start gap-3 rounded-xl border px-4 py-3 ${nextStep.tone}`}>
@@ -161,7 +145,7 @@ export default function IdentityRecoveryGuide({
         </div>
       </div>
 
-      <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+      <div className="mt-4 grid gap-3 lg:grid-cols-3">
         <RecoveryStepCard
           action={emailAction}
           description="Xác minh danh tính, nhập email mới và duyệt preview tác động."
@@ -172,23 +156,10 @@ export default function IdentityRecoveryGuide({
           title="Đổi email"
         />
         <RecoveryStepCard
-          action={mfaAction}
-          description={hasMfa
-            ? 'Xóa email MFA, ứng dụng xác thực và toàn bộ mã dự phòng.'
-            : 'Tài khoản không có phương thức MFA cần xử lý.'}
-          icon={<SafetyCertificateOutlined />}
-          number={2}
-          status={mfaStatus}
-          statusLabel={!emailDone
-            ? 'Chờ bước 1'
-            : (mfaDone ? (hasMfa ? 'Đã xong' : 'Tự bỏ qua') : 'Cần làm')}
-          title="Xử lý MFA"
-        />
-        <RecoveryStepCard
           action={passwordResetAction}
           description="Gửi sau thay đổi cuối cùng; mật khẩu mới do người dùng tự chọn."
           icon={<KeyOutlined />}
-          number={3}
+          number={2}
           status={passwordStatus}
           statusLabel={passwordResetSent
             ? 'Đã gửi'
@@ -196,9 +167,9 @@ export default function IdentityRecoveryGuide({
           title="Gửi link mật khẩu"
         />
         <RecoveryStepCard
-          description="Người dùng đặt mật khẩu, đăng nhập và cấu hình lại MFA/OAuth."
+          description="Người dùng đặt mật khẩu, đăng nhập và liên kết lại OAuth nếu cần."
           icon={<LockOutlined />}
-          number={4}
+          number={3}
           status={finishStatus}
           statusLabel={userCompleted
             ? 'Hoàn tất'

@@ -51,21 +51,18 @@ class AdminAccessG2ApiTests(TestCase):
             status=User.Status.ACTIVE,
             is_superuser=True,
             is_staff=True,
-            two_factor_enabled=True,
         )
         self.admin = User.objects.create_user(
             'manager@example.com',
             'TestPass123',
             role=User.Role.ADMIN,
             status=User.Status.ACTIVE,
-            two_factor_enabled=True,
         )
         self.staff = User.objects.create_user(
             'staff@example.com',
             'TestPass123',
             role=User.Role.ADMIN,
             status=User.Status.ACTIVE,
-            two_factor_enabled=False,
         )
         self.department = Department.objects.create(
             code='content-cv',
@@ -517,7 +514,7 @@ class AdminAccessG2ApiTests(TestCase):
         )
         self.assertEqual(company_recruiter['requires'], ['company.view'])
 
-    def test_assignment_preview_mfa_and_confirm(self):
+    def test_assignment_preview_and_confirm(self):
         self.authenticate(self.superuser)
         preview = self.client.post(
             reverse('admin-membership-assignment-impact'),
@@ -528,7 +525,6 @@ class AdminAccessG2ApiTests(TestCase):
             format='json',
         )
         self.assertEqual(preview.status_code, 200)
-        self.assertTrue(preview.json()['mfa_warning'])
         self.assertIn('cv_template.view', preview.json()['permissions_gained'])
 
         response = self.client.post(

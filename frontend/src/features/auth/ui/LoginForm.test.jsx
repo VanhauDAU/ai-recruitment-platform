@@ -17,8 +17,6 @@ vi.mock('react-google-recaptcha-v3', () => ({
 
 vi.mock('../api/auth.api', () => ({
   login: mocks.login,
-  resendTwoFactorLogin: vi.fn(),
-  verifyTwoFactorLogin: vi.fn(),
 }))
 
 vi.mock('@/entities/session', () => ({

@@ -5,12 +5,12 @@ import {
 import { Avatar, Dropdown } from 'antd'
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router'
-import { CANDIDATE_MENU, candidateMenuItemLabel } from '@/entities/account'
+import { CANDIDATE_MENU } from '@/entities/account'
 import { message } from '@/shared/lib/toast'
 
 const SECTIONS = CANDIDATE_MENU
 
-function Section({ section, open, onToggle, onItem, user, activePathname }) {
+function Section({ section, open, onToggle, onItem, activePathname }) {
   const panelId = `candidate-user-menu-${section.key}`
 
   return (
@@ -54,7 +54,7 @@ function Section({ section, open, onToggle, onItem, user, activePathname }) {
                       : 'text-slate-900'
                   }`}
                 >
-                  {candidateMenuItemLabel(it, user)}
+                  {it.label}
                 </button>
               )
             })}
@@ -120,7 +120,7 @@ export default function CandidateUserMenu({ user, logout }) {
 
       <div className="min-h-0 overflow-y-auto overscroll-contain border-t border-gray-100 px-2 [scrollbar-width:thin]">
         {SECTIONS.map((s) => (
-          <Section key={s.key} section={s} user={user} activePathname={pathname} open={openKey === s.key} onToggle={() => toggleSection(s.key)} onItem={handleItem} />
+          <Section key={s.key} section={s} activePathname={pathname} open={openKey === s.key} onToggle={() => toggleSection(s.key)} onItem={handleItem} />
         ))}
       </div>
 

@@ -14,7 +14,6 @@ export const VerifyEmailPage = lazy(() => import('@/pages/main/auth/VerifyEmail'
 export const CandidateAccountLayout = lazy(() => import('@/pages/main/account/CandidateAccountLayout'))
 export const PersonalInfoPage = lazy(() => import('@/pages/main/account/PersonalInfo'))
 export const MyCvsPage = lazy(() => import('@/pages/main/account/MyCvs'))
-export const TwoFactorAuthenticationPage = lazy(() => import('@/pages/main/account/TwoFactorAuthentication'))
 export const SecuritySettingsPage = lazy(() => import('@/pages/main/account/SecuritySettings'))
 export const ChangePasswordPage = lazy(() => import('@/pages/main/account/ChangePassword'))
 export const EmailNotificationSettingsPage = lazy(() => import('@/pages/main/account/EmailNotificationSettings'))
