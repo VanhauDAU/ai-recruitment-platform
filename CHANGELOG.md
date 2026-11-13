@@ -8,6 +8,27 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-13
 
+#### Removed — Gói dịch vụ, quyền lợi và yêu cầu tư vấn (ADR-0015)
+
+- Xóa API `/api/services/*` (catalogue gói, phiên bản, cấp lượt, kích hoạt dịch
+  vụ cho tin, làm mới tin, thông báo việc làm trả phí, audit, yêu cầu tư vấn) và
+  `/api/jobs/remarketing/saved/*`. Migration `services.0012` xóa 15 bảng; dữ
+  liệu không khôi phục được, cần sao lưu trước khi chạy.
+- Danh sách việc làm chỉ còn thứ tự tự nhiên: nhãn `tier` do quản trị viên gán,
+  rồi thời điểm đăng. Box "Việc làm tốt nhất" chỉ nhận tin `tier=top`. Nhãn
+  `tier`, `is_hot`, `is_urgent`, `has_flash_badge` và object `presentation` giữ
+  nguyên.
+- Posting context bỏ object `services`; pause impact của chiến dịch bỏ
+  `active_services`.
+- Bỏ 10 quyền admin `consultation_lead.*`, `service_catalog.*`,
+  `service_entitlement.*`, `service_audit.view` (`accounts.0029` đánh dấu
+  deprecated) và phòng ban mẫu "Dịch vụ nhà tuyển dụng".
+- Bỏ 3 tác vụ Celery beat, định tuyến hàng đợi và 10 biến môi trường của mảng
+  dịch vụ.
+- Frontend: bỏ trang báo giá, trang dịch vụ của nhà tuyển dụng, quản trị gói
+  dịch vụ và lead tư vấn, form và nút tư vấn nổi, lane remarketing việc đã lưu,
+  tab dịch vụ trong chi tiết tin và chiến dịch.
+
 #### Added — Cam kết khi đăng tin và trạng thái tạm ẩn cho nhà tuyển dụng
 
 - Đăng tin nháp và mở lại tin đã đóng yêu cầu `responsibility_statement_version`

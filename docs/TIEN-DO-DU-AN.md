@@ -13,6 +13,19 @@ Quyết định:
 > vitest (333 file, 1247 test), build, E2E smoke 270 passed (6 skip).
 > `openapi.yaml` đã sinh lại; bản cũ đã lệch 42 path từ các epic trước.
 >
+> PM-4a (PR 3, nhánh `refactor/remove-commercial-services`, tách từ PR 2): đã
+> gỡ mọi chỗ dùng `services`, xóa code của app và viết migration
+> `services.0012` xóa 15 bảng. Backend: pytest 1175 passed, coverage 87,47%.
+> Frontend: lint 0 lỗi, kiến trúc, vitest (323 file, 1208 test), build, E2E
+> smoke 258 passed (6 skip). DB local đã áp dụng `services.0012` và
+> `accounts.0029` lúc 08:46 khi container backend khởi động lại (lệnh khởi động
+> có `manage.py migrate`), **trước khi kịp sao lưu**; dữ liệu 15 bảng dịch vụ
+> local đã mất. Bản sao lưu sau migration nằm ngoài repo, trong
+> `~/Documents/ai-recruitment-platform-backups/`. DB local còn 31 bảng `services_*`
+> do migration `0012`–`0014` của một nhánh khác chưa gộp tạo ra; PM-4b xử lý.
+> PM-4b (PR 4) xóa thư mục app, bỏ khỏi `INSTALLED_APPS`, dọn
+> `django_migrations` và content type sau khi migration đã chạy ở mọi môi trường.
+>
 > Lưu ý khi chạy E2E local: nếu container frontend Docker đang giữ cổng 5173,
 > Playwright sẽ dùng lại server đó và nhiều test lỗi giả. Chạy
 > `PLAYWRIGHT_PORT=4317 PLAYWRIGHT_WEB_SERVER=preview npm run test:e2e:smoke`.
@@ -24,7 +37,8 @@ Quyết định:
 | PM-2 | Backend: đăng tin là công khai, gỡ duyệt tin, migration dữ liệu | ✅ Hoàn tất — đạt cổng backend |
 | PM-3 | Frontend: cổng nhà tuyển dụng và quản trị theo hợp đồng API mới | ✅ Hoàn tất — đạt cổng frontend kể cả E2E |
 | PM-3b | Lưu cam kết chịu trách nhiệm khi đăng và mở lại tin; nhà tuyển dụng thấy tin bị tạm ẩn kèm nhóm lý do | ✅ Hoàn tất — đạt cổng backend và frontend |
-| PM-4 | Xóa app `services` (gói dịch vụ, quyền lợi, yêu cầu tư vấn) | ⬜ Chưa bắt đầu |
+| PM-4a | Gỡ mọi chỗ dùng `services`, giao diện, quyền admin; migration xóa bảng | ✅ Hoàn tất — đạt cổng, migration đã chạy trên DB local |
+| PM-4b | Xóa thư mục app `services` và cấu hình còn lại | ⬜ Chưa bắt đầu |
 | PM-5 | Kiểm thử tích hợp ba cổng | ⬜ Chưa bắt đầu |
 | PM-6 | Dọn docs, xóa `99-tien-do`, dựng lại mục lục | ⬜ Chưa bắt đầu |
 | PM-7 | Bổ sung changelog còn thiếu, rút gọn tiến độ | ⬜ Chưa bắt đầu |

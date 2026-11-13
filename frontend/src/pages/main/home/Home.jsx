@@ -15,7 +15,6 @@ import HomeHeroMascot from './ui/HomeHeroMascot'
 import { LocationFilter } from '@/entities/location'
 import MarketStats from './ui/MarketStats'
 import { SearchDropdown, saveHistory } from '@/features/search-jobs'
-import { SavedJobRemarketingLane } from '@/features/saved-job-remarketing'
 import { CandidateJobRecommendations } from '@/widgets/candidate-job-recommendations'
 import './home-mascot.css'
 
@@ -241,8 +240,6 @@ export default function Home() {
       </section>
 
       <CandidateJobRecommendations variant="home" />
-
-      <SavedJobRemarketingLane />
 
       <section className="pt-8">
         <div className="bg-white py-8">

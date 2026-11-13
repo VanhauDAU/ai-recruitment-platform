@@ -26,14 +26,12 @@ import {
   EmployerLandingPage,
   EmployerLegalPage,
   EmployerLoginPage,
-  EmployerMyServicesPage,
   EmployerOnboardingPage,
   EmployerNotificationsPage,
   EmployerPasswordLoginPage,
   EmployerPersonalDataProtectionPage,
   EmployerRecruitmentDemandPage,
   EmployerPhoneVerifyPage,
-  EmployerPricingPage,
   EmployerRegisterPage,
   EmployerServicesPage,
   EmployerVerifyPage,
@@ -47,7 +45,6 @@ export function employerRoutes() {
       <Route path={employerMarketingPath('')} element={<EmployerLandingPage />} />
       <Route path={employerMarketingPath('/gioi-thieu')} element={<EmployerAboutPage />} />
       <Route path={employerMarketingPath('/dich-vu')} element={<EmployerServicesPage />} />
-      <Route path={employerMarketingPath('/bao-gia')} element={<EmployerPricingPage />} />
       <Route path={employerMarketingPath('/lien-he')} element={<EmployerContactPage />} />
       <Route path={employerMarketingPath('/dieu-khoan-dich-vu')} element={<EmployerLegalPage />} />
       <Route path={employerMarketingPath('/chinh-sach-quyen-rieng')} element={<EmployerLegalPage />} />
@@ -112,7 +109,6 @@ export function employerRoutes() {
             <Route path={employerAppPath('/dashboard')} element={<EmployerDashboardPage />} />
             <Route path={employerAppPath('/notifications')} element={<EmployerNotificationsPage />} />
             <Route path={employerAppPath('/activities')} element={<EmployerActivitiesPage />} />
-            <Route path={employerAppPath('/services')} element={<EmployerMyServicesPage />} />
             <Route element={<JobWorkspaceGuard />}>
               <Route path={employerAppPath('/campaigns')} element={<EmployerCampaignListPage />} />
               <Route path={employerAppPath('/campaigns/:publicId')} element={<EmployerCampaignDetailPage />} />

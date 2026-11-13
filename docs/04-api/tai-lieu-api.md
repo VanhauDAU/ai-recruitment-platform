@@ -94,7 +94,7 @@ Xác thực trong Swagger UI: gọi `POST /api/auth/login/` lấy `access`, bấ
 | GET | `/api/jobs/benefits/` | Danh mục quyền lợi chuẩn hóa (đang active), public, không phân trang |
 | GET | `/api/jobs/languages/` | Danh mục ngoại ngữ (đang active), public, không phân trang |
 | GET | `/api/jobs/stats/` | Thống kê thị trường việc làm cho dashboard trang chủ (số job/công ty, job mới 24h, tăng trưởng 7 ngày, nhu cầu theo ngành, job mới nhất), public |
-| GET | `/api/jobs/best/?rotation_seed=&page=&page_size=` | Box Việc làm tốt nhất trang chủ: chỉ tin public có quyền lợi `best_jobs_eligible`/legacy TOP, luân phiên ổn định theo seed riêng và không kế thừa ranking/refresh của danh sách việc làm |
+| GET | `/api/jobs/best/?rotation_seed=&page=&page_size=` | Box Việc làm tốt nhất trang chủ: chỉ tin public có nhãn `tier=top` do quản trị viên gán, luân phiên ổn định theo seed riêng và không kế thừa thứ tự của danh sách việc làm |
 | GET | `/api/jobs/recommendations/for-me/?page=&page_size=` | Candidate-only: feed chỉ dùng nhu cầu công việc đã lưu (vị trí taxonomy/tự nhập, kỹ năng, lương, kinh nghiệm, tỉnh, relocate), có setup/consent và phân trang. `sources.cv=false`, `source_cv=null`; loại job đã ứng tuyển/đã ẩn trước cap. |
 | GET | `/api/jobs/recommendations/by-cv/{cv_public_id}/` | Candidate owner-only: tối đa 6 việc làm giải thích được cho CV vừa lưu; yêu cầu consent gợi ý trước khi đọc nội dung CV, thiếu consent trả `403` và client hiển thị CTA tới cài đặt. |
 | GET | `/api/jobs/recommendations/inline/?page=&ranking_seed=&excluded=` | Candidate-only: `ranking_seed` bắt buộc; lane độc lập có xác suất deterministic 40% theo candidate/seed/page; trả `not_shown` hoặc 1–2 job cùng `after_result_index` zero-based. `excluded` là CSV tối đa 50 public ID; luôn loại tin đã ứng tuyển/đã ẩn. |
@@ -158,8 +158,6 @@ quyền, endpoint RBAC trả:
 | Bề mặt admin | Trạng thái G1 |
 | --- | --- |
 | Site locale/settings/upload | `HasAdminPermission`, luôn `require_superuser` |
-| Service category/package | `service_catalog.view/manage` |
-| Consultation lead | `consultation_lead.view/manage` |
 | CV catalogue | `cv_template.view/create/edit/publish/archive/delete` theo action |
 | Job moderation | `.view` để đọc, `.enforce_visibility` để tạm ẩn hoặc khôi phục, `.resolve_report` để xử lý báo cáo |
 | `/api/dashboard/` | Vẫn `IsAdmin`, chuyển ở G2 |

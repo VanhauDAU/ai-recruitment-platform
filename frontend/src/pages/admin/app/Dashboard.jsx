@@ -1,12 +1,10 @@
 import {
   AppstoreOutlined,
-  ContactsOutlined,
   FileDoneOutlined,
   FileTextOutlined,
   KeyOutlined,
   SafetyCertificateOutlined,
   SettingOutlined,
-  SolutionOutlined,
   TeamOutlined,
 } from '@ant-design/icons'
 import { Link, useOutletContext } from 'react-router'
@@ -20,9 +18,7 @@ const ICONS = {
   access: <KeyOutlined />,
   cv: <FileTextOutlined />,
   dashboard: <AppstoreOutlined />,
-  leads: <ContactsOutlined />,
   moderation: <FileDoneOutlined />,
-  services: <SolutionOutlined />,
   settings: <SettingOutlined />,
   shield: <SafetyCertificateOutlined />,
 }

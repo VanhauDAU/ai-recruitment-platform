@@ -1,6 +1,5 @@
 import re
 
-from django.conf import settings
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -14,11 +13,9 @@ from rest_framework.views import APIView
 from apps.accounts.permissions import IsCandidate
 from apps.cvs.models import UserCv
 from apps.privacy.services import load_consent
-from apps.services.services import record_job_promotion_metrics
 from common.metrics import record_metric
 
 from ...models import Job, SavedJob
-from ...selectors.distribution import distribute_sponsored_job_page
 from ...selectors.homepage import (
     DEFAULT_BEST_JOBS_ROTATION_SEED,
     build_homepage_best_jobs_queryset,
@@ -30,7 +27,6 @@ from ...selectors.listing import (
     publicly_available_job_filter,
     suggest_job_search_terms,
 )
-from ...selectors.presentation import prime_effective_service_presentations
 from ...selectors.recommendations import (
     RecommendationConsentRequired,
     recommend_jobs_for_candidate,
@@ -57,19 +53,6 @@ from ..serializers import (
 class JobListView(generics.ListAPIView):
     permission_classes = [permissions.AllowAny]
 
-    RANKING_SEED_PATTERN = re.compile(r'^[A-Za-z0-9_-]{1,64}$')
-
-    def _snapshot_at(self):
-        if not hasattr(self, '_job_list_snapshot_at'):
-            self._job_list_snapshot_at = timezone.now()
-        return self._job_list_snapshot_at
-
-    def _ranking_seed(self):
-        ranking_seed = self.request.query_params.get('ranking_seed', '')
-        if ranking_seed and not self.RANKING_SEED_PATTERN.fullmatch(ranking_seed):
-            raise ValidationError({'ranking_seed': 'Invalid ranking seed.'})
-        return ranking_seed
-
     def get_serializer_class(self):
         return (
             PublicJobPreviewSerializer
@@ -81,50 +64,6 @@ class JobListView(generics.ListAPIView):
         return build_job_list_queryset(
             self.request.query_params,
             include_preview=self.request.query_params.get('view') == 'preview',
-            at=self._snapshot_at(),
-        )
-
-    def list(self, request, *args, **kwargs):
-        explicit_ordering = bool(request.query_params.get('ordering'))
-        if (
-            not getattr(settings, 'SPONSORED_JOB_DISTRIBUTION_ENABLED', False)
-            or not getattr(settings, 'JOB_PRESENTATION_V2_ENABLED', False)
-            or explicit_ordering
-        ):
-            return super().list(request, *args, **kwargs)
-
-        queryset = self.filter_queryset(self.get_queryset())
-        paginator = self.paginator
-        page_size = paginator.get_page_size(request) if paginator else 20
-        try:
-            page_number = int(request.query_params.get('page', 1))
-        except (TypeError, ValueError):
-            page_number = 1
-        ranking_seed = self._ranking_seed()
-        distributed = distribute_sponsored_job_page(
-            queryset,
-            page=page_number,
-            page_size=page_size,
-            at=self._snapshot_at(),
-            ranking_seed=ranking_seed,
-        )
-        serializer = self.get_serializer(distributed.items, many=True)
-        query = request.query_params.copy()
-
-        def page_url(number):
-            if number < 1 or number > distributed.total_pages:
-                return None
-            query['page'] = number
-            return request.build_absolute_uri(f'{request.path}?{query.urlencode()}')
-
-        return Response(
-            {
-                'count': distributed.total,
-                'next': page_url(distributed.page + 1),
-                'previous': page_url(distributed.page - 1),
-                'ranking_seed': ranking_seed,
-                'results': serializer.data,
-            }
         )
 
 
@@ -285,7 +224,6 @@ def _serialize_recommendation_results(payload, request):
         context,
         {(item['job'].company_id, item['job'].posted_by_id) for item in payload['results']},
     )
-    prime_effective_service_presentations(item['job'] for item in payload['results'])
     results = []
     for item in payload['results']:
         serialized = PublicJobListSerializer(item['job'], context=context).data
@@ -399,8 +337,6 @@ class JobViewCreateView(APIView):
             )
 
         result = record_consented_job_view(request, job)
-        if result.get('counted'):
-            record_job_promotion_metrics(job_ids=[job.pk], event='view')
         viewer_id = result.pop('viewer_id', None)
         response = Response(result)
         set_viewer_cookie(response, viewer_id)
@@ -451,11 +387,6 @@ class JobImpressionBatchCreateView(APIView):
         jobs = [jobs_by_slug[slug] for slug in slugs if slug in jobs_by_slug]
         record_metric('job_impression_batch_size', len(slugs), reason='accepted')
         result = record_consented_job_impressions(request, jobs)
-        counted_slugs = {item['slug'] for item in result['results'] if item.get('counted')}
-        record_job_promotion_metrics(
-            job_ids=[job.pk for job in jobs if job.slug in counted_slugs],
-            event='impression',
-        )
         tracked_by_slug = {item['slug']: item for item in result['results']}
         response = Response(
             {
@@ -504,7 +435,6 @@ class SavedJobListCreateView(generics.ListCreateAPIView):
             context,
             {(saved.job.company_id, saved.job.posted_by_id) for saved in saved_jobs},
         )
-        prime_effective_service_presentations(saved.job for saved in saved_jobs)
         return Response(self.get_serializer(saved_jobs, many=True, context=context).data)
 
     def perform_create(self, serializer):

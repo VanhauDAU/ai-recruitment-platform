@@ -58,7 +58,6 @@ const ROUTES = Object.freeze({
     ['Trang chủ nhà tuyển dụng', '', ANNOUNCEMENT_ROUTE_ACCESS.PUBLIC],
     ['Giới thiệu', '/gioi-thieu', ANNOUNCEMENT_ROUTE_ACCESS.PUBLIC],
     ['Dịch vụ', '/dich-vu', ANNOUNCEMENT_ROUTE_ACCESS.PUBLIC],
-    ['Báo giá', '/bao-gia', ANNOUNCEMENT_ROUTE_ACCESS.PUBLIC],
     ['Liên hệ', '/lien-he', ANNOUNCEMENT_ROUTE_ACCESS.PUBLIC],
   ],
   [ANNOUNCEMENT_SURFACES.EMPLOYER_WORKSPACE]: [

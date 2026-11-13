@@ -124,51 +124,6 @@ ADMIN_DEPARTMENTS = (
             },
         ),
     },
-    {
-        'code': 'employer-services',
-        'name': 'Dịch vụ nhà tuyển dụng',
-        'description': 'Quản lý dịch vụ và lead tư vấn của nhà tuyển dụng.',
-        'roles': (
-            {
-                'code': 'staff',
-                'name': 'Nhân viên',
-                'description': 'Theo dõi catalogue dịch vụ và xử lý lead tư vấn.',
-                'rank': 10,
-                'permissions': (
-                    'dashboard.view',
-                    'company.view',
-                    'company_recruiter.view',
-                    'service_catalog.view',
-                    'service_entitlement.view',
-                    'service_audit.view',
-                    'consultation_lead.view',
-                    'consultation_lead.manage',
-                ),
-            },
-            {
-                'code': 'manager',
-                'name': 'Trưởng phòng',
-                'description': 'Quản lý catalogue dịch vụ và hoạt động tư vấn.',
-                'rank': 100,
-                'permissions': (
-                    'dashboard.view',
-                    'company.view',
-                    'company.sensitive.view',
-                    'company_recruiter.view',
-                    'service_catalog.view',
-                    'service_catalog.manage',
-                    'service_catalog.draft.manage',
-                    'service_catalog.publish',
-                    'service_entitlement.view',
-                    'service_entitlement.manage',
-                    'service_audit.view',
-                    'consultation_lead.view',
-                    'consultation_lead.export',
-                    'consultation_lead.manage',
-                ),
-            },
-        ),
-    },
 )
 
 

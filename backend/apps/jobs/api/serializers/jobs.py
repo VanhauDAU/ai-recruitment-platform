@@ -939,21 +939,12 @@ class EmployerJobLifecyclePolicySerializer(serializers.Serializer):
     timezone = serializers.CharField()
 
 
-class EmployerJobServicesContextSerializer(serializers.Serializer):
-    catalog_v2_enabled = serializers.BooleanField()
-    activation_enabled = serializers.BooleanField()
-    refresh_enabled = serializers.BooleanField()
-    alert_enabled = serializers.BooleanField()
-    metrics_enabled = serializers.BooleanField()
-
-
 class EmployerJobPostingContextSerializer(serializers.Serializer):
     default_deadline_days = serializers.IntegerField(min_value=1)
     max_deadline_days = serializers.IntegerField(min_value=1)
     max_public_lifetime_days = serializers.IntegerField(min_value=1)
     lifecycle_policy = EmployerJobLifecyclePolicySerializer()
     responsibility_statement = JobResponsibilityStatementSerializer()
-    services = EmployerJobServicesContextSerializer()
     verification_completed = serializers.BooleanField()
     admin_approved = serializers.BooleanField()
     account_level = serializers.IntegerField(min_value=0)

@@ -458,13 +458,6 @@ def employer_job_posting_context(user):
             'version': RESPONSIBILITY_STATEMENT_VERSION,
             'text': RESPONSIBILITY_STATEMENT_TEXT,
         },
-        'services': {
-            'catalog_v2_enabled': bool(getattr(settings, 'SERVICE_CATALOG_V2_ENABLED', False)),
-            'activation_enabled': bool(getattr(settings, 'SERVICE_ACTIVATION_ENABLED', False)),
-            'refresh_enabled': bool(getattr(settings, 'JOB_PROMOTION_REFRESH_ENABLED', False)),
-            'alert_enabled': bool(getattr(settings, 'JOB_PROMOTION_ALERT_ENABLED', False)),
-            'metrics_enabled': bool(getattr(settings, 'JOB_PROMOTION_METRICS_ENABLED', False)),
-        },
         'verification_completed': entitlement['verification_completed'],
         'admin_approved': entitlement['admin_approved'],
         'account_level': entitlement['account_level'],

@@ -6,9 +6,6 @@ import JobDetail from './JobDetail'
 
 const mocks = vi.hoisted(() => ({
   getEmployerJob: vi.fn(),
-  getEmployerActiveServices: vi.fn(),
-  getEmployerServiceHistory: vi.fn(),
-  getEmployerServiceInventory: vi.fn(),
   getJobPostingContext: vi.fn(),
   getRecruiterApplications: vi.fn(),
   reopenEmployerJob: vi.fn(),
@@ -52,16 +49,6 @@ vi.mock('@/entities/job', () => ({
 vi.mock('@/entities/employer-profile', async (importOriginal) => ({
   ...await importOriginal(),
   useEmployerReadiness: () => mocks.readinessState,
-}))
-vi.mock('@/entities/service-package', () => ({
-  activateEmployerService: vi.fn(),
-  createEmployerJobAlert: vi.fn(),
-  getEmployerActiveServices: mocks.getEmployerActiveServices,
-  getEmployerServiceHistory: mocks.getEmployerServiceHistory,
-  getEmployerServiceInventory: mocks.getEmployerServiceInventory,
-  previewEmployerJobAlert: vi.fn(),
-  previewEmployerServiceActivation: vi.fn(),
-  refreshEmployerJobService: vi.fn(),
 }))
 vi.mock('./JobApplicationsWorkspace', () => ({
   default: ({ applications }) => (
@@ -118,16 +105,7 @@ describe('JobDetail candidate-data boundary', () => {
       default_deadline_days: 30,
       max_deadline_days: 90,
       max_public_lifetime_days: 90,
-      services: {
-        activation_enabled: false,
-        refresh_enabled: false,
-        alert_enabled: false,
-        metrics_enabled: false,
-      },
     })
-    mocks.getEmployerActiveServices.mockReset().mockResolvedValue([])
-    mocks.getEmployerServiceHistory.mockReset().mockResolvedValue({ count: 0, results: [] })
-    mocks.getEmployerServiceInventory.mockReset().mockResolvedValue([])
     mocks.getRecruiterApplications.mockReset().mockResolvedValue([{
       public_id: 'application_1',
       candidate_name: 'Nguyễn Minh Anh',
@@ -243,41 +221,10 @@ describe('JobDetail candidate-data boundary', () => {
     expect(screen.getByText('Dữ liệu ứng viên đang được bảo vệ')).toBeInTheDocument()
   })
 
-  it('shows active paid-service attribution in the dedicated job tab', async () => {
-    mocks.getJobPostingContext.mockResolvedValue({
-      default_deadline_days: 30,
-      max_deadline_days: 90,
-      max_public_lifetime_days: 90,
-      services: {
-        activation_enabled: true,
-        refresh_enabled: false,
-        alert_enabled: false,
-        metrics_enabled: true,
-      },
-    })
-    mocks.getEmployerServiceHistory.mockResolvedValue({ count: 1, results: [{
-      public_id: 'jsa_featured',
-      package_name: 'Tin nổi bật 14 ngày',
-      job_public_id: 'job_1',
-      job_title: 'Kỹ sư Frontend',
-      job_status: 'active',
-      status: 'active',
-      starts_at: '2026-08-13T00:00:00Z',
-      ends_at: '2026-08-27T00:00:00Z',
-      items: [{ capability: 'sponsored_placement', name: 'Vị trí tài trợ', quantity: 1, remaining_quantity: 1 }],
-      metrics: { available: true, impressions: 420, views: 35, saves: 8, applies: 3 },
-    }] })
-
+  it('falls back to the CV tab for an unknown active_tab', async () => {
     renderPage('services')
 
-    expect(await screen.findByText('Tin nổi bật 14 ngày')).toBeVisible()
-    fireEvent.click(screen.getByText('Chi tiết', { exact: true }).closest('button'))
-    expect(screen.getByText('420')).toBeVisible()
-    expect(screen.getByText(/không phải mức tăng thuần/i)).toBeVisible()
-    expect(mocks.getEmployerServiceHistory).toHaveBeenCalledWith({
-      job_public_id: 'job_1',
-      ordering: '-starts_at',
-      page_size: 100,
-    })
+    expect(await screen.findByText('Dữ liệu ứng viên đang được bảo vệ')).toBeInTheDocument()
+    expect(screen.queryByText('Dịch vụ & hiệu quả')).not.toBeInTheDocument()
   })
 })

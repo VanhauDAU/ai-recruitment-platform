@@ -493,43 +493,23 @@ app/router + app/layouts
   ánh quyết định tạm ẩn nội dung. Tin có một trong hai hold không được xuất hiện
   ở bất kỳ bề mặt công khai nào, nhưng vẫn hiện trong workspace quản trị.
 
-## Ownership map — Catalogue và yêu cầu tư vấn quản trị
+## Ownership map — Catalogue CV quản trị
 
 ```text
-pages/admin/app/ConsultationLeads
-  → widgets/admin-consultation-leads
-    → entities/consultation-lead + entities/admin-access + entities/session
-      → shared/api, shared/ui
-
-pages/admin/app/EmployerServices + CvCatalogue
-  → widgets/admin-service-catalog + widgets/admin-cv-catalogue
-    → entities/service-package + entities/cv-template + entities/locale
+pages/admin/app/CvCatalogue
+  → widgets/admin-cv-catalogue
+    → entities/cv-template + entities/locale
       → shared/api, shared/ui
 ```
 
 - Page chỉ compose page header và widget; filter, tab, bảng, editor và mutation
   thuộc widget sở hữu workflow.
-- Danh sách lead dùng URL làm nguồn chuẩn cho tìm kiếm, trạng thái, khoảng ngày,
-  ordering và page; filter/sort/phân trang chạy phía server. Xuất lead phải qua
-  endpoint riêng, đồng thời kiểm tra `consultation_lead.view` và
-  `consultation_lead.export`, giới hạn số dòng và ghi audit không chứa PII.
-- Catalogue dịch vụ và CV hiện là contract không phân trang nên widget chỉ
-  search/sort dữ liệu đã tải. CSV phía client phải ghi rõ phạm vi tab/dữ liệu
-  đang hiển thị; không được gọi đó là xuất toàn bộ dữ liệu hệ thống.
-- `entities/service-package` sở hữu cả contract marketing tương thích và
-  contract thương mại có cấu trúc: capability đóng, package version, entitlement
-  và audit. `widgets/admin-service-catalog` tách tab catalogue marketing khỏi
-  tab phiên bản vận hành; publish không sửa version cũ. Kho lượt và audit phân
-  trang/sort phía server, còn danh sách version của một catalogue nhỏ tiếp tục
-  là contract không phân trang.
-- `entities/service-package` cũng sở hữu contract kho lượt, dịch vụ đang chạy và
-  sự kiện sử dụng quyền lợi của NTD. `features/post-job` chỉ compose preview,
-  kích hoạt và xác nhận làm mới tại mục dịch vụ; làm mới tiêu thụ ledger riêng,
-  không được sửa `published_at`, hạn nhận hồ sơ hoặc vòng đời của tin.
-- Quyền admin tách `service_catalog.draft.manage`, `service_catalog.publish`,
-  `service_entitlement.view|manage` và `service_audit.view`; ẩn nút ở frontend
-  chỉ là UX, backend luôn kiểm tra từng mutation. HOT, RED, huy hiệu phản hồi
-  nhanh và title 255 không xuất hiện trong capability thương mại.
+- Catalogue CV hiện là contract không phân trang nên widget chỉ search/sort dữ
+  liệu đã tải. CSV phía client phải ghi rõ phạm vi tab/dữ liệu đang hiển thị;
+  không được gọi đó là xuất toàn bộ dữ liệu hệ thống.
+- Dịch vụ thương mại (gói, kho lượt, kích hoạt, job alert trả phí, remarketing
+  tin đã lưu, lead tư vấn) đã bị gỡ khỏi cả backend và frontend theo ADR-0015.
+  Nhãn `tier`/HOT/gấp/flash badge của tin vẫn thuộc `entities/job`.
 - Upload hình nền CV là asset workflow, không phải bulk import. Không hiển thị
   nút nhập dữ liệu cho tới khi có contract dry-run, validate, idempotency,
   permission và audit phía server.
@@ -674,14 +654,15 @@ pages/employer/app/campaigns/CampaignList|CampaignDetail
 - i18next chỉ được khởi tạo từ `EmployerMarketingLayout`; không import
   `@/shared/config/i18n` vào `AppProviders`, main portal hoặc admin portal để
   tránh kéo runtime và resource song ngữ vào các chunk không dùng.
-- Namespace `employer` sở hữu toàn bộ copy của 5 trang marketing. Nội dung lấy
-  từ database dùng cột đôi `*_vi`/`*_en` và helper `pickLocalized`; tiếng Anh
-  rỗng hoặc mảng rỗng phải fallback về tiếng Việt.
+- Namespace `employer` sở hữu toàn bộ copy của 4 trang marketing (trang chủ,
+  giới thiệu, dịch vụ, liên hệ) và trang pháp lý. Nội dung song ngữ lấy từ site
+  settings đọc trường theo ngôn ngữ; giá trị tiếng Anh rỗng phải fallback về
+  tiếng Việt.
 - Lựa chọn ngôn ngữ được lưu bằng key `employer_marketing_lang`, không thay đổi
   URL. Route, API payload, auth guard và portal host vẫn dùng contract hiện có.
-- Page marketing chỉ compose section; workflow gửi lead nằm ở
-  `features/request-consultation`, domain gói/giá ở
-  `entities/service-package`, footer lớn ở `widgets/employer-footer`.
+- Page marketing chỉ compose section; footer lớn ở `widgets/employer-footer`.
+  Cổng marketing không có bảng giá hay form lead; CTA dẫn tới đăng ký nhà tuyển
+  dụng hoặc `/lien-he`.
 
 ## Ownership map — Auth và onboarding nhà tuyển dụng
 
@@ -757,9 +738,9 @@ app/router + EmployerAuthLayout|EmployerSetupLayout|EmployerWorkspaceLayout
   các action mở route account nội bộ và tin đầu tiên chỉ bật sau khi đủ năm điều
   kiện trước đó. Submit consulting đi tới checklist; direct navigation lại
   `/consulting-need` ở state `complete` phải về dashboard.
-- `EmployerWorkspaceLayout` chiếm đúng `100dvh`; chỉ vùng `Content` cuộn. Link
-  dịch vụ/bảng giá chưa có workflow quản trị phải disabled trong workspace,
-  không điều hướng sang landing page marketing.
+- `EmployerWorkspaceLayout` chiếm đúng `100dvh`; chỉ vùng `Content` cuộn. Mục
+  menu chưa có workflow phải disabled trong workspace, không điều hướng sang
+  landing page marketing.
 - Login/register/recovery employer dùng `EmployerAuthLayout` và route helper
   `employerAppPath`; không hardcode host, token key hoặc điều hướng sang cổng
   candidate.

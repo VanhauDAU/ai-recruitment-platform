@@ -35,7 +35,6 @@ export default function PostJobForm({
   campaigns = [],
   categories = [],
   postingContext,
-  serviceContent,
   defaultDeadlineDays,
   maxDeadlineDays,
   isDraft,
@@ -56,7 +55,7 @@ export default function PostJobForm({
   const initializedFormRef = useRef(null)
   const appliedAiSuggestionRef = useRef(null)
   const [activeSection, setActiveSection] = useState('general')
-  const [openSections, setOpenSections] = useState(() => new Set(['general', 'description', 'expectations', 'application', 'services']))
+  const [openSections, setOpenSections] = useState(() => new Set(['general', 'description', 'expectations', 'application']))
   const [invalidSections, setInvalidSections] = useState(() => new Set())
   const [invalidFieldNames, setInvalidFieldNames] = useState(() => new Set())
   const provincesQuery = useQuery({ queryKey: ['locations', 'provinces'], queryFn: getProvinces })
@@ -267,25 +266,9 @@ export default function PostJobForm({
             />
             <AutomaticApplicationStatusFields />
           </JobFormSection>
-          <JobFormSection
-            id="services"
-            number={5}
-            title="Dịch vụ và gia tăng hiệu quả"
-            progress={sections[4]}
-            invalid={invalidSections.has('services')}
-            open={openSections.has('services')}
-            active={activeSection === 'services'}
-            onToggle={() => toggleSection('services')}
-          >
-            {serviceContent}
-          </JobFormSection>
 
           {isDraft && (
             <div className="rounded-lg border border-slate-200 bg-white p-4">
-              <p className="text-xs leading-5 text-slate-500">
-                Tin hiển thị với ứng viên ngay khi bạn đăng, không qua bước duyệt trước. Tin bị báo
-                cáo vi phạm có thể bị quản trị viên tạm ẩn.
-              </p>
               {responsibilityStatement ? (
                 <Form.Item
                   name="responsibility_accepted"

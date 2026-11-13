@@ -54,10 +54,6 @@ if JOB_LIFECYCLE_V2_MODE not in {'legacy', 'shadow', 'enforce'}:
     _errors.append('JOB_LIFECYCLE_V2_MODE phải là legacy, shadow hoặc enforce.')
 if EMPLOYER_BADGE_POLICY_MODE not in {'shadow', 'enforce'}:
     _errors.append('EMPLOYER_BADGE_POLICY_MODE phải là shadow hoặc enforce.')
-if not 1 <= JOB_PROMOTION_ALERT_SELECTION_BATCH_SIZE <= 1000:
-    _errors.append('JOB_PROMOTION_ALERT_SELECTION_BATCH_SIZE phải từ 1 đến 1000.')
-if not 7 <= SAVED_JOB_REMARKETING_RETENTION_DAYS <= 365:
-    _errors.append('SAVED_JOB_REMARKETING_RETENTION_DAYS phải từ 7 đến 365 ngày.')
 
 _ai_provider_backends = {'gemini_developer', 'vertex'}
 if AI_PROVIDER_BACKEND not in _ai_provider_backends:

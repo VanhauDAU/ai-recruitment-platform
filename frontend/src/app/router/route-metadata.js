@@ -15,7 +15,6 @@ const EMPLOYER_MARKETING_SEGMENTS = [
   '',
   '/gioi-thieu',
   '/dich-vu',
-  '/bao-gia',
   '/lien-he',
   '/dieu-khoan-dich-vu',
   '/chinh-sach-quyen-rieng',
