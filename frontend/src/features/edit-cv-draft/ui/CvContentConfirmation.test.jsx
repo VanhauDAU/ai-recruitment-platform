@@ -24,7 +24,7 @@ describe('CV content confirmations', () => {
     })
     mocks.getCvTemplate.mockResolvedValue({ sections: [{ section_key: 'summary' }] })
     mocks.getCvSampleContents.mockResolvedValue([
-      { public_id: 'sample-1', title: 'Nội dung Marketing', position_name_vi: 'Marketing Executive' },
+      { public_id: 'sample-1', title: 'Nội dung Marketing', position_name: 'Marketing Executive' },
     ])
   })
 

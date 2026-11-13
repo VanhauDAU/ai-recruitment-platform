@@ -102,13 +102,6 @@ export default function AccountVerificationSummary({ account }) {
             inactiveLabel="Chưa xác minh"
           />
         </Descriptions.Item>
-        <Descriptions.Item label="MFA">
-          <VerificationState
-            active={account.two_factor_enabled}
-            activeLabel="Đang bật"
-            inactiveLabel="Chưa bật"
-          />
-        </Descriptions.Item>
         <Descriptions.Item label="Phiên đang hoạt động">
           {account.active_session_count ?? 'Chưa xác định'}
         </Descriptions.Item>

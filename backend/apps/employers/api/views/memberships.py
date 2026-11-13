@@ -304,7 +304,7 @@ class JoinCompanyView(APIView):
     chỉnh sửa công ty. Hai nghiệp vụ sau có workflow duyệt riêng.
     """
 
-    # Liên kết không yêu cầu MFA/xác thực lại và không nhận giấy tờ.
+    # Liên kết không yêu cầu xác thực lại và không nhận giấy tờ.
     permission_classes = [IsEmployer]
     parser_classes = [parsers.MultiPartParser]
 

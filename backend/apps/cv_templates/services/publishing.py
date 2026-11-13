@@ -2,7 +2,7 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
 
-from ..models import CvContentBlueprint, CvSampleContent, CvTemplate, CvTemplateVersion
+from ..models import CvSampleContent, CvTemplate, CvTemplateVersion
 
 
 @transaction.atomic
@@ -57,12 +57,3 @@ def archive_sample(sample):
     sample.status = CvSampleContent.Status.ARCHIVED
     sample.save(update_fields=['status', 'updated_at'])
     return sample
-
-
-@transaction.atomic
-def activate_blueprint(blueprint):
-    blueprint = CvContentBlueprint.objects.select_for_update().get(pk=blueprint.pk)
-    blueprint.full_clean()
-    blueprint.is_active = True
-    blueprint.save(update_fields=['is_active', 'updated_at'])
-    return blueprint

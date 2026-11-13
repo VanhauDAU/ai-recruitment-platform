@@ -10,11 +10,12 @@ from ._admin_access import cli_actor_identifier, resolve_actor
 
 
 class Command(BaseCommand):
-    help = 'Bật email MFA cho admin được tạo từ createsuperuser.'
+    help = (
+        'Đánh dấu email đã xác thực cho admin được tạo từ CLI (createsuperuser/create_admin_user).'
+    )
 
     def add_arguments(self, parser):
         parser.add_argument('email')
-        parser.add_argument('--mark-email-verified', action='store_true')
         parser.add_argument('--actor-email')
         parser.add_argument('--no-input', action='store_true')
 
@@ -27,15 +28,13 @@ class Command(BaseCommand):
             raise CommandError(f'Không tìm thấy tài khoản admin hợp lệ: {email}.') from error
         if not is_account_accessible(user):
             raise CommandError('Tài khoản admin đang bị khoá hoặc không còn truy cập được.')
+        if user.email_verified:
+            self.stdout.write(f'Email {user.email} đã được xác thực trước đó.')
+            return
 
         actor = resolve_actor(options['actor_email'])
         actor_identifier = '' if actor else cli_actor_identifier()
-        if not user.email_verified and not options['mark_email_verified']:
-            raise CommandError(
-                f'Email chưa xác minh. Chạy lại: python manage.py bootstrap_admin_mfa {email} '
-                '--mark-email-verified --actor-email <superadmin>'
-            )
-        if not user.email_verified and options['mark_email_verified'] and not options['no_input']:
+        if not options['no_input']:
             self.stdout.write(
                 self.style.WARNING(
                     'Đây là thao tác tin cậy từ CLI, chỉ dùng khi bạn kiểm soát hộp thư này.'
@@ -58,26 +57,4 @@ class Command(BaseCommand):
                     target_public_id=user.public_id,
                     payload={'user_public_id': user.public_id, 'email': user.email},
                 )
-            user.two_factor_enabled = True
-            user.two_factor_email_enabled = True
-            user.save(
-                update_fields=[
-                    'two_factor_enabled',
-                    'two_factor_email_enabled',
-                    'updated_at',
-                ]
-            )
-            AdminAccessAuditLog.objects.create(
-                actor=actor,
-                source='management_command' if actor else 'seed',
-                actor_identifier=actor_identifier,
-                action='bootstrap_mfa',
-                target_type='user',
-                target_public_id=user.public_id,
-                payload={
-                    'user_public_id': user.public_id,
-                    'email': user.email,
-                    'method': 'email',
-                },
-            )
-        self.stdout.write(self.style.SUCCESS(f'Đã bật email MFA cho {user.email}.'))
+        self.stdout.write(self.style.SUCCESS(f'Đã đánh dấu email {user.email} là đã xác thực.'))

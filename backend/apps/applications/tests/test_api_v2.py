@@ -45,19 +45,16 @@ class RecruiterApplicationSnapshotV2Tests(APITestCase):
             email='snapshot-owner@example.com',
             password='password',
             role='employer',
-            two_factor_enabled=True,
         )
         self.member = get_user_model().objects.create_user(
             email='snapshot-member@example.com',
             password='password',
             role='employer',
-            two_factor_enabled=True,
         )
         self.outsider = get_user_model().objects.create_user(
             email='snapshot-outsider@example.com',
             password='password',
             role='employer',
-            two_factor_enabled=True,
         )
         self.company = Company.objects.create(
             company_name='Snapshot Company', created_by=self.owner
@@ -106,7 +103,7 @@ class RecruiterApplicationSnapshotV2Tests(APITestCase):
         save_draft_as_version(cv=self.cv, actor=self.candidate, expected_lock_version=1)
         self.assertEqual(CvVersion.objects.filter(cv=self.cv).count(), 3)
 
-        tokens = issue_tokens(self.owner, auth_method='mfa')
+        tokens = issue_tokens(self.owner, auth_method='password')
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + tokens['access'])
         response = self.client.get(
             reverse(
@@ -120,9 +117,7 @@ class RecruiterApplicationSnapshotV2Tests(APITestCase):
         self.assertEqual(response.data['cv']['content_json']['personal_info']['full_name'], '')
         self.assertNotIn('cv_data', response.data['cv'])
 
-    def test_job_poster_reads_candidate_snapshot_without_mfa(self):
-        self.owner.two_factor_enabled = False
-        self.owner.save(update_fields=['two_factor_enabled'])
+    def test_job_poster_reads_candidate_snapshot_with_password_session(self):
         tokens = issue_tokens(self.owner, auth_method='password')
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + tokens['access'])
 
@@ -190,7 +185,7 @@ class RecruiterApplicationSnapshotV2Tests(APITestCase):
         self.assertEqual(allowed.status_code, 200)
 
     def test_recruiter_outside_the_application_company_receives_404(self):
-        tokens = issue_tokens(self.outsider, auth_method='mfa')
+        tokens = issue_tokens(self.outsider, auth_method='password')
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + tokens['access'])
 
         response = self.client.get(
@@ -203,7 +198,7 @@ class RecruiterApplicationSnapshotV2Tests(APITestCase):
         self.assertEqual(response.status_code, 404)
 
     def test_company_member_cannot_read_the_posters_snapshot(self):
-        tokens = issue_tokens(self.member, auth_method='mfa')
+        tokens = issue_tokens(self.member, auth_method='password')
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + tokens['access'])
 
         response = self.client.get(
@@ -230,7 +225,7 @@ class RecruiterApplicationSnapshotV2Tests(APITestCase):
         self.assertIsNone(self.snapshot.cv_id)
 
         self.client.force_authenticate(user=None)
-        tokens = issue_tokens(self.owner, auth_method='mfa')
+        tokens = issue_tokens(self.owner, auth_method='password')
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + tokens['access'])
         snapshot_response = self.client.get(
             reverse(

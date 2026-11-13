@@ -40,16 +40,26 @@ function SourceOption({ value, current, onSelect, title, note, disabled, childre
   )
 }
 
-export default function CvSourcePanel({ template, locale = 'vi-VN', themeColor, onCreated, onBack, onPreviewChange, onRequireLogin }) {
+// Cha phải đặt `key={`${template.public_id}:${locale}`}` để panel mount lại khi đổi mẫu/ngôn ngữ.
+export default function CvSourcePanel({
+  template,
+  locale = 'vi-VN',
+  themeColor,
+  initialSelection,
+  onSelectionChange,
+  onCreated,
+  onBack,
+  onPreviewChange,
+  onRequireLogin,
+}) {
   const { siteName } = useSiteSettings()
   const {
-    locales,
+    languages,
     source,
     setSource,
     myCvs,
     selectedCvId,
     setSelectedCvId,
-    recoverable,
     sampleLocale,
     setSampleLocale,
     positions,
@@ -60,6 +70,7 @@ export default function CvSourcePanel({ template, locale = 'vi-VN', themeColor, 
     setSelectedPosition,
     submitting,
     setUploadFile,
+    clearUpload,
     importCvId,
     importError,
     uploadState,
@@ -67,12 +78,61 @@ export default function CvSourcePanel({ template, locale = 'vi-VN', themeColor, 
     canSubmit,
     retryUpload,
     submit,
-  } = useCvSource({ template, locale, themeColor, onCreated, onPreviewChange, onRequireLogin })
+  } = useCvSource({
+    template,
+    locale,
+    themeColor,
+    initialSelection,
+    onSelectionChange,
+    onCreated,
+    onPreviewChange,
+    onRequireLogin,
+  })
   const uploadStateMeta = getUploadStatePresentation(uploadState)
 
   return (
     <>
       <div className="flex-1 space-y-2.5 overflow-y-auto pr-1">
+        <SourceOption value="sample" current={source} onSelect={setSource} title={`Nội dung CV mẫu ${siteName} gợi ý`}>
+          <div>
+            <p className="mb-1.5 text-xs font-semibold text-slate-700">Chọn ngôn ngữ</p>
+            <div className="flex flex-wrap gap-1.5">
+              {languages.map((item) => (
+                <button
+                  key={item.code}
+                  type="button"
+                  onClick={() => setSampleLocale(item.code)}
+                  className={[
+                    'rounded-full px-3 py-1 text-xs font-medium transition cursor-pointer',
+                    sampleLocale === item.code
+                      ? 'bg-[var(--brand-primary)] text-white'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200',
+                  ].join(' ')}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+            <p className="mb-1.5 mt-3 text-xs font-semibold text-slate-700">Chọn vị trí</p>
+            <Select
+              showSearch
+              virtual={false}
+              className="w-full"
+              placeholder="Nhập để tìm kiếm vị trí"
+              loading={loadingPositions || loadingPreview}
+              value={selectedPosition}
+              onChange={(val) => setSelectedPosition(val)}
+              optionFilterProp="label"
+              notFoundContent={loadingPositions ? <Spin size="small" /> : 'Không tìm thấy vị trí chuyên môn'}
+              options={positions.map((position) => ({
+                value: position.public_id,
+                label: position.display_name || position.name_vi,
+              }))}
+            />
+            {previewError && <p className="mt-1.5 text-xs leading-5 text-amber-600">{previewError}</p>}
+          </div>
+        </SourceOption>
+
         {myCvs.length > 0 && (
           <SourceOption value="previous" current={source} onSelect={setSource} title="Nội dung CV đã tạo trước đó">
             <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
@@ -107,46 +167,6 @@ export default function CvSourcePanel({ template, locale = 'vi-VN', themeColor, 
           </SourceOption>
         )}
 
-        <SourceOption value="sample" current={source} onSelect={setSource} title={`Nội dung CV mẫu ${siteName} gợi ý`}>
-          <div>
-            <p className="mb-1.5 text-xs font-semibold text-slate-700">Chọn ngôn ngữ</p>
-            <div className="flex flex-wrap gap-1.5">
-              {locales.map((item) => (
-                <button
-                  key={item.code}
-                  type="button"
-                  onClick={() => setSampleLocale(item.code)}
-                  className={[
-                    'rounded-full px-3 py-1 text-xs font-medium transition cursor-pointer',
-                    sampleLocale === item.code
-                      ? 'bg-[var(--brand-primary)] text-white'
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200',
-                  ].join(' ')}
-                >
-                  {item.label_vi}
-                </button>
-              ))}
-            </div>
-            <p className="mb-1.5 mt-3 text-xs font-semibold text-slate-700">Chọn vị trí</p>
-            <Select
-              showSearch
-              virtual={false}
-              className="w-full"
-              placeholder="Nhập để tìm kiếm vị trí"
-              loading={loadingPositions || loadingPreview}
-              value={selectedPosition}
-              onChange={(val) => setSelectedPosition(val)}
-              optionFilterProp="label"
-              notFoundContent={loadingPositions ? <Spin size="small" /> : 'Không tìm thấy vị trí chuyên môn'}
-              options={positions.map((position) => ({
-                value: position.public_id,
-                label: position.display_name || position.name_vi,
-              }))}
-            />
-            {previewError && <p className="mt-1.5 text-xs leading-5 text-amber-600">{previewError}</p>}
-          </div>
-        </SourceOption>
-
         <SourceOption
           value="upload"
           current={source}
@@ -160,7 +180,7 @@ export default function CvSourcePanel({ template, locale = 'vi-VN', themeColor, 
               accept=".pdf,.docx"
               maxCount={1}
               beforeUpload={(file) => { setUploadFile(file); setImportError(''); return false }}
-              onRemove={() => { setUploadFile(null); setImportCvId(null); setImportError('') }}
+              onRemove={clearUpload}
             >
               <p className="ant-upload-drag-icon"><InboxOutlined /></p>
               <p className="px-2 text-sm">Chọn hoặc kéo thả tệp CV vào đây</p>
@@ -179,17 +199,6 @@ export default function CvSourcePanel({ template, locale = 'vi-VN', themeColor, 
         </SourceOption>
 
         <SourceOption
-          value="restore"
-          current={source}
-          onSelect={setSource}
-          title="Khôi phục bản chưa lưu"
-          note={recoverable?.cv?.draft_updated_at
-            ? `Tiếp tục bản gần nhất lúc ${new Date(recoverable.cv.draft_updated_at).toLocaleString('vi-VN')}`
-            : 'Không có bản đang chỉnh sửa cần khôi phục'}
-          disabled={!recoverable}
-        />
-
-        <SourceOption
           value="blank"
           current={source}
           onSelect={setSource}
@@ -205,7 +214,7 @@ export default function CvSourcePanel({ template, locale = 'vi-VN', themeColor, 
           onClick={submit}
           className="w-full rounded-lg bg-[var(--brand-primary)] py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--brand-primary-hover)] disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 cursor-pointer"
         >
-          {submitting ? 'Đang xử lý…' : (source === 'restore' ? 'Tiếp tục chỉnh sửa' : (source === 'upload' ? 'Phân tích và tạo CV' : 'Tạo CV'))}
+          {submitting ? 'Đang xử lý…' : (source === 'upload' ? 'Phân tích và tạo CV' : 'Tạo CV')}
         </button>
 
         {onBack && (

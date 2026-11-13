@@ -181,15 +181,6 @@ export default function AccountTable({
       ),
     },
     {
-      title: 'MFA',
-      dataIndex: 'two_factor_enabled',
-      key: 'two_factor_enabled',
-      width: 125,
-      sorter: true,
-      sortOrder: sortOrder(ordering, 'two_factor_enabled'),
-      render: (value) => <Tag color={value ? 'green' : 'default'}>{value ? 'Đang bật' : 'Chưa bật'}</Tag>,
-    },
-    {
       title: 'Hoạt động gần nhất',
       dataIndex: 'last_activity_at',
       key: 'last_session_seen_at',

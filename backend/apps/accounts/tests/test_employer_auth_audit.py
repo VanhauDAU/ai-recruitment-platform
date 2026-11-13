@@ -6,7 +6,6 @@ biết bối cảnh từng mục (A1, A2, ...).
 """
 
 import inspect
-from time import time
 from unittest.mock import patch
 
 from django.core.cache import cache
@@ -20,7 +19,6 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from common.security import AuthCookieOriginMiddleware
 
 from ..models import AuthSession, User
-from ..services import two_factor
 from ..services.refresh_cookies import cookie_name
 from ..services.tokens import issue_tokens
 
@@ -196,84 +194,6 @@ class LoginUserEnumerationTests(APITestCase):
         )
 
 
-@override_settings(
-    RECAPTCHA_SECRET_KEY='',
-    DEBUG=True,
-    CACHES=LOCMEM_CACHE,
-    TWO_FACTOR_CODE_TTL=180,
-    REST_FRAMEWORK=rest_framework_with_rates(login='1000/min', two_factor_verify='1000/min'),
-)
-class TwoFactorLoginBruteForceTests(APITestCase):
-    """A2 — mọi phương thức MFA phải bị giới hạn số lần nhập sai, không riêng email."""
-
-    def setUp(self):
-        cache.clear()
-        self.employer = User.objects.create_user(
-            email='mfa-recruiter@example.com',
-            password=PASSWORD,
-            role=User.Role.EMPLOYER,
-        )
-        self.secret = two_factor.generate_totp_secret()
-        self.employer.two_factor_totp_secret = two_factor.encrypt_totp_secret(self.secret)
-        self.employer.two_factor_enabled = True
-        self.employer.save(
-            update_fields=['two_factor_totp_secret', 'two_factor_enabled', 'updated_at']
-        )
-
-    def _start_challenge(self):
-        login = self.client.post(reverse('auth-login'), employer_login_payload(self.employer.email))
-        self.assertEqual(login.status_code, status.HTTP_202_ACCEPTED)
-        return login.data['challenge']
-
-    def _verify(self, challenge, code, method='totp'):
-        return self.client.post(
-            reverse('auth-two-factor-login-verify'),
-            {'challenge': challenge, 'code': code, 'method': method},
-        )
-
-    def _current_totp(self):
-        counter = int(time()) // two_factor.TOTP_PERIOD_SECONDS
-        return two_factor._totp_code(self.secret, counter)
-
-    def test_a_challenge_dies_after_too_many_wrong_totp_codes(self):
-        challenge = self._start_challenge()
-        for index in range(two_factor.MAX_VERIFY_ATTEMPTS):
-            wrong = self._verify(challenge, f'{index:06d}')
-            self.assertEqual(wrong.status_code, status.HTTP_400_BAD_REQUEST)
-
-        replayed = self._verify(challenge, self._current_totp())
-
-        self.assertEqual(
-            replayed.status_code,
-            status.HTTP_400_BAD_REQUEST,
-            'Challenge vẫn sống sau nhiều lần nhập sai TOTP nên có thể dò 6 chữ số.',
-        )
-        self.assertNotIn('access', replayed.data)
-
-    def test_a_challenge_dies_after_too_many_wrong_backup_codes(self):
-        codes = two_factor.replace_backup_codes(self.employer)
-        challenge = self._start_challenge()
-        for index in range(two_factor.MAX_VERIFY_ATTEMPTS):
-            self._verify(challenge, f'{index:08d}', method='backup')
-
-        replayed = self._verify(challenge, codes[0], method='backup')
-
-        self.assertEqual(replayed.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertNotIn('access', replayed.data)
-
-    def test_a_fresh_challenge_still_accepts_a_correct_code(self):
-        """Bộ đếm phải bám challenge, không được khoá vĩnh viễn tài khoản."""
-        first = self._start_challenge()
-        for index in range(two_factor.MAX_VERIFY_ATTEMPTS):
-            self._verify(first, f'{index:06d}')
-
-        second = self._start_challenge()
-        accepted = self._verify(second, self._current_totp())
-
-        self.assertEqual(accepted.status_code, status.HTTP_200_OK)
-        self.assertIn('access', accepted.data)
-
-
 @override_settings(RECAPTCHA_SECRET_KEY='', DEBUG=True, CACHES=LOCMEM_CACHE)
 class RefreshTokenReuseTests(APITestCase):
     """C1 — dùng lại refresh token đã xoay vòng là dấu hiệu bị trộm ⇒ giết phiên."""
@@ -356,7 +276,7 @@ class AuthCookieOriginCoverageTests(APITestCase):
         discovered = {name for name, _ in self._cookie_minting_routes()}
 
         self.assertLessEqual(
-            {'LoginView', 'RegisterView', 'TwoFactorLoginVerifyView', 'EmployerRegisterView'},
+            {'LoginView', 'RegisterView', 'EmployerRegisterView'},
             discovered,
         )
 

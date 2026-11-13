@@ -206,7 +206,6 @@ const membership = {
     public_id: 'user_1',
     email: 'staff@example.com',
     full_name: 'Nguyễn Văn A',
-    two_factor_enabled: false,
   },
   department: role.department,
   role: {
@@ -287,12 +286,11 @@ describe('AccessControl', () => {
     expect(api.getAdminMemberships).not.toHaveBeenCalled()
   })
 
-  it('shows the MFA warning in the superuser personnel tab', async () => {
+  it('shows staff and assignment controls in the superuser personnel tab', async () => {
     renderPage(true)
     fireEvent.click(await screen.findByRole('tab', { name: 'Nhân viên' }))
 
     expect(await screen.findByText('Nguyễn Văn A')).toBeInTheDocument()
-    expect(screen.getByText('Chưa bật MFA')).toBeInTheDocument()
     expect(screen.getByPlaceholderText('Tìm nhân viên hoặc chức danh')).toBeInTheDocument()
     expect(screen.getByLabelText('Gán chức danh')).toBeInTheDocument()
     expect(screen.getByLabelText('Đổi chức danh của Nguyễn Văn A')).toBeInTheDocument()
@@ -317,7 +315,7 @@ describe('AccessControl', () => {
     })
     expect(await screen.findByText('45 kết quả')).toBeInTheDocument()
     const membershipTable = screen.getByText('Nguyễn Văn A').closest('table')
-    expect(membershipTable.querySelectorAll('th.ant-table-column-has-sorters')).toHaveLength(6)
+    expect(membershipTable.querySelectorAll('th.ant-table-column-has-sorters')).toHaveLength(5)
     expect(within(membershipTable).getByRole('columnheader', { name: /Nhân viên/ }))
       .toHaveAttribute('aria-sort', 'ascending')
 

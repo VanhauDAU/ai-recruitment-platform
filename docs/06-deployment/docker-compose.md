@@ -71,7 +71,7 @@ docker compose exec backend sh -c "\
 ```
 
 `seed_cv_templates` dựng 10 mẫu CV (template + version đã publish + mapping
-section + localization 4 ngôn ngữ + danh mục + màu). Thêm `--snapshots` để xếp
+section + tên/mô tả tiếng Việt, tiếng Anh + danh mục + màu). Thêm `--snapshots` để xếp
 hàng render ảnh preview thật cho từng màu — cần worker Celery có WeasyPrint;
 không chạy thì catalogue dùng ảnh giữ chỗ theo màu chủ đạo.
 
@@ -86,14 +86,14 @@ Sau khi backend đã migrate, tạo bộ tài khoản quản trị demo bằng l
 docker compose exec backend python manage.py seed_admin_account_demo
 ```
 
-Lệnh chỉ chạy mặc định khi `DEBUG=True`, đặt lại mật khẩu và mã dự phòng demo
-mỗi lần chạy để môi trường local luôn đăng nhập được:
+Lệnh chỉ chạy mặc định khi `DEBUG=True`, đặt lại mật khẩu demo mỗi lần chạy để
+môi trường local luôn đăng nhập được:
 
-| Persona | Email | Mật khẩu | Mã dự phòng |
-| --- | --- | --- | --- |
-| Superuser | `admin-root@demo.local` | `AdminDemo123!` | `91000001` … `91000005` |
-| Nhân sự cấp tài khoản | `hr-provisioner@demo.local` | `AdminDemo123!` | `92000001` … `92000005` |
-| Nhân viên kiểm duyệt | `moderator-admin@demo.local` | `AdminDemo123!` | `93000001` … `93000005` |
+| Persona | Email | Mật khẩu |
+| --- | --- | --- |
+| Superuser | `admin-root@demo.local` | `AdminDemo123!` |
+| Nhân sự cấp tài khoản | `hr-provisioner@demo.local` | `AdminDemo123!` |
+| Nhân viên kiểm duyệt | `moderator-admin@demo.local` | `AdminDemo123!` |
 
 Persona Nhân sự có `account.admin.invite` và được whitelist cấp ba chức danh
 thường: kiểm duyệt, nội dung và chăm sóc khách hàng. Persona này không thể cấp
@@ -106,8 +106,7 @@ demo trên staging/production.
 # Migrate thủ công / tạo superuser
 docker compose exec backend python manage.py migrate
 docker compose exec backend python manage.py createsuperuser
-docker compose exec backend python manage.py bootstrap_admin_mfa <email> \
-  --mark-email-verified --no-input
+docker compose exec backend python manage.py verify_admin_email <email> --no-input
 
 # Backup DB
 docker compose exec db pg_dump -U postgres ai_career_coach > backup-$(date +%F).sql
@@ -167,6 +166,6 @@ mount; build cache chỉ hỗ trợ build nhanh và không được sử dụng 
   fonts Noto/DejaVu — render PDF tiếng Việt hoạt động trong container.
 - `scripts/check_all.sh` tự fallback chạy backend qua compose khi máy không có
   `backend/venv`.
-- `createsuperuser` + `bootstrap_admin_mfa` là break-glass có quyền máy chủ,
+- `createsuperuser` + `verify_admin_email` là break-glass có quyền máy chủ,
   không phải cách bật `/admin/` ở production. Mọi lần sử dụng phải có ticket và
   nhật ký vận hành.

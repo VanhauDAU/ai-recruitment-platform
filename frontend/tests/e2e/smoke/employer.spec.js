@@ -563,7 +563,7 @@ test('employer workspace: verification actions stay inside the 100vh app shell',
   await expectNoHorizontalOverflow(page)
 
   await page.goto('/tuyendung/app/account/settings/general-setting')
-  await expect(page.getByText('Xác thực 2 yếu tố', { exact: true })).toBeVisible()
+  await expect(page.getByText('Thông báo CV ứng tuyển', { exact: true })).toBeVisible()
   await expectNoHorizontalOverflow(page)
 
   await page.goto('/tuyendung/app/dashboard')

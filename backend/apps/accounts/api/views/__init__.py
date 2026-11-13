@@ -16,22 +16,6 @@ from .password_reset import (
     PasswordResetValidateView,
 )
 from .sessions import SessionListView, SessionRevokeOthersView, SessionRevokeView
-from .two_factor import (
-    EmployerBackupCodesGenerateView,
-    EmployerBackupCodesSendView,
-    EmployerTotpConfirmView,
-    EmployerTotpDisableView,
-    EmployerTotpSetupView,
-    EmployerTwoFactorMethodDisableSendView,
-    EmployerTwoFactorMethodDisableView,
-    EmployerTwoFactorMethodsView,
-    TwoFactorDisableConfirmView,
-    TwoFactorDisableSendView,
-    TwoFactorLoginResendView,
-    TwoFactorLoginVerifyView,
-    TwoFactorSetupConfirmView,
-    TwoFactorSetupSendView,
-)
 from .verification import ChangeEmailView, VerificationConfirmView, VerificationSendView
 
 __all__ = [
@@ -55,18 +39,4 @@ __all__ = [
     'SessionRevokeOthersView',
     'VerificationConfirmView',
     'VerificationSendView',
-    'TwoFactorLoginResendView',
-    'TwoFactorLoginVerifyView',
-    'EmployerBackupCodesGenerateView',
-    'EmployerBackupCodesSendView',
-    'EmployerTotpConfirmView',
-    'EmployerTotpDisableView',
-    'EmployerTotpSetupView',
-    'EmployerTwoFactorMethodDisableSendView',
-    'EmployerTwoFactorMethodDisableView',
-    'EmployerTwoFactorMethodsView',
-    'TwoFactorDisableConfirmView',
-    'TwoFactorDisableSendView',
-    'TwoFactorSetupConfirmView',
-    'TwoFactorSetupSendView',
 ]

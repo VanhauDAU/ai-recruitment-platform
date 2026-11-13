@@ -1,4 +1,5 @@
 from django.urls import path, re_path
+from django.views.generic import RedirectView
 
 from .api.views.seo import CvTemplateSeoShellView, CvTemplateSitemapView
 
@@ -9,16 +10,22 @@ urlpatterns = [
         name='seo-sitemap-cv-templates',
     ),
     re_path(
-        r'^(?P<catalog_path>mau-cv(?:-tieng-(?:anh|nhat|trung)))'
+        r'^(?P<catalog_path>mau-cv-tieng-anh)'
         r'(?:/chi-tiet/(?P<slug>[^/]+)|/(?P<category_slug>[^/]+))?$',
         CvTemplateSeoShellView.as_view(),
         name='seo-cv-template-localized',
     ),
+    # Kho mẫu tiếng Nhật/Trung và route locale động đã gỡ (CVT-0): chuyển
+    # vĩnh viễn về kho tiếng Việt, giữ nguyên slug mẫu nếu có.
     re_path(
-        r'^mau-cv/ngon-ngu/(?P<locale_code>[^/]+)'
-        r'(?:/chi-tiet/(?P<slug>[^/]+)|/(?P<category_slug>[^/]+))?$',
-        CvTemplateSeoShellView.as_view(),
-        name='seo-cv-template-dynamic-locale',
+        r'^(?:mau-cv-tieng-(?:nhat|trung)|mau-cv/ngon-ngu/[^/]+)/chi-tiet/(?P<slug>[^/]+)$',
+        RedirectView.as_view(url='/mau-cv/chi-tiet/%(slug)s', permanent=True),
+        name='seo-cv-template-removed-locale-detail',
+    ),
+    re_path(
+        r'^(?:mau-cv-tieng-(?:nhat|trung)|mau-cv/ngon-ngu/[^/]+)(?:/[^/]+)?$',
+        RedirectView.as_view(url='/mau-cv', permanent=True),
+        name='seo-cv-template-removed-locale',
     ),
     re_path(
         r'^mau-cv(?:/chi-tiet/(?P<slug>[^/]+)|/(?P<category_slug>[^/]+))?$',

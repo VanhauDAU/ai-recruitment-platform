@@ -26,7 +26,6 @@ from ...selectors import (
     candidate_cv_by_public_id,
     candidate_cv_versions_queryset,
     candidate_cvs_queryset,
-    latest_recoverable_cv,
 )
 from ...services import (
     CvExportPermissionError,
@@ -145,6 +144,7 @@ class CvV2ListCreateView(generics.ListCreateAPIView):
                 language=serializer.validated_data['language'],
                 sample_content=serializer.validated_data.get('sample_content_public_id'),
                 position=serializer.validated_data.get('position_public_id'),
+                experience_band=serializer.validated_data['experience_band'],
                 source_cv=serializer.validated_data.get('source_cv_public_id'),
                 theme_color=serializer.validated_data.get('theme_color'),
             )
@@ -153,37 +153,6 @@ class CvV2ListCreateView(generics.ListCreateAPIView):
         except CvLifecyclePolicyError as error:
             raise PermissionDenied(str(error)) from error
         return Response(CvV2Serializer(cv).data, status=status.HTTP_201_CREATED)
-
-
-class CvV2LatestRecoverableDraftView(APIView):
-    permission_classes = [IsCandidate]
-
-    @extend_schema(
-        summary='Bản nháp CV gần nhất còn khôi phục được',
-        responses={
-            200: inline_serializer(
-                'LatestRecoverableDraft',
-                {
-                    'cv': CvV2Serializer(),
-                    'draft': CvDraftSerializer(),
-                },
-            ),
-            204: None,
-        },
-        tags=['cvs-v2'],
-    )
-    def get(self, request):
-        cv = latest_recoverable_cv(request.user)
-        if cv is None:
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        draft = cv.draft
-        return Response(
-            {
-                'cv': CvV2Serializer(cv).data,
-                'draft': CvDraftSerializer(draft).data,
-            },
-            headers={'ETag': f'"lock-version-{draft.lock_version}"'},
-        )
 
 
 class CvV2DetailView(CandidateV2CvMixin, APIView):

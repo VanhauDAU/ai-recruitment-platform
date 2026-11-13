@@ -61,18 +61,6 @@ body {
     min-height: 100dvh;
     padding: 20px;
   }
-
-  .employer-totp-modal {
-    margin: 0 12px !important;
-    max-width: none !important;
-    top: 12px !important;
-    width: calc(100vw - 24px) !important;
-  }
-
-  .employer-totp-modal .ant-modal-content,
-  .employer-totp-modal .ant-modal-header {
-    padding: 16px !important;
-  }
 }
 
 /* Sonner renders directly under document.body, so it cannot be clipped by a
@@ -206,24 +194,4 @@ body {
 
 .animate-fade-slide {
   animation: fadeSlide 0.45s ease;
-}
-
-@keyframes nudgeX {
-  0%,
-  100% {
-    transform: translateX(0);
-  }
-  50% {
-    transform: translateX(3px);
-  }
-}
-
-.animate-nudge-x {
-  animation: nudgeX 0.9s ease-in-out infinite;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .animate-nudge-x {
-    animation: none;
-  }
 }

@@ -2,8 +2,7 @@ import { CheckOutlined } from '@ant-design/icons'
 import { Select, Slider } from 'antd'
 import { useEffect, useState } from 'react'
 import { getCvFontStack } from '@/entities/cv'
-import { getCvBackgrounds, getCvTemplates } from '@/entities/cv-template'
-import { useLocales } from '@/entities/locale'
+import { CV_LANGUAGES, getCvBackgrounds, getCvTemplates } from '@/entities/cv-template'
 import ThemeColorControl from './ThemeColorControl'
 import './DesignFontPanel.css'
 
@@ -14,7 +13,6 @@ const FONTS = FONT_NAMES.map((value) => ({
 }))
 
 export default function DesignFontPanel({ editor, onStyle, onLocale }) {
-  const { locales } = useLocales()
   const [colors, setColors] = useState([])
   const [backgrounds, setBackgrounds] = useState([])
 
@@ -28,13 +26,12 @@ export default function DesignFontPanel({ editor, onStyle, onLocale }) {
   }, [editor.cv.template_public_id, editor.document.content_json.locale])
 
   const style = editor.document.style_json
-  const localeName = (locale) => locale.label_vi || locale.native_name || locale.code
   const changeThemeColor = (theme_color) => onStyle({ theme_color })
 
   return <div className="space-y-7 text-slate-700">
     <div>
       <span className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">Ngôn ngữ CV</span>
-      <div className="grid grid-cols-2 gap-2">{locales.map((locale) => <button key={locale.code} type="button" onClick={() => onLocale(locale.code)} className={`min-h-10 cursor-pointer rounded-md border px-3 py-2 text-xs font-semibold transition ${editor.document.content_json.locale === locale.code ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-white text-slate-600 hover:border-emerald-300 hover:text-emerald-700'}`}>{localeName(locale)}</button>)}</div>
+      <div className="grid grid-cols-2 gap-2">{CV_LANGUAGES.map((locale) => <button key={locale.code} type="button" onClick={() => onLocale(locale.code)} className={`min-h-10 cursor-pointer rounded-md border px-3 py-2 text-xs font-semibold transition ${editor.document.content_json.locale === locale.code ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-white text-slate-600 hover:border-emerald-300 hover:text-emerald-700'}`}>{locale.label}</button>)}</div>
       <p className="mt-2 text-[11px] leading-4 text-slate-400">Đổi tiêu đề chuẩn của mẫu; nội dung tự viết được giữ nguyên.</p>
     </div>
 

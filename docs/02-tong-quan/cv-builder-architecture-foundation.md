@@ -78,15 +78,32 @@ CvTemplate ──< CvTemplateColorLink    >── CvColor
   không tạo template version mới; màu được chọn khi tạo CV được copy vào
   `style_json.theme_color` của initial version/draft.
 - Catalogue public chỉ hiện template `active`, lifecycle `published`, có
-  localization active và `current_published_version` đang published.
-- Locale là dữ liệu tại `sitecontent.Locale` (không phải enum). Locale inactive
-  bị chặn với CV/preview mới nhưng document cũ vẫn render theo code đã lưu.
-- Vị trí: dropdown đọc `JobCategory(category_type=specialization)` active, value
-  là `public_id`, nhãn là `JobCategoryLocalization(vi-VN).display_name`. Resolver
-  ưu tiên `CvSampleContent` curated theo vị trí–locale–cấp độ, nếu không có thì
-  materialize `CvContentBlueprint.content_json_template` theo locale/kinh nghiệm
-  (token `{position}` thay đệ quy ở mọi string). Vị trí mới chỉ cần bốn
-  localization; không phải tạo sample cho từng template.
+  `display_name_<vi|en>` khác rỗng ở ngôn ngữ đang xem và
+  `current_published_version` đang published.
+- Ngôn ngữ CV là enum `CvLanguage` (`vi-VN`, `en-US`) ở
+  `apps/cv_templates/models/language.py`, kèm `CATALOG_LANGUAGES` (path kho mẫu,
+  nhãn, hậu tố trường song ngữ); frontend mirror ở
+  `entities/cv-template/model/cv-languages.js`. Tên/mô tả/SEO của template là
+  các trường `*_vi`/`*_en` trên `CvTemplate` (CVT-1a gộp `CvTemplateLocalization`
+  và gỡ bảng `sitecontent.Locale`). Kho `/mau-cv-tieng-nhat`,
+  `/mau-cv-tieng-trung`, `/mau-cv/ngon-ngu/:locale` redirect 301 về `/mau-cv`.
+- Trang chi tiết mẫu đồng bộ lựa chọn với query string: `nguon`
+  (`cv-cu|tai-len|trong`, mặc định nội dung mẫu), `vi-tri` (slug
+  `JobCategory`), `ngon-ngu` (`vi|en`), `mau` (slug `CvColor`). Không đưa mã CV
+  hay dữ liệu cá nhân lên URL; canonical luôn là path gốc.
+- Vị trí: dropdown đọc `JobCategory(category_type=specialization)` active có
+  `CvPositionProfile` đang bật (1-1, CVT-1b), value là `public_id`, nhãn là
+  `JobCategoryLocalization(vi-VN).display_name`. Profile giữ `section_preset`
+  (thứ tự, bật/tắt section) áp cho mọi nội dung dựng từ vị trí đó.
+- Nội dung mẫu `CvSampleContent` theo `(position_profile, locale, experience_band)`;
+  `position_profile = null` là nội dung chung chứa token `{position}`.
+  `experience_band` (`entry`, `junior`, `mid`, `senior`) tương ứng các khoảng của
+  `Job.ExperienceYears`, mặc định `junior`. Resolver chọn nhóm kinh nghiệm gần
+  nhất trước, cùng khoảng cách thì nội dung riêng của vị trí trước nội dung chung;
+  nội dung chung được thay `{position}` bằng tên vị trí theo ngôn ngữ. Vị trí mới
+  chỉ cần localization tiếng Việt/Anh và profile; không phải tạo sample cho từng
+  template. Thư viện mẫu của editor và `sample_content_public_id` chỉ nhận nội
+  dung riêng của vị trí (nội dung chung còn token).
 
 ## 5. API V2
 
@@ -94,11 +111,10 @@ CV của ứng viên (`/api/v2/cvs/`, owner-only):
 
 | Route | Hành vi |
 | --- | --- |
-| `GET\|POST /` | Danh sách CV; tạo CV từ `template_public_id`, `language`, `title`, tùy chọn `position_public_id`, `theme_color` (chỉ màu active gán cho template). Một transaction khóa template, kiểm version published, compose content (sample/blueprint/trắng), tạo `UserCv` + initial `CvVersion` + `CvDraft`. |
+| `GET\|POST /` | Danh sách CV; tạo CV từ `template_public_id`, `language`, `title`, tùy chọn `position_public_id`, `theme_color` (chỉ màu active gán cho template). Một transaction khóa template, kiểm version published, compose content (nội dung mẫu theo vị trí/nhóm kinh nghiệm hoặc trắng); nhận thêm `experience_band`, tạo `UserCv` + initial `CvVersion` + `CvDraft`. |
 | `GET\|PATCH\|DELETE /{id}/` | Metadata; đổi `title`/`is_default`; xóa vĩnh viễn (gỡ draft/version/share/export/file; application snapshot được tách khỏi CV và giữ nguyên). |
 | `POST /{id}/duplicate/` | Chỉ CV builder: copy latest immutable version sang CV mới có initial version + draft riêng; không copy draft, share link, trạng thái published. |
 | `GET\|PUT /{id}/draft/` | Đọc/autosave draft. Autosave không tạo `CvVersion`. |
-| `GET /latest-recoverable-draft/` | Trả một draft dirty mới nhất (`CvDraft.document_hash` khác `base_version.content_hash`). |
 | `PUT /{id}/template/`, `GET /{id}/template-preview/` | Đổi mẫu/màu bằng CAS (giữ content, cập nhật hidden section) và projection read-only trước khi đổi. |
 | `POST /{id}/apply-sample/` | Thay section nội dung bằng sample, giữ `personal_info`, locale, marker, title, style; compose ở backend. |
 | `POST /{id}/save-version/`, `POST /{id}/publish/` | Tạo version `manual_save` / `published`. |
@@ -133,9 +149,10 @@ không trả layout/style/renderer config, lọc `locale`/`category`/`tag`),
 
 Quản trị (`/api/v2/admin/`, kiểm quyền `HasAdminPermission` với
 `cv_template.*`): `cv-templates` (kèm action tạo draft version từ version hiện
-hành, publish, retire, regenerate snapshot), `cv-template-localizations`,
-`cv-categories`, `cv-colors`, `cv-backgrounds`, `cv-sample-contents`,
-`cv-content-blueprints`. Admin locale nằm ở `sitecontent`.
+hành, publish, retire, regenerate snapshot; nhận các trường song ngữ),
+`cv-categories`, `cv-colors`, `cv-backgrounds`, `cv-sample-contents` (nhận
+`position_public_id`, `experience_band`). Hồ sơ vị trí CV quản lý ở Django admin
+cho tới CVT-4.
 
 ## 6. Editor WYSIWYG
 
@@ -213,8 +230,8 @@ response shared/recruiter; PDF worker đọc storage nội bộ.
 ## 9. Quản trị catalogue và snapshot
 
 - Portal admin `cv-catalogue` (sau `AuthGuard → RoleGuard`) quản lý template/
-  version, localization, category, color, background, sample (structured editor
-  theo section/item) và blueprint; không yêu cầu sửa raw JSON.
+  version, category, color, background và sample (structured editor theo
+  section/item); không yêu cầu sửa raw JSON.
 - Publish chạy trong transaction với row lock, gọi `full_clean()` trước khi đổi
   con trỏ published, đồng thời retire version cũ.
 - Snapshot thumbnail/preview: canonical composer → HTML/WeasyPrint → raster
@@ -228,7 +245,7 @@ response shared/recruiter; PDF worker đọc storage nội bộ.
 - Publish template version dùng `header_two_column_v1`, duyệt golden canvas/PDF
   trên bộ mẫu thật, UAT; sau một release ổn định thì gỡ editor legacy và cờ
   `cv_builder_wysiwyg_enabled`.
-- Contract cleanup: bỏ dual-read `locale` ↔ `locale_ref`, xóa field legacy
+- Contract cleanup: xóa field legacy
   (`UserCv.cv_data`/`style_config`/`status`, `CvTemplate.category`,
   `default_style_json.color_variants`, `theme_color`/`color_variants` trên card,
   input `sample_content_public_id`) sau khi đo không còn client đọc.

@@ -83,17 +83,6 @@ export function changeAccountEmail(publicId, payload, impactToken) {
   }))
 }
 
-export function getAccountMfaResetImpact(publicId, payload) {
-  return data(client.post(`/admin/accounts/${publicId}/mfa-impact/`, payload))
-}
-
-export function resetAccountMfa(publicId, payload, impactToken) {
-  return data(client.post(`/admin/accounts/${publicId}/reset-mfa/`, {
-    ...payload,
-    impact_token: impactToken,
-  }))
-}
-
 export function getAccountSessionsImpact(publicId, reason) {
   return data(client.post(`/admin/accounts/${publicId}/revoke-sessions-impact/`, {
     reason,

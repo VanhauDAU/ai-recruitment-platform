@@ -2,25 +2,21 @@ from rest_framework import serializers
 
 from apps.accounts.permissions import require_admin_permission
 from apps.cvs.models import CvAsset
-from apps.jobs.models import JobCategory
 
 from ...models import (
     CvCategory,
     CvColor,
-    CvContentBlueprint,
+    CvPositionProfile,
     CvSampleContent,
     CvTemplate,
-    CvTemplateLocalization,
     CvTemplateVersion,
 )
 
 PROTECTED_LIFECYCLE_FIELDS = {
     'CvTemplate': ('status', 'lifecycle_status', 'current_published_version'),
-    'CvTemplateLocalization': ('is_active',),
     'CvCategory': ('is_active',),
     'CvColor': ('is_active',),
     'CvAsset': ('is_active',),
-    'CvContentBlueprint': ('is_active',),
     'CvSampleContent': ('status', 'published_at'),
 }
 
@@ -80,19 +76,8 @@ class CvTemplateVersionAdminSerializer(serializers.ModelSerializer):
         ]
 
 
-class CvTemplateLocalizationAdminSerializer(
-    LifecycleFieldGuardMixin,
-    serializers.ModelSerializer,
-):
-    class Meta:
-        model = CvTemplateLocalization
-        fields = '__all__'
-        read_only_fields = ['locale_ref']
-
-
 class CvTemplateAdminSerializer(LifecycleFieldGuardMixin, serializers.ModelSerializer):
     versions = CvTemplateVersionAdminSerializer(many=True, read_only=True)
-    localizations = CvTemplateLocalizationAdminSerializer(many=True, read_only=True)
     current_published_version_id = serializers.IntegerField(read_only=True)
 
     class Meta:
@@ -101,7 +86,14 @@ class CvTemplateAdminSerializer(LifecycleFieldGuardMixin, serializers.ModelSeria
             'public_id',
             'name',
             'slug',
-            'description',
+            'display_name_vi',
+            'display_name_en',
+            'description_vi',
+            'description_en',
+            'seo_title_vi',
+            'seo_title_en',
+            'seo_description_vi',
+            'seo_description_en',
             'thumbnail_url',
             'preview_url',
             'is_premium',
@@ -110,7 +102,6 @@ class CvTemplateAdminSerializer(LifecycleFieldGuardMixin, serializers.ModelSeria
             'lifecycle_status',
             'current_published_version_id',
             'versions',
-            'localizations',
         ]
         read_only_fields = ['public_id', 'lifecycle_status', 'current_published_version_id']
 
@@ -167,24 +158,35 @@ class CvBackgroundAdminSerializer(LifecycleFieldGuardMixin, serializers.ModelSer
         return request.build_absolute_uri(path) if request else path
 
 
+class PositionProfileField(serializers.SlugRelatedField):
+    """Nhận và trả mã `JobCategory` thay cho khóa nội bộ của `CvPositionProfile`."""
+
+    def to_representation(self, obj):
+        return obj.job_category.public_id
+
+
 class CvSampleContentAdminSerializer(LifecycleFieldGuardMixin, serializers.ModelSerializer):
-    job_category_public_id = serializers.SlugRelatedField(
-        source='job_category',
-        slug_field='public_id',
-        queryset=JobCategory.objects.all(),
+    # Mã `JobCategory` của vị trí (null = nội dung chung, có thể chứa `{position}`).
+    position_public_id = PositionProfileField(
+        source='position_profile',
+        slug_field='job_category__public_id',
+        queryset=CvPositionProfile.objects.select_related('job_category'),
         allow_null=True,
         required=False,
+    )
+    position_name = serializers.CharField(
+        source='position_profile.job_category.name', read_only=True, default=''
     )
 
     class Meta:
         model = CvSampleContent
         fields = [
             'public_id',
-            'job_category_public_id',
+            'position_public_id',
+            'position_name',
             'locale',
-            'experience_level',
+            'experience_band',
             'title',
-            'position_name_vi',
             'content_json',
             'schema_version',
             'status',
@@ -203,29 +205,3 @@ class CvSampleContentAdminSerializer(LifecycleFieldGuardMixin, serializers.Model
                 {'content_json': 'content_json.locale must match locale.'}
             )
         return super().validate(attrs)
-
-
-class CvContentBlueprintAdminSerializer(LifecycleFieldGuardMixin, serializers.ModelSerializer):
-    class Meta:
-        model = CvContentBlueprint
-        fields = [
-            'public_id',
-            'locale',
-            'experience_level',
-            'content_json_template',
-            'summary_title',
-            'summary_template',
-            'experience_title',
-            'experience_company',
-            'experience_description_template',
-            'education_title',
-            'education_degree',
-            'education_institution',
-            'education_description',
-            'skills_title',
-            'skill_templates',
-            'is_active',
-            'created_at',
-            'updated_at',
-        ]
-        read_only_fields = ['public_id', 'created_at', 'updated_at']

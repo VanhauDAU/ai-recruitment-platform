@@ -9,11 +9,15 @@ export const AUDIT_ACTION_LABELS = {
   // Thao tác bảo mật do chính tài khoản thực hiện (tiền tố `self_`).
   self_password_change: 'Đổi mật khẩu',
   self_profile_update: 'Cập nhật hồ sơ',
+  self_session_revoke: 'Đăng xuất một thiết bị',
+  self_session_revoke_others: 'Đăng xuất các thiết bị khác',
+
+  // Hành động đã gỡ — ADR-0016. Giữ nhãn để nhật ký cũ vẫn đọc được.
   self_mfa_enable: 'Bật xác thực hai yếu tố',
   self_mfa_disable: 'Tắt xác thực hai yếu tố',
   self_backup_codes_regenerate: 'Tạo lại mã dự phòng',
-  self_session_revoke: 'Đăng xuất một thiết bị',
-  self_session_revoke_others: 'Đăng xuất các thiết bị khác',
+  reset_account_mfa: 'Đặt lại xác thực đa yếu tố',
+  bootstrap_mfa: 'Khởi tạo MFA qua CLI',
 
   // Thao tác phân quyền (RBAC).
   assign_membership: 'Gán chức danh',
@@ -64,13 +68,11 @@ export const AUDIT_ACTION_LABELS = {
   reactivate_account: 'Mở lại tài khoản',
   release_account_resource_hold: 'Gỡ policy hold tài nguyên',
   change_account_email: 'Khôi phục email đăng nhập',
-  reset_account_mfa: 'Đặt lại xác thực đa yếu tố',
   revoke_account_sessions: 'Thu hồi phiên tài khoản',
   send_account_password_reset: 'Gửi đặt lại mật khẩu',
   resend_account_verification: 'Gửi lại xác minh email',
 
   // Thao tác từ management command / seed.
-  bootstrap_mfa: 'Khởi tạo MFA qua CLI',
   mark_email_verified: 'Đánh dấu email đã xác minh',
 }
 

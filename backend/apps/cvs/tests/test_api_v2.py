@@ -19,7 +19,7 @@ from rest_framework.test import APITestCase
 
 from apps.cv_templates.models import (
     CvColor,
-    CvContentBlueprint,
+    CvPositionProfile,
     CvSampleContent,
     CvTemplate,
     CvTemplateColorLink,
@@ -90,6 +90,10 @@ class CvV2ApiTests(APITestCase):
         self.blue = CvColor.objects.create(name='Blue', slug='blue', hex_code='#2255AA')
         CvTemplateColorLink.objects.create(template=self.template, color=self.blue, is_default=True)
         self.client.force_authenticate(self.candidate)
+
+    def curated_sample_profile(self):
+        position = JobCategory.objects.create(name='Sample position')
+        return CvPositionProfile.objects.create(job_category=position)
 
     def create_cv(self):
         response = self.client.post(
@@ -231,62 +235,6 @@ class CvV2ApiTests(APITestCase):
         cv.refresh_from_db()
         self.assertEqual(cv.lifecycle_status, UserCv.LifecycleStatus.PUBLISHED)
         self.assertEqual(cv.published_version.public_id, published.data['public_id'])
-
-    def test_latest_recoverable_draft_uses_hash_and_clears_after_manual_save(self):
-        cv = self.create_cv()
-        url = reverse('cv-v2-latest-recoverable-draft')
-        self.assertEqual(self.client.get(url).status_code, 204)
-
-        draft_response = self.client.get(self.draft_url(cv))
-        payload = {
-            key: draft_response.data[key]
-            for key in ('schema_version', 'content_json', 'layout_json', 'style_json')
-        }
-        payload['content_json']['personal_info']['full_name'] = 'Recover me'
-        autosave = self.client.put(
-            self.draft_url(cv),
-            payload,
-            format='json',
-            HTTP_IF_MATCH='"lock-version-0"',
-        )
-        self.assertEqual(autosave.status_code, 200, autosave.data)
-
-        recoverable = self.client.get(url)
-        self.assertEqual(recoverable.status_code, 200, recoverable.data)
-        self.assertEqual(recoverable.data['cv']['public_id'], cv.public_id)
-        self.assertEqual(
-            recoverable.data['draft']['content_json']['personal_info']['full_name'], 'Recover me'
-        )
-
-        saved = self.client.post(
-            reverse('cv-v2-save-version', kwargs={'public_id': cv.public_id}),
-            format='json',
-            HTTP_IF_MATCH='"lock-version-1"',
-        )
-        self.assertEqual(saved.status_code, 201, saved.data)
-        self.assertEqual(self.client.get(url).status_code, 204)
-
-    def test_latest_recoverable_draft_returns_only_most_recent_dirty_cv(self):
-        first = self.create_cv()
-        second = self.create_cv()
-        for cv, name in ((first, 'Older draft'), (second, 'Newest draft')):
-            draft_response = self.client.get(self.draft_url(cv))
-            payload = {
-                key: draft_response.data[key]
-                for key in ('schema_version', 'content_json', 'layout_json', 'style_json')
-            }
-            payload['content_json']['personal_info']['full_name'] = name
-            response = self.client.put(
-                self.draft_url(cv),
-                payload,
-                format='json',
-                HTTP_IF_MATCH='"lock-version-0"',
-            )
-            self.assertEqual(response.status_code, 200, response.data)
-
-        recoverable = self.client.get(reverse('cv-v2-latest-recoverable-draft'))
-        self.assertEqual(recoverable.status_code, 200, recoverable.data)
-        self.assertEqual(recoverable.data['cv']['public_id'], second.public_id)
 
     def test_create_can_copy_owned_draft_into_a_new_template(self):
         source = self.create_cv()
@@ -979,6 +927,8 @@ class CvV2ApiTests(APITestCase):
         sample_content = empty_content('vi-VN')
         sample_content['personal_info']['full_name'] = 'Sample Candidate'
         sample = CvSampleContent.objects.create(
+            position_profile=self.curated_sample_profile(),
+            experience_band='mid',
             locale='vi-VN',
             title='Sample content',
             content_json=sample_content,
@@ -1039,6 +989,8 @@ class CvV2ApiTests(APITestCase):
         sample_content = empty_content('vi-VN')
         sample_content['personal_info']['full_name'] = 'Sample Person'
         sample = CvSampleContent.objects.create(
+            position_profile=self.curated_sample_profile(),
+            experience_band='mid',
             locale='vi-VN',
             title='Sample',
             content_json=sample_content,
@@ -1082,6 +1034,8 @@ class CvV2ApiTests(APITestCase):
             }
         ]
         sample = CvSampleContent.objects.create(
+            position_profile=self.curated_sample_profile(),
+            experience_band='mid',
             locale='vi-VN',
             title='Sample apply',
             content_json=sample_content,
@@ -1141,8 +1095,9 @@ class CvV2ApiTests(APITestCase):
         )
         self.assertEqual(rejected.status_code, 400)
 
-    def test_create_from_position_resolves_blueprint_and_persists_taxonomy_identity(self):
+    def test_create_from_position_resolves_generic_content_and_persists_taxonomy_identity(self):
         position = JobCategory.objects.create(name='Nhân viên CSKH')
+        CvPositionProfile.objects.create(job_category=position)
         JobCategoryLocalization.objects.bulk_create(
             [
                 JobCategoryLocalization(
@@ -1155,9 +1110,27 @@ class CvV2ApiTests(APITestCase):
                 ),
             ]
         )
-        blueprint = CvContentBlueprint.objects.get(locale='en-US', experience_level='unspecified')
-        blueprint.summary_template = 'Build a career as {position}.'
-        blueprint.save(update_fields=['summary_template', 'updated_at'])
+        content = empty_content('en-US')
+        content['personal_info']['headline'] = '{position}'
+        content['sections'] = [
+            {
+                'instance_id': 'summary_1',
+                'section_key': 'summary',
+                'title': 'Career objective',
+                'enabled': True,
+                'items': [{'item_id': 'summary_item_1', 'value': 'Build a career as {position}.'}],
+            }
+        ]
+        CvSampleContent.objects.update_or_create(
+            position_profile=None,
+            locale='en-US',
+            experience_band='senior',
+            defaults={
+                'title': 'Generic',
+                'content_json': content,
+                'status': CvSampleContent.Status.PUBLISHED,
+            },
+        )
 
         response = self.client.post(
             reverse('cv-v2-list-create'),
@@ -1166,6 +1139,7 @@ class CvV2ApiTests(APITestCase):
                 'template_public_id': self.template.public_id,
                 'language': 'en-US',
                 'position_public_id': position.public_id,
+                'experience_band': 'senior',
             },
             format='json',
         )
@@ -1176,6 +1150,14 @@ class CvV2ApiTests(APITestCase):
         self.assertEqual(response.data['position_public_id'], position.public_id)
         self.assertEqual(
             cv.draft.content_json['personal_info']['headline'], 'Customer Service Representative'
+        )
+        summary = next(
+            section
+            for section in cv.draft.content_json['sections']
+            if section['section_key'] == 'summary'
+        )
+        self.assertEqual(
+            summary['items'][0]['value'], 'Build a career as Customer Service Representative.'
         )
 
     def test_legacy_dual_write_does_not_discard_a_v2_layout(self):

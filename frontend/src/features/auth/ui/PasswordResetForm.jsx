@@ -72,7 +72,7 @@ export default function PasswordResetForm({
           <h2 className="mt-4 text-xl font-bold text-gray-900 dark:text-white">Đã đổi mật khẩu</h2>
           <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
             {isAdminReset
-              ? 'Mật khẩu mới đã sẵn sàng. Đăng nhập lại và xác minh MFA email để tiếp tục.'
+              ? 'Mật khẩu mới đã sẵn sàng. Đăng nhập lại cổng quản trị để tiếp tục.'
               : 'Mật khẩu mới đã sẵn sàng. Các thiết bị đang đăng nhập trước đó sẽ bị đăng xuất.'}
           </p>
           <button

@@ -412,9 +412,9 @@ tương thích và SEO shell phát canonical về `/viec-lam/:slug`.
   đầy đủ; `GET /api/employer/company/` trả hồ sơ đầy đủ cho member. Đây là
   accepted risk, xem
   [employer-flow-security-audit-2026-08.md](../02-tong-quan/employer-flow-security-audit-2026-08.md).
-- Hành động bảo mật NTD tự thực hiện (đổi mật khẩu, MFA, thu hồi phiên) chưa
+- Hành động bảo mật NTD tự thực hiện (đổi mật khẩu, thu hồi phiên) chưa
   ghi audit log.
-- MFA cho NTD là tùy chọn. Tra cứu MST không phải nguồn quyết định pháp lý.
+- Tra cứu MST không phải nguồn quyết định pháp lý.
 
 ## 14. Việc còn mở
 

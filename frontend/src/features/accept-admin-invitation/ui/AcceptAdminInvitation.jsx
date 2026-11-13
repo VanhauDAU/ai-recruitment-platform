@@ -67,7 +67,7 @@ export default function AcceptAdminInvitation() {
           status="success"
           icon={<CheckCircleFilled className="text-emerald-600" />}
           title="Tài khoản Admin đã sẵn sàng"
-          subTitle="Mật khẩu và chức danh đã được thiết lập. Bạn có thể bật xác thực hai yếu tố sau trong phần Bảo mật."
+          subTitle="Mật khẩu và chức danh đã được thiết lập. Đăng nhập cổng quản trị để bắt đầu làm việc."
           extra={<Button type="primary" href={adminPath('/login')}>Đăng nhập Admin</Button>}
         />
       </div>

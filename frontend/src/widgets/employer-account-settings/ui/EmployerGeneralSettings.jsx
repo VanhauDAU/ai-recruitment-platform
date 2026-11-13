@@ -1,6 +1,5 @@
 import { MailOutlined } from '@ant-design/icons'
 import { Switch, Tooltip } from 'antd'
-import { TwoFactorMethodsPanel } from '@/features/two-factor'
 import { EmployerNotificationPreferences } from '@/features/configure-employer-notifications'
 
 export default function EmployerGeneralSettings() {
@@ -18,8 +17,6 @@ export default function EmployerGeneralSettings() {
         </div>
         <Tooltip title="Thông báo email luôn được bật; tùy chọn cấu hình sẽ có ở giai đoạn tiếp theo."><Switch checked disabled /></Tooltip>
       </div>
-
-      <TwoFactorMethodsPanel />
     </div>
   )
 }

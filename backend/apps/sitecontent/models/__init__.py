@@ -6,7 +6,7 @@ from .announcements import (
     AnnouncementRevision,
     AnnouncementUserState,
 )
-from .settings import Banner, Feedback, LinkGroup, LinkItem, Locale, SiteSetting
+from .settings import Banner, Feedback, LinkGroup, LinkItem, SiteSetting
 
 __all__ = [
     'Announcement',
@@ -17,6 +17,5 @@ __all__ = [
     'Feedback',
     'LinkGroup',
     'LinkItem',
-    'Locale',
     'SiteSetting',
 ]

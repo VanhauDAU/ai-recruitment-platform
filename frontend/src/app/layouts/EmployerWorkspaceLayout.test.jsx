@@ -93,7 +93,7 @@ describe('EmployerWorkspaceLayout', () => {
 
     const sidebar = screen.getByTestId('employer-sidebar')
     expect(sidebar).toHaveClass('ant-layout-sider-collapsed')
-    expect(screen.getByRole('link', { name: 'Xem trạng thái xác thực tài khoản' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Thông tin tài khoản' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Mở menu quản trị' })).toHaveAttribute('aria-pressed', 'false')
 
     fireEvent.mouseEnter(sidebar)

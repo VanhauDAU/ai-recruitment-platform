@@ -3,7 +3,7 @@
 ``seed_cv_catalog`` seeds starter content (sample contents, blueprints, colors)
 and can only decorate templates that already exist. This command owns the other
 half — the templates themselves plus their immutable published version, section
-mapping, localizations, category links and color links — so the public
+mapping, bilingual names, category links and color links — so the public
 catalogue and the CV editor have something to render.
 
 Idempotent: every row is created with get_or_create and a template that already
@@ -14,13 +14,13 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 
 from apps.cv_templates.models import (
+    CATALOG_LANGUAGES,
     CvCategory,
     CvColor,
     CvSectionDefinition,
     CvTemplate,
     CvTemplateCategoryLink,
     CvTemplateColorLink,
-    CvTemplateLocalization,
     CvTemplateSection,
     CvTemplateVersion,
 )
@@ -30,7 +30,6 @@ from apps.cv_templates.services import publish_template_version
 from ._cv_template_catalog import (
     CATEGORIES,
     DEFAULT_ENABLED_SECTIONS,
-    LOCALES,
     PALETTE,
     PERSONAL_INFO_SECTIONS,
     REQUIRED_SECTIONS,
@@ -61,6 +60,20 @@ def _default_layout(spec, regions):
     }
 
 
+def _bilingual_fields(spec):
+    """Tên, mô tả và SEO song ngữ của template theo `CvLanguage`."""
+    fields = {}
+    for language in CATALOG_LANGUAGES:
+        name = spec['names'][language.code]
+        description = spec['descriptions'][language.code]
+        suffix = language.field_suffix
+        fields[f'display_name_{suffix}'] = name
+        fields[f'description_{suffix}'] = description
+        fields[f'seo_title_{suffix}'] = name
+        fields[f'seo_description_{suffix}'] = description
+    return fields
+
+
 class Command(BaseCommand):
     help = 'Seed CV templates, published versions, taxonomy and color links (idempotent).'
 
@@ -85,7 +98,6 @@ class Command(BaseCommand):
             published_versions += int(
                 self._seed_published_version(template, spec, definitions) is not None
             )
-            self._seed_localizations(template, spec)
             self._link_categories(template, spec, categories)
             self._link_colors(template, spec, colors)
 
@@ -148,7 +160,7 @@ class Command(BaseCommand):
             slug=spec['slug'],
             defaults={
                 'name': spec['names']['vi-VN'],
-                'description': spec['descriptions']['vi-VN'],
+                **_bilingual_fields(spec),
                 # The legacy comma-separated column stays empty on purpose:
                 # `seed_cv_catalog` converts it into ad-hoc categories, and this
                 # command already links the real taxonomy rows below.
@@ -202,22 +214,6 @@ class Command(BaseCommand):
                     use_theme_color=section_key not in PERSONAL_INFO_SECTIONS,
                 )
         return publish_template_version(template=template, version=version)
-
-    def _seed_localizations(self, template, spec):
-        for locale in LOCALES:
-            display_name = spec['names'][locale]
-            description = spec['descriptions'][locale]
-            CvTemplateLocalization.objects.get_or_create(
-                template=template,
-                locale=locale,
-                defaults={
-                    'display_name': display_name,
-                    'description': description,
-                    'seo_title': display_name,
-                    'seo_description': description,
-                    'is_active': True,
-                },
-            )
 
     def _link_categories(self, template, spec, categories):
         for sort_order, slug in enumerate(spec['categories']):

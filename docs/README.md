@@ -25,6 +25,7 @@ tại; lịch sử kế hoạch và bằng chứng triển khai nằm trong git 
 | [dac-ta-onboarding-ung-vien.md](01-phan-tich/dac-ta-onboarding-ung-vien.md) | Luồng onboarding và hồ sơ nhu cầu việc làm của ứng viên |
 | [dac-ta-trung-tam-tro-giup.md](01-phan-tich/dac-ta-trung-tam-tro-giup.md) | Trung tâm trợ giúp: bài viết, revision, quyền và API |
 | [dac-ta-thong-bao-da-cong.md](01-phan-tich/dac-ta-thong-bao-da-cong.md) | Thông báo đa cổng: surface, targeting, vòng đời, theme và analytics |
+| [ke-hoach-cv-template-v3.md](01-phan-tich/ke-hoach-cv-template-v3.md) | Kế hoạch làm lại template CV, tạo CV, trích xuất CV upload và quản trị mẫu CV (CVT-0…CVT-7) |
 
 ## 02-tong-quan — Kiến trúc và quyết định
 
@@ -37,6 +38,7 @@ tại; lịch sử kế hoạch và bằng chứng triển khai nằm trong git 
 | [adr-0013-public-companies-api.md](02-tong-quan/adr-0013-public-companies-api.md) | API công khai cho danh bạ công ty |
 | [adr-0014-job-post-moderation.md](02-tong-quan/adr-0014-job-post-moderation.md) | Hậu kiểm tin tuyển dụng thay cho duyệt trước |
 | [adr-0015-remove-commercial-services.md](02-tong-quan/adr-0015-remove-commercial-services.md) | Gỡ gói dịch vụ, quyền lợi và yêu cầu tư vấn |
+| [adr-0016-remove-two-factor-auth.md](02-tong-quan/adr-0016-remove-two-factor-auth.md) | Gỡ xác thực hai bước (2FA/MFA) ở cả ba cổng |
 | [employer-remediation-decision-log.md](02-tong-quan/employer-remediation-decision-log.md) | Biên bản quyết định của đợt hardening cổng nhà tuyển dụng |
 | [chatbot-local-decision-log.md](02-tong-quan/chatbot-local-decision-log.md) | Biên bản quyết định cho chatbot ứng viên chạy local |
 | [employer-flow-security-audit-2026-08.md](02-tong-quan/employer-flow-security-audit-2026-08.md) | Audit luồng và bảo mật nhà tuyển dụng (2026-08) |

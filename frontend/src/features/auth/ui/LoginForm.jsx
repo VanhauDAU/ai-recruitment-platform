@@ -8,8 +8,7 @@ import { toastSoundOptions } from '@/shared/lib/sound-effects'
 import { message } from '@/shared/lib/toast'
 import { MAIN_FORGOT_PASSWORD_URL } from '@/shared/config/portals'
 import { useSession } from '@/entities/session'
-import { login, resendTwoFactorLogin, verifyTwoFactorLogin } from '../api/auth.api'
-import TwoFactorCodeModal from '@/shared/ui/TwoFactorCodeModal'
+import { login } from '../api/auth.api'
 import { getReturnUrl } from '../model/return-url'
 import { getAuthDestination } from '../model/password-login-destination'
 import AuthFormStyles from './AuthFormStyles'
@@ -50,7 +49,6 @@ export default function LoginForm({
   const [error, setError] = useState(() => getOAuthErrorMessage(searchParams.get('oauth_error')))
   const [warning, setWarning] = useState(() => location.state?.authWarning || '')
   const [loading, setLoading] = useState(false)
-  const [twoFactorChallenge, setTwoFactorChallenge] = useState(null)
   const [activeMascotField, setActiveMascotField] = useState(null)
   const [passwordVisible, setPasswordVisible] = useState(false)
   const [validationFailed, setValidationFailed] = useState(false)
@@ -101,12 +99,7 @@ export default function LoginForm({
     setLoading(true)
     try {
       const captchaToken = await executeRecaptcha('login')
-      const result = await login({ ...values, captcha_token: captchaToken, portal })
-      if (result.two_factor_required) {
-        clearPassword()
-        setTwoFactorChallenge({ ...result, portal, method: result.preferred_method || 'email' })
-        return
-      }
+      await login({ ...values, captcha_token: captchaToken, portal })
       const user = await refreshSession()
       if (expectedRoles && !expectedRoles.includes(user.role)) {
         clearPassword()
@@ -128,26 +121,6 @@ export default function LoginForm({
       submitLockedRef.current = false
       setLoading(false)
     }
-  }
-
-  async function handleTwoFactorConfirm(code) {
-    await verifyTwoFactorLogin({
-      challenge: twoFactorChallenge.challenge,
-      code,
-      method: twoFactorChallenge.method,
-      portal: twoFactorChallenge.portal,
-    })
-    const user = await refreshSession()
-    if (expectedRoles && !expectedRoles.includes(user.role)) {
-      logout()
-      setTwoFactorChallenge(null)
-      setError('Tài khoản không có quyền truy cập cổng này.')
-      return
-    }
-    setTwoFactorChallenge(null)
-    message.success('Đăng nhập thành công.', toastSoundOptions('done'))
-    if (onSuccess) onSuccess(user)
-    else navigateAfterLogin(user)
   }
 
   return (
@@ -270,33 +243,6 @@ export default function LoginForm({
           <LoginSubmitButton loading={loading} employerAppearance={employerAppearance} />
         </div>
       </Form>
-
-      <TwoFactorCodeModal
-        open={Boolean(twoFactorChallenge)}
-        email={twoFactorChallenge?.email}
-        expiresIn={twoFactorChallenge?.expires_in || 180}
-        onCancel={() => setTwoFactorChallenge(null)}
-        onConfirm={handleTwoFactorConfirm}
-        onResend={() => resendTwoFactorLogin(twoFactorChallenge.challenge)}
-        codeLength={twoFactorChallenge?.method === 'backup' ? 8 : 6}
-        title={twoFactorChallenge?.method === 'totp' ? 'Nhập mã ứng dụng xác thực' : twoFactorChallenge?.method === 'backup' ? 'Nhập mã dự phòng' : undefined}
-        description={twoFactorChallenge?.method === 'totp'
-          ? 'Mở ứng dụng xác thực của bạn và nhập mã gồm 6 chữ số.'
-          : twoFactorChallenge?.method === 'backup'
-            ? 'Nhập một mã dự phòng gồm 8 chữ số. Mỗi mã chỉ sử dụng một lần.'
-            : undefined}
-        showResend={twoFactorChallenge?.method === 'email'}
-        methodOptions={twoFactorChallenge && Object.values(twoFactorChallenge.methods || { email: true }).filter(Boolean).length > 1 ? (
-          <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-3 text-left">
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Phương thức khác</p>
-            <div className="flex gap-2">
-              {twoFactorChallenge.methods?.totp && twoFactorChallenge.method !== 'totp' && <button type="button" className="flex-1 whitespace-nowrap rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-600 transition hover:border-emerald-300 hover:text-emerald-700" onClick={() => setTwoFactorChallenge((current) => ({ ...current, method: 'totp' }))}>Ứng dụng xác thực</button>}
-              {twoFactorChallenge.methods?.email && twoFactorChallenge.method !== 'email' && <button type="button" className="flex-1 whitespace-nowrap rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-600 transition hover:border-emerald-300 hover:text-emerald-700" onClick={() => setTwoFactorChallenge((current) => ({ ...current, method: 'email' }))}>Nhận mã qua email</button>}
-              {twoFactorChallenge.methods?.backup && twoFactorChallenge.method !== 'backup' && <button type="button" className="flex-1 whitespace-nowrap rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-600 transition hover:border-emerald-300 hover:text-emerald-700" onClick={() => setTwoFactorChallenge((current) => ({ ...current, method: 'backup' }))}>Dùng mã dự phòng</button>}
-            </div>
-          </div>
-        ) : null}
-      />
     </>
   )
 }

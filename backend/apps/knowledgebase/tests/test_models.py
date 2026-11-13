@@ -68,6 +68,13 @@ class KnowledgebaseFoundationTests(TestCase):
             },
         )
 
+    def test_account_security_article_no_longer_mentions_two_factor(self):
+        article = KnowledgeArticle.objects.get(slug='bao-ve-tai-khoan-va-xac-minh-hai-buoc')
+
+        self.assertEqual(article.published_revision.title, 'Bảo vệ tài khoản ProCV')
+        self.assertNotIn('hai bước', article.published_revision.body)
+        self.assertNotIn('/tai-khoan/xac-minh-hai-buoc', article.published_revision.body)
+
     def test_public_identifiers_use_domain_prefixes(self):
         category = KnowledgeCategory.objects.first()
         article = KnowledgeArticle.objects.create(

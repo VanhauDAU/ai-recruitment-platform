@@ -50,13 +50,6 @@ export default function AccountAdvancedFilters({
               options={BOOLEAN_OPTIONS}
             />
           </Field>
-          <Field label="Đã bật MFA">
-            <Select
-              value={filters.mfa}
-              onChange={(value) => patch('mfa', value)}
-              options={BOOLEAN_OPTIONS}
-            />
-          </Field>
           <Field
             label="Có phiên hoạt động"
             hint="Tài khoản đang đăng nhập trên ít nhất một thiết bị"

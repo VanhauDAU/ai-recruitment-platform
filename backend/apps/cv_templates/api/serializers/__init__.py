@@ -2,10 +2,8 @@ from .admin import (
     CvBackgroundAdminSerializer,
     CvCategoryAdminSerializer,
     CvColorAdminSerializer,
-    CvContentBlueprintAdminSerializer,
     CvSampleContentAdminSerializer,
     CvTemplateAdminSerializer,
-    CvTemplateLocalizationAdminSerializer,
     CvTemplateVersionAdminSerializer,
 )
 from .v2 import (
@@ -22,7 +20,6 @@ __all__ = [
     'CvCategoryAdminSerializer',
     'CvCategorySerializer',
     'CvColorAdminSerializer',
-    'CvContentBlueprintAdminSerializer',
     'CvPositionOptionSerializer',
     'CvSampleContentAdminSerializer',
     'CvSampleContentCardSerializer',
@@ -30,6 +27,5 @@ __all__ = [
     'CvTemplateAdminSerializer',
     'CvTemplateCardSerializer',
     'CvTemplateDetailSerializer',
-    'CvTemplateLocalizationAdminSerializer',
     'CvTemplateVersionAdminSerializer',
 ]

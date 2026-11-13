@@ -3,13 +3,10 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import ChangeAccountEmailButton from './ChangeAccountEmailButton'
-import ResetAccountMfaButton from './ResetAccountMfaButton'
 
 const mocks = vi.hoisted(() => ({
   changeAccountEmail: vi.fn(),
   getAccountEmailImpact: vi.fn(),
-  getAccountMfaResetImpact: vi.fn(),
-  resetAccountMfa: vi.fn(),
   message: { error: vi.fn(), success: vi.fn(), warning: vi.fn() },
 }))
 
@@ -20,8 +17,6 @@ vi.mock('@/entities/admin-account', () => ({
   adminAccountKeys: { all: ['admin-accounts'] },
   changeAccountEmail: mocks.changeAccountEmail,
   getAccountEmailImpact: mocks.getAccountEmailImpact,
-  getAccountMfaResetImpact: mocks.getAccountMfaResetImpact,
-  resetAccountMfa: mocks.resetAccountMfa,
 }))
 vi.mock('@/shared/lib/toast', () => ({ message: mocks.message }))
 
@@ -52,7 +47,6 @@ describe('Identity recovery actions', () => {
     })
     Object.values(mocks.message).forEach((method) => method.mockReset())
     mocks.changeAccountEmail.mockResolvedValue({})
-    mocks.resetAccountMfa.mockResolvedValue({})
   })
 
   it('validates, previews and confirms an email recovery', async () => {
@@ -62,7 +56,6 @@ describe('Identity recovery actions', () => {
       after: { email: 'new@example.com' },
       active_session_count: 2,
       oauth_providers_to_revoke: ['google'],
-      mfa_methods: { email: true, totp: false, backup_codes_remaining: 2 },
       password_reset_available: true,
       can_apply: true,
       impact_token: 'impact-email',
@@ -114,9 +107,12 @@ describe('Identity recovery actions', () => {
   })
 
   it('rejects short verification evidence before requesting a preview', async () => {
-    renderWithQuery(<ResetAccountMfaButton publicId="usr-validation" />)
+    renderWithQuery(<ChangeAccountEmailButton publicId="usr-validation" />)
 
-    fireEvent.click(screen.getByRole('button', { name: /Đặt lại MFA/i }))
+    fireEvent.click(screen.getByRole('button', { name: /Đổi email đăng nhập/i }))
+    fireEvent.change(screen.getByLabelText('Email đăng nhập mới'), {
+      target: { value: 'new@example.com' },
+    })
     fireEvent.change(screen.getByLabelText('Lý do khôi phục'), {
       target: { value: 'Cần khôi phục tài khoản' },
     })
@@ -127,57 +123,34 @@ describe('Identity recovery actions', () => {
 
     expect(await screen.findByText('Bằng chứng xác minh cần có ít nhất 20 ký tự.'))
       .toBeInTheDocument()
-    expect(mocks.getAccountMfaResetImpact).not.toHaveBeenCalled()
-  })
-
-  it('previews and confirms an MFA reset', async () => {
-    mocks.getAccountMfaResetImpact.mockResolvedValue({
-      methods_to_disable: { email: true, totp: true, backup_codes_remaining: 3 },
-      active_session_count: 1,
-      can_apply: true,
-      impact_token: 'impact-mfa',
-    })
-    renderWithQuery(<ResetAccountMfaButton publicId="usr-2" />)
-
-    fireEvent.click(screen.getByRole('button', { name: /Đặt lại MFA/i }))
-    fillAuditFields()
-    fireEvent.click(screen.getByRole('button', { name: 'Xem tác động' }))
-
-    expect(await screen.findByText(/Email, Ứng dụng xác thực, 3 mã dự phòng/))
-      .toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: 'Xác nhận thực hiện' }))
-
-    await waitFor(() => {
-      expect(mocks.resetAccountMfa).toHaveBeenCalledWith(
-        'usr-2',
-        {
-          reason: 'Người dùng mất quyền truy cập danh tính cũ',
-          verification_evidence: 'Đã gọi lại số trên hồ sơ pháp lý và đối chiếu giấy tờ.',
-        },
-        'impact-mfa',
-      )
-    })
+    expect(mocks.getAccountEmailImpact).not.toHaveBeenCalled()
   })
 
   it('reloads impact after a stale confirmation without retrying confirm', async () => {
-    mocks.getAccountMfaResetImpact.mockResolvedValue({
-      methods_to_disable: { email: true, totp: false, backup_codes_remaining: 0 },
+    mocks.getAccountEmailImpact.mockResolvedValue({
+      before: { email: 'old@example.com' },
+      after: { email: 'new@example.com' },
       active_session_count: 1,
+      oauth_providers_to_revoke: [],
+      password_reset_available: true,
       can_apply: true,
-      impact_token: 'impact-mfa',
+      impact_token: 'impact-email',
     })
-    mocks.resetAccountMfa.mockRejectedValue({ response: { status: 409 } })
-    renderWithQuery(<ResetAccountMfaButton publicId="usr-3" />)
+    mocks.changeAccountEmail.mockRejectedValue({ response: { status: 409 } })
+    renderWithQuery(<ChangeAccountEmailButton publicId="usr-3" />)
 
-    fireEvent.click(screen.getByRole('button', { name: /Đặt lại MFA/i }))
+    fireEvent.click(screen.getByRole('button', { name: /Đổi email đăng nhập/i }))
+    fireEvent.change(screen.getByLabelText('Email đăng nhập mới'), {
+      target: { value: 'new@example.com' },
+    })
     fillAuditFields()
     fireEvent.click(screen.getByRole('button', { name: 'Xem tác động' }))
-    await screen.findByText('MFA bị xóa')
+    await screen.findByText('Phiên bị thu hồi')
     fireEvent.click(screen.getByRole('button', { name: 'Xác nhận thực hiện' }))
 
     await waitFor(() => {
-      expect(mocks.getAccountMfaResetImpact).toHaveBeenCalledTimes(2)
+      expect(mocks.getAccountEmailImpact).toHaveBeenCalledTimes(2)
     })
-    expect(mocks.resetAccountMfa).toHaveBeenCalledTimes(1)
+    expect(mocks.changeAccountEmail).toHaveBeenCalledTimes(1)
   })
 })

@@ -113,7 +113,7 @@ function InvitationModal({
         type="info"
         showIcon
         title="Tài khoản chỉ được kích hoạt sau khi người nhận đặt mật khẩu"
-        description="Email xác minh, MFA email và mã dự phòng sẽ được thiết lập trong cùng một luồng."
+        description="Người nhận mở liên kết mời để xác minh email và đặt mật khẩu trong cùng một luồng."
       />
       <Form form={form} layout="vertical" requiredMark={false}>
         <div className="grid gap-x-4 sm:grid-cols-2">

@@ -71,8 +71,8 @@ def _breadcrumb(request, *, locale, template=None, category=None, canonical_url)
         {
             '@type': 'ListItem',
             'position': 2,
-            'name': f'Mẫu CV {locale.label_vi.lower()}',
-            'item': absolute_url(request, f'/{locale.catalog_path}'),
+            'name': f'Mẫu CV {locale.label}',
+            'item': absolute_url(request, f'/{locale.path}'),
         },
     ]
     if category:
@@ -89,7 +89,7 @@ def _breadcrumb(request, *, locale, template=None, category=None, canonical_url)
             {
                 '@type': 'ListItem',
                 'position': 3,
-                'name': template.catalog_localizations[0].display_name,
+                'name': template.catalog_display_name,
                 'item': canonical_url,
             }
         )
@@ -105,7 +105,6 @@ class CvTemplateSeoShellView(View):
         self,
         request,
         catalog_path=None,
-        locale_code=None,
         category_slug=None,
         slug=None,
         legacy_slug=None,
@@ -116,14 +115,13 @@ class CvTemplateSeoShellView(View):
 
         locale, category = seo_catalog_context(
             catalog_path=catalog_path,
-            locale_code=locale_code,
             category_slug=category_slug,
         )
         requested_path = request.path.rstrip('/') or '/'
         if not locale:
             return _not_found(request, requested_path, 'Ngôn ngữ CV không tồn tại')
 
-        base_path = f'/{locale.catalog_path}'
+        base_path = f'/{locale.path}'
         if category_slug and not category:
             return _not_found(request, f'{base_path}/{category_slug}', 'Danh mục CV không tồn tại')
 
@@ -132,7 +130,6 @@ class CvTemplateSeoShellView(View):
             canonical_path = f'{base_path}/chi-tiet/{slug}'
             if not template:
                 return _not_found(request, canonical_path)
-            localization = template.catalog_localizations[0]
             canonical_url = absolute_url(request, canonical_path)
             image = media_url_from_value(
                 template.preview_url or template.thumbnail_url,
@@ -141,8 +138,8 @@ class CvTemplateSeoShellView(View):
             creative_work = {
                 '@context': 'https://schema.org',
                 '@type': 'CreativeWork',
-                'name': localization.display_name,
-                'description': localization.seo_description or localization.description,
+                'name': template.catalog_display_name,
+                'description': template.catalog_seo_description or template.catalog_description,
                 'inLanguage': locale.code,
                 'url': canonical_url,
             }
@@ -152,8 +149,8 @@ class CvTemplateSeoShellView(View):
                 request,
                 _metadata(
                     request,
-                    title=localization.seo_title or f'Mẫu CV {localization.display_name}',
-                    description=localization.seo_description or localization.description,
+                    title=template.catalog_seo_title or f'Mẫu CV {template.catalog_display_name}',
+                    description=template.catalog_seo_description or template.catalog_description,
                     canonical_path=canonical_path,
                     image=image,
                     structured_data=(
@@ -169,11 +166,11 @@ class CvTemplateSeoShellView(View):
             )
 
         canonical_path = f'{base_path}/{category.slug}' if category else base_path
-        label = category.name if category else f'Mẫu CV {locale.label_vi.lower()} chuyên nghiệp'
+        label = category.name if category else f'Mẫu CV {locale.label} chuyên nghiệp'
         description = (
             category.description
             if category
-            else f'Khám phá mẫu CV {locale.label_vi.lower()} chuyên nghiệp, dễ chỉnh sửa và dùng ngay.'
+            else f'Khám phá mẫu CV {locale.label} chuyên nghiệp, dễ chỉnh sửa và dùng ngay.'
         )
         canonical_url = absolute_url(request, canonical_path)
         return render_seo_shell(
@@ -197,10 +194,10 @@ class CvTemplateSeoShellView(View):
 
 class CvTemplateSitemapView(View):
     def get(self, request):
-        localizations, locales, categories = cv_template_sitemap_rows()
+        rows, languages, categories = cv_template_sitemap_rows()
         items = []
-        for locale in locales:
-            base_path = f'/{locale.catalog_path}'
+        for language in languages:
+            base_path = f'/{language.path}'
             items.append({'loc': absolute_url(request, base_path)})
             items.extend(
                 {
@@ -211,13 +208,9 @@ class CvTemplateSitemapView(View):
             )
         items.extend(
             {
-                'loc': absolute_url(
-                    request,
-                    f'/{localization.locale_ref.catalog_path}/chi-tiet/'
-                    f'{localization.template.slug}',
-                ),
-                'lastmod': localization.template.updated_at.date().isoformat(),
+                'loc': absolute_url(request, f'/{language.path}/chi-tiet/{template.slug}'),
+                'lastmod': template.updated_at.date().isoformat(),
             }
-            for localization in localizations
+            for language, template in rows
         )
         return xml_response(sitemap_urlset(items))

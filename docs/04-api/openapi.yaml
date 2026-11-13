@@ -544,38 +544,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/ManagedAccount'
           description: ''
-  /api/admin/accounts/{public_id}/mfa-impact/:
-    post:
-      operationId: admin_accounts_mfa_impact_create
-      parameters:
-      - in: path
-        name: public_id
-        schema:
-          type: string
-        required: true
-      tags:
-      - admin
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ManagedAccountRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/ManagedAccountRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/ManagedAccountRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ManagedAccount'
-          description: ''
   /api/admin/accounts/{public_id}/profile/:
     get:
       operationId: admin_accounts_profile_retrieve
@@ -682,38 +650,6 @@ paths:
   /api/admin/accounts/{public_id}/resend-verification/:
     post:
       operationId: admin_accounts_resend_verification_create
-      parameters:
-      - in: path
-        name: public_id
-        schema:
-          type: string
-        required: true
-      tags:
-      - admin
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ManagedAccountRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/ManagedAccountRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/ManagedAccountRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ManagedAccount'
-          description: ''
-  /api/admin/accounts/{public_id}/reset-mfa/:
-    post:
-      operationId: admin_accounts_reset_mfa_create
       parameters:
       - in: path
         name: public_id
@@ -3691,330 +3627,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SessionRevokeOthers'
-          description: ''
-  /api/auth/two-factor/disable/confirm/:
-    post:
-      operationId: auth_two_factor_disable_confirm_create
-      summary: Xác nhận mã để tắt xác minh hai bước
-      tags:
-      - auth-2fa
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TwoFactorCodeRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/TwoFactorCodeRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/TwoFactorCodeRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SessionUser'
-          description: ''
-  /api/auth/two-factor/disable/send/:
-    post:
-      operationId: auth_two_factor_disable_send_create
-      summary: Gửi mã để tắt xác minh hai bước qua email
-      tags:
-      - auth-2fa
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TwoFactorCodeSent'
-          description: ''
-  /api/auth/two-factor/employer/backup-codes/:
-    post:
-      operationId: auth_two_factor_employer_backup_codes_create
-      summary: Sinh bộ mã dự phòng mới (chỉ hiển thị một lần)
-      tags:
-      - auth-2fa
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TwoFactorLoginCodeRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/TwoFactorLoginCodeRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/TwoFactorLoginCodeRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SessionUser'
-          description: ''
-  /api/auth/two-factor/employer/backup-codes/send/:
-    post:
-      operationId: auth_two_factor_employer_backup_codes_send_create
-      summary: Gửi mã xác minh để sinh mã dự phòng
-      tags:
-      - auth-2fa
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TwoFactorCodeSent'
-          description: ''
-  /api/auth/two-factor/employer/methods/:
-    get:
-      operationId: auth_two_factor_employer_methods_retrieve
-      description: Status không chứa secret/hash; dùng cho workspace employer và admin.
-      summary: Trạng thái các phương thức MFA của nhà tuyển dụng
-      tags:
-      - auth-2fa
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/EmployerTwoFactorMethods'
-          description: ''
-  /api/auth/two-factor/employer/methods/disable/:
-    post:
-      operationId: auth_two_factor_employer_methods_disable_create
-      description: Tắt email, TOTP hoặc recovery codes sau step-up bằng phương thức
-        đang bật.
-      summary: Tắt một phương thức MFA cụ thể
-      tags:
-      - auth-2fa
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/EmployerTwoFactorMethodDisableRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/EmployerTwoFactorMethodDisableRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/EmployerTwoFactorMethodDisableRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SessionUser'
-          description: ''
-  /api/auth/two-factor/employer/methods/disable/send/:
-    post:
-      operationId: auth_two_factor_employer_methods_disable_send_create
-      description: Gửi email step-up để tắt một phương thức MFA.
-      summary: Gửi mã step-up để tắt một phương thức MFA
-      tags:
-      - auth-2fa
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/EmployerTwoFactorMethodRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/EmployerTwoFactorMethodRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/EmployerTwoFactorMethodRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TwoFactorCodeSent'
-          description: ''
-  /api/auth/two-factor/employer/totp/confirm/:
-    post:
-      operationId: auth_two_factor_employer_totp_confirm_create
-      summary: Xác nhận mã TOTP để bật ứng dụng xác thực
-      tags:
-      - auth-2fa
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TwoFactorCodeRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/TwoFactorCodeRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/TwoFactorCodeRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SessionUser'
-          description: ''
-  /api/auth/two-factor/employer/totp/disable/:
-    post:
-      operationId: auth_two_factor_employer_totp_disable_create
-      summary: Tắt TOTP sau khi xác minh step-up
-      tags:
-      - auth-2fa
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TwoFactorLoginCodeRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/TwoFactorLoginCodeRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/TwoFactorLoginCodeRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SessionUser'
-          description: ''
-  /api/auth/two-factor/employer/totp/setup/:
-    post:
-      operationId: auth_two_factor_employer_totp_setup_create
-      summary: 'Khởi tạo TOTP: trả secret và otpauth URL để quét QR'
-      tags:
-      - auth-2fa
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/EmployerTotpSetup'
-          description: ''
-  /api/auth/two-factor/login/resend/:
-    post:
-      operationId: auth_two_factor_login_resend_create
-      summary: Gửi lại mã xác minh đăng nhập hai bước
-      tags:
-      - auth
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TwoFactorResendRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/TwoFactorResendRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/TwoFactorResendRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TwoFactorLoginResend'
-          description: ''
-  /api/auth/two-factor/login/verify/:
-    post:
-      operationId: auth_two_factor_login_verify_create
-      summary: Xác nhận mã và hoàn tất đăng nhập hai bước
-      tags:
-      - auth
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TwoFactorChallengeRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/TwoFactorChallengeRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/TwoFactorChallengeRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TwoFactorLoginTokens'
-          description: ''
-  /api/auth/two-factor/setup/confirm/:
-    post:
-      operationId: auth_two_factor_setup_confirm_create
-      summary: Xác nhận mã để bật xác minh hai bước
-      tags:
-      - auth
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TwoFactorCodeRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/TwoFactorCodeRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/TwoFactorCodeRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SessionUser'
-          description: ''
-  /api/auth/two-factor/setup/send/:
-    post:
-      operationId: auth_two_factor_setup_send_create
-      summary: Gửi mã để bật xác minh hai bước
-      tags:
-      - auth
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TwoFactorCodeSent'
           description: ''
   /api/auth/verify/confirm/:
     post:
@@ -9096,128 +8708,6 @@ paths:
                 type: object
                 additionalProperties: {}
           description: ''
-  /api/site/admin/locales/:
-    get:
-      operationId: site_admin_locales_list
-      tags:
-      - site
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/AdminLocale'
-          description: ''
-    post:
-      operationId: site_admin_locales_create
-      tags:
-      - site
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AdminLocaleRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/AdminLocaleRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/AdminLocaleRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '201':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AdminLocale'
-          description: ''
-  /api/site/admin/locales/{code}/:
-    get:
-      operationId: site_admin_locales_retrieve
-      parameters:
-      - in: path
-        name: code
-        schema:
-          type: string
-        required: true
-      tags:
-      - site
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AdminLocale'
-          description: ''
-    put:
-      operationId: site_admin_locales_update
-      parameters:
-      - in: path
-        name: code
-        schema:
-          type: string
-        required: true
-      tags:
-      - site
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AdminLocaleRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/AdminLocaleRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/AdminLocaleRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AdminLocale'
-          description: ''
-    patch:
-      operationId: site_admin_locales_partial_update
-      parameters:
-      - in: path
-        name: code
-        schema:
-          type: string
-        required: true
-      tags:
-      - site
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchedAdminLocaleRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PatchedAdminLocaleRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PatchedAdminLocaleRequest'
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AdminLocale'
-          description: ''
   /api/site/admin/settings/:
     get:
       operationId: site_admin_settings_retrieve
@@ -9488,23 +8978,6 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/LinkGroup'
-          description: ''
-  /api/site/locales/:
-    get:
-      operationId: site_locales_list
-      tags:
-      - site
-      security:
-      - jwtAuth: []
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Locale'
           description: ''
   /api/site/settings/:
     get:
@@ -10196,207 +9669,6 @@ paths:
       responses:
         '204':
           description: No response body
-  /api/v2/admin/cv-content-blueprints/:
-    get:
-      operationId: v2_admin_cv_content_blueprints_list
-      tags:
-      - v2
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/CvContentBlueprintAdmin'
-          description: ''
-    post:
-      operationId: v2_admin_cv_content_blueprints_create
-      tags:
-      - v2
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CvContentBlueprintAdminRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/CvContentBlueprintAdminRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/CvContentBlueprintAdminRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '201':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CvContentBlueprintAdmin'
-          description: ''
-  /api/v2/admin/cv-content-blueprints/{public_id}/:
-    get:
-      operationId: v2_admin_cv_content_blueprints_retrieve
-      parameters:
-      - in: path
-        name: public_id
-        schema:
-          type: string
-        required: true
-      tags:
-      - v2
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CvContentBlueprintAdmin'
-          description: ''
-    put:
-      operationId: v2_admin_cv_content_blueprints_update
-      parameters:
-      - in: path
-        name: public_id
-        schema:
-          type: string
-        required: true
-      tags:
-      - v2
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CvContentBlueprintAdminRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/CvContentBlueprintAdminRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/CvContentBlueprintAdminRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CvContentBlueprintAdmin'
-          description: ''
-    patch:
-      operationId: v2_admin_cv_content_blueprints_partial_update
-      parameters:
-      - in: path
-        name: public_id
-        schema:
-          type: string
-        required: true
-      tags:
-      - v2
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchedCvContentBlueprintAdminRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PatchedCvContentBlueprintAdminRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PatchedCvContentBlueprintAdminRequest'
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CvContentBlueprintAdmin'
-          description: ''
-    delete:
-      operationId: v2_admin_cv_content_blueprints_destroy
-      parameters:
-      - in: path
-        name: public_id
-        schema:
-          type: string
-        required: true
-      tags:
-      - v2
-      security:
-      - jwtAuth: []
-      responses:
-        '204':
-          description: No response body
-  /api/v2/admin/cv-content-blueprints/{public_id}/activate/:
-    post:
-      operationId: v2_admin_cv_content_blueprints_activate_create
-      parameters:
-      - in: path
-        name: public_id
-        schema:
-          type: string
-        required: true
-      tags:
-      - v2
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CvContentBlueprintAdminRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/CvContentBlueprintAdminRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/CvContentBlueprintAdminRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CvContentBlueprintAdmin'
-          description: ''
-  /api/v2/admin/cv-content-blueprints/{public_id}/preview/:
-    post:
-      operationId: v2_admin_cv_content_blueprints_preview_create
-      parameters:
-      - in: path
-        name: public_id
-        schema:
-          type: string
-        required: true
-      tags:
-      - v2
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CvContentBlueprintAdminRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/CvContentBlueprintAdminRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/CvContentBlueprintAdminRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CvContentBlueprintAdmin'
-          description: ''
   /api/v2/admin/cv-sample-contents/:
     get:
       operationId: v2_admin_cv_sample_contents_list
@@ -10630,147 +9902,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/CvSampleContentAdmin'
           description: ''
-  /api/v2/admin/cv-template-localizations/:
-    get:
-      operationId: v2_admin_cv_template_localizations_list
-      tags:
-      - v2
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/CvTemplateLocalizationAdmin'
-          description: ''
-    post:
-      operationId: v2_admin_cv_template_localizations_create
-      tags:
-      - v2
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CvTemplateLocalizationAdminRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/CvTemplateLocalizationAdminRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/CvTemplateLocalizationAdminRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '201':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CvTemplateLocalizationAdmin'
-          description: ''
-  /api/v2/admin/cv-template-localizations/{id}/:
-    get:
-      operationId: v2_admin_cv_template_localizations_retrieve
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this cv template localization.
-        required: true
-      tags:
-      - v2
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CvTemplateLocalizationAdmin'
-          description: ''
-    put:
-      operationId: v2_admin_cv_template_localizations_update
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this cv template localization.
-        required: true
-      tags:
-      - v2
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CvTemplateLocalizationAdminRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/CvTemplateLocalizationAdminRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/CvTemplateLocalizationAdminRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CvTemplateLocalizationAdmin'
-          description: ''
-    patch:
-      operationId: v2_admin_cv_template_localizations_partial_update
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this cv template localization.
-        required: true
-      tags:
-      - v2
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchedCvTemplateLocalizationAdminRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PatchedCvTemplateLocalizationAdminRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PatchedCvTemplateLocalizationAdminRequest'
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CvTemplateLocalizationAdmin'
-          description: ''
-    delete:
-      operationId: v2_admin_cv_template_localizations_destroy
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this cv template localization.
-        required: true
-      tags:
-      - v2
-      security:
-      - jwtAuth: []
-      responses:
-        '204':
-          description: No response body
   /api/v2/admin/cv-templates/:
     get:
       operationId: v2_admin_cv_templates_list
@@ -11219,9 +10350,14 @@ paths:
       summary: Xem trước nội dung mẫu theo vị trí công việc
       parameters:
       - in: query
-        name: experience_level
+        name: experience_band
         schema:
           type: string
+          enum:
+          - entry
+          - junior
+          - mid
+          - senior
       - in: query
         name: position_public_id
         schema:
@@ -11230,7 +10366,7 @@ paths:
         name: source
         schema:
           type: string
-        description: sample | blueprint
+        description: sample | blank
       - in: query
         name: template_public_id
         schema:
@@ -12217,23 +11353,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/CvV2'
           description: ''
-  /api/v2/cvs/latest-recoverable-draft/:
-    get:
-      operationId: v2_cvs_latest_recoverable_draft_retrieve
-      summary: Bản nháp CV gần nhất còn khôi phục được
-      tags:
-      - cvs-v2
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/LatestRecoverableDraft'
-          description: ''
-        '204':
-          description: No response body
   /api/v2/cvs/shares/{token}/:
     get:
       operationId: v2_cvs_shares_retrieve
@@ -13302,7 +12421,7 @@ components:
           readOnly: true
         method:
           allOf:
-          - $ref: '#/components/schemas/MethodE6bEnum'
+          - $ref: '#/components/schemas/MethodEnum'
           readOnly: true
         status:
           allOf:
@@ -13462,7 +12581,7 @@ components:
           readOnly: true
         method:
           allOf:
-          - $ref: '#/components/schemas/MethodE6bEnum'
+          - $ref: '#/components/schemas/MethodEnum'
           readOnly: true
         status:
           allOf:
@@ -14865,84 +13984,6 @@ components:
           maxLength: 1000
       required:
       - note
-    AdminLocale:
-      type: object
-      properties:
-        code:
-          type: string
-          maxLength: 16
-        label_vi:
-          type: string
-          maxLength: 80
-        native_name:
-          type: string
-          maxLength: 80
-        flag_emoji:
-          type: string
-          maxLength: 16
-        catalog_path:
-          type: string
-          maxLength: 120
-          pattern: ^[-a-zA-Z0-9_]+$
-        is_default:
-          type: boolean
-        is_active:
-          type: boolean
-        sort_order:
-          type: integer
-          maximum: 2147483647
-          minimum: 0
-        created_at:
-          type: string
-          format: date-time
-          readOnly: true
-        updated_at:
-          type: string
-          format: date-time
-          readOnly: true
-      required:
-      - catalog_path
-      - code
-      - created_at
-      - label_vi
-      - native_name
-      - updated_at
-    AdminLocaleRequest:
-      type: object
-      properties:
-        code:
-          type: string
-          minLength: 1
-          maxLength: 16
-        label_vi:
-          type: string
-          minLength: 1
-          maxLength: 80
-        native_name:
-          type: string
-          minLength: 1
-          maxLength: 80
-        flag_emoji:
-          type: string
-          maxLength: 16
-        catalog_path:
-          type: string
-          minLength: 1
-          maxLength: 120
-          pattern: ^[-a-zA-Z0-9_]+$
-        is_default:
-          type: boolean
-        is_active:
-          type: boolean
-        sort_order:
-          type: integer
-          maximum: 2147483647
-          minimum: 0
-      required:
-      - catalog_path
-      - code
-      - label_vi
-      - native_name
     AdminMembershipCreate:
       type: object
       properties:
@@ -15465,8 +14506,6 @@ components:
         full_name:
           type: string
           maxLength: 255
-        two_factor_enabled:
-          type: boolean
         active_membership_count:
           type: integer
           readOnly: true
@@ -18485,7 +17524,7 @@ components:
           readOnly: true
         method:
           allOf:
-          - $ref: '#/components/schemas/MethodE6bEnum'
+          - $ref: '#/components/schemas/MethodEnum'
           readOnly: true
         status:
           allOf:
@@ -19259,145 +18298,6 @@ components:
       - hex_code
       - name
       - slug
-    CvContentBlueprintAdmin:
-      type: object
-      description: Protect public lifecycle transitions independently from edit access.
-      properties:
-        public_id:
-          type: string
-          readOnly: true
-        locale:
-          type: string
-          maxLength: 16
-        experience_level:
-          type: string
-          default: unspecified
-          maxLength: 30
-        content_json_template:
-          description: Canonical content template; strings may contain {position}.
-        summary_title:
-          type: string
-          maxLength: 255
-        summary_template:
-          type: string
-          description: Dùng {position} tại nơi cần chèn tên vị trí đã bản địa hóa.
-        experience_title:
-          type: string
-          maxLength: 255
-        experience_company:
-          type: string
-          maxLength: 255
-        experience_description_template:
-          type: string
-          description: Dùng {position} tại nơi cần chèn tên vị trí.
-        education_title:
-          type: string
-          maxLength: 255
-        education_degree:
-          type: string
-          maxLength: 255
-        education_institution:
-          type: string
-          maxLength: 255
-        education_description:
-          type: string
-        skills_title:
-          type: string
-          maxLength: 255
-        skill_templates:
-          description: Danh sách chuỗi; có thể dùng {position}.
-        is_active:
-          type: boolean
-        created_at:
-          type: string
-          format: date-time
-          readOnly: true
-        updated_at:
-          type: string
-          format: date-time
-          readOnly: true
-      required:
-      - created_at
-      - education_degree
-      - education_institution
-      - education_title
-      - experience_company
-      - experience_description_template
-      - experience_title
-      - locale
-      - public_id
-      - skills_title
-      - summary_template
-      - summary_title
-      - updated_at
-    CvContentBlueprintAdminRequest:
-      type: object
-      description: Protect public lifecycle transitions independently from edit access.
-      properties:
-        locale:
-          type: string
-          minLength: 1
-          maxLength: 16
-        experience_level:
-          type: string
-          minLength: 1
-          default: unspecified
-          maxLength: 30
-        content_json_template:
-          description: Canonical content template; strings may contain {position}.
-        summary_title:
-          type: string
-          minLength: 1
-          maxLength: 255
-        summary_template:
-          type: string
-          minLength: 1
-          description: Dùng {position} tại nơi cần chèn tên vị trí đã bản địa hóa.
-        experience_title:
-          type: string
-          minLength: 1
-          maxLength: 255
-        experience_company:
-          type: string
-          minLength: 1
-          maxLength: 255
-        experience_description_template:
-          type: string
-          minLength: 1
-          description: Dùng {position} tại nơi cần chèn tên vị trí.
-        education_title:
-          type: string
-          minLength: 1
-          maxLength: 255
-        education_degree:
-          type: string
-          minLength: 1
-          maxLength: 255
-        education_institution:
-          type: string
-          minLength: 1
-          maxLength: 255
-        education_description:
-          type: string
-        skills_title:
-          type: string
-          minLength: 1
-          maxLength: 255
-        skill_templates:
-          description: Danh sách chuỗi; có thể dùng {position}.
-        is_active:
-          type: boolean
-      required:
-      - education_degree
-      - education_institution
-      - education_title
-      - experience_company
-      - experience_description_template
-      - experience_title
-      - locale
-      - skills_title
-      - summary_template
-      - summary_title
     CvDraft:
       type: object
       properties:
@@ -19557,6 +18457,10 @@ components:
         public_id:
           type: string
           readOnly: true
+        slug:
+          type: string
+          readOnly: true
+          pattern: ^[-a-zA-Z0-9_]+$
         display_name:
           type: string
           readOnly: true
@@ -19567,6 +18471,7 @@ components:
       - display_name
       - name_vi
       - public_id
+      - slug
     CvSampleContentAdmin:
       type: object
       description: Protect public lifecycle transitions independently from edit access.
@@ -19574,19 +18479,18 @@ components:
         public_id:
           type: string
           readOnly: true
-        job_category_public_id:
+        position_public_id:
           type: string
           nullable: true
+        position_name:
+          type: string
+          readOnly: true
+          default: ''
         locale:
-          type: string
-          maxLength: 16
-        experience_level:
-          type: string
-          maxLength: 30
+          $ref: '#/components/schemas/LocaleDcaEnum'
+        experience_band:
+          $ref: '#/components/schemas/ExperienceBandEnum'
         title:
-          type: string
-          maxLength: 255
-        position_name_vi:
           type: string
           maxLength: 255
         content_json: {}
@@ -19613,7 +18517,9 @@ components:
           readOnly: true
       required:
       - created_at
+      - experience_band
       - locale
+      - position_name
       - public_id
       - published_at
       - status
@@ -19623,24 +18529,17 @@ components:
       type: object
       description: Protect public lifecycle transitions independently from edit access.
       properties:
-        job_category_public_id:
+        position_public_id:
           type: string
           minLength: 1
           nullable: true
         locale:
-          type: string
-          minLength: 1
-          maxLength: 16
-        experience_level:
-          type: string
-          minLength: 1
-          maxLength: 30
+          $ref: '#/components/schemas/LocaleDcaEnum'
+        experience_band:
+          $ref: '#/components/schemas/ExperienceBandEnum'
         title:
           type: string
           minLength: 1
-          maxLength: 255
-        position_name_vi:
-          type: string
           maxLength: 255
         content_json: {}
         schema_version:
@@ -19648,6 +18547,7 @@ components:
           maximum: 2147483647
           minimum: 0
       required:
+      - experience_band
       - locale
       - title
     CvSampleContentCard:
@@ -19660,30 +18560,28 @@ components:
           type: string
           readOnly: true
         locale:
+          allOf:
+          - $ref: '#/components/schemas/LocaleDcaEnum'
+          readOnly: true
+        experience_band:
+          allOf:
+          - $ref: '#/components/schemas/ExperienceBandEnum'
+          readOnly: true
+        position_public_id:
           type: string
           readOnly: true
-        experience_level:
-          type: string
-          readOnly: true
-        job_category_name:
-          type: string
-          readOnly: true
-        job_category_slug:
-          type: string
-          readOnly: true
-        position_name_vi:
+        position_slug:
           type: string
           readOnly: true
         position_name:
           type: string
           readOnly: true
       required:
-      - experience_level
-      - job_category_name
-      - job_category_slug
+      - experience_band
       - locale
       - position_name
-      - position_name_vi
+      - position_public_id
+      - position_slug
       - public_id
       - title
     CvSampleContentDetail:
@@ -19696,18 +18594,17 @@ components:
           type: string
           readOnly: true
         locale:
+          allOf:
+          - $ref: '#/components/schemas/LocaleDcaEnum'
+          readOnly: true
+        experience_band:
+          allOf:
+          - $ref: '#/components/schemas/ExperienceBandEnum'
+          readOnly: true
+        position_public_id:
           type: string
           readOnly: true
-        experience_level:
-          type: string
-          readOnly: true
-        job_category_name:
-          type: string
-          readOnly: true
-        job_category_slug:
-          type: string
-          readOnly: true
-        position_name_vi:
+        position_slug:
           type: string
           readOnly: true
         position_name:
@@ -19720,12 +18617,11 @@ components:
           readOnly: true
       required:
       - content_json
-      - experience_level
-      - job_category_name
-      - job_category_slug
+      - experience_band
       - locale
       - position_name
-      - position_name_vi
+      - position_public_id
+      - position_slug
       - public_id
       - schema_version
       - title
@@ -19799,7 +18695,25 @@ components:
           type: string
           maxLength: 255
           pattern: ^[-a-zA-Z0-9_]+$
-        description:
+        display_name_vi:
+          type: string
+          maxLength: 255
+        display_name_en:
+          type: string
+          maxLength: 255
+        description_vi:
+          type: string
+        description_en:
+          type: string
+        seo_title_vi:
+          type: string
+          maxLength: 255
+        seo_title_en:
+          type: string
+          maxLength: 255
+        seo_description_vi:
+          type: string
+        seo_description_en:
           type: string
         thumbnail_url:
           type: string
@@ -19825,15 +18739,9 @@ components:
           items:
             $ref: '#/components/schemas/CvTemplateVersionAdmin'
           readOnly: true
-        localizations:
-          type: array
-          items:
-            $ref: '#/components/schemas/CvTemplateLocalizationAdmin'
-          readOnly: true
       required:
       - current_published_version_id
       - lifecycle_status
-      - localizations
       - name
       - public_id
       - versions
@@ -19849,7 +18757,25 @@ components:
           type: string
           maxLength: 255
           pattern: ^[-a-zA-Z0-9_]+$
-        description:
+        display_name_vi:
+          type: string
+          maxLength: 255
+        display_name_en:
+          type: string
+          maxLength: 255
+        description_vi:
+          type: string
+        description_en:
+          type: string
+        seo_title_vi:
+          type: string
+          maxLength: 255
+        seo_title_en:
+          type: string
+          maxLength: 255
+        seo_description_vi:
+          type: string
+        seo_description_en:
           type: string
         thumbnail_url:
           type: string
@@ -19962,6 +18888,12 @@ components:
         preview_url:
           type: string
           readOnly: true
+        seo_title:
+          type: string
+          readOnly: true
+        seo_description:
+          type: string
+          readOnly: true
         renderer:
           type: string
           readOnly: true
@@ -19979,71 +18911,12 @@ components:
       - public_id
       - renderer
       - sections
+      - seo_description
+      - seo_title
       - slug
       - tags
       - theme_color
       - thumbnail_url
-    CvTemplateLocalizationAdmin:
-      type: object
-      description: Protect public lifecycle transitions independently from edit access.
-      properties:
-        id:
-          type: integer
-          readOnly: true
-        locale:
-          type: string
-          maxLength: 16
-        display_name:
-          type: string
-          maxLength: 255
-        description:
-          type: string
-        seo_title:
-          type: string
-          maxLength: 255
-        seo_description:
-          type: string
-        is_active:
-          type: boolean
-        template:
-          type: integer
-        locale_ref:
-          type: string
-          readOnly: true
-          nullable: true
-      required:
-      - display_name
-      - id
-      - locale
-      - locale_ref
-      - template
-    CvTemplateLocalizationAdminRequest:
-      type: object
-      description: Protect public lifecycle transitions independently from edit access.
-      properties:
-        locale:
-          type: string
-          minLength: 1
-          maxLength: 16
-        display_name:
-          type: string
-          minLength: 1
-          maxLength: 255
-        description:
-          type: string
-        seo_title:
-          type: string
-          maxLength: 255
-        seo_description:
-          type: string
-        is_active:
-          type: boolean
-        template:
-          type: integer
-      required:
-      - display_name
-      - locale
-      - template
     CvTemplateSwitchRequest:
       type: object
       properties:
@@ -20173,7 +19046,8 @@ components:
           type: string
           readOnly: true
         language:
-          type: string
+          allOf:
+          - $ref: '#/components/schemas/LanguageEnum'
           readOnly: true
         cv_type:
           allOf:
@@ -20309,15 +19183,19 @@ components:
           type: string
           maxLength: 50
         language:
-          type: string
+          allOf:
+          - $ref: '#/components/schemas/LanguageEnum'
           default: vi-VN
-          maxLength: 16
         sample_content_public_id:
           type: string
           maxLength: 50
         position_public_id:
           type: string
           maxLength: 50
+        experience_band:
+          allOf:
+          - $ref: '#/components/schemas/ExperienceBandEnum'
+          default: junior
         source_cv_public_id:
           type: string
           maxLength: 50
@@ -20339,10 +19217,9 @@ components:
           minLength: 1
           maxLength: 50
         language:
-          type: string
-          minLength: 1
+          allOf:
+          - $ref: '#/components/schemas/LanguageEnum'
           default: vi-VN
-          maxLength: 16
         sample_content_public_id:
           type: string
           minLength: 1
@@ -20351,6 +19228,10 @@ components:
           type: string
           minLength: 1
           maxLength: 50
+        experience_band:
+          allOf:
+          - $ref: '#/components/schemas/ExperienceBandEnum'
+          default: junior
         source_cv_public_id:
           type: string
           minLength: 1
@@ -20388,10 +19269,9 @@ components:
           minLength: 1
           maxLength: 50
         language:
-          type: string
-          minLength: 1
+          allOf:
+          - $ref: '#/components/schemas/LanguageEnum'
           default: vi-VN
-          maxLength: 16
         theme_color:
           type: string
           minLength: 1
@@ -22209,61 +21089,6 @@ components:
       - gender
       - terms_accepted
       - work_location
-    EmployerTotpSetup:
-      type: object
-      properties:
-        manual_key:
-          type: string
-        otpauth_url:
-          type: string
-        expires_in:
-          type: integer
-      required:
-      - expires_in
-      - manual_key
-      - otpauth_url
-    EmployerTwoFactorMethodDisableRequest:
-      type: object
-      properties:
-        code:
-          type: string
-          minLength: 1
-          maxLength: 16
-        method:
-          allOf:
-          - $ref: '#/components/schemas/Method2ddEnum'
-          default: email
-        target:
-          $ref: '#/components/schemas/TargetEnum'
-      required:
-      - code
-      - target
-    EmployerTwoFactorMethodRequest:
-      type: object
-      properties:
-        target:
-          $ref: '#/components/schemas/TargetEnum'
-      required:
-      - target
-    EmployerTwoFactorMethods:
-      type: object
-      properties:
-        email:
-          type: boolean
-        totp:
-          type: boolean
-        backup:
-          type: boolean
-        two_factor_enabled:
-          type: boolean
-        backup_codes_remaining:
-          type: integer
-      required:
-      - backup
-      - backup_codes_remaining
-      - email
-      - totp
-      - two_factor_enabled
     EmploymentTypeEnum:
       enum:
       - full_time
@@ -22304,6 +21129,18 @@ components:
         * `document_changes_requested` - Giấy tờ xác thực cần bổ sung
         * `document_rejected` - Giấy tờ xác thực bị từ chối
         * `company_link_removed` - Liên kết công ty đã được gỡ
+    ExperienceBandEnum:
+      enum:
+      - entry
+      - junior
+      - mid
+      - senior
+      type: string
+      description: |-
+        * `entry` - Dưới 1 năm
+        * `junior` - 1–2 năm
+        * `mid` - 3–4 năm
+        * `senior` - Từ 5 năm
     ExperienceLevelEnum:
       enum:
       - no_experience
@@ -22773,6 +21610,11 @@ components:
       - unresolved_suggestions
       - updated_at
       - warnings
+    JobAiGenerationCreateLocaleEnum:
+      enum:
+      - vi-VN
+      type: string
+      description: '* `vi-VN` - vi-VN'
     JobAiGenerationCreateRequest:
       type: object
       properties:
@@ -22785,7 +21627,7 @@ components:
           pattern: ^[A-Za-z0-9._:-]{1,64}$
         locale:
           allOf:
-          - $ref: '#/components/schemas/LocaleEnum'
+          - $ref: '#/components/schemas/JobAiGenerationCreateLocaleEnum'
           default: vi-VN
         brief:
           $ref: '#/components/schemas/JobAiBriefRequest'
@@ -24264,16 +23106,14 @@ components:
       - code
       - id
       - name
-    LatestRecoverableDraft:
-      type: object
-      properties:
-        cv:
-          $ref: '#/components/schemas/CvV2'
-        draft:
-          $ref: '#/components/schemas/CvDraft'
-      required:
-      - cv
-      - draft
+    LanguageEnum:
+      enum:
+      - vi-VN
+      - en-US
+      type: string
+      description: |-
+        * `vi-VN` - Tiếng Việt
+        * `en-US` - Tiếng Anh
     LifecycleState4f9Enum:
       enum:
       - ACTIVE
@@ -24331,45 +23171,14 @@ components:
         * `manual` - Nhập tay
         * `locations` - Tự sinh từ Khu vực
         * `categories` - Tự sinh từ Ngành nghề
-    Locale:
-      type: object
-      properties:
-        code:
-          type: string
-          maxLength: 16
-        label_vi:
-          type: string
-          maxLength: 80
-        native_name:
-          type: string
-          maxLength: 80
-        flag_emoji:
-          type: string
-          maxLength: 16
-        catalog_path:
-          type: string
-          maxLength: 120
-          pattern: ^[-a-zA-Z0-9_]+$
-        is_default:
-          type: boolean
-        is_active:
-          type: boolean
-          readOnly: true
-        sort_order:
-          type: integer
-          maximum: 2147483647
-          minimum: 0
-      required:
-      - catalog_path
-      - code
-      - is_active
-      - label_vi
-      - native_name
-    LocaleEnum:
+    LocaleDcaEnum:
       enum:
       - vi-VN
+      - en-US
       type: string
-      description: '* `vi-VN` - vi-VN'
+      description: |-
+        * `vi-VN` - Tiếng Việt
+        * `en-US` - Tiếng Anh
     LocationLevelEnum:
       enum:
       - province
@@ -24409,8 +23218,8 @@ components:
       description: |-
         Xác thực email/mật khẩu mà chưa phát JWT.
 
-        Tách bước này khỏi ``TokenObtainPairSerializer`` để tài khoản bật 2FA không
-        nhận refresh token trước khi mã email được xác nhận.
+        Tách bước này khỏi ``TokenObtainPairSerializer`` để view tự phát token qua
+        ``issue_tokens`` (gắn ``AuthSession`` và refresh cookie HttpOnly).
 
         Mô hình tách tài khoản theo cổng: cùng email có thể có tài khoản ứng viên và
         NTD riêng (mật khẩu riêng), nên phải resolve theo **(email, role của cổng)**
@@ -24443,13 +23252,6 @@ components:
           $ref: '#/components/schemas/SessionUser'
         access:
           type: string
-        two_factor_required:
-          type: boolean
-        challenge_token:
-          type: string
-        methods:
-          type: object
-          additionalProperties: {}
         detail:
           type: string
         code:
@@ -24510,11 +23312,6 @@ components:
           $ref: '#/components/schemas/Status5ebEnum'
         email_verified:
           type: boolean
-        two_factor_enabled:
-          type: boolean
-        mfa_methods:
-          type: string
-          readOnly: true
         has_usable_password:
           type: string
           readOnly: true
@@ -24555,7 +23352,6 @@ components:
       - has_usable_password
       - invitation
       - last_activity_at
-      - mfa_methods
       - public_id
       - updated_at
     ManagedAccountDetail:
@@ -24583,11 +23379,6 @@ components:
           $ref: '#/components/schemas/Status5ebEnum'
         email_verified:
           type: boolean
-        two_factor_enabled:
-          type: boolean
-        mfa_methods:
-          type: string
-          readOnly: true
         has_usable_password:
           type: string
           readOnly: true
@@ -24637,7 +23428,6 @@ components:
       - has_usable_password
       - invitation
       - last_activity_at
-      - mfa_methods
       - profile
       - public_id
       - section_counts
@@ -24662,8 +23452,6 @@ components:
         status:
           $ref: '#/components/schemas/Status5ebEnum'
         email_verified:
-          type: boolean
-        two_factor_enabled:
           type: boolean
         last_login:
           type: string
@@ -24736,17 +23524,7 @@ components:
           maxLength: 300
       required:
       - file
-    Method2ddEnum:
-      enum:
-      - email
-      - totp
-      - backup
-      type: string
-      description: |-
-        * `email` - email
-        * `totp` - totp
-        * `backup` - backup
-    MethodE6bEnum:
+    MethodEnum:
       enum:
       - dns_txt
       - admin_manual
@@ -25767,37 +24545,6 @@ components:
           type: string
           minLength: 1
           maxLength: 500
-    PatchedAdminLocaleRequest:
-      type: object
-      properties:
-        code:
-          type: string
-          minLength: 1
-          maxLength: 16
-        label_vi:
-          type: string
-          minLength: 1
-          maxLength: 80
-        native_name:
-          type: string
-          minLength: 1
-          maxLength: 80
-        flag_emoji:
-          type: string
-          maxLength: 16
-        catalog_path:
-          type: string
-          minLength: 1
-          maxLength: 120
-          pattern: ^[-a-zA-Z0-9_]+$
-        is_default:
-          type: boolean
-        is_active:
-          type: boolean
-        sort_order:
-          type: integer
-          maximum: 2147483647
-          minimum: 0
     PatchedAdminPinnedPostRequest:
       type: object
       properties:
@@ -26032,85 +24779,21 @@ components:
           minimum: -2147483648
         is_active:
           type: boolean
-    PatchedCvContentBlueprintAdminRequest:
-      type: object
-      description: Protect public lifecycle transitions independently from edit access.
-      properties:
-        locale:
-          type: string
-          minLength: 1
-          maxLength: 16
-        experience_level:
-          type: string
-          minLength: 1
-          default: unspecified
-          maxLength: 30
-        content_json_template:
-          description: Canonical content template; strings may contain {position}.
-        summary_title:
-          type: string
-          minLength: 1
-          maxLength: 255
-        summary_template:
-          type: string
-          minLength: 1
-          description: Dùng {position} tại nơi cần chèn tên vị trí đã bản địa hóa.
-        experience_title:
-          type: string
-          minLength: 1
-          maxLength: 255
-        experience_company:
-          type: string
-          minLength: 1
-          maxLength: 255
-        experience_description_template:
-          type: string
-          minLength: 1
-          description: Dùng {position} tại nơi cần chèn tên vị trí.
-        education_title:
-          type: string
-          minLength: 1
-          maxLength: 255
-        education_degree:
-          type: string
-          minLength: 1
-          maxLength: 255
-        education_institution:
-          type: string
-          minLength: 1
-          maxLength: 255
-        education_description:
-          type: string
-        skills_title:
-          type: string
-          minLength: 1
-          maxLength: 255
-        skill_templates:
-          description: Danh sách chuỗi; có thể dùng {position}.
-        is_active:
-          type: boolean
     PatchedCvSampleContentAdminRequest:
       type: object
       description: Protect public lifecycle transitions independently from edit access.
       properties:
-        job_category_public_id:
+        position_public_id:
           type: string
           minLength: 1
           nullable: true
         locale:
-          type: string
-          minLength: 1
-          maxLength: 16
-        experience_level:
-          type: string
-          minLength: 1
-          maxLength: 30
+          $ref: '#/components/schemas/LocaleDcaEnum'
+        experience_band:
+          $ref: '#/components/schemas/ExperienceBandEnum'
         title:
           type: string
           minLength: 1
-          maxLength: 255
-        position_name_vi:
-          type: string
           maxLength: 255
         content_json: {}
         schema_version:
@@ -26129,7 +24812,25 @@ components:
           type: string
           maxLength: 255
           pattern: ^[-a-zA-Z0-9_]+$
-        description:
+        display_name_vi:
+          type: string
+          maxLength: 255
+        display_name_en:
+          type: string
+          maxLength: 255
+        description_vi:
+          type: string
+        description_en:
+          type: string
+        seo_title_vi:
+          type: string
+          maxLength: 255
+        seo_title_en:
+          type: string
+          maxLength: 255
+        seo_description_vi:
+          type: string
+        seo_description_en:
           type: string
         thumbnail_url:
           type: string
@@ -26143,29 +24844,6 @@ components:
           type: integer
           maximum: 2147483647
           minimum: -2147483648
-    PatchedCvTemplateLocalizationAdminRequest:
-      type: object
-      description: Protect public lifecycle transitions independently from edit access.
-      properties:
-        locale:
-          type: string
-          minLength: 1
-          maxLength: 16
-        display_name:
-          type: string
-          minLength: 1
-          maxLength: 255
-        description:
-          type: string
-        seo_title:
-          type: string
-          maxLength: 255
-        seo_description:
-          type: string
-        is_active:
-          type: boolean
-        template:
-          type: integer
     PatchedCvV2MetadataUpdateRequest:
       type: object
       properties:
@@ -26416,8 +25094,6 @@ components:
         status:
           $ref: '#/components/schemas/Status5ebEnum'
         email_verified:
-          type: boolean
-        two_factor_enabled:
           type: boolean
         last_login:
           type: string
@@ -29045,18 +27721,6 @@ components:
         email_verified:
           type: boolean
           readOnly: true
-        two_factor_enabled:
-          type: boolean
-          readOnly: true
-        two_factor_email_enabled:
-          type: string
-          readOnly: true
-        two_factor_totp_enabled:
-          type: string
-          readOnly: true
-        two_factor_backup_codes_enabled:
-          type: string
-          readOnly: true
         job_preferences_configured:
           type: string
           readOnly: true
@@ -29093,10 +27757,6 @@ components:
       - phone
       - public_id
       - role
-      - two_factor_backup_codes_enabled
-      - two_factor_email_enabled
-      - two_factor_enabled
-      - two_factor_totp_enabled
     SharedCvSummary:
       type: object
       properties:
@@ -29386,16 +28046,6 @@ components:
           pattern: ^[-a-zA-Z0-9_]+$
       required:
       - name
-    TargetEnum:
-      enum:
-      - email
-      - totp
-      - backup
-      type: string
-      description: |-
-        * `email` - email
-        * `totp` - totp
-        * `backup` - backup
     TaxCodeEnum:
       enum:
       - match
@@ -29476,88 +28126,6 @@ components:
           minimum: 1
       required:
       - revision_token
-    TwoFactorChallengeRequest:
-      type: object
-      properties:
-        code:
-          type: string
-          minLength: 1
-          maxLength: 16
-        method:
-          allOf:
-          - $ref: '#/components/schemas/Method2ddEnum'
-          default: email
-        challenge:
-          type: string
-          minLength: 1
-          maxLength: 128
-      required:
-      - challenge
-      - code
-    TwoFactorCodeRequest:
-      type: object
-      properties:
-        code:
-          type: string
-          minLength: 1
-          pattern: ^\d{6}$
-      required:
-      - code
-    TwoFactorCodeSent:
-      type: object
-      properties:
-        detail:
-          type: string
-        email:
-          type: string
-        expires_in:
-          type: integer
-      required:
-      - detail
-      - email
-      - expires_in
-    TwoFactorLoginCodeRequest:
-      type: object
-      properties:
-        code:
-          type: string
-          minLength: 1
-          maxLength: 16
-        method:
-          allOf:
-          - $ref: '#/components/schemas/Method2ddEnum'
-          default: email
-      required:
-      - code
-    TwoFactorLoginResend:
-      type: object
-      properties:
-        detail:
-          type: string
-        email:
-          type: string
-        expires_in:
-          type: integer
-      required:
-      - detail
-      - email
-      - expires_in
-    TwoFactorLoginTokens:
-      type: object
-      properties:
-        access:
-          type: string
-      required:
-      - access
-    TwoFactorResendRequest:
-      type: object
-      properties:
-        challenge:
-          type: string
-          minLength: 1
-          maxLength: 128
-      required:
-      - challenge
     TypeEnum:
       enum:
       - FAQ

@@ -58,7 +58,7 @@ class JobCategoryLocalizationInlineFormSet(BaseInlineFormSet):
         missing = required_locales - configured_locales
         if missing:
             raise ValidationError(
-                f'Vị trí active phải có đủ 4 ngôn ngữ. Còn thiếu: {", ".join(sorted(missing))}.'
+                f'Vị trí active phải có đủ {len(required_locales)} ngôn ngữ. Còn thiếu: {", ".join(sorted(missing))}.'
             )
 
 
@@ -139,7 +139,7 @@ class JobCategoryAdmin(admin.ModelAdmin):
             return '-'
         active_locales = {item.locale for item in obj.localizations.all() if item.is_active}
         required = {choice[0] for choice in JobCategoryLocalization.Locale.choices}
-        return '4/4' if active_locales >= required else f'{len(active_locales & required)}/4'
+        return f'{len(active_locales & required)}/{len(required)}'
 
 
 class JobSkillInline(admin.TabularInline):

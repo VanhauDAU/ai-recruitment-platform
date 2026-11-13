@@ -1,21 +1,25 @@
 // State + nghiệp vụ của bảng chọn nguồn nội dung khi tạo CV từ mẫu.
 // UI (ui/CvSourcePanel.jsx) chỉ render theo giá trị hook trả về.
-import { useEffect, useState } from 'react'
+//
+// Hook không tự reset khi đổi mẫu/ngôn ngữ: component cha phải đặt `key`
+// theo `template.public_id` + `locale` để mount lại. Nhờ vậy không còn effect
+// reset chạy lại khi dữ liệu phụ (ngôn ngữ, phiên đăng nhập) tải xong — nguyên
+// nhân preview kẹt ở trạng thái chờ trước CVT-0.
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
-  getLatestRecoverableDraft,
   getMyCvs,
   importCvFile,
   retryCvImport,
-  switchCvTemplate,
   waitForCvImport,
 } from '@/entities/cv'
-import { getCvPositionOptions } from '@/entities/cv-template'
-import { useLocales } from '@/entities/locale'
+import { CV_LANGUAGES, getCvPositionOptions } from '@/entities/cv-template'
 import { useSession } from '@/entities/session'
 import { message } from '@/shared/lib/toast'
 import { createCvFromTemplate } from '../api/create-cv.api'
 import { createCvErrorMessage } from '../api/create-cv.errors'
 import { resolvePreviewSelection } from './preview-selection'
+
+const CV_SOURCES = ['sample', 'previous', 'upload', 'blank']
 
 function importFailureMessage(code) {
   if (code === 'scanned_pdf_ocr_unavailable') return 'PDF là bản scan chưa có lớp chữ. Hãy dùng PDF có thể bôi đen chữ hoặc tệp DOCX.'
@@ -24,120 +28,118 @@ function importFailureMessage(code) {
   return 'Không thể phân tích tệp thành CV. Bạn có thể thử lại hoặc tạo CV trống.'
 }
 
-export function useCvSource({ template, locale, themeColor, onCreated, onPreviewChange, onRequireLogin }) {
+function isAbort(error) {
+  return error?.code === 'ERR_CANCELED' || error?.name === 'CanceledError' || error?.name === 'AbortError'
+}
+
+function useLatest(value) {
+  const ref = useRef(value)
+  useEffect(() => { ref.current = value })
+  return ref
+}
+
+export function useCvSource({
+  template,
+  locale,
+  themeColor,
+  initialSelection,
+  onSelectionChange,
+  onCreated,
+  onPreviewChange,
+  onRequireLogin,
+}) {
   const { user, isAuthenticated } = useSession()
-  const { locales } = useLocales()
-  const [source, setSource] = useState('sample')
-  const [myCvs, setMyCvs] = useState([])
+  const candidateId = isAuthenticated && user?.role === 'candidate' ? user.public_id || 'candidate' : null
+  const templateId = template.public_id
+  const previewChangeRef = useLatest(onPreviewChange)
+  const selectionChangeRef = useLatest(onSelectionChange)
+  const pendingPositionSlug = useRef(initialSelection?.positionSlug || null)
+
+  const [source, setSource] = useState(() => (CV_SOURCES.includes(initialSelection?.source) ? initialSelection.source : 'sample'))
+  const [sampleLocale, setSampleLocale] = useState(() => initialSelection?.sampleLocale || locale)
+  const [myCvs, setMyCvs] = useState({ owner: null, items: [] })
   const [selectedCvId, setSelectedCvId] = useState(null)
-  const [recoverable, setRecoverable] = useState(null)
-  const [sampleLocale, setSampleLocale] = useState(locale)
-  const [positions, setPositions] = useState([])
-  const [positionsLocale, setPositionsLocale] = useState(null)
-  const [loadingPositions, setLoadingPositions] = useState(false)
+  const [positions, setPositions] = useState({ locale: null, items: [] })
+  const [selectedPosition, setSelectedPosition] = useState(null)
   const [loadingPreview, setLoadingPreview] = useState(false)
   const [previewAvailable, setPreviewAvailable] = useState(false)
   const [previewError, setPreviewError] = useState('')
-  const [selectedPosition, setSelectedPosition] = useState(null)
   const [submitting, setSubmitting] = useState(false)
   const [uploadFile, setUploadFile] = useState(null)
   const [importCvId, setImportCvId] = useState(null)
   const [importError, setImportError] = useState('')
   const [uploadState, setUploadState] = useState(null)
 
-  useEffect(() => {
-    setSource('sample')
-    setSelectedCvId(null)
-    setSelectedPosition(null)
-    setUploadFile(null)
-    setImportCvId(null)
-    setImportError('')
-    setUploadState(null)
-    const selectedLocale = locales.find((item) => item.code === locale)
-      || locales.find((item) => item.is_default)
-      || locales.find((item) => item.code === 'vi-VN')
-      || locales[0]
-    setSampleLocale(selectedLocale?.code || 'vi-VN')
-    setPositionsLocale(null)
-    onPreviewChange?.(null)
+  const loadingPositions = positions.locale !== sampleLocale
+  const cvsLoaded = myCvs.owner === candidateId
+  const availableCvs = cvsLoaded ? myCvs.items : []
+  // "CV đã tạo" chỉ hợp lệ khi đã tải xong và có ít nhất một CV.
+  const activeSource = source === 'previous' && (!candidateId || (cvsLoaded && availableCvs.length === 0)) ? 'sample' : source
 
+  useEffect(() => {
+    if (!candidateId) return undefined
     let cancelled = false
-    if (isAuthenticated && user?.role === 'candidate') {
-      getMyCvs()
-        .then((data) => {
-          if (cancelled) return
-          setMyCvs(data)
-          setSelectedCvId(data[0]?.public_id || null)
-        })
-        .catch(() => !cancelled && setMyCvs([]))
-      getLatestRecoverableDraft()
-        .then((data) => !cancelled && setRecoverable(data))
-        .catch(() => !cancelled && setRecoverable(null))
-    } else {
-      setMyCvs([])
-      setRecoverable(null)
-    }
-    return () => {
-      cancelled = true
-    }
-  }, [template, locale, locales, isAuthenticated, user, onPreviewChange])
+    getMyCvs()
+      .then((data) => {
+        if (cancelled) return
+        setMyCvs({ owner: candidateId, items: data })
+        setSelectedCvId((current) => current || data[0]?.public_id || null)
+      })
+      .catch(() => !cancelled && setMyCvs({ owner: candidateId, items: [] }))
+    return () => { cancelled = true }
+  }, [candidateId])
 
   useEffect(() => {
-    if (source !== 'sample') return undefined
     const controller = new AbortController()
-    setPositionsLocale(null)
-    setLoadingPositions(true)
     getCvPositionOptions(sampleLocale, '', controller.signal)
       .then((data) => {
-        setPositions(data)
-        setPositionsLocale(sampleLocale)
+        // Đọc slug từ URL ngoài updater: StrictMode gọi updater hai lần.
+        const wanted = pendingPositionSlug.current
+        pendingPositionSlug.current = null
+        const fromSlug = wanted && data.find((position) => position.slug === wanted)
+        setPositions({ locale: sampleLocale, items: data })
         setSelectedPosition((current) => {
-          const options = data.map((position) => position.public_id).filter(Boolean)
-          return current && options.includes(current) ? current : (options[0] || null)
+          if (fromSlug) return fromSlug.public_id
+          if (current && data.some((position) => position.public_id === current)) return current
+          return data[0]?.public_id || null
         })
       })
       .catch((error) => {
-        if (error.code === 'ERR_CANCELED' || error.name === 'CanceledError') return
-        setPositions([])
-        setPositionsLocale(sampleLocale)
+        if (isAbort(error)) return
+        setPositions({ locale: sampleLocale, items: [] })
         setSelectedPosition(null)
       })
-      .finally(() => {
-        if (!controller.signal.aborted) setLoadingPositions(false)
-      })
-    return () => {
-      controller.abort()
-    }
-  }, [source, sampleLocale])
+    return () => controller.abort()
+  }, [sampleLocale])
 
   useEffect(() => {
+    const notify = (value) => previewChangeRef.current?.(value)
     const selection = resolvePreviewSelection({
-      source,
+      source: activeSource,
       locale,
       sampleLocale,
-      positionsLocale,
-      positions,
+      positionsLocale: positions.locale,
+      positions: positions.items,
       loadingPositions,
       selectedPosition,
       selectedCvId,
-      recoverable,
-      templatePublicId: template.public_id,
+      templatePublicId: templateId,
     })
     if (selection.state === 'unavailable') {
       setPreviewAvailable(false)
       setPreviewError('')
-      onPreviewChange?.({ unavailable: true })
+      notify({ unavailable: true })
       return undefined
     }
     if (selection.state !== 'ready') {
       setPreviewAvailable(false)
       if (selection.state === 'empty') {
-        setPreviewError(source === 'sample'
+        setPreviewError(activeSource === 'sample'
           ? 'Chưa có nội dung CV mẫu cho ngôn ngữ này.'
           : 'Không có dữ liệu CV phù hợp để xem trước.')
-        onPreviewChange?.({ empty: true })
+        notify({ empty: true })
       } else {
-        onPreviewChange?.(null)
+        notify(null)
       }
       return undefined
     }
@@ -145,43 +147,44 @@ export function useCvSource({ template, locale, themeColor, onCreated, onPreview
     setLoadingPreview(true)
     setPreviewAvailable(false)
     setPreviewError('')
-    onPreviewChange?.(null)
     selection.load(controller.signal)
       .then((data) => {
         setPreviewAvailable(Boolean(data.document))
-        onPreviewChange?.(data)
+        notify(data)
       })
       .catch((error) => {
-        if (error.code === 'ERR_CANCELED' || error.name === 'CanceledError') return
+        if (isAbort(error)) return
         setPreviewError('Không thể tải bản xem trước. Vui lòng chọn lại nội dung.')
-        onPreviewChange?.({ error: true })
+        notify({ error: true })
       })
       .finally(() => {
         if (!controller.signal.aborted) setLoadingPreview(false)
       })
-    return () => {
-      controller.abort()
-    }
-  }, [
-    source,
-    selectedPosition,
-    sampleLocale,
-    positionsLocale,
-    positions,
-    loadingPositions,
-    locale,
-    template.public_id,
-    selectedCvId,
-    recoverable,
-    onPreviewChange,
-  ])
+    return () => controller.abort()
+  }, [activeSource, locale, sampleLocale, positions, loadingPositions, selectedPosition, selectedCvId, templateId, previewChangeRef])
 
-  const sourceReady = source === 'blank'
-    || (source === 'sample' && Boolean(selectedPosition))
-    || (source === 'previous' && Boolean(selectedCvId))
-    || (source === 'restore' && Boolean(recoverable))
-    || (source === 'upload' && Boolean(uploadFile))
-  const canSubmit = sourceReady && (source === 'upload' || previewAvailable)
+  const position = useMemo(
+    () => positions.items.find((item) => item.public_id === selectedPosition) || null,
+    [positions.items, selectedPosition],
+  )
+  const positionSlug = position?.slug || null
+  const positionLabel = position?.display_name || position?.name_vi || null
+
+  useEffect(() => {
+    // Chờ danh sách vị trí để không xóa `vi-tri` khỏi URL trong lúc đang tải.
+    if (activeSource === 'sample' && loadingPositions) return
+    selectionChangeRef.current?.({
+      source: activeSource,
+      sampleLocale,
+      position: positionSlug ? { slug: positionSlug, label: positionLabel } : null,
+    })
+  }, [activeSource, sampleLocale, loadingPositions, positionSlug, positionLabel, selectionChangeRef])
+
+  const sourceReady = activeSource === 'blank'
+    || (activeSource === 'sample' && Boolean(selectedPosition))
+    || (activeSource === 'previous' && Boolean(selectedCvId))
+    || (activeSource === 'upload' && Boolean(uploadFile))
+  const canSubmit = sourceReady && (activeSource === 'upload' || previewAvailable)
 
   const pollImport = async (publicId) => {
     const analyzed = await waitForCvImport(publicId)
@@ -203,6 +206,12 @@ export function useCvSource({ template, locale, themeColor, onCreated, onPreview
     }
   }
 
+  const clearUpload = () => {
+    setUploadFile(null)
+    setImportCvId(null)
+    setImportError('')
+  }
+
   const submit = async () => {
     if (!isAuthenticated) {
       onRequireLogin?.()
@@ -218,10 +227,10 @@ export function useCvSource({ template, locale, themeColor, onCreated, onPreview
     }
     setSubmitting(true)
     try {
-      if (source === 'upload') {
+      if (activeSource === 'upload') {
         setImportError('')
         const queued = await importCvFile(uploadFile, uploadFile.name, {
-          templatePublicId: template.public_id,
+          templatePublicId: templateId,
           language: sampleLocale || locale,
           themeColor,
           idempotencyKey: globalThis.crypto?.randomUUID?.() || `import-${Date.now()}`,
@@ -231,30 +240,20 @@ export function useCvSource({ template, locale, themeColor, onCreated, onPreview
         await pollImport(queued.public_id)
         return
       }
-      if (source === 'restore') {
-        const result = await switchCvTemplate(
-          recoverable.cv.public_id,
-          template.public_id,
-          recoverable.draft.lock_version,
-          globalThis.crypto?.randomUUID?.() || `restore-${Date.now()}`,
-          themeColor,
-        )
-        message.success('Đã khôi phục bản chỉnh sửa gần nhất trên mẫu mới.')
-        onCreated?.(result.cv)
-        return
-      }
       const cv = await createCvFromTemplate({
-        title: `CV ${template.display_name}`,
-        template_public_id: template.public_id,
-        language: source === 'sample' ? sampleLocale : locale,
+        title: positionLabel && activeSource === 'sample'
+          ? `CV ${positionLabel} - ${template.display_name}`
+          : `CV ${template.display_name}`,
+        template_public_id: templateId,
+        language: activeSource === 'sample' ? sampleLocale : locale,
         ...(themeColor ? { theme_color: themeColor } : {}),
-        ...(source === 'sample' ? { position_public_id: selectedPosition } : {}),
-        ...(source === 'previous' ? { source_cv_public_id: selectedCvId } : {}),
+        ...(activeSource === 'sample' ? { position_public_id: selectedPosition } : {}),
+        ...(activeSource === 'previous' ? { source_cv_public_id: selectedCvId } : {}),
       })
       message.success('Đã tạo CV. Bạn có thể bắt đầu chỉnh sửa ngay.')
       onCreated?.(cv)
     } catch (error) {
-      if (source === 'upload') {
+      if (activeSource === 'upload') {
         setImportError(importFailureMessage(error.code))
       } else {
         message.error(createCvErrorMessage(error))
@@ -265,16 +264,15 @@ export function useCvSource({ template, locale, themeColor, onCreated, onPreview
   }
 
   return {
-    locales,
-    source,
+    languages: CV_LANGUAGES,
+    source: activeSource,
     setSource,
-    myCvs,
+    myCvs: availableCvs,
     selectedCvId,
     setSelectedCvId,
-    recoverable,
     sampleLocale,
     setSampleLocale,
-    positions,
+    positions: positions.items,
     loadingPositions,
     loadingPreview,
     previewError,
@@ -283,6 +281,7 @@ export function useCvSource({ template, locale, themeColor, onCreated, onPreview
     submitting,
     uploadFile,
     setUploadFile,
+    clearUpload,
     importCvId,
     importError,
     uploadState,

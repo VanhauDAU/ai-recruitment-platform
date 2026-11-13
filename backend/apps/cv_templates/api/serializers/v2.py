@@ -8,10 +8,6 @@ from common.media_storage import media_url_from_value
 from ...models import CvCategory, CvSampleContent, CvTemplate
 
 
-def _localized(template):
-    return (getattr(template, 'catalog_localizations', []) or [None])[0]
-
-
 def _catalog_groups(template):
     links = getattr(template, 'catalog_category_links', [])
     categories = []
@@ -80,13 +76,12 @@ class CvTemplateCardSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = fields
 
+    # Giá trị theo ngôn ngữ do `published_template_queryset` annotate.
     def get_display_name(self, template):
-        localization = _localized(template)
-        return localization.display_name if localization else template.name
+        return template.catalog_display_name
 
     def get_description(self, template):
-        localization = _localized(template)
-        return localization.description if localization else template.description
+        return template.catalog_description
 
     def get_theme_color(self, template):
         colors = _catalog_colors(template, self.context.get('request'))
@@ -116,11 +111,19 @@ class CvTemplateCardSerializer(serializers.ModelSerializer):
 
 class CvTemplateDetailSerializer(CvTemplateCardSerializer):
     preview_url = serializers.CharField(read_only=True)
+    seo_title = serializers.CharField(source='catalog_seo_title', read_only=True)
+    seo_description = serializers.CharField(source='catalog_seo_description', read_only=True)
     renderer = serializers.SerializerMethodField()
     sections = serializers.SerializerMethodField()
 
     class Meta(CvTemplateCardSerializer.Meta):
-        fields = CvTemplateCardSerializer.Meta.fields + ['preview_url', 'renderer', 'sections']
+        fields = CvTemplateCardSerializer.Meta.fields + [
+            'preview_url',
+            'seo_title',
+            'seo_description',
+            'renderer',
+            'sections',
+        ]
 
     def get_renderer(self, template):
         version = template.current_published_version
@@ -153,20 +156,15 @@ class CvCategorySerializer(serializers.ModelSerializer):
 
 
 class CvSampleContentCardSerializer(serializers.ModelSerializer):
-    job_category_name = serializers.CharField(source='job_category.name', read_only=True)
-    job_category_slug = serializers.CharField(source='job_category.slug', read_only=True)
-    position_name_vi = serializers.SerializerMethodField()
-    position_name = serializers.SerializerMethodField()
-
-    def get_position_name_vi(self, obj):
-        return obj.position_name_vi or (obj.job_category.name if obj.job_category_id else obj.title)
-
-    def get_position_name(self, obj):
-        content = obj.content_json if isinstance(obj.content_json, dict) else {}
-        personal_info = content.get('personal_info', {})
-        if isinstance(personal_info, dict) and personal_info.get('headline'):
-            return personal_info['headline']
-        return obj.job_category.name if obj.job_category_id else obj.title
+    position_public_id = serializers.CharField(
+        source='position_profile.job_category.public_id', read_only=True
+    )
+    position_slug = serializers.CharField(
+        source='position_profile.job_category.slug', read_only=True
+    )
+    position_name = serializers.CharField(
+        source='position_profile.job_category.name', read_only=True
+    )
 
     class Meta:
         model = CvSampleContent
@@ -174,10 +172,9 @@ class CvSampleContentCardSerializer(serializers.ModelSerializer):
             'public_id',
             'title',
             'locale',
-            'experience_level',
-            'job_category_name',
-            'job_category_slug',
-            'position_name_vi',
+            'experience_band',
+            'position_public_id',
+            'position_slug',
             'position_name',
         ]
         read_only_fields = fields
@@ -195,7 +192,7 @@ class CvPositionOptionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = JobCategory
-        fields = ['public_id', 'display_name', 'name_vi']
+        fields = ['public_id', 'slug', 'display_name', 'name_vi']
         read_only_fields = fields
 
     def get_display_name(self, obj):

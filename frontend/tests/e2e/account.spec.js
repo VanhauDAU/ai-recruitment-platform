@@ -7,7 +7,6 @@ const candidate = {
   full_name: 'Ứng viên thử nghiệm',
   phone: '',
   email_verified: true,
-  two_factor_enabled: false,
 }
 
 async function authenticateCandidate(page) {
@@ -15,6 +14,9 @@ async function authenticateCandidate(page) {
   await page.route('**/api/privacy/consent/', (route) => route.fulfill({
     contentType: 'application/json',
     body: JSON.stringify({ consent: { necessary: true, preferences: false, analytics: false, marketing: false } }),
+  }))
+  await page.route('**/api/auth/refresh/', (route) => route.fulfill({
+    contentType: 'application/json', body: JSON.stringify({ access: 'e2e-access' }),
   }))
   await page.route('**/api/auth/me/', async (route) => {
     if (route.request().method() === 'PATCH') {
@@ -30,9 +32,9 @@ test.describe('candidate account features', () => {
   test('preserves the protected URL as returnUrl before redirecting to login', async ({ page }) => {
     await page.route('**/api/site/settings/', (route) => route.fulfill({ contentType: 'application/json', body: '{}' }))
 
-    await page.goto('/tai-khoan/xac-minh-hai-buoc?source=header')
+    await page.goto('/tai-khoan/thong-tin-ca-nhan?source=header')
 
-    await expect(page).toHaveURL(/\/login\?returnUrl=%2Ftai-khoan%2Fxac-minh-hai-buoc%3Fsource%3Dheader/)
+    await expect(page).toHaveURL(/\/login\?returnUrl=%2Ftai-khoan%2Fthong-tin-ca-nhan%3Fsource%3Dheader/)
     await expect(page.getByRole('heading', { name: 'Chào mừng quay trở lại' })).toBeVisible()
   })
 
@@ -44,22 +46,5 @@ test.describe('candidate account features', () => {
     await page.getByLabel('Số điện thoại').fill('0912345678')
     await page.getByRole('button', { name: 'Lưu', exact: true }).click()
     await expect(page.getByText('Đã lưu thông tin cá nhân.')).toBeVisible()
-  })
-
-  test('enables two-factor authentication through the account route', async ({ page }) => {
-    await authenticateCandidate(page)
-    await page.route('**/api/auth/two-factor/setup/send/', (route) => route.fulfill({
-      contentType: 'application/json', body: JSON.stringify({ email: candidate.email, expires_in: 180 }),
-    }))
-    await page.route('**/api/auth/two-factor/setup/confirm/', (route) => route.fulfill({
-      contentType: 'application/json', body: JSON.stringify({ ...candidate, two_factor_enabled: true }),
-    }))
-
-    await page.goto('/tai-khoan/xac-minh-hai-buoc')
-    await page.getByRole('button', { name: 'Xác minh 2 bước' }).click()
-    await expect(page.getByRole('dialog')).toBeVisible()
-    await page.getByRole('group', { name: 'Mã xác minh 6 chữ số' }).locator('input').first().pressSequentially('123456')
-    await page.getByRole('button', { name: 'Xác nhận' }).click()
-    await expect(page.getByRole('heading', { name: 'Xác minh hai bước đã bật' })).toBeVisible()
   })
 })

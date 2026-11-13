@@ -14,12 +14,11 @@ from django.utils import timezone
 from apps.cvs.schemas import empty_content
 from apps.cvs.services.composition import compose_cv_document
 from apps.cvs.services.pdf_renderer import render_cv_version_pdf
-from apps.sitecontent.selectors import default_locale_code
 from common.metrics import record_metric
 from common.pdf_raster import first_pdf_page_image
 from common.r2_storage import public_media_storage
 
-from .models import CvSampleContent, CvTemplateColorLink
+from .models import CATALOG_LANGUAGES, CvSampleContent, CvTemplateColorLink
 
 logger = logging.getLogger(__name__)
 SNAPSHOT_RENDERER_VERSION = 'catalogue-snapshot-v1'
@@ -27,7 +26,11 @@ SNAPSHOT_RENDERER_VERSION = 'catalogue-snapshot-v1'
 
 def _source_content(locale):
     sample = (
-        CvSampleContent.objects.filter(locale=locale, status=CvSampleContent.Status.PUBLISHED)
+        CvSampleContent.objects.filter(
+            locale=locale,
+            status=CvSampleContent.Status.PUBLISHED,
+            position_profile__isnull=False,
+        )
         .order_by('-updated_at', '-pk')
         .first()
     )
@@ -44,12 +47,16 @@ def _source_content(locale):
 def snapshot_fingerprint(link):
     template = link.template
     version = template.current_published_version
-    # A template is normally localized in every supported language, so picking
-    # the alphabetically first one would render the catalogue thumbnail in an
-    # arbitrary language. Prefer the locale most visitors browse the site in.
-    locales = sorted(template.localizations.filter(is_active=True).values_list('locale', flat=True))
-    default_locale = default_locale_code()
-    locale = default_locale if default_locale in locales or not locales else locales[0]
+    # Ảnh thumbnail dùng ngôn ngữ đầu tiên mà template có tên (tiếng Việt trước),
+    # để không render bằng một ngôn ngữ ngẫu nhiên.
+    locale = next(
+        (
+            language.code
+            for language in CATALOG_LANGUAGES
+            if template.localized('display_name', language.code)
+        ),
+        CATALOG_LANGUAGES[0].code,
+    )
     _, source_revision = _source_content(locale)
     payload = {
         'template_version': version.pk if version else None,

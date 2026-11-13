@@ -1,22 +1,18 @@
-export const CATALOG_LOCALES = [
-  { locale: 'vi-VN', path: '/mau-cv', label: 'Tiếng Việt', shortLabel: 'tiếng Việt', flag: '🇻🇳' },
-  { locale: 'en-US', path: '/mau-cv-tieng-anh', label: 'Tiếng Anh', shortLabel: 'tiếng Anh', flag: '🇬🇧' },
-  { locale: 'ja-JP', path: '/mau-cv-tieng-nhat', label: 'Tiếng Nhật', shortLabel: 'tiếng Nhật', flag: '🇯🇵' },
-  { locale: 'zh-CN', path: '/mau-cv-tieng-trung', label: 'Tiếng Trung', shortLabel: 'tiếng Trung', flag: '🇨🇳' },
-]
+import { CV_LANGUAGES } from '@/entities/cv-template'
+
+// Đường dẫn kho mẫu CV theo ngôn ngữ (tiếng Việt, tiếng Anh). Path Nhật/Trung
+// và /mau-cv/ngon-ngu/:locale cũ được redirect ở router và SEO shell backend.
+const CATALOG_PATHS = { 'vi-VN': '/mau-cv', 'en-US': '/mau-cv-tieng-anh' }
+
+export const CATALOG_LOCALES = CV_LANGUAGES.map((language) => ({
+  locale: language.code,
+  path: CATALOG_PATHS[language.code],
+  label: language.label,
+  shortLabel: language.inlineLabel,
+  flag: language.flag,
+}))
 
 export function catalogLocaleFromPath(pathname) {
-  const dynamicMatch = pathname.match(/^\/mau-cv\/ngon-ngu\/([^/]+)/)
-  if (dynamicMatch) {
-    const locale = decodeURIComponent(dynamicMatch[1])
-    return {
-      locale,
-      path: `/mau-cv/ngon-ngu/${encodeURIComponent(locale)}`,
-      label: locale,
-      shortLabel: locale,
-      flag: '🌐',
-    }
-  }
   const match = [...CATALOG_LOCALES]
     .sort((a, b) => b.path.length - a.path.length)
     .find((item) => pathname === item.path || pathname.startsWith(`${item.path}/`))
@@ -24,8 +20,7 @@ export function catalogLocaleFromPath(pathname) {
 }
 
 export function catalogPathForLocale(locale) {
-  return CATALOG_LOCALES.find((item) => item.locale === locale)?.path
-    || `/mau-cv/ngon-ngu/${encodeURIComponent(locale)}`
+  return (CATALOG_LOCALES.find((item) => item.locale === locale) || CATALOG_LOCALES[0]).path
 }
 
 /**
@@ -49,16 +44,4 @@ export function catalogCategoryFromPath(pathname, basePath) {
   // Bỏ qua segment dành riêng cho detail page
   if (firstSegment === 'chi-tiet') return null
   return firstSegment
-}
-
-export function templateDetailPath(locale, slug) {
-  const base = catalogPathForLocale(locale)
-  return `${base}/chi-tiet/${slug}`
-}
-
-/**
- * Build detail URL từ basePath đã biết (dùng trong component).
- */
-export function buildDetailPath(basePath, slug) {
-  return `${basePath}/chi-tiet/${slug}`
 }

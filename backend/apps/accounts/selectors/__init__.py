@@ -3,7 +3,6 @@
 from .account_management import (
     account_activity_queryset,
     account_email_change_impact,
-    account_mfa_reset_impact,
     account_resource_hold_impact,
     account_revoke_sessions_impact,
     account_sessions_queryset,
@@ -42,7 +41,6 @@ __all__ = [
     'accessible_users_queryset',
     'account_activity_queryset',
     'account_email_change_impact',
-    'account_mfa_reset_impact',
     'account_revoke_sessions_impact',
     'account_resource_hold_impact',
     'account_sessions_queryset',

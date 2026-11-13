@@ -53,7 +53,6 @@ class ManagedAccountSerializer(serializers.ModelSerializer):
     admin_access = serializers.SerializerMethodField()
     invitation = serializers.SerializerMethodField()
     has_usable_password = serializers.SerializerMethodField()
-    mfa_methods = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -66,8 +65,6 @@ class ManagedAccountSerializer(serializers.ModelSerializer):
             'role',
             'status',
             'email_verified',
-            'two_factor_enabled',
-            'mfa_methods',
             'has_usable_password',
             'active_session_count',
             'last_activity_at',
@@ -87,13 +84,6 @@ class ManagedAccountSerializer(serializers.ModelSerializer):
             obj.avatar_url,
             request=self.context.get('request'),
         )
-
-    def get_mfa_methods(self, obj):
-        return {
-            'email': bool(obj.two_factor_email_enabled),
-            'totp': bool(obj.two_factor_totp_secret),
-            'backup_codes_remaining': len(obj.two_factor_backup_code_hashes or []),
-        }
 
     def get_context(self, obj):
         if obj.is_candidate:
@@ -491,14 +481,6 @@ class AccountEmailImpactSerializer(AccountRecoverySerializer):
 
 
 class AccountEmailChangeSerializer(AccountEmailImpactSerializer):
-    impact_token = serializers.CharField(trim_whitespace=True)
-
-
-class AccountMfaResetImpactSerializer(AccountRecoverySerializer):
-    pass
-
-
-class AccountMfaResetSerializer(AccountMfaResetImpactSerializer):
     impact_token = serializers.CharField(trim_whitespace=True)
 
 

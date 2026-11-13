@@ -88,7 +88,7 @@ Migration `0002_seed_knowledgebase` seed bảy chuyên mục (idempotent, không
 | # | Slug | Phạm vi | Chu kỳ xác minh |
 | ---: | --- | --- | ---: |
 | 1 | `tai-khoan-va-dang-nhap` | đăng ký, xác thực email, đăng nhập, quên mật khẩu, social login | 180 ngày |
-| 2 | `bao-mat-va-quyen-rieng` | đổi mật khẩu, 2FA, bảo mật, quyền riêng tư | 90 ngày |
+| 2 | `bao-mat-va-quyen-rieng` | đổi mật khẩu, bảo mật, quyền riêng tư | 90 ngày |
 | 3 | `tim-viec-va-goi-y-viec-lam` | tìm kiếm, bộ lọc, lưu việc, việc phù hợp | 180 ngày |
 | 4 | `ung-tuyen-va-theo-doi-ho-so` | ứng tuyển, chọn CV, việc đã ứng tuyển | 180 ngày |
 | 5 | `cv-va-mau-cv` | chọn mẫu, tạo, sửa, xem, chia sẻ CV | 180 ngày |

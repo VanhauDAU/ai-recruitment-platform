@@ -51,7 +51,6 @@ class EmployerDocumentUploadSessionTests(TemporaryUploadStorageMixin, APITestCas
             email='employer-upload-session@example.com',
             password='Password@123',
             role=User.Role.EMPLOYER,
-            two_factor_enabled=True,
         )
         self.company = Company.objects.create(
             company_name='Upload Session Company',
@@ -63,7 +62,7 @@ class EmployerDocumentUploadSessionTests(TemporaryUploadStorageMixin, APITestCas
             company=self.company,
             company_role=RecruiterProfile.CompanyRole.OWNER,
         )
-        tokens = issue_tokens(self.user, auth_method='mfa')
+        tokens = issue_tokens(self.user, auth_method='password')
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {tokens["access"]}')
 
     def create_session(
@@ -193,7 +192,6 @@ class EmployerMediaUploadSessionTests(TemporaryUploadStorageMixin, APITestCase):
             email='employer-media-session@example.com',
             password='Password@123',
             role=User.Role.EMPLOYER,
-            two_factor_enabled=True,
         )
         self.company = Company.objects.create(
             company_name='Media Session Company',
@@ -205,7 +203,7 @@ class EmployerMediaUploadSessionTests(TemporaryUploadStorageMixin, APITestCase):
             company=self.company,
             company_role=RecruiterProfile.CompanyRole.OWNER,
         )
-        tokens = issue_tokens(self.user, auth_method='mfa')
+        tokens = issue_tokens(self.user, auth_method='password')
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {tokens["access"]}')
 
     def create_image_session(

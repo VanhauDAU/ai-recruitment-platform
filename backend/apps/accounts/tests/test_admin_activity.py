@@ -20,14 +20,12 @@ class AdminAuditLogApiTests(TestCase):
             status=User.Status.ACTIVE,
             is_superuser=True,
             is_staff=True,
-            two_factor_enabled=True,
         )
         self.staff = User.objects.create_user(
             'staff@example.com',
             'TestPass123',
             role=User.Role.ADMIN,
             status=User.Status.ACTIVE,
-            two_factor_enabled=True,
         )
         self.candidate = User.objects.create_user('candidate@example.com', 'TestPass123')
         self.client = APIClient()
@@ -77,7 +75,7 @@ class AdminAuditLogApiTests(TestCase):
 
     def test_superuser_scope_all_covers_rbac_actions_and_filters_by_action(self):
         self._grant_audit_permission()  # sinh log `assign_membership`
-        record_admin_self_action(self.superuser, 'self_mfa_enable', {'method': 'totp'})
+        record_admin_self_action(self.superuser, 'self_password_change', {})
 
         self.client.force_authenticate(self.superuser)
         filtered = self.client.get(self.url, {'scope': 'all', 'action': 'assign_membership'})
@@ -120,7 +118,6 @@ class AdminSelfActionAuditTests(TestCase):
             role=User.Role.ADMIN,
             status=User.Status.ACTIVE,
             email_verified=True,
-            two_factor_enabled=True,
         )
         self.candidate = User.objects.create_user('candidate-activity@example.com', 'TestPass123')
         self.client = APIClient()

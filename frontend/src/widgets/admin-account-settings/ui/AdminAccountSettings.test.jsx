@@ -27,7 +27,6 @@ describe('AdminAccountSettings', () => {
         full_name: 'Quản trị viên',
         email: 'admin@example.com',
         email_verified: true,
-        two_factor_enabled: true,
         admin_access: { is_superuser: true, memberships: [] },
       },
     })
@@ -38,7 +37,6 @@ describe('AdminAccountSettings', () => {
 
     expect(screen.getByRole('heading', { name: 'Tài khoản của tôi' })).toBeInTheDocument()
     expect(screen.getByText('Đã xác minh')).toBeInTheDocument()
-    expect(screen.getByText('Đang bật')).toBeInTheDocument()
     for (const label of ['Hồ sơ', 'Bảo mật', 'Quyền của tôi', 'Nhật ký hoạt động']) {
       expect(screen.getByRole('tab', { name: new RegExp(label) })).toBeInTheDocument()
     }

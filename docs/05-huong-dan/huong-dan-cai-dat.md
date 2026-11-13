@@ -62,7 +62,7 @@ python manage.py seed_locations
 python manage.py seed_province_merges
 python manage.py seed_job_categories
 python manage.py seed_sitecontent
-python manage.py seed_cv_catalog     # nội dung CV mẫu theo vị trí + blueprint + bảng màu
+python manage.py seed_cv_catalog     # hồ sơ vị trí CV + nội dung mẫu (chung 4 nhóm kinh nghiệm, riêng 9 vị trí) + bảng màu
 python manage.py seed_cv_templates   # 10 mẫu CV đã publish — thiếu thì trang /mau-cv rỗng
 python manage.py sync_admin_permissions
 python manage.py seed_admin_access
@@ -72,21 +72,19 @@ python manage.py seed_demo_jobs
 python manage.py seed_blog           # bài viết mẫu cho trang cẩm nang
 
 python manage.py createsuperuser
-# Tùy chọn, khuyến nghị: tạo sẵn MFA Email từ CLI tin cậy.
-python manage.py bootstrap_admin_mfa <email-admin> \
-  --mark-email-verified --actor-email <email-superuser>
+# Tùy chọn: đánh dấu email admin đã xác thực từ CLI tin cậy.
+python manage.py verify_admin_email <email-admin> --actor-email <email-superuser>
 
 # Tài khoản nhân viên admin: không dùng createsuperuser vì sẽ bypass RBAC.
 # Command hỏi mật khẩu tương tác và tạo is_superuser=False, is_staff=False:
 python manage.py create_admin_user <email-nhan-vien> \
   --actor-email <email-superuser>
-# Tùy chọn, khuyến nghị: bật MFA Email cho tài khoản nhân viên.
-python manage.py bootstrap_admin_mfa <email-nhan-vien> \
-  --mark-email-verified --actor-email <email-superuser>
+# Tùy chọn: đánh dấu email nhân viên đã xác thực.
+python manage.py verify_admin_email <email-nhan-vien> --actor-email <email-superuser>
 python manage.py runserver 8000
 ```
 
-Email (xác thực, reset password, 2FA, OTP điện thoại) và tác vụ nặng (render PDF,
+Email (xác thực, reset password, OTP điện thoại) và tác vụ nặng (render PDF,
 thumbnail CV) đều chạy bất đồng bộ. Chạy thêm hai process từ thư mục `backend`:
 
 ```bash

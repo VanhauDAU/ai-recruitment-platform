@@ -73,7 +73,7 @@ Entity không điều phối ý định của người dùng và không import f
 ### Khi nào dùng feature
 
 Dùng `features/<action>` cho một ý định hoặc workflow của người dùng: đăng nhập,
-lưu việc, tìm việc, phản hồi, chỉnh sửa profile hoặc quản lý 2FA. Feature sở hữu
+lưu việc, tìm việc, phản hồi, chỉnh sửa profile hoặc đổi mật khẩu. Feature sở hữu
 state và API của hành động đó, nhưng dùng entity/shared để đọc domain hoặc hạ tầng.
 
 ### Khi nào dùng widget
@@ -498,7 +498,7 @@ app/router + app/layouts
 ```text
 pages/admin/app/CvCatalogue
   → widgets/admin-cv-catalogue
-    → entities/cv-template + entities/locale
+    → entities/cv-template
       → shared/api, shared/ui
 ```
 
