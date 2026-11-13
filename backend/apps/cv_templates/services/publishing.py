@@ -39,14 +39,32 @@ def retire_template_version(*, template, version):
 
 
 @transaction.atomic
-def publish_sample(sample):
+def publish_sample(sample, *, actor=None):
+    """Xuất bản bản nháp hoặc bản AI chờ duyệt; bản đang xuất bản cùng tổ hợp được lưu trữ.
+
+    Mỗi (vị trí, ngôn ngữ, nhóm kinh nghiệm) chỉ có một nội dung xuất bản (ràng
+    buộc DB). Người xuất bản được ghi là người duyệt.
+    """
     sample = CvSampleContent.objects.select_for_update().get(pk=sample.pk)
-    if sample.status != CvSampleContent.Status.DRAFT:
-        raise ValidationError({'status': 'Only draft sample content can be published.'})
+    if sample.status not in {CvSampleContent.Status.DRAFT, CvSampleContent.Status.IN_REVIEW}:
+        raise ValidationError(
+            {'status': 'Only draft or in-review sample content can be published.'}
+        )
     sample.full_clean()
+    CvSampleContent.objects.select_for_update().filter(
+        position_profile=sample.position_profile,
+        locale=sample.locale,
+        experience_band=sample.experience_band,
+        status=CvSampleContent.Status.PUBLISHED,
+    ).update(status=CvSampleContent.Status.ARCHIVED, updated_at=timezone.now())
+    now = timezone.now()
     sample.status = CvSampleContent.Status.PUBLISHED
-    sample.published_at = timezone.now()
-    sample.save(update_fields=['status', 'published_at', 'updated_at'])
+    sample.published_at = now
+    sample.reviewed_by = actor
+    sample.reviewed_at = now
+    sample.save(
+        update_fields=['status', 'published_at', 'reviewed_by', 'reviewed_at', 'updated_at']
+    )
     return sample
 
 

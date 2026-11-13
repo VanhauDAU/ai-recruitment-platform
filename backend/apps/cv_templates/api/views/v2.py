@@ -34,12 +34,17 @@ from ...models import (
 from ...selectors import (
     active_cv_categories_queryset,
     active_cv_position_options_queryset,
+    active_position_profile,
     published_sample_contents_queryset,
     published_template_detail_queryset,
     published_template_queryset,
     related_published_templates,
 )
-from ...services import PositionContentUnavailable, resolve_position_content
+from ...services import (
+    PositionContentUnavailable,
+    position_details_section,
+    resolve_position_content,
+)
 from ..serializers.v2 import (
     CvCategorySerializer,
     CvPositionOptionSerializer,
@@ -167,6 +172,25 @@ class CvPositionOptionListView(PublicCatalogCacheMixin, generics.ListAPIView):
 
     def list(self, request, *args, **kwargs):
         return self.cached_response(self.get_serializer(self.get_queryset(), many=True).data)
+
+
+@extend_schema(
+    summary='Khung mục thông tin chuyên môn (trường riêng) của một vị trí',
+    parameters=[OpenApiParameter('position_public_id', str), OpenApiParameter('locale', str)],
+    responses={200: OpenApiTypes.OBJECT},
+    tags=['cv-templates'],
+)
+class CvPositionDetailsView(PublicCatalogCacheMixin, APIView):
+    """Editor dùng khi ứng viên đổi vị trí: thay section `position_details` theo vị trí mới."""
+
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        public_id = request.query_params.get('position_public_id', '').strip()
+        locale = requested_locale(request)
+        profile = active_position_profile(public_id) if public_id else None
+        section = position_details_section(profile, locale) if profile else None
+        return self.cached_response({'position_public_id': public_id, 'section': section})
 
 
 @extend_schema(

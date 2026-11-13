@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react'
 import {
   addItem,
   addSection,
+  applyPositionDetails,
   availableSectionKeys,
   changeContentLocale,
   CvDocumentPreview,
@@ -39,6 +40,7 @@ import { BUILDER_TOOLS } from '../model/builder-tools'
 import useCvDraftEditor from '../model/use-cv-draft-editor'
 import AddSectionsPanel from './panels/AddSectionsPanel'
 import AiSuggestPanel from './panels/AiSuggestPanel'
+import CvProfilePanel from './panels/CvProfilePanel'
 import DesignFontPanel from './panels/DesignFontPanel'
 import LayoutPanel from './panels/LayoutPanel'
 import CvLegacyDraftEditor from './CvLegacyDraftEditor'
@@ -303,6 +305,7 @@ function CvWysiwygDraftEditor({ publicId, onSaved }) {
     sections: <AddSectionsPanel locale={content.locale} availableKeys={availableSectionKeys(content)} sections={orderedSections} onAdd={(sectionKey) => addSectionAndSelect(sectionKey)} onAddCustom={(title) => addSectionAndSelect('custom', title)} onLocate={locateSection} />,
     layout: <LayoutPanel regions={regions} capabilities={capabilities} sections={orderedSections} onLocate={locateSection} pageMargin={Number(editor.document.layout_json.page?.margin_mm) || 8} onPageMarginChange={(margin_mm) => changeDocument((document) => ({ ...document, layout_json: { ...document.layout_json, page: { ...document.layout_json.page, margin_mm } } }), 'Đổi lề trang', { coalesceKey: 'page-margin' })} onResize={(regionId, width) => changeDocument((document) => resizeRegionPair(document, regionId, width, capabilities), 'Đổi tỷ lệ cột')} />,
     templates: <TemplateSwitcher currentTemplatePublicId={editor.cv.template_public_id} locale={content.locale} currentSections={content.sections} disabled={isBlocked || editor.phase === 'saving'} onSwitch={editor.switchTemplate} />,
+    profile: <CvProfilePanel cv={editor.cv} locale={content.locale} disabled={isBlocked} onUpdate={editor.updateProfile} onPositionDetails={(skeleton) => changeDocument((document) => applyPositionDetails(document, skeleton), 'Cập nhật thông tin chuyên môn')} />,
     suggest: <AiSuggestPanel />,
     samples: <SampleLibraryPanel locale={content.locale} disabled={isBlocked || editor.phase === 'saving'} onApply={editor.applySample} />,
   }

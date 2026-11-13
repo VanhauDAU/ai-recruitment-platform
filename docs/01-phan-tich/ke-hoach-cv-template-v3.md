@@ -650,7 +650,7 @@ không đăng ký section chưa có giao diện dùng.
 - **Công việc:** layout registry BE/FE + test đồng bộ; bỏ header cứng; 8 renderer React lazy-load; avatar; editor kéo thả giữa vùng, kéo độ rộng cột; xuất PDF theo phương án đã chọn; sinh thumbnail theo màu.
 - **Đầu ra:** renderer, contract, test golden ảnh từng layout (3 bộ nội dung: ngắn, trung bình, 3 trang).
 - **Nghiệm thu:** mỗi layout render đúng ở preview, editor, PDF (sai lệch ≤ 2% pixel trang đầu); ngắt trang không cắt đôi dòng; nameplate/contact/avatar đặt được ở mọi vùng layout cho phép.
-- **Thực hiện (🟨 chờ review PR):** thay 8 component lazy bằng một renderer chung đọc registry (mỗi layout chỉ là dữ liệu: hàng, độ rộng, tone, cách xếp, biến thể), nên thêm layout không cần code React mới. Vì PDF in từ chính renderer đó, so pixel preview–PDF không còn cần: e2e `cv-print.spec.js` kiểm từng layout trên trang in (tỉ lệ cột, tên/ảnh đúng vùng, không tràn ngang, nội dung dài sang trang theo từng mục). Font chốt 4 font OFL tự host (I5). Thiết kế 8 layout do dev phác, người dùng duyệt qua ảnh chụp (I2).
+- **Thực hiện (✅ PR #182):** thay 8 component lazy bằng một renderer chung đọc registry (mỗi layout chỉ là dữ liệu: hàng, độ rộng, tone, cách xếp, biến thể), nên thêm layout không cần code React mới. Vì PDF in từ chính renderer đó, so pixel preview–PDF không còn cần: e2e `cv-print.spec.js` kiểm từng layout trên trang in (tỉ lệ cột, tên/ảnh đúng vùng, không tràn ngang, nội dung dài sang trang theo từng mục). Font chốt 4 font OFL tự host (I5). Thiết kế 8 layout do dev phác, người dùng duyệt qua ảnh chụp (I2).
 
 ### CVT-3 — Vị trí, trường riêng, nội dung mẫu
 
@@ -658,6 +658,7 @@ không đăng ký section chưa có giao diện dùng.
 - **Công việc:** service/selectors cho profile, field, resolver; section `position_details` trong editor (form sinh từ định nghĩa trường); service sinh nội dung mẫu qua runtime `ai_core` + job Celery batch + validator chống PII; import/export JSON.
 - **Đầu ra:** API admin vị trí/nội dung, task sinh AI, test.
 - **Nghiệm thu:** chọn "Kỹ sư phần mềm" và "Nhân viên kinh doanh" cho ra bộ section khác nhau và trường riêng khác nhau; sinh 8 nội dung (1 vị trí × 4 nhóm kinh nghiệm × 2 ngôn ngữ) trong < 2 phút, tất cả qua validator.
+- **Thực hiện (🟨 xong code):** đạt cả hai tiêu chí (test `test_positions_get_different_section_sets_and_their_own_fields`; chạy thật 8 nội dung Sales Online xong trong ~13 giây). Điều chỉnh so với kế hoạch, để không phức tạp hơn mức cần: trường riêng là item của section `position_details` (dùng chung cơ chế item, id ổn định) thay vì mảng `fields`; document giữ `schema_version 1` vì chỉ bổ sung trường tùy chọn; kỹ năng khớp taxonomy theo tên chuẩn hóa/alias khi lưu version thay vì bắt ứng viên chọn `skill_id`; ngoại ngữ CEFR hoãn tới khi JD có yêu cầu ngoại ngữ; lượt sinh AI là model `CvSampleGeneration` để admin theo dõi theo `batch_id`; ràng buộc unique của nội dung mẫu chỉ áp cho bản xuất bản. Giao diện admin cho các API này làm ở CVT-4 (cổng hiện tại đã duyệt được bản AI).
 
 ### CVT-4 — Cổng quản trị mới
 

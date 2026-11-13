@@ -120,6 +120,21 @@ CvTemplate ──< CvTemplateColorLink    >── CvColor
   tháng hiện tại) — `apps/cvs/services/matching_profile.py`. Vị trí mục tiêu dùng
   `UserCv.position` (`JobCategory`). Gợi ý việc làm theo CV dùng giá trị này thay
   cho khai báo của ứng viên khi CV có kinh nghiệm.
+- Trường riêng theo vị trí (CVT-3): `CvPositionField` do admin định nghĩa (kiểu
+  văn bản, liên kết, số, tháng/năm, chọn một, chọn nhiều, thẻ). Khi dựng CV từ vị
+  trí, định nghĩa được chụp vào section `position_details` (mỗi trường là một item
+  có `field_key`, nhãn, kiểu, lựa chọn, `maps_to`, `value`) — document tự đủ để
+  hiển thị và validate, sửa trường ở admin không làm hỏng CV cũ. Section đứng sau
+  kỹ năng nếu `section_preset` không nhắc tới. Editor có panel "Hồ sơ ứng tuyển"
+  để chọn vị trí mục tiêu và cấp bậc mong muốn (không in lên CV); đổi vị trí thì
+  khung `position_details` đổi theo (`GET /api/v2/cv-position-details/`), giữ giá
+  trị các trường cùng khóa. Thêm section `portfolio`, `publications`; document
+  vẫn `schema_version 1` vì mọi thay đổi là bổ sung tùy chọn.
+- Matching (CVT-3) mở rộng `matching_profile`: `education_level` là bậc
+  `degree_level` cao nhất của mục học vấn (cùng enum `Job.EducationLevel`, chọn
+  trong editor, không in), `CvSkill` đồng bộ từ mục kỹ năng và trường riêng
+  `maps_to=skills` theo tên chuẩn hóa/alias của taxonomy `skills.Skill`; tên chưa
+  có trong taxonomy được bỏ qua (hàng đợi chuẩn hóa làm cùng trích xuất ở CVT-6).
 - `CvTemplate` chỉ dùng `lifecycle_status` để quyết định hiển thị công khai; ảnh
   xem trước nằm ở `CvTemplateColorLink` (card `thumbnail_url` và detail
   `preview_url` lấy từ màu mặc định).
@@ -258,7 +273,13 @@ response shared/recruiter; PDF worker đọc storage nội bộ.
 
 - Portal admin `cv-catalogue` (sau `AuthGuard → RoleGuard`) quản lý template/
   version, category, color, background và sample (structured editor theo
-  section/item); không yêu cầu sửa raw JSON.
+  section/item); không yêu cầu sửa raw JSON. Cổng mới (CVT-4) dùng các API vị
+  trí/trường riêng/độ phủ/import-export/sinh AI đã có từ CVT-3.
+- Nội dung mẫu bằng AI (CVT-3): admin chọn vị trí × ngôn ngữ × nhóm kinh nghiệm,
+  mỗi tổ hợp một `CvSampleGeneration` trên queue `ai-generation`; kết quả là bản
+  `in_review` không danh tính, chỉ xuất bản khi admin duyệt. Mỗi tổ hợp có một bản
+  xuất bản; duyệt bản mới lưu trữ bản cũ. Chi tiết:
+  [`thuat-toan-ai.md`](../07-algorithms/thuat-toan-ai.md) mục 5b.
 - Publish chạy trong transaction với row lock, gọi `full_clean()` trước khi đổi
   con trỏ published, đồng thời retire version cũ.
 - Snapshot thumbnail/preview: canonical composer → trang in Chromium → raster
@@ -279,5 +300,7 @@ response shared/recruiter; PDF worker đọc storage nội bộ.
   được dùng.
 - Hardening: retention/revoke tổng thể cho share/export, benchmark catalog,
   autosave và renderer/PDF với CV lớn.
-- Chưa có: AI writer ("Gợi ý viết CV"), import LinkedIn, ATS/matching và quota/
-  consent AI cấp sản phẩm.
+- Chưa có: AI writer ("Gợi ý viết CV"), import LinkedIn, thuật toán matching
+  (dữ liệu đã chuẩn hóa) và quota/consent AI cấp sản phẩm.
+- Ngoại ngữ có cấu trúc (ISO 639-1 + CEFR) chờ tin tuyển dụng có yêu cầu ngoại
+  ngữ để có cùng từ vựng.

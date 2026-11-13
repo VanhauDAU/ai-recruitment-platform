@@ -46,6 +46,8 @@ function defaultItem(content, sectionKey) {
   if (sectionKey === 'skills') return { item_id, name: '', level: '' }
   if (sectionKey === 'projects') return { item_id, name: '', role: '', description: richText('') }
   if (sectionKey === 'certifications') return { item_id, name: '', issuer: '', description: richText('') }
+  if (sectionKey === 'portfolio') return { item_id, name: '', value: '', description: richText('') }
+  if (sectionKey === 'publications') return { item_id, title: '', organization: '', value: '', description: richText('') }
   return { item_id, name: '', value: '', description: richText('') }
 }
 
@@ -146,7 +148,7 @@ export function availableSectionKeys(content) {
     // too, but it must remain available so a candidate can add an image block.
     // Standard sections expose repeatable entries inside one section. Only the
     // custom section may be added more than once from the editor toolbox.
-    .filter((definition) => !['nameplate', 'contact'].includes(definition.key) && (definition.key === 'custom' || !sectionByKey(content, definition.key)))
+    .filter((definition) => !['nameplate', 'contact'].includes(definition.key) && !definition.positionBacked && (definition.key === 'custom' || !sectionByKey(content, definition.key)))
     .map((definition) => definition.key)
 }
 

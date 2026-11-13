@@ -82,8 +82,17 @@ CATEGORIES = (
 # Canonical section keys ordered per region, per layout. Every layout places
 # ``nameplate`` and ``contact`` in a region (there is no hard-coded header), and
 # layouts that support a photo also place ``avatar``.
-_MAIN_STORY = ('summary', 'experience', 'education', 'projects', 'activities', 'awards')
-_SIDE_FACTS = ('skills', 'certifications', 'languages', 'interests')
+_MAIN_STORY = (
+    'summary',
+    'experience',
+    'education',
+    'projects',
+    'portfolio',
+    'publications',
+    'activities',
+    'awards',
+)
+_SIDE_FACTS = ('skills', 'position_details', 'certifications', 'languages', 'interests')
 _TAIL = ('references', 'custom')
 
 SECTION_PLANS = {
@@ -93,6 +102,7 @@ SECTION_PLANS = {
             'contact',
             *_MAIN_STORY[:3],
             'skills',
+            'position_details',
             *_MAIN_STORY[3:],
             'certifications',
             'languages',
@@ -105,6 +115,7 @@ SECTION_PLANS = {
         'main': (
             *_MAIN_STORY[:3],
             'skills',
+            'position_details',
             *_MAIN_STORY[3:],
             'certifications',
             'languages',
@@ -134,6 +145,7 @@ SECTION_PLANS = {
         'main': (
             *_MAIN_STORY[:3],
             'skills',
+            'position_details',
             *_MAIN_STORY[3:],
             'certifications',
             'languages',
@@ -143,8 +155,24 @@ SECTION_PLANS = {
     },
     'compact_two_column_v1': {
         'header': ('nameplate', 'contact'),
-        'left': ('summary', 'experience', 'projects', 'activities', *_TAIL),
-        'right': ('education', 'skills', 'certifications', 'languages', 'awards', 'interests'),
+        'left': (
+            'summary',
+            'experience',
+            'projects',
+            'portfolio',
+            'publications',
+            'activities',
+            *_TAIL,
+        ),
+        'right': (
+            'education',
+            'skills',
+            'position_details',
+            'certifications',
+            'languages',
+            'awards',
+            'interests',
+        ),
     },
 }
 

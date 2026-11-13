@@ -71,6 +71,21 @@
   color: #0f172a !important;
 }
 
+/* Ô chọn của editor (trường riêng, bậc học) trên dải màu: không viền, thẻ đã
+   chọn nền trắng mờ để chữ trắng vẫn đọc được. */
+.cv-region--band .ant-select,
+.cv-region--band .ant-select :is(div, span) {
+  border-color: transparent !important;
+}
+
+.cv-region--band .ant-select-selection-item {
+  background: rgb(255 255 255 / 0.18) !important;
+}
+
+.cv-region--band .ant-select-selection-placeholder {
+  color: rgb(255 255 255 / 0.6) !important;
+}
+
 .cv-region--band .bg-\[var\(--cv-theme\)\] {
   background: #fff !important;
 }

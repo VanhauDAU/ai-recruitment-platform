@@ -7,6 +7,7 @@ from apps.jobs.models import JobCategory, JobCategoryLocalization
 from ..models import (
     DEFAULT_CV_LANGUAGE,
     CvCategory,
+    CvPositionProfile,
     CvSampleContent,
     CvTemplate,
     CvTemplateCategoryLink,
@@ -181,3 +182,16 @@ def related_published_templates(template, *, locale=DEFAULT_CV_LANGUAGE, limit=6
             ],
         ).distinct()
     return queryset.order_by('-usage_count', 'sort_order', 'name')[:limit]
+
+
+def active_position_profile(position_public_id):
+    """Profile CV đang bật của một vị trí chuyên môn đang hoạt động, kèm trường riêng."""
+    return (
+        CvPositionProfile.objects.filter(
+            job_category__public_id=position_public_id,
+            job_category__status=JobCategory.Status.ACTIVE,
+            is_active=True,
+        )
+        .prefetch_related('fields')
+        .first()
+    )
