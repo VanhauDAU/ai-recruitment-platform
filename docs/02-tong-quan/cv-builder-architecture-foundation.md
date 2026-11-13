@@ -78,12 +78,15 @@ CvTemplate ──< CvTemplateColorLink    >── CvColor
   không tạo template version mới; màu được chọn khi tạo CV được copy vào
   `style_json.theme_color` của initial version/draft.
 - Catalogue public chỉ hiện template `active`, lifecycle `published`, có
-  localization active và `current_published_version` đang published.
-- Locale là dữ liệu tại `sitecontent.Locale` nhưng chỉ `vi-VN` và `en-US` được
-  dùng (`SUPPORTED_LOCALE_CODES` ở `apps/sitecontent/selectors/locales.py`, từ
-  CVT-0); locale khác hoặc inactive bị chặn với CV/preview mới nhưng document cũ
-  vẫn render theo code đã lưu. Kho `/mau-cv-tieng-nhat`, `/mau-cv-tieng-trung`,
-  `/mau-cv/ngon-ngu/:locale` redirect 301 về `/mau-cv`.
+  `display_name_<vi|en>` khác rỗng ở ngôn ngữ đang xem và
+  `current_published_version` đang published.
+- Ngôn ngữ CV là enum `CvLanguage` (`vi-VN`, `en-US`) ở
+  `apps/cv_templates/models/language.py`, kèm `CATALOG_LANGUAGES` (path kho mẫu,
+  nhãn, hậu tố trường song ngữ); frontend mirror ở
+  `entities/cv-template/model/cv-languages.js`. Tên/mô tả/SEO của template là
+  các trường `*_vi`/`*_en` trên `CvTemplate` (CVT-1a gộp `CvTemplateLocalization`
+  và gỡ bảng `sitecontent.Locale`). Kho `/mau-cv-tieng-nhat`,
+  `/mau-cv-tieng-trung`, `/mau-cv/ngon-ngu/:locale` redirect 301 về `/mau-cv`.
 - Trang chi tiết mẫu đồng bộ lựa chọn với query string: `nguon`
   (`cv-cu|tai-len|trong`, mặc định nội dung mẫu), `vi-tri` (slug
   `JobCategory`), `ngon-ngu` (`vi|en`), `mau` (slug `CvColor`). Không đưa mã CV
@@ -92,8 +95,8 @@ CvTemplate ──< CvTemplateColorLink    >── CvColor
   là `public_id`, nhãn là `JobCategoryLocalization(vi-VN).display_name`. Resolver
   ưu tiên `CvSampleContent` curated theo vị trí–locale–cấp độ, nếu không có thì
   materialize `CvContentBlueprint.content_json_template` theo locale/kinh nghiệm
-  (token `{position}` thay đệ quy ở mọi string). Vị trí mới chỉ cần bốn
-  localization; không phải tạo sample cho từng template.
+  (token `{position}` thay đệ quy ở mọi string). Vị trí mới chỉ cần
+  localization tiếng Việt và tiếng Anh; không phải tạo sample cho từng template.
 
 ## 5. API V2
 
@@ -139,9 +142,9 @@ không trả layout/style/renderer config, lọc `locale`/`category`/`tag`),
 
 Quản trị (`/api/v2/admin/`, kiểm quyền `HasAdminPermission` với
 `cv_template.*`): `cv-templates` (kèm action tạo draft version từ version hiện
-hành, publish, retire, regenerate snapshot), `cv-template-localizations`,
+hành, publish, retire, regenerate snapshot; nhận các trường song ngữ),
 `cv-categories`, `cv-colors`, `cv-backgrounds`, `cv-sample-contents`,
-`cv-content-blueprints`. Admin locale nằm ở `sitecontent`.
+`cv-content-blueprints`.
 
 ## 6. Editor WYSIWYG
 
@@ -234,7 +237,7 @@ response shared/recruiter; PDF worker đọc storage nội bộ.
 - Publish template version dùng `header_two_column_v1`, duyệt golden canvas/PDF
   trên bộ mẫu thật, UAT; sau một release ổn định thì gỡ editor legacy và cờ
   `cv_builder_wysiwyg_enabled`.
-- Contract cleanup: bỏ dual-read `locale` ↔ `locale_ref`, xóa field legacy
+- Contract cleanup: xóa field legacy
   (`UserCv.cv_data`/`style_config`/`status`, `CvTemplate.category`,
   `default_style_json.color_variants`, `theme_color`/`color_variants` trên card,
   input `sample_content_public_id`) sau khi đo không còn client đọc.

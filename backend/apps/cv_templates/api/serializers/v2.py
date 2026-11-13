@@ -8,10 +8,6 @@ from common.media_storage import media_url_from_value
 from ...models import CvCategory, CvSampleContent, CvTemplate
 
 
-def _localized(template):
-    return (getattr(template, 'catalog_localizations', []) or [None])[0]
-
-
 def _catalog_groups(template):
     links = getattr(template, 'catalog_category_links', [])
     categories = []
@@ -80,13 +76,12 @@ class CvTemplateCardSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = fields
 
+    # Giá trị theo ngôn ngữ do `published_template_queryset` annotate.
     def get_display_name(self, template):
-        localization = _localized(template)
-        return localization.display_name if localization else template.name
+        return template.catalog_display_name
 
     def get_description(self, template):
-        localization = _localized(template)
-        return localization.description if localization else template.description
+        return template.catalog_description
 
     def get_theme_color(self, template):
         colors = _catalog_colors(template, self.context.get('request'))
@@ -116,11 +111,19 @@ class CvTemplateCardSerializer(serializers.ModelSerializer):
 
 class CvTemplateDetailSerializer(CvTemplateCardSerializer):
     preview_url = serializers.CharField(read_only=True)
+    seo_title = serializers.CharField(source='catalog_seo_title', read_only=True)
+    seo_description = serializers.CharField(source='catalog_seo_description', read_only=True)
     renderer = serializers.SerializerMethodField()
     sections = serializers.SerializerMethodField()
 
     class Meta(CvTemplateCardSerializer.Meta):
-        fields = CvTemplateCardSerializer.Meta.fields + ['preview_url', 'renderer', 'sections']
+        fields = CvTemplateCardSerializer.Meta.fields + [
+            'preview_url',
+            'seo_title',
+            'seo_description',
+            'renderer',
+            'sections',
+        ]
 
     def get_renderer(self, template):
         version = template.current_published_version

@@ -4,9 +4,13 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from django.utils import timezone
 from rest_framework import serializers
 
-from apps.cv_templates.models import CvSampleContent, CvTemplate
+from apps.cv_templates.models import (
+    DEFAULT_CV_LANGUAGE,
+    CvLanguage,
+    CvSampleContent,
+    CvTemplate,
+)
 from apps.jobs.models import JobCategory
-from apps.sitecontent.selectors import is_active_locale
 
 from ...models import CvAsset, CvDraft, CvExport, CvImportJob, CvSharedLink, CvVersion, UserCv
 from ...schemas import validate_cv_document
@@ -148,7 +152,7 @@ class CvV2ImportSerializer(serializers.Serializer):
         max_length=255, required=False, allow_blank=False, trim_whitespace=True
     )
     template_public_id = serializers.CharField(max_length=50, required=False)
-    language = serializers.CharField(max_length=16, default='vi-VN')
+    language = serializers.ChoiceField(choices=CvLanguage.choices, default=DEFAULT_CV_LANGUAGE)
     theme_color = serializers.RegexField(r'^#[0-9A-Fa-f]{6}$', required=False)
 
     def validate_template_public_id(self, value):
@@ -158,11 +162,6 @@ class CvV2ImportSerializer(serializers.Serializer):
             )
         except CvTemplate.DoesNotExist as error:
             raise serializers.ValidationError('Unknown template.') from error
-
-    def validate_language(self, value):
-        if not is_active_locale(value):
-            raise serializers.ValidationError('Unknown or inactive locale.')
-        return value
 
     def validate(self, attrs):
         upload = attrs.get('file')
@@ -199,18 +198,13 @@ class CvV2DuplicateSerializer(serializers.Serializer):
 class CvV2CreateSerializer(serializers.Serializer):
     title = serializers.CharField(max_length=255)
     template_public_id = serializers.CharField(max_length=50)
-    language = serializers.CharField(max_length=16, default='vi-VN')
+    language = serializers.ChoiceField(choices=CvLanguage.choices, default=DEFAULT_CV_LANGUAGE)
     sample_content_public_id = serializers.CharField(
         max_length=50, required=False, allow_blank=False
     )
     position_public_id = serializers.CharField(max_length=50, required=False, allow_blank=False)
     source_cv_public_id = serializers.CharField(max_length=50, required=False, allow_blank=False)
     theme_color = serializers.RegexField(r'^#[0-9A-Fa-f]{6}$', required=False)
-
-    def validate_language(self, value):
-        if not is_active_locale(value):
-            raise serializers.ValidationError('Unknown or inactive locale.')
-        return value
 
     def validate_template_public_id(self, value):
         try:

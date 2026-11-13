@@ -2,6 +2,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 
+from apps.cv_templates.models import CvLanguage
 from apps.skills.models import Skill
 from common.public_id import generate_public_id
 
@@ -75,7 +76,7 @@ class UserCv(models.Model):
     error_message = models.TextField(blank=True)
     # V2 fields are additive.  `cv_data`, `style_config`, and `status` remain
     # available while clients dual-read during the migration window.
-    language = models.CharField(max_length=16, default='vi-VN')
+    language = models.CharField(max_length=16, choices=CvLanguage.choices, default=CvLanguage.VI)
     lifecycle_status = models.CharField(
         max_length=20,
         choices=LifecycleStatus.choices,

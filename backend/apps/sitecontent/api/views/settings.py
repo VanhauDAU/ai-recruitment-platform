@@ -22,16 +22,14 @@ from common.media_storage import (
     save_image_upload,
 )
 
-from ...models import Banner, Locale, SiteSetting
-from ...selectors import active_locales, resolved_link_groups
+from ...models import Banner, SiteSetting
+from ...selectors import resolved_link_groups
 from ...signals import PUBLIC_SETTINGS_CACHE_KEY
 from ..serializers import (
-    AdminLocaleSerializer,
     AdminSiteSettingSerializer,
     BannerSerializer,
     FeedbackSerializer,
     LinkGroupSerializer,
-    LocaleSerializer,
 )
 
 _HEX_COLOR = re.compile(r'^#[0-9a-fA-F]{6}$')
@@ -71,40 +69,6 @@ class SiteSettingListView(APIView):
             settings.KNOWLEDGEBASE_PUBLIC_ENABLED and settings.KNOWLEDGEBASE_SEARCH_INDEX_ENABLED
         )
         return Response(response_data)
-
-
-class LocaleListView(generics.ListAPIView):
-    serializer_class = LocaleSerializer
-    permission_classes = [permissions.AllowAny]
-    pagination_class = None
-
-    def get_queryset(self):
-        return active_locales()
-
-
-class AdminLocaleListCreateView(generics.ListCreateAPIView):
-    serializer_class = AdminLocaleSerializer
-    permission_classes = [HasAdminPermission]
-    required_admin_permissions = {
-        'GET': ['site_setting.view'],
-        'POST': ['site_setting.manage'],
-    }
-    require_superuser = True
-    pagination_class = None
-    queryset = Locale.objects.all()
-
-
-class AdminLocaleDetailView(generics.RetrieveUpdateAPIView):
-    serializer_class = AdminLocaleSerializer
-    permission_classes = [HasAdminPermission]
-    required_admin_permissions = {
-        'GET': ['site_setting.view'],
-        'PUT': ['site_setting.manage'],
-        'PATCH': ['site_setting.manage'],
-    }
-    require_superuser = True
-    queryset = Locale.objects.all()
-    lookup_field = 'code'
 
 
 def _validate_value(setting, value):

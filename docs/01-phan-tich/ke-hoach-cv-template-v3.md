@@ -60,7 +60,7 @@ Những thứ **giữ lại** vì đã tốt: document canonical 3 JSON (`conten
 | D4 | Nội dung mẫu | AI sinh nháp hàng loạt, admin sửa và duyệt; import/export JSON |
 | D5 | Upload | Bấm Tạo CV → AI trích xuất → màn rà soát → editor |
 | D6 | File gốc | Xóa ngay sau khi trích xuất thành công; nếu lỗi giữ tối đa 24h để thử lại; che PII trước khi gửi AI |
-| D7 | Ngôn ngữ | Chỉ `vi` và `en`, là thuộc tính của CV; enum trong code, bỏ `sitecontent.Locale` khỏi miền CV; một kho mẫu chung, hai trang SEO |
+| D7 | Ngôn ngữ | Chỉ tiếng Việt và tiếng Anh, là thuộc tính của CV; enum `CvLanguage` trong code với giá trị BCP 47 `vi-VN`/`en-US` (giữ mã mà `content_json.locale`, API và frontend đang dùng); gỡ hẳn `sitecontent.Locale`; một kho mẫu chung, hai trang SEO |
 | D8 | Tiêu đề/URL | Lựa chọn đồng bộ vào query string; H1, breadcrumb, `<title>` đổi theo; canonical luôn là trang mẫu gốc |
 | D9 | Ảnh | Có ảnh tùy layout; ảnh là asset riêng tư |
 | D10 | Dữ liệu cũ | Được xóa template, nội dung mẫu và CV cũ, seed lại bộ mới (dữ liệu hiện tại là dữ liệu phát triển) |
@@ -101,17 +101,22 @@ Tuân thủ ADR-0010 (`api → services/selectors → models`, `tasks → servic
 
 Vì được xóa dữ liệu cũ (D10), làm sạch luôn thay vì giữ dual-read. **Bắt buộc `pg_dump` trước khi chạy migration** (Docker backend tự migrate khi khởi động).
 
-### 5.1 Ngôn ngữ
+### 5.1 Ngôn ngữ (✅ CVT-1a)
 
-- Enum `CvLanguage` trong `apps/cv_templates/constants.py`: `vi`, `en`. Lưu mã ngắn ở mọi bảng; mapping sang `vi-VN`/`en-US` chỉ ở tầng hiển thị (định dạng ngày).
-- Xóa FK `locale_ref` tới `sitecontent.Locale` ở các model CV; xóa tab "Ngôn ngữ" trong admin CV. `sitecontent.Locale` giữ nguyên nếu module khác còn dùng (kiểm tra bằng grep ở `CVT-1`).
+- Enum `CvLanguage` ở `apps/cv_templates/models/language.py`: `vi-VN`, `en-US`
+  (mã BCP 47, không đổi sang mã ngắn để tránh chuyển đổi dữ liệu và API không
+  cần thiết). `CATALOG_LANGUAGES` giữ path kho mẫu, nhãn và hậu tố trường song
+  ngữ; frontend mirror ở `entities/cv-template/model/cv-languages.js`.
+- Gỡ bảng `sitecontent.Locale`, API `/api/site/locales/`, `/api/site/admin/locales/`
+  và mọi FK `locale_ref` (kể cả ở `JobCategoryLocalization`, vốn chỉ phục vụ kho
+  CV). `JobCategoryLocalization.Locale` còn `vi-VN`/`en-US`.
 
 ### 5.2 Template
 
 | Model | Thay đổi |
 | --- | --- |
-| `CvTemplate` | Thêm `name_vi`, `name_en`, `description_vi`, `description_en`, `seo_title_vi/en`, `seo_description_vi/en`, `supported_languages` (mặc định cả hai). Xóa `category` (chuỗi legacy), `status` (legacy), `layout_config`, `style_config`, `thumbnail_url`, `preview_url` (chuyển sang color link). Giữ `lifecycle_status`, `current_published_version`, `usage_count`, `sort_order`, `is_premium` |
-| `CvTemplateLocalization` | Xóa (thay bằng các trường `_vi/_en`) |
+| `CvTemplate` | ✅ CVT-1a: thêm `display_name_vi/en`, `description_vi/en`, `seo_title_vi/en`, `seo_description_vi/en`; template có mặt ở kho ngôn ngữ nào khi `display_name_<ngôn ngữ>` khác rỗng (không cần trường `supported_languages`); xóa `description`. CVT-1b: xóa `category` (chuỗi legacy), `status` (legacy), `layout_config`, `style_config`, `thumbnail_url`, `preview_url` (chuyển sang color link). Giữ `lifecycle_status`, `current_published_version`, `usage_count`, `sort_order`, `is_premium` |
+| `CvTemplateLocalization` | ✅ Xóa ở CVT-1a, dữ liệu vi/en được chép sang các trường `_vi/_en` bằng data migration |
 | `CvTemplateVersion` | Giữ bất biến. `renderer_key` → đổi tên ý nghĩa thành `layout_key` (xem 6.1); thêm `style_preset` (font, cỡ chữ, khoảng cách, kiểu tiêu đề section, kiểu gạch chân) |
 | `CvTemplateSection` | Giữ; thêm ràng buộc section phải nằm trong `allowed_sections` của vùng theo layout |
 | `CvTemplateColorLink` | Giữ (thumbnail/preview theo từng màu); ảnh xuất WebP |
@@ -601,8 +606,23 @@ Thêm:
 
 ### CVT-1 — Nền tảng dữ liệu
 
+Tách hai PR để giữ dưới ngưỡng 60 file của quy trình PR:
+
+- **CVT-1a — Ngôn ngữ (🟨 chờ review, tách PR frontend + PR backend):** enum
+  `CvLanguage`; gộp `CvTemplateLocalization` vào trường song ngữ của
+  `CvTemplate` bằng data migration; gỡ `sitecontent.Locale`, API locale, FK
+  `locale_ref`, tab "Ngôn ngữ" ở admin và entity frontend `locale`; xóa dữ liệu
+  mẫu/blueprint/taxonomy tiếng Nhật, Trung. **Không xóa CV người dùng**: các bước
+  này không cần đến (điều chỉnh D10).
+- **CVT-1b — Vị trí và nội dung mẫu:** `CvPositionProfile`, `CvPositionField`,
+  `CvSampleContent` theo `experience_band`, bỏ `CvContentBlueprint`, gỡ field legacy
+  `UserCv`/`CvTemplate` và thêm trường matching (mục 5.6), viết lại seed.
+
+Section mới và `schema_version 2` chuyển sang CVT-3, làm cùng form nhập liệu, để
+không đăng ký section chưa có giao diện dùng.
+
 - **Đầu vào:** quyết định D7, D10; `pg_dump` DB local.
-- **Công việc:** enum `CvLanguage`; model mới/sửa theo mục 5; migration xóa bảng/field legacy; xóa dữ liệu template, nội dung mẫu, CV cũ; section registry mới + `schema_version 2` + validator; seed: 8 template (1/layout, sau CVT-2 mới có renderer), 30 vị trí ưu tiên, nội dung chung 4 nhóm kinh nghiệm × 2 ngôn ngữ, 10 màu.
+- **Công việc:** như hai PR trên; seed: template hiện có, 30 vị trí ưu tiên, nội dung chung 4 nhóm kinh nghiệm × 2 ngôn ngữ, màu.
 - **Đầu ra:** migration, lệnh `seed_cv_catalog` mới, test model/validator.
 - **Nghiệm thu:** `makemigrations --check` sạch; seed chạy lại nhiều lần không lỗi (idempotent); resolver nội dung luôn trả kết quả cho mọi tổ hợp vị trí × cấp độ × ngôn ngữ.
 

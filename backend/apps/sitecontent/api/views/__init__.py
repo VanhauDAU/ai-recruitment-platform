@@ -16,14 +16,11 @@ from .announcements import (
     AnnouncementStateView,
 )
 from .settings import (
-    AdminLocaleDetailView,
-    AdminLocaleListCreateView,
     AdminSettingUploadView,
     AdminSiteSettingView,
     BannerListView,
     FeedbackCreateView,
     LinkGroupListView,
-    LocaleListView,
     SiteSettingListView,
 )
 
@@ -43,13 +40,10 @@ __all__ = [
     'AdminAnnouncementResetDismissalsView',
     'AdminAnnouncementResumeView',
     'AdminAnnouncementRevisionCreateView',
-    'AdminLocaleDetailView',
-    'AdminLocaleListCreateView',
     'AdminSettingUploadView',
     'AdminSiteSettingView',
     'BannerListView',
     'FeedbackCreateView',
     'LinkGroupListView',
-    'LocaleListView',
     'SiteSettingListView',
 ]

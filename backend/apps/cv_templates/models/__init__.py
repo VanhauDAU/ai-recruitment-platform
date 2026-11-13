@@ -1,5 +1,14 @@
 """Public model API for the cv_templates Django app."""
 
+from .language import (
+    CATALOG_LANGUAGES,
+    DEFAULT_CV_LANGUAGE,
+    CatalogLanguage,
+    CvLanguage,
+    catalog_language,
+    catalog_language_for_path,
+    localized_field,
+)
 from .template import (
     CvCategory,
     CvColor,
@@ -9,12 +18,18 @@ from .template import (
     CvTemplate,
     CvTemplateCategoryLink,
     CvTemplateColorLink,
-    CvTemplateLocalization,
     CvTemplateSection,
     CvTemplateVersion,
 )
 
 __all__ = [
+    'CATALOG_LANGUAGES',
+    'DEFAULT_CV_LANGUAGE',
+    'CatalogLanguage',
+    'CvLanguage',
+    'catalog_language',
+    'catalog_language_for_path',
+    'localized_field',
     'CvCategory',
     'CvColor',
     'CvContentBlueprint',
@@ -23,7 +38,6 @@ __all__ = [
     'CvTemplate',
     'CvTemplateCategoryLink',
     'CvTemplateColorLink',
-    'CvTemplateLocalization',
     'CvTemplateSection',
     'CvTemplateVersion',
 ]

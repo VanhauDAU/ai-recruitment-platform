@@ -76,26 +76,13 @@ class JobCategoryLocalization(models.Model):
     class Locale(models.TextChoices):
         VI = 'vi-VN', 'Tiếng Việt'
         EN = 'en-US', 'Tiếng Anh'
-        JA = 'ja-JP', 'Tiếng Nhật'
-        ZH = 'zh-CN', 'Tiếng Trung'
 
     category = models.ForeignKey(
         JobCategory,
         on_delete=models.CASCADE,
         related_name='localizations',
     )
-    # Compatibility code kept during the staged locale migration. New code
-    # writes both this field and locale_ref until the cleanup release.
-    locale = models.CharField(max_length=16)
-    locale_ref = models.ForeignKey(
-        'sitecontent.Locale',
-        to_field='code',
-        db_column='locale_ref_code',
-        on_delete=models.PROTECT,
-        null=True,
-        blank=True,
-        related_name='job_category_localizations',
-    )
+    locale = models.CharField(max_length=16, choices=Locale.choices)
     display_name = models.CharField(max_length=255)
     search_aliases = models.TextField(
         blank=True, help_text='Các từ khóa tìm kiếm, phân tách bằng dấu phẩy.'
@@ -118,14 +105,6 @@ class JobCategoryLocalization(models.Model):
 
     def __str__(self):
         return f'{self.category.name} ({self.locale})'
-
-    def save(self, *args, **kwargs):
-        from apps.sitecontent.models import Locale as SiteLocale
-
-        self.locale_ref_id = (
-            self.locale if SiteLocale.objects.filter(code=self.locale).exists() else None
-        )
-        super().save(*args, **kwargs)
 
 
 class Job(models.Model):

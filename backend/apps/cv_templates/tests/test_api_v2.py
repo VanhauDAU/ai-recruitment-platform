@@ -20,9 +20,9 @@ from ..models import (
     CvTemplate,
     CvTemplateCategoryLink,
     CvTemplateColorLink,
-    CvTemplateLocalization,
     CvTemplateSection,
     CvTemplateVersion,
+    localized_field,
 )
 
 
@@ -30,6 +30,10 @@ class TemplateCatalogV2Tests(TestCase):
     def create_template(self, name, *, locale='vi-VN', categories=(), usage_count=0):
         template = CvTemplate.objects.create(
             name=name,
+            **{
+                localized_field('display_name', locale): f'{name} {locale}',
+                localized_field('description', locale): f'{name} description',
+            },
             lifecycle_status=CvTemplate.LifecycleStatus.PUBLISHED,
             thumbnail_url=f'/templates/{name}.png',
             usage_count=usage_count,
@@ -46,12 +50,6 @@ class TemplateCatalogV2Tests(TestCase):
         )
         template.current_published_version = version
         template.save(update_fields=['current_published_version'])
-        CvTemplateLocalization.objects.create(
-            template=template,
-            locale=locale,
-            display_name=f'{name} {locale}',
-            description=f'{name} description',
-        )
         for category in categories:
             CvTemplateCategoryLink.objects.create(template=template, category=category)
         green, _ = CvColor.objects.get_or_create(
@@ -295,16 +293,13 @@ class TemplateCatalogV2Tests(TestCase):
             'Ready for Customer Service Representative.',
         )
 
-    def test_inactive_locale_is_rejected_by_catalogue_and_preview(self):
-        from apps.sitecontent.models import Locale
-
-        Locale.objects.filter(code='en-US').update(is_active=False)
-        catalogue = self.client.get('/api/v2/cv-templates/', {'locale': 'en-US'})
+    def test_unsupported_locale_is_rejected_by_catalogue_and_preview(self):
+        catalogue = self.client.get('/api/v2/cv-templates/', {'locale': 'ja-JP'})
         preview = self.client.get(
             '/api/v2/cv-position-preview/',
             {
                 'position_public_id': self.sample_category.public_id,
-                'locale': 'en-US',
+                'locale': 'ja-JP',
             },
         )
 

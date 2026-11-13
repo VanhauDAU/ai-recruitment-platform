@@ -5,23 +5,7 @@ from django.contrib import admin
 
 from common.media_storage import delete_local_media_url, save_image_upload
 
-from .models import Banner, Feedback, LinkGroup, LinkItem, Locale, SiteSetting
-
-
-@admin.register(Locale)
-class LocaleAdmin(admin.ModelAdmin):
-    list_display = [
-        'code',
-        'native_name',
-        'label_vi',
-        'catalog_path',
-        'is_default',
-        'is_active',
-        'sort_order',
-    ]
-    list_filter = ['is_default', 'is_active']
-    list_editable = ['sort_order', 'is_active']
-    search_fields = ['code', 'label_vi', 'native_name']
+from .models import Banner, Feedback, LinkGroup, LinkItem, SiteSetting
 
 
 class SiteSettingAdminForm(forms.ModelForm):

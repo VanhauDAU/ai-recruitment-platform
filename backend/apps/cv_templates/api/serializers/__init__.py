@@ -5,7 +5,6 @@ from .admin import (
     CvContentBlueprintAdminSerializer,
     CvSampleContentAdminSerializer,
     CvTemplateAdminSerializer,
-    CvTemplateLocalizationAdminSerializer,
     CvTemplateVersionAdminSerializer,
 )
 from .v2 import (
@@ -30,6 +29,5 @@ __all__ = [
     'CvTemplateAdminSerializer',
     'CvTemplateCardSerializer',
     'CvTemplateDetailSerializer',
-    'CvTemplateLocalizationAdminSerializer',
     'CvTemplateVersionAdminSerializer',
 ]

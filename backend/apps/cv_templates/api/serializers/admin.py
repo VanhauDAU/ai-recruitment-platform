@@ -10,13 +10,11 @@ from ...models import (
     CvContentBlueprint,
     CvSampleContent,
     CvTemplate,
-    CvTemplateLocalization,
     CvTemplateVersion,
 )
 
 PROTECTED_LIFECYCLE_FIELDS = {
     'CvTemplate': ('status', 'lifecycle_status', 'current_published_version'),
-    'CvTemplateLocalization': ('is_active',),
     'CvCategory': ('is_active',),
     'CvColor': ('is_active',),
     'CvAsset': ('is_active',),
@@ -80,19 +78,8 @@ class CvTemplateVersionAdminSerializer(serializers.ModelSerializer):
         ]
 
 
-class CvTemplateLocalizationAdminSerializer(
-    LifecycleFieldGuardMixin,
-    serializers.ModelSerializer,
-):
-    class Meta:
-        model = CvTemplateLocalization
-        fields = '__all__'
-        read_only_fields = ['locale_ref']
-
-
 class CvTemplateAdminSerializer(LifecycleFieldGuardMixin, serializers.ModelSerializer):
     versions = CvTemplateVersionAdminSerializer(many=True, read_only=True)
-    localizations = CvTemplateLocalizationAdminSerializer(many=True, read_only=True)
     current_published_version_id = serializers.IntegerField(read_only=True)
 
     class Meta:
@@ -101,7 +88,14 @@ class CvTemplateAdminSerializer(LifecycleFieldGuardMixin, serializers.ModelSeria
             'public_id',
             'name',
             'slug',
-            'description',
+            'display_name_vi',
+            'display_name_en',
+            'description_vi',
+            'description_en',
+            'seo_title_vi',
+            'seo_title_en',
+            'seo_description_vi',
+            'seo_description_en',
             'thumbnail_url',
             'preview_url',
             'is_premium',
@@ -110,7 +104,6 @@ class CvTemplateAdminSerializer(LifecycleFieldGuardMixin, serializers.ModelSeria
             'lifecycle_status',
             'current_published_version_id',
             'versions',
-            'localizations',
         ]
         read_only_fields = ['public_id', 'lifecycle_status', 'current_published_version_id']
 
