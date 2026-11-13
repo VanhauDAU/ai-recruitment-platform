@@ -211,6 +211,30 @@ Hợp đồng output, trường cấm và tiêu chí train model xem
 [`ai-job-post-generation.md`](./ai-job-post-generation.md); cờ và rollback xem
 [`van-hanh-va-kill-switch.md`](../06-deployment/van-hanh-va-kill-switch.md).
 
+## 5b. AI sinh nội dung CV mẫu (CVT-3)
+
+Use case `cv_sample_content`, prompt `cv-sample-v1`, schema
+`cv-sample-content-v1` (`apps/cv_templates/services/sample_generation.py`).
+
+1. Admin gọi `POST /api/v2/admin/cv-sample-contents/generate/` với vị trí ×
+   ngôn ngữ × nhóm kinh nghiệm (≤ 16 tổ hợp, ≤ 16 lượt đang chạy; lượt treo quá
+   10 phút bị đánh lỗi `stale`). Runtime phải bật và có credential, nếu không
+   trả 503 trước khi tạo gì.
+2. Mỗi tổ hợp là một `CvSampleGeneration`, task
+   `generate_cv_sample_content` chạy trên queue `ai-generation` (85/90 giây).
+   Prompt chỉ gồm tên vị trí, số năm theo nhóm, từ khóa và định nghĩa trường
+   riêng — không có dữ liệu người dùng.
+3. Schema phản hồi không có trường danh tính; `result_validator` từ chối mọi
+   email, số điện thoại, liên kết (`personal_data_detected`, provider thử lại).
+   Giá trị trường riêng được lọc theo kiểu và danh sách lựa chọn; AI không điền
+   liên kết, số hay ngày.
+4. Kết quả được dựng thành document chuẩn, validate rồi lưu thành
+   `CvSampleContent` `in_review`, `origin=ai`. Không có gì được xuất bản nếu admin
+   chưa duyệt; duyệt = publish, bản cũ cùng tổ hợp được lưu trữ.
+
+Đo trên máy dev (Gemini flash-lite): 8 nội dung (1 vị trí × 4 nhóm × 2 ngôn
+ngữ) xong trong ~13 giây, tất cả qua validator.
+
 ## 6. Chế độ lỗi và hành vi suy giảm
 
 | Tình huống | Hành vi |

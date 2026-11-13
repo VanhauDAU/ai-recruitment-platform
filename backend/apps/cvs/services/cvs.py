@@ -204,13 +204,20 @@ def duplicate_cv(*, cv, actor, title=''):
     ).get(pk=duplicate.pk)
 
 
+UNCHANGED = object()
+
+
 @transaction.atomic
-def update_cv_metadata(*, cv, actor, title=None, is_default=None):
+def update_cv_metadata(
+    *, cv, actor, title=None, is_default=None, position=UNCHANGED, position_level=None
+):
     """Update the small mutable CV aggregate owned by the candidate.
 
     Draft document changes intentionally stay on the optimistic-locking draft
     endpoint.  The account library only needs a title and one active default
-    CV, so this service makes those invariants explicit.
+    CV, so this service makes those invariants explicit.  The target position
+    (`JobCategory`, ``None`` clears it) and desired `Job.PositionLevel` are the
+    candidate-chosen matching fields of CVT-3; they are never printed on the CV.
     """
     locked_cv = UserCv.objects.select_for_update().get(pk=cv.pk)
     if locked_cv.user_id != actor.pk:
@@ -231,6 +238,12 @@ def update_cv_metadata(*, cv, actor, title=None, is_default=None):
     if is_default is not None and locked_cv.is_default != is_default:
         locked_cv.is_default = is_default
         update_fields.append('is_default')
+    if position is not UNCHANGED and locked_cv.position_id != getattr(position, 'pk', None):
+        locked_cv.position = position
+        update_fields.append('position')
+    if position_level is not None and locked_cv.position_level != position_level:
+        locked_cv.position_level = position_level
+        update_fields.append('position_level')
     if update_fields:
         locked_cv.save(update_fields=[*update_fields, 'updated_at'])
     return locked_cv

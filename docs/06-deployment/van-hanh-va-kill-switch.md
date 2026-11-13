@@ -319,7 +319,9 @@ Secret không đưa vào Site Setting, frontend, log hay ticket.
 
 ### Worker và lịch
 
-- `ai-worker` chỉ nghe queue `ai-generation`, concurrency 2.
+- `ai-worker` chỉ nghe queue `ai-generation`, concurrency 2: sinh tin tuyển dụng
+  và sinh nội dung CV mẫu (`generate_cv_sample_content`, CVT-3). Tắt
+  `AI_RUNTIME_ENABLED` thì endpoint sinh nội dung mẫu trả 503, không xếp hàng.
 - Beat: `recover-stale-job-ai-generations` (5 giây),
   `purge-expired-job-ai-generation-content` và
   `purge-expired-ai-runtime-metadata` (hằng ngày).

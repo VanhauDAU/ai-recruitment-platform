@@ -10,8 +10,10 @@ from django.db import transaction
 from django.utils import timezone
 
 from apps.cv_templates.content_tokens import _materialize_tokens
+from apps.cv_templates.management.commands._cv_position_fields import POSITION_SETUP
 from apps.cv_templates.models import (
     CvColor,
+    CvPositionField,
     CvPositionProfile,
     CvSampleContent,
     CvTemplate,
@@ -269,6 +271,7 @@ class Command(BaseCommand):
                 profile.save(update_fields=['section_preset', 'updated_at'])
             profiles[category.name] = profile
 
+        fields_created = self._seed_position_fields(profiles)
         samples_created = 0
         for locale in LOCALE_TEXTS:
             for band in ExperienceBand:
@@ -343,20 +346,43 @@ class Command(BaseCommand):
 
         self.stdout.write(
             self.style.SUCCESS(
-                f'Done. {color_links_created} template color link(s) and '
+                f'Done. {color_links_created} template color link(s), '
+                f'{fields_created} position field(s) and '
                 f'{samples_created} sample content(s) created.'
             )
         )
+
+    def _seed_position_fields(self, profiles):
+        """Từ khóa và trường riêng đề xuất; không ghi đè cấu hình admin đã có."""
+        created_count = 0
+        for name, setup in POSITION_SETUP.items():
+            profile = profiles.get(name)
+            if profile is None:
+                continue
+            if not profile.keywords:
+                profile.keywords = setup['keywords']
+                profile.full_clean()
+                profile.save(update_fields=['keywords', 'updated_at'])
+            for order, data in enumerate(setup['fields']):
+                field, created = CvPositionField.objects.get_or_create(
+                    profile=profile,
+                    key=data['key'],
+                    defaults={**data, 'sort_order': order},
+                )
+                if created:
+                    field.full_clean()
+                created_count += int(created)
+        return created_count
 
     def _seed_sample(self, *, profile, locale, band, title, content):
         sample, created = CvSampleContent.objects.get_or_create(
             position_profile=profile,
             locale=locale,
             experience_band=band,
+            status=CvSampleContent.Status.PUBLISHED,
             defaults={
                 'title': title,
                 'content_json': content,
-                'status': CvSampleContent.Status.PUBLISHED,
                 'published_at': timezone.now(),
             },
         )

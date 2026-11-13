@@ -1,12 +1,21 @@
-"""Dữ liệu matching dẫn xuất từ document CV (CVT-1c)."""
+"""Dữ liệu matching dẫn xuất từ document CV (CVT-1c, CVT-3)."""
 
 from datetime import date
 
-from django.test import SimpleTestCase
+from django.contrib.auth import get_user_model
+from django.test import SimpleTestCase, TestCase
 
 from apps.jobs.models import Job
+from apps.skills.models import Skill
 
-from ..services.matching_profile import experience_months, experience_years
+from ..models import CvSkill, UserCv
+from ..services.matching_profile import (
+    declared_skills,
+    education_level,
+    experience_months,
+    experience_years,
+    sync_matching_profile,
+)
 
 TODAY = date(2026, 11, 14)
 
@@ -60,3 +69,80 @@ class ExperienceYearsTests(SimpleTestCase):
             0,
         )
         self.assertEqual(experience_months(content(('2020-01', None), enabled=False), TODAY), 0)
+
+
+def section(key, *items, enabled=True):
+    return {'section_key': key, 'enabled': enabled, 'items': list(items)}
+
+
+class EducationAndSkillsTests(SimpleTestCase):
+    """CVT-3: bậc học và kỹ năng dùng cùng từ vựng với tin tuyển dụng."""
+
+    def test_education_level_is_the_highest_declared_degree(self):
+        document = {
+            'sections': [
+                section(
+                    'education',
+                    {'degree_level': Job.EducationLevel.COLLEGE},
+                    {'degree_level': Job.EducationLevel.UNIVERSITY},
+                    {'degree_level': 'not-a-level'},
+                ),
+                section(
+                    'education', {'degree_level': Job.EducationLevel.POSTGRADUATE}, enabled=False
+                ),
+            ]
+        }
+
+        self.assertEqual(education_level(document), Job.EducationLevel.UNIVERSITY)
+        self.assertEqual(education_level({'sections': []}), '')
+
+    def test_declared_skills_merge_skill_items_and_skill_mapped_fields(self):
+        document = {
+            'sections': [
+                section('skills', {'name': ' Python ', 'level': 4}, {'name': 'Giao tiếp'}),
+                section(
+                    'position_details',
+                    {'maps_to': 'skills', 'value': ['Django', 'python']},
+                    {'maps_to': 'none', 'value': ['Không phải kỹ năng']},
+                ),
+            ]
+        }
+
+        declared = declared_skills(document)
+
+        self.assertEqual(declared['python'], (' Python ', CvSkill.Level.ADVANCED))
+        self.assertEqual(declared['django'], ('Django', ''))
+        self.assertIn('giao tiếp', declared)
+        self.assertNotIn('không phải kỹ năng', declared)
+
+
+class CvSkillSyncTests(TestCase):
+    def setUp(self):
+        user = get_user_model().objects.create_user(
+            email='matching-candidate@example.com', password='password', role='candidate'
+        )
+        self.cv = UserCv.objects.create(
+            user=user, cv_type=UserCv.CvType.BUILDER, source=UserCv.Source.BUILDER, title='CV'
+        )
+        self.python = Skill.objects.create(name='Python')
+        self.react = Skill.objects.create(name='React', aliases=['ReactJS'])
+
+    def document(self, *skills):
+        return {'sections': [section('skills', *skills)]}
+
+    def test_known_skills_are_linked_by_name_or_alias_and_unknown_are_skipped(self):
+        sync_matching_profile(
+            self.cv,
+            self.document({'name': 'python', 'level': 2}, {'name': 'ReactJS'}, {'name': 'Bơi lội'}),
+        )
+
+        rows = {row.skill.name: row.level for row in self.cv.cv_skills.select_related('skill')}
+        self.assertEqual(rows, {'Python': CvSkill.Level.BEGINNER, 'React': ''})
+        self.assertFalse(Skill.objects.filter(normalized_name='bơi lội').exists())
+
+    def test_resync_updates_levels_and_removes_dropped_skills(self):
+        sync_matching_profile(self.cv, self.document({'name': 'Python'}, {'name': 'React'}))
+        sync_matching_profile(self.cv, self.document({'name': 'Python', 'level': 5}))
+
+        rows = {row.skill.name: row.level for row in self.cv.cv_skills.select_related('skill')}
+        self.assertEqual(rows, {'Python': CvSkill.Level.ADVANCED})

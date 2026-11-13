@@ -35,6 +35,16 @@ SECTION_REGISTRY = {
         SectionContract('activities', 'Hoạt động', allow_multiple=True),
         SectionContract('references', 'Người tham chiếu', allow_multiple=True),
         SectionContract('interests', 'Sở thích'),
+        # CVT-3. Mỗi item là một trường riêng của vị trí, định nghĩa được chụp
+        # vào document lúc tạo CV (apps/cv_templates/services/position_fields.py).
+        SectionContract(
+            'position_details',
+            'Thông tin chuyên môn',
+            requires_items=False,
+            initial_item=False,
+        ),
+        SectionContract('portfolio', 'Portfolio'),
+        SectionContract('publications', 'Công bố'),
         SectionContract(
             'nameplate',
             'Danh thiếp',

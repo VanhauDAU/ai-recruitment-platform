@@ -10,7 +10,10 @@ import re
 
 from django.core.exceptions import ValidationError
 
+from apps.cv_templates.models import CvPositionField
+from apps.cv_templates.models.position import FIELD_KEY_RE, MAX_FIELD_OPTIONS
 from apps.cv_templates.section_registry import get_section_contract
+from apps.jobs.models import Job
 
 CANONICAL_SCHEMA_VERSION = 1
 MAX_DOCUMENT_BYTES = 256 * 1024
@@ -22,6 +25,11 @@ LEGACY_FONT_FAMILIES = frozenset({'Arial', 'Calibri', 'Source Sans Pro'})
 ALLOWED_FONT_FAMILIES = frozenset(CV_FONT_FAMILIES) | LEGACY_FONT_FAMILIES
 HEX_COLOR_RE = re.compile(r'^#[0-9A-Fa-f]{6}$')
 YEAR_MONTH_RE = re.compile(r'^\d{4}-(0[1-9]|1[0-2])$')
+# Trường riêng theo vị trí (section `position_details`, CVT-3).
+POSITION_FIELD_KEY_RE = re.compile(FIELD_KEY_RE)
+POSITION_FIELD_TEXT_LIMITS = {'text': 200, 'long_text': 2000, 'url': 300, 'select': 100}
+MAX_POSITION_LIST_VALUES = 30
+MAX_POSITION_LIST_VALUE_LENGTH = 60
 SAFE_RICH_TEXT_TYPES = frozenset({'bullet', 'paragraph'})
 SAFE_RICH_TEXT_MARKS = frozenset(
     {
@@ -228,6 +236,11 @@ def _validate_content(content, errors):
                 item_ids.add(item_id)
             _validate_item_dates(item, item_path, errors)
             _validate_rich_text(item.get('description'), item_path, errors)
+            if section_key == 'position_details':
+                _validate_position_detail(item, item_path, errors)
+            degree_level = item.get('degree_level', '')
+            if section_key == 'education' and degree_level not in ('', *Job.EducationLevel.values):
+                errors[f'{item_path}.degree_level'] = 'Must be a job education level.'
 
 
 def _validate_item_dates(item, path, errors):
@@ -235,6 +248,60 @@ def _validate_item_dates(item, path, errors):
         value = item.get(key)
         if value is not None and (not isinstance(value, str) or not YEAR_MONTH_RE.fullmatch(value)):
             errors[f'{path}.{key}'] = 'Must be YYYY-MM or null.'
+
+
+def _position_value_is_valid(field_type, value, options):
+    if field_type in CvPositionField.LIST_TYPES:
+        return (
+            isinstance(value, list)
+            and len(value) <= MAX_POSITION_LIST_VALUES
+            and all(
+                isinstance(entry, str) and 0 < len(entry) <= MAX_POSITION_LIST_VALUE_LENGTH
+                for entry in value
+            )
+            and (field_type != CvPositionField.FieldType.MULTI_SELECT or set(value) <= set(options))
+        )
+    if field_type == CvPositionField.FieldType.NUMBER:
+        return isinstance(value, (int, float)) and not isinstance(value, bool) and abs(value) < 1e12
+    if field_type == CvPositionField.FieldType.DATE:
+        return isinstance(value, str) and bool(YEAR_MONTH_RE.fullmatch(value))
+    if not isinstance(value, str) or len(value) > POSITION_FIELD_TEXT_LIMITS[field_type]:
+        return False
+    if field_type == CvPositionField.FieldType.URL:
+        return value.startswith(('https://', 'http://'))
+    if field_type == CvPositionField.FieldType.SELECT:
+        return value in options
+    return True
+
+
+def _validate_position_detail(item, path, errors):
+    """Một trường riêng đã chụp vào document: khóa, nhãn, kiểu và giá trị đúng kiểu."""
+    key = item.get('field_key')
+    if not isinstance(key, str) or not POSITION_FIELD_KEY_RE.fullmatch(key):
+        errors[f'{path}.field_key'] = 'Must be a lowercase field key.'
+    label = item.get('label')
+    if not isinstance(label, str) or not 0 < len(label) <= 100:
+        errors[f'{path}.label'] = 'Must be 1-100 characters.'
+    if item.get('maps_to', CvPositionField.MapsTo.NONE) not in CvPositionField.MapsTo.values:
+        errors[f'{path}.maps_to'] = 'Unknown mapping.'
+    placeholder = item.get('placeholder', '')
+    if not isinstance(placeholder, str) or len(placeholder) > 200:
+        errors[f'{path}.placeholder'] = 'Must be at most 200 characters.'
+    options = item.get('options', [])
+    if (
+        not isinstance(options, list)
+        or len(options) > MAX_FIELD_OPTIONS
+        or any(not isinstance(option, str) or not 0 < len(option) <= 100 for option in options)
+    ):
+        errors[f'{path}.options'] = f'Must be at most {MAX_FIELD_OPTIONS} labels.'
+        return
+    field_type = item.get('field_type')
+    if field_type not in CvPositionField.FieldType.values:
+        errors[f'{path}.field_type'] = 'Unknown field type.'
+        return
+    value = item.get('value')
+    if value not in (None, '', []) and not _position_value_is_valid(field_type, value, options):
+        errors[f'{path}.value'] = f'Invalid value for a {field_type} field.'
 
 
 def _validate_inline_text_styles(styles, errors):

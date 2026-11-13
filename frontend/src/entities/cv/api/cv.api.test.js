@@ -23,6 +23,7 @@ import {
   switchCvTemplate,
   renameCv,
   setDefaultCv,
+  updateCvProfile,
   uploadCvAsset,
   updateCvDraft,
 } from './cv.api'
@@ -64,6 +65,8 @@ describe('CV V2 API', () => {
 
     expect(patch).toHaveBeenNthCalledWith(1, '/v2/cvs/cv_1/', { title: 'Renamed' })
     expect(patch).toHaveBeenNthCalledWith(2, '/v2/cvs/cv_1/', { is_default: true })
+    await updateCvProfile('cv_1', { position_public_id: null, position_level: 'team_lead' })
+    expect(patch).toHaveBeenLastCalledWith('/v2/cvs/cv_1/', { position_public_id: null, position_level: 'team_lead' })
     expect(post).toHaveBeenCalledWith('/v2/cvs/imports/', expect.any(FormData), { headers: {} })
     const importBody = post.mock.calls.find(([url]) => url === '/v2/cvs/imports/')[1]
     expect(importBody.get('upload_session')).toBe('ups_cv_1')

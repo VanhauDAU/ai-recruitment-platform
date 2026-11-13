@@ -1,11 +1,13 @@
 import { ArrowDownOutlined, ArrowUpOutlined, DeleteOutlined, HolderOutlined, PlusOutlined } from '@ant-design/icons'
-import { Button, Tooltip } from 'antd'
+import { Button, Select, Tooltip } from 'antd'
 import { useDroppable } from '@dnd-kit/core'
 import { useEffect, useRef, useState } from 'react'
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { CvDocumentPreview, getCvUiText, getOrderedItems, getSectionDefinition } from '@/entities/cv'
+import { EDUCATION_LEVEL_LABELS } from '@/entities/job'
 import InlineText from './InlineText'
+import PositionDetailField from './PositionDetailField'
 import RichTextArea from './RichTextArea'
 import AvatarUploadModal from './AvatarUploadModal'
 
@@ -18,6 +20,9 @@ const CANVAS_ACTION_TONES = {
 function CanvasActionButton({ label, ariaLabel = label, tone = 'default', className = '', children, ...props }) {
   return <Tooltip title={label}><button type="button" aria-label={ariaLabel} className={`flex h-7 min-w-7 cursor-pointer items-center justify-center gap-1 rounded-md border bg-white px-1 text-xs font-semibold shadow-sm transition disabled:cursor-not-allowed disabled:opacity-30 ${CANVAS_ACTION_TONES[tone]} ${className}`} {...props}>{children}</button></Tooltip>
 }
+
+// Bậc học dùng chung từ vựng với tin tuyển dụng (matching CVT-3).
+const DEGREE_LEVEL_OPTIONS = Object.entries(EDUCATION_LEVEL_LABELS).filter(([value]) => value !== 'none').map(([value, label]) => ({ value, label }))
 
 function SkillLevelPicker({ value, itemId, onChange }) {
   const level = Number(value) || 0
@@ -161,6 +166,7 @@ function SortableItem({ item, section, locale, position, total, selected, onSele
       if (field === 'name' && 'level' in item) return <div key={field} className="flex items-center justify-between gap-3 font-bold text-slate-800">{input}<SkillLevelPicker value={item.level} itemId={item.item_id} onChange={(level) => onChange({ level })} /></div>
       return <div key={field} className={titleFields.has(field) ? 'font-bold text-slate-800' : 'text-slate-600'}>{input}</div>
     })}
+    {section.section_key === 'education' && <Select size="small" variant="borderless" allowClear aria-label={`Bậc học ${item.item_id}`} placeholder="Bậc học (không in lên CV, dùng để gợi ý việc làm)" value={item.degree_level || undefined} options={DEGREE_LEVEL_OPTIONS} onChange={(degree_level) => onChange({ degree_level: degree_level || '' })} className="-mx-2 mb-1 w-[calc(100%+1rem)] text-slate-500" />}
     {('description' in item && (section.section_key !== 'summary' || hasRichTextContent(item.description))) && <RichTextArea value={item.description} ariaLabel={`Mô tả ${item.item_id}`} placeholder={descriptionHint(section.section_key, locale)} onCommit={(description) => onChange({ description })} registerPendingEdit={registerPendingEdit} defaultFontFamily={defaultFontFamily} />}
     <div className="cv-item-toolbar absolute -bottom-3 right-0 z-10 flex items-center gap-1"><CanvasActionButton label="Di chuyển lên trên" ariaLabel={`Đưa item ${item.item_id} lên`} disabled={position === 0} onClick={() => onMove(-1)}><ArrowUpOutlined /></CanvasActionButton><CanvasActionButton label="Di chuyển xuống dưới" ariaLabel={`Đưa item ${item.item_id} xuống`} disabled={position === total - 1} onClick={() => onMove(1)}><ArrowDownOutlined /></CanvasActionButton><CanvasActionButton label="Xóa nội dung" ariaLabel={`Xóa item ${item.item_id}`} tone="danger" onClick={onRemove}><DeleteOutlined /><span>Xóa</span></CanvasActionButton><CanvasActionButton label="Thêm nội dung ngay sau" ariaLabel={`Thêm nội dung sau ${item.item_id}`} tone="primary" onClick={onAddAfter}><PlusOutlined /><span>Thêm</span></CanvasActionButton></div>
   </div>
@@ -214,8 +220,9 @@ function SortableSection({ section, document, personal, assets, pageNumber, posi
   return <section id={pageNumber === 1 ? `cv-section-${section.instance_id}` : undefined} ref={sortable.setNodeRef} tabIndex={0} aria-label={`Mục CV ${section.title}`} style={style} className={sectionClass} {...selectionProps}>
     {sortable.isOver && !sortable.isDragging && <div className="pointer-events-none absolute -top-2 left-2 right-2 z-20 border-t-2 border-emerald-500"><span className="relative -top-3 rounded-full bg-emerald-600 px-2 py-0.5 text-[9px] font-bold text-white">Thả mục tại đây</span></div>}
     <div className="mb-3 flex items-center gap-2 border-b pb-2.5 text-sm font-bold uppercase tracking-wide text-[var(--cv-theme)]"><InlineText value={section.title || definition?.displayName || ''} placeholder={getCvUiText('section_title', locale)} ariaLabel={`Tiêu đề ${section.instance_id}`} onCommit={onRename} registerPendingEdit={registerPendingEdit} marks={inlineTextStyles?.[`section:${section.instance_id}:title`]} onMarksChange={(marks) => onInlineTextStyle(`section:${section.instance_id}:title`, marks)} defaultFontFamily={document.style_json.font_family} /><SectionToolbar section={section} sortable={sortable} position={position} total={total} definition={definition} onMoveSection={onMoveSection} onRemoveSection={onRemoveSection} /></div>
-    <SortableContext items={items.map((item) => `item:${section.instance_id}:${item.item_id}`)} strategy={verticalListSortingStrategy}>{items.map((item, itemPosition) => <SortableItem key={item.item_id} item={item} section={section} locale={locale} position={itemPosition} total={items.length} selected={selected && selection?.itemId === item.item_id} onSelect={onSelect} onChange={(patch) => onItemChange(item.item_id, patch)} onRemove={() => onRemoveItem(item.item_id)} onMove={(direction) => onMoveItem(item.item_id, direction)} onAddAfter={() => onAddItem(item.item_id)} registerPendingEdit={registerPendingEdit} defaultFontFamily={document.style_json.font_family} inlineTextStyles={inlineTextStyles} onInlineTextStyle={onInlineTextStyle} />)}</SortableContext>
-    {!definition?.personalInfoBacked && <Button size="small" type="primary" aria-label={getCvUiText('add_item', locale)} icon={<PlusOutlined />} onClick={() => onAddItem()} className="!absolute -bottom-3 left-2 z-10 !border-emerald-600 !bg-emerald-600 !shadow-md transition-opacity hover:!border-emerald-700 hover:!bg-emerald-700 lg:pointer-events-none lg:opacity-0 lg:group-hover/section:pointer-events-auto lg:group-hover/section:opacity-100 lg:group-focus-within/section:pointer-events-auto lg:group-focus-within/section:opacity-100">{getCvUiText('add_item', locale)}</Button>}
+    {definition?.positionBacked && items.map((item) => <PositionDetailField key={item.item_id} item={item} locale={locale} onChange={(patch) => onItemChange(item.item_id, patch)} registerPendingEdit={registerPendingEdit} defaultFontFamily={document.style_json.font_family} />)}
+    {!definition?.positionBacked && <SortableContext items={items.map((item) => `item:${section.instance_id}:${item.item_id}`)} strategy={verticalListSortingStrategy}>{items.map((item, itemPosition) => <SortableItem key={item.item_id} item={item} section={section} locale={locale} position={itemPosition} total={items.length} selected={selected && selection?.itemId === item.item_id} onSelect={onSelect} onChange={(patch) => onItemChange(item.item_id, patch)} onRemove={() => onRemoveItem(item.item_id)} onMove={(direction) => onMoveItem(item.item_id, direction)} onAddAfter={() => onAddItem(item.item_id)} registerPendingEdit={registerPendingEdit} defaultFontFamily={document.style_json.font_family} inlineTextStyles={inlineTextStyles} onInlineTextStyle={onInlineTextStyle} />)}</SortableContext>}
+    {!definition?.personalInfoBacked && !definition?.positionBacked && <Button size="small" type="primary" aria-label={getCvUiText('add_item', locale)} icon={<PlusOutlined />} onClick={() => onAddItem()} className="!absolute -bottom-3 left-2 z-10 !border-emerald-600 !bg-emerald-600 !shadow-md transition-opacity hover:!border-emerald-700 hover:!bg-emerald-700 lg:pointer-events-none lg:opacity-0 lg:group-hover/section:pointer-events-auto lg:group-hover/section:opacity-100 lg:group-focus-within/section:pointer-events-auto lg:group-focus-within/section:opacity-100">{getCvUiText('add_item', locale)}</Button>}
   </section>
 }
 

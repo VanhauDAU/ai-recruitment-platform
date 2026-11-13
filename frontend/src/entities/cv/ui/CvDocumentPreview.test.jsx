@@ -26,6 +26,26 @@ describe('CV document preview', () => {
     expect(screen.getByText('React')).toBeInTheDocument()
   })
 
+  it('prints filled position fields as label and value and shows secondary item values', () => {
+    const withDetails = JSON.parse(JSON.stringify(document))
+    withDetails.content_json.sections.push(
+      { instance_id: 'position_details_1', section_key: 'position_details', title: 'Thông tin chuyên môn', enabled: true, items: [
+        { item_id: 'pd_1', field_key: 'stack', label: 'Công nghệ chính', field_type: 'tags', value: ['React', 'Vite'] },
+        { item_id: 'pd_2', field_key: 'github_url', label: 'GitHub', field_type: 'url', value: '' },
+      ] },
+      { instance_id: 'portfolio_1', section_key: 'portfolio', title: 'Portfolio', enabled: true, items: [{ item_id: 'portfolio_item_1', name: 'Cửa hàng trực tuyến', value: 'https://shop.example.com' }] },
+    )
+    withDetails.layout_json.regions[1].section_instance_ids.push('position_details_1', 'portfolio_1')
+
+    render(<CvDocumentPreview document={withDetails} rendererKey="sidebar_right_v1" />)
+
+    expect(screen.getByText('Công nghệ chính')).toBeInTheDocument()
+    expect(screen.getByText('React, Vite')).toBeInTheDocument()
+    expect(screen.queryByText('GitHub')).not.toBeInTheDocument()
+    expect(screen.getByText('Cửa hàng trực tuyến')).toBeInTheDocument()
+    expect(screen.getByText('https://shop.example.com')).toBeInTheDocument()
+  })
+
   it('uses the same supported page margin as the editor and PDF renderer', () => {
     const compactDocument = JSON.parse(JSON.stringify(document))
     compactDocument.layout_json.page = { size: 'A4', margin_mm: 5 }

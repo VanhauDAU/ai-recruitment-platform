@@ -64,6 +64,10 @@ class UserCv(models.Model):
     # nghiệm mỗi khi tạo version (services/matching_profile.py). Không đặt
     # `choices` ở đây để tránh import vòng cvs ↔ jobs; service bảo đảm giá trị.
     experience_years = models.CharField(max_length=20, blank=True)
+    # CVT-3, cùng quy ước: `Job.PositionLevel` do ứng viên chọn trong editor;
+    # `Job.EducationLevel` là bậc học cao nhất trong mục học vấn, tính khi tạo version.
+    position_level = models.CharField(max_length=20, blank=True)
+    education_level = models.CharField(max_length=20, blank=True)
     language = models.CharField(max_length=16, choices=CvLanguage.choices, default=CvLanguage.VI)
     lifecycle_status = models.CharField(
         max_length=20,

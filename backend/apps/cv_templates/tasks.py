@@ -8,6 +8,7 @@ from types import SimpleNamespace
 from urllib.parse import quote
 
 from celery import shared_task
+from celery.exceptions import SoftTimeLimitExceeded
 from django.core.files.base import ContentFile
 from django.db import transaction
 from django.utils import timezone
@@ -21,6 +22,7 @@ from common.r2_storage import public_media_storage
 
 from .demo_identity import with_demo_identity
 from .models import CATALOG_LANGUAGES, CvSampleContent, CvTemplateColorLink
+from .services.sample_generation import execute_sample_generation, fail_sample_generation
 
 logger = logging.getLogger(__name__)
 SNAPSHOT_RENDERER_VERSION = 'catalogue-snapshot-v2'  # v2: Chromium print page (CVT-2)
@@ -191,3 +193,18 @@ def regenerate_all_template_snapshots():
         .iterator()
     ):
         generate_template_color_snapshot.delay(link_id)
+
+
+@shared_task(
+    name='apps.cv_templates.tasks.generate_cv_sample_content',
+    soft_time_limit=85,
+    time_limit=90,
+)
+def generate_cv_sample_content(generation_id):
+    """Sinh một nội dung CV mẫu chờ duyệt (CVT-3); chạy trên hàng đợi `ai-generation`."""
+    try:
+        sample = execute_sample_generation(generation_id)
+    except SoftTimeLimitExceeded:
+        fail_sample_generation(generation_id, code='generation_timeout')
+        return None
+    return sample.public_id if sample else None

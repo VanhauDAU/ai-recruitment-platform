@@ -29,10 +29,11 @@ import { message } from '@/shared/lib/toast'
 import { AdminDataActions, AdminPanel } from '@/shared/ui/admin'
 
 function statusTag(value) {
-  const color = value === 'published' || value === true ? 'green' : value === 'draft' ? 'gold' : 'default'
+  const color = value === 'published' || value === true ? 'green' : value === 'draft' ? 'gold' : value === 'in_review' ? 'blue' : 'default'
   const labels = {
     archived: 'Đã lưu trữ',
     draft: 'Bản nháp',
+    in_review: 'Chờ duyệt (AI)',
     published: 'Đã phát hành',
     true: 'Đang bật',
     false: 'Đang tắt',
@@ -253,7 +254,7 @@ export default function AdminCvCatalogue() {
     { title: 'Trạng thái', dataIndex: 'status', sorter: compareText('status'), render: statusTag },
     { title: 'Thao tác', render: (_, row) => <Space>
       <Button icon={<EditOutlined />} size="small" onClick={() => setEditing(row)}>Sửa cấu trúc</Button>
-      {row.status === 'draft' && <Button icon={<CheckCircleOutlined />} size="small" type="primary" onClick={() => act(() => publishAdminCvSample(row.public_id), 'Đã phát hành nội dung mẫu.')}>Phát hành</Button>}
+      {['draft', 'in_review'].includes(row.status) && <Button icon={<CheckCircleOutlined />} size="small" type="primary" onClick={() => act(() => publishAdminCvSample(row.public_id), 'Đã phát hành nội dung mẫu.')}>{row.status === 'in_review' ? 'Duyệt & phát hành' : 'Phát hành'}</Button>}
       {row.status !== 'archived' && <Button icon={<InboxOutlined />} size="small" danger onClick={() => act(() => archiveAdminCvSample(row.public_id), 'Đã lưu trữ nội dung mẫu.')}>Lưu trữ</Button>}
     </Space> },
   ]

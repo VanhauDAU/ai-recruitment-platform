@@ -1,6 +1,7 @@
 import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { getRendererContract, paginateMeasuredProjection, projectDocumentForRenderer } from '../model/renderer-contracts'
 import { getCvFontStack } from '../model/document'
+import { formatPositionValue } from '../model/position-details'
 import { getCvUiText, getSectionDefinition, getSectionDisplayName } from '../model/section-registry'
 import './cv-fonts.css'
 import './CvDocumentPreview.css'
@@ -83,6 +84,7 @@ function sectionHasVisibleContent(section, personal, assets) {
   if (section.section_key === 'nameplate') return hasValue(personal.full_name) || hasValue(personal.headline)
   if (section.section_key === 'contact') return contactValues(personal).length > 0
   if (section.section_key === 'avatar') return Boolean(assets?.[personal.avatar_asset_id]?.url)
+  if (section.section_key === 'position_details') return (section.items || []).some(formatPositionValue)
   return (section.items || []).some(hasItemContent)
 }
 
@@ -102,7 +104,9 @@ function SectionContent({ section, personal, assets, locale, inlineTextStyles = 
     const level = Math.min(5, Math.max(0, Number(item.level) || 0))
     return <div key={item.item_id} data-cv-item-id={itemAttribute(item)} className="flex items-start justify-between gap-3"><span className="min-w-0 break-words text-slate-700">{item.name || item.value}</span>{level > 0 && <span className="mt-1 flex shrink-0 gap-0.5" aria-label={`Mức độ ${level} trên 5`}>{[1, 2, 3, 4, 5].map((number) => <span key={number} className={`h-1.5 w-3 rounded-full ${number <= level ? 'bg-[var(--cv-theme)]' : 'bg-slate-200'}`} />)}</span>}</div>
   })}</div>
-  return <div className="space-y-3">{section.items.filter(hasItemContent).map((item) => <div key={item.item_id} data-cv-item-id={itemAttribute(item)}>{(item.start_date || item.end_date) && <p className="text-slate-600">{[item.start_date, item.end_date].filter(Boolean).join(' – ')}</p>}{(item.name || item.degree || item.title || item.value) && <p className="font-semibold text-slate-800">{item.name || item.degree || item.title || item.value}</p>}{(item.institution || item.issuer || item.organization || item.role) && <p className="text-slate-600">{item.institution || item.issuer || item.organization || item.role}</p>}<div className="text-slate-700">{hasValue(item.description) ? <RichTextContent value={item.description} /> : null}</div></div>)}</div>
+  if (section.section_key === 'position_details') return <dl className="space-y-2">{section.items.filter(formatPositionValue).map((item) => <div key={item.item_id} data-cv-item-id={itemAttribute(item)}><dt className="text-xs font-semibold text-slate-500">{item.label}</dt><dd className="break-words text-slate-700">{formatPositionValue(item)}</dd></div>)}</dl>
+  const heading = (item) => item.name || item.degree || item.title
+  return <div className="space-y-3">{section.items.filter(hasItemContent).map((item) => <div key={item.item_id} data-cv-item-id={itemAttribute(item)}>{(item.start_date || item.end_date) && <p className="text-slate-600">{[item.start_date, item.end_date].filter(Boolean).join(' – ')}</p>}{(heading(item) || item.value) && <p className="font-semibold text-slate-800">{heading(item) || item.value}</p>}{heading(item) && item.value && <p className="break-words text-slate-600">{item.value}</p>}{(item.institution || item.issuer || item.organization || item.role) && <p className="text-slate-600">{item.institution || item.issuer || item.organization || item.role}</p>}<div className="text-slate-700">{hasValue(item.description) ? <RichTextContent value={item.description} /> : null}</div></div>)}</div>
 }
 
 function PreviewSection({ section, themeColor, personal, assets, locale, inlineTextStyles }) {

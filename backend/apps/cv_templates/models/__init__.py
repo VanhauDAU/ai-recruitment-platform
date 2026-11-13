@@ -10,6 +10,7 @@ from .language import (
     catalog_language_for_path,
     localized_field,
 )
+from .position import CvPositionField, CvSampleGeneration
 from .template import (
     CvCategory,
     CvColor,
@@ -36,8 +37,10 @@ __all__ = [
     'localized_field',
     'CvCategory',
     'CvColor',
+    'CvPositionField',
     'CvPositionProfile',
     'CvSampleContent',
+    'CvSampleGeneration',
     'CvSectionDefinition',
     'CvTemplate',
     'CvTemplateCategoryLink',
