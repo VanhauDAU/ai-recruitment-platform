@@ -28,6 +28,10 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 - Frontend: bỏ trang báo giá, trang dịch vụ của nhà tuyển dụng, quản trị gói
   dịch vụ và lead tư vấn, form và nút tư vấn nổi, lane remarketing việc đã lưu,
   tab dịch vụ trong chi tiết tin và chiến dịch.
+- Xóa thư mục `backend/apps/services` và bỏ app khỏi `INSTALLED_APPS`.
+  Migration `jobs.0049` xóa content type, quyền Django, nhật ký admin và bản
+  ghi `django_migrations` còn sót của app. Chỉ triển khai sau khi
+  `services.0012` đã chạy ở môi trường đó.
 
 #### Added — Cam kết khi đăng tin và trạng thái tạm ẩn cho nhà tuyển dụng
 
