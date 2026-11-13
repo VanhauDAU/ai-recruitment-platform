@@ -419,7 +419,7 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 - Mở epic **AN-V** nâng cấp dải thông báo đa cổng: chọn màu hiển thị (mode
   `kind` / `preset` / `custom` hex) và ảnh nền strip (ví dụ 980×31) kèm overlay
   contrast. Đặc tả:
-  [`docs/03-database/ke-hoach-nang-cap-thong-bao-visual-theme.md`](docs/03-database/ke-hoach-nang-cap-thong-bao-visual-theme.md).
+  [`docs/01-phan-tich/dac-ta-thong-bao-da-cong.md`](docs/01-phan-tich/dac-ta-thong-bao-da-cong.md).
 - **AN-V1 backend:** migration `sitecontent.0017_announcement_revision_visual_theme`
   thêm field theme/background trên `AnnouncementRevision`; service
   `normalize_theme_and_background` (hex `#RRGGBB`, storage key ảnh, ép overlay
@@ -678,7 +678,7 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 - Chạy lại với Redis dừng đạt HTTP 202, sau đó Redis được khôi phục healthy và
   active feed tiếp tục trả 200. Bằng chứng bốn surface, priority và kill switch
   nằm tại
-  [rehearsal staging 2026-07-29](docs/06-deployment/announcement-staging-evidence-2026-07-29.md).
+  rehearsal staging 2026-07-29 (đã gộp vào [vận hành và kill switch](docs/06-deployment/van-hanh-va-kill-switch.md)).
 - Full gate sau bản vá đạt 617 backend test với coverage 86,13%, 666 frontend
   test, bundle budget và 153 smoke E2E desktop/tablet/mobile.
 

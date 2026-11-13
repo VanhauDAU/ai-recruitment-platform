@@ -4,7 +4,7 @@ Trạng thái: **AN-P2 đã triển khai trên nhánh tính năng, chờ merge v
 
 Tài liệu này mô tả phần runtime của hệ thống thông báo. Contract sản phẩm,
 schema, lifecycle và API canonical nằm tại
-[`ke-hoach-he-thong-thong-bao-chay.md`](../03-database/ke-hoach-he-thong-thong-bao-chay.md).
+[`dac-ta-thong-bao-da-cong.md`](../01-phan-tich/dac-ta-thong-bao-da-cong.md).
 
 ## 1. Ownership và chiều phụ thuộc
 
@@ -126,7 +126,7 @@ Docker local và production đều chuyển tiếp build arg này. Không sửa 
 
 ### 5.1. Visual theme & ảnh nền (epic AN-V)
 
-Nguồn: [kế hoạch visual](../03-database/ke-hoach-nang-cap-thong-bao-visual-theme.md).
+Nguồn: [đặc tả thông báo đa cổng](../01-phan-tich/dac-ta-thong-bao-da-cong.md).
 
 - Backend AN-V1 expose `theme` + `background` trên active feed (additive).
 - Runtime strip (AN-V3) map CSS variables + layers ảnh/overlay qua

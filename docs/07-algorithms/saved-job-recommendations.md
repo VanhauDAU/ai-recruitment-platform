@@ -132,7 +132,7 @@ che danh sách đã lưu.
 
 - Endpoint candidate-only và scope toàn bộ nguồn theo `request.user`.
 - `POST /api/jobs/saved/` dùng cùng predicate public-availability, nên không thể
-  lưu tin nháp, chờ duyệt, bị từ chối, đã đóng/hết hạn hoặc thuộc campaign dừng
+  lưu tin nháp, đang tạm ẩn, đã đóng/hết hạn hoặc thuộc campaign dừng
   chỉ bằng cách đoán `public_id`.
 - Đây là similarity rule-based trên hành động lưu tường minh, không đọc CV,
   profile hoặc lịch sử tìm kiếm, nên không dùng consent `AI_RECOMMENDATION`.
