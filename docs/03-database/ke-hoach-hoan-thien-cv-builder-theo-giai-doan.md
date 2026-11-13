@@ -1,7 +1,7 @@
 # Kế hoạch hoàn thiện CV Builder theo giai đoạn
 
 **Cập nhật:** 2026-07-15  
-**Nguồn kiến trúc:** [CV Builder — Architecture Foundation](cv-builder-architecture-foundation.md)
+**Nguồn kiến trúc:** [CV Builder — Architecture Foundation](../02-tong-quan/cv-builder-architecture-foundation.md)
 
 ## Mục tiêu và nguyên tắc
 

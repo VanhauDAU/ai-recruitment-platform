@@ -15,14 +15,14 @@
 | [02-tong-quan](02-tong-quan/)   | [adr-0015-remove-commercial-services.md](02-tong-quan/adr-0015-remove-commercial-services.md) | ADR gỡ app dịch vụ thương mại và yêu cầu tư vấn |
 | [03-database](03-database/)     | [thiet-ke-database.md](03-database/thiet-ke-database.md)         | Thiết kế database, ERD, quy ước đặt tên                                 |
 | [03-database](03-database/)     | [ke-hoach-ra-soat-va-khac-phuc-employer.md](03-database/ke-hoach-ra-soat-va-khac-phuc-employer.md) | Kế hoạch ER-0…ER-8 cho company, verification, upload, moderation, DPA và notification |
-| [03-database](03-database/)     | [cv-builder-architecture-foundation.md](03-database/cv-builder-architecture-foundation.md) | Canonical document, template/version, taxonomy màu và lifecycle CV V2 |
+| [03-database](03-database/)     | [cv-builder-architecture-foundation.md](02-tong-quan/cv-builder-architecture-foundation.md) | Canonical document, template/version, taxonomy màu và lifecycle CV V2 |
 | [03-database](03-database/)     | [ke-hoach-hoan-thien-cv-builder-theo-giai-doan.md](03-database/ke-hoach-hoan-thien-cv-builder-theo-giai-doan.md) | Trạng thái và roadmap hoàn thiện CV Builder |
 | [03-database](03-database/)     | [ke-hoach-chien-dich-va-vong-doi-tin.md](03-database/ke-hoach-chien-dich-va-vong-doi-tin.md) | Ownership recruiter, chiến dịch, duyệt tin, quota và pipeline ứng viên |
 | [03-database](03-database/)     | [ke-hoach-database-phan-quyen-admin.md](03-database/ke-hoach-database-phan-quyen-admin.md) | RBAC admin theo phòng ban, role, membership và audit |
 | [03-database](03-database/)     | [ke-hoach-he-thong-thong-bao-chay.md](03-database/ke-hoach-he-thong-thong-bao-chay.md) | Dải thông báo đa cổng: revision, targeting, priority, consent, rollout |
 | [03-database](03-database/)     | [ke-hoach-nang-cap-thong-bao-visual-theme.md](03-database/ke-hoach-nang-cap-thong-bao-visual-theme.md) | Nâng cấp visual strip: chọn màu, ảnh nền (vd. 980×31), phase AN-V0…V4 |
 | [03-database](03-database/)     | [ke-hoach-faq-huong-dan.md](03-database/ke-hoach-faq-huong-dan.md) | Đặc tả full-stack FAQ/hướng dẫn ứng viên, workflow duyệt và lộ trình triển khai trước chatbot |
-| [03-database](03-database/)     | [ke-hoach-chatbot-ung-vien-faq.md](03-database/ke-hoach-chatbot-ung-vien-faq.md) | Chatbot ứng viên: retrieval FAQ tìm việc (pgvector + Ollama embedding), phase CB-P0…P3 |
+| [03-database](03-database/)     | [ke-hoach-chatbot-ung-vien-faq.md](07-algorithms/chatbot-ung-vien-faq.md) | Chatbot ứng viên: retrieval FAQ tìm việc (pgvector + Ollama embedding), phase CB-P0…P3 |
 | [04-api](04-api/)               | [tai-lieu-api.md](04-api/tai-lieu-api.md)                        | Tài liệu API (endpoint, request/response)                               |
 | [04-api](04-api/)               | [frontend-response-contracts.md](04-api/frontend-response-contracts.md) | Contract response tối thiểu theo từng màn hình frontend             |
 | [04-api](04-api/)               | [cookie-consent-va-job-view-tracking.md](04-api/cookie-consent-va-job-view-tracking.md) | Consent cookie, browser storage và job-view tracking |
@@ -45,7 +45,7 @@
 | [06-deployment](06-deployment/) | [job-services-rollout-runbook.md](06-deployment/job-services-rollout-runbook.md) | Expand–backfill–shadow–enforce, audit legacy, observability và rollback dịch vụ tin |
 | [07-algorithms](07-algorithms/) | [thuat-toan-ai.md](07-algorithms/thuat-toan-ai.md)               | Thuật toán AI: trích xuất kỹ năng, matching CV-Job, chấm điểm phỏng vấn |
 | [07-algorithms](07-algorithms/) | [ai-job-post-generation.md](07-algorithms/ai-job-post-generation.md) | Structured generation, ranh giới field, eval và điều kiện fine-tuning |
-| [07-algorithms](07-algorithms/) | [employer-flow-security-audit-2026-08.md](07-algorithms/employer-flow-security-audit-2026-08.md) | Baseline finding, evidence và retest criteria cho luồng Nhà tuyển dụng |
+| [07-algorithms](07-algorithms/) | [employer-flow-security-audit-2026-08.md](02-tong-quan/employer-flow-security-audit-2026-08.md) | Baseline finding, evidence và retest criteria cho luồng Nhà tuyển dụng |
 | [07-algorithms](07-algorithms/) | [sponsored-job-distribution-policy.md](07-algorithms/sponsored-job-distribution-policy.md) | Relevance-first, slot 2/10, company diversity và ma trận presentation các surface |
 | [08-frontend](08-frontend/)     | [cau-truc-frontend.md](08-frontend/cau-truc-frontend.md)         | Cấu trúc frontend, component, quy ước code                              |
 | [08-frontend](08-frontend/)     | [dai-thong-bao-da-cong.md](08-frontend/dai-thong-bao-da-cong.md) | Runtime strip đa cổng, priority, accessibility, rollout và rollback     |

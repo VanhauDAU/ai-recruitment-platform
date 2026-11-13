@@ -5,7 +5,7 @@
 > **Kế hoạch canonical:**
 > [ke-hoach-ra-soat-va-khac-phuc-employer.md](../03-database/ke-hoach-ra-soat-va-khac-phuc-employer.md)  
 > **Decision log:**
-> [employer-remediation-decision-log.md](../02-tong-quan/employer-remediation-decision-log.md)
+> [employer-remediation-decision-log.md](employer-remediation-decision-log.md)
 
 ## 1. Phạm vi và phương pháp
 

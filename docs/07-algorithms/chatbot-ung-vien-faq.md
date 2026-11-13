@@ -8,8 +8,8 @@
 >
 > Phiên bản quyết định: **1.0**
 >
-> Nguồn nền: [FAQ/hướng dẫn](ke-hoach-faq-huong-dan.md) (KB-P0…KB-P6 **đã hoàn tất**),
-> [hợp đồng nâng cấp chatbot/RAG — mục 20](ke-hoach-faq-huong-dan.md#20-hợp-đồng-nâng-cấp-sang-chatbotrag),
+> Nguồn nền: [FAQ/hướng dẫn](../03-database/ke-hoach-faq-huong-dan.md) (KB-P0…KB-P6 **đã hoàn tất**),
+> [hợp đồng nâng cấp chatbot/RAG — mục 20](../03-database/ke-hoach-faq-huong-dan.md#20-hợp-đồng-nâng-cấp-sang-chatbotrag),
 > UI sẵn có `widgets/candidate-assistant`
 >
 > Biên bản quyết định session: [chatbot-local-decision-log.md](../02-tong-quan/chatbot-local-decision-log.md)

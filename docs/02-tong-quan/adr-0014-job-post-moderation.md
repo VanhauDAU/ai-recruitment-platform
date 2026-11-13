@@ -75,4 +75,4 @@ này nó mang nghĩa "được phép đưa tin lên công khai".
   khóa tài khoản vi phạm bằng `policy_hold`.
 - Thay thế các phần về duyệt tin trong
   [`ke-hoach-chien-dich-va-vong-doi-tin.md`](../03-database/ke-hoach-chien-dich-va-vong-doi-tin.md)
-  và [`admin-job-management-plan.md`](../08-frontend/admin-job-management-plan.md).
+  và [`admin-job-management.md`](../08-frontend/admin-job-management.md).

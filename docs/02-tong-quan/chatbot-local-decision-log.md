@@ -1,7 +1,7 @@
 # Biên bản quyết định — Chatbot AI local (ứng viên)
 
 > Tài liệu sống: mỗi quyết định đã xác nhận được ghi ngày, phạm vi và hệ quả.
-> Đặc tả triển khai: [ke-hoach-chatbot-ung-vien-faq.md](../03-database/ke-hoach-chatbot-ung-vien-faq.md)
+> Đặc tả triển khai: [chatbot-ung-vien-faq.md](../07-algorithms/chatbot-ung-vien-faq.md)
 > Nguồn kiến thức: [ke-hoach-faq-huong-dan.md](../03-database/ke-hoach-faq-huong-dan.md) (KB-P6 hoàn tất)
 
 ## Nguyên tắc nền (đã khẳng định qua FAQ)

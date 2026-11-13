@@ -1,7 +1,7 @@
 # CVB-8 — WYSIWYG CV Builder kiểu TopCV
 
 **Ngày chốt:** 2026-07-16  
-**Nguồn kiến trúc:** [CV Builder — Architecture Foundation](cv-builder-architecture-foundation.md)
+**Nguồn kiến trúc:** [CV Builder — Architecture Foundation](../02-tong-quan/cv-builder-architecture-foundation.md)
 
 **Trạng thái triển khai:** ✅ Hoàn tất code nền, workflow chính và shell TopCV;
 WYSIWYG được seed mặc định bật, feature flag vẫn giữ để rollback về editor cũ.
