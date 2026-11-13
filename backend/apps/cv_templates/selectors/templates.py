@@ -1,18 +1,19 @@
 """Read queries for public CV templates."""
 
-from django.db.models import Prefetch, Q
+from django.db.models import F, Prefetch, Q
 
 from apps.jobs.models import JobCategory, JobCategoryLocalization
 
 from ..models import (
+    DEFAULT_CV_LANGUAGE,
     CvCategory,
     CvContentBlueprint,
     CvSampleContent,
     CvTemplate,
     CvTemplateCategoryLink,
     CvTemplateColorLink,
-    CvTemplateLocalization,
     CvTemplateSection,
+    localized_field,
 )
 
 
@@ -24,9 +25,32 @@ def _slugs(value):
     return [slug.strip() for slug in (value or '').split(',') if slug.strip()]
 
 
-def published_template_queryset(*, locale='vi-VN', category=None, tag=None):
+def published_templates_in_language(locale=DEFAULT_CV_LANGUAGE):
+    """Template đã xuất bản và có tên ở ngôn ngữ `locale`, kèm nội dung theo ngôn ngữ đó.
+
+    `catalog_display_name`, `catalog_description`, `catalog_seo_title` và
+    `catalog_seo_description` là giá trị của ngôn ngữ được yêu cầu. Template chưa
+    có tên ở một ngôn ngữ thì không xuất hiện trong kho mẫu của ngôn ngữ đó.
+    """
+    display_name = localized_field('display_name', locale)
+    return (
+        CvTemplate.objects.filter(
+            status=CvTemplate.Status.ACTIVE,
+            lifecycle_status=CvTemplate.LifecycleStatus.PUBLISHED,
+            current_published_version__version_status='published',
+        )
+        .exclude(**{display_name: ''})
+        .annotate(
+            catalog_display_name=F(display_name),
+            catalog_description=F(localized_field('description', locale)),
+            catalog_seo_title=F(localized_field('seo_title', locale)),
+            catalog_seo_description=F(localized_field('seo_description', locale)),
+        )
+    )
+
+
+def published_template_queryset(*, locale=DEFAULT_CV_LANGUAGE, category=None, tag=None):
     """Public catalogue, always tied to the current published version."""
-    localizations = CvTemplateLocalization.objects.filter(locale=locale, is_active=True)
     categories = (
         CvTemplateCategoryLink.objects.select_related('category')
         .filter(
@@ -42,16 +66,9 @@ def published_template_queryset(*, locale='vi-VN', category=None, tag=None):
         .order_by('sort_order', 'color__sort_order', 'color__name')
     )
     queryset = (
-        CvTemplate.objects.filter(
-            status=CvTemplate.Status.ACTIVE,
-            lifecycle_status=CvTemplate.LifecycleStatus.PUBLISHED,
-            current_published_version__version_status='published',
-            localizations__locale=locale,
-            localizations__is_active=True,
-        )
+        published_templates_in_language(locale)
         .select_related('current_published_version')
         .prefetch_related(
-            Prefetch('localizations', queryset=localizations, to_attr='catalog_localizations'),
             Prefetch('category_links', queryset=categories, to_attr='catalog_category_links'),
             Prefetch('color_links', queryset=colors, to_attr='catalog_color_links'),
         )
@@ -75,7 +92,7 @@ def published_template_queryset(*, locale='vi-VN', category=None, tag=None):
     return queryset.distinct()
 
 
-def published_template_detail_queryset(locale='vi-VN'):
+def published_template_detail_queryset(locale=DEFAULT_CV_LANGUAGE):
     return published_template_queryset(locale=locale).prefetch_related(
         Prefetch(
             'current_published_version__sections',
@@ -151,7 +168,7 @@ def active_cv_position_options_queryset(
     )
 
 
-def related_published_templates(template, *, locale='vi-VN', limit=6):
+def related_published_templates(template, *, locale=DEFAULT_CV_LANGUAGE, limit=6):
     category_slugs = [
         link.category.slug
         for link in getattr(template, 'catalog_category_links', [])

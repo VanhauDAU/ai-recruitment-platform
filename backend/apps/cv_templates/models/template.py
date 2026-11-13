@@ -6,6 +6,8 @@ from django.utils.text import slugify
 
 from common.public_id import generate_public_id
 
+from .language import CvLanguage, localized_field
+
 
 class CvTemplate(models.Model):
     """CV Builder template (DB doc section 2.4)."""
@@ -25,7 +27,16 @@ class CvTemplate(models.Model):
     category = models.CharField(
         max_length=100, blank=True, help_text='IT, internship, professional, simple'
     )
-    description = models.TextField(blank=True)
+    # Nội dung song ngữ. Template chỉ xuất hiện ở kho mẫu của ngôn ngữ có
+    # `display_name_<ngôn ngữ>` khác rỗng.
+    display_name_vi = models.CharField(max_length=255, blank=True)
+    display_name_en = models.CharField(max_length=255, blank=True)
+    description_vi = models.TextField(blank=True)
+    description_en = models.TextField(blank=True)
+    seo_title_vi = models.CharField(max_length=255, blank=True)
+    seo_title_en = models.CharField(max_length=255, blank=True)
+    seo_description_vi = models.TextField(blank=True)
+    seo_description_en = models.TextField(blank=True)
     thumbnail_url = models.TextField(blank=True)
     preview_url = models.TextField(blank=True)
     layout_config = models.JSONField(
@@ -85,6 +96,9 @@ class CvTemplate(models.Model):
         if not self.slug:
             self.slug = slugify(self.name)
         super().save(*args, **kwargs)
+
+    def localized(self, field, language):
+        return getattr(self, localized_field(field, language))
 
     def __str__(self):
         return self.name
@@ -276,38 +290,6 @@ class CvTemplateVersion(models.Model):
         return f'{self.template_id} v{self.version_number}'
 
 
-class CvTemplateLocalization(models.Model):
-    template = models.ForeignKey(CvTemplate, on_delete=models.CASCADE, related_name='localizations')
-    locale = models.CharField(max_length=16)
-    locale_ref = models.ForeignKey(
-        'sitecontent.Locale',
-        to_field='code',
-        db_column='locale_ref_code',
-        on_delete=models.PROTECT,
-        null=True,
-        blank=True,
-        related_name='cv_template_localizations',
-    )
-    display_name = models.CharField(max_length=255)
-    description = models.TextField(blank=True)
-    seo_title = models.CharField(max_length=255, blank=True)
-    seo_description = models.TextField(blank=True)
-    is_active = models.BooleanField(default=True)
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(fields=['template', 'locale'], name='uq_cv_template_locale'),
-        ]
-
-    def save(self, *args, **kwargs):
-        from apps.sitecontent.models import Locale
-
-        self.locale_ref_id = (
-            self.locale if Locale.objects.filter(code=self.locale).exists() else None
-        )
-        super().save(*args, **kwargs)
-
-
 class CvTemplateCategoryLink(models.Model):
     template = models.ForeignKey(
         CvTemplate, on_delete=models.CASCADE, related_name='category_links'
@@ -419,16 +401,7 @@ class CvSampleContent(models.Model):
         blank=True,
         related_name='cv_sample_contents',
     )
-    locale = models.CharField(max_length=16)
-    locale_ref = models.ForeignKey(
-        'sitecontent.Locale',
-        to_field='code',
-        db_column='locale_ref_code',
-        on_delete=models.PROTECT,
-        null=True,
-        blank=True,
-        related_name='cv_sample_contents',
-    )
+    locale = models.CharField(max_length=16, choices=CvLanguage.choices)
     experience_level = models.CharField(max_length=30, default='unspecified')
     title = models.CharField(max_length=255)
     # The picker is intentionally Vietnamese even when the sample content is
@@ -489,11 +462,6 @@ class CvSampleContent(models.Model):
     def save(self, *args, **kwargs):
         if not self.public_id:
             self.public_id = generate_public_id('cvsample')
-        from apps.sitecontent.models import Locale
-
-        self.locale_ref_id = (
-            self.locale if Locale.objects.filter(code=self.locale).exists() else None
-        )
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -504,16 +472,7 @@ class CvContentBlueprint(models.Model):
     """Admin-configurable generic starter content for a locale/experience pair."""
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)
-    locale = models.CharField(max_length=16)
-    locale_ref = models.ForeignKey(
-        'sitecontent.Locale',
-        to_field='code',
-        db_column='locale_ref_code',
-        on_delete=models.PROTECT,
-        null=True,
-        blank=True,
-        related_name='cv_content_blueprints',
-    )
+    locale = models.CharField(max_length=16, choices=CvLanguage.choices)
     experience_level = models.CharField(max_length=30, default='unspecified')
     content_json_template = models.JSONField(
         default=dict,
@@ -585,11 +544,6 @@ class CvContentBlueprint(models.Model):
     def save(self, *args, **kwargs):
         if not self.public_id:
             self.public_id = generate_public_id('cvblueprint')
-        from apps.sitecontent.models import Locale
-
-        self.locale_ref_id = (
-            self.locale if Locale.objects.filter(code=self.locale).exists() else None
-        )
         super().save(*args, **kwargs)
 
     def __str__(self):

@@ -9,7 +9,6 @@ from .api.views.admin import (
     AdminCvColorViewSet,
     AdminCvContentBlueprintViewSet,
     AdminCvSampleContentViewSet,
-    AdminCvTemplateLocalizationViewSet,
     AdminCvTemplateViewSet,
 )
 from .api.views.v2 import (
@@ -25,11 +24,6 @@ from .api.views.v2 import (
 
 router = DefaultRouter()
 router.register('admin/cv-templates', AdminCvTemplateViewSet, basename='admin-cv-template')
-router.register(
-    'admin/cv-template-localizations',
-    AdminCvTemplateLocalizationViewSet,
-    basename='admin-cv-template-localization',
-)
 router.register('admin/cv-categories', AdminCvCategoryViewSet, basename='admin-cv-category')
 router.register('admin/cv-colors', AdminCvColorViewSet, basename='admin-cv-color')
 router.register('admin/cv-backgrounds', AdminCvBackgroundViewSet, basename='admin-cv-background')

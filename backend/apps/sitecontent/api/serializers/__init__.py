@@ -19,12 +19,10 @@ from .announcements import (
     AnnouncementUserStateSerializer,
 )
 from .settings import (
-    AdminLocaleSerializer,
     AdminSiteSettingSerializer,
     BannerSerializer,
     FeedbackSerializer,
     LinkGroupSerializer,
-    LocaleSerializer,
     SiteSettingSerializer,
 )
 
@@ -32,7 +30,6 @@ __all__ = [
     'ActiveAnnouncementFeedSerializer',
     'ActiveAnnouncementQuerySerializer',
     'ActiveAnnouncementSerializer',
-    'AdminLocaleSerializer',
     'AdminAnnouncementDetailSerializer',
     'AdminAnnouncementListSerializer',
     'AdminSiteSettingSerializer',
@@ -52,6 +49,5 @@ __all__ = [
     'BannerSerializer',
     'FeedbackSerializer',
     'LinkGroupSerializer',
-    'LocaleSerializer',
     'SiteSettingSerializer',
 ]

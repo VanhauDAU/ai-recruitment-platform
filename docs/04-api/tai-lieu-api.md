@@ -107,18 +107,15 @@ Xác thực trong Swagger UI: gọi `POST /api/auth/login/` lấy `access`, bấ
 | GET/PUT/PATCH/DELETE | `/api/cvs/{public_id}/` | **Legacy V1** CV detail; chuyển sang V2 metadata/draft endpoints |
 | POST | `/api/cvs/upload/` | **Legacy V1** upload; chuyển sang `/api/v2/cvs/imports/` |
 | GET | `/api/v2/cv-templates/?locale=&category=&tag=&page=` | Public catalogue V2. Card DTO gồm localization, category/tag và `colors[]`; không lộ layout/style JSON hoặc renderer config. |
-| GET | `/api/v2/cv-templates/{slug}/` | Public template detail V2: card fields + preview metadata, renderer contract an toàn và section list. |
+| GET | `/api/v2/cv-templates/{slug}/` | Public template detail V2: card fields + preview metadata, `seo_title`/`seo_description` theo `locale`, renderer contract an toàn và section list. |
 | GET | `/api/v2/cv-templates/{slug}/related/` | Template published liên quan theo category, cùng locale. |
 | GET | `/api/v2/cv-categories/?type=` | Taxonomy template active (`style`, `feature`, `position`, `audience`). |
 | GET | `/api/v2/cv-position-options/?locale=&experience_level=&q=` | Vị trí chuyên môn active có localization và content resolve được; response gồm `public_id`, `slug` (dùng cho query `vi-tri` của trang chi tiết mẫu), `display_name`, `name_vi`, có ordering quản trị được. |
 | GET | `/api/v2/cv-position-preview/?position_public_id=&locale=&experience_level=&template_public_id=&theme_color=` | Resolve curated→blueprint; khi có template trả thêm canonical `document`, `renderer`, `revision`. `source=blank` compose document trống. Contract content-only cũ vẫn hoạt động nếu thiếu template. |
-| GET | `/api/site/locales/` | Danh sách locale active theo `sort_order`; public, không phân trang. |
-| GET/POST | `/api/site/admin/locales/` | Admin list/create locale. `code` bất biến sau khi tạo; đổi default demote default cũ trong transaction. |
-| GET/PATCH/PUT | `/api/site/admin/locales/{code}/` | Admin đọc/cập nhật locale; không có DELETE. Locale default không thể inactive. |
-
-`locale` trên catalogue/position preview và `language` khi tạo CV phải thuộc
-registry active. API tiếp tục nhận/trả locale code để giữ tương thích; FK
-`locale_ref` là chi tiết migration nội bộ, không làm đổi public payload.
+`locale` trên catalogue/position preview và `language` khi tạo/import CV chỉ
+nhận `vi-VN` hoặc `en-US` (enum `CvLanguage` ở
+`apps/cv_templates/models/language.py`); giá trị khác trả `400`. Từ CVT-1a không
+còn API quản lý ngôn ngữ (`/api/site/locales/`, `/api/site/admin/locales/`).
 
 ### Contract phân quyền admin G1
 
@@ -373,7 +370,6 @@ trả `409 admin_resource_changed`.
 | POST | `/api/v2/admin/cv-templates/{public_id}/versions/{id}/publish/` | Validate và publish immutable template version. |
 | POST | `/api/v2/admin/cv-templates/{public_id}/versions/{id}/retire/` | Retire version không còn là current pointer. |
 | POST | `/api/v2/admin/cv-templates/{public_id}/snapshots/regenerate/` | Queue snapshot cho mọi màu của template. |
-| CRUD | `/api/v2/admin/cv-template-localizations/` | Localization của template. |
 | CRUD | `/api/v2/admin/cv-categories/` | Taxonomy catalogue. |
 | CRUD | `/api/v2/admin/cv-colors/` | Registry màu. |
 | CRUD | `/api/v2/admin/cv-sample-contents/` | Nội dung canonical draft. |

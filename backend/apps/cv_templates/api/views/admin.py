@@ -19,7 +19,6 @@ from ...models import (
     CvContentBlueprint,
     CvSampleContent,
     CvTemplate,
-    CvTemplateLocalization,
     CvTemplateSection,
     CvTemplateVersion,
 )
@@ -39,7 +38,6 @@ from ..serializers.admin import (
     CvContentBlueprintAdminSerializer,
     CvSampleContentAdminSerializer,
     CvTemplateAdminSerializer,
-    CvTemplateLocalizationAdminSerializer,
     CvTemplateVersionAdminSerializer,
 )
 
@@ -82,9 +80,7 @@ class AdminModelViewSet(viewsets.ModelViewSet):
 class AdminCvTemplateViewSet(AdminModelViewSet):
     serializer_class = CvTemplateAdminSerializer
     lookup_field = 'public_id'
-    queryset = CvTemplate.objects.prefetch_related('versions', 'localizations').order_by(
-        'sort_order', 'name'
-    )
+    queryset = CvTemplate.objects.prefetch_related('versions').order_by('sort_order', 'name')
     required_admin_permissions = {
         **AdminModelViewSet.required_admin_permissions,
         'create_version': ['cv_template.create'],
@@ -179,13 +175,6 @@ class AdminCvTemplateViewSet(AdminModelViewSet):
     def regenerate_snapshots(self, request, public_id=None):
         enqueue_template_snapshots(self.get_object())
         return Response({'status': 'queued'}, status=status.HTTP_202_ACCEPTED)
-
-
-class AdminCvTemplateLocalizationViewSet(AdminModelViewSet):
-    serializer_class = CvTemplateLocalizationAdminSerializer
-    queryset = CvTemplateLocalization.objects.select_related('template').order_by(
-        'template_id', 'locale'
-    )
 
 
 class AdminCvCategoryViewSet(AdminModelViewSet):

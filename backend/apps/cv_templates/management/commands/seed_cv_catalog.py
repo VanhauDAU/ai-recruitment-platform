@@ -17,7 +17,6 @@ from apps.cv_templates.models import (
     CvTemplate,
     CvTemplateCategoryLink,
     CvTemplateColorLink,
-    CvTemplateLocalization,
 )
 from apps.jobs.models import JobCategory, JobCategoryLocalization
 
@@ -64,28 +63,6 @@ POSITION_LABELS = {
         'Kế toán': 'Accountant',
         'Nhân sự': 'Human Resources',
     },
-    'ja-JP': {
-        'Backend Developer': 'バックエンド開発者',
-        'Frontend Developer': 'フロントエンド開発者',
-        'AI/Machine Learning Engineer': 'AI・機械学習エンジニア',
-        'Automation Tester': '自動化テスター',
-        'Content Marketing': 'コンテンツマーケティング',
-        'Chăm sóc khách hàng': 'カスタマーサポート',
-        'Nhân viên kinh doanh': '営業担当者',
-        'Kế toán': '会計担当者',
-        'Nhân sự': '人事担当者',
-    },
-    'zh-CN': {
-        'Backend Developer': '后端开发工程师',
-        'Frontend Developer': '前端开发工程师',
-        'AI/Machine Learning Engineer': '人工智能/机器学习工程师',
-        'Automation Tester': '自动化测试工程师',
-        'Content Marketing': '内容营销',
-        'Chăm sóc khách hàng': '客户服务专员',
-        'Nhân viên kinh doanh': '销售专员',
-        'Kế toán': '会计专员',
-        'Nhân sự': '人力资源专员',
-    },
 }
 
 LOCALE_TEXTS = {
@@ -123,36 +100,6 @@ LOCALE_TEXTS = {
         'edu_desc': 'Graduated with distinction.',
         'skills_title': 'Skills',
         'skills': ['{position} expertise', 'Teamwork', 'Problem solving', 'Business English'],
-    },
-    'ja-JP': {
-        'title': 'サンプルCV — {position}',
-        'summary_title': 'キャリア目標',
-        'summary': '{position}として3年の経験があります。専門性を活かし、会社の成長に貢献したいと考えています。今後2年でチームの中心メンバーになることを目指します。',
-        'experience_title': '職務経歴',
-        'exp_role': '{position}',
-        'exp_company': 'ABC株式会社',
-        'exp_desc': '{position}の主要業務を担当し、部門横断で協力して目標を達成しました。\n直近年度の目標を120%達成。',
-        'education_title': '学歴',
-        'edu_degree': '関連分野の学士号',
-        'edu_school': 'ハノイ大学',
-        'edu_desc': '優秀な成績で卒業。',
-        'skills_title': 'スキル',
-        'skills': ['{position}の専門スキル', 'チームワーク', '問題解決', 'ビジネス英語'],
-    },
-    'zh-CN': {
-        'title': '简历模板 — {position}',
-        'summary_title': '职业目标',
-        'summary': '拥有3年{position}工作经验，希望发挥专业能力，为公司发展贡献力量。未来两年的目标是成为团队的核心成员。',
-        'experience_title': '工作经历',
-        'exp_role': '{position}',
-        'exp_company': 'ABC有限公司',
-        'exp_desc': '负责{position}岗位的核心工作，跨部门协作完成共同目标。\n最近一年达成120%的绩效指标。',
-        'education_title': '教育背景',
-        'edu_degree': '相关专业学士学位',
-        'edu_school': '河内大学',
-        'edu_desc': '以优异成绩毕业。',
-        'skills_title': '技能',
-        'skills': ['{position}专业技能', '团队合作', '解决问题', '商务英语'],
     },
 }
 
@@ -333,27 +280,6 @@ class Command(BaseCommand):
                 )
                 CvTemplateCategoryLink.objects.get_or_create(template=template, category=category)
 
-        # A template only appears in a language catalog when it has an active
-        # localization for that locale, so make sure every published template
-        # is available in all four supported languages.
-        localizations_created = 0
-        for template in CvTemplate.objects.filter(
-            lifecycle_status=CvTemplate.LifecycleStatus.PUBLISHED,
-            current_published_version__isnull=False,
-        ):
-            base = template.localizations.filter(is_active=True).first()
-            for locale in LOCALE_TEXTS:
-                _, created = CvTemplateLocalization.objects.get_or_create(
-                    template=template,
-                    locale=locale,
-                    defaults={
-                        'display_name': base.display_name if base else template.name,
-                        'description': base.description if base else template.description,
-                        'is_active': True,
-                    },
-                )
-                localizations_created += int(created)
-
         samples_created = 0
         categories = {
             category.name: category
@@ -419,7 +345,7 @@ class Command(BaseCommand):
 
         self.stdout.write(
             self.style.SUCCESS(
-                f'Done. {color_links_created} template color link(s) created; '
-                f'{localizations_created} localization(s) and {samples_created} sample content(s) created.'
+                f'Done. {color_links_created} template color link(s) and '
+                f'{samples_created} sample content(s) created.'
             )
         )

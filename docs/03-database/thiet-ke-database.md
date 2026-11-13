@@ -199,7 +199,7 @@ chiến dịch (nếu có) active, không hold và chủ chiến dịch active.
 | Bảng (model) | Mục đích và ràng buộc |
 | --- | --- |
 | `JobCategory` | Taxonomy 3 cấp (`parent`), `category_type` occupation_group/domain/specialization, `status`, `public_id`, slug unique. Picker CV dùng loại `specialization`. |
-| `JobCategoryLocalization` | Tên hiển thị/alias tìm kiếm theo locale (vi/en/ja/zh); unique `(category, locale)`; cột `locale` code song song FK `locale_ref` → `sitecontent.Locale.code` trong cửa sổ chuyển đổi. |
+| `JobCategoryLocalization` | Tên hiển thị/alias tìm kiếm theo `locale` (`vi-VN`, `en-US`); unique `(category, locale)`. |
 | `JobCategoryAssignment` | Một `primary_specialization` (partial unique mỗi job) và nhiều `domain_knowledge`; unique `(job, category, role)`; category PROTECT. |
 | `JobLocation` | Địa điểm + `address_detail`; ghi mới bắt buộc cấp phường/xã (tỉnh suy ra từ `location.parent`), liên kết cấp tỉnh cũ được giữ; unique `(job, location, address_detail)`. |
 | `JobWorkSchedule` | Khung ngày/giờ có cấu trúc (`weekday_from/to` 1–7, giờ, `is_overnight`, note). |
@@ -243,13 +243,12 @@ Chi tiết contract document, renderer và API ở
 | `CvImportJob` | Job nhập PDF/DOCX → canonical (1-1 CV), unique `(user, idempotency_key)`, `result_version`. |
 | `CvAccessLog` | Audit tối thiểu truy cập CV (owner/recruiter/admin/anonymous theo kênh), không lưu payload hay PII thô. |
 | `CvSkill` | Kỹ năng khai báo/AI trích xuất theo CV; unique `(cv, skill)`. |
-| `CvTemplate` | Identity/catalogue mẫu: slug, `lifecycle_status` draft/published/archived, `status` (công tắc catalogue legacy), `current_published_version`, `is_premium`; M2M category/color qua bảng link. `category`, `layout_config`, `style_config` là field legacy. |
+| `CvTemplate` | Identity/catalogue mẫu: slug, tên/mô tả/SEO song ngữ `display_name_vi/en`, `description_vi/en`, `seo_title_vi/en`, `seo_description_vi/en` (rỗng ở ngôn ngữ nào thì không hiện ở kho ngôn ngữ đó), `lifecycle_status` draft/published/archived, `status` (công tắc catalogue legacy), `current_published_version`, `is_premium`; M2M category/color qua bảng link. `category`, `layout_config`, `style_config` là field legacy. |
 | `CvTemplateVersion` | Contract renderer bất biến sau publish: `renderer_key`, `renderer_version`, schema/default layout/style, `capabilities`, `content_contract`, `version_status` draft/published/retired; unique `(template, version_number)`. |
 | `CvSectionDefinition`, `CvTemplateSection` | Registry section key canonical và cấu hình section theo region của từng version (unique version–section). |
-| `CvTemplateLocalization` | Tên/mô tả/SEO theo locale; unique `(template, locale)`. |
 | `CvCategory`, `CvTemplateCategoryLink` | Taxonomy style/feature/position/audience (unique `(category_type, slug)`), link có thứ tự. |
 | `CvColor`, `CvTemplateColorLink` | Palette dùng lại; link giữ thumbnail/preview, thứ tự, tối đa một màu mặc định mỗi template. |
-| `CvContentBlueprint`, `CvSampleContent` | Nội dung khởi tạo generic theo `(locale, experience_level)` và nội dung curated tùy chọn theo vị trí–locale–cấp độ. |
+| `CvContentBlueprint`, `CvSampleContent` | Nội dung khởi tạo generic theo `(locale, experience_level)` và nội dung curated tùy chọn theo vị trí–locale–cấp độ; `locale` thuộc enum `CvLanguage`. |
 
 ## 8. Ứng viên (`candidates`)
 
@@ -297,7 +296,6 @@ Quy tắc chi tiết: [đặc tả trung tâm trợ giúp](../01-phan-tich/dac-t
 | Bảng (model) | Mục đích và ràng buộc |
 | --- | --- |
 | `SiteSetting` | Kho key-value (`value` JSON) theo `group`/`value_type`, cho mọi cấu hình admin sửa không cần deploy. Danh sách key: [cấu hình site settings](../05-huong-dan/cau-hinh-site-settings.md). |
-| `Locale` | Registry locale dùng cho catalogue CV/taxonomy; `code` bất biến, đúng một default active. |
 | `LinkGroup`, `LinkItem` | Cụm link footer (nhập tay hoặc tự sinh từ locations/categories). |
 | `Banner` | Banner theo `placement` (home_hero, job_detail_sidebar, blog_sidebar, blog_inline, job_empty, job_list_inline…), CTA chính/phụ. |
 | `Feedback` | Góp ý từ nút nổi; khách được gửi (`user` null), admin xử lý bằng `status`. |
@@ -355,8 +353,6 @@ Consent nghiệp vụ của ứng viên nằm ở `candidate_consents` (mục 8)
 
 - Contract migration xóa vật lý các cột verification legacy của
   `employers_company` (đang giữ với DB default sau `employers.0044`).
-- Bỏ dual-read `locale` code ↔ `locale_ref` ở `JobCategoryLocalization`,
-  `CvTemplateLocalization`, `CvSampleContent`, `CvContentBlueprint`.
 - Xóa field legacy của CV: `UserCv.cv_data`/`style_config`/`status`,
   `CvTemplate.category`/`layout_config`/`style_config`, `default_style_json.color_variants`.
 - Hợp nhất phân quyền blog trong Django admin (Groups) vào RBAC admin.
