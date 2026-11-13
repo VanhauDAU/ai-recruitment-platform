@@ -62,7 +62,7 @@ python manage.py seed_locations
 python manage.py seed_province_merges
 python manage.py seed_job_categories
 python manage.py seed_sitecontent
-python manage.py seed_cv_catalog     # nội dung CV mẫu theo vị trí + blueprint + bảng màu
+python manage.py seed_cv_catalog     # hồ sơ vị trí CV + nội dung mẫu (chung 4 nhóm kinh nghiệm, riêng 9 vị trí) + bảng màu
 python manage.py seed_cv_templates   # 10 mẫu CV đã publish — thiếu thì trang /mau-cv rỗng
 python manage.py sync_admin_permissions
 python manage.py seed_admin_access

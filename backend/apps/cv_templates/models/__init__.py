@@ -1,5 +1,6 @@
 """Public model API for the cv_templates Django app."""
 
+from .experience import DEFAULT_EXPERIENCE_BAND, EXPERIENCE_BAND_ORDER, ExperienceBand
 from .language import (
     CATALOG_LANGUAGES,
     DEFAULT_CV_LANGUAGE,
@@ -12,7 +13,7 @@ from .language import (
 from .template import (
     CvCategory,
     CvColor,
-    CvContentBlueprint,
+    CvPositionProfile,
     CvSampleContent,
     CvSectionDefinition,
     CvTemplate,
@@ -25,6 +26,9 @@ from .template import (
 __all__ = [
     'CATALOG_LANGUAGES',
     'DEFAULT_CV_LANGUAGE',
+    'DEFAULT_EXPERIENCE_BAND',
+    'EXPERIENCE_BAND_ORDER',
+    'ExperienceBand',
     'CatalogLanguage',
     'CvLanguage',
     'catalog_language',
@@ -32,7 +36,7 @@ __all__ = [
     'localized_field',
     'CvCategory',
     'CvColor',
-    'CvContentBlueprint',
+    'CvPositionProfile',
     'CvSampleContent',
     'CvSectionDefinition',
     'CvTemplate',

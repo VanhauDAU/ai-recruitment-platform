@@ -1,22 +1,24 @@
-"""Resolve deterministic, renderer-neutral CV starter content for a position."""
+"""Resolve deterministic, renderer-neutral CV starter content for a position.
+
+Thứ tự ưu tiên (CVT-1b): nhóm kinh nghiệm gần nhất với nhóm được chọn trước
+(để mục tiêu, chức danh, số năm không sai), cùng khoảng cách thì nội dung riêng
+của vị trí trước nội dung chung, rồi đến nhóm cao hơn. Nội dung chung được thay
+token `{position}` bằng tên vị trí theo ngôn ngữ; mọi nội dung đều được sắp xếp
+section theo `CvPositionProfile.section_preset`.
+"""
 
 from copy import deepcopy
 
+from django.db.models import Q
+
 from apps.jobs.models import JobCategory, JobCategoryLocalization
 
-from ..content_tokens import _format, _materialize_tokens
-from ..models import CvContentBlueprint, CvSampleContent
+from ..content_tokens import _materialize_tokens
+from ..models import EXPERIENCE_BAND_ORDER, CvPositionProfile, CvSampleContent
 
 
 class PositionContentUnavailable(ValueError):
     """Required localized/configured content is not published for this selection."""
-
-
-def _rich_text(value):
-    return {
-        'format': 'rich_text_v1',
-        'content': [{'type': 'paragraph', 'text': line} for line in value.split('\n') if line],
-    }
 
 
 def _localized_name(position, locale):
@@ -39,150 +41,71 @@ def _name_vi(position):
     return localization.display_name if localization else position.name
 
 
-def _blueprint(locale, experience_level):
-    blueprint = CvContentBlueprint.objects.filter(
-        locale=locale,
-        experience_level=experience_level,
-        is_active=True,
-    ).first()
-    if blueprint is None and experience_level != 'unspecified':
-        blueprint = CvContentBlueprint.objects.filter(
-            locale=locale,
-            experience_level='unspecified',
-            is_active=True,
-        ).first()
-    if blueprint is None:
-        raise PositionContentUnavailable(f'Chưa có blueprint CV active cho ngôn ngữ {locale}.')
-    return blueprint
-
-
-def _content_from_blueprint(blueprint, locale, position_name):
-    if isinstance(blueprint.content_json_template, dict) and blueprint.content_json_template.get(
-        'sections'
-    ):
-        content = _materialize_tokens(deepcopy(blueprint.content_json_template), position_name)
-        content['locale'] = locale
-        content['schema_version'] = content.get('schema_version') or 1
-        return content
-    return {
-        'schema_version': 1,
-        'locale': locale,
-        'personal_info': {
-            'full_name': '',
-            'headline': position_name,
-            'email': '',
-            'phone': '',
-            'address': '',
-            'avatar_asset_id': None,
-            'links': [],
-        },
-        'sections': [
-            {
-                'instance_id': 'summary_1',
-                'section_key': 'summary',
-                'title': blueprint.summary_title,
-                'enabled': True,
-                'items': [
-                    {
-                        'item_id': 'summary_item_1',
-                        'value': _format(blueprint.summary_template, position_name),
-                    }
-                ],
-            },
-            {
-                'instance_id': 'experience_1',
-                'section_key': 'experience',
-                'title': blueprint.experience_title,
-                'enabled': True,
-                'items': [
-                    {
-                        'item_id': 'experience_item_1',
-                        'role': position_name,
-                        'company': blueprint.experience_company,
-                        'start_date': '2022-03',
-                        'end_date': None,
-                        'description': _rich_text(
-                            _format(
-                                blueprint.experience_description_template,
-                                position_name,
-                            )
-                        ),
-                    }
-                ],
-            },
-            {
-                'instance_id': 'education_1',
-                'section_key': 'education',
-                'title': blueprint.education_title,
-                'enabled': True,
-                'items': [
-                    {
-                        'item_id': 'education_item_1',
-                        'degree': blueprint.education_degree,
-                        'institution': blueprint.education_institution,
-                        'start_date': '2016-09',
-                        'end_date': '2020-06',
-                        'description': _rich_text(blueprint.education_description),
-                    }
-                ],
-            },
-            {
-                'instance_id': 'skills_1',
-                'section_key': 'skills',
-                'title': blueprint.skills_title,
-                'enabled': True,
-                'items': [
-                    {
-                        'item_id': f'skills_item_{index + 1}',
-                        'name': _format(skill, position_name),
-                        'level': '',
-                    }
-                    for index, skill in enumerate(blueprint.skill_templates)
-                ],
-            },
-        ],
-        'custom_fields': {},
-    }
-
-
-def resolve_position_content(*, position, locale, experience_level='unspecified', lock=False):
-    """Return a curated override or materialize a generic localized blueprint."""
+def _active_profile(position):
     if (
         position.status != JobCategory.Status.ACTIVE
         or position.category_type != JobCategory.CategoryType.SPECIALIZATION
     ):
         raise PositionContentUnavailable('Vị trí chuyên môn không hoạt động.')
+    profile = CvPositionProfile.objects.filter(job_category=position, is_active=True).first()
+    if profile is None:
+        raise PositionContentUnavailable('Vị trí chưa được bật cho CV.')
+    return profile
 
+
+def _pick_sample(samples, profile, experience_band):
+    """Chọn mẫu theo thứ tự ưu tiên ở docstring module."""
+    wanted = EXPERIENCE_BAND_ORDER.index(experience_band)
+
+    def rank(sample):
+        is_generic = sample.position_profile_id != profile.pk
+        distance = abs(EXPERIENCE_BAND_ORDER.index(sample.experience_band) - wanted)
+        # Cùng khoảng cách thì ưu tiên nhóm cao hơn (nội dung đầy đủ hơn).
+        return (distance, is_generic, -EXPERIENCE_BAND_ORDER.index(sample.experience_band))
+
+    return min(samples, key=rank, default=None)
+
+
+def _apply_section_preset(content, preset):
+    """Sắp xếp và bật/tắt section theo preset; section ngoài preset bị tắt, giữ ở cuối."""
+    if not preset:
+        return content
+    positions = {entry['section_key']: index for index, entry in enumerate(preset)}
+    enabled = {entry['section_key']: entry.get('enabled', True) for entry in preset}
+    sections = content.get('sections', [])
+    for section in sections:
+        key = section.get('section_key')
+        section['enabled'] = enabled.get(key, False)
+    sections.sort(key=lambda section: positions.get(section.get('section_key'), len(positions)))
+    return content
+
+
+def resolve_position_content(*, position, locale, experience_band, lock=False):
+    """Return starter content for a position, language and experience band."""
+    profile = _active_profile(position)
     samples = CvSampleContent.objects.filter(
-        job_category=position,
+        Q(position_profile=profile) | Q(position_profile__isnull=True),
         locale=locale,
-        experience_level=experience_level,
         status=CvSampleContent.Status.PUBLISHED,
     )
     if lock:
         samples = samples.select_for_update()
-    sample = samples.first()
-    if sample:
-        return {
-            'position_public_id': position.public_id,
-            'name_vi': _name_vi(position),
-            'locale': locale,
-            'experience_level': experience_level,
-            'source': 'curated',
-            'sample_content_public_id': sample.public_id,
-            'schema_version': sample.schema_version,
-            'content_json': deepcopy(sample.content_json),
-        }
+    sample = _pick_sample(list(samples), profile, experience_band)
+    if sample is None:
+        raise PositionContentUnavailable(f'Chưa có nội dung CV mẫu cho ngôn ngữ {locale}.')
 
-    position_name = _localized_name(position, locale)
-    blueprint = _blueprint(locale, experience_level)
+    content = deepcopy(sample.content_json)
+    is_generic = sample.position_profile_id is None
+    if is_generic:
+        content = _materialize_tokens(content, _localized_name(position, locale))
+    content = _apply_section_preset(content, profile.section_preset)
     return {
         'position_public_id': position.public_id,
         'name_vi': _name_vi(position),
         'locale': locale,
-        'experience_level': experience_level,
-        'source': 'blueprint',
-        'sample_content_public_id': None,
-        'schema_version': 1,
-        'content_json': _content_from_blueprint(blueprint, locale, position_name),
+        'experience_band': sample.experience_band,
+        'source': 'generic' if is_generic else 'curated',
+        'sample_content_public_id': sample.public_id,
+        'schema_version': sample.schema_version,
+        'content_json': content,
     }

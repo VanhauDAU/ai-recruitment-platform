@@ -7,7 +7,6 @@ async function list(path) {
 
 export const getAdminCvTemplates = () => list('/v2/admin/cv-templates/')
 export const getAdminCvSamples = () => list('/v2/admin/cv-sample-contents/')
-export const getAdminCvBlueprints = () => list('/v2/admin/cv-content-blueprints/')
 export const getAdminCvCategories = () => list('/v2/admin/cv-categories/')
 export const getAdminCvColors = () => list('/v2/admin/cv-colors/')
 export const getAdminCvBackgrounds = () => list('/v2/admin/cv-backgrounds/')
@@ -56,10 +55,5 @@ export async function publishAdminCvSample(sampleId) {
 
 export async function archiveAdminCvSample(sampleId) {
   const { data } = await api.post(`/v2/admin/cv-sample-contents/${sampleId}/archive/`, {})
-  return data
-}
-
-export async function activateAdminCvBlueprint(blueprintId) {
-  const { data } = await api.post(`/v2/admin/cv-content-blueprints/${blueprintId}/activate/`, {})
   return data
 }

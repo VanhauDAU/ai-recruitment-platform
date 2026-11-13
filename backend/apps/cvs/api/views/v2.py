@@ -144,6 +144,7 @@ class CvV2ListCreateView(generics.ListCreateAPIView):
                 language=serializer.validated_data['language'],
                 sample_content=serializer.validated_data.get('sample_content_public_id'),
                 position=serializer.validated_data.get('position_public_id'),
+                experience_band=serializer.validated_data['experience_band'],
                 source_cv=serializer.validated_data.get('source_cv_public_id'),
                 theme_color=serializer.validated_data.get('theme_color'),
             )

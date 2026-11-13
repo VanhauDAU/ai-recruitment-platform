@@ -10,12 +10,10 @@ import { Button, Input, Modal, Space, Switch, Table, Tabs, Tag, Typography, Uplo
 import { useCallback, useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import {
-  activateAdminCvBlueprint,
   archiveAdminCvBackground,
   archiveAdminCvSample,
   createAdminCvBackground,
   createAdminTemplateVersion,
-  getAdminCvBlueprints,
   getAdminCvBackgrounds,
   getAdminCvCategories,
   getAdminCvColors,
@@ -70,16 +68,10 @@ const EXPORT_COLUMNS = {
   samples: [
     { key: 'public_id', label: 'Mã nội dung mẫu' },
     { key: 'title', label: 'Tên nội dung' },
-    { key: 'position_name_vi', label: 'Vị trí' },
+    { key: 'position_name', label: 'Vị trí' },
     { key: 'locale', label: 'Ngôn ngữ' },
-    { key: 'experience_level', label: 'Cấp độ kinh nghiệm' },
+    { key: 'experience_band', label: 'Nhóm kinh nghiệm' },
     { key: 'status', label: 'Trạng thái' },
-  ],
-  blueprints: [
-    { key: 'public_id', label: 'Mã blueprint' },
-    { key: 'locale', label: 'Ngôn ngữ' },
-    { key: 'experience_level', label: 'Cấp độ' },
-    { key: 'is_active', label: 'Đang bật' },
   ],
   taxonomy: [
     { key: 'record_type', label: 'Nhóm dữ liệu' },
@@ -117,9 +109,8 @@ function StructuredSampleEditor({ sample, open, onClose, onSaved }) {
     try {
       const saved = await updateAdminCvSample(draft.public_id, {
         title: draft.title,
-        position_name_vi: draft.position_name_vi,
         locale: draft.locale,
-        experience_level: draft.experience_level,
+        experience_band: draft.experience_band,
         content_json: draft.content_json,
         schema_version: draft.schema_version,
       })
@@ -136,7 +127,7 @@ function StructuredSampleEditor({ sample, open, onClose, onSaved }) {
     <Modal title="Biên tập nội dung CV mẫu" open={open} onCancel={onClose} onOk={save} okText="Lưu bản nháp" cancelText="Hủy" confirmLoading={saving} width={920}>
       <div className="max-h-[70vh] space-y-4 overflow-y-auto pr-2">
         <label className="block text-sm font-medium">Tên nội dung<Input value={draft.title} onChange={(event) => setDraft({ ...draft, title: event.target.value })} /></label>
-        <label className="block text-sm font-medium">Tên vị trí tiếng Việt<Input value={draft.position_name_vi} onChange={(event) => setDraft({ ...draft, position_name_vi: event.target.value })} /></label>
+        <p className="text-sm text-slate-600">Vị trí: <strong>{draft.position_name || 'Nội dung chung (dùng token {position})'}</strong></p>
         {draft.content_json?.sections?.map((section, sectionIndex) => (
           <section key={section.instance_id} className="rounded-lg border border-slate-200 p-4">
             <Typography.Text strong>{section.section_key}</Typography.Text>
@@ -169,12 +160,12 @@ function StructuredSampleEditor({ sample, open, onClose, onSaved }) {
 
 export default function AdminCvCatalogue() {
   const [searchParams, setSearchParams] = useSearchParams()
-  const allowedTabs = ['templates', 'samples', 'blueprints', 'taxonomy', 'backgrounds']
+  const allowedTabs = ['templates', 'samples', 'taxonomy', 'backgrounds']
   const requestedTab = searchParams.get('tab') || 'templates'
   const activeTab = allowedTabs.includes(requestedTab) ? requestedTab : 'templates'
   const rawQuery = searchParams.get('q') || ''
   const query = rawQuery.trim().toLocaleLowerCase('vi')
-  const [data, setData] = useState({ templates: [], samples: [], blueprints: [], categories: [], colors: [], backgrounds: [] })
+  const [data, setData] = useState({ templates: [], samples: [], categories: [], colors: [], backgrounds: [] })
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState(null)
   const [searchDraft, setSearchDraft] = useState(rawQuery)
@@ -182,11 +173,11 @@ export default function AdminCvCatalogue() {
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const [templates, samples, blueprints, categories, colors, backgrounds] = await Promise.all([
-        getAdminCvTemplates(), getAdminCvSamples(), getAdminCvBlueprints(),
+      const [templates, samples, categories, colors, backgrounds] = await Promise.all([
+        getAdminCvTemplates(), getAdminCvSamples(),
         getAdminCvCategories(), getAdminCvColors(), getAdminCvBackgrounds(),
       ])
-      setData({ templates, samples, blueprints, categories, colors, backgrounds })
+      setData({ templates, samples, categories, colors, backgrounds })
     } catch {
       message.error('Không thể tải catalogue CV quản trị.')
     } finally {
@@ -208,8 +199,7 @@ export default function AdminCvCatalogue() {
 
   const filtered = {
     templates: filterRows(data.templates, query, ['public_id', 'name', 'lifecycle_status']),
-    samples: filterRows(data.samples, query, ['public_id', 'title', 'position_name_vi', 'locale', 'experience_level', 'status']),
-    blueprints: filterRows(data.blueprints, query, ['public_id', 'locale', 'experience_level']),
+    samples: filterRows(data.samples, query, ['public_id', 'title', 'position_name', 'locale', 'experience_band', 'status']),
     categories: filterRows(data.categories, query, ['public_id', 'name', 'category_type']),
     colors: filterRows(data.colors, query, ['public_id', 'name', 'hex_code']),
     backgrounds: filterRows(data.backgrounds, query, ['public_id', 'title']),
@@ -217,7 +207,6 @@ export default function AdminCvCatalogue() {
   const rowsByTab = {
     templates: filtered.templates,
     samples: filtered.samples,
-    blueprints: filtered.blueprints,
     taxonomy: [
       ...filtered.categories.map((item) => ({
         ...item,
@@ -258,7 +247,9 @@ export default function AdminCvCatalogue() {
   ]
   const sampleColumns = [
     { title: 'Nội dung', dataIndex: 'title', sorter: compareText('title') },
+    { title: 'Vị trí', dataIndex: 'position_name', sorter: compareText('position_name'), render: (value) => value || 'Nội dung chung' },
     { title: 'Ngôn ngữ', dataIndex: 'locale', sorter: compareText('locale') },
+    { title: 'Kinh nghiệm', dataIndex: 'experience_band', sorter: compareText('experience_band') },
     { title: 'Trạng thái', dataIndex: 'status', sorter: compareText('status'), render: statusTag },
     { title: 'Thao tác', render: (_, row) => <Space>
       <Button icon={<EditOutlined />} size="small" onClick={() => setEditing(row)}>Sửa cấu trúc</Button>
@@ -298,11 +289,6 @@ export default function AdminCvCatalogue() {
         }} items={[
         { key: 'templates', label: 'Mẫu CV', children: <Table rowKey="public_id" loading={loading} dataSource={filtered.templates} columns={templateColumns} pagination={false} showSorterTooltip={{ target: 'sorter-icon' }} /> },
         { key: 'samples', label: 'Nội dung mẫu', children: <Table rowKey="public_id" loading={loading} dataSource={filtered.samples} columns={sampleColumns} pagination={false} showSorterTooltip={{ target: 'sorter-icon' }} /> },
-        { key: 'blueprints', label: 'Blueprint', children: <Table rowKey="public_id" loading={loading} dataSource={filtered.blueprints} pagination={false} showSorterTooltip={{ target: 'sorter-icon' }} columns={[
-          { title: 'Ngôn ngữ', dataIndex: 'locale', sorter: compareText('locale') }, { title: 'Cấp độ', dataIndex: 'experience_level', sorter: compareText('experience_level') },
-          { title: 'Trạng thái', dataIndex: 'is_active', sorter: compareBoolean('is_active'), render: statusTag },
-          { title: 'Thao tác', render: (_, row) => <Button icon={<CheckCircleOutlined />} size="small" disabled={row.is_active} onClick={() => act(() => activateAdminCvBlueprint(row.public_id), 'Đã kích hoạt blueprint.')}>Kích hoạt</Button> },
-        ]} /> },
         { key: 'taxonomy', label: 'Danh mục & màu', children: <div className="grid gap-5 xl:grid-cols-2"><Table rowKey="public_id" dataSource={filtered.categories} pagination={false} showSorterTooltip={{ target: 'sorter-icon' }} columns={[{ title: 'Danh mục', dataIndex: 'name', sorter: compareText('name') }, { title: 'Loại', dataIndex: 'category_type', sorter: compareText('category_type') }]} /><Table rowKey="public_id" dataSource={filtered.colors} pagination={false} showSorterTooltip={{ target: 'sorter-icon' }} columns={[{ title: 'Màu', dataIndex: 'name', sorter: compareText('name') }, { title: 'Mã HEX', dataIndex: 'hex_code', sorter: compareText('hex_code') }]} /></div> },
         { key: 'backgrounds', label: 'Hình nền', children: <div className="space-y-4"><Upload accept="image/jpeg,image/png,image/webp" showUploadList={false} beforeUpload={async (file) => { await act(() => createAdminCvBackground(file, file.name.replace(/\.[^.]+$/, '')), 'Đã thêm hình nền CV.'); return false }}><Button data-print-hide="true" icon={<UploadOutlined />} type="primary">Tải ảnh nền mới</Button></Upload><Table rowKey="public_id" loading={loading} dataSource={filtered.backgrounds} pagination={false} showSorterTooltip={{ target: 'sorter-icon' }} columns={[
           { title: 'Ảnh', render: (_, row) => <img src={row.url} alt={`Hình nền ${row.title}`} loading="lazy" className="h-24 w-20 rounded object-cover" /> },

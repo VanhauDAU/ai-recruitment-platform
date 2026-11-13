@@ -7,7 +7,6 @@ from apps.jobs.models import JobCategory, JobCategoryLocalization
 from ..models import (
     DEFAULT_CV_LANGUAGE,
     CvCategory,
-    CvContentBlueprint,
     CvSampleContent,
     CvTemplate,
     CvTemplateCategoryLink,
@@ -109,23 +108,25 @@ def active_cv_categories_queryset(category_type=None):
     return queryset
 
 
-def published_sample_contents_queryset(*, locale=None, experience_level=None):
+def published_sample_contents_queryset(*, locale=None, experience_band=None):
+    """Nội dung mẫu riêng theo vị trí cho thư viện mẫu của editor.
+
+    Nội dung chung (không gắn vị trí) còn token `{position}` nên chỉ dùng qua
+    `resolve_position_content`, không liệt kê ở đây.
+    """
     queryset = CvSampleContent.objects.filter(
-        status=CvSampleContent.Status.PUBLISHED
-    ).select_related('job_category')
+        status=CvSampleContent.Status.PUBLISHED,
+        position_profile__isnull=False,
+    ).select_related('position_profile__job_category')
     if locale:
         queryset = queryset.filter(locale=locale)
-    if experience_level:
-        queryset = queryset.filter(experience_level=experience_level)
+    if experience_band:
+        queryset = queryset.filter(experience_band=experience_band)
     return queryset
 
 
-def active_cv_position_options_queryset(
-    query=None,
-    *,
-    locale=JobCategoryLocalization.Locale.VI,
-    experience_level='unspecified',
-):
+def active_cv_position_options_queryset(query=None, *, locale=JobCategoryLocalization.Locale.VI):
+    """Vị trí có profile CV đang bật, có tên ở `locale` và có nội dung mẫu dùng được."""
     selected_localizations = JobCategoryLocalization.objects.filter(
         locale=locale,
         is_active=True,
@@ -137,6 +138,7 @@ def active_cv_position_options_queryset(
     queryset = JobCategory.objects.filter(
         status=JobCategory.Status.ACTIVE,
         category_type=JobCategory.CategoryType.SPECIALIZATION,
+        cv_position_profile__is_active=True,
         localizations__locale=locale,
         localizations__is_active=True,
     ).prefetch_related(
@@ -145,16 +147,14 @@ def active_cv_position_options_queryset(
         ),
         Prefetch('localizations', queryset=vi_localizations, to_attr='cv_picker_vi_localizations'),
     )
-    has_blueprint = CvContentBlueprint.objects.filter(
-        locale=locale,
-        experience_level__in=[experience_level, 'unspecified'],
-        is_active=True,
-    ).exists()
-    if not has_blueprint:
+    published = CvSampleContent.objects.filter(
+        locale=locale, status=CvSampleContent.Status.PUBLISHED
+    )
+    if not published.filter(position_profile__isnull=True).exists():
         queryset = queryset.filter(
-            cv_sample_contents__locale=locale,
-            cv_sample_contents__experience_level=experience_level,
-            cv_sample_contents__status=CvSampleContent.Status.PUBLISHED,
+            cv_position_profile__sample_contents__in=published.filter(
+                position_profile__isnull=False
+            )
         )
     if query:
         queryset = queryset.filter(
@@ -162,6 +162,7 @@ def active_cv_position_options_queryset(
             | Q(localizations__search_aliases__unaccent__icontains=query)
         )
     return queryset.distinct().order_by(
+        'cv_position_profile__sort_order',
         'localizations__sort_order',
         'localizations__display_name',
         'pk',

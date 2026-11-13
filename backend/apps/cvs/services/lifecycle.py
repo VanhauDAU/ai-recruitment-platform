@@ -6,7 +6,7 @@ from django.db import transaction
 from django.db.models import F
 from django.utils import timezone
 
-from apps.cv_templates.models import CvSampleContent, CvTemplate
+from apps.cv_templates.models import DEFAULT_EXPERIENCE_BAND, CvSampleContent, CvTemplate
 from apps.cv_templates.services import resolve_position_content
 
 from ..models import CvDraft, CvVersion, UserCv
@@ -24,12 +24,12 @@ class CvLifecyclePolicyError(ValueError):
     """The requested lifecycle action violates a CV business policy."""
 
 
-def _content_for_create(sample_content, position, language):
+def _content_for_create(sample_content, position, language, experience_band):
     if position is not None:
         return resolve_position_content(
             position=position,
             locale=language,
-            experience_level='unspecified',
+            experience_band=experience_band,
             lock=True,
         )['content_json']
     if sample_content is None:
@@ -53,6 +53,7 @@ def create_v2_cv(
     language='vi-VN',
     sample_content=None,
     position=None,
+    experience_band=DEFAULT_EXPERIENCE_BAND,
     source_cv=None,
     theme_color=None,
 ):
@@ -84,7 +85,7 @@ def create_v2_cv(
         language = content.get('locale') or source_cv.language
         position = source_cv.position
     else:
-        content = _content_for_create(sample_content, position, language)
+        content = _content_for_create(sample_content, position, language, experience_band)
         content = overlay_actor_identity(content, actor, clear_demo_contacts=True)
     try:
         document = compose_cv_document(
@@ -284,6 +285,7 @@ def apply_sample_to_draft(
         sample = CvSampleContent.objects.select_for_update().get(
             public_id=sample_public_id,
             status=CvSampleContent.Status.PUBLISHED,
+            position_profile__isnull=False,
         )
     except CvSampleContent.DoesNotExist as error:
         raise CvLifecyclePolicyError('The selected sample content is unavailable.') from error

@@ -8,7 +8,7 @@ export default function AdminCvCataloguePage() {
       <AdminPageHeader
         eyebrow="Tuyển dụng & CV"
         title="Catalogue CV"
-        description="Quản lý mẫu, nội dung mẫu, blueprint, ngôn ngữ, taxonomy và hình nền của hệ thống CV."
+        description="Quản lý mẫu, nội dung mẫu, taxonomy và hình nền của hệ thống CV."
         icon={<FileTextOutlined />}
       />
       <AdminCvCatalogue />

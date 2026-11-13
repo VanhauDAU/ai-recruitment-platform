@@ -11,31 +11,26 @@ from apps.accounts.selectors import effective_permission_codes
 from apps.cvs.models import CvAsset
 from apps.cvs.services import create_background_asset
 from apps.cvs.services.composition import compose_cv_document
-from apps.jobs.models import JobCategory, JobCategoryLocalization
 
 from ...models import (
     CvCategory,
     CvColor,
-    CvContentBlueprint,
     CvSampleContent,
     CvTemplate,
     CvTemplateSection,
     CvTemplateVersion,
 )
 from ...services import (
-    activate_blueprint,
     archive_sample,
     publish_sample,
     publish_template_version,
     retire_template_version,
 )
-from ...services.position_content import _content_from_blueprint
 from ...tasks import enqueue_template_snapshots, regenerate_all_template_snapshots
 from ..serializers.admin import (
     CvBackgroundAdminSerializer,
     CvCategoryAdminSerializer,
     CvColorAdminSerializer,
-    CvContentBlueprintAdminSerializer,
     CvSampleContentAdminSerializer,
     CvTemplateAdminSerializer,
     CvTemplateVersionAdminSerializer,
@@ -233,7 +228,9 @@ class AdminCvBackgroundViewSet(AdminModelViewSet):
 class AdminCvSampleContentViewSet(AdminModelViewSet):
     serializer_class = CvSampleContentAdminSerializer
     lookup_field = 'public_id'
-    queryset = CvSampleContent.objects.select_related('job_category').order_by('-updated_at')
+    queryset = CvSampleContent.objects.select_related('position_profile__job_category').order_by(
+        '-updated_at'
+    )
     required_admin_permissions = {
         **AdminModelViewSet.required_admin_permissions,
         'preview': ['cv_template.view'],
@@ -265,51 +262,3 @@ class AdminCvSampleContentViewSet(AdminModelViewSet):
     def archive(self, request, public_id=None):
         sample = _call(archive_sample, sample=self.get_object())
         return Response(self.get_serializer(sample).data)
-
-
-class AdminCvContentBlueprintViewSet(AdminModelViewSet):
-    serializer_class = CvContentBlueprintAdminSerializer
-    lookup_field = 'public_id'
-    queryset = CvContentBlueprint.objects.order_by('locale', 'experience_level')
-    required_admin_permissions = {
-        **AdminModelViewSet.required_admin_permissions,
-        'preview': ['cv_template.view'],
-        'activate': ['cv_template.publish'],
-    }
-
-    def perform_create(self, serializer):
-        serializer.save(
-            updated_by=self.request.user,
-            **self._safe_create_overrides(serializer),
-        )
-
-    def perform_update(self, serializer):
-        serializer.save(updated_by=self.request.user)
-
-    @action(detail=True, methods=['post'])
-    def preview(self, request, public_id=None):
-        blueprint = self.get_object()
-        try:
-            template = CvTemplate.objects.get(public_id=request.data.get('template_public_id'))
-            position = JobCategory.objects.get(public_id=request.data.get('position_public_id'))
-            position_name = JobCategoryLocalization.objects.get(
-                category=position,
-                locale=blueprint.locale,
-                is_active=True,
-            ).display_name
-        except (
-            CvTemplate.DoesNotExist,
-            JobCategory.DoesNotExist,
-            JobCategoryLocalization.DoesNotExist,
-        ) as error:
-            raise ValidationError(
-                {'selection': 'Template/position localization is unavailable.'}
-            ) from error
-        content = _content_from_blueprint(blueprint, blueprint.locale, position_name)
-        return Response({'document': compose_cv_document(template=template, content_json=content)})
-
-    @action(detail=True, methods=['post'])
-    def activate(self, request, public_id=None):
-        blueprint = _call(activate_blueprint, blueprint=self.get_object())
-        regenerate_all_template_snapshots.delay()
-        return Response(self.get_serializer(blueprint).data)

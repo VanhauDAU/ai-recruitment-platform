@@ -156,20 +156,15 @@ class CvCategorySerializer(serializers.ModelSerializer):
 
 
 class CvSampleContentCardSerializer(serializers.ModelSerializer):
-    job_category_name = serializers.CharField(source='job_category.name', read_only=True)
-    job_category_slug = serializers.CharField(source='job_category.slug', read_only=True)
-    position_name_vi = serializers.SerializerMethodField()
-    position_name = serializers.SerializerMethodField()
-
-    def get_position_name_vi(self, obj):
-        return obj.position_name_vi or (obj.job_category.name if obj.job_category_id else obj.title)
-
-    def get_position_name(self, obj):
-        content = obj.content_json if isinstance(obj.content_json, dict) else {}
-        personal_info = content.get('personal_info', {})
-        if isinstance(personal_info, dict) and personal_info.get('headline'):
-            return personal_info['headline']
-        return obj.job_category.name if obj.job_category_id else obj.title
+    position_public_id = serializers.CharField(
+        source='position_profile.job_category.public_id', read_only=True
+    )
+    position_slug = serializers.CharField(
+        source='position_profile.job_category.slug', read_only=True
+    )
+    position_name = serializers.CharField(
+        source='position_profile.job_category.name', read_only=True
+    )
 
     class Meta:
         model = CvSampleContent
@@ -177,10 +172,9 @@ class CvSampleContentCardSerializer(serializers.ModelSerializer):
             'public_id',
             'title',
             'locale',
-            'experience_level',
-            'job_category_name',
-            'job_category_slug',
-            'position_name_vi',
+            'experience_band',
+            'position_public_id',
+            'position_slug',
             'position_name',
         ]
         read_only_fields = fields

@@ -6,6 +6,7 @@ from django.utils.text import slugify
 
 from common.public_id import generate_public_id
 
+from .experience import ExperienceBand
 from .language import CvLanguage, localized_field
 
 
@@ -385,6 +386,60 @@ class CvTemplateSection(models.Model):
         super().save(*args, **kwargs)
 
 
+class CvPositionProfile(models.Model):
+    """Cấu hình CV cho một vị trí chuyên môn.
+
+    Gắn 1-1 với `JobCategory(category_type=specialization)` — cùng taxonomy với
+    tin tuyển dụng, nên tên, slug và bản dịch của vị trí lấy từ `JobCategory`
+    thay vì lưu lặp ở đây. Vị trí chỉ xuất hiện ở ô chọn của trang mẫu CV khi có
+    profile đang bật.
+    """
+
+    public_id = models.CharField(max_length=50, unique=True, editable=False)
+    job_category = models.OneToOneField(
+        'jobs.JobCategory',
+        on_delete=models.CASCADE,
+        related_name='cv_position_profile',
+    )
+    # Thứ tự và trạng thái bật của section khi dựng CV từ nội dung mẫu của vị
+    # trí, ví dụ [{"section_key": "skills", "enabled": true}, ...]. Rỗng = giữ
+    # nguyên thứ tự của nội dung mẫu.
+    section_preset = models.JSONField(default=list, blank=True)
+    is_active = models.BooleanField(default=True)
+    sort_order = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['sort_order', 'pk']
+
+    def clean(self):
+        from apps.jobs.models import JobCategory
+
+        from ..section_registry import get_section_contract
+
+        if self.job_category.category_type != JobCategory.CategoryType.SPECIALIZATION:
+            raise ValidationError({'job_category': 'Chỉ gắn với vị trí chuyên môn.'})
+        if not isinstance(self.section_preset, list):
+            raise ValidationError({'section_preset': 'Phải là danh sách.'})
+        keys = []
+        for entry in self.section_preset:
+            key = entry.get('section_key') if isinstance(entry, dict) else None
+            if not get_section_contract(key) or not isinstance(entry.get('enabled', True), bool):
+                raise ValidationError({'section_preset': f'Section không hợp lệ: {entry!r}.'})
+            keys.append(key)
+        if len(keys) != len(set(keys)):
+            raise ValidationError({'section_preset': 'Section bị lặp.'})
+
+    def save(self, *args, **kwargs):
+        if not self.public_id:
+            self.public_id = generate_public_id('cvpos')
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.job_category.name
+
+
 class CvSampleContent(models.Model):
     """Published canonical starter content; never tied to a renderer/template."""
 
@@ -394,21 +449,18 @@ class CvSampleContent(models.Model):
         ARCHIVED = 'archived', 'Archived'
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)
-    job_category = models.ForeignKey(
-        'jobs.JobCategory',
-        on_delete=models.SET_NULL,
+    # Null = nội dung chung cho mọi vị trí; chuỗi có thể chứa token
+    # `{position}`, được thay bằng tên vị trí theo ngôn ngữ khi dựng CV.
+    position_profile = models.ForeignKey(
+        CvPositionProfile,
+        on_delete=models.CASCADE,
         null=True,
         blank=True,
-        related_name='cv_sample_contents',
+        related_name='sample_contents',
     )
     locale = models.CharField(max_length=16, choices=CvLanguage.choices)
-    experience_level = models.CharField(max_length=30, default='unspecified')
+    experience_band = models.CharField(max_length=20, choices=ExperienceBand.choices)
     title = models.CharField(max_length=255)
-    # The picker is intentionally Vietnamese even when the sample content is
-    # rendered in another locale.  Keep this presentation label beside the
-    # canonical sample so the API does not make the client infer it from
-    # localized content.
-    position_name_vi = models.CharField(max_length=255, blank=True)
     content_json = models.JSONField(default=dict)
     schema_version = models.PositiveIntegerField(default=1)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.DRAFT)
@@ -426,16 +478,22 @@ class CvSampleContent(models.Model):
     class Meta:
         indexes = [
             models.Index(
-                fields=['status', 'locale', 'experience_level'], name='idx_cv_samples_catalog'
+                fields=['status', 'locale', 'experience_band'], name='idx_cv_samples_catalog'
             ),
         ]
         constraints = [
             models.UniqueConstraint(
-                fields=['job_category', 'locale', 'experience_level'],
-                name='uq_cv_sample_position_locale_level',
+                fields=['position_profile', 'locale', 'experience_band'],
+                condition=models.Q(position_profile__isnull=False),
+                name='uq_cv_sample_position_locale_band',
+            ),
+            models.UniqueConstraint(
+                fields=['locale', 'experience_band'],
+                condition=models.Q(position_profile__isnull=True),
+                name='uq_cv_sample_generic_locale_band',
             ),
         ]
-        ordering = ['locale', 'experience_level', 'title']
+        ordering = ['locale', 'experience_band', 'title']
 
     def clean(self):
         from apps.cvs.schemas import empty_layout, empty_style, validate_cv_document
@@ -466,85 +524,3 @@ class CvSampleContent(models.Model):
 
     def __str__(self):
         return self.title
-
-
-class CvContentBlueprint(models.Model):
-    """Admin-configurable generic starter content for a locale/experience pair."""
-
-    public_id = models.CharField(max_length=50, unique=True, editable=False)
-    locale = models.CharField(max_length=16, choices=CvLanguage.choices)
-    experience_level = models.CharField(max_length=30, default='unspecified')
-    content_json_template = models.JSONField(
-        default=dict,
-        blank=True,
-        help_text='Canonical content template; strings may contain {position}.',
-    )
-    summary_title = models.CharField(max_length=255)
-    summary_template = models.TextField(
-        help_text='Dùng {position} tại nơi cần chèn tên vị trí đã bản địa hóa.'
-    )
-    experience_title = models.CharField(max_length=255)
-    experience_company = models.CharField(max_length=255)
-    experience_description_template = models.TextField(
-        help_text='Dùng {position} tại nơi cần chèn tên vị trí.'
-    )
-    education_title = models.CharField(max_length=255)
-    education_degree = models.CharField(max_length=255)
-    education_institution = models.CharField(max_length=255)
-    education_description = models.TextField(blank=True)
-    skills_title = models.CharField(max_length=255)
-    skill_templates = models.JSONField(
-        default=list, help_text='Danh sách chuỗi; có thể dùng {position}.'
-    )
-    is_active = models.BooleanField(default=True)
-    updated_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='updated_cv_content_blueprints',
-    )
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=['locale', 'experience_level'], name='uq_cv_content_blueprint'
-            ),
-        ]
-        ordering = ['locale', 'experience_level']
-
-    def clean(self):
-        if not isinstance(self.skill_templates, list) or not all(
-            isinstance(item, str) for item in self.skill_templates
-        ):
-            raise ValidationError({'skill_templates': 'Must be a list of strings.'})
-        if self.content_json_template:
-            from apps.cvs.schemas import empty_layout, empty_style, validate_cv_document
-
-            from ..content_tokens import _materialize_tokens
-
-            content = _materialize_tokens(self.content_json_template, 'Software Engineer')
-            content['locale'] = self.locale
-            section_ids = [
-                section.get('instance_id')
-                for section in content.get('sections', [])
-                if isinstance(section, dict) and section.get('instance_id')
-            ]
-            layout = empty_layout()
-            layout['regions'][0]['section_instance_ids'] = section_ids
-            validate_cv_document(
-                content_json=content,
-                layout_json=layout,
-                style_json=empty_style(),
-                schema_version=content.get('schema_version', 1),
-            )
-
-    def save(self, *args, **kwargs):
-        if not self.public_id:
-            self.public_id = generate_public_id('cvblueprint')
-        super().save(*args, **kwargs)
-
-    def __str__(self):
-        return f'{self.locale} / {self.experience_level}'

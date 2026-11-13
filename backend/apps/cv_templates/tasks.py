@@ -26,7 +26,11 @@ SNAPSHOT_RENDERER_VERSION = 'catalogue-snapshot-v1'
 
 def _source_content(locale):
     sample = (
-        CvSampleContent.objects.filter(locale=locale, status=CvSampleContent.Status.PUBLISHED)
+        CvSampleContent.objects.filter(
+            locale=locale,
+            status=CvSampleContent.Status.PUBLISHED,
+            position_profile__isnull=False,
+        )
         .order_by('-updated_at', '-pk')
         .first()
     )

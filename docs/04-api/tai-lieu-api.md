@@ -110,8 +110,8 @@ Xác thực trong Swagger UI: gọi `POST /api/auth/login/` lấy `access`, bấ
 | GET | `/api/v2/cv-templates/{slug}/` | Public template detail V2: card fields + preview metadata, `seo_title`/`seo_description` theo `locale`, renderer contract an toàn và section list. |
 | GET | `/api/v2/cv-templates/{slug}/related/` | Template published liên quan theo category, cùng locale. |
 | GET | `/api/v2/cv-categories/?type=` | Taxonomy template active (`style`, `feature`, `position`, `audience`). |
-| GET | `/api/v2/cv-position-options/?locale=&experience_level=&q=` | Vị trí chuyên môn active có localization và content resolve được; response gồm `public_id`, `slug` (dùng cho query `vi-tri` của trang chi tiết mẫu), `display_name`, `name_vi`, có ordering quản trị được. |
-| GET | `/api/v2/cv-position-preview/?position_public_id=&locale=&experience_level=&template_public_id=&theme_color=` | Resolve curated→blueprint; khi có template trả thêm canonical `document`, `renderer`, `revision`. `source=blank` compose document trống. Contract content-only cũ vẫn hoạt động nếu thiếu template. |
+| GET | `/api/v2/cv-position-options/?locale=&q=` | Vị trí chuyên môn active có `CvPositionProfile` bật, có localization và content resolve được; response gồm `public_id`, `slug` (dùng cho query `vi-tri` của trang chi tiết mẫu), `display_name`, `name_vi`, có ordering quản trị được. |
+| GET | `/api/v2/cv-position-preview/?position_public_id=&locale=&experience_band=&template_public_id=&theme_color=` | Resolve nội dung theo nhóm kinh nghiệm gần nhất (`entry/junior/mid/senior`, mặc định `junior`, giá trị khác → 400), riêng của vị trí trước chung; response có `source` (`curated`/`generic`/`blank`), `experience_band`; khi có template trả thêm canonical `document`, `renderer`, `revision`. `source=blank` compose document trống. Contract content-only cũ vẫn hoạt động nếu thiếu template. |
 `locale` trên catalogue/position preview và `language` khi tạo/import CV chỉ
 nhận `vi-VN` hoặc `en-US` (enum `CvLanguage` ở
 `apps/cv_templates/models/language.py`); giá trị khác trả `400`. Từ CVT-1a không
@@ -161,7 +161,7 @@ quyền, endpoint RBAC trả:
 
 Các field lifecycle CV được bảo vệ riêng để quyền `.edit` không thể phát hành
 qua PATCH: `CvTemplate.status/lifecycle_status/current_published_version`,
-`is_active` của localization/category/color/background/blueprint và
+`is_active` của category/color/background và
 `CvSampleContent.status/published_at`. Staff tạo template ở `inactive`; các tài
 nguyên `is_active` mặc định `false`; sample/version tiếp tục ở `draft`. Chuyển
 ẩn → hiện cần `.publish`, hiện → ẩn cần `.archive`; gửi lại giá trị không đổi
@@ -375,8 +375,6 @@ trả `409 admin_resource_changed`.
 | CRUD | `/api/v2/admin/cv-sample-contents/` | Nội dung canonical draft. |
 | POST | `/api/v2/admin/cv-sample-contents/{public_id}/preview/` | Preview bằng canonical composer. |
 | POST | `/api/v2/admin/cv-sample-contents/{public_id}/publish\|archive/` | Lifecycle curated content. |
-| CRUD | `/api/v2/admin/cv-content-blueprints/` | Blueprint canonical/compatibility fields. |
-| POST | `/api/v2/admin/cv-content-blueprints/{public_id}/preview\|activate/` | Preview/activate blueprint. |
 
 Các action sinh snapshot trả `202 queued`; asset không được tạo trong request
 web. Public card chỉ thấy storage URL mới sau khi worker đã render và swap đủ
@@ -448,9 +446,9 @@ Mã lỗi ổn định gồm `JOB_AI_DAILY_QUOTA_EXCEEDED` (429),
 `JOB_AI_IDEMPOTENCY_CONFLICT` (409), generation unavailable (503), validation
 400 và owner mismatch 404. Provider message/raw content không được trả cho client.
 
-| GET | `/api/v2/cv-sample-contents/?locale=&experience_level=` | Compatibility catalogue cho client cũ; frontend mới không dùng endpoint này làm nguồn dropdown. |
+| GET | `/api/v2/cv-sample-contents/?locale=&experience_band=` | Thư viện nội dung mẫu riêng theo vị trí cho editor (không gồm nội dung chung); card có `position_public_id`, `position_slug`, `position_name`, `experience_band`. |
 | GET | `/api/v2/cv-sample-contents/{public_id}/` | Compatibility detail cho client cũ dùng `sample_content_public_id`. |
-| GET/POST | `/api/v2/cvs/` | Candidate lifecycle V2. POST nhận template, language, optional sample/position/`source_cv_public_id` và optional màu; các source loại trừ nhau. |
+| GET/POST | `/api/v2/cvs/` | Candidate lifecycle V2. POST nhận template, language, optional sample/position/`source_cv_public_id`, `experience_band` (khi tạo từ vị trí) và optional màu; các source loại trừ nhau. |
 | GET/PATCH/DELETE | `/api/v2/cvs/{public_id}/` | Candidate metadata/detail: PATCH chỉ nhận `title`, `is_default`; DELETE xóa vĩnh viễn CV và library artifacts. Snapshot của application đã nộp được giữ detached cho recruiter. |
 | POST | `/api/v2/cvs/imports/` | Candidate import PDF/DOCX (`multipart upload_session`, optional `title`/template fields). Response không có storage key/URL; raw `file` chỉ compatibility. |
 | POST | `/api/v2/cvs/{public_id}/duplicate/` | Clone builder CV từ latest immutable version thành CV/draft/version độc lập. Optional `title`; không hỗ trợ uploaded CV để tránh dùng chung file storage. |
@@ -564,9 +562,10 @@ Position picker trả contract tối thiểu, không lộ hai cấp taxonomy tr�
 ```
 
 Frontend dùng `public_id` làm value và chỉ hiển thị `name_vi`. Sau khi chọn,
-frontend gọi position-preview với locale. Resolver ưu tiên curated sample; nếu
-không có, nó kết hợp `JobCategoryLocalization` và `CvContentBlueprint` để tạo
-`content_json` deterministic. Không fallback tên tiếng Việt vào preview locale khác.
+frontend gọi position-preview với locale và `experience_band`. Resolver chọn
+nhóm kinh nghiệm gần nhất, ưu tiên nội dung riêng của vị trí; nội dung chung được
+thay `{position}` bằng `JobCategoryLocalization` theo locale để tạo `content_json`
+deterministic. Không fallback tên tiếng Việt vào preview locale khác.
 
 Payload tạo CV V2:
 

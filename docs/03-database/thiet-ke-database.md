@@ -248,7 +248,8 @@ Chi tiết contract document, renderer và API ở
 | `CvSectionDefinition`, `CvTemplateSection` | Registry section key canonical và cấu hình section theo region của từng version (unique version–section). |
 | `CvCategory`, `CvTemplateCategoryLink` | Taxonomy style/feature/position/audience (unique `(category_type, slug)`), link có thứ tự. |
 | `CvColor`, `CvTemplateColorLink` | Palette dùng lại; link giữ thumbnail/preview, thứ tự, tối đa một màu mặc định mỗi template. |
-| `CvContentBlueprint`, `CvSampleContent` | Nội dung khởi tạo generic theo `(locale, experience_level)` và nội dung curated tùy chọn theo vị trí–locale–cấp độ; `locale` thuộc enum `CvLanguage`. |
+| `CvPositionProfile` | Cấu hình CV của một vị trí chuyên môn: 1-1 `JobCategory(specialization)`, `section_preset` (JSON thứ tự/bật section), `is_active`, `sort_order`. Tên/slug lấy từ `JobCategory`. |
+| `CvSampleContent` | Nội dung khởi tạo theo `(position_profile, locale, experience_band)`; `position_profile` null là nội dung chung (token `{position}`), unique riêng cho từng trường hợp bằng partial constraint; `locale` thuộc `CvLanguage`, `experience_band` thuộc `entry/junior/mid/senior`. |
 
 ## 8. Ứng viên (`candidates`)
 

@@ -19,7 +19,7 @@ from rest_framework.test import APITestCase
 
 from apps.cv_templates.models import (
     CvColor,
-    CvContentBlueprint,
+    CvPositionProfile,
     CvSampleContent,
     CvTemplate,
     CvTemplateColorLink,
@@ -90,6 +90,10 @@ class CvV2ApiTests(APITestCase):
         self.blue = CvColor.objects.create(name='Blue', slug='blue', hex_code='#2255AA')
         CvTemplateColorLink.objects.create(template=self.template, color=self.blue, is_default=True)
         self.client.force_authenticate(self.candidate)
+
+    def curated_sample_profile(self):
+        position = JobCategory.objects.create(name='Sample position')
+        return CvPositionProfile.objects.create(job_category=position)
 
     def create_cv(self):
         response = self.client.post(
@@ -923,6 +927,8 @@ class CvV2ApiTests(APITestCase):
         sample_content = empty_content('vi-VN')
         sample_content['personal_info']['full_name'] = 'Sample Candidate'
         sample = CvSampleContent.objects.create(
+            position_profile=self.curated_sample_profile(),
+            experience_band='mid',
             locale='vi-VN',
             title='Sample content',
             content_json=sample_content,
@@ -983,6 +989,8 @@ class CvV2ApiTests(APITestCase):
         sample_content = empty_content('vi-VN')
         sample_content['personal_info']['full_name'] = 'Sample Person'
         sample = CvSampleContent.objects.create(
+            position_profile=self.curated_sample_profile(),
+            experience_band='mid',
             locale='vi-VN',
             title='Sample',
             content_json=sample_content,
@@ -1026,6 +1034,8 @@ class CvV2ApiTests(APITestCase):
             }
         ]
         sample = CvSampleContent.objects.create(
+            position_profile=self.curated_sample_profile(),
+            experience_band='mid',
             locale='vi-VN',
             title='Sample apply',
             content_json=sample_content,
@@ -1085,8 +1095,9 @@ class CvV2ApiTests(APITestCase):
         )
         self.assertEqual(rejected.status_code, 400)
 
-    def test_create_from_position_resolves_blueprint_and_persists_taxonomy_identity(self):
+    def test_create_from_position_resolves_generic_content_and_persists_taxonomy_identity(self):
         position = JobCategory.objects.create(name='Nhân viên CSKH')
+        CvPositionProfile.objects.create(job_category=position)
         JobCategoryLocalization.objects.bulk_create(
             [
                 JobCategoryLocalization(
@@ -1099,9 +1110,27 @@ class CvV2ApiTests(APITestCase):
                 ),
             ]
         )
-        blueprint = CvContentBlueprint.objects.get(locale='en-US', experience_level='unspecified')
-        blueprint.summary_template = 'Build a career as {position}.'
-        blueprint.save(update_fields=['summary_template', 'updated_at'])
+        content = empty_content('en-US')
+        content['personal_info']['headline'] = '{position}'
+        content['sections'] = [
+            {
+                'instance_id': 'summary_1',
+                'section_key': 'summary',
+                'title': 'Career objective',
+                'enabled': True,
+                'items': [{'item_id': 'summary_item_1', 'value': 'Build a career as {position}.'}],
+            }
+        ]
+        CvSampleContent.objects.update_or_create(
+            position_profile=None,
+            locale='en-US',
+            experience_band='senior',
+            defaults={
+                'title': 'Generic',
+                'content_json': content,
+                'status': CvSampleContent.Status.PUBLISHED,
+            },
+        )
 
         response = self.client.post(
             reverse('cv-v2-list-create'),
@@ -1110,6 +1139,7 @@ class CvV2ApiTests(APITestCase):
                 'template_public_id': self.template.public_id,
                 'language': 'en-US',
                 'position_public_id': position.public_id,
+                'experience_band': 'senior',
             },
             format='json',
         )
@@ -1120,6 +1150,14 @@ class CvV2ApiTests(APITestCase):
         self.assertEqual(response.data['position_public_id'], position.public_id)
         self.assertEqual(
             cv.draft.content_json['personal_info']['headline'], 'Customer Service Representative'
+        )
+        summary = next(
+            section
+            for section in cv.draft.content_json['sections']
+            if section['section_key'] == 'summary'
+        )
+        self.assertEqual(
+            summary['items'][0]['value'], 'Build a career as Customer Service Representative.'
         )
 
     def test_legacy_dual_write_does_not_discard_a_v2_layout(self):

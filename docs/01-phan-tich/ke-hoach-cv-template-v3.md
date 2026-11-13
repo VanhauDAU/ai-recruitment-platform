@@ -124,6 +124,8 @@ Vì được xóa dữ liệu cũ (D10), làm sạch luôn thay vì giữ dual-r
 
 ### 5.3 Vị trí và trường riêng (mới)
 
+> CVT-1b đã làm `CvPositionProfile` (`job_category` 1-1, `section_preset`, `is_active`, `sort_order`; tên/slug lấy từ `JobCategory`, không lưu lặp `name_vi/en`, `slug`, `industry_group`). `CvPositionField` và `keywords` làm ở CVT-3 cùng form nhập liệu dùng chúng.
+
 ```text
 JobCategory(specialization) 1──1 CvPositionProfile 1──< CvPositionField
                                        │
@@ -178,18 +180,18 @@ Nhãn được **chụp vào document** lúc tạo CV, nên đổi/xóa trườn
 `CvSampleContent`: unique `(position_profile, experience_band, language)`; `position_profile = null` là nội dung chung.
 
 - `experience_band`: 4 nhóm **suy ra từ enum `Job.ExperienceYears` của JD** (không tạo enum riêng): `entry` = `none`/`under_1`, `junior` = `1`/`2`, `mid` = `3`/`4`, `senior` = `5`/`over_5`. Bảng nhóm đặt một chỗ (mục 5.6) để CV, nội dung mẫu và matching dùng chung.
-- `status`: `draft` → `in_review` → `published` → `archived`.
-- `origin`: `ai`, `manual`, `import`; `ai_invocation` FK (nếu sinh bằng AI); `reviewed_by`, `reviewed_at`.
+- `status`: `draft` → `in_review` → `published` → `archived` (CVT-1b giữ `draft/published/archived`; `in_review` thêm ở CVT-3 cùng hàng đợi duyệt AI).
+- `origin`: `ai`, `manual`, `import`; `ai_invocation` FK (nếu sinh bằng AI); `reviewed_by`, `reviewed_at` — làm ở CVT-3.
 - Danh tính mẫu cố định, hư cấu (`Nguyễn Văn A`, `nguyenvana@example.com`); validator chặn email/SĐT không thuộc allowlist mẫu để AI không lọt dữ liệu thật.
 
-Thứ tự resolve khi ứng viên chọn vị trí P, nhóm kinh nghiệm L, ngôn ngữ G:
-`(P, L, G)` → `(P, any, G)` → `(null, L, G)` với `{position}` thay bằng tên vị trí → `(null, any, G)`. Luôn có kết quả nếu seed nội dung chung đủ 4 nhóm × 2 ngôn ngữ.
+Thứ tự resolve khi ứng viên chọn vị trí P, nhóm kinh nghiệm L, ngôn ngữ G (✅ CVT-1b, điều chỉnh so với bản đầu):
+nhóm kinh nghiệm gần L nhất trước, cùng khoảng cách thì nội dung riêng `(P, ·, G)` trước nội dung chung `(null, ·, G)` (thay `{position}` bằng tên vị trí), rồi nhóm cao hơn. Lý do: nội dung riêng ở nhóm khác sẽ ghi sai số năm kinh nghiệm và chức danh. `section_preset` của P áp cho mọi nội dung. Luôn có kết quả nếu seed nội dung chung đủ 4 nhóm × 2 ngôn ngữ.
 
 ### 5.5 CV và import
 
 | Model | Thay đổi |
 | --- | --- |
-| `UserCv` | Xóa `cv_data`, `style_config`, `status` legacy (đã ghi trong việc còn mở của CV Builder). `language` dùng enum `vi|en`. Thêm các trường matching ở mục 5.6 (`target_category`, `experience_years`, `position_level`, `education_level`) |
+| `UserCv` | Xóa `cv_data`, `style_config`, `status` legacy (đã ghi trong việc còn mở của CV Builder). `language` dùng enum `vi|en`. Thêm các trường matching ở mục 5.6 (`experience_years`, `position_level`, `education_level`; vị trí dùng `UserCv.position` có sẵn) |
 | `CvImportJob` | Thêm trạng thái `awaiting_review`; `extraction_summary` JSON chỉ chứa **metadata** (số section, danh sách đường dẫn trường có độ tin cậy thấp, vị trí gợi ý) — không chứa nội dung; `consent_at`; `source_deleted_at` |
 | `CvDraft` | Nội dung trích xuất nằm trong draft như mọi CV khác; không có bản sao thứ hai |
 | `CvAsset` (avatar) | Thêm `kind=avatar`; xử lý ảnh: bỏ EXIF, cắt vuông, resize 400×400 WebP |
@@ -204,7 +206,7 @@ Không để matching sau này phải đọc lại rich text hay đoán từ ch�
 
 | Chiều so khớp | Phía JD (đã có) | Phía CV (chuẩn hóa trong kế hoạch này) | Nguồn dữ liệu CV |
 | --- | --- | --- | --- |
-| Vị trí / ngành | `Job` → `JobCategory` | `UserCv.target_category` FK `JobCategory(specialization)` — cùng taxonomy với ô chọn vị trí (`vi-tri` trên URL đã là slug `JobCategory` từ CVT-0) | Vị trí chọn khi tạo CV; AI gợi ý khi upload |
+| Vị trí / ngành | `Job` → `JobCategory` | `UserCv.position` (FK `JobCategory` đã có sẵn, được ghi khi tạo CV từ vị trí — không thêm `target_category` trùng lặp) — cùng taxonomy với ô chọn vị trí (`vi-tri` trên URL đã là slug `JobCategory` từ CVT-0) | Vị trí chọn khi tạo CV; AI gợi ý khi upload |
 | Kỹ năng | `JobSkill`: FK `skills.Skill`, `importance`, `min_level` (`beginner/intermediate/advanced`), `min_years_experience` | `CvSkill`: FK `skills.Skill`, `level` (cùng enum), `years_experience`, `source` (`manual/ai_extracted`), `confidence_score` | Item trong section `skills` có `skill_id` (chọn từ taxonomy, gõ tự do thì giữ `name` và vào hàng đợi chuẩn hóa) |
 | Số năm kinh nghiệm | `Job.experience_years` (`ExperienceYears`) | `UserCv.experience_years` cùng enum, **tính tự động** từ ngày bắt đầu/kết thúc các item kinh nghiệm (gộp khoảng chồng lấn) | Section `experience` với ngày dạng `YYYY-MM` bắt buộc hợp lệ |
 | Cấp bậc | `Job.position_level` (`PositionLevel`) | `UserCv.position_level` cùng enum | Ứng viên chọn; AI gợi ý từ chức danh gần nhất |
@@ -608,15 +610,23 @@ Thêm:
 
 Tách hai PR để giữ dưới ngưỡng 60 file của quy trình PR:
 
-- **CVT-1a — Ngôn ngữ (🟨 chờ review, tách PR frontend + PR backend):** enum
+- **CVT-1a — Ngôn ngữ (✅ gộp vào `dev`, PR #178 + #179):** enum
   `CvLanguage`; gộp `CvTemplateLocalization` vào trường song ngữ của
   `CvTemplate` bằng data migration; gỡ `sitecontent.Locale`, API locale, FK
   `locale_ref`, tab "Ngôn ngữ" ở admin và entity frontend `locale`; xóa dữ liệu
   mẫu/blueprint/taxonomy tiếng Nhật, Trung. **Không xóa CV người dùng**: các bước
   này không cần đến (điều chỉnh D10).
-- **CVT-1b — Vị trí và nội dung mẫu:** `CvPositionProfile`, `CvPositionField`,
-  `CvSampleContent` theo `experience_band`, bỏ `CvContentBlueprint`, gỡ field legacy
-  `UserCv`/`CvTemplate` và thêm trường matching (mục 5.6), viết lại seed.
+- **CVT-1b — Vị trí và nội dung mẫu (🟨 chờ review PR):**
+  `CvPositionProfile`, `ExperienceBand`, `CvSampleContent` theo
+  `(position_profile, locale, experience_band)`, bỏ `CvContentBlueprint` (blueprint
+  thành nội dung chung bằng data migration), resolver/picker/preview/tạo CV theo
+  `experience_band`, viết lại seed (nội dung chung 4 nhóm × 2 ngôn ngữ, nội dung
+  riêng 9 vị trí chuyên môn), gỡ tab/menu "Blueprint" và mục menu "Ngôn ngữ" còn
+  sót từ CVT-1a. Danh sách 30 vị trí ưu tiên (I1) chưa có: hồ sơ được tạo cho mọi
+  vị trí chuyên môn đang hoạt động.
+- **CVT-1c — Trường matching và dọn legacy:** gỡ `UserCv.cv_data/style_config/status`,
+  `CvTemplate.category/status/layout_config/style_config`, thêm
+  `experience_years`/`position_level`/`education_level` (mục 5.6).
 
 Section mới và `schema_version 2` chuyển sang CVT-3, làm cùng form nhập liệu, để
 không đăng ký section chưa có giao diện dùng.

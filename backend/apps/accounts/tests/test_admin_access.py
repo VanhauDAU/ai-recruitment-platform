@@ -349,7 +349,6 @@ class AdminAccessTests(TestCase):
             cv_admin.AdminModelViewSet,
             cv_admin.AdminCvTemplateViewSet,
             cv_admin.AdminCvSampleContentViewSet,
-            cv_admin.AdminCvContentBlueprintViewSet,
             site_settings.AdminSiteSettingView,
             site_settings.AdminSettingUploadView,
             AdminJobModerationListView,

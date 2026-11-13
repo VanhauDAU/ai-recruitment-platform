@@ -9669,207 +9669,6 @@ paths:
       responses:
         '204':
           description: No response body
-  /api/v2/admin/cv-content-blueprints/:
-    get:
-      operationId: v2_admin_cv_content_blueprints_list
-      tags:
-      - v2
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/CvContentBlueprintAdmin'
-          description: ''
-    post:
-      operationId: v2_admin_cv_content_blueprints_create
-      tags:
-      - v2
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CvContentBlueprintAdminRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/CvContentBlueprintAdminRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/CvContentBlueprintAdminRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '201':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CvContentBlueprintAdmin'
-          description: ''
-  /api/v2/admin/cv-content-blueprints/{public_id}/:
-    get:
-      operationId: v2_admin_cv_content_blueprints_retrieve
-      parameters:
-      - in: path
-        name: public_id
-        schema:
-          type: string
-        required: true
-      tags:
-      - v2
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CvContentBlueprintAdmin'
-          description: ''
-    put:
-      operationId: v2_admin_cv_content_blueprints_update
-      parameters:
-      - in: path
-        name: public_id
-        schema:
-          type: string
-        required: true
-      tags:
-      - v2
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CvContentBlueprintAdminRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/CvContentBlueprintAdminRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/CvContentBlueprintAdminRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CvContentBlueprintAdmin'
-          description: ''
-    patch:
-      operationId: v2_admin_cv_content_blueprints_partial_update
-      parameters:
-      - in: path
-        name: public_id
-        schema:
-          type: string
-        required: true
-      tags:
-      - v2
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchedCvContentBlueprintAdminRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PatchedCvContentBlueprintAdminRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PatchedCvContentBlueprintAdminRequest'
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CvContentBlueprintAdmin'
-          description: ''
-    delete:
-      operationId: v2_admin_cv_content_blueprints_destroy
-      parameters:
-      - in: path
-        name: public_id
-        schema:
-          type: string
-        required: true
-      tags:
-      - v2
-      security:
-      - jwtAuth: []
-      responses:
-        '204':
-          description: No response body
-  /api/v2/admin/cv-content-blueprints/{public_id}/activate/:
-    post:
-      operationId: v2_admin_cv_content_blueprints_activate_create
-      parameters:
-      - in: path
-        name: public_id
-        schema:
-          type: string
-        required: true
-      tags:
-      - v2
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CvContentBlueprintAdminRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/CvContentBlueprintAdminRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/CvContentBlueprintAdminRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CvContentBlueprintAdmin'
-          description: ''
-  /api/v2/admin/cv-content-blueprints/{public_id}/preview/:
-    post:
-      operationId: v2_admin_cv_content_blueprints_preview_create
-      parameters:
-      - in: path
-        name: public_id
-        schema:
-          type: string
-        required: true
-      tags:
-      - v2
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CvContentBlueprintAdminRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/CvContentBlueprintAdminRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/CvContentBlueprintAdminRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CvContentBlueprintAdmin'
-          description: ''
   /api/v2/admin/cv-sample-contents/:
     get:
       operationId: v2_admin_cv_sample_contents_list
@@ -10551,9 +10350,14 @@ paths:
       summary: Xem trước nội dung mẫu theo vị trí công việc
       parameters:
       - in: query
-        name: experience_level
+        name: experience_band
         schema:
           type: string
+          enum:
+          - entry
+          - junior
+          - mid
+          - senior
       - in: query
         name: position_public_id
         schema:
@@ -10562,7 +10366,7 @@ paths:
         name: source
         schema:
           type: string
-        description: sample | blueprint
+        description: sample | blank
       - in: query
         name: template_public_id
         schema:
@@ -18494,142 +18298,6 @@ components:
       - hex_code
       - name
       - slug
-    CvContentBlueprintAdmin:
-      type: object
-      description: Protect public lifecycle transitions independently from edit access.
-      properties:
-        public_id:
-          type: string
-          readOnly: true
-        locale:
-          $ref: '#/components/schemas/LocaleDcaEnum'
-        experience_level:
-          type: string
-          default: unspecified
-          maxLength: 30
-        content_json_template:
-          description: Canonical content template; strings may contain {position}.
-        summary_title:
-          type: string
-          maxLength: 255
-        summary_template:
-          type: string
-          description: Dùng {position} tại nơi cần chèn tên vị trí đã bản địa hóa.
-        experience_title:
-          type: string
-          maxLength: 255
-        experience_company:
-          type: string
-          maxLength: 255
-        experience_description_template:
-          type: string
-          description: Dùng {position} tại nơi cần chèn tên vị trí.
-        education_title:
-          type: string
-          maxLength: 255
-        education_degree:
-          type: string
-          maxLength: 255
-        education_institution:
-          type: string
-          maxLength: 255
-        education_description:
-          type: string
-        skills_title:
-          type: string
-          maxLength: 255
-        skill_templates:
-          description: Danh sách chuỗi; có thể dùng {position}.
-        is_active:
-          type: boolean
-        created_at:
-          type: string
-          format: date-time
-          readOnly: true
-        updated_at:
-          type: string
-          format: date-time
-          readOnly: true
-      required:
-      - created_at
-      - education_degree
-      - education_institution
-      - education_title
-      - experience_company
-      - experience_description_template
-      - experience_title
-      - locale
-      - public_id
-      - skills_title
-      - summary_template
-      - summary_title
-      - updated_at
-    CvContentBlueprintAdminRequest:
-      type: object
-      description: Protect public lifecycle transitions independently from edit access.
-      properties:
-        locale:
-          $ref: '#/components/schemas/LocaleDcaEnum'
-        experience_level:
-          type: string
-          minLength: 1
-          default: unspecified
-          maxLength: 30
-        content_json_template:
-          description: Canonical content template; strings may contain {position}.
-        summary_title:
-          type: string
-          minLength: 1
-          maxLength: 255
-        summary_template:
-          type: string
-          minLength: 1
-          description: Dùng {position} tại nơi cần chèn tên vị trí đã bản địa hóa.
-        experience_title:
-          type: string
-          minLength: 1
-          maxLength: 255
-        experience_company:
-          type: string
-          minLength: 1
-          maxLength: 255
-        experience_description_template:
-          type: string
-          minLength: 1
-          description: Dùng {position} tại nơi cần chèn tên vị trí.
-        education_title:
-          type: string
-          minLength: 1
-          maxLength: 255
-        education_degree:
-          type: string
-          minLength: 1
-          maxLength: 255
-        education_institution:
-          type: string
-          minLength: 1
-          maxLength: 255
-        education_description:
-          type: string
-        skills_title:
-          type: string
-          minLength: 1
-          maxLength: 255
-        skill_templates:
-          description: Danh sách chuỗi; có thể dùng {position}.
-        is_active:
-          type: boolean
-      required:
-      - education_degree
-      - education_institution
-      - education_title
-      - experience_company
-      - experience_description_template
-      - experience_title
-      - locale
-      - skills_title
-      - summary_template
-      - summary_title
     CvDraft:
       type: object
       properties:
@@ -18811,18 +18479,18 @@ components:
         public_id:
           type: string
           readOnly: true
-        job_category_public_id:
+        position_public_id:
           type: string
           nullable: true
+        position_name:
+          type: string
+          readOnly: true
+          default: ''
         locale:
           $ref: '#/components/schemas/LocaleDcaEnum'
-        experience_level:
-          type: string
-          maxLength: 30
+        experience_band:
+          $ref: '#/components/schemas/ExperienceBandEnum'
         title:
-          type: string
-          maxLength: 255
-        position_name_vi:
           type: string
           maxLength: 255
         content_json: {}
@@ -18849,7 +18517,9 @@ components:
           readOnly: true
       required:
       - created_at
+      - experience_band
       - locale
+      - position_name
       - public_id
       - published_at
       - status
@@ -18859,22 +18529,17 @@ components:
       type: object
       description: Protect public lifecycle transitions independently from edit access.
       properties:
-        job_category_public_id:
+        position_public_id:
           type: string
           minLength: 1
           nullable: true
         locale:
           $ref: '#/components/schemas/LocaleDcaEnum'
-        experience_level:
-          type: string
-          minLength: 1
-          maxLength: 30
+        experience_band:
+          $ref: '#/components/schemas/ExperienceBandEnum'
         title:
           type: string
           minLength: 1
-          maxLength: 255
-        position_name_vi:
-          type: string
           maxLength: 255
         content_json: {}
         schema_version:
@@ -18882,6 +18547,7 @@ components:
           maximum: 2147483647
           minimum: 0
       required:
+      - experience_band
       - locale
       - title
     CvSampleContentCard:
@@ -18897,28 +18563,25 @@ components:
           allOf:
           - $ref: '#/components/schemas/LocaleDcaEnum'
           readOnly: true
-        experience_level:
+        experience_band:
+          allOf:
+          - $ref: '#/components/schemas/ExperienceBandEnum'
+          readOnly: true
+        position_public_id:
           type: string
           readOnly: true
-        job_category_name:
-          type: string
-          readOnly: true
-        job_category_slug:
-          type: string
-          readOnly: true
-        position_name_vi:
+        position_slug:
           type: string
           readOnly: true
         position_name:
           type: string
           readOnly: true
       required:
-      - experience_level
-      - job_category_name
-      - job_category_slug
+      - experience_band
       - locale
       - position_name
-      - position_name_vi
+      - position_public_id
+      - position_slug
       - public_id
       - title
     CvSampleContentDetail:
@@ -18934,16 +18597,14 @@ components:
           allOf:
           - $ref: '#/components/schemas/LocaleDcaEnum'
           readOnly: true
-        experience_level:
+        experience_band:
+          allOf:
+          - $ref: '#/components/schemas/ExperienceBandEnum'
+          readOnly: true
+        position_public_id:
           type: string
           readOnly: true
-        job_category_name:
-          type: string
-          readOnly: true
-        job_category_slug:
-          type: string
-          readOnly: true
-        position_name_vi:
+        position_slug:
           type: string
           readOnly: true
         position_name:
@@ -18956,12 +18617,11 @@ components:
           readOnly: true
       required:
       - content_json
-      - experience_level
-      - job_category_name
-      - job_category_slug
+      - experience_band
       - locale
       - position_name
-      - position_name_vi
+      - position_public_id
+      - position_slug
       - public_id
       - schema_version
       - title
@@ -19532,6 +19192,10 @@ components:
         position_public_id:
           type: string
           maxLength: 50
+        experience_band:
+          allOf:
+          - $ref: '#/components/schemas/ExperienceBandEnum'
+          default: junior
         source_cv_public_id:
           type: string
           maxLength: 50
@@ -19564,6 +19228,10 @@ components:
           type: string
           minLength: 1
           maxLength: 50
+        experience_band:
+          allOf:
+          - $ref: '#/components/schemas/ExperienceBandEnum'
+          default: junior
         source_cv_public_id:
           type: string
           minLength: 1
@@ -21461,6 +21129,18 @@ components:
         * `document_changes_requested` - Giấy tờ xác thực cần bổ sung
         * `document_rejected` - Giấy tờ xác thực bị từ chối
         * `company_link_removed` - Liên kết công ty đã được gỡ
+    ExperienceBandEnum:
+      enum:
+      - entry
+      - junior
+      - mid
+      - senior
+      type: string
+      description: |-
+        * `entry` - Dưới 1 năm
+        * `junior` - 1–2 năm
+        * `mid` - 3–4 năm
+        * `senior` - Từ 5 năm
     ExperienceLevelEnum:
       enum:
       - no_experience
@@ -25099,81 +24779,21 @@ components:
           minimum: -2147483648
         is_active:
           type: boolean
-    PatchedCvContentBlueprintAdminRequest:
-      type: object
-      description: Protect public lifecycle transitions independently from edit access.
-      properties:
-        locale:
-          $ref: '#/components/schemas/LocaleDcaEnum'
-        experience_level:
-          type: string
-          minLength: 1
-          default: unspecified
-          maxLength: 30
-        content_json_template:
-          description: Canonical content template; strings may contain {position}.
-        summary_title:
-          type: string
-          minLength: 1
-          maxLength: 255
-        summary_template:
-          type: string
-          minLength: 1
-          description: Dùng {position} tại nơi cần chèn tên vị trí đã bản địa hóa.
-        experience_title:
-          type: string
-          minLength: 1
-          maxLength: 255
-        experience_company:
-          type: string
-          minLength: 1
-          maxLength: 255
-        experience_description_template:
-          type: string
-          minLength: 1
-          description: Dùng {position} tại nơi cần chèn tên vị trí.
-        education_title:
-          type: string
-          minLength: 1
-          maxLength: 255
-        education_degree:
-          type: string
-          minLength: 1
-          maxLength: 255
-        education_institution:
-          type: string
-          minLength: 1
-          maxLength: 255
-        education_description:
-          type: string
-        skills_title:
-          type: string
-          minLength: 1
-          maxLength: 255
-        skill_templates:
-          description: Danh sách chuỗi; có thể dùng {position}.
-        is_active:
-          type: boolean
     PatchedCvSampleContentAdminRequest:
       type: object
       description: Protect public lifecycle transitions independently from edit access.
       properties:
-        job_category_public_id:
+        position_public_id:
           type: string
           minLength: 1
           nullable: true
         locale:
           $ref: '#/components/schemas/LocaleDcaEnum'
-        experience_level:
-          type: string
-          minLength: 1
-          maxLength: 30
+        experience_band:
+          $ref: '#/components/schemas/ExperienceBandEnum'
         title:
           type: string
           minLength: 1
-          maxLength: 255
-        position_name_vi:
-          type: string
           maxLength: 255
         content_json: {}
         schema_version:

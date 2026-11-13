@@ -173,8 +173,6 @@ export const ADMIN_NAVIGATION = [
         children: [
           { key: 'cv-templates', label: 'Mẫu CV', routeRef: 'cvCatalogue' },
           { key: 'cv-samples', label: 'Nội dung mẫu', routeRef: 'cvCatalogue', query: { tab: 'samples' } },
-          { key: 'cv-blueprints', label: 'Blueprint', routeRef: 'cvCatalogue', query: { tab: 'blueprints' } },
-          { key: 'cv-locales', label: 'Ngôn ngữ', routeRef: 'cvCatalogue', query: { tab: 'locales' } },
           { key: 'cv-taxonomy', label: 'Danh mục & màu', routeRef: 'cvCatalogue', query: { tab: 'taxonomy' } },
           { key: 'cv-backgrounds', label: 'Hình nền', routeRef: 'cvCatalogue', query: { tab: 'backgrounds' } },
         ],

@@ -6,9 +6,11 @@ from rest_framework import serializers
 
 from apps.cv_templates.models import (
     DEFAULT_CV_LANGUAGE,
+    DEFAULT_EXPERIENCE_BAND,
     CvLanguage,
     CvSampleContent,
     CvTemplate,
+    ExperienceBand,
 )
 from apps.jobs.models import JobCategory
 
@@ -203,6 +205,9 @@ class CvV2CreateSerializer(serializers.Serializer):
         max_length=50, required=False, allow_blank=False
     )
     position_public_id = serializers.CharField(max_length=50, required=False, allow_blank=False)
+    experience_band = serializers.ChoiceField(
+        choices=ExperienceBand.choices, default=DEFAULT_EXPERIENCE_BAND
+    )
     source_cv_public_id = serializers.CharField(max_length=50, required=False, allow_blank=False)
     theme_color = serializers.RegexField(r'^#[0-9A-Fa-f]{6}$', required=False)
 
@@ -215,8 +220,9 @@ class CvV2CreateSerializer(serializers.Serializer):
             raise serializers.ValidationError('Unknown template.') from error
 
     def validate_sample_content_public_id(self, value):
+        # Nội dung chung còn token `{position}` nên chỉ dùng được qua vị trí.
         try:
-            return CvSampleContent.objects.get(public_id=value)
+            return CvSampleContent.objects.get(public_id=value, position_profile__isnull=False)
         except CvSampleContent.DoesNotExist as error:
             raise serializers.ValidationError('Unknown sample content.') from error
 

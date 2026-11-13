@@ -7,7 +7,6 @@ from .api.views.admin import (
     AdminCvBackgroundViewSet,
     AdminCvCategoryViewSet,
     AdminCvColorViewSet,
-    AdminCvContentBlueprintViewSet,
     AdminCvSampleContentViewSet,
     AdminCvTemplateViewSet,
 )
@@ -29,11 +28,6 @@ router.register('admin/cv-colors', AdminCvColorViewSet, basename='admin-cv-color
 router.register('admin/cv-backgrounds', AdminCvBackgroundViewSet, basename='admin-cv-background')
 router.register(
     'admin/cv-sample-contents', AdminCvSampleContentViewSet, basename='admin-cv-sample-content'
-)
-router.register(
-    'admin/cv-content-blueprints',
-    AdminCvContentBlueprintViewSet,
-    basename='admin-cv-content-blueprint',
 )
 
 

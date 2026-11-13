@@ -23,7 +23,13 @@ from apps.cvs.services.composition import (
 from apps.jobs.models import JobCategory
 from common.metrics import record_metric
 
-from ...models import DEFAULT_CV_LANGUAGE, CvLanguage, CvTemplate
+from ...models import (
+    DEFAULT_CV_LANGUAGE,
+    DEFAULT_EXPERIENCE_BAND,
+    CvLanguage,
+    CvTemplate,
+    ExperienceBand,
+)
 from ...selectors import (
     active_cv_categories_queryset,
     active_cv_position_options_queryset,
@@ -48,6 +54,13 @@ def requested_locale(request):
     if locale not in CvLanguage.values:
         raise ValidationError({'locale': 'Unsupported locale.'})
     return locale
+
+
+def requested_experience_band(request, *, default=DEFAULT_EXPERIENCE_BAND):
+    band = request.query_params.get('experience_band', '').strip() or default
+    if band and band not in ExperienceBand.values:
+        raise ValidationError({'experience_band': 'Unsupported experience band.'})
+    return band
 
 
 class PublicCatalogCacheMixin:
@@ -134,7 +147,7 @@ class CvSampleContentCatalogListView(PublicCatalogCacheMixin, generics.ListAPIVi
     def get_queryset(self):
         return published_sample_contents_queryset(
             locale=self.request.query_params.get('locale'),
-            experience_level=self.request.query_params.get('experience_level'),
+            experience_band=requested_experience_band(self.request, default=None),
         )
 
     def list(self, request, *args, **kwargs):
@@ -162,9 +175,6 @@ class CvPositionOptionListView(PublicCatalogCacheMixin, generics.ListAPIView):
         return active_cv_position_options_queryset(
             self.request.query_params.get('q', '').strip(),
             locale=requested_locale(self.request),
-            experience_level=self.request.query_params.get(
-                'experience_level', 'unspecified'
-            ).strip(),
         )
 
     def list(self, request, *args, **kwargs):
@@ -175,8 +185,8 @@ class CvPositionOptionListView(PublicCatalogCacheMixin, generics.ListAPIView):
     summary='Xem trước nội dung mẫu theo vị trí công việc',
     parameters=[
         OpenApiParameter('position_public_id', str),
-        OpenApiParameter('experience_level', str),
-        OpenApiParameter('source', str, description='sample | blueprint'),
+        OpenApiParameter('experience_band', str, enum=ExperienceBand.values),
+        OpenApiParameter('source', str, description='sample | blank'),
         OpenApiParameter('template_public_id', str),
         OpenApiParameter('theme_color', str),
     ],
@@ -190,7 +200,7 @@ class CvPositionPreviewView(PublicCatalogCacheMixin, APIView):
         started_at = monotonic()
         public_id = request.query_params.get('position_public_id', '').strip()
         locale = requested_locale(request)
-        experience_level = request.query_params.get('experience_level', 'unspecified').strip()
+        experience_band = requested_experience_band(request)
         source = request.query_params.get('source', 'sample').strip()
         template_public_id = request.query_params.get('template_public_id', '').strip()
         theme_color = request.query_params.get('theme_color', '').strip().upper()
@@ -204,7 +214,7 @@ class CvPositionPreviewView(PublicCatalogCacheMixin, APIView):
                 'position_public_id': None,
                 'name_vi': '',
                 'locale': locale,
-                'experience_level': experience_level,
+                'experience_band': experience_band,
                 'source': 'blank',
                 'sample_content_public_id': None,
                 'schema_version': 1,
@@ -212,17 +222,16 @@ class CvPositionPreviewView(PublicCatalogCacheMixin, APIView):
             }
         else:
             try:
-                position = active_cv_position_options_queryset(
-                    locale=locale,
-                    experience_level=experience_level,
-                ).get(public_id=public_id)
+                position = active_cv_position_options_queryset(locale=locale).get(
+                    public_id=public_id
+                )
             except JobCategory.DoesNotExist as error:
                 raise Http404 from error
             try:
                 resolved = resolve_position_content(
                     position=position,
                     locale=locale,
-                    experience_level=experience_level,
+                    experience_band=experience_band,
                 )
             except PositionContentUnavailable as error:
                 raise ValidationError({'locale': str(error)}) from error
@@ -269,7 +278,7 @@ class CvPositionPreviewView(PublicCatalogCacheMixin, APIView):
                 str(version.pk if version else 'missing'),
                 locale,
                 public_id or 'blank',
-                experience_level,
+                experience_band,
                 content_digest,
             ]
         )

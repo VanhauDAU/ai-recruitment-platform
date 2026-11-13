@@ -3,7 +3,7 @@ from django.contrib import admin
 from .models import (
     CvCategory,
     CvColor,
-    CvContentBlueprint,
+    CvPositionProfile,
     CvSampleContent,
     CvTemplate,
     CvTemplateCategoryLink,
@@ -48,22 +48,26 @@ class CvColorAdmin(admin.ModelAdmin):
     readonly_fields = ['public_id']
 
 
-@admin.register(CvContentBlueprint)
-class CvContentBlueprintAdmin(admin.ModelAdmin):
-    list_display = ['locale', 'experience_level', 'is_active', 'updated_at']
-    list_filter = ['locale', 'experience_level', 'is_active']
-    search_fields = ['summary_title', 'summary_template', 'experience_title']
+@admin.register(CvPositionProfile)
+class CvPositionProfileAdmin(admin.ModelAdmin):
+    list_display = ['job_category', 'is_active', 'sort_order', 'updated_at']
+    list_filter = ['is_active']
+    search_fields = ['job_category__name', 'job_category__slug']
+    autocomplete_fields = ['job_category']
     readonly_fields = ['public_id', 'created_at', 'updated_at']
-
-    def save_model(self, request, obj, form, change):
-        obj.updated_by = request.user
-        super().save_model(request, obj, form, change)
 
 
 @admin.register(CvSampleContent)
 class CvSampleContentAdmin(admin.ModelAdmin):
-    list_display = ['title', 'job_category', 'locale', 'experience_level', 'status', 'updated_at']
-    list_filter = ['locale', 'experience_level', 'status']
-    search_fields = ['title', 'position_name_vi', 'job_category__name']
-    autocomplete_fields = ['job_category']
+    list_display = [
+        'title',
+        'position_profile',
+        'locale',
+        'experience_band',
+        'status',
+        'updated_at',
+    ]
+    list_filter = ['locale', 'experience_band', 'status']
+    search_fields = ['title', 'position_profile__job_category__name']
+    autocomplete_fields = ['position_profile']
     readonly_fields = ['public_id', 'created_at', 'updated_at']
