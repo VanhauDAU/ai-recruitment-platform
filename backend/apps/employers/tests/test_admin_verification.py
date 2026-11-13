@@ -41,7 +41,6 @@ from ..services import (
     confirm_verification_decision,
     ensure_recruiter_candidate_data_access,
     get_or_create_verification_case,
-    reconcile_completed_verification_cases,
     reconcile_recruiter_verification,
     recruiter_is_approved,
     recruiter_posting_readiness,
@@ -530,20 +529,6 @@ class EmployerAccountVerificationTests(APITestCase):
         )
         self.assertEqual(duplicate_company.tax_code, self.company.tax_code)
         self.assertEqual(duplicate_company.updated_at, duplicate_company_updated_at)
-
-    def test_reconciliation_never_creates_a_final_decision(self):
-        reconciled = reconcile_completed_verification_cases()
-
-        self.first_case.refresh_from_db()
-        self.assertEqual(reconciled, [])
-        self.assertEqual(self.first_case.status, EmployerVerificationCase.Status.PENDING)
-        self.assertFalse(
-            EmployerVerificationEvent.objects.filter(
-                verification_case=self.first_case,
-                event_type=EmployerVerificationEvent.EventType.APPROVED,
-                payload__source='reconciliation',
-            ).exists()
-        )
 
     @patch('apps.employers.tasks.tax_lookup.lookup_company_tax_evidence.delay')
     def test_admin_can_refresh_verification_tax_lookup(self, delay):

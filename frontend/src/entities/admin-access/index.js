@@ -33,7 +33,6 @@ export {
   auditActionLabel,
   auditSourceLabel,
   AUDIT_ACTION_LABELS,
-  SELF_SERVICE_ACTIONS,
 } from './model/audit-action-labels'
 export { groupPermissionsByModule } from './model/group-by-module'
 export { MODULE_LABELS } from './model/module-labels'

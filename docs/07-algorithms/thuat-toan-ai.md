@@ -14,9 +14,7 @@ lặp lại.
 | AI tạo tin tuyển dụng | LLM structured output qua `ai_core` | `apps/jobs/services/ai_generation.py` | mục 5, [`ai-job-post-generation.md`](./ai-job-post-generation.md) |
 | Chatbot FAQ ứng viên | Retrieval, không sinh LLM | — | [`chatbot-ung-vien-faq.md`](./chatbot-ung-vien-faq.md) |
 
-Không có model ML tự train trong production. `backend/requirements-ai.txt`
-(PyMuPDF, scikit-learn, joblib, pandas) là dependency tùy chọn cho hướng nghiên
-cứu, không được image hay code ứng dụng import.
+Không có model ML tự train trong production.
 
 ## 1. Import và cấu trúc hóa CV
 

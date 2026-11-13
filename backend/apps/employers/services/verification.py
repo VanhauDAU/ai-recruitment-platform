@@ -963,12 +963,6 @@ def reconcile_recruiter_verification(recruiter, *, source):
     return reconcile_verification_case(case, source=source)
 
 
-def reconcile_completed_verification_cases():
-    """Deprecated compatibility hook; auto-approval is permanently disabled."""
-
-    return []
-
-
 def _tax_advisory(case, *, evidences=None):
     if evidences is None:
         evidence = (
@@ -1576,7 +1570,6 @@ __all__ = [
     'confirm_verification_decision',
     'confirm_verification_lifecycle_action',
     'get_or_create_verification_case',
-    'reconcile_completed_verification_cases',
     'reconcile_recruiter_verification',
     'reconcile_verification_case',
     'record_verification_upload',

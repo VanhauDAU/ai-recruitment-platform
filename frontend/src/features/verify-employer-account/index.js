@@ -6,7 +6,6 @@ export { default as EmployerVerificationLifecycleAlert } from './ui/EmployerVeri
 export { default as EmployerTrustBadgeEligibility } from './ui/EmployerTrustBadgeEligibility'
 export { getEmployerVerificationProgress } from './model/verification-progress'
 export {
-  EMPLOYER_ACCOUNT_VERIFICATION_LEVEL_STEPS,
   getEmployerAccountVerificationLevel,
   isEmployerVerificationInvalidated,
 } from './model/account-verification-level'

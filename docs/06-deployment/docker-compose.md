@@ -165,8 +165,6 @@ mount; build cache chỉ hỗ trợ build nhanh và không được sử dụng 
 
 - Ảnh backend cài sẵn system libs cho WeasyPrint (pango/cairo/gdk-pixbuf) và
   fonts Noto/DejaVu — render PDF tiếng Việt hoạt động trong container.
-- `requirements-ai.txt` (PyMuPDF, scikit-learn...) chưa đưa vào image; khi làm
-  Giai đoạn AI sẽ thêm build arg riêng.
 - `scripts/check_all.sh` tự fallback chạy backend qua compose khi máy không có
   `backend/venv`.
 - `createsuperuser` + `bootstrap_admin_mfa` là break-glass có quyền máy chủ,
