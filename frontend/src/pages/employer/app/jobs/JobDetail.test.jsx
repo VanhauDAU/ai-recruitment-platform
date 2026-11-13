@@ -6,11 +6,9 @@ import JobDetail from './JobDetail'
 
 const mocks = vi.hoisted(() => ({
   getEmployerJob: vi.fn(),
-  getEmployerActiveServices: vi.fn(),
-  getEmployerServiceHistory: vi.fn(),
-  getEmployerServiceInventory: vi.fn(),
   getJobPostingContext: vi.fn(),
   getRecruiterApplications: vi.fn(),
+  reopenEmployerJob: vi.fn(),
   readinessState: {
     readiness: {
       jobWorkspaceReady: true,
@@ -46,21 +44,11 @@ vi.mock('@/entities/job', () => ({
     employerDetail: (id) => ['jobs', 'employer-detail', id],
     postingContext: ['jobs', 'posting-context'],
   },
-  reopenEmployerJob: vi.fn(),
+  reopenEmployerJob: mocks.reopenEmployerJob,
 }))
 vi.mock('@/entities/employer-profile', async (importOriginal) => ({
   ...await importOriginal(),
   useEmployerReadiness: () => mocks.readinessState,
-}))
-vi.mock('@/entities/service-package', () => ({
-  activateEmployerService: vi.fn(),
-  createEmployerJobAlert: vi.fn(),
-  getEmployerActiveServices: mocks.getEmployerActiveServices,
-  getEmployerServiceHistory: mocks.getEmployerServiceHistory,
-  getEmployerServiceInventory: mocks.getEmployerServiceInventory,
-  previewEmployerJobAlert: vi.fn(),
-  previewEmployerServiceActivation: vi.fn(),
-  refreshEmployerJobService: vi.fn(),
 }))
 vi.mock('./JobApplicationsWorkspace', () => ({
   default: ({ applications }) => (
@@ -69,7 +57,14 @@ vi.mock('./JobApplicationsWorkspace', () => ({
     ))}</div>
   ),
 }))
-vi.mock('./JobDetailHeader', () => ({ default: ({ job }) => <h1>{job.title}</h1> }))
+vi.mock('./JobDetailHeader', () => ({
+  default: ({ job, onDeadlineAction }) => (
+    <>
+      <h1>{job.title}</h1>
+      <button type="button" onClick={() => onDeadlineAction('reopen')}>Mô phỏng mở lại</button>
+    </>
+  ),
+}))
 vi.mock('./JobInformationPanel', () => ({ default: () => <p>Thông tin tin tuyển dụng</p> }))
 
 function LocationProbe() {
@@ -110,16 +105,7 @@ describe('JobDetail candidate-data boundary', () => {
       default_deadline_days: 30,
       max_deadline_days: 90,
       max_public_lifetime_days: 90,
-      services: {
-        activation_enabled: false,
-        refresh_enabled: false,
-        alert_enabled: false,
-        metrics_enabled: false,
-      },
     })
-    mocks.getEmployerActiveServices.mockReset().mockResolvedValue([])
-    mocks.getEmployerServiceHistory.mockReset().mockResolvedValue({ count: 0, results: [] })
-    mocks.getEmployerServiceInventory.mockReset().mockResolvedValue([])
     mocks.getRecruiterApplications.mockReset().mockResolvedValue([{
       public_id: 'application_1',
       candidate_name: 'Nguyễn Minh Anh',
@@ -144,6 +130,70 @@ describe('JobDetail candidate-data boundary', () => {
     expect(accessError
       ? screen.getByText('Không thể kiểm tra quyền truy cập')
       : screen.getByText('Dữ liệu ứng viên đang được bảo vệ')).toBeInTheDocument()
+  })
+
+  it('explains to the owner why candidates cannot see a held job', async () => {
+    mocks.getEmployerJob.mockResolvedValue({
+      public_id: 'job_1',
+      title: 'Kỹ sư Frontend',
+      status: 'active',
+      application_count: 0,
+      view_count: 0,
+      visibility_hold: {
+        kind: 'moderation',
+        code: 'manual_review',
+        label: 'Tạm ẩn để rà soát nội dung',
+        held_at: '2026-11-12T08:00:00+07:00',
+        reason_code: 'fraud_risk',
+        reason_label: 'Có dấu hiệu lừa đảo',
+      },
+    })
+    renderPage('job')
+
+    const notice = await screen.findByTestId('job-visibility-hold')
+    expect(notice).toHaveTextContent('Tin đang bị quản trị viên tạm ẩn')
+    expect(notice).toHaveTextContent('Tạm ẩn để rà soát nội dung')
+    expect(notice).toHaveTextContent('Có dấu hiệu lừa đảo')
+  })
+
+  it('shows no hold notice for a job candidates can see', async () => {
+    renderPage('job')
+
+    expect(await screen.findByRole('heading', { name: 'Kỹ sư Frontend' })).toBeInTheDocument()
+    expect(screen.queryByTestId('job-visibility-hold')).not.toBeInTheDocument()
+  })
+
+  it('reopens a closed job only with the accepted commitment version', async () => {
+    mocks.getEmployerJob.mockResolvedValue({
+      public_id: 'job_1',
+      title: 'Kỹ sư Frontend',
+      status: 'closed',
+      deadline: '2099-01-15',
+      application_count: 0,
+      view_count: 0,
+    })
+    mocks.getJobPostingContext.mockResolvedValue({
+      default_deadline_days: 30,
+      max_deadline_days: 90,
+      max_public_lifetime_days: 90,
+      responsibility_statement: { version: '2026-11', text: 'Tôi cam kết chịu trách nhiệm.' },
+    })
+    mocks.reopenEmployerJob.mockReset().mockResolvedValue({ public_id: 'job_1', status: 'active' })
+    renderPage('job')
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Mô phỏng mở lại' }))
+    const commitment = await screen.findByRole('checkbox', { name: 'Tôi cam kết chịu trách nhiệm.' })
+    fireEvent.click(screen.getByRole('button', { name: 'Mở lại tin' }))
+    expect(mocks.reopenEmployerJob).not.toHaveBeenCalled()
+
+    fireEvent.click(commitment)
+    fireEvent.click(screen.getByRole('button', { name: 'Mở lại tin' }))
+
+    await waitFor(() => expect(mocks.reopenEmployerJob).toHaveBeenCalledWith(
+      'job_1',
+      '2099-01-15',
+      '2026-11',
+    ))
   })
 
   it('removes previously rendered candidate PII when access changes from true to false', async () => {
@@ -171,41 +221,10 @@ describe('JobDetail candidate-data boundary', () => {
     expect(screen.getByText('Dữ liệu ứng viên đang được bảo vệ')).toBeInTheDocument()
   })
 
-  it('shows active paid-service attribution in the dedicated job tab', async () => {
-    mocks.getJobPostingContext.mockResolvedValue({
-      default_deadline_days: 30,
-      max_deadline_days: 90,
-      max_public_lifetime_days: 90,
-      services: {
-        activation_enabled: true,
-        refresh_enabled: false,
-        alert_enabled: false,
-        metrics_enabled: true,
-      },
-    })
-    mocks.getEmployerServiceHistory.mockResolvedValue({ count: 1, results: [{
-      public_id: 'jsa_featured',
-      package_name: 'Tin nổi bật 14 ngày',
-      job_public_id: 'job_1',
-      job_title: 'Kỹ sư Frontend',
-      job_status: 'active',
-      status: 'active',
-      starts_at: '2026-08-13T00:00:00Z',
-      ends_at: '2026-08-27T00:00:00Z',
-      items: [{ capability: 'sponsored_placement', name: 'Vị trí tài trợ', quantity: 1, remaining_quantity: 1 }],
-      metrics: { available: true, impressions: 420, views: 35, saves: 8, applies: 3 },
-    }] })
-
+  it('falls back to the CV tab for an unknown active_tab', async () => {
     renderPage('services')
 
-    expect(await screen.findByText('Tin nổi bật 14 ngày')).toBeVisible()
-    fireEvent.click(screen.getByText('Chi tiết', { exact: true }).closest('button'))
-    expect(screen.getByText('420')).toBeVisible()
-    expect(screen.getByText(/không phải mức tăng thuần/i)).toBeVisible()
-    expect(mocks.getEmployerServiceHistory).toHaveBeenCalledWith({
-      job_public_id: 'job_1',
-      ordering: '-starts_at',
-      page_size: 100,
-    })
+    expect(await screen.findByText('Dữ liệu ứng viên đang được bảo vệ')).toBeInTheDocument()
+    expect(screen.queryByText('Dịch vụ & hiệu quả')).not.toBeInTheDocument()
   })
 })

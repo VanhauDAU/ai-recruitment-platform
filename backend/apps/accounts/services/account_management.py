@@ -1185,7 +1185,7 @@ def _confirm_account_status(
             )
             job_qs = Job.objects.filter(
                 pk__in=job_ids,
-                status__in={Job.Status.DRAFT, Job.Status.PENDING, Job.Status.ACTIVE},
+                status__in={Job.Status.DRAFT, Job.Status.ACTIVE},
             )
             held_campaign_count = campaign_qs.count()
             held_job_count = job_qs.count()
@@ -1209,7 +1209,7 @@ def _confirm_account_status(
             job_qs = Job.objects.filter(
                 pk__in=job_ids,
                 policy_hold=Job.PolicyHold.NONE,
-                status__in={Job.Status.DRAFT, Job.Status.PENDING, Job.Status.ACTIVE},
+                status__in={Job.Status.DRAFT, Job.Status.ACTIVE},
             )
             held_campaign_count = campaign_qs.count()
             held_job_count = job_qs.count()

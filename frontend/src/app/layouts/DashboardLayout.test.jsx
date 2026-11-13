@@ -96,7 +96,7 @@ describe('DashboardLayout admin access', () => {
     )
 
     await user.click(screen.getByRole('button', { name: /^Tin tuyển dụng/ }))
-    expect(screen.getByText('Tin chờ duyệt')).toBeInTheDocument()
+    expect(screen.getByText('Tin có báo cáo chờ')).toBeInTheDocument()
     expect(screen.getByText('Tài khoản cá nhân')).toBeInTheDocument()
     expect(screen.queryByText('Hệ thống')).not.toBeInTheDocument()
     expect(screen.getByText('Kiểm duyệt tin · Nhân viên')).toBeInTheDocument()
@@ -131,10 +131,10 @@ describe('DashboardLayout admin access', () => {
     expect(within(navigation).queryByText('Bảng điều khiển')).not.toBeInTheDocument()
     expect(screen.queryByText('Thông tin cá nhân')).not.toBeInTheDocument()
 
-    expect(screen.getByText('Nội dung & dịch vụ')).toBeInTheDocument()
+    expect(screen.getByText('Nội dung')).toBeInTheDocument()
     expect(screen.queryByText('Danh mục')).not.toBeInTheDocument()
 
-    await user.click(screen.getByText('Nội dung & dịch vụ'))
+    await user.click(screen.getByText('Nội dung'))
     await user.click(screen.getByText('Cẩm nang nghề nghiệp'))
 
     expect(await screen.findByText('Danh mục')).toBeInTheDocument()
@@ -157,7 +157,7 @@ describe('DashboardLayout admin access', () => {
       </MemoryRouter>,
     )
 
-    await user.click(screen.getByText('Nội dung & dịch vụ'))
+    await user.click(screen.getByText('Nội dung'))
     const guideButton = screen.getByRole('button', { name: /^Cẩm nang/ })
     vi.spyOn(guideButton, 'getBoundingClientRect').mockReturnValue({
       top: 240,
@@ -218,7 +218,7 @@ describe('DashboardLayout admin access', () => {
       </MemoryRouter>,
     )
 
-    const contentSection = screen.getByRole('button', { name: /Nội dung & dịch vụ/ })
+    const contentSection = screen.getByRole('button', { name: /^Nội dung/ })
     const accountSection = screen.getByRole('button', { name: /Doanh nghiệp/ })
     await user.click(contentSection)
     expect(contentSection).toHaveAttribute('aria-expanded', 'true')

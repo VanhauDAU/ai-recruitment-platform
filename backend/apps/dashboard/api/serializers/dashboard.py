@@ -34,7 +34,6 @@ class EmployerDashboardAccountSerializer(serializers.Serializer):
 class EmployerDashboardSummarySerializer(serializers.Serializer):
     jobs_total = serializers.IntegerField()
     jobs_active = serializers.IntegerField()
-    jobs_pending = serializers.IntegerField()
     jobs_draft = serializers.IntegerField()
     job_views = serializers.IntegerField()
     applications_total = serializers.IntegerField()

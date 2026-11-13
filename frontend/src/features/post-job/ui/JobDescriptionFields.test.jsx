@@ -47,7 +47,7 @@ describe('JobDescriptionFields — quyền lợi bổ sung', () => {
 
     expect(badge().textContent).toBe('2')
     // getFieldsValue() không tham số chỉ trả về field đang đăng ký — đây cũng là payload onFinish
-    // dùng khi bấm "Gửi duyệt tin", nên field không được unmount theo panel.
+    // dùng khi bấm "Đăng tin", nên field không được unmount theo panel.
     expect(formRef.current.getFieldsValue().benefit_ids).toEqual([1, 3])
   })
 })

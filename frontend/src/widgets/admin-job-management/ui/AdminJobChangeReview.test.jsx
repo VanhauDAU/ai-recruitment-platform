@@ -2,10 +2,10 @@ import { render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import AdminJobChangeReview from './AdminJobChangeReview'
 
-function renderReview(pendingChanges) {
+function renderReview(contentChanges) {
   return render(
     <AdminJobChangeReview
-      job={{ pending_changes: pendingChanges }}
+      job={{ content_changes: contentChanges }}
       onToggle={vi.fn()}
       openSection="changes"
     />,
@@ -42,8 +42,8 @@ describe('AdminJobChangeReview', () => {
     expect(screen.getByText('Backend Engineer')).toBeVisible()
     expect(screen.getByText('Senior Backend Engineer')).toBeVisible()
     expect(screen.getByText('Go')).toBeVisible()
-    expect(screen.getAllByText('Bản đã duyệt')).toHaveLength(2)
-    expect(screen.getAllByText('Bản gửi duyệt')).toHaveLength(2)
+    expect(screen.getAllByText('Bản đã đăng')).toHaveLength(2)
+    expect(screen.getAllByText('Bản hiện tại')).toHaveLength(2)
   })
 
   it('states that restricted contact edits exist without revealing them', () => {
@@ -67,7 +67,7 @@ describe('AdminJobChangeReview', () => {
       changes: [],
     })
 
-    expect(screen.getByText('Chưa có bản đã duyệt để so sánh')).toBeVisible()
-    expect(screen.queryByText('Bản gửi duyệt')).not.toBeInTheDocument()
+    expect(screen.getByText('Chưa có bản đã đăng để so sánh')).toBeVisible()
+    expect(screen.queryByText('Bản hiện tại')).not.toBeInTheDocument()
   })
 })

@@ -29,7 +29,7 @@ describe('admin navigation tree', () => {
     )
     const labels = flattenAdminNavigation(tree).map((leaf) => leaf.label)
 
-    expect(labels).toContain('Tin chờ duyệt')
+    expect(labels).toContain('Tin có báo cáo chờ')
     expect(labels).toContain('Báo cáo vi phạm')
     expect(labels).toContain('Tài khoản cá nhân')
     expect(labels).not.toContain('Tất cả công ty')
@@ -217,29 +217,5 @@ describe('admin navigation tree', () => {
       .not.toContain('announcements')
     expect(flattenAdminNavigation(allowed).find((leaf) => leaf.key === 'announcements')?.href)
       .toBe('/admin/app/announcements')
-  })
-
-  it('exposes active services only to entitlement readers', () => {
-    const denied = buildAdminNavigation(
-      ADMIN_NAVIGATION,
-      ADMIN_ROUTES,
-      access(['service_catalog.view']),
-    )
-    const allowed = buildAdminNavigation(
-      ADMIN_NAVIGATION,
-      ADMIN_ROUTES,
-      access(['service_catalog.view', 'service_entitlement.view']),
-    )
-
-    expect(flattenAdminNavigation(denied).map((leaf) => leaf.key))
-      .not.toContain('service-activations')
-    expect(flattenAdminNavigation(allowed).find(
-      (leaf) => leaf.key === 'service-activations',
-    )?.href).toBe('/admin/app/services?tab=activations')
-    expect(findActiveAdminNavigation(
-      allowed,
-      '/admin/app/services',
-      '?tab=activations&activation_status=active',
-    )?.key).toBe('service-activations')
   })
 })

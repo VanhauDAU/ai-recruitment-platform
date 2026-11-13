@@ -144,14 +144,14 @@ export const ADMIN_NAVIGATION = [
         children: [
           {
             key: 'job-moderation',
-            label: 'Tin chờ duyệt',
+            label: 'Tất cả tin',
             routeRef: 'jobModeration',
           },
           {
-            key: 'all-jobs',
-            label: 'Tất cả tin',
+            key: 'reported-jobs',
+            label: 'Tin có báo cáo chờ',
             routeRef: 'jobModeration',
-            query: { job_scope: 'all' },
+            query: { job_scope: 'reported' },
           },
           {
             key: 'held-jobs',
@@ -183,7 +183,7 @@ export const ADMIN_NAVIGATION = [
   },
   {
     key: 'content-business',
-    label: 'Nội dung & dịch vụ',
+    label: 'Nội dung',
     iconKey: 'blog',
     children: [
       {
@@ -204,26 +204,6 @@ export const ADMIN_NAVIGATION = [
           { key: 'knowledgebase-review', label: 'Hàng chờ duyệt', routeRef: 'knowledgebase', query: { revision_status: 'IN_REVIEW' }, access: { allOf: ['knowledgebase.review'] } },
           { key: 'knowledgebase-overdue', label: 'Cần rà soát', routeRef: 'knowledgebase', query: { review_due: 'overdue' } },
         ],
-      },
-      {
-        key: 'services',
-        label: 'Dịch vụ',
-        children: [
-          { key: 'service-categories', label: 'Danh mục', routeRef: 'services' },
-          { key: 'service-packages', label: 'Gói dịch vụ', routeRef: 'services', query: { tab: 'packages' } },
-          {
-            key: 'service-activations',
-            label: 'Dịch vụ đang chạy',
-            routeRef: 'services',
-            query: { tab: 'activations' },
-            access: { allOf: ['service_entitlement.view'] },
-          },
-        ],
-      },
-      {
-        key: 'consultation-leads',
-        label: 'Yêu cầu tư vấn',
-        routeRef: 'consultationLeads',
       },
       {
         key: 'announcements',

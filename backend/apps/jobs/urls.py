@@ -8,7 +8,6 @@ from .api.views import (
     AdminJobReportListView,
     AdminJobReportResolveView,
     AdminJobReportReverseView,
-    AdminJobReviewView,
     BenefitListView,
     CandidateJobAlertDetailView,
     CandidateJobAlertListCreateView,
@@ -42,8 +41,6 @@ from .api.views import (
     SavedJobDestroyView,
     SavedJobListCreateView,
     SavedJobRecommendationView,
-    SavedJobRemarketingImpressionView,
-    SavedJobRemarketingLaneView,
 )
 
 urlpatterns = [
@@ -70,11 +67,6 @@ urlpatterns = [
         'admin/moderation/<str:public_id>/decisions/',
         AdminJobDecisionView.as_view(),
         name='admin-job-decision',
-    ),
-    path(
-        'admin/moderation/<str:public_id>/review/',
-        AdminJobReviewView.as_view(),
-        name='admin-job-review',
     ),
     path('categories/', JobCategoryListView.as_view(), name='job-category-list'),
     path('benefits/', BenefitListView.as_view(), name='benefit-list'),
@@ -116,16 +108,6 @@ urlpatterns = [
         'recommendations/by-saved/',
         SavedJobRecommendationView.as_view(),
         name='saved-job-recommendations',
-    ),
-    path(
-        'remarketing/saved/',
-        SavedJobRemarketingLaneView.as_view(),
-        name='saved-job-remarketing-lane',
-    ),
-    path(
-        'remarketing/saved/impressions/',
-        SavedJobRemarketingImpressionView.as_view(),
-        name='saved-job-remarketing-impression',
     ),
     path('saved/', SavedJobListCreateView.as_view(), name='saved-job-list-create'),
     path('saved/<str:public_id>/', SavedJobDestroyView.as_view(), name='saved-job-destroy'),

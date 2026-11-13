@@ -35,7 +35,7 @@ export default function VerificationDecisionImpactSummary({ impact, lifecycle })
         )}
         <Descriptions.Item label="Quyền sau quyết định">
           {lifecycle
-            ? 'Khóa dữ liệu ứng viên và duyệt tin; workspace/tạo/sửa/gửi tin giữ nguyên.'
+            ? 'Khóa dữ liệu ứng viên và quyền đăng tin; workspace và việc tạo, sửa bản nháp giữ nguyên.'
             : 'Backend sẽ tính lại readiness và quyền sau khi commit.'}
         </Descriptions.Item>
         <Descriptions.Item label="Tài nguyên bị tác động">

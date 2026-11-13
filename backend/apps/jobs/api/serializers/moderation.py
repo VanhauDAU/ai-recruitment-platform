@@ -4,7 +4,11 @@ from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import serializers
 
 from ...models import Job, JobModerationEvent, JobStatusHistory
-from ...services import create_job_review_token, job_moderation_state, job_pending_changes
+from ...services import (
+    create_job_review_token,
+    job_moderation_state,
+    job_published_content_changes,
+)
 from .reports import AdminJobReportSerializer
 from .supporting import (
     JobApplicationContactSerializer,
@@ -89,7 +93,7 @@ class AdminJobManagementListSerializer(serializers.ModelSerializer):
     is_publicly_visible = serializers.BooleanField(read_only=True, default=False)
     pending_report_count = serializers.IntegerField(read_only=True, default=0)
     report_count = serializers.IntegerField(read_only=True, default=0)
-    approved_job_count = serializers.IntegerField(read_only=True, default=0)
+    published_job_count = serializers.IntegerField(read_only=True, default=0)
 
     class Meta:
         model = Job
@@ -131,8 +135,7 @@ class AdminJobManagementListSerializer(serializers.ModelSerializer):
             'application_count',
             'pending_report_count',
             'report_count',
-            'approved_job_count',
-            'rejected_reason',
+            'published_job_count',
         ]
         read_only_fields = fields
 
@@ -165,15 +168,6 @@ class AdminJobManagementListSerializer(serializers.ModelSerializer):
         return getattr(obj, 'is_expired_value', obj.is_expired)
 
 
-class AdminJobModerationSerializer(AdminJobManagementListSerializer):
-    """Compatibility name for the original list/review response."""
-
-    description = serializers.CharField(read_only=True)
-
-    class Meta(AdminJobManagementListSerializer.Meta):
-        fields = [*AdminJobManagementListSerializer.Meta.fields, 'description']
-
-
 class AdminJobDetailSerializer(AdminJobManagementListSerializer):
     category_assignments = JobCategoryAssignmentSerializer(many=True, read_only=True)
     job_locations = JobLocationSerializer(many=True, read_only=True)
@@ -189,9 +183,7 @@ class AdminJobDetailSerializer(AdminJobManagementListSerializer):
     review_token = serializers.SerializerMethodField()
     state_actions = serializers.SerializerMethodField()
     blocked_reasons = serializers.SerializerMethodField()
-    approve_blockers = serializers.SerializerMethodField()
-    approve_requirements = serializers.SerializerMethodField()
-    pending_changes = serializers.SerializerMethodField()
+    content_changes = serializers.SerializerMethodField()
     employer_account_level = serializers.SerializerMethodField()
     employer_verification_completed = serializers.SerializerMethodField()
 
@@ -225,15 +217,15 @@ class AdminJobDetailSerializer(AdminJobManagementListSerializer):
             'language_requirements',
             'application_contact',
             'can_view_sensitive_contact',
+            'responsibility_accepted_at',
+            'responsibility_statement_version',
             'status_history',
             'moderation_events',
             'reports',
             'review_token',
             'state_actions',
             'blocked_reasons',
-            'approve_blockers',
-            'approve_requirements',
-            'pending_changes',
+            'content_changes',
             'employer_account_level',
             'employer_verification_completed',
         ]
@@ -266,14 +258,8 @@ class AdminJobDetailSerializer(AdminJobManagementListSerializer):
     def get_blocked_reasons(self, obj):
         return self._state(obj)['blocked_reasons']
 
-    def get_approve_blockers(self, obj):
-        return self._state(obj)['approve_blockers']
-
-    def get_approve_requirements(self, obj):
-        return self._state(obj)['approve_requirements']
-
-    def get_pending_changes(self, obj):
-        return job_pending_changes(
+    def get_content_changes(self, obj):
+        return job_published_content_changes(
             obj,
             include_sensitive=bool(self.context.get('can_view_sensitive_contact')),
         )
@@ -285,25 +271,10 @@ class AdminJobDetailSerializer(AdminJobManagementListSerializer):
         return self.context.get('employer_entitlement', {}).get('verification_completed', False)
 
 
-class AdminJobReviewSerializer(serializers.Serializer):
-    action = serializers.ChoiceField(choices=['approve', 'reject'])
-    reason = serializers.CharField(required=False, allow_blank=True, max_length=3000)
-    reason_code = serializers.ChoiceField(
-        choices=JobModerationEvent.Reason.choices,
-        required=False,
-        allow_blank=True,
-    )
-
-    def validate(self, attrs):
-        if attrs['action'] == 'reject' and not attrs.get('reason', '').strip():
-            raise serializers.ValidationError(
-                {'reason': 'Nhập lý do từ chối để nhà tuyển dụng có thể chỉnh sửa tin.'}
-            )
-        return attrs
-
-
 class AdminJobDecisionSerializer(serializers.Serializer):
-    action = serializers.ChoiceField(choices=JobModerationEvent.Action.choices)
+    action = serializers.ChoiceField(
+        choices=[JobModerationEvent.Action.HIDE, JobModerationEvent.Action.RESTORE]
+    )
     review_token = serializers.CharField(trim_whitespace=True)
     reason_code = serializers.ChoiceField(
         choices=JobModerationEvent.Reason.choices,
@@ -311,7 +282,6 @@ class AdminJobDecisionSerializer(serializers.Serializer):
         allow_blank=True,
     )
     note = serializers.CharField(required=False, allow_blank=True, max_length=3000)
-    deadline = serializers.DateField(required=False, allow_null=True)
     hold = serializers.ChoiceField(
         choices=[
             Job.ModerationHold.MANUAL_REVIEW,
@@ -323,9 +293,8 @@ class AdminJobDecisionSerializer(serializers.Serializer):
     source_report_public_id = serializers.CharField(required=False, allow_blank=True)
 
     def validate(self, attrs):
-        action = attrs['action']
-        if action in {'reject', 'hide'} and not attrs.get('reason_code'):
+        if attrs['action'] == JobModerationEvent.Action.HIDE and not attrs.get('reason_code'):
             raise serializers.ValidationError({'reason_code': 'Chọn lý do xử lý.'})
-        if action in {'reject', 'hide', 'restore'} and not attrs.get('note', '').strip():
+        if not attrs.get('note', '').strip():
             raise serializers.ValidationError({'note': 'Nhập ghi chú xử lý.'})
         return attrs

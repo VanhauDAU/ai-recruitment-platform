@@ -125,6 +125,5 @@ def active_jobs_queryset(include_preview=False, *, at=None):
             'requirements',
             'benefits',
             'work_schedule_note',
-            'rejected_reason',
         )
     return queryset

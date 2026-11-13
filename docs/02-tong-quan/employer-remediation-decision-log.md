@@ -3,7 +3,7 @@
 > **Tài liệu sống:** cập nhật trước khi triển khai một thay đổi mới về luồng,
 > quyền, dữ liệu hoặc rollout.  
 > **Đặc tả canonical:**
-> [Kế hoạch rà soát và khắc phục Employer](../03-database/ke-hoach-ra-soat-va-khac-phuc-employer.md)  
+> [Đặc tả nhà tuyển dụng](../01-phan-tich/dac-ta-nha-tuyen-dung.md)  
 > **Ngày khóa gate ER-0:** 2026-08-10
 
 ## Nguyên tắc

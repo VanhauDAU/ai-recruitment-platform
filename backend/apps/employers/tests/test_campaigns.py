@@ -12,13 +12,6 @@ from apps.applications.models import Application
 from apps.cvs.models import UserCv
 from apps.cvs.services import create_initial_document
 from apps.jobs.models import Job, JobCategory, JobEngagementDaily
-from apps.services.models import (
-    JobServiceActivation,
-    ServiceCategory,
-    ServiceEntitlementUnit,
-    ServicePackage,
-    ServicePackageVersion,
-)
 
 from ..models import (
     CampaignActivity,
@@ -223,7 +216,7 @@ class RecruitmentCampaignApiTests(TestCase):
             status=Job.Status.ACTIVE,
             deadline=timezone.localdate() + timedelta(days=10),
         )
-        pending_campaign = RecruitmentCampaign.objects.create(
+        draft_campaign = RecruitmentCampaign.objects.create(
             owner=self.owner_profile,
             company=self.company,
             name='Backend team',
@@ -232,10 +225,10 @@ class RecruitmentCampaignApiTests(TestCase):
         Job.objects.create(
             posted_by=self.owner,
             company=self.company,
-            campaign=pending_campaign,
-            title='Backend pending',
-            description='Pending review.',
-            status=Job.Status.PENDING,
+            campaign=draft_campaign,
+            title='Backend draft',
+            description='Not published yet.',
+            status=Job.Status.DRAFT,
         )
         candidate = get_user_model().objects.create_user(
             email='campaign-candidate@example.com',
@@ -272,7 +265,6 @@ class RecruitmentCampaignApiTests(TestCase):
 
         listed = self.client.get(reverse('employer-campaign-list'))
         needs_review = self.client.get(reverse('employer-campaign-list'), {'scope': 'needs_review'})
-        pending_jobs = self.client.get(reverse('employer-campaign-list'), {'scope': 'pending_jobs'})
         report = self.client.get(
             reverse('employer-campaign-report', kwargs={'public_id': campaign.public_id})
         )
@@ -282,7 +274,9 @@ class RecruitmentCampaignApiTests(TestCase):
         )
         self.assertEqual(item['job_count'], 2)
         self.assertEqual(item['active_job_count'], 2)
-        self.assertEqual(item['pending_job_count'], 0)
+        self.assertEqual(item['draft_job_count'], 0)
+        self.assertNotIn('pending_job_count', item)
+        self.assertNotIn('rejected_job_count', item)
         self.assertEqual(item['expired_job_count'], 0)
         self.assertEqual(item['candidate_count'], 1)
         self.assertEqual(
@@ -301,7 +295,6 @@ class RecruitmentCampaignApiTests(TestCase):
         self.assertEqual(item['unviewed_application_count'], 1)
         self.assertEqual(item['unviewed_count'], 1)
         self.assertEqual(needs_review.data['count'], 1)
-        self.assertEqual(pending_jobs.data['count'], 1)
         self.assertEqual(report.data['jobs']['total'], 2)
         self.assertEqual(report.data['jobs']['active'], 2)
         self.assertEqual(report.data['jobs']['expired'], 0)
@@ -335,69 +328,6 @@ class RecruitmentCampaignApiTests(TestCase):
             description='Must not become public after resume.',
             status=Job.Status.ACTIVE,
             deadline=timezone.localdate() - timedelta(days=1),
-        )
-        now = timezone.now()
-        service_category = ServiceCategory.objects.create(
-            key='campaign-pause-impact',
-            name_vi='Dịch vụ tin tuyển dụng',
-        )
-        service_package = ServicePackage.objects.create(
-            category=service_category,
-            slug='campaign-pause-priority',
-            name_vi='Tin ưu tiên 14 ngày',
-        )
-        package_version = ServicePackageVersion.objects.create(
-            package=service_package,
-            version_number=1,
-            price=299000,
-        )
-
-        def create_activation(*, key, starts_at, ends_at):
-            unit = ServiceEntitlementUnit.objects.create(
-                company=self.company,
-                package_version=package_version,
-                status=ServiceEntitlementUnit.Status.CONSUMED,
-                source=ServiceEntitlementUnit.Source.MANUAL_GRANT,
-                grant_key=key,
-                unit_number=1,
-                snapshot={'package_name': service_package.name_vi},
-                granted_at=now - timedelta(days=10),
-                activate_by=now + timedelta(days=30),
-                consumed_at=now,
-                created_by=self.owner,
-            )
-            return JobServiceActivation.objects.create(
-                unit=unit,
-                company=self.company,
-                job=job,
-                idempotency_key=key,
-                status=JobServiceActivation.Status.ACTIVE,
-                starts_at=starts_at,
-                ends_at=ends_at,
-                snapshot={'package_name': service_package.name_vi},
-                created_by=self.owner,
-            )
-
-        active_service = create_activation(
-            key='campaign-pause-active',
-            starts_at=now - timedelta(days=2),
-            ends_at=now + timedelta(days=12),
-        )
-        not_started_service = create_activation(
-            key='campaign-pause-future',
-            starts_at=now + timedelta(days=1),
-            ends_at=now + timedelta(days=15),
-        )
-        ended_service = create_activation(
-            key='campaign-pause-ended',
-            starts_at=now - timedelta(days=15),
-            ends_at=now - timedelta(seconds=1),
-        )
-        activation_before_pause = (
-            active_service.status,
-            active_service.starts_at,
-            active_service.ends_at,
-            active_service.updated_at,
         )
         self.client.force_authenticate(self.owner)
         url = reverse('employer-campaign-status', kwargs={'public_id': campaign.public_id})
@@ -433,20 +363,7 @@ class RecruitmentCampaignApiTests(TestCase):
 
         self.assertEqual(impact.status_code, 200, impact.data)
         self.assertEqual(impact.data['active_public_job_count'], 1)
-        self.assertEqual(len(impact.data['active_services']), 1)
-        self.assertEqual(
-            impact.data['active_services'][0],
-            {
-                'public_id': active_service.public_id,
-                'job_public_id': job.public_id,
-                'job_title': job.title,
-                'package_name': service_package.name_vi,
-                'ends_at': active_service.ends_at,
-            },
-        )
-        returned_service_ids = {item['public_id'] for item in impact.data['active_services']}
-        self.assertNotIn(not_started_service.public_id, returned_service_ids)
-        self.assertNotIn(ended_service.public_id, returned_service_ids)
+        self.assertNotIn('active_services', impact.data)
         self.assertEqual(missing_code.status_code, 400)
         self.assertEqual(wrong_code.status_code, 400)
         self.assertEqual(padded_code.status_code, 400)
@@ -459,18 +376,8 @@ class RecruitmentCampaignApiTests(TestCase):
         self.assertEqual(invalid.status_code, 400, invalid.data)
         job.refresh_from_db()
         expired_job.refresh_from_db()
-        active_service.refresh_from_db()
         self.assertEqual(job.status, Job.Status.ACTIVE)
         self.assertEqual(expired_job.status, Job.Status.ACTIVE)
-        self.assertEqual(
-            (
-                active_service.status,
-                active_service.starts_at,
-                active_service.ends_at,
-                active_service.updated_at,
-            ),
-            activation_before_pause,
-        )
         event_types = [item['event_type'] for item in activities.data['results']]
         self.assertIn('campaign_paused', event_types)
         self.assertIn('campaign_resumed', event_types)

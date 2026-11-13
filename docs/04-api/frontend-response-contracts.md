@@ -33,11 +33,11 @@ hoặc cấu trúc database.
 | Picker địa điểm | `GET /api/locations/` | `LocationLookupSerializer` | `id`, `name`, `level`, `parent`, `merged_from` |
 | Picker vị trí chuyên môn | `GET /api/jobs/categories/` | `JobCategoryListSerializer` | `id`, `name`, `logo_url`, `parent`, `category_type` |
 | Job card / kết quả tìm kiếm / việc đã lưu | `GET /api/jobs/` | `PublicJobListSerializer` | định danh public, tiêu đề/công ty, địa điểm, skill, loại việc, kinh nghiệm/cấp bậc/học vấn/tuổi, lương, badge/tier, thời gian đăng |
-| Việc làm tốt nhất trang chủ | `GET /api/jobs/best/?rotation_seed=` | `PublicJobPreviewSerializer` | eligibility pool riêng, pagination + seed luân phiên; không dùng main-list ranking |
+| Việc làm tốt nhất trang chủ | `GET /api/jobs/best/?rotation_seed=` | `PublicJobPreviewSerializer` | chỉ tin `tier=top`, pagination + seed luân phiên; không dùng thứ tự của danh sách chính |
 | Chi tiết / quick view việc làm | `GET /api/jobs/{slug}/` | `JobDetailSerializer` | nội dung chi tiết, thông tin công ty tối thiểu, salary/deadline/view, location/schedule/language và các nhóm view-model |
-| Bảng quản lý tin NTD | `GET /api/jobs/mine/` | `EmployerJobListSerializer` | `public_id`, `title`, `company_name`, `locations_detail`, `employment_type`, `deadline`, `status`, `application_count`, timestamps cần hiển thị |
+| Bảng quản lý tin NTD | `GET /api/jobs/mine/` | `EmployerJobListSerializer` | `public_id`, `title`, `company_name`, `locations_detail`, `employment_type`, `deadline`, `status`, `visibility_hold`, `application_count`, timestamps cần hiển thị |
 | Form tin NTD | `POST/PATCH /api/jobs/mine/...` | `EmployerJobWriteSerializer`; response `EmployerJobDetailSerializer` | dữ liệu form và nested relation, gồm liên hệ nhận hồ sơ; endpoint có `IsEmployer` |
-| Admin duyệt tin | `GET /api/jobs/admin/moderation/{public_id}/`, `POST .../decisions/` | `AdminJobDetailSerializer` / `AdminJobDecisionSerializer` | `review_token`, `state_actions`, `blocked_reasons`, `approve_blockers`, `approve_requirements`; eligibility do backend tính |
+| Admin hậu kiểm tin | `GET /api/jobs/admin/moderation/{public_id}/`, `POST .../decisions/` | `AdminJobDetailSerializer` / `AdminJobDecisionSerializer` | `review_token`, `state_actions` (`hide`/`restore`), `blocked_reasons`, `content_changes`; hành động hợp lệ do backend tính |
 | Readiness nhà tuyển dụng | `GET /api/employer/me/` | `RecruiterProfileSerializer` + readiness selector | Năm field top-level `job_workspace_ready`, `verification_approved`, `candidate_data_access`, `dpa_status`, `blockers`; onboarding legacy chỉ để tương thích |
 | Thẻ yêu cầu cập nhật của tôi | `GET /api/employer/company/update-requests/?scope=mine` | `CompanyUpdateRequestSerializer` | request của actor, `submitted_at`, status/review note, revision và file/media actor được phép mở |
 | Compatibility/audit company scope | `GET /api/employer/company/update-requests/?scope=company` | `CompanyUpdateRequestSerializer` | backend compatibility có redaction; recruiter company settings không gọi/render contract này |
@@ -329,25 +329,36 @@ tác mở khóa cho actor có permission tương ứng. UI không gọi confirm 
 hoặc tự suy trạng thái; mọi thay đổi payload sau preview xóa impact hiện tại và
 bắt preview lại.
 
-### Contract blocker duyệt tin
+### Contract điều kiện đăng tin
 
-`approve` chỉ xuất hiện trong `state_actions` khi `approve_blockers=[]`. Tối
-thiểu có hai blocker employer fail-closed:
+Nhà tuyển dụng đăng tin không qua duyệt trước (ADR-0014). Backend kiểm tra
+điều kiện đăng trong transaction của `submit` và `reopen`; tối thiểu có hai
+blocker fail-closed:
 
 - `verification_required`: verification case chưa `approved`, không thuộc đúng
   recruiter hoặc không khớp company của tin;
 - `dpa_outdated`: recruiter chưa có DPA hợp lệ theo nguồn trạng thái hiện hành.
 
-Khi blocker xuất hiện giữa preview và submit, backend trả HTTP 400 với
-`code=JOB_APPROVAL_BLOCKED` và `blocked_reasons[]`; frontend phải invalidate
-detail và không hiển thị toast thành công. `review_token` bảo vệ revision của
-job nhưng không thay thế việc backend đọc lại verification/DPA/campaign trong
-transaction.
+Khi không đạt, backend trả HTTP 400 với `code=JOB_PUBLICATION_BLOCKED` và
+`blocked_reasons[]`; frontend giữ tin ở bản nháp, hiển thị label từ backend và
+không hiển thị toast thành công. Frontend không tự suy điều kiện đăng.
 
-Frontend map allowlist `verification_required|dpa_outdated` tới deep-link
+Trước điều kiện đăng, backend yêu cầu cam kết chịu trách nhiệm. Frontend hiển
+thị `responsibility_statement.text` của posting context dưới dạng ô xác nhận
+ở form đăng tin nháp và hộp thoại mở lại tin, rồi gửi
+`responsibility_statement_version`. Frontend không giữ bản sao nội dung cam
+kết; khi chưa tải được posting context thì không cho đăng. Lưu thay đổi trên
+tin đang tuyển không hiển thị ô xác nhận.
+
+Khi `visibility_hold` khác `null`, cổng nhà tuyển dụng gắn nhãn "Tạm ẩn" cho
+tin đang tuyển, hiển thị tình trạng và nhóm lý do ở trang chi tiết, và không
+hiển thị các thao tác backend sẽ từ chối (sửa, gia hạn, mở lại, sao chép).
+
+Ở trang chi tiết tin của admin, `blocked_reasons[]` giải thích vì sao tin đang
+không hiển thị với ứng viên. Frontend map allowlist
+`verification_required|dpa_outdated` tới deep-link
 `/admin/app/recruiters/{employer_public_id}?tab=verification` chỉ khi actor có
-`employer_verification.view`. Blocker khác chỉ giữ nút approve disabled và
-label backend; không suy route từ message hoặc company.
+`employer_verification.view`; không suy route từ message hoặc company.
 
 ## Query strategy
 

@@ -22,6 +22,7 @@ from .jobs import (
     EmployerJobPostingContextSerializer,
     EmployerJobWriteSerializer,
     JobDetailSerializer,
+    JobResponsibilityAcknowledgementSerializer,
     JobSerializer,
     PublicJobListSerializer,
     PublicJobPreviewSerializer,
@@ -30,8 +31,6 @@ from .moderation import (
     AdminJobDecisionSerializer,
     AdminJobDetailSerializer,
     AdminJobManagementListSerializer,
-    AdminJobModerationSerializer,
-    AdminJobReviewSerializer,
     JobModerationEventSerializer,
     JobStatusHistoryAdminSerializer,
 )
@@ -73,8 +72,6 @@ from .supporting import (
 
 __all__ = [
     'BenefitSerializer',
-    'AdminJobModerationSerializer',
-    'AdminJobReviewSerializer',
     'AdminJobDecisionSerializer',
     'AdminJobDetailSerializer',
     'AdminJobManagementListSerializer',
@@ -89,6 +86,7 @@ __all__ = [
     'EmployerJobListSerializer',
     'EmployerJobPostingContextSerializer',
     'EmployerJobWriteSerializer',
+    'JobResponsibilityAcknowledgementSerializer',
     'JobApplicationContactSerializer',
     'JobAlertReadSerializer',
     'JobAlertCreateSerializer',

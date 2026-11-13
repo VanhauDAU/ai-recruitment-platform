@@ -82,7 +82,7 @@ export default function CompanyJobs({ company, enabled }) {
   return (
     <CompanyPanel
       title={`Tin tuyển dụng (${jobs.count})`}
-      description="Toàn bộ tin do các nhà tuyển dụng thuộc công ty đăng, bao gồm cả tin nháp, chờ duyệt, đang tuyển và đã kết thúc."
+      description="Toàn bộ tin do các nhà tuyển dụng thuộc công ty đăng, bao gồm cả tin nháp, đang tuyển và đã kết thúc."
     >
       <div className="mb-5 grid gap-3 md:grid-cols-[minmax(240px,2fr)_minmax(210px,1fr)]">
         <Input.Search

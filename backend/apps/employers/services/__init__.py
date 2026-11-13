@@ -86,8 +86,8 @@ from .profiles import (
     ensure_recruiter_job_workspace,
     get_or_create_recruiter,
     recruiter_candidate_data_access_allowed,
-    recruiter_job_approval_state,
     recruiter_job_posting_entitlement,
+    recruiter_job_publication_state,
     recruiter_posting_readiness,
     recruiter_readiness_state,
 )
@@ -194,7 +194,7 @@ __all__ = [
     'get_or_create_recruiter',
     'recruiter_candidate_data_access_allowed',
     'recruiter_has_active_compliance_hold',
-    'recruiter_job_approval_state',
+    'recruiter_job_publication_state',
     'recruiter_badge_eligibility',
     'recruiter_job_posting_entitlement',
     'get_or_create_verification_case',

@@ -29,9 +29,7 @@ class Industry(models.Model):
 
 class Company(models.Model):
     """Pháp nhân tuyển dụng — tách khỏi tài khoản nhà tuyển dụng để nhiều HR
-    dùng chung một hồ sơ công ty. Xem kế hoạch:
-    docs/03-database/ke-hoach-thiet-ke-lai-cong-ty-nha-tuyen-dung.md.
-
+    dùng chung một hồ sơ công ty. Xem docs/01-phan-tich/dac-ta-nha-tuyen-dung.md.
     """
 
     class BusinessType(models.TextChoices):

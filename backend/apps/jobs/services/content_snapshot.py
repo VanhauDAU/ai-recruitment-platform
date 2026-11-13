@@ -1,9 +1,9 @@
-"""Content snapshots that let a reviewer compare a revision with the approved one.
+"""Content snapshots that show what an employer changed after publishing.
 
-An employer edit sends a public job back to the review queue, so moderators need
-to know what actually changed instead of re-reading the whole posting. Every
-approval stores a snapshot of the content it made public; the pending revision is
-diffed against that baseline.
+A job is public as soon as its recruiter publishes it and later edits take
+effect immediately. Every publication stores a snapshot of the content it made
+public, so an administrator handling a report can diff the current content
+against that baseline instead of re-reading the whole posting.
 """
 
 WEEKDAY_LABELS = {
@@ -193,8 +193,8 @@ def diff_job_snapshots(baseline, current):
     return changes
 
 
-def job_pending_changes(job, *, include_sensitive=False):
-    """Describe how the revision on screen differs from the approved content."""
+def job_published_content_changes(job, *, include_sensitive=False):
+    """Describe how the current content differs from what was last published."""
     baseline = job.approved_snapshot or {}
     if not baseline:
         return {

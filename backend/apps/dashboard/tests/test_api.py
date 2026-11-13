@@ -61,7 +61,7 @@ class EmployerDashboardApiTests(APITestCase):
             company=self.company,
             title='Trưởng nhóm bán hàng',
             description='Mô tả công việc',
-            status=Job.Status.PENDING,
+            status=Job.Status.DRAFT,
             view_count=10,
         )
         self.client.force_authenticate(user=self.user)
@@ -74,7 +74,8 @@ class EmployerDashboardApiTests(APITestCase):
         self.assertTrue(response.data['account']['verification']['account_ready'])
         self.assertEqual(response.data['summary']['jobs_total'], 2)
         self.assertEqual(response.data['summary']['jobs_active'], 1)
-        self.assertEqual(response.data['summary']['jobs_pending'], 1)
+        self.assertEqual(response.data['summary']['jobs_draft'], 1)
+        self.assertNotIn('jobs_pending', response.data['summary'])
         self.assertEqual(response.data['summary']['job_views'], 130)
         self.assertEqual(response.data['summary']['applications_total'], 0)
         self.assertEqual(

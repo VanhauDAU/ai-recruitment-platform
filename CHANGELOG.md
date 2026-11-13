@@ -6,6 +6,216 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ## [Unreleased]
 
+### 2026-11-13
+
+#### Changed — Tối ưu thời gian CI (#162)
+
+- Backend test chạy song song bằng `pytest-xdist` (`-n auto --dist loadfile`;
+  `PYTEST_WORKERS=0` để chạy tuần tự), dùng MD5 password hasher chỉ trong test
+  settings và PostgreSQL CI trên tmpfs với fsync tắt.
+- Frontend unit và E2E chia shard; E2E CI chạy trên bundle production
+  (`PLAYWRIGHT_WEB_SERVER=preview`) và cho phép một lần retry, test cần retry bị
+  báo `flaky`.
+- Cập nhật dependency frontend có lỗ hổng, giữ nguyên bundle budget.
+
+#### Removed — Gói dịch vụ, quyền lợi và yêu cầu tư vấn (ADR-0015)
+
+- Xóa API `/api/services/*` (catalogue gói, phiên bản, cấp lượt, kích hoạt dịch
+  vụ cho tin, làm mới tin, thông báo việc làm trả phí, audit, yêu cầu tư vấn) và
+  `/api/jobs/remarketing/saved/*`. Migration `services.0012` xóa 15 bảng; dữ
+  liệu không khôi phục được, cần sao lưu trước khi chạy.
+- Danh sách việc làm chỉ còn thứ tự tự nhiên: nhãn `tier` do quản trị viên gán,
+  rồi thời điểm đăng. Box "Việc làm tốt nhất" chỉ nhận tin `tier=top`. Nhãn
+  `tier`, `is_hot`, `is_urgent`, `has_flash_badge` và object `presentation` giữ
+  nguyên.
+- Posting context bỏ object `services`; pause impact của chiến dịch bỏ
+  `active_services`.
+- Bỏ 10 quyền admin `consultation_lead.*`, `service_catalog.*`,
+  `service_entitlement.*`, `service_audit.view` (`accounts.0029` đánh dấu
+  deprecated) và phòng ban mẫu "Dịch vụ nhà tuyển dụng".
+- Bỏ 3 tác vụ Celery beat, định tuyến hàng đợi và 10 biến môi trường của mảng
+  dịch vụ.
+- Frontend: bỏ trang báo giá, trang dịch vụ của nhà tuyển dụng, quản trị gói
+  dịch vụ và lead tư vấn, form và nút tư vấn nổi, lane remarketing việc đã lưu,
+  tab dịch vụ trong chi tiết tin và chiến dịch.
+- Xóa thư mục `backend/apps/services` và bỏ app khỏi `INSTALLED_APPS`.
+  Migration `jobs.0049` xóa content type, quyền Django, nhật ký admin và bản
+  ghi `django_migrations` còn sót của app. Chỉ triển khai sau khi
+  `services.0012` đã chạy ở môi trường đó.
+
+#### Added — Cam kết khi đăng tin và trạng thái tạm ẩn cho nhà tuyển dụng
+
+- Đăng tin nháp và mở lại tin đã đóng yêu cầu `responsibility_statement_version`
+  khớp bản cam kết đang có hiệu lực; thiếu hoặc sai trả
+  `JOB_RESPONSIBILITY_REQUIRED`. Posting context trả `responsibility_statement`;
+  tin lưu `responsibility_accepted_at` và `responsibility_statement_version`
+  (`jobs.0048`). Form đăng tin và hộp thoại mở lại tin có ô xác nhận; trang chi
+  tiết tin của admin hiển thị thời điểm nhà tuyển dụng cam kết.
+- API tin của nhà tuyển dụng trả `visibility_hold` (loại, thời điểm, nhóm lý
+  do, không gồm ghi chú nội bộ); báo cáo hiệu quả tin của chiến dịch trả
+  `visibility_held`. Cổng nhà tuyển dụng gắn nhãn "Tạm ẩn", giải thích ở trang
+  chi tiết và ẩn các thao tác bị từ chối khi tin đang tạm ẩn.
+
+#### Changed — Hậu kiểm tin tuyển dụng thay cho duyệt trước (ADR-0014)
+
+- Nhà tuyển dụng đăng tin là tin công khai ngay: `submit` và `reopen` chuyển
+  tin sang `active`, khởi tạo hoặc tiếp tục vòng đời hiển thị và chụp snapshot
+  nội dung. Sửa tin đang tuyển có hiệu lực tại chỗ, không đổi `published_at`.
+- Điều kiện trước đây kiểm tra khi duyệt nay chặn ngay thao tác đăng: hồ sơ xác
+  thực đã được chấp nhận cho đúng công ty, DPA còn hiệu lực, không có compliance
+  hold và chiến dịch đang chạy. Không đạt thì API trả `JOB_PUBLICATION_BLOCKED`.
+- Trang quản trị tin chỉ còn tạm ẩn và khôi phục; chi tiết tin trả
+  `content_changes` so với nội dung của lần đăng gần nhất và
+  `published_job_count` thay cho `approved_job_count`.
+- Tin nháp đã từng được đăng không còn xóa được, vì có thể đang giữ hồ sơ ứng
+  tuyển.
+
+#### Changed — Giao diện theo mô hình hậu kiểm
+
+- Cổng nhà tuyển dụng: nút "Đăng tin" thay "Gửi duyệt tin", hiển thị lý do khi
+  backend trả
+  `JOB_PUBLICATION_BLOCKED`; bỏ nhãn, bộ lọc và số đếm "Chờ duyệt", "Từ chối".
+- Cổng quản trị: danh sách tin mặc định hiển thị tất cả tin, thêm phạm vi "Có
+  báo cáo chờ"; trang chi tiết chỉ còn tạm ẩn và khôi phục, tab "Thay đổi" so
+  nội dung hiện tại với bản đã đăng. Xóa feature `review-job-submission`.
+
+#### Removed — Quy trình duyệt tin
+
+- Trạng thái `pending`, `rejected` và cột `rejected_reason` của tin; các hàm
+  `approve_job`, `reject_job`; endpoint `/api/jobs/admin/moderation/{id}/review/`;
+  các field `approve_blockers`, `approve_requirements`, `approval_required`,
+  `jobs_pending`, `pending_job_count`, `rejected_job_count`; scope
+  `pending_jobs` của danh sách chiến dịch.
+- Quyền admin `job_moderation.approve` và `job_moderation.reject`.
+- Site setting `job_auto_approve` chưa từng được dùng.
+
+#### Migration — Chuyển đổi dữ liệu duyệt tin
+
+- `jobs.0046` đưa mọi tin `pending` và `rejected` về `draft` kèm một dòng lịch
+  sử trạng thái; `jobs.0047` xóa hai trạng thái và cột `rejected_reason`.
+- Sau khi migrate, chạy `python manage.py publish_converted_pending_jobs` để
+  xem trước rồi thêm `--apply` để đăng lại các tin từng chờ duyệt. Chỉ tin đạt
+  điều kiện đăng mới công khai; tin còn lại vẫn là bản nháp.
+- `accounts.0028` đánh dấu hai quyền duyệt tin là deprecated;
+  `sitecontent.0021` xóa setting `job_auto_approve`.
+
+### 2026-10-11
+
+#### Fixed — Ownership và kiểm tra biến môi trường (#160)
+
+- Env checker kiểm hợp nhất các catalog, owner, tên trùng, consumer thiếu hoặc
+  thừa và kiểu cast; xác nhận Docker smoke với cấu hình mới.
+
+### 2026-10-10
+
+#### Changed — Cấu hình môi trường tối thiểu (#159)
+
+- Backend chỉ đọc `backend/.env` cùng process environment; `.env.example` chỉ
+  còn cấu hình tối thiểu, các tích hợp và tuning chuyển sang
+  `.env.optional.example` (không tự nạp). Frontend tách tương tự.
+- Compose chỉ giữ override hạ tầng nội bộ (DB, Redis, media, ClamAV). Thêm
+  `scripts/check_env_sync.sh` và `scripts/env_inventory.py`.
+
+### 2026-09-30
+
+#### Removed — Cấu hình deploy production
+
+- Bỏ `docker-compose.prod.yml`, `deploy/nginx/`, `frontend/Dockerfile` và
+  `frontend/nginx.conf`; dự án chỉ còn Compose cho local.
+
+### 2026-09-27
+
+#### Fixed — Chẩn đoán và ổn định test CI (#156)
+
+- Pytest xuất `--durations`, JUnit và `faulthandler_timeout=120`; Vitest xuất
+  JUnit; Playwright giữ trace ở lượt chính. E2E CI khóa
+  `VITE_API_BASE_URL` để route mock không phụ thuộc hostname.
+- Sửa fixture và assertion cũ làm 34 E2E lỗi; E2E smoke đạt trên ba viewport.
+
+#### Removed — Artifact sinh ra trong repo (#157)
+
+- Bỏ media test giả và artifact runtime khỏi Git; `scripts/clean_artifacts.sh`
+  chỉ xóa file tái tạo được.
+
+### 2026-09-24
+
+#### Added — Baseline tái tổ chức ProCV (#155)
+
+- Kiểm kê repo, hợp đồng hành vi (API, migration, quyền, task, UI) và số đo CI
+  làm mốc cho kế hoạch tái cấu trúc P0–P10.
+
+### 2026-09-23
+
+#### Removed — App interviews và route placeholder (#154)
+
+- Xóa app `interviews` chưa dùng và các route giữ chỗ không có nội dung.
+
+### 2026-09-08
+
+#### Removed — Text-to-speech (#153)
+
+- Gỡ tính năng đọc bài blog bằng giọng nói cùng worker, cache và 14 biến môi
+  trường TTS.
+
+### 2026-09-05
+
+#### Added — Danh bạ công ty công khai (#151)
+
+- Trang danh sách công ty có tìm kiếm và API công khai (ADR-0013).
+
+#### Fixed — CI và bảo mật dependency
+
+- Sửa bundle budget frontend và timeout test backend trên CI; nâng `nanoid`
+  lên 3.3.18 để xử lý cảnh báo audit mức cao.
+
+### 2026-08-14
+
+#### Added — So sánh việc làm (#150)
+
+- Ứng viên chọn nhiều tin để so sánh trong một dock dùng chung giữa các trang.
+
+#### Added — Gợi ý việc làm theo nhu cầu ứng viên (#149)
+
+- Gợi ý dựa trên nhu cầu việc làm đã khai báo khi onboarding, cho phép ẩn tin
+  không phù hợp.
+
+### 2026-08-13
+
+#### Added — Xác minh tên miền công ty và huy hiệu tin cậy (#148)
+
+- Nhà tuyển dụng xác minh tên miền công ty qua bản ghi TXT; tin của công ty đạt
+  điều kiện hiển thị huy hiệu tin cậy.
+
+#### Added — Nền tảng dịch vụ tin tuyển dụng (#146, #147)
+
+- Catalogue gói có phiên bản, quyền lợi, kích hoạt dịch vụ cho tin, tin tài trợ,
+  làm mới tin, số liệu quảng bá và remarketing việc đã lưu. Toàn bộ mảng này đã
+  được gỡ ở ngày 2026-11-13 (ADR-0015).
+
+### 2026-08-12
+
+#### Added — AI tạo tin tuyển dụng (#145)
+
+- Nhà tuyển dụng tạo bản nháp tin bằng AI qua `apps.ai_core`, có ranh giới field,
+  quota và lưu nguồn gốc của bản nháp.
+
+#### Changed — Xác thực nhà tuyển dụng theo tài khoản (#144)
+
+- Bỏ model xác thực công ty cũ; xác thực gắn với tài khoản nhà tuyển dụng.
+- Admin xem tab tin tuyển dụng của từng công ty trong danh bạ quản trị.
+
+#### Added — Tự động từ chối hồ sơ quá hạn
+
+- Tin có thể đặt `auto_reject_after_days`; nhà tuyển dụng được nhắc trước và ứng
+  viên nhận email sau khi hồ sơ bị từ chối. Nhãn trạng thái "Không đạt" đổi
+  thành "Từ chối".
+
+### 2026-08-11
+
+#### Added — Thông báo việc làm cho ứng viên (#143)
+
+- Ứng viên tạo bộ lọc thông báo việc làm và nhận email tổng hợp định kỳ.
+
 ### 2026-08-10
 
 #### Added — Employer rollout readiness và monitoring
@@ -336,7 +546,7 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 - Mở epic **AN-V** nâng cấp dải thông báo đa cổng: chọn màu hiển thị (mode
   `kind` / `preset` / `custom` hex) và ảnh nền strip (ví dụ 980×31) kèm overlay
   contrast. Đặc tả:
-  [`docs/03-database/ke-hoach-nang-cap-thong-bao-visual-theme.md`](docs/03-database/ke-hoach-nang-cap-thong-bao-visual-theme.md).
+  [`docs/01-phan-tich/dac-ta-thong-bao-da-cong.md`](docs/01-phan-tich/dac-ta-thong-bao-da-cong.md).
 - **AN-V1 backend:** migration `sitecontent.0017_announcement_revision_visual_theme`
   thêm field theme/background trên `AnnouncementRevision`; service
   `normalize_theme_and_background` (hex `#RRGGBB`, storage key ảnh, ép overlay
@@ -595,7 +805,7 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 - Chạy lại với Redis dừng đạt HTTP 202, sau đó Redis được khôi phục healthy và
   active feed tiếp tục trả 200. Bằng chứng bốn surface, priority và kill switch
   nằm tại
-  [rehearsal staging 2026-07-29](docs/06-deployment/announcement-staging-evidence-2026-07-29.md).
+  rehearsal staging 2026-07-29 (đã gộp vào [vận hành và kill switch](docs/06-deployment/van-hanh-va-kill-switch.md)).
 - Full gate sau bản vá đạt 617 backend test với coverage 86,13%, 666 frontend
   test, bundle budget và 153 smoke E2E desktop/tablet/mobile.
 

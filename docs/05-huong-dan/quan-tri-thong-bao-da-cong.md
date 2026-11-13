@@ -227,4 +227,4 @@ python manage.py announcement_rollout_preflight \
 ```
 
 Kill switch runtime, failure injection, monitoring threshold và rollout tuần
-tự phải theo [runbook AN-P5](../06-deployment/announcement-rollout-runbook.md).
+tự phải theo [vận hành và kill switch](../06-deployment/van-hanh-va-kill-switch.md).

@@ -1,8 +1,5 @@
 """Read models for administrator job management and moderation."""
 
-from datetime import timedelta
-
-from django.conf import settings
 from django.db.models import BooleanField, Case, CharField, Count, Prefetch, Q, Value, When
 from django.db.models.functions import Coalesce, NullIf
 from django.utils import timezone
@@ -26,7 +23,7 @@ def _admin_job_queryset():
             distinct=True,
         ),
         report_count=Count('reports', distinct=True),
-        approved_job_count=Count(
+        published_job_count=Count(
             'posted_by__posted_jobs',
             filter=Q(posted_by__posted_jobs__approved_at__isnull=False),
             distinct=True,
@@ -129,12 +126,6 @@ def admin_job_management_queryset(*, params=None):
     return queryset.order_by(f'{prefix}{field}', f'{prefix}id')
 
 
-def job_moderation_queryset(*, status=None):
-    """Compatibility selector for the original moderation endpoint."""
-    params = {'status': status} if status else {}
-    return admin_job_management_queryset(params=params)
-
-
 def admin_job_detail_queryset():
     status_history = JobStatusHistory.objects.select_related('changed_by').order_by(
         '-created_at', '-id'
@@ -160,24 +151,14 @@ def admin_job_detail_queryset():
 
 
 def admin_job_management_summary():
-    now = timezone.now()
-    sla_hours = getattr(settings, 'JOB_MODERATION_SLA_HOURS', 24)
     jobs = Job.objects.aggregate(
         total=Count('id'),
-        pending=Count('id', filter=Q(status=Job.Status.PENDING)),
-        overdue=Count(
-            'id',
-            filter=Q(
-                status=Job.Status.PENDING,
-                submitted_at__lt=now - timedelta(hours=sla_hours),
-            ),
-        ),
+        draft=Count('id', filter=Q(status=Job.Status.DRAFT)),
         active=Count('id', filter=Q(status=Job.Status.ACTIVE)),
         expired=Count(
             'id',
             filter=Q(status=Job.Status.ACTIVE, deadline__lt=timezone.localdate()),
         ),
-        rejected=Count('id', filter=Q(status=Job.Status.REJECTED)),
         closed=Count('id', filter=Q(status=Job.Status.CLOSED)),
         held=Count(
             'id',
@@ -187,5 +168,4 @@ def admin_job_management_summary():
         ),
     )
     jobs['pending_reports'] = JobReport.objects.filter(status=JobReport.Status.PENDING).count()
-    jobs['sla_hours'] = sla_hours
     return jobs

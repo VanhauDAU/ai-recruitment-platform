@@ -16,7 +16,6 @@ def _summary(jobs, applications):
     job_counts = jobs.aggregate(
         total=Count('id'),
         active=Count('id', filter=Q(status=Job.Status.ACTIVE)),
-        pending=Count('id', filter=Q(status=Job.Status.PENDING)),
         draft=Count('id', filter=Q(status=Job.Status.DRAFT)),
         views=Coalesce(Sum('view_count'), Value(0)),
     )
@@ -29,7 +28,6 @@ def _summary(jobs, applications):
     return {
         'jobs_total': job_counts['total'],
         'jobs_active': job_counts['active'],
-        'jobs_pending': job_counts['pending'],
         'jobs_draft': job_counts['draft'],
         'job_views': job_counts['views'],
         'applications_total': application_counts['total'],

@@ -22,7 +22,6 @@ from .models import (
     Language,
     SavedJob,
 )
-from .services import approve_job, reject_job
 
 
 class JobCategoryAdminForm(forms.ModelForm):
@@ -213,7 +212,6 @@ class JobAdmin(admin.ModelAdmin):
         'application_count',
         'engagement_tracking_started_at',
     ]
-    actions = ['approve_selected_jobs']
     inlines = [
         JobCategoryAssignmentInline,
         JobLocationInline,
@@ -232,7 +230,6 @@ class JobAdmin(admin.ModelAdmin):
                     'posted_by',
                     'company',
                     'status',
-                    'rejected_reason',
                     'tier',
                     'is_hot',
                     'is_urgent',
@@ -240,7 +237,7 @@ class JobAdmin(admin.ModelAdmin):
                 )
             },
         ),
-        ('Duyệt tin', {'fields': ('submitted_at', 'approved_at', 'published_at')}),
+        ('Mốc đăng tin', {'fields': ('submitted_at', 'approved_at', 'published_at')}),
         (
             'Mô tả hiển thị trên trang chi tiết',
             {
@@ -283,42 +280,16 @@ class JobAdmin(admin.ModelAdmin):
         ),
     )
 
-    @admin.action(description='Duyệt các tin đã chọn')
-    def approve_selected_jobs(self, request, queryset):
-        approved = 0
-        for job in queryset.filter(status=Job.Status.PENDING):
-            approve_job(job=job, user=request.user)
-            approved += 1
-        self.message_user(request, f'Đã duyệt {approved} tin.')
-
     def save_model(self, request, obj, form, change):
         previous = Job.objects.filter(pk=obj.pk).values('status').first() if change else None
-        desired_status = obj.status
-        if not previous and desired_status != Job.Status.DRAFT:
+        if not previous and obj.status != Job.Status.DRAFT:
             raise ValidationError('Tin tạo trong trang quản trị phải bắt đầu ở trạng thái nháp.')
-        if previous and desired_status != previous['status']:
-            if previous['status'] != Job.Status.PENDING:
-                raise ValidationError('Chỉ tin đang chờ duyệt mới được chuyển trạng thái tại đây.')
-            if desired_status not in {Job.Status.ACTIVE, Job.Status.REJECTED}:
-                raise ValidationError('Chỉ có thể duyệt hoặc từ chối tin đang chờ duyệt.')
-            if desired_status == Job.Status.REJECTED and not obj.rejected_reason.strip():
-                raise ValidationError('Nhập lý do từ chối để nhà tuyển dụng có thể chỉnh sửa tin.')
-            obj.status = Job.Status.PENDING
+        if previous and obj.status != previous['status']:
+            raise ValidationError(
+                'Trạng thái tin do nhà tuyển dụng thay đổi. '
+                'Dùng trang quản lý tin để tạm ẩn hoặc khôi phục hiển thị.'
+            )
         super().save_model(request, obj, form, change)
-        if (
-            previous
-            and previous['status'] == Job.Status.PENDING
-            and desired_status == Job.Status.REJECTED
-        ):
-            reject_job(job=obj, user=request.user, reason=obj.rejected_reason)
-        elif (
-            previous
-            and previous['status'] == Job.Status.PENDING
-            and desired_status == Job.Status.ACTIVE
-        ):
-            # Keep manual status updates in Django admin consistent with the
-            # review service, including approval timestamps and history.
-            approve_job(job=obj, user=request.user)
 
 
 @admin.register(JobSkill)

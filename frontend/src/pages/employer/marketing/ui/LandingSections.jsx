@@ -2,21 +2,14 @@ import {
   BarChartOutlined,
   CheckCircleFilled,
   DatabaseOutlined,
-  FileSearchOutlined,
   FundProjectionScreenOutlined,
   NotificationOutlined,
   RobotOutlined,
   SafetyCertificateOutlined,
-  StarOutlined,
   TeamOutlined,
-  ThunderboltOutlined,
 } from '@ant-design/icons'
-import { Button } from 'antd'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router'
-import { ConsultationForm } from '@/features/request-consultation'
 import { useSiteSetting } from '@/entities/site-settings'
-import { employerMarketingPath } from '@/shared/config/portals'
 
 const FUNCTION_ITEMS = [
   ['posting', NotificationOutlined],
@@ -25,14 +18,6 @@ const FUNCTION_ITEMS = [
   ['database', DatabaseOutlined],
   ['analytics', BarChartOutlined],
   ['branding', SafetyCertificateOutlined],
-]
-
-const SERVICE_ITEMS = [
-  ['featured', ThunderboltOutlined],
-  ['combo', StarOutlined],
-  ['ai', RobotOutlined],
-  ['branding', SafetyCertificateOutlined],
-  ['addons', FileSearchOutlined],
 ]
 
 function Eyebrow({ children, light = false }) {
@@ -129,39 +114,6 @@ export function CoreFunctions() {
             </article>
           ))}
         </div>
-      </div>
-    </section>
-  )
-}
-
-export function ServiceHighlights() {
-  const { t } = useTranslation('employer')
-  return (
-    <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
-      <div className="flex flex-col justify-between gap-5 md:flex-row md:items-end">
-        <div className="max-w-3xl"><Eyebrow>{t('landing.services.eyebrow')}</Eyebrow><h2 className="mt-4 text-3xl font-extrabold text-slate-950 sm:text-4xl">{t('landing.services.title')}</h2><p className="mt-4 text-lg leading-8 text-slate-600">{t('landing.services.subtitle')}</p></div>
-        <Link to={employerMarketingPath('/dich-vu')}><Button shape="round" size="large">{t('common.seeServices')}</Button></Link>
-      </div>
-      <div className="mt-10 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-        {SERVICE_ITEMS.map(([key, Icon], index) => (
-          <Link key={key} to={employerMarketingPath(index < 3 ? '/bao-gia' : '/dich-vu')} className="group cursor-pointer rounded-2xl border border-slate-200 p-5 transition hover:border-emerald-300 hover:bg-emerald-50/50">
-            <span className="text-2xl text-emerald-600"><Icon /></span>
-            <h3 className="mt-6 font-bold leading-6 text-slate-900">{t(`landing.services.items.${key}`)}</h3>
-            <span className="mt-5 inline-block text-sm font-bold text-emerald-600 transition group-hover:translate-x-1">{t('common.learnMore')} →</span>
-          </Link>
-        ))}
-      </div>
-    </section>
-  )
-}
-
-export function ConsultationSection() {
-  const { t } = useTranslation('employer')
-  return (
-    <section className="bg-gradient-to-br from-emerald-50 to-white">
-      <div className="mx-auto grid max-w-7xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[0.8fr_1.2fr] lg:items-center lg:px-8 lg:py-24">
-        <div><Eyebrow>{t('landing.consultation.eyebrow')}</Eyebrow><h2 className="mt-4 text-3xl font-extrabold leading-tight text-slate-950 sm:text-4xl">{t('landing.consultation.title')}</h2><p className="mt-5 text-lg leading-8 text-slate-600">{t('landing.consultation.desc')}</p></div>
-        <div className="rounded-3xl border border-emerald-100 bg-white p-6 shadow-xl shadow-emerald-950/5 sm:p-8"><ConsultationForm /></div>
       </div>
     </section>
   )

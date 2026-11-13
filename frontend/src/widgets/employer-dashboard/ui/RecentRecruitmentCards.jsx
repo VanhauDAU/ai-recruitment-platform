@@ -6,10 +6,8 @@ import { employerAppPath } from '@/shared/config/portals'
 const dateFormatter = new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })
 const JOB_STATUS = {
   active: { label: 'Đang tuyển', className: 'bg-emerald-50 text-emerald-700' },
-  pending: { label: 'Chờ duyệt', className: 'bg-amber-50 text-amber-700' },
   draft: { label: 'Bản nháp', className: 'bg-slate-100 text-slate-600' },
   closed: { label: 'Đã đóng', className: 'bg-slate-100 text-slate-500' },
-  rejected: { label: 'Từ chối', className: 'bg-red-50 text-red-700' },
 }
 const APPLICATION_STATUS = {
   submitted: { label: 'Mới', className: 'bg-blue-50 text-blue-700' },

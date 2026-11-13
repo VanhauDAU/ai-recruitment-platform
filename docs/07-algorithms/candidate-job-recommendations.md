@@ -131,8 +131,8 @@ xếp hạng đầu, cùng `after_result_index` zero-based trong khoảng 3–7.
 định với cùng candidate/seed/page và không phụ thuộc filter/sort của lane public.
 
 Inline loại các ID canonical client gửi, tin đã ứng tuyển và tin đã ẩn trước cap.
-Job dùng nguyên `PublicJobListSerializer`, vì vậy presentation tài trợ vẫn được
-giữ nguyên.
+Job dùng nguyên `PublicJobListSerializer`, vì vậy `presentation` (nhãn `tier`,
+HOT, GẤP, phản hồi nhanh) giống hệt danh sách việc làm.
 
 `POST /api/jobs/recommendations/hidden/` nhận `job_public_id` và `source` thuộc
 `matching|homepage|inline`. Unique `(candidate, job)` làm POST idempotent.

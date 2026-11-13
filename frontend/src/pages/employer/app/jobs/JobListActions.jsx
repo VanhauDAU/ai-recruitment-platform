@@ -11,16 +11,15 @@ import { Button, Dropdown, Tooltip } from 'antd'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router'
 import { employerAppPath } from '@/shared/config/portals'
-import { employerJobApplicationsPath } from './job-list-presentation'
+import { employerJobApplicationsPath, isJobHeld } from './job-list-presentation'
 
 const iconActionClass = 'inline-flex h-8 w-8 items-center justify-center rounded-lg !text-slate-500 transition hover:!bg-slate-100 hover:!text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500'
 
+// The backend refuses edits, extensions and copies while a job is held.
 function primaryAction(job) {
+  if (isJobHeld(job)) return null
   if (job.status === 'draft') {
     return { label: 'Hoàn thiện', to: employerAppPath(`/jobs/${job.public_id}/edit`) }
-  }
-  if (job.status === 'rejected') {
-    return { label: 'Chỉnh sửa', to: employerAppPath(`/jobs/${job.public_id}/edit`) }
   }
   if (job.is_expired) {
     return { label: 'Gia hạn', to: employerAppPath(`/jobs/${job.public_id}`) }
@@ -56,22 +55,24 @@ function menuItems(job, {
       label: <Link to={employerJobApplicationsPath(job)}>Xem hồ sơ ứng tuyển</Link>,
     })
   }
-  if (!['draft', 'rejected', 'closed'].includes(job.status)) {
+  if (!isJobHeld(job)) {
+    if (!['draft', 'closed'].includes(job.status)) {
+      items.push({
+        key: 'edit',
+        icon: <EditOutlined />,
+        label: <Link to={employerAppPath(`/jobs/${job.public_id}/edit`)}>Chỉnh sửa tin</Link>,
+      })
+    }
     items.push({
-      key: 'edit',
-      icon: <EditOutlined />,
-      label: <Link to={employerAppPath(`/jobs/${job.public_id}/edit`)}>Chỉnh sửa tin</Link>,
+      key: 'duplicate',
+      icon: <CopyOutlined />,
+      label: 'Sao chép thành bản nháp',
+      onClick: () => {
+        closeMenu()
+        onDuplicate(job.public_id)
+      },
     })
   }
-  items.push({
-    key: 'duplicate',
-    icon: <CopyOutlined />,
-    label: 'Sao chép thành bản nháp',
-    onClick: () => {
-      closeMenu()
-      onDuplicate(job.public_id)
-    },
-  })
   if (job.status === 'active' && !job.is_expired) {
     items.push(
       { type: 'divider' },
@@ -142,7 +143,7 @@ function QuickActions({ job, candidateDataAccess }) {
           </Link>
         </Tooltip>
       )}
-      {!['draft', 'rejected', 'closed'].includes(job.status) && (
+      {!isJobHeld(job) && !['draft', 'closed'].includes(job.status) && (
         <Tooltip title="Chỉnh sửa tin">
           <Link
             aria-label="Chỉnh sửa tin"

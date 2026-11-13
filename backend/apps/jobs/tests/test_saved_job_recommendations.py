@@ -524,7 +524,7 @@ class SavedJobRecommendationApiTests(APITestCase):
             ).exists()
         )
 
-        for status in (Job.Status.DRAFT, Job.Status.CLOSED, Job.Status.REJECTED):
+        for status in (Job.Status.DRAFT, Job.Status.CLOSED):
             with self.subTest(status=status):
                 unavailable = self._create_job(
                     f'Tin không public {status}',

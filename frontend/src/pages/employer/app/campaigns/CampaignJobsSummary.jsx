@@ -3,10 +3,8 @@ import { Button } from 'antd'
 
 const JOB_STATUS_SUMMARIES = [
   { key: 'active_job_count', label: 'Đang tuyển', className: 'bg-emerald-50 text-emerald-700' },
-  { key: 'pending_job_count', label: 'Chờ duyệt', className: 'bg-amber-50 text-amber-700' },
   { key: 'draft_job_count', label: 'Nháp', className: 'bg-slate-100 text-slate-600' },
   { key: 'expired_job_count', label: 'Hết hạn', className: 'bg-orange-50 text-orange-700' },
-  { key: 'rejected_job_count', label: 'Từ chối', className: 'bg-red-50 text-red-700' },
 ]
 
 function count(value) {

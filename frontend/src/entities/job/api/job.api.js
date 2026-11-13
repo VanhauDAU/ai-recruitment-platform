@@ -35,16 +35,6 @@ export async function getInlineJobRecommendations({ excludedJobIds = [], ...para
   return data
 }
 
-export async function getSavedJobRemarketingLane() {
-  const { data } = await api.get('/jobs/remarketing/saved/')
-  return data
-}
-
-export async function recordSavedJobRemarketingImpression(payload) {
-  const { data } = await api.post('/jobs/remarketing/saved/impressions/', payload)
-  return data
-}
-
 export async function getJobDetail(slug) {
   return dedupeRequest(`job-detail:${slug}`, async () => {
     const { data } = await api.get(`/jobs/${slug}/`)
@@ -151,13 +141,17 @@ export async function saveEmployerJob(payload, publicId) {
   return data
 }
 
-export async function publishEmployerJob(payload, publicId) {
+// The backend only makes a job public when the request names the commitment
+// version the recruiter accepted (see `responsibility_statement` in the
+// posting context). Saving an already public job needs no acknowledgement.
+export async function publishEmployerJob(payload, publicId, acceptedStatementVersion) {
+  const acknowledgement = { responsibility_statement_version: acceptedStatementVersion }
   if (publicId) {
     await api.patch(`/jobs/mine/${publicId}/`, payload)
-    const { data } = await api.post(`/jobs/mine/${publicId}/submit/`)
+    const { data } = await api.post(`/jobs/mine/${publicId}/submit/`, acknowledgement)
     return data
   }
-  const { data } = await api.post('/jobs/mine/', payload)
+  const { data } = await api.post('/jobs/mine/', { ...payload, ...acknowledgement })
   return data
 }
 
@@ -166,8 +160,11 @@ export async function closeEmployerJob(publicId) {
   return data
 }
 
-export async function reopenEmployerJob(publicId, deadline) {
-  const { data } = await api.post(`/jobs/mine/${publicId}/reopen/`, { deadline })
+export async function reopenEmployerJob(publicId, deadline, acceptedStatementVersion) {
+  const { data } = await api.post(`/jobs/mine/${publicId}/reopen/`, {
+    deadline,
+    responsibility_statement_version: acceptedStatementVersion,
+  })
   return data
 }
 
@@ -184,14 +181,4 @@ export async function duplicateEmployerJob(publicId) {
 export async function deleteEmployerJob(publicId) {
   await api.delete(`/jobs/mine/${publicId}/`)
   return publicId
-}
-
-export async function getAdminJobModeration(params = {}) {
-  const { data } = await api.get('/jobs/admin/moderation/', { params })
-  return data.results || data
-}
-
-export async function reviewAdminJob(publicId, payload) {
-  const { data } = await api.post(`/jobs/admin/moderation/${publicId}/review/`, payload)
-  return data
 }

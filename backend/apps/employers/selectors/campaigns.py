@@ -8,7 +8,6 @@ from django.utils import timezone
 
 from apps.applications.models import Application
 from apps.jobs.models import Job, JobEngagementDaily
-from apps.services.models import JobServiceActivation
 
 from ..models import CampaignActivity, RecruitmentCampaign
 
@@ -70,7 +69,6 @@ def campaign_list_queryset(user, *, status=None, scope=None, q=None, ordering=No
     queryset = queryset.annotate(
         job_count=Count('jobs', distinct=True),
         draft_job_count=Count('jobs', filter=Q(jobs__status='draft'), distinct=True),
-        pending_job_count=Count('jobs', filter=Q(jobs__status='pending'), distinct=True),
         active_job_count=Count(
             'jobs',
             filter=Q(jobs__status='active')
@@ -83,7 +81,6 @@ def campaign_list_queryset(user, *, status=None, scope=None, q=None, ordering=No
             distinct=True,
         ),
         closed_job_count=Count('jobs', filter=Q(jobs__status='closed'), distinct=True),
-        rejected_job_count=Count('jobs', filter=Q(jobs__status='rejected'), distinct=True),
         application_count=Count('jobs__applications', distinct=True),
         application_submission_count=Count('jobs__applications', distinct=True),
         application_pair_count=Coalesce(
@@ -115,8 +112,6 @@ def campaign_list_queryset(user, *, status=None, scope=None, q=None, ordering=No
         queryset = queryset.filter(unviewed_application_count__gt=0)
     elif scope == 'active_jobs':
         queryset = queryset.filter(active_job_count__gt=0)
-    elif scope == 'pending_jobs':
-        queryset = queryset.filter(pending_job_count__gt=0)
     elif scope == 'expired_jobs':
         queryset = queryset.filter(expired_job_count__gt=0)
     order_fields = {
@@ -222,7 +217,7 @@ def campaign_report(campaign):
         .annotate(count=Count('id'))
     }
     jobs = campaign.jobs.all()
-    job_statuses = {state: 0 for state in ('draft', 'pending', 'active', 'closed', 'rejected')}
+    job_statuses = {state: 0 for state in ('draft', 'active', 'closed')}
     job_statuses.update(
         {row['status']: row['count'] for row in jobs.values('status').annotate(count=Count('id'))}
     )
@@ -279,19 +274,8 @@ def campaign_activity_queryset(campaign, *, group=None):
 
 def campaign_pause_impact(campaign):
     today = timezone.localdate()
-    now = timezone.now()
     active_jobs = campaign.jobs.filter(status=Job.Status.ACTIVE).filter(
         Q(deadline__isnull=True) | Q(deadline__gte=today)
-    )
-    active_services = (
-        JobServiceActivation.objects.filter(
-            job__campaign=campaign,
-            status=JobServiceActivation.Status.ACTIVE,
-            starts_at__lte=now,
-            ends_at__gt=now,
-        )
-        .select_related('job', 'unit__package_version__package')
-        .order_by('ends_at', 'id')
     )
     return {
         'campaign_public_id': campaign.public_id,
@@ -301,16 +285,6 @@ def campaign_pause_impact(campaign):
         'active_public_jobs': list(
             active_jobs.order_by('-created_at').values('public_id', 'title', 'deadline')[:10]
         ),
-        'active_services': [
-            {
-                'public_id': activation.public_id,
-                'job_public_id': activation.job.public_id,
-                'job_title': activation.job.title,
-                'package_name': activation.unit.package_version.package.name_vi,
-                'ends_at': activation.ends_at,
-            }
-            for activation in active_services
-        ],
     }
 
 
@@ -337,8 +311,9 @@ def campaign_job_performance(campaign, *, days=7, job_public_id=None):
             'slug',
             'title',
             'status',
-            'rejected_reason',
             'deadline',
+            'policy_hold',
+            'moderation_hold',
             'engagement_tracking_started_at',
         )
     )
@@ -406,11 +381,11 @@ def campaign_job_performance(campaign, *, days=7, job_public_id=None):
                 'slug': job['slug'],
                 'title': job['title'],
                 'status': job['status'],
-                'rejected_reason': job['rejected_reason'],
                 'deadline': deadline,
                 'is_expired': bool(
                     job['status'] == Job.Status.ACTIVE and deadline is not None and deadline < today
                 ),
+                'visibility_held': bool(job['moderation_hold'] or job['policy_hold']),
                 'available': available,
                 'data_available_from': tracking_date,
                 'impressions': impressions,

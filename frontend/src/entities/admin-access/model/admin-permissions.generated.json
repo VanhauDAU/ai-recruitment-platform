@@ -245,31 +245,6 @@
     "requires": []
   },
   {
-    "code": "consultation_lead.export",
-    "module": "consultation_lead",
-    "label": "Xuất lead tư vấn",
-    "description": "Xuất danh sách lead tư vấn theo bộ lọc hiện tại với nhật ký audit.",
-    "requires": [
-      "consultation_lead.view"
-    ]
-  },
-  {
-    "code": "consultation_lead.manage",
-    "module": "consultation_lead",
-    "label": "Xử lý lead tư vấn",
-    "description": "Cập nhật trạng thái xử lý lead tư vấn doanh nghiệp.",
-    "requires": [
-      "consultation_lead.view"
-    ]
-  },
-  {
-    "code": "consultation_lead.view",
-    "module": "consultation_lead",
-    "label": "Xem lead tư vấn",
-    "description": "Xem thông tin lead tư vấn doanh nghiệp.",
-    "requires": []
-  },
-  {
     "code": "cv_template.archive",
     "module": "cv_template",
     "label": "Lưu trữ mẫu CV",
@@ -407,28 +382,10 @@
     "requires": []
   },
   {
-    "code": "job_moderation.approve",
-    "module": "job_moderation",
-    "label": "Duyệt tin tuyển dụng",
-    "description": "Phê duyệt tin tuyển dụng đã gửi duyệt.",
-    "requires": [
-      "job_moderation.view"
-    ]
-  },
-  {
     "code": "job_moderation.enforce_visibility",
     "module": "job_moderation",
     "label": "Tạm ẩn hoặc khôi phục tin tuyển dụng",
     "description": "Áp dụng hoặc gỡ moderation hold mà không đổi trạng thái nghiệp vụ của tin.",
-    "requires": [
-      "job_moderation.view"
-    ]
-  },
-  {
-    "code": "job_moderation.reject",
-    "module": "job_moderation",
-    "label": "Từ chối tin tuyển dụng",
-    "description": "Từ chối tin tuyển dụng và ghi lý do.",
     "requires": [
       "job_moderation.view"
     ]
@@ -446,7 +403,7 @@
     "code": "job_moderation.view",
     "module": "job_moderation",
     "label": "Xem quản lý tin tuyển dụng",
-    "description": "Xem danh sách, chi tiết, lịch sử và hàng chờ kiểm duyệt tin tuyển dụng.",
+    "description": "Xem danh sách, chi tiết, lịch sử và báo cáo của tin tuyển dụng.",
     "requires": []
   },
   {
@@ -491,67 +448,6 @@
     "label": "Xem trung tâm trợ giúp",
     "description": "Xem bài, revision, preview và lịch sử vận hành nội dung trợ giúp.",
     "requires": []
-  },
-  {
-    "code": "service_audit.view",
-    "module": "service_audit",
-    "label": "Xem lịch sử dịch vụ",
-    "description": "Xem lịch sử phát hành, cấp, thu hồi và kích hoạt dịch vụ.",
-    "requires": [
-      "service_catalog.view"
-    ]
-  },
-  {
-    "code": "service_catalog.draft.manage",
-    "module": "service_catalog",
-    "label": "Quản lý phiên bản nháp dịch vụ",
-    "description": "Tạo và chỉnh sửa quyền lợi có cấu trúc trước khi phát hành.",
-    "requires": [
-      "service_catalog.view"
-    ]
-  },
-  {
-    "code": "service_catalog.manage",
-    "module": "service_catalog",
-    "label": "Quản lý gói dịch vụ",
-    "description": "Tạo, sửa hoặc xoá nhóm và gói dịch vụ nhà tuyển dụng.",
-    "requires": [
-      "service_catalog.view"
-    ]
-  },
-  {
-    "code": "service_catalog.publish",
-    "module": "service_catalog",
-    "label": "Phát hành phiên bản gói dịch vụ",
-    "description": "Khóa và phát hành một phiên bản quyền lợi thương mại mới.",
-    "requires": [
-      "service_catalog.view"
-    ]
-  },
-  {
-    "code": "service_catalog.view",
-    "module": "service_catalog",
-    "label": "Xem gói dịch vụ",
-    "description": "Xem catalogue dịch vụ nhà tuyển dụng.",
-    "requires": []
-  },
-  {
-    "code": "service_entitlement.manage",
-    "module": "service_entitlement",
-    "label": "Cấp và thu hồi lượt dịch vụ",
-    "description": "Cấp thủ công, thu hồi hoặc bù lượt dịch vụ cho doanh nghiệp.",
-    "requires": [
-      "service_entitlement.view"
-    ]
-  },
-  {
-    "code": "service_entitlement.view",
-    "module": "service_entitlement",
-    "label": "Xem kho lượt dịch vụ",
-    "description": "Xem lượt dịch vụ và trạng thái kích hoạt của doanh nghiệp.",
-    "requires": [
-      "service_catalog.view"
-    ]
   },
   {
     "code": "site_setting.manage",

@@ -30,6 +30,11 @@ describe('manual job form values', () => {
     expect(buildJobPayload({ description: legacyHtml }).description).toBe('<ul><li>Python</li></ul>')
   })
 
+  it('keeps the commitment checkbox out of the job payload', () => {
+    expect(buildJobPayload({ title: 'Kỹ sư Backend', responsibility_accepted: true }))
+      .not.toHaveProperty('responsibility_accepted')
+  })
+
   it('normalizes API detail data for the form without losing domain knowledge or contact emails', () => {
     const values = createJobFormValues({
       deadline: '2026-08-20',
@@ -240,7 +245,7 @@ describe('manual job form values', () => {
     })
   })
 
-  it('reports progress for all five manual-entry sections', () => {
+  it('reports progress for all four manual-entry sections', () => {
     const progress = getJobFormProgress(createJobFormValues({ title: 'Backend Engineer' }))
 
     expect(progress.map(({ key, completed, total }) => ({ key, completed, total }))).toEqual([
@@ -248,7 +253,6 @@ describe('manual job form values', () => {
       { key: 'description', completed: 0, total: 4 },
       { key: 'expectations', completed: 0, total: 4 },
       { key: 'application', completed: 1, total: 5 },
-      { key: 'services', completed: 0, total: 0 },
     ])
   })
 

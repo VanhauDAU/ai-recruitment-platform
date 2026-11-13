@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-"""Inventory hotspot cho kế hoạch tái cấu trúc (Giai đoạn 0.5).
+"""Inventory hotspot của mã nguồn.
 
 Liệt kê file lớn (>300 / >500 dòng) và "import nóng" (module được import bởi
 nhiều file) để chọn điểm cần tách trước. Chạy lại được nhiều lần để so mốc.
 
 Cách dùng:
     python scripts/codebase_inventory.py                 # in ra màn hình
-    python scripts/codebase_inventory.py --out docs/99-tien-do/baseline/code-hotspots.md
-    python scripts/codebase_inventory.py --tracked-manifest docs/baseline/tracked-files.csv
+    python scripts/codebase_inventory.py --out /tmp/code-hotspots.md
+    python scripts/codebase_inventory.py --tracked-manifest /tmp/tracked-files.csv
 """
 
 from __future__ import annotations
