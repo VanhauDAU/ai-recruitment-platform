@@ -79,8 +79,15 @@ CvTemplate ──< CvTemplateColorLink    >── CvColor
   `style_json.theme_color` của initial version/draft.
 - Catalogue public chỉ hiện template `active`, lifecycle `published`, có
   localization active và `current_published_version` đang published.
-- Locale là dữ liệu tại `sitecontent.Locale` (không phải enum). Locale inactive
-  bị chặn với CV/preview mới nhưng document cũ vẫn render theo code đã lưu.
+- Locale là dữ liệu tại `sitecontent.Locale` nhưng chỉ `vi-VN` và `en-US` được
+  dùng (`SUPPORTED_LOCALE_CODES` ở `apps/sitecontent/selectors/locales.py`, từ
+  CVT-0); locale khác hoặc inactive bị chặn với CV/preview mới nhưng document cũ
+  vẫn render theo code đã lưu. Kho `/mau-cv-tieng-nhat`, `/mau-cv-tieng-trung`,
+  `/mau-cv/ngon-ngu/:locale` redirect 301 về `/mau-cv`.
+- Trang chi tiết mẫu đồng bộ lựa chọn với query string: `nguon`
+  (`cv-cu|tai-len|trong`, mặc định nội dung mẫu), `vi-tri` (slug
+  `JobCategory`), `ngon-ngu` (`vi|en`), `mau` (slug `CvColor`). Không đưa mã CV
+  hay dữ liệu cá nhân lên URL; canonical luôn là path gốc.
 - Vị trí: dropdown đọc `JobCategory(category_type=specialization)` active, value
   là `public_id`, nhãn là `JobCategoryLocalization(vi-VN).display_name`. Resolver
   ưu tiên `CvSampleContent` curated theo vị trí–locale–cấp độ, nếu không có thì
@@ -98,7 +105,6 @@ CV của ứng viên (`/api/v2/cvs/`, owner-only):
 | `GET\|PATCH\|DELETE /{id}/` | Metadata; đổi `title`/`is_default`; xóa vĩnh viễn (gỡ draft/version/share/export/file; application snapshot được tách khỏi CV và giữ nguyên). |
 | `POST /{id}/duplicate/` | Chỉ CV builder: copy latest immutable version sang CV mới có initial version + draft riêng; không copy draft, share link, trạng thái published. |
 | `GET\|PUT /{id}/draft/` | Đọc/autosave draft. Autosave không tạo `CvVersion`. |
-| `GET /latest-recoverable-draft/` | Trả một draft dirty mới nhất (`CvDraft.document_hash` khác `base_version.content_hash`). |
 | `PUT /{id}/template/`, `GET /{id}/template-preview/` | Đổi mẫu/màu bằng CAS (giữ content, cập nhật hidden section) và projection read-only trước khi đổi. |
 | `POST /{id}/apply-sample/` | Thay section nội dung bằng sample, giữ `personal_info`, locale, marker, title, style; compose ở backend. |
 | `POST /{id}/save-version/`, `POST /{id}/publish/` | Tạo version `manual_save` / `published`. |

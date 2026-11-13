@@ -14,7 +14,6 @@ from .api.views.v2 import (
     CvV2ExportRetryView,
     CvV2ImportRetryView,
     CvV2ImportView,
-    CvV2LatestRecoverableDraftView,
     CvV2ListCreateView,
     CvV2OwnerVersionView,
     CvV2PublishView,
@@ -41,11 +40,6 @@ urlpatterns = [
         'shares/<str:token>/', CvV2SharedLinkPublicView.as_view(), name='cv-v2-shared-link-public'
     ),
     path('imports/', CvV2ImportView.as_view(), name='cv-v2-import'),
-    path(
-        'latest-recoverable-draft/',
-        CvV2LatestRecoverableDraftView.as_view(),
-        name='cv-v2-latest-recoverable-draft',
-    ),
     path('', CvV2ListCreateView.as_view(), name='cv-v2-list-create'),
     path('<str:public_id>/', CvV2DetailView.as_view(), name='cv-v2-detail'),
     path('<str:public_id>/duplicate/', CvV2DuplicateView.as_view(), name='cv-v2-duplicate'),

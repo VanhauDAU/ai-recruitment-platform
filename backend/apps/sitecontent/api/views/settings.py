@@ -23,7 +23,7 @@ from common.media_storage import (
 )
 
 from ...models import Banner, Locale, SiteSetting
-from ...selectors import resolved_link_groups
+from ...selectors import active_locales, resolved_link_groups
 from ...signals import PUBLIC_SETTINGS_CACHE_KEY
 from ..serializers import (
     AdminLocaleSerializer,
@@ -79,7 +79,7 @@ class LocaleListView(generics.ListAPIView):
     pagination_class = None
 
     def get_queryset(self):
-        return Locale.objects.filter(is_active=True)
+        return active_locales()
 
 
 class AdminLocaleListCreateView(generics.ListCreateAPIView):

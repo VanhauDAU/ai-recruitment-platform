@@ -16,6 +16,7 @@ from common.r2_storage import public_media_storage
 
 from ..api.serializers import AdminSiteSettingSerializer
 from ..models import Locale, SiteSetting
+from ..selectors import is_active_locale
 from ..signals import PUBLIC_SETTINGS_CACHE_KEY
 
 PNG_BYTES = (
@@ -200,11 +201,18 @@ class LocaleApiTests(APITransactionTestCase):
         )
 
     def test_public_api_only_returns_active_locales_in_stable_order(self):
-        Locale.objects.filter(code='ja-JP').update(is_active=False)
+        Locale.objects.filter(code='en-US').update(is_active=False)
         response = self.client.get(reverse('site-locales'))
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual([item['code'] for item in response.data], ['vi-VN', 'en-US', 'zh-CN'])
+        self.assertEqual([item['code'] for item in response.data], ['vi-VN'])
+
+    def test_public_api_hides_unsupported_cv_locales_even_when_active(self):
+        response = self.client.get(reverse('site-locales'))
+
+        self.assertEqual([item['code'] for item in response.data], ['vi-VN', 'en-US'])
+        self.assertFalse(is_active_locale('ja-JP'))
+        self.assertTrue(is_active_locale('en-US'))
 
     def test_admin_can_change_default_and_previous_default_is_demoted(self):
         self.client.force_authenticate(self.admin)

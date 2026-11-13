@@ -10,7 +10,6 @@ export function resolvePreviewSelection({
   loadingPositions,
   selectedPosition,
   selectedCvId,
-  recoverable,
   templatePublicId,
 }) {
   if (source === 'upload') return { state: 'unavailable' }
@@ -21,15 +20,12 @@ export function resolvePreviewSelection({
         : 'waiting',
     }
   }
-  const sourceCvId = source === 'previous'
-    ? selectedCvId
-    : (source === 'restore' ? recoverable?.cv?.public_id : null)
-  if ((source === 'previous' || source === 'restore') && !sourceCvId) return { state: 'empty' }
+  if (source === 'previous' && !selectedCvId) return { state: 'waiting' }
   if (source === 'blank') {
     return { state: 'ready', load: (signal) => getBlankCvPreview(locale, templatePublicId, { signal }) }
   }
-  if (source === 'previous' || source === 'restore') {
-    return { state: 'ready', load: (signal) => getCvTemplatePreview(sourceCvId, templatePublicId, signal) }
+  if (source === 'previous') {
+    return { state: 'ready', load: (signal) => getCvTemplatePreview(selectedCvId, templatePublicId, signal) }
   }
   return {
     state: 'ready',

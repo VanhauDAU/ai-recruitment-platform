@@ -57,6 +57,7 @@ export default function UseTemplateModal({ template, themeColor, open, onClose, 
         <div className="order-1 flex max-h-[70vh] flex-col overflow-y-auto border-b border-slate-200 bg-slate-50 p-6 lg:order-2 lg:col-span-3 lg:max-h-none lg:overflow-visible lg:border-b-0 lg:border-l">
           <h3 className="mb-3.5 text-base font-bold text-[var(--brand-primary)]">Bạn muốn tạo CV từ?</h3>
           <CvSourcePanel
+            key={`${template.public_id}:${locale}`}
             template={template}
             locale={locale}
             themeColor={themeColor}

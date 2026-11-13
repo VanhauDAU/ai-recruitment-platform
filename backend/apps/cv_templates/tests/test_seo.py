@@ -55,3 +55,17 @@ class CvTemplateSeoTests(TestCase):
 
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response['X-Robots-Tag'], 'noindex, nofollow')
+
+    def test_removed_locale_catalogues_redirect_permanently_to_vietnamese(self):
+        detail = self.client.get(f'/mau-cv-tieng-nhat/chi-tiet/{self.template.slug}')
+        dynamic = self.client.get('/mau-cv/ngon-ngu/zh-CN/mau-it')
+        listing = self.client.get('/mau-cv-tieng-trung')
+
+        self.assertRedirects(
+            detail,
+            f'/mau-cv/chi-tiet/{self.template.slug}',
+            status_code=301,
+            fetch_redirect_response=False,
+        )
+        self.assertRedirects(dynamic, '/mau-cv', status_code=301, fetch_redirect_response=False)
+        self.assertRedirects(listing, '/mau-cv', status_code=301, fetch_redirect_response=False)

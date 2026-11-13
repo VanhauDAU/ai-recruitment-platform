@@ -113,11 +113,6 @@ export async function getCvDraft(publicId) {
   return { ...data, etag: headers.etag }
 }
 
-export async function getLatestRecoverableDraft() {
-  const response = await api.get('/v2/cvs/latest-recoverable-draft/')
-  return response.status === 204 ? null : response.data
-}
-
 export async function getCvTemplatePreview(publicId, templatePublicId, signal) {
   const config = { params: { template_public_id: templatePublicId } }
   if (signal) config.signal = signal

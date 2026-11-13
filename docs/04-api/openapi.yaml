@@ -11829,23 +11829,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/CvV2'
           description: ''
-  /api/v2/cvs/latest-recoverable-draft/:
-    get:
-      operationId: v2_cvs_latest_recoverable_draft_retrieve
-      summary: Bản nháp CV gần nhất còn khôi phục được
-      tags:
-      - cvs-v2
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/LatestRecoverableDraft'
-          description: ''
-        '204':
-          description: No response body
   /api/v2/cvs/shares/{token}/:
     get:
       operationId: v2_cvs_shares_retrieve
@@ -19167,6 +19150,10 @@ components:
         public_id:
           type: string
           readOnly: true
+        slug:
+          type: string
+          readOnly: true
+          pattern: ^[-a-zA-Z0-9_]+$
         display_name:
           type: string
           readOnly: true
@@ -19177,6 +19164,7 @@ components:
       - display_name
       - name_vi
       - public_id
+      - slug
     CvSampleContentAdmin:
       type: object
       description: Protect public lifecycle transitions independently from edit access.
@@ -23819,16 +23807,6 @@ components:
       - code
       - id
       - name
-    LatestRecoverableDraft:
-      type: object
-      properties:
-        cv:
-          $ref: '#/components/schemas/CvV2'
-        draft:
-          $ref: '#/components/schemas/CvDraft'
-      required:
-      - cv
-      - draft
     LifecycleState4f9Enum:
       enum:
       - ACTIVE
