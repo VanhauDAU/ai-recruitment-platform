@@ -85,7 +85,9 @@ jobs:
           POSTGRES_PASSWORD: postgres
           POSTGRES_DB: ai_career_coach
         ports: ['5432:5432']
+        # CI data is thrown away with the job: keep the cluster in RAM.
         options: >-
+          --tmpfs /var/lib/postgresql/data:rw
           --health-cmd "pg_isready -U postgres"
           --health-interval 10s
           --health-timeout 5s
@@ -99,6 +101,9 @@ jobs:
       SECRET_KEY: ci-secret-key-at-least-32-characters-long-xxx
       DEBUG: 'True'
       DJANGO_SETTINGS_MODULE: config.settings.test
+      # pytest-xdist worker count. Each worker owns a separate test database
+      # (test_<name>_gwN). Set to '0' to fall back to the serial run.
+      PYTEST_WORKERS: auto
     steps:
       - name: Start job timer
         id: timer
@@ -116,6 +121,19 @@ jobs:
 
       - name: Install dependencies
         run: python -m pip install --disable-pip-version-check -r requirements.txt ruff==0.15.22
+
+      - name: Tune PostgreSQL for throwaway CI data
+        working-directory: .
+        env:
+          POSTGRES_CONTAINER: ${{ job.services.postgres.id }}
+        run: |
+          # Durability is irrelevant for a database that dies with the job.
+          # All three settings are reloadable, so no restart is needed.
+          docker exec "$POSTGRES_CONTAINER" psql -U postgres -v ON_ERROR_STOP=1 \
+            -c "ALTER SYSTEM SET fsync = off" \
+            -c "ALTER SYSTEM SET synchronous_commit = off" \
+            -c "ALTER SYSTEM SET full_page_writes = off" \
+            -c "SELECT pg_reload_conf()"
 
       - name: Lint (ruff)
         run: ruff check .
@@ -151,7 +169,10 @@ jobs:
           set -o pipefail
           # Stop pytest before the job-level timeout so always() diagnostics
           # still have time to publish the active test and faulthandler output.
+          # loadfile keeps every test of one module on the same worker, so
+          # class-level fixtures and migration tests keep their ordering.
           timeout --signal=TERM --kill-after=30s 47m pytest -vv \
+            -n "$PYTEST_WORKERS" --dist loadfile \
             --cov \
             --cov-fail-under=84 \
             --cov-report=term-missing \
