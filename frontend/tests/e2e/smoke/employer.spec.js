@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { expectAnimatedLoginButton, mockPublicApi } from './helpers'
+import { expectAnimatedLoginButton, mockPublicApi, selectTab } from './helpers'
 
 async function expectNoHorizontalOverflow(page) {
   await expect.poll(() => page.evaluate(() => {
@@ -1508,7 +1508,7 @@ test('employer jobs: detail workspace is compact, actionable and responsive', as
     await page.getByRole('combobox', { name: 'Chọn nội dung quản lý tin' }).click()
     await page.locator('.ant-select-dropdown:visible').getByText('Thông tin tuyển dụng', { exact: true }).click()
   } else {
-    await page.getByRole('tab', { name: /Thông tin tuyển dụng/ }).click()
+    await selectTab(page, /Thông tin tuyển dụng/)
   }
   await expect(page.getByText('18 - 30 triệu')).toBeVisible()
   await expect(page.getByText('Phường Hải Châu')).toBeVisible()
