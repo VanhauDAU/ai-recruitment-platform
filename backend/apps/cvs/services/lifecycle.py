@@ -6,7 +6,12 @@ from django.db import transaction
 from django.db.models import F
 from django.utils import timezone
 
-from apps.cv_templates.models import DEFAULT_EXPERIENCE_BAND, CvSampleContent, CvTemplate
+from apps.cv_templates.models import (
+    DEFAULT_CV_LANGUAGE,
+    DEFAULT_EXPERIENCE_BAND,
+    CvSampleContent,
+    CvTemplate,
+)
 from apps.cv_templates.services import resolve_position_content
 
 from ..models import CvDraft, CvVersion, UserCv
@@ -24,24 +29,15 @@ class CvLifecyclePolicyError(ValueError):
     """The requested lifecycle action violates a CV business policy."""
 
 
-def _content_for_create(sample_content, position, language, experience_band):
-    if position is not None:
-        return resolve_position_content(
-            position=position,
-            locale=language,
-            experience_band=experience_band,
-            lock=True,
-        )['content_json']
-    if sample_content is None:
+def _content_for_create(position, language, experience_band):
+    if position is None:
         return empty_content(language)
-    sample_content = CvSampleContent.objects.select_for_update().get(pk=sample_content.pk)
-    if sample_content.status != CvSampleContent.Status.PUBLISHED:
-        raise CvLifecyclePolicyError('The selected sample content is not published.')
-    if sample_content.locale != language:
-        raise CvLifecyclePolicyError(
-            'The selected sample content is not available in this language.'
-        )
-    return sample_content.content_json
+    return resolve_position_content(
+        position=position,
+        locale=language,
+        experience_band=experience_band,
+        lock=True,
+    )['content_json']
 
 
 @transaction.atomic
@@ -50,8 +46,7 @@ def create_v2_cv(
     actor,
     title,
     template,
-    language='vi-VN',
-    sample_content=None,
+    language=DEFAULT_CV_LANGUAGE,
     position=None,
     experience_band=DEFAULT_EXPERIENCE_BAND,
     source_cv=None,
@@ -85,7 +80,7 @@ def create_v2_cv(
         language = content.get('locale') or source_cv.language
         position = source_cv.position
     else:
-        content = _content_for_create(sample_content, position, language, experience_band)
+        content = _content_for_create(position, language, experience_band)
         content = overlay_actor_identity(content, actor, clear_demo_contacts=True)
     try:
         document = compose_cv_document(
@@ -107,9 +102,6 @@ def create_v2_cv(
         source=UserCv.Source.BUILDER,
         title=title,
         language=language,
-        # Retained only for legacy dual-read while V2 is rolled out.
-        cv_data=content,
-        style_config=style,
     )
     create_version(
         cv=cv,
@@ -253,18 +245,7 @@ def switch_draft_template(
     previous_template_id = cv.template_id
     cv.template = template
     cv.current_template_version = template_version
-    # Preserve legacy dual-read projections while the V1 API remains available.
-    cv.cv_data = content
-    cv.style_config = style
-    cv.save(
-        update_fields=[
-            'template',
-            'current_template_version',
-            'cv_data',
-            'style_config',
-            'updated_at',
-        ]
-    )
+    cv.save(update_fields=['template', 'current_template_version', 'updated_at'])
     if previous_template_id != template.pk:
         CvTemplate.objects.filter(pk=template.pk).update(usage_count=F('usage_count') + 1)
     return cv, draft
@@ -344,9 +325,5 @@ def apply_sample_to_draft(
             'updated_at',
         ]
     )
-    UserCv.objects.filter(pk=cv.pk).update(
-        cv_data=merged,
-        style_config=style,
-        updated_at=timezone.now(),
-    )
+    UserCv.objects.filter(pk=cv.pk).update(updated_at=timezone.now())
     return draft

@@ -160,7 +160,7 @@ quyền, endpoint RBAC trả:
 | `/api/dashboard/` | Vẫn `IsAdmin`, chuyển ở G2 |
 
 Các field lifecycle CV được bảo vệ riêng để quyền `.edit` không thể phát hành
-qua PATCH: `CvTemplate.status/lifecycle_status/current_published_version`,
+qua PATCH: `CvTemplate.lifecycle_status/current_published_version`,
 `is_active` của category/color/background và
 `CvSampleContent.status/published_at`. Staff tạo template ở `inactive`; các tài
 nguyên `is_active` mặc định `false`; sample/version tiếp tục ở `draft`. Chuyển
@@ -447,8 +447,7 @@ Mã lỗi ổn định gồm `JOB_AI_DAILY_QUOTA_EXCEEDED` (429),
 400 và owner mismatch 404. Provider message/raw content không được trả cho client.
 
 | GET | `/api/v2/cv-sample-contents/?locale=&experience_band=` | Thư viện nội dung mẫu riêng theo vị trí cho editor (không gồm nội dung chung); card có `position_public_id`, `position_slug`, `position_name`, `experience_band`. |
-| GET | `/api/v2/cv-sample-contents/{public_id}/` | Compatibility detail cho client cũ dùng `sample_content_public_id`. |
-| GET/POST | `/api/v2/cvs/` | Candidate lifecycle V2. POST nhận template, language, optional sample/position/`source_cv_public_id`, `experience_band` (khi tạo từ vị trí) và optional màu; các source loại trừ nhau. |
+| GET/POST | `/api/v2/cvs/` | Candidate lifecycle V2. POST nhận template, language, optional `position_public_id` (kèm `experience_band`) hoặc `source_cv_public_id` (loại trừ nhau) và optional màu. |
 | GET/PATCH/DELETE | `/api/v2/cvs/{public_id}/` | Candidate metadata/detail: PATCH chỉ nhận `title`, `is_default`; DELETE xóa vĩnh viễn CV và library artifacts. Snapshot của application đã nộp được giữ detached cho recruiter. |
 | POST | `/api/v2/cvs/imports/` | Candidate import PDF/DOCX (`multipart upload_session`, optional `title`/template fields). Response không có storage key/URL; raw `file` chỉ compatibility. |
 | POST | `/api/v2/cvs/{public_id}/duplicate/` | Clone builder CV từ latest immutable version thành CV/draft/version độc lập. Optional `title`; không hỗ trợ uploaded CV để tránh dùng chung file storage. |
@@ -548,9 +547,9 @@ Một phần tử `colors` trong card/detail:
 }
 ```
 
-`theme_color` và `color_variants` vẫn có trong response trong cửa sổ tương
-thích. Client mới phải dùng `colors[]`; URL ảnh thuộc quan hệ template–color,
-không suy ra từ hex hoặc hard-code trên frontend.
+Card không còn `theme_color`/`color_variants` (CVT-1c): client dùng `colors[]`;
+`thumbnail_url` của card và `preview_url` của detail là ảnh của màu mặc định. URL
+ảnh thuộc quan hệ template–color, không suy ra từ hex hoặc hard-code trên frontend.
 
 Position picker trả contract tối thiểu, không lộ hai cấp taxonomy trên UI:
 
@@ -579,8 +578,9 @@ Payload tạo CV V2:
 }
 ```
 
-`position_public_id` và `theme_color` đều optional. `sample_content_public_id`
-vẫn được nhận cho client cũ nhưng không được gửi cùng `position_public_id`. Nếu gửi màu không
+`position_public_id`, `experience_band` và `theme_color` đều optional;
+`position_public_id` không được gửi cùng `source_cv_public_id`. Từ CVT-1c API tạo
+CV không còn nhận `sample_content_public_id`. Nếu gửi màu không
 active hoặc không được gán cho template, API trả `400 theme_color`. Màu hợp lệ
 được copy vào `style_json.theme_color` của initial version và draft.
 

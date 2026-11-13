@@ -14,7 +14,7 @@ from .upload_claims import (
     open_clean_candidate_upload,
     release_candidate_cv_source,
 )
-from .versions import create_initial_document, create_version, sync_legacy_builder_draft
+from .versions import create_initial_document, create_version
 
 ALLOWED_UPLOAD_TYPES = {'pdf', 'docx'}
 
@@ -70,7 +70,7 @@ def permanently_delete_cv(*, cv, actor):
         claim_scope=CV_SOURCE_CLAIM_SCOPE,
         claim_reference=locked_cv.public_id,
     )
-    storage_keys = [locked_cv.pdf_url, locked_cv.thumbnail_url]
+    storage_keys = [locked_cv.thumbnail_url]
     if source_asset is None:
         storage_keys.append(locked_cv.file_url)
     exports = CvExport.objects.filter(cv=locked_cv)
@@ -109,7 +109,6 @@ def upload_cv(user, upload, title='', *, source=UserCv.Source.UPLOADED):
                 file_url=path,
                 file_name=upload.name,
                 file_type=file_type,
-                status=UserCv.Status.UPLOADED,
             )
             create_initial_document(cv, user, version_kind='imported')
             return cv
@@ -131,7 +130,6 @@ def import_v2_cv_from_session(*, actor, upload_session_public_id, title=''):
         cv_type=UserCv.CvType.UPLOADED,
         source=UserCv.Source.IMPORTED,
         title=title or 'CV đã tải lên',
-        status=UserCv.Status.UPLOADED,
     )
     asset = claim_candidate_upload(
         owner=actor,
@@ -186,8 +184,6 @@ def duplicate_cv(*, cv, actor, title=''):
         source=UserCv.Source.BUILDER,
         title=title or f'{source_cv.title} (copy)',
         language=source_cv.language,
-        cv_data=content_json,
-        style_config=style_json,
     )
     create_version(
         cv=duplicate,
@@ -238,10 +234,3 @@ def update_cv_metadata(*, cv, actor, title=None, is_default=None):
     if update_fields:
         locked_cv.save(update_fields=[*update_fields, 'updated_at'])
     return locked_cv
-
-
-def update_builder_cv(serializer, user):
-    """Persist legacy fields and mirror them into the V2 mutable draft."""
-    cv = serializer.save()
-    sync_legacy_builder_draft(cv, user)
-    return cv

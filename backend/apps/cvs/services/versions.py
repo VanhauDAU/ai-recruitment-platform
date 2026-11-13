@@ -9,11 +9,14 @@ from django.utils import timezone
 
 from ..models import CvDraft, CvVersion, UserCv
 from ..schemas import (
-    canonicalize_legacy_cv_data,
+    empty_content,
+    empty_layout,
+    empty_style,
     validate_cv_document,
     validate_template_layout_capabilities,
 )
 from .assets import validate_document_assets
+from .matching_profile import sync_matching_profile
 
 
 class StaleDraftError(ValueError):
@@ -54,9 +57,15 @@ def plain_text_from_content(content_json):
     return '\n'.join(value for value in values if value)
 
 
-def create_initial_document(cv, actor, version_kind=CvVersion.VersionKind.INITIAL):
-    """Create an immutable V1 baseline plus the one mutable draft for a CV."""
-    content, layout, style = canonicalize_legacy_cv_data(cv.cv_data, cv.style_config, cv.language)
+def create_initial_document(
+    cv, actor, version_kind=CvVersion.VersionKind.INITIAL, content_json=None
+):
+    """Create an immutable baseline plus the one mutable draft for a CV."""
+    content = content_json if content_json is not None else empty_content(cv.language)
+    layout, style = empty_layout(), empty_style()
+    layout['regions'][0]['section_instance_ids'] = [
+        section['instance_id'] for section in content.get('sections', [])
+    ]
     template_version = cv.template.current_published_version if cv.template_id else None
     return create_version(
         cv=cv,
@@ -139,19 +148,12 @@ def create_version(
     if update_cv_pointers:
         cv.latest_version = version
         cv.current_template_version = resolved_template_version
-        cv.current_version = version.version_number  # legacy dual-write projection
-        cv.save(
-            update_fields=[
-                'latest_version',
-                'current_template_version',
-                'current_version',
-                'updated_at',
-            ]
-        )
+        cv.save(update_fields=['latest_version', 'current_template_version', 'updated_at'])
         if caller_cv is not cv:
             caller_cv.latest_version = version
             caller_cv.current_template_version = resolved_template_version
-            caller_cv.current_version = version.version_number
+    sync_matching_profile(cv, content_json)
+    caller_cv.experience_years = cv.experience_years
     if create_or_replace_draft:
         CvDraft.objects.update_or_create(
             cv=cv,
@@ -210,58 +212,8 @@ def update_draft(
         raise StaleDraftError(
             'This draft was updated in another session. Refresh and merge before saving.'
         )
-    # V2 is the canonical writer, but V1 clients continue to read these legacy
-    # projections during the controlled dual-write migration window.
-    UserCv.objects.filter(pk=cv.pk).update(
-        cv_data=content_json,
-        style_config=style_json,
-        updated_at=timezone.now(),
-    )
+    UserCv.objects.filter(pk=cv.pk).update(updated_at=timezone.now())
     return CvDraft.objects.get(cv=cv)
-
-
-def sync_legacy_builder_draft(cv, actor):
-    """Dual-write adapter for the existing V1 update endpoint."""
-    if cv.cv_type != UserCv.CvType.BUILDER:
-        return None
-    content, layout, style = canonicalize_legacy_cv_data(cv.cv_data, cv.style_config, cv.language)
-    draft = CvDraft.objects.filter(cv=cv).first()
-    # A V2 autosave mirrors canonical content into the legacy projection. If a
-    # legacy client later edits metadata/content, it must not silently discard
-    # the V2 region layout that legacy never knew how to represent.
-    if draft is not None and isinstance(cv.cv_data, dict) and cv.cv_data.get('schema_version') == 1:
-        layout = draft.layout_json
-    validate_cv_document(
-        content_json=content,
-        layout_json=layout,
-        style_json=style,
-        schema_version=1,
-    )
-    if cv.current_template_version_id:
-        validate_template_layout_capabilities(
-            layout_json=layout,
-            capabilities=cv.current_template_version.capabilities,
-        )
-    if draft is None:
-        return CvDraft.objects.create(
-            cv=cv,
-            base_version=cv.latest_version,
-            content_json=content,
-            layout_json=layout,
-            style_json=style,
-            document_hash=document_hash(content, layout, style),
-            updated_by=actor,
-        )
-    else:
-        draft.content_json = content
-        draft.layout_json = layout
-        draft.style_json = style
-        draft.document_hash = document_hash(content, layout, style)
-        draft.updated_by = actor
-        draft.lock_version += 1
-        draft.full_clean()
-        draft.save()
-    return draft
 
 
 def create_application_snapshot(cv, actor, source_version=None):

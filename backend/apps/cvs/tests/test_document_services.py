@@ -13,7 +13,6 @@ from apps.cv_templates.models import (
 from apps.cv_templates.services import publish_template_version
 from apps.cvs.models import CvVersion, ImmutableCvVersionError, UserCv
 from apps.cvs.schemas import (
-    canonicalize_legacy_cv_data,
     empty_content,
     empty_layout,
     empty_style,
@@ -61,21 +60,6 @@ class CanonicalCvDocumentTests(TestCase):
     def test_accepts_canonical_document(self):
         content, layout, style = self.valid_document()
 
-        validate_cv_document(
-            content_json=content, layout_json=layout, style_json=style, schema_version=1
-        )
-
-    def test_legacy_payload_is_adapted_to_the_canonical_three_document_contract(self):
-        content, layout, style = canonicalize_legacy_cv_data(
-            {
-                'personal': {'full_name': 'Nguyễn Văn A'},
-                'skills': [{'name': 'Django'}],
-            },
-            {'color': '#00A66A', 'font_family': 'Roboto'},
-        )
-
-        self.assertEqual(content['personal_info']['full_name'], 'Nguyễn Văn A')
-        self.assertEqual(content['sections'][0]['items'][0]['item_id'], 'legacy_skills_1')
         validate_cv_document(
             content_json=content, layout_json=layout, style_json=style, schema_version=1
         )

@@ -123,7 +123,6 @@ def _candidate_cvs(user):
     return (
         UserCv.objects.filter(user=user, is_deleted=False)
         .exclude(lifecycle_status=UserCv.LifecycleStatus.ARCHIVED)
-        .exclude(status=UserCv.Status.FAILED)
         .exclude(processing_status=UserCv.ProcessingStatus.FAILED)
         .select_related('position', 'latest_version')
         .prefetch_related('cv_skills__skill')
@@ -133,7 +132,7 @@ def _candidate_cvs(user):
 
 def _cv_content(cv):
     version = cv.latest_version
-    content = version.content_json if version else (cv.cv_data or {})
+    content = version.content_json if version else {}
     personal = content.get('personal_info', {}) if isinstance(content, dict) else {}
     headline = str(personal.get('headline') or personal.get('job_title') or '').strip()
     return content, headline
@@ -213,6 +212,13 @@ def _cv_context(user, public_id):
         'position_reason': 'Khớp vị trí trên CV',
         'focus_keyword': focus_keyword,
         **_preference_values(preference),
+        # Số năm kinh nghiệm tính từ chính CV (cùng enum với JD) được ưu tiên như
+        # vị trí; CV chưa có mục kinh nghiệm thì dùng khai báo của ứng viên.
+        **(
+            {'experience_level': cv.experience_years}
+            if cv.experience_years and cv.experience_years != Job.ExperienceYears.NONE
+            else {}
+        ),
     }
 
 

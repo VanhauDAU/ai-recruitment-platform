@@ -32,8 +32,7 @@ def published_template_version(template):
     """Return the template's active immutable rendering contract."""
     version = template.current_published_version
     if (
-        template.status != CvTemplate.Status.ACTIVE
-        or template.lifecycle_status != CvTemplate.LifecycleStatus.PUBLISHED
+        template.lifecycle_status != CvTemplate.LifecycleStatus.PUBLISHED
         or version is None
         or version.template_id != template.pk
         or version.version_status != CvTemplateVersion.VersionStatus.PUBLISHED

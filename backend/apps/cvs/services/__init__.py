@@ -8,7 +8,6 @@ from .cvs import (
     import_v2_cv,
     import_v2_cv_from_session,
     permanently_delete_cv,
-    update_builder_cv,
     update_cv_metadata,
     upload_cv,
 )
@@ -81,7 +80,6 @@ __all__ = [
     'create_shared_link',
     'request_cv_export',
     'create_version',
-    'update_builder_cv',
     'update_cv_metadata',
     'update_draft',
     'upload_cv',

@@ -23,8 +23,8 @@ class CvTemplateColorInline(admin.TabularInline):
 
 @admin.register(CvTemplate)
 class CvTemplateAdmin(admin.ModelAdmin):
-    list_display = ['name', 'is_premium', 'status', 'lifecycle_status', 'usage_count', 'sort_order']
-    list_filter = ['is_premium', 'status', 'lifecycle_status', 'categories__category_type']
+    list_display = ['name', 'is_premium', 'lifecycle_status', 'usage_count', 'sort_order']
+    list_filter = ['is_premium', 'lifecycle_status', 'categories__category_type']
     search_fields = ['name', 'display_name_vi', 'display_name_en']
     prepopulated_fields = {'slug': ('name',)}
     readonly_fields = ['public_id', 'usage_count']

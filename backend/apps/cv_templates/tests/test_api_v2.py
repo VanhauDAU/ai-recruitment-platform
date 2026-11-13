@@ -35,7 +35,6 @@ class TemplateCatalogV2Tests(TestCase):
                 localized_field('description', locale): f'{name} description',
             },
             lifecycle_status=CvTemplate.LifecycleStatus.PUBLISHED,
-            thumbnail_url=f'/templates/{name}.png',
             usage_count=usage_count,
         )
         version = CvTemplateVersion.objects.create(
@@ -125,12 +124,13 @@ class TemplateCatalogV2Tests(TestCase):
         self.assertEqual(response.data['count'], 1)
         card = response.data['results'][0]
         self.assertEqual(card['slug'], self.primary.slug)
-        self.assertEqual(card['theme_color'], '#00A66A')
+        self.assertEqual(card['thumbnail_url'], '/templates/Primary-green.png')
         self.assertEqual(
             [(color['slug'], color['preview_url']) for color in card['colors']],
             [('green', '/templates/Primary-green.png'), ('blue', '/templates/Primary-blue.png')],
         )
-        self.assertEqual(card['color_variants'], ['#00A66A', '#2255AA'])
+        self.assertNotIn('theme_color', card)
+        self.assertNotIn('color_variants', card)
         self.assertCountEqual(
             [category['slug'] for category in card['categories']],
             ['minimal', 'professional'],

@@ -33,16 +33,9 @@ def _catalog_colors(template, request=None):
             'name': link.color.name,
             'slug': link.color.slug,
             'hex_code': link.color.hex_code,
-            'thumbnail_url': media_url_from_value(
-                link.thumbnail_url or template.thumbnail_url,
-                request=request,
-            ),
+            'thumbnail_url': media_url_from_value(link.thumbnail_url, request=request),
             'preview_url': media_url_from_value(
-                link.preview_url
-                or link.thumbnail_url
-                or template.preview_url
-                or template.thumbnail_url,
-                request=request,
+                link.preview_url or link.thumbnail_url, request=request
             ),
             'is_default': link.is_default,
         }
@@ -50,11 +43,14 @@ def _catalog_colors(template, request=None):
     ]
 
 
+def _default_color(colors):
+    return next((item for item in colors if item['is_default']), colors[0] if colors else {})
+
+
 class CvTemplateCardSerializer(serializers.ModelSerializer):
     display_name = serializers.SerializerMethodField()
     description = serializers.SerializerMethodField()
-    theme_color = serializers.SerializerMethodField()
-    color_variants = serializers.SerializerMethodField()
+    thumbnail_url = serializers.SerializerMethodField()
     colors = serializers.SerializerMethodField()
     categories = serializers.SerializerMethodField()
     tags = serializers.SerializerMethodField()
@@ -68,8 +64,6 @@ class CvTemplateCardSerializer(serializers.ModelSerializer):
             'description',
             'thumbnail_url',
             'is_premium',
-            'theme_color',
-            'color_variants',
             'colors',
             'categories',
             'tags',
@@ -83,24 +77,13 @@ class CvTemplateCardSerializer(serializers.ModelSerializer):
     def get_description(self, template):
         return template.catalog_description
 
-    def get_theme_color(self, template):
-        colors = _catalog_colors(template, self.context.get('request'))
-        default = next(
-            (item for item in colors if item['is_default']), colors[0] if colors else None
-        )
-        return (
-            default['hex_code']
-            if default
-            else template.current_published_version.default_style_json.get('theme_color', '#00A66A')
-        )
-
-    def get_color_variants(self, template):
-        return [
-            item['hex_code'] for item in _catalog_colors(template, self.context.get('request'))
-        ] or [self.get_theme_color(template)]
-
     def get_colors(self, template):
         return _catalog_colors(template, self.context.get('request'))
+
+    def get_thumbnail_url(self, template):
+        """Ảnh của màu mặc định (thumbnail, thiếu thì dùng ảnh preview)."""
+        color = _default_color(self.get_colors(template))
+        return color.get('thumbnail_url') or color.get('preview_url', '')
 
     def get_categories(self, template):
         return _catalog_groups(template)[0]
@@ -110,7 +93,7 @@ class CvTemplateCardSerializer(serializers.ModelSerializer):
 
 
 class CvTemplateDetailSerializer(CvTemplateCardSerializer):
-    preview_url = serializers.CharField(read_only=True)
+    preview_url = serializers.SerializerMethodField()
     seo_title = serializers.CharField(source='catalog_seo_title', read_only=True)
     seo_description = serializers.CharField(source='catalog_seo_description', read_only=True)
     renderer = serializers.SerializerMethodField()
@@ -124,6 +107,9 @@ class CvTemplateDetailSerializer(CvTemplateCardSerializer):
             'renderer',
             'sections',
         ]
+
+    def get_preview_url(self, template):
+        return _default_color(self.get_colors(template)).get('preview_url', '')
 
     def get_renderer(self, template):
         version = template.current_published_version
@@ -177,12 +163,6 @@ class CvSampleContentCardSerializer(serializers.ModelSerializer):
             'position_slug',
             'position_name',
         ]
-        read_only_fields = fields
-
-
-class CvSampleContentDetailSerializer(CvSampleContentCardSerializer):
-    class Meta(CvSampleContentCardSerializer.Meta):
-        fields = CvSampleContentCardSerializer.Meta.fields + ['content_json', 'schema_version']
         read_only_fields = fields
 
 

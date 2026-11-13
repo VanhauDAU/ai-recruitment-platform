@@ -62,8 +62,6 @@ class AdminModelViewSet(viewsets.ModelViewSet):
         if 'cv_template.publish' in effective_permission_codes(self.request.user):
             return {}
         model = serializer.Meta.model
-        if model is CvTemplate:
-            return {'status': CvTemplate.Status.INACTIVE}
         if hasattr(model, 'is_active'):
             return {'is_active': False}
         return {}

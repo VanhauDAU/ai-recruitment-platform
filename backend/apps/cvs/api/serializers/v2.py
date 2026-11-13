@@ -8,7 +8,6 @@ from apps.cv_templates.models import (
     DEFAULT_CV_LANGUAGE,
     DEFAULT_EXPERIENCE_BAND,
     CvLanguage,
-    CvSampleContent,
     CvTemplate,
     ExperienceBand,
 )
@@ -201,9 +200,6 @@ class CvV2CreateSerializer(serializers.Serializer):
     title = serializers.CharField(max_length=255)
     template_public_id = serializers.CharField(max_length=50)
     language = serializers.ChoiceField(choices=CvLanguage.choices, default=DEFAULT_CV_LANGUAGE)
-    sample_content_public_id = serializers.CharField(
-        max_length=50, required=False, allow_blank=False
-    )
     position_public_id = serializers.CharField(max_length=50, required=False, allow_blank=False)
     experience_band = serializers.ChoiceField(
         choices=ExperienceBand.choices, default=DEFAULT_EXPERIENCE_BAND
@@ -218,13 +214,6 @@ class CvV2CreateSerializer(serializers.Serializer):
             )
         except CvTemplate.DoesNotExist as error:
             raise serializers.ValidationError('Unknown template.') from error
-
-    def validate_sample_content_public_id(self, value):
-        # Nội dung chung còn token `{position}` nên chỉ dùng được qua vị trí.
-        try:
-            return CvSampleContent.objects.get(public_id=value, position_profile__isnull=False)
-        except CvSampleContent.DoesNotExist as error:
-            raise serializers.ValidationError('Unknown sample content.') from error
 
     def validate_position_public_id(self, value):
         try:
@@ -247,21 +236,9 @@ class CvV2CreateSerializer(serializers.Serializer):
             raise serializers.ValidationError('Unknown reusable CV.') from error
 
     def validate(self, attrs):
-        sample_content = attrs.get('sample_content_public_id')
-        position = attrs.get('position_public_id')
-        source_cv = attrs.get('source_cv_public_id')
-        selected_sources = [
-            value for value in (sample_content, position, source_cv) if value is not None
-        ]
-        if len(selected_sources) > 1:
+        if attrs.get('position_public_id') and attrs.get('source_cv_public_id'):
             raise serializers.ValidationError(
-                {
-                    'position_public_id': 'Use only one content source.',
-                }
-            )
-        if sample_content is not None and sample_content.locale != attrs['language']:
-            raise serializers.ValidationError(
-                {'sample_content_public_id': 'Sample locale must match language.'}
+                {'position_public_id': 'Use only one content source.'}
             )
         theme_color = attrs.get('theme_color')
         template = attrs['template_public_id']

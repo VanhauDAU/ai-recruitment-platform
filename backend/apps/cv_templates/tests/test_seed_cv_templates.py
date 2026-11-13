@@ -35,7 +35,6 @@ class SeedCvTemplatesTests(TestCase):
         self.assertEqual(CvTemplate.objects.count(), len(TEMPLATES))
         for template in CvTemplate.objects.all():
             with self.subTest(template=template.slug):
-                self.assertEqual(template.status, CvTemplate.Status.ACTIVE)
                 self.assertEqual(template.lifecycle_status, CvTemplate.LifecycleStatus.PUBLISHED)
                 version = template.current_published_version
                 self.assertIsNotNone(version)

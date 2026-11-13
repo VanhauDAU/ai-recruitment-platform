@@ -13,10 +13,6 @@ from .language import CvLanguage, localized_field
 class CvTemplate(models.Model):
     """CV Builder template (DB doc section 2.4)."""
 
-    class Status(models.TextChoices):
-        ACTIVE = 'active', 'Active'
-        INACTIVE = 'inactive', 'Inactive'
-
     class LifecycleStatus(models.TextChoices):
         DRAFT = 'draft', 'Draft'
         PUBLISHED = 'published', 'Published'
@@ -25,9 +21,6 @@ class CvTemplate(models.Model):
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     name = models.CharField(max_length=255)
     slug = models.SlugField(max_length=255, unique=True, blank=True)
-    category = models.CharField(
-        max_length=100, blank=True, help_text='IT, internship, professional, simple'
-    )
     # Nội dung song ngữ. Template chỉ xuất hiện ở kho mẫu của ngôn ngữ có
     # `display_name_<ngôn ngữ>` khác rỗng.
     display_name_vi = models.CharField(max_length=255, blank=True)
@@ -38,21 +31,12 @@ class CvTemplate(models.Model):
     seo_title_en = models.CharField(max_length=255, blank=True)
     seo_description_vi = models.TextField(blank=True)
     seo_description_en = models.TextField(blank=True)
-    thumbnail_url = models.TextField(blank=True)
-    preview_url = models.TextField(blank=True)
-    layout_config = models.JSONField(
-        default=dict, blank=True, help_text='one-column, two-column, ...'
-    )
-    style_config = models.JSONField(
-        default=dict, blank=True, help_text='color, font, spacing defaults'
-    )
     is_premium = models.BooleanField(default=False)
-    status = models.CharField(max_length=50, choices=Status.choices, default=Status.ACTIVE)
     sort_order = models.IntegerField(default=0)
     usage_count = models.IntegerField(default=0)
-    # `status` is the legacy public-catalogue switch.  Lifecycle and the
-    # current immutable version are the V2 source of truth; both fields stay
-    # during the dual-read window so existing clients remain compatible.
+    # Nguồn sự thật duy nhất cho việc hiển thị công khai: chỉ template
+    # `published` có version đang published mới vào kho mẫu. Ảnh xem trước nằm ở
+    # `CvTemplateColorLink` của từng màu.
     lifecycle_status = models.CharField(
         max_length=20,
         choices=LifecycleStatus.choices,

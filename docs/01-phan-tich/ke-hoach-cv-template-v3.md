@@ -616,7 +616,7 @@ Tách hai PR để giữ dưới ngưỡng 60 file của quy trình PR:
   `locale_ref`, tab "Ngôn ngữ" ở admin và entity frontend `locale`; xóa dữ liệu
   mẫu/blueprint/taxonomy tiếng Nhật, Trung. **Không xóa CV người dùng**: các bước
   này không cần đến (điều chỉnh D10).
-- **CVT-1b — Vị trí và nội dung mẫu (🟨 chờ review PR):**
+- **CVT-1b — Vị trí và nội dung mẫu (✅ PR #180):**
   `CvPositionProfile`, `ExperienceBand`, `CvSampleContent` theo
   `(position_profile, locale, experience_band)`, bỏ `CvContentBlueprint` (blueprint
   thành nội dung chung bằng data migration), resolver/picker/preview/tạo CV theo
@@ -624,9 +624,17 @@ Tách hai PR để giữ dưới ngưỡng 60 file của quy trình PR:
   riêng 9 vị trí chuyên môn), gỡ tab/menu "Blueprint" và mục menu "Ngôn ngữ" còn
   sót từ CVT-1a. Danh sách 30 vị trí ưu tiên (I1) chưa có: hồ sơ được tạo cho mọi
   vị trí chuyên môn đang hoạt động.
-- **CVT-1c — Trường matching và dọn legacy:** gỡ `UserCv.cv_data/style_config/status`,
-  `CvTemplate.category/status/layout_config/style_config`, thêm
-  `experience_years`/`position_level`/`education_level` (mục 5.6).
+- **CVT-1c — Trường matching và dọn legacy (🟨 chờ review PR):** thêm
+  `UserCv.experience_years` (giá trị `Job.ExperienceYears`) tính từ mục kinh nghiệm
+  ở mỗi `create_version`, gợi ý việc làm theo CV dùng giá trị này; vị trí mục tiêu
+  dùng `UserCv.position` có sẵn. Gỡ `UserCv.cv_data/style_config/status/
+  current_version/raw_text/normalized_text/pdf_url/last_analyzed_at`,
+  `CvTemplate.category/status/layout_config/style_config/thumbnail_url/preview_url`
+  (ảnh lấy từ màu mặc định), `theme_color`/`color_variants` trên card, đầu vào
+  `sample_content_public_id` khi tạo CV và endpoint chi tiết nội dung mẫu, adapter
+  V1 (`canonicalize_legacy_cv_data`, `sync_legacy_builder_draft`,
+  `update_builder_cv`). `position_level`/`education_level` chuyển sang CVT-3, khi
+  form nhập liệu là nguồn dữ liệu.
 
 Section mới và `schema_version 2` chuyển sang CVT-3, làm cùng form nhập liệu, để
 không đăng ký section chưa có giao diện dùng.
