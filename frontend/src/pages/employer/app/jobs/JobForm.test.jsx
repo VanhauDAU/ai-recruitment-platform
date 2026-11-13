@@ -54,7 +54,7 @@ vi.mock('@/widgets/employer-job-editor', () => ({
         {defaultDeadlineDays}/{maxDeadlineDays}
       </p>
       <button type="button" onClick={() => onPublish({ title: 'Backend Engineer' }, null)}>
-        Mô phỏng gửi duyệt
+        Mô phỏng đăng tin
       </button>
       <button type="button" onClick={() => onSaveDraft({ title: 'Backend Engineer' }, null)}>
         Mô phỏng lưu nháp
@@ -90,7 +90,7 @@ describe('JobForm submission feedback', () => {
     mocks.message.success.mockReset()
   })
 
-  it('shows the backend error as a toast when sending a job for review fails', async () => {
+  it('shows the backend error as a toast when publishing a job fails', async () => {
     mocks.publishEmployerJob.mockRejectedValue({
       response: {
         status: 400,
@@ -99,7 +99,7 @@ describe('JobForm submission feedback', () => {
     })
     renderPage()
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Mô phỏng gửi duyệt' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Mô phỏng đăng tin' }))
 
     await waitFor(() => expect(mocks.message.error).toHaveBeenCalledWith(
       'Hạn nhận hồ sơ phải là một ngày trong tương lai.',
@@ -107,6 +107,40 @@ describe('JobForm submission feedback', () => {
     ))
     expect(await screen.findByText('Hạn nhận hồ sơ phải là một ngày trong tương lai.'))
       .toBeInTheDocument()
+  })
+
+  it('lists the blocking reasons when the employer may not publish yet', async () => {
+    mocks.publishEmployerJob.mockRejectedValue({
+      response: {
+        status: 400,
+        data: {
+          code: 'JOB_PUBLICATION_BLOCKED',
+          detail: 'Chưa thể đăng tin.',
+          blocked_reasons: [
+            { code: 'verification_required', label: 'Nhà tuyển dụng chưa được duyệt xác thực.' },
+          ],
+        },
+      },
+    })
+    renderPage()
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Mô phỏng đăng tin' }))
+
+    await waitFor(() => expect(mocks.message.error).toHaveBeenCalledWith(
+      'Chưa thể đăng tin. Nhà tuyển dụng chưa được duyệt xác thực.',
+      { duration: 5000, id: 'post-job-submit-error' },
+    ))
+  })
+
+  it('tells the employer the job is public as soon as it is published', async () => {
+    mocks.publishEmployerJob.mockResolvedValue({ public_id: 'job_1', status: 'active' })
+    renderPage()
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Mô phỏng đăng tin' }))
+
+    await waitFor(() => expect(mocks.message.success).toHaveBeenCalledWith(
+      'Đã đăng tin. Ứng viên có thể xem tin ngay.',
+    ))
   })
 
   it('uses the posting default as the suggestion and the maximum as the selectable limit', async () => {

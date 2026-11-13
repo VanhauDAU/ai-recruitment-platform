@@ -12,7 +12,7 @@ const CARD_DEFINITIONS = [
     icon: FileSearchOutlined,
     iconClass: 'bg-emerald-50 text-emerald-600 ring-emerald-100',
     accent: 'from-emerald-500 to-teal-500',
-    caption: (summary) => `${summary.jobs_pending || 0} chờ duyệt · ${summary.jobs_draft || 0} bản nháp`,
+    caption: (summary) => `${summary.jobs_draft || 0} bản nháp chưa đăng`,
   },
   {
     key: 'applications_total',

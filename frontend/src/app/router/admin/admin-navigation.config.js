@@ -144,14 +144,14 @@ export const ADMIN_NAVIGATION = [
         children: [
           {
             key: 'job-moderation',
-            label: 'Tin chờ duyệt',
+            label: 'Tất cả tin',
             routeRef: 'jobModeration',
           },
           {
-            key: 'all-jobs',
-            label: 'Tất cả tin',
+            key: 'reported-jobs',
+            label: 'Tin có báo cáo chờ',
             routeRef: 'jobModeration',
-            query: { job_scope: 'all' },
+            query: { job_scope: 'reported' },
           },
           {
             key: 'held-jobs',

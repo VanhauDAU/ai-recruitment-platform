@@ -29,7 +29,7 @@ describe('admin navigation tree', () => {
     )
     const labels = flattenAdminNavigation(tree).map((leaf) => leaf.label)
 
-    expect(labels).toContain('Tin chờ duyệt')
+    expect(labels).toContain('Tin có báo cáo chờ')
     expect(labels).toContain('Báo cáo vi phạm')
     expect(labels).toContain('Tài khoản cá nhân')
     expect(labels).not.toContain('Tất cả công ty')

@@ -6,25 +6,28 @@ Quyết định:
 [`adr-0014-job-post-moderation.md`](02-tong-quan/adr-0014-job-post-moderation.md),
 [`adr-0015-remove-commercial-services.md`](02-tong-quan/adr-0015-remove-commercial-services.md).
 
-> Cập nhật lần cuối: 2026-11-13 — PM-1 và PM-2 đã commit trên nhánh
-> `refactor/remove-job-approval-workflow`. Backend đã qua ruff và kiểm tra cú
-> pháp; **chưa chạy pytest, import-linter và `makemigrations --check`**, nên
-> PM-2 chưa đạt cổng kiểm tra.
+> Cập nhật lần cuối: 2026-11-13 — PM-1 đến PM-3 đã commit trên nhánh
+> `refactor/remove-job-approval-workflow`. PM-2 đạt cổng backend: ruff,
+> import-linter, `makemigrations --check` và 1246 test (bỏ riêng test
+> migration, vốn đã đạt ở lần chạy theo app). PM-3 đã qua kiểm tra kiến trúc
+> (dependency-cruiser, ranh giới feature và API); **chưa chạy oxlint, vitest,
+> build và E2E**.
 
 | Phase | Nội dung | Trạng thái |
 | --- | --- | --- |
 | PM-0 | Tag `pre-post-moderation`, nhánh làm việc | ✅ Hoàn tất |
 | PM-1 | ADR-0014, ADR-0015, đánh dấu ADR-0012 thay thế một phần | ✅ Hoàn tất |
-| PM-2 | Backend: đăng tin là công khai, gỡ duyệt tin, migration dữ liệu | 🟨 Code complete — chờ chạy cổng kiểm tra backend |
-| PM-3 | Frontend: cổng nhà tuyển dụng và quản trị theo hợp đồng API mới | ⬜ Chưa bắt đầu |
+| PM-2 | Backend: đăng tin là công khai, gỡ duyệt tin, migration dữ liệu | ✅ Hoàn tất — đạt cổng backend |
+| PM-3 | Frontend: cổng nhà tuyển dụng và quản trị theo hợp đồng API mới | 🟨 Code complete — chờ chạy lint, unit test, build và E2E |
 | PM-4 | Xóa app `services` (gói dịch vụ, quyền lợi, yêu cầu tư vấn) | ⬜ Chưa bắt đầu |
 | PM-5 | Kiểm thử tích hợp ba cổng | ⬜ Chưa bắt đầu |
 | PM-6 | Dọn docs, xóa `99-tien-do`, dựng lại mục lục | ⬜ Chưa bắt đầu |
 | PM-7 | Bổ sung changelog còn thiếu, rút gọn tiến độ, sinh lại OpenAPI | ⬜ Chưa bắt đầu |
 
-Việc còn treo của PM-2: `docs/04-api/openapi.yaml` chưa được sinh lại; ô xác
-nhận cam kết trách nhiệm khi đăng tin làm cùng PM-3 vì cần cả backend và
-frontend.
+Việc còn treo: `docs/04-api/openapi.yaml` chưa được sinh lại. Cam kết trách
+nhiệm hiện là dòng thông báo cạnh nút "Đăng tin", chưa có ô xác nhận được lưu
+ở backend. Nhà tuyển dụng chưa thấy trạng thái "bị tạm ẩn" trên tin của mình,
+vì API cổng nhà tuyển dụng chưa trả `moderation_hold`.
 
 ## Epic rà soát và hardening cổng Nhà tuyển dụng (ER, 2026-08-10)
 

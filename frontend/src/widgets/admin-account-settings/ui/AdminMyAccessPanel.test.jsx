@@ -13,7 +13,7 @@ describe('AdminMyAccessPanel', () => {
       user: {
         admin_access: {
           is_superuser: false,
-          permissions: ['job_moderation.view', 'job_moderation.approve'],
+          permissions: ['job_moderation.view', 'job_moderation.enforce_visibility'],
           primary_department: {
             code: 'job-moderation',
             name: 'Kiểm duyệt tin tuyển dụng',
@@ -31,7 +31,7 @@ describe('AdminMyAccessPanel', () => {
     render(<AdminMyAccessPanel />)
 
     expect(screen.getAllByText('Kiểm duyệt tin tuyển dụng').length).toBeGreaterThan(0)
-    expect(screen.getByText('Duyệt tin tuyển dụng')).toBeInTheDocument()
+    expect(screen.getByText('Tạm ẩn hoặc khôi phục tin tuyển dụng')).toBeInTheDocument()
     expect(screen.getByText(/Nhân viên · rank 10/)).toBeInTheDocument()
   })
 

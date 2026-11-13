@@ -297,13 +297,6 @@ export default function JobDetail() {
         onDeadlineAction={openDeadlineAction}
       />
 
-      {job.status === 'pending' && (
-        <Alert type="info" showIcon title="Tin đang chờ quản trị viên duyệt" description="Tin chưa hiển thị với ứng viên cho đến khi được duyệt." />
-      )}
-      {job.status === 'rejected' && (
-        <Alert type="error" showIcon title="Tin tuyển dụng bị từ chối" description={job.rejected_reason || 'Quản trị viên chưa cung cấp lý do.'} />
-      )}
-
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <MetricCard testId="job-metric-total-cvs" icon={<TeamOutlined />} label="Tổng lượng CV ứng viên" value={metrics.total} helper="Tất cả nguồn CV của tin" />
         <MetricCard testId="job-metric-applied-cvs" icon={<FileTextOutlined />} label="CV ứng tuyển" value={metrics.applied} helper="Ứng viên chủ động nộp CV" tone="blue" />

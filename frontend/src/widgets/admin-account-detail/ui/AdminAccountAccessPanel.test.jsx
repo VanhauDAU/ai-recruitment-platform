@@ -14,7 +14,7 @@ const ACCOUNT = {
   admin_access: {
     is_superuser: false,
     access_source: 'role',
-    permissions: ['job_moderation.approve', 'job_moderation.view'],
+    permissions: ['job_moderation.enforce_visibility', 'job_moderation.view'],
     permission_count: 2,
     membership: {
       is_active: true,
@@ -29,7 +29,7 @@ const ACCOUNT = {
         rank: 10,
         is_active: true,
         is_system_managed: true,
-        permission_codes: ['job_moderation.approve', 'job_moderation.view'],
+        permission_codes: ['job_moderation.enforce_visibility', 'job_moderation.view'],
         department: {
           code: 'job-moderation',
           name: 'Kiểm duyệt tin tuyển dụng',
@@ -49,7 +49,7 @@ describe('AdminAccountAccessPanel', () => {
     expect(screen.getByText('Nhân viên kiểm duyệt')).toBeInTheDocument()
     expect(screen.getByText('Kiểm duyệt tin tuyển dụng')).toBeInTheDocument()
     expect(screen.getByText('System Admin · root@example.com')).toBeInTheDocument()
-    expect(screen.getByText('Duyệt tin tuyển dụng')).toBeInTheDocument()
+    expect(screen.getByText('Tạm ẩn hoặc khôi phục tin tuyển dụng')).toBeInTheDocument()
     expect(screen.getByText('Xem quản lý tin tuyển dụng')).toBeInTheDocument()
     expect(screen.getByText('2 quyền')).toBeInTheDocument()
     expect(screen.getByText('Đã chấp nhận')).toBeInTheDocument()

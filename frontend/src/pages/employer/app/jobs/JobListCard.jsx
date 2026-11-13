@@ -118,12 +118,10 @@ export default function JobListCard({
             >
               {job.title || 'Tin nháp chưa đặt tên'}
             </Link>
-            <Tooltip title={job.status === 'rejected' ? job.rejected_reason : undefined}>
-              <span className={`inline-flex shrink-0 items-center gap-1 text-[10px] font-semibold ${status.className}`}>
-                <span aria-hidden className={`h-1.5 w-1.5 rounded-full ${status.dot}`} />
-                {status.label}
-              </span>
-            </Tooltip>
+            <span className={`inline-flex shrink-0 items-center gap-1 text-[10px] font-semibold ${status.className}`}>
+              <span aria-hidden className={`h-1.5 w-1.5 rounded-full ${status.dot}`} />
+              {status.label}
+            </span>
           </div>
           <div className="mt-1 flex min-w-0 items-center gap-1.5 overflow-hidden whitespace-nowrap text-[11px] text-slate-500">
             {job.campaign_name && (

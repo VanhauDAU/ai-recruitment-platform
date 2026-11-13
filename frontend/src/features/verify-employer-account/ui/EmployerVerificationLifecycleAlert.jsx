@@ -3,11 +3,11 @@ import { Alert } from 'antd'
 const LIFECYCLE_COPY = {
   revoked: {
     title: 'Xác thực nhà tuyển dụng đã bị thu hồi',
-    consequence: 'Quyền xem dữ liệu ứng viên và duyệt tin đã bị khóa.',
+    consequence: 'Quyền xem dữ liệu ứng viên và đăng tin đã bị khóa.',
   },
   expired: {
     title: 'Xác thực nhà tuyển dụng đã hết hiệu lực',
-    consequence: 'Quyền xem dữ liệu ứng viên và duyệt tin đã bị khóa.',
+    consequence: 'Quyền xem dữ liệu ứng viên và đăng tin đã bị khóa.',
   },
 }
 

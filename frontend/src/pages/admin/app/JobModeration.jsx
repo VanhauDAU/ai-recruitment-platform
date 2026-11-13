@@ -8,7 +8,7 @@ export default function JobModeration() {
       <AdminPageHeader
         eyebrow="Tuyển dụng & CV"
         title="Quản lý tin tuyển dụng"
-        description="Kiểm duyệt nội dung, theo dõi trạng thái hiển thị và xử lý báo cáo vi phạm của tin tuyển dụng."
+        description="Hậu kiểm tin đã đăng: theo dõi trạng thái hiển thị, xử lý báo cáo vi phạm và tạm ẩn tin khi cần."
         icon={<FileDoneOutlined />}
       />
       <AdminJobManagement />

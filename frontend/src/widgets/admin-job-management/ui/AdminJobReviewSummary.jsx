@@ -14,7 +14,7 @@ export default function AdminJobReviewSummary({ job }) {
       </div>
       <div className="admin-job-review-summary__metrics">
         <span><strong>{job.pending_report_count || 0}</strong>Báo cáo chờ</span>
-        <span><strong>{job.approved_job_count || 0}</strong>Tin từng duyệt</span>
+        <span><strong>{job.published_job_count || 0}</strong>Tin đã đăng</span>
         <span><strong>{job.employer_account_level || 0}</strong>Cấp tài khoản</span>
       </div>
     </aside>

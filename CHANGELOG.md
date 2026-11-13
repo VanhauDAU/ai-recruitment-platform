@@ -22,6 +22,15 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 - Tin nháp đã từng được đăng không còn xóa được, vì có thể đang giữ hồ sơ ứng
   tuyển.
 
+#### Changed — Giao diện theo mô hình hậu kiểm
+
+- Cổng nhà tuyển dụng: nút "Đăng tin" thay "Gửi duyệt tin", có dòng cam kết
+  trách nhiệm trước khi đăng, hiển thị lý do khi backend trả
+  `JOB_PUBLICATION_BLOCKED`; bỏ nhãn, bộ lọc và số đếm "Chờ duyệt", "Từ chối".
+- Cổng quản trị: danh sách tin mặc định hiển thị tất cả tin, thêm phạm vi "Có
+  báo cáo chờ"; trang chi tiết chỉ còn tạm ẩn và khôi phục, tab "Thay đổi" so
+  nội dung hiện tại với bản đã đăng. Xóa feature `review-job-submission`.
+
 #### Removed — Quy trình duyệt tin
 
 - Trạng thái `pending`, `rejected` và cột `rejected_reason` của tin; các hàm

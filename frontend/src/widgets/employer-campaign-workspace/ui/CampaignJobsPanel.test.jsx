@@ -227,23 +227,4 @@ describe('CampaignJobsPanel', () => {
       'true',
     )
   })
-
-  it('shows the rejection reason for a rejected job', async () => {
-    const user = userEvent.setup()
-    const rejected = performance()
-    rejected.jobs[0] = {
-      ...rejected.jobs[0],
-      status: 'rejected',
-      rejected_reason: 'Thiếu thông tin về mức lương và quyền lợi.',
-    }
-    mocks.getCampaignJobPerformance.mockResolvedValue(rejected)
-    renderPanel()
-
-    await user.click(await screen.findByRole('button', { name: 'Xem lý do từ chối Kỹ sư Frontend' }))
-    expect(screen.getByText('Thiếu thông tin về mức lương và quyền lợi.')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Chỉnh sửa và gửi lại' })).toHaveAttribute(
-      'href',
-      '/tuyendung/app/jobs/job_1/edit',
-    )
-  })
 })

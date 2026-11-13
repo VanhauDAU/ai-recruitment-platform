@@ -19,9 +19,6 @@ function primaryAction(job) {
   if (job.status === 'draft') {
     return { label: 'Hoàn thiện', to: employerAppPath(`/jobs/${job.public_id}/edit`) }
   }
-  if (job.status === 'rejected') {
-    return { label: 'Chỉnh sửa', to: employerAppPath(`/jobs/${job.public_id}/edit`) }
-  }
   if (job.is_expired) {
     return { label: 'Gia hạn', to: employerAppPath(`/jobs/${job.public_id}`) }
   }
@@ -56,7 +53,7 @@ function menuItems(job, {
       label: <Link to={employerJobApplicationsPath(job)}>Xem hồ sơ ứng tuyển</Link>,
     })
   }
-  if (!['draft', 'rejected', 'closed'].includes(job.status)) {
+  if (!['draft', 'closed'].includes(job.status)) {
     items.push({
       key: 'edit',
       icon: <EditOutlined />,
@@ -142,7 +139,7 @@ function QuickActions({ job, candidateDataAccess }) {
           </Link>
         </Tooltip>
       )}
-      {!['draft', 'rejected', 'closed'].includes(job.status) && (
+      {!['draft', 'closed'].includes(job.status) && (
         <Tooltip title="Chỉnh sửa tin">
           <Link
             aria-label="Chỉnh sửa tin"

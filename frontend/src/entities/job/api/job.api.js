@@ -185,13 +185,3 @@ export async function deleteEmployerJob(publicId) {
   await api.delete(`/jobs/mine/${publicId}/`)
   return publicId
 }
-
-export async function getAdminJobModeration(params = {}) {
-  const { data } = await api.get('/jobs/admin/moderation/', { params })
-  return data.results || data
-}
-
-export async function reviewAdminJob(publicId, payload) {
-  const { data } = await api.post(`/jobs/admin/moderation/${publicId}/review/`, payload)
-  return data
-}

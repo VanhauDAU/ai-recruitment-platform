@@ -7,7 +7,7 @@ import {
   PlusOutlined,
 } from '@ant-design/icons'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
-import { Alert, Button, Empty, Modal, Select, Skeleton, Table, Tag, Tooltip } from 'antd'
+import { Alert, Button, Empty, Select, Skeleton, Table, Tag, Tooltip } from 'antd'
 import { useRef, useState } from 'react'
 import { Link } from 'react-router'
 import {
@@ -20,10 +20,8 @@ import CampaignPerformanceChart from './CampaignPerformanceChart'
 
 const JOB_STATUS = {
   draft: ['Nháp', 'default'],
-  pending: ['Chờ duyệt', 'gold'],
   active: ['Đang tuyển', 'green'],
   closed: ['Đã đóng', 'default'],
-  rejected: ['Từ chối', 'red'],
 }
 
 const RANGE_OPTIONS = [
@@ -70,7 +68,6 @@ function JobStatus({ job, campaignPaused = false }) {
 
 function JobActions({
   job,
-  onShowRejectedReason,
   onViewReport,
   reportSelected = false,
   campaignPaused = false,
@@ -122,18 +119,6 @@ function JobActions({
           <EditOutlined />
         </Link>
       </Tooltip>
-      {job.status === 'rejected' && (
-        <Tooltip title="Xem lý do từ chối">
-          <button
-            type="button"
-            aria-label={`Xem lý do từ chối ${job.title || 'tin tuyển dụng'}`}
-            onClick={() => onShowRejectedReason(job)}
-            className={actionClassName}
-          >
-            <InfoCircleOutlined />
-          </button>
-        </Tooltip>
-      )}
     </div>
   )
 }
@@ -179,7 +164,6 @@ export default function CampaignJobsPanel({
   const [days, setDays] = useState(7)
   const [jobPublicId, setJobPublicId] = useState('')
   const [status, setStatus] = useState('')
-  const [rejectedJob, setRejectedJob] = useState(null)
   const performanceQuery = useQuery({
     queryKey: campaignKeys.jobPerformance(publicId, days, jobPublicId),
     queryFn: () => getCampaignJobPerformance(publicId, days, jobPublicId),
@@ -363,7 +347,6 @@ export default function CampaignJobsPanel({
                 <JobActions
                   job={job}
                   campaignPaused={campaign?.status === 'paused'}
-                  onShowRejectedReason={setRejectedJob}
                   onViewReport={viewJobReport}
                   reportSelected={job.public_id === jobPublicId}
                 />
@@ -417,25 +400,6 @@ export default function CampaignJobsPanel({
         <p>Chỉ bao gồm lượt hiển thị và lượt xem của người dùng đã đồng ý Analytics. Số lượt ứng tuyển tính mọi lần gửi CV, bao gồm ứng tuyển lại.</p>
         <p>Số liệu có thể có độ trễ ngắn và không cập nhật tức thời.</p>
       </div>
-      <Modal
-        destroyOnHidden
-        open={Boolean(rejectedJob)}
-        title="Lý do tin tuyển dụng bị từ chối"
-        onCancel={() => setRejectedJob(null)}
-        footer={[
-          <Button key="close" onClick={() => setRejectedJob(null)}>Đóng</Button>,
-          <Button key="edit" type="primary" onClick={() => setRejectedJob(null)} href={rejectedJob ? employerAppPath(`/jobs/${rejectedJob.public_id}/edit`) : undefined}>
-            Chỉnh sửa và gửi lại
-          </Button>,
-        ]}
-      >
-        <div className="rounded-lg border border-red-100 border-l-4 border-l-red-500 bg-red-50/70 p-4">
-          <p className="font-semibold text-red-700">{rejectedJob?.title || 'Tin tuyển dụng'}</p>
-          <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-slate-700">
-            {rejectedJob?.rejected_reason?.trim() || 'Quản trị viên chưa cung cấp lý do cụ thể. Vui lòng liên hệ bộ phận hỗ trợ để biết thêm chi tiết.'}
-          </p>
-        </div>
-      </Modal>
     </div>
   )
 }

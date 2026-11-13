@@ -85,7 +85,7 @@ export function createCompanyJobColumns({ ordering, openJob }) {
       render: formatAdminJobDateTime,
     },
     {
-      title: 'Gửi duyệt lúc',
+      title: 'Đăng lần đầu lúc',
       dataIndex: 'submitted_at',
       key: 'submitted_at',
       sorter: true,

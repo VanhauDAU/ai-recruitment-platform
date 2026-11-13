@@ -118,7 +118,8 @@ describe('PostJobForm AI initialization', () => {
       </QueryClientProvider>,
     )
 
-    fireEvent.click(screen.getByRole('button', { name: /Gửi duyệt tin/ }))
+    expect(screen.getByText(/chịu trách nhiệm về tin đã đăng/)).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /Đăng tin/ }))
 
     await waitFor(() => expect(toastMocks.message.warning).toHaveBeenCalledWith(
       'Nhập tiêu đề tin.',

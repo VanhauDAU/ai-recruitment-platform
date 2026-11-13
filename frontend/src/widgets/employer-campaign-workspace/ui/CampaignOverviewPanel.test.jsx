@@ -27,10 +27,8 @@ const CAMPAIGN = {
   job_count: 5,
   active_job_count: 2,
   draft_job_count: 1,
-  pending_job_count: 0,
   expired_job_count: 1,
   closed_job_count: 1,
-  rejected_job_count: 0,
   accepted_count: 1,
 }
 
@@ -65,7 +63,7 @@ describe('CampaignOverviewPanel', () => {
       application_pair_count: 6,
       unviewed_count: 2,
       accepted_count: 1,
-      jobs: { total: 5, active: 2, draft: 1, pending: 0, expired: 1, closed: 1, rejected: 0 },
+      jobs: { total: 5, active: 2, draft: 1, expired: 1, closed: 1 },
       funnel: { submitted: 2, viewed: 1, considering: 1, shortlisted: 0, interviewed: 0, accepted: 1, rejected: 1 },
     })
 
@@ -89,10 +87,10 @@ describe('CampaignOverviewPanel', () => {
     renderPanel(
       {
         unviewed_count: 0,
-        jobs: { total: 1, active: 1, draft: 0, pending: 0, expired: 0, closed: 0, rejected: 0 },
+        jobs: { total: 1, active: 1, draft: 0, expired: 0, closed: 0 },
         funnel: {},
       },
-      { ...CAMPAIGN, unviewed_count: 0, pending_job_count: 0, expired_job_count: 0 },
+      { ...CAMPAIGN, unviewed_count: 0, expired_job_count: 0 },
     )
 
     expect(screen.getByText('Mọi việc đang ổn')).toBeInTheDocument()

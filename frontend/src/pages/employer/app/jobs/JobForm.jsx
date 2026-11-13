@@ -18,6 +18,17 @@ import { employerAppPath } from '@/shared/config/portals'
 import { message } from '@/shared/lib/toast'
 import { EmployerJobEditor } from '@/widgets/employer-job-editor'
 
+// The backend refuses publication with machine-readable reasons; show their
+// labels instead of the generic "cannot publish" detail.
+function jobMutationErrorMessage(error, fallback) {
+  const data = error?.response?.data
+  if (data?.code === 'JOB_PUBLICATION_BLOCKED' && Array.isArray(data.blocked_reasons)) {
+    const reasons = data.blocked_reasons.map((item) => item.label).filter(Boolean).join(' ')
+    return reasons ? `Chưa thể đăng tin. ${reasons}` : 'Chưa thể đăng tin.'
+  }
+  return getApiErrorMessage(error, fallback)
+}
+
 export default function JobForm() {
   const { publicId } = useParams()
   const [searchParams] = useSearchParams()
@@ -53,14 +64,14 @@ export default function JobForm() {
     onSuccess: (job) => {
       queryClient.invalidateQueries({ queryKey: ['jobs'] })
       message.success(
-        job.status === 'pending'
-          ? 'Đã gửi tin để quản trị viên duyệt.'
+        !publicId || detailQuery.data?.status === 'draft'
+          ? 'Đã đăng tin. Ứng viên có thể xem tin ngay.'
           : 'Đã cập nhật tin tuyển dụng.',
       )
       navigate(employerAppPath(`/jobs/${job.public_id}`))
     },
     onError: (error) => message.error(
-      getApiErrorMessage(error, 'Không thể gửi tin để duyệt. Vui lòng kiểm tra thông tin và thử lại.'),
+      jobMutationErrorMessage(error, 'Không thể đăng tin. Vui lòng kiểm tra thông tin và thử lại.'),
       { duration: 5000, id: 'post-job-submit-error' },
     ),
   })
@@ -76,13 +87,7 @@ export default function JobForm() {
   const currentStatus = detailQuery.data?.status
   const isDraft = !publicId || currentStatus === 'draft'
   const requiresNewCredit = !publicId || currentStatus === 'draft'
-  const submitLabel = !publicId || currentStatus === 'draft'
-    ? 'Gửi duyệt tin'
-    : currentStatus === 'rejected'
-      ? 'Gửi duyệt lại'
-      : currentStatus === 'active'
-        ? 'Cập nhật và gửi duyệt lại'
-        : 'Cập nhật tin chờ duyệt'
+  const submitLabel = isDraft ? 'Đăng tin' : 'Lưu và cập nhật'
   const campaignFromUrl = searchParams.get('campaign')
   const initialValues = useMemo(() => {
     if (detailQuery.data) return detailQuery.data
@@ -125,7 +130,7 @@ export default function JobForm() {
         requiresNewCredit={requiresNewCredit}
         submitLabel={submitLabel}
         submitting={draftMutation.isPending || publishMutation.isPending}
-        errorMessage={mutationError ? getApiErrorMessage(mutationError, 'Không thể lưu tin tuyển dụng.') : ''}
+        errorMessage={mutationError ? jobMutationErrorMessage(mutationError, 'Không thể lưu tin tuyển dụng.') : ''}
         creatingCampaign={quickCampaignMutation.isPending}
         onCreateCampaign={(name) => quickCampaignMutation.mutateAsync({ name })}
         onCreateSkill={(name) => createSkillMutation.mutateAsync(name)}

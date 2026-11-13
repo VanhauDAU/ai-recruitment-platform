@@ -45,7 +45,7 @@ describe('admin job api', () => {
   })
 
   it('posts a revision-bound moderation decision', async () => {
-    const payload = { action: 'approve', review_token: 'signed-token' }
+    const payload = { action: 'hide', review_token: 'signed-token' }
     await decideAdminJob('job_123', payload)
 
     expect(client.post).toHaveBeenCalledWith(

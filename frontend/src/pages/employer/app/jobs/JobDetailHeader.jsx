@@ -15,10 +15,8 @@ import { employerAppPath } from '@/shared/config/portals'
 
 const STATUS = {
   draft: ['Nháp', 'default'],
-  pending: ['Chờ duyệt', 'gold'],
   active: ['Đang tuyển', 'green'],
   closed: ['Đã đóng', 'default'],
-  rejected: ['Từ chối', 'red'],
 }
 
 export default function JobDetailHeader({ job, publicId, closing, onClose, onDeadlineAction }) {
@@ -63,7 +61,7 @@ export default function JobDetailHeader({ job, publicId, closing, onClose, onDea
         <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:justify-end">
           {job.status !== 'closed' && (
             <Button className="!w-full sm:!w-auto" icon={<EditOutlined />} onClick={() => navigate(employerAppPath(`/jobs/${publicId}/edit`))}>
-              {job.status === 'rejected' ? 'Chỉnh sửa và gửi lại' : 'Chỉnh sửa'}
+              Chỉnh sửa
             </Button>
           )}
           {job.status === 'active' && job.is_expired && canExtendDeadline && (

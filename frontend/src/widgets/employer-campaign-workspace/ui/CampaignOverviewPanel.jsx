@@ -5,7 +5,6 @@ import {
   CheckCircleOutlined,
   EyeInvisibleOutlined,
   FileDoneOutlined,
-  FileTextOutlined,
   RiseOutlined,
   SafetyCertificateOutlined,
   TeamOutlined,
@@ -69,14 +68,6 @@ export default function CampaignOverviewPanel({ campaign, report, reportLoading 
       tone: 'bg-amber-50 text-amber-600',
     },
     {
-      count: numericValue(campaign.pending_job_count) || 0,
-      label: 'Tin đang chờ duyệt',
-      helper: 'Theo dõi tiến trình kiểm duyệt',
-      icon: FileTextOutlined,
-      to: '?active_tab=job',
-      tone: 'bg-sky-50 text-sky-600',
-    },
-    {
       count: numericValue(campaign.expired_job_count) || 0,
       label: 'Tin đã hết hạn',
       helper: 'Kiểm tra và gia hạn nếu cần',
@@ -89,11 +80,9 @@ export default function CampaignOverviewPanel({ campaign, report, reportLoading 
   const pendingTotal = pendingActions.reduce((total, item) => total + item.count, 0)
   const jobHealth = [
     { label: 'Đang tuyển', value: report.jobs?.active ?? campaign.active_job_count, dot: 'bg-emerald-500' },
-    { label: 'Chờ duyệt', value: report.jobs?.pending ?? campaign.pending_job_count, dot: 'bg-sky-500' },
     { label: 'Bản nháp', value: report.jobs?.draft ?? campaign.draft_job_count, dot: 'bg-slate-400' },
     { label: 'Hết hạn', value: report.jobs?.expired ?? campaign.expired_job_count, dot: 'bg-amber-500' },
     { label: 'Đã đóng', value: report.jobs?.closed ?? campaign.closed_job_count, dot: 'bg-violet-500' },
-    { label: 'Từ chối', value: report.jobs?.rejected ?? campaign.rejected_job_count, dot: 'bg-rose-500' },
   ]
 
   return (
@@ -234,7 +223,7 @@ export default function CampaignOverviewPanel({ campaign, report, reportLoading 
             <div className="mt-4 rounded-xl border border-emerald-100 bg-emerald-50 p-4 text-center">
               <CheckCircleFilled className="text-2xl text-emerald-500" aria-hidden />
               <p className="mt-2 text-sm font-semibold text-emerald-800">Mọi việc đang ổn</p>
-              <p className="mt-1 text-xs leading-5 text-emerald-700">Không có CV mới, tin chờ duyệt hoặc tin hết hạn cần xử lý.</p>
+              <p className="mt-1 text-xs leading-5 text-emerald-700">Không có CV mới hoặc tin hết hạn cần xử lý.</p>
             </div>
           )}
         </aside>

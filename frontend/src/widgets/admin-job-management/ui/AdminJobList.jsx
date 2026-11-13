@@ -18,7 +18,7 @@ import { AdminDataActions, AdminPanel } from '@/shared/ui/admin'
 import AdminJobPublicLink from './AdminJobPublicLink'
 
 const EMPTY_PAGE = { count: 0, results: [] }
-const DEFAULT_SCOPE = 'pending'
+const DEFAULT_SCOPE = 'all'
 const DEFAULT_ORDERING = '-created_at'
 
 function sorterOrder(ordering, field) {
@@ -29,6 +29,7 @@ function sorterOrder(ordering, field) {
 
 function scopeToParams(scope) {
   if (scope === 'all') return {}
+  if (scope === 'reported') return { has_reports: 'true' }
   if (scope === 'expired' || scope === 'held') return { scope }
   return { status: scope }
 }
@@ -178,7 +179,7 @@ export default function AdminJobList() {
           <span className={value ? 'font-semibold text-red-600' : 'text-slate-600'}>
             {value || 0} báo cáo chờ
           </span>
-          <span className="text-xs text-slate-500">{job.approved_job_count || 0} tin từng duyệt</span>
+          <span className="text-xs text-slate-500">{job.published_job_count || 0} tin đã đăng</span>
         </Space>
       ),
     },
@@ -201,7 +202,7 @@ export default function AdminJobList() {
       render: formatAdminJobDateTime,
     },
     {
-      title: 'Gửi duyệt lúc',
+      title: 'Đăng lần đầu lúc',
       dataIndex: 'submitted_at',
       key: 'submitted_at',
       sorter: true,
@@ -239,10 +240,10 @@ export default function AdminJobList() {
 
   const scopeStats = [
     { key: 'all', label: 'Tất cả tin', value: summary.total, detail: 'Toàn bộ vòng đời' },
-    { key: 'pending', label: 'Chờ duyệt', value: summary.pending, detail: `${summary.overdue || 0} quá SLA ${summary.sla_hours || 24}h` },
     { key: 'active', label: 'Đang tuyển', value: summary.active, detail: `${summary.expired || 0} quá hạn` },
+    { key: 'reported', label: 'Báo cáo chờ', value: summary.pending_reports, detail: 'Tin cần hậu kiểm' },
     { key: 'held', label: 'Đang tạm giữ', value: summary.held, detail: 'Policy hoặc kiểm duyệt' },
-    { key: 'rejected', label: 'Đã từ chối', value: summary.rejected, detail: `${summary.pending_reports || 0} báo cáo chờ` },
+    { key: 'draft', label: 'Bản nháp', value: summary.draft, detail: 'Chưa đăng' },
   ]
 
   return (
@@ -276,7 +277,7 @@ export default function AdminJobList() {
 
       <AdminPanel
         title="Danh sách tin tuyển dụng"
-        description="Mở chi tiết để xem toàn bộ nội dung, tín hiệu tin cậy và lịch sử trước khi quyết định."
+        description="Tin công khai ngay khi nhà tuyển dụng đăng. Mở chi tiết để xem nội dung, báo cáo và lịch sử trước khi tạm ẩn."
         extra={(
           <Space wrap>
             <Input.Search
@@ -303,7 +304,7 @@ export default function AdminJobList() {
                 { label: 'Trạng thái', value: (row) => row.status_label || row.status },
                 { key: 'deadline', label: 'Hạn nộp' },
                 { key: 'created_at', label: 'Tạo lúc' },
-                { key: 'submitted_at', label: 'Gửi duyệt lúc' },
+                { key: 'submitted_at', label: 'Đăng lần đầu lúc' },
                 { key: 'application_count', label: 'Số lượt ứng tuyển' },
                 { key: 'pending_report_count', label: 'Báo cáo đang chờ' },
               ]}

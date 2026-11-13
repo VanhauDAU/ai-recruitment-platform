@@ -1,18 +1,15 @@
 export const ADMIN_JOB_STATUS = {
   draft: { label: 'Nháp', color: 'default' },
-  pending: { label: 'Chờ duyệt', color: 'gold' },
   active: { label: 'Đang tuyển', color: 'green' },
   closed: { label: 'Đã đóng', color: 'default' },
-  rejected: { label: 'Từ chối', color: 'red' },
 }
 
 export const JOB_SCOPE_OPTIONS = [
-  { value: 'pending', label: 'Chờ duyệt' },
   { value: 'all', label: 'Tất cả tin' },
   { value: 'active', label: 'Đang tuyển' },
+  { value: 'reported', label: 'Có báo cáo chờ' },
   { value: 'expired', label: 'Quá hạn' },
   { value: 'held', label: 'Đang tạm giữ' },
-  { value: 'rejected', label: 'Từ chối' },
   { value: 'closed', label: 'Đã đóng' },
   { value: 'draft', label: 'Nháp' },
 ]

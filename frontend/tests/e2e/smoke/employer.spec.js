@@ -1229,7 +1229,7 @@ test('employer jobs: creation chooser leads to the complete manual five-section 
   await expect(page.getByLabel('Họ và tên người nhận')).toHaveValue('Nguyễn An')
   await expect(page.locator('#application').getByText('hr@example.com', { exact: true })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Lưu nháp' })).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Gửi duyệt tin' })).toBeVisible()
+  await expect(page.getByRole('button', { name: /Đăng tin$/ })).toBeVisible()
   await expectNoHorizontalOverflow(page)
   await page.getByRole('button', { name: 'Lưu nháp' }).click()
   await expect.poll(() => savedDraft).not.toHaveProperty('requested_visibility_days')

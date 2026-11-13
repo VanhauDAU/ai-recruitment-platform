@@ -173,7 +173,7 @@ export default function PostJobForm({
     updateInvalidSections(errorFields)
     const firstError = errorFields.flatMap((field) => field.errors || []).find(Boolean)
     message.warning(
-      firstError || 'Vui lòng hoàn thiện các trường bắt buộc trước khi gửi duyệt.',
+      firstError || 'Vui lòng hoàn thiện các trường bắt buộc trước khi đăng tin.',
       { duration: 5000, id: 'post-job-validation-error' },
     )
   }, [updateInvalidSections])
@@ -275,6 +275,14 @@ export default function PostJobForm({
             {serviceContent}
           </JobFormSection>
 
+          {isDraft && (
+            <p className="text-xs leading-5 text-slate-500">
+              Tin hiển thị với ứng viên ngay khi bạn đăng, không qua bước duyệt trước. Khi đăng tin,
+              bạn cam kết nội dung đúng sự thật và chịu trách nhiệm về tin đã đăng. Tin bị báo cáo
+              vi phạm có thể bị tạm ẩn.
+            </p>
+          )}
+
           <div className="sticky bottom-3 z-10 flex flex-col-reverse gap-2 rounded-lg border border-slate-200 bg-white/95 p-3 backdrop-blur sm:flex-row sm:justify-end">
             <Button
               size="large"
@@ -292,7 +300,7 @@ export default function PostJobForm({
               loading={submitting}
               disabled={requiresNewCredit && postingContext && !postingContext.job_postable}
             >
-              {submitLabel || (isDraft ? 'Gửi duyệt tin' : 'Lưu và cập nhật')}
+              {submitLabel || (isDraft ? 'Đăng tin' : 'Lưu và cập nhật')}
             </Button>
           </div>
         </main>

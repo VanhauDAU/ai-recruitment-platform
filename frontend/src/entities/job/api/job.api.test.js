@@ -4,7 +4,6 @@ import {
   deleteEmployerJob,
   duplicateEmployerJob,
   getCandidateJobRecommendations,
-  getAdminJobModeration,
   extendEmployerJob,
   getCvJobRecommendations,
   getEmployerJob,
@@ -19,7 +18,6 @@ import {
   publishEmployerJob,
   recordJobImpressions,
   reopenEmployerJob,
-  reviewAdminJob,
   saveEmployerJob,
 } from './job.api'
 
@@ -185,24 +183,6 @@ describe('CV job recommendations API', () => {
     expect(get).toHaveBeenNthCalledWith(1, '/jobs/benefits/')
     expect(get).toHaveBeenNthCalledWith(2, '/jobs/languages/')
     expect(get).toHaveBeenNthCalledWith(3, '/skills/')
-  })
-
-  it('uses the administrator-only moderation endpoints', async () => {
-    get.mockResolvedValue({ data: { results: [{ public_id: 'job_pending' }] } })
-    post.mockResolvedValue({ data: { public_id: 'job_pending', status: 'rejected' } })
-
-    await expect(getAdminJobModeration({ status: 'pending' })).resolves.toEqual([
-      { public_id: 'job_pending' },
-    ])
-    await expect(
-      reviewAdminJob('job_pending', { action: 'reject', reason: 'Thiếu mô tả quyền lợi.' }),
-    ).resolves.toMatchObject({ status: 'rejected' })
-
-    expect(get).toHaveBeenCalledWith('/jobs/admin/moderation/', { params: { status: 'pending' } })
-    expect(post).toHaveBeenCalledWith('/jobs/admin/moderation/job_pending/review/', {
-      action: 'reject',
-      reason: 'Thiếu mô tả quyền lợi.',
-    })
   })
 
   it('sends viewable job impressions as one credentialed batch', async () => {
