@@ -15,6 +15,11 @@ const webServerCommand = webServerMode === 'preview'
 export default defineConfig({
   testDir: './tests/e2e',
   timeout: 30_000,
+  // Assertion budgets were tuned on developer machines. Hosted runners share
+  // four vCPUs between two browser workers and the web server, so lazy tab
+  // and locale chunks occasionally needed more than the default 5s. This
+  // widens the wait for a correct result; it does not retry failed tests.
+  expect: { timeout: process.env.CI ? 10_000 : 5_000 },
   use: {
     baseURL: playwrightBaseUrl,
     trace: 'on-first-retry',

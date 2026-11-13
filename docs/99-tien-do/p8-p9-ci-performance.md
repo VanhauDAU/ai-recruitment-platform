@@ -76,6 +76,34 @@ Chạy local không đổi: `npm run test:e2e:smoke` vẫn dùng dev server. Đ�
 `PLAYWRIGHT_WEB_SERVER=preview` (kèm `VITE_API_BASE_URL`) để tái hiện chế độ CI;
 đặt `PLAYWRIGHT_WEB_SERVER: dev` trong workflow để quay lại hành vi cũ.
 
+### Kết quả lượt 2 (commit `7342ed85`, run ngày 13/11/2026)
+
+| Job | Thời lượng | Kết quả |
+| --- | --- | --- |
+| `backend-checks` | 4m32s (pytest 3m26s) | **Fail**: 89 failed, 29 errors, coverage 84,71% |
+| `backend-migration-tests` | khoảng 7 phút (pytest 6m10s) | 15 passed |
+| `coverage-shard` ×4 | 128–217 giây | Đạt; gộp 20 giây |
+| `e2e-smoke-shard` desktop | 186 giây | 92 test đạt |
+| `e2e-smoke-shard` tablet | 184 giây | 1 fail (`employer.spec.js:1407`) |
+| `e2e-smoke-shard` mobile | 175 giây | 3 fail (`announcement-admin:208`, `candidate-job-alerts:322`, `employer.spec.js:172`) |
+| `audit` | 6 giây | **Fail**: advisory mới ở dompurify, vite, undici, follow-redirects |
+
+Nguyên nhân `backend-checks` fail: `--dist loadfile` cho một module có
+`TransactionTestCase` chạy trước các module khác trên cùng worker, và bước
+TRUNCATE của nó xóa dữ liệu seed từ migration (`AdminPermission`,
+`ServiceCapability`, `KnowledgeCategory`, ...). Chạy tuần tự không gặp vì
+pytest-django xếp mọi `TestCase` trước mọi `TransactionTestCase`.
+
+## Lượt 3
+
+- `backend-checks` chuyển sang `--dist load`: test được phát theo thứ tự
+  collection nên mỗi worker chỉ tới nhóm `TransactionTestCase` sau khi xong các
+  `TestCase` thường.
+- Playwright trên CI dùng `expect.timeout` 10 giây thay vì 5 giây. Bốn lỗi E2E
+  còn lại của lượt 2 đều chỉ xuất hiện ở một viewport và khác với các lỗi của
+  lượt 1; chúng là lỗi không ổn định, chưa xác định nguyên nhân gốc từng test.
+- `audit` cần chạy `npm audit fix` trên máy có kết nối npm registry.
+
 ## Đã cân nhắc nhưng không làm
 
 - Tách lint backend thành job riêng: các bước lint chỉ mất vài giây.

@@ -172,14 +172,20 @@ jobs:
           set -o pipefail
           # Stop pytest before the job-level timeout so always() diagnostics
           # still have time to publish the active test and faulthandler output.
-          # loadfile keeps every test of one module on the same worker, so
-          # class-level fixtures keep their ordering.
+          # --dist load hands tests to workers in collection order.
+          # pytest-django sorts every TestCase before every
+          # TransactionTestCase, so each worker reaches the transactional
+          # tests (which TRUNCATE migration-seeded rows) only after its
+          # ordinary tests. --dist loadfile broke that invariant: a module
+          # containing a TransactionTestCase wiped the seed data for the
+          # modules that followed it on the same worker (89 failures, 29
+          # errors on run 2). Do not switch to loadfile or worksteal.
           #
           # Migration upgrade/recovery tests are excluded here: they were 19 of
           # the suite's 31 serial minutes and run in `backend-migration-tests`
           # when the change detector says they can be affected.
           timeout --signal=TERM --kill-after=30s 47m pytest -vv \
-            -n "$PYTEST_WORKERS" --dist loadfile \
+            -n "$PYTEST_WORKERS" --dist load \
             --ignore-glob='*/tests/test_*migrations*.py' \
             --cov \
             --cov-fail-under=84 \
