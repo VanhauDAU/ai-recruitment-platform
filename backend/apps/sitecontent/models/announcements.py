@@ -131,6 +131,35 @@ class AnnouncementRevision(models.Model):
         SPARKLES = 'sparkles', 'Lấp lánh'
         WRENCH = 'wrench', 'Bảo trì'
 
+    class ThemeMode(models.TextChoices):
+        KIND = 'kind', 'Theo loại thông báo'
+        PRESET = 'preset', 'Bảng màu có sẵn'
+        CUSTOM = 'custom', 'Màu tùy chỉnh'
+
+    class ThemePreset(models.TextChoices):
+        BRAND = 'brand', 'Thương hiệu'
+        EMERALD = 'emerald', 'Xanh ngọc'
+        AMBER = 'amber', 'Hổ phách'
+        ROSE = 'rose', 'Hồng'
+        VIOLET = 'violet', 'Tím'
+        SLATE = 'slate', 'Xám'
+        OCEAN = 'ocean', 'Xanh biển'
+
+    class BackgroundFit(models.TextChoices):
+        COVER = 'cover', 'Phủ toàn dải'
+        REPEAT_X = 'repeat-x', 'Lặp ngang'
+        CONTAIN = 'contain', 'Vừa khung'
+
+    class BackgroundPosition(models.TextChoices):
+        CENTER = 'center', 'Giữa'
+        TOP = 'top', 'Trên'
+        BOTTOM = 'bottom', 'Dưới'
+
+    class BackgroundOverlay(models.TextChoices):
+        NONE = 'none', 'Không phủ'
+        LIGHT = 'light', 'Phủ sáng'
+        DARK = 'dark', 'Phủ tối'
+
     announcement = models.ForeignKey(
         Announcement,
         related_name='revisions',
@@ -166,6 +195,42 @@ class AnnouncementRevision(models.Model):
         default=DismissMode.CLOSE,
     )
     snooze_seconds = models.PositiveIntegerField(null=True, blank=True)
+    # Visual theme (AN-V1): mặc định theo kind; preset/custom + ảnh nền decorative.
+    theme_mode = models.CharField(
+        max_length=20,
+        choices=ThemeMode.choices,
+        default=ThemeMode.KIND,
+    )
+    theme_preset = models.CharField(
+        max_length=20,
+        choices=ThemePreset.choices,
+        blank=True,
+        default='',
+    )
+    color_accent = models.CharField(max_length=7, blank=True, default='')
+    color_bg_from = models.CharField(max_length=7, blank=True, default='')
+    color_bg_to = models.CharField(max_length=7, blank=True, default='')
+    color_fg = models.CharField(max_length=7, blank=True, default='')
+    background_image = models.TextField(
+        blank=True,
+        default='',
+        help_text='Storage key ảnh nền strip (vd. site/announcements/backgrounds/…)',
+    )
+    background_fit = models.CharField(
+        max_length=20,
+        choices=BackgroundFit.choices,
+        default=BackgroundFit.COVER,
+    )
+    background_position = models.CharField(
+        max_length=20,
+        choices=BackgroundPosition.choices,
+        default=BackgroundPosition.CENTER,
+    )
+    background_overlay = models.CharField(
+        max_length=20,
+        choices=BackgroundOverlay.choices,
+        default=BackgroundOverlay.NONE,
+    )
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         related_name='announcement_revisions_created',

@@ -86,7 +86,17 @@ export default function SettingField({ setting, value, onChange, pendingFile, on
     case 'boolean':
       return <Switch checked={!!value} onChange={onChange} />
     case 'number':
-      return <InputNumber value={value} onChange={onChange} className="!w-40" />
+      return (
+        <InputNumber
+          value={value}
+          onChange={onChange}
+          min={Number.isFinite(setting.options?.min) ? setting.options.min : undefined}
+          max={Number.isFinite(setting.options?.max) ? setting.options.max : undefined}
+          step={Number.isFinite(setting.options?.step) ? setting.options.step : undefined}
+          precision={setting.options?.integer ? 0 : setting.options?.precision}
+          className="!w-40"
+        />
+      )
     case 'select':
       return <Select value={value} onChange={onChange} options={setting.options?.choices || []} className="min-w-52" />
     case 'color':

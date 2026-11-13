@@ -14,6 +14,8 @@ import {
   useAnnouncementActions,
 } from '@/features/manage-announcement'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
+import { AdminDataActions } from '@/shared/ui/admin'
+import useConfirmAction from '@/shared/ui/use-confirm-action'
 import AnnouncementDetailDrawer from './AnnouncementDetailDrawer'
 import AnnouncementEditor from './AnnouncementEditor'
 import AnnouncementFilters from './AnnouncementFilters'
@@ -29,7 +31,7 @@ function value(searchParams, key, fallback = '') {
 }
 
 export default function AdminAnnouncementManagement() {
-  const { message, modal } = App.useApp()
+  const { message } = App.useApp()
   const { user } = useSession()
   const access = useAdminAccess(user)
   const canManage = access.has('announcement.manage')
@@ -52,6 +54,7 @@ export default function AdminAnnouncementManagement() {
   const [editorMode, setEditorMode] = useState(null)
   const [nameMode, setNameMode] = useState(null)
   const [conflict, setConflict] = useState(null)
+  const { confirmationModal, requestConfirmation } = useConfirmAction()
   const listQuery = useQuery({
     queryKey: announcementKeys.adminList(params),
     queryFn: ({ signal }) => getAdminAnnouncements(params, { signal }),
@@ -125,7 +128,7 @@ export default function AdminAnnouncementManagement() {
     }
   }
 
-  const executeLifecycle = async (type, extra = {}) => {
+  const executeLifecycle = async (type, extra = {}, { throwOnError = false } = {}) => {
     const detail = detailQuery.data
     if (!detail || actions.pending) return
     try {
@@ -143,20 +146,21 @@ export default function AdminAnnouncementManagement() {
       }[type])
     } catch (error) {
       handleError(error)
+      if (throwOnError) throw error
     }
   }
 
   const confirmations = {
     archive: {
-      title: 'Lưu trữ thông báo?',
-      content: 'Thông báo đã lưu trữ là trạng thái cuối và không thể phát hành lại.',
-      okText: 'Lưu trữ',
-      okButtonProps: { danger: true },
+      title: 'Lưu trữ thông báo',
+      description: <>Bạn có chắc muốn lưu trữ <strong>{detailQuery.data?.internal_name}</strong>? Thông báo đã lưu trữ là trạng thái cuối và không thể phát hành lại.</>,
+      confirmText: 'Lưu trữ',
+      danger: true,
     },
     'reset-dismissals': {
-      title: 'Hiện lại thông báo cho người đã đóng?',
-      content: 'Mọi người từng bấm đóng hoặc tạm ẩn sẽ thấy lại thông báo này. Chỉ dùng khi nội dung đã thay đổi đáng kể.',
-      okText: 'Hiện lại',
+      title: 'Hiện lại thông báo',
+      description: <>Bạn có chắc muốn hiện lại <strong>{detailQuery.data?.internal_name}</strong>? Mọi người từng bấm đóng hoặc tạm ẩn sẽ thấy lại thông báo này. Chỉ dùng khi nội dung đã thay đổi đáng kể.</>,
+      confirmText: 'Hiện lại',
     },
   }
 
@@ -166,10 +170,10 @@ export default function AdminAnnouncementManagement() {
       executeLifecycle(type, extra)
       return
     }
-    modal.confirm({
+    requestConfirmation({
       cancelText: 'Hủy',
       ...confirmation,
-      onOk: () => executeLifecycle(type, extra),
+      onConfirm: () => executeLifecycle(type, extra, { throwOnError: true }),
     })
   }
 
@@ -210,15 +214,37 @@ export default function AdminAnnouncementManagement() {
   )
 
   return (
-    <section className="admin-announcement-management" aria-label="Quản lý thông báo">
+    <>
+      <section className="admin-announcement-management" aria-label="Quản lý thông báo">
       <AnnouncementFilters
+        actions={(
+          <AdminDataActions
+            compact
+            columns={[
+              { key: 'public_id', label: 'Mã thông báo' },
+              { key: 'internal_name', label: 'Tên vận hành' },
+              { label: 'Surface', value: (row) => row.surfaces },
+              { key: 'presentation_status', label: 'Trạng thái' },
+              { key: 'kind', label: 'Loại' },
+              { key: 'priority', label: 'Ưu tiên' },
+              { key: 'impressions', label: 'Hiển thị' },
+              { key: 'clicks', label: 'Click' },
+              { key: 'ctr', label: 'CTR (%)' },
+              { key: 'updated_at', label: 'Cập nhật lúc' },
+            ]}
+            exportLabel="CSV trang này"
+            exportScopeLabel={`Xuất ${data.results.length} thông báo của trang ${page}`}
+            filename={`thong-bao-trang-${page}`}
+            onRefresh={() => listQuery.refetch()}
+            refreshing={listQuery.isFetching}
+            rows={data.results}
+          />
+        )}
         canCreate={canManage}
         filters={filters}
-        loading={listQuery.isFetching}
         onChange={updateParams}
         onCreate={() => setEditorMode('create')}
         onReset={resetFilters}
-        onRetry={() => listQuery.refetch()}
         searchInput={searchInput}
         onSearchChange={(event) => setSearchInput(event.target.value)}
         total={data.count}
@@ -306,6 +332,8 @@ export default function AdminAnnouncementManagement() {
         onCancel={() => setNameMode(null)}
         onSubmit={submitName}
       />
-    </section>
+      </section>
+      {confirmationModal}
+    </>
   )
 }

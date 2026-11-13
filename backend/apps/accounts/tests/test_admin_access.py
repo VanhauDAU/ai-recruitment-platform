@@ -277,6 +277,11 @@ class AdminAccessTests(TestCase):
         self.assertIn('company_update.review', manager['permissions'])
         self.assertIn('employer_verification.review', manager['permissions'])
 
+        service_staff = system_role_definition('employer-services', 'staff')
+        service_manager = system_role_definition('employer-services', 'manager')
+        self.assertNotIn('consultation_lead.export', service_staff['permissions'])
+        self.assertIn('consultation_lead.export', service_manager['permissions'])
+
     def test_role_permission_service_adds_required_view_permission(self):
         approve = AdminPermission.objects.create(
             code='job_moderation.approve',
@@ -368,6 +373,7 @@ class AdminAccessTests(TestCase):
             service_catalog.AdminServicePackageListCreateView,
             service_catalog.AdminServicePackageDetailView,
             service_catalog.AdminConsultationLeadListView,
+            service_catalog.AdminConsultationLeadExportView,
             service_catalog.AdminConsultationLeadDetailView,
             site_settings.AdminLocaleListCreateView,
             site_settings.AdminLocaleDetailView,

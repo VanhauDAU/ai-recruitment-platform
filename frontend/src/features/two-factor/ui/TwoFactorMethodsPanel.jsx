@@ -8,12 +8,13 @@ import {
   MobileOutlined,
   SafetyCertificateOutlined,
 } from '@ant-design/icons'
-import { Button, Input, Modal, Popconfirm, QRCode, Radio, Switch, Tooltip } from 'antd'
+import { Button, Input, Modal, QRCode, Radio, Switch, Tooltip } from 'antd'
 import { useState } from 'react'
 import { useSession } from '@/entities/session'
 import { useSiteSettings } from '@/entities/site-settings'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { message } from '@/shared/lib/toast'
+import ConfirmAction from '@/shared/ui/ConfirmAction'
 import { sanitizeTwoFactorCode, TWO_FACTOR_CODE_LENGTH } from '@/shared/ui/two-factor-code'
 import TwoFactorCodeModal from '@/shared/ui/TwoFactorCodeModal'
 import {
@@ -184,7 +185,7 @@ export default function TwoFactorMethodsPanel() {
     if (codes.length) setBackupCodes(codes)
   }
 
-  async function startEmailAction(action, options = {}) {
+  async function startEmailAction(action, options = {}, { rethrow = false } = {}) {
     setSending(true)
     try {
       const response = action === 'email-disable'
@@ -195,6 +196,7 @@ export default function TwoFactorMethodsPanel() {
       setVerification({ action, method: action === 'backup' ? 'email' : undefined, email: response.email || user?.email || '', expiresIn: response.expires_in || 180, ...options })
     } catch (error) {
       message.error(getApiErrorMessage(error, 'Không thể gửi mã xác minh. Vui lòng thử lại.'))
+      if (rethrow) throw error
     } finally {
       setSending(false)
     }
@@ -232,12 +234,11 @@ export default function TwoFactorMethodsPanel() {
     return response
   }
 
-  function startBackupCodesAction() {
+  function startBackupCodesAction({ rethrow = false } = {}) {
     const reset = backupEnabled
     const method = availableBackupMethods()[0]?.value
     if (method === 'email') {
-      startEmailAction('backup', { reset })
-      return
+      return startEmailAction('backup', { reset }, { rethrow })
     }
     if (method === 'totp') setVerification({ action: 'backup', method, reset })
   }
@@ -331,21 +332,20 @@ export default function TwoFactorMethodsPanel() {
 
   const backupActionDisabled = sending || !twoFactorEnabled
   const backupButton = (
-    <Button className="!h-11 !px-4" loading={sending} disabled={backupActionDisabled} onClick={backupEnabled ? undefined : startBackupCodesAction}>
+    <Button className="!h-11 !px-4" loading={sending} disabled={backupActionDisabled} onClick={backupEnabled ? undefined : () => startBackupCodesAction()}>
       {backupEnabled ? 'Đặt lại mã' : 'Tạo mã'}
     </Button>
   )
   const backupAction = backupEnabled ? (
-    <Popconfirm
-      title="Đặt lại mã dự phòng?"
-      description="Toàn bộ mã dự phòng hiện tại sẽ không còn hiệu lực."
-      okText="Đặt lại mã"
-      cancelText="Hủy"
-      okButtonProps={{ danger: true }}
-      onConfirm={startBackupCodesAction}
+    <ConfirmAction
+      title="Đặt lại mã dự phòng"
+      description="Bạn có chắc muốn đặt lại toàn bộ mã dự phòng không? Toàn bộ mã hiện tại sẽ không còn hiệu lực."
+      confirmText="Đặt lại mã"
+      danger
+      onConfirm={() => startBackupCodesAction({ rethrow: true })}
     >
       {backupButton}
-    </Popconfirm>
+    </ConfirmAction>
   ) : (
     backupButton
   )

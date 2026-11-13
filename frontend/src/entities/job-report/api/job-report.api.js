@@ -5,8 +5,8 @@ export async function submitJobReport(jobPublicId, payload) {
   return data
 }
 
-export async function getAdminJobReports(params = {}) {
-  const { data } = await api.get('/jobs/admin/reports/', { params })
+export async function getAdminJobReports(params = {}, config = {}) {
+  const { data } = await api.get('/jobs/admin/reports/', { ...config, params })
   return data
 }
 

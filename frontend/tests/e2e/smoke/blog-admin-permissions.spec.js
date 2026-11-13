@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { API_ROUTE } from './helpers'
 
 const category = {
   public_id: 'pcat_career',
@@ -77,7 +78,7 @@ async function mockBlogApi(page, permissions, allowedActions, editorialState = '
       memberships: [],
     },
   }
-  await page.route('http://localhost:8000/api/**', async (route) => {
+  await page.route(API_ROUTE, async (route) => {
     const path = new URL(route.request().url()).pathname
     let body = {}
     if (path === '/api/auth/refresh/') body = { access: 'e2e-access' }

@@ -1,12 +1,15 @@
 export {
+  changeAdminEmployerVerificationLifecycle,
   decideAdminEmployerVerification,
   downloadAdminEmployerDocument,
   getAdminEmployerDecisionImpact,
+  getAdminEmployerLifecycleImpact,
   getAdminEmployerDocumentContent,
   getAdminEmployerVerification,
   getAdminEmployerVerifications,
   getAdminEmployerVerificationSummary,
   getAdminCompanyUpdateDocumentContent,
+  getAdminCompanyUpdateRequest,
   getAdminCompanyUpdateRequests,
   reviewAdminEmployerDocument,
   refreshAdminEmployerTaxLookup,
@@ -14,8 +17,18 @@ export {
   reviewAdminCompanyUpdateDocument,
   reviewAdminCompanyUpdateRequest,
   startAdminEmployerVerificationReview,
+  startAdminCompanyUpdateReview,
+  unlockAdminEmployerVerificationResubmission,
+  decideAdminCompanyDomainClaim,
+  getAdminCompanyDomainClaimImpact,
+  getAdminCompanyDomainClaim,
+  getAdminCompanyDomainClaims,
+  getAdminCompanyDomainClaimSummary,
 } from './api/admin-employer-verification.api'
-export { adminEmployerVerificationKeys } from './api/admin-employer-verification.keys'
+export {
+  adminCompanyDomainClaimKeys,
+  adminEmployerVerificationKeys,
+} from './api/admin-employer-verification.keys'
 export {
   documentStatusMeta,
   EMPLOYER_VERIFICATION_STATUS,

@@ -67,6 +67,7 @@ export default function AnnouncementEditor({
   }), [baseValues])
   const dismissMode = Form.useWatch('dismiss_mode', form)
   const kind = Form.useWatch('kind', form)
+  const themeMode = Form.useWatch('theme_mode', form) || initialValues.theme_mode
   const priority = Form.useWatch('priority', form)
   const ctaMode = Form.useWatch('cta_mode', form) || initialValues.cta_mode
   const surfaces = Form.useWatch('surfaces', form) || initialValues.surfaces
@@ -125,6 +126,7 @@ export default function AnnouncementEditor({
             form={form}
             kind={kind}
             surfaces={surfaces}
+            themeMode={themeMode}
           />
         )}
 

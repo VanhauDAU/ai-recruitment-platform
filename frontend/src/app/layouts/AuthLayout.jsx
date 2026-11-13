@@ -36,7 +36,7 @@ export default function AuthLayout() {
               : undefined}
           >
             <div
-              className={`w-full animate-fade-slide rounded-3xl bg-white px-5 py-8 shadow-[0_4px_32px_rgba(0,0,0,0.07)] dark:bg-zinc-900 dark:shadow-none sm:px-10 sm:py-10 ${
+              className={`relative w-full overflow-visible animate-fade-slide rounded-3xl bg-white px-5 py-8 shadow-[0_4px_32px_rgba(0,0,0,0.07)] dark:bg-zinc-900 dark:shadow-none sm:px-10 sm:py-10 ${
                 isRegister ? 'max-w-[680px] sm:px-12' : 'max-w-[680px] sm:px-11'
               } ${isAdmin ? 'border' : ''}`}
               style={isAdmin

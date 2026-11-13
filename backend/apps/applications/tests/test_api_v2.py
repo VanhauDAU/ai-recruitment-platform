@@ -1,4 +1,8 @@
+from copy import deepcopy
 from datetime import timedelta
+from io import BytesIO
+from unittest.mock import Mock, patch
+from urllib.parse import urlsplit
 
 from django.contrib.auth import get_user_model
 from django.db.models.deletion import ProtectedError
@@ -9,7 +13,7 @@ from rest_framework.test import APIClient, APITestCase
 
 from apps.accounts.services.tokens import issue_tokens
 from apps.cv_templates.tests.factories import make_published_template
-from apps.cvs.models import CvVersion
+from apps.cvs.models import CvAsset, CvVersion
 from apps.cvs.services import (
     create_application_snapshot,
     create_v2_cv,
@@ -22,6 +26,7 @@ from apps.employers.models import (
     RecruiterProfile,
     RecruitmentCampaign,
 )
+from apps.employers.tests.readiness_helpers import make_employer_ready
 from apps.jobs.models import Job, JobLocation
 from apps.locations.models import Location
 
@@ -56,6 +61,11 @@ class RecruiterApplicationSnapshotV2Tests(APITestCase):
         )
         self.company = Company.objects.create(
             company_name='Snapshot Company', created_by=self.owner
+        )
+        self.owner_profile = make_employer_ready(
+            self.owner,
+            company=self.company,
+            candidate_data=True,
         )
         RecruiterProfile.objects.create(
             user=self.member,
@@ -133,6 +143,52 @@ class RecruiterApplicationSnapshotV2Tests(APITestCase):
         self.assertTrue(CvVersion.objects.filter(pk=self.snapshot.pk).exists())
         self.assertTrue(Application.objects.filter(pk=self.application.pk).exists())
 
+    def test_recruiter_asset_token_is_actor_bound_and_rechecks_live_candidate_access(self):
+        asset = CvAsset.objects.create(
+            owner=self.candidate,
+            kind=CvAsset.Kind.AVATAR,
+            storage_key='cvs/assets/recruiter-bound-avatar.png',
+            content_type='image/png',
+            size_bytes=3,
+            width=1,
+            height=1,
+            checksum_sha256='a' * 64,
+        )
+        content = deepcopy(self.snapshot.content_json)
+        content['personal_info']['avatar_asset_id'] = asset.public_id
+        CvVersion.objects.filter(pk=self.snapshot.pk).update(content_json=content)
+        self.snapshot.refresh_from_db()
+        self.client.credentials()
+        self.client.force_authenticate(self.owner)
+
+        snapshot_response = self.client.get(
+            reverse(
+                'recruiter-application-snapshot-v2',
+                kwargs={'public_id': self.application.public_id},
+            )
+        )
+        asset_url = snapshot_response.data['cv']['assets'][asset.public_id]['url']
+        parsed = urlsplit(asset_url)
+        content_url = f'{parsed.path}?{parsed.query}'
+
+        self.client.force_authenticate(self.member)
+        self.assertEqual(self.client.get(content_url).status_code, 404)
+
+        self.owner_profile.dpa_accepted_at = None
+        self.owner_profile.save(update_fields=['dpa_accepted_at', 'updated_at'])
+        self.client.force_authenticate(self.owner)
+        blocked = self.client.get(content_url)
+        self.assertEqual(blocked.status_code, 403, blocked.data)
+        self.assertEqual(blocked.data['code'], 'CANDIDATE_DATA_BLOCKED')
+
+        self.owner_profile.dpa_accepted_at = timezone.now()
+        self.owner_profile.save(update_fields=['dpa_accepted_at', 'updated_at'])
+        storage = Mock()
+        storage.open.return_value = BytesIO(b'png')
+        with patch('apps.cvs.api.views.v2.cv_asset_storage', return_value=storage):
+            allowed = self.client.get(content_url)
+        self.assertEqual(allowed.status_code, 200)
+
     def test_recruiter_outside_the_application_company_receives_404(self):
         tokens = issue_tokens(self.outsider, auth_method='mfa')
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + tokens['access'])
@@ -209,6 +265,11 @@ class CandidateApplicationV2Tests(APITestCase):
         )
         self.company = Company.objects.create(
             company_name='Apply Company', created_by=self.employer
+        )
+        RecruiterProfile.objects.create(
+            user=self.employer,
+            company=self.company,
+            company_role=RecruiterProfile.CompanyRole.OWNER,
         )
         self.job = Job.objects.create(
             posted_by=self.employer,
@@ -393,7 +454,11 @@ class CandidateApplicationV2Tests(APITestCase):
         self.assertEqual(response.status_code, 403)
 
     def test_recruiter_campaign_list_and_export_use_latest_submission_per_candidate_job(self):
-        recruiter = RecruiterProfile.objects.create(user=self.employer, company=self.company)
+        recruiter = make_employer_ready(
+            self.employer,
+            company=self.company,
+            candidate_data=True,
+        )
         campaign = RecruitmentCampaign.objects.create(
             owner=recruiter,
             company=self.company,

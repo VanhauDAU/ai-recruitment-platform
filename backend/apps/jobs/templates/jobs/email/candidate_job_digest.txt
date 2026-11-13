@@ -1,0 +1,15 @@
+Xin chào {{ candidate_name }},
+
+{{ site_name }} có {{ jobs|length }} việc làm mới dành cho bạn:
+
+{% for job in jobs %}{{ forloop.counter }}. {{ job.title }} — {{ job.company_name }}
+{% if job.locations %}Địa điểm: {{ job.locations }}
+{% endif %}Mức lương: {{ job.salary }}
+{% if job.badges %}Nhãn: {{ job.badges|join:", " }}
+{% endif %}Nguồn: {{ job.sources|join:", " }}
+Xem việc làm: {{ job.url }}
+
+{% endfor %}Quản lý thông báo việc làm: {{ manage_url }}
+Cài đặt nhận email: {{ email_settings_url }}
+
+Đây là email tự động từ {{ site_name }}.

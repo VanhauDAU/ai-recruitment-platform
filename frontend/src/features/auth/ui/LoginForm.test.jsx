@@ -99,6 +99,43 @@ describe('LoginForm submit button', () => {
     await waitFor(() => {
       expect(button).toBeEnabled()
     })
+    expect(mocks.success).toHaveBeenCalledWith('Đăng nhập thành công.', {
+      className: 'app-toast--sound-done',
+    })
     expect(button).toHaveAttribute('aria-busy', 'false')
+  })
+
+  it('drives the candidate mascot from email, password and visibility interactions', async () => {
+    const { container } = renderLoginForm({ withMascot: true })
+    const mascot = () => container.querySelector('.procv-mascot')
+    const email = screen.getByPlaceholderText('ten@congty.com')
+    const password = screen.getByPlaceholderText('Nhập mật khẩu của bạn')
+
+    expect(mascot()).toHaveAttribute('data-pose', 'frameGrip')
+
+    fireEvent.focus(email)
+    expect(mascot()).toHaveAttribute('data-gaze', 'down')
+
+    fireEvent.change(email, { target: { value: 'candidate@example.com' } })
+    fireEvent.focus(password)
+    fireEvent.change(password, { target: { value: 'secret-password' } })
+    expect(mascot()).toHaveAttribute('data-pose', 'coverEyes')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Show' }))
+    expect(mascot()).toHaveAttribute('data-pose', 'peek')
+
+    fireEvent.blur(password)
+    await waitFor(() => expect(mascot()).toHaveAttribute('data-pose', 'thumbsUp'))
+  })
+
+  it('shows a distinct mascot state when form validation blocks submit', async () => {
+    const { container } = renderLoginForm({ withMascot: true })
+    fireEvent.click(screen.getByTestId('login-submit'))
+
+    await waitFor(() => {
+      expect(container.querySelector('.auth-mascot-stage')).toHaveAttribute('data-state', 'invalid')
+    })
+    expect(screen.getByRole('status')).toHaveTextContent('chưa hợp lệ')
+    expect(mocks.login).not.toHaveBeenCalled()
   })
 })

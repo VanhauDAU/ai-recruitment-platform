@@ -1,4 +1,4 @@
-import { BulbOutlined, CloseOutlined, DownOutlined, FilterOutlined, ThunderboltOutlined } from '@ant-design/icons'
+import { BulbOutlined, CloseOutlined, DownOutlined, FilterOutlined, SwapOutlined } from '@ant-design/icons'
 import { Dropdown } from 'antd'
 import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
@@ -94,10 +94,10 @@ export default function BestJobs({ categories = [] }) {
       <div className="mb-5 flex items-center gap-3">
         <div className="flex items-center gap-2.5">
           <h2 className="text-xl font-bold text-gray-900 md:text-2xl">Việc làm tốt nhất</h2>
-          {/* AI badge */}
+          {/* Rotation policy badge */}
           <span className="hidden items-center gap-1 rounded-full border border-[var(--brand-primary)]/20 bg-gradient-to-r from-[var(--brand-primary-soft)] to-green-50 px-2.5 py-0.5 text-[11px] font-semibold text-[var(--brand-primary)] sm:inline-flex">
-            <ThunderboltOutlined style={{ fontSize: 10 }} />
-            Gợi ý bởi AI
+            <SwapOutlined style={{ fontSize: 10 }} />
+            Luân phiên ngẫu nhiên
           </span>
         </div>
 
@@ -177,7 +177,7 @@ export default function BestJobs({ categories = [] }) {
       {showHint && (
         <div className="mb-4 flex items-center gap-2 rounded-xl border border-[var(--brand-primary)]/20 bg-gradient-to-r from-[var(--brand-primary-soft)] to-green-50 px-4 py-2.5 text-sm text-gray-600">
           <BulbOutlined className="shrink-0 text-[var(--brand-primary)]" />
-          <span className="flex-1">Gợi ý: Di chuột vào tiêu đề việc làm để xem thêm thông tin chi tiết</span>
+          <span className="flex-1">Các tin đang hoạt động, đủ điều kiện Việc làm tốt nhất được luân phiên; F5 sẽ tạo một lượt hiển thị khác.</span>
           <CloseOutlined
             className="shrink-0 cursor-pointer text-gray-400 transition hover:text-gray-600"
             onClick={() => setShowHint(false)}

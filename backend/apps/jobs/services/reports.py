@@ -5,6 +5,13 @@ from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
 from ..models import JobReport, JobReportResolutionEvent
+from .moderation import apply_confirmed_report_hold
+
+TRUST_REPORT_REASONS = {
+    JobReport.Reason.FAKE_COMPANY,
+    JobReport.Reason.SCAM,
+    JobReport.Reason.WRONG_INFO,
+}
 
 
 def submit_job_report(*, job, reporter, reason, detail=''):
@@ -30,11 +37,13 @@ def resolve_job_report(*, report, status, actor, note=''):
     """Kết luận một báo cáo; chỉ `upheld` mới làm mất huy hiệu của NTD."""
     if status not in {JobReport.Status.UPHELD, JobReport.Status.DISMISSED}:
         raise ValidationError('Trạng thái kết luận không hợp lệ.')
-    locked = JobReport.objects.select_for_update().get(pk=report.pk)
+    locked = JobReport.objects.select_for_update().select_related('job').get(pk=report.pk)
     if locked.status != JobReport.Status.PENDING:
         raise ValidationError('Báo cáo này đã được xử lý.')
 
     normalized_note = (note or '').strip()
+    if status == JobReport.Status.UPHELD and not normalized_note:
+        raise ValidationError({'note': 'Nhập căn cứ xác nhận vi phạm.'})
     JobReportResolutionEvent.objects.create(
         report=locked,
         from_status=locked.status,
@@ -49,6 +58,13 @@ def resolve_job_report(*, report, status, actor, note=''):
     locked.save(
         update_fields=['status', 'resolution_note', 'resolved_at', 'resolved_by', 'updated_at']
     )
+    if status == JobReport.Status.UPHELD and locked.reason in TRUST_REPORT_REASONS:
+        apply_confirmed_report_hold(
+            job=locked.job,
+            actor=actor,
+            report=locked,
+            note=normalized_note,
+        )
     return locked
 
 

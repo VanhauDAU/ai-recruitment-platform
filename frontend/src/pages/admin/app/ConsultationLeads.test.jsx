@@ -1,33 +1,43 @@
 import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import AdminConsultationLeads from './ConsultationLeads'
 
 const {
+  exportAdminConsultationLeads,
   getAdminConsultationLeads,
   message,
   updateAdminConsultationLead,
 } = vi.hoisted(() => ({
+  exportAdminConsultationLeads: vi.fn(),
   getAdminConsultationLeads: vi.fn(),
-  message: { error: vi.fn(), success: vi.fn() },
+  message: { error: vi.fn(), success: vi.fn(), warning: vi.fn() },
   updateAdminConsultationLead: vi.fn(),
+}))
+
+vi.mock('@/entities/admin-access', () => ({
+  useAdminAccess: () => ({ isSuperuser: true, has: () => true }),
 }))
 
 vi.mock('@/entities/consultation-lead', () => ({
   consultationLeadKeys: {
     all: ['consultation-leads'],
     adminLists: ['consultation-leads', 'admin', 'list'],
-    adminList: ({ status = '', page = 1 } = {}) => [
+    adminList: (params = {}) => [
       'consultation-leads',
       'admin',
       'list',
-      { status, page },
+      params,
     ],
   },
+  exportAdminConsultationLeads,
   getAdminConsultationLeads,
   updateAdminConsultationLead,
 }))
+
+vi.mock('@/entities/session', () => ({ useSession: () => ({ user: {} }) }))
 
 vi.mock('@/shared/lib/toast', () => ({ message }))
 
@@ -58,14 +68,16 @@ function renderPage({ retry = false } = {}) {
     queryClient,
     ...render(
       <QueryClientProvider client={queryClient}>
-        <AdminConsultationLeads />
+        <MemoryRouter>
+          <AdminConsultationLeads />
+        </MemoryRouter>
       </QueryClientProvider>,
     ),
   }
 }
 
 async function chooseStatus(user, label) {
-  await user.click(screen.getByRole('combobox'))
+  await user.click(screen.getByLabelText('Lọc trạng thái lead'))
   await user.click(await screen.findByText(label, {
     selector: '.ant-select-item-option-content',
   }))
@@ -74,9 +86,11 @@ async function chooseStatus(user, label) {
 describe('AdminConsultationLeads', () => {
   beforeEach(() => {
     getAdminConsultationLeads.mockReset()
+    exportAdminConsultationLeads.mockReset()
     updateAdminConsultationLead.mockReset()
     message.error.mockReset()
     message.success.mockReset()
+    message.warning.mockReset()
   })
 
   it('keys requests by server page/filter and resets the page when the filter changes', async () => {
@@ -94,12 +108,19 @@ describe('AdminConsultationLeads', () => {
     await chooseStatus(user, 'Đã liên hệ')
     expect(await screen.findByText('Lead contacted-1')).toBeInTheDocument()
 
+    await chooseStatus(user, 'Tất cả trạng thái')
+    expect(await screen.findByText('Lead all-1')).toBeInTheDocument()
+
     expect(getAdminConsultationLeads).toHaveBeenCalledWith(
-      { status: 'new', page: 2 },
+      { status: 'new', ordering: '-created_at', page: 2 },
+      { signal: expect.any(AbortSignal) },
+    )
+    expect(getAdminConsultationLeads).toHaveBeenCalledWith(
+      { status: 'contacted', ordering: '-created_at', page: 1 },
       { signal: expect.any(AbortSignal) },
     )
     expect(getAdminConsultationLeads).toHaveBeenLastCalledWith(
-      { status: 'contacted', page: 1 },
+      { ordering: '-created_at', page: 1 },
       { signal: expect.any(AbortSignal) },
     )
   })

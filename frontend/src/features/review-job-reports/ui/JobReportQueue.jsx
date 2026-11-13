@@ -1,22 +1,28 @@
+import { CheckOutlined, CloseOutlined, FilterOutlined, UndoOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { CheckOutlined, CloseOutlined, UndoOutlined } from '@ant-design/icons'
 import {
   Alert,
   Button,
+  DatePicker,
   Descriptions,
+  Empty,
   Form,
+  Input,
   Select,
   Space,
   Table,
   Tag,
   Tooltip,
 } from 'antd'
-import { useState } from 'react'
+import dayjs from 'dayjs'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router'
 import { useAdminAccess } from '@/entities/admin-access'
 import { jobDetailPath } from '@/entities/job'
 import {
   getAdminJobReports,
   jobReportKeys,
+  JOB_REPORT_REASON_OPTIONS,
   JOB_REPORT_STATUS_COLORS,
   JOB_REPORT_STATUS_LABELS,
   JOB_REPORT_STATUS_OPTIONS,
@@ -26,28 +32,101 @@ import {
 import { useSession } from '@/entities/session'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { message } from '@/shared/lib/toast'
+import { AdminDataActions, AdminPanel } from '@/shared/ui/admin'
 import JobReportDecisionModal from './JobReportDecisionModal'
 
 const PAGE_SIZE = 20
+const DEFAULT_STATUS = 'pending'
+const DEFAULT_ORDERING = '-created_at'
+const REPORT_QUERY_KEYS = [
+  'report_status',
+  'report_reason',
+  'report_q',
+  'report_created_from',
+  'report_created_to',
+  'report_ordering',
+  'report_page',
+]
 
 function formatDateTime(value) {
   return value ? new Date(value).toLocaleString('vi-VN') : '—'
+}
+
+function sorterOrder(ordering, field) {
+  if (ordering === field) return 'ascend'
+  if (ordering === `-${field}`) return 'descend'
+  return null
+}
+
+function positivePage(value) {
+  const parsed = Number(value || 1)
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : 1
 }
 
 export default function JobReportQueue() {
   const { user } = useSession()
   const adminAccess = useAdminAccess(user)
   const canResolve = adminAccess.has('job_moderation.resolve_report')
-  const [statusFilter, setStatusFilter] = useState('pending')
-  const [page, setPage] = useState(1)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const rawStatus = searchParams.get('report_status')
+  const statusFilter = rawStatus === 'all' ? '' : rawStatus || DEFAULT_STATUS
+  const reasonFilter = searchParams.get('report_reason') || ''
+  const query = searchParams.get('report_q') || ''
+  const createdFrom = searchParams.get('report_created_from') || ''
+  const createdTo = searchParams.get('report_created_to') || ''
+  const ordering = searchParams.get('report_ordering') || DEFAULT_ORDERING
+  const page = positivePage(searchParams.get('report_page'))
+  const [searchInput, setSearchInput] = useState(query)
   const [decision, setDecision] = useState(null)
   const [form] = Form.useForm()
   const queryClient = useQueryClient()
-  const params = { status: statusFilter, page }
+  const params = useMemo(() => ({
+    ...(statusFilter && { status: statusFilter }),
+    ...(reasonFilter && { reason: reasonFilter }),
+    ...(query && { q: query }),
+    ...(createdFrom && { created_from: createdFrom }),
+    ...(createdTo && { created_to: createdTo }),
+    ordering,
+    page,
+  }), [createdFrom, createdTo, ordering, page, query, reasonFilter, statusFilter])
   const reportsQuery = useQuery({
     queryKey: jobReportKeys.adminList(params),
-    queryFn: () => getAdminJobReports(params),
+    queryFn: ({ signal }) => getAdminJobReports(params, { signal }),
+    placeholderData: (previousData) => previousData,
   })
+  const reports = reportsQuery.data?.results || []
+  const total = reportsQuery.data?.count || 0
+  const activeFilterCount = [
+    query,
+    reasonFilter,
+    createdFrom || createdTo,
+    statusFilter !== DEFAULT_STATUS ? statusFilter || 'all' : '',
+  ].filter(Boolean).length
+
+  const patchParams = useCallback((changes, { resetPage = true, replace = false } = {}) => {
+    const next = new URLSearchParams(searchParams)
+    Object.entries(changes).forEach(([key, value]) => {
+      const isDefault = (key === 'report_status' && value === DEFAULT_STATUS)
+        || (key === 'report_ordering' && value === DEFAULT_ORDERING)
+        || (key === 'report_page' && Number(value) === 1)
+      if (value == null || value === '' || isDefault) next.delete(key)
+      else next.set(key, String(value))
+    })
+    if (resetPage) next.delete('report_page')
+    setSearchParams(next, { replace })
+  }, [searchParams, setSearchParams])
+
+  useEffect(() => setSearchInput(query), [query])
+
+  useEffect(() => {
+    const normalized = searchInput.trim()
+    if (normalized === query) return undefined
+    const timeoutId = window.setTimeout(() => {
+      patchParams({ report_q: normalized }, { replace: true })
+    }, 400)
+    return () => window.clearTimeout(timeoutId)
+  }, [patchParams, query, searchInput])
+
   const decisionMutation = useMutation({
     mutationFn: async ({ action, reportPublicId, note }) => {
       if (action === 'reverse') {
@@ -75,6 +154,13 @@ export default function JobReportQueue() {
     },
   })
 
+  function clearFilters() {
+    const next = new URLSearchParams(searchParams)
+    REPORT_QUERY_KEYS.forEach((key) => next.delete(key))
+    setSearchInput('')
+    setSearchParams(next)
+  }
+
   function openDecision(report, action) {
     form.resetFields()
     setDecision({ report, action })
@@ -97,8 +183,12 @@ export default function JobReportQueue() {
   const columns = [
     {
       title: 'Tin tuyển dụng',
+      dataIndex: 'job_title',
+      key: 'job_title',
+      sorter: true,
+      sortOrder: sorterOrder(ordering, 'job_title'),
       width: 260,
-      render: (_, report) => (
+      render: (value, report) => (
         <div className="min-w-0">
           <a
             className="font-semibold text-slate-900 hover:text-[var(--brand-primary)]"
@@ -106,21 +196,36 @@ export default function JobReportQueue() {
             rel="noreferrer"
             target="_blank"
           >
-            {report.job_title}
+            {value}
           </a>
-          <p className="mt-1 break-words text-xs text-slate-500">{report.company_name}</p>
+          <p className="mt-1 font-mono text-[11px] text-slate-400">{report.public_id}</p>
         </div>
       ),
     },
     {
+      title: 'Công ty',
+      dataIndex: 'company_name',
+      key: 'company_name',
+      sorter: true,
+      sortOrder: sorterOrder(ordering, 'company_name'),
+      width: 210,
+      render: (value) => <span className="break-words font-medium text-slate-800">{value}</span>,
+    },
+    {
       title: 'Lý do',
       dataIndex: 'reason_label',
+      key: 'reason',
+      sorter: true,
+      sortOrder: sorterOrder(ordering, 'reason'),
       width: 210,
       render: (value) => <span className="font-medium text-slate-800">{value}</span>,
     },
     {
       title: 'Mô tả',
       dataIndex: 'detail',
+      key: 'detail',
+      sorter: true,
+      sortOrder: sorterOrder(ordering, 'detail'),
       width: 300,
       render: (value) => (
         <span className="line-clamp-3 whitespace-pre-wrap break-words text-sm text-slate-600">
@@ -131,12 +236,18 @@ export default function JobReportQueue() {
     {
       title: 'Người báo cáo',
       dataIndex: 'reporter_email',
+      key: 'reporter_email',
+      sorter: true,
+      sortOrder: sorterOrder(ordering, 'reporter_email'),
       width: 220,
       render: (value) => <span className="break-all text-sm">{value || 'Tài khoản đã xóa'}</span>,
     },
     {
       title: 'Trạng thái',
       dataIndex: 'status',
+      key: 'status',
+      sorter: true,
+      sortOrder: sorterOrder(ordering, 'status'),
       width: 170,
       render: (value) => (
         <Tag color={JOB_REPORT_STATUS_COLORS[value]}>
@@ -147,6 +258,9 @@ export default function JobReportQueue() {
     {
       title: 'Thời điểm báo cáo',
       dataIndex: 'created_at',
+      key: 'created_at',
+      sorter: true,
+      sortOrder: sorterOrder(ordering, 'created_at'),
       width: 180,
       render: formatDateTime,
     },
@@ -202,30 +316,69 @@ export default function JobReportQueue() {
   ]
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h2 className="text-base font-bold text-slate-900">Báo cáo vi phạm</h2>
-          <p className="mt-1 text-sm leading-6 text-slate-600">
-            Chỉ kết luận “vi phạm” đã được xác nhận mới ảnh hưởng huy hiệu của người đăng.
-          </p>
-        </div>
-        <Select
-          aria-label="Lọc trạng thái báo cáo"
-          className="w-full sm:w-56"
-          onChange={(value) => {
-            setStatusFilter(value)
-            setPage(1)
-          }}
-          options={[
-            ...JOB_REPORT_STATUS_OPTIONS,
-            { value: '', label: 'Tất cả trạng thái' },
-          ]}
-          value={statusFilter}
+    <AdminPanel
+      title="Báo cáo vi phạm"
+      description={`${total.toLocaleString('vi-VN')} báo cáo phù hợp. Chỉ kết luận vi phạm đã xác nhận mới ảnh hưởng huy hiệu người đăng.`}
+      extra={(
+        <AdminDataActions
+          allowExport={false}
+          onRefresh={() => reportsQuery.refetch()}
+          refreshing={reportsQuery.isFetching}
         />
+      )}
+    >
+      <div className="admin-list-toolbar" data-print-hide="true">
+        <div className="admin-list-toolbar__filters">
+          <Input.Search
+            allowClear
+            aria-label="Tìm báo cáo vi phạm"
+            className="w-full sm:w-72"
+            onChange={(event) => setSearchInput(event.target.value)}
+            placeholder="Mã, tin, công ty, email, nội dung"
+            value={searchInput}
+          />
+          <Select
+            aria-label="Lọc trạng thái báo cáo"
+            className="w-full sm:w-52"
+            onChange={(value) => patchParams({
+              report_status: value === DEFAULT_STATUS ? null : value || 'all',
+            })}
+            options={[
+              ...JOB_REPORT_STATUS_OPTIONS,
+              { value: '', label: 'Tất cả trạng thái' },
+            ]}
+            value={statusFilter}
+          />
+          <Select
+            allowClear
+            aria-label="Lọc lý do báo cáo"
+            className="w-full sm:w-60"
+            onChange={(value) => patchParams({ report_reason: value })}
+            options={JOB_REPORT_REASON_OPTIONS}
+            placeholder="Tất cả lý do"
+            value={reasonFilter || undefined}
+          />
+          <DatePicker.RangePicker
+            aria-label="Lọc ngày báo cáo"
+            className="w-full sm:w-auto"
+            format="DD/MM/YYYY"
+            onChange={(dates) => patchParams({
+              report_created_from: dates?.[0]?.format('YYYY-MM-DD') || '',
+              report_created_to: dates?.[1]?.format('YYYY-MM-DD') || '',
+            })}
+            value={createdFrom && createdTo ? [dayjs(createdFrom), dayjs(createdTo)] : null}
+          />
+        </div>
+        {activeFilterCount > 0 && (
+          <Button icon={<FilterOutlined />} onClick={clearFilters}>
+            Xóa {activeFilterCount} bộ lọc
+          </Button>
+        )}
       </div>
+
       {!canResolve && (
         <Alert
+          className="mb-4"
           showIcon
           title="Bạn có quyền xem nhưng không có quyền xử lý báo cáo."
           type="info"
@@ -234,6 +387,8 @@ export default function JobReportQueue() {
       {reportsQuery.isError && (
         <Alert
           action={<Button onClick={() => reportsQuery.refetch()} size="small">Thử lại</Button>}
+          className="mb-4"
+          description={getApiErrorMessage(reportsQuery.error)}
           showIcon
           title="Không thể tải danh sách báo cáo."
           type="error"
@@ -242,7 +397,7 @@ export default function JobReportQueue() {
       <div className="overflow-x-auto">
         <Table
           columns={columns}
-          dataSource={reportsQuery.data?.results || []}
+          dataSource={reports}
           expandable={{
             expandedRowRender: (report) => (
               <Descriptions
@@ -274,17 +429,37 @@ export default function JobReportQueue() {
               />
             ),
           }}
-          loading={reportsQuery.isLoading}
-          locale={{ emptyText: 'Không có báo cáo phù hợp.' }}
+          loading={reportsQuery.isFetching}
+          locale={{
+            emptyText: (
+              <Empty description={activeFilterCount
+                ? 'Không có báo cáo phù hợp với bộ lọc.'
+                : 'Chưa có báo cáo trong hàng đợi.'}
+              />
+            ),
+          }}
+          onChange={(pagination, _, sorter, extra) => {
+            const selectedSorter = Array.isArray(sorter) ? sorter[0] : sorter
+            const field = selectedSorter?.columnKey || selectedSorter?.field
+            const nextOrdering = selectedSorter?.order
+              ? `${selectedSorter.order === 'descend' ? '-' : ''}${field}`
+              : DEFAULT_ORDERING
+            const sortingChanged = extra?.action === 'sort' || nextOrdering !== ordering
+            patchParams({
+              report_ordering: nextOrdering,
+              report_page: sortingChanged ? null : pagination.current,
+            }, { resetPage: false })
+          }}
           pagination={{
             current: page,
-            onChange: setPage,
             pageSize: PAGE_SIZE,
             showSizeChanger: false,
-            total: reportsQuery.data?.count || 0,
+            showTotal: (count, range) => `${range[0]}–${range[1]} / ${count} báo cáo`,
+            total,
           }}
           rowKey="public_id"
-          scroll={{ x: 1450 }}
+          scroll={{ x: 1640 }}
+          showSorterTooltip={{ target: 'sorter-icon' }}
         />
       </div>
       <JobReportDecisionModal
@@ -298,6 +473,6 @@ export default function JobReportQueue() {
         onSubmit={submitDecision}
         pending={decisionMutation.isPending}
       />
-    </div>
+    </AdminPanel>
   )
 }

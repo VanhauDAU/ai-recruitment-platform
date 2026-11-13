@@ -9,14 +9,22 @@ const ORDERING_OPTIONS = [
   { value: '-is_sensitive', label: 'Ưu tiên thay đổi pháp lý' },
 ]
 
+const STATUS_OPTIONS = [
+  { value: 'submitted', label: 'Chờ tiếp nhận' },
+  { value: 'in_review', label: 'Đang thẩm định' },
+  { value: 'changes_requested', label: 'Chờ nhà tuyển dụng sửa' },
+]
+
 export default function CompanyUpdateFilters({
   companyFilter,
   loading,
   ordering,
+  status,
   queryText,
   total,
   onClearCompany,
   onOrderingChange,
+  onStatusChange,
   onSearchChange,
 }) {
   return (
@@ -33,6 +41,13 @@ export default function CompanyUpdateFilters({
           onChange={onSearchChange}
         />
         <Select
+          aria-label="Lọc trạng thái yêu cầu cập nhật"
+          size="large"
+          value={status}
+          options={STATUS_OPTIONS}
+          onChange={onStatusChange}
+        />
+        <Select
           aria-label="Sắp xếp yêu cầu cập nhật"
           size="large"
           value={ordering}
@@ -46,7 +61,7 @@ export default function CompanyUpdateFilters({
           {loading ? 'Đang tải hàng đợi…' : (
             <>
               <strong>{Number(total || 0).toLocaleString('vi-VN')}</strong>
-              {' yêu cầu đang chờ xử lý'}
+              {' yêu cầu theo trạng thái đã chọn'}
             </>
           )}
         </span>

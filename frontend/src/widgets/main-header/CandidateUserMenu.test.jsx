@@ -39,7 +39,7 @@ describe('CandidateUserMenu', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Mở menu tài khoản' }))
     const searchSection = await screen.findByRole('button', { name: /Quản lý tìm việc/ })
-    const cvSection = screen.getByRole('button', { name: /Quản lý CV & Cover letter/ })
+    const cvSection = screen.getByRole('button', { name: /Quản lý CV/ })
 
     expect(searchSection).toHaveAttribute('aria-expanded', 'true')
     expect(cvSection).toHaveAttribute('aria-expanded', 'false')
@@ -54,6 +54,7 @@ describe('CandidateUserMenu', () => {
       'tabindex',
       '-1',
     )
+    expect(screen.getByRole('button', { name: 'CV của tôi' })).toBeInTheDocument()
   })
 
   it('opens the section that owns the current account route', async () => {

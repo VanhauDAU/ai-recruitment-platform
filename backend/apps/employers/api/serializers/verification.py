@@ -2,13 +2,19 @@ import re
 
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.core.validators import EmailValidator, URLValidator
+from drf_spectacular.utils import extend_schema_field, inline_serializer
 from rest_framework import serializers
 
 from common.media_storage import media_url_from_value
-from common.rich_text import rich_text_plain_text, sanitize_rich_text
 
-from ...models import Company, CompanyDocument, CompanyUpdateRequest, Industry
-from ...services import SENSITIVE_FIELDS, UPDATABLE_COMPANY_FIELDS
+from ...models import Company, CompanyDocument, CompanyUpdateRequest, Industry, RecruiterProfile
+from ...selectors import can_access_employer_document_content
+from ...services import (
+    SENSITIVE_FIELDS,
+    UPDATABLE_COMPANY_FIELDS,
+    normalize_company_rich_text,
+    normalize_company_tax_code,
+)
 
 
 class CompanyDocumentSerializer(serializers.ModelSerializer):
@@ -41,14 +47,38 @@ class CompanyDocumentSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = fields
 
+    @extend_schema_field(serializers.CharField(allow_null=True))
     def get_file_url(self, obj):
         if obj.file_url.startswith(('http://', 'https://')):
             return obj.file_url
+        if not self._can_view_content(obj):
+            return None
         from django.urls import reverse
 
         path = reverse('employer-company-document-content', kwargs={'pk': obj.pk})
         request = self.context.get('request')
         return request.build_absolute_uri(path) if request else path
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if not instance.file_url.startswith(('http://', 'https://')) and not self._can_view_content(
+            instance
+        ):
+            data['file_name'] = ''
+            data['mime_type'] = ''
+            data['file_size'] = 0
+        return data
+
+    def _can_view_content(self, obj):
+        request = self.context.get('request')
+        recruiter = self.context.get('recruiter')
+        if request is None or recruiter is None:
+            return False
+        return can_access_employer_document_content(
+            document=obj,
+            user=request.user,
+            recruiter=recruiter,
+        )
 
     def get_source_type(self, obj):
         # URL ngoài chỉ được dùng cho bằng chứng tên thương mại. Không cần thêm
@@ -64,36 +94,139 @@ class CompanyDocumentSerializer(serializers.ModelSerializer):
 class CompanyUpdateRequestSerializer(serializers.ModelSerializer):
     documents = CompanyDocumentSerializer(many=True, read_only=True)
     media_previews = serializers.SerializerMethodField()
+    requested_by_summary = serializers.SerializerMethodField()
+    current_revision_public_id = serializers.CharField(
+        source='current_revision.public_id',
+        read_only=True,
+        allow_null=True,
+    )
+    allowed_actions = serializers.SerializerMethodField()
+    rejection_reason = serializers.SerializerMethodField()
+    base_company_updated_at = serializers.DateTimeField(required=False)
 
     class Meta:
         model = CompanyUpdateRequest
         fields = [
             'public_id',
+            'requested_by_summary',
+            'current_revision_public_id',
+            'allowed_actions',
             'changes',
             'is_sensitive',
             'reason',
             'proof_type',
             'status',
             'review_note',
+            'rejection_reason',
             'documents',
             'media_previews',
+            'submitted_at',
             'created_at',
             'updated_at',
             'revision',
             'lock_version',
+            'base_company_updated_at',
         ]
         read_only_fields = [
             'public_id',
+            'requested_by_summary',
+            'current_revision_public_id',
+            'allowed_actions',
             'is_sensitive',
             'status',
             'review_note',
+            'rejection_reason',
+            'submitted_at',
             'created_at',
             'updated_at',
             'revision',
             'lock_version',
         ]
 
+    @extend_schema_field(serializers.CharField(allow_blank=True))
+    def get_rejection_reason(self, obj):
+        if obj.status == CompanyUpdateRequest.Status.REJECTED:
+            return obj.review_note or ''
+        return ''
+
+    @extend_schema_field(serializers.ListField(child=serializers.CharField()))
+    def get_allowed_actions(self, obj):
+        request = self.context.get('request')
+        recruiter = self.context.get('recruiter')
+        if request is None or recruiter is None:
+            return []
+        actions = []
+        if obj.status in {
+            CompanyUpdateRequest.Status.PENDING,
+            CompanyUpdateRequest.Status.SUBMITTED,
+            CompanyUpdateRequest.Status.CHANGES_REQUESTED,
+        }:
+            if obj.requested_by_id == request.user.id:
+                actions.extend(['edit', 'withdraw'])
+                if obj.status == CompanyUpdateRequest.Status.CHANGES_REQUESTED:
+                    actions.append('resubmit')
+            if recruiter.company_role == RecruiterProfile.CompanyRole.OWNER:
+                actions.append('cancel')
+        return actions
+
+    @extend_schema_field(
+        inline_serializer(
+            name='CompanyUpdateRequesterSummary',
+            fields={
+                'public_id': serializers.CharField(),
+                'display_name': serializers.CharField(),
+            },
+        )
+    )
+    def get_requested_by_summary(self, obj):
+        display_name = (obj.requested_by.full_name or '').strip() or 'Thành viên công ty'
+        return {
+            'public_id': obj.requested_by.public_id,
+            'display_name': display_name,
+        }
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if not self._can_view_request_files(instance):
+            changes = dict(data.get('changes') or {})
+            for field in ('logo_url', 'cover_image_url'):
+                if field in changes:
+                    changes[field] = None
+            if 'gallery_additions' in changes:
+                changes['gallery_additions'] = []
+            data['changes'] = changes
+            data['media_previews'] = {}
+        return data
+
+    def _can_view_request_files(self, obj):
+        request = self.context.get('request')
+        recruiter = self.context.get('recruiter')
+        if request is None or recruiter is None:
+            return False
+        return bool(
+            obj.requested_by_id == request.user.id
+            or (
+                recruiter.company_role == RecruiterProfile.CompanyRole.OWNER
+                and recruiter.company_id == obj.company_id
+            )
+        )
+
+    @extend_schema_field(
+        inline_serializer(
+            name='CompanyUpdateMediaPreviews',
+            fields={
+                'logo_url': serializers.URLField(required=False),
+                'cover_image_url': serializers.URLField(required=False),
+                'gallery_additions': serializers.ListField(
+                    child=serializers.URLField(),
+                    required=False,
+                ),
+            },
+        )
+    )
     def get_media_previews(self, obj):
+        if not self._can_view_request_files(obj):
+            return {}
         changes = obj.changes or {}
         request = self.context.get('request')
         previews = {
@@ -189,12 +322,10 @@ class CompanyUpdateRequestSerializer(serializers.ModelSerializer):
                 ) from error
 
         if 'tax_code' in cleaned:
-            tax_code = re.sub(r'\s+', '', str(cleaned['tax_code'] or ''))
-            if not re.fullmatch(r'\d{10}(?:-\d{3})?', tax_code):
-                raise serializers.ValidationError(
-                    {'tax_code': 'Mã số thuế phải gồm 10 chữ số hoặc có dạng 10 chữ số-3 chữ số.'}
-                )
-            cleaned['tax_code'] = tax_code
+            try:
+                cleaned['tax_code'] = normalize_company_tax_code(cleaned['tax_code'])
+            except ValueError as error:
+                raise serializers.ValidationError({'tax_code': str(error)}) from error
 
         for field, required, label in (
             ('description', True, 'Mô tả công ty'),
@@ -202,14 +333,14 @@ class CompanyUpdateRequestSerializer(serializers.ModelSerializer):
         ):
             if field not in cleaned:
                 continue
-            cleaned[field] = sanitize_rich_text(cleaned[field])
-            visible = rich_text_plain_text(cleaned[field])
-            if required and not visible:
-                raise serializers.ValidationError({field: f'{label} là bắt buộc.'})
-            if len(visible) > 10_000:
-                raise serializers.ValidationError(
-                    {field: f'{label} không được vượt quá 10.000 ký tự.'}
+            try:
+                cleaned[field] = normalize_company_rich_text(
+                    cleaned[field],
+                    required=required,
+                    label=label,
                 )
+            except ValueError as error:
+                raise serializers.ValidationError({field: str(error)}) from error
 
         if 'markets' in cleaned:
             invalid = set(cleaned['markets']) - set(Company.Market.values)
@@ -281,9 +412,10 @@ class CompanyUpdateRequestSerializer(serializers.ModelSerializer):
             'trade_name_same_as_registered',
             getattr(company, 'trade_name_same_as_registered', False),
         )
-        if same_name:
+        name_fields = {'company_name', 'trade_name', 'trade_name_same_as_registered'}
+        if same_name and name_fields & set(cleaned):
             cleaned['trade_name'] = name
-        elif {'company_name', 'trade_name', 'trade_name_same_as_registered'} & set(cleaned):
+        elif name_fields & set(cleaned):
             trade_name = cleaned.get('trade_name', getattr(company, 'trade_name', ''))
             if not str(trade_name or '').strip():
                 # Hồ sơ legacy có thể chưa có tên thương mại. Khi đổi tên đăng
@@ -291,3 +423,8 @@ class CompanyUpdateRequestSerializer(serializers.ModelSerializer):
                 cleaned['trade_name'] = name
                 cleaned['trade_name_same_as_registered'] = True
         return cleaned
+
+
+class CompanyUpdateRequestCloseSerializer(serializers.Serializer):
+    reason = serializers.CharField(max_length=2000, required=False, allow_blank=True)
+    lock_version = serializers.IntegerField(min_value=0)

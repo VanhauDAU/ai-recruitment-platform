@@ -40,7 +40,7 @@ backend/
   config/       Django settings, urls (root)
   common/       Tiện ích hạ tầng dùng chung, không phải Django app
   apps/         Toàn bộ Django app: accounts, skills, candidates, employers, locations,
-                cv_templates, cvs, jobs, applications, interviews, ai_core, dashboard
+                cv_templates, cvs, jobs, applications, ai_core, dashboard
 frontend/
   src/
     app/        Composition root: providers, layouts, guards, router/lazy registry
@@ -58,16 +58,32 @@ docs/       Tài liệu dự án — xem docs/README.md
 ### Cách 1 — Docker Compose (khuyến nghị, chỉ cần Docker)
 
 ```bash
-cp backend/.env.example backend/.env    # điền tối thiểu SECRET_KEY
+cp backend/.env.example backend/.env    # chạy local; thay SECRET_KEY nếu dùng lâu dài
 docker compose up
 # Frontend: http://localhost:5173 · API: http://localhost:8000/api · Swagger: /api/docs/
 ```
+
+Scanner malware thật là profile riêng vì ClamAV cần khoảng 3–4 GB RAM:
+
+```bash
+docker compose --profile scanner up -d clamav
+docker compose --profile scanner exec \
+  -e UPLOAD_QUARANTINE_ENABLED=true -e CLAMAV_HOST=clamav \
+  backend python manage.py check_upload_scanner_readiness --json
+```
+
+ClamAV chỉ mở cổng 3310 trong private Compose network, không publish ra host.
+Trên Apple Silicon image chính thức 1.4 chạy qua `linux/amd64` emulation; có thể
+đổi bằng `CLAMAV_PLATFORM` khi registry được duyệt đã phát hành arm64.
 
 Postgres của compose mở ở host cổng **5433** (`postgres/postgres`, DB `ai_career_coach`)
 để không trùng Postgres cài trực tiếp trên máy ở 5432 — hai DB trùng tên nên rất
 dễ nối lẫn khi mở bằng DBeaver/psql.
 
-Đầy đủ (gồm production trên VPS): [docs/06-deployment/docker-compose.md](docs/06-deployment/docker-compose.md).
+Chi tiết chạy local bằng Compose: [docs/06-deployment/docker-compose.md](docs/06-deployment/docker-compose.md).
+Quy tắc env tối thiểu và catalog tùy chọn: [docs/05-huong-dan/cau-hinh-env.md](docs/05-huong-dan/cau-hinh-env.md).
+Tùy chọn Compose local có catalog riêng tại [`.env.example`](.env.example);
+không đặt secret backend hoặc biến `VITE_*` vào file env ở root.
 
 ### Cách 2 — Chạy trực tiếp (venv + PostgreSQL + Redis local)
 
@@ -79,10 +95,11 @@ brew services start redis
 python manage.py runserver 8000        # http://localhost:8000
 
 # Worker Celery (terminal riêng, chạy từ backend/).
-# BẮT BUỘC khai đủ 3 queue: settings route task sang auth-email (email xác thực,
-# 2FA, OTP điện thoại) và cv-export (render PDF, thumbnail); phần còn lại vào
-# default. Thiếu queue nào thì task của queue đó im lặng không chạy.
-celery -A config worker -l info -Q default,auth-email,cv-export
+# Worker thông thường nghe toàn bộ queue không-AI; AI có worker riêng để không
+# chiếm pool email/export/scan. Thiếu queue thì task có thể im lặng không chạy.
+celery -A config worker -l info \
+  -Q default,auth-email,auth-sms,cv-export,upload-scan,candidate-email
+celery -A config worker -l info -Q ai-generation --concurrency=2
 
 # Beat: quét lại job bị gián đoạn + dọn file import hết hạn (terminal riêng)
 celery -A config beat -l info
@@ -141,7 +158,7 @@ tới `backend/` hoặc `frontend/`.
 - [Kiến trúc CV Builder](docs/03-database/cv-builder-architecture-foundation.md)
 - [Kế hoạch CV Builder](docs/03-database/ke-hoach-hoan-thien-cv-builder-theo-giai-doan.md)
 
-Xem [docs/README.md](docs/README.md) cho toàn bộ tài liệu: phân tích, tổng quan, database, API, deployment, thuật toán AI, frontend.
+Xem [docs/README.md](docs/README.md) cho toàn bộ tài liệu: phân tích, tổng quan, database, API, hướng dẫn local, thuật toán AI và frontend.
 
 ## Changelog
 

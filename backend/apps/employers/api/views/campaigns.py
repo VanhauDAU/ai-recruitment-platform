@@ -21,7 +21,7 @@ from ...selectors.campaigns import (
     campaign_report,
     owned_campaign_queryset,
 )
-from ...services import recruiter_candidate_data_access_allowed
+from ...services import ensure_recruiter_job_workspace
 from ...services.campaigns import (
     change_campaign_status,
     create_campaign,
@@ -35,11 +35,23 @@ from ..serializers.campaigns import (
 )
 
 
-class RecruitmentCampaignListCreateView(generics.ListCreateAPIView):
+class EmployerWorkspaceReadMixin:
+    """Authoritatively gate recruiter workspace reads and cache their state."""
+
+    def employer_workspace_readiness(self):
+        readiness = getattr(self, '_employer_workspace_readiness', None)
+        if readiness is None:
+            _, readiness = ensure_recruiter_job_workspace(self.request.user)
+            self._employer_workspace_readiness = readiness
+        return readiness
+
+
+class RecruitmentCampaignListCreateView(EmployerWorkspaceReadMixin, generics.ListCreateAPIView):
     permission_classes = [IsEmployer]
     serializer_class = RecruitmentCampaignSerializer
 
     def get_queryset(self):
+        self.employer_workspace_readiness()
         return campaign_list_queryset(
             self.request.user,
             status=self.request.query_params.get('status'),
@@ -52,13 +64,13 @@ class RecruitmentCampaignListCreateView(generics.ListCreateAPIView):
         queryset = self.filter_queryset(self.get_queryset())
         page = self.paginate_queryset(queryset)
         if page is not None:
-            if recruiter_candidate_data_access_allowed(request.user):
+            if self.employer_workspace_readiness()['candidate_data_access']:
                 attach_campaign_candidate_previews(page)
             serializer = self.get_serializer(page, many=True)
             return self.get_paginated_response(serializer.data)
 
         campaigns = list(queryset)
-        if recruiter_candidate_data_access_allowed(request.user):
+        if self.employer_workspace_readiness()['candidate_data_access']:
             attach_campaign_candidate_previews(campaigns)
         serializer = self.get_serializer(campaigns, many=True)
         return Response(serializer.data)
@@ -67,12 +79,13 @@ class RecruitmentCampaignListCreateView(generics.ListCreateAPIView):
         serializer.instance = create_campaign(user=self.request.user, **serializer.validated_data)
 
 
-class RecruitmentCampaignDetailView(generics.RetrieveUpdateAPIView):
+class RecruitmentCampaignDetailView(EmployerWorkspaceReadMixin, generics.RetrieveUpdateAPIView):
     permission_classes = [IsEmployer]
     serializer_class = RecruitmentCampaignSerializer
     lookup_field = 'public_id'
 
     def get_queryset(self):
+        self.employer_workspace_readiness()
         return campaign_detail_queryset(self.request.user)
 
     def perform_update(self, serializer):
@@ -81,10 +94,11 @@ class RecruitmentCampaignDetailView(generics.RetrieveUpdateAPIView):
         )
 
 
-class RecruitmentCampaignOptionsView(APIView):
+class RecruitmentCampaignOptionsView(EmployerWorkspaceReadMixin, APIView):
     permission_classes = [IsEmployer]
 
     def get(self, request):
+        self.employer_workspace_readiness()
         return Response(
             RecruitmentCampaignSerializer(campaign_options(request.user), many=True).data
         )
@@ -106,10 +120,11 @@ class RecruitmentCampaignStatusView(APIView):
         return Response(RecruitmentCampaignSerializer(campaign).data)
 
 
-class RecruitmentCampaignPauseImpactView(APIView):
+class RecruitmentCampaignPauseImpactView(EmployerWorkspaceReadMixin, APIView):
     permission_classes = [IsEmployer]
 
     def get(self, request, public_id):
+        self.employer_workspace_readiness()
         campaign = get_object_or_404(
             owned_campaign_queryset(request.user),
             public_id=public_id,
@@ -117,11 +132,19 @@ class RecruitmentCampaignPauseImpactView(APIView):
         return Response(campaign_pause_impact(campaign))
 
 
-class RecruitmentCampaignActivityView(generics.ListAPIView):
+class RecruitmentCampaignActivityView(EmployerWorkspaceReadMixin, generics.ListAPIView):
     permission_classes = [IsEmployer]
     serializer_class = CampaignActivitySerializer
 
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['candidate_data_access'] = self.employer_workspace_readiness()[
+            'candidate_data_access'
+        ]
+        return context
+
     def get_queryset(self):
+        self.employer_workspace_readiness()
         campaign = get_object_or_404(
             owned_campaign_queryset(self.request.user),
             public_id=self.kwargs['public_id'],
@@ -132,18 +155,20 @@ class RecruitmentCampaignActivityView(generics.ListAPIView):
         )
 
 
-class RecruitmentCampaignReportView(APIView):
+class RecruitmentCampaignReportView(EmployerWorkspaceReadMixin, APIView):
     permission_classes = [IsEmployer]
 
     def get(self, request, public_id):
+        self.employer_workspace_readiness()
         campaign = get_object_or_404(owned_campaign_queryset(request.user), public_id=public_id)
         return Response(campaign_report(campaign))
 
 
-class RecruitmentCampaignJobPerformanceView(APIView):
+class RecruitmentCampaignJobPerformanceView(EmployerWorkspaceReadMixin, APIView):
     permission_classes = [IsEmployer]
 
     def get(self, request, public_id):
+        self.employer_workspace_readiness()
         started_at = perf_counter()
         campaign = get_object_or_404(owned_campaign_queryset(request.user), public_id=public_id)
         serializer = CampaignPerformanceQuerySerializer(data=request.query_params)

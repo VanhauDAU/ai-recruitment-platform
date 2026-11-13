@@ -1,3 +1,5 @@
+from django.conf import settings
+from django.core.files.base import File
 from django.db import transaction
 from django.db.models import Max
 from drf_spectacular.utils import extend_schema, inline_serializer
@@ -7,20 +9,30 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.accounts.permissions import IsEmployer
+from apps.uploads.services import UploadServiceError, claim_clean_upload
 from common.media_storage import delete_local_media_url, save_image_upload, validate_image_upload
+from common.public_id import generate_public_id
+from common.r2_storage import private_media_storage
 
-from ...models import Company, CompanyImage, CompanyUpdateRequest
+from ...models import CompanyImage, CompanyMediaUpload, CompanyUpdateRequest
+from ...services import (
+    REQUESTER_EDITABLE_COMPANY_UPDATE_STATUSES,
+    EmployerUploadStructureError,
+    lock_company_update_request,
+    snapshot_company_update_request,
+    validate_employer_upload_structure,
+)
+from ..exceptions import EmployerUploadSessionResponse, UploadSessionRequiredResponse
 from ..serializers import CompanyImageSerializer, CompanySerializer
 from .onboarding import _require_owner
+
+EMPLOYER_MEDIA_PURPOSE = 'employer_company_update'
+EMPLOYER_MEDIA_CLAIM_SCOPE = 'employer_company_media'
 
 
 def _approval_is_required(company):
     """Initial onboarding may upload media directly; later edits need a request."""
-    return (
-        company.verification_status != Company.VerificationStatus.UNVERIFIED
-        or company.recruiter_verification_cases.exists()
-        or company.update_requests.exists()
-    )
+    return company.recruiter_verification_cases.exists() or company.update_requests.exists()
 
 
 def _get_update_request(request, company):
@@ -41,18 +53,64 @@ def _get_update_request(request, company):
     update_request = CompanyUpdateRequest.objects.filter(
         public_id=update_request_id,
         company=company,
-        status=CompanyUpdateRequest.Status.PENDING,
+        requested_by=request.user,
+        status__in=REQUESTER_EDITABLE_COMPANY_UPDATE_STATUSES,
     ).first()
     if update_request is None:
         raise ValidationError({'update_request': 'Không tìm thấy yêu cầu cập nhật đang chờ.'})
     return update_request
 
 
+def _save_scanned_image_derivative(*, request, company, update_request, kind, public_id):
+    try:
+        asset = claim_clean_upload(
+            owner=request.user,
+            public_id=public_id,
+            expected_purpose=EMPLOYER_MEDIA_PURPOSE,
+            claim_scope=EMPLOYER_MEDIA_CLAIM_SCOPE,
+            claim_reference=generate_public_id('cma'),
+        )
+    except UploadServiceError as error:
+        raise EmployerUploadSessionResponse(error) from error
+
+    if asset.size_bytes > settings.IMAGE_UPLOAD_MAX_SIZE:
+        raise ValidationError({'upload_session': 'Ảnh phải nhỏ hơn 5 MB.'})
+    if asset.content_type not in {'image/jpeg', 'image/png', 'image/webp'}:
+        raise ValidationError({'upload_session': 'Chỉ chấp nhận ảnh JPG, PNG hoặc WebP.'})
+    try:
+        validate_employer_upload_structure(asset)
+    except EmployerUploadStructureError as error:
+        raise ValidationError(
+            {'upload_session': 'Nội dung ảnh bị lỗi hoặc không đúng định dạng khai báo.'}
+        ) from error
+
+    with private_media_storage().open(asset.storage_key, 'rb') as stored_file:
+        upload = File(stored_file, name=asset.original_filename)
+        upload.content_type = asset.content_type
+        saved = save_image_upload(
+            upload,
+            f'employers/{company.public_id}/{kind}s',
+            request=request,
+            max_dimensions=(2400, 1600),
+        )
+
+    CompanyMediaUpload.objects.create(
+        public_id=asset.claim_reference,
+        company=company,
+        uploaded_by=request.user,
+        update_request=update_request,
+        upload_asset=asset,
+        kind=kind,
+        public_path=saved['path'],
+    )
+    return saved
+
+
 class CompanyImageUploadView(APIView):
     """Upload ảnh cho công ty: logo, cover hoặc ảnh giới thiệu (`kind`)."""
 
     permission_classes = [IsEmployer]
-    parser_classes = [parsers.MultiPartParser]
+    parser_classes = [parsers.JSONParser, parsers.MultiPartParser]
     kind = ''  # 'logo' | 'cover' | 'gallery'
 
     @extend_schema(
@@ -60,7 +118,12 @@ class CompanyImageUploadView(APIView):
         request=inline_serializer(
             'CompanyImageUploadRequest',
             fields={
-                'file': serializers.FileField(help_text='Ảnh JPG, PNG, GIF hoặc WebP, tối đa 5MB')
+                'file': serializers.FileField(
+                    required=False,
+                    help_text='Ảnh JPG, PNG hoặc WebP, tối đa 5MB',
+                ),
+                'upload_session': serializers.CharField(required=False),
+                'update_request': serializers.CharField(required=False),
             },
         ),
         responses={200: CompanySerializer},
@@ -68,15 +131,19 @@ class CompanyImageUploadView(APIView):
     )
     def post(self, request):
         upload = request.FILES.get('file')
-        if not upload:
-            return Response({'file': 'This field is required.'}, status=status.HTTP_400_BAD_REQUEST)
-
-        extension, _ = validate_image_upload(upload)
-        if extension == 'gif':
-            return Response(
-                {'file': 'Chỉ chấp nhận ảnh JPG, PNG hoặc WebP.'},
-                status=status.HTTP_400_BAD_REQUEST,
+        upload_session_public_id = (request.data.get('upload_session') or '').strip()
+        if not upload and not upload_session_public_id:
+            raise ValidationError({'file': 'Vui lòng chọn ảnh.'})
+        if upload and upload_session_public_id:
+            raise ValidationError(
+                {'upload_session': 'Không thể gửi đồng thời file thô và upload session.'}
             )
+        if upload and settings.EMPLOYER_UPLOAD_SESSION_REQUIRED:
+            raise UploadSessionRequiredResponse()
+        if upload:
+            extension, _ = validate_image_upload(upload)
+            if extension == 'gif':
+                raise ValidationError({'file': 'Chỉ chấp nhận ảnh JPG, PNG hoặc WebP.'})
 
         company = _require_owner(request.user).company
         update_request = _get_update_request(request, company)
@@ -86,20 +153,31 @@ class CompanyImageUploadView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        saved = save_image_upload(
-            upload,
-            f'employers/{company.public_id}/{self.kind}s',
-            request=request,
-            max_dimensions=(2400, 1600),
-        )
-
+        saved = None
         try:
-            if update_request is not None:
-                with transaction.atomic():
-                    update_request = CompanyUpdateRequest.objects.select_for_update().get(
-                        pk=update_request.pk
+            with transaction.atomic():
+                if upload_session_public_id:
+                    saved = _save_scanned_image_derivative(
+                        request=request,
+                        company=company,
+                        update_request=update_request,
+                        kind=self.kind,
+                        public_id=upload_session_public_id,
                     )
-                    if update_request.status != CompanyUpdateRequest.Status.PENDING:
+                else:
+                    saved = save_image_upload(
+                        upload,
+                        f'employers/{company.public_id}/{self.kind}s',
+                        request=request,
+                        max_dimensions=(2400, 1600),
+                    )
+
+                if update_request is not None:
+                    company, update_request = lock_company_update_request(
+                        company_id=company.pk,
+                        update_request_id=update_request.pk,
+                    )
+                    if update_request.status not in REQUESTER_EDITABLE_COMPANY_UPDATE_STATUSES:
                         raise ValidationError(
                             {'update_request': 'Yêu cầu cập nhật này vừa được xử lý.'}
                         )
@@ -128,29 +206,33 @@ class CompanyImageUploadView(APIView):
                         changes['cover_image_url'] = saved['path']
                         changes.pop('cover_pending', None)
                     update_request.changes = changes
-                    update_request.lock_version += 1
-                    update_request.save(update_fields=['changes', 'lock_version', 'updated_at'])
+                    update_request.save(update_fields=['changes', 'updated_at'])
+                    snapshot_company_update_request(
+                        update_request,
+                        actor=request.user,
+                    )
                     if replaced_path:
                         transaction.on_commit(lambda: delete_local_media_url(replaced_path))
-            elif self.kind == 'gallery':
-                last_order = company.images.aggregate(value=Max('sort_order'))['value']
-                CompanyImage.objects.create(
-                    company=company,
-                    image_url=saved['path'],
-                    sort_order=(last_order + 1) if last_order is not None else 0,
-                )
-            else:
-                field = 'logo_url' if self.kind == 'logo' else 'cover_image_url'
-                delete_local_media_url(getattr(company, field))
-                # Lưu key của storage thay vì URL tuyệt đối phụ thuộc localhost/domain.
-                setattr(company, field, saved['path'])
-                update_fields = [field, 'updated_at']
-                if self.kind == 'logo':
-                    company.has_no_logo = False
-                    update_fields.append('has_no_logo')
-                company.save(update_fields=update_fields)
+                elif self.kind == 'gallery':
+                    last_order = company.images.aggregate(value=Max('sort_order'))['value']
+                    CompanyImage.objects.create(
+                        company=company,
+                        image_url=saved['path'],
+                        sort_order=(last_order + 1) if last_order is not None else 0,
+                    )
+                else:
+                    field = 'logo_url' if self.kind == 'logo' else 'cover_image_url'
+                    delete_local_media_url(getattr(company, field))
+                    # Lưu key của storage thay vì URL tuyệt đối phụ thuộc localhost/domain.
+                    setattr(company, field, saved['path'])
+                    update_fields = [field, 'updated_at']
+                    if self.kind == 'logo':
+                        company.has_no_logo = False
+                        update_fields.append('has_no_logo')
+                    company.save(update_fields=update_fields)
         except Exception:
-            delete_local_media_url(saved['path'])
+            if saved:
+                delete_local_media_url(saved['path'])
             raise
 
         if update_request is not None:
@@ -176,10 +258,11 @@ class CompanyImageUploadView(APIView):
         field = 'logo_url' if self.kind == 'logo' else 'cover_image_url'
         if update_request is not None:
             with transaction.atomic():
-                update_request = CompanyUpdateRequest.objects.select_for_update().get(
-                    pk=update_request.pk
+                company, update_request = lock_company_update_request(
+                    company_id=company.pk,
+                    update_request_id=update_request.pk,
                 )
-                if update_request.status != CompanyUpdateRequest.Status.PENDING:
+                if update_request.status not in REQUESTER_EDITABLE_COMPANY_UPDATE_STATUSES:
                     raise ValidationError(
                         {'update_request': 'Yêu cầu cập nhật này vừa được xử lý.'}
                     )
@@ -191,8 +274,11 @@ class CompanyImageUploadView(APIView):
                 else:
                     changes['cover_image_url'] = ''
                 update_request.changes = changes
-                update_request.lock_version += 1
-                update_request.save(update_fields=['changes', 'lock_version', 'updated_at'])
+                update_request.save(update_fields=['changes', 'updated_at'])
+                snapshot_company_update_request(
+                    update_request,
+                    actor=request.user,
+                )
                 if staged_path:
                     transaction.on_commit(lambda: delete_local_media_url(staged_path))
             return Response(

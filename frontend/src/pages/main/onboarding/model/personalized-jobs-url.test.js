@@ -5,7 +5,7 @@ describe('buildPersonalizedJobsUrl', () => {
   it('dựng URL /viec-lam với danh mục, từ khoá và tỉnh/thành đầu tiên', () => {
     const url = buildPersonalizedJobsUrl({
       desired_specializations: [{ id: 11 }, { id: 22 }, { id: 33 }],
-      desired_position_other: '  nhân viên máy tính  ',
+      desired_position_others: ['  nhân viên máy tính  ', 'Kỹ sư dữ liệu'],
       preferred_provinces: [
         { id: 48, name: 'Thành phố Đà Nẵng' },
         { id: 1, name: 'Thành phố Hà Nội' },
@@ -32,5 +32,12 @@ describe('buildPersonalizedJobsUrl', () => {
       preferred_provinces: [{ id: 2, name: 'Tỉnh Nghệ An' }],
     })
     expect(url).toBe('/viec-lam/tai/nghe-an?cat=5&locations=2')
+  })
+
+  it('dùng vị trí tự nhập đầu tiên vì URL chỉ có một từ khoá tìm kiếm', () => {
+    const url = buildPersonalizedJobsUrl({
+      desired_position_others: ['Product Owner', 'Business Analyst'],
+    })
+    expect(url).toBe('/viec-lam?search=Product+Owner')
   })
 })

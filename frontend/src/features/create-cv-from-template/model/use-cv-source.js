@@ -43,6 +43,7 @@ export function useCvSource({ template, locale, themeColor, onCreated, onPreview
   const [uploadFile, setUploadFile] = useState(null)
   const [importCvId, setImportCvId] = useState(null)
   const [importError, setImportError] = useState('')
+  const [uploadState, setUploadState] = useState(null)
 
   useEffect(() => {
     setSource('sample')
@@ -51,6 +52,7 @@ export function useCvSource({ template, locale, themeColor, onCreated, onPreview
     setUploadFile(null)
     setImportCvId(null)
     setImportError('')
+    setUploadState(null)
     const selectedLocale = locales.find((item) => item.code === locale)
       || locales.find((item) => item.is_default)
       || locales.find((item) => item.code === 'vi-VN')
@@ -223,6 +225,7 @@ export function useCvSource({ template, locale, themeColor, onCreated, onPreview
           language: sampleLocale || locale,
           themeColor,
           idempotencyKey: globalThis.crypto?.randomUUID?.() || `import-${Date.now()}`,
+          onUploadStateChange: setUploadState,
         })
         setImportCvId(queued.public_id)
         await pollImport(queued.public_id)
@@ -282,6 +285,7 @@ export function useCvSource({ template, locale, themeColor, onCreated, onPreview
     setUploadFile,
     importCvId,
     importError,
+    uploadState,
     setImportError,
     canSubmit,
     retryUpload,

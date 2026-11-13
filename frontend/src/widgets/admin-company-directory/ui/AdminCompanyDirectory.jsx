@@ -1,7 +1,7 @@
 import {
   BankOutlined,
-  CheckCircleOutlined,
   FileSyncOutlined,
+  WarningOutlined,
 } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
@@ -36,7 +36,6 @@ export default function AdminCompanyDirectory({ onOpenUpdates }) {
   const [searchInput, setSearchInput] = useState(query)
   const filters = {
     q: query,
-    verification_status: queryValue(searchParams, 'verification_status'),
     recruiter_verification_status: queryValue(
       searchParams,
       'recruiter_verification_status',
@@ -57,11 +56,10 @@ export default function AdminCompanyDirectory({ onOpenUpdates }) {
   const companies = companiesQuery.data || EMPTY_PAGE
   const summary = summaryQuery.data || {
     total: 0,
-    verification: {},
     pending_update_requests: 0,
+    companies_without_single_owner: 0,
   }
   const activeFilterCount = [
-    filters.verification_status,
     filters.recruiter_verification_status,
     filters.member_role,
   ].filter(Boolean).length + (query ? 1 : 0)
@@ -115,7 +113,7 @@ export default function AdminCompanyDirectory({ onOpenUpdates }) {
 
   return (
     <div className="company-directory company-management-tab-content space-y-5">
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4" aria-label="Tóm tắt công ty">
+      <section className="grid gap-4 md:grid-cols-3" aria-label="Tóm tắt công ty">
         <CompanyStatCard
           icon={<BankOutlined />}
           label="Tổng công ty"
@@ -125,22 +123,11 @@ export default function AdminCompanyDirectory({ onOpenUpdates }) {
           onClick={clearFilters}
         />
         <CompanyStatCard
-          icon={<CheckCircleOutlined />}
-          label="Đã xác thực"
-          value={summary.verification?.verified}
-          tone="green"
-          hint="Lọc danh sách"
-          active={filters.verification_status === 'verified'}
-          onClick={() => updateParams({ verification_status: 'verified' })}
-        />
-        <CompanyStatCard
-          icon={<FileSyncOutlined />}
-          label="Chờ duyệt pháp nhân"
-          value={summary.verification?.pending}
+          icon={<WarningOutlined />}
+          label="Cần kiểm tra owner"
+          value={summary.companies_without_single_owner}
           tone="amber"
-          hint="Cần theo dõi"
-          active={filters.verification_status === 'pending'}
-          onClick={() => updateParams({ verification_status: 'pending' })}
+          hint="Khác một owner"
         />
         <CompanyStatCard
           icon={<FileSyncOutlined />}

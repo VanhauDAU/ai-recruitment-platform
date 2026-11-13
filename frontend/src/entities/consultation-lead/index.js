@@ -1,5 +1,6 @@
 export {
   createConsultationLead,
+  exportAdminConsultationLeads,
   getAdminConsultationLeads,
   updateAdminConsultationLead,
 } from './api/consultation-lead.api'

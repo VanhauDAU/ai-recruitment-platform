@@ -78,6 +78,12 @@ def save_image_upload(upload, directory, request=None, max_dimensions=None):
         if resized is not None:
             file_to_save = resized
 
+    file_to_save.seek(0)
+    with Image.open(file_to_save) as verified_image:
+        width, height = verified_image.size
+        verified_image.verify()
+    file_to_save.seek(0)
+
     path = public_media_storage().save(f'{safe_directory}/{filename}', file_to_save)
 
     return {
@@ -86,6 +92,8 @@ def save_image_upload(upload, directory, request=None, max_dimensions=None):
         'content_type': content_type,
         'size': file_to_save.size,
         'name': upload.name,
+        'width': width,
+        'height': height,
     }
 
 

@@ -4,6 +4,7 @@ const COOKIE_ROWS = [
   ['procv_consent', 'Cookie ký số, HttpOnly', 'Ghi nhớ lựa chọn đồng ý cookie', 'Thiết yếu', '180 ngày'],
   ['color-scheme', 'localStorage', 'Ghi nhớ giao diện sáng/tối', 'Tùy chọn', 'Đến khi rút đồng ý hoặc xóa dữ liệu'],
   ['search_history', 'localStorage', 'Gợi ý tìm kiếm gần đây', 'Tùy chọn', 'Đến khi rút đồng ý hoặc xóa dữ liệu'],
+  ['procv_job_comparison_v1', 'localStorage', 'Ghi nhớ tối đa ba việc làm đang so sánh', 'Tùy chọn', 'Đến khi rút đồng ý hoặc xóa dữ liệu'],
   ['procv_viewer_id', 'Cookie ký số, HttpOnly', 'Chống đếm trùng lượt xem tin tuyển dụng', 'Hiệu năng', '365 ngày'],
 ]
 
@@ -13,7 +14,7 @@ export default function CookiePolicy() {
       <article className="mx-auto max-w-4xl rounded-2xl bg-white px-5 py-8 shadow-sm ring-1 ring-slate-200 sm:px-10 sm:py-12">
         <p className="text-sm font-bold uppercase tracking-wider text-[var(--brand-primary)]">ProCV</p>
         <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-slate-900">Chính sách cookie</h1>
-        <p className="mt-3 text-sm text-slate-500">Phiên bản 1 · Cập nhật ngày 14/07/2026</p>
+        <p className="mt-3 text-sm text-slate-500">Phiên bản 1 · Cập nhật ngày 14/08/2026</p>
 
         <div className="mt-8 space-y-7 text-sm leading-6 text-slate-700">
           <section>
@@ -35,7 +36,7 @@ export default function CookiePolicy() {
           </section>
           <section>
             <h2 className="text-lg font-bold text-slate-900">Thay đổi lựa chọn</h2>
-            <p className="mt-2">Bạn có thể mở <span className="font-semibold">Cài đặt cookie</span> ở chân trang bất cứ lúc nào để bật, tắt hoặc rút lại sự đồng ý. Việc tắt nhóm hiệu năng sẽ xóa mã định danh lượt xem của trình duyệt.</p>
+            <p className="mt-2">Bạn có thể mở <span className="font-semibold">Cài đặt cookie</span> ở chân trang bất cứ lúc nào để bật, tắt hoặc rút lại sự đồng ý. Khi tắt nhóm Sở thích, lịch sử tìm kiếm, giao diện và danh sách so sánh chỉ tiếp tục trong bộ nhớ của tab hiện tại; dữ liệu tương ứng trong trình duyệt sẽ được xóa.</p>
           </section>
         </div>
         <Link to="/" className="mt-9 inline-flex font-semibold text-[var(--brand-primary)] hover:underline">← Quay về trang chủ</Link>

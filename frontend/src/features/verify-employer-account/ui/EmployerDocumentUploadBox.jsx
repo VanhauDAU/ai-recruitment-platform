@@ -9,6 +9,7 @@ import {
 import { Button, Modal, Upload } from 'antd'
 import { useEffect, useState } from 'react'
 import { message } from '@/shared/lib/toast'
+import { getUploadStatePresentation } from '@/shared/api/upload-session'
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024
 
@@ -95,6 +96,7 @@ export default function EmployerDocumentUploadBox({
   onResolvePreview,
   previewing = false,
   uploadHint,
+  uploadState,
 }) {
   const [openingFileKey, setOpeningFileKey] = useState('')
   const [previewFile, setPreviewFile] = useState(null)
@@ -130,6 +132,7 @@ export default function EmployerDocumentUploadBox({
 
   const selectedFiles = files || []
   const effectiveMaxCount = multiple ? maxCount : 1
+  const uploadStateMeta = getUploadStatePresentation(uploadState)
 
   return (
     <div className={`min-w-0 ${className}`.trim()}>
@@ -163,6 +166,11 @@ export default function EmployerDocumentUploadBox({
           {multiple ? 'Chọn các tệp' : 'Chọn tệp'}
         </Button>
       </Upload.Dragger>
+      {uploadStateMeta && (
+        <p className={`mt-2 text-xs ${uploadStateMeta.tone}`} role="status">
+          {uploadStateMeta.text}
+        </p>
+      )}
       {selectedFiles.length > 0 && (
         <ul
           aria-label={label ? `Các tệp đã chọn cho ${label}` : 'Các tệp đã chọn'}
@@ -206,13 +214,29 @@ export default function EmployerDocumentUploadBox({
                 className="mx-auto max-h-[70vh] max-w-full object-contain"
               />
             )
-          : (
+          : previewFile?.type.includes('wordprocessingml')
+            ? (
+                <div className="rounded-lg bg-slate-50 p-6 text-center">
+                  <FileWordOutlined className="text-5xl text-blue-600" />
+                  <p className="mt-3 text-sm text-slate-600">
+                    Trình duyệt không xem trực tiếp tệp DOCX. Bạn có thể tải tệp đã chọn để kiểm tra.
+                  </p>
+                  <a
+                    className="mt-4 inline-flex rounded-md border border-blue-200 px-4 py-2 text-sm font-medium text-blue-700"
+                    download={previewFile.name}
+                    href={previewFile.url}
+                  >
+                    Tải tệp đã chọn
+                  </a>
+                </div>
+              )
+            : (
               <iframe
                 src={previewFile?.url}
                 title={`Xem trước ${previewFile?.name}`}
                 className="h-[70vh] w-full rounded border-0"
               />
-            )}
+              )}
       </Modal>
     </div>
   )

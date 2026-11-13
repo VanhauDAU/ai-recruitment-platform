@@ -1,19 +1,26 @@
 """Company mutation and review workflows."""
 
-from django.db import IntegrityError, transaction
+import re
+
+from django.db import transaction
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
 from apps.accounts.services import StaleImpactToken, record_admin_action
 from common.media_storage import delete_local_media_url
+from common.rich_text import rich_text_plain_text, sanitize_rich_text
 
 from ..models import (
-    Company,
     CompanyDocument,
     CompanyImage,
     CompanyIndustry,
+    CompanyMediaUpload,
+    CompanyUpdateEvent,
+    CompanyUpdateRequest,
+    CompanyUpdateRevision,
     Industry,
 )
+from .company_update_locks import lock_company_update_request
 
 UPDATABLE_COMPANY_FIELDS = {
     'business_type',
@@ -35,77 +42,337 @@ UPDATABLE_COMPANY_FIELDS = {
     'founded_year',
 }
 SENSITIVE_FIELDS = {'tax_code', 'company_name'}
+ACTIVE_COMPANY_UPDATE_STATUSES = frozenset(
+    {
+        CompanyUpdateRequest.Status.PENDING,
+        CompanyUpdateRequest.Status.SUBMITTED,
+        CompanyUpdateRequest.Status.IN_REVIEW,
+        CompanyUpdateRequest.Status.CHANGES_REQUESTED,
+    }
+)
+REQUESTER_EDITABLE_COMPANY_UPDATE_STATUSES = frozenset(
+    {
+        CompanyUpdateRequest.Status.PENDING,
+        CompanyUpdateRequest.Status.SUBMITTED,
+        CompanyUpdateRequest.Status.CHANGES_REQUESTED,
+    }
+)
+COMPANY_DESCRIPTION_MIN_LENGTH = 500
+PRE_REVIEW_COMPANY_UPDATE_STATUSES = frozenset(
+    {
+        CompanyUpdateRequest.Status.PENDING,
+        CompanyUpdateRequest.Status.SUBMITTED,
+        CompanyUpdateRequest.Status.CHANGES_REQUESTED,
+    }
+)
 
 
-class CompanyTaxCodeConflict(Exception):
-    """The requested tax code belongs to another company."""
+class CompanyUpdateConflict(Exception):
+    """One or more requested fields changed after the requester snapshot."""
 
-    def __init__(self, tax_code, *, claim_status):
-        self.tax_code = tax_code
-        self.claim_status = claim_status
-        super().__init__(f'Mã số thuế {tax_code} đã được sử dụng bởi một công ty khác.')
-
-
-def _verified_tax_code_claim_exists(*, company, tax_code):
-    if not tax_code:
-        return False
-    return (
-        Company.objects.filter(
-            tax_code=tax_code,
-            verification_status=Company.VerificationStatus.VERIFIED,
-        )
-        .exclude(pk=company.pk)
-        .exists()
-    )
+    def __init__(self, fields):
+        self.fields = tuple(sorted(set(fields)))
+        super().__init__('Thông tin công ty đã thay đổi ở các trường đang được yêu cầu cập nhật.')
 
 
-def ensure_company_tax_code_can_be_verified(company, *, tax_code=None):
-    """Only verified companies own an exclusive tax-code claim."""
-    tax_code = (company.tax_code if tax_code is None else tax_code) or None
-    if _verified_tax_code_claim_exists(company=company, tax_code=tax_code):
-        raise CompanyTaxCodeConflict(tax_code, claim_status='verified')
-
-
-def mark_company_verified(company, *, verified_at=None):
-    """Mark one company verified and translate uniqueness races to a domain error."""
-    verified_at = verified_at or timezone.now()
-    ensure_company_tax_code_can_be_verified(company)
-    try:
-        # The savepoint keeps the surrounding review transaction usable when
-        # the conditional database constraint wins a concurrent approval race.
-        with transaction.atomic():
-            Company.objects.filter(pk=company.pk).update(
-                verification_status=Company.VerificationStatus.VERIFIED,
-                verified_at=verified_at,
-                rejected_reason='',
-                updated_at=verified_at,
+def _company_update_field_value(company, field):
+    if field == 'industries':
+        return list(
+            company.company_industries.order_by('industry_id').values_list(
+                'industry_id',
+                flat=True,
             )
-    except IntegrityError as error:
-        if _verified_tax_code_claim_exists(company=company, tax_code=company.tax_code):
-            raise CompanyTaxCodeConflict(
-                company.tax_code,
-                claim_status='concurrent',
-            ) from error
-        raise
-    company.verification_status = Company.VerificationStatus.VERIFIED
-    company.verified_at = verified_at
-    company.rejected_reason = ''
-    return company
+        )
+    if field == 'primary_industry':
+        return (
+            company.company_industries.filter(is_primary=True)
+            .values_list('industry_id', flat=True)
+            .first()
+        )
+    if field in {'gallery_additions', 'gallery_deletions'}:
+        return list(company.images.order_by('id').values_list('id', flat=True))
+    if field.endswith('_pending'):
+        return None
+    return getattr(company, field, None)
 
 
-def _save_company_with_tax_code_policy(*, company, tax_code):
-    if company.verification_status == Company.VerificationStatus.VERIFIED:
-        ensure_company_tax_code_can_be_verified(company, tax_code=tax_code)
-    try:
-        with transaction.atomic():
-            company.save()
-    except IntegrityError as error:
-        if (
-            company.verification_status == Company.VerificationStatus.VERIFIED
-            and _verified_tax_code_claim_exists(company=company, tax_code=tax_code)
-        ):
-            raise CompanyTaxCodeConflict(tax_code, claim_status='concurrent') from error
-        raise
+def capture_company_update_base_values(company, changes):
+    return {
+        field: _company_update_field_value(company, field)
+        for field in changes
+        if not field.endswith('_pending')
+    }
+
+
+def _current_request_media(update_request):
+    changes = update_request.changes or {}
+    paths = {
+        value
+        for value in (
+            changes.get('logo_url'),
+            changes.get('cover_image_url'),
+            *(changes.get('gallery_additions') or []),
+        )
+        if value
+    }
+    if not paths:
+        return CompanyMediaUpload.objects.none()
+    return update_request.media_upload_records.filter(public_path__in=paths)
+
+
+def snapshot_company_update_request(
+    update_request,
+    *,
+    actor,
+    event_type=CompanyUpdateEvent.EventType.REVISION_CREATED,
+    base_company_updated_at=None,
+    base_values=None,
+    payload=None,
+):
+    """Append one immutable snapshot after the caller locks Company → Request."""
+    has_revision = update_request.revisions.exists()
+    number = update_request.revision + 1 if has_revision else max(update_request.revision, 1)
+    update_request.revision = number
+    if base_company_updated_at is not None:
+        update_request.base_company_updated_at = base_company_updated_at
+    if base_values is not None:
+        update_request.base_values = base_values
+    update_request.lock_version += 1
+    update_request.save(
+        update_fields=[
+            'revision',
+            'base_company_updated_at',
+            'base_values',
+            'lock_version',
+            'updated_at',
+        ]
+    )
+    revision = CompanyUpdateRevision.objects.create(
+        update_request=update_request,
+        number=number,
+        submitted_by=actor,
+        changes=update_request.changes,
+        reason=update_request.reason,
+        proof_type=update_request.proof_type,
+        base_company_updated_at=(
+            update_request.base_company_updated_at or update_request.company.updated_at
+        ),
+        base_values=update_request.base_values,
+        submitted_at=update_request.submitted_at,
+    )
+    update_request.current_revision = revision
+    update_request.save(update_fields=['current_revision', 'updated_at'])
+    current_documents = update_request.documents.filter(is_current=True)
+    current_media = _current_request_media(update_request)
+    revision.documents.set(current_documents)
+    revision.media_uploads.set(current_media)
+    current_documents.update(update_revision=revision)
+    current_media.update(update_revision=revision)
+    CompanyUpdateEvent.objects.create(
+        update_request=update_request,
+        actor=actor,
+        event_type=event_type,
+        revision_number=number,
+        payload={
+            'changed_fields': sorted((update_request.changes or {}).keys()),
+            **(payload or {}),
+        },
+    )
+    return revision
+
+
+def current_company_update_revision(update_request):
+    revision = update_request.current_revision
+    if revision is not None and revision.number == update_request.revision:
+        return revision
+    return update_request.revisions.filter(number=update_request.revision).first()
+
+
+def validate_company_update_revision(update_request, revision_public_id=''):
+    revision = current_company_update_revision(update_request)
+    if revision is None and not revision_public_id:
+        revision = snapshot_company_update_request(
+            update_request,
+            actor=update_request.requested_by,
+            base_company_updated_at=(
+                update_request.base_company_updated_at or update_request.company.updated_at
+            ),
+            base_values=(
+                update_request.base_values
+                or capture_company_update_base_values(
+                    update_request.company,
+                    update_request.changes,
+                )
+            ),
+            payload={'compatibility_snapshot': True},
+        )
+    if revision is None:
+        raise StaleImpactToken('Yêu cầu chưa có revision hiện hành. Vui lòng tải lại.')
+    if revision_public_id and revision.public_id != revision_public_id:
+        raise StaleImpactToken('Phiên yêu cầu đã thay đổi. Vui lòng tải lại.')
+    return revision
+
+
+def _request_review_blockers(update_request):
+    changes = update_request.changes or {}
+    blockers = []
+    if {'logo_pending', 'cover_pending', 'gallery_pending'} & set(changes):
+        blockers.append('media_upload_pending')
+    if update_request.is_sensitive:
+        current_types = set(
+            update_request.documents.filter(is_current=True).values_list('doc_type', flat=True)
+        )
+        if update_request.proof_type == update_request.ProofType.BUSINESS_REGISTRATION:
+            complete = CompanyDocument.DocType.BUSINESS_REGISTRATION in current_types
+        else:
+            complete = {
+                CompanyDocument.DocType.AUTHORIZATION_LETTER,
+                CompanyDocument.DocType.IDENTITY_DOCUMENT,
+            }.issubset(current_types)
+        if not complete:
+            blockers.append('supporting_documents_missing')
+    return blockers
+
+
+@transaction.atomic
+def start_company_update_review(
+    update_request,
+    *,
+    actor,
+    lock_version,
+    revision_public_id='',
+):
+    _, update_request = lock_company_update_request(
+        company_id=update_request.company_id,
+        update_request_id=update_request.pk,
+    )
+    if update_request.lock_version != lock_version:
+        raise StaleImpactToken('Yêu cầu đã thay đổi. Vui lòng tải lại.')
+    validate_company_update_revision(update_request, revision_public_id)
+    if update_request.status not in {
+        CompanyUpdateRequest.Status.PENDING,
+        CompanyUpdateRequest.Status.SUBMITTED,
+    }:
+        raise ValidationError({'detail': 'Chỉ yêu cầu đã gửi mới được nhận thẩm định.'})
+    blockers = _request_review_blockers(update_request)
+    if blockers:
+        raise ValidationError(
+            {
+                'code': 'COMPANY_UPDATE_NOT_READY',
+                'detail': 'Yêu cầu chưa đủ dữ liệu để bắt đầu thẩm định.',
+                'blockers': blockers,
+            }
+        )
+    update_request.status = CompanyUpdateRequest.Status.IN_REVIEW
+    update_request.reviewed_by = actor
+    update_request.reviewed_at = None
+    update_request.review_note = ''
+    update_request.lock_version += 1
+    update_request.save(
+        update_fields=[
+            'status',
+            'reviewed_by',
+            'reviewed_at',
+            'review_note',
+            'lock_version',
+            'updated_at',
+        ]
+    )
+    CompanyUpdateEvent.objects.create(
+        update_request=update_request,
+        actor=actor,
+        event_type=CompanyUpdateEvent.EventType.REVIEW_STARTED,
+        revision_number=update_request.revision,
+    )
+    return update_request
+
+
+@transaction.atomic
+def close_company_update_before_review(
+    update_request,
+    *,
+    actor,
+    action,
+    reason,
+    lock_version,
+    actor_is_owner=False,
+):
+    _, update_request = lock_company_update_request(
+        company_id=update_request.company_id,
+        update_request_id=update_request.pk,
+    )
+    if update_request.lock_version != lock_version:
+        raise StaleImpactToken('Yêu cầu đã thay đổi. Vui lòng tải lại.')
+    if update_request.status not in PRE_REVIEW_COMPANY_UPDATE_STATUSES:
+        raise ValidationError({'detail': 'Yêu cầu đã vào thẩm định hoặc đã kết thúc.'})
+    if action == CompanyUpdateRequest.Status.WITHDRAWN:
+        if update_request.requested_by_id != actor.id:
+            raise ValidationError({'detail': 'Chỉ người tạo yêu cầu mới được rút yêu cầu.'})
+        event_type = CompanyUpdateEvent.EventType.WITHDRAWN
+    elif action == CompanyUpdateRequest.Status.CANCELLED:
+        if not actor_is_owner:
+            raise ValidationError({'detail': 'Chỉ chủ công ty mới được hủy yêu cầu.'})
+        if not reason.strip():
+            raise ValidationError({'reason': 'Nhập lý do hủy yêu cầu.'})
+        event_type = CompanyUpdateEvent.EventType.CANCELLED
+    else:
+        raise ValidationError({'action': 'Thao tác không hợp lệ.'})
+    update_request.status = action
+    update_request.review_note = reason.strip()
+    update_request.reviewed_by = actor
+    update_request.reviewed_at = timezone.now()
+    update_request.lock_version += 1
+    update_request.save(
+        update_fields=[
+            'status',
+            'review_note',
+            'reviewed_by',
+            'reviewed_at',
+            'lock_version',
+            'updated_at',
+        ]
+    )
+    CompanyUpdateEvent.objects.create(
+        update_request=update_request,
+        actor=actor,
+        event_type=event_type,
+        revision_number=update_request.revision,
+        payload={'reason': reason.strip()},
+    )
+    return update_request
+
+
+def company_update_conflicting_fields(company, revision):
+    return [
+        field
+        for field, base_value in (revision.base_values or {}).items()
+        if _company_update_field_value(company, field) != base_value
+    ]
+
+
+def normalize_company_tax_code(value):
+    """Return the canonical Vietnamese 10/13-digit tax identifier."""
+
+    normalized = str(value or '').strip()
+    if not re.fullmatch(r'(?:[0-9]{10}|[0-9]{13})', normalized):
+        raise ValueError('Mã số thuế phải gồm đúng 10 hoặc 13 chữ số.')
+    return normalized
+
+
+def normalize_company_rich_text(value, *, required, label):
+    """Sanitize and validate rich text using its visible-text length."""
+
+    if not isinstance(value, str):
+        raise ValueError(f'{label} không hợp lệ.')
+    sanitized = sanitize_rich_text(value)
+    visible = rich_text_plain_text(sanitized)
+    if required and not visible:
+        raise ValueError(f'{label} là bắt buộc.')
+    if required and len(visible) < COMPANY_DESCRIPTION_MIN_LENGTH:
+        raise ValueError(f'{label} phải có ít nhất {COMPANY_DESCRIPTION_MIN_LENGTH} ký tự.')
+    if len(visible) > 10_000:
+        raise ValueError(f'{label} không được vượt quá 10.000 ký tự.')
+    return sanitized
 
 
 @transaction.atomic
@@ -125,15 +392,40 @@ def set_company_industries(company, industries, primary_industry):
 
 
 @transaction.atomic
-def apply_update_request(update_request, admin_user, approve, note='', lock_version=None):
+def apply_update_request(
+    update_request,
+    admin_user,
+    approve=None,
+    note='',
+    lock_version=None,
+    *,
+    decision=None,
+    revision_public_id='',
+):
     """Review an update request and atomically apply approved changes."""
-    update_request = type(update_request).objects.select_for_update().get(pk=update_request.pk)
-    if update_request.status != update_request.Status.PENDING:
+    company, update_request = lock_company_update_request(
+        company_id=update_request.company_id,
+        update_request_id=update_request.pk,
+    )
+    decision = decision or (
+        update_request.Status.APPROVED if approve else update_request.Status.REJECTED
+    )
+    if decision not in {
+        update_request.Status.APPROVED,
+        update_request.Status.CHANGES_REQUESTED,
+        update_request.Status.REJECTED,
+    }:
+        raise ValidationError({'decision': 'Kết quả xử lý yêu cầu không hợp lệ.'})
+    if update_request.status != update_request.Status.IN_REVIEW:
         raise ValidationError({'detail': 'Yêu cầu này đã được xử lý.'})
     if lock_version is not None and update_request.lock_version != lock_version:
         raise StaleImpactToken('Yêu cầu đã được chỉnh sửa. Vui lòng tải lại trước khi duyệt.')
+    revision = validate_company_update_revision(update_request, revision_public_id)
 
-    if approve:
+    if decision == update_request.Status.APPROVED:
+        conflicting_fields = company_update_conflicting_fields(company, revision)
+        if conflicting_fields:
+            raise CompanyUpdateConflict(conflicting_fields)
         request_markers = {'logo_pending', 'cover_pending', 'gallery_pending'} & set(
             update_request.changes
         )
@@ -157,8 +449,26 @@ def apply_update_request(update_request, admin_user, approve, note='', lock_vers
                 raise ValidationError(
                     {'detail': ('Yêu cầu nhạy cảm chưa có đủ giấy tờ chứng minh đã được duyệt.')}
                 )
-        company = Company.objects.select_for_update().get(pk=update_request.company_id)
         changes = dict(update_request.changes)
+        if 'tax_code' in changes:
+            try:
+                changes['tax_code'] = normalize_company_tax_code(changes['tax_code'])
+            except ValueError as error:
+                raise ValidationError({'tax_code': str(error)}) from error
+        for field, required, label in (
+            ('description', True, 'Mô tả công ty'),
+            ('employee_benefits', False, 'Phúc lợi nhân viên'),
+        ):
+            if field not in changes:
+                continue
+            try:
+                changes[field] = normalize_company_rich_text(
+                    changes[field],
+                    required=required,
+                    label=label,
+                )
+            except ValueError as error:
+                raise ValidationError({field: str(error)}) from error
         industry_ids = changes.pop('industries', None)
         primary_id = changes.pop('primary_industry', None)
         logo_url = changes.pop('logo_url', None)
@@ -167,7 +477,6 @@ def apply_update_request(update_request, admin_user, approve, note='', lock_vers
         gallery_deletions = changes.pop('gallery_deletions', [])
         changes.pop('logo_pending', None)
         changes.pop('gallery_pending', None)
-        proposed_tax_code = changes.get('tax_code', company.tax_code) or None
         old_logo_url = ''
         old_cover_image_url = ''
         if logo_url is not None:
@@ -194,10 +503,7 @@ def apply_update_request(update_request, admin_user, approve, note='', lock_vers
         )
         if final_gallery_count > 10:
             raise ValidationError({'detail': 'Thư viện công ty chỉ được có tối đa 10 ảnh.'})
-        _save_company_with_tax_code_policy(
-            company=company,
-            tax_code=proposed_tax_code,
-        )
+        company.save()
         if industry_ids:
             industries = list(Industry.objects.filter(id__in=industry_ids))
             primary = next(
@@ -232,7 +538,7 @@ def apply_update_request(update_request, admin_user, approve, note='', lock_vers
 
         transaction.on_commit(delete_replaced_media)
 
-    if not approve:
+    if decision == update_request.Status.REJECTED:
         staged_paths = [
             update_request.changes.get('logo_url'),
             update_request.changes.get('cover_image_url'),
@@ -246,9 +552,7 @@ def apply_update_request(update_request, admin_user, approve, note='', lock_vers
 
         transaction.on_commit(delete_rejected_media)
 
-    update_request.status = (
-        update_request.Status.APPROVED if approve else update_request.Status.REJECTED
-    )
+    update_request.status = decision
     update_request.reviewed_by = admin_user
     update_request.reviewed_at = timezone.now()
     update_request.review_note = note
@@ -281,6 +585,19 @@ def apply_update_request(update_request, admin_user, approve, note='', lock_vers
             ),
         },
     )
+    CompanyUpdateEvent.objects.create(
+        update_request=update_request,
+        actor=admin_user,
+        event_type={
+            update_request.Status.APPROVED: CompanyUpdateEvent.EventType.APPROVED,
+            update_request.Status.CHANGES_REQUESTED: (
+                CompanyUpdateEvent.EventType.CHANGES_REQUESTED
+            ),
+            update_request.Status.REJECTED: CompanyUpdateEvent.EventType.REJECTED,
+        }[decision],
+        revision_number=update_request.revision,
+        payload={'note': note.strip()},
+    )
     return update_request
 
 
@@ -292,18 +609,23 @@ def review_company_update_document(
     decision,
     note='',
     lock_version=None,
+    revision_public_id='',
 ):
     """Review one current proof attached to a pending company update."""
-    document = CompanyDocument.objects.select_for_update().get(pk=document.pk)
-    update_request = (
-        type(document.update_request).objects.select_for_update().get(pk=document.update_request_id)
+    _, update_request = lock_company_update_request(
+        company_id=document.company_id,
+        update_request_id=document.update_request_id,
     )
-    if update_request.status != update_request.Status.PENDING:
+    document = CompanyDocument.objects.select_for_update().get(pk=document.pk)
+    if document.update_request_id != update_request.pk:
+        raise ValidationError({'detail': 'Giấy tờ không còn thuộc yêu cầu cập nhật này.'})
+    if update_request.status != update_request.Status.IN_REVIEW:
         raise ValidationError({'detail': 'Yêu cầu cập nhật này đã được xử lý.'})
     if not document.is_current:
         raise ValidationError({'detail': 'Đây không còn là phiên bản giấy tờ hiện tại.'})
     if lock_version is not None and update_request.lock_version != lock_version:
         raise StaleImpactToken('Yêu cầu đã được chỉnh sửa. Vui lòng tải lại trước khi duyệt.')
+    validate_company_update_revision(update_request, revision_public_id)
     allowed = {
         CompanyDocument.Status.APPROVED,
         CompanyDocument.Status.CHANGES_REQUESTED,
@@ -333,24 +655,14 @@ def review_company_update_document(
             'update_request_public_id': update_request.public_id,
         },
     )
-    return document, update_request
-
-
-@transaction.atomic
-def verify_company(company, admin_user, approve, reason=''):
-    """Review company verification after its documents were inspected."""
-    if approve:
-        mark_company_verified(company)
-        return company
-    else:
-        company.verification_status = Company.VerificationStatus.REJECTED
-        company.rejected_reason = reason
-    company.save(
-        update_fields=[
-            'verification_status',
-            'verified_at',
-            'rejected_reason',
-            'updated_at',
-        ]
+    CompanyUpdateEvent.objects.create(
+        update_request=update_request,
+        actor=admin_user,
+        event_type=CompanyUpdateEvent.EventType.DOCUMENT_REVIEWED,
+        revision_number=update_request.revision,
+        payload={
+            'decision': decision,
+            'document_public_id': document.public_id,
+        },
     )
-    return company
+    return document, update_request

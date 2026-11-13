@@ -23,6 +23,7 @@ const ERROR_FIELD_LABELS = {
 export function requestErrorMessage(error, fallback) {
   const response = error?.response?.data
   if (typeof response?.detail === 'string') return response.detail
+  if (typeof response?.message === 'string') return response.message
   if (!response || typeof response !== 'object' || Array.isArray(response)) return fallback
 
   const fieldEntry = Object.entries(response).find(([, value]) => (
@@ -64,6 +65,7 @@ export function useApplyForm({
   const [showAllCvs, setShowAllCvs] = useState(false)
   const [loadingCvs, setLoadingCvs] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [uploadState, setUploadState] = useState(null)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const fileInputRef = useRef(null)
@@ -87,6 +89,7 @@ export function useApplyForm({
     setContactPhone(candidatePhone)
     setUploadFile(null)
     setUploadedCv(null)
+    setUploadState(null)
     setShowAllCvs(false)
     getMyCvs()
       .then((items) => {
@@ -114,6 +117,7 @@ export function useApplyForm({
     setError('')
     setUploadFile(file)
     setUploadedCv(null)
+    setUploadState(null)
     setSelectedCvId(UPLOAD_CHOICE_ID)
   }
 
@@ -143,7 +147,9 @@ export function useApplyForm({
         targetCv = uploadedCv
         if (!targetCv) {
           setUploading(true)
-          targetCv = await importCvFile(uploadFile, uploadFile.name)
+          targetCv = await importCvFile(uploadFile, uploadFile.name, {
+            onUploadStateChange: setUploadState,
+          })
           setUploadedCv(targetCv)
           setUploading(false)
         }
@@ -221,6 +227,7 @@ export function useApplyForm({
     setShowAllCvs,
     loadingCvs,
     uploading,
+    uploadState,
     submitting,
     error,
     setError,

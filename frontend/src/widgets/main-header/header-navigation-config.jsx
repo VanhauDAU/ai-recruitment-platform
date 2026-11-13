@@ -1,11 +1,12 @@
 import {
   AppstoreOutlined, BankOutlined, BookOutlined, BulbOutlined, CalculatorOutlined,
   CompassOutlined, DollarOutlined, EditOutlined, ExperimentOutlined, FileDoneOutlined,
-  FileProtectOutlined, HighlightOutlined, IdcardOutlined, LikeOutlined, LineChartOutlined,
+  HighlightOutlined, IdcardOutlined, LikeOutlined, LineChartOutlined,
   MobileOutlined, OrderedListOutlined, ProfileOutlined, ReadOutlined, RiseOutlined,
   RocketOutlined, SafetyCertificateOutlined, SafetyOutlined, SearchOutlined,
-  SnippetsOutlined, StarOutlined, UploadOutlined, WalletOutlined,
+  StarOutlined, UploadOutlined, WalletOutlined,
 } from '@ant-design/icons'
+import { COMPANY_DIRECTORY_PATH } from '@/entities/company'
 
 const job = (name) => ({ label: `Việc làm ${name}`, search: name })
 const soon = (label, icon, badge) => ({ label, icon, badge })
@@ -15,7 +16,7 @@ export const HEADER_NAVIGATION = [
     key: 'jobs',
     label: 'Việc làm',
     to: '/viec-lam',
-    activePaths: ['/jobs'],
+    activePaths: ['/jobs', COMPANY_DIRECTORY_PATH],
     columns: [
       [
         {
@@ -27,7 +28,10 @@ export const HEADER_NAVIGATION = [
             { label: 'Việc làm phù hợp', to: '/tai-khoan/viec-lam-phu-hop', icon: <LikeOutlined /> },
           ],
         },
-        { title: 'Công ty', items: [soon('Danh sách công ty', <BankOutlined />)] },
+        {
+          title: 'Công ty',
+          items: [{ label: 'Danh sách công ty', to: COMPANY_DIRECTORY_PATH, icon: <BankOutlined /> }],
+        },
       ],
       [{
         title: 'Việc làm theo vị trí',
@@ -76,9 +80,12 @@ export const HEADER_NAVIGATION = [
         items: [
           soon('Quản lý CV', <ProfileOutlined />),
           soon('Tải CV lên', <UploadOutlined />),
-          soon('Hướng dẫn viết CV', <EditOutlined />),
-          soon('Quản lý Cover Letter', <FileProtectOutlined />),
-          soon('Mẫu Cover Letter', <SnippetsOutlined />),
+          {
+            label: 'Hướng dẫn viết CV',
+            to: '/tro-giup/cv-va-mau-cv',
+            icon: <EditOutlined />,
+            requiresKnowledgebase: true,
+          },
         ],
       }],
     ],
@@ -140,6 +147,18 @@ export const HEADER_NAVIGATION = [
 
 export function flattenMenuItems(menu) {
   return menu.columns.flatMap((column) => column.flatMap((group) => group.items))
+}
+
+export function navigationForCapabilities(menus, { knowledgebaseEnabled = false } = {}) {
+  return menus.map((menu) => ({
+    ...menu,
+    columns: menu.columns.map((column) => column.map((group) => ({
+      ...group,
+      items: group.items.filter(
+        (item) => knowledgebaseEnabled || !item.requiresKnowledgebase,
+      ),
+    }))),
+  }))
 }
 
 export function isMenuActive(menu, pathname) {

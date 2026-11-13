@@ -1,9 +1,13 @@
 import {
   ANNOUNCEMENT_ANIMATIONS,
+  ANNOUNCEMENT_BG_FITS,
+  ANNOUNCEMENT_BG_OVERLAYS,
+  ANNOUNCEMENT_BG_POSITIONS,
   ANNOUNCEMENT_DISMISS_MODES,
   ANNOUNCEMENT_ICONS,
   ANNOUNCEMENT_KINDS,
   ANNOUNCEMENT_SURFACES,
+  ANNOUNCEMENT_THEME_MODES,
 } from './announcement.presentation'
 
 export const ANNOUNCEMENT_AUDIENCES = Object.freeze({
@@ -68,6 +72,17 @@ export const DEFAULT_ADMIN_ANNOUNCEMENT_REVISION = Object.freeze({
   display_seconds: 6,
   dismiss_mode: ANNOUNCEMENT_DISMISS_MODES.CLOSE,
   snooze_seconds: null,
+  theme_mode: ANNOUNCEMENT_THEME_MODES.KIND,
+  theme_preset: '',
+  color_accent: '',
+  color_bg_from: '',
+  color_bg_to: '',
+  color_fg: '',
+  background_image: '',
+  background_image_url: '',
+  background_fit: ANNOUNCEMENT_BG_FITS.COVER,
+  background_position: ANNOUNCEMENT_BG_POSITIONS.CENTER,
+  background_overlay: ANNOUNCEMENT_BG_OVERLAYS.NONE,
 })
 
 function text(value) {
@@ -117,6 +132,9 @@ export function normalizeAdminAnnouncementListItem(value = {}) {
 }
 
 function normalizeRevision(value = {}) {
+  const background = value.background && typeof value.background === 'object'
+    ? value.background
+    : {}
   return {
     ...DEFAULT_ADMIN_ANNOUNCEMENT_REVISION,
     ...value,
@@ -126,6 +144,19 @@ function normalizeRevision(value = {}) {
     roles: list(value.roles),
     include_path_prefixes: list(value.include_path_prefixes),
     exclude_path_prefixes: list(value.exclude_path_prefixes),
+    theme_mode: text(value.theme_mode) || ANNOUNCEMENT_THEME_MODES.KIND,
+    theme_preset: text(value.theme_preset),
+    color_accent: text(value.color_accent),
+    color_bg_from: text(value.color_bg_from),
+    color_bg_to: text(value.color_bg_to),
+    color_fg: text(value.color_fg),
+    background_image: text(value.background_image || background.image_storage_key),
+    background_image_url: text(background.image_url || value.background_image_url),
+    background_fit: text(value.background_fit || background.fit) || ANNOUNCEMENT_BG_FITS.COVER,
+    background_position: text(value.background_position || background.position)
+      || ANNOUNCEMENT_BG_POSITIONS.CENTER,
+    background_overlay: text(value.background_overlay || background.overlay)
+      || ANNOUNCEMENT_BG_OVERLAYS.NONE,
     creator: actor(value.creator),
     is_active: Boolean(value.is_active),
     published_at: value.published_at || null,

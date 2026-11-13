@@ -1,7 +1,7 @@
 import { CloudUploadOutlined, FileAddOutlined } from '@ant-design/icons'
 
 // Banner quảng bá đầu trang Quản lý CV — thuần trình bày.
-export default function MyCvsBanner({ onCreateCv, onUploadCv }) {
+export default function MyCvsBanner({ onCreateCv, onUploadCv, uploading = false }) {
   return (
     <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#0d5c3a] to-[#137a4e] p-6 text-white shadow-md">
       <div className="grid grid-cols-1 gap-6 md:grid-cols-12 md:items-center">
@@ -28,10 +28,11 @@ export default function MyCvsBanner({ onCreateCv, onUploadCv }) {
             <button
               type="button"
               onClick={onUploadCv}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-800/80 border border-emerald-700 px-4 py-2.5 text-xs font-bold text-white transition-all hover:bg-emerald-950 cursor-pointer"
+              disabled={uploading}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-800/80 border border-emerald-700 px-4 py-2.5 text-xs font-bold text-white transition-all hover:bg-emerald-950 cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
             >
               <CloudUploadOutlined />
-              Tải CV lên
+              {uploading ? 'Đang kiểm tra…' : 'Tải CV lên'}
             </button>
           </div>
         </div>

@@ -16,6 +16,9 @@ from .account_management import (
     provisioning_scopes_queryset,
 )
 from .admin_access import (
+    MEMBERSHIP_DEFAULT_ORDERING,
+    MEMBERSHIP_ORDERING_FIELDS,
+    MEMBERSHIP_STATUS_CHOICES,
     admin_access_snapshot,
     admin_staff_queryset,
     audit_logs_queryset,
@@ -57,6 +60,9 @@ __all__ = [
     'get_accessible_user',
     'invitation_queryset',
     'linked_oauth_provider',
+    'MEMBERSHIP_DEFAULT_ORDERING',
+    'MEMBERSHIP_ORDERING_FIELDS',
+    'MEMBERSHIP_STATUS_CHOICES',
     'membership_assignment_impact',
     'membership_revoke_impact',
     'memberships_queryset',

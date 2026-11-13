@@ -16,11 +16,26 @@ from ...services import reapplication_error
 class RecruiterApplicationSnapshotSerializer(serializers.ModelSerializer):
     application_public_id = serializers.CharField(source='public_id', read_only=True)
     job_public_id = serializers.CharField(source='job.public_id', read_only=True)
-    cv = CvVersionSerializer(source='submitted_cv_version', read_only=True)
+    cv = serializers.SerializerMethodField()
     preferred_location_names = serializers.SerializerMethodField()
 
     def get_preferred_location_names(self, obj):
         return [location.name for location in obj.preferred_locations.all()]
+
+    def get_cv(self, obj):
+        request = self.context.get('request')
+        subject = request.user.public_id if request is not None else ''
+        return CvVersionSerializer(
+            obj.submitted_cv_version,
+            context={
+                'request': request,
+                'asset_token_context': {
+                    'audience': 'recruiter_application',
+                    'subject': subject,
+                    'resource': obj.public_id,
+                },
+            },
+        ).data
 
     class Meta:
         model = Application

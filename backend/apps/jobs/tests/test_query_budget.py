@@ -6,14 +6,26 @@ field/relation mới làm tăng số query, cập nhật con số kèm giải th
 tăng không giải thích = regression.
 """
 
+from datetime import timedelta
+
 from django.test import override_settings
 from django.urls import reverse
+from django.utils import timezone
 from rest_framework.test import APITestCase
 
 from apps.accounts.models import User
 from apps.applications.models import Application
 from apps.cvs.models import CvVersion, UserCv
 from apps.employers.models import Company
+from apps.employers.tests.readiness_helpers import make_employer_ready
+from apps.services.models import ServiceCapability, ServiceCategory, ServicePackage
+from apps.services.services import (
+    activate_job_service,
+    add_package_version_item,
+    create_package_version,
+    grant_package_units,
+    publish_package_version,
+)
 from apps.skills.models import Skill
 
 from ..models import Job, JobCategory, JobCategoryAssignment, JobSkill, SavedJob
@@ -21,14 +33,17 @@ from ..models import Job, JobCategory, JobCategoryAssignment, JobSkill, SavedJob
 # 1 COUNT (pagination) + 1 SELECT jobs + 3 prefetch (categories, locations,
 # skills). select_related company nằm trong SELECT chính.
 #
-# +4 cho huy hiệu xác thực nhà tuyển dụng (`company_verified`): 1 đọc ngưỡng
-# tuổi tài khoản từ site settings, 3 gom điều kiện của mọi cặp (công ty, người
-# đăng) trong trang (hồ sơ NTD, GPKD do người đăng tải, báo cáo upheld của họ).
-# Bốn query này chạy một lần cho cả response nên tổng vẫn phẳng theo số bản ghi.
-BADGE_QUERY_BUDGET = 4
+# +3 cho huy hiệu tin cậy nhà tuyển dụng (`company_verified`): setting tuổi,
+# recruiter + correlated legal/report evidence, và active domain claims. Các
+# query chạy một lần cho cả response nên tổng vẫn phẳng theo số bản ghi.
+BADGE_QUERY_BUDGET = 3
 JOB_LIST_QUERY_BUDGET = 5 + BADGE_QUERY_BUDGET
+JOB_LIST_COMMERCIAL_PRESENTATION_QUERY_BUDGET = JOB_LIST_QUERY_BUDGET + 2
+# Homepage preview adds two relation prefetches (benefits + schedules) while
+# keeping eligibility in the main SQL through EXISTS.
+HOMEPAGE_BEST_JOB_LIST_QUERY_BUDGET = JOB_LIST_COMMERCIAL_PRESENTATION_QUERY_BUDGET + 2
 ADMIN_JOB_LIST_QUERY_BUDGET = 2
-EMPLOYER_JOB_LIST_QUERY_BUDGET = 4
+EMPLOYER_JOB_LIST_QUERY_BUDGET = 5
 SAVED_JOB_SIMILARITY_QUERY_BUDGET = 8 + BADGE_QUERY_BUDGET
 SAVED_JOB_FALLBACK_QUERY_BUDGET = 9 + BADGE_QUERY_BUDGET
 
@@ -41,6 +56,11 @@ class JobListQueryBudgetTests(APITestCase):
             role=User.Role.EMPLOYER,
         )
         self.company = Company.objects.create(company_name='Acme', created_by=self.user)
+        make_employer_ready(
+            self.user,
+            company=self.company,
+            candidate_data=True,
+        )
         for index in range(5):
             Job.objects.create(
                 posted_by=self.user,
@@ -59,6 +79,120 @@ class JobListQueryBudgetTests(APITestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.data['results']), 5)
 
+    @override_settings(JOB_PRESENTATION_V2_ENABLED=True)
+    def test_commercial_presentation_query_count_is_flat(self):
+        now = timezone.now()
+        job = Job.objects.order_by('pk').first()
+        job.deadline = timezone.localdate() + timedelta(days=30)
+        job.requested_visibility_days = 30
+        job.first_approved_at = now
+        job.visibility_starts_at = now
+        job.visibility_ends_at = now + timedelta(days=30)
+        job.save(
+            update_fields=[
+                'deadline',
+                'requested_visibility_days',
+                'first_approved_at',
+                'visibility_starts_at',
+                'visibility_ends_at',
+            ]
+        )
+        category = ServiceCategory.objects.create(
+            key='job-query-budget', name_vi='Job query budget'
+        )
+        package = ServicePackage.objects.create(
+            category=category, slug='job-query-budget', name_vi='Job query budget'
+        )
+        version = create_package_version(package=package, price=299000)
+        add_package_version_item(
+            package_version=version,
+            capability=ServiceCapability.objects.get(code='sponsored_placement'),
+            duration_days=14,
+            configuration={'placement': 'search_sponsored'},
+        )
+        version = publish_package_version(package_version=version, actor=self.user)
+        unit = grant_package_units(
+            company=self.company,
+            package_version=version,
+            quantity=1,
+            actor=self.user,
+            grant_key='job-query-budget-grant',
+            granted_at=now,
+        )[0]
+        activate_job_service(
+            unit=unit,
+            job=job,
+            actor=self.user,
+            idempotency_key='job-query-budget-activation',
+            activated_at=now,
+        )
+
+        with self.assertNumQueries(JOB_LIST_COMMERCIAL_PRESENTATION_QUERY_BUDGET):
+            response = self.client.get(reverse('job-list'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data['results']), 5)
+
+    @override_settings(JOB_PRESENTATION_V2_ENABLED=True)
+    def test_homepage_best_jobs_query_count_is_flat(self):
+        Job.objects.update(tier=Job.Tier.TOP)
+        now = timezone.now()
+        job = Job.objects.order_by('pk').first()
+        job.deadline = timezone.localdate() + timedelta(days=30)
+        job.requested_visibility_days = 30
+        job.first_approved_at = now
+        job.visibility_starts_at = now
+        job.visibility_ends_at = now + timedelta(days=30)
+        job.save(
+            update_fields=[
+                'deadline',
+                'requested_visibility_days',
+                'first_approved_at',
+                'visibility_starts_at',
+                'visibility_ends_at',
+            ]
+        )
+        category = ServiceCategory.objects.create(
+            key='homepage-best-query-budget', name_vi='Homepage best query budget'
+        )
+        package = ServicePackage.objects.create(
+            category=category,
+            slug='homepage-best-query-budget',
+            name_vi='Homepage best query budget',
+        )
+        version = create_package_version(package=package, price=799000)
+        add_package_version_item(
+            package_version=version,
+            capability=ServiceCapability.objects.get(code='sponsored_placement'),
+            duration_days=14,
+            configuration={'placement': 'best_jobs_eligible'},
+        )
+        version = publish_package_version(package_version=version, actor=self.user)
+        unit = grant_package_units(
+            company=self.company,
+            package_version=version,
+            quantity=1,
+            actor=self.user,
+            grant_key='homepage-best-query-budget',
+            granted_at=now,
+        )[0]
+        activate_job_service(
+            unit=unit,
+            job=job,
+            actor=self.user,
+            idempotency_key='homepage-best-query-budget',
+            activated_at=now,
+        )
+
+        with self.assertNumQueries(HOMEPAGE_BEST_JOB_LIST_QUERY_BUDGET):
+            response = self.client.get(
+                reverse('homepage-best-job-list'),
+                {'page_size': 12, 'rotation_seed': 'query-budget'},
+            )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data['results']), 5)
+
 
 @override_settings(REQUIRE_APPROVED_EMPLOYER_CANDIDATE_ACCESS=False)
 class EmployerJobListQueryBudgetTests(APITestCase):
@@ -71,6 +205,11 @@ class EmployerJobListQueryBudgetTests(APITestCase):
         self.company = Company.objects.create(
             company_name='Employer List Budget Co',
             created_by=self.employer,
+        )
+        make_employer_ready(
+            self.employer,
+            company=self.company,
+            candidate_data=True,
         )
         candidate = User.objects.create_user(
             email='employer-list-candidate@example.com',
@@ -110,8 +249,9 @@ class EmployerJobListQueryBudgetTests(APITestCase):
         self.client.force_authenticate(self.employer)
 
     def test_employer_job_list_query_count_is_flat_with_candidate_previews(self):
-        # 1 COUNT + 1 SELECT jobs (candidate_count is a correlated subquery)
-        # + 1 locations prefetch + 1 batched candidate-preview query.
+        # 1 canonical readiness query + 1 COUNT + 1 SELECT jobs
+        # (candidate_count is a correlated subquery) + 1 locations prefetch
+        # + 1 batched candidate-preview query.
         with self.assertNumQueries(EMPLOYER_JOB_LIST_QUERY_BUDGET):
             response = self.client.get(reverse('employer-job-list-create'))
 
@@ -173,6 +313,11 @@ class SavedJobRecommendationQueryBudgetTests(APITestCase):
         self.company = Company.objects.create(
             company_name='Saved Budget Co',
             created_by=self.employer,
+        )
+        make_employer_ready(
+            self.employer,
+            company=self.company,
+            candidate_data=True,
         )
         self.category = JobCategory.objects.create(
             name='Budget Backend',

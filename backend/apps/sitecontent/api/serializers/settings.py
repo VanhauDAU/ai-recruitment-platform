@@ -1,8 +1,8 @@
-from decouple import config
 from django.db import transaction
 from rest_framework import serializers
 
 from common.media_storage import media_url_from_value
+from config.env import config
 
 from ...models import Banner, Feedback, LinkGroup, Locale, SiteSetting
 from ...selectors import resolve_link_group_items
@@ -104,7 +104,7 @@ class AdminSiteSettingSerializer(serializers.ModelSerializer):
     def get_env_configured(self, obj):
         if obj.value_type != SiteSetting.ValueType.ENV:
             return None
-        # python-decouple resolves backend/.env without mutating os.environ.
+        # The shared resolver reads only backend/.env without mutating os.environ.
         # This must use the same resolver as runtime services so the admin badge
         # reflects whether a secret is actually available to the process.
         return bool(config(obj.options.get('env_var', ''), default=''))

@@ -1,12 +1,17 @@
+import csv
+
 from django.core.cache import cache
 from django.db.models import ProtectedError
-from drf_spectacular.utils import extend_schema
+from django.http import HttpResponse
+from django.utils import timezone
+from drf_spectacular.utils import OpenApiTypes, extend_schema
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
 from apps.accounts.permissions import HasAdminPermission
+from apps.accounts.services import record_admin_action
 
 from ...models import ConsultationLead, ServicePackage
 from ...selectors import (
@@ -16,12 +21,29 @@ from ...selectors import (
 )
 from ...signals import PUBLIC_PACKAGES_CACHE_KEY
 from ..serializers import (
+    AdminConsultationLeadQuerySerializer,
     AdminConsultationLeadSerializer,
     AdminServiceCategorySerializer,
     AdminServicePackageSerializer,
     ConsultationLeadCreateSerializer,
     PublicServiceCategorySerializer,
 )
+
+ADMIN_CONSULTATION_LEAD_EXPORT_LIMIT = 10_000
+CSV_FORMULA_PREFIXES = ('=', '+', '-', '@', '\t', '\r')
+
+
+def _validated_lead_query(query_params):
+    serializer = AdminConsultationLeadQuerySerializer(data=query_params)
+    serializer.is_valid(raise_exception=True)
+    return serializer.validated_data
+
+
+def _csv_cell(value):
+    """Prevent spreadsheet formula execution when exported CSV is opened."""
+
+    text = str(value or '')
+    return f"'{text}" if text.startswith(CSV_FORMULA_PREFIXES) else text
 
 
 @extend_schema(
@@ -112,15 +134,94 @@ class AdminServicePackageDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = ServicePackage.objects.select_related('category').all()
 
 
+@extend_schema(
+    parameters=[AdminConsultationLeadQuerySerializer],
+    tags=['services-admin'],
+)
 class AdminConsultationLeadListView(generics.ListAPIView):
-    """Danh sách lead tư vấn cho admin, mới nhất trước. Lọc theo ?status=new|contacted."""
+    """Danh sách lead tư vấn với filter và ordering phía server."""
 
     serializer_class = AdminConsultationLeadSerializer
     permission_classes = [HasAdminPermission]
     required_admin_permissions = {'GET': ['consultation_lead.view']}
 
     def get_queryset(self):
-        return admin_leads_queryset(self.request.query_params.get('status'))
+        return admin_leads_queryset(_validated_lead_query(self.request.query_params))
+
+
+@extend_schema(
+    summary='Xuất CSV lead tư vấn theo bộ lọc hiện tại',
+    parameters=[AdminConsultationLeadQuerySerializer],
+    responses={(200, 'text/csv'): OpenApiTypes.BINARY},
+    tags=['services-admin'],
+)
+class AdminConsultationLeadExportView(APIView):
+    permission_classes = [HasAdminPermission]
+    required_admin_permissions = {'GET': ['consultation_lead.view', 'consultation_lead.export']}
+
+    def get(self, request):
+        params = _validated_lead_query(request.query_params)
+        leads = list(admin_leads_queryset(params)[: ADMIN_CONSULTATION_LEAD_EXPORT_LIMIT + 1])
+        truncated = len(leads) > ADMIN_CONSULTATION_LEAD_EXPORT_LIMIT
+        leads = leads[:ADMIN_CONSULTATION_LEAD_EXPORT_LIMIT]
+
+        filename = f'consultation-leads-{timezone.localdate().isoformat()}.csv'
+        response = HttpResponse(content_type='text/csv; charset=utf-8')
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        response['X-Export-Row-Limit'] = str(ADMIN_CONSULTATION_LEAD_EXPORT_LIMIT)
+        response['X-Export-Truncated'] = str(truncated).lower()
+        response.write('\ufeff')
+        writer = csv.writer(response)
+        writer.writerow(
+            [
+                'ID',
+                'Khách hàng',
+                'Công ty',
+                'Email',
+                'Số điện thoại',
+                'Tỉnh/TP',
+                'Nhu cầu',
+                'Ghi chú',
+                'Nguồn',
+                'Trạng thái',
+                'Ngày gửi',
+            ]
+        )
+        for lead in leads:
+            writer.writerow(
+                [
+                    lead.pk,
+                    _csv_cell(lead.full_name),
+                    _csv_cell(lead.company_name),
+                    _csv_cell(lead.email),
+                    _csv_cell(lead.phone),
+                    _csv_cell(lead.province),
+                    _csv_cell(lead.get_need_display()),
+                    _csv_cell(lead.note),
+                    _csv_cell(lead.source_page),
+                    _csv_cell(lead.get_status_display()),
+                    lead.created_at.isoformat(),
+                ]
+            )
+
+        active_filter_names = [
+            name for name in ('status', 'q', 'created_from', 'created_to') if params.get(name)
+        ]
+        record_admin_action(
+            actor=request.user,
+            action='export_consultation_leads',
+            target_type='consultation_lead_export',
+            target_public_id='',
+            payload={
+                'format': 'csv',
+                'row_count': len(leads),
+                'truncated': truncated,
+                'row_limit': ADMIN_CONSULTATION_LEAD_EXPORT_LIMIT,
+                'filter_names': active_filter_names,
+                'ordering': params['ordering'],
+            },
+        )
+        return response
 
 
 class AdminConsultationLeadDetailView(generics.RetrieveUpdateAPIView):

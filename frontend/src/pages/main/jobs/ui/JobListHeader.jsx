@@ -4,6 +4,7 @@ import { Link } from 'react-router'
 import { formatNumber } from '@/entities/job'
 
 export default function JobListHeader({
+  canCreateJobAlert = true,
   catChain,
   contextLabel,
   count,
@@ -14,6 +15,7 @@ export default function JobListHeader({
   loading,
   locationSummary,
   onCategorySelect,
+  onCreateJobAlert,
   onJumpToResults,
   onLocationPickerOpen,
   onSuggestedLocationSelect,
@@ -150,12 +152,16 @@ export default function JobListHeader({
           </div>
         ) : null}
       </div>
-      <span
-        title="Sắp ra mắt"
-        className="inline-flex w-fit shrink-0 cursor-not-allowed items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-600"
-      >
-        <BellOutlined /> Tạo thông báo việc làm
-      </span>
+      {canCreateJobAlert && (
+        <button
+          type="button"
+          aria-label="Tạo thông báo việc làm"
+          onClick={onCreateJobAlert}
+          className="inline-flex w-fit shrink-0 cursor-pointer items-center gap-2 rounded-full border border-emerald-200 bg-white px-4 py-2 text-sm font-semibold text-emerald-700 shadow-sm transition hover:border-emerald-400 hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+        >
+          <BellOutlined /> Tạo thông báo việc làm
+        </button>
+      )}
     </div>
   )
 }

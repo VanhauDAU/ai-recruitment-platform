@@ -36,7 +36,7 @@ describe('buildTranscript', () => {
     expect(items.at(-1).role).toBe('bot')
   })
 
-  it('giữ lại câu robot nhắc như một lượt nói thật', () => {
+  it('giữ lại câu robot nhắc như một tin nhắn thật', () => {
     const items = buildTranscript({
       ...BASE,
       index: 0,

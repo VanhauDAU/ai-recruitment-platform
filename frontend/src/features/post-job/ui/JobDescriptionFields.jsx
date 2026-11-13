@@ -1,5 +1,5 @@
-import { DownOutlined, MinusCircleFilled } from '@ant-design/icons'
-import { Button, Form } from 'antd'
+import { DeleteOutlined, DownOutlined, MinusCircleFilled, PlusOutlined } from '@ant-design/icons'
+import { Button, Form, Input } from 'antd'
 import { useState } from 'react'
 import RichTextEditor from '@/shared/ui/RichTextEditor'
 import JobLocationFields from './JobLocationFields'
@@ -63,6 +63,51 @@ export default function JobDescriptionFields({ form, provinces, benefits }) {
       >
         <RichTextEditor contentClassName="post-job-rich-editor__content" minHeight={230} placeholder="Thu nhập, chế độ, phúc lợi và cơ hội phát triển" />
       </Form.Item>
+      <div className="mb-6 rounded-xl border border-emerald-100 bg-emerald-50/50 p-4 sm:p-5">
+        <div>
+          <h3 className="font-semibold text-slate-800">3 lý do nên ứng tuyển</h3>
+          <p className="mt-1 text-sm leading-6 text-slate-600">
+            Tóm tắt tối đa ba điểm khác biệt quan trọng. Đây là nội dung cơ bản, không thuộc gói trả phí.
+          </p>
+        </div>
+        <Form.List name="application_reasons">
+          {(fields, { add, remove }) => (
+            <div className="mt-3 space-y-2">
+              {fields.map((field, index) => (
+                <div key={field.key} className="flex items-start gap-2">
+                  <Form.Item
+                    {...field}
+                    className="!mb-0 min-w-0 flex-1"
+                    rules={[
+                      { required: true, whitespace: true, message: 'Nhập lý do hoặc xóa dòng này.' },
+                      { max: 160, message: 'Mỗi lý do tối đa 160 ký tự.' },
+                    ]}
+                  >
+                    <Input maxLength={160} showCount placeholder={`Lý do ${index + 1}`} />
+                  </Form.Item>
+                  <Button
+                    aria-label={`Xóa lý do ${index + 1}`}
+                    type="text"
+                    danger
+                    icon={<DeleteOutlined />}
+                    onClick={() => remove(field.name)}
+                  />
+                </div>
+              ))}
+              <Button
+                aria-label={`Thêm lý do (${fields.length}/3)`}
+                type="dashed"
+                className="!w-full sm:!w-auto"
+                icon={<PlusOutlined />}
+                disabled={fields.length >= 3}
+                onClick={() => add('')}
+              >
+                Thêm lý do ({fields.length}/3)
+              </Button>
+            </div>
+          )}
+        </Form.List>
+      </div>
       <div className="mb-6 rounded-xl border border-emerald-200 bg-white p-4 sm:p-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>

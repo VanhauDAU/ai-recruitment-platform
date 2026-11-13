@@ -1,0 +1,10 @@
+Xin chào {{ candidate_name }},
+
+Bạn nhận email này vì Job Alert bạn đã cài đặt đang phù hợp với một tin tuyển dụng mới.
+
+{{ job_title }} — {{ company_name }}
+Xem việc làm: {{ job_url }}
+
+Bạn có thể thay đổi lựa chọn nhận email tại: {{ email_settings_url }}
+
+Đây là email tự động từ {{ site_name }}.

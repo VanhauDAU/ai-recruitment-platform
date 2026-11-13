@@ -1,4 +1,4 @@
-import { CrownOutlined, FileTextOutlined, IdcardOutlined, MailOutlined, SafetyOutlined } from '@ant-design/icons'
+import { FileTextOutlined, IdcardOutlined, MailOutlined, SafetyOutlined } from '@ant-design/icons'
 
 /**
  * Nguồn dữ liệu DUY NHẤT cho menu tài khoản ứng viên — dùng chung bởi:
@@ -10,7 +10,6 @@ import { CrownOutlined, FileTextOutlined, IdcardOutlined, MailOutlined, SafetyOu
  * Quy ước item:
  * - `path`  : route đích.
  * - `blank` : mở tab mới vì trang KHÔNG dùng layout 3 cột (vd: Việc làm đã lưu).
- * - `todo`  : tính năng chưa xây — UI hiển thị "sắp ra mắt" thay vì điều hướng.
  */
 
 export const ACCOUNT_ROOT = '/tai-khoan'
@@ -27,12 +26,9 @@ export const CANDIDATE_MENU = [
     ],
   },
   {
-    key: 'cv', title: 'Quản lý CV & Cover letter', icon: <FileTextOutlined />, dot: true,
+    key: 'cv', title: 'Quản lý CV', icon: <FileTextOutlined />, dot: true,
     items: [
       { key: 'my-cv', label: 'CV của tôi', path: accountPath('cv-cua-toi') },
-      { key: 'my-cover-letter', label: 'Cover Letter của tôi', path: accountPath('cover-letter-cua-toi') },
-      { key: 'recruiter-connect', label: 'Nhà tuyển dụng muốn kết nối với bạn', path: '/ket-noi-nha-tuyen-dung', blank: true, todo: true },
-      { key: 'profile-views', label: 'Nhà tuyển dụng xem hồ sơ', path: accountPath('nha-tuyen-dung-xem-ho-so') },
     ],
   },
   {
@@ -49,13 +45,6 @@ export const CANDIDATE_MENU = [
       { key: 'security', label: 'Cài đặt bảo mật', path: accountPath('cai-dat-bao-mat') },
       { key: 'change-password', label: 'Đổi mật khẩu', path: accountPath('doi-mat-khau') },
       { key: 'two-factor', label: 'Xác minh hai bước', path: accountPath('xac-minh-hai-buoc') },
-    ],
-  },
-  {
-    key: 'upgrade', title: 'Nâng cấp tài khoản', icon: <CrownOutlined />,
-    items: [
-      { key: 'vip', label: 'Nâng cấp tài khoản VIP', path: '/nang-cap-tai-khoan', blank: true, todo: true },
-      { key: 'gift', label: 'Kích hoạt quà tặng', path: '/kich-hoat-qua-tang', blank: true, todo: true },
     ],
   },
 ]

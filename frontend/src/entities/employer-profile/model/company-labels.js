@@ -26,12 +26,6 @@ export const COMPANY_VALUE_LABELS = {
     australia: 'Châu Úc',
   },
   target_customers: { b2b: 'B2B', b2c: 'B2C', b2g: 'B2G' },
-  verification_status: {
-    unverified: 'Chưa xác thực',
-    pending: 'Chờ duyệt',
-    verified: 'Đã xác thực',
-    rejected: 'Bị từ chối',
-  },
   company_role: {
     owner: 'Người tạo công ty',
     member: 'Thành viên',

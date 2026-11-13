@@ -37,7 +37,13 @@ describe('CampaignLifecycleActions', () => {
     mocks.getCampaignPauseImpact.mockReset().mockResolvedValue({
       active_public_job_count: 1,
       active_public_jobs: [{ public_id: 'job_1', title: 'Frontend Engineer' }],
-      active_services: [],
+      active_services: [{
+        public_id: 'jsa_priority',
+        job_public_id: 'job_1',
+        job_title: 'Frontend Engineer',
+        package_name: 'Tin ưu tiên 14 ngày',
+        ends_at: '2026-08-30T03:00:00Z',
+      }],
     })
   })
 
@@ -48,6 +54,16 @@ describe('CampaignLifecycleActions', () => {
     await user.click(screen.getByRole('button', { name: /dừng/i }))
     expect(await screen.findByText('1 tin đang công khai sẽ bị ẩn')).toBeInTheDocument()
     expect(screen.getByText('Frontend Engineer')).toBeInTheDocument()
+    expect(screen.getByText('1 dịch vụ đang chạy')).toBeInTheDocument()
+    expect(screen.getByText('Tin ưu tiên 14 ngày')).toBeInTheDocument()
+    expect(screen.getByText('Tin: Frontend Engineer')).toBeInTheDocument()
+    expect(screen.getByText(/Kết thúc:/)).toHaveAttribute(
+      'datetime',
+      '2026-08-30T03:00:00Z',
+    )
+    expect(screen.getByText('Dịch vụ trả phí vẫn tiếp tục đếm ngược')).toBeInTheDocument()
+    expect(screen.getByText(/vẫn hiển thị “Đang chạy”/i)).toBeInTheDocument()
+    expect(screen.getByText(/nếu đã hết hạn, dịch vụ không được khôi phục/i)).toBeInTheDocument()
     const confirm = screen.getByRole('button', { name: 'Xác nhận dừng' })
     const input = screen.getByRole('textbox')
     expect(confirm).toBeDisabled()
@@ -64,6 +80,24 @@ describe('CampaignLifecycleActions', () => {
       'paused',
       'camp_frontend',
     ))
+  })
+
+  it('shows a zero-service state without an irrelevant paid-service warning', async () => {
+    const user = userEvent.setup()
+    mocks.getCampaignPauseImpact.mockResolvedValueOnce({
+      active_public_job_count: 0,
+      active_public_jobs: [],
+      active_services: [],
+    })
+    renderActions()
+
+    await user.click(screen.getByRole('button', { name: /dừng/i }))
+
+    expect(await screen.findByText('0 dịch vụ đang chạy')).toBeInTheDocument()
+    expect(screen.getByText('Không có dịch vụ đang chạy.')).toBeInTheDocument()
+    expect(
+      screen.queryByText('Dịch vụ trả phí vẫn tiếp tục đếm ngược'),
+    ).not.toBeInTheDocument()
   })
 
   it('offers one-step resume only for a paused campaign', async () => {

@@ -55,6 +55,11 @@ describe('JobPreferenceSettings', () => {
     queryClient.setQueryData(jobKeys.candidateRecommendations({ page: 1 }), {
       status: 'ready',
     })
+    queryClient.setQueryData(jobKeys.inlineRecommendations({
+      excluded: 'job_1',
+      page: 1,
+      ranking_seed: 'seed',
+    }), { status: 'ready' })
 
     render(
       <QueryClientProvider client={queryClient}>
@@ -67,10 +72,18 @@ describe('JobPreferenceSettings', () => {
     expect(removeQueries).toHaveBeenCalledWith({
       queryKey: jobKeys.candidateRecommendationsRoot,
     })
+    expect(removeQueries).toHaveBeenCalledWith({
+      queryKey: jobKeys.inlineRecommendationsRoot,
+    })
     await waitFor(() => {
       expect(queryClient.getQueryData(
         jobKeys.candidateRecommendations({ page: 1 }),
       )).toBeUndefined()
+      expect(queryClient.getQueryData(jobKeys.inlineRecommendations({
+        excluded: 'job_1',
+        page: 1,
+        ranking_seed: 'seed',
+      }))).toBeUndefined()
     })
   })
 

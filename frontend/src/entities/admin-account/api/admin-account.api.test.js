@@ -8,10 +8,12 @@ import {
   getAccountResourceHoldImpact,
   getAvailableAdminInvitationRoles,
   getProvisioningScopeImpact,
+  getEmployerCompanyUnlinkImpact,
   resendAdminInvitation,
   releaseAccountResourceHolds,
   revokeAccountSessions,
   setProvisioningScopeStatus,
+  unlinkEmployerCompany,
 } from './admin-account.api'
 
 const { get, patch, post } = vi.hoisted(() => ({
@@ -142,6 +144,22 @@ describe('admin account management API', () => {
       6,
       '/admin/provisioning-scopes/apscope_1/deactivate/',
       { impact_token: 'impact-scope' },
+    )
+  })
+
+  it('uses a separate signed preview before employer company unlink', async () => {
+    await getEmployerCompanyUnlinkImpact('usr_employer', 'Chọn nhầm công ty')
+    await unlinkEmployerCompany('usr_employer', 'Chọn nhầm công ty', 'impact-unlink')
+
+    expect(post).toHaveBeenNthCalledWith(
+      1,
+      '/admin/accounts/usr_employer/company-unlink-impact/',
+      { reason: 'Chọn nhầm công ty' },
+    )
+    expect(post).toHaveBeenNthCalledWith(
+      2,
+      '/admin/accounts/usr_employer/unlink-company/',
+      { reason: 'Chọn nhầm công ty', impact_token: 'impact-unlink' },
     )
   })
 

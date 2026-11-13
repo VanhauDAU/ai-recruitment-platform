@@ -45,7 +45,12 @@ function PackageCard({ item, language, onConsult }) {
   const vatNote = pickLocalized(item, 'vat_note', language)
   const badge = pickLocalized(item, 'badge', language)
   const benefits = pickLocalized(item, 'benefits', language) || []
-  const price = formatServicePrice(item.price, item.currency, language)
+  const commercialVersion = item.published_version
+  const price = formatServicePrice(
+    commercialVersion?.price ?? item.price,
+    commercialVersion?.currency ?? item.currency,
+    language,
+  )
   const actionLabel = item.cta_type === 'register' ? t('pricing.registerCta') : t('pricing.contactCta')
 
   return (

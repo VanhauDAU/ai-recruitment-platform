@@ -1,9 +1,9 @@
-import { CloudUploadOutlined, FileImageOutlined, SearchOutlined } from '@ant-design/icons'
+import { CloudUploadOutlined, FileImageOutlined, LinkOutlined, SearchOutlined } from '@ant-design/icons'
 import { Alert, Button, Empty, Input, Modal, Skeleton, Tabs, Upload } from 'antd'
 import { useEffect, useState } from 'react'
 import { message } from '@/shared/lib/toast'
 
-const ACCEPTED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/gif', 'image/webp'])
+const DEFAULT_ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024
 
 function defaultAlt(name = '') {
@@ -25,7 +25,27 @@ function errorMessage(error, fallback) {
   return fieldError || fallback
 }
 
-export default function RichTextImageLibrary({ open, onCancel, onInsert, onLoadImages, onUploadImage }) {
+function isAllowedImageUrl(value) {
+  const source = value.trim()
+  if (source.startsWith('/') && !source.startsWith('//')) return true
+  try {
+    const parsed = new URL(source)
+    return parsed.protocol === 'https:' && !parsed.username && !parsed.password
+  } catch {
+    return false
+  }
+}
+
+export default function RichTextImageLibrary({
+  open,
+  onCancel,
+  onInsert,
+  onLoadImages,
+  onUploadImage,
+  allowExternalImage = false,
+  acceptedImageTypes = DEFAULT_ACCEPTED_IMAGE_TYPES,
+  uploadHint = 'JPG, PNG, GIF, WebP · tối đa 5 MB · ảnh lớn tự thu về tối đa 1600 px',
+}) {
   const [activeTab, setActiveTab] = useState('library')
   const [query, setQuery] = useState('')
   const [items, setItems] = useState([])
@@ -35,6 +55,8 @@ export default function RichTextImageLibrary({ open, onCancel, onInsert, onLoadI
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')
   const [reloadKey, setReloadKey] = useState(0)
+  const [externalUrl, setExternalUrl] = useState('')
+  const [externalAlt, setExternalAlt] = useState('')
 
   useEffect(() => {
     if (!open || !onLoadImages) return
@@ -67,6 +89,8 @@ export default function RichTextImageLibrary({ open, onCancel, onInsert, onLoadI
     setAlt('')
     setError('')
     setActiveTab('library')
+    setExternalUrl('')
+    setExternalAlt('')
   }, [open])
 
   const choose = (item) => {
@@ -76,8 +100,8 @@ export default function RichTextImageLibrary({ open, onCancel, onInsert, onLoadI
 
   const upload = async (file) => {
     if (!onUploadImage) return Upload.LIST_IGNORE
-    if (!ACCEPTED_IMAGE_TYPES.has(file.type) || file.size > MAX_IMAGE_SIZE) {
-      const text = 'Chỉ hỗ trợ JPG, PNG, GIF hoặc WebP tối đa 5 MB.'
+    if (!acceptedImageTypes.includes(file.type) || file.size > MAX_IMAGE_SIZE) {
+      const text = `Chỉ hỗ trợ ${uploadHint}.`
       setError(text)
       message.error(text)
       return Upload.LIST_IGNORE
@@ -92,7 +116,7 @@ export default function RichTextImageLibrary({ open, onCancel, onInsert, onLoadI
       setActiveTab('library')
       message.success('Đã tải ảnh lên kho hình ảnh.')
     } catch (uploadError) {
-      const text = errorMessage(uploadError, 'Không thể tải ảnh. Chỉ hỗ trợ JPG, PNG, GIF hoặc WebP tối đa 5 MB.')
+      const text = errorMessage(uploadError, `Không thể tải ảnh. Chỉ hỗ trợ ${uploadHint}.`)
       setError(text)
       message.error(text)
     } finally {
@@ -102,6 +126,12 @@ export default function RichTextImageLibrary({ open, onCancel, onInsert, onLoadI
   }
 
   const insert = () => {
+    if (activeTab === 'url') {
+      if (!isAllowedImageUrl(externalUrl) || !externalAlt.trim()) return
+      onInsert({ src: externalUrl.trim(), alt: externalAlt.trim() })
+      onCancel()
+      return
+    }
     if (!selected?.url) return
     onInsert({ src: selected.url, alt: alt.trim() || defaultAlt(selected.original_name) })
     onCancel()
@@ -148,7 +178,7 @@ export default function RichTextImageLibrary({ open, onCancel, onInsert, onLoadI
     <div>
       {error && <Alert className="mb-4" type="error" showIcon message={error} />}
       <Upload.Dragger
-        accept="image/jpeg,image/png,image/gif,image/webp"
+        accept={acceptedImageTypes.join(',')}
         beforeUpload={upload}
         disabled={uploading}
         multiple={false}
@@ -156,11 +186,47 @@ export default function RichTextImageLibrary({ open, onCancel, onInsert, onLoadI
       >
         <p className="ant-upload-drag-icon"><CloudUploadOutlined /></p>
         <p className="ant-upload-text">Kéo thả ảnh vào đây hoặc bấm để chọn</p>
-        <p className="ant-upload-hint">JPG, PNG, GIF, WebP · tối đa 5 MB · ảnh lớn tự thu về tối đa 1600 px</p>
+        <p className="ant-upload-hint">{uploadHint}</p>
         {uploading && <Button className="mt-4" loading>Đang tải ảnh…</Button>}
       </Upload.Dragger>
     </div>
   )
+
+  const externalImage = (
+    <div className="rich-image-library__external">
+      <Alert
+        type="info"
+        showIcon
+        message="Có thể chèn ảnh trực tiếp mà không cần tải lên kho ProCV."
+        description="Chỉ dùng URL HTTPS tin cậy hoặc đường dẫn nội bộ. Nếu nguồn ảnh bị xóa, ảnh trong bài cũng sẽ không còn hiển thị."
+      />
+      <label htmlFor="rich-image-external-url">URL hình ảnh</label>
+      <Input
+        id="rich-image-external-url"
+        aria-label="URL hình ảnh"
+        placeholder="https://example.com/image.webp"
+        status={externalUrl && !isAllowedImageUrl(externalUrl) ? 'error' : undefined}
+        value={externalUrl}
+        onChange={(event) => setExternalUrl(event.target.value)}
+      />
+      {externalUrl && !isAllowedImageUrl(externalUrl) && (
+        <p className="rich-image-library__field-error">Nhập URL HTTPS hoặc đường dẫn nội bộ bắt đầu bằng /.</p>
+      )}
+      <label htmlFor="rich-image-external-alt">Mô tả ảnh (alt text)</label>
+      <Input
+        id="rich-image-external-alt"
+        aria-label="Mô tả ảnh từ URL"
+        maxLength={255}
+        placeholder="Mô tả ngắn nội dung ảnh"
+        value={externalAlt}
+        onChange={(event) => setExternalAlt(event.target.value)}
+      />
+    </div>
+  )
+
+  const canInsert = activeTab === 'url'
+    ? isAllowedImageUrl(externalUrl) && Boolean(externalAlt.trim())
+    : Boolean(selected?.url)
 
   return (
     <Modal
@@ -170,7 +236,7 @@ export default function RichTextImageLibrary({ open, onCancel, onInsert, onLoadI
       title={<span><FileImageOutlined className="mr-2" />Chèn hình ảnh</span>}
       okText="Chèn vào bài viết"
       cancelText="Hủy"
-      okButtonProps={{ disabled: !selected?.url }}
+      okButtonProps={{ disabled: !canInsert }}
       onCancel={onCancel}
       onOk={insert}
     >
@@ -180,9 +246,12 @@ export default function RichTextImageLibrary({ open, onCancel, onInsert, onLoadI
         items={[
           { key: 'library', label: 'Kho hình ảnh', children: library },
           { key: 'upload', label: 'Tải ảnh mới', children: uploader },
+          ...(allowExternalImage
+            ? [{ key: 'url', label: <span><LinkOutlined /> Từ URL</span>, children: externalImage }]
+            : []),
         ]}
       />
-      {selected && (
+      {activeTab !== 'url' && selected && (
         <div className="rich-image-library__selection">
           <img src={selected.url} alt="" />
           <div className="min-w-0 flex-1">

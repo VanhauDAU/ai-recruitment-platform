@@ -75,7 +75,7 @@ describe('EmployerAccountVerificationCard', () => {
     expect(businessDocumentStep.querySelector('.anticon-check-circle')).not.toBeInTheDocument()
   })
 
-  it('advances an approved account without report history to level 3', () => {
+  it('advances an approved recruiter case to level 3 independently of report history', () => {
     queryState.data = {
       onboarding: {
         email_verified: true,
@@ -83,8 +83,9 @@ describe('EmployerAccountVerificationCard', () => {
         company_linked: true,
         business_doc_submitted: true,
         business_doc_approved: true,
-        no_report_history: true,
+        no_report_history: false,
       },
+      verification_case: { status: 'approved' },
     }
 
     renderCard()
@@ -93,7 +94,43 @@ describe('EmployerAccountVerificationCard', () => {
     expect(screen.getByText('Hoàn thành')).toHaveTextContent('Hoàn thành 100%')
   })
 
-  it('does not require a separate final approval to unlock the quota', () => {
+  it('keeps quota separate from level 3 until DPA is accepted', () => {
+    queryState.data = {
+      onboarding: {
+        email_verified: true,
+        phone_verified: true,
+        company_linked: true,
+        business_doc_submitted: true,
+        business_doc_approved: true,
+        no_report_history: false,
+        representative_verified: true,
+        dpa_accepted: false,
+      },
+      verification_case: { status: 'approved' },
+    }
+
+    renderCard()
+
+    expect(screen.getByText(/Quota sẽ được mở tự động sau khi thỏa thuận DPA còn hiệu lực/)).toBeInTheDocument()
+    expect(screen.queryByText(/Hồ sơ xác thực đã hoàn tất/)).not.toBeInTheDocument()
+  })
+
+  it('uses the authoritative level and quota state from the backend', () => {
+    queryState.data = {
+      onboarding: { dpa_accepted: true },
+      account_verification: {
+        level: 3,
+        verified_job_quota_eligible: true,
+      },
+    }
+
+    renderCard()
+
+    expect(screen.getByText('Cấp 3/3')).toBeInTheDocument()
+    expect(screen.getByText(/quota tối đa/)).toHaveTextContent('100 tin đăng')
+  })
+
+  it('does not show level 3 after verification is revoked', () => {
     queryState.data = {
       onboarding: {
         email_verified: true,
@@ -102,13 +139,22 @@ describe('EmployerAccountVerificationCard', () => {
         business_doc_submitted: true,
         business_doc_approved: true,
         no_report_history: true,
-        representative_verified: false,
+        representative_verified: true,
+      },
+      verification_case: {
+        status: 'revoked',
+        decision_reason: 'Giấy phép không còn hiệu lực.',
       },
     }
 
     renderCard()
 
-    expect(screen.getByText(/Quota sẽ được mở tự động/)).toBeInTheDocument()
-    expect(screen.queryByText(/admin duyệt cuối cùng/)).not.toBeInTheDocument()
+    expect(screen.getByText('Cấp 1/3')).toBeInTheDocument()
+    expect(screen.queryByText('Cấp 3/3')).not.toBeInTheDocument()
+    expect(screen.getByText('Xác thực nhà tuyển dụng đã bị thu hồi')).toBeVisible()
+    const businessDocumentStep = screen.getByRole('link', {
+      name: /Xác thực Giấy đăng ký doanh nghiệp/,
+    })
+    expect(businessDocumentStep.querySelector('.anticon-check-circle')).not.toBeInTheDocument()
   })
 })

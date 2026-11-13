@@ -145,6 +145,26 @@ class AccountManagementG3ApiTests(TestCase):
             self.department.code,
         )
 
+    def test_account_detail_resolves_stored_avatar_path(self):
+        employer = User.objects.create_user(
+            'avatar-employer@example.com',
+            self.password,
+            role=User.Role.EMPLOYER,
+            status=User.Status.ACTIVE,
+            avatar_url='users/avatars/recruiter.png',
+        )
+        self.authenticate(self.superuser)
+
+        response = self.client.get(
+            reverse('admin-account-detail', kwargs={'public_id': employer.public_id})
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.json()['avatar_url'],
+            'http://testserver/media/users/avatars/recruiter.png',
+        )
+
     def test_employer_view_permission_does_not_expose_candidates(self):
         employer_permission, _ = AdminPermission.objects.get_or_create(
             code='account.employer.view',

@@ -9,7 +9,6 @@ import '../admin-company-directory.css'
 
 const DIRECTORY_QUERY_KEYS = [
   'q',
-  'verification_status',
   'recruiter_verification_status',
   'member_role',
   'ordering',

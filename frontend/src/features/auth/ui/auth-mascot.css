@@ -1,0 +1,119 @@
+.auth-mascot-stage {
+  height: 142px;
+  pointer-events: none;
+  position: absolute;
+  right: 28px;
+  top: -82px;
+  width: 142px;
+  z-index: 2;
+}
+
+.auth-mascot-stage__halo {
+  background: radial-gradient(circle, color-mix(in srgb, var(--brand-primary) 14%, transparent), transparent 70%);
+  border-radius: 9999px;
+  height: 104px;
+  left: 50%;
+  position: absolute;
+  top: 43%;
+  transform: translate(-50%, -50%);
+  width: 144px;
+}
+
+.auth-mascot-stage__robot {
+  /* Nâng robot nhưng nới phần crop để thân vẫn chạm mép card, không lộ khe. */
+  clip-path: inset(0 0 38% 0);
+  filter: drop-shadow(0 12px 14px rgb(15 23 42 / 0.12));
+  inset: 0;
+  position: absolute;
+  transform: translateY(-5px);
+  z-index: 1;
+}
+
+.auth-mascot-stage__grip {
+  height: 142px;
+  inset: 0;
+  object-fit: contain;
+  position: absolute;
+  transform: translate(3px, -3px);
+  user-select: none;
+  width: 142px;
+  z-index: 2;
+}
+
+.auth-mascot-stage__message {
+  animation: authMascotMessageIn 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+  background: rgb(255 255 255 / 0.94);
+  border: 1px solid color-mix(in srgb, var(--brand-primary) 18%, #e5e7eb);
+  border-radius: 14px 14px 14px 4px;
+  box-shadow: 0 8px 24px rgb(15 23 42 / 0.08);
+  color: #475569;
+  font-size: 0.75rem;
+  font-weight: 600;
+  right: 116px;
+  line-height: 1.35;
+  max-width: 168px;
+  padding: 0.55rem 0.7rem;
+  position: absolute;
+  top: 22px;
+  width: 168px;
+  z-index: 2;
+}
+
+.auth-mascot-stage[data-state='invalid'] .auth-mascot-stage__robot {
+  animation: authMascotNope 0.42s ease-in-out;
+}
+
+.dark .auth-mascot-stage__message {
+  background: rgb(24 24 27 / 0.96);
+  border-color: rgb(63 63 70);
+  color: #d4d4d8;
+}
+
+@keyframes authMascotMessageIn {
+  from { opacity: 0; transform: translate(-6px, 4px) scale(0.96); }
+  to { opacity: 1; transform: translate(0, 0) scale(1); }
+}
+
+@keyframes authMascotNope {
+  0%, 100% { transform: translate(0, -5px) rotate(0); }
+  25% { transform: translate(-5px, -5px) rotate(-2deg); }
+  75% { transform: translate(5px, -5px) rotate(2deg); }
+}
+
+@media (max-width: 479px) {
+  .auth-mascot-stage {
+    height: 118px;
+    left: 4px;
+    right: auto;
+    top: -68px;
+    width: 118px;
+  }
+
+  .auth-mascot-stage__robot {
+    height: 118px !important;
+    transform: translateY(-4px);
+    width: 118px !important;
+  }
+
+  .auth-mascot-stage__grip {
+    height: 118px;
+    transform: translate(3px, -2px);
+    width: 118px;
+  }
+
+  .auth-mascot-stage__message {
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    height: 1px;
+    overflow: hidden;
+    white-space: nowrap;
+    width: 1px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-mascot-stage[data-state='invalid'] .auth-mascot-stage__robot,
+  .auth-mascot-stage__message {
+    animation: none;
+  }
+}

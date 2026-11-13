@@ -1,5 +1,15 @@
 import { ReloadOutlined, SafetyCertificateOutlined } from '@ant-design/icons'
-import { Alert, Button, Card, Descriptions, Space, Tag, Typography } from 'antd'
+import {
+  Alert,
+  Button,
+  Card,
+  Collapse,
+  Descriptions,
+  Space,
+  Tag,
+  Typography,
+} from 'antd'
+import { getTaxReviewState } from '../model/tax-review-state'
 
 const STATUS_META = {
   pending: { color: 'processing', label: 'Đang tra cứu' },
@@ -54,14 +64,14 @@ export default function TaxLookupEvidenceCard({
     return (
       <Card
         size="small"
-        title={<Space><SafetyCertificateOutlined />Đối chiếu mã số thuế</Space>}
+        title={<Space><SafetyCertificateOutlined />Đối chiếu thuế</Space>}
         extra={extra}
       >
         <Alert
           showIcon
           type="info"
-          title="Chưa có dữ liệu đối chiếu VietQR"
-          description={`${scopeDescription} Hồ sơ vẫn được xử lý thủ công dựa trên giấy tờ pháp lý.`}
+          title="Cần đối chiếu thủ công"
+          description="Chưa có kết quả tra cứu cho phiên hồ sơ này. Admin cần kiểm tra giấy tờ pháp lý trước khi duyệt."
         />
       </Card>
     )
@@ -72,55 +82,63 @@ export default function TaxLookupEvidenceCard({
     label: evidence.status_label || evidence.status,
   }
   const comparison = evidence.comparison || {}
+  const reviewState = getTaxReviewState(evidence)
   return (
     <Card
       size="small"
-      title={<Space><SafetyCertificateOutlined />Đối chiếu mã số thuế</Space>}
+      title={<Space><SafetyCertificateOutlined />Đối chiếu thuế</Space>}
       extra={extra}
       className={compact ? 'company-comparison-tax-lookup' : 'account-detail-card'}
     >
       <Alert
         className="mb-3"
         showIcon
-        type="info"
-        title="Phạm vi đối chiếu"
-        description={`${scopeDescription} Yêu cầu cập nhật thông tin công ty, nếu có, được xử lý ở luồng riêng bên dưới.`}
+        type={reviewState.blocksApproval
+          ? 'info'
+          : reviewState.requiresManualApproval ? 'warning' : 'success'}
+        title={reviewState.requiresManualApproval ? 'Cần đối chiếu thủ công' : status.label}
+        description={reviewState.message}
       />
-      <Space wrap className="mb-3">
-        <Tag color={status.color}>{status.label}</Tag>
-        <Tag>VietQR.io</Tag>
-        <Typography.Text type="secondary">
-          {`Phiên ${evidence.workflow_revision} · ${formatDate(evidence.completed_at || evidence.created_at)}`}
-        </Typography.Text>
-      </Space>
-      {evidence.provider_description && evidence.status !== 'found' && (
-        <Alert
-          className="mb-3"
-          showIcon
-          type={evidence.status === 'invalid_response' ? 'error' : 'warning'}
-          title={evidence.provider_description}
-          description="Kết quả này chỉ mang tính tham khảo; admin vẫn quyết định dựa trên hồ sơ."
-        />
-      )}
-      <Descriptions bordered size="small" column={{ xs: 1, md: 3 }}>
-        <Descriptions.Item label="Thông tin">NTD đã gửi</Descriptions.Item>
-        <Descriptions.Item label="VietQR">Dữ liệu đối chiếu</Descriptions.Item>
-        <Descriptions.Item label="Kết quả">So khớp</Descriptions.Item>
+      <Collapse
+        ghost
+        items={[{
+          key: 'tax-details',
+          label: 'Xem dữ liệu đối chiếu',
+          children: (
+            <div className="verification-tax-details">
+              <Typography.Paragraph type="secondary">
+                {`${scopeDescription} Yêu cầu cập nhật công ty được xử lý ở luồng riêng.`}
+              </Typography.Paragraph>
+              <Space wrap className="mb-3">
+                <Tag color={status.color}>{status.label}</Tag>
+                <Tag>VietQR.io</Tag>
+                <Typography.Text type="secondary">
+                  {`Phiên ${evidence.workflow_revision} · ${formatDate(evidence.completed_at || evidence.created_at)}`}
+                </Typography.Text>
+              </Space>
+              <Descriptions bordered size="small" column={{ xs: 1, md: 3 }}>
+                <Descriptions.Item label="Thông tin">NTD đã gửi</Descriptions.Item>
+                <Descriptions.Item label="Nguồn tra cứu">Dữ liệu trả về</Descriptions.Item>
+                <Descriptions.Item label="Kết quả">So khớp</Descriptions.Item>
 
-        <Descriptions.Item label="Mã số thuế">{evidence.tax_code || 'Chưa có'}</Descriptions.Item>
-        <Descriptions.Item label="Mã số thuế">{evidence.returned_tax_code || 'Không có dữ liệu'}</Descriptions.Item>
-        <Descriptions.Item label="Mã số thuế"><ComparisonTag value={comparison.tax_code} /></Descriptions.Item>
+                <Descriptions.Item label="Mã số thuế">{evidence.tax_code || 'Chưa có'}</Descriptions.Item>
+                <Descriptions.Item label="Mã số thuế">{evidence.returned_tax_code || 'Không có dữ liệu'}</Descriptions.Item>
+                <Descriptions.Item label="Mã số thuế"><ComparisonTag value={comparison.tax_code} /></Descriptions.Item>
 
-        <Descriptions.Item label="Tên đăng ký">{evidence.submitted_company_name || 'Chưa có'}</Descriptions.Item>
-        <Descriptions.Item label="Tên đăng ký">{evidence.registered_name || 'Không có dữ liệu'}</Descriptions.Item>
-        <Descriptions.Item label="Tên đăng ký"><ComparisonTag value={comparison.company_name} /></Descriptions.Item>
-      </Descriptions>
-      {(evidence.international_name || evidence.short_name) && (
-        <Typography.Paragraph type="secondary" className="!mb-0 !mt-3">
-          {evidence.international_name && `Tên quốc tế: ${evidence.international_name}. `}
-          {evidence.short_name && `Tên ngắn: ${evidence.short_name}.`}
-        </Typography.Paragraph>
-      )}
+                <Descriptions.Item label="Tên đăng ký">{evidence.submitted_company_name || 'Chưa có'}</Descriptions.Item>
+                <Descriptions.Item label="Tên đăng ký">{evidence.registered_name || 'Không có dữ liệu'}</Descriptions.Item>
+                <Descriptions.Item label="Tên đăng ký"><ComparisonTag value={comparison.company_name} /></Descriptions.Item>
+              </Descriptions>
+              {(evidence.international_name || evidence.short_name) && (
+                <Typography.Paragraph type="secondary" className="!mb-0 !mt-3">
+                  {evidence.international_name && `Tên quốc tế: ${evidence.international_name}. `}
+                  {evidence.short_name && `Tên ngắn: ${evidence.short_name}.`}
+                </Typography.Paragraph>
+              )}
+            </div>
+          ),
+        }]}
+      />
     </Card>
   )
 }

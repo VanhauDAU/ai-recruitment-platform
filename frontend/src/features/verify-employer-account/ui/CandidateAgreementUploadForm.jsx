@@ -8,7 +8,7 @@ import { CandidateAgreementDocumentLink } from './CandidateAgreementDocumentLink
 import EmployerDocumentUploadBox from './EmployerDocumentUploadBox'
 
 const DPA_TEMPLATE_URL = '/documents/topcv-mau-van-ban-thong-bao-dong-y-xu-ly-dlcn.docx'
-const ACCEPTED_FILE_TYPES = '.doc,.docx,.pdf'
+const ACCEPTED_FILE_TYPES = '.docx,.pdf'
 const CANDIDATE_AGREEMENT_DOCUMENT_NAME = 'Thỏa thuận xử lý DLCN'
 
 export function CandidateAgreementTemplate() {
@@ -41,9 +41,8 @@ export default function CandidateAgreementUploadForm({
   onSave,
   onOpenDocument,
   openingDocument,
-  onPreviewSelectedFile,
-  previewingSelectedFile,
   siteName,
+  uploadState,
 }) {
   return (
     <>
@@ -71,13 +70,9 @@ export default function CandidateAgreementUploadForm({
               files={files}
               multiple={false}
               onFilesChange={onFilesChange}
-              onResolvePreview={(file) => (
-                file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')
-                  ? file
-                  : onPreviewSelectedFile(file)
-              )}
-              previewing={previewingSelectedFile}
-              uploadHint="Dung lượng tối đa 5MB, định dạng: docx, doc, pdf"
+              onResolvePreview={(file) => file}
+              uploadHint="Dung lượng tối đa 5MB, định dạng: docx, pdf"
+              uploadState={uploadState}
             />
             <UploadNotice />
           </div>

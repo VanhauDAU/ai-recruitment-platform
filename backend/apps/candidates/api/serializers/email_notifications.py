@@ -4,7 +4,7 @@ from ...models import CandidateEmailNotificationSettings
 
 
 class CandidateEmailNotificationSettingsSerializer(serializers.ModelSerializer):
-    """Candidate-owned email notification preferences, enabled by default."""
+    """Candidate-owned email notification preferences."""
 
     class Meta:
         model = CandidateEmailNotificationSettings

@@ -1,12 +1,19 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { FilterOutlined } from '@ant-design/icons'
 import { useLoginPrompt } from '@/features/auth'
+import { CreateJobAlertModal } from '@/features/manage-job-alerts'
 import { message } from '@/shared/lib/toast'
 import { useSession } from '@/entities/session'
 import { useHideOnScroll } from '@/shared/hooks/use-hide-on-scroll'
 import { useMediaQuery } from '@/shared/hooks/use-media-query'
 import { useDocumentMetadata } from '@/shared/hooks/use-document-metadata'
-import { formatNumber } from '@/entities/job'
+import {
+  buildCategoryTree,
+  formatNumber,
+  nodeCheckState,
+  selectedLeafSet,
+  toggleCategoryIds,
+} from '@/entities/job'
 import JobEmptyExtras from './ui/JobEmptyExtras'
 import JobFilterSidebar from './ui/JobFilterSidebar'
 import JobListFooter from './ui/JobListFooter'
@@ -20,14 +27,15 @@ import PlacementBanner from './ui/PlacementBanner'
 import QuickExplore from './ui/QuickExplore'
 import RelatedSearchesCard from './ui/RelatedSearchesCard'
 import useJobListData from './model/use-job-list-data'
+import useInlineJobRecommendations from './model/use-inline-job-recommendations'
 import useJobListFilters from './model/use-job-list-filters'
 import useHanoiJobSuggestion from './model/use-hanoi-job-suggestion'
 import useJobLocationData from './model/use-job-location-data'
 import useJobSidebarData from './model/use-job-sidebar-data'
-import { buildCategoryTree, nodeCheckState, selectedLeafSet, toggleCategoryIds } from './lib/category-tree'
 import { formatLocationGroups, locationDisplayName } from './lib/job-list-params'
 import { relatedCategoryChips, relatedSearchTerms } from './lib/related-terms'
 import { buildJobListTitle } from './lib/job-list-title'
+import { buildJobAlertPrefill } from './lib/job-alert-prefill'
 
 export default function JobList() {
   const [expandedGroups, setExpandedGroups] = useState({})
@@ -37,11 +45,12 @@ export default function JobList() {
   const [quickViewJob, setQuickViewJob] = useState(null)
   const [dismissedNotice, setDismissedNotice] = useState(null)
   const [noticeExpanded, setNoticeExpanded] = useState(false)
+  const [createAlertOpen, setCreateAlertOpen] = useState(false)
   const searchBoxRef = useRef(null)
   const shortcutScrollerRef = useRef(null)
   const [canScrollShortcutsLeft, setCanScrollShortcutsLeft] = useState(false)
   const [canScrollShortcutsRight, setCanScrollShortcutsRight] = useState(false)
-  const { isAuthenticated } = useSession()
+  const { isAuthenticated, loading: sessionLoading, user } = useSession()
   const { promptLogin } = useLoginPrompt()
   const isDesktop = useMediaQuery('(min-width: 1024px)')
 
@@ -52,7 +61,16 @@ export default function JobList() {
     searchBy, searchParamKeyword, searchParams,
     selectedCategories, selectedLocations,
   } = filters
-  const { count, loading, results } = useJobListData(searchParams)
+  const { count, loading, rankingSeed, results } = useJobListData(searchParams)
+  const inlineRecommendations = useInlineJobRecommendations({
+    enabled: !loading
+      && isAuthenticated
+      && user?.role === 'candidate'
+      && user?.job_preferences_configured,
+    excludedJobIds: results.map((job) => job.public_id),
+    page,
+    rankingSeed,
+  })
 
   // Thanh tìm kiếm sticky né header (header tự ẩn khi cuộn xuống); sidebar dính ngay dưới nó.
   const headerVisible = useHideOnScroll()
@@ -142,6 +160,21 @@ export default function JobList() {
     filters.persistFilter()
     message.success('Đã lưu bộ lọc hiện tại')
   }
+
+  function createJobAlert() {
+    if (sessionLoading || (isAuthenticated && user?.role !== 'candidate')) return
+    if (!isAuthenticated) {
+      promptLogin(() => setCreateAlertOpen(true))
+      return
+    }
+    setCreateAlertOpen(true)
+  }
+
+  const jobAlertInitialValues = useMemo(
+    () => buildJobAlertPrefill({ provinces, searchParams, selectedLocationGroups }),
+    [provinces, searchParams, selectedLocationGroups],
+  )
+  const canCreateJobAlert = !sessionLoading && (!isAuthenticated || user?.role === 'candidate')
 
   const catChain = (() => {
     if (selectedCategories.length !== 1) return []
@@ -288,6 +321,7 @@ export default function JobList() {
           activeSearchKeyword={searchLabel}
           contextLabel={contextLabel}
           count={count}
+          canCreateJobAlert={canCreateJobAlert}
           fullContextLabel={fullContextLabel}
           fullLocationSummary={fullLocationSummary}
           hasSelectedLocation={selectedLocations.length > 0}
@@ -296,6 +330,7 @@ export default function JobList() {
           locationSummary={locationSummary}
           onCategorySelect={(id) => filters.setCommaParam('cat', [id])}
           onJumpToResults={jumpToResults}
+          onCreateJobAlert={createJobAlert}
           onLocationPickerOpen={openLocationPicker}
           onSuggestedLocationSelect={filters.selectSuggestedLocation}
           searchSuggestion={keyword.trim()}
@@ -380,6 +415,8 @@ export default function JobList() {
               />
             )}
             insertAfter={insertAfter}
+            recommendationInsertAfter={inlineRecommendations.afterResultIndex}
+            recommendedJobs={inlineRecommendations.results}
             isAuthenticated={isAuthenticated}
             loading={loading}
             onClearAll={hasFilters || searchParamKeyword ? filters.clearAllCriteria : undefined}
@@ -423,6 +460,11 @@ export default function JobList() {
         onFilterDrawerClose={() => setFilterDrawerOpen(false)}
         onQuickViewClose={() => setQuickViewJob(null)}
         onRequireLogin={promptLogin}
+      />
+      <CreateJobAlertModal
+        open={createAlertOpen}
+        initialValues={jobAlertInitialValues}
+        onClose={() => setCreateAlertOpen(false)}
       />
     </div>
   )

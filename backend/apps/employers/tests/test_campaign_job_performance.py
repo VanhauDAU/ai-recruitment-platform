@@ -5,7 +5,8 @@ from rest_framework.test import APIClient
 
 from apps.jobs.models import Job
 
-from ..models import Company, RecruiterProfile, RecruitmentCampaign
+from ..models import Company, RecruitmentCampaign
+from .readiness_helpers import make_employer_ready
 
 
 class CampaignJobPerformanceTests(TestCase):
@@ -16,7 +17,7 @@ class CampaignJobPerformanceTests(TestCase):
             role='employer',
         )
         company = Company.objects.create(company_name='Campaign Co', created_by=user)
-        recruiter = RecruiterProfile.objects.create(user=user, company=company)
+        recruiter = make_employer_ready(user, company=company)
         campaign = RecruitmentCampaign.objects.create(
             owner=recruiter,
             company=company,

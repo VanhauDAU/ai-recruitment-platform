@@ -1,15 +1,31 @@
-import { useEffect, useMemo, useState } from 'react'
-import { Button, Modal, Skeleton, Tag, Tabs, Typography } from 'antd'
+import { SettingOutlined } from '@ant-design/icons'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Alert, Button, Skeleton, Tag, Tabs, Typography } from 'antd'
 import { useSearchParams } from 'react-router'
 import { useSiteSettings } from '@/entities/site-settings'
+import { AiRuntimeOverview } from '@/features/manage-ai-runtime'
 import { getAdminSettings, SettingField, updateAdminSettings } from '@/features/manage-site-settings'
 import { message } from '@/shared/lib/toast'
-import { AdminPanel } from '@/widgets/admin-workspace'
+import { AdminDataActions, AdminPageHeader, AdminPanel } from '@/shared/ui/admin'
+import useConfirmAction from '@/shared/ui/use-confirm-action'
 
 const isEqual = (a, b) => JSON.stringify(a) === JSON.stringify(b)
 
+function SettingsPageHeader() {
+  return (
+    <AdminPageHeader
+      eyebrow="Hệ thống"
+      title="Cài đặt hệ thống"
+      description="Quản lý cấu hình vận hành, thương hiệu, bảo mật và các bề mặt sản phẩm từ một nơi."
+      icon={<SettingOutlined />}
+      actions={<AdminDataActions allowExport={false} />}
+    />
+  )
+}
+
 export default function AdminSettings() {
   const [searchParams, setSearchParams] = useSearchParams()
+  const { confirmationModal, requestConfirmation } = useConfirmAction()
   const { retry: refreshSiteSettings } = useSiteSettings()
   const [groups, setGroups] = useState(null)
   const [values, setValues] = useState({})
@@ -17,19 +33,33 @@ export default function AdminSettings() {
   const [pendingImageFiles, setPendingImageFiles] = useState({})
   const [activeGroup, setActiveGroup] = useState(() => searchParams.get('group') || 'general')
   const [saving, setSaving] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
+
+  const loadSettings = useCallback(async () => {
+    setLoading(true)
+    setLoadError(false)
+    try {
+      const response = await getAdminSettings()
+      setGroups(response.groups)
+      const map = Object.fromEntries(
+        response.groups.flatMap((group) => (
+          group.settings.map((setting) => [setting.key, setting.value])
+        )),
+      )
+      setValues(map)
+      setInitial(map)
+    } catch {
+      setLoadError(true)
+      message.error('Không tải được cấu hình.')
+    } finally {
+      setLoading(false)
+    }
+  }, [])
 
   useEffect(() => {
-    getAdminSettings()
-      .then(({ groups }) => {
-        setGroups(groups)
-        const map = Object.fromEntries(
-          groups.flatMap((g) => g.settings.map((s) => [s.key, s.value]))
-        )
-        setValues(map)
-        setInitial(map)
-      })
-      .catch(() => message.error('Không tải được cấu hình.'))
-  }, [])
+    loadSettings()
+  }, [loadSettings])
 
   useEffect(() => {
     const requested = searchParams.get('group') || 'general'
@@ -117,19 +147,38 @@ export default function AdminSettings() {
     }
     const current = groups.find((g) => g.key === activeGroup)
     if (current && dirtyInGroup(current)) {
-      Modal.confirm({
-        title: 'Thay đổi chưa lưu',
-        content: 'Nhóm hiện tại có thay đổi chưa lưu. Chuyển tab sẽ giữ nguyên thay đổi (chưa mất), tiếp tục?',
-        okText: 'Chuyển tab',
+      requestConfirmation({
+        title: 'Chuyển nhóm cài đặt',
+        description: 'Nhóm hiện tại có thay đổi chưa lưu. Bạn có muốn chuyển tab? Các thay đổi vẫn được giữ lại.',
+        confirmText: 'Chuyển tab',
         cancelText: 'Ở lại',
-        onOk: commitGroup,
+        onConfirm: commitGroup,
       })
     } else {
       commitGroup()
     }
   }
 
-  if (!groups) return <Skeleton active paragraph={{ rows: 10 }} />
+  if (!groups) {
+    return (
+      <div className="space-y-5">
+        <SettingsPageHeader />
+        <AdminPanel>
+          {loadError ? (
+            <Alert
+              action={<Button onClick={loadSettings}>Thử lại</Button>}
+              description="Kết nối hoặc quyền truy cập có thể đã thay đổi. Hãy tải lại dữ liệu trước khi chỉnh sửa."
+              showIcon
+              title="Không thể tải cài đặt hệ thống"
+              type="error"
+            />
+          ) : (
+            <Skeleton active={loading} paragraph={{ rows: 10 }} />
+          )}
+        </AdminPanel>
+      </div>
+    )
+  }
 
   const items = groups.map((group) => ({
     key: group.key,
@@ -141,6 +190,9 @@ export default function AdminSettings() {
     ),
     children: (
       <div className="max-w-3xl">
+        {group.key === 'ai' && (
+          <AiRuntimeOverview />
+        )}
         <div className="divide-y divide-gray-100">
           {group.settings.map((setting) => (
             <div key={setting.key} className="flex flex-col gap-2 py-4 sm:flex-row sm:items-start">
@@ -187,16 +239,20 @@ export default function AdminSettings() {
   }))
 
   return (
-    <div className="space-y-5">
-      <AdminPanel>
-        <Tabs
-          tabPlacement="top"
-          activeKey={activeGroup}
-          onChange={handleTabChange}
-          items={items}
-          className="[&_.ant-tabs-tab]:!py-2"
-        />
-      </AdminPanel>
-    </div>
+    <>
+      <div className="space-y-5">
+        <SettingsPageHeader />
+        <AdminPanel>
+          <Tabs
+            tabPlacement="top"
+            activeKey={activeGroup}
+            onChange={handleTabChange}
+            items={items}
+            className="[&_.ant-tabs-tab]:!py-2"
+          />
+        </AdminPanel>
+      </div>
+      {confirmationModal}
+    </>
   )
 }

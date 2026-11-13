@@ -58,3 +58,133 @@ export async function deleteAdminServicePackage(id) {
   await client.delete(`/services/admin/packages/${id}/`)
   invalidateRequestCache(PUBLIC_PACKAGES_CACHE_KEY)
 }
+
+export async function getAdminServiceCapabilities() {
+  const { data } = await client.get('/services/admin/capabilities/')
+  return collection(data)
+}
+
+export async function getAdminPackageVersions(params = {}) {
+  const { data } = await client.get('/services/admin/package-versions/', { params })
+  return collection(data)
+}
+
+export async function createAdminPackageVersion(payload) {
+  const { data } = await client.post('/services/admin/package-versions/', payload)
+  return data
+}
+
+export async function updateAdminPackageVersion(id, payload) {
+  const { data } = await client.put(`/services/admin/package-versions/${id}/`, payload)
+  return data
+}
+
+export async function deleteAdminPackageVersion(id) {
+  await client.delete(`/services/admin/package-versions/${id}/`)
+}
+
+export async function publishAdminPackageVersion(id) {
+  const { data } = await client.post(`/services/admin/package-versions/${id}/publish/`)
+  return data
+}
+
+export async function getAdminServiceEntitlements(params = {}) {
+  const { data } = await client.get('/services/admin/entitlements/', { params })
+  return data
+}
+
+export async function grantAdminServiceEntitlements(payload) {
+  const { data } = await client.post('/services/admin/entitlements/', payload)
+  return data
+}
+
+export async function revokeAdminServiceEntitlement(publicId, reason) {
+  const { data } = await client.post(`/services/admin/entitlements/${publicId}/revoke/`, { reason })
+  return data
+}
+
+export async function getAdminServiceAudit(params = {}) {
+  const { data } = await client.get('/services/admin/audit/', { params })
+  return data
+}
+
+export async function getAdminServiceActivations(params = {}) {
+  const { data } = await client.get('/services/admin/activations/', { params })
+  return data
+}
+
+export async function getAdminServiceActivationSummary(params = {}) {
+  const { data } = await client.get('/services/admin/activations/summary/', { params })
+  return data
+}
+
+export async function terminateAdminServiceActivation(publicId, reason) {
+  const { data } = await client.post(
+    `/services/admin/activations/${publicId}/terminate/`,
+    { reason },
+  )
+  return data
+}
+
+export async function getEmployerServiceInventory() {
+  const { data } = await client.get('/services/mine/inventory/')
+  const inventory = collection(data)
+  return Array.isArray(inventory) ? inventory : []
+}
+
+function normalizeActivationParams(scope) {
+  if (typeof scope === 'string') {
+    return scope ? { job_public_id: scope } : {}
+  }
+  return scope && typeof scope === 'object' ? scope : {}
+}
+
+export async function getEmployerActiveServices(scope = {}) {
+  const { data } = await client.get('/services/mine/activations/', {
+    params: normalizeActivationParams(scope),
+  })
+  const activations = collection(data)
+  return Array.isArray(activations) ? activations : []
+}
+
+export async function getEmployerServiceHistory(params = {}) {
+  const { data } = await client.get('/services/mine/activation-history/', { params })
+  return data
+}
+
+export async function previewEmployerServiceActivation(payload) {
+  const { data } = await client.post('/services/activations/preview/', payload)
+  return data
+}
+
+export async function activateEmployerService(payload, idempotencyKey) {
+  const { data } = await client.post('/services/activations/', payload, {
+    headers: { 'Idempotency-Key': idempotencyKey },
+  })
+  return data
+}
+
+export async function refreshEmployerJobService(activationPublicId, idempotencyKey) {
+  const { data } = await client.post(
+    `/services/activations/${activationPublicId}/refresh/`,
+    {},
+    { headers: { 'Idempotency-Key': idempotencyKey } },
+  )
+  return data
+}
+
+export async function previewEmployerJobAlert(activationPublicId) {
+  const { data } = await client.post(
+    `/services/activations/${activationPublicId}/job-alerts/preview/`,
+  )
+  return data
+}
+
+export async function createEmployerJobAlert(activationPublicId, idempotencyKey) {
+  const { data } = await client.post(
+    `/services/activations/${activationPublicId}/job-alerts/`,
+    {},
+    { headers: { 'Idempotency-Key': idempotencyKey } },
+  )
+  return data
+}

@@ -1,5 +1,12 @@
-import { AutoComplete, Checkbox, Input, InputNumber, Select } from 'antd'
-import { EXPERIENCE_OPTIONS, JobSpecializationPicker } from '@/features/configure-job-preferences'
+import { Checkbox, InputNumber, Select } from 'antd'
+import {
+  DesiredPositionTagsInput,
+  EXPERIENCE_OPTIONS,
+  JobSpecializationPicker,
+  MAX_CUSTOM_DESIRED_POSITIONS,
+  MAX_DESIRED_SPECIALIZATIONS,
+  normalizeDesiredPositionOthers,
+} from '@/features/configure-job-preferences'
 
 const DROPDOWN_CLASS_NAME = 'onboarding-chat__dropdown'
 const SALARY_PRESETS = [8, 10, 15, 20, 30].map((millions) => ({
@@ -32,29 +39,35 @@ function ChoiceChip({ children, onClick, selected }) {
  */
 export default function InterviewStepFields({ catalog, onQuickAnswer, onSend, setField, stepId, values }) {
   if (stepId === 'specialization') {
+    const selectedIds = values.desired_specialization_ids || []
+    const customPositions = normalizeDesiredPositionOthers(values.desired_position_others)
+
+    function selectSuggestedPosition(id) {
+      if (selectedIds.includes(id)) return true
+      if (selectedIds.length >= MAX_DESIRED_SPECIALIZATIONS) return false
+      setField('desired_specialization_ids', [...selectedIds, id])
+      return true
+    }
+
     return (
       <div className="space-y-3">
         <JobSpecializationPicker
           categories={catalog.categories}
           disabled={catalog.loading}
-          value={values.desired_specialization_ids}
+          maxSelections={MAX_DESIRED_SPECIALIZATIONS}
+          value={selectedIds}
           onChange={(ids) => setField('desired_specialization_ids', ids)}
         />
-        <AutoComplete
-          options={catalog.specializationSuggestions}
-          value={values.desired_position_other}
-          onChange={(text) => setField('desired_position_other', text)}
-          classNames={{ popup: { root: DROPDOWN_CLASS_NAME } }}
-          filterOption={(input, option) => option.value.toLocaleLowerCase('vi-VN').includes(input.toLocaleLowerCase('vi-VN'))}
-          className="w-full"
-        >
-          <Input
-            allowClear
-            maxLength={255}
-            placeholder="Vị trí khác không có trong danh mục (không bắt buộc)"
-            className="!h-11 !rounded-xl"
-          />
-        </AutoComplete>
+        <DesiredPositionTagsInput
+          availableSlots={Math.max(0, MAX_CUSTOM_DESIRED_POSITIONS - customPositions.length)}
+          availableSuggestionSlots={Math.max(0, MAX_DESIRED_SPECIALIZATIONS - selectedIds.length)}
+          disabled={catalog.loading}
+          selectedSuggestionIds={selectedIds}
+          suggestions={catalog.specializationSuggestions}
+          value={customPositions}
+          onChange={(positions) => setField('desired_position_others', positions)}
+          onSuggestionSelect={selectSuggestedPosition}
+        />
       </div>
     )
   }
@@ -150,7 +163,7 @@ export default function InterviewStepFields({ catalog, onQuickAnswer, onSend, se
         checked={values.ai_recommendation_consent}
         onChange={(event) => setField('ai_recommendation_consent', event.target.checked)}
       >
-        Đồng ý để hệ thống gợi ý việc làm dựa trên nhu cầu công việc và CV của tôi.
+        Đồng ý để hệ thống gợi ý việc làm dựa trên nhu cầu công việc của tôi.
       </Checkbox>
       <Checkbox
         checked={values.recruiter_visibility_consent}

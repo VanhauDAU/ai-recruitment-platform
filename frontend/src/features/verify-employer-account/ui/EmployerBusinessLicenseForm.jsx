@@ -1,6 +1,6 @@
 import { EditOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Button, Modal, Radio, Skeleton, Tag } from 'antd'
+import { Alert, Button, Modal, Radio, Skeleton, Tag } from 'antd'
 import { useState } from 'react'
 import { Link } from 'react-router'
 import {
@@ -8,6 +8,7 @@ import {
   getEmployerProfile,
   getEmployerCompanyDocuments,
   getEmployerCompanyDocumentContent,
+  prepareEmployerUpload,
   uploadEmployerBusinessDocument,
   uploadEmployerCompanyDocument,
 } from '@/entities/employer-profile'
@@ -24,6 +25,7 @@ import {
   uploadDocumentSet,
 } from '../model/business-document-set'
 import { EmployerBusinessDocumentCard } from './EmployerBusinessDocumentCard'
+import EmployerVerificationLifecycleAlert from './EmployerVerificationLifecycleAlert'
 
 const UPLOAD_GUIDE_URL = 'https://drive.google.com/file/d/1yYXQMXUjW7_vF3dlpsQd0EBo8WinH9K-/view'
 
@@ -42,12 +44,13 @@ export default function EmployerBusinessLicenseForm() {
   const [replacementFiles, setReplacementFiles] = useState({})
   const [submissionConfirmed, setSubmissionConfirmed] = useState(false)
   const [editingDocuments, setEditingDocuments] = useState(false)
+  const [uploadState, setUploadState] = useState(null)
   const queryClient = useQueryClient()
   const { siteName } = useSiteSettings()
   const profileQuery = useQuery({ queryKey: ['employer', 'profile'], queryFn: getEmployerProfile })
   const documentsQuery = useQuery({
-    queryKey: employerProfileKeys.companyDocuments,
-    queryFn: getEmployerCompanyDocuments,
+    queryKey: employerProfileKeys.companyDocumentList('mine'),
+    queryFn: () => getEmployerCompanyDocuments({ scope: 'mine' }),
   })
 
   async function refreshDashboard() {
@@ -66,16 +69,31 @@ export default function EmployerBusinessLicenseForm() {
       replacements,
       preserveExisting,
     }) => {
+      const filesToPrepare = preserveExisting || replacements.length
+        ? [...replacements.map(({ file }) => file), ...identityFiles]
+        : selectedMethod === 'business_registration'
+          ? [businessFile]
+          : [...authorizationFiles, ...identityFiles]
+      const uploadSessions = new Map(await Promise.all(
+        filesToPrepare.filter(Boolean).map(async (file) => [
+          file,
+          await prepareEmployerUpload(file, 'employer_verification', {
+            onStateChange: setUploadState,
+          }),
+        ]),
+      ))
       if (preserveExisting || replacements.length) {
         const replacementDocuments = []
         for (const { document, file } of replacements) {
           const savedDocument = document.doc_type === 'business_registration'
-            ? await uploadEmployerBusinessDocument(file, {
+              ? await uploadEmployerBusinessDocument(file, {
                 replaceDocument: document.public_id,
+                uploadSession: uploadSessions.get(file),
               })
             : await uploadEmployerCompanyDocument(document.doc_type, file, {
                 replaceDocument: document.public_id,
                 verificationMethod: selectedMethod,
+                uploadSession: uploadSessions.get(file),
               })
           replacementDocuments.push(savedDocument)
         }
@@ -83,22 +101,27 @@ export default function EmployerBusinessLicenseForm() {
           replacementDocuments.push(await uploadEmployerCompanyDocument(
             'identity_document',
             file,
-            { append: true },
+            { append: true, uploadSession: uploadSessions.get(file) },
           ))
         }
         return replacementDocuments
       }
       if (selectedMethod === 'business_registration') {
-        return uploadEmployerBusinessDocument(businessFile)
+        return uploadEmployerBusinessDocument(businessFile, {
+          uploadSession: uploadSessions.get(businessFile),
+        })
       }
       const authorizationDocuments = await uploadDocumentSet(
         'authorization_letter',
         authorizationFiles,
+        undefined,
+        { uploadSessions },
       )
       const identityDocuments = await uploadDocumentSet(
         'identity_document',
         identityFiles,
         'authorization_and_id',
+        { uploadSessions },
       )
       return [...authorizationDocuments, ...identityDocuments]
     },
@@ -108,33 +131,37 @@ export default function EmployerBusinessLicenseForm() {
       preserveExisting,
     }) => {
       const uploadedDocuments = savedDocumentsFromResponse(response)
-      queryClient.setQueryData(employerProfileKeys.companyDocuments, (cachedDocuments) => {
-        if (!preserveExisting) {
-          return replaceCachedDocuments(cachedDocuments, uploadedDocuments, selectedMethod)
-        }
-        const replacedIds = new Set(replacements.flatMap(({ document }) => (
-          [document.id, document.public_id].filter(Boolean)
-        )))
-        const uploadedIds = new Set(uploadedDocuments.flatMap((document) => (
-          [document.id, document.public_id].filter(Boolean)
-        )))
-        return [
-          ...uploadedDocuments,
-          ...(Array.isArray(cachedDocuments) ? cachedDocuments : []).filter(
-            (document) => (
-              !replacedIds.has(document.id)
-              && !replacedIds.has(document.public_id)
-              && !uploadedIds.has(document.id)
-              && !uploadedIds.has(document.public_id)
+      queryClient.setQueryData(
+        employerProfileKeys.companyDocumentList('mine'),
+        (cachedDocuments) => {
+          if (!preserveExisting) {
+            return replaceCachedDocuments(cachedDocuments, uploadedDocuments, selectedMethod)
+          }
+          const replacedIds = new Set(replacements.flatMap(({ document }) => (
+            [document.id, document.public_id].filter(Boolean)
+          )))
+          const uploadedIds = new Set(uploadedDocuments.flatMap((document) => (
+            [document.id, document.public_id].filter(Boolean)
+          )))
+          return [
+            ...uploadedDocuments,
+            ...(Array.isArray(cachedDocuments) ? cachedDocuments : []).filter(
+              (document) => (
+                !replacedIds.has(document.id)
+                && !replacedIds.has(document.public_id)
+                && !uploadedIds.has(document.id)
+                && !uploadedIds.has(document.public_id)
+              ),
             ),
-          ),
-        ]
-      })
+          ]
+        },
+      )
       setBusinessFiles([])
       setAuthorizationFiles([])
       setIdentityFiles([])
       setReplacementFiles({})
       setEditingDocuments(false)
+      setUploadState(null)
       setSubmissionConfirmed(true)
       await refreshDashboard()
     },
@@ -163,11 +190,13 @@ export default function EmployerBusinessLicenseForm() {
   if (profileQuery.isLoading) return <Skeleton active paragraph={{ rows: 10 }} />
 
   const companyLinked = Boolean(profileQuery.data?.onboarding?.company_linked)
+  const verificationCase = profileQuery.data?.verification_case || {}
+  const resubmissionLocked = Boolean(verificationCase.resubmission_locked)
   const documents = Array.isArray(documentsQuery.data) ? documentsQuery.data : []
   const savedDocuments = currentDocumentSet(documents)
   const savedStatus = documentStatus(savedDocuments.documents)
   const savedStatusMeta = savedStatus ? DOCUMENT_STATUS[savedStatus] : null
-  const showDocumentForm = !savedStatus || editingDocuments
+  const showDocumentForm = (!savedStatus || editingDocuments) && !resubmissionLocked
   const businessFile = businessFiles[0]?.originFileObj || businessFiles[0]
   const selectedAuthorizationFiles = filesFromUploadList(authorizationFiles)
   const selectedIdentityFiles = filesFromUploadList(identityFiles)
@@ -180,18 +209,36 @@ export default function EmployerBusinessLicenseForm() {
       ? [{ document: selection.document, file: file.originFileObj || file }]
       : []
   })
+  const replacementDocumentIds = new Set(replacements.map(({ document }) => (
+    document.public_id || document.id
+  )))
+  const requiredCorrectionDocuments = savedDocuments.documents.filter((document) => (
+    ['changes_requested', 'rejected'].includes(document.status)
+  ))
+  const allRequiredCorrectionsSelected = requiredCorrectionDocuments.every((document) => (
+    replacementDocumentIds.has(document.public_id || document.id)
+  ))
   const hasRequiredFiles = preservingCurrentMethod
-    ? Boolean(replacements.length || selectedIdentityFiles.length)
+    ? requiredCorrectionDocuments.length
+      ? allRequiredCorrectionsSelected
+      : Boolean(replacements.length || selectedIdentityFiles.length)
     : method === 'business_registration'
       ? Boolean(businessFile)
       : Boolean(selectedAuthorizationFiles.length && selectedIdentityFiles.length)
-  const canSave = companyLinked && hasRequiredFiles && !documentMutation.isPending
-  const saveHint = !companyLinked
+  const canSave = !resubmissionLocked
+    && companyLinked
+    && hasRequiredFiles
+    && !documentMutation.isPending
+  const saveHint = resubmissionLocked
+    ? 'Hồ sơ đã đạt giới hạn từ chối cuối và đang khóa nộp lại'
+    : !companyLinked
     ? 'Cần cập nhật thông tin công ty trước khi lưu'
     : !hasRequiredFiles
-      ? method === 'business_registration'
-        ? 'Chọn giấy đăng ký doanh nghiệp để lưu'
-        : 'Chọn đủ giấy ủy quyền và giấy tờ định danh để lưu'
+      ? preservingCurrentMethod && requiredCorrectionDocuments.length
+        ? 'Thay toàn bộ giấy tờ đang bị yêu cầu bổ sung hoặc từ chối trước khi nộp lại'
+        : method === 'business_registration'
+          ? 'Chọn giấy đăng ký doanh nghiệp để lưu'
+          : 'Chọn đủ giấy ủy quyền và giấy tờ định danh để lưu'
       : undefined
 
   function startEditing() {
@@ -239,6 +286,19 @@ export default function EmployerBusinessLicenseForm() {
 
   return (
     <div>
+      <EmployerVerificationLifecycleAlert
+        className="mb-5"
+        verificationCase={verificationCase}
+      />
+      {resubmissionLocked && (
+        <Alert
+          className="mb-5"
+          showIcon
+          type="error"
+          title="Hồ sơ đang bị khóa nộp lại"
+          description={`Hồ sơ đã nhận ${verificationCase.final_rejection_count || 3}/${verificationCase.rejection_limit || 3} quyết định từ chối cuối. Bạn vẫn có thể xem giấy tờ và lý do gần nhất; hãy liên hệ bộ phận hỗ trợ để gửi khiếu nại hoặc đề nghị xem xét mở khóa.`}
+        />
+      )}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <h2 className="text-base font-semibold text-slate-800">Thông tin Giấy đăng ký doanh nghiệp</h2>
         <div className="flex w-full flex-wrap items-center gap-3 sm:w-auto sm:justify-end">
@@ -250,6 +310,7 @@ export default function EmployerBusinessLicenseForm() {
               aria-label="Chỉnh sửa giấy tờ"
               icon={<EditOutlined />}
               onClick={startEditing}
+              disabled={resubmissionLocked}
               className="!border-emerald-500 !text-emerald-600 hover:!border-emerald-600 hover:!text-emerald-700"
             >
               Chỉnh sửa
@@ -317,6 +378,7 @@ export default function EmployerBusinessLicenseForm() {
               editing={preservingCurrentMethod}
               replacementFiles={replacementFiles}
               onReplacementFilesChange={updateReplacementFiles}
+              uploadState={uploadState}
             />
           </div>
         )}
@@ -341,6 +403,7 @@ export default function EmployerBusinessLicenseForm() {
               editing={preservingCurrentMethod}
               replacementFiles={replacementFiles}
               onReplacementFilesChange={updateReplacementFiles}
+              uploadState={uploadState}
             />
             <EmployerBusinessDocumentCard
               label="Giấy tờ định danh (CCCD/ Hộ chiếu)"
@@ -358,6 +421,7 @@ export default function EmployerBusinessLicenseForm() {
               replacementFiles={replacementFiles}
               onReplacementFilesChange={updateReplacementFiles}
               allowNewFiles={preservingCurrentMethod}
+              uploadState={uploadState}
             />
           </div>
         )}

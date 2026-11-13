@@ -10,6 +10,14 @@ env/
 # Django
 backend/staticfiles/
 backend/media/
+backend/legacy-media/
+backend/public-media/
+backend/private-media/
+backend/quarantine/
+# Synthetic development media at repository root was accidentally tracked.
+# Local Docker uses named volumes; native Django defaults live under backend/.
+/public-media/
+/private-media/
 db.sqlite3
 celerybeat-schedule*
 *.rdb
@@ -30,9 +38,20 @@ node_modules/
 frontend/dist/
 frontend/dist-ssr/
 .vite/
+test-results/
+playwright-report/
+blob-report/
+coverage/
 
 # Env files
 .env
+.env.*
+!.env.example
+!.env.optional.example
+**/.env
+**/.env.*
+!**/.env.example
+!**/.env.optional.example
 .env.local
 *.env
 

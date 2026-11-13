@@ -8,7 +8,8 @@ from apps.accounts.models import User
 from apps.applications.models import Application
 from apps.cvs.models import UserCv
 from apps.cvs.services import create_initial_document
-from apps.employers.models import Company, RecruiterProfile, RecruitmentCampaign
+from apps.employers.models import Company, RecruitmentCampaign
+from apps.employers.tests.readiness_helpers import make_employer_ready
 from apps.locations.models import Location
 from apps.skills.models import Skill
 
@@ -37,6 +38,11 @@ class SavedJobRecommendationApiTests(APITestCase):
         self.company = Company.objects.create(
             company_name='Saved Recommendations Co',
             created_by=self.employer,
+        )
+        self.recruiter = make_employer_ready(
+            self.employer,
+            company=self.company,
+            candidate_data=True,
         )
         self.category = JobCategory.objects.create(
             name='Backend Developer',
@@ -383,9 +389,8 @@ class SavedJobRecommendationApiTests(APITestCase):
             ),
             category=self.category,
         )
-        recruiter = RecruiterProfile.objects.create(user=self.employer, company=self.company)
         paused_campaign = RecruitmentCampaign.objects.create(
-            owner=recruiter,
+            owner=self.recruiter,
             company=self.company,
             name='Chiến dịch tạm dừng',
             status=RecruitmentCampaign.Status.PAUSED,

@@ -51,7 +51,7 @@ source venv/bin/activate
 pip install -r requirements.txt
 # Chỉ khi phát triển module AI/CV analysis:
 # pip install -r requirements-ai.txt
-cp .env.example .env   # chỉnh DB_USER/DB_PASSWORD nếu khác PostgreSQL local
+cp .env.example .env   # catalog tích hợp/tuning: .env.optional.example
 python manage.py migrate
 
 # Seed dữ liệu nền (chạy theo đúng thứ tự này — job_categories cần skills,
@@ -90,10 +90,12 @@ Email (xác thực, reset password, 2FA, OTP điện thoại) và tác vụ nặ
 thumbnail CV) đều chạy bất đồng bộ. Chạy thêm hai process từ thư mục `backend`:
 
 ```bash
-# Terminal worker: BẮT BUỘC khai đủ 3 queue. Settings route task sang
-# auth-email và cv-export; phần còn lại vào default. Thiếu queue nào thì task
-# của queue đó im lặng không chạy (không lỗi, không log).
-venv/bin/celery -A config worker -l info -Q default,auth-email,cv-export
+# Terminal worker thường: phải nghe đủ queue không-AI đang được route.
+venv/bin/celery -A config worker -l info \
+  -Q default,auth-email,auth-sms,cv-export,upload-scan,candidate-email
+
+# Terminal AI worker riêng để provider latency không chiếm pool thường.
+venv/bin/celery -A config worker -l info -Q ai-generation --concurrency=2
 
 # Terminal beat: quét lại job pending khi broker/worker từng bị gián đoạn
 venv/bin/celery -A config beat -l info
@@ -121,17 +123,19 @@ python manage.py runserver 8000
 ```bash
 cd frontend
 npm install
-cp .env.example .env
+cp .env.example .env.local
 npm run dev   # http://localhost:5173
 ```
 
-`frontend/.env` mặc định trỏ API về backend local:
+`frontend/.env.local` tối thiểu dùng proxy cùng origin:
 
 ```env
-VITE_API_BASE_URL=http://localhost:8000/api
+VITE_API_BASE_URL=/api
 VITE_RECAPTCHA_SITE_KEY=
-VITE_ANNOUNCEMENT_ROLLOUT_SURFACES=
 ```
+
+Branding, host ba cổng, consent, rollout và tooling xem trong
+`frontend/.env.optional.example`; file catalog này không được tự động nạp.
 
 Backend remote feed mặc định tắt. Bật theo surface trong `backend/.env`:
 

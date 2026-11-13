@@ -60,7 +60,7 @@ SETTINGS = [
                 },
                 {
                     'title': 'Việc làm chất lượng được xác thực',
-                    'description': 'Tin tuyển dụng từ công ty đã xác thực, đầy đủ mức lương và phúc lợi.',
+                    'description': 'Tin tuyển dụng từ nhà tuyển dụng đã xác thực, đầy đủ mức lương và phúc lợi.',
                 },
             ],
             'cta_label': 'Tạo CV ngay',

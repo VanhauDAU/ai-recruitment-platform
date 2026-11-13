@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowRightOutlined, AudioMutedOutlined, CloseOutlined, RedoOutlined, SoundOutlined } from '@ant-design/icons'
+import { ArrowRightOutlined, CloseOutlined } from '@ant-design/icons'
 import { Button } from 'antd'
 import { jobPreferenceFieldErrors, saveJobPreferences, useJobPreferenceCatalog } from '@/features/configure-job-preferences'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
@@ -8,23 +8,21 @@ import { useVisualViewportBottomInset } from '@/shared/hooks/use-visual-viewport
 import { ProcvMascot } from '@/shared/ui/mascot'
 import { buildTranscript } from '../model/chat-transcript'
 import { START_REPLY } from '../model/interview-script'
-import { useOnboardingVoice } from '../model/onboarding-voice-context'
 import { useInterviewChat } from '../model/use-interview-chat'
 import ChatComposer from './ChatComposer'
 import ChatMessage from './ChatMessage'
 import '../onboarding-interview.css'
 
-/** Nhịp "robot đang gõ" trước mỗi lượt nói, đủ để thấy đây là hội thoại. */
+/** Nhịp "robot đang gõ" trước mỗi tin nhắn, đủ để thấy đây là hội thoại. */
 const TYPING_MS = 420
-/** Đếm ngược sang trang việc làm, chỉ chạy sau khi robot nói dứt câu chốt. */
+/** Đếm ngược sang trang việc làm, chỉ chạy sau khi tin nhắn chốt hiện đầy đủ. */
 const COUNTDOWN_SECONDS = 5
 const ICON_BUTTON_CLASS = 'inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-emerald-600 disabled:cursor-not-allowed disabled:opacity-40'
 
-function botEmotion({ latestId, phase, speaking }) {
+function botEmotion({ latestId, phase }) {
   if (phase === 'saving') return 'thinking'
   if (phase === 'ready') return 'success'
   if (phase === 'retry' || latestId?.startsWith('nag-')) return 'error'
-  if (speaking) return 'happy'
   return 'neutral'
 }
 
@@ -55,7 +53,6 @@ function useTypingPause(liveId, reducedMotion) {
  */
 export default function OnboardingChat({ onFinish, onSaved, onSkip, preference, user }) {
   const catalog = useJobPreferenceCatalog()
-  const voice = useOnboardingVoice()
   const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)')
   // Ẩn/thu gọn bằng JS thay vì class `hidden sm:*`: nút dùng chung đã có
   // `inline-flex` nên hai utility display sẽ tranh nhau theo thứ tự stylesheet.
@@ -95,7 +92,7 @@ export default function OnboardingChat({ onFinish, onSaved, onSkip, preference, 
   const latest = messages[messages.length - 1]
   const liveId = latest?.role === 'bot' ? latest.id : null
   const liveShown = useTypingPause(liveId, reducedMotion)
-  const emotion = botEmotion({ latestId: liveId, phase: chat.phase, speaking: voice.speaking })
+  const emotion = botEmotion({ latestId: liveId, phase: chat.phase })
 
   const scrollRef = useRef(null)
   const stickyRef = useRef(true)
@@ -114,30 +111,23 @@ export default function OnboardingChat({ onFinish, onSaved, onSkip, preference, 
 
   useEffect(keepLatestVisible, [keepLatestVisible, liveShown, messages.length])
 
-  const [readySpoken, setReadySpoken] = useState(false)
+  const [readyRevealed, setReadyRevealed] = useState(false)
   const [secondsLeft, setSecondsLeft] = useState(COUNTDOWN_SECONDS)
   const handleRevealed = useCallback((id) => {
-    if (id === 'ready') setReadySpoken(true)
+    if (id === 'ready') setReadyRevealed(true)
   }, [])
 
   useEffect(() => {
-    if (!readySpoken) return undefined
+    if (!readyRevealed) return undefined
     if (secondsLeft <= 0) {
       onFinish()
       return undefined
     }
     const timer = window.setTimeout(() => setSecondsLeft((value) => value - 1), 1000)
     return () => window.clearTimeout(timer)
-  }, [onFinish, readySpoken, secondsLeft])
+  }, [onFinish, readyRevealed, secondsLeft])
 
-  function begin() {
-    // Cử chỉ duy nhất mở Web Audio cho cả luồng — sau lời chào robot nói được ngay.
-    voice.unlock()
-    chat.start()
-  }
-
-  const status = voice.speaking ? 'Đang nói…'
-    : !liveShown ? 'Đang nhập…'
+  const status = !liveShown ? 'Đang nhập…'
       : chat.phase === 'saving' ? 'Đang lọc việc làm cho bạn…'
         : chat.phase === 'ready' ? 'Đã xong' : 'Đang trực tuyến'
 
@@ -150,7 +140,7 @@ export default function OnboardingChat({ onFinish, onSaved, onSkip, preference, 
     >
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-3xl bg-white shadow-2xl shadow-emerald-950/30">
         <header className="flex shrink-0 items-center gap-2 border-b border-slate-100 px-3 py-2.5 sm:gap-3 sm:px-5">
-          <ProcvMascot blink emotion={emotion} pose="microphone" size={compact ? 36 : 44} talking={voice.speaking} />
+          <ProcvMascot blink emotion={emotion} size={compact ? 36 : 44} />
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-semibold text-slate-800">Trợ lý ProCV</p>
             <p className="truncate text-xs text-slate-500">{status}</p>
@@ -159,26 +149,6 @@ export default function OnboardingChat({ onFinish, onSaved, onSkip, preference, 
             <span className="shrink-0 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
               Câu {chat.index + 1}/{chat.total}
             </span>
-          )}
-          <button
-            type="button"
-            aria-label={voice.enabled ? 'Tắt giọng đọc' : 'Bật giọng đọc'}
-            aria-pressed={voice.enabled}
-            onClick={voice.toggle}
-            className={ICON_BUTTON_CLASS}
-          >
-            {voice.enabled ? <SoundOutlined /> : <AudioMutedOutlined />}
-          </button>
-          {voice.enabled && !compact && (
-            <button
-              type="button"
-              aria-label="Nghe lại"
-              disabled={voice.speaking || !liveId}
-              onClick={() => voice.replay(liveId, latest?.text)}
-              className={ICON_BUTTON_CLASS}
-            >
-              <RedoOutlined />
-            </button>
           )}
           {chat.phase !== 'ready' && (
             <button
@@ -253,7 +223,7 @@ export default function OnboardingChat({ onFinish, onSaved, onSkip, preference, 
                 type="primary"
                 icon={<ArrowRightOutlined />}
                 iconPlacement="end"
-                onClick={begin}
+                onClick={chat.start}
                 className="!h-10 !rounded-full !border-emerald-700 !bg-emerald-600 !px-7 !font-semibold hover:!bg-emerald-700"
               >
                 {START_REPLY}
@@ -293,7 +263,7 @@ export default function OnboardingChat({ onFinish, onSaved, onSkip, preference, 
                 Xem việc làm dành riêng cho bạn
               </Button>
               <p className="text-xs text-slate-500">
-                {readySpoken
+                {readyRevealed
                   ? <>Tự động chuyển sau <span className="font-semibold text-emerald-700">{secondsLeft}</span> giây</>
                   : 'Hệ thống sẽ tự động chuyển bạn đến trang việc làm ngay sau đây'}
               </p>

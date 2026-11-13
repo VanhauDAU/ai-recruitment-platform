@@ -1,8 +1,14 @@
+from unittest.mock import patch
+
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from rest_framework.test import APIClient
 
-from ..models import CandidateEmailNotificationSettings
+from ..models import (
+    CandidateConsent,
+    CandidateEmailNotificationSettings,
+    CandidateJobPreference,
+)
 
 
 class CandidateEmailNotificationSettingsApiTests(TestCase):
@@ -27,18 +33,26 @@ class CandidateEmailNotificationSettingsApiTests(TestCase):
             email='candidate-notifications@example.com',
             password='password',
             role='candidate',
+            email_verified=True,
         )
         self.client = APIClient()
         self.client.force_authenticate(self.user)
 
-    def test_get_returns_enabled_defaults_without_creating_settings(self):
+    def test_get_returns_safe_defaults_without_creating_settings(self):
         self.assertFalse(CandidateEmailNotificationSettings.objects.exists())
 
         response = self.client.get(self.url)
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(set(response.data), self.field_names)
-        self.assertTrue(all(response.data.values()))
+        self.assertFalse(response.data['suitable_job_recommendations'])
+        self.assertTrue(
+            all(
+                value
+                for key, value in response.data.items()
+                if key != 'suitable_job_recommendations'
+            )
+        )
         self.assertFalse(CandidateEmailNotificationSettings.objects.exists())
 
     def test_get_returns_persisted_choices(self):
@@ -91,7 +105,53 @@ class CandidateEmailNotificationSettingsApiTests(TestCase):
         self.assertFalse(settings.configured_job_alerts)
         self.assertFalse(settings.service_introductions)
         self.assertFalse(settings.employer_viewed_cv)
-        self.assertTrue(settings.suitable_job_recommendations)
+        self.assertFalse(settings.suitable_job_recommendations)
+
+    def test_enabling_suitable_recommendations_requires_configured_preferences(self):
+        response = self.client.patch(
+            self.url,
+            {'suitable_job_recommendations': True},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data['code'], 'preferences_required')
+        self.assertFalse(CandidateEmailNotificationSettings.objects.exists())
+
+    def test_enabling_suitable_recommendations_requires_ai_consent(self):
+        profile = self.user.candidate_profile
+        profile.job_preferences_configured = True
+        profile.save(update_fields=['job_preferences_configured', 'updated_at'])
+        CandidateJobPreference.objects.create(candidate_profile=profile)
+
+        response = self.client.patch(
+            self.url,
+            {'suitable_job_recommendations': True},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data['code'], 'consent_required')
+
+    def test_candidate_can_opt_in_after_granting_ai_consent(self):
+        profile = self.user.candidate_profile
+        profile.job_preferences_configured = True
+        profile.save(update_fields=['job_preferences_configured', 'updated_at'])
+        CandidateJobPreference.objects.create(candidate_profile=profile)
+        CandidateConsent.objects.create(
+            candidate_profile=profile,
+            consent_type=CandidateConsent.ConsentType.AI_RECOMMENDATION,
+            decision=CandidateConsent.Decision.GRANTED,
+        )
+
+        response = self.client.patch(
+            self.url,
+            {'suitable_job_recommendations': True},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.data['suitable_job_recommendations'])
 
     def test_settings_are_candidate_only(self):
         anonymous = APIClient()
@@ -124,3 +184,52 @@ class CandidateEmailNotificationSettingsApiTests(TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn('configured_job_alerts', response.data)
         self.assertFalse(CandidateEmailNotificationSettings.objects.exists())
+
+    def test_unverified_candidate_cannot_reenable_job_email_but_can_disable(self):
+        settings = CandidateEmailNotificationSettings.objects.create(
+            candidate_profile=self.user.candidate_profile,
+            configured_job_alerts=False,
+        )
+        self.user.email_verified = False
+        self.user.save(update_fields=['email_verified', 'updated_at'])
+
+        enabled = self.client.patch(
+            self.url,
+            {'configured_job_alerts': True},
+            format='json',
+        )
+        self.assertEqual(enabled.status_code, 400)
+        self.assertEqual(enabled.data['code'], 'email_unverified')
+        settings.refresh_from_db()
+        self.assertFalse(settings.configured_job_alerts)
+
+        settings.configured_job_alerts = True
+        settings.save(update_fields=['configured_job_alerts', 'updated_at'])
+        disabled = self.client.patch(
+            self.url,
+            {'configured_job_alerts': False},
+            format='json',
+        )
+        self.assertEqual(disabled.status_code, 200)
+        self.assertFalse(disabled.data['configured_job_alerts'])
+
+    @patch(
+        'apps.jobs.services.reset_candidate_job_delivery_cursors',
+        side_effect=RuntimeError('cursor reset failed'),
+    )
+    def test_cursor_reset_failure_rolls_back_preference_transition(self, _reset):
+        settings = CandidateEmailNotificationSettings.objects.create(
+            candidate_profile=self.user.candidate_profile,
+            configured_job_alerts=False,
+        )
+        self.client.raise_request_exception = False
+
+        response = self.client.patch(
+            self.url,
+            {'configured_job_alerts': True},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 500)
+        settings.refresh_from_db()
+        self.assertFalse(settings.configured_job_alerts)

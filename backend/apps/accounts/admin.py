@@ -51,6 +51,19 @@ class UserAdmin(DjangoUserAdmin):
         ),
     )
 
+    def get_readonly_fields(self, request, obj=None):
+        """Keep identity proofs immutable outside their audited workflows.
+
+        New users still receive an e-mail through ``add_fieldsets``. Once the
+        account exists, changing the mailbox/phone or toggling verification in
+        Django Admin would detach the value from the evidence that proved it.
+        """
+
+        fields = list(super().get_readonly_fields(request, obj))
+        if obj is not None:
+            fields.extend(['email', 'phone', 'email_verified'])
+        return fields
+
     @admin.display(description='Created at')
     def created_at_display(self, obj):
         return obj.date_joined
