@@ -192,7 +192,7 @@ jobs:
           retention-days: 5
 
   coverage-shard:
-    name: coverage-shard (${{ matrix.shard }}/3)
+    name: coverage-shard (${{ matrix.shard }}/${{ strategy.job-total }})
     needs: changes
     if: ${{ needs.changes.result == 'success' && needs.changes.outputs.frontend == 'true' && !cancelled() }}
     runs-on: ubuntu-latest
@@ -201,7 +201,8 @@ jobs:
       # Let every shard finish so one failure still yields complete diagnostics.
       fail-fast: false
       matrix:
-        shard: [1, 2, 3]
+        # Keep UNIT_TEST_SHARDS in the `coverage` job equal to this list's length.
+        shard: [1, 2, 3, 4]
     defaults:
       run:
         working-directory: frontend
@@ -218,25 +219,26 @@ jobs:
       - name: Install dependencies
         run: npm ci --prefer-offline --no-audit
 
-      - name: Unit tests (shard ${{ matrix.shard }}/3)
+      - name: Unit tests (shard ${{ matrix.shard }}/${{ strategy.job-total }})
         id: coverage_tests
         shell: bash
         env:
           SHARD: ${{ matrix.shard }}
+          SHARD_TOTAL: ${{ strategy.job-total }}
         run: |
           set -o pipefail
           # Serialize jsdom/Ant Design interaction tests on GitHub-hosted
           # runners. Parallel workers compete for CPU and make otherwise fast
           # interaction tests exceed their per-test timeout under coverage.
-          # Parallelism comes from three runners instead of three workers.
+          # Parallelism comes from separate runners instead of extra workers.
           #
-          # A single shard only sees a third of the suite, so the ratchet in
+          # A single shard only sees part of the suite, so the ratchet in
           # vite.config.js cannot be evaluated here. Thresholds are zeroed for
           # the shard and enforced once on the merged report by `coverage`.
           timeout --signal=TERM --kill-after=30s 17m \
             npm run test:coverage -- \
               --maxWorkers=1 \
-              --shard="${SHARD}/3" \
+              --shard="${SHARD}/${SHARD_TOTAL}" \
               --reporter=verbose \
               --reporter=blob \
               --coverage.thresholds.statements=0 \
@@ -308,11 +310,13 @@ jobs:
       - name: Merge shards and enforce coverage gate
         id: coverage_tests
         shell: bash
+        env:
+          UNIT_TEST_SHARDS: 4
         run: |
           set -o pipefail
           ls -l .vitest-reports
-          [[ "$(find .vitest-reports -name 'blob-*.json' | wc -l)" -eq 3 ]]
-          # No test runs here: Vitest replays the three blob reports, merges
+          [[ "$(find .vitest-reports -name 'blob-*.json' | wc -l)" -eq "$UNIT_TEST_SHARDS" ]]
+          # No test runs here: Vitest replays the blob reports, merges
           # their coverage maps and applies the thresholds from vite.config.js.
           npx vitest run --merge-reports \
             --coverage \
@@ -382,7 +386,7 @@ jobs:
           elapsed = max(0, int(time.time()) - started_at)
           summary = Path(os.environ['GITHUB_STEP_SUMMARY'])
           with summary.open('a') as stream:
-              stream.write('## Frontend coverage (3 shards merged)\n\n')
+              stream.write('## Frontend coverage (shards merged)\n\n')
               stream.write('| Metric | Value |\n| --- | --- |\n')
               stream.write(f"| Result | {os.environ.get('JOB_STATUS', 'unknown')} |\n")
               stream.write(f'| Tests | {tests} |\n')
@@ -421,6 +425,10 @@ jobs:
       # value, CI has no gitignored frontend/.env and Vite falls back to its
       # same-origin proxy, bypassing older route fixtures bound to port 8000.
       VITE_API_BASE_URL: http://localhost:8000/api
+      # Smoke-test the production bundle (vite build + vite preview). The
+      # unbundled dev server made multi-route tests exceed their 30s budget on
+      # hosted runners. Set to `dev` to restore the previous behaviour.
+      PLAYWRIGHT_WEB_SERVER: preview
     defaults:
       run:
         working-directory: frontend

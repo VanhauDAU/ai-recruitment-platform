@@ -27,6 +27,7 @@ jobs:
       docs: ${{ steps.areas.outputs.docs }}
       ci: ${{ steps.areas.outputs.ci }}
       deploy: ${{ steps.areas.outputs.deploy }}
+      backend_migrations: ${{ steps.areas.outputs.backend_migrations }}
       changed_count: ${{ steps.areas.outputs.changed_count }}
     steps:
       - uses: actions/checkout@v5
@@ -52,6 +53,7 @@ jobs:
           DOCS: ${{ steps.areas.outputs.docs }}
           CI_AREA: ${{ steps.areas.outputs.ci }}
           DEPLOY: ${{ steps.areas.outputs.deploy }}
+          MIGRATIONS: ${{ steps.areas.outputs.backend_migrations }}
           CHANGED_COUNT: ${{ steps.areas.outputs.changed_count }}
         run: |
           {
@@ -66,6 +68,7 @@ jobs:
             echo "| Docs | ${DOCS:-unknown} |"
             echo "| CI | ${CI_AREA:-unknown} |"
             echo "| Deploy | ${DEPLOY:-unknown} |"
+            echo "| Migration suite | ${MIGRATIONS:-unknown} |"
           } >> "$GITHUB_STEP_SUMMARY"
 
   backend-checks:
@@ -170,9 +173,14 @@ jobs:
           # Stop pytest before the job-level timeout so always() diagnostics
           # still have time to publish the active test and faulthandler output.
           # loadfile keeps every test of one module on the same worker, so
-          # class-level fixtures and migration tests keep their ordering.
+          # class-level fixtures keep their ordering.
+          #
+          # Migration upgrade/recovery tests are excluded here: they were 19 of
+          # the suite's 31 serial minutes and run in `backend-migration-tests`
+          # when the change detector says they can be affected.
           timeout --signal=TERM --kill-after=30s 47m pytest -vv \
             -n "$PYTEST_WORKERS" --dist loadfile \
+            --ignore-glob='*/tests/test_*migrations*.py' \
             --cov \
             --cov-fail-under=84 \
             --cov-report=term-missing \
@@ -245,9 +253,99 @@ jobs:
           if-no-files-found: ignore
           retention-days: 5
 
+  backend-migration-tests:
+    name: backend-migration-tests
+    needs: changes
+    if: ${{ needs.changes.outputs.backend == 'true' && needs.changes.outputs.backend_migrations == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: ai_career_coach
+        ports: ['5432:5432']
+        options: >-
+          --tmpfs /var/lib/postgresql/data:rw
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DB_NAME: ai_career_coach
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_HOST: localhost
+      DB_PORT: '5432'
+      SECRET_KEY: ci-secret-key-at-least-32-characters-long-xxx
+      DEBUG: 'True'
+      DJANGO_SETTINGS_MODULE: config.settings.test
+      PYTEST_WORKERS: auto
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install dependencies
+        run: python -m pip install --disable-pip-version-check -r requirements.txt
+
+      - name: Tune PostgreSQL for throwaway CI data
+        working-directory: .
+        env:
+          POSTGRES_CONTAINER: ${{ job.services.postgres.id }}
+        run: |
+          docker exec "$POSTGRES_CONTAINER" psql -U postgres -v ON_ERROR_STOP=1 \
+            -c "ALTER SYSTEM SET fsync = off" \
+            -c "ALTER SYSTEM SET synchronous_commit = off" \
+            -c "ALTER SYSTEM SET full_page_writes = off" \
+            -c "SELECT pg_reload_conf()"
+
+      - name: Migration upgrade and recovery tests
+        id: pytest
+        shell: bash
+        run: |
+          set -o pipefail
+          shopt -s nullglob
+          files=(apps/*/tests/test_*migrations*.py)
+          echo "Migration test modules: ${#files[@]}"
+          printf '  %s\n' "${files[@]}"
+          # An empty match would make pytest collect the whole suite.
+          [[ "${#files[@]}" -gt 0 ]]
+          # Every test rewinds and replays the schema inside its own worker
+          # database, so tests are independent and can be spread one by one
+          # (--dist load) instead of being pinned to their module's worker.
+          # Coverage is gated in backend-checks; migrations are omitted from
+          # the coverage source anyway.
+          timeout --signal=TERM --kill-after=30s 27m pytest -vv \
+            -n "$PYTEST_WORKERS" --dist load \
+            --junitxml=pytest-migrations.xml \
+            "${files[@]}" \
+            2>&1 | tee pytest-migrations.log
+
+      - name: Upload migration diagnostics
+        if: ${{ always() && steps.pytest.outcome != 'success' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-migration-diagnostics-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            backend/pytest-migrations.log
+            backend/pytest-migrations.xml
+          if-no-files-found: ignore
+          retention-days: 5
+
   quality:
     name: quality
-    needs: [changes, backend-checks]
+    needs: [changes, backend-checks, backend-migration-tests]
     if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -258,6 +356,8 @@ jobs:
           CHANGES_RESULT: ${{ needs.changes.result }}
           BACKEND_CHANGED: ${{ needs.changes.outputs.backend }}
           BACKEND_RESULT: ${{ needs.backend-checks.result }}
+          MIGRATIONS_REQUIRED: ${{ needs.changes.outputs.backend_migrations }}
+          MIGRATIONS_RESULT: ${{ needs.backend-migration-tests.result }}
           FRONTEND_CHANGED: ${{ needs.changes.outputs.frontend }}
           DOCS_CHANGED: ${{ needs.changes.outputs.docs }}
           CI_CHANGED: ${{ needs.changes.outputs.ci }}
@@ -267,7 +367,18 @@ jobs:
           gate=failure
           reason='Change detection or backend checks did not complete successfully.'
 
-          if [[ "$CHANGES_RESULT" == success && "$BACKEND_CHANGED" == true && "$BACKEND_RESULT" == success ]]; then
+          # The migration suite must have passed when it was required and must
+          # have been skipped (never failed or cancelled) when it was not.
+          migrations_ok=false
+          if [[ "$BACKEND_CHANGED" == true && "$MIGRATIONS_REQUIRED" == true ]]; then
+            [[ "$MIGRATIONS_RESULT" == success ]] && migrations_ok=true
+          elif [[ "$MIGRATIONS_REQUIRED" == true || "$MIGRATIONS_REQUIRED" == false ]]; then
+            [[ "$MIGRATIONS_RESULT" == skipped ]] && migrations_ok=true
+          fi
+
+          if [[ "$migrations_ok" != true ]]; then
+            reason="Migration suite result '${MIGRATIONS_RESULT:-unknown}' does not match detector output '${MIGRATIONS_REQUIRED:-unknown}'."
+          elif [[ "$CHANGES_RESULT" == success && "$BACKEND_CHANGED" == true && "$BACKEND_RESULT" == success ]]; then
             gate=success
             reason='All backend checks passed.'
           elif [[ "$CHANGES_RESULT" == success && "$BACKEND_CHANGED" == false && "$BACKEND_RESULT" == skipped ]]; then
@@ -283,6 +394,7 @@ jobs:
             echo "| Changed files | ${CHANGED_COUNT:-unknown} |"
             echo "| Areas | backend=${BACKEND_CHANGED:-unknown}, frontend=${FRONTEND_CHANGED:-unknown}, docs=${DOCS_CHANGED:-unknown}, ci=${CI_CHANGED:-unknown}, deploy=${DEPLOY_CHANGED:-unknown} |"
             echo "| Heavy checks | ${BACKEND_RESULT:-unknown} |"
+            echo "| Migration suite (required=${MIGRATIONS_REQUIRED:-unknown}) | ${MIGRATIONS_RESULT:-unknown} |"
             echo "| Gate | ${gate^^} |"
             echo "| Reason | $reason |"
           } >> "$GITHUB_STEP_SUMMARY"

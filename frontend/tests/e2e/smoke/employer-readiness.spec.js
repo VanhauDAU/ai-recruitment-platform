@@ -59,7 +59,7 @@ test.beforeEach(async ({ page }) => {
   await setDeniedEmployerSession(page)
 })
 
-test('candidate-data guard preserves a denied applications URL and makes zero sensitive calls', async ({ page }) => {
+test('candidate-data guard redirects a denied applications URL to verification and makes zero sensitive calls', async ({ page }) => {
   let applicationCalls = 0
   await page.route(/http:\/\/localhost:8000\/api\/v2\/recruiter\/applications\/.*/, async (route) => {
     applicationCalls += 1
@@ -68,12 +68,11 @@ test('candidate-data guard preserves a denied applications URL and makes zero se
 
   await page.goto('/tuyendung/app/applications?job=jb_private&application=app_private')
 
-  await expect(page).toHaveURL(/\/tuyendung\/app\/applications\?job=jb_private&application=app_private$/)
-  await expect(page.getByText(
-    'DPA cần được cập nhật trước khi xem dữ liệu ứng viên.',
-    { exact: true },
-  )).toBeVisible()
-  await expect(page.getByRole('link', { name: 'Cập nhật DPA hiện hành' }).last()).toBeVisible()
+  // Since 7e4c7269 EmployerCapabilityGuard sends a denied route-level request
+  // to the verification page instead of rendering the gate in place (see
+  // EmployerCapabilityGuard.test.jsx). The security contract is unchanged:
+  // the applications API is never called for a denied profile.
+  await expect(page).toHaveURL(/\/tuyendung\/app\/employer-verify$/)
   await expect.poll(() => applicationCalls).toBe(0)
 })
 

@@ -53,7 +53,7 @@ trong Site Settings cũng được kiểm kê, gồm `EMAIL_HOST_PASSWORD`,
 | Runtime | `VITE_RECAPTCHA_SITE_KEY` | public site key, rỗng local | Có | Giữ minimal; không phải secret reCAPTCHA backend |
 | Portal/branding | `VITE_MAIN_HOST`, `VITE_EMPLOYER_HOST`, `VITE_ADMIN_HOST`, `VITE_AUTH_SYNC_COOKIE_DOMAIN`, `VITE_SITE_*`, `VITE_PUBLIC_ASSET_BASE_URL` | rỗng hoặc fallback trong code | Có | Chuyển optional; route/asset tests |
 | Consent/rollout | `VITE_COOKIE_CONSENT_ENABLED`, `VITE_ANNOUNCEMENT_ROLLOUT_SURFACES` | `true`/rỗng | Có | Chuyển optional; unit/E2E hiện hành |
-| Node tooling | `API_PROXY_TARGET`, `PORT`, `PLAYWRIGHT_PORT`, `ANALYZE` | có default local | Không bundle | Chuyển optional, không đổi thành `VITE_*` |
+| Node tooling | `API_PROXY_TARGET`, `PORT`, `PLAYWRIGHT_PORT`, `PLAYWRIGHT_WEB_SERVER`, `ANALYZE` | có default local | Không bundle | Chuyển optional, không đổi thành `VITE_*` |
 
 Gate từ chối tên `VITE_*` có dấu hiệu chứa secret, password, private key, access
 key hoặc API token. `CI` và `import.meta.env.PROD` thuộc runner/Vite nên được ghi
