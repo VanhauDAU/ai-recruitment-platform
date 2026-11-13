@@ -6,31 +6,33 @@ Quyết định:
 [`adr-0014-job-post-moderation.md`](02-tong-quan/adr-0014-job-post-moderation.md),
 [`adr-0015-remove-commercial-services.md`](02-tong-quan/adr-0015-remove-commercial-services.md).
 
-> Cập nhật lần cuối: 2026-11-13 — PM-1 đến PM-3 đã commit trên nhánh
-> `refactor/remove-job-approval-workflow`. PM-2 đạt cổng backend: ruff,
-> import-linter, `makemigrations --check` và 1246 test (bỏ riêng test
-> migration, vốn đã đạt ở lần chạy theo app). PM-3 đạt oxlint (0 lỗi), vitest
-> (332 file, 1232 test), build và kiểm tra kiến trúc; **E2E chưa chạy được**
-> vì máy local chưa có đúng bản trình duyệt của Playwright. PM-3b (cam kết khi
-> đăng tin, trạng thái tạm ẩn cho nhà tuyển dụng) đã commit sau lần chạy cổng
-> đó nên **chưa được chạy test**; mới qua ruff và kiểm tra phụ thuộc frontend.
+> Cập nhật lần cuối: 2026-11-13 — PM-1 đến PM-3b hoàn tất trên nhánh
+> `refactor/remove-job-approval-workflow` và đạt đủ cổng. Backend: ruff,
+> import-linter, layering, `manage.py check`, `makemigrations --check`, pytest
+> 1268 passed, coverage 87,70%. Frontend: oxlint 0 lỗi, kiểm tra kiến trúc,
+> vitest (333 file, 1247 test), build, E2E smoke 270 passed (6 skip).
+> `openapi.yaml` đã sinh lại; bản cũ đã lệch 42 path từ các epic trước.
+>
+> Lưu ý khi chạy E2E local: nếu container frontend Docker đang giữ cổng 5173,
+> Playwright sẽ dùng lại server đó và nhiều test lỗi giả. Chạy
+> `PLAYWRIGHT_PORT=4317 PLAYWRIGHT_WEB_SERVER=preview npm run test:e2e:smoke`.
 
 | Phase | Nội dung | Trạng thái |
 | --- | --- | --- |
 | PM-0 | Tag `pre-post-moderation`, nhánh làm việc | ✅ Hoàn tất |
 | PM-1 | ADR-0014, ADR-0015, đánh dấu ADR-0012 thay thế một phần | ✅ Hoàn tất |
 | PM-2 | Backend: đăng tin là công khai, gỡ duyệt tin, migration dữ liệu | ✅ Hoàn tất — đạt cổng backend |
-| PM-3 | Frontend: cổng nhà tuyển dụng và quản trị theo hợp đồng API mới | 🟨 Đạt lint, unit test, build — còn chờ E2E |
-| PM-3b | Lưu cam kết chịu trách nhiệm khi đăng và mở lại tin; nhà tuyển dụng thấy tin bị tạm ẩn kèm nhóm lý do | 🟨 Đã commit — chờ chạy lại cổng backend và frontend |
+| PM-3 | Frontend: cổng nhà tuyển dụng và quản trị theo hợp đồng API mới | ✅ Hoàn tất — đạt cổng frontend kể cả E2E |
+| PM-3b | Lưu cam kết chịu trách nhiệm khi đăng và mở lại tin; nhà tuyển dụng thấy tin bị tạm ẩn kèm nhóm lý do | ✅ Hoàn tất — đạt cổng backend và frontend |
 | PM-4 | Xóa app `services` (gói dịch vụ, quyền lợi, yêu cầu tư vấn) | ⬜ Chưa bắt đầu |
 | PM-5 | Kiểm thử tích hợp ba cổng | ⬜ Chưa bắt đầu |
 | PM-6 | Dọn docs, xóa `99-tien-do`, dựng lại mục lục | ⬜ Chưa bắt đầu |
-| PM-7 | Bổ sung changelog còn thiếu, rút gọn tiến độ, sinh lại OpenAPI | ⬜ Chưa bắt đầu |
+| PM-7 | Bổ sung changelog còn thiếu, rút gọn tiến độ | ⬜ Chưa bắt đầu |
 
 Đã chốt (2026-11-13): nhà tuyển dụng không sửa được tin đang bị tạm ẩn; muốn
 khắc phục nội dung phải liên hệ quản trị viên.
 
-Việc còn treo: `docs/04-api/openapi.yaml` chưa được sinh lại. Khi `POST /api/jobs/mine/` bị từ chối ở bước đăng, bản nháp vừa tạo vẫn
+Việc còn treo: khi `POST /api/jobs/mine/` bị từ chối ở bước đăng, bản nháp vừa tạo vẫn
 được giữ lại (hành vi có từ trước, áp dụng cho mọi lý do từ chối).
 
 ## Epic rà soát và hardening cổng Nhà tuyển dụng (ER, 2026-08-10)
