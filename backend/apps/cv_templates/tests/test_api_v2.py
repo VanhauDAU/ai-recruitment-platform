@@ -139,8 +139,26 @@ class TemplateCatalogV2Tests(TestCase):
         self.assertEqual([tag['slug'] for tag in card['tags']], ['ats'])
         self.assertNotIn('default_layout_json', card)
         self.assertNotIn('renderer', card)
-        self.assertIn('max-age=300', response['Cache-Control'])
+        self.assertEqual(response['Cache-Control'], 'public, no-cache')
         self.assertIn('ETag', response)
+
+    def test_hiding_a_template_takes_effect_for_a_cached_catalogue_immediately(self):
+        """Hồi quy: "Tất cả" trước đây còn hiện mẫu đã ẩn suốt 5 phút cache."""
+        params = {'locale': 'vi-VN'}
+        first = self.client.get('/api/v2/cv-templates/', params)
+        unchanged = self.client.get(
+            '/api/v2/cv-templates/', params, HTTP_IF_NONE_MATCH=first['ETag']
+        )
+        self.primary.lifecycle_status = CvTemplate.LifecycleStatus.ARCHIVED
+        self.primary.save(update_fields=['lifecycle_status'])
+        after_hide = self.client.get(
+            '/api/v2/cv-templates/', params, HTTP_IF_NONE_MATCH=first['ETag']
+        )
+
+        self.assertEqual(unchanged.status_code, 304)
+        self.assertEqual(after_hide.status_code, 200)
+        self.assertNotIn(self.primary.slug, [card['slug'] for card in after_hide.data['results']])
+        self.assertIn(self.primary.slug, [card['slug'] for card in first.data['results']])
 
     def test_detail_and_related_only_use_current_published_template_versions(self):
         detail = self.client.get(f'/api/v2/cv-templates/{self.primary.slug}/', {'locale': 'vi-VN'})
@@ -389,7 +407,12 @@ class TemplateCatalogV2Tests(TestCase):
         self.assertEqual(create_response.status_code, 201, create_response.data)
         version_id = create_response.data['id']
 
-        with patch('apps.cv_templates.tasks.generate_template_color_snapshot.delay') as enqueue:
+        # Checklist xuất bản có test riêng (test_admin_portal); ở đây chỉ kiểm hợp đồng
+        # publish → snapshot.
+        with (
+            patch('apps.cv_templates.api.views.admin.publish_checklist', return_value=[]),
+            patch('apps.cv_templates.tasks.generate_template_color_snapshot.delay') as enqueue,
+        ):
             with self.captureOnCommitCallbacks(execute=True):
                 publish_response = self.client.post(
                     f'/api/v2/admin/cv-templates/{self.primary.public_id}/versions/{version_id}/publish/',
@@ -425,8 +448,7 @@ class TemplateCatalogV2Tests(TestCase):
                 )
                 for code in (
                     'cv_template.view',
-                    'cv_template.create',
-                    'cv_template.edit',
+                    'cv_template.manage',
                 )
             ]
         )
@@ -475,8 +497,9 @@ class TemplateCatalogV2Tests(TestCase):
         self.style.refresh_from_db()
         self.assertTrue(self.style.is_active)
 
+        # CVT-4: xóa nằm trong quyền quản lý (mục chưa dùng ở đâu).
         deleted = self.client.delete(f'/api/v2/admin/cv-categories/{created_category.public_id}/')
-        self.assertEqual(deleted.status_code, 403)
+        self.assertEqual(deleted.status_code, 204)
 
     def test_admin_endpoints_require_admin_role(self):
         response = self.client.get('/api/v2/admin/cv-templates/')
@@ -510,6 +533,23 @@ class TemplateCatalogV2Tests(TestCase):
 
         generate_template_color_snapshot(link.pk)
         self.assertEqual(save_once.call_count, 2)
+
+    def test_replaced_snapshots_are_deleted_later_and_never_while_still_in_use(self):
+        """Hồi quy ảnh vỡ ở kho mẫu: ảnh cũ không bị xóa ngay khi mẫu xuất bản lại."""
+        from apps.cv_templates.tasks import STALE_SNAPSHOT_GRACE_SECONDS, delete_stale_snapshot
+
+        link = self.primary.color_links.order_by('pk').first()
+        link.thumbnail_url = 'cv-templates/snapshots/tpl/old-thumbnail.png'
+        link.save(update_fields=['thumbnail_url'])
+        with patch('apps.cv_templates.tasks.public_media_storage') as storage:
+            delete_stale_snapshot(link.thumbnail_url)
+            delete_stale_snapshot('cv-templates/snapshots/tpl/gone-thumbnail.png')
+            delete_stale_snapshot('site/settings/logo.png')
+
+        storage.return_value.delete.assert_called_once_with(
+            'cv-templates/snapshots/tpl/gone-thumbnail.png'
+        )
+        self.assertGreaterEqual(STALE_SNAPSHOT_GRACE_SECONDS, 300)
 
     def test_published_template_version_and_its_sections_are_immutable(self):
         version = self.primary.current_published_version

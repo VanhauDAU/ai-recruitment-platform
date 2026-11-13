@@ -67,6 +67,9 @@ export default function CvSourcePanel({
     loadingPreview,
     previewError,
     selectedPosition,
+    experienceBands,
+    experienceBand,
+    setExperienceBand,
     setSelectedPosition,
     submitting,
     setUploadFile,
@@ -129,6 +132,28 @@ export default function CvSourcePanel({
                 label: position.display_name || position.name_vi,
               }))}
             />
+            <p className="mb-1.5 mt-3 text-xs font-semibold text-slate-700">Số năm kinh nghiệm</p>
+            <div role="radiogroup" aria-label="Số năm kinh nghiệm" className="flex flex-wrap gap-1.5">
+              {experienceBands.map((band) => (
+                <button
+                  key={band.value}
+                  type="button"
+                  role="radio"
+                  aria-checked={experienceBand === band.value}
+                  title={band.who}
+                  onClick={() => setExperienceBand(band.value)}
+                  className={[
+                    'rounded-full px-3 py-1 text-xs font-medium transition cursor-pointer',
+                    experienceBand === band.value
+                      ? 'bg-[var(--brand-primary)] text-white'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200',
+                  ].join(' ')}
+                >
+                  {band.label}
+                </button>
+              ))}
+            </div>
+            <p className="mt-1 text-[11px] leading-4 text-slate-500">Nội dung gợi ý được viết theo mức kinh nghiệm bạn chọn.</p>
             {previewError && <p className="mt-1.5 text-xs leading-5 text-amber-600">{previewError}</p>}
           </div>
         </SourceOption>

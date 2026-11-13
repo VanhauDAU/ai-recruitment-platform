@@ -34,6 +34,7 @@ from .lifecycle import (
     save_draft_as_version,
     switch_draft_template,
 )
+from .moderation import admin_cv_content, lock_cv, unlock_cv
 from .sharing import (
     CvSharePermissionError,
     CvShareUnavailableError,
@@ -52,6 +53,9 @@ from .versions import (
 )
 
 __all__ = [
+    'admin_cv_content',
+    'lock_cv',
+    'unlock_cv',
     'StaleDraftError',
     'UnsupportedCvUpload',
     'CvLifecyclePolicyError',

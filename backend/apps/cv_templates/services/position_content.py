@@ -15,6 +15,7 @@ from apps.jobs.models import JobCategory, JobCategoryLocalization
 
 from ..content_tokens import _materialize_tokens
 from ..models import EXPERIENCE_BAND_ORDER, CvPositionProfile, CvSampleContent
+from ..section_registry import blank_section, get_section_contract
 from .position_fields import SECTION_KEY as POSITION_DETAILS_KEY
 from .position_fields import apply_position_details
 
@@ -84,7 +85,15 @@ def _apply_section_preset(content, preset):
     enabled = {entry['section_key']: entry.get('enabled', True) for entry in preset}
     positions.setdefault(POSITION_DETAILS_KEY, positions.get('skills', len(positions)) + 0.5)
     enabled.setdefault(POSITION_DETAILS_KEY, True)
-    sections = content.get('sections', [])
+    sections = content.setdefault('sections', [])
+    present = {section.get('section_key') for section in sections}
+    # Mục vị trí yêu cầu mà nội dung gợi ý chưa có được thêm ở dạng trống để ứng
+    # viên điền: bộ mục của vị trí quyết định CV có mục nào, không phụ thuộc bản mẫu.
+    for entry in preset:
+        key = entry['section_key']
+        contract = get_section_contract(key)
+        if entry.get('enabled', True) and key not in present and not contract.personal_info_backed:
+            sections.append(blank_section(key, content.get('locale'), f'{key}_1'))
     for section in sections:
         key = section.get('section_key')
         section['enabled'] = enabled.get(key, False)

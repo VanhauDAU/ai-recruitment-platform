@@ -187,6 +187,13 @@ class CvTemplateVersion(models.Model):
         blank=True,
         related_name='created_cv_template_versions',
     )
+    published_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='published_cv_template_versions',
+    )
     published_at = models.DateTimeField(null=True, blank=True)
     retired_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -221,6 +228,7 @@ class CvTemplateVersion(models.Model):
         'capabilities',
         'content_contract',
         'created_by_id',
+        'published_by_id',
         'published_at',
         'created_at',
     )

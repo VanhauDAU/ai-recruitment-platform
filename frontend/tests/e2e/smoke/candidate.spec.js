@@ -516,6 +516,9 @@ test('candidate smoke: job application submits the selected immutable CV version
   const selectPreferredLocation = async (locationName) => {
     await locationSelect.click()
     await expect(locationDropdown).toBeVisible()
+    // Ant Design ignores clicks while the menu is still running its open
+    // animation; on a busy runner that dropped the selection (CI 2026-11-14).
+    await expect(locationDropdown).not.toHaveClass(/slide-up-(enter|appear)/)
     await locationDropdown.locator('.ant-select-item-option-content', { hasText: locationName }).click()
     await expect(applicationDialog.locator('.ant-select-selection-item-content', { hasText: locationName })).toBeVisible()
     // A multiple Select can keep its menu open after choosing an option. Dismiss

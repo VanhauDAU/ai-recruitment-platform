@@ -666,6 +666,7 @@ không đăng ký section chưa có giao diện dùng.
 - **Công việc:** 6 trang mục 9; wizard 6 bước có autosave; ma trận độ phủ; hàng đợi duyệt AI; CV ứng viên có audit; permission mới; xóa widget/route cũ.
 - **Đầu ra:** `widgets/admin-cv-*` mới, page admin, route, E2E.
 - **Nghiệm thu:** một admin chưa từng dùng tạo và xuất bản template mới trong ≤ 10 phút (đo bằng thử nghiệm người dùng); không có màn nào yêu cầu sửa JSON thô; không cuộn ngang ở 1280 px; dùng được ở 768 px.
+- **Thực hiện (🟨 xong code):** sau thử nghiệm, wizard 6 bước được thay bằng **một trang chỉnh sửa** (thiết lập bên trái gồm Thông tin, Bố cục, Màu & chữ, Các mục — thu gọn mặc định; xem trước dính bên phải; mọi thay đổi tự lưu vào bản nháp tạo tự động). Tạo mẫu chỉ hỏi tên VI/EN và bố cục; backend xếp sẵn mục theo bản đồ `section_plans` dùng chung với seed và gán 6 màu đầu thư viện, nên mẫu mới chỉ còn thiếu PDF thử là xuất bản được. Xuất bản qua hộp checklist có nút PDF thử ngay tại chỗ. Màn hẹp: thiết lập và xem trước là hai tab.
 
 ### CVT-5 — Trang chi tiết mẫu và tạo CV
 

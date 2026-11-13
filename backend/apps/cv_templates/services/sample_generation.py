@@ -440,3 +440,15 @@ def execute_sample_generation(generation_id):
             updated_at=timezone.now(),
         )
     return sample
+
+
+def average_generation_cost(sample_size=50):
+    """Chi phí trung bình (USD) của các lượt sinh thành công gần nhất; `None` nếu chưa có."""
+    from apps.ai_core.models import AiInvocation
+
+    costs = list(
+        AiInvocation.objects.filter(use_case=USE_CASE, status=AiInvocation.Status.SUCCEEDED)
+        .order_by('-created_at')
+        .values_list('cost_usd', flat=True)[:sample_size]
+    )
+    return round(float(sum(costs)) / len(costs), 6) if costs else None

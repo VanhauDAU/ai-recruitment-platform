@@ -8,12 +8,7 @@ from django.test import TestCase
 from apps.cvs.schemas import empty_content
 from apps.cvs.services.composition import compose_cv_document
 
-from ..management.commands._cv_template_catalog import (
-    SECTION_PLANS,
-    TEMPLATES,
-    layout_capabilities,
-    layout_regions,
-)
+from ..management.commands._cv_template_catalog import TEMPLATES
 from ..models import (
     CATALOG_LANGUAGES,
     CvCategory,
@@ -23,7 +18,9 @@ from ..models import (
     CvTemplateVersion,
 )
 from ..renderers import get_renderer_contract, validate_renderer_contract
+from ..section_plans import SECTION_PLANS
 from ..selectors import published_template_queryset
+from ..services.template_config import layout_capabilities, layout_regions
 
 
 class SeedCvTemplatesTests(TestCase):

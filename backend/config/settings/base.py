@@ -616,6 +616,7 @@ CELERY_TASK_ROUTES = {
     'apps.employers.tasks.tax_lookup.*': {'queue': 'default'},
     'apps.employers.tasks.domain_claims.*': {'queue': 'default'},
     'apps.cv_templates.tasks.generate_cv_sample_content': {'queue': 'ai-generation'},
+    'apps.cv_templates.tasks.render_template_test_pdf': {'queue': 'cv-export'},
     'apps.cvs.tasks.*': {'queue': 'cv-export'},
     'apps.uploads.tasks.*': {'queue': 'upload-scan'},
     'apps.jobs.tasks.ai_generation.*': {'queue': 'ai-generation'},

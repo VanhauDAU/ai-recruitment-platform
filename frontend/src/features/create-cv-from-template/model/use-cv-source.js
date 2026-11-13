@@ -12,7 +12,7 @@ import {
   retryCvImport,
   waitForCvImport,
 } from '@/entities/cv'
-import { CV_LANGUAGES, getCvPositionOptions } from '@/entities/cv-template'
+import { CV_EXPERIENCE_BANDS, CV_LANGUAGES, DEFAULT_CV_EXPERIENCE_BAND, getCvPositionOptions } from '@/entities/cv-template'
 import { useSession } from '@/entities/session'
 import { message } from '@/shared/lib/toast'
 import { createCvFromTemplate } from '../api/create-cv.api'
@@ -61,6 +61,7 @@ export function useCvSource({
   const [selectedCvId, setSelectedCvId] = useState(null)
   const [positions, setPositions] = useState({ locale: null, items: [] })
   const [selectedPosition, setSelectedPosition] = useState(null)
+  const [experienceBand, setExperienceBand] = useState(() => initialSelection?.experienceBand || DEFAULT_CV_EXPERIENCE_BAND)
   const [loadingPreview, setLoadingPreview] = useState(false)
   const [previewAvailable, setPreviewAvailable] = useState(false)
   const [previewError, setPreviewError] = useState('')
@@ -122,6 +123,7 @@ export function useCvSource({
       positions: positions.items,
       loadingPositions,
       selectedPosition,
+      experienceBand,
       selectedCvId,
       templatePublicId: templateId,
     })
@@ -161,7 +163,7 @@ export function useCvSource({
         if (!controller.signal.aborted) setLoadingPreview(false)
       })
     return () => controller.abort()
-  }, [activeSource, locale, sampleLocale, positions, loadingPositions, selectedPosition, selectedCvId, templateId, previewChangeRef])
+  }, [activeSource, locale, sampleLocale, positions, loadingPositions, selectedPosition, experienceBand, selectedCvId, templateId, previewChangeRef])
 
   const position = useMemo(
     () => positions.items.find((item) => item.public_id === selectedPosition) || null,
@@ -176,9 +178,10 @@ export function useCvSource({
     selectionChangeRef.current?.({
       source: activeSource,
       sampleLocale,
+      experienceBand,
       position: positionSlug ? { slug: positionSlug, label: positionLabel } : null,
     })
-  }, [activeSource, sampleLocale, loadingPositions, positionSlug, positionLabel, selectionChangeRef])
+  }, [activeSource, sampleLocale, experienceBand, loadingPositions, positionSlug, positionLabel, selectionChangeRef])
 
   const sourceReady = activeSource === 'blank'
     || (activeSource === 'sample' && Boolean(selectedPosition))
@@ -247,7 +250,7 @@ export function useCvSource({
         template_public_id: templateId,
         language: activeSource === 'sample' ? sampleLocale : locale,
         ...(themeColor ? { theme_color: themeColor } : {}),
-        ...(activeSource === 'sample' ? { position_public_id: selectedPosition } : {}),
+        ...(activeSource === 'sample' ? { position_public_id: selectedPosition, experience_band: experienceBand } : {}),
         ...(activeSource === 'previous' ? { source_cv_public_id: selectedCvId } : {}),
       })
       message.success('Đã tạo CV. Bạn có thể bắt đầu chỉnh sửa ngay.')
@@ -278,6 +281,9 @@ export function useCvSource({
     previewError,
     selectedPosition,
     setSelectedPosition,
+    experienceBands: CV_EXPERIENCE_BANDS,
+    experienceBand,
+    setExperienceBand,
     submitting,
     uploadFile,
     setUploadFile,

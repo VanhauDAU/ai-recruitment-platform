@@ -7,6 +7,7 @@ from .api.views.admin import (
     AdminCvBackgroundViewSet,
     AdminCvCategoryViewSet,
     AdminCvColorViewSet,
+    AdminCvOverviewView,
     AdminCvPositionFieldViewSet,
     AdminCvPositionViewSet,
     AdminCvSampleContentViewSet,
@@ -64,6 +65,7 @@ urlpatterns = [
     ),
     path('cv-position-preview/', CvPositionPreviewView.as_view(), name='cv-position-preview-v2'),
     path('cv-position-details/', CvPositionDetailsView.as_view(), name='cv-position-details-v2'),
+    path('admin/cv-stats/overview/', AdminCvOverviewView.as_view(), name='admin-cv-overview'),
     path(
         'cv-sample-contents/',
         CvSampleContentCatalogListView.as_view(),

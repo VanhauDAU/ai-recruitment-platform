@@ -25,19 +25,20 @@ from apps.cv_templates.models import (
     CvTemplateSection,
     CvTemplateVersion,
 )
-from apps.cv_templates.section_registry import section_definition_seed_data
-from apps.cv_templates.services import publish_template_version
-
-from ._cv_template_catalog import (
-    CATEGORIES,
+from apps.cv_templates.section_plans import (
     DEFAULT_ENABLED_SECTIONS,
-    PALETTE,
     PERSONAL_INFO_SECTIONS,
     REQUIRED_SECTIONS,
     SECTION_PLANS,
+)
+from apps.cv_templates.section_registry import section_definition_seed_data
+from apps.cv_templates.services import publish_template_version
+from apps.cv_templates.services.template_config import layout_capabilities, layout_regions
+
+from ._cv_template_catalog import (
+    CATEGORIES,
+    PALETTE,
     TEMPLATES,
-    layout_capabilities,
-    layout_regions,
 )
 
 

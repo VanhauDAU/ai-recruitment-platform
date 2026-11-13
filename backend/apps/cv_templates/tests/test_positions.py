@@ -132,6 +132,25 @@ class PositionContentTests(TestCase):
         self.assertEqual(developer_fields[1]['maps_to'], 'skills')
         self.assertEqual(sales[3]['items'][0]['options'], ['Shopee', 'Zalo'])
 
+    def test_sections_the_position_asks_for_are_added_empty_when_the_sample_lacks_them(self):
+        profile = CvPositionProfile.objects.get(job_category=self.sales)
+        profile.section_preset = [
+            {'section_key': 'summary', 'enabled': True},
+            {'section_key': 'projects', 'enabled': True},
+            {'section_key': 'experience', 'enabled': True},
+        ]
+        profile.save()
+
+        sections = self.resolve(self.sales)
+
+        keys = [(section['section_key'], section['enabled']) for section in sections]
+        self.assertEqual(keys[:3], [('summary', True), ('projects', True), ('experience', True)])
+        projects = sections[1]
+        self.assertEqual(projects['title'], 'Dự án')
+        self.assertEqual(set(projects['items'][0]), {'item_id', 'name', 'role', 'description'})
+        # Mục ngoài bộ mục (kỹ năng) vẫn giữ trong CV nhưng tắt.
+        self.assertIn(('skills', False), keys)
+
     def test_inactive_fields_are_left_out_and_a_position_without_fields_has_no_section(self):
         CvPositionField.objects.filter(key='sales_channels').update(is_active=False)
 

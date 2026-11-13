@@ -1,12 +1,17 @@
-export default function CvTemplatePreview({ template, compact = false, imageUrl: selectedImageUrl }) {
+import { useState } from 'react'
+
+// Ảnh mẫu theo màu; ảnh chưa có hoặc không tải được (vừa được thay khi mẫu xuất
+// bản lại) thì vẽ khung minh họa thay vì hiện ảnh vỡ.
+export default function CvTemplatePreview({ template, imageUrl: selectedImageUrl }) {
   const color = template?.theme_color || '#00A66A'
   const name = template?.display_name || 'Mẫu CV'
   const imageUrl = selectedImageUrl || template?.thumbnail_url || template?.preview_url
+  const [failedUrl, setFailedUrl] = useState(null)
 
-  if (imageUrl) {
+  if (imageUrl && imageUrl !== failedUrl) {
     return (
-      <div className="relative overflow-hidden rounded-lg bg-slate-100" style={{ aspectRatio: compact ? '3 / 4' : '3 / 4' }}>
-        <img src={imageUrl} alt={`Xem trước ${name}`} className="h-full w-full object-cover object-top" />
+      <div className="relative overflow-hidden rounded-lg bg-slate-100" style={{ aspectRatio: '3 / 4' }}>
+        <img src={imageUrl} alt={`Xem trước ${name}`} loading="lazy" decoding="async" onError={() => setFailedUrl(imageUrl)} className="h-full w-full object-cover object-top" />
       </div>
     )
   }

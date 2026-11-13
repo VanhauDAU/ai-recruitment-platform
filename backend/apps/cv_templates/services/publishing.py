@@ -6,16 +6,25 @@ from ..models import CvSampleContent, CvTemplate, CvTemplateVersion
 
 
 @transaction.atomic
-def publish_template_version(*, template, version):
+def publish_template_version(*, template, version, actor=None):
+    """Xuất bản bản nháp và chuyển bản đang xuất bản sang `retired`.
+
+    CV đã tạo vẫn ghim phiên bản cũ (bất biến), nên retire chỉ đổi phiên bản
+    dùng cho CV mới.
+    """
     template = CvTemplate.objects.select_for_update().get(pk=template.pk)
     version = CvTemplateVersion.objects.select_for_update().get(pk=version.pk, template=template)
     if version.version_status != CvTemplateVersion.VersionStatus.DRAFT:
         raise ValidationError({'version': 'Only a draft template version can be published.'})
     version.full_clean()
     now = timezone.now()
+    template.versions.filter(version_status=CvTemplateVersion.VersionStatus.PUBLISHED).exclude(
+        pk=version.pk
+    ).update(version_status=CvTemplateVersion.VersionStatus.RETIRED, retired_at=now)
     version.version_status = CvTemplateVersion.VersionStatus.PUBLISHED
     version.published_at = now
-    version.save(update_fields=['version_status', 'published_at'])
+    version.published_by = actor
+    version.save(update_fields=['version_status', 'published_at', 'published_by'])
     template.current_published_version = version
     template.lifecycle_status = CvTemplate.LifecycleStatus.PUBLISHED
     template.save(update_fields=['current_published_version', 'lifecycle_status'])

@@ -9,6 +9,7 @@ export function resolvePreviewSelection({
   positions,
   loadingPositions,
   selectedPosition,
+  experienceBand,
   selectedCvId,
   templatePublicId,
 }) {
@@ -29,6 +30,6 @@ export function resolvePreviewSelection({
   }
   return {
     state: 'ready',
-    load: (signal) => getCvPositionPreview(selectedPosition, sampleLocale, templatePublicId, { signal }),
+    load: (signal) => getCvPositionPreview(selectedPosition, sampleLocale, templatePublicId, { signal, experienceBand }),
   }
 }
