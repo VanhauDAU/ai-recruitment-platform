@@ -10,7 +10,7 @@ from urllib.parse import quote
 from celery import shared_task
 from celery.exceptions import SoftTimeLimitExceeded
 from django.core.files.base import ContentFile
-from django.db import transaction
+from django.db import models, transaction
 from django.utils import timezone
 
 from apps.cvs.schemas import empty_content
@@ -21,8 +21,9 @@ from common.pdf_raster import first_pdf_page_image
 from common.r2_storage import public_media_storage
 
 from .demo_identity import with_demo_identity
-from .models import CATALOG_LANGUAGES, CvSampleContent, CvTemplateColorLink
+from .models import CATALOG_LANGUAGES, CvSampleContent, CvTemplateColorLink, CvTemplateVersion
 from .services.sample_generation import execute_sample_generation, fail_sample_generation
+from .services.template_preview import fail_test_pdf, finish_test_pdf, preview_document
 
 logger = logging.getLogger(__name__)
 SNAPSHOT_RENDERER_VERSION = 'catalogue-snapshot-v2'  # v2: Chromium print page (CVT-2)
@@ -169,10 +170,31 @@ def generate_template_color_snapshot(link_id):
                 and old_key != preview_key
                 and 'cv-templates/snapshots/' in old_key
             ):
-                transaction.on_commit(lambda key=old_key: public_media_storage().delete(key))
+                transaction.on_commit(
+                    lambda key=old_key: delete_stale_snapshot.apply_async(
+                        (key,), countdown=STALE_SNAPSHOT_GRACE_SECONDS
+                    )
+                )
     record_metric(
         'cv_snapshot_duration_ms', round((monotonic() - started_at) * 1000, 2), status='completed'
     )
+
+
+# Ảnh mẫu cũ chưa xóa ngay: trang ứng viên đang mở (hoặc bản cache) vẫn trỏ tới
+# nó; xóa ngay làm ảnh vỡ cho tới khi tải lại danh sách.
+STALE_SNAPSHOT_GRACE_SECONDS = 30 * 60
+
+
+@shared_task
+def delete_stale_snapshot(key):
+    """Xóa ảnh mẫu đã bị thay, trừ khi nó lại được dùng (cấu hình quay về cũ)."""
+    if 'cv-templates/snapshots/' not in key:
+        return
+    if CvTemplateColorLink.objects.filter(
+        models.Q(thumbnail_url=key) | models.Q(preview_url=key)
+    ).exists():
+        return
+    public_media_storage().delete(key)
 
 
 def enqueue_template_snapshots(template):
@@ -208,3 +230,21 @@ def generate_cv_sample_content(generation_id):
         fail_sample_generation(generation_id, code='generation_timeout')
         return None
     return sample.public_id if sample else None
+
+
+@shared_task(name='apps.cv_templates.tasks.render_template_test_pdf')
+def render_template_test_pdf(token, version_id, options):
+    """PDF thử của một phiên bản template (wizard admin, CVT-4); kết quả vào cache."""
+    version = CvTemplateVersion.objects.select_related('template').filter(pk=version_id).first()
+    if version is None:
+        fail_test_pdf(token)
+        return
+    try:
+        document = preview_document(version.template, version, **options)
+        payload = print_payload(SimpleNamespace(**document, template_version=version))
+        payload['assets'][SNAPSHOT_AVATAR_ID] = {'url': SNAPSHOT_AVATAR_URI}
+        payload['document']['content_json']['personal_info']['avatar_asset_id'] = SNAPSHOT_AVATAR_ID
+        finish_test_pdf(token, version, render_document_pdf(payload))
+    except Exception:  # noqa: BLE001 - only a status reaches the admin, never content
+        logger.warning('Template test PDF for version %s failed.', version_id)
+        fail_test_pdf(token)

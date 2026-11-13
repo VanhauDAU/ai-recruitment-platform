@@ -68,6 +68,17 @@ class UserCv(models.Model):
     # `Job.EducationLevel` là bậc học cao nhất trong mục học vấn, tính khi tạo version.
     position_level = models.CharField(max_length=20, blank=True)
     education_level = models.CharField(max_length=20, blank=True)
+    # Khóa CV vi phạm (CVT-4): admin thu hồi và chặn chia sẻ công khai; ứng viên
+    # vẫn sửa, xuất PDF và dùng CV để ứng tuyển.
+    moderation_locked_at = models.DateTimeField(null=True, blank=True)
+    moderation_lock_reason = models.CharField(max_length=255, blank=True)
+    moderation_locked_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='locked_cvs',
+    )
     language = models.CharField(max_length=16, choices=CvLanguage.choices, default=CvLanguage.VI)
     lifecycle_status = models.CharField(
         max_length=20,
@@ -398,6 +409,8 @@ class CvAccessLog(models.Model):
     )
     ip_hash = models.CharField(max_length=64, blank=True, default='')
     user_agent_hash = models.CharField(max_length=64, blank=True, default='')
+    # Lý do admin nhập khi xem nội dung CV ứng viên (CVT-4); trống với kênh khác.
+    reason = models.CharField(max_length=255, blank=True, default='')
     accessed_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

@@ -6,6 +6,7 @@ semantics.  Adding a new system section is an intentional product/schema
 change, not an ad-hoc template conditional.
 """
 
+from copy import deepcopy
 from dataclasses import dataclass
 
 
@@ -70,6 +71,67 @@ SECTION_REGISTRY = {
         ),
     )
 }
+
+
+# Tên mục tiếng Anh và khung item trống, dùng khi hệ thống tự thêm một mục vào CV
+# (bộ mục của vị trí, CVT-4). Khung item khớp `defaultItem` ở frontend
+# (entities/cv/model/document.js) để editor hiện đúng các ô nhập.
+SECTION_TITLES_EN = {
+    'summary': 'Career objective',
+    'experience': 'Work experience',
+    'education': 'Education',
+    'skills': 'Skills',
+    'projects': 'Projects',
+    'certifications': 'Certifications',
+    'languages': 'Languages',
+    'awards': 'Awards',
+    'activities': 'Activities',
+    'references': 'References',
+    'interests': 'Interests',
+    'portfolio': 'Portfolio',
+    'publications': 'Publications',
+}
+_RICH_TEXT = {'format': 'rich_text_v1', 'content': []}
+_BLANK_ITEMS = {
+    'summary': {'value': ''},
+    'experience': {
+        'role': '',
+        'company': '',
+        'start_date': None,
+        'end_date': None,
+        'description': _RICH_TEXT,
+    },
+    'education': {
+        'degree': '',
+        'institution': '',
+        'start_date': None,
+        'end_date': None,
+        'description': _RICH_TEXT,
+    },
+    'skills': {'name': '', 'level': ''},
+    'projects': {'name': '', 'role': '', 'description': _RICH_TEXT},
+    'certifications': {'name': '', 'issuer': '', 'description': _RICH_TEXT},
+    'publications': {'title': '', 'organization': '', 'value': '', 'description': _RICH_TEXT},
+}
+_DEFAULT_BLANK_ITEM = {'name': '', 'value': '', 'description': _RICH_TEXT}
+
+
+def blank_section(section_key, locale, instance_id):
+    """Một mục trống (một item để điền) cho CV ở ngôn ngữ `locale`."""
+    contract = SECTION_REGISTRY[section_key]
+    title = SECTION_TITLES_EN.get(section_key) if locale == 'en-US' else None
+    return {
+        'instance_id': instance_id,
+        'section_key': section_key,
+        'title': title or contract.display_name,
+        'enabled': True,
+        'items': [
+            {
+                'item_id': f'{section_key}_item_1',
+                **deepcopy(_BLANK_ITEMS.get(section_key, _DEFAULT_BLANK_ITEM)),
+            }
+        ],
+    }
 
 
 def get_section_contract(section_key):

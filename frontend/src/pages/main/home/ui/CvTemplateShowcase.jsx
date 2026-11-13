@@ -34,7 +34,7 @@ function ShowcaseCard({ template, fanClass }) {
         aria-label={`Xem mẫu CV ${template.display_name}`}
         className="relative block overflow-hidden rounded-xl"
       >
-        <CvTemplatePreview template={{ ...template, theme_color: color.hex_code }} imageUrl={templatePreviewForColor(template, color)} compact />
+        <CvTemplatePreview template={{ ...template, theme_color: color.hex_code }} imageUrl={templatePreviewForColor(template, color)} />
         {template.is_premium && (
           <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-amber-400/95 px-2 py-0.5 text-[10px] font-bold text-white shadow-sm">
             <CrownFilled className="text-[9px]" /> PREMIUM

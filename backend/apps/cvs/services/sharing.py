@@ -57,6 +57,8 @@ def create_shared_link(
     # are nullable FKs, so joining them under PostgreSQL FOR UPDATE is invalid.
     cv = UserCv.objects.select_for_update(of=('self',)).get(pk=cv.pk)
     _assert_owner(cv, actor)
+    if cv.moderation_locked_at is not None:
+        raise CvSharePermissionError('This CV is locked for public sharing.')
     if not actor.email_verified:
         raise CvSharePermissionError('Verify your email before sharing a CV.')
     if expires_at is not None and expires_at <= timezone.now():
@@ -118,6 +120,7 @@ def resolve_shared_link(*, raw_token: str, request) -> tuple[CvSharedLink, CvVer
         .filter(
             token_hash=token_hash(raw_token),
             cv__is_deleted=False,
+            cv__moderation_locked_at__isnull=True,
             revoked_at__isnull=True,
         )
         .filter(Q(expires_at__isnull=True) | Q(expires_at__gt=now))

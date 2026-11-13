@@ -85,6 +85,7 @@ export default function TemplateDetail() {
         source: selection.source,
         positionSlug: selection.position?.slug,
         sampleLocale: selection.sampleLocale,
+        experienceBand: selection.experienceBand,
         colorSlug: activeColorSlug,
       },
       { pathLocale: locale, defaultColorSlug: colors[0]?.slug },

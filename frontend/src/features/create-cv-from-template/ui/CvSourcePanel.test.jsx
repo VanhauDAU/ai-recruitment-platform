@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -26,6 +26,11 @@ vi.mock('@/entities/cv-template', () => ({
     { code: 'vi-VN', param: 'vi', label: 'Tiếng Việt' },
     { code: 'en-US', param: 'en', label: 'Tiếng Anh' },
   ],
+  CV_EXPERIENCE_BANDS: [
+    { value: 'junior', label: '1–2 năm', who: 'Đã đi làm' },
+    { value: 'senior', label: 'Từ 5 năm', who: 'Chuyên gia' },
+  ],
+  DEFAULT_CV_EXPERIENCE_BAND: 'junior',
   getBlankCvPreview: mocks.getBlankCvPreview,
   getCvPositionOptions: mocks.getCvPositionOptions,
   getCvPositionPreview: mocks.getCvPositionPreview,
@@ -87,10 +92,23 @@ describe('CvSourcePanel', () => {
     await waitFor(() => expect(onSelectionChange).toHaveBeenLastCalledWith({
       source: 'sample',
       sampleLocale: 'vi-VN',
+      experienceBand: 'junior',
       position: { slug: 'ky-su-ai', label: 'Kỹ sư AI' },
     }))
     expect(onSelectionChange).not.toHaveBeenCalledWith(expect.objectContaining({ position: null }))
     await waitFor(() => expect(mocks.getCvPositionPreview).toHaveBeenCalledWith('pos_2', 'vi-VN', 'template_1', expect.any(Object)))
+  })
+
+  it('lets the candidate pick years of experience and previews that content', async () => {
+    const onSelectionChange = vi.fn()
+    renderPanel({ onSelectionChange })
+    await waitFor(() => expect(mocks.getCvPositionPreview).toHaveBeenCalledWith('pos_1', 'vi-VN', 'template_1', expect.objectContaining({ experienceBand: 'junior' })))
+
+    fireEvent.click(screen.getByRole('radio', { name: 'Từ 5 năm' }))
+
+    expect(screen.getByRole('radio', { name: 'Từ 5 năm' })).toHaveAttribute('aria-checked', 'true')
+    await waitFor(() => expect(mocks.getCvPositionPreview).toHaveBeenLastCalledWith('pos_1', 'vi-VN', 'template_1', expect.objectContaining({ experienceBand: 'senior' })))
+    await waitFor(() => expect(onSelectionChange).toHaveBeenLastCalledWith(expect.objectContaining({ experienceBand: 'senior' })))
   })
 
   it('falls back to sample content when a guest opens a previous-CV link', async () => {

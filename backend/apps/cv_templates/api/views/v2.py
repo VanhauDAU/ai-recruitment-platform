@@ -68,15 +68,26 @@ def requested_experience_band(request, *, default=DEFAULT_EXPERIENCE_BAND):
     return band
 
 
+# Kho mẫu công khai: trình duyệt/CDN được lưu nhưng phải hỏi lại máy chủ mỗi lần
+# (ETag → 304). Admin ẩn, hiện hay xuất bản mẫu có hiệu lực ngay; trước đây
+# `max-age=300` khiến danh sách cũ (kèm ảnh mẫu đã thay) còn hiển thị 5 phút.
+PUBLIC_CATALOG_CACHE_CONTROL = 'public, no-cache'
+
+
+def revalidated_response(request, data, etag=None):
+    etag = f'"{etag or sha256(repr(data).encode("utf-8")).hexdigest()}"'
+    headers = {'Cache-Control': PUBLIC_CATALOG_CACHE_CONTROL, 'ETag': etag}
+    if etag in request.headers.get('If-None-Match', ''):
+        return Response(status=304, headers=headers)
+    return Response(data, headers=headers)
+
+
 class PublicCatalogCacheMixin:
+    # Thời gian giữ document xem trước trong cache máy chủ (Redis).
     cache_seconds = 300
 
     def cached_response(self, data):
-        response = Response(data)
-        digest = sha256(repr(data).encode('utf-8')).hexdigest()
-        response['Cache-Control'] = f'public, max-age={self.cache_seconds}'
-        response['ETag'] = f'"{digest}"'
-        return response
+        return revalidated_response(self.request, data)
 
 
 class CvTemplateCatalogListView(PublicCatalogCacheMixin, generics.ListAPIView):
@@ -91,10 +102,7 @@ class CvTemplateCatalogListView(PublicCatalogCacheMixin, generics.ListAPIView):
         ).order_by('-usage_count', 'sort_order', 'name')
 
     def list(self, request, *args, **kwargs):
-        response = super().list(request, *args, **kwargs)
-        response['Cache-Control'] = f'public, max-age={self.cache_seconds}'
-        response['ETag'] = f'"{sha256(repr(response.data).encode("utf-8")).hexdigest()}"'
-        return response
+        return revalidated_response(request, super().list(request, *args, **kwargs).data)
 
 
 @extend_schema(
@@ -338,12 +346,10 @@ class CvPositionPreviewView(PublicCatalogCacheMixin, APIView):
             },
             'revision': revision,
         }
-        response = Response(data)
         if request.user.is_authenticated:
-            response['Cache-Control'] = 'private, no-store'
+            response = Response(data, headers={'Cache-Control': 'private, no-store'})
         else:
-            response['Cache-Control'] = f'public, max-age={self.cache_seconds}'
-            response['ETag'] = f'"{revision}"'
+            response = revalidated_response(request, data, etag=revision)
         record_metric('cv_preview_cache_hit', int(cache_hit), source=source, locale=locale)
         record_metric(
             'cv_preview_latency_ms',

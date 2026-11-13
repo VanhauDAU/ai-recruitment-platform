@@ -224,6 +224,43 @@ class SampleGenerationFlowTests(TestCase):
         self.assertEqual(generation.failure_code, 'personal_data_detected')
         self.assertEqual(CvSampleContent.objects.count(), samples_before)
 
+    def test_published_sample_is_editable_while_other_drafts_share_its_slot(self):
+        """Hồi quy: lưu bản đang dùng không báo "locale, experience_band must make a
+        unique set" khi cùng ô còn bản nháp hoặc nội dung chung cùng mức."""
+        fields = {
+            'locale': 'vi-VN',
+            'experience_band': 'junior',
+            'content_json': empty_content('vi-VN'),
+        }
+        CvSampleContent.objects.create(
+            title='Chung', status=CvSampleContent.Status.PUBLISHED, **fields
+        )
+        CvSampleContent.objects.create(position_profile=self.profile, title='Nháp', **fields)
+        live = CvSampleContent.objects.create(
+            position_profile=self.profile,
+            title='Đang dùng',
+            status=CvSampleContent.Status.PUBLISHED,
+            **fields,
+        )
+        url = f'/api/v2/admin/cv-sample-contents/{live.public_id}/'
+
+        saved = self.client.patch(
+            url,
+            {
+                'title': 'Đã sửa',
+                'locale': 'vi-VN',
+                'experience_band': 'junior',
+                'content_json': fields['content_json'],
+            },
+            format='json',
+        )
+        moved = self.client.patch(url, {'experience_band': 'mid'}, format='json')
+
+        self.assertEqual(saved.status_code, 200, saved.data)
+        self.assertEqual(saved.data['title'], 'Đã sửa')
+        self.assertEqual(moved.status_code, 400)
+        self.assertIn('experience_band', moved.data)
+
     def test_approving_ai_content_replaces_the_published_sample(self):
         old = CvSampleContent.objects.create(
             position_profile=self.profile,

@@ -55,6 +55,7 @@ export async function getCvPositionPreview(positionPublicId, locale = 'vi-VN', t
     locale,
     ...(templatePublicId ? { template_public_id: templatePublicId } : {}),
     ...(options.source ? { source: options.source } : {}),
+    ...(options.experienceBand ? { experience_band: options.experienceBand } : {}),
     ...(options.themeColor ? { theme_color: options.themeColor } : {}),
   }
   const config = { params }
