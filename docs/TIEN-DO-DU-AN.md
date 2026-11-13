@@ -21,9 +21,9 @@ Quyết định:
 > `accounts.0029` lúc 08:46 khi container backend khởi động lại (lệnh khởi động
 > có `manage.py migrate`), **trước khi kịp sao lưu**; dữ liệu 15 bảng dịch vụ
 > local đã mất. Bản sao lưu sau migration nằm ngoài repo, trong
-> `~/Documents/ai-recruitment-platform-backups/`. DB local còn 31 bảng `services_*`
-> do migration `0012`–`0014` của một nhánh khác chưa gộp tạo ra; chúng không
-> thuộc code nào trên các nhánh của epic này và chưa được xóa.
+> `~/Documents/ai-recruitment-platform-backups/`. 31 bảng `services_*` khác, do
+> migration `0012`–`0014` của một nhánh chưa gộp tạo ra, đã được xóa thủ công
+> trên DB local sau khi sao lưu (bản `…-before-jobs-0049.dump` vẫn chứa chúng).
 >
 > PM-4b (PR 4, nhánh `chore/drop-services-app`, tách từ PR 3): xóa thư mục app,
 > bỏ khỏi `INSTALLED_APPS` và import-linter; migration `jobs.0049` dọn content
