@@ -1,5 +1,4 @@
 from django.conf import settings
-from django.contrib.auth.hashers import make_password
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
@@ -25,21 +24,18 @@ DEMO_ACCOUNTS = (
         'name': 'Superuser Demo',
         'is_superuser': True,
         'role_code': None,
-        'backup_codes': ('91000001', '91000002', '91000003', '91000004', '91000005'),
     },
     {
         'email': 'hr-provisioner@demo.local',
         'name': 'Nhân sự cấp tài khoản',
         'is_superuser': False,
         'role_code': 'internal-hr',
-        'backup_codes': ('92000001', '92000002', '92000003', '92000004', '92000005'),
     },
     {
         'email': 'moderator-admin@demo.local',
         'name': 'Nhân viên kiểm duyệt',
         'is_superuser': False,
         'role_code': 'moderator',
-        'backup_codes': ('93000001', '93000002', '93000003', '93000004', '93000005'),
     },
 )
 
@@ -135,10 +131,7 @@ class Command(BaseCommand):
             kind = (
                 'Superuser' if definition['is_superuser'] else roles[definition['role_code']].name
             )
-            self.stdout.write(
-                f'- {definition["email"]} | {kind} | mã dự phòng: '
-                f'{", ".join(definition["backup_codes"])}'
-            )
+            self.stdout.write(f'- {definition["email"]} | {kind}')
 
     def _upsert_account(self, definition):
         user, created = User.objects.get_or_create(
@@ -152,11 +145,6 @@ class Command(BaseCommand):
         user.is_staff = definition['is_superuser']
         user.is_superuser = definition['is_superuser']
         user.email_verified = True
-        user.two_factor_enabled = True
-        user.two_factor_email_enabled = True
-        user.two_factor_backup_code_hashes = [
-            make_password(code) for code in definition['backup_codes']
-        ]
         user.set_password(DEMO_PASSWORD)
         user.save(
             update_fields=[
@@ -166,9 +154,6 @@ class Command(BaseCommand):
                 'is_staff',
                 'is_superuser',
                 'email_verified',
-                'two_factor_enabled',
-                'two_factor_email_enabled',
-                'two_factor_backup_code_hashes',
                 'password',
                 'updated_at',
             ]

@@ -55,10 +55,6 @@ _LAZY_EXPORTS = {
         '.account_management',
         'confirm_revoke_account_sessions',
     ),
-    'confirm_reset_account_mfa': (
-        '.account_management',
-        'confirm_reset_account_mfa',
-    ),
     'create_admin_invitation': ('.account_management', 'create_admin_invitation'),
     'create_provisioning_scope': ('.account_management', 'create_provisioning_scope'),
     'ensure_account_write_allowed': (
@@ -118,7 +114,6 @@ __all__ = [
     'confirm_role_status_change',
     'confirm_provisioning_scope_status',
     'confirm_revoke_account_sessions',
-    'confirm_reset_account_mfa',
     'create_admin_invitation',
     'create_department',
     'create_role',

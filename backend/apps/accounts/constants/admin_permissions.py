@@ -36,12 +36,6 @@ ADMIN_PERMISSIONS = (
         'description': 'Xem danh sách và chi tiết tài khoản nhà tuyển dụng, không mở dữ liệu ứng viên.',
     },
     {
-        'code': 'account.mfa.reset',
-        'module': 'account',
-        'label': 'Đặt lại xác thực đa yếu tố',
-        'description': 'Xóa các phương thức xác thực đa yếu tố sau khi xác minh danh tính thủ công.',
-    },
-    {
         'code': 'account.profile.manage',
         'module': 'account',
         'label': 'Sửa thông tin tài khoản',
@@ -344,7 +338,6 @@ ADMIN_PERMISSION_CODES = frozenset(item['code'] for item in ADMIN_PERMISSIONS)
 ADMIN_PERMISSION_DEPENDENCIES = {
     'account.admin.manage': ('account.admin.view',),
     'account.email.manage': ('account.view', 'account.security.manage'),
-    'account.mfa.reset': ('account.view', 'account.security.manage'),
     'account.profile.manage': ('account.view',),
     'account.resource_hold.release': ('account.view', 'account.status.manage'),
     'account.security.manage': ('account.view',),

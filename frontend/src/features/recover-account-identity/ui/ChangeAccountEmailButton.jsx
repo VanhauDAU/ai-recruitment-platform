@@ -27,7 +27,6 @@ export default function ChangeAccountEmailButton({
       </Tooltip>
       <IdentityRecoveryModal
         account={account}
-        kind="email"
         open={open}
         publicId={publicId}
         onSuccess={onSuccess}

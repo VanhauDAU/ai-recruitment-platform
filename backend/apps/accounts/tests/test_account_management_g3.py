@@ -3,7 +3,6 @@ from io import StringIO
 from unittest import skipUnless
 from unittest.mock import patch
 
-from django.contrib.auth.hashers import check_password
 from django.core import management
 from django.db import close_old_connections, connection
 from django.test import TestCase, TransactionTestCase
@@ -602,7 +601,6 @@ class AccountManagementG3ApiTests(TestCase):
             format='json',
         )
         self.assertEqual(accepted.status_code, 200)
-        self.assertNotIn('backup_codes', accepted.json())
 
         invitation.refresh_from_db()
         user = invitation.user
@@ -610,9 +608,6 @@ class AccountManagementG3ApiTests(TestCase):
         self.assertEqual(invitation.status, AdminInvitation.Status.ACCEPTED)
         self.assertEqual(user.status, User.Status.ACTIVE)
         self.assertTrue(user.email_verified)
-        self.assertFalse(user.two_factor_enabled)
-        self.assertFalse(user.two_factor_email_enabled)
-        self.assertFalse(user.two_factor_backup_code_hashes)
         self.assertEqual(AdminMembership.objects.filter(user=user, is_active=True).count(), 1)
 
         second = APIClient().post(
@@ -756,7 +751,7 @@ class AccountManagementG3ApiTests(TestCase):
 
 
 class AccountManagementG3DemoSeedTests(TestCase):
-    def test_demo_seed_is_idempotent_and_provides_login_backup_codes(self):
+    def test_demo_seed_is_idempotent_and_provides_password_login(self):
         output = StringIO()
         management.call_command('seed_admin_account_demo', force=True, stdout=output)
         management.call_command('seed_admin_account_demo', force=True, stdout=output)
@@ -777,10 +772,7 @@ class AccountManagementG3DemoSeedTests(TestCase):
         self.assertEqual(AdminProvisioningScope.objects.filter(is_active=True).count(), 2)
         root = admins.get(email='admin-root@demo.local')
         self.assertTrue(root.check_password('AdminDemo123!'))
-        self.assertTrue(
-            any(check_password('91000001', value) for value in root.two_factor_backup_code_hashes)
-        )
-        self.assertIn('91000001', output.getvalue())
+        self.assertIn('admin-root@demo.local', output.getvalue())
 
 
 @skipUnless(connection.features.has_select_for_update, 'Requires row-level locking support.')

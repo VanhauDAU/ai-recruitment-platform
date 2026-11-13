@@ -57,7 +57,7 @@ def make_linked_employer(email='owner@acme.vn', *, company=None):
 
 
 def authenticate(client, user):
-    tokens = issue_tokens(user, auth_method='mfa')
+    tokens = issue_tokens(user, auth_method='password')
     client.credentials(HTTP_AUTHORIZATION='Bearer ' + tokens['access'])
 
 

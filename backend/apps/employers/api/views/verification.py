@@ -57,8 +57,8 @@ class CompanyDocumentListCreateView(generics.ListCreateAPIView):
     """Giấy tờ của công ty tôi, gồm file và URL chứng minh tên thương mại."""
 
     serializer_class = CompanyDocumentSerializer
-    # Tài liệu vẫn thuộc phiên employer đang đăng nhập, nhưng không bắt buộc
-    # MFA/xác thực lại: mọi tệp đều quay về trạng thái chờ duyệt khi được thay.
+    # Tài liệu vẫn thuộc phiên employer đang đăng nhập, không bắt buộc xác thực
+    # lại: mọi tệp đều quay về trạng thái chờ duyệt khi được thay.
     permission_classes = [IsEmployer]
     parser_classes = [parsers.JSONParser, parsers.MultiPartParser]
     pagination_class = None

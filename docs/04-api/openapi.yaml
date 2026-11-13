@@ -544,38 +544,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/ManagedAccount'
           description: ''
-  /api/admin/accounts/{public_id}/mfa-impact/:
-    post:
-      operationId: admin_accounts_mfa_impact_create
-      parameters:
-      - in: path
-        name: public_id
-        schema:
-          type: string
-        required: true
-      tags:
-      - admin
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ManagedAccountRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/ManagedAccountRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/ManagedAccountRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ManagedAccount'
-          description: ''
   /api/admin/accounts/{public_id}/profile/:
     get:
       operationId: admin_accounts_profile_retrieve
@@ -682,38 +650,6 @@ paths:
   /api/admin/accounts/{public_id}/resend-verification/:
     post:
       operationId: admin_accounts_resend_verification_create
-      parameters:
-      - in: path
-        name: public_id
-        schema:
-          type: string
-        required: true
-      tags:
-      - admin
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ManagedAccountRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/ManagedAccountRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/ManagedAccountRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ManagedAccount'
-          description: ''
-  /api/admin/accounts/{public_id}/reset-mfa/:
-    post:
-      operationId: admin_accounts_reset_mfa_create
       parameters:
       - in: path
         name: public_id
@@ -3691,330 +3627,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SessionRevokeOthers'
-          description: ''
-  /api/auth/two-factor/disable/confirm/:
-    post:
-      operationId: auth_two_factor_disable_confirm_create
-      summary: Xác nhận mã để tắt xác minh hai bước
-      tags:
-      - auth-2fa
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TwoFactorCodeRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/TwoFactorCodeRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/TwoFactorCodeRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SessionUser'
-          description: ''
-  /api/auth/two-factor/disable/send/:
-    post:
-      operationId: auth_two_factor_disable_send_create
-      summary: Gửi mã để tắt xác minh hai bước qua email
-      tags:
-      - auth-2fa
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TwoFactorCodeSent'
-          description: ''
-  /api/auth/two-factor/employer/backup-codes/:
-    post:
-      operationId: auth_two_factor_employer_backup_codes_create
-      summary: Sinh bộ mã dự phòng mới (chỉ hiển thị một lần)
-      tags:
-      - auth-2fa
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TwoFactorLoginCodeRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/TwoFactorLoginCodeRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/TwoFactorLoginCodeRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SessionUser'
-          description: ''
-  /api/auth/two-factor/employer/backup-codes/send/:
-    post:
-      operationId: auth_two_factor_employer_backup_codes_send_create
-      summary: Gửi mã xác minh để sinh mã dự phòng
-      tags:
-      - auth-2fa
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TwoFactorCodeSent'
-          description: ''
-  /api/auth/two-factor/employer/methods/:
-    get:
-      operationId: auth_two_factor_employer_methods_retrieve
-      description: Status không chứa secret/hash; dùng cho workspace employer và admin.
-      summary: Trạng thái các phương thức MFA của nhà tuyển dụng
-      tags:
-      - auth-2fa
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/EmployerTwoFactorMethods'
-          description: ''
-  /api/auth/two-factor/employer/methods/disable/:
-    post:
-      operationId: auth_two_factor_employer_methods_disable_create
-      description: Tắt email, TOTP hoặc recovery codes sau step-up bằng phương thức
-        đang bật.
-      summary: Tắt một phương thức MFA cụ thể
-      tags:
-      - auth-2fa
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/EmployerTwoFactorMethodDisableRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/EmployerTwoFactorMethodDisableRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/EmployerTwoFactorMethodDisableRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SessionUser'
-          description: ''
-  /api/auth/two-factor/employer/methods/disable/send/:
-    post:
-      operationId: auth_two_factor_employer_methods_disable_send_create
-      description: Gửi email step-up để tắt một phương thức MFA.
-      summary: Gửi mã step-up để tắt một phương thức MFA
-      tags:
-      - auth-2fa
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/EmployerTwoFactorMethodRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/EmployerTwoFactorMethodRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/EmployerTwoFactorMethodRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TwoFactorCodeSent'
-          description: ''
-  /api/auth/two-factor/employer/totp/confirm/:
-    post:
-      operationId: auth_two_factor_employer_totp_confirm_create
-      summary: Xác nhận mã TOTP để bật ứng dụng xác thực
-      tags:
-      - auth-2fa
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TwoFactorCodeRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/TwoFactorCodeRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/TwoFactorCodeRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SessionUser'
-          description: ''
-  /api/auth/two-factor/employer/totp/disable/:
-    post:
-      operationId: auth_two_factor_employer_totp_disable_create
-      summary: Tắt TOTP sau khi xác minh step-up
-      tags:
-      - auth-2fa
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TwoFactorLoginCodeRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/TwoFactorLoginCodeRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/TwoFactorLoginCodeRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SessionUser'
-          description: ''
-  /api/auth/two-factor/employer/totp/setup/:
-    post:
-      operationId: auth_two_factor_employer_totp_setup_create
-      summary: 'Khởi tạo TOTP: trả secret và otpauth URL để quét QR'
-      tags:
-      - auth-2fa
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/EmployerTotpSetup'
-          description: ''
-  /api/auth/two-factor/login/resend/:
-    post:
-      operationId: auth_two_factor_login_resend_create
-      summary: Gửi lại mã xác minh đăng nhập hai bước
-      tags:
-      - auth
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TwoFactorResendRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/TwoFactorResendRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/TwoFactorResendRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TwoFactorLoginResend'
-          description: ''
-  /api/auth/two-factor/login/verify/:
-    post:
-      operationId: auth_two_factor_login_verify_create
-      summary: Xác nhận mã và hoàn tất đăng nhập hai bước
-      tags:
-      - auth
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TwoFactorChallengeRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/TwoFactorChallengeRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/TwoFactorChallengeRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TwoFactorLoginTokens'
-          description: ''
-  /api/auth/two-factor/setup/confirm/:
-    post:
-      operationId: auth_two_factor_setup_confirm_create
-      summary: Xác nhận mã để bật xác minh hai bước
-      tags:
-      - auth
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TwoFactorCodeRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/TwoFactorCodeRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/TwoFactorCodeRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SessionUser'
-          description: ''
-  /api/auth/two-factor/setup/send/:
-    post:
-      operationId: auth_two_factor_setup_send_create
-      summary: Gửi mã để bật xác minh hai bước
-      tags:
-      - auth
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TwoFactorCodeSent'
           description: ''
   /api/auth/verify/confirm/:
     post:
@@ -13302,7 +12914,7 @@ components:
           readOnly: true
         method:
           allOf:
-          - $ref: '#/components/schemas/MethodE6bEnum'
+          - $ref: '#/components/schemas/MethodEnum'
           readOnly: true
         status:
           allOf:
@@ -13462,7 +13074,7 @@ components:
           readOnly: true
         method:
           allOf:
-          - $ref: '#/components/schemas/MethodE6bEnum'
+          - $ref: '#/components/schemas/MethodEnum'
           readOnly: true
         status:
           allOf:
@@ -15465,8 +15077,6 @@ components:
         full_name:
           type: string
           maxLength: 255
-        two_factor_enabled:
-          type: boolean
         active_membership_count:
           type: integer
           readOnly: true
@@ -18485,7 +18095,7 @@ components:
           readOnly: true
         method:
           allOf:
-          - $ref: '#/components/schemas/MethodE6bEnum'
+          - $ref: '#/components/schemas/MethodEnum'
           readOnly: true
         status:
           allOf:
@@ -22209,61 +21819,6 @@ components:
       - gender
       - terms_accepted
       - work_location
-    EmployerTotpSetup:
-      type: object
-      properties:
-        manual_key:
-          type: string
-        otpauth_url:
-          type: string
-        expires_in:
-          type: integer
-      required:
-      - expires_in
-      - manual_key
-      - otpauth_url
-    EmployerTwoFactorMethodDisableRequest:
-      type: object
-      properties:
-        code:
-          type: string
-          minLength: 1
-          maxLength: 16
-        method:
-          allOf:
-          - $ref: '#/components/schemas/Method2ddEnum'
-          default: email
-        target:
-          $ref: '#/components/schemas/TargetEnum'
-      required:
-      - code
-      - target
-    EmployerTwoFactorMethodRequest:
-      type: object
-      properties:
-        target:
-          $ref: '#/components/schemas/TargetEnum'
-      required:
-      - target
-    EmployerTwoFactorMethods:
-      type: object
-      properties:
-        email:
-          type: boolean
-        totp:
-          type: boolean
-        backup:
-          type: boolean
-        two_factor_enabled:
-          type: boolean
-        backup_codes_remaining:
-          type: integer
-      required:
-      - backup
-      - backup_codes_remaining
-      - email
-      - totp
-      - two_factor_enabled
     EmploymentTypeEnum:
       enum:
       - full_time
@@ -24409,8 +23964,8 @@ components:
       description: |-
         Xác thực email/mật khẩu mà chưa phát JWT.
 
-        Tách bước này khỏi ``TokenObtainPairSerializer`` để tài khoản bật 2FA không
-        nhận refresh token trước khi mã email được xác nhận.
+        Tách bước này khỏi ``TokenObtainPairSerializer`` để view tự phát token qua
+        ``issue_tokens`` (gắn ``AuthSession`` và refresh cookie HttpOnly).
 
         Mô hình tách tài khoản theo cổng: cùng email có thể có tài khoản ứng viên và
         NTD riêng (mật khẩu riêng), nên phải resolve theo **(email, role của cổng)**
@@ -24443,13 +23998,6 @@ components:
           $ref: '#/components/schemas/SessionUser'
         access:
           type: string
-        two_factor_required:
-          type: boolean
-        challenge_token:
-          type: string
-        methods:
-          type: object
-          additionalProperties: {}
         detail:
           type: string
         code:
@@ -24510,11 +24058,6 @@ components:
           $ref: '#/components/schemas/Status5ebEnum'
         email_verified:
           type: boolean
-        two_factor_enabled:
-          type: boolean
-        mfa_methods:
-          type: string
-          readOnly: true
         has_usable_password:
           type: string
           readOnly: true
@@ -24555,7 +24098,6 @@ components:
       - has_usable_password
       - invitation
       - last_activity_at
-      - mfa_methods
       - public_id
       - updated_at
     ManagedAccountDetail:
@@ -24583,11 +24125,6 @@ components:
           $ref: '#/components/schemas/Status5ebEnum'
         email_verified:
           type: boolean
-        two_factor_enabled:
-          type: boolean
-        mfa_methods:
-          type: string
-          readOnly: true
         has_usable_password:
           type: string
           readOnly: true
@@ -24637,7 +24174,6 @@ components:
       - has_usable_password
       - invitation
       - last_activity_at
-      - mfa_methods
       - profile
       - public_id
       - section_counts
@@ -24662,8 +24198,6 @@ components:
         status:
           $ref: '#/components/schemas/Status5ebEnum'
         email_verified:
-          type: boolean
-        two_factor_enabled:
           type: boolean
         last_login:
           type: string
@@ -24736,17 +24270,7 @@ components:
           maxLength: 300
       required:
       - file
-    Method2ddEnum:
-      enum:
-      - email
-      - totp
-      - backup
-      type: string
-      description: |-
-        * `email` - email
-        * `totp` - totp
-        * `backup` - backup
-    MethodE6bEnum:
+    MethodEnum:
       enum:
       - dns_txt
       - admin_manual
@@ -26416,8 +25940,6 @@ components:
         status:
           $ref: '#/components/schemas/Status5ebEnum'
         email_verified:
-          type: boolean
-        two_factor_enabled:
           type: boolean
         last_login:
           type: string
@@ -29045,18 +28567,6 @@ components:
         email_verified:
           type: boolean
           readOnly: true
-        two_factor_enabled:
-          type: boolean
-          readOnly: true
-        two_factor_email_enabled:
-          type: string
-          readOnly: true
-        two_factor_totp_enabled:
-          type: string
-          readOnly: true
-        two_factor_backup_codes_enabled:
-          type: string
-          readOnly: true
         job_preferences_configured:
           type: string
           readOnly: true
@@ -29093,10 +28603,6 @@ components:
       - phone
       - public_id
       - role
-      - two_factor_backup_codes_enabled
-      - two_factor_email_enabled
-      - two_factor_enabled
-      - two_factor_totp_enabled
     SharedCvSummary:
       type: object
       properties:
@@ -29386,16 +28892,6 @@ components:
           pattern: ^[-a-zA-Z0-9_]+$
       required:
       - name
-    TargetEnum:
-      enum:
-      - email
-      - totp
-      - backup
-      type: string
-      description: |-
-        * `email` - email
-        * `totp` - totp
-        * `backup` - backup
     TaxCodeEnum:
       enum:
       - match
@@ -29476,88 +28972,6 @@ components:
           minimum: 1
       required:
       - revision_token
-    TwoFactorChallengeRequest:
-      type: object
-      properties:
-        code:
-          type: string
-          minLength: 1
-          maxLength: 16
-        method:
-          allOf:
-          - $ref: '#/components/schemas/Method2ddEnum'
-          default: email
-        challenge:
-          type: string
-          minLength: 1
-          maxLength: 128
-      required:
-      - challenge
-      - code
-    TwoFactorCodeRequest:
-      type: object
-      properties:
-        code:
-          type: string
-          minLength: 1
-          pattern: ^\d{6}$
-      required:
-      - code
-    TwoFactorCodeSent:
-      type: object
-      properties:
-        detail:
-          type: string
-        email:
-          type: string
-        expires_in:
-          type: integer
-      required:
-      - detail
-      - email
-      - expires_in
-    TwoFactorLoginCodeRequest:
-      type: object
-      properties:
-        code:
-          type: string
-          minLength: 1
-          maxLength: 16
-        method:
-          allOf:
-          - $ref: '#/components/schemas/Method2ddEnum'
-          default: email
-      required:
-      - code
-    TwoFactorLoginResend:
-      type: object
-      properties:
-        detail:
-          type: string
-        email:
-          type: string
-        expires_in:
-          type: integer
-      required:
-      - detail
-      - email
-      - expires_in
-    TwoFactorLoginTokens:
-      type: object
-      properties:
-        access:
-          type: string
-      required:
-      - access
-    TwoFactorResendRequest:
-      type: object
-      properties:
-        challenge:
-          type: string
-          minLength: 1
-          maxLength: 128
-      required:
-      - challenge
     TypeEnum:
       enum:
       - FAQ

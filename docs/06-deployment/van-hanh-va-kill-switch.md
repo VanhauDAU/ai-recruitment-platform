@@ -51,9 +51,9 @@ URL hay error message.
 | --- | --- |
 | `sync_admin_permissions [--actor-email]` | Đồng bộ registry permission vào DB. Permission bị bỏ khỏi registry được deprecate, giữ M2M; đưa code cũ trở lại rồi sync sẽ phục hồi grant. Chạy sau mỗi `migrate`. |
 | `seed_admin_access [--actor-email] [--assign email:department:role]` | Seed hội tụ phòng ban/chức danh hệ thống (`is_system_managed=True`); bản ghi đã tùy chỉnh qua UI không bị ghi đè. `--assign` bắt buộc `--actor-email`. |
-| `check_admin_access_readiness` | Hard gate, exit khác 0 khi admin thường không có membership hiệu lực, membership không sinh permission, primary trỏ vào role/department bị khóa hoặc một user có nhiều primary. Permission deprecated còn gắn role chỉ là warning. Cảnh báo admin có membership chưa bật MFA. |
+| `check_admin_access_readiness` | Hard gate, exit khác 0 khi admin thường không có membership hiệu lực, membership không sinh permission, primary trỏ vào role/department bị khóa hoặc một user có nhiều primary. Permission deprecated còn gắn role chỉ là warning. |
 | `create_admin_user <email> [--actor-email]` | Tạo admin thường, không bypass RBAC. Không dùng `createsuperuser` cho nhân viên. |
-| `bootstrap_admin_mfa <email> [--mark-email-verified] [--actor-email] [--no-input]` | Bật email MFA cho admin vừa tạo. `--mark-email-verified` chỉ dùng khi người vận hành kiểm soát hộp thư; automation phải thêm `--no-input`. |
+| `verify_admin_email <email> [--actor-email] [--no-input]` | Đánh dấu email admin vừa tạo là đã xác thực. Chỉ dùng khi người vận hành kiểm soát hộp thư; automation phải thêm `--no-input`. |
 | `export_admin_permissions [--output]` | Xuất contract permission cho frontend (`frontend/src/entities/admin-access/model/admin-permissions.generated.json`) từ registry Python, không cần DB. |
 | `purge_deprecated_admin_permissions --confirm [--force]` | Xóa vĩnh viễn permission đã deprecate. Không ghi audit revision. |
 | `reconcile_account_status_holds [--apply]` | Đối soát hold của campaign/job với trạng thái tài khoản. `--apply` chỉ thêm `ban_review`/`legacy_lock` (fail-closed), không tự gỡ hold của tài khoản active. |
@@ -83,22 +83,21 @@ docker compose exec backend python manage.py reconcile_account_status_holds
 
 ### Quy tắc vận hành còn hiệu lực
 
-- Superuser bypass toàn bộ RBAC. Duy trì tối thiểu hai superuser độc lập có
-  TOTP; mã dự phòng cất ngoại tuyến.
+- Superuser bypass toàn bộ RBAC. Duy trì tối thiểu hai superuser độc lập với
+  mật khẩu mạnh, không dùng chung.
 - Permission `account.status.ban`, `account.resource_hold.release`,
-  `account.email.manage`, `account.mfa.reset` được seed nhưng không gán mặc
+  `account.email.manage` được seed nhưng không gán mặc
   định cho role nào; chỉ superuser dùng cho tới khi có quy trình four-eyes.
 - Trang đăng nhập Admin không có "Quên mật khẩu" công khai; reset chỉ qua link
   do workflow quản trị phát hành.
-- Khôi phục danh tính (đổi email, reset MFA, gửi reset mật khẩu) và đổi trạng
+- Khôi phục danh tính (đổi email, gửi reset mật khẩu) và đổi trạng
   thái tài khoản đều theo preview → confirm có lý do/evidence, nghiệp vụ chi tiết
   xem [`flow-audit-2026-07.md`](../02-tong-quan/flow-audit-2026-07.md) và
   [`thiet-ke-database.md`](../03-database/thiet-ke-database.md). Không bao giờ
   mở `BANNED → ACTIVE` trực tiếp: phải qua `INACTIVE`, gỡ hold, rồi mở lại.
 - Break-glass khi mất toàn bộ superuser: người có quyền máy chủ chạy
-  `createsuperuser` rồi `bootstrap_admin_mfa <email> --mark-email-verified
-  --no-input`; ghi ticket, kiểm tra audit `bootstrap_mfa`, bổ sung superuser dự
-  phòng. Không sửa password hash trực tiếp.
+  `createsuperuser` rồi `verify_admin_email <email> --no-input`; ghi ticket,
+  kiểm tra audit `mark_email_verified`, bổ sung superuser dự phòng. Không sửa password hash trực tiếp.
 
 ### Rollback
 
@@ -115,10 +114,10 @@ docker compose exec backend python manage.py reconcile_account_status_holds
 - 403 `admin_permission_denied`, 409 `admin_resource_changed`/stale impact,
   400 vi phạm state machine, 403 từ write guard sau khi khóa tài khoản.
 - Outbox `AuthEmailJob` theo loại (`admin_invitation`, `email_changed_notice`,
-  `mfa_reset_notice`, `account_status_notice`): tỷ lệ `failed`/`cancelled`.
+  `account_status_notice`): tỷ lệ `failed`/`cancelled`.
 - Số hold `temporary_lock`/`ban_review`/`legacy_lock` theo trạng thái tài khoản.
 - Audit có actor, reason/evidence, số ảnh hưởng; không có token, URL reset,
-  mật khẩu, MFA secret hay backup code.
+  mật khẩu hay secret.
 
 ## Thông báo đa cổng (announcement)
 

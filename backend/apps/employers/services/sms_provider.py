@@ -166,9 +166,8 @@ def sms_configuration_errors(*, require_enabled=False):
         except (TypeError, ValueError):
             errors.append('EMPLOYER_SMS_PAYLOAD_ENCRYPTION_KEY không phải Fernet key hợp lệ.')
     jwt_signing_key = settings.SIMPLE_JWT.get('SIGNING_KEY', '')
-    totp_encryption_key = settings.TWO_FACTOR_TOTP_ENCRYPTION_KEY
     if settings.IS_PRODUCTION and encryption_key:
-        if encryption_key in {settings.SECRET_KEY, jwt_signing_key, totp_encryption_key} - {''}:
+        if encryption_key in {settings.SECRET_KEY, jwt_signing_key} - {''}:
             errors.append(
                 'EMPLOYER_SMS_PAYLOAD_ENCRYPTION_KEY không được dùng lại secret hệ thống khác.'
             )
@@ -179,7 +178,6 @@ def sms_configuration_errors(*, require_enabled=False):
         if hmac_key in {
             settings.SECRET_KEY,
             jwt_signing_key,
-            totp_encryption_key,
             encryption_key,
         } - {''}:
             errors.append(

@@ -162,7 +162,6 @@ class AdminMembershipReadSerializer(serializers.ModelSerializer):
             'public_id': obj.user.public_id,
             'email': obj.user.email,
             'full_name': obj.user.full_name,
-            'two_factor_enabled': obj.user.two_factor_enabled,
         }
 
     def get_department(self, obj):
@@ -248,7 +247,6 @@ class AdminStaffSerializer(serializers.ModelSerializer):
             'public_id',
             'email',
             'full_name',
-            'two_factor_enabled',
             'active_membership_count',
         ]
 

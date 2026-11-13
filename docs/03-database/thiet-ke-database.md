@@ -67,10 +67,10 @@ erDiagram
 
 | Bảng (model) | Mục đích, field then chốt và ràng buộc |
 | --- | --- |
-| `User` | Custom user (`AbstractUser`, không có `username`/`first_name`/`last_name`), đăng nhập bằng `email`. `role` ∈ candidate/employer/admin, `status` ∈ active/inactive/banned/pending, `provider` (local/google/facebook/linkedin/github), `email_verified`, cờ 2FA (email/TOTP/backup code hash), `auth_revision` (tăng đơn điệu để vô hiệu mọi phiên/artifact cũ). Email **không** unique toàn cục: `uniq_users_email_role_lower` unique `(Lower(email), role)` — mỗi cổng một tài khoản độc lập, cùng email được dùng ở cổng khác. |
+| `User` | Custom user (`AbstractUser`, không có `username`/`first_name`/`last_name`), đăng nhập bằng `email`. `role` ∈ candidate/employer/admin, `status` ∈ active/inactive/banned/pending, `provider` (local/google/facebook/linkedin/github), `email_verified`, `auth_revision` (tăng đơn điệu để vô hiệu mọi phiên/artifact cũ). Email **không** unique toàn cục: `uniq_users_email_role_lower` unique `(Lower(email), role)` — mỗi cổng một tài khoản độc lập, cùng email được dùng ở cổng khác. |
 | `SocialAccount` | Liên kết OAuth; `raw_profile` JSON; unique `(provider, provider_user_id, user)`. |
 | `AuthSession` | Một phiên/thiết bị: `portal`, `refresh_jti` (unique, chỉ lưu jti), `auth_revision`, `expires_at`, `revoked_at`. Access token bắt buộc có `sid` trỏ tới phiên còn hiệu lực. |
-| `AuthEmailJob` | Outbox email bảo mật (verification, welcome, reset mật khẩu, 2FA, mời admin, thông báo đổi email/MFA/trạng thái); `status` pending→sending→sent/failed/cancelled; tối đa một email welcome mỗi user. |
+| `AuthEmailJob` | Outbox email bảo mật (verification, welcome, reset mật khẩu, mời admin, thông báo đổi email/trạng thái); `status` pending→sending→sent/failed/cancelled; tối đa một email welcome mỗi user. |
 | `AccountStatusTransition` | Bằng chứng bất biến cho mỗi quyết định trạng thái tài khoản (mục 3.2). |
 | `AdminPermission` | Mirror registry code-owned `accounts/constants/admin_permissions.py`; `code` unique, `module`, `is_active` (code bị bỏ được deprecate, không xóa). |
 | `Department`, `AdminRole` | Phòng ban và chức danh; role unique `(department, code)`, M2M permission, `rank` chỉ để hiển thị/chọn primary, `is_system_managed` phân biệt bản ghi seed với bản ghi đã tùy chỉnh. Không có DELETE, chỉ activate/deactivate. |

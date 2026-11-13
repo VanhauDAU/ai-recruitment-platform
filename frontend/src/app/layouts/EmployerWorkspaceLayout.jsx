@@ -2,14 +2,12 @@ import {
   ArrowLeftOutlined,
   BarChartOutlined,
   CustomerServiceOutlined,
-  DoubleRightOutlined,
   FileTextOutlined,
   LogoutOutlined,
   MenuOutlined,
   MessageOutlined,
   PlusOutlined,
   QuestionCircleFilled,
-  SafetyCertificateOutlined,
   SearchOutlined,
   SettingOutlined,
 } from '@ant-design/icons'
@@ -33,8 +31,6 @@ import { AnnouncementStrip } from '@/widgets/announcement-strip'
 import { EmployerNotificationBell } from '@/widgets/employer-notification-center'
 import {
   EMPLOYER_ACCOUNT_SETTINGS_URL,
-  EMPLOYER_GENERAL_SETTINGS_URL,
-  EMPLOYER_VERIFY_URL,
   employerAppPath,
 } from '@/shared/config/portals'
 import EmployerAccountVerificationPopover from './EmployerAccountVerificationPopover'
@@ -99,9 +95,6 @@ export default function EmployerWorkspaceLayout() {
     verificationCase,
     profile.account_verification ?? profile.employer_account_level,
   )
-  // "An toàn" ở đây gắn với bảo mật đăng nhập: bật một trong các phương thức xác
-  // thực 2 yếu tố (hiện có email) là đủ để ẩn cảnh báo đỏ ở sidebar.
-  const accountSecure = Boolean(user?.two_factor_enabled)
   const candidateBlocker = employerReadinessBlockersFor(
     readiness,
     EMPLOYER_CAPABILITIES.CANDIDATE_DATA,
@@ -256,15 +249,6 @@ export default function EmployerWorkspaceLayout() {
                       <Avatar size={34} src={user?.avatar_url || undefined} className="!bg-slate-100 !font-bold !text-slate-500">{initials}</Avatar>
                     </Link>
                   </Tooltip>
-                  <Tooltip title={accountSecure ? 'Tài khoản đã đủ an toàn' : 'Tài khoản chưa đủ an toàn'} placement="right">
-                    <Link
-                      to={accountSecure ? EMPLOYER_VERIFY_URL : EMPLOYER_GENERAL_SETTINGS_URL}
-                      aria-label="Xem trạng thái xác thực tài khoản"
-                      className={`flex h-8 w-8 items-center justify-center rounded-full text-sm transition ${accountSecure ? '!bg-emerald-50 !text-emerald-700 hover:!bg-emerald-100' : '!bg-red-500 !text-white hover:!bg-red-600'}`}
-                    >
-                      <SafetyCertificateOutlined />
-                    </Link>
-                  </Tooltip>
                 </div>
               ) : (
                 <>
@@ -289,15 +273,6 @@ export default function EmployerWorkspaceLayout() {
                       <button type="button" aria-label="Xem chi tiết cấp xác thực tài khoản" className="inline-flex cursor-help text-slate-400 transition hover:text-slate-600"><QuestionCircleFilled /></button>
                     </Popover>
                   </span>
-                  {!accountSecure && (
-                    <Link
-                      to={EMPLOYER_GENERAL_SETTINGS_URL}
-                      className="mt-3 flex items-center justify-center gap-2 whitespace-nowrap rounded-full !bg-red-500 px-3 py-2 text-[11px] font-bold !text-white transition hover:!bg-red-600"
-                    >
-                      <SafetyCertificateOutlined /> Tài khoản chưa đủ an toàn
-                      <DoubleRightOutlined aria-hidden="true" className="animate-nudge-x" />
-                    </Link>
-                  )}
                 </>
               )}
             </div>

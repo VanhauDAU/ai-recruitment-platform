@@ -41,7 +41,7 @@ Xác thực trong Swagger UI: gọi `POST /api/auth/login/` lấy `access`, bấ
 | POST | `/api/auth/oauth/complete/` | Đổi `one_time_code` (1 lần dùng, TTL 60s) lấy `{user, access, refresh}` |
 | GET/PATCH | `/api/candidate/profile/` | Đọc/cập nhật `gender` cho onboarding và cài đặt gợi ý việc làm (tự tạo profile legacy khi cần) |
 | GET/PUT | `/api/candidate/job-preferences/` | Candidate: đọc/lưu nhu cầu việc làm chuẩn hóa. PUT yêu cầu 1–5 `desired_specialization_ids`, ít nhất một `preferred_province_ids`, `experience_level` và `desired_salary_vnd` > 0; đồng thời lưu hai quyết định consent. |
-| GET/PATCH | `/api/candidate/email-notification-settings/` | Đọc/cập nhật từng phần 12 preference email candidate. GET chưa có row trả defaults bật mà không ghi DB; PATCH partial tạo khi ghi lần đầu. Email xác thực/reset mật khẩu/2FA là email giao dịch, không thuộc contract hay UI preference. |
+| GET/PATCH | `/api/candidate/email-notification-settings/` | Đọc/cập nhật từng phần 12 preference email candidate. GET chưa có row trả defaults bật mà không ghi DB; PATCH partial tạo khi ghi lần đầu. Email xác thực/reset mật khẩu là email giao dịch, không thuộc contract hay UI preference. |
 | GET/PATCH | `/api/candidate/recruiter-visibility/` | Đọc/bật-tắt consent để NTD tìm thấy hồ sơ; bật yêu cầu xác nhận và mọi quyết định được audit. |
 | GET/PATCH | `/api/employer/me/` | Hồ sơ nhà tuyển dụng của tôi + canonical `job_workspace_ready`, `verification_approved`, `candidate_data_access`, `dpa_status`, `blockers[]`, `account_verification` (Cấp 0–3/quota) và `badge_eligibility` (năm tiêu chí dấu tick tách biệt; chỉ self mới thấy failure/action). Chỉ `position_title` sửa được. |
 | POST | `/api/admin/accounts/{public_id}/company-unlink-impact/` | Admin permission riêng xem tác động gỡ company chọn nhầm; reason bắt buộc, chỉ trả signed token khi relation clean |
@@ -63,7 +63,7 @@ Xác thực trong Swagger UI: gọi `POST /api/auth/login/` lấy `access`, bấ
 | POST | `/api/employer/phone/verify/` | Nhận `{challenge_id,code}`; xác thực initial/change/reverify, chống replay và giới hạn 5 lần sai |
 | POST | `/api/employer/dpa/accept/` | Chấp nhận exact DPA hiện hành bằng `policy_version` + `document_sha256`; stale trả 409 |
 | GET | `/api/employer/company/` | Công ty của tôi (chỉ đọc — thay đổi thông tin qua update-requests) |
-| POST | `/api/employer/company/create/` | Tạo hồ sơ catalogue công ty mới, không phụ thuộc trạng thái xác thực SĐT hoặc MFA; người tạo là owner và liên kết có hiệu lực ngay. Company không có verification lifecycle. Bị từ chối nếu recruiter đã tạo/chọn một công ty |
+| POST | `/api/employer/company/create/` | Tạo hồ sơ catalogue công ty mới, không phụ thuộc trạng thái xác thực SĐT; người tạo là owner và liên kết có hiệu lực ngay. Company không có verification lifecycle. Bị từ chối nếu recruiter đã tạo/chọn một công ty |
 | GET | `/api/employer/company/search/?q=&page=` | Catalogue phân trang `{count,next,previous,results}`, cố định 6 bản ghi/trang. Không có `q`: công ty thật mới tạo, mới nhất trước; có `q`: tìm không dấu theo tên đăng ký / tên thương mại / MST. Không trả placeholder từ luồng đăng ký cũ |
 | GET | `/api/companies/?q=&cursor=` | Danh bạ công khai. Không `q`: tối đa 18 company featured đã qua eligibility, finite và không có `count`. Có `q`: tìm không dấu trên tên/tên thương mại trong mọi `Company`, không áp dụng verification/completeness gate; trang đầu trả exact `count`, trang cursor sau bỏ `count`. DTO public-safe không trả MST/email/phone/raw address/recruiter và luôn redact địa chỉ hộ kinh doanh. |
 | GET | `/api/employer/company/catalogs/` | Source-of-truth cho `business_types`, `company_sizes`, `markets`, `target_customers` của form công ty |
@@ -190,9 +190,9 @@ Base quản trị: `/api/admin/`; public accept: `/api/auth/admin-invitations/`.
 | GET/POST | `/provisioning-scopes/` | Đọc/tạo whitelist; ghi superuser-only |
 | POST | `/provisioning-scopes/{id}/status-impact/`, `/activate/`, `/deactivate/` | Impact token và xác nhận trạng thái scope |
 | GET | `/api/auth/admin-invitations/validate/?token=...` | Kiểm tra link mời công khai |
-| POST | `/api/auth/admin-invitations/accept/` | Đặt mật khẩu, bật MFA email, trả mã dự phòng một lần |
+| POST | `/api/auth/admin-invitations/accept/` | Đặt mật khẩu và kích hoạt tài khoản admin được mời |
 
-Filter tài khoản gồm `q`, `role`, `status`, `email_verified`, `mfa`,
+Filter tài khoản gồm `q`, `role`, `status`, `email_verified`,
 `has_active_session`, `department`, `admin_role`, `company`, khoảng ngày tạo,
 khoảng lần đăng nhập và `ordering`. Lời mời hỗ trợ `q`, `status`, `department`,
 `role`; superuser có thêm `invited_by`.

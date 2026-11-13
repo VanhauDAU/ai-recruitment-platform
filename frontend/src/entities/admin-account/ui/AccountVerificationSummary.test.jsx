@@ -11,7 +11,6 @@ const ACCOUNT = {
   role: 'candidate',
   status: 'active',
   email_verified: true,
-  two_factor_enabled: true,
   active_session_count: 2,
   date_joined: '2026-01-12T08:15:00Z',
   last_login: '2026-07-28T10:30:00Z',
@@ -35,7 +34,6 @@ describe('AccountVerificationSummary', () => {
     expect(screen.getByText('Ứng viên')).toBeInTheDocument()
     expect(screen.getByText('Đang hoạt động')).toBeInTheDocument()
     expect(screen.getByText('Đã xác minh')).toBeInTheDocument()
-    expect(screen.getByText('Đang bật')).toBeInTheDocument()
     expect(screen.getByText(/Không đọc sẵn dữ liệu/)).toBeInTheDocument()
   })
 

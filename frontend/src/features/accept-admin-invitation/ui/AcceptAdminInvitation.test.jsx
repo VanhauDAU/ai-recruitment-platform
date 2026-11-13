@@ -56,7 +56,7 @@ describe('AcceptAdminInvitation', () => {
     )
   })
 
-  it('activates the account after setting a password without requiring MFA setup', async () => {
+  it('activates the account after setting a password', async () => {
     const user = userEvent.setup()
     api.acceptAdminInvitation.mockResolvedValue({
       user_public_id: 'usr_admin',
@@ -70,9 +70,7 @@ describe('AcceptAdminInvitation', () => {
     await user.click(screen.getByRole('button', { name: 'Kích hoạt tài khoản' }))
 
     expect(await screen.findByText('Tài khoản Admin đã sẵn sàng')).toBeInTheDocument()
-    expect(screen.getByText(/bật xác thực hai yếu tố sau trong phần Bảo mật/)).toBeInTheDocument()
-    expect(screen.queryByText('MFA email')).not.toBeInTheDocument()
-    expect(screen.queryByText('Mã dự phòng')).not.toBeInTheDocument()
+    expect(screen.getByText(/Đăng nhập cổng quản trị để bắt đầu làm việc/)).toBeInTheDocument()
     await waitFor(() => {
       expect(api.acceptAdminInvitation).toHaveBeenCalledWith({
         token: 'signed-token',

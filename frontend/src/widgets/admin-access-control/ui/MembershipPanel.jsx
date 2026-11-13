@@ -113,18 +113,6 @@ export default function MembershipPanel({
       ),
     },
     {
-      title: 'MFA',
-      key: 'user__two_factor_enabled',
-      width: 130,
-      sorter: true,
-      sortOrder: sorterOrder(filters.ordering, 'user__two_factor_enabled'),
-      render: (_, row) => (
-        <Tag color={row.user.two_factor_enabled ? 'green' : 'red'}>
-          {row.user.two_factor_enabled ? 'Đã bật' : 'Chưa bật MFA'}
-        </Tag>
-      ),
-    },
-    {
       title: 'Trạng thái',
       key: 'is_active',
       width: 130,
@@ -288,11 +276,6 @@ export default function MembershipPanel({
               <Descriptions.Item label="Chức danh">{selectedMember.role.name}</Descriptions.Item>
               <Descriptions.Item label="Phòng ban">{selectedMember.department.name}</Descriptions.Item>
               <Descriptions.Item label="Trạng thái"><StatusBadge active={selectedMember.is_active} /></Descriptions.Item>
-              <Descriptions.Item label="MFA">
-                <Tag color={selectedMember.user.two_factor_enabled ? 'green' : 'red'}>
-                  {selectedMember.user.two_factor_enabled ? 'Đã bật' : 'Chưa bật'}
-                </Tag>
-              </Descriptions.Item>
               <Descriptions.Item label="Được cấp lúc">{formatDateTime(selectedMember.assigned_at)}</Descriptions.Item>
               <Descriptions.Item label="Người cấp">{selectedMember.assigned_by_email || 'Hệ thống / không lưu'}</Descriptions.Item>
               {!selectedMember.is_active && <Descriptions.Item label="Thu hồi lúc">{formatDateTime(selectedMember.revoked_at)}</Descriptions.Item>}

@@ -40,16 +40,6 @@
     "requires": []
   },
   {
-    "code": "account.mfa.reset",
-    "module": "account",
-    "label": "Đặt lại xác thực đa yếu tố",
-    "description": "Xóa các phương thức xác thực đa yếu tố sau khi xác minh danh tính thủ công.",
-    "requires": [
-      "account.view",
-      "account.security.manage"
-    ]
-  },
-  {
     "code": "account.profile.manage",
     "module": "account",
     "label": "Sửa thông tin tài khoản",

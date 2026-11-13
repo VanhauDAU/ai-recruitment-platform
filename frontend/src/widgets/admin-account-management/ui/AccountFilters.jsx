@@ -40,7 +40,6 @@ export default function AccountFilters({
     ['q', 'Từ khóa', filters.q.trim()],
     ['status', 'Trạng thái', labelOf(STATUS_OPTIONS, filters.status)],
     ['email_verified', 'Xác minh email', labelOf(BOOLEAN_OPTIONS, filters.email_verified)],
-    ['mfa', 'Bật MFA', labelOf(BOOLEAN_OPTIONS, filters.mfa)],
     ['has_active_session', 'Phiên hoạt động', labelOf(BOOLEAN_OPTIONS, filters.has_active_session)],
     ...(!recruiterOnly ? [
       ['department', 'Phòng ban', departments.find((item) => item.public_id === filters.department)?.name],

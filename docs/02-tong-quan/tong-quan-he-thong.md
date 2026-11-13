@@ -58,7 +58,7 @@ khác dùng `/api/<app>/`.
 
 | App | Trách nhiệm |
 | --- | --- |
-| `accounts` | User theo role, đăng nhập/đăng ký, social login, JWT + `AuthSession`, MFA, outbox email xác thực, RBAC admin, lời mời admin, trạng thái tài khoản (`/api/auth/`, `/api/admin/`) |
+| `accounts` | User theo role, đăng nhập/đăng ký, social login, JWT + `AuthSession`, outbox email xác thực, RBAC admin, lời mời admin, trạng thái tài khoản (`/api/auth/`, `/api/admin/`) |
 | `candidates` | Hồ sơ ứng viên, onboarding, nhu cầu công việc, consent, cài đặt email (`/api/candidate/`) |
 | `employers` | Công ty, recruiter, xác thực doanh nghiệp, DPA, OTP SMS, chiến dịch tuyển dụng, compliance hold, domain claim, thông báo NTD, API công ty công khai (`/api/employer/`, `/api/companies/`) |
 | `jobs` | Tin tuyển dụng và vòng đời, tìm kiếm, tin đã lưu/ẩn, báo cáo tin và tạm ẩn, gợi ý việc làm, digest email, AI tạo tin (`/api/jobs/`, `/api/ai/`) |
@@ -145,10 +145,11 @@ onboarding ứng viên đặc tả trong [`dac-ta-onboarding-ung-vien.md`](../01
   `sid` phải trỏ tới phiên còn hiệu lực, nên thu hồi phiên có tác dụng ngay.
   Có idle timeout, ân hạn tái sử dụng refresh khi đua giữa hai tab, và
   re-authentication cho thao tác nhạy cảm.
-- `auth_revision` của tài khoản/phiên làm vô hiệu mọi token, link reset và
-  challenge MFA phát trước khi đổi email, reset MFA hay đổi trạng thái.
-- Chống dò mật khẩu bằng backoff theo tài khoản; MFA email/TOTP/mã dự phòng
-  cho admin. Social login: [`social-login.md`](../05-huong-dan/social-login.md).
+- `auth_revision` của tài khoản/phiên làm vô hiệu mọi token và link reset
+  phát trước khi đổi email hay đổi trạng thái.
+- Chống dò mật khẩu bằng backoff theo tài khoản. Không có xác thực hai bước
+  ([ADR-0016](./adr-0016-remove-two-factor-auth.md)). Social login:
+  [`social-login.md`](../05-huong-dan/social-login.md).
 
 ### Phân quyền admin (RBAC)
 
@@ -198,6 +199,7 @@ fail-fast khi cấu hình sai. Cờ rollout và cách tắt khẩn cấp:
 - [ADR-0013](./adr-0013-public-companies-api.md): API công khai cho danh bạ công ty.
 - [ADR-0014](./adr-0014-job-post-moderation.md): hậu kiểm tin thay cho duyệt trước.
 - [ADR-0015](./adr-0015-remove-commercial-services.md): gỡ dịch vụ thương mại.
+- [ADR-0016](./adr-0016-remove-two-factor-auth.md): gỡ xác thực hai bước.
 - [`cv-builder-architecture-foundation.md`](./cv-builder-architecture-foundation.md): kiến trúc CV Builder.
 - [`employer-remediation-decision-log.md`](./employer-remediation-decision-log.md),
   [`chatbot-local-decision-log.md`](./chatbot-local-decision-log.md): nhật ký quyết định theo mảng.

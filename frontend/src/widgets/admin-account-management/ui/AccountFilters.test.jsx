@@ -12,7 +12,6 @@ const baseFilters = {
   q: '',
   status: '',
   email_verified: '',
-  mfa: '',
   has_active_session: '',
   department: '',
   admin_role: '',
@@ -62,7 +61,7 @@ describe('AccountFilters', () => {
     const { chipLabels, count } = setup({
       q: 'lan',
       status: 'active',
-      mfa: 'true',
+      email_verified: 'true',
       department: 'dep_1',
       admin_role: 'rol_1',
       created_range: [dayjs('2026-01-01'), dayjs('2026-01-31')],
@@ -71,7 +70,7 @@ describe('AccountFilters', () => {
     expect(chipLabels).toEqual([
       'Từ khóa: lan',
       'Trạng thái: Đang hoạt động',
-      'Bật MFA: Có',
+      'Xác minh email: Có',
       'Phòng ban: Vận hành',
       'Chức danh: Chuyên viên',
       'Ngày tạo: 01/01/2026 → 31/01/2026',
@@ -80,19 +79,19 @@ describe('AccountFilters', () => {
   })
 
   it('clears a single condition when its chip is closed', async () => {
-    const { chips, onChange } = setup({ status: 'active', mfa: 'true' })
+    const { chips, onChange } = setup({ status: 'active', email_verified: 'true' })
 
     await userEvent.click(chips[0].querySelector('.ant-tag-close-icon'))
 
     expect(onChange).toHaveBeenCalledWith(
-      expect.objectContaining({ status: '', mfa: 'true' }),
+      expect.objectContaining({ status: '', email_verified: 'true' }),
     )
   })
 
   it('counts only advanced conditions on the filter badge', () => {
-    // status nằm ở thanh lọc nhanh nên badge chỉ đếm mfa + company.
+    // status nằm ở thanh lọc nhanh nên badge chỉ đếm email_verified + company.
     setup(
-      { status: 'active', mfa: 'true', company: 'cmp_1' },
+      { status: 'active', email_verified: 'true', company: 'cmp_1' },
       { recruiterOnly: true },
     )
 

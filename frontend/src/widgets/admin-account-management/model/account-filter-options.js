@@ -23,7 +23,6 @@ export const ORDERING_OPTIONS = [
   { value: 'role', label: 'Loại tài khoản' },
   { value: 'status', label: 'Trạng thái tài khoản' },
   { value: 'email_verified', label: 'Xác minh email' },
-  { value: 'two_factor_enabled', label: 'Trạng thái MFA' },
   { value: 'recruiter_profile__company__company_name', label: 'Công ty A–Z' },
   { value: 'recruiter_profile__company_role', label: 'Vai trò trong công ty' },
   {
@@ -36,7 +35,6 @@ export const ORDERING_OPTIONS = [
 // Các trường chỉ xuất hiện trong panel nâng cao: dùng cho badge đếm và nút đặt lại.
 export const ADVANCED_KEYS = [
   'email_verified',
-  'mfa',
   'has_active_session',
   'department',
   'admin_role',

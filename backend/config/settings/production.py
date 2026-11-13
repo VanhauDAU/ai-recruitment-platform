@@ -169,7 +169,6 @@ if EMPLOYER_SMS_OTP_ENABLED:
         if EMPLOYER_SMS_PAYLOAD_ENCRYPTION_KEY in {
             SECRET_KEY,
             SIMPLE_JWT.get('SIGNING_KEY', ''),
-            TWO_FACTOR_TOTP_ENCRYPTION_KEY,
         } - {''}:
             _errors.append(
                 'EMPLOYER_SMS_PAYLOAD_ENCRYPTION_KEY không được dùng lại secret hệ thống khác.'
@@ -179,7 +178,6 @@ if EMPLOYER_SMS_OTP_ENABLED:
     elif EMPLOYER_SMS_CHALLENGE_HMAC_KEY in {
         SECRET_KEY,
         SIMPLE_JWT.get('SIGNING_KEY', ''),
-        TWO_FACTOR_TOTP_ENCRYPTION_KEY,
         EMPLOYER_SMS_PAYLOAD_ENCRYPTION_KEY,
     } - {''}:
         _errors.append('EMPLOYER_SMS_CHALLENGE_HMAC_KEY không được dùng lại secret hệ thống khác.')

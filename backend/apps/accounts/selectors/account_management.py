@@ -167,13 +167,9 @@ def accounts_queryset(actor, *, params=None):
     if params.get('status'):
         statuses = [value.strip() for value in params['status'].split(',') if value.strip()]
         queryset = queryset.filter(status__in=statuses)
-    for key, field in (
-        ('email_verified', 'email_verified'),
-        ('mfa', 'two_factor_enabled'),
-    ):
-        value = params.get(key, '').lower()
-        if value in {'true', 'false'}:
-            queryset = queryset.filter(**{field: value == 'true'})
+    email_verified = params.get('email_verified', '').lower()
+    if email_verified in {'true', 'false'}:
+        queryset = queryset.filter(email_verified=email_verified == 'true')
     session_filter = params.get('has_active_session', '').lower()
     if session_filter in {'true', 'false'}:
         queryset = queryset.filter(
@@ -231,8 +227,6 @@ def accounts_queryset(actor, *, params=None):
         '-status',
         'email_verified',
         '-email_verified',
-        'two_factor_enabled',
-        '-two_factor_enabled',
         'last_session_seen_at',
         '-last_session_seen_at',
         'recruiter_profile__company__company_name',
@@ -763,16 +757,6 @@ def account_revoke_sessions_impact(user, *, reason):
     }
 
 
-def _account_mfa_snapshot(user):
-    has_totp = bool(user.two_factor_totp_secret)
-    has_email = bool(user.two_factor_email_enabled or (user.two_factor_enabled and not has_totp))
-    return {
-        'email': has_email,
-        'totp': has_totp,
-        'backup_codes_remaining': len(user.two_factor_backup_code_hashes or []),
-    }
-
-
 def _active_recovery_session_count(user):
     return AuthSession.objects.filter(
         user=user,
@@ -790,7 +774,6 @@ def _account_email_snapshot(user):
         'has_usable_password': user.has_usable_password(),
         'auth_revision': user.auth_revision,
         'oauth_providers': providers,
-        'mfa_methods': _account_mfa_snapshot(user),
     }
 
 
@@ -824,7 +807,6 @@ def account_email_change_impact(user, *, email, reason, verification_evidence):
         },
         'active_session_count': _active_recovery_session_count(user),
         'oauth_providers_to_revoke': before['oauth_providers'],
-        'mfa_methods': before['mfa_methods'],
         'password_reset_required': True,
         'password_reset_available': user.status == User.Status.ACTIVE and user.is_active,
         'email_verification_required': True,
@@ -832,36 +814,6 @@ def account_email_change_impact(user, *, email, reason, verification_evidence):
         'impact_token': create_impact_token(
             revision=current_rbac_revision(),
             operation='account.email.change',
-            resource_key=f'account:{user.public_id}',
-            normalized_payload=payload,
-        ),
-    }
-
-
-def account_mfa_reset_impact(user, *, reason, verification_evidence):
-    methods = _account_mfa_snapshot(user)
-    payload = {
-        'reason': reason.strip(),
-        'verification_evidence': verification_evidence.strip(),
-        'auth_revision': user.auth_revision,
-        'methods': methods,
-    }
-    return {
-        'operation': 'account.mfa.reset',
-        'target': {
-            'public_id': user.public_id,
-            'email': user.email,
-            'full_name': user.full_name,
-            'role': user.role,
-            'status': user.status,
-        },
-        'methods_to_disable': methods,
-        'active_session_count': _active_recovery_session_count(user),
-        'password_will_remain_unchanged': True,
-        'can_apply': bool(methods['email'] or methods['totp'] or methods['backup_codes_remaining']),
-        'impact_token': create_impact_token(
-            revision=current_rbac_revision(),
-            operation='account.mfa.reset',
             resource_key=f'account:{user.public_id}',
             normalized_payload=payload,
         ),

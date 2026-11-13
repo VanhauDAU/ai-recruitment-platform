@@ -378,8 +378,6 @@ REST_FRAMEWORK = {
     'NUM_PROXIES': TRUSTED_PROXY_HOPS,
     'DEFAULT_THROTTLE_RATES': {
         'login': '5/min',
-        'two_factor': '5/min',
-        'two_factor_verify': '10/min',
         'register': '5/min',
         'register_email_check': '12/min',
         'verify_email': '5/min',
@@ -871,12 +869,6 @@ EMAIL_VERIFICATION_RESEND_COOLDOWN = config(
 # được tài khoản; cooldown chặn spam gửi lại tới cùng một hòm thư.
 PASSWORD_RESET_TTL = config('PASSWORD_RESET_TTL', default=60 * 30, cast=int)
 PASSWORD_RESET_RESEND_COOLDOWN = config('PASSWORD_RESET_RESEND_COOLDOWN', default=60, cast=int)
-
-# Xác minh hai bước qua mã email: mã ngắn, chỉ dùng một lần và hết hạn sau 3 phút.
-TWO_FACTOR_CODE_TTL = config('TWO_FACTOR_CODE_TTL', default=60 * 3, cast=int)
-# Khóa Fernet riêng cho secret TOTP. Production phải cấu hình độc lập với
-# SECRET_KEY để có thể xoay khóa mà không làm lộ seed MFA trong database.
-TWO_FACTOR_TOTP_ENCRYPTION_KEY = config('TWO_FACTOR_TOTP_ENCRYPTION_KEY', default='')
 
 # Social login (OAuth Authorization Code Flow qua backend callback).
 # Chưa điền client id/secret -> nút social báo "chưa cấu hình" (không crash).

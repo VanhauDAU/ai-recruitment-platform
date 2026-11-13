@@ -13,8 +13,8 @@ describe('return URL policy', () => {
   )
 
   it('adds the URL to a login path without overwriting existing search parameters', () => {
-    expect(withReturnUrl('/login?reason=session', '/tai-khoan/xac-minh-hai-buoc'))
-      .toBe('/login?reason=session&returnUrl=%2Ftai-khoan%2Fxac-minh-hai-buoc')
+    expect(withReturnUrl('/login?reason=session', '/tai-khoan/doi-mat-khau'))
+      .toBe('/login?reason=session&returnUrl=%2Ftai-khoan%2Fdoi-mat-khau')
   })
 
   it('reads only a safe return URL from search params', () => {
