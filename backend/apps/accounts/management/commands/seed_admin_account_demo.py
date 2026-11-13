@@ -74,16 +74,6 @@ ROLE_DEFINITIONS = (
             'blog.manage',
         ),
     },
-    {
-        'code': 'customer-care',
-        'name': 'Nhân viên chăm sóc khách hàng',
-        'description': 'Theo dõi và xử lý lead tư vấn.',
-        'permissions': (
-            'dashboard.view',
-            'consultation_lead.view',
-            'consultation_lead.manage',
-        ),
-    },
 )
 
 
@@ -132,7 +122,7 @@ class Command(BaseCommand):
                         source='seed',
                         actor_identifier='seed_admin_account_demo',
                     )
-            for target_code in ('moderator', 'content', 'customer-care'):
+            for target_code in ('moderator', 'content'):
                 create_provisioning_scope(
                     source_role=roles['internal-hr'],
                     target_role=roles[target_code],

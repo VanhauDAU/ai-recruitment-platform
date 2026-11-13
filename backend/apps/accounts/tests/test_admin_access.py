@@ -277,11 +277,6 @@ class AdminAccessTests(TestCase):
         self.assertIn('company_update.review', manager['permissions'])
         self.assertIn('employer_verification.review', manager['permissions'])
 
-        service_staff = system_role_definition('employer-services', 'staff')
-        service_manager = system_role_definition('employer-services', 'manager')
-        self.assertNotIn('consultation_lead.export', service_staff['permissions'])
-        self.assertIn('consultation_lead.export', service_manager['permissions'])
-
     def test_role_permission_service_adds_required_view_permission(self):
         enforce = AdminPermission.objects.create(
             code='job_moderation.enforce_visibility',
@@ -360,7 +355,6 @@ class AdminAccessTests(TestCase):
             AdminJobReportResolveView,
             AdminJobReportReverseView,
         )
-        from apps.services.api.views import catalog as service_catalog
         from apps.sitecontent.api.views import settings as site_settings
 
         view_classes = [
@@ -368,13 +362,6 @@ class AdminAccessTests(TestCase):
             cv_admin.AdminCvTemplateViewSet,
             cv_admin.AdminCvSampleContentViewSet,
             cv_admin.AdminCvContentBlueprintViewSet,
-            service_catalog.AdminServiceCategoryListCreateView,
-            service_catalog.AdminServiceCategoryDetailView,
-            service_catalog.AdminServicePackageListCreateView,
-            service_catalog.AdminServicePackageDetailView,
-            service_catalog.AdminConsultationLeadListView,
-            service_catalog.AdminConsultationLeadExportView,
-            service_catalog.AdminConsultationLeadDetailView,
             site_settings.AdminLocaleListCreateView,
             site_settings.AdminLocaleDetailView,
             site_settings.AdminSiteSettingView,

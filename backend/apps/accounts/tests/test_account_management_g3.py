@@ -774,7 +774,7 @@ class AccountManagementG3DemoSeedTests(TestCase):
             AdminMembership.objects.filter(user__in=admins, is_active=True).count(),
             2,
         )
-        self.assertEqual(AdminProvisioningScope.objects.filter(is_active=True).count(), 3)
+        self.assertEqual(AdminProvisioningScope.objects.filter(is_active=True).count(), 2)
         root = admins.get(email='admin-root@demo.local')
         self.assertTrue(root.check_password('AdminDemo123!'))
         self.assertTrue(
