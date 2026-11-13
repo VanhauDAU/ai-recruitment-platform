@@ -26,7 +26,6 @@
 | [04-api](04-api/)               | [tai-lieu-api.md](04-api/tai-lieu-api.md)                        | Tài liệu API (endpoint, request/response)                               |
 | [04-api](04-api/)               | [frontend-response-contracts.md](04-api/frontend-response-contracts.md) | Contract response tối thiểu theo từng màn hình frontend             |
 | [04-api](04-api/)               | [cookie-consent-va-job-view-tracking.md](04-api/cookie-consent-va-job-view-tracking.md) | Consent cookie, browser storage và job-view tracking |
-| [04-api](04-api/)               | [job-services-contract.md](04-api/job-services-contract.md) | Hợp đồng API dự kiến cho lifecycle V2, inventory, activation và candidate presentation |
 | [05-huong-dan](05-huong-dan/)   | [huong-dan-cai-dat.md](05-huong-dan/huong-dan-cai-dat.md)        | Hướng dẫn cài đặt, chạy dự án local                                     |
 | [05-huong-dan](05-huong-dan/)   | [cau-hinh-env.md](05-huong-dan/cau-hinh-env.md)                  | Mẫu env tối thiểu, catalog optional và ma trận native/Docker/CI         |
 | [05-huong-dan](05-huong-dan/)   | [cau-hinh-site-settings.md](05-huong-dan/cau-hinh-site-settings.md) | Cấu hình site settings (15 nhóm, schema-driven, quy ước env)         |
@@ -42,11 +41,9 @@
 | [06-deployment](06-deployment/) | [employer-dpa-evidence-rollout.md](06-deployment/employer-dpa-evidence-rollout.md) | ER-6B: cấu hình exact DPA, migration không bịa evidence, rollout và rollback |
 | [06-deployment](06-deployment/) | [employer-hardening-rollout-runbook.md](06-deployment/employer-hardening-rollout-runbook.md) | ER-8: readiness audit, rollout tuần tự, monitoring, Chrome QA và rollback employer |
 | [06-deployment](06-deployment/) | [ai-job-generation-rollout-runbook.md](06-deployment/ai-job-generation-rollout-runbook.md) | AI tạo tin: cấu hình Gemini/Vertex, eval gate, rollout, monitoring và rollback |
-| [06-deployment](06-deployment/) | [job-services-rollout-runbook.md](06-deployment/job-services-rollout-runbook.md) | Expand–backfill–shadow–enforce, audit legacy, observability và rollback dịch vụ tin |
 | [07-algorithms](07-algorithms/) | [thuat-toan-ai.md](07-algorithms/thuat-toan-ai.md)               | Thuật toán AI: trích xuất kỹ năng, matching CV-Job, chấm điểm phỏng vấn |
 | [07-algorithms](07-algorithms/) | [ai-job-post-generation.md](07-algorithms/ai-job-post-generation.md) | Structured generation, ranh giới field, eval và điều kiện fine-tuning |
 | [07-algorithms](07-algorithms/) | [employer-flow-security-audit-2026-08.md](02-tong-quan/employer-flow-security-audit-2026-08.md) | Baseline finding, evidence và retest criteria cho luồng Nhà tuyển dụng |
-| [07-algorithms](07-algorithms/) | [sponsored-job-distribution-policy.md](07-algorithms/sponsored-job-distribution-policy.md) | Relevance-first, slot 2/10, company diversity và ma trận presentation các surface |
 | [08-frontend](08-frontend/)     | [cau-truc-frontend.md](08-frontend/cau-truc-frontend.md)         | Cấu trúc frontend, component, quy ước code                              |
 | [08-frontend](08-frontend/)     | [dai-thong-bao-da-cong.md](08-frontend/dai-thong-bao-da-cong.md) | Runtime strip đa cổng, priority, accessibility, rollout và rollback     |
 
