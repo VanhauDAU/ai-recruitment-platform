@@ -89,11 +89,6 @@ export async function getUploadSession(publicId) {
   return data
 }
 
-export async function cancelUploadSession(publicId) {
-  const { data } = await api.post(`/uploads/sessions/${publicId}/cancel/`)
-  return data
-}
-
 export async function retryUploadSession(publicId) {
   const { data } = await api.post(`/uploads/sessions/${publicId}/retry/`)
   return data

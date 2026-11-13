@@ -12,7 +12,6 @@ from apps.accounts.permissions import HasAdminPermission
 from apps.accounts.selectors import effective_permission_codes
 from apps.cvs.models import CvAsset, CvDraft
 from apps.cvs.services import create_background_asset
-from apps.cvs.services.composition import compose_cv_document
 from apps.jobs.models import JobCategory
 
 from ...models import (
@@ -462,20 +461,6 @@ class AdminCvSampleContentViewSet(AdminModelViewSet):
             },
             status=status.HTTP_202_ACCEPTED,
         )
-
-    @action(detail=True, methods=['post'])
-    def preview(self, request, public_id=None):
-        sample = self.get_object()
-        try:
-            template = CvTemplate.objects.get(public_id=request.data.get('template_public_id'))
-        except CvTemplate.DoesNotExist as error:
-            raise ValidationError({'template_public_id': 'Unknown template.'}) from error
-        document = compose_cv_document(
-            template=template,
-            content_json=sample.content_json,
-            theme_color=request.data.get('theme_color'),
-        )
-        return Response({'document': document})
 
     @action(detail=True, methods=['post'])
     def publish(self, request, public_id=None):

@@ -284,15 +284,6 @@ def is_recent_oauth_reauthentication(session):
     )
 
 
-def is_recent_reauthentication(session):
-    return bool(
-        session
-        and session.reauthenticated_at
-        and session.reauthenticated_at
-        > timezone.now() - timedelta(seconds=settings.AUTH_REAUTH_MAX_AGE_SECONDS)
-    )
-
-
 def _blacklist_jti(jti):
     outstanding = OutstandingToken.objects.filter(jti=jti).first()
     if outstanding:

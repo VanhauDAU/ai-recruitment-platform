@@ -6,8 +6,6 @@ export const CV_LANGUAGES = [
   { code: 'en-US', param: 'en', label: 'Tiếng Anh', inlineLabel: 'tiếng Anh', flag: '🇬🇧' },
 ]
 
-export const DEFAULT_CV_LANGUAGE = CV_LANGUAGES[0].code
-
 export function cvLanguage(code) {
   return CV_LANGUAGES.find((language) => language.code === code) || CV_LANGUAGES[0]
 }

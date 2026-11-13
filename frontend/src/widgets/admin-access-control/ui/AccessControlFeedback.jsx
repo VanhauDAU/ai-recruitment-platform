@@ -1,13 +1,5 @@
 import { Alert, Button, Card, Descriptions, Tag, Typography } from 'antd'
 
-export function ManagementBadge({ managed }) {
-  return (
-    <Tag color={managed ? 'blue' : 'gold'}>
-      {managed ? 'Do hệ thống quản lý' : 'Đã tuỳ chỉnh'}
-    </Tag>
-  )
-}
-
 export function StatusBadge({ active }) {
   return (
     <Tag color={active ? 'green' : 'default'}>

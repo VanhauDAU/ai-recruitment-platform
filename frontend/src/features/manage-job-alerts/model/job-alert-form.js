@@ -5,7 +5,6 @@ import {
   WORK_TYPE_LABELS,
 } from '@/entities/job'
 
-export const JOB_ALERT_MANAGEMENT_PATH = '/tai-khoan/cai-dat-thong-bao-viec-lam'
 export const JOB_PREFERENCE_SETTINGS_PATH = '/tai-khoan/cai-dat-goi-y-viec-lam'
 
 export const JOB_ALERT_SCOPE_OPTIONS = [

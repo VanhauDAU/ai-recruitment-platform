@@ -596,13 +596,6 @@ def prepare_candidate_job_digest(candidate_id, now=None, claimed_at=None):
     return digest
 
 
-def due_candidate_job_digest_candidate_ids(now=None):
-    """Bounded, cheap Beat enumeration; expensive preparation runs per candidate."""
-    now = now or timezone.now()
-    initialize_missing_suitable_digest_schedules(now)
-    return due_candidate_ids(now)
-
-
 def _delivery_gate(digest):
     candidate = get_user_model().objects.filter(pk=digest.candidate_id).first()
     if not (

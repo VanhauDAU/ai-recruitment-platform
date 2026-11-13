@@ -59,7 +59,6 @@ export const EMPLOYER_LOGIN_URL = import.meta.env.VITE_EMPLOYER_HOST
   : employerAppPath('/login')
 
 export const EMPLOYER_FORGOT_PASSWORD_URL = employerAppPath('/forgot-password')
-export const EMPLOYER_RESET_PASSWORD_URL = employerAppPath('/reset-password')
 export const EMPLOYER_ACCOUNT_VERIFY_URL = employerAppPath('/account/verify')
 export const EMPLOYER_COMPLETE_PROFILE_URL = employerAppPath('/account/complete-profile')
 export const EMPLOYER_CONSULTING_NEED_URL = employerAppPath('/consulting-need')

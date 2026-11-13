@@ -85,7 +85,6 @@ from .profiles import (
     ensure_recruiter_candidate_data_access,
     ensure_recruiter_job_workspace,
     get_or_create_recruiter,
-    recruiter_candidate_data_access_allowed,
     recruiter_job_posting_entitlement,
     recruiter_job_publication_state,
     recruiter_posting_readiness,
@@ -96,7 +95,6 @@ from .recruitment_needs import (
     create_initial_recruitment_need,
 )
 from .tax_lookup import (
-    latest_tax_lookup_evidence,
     lookup_company_tax,
     queue_company_tax_lookup,
     refresh_company_update_tax_lookup,
@@ -191,7 +189,6 @@ __all__ = [
     'confirm_verification_lifecycle_action',
     'record_campaign_activity',
     'get_or_create_recruiter',
-    'recruiter_candidate_data_access_allowed',
     'recruiter_has_active_compliance_hold',
     'recruiter_job_publication_state',
     'recruiter_badge_eligibility',
@@ -201,7 +198,6 @@ __all__ = [
     'reconcile_verification_case',
     'recruiter_posting_readiness',
     'recruiter_readiness_state',
-    'latest_tax_lookup_evidence',
     'lookup_company_tax',
     'lock_company_update_request',
     'lock_verification_identity',

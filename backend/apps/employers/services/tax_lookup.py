@@ -266,13 +266,6 @@ def queue_company_tax_lookup(
     return evidence
 
 
-def latest_tax_lookup_evidence(workflow):
-    relation = workflow.tax_lookup_evidences
-    return (
-        relation.filter(workflow_revision=workflow.revision).order_by('-created_at', '-id').first()
-    )
-
-
 @transaction.atomic
 def refresh_verification_tax_lookup(case, *, actor):
     scope = lock_verification_identity(case)
