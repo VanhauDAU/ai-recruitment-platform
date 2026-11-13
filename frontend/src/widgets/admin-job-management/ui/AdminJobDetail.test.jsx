@@ -36,8 +36,8 @@ const job = {
   content_changes: { has_baseline: false, changed_count: 0, changes: [] },
 }
 
-function renderDetail({ permissions = [], serviceContent = null } = {}) {
-  getAdminJob.mockResolvedValue(job)
+function renderDetail({ data = job, permissions = [], serviceContent = null } = {}) {
+  getAdminJob.mockResolvedValue(data)
   useSession.mockReturnValue({ user: { admin_access: { permissions } } })
   return render(
     <QueryClientProvider client={new QueryClient()}>
@@ -111,6 +111,25 @@ describe('AdminJobDetail', () => {
 
     const panel = screen.getByTestId('job-service-activations')
     expect(panel).toHaveTextContent('Dịch vụ của Backend Engineer')
+  })
+
+  it('shows when the recruiter accepted the publication commitment', async () => {
+    renderDetail({
+      data: {
+        ...job,
+        responsibility_accepted_at: '2026-11-12T08:00:00+07:00',
+        responsibility_statement_version: '2026-11',
+      },
+    })
+
+    expect(await screen.findByText(/NTD đã cam kết/)).toBeInTheDocument()
+    expect(screen.queryByText('Chưa ghi nhận cam kết')).not.toBeInTheDocument()
+  })
+
+  it('flags a public job that has no commitment on record', async () => {
+    renderDetail()
+
+    expect(await screen.findByText('Chưa ghi nhận cam kết')).toBeInTheDocument()
   })
 
   it('links to the employer verification file when compliance blocks the job', async () => {

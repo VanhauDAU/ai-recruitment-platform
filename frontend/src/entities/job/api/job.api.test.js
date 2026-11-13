@@ -113,10 +113,13 @@ describe('CV job recommendations API', () => {
     await expect(getJobPostingContext()).resolves.toEqual({ job_postable: true })
     await expect(saveEmployerJob({ title: 'Nháp' })).resolves.toEqual({ public_id: 'job_draft' })
     await expect(saveEmployerJob({ title: 'Sửa' }, 'job_1')).resolves.toEqual({ public_id: 'job_1' })
-    await expect(publishEmployerJob({ title: 'Mới' })).resolves.toEqual({ public_id: 'job_active' })
-    await expect(publishEmployerJob({ title: 'Đã sửa' }, 'job_1')).resolves.toEqual({ public_id: 'job_published' })
+    await expect(publishEmployerJob({ title: 'Mới' }, undefined, '2026-11'))
+      .resolves.toEqual({ public_id: 'job_active' })
+    await expect(publishEmployerJob({ title: 'Đã sửa' }, 'job_1', '2026-11'))
+      .resolves.toEqual({ public_id: 'job_published' })
     await expect(closeEmployerJob('job_1')).resolves.toEqual({ public_id: 'job_closed' })
-    await expect(reopenEmployerJob('job_1', '2026-08-01')).resolves.toEqual({ public_id: 'job_reopened' })
+    await expect(reopenEmployerJob('job_1', '2026-08-01', '2026-11'))
+      .resolves.toEqual({ public_id: 'job_reopened' })
     await expect(extendEmployerJob('job_1', '2026-08-08')).resolves.toEqual({ public_id: 'job_extended' })
     await expect(duplicateEmployerJob('job_1')).resolves.toEqual({ public_id: 'job_copy' })
 
@@ -125,11 +128,19 @@ describe('CV job recommendations API', () => {
     expect(get).toHaveBeenNthCalledWith(3, '/jobs/mine/posting-context/')
     expect(post).toHaveBeenNthCalledWith(1, '/jobs/mine/?as=draft', { title: 'Nháp' })
     expect(patch).toHaveBeenNthCalledWith(1, '/jobs/mine/job_1/', { title: 'Sửa' })
-    expect(post).toHaveBeenNthCalledWith(2, '/jobs/mine/', { title: 'Mới' })
+    expect(post).toHaveBeenNthCalledWith(2, '/jobs/mine/', {
+      title: 'Mới',
+      responsibility_statement_version: '2026-11',
+    })
     expect(patch).toHaveBeenNthCalledWith(2, '/jobs/mine/job_1/', { title: 'Đã sửa' })
-    expect(post).toHaveBeenNthCalledWith(3, '/jobs/mine/job_1/submit/')
+    expect(post).toHaveBeenNthCalledWith(3, '/jobs/mine/job_1/submit/', {
+      responsibility_statement_version: '2026-11',
+    })
     expect(post).toHaveBeenNthCalledWith(4, '/jobs/mine/job_1/close/')
-    expect(post).toHaveBeenNthCalledWith(5, '/jobs/mine/job_1/reopen/', { deadline: '2026-08-01' })
+    expect(post).toHaveBeenNthCalledWith(5, '/jobs/mine/job_1/reopen/', {
+      deadline: '2026-08-01',
+      responsibility_statement_version: '2026-11',
+    })
     expect(post).toHaveBeenNthCalledWith(6, '/jobs/mine/job_1/extend/', { deadline: '2026-08-08' })
     expect(post).toHaveBeenNthCalledWith(7, '/jobs/mine/job_1/duplicate/')
   })

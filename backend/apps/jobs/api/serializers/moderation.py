@@ -217,6 +217,8 @@ class AdminJobDetailSerializer(AdminJobManagementListSerializer):
             'language_requirements',
             'application_contact',
             'can_view_sensitive_contact',
+            'responsibility_accepted_at',
+            'responsibility_statement_version',
             'status_history',
             'moderation_events',
             'reports',

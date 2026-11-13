@@ -1086,6 +1086,10 @@ test('employer jobs: creation chooser leads to the complete manual five-section 
         job_postable: true,
         free_publish_limit: 3,
         free_publish_remain: 3,
+        responsibility_statement: {
+          version: '2026-11',
+          text: 'Tôi cam kết nội dung tin tuyển dụng là đúng sự thật và chịu trách nhiệm về tin đã đăng.',
+        },
         lifecycle_policy: {
           mode: 'legacy',
           default_visibility_days: 30,
@@ -1230,6 +1234,7 @@ test('employer jobs: creation chooser leads to the complete manual five-section 
   await expect(page.locator('#application').getByText('hr@example.com', { exact: true })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Lưu nháp' })).toBeVisible()
   await expect(page.getByRole('button', { name: /Đăng tin$/ })).toBeVisible()
+  await expect(page.getByRole('checkbox', { name: /chịu trách nhiệm về tin đã đăng/ })).toBeVisible()
   await expectNoHorizontalOverflow(page)
   await page.getByRole('button', { name: 'Lưu nháp' }).click()
   await expect.poll(() => savedDraft).not.toHaveProperty('requested_visibility_days')
@@ -1293,7 +1298,15 @@ test('employer jobs: direct AI modes preserve campaign, resume generation and at
   await page.route('http://localhost:8000/api/jobs/mine/posting-context/', async (route) => {
     await route.fulfill({
       contentType: 'application/json',
-      body: JSON.stringify({ job_postable: true, free_publish_limit: 3, free_publish_remain: 3 }),
+      body: JSON.stringify({
+        job_postable: true,
+        free_publish_limit: 3,
+        free_publish_remain: 3,
+        responsibility_statement: {
+          version: '2026-11',
+          text: 'Tôi cam kết nội dung tin tuyển dụng là đúng sự thật và chịu trách nhiệm về tin đã đăng.',
+        },
+      }),
     })
   })
   await page.route('http://localhost:8000/api/jobs/benefits/', async (route) => {

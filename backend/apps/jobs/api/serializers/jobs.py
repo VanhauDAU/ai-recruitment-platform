@@ -905,6 +905,22 @@ class EmployerJobListSerializer(EmployerJobVisibilityHoldMixin, PublicJobListSer
         ]
 
 
+class JobResponsibilityAcknowledgementSerializer(serializers.Serializer):
+    """Sent with every request that makes a job public (publish, reopen)."""
+
+    responsibility_statement_version = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        default='',
+        max_length=20,
+    )
+
+
+class JobResponsibilityStatementSerializer(serializers.Serializer):
+    version = serializers.CharField()
+    text = serializers.CharField()
+
+
 class EmployerPostingBlockerSerializer(serializers.Serializer):
     code = serializers.CharField()
     capabilities = serializers.ListField(
@@ -936,6 +952,7 @@ class EmployerJobPostingContextSerializer(serializers.Serializer):
     max_deadline_days = serializers.IntegerField(min_value=1)
     max_public_lifetime_days = serializers.IntegerField(min_value=1)
     lifecycle_policy = EmployerJobLifecyclePolicySerializer()
+    responsibility_statement = JobResponsibilityStatementSerializer()
     services = EmployerJobServicesContextSerializer()
     verification_completed = serializers.BooleanField()
     admin_approved = serializers.BooleanField()

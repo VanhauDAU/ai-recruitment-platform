@@ -151,13 +151,17 @@ export async function saveEmployerJob(payload, publicId) {
   return data
 }
 
-export async function publishEmployerJob(payload, publicId) {
+// The backend only makes a job public when the request names the commitment
+// version the recruiter accepted (see `responsibility_statement` in the
+// posting context). Saving an already public job needs no acknowledgement.
+export async function publishEmployerJob(payload, publicId, acceptedStatementVersion) {
+  const acknowledgement = { responsibility_statement_version: acceptedStatementVersion }
   if (publicId) {
     await api.patch(`/jobs/mine/${publicId}/`, payload)
-    const { data } = await api.post(`/jobs/mine/${publicId}/submit/`)
+    const { data } = await api.post(`/jobs/mine/${publicId}/submit/`, acknowledgement)
     return data
   }
-  const { data } = await api.post('/jobs/mine/', payload)
+  const { data } = await api.post('/jobs/mine/', { ...payload, ...acknowledgement })
   return data
 }
 
@@ -166,8 +170,11 @@ export async function closeEmployerJob(publicId) {
   return data
 }
 
-export async function reopenEmployerJob(publicId, deadline) {
-  const { data } = await api.post(`/jobs/mine/${publicId}/reopen/`, { deadline })
+export async function reopenEmployerJob(publicId, deadline, acceptedStatementVersion) {
+  const { data } = await api.post(`/jobs/mine/${publicId}/reopen/`, {
+    deadline,
+    responsibility_statement_version: acceptedStatementVersion,
+  })
   return data
 }
 

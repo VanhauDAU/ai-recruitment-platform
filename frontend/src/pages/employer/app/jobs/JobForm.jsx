@@ -61,7 +61,9 @@ export default function JobForm() {
     ),
   })
   const publishMutation = useMutation({
-    mutationFn: (payload) => publishEmployerJob(payload, publicId),
+    mutationFn: ({ payload, acceptedStatementVersion }) => (
+      publishEmployerJob(payload, publicId, acceptedStatementVersion)
+    ),
     onSuccess: (job) => {
       queryClient.invalidateQueries({ queryKey: ['jobs'] })
       message.success(
@@ -147,7 +149,10 @@ export default function JobForm() {
         onCreateCampaign={(name) => quickCampaignMutation.mutateAsync({ name })}
         onCreateSkill={(name) => createSkillMutation.mutateAsync(name)}
         onSaveDraft={(payload, aiGenerationPublicId) => draftMutation.mutate(withAiAttribution(payload, aiGenerationPublicId))}
-        onPublish={(payload, aiGenerationPublicId) => publishMutation.mutate(withAiAttribution(payload, aiGenerationPublicId))}
+        onPublish={(payload, aiGenerationPublicId, acceptedStatementVersion) => publishMutation.mutate({
+          payload: withAiAttribution(payload, aiGenerationPublicId),
+          acceptedStatementVersion,
+        })}
       />
     </section>
   )

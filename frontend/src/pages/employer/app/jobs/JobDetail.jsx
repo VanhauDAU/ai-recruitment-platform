@@ -107,6 +107,7 @@ export default function JobDetail() {
   const queryClient = useQueryClient()
   const [deadlineAction, setDeadlineAction] = useState(null)
   const [newDeadline, setNewDeadline] = useState(null)
+  const [commitmentAccepted, setCommitmentAccepted] = useState(false)
   const {
     readiness,
     profileQuery,
@@ -161,9 +162,9 @@ export default function JobDetail() {
     },
   })
   const deadlineMutation = useMutation({
-    mutationFn: ({ action, deadline }) => (
+    mutationFn: ({ action, deadline, acceptedStatementVersion }) => (
       action === 'reopen'
-        ? reopenEmployerJob(publicId, deadline)
+        ? reopenEmployerJob(publicId, deadline, acceptedStatementVersion)
         : extendEmployerJob(publicId, deadline)
     ),
     onSuccess: () => {
@@ -180,6 +181,7 @@ export default function JobDetail() {
 
   function openDeadlineAction(action) {
     setDeadlineAction(action)
+    setCommitmentAccepted(false)
     setNewDeadline(jobQuery.data?.deadline ? dayjs(jobQuery.data.deadline) : null)
   }
 
@@ -194,9 +196,15 @@ export default function JobDetail() {
       message.error('Hạn gia hạn phải sau hạn nhận hồ sơ hiện tại.')
       return
     }
+    const commitment = postingContextQuery.data?.responsibility_statement
+    if (deadlineAction === 'reopen' && !(commitment && commitmentAccepted)) {
+      message.error('Xác nhận cam kết trước khi mở lại tin.')
+      return
+    }
     deadlineMutation.mutate({
       action: deadlineAction,
       deadline: newDeadline.format('YYYY-MM-DD'),
+      acceptedStatementVersion: deadlineAction === 'reopen' ? commitment.version : undefined,
     })
   }
 
@@ -333,6 +341,8 @@ export default function JobDetail() {
 
       <JobLifecycleModal
         action={deadlineAction}
+        commitment={postingContextQuery.data?.responsibility_statement}
+        commitmentAccepted={commitmentAccepted}
         deadline={newDeadline}
         earliestDeadline={earliestDeadline}
         latestDeadline={latestDeadline}
@@ -340,6 +350,7 @@ export default function JobDetail() {
         onCancel={() => {
           setDeadlineAction(null)
         }}
+        onCommitmentChange={setCommitmentAccepted}
         onDeadlineChange={setNewDeadline}
         onSubmit={submitDeadlineAction}
       />

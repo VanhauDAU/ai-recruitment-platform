@@ -381,6 +381,10 @@ class Job(models.Model):
     # immediately, so administrators diff the current content against this.
     approved_snapshot = models.JSONField(default=dict, blank=True)
     approved_snapshot_at = models.DateTimeField(null=True, blank=True)
+    # Evidence that the recruiter accepted the publication commitment the last
+    # time this job went public. Empty for jobs published before ADR-0014.
+    responsibility_accepted_at = models.DateTimeField(null=True, blank=True)
+    responsibility_statement_version = models.CharField(max_length=20, blank=True, default='')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

@@ -50,6 +50,32 @@ vi.mock('./JobFormProgress', () => ({ default: () => null }))
 vi.mock('./PostingQuotaNotice', () => ({ default: () => null }))
 
 const suggestion = { title: 'Kỹ sư Backend AI' }
+const postingContext = {
+  job_postable: true,
+  responsibility_statement: {
+    version: '2026-11',
+    text: 'Tôi cam kết nội dung đúng sự thật và chịu trách nhiệm về tin đã đăng.',
+  },
+}
+
+function renderForm(props) {
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  })
+  const onPublish = vi.fn()
+  render(
+    <QueryClientProvider client={client}>
+      <PostJobForm
+        initialValues={{ title: 'Kỹ sư Backend' }}
+        postingContext={postingContext}
+        onPublish={onPublish}
+        onSaveDraft={vi.fn()}
+        {...props}
+      />
+    </QueryClientProvider>,
+  )
+  return { onPublish }
+}
 
 function StrictModeHarness({ onApplied }) {
   const [initialValues, setInitialValues] = useState({
@@ -103,22 +129,8 @@ describe('PostJobForm AI initialization', () => {
 
   it('shows an actionable toast when client validation blocks publishing', async () => {
     toastMocks.message.warning.mockReset()
-    const client = new QueryClient({
-      defaultOptions: { queries: { retry: false } },
-    })
-    const onPublish = vi.fn()
-    render(
-      <QueryClientProvider client={client}>
-        <PostJobForm
-          initialValues={{}}
-          isDraft
-          onPublish={onPublish}
-          onSaveDraft={vi.fn()}
-        />
-      </QueryClientProvider>,
-    )
+    const { onPublish } = renderForm({ initialValues: {}, isDraft: true })
 
-    expect(screen.getByText(/chịu trách nhiệm về tin đã đăng/)).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: /Đăng tin/ }))
 
     await waitFor(() => expect(toastMocks.message.warning).toHaveBeenCalledWith(
@@ -126,5 +138,51 @@ describe('PostJobForm AI initialization', () => {
       { duration: 5000, id: 'post-job-validation-error' },
     ))
     expect(onPublish).not.toHaveBeenCalled()
+  })
+})
+
+describe('PostJobForm publication commitment', () => {
+  it('publishes a draft only after the recruiter accepts the commitment in force', async () => {
+    toastMocks.message.warning.mockReset()
+    const { onPublish } = renderForm({ isDraft: true })
+    const commitment = screen.getByRole('checkbox', {
+      name: postingContext.responsibility_statement.text,
+    })
+    await waitFor(() => expect(screen.getByLabelText('Tiêu đề tin')).toHaveValue('Kỹ sư Backend'))
+
+    fireEvent.click(screen.getByRole('button', { name: /Đăng tin/ }))
+
+    await waitFor(() => expect(toastMocks.message.warning).toHaveBeenCalledWith(
+      'Xác nhận cam kết trước khi đăng tin.',
+      { duration: 5000, id: 'post-job-validation-error' },
+    ))
+    expect(onPublish).not.toHaveBeenCalled()
+
+    fireEvent.click(commitment)
+    fireEvent.click(screen.getByRole('button', { name: /Đăng tin/ }))
+
+    await waitFor(() => expect(onPublish).toHaveBeenCalledTimes(1))
+    const [payload, acceptedStatementVersion] = onPublish.mock.calls[0]
+    expect(payload.title).toBe('Kỹ sư Backend')
+    expect(payload).not.toHaveProperty('responsibility_accepted')
+    expect(acceptedStatementVersion).toBe('2026-11')
+  })
+
+  it('does not ask again when saving changes to a job that is already public', async () => {
+    const { onPublish } = renderForm({ isDraft: false })
+    await waitFor(() => expect(screen.getByLabelText('Tiêu đề tin')).toHaveValue('Kỹ sư Backend'))
+
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Lưu và cập nhật' }))
+
+    await waitFor(() => expect(onPublish).toHaveBeenCalledTimes(1))
+    expect(onPublish.mock.calls[0][1]).toBeUndefined()
+  })
+
+  it('blocks publishing when the commitment text could not be loaded', () => {
+    renderForm({ isDraft: true, postingContext: undefined })
+
+    expect(screen.getByText(/Chưa tải được nội dung cam kết đăng tin/)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Đăng tin/ })).toBeDisabled()
   })
 })

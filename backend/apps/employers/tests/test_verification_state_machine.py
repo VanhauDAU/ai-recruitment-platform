@@ -24,7 +24,7 @@ from apps.accounts.models import (
 from apps.accounts.services import StaleImpactToken, assign_membership
 from apps.jobs.models import Job
 from apps.jobs.selectors.listing import active_jobs_queryset
-from apps.jobs.services import reopen_job
+from apps.jobs.services import RESPONSIBILITY_STATEMENT_VERSION, reopen_job
 
 from ..models import (
     Company,
@@ -1320,6 +1320,7 @@ class EmployerVerificationJobPublicationConcurrencyTests(TransactionTestCase):
                     Job.objects.get(pk=self.job.pk),
                     User.objects.get(pk=self.employer.pk),
                     timezone.localdate() + timedelta(days=14),
+                    accepted_statement_version=RESPONSIBILITY_STATEMENT_VERSION,
                 )
             except ValidationError as error:
                 return error.detail

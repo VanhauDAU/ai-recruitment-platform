@@ -4,6 +4,8 @@ Migration 0046 returned every pending job to its recruiter as a draft. This
 command sends those drafts through the normal publish workflow on behalf of
 their owners, so a job becomes public only when it passes the same checks as
 any other publication. Jobs that fail stay drafts for the recruiter to fix.
+Their recruiters submitted them before the publication commitment existed, so
+these jobs go public without an acknowledgement on record.
 Run it once per environment after migrating; it is safe to run again.
 """
 
@@ -46,7 +48,7 @@ class Command(BaseCommand):
         for job in jobs:
             try:
                 with transaction.atomic():
-                    publish_job(job, job.posted_by)
+                    publish_job(job, job.posted_by, submitted_before_commitment=True)
                     if not apply_changes:
                         transaction.set_rollback(True)
             except APIException as error:

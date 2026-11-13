@@ -6,8 +6,10 @@ from unittest.mock import patch
 from django.contrib.auth import get_user_model
 from django.core.management import call_command
 from django.test import TestCase, override_settings
+from django.urls import reverse
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
+from rest_framework.test import APIClient
 
 from apps.employers.models import (
     CampaignActivity,
@@ -36,6 +38,7 @@ from ..models import (
 )
 from ..models.querysets import publicly_available_job_filter
 from ..services import (
+    RESPONSIBILITY_STATEMENT_VERSION,
     close_job,
     delete_job_draft,
     duplicate_job,
@@ -46,6 +49,8 @@ from ..services import (
     reopen_job,
     update_employer_job,
 )
+
+ACCEPTED = {'accepted_statement_version': RESPONSIBILITY_STATEMENT_VERSION}
 
 
 class JobPostingWorkflowTests(TestCase):
@@ -154,7 +159,7 @@ class JobPostingWorkflowTests(TestCase):
         job.work_schedules.all().delete()
 
         with self.assertRaises(ValidationError) as context:
-            publish_job(job, self.user)
+            publish_job(job, self.user, **ACCEPTED)
 
         self.assertIn('requirements', context.exception.detail)
 
@@ -163,7 +168,7 @@ class JobPostingWorkflowTests(TestCase):
         entitlement.return_value = (self.recruiter, self.free_entitlement)
         job = self.make_publishable_job()
 
-        published = publish_job(job, self.user)
+        published = publish_job(job, self.user, **ACCEPTED)
 
         self.assertEqual(published.status, Job.Status.ACTIVE)
         self.assertIsNotNone(published.submitted_at)
@@ -176,6 +181,11 @@ class JobPostingWorkflowTests(TestCase):
         )
         self.assertEqual(published.approved_snapshot['title'], job.title)
         self.assertEqual(published.approved_snapshot_at, published.published_at)
+        self.assertEqual(published.responsibility_accepted_at, published.published_at)
+        self.assertEqual(
+            published.responsibility_statement_version,
+            RESPONSIBILITY_STATEMENT_VERSION,
+        )
         self.assertTrue(published.slug.endswith(published.public_id))
         history = published.status_history.get()
         self.assertEqual(history.from_status, Job.Status.DRAFT)
@@ -183,11 +193,29 @@ class JobPostingWorkflowTests(TestCase):
         self.assertEqual(history.changed_by, self.user)
         self.assertTrue(Job.objects.filter(publicly_available_job_filter(), pk=job.pk).exists())
 
+    def test_publish_requires_the_commitment_currently_in_force(self):
+        job = self.make_publishable_job()
+
+        for accepted_version in ('', 'an-outdated-version'):
+            with self.subTest(accepted_version=accepted_version):
+                with self.assertRaises(ValidationError) as context:
+                    publish_job(job, self.user, accepted_statement_version=accepted_version)
+
+                self.assertEqual(
+                    str(context.exception.detail['code']),
+                    'JOB_RESPONSIBILITY_REQUIRED',
+                )
+        job.refresh_from_db()
+        self.assertEqual(job.status, Job.Status.DRAFT)
+        self.assertIsNone(job.responsibility_accepted_at)
+        self.assertEqual(job.responsibility_statement_version, '')
+        self.assertFalse(job.status_history.exists())
+
     def test_publish_is_blocked_until_the_employer_is_verified(self):
         job = self.make_publishable_job(owner=self.other_user)
 
         with self.assertRaises(ValidationError) as context:
-            publish_job(job, self.other_user)
+            publish_job(job, self.other_user, **ACCEPTED)
 
         self.assertEqual(str(context.exception.detail['code']), 'JOB_PUBLICATION_BLOCKED')
         self.assertEqual(
@@ -211,7 +239,7 @@ class JobPostingWorkflowTests(TestCase):
         job.save(update_fields=['campaign'])
 
         with self.assertRaises(ValidationError) as context:
-            publish_job(job, self.user)
+            publish_job(job, self.user, **ACCEPTED)
 
         self.assertEqual(str(context.exception.detail['code']), 'JOB_PUBLICATION_BLOCKED')
         self.assertEqual(
@@ -230,7 +258,7 @@ class JobPostingWorkflowTests(TestCase):
         job.save(update_fields=['first_approved_at', 'visibility_starts_at', 'visibility_ends_at'])
 
         with self.assertRaises(ValidationError) as context:
-            publish_job(job, self.user)
+            publish_job(job, self.user, **ACCEPTED)
 
         self.assertEqual(context.exception.detail['code'], 'JOB_VISIBILITY_EXPIRED')
         job.refresh_from_db()
@@ -251,7 +279,7 @@ class JobPostingWorkflowTests(TestCase):
         self.assertEqual(context['free_publish_remain'], 0)
         self.assertFalse(context['job_postable'])
         with self.assertRaises(ValidationError) as error:
-            publish_job(draft, self.user)
+            publish_job(draft, self.user, **ACCEPTED)
 
         self.assertIn('Hoàn tất xác thực hồ sơ', str(error.exception.detail))
         self.assertNotIn('được admin duyệt', str(error.exception.detail))
@@ -320,7 +348,11 @@ class JobPostingWorkflowTests(TestCase):
         self.assertEqual(context['publish_limit'], 100)
         self.assertEqual(context['publish_remain'], 97)
 
-        published = publish_job(self.make_publishable_job(title='Job after upgrade'), self.user)
+        published = publish_job(
+            self.make_publishable_job(title='Job after upgrade'),
+            self.user,
+            **ACCEPTED,
+        )
         self.assertEqual(published.status, Job.Status.ACTIVE)
 
     def test_previous_company_evidence_cannot_unlock_entitlement_or_posting_context(self):
@@ -355,7 +387,7 @@ class JobPostingWorkflowTests(TestCase):
         entitlement.return_value = (self.recruiter, self.free_entitlement)
         job = self.make_active_job(published_at=timezone.now() - timedelta(days=3))
 
-        republished = publish_job(job, self.user)
+        republished = publish_job(job, self.user, **ACCEPTED)
 
         self.assertEqual(republished.status, Job.Status.ACTIVE)
         self.assertEqual(republished.published_at, job.published_at)
@@ -369,7 +401,7 @@ class JobPostingWorkflowTests(TestCase):
         accepted.deadline = today + timedelta(days=90)
         accepted.save(update_fields=['deadline'])
 
-        published = publish_job(accepted, self.user)
+        published = publish_job(accepted, self.user, **ACCEPTED)
 
         self.assertEqual(published.status, Job.Status.ACTIVE)
         self.assertEqual(published.deadline, today + timedelta(days=90))
@@ -379,7 +411,7 @@ class JobPostingWorkflowTests(TestCase):
         rejected.save(update_fields=['deadline'])
 
         with self.assertRaises(ValidationError) as context:
-            publish_job(rejected, self.user)
+            publish_job(rejected, self.user, **ACCEPTED)
 
         self.assertIn('deadline', context.exception.detail)
         rejected.refresh_from_db()
@@ -727,7 +759,7 @@ class JobPostingWorkflowTests(TestCase):
         job = self.make_publishable_job()
 
         with self.assertRaises(ValidationError):
-            publish_job(job, self.other_user)
+            publish_job(job, self.other_user, **ACCEPTED)
         with self.assertRaises(ValidationError):
             duplicate_job(job, self.other_user)
 
@@ -740,7 +772,7 @@ class JobPostingWorkflowTests(TestCase):
         closed = close_job(job, self.user)
         self.assertEqual(closed.status, Job.Status.CLOSED)
         reopened_deadline = lifecycle_local_date() + timedelta(days=21)
-        reopened = reopen_job(closed, self.user, reopened_deadline)
+        reopened = reopen_job(closed, self.user, reopened_deadline, **ACCEPTED)
 
         self.assertEqual(reopened.status, Job.Status.ACTIVE)
         self.assertEqual(reopened.deadline, reopened_deadline)
@@ -755,12 +787,57 @@ class JobPostingWorkflowTests(TestCase):
             ],
         )
 
+    def test_reopen_requires_the_commitment_and_records_it_again(self):
+        closed = close_job(self.make_active_job(), self.user)
+        deadline = lifecycle_local_date() + timedelta(days=21)
+
+        with self.assertRaises(ValidationError) as context:
+            reopen_job(closed, self.user, deadline)
+
+        self.assertEqual(str(context.exception.detail['code']), 'JOB_RESPONSIBILITY_REQUIRED')
+        closed.refresh_from_db()
+        self.assertEqual(closed.status, Job.Status.CLOSED)
+        self.assertIsNone(closed.responsibility_accepted_at)
+
+        reopened = reopen_job(closed, self.user, deadline, **ACCEPTED)
+
+        self.assertEqual(reopened.responsibility_accepted_at, reopened.published_at)
+        self.assertEqual(
+            reopened.responsibility_statement_version,
+            RESPONSIBILITY_STATEMENT_VERSION,
+        )
+
+    def test_api_refuses_to_make_a_job_public_without_the_commitment(self):
+        client = APIClient()
+        client.force_authenticate(self.user)
+        acknowledgement = {'responsibility_statement_version': RESPONSIBILITY_STATEMENT_VERSION}
+        draft = self.make_publishable_job()
+        closed = close_job(self.make_active_job(), self.user)
+        deadline = (lifecycle_local_date() + timedelta(days=21)).isoformat()
+        requests = (
+            (reverse('employer-job-submit', kwargs={'public_id': draft.public_id}), {}),
+            (
+                reverse('employer-job-reopen', kwargs={'public_id': closed.public_id}),
+                {'application_deadline': deadline},
+            ),
+        )
+
+        for url, payload in requests:
+            with self.subTest(url=url):
+                refused = client.post(url, payload, format='json')
+                accepted = client.post(url, {**payload, **acknowledgement}, format='json')
+
+                self.assertEqual(refused.status_code, 400, refused.data)
+                self.assertEqual(str(refused.data['code']), 'JOB_RESPONSIBILITY_REQUIRED')
+                self.assertEqual(accepted.status_code, 200, accepted.data)
+                self.assertEqual(accepted.data['status'], Job.Status.ACTIVE)
+
     def test_reopen_accepts_ninety_days_and_rejects_day_ninety_one(self):
         today = lifecycle_local_date()
         accepted = self.make_active_job()
         accepted = close_job(accepted, self.user)
 
-        reopened = reopen_job(accepted, self.user, today + timedelta(days=90))
+        reopened = reopen_job(accepted, self.user, today + timedelta(days=90), **ACCEPTED)
 
         self.assertEqual(reopened.status, Job.Status.ACTIVE)
         self.assertEqual(reopened.deadline, today + timedelta(days=90))
@@ -768,7 +845,7 @@ class JobPostingWorkflowTests(TestCase):
         rejected = self.make_active_job()
         rejected = close_job(rejected, self.user)
         with self.assertRaises(ValidationError) as context:
-            reopen_job(rejected, self.user, today + timedelta(days=91))
+            reopen_job(rejected, self.user, today + timedelta(days=91), **ACCEPTED)
 
         self.assertIn('deadline', context.exception.detail)
         rejected.refresh_from_db()
@@ -784,7 +861,12 @@ class JobPostingWorkflowTests(TestCase):
         closed = close_job(job, self.user)
 
         with self.assertRaises(ValidationError) as context:
-            reopen_job(closed, self.user, lifecycle_local_date() + timedelta(days=20))
+            reopen_job(
+                closed,
+                self.user,
+                lifecycle_local_date() + timedelta(days=20),
+                **ACCEPTED,
+            )
 
         self.assertEqual(context.exception.detail['code'], 'JOB_VISIBILITY_EXPIRED')
         closed.refresh_from_db()
@@ -803,7 +885,7 @@ class JobPostingWorkflowTests(TestCase):
         close_job(job, self.user)
 
         with self.assertRaises(ValidationError):
-            publish_job(stale_for_publish, self.user)
+            publish_job(stale_for_publish, self.user, **ACCEPTED)
         with self.assertRaises(ValidationError):
             extend_job_deadline(
                 stale_for_extend,
@@ -816,12 +898,14 @@ class JobPostingWorkflowTests(TestCase):
             Job.objects.get(pk=job.pk),
             self.user,
             lifecycle_local_date() + timedelta(days=21),
+            **ACCEPTED,
         )
         with self.assertRaises(ValidationError):
             reopen_job(
                 stale_for_reopen,
                 self.user,
                 lifecycle_local_date() + timedelta(days=28),
+                **ACCEPTED,
             )
 
         job.refresh_from_db()
@@ -838,6 +922,8 @@ class JobPostingWorkflowTests(TestCase):
         job.first_approved_at = timezone.now() - timedelta(days=5)
         job.visibility_starts_at = job.first_approved_at
         job.visibility_ends_at = job.visibility_starts_at + timedelta(days=30)
+        job.responsibility_accepted_at = job.first_approved_at
+        job.responsibility_statement_version = RESPONSIBILITY_STATEMENT_VERSION
         job.save(
             update_fields=[
                 'approved_snapshot',
@@ -845,6 +931,8 @@ class JobPostingWorkflowTests(TestCase):
                 'first_approved_at',
                 'visibility_starts_at',
                 'visibility_ends_at',
+                'responsibility_accepted_at',
+                'responsibility_statement_version',
             ]
         )
 
@@ -857,6 +945,8 @@ class JobPostingWorkflowTests(TestCase):
         self.assertIsNone(duplicate.visibility_ends_at)
         self.assertEqual(duplicate.approved_snapshot, {})
         self.assertIsNone(duplicate.approved_snapshot_at)
+        self.assertIsNone(duplicate.responsibility_accepted_at)
+        self.assertEqual(duplicate.responsibility_statement_version, '')
         self.assertEqual(duplicate.application_contact.recipient_name, contact.recipient_name)
         self.assertEqual(duplicate.application_contact.phone, contact.phone)
         self.assertEqual(
@@ -936,6 +1026,8 @@ class JobPostingWorkflowTests(TestCase):
         untouched_draft.refresh_from_db()
         self.assertEqual(eligible.status, Job.Status.ACTIVE)
         self.assertIsNotNone(eligible.published_at)
+        # Sent for approval before the commitment existed: nothing to record.
+        self.assertIsNone(eligible.responsibility_accepted_at)
         self.assertEqual(blocked.status, Job.Status.DRAFT)
         self.assertEqual(untouched_draft.status, Job.Status.DRAFT)
         self.assertIn(blocked.public_id, output.getvalue())

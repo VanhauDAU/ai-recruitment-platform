@@ -1,6 +1,6 @@
 import { SaveOutlined, SendOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
-import { Alert, Button, Form } from 'antd'
+import { Alert, Button, Checkbox, Form } from 'antd'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   getJobBenefits,
@@ -64,6 +64,8 @@ export default function PostJobForm({
   const languagesQuery = useQuery({ queryKey: jobKeys.languages, queryFn: getJobLanguages })
   const skillsQuery = useQuery({ queryKey: jobKeys.skills, queryFn: () => getSkills() })
   const values = Form.useWatch([], form) || createJobFormValues(initialValues, { defaultDeadlineDays })
+  // Making a job public requires accepting the commitment the backend has in force.
+  const responsibilityStatement = postingContext?.responsibility_statement
   const sections = useMemo(() => getJobFormProgress(values), [values])
 
   useEffect(() => {
@@ -184,7 +186,10 @@ export default function PostJobForm({
       form={form}
       layout="vertical"
       scrollToFirstError={{ behavior: 'smooth', block: 'center' }}
-      onFinish={(formValues) => onPublish(buildJobPayload(formValues))}
+      onFinish={(formValues) => onPublish(
+        buildJobPayload(formValues),
+        isDraft ? responsibilityStatement?.version : undefined,
+      )}
       onFieldsChange={(_, allFields) => updateInvalidSections(allFields)}
       onFinishFailed={handleFinishFailed}
       onValuesChange={onValuesChange}
@@ -276,11 +281,30 @@ export default function PostJobForm({
           </JobFormSection>
 
           {isDraft && (
-            <p className="text-xs leading-5 text-slate-500">
-              Tin hiển thị với ứng viên ngay khi bạn đăng, không qua bước duyệt trước. Khi đăng tin,
-              bạn cam kết nội dung đúng sự thật và chịu trách nhiệm về tin đã đăng. Tin bị báo cáo
-              vi phạm có thể bị tạm ẩn.
-            </p>
+            <div className="rounded-lg border border-slate-200 bg-white p-4">
+              <p className="text-xs leading-5 text-slate-500">
+                Tin hiển thị với ứng viên ngay khi bạn đăng, không qua bước duyệt trước. Tin bị báo
+                cáo vi phạm có thể bị quản trị viên tạm ẩn.
+              </p>
+              {responsibilityStatement ? (
+                <Form.Item
+                  name="responsibility_accepted"
+                  valuePropName="checked"
+                  className="!mb-0 !mt-2"
+                  rules={[{
+                    validator: (_, accepted) => (accepted
+                      ? Promise.resolve()
+                      : Promise.reject(new Error('Xác nhận cam kết trước khi đăng tin.'))),
+                  }]}
+                >
+                  <Checkbox>{responsibilityStatement.text}</Checkbox>
+                </Form.Item>
+              ) : (
+                <p className="mt-2 text-xs font-semibold text-red-600">
+                  Chưa tải được nội dung cam kết đăng tin. Tải lại trang để đăng tin.
+                </p>
+              )}
+            </div>
           )}
 
           <div className="sticky bottom-3 z-10 flex flex-col-reverse gap-2 rounded-lg border border-slate-200 bg-white/95 p-3 backdrop-blur sm:flex-row sm:justify-end">
@@ -298,7 +322,10 @@ export default function PostJobForm({
               htmlType="submit"
               icon={<SendOutlined />}
               loading={submitting}
-              disabled={requiresNewCredit && postingContext && !postingContext.job_postable}
+              disabled={
+                (requiresNewCredit && postingContext && !postingContext.job_postable)
+                || (isDraft && !responsibilityStatement)
+              }
             >
               {submitLabel || (isDraft ? 'Đăng tin' : 'Lưu và cập nhật')}
             </Button>

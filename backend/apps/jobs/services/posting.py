@@ -48,6 +48,13 @@ DEFAULT_DEADLINE_DAYS = 30
 MAX_DEADLINE_DAYS = 90
 MAX_PUBLIC_LIFETIME_DAYS = 90
 EXPIRED_JOB_RENEWAL_GRACE_DAYS = 30
+# The commitment a recruiter accepts each time a job goes public. Change the
+# version together with the text so stored acknowledgements stay attributable.
+RESPONSIBILITY_STATEMENT_VERSION = '2026-11'
+RESPONSIBILITY_STATEMENT_TEXT = (
+    'Tôi cam kết nội dung tin tuyển dụng là đúng sự thật, tuân thủ pháp luật và quy định '
+    'đăng tin của ProCV, đồng thời chịu trách nhiệm về tin đã đăng và mọi chỉnh sửa sau đó.'
+)
 
 
 def job_deadline_policy():
@@ -304,13 +311,27 @@ def _ensure_publication_allowed(job, publication_state):
         )
 
 
-def _go_live(job, *, user, previous_status, update_fields=()):
+def _ensure_responsibility_accepted(accepted_statement_version):
+    """Require the recruiter to have accepted the commitment currently in force."""
+    if accepted_statement_version != RESPONSIBILITY_STATEMENT_VERSION:
+        raise ValidationError(
+            {
+                'code': 'JOB_RESPONSIBILITY_REQUIRED',
+                'detail': 'Xác nhận cam kết chịu trách nhiệm về nội dung tin trước khi đăng.',
+            }
+        )
+
+
+def _go_live(job, *, user, previous_status, acknowledged, update_fields=()):
     """Make one job public and start, or resume, its visibility cycle.
 
     The content snapshot taken here is the baseline administrators compare
     later edits against when they review a report.
     """
     now = timezone.now()
+    if acknowledged:
+        job.responsibility_accepted_at = now
+        job.responsibility_statement_version = RESPONSIBILITY_STATEMENT_VERSION
     lifecycle_fields = initialize_job_visibility(job, approved_at=now)
     job.status = Job.Status.ACTIVE
     job.submitted_at = job.submitted_at or now
@@ -332,6 +353,8 @@ def _go_live(job, *, user, previous_status, update_fields=()):
             'slug',
             'approved_snapshot',
             'approved_snapshot_at',
+            'responsibility_accepted_at',
+            'responsibility_statement_version',
             'updated_at',
         ]
     )
@@ -431,6 +454,10 @@ def employer_job_posting_context(user):
     return {
         **job_deadline_policy(),
         'lifecycle_policy': job_lifecycle_policy(),
+        'responsibility_statement': {
+            'version': RESPONSIBILITY_STATEMENT_VERSION,
+            'text': RESPONSIBILITY_STATEMENT_TEXT,
+        },
         'services': {
             'catalog_v2_enabled': bool(getattr(settings, 'SERVICE_CATALOG_V2_ENABLED', False)),
             'activation_enabled': bool(getattr(settings, 'SERVICE_ACTIVATION_ENABLED', False)),
@@ -501,8 +528,19 @@ def save_job_draft(serializer, user):
 
 
 @transaction.atomic
-def publish_job(job, user):
-    """Publish a recruiter-owned draft; candidates can see it as soon as this returns."""
+def publish_job(
+    job,
+    user,
+    *,
+    accepted_statement_version='',
+    submitted_before_commitment=False,
+):
+    """Publish a recruiter-owned draft; candidates can see it as soon as this returns.
+
+    ``submitted_before_commitment`` is only for jobs their recruiters sent for
+    approval before the commitment existed (``publish_converted_pending_jobs``).
+    Those go public without an acknowledgement on record.
+    """
     recruiter = _locked_recruiter(user)
     publication_state = recruiter_job_publication_state(
         user,
@@ -516,6 +554,8 @@ def publish_job(job, user):
         raise ValidationError('Mở lại tin đã đóng thay vì đăng lại.')
     if job.status == Job.Status.ACTIVE:
         return job
+    if not submitted_before_commitment:
+        _ensure_responsibility_accepted(accepted_statement_version)
     _ensure_publication_allowed(job, publication_state)
     _validate_job_for_write(job)
     _validate_campaign_for_write(job.campaign, recruiter=recruiter)
@@ -533,7 +573,12 @@ def publish_job(job, user):
                     ),
                 }
             )
-    return _go_live(job, user=user, previous_status=job.status)
+    return _go_live(
+        job,
+        user=user,
+        previous_status=job.status,
+        acknowledged=not submitted_before_commitment,
+    )
 
 
 @transaction.atomic
@@ -585,7 +630,7 @@ def close_job(job, user):
 
 
 @transaction.atomic
-def reopen_job(job, user, deadline):
+def reopen_job(job, user, deadline, *, accepted_statement_version=''):
     recruiter = _locked_recruiter(user)
     publication_state = recruiter_job_publication_state(
         user,
@@ -595,6 +640,7 @@ def reopen_job(job, user, deadline):
     job, _ = _locked_job(job)
     if job.posted_by_id != user.id or job.status != Job.Status.CLOSED:
         raise ValidationError('Chỉ có thể mở lại tin đã đóng của bạn.')
+    _ensure_responsibility_accepted(accepted_statement_version)
     _ensure_publication_allowed(job, publication_state)
     _validate_job_for_write(job)
     _validate_campaign_for_write(job.campaign, recruiter=recruiter)
@@ -606,6 +652,7 @@ def reopen_job(job, user, deadline):
         job,
         user=user,
         previous_status=Job.Status.CLOSED,
+        acknowledged=True,
         update_fields=('deadline',),
     )
 
@@ -725,6 +772,8 @@ def duplicate_job(job, user):
     duplicate.visibility_ends_at = None
     duplicate.approved_snapshot = {}
     duplicate.approved_snapshot_at = None
+    duplicate.responsibility_accepted_at = None
+    duplicate.responsibility_statement_version = ''
     duplicate.policy_hold = Job.PolicyHold.NONE
     duplicate.policy_held_at = None
     duplicate.policy_hold_transition = None

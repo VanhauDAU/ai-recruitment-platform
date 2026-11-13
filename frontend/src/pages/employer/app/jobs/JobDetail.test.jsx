@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   getEmployerServiceInventory: vi.fn(),
   getJobPostingContext: vi.fn(),
   getRecruiterApplications: vi.fn(),
+  reopenEmployerJob: vi.fn(),
   readinessState: {
     readiness: {
       jobWorkspaceReady: true,
@@ -46,7 +47,7 @@ vi.mock('@/entities/job', () => ({
     employerDetail: (id) => ['jobs', 'employer-detail', id],
     postingContext: ['jobs', 'posting-context'],
   },
-  reopenEmployerJob: vi.fn(),
+  reopenEmployerJob: mocks.reopenEmployerJob,
 }))
 vi.mock('@/entities/employer-profile', async (importOriginal) => ({
   ...await importOriginal(),
@@ -69,7 +70,14 @@ vi.mock('./JobApplicationsWorkspace', () => ({
     ))}</div>
   ),
 }))
-vi.mock('./JobDetailHeader', () => ({ default: ({ job }) => <h1>{job.title}</h1> }))
+vi.mock('./JobDetailHeader', () => ({
+  default: ({ job, onDeadlineAction }) => (
+    <>
+      <h1>{job.title}</h1>
+      <button type="button" onClick={() => onDeadlineAction('reopen')}>Mô phỏng mở lại</button>
+    </>
+  ),
+}))
 vi.mock('./JobInformationPanel', () => ({ default: () => <p>Thông tin tin tuyển dụng</p> }))
 
 function LocationProbe() {
@@ -175,6 +183,39 @@ describe('JobDetail candidate-data boundary', () => {
 
     expect(await screen.findByRole('heading', { name: 'Kỹ sư Frontend' })).toBeInTheDocument()
     expect(screen.queryByTestId('job-visibility-hold')).not.toBeInTheDocument()
+  })
+
+  it('reopens a closed job only with the accepted commitment version', async () => {
+    mocks.getEmployerJob.mockResolvedValue({
+      public_id: 'job_1',
+      title: 'Kỹ sư Frontend',
+      status: 'closed',
+      deadline: '2099-01-15',
+      application_count: 0,
+      view_count: 0,
+    })
+    mocks.getJobPostingContext.mockResolvedValue({
+      default_deadline_days: 30,
+      max_deadline_days: 90,
+      max_public_lifetime_days: 90,
+      responsibility_statement: { version: '2026-11', text: 'Tôi cam kết chịu trách nhiệm.' },
+    })
+    mocks.reopenEmployerJob.mockReset().mockResolvedValue({ public_id: 'job_1', status: 'active' })
+    renderPage('job')
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Mô phỏng mở lại' }))
+    const commitment = await screen.findByRole('checkbox', { name: 'Tôi cam kết chịu trách nhiệm.' })
+    fireEvent.click(screen.getByRole('button', { name: 'Mở lại tin' }))
+    expect(mocks.reopenEmployerJob).not.toHaveBeenCalled()
+
+    fireEvent.click(commitment)
+    fireEvent.click(screen.getByRole('button', { name: 'Mở lại tin' }))
+
+    await waitFor(() => expect(mocks.reopenEmployerJob).toHaveBeenCalledWith(
+      'job_1',
+      '2099-01-15',
+      '2026-11',
+    ))
   })
 
   it('removes previously rendered candidate PII when access changes from true to false', async () => {

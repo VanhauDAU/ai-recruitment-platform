@@ -56,6 +56,7 @@ from .moderation import (
     restore_job_visibility,
 )
 from .posting import (
+    RESPONSIBILITY_STATEMENT_VERSION,
     close_job,
     delete_job_draft,
     duplicate_job,
@@ -77,6 +78,7 @@ from .reports import resolve_job_report, reverse_job_report, submit_job_report
 
 __all__ = [
     'JOB_ALERT_LIMIT',
+    'RESPONSIBILITY_STATEMENT_VERSION',
     'apply_job_ai_generation_to_draft',
     'apply_confirmed_report_hold',
     'cancel_job_ai_generation',

@@ -54,7 +54,7 @@ vi.mock('@/widgets/employer-job-editor', () => ({
       <p data-testid="deadline-policy">
         {defaultDeadlineDays}/{maxDeadlineDays}
       </p>
-      <button type="button" onClick={() => onPublish({ title: 'Backend Engineer' }, null)}>
+      <button type="button" onClick={() => onPublish({ title: 'Backend Engineer' }, null, '2026-11')}>
         Mô phỏng đăng tin
       </button>
       <button type="button" onClick={() => onSaveDraft({ title: 'Backend Engineer' }, null)}>
@@ -146,6 +146,11 @@ describe('JobForm submission feedback', () => {
     await waitFor(() => expect(mocks.message.success).toHaveBeenCalledWith(
       'Đã đăng tin. Ứng viên có thể xem tin ngay.',
     ))
+    expect(mocks.publishEmployerJob).toHaveBeenCalledWith(
+      { title: 'Backend Engineer' },
+      undefined,
+      '2026-11',
+    )
   })
 
   it('uses the posting default as the suggestion and the maximum as the selectable limit', async () => {
