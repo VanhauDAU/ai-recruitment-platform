@@ -1,7 +1,5 @@
-import { useState } from 'react'
 import {
   CheckCircleFilled,
-  FileSearchOutlined,
   FundProjectionScreenOutlined,
   NotificationOutlined,
   RobotOutlined,
@@ -10,7 +8,6 @@ import {
 import { Button } from 'antd'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
-import { ConsultationModal } from '@/features/request-consultation'
 import { employerAppPath, employerMarketingPath } from '@/shared/config/portals'
 
 const SECTIONS = [
@@ -18,7 +15,6 @@ const SECTIONS = [
   ['pipeline', FundProjectionScreenOutlined],
   ['ai', RobotOutlined],
   ['branding', SafetyCertificateOutlined],
-  ['support', FileSearchOutlined],
 ]
 
 function ServiceVisual({ Icon, index }) {
@@ -41,8 +37,6 @@ function ServiceVisual({ Icon, index }) {
 
 export default function EmployerServices() {
   const { t } = useTranslation('employer')
-  const [consultOpen, setConsultOpen] = useState(false)
-
   return (
     <>
       <section className="bg-gradient-to-br from-emerald-50 via-white to-cyan-50">
@@ -52,7 +46,7 @@ export default function EmployerServices() {
           <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-slate-600">{t('servicesPage.subtitle')}</p>
           <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row [&_a]:w-full sm:[&_a]:w-auto [&_.ant-btn]:w-full sm:[&_.ant-btn]:w-auto">
             <Link to={employerAppPath('/register')}><Button type="primary" size="large" shape="round" className="!h-12 !px-7">{t('common.startNow')}</Button></Link>
-            <Button size="large" shape="round" className="!h-12 !px-7" onClick={() => setConsultOpen(true)}>{t('common.consult')}</Button>
+            <Link to={employerMarketingPath('/lien-he')}><Button size="large" shape="round" className="!h-12 !px-7">{t('nav.contact')}</Button></Link>
           </div>
         </div>
       </section>
@@ -68,10 +62,6 @@ export default function EmployerServices() {
               <ul className="mt-6 space-y-3">
                 {t(`servicesPage.sections.${key}.benefits`, { returnObjects: true }).map((benefit) => <li key={benefit} className="flex items-start gap-3 leading-7 text-slate-600"><CheckCircleFilled className="mt-1.5 text-emerald-500" />{benefit}</li>)}
               </ul>
-              <div className="mt-7 flex flex-wrap gap-3">
-                <Link to={employerMarketingPath('/bao-gia')}><Button type="primary" shape="round">{t('common.viewPricing')}</Button></Link>
-                <Button shape="round" onClick={() => setConsultOpen(true)}>{t('common.consultShort')}</Button>
-              </div>
             </div>
           </section>
         ))}
@@ -80,11 +70,9 @@ export default function EmployerServices() {
       <section className="bg-slate-950 px-4 py-14 text-white">
         <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-6 text-center md:flex-row md:text-left">
           <div><h2 className="text-2xl font-bold">{t('servicesPage.ctaTitle')}</h2><p className="mt-2 text-white/60">{t('servicesPage.ctaDesc')}</p></div>
-          <div className="flex w-full shrink-0 flex-col gap-3 sm:w-auto sm:flex-row [&_a]:w-full sm:[&_a]:w-auto [&_.ant-btn]:w-full sm:[&_.ant-btn]:w-auto"><Link to={employerAppPath('/register')}><Button type="primary" size="large" shape="round">{t('common.register')}</Button></Link><Button ghost size="large" shape="round" onClick={() => setConsultOpen(true)}>{t('common.consultShort')}</Button></div>
+          <div className="flex w-full shrink-0 flex-col gap-3 sm:w-auto sm:flex-row [&_a]:w-full sm:[&_a]:w-auto [&_.ant-btn]:w-full sm:[&_.ant-btn]:w-auto"><Link to={employerAppPath('/register')}><Button type="primary" size="large" shape="round">{t('common.register')}</Button></Link><Link to={employerMarketingPath('/lien-he')}><Button ghost size="large" shape="round">{t('nav.contact')}</Button></Link></div>
         </div>
       </section>
-
-      <ConsultationModal open={consultOpen} onClose={() => setConsultOpen(false)} initialValues={{ need: 'buy_service' }} />
     </>
   )
 }

@@ -1,7 +1,6 @@
 import {
   AppstoreOutlined,
   BankOutlined,
-  ContactsOutlined,
   FileDoneOutlined,
   FileTextOutlined,
   IdcardOutlined,
@@ -11,7 +10,6 @@ import {
   SafetyCertificateOutlined,
   SearchOutlined,
   SettingOutlined,
-  SolutionOutlined,
   TeamOutlined,
   NotificationOutlined,
 } from '@ant-design/icons'
@@ -31,9 +29,7 @@ const ICONS = {
   companies: <BankOutlined />,
   cv: <FileTextOutlined />,
   dashboard: <AppstoreOutlined />,
-  leads: <ContactsOutlined />,
   moderation: <FileDoneOutlined />,
-  services: <SolutionOutlined />,
   settings: <SettingOutlined />,
   shield: <SafetyCertificateOutlined />,
 }

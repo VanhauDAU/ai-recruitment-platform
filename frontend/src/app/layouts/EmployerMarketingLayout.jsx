@@ -5,7 +5,6 @@ import { useTranslation } from 'react-i18next'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router'
 import '@/shared/config/i18n'
 import { EmailVerificationBanner } from '@/features/auth'
-import { FloatingConsultButton } from '@/features/request-consultation'
 import { LanguageSwitcher } from '@/features/switch-language'
 import { ANNOUNCEMENT_SURFACES } from '@/entities/announcement'
 import { useSession } from '@/entities/session'
@@ -19,7 +18,6 @@ const NAV_ITEMS = [
   { key: 'home', to: employerMarketingPath(''), end: true },
   { key: 'about', to: employerMarketingPath('/gioi-thieu') },
   { key: 'services', to: employerMarketingPath('/dich-vu') },
-  { key: 'pricing', to: employerMarketingPath('/bao-gia') },
   { key: 'contact', to: employerMarketingPath('/lien-he') },
 ]
 
@@ -137,7 +135,6 @@ export default function EmployerMarketingLayout() {
         <Outlet />
       </main>
 
-      <FloatingConsultButton />
       <EmployerFooter />
     </div>
   )

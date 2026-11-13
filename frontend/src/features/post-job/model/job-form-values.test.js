@@ -245,7 +245,7 @@ describe('manual job form values', () => {
     })
   })
 
-  it('reports progress for all five manual-entry sections', () => {
+  it('reports progress for all four manual-entry sections', () => {
     const progress = getJobFormProgress(createJobFormValues({ title: 'Backend Engineer' }))
 
     expect(progress.map(({ key, completed, total }) => ({ key, completed, total }))).toEqual([
@@ -253,7 +253,6 @@ describe('manual job form values', () => {
       { key: 'description', completed: 0, total: 4 },
       { key: 'expectations', completed: 0, total: 4 },
       { key: 'application', completed: 1, total: 5 },
-      { key: 'services', completed: 0, total: 0 },
     ])
   })
 

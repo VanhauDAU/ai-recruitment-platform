@@ -2,16 +2,14 @@ import { ArrowRightOutlined, CheckCircleFilled, RobotOutlined } from '@ant-desig
 import { Button } from 'antd'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
-import { employerAppPath } from '@/shared/config/portals'
+import { employerAppPath, employerMarketingPath } from '@/shared/config/portals'
 import ContactBand from './ui/ContactBand'
 import StatsBand from './ui/StatsBand'
 import {
   AiFeatureSection,
-  ConsultationSection,
   CoreFunctions,
   PartnersBand,
   PlatformIntro,
-  ServiceHighlights,
   ValuesSection,
 } from './ui/LandingSections'
 
@@ -33,7 +31,7 @@ function HeroSection() {
           <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">{t('landing.hero.subtitle')}</p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row [&_a]:w-full sm:[&_a]:w-auto [&_.ant-btn]:w-full sm:[&_.ant-btn]:w-auto">
             <Link to={employerAppPath('/register')}><Button type="primary" size="large" shape="round" className="!h-12 !px-7">{t('landing.hero.primaryCta')} <ArrowRightOutlined /></Button></Link>
-            <a href="#tu-van"><Button size="large" shape="round" className="!h-12 !px-7">{t('landing.hero.secondaryCta')}</Button></a>
+            <Link to={employerMarketingPath('/dich-vu')}><Button size="large" shape="round" className="!h-12 !px-7">{t('landing.hero.secondaryCta')}</Button></Link>
           </div>
           <div className="mt-7 flex flex-col gap-3 text-sm font-semibold text-slate-600 sm:flex-row sm:flex-wrap sm:gap-x-5">
             {t('landing.hero.benefits', { returnObjects: true }).map((benefit) => <span key={benefit} className="flex items-center gap-2"><CheckCircleFilled className="text-emerald-500" />{benefit}</span>)}
@@ -76,9 +74,7 @@ export default function EmployerLanding() {
       <PlatformIntro />
       <AiFeatureSection />
       <CoreFunctions />
-      <ServiceHighlights />
       <StatsBand title={t('landing.statsTitle')} />
-      <div id="tu-van"><ConsultationSection /></div>
       <ValuesSection />
       <PartnersBand />
       <ContactBand />

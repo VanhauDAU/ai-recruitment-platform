@@ -9,11 +9,8 @@ import {
   NotificationOutlined,
   RobotOutlined,
   SettingOutlined,
-  ShoppingCartOutlined,
-  TagsOutlined,
   TeamOutlined,
   ThunderboltOutlined,
-  ToolOutlined,
 } from '@ant-design/icons'
 import { createElement } from 'react'
 import { employerAppPath } from '@/shared/config/portals'
@@ -111,27 +108,6 @@ export const EMPLOYER_NAV_ITEMS = [
   },
   { type: 'divider' },
   {
-    key: 'coming-buy-services',
-    icon: <ShoppingCartOutlined />,
-    label: comingSoonLabel('Mua dịch vụ'),
-    title: 'Mua dịch vụ — Sắp mở',
-    disabled: true,
-  },
-  {
-    key: employerAppPath('/services'),
-    icon: <ToolOutlined />,
-    label: 'Dịch vụ của tôi',
-    title: 'Dịch vụ của tôi',
-  },
-  {
-    key: 'coming-coupons',
-    icon: <TagsOutlined />,
-    label: comingSoonLabel('Mã ưu đãi'),
-    title: 'Mã ưu đãi — Sắp mở',
-    disabled: true,
-  },
-  { type: 'divider' },
-  {
     key: employerAppPath('/activities'),
     icon: <HistoryOutlined />,
     label: 'Lịch sử hoạt động',
@@ -158,7 +134,6 @@ const ROUTE_TITLES = [
   [employerAppPath('/activities'), 'Lịch sử hoạt động'],
   [employerAppPath('/campaigns'), 'Chiến dịch tuyển dụng'],
   [employerAppPath('/jobs'), 'Tin tuyển dụng'],
-  [employerAppPath('/services'), 'Dịch vụ của tôi'],
   [employerAppPath('/applications'), 'Hồ sơ ứng tuyển'],
   [employerAppPath('/employer-verify'), 'Xác thực tài khoản'],
   [employerAppPath('/account/phone-verify'), 'Xác thực số điện thoại'],

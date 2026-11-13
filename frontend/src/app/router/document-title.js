@@ -32,7 +32,6 @@ const EXACT_EMPLOYER_TITLES = new Map([
   [employerMarketingPath(''), 'Trang chủ nhà tuyển dụng'],
   [employerMarketingPath('/gioi-thieu'), 'Giới thiệu'],
   [employerMarketingPath('/dich-vu'), 'Dịch vụ tuyển dụng'],
-  [employerMarketingPath('/bao-gia'), 'Bảng giá'],
   [employerMarketingPath('/lien-he'), 'Liên hệ'],
   [employerMarketingPath('/dieu-khoan-dich-vu'), 'Điều khoản dịch vụ'],
   [employerMarketingPath('/chinh-sach-quyen-rieng'), 'Chính sách quyền riêng tư'],

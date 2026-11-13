@@ -5,8 +5,8 @@ describe('i18n employer marketing', () => {
   it('khởi tạo với tiếng Việt mặc định và namespace employer', () => {
     expect(i18n.isInitialized).toBe(true)
     expect(i18n.options.fallbackLng).toContain('vi')
-    expect(i18n.t('employer:nav.pricing', { lng: 'vi' })).toBe('Báo giá')
-    expect(i18n.t('employer:nav.pricing', { lng: 'en' })).toBe('Pricing')
+    expect(i18n.t('employer:nav.services', { lng: 'vi' })).toBe('Dịch vụ')
+    expect(i18n.t('employer:nav.services', { lng: 'en' })).toBe('Services')
   })
 
   it('changeAppLanguage đổi ngôn ngữ, lưu localStorage và cập nhật <html lang>', () => {

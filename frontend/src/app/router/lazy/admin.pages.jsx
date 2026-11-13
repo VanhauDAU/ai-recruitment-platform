@@ -7,8 +7,6 @@ export const AdminCompaniesPage = lazy(() => import('@/pages/admin/app/Companies
 export const AdminCompanyDetailPage = lazy(() => import('@/pages/admin/app/CompanyDetail'))
 export const AdminSettingsPage = lazy(() => import('@/pages/admin/app/Settings'))
 export const AdminCvCataloguePage = lazy(() => import('@/pages/admin/app/CvCatalogue'))
-export const AdminEmployerServicesPage = lazy(() => import('@/pages/admin/app/EmployerServices'))
-export const AdminConsultationLeadsPage = lazy(() => import('@/pages/admin/app/ConsultationLeads'))
 export const AdminJobModerationPage = lazy(() => import('@/pages/admin/app/JobModeration'))
 export const AdminJobModerationDetailPage = lazy(() => import('@/pages/admin/app/JobModerationDetail'))
 export const AdminBlogManagementPage = lazy(() => import('@/pages/admin/app/BlogManagement'))
@@ -34,8 +32,6 @@ export const ADMIN_PAGE_BY_KEY = {
   AdminCompanyDetailPage,
   AdminSettingsPage,
   AdminCvCataloguePage,
-  AdminEmployerServicesPage,
-  AdminConsultationLeadsPage,
   AdminJobModerationPage,
   AdminJobModerationDetailPage,
   AdminBlogManagementPage,

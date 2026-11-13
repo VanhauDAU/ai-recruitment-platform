@@ -295,7 +295,6 @@ export function getJobFormProgress(values = {}) {
         { label: 'Email nhận hồ sơ', done: Boolean(values.application_contact?.emails?.length), errorFields: ['application_contact.emails'] },
       ],
     },
-    { key: 'services', label: 'Dịch vụ và gia tăng hiệu quả', items: [] },
   ]
 
   return groups.map((group) => ({

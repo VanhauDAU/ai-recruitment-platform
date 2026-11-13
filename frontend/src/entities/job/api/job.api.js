@@ -35,16 +35,6 @@ export async function getInlineJobRecommendations({ excludedJobIds = [], ...para
   return data
 }
 
-export async function getSavedJobRemarketingLane() {
-  const { data } = await api.get('/jobs/remarketing/saved/')
-  return data
-}
-
-export async function recordSavedJobRemarketingImpression(payload) {
-  const { data } = await api.post('/jobs/remarketing/saved/impressions/', payload)
-  return data
-}
-
 export async function getJobDetail(slug) {
   return dedupeRequest(`job-detail:${slug}`, async () => {
     const { data } = await api.get(`/jobs/${slug}/`)

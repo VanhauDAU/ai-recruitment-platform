@@ -51,7 +51,6 @@ export default function EmployerFooter() {
   const marketingLinks = [
     { label: t('nav.about'), href: employerMarketingPath('/gioi-thieu') },
     { label: t('nav.services'), href: employerMarketingPath('/dich-vu') },
-    { label: t('nav.pricing'), href: employerMarketingPath('/bao-gia') },
     { label: t('nav.contact'), href: employerMarketingPath('/lien-he') },
     { label: t('nav.postJob'), href: employerAppPath('/register') },
   ]
