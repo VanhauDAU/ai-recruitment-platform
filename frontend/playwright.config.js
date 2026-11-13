@@ -20,6 +20,13 @@ export default defineConfig({
   // and locale chunks occasionally needed more than the default 5s. This
   // widens the wait for a correct result; it does not retry failed tests.
   expect: { timeout: process.env.CI ? 10_000 : 5_000 },
+  // Three CI runs on 2026-11-13 each lost one to three clicks on Ant Design
+  // tabs/menus/selects, on a different test and viewport every time, after the
+  // deterministic failures were fixed. One retry keeps those from blocking
+  // merges; a test that needs it is reported as "flaky" and surfaced as a
+  // warning by the workflow, never counted as a clean pass. Local runs keep
+  // zero retries so a flaky test still fails in front of its author.
+  retries: process.env.CI ? 1 : 0,
   use: {
     baseURL: playwrightBaseUrl,
     trace: 'on-first-retry',

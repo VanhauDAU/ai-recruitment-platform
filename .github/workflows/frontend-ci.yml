@@ -460,8 +460,8 @@ jobs:
           PROJECT: ${{ matrix.project }}
         run: |
           set -o pipefail
-          # Keep traces from the first failing run. Re-running every failure
-          # used another ~5.5 minutes without producing a stable signal.
+          # Keep traces from every failing attempt, including a first attempt
+          # that later passes on its single retry (see playwright.config.js).
           timeout --signal=TERM --kill-after=30s 17m \
             npm run test:e2e:smoke -- \
               --project="$PROJECT" \
@@ -503,6 +503,27 @@ jobs:
               stream.write(f"| Failures / errors / skipped | {metrics['failures']} / {metrics['errors']} / {metrics['skipped']} |\n")
               stream.write(f"| Playwright duration | {metrics['time']}s |\n")
               stream.write(f'| Measured checks elapsed | {elapsed}s |\n')
+
+          # A test that only passed on its retry is not a clean pass. List it
+          # in the summary and raise a warning annotation on the pull request.
+          import re
+          flaky = []
+          log_path = Path('e2e.log')
+          if log_path.exists():
+              lines = re.sub(r'\x1b\[[0-9;]*m', '', log_path.read_text(errors='replace')).splitlines()
+              for index, line in enumerate(lines):
+                  if re.match(r'^\s+\d+ flaky\s*$', line):
+                      for entry in lines[index + 1:]:
+                          if not re.match(r'^\s+\[', entry):
+                              break
+                          flaky.append(entry.strip())
+          with summary.open('a') as stream:
+              stream.write(f'| Flaky (passed on retry) | {len(flaky)} |\n')
+              for entry in flaky:
+                  stream.write(f'\n- `{entry}`')
+              stream.write('\n')
+          for entry in flaky:
+              print(f'::warning title=Flaky E2E test (passed on retry)::{entry}')
           PY
 
       - name: Upload Playwright diagnostics

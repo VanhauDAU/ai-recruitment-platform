@@ -291,7 +291,12 @@ jobs:
       SECRET_KEY: ci-secret-key-at-least-32-characters-long-xxx
       DEBUG: 'True'
       DJANGO_SETTINGS_MODULE: config.settings.test
-      PYTEST_WORKERS: auto
+      # Not `auto`: with four workers one was killed mid-migration on run 3
+      # ("node down: Not properly terminated"). Every worker rebuilds the full
+      # historical model state per migration step, which is memory-heavy; two
+      # workers trade a longer job for headroom. The step below records
+      # whether the kernel OOM killer was involved if it happens again.
+      PYTEST_WORKERS: '2'
     steps:
       - uses: actions/checkout@v5
 
@@ -337,6 +342,13 @@ jobs:
             --junitxml=pytest-migrations.xml \
             "${files[@]}" \
             2>&1 | tee pytest-migrations.log
+
+      - name: Record memory state after a failure
+        if: ${{ always() && steps.pytest.outcome != 'success' }}
+        working-directory: .
+        run: |
+          free -m || true
+          sudo dmesg -T 2>/dev/null | grep -iE 'out of memory|oom-kill|killed process' | tail -20 || true
 
       - name: Upload migration diagnostics
         if: ${{ always() && steps.pytest.outcome != 'success' }}
