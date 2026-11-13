@@ -86,7 +86,6 @@ INSTALLED_APPS = [
     'apps.sitecontent',
     'apps.blog',
     'apps.privacy',
-    'apps.services',
     'apps.knowledgebase',
     'apps.uploads',
 ]
