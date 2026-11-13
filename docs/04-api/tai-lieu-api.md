@@ -49,7 +49,7 @@ Xác thực trong Swagger UI: gọi `POST /api/auth/login/` lấy `access`, bấ
 | POST | `/api/employer/register/` | Đăng ký employer, tạo atomically user/recruiter/consent, trả JWT và gửi email xác thực. **Không tự tạo hoặc liên kết company**; company chỉ có sau thao tác rõ ràng ở settings |
 | POST | `/api/employer/onboarding/registration/` | Hoàn thiện profile bắt buộc cho employer mới qua Google |
 | GET/POST | `/api/employer/consulting-need/` | Đọc hoặc tạo **một lần** nhu cầu tuyển dụng ưu tiên; POST lặp lại trả `400` |
-| GET/POST | `/api/employer/campaigns/` | Danh sách/tạo chiến dịch của chính recruiter. Cả read workspace và mutation yêu cầu `job_workspace_ready=true`; POST chỉ nhận `name`. Filter gồm `status`, `q`, `scope=open|needs_review|active_jobs|pending_jobs|expired_jobs`. |
+| GET/POST | `/api/employer/campaigns/` | Danh sách/tạo chiến dịch của chính recruiter. Cả read workspace và mutation yêu cầu `job_workspace_ready=true`; POST chỉ nhận `name`. Filter gồm `status`, `q`, `scope=open|needs_review|active_jobs|expired_jobs`. |
 | GET/PATCH | `/api/employer/campaigns/{public_id}/` | Xem/sửa chiến dịch do chính recruiter sở hữu và workspace đang ready. |
 | GET | `/api/employer/campaigns/options/` | `suggestions/` | Option để gắn tin (trừ chiến dịch hoàn tất/hủy) và nhu cầu tuyển dụng chưa chuyển thành chiến dịch. |
 | POST | `/api/employer/campaigns/from-need/{public_id}/` | Tạo và mở chiến dịch từ nhu cầu tuyển dụng của chính recruiter. |
@@ -128,7 +128,7 @@ candidate/employer:
 ```json
 {
   "is_superuser": false,
-  "permissions": ["job_moderation.approve", "job_moderation.view"],
+  "permissions": ["job_moderation.enforce_visibility", "job_moderation.view"],
   "primary_department": {
     "code": "job-moderation",
     "name": "Kiểm duyệt tin tuyển dụng"
@@ -161,7 +161,7 @@ quyền, endpoint RBAC trả:
 | Service category/package | `service_catalog.view/manage` |
 | Consultation lead | `consultation_lead.view/manage` |
 | CV catalogue | `cv_template.view/create/edit/publish/archive/delete` theo action |
-| Job moderation | `.view` ở cửa vào, `.approve/.reject` sau khi serializer hợp lệ |
+| Job moderation | `.view` để đọc, `.enforce_visibility` để tạm ẩn hoặc khôi phục, `.resolve_report` để xử lý báo cáo |
 | `/api/dashboard/` | Vẫn `IsAdmin`, chuyển ở G2 |
 | Blog admin upload | Vẫn legacy `CanEditBlog` + Django Groups, chuyển ở G2 |
 
@@ -279,20 +279,26 @@ build-time. Permission deprecated đang được role giữ vẫn xuất hiện 
 `is_active=false`, `is_granted_to_role=true` và không được gửi trong
 `permission_codes` active.
 
-### Admin job moderation — employer approval safety
+### Hậu kiểm tin tuyển dụng (ADR-0014)
+
+Tin không còn qua bước duyệt trước. Nhà tuyển dụng đăng là tin công khai; quản
+trị viên chỉ hậu kiểm.
 
 | Method | Endpoint | Contract |
 | --- | --- | --- |
-| GET | `/api/jobs/admin/moderation/{public_id}/` | Trả `review_token`, `state_actions`, `approve_blockers`, `approve_requirements`; eligibility do backend tính |
-| POST | `/api/jobs/admin/moderation/{public_id}/decisions/` | Canonical approve/reject/hide/restore; approve recompute account, campaign, verification và DPA trong transaction |
-| POST | `/api/jobs/admin/moderation/{public_id}/review/` | Endpoint compatibility; vẫn bắt buộc cùng backend approval guard |
+| GET | `/api/jobs/admin/moderation/` | Danh sách vận hành; mỗi dòng có `published_job_count`, `pending_report_count`, `is_publicly_visible` |
+| GET | `/api/jobs/admin/moderation/summary/` | `total`, `draft`, `active`, `expired`, `closed`, `held`, `pending_reports` |
+| GET | `/api/jobs/admin/moderation/{public_id}/` | Trả `review_token`, `state_actions` (`hide` hoặc `restore`), `blocked_reasons`, `content_changes` (khác biệt so với nội dung của lần đăng gần nhất) |
+| POST | `/api/jobs/admin/moderation/{public_id}/decisions/` | Chỉ nhận `action=hide\|restore`, yêu cầu quyền `job_moderation.enforce_visibility`; `hide` cần `reason_code` và `note`, `restore` cần `note` |
 
-Approve bị từ chối với HTTP 400 và payload máy đọc được:
+Điều kiện đăng được kiểm tra khi nhà tuyển dụng gọi `submit` hoặc `reopen`.
+Không đạt thì API trả HTTP 400 với payload máy đọc được và tin giữ nguyên
+trạng thái:
 
 ```json
 {
-  "code": "JOB_APPROVAL_BLOCKED",
-  "detail": "Không thể duyệt tin.",
+  "code": "JOB_PUBLICATION_BLOCKED",
+  "detail": "Chưa thể đăng tin.",
   "blocked_reasons": [
     {"code": "verification_required", "label": "Nhà tuyển dụng chưa được duyệt xác thực."},
     {"code": "dpa_outdated", "label": "Nhà tuyển dụng chưa có chấp thuận DPA còn hiệu lực."}
@@ -300,8 +306,9 @@ Approve bị từ chối với HTTP 400 và payload máy đọc được:
 }
 ```
 
-Client không được gửi hoặc tự suy eligibility. `review_token` chỉ khóa revision
-của job; backend vẫn đọc lại policy state ngay trước khi chuyển sang `active`.
+Các mã lý do: `verification_required`, `dpa_outdated`, `compliance_hold_active`,
+`campaign_inactive`. `review_token` chỉ khóa revision của job cho thao tác tạm
+ẩn và khôi phục.
 
 ### Admin employer verification — final decision và lifecycle
 
@@ -442,11 +449,11 @@ Mã lỗi ổn định gồm `JOB_AI_DAILY_QUOTA_EXCEEDED` (429),
 | POST | `/api/jobs/{public_id}/report/` | Candidate-only, chỉ nhận tin đang public và throttle đồng thời theo account/IP; response tối thiểu `{public_id,status,created_at}`. Chỉ admin-UPHELD thuộc `fake_company\|scam\|wrong_info` làm mất tick recruiter và tự tạo hold ẩn tin; reverse phục hồi badge nhưng không tự public lại tin. |
 | POST | `/api/jobs/{slug}/views/` | Ghi nhận lượt xem riêng, chỉ khi Analytics consent hợp lệ; Redis dedupe 24 giờ, response `{counted, view_count, reason?}`. |
 | GET/POST | `/api/privacy/consent/` | Đọc/lưu lựa chọn cookie ký số (`preferences`, `analytics`, `marketing`); necessary luôn bật, rút Analytics sẽ xóa viewer cookie. |
-| GET/POST | `/api/jobs/mine/` | Workspace recruiter owner-only và yêu cầu `job_workspace_ready=true`. `POST ?as=draft` lưu nháp thiếu dữ liệu; POST thường validate form/quota rồi tạo `pending`. Form giữ contract nested hiện hữu. Candidate preview chỉ gắn khi `candidate_data_access=true`. |
-| GET/PATCH/DELETE | `/api/jobs/mine/{public_id}/` | Chỉ người tạo và workspace-ready được đọc/sửa; chỉ xóa nháp. Cập nhật tin `active` quay lại `pending`. |
+| GET/POST | `/api/jobs/mine/` | Workspace recruiter owner-only và yêu cầu `job_workspace_ready=true`. `POST ?as=draft` lưu nháp thiếu dữ liệu; POST thường validate form, điều kiện đăng và quota rồi đăng tin ở trạng thái `active`. Form giữ contract nested hiện hữu. Candidate preview chỉ gắn khi `candidate_data_access=true`. |
+| GET/PATCH/DELETE | `/api/jobs/mine/{public_id}/` | Chỉ người tạo và workspace-ready được đọc/sửa; chỉ xóa nháp chưa từng đăng. Cập nhật tin `active` có hiệu lực ngay và không đổi `published_at`. |
 | GET | `/api/jobs/mine/posting-context/` | Endpoint compliance không bị workspace guard để luôn trả quota + `job_workspace_ready`, `candidate_data_access`, `dpa_status`, `blockers[]`, `job_postable`, `block_reason` và policy hạn hồ sơ (`default_deadline_days`, `max_deadline_days`, `max_public_lifetime_days`). |
-| POST | `/api/jobs/mine/{public_id}/submit/` | Gửi nháp/tin bị từ chối để duyệt lại; cập nhật tin pending giữ hàng chờ. |
-| POST | `/api/jobs/mine/{public_id}/close/`, `/reopen/`, `/extend/`, `/duplicate/` | Đóng, mở lại (trở về `pending`, body `{deadline}`), gia hạn tin active hoặc tạo nháp sao chép. |
+| POST | `/api/jobs/mine/{public_id}/submit/` | Đăng một tin nháp: tin công khai ngay (`active`). Trả `400 JOB_PUBLICATION_BLOCKED` kèm `blocked_reasons[]` khi nhà tuyển dụng chưa đạt điều kiện đăng. Gọi lại với tin đã `active` là idempotent. |
+| POST | `/api/jobs/mine/{public_id}/close/`, `/reopen/`, `/extend/`, `/duplicate/` | Đóng, mở lại (tin `active` ngay, body `{deadline}`, cùng điều kiện đăng), gia hạn tin active hoặc tạo nháp sao chép. |
 | GET | `/api/jobs/admin/moderation/?status=pending` | **Admin**: danh sách tin để kiểm duyệt, gồm người tạo, công ty, thời điểm gửi và lý do từ chối (nếu có). |
 | POST | `/api/jobs/admin/moderation/{public_id}/review/` | **Admin**: body `{"action":"approve"}` để thành `active`, hoặc `{"action":"reject","reason":"..."}`. Lý do từ chối bắt buộc và trả cho chủ tin. |
 | GET/POST | `/api/v2/applications/` | Candidate application V2. POST bắt buộc `job_public_id`, `cv_public_id`, `version_public_id`; backend từ chối tin hết hạn, tạo snapshot CV bất biến và trả `candidate_status` cùng timeline đã lọc. |

@@ -51,6 +51,10 @@ Các cột `approved_at`, `first_approved_at`, `approved_snapshot` và
 và trong mốc neo vòng đời hiển thị. Từ ADR này chúng mang nghĩa "thời điểm
 và nội dung của lần đăng công khai".
 
+Capability `job_approval` trong readiness của nhà tuyển dụng cũng giữ nguyên
+khóa vì đã được lưu trong các snapshot kiểm toán của hồ sơ xác thực. Từ ADR
+này nó mang nghĩa "được phép đưa tin lên công khai".
+
 ## Hệ quả
 
 - Nhà tuyển dụng đã xác thực không còn phải chờ; hàng chờ và SLA duyệt tin
