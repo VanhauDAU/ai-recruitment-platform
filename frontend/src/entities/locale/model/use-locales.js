@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { getLocales } from '../api/locale.api'
 
-export const FALLBACK_LOCALES = [
+const FALLBACK_LOCALES = [
   { code: 'vi-VN', label_vi: 'Tiếng Việt', native_name: 'Tiếng Việt', flag_emoji: '🇻🇳', catalog_path: 'mau-cv', is_default: true, is_active: true, sort_order: 0 },
   { code: 'en-US', label_vi: 'Tiếng Anh', native_name: 'English', flag_emoji: '🇬🇧', catalog_path: 'mau-cv-tieng-anh', is_default: false, is_active: true, sort_order: 10 },
 ]
