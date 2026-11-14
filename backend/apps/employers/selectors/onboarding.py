@@ -11,6 +11,15 @@ from ..models.readiness import current_dpa_status
 from .company_status import has_explicit_company_link
 from .domain_claims import effective_company_domain_claims
 
+INVALIDATING_CASE_STATUSES = frozenset(
+    {
+        EmployerVerificationCase.Status.CHANGES_REQUESTED,
+        EmployerVerificationCase.Status.REJECTED,
+        EmployerVerificationCase.Status.REVOKED,
+        EmployerVerificationCase.Status.EXPIRED,
+    }
+)
+
 INITIAL_ONBOARDING_STEP_LABELS = {
     'registration_completed': 'Hồ sơ đăng ký',
     'email_verified': 'Xác minh email',
@@ -108,6 +117,12 @@ def build_employer_onboarding_steps(recruiter, *, badge_eligibility=None):
         status=CompanyDocument.Status.APPROVED,
     ).exists()
     case_approved = case is not None and case.status == EmployerVerificationCase.Status.APPROVED
+    # A decision that ends or reopens the case voids the evidence for the
+    # checklist: documents keep their per-file "approved" review, but the
+    # recruiter must act again. Workspace readiness still reads
+    # `business_doc_submitted`, so read access is not taken away here.
+    case_invalidated = case is not None and case.status in INVALIDATING_CASE_STATUSES
+    business_doc_current = has_business_doc and not case_invalidated
     if badge_eligibility is None:
         domain = email_domain(recruiter.user.email) if recruiter.user.email_verified else ''
         badge_criteria = {
@@ -142,7 +157,8 @@ def build_employer_onboarding_steps(recruiter, *, badge_eligibility=None):
         'phone_verified': badge_criteria['phone_verified'],
         'company_linked': company_linked,
         'business_doc_submitted': has_business_doc,
-        'business_doc_approved': has_approved_business_doc,
+        'business_doc_current': business_doc_current,
+        'business_doc_approved': has_approved_business_doc and not case_invalidated,
         'email_domain_verified': badge_criteria['email_domain_verified'],
         'no_report_history': badge_criteria['no_report_history'],
         'candidate_dpa_submitted': has_candidate_dpa,
@@ -160,7 +176,7 @@ def build_employer_onboarding_steps(recruiter, *, badge_eligibility=None):
             steps['account_ready'],
             steps['phone_verified'],
             steps['company_linked'],
-            steps['business_doc_submitted'],
+            steps['business_doc_current'],
             steps['candidate_dpa_submitted'],
             steps['dpa_accepted'],
         ]

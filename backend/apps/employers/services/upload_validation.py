@@ -1,6 +1,9 @@
+import io
+
 from PIL import Image
 from pypdf import PdfReader
 
+from common.file_signatures import pdf_header_offset
 from common.r2_storage import private_media_storage
 
 
@@ -11,7 +14,14 @@ class EmployerUploadStructureError(ValueError):
 def _validate_pdf(storage_key):
     try:
         with private_media_storage().open(storage_key, 'rb') as source:
-            reader = PdfReader(source, strict=True)
+            data = source.read()
+        offset = pdf_header_offset(data)
+        if offset < 0:
+            raise EmployerUploadStructureError
+        # Files with whitespace before the header measure their cross-reference
+        # offsets from the header (the Acrobat convention), so parse from there.
+        with io.BytesIO(data[offset:]) as document:
+            reader = PdfReader(document, strict=True)
             if reader.is_encrypted or not reader.pages:
                 raise EmployerUploadStructureError
             for page in reader.pages:

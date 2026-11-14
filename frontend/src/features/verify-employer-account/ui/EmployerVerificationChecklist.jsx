@@ -24,7 +24,7 @@ import EmployerVerificationLifecycleAlert from './EmployerVerificationLifecycleA
 const STEP_DEFINITIONS = [
   { key: 'phone_verified', title: 'Xác thực số điện thoại', description: 'Tăng bảo mật và độ tin cậy khi liên hệ ứng viên.', icon: PhoneOutlined, to: EMPLOYER_PHONE_VERIFY_URL },
   { key: 'company_linked', title: 'Cập nhật thông tin công ty', description: 'Tìm doanh nghiệp đã có hoặc tạo hồ sơ công ty mới.', icon: BankOutlined, to: `${EMPLOYER_COMPANY_SETTINGS_URL}?update=true` },
-  { key: 'business_doc_submitted', title: 'Nộp giấy tờ chứng minh quyền đại diện', description: 'Tải GPKD hoặc bộ giấy ủy quyền và định danh.', icon: FileProtectOutlined, to: EMPLOYER_BUSINESS_LICENSE_URL },
+  { key: 'business_doc_current', title: 'Nộp giấy tờ chứng minh quyền đại diện', description: 'Tải GPKD hoặc bộ giấy ủy quyền và định danh.', icon: FileProtectOutlined, to: EMPLOYER_BUSINESS_LICENSE_URL },
   { key: 'candidate_dpa_submitted', title: 'Nộp văn bản xử lý dữ liệu ứng viên', description: 'Đăng tải văn bản cho phép thu thập và sử dụng dữ liệu ứng viên.', icon: FileProtectOutlined, to: EMPLOYER_DATA_PROTECTION_URL },
   { key: 'dpa_accepted', title: 'Đồng ý Thỏa thuận xử lý DLCN với nền tảng', description: 'Xác nhận vai trò và trách nhiệm bảo vệ dữ liệu trên hệ thống.', icon: SafetyCertificateOutlined, to: EMPLOYER_DATA_PROTECTION_URL },
 ]
