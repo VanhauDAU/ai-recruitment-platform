@@ -8,6 +8,14 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-15
 
+#### Added — Mời người khác đánh giá hồ sơ (giai đoạn 3)
+
+- Nút "Mời đánh giá" trong workspace hồ sơ: tạo link có hạn, sao chép hoặc gửi
+  qua email của chính NTD, thu hồi bất cứ lúc nào; token chỉ lưu dạng hash.
+- Trang công khai `/tuyendung/danh-gia-ho-so/:token`: CV đã ẩn ảnh, liên hệ và
+  người tham chiếu; phiếu đánh giá (đề xuất, điểm, điểm mạnh, băn khoăn), sửa
+  được tới khi hết hạn. NTD nhận thông báo và xem tổng hợp phiếu.
+
 #### Added — Xử lý hồ sơ ứng tuyển (giai đoạn 1)
 
 - Ứng viên có chuông thông báo và email khi nhà tuyển dụng xem, tải CV hoặc ra

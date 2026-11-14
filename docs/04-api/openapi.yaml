@@ -10425,6 +10425,59 @@ paths:
               schema:
                 $ref: '#/components/schemas/AdminUserCv'
           description: ''
+  /api/v2/application-reviews/{token}/:
+    get:
+      operationId: v2_application_reviews_retrieve
+      description: Bearer endpoint for invited reviewers; bad, expired and revoked
+        links all 404.
+      summary: Người được mời xem hồ sơ đã ẩn thông tin liên hệ
+      parameters:
+      - in: path
+        name: token
+        schema:
+          type: string
+        required: true
+      tags:
+      - applications-v2
+      security:
+      - {}
+      responses:
+        '200':
+          description: No response body
+    put:
+      operationId: v2_application_reviews_update
+      description: Bearer endpoint for invited reviewers; bad, expired and revoked
+        links all 404.
+      summary: Gửi hoặc cập nhật phiếu đánh giá
+      parameters:
+      - in: path
+        name: token
+        schema:
+          type: string
+        required: true
+      tags:
+      - applications-v2
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviewSubmitRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ReviewSubmitRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ReviewSubmitRequest'
+        required: true
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationReview'
+          description: ''
   /api/v2/applications/:
     get:
       operationId: v2_applications_list
@@ -11752,6 +11805,104 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PaginatedApplicationStatusHistoryList'
+          description: ''
+  /api/v2/recruiter/applications/{public_id}/review-links/:
+    get:
+      operationId: v2_recruiter_applications_review_links_list
+      summary: Các link mời đánh giá hồ sơ
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - applications-v2
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ReviewLink'
+          description: ''
+    post:
+      operationId: v2_recruiter_applications_review_links_create
+      summary: Tạo link mời đánh giá (token chỉ trả về một lần)
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - applications-v2
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviewLinkCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ReviewLinkCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ReviewLinkCreateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewLinkCreated'
+          description: ''
+  /api/v2/recruiter/applications/{public_id}/review-links/{link_public_id}/revoke/:
+    post:
+      operationId: v2_recruiter_applications_review_links_revoke_create
+      summary: Thu hồi link mời đánh giá
+      parameters:
+      - in: path
+        name: link_public_id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - applications-v2
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v2/recruiter/applications/{public_id}/reviews/:
+    get:
+      operationId: v2_recruiter_applications_reviews_retrieve
+      summary: Phiếu đánh giá của người được mời và tổng hợp
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - applications-v2
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationReviewList'
           description: ''
   /api/v2/recruiter/applications/{public_id}/status/:
     post:
@@ -16623,6 +16774,59 @@ components:
       required:
       - application
       - candidate_notice_at
+    ApplicationReview:
+      type: object
+      properties:
+        reviewer_name:
+          type: string
+          readOnly: true
+        recommendation:
+          allOf:
+          - $ref: '#/components/schemas/RecommendationEnum'
+          readOnly: true
+        recommendation_label:
+          type: string
+          readOnly: true
+        rating:
+          type: integer
+          readOnly: true
+          nullable: true
+        strengths:
+          type: string
+          readOnly: true
+        concerns:
+          type: string
+          readOnly: true
+        submitted_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - concerns
+      - rating
+      - recommendation
+      - recommendation_label
+      - reviewer_name
+      - strengths
+      - submitted_at
+      - updated_at
+    ApplicationReviewList:
+      type: object
+      properties:
+        summary:
+          type: object
+          additionalProperties: {}
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApplicationReview'
+      required:
+      - results
+      - summary
     ApplicationStatusDecisionRequest:
       type: object
       properties:
@@ -20033,7 +20237,7 @@ components:
           type: string
           readOnly: true
         event_type:
-          $ref: '#/components/schemas/EventTypeCa5Enum'
+          $ref: '#/components/schemas/EventTypeFd7Enum'
         summary:
           type: string
           maxLength: 240
@@ -21362,7 +21566,7 @@ components:
           type: string
           readOnly: true
         event_type:
-          $ref: '#/components/schemas/EventTypeCa5Enum'
+          $ref: '#/components/schemas/EventTypeFd7Enum'
         title:
           type: string
           maxLength: 180
@@ -21574,7 +21778,7 @@ components:
         * `internship` - Internship
         * `freelance` - Freelance
         * `other` - Khác
-    EventTypeCa5Enum:
+    EventTypeFd7Enum:
       enum:
       - verification_approved
       - verification_changes_requested
@@ -21586,6 +21790,7 @@ components:
       - company_link_removed
       - company_page_editor_granted
       - company_page_editor_revoked
+      - application_review_submitted
       type: string
       description: |-
         * `verification_approved` - Hồ sơ xác thực đã được duyệt
@@ -21598,6 +21803,7 @@ components:
         * `company_link_removed` - Liên kết công ty đã được gỡ
         * `company_page_editor_granted` - Bạn được cấp quyền biên tập trang công ty
         * `company_page_editor_revoked` - Quyền biên tập trang công ty đã bị thu hồi
+        * `application_review_submitted` - Có đánh giá mới cho hồ sơ ứng viên
     ExperienceBandEnum:
       enum:
       - entry
@@ -21650,6 +21856,18 @@ components:
         * `4` - 4 năm
         * `5` - 5 năm
         * `over_5` - Trên 5 năm
+    ExpiresInDaysEnum:
+      enum:
+      - 3
+      - 7
+      - 14
+      - 30
+      type: integer
+      description: |-
+        * `3` - 3
+        * `7` - 7
+        * `14` - 14
+        * `30` - 30
     ExportFormatEnum:
       enum:
       - pdf
@@ -26978,6 +27196,18 @@ components:
       - status_label
       - title
       - view_count
+    RecommendationEnum:
+      enum:
+      - strong_yes
+      - 'yes'
+      - 'no'
+      - strong_no
+      type: string
+      description: |-
+        * `strong_yes` - Rất nên tuyển
+        * `yes` - Nên tuyển
+        * `no` - Chưa nên tuyển
+        * `strong_no` - Không nên tuyển
     RecommendationMatchDetail:
       type: object
       properties:
@@ -27865,6 +28095,101 @@ components:
           maxLength: 64
       required:
       - public_ids
+    ReviewLink:
+      type: object
+      properties:
+        public_id:
+          type: string
+          readOnly: true
+        reviewer_name:
+          type: string
+          readOnly: true
+        message:
+          type: string
+          readOnly: true
+        status:
+          type: string
+          readOnly: true
+        has_review:
+          type: boolean
+          readOnly: true
+        expires_at:
+          type: string
+          format: date-time
+          readOnly: true
+        revoked_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        last_opened_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        open_count:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - expires_at
+      - has_review
+      - last_opened_at
+      - message
+      - open_count
+      - public_id
+      - reviewer_name
+      - revoked_at
+      - status
+    ReviewLinkCreateRequest:
+      type: object
+      properties:
+        reviewer_name:
+          type: string
+          minLength: 1
+          maxLength: 120
+        message:
+          type: string
+          maxLength: 1000
+        expires_in_days:
+          allOf:
+          - $ref: '#/components/schemas/ExpiresInDaysEnum'
+          default: 7
+      required:
+      - reviewer_name
+    ReviewLinkCreated:
+      type: object
+      properties:
+        link:
+          $ref: '#/components/schemas/ReviewLink'
+        url:
+          type: string
+          format: uri
+      required:
+      - link
+      - url
+    ReviewSubmitRequest:
+      type: object
+      properties:
+        recommendation:
+          $ref: '#/components/schemas/RecommendationEnum'
+        rating:
+          type: integer
+          maximum: 5
+          minimum: 1
+          nullable: true
+        strengths:
+          type: string
+          maxLength: 2000
+        concerns:
+          type: string
+          maxLength: 2000
+      required:
+      - recommendation
     RevisionActionRequest:
       type: object
       properties:

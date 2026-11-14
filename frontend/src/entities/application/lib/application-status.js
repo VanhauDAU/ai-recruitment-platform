@@ -46,3 +46,11 @@ export function replaceApplicationInPage(page, application) {
     )),
   }
 }
+
+// Mirrors ApplicationReview.Recommendation.
+export const REVIEW_RECOMMENDATIONS = [
+  { value: 'strong_yes', label: 'Rất nên tuyển', tone: 'emerald' },
+  { value: 'yes', label: 'Nên tuyển', tone: 'teal' },
+  { value: 'no', label: 'Chưa nên tuyển', tone: 'amber' },
+  { value: 'strong_no', label: 'Không nên tuyển', tone: 'rose' },
+]

@@ -15,6 +15,7 @@ const mocks = vi.hoisted(() => ({
   requestApplicationCvExport: vi.fn(),
   getApplicationCvExport: vi.fn(),
   downloadApplicationCv: vi.fn(),
+  getApplicationReviews: vi.fn(),
   triggerBlobDownload: vi.fn(),
   cvPreview: vi.fn(),
 }))
@@ -30,6 +31,7 @@ vi.mock('@/entities/application', async (importOriginal) => ({
   requestApplicationCvExport: mocks.requestApplicationCvExport,
   getApplicationCvExport: mocks.getApplicationCvExport,
   downloadApplicationCv: mocks.downloadApplicationCv,
+  getApplicationReviews: mocks.getApplicationReviews,
 }))
 
 vi.mock('@/shared/lib/download-blob', () => ({ triggerBlobDownload: mocks.triggerBlobDownload }))
@@ -129,6 +131,10 @@ describe('EmployerApplicationList', () => {
     })
     mocks.getRecruiterApplicationSnapshot.mockImplementation(async (publicId) => snapshotFor(publicId))
     mocks.getApplicationHistory.mockResolvedValue([VIEWED_ROW])
+    mocks.getApplicationReviews.mockResolvedValue({
+      summary: { total: 1, average_rating: 4, by_recommendation: { strong_yes: 0, yes: 1, no: 0, strong_no: 0 } },
+      results: [{ reviewer_name: 'Anh Minh', recommendation: 'yes', recommendation_label: 'Nên tuyển', rating: 4, strengths: 'SQL tốt', concerns: '', submitted_at: '2026-07-22T10:00:00+07:00', updated_at: '2026-07-22T10:00:00+07:00' }],
+    })
   })
 
   it('renders the three-column workspace with decisions, PDF download and a disabled message action', async () => {
@@ -150,6 +156,8 @@ describe('EmployerApplicationList', () => {
     expect(within(decisions).getAllByRole('button')).toHaveLength(4)
     expect(await screen.findByTestId('canonical-cv-preview')).toBeVisible()
     expect(await within(inspector).findByText(/Đã báo ứng viên/)).toBeVisible()
+    expect(await within(inspector).findByText('Anh Minh')).toBeVisible()
+    expect(within(preview).getByRole('button', { name: /Mời đánh giá/ })).toBeEnabled()
     expect(mocks.cvPreview).toHaveBeenCalledWith(expect.objectContaining({
       rendererKey: 'modern-green',
       editorChrome: false,

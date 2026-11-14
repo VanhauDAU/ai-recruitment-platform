@@ -42,6 +42,10 @@ class EmployerNotification(models.Model):
             'company_page_editor_revoked',
             'Quyền biên tập trang công ty đã bị thu hồi',
         )
+        APPLICATION_REVIEW_SUBMITTED = (
+            'application_review_submitted',
+            'Có đánh giá mới cho hồ sơ ứng viên',
+        )
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     recipient = models.ForeignKey(

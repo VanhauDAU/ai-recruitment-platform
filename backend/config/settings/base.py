@@ -403,6 +403,8 @@ REST_FRAMEWORK = {
         'ai_job_generation': '3/min',
         'knowledgebase_public': '120/min',
         'public_companies': '120/min',
+        # Invited reviewers: open the CV and save a scorecard a few times.
+        'application_review': '60/hour',
         'company_follow': '60/hour',
         'company_report': '10/hour',
         'company_page_layout': '60/hour',

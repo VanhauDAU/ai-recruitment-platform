@@ -247,6 +247,10 @@ Ba mốc thời gian độc lập, không suy mốc này từ mốc khác:
   email "Chúc mừng bạn đã ứng tuyển thành công vị trí …" kèm tối đa 5 việc làm
   tương tự (tính từ chính tin vừa nộp, không dùng hồ sơ cá nhân), theo cài đặt
   nhận thông báo của ứng viên.
+- **Mời đánh giá nội bộ:** NTD tạo link có hạn (3–30 ngày), thu hồi được, cho
+  người không có tài khoản (vd. trưởng bộ phận) xem CV đã ẩn thông tin liên hệ
+  và ảnh rồi gửi phiếu (đề xuất, điểm 1–5, điểm mạnh, băn khoăn). NTD được báo
+  và xem tổng hợp phiếu trong workspace.
 - Ứng viên bị hạn chế tài khoản chỉ có thể bị chuyển sang `rejected`.
 - `employer_rating` (1–5) và `employer_note` là dữ liệu nội bộ, lưu qua PATCH
   riêng; không bao giờ xuất hiện trong thông báo, email hay API ứng viên.

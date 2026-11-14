@@ -575,10 +575,13 @@ pages/employer/app/applications/ApplicationList
   → widgets/employer-application-workspace (3 cột, URL state, CSS lazy)
     → features/application-status-decision (4 quyết định, xác nhận trạng thái cuối, hoàn tác)
     → features/download-application-cv (yêu cầu PDF, poll, lưu file)
+    → features/share-application-review (tạo/thu hồi link mời đánh giá)
       → entities/application, entities/cv
         → shared/lib/{date-time,download-blob}
 ```
 
+- Trang công khai `pages/employer/review/ApplicationReview` (`/tuyendung/danh-gia-ho-so/:token`,
+  không layout, không session) → `features/submit-application-review`.
 - Trạng thái: `submitted`/`viewed` do hệ thống đặt; UI chỉ bật nút nằm trong
   `available_decisions` của API, không tự suy luận đồ thị chuyển.
 - Ghi chú/điểm nội bộ đi PATCH riêng; quyết định đi `status/` và `status/undo/`.

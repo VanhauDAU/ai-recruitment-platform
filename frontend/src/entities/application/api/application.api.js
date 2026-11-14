@@ -93,3 +93,35 @@ export async function getApplicationHistory(publicId) {
   const { data } = await api.get(`/v2/recruiter/applications/${publicId}/history/`)
   return data.results || data
 }
+
+export async function getApplicationReviewLinks(publicId) {
+  const { data } = await api.get(`/v2/recruiter/applications/${publicId}/review-links/`)
+  return data
+}
+
+/** Returns `{ link, url }`; `url` carries the only copy of the raw token. */
+export async function createApplicationReviewLink(publicId, payload) {
+  const { data } = await api.post(`/v2/recruiter/applications/${publicId}/review-links/`, payload)
+  return data
+}
+
+export async function revokeApplicationReviewLink(publicId, linkId) {
+  const { data } = await api.post(`/v2/recruiter/applications/${publicId}/review-links/${linkId}/revoke/`)
+  return data
+}
+
+export async function getApplicationReviews(publicId) {
+  const { data } = await api.get(`/v2/recruiter/applications/${publicId}/reviews/`)
+  return data
+}
+
+/** Public reviewer endpoints: the token in the URL is the only credential. */
+export async function getPublicApplicationReview(token) {
+  const { data } = await api.get(`/v2/application-reviews/${encodeURIComponent(token)}/`)
+  return data
+}
+
+export async function submitPublicApplicationReview(token, payload) {
+  const { data } = await api.put(`/v2/application-reviews/${encodeURIComponent(token)}/`, payload)
+  return data
+}

@@ -13,6 +13,7 @@ import { ApplicationDecisionBar } from '@/features/application-status-decision'
 import { formatApplicationDate, initialsOf, pendingNoticeOf } from '../model/application-workspace'
 import ApplicationAssessmentSection from './ApplicationAssessmentSection'
 import ApplicationHistoryTimeline from './ApplicationHistoryTimeline'
+import ApplicationReviewsSection from './ApplicationReviewsSection'
 import ApplicationStatusBadge from './ApplicationStatusBadge'
 
 const SOURCE_LABELS = {
@@ -134,6 +135,8 @@ export default function ApplicationInspectorPanel({
             {selectedApplication.cover_letter && <TextBlock label="Thư ứng tuyển">{selectedApplication.cover_letter}</TextBlock>}
             {selectedApplication.candidate_note && <TextBlock label="Ghi chú của ứng viên">{selectedApplication.candidate_note}</TextBlock>}
           </section>
+
+          <ApplicationReviewsSection publicId={selectedApplication.public_id} />
 
           <ApplicationAssessmentSection key={selectedApplication.public_id} application={selectedApplication} />
 

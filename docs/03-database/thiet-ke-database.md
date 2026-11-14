@@ -215,6 +215,7 @@ chiến dịch (nếu có) active, không hold và chủ chiến dịch active.
 | Bảng (model) | Mục đích và ràng buộc |
 | --- | --- |
 | `Application` | Một lần nộp của ứng viên vào tin. **Không** unique `(candidate, job)`: tối đa 3 lần nộp mỗi tin (`MAX_APPLICATIONS_PER_JOB`, kiểm ở service). `submitted_cv_version` (PROTECT, bắt buộc) trỏ `CvVersion` kind `application_snapshot`; `cv` chỉ là con trỏ thư viện, SET_NULL khi ứng viên xóa CV. Thông tin liên hệ, thư xin việc, `preferred_locations` M2M, consent AI/DLCN, `source` applied/recommended/invited, `status` submitted/viewed/shortlisted/interviewed/rejected/accepted (`chk_applications_status`; `considering` gộp vào `viewed` ở migration 0013) cùng các mốc thời gian và mốc tự từ chối. |
+| `ApplicationReviewLink`, `ApplicationReview` | Link mời đánh giá (token chỉ lưu hash, `expires_at` ≤ 30 ngày, `revoked_at`, đếm lượt mở) và phiếu đánh giá 1-1 theo link (`recommendation`, `rating` 1–5, điểm mạnh, băn khoăn). |
 | `ApplicationStatusHistory` | Timeline đổi trạng thái (actor SET_NULL, note nội bộ, `reverted_at` khi NTD hoàn tác). Mỗi dòng là khóa `application-status:<pk>` của thông báo nó tạo; ứng viên chỉ thấy dòng chưa hoàn tác có thông báo đã giao (hoặc không có thông báo). |
 
 Quyền đọc: nhà tuyển dụng chỉ thấy application của tin mình đăng
