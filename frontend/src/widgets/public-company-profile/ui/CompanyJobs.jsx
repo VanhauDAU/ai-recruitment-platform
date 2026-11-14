@@ -37,10 +37,17 @@ function JobListError({ onRetry }) {
   )
 }
 
-function JobList({ jobs }) {
+// Tin công ty ghim: API đã xếp chúng lên đầu, ở đây chỉ gắn nhãn "Nổi bật".
+function pinnedJobIds(company) {
+  return (company.sections || []).find((section) => section.type === 'jobs')?.pinned_job_public_ids || []
+}
+
+function JobList({ jobs, pinnedIds }) {
   return (
     <div className="space-y-3">
-      {jobs.map((job) => <CompanyJobCard key={job.public_id} job={job} />)}
+      {jobs.map((job) => (
+        <CompanyJobCard key={job.public_id} job={job} pinned={pinnedIds.includes(job.public_id)} />
+      ))}
     </div>
   )
 }
@@ -57,7 +64,7 @@ export function CompanyJobsPreview({ company, jobsPath }) {
 
   return (
     <>
-      <JobList jobs={jobs.slice(0, PREVIEW_COUNT)} />
+      <JobList jobs={jobs.slice(0, PREVIEW_COUNT)} pinnedIds={pinnedJobIds(company)} />
       <div className="mt-4 flex justify-center">
         <Link
           to={jobsPath}
@@ -150,7 +157,7 @@ export function CompanyJobsTab({ company, q, location, page }) {
             </p>
           )
         : NO_JOBS)}
-      {jobs.length > 0 && <JobList jobs={jobs} />}
+      {jobs.length > 0 && <JobList jobs={jobs} pinnedIds={pinnedJobIds(company)} />}
 
       {count > COMPANY_JOBS_PAGE_SIZE && (
         <div className="mt-6 flex justify-center">

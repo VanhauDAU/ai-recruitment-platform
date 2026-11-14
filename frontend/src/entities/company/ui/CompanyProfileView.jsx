@@ -29,6 +29,7 @@ function accentStyle(theme) {
  * - `heroActions`: nút hành động của nền tảng trong hero.
  * - `navigation`: thanh điều hướng giữa hero và nội dung (tab của trang công khai).
  * - `focusType`: cột chính chỉ còn các khối thuộc kiểu này (tab việc làm).
+ * - `sidebarFooter`: hành động ít nổi bật đặt dưới các khối của sidebar (báo cáo).
  * - `preview`: bản xem trước nhúng trong trang khác. Tên công ty không chiếm
  *   `h1` của trang chứa và khối chia sẻ (vốn chia sẻ URL hiện tại) bị ẩn.
  */
@@ -37,6 +38,7 @@ export default function CompanyProfileView({
   heroActions,
   navigation,
   focusType,
+  sidebarFooter,
   slots = NO_SLOTS,
   preview = false,
 }) {
@@ -58,6 +60,7 @@ export default function CompanyProfileView({
           {(profile.sidebar || []).map((block) => (
             <CompanySection key={block.key} section={block} slots={slots} preview={preview} sidebar />
           ))}
+          {sidebarFooter}
         </aside>
       </div>
     </div>

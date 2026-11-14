@@ -22,8 +22,11 @@ function Chip({ children }) {
   )
 }
 
-/** Thẻ tin trong trang công ty: bỏ logo và tên công ty vì cả trang đã là công ty đó. */
-export default function CompanyJobCard({ job }) {
+/**
+ * Thẻ tin trong trang công ty: bỏ logo và tên công ty vì cả trang đã là công ty
+ * đó. `pinned` gắn nhãn "Nổi bật" cho tin công ty ghim lên đầu.
+ */
+export default function CompanyJobCard({ job, pinned = false }) {
   const { isAuthenticated, user } = useSession()
   const { promptLogin } = useLoginPrompt()
   const [saved, toggleSaved, savePending] = useSavedJob(job.public_id, job)
@@ -52,6 +55,7 @@ export default function CompanyJobCard({ job }) {
       <div className="min-w-0 flex-1">
         <div className="company-job-card__headline">
           <h3 className="min-w-0 font-semibold leading-snug text-slate-950 line-clamp-2">
+            {pinned && <span className="company-job-card__pin">Nổi bật</span>}
             <Link
               to={jobDetailPath(job)}
               className="!text-slate-950 no-underline transition-colors hover:!text-slate-950 hover:underline underline-offset-2"

@@ -14,8 +14,27 @@ const { client, promptLogin, session, toggleSaved } = vi.hoisted(() => ({
 }))
 
 vi.mock('@/shared/api/client', () => ({ default: client }))
-vi.mock('@/entities/session', () => ({ useSession: () => session.current }))
+vi.mock('@/entities/session', () => ({
+  useSession: () => session.current,
+  useCandidateAudience: () => {
+    if (!session.current.isAuthenticated) return 'guest'
+    return session.current.user.role === 'candidate' ? 'candidate' : null
+  },
+}))
 vi.mock('@/features/auth', () => ({ useLoginPrompt: () => ({ promptLogin }) }))
+// Hai feature tự ẩn theo vai trò; ở đây chỉ kiểm tra widget gắn chúng vào đâu.
+vi.mock('@/features/follow-company', () => ({
+  FollowCompanyButton: ({ publicId, onRequireLogin, className }) => (
+    <button type="button" className={className} data-company={publicId} onClick={() => onRequireLogin()}>Theo dõi</button>
+  ),
+}))
+vi.mock('@/features/report-company', () => ({
+  ReportCompanyButton: ({ company, sections }) => (
+    <button type="button" data-company={`${company.public_id}:${company.name}`} data-sections={sections.map(({ key }) => key).join(',')}>
+      Báo cáo thông tin sai
+    </button>
+  ),
+}))
 vi.mock('@/features/saved-jobs', () => ({ useSavedJob: () => [false, toggleSaved, false] }))
 vi.mock('@/features/track-job-engagement', () => ({
   JobImpressionBoundary: ({ as: Component = 'div', slug, ...props }) => <Component data-job-slug={slug} {...props} />,
@@ -162,6 +181,46 @@ describe('PublicCompanyProfile', () => {
     expect(document.body).toHaveClass('has-bottom-action-bar')
   })
 
+  it('puts follow in the hero and the mobile bar, and report under the sidebar', async () => {
+    const user = userEvent.setup()
+    mockApi()
+    renderProfile()
+
+    await screen.findByRole('heading', { level: 1, name: 'FPT Software' })
+    const [heroFollow, barFollow] = screen.getAllByRole('button', { name: 'Theo dõi' })
+    expect(heroFollow).toHaveClass('hidden', 'lg:inline-flex')
+    expect(heroFollow).toHaveAttribute('data-company', 'co_ab12')
+    expect(heroFollow.closest('section')).toContainElement(screen.getByRole('heading', { level: 1 }))
+    expect(barFollow).toHaveClass('inline-flex')
+    expect(barFollow.parentElement).toContainElement(screen.getByRole('link', { name: 'Xem việc làm (7)' }))
+
+    await user.click(barFollow)
+    expect(promptLogin).toHaveBeenCalledOnce()
+
+    const report = screen.getByRole('button', { name: 'Báo cáo thông tin sai' })
+    expect(report.closest('aside')).not.toBeNull()
+    expect(report).toHaveAttribute('data-company', 'co_ab12:FPT Software')
+    // Khối chia sẻ và công ty cùng lĩnh vực do nền tảng sinh ra, không báo cáo được.
+    expect(report).toHaveAttribute('data-sections', 'about,jobs,general_info')
+  })
+
+  it('keeps the mobile bar for following in the jobs tab and on a company without jobs', async () => {
+    mockApi({ jobs: jobsPage(25) })
+    const { unmount } = renderProfile('/cong-ty/fpt-software?tab=viec-lam')
+
+    await screen.findByRole('heading', { level: 1, name: 'FPT Software' })
+    expect(screen.getAllByRole('button', { name: 'Theo dõi' })[1]).toHaveClass('flex', 'flex-1')
+    expect(screen.queryByRole('link', { name: /Xem việc làm/ })).not.toBeInTheDocument()
+    expect(document.body).toHaveClass('has-bottom-action-bar')
+    unmount()
+
+    session.current = { isAuthenticated: true, user: { role: 'employer' } }
+    renderProfile('/cong-ty/fpt-software?tab=viec-lam')
+    await screen.findByRole('heading', { level: 1, name: 'FPT Software' })
+    expect(screen.queryByRole('button', { name: 'Theo dõi' })).not.toBeInTheDocument()
+    expect(document.body).not.toHaveClass('has-bottom-action-bar')
+  })
+
   it('keeps a sparse company complete and drops blocks that turn out empty', async () => {
     const sparse = {
       ...PROFILE,
@@ -169,6 +228,8 @@ describe('PublicCompanyProfile', () => {
       stats: { active_public_job_count: 0, company_size: '', company_size_display: '', founded_year: null },
       sections: [{ key: 'jobs', type: 'jobs', title: 'Việc làm đang tuyển' }],
     }
+    // Vai trò không có nút theo dõi: công ty chưa có việc làm thì không còn gì cho thanh CTA.
+    session.current = { isAuthenticated: true, user: { role: 'employer' } }
     mockApi({ profile: sparse, jobs: jobsPage(0) })
     const { container } = renderProfile()
 

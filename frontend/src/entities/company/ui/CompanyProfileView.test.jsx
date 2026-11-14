@@ -97,13 +97,14 @@ describe('CompanyProfileView', () => {
     expect(container.querySelector('.company-profile-cover')).not.toHaveClass('company-profile-cover--fallback')
     expect(screen.getByRole('link', { name: /Website$/ })).toHaveAttribute('href', 'https://fpt-software.com')
 
-    // `jobs`/`similar_companies` cần slot của nơi dùng; `video`/`social_links` là kiểu chưa hỗ trợ.
+    // `jobs`/`similar_companies` cần slot của nơi dùng; video thiếu URL nhúng chuẩn bị ẩn.
     expect(headings()).toEqual([
       'Giới thiệu công ty',
       'Phúc lợi',
       'Hình ảnh công ty',
       'Thông tin chung',
       'Địa điểm',
+      'Mạng xã hội',
       'Chia sẻ công ty',
     ])
     expect(screen.getByText('Chúng tôi làm phần mềm.')).toBeVisible()
@@ -159,7 +160,7 @@ describe('CompanyProfileView', () => {
   it('narrows the main column to one section type while keeping the sidebar', () => {
     render(<CompanyProfileView profile={PROFILE} focusType="jobs" slots={{ jobs: <p>Danh sách có bộ lọc</p> }} />)
 
-    expect(headings()).toEqual(['Việc làm đang tuyển', 'Thông tin chung', 'Địa điểm', 'Chia sẻ công ty'])
+    expect(headings()).toEqual(['Việc làm đang tuyển', 'Thông tin chung', 'Địa điểm', 'Mạng xã hội', 'Chia sẻ công ty'])
     expect(screen.getByText('Danh sách có bộ lọc')).toBeVisible()
   })
 
@@ -208,6 +209,25 @@ describe('CompanyProfileView', () => {
     )
 
     expect(screen.queryAllByRole('heading', { level: 2 })).toHaveLength(0)
+  })
+
+  it('shows the follower count in the hero only when the company has followers', () => {
+    const withFollowers = { ...PROFILE, stats: { ...PROFILE.stats, follower_count: 1234 } }
+    const { rerender } = render(<CompanyProfileView profile={withFollowers} />)
+    expect(screen.getByText('1.234 người theo dõi')).toBeVisible()
+
+    rerender(<CompanyProfileView profile={{ ...PROFILE, stats: { ...PROFILE.stats, follower_count: 0 } }} />)
+    expect(screen.queryByText(/người theo dõi/)).not.toBeInTheDocument()
+
+    rerender(<CompanyProfileView profile={PROFILE} />)
+    expect(screen.queryByText(/người theo dõi/)).not.toBeInTheDocument()
+  })
+
+  it('places the consumer footer under the sidebar blocks', () => {
+    render(<CompanyProfileView profile={PROFILE} sidebarFooter={<button type="button">Báo cáo thông tin sai</button>} />)
+
+    const sidebar = screen.getByRole('complementary')
+    expect(sidebar.lastElementChild).toBe(within(sidebar).getByRole('button', { name: 'Báo cáo thông tin sai' }))
   })
 
   it('renders an embedded preview without claiming the page h1 or sharing the host URL', () => {

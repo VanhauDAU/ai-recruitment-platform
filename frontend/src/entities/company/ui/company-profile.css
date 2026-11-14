@@ -173,3 +173,205 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
+
+/* Khẩu hiệu, phúc lợi dạng thẻ, video nhấp-để-tải, mạng xã hội, văn phòng (CP-6). */
+.company-profile-headline {
+  margin-top: 0.25rem;
+  overflow-wrap: anywhere;
+  color: #334155;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  line-height: 1.375rem;
+}
+
+.company-profile-benefits {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.company-profile-benefit {
+  display: flex;
+  min-width: 0;
+  align-items: flex-start;
+  gap: 0.75rem;
+  border-radius: 0.75rem;
+  background: var(--company-accent-soft);
+  padding: 0.75rem;
+}
+
+.company-profile-benefit__icon {
+  display: inline-flex;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: #fff;
+  color: var(--company-accent);
+  font-size: 1rem;
+}
+
+.company-profile-benefit__name,
+.company-profile-benefit__note {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.company-profile-benefit__name {
+  color: #1e293b;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.company-profile-benefit__note {
+  margin-top: 0.125rem;
+  color: #64748b;
+  font-size: 0.8125rem;
+  line-height: 1.25rem;
+}
+
+.company-profile-video {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border: 0;
+  border-radius: 0.75rem;
+  background: linear-gradient(120deg, var(--company-accent), var(--company-accent-hover));
+  padding: 0;
+}
+
+.company-profile-video > iframe,
+.company-profile-video__facade > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  object-fit: cover;
+}
+
+.company-profile-video__facade {
+  cursor: pointer;
+}
+
+.company-profile-video__play {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  color: #fff;
+  font-size: 3.5rem;
+  filter: drop-shadow(0 4px 12px rgb(15 23 42 / 0.45));
+  transform: translate(-50%, -50%);
+  transition: transform 0.15s;
+}
+
+.company-profile-video__facade:hover .company-profile-video__play {
+  transform: translate(-50%, -50%) scale(1.08);
+}
+
+.company-profile-video__facade:focus-visible {
+  outline: 3px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+
+.company-profile-video__provider {
+  position: absolute;
+  bottom: 0.625rem;
+  left: 0.75rem;
+  border-radius: 9999px;
+  background: rgb(15 23 42 / 0.7);
+  padding: 0.125rem 0.5rem;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.company-profile-social {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.company-profile-social__link {
+  display: inline-flex;
+  width: 2.5rem;
+  height: 2.5rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e2e8f0;
+  border-radius: 9999px;
+  color: #475569 !important;
+  font-size: 1.125rem;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.company-profile-social__link:hover {
+  border-color: var(--company-accent);
+  color: var(--company-accent) !important;
+}
+
+.company-profile-office-tag {
+  margin-left: 0.375rem;
+  border-radius: 9999px;
+  background: var(--company-accent-soft);
+  padding: 0 0.375rem;
+  color: #334155;
+  font-weight: 600;
+}
+
+@media (min-width: 640px) {
+  .company-profile-benefits {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .company-profile-video__play,
+  .company-profile-social__link {
+    transition: none;
+  }
+}
+
+/* Bản xem trước nhúng (CompanyLayoutPreview): sidebar không dính theo trang
+   chứa. Biến thể hẹp dựng lại bố cục màn di động vì breakpoint theo viewport. */
+.company-profile-embedded .company-profile aside {
+  position: static;
+}
+
+.company-profile-embedded--narrow .company-profile > .grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.company-profile-embedded--narrow .company-profile-hero {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.75rem;
+  padding: 0 1.25rem 1.25rem;
+}
+
+.company-profile-embedded--narrow .company-profile-logo {
+  width: 5rem;
+  height: 5rem;
+  margin-top: -2.5rem;
+  font-size: 1.75rem;
+}
+
+.company-profile-embedded--narrow .company-profile-hero__main,
+.company-profile-embedded--narrow .company-profile-hero__actions {
+  padding-top: 0;
+}
+
+.company-profile-embedded--narrow .company-profile-hero__actions > * {
+  flex: 1 1 auto;
+}
+
+.company-profile-embedded--narrow .company-profile-gallery {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.company-profile-embedded--narrow .company-profile-benefits {
+  grid-template-columns: minmax(0, 1fr);
+}

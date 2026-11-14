@@ -6,3 +6,7 @@ import { lazy } from 'react'
 export const preloadCompanyProfileView = () => import('./CompanyProfileView')
 
 export const CompanyProfileView = lazy(preloadCompanyProfileView)
+
+// Bản xem trước theo bố cục nháp (workspace nhà tuyển dụng) kéo theo
+// `applyCompanyLayout`, cũng chỉ tải khi có nơi render.
+export const CompanyLayoutPreview = lazy(() => import('./CompanyLayoutPreview'))

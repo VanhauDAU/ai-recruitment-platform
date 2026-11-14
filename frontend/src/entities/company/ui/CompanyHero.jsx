@@ -1,4 +1,9 @@
-import { GlobalOutlined, SolutionOutlined, TeamOutlined } from '@ant-design/icons'
+import {
+  GlobalOutlined,
+  SolutionOutlined,
+  TeamOutlined,
+  UsergroupAddOutlined,
+} from '@ant-design/icons'
 import CompanyLogo from './CompanyLogo'
 
 function HeroStat({ icon, children }) {
@@ -15,6 +20,7 @@ export default function CompanyHero({ profile, actions, titleAs: Title = 'h1' })
   const { identity, stats } = profile
   const industries = identity.industries || []
   const jobCount = Number(stats?.active_public_job_count) || 0
+  const followerCount = Number(stats?.follower_count) || 0
   const hasWebsite = /^https?:\/\//i.test(identity.website_url || '')
 
   return (
@@ -47,6 +53,7 @@ export default function CompanyHero({ profile, actions, titleAs: Title = 'h1' })
           <Title id="company-profile-name" className="break-words text-xl font-bold leading-snug text-slate-900 sm:text-2xl">
             {identity.display_name}
           </Title>
+          {identity.headline && <p className="company-profile-headline">{identity.headline}</p>}
           {identity.legal_name && (
             <p className="mt-1 break-words text-sm font-medium text-gray-600">{identity.legal_name}</p>
           )}
@@ -66,6 +73,11 @@ export default function CompanyHero({ profile, actions, titleAs: Title = 'h1' })
                 ? `${jobCount.toLocaleString('vi-VN')} việc làm đang tuyển`
                 : 'Chưa có việc làm đang tuyển'}
             </HeroStat>
+            {followerCount > 0 && (
+              <HeroStat icon={<UsergroupAddOutlined />}>
+                {`${followerCount.toLocaleString('vi-VN')} người theo dõi`}
+              </HeroStat>
+            )}
           </ul>
         </div>
 

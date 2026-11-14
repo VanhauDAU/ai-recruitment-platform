@@ -1,0 +1,55 @@
+/* Roster người biên tập trang công ty; đi theo lazy chunk của workspace. */
+
+.company-editors,
+.company-editors__hint,
+.company-editors__name,
+.company-editors__meta {
+  margin: 0;
+}
+
+.company-editors {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  padding: 0;
+  list-style: none;
+}
+
+.company-editors__hint,
+.company-editors__meta {
+  color: #64748b;
+  font-size: 0.8125rem;
+  line-height: 1.25rem;
+}
+
+.company-editors__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.625rem;
+  background: #fff;
+  padding: 0.625rem 0.75rem;
+}
+
+.company-editors__identity {
+  min-width: 0;
+  flex: 1 1 14rem;
+}
+
+.company-editors__name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.5rem;
+  overflow-wrap: anywhere;
+  color: #0f172a;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.company-editors__meta {
+  overflow-wrap: anywhere;
+}

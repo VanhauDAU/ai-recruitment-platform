@@ -2215,3 +2215,179 @@ test('employer company settings: pending values remain editable without creating
   await expect(page.getByText('Giấy đăng ký doanh nghiệp hoặc giấy tờ tương đương')).toBeVisible()
   await expectNoHorizontalOverflow(page)
 })
+
+test('employer company page: hiding a section updates the preview and saves the layout', async ({ page }) => {
+  await mockPublicApi(page)
+  await setEmployerSession(page, {
+    email_verified: true,
+    employer_onboarding_required: false,
+    employer_onboarding_step: 'complete',
+  })
+  let layout = {
+    section_order: ['about', 'jobs', 'benefits'],
+    hidden_sections: [],
+    accent: 'brand',
+    pinned_job_public_ids: [],
+    lock_version: 3,
+  }
+  const workspace = () => ({
+    company: { public_id: 'co_acme', slug: 'acme', display_name: 'ACME Việt Nam', public_path: '/cong-ty/acme', is_public: true, is_indexable: true },
+    permissions: { can_view: true, can_edit_layout: true, can_edit_content: true, can_manage_editors: true, blockers: [] },
+    registry: {
+      sections: [
+        { key: 'about', title: 'Giới thiệu công ty', zone: 'main', always_on: false },
+        { key: 'jobs', title: 'Việc làm đang tuyển', zone: 'main', always_on: true },
+        { key: 'benefits', title: 'Phúc lợi', zone: 'main', always_on: false },
+        { key: 'general_info', title: 'Thông tin chung', zone: 'sidebar', always_on: true },
+      ],
+      accents: [
+        { key: 'brand', label: 'Xanh ProCV', primary: '#00b14f', hover: '#008a3e', soft: '#f0fbf5' },
+        { key: 'ocean', label: 'Xanh biển', primary: '#0b6bcb', hover: '#084f96', soft: '#eef6ff' },
+      ],
+      limits: { pinned_jobs: 3 },
+    },
+    layout,
+    pinned_jobs: [],
+    content: {
+      public_id: 'co_acme',
+      slug: 'acme',
+      identity: { display_name: 'ACME Việt Nam', legal_name: 'Công ty TNHH ACME Việt Nam', logo_url: '', cover_image_url: '', website_url: '', industries: [] },
+      stats: { active_public_job_count: 5, follower_count: 12 },
+      theme: { accent: { key: 'brand', primary: '#00b14f', hover: '#008a3e', soft: '#f0fbf5' } },
+      sections: [
+        { key: 'about', type: 'rich_text', title: 'Giới thiệu công ty', body_html: '<p>Chúng tôi làm phần mềm.</p>' },
+        { key: 'jobs', type: 'jobs', title: 'Việc làm đang tuyển' },
+        { key: 'benefits', type: 'rich_text', title: 'Phúc lợi', body_html: '<p>Bảo hiểm sức khoẻ.</p>' },
+      ],
+      sidebar: [
+        { key: 'general_info', type: 'facts', title: 'Thông tin chung', items: [{ key: 'company_size', label: 'Quy mô', value: '25 - 99 nhân viên' }] },
+      ],
+    },
+    stats: { follower_count: 12, active_public_job_count: 5 },
+  })
+  const patches = []
+  await page.route('http://localhost:8000/api/employer/company/page/', async (route) => {
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify(workspace()) })
+  })
+  await page.route('http://localhost:8000/api/employer/company/page/layout/', async (route) => {
+    const body = route.request().postDataJSON()
+    patches.push({ method: route.request().method(), body })
+    layout = { ...layout, ...body, lock_version: layout.lock_version + 1 }
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify(workspace()) })
+  })
+
+  await page.goto('/tuyendung/app/company-page')
+
+  await expect(page.getByRole('heading', { level: 1, name: 'Trang công ty' })).toBeVisible()
+  await expect(page.getByRole('link', { name: /Xem trang công khai/ })).toHaveAttribute('href', '/cong-ty/acme')
+  const save = page.getByRole('button', { name: 'Lưu thay đổi' })
+  await expect(save).toBeDisabled()
+  // Từ 1200px bản xem trước đứng cạnh điều khiển; hẹp hơn thì mở trong drawer.
+  const sideBySide = page.viewportSize().width >= 1200
+  const preview = sideBySide
+    ? page.getByRole('complementary', { name: 'Xem trước trang công ty' })
+    : page.getByRole('dialog', { name: 'Xem trước trang công ty' })
+  if (sideBySide) await expect(preview.getByRole('region', { name: 'Phúc lợi' })).toBeVisible()
+
+  await page.getByRole('switch', { name: 'Hiển thị Phúc lợi' }).click()
+  await expect(page.getByText('Có thay đổi chưa lưu.')).toBeVisible()
+  if (!sideBySide) await page.getByRole('button', { name: 'Xem trước' }).click()
+  await expect(preview.getByRole('region', { name: 'Giới thiệu công ty' })).toBeVisible()
+  await expect(preview.getByRole('region', { name: 'Phúc lợi' })).toHaveCount(0)
+  if (!sideBySide) await preview.getByRole('button', { name: 'Close' }).click()
+  await expectNoHorizontalOverflow(page)
+
+  await save.click()
+
+  await expect(page.getByText('Bố cục đang khớp với trang công khai.')).toBeVisible()
+  expect(patches).toEqual([{ method: 'PATCH', body: { lock_version: 3, hidden_sections: ['benefits'] } }])
+  await expect(page.getByRole('switch', { name: 'Hiển thị Phúc lợi' })).not.toBeChecked()
+  await expect(save).toBeDisabled()
+})
+
+test('employer company page: editing the headline sends it for review and marks the card pending', async ({ page }) => {
+  await mockPublicApi(page)
+  await setEmployerSession(page, {
+    email_verified: true,
+    employer_onboarding_required: false,
+    employer_onboarding_step: 'complete',
+  })
+  let pending = null
+  const workspace = () => ({
+    company: { public_id: 'co_acme', slug: 'acme', display_name: 'ACME Việt Nam', public_path: '/cong-ty/acme', is_public: true, is_indexable: true },
+    permissions: { can_view: true, can_edit_layout: true, can_edit_content: true, can_manage_editors: false, blockers: [] },
+    registry: {
+      sections: [
+        { key: 'about', title: 'Giới thiệu công ty', zone: 'main', always_on: false },
+        { key: 'jobs', title: 'Việc làm đang tuyển', zone: 'main', always_on: true },
+        { key: 'general_info', title: 'Thông tin chung', zone: 'sidebar', always_on: true },
+      ],
+      accents: [{ key: 'brand', label: 'Xanh ProCV', primary: '#00b14f', hover: '#008a3e', soft: '#f0fbf5' }],
+      social_networks: [{ key: 'facebook', label: 'Facebook', placeholder: 'https://facebook.com/…' }],
+      limits: { pinned_jobs: 3, benefits: 8, offices: 10, gallery: 10, headline: 160 },
+    },
+    layout: { section_order: ['about', 'jobs'], hidden_sections: [], accent: 'brand', pinned_job_public_ids: [], lock_version: 1 },
+    pinned_jobs: [],
+    content: {
+      public_id: 'co_acme',
+      slug: 'acme',
+      identity: { display_name: 'ACME Việt Nam', headline: '', legal_name: '', logo_url: '', cover_image_url: '', website_url: '', industries: [] },
+      stats: { active_public_job_count: 2, follower_count: 0 },
+      theme: { accent: { key: 'brand', primary: '#00b14f', hover: '#008a3e', soft: '#f0fbf5' } },
+      sections: [
+        { key: 'about', type: 'rich_text', title: 'Giới thiệu công ty', body_html: '<p>Chúng tôi làm phần mềm.</p>' },
+        { key: 'jobs', type: 'jobs', title: 'Việc làm đang tuyển' },
+      ],
+      sidebar: [{ key: 'general_info', type: 'facts', title: 'Thông tin chung', items: [{ key: 'company_size', label: 'Quy mô', value: '25 - 99 nhân viên' }] }],
+    },
+    content_form: {
+      published: {
+        headline: '', description: '<p>Chúng tôi làm phần mềm.</p>', culture: '', employee_benefits: '', video_url: '',
+        social_links: { facebook: '' }, benefits: [], offices: [], logo_url: '', cover_image_url: '', gallery: [],
+      },
+      pending,
+      request: pending ? { public_id: 'cur_1', status: 'submitted', submitted_at: '2026-11-14T03:00:00Z', review_note: '', editable: true } : null,
+      section_status: {
+        hero: pending ? 'pending' : 'empty', about: 'published', benefits: 'empty', culture: 'empty',
+        gallery: 'empty', video: 'empty', offices: 'empty', social_links: 'empty',
+      },
+    },
+    completeness: {
+      score: pending ? 20 : 10,
+      items: [
+        { key: 'headline', label: 'Khẩu hiệu', done: Boolean(pending) },
+        { key: 'about', label: 'Giới thiệu', done: true },
+        { key: 'video', label: 'Video', done: false },
+      ],
+    },
+    stats: { follower_count: 0, active_public_job_count: 2 },
+  })
+  const submissions = []
+  await page.route('http://localhost:8000/api/employer/company/page/', async (route) => {
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify(workspace()) })
+  })
+  await page.route('http://localhost:8000/api/employer/company/page/content/', async (route) => {
+    const { changes } = route.request().postDataJSON()
+    submissions.push(changes)
+    pending = { ...pending, ...changes }
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify(workspace()) })
+  })
+  await page.route('http://localhost:8000/api/jobs/benefits/', async (route) => {
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify([{ id: 7, name: 'Bảo hiểm sức khoẻ', icon: '', category: 'welfare' }]) })
+  })
+
+  await page.goto('/tuyendung/app/company-page')
+
+  await expect(page.getByRole('progressbar', { name: 'Độ hoàn thiện' })).toHaveAttribute('aria-valuenow', '10')
+  await page.getByRole('tab', { name: 'Nội dung' }).click()
+  const hero = page.getByRole('region', { name: 'Đầu trang' })
+  await expect(hero.getByText('Chưa có', { exact: true })).toBeVisible()
+  await hero.getByLabel('Khẩu hiệu').fill('Cùng xây phần mềm cho hàng triệu người')
+  await hero.getByRole('button', { name: 'Gửi duyệt Đầu trang' }).click()
+
+  await expect(hero.getByText('Chờ duyệt', { exact: true })).toBeVisible()
+  await expect(hero.getByLabel('Khẩu hiệu')).toHaveValue('Cùng xây phần mềm cho hàng triệu người')
+  await expect(page.getByRole('region', { name: 'Yêu cầu cập nhật nội dung' })).toContainText('Đã gửi, chờ duyệt')
+  expect(submissions).toEqual([{ headline: 'Cùng xây phần mềm cho hàng triệu người' }])
+  await expectNoHorizontalOverflow(page)
+})

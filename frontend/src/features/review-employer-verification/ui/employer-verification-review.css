@@ -720,6 +720,8 @@
   display: none;
 }
 
+.company-comparison-list { margin: 0; padding-left: 18px; }
+.company-comparison-list li + li { margin-top: 2px; }
 .company-comparison-rich-text {
   max-height: 220px;
   overflow: auto;

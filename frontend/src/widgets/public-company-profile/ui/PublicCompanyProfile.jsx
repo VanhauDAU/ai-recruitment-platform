@@ -10,6 +10,10 @@ import {
   getSimilarCompanies,
   usePublicCompany,
 } from '@/entities/company'
+import { useCandidateAudience } from '@/entities/session'
+import { useLoginPrompt } from '@/features/auth'
+import { FollowCompanyButton } from '@/features/follow-company'
+import { ReportCompanyButton } from '@/features/report-company'
 import { CompanyJobsPreview, CompanyJobsTab } from './CompanyJobs'
 import {
   CompanyProfileError,
@@ -21,6 +25,8 @@ import '../public-company-profile.css'
 
 const BREADCRUMB_LINK = 'shrink-0 font-medium !text-slate-700 transition-colors hover:!text-[var(--brand-primary)]'
 const PRIMARY_LINK = 'items-center justify-center gap-2 rounded-lg !bg-[var(--brand-primary)] text-sm font-bold !text-white shadow-sm transition hover:!bg-[var(--brand-primary-hover)]'
+// Khối do nền tảng sinh ra, không chứa thông tin công ty tự khai để báo cáo.
+const UNREPORTABLE_TYPES = new Set(['share', 'similar_companies'])
 const SIMILAR_SKELETON = (
   <div className="space-y-3" aria-label="Đang tải công ty cùng lĩnh vực">
     {[0, 1, 2].map((index) => (
@@ -49,8 +55,8 @@ function CompanyTabs({ ref, slug, isJobsTab, jobCount }) {
   )
 }
 
-/** `actions` là chỗ gắn nút theo dõi ở các giai đoạn sau, đứng trước nút xem việc làm. */
-function CompanyMobileCta({ actions, jobCount, to }) {
+/** Thanh hành động dính đáy trên màn hẹp: nút theo dõi rồi tới nút xem việc làm. */
+function CompanyMobileCta({ children }) {
   useEffect(() => {
     // Nút nổi (góp ý, trợ lý) tự nâng lên khỏi thanh này nhờ class trên body.
     document.body.classList.add('has-bottom-action-bar')
@@ -59,12 +65,7 @@ function CompanyMobileCta({ actions, jobCount, to }) {
 
   return (
     <div className="fixed inset-x-0 bottom-0 z-40 border-t border-gray-200 bg-white/95 p-3 shadow-[0_-8px_24px_rgba(15,23,42,0.08)] backdrop-blur lg:hidden">
-      <div className="mx-auto flex max-w-6xl gap-2">
-        {actions}
-        <Link to={to} className={`inline-flex h-11 flex-1 px-4 ${PRIMARY_LINK}`}>
-          Xem việc làm ({jobCount.toLocaleString('vi-VN')})
-        </Link>
-      </div>
+      <div className="mx-auto flex max-w-6xl gap-2">{children}</div>
     </div>
   )
 }
@@ -76,6 +77,14 @@ function CompanyProfilePage({ profile, tab, q, location, page }) {
   const lastView = useRef(view)
   const jobCount = Number(profile.stats?.active_public_job_count) || 0
   const jobsPath = companyDetailPath(profile.slug, { tab: COMPANY_JOBS_TAB })
+  const showJobsLink = jobCount > 0 && !isJobsTab
+  // Theo dõi và báo cáo dành cho khách (được mời đăng nhập) và ứng viên; hai nút
+  // tự ẩn với vai trò khác, còn thanh CTA cần biết trước để không hiện rỗng.
+  const { promptLogin } = useLoginPrompt()
+  const hasCandidateActions = Boolean(useCandidateAudience())
+  const reportSections = [...(profile.sections || []), ...(profile.sidebar || [])]
+    .filter((section) => !UNREPORTABLE_TYPES.has(section.type))
+    .map(({ key, title }) => ({ key, title }))
   const similarQuery = useQuery({
     queryKey: companyKeys.similar(profile.public_id),
     queryFn: ({ signal }) => getSimilarCompanies(profile.public_id, { signal }),
@@ -106,10 +115,26 @@ function CompanyProfilePage({ profile, tab, q, location, page }) {
 
           <CompanyProfileView
             profile={profile}
-            heroActions={jobCount > 0 && !isJobsTab && (
-              <Link to={jobsPath} className={`hidden h-11 px-5 lg:inline-flex ${PRIMARY_LINK}`}>
-                Xem việc làm
-              </Link>
+            heroActions={(hasCandidateActions || showJobsLink) && (
+              <>
+                <FollowCompanyButton
+                  publicId={profile.public_id}
+                  onRequireLogin={promptLogin}
+                  className="hidden lg:inline-flex"
+                />
+                {showJobsLink && (
+                  <Link to={jobsPath} className={`hidden h-11 px-5 lg:inline-flex ${PRIMARY_LINK}`}>
+                    Xem việc làm
+                  </Link>
+                )}
+              </>
+            )}
+            sidebarFooter={(
+              <ReportCompanyButton
+                company={{ public_id: profile.public_id, name: profile.identity.display_name }}
+                sections={reportSections}
+                onRequireLogin={promptLogin}
+              />
             )}
             navigation={(
               <CompanyTabs ref={tabsRef} slug={profile.slug} isJobsTab={isJobsTab} jobCount={jobCount} />
@@ -127,7 +152,20 @@ function CompanyProfilePage({ profile, tab, q, location, page }) {
         </div>
       </main>
 
-      {jobCount > 0 && !isJobsTab && <CompanyMobileCta jobCount={jobCount} to={jobsPath} />}
+      {(hasCandidateActions || showJobsLink) && (
+        <CompanyMobileCta>
+          <FollowCompanyButton
+            publicId={profile.public_id}
+            onRequireLogin={promptLogin}
+            className={showJobsLink ? 'inline-flex' : 'flex flex-1'}
+          />
+          {showJobsLink && (
+            <Link to={jobsPath} className={`inline-flex h-11 flex-1 px-4 ${PRIMARY_LINK}`}>
+              Xem việc làm ({jobCount.toLocaleString('vi-VN')})
+            </Link>
+          )}
+        </CompanyMobileCta>
+      )}
     </>
   )
 }

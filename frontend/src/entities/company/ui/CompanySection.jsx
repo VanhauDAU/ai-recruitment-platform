@@ -1,15 +1,37 @@
 import {
   BankOutlined,
   CalendarOutlined,
+  DollarOutlined,
   EnvironmentOutlined,
+  FacebookFilled,
+  GiftOutlined,
   GlobalOutlined,
+  HeartOutlined,
   InfoCircleOutlined,
+  InstagramOutlined,
+  LaptopOutlined,
+  LinkedinFilled,
   TeamOutlined,
+  TikTokOutlined,
+  YoutubeFilled,
 } from '@ant-design/icons'
 import { sanitizeHtml } from '@/shared/lib/sanitize-html'
 import RichContent from '@/shared/ui/RichContent'
 import ShareButtons from '@/shared/ui/ShareButtons'
+import { companyVideoEmbed } from '../lib/company-video'
 import CompanyGallery from './CompanyGallery'
+import CompanyVideo from './CompanyVideo'
+
+const HTTP_URL = /^https?:\/\//i
+// Icon chỉ là trang trí theo nhóm danh mục; `icon` của danh mục chưa có định dạng chung.
+const BENEFIT_ICONS = { allowance: DollarOutlined, equipment: LaptopOutlined, welfare: HeartOutlined }
+const SOCIAL_ICONS = {
+  facebook: FacebookFilled,
+  linkedin: LinkedinFilled,
+  youtube: YoutubeFilled,
+  tiktok: TikTokOutlined,
+  instagram: InstagramOutlined,
+}
 
 // Khối rich text chỉ được hiển thị khi còn chữ hoặc ảnh sau khi sanitize.
 function hasRichText(html) {
@@ -39,7 +61,7 @@ function CompanyFacts({ items }) {
           </span>
           <div className="min-w-0">
             <p className="text-xs text-gray-500">{item.label}</p>
-            {/^https?:\/\//i.test(item.href || '') ? (
+            {HTTP_URL.test(item.href || '') ? (
               <a
                 href={item.href}
                 target="_blank"
@@ -65,11 +87,60 @@ function CompanyOffices({ items }) {
         <li key={`${office.label}-${index}`} className="flex items-start gap-2.5 text-sm">
           <EnvironmentOutlined className="mt-0.5 text-gray-400" aria-hidden="true" />
           <div className="min-w-0">
-            {office.label && <p className="text-xs text-gray-500">{office.label}</p>}
+            {(office.label || office.is_headquarters) && (
+              <p className="text-xs text-gray-500">
+                {office.label}
+                {office.is_headquarters && office.label !== 'Trụ sở chính' && (
+                  <span className="company-profile-office-tag">Trụ sở chính</span>
+                )}
+              </p>
+            )}
             <p className="mt-0.5 break-words leading-5 text-slate-700">{office.address}</p>
+            {office.province_name && <p className="text-xs text-gray-500">{office.province_name}</p>}
           </div>
         </li>
       ))}
+    </ul>
+  )
+}
+
+function CompanyBenefits({ items, html }) {
+  return (
+    <>
+      {items.length > 0 && (
+        <ul className="company-profile-benefits">
+          {items.map((item, index) => {
+            const Icon = BENEFIT_ICONS[item.category] || GiftOutlined
+            return (
+              <li key={`${item.name}-${index}`} className="company-profile-benefit">
+                <span className="company-profile-benefit__icon" aria-hidden="true"><Icon /></span>
+                <div className="min-w-0">
+                  <p className="company-profile-benefit__name">{item.name}</p>
+                  {item.note && <p className="company-profile-benefit__note">{item.note}</p>}
+                </div>
+              </li>
+            )
+          })}
+        </ul>
+      )}
+      {html && <RichContent html={html} className={items.length > 0 ? 'mt-4' : ''} />}
+    </>
+  )
+}
+
+function CompanySocialLinks({ items }) {
+  return (
+    <ul className="company-profile-social">
+      {items.map((item) => {
+        const Icon = SOCIAL_ICONS[item.network] || GlobalOutlined
+        return (
+          <li key={`${item.network}-${item.url}`}>
+            <a href={item.url} target="_blank" rel="noopener noreferrer nofollow" aria-label={item.label || item.network} className="company-profile-social__link">
+              <Icon aria-hidden="true" />
+            </a>
+          </li>
+        )
+      })}
     </ul>
   )
 }
@@ -80,6 +151,20 @@ function defaultBody(section, preview) {
   switch (section.type) {
     case 'rich_text':
       return hasRichText(section.body_html) ? <RichContent html={section.body_html} /> : null
+    case 'benefits': {
+      const items = (section.items || []).filter((item) => item?.name)
+      const html = hasRichText(section.body_html) ? section.body_html : ''
+      return items.length || html ? <CompanyBenefits items={items} html={html} /> : null
+    }
+    case 'video': {
+      const video = companyVideoEmbed(section)
+      return video ? <CompanyVideo video={video} title={section.title} /> : null
+    }
+    case 'social_links': {
+      // Chỉ liên kết http(s); mọi scheme khác (javascript:, data:) bị bỏ.
+      const items = (section.items || []).filter((item) => HTTP_URL.test(item?.url || ''))
+      return items.length ? <CompanySocialLinks items={items} /> : null
+    }
     case 'gallery':
       return section.items?.length ? <CompanyGallery items={section.items} title={section.title} /> : null
     case 'facts':
