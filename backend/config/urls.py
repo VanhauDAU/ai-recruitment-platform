@@ -29,6 +29,7 @@ urlpatterns = [
     path('api/admin/', include('apps.accounts.urls_admin')),
     path('api/admin/', include('apps.employers.urls_admin')),
     path('api/candidate/', include('apps.candidates.urls')),
+    path('api/candidate/', include('apps.employers.urls_candidate')),
     path('api/companies/', include('apps.employers.urls_public')),
     path('api/employer/', include('apps.employers.urls')),
     path('api/v2/cvs/', include('apps.cvs.urls_v2')),

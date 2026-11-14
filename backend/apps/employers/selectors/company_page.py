@@ -184,6 +184,7 @@ def build_public_company_profile(company, *, request=None):
         },
         'stats': {
             'active_public_job_count': _active_public_job_count(company),
+            'follower_count': company.follower_count,
             'company_size': company.company_size,
             'company_size_display': company.get_company_size_display(),
             'founded_year': company.founded_year,

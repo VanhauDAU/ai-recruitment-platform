@@ -105,6 +105,9 @@ class Company(models.Model):
     # Moderation switch for the public page. Write it with QuerySet.update()
     # only: save() moves updated_at, the optimistic-lock base of update requests.
     content_policy_hold = models.BooleanField(default=False, db_index=True)
+    # Number of CompanyFollow rows. Same rule as the hold: QuerySet.update()
+    # with F() only, in the transaction that adds or removes the follow row.
+    follower_count = models.PositiveIntegerField(default=0)
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='companies_created'
     )

@@ -53,7 +53,7 @@ def legally_represented_companies_queryset():
     ).filter(_has_eligible_representative=True)
 
 
-def _public_company_projection(queryset):
+def public_company_projection(queryset):
     return queryset.only(*PUBLIC_COMPANY_FIELDS).prefetch_related('industries')
 
 
@@ -113,7 +113,7 @@ def featured_public_companies(*, limit=18):
     company_ids = [item['company_id'] for item in metrics]
     companies_by_id = {
         company.pk: company
-        for company in _public_company_projection(
+        for company in public_company_projection(
             Company.objects.filter(pk__in=company_ids),
         )
     }
@@ -164,7 +164,7 @@ def similar_public_companies(company, *, limit=6):
             output_field=IntegerField(),
         )
         ordering.insert(0, hiring_rank)
-    companies = list(_public_company_projection(candidates).order_by(*ordering)[:limit])
+    companies = list(public_company_projection(candidates).order_by(*ordering)[:limit])
     for similar in companies:
         similar.active_public_job_count = counts.get(similar.pk, 0)
     return companies
@@ -226,4 +226,4 @@ def public_company_search_queryset(*, query):
             _folded_company_search_q('company_name_search', query)
             | _folded_company_search_q('trade_name_search', query)
         )
-    return _public_company_projection(queryset).order_by('slug')
+    return public_company_projection(queryset).order_by('slug')

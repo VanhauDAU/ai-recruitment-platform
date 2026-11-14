@@ -173,6 +173,7 @@ class PublicCompanyDetailApiTests(PublicCompanyPageTestCase):
             data['stats'],
             {
                 'active_public_job_count': 1,
+                'follower_count': 0,
                 'company_size': '100-499',
                 'company_size_display': '100 - 499 nhân viên',
                 'founded_year': 2010,
@@ -298,6 +299,7 @@ class PublicCompanyDetailApiTests(PublicCompanyPageTestCase):
             response.data['stats'],
             {
                 'active_public_job_count': 0,
+                'follower_count': 0,
                 'company_size': '',
                 'company_size_display': '',
                 'founded_year': None,

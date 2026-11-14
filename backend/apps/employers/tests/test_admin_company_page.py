@@ -4,17 +4,10 @@ from django.core.cache import cache
 from django.urls import reverse
 from rest_framework.test import APITestCase
 
-from apps.accounts.models import (
-    AdminAccessAuditLog,
-    AdminPermission,
-    AdminRole,
-    Department,
-    User,
-)
-from apps.accounts.services import assign_membership
+from apps.accounts.models import AdminAccessAuditLog, User
 
 from ..models import Company, CompanyPageEvent, Industry
-from .company_page_helpers import add_recruiter, make_company, make_employer
+from .company_page_helpers import add_recruiter, make_company, make_employer, make_limited_admin
 
 HOLD_REASON = 'Nội dung giới thiệu vi phạm quy định cộng đồng.'
 RELEASE_REASON = 'Doanh nghiệp đã chỉnh sửa nội dung theo yêu cầu.'
@@ -40,30 +33,7 @@ class AdminCompanyPublicPageTests(APITestCase):
         self.policy_hold_url = reverse('admin-company-policy-hold', args=[self.company.public_id])
 
     def _limited_admin(self, *permission_codes):
-        user = User.objects.create_user(
-            email=f'page-limited-{User.objects.count()}@example.com',
-            password='Password@123',
-            role=User.Role.ADMIN,
-            status=User.Status.ACTIVE,
-        )
-        department = Department.objects.create(
-            code=f'company-page-{Department.objects.count()}',
-            name='Kiểm duyệt trang công ty',
-        )
-        role = AdminRole.objects.create(
-            department=department,
-            code='staff',
-            name='Nhân viên',
-            rank=10,
-        )
-        for code in permission_codes:
-            permission, _ = AdminPermission.objects.get_or_create(
-                code=code,
-                defaults={'module': 'company', 'label': code},
-            )
-            role.permissions.add(permission)
-        assign_membership(user, role, actor=self.superuser)
-        return user
+        return make_limited_admin(self.superuser, *permission_codes)
 
     def _hold(self, action='apply', reason=HOLD_REASON):
         return self.client.post(

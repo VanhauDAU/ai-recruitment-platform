@@ -20,13 +20,26 @@ from ..models import (
     CompanyDocument,
     CompanyImage,
     CompanyIndustry,
+    CompanyReport,
     CompanyUpdateRequest,
     EmployerVerificationCase,
     Industry,
     RecruiterProfile,
     RecruitmentNeed,
 )
-from .company_page_helpers import add_recruiter, make_company, make_employer, publish_job
+from ..services import (
+    follow_company,
+    resolve_company_report,
+    reverse_company_report,
+    submit_company_report,
+)
+from .company_page_helpers import (
+    add_recruiter,
+    make_candidate,
+    make_company,
+    make_employer,
+    publish_job,
+)
 
 # Authentication is bypassed with force_authenticate: one recruiter lookup plus
 # one recruitment-need SELECT. The count must remain flat as rows are added.
@@ -42,6 +55,14 @@ PUBLIC_COMPANY_DETAIL_QUERY_BUDGET = 4
 PUBLIC_COMPANY_SIMILAR_QUERY_BUDGET = 4
 # Visible-company lookup, one grouped province aggregate.
 PUBLIC_COMPANY_JOB_FACETS_QUERY_BUDGET = 2
+# Visible-company lookup, the caller's follow next to the follower total.
+COMPANY_FOLLOW_STATE_QUERY_BUDGET = 2
+# Pagination count, followed companies (follow columns ride the same join),
+# industries prefetch, one grouped canonical job count for the page.
+FOLLOWED_COMPANY_LIST_QUERY_BUDGET = 4
+# Pagination count, reports joined to company/reporter/resolver, resolution
+# history prefetch, history actors prefetch.
+ADMIN_COMPANY_REPORT_LIST_QUERY_BUDGET = 4
 
 
 def _canonical_job_table_references(queries):
@@ -168,19 +189,7 @@ class PublicCompanyListQueryBudgetTests(APITestCase):
         self.assertEqual(_canonical_job_table_references(cursor_queries), 1)
 
 
-class PublicCompanyPageQueryBudgetTests(APITestCase):
-    def setUp(self):
-        cache.clear()
-        self.creator = make_employer('public-company-page-budget@example.com')
-        self.industry = Industry.objects.create(name='Company page budget')
-        self.company = make_company(
-            self.creator,
-            name='Công ty trang ngân sách',
-            industry=self.industry,
-            description='<p>Giới thiệu công ty.</p>',
-        )
-        self.recruiter = add_recruiter(self.company)
-
+class FlatQueryCountMixin:
     def _assert_flat(self, url, budget, grow):
         with CaptureQueriesContext(connection) as baseline_queries:
             baseline = self.client.get(url)
@@ -193,6 +202,20 @@ class PublicCompanyPageQueryBudgetTests(APITestCase):
         self.assertEqual(len(baseline_queries), len(expanded_queries))
         self.assertLessEqual(len(expanded_queries), budget)
         return baseline, expanded
+
+
+class PublicCompanyPageQueryBudgetTests(FlatQueryCountMixin, APITestCase):
+    def setUp(self):
+        cache.clear()
+        self.creator = make_employer('public-company-page-budget@example.com')
+        self.industry = Industry.objects.create(name='Company page budget')
+        self.company = make_company(
+            self.creator,
+            name='Công ty trang ngân sách',
+            industry=self.industry,
+            description='<p>Giới thiệu công ty.</p>',
+        )
+        self.recruiter = add_recruiter(self.company)
 
     def test_public_company_detail_query_count_stays_flat(self):
         publish_job(self.company, self.recruiter)
@@ -277,6 +300,110 @@ class PublicCompanyPageQueryBudgetTests(APITestCase):
 
         self.assertEqual(len(baseline.data['locations']), 1)
         self.assertEqual(len(expanded.data['locations']), 25)
+
+
+class CompanyFollowQueryBudgetTests(FlatQueryCountMixin, APITestCase):
+    def setUp(self):
+        cache.clear()
+        self.creator = make_employer('company-follow-budget@example.com')
+        self.industry = Industry.objects.create(name='Company follow budget')
+        self.candidate = make_candidate('company-follow-budget-candidate@example.com')
+        self.client.force_authenticate(self.candidate)
+
+    def _followed_company(self, index):
+        company = make_company(
+            self.creator,
+            name=f'Công ty theo dõi {index:02d}',
+            industry=self.industry,
+        )
+        publish_job(company, add_recruiter(company))
+        follow_company(company=company, candidate=self.candidate)
+        return company
+
+    def test_follow_state_query_count_stays_flat(self):
+        company = self._followed_company(0)
+
+        def grow():
+            for index in range(24):
+                follow_company(
+                    company=company,
+                    candidate=make_candidate(f'company-follow-budget-{index}@example.com'),
+                )
+
+        baseline, expanded = self._assert_flat(
+            reverse('company-follow', args=[company.public_id]),
+            COMPANY_FOLLOW_STATE_QUERY_BUDGET,
+            grow,
+        )
+
+        self.assertEqual(baseline.data['follower_count'], 1)
+        self.assertEqual(expanded.data['follower_count'], 25)
+
+    def test_followed_company_list_query_count_stays_flat(self):
+        self._followed_company(0)
+
+        def grow():
+            for index in range(1, 25):
+                self._followed_company(index)
+
+        baseline, expanded = self._assert_flat(
+            f'{reverse("candidate-followed-companies")}?page_size=60',
+            FOLLOWED_COMPANY_LIST_QUERY_BUDGET,
+            grow,
+        )
+
+        self.assertEqual(len(baseline.data['results']), 1)
+        self.assertEqual(len(expanded.data['results']), 25)
+        self.assertEqual(
+            {item['active_public_job_count'] for item in expanded.data['results']},
+            {1},
+        )
+
+
+class AdminCompanyReportQueryBudgetTests(FlatQueryCountMixin, APITestCase):
+    def setUp(self):
+        cache.clear()
+        self.admin = get_user_model().objects.create_superuser(
+            email='company-report-admin-budget@example.com',
+            password='Password@123',
+        )
+        self.creator = make_employer('company-report-budget@example.com')
+        self.client.force_authenticate(self.admin)
+
+    def _reopened_report(self, index):
+        """A report with two history events, so both prefetches always run."""
+        report = submit_company_report(
+            company=make_company(self.creator, name=f'Công ty bị báo cáo {index:02d}'),
+            reporter=make_candidate(f'company-report-budget-{index}@example.com'),
+            reason=CompanyReport.Reason.WRONG_INFO,
+        )
+        resolve_company_report(
+            report=report,
+            status=CompanyReport.Status.UPHELD,
+            actor=self.admin,
+            note='Đã đối chiếu thông tin.',
+        )
+        reverse_company_report(report=report, actor=self.admin, note='Cần xem lại.')
+
+    def test_admin_company_report_list_query_count_stays_flat(self):
+        self._reopened_report(0)
+
+        def grow():
+            for index in range(1, 25):
+                self._reopened_report(index)
+
+        baseline, expanded = self._assert_flat(
+            f'{reverse("admin-company-report-list")}?page_size=60',
+            ADMIN_COMPANY_REPORT_LIST_QUERY_BUDGET,
+            grow,
+        )
+
+        self.assertEqual(baseline.data['count'], 1)
+        self.assertEqual(len(expanded.data['results']), 25)
+        self.assertEqual(
+            {len(row['resolution_history']) for row in expanded.data['results']},
+            {2},
+        )
 
 
 class RecruitmentNeedQueryBudgetTests(APITestCase):

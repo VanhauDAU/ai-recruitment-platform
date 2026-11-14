@@ -5,6 +5,8 @@ from datetime import timedelta
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 
+from apps.accounts.models import AdminPermission, AdminRole, Department
+from apps.accounts.services import assign_membership
 from apps.jobs.models import Job
 
 from ..models import (
@@ -22,6 +24,43 @@ def make_employer(email):
         password='Password@123',
         role='employer',
     )
+
+
+def make_candidate(email):
+    return get_user_model().objects.create_user(
+        email=email,
+        password='Password@123',
+        role='candidate',
+    )
+
+
+def make_limited_admin(actor, *permission_codes):
+    """Admin whose only role holds exactly ``permission_codes``."""
+    user_model = get_user_model()
+    user = user_model.objects.create_user(
+        email=f'page-limited-{user_model.objects.count()}@example.com',
+        password='Password@123',
+        role=user_model.Role.ADMIN,
+        status=user_model.Status.ACTIVE,
+    )
+    department = Department.objects.create(
+        code=f'company-page-{Department.objects.count()}',
+        name='Kiểm duyệt trang công ty',
+    )
+    role = AdminRole.objects.create(
+        department=department,
+        code='staff',
+        name='Nhân viên',
+        rank=10,
+    )
+    for code in permission_codes:
+        permission, _ = AdminPermission.objects.get_or_create(
+            code=code,
+            defaults={'module': 'company', 'label': code},
+        )
+        role.permissions.add(permission)
+    assign_membership(user, role, actor=actor)
+    return user
 
 
 def make_company(creator, *, name, industry=None, **overrides):

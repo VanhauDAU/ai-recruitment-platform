@@ -9,7 +9,7 @@ from django.utils import timezone
 # Otherwise the historical project state omits newer Company fields (or keeps
 # removed User fields) even though the database columns already changed, and a
 # setUp failure leaves later tests on the old jobs schema.
-EMPLOYERS_LEAF = ('employers', '0048_company_page_policy_hold')
+EMPLOYERS_LEAF = ('employers', '0050_company_report')
 ACCOUNTS_LEAF = ('accounts', '0030_remove_two_factor')
 BEFORE = [('jobs', '0040_job_status_created_desc_index'), EMPLOYERS_LEAF, ACCOUNTS_LEAF]
 AFTER = [('jobs', '0042_backfill_job_lifecycle_v2'), EMPLOYERS_LEAF, ACCOUNTS_LEAF]

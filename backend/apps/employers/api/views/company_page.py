@@ -20,18 +20,19 @@ from ..serializers import PublicCompanyListSerializer
 COMPANY_NOT_FOUND = 'Không tìm thấy công ty.'
 
 
+def get_visible_company(public_id):
+    company = visible_company_by_public_id(public_id)
+    if company is None:
+        raise NotFound(COMPANY_NOT_FOUND)
+    return company
+
+
 class PublicCompanyPageView(APIView):
     """Shares the directory throttle: one client budget for all company reads."""
 
     permission_classes = [permissions.AllowAny]
     throttle_classes = [ClientIPScopedRateThrottle]
     throttle_scope = 'public_companies'
-
-    def visible_company(self, public_id):
-        company = visible_company_by_public_id(public_id)
-        if company is None:
-            raise NotFound(COMPANY_NOT_FOUND)
-        return company
 
 
 class PublicCompanyDetailView(PublicCompanyPageView):
@@ -44,7 +45,7 @@ class PublicCompanyDetailView(PublicCompanyPageView):
 
 class PublicCompanySimilarView(PublicCompanyPageView):
     def get(self, request, public_id):
-        companies = similar_public_companies(self.visible_company(public_id))
+        companies = similar_public_companies(get_visible_company(public_id))
         serializer = PublicCompanyListSerializer(
             companies,
             many=True,
@@ -55,5 +56,5 @@ class PublicCompanySimilarView(PublicCompanyPageView):
 
 class PublicCompanyJobFacetsView(PublicCompanyPageView):
     def get(self, request, public_id):
-        company = self.visible_company(public_id)
+        company = get_visible_company(public_id)
         return Response({'locations': public_company_job_locations(company)})

@@ -69,6 +69,9 @@ Xác thực trong Swagger UI: gọi `POST /api/auth/login/` lấy `access`, bấ
 | GET | `/api/companies/{slug}/` | Trang công ty công khai (ADR-0017), xem [chi tiết bên dưới](#trang-công-ty-công-khai-adr-0017). Slug lạ hoặc công ty bị tạm ẩn trả `404 {detail}`. |
 | GET | `/api/companies/{public_id}/similar/` | `{results}`: tối đa 6 công ty cùng lĩnh vực chính, không bị tạm ẩn, không gồm chính nó; công ty đang tuyển xếp trước. Item cùng shape với danh bạ. |
 | GET | `/api/companies/{public_id}/job-facets/` | `{locations: [{id, name, count}]}`: tỉnh/thành của các tin đang công khai của công ty, xếp theo `count` giảm dần rồi tên; `id` dùng cho `GET /api/jobs/?company=&location=`. |
+| GET/PUT/DELETE | `/api/companies/{public_id}/follow/` | Candidate-only (anonymous `401`, role khác `403`). Cả ba trả `{following, notify_new_jobs, follower_count}`; PUT nhận `{}` hoặc `{notify_new_jobs}` và idempotent, DELETE idempotent. Công ty lạ hoặc đang bị tạm ẩn trả `404`. PUT/DELETE dùng throttle `company_follow` 60/giờ theo tài khoản. Xem [chi tiết](#theo-dõi-và-báo-cáo-trang-công-ty). |
+| GET | `/api/candidate/followed-companies/?page=&page_size=` | Candidate-only. `{count,next,previous,results}`; item gồm mọi key của danh bạ công ty cộng `followed_at`, `notify_new_jobs`; theo dõi mới nhất trước, loại công ty đang bị tạm ẩn. |
+| POST | `/api/companies/{public_id}/reports/` | Candidate-only. Body `{reason, section_key, detail}`; trả `201 {public_id, status}`. Mỗi ứng viên chỉ có một báo cáo `pending` cho mỗi công ty (trùng trả `400 {detail}`); công ty lạ hoặc bị tạm ẩn trả `404`. Throttle `company_report` 10/giờ theo tài khoản. |
 | GET | `/api/employer/company/catalogs/` | Source-of-truth cho `business_types`, `company_sizes`, `markets`, `target_customers` của form công ty |
 | POST | `/api/employer/company/join/` | Liên kết ngay với công ty có sẵn, không phụ thuộc trạng thái xác thực SĐT hay admin duyệt: multipart chỉ cần `company`; membership có hiệu lực ngay. API vẫn nhận tùy chọn `proof_type` (`business_registration` hoặc `authorization_and_id`) và file giấy tờ khi cần bổ sung hồ sơ. Bị từ chối nếu recruiter đã tạo/chọn một công ty |
 | GET/POST | `/api/employer/company/domain-claims/` | Liệt kê claim của company hiện tại hoặc tạo DNS TXT challenge cho exact domain được suy từ mailbox hiện tại đã xác thực. Plaintext TXT value chỉ có trong response tạo; list không trả lại secret. Pending không giữ chỗ domain toàn cục. |
@@ -86,6 +89,9 @@ Xác thực trong Swagger UI: gọi `POST /api/auth/login/` lấy `access`, bấ
 | GET/POST | `/api/admin/company-update-requests/{public_id}/` · `start-review/` · `review/` | Admin mở exact request, nhận review bằng exact revision/lock rồi mới ra quyết định cuối `approved\|changes_requested\|rejected`. Duyệt từng document không tự quyết định toàn request. Apply so conflict theo field và không partial apply. |
 | GET | `/api/admin/companies/{public_id}/public-page/` | Quyền `company.view`. Trả `{public_path, is_indexable, policy_hold: {active, reason, actor_name, at}, profile}`; `profile` là đúng DTO của `GET /api/companies/{slug}/` và vẫn được dựng khi trang đang bị tạm ẩn. |
 | POST | `/api/admin/companies/{public_id}/policy-hold/` | Quyền `company.view` + `company_page.moderate`. Body `{action: apply\|release, reason}` với `reason` 10–500 ký tự; trả cùng payload với `public-page/`. Lặp lại quyết định đang có hiệu lực trả `400`. Mỗi lần ghi `CompanyPageEvent` và nhật ký quản trị, không đổi `Company.updated_at`. |
+| GET | `/api/admin/company-reports/?status=&reason=&company=&q=&ordering=&page=` | Quyền `company_report.view`. Hàng chờ báo cáo trang công ty, phân trang chuẩn. `company` là `public_id` công ty; `q` tìm theo mã báo cáo, mã/tên công ty (không dấu), email người báo cáo, nội dung và ghi chú kết luận. `ordering` chỉ nhận whitelist `company_name\|reason\|detail\|reporter_email\|status\|created_at` (thêm `-` để giảm dần), giá trị khác trả `400`. Không có endpoint summary; đếm hàng chờ bằng `?status=pending&page_size=1`. |
+| POST | `/api/admin/company-reports/{public_id}/resolve/` | Quyền `company_report.view` + `company_report.resolve`. Body `{status: upheld\|dismissed, note, apply_hold}`; `note` bắt buộc, tối đa 1000 ký tự. `apply_hold=true` chỉ hợp lệ với `upheld`, cần thêm quyền `company_page.moderate` (thiếu trả `403`), tạm ẩn trang trong cùng transaction với `note` làm lý do và bỏ qua nếu trang đã bị ẩn. Chỉ báo cáo `pending` được kết luận. Trả row đã cập nhật; ghi nhật ký `resolve_company_report`. Không ảnh hưởng huy hiệu xác thực của recruiter. |
+| POST | `/api/admin/company-reports/{public_id}/reverse/` | Quyền như `resolve/`. Body `{note}` bắt buộc. Đưa báo cáo `upheld`/`dismissed` về `pending`, xoá `resolution_note`/`resolved_at`/`resolved_by_email`, thêm một dòng lịch sử; không bao giờ gỡ tạm ẩn trang. Bị từ chối `400` nếu người báo cáo đã có báo cáo `pending` khác cho cùng công ty. Ghi nhật ký `reverse_company_report`. |
 | GET/POST | `/api/admin/company-domain-claims/` · `{public_id}/manual-review-impact/` · `approve-manual/` · `reject-manual/` · `revoke-impact/` · `revoke/` | Hàng chờ domain dùng permission `employer_domain.view/review/revoke`. Mọi quyết định ghi reason, preview signed impact token, recheck stale dưới lock và append audit; manual proof hết hạn sau 12 tháng. |
 | GET | `/api/employer/industries/all/` | Toàn bộ lĩnh vực cho dropdown tạo hồ sơ công ty |
 | GET | `/api/dashboard/employer/` | Read-model dashboard employer: account/verification, KPI tổng hợp, activity 7 ngày, nhu cầu và tin gần đây. `recent_applications` chỉ có khi `candidate_data_access=true`. |
@@ -144,7 +150,7 @@ còn API quản lý ngôn ngữ (`/api/site/locales/`, `/api/site/admin/locales/
     "website_url": "https://fpt-software.com",
     "industries": [{"id": 1, "name": "Công nghệ thông tin", "slug": "cong-nghe-thong-tin", "is_primary": true}]
   },
-  "stats": {"active_public_job_count": 12, "company_size": "100-499", "company_size_display": "100 - 499 nhân viên", "founded_year": 2010},
+  "stats": {"active_public_job_count": 12, "follower_count": 34, "company_size": "100-499", "company_size_display": "100 - 499 nhân viên", "founded_year": 2010},
   "theme": {"accent": {"key": "brand", "primary": "#00b14f", "hover": "#008a3e", "soft": "#f0fbf5"}},
   "sections": [
     {"key": "about", "type": "rich_text", "title": "Giới thiệu công ty", "body_html": "<p>…</p>"},
@@ -172,6 +178,8 @@ còn API quản lý ngôn ngữ (`/api/site/locales/`, `/api/site/admin/locales/
 - `indexable` đúng khi công ty không bị tạm ẩn, có người đại diện hợp lệ, có
   lĩnh vực và có mô tả hoặc ít nhất một tin đang công khai. Sitemap dùng cùng
   định nghĩa này.
+- `stats.follower_count` là tổng số ứng viên đang theo dõi; không endpoint nào
+  trả danh tính người theo dõi cho nhà tuyển dụng hay khách.
 - Response không bao giờ chứa mã số thuế, email, số điện thoại, `address` thô,
   danh tính recruiter hay trạng thái kiểm duyệt.
 
@@ -181,6 +189,60 @@ canonical, robots, Open Graph/Twitter và JSON-LD `Organization` +
 đang bật. Slug lạ hoặc công ty bị tạm ẩn trả HTTP 404 kèm `noindex`.
 `/sitemaps/companies.xml` liệt kê các công ty `indexable` với `lastmod` lấy từ
 `Company.updated_at` và được khai báo trong `/sitemap.xml`.
+
+### Theo dõi và báo cáo trang công ty
+
+`GET|PUT|DELETE /api/companies/{public_id}/follow/` luôn trả cùng một shape:
+
+```json
+{"following": true, "notify_new_jobs": true, "follower_count": 13}
+```
+
+- Lần theo dõi đầu mặc định `notify_new_jobs=true`; PUT sau đó không gửi key
+  (hoặc gửi `null`) giữ nguyên lựa chọn đã lưu. Khi chưa theo dõi,
+  `notify_new_jobs` luôn là `false`.
+- `Company.follower_count` chỉ được ghi bằng `QuerySet.update(F())` trong cùng
+  transaction với dòng `CompanyFollow`, không đổi `Company.updated_at`. Chiều
+  giảm đi qua một receiver `pre_delete` duy nhất, nên bỏ theo dõi và xoá hẳn
+  tài khoản ứng viên đều giữ `follower_count` bằng đúng số dòng theo dõi.
+- GET không tính vào throttle `company_follow`: mỗi lượt xem trang công ty đều
+  đọc trạng thái này.
+
+`POST /api/companies/{public_id}/reports/`:
+
+```json
+{"reason": "wrong_info", "section_key": "offices", "detail": "Địa chỉ trụ sở không đúng."}
+```
+
+- `reason`: `wrong_info`, `impersonation`, `inappropriate_content`, `scam`,
+  `other`. `section_key` rỗng hoặc là một `key` của khối trên trang (`about`,
+  `jobs`, `benefits`, `culture`, `gallery`, `video`, `general_info`, `offices`,
+  `social_links`, `share`, `similar_companies`). `detail` tối đa 2000 ký tự,
+  bắt buộc từ 10 ký tự khi `reason=other`.
+- Báo cáo lưu lại tên đăng ký và tên thương mại của công ty tại thời điểm gửi.
+
+Row của `GET /api/admin/company-reports/` (và response của `resolve/`,
+`reverse/`) giữ nguyên các key của row báo cáo tin tuyển dụng, thay nhóm key
+của tin bằng object `company` và thêm `section_key`, `section_title`:
+
+```json
+{
+  "public_id": "crp_ab12cd34ef56",
+  "company": {"public_id": "co_ab12", "slug": "fpt-software", "display_name": "FPT Software", "logo_url": "https://…/logo.png", "content_policy_hold": false},
+  "reporter_email": "ung-vien@example.com",
+  "reason": "wrong_info",
+  "reason_label": "Thông tin công ty sai sự thật",
+  "section_key": "offices",
+  "section_title": "Địa điểm",
+  "detail": "Địa chỉ trụ sở không đúng.",
+  "status": "pending",
+  "resolution_note": "",
+  "resolved_at": null,
+  "resolved_by_email": "",
+  "resolution_history": [{"public_id": "crpe_…", "from_status": "pending", "to_status": "upheld", "note": "…", "actor_email": "admin@example.com", "created_at": "…"}],
+  "created_at": "2026-11-14T07:00:00Z"
+}
+```
 
 ### Contract phân quyền admin G1
 

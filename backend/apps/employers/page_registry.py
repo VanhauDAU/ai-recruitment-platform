@@ -35,6 +35,9 @@ SIDEBAR_SECTIONS = (
     PageSection('similar_companies', 'similar_companies', 'Công ty cùng lĩnh vực', always_on=True),
 )
 
+# Every block a visitor can point at, e.g. when reporting wrong information.
+SECTION_TITLES = {section.key: section.title for section in MAIN_SECTIONS + SIDEBAR_SECTIONS}
+
 DEFAULT_ACCENT_KEY = 'brand'
 
 # Decorative accents only. ``brand`` is the platform colour; every other

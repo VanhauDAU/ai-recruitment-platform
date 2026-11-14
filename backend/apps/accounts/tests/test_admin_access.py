@@ -282,6 +282,13 @@ class AdminAccessTests(TestCase):
             expand_admin_permission_codes({'company_page.moderate'}),
             {'company.view', 'company_page.moderate'},
         )
+        for code in ('company_report.view', 'company_report.resolve'):
+            self.assertIn(code, manager['permissions'])
+            self.assertNotIn(code, staff['permissions'])
+        self.assertEqual(
+            expand_admin_permission_codes({'company_report.resolve'}),
+            {'company_report.view', 'company_report.resolve'},
+        )
 
     def test_role_permission_service_adds_required_view_permission(self):
         enforce = AdminPermission.objects.create(

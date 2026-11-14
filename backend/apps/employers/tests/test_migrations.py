@@ -18,7 +18,9 @@ PUBLIC_SEARCH_BEFORE = [('employers', '0045_companydomainclaim_companydomainclai
 PUBLIC_SEARCH_AFTER = [('employers', '0047_company_public_search_indexes')]
 PAGE_PERMISSION_BEFORE = [('accounts', '0031_cv_admin_permissions')]
 PAGE_PERMISSION_AFTER = [('accounts', '0032_company_page_moderation_permission')]
-PAGE_PERMISSION_CODE = 'company_page.moderate'
+PAGE_PERMISSION_CODES = ['company_page.moderate']
+REPORT_PERMISSION_AFTER = [('accounts', '0033_company_report_permissions')]
+REPORT_PERMISSION_CODES = ['company_report.resolve', 'company_report.view']
 
 
 class CompanyPagePermissionMigrationTests(TransactionTestCase):
@@ -28,12 +30,10 @@ class CompanyPagePermissionMigrationTests(TransactionTestCase):
         executor.migrate(targets)
         return executor.loader.project_state(targets).apps
 
-    def test_permission_is_seeded_for_the_manager_role_only(self):
-        old_apps = self._migrate(PAGE_PERMISSION_BEFORE)
-        # Reversing 0032 is a no-op, so drop what the test database setup seeded.
-        old_apps.get_model('accounts', 'AdminPermission').objects.filter(
-            code=PAGE_PERMISSION_CODE
-        ).delete()
+    def _assert_seeded_for_the_manager_role_only(self, before, after, codes):
+        old_apps = self._migrate(before)
+        # Reversing a seed is a no-op, so drop what the test database setup seeded.
+        old_apps.get_model('accounts', 'AdminPermission').objects.filter(code__in=codes).delete()
         department, _ = old_apps.get_model('accounts', 'Department').objects.get_or_create(
             code='employer-operations',
             defaults={
@@ -54,19 +54,32 @@ class CompanyPagePermissionMigrationTests(TransactionTestCase):
                 },
             )
 
-        new_apps = self._migrate(PAGE_PERMISSION_AFTER)
-        permission = new_apps.get_model('accounts', 'AdminPermission').objects.get(
-            code=PAGE_PERMISSION_CODE
+        new_apps = self._migrate(after)
+        permissions = new_apps.get_model('accounts', 'AdminPermission').objects.filter(
+            code__in=codes
         )
         roles = new_apps.get_model('accounts', 'AdminRole').objects.filter(
             department__code='employer-operations'
         )
 
-        self.assertEqual(permission.module, 'company')
-        self.assertTrue(permission.is_active)
         self.assertEqual(
-            list(roles.filter(permissions=permission).values_list('code', flat=True)),
-            ['manager'],
+            sorted(permissions.values_list('code', 'module', 'is_active')),
+            [(code, 'company', True) for code in codes],
+        )
+        for permission in permissions:
+            self.assertEqual(
+                list(roles.filter(permissions=permission).values_list('code', flat=True)),
+                ['manager'],
+            )
+
+    def test_page_permission_is_seeded_for_the_manager_role_only(self):
+        self._assert_seeded_for_the_manager_role_only(
+            PAGE_PERMISSION_BEFORE, PAGE_PERMISSION_AFTER, PAGE_PERMISSION_CODES
+        )
+
+    def test_report_permissions_are_seeded_for_the_manager_role_only(self):
+        self._assert_seeded_for_the_manager_role_only(
+            PAGE_PERMISSION_AFTER, REPORT_PERMISSION_AFTER, REPORT_PERMISSION_CODES
         )
 
     def tearDown(self):

@@ -114,6 +114,8 @@ ADMIN_DEPARTMENTS = (
                     'company.sensitive.view',
                     'company_page.moderate',
                     'company_recruiter.view',
+                    'company_report.view',
+                    'company_report.resolve',
                     'company_update.view',
                     'company_update.review',
                     'employer_verification.view',

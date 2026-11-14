@@ -168,6 +168,18 @@ ADMIN_PERMISSIONS = (
         'description': 'Xem owner, member và trạng thái xác thực của nhà tuyển dụng thuộc công ty.',
     },
     {
+        'code': 'company_report.resolve',
+        'module': 'company',
+        'label': 'Xử lý báo cáo trang công ty',
+        'description': 'Xác nhận, bác bỏ hoặc mở lại báo cáo trang công ty; tạm ẩn trang khi kết luận cần thêm quyền tạm ẩn trang công ty.',
+    },
+    {
+        'code': 'company_report.view',
+        'module': 'company',
+        'label': 'Xem báo cáo trang công ty',
+        'description': 'Xem hàng chờ báo cáo trang công ty, người báo cáo và lịch sử kết luận.',
+    },
+    {
         'code': 'company_update.review',
         'module': 'company_update',
         'label': 'Duyệt sửa thông tin công ty',
@@ -360,6 +372,7 @@ ADMIN_PERMISSION_DEPENDENCIES = {
     'company.sensitive.view': ('company.view',),
     'company_page.moderate': ('company.view',),
     'company_recruiter.view': ('company.view',),
+    'company_report.resolve': ('company_report.view',),
     'company_update.review': ('company_update.view',),
     'cv_content.generate_ai': ('cv_template.view',),
     'cv_template.manage': ('cv_template.view',),

@@ -403,6 +403,8 @@ REST_FRAMEWORK = {
         'ai_job_generation': '3/min',
         'knowledgebase_public': '120/min',
         'public_companies': '120/min',
+        'company_follow': '60/hour',
+        'company_report': '10/hour',
         'upload_session': '30/hour',
         'upload_status': '120/min',
         'upload_content': '20/hour',
