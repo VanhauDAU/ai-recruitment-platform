@@ -18,6 +18,13 @@ from .company_page import (
     PublicCompanyJobFacetsView,
     PublicCompanySimilarView,
 )
+from .company_page_workspace import (
+    CompanyPageEditorDetailView,
+    CompanyPageEditorListView,
+    CompanyPageLayoutView,
+    CompanyPagePinnableJobsView,
+    CompanyPageWorkspaceView,
+)
 from .company_reports import CompanyReportCreateView
 from .domain_claims import (
     CompanyDomainClaimListCreateView,
@@ -74,6 +81,11 @@ __all__ = [
     'CompanyLogoUploadView',
     'CompanySearchView',
     'CompanyFollowView',
+    'CompanyPageEditorDetailView',
+    'CompanyPageEditorListView',
+    'CompanyPageLayoutView',
+    'CompanyPagePinnableJobsView',
+    'CompanyPageWorkspaceView',
     'CompanyReportCreateView',
     'FollowedCompanyListView',
     'PublicCompanyDetailView',

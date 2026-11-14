@@ -12,7 +12,7 @@ from rest_framework.test import APITestCase
 from apps.accounts.models import User
 from apps.applications.models import Application
 from apps.cvs.models import CvVersion, UserCv
-from apps.employers.models import Company
+from apps.employers.models import Company, CompanyPinnedJob
 from apps.employers.tests.readiness_helpers import make_employer_ready
 from apps.skills.models import Skill
 
@@ -69,6 +69,20 @@ class JobListQueryBudgetTests(APITestCase):
         with self.assertNumQueries(JOB_LIST_QUERY_BUDGET):
             response = self.client.get(reverse('job-list'), {'company': self.company.public_id})
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data['results']), 5)
+
+    def test_pinned_jobs_lead_the_company_job_list_without_an_extra_query(self):
+        oldest, newest = Job.objects.order_by('id')[0], Job.objects.order_by('id')[4]
+        for position, job in enumerate((oldest, newest)):
+            CompanyPinnedJob.objects.create(company=self.company, job=job, sort_order=position)
+
+        with self.assertNumQueries(JOB_LIST_QUERY_BUDGET):
+            response = self.client.get(reverse('job-list'), {'company': self.company.public_id})
+
+        self.assertEqual(
+            [job['public_id'] for job in response.data['results']][:2],
+            [oldest.public_id, newest.public_id],
+        )
         self.assertEqual(len(response.data['results']), 5)
 
     def test_held_company_hides_its_slug_without_an_extra_query(self):

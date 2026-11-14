@@ -1,7 +1,8 @@
-from django.db.models import Case, F, IntegerField, Q, When
+from django.db.models import Case, F, IntegerField, OuterRef, Q, Subquery, When
 from django.db.models.functions import Coalesce
 from rest_framework.exceptions import ValidationError
 
+from apps.employers.models import CompanyPinnedJob
 from common.db.search import fold_accents, search_q
 
 from ..models import Job, JobCategory
@@ -128,7 +129,9 @@ def _filter_search(queryset, params):
     return queryset.filter(search_q('title', search))
 
 
-def _order_jobs(queryset, ordering):
+def _order_jobs(queryset, ordering, *, pinned_first=False):
+    """``pinned_first`` puts a company's pinned jobs ahead of the default feed
+    order; an explicit ``ordering`` always wins over the pins."""
     if ordering and ordering not in JOB_LIST_ORDERINGS:
         raise ValidationError({'ordering': 'Invalid ordering.'})
 
@@ -149,8 +152,13 @@ def _order_jobs(queryset, ordering):
         default=0,
         output_field=IntegerField(),
     )
-    return queryset.annotate(tier_weight=tier_weight).order_by(
-        '-tier_weight', '-lifecycle_recency', '-created_at', '-id'
+    queryset = queryset.annotate(tier_weight=tier_weight)
+    default_order = ['-tier_weight', '-lifecycle_recency', '-created_at', '-id']
+    if not pinned_first:
+        return queryset.order_by(*default_order)
+    pin = CompanyPinnedJob.objects.filter(job_id=OuterRef('pk'), company_id=OuterRef('company_id'))
+    return queryset.annotate(pin_order=Subquery(pin.values('sort_order')[:1])).order_by(
+        F('pin_order').asc(nulls_last=True), *default_order
     )
 
 
@@ -190,4 +198,8 @@ def filter_job_list_queryset(params, include_preview=False, *, at=None):
 def build_job_list_queryset(params, include_preview=False, *, at=None):
     """Apply public job-list filters and the main search-feed ordering."""
     queryset = filter_job_list_queryset(params, include_preview=include_preview, at=at)
-    return _order_jobs(queryset, params.get('ordering'))
+    return _order_jobs(
+        queryset,
+        params.get('ordering'),
+        pinned_first=bool(params.get('company')),
+    )

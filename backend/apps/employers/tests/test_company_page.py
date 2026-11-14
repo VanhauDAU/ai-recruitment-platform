@@ -199,7 +199,12 @@ class PublicCompanyDetailApiTests(PublicCompanyPageTestCase):
                     'title': 'Giới thiệu công ty',
                     'body_html': '<p>Xây dựng <strong>sản phẩm</strong> công nghệ.</p>',
                 },
-                {'key': 'jobs', 'type': 'jobs', 'title': 'Việc làm đang tuyển'},
+                {
+                    'key': 'jobs',
+                    'type': 'jobs',
+                    'title': 'Việc làm đang tuyển',
+                    'pinned_job_public_ids': [],
+                },
                 {
                     'key': 'benefits',
                     'type': 'rich_text',
@@ -307,7 +312,14 @@ class PublicCompanyDetailApiTests(PublicCompanyPageTestCase):
         )
         self.assertEqual(
             response.data['sections'],
-            [{'key': 'jobs', 'type': 'jobs', 'title': 'Việc làm đang tuyển'}],
+            [
+                {
+                    'key': 'jobs',
+                    'type': 'jobs',
+                    'title': 'Việc làm đang tuyển',
+                    'pinned_job_public_ids': [],
+                }
+            ],
         )
         self.assertEqual(
             [block['key'] for block in response.data['sidebar']],

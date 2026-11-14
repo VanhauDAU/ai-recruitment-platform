@@ -40,6 +40,12 @@ from .company_page import (
     visible_company_by_public_id,
     visible_company_page_by_slug,
 )
+from .company_page_workspace import (
+    company_page_editor_rows,
+    company_page_workspace,
+    current_company_page_layout,
+    pinnable_company_jobs,
+)
 from .company_reports import (
     ADMIN_COMPANY_REPORT_ORDERING_FIELDS,
     admin_company_reports_queryset,
@@ -117,6 +123,10 @@ __all__ = [
     'company_follow_state',
     'followed_companies_queryset',
     'company_page_policy_hold',
+    'company_page_editor_rows',
+    'company_page_workspace',
+    'current_company_page_layout',
+    'pinnable_company_jobs',
     'company_page_queryset',
     'company_sitemap_rows',
     'public_company_job_locations',

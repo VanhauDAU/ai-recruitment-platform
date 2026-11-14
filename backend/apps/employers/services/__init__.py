@@ -28,7 +28,12 @@ from .companies import (
     validate_company_update_revision,
 )
 from .company_follows import follow_company, unfollow_company
-from .company_page import set_company_page_policy_hold
+from .company_page import (
+    CompanyPageLayoutStale,
+    set_company_page_policy_hold,
+    update_company_page_layout,
+)
+from .company_page_editors import grant_company_page_editor, revoke_company_page_editor
 from .company_recovery import (
     COMPANY_UNLINK_PERMISSION,
     CompanyUnlinkError,
@@ -235,6 +240,10 @@ __all__ = [
     'unlock_verification_resubmission',
     'set_company_industries',
     'set_company_page_policy_hold',
+    'CompanyPageLayoutStale',
+    'update_company_page_layout',
+    'grant_company_page_editor',
+    'revoke_company_page_editor',
     'follow_company',
     'resolve_company_report',
     'reverse_company_report',

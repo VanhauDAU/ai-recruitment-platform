@@ -14,7 +14,8 @@ from common.media_storage import delete_local_media_url, save_image_upload, vali
 from common.public_id import generate_public_id
 from common.r2_storage import private_media_storage
 
-from ...models import CompanyImage, CompanyMediaUpload, CompanyUpdateRequest
+from ...models import CompanyImage, CompanyMediaUpload, CompanyUpdateRequest, RecruiterProfile
+from ...models.page_access import resolve_company_page_access
 from ...services import (
     REQUESTER_EDITABLE_COMPANY_UPDATE_STATUSES,
     EmployerUploadStructureError,
@@ -24,10 +25,28 @@ from ...services import (
 )
 from ..exceptions import EmployerUploadSessionResponse, UploadSessionRequiredResponse
 from ..serializers import CompanyImageSerializer, CompanySerializer
-from .onboarding import _require_owner
+from .onboarding import _require_company
 
 EMPLOYER_MEDIA_PURPOSE = 'employer_company_update'
 EMPLOYER_MEDIA_CLAIM_SCOPE = 'employer_company_media'
+
+
+def _require_media_editor(user):
+    """The owner (ER-D05), or a member the page policy lets edit content now."""
+    recruiter = _require_company(user)
+    if (
+        recruiter.company_role != RecruiterProfile.CompanyRole.OWNER
+        and not resolve_company_page_access(recruiter).can_edit_content
+    ):
+        raise ValidationError(
+            {
+                'detail': (
+                    'Chỉ người tạo hồ sơ công ty hoặc người được cấp quyền biên tập '
+                    'trang công ty được thực hiện thao tác này.'
+                )
+            }
+        )
+    return recruiter
 
 
 def _approval_is_required(company):
@@ -145,7 +164,7 @@ class CompanyImageUploadView(APIView):
             if extension == 'gif':
                 raise ValidationError({'file': 'Chỉ chấp nhận ảnh JPG, PNG hoặc WebP.'})
 
-        company = _require_owner(request.user).company
+        company = _require_media_editor(request.user).company
         update_request = _get_update_request(request, company)
         if self.kind == 'gallery' and not update_request and company.images.count() >= 10:
             return Response(
@@ -253,7 +272,7 @@ class CompanyImageUploadView(APIView):
     def delete(self, request):
         if self.kind == 'gallery':
             return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
-        company = _require_owner(request.user).company
+        company = _require_media_editor(request.user).company
         update_request = _get_update_request(request, company)
         field = 'logo_url' if self.kind == 'logo' else 'cover_image_url'
         if update_request is not None:
@@ -318,7 +337,7 @@ class CompanyGalleryDeleteView(generics.DestroyAPIView):
     permission_classes = [IsEmployer]
 
     def get_queryset(self):
-        return CompanyImage.objects.filter(company=_require_owner(self.request.user).company)
+        return CompanyImage.objects.filter(company=_require_media_editor(self.request.user).company)
 
     def perform_destroy(self, instance):
         company = instance.company

@@ -70,13 +70,13 @@ def make_company(creator, *, name, industry=None, **overrides):
     return company
 
 
-def add_recruiter(company, *, approved=True):
-    """Link an owner; ``approved`` adds the evidence of legal representation."""
+def add_recruiter(company, *, approved=True, role=RecruiterProfile.CompanyRole.OWNER):
+    """Link a recruiter; ``approved`` adds the evidence of legal representation."""
     user = make_employer(f'page-recruiter-{RecruiterProfile.objects.count()}@example.com')
     recruiter = RecruiterProfile.objects.create(
         user=user,
         company=company,
-        company_role=RecruiterProfile.CompanyRole.OWNER,
+        company_role=role,
     )
     if approved:
         verification_case = EmployerVerificationCase.objects.create(

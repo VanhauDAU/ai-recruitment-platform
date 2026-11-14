@@ -38,6 +38,13 @@ SIDEBAR_SECTIONS = (
 # Every block a visitor can point at, e.g. when reporting wrong information.
 SECTION_TITLES = {section.key: section.title for section in MAIN_SECTIONS + SIDEBAR_SECTIONS}
 
+MAIN_SECTION_KEYS = tuple(section.key for section in MAIN_SECTIONS)
+# Blocks an editor may switch off, in either zone.
+HIDEABLE_SECTION_KEYS = frozenset(
+    section.key for section in MAIN_SECTIONS + SIDEBAR_SECTIONS if not section.always_on
+)
+PINNED_JOB_LIMIT = 3
+
 DEFAULT_ACCENT_KEY = 'brand'
 
 # Decorative accents only. ``brand`` is the platform colour; every other
@@ -52,3 +59,47 @@ ACCENT_PALETTE = {
     'teal': {'primary': '#0f766e', 'hover': '#115e59', 'soft': '#f0fdfa'},
     'slate': {'primary': '#334155', 'hover': '#1e293b', 'soft': '#f8fafc'},
 }
+
+ACCENT_LABELS = {
+    'brand': 'Xanh ProCV',
+    'ocean': 'Xanh đại dương',
+    'indigo': 'Chàm',
+    'violet': 'Tím',
+    'rose': 'Đỏ hồng',
+    'orange': 'Cam',
+    'teal': 'Xanh ngọc',
+    'slate': 'Xám đá',
+}
+
+
+def resolve_section_order(stored):
+    """Main-zone order to render: the saved order reconciled with the registry.
+
+    Saved keys the registry no longer has are dropped and blocks added to the
+    registry later keep their default position after the saved ones, so a
+    registry change never needs a data migration.
+    """
+    known = [key for key in stored if key in MAIN_SECTION_KEYS]
+    return [*known, *(key for key in MAIN_SECTION_KEYS if key not in known)]
+
+
+def company_page_registry():
+    """What an editor can arrange, as served to the employer workspace."""
+    zones = (('main', MAIN_SECTIONS), ('sidebar', SIDEBAR_SECTIONS))
+    return {
+        'sections': [
+            {
+                'key': section.key,
+                'title': section.title,
+                'zone': zone,
+                'always_on': section.always_on,
+            }
+            for zone, sections in zones
+            for section in sections
+        ],
+        'accents': [
+            {'key': key, 'label': ACCENT_LABELS[key], **colours}
+            for key, colours in ACCENT_PALETTE.items()
+        ],
+        'limits': {'pinned_jobs': PINNED_JOB_LIMIT},
+    }

@@ -26,6 +26,10 @@ from .companies import (
     PublicCompanyListSerializer,
 )
 from .company_follows import CompanyFollowWriteSerializer, FollowedCompanySerializer
+from .company_page_workspace import (
+    CompanyPageEditorGrantSerializer,
+    CompanyPageLayoutSerializer,
+)
 from .company_reports import (
     AdminCompanyReportQuerySerializer,
     AdminCompanyReportResolveSerializer,
@@ -88,6 +92,8 @@ __all__ = [
     'CompanySearchSerializer',
     'CompanySerializer',
     'CompanyFollowWriteSerializer',
+    'CompanyPageEditorGrantSerializer',
+    'CompanyPageLayoutSerializer',
     'FollowedCompanySerializer',
     'PublicCompanyListSerializer',
     'CompanyUpdateRequestSerializer',

@@ -47,9 +47,10 @@ RECRUITMENT_NEED_READ_BUDGET = 2
 COMPANY_UPDATE_REQUEST_LIST_BUDGET = 4
 ADMIN_COMPANY_UPDATE_REQUEST_LIST_BUDGET = 8
 PUBLIC_COMPANY_LIST_QUERY_BUDGET = 5
-# Company row (indexability is an EXISTS annotation of the same SELECT),
-# industries prefetch, gallery prefetch, canonical public-job count.
-PUBLIC_COMPANY_DETAIL_QUERY_BUDGET = 4
+# Company row (indexability is an EXISTS annotation and the saved layout a
+# join of the same SELECT), industries prefetch, gallery prefetch, canonical
+# public-job count, publicly available pinned jobs (CP-5).
+PUBLIC_COMPANY_DETAIL_QUERY_BUDGET = 5
 # Visible-company lookup, one canonical job aggregate over the same-industry
 # candidates, the ranked projection, industries prefetch.
 PUBLIC_COMPANY_SIMILAR_QUERY_BUDGET = 4
