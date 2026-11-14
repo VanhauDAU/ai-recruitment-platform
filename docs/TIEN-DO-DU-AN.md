@@ -7,6 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
+| [Gỡ widget Trợ lý ProCV ở cổng ứng viên](#gỡ-widget-trợ-lý-procv-ở-cổng-ứng-viên-2026-11-14) | 🟨 Xong trên nhánh `refactor/remove-candidate-assistant`, chờ gộp PR vào `dev` |
 | [Gỡ phòng ban, chức danh, nhân viên quản trị (ADR-0018)](#gỡ-phòng-ban-chức-danh-nhân-viên-quản-trị-adr-0018-2026-11-14) | 🟨 Xong trên nhánh `refactor/remove-admin-rbac`, chờ gộp PR vào `dev` |
 | [Trang công ty và quyền biên tập (CP)](#trang-công-ty-và-quyền-biên-tập-cp-2026-11-14) | 🟨 CP-0 → CP-7 xong trên nhánh `feat/company-page`, chờ gộp PR |
 | [Làm lại Template CV, tạo CV, trích xuất upload (CVT-v3)](#làm-lại-template-cv-cvt-v3-2026-11-13) | 🟨 CVT-0 → CVT-2 đã gộp vào `dev` (PR #176, #178–#182); CVT-3 xong code |
@@ -17,6 +18,17 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Các epic đã hoàn tất](#các-epic-đã-hoàn-tất) | ✅ |
 | [Lộ trình theo PRD](#lộ-trình-theo-prd) | 🟨 Phần AI lõi (giai đoạn 2–3) còn mở |
 | [Việc còn mở](#việc-còn-mở) | |
+
+## Gỡ widget Trợ lý ProCV ở cổng ứng viên (2026-11-14)
+
+Xóa toàn bộ `frontend/src/widgets/candidate-assistant` (nút nổi góc phải dưới,
+panel chat, kịch bản keyword tĩnh, CSS, unit test) và điểm mount trong
+`MainLayout`. Widget không gọi API nên backend không đổi; khóa
+`sessionStorage` `procv-assistant-greeting-seen` không còn được ghi. Smoke E2E
+bỏ luồng hỏi trợ lý, test tablet chỉ còn kiểm tra nút nổi hỗ trợ. Mascot,
+`use-progressive-reply` và `use-visual-viewport-bottom-inset` giữ lại vì
+onboarding, hero và nút hỗ trợ còn dùng. Đặc tả chatbot (CB) ghi chú tạm dừng:
+mở lại CB-P2 phải dựng UI mới.
 
 ## Gỡ phòng ban, chức danh, nhân viên quản trị (ADR-0018, 2026-11-14)
 
