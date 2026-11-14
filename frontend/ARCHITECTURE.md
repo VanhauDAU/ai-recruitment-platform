@@ -309,6 +309,11 @@ app/router
   `content-visibility` để giữ chi phí render phẳng. Hero featured và search dùng
   `<picture>` ưu tiên WebP, giữ PNG fallback, khai báo kích thước nguồn và chỉ
   eager-load illustration thuộc route hiện tại.
+- `entities/company` sở hữu `CompanyLogo` và helper tên hiển thị
+  (`companyDisplayName`, `companyInitial`) để danh bạ và trang chi tiết công ty
+  dùng chung; widget không giữ bản sao. HTML rich text của mọi domain render
+  qua `shared/ui/RichContent` (luôn sanitize), nút chia sẻ trang dùng
+  `shared/ui/ShareButtons`; container của nơi dùng quyết định bố cục.
 - CTA chưa có route chi tiết công ty phải dùng `companyDirectoryPath(name)` để
   mở danh bạ đã lọc. Card danh bạ có thể dùng `companyJobsPath(name)` để mở
   contract tìm việc hiện hữu; không tự sinh route `/cong-ty/:slug` cho tới khi

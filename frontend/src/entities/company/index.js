@@ -1,3 +1,5 @@
 export * from './api/company.api'
 export * from './api/company.keys'
 export * from './lib/company-paths'
+export * from './lib/company-presentation'
+export { default as CompanyLogo } from './ui/CompanyLogo'

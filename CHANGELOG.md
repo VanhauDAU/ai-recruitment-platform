@@ -6,6 +6,23 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ## [Unreleased]
 
+### 2026-11-14
+
+#### Added — Nền móng trang công ty (CP-0)
+
+- Theo [ADR-0017](docs/02-tong-quan/adr-0017-company-page.md) và
+  [kế hoạch trang công ty](docs/01-phan-tich/ke-hoach-trang-cong-ty.md).
+- `GET /api/jobs/` nhận `company=<company_public_id>` (khớp chính xác, không
+  thêm query); card và chi tiết tin trả `company_slug`.
+- `Company.public_headquarters` là nguồn duy nhất cho địa chỉ công khai.
+  `company_address` của chi tiết tin không còn trả địa chỉ hộ kinh doanh.
+- Slug `tim-kiem` dành riêng cho route tìm kiếm danh bạ; công ty trùng tên
+  nhận slug có hậu tố `public_id`.
+- Predicate người đại diện hợp lệ chuyển xuống
+  `employers/models/representation.py` để selector và service dùng chung.
+- Frontend: `CompanyLogo` và helper tên công ty thuộc `entities/company`;
+  `RichContent` (thay `JobRichContent`) và `ShareButtons` thuộc `shared/ui`.
+
 ### 2026-11-13
 
 #### Removed — Gỡ xác thực hai bước (2FA/MFA) ở cả ba cổng

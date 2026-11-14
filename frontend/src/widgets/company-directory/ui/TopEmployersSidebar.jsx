@@ -1,8 +1,6 @@
 import { ReloadOutlined } from '@ant-design/icons'
 import { Link } from 'react-router'
-import { companyJobsPath } from '@/entities/company'
-import CompanyLogo from './CompanyLogo'
-import { companyDisplayName } from './company-presentation'
+import { companyDisplayName, companyJobsPath, CompanyLogo } from '@/entities/company'
 
 const SIDEBAR_SKELETON_COUNT = 6
 

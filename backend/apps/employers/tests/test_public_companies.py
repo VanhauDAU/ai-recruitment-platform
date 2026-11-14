@@ -304,6 +304,12 @@ class PublicCompanyListApiTests(APITestCase):
             company.public_id, [item['public_id'] for item in featured.data['results']]
         )
 
+    def test_company_named_like_a_reserved_route_gets_a_distinct_slug(self):
+        company = Company.objects.create(company_name='Tìm kiếm', created_by=self.creator)
+
+        self.assertNotEqual(company.slug, 'tim-kiem')
+        self.assertEqual(company.slug, f'tim-kiem-{company.public_id.lower()}')
+
     def test_headquarters_redacts_household_address_and_keeps_enterprise_address(self):
         enterprise, _enterprise_user = self._legal_company(
             name='Location Enterprise',

@@ -6,6 +6,10 @@ from django.utils.text import slugify
 from common.db.search import fold_accents
 from common.public_id import generate_public_id
 
+# Path segments owned by static routes under /cong-ty/; a company slug equal to
+# one of them would be unreachable at /cong-ty/<slug>.
+RESERVED_COMPANY_SLUGS = frozenset({'tim-kiem'})
+
 
 class Industry(models.Model):
     """Lĩnh vực hoạt động (Fintech, Bán lẻ, Giáo dục...). Một công ty có thể
@@ -125,7 +129,10 @@ class Company(models.Model):
         if not self.slug:
             base_slug = slugify(self.company_name) or 'company'
             self.slug = base_slug
-            if Company.objects.filter(slug=base_slug).exclude(pk=self.pk).exists():
+            if (
+                base_slug in RESERVED_COMPANY_SLUGS
+                or Company.objects.filter(slug=base_slug).exclude(pk=self.pk).exists()
+            ):
                 self.slug = f'{base_slug}-{self.public_id.lower()}'
         self.tax_code = self.tax_code or None
         self.company_name_search = fold_accents(self.company_name)
@@ -142,6 +149,17 @@ class Company(models.Model):
 
     def __str__(self):
         return self.company_name
+
+    @property
+    def public_headquarters(self):
+        """Address safe for public surfaces.
+
+        A household business usually registers the owner's home, so only an
+        enterprise address may leave the employer and admin portals.
+        """
+        if self.business_type != self.BusinessType.ENTERPRISE:
+            return ''
+        return self.address.strip()
 
 
 class CompanyIndustry(models.Model):

@@ -7,6 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
+| [Trang công ty và quyền biên tập (CP)](#trang-công-ty-và-quyền-biên-tập-cp-2026-11-14) | 🟨 Đang làm trên nhánh `feat/company-page`; CP-0 xong |
 | [Làm lại Template CV, tạo CV, trích xuất upload (CVT-v3)](#làm-lại-template-cv-cvt-v3-2026-11-13) | 🟨 CVT-0 → CVT-2 đã gộp vào `dev` (PR #176, #178–#182); CVT-3 xong code |
 | [Gỡ xác thực hai bước (ADR-0016)](#gỡ-xác-thực-hai-bước-adr-0016-2026-11-13) | 🟨 Xong trên nhánh `refactor/remove-two-factor`, chưa commit/gộp |
 | [Epic hậu kiểm tin, gỡ dịch vụ, dọn docs (PM)](#epic-hậu-kiểm-tin-gỡ-dịch-vụ-thương-mại-và-dọn-docs-pm-2026-11-13) | 🟨 PM-0 đến PM-6 xong trên nhánh, chưa gộp; còn PM-5 và một phần PM-7 |
@@ -15,6 +16,22 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Các epic đã hoàn tất](#các-epic-đã-hoàn-tất) | ✅ |
 | [Lộ trình theo PRD](#lộ-trình-theo-prd) | 🟨 Phần AI lõi (giai đoạn 2–3) còn mở |
 | [Việc còn mở](#việc-còn-mở) | |
+
+## Trang công ty và quyền biên tập (CP, 2026-11-14)
+
+Kế hoạch: [`ke-hoach-trang-cong-ty.md`](01-phan-tich/ke-hoach-trang-cong-ty.md).
+Quyết định: [ADR-0017](02-tong-quan/adr-0017-company-page.md), ER-D58 đến ER-D64.
+
+| Giai đoạn | Nội dung | Trạng thái |
+| --- | --- | --- |
+| CP-0 | Nền móng: predicate người đại diện chuyển xuống `employers/models/representation.py`; `GET /api/jobs/?company=<public_id>` (0 query phát sinh) và `company_slug` trên DTO tin; slug `tim-kiem` dành riêng; `Company.public_headquarters` dùng chung cho danh bạ và chi tiết tin (hộ kinh doanh không lộ địa chỉ); frontend chuyển `CompanyLogo` + helper tên công ty vào `entities/company`, `RichContent` và `ShareButtons` vào `shared/ui` | 🟨 Xong trên nhánh, chưa gộp |
+| CP-1 | Read model + SEO shell: `GET /api/companies/<slug>/`, công ty tương tự, facets, tạm ẩn trang, sitemap | ⬜ Planned |
+| CP-2 | Trang công khai `/cong-ty/:slug`, thay mọi liên kết công ty theo tên | ⬜ Planned |
+| CP-3 | Theo dõi công ty | ⬜ Planned |
+| CP-4 | Báo cáo thông tin sai + hàng chờ admin | ⬜ Planned |
+| CP-5 | Quyền biên tập, uỷ quyền và bố cục áp dụng ngay | ⬜ Planned |
+| CP-6 | Nội dung trang qua kiểm duyệt | ⬜ Planned |
+| CP-7 | Email việc mới cho người theo dõi | ⬜ Planned |
 
 ## Làm lại Template CV (CVT-v3, 2026-11-13)
 

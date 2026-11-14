@@ -3,7 +3,6 @@
 from django.db.models import (
     Count,
     Exists,
-    F,
     Max,
     OuterRef,
     Q,
@@ -11,17 +10,11 @@ from django.db.models import (
 )
 from django.db.models.functions import Coalesce, Length, Trim
 
-from apps.accounts.models import User
 from apps.jobs.models import Job
 from common.db.search import fold_accents, search_q
 
-from ..models import (
-    Company,
-    CompanyDocument,
-    CompanyIndustry,
-    EmployerVerificationCase,
-    RecruiterProfile,
-)
+from ..models import Company, CompanyIndustry
+from ..models.representation import eligible_representatives_queryset
 
 PUBLIC_COMPANY_FIELDS = (
     'id',
@@ -49,63 +42,8 @@ def _catalog_companies_queryset():
     )
 
 
-def _eligible_representatives_queryset():
-    """Recruiters whose current legal evidence authorizes this company link."""
-    current_approved_documents = CompanyDocument.objects.filter(
-        verification_case_id=OuterRef('verification_case'),
-        company_id=OuterRef('company_id'),
-        is_current=True,
-        status=CompanyDocument.Status.APPROVED,
-    )
-    return (
-        RecruiterProfile.objects.filter(
-            company_id__isnull=False,
-            user__role=User.Role.EMPLOYER,
-            user__status=User.Status.ACTIVE,
-            user__is_active=True,
-            user__is_deleted=False,
-            verification_case__status=EmployerVerificationCase.Status.APPROVED,
-            verification_case__company_id=F('company_id'),
-        )
-        .alias(
-            _has_business_registration=Exists(
-                current_approved_documents.filter(
-                    doc_type=CompanyDocument.DocType.BUSINESS_REGISTRATION,
-                )
-            ),
-            _has_authorization=Exists(
-                current_approved_documents.filter(
-                    doc_type=CompanyDocument.DocType.AUTHORIZATION_LETTER,
-                )
-            ),
-            _has_identity_document=Exists(
-                current_approved_documents.filter(
-                    doc_type=CompanyDocument.DocType.IDENTITY_DOCUMENT,
-                )
-            ),
-        )
-        .filter(
-            Q(
-                verification_case__verification_method=(
-                    EmployerVerificationCase.VerificationMethod.BUSINESS_REGISTRATION
-                ),
-                _has_business_registration=True,
-            )
-            | Q(
-                verification_case__verification_method=(
-                    EmployerVerificationCase.VerificationMethod.AUTHORIZATION_AND_ID
-                ),
-                _has_authorization=True,
-                _has_identity_document=True,
-            )
-        )
-    )
-
-
 def _legally_represented_companies_queryset():
-    eligible_representatives = _eligible_representatives_queryset().filter(
-        company_id=OuterRef('pk')
-    )
+    eligible_representatives = eligible_representatives_queryset().filter(company_id=OuterRef('pk'))
     return Company.objects.alias(
         _has_eligible_representative=Exists(eligible_representatives),
     ).filter(_has_eligible_representative=True)

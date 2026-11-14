@@ -4,9 +4,7 @@ import {
   SolutionOutlined,
 } from '@ant-design/icons'
 import { Link } from 'react-router'
-import { companyJobsPath } from '@/entities/company'
-import CompanyLogo from './CompanyLogo'
-import { companyDisplayName } from './company-presentation'
+import { companyDisplayName, companyJobsPath, CompanyLogo } from '@/entities/company'
 
 function activeJobCount(company) {
   const value = Number(company?.active_public_job_count)

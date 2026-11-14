@@ -4,9 +4,12 @@ import {
   TeamOutlined,
 } from '@ant-design/icons'
 import { Link } from 'react-router'
-import { companyJobsPath } from '@/entities/company'
-import CompanyLogo from './CompanyLogo'
-import { companyDisplayName, companyInitial } from './company-presentation'
+import {
+  companyDisplayName,
+  companyInitial,
+  companyJobsPath,
+  CompanyLogo,
+} from '@/entities/company'
 
 function CompanyCover({ company, eager }) {
   return (

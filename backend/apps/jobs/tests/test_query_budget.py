@@ -65,6 +65,12 @@ class JobListQueryBudgetTests(APITestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.data['results']), 5)
 
+    def test_company_filter_adds_no_query_to_the_job_list(self):
+        with self.assertNumQueries(JOB_LIST_QUERY_BUDGET):
+            response = self.client.get(reverse('job-list'), {'company': self.company.public_id})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data['results']), 5)
+
     def test_homepage_best_jobs_query_count_is_flat(self):
         Job.objects.update(tier=Job.Tier.TOP)
 

@@ -89,6 +89,7 @@ class JobSerializer(serializers.ModelSerializer):
     job_benefits = JobBenefitSerializer(many=True, required=False)
     language_requirements = JobLanguageRequirementSerializer(many=True, required=False)
     company_name = serializers.CharField(source='company.company_name', read_only=True)
+    company_slug = serializers.CharField(source='company.slug', read_only=True)
     company_logo_url = serializers.SerializerMethodField()
     # Legacy HTTP name: value belongs to the recruiter who posted this job,
     # not to Company. Keep until clients migrate to an employer-scoped key.
@@ -125,6 +126,7 @@ class JobSerializer(serializers.ModelSerializer):
             'slug',
             'title',
             'company_name',
+            'company_slug',
             'company_logo_url',
             'company_cover_url',
             'brand_slug',
@@ -182,6 +184,7 @@ class JobSerializer(serializers.ModelSerializer):
             'public_id',
             'slug',
             'company_name',
+            'company_slug',
             'company_logo_url',
             'category',
             'locations_detail',
@@ -420,6 +423,7 @@ class PublicJobListSerializer(JobSerializer):
             'slug',
             'title',
             'company_name',
+            'company_slug',
             'company_logo_url',
             'brand_slug',
             'company_verified',
@@ -489,7 +493,7 @@ class JobDetailSerializer(JobSerializer):
     # Legacy HTTP name paired with ``company_verified``; payload is recruiter-scoped.
     company_verification = serializers.SerializerMethodField()
     company_size = serializers.CharField(source='company.company_size', read_only=True)
-    company_address = serializers.CharField(source='company.address', read_only=True)
+    company_address = serializers.CharField(source='company.public_headquarters', read_only=True)
     company_description = serializers.SerializerMethodField()
     company_website_url = serializers.CharField(source='company.website_url', read_only=True)
     company_industries = serializers.SerializerMethodField()
@@ -512,6 +516,7 @@ class JobDetailSerializer(JobSerializer):
             'slug',
             'title',
             'company_name',
+            'company_slug',
             'company_logo_url',
             'company_cover_url',
             'brand_slug',
