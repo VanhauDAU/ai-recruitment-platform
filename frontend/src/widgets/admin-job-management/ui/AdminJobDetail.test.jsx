@@ -4,16 +4,14 @@ import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 import AdminJobDetail from './AdminJobDetail'
 
-const { getAdminJob, useSession } = vi.hoisted(() => ({
+const { getAdminJob } = vi.hoisted(() => ({
   getAdminJob: vi.fn(),
-  useSession: vi.fn(),
 }))
 
 vi.mock('@/entities/admin-job', async (importOriginal) => ({
   ...(await importOriginal()),
   getAdminJob,
 }))
-vi.mock('@/entities/session', () => ({ useSession }))
 vi.mock('@/features/enforce-job-visibility', () => ({
   JobVisibilityActions: () => null,
 }))
@@ -36,9 +34,8 @@ const job = {
   content_changes: { has_baseline: false, changed_count: 0, changes: [] },
 }
 
-function renderDetail({ data = job, permissions = [] } = {}) {
+function renderDetail({ data = job } = {}) {
   getAdminJob.mockResolvedValue(data)
-  useSession.mockReturnValue({ user: { admin_access: { permissions } } })
   return render(
     <QueryClientProvider client={new QueryClient()}>
       <MemoryRouter>
@@ -80,7 +77,6 @@ describe('AdminJobDetail', () => {
         }],
       },
     })
-    useSession.mockReturnValue({ user: { admin_access: { permissions: [] } } })
     render(
       <QueryClientProvider client={new QueryClient()}>
         <MemoryRouter>
@@ -119,9 +115,6 @@ describe('AdminJobDetail', () => {
       blocked_reasons: [
         { code: 'verification_required', label: 'Nhà tuyển dụng chưa được duyệt xác thực.' },
       ],
-    })
-    useSession.mockReturnValue({
-      user: { admin_access: { permissions: ['employer_verification.view'] } },
     })
     render(
       <QueryClientProvider client={new QueryClient()}>

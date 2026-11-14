@@ -300,91 +300,6 @@
   white-space: nowrap;
 }
 
-/* ---- Tab quyền truy cập -------------------------------------------- */
-
-.account-access-panel {
-  display: grid;
-  gap: 20px;
-}
-
-.account-access-summary {
-  display: grid;
-  gap: 12px;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-}
-
-.account-access-summary > div {
-  background: #f8fafc;
-  border: 1px solid var(--admin-border);
-  border-radius: 12px;
-  display: grid;
-  grid-template-columns: auto 1fr;
-  min-width: 0;
-  padding: 14px;
-}
-
-.account-access-summary .anticon {
-  color: var(--admin-primary);
-  font-size: 18px;
-  grid-row: span 2;
-  margin-right: 10px;
-  margin-top: 2px;
-}
-
-.account-access-summary span {
-  color: #64748b;
-  font-size: 11px;
-}
-
-.account-access-summary strong {
-  color: #0f172a;
-  font-size: 15px;
-  overflow-wrap: anywhere;
-}
-
-.account-access-card {
-  border-color: var(--admin-border);
-}
-
-.account-access-section-heading {
-  align-items: flex-start;
-  display: flex;
-  gap: 16px;
-  justify-content: space-between;
-  margin-bottom: 12px;
-}
-
-.account-access-section-heading .ant-typography {
-  margin: 0;
-}
-
-.account-access-section-heading > .ant-tag {
-  margin: 2px 0 0;
-}
-
-.account-access-permission-grid {
-  display: grid;
-  gap: 14px;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.account-access-permission-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.account-access-permission-list li {
-  border-bottom: 1px solid #eef2f7;
-  display: grid;
-  gap: 5px;
-  padding: 11px 0;
-}
-
-.account-access-permission-list li:first-child { padding-top: 0; }
-.account-access-permission-list li:last-child { border-bottom: 0; padding-bottom: 0; }
-.account-access-permission-list .ant-typography code { justify-self: start; }
-
 @media (max-width: 768px) {
   .account-profile__grid .ant-descriptions-item-label { width: 40%; }
   .account-profile__richtext-body { max-height: 260px; }
@@ -415,11 +330,6 @@
 
   .account-company-gallery {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .account-access-summary,
-  .account-access-permission-grid {
-    grid-template-columns: 1fr;
   }
 
   .account-company-visual__identity {

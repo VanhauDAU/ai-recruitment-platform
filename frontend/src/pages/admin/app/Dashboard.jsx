@@ -2,10 +2,8 @@ import {
   AppstoreOutlined,
   FileDoneOutlined,
   FileTextOutlined,
-  KeyOutlined,
   SafetyCertificateOutlined,
   SettingOutlined,
-  TeamOutlined,
 } from '@ant-design/icons'
 import { Link, useOutletContext } from 'react-router'
 import {
@@ -15,12 +13,10 @@ import {
 } from '@/shared/ui/admin'
 
 const ICONS = {
-  access: <KeyOutlined />,
   cv: <FileTextOutlined />,
   dashboard: <AppstoreOutlined />,
   moderation: <FileDoneOutlined />,
   settings: <SettingOutlined />,
-  shield: <SafetyCertificateOutlined />,
 }
 
 export default function AdminDashboard() {
@@ -35,52 +31,41 @@ export default function AdminDashboard() {
         description="Tổng quan phạm vi truy cập và các công cụ quản trị được cấp cho tài khoản hiện tại."
         icon={<AppstoreOutlined />}
       />
-      <section className="grid gap-4 md:grid-cols-3" aria-label="Tóm tắt quyền truy cập">
+      <section className="grid gap-4 md:grid-cols-2" aria-label="Tóm tắt quyền truy cập">
         <AdminStatCard
           icon={<AppstoreOutlined />}
           label="Khu vực khả dụng"
           value={availableRoutes.length}
-          detail="Theo quyền hiện tại"
-        />
-        <AdminStatCard
-          icon={<TeamOutlined />}
-          label="Chức danh hiệu lực"
-          value={adminAccess?.memberships?.length || 0}
-          detail={adminAccess?.memberships?.[0]?.role?.name || 'Chưa được gán chức danh'}
-          tone="green"
+          detail="Theo cấp quản trị hiện tại"
         />
         <AdminStatCard
           icon={<SafetyCertificateOutlined />}
-          label="Quyền thao tác"
-          value={adminAccess?.isSuperuser ? 'Toàn quyền' : (adminAccess?.permissions?.length || 0)}
-          detail={adminAccess?.isSuperuser ? 'Superuser hệ thống' : 'Quyền thao tác được cấp'}
+          label="Cấp quản trị"
+          value={adminAccess?.isSuperuser ? 'Superuser' : 'Quản trị viên'}
+          detail={adminAccess?.isSuperuser
+            ? 'Toàn quyền, gồm tài khoản quản trị và cài đặt hệ thống'
+            : 'Mọi nghiệp vụ, trừ tài khoản quản trị và cài đặt hệ thống'}
           tone="amber"
         />
       </section>
 
       <AdminPanel
         title="Truy cập nhanh"
-        description="Các công cụ được hiển thị dựa trên quyền đang hiệu lực của tài khoản."
+        description="Các công cụ được hiển thị theo cấp quản trị của tài khoản."
       >
-        {workspaceRoutes.length ? (
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            {workspaceRoutes.map((route) => (
-              <Link key={route.path} to={route.path} className="admin-quick-link">
-                <span className="admin-quick-link__icon" aria-hidden="true">
-                  {ICONS[route.iconKey] || <AppstoreOutlined />}
-                </span>
-                <span className="min-w-0">
-                  <span className="block font-semibold">{route.navLabel}</span>
-                  <span className="mt-0.5 block text-xs text-slate-500">{route.title}</span>
-                </span>
-              </Link>
-            ))}
-          </div>
-        ) : (
-          <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
-            Chưa có khu vực nghiệp vụ nào được cấp. Hãy liên hệ quản trị hệ thống để được gán phòng ban và quyền phù hợp.
-          </div>
-        )}
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          {workspaceRoutes.map((route) => (
+            <Link key={route.path} to={route.path} className="admin-quick-link">
+              <span className="admin-quick-link__icon" aria-hidden="true">
+                {ICONS[route.iconKey] || <AppstoreOutlined />}
+              </span>
+              <span className="min-w-0">
+                <span className="block font-semibold">{route.navLabel}</span>
+                <span className="mt-0.5 block text-xs text-slate-500">{route.title}</span>
+              </span>
+            </Link>
+          ))}
+        </div>
       </AdminPanel>
     </div>
   )

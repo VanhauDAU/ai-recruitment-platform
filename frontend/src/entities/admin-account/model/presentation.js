@@ -18,6 +18,10 @@ export const INVITATION_STATUS_LABELS = {
   revoked: 'Đã thu hồi',
 }
 
+export function adminTierLabel(adminAccess) {
+  return adminAccess?.is_superuser ? 'Superuser' : 'Quản trị viên'
+}
+
 export function formatAdminDate(value, fallback = 'Chưa có') {
   if (!value) return fallback
   return new Intl.DateTimeFormat('vi-VN', {
@@ -27,12 +31,7 @@ export function formatAdminDate(value, fallback = 'Chưa có') {
 }
 
 export function accountSubtitle(account) {
-  if (account.role === 'admin') {
-    const membership = account.admin_access?.membership
-    return membership
-      ? `${membership.role.department.name} · ${membership.role.name}`
-      : 'Chưa được gán chức danh'
-  }
+  if (account.role === 'admin') return adminTierLabel(account.admin_access)
   if (account.role === 'employer') {
     return account.context?.company?.name || account.context?.position_title || 'Nhà tuyển dụng'
   }

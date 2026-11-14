@@ -16,6 +16,4 @@ export const adminAccountKeys = {
   sessions: (publicId) => [...root, 'sessions', publicId],
   activity: (publicId, page = 1) => [...root, 'activity', publicId, page],
   invitations: (params = {}) => [...root, 'invitations', params],
-  availableRoles: [...root, 'available-roles'],
-  provisioningScopes: [...root, 'provisioning-scopes'],
 }

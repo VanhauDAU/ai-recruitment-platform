@@ -83,7 +83,7 @@ function listItem(detail) {
   }
 }
 
-async function routeAdminApi(page, permissions) {
+async function routeAdminApi(page) {
   let detail = announcementDetail()
   let stalePause = true
   await mockPublicApi(page)
@@ -102,11 +102,7 @@ async function routeAdminApi(page, permissions) {
         full_name: 'System Admin',
         role: 'admin',
         email_verified: true,
-        admin_access: {
-          is_superuser: false,
-          permissions,
-          memberships: [],
-        },
+        admin_access: { is_superuser: false },
       }
     } else if (path === '/api/site/admin/announcements/' && request.method() === 'GET') {
       body = { count: 1, next: null, previous: null, results: [listItem(detail)] }
@@ -208,11 +204,7 @@ async function routeAdminApi(page, permissions) {
 test('announcement admin: create, publish and stale conflict stay responsive', async ({ page }) => {
   const pageErrors = []
   page.on('pageerror', (error) => pageErrors.push(error.message))
-  await routeAdminApi(page, [
-    'announcement.view',
-    'announcement.manage',
-    'announcement.publish',
-  ])
+  await routeAdminApi(page)
 
   await page.goto('/admin/app/announcements')
   await expect(page).toHaveURL('/admin/app/announcements')
@@ -279,16 +271,4 @@ test('announcement admin: create, publish and stale conflict stay responsive', a
     await page.locator('html').evaluate((element) => element.clientWidth),
   )
   expect(pageErrors).toEqual([])
-})
-
-test('announcement admin: view-only permission exposes no mutation controls', async ({ page }) => {
-  await routeAdminApi(page, ['announcement.view'])
-  await page.goto('/admin/app/announcements')
-  await expect(page).toHaveURL('/admin/app/announcements')
-  await expect(page.getByRole('heading', { name: 'Trung tâm thông báo' })).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Tạo thông báo' })).toHaveCount(0)
-  await page.getByRole('button', { name: 'Chi tiết' }).click()
-  await expect(page.getByRole('button', { name: 'Tạo revision' })).toHaveCount(0)
-  await expect(page.getByRole('button', { name: 'Phát hành' })).toHaveCount(0)
-  await expect(page.getByRole('button', { name: 'Nhân bản' })).toHaveCount(0)
 })

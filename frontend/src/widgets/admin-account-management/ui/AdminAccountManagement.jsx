@@ -9,12 +9,7 @@ import {
   getAdminAccountSummary,
   updateAdminAccount,
 } from '@/entities/admin-account'
-import {
-  adminAccessKeys,
-  getAdminDepartments,
-  getAdminRoles,
-  useAdminAccess,
-} from '@/entities/admin-access'
+import { useAdminAccess } from '@/entities/admin-access'
 import {
   adminCompanyDomainClaimKeys,
   getAdminCompanyDomainClaimSummary,
@@ -40,8 +35,6 @@ const DEFAULT_FILTERS = {
   status: '',
   email_verified: '',
   has_active_session: '',
-  department: '',
-  admin_role: '',
   company: '',
   company_state: '',
   verification_status: '',
@@ -54,8 +47,6 @@ const SIMPLE_FILTER_KEYS = [
   'status',
   'email_verified',
   'has_active_session',
-  'department',
-  'admin_role',
   'company',
   'company_state',
   'verification_status',
@@ -72,8 +63,6 @@ const ACCOUNT_QUERY_KEYS = [
 const INVITATION_QUERY_KEYS = [
   'invite_q',
   'invite_status',
-  'invite_department',
-  'invite_role',
   'invite_by',
   'invite_page',
   'invite_ordering',
@@ -122,8 +111,6 @@ function queryParams(scope, tab, filters, search, page) {
     status: filters.status,
     email_verified: filters.email_verified,
     has_active_session: filters.has_active_session,
-    department: filters.department,
-    admin_role: filters.admin_role,
     company: filters.company.trim(),
     company_state: filters.company_state,
     verification_status: filters.verification_status,
@@ -147,28 +134,9 @@ export default function AdminAccountManagement({ scope = 'accounts' }) {
   const recruiterScope = scope === 'recruiters'
   const apiScope = recruiterScope ? 'recruiters' : 'users'
   const { user } = useSession()
-  const { has, isSuperuser } = useAdminAccess(user)
-  const canViewCandidates = !recruiterScope && (isSuperuser || has('account.view'))
-  const canViewAdmins = !recruiterScope && (isSuperuser || has('account.admin.view'))
-  const canInvite = !recruiterScope && (isSuperuser || has('account.admin.invite'))
-  const canBrowseRecruiters = recruiterScope && (
-    isSuperuser || has('account.employer.view') || has('account.view')
-  )
-  const canViewEmployerVerifications = recruiterScope && (
-    isSuperuser || has('employer_verification.view')
-  )
-  const canViewDomainClaims = recruiterScope && (
-    isSuperuser || has('employer_domain.view')
-  )
-  const canReviewDomainClaims = isSuperuser || has('employer_domain.review')
-  const canRevokeDomainClaims = isSuperuser || has('employer_domain.revoke')
-  const canBrowseAccounts = recruiterScope
-    ? canBrowseRecruiters
-    : canViewCandidates || canViewAdmins
-  // Domain review has its own endpoint and permission boundary. Do not call
-  // the account summary API for a domain-only operator because that endpoint
-  // intentionally does not accept `employer_domain.view`.
-  const canReadAccounts = canBrowseAccounts || canViewEmployerVerifications || canInvite
+  const { isSuperuser } = useAdminAccess(user)
+  // Tài khoản quản trị và lời mời quản trị chỉ dành cho superuser.
+  const canManageAdmins = !recruiterScope && isSuperuser
   const navigate = useNavigate()
   const location = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -176,34 +144,16 @@ export default function AdminAccountManagement({ scope = 'accounts' }) {
   const [editForm] = Form.useForm()
 
   const accountTabs = useMemo(() => {
-    if (recruiterScope) return canBrowseRecruiters ? ['employer'] : []
-    return [
-      ...(canViewCandidates && canViewAdmins ? ['all'] : []),
-      ...(canViewCandidates ? ['candidate'] : []),
-      ...(canViewAdmins ? ['admin'] : []),
-    ]
-  }, [
-    canBrowseRecruiters,
-    canViewAdmins,
-    canViewCandidates,
-    recruiterScope,
-  ])
-  const fallbackTab = (
-    accountTabs[0]
-    || (canViewEmployerVerifications ? 'verification' : '')
-    || (canViewDomainClaims ? 'domain-verification' : '')
-    || (canInvite ? 'invitations' : '')
-  )
-  const requestedTab = searchParams.get('tab') || (
-    recruiterScope ? 'employer' : accountTabs[0]
-  )
+    if (recruiterScope) return ['employer']
+    return canManageAdmins ? ['all', 'candidate', 'admin'] : ['candidate']
+  }, [canManageAdmins, recruiterScope])
+  const requestedTab = searchParams.get('tab') || accountTabs[0]
   const allowedTabs = [
     ...accountTabs,
-    ...(canViewEmployerVerifications ? ['verification'] : []),
-    ...(canViewDomainClaims ? ['domain-verification'] : []),
-    ...(canInvite ? ['invitations'] : []),
+    ...(recruiterScope ? ['verification', 'domain-verification'] : []),
+    ...(canManageAdmins ? ['invitations'] : []),
   ]
-  const activeTab = allowedTabs.includes(requestedTab) ? requestedTab : fallbackTab
+  const activeTab = allowedTabs.includes(requestedTab) ? requestedTab : accountTabs[0]
 
   const [filters, setFilters] = useState(() => filtersFromQuery(searchParams))
   const page = Number(searchParams.get('page') || 1)
@@ -219,12 +169,11 @@ export default function AdminAccountManagement({ scope = 'accounts' }) {
   const summaryQuery = useQuery({
     queryKey: adminAccountKeys.summary(summaryParams),
     queryFn: ({ signal }) => getAdminAccountSummary(summaryParams, { signal }),
-    enabled: canReadAccounts,
   })
   const domainSummaryQuery = useQuery({
     queryKey: adminCompanyDomainClaimKeys.summary,
     queryFn: ({ signal }) => getAdminCompanyDomainClaimSummary({ signal }),
-    enabled: canViewDomainClaims,
+    enabled: recruiterScope,
     refetchInterval: 10_000,
     refetchOnWindowFocus: 'always',
     staleTime: 0,
@@ -234,20 +183,7 @@ export default function AdminAccountManagement({ scope = 'accounts' }) {
     queryFn: ({ signal }) => getAdminAccounts(params, { signal }),
     enabled: accountTabs.includes(activeTab),
   })
-  const needsAdminLookups = ['admin', 'invitations'].includes(activeTab)
-  const departmentsQuery = useQuery({
-    queryKey: adminAccessKeys.departments,
-    queryFn: ({ signal }) => getAdminDepartments({ signal }),
-    enabled: !recruiterScope && needsAdminLookups,
-  })
-  const rolesQuery = useQuery({
-    queryKey: adminAccessKeys.roles(''),
-    queryFn: ({ signal }) => getAdminRoles('', { signal }),
-    enabled: !recruiterScope && needsAdminLookups,
-  })
 
-  const departments = departmentsQuery.data || []
-  const roles = rolesQuery.data || []
   const summary = summaryQuery.data || {}
   const accounts = accountsQuery.data || EMPTY_PAGE
   const metrics = recruiterScope
@@ -257,8 +193,7 @@ export default function AdminAccountManagement({ scope = 'accounts' }) {
       : summary.by_role?.[activeTab] || EMPTY_METRICS
 
   useEffect(() => {
-    if (!activeTab) return
-    const defaultTab = recruiterScope ? 'employer' : accountTabs[0]
+    const defaultTab = accountTabs[0]
     if (requestedTab === activeTab || (!searchParams.get('tab') && activeTab === defaultTab)) {
       return
     }
@@ -269,7 +204,6 @@ export default function AdminAccountManagement({ scope = 'accounts' }) {
   }, [
     accountTabs,
     activeTab,
-    recruiterScope,
     requestedTab,
     searchParams,
     setSearchParams,
@@ -281,8 +215,7 @@ export default function AdminAccountManagement({ scope = 'accounts' }) {
 
   const syncQuery = (tab, nextFilters, nextPage, { replace = false } = {}) => {
     const next = new URLSearchParams(searchParams)
-    const defaultTab = recruiterScope ? 'employer' : accountTabs[0]
-    if (tab === defaultTab) next.delete('tab')
+    if (tab === accountTabs[0]) next.delete('tab')
     else next.set('tab', tab)
     SIMPLE_FILTER_KEYS.forEach((key) => {
       const value = typeof nextFilters[key] === 'string'
@@ -315,14 +248,8 @@ export default function AdminAccountManagement({ scope = 'accounts' }) {
   }
 
   const changeTab = (key) => {
-    let nextFilters = filters
-    if (!recruiterScope && key === 'candidate') {
-      nextFilters = { ...filters, department: '', admin_role: '' }
-    }
-    setFilters(nextFilters)
     const next = new URLSearchParams(searchParams)
-    const defaultTab = recruiterScope ? 'employer' : accountTabs[0]
-    if (key === defaultTab) next.delete('tab')
+    if (key === accountTabs[0]) next.delete('tab')
     else next.set('tab', key)
     if (!accountTabs.includes(key)) ACCOUNT_QUERY_KEYS.forEach((queryKey) => next.delete(queryKey))
     if (key !== 'invitations') {
@@ -331,10 +258,6 @@ export default function AdminAccountManagement({ scope = 'accounts' }) {
     if (key !== 'verification') {
       VERIFICATION_QUERY_KEYS.forEach((queryKey) => next.delete(queryKey))
       next.delete('company')
-    }
-    if (key === 'candidate') {
-      next.delete('department')
-      next.delete('admin_role')
     }
     setSearchParams(next)
   }
@@ -372,12 +295,7 @@ export default function AdminAccountManagement({ scope = 'accounts' }) {
     })
   }
 
-  const canEdit = (account) => (
-    isSuperuser || (account.role !== 'admin' && has('account.profile.manage'))
-  )
-  const canManageSecurity = (account) => (
-    isSuperuser || (account.role !== 'admin' && has('account.security.manage'))
-  )
+  const canManageAccount = (account) => isSuperuser || account.role !== 'admin'
   const openEdit = (account) => {
     editForm.setFieldsValue({ full_name: account.full_name, phone: account.phone })
     setEditingAccount(account)
@@ -406,8 +324,6 @@ export default function AdminAccountManagement({ scope = 'accounts' }) {
     <div className="account-management-tab-content">
       <AccountFilters
         filters={filters}
-        departments={departments}
-        roles={roles}
         total={accounts.count}
         loading={accountsQuery.isLoading}
         recruiterOnly={recruiterScope}
@@ -437,8 +353,8 @@ export default function AdminAccountManagement({ scope = 'accounts' }) {
         onOpenDetail={openDetail}
         onEdit={openEdit}
         onSecurity={(account) => openDetail(account, 'security')}
-        canEdit={canEdit}
-        canManageSecurity={canManageSecurity}
+        canEdit={canManageAccount}
+        canManageSecurity={canManageAccount}
         resultLabel={recruiterScope ? 'nhà tuyển dụng' : 'người dùng'}
       />
     </div>
@@ -446,27 +362,27 @@ export default function AdminAccountManagement({ scope = 'accounts' }) {
 
   const pendingInvitations = summary.queues?.pending_admin_invitations || 0
   const tabs = [
-    ...(!recruiterScope && accountTabs.includes('all') ? [{
+    ...(accountTabs.includes('all') ? [{
       key: 'all',
       label: `Tất cả người dùng (${summary.totals?.total || 0})`,
       children: accountList,
     }] : []),
-    ...(!recruiterScope && accountTabs.includes('candidate') ? [{
+    ...(accountTabs.includes('candidate') ? [{
       key: 'candidate',
       label: `Ứng viên (${summary.by_role?.candidate?.total || 0})`,
       children: accountList,
     }] : []),
-    ...(!recruiterScope && accountTabs.includes('admin') ? [{
+    ...(accountTabs.includes('admin') ? [{
       key: 'admin',
       label: `Quản trị viên (${summary.by_role?.admin?.total || 0})`,
       children: accountList,
     }] : []),
-    ...(recruiterScope && accountTabs.includes('employer') ? [{
+    ...(accountTabs.includes('employer') ? [{
       key: 'employer',
       label: `Danh sách NTD (${summary.totals?.total || 0})`,
       children: accountList,
     }] : []),
-    ...(canViewEmployerVerifications ? [{
+    ...(recruiterScope ? [{
       key: 'verification',
       label: (
         <QueueTabLabel count={summary.verification?.pending}>
@@ -475,7 +391,7 @@ export default function AdminAccountManagement({ scope = 'accounts' }) {
       ),
       children: <div className="account-management-tab-content"><VerificationQueuePanel /></div>,
     }] : []),
-    ...(canViewDomainClaims ? [{
+    ...(recruiterScope ? [{
       key: 'domain-verification',
       label: (
         <QueueTabLabel count={domainSummaryQuery.data?.manual_pending}>
@@ -484,23 +400,16 @@ export default function AdminAccountManagement({ scope = 'accounts' }) {
       ),
       children: (
         <div className="account-management-tab-content">
-          <AdminCompanyDomainReview
-            canReview={canReviewDomainClaims}
-            canRevoke={canRevokeDomainClaims}
-          />
+          <AdminCompanyDomainReview />
         </div>
       ),
     }] : []),
-    ...(canInvite ? [{
+    ...(canManageAdmins ? [{
       key: 'invitations',
       label: <QueueTabLabel count={pendingInvitations}>Lời mời quản trị</QueueTabLabel>,
       children: (
         <div className="account-management-tab-content">
-          <InvitationPanel
-            departments={departments}
-            roles={roles}
-            isSuperuser={isSuperuser}
-          />
+          <InvitationPanel />
         </div>
       ),
     }] : []),
@@ -508,12 +417,12 @@ export default function AdminAccountManagement({ scope = 'accounts' }) {
 
   return (
     <div className="min-w-0 space-y-5">
-      {!['invitations'].includes(activeTab) && canReadAccounts && (
+      {activeTab !== 'invitations' && (
         <AccountOverview
           metrics={metrics}
           recruiterSummary={recruiterScope ? summary : null}
           pendingInvitations={pendingInvitations}
-          canInvite={canInvite}
+          canInvite={canManageAdmins}
           onApplyFilter={applyOverviewFilter}
           onOpenQueue={changeTab}
         />

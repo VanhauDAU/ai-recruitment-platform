@@ -543,25 +543,11 @@
   font-size: 13px;
 }
 
-.account-drawer__access,
-.invitation-role-summary {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 13px;
-  margin-top: 18px;
-  padding: 16px;
-}
-
-.account-drawer__access p {
-  color: #475569;
-  margin: 8px 0 12px;
-}
-
 .account-list-toolbar__filters {
   display: grid;
   flex: 1;
   gap: 10px;
-  grid-template-columns: minmax(220px, 1.6fr) repeat(4, minmax(150px, 1fr));
+  grid-template-columns: minmax(220px, 1.6fr) repeat(2, minmax(150px, 1fr));
 }
 
 .verification-queue-filters {
@@ -581,31 +567,6 @@
 
 .company-update-queue-filters {
   max-width: 560px;
-}
-
-.invitation-role-summary {
-  display: grid;
-  gap: 12px;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  margin: -4px 0 18px;
-}
-
-.invitation-role-summary span {
-  color: #64748b;
-  display: block;
-  font-size: 11px;
-  margin-bottom: 2px;
-}
-
-.invitation-role-summary strong {
-  color: #0f172a;
-  font-size: 13px;
-}
-
-.invitation-role-summary__permissions {
-  border-top: 1px solid #e2e8f0;
-  grid-column: 1 / -1;
-  padding-top: 10px;
 }
 
 @media (max-width: 1280px) {

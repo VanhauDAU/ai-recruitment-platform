@@ -5,21 +5,19 @@ import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import AdminCompanyDetail from './AdminCompanyDetail'
 
-const { api, toast, useSession } = vi.hoisted(() => ({
+const { api, toast } = vi.hoisted(() => ({
   api: {
     getAdminCompany: vi.fn(),
     getAdminCompanyPublicPage: vi.fn(),
     setAdminCompanyPolicyHold: vi.fn(),
   },
   toast: { success: vi.fn(), error: vi.fn() },
-  useSession: vi.fn(),
 }))
 
 vi.mock('@/entities/admin-company', async (importOriginal) => ({
   ...await importOriginal(),
   ...api,
 }))
-vi.mock('@/entities/session', () => ({ useSession }))
 vi.mock('@/shared/lib/toast', () => ({ message: toast }))
 
 const COMPANY = {
@@ -61,10 +59,7 @@ function publicPage(hold = {}) {
   }
 }
 
-function renderTab({ permissions = ['company.view'], tab = 'public-page' } = {}) {
-  useSession.mockReturnValue({
-    user: { role: 'admin', admin_access: { is_superuser: false, permissions, memberships: [] } },
-  })
+function renderTab({ tab = 'public-page' } = {}) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
     <QueryClientProvider client={queryClient}>
@@ -97,7 +92,7 @@ describe('admin company public page tab', () => {
     )
   })
 
-  it('previews the public profile read-only and hides hold controls without the moderate permission', async () => {
+  it('previews the public profile read-only with the hold control', async () => {
     renderTab()
 
     expect(await screen.findByText('Đang hiển thị')).toBeVisible()
@@ -110,7 +105,7 @@ describe('admin company public page tab', () => {
     expect(screen.queryByRole('button', { name: 'Sao chép đường dẫn' })).not.toBeInTheDocument()
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1)
 
-    expect(screen.queryByRole('button', { name: 'Tạm ẩn trang' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Tạm ẩn trang' })).toBeVisible()
     expect(screen.queryByRole('button', { name: 'Khôi phục hiển thị' })).not.toBeInTheDocument()
   })
 
@@ -123,7 +118,7 @@ describe('admin company public page tab', () => {
       at: '2026-11-14T03:00:00Z',
     })
     api.setAdminCompanyPolicyHold.mockResolvedValue({ ...held, is_indexable: false })
-    renderTab({ permissions: ['company.view', 'company_page.moderate'] })
+    renderTab()
 
     await user.click(await screen.findByRole('button', { name: 'Tạm ẩn trang' }))
     const dialog = await screen.findByRole('dialog', { name: 'Tạm ẩn trang công ty' })
@@ -163,7 +158,7 @@ describe('admin company public page tab', () => {
     api.setAdminCompanyPolicyHold
       .mockRejectedValueOnce({ response: { status: 403, data: { detail: 'Bạn không có quyền thực hiện thao tác này.' } } })
       .mockResolvedValueOnce(publicPage())
-    renderTab({ permissions: ['company.view', 'company_page.moderate'] })
+    renderTab()
 
     await user.click(await screen.findByRole('button', { name: 'Khôi phục hiển thị' }))
     const dialog = await screen.findByRole('dialog', { name: 'Khôi phục trang công ty' })

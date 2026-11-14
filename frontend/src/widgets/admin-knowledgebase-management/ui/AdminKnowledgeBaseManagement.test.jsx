@@ -8,12 +8,10 @@ const {
   getAdminKnowledgeArticles,
   getAdminKnowledgeArticleSummary,
   getAdminKnowledgeCategories,
-  useSession,
 } = vi.hoisted(() => ({
   getAdminKnowledgeArticles: vi.fn(),
   getAdminKnowledgeArticleSummary: vi.fn(),
   getAdminKnowledgeCategories: vi.fn(),
-  useSession: vi.fn(),
 }))
 
 vi.mock('@/entities/knowledgebase', async (importOriginal) => ({
@@ -22,7 +20,6 @@ vi.mock('@/entities/knowledgebase', async (importOriginal) => ({
   getAdminKnowledgeArticleSummary,
   getAdminKnowledgeCategories,
 }))
-vi.mock('@/entities/session', () => ({ useSession }))
 
 const category = {
   public_id: 'kbc_account',
@@ -65,12 +62,6 @@ function renderWidget(initialEntry = '/admin/app/knowledgebase') {
 describe('AdminKnowledgeBaseManagement', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    useSession.mockReturnValue({
-      user: {
-        role: 'admin',
-        admin_access: { is_superuser: true, permissions: [], memberships: [] },
-      },
-    })
     getAdminKnowledgeCategories.mockResolvedValue([category])
     getAdminKnowledgeArticles.mockResolvedValue({ count: 47, results: [article] })
     getAdminKnowledgeArticleSummary.mockResolvedValue({

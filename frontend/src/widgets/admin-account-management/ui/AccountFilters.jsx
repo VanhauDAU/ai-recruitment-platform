@@ -15,8 +15,6 @@ import AccountAdvancedFilters from './AccountAdvancedFilters'
 
 export default function AccountFilters({
   filters,
-  departments,
-  roles,
   total,
   loading,
   recruiterOnly = false,
@@ -29,7 +27,7 @@ export default function AccountFilters({
   const patch = (name, value) => onChange({ ...filters, [name]: value })
 
   const advancedKeys = recruiterOnly
-    ? ADVANCED_KEYS.filter((key) => !['department', 'admin_role'].includes(key))
+    ? ADVANCED_KEYS
     : ADVANCED_KEYS.filter((key) => ![
       'company',
       'company_state',
@@ -41,10 +39,6 @@ export default function AccountFilters({
     ['status', 'Trạng thái', labelOf(STATUS_OPTIONS, filters.status)],
     ['email_verified', 'Xác minh email', labelOf(BOOLEAN_OPTIONS, filters.email_verified)],
     ['has_active_session', 'Phiên hoạt động', labelOf(BOOLEAN_OPTIONS, filters.has_active_session)],
-    ...(!recruiterOnly ? [
-      ['department', 'Phòng ban', departments.find((item) => item.public_id === filters.department)?.name],
-      ['admin_role', 'Chức danh', roles.find((item) => item.public_id === filters.admin_role)?.name],
-    ] : []),
     ...(recruiterOnly ? [
       ['company', 'Mã công ty', filters.company.trim()],
       ['company_state', 'Liên kết công ty', {
@@ -68,8 +62,6 @@ export default function AccountFilters({
   const advanced = (
     <AccountAdvancedFilters
       filters={filters}
-      departments={departments}
-      roles={roles}
       recruiterOnly={recruiterOnly}
       onChange={onChange}
       onDone={() => setAdvancedOpen(false)}

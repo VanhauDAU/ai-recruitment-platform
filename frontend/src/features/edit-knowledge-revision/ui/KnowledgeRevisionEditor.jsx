@@ -33,7 +33,6 @@ function isSameField(left, right) {
 export default function KnowledgeRevisionEditor({
   article,
   categories,
-  canManage,
   onArticleChange,
   onDirtyChange,
 }) {
@@ -55,7 +54,7 @@ export default function KnowledgeRevisionEditor({
   const watched = Form.useWatch([], form) || {}
   const draftRevision = article?.revisions?.find((item) => item.status === 'DRAFT')
   const latestRevision = article?.revisions?.[0]
-  const canEdit = canManage && (!article || Boolean(draftRevision))
+  const canEdit = !article || Boolean(draftRevision)
   const completion = editorCompletion(watched)
 
   useEffect(() => {
@@ -248,7 +247,7 @@ export default function KnowledgeRevisionEditor({
           action={<Button onClick={() => window.location.reload()}>Tải lại</Button>}
         />
       )}
-      {article && !draftRevision && canManage && (
+      {article && !draftRevision && (
         <Alert
           className="knowledge-editor__alert"
           type={latestRevision?.status === 'IN_REVIEW' ? 'info' : 'warning'}

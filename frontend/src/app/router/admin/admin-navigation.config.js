@@ -18,7 +18,6 @@ export const ADMIN_NAVIGATION = [
             key: 'company-list',
             label: 'Tất cả công ty',
             routeRef: 'companies',
-            access: { allOf: ['company.view'] },
           },
           {
             key: 'company-updates',
@@ -26,7 +25,6 @@ export const ADMIN_NAVIGATION = [
             badgeKey: 'company_updates',
             routeRef: 'companies',
             query: { tab: 'updates' },
-            access: { allOf: ['company_update.view'] },
           },
           {
             key: 'company-reports',
@@ -43,7 +41,6 @@ export const ADMIN_NAVIGATION = [
             key: 'employer-list',
             label: 'Tất cả NTD',
             routeRef: 'recruiters',
-            access: { anyOf: ['account.employer.view', 'account.view'] },
           },
           {
             key: 'employer-verification',
@@ -51,7 +48,6 @@ export const ADMIN_NAVIGATION = [
             badgeKey: 'recruiter_verification',
             routeRef: 'recruiters',
             query: { tab: 'verification' },
-            access: { allOf: ['employer_verification.view'] },
           },
           {
             key: 'employer-domain-verification',
@@ -59,14 +55,12 @@ export const ADMIN_NAVIGATION = [
             badgeKey: 'domain_verification',
             routeRef: 'recruiters',
             query: { tab: 'domain-verification' },
-            access: { allOf: ['employer_domain.view'] },
           },
           {
             key: 'employer-restricted',
             label: 'NTD bị hạn chế',
             routeRef: 'recruiters',
             query: { status: 'inactive,banned' },
-            access: { anyOf: ['account.employer.view', 'account.view'] },
           },
           {
             key: 'employer-invitations',
@@ -91,21 +85,20 @@ export const ADMIN_NAVIGATION = [
             key: 'all-accounts',
             label: 'Tất cả người dùng',
             routeRef: 'accounts',
-            access: { allOf: ['account.view', 'account.admin.view'] },
+            access: { superuser: true },
           },
           {
             key: 'candidate-accounts',
             label: 'Ứng viên',
             routeRef: 'accounts',
             query: { tab: 'candidate' },
-            access: { allOf: ['account.view'] },
           },
           {
             key: 'admin-accounts',
             label: 'Quản trị viên',
             routeRef: 'accounts',
             query: { tab: 'admin' },
-            access: { allOf: ['account.admin.view'] },
+            access: { superuser: true },
           },
           {
             key: 'admin-invitations',
@@ -113,7 +106,7 @@ export const ADMIN_NAVIGATION = [
             badgeKey: 'admin_invitations',
             routeRef: 'accounts',
             query: { tab: 'invitations' },
-            access: { allOf: ['account.admin.invite'] },
+            access: { superuser: true },
           },
         ],
       },
@@ -126,7 +119,6 @@ export const ADMIN_NAVIGATION = [
             label: 'Người dùng bị hạn chế',
             routeRef: 'accounts',
             query: { status: 'inactive,banned' },
-            access: { anyOf: ['account.view', 'account.admin.view'] },
           },
           {
             key: 'account-activity',
@@ -205,7 +197,7 @@ export const ADMIN_NAVIGATION = [
         label: 'FAQ & hướng dẫn',
         children: [
           { key: 'knowledgebase-articles', label: 'Tất cả nội dung', routeRef: 'knowledgebase' },
-          { key: 'knowledgebase-review', label: 'Hàng chờ duyệt', routeRef: 'knowledgebase', query: { revision_status: 'IN_REVIEW' }, access: { allOf: ['knowledgebase.review'] } },
+          { key: 'knowledgebase-review', label: 'Hàng chờ duyệt', routeRef: 'knowledgebase', query: { revision_status: 'IN_REVIEW' } },
           { key: 'knowledgebase-overdue', label: 'Cần rà soát', routeRef: 'knowledgebase', query: { review_due: 'overdue' } },
         ],
       },
@@ -213,7 +205,6 @@ export const ADMIN_NAVIGATION = [
         key: 'announcements',
         label: 'Thông báo đa cổng',
         routeRef: 'announcements',
-        access: { allOf: ['announcement.view'] },
       },
     ],
   },
@@ -222,16 +213,6 @@ export const ADMIN_NAVIGATION = [
     label: 'Hệ thống',
     iconKey: 'shield',
     children: [
-      {
-        key: 'access-control',
-        label: 'Phân quyền',
-        children: [
-          { key: 'departments', label: 'Phòng ban', routeRef: 'accessControl' },
-          { key: 'roles', label: 'Chức danh', routeRef: 'accessControl', query: { tab: 'roles' } },
-          { key: 'staff', label: 'Nhân viên', routeRef: 'accessControl', query: { tab: 'staff' } },
-          { key: 'provisioning', label: 'Cấp tài khoản', routeRef: 'accessControl', query: { tab: 'provisioning' } },
-        ],
-      },
       {
         key: 'settings',
         label: 'Cấu hình',
@@ -249,7 +230,6 @@ export const ADMIN_NAVIGATION = [
           { key: 'settings-upload', label: 'Tải tệp', routeRef: 'settings', query: { group: 'upload' } },
           { key: 'settings-footer', label: 'Chân trang', routeRef: 'settings', query: { group: 'footer' } },
           { key: 'settings-contact', label: 'Liên hệ', routeRef: 'settings', query: { group: 'contact' } },
-          { key: 'settings-admin', label: 'Quản trị', routeRef: 'settings', query: { group: 'admin_roles' } },
           { key: 'settings-ai', label: 'AI', routeRef: 'settings', query: { group: 'ai' } },
           { key: 'settings-blog', label: 'Cẩm nang', routeRef: 'settings', query: { group: 'blog' } },
         ],
@@ -258,7 +238,7 @@ export const ADMIN_NAVIGATION = [
         key: 'audit-log',
         label: 'Nhật ký kiểm toán',
         status: 'comingSoon',
-        access: { allOf: ['audit_log.view'] },
+        access: { superuser: true },
       },
     ],
   },

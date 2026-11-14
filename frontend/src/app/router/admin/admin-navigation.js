@@ -2,11 +2,7 @@ import { canAccessAdminRoute } from '@/entities/admin-access'
 import { adminPath } from '@/shared/config/portals'
 
 function accessAllowed(access, adminAccess) {
-  if (!access) return true
-  if (access.superuser && !adminAccess.isSuperuser) return false
-  if (access.allOf && !adminAccess.hasAll(access.allOf)) return false
-  if (access.anyOf && !adminAccess.hasAny(access.anyOf)) return false
-  return true
+  return !access?.superuser || adminAccess.isSuperuser
 }
 
 function queryString(query = {}) {

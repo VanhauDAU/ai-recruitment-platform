@@ -63,7 +63,6 @@ function renderPanel(section = 'profile') {
         <AccountProfilePanel
           publicId="usr_1"
           account={{ role: 'employer' }}
-          canReveal
           section={section}
         />
       </QueryClientProvider>

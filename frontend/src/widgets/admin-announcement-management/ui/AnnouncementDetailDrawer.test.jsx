@@ -38,8 +38,6 @@ function renderDrawer(lifecycleState, overrides = {}) {
       <AnnouncementDetailDrawer
         open
         detail={detailFor(lifecycleState)}
-        canPublish
-        canManage
         onAction={onAction}
         onClose={vi.fn()}
         onDuplicate={vi.fn()}
@@ -71,12 +69,6 @@ describe('AnnouncementDetailDrawer re-show action', () => {
 
   it('hides the action while the announcement is not live', () => {
     renderDrawer('paused')
-
-    expect(screen.queryByRole('button', { name: /Hiện lại cho người đã đóng/ })).not.toBeInTheDocument()
-  })
-
-  it('hides the action without publish permission', () => {
-    renderDrawer('published', { canPublish: false })
 
     expect(screen.queryByRole('button', { name: /Hiện lại cho người đã đóng/ })).not.toBeInTheDocument()
   })

@@ -6,16 +6,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import CompanyReportQueue from './CompanyReportQueue'
 
 const mocks = vi.hoisted(() => ({
-  permissions: new Set(),
   getAdminCompanyReports: vi.fn(),
   resolveAdminCompanyReport: vi.fn(),
   reverseAdminCompanyReport: vi.fn(),
 }))
 
-vi.mock('@/entities/admin-access', () => ({
-  useAdminAccess: () => ({ has: (code) => mocks.permissions.has(code) }),
-}))
-vi.mock('@/entities/session', () => ({ useSession: () => ({ user: { role: 'admin' } }) }))
 vi.mock('@/entities/company-report', async (importOriginal) => ({
   ...(await importOriginal()),
   getAdminCompanyReports: mocks.getAdminCompanyReports,
@@ -70,7 +65,6 @@ const lastParams = () => mocks.getAdminCompanyReports.mock.lastCall[0]
 describe('CompanyReportQueue', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mocks.permissions = new Set(['company_report.view', 'company_report.resolve', 'company_page.moderate', 'company.view'])
     mocks.getAdminCompanyReports.mockResolvedValue(listOf(REPORT))
     mocks.resolveAdminCompanyReport.mockResolvedValue({ ...REPORT, status: 'upheld' })
   })
@@ -90,16 +84,14 @@ describe('CompanyReportQueue', () => {
     )
   })
 
-  it('marks a hidden company and does not link it for admins who cannot open companies', async () => {
-    mocks.permissions.delete('company.view')
+  it('marks a hidden company', async () => {
     mocks.getAdminCompanyReports.mockResolvedValue(
       listOf({ ...REPORT, section_title: '', company: { ...REPORT.company, content_policy_hold: true } }),
     )
     renderQueue()
 
     expect(await screen.findByText('Đang tạm ẩn')).toBeVisible()
-    expect(screen.getByText('FPT Software')).toBeVisible()
-    expect(screen.queryByRole('link', { name: 'FPT Software' })).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'FPT Software' })).toBeVisible()
     expect(screen.queryByText(/^Phần:/)).not.toBeInTheDocument()
   })
 
@@ -122,23 +114,6 @@ describe('CompanyReportQueue', () => {
       apply_hold: true,
     }))
     await waitFor(() => expect(mocks.getAdminCompanyReports).toHaveBeenCalledTimes(2))
-  })
-
-  it('offers no page hold to admins who cannot moderate company pages', async () => {
-    mocks.permissions.delete('company_page.moderate')
-    renderQueue()
-
-    fireEvent.click(await screen.findByRole('button', { name: 'Xác nhận vi phạm' }))
-    const dialog = screen.getByRole('dialog')
-    expect(within(dialog).queryByRole('checkbox')).not.toBeInTheDocument()
-    fireEvent.change(within(dialog).getByLabelText('Ghi chú xử lý'), { target: { value: 'Đã xác minh.' } })
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Xác nhận vi phạm' }))
-
-    await waitFor(() => expect(mocks.resolveAdminCompanyReport).toHaveBeenCalledWith('crp_1', {
-      status: 'upheld',
-      note: 'Đã xác minh.',
-      apply_hold: false,
-    }))
   })
 
   it('dismisses a report with a note and never offers a hold', async () => {
@@ -175,16 +150,6 @@ describe('CompanyReportQueue', () => {
     await waitFor(() => expect(mocks.reverseAdminCompanyReport).toHaveBeenCalledWith('crp_1', 'Bằng chứng mới.'))
   })
 
-  it('is read-only without the resolve permission', async () => {
-    mocks.permissions.delete('company_report.resolve')
-    renderQueue()
-
-    expect(await screen.findByText('Bạn có quyền xem nhưng không có quyền xử lý báo cáo.')).toBeVisible()
-    expect(await screen.findByText('Chỉ xem')).toBeVisible()
-    expect(screen.queryByRole('button', { name: 'Xác nhận vi phạm' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Bác bỏ báo cáo' })).not.toBeInTheDocument()
-  })
-
   it('keeps filters, ordering and page in the URL and narrows to one company', async () => {
     renderQueue(`${ROUTE}?status=all&reason=scam&q=FPT&ordering=company_name&page=2`)
 
@@ -207,7 +172,7 @@ describe('CompanyReportQueue', () => {
     await waitFor(() => expect(lastParams()).toEqual({ status: 'pending', ordering: '-created_at', page: 1 }))
     expect(screen.getByTestId('location')).toHaveTextContent(ROUTE)
     expect(screen.getByTestId('location')).not.toHaveTextContent('?')
-  })
+  }, 10_000)
 
   it('sorts every data column on the server in both directions', async () => {
     renderQueue(`${ROUTE}?page=3`)

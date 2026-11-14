@@ -68,24 +68,14 @@ describe('DashboardLayout admin access', () => {
     })
   })
 
-  it('filters navigation with the shared permission policy', async () => {
+  it('hides superuser-only areas from a regular admin', async () => {
     const user = userEvent.setup()
     useSession.mockReturnValue({
       user: {
         role: 'admin',
+        full_name: 'Lan Kiểm Duyệt',
         email: 'moderator@example.com',
-        admin_access: {
-          is_superuser: false,
-          permissions: ['job_moderation.view', 'site_setting.view'],
-          primary_department: {
-            code: 'job-moderation',
-            name: 'Kiểm duyệt tin',
-          },
-          memberships: [{
-            department: { code: 'job-moderation', name: 'Kiểm duyệt tin' },
-            role: { code: 'staff', name: 'Nhân viên', rank: 10 },
-          }],
-        },
+        admin_access: { is_superuser: false },
       },
       logout: vi.fn(),
     })
@@ -99,7 +89,12 @@ describe('DashboardLayout admin access', () => {
     expect(screen.getByText('Tin có báo cáo chờ')).toBeInTheDocument()
     expect(screen.getByText('Tài khoản cá nhân')).toBeInTheDocument()
     expect(screen.queryByText('Hệ thống')).not.toBeInTheDocument()
-    expect(screen.getByText('Kiểm duyệt tin · Nhân viên')).toBeInTheDocument()
+    expect(screen.getByText('Quản trị viên')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: /^Người dùng/ }))
+    await user.click(screen.getByRole('button', { name: /^Tài khoản(?! cá nhân)/ }))
+    expect(screen.getByText('Ứng viên')).toBeInTheDocument()
+    expect(screen.queryByText('Lời mời quản trị')).not.toBeInTheDocument()
+    expect(screen.queryByText('Tất cả người dùng')).not.toBeInTheDocument()
   })
 
   it('groups related administration routes into expandable navigation sections', async () => {
@@ -108,11 +103,7 @@ describe('DashboardLayout admin access', () => {
       user: {
         role: 'admin',
         email: 'superuser@example.com',
-        admin_access: {
-          is_superuser: true,
-          permissions: [],
-          memberships: [],
-        },
+        admin_access: { is_superuser: true },
       },
       logout: vi.fn(),
     })
@@ -147,7 +138,7 @@ describe('DashboardLayout admin access', () => {
       user: {
         role: 'admin',
         email: 'superuser@example.com',
-        admin_access: { is_superuser: true, permissions: [], memberships: [] },
+        admin_access: { is_superuser: true },
       },
       logout: vi.fn(),
     })
@@ -183,7 +174,7 @@ describe('DashboardLayout admin access', () => {
       user: {
         role: 'admin',
         email: 'superuser@example.com',
-        admin_access: { is_superuser: true, permissions: [], memberships: [] },
+        admin_access: { is_superuser: true },
       },
       logout: vi.fn(),
     })
@@ -208,7 +199,7 @@ describe('DashboardLayout admin access', () => {
       user: {
         role: 'admin',
         email: 'superuser@example.com',
-        admin_access: { is_superuser: true, permissions: [], memberships: [] },
+        admin_access: { is_superuser: true },
       },
       logout: vi.fn(),
     })
@@ -234,7 +225,7 @@ describe('DashboardLayout admin access', () => {
       user: {
         role: 'admin',
         email: 'superuser@example.com',
-        admin_access: { is_superuser: true, permissions: [], memberships: [] },
+        admin_access: { is_superuser: true },
       },
       logout: vi.fn(),
     })
@@ -282,7 +273,7 @@ describe('DashboardLayout admin access', () => {
       user: {
         role: 'admin',
         email: 'superuser@example.com',
-        admin_access: { is_superuser: true, permissions: [], memberships: [] },
+        admin_access: { is_superuser: true },
       },
       logout: vi.fn(),
     })
@@ -295,17 +286,13 @@ describe('DashboardLayout admin access', () => {
     expect(screen.getByText('Đang ở: Yêu cầu cập nhật')).toBeInTheDocument()
   })
 
-  it('shows a useful empty state for an unassigned admin', () => {
+  it('labels a superuser in the workspace header', () => {
     useSession.mockReturnValue({
       user: {
         role: 'admin',
-        email: 'new-admin@example.com',
-        admin_access: {
-          is_superuser: false,
-          permissions: [],
-          primary_department: null,
-          memberships: [],
-        },
+        full_name: 'Hậu Superuser',
+        email: 'root@example.com',
+        admin_access: { is_superuser: true },
       },
       logout: vi.fn(),
     })
@@ -314,7 +301,8 @@ describe('DashboardLayout admin access', () => {
         <DashboardLayout />
       </MemoryRouter>,
     )
-    expect(screen.getByText(/Liên hệ quản trị hệ thống/)).toBeInTheDocument()
+    expect(screen.getByText('Superuser')).toBeInTheDocument()
+    expect(screen.queryByText(/chưa được gán phòng ban/)).not.toBeInTheDocument()
   })
 
   it('asks for confirmation before logging out', async () => {
@@ -324,11 +312,7 @@ describe('DashboardLayout admin access', () => {
       user: {
         role: 'admin',
         email: 'admin@example.com',
-        admin_access: {
-          is_superuser: true,
-          permissions: [],
-          memberships: [],
-        },
+        admin_access: { is_superuser: true },
       },
       logout,
     })
@@ -354,11 +338,7 @@ describe('DashboardLayout admin access', () => {
       user: {
         role: 'admin',
         email: 'admin@example.com',
-        admin_access: {
-          is_superuser: true,
-          permissions: [],
-          memberships: [],
-        },
+        admin_access: { is_superuser: true },
       },
       logout: vi.fn(),
     })

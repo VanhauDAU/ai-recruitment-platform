@@ -47,8 +47,6 @@ export default function CompanyUpdateReviewPanel({
   companyPublicId,
   requestPublicId,
   requesterPublicId,
-  canReview,
-  canViewSensitive,
   onChanged,
 }) {
   const queryClient = useQueryClient()
@@ -250,7 +248,7 @@ export default function CompanyUpdateReviewPanel({
           <Button icon={<EyeOutlined />} onClick={() => setDetailsOpen(true)}>
             Xem chi tiết và đối chiếu
           </Button>
-          {canReview && isSubmitted && (
+          {isSubmitted && (
             <Button
               type="primary"
               loading={startReviewMutation.isPending}
@@ -264,8 +262,7 @@ export default function CompanyUpdateReviewPanel({
       <CompanyUpdateComparisonModal
         open={detailsOpen}
         updateRequest={updateRequest}
-        canReview={canReview && isInReview}
-        canViewSensitive={canViewSensitive}
+        canReview={isInReview}
         canApply={canApply}
         requestConflict={requestConflict}
         documentLoading={documentMutation.isPending}

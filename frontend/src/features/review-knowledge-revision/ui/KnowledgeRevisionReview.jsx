@@ -28,7 +28,7 @@ function DiffPanel({ current, published }) {
   )
 }
 
-export default function KnowledgeRevisionReview({ article, canManage, canReview, onArticleChange, disabled }) {
+export default function KnowledgeRevisionReview({ article, onArticleChange, disabled }) {
   const queryClient = useQueryClient()
   const [action, setAction] = useState(null)
   const [note, setNote] = useState('')
@@ -86,10 +86,10 @@ export default function KnowledgeRevisionReview({ article, canManage, canReview,
           <strong>{nextStep}</strong>
         </div>
         <Space className="knowledge-workflow-card__actions" size={8} wrap>
-          {current.status === 'DRAFT' && canManage && (
+          {current.status === 'DRAFT' && (
             <Button size="small" type="primary" icon={<SendOutlined />} disabled={disabled} onClick={() => openAction('submit')}>Gửi duyệt</Button>
           )}
-          {current.status === 'IN_REVIEW' && canReview && (
+          {current.status === 'IN_REVIEW' && (
             <>
               <Button size="small" type="primary" icon={<CheckOutlined />} disabled={disabled} onClick={() => openAction('approve')}>Duyệt revision</Button>
               <Button size="small" danger icon={<CloseOutlined />} disabled={disabled} onClick={() => openAction('reject')}>Yêu cầu chỉnh sửa</Button>

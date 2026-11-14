@@ -36,20 +36,16 @@ describe('AcceptAdminInvitation', () => {
     api.validateAdminInvitation.mockResolvedValue({
       email: 'new-admin@example.com',
       full_name: 'Nguyễn Văn An',
-      target_role: {
-        name: 'Nhân viên kiểm duyệt',
-        department: { name: 'Kiểm duyệt tin' },
-      },
+      expires_at: '2026-12-01T00:00:00Z',
     })
   })
 
-  it('validates the signed link and displays the backend-selected role', async () => {
+  it('validates the signed link and shows the invited email', async () => {
     renderFeature()
     expect(await screen.findByRole('heading', {
       name: 'Hoàn tất tài khoản quản trị',
     })).toBeInTheDocument()
-    expect(screen.getByText('Kiểm duyệt tin')).toBeInTheDocument()
-    expect(screen.getByText('Nhân viên kiểm duyệt')).toBeInTheDocument()
+    expect(screen.getByText('new-admin@example.com')).toBeInTheDocument()
     expect(api.validateAdminInvitation).toHaveBeenCalledWith(
       'signed-token',
       expect.objectContaining({ signal: expect.any(AbortSignal) }),

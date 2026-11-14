@@ -1,11 +1,10 @@
 import {
   ArrowRightOutlined,
-  CheckCircleFilled,
   ClockCircleOutlined,
   SafetyCertificateOutlined,
   UserOutlined,
 } from '@ant-design/icons'
-import { Avatar, Button, Descriptions, Drawer, Tag, Typography } from 'antd'
+import { Avatar, Button, Descriptions, Drawer, Typography } from 'antd'
 import {
   accountSubtitle,
   formatAdminDate,
@@ -26,7 +25,6 @@ function DetailLine({ icon, label, value }) {
 
 export default function AccountQuickDrawer({ account, open, onClose, onOpenDetail }) {
   if (!account) return null
-  const membership = account.admin_access?.membership
 
   return (
     <Drawer
@@ -91,23 +89,6 @@ export default function AccountQuickDrawer({ account, open, onClose, onOpenDetai
         </Descriptions.Item>
       </Descriptions>
 
-      {membership && (
-        <div className="account-drawer__access">
-          <div className="flex items-center gap-2">
-            <CheckCircleFilled className="text-emerald-600" />
-            <strong>Quyền truy cập Admin</strong>
-          </div>
-          <p>{`${membership.role.department.name} · ${membership.role.name}`}</p>
-          <div className="flex flex-wrap gap-1.5">
-            {membership.role.permission_codes.slice(0, 6).map((code) => (
-              <Tag key={code}>{code}</Tag>
-            ))}
-            {membership.role.permission_codes.length > 6 && (
-              <Tag>{`+${membership.role.permission_codes.length - 6}`}</Tag>
-            )}
-          </div>
-        </div>
-      )}
     </Drawer>
   )
 }

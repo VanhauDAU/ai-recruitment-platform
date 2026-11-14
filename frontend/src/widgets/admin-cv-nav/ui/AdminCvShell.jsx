@@ -1,7 +1,5 @@
 import { ApartmentOutlined, BgColorsOutlined, DashboardOutlined, FileTextOutlined, SolutionOutlined } from '@ant-design/icons'
 import { NavLink } from 'react-router'
-import { useAdminAccess } from '@/entities/admin-access'
-import { useSession } from '@/entities/session'
 import { adminPath } from '@/shared/config/portals'
 import { AdminPageHeader } from '@/shared/ui/admin'
 
@@ -11,14 +9,12 @@ const ITEMS = [
   { to: '/cv/templates', label: 'Mẫu CV', icon: <FileTextOutlined /> },
   { to: '/cv/positions', label: 'Nội dung theo vị trí', icon: <ApartmentOutlined /> },
   { to: '/cv/library', label: 'Thư viện', icon: <BgColorsOutlined /> },
-  { to: '/cv/user-cvs', label: 'CV ứng viên', icon: <SolutionOutlined />, permission: 'cv_user.view' },
+  { to: '/cv/user-cvs', label: 'CV ứng viên', icon: <SolutionOutlined /> },
 ]
 
 export function AdminCvNav() {
-  const { user } = useSession()
-  const access = useAdminAccess(user)
   return <nav aria-label="Các trang Mẫu CV" className="-mx-1 flex gap-1 overflow-x-auto rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
-    {ITEMS.filter((item) => !item.permission || access.has(item.permission)).map((item) => <NavLink key={item.to} to={adminPath(item.to)} className={({ isActive }) => `flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition ${isActive ? '!bg-emerald-50 !text-emerald-700' : '!text-slate-600 hover:!bg-slate-50 hover:!text-slate-900'}`}>
+    {ITEMS.map((item) => <NavLink key={item.to} to={adminPath(item.to)} className={({ isActive }) => `flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition ${isActive ? '!bg-emerald-50 !text-emerald-700' : '!text-slate-600 hover:!bg-slate-50 hover:!text-slate-900'}`}>
       {item.icon}{item.label}
     </NavLink>)}
   </nav>

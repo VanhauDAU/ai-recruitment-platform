@@ -126,7 +126,7 @@ function ReviewModal({ review, loading, onClose, onPreview, onConfirm }) {
   )
 }
 
-function ClaimCard({ claim, canReview, canRevoke, onReview, onOpenDetail }) {
+function ClaimCard({ claim, onReview, onOpenDetail }) {
   const status = domainClaimStatusPresentation(claim)
   const manualPending = claim.status === 'pending'
     && claim.method === 'admin_manual'
@@ -157,13 +157,13 @@ function ClaimCard({ claim, canReview, canRevoke, onReview, onOpenDetail }) {
       {claim.review_reason && <p className="mt-3 rounded-lg bg-slate-50 px-3 py-2 text-sm leading-6 text-slate-600"><strong>Lý do gần nhất:</strong> {claim.review_reason}</p>}
       <div className="mt-4 flex flex-col gap-2 border-t border-slate-100 pt-4 sm:flex-row sm:flex-wrap">
         <Button icon={<EyeOutlined />} onClick={() => onOpenDetail(claim.public_id)}>Xem đầy đủ</Button>
-        {manualPending && canReview && (
+        {manualPending && (
           <>
             <Button type="primary" icon={<CheckOutlined />} onClick={() => onReview(claim, 'approve_manual')}>Duyệt thủ công</Button>
             <Button danger icon={<CloseOutlined />} onClick={() => onReview(claim, 'reject_manual')}>Từ chối</Button>
           </>
         )}
-        {claim.status === 'verified' && canRevoke && (
+        {claim.status === 'verified' && (
           <Button danger icon={<StopOutlined />} onClick={() => onReview(claim, 'revoke')}>Thu hồi</Button>
         )}
       </div>
@@ -171,7 +171,7 @@ function ClaimCard({ claim, canReview, canRevoke, onReview, onOpenDetail }) {
   )
 }
 
-export default function AdminCompanyDomainReview({ canReview = false, canRevoke = false }) {
+export default function AdminCompanyDomainReview() {
   const queryClient = useQueryClient()
   const [filters, setFilters] = useState({ status: '', method: '', search: '', page: 1 })
   const [review, setReview] = useState(null)
@@ -268,8 +268,6 @@ export default function AdminCompanyDomainReview({ canReview = false, canRevoke 
           <ClaimCard
             key={claim.public_id}
             claim={claim}
-            canReview={canReview}
-            canRevoke={canRevoke}
             onReview={(item, action) => setReview({ claim: item, action, impact: null })}
             onOpenDetail={setSelectedClaimId}
           />

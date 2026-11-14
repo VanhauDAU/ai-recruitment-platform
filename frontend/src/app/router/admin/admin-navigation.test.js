@@ -9,59 +9,52 @@ import {
 } from './admin-navigation'
 import { ADMIN_ROUTES } from './admin-routes.config'
 
-function access(permissions = [], isSuperuser = false) {
-  return createAdminAccess({
-    role: 'admin',
-    admin_access: {
-      is_superuser: isSuperuser,
-      permissions,
-      memberships: [],
-    },
-  })
+function tree(isSuperuser = false) {
+  const access = createAdminAccess({ role: 'admin', admin_access: { is_superuser: isSuperuser } })
+  return buildAdminNavigation(ADMIN_NAVIGATION, ADMIN_ROUTES, access)
 }
 
+const leafKeys = (nodes) => flattenAdminNavigation(nodes).map((leaf) => leaf.key)
+const SUPERUSER_ONLY = ['all-accounts', 'admin-accounts', 'admin-invitations']
+
 describe('admin navigation tree', () => {
-  it('filters leaves bottom-up and removes empty ancestors', () => {
-    const tree = buildAdminNavigation(
-      ADMIN_NAVIGATION,
-      ADMIN_ROUTES,
-      access(['job_moderation.view']),
-    )
-    const labels = flattenAdminNavigation(tree).map((leaf) => leaf.label)
+  it('gives a regular admin every business area but no admin-account management', () => {
+    const keys = leafKeys(tree())
 
-    expect(labels).toContain('Tin có báo cáo chờ')
-    expect(labels).toContain('Báo cáo vi phạm')
-    expect(labels).toContain('Tài khoản cá nhân')
-    expect(labels).not.toContain('Tất cả công ty')
-    expect(tree.map((item) => item.label)).not.toContain('Doanh nghiệp')
+    expect(keys).toEqual(expect.arrayContaining([
+      'dashboard',
+      'company-list',
+      'company-updates',
+      'company-reports',
+      'employer-list',
+      'employer-verification',
+      'employer-domain-verification',
+      'candidate-accounts',
+      'blocked-accounts',
+      'job-moderation',
+      'cv-templates',
+      'blog-posts',
+      'knowledgebase-review',
+      'announcements',
+      'personal',
+    ]))
+    SUPERUSER_ONLY.forEach((key) => expect(keys).not.toContain(key))
   })
 
-  it('lists the company report queue under companies, for its own permission', () => {
-    const leaves = (permissions) => flattenAdminNavigation(
-      buildAdminNavigation(ADMIN_NAVIGATION, ADMIN_ROUTES, access(permissions)),
-    )
-    const moderator = leaves(['company.view', 'company_update.view', 'company_report.view'])
-    const queue = moderator.find((leaf) => leaf.key === 'company-reports')
+  it('keeps settings and future items out of a regular admin tree', () => {
+    const regular = tree()
 
-    expect(queue).toMatchObject({ label: 'Báo cáo công ty', href: '/admin/app/company-reports' })
-    expect(moderator[moderator.indexOf(queue) - 1].key).toBe('company-updates')
-    expect(leaves(['company.view']).map((leaf) => leaf.key)).not.toContain('company-reports')
-    expect(leaves(['company_report.view']).map((leaf) => leaf.key)).toEqual(['company-reports', 'personal'])
+    expect(leafKeys(regular).filter((key) => key.startsWith('settings-'))).toEqual([])
+    expect(leafKeys(regular)).not.toContain('audit-log')
+    expect(leafKeys(regular)).not.toContain('employer-invitations')
   })
 
-  it('keeps future items disabled and superuser-only', () => {
-    const regular = buildAdminNavigation(
-      ADMIN_NAVIGATION,
-      ADMIN_ROUTES,
-      access(['audit_log.view']),
-    )
-    const superuser = buildAdminNavigation(
-      ADMIN_NAVIGATION,
-      ADMIN_ROUTES,
-      access([], true),
-    )
+  it('shows admin-account management, settings and future items to a superuser', () => {
+    const superuser = tree(true)
+    const keys = leafKeys(superuser)
 
-    expect(flattenAdminNavigation(regular).map((leaf) => leaf.key)).toContain('audit-log')
+    SUPERUSER_ONLY.forEach((key) => expect(keys).toContain(key))
+    expect(keys).toContain('settings-general')
     const report = flattenAdminNavigation(superuser).find(
       (leaf) => leaf.key === 'employer-invitations',
     )
@@ -69,13 +62,23 @@ describe('admin navigation tree', () => {
     expect(report.href).toBeNull()
   })
 
+  it('has no access-control area left', () => {
+    expect(leafKeys(ADMIN_NAVIGATION).filter((key) => (
+      ['departments', 'roles', 'staff', 'provisioning', 'settings-admin'].includes(key)
+    ))).toEqual([])
+    expect(searchAdminNavigation(tree(true), 'phân quyền')).toEqual([])
+  })
+
+  it('lists the company report queue right after company update requests', () => {
+    const leaves = flattenAdminNavigation(tree())
+    const queue = leaves.find((leaf) => leaf.key === 'company-reports')
+
+    expect(queue).toMatchObject({ label: 'Báo cáo công ty', href: '/admin/app/company-reports' })
+    expect(leaves[leaves.indexOf(queue) - 1].key).toBe('company-updates')
+  })
+
   it('keeps dashboard as a direct top-level home destination', () => {
-    const tree = buildAdminNavigation(
-      ADMIN_NAVIGATION,
-      ADMIN_ROUTES,
-      access(['dashboard.view']),
-    )
-    const dashboard = flattenAdminNavigation(tree).find(
+    const dashboard = flattenAdminNavigation(tree()).find(
       (leaf) => leaf.key === 'dashboard',
     )
 
@@ -86,76 +89,35 @@ describe('admin navigation tree', () => {
   })
 
   it('selects the most specific route and query leaf', () => {
-    const tree = buildAdminNavigation(
-      ADMIN_NAVIGATION,
-      ADMIN_ROUTES,
-      access(['company.view', 'company_recruiter.view']),
-    )
+    const nodes = tree()
 
     expect(findActiveAdminNavigation(
-      tree,
+      nodes,
       '/admin/app/companies',
       '?verification_status=pending',
     )?.key).toBe('company-list')
+    expect(findActiveAdminNavigation(nodes, '/admin/app/companies/co_123', '')?.key)
+      .toBe('company-list')
     expect(findActiveAdminNavigation(
-      tree,
-      '/admin/app/companies/co_123',
-      '',
-    )?.key).toBe('company-list')
-  })
-
-  it('routes company update requests inside the company workspace', () => {
-    const tree = buildAdminNavigation(
-      ADMIN_NAVIGATION,
-      ADMIN_ROUTES,
-      access(['company_update.view']),
-    )
-    const leaf = flattenAdminNavigation(tree).find(
-      (item) => item.key === 'company-updates',
-    )
-
-    expect(leaf.href).toBe('/admin/app/companies?tab=updates')
-    expect(findActiveAdminNavigation(
-      tree,
+      nodes,
       '/admin/app/companies',
       '?tab=updates&company=co_123',
     )?.key).toBe('company-updates')
   })
 
   it('routes recruiter administration to its dedicated workspace', () => {
-    const tree = buildAdminNavigation(
-      ADMIN_NAVIGATION,
-      ADMIN_ROUTES,
-      access(['account.view', 'employer_verification.view']),
-    )
-    const leaves = flattenAdminNavigation(tree)
+    const leaves = flattenAdminNavigation(tree())
 
     expect(leaves.find((leaf) => leaf.key === 'employer-list')?.href)
       .toBe('/admin/app/recruiters')
     expect(leaves.find((leaf) => leaf.key === 'employer-verification')?.href)
       .toBe('/admin/app/recruiters?tab=verification')
-  })
-
-  it('lets recruiter readers see NTD without exposing the general user area', () => {
-    const tree = buildAdminNavigation(
-      ADMIN_NAVIGATION,
-      ADMIN_ROUTES,
-      access(['account.employer.view']),
-    )
-    const leaves = flattenAdminNavigation(tree)
-
-    expect(leaves.map((leaf) => leaf.key)).toContain('employer-list')
-    expect(leaves.map((leaf) => leaf.key)).not.toContain('all-accounts')
-    expect(tree.map((item) => item.key)).not.toContain('users')
+    expect(leaves.find((leaf) => leaf.key === 'company-updates')?.href)
+      .toBe('/admin/app/companies?tab=updates')
   })
 
   it('does not turn persistent restricted-account totals into alert badges', () => {
-    const tree = buildAdminNavigation(
-      ADMIN_NAVIGATION,
-      ADMIN_ROUTES,
-      access([], true),
-    )
-    const leaves = flattenAdminNavigation(tree)
+    const leaves = flattenAdminNavigation(tree(true))
 
     expect(leaves.find((leaf) => leaf.key === 'employer-restricted')?.badgeKey)
       .toBeUndefined()
@@ -164,9 +126,9 @@ describe('admin navigation tree', () => {
   })
 
   it('maps each system setting leaf to one exact settings group', () => {
-    const settingLeaves = flattenAdminNavigation(ADMIN_NAVIGATION)
+    const groups = flattenAdminNavigation(ADMIN_NAVIGATION)
       .filter((item) => item.key.startsWith('settings-'))
-    const groups = settingLeaves.map((item) => item.query?.group || 'general')
+      .map((item) => item.query?.group || 'general')
 
     expect(groups).toEqual([
       'general',
@@ -182,53 +144,24 @@ describe('admin navigation tree', () => {
       'upload',
       'footer',
       'contact',
-      'admin_roles',
       'ai',
       'blog',
     ])
   })
 
   it('searches only the already-authorized tree and keeps breadcrumbs', () => {
-    const tree = buildAdminNavigation(
-      ADMIN_NAVIGATION,
-      ADMIN_ROUTES,
-      access(['company.view', 'company_recruiter.view', 'employer_verification.view']),
-    )
-    const results = searchAdminNavigation(tree, 'xác thực')
+    const results = searchAdminNavigation(tree(), 'xác thực')
 
     expect(results.map((leaf) => leaf.key)).toContain('employer-verification')
     expect(results[0].breadcrumb).toHaveLength(3)
-    expect(searchAdminNavigation(tree, 'phân quyền')).toEqual([])
+    expect(searchAdminNavigation(tree(), 'lời mời quản trị')).toEqual([])
   })
 
   it('does not duplicate owner/member filters as a navigation group', () => {
-    const tree = buildAdminNavigation(
-      ADMIN_NAVIGATION,
-      ADMIN_ROUTES,
-      access([], true),
-    )
-    const keys = flattenAdminNavigation(tree).map((leaf) => leaf.key)
+    const keys = leafKeys(tree(true))
 
     expect(keys).not.toContain('company-owners')
     expect(keys).not.toContain('company-members')
     expect(keys).not.toContain('membership-management')
-  })
-
-  it('shows the announcement workspace only with announcement.view', () => {
-    const denied = buildAdminNavigation(
-      ADMIN_NAVIGATION,
-      ADMIN_ROUTES,
-      access(['announcement.manage']),
-    )
-    const allowed = buildAdminNavigation(
-      ADMIN_NAVIGATION,
-      ADMIN_ROUTES,
-      access(['announcement.view']),
-    )
-
-    expect(flattenAdminNavigation(denied).map((leaf) => leaf.key))
-      .not.toContain('announcements')
-    expect(flattenAdminNavigation(allowed).find((leaf) => leaf.key === 'announcements')?.href)
-      .toBe('/admin/app/announcements')
   })
 })

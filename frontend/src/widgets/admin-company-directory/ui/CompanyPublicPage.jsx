@@ -46,7 +46,7 @@ function formatHoldTime(value) {
     : ''
 }
 
-export default function CompanyPublicPage({ company, enabled, canModerate }) {
+export default function CompanyPublicPage({ company, enabled }) {
   const queryClient = useQueryClient()
   const [form] = Form.useForm()
   // Giữ `action` khi đóng để tiêu đề và nút không đổi chữ trong lúc modal đang khép.
@@ -125,14 +125,12 @@ export default function CompanyPublicPage({ company, enabled, canModerate }) {
             </a>
           )}
         </div>
-        {canModerate && (
-          <Button
-            danger={!hold.active}
-            onClick={() => setDialog({ action: hold.active ? 'release' : 'apply', open: true })}
-          >
-            {hold.active ? 'Khôi phục hiển thị' : 'Tạm ẩn trang'}
-          </Button>
-        )}
+        <Button
+          danger={!hold.active}
+          onClick={() => setDialog({ action: hold.active ? 'release' : 'apply', open: true })}
+        >
+          {hold.active ? 'Khôi phục hiển thị' : 'Tạm ẩn trang'}
+        </Button>
       </div>
 
       {hold.active && (

@@ -36,8 +36,6 @@ export const ORDERING_OPTIONS = [
 export const ADVANCED_KEYS = [
   'email_verified',
   'has_active_session',
-  'department',
-  'admin_role',
   'company',
   'company_state',
   'verification_status',

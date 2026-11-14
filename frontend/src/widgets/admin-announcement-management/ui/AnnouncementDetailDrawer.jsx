@@ -83,8 +83,6 @@ function DetailOverview({ detail }) {
 }
 
 export default function AnnouncementDetailDrawer({
-  canManage,
-  canPublish,
   conflict,
   detail,
   error,
@@ -115,7 +113,7 @@ export default function AnnouncementDetailDrawer({
       destroyOnHidden
       extra={detail && (
         <Space wrap>
-          {canManage && !isArchived && (
+          {!isArchived && (
             <>
               <Button icon={<EditOutlined />} onClick={onRename}>Đổi tên</Button>
               <Button type="primary" icon={<EditOutlined />} onClick={onEdit}>
@@ -151,7 +149,7 @@ export default function AnnouncementDetailDrawer({
         <>
           <div className="announcement-detail__actions">
             <Space wrap>
-              {canPublish && !isArchived && publishRevision && (isDraft || detail.draft_revision_number) && (
+              {!isArchived && publishRevision && (isDraft || detail.draft_revision_number) && (
                 <Button
                   type="primary"
                   icon={<RocketOutlined />}
@@ -161,7 +159,7 @@ export default function AnnouncementDetailDrawer({
                   {detail.draft_revision_number ? 'Phát hành revision mới' : 'Phát hành'}
                 </Button>
               )}
-              {canPublish && isPublished && (
+              {isPublished && (
                 <Button
                   icon={<PauseCircleOutlined />}
                   loading={pendingType === 'pause'}
@@ -170,7 +168,7 @@ export default function AnnouncementDetailDrawer({
                   Tạm dừng
                 </Button>
               )}
-              {canPublish && isPaused && (
+              {isPaused && (
                 <Button
                   icon={<PlayCircleOutlined />}
                   loading={pendingType === 'resume'}
@@ -179,7 +177,7 @@ export default function AnnouncementDetailDrawer({
                   Tiếp tục
                 </Button>
               )}
-              {canPublish && isPublished && (
+              {isPublished && (
                 <Button
                   icon={<BellOutlined />}
                   loading={pendingType === 'reset-dismissals'}
@@ -188,7 +186,7 @@ export default function AnnouncementDetailDrawer({
                   Hiện lại cho người đã đóng
                 </Button>
               )}
-              {canPublish && !isArchived && (
+              {!isArchived && (
                 <Button
                   danger
                   icon={<StopOutlined />}
@@ -198,11 +196,9 @@ export default function AnnouncementDetailDrawer({
                   Lưu trữ
                 </Button>
               )}
-              {canManage && (
-                <Button icon={<CopyOutlined />} onClick={onDuplicate}>
-                  Nhân bản
-                </Button>
-              )}
+              <Button icon={<CopyOutlined />} onClick={onDuplicate}>
+                Nhân bản
+              </Button>
             </Space>
           </div>
           <Tabs

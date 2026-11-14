@@ -3,7 +3,6 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Alert, Button, Descriptions, Empty, Input, Select, Table, Tag } from 'antd'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useLocation, useSearchParams } from 'react-router'
-import { useAdminAccess } from '@/entities/admin-access'
 import {
   COMPANY_REPORT_REASON_OPTIONS,
   COMPANY_REPORT_STATUS_OPTIONS,
@@ -12,7 +11,6 @@ import {
   resolveAdminCompanyReport,
   reverseAdminCompanyReport,
 } from '@/entities/company-report'
-import { useSession } from '@/entities/session'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { message } from '@/shared/lib/toast'
 import { AdminDataActions, AdminPanel } from '@/shared/ui/admin'
@@ -37,9 +35,6 @@ function positivePage(value) {
 
 /** Hàng chờ báo cáo công ty; bộ lọc, thứ tự và trang đều là trạng thái URL. */
 export default function CompanyReportQueue() {
-  const { user } = useSession()
-  const adminAccess = useAdminAccess(user)
-  const canResolve = adminAccess.has('company_report.resolve')
   const location = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
   const rawStatus = searchParams.get('status')
@@ -138,8 +133,6 @@ export default function CompanyReportQueue() {
     ordering,
     origin: { pathname: location.pathname, search: location.search, label: 'Báo cáo công ty' },
     busy: decisionMutation.isPending,
-    canOpenCompany: adminAccess.has('company.view'),
-    canResolve,
     onDecide: (report, action) => setDecision({ action, open: true, report }),
     onFilterCompany: companyFilter ? undefined : (company) => patchParams({ company }),
   })
@@ -194,14 +187,6 @@ export default function CompanyReportQueue() {
         )}
       </div>
 
-      {!canResolve && (
-        <Alert
-          className="mb-4"
-          showIcon
-          title="Bạn có quyền xem nhưng không có quyền xử lý báo cáo."
-          type="info"
-        />
-      )}
       {reportsQuery.isError && (
         <Alert
           action={<Button onClick={() => reportsQuery.refetch()} size="small">Thử lại</Button>}
@@ -253,7 +238,6 @@ export default function CompanyReportQueue() {
         />
       </div>
       <CompanyReportDecisionModal
-        canHoldPage={adminAccess.has('company_page.moderate')}
         decision={decision}
         onCancel={() => {
           if (!decisionMutation.isPending) closeDecision()

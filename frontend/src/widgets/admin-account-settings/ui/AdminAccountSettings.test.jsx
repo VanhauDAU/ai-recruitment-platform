@@ -9,7 +9,6 @@ const { useSession } = vi.hoisted(() => ({ useSession: vi.fn() }))
 vi.mock('@/entities/session', () => ({ useSession }))
 vi.mock('./AdminProfilePanel', () => ({ default: () => <div>panel-profile</div> }))
 vi.mock('./AdminSecurityPanel', () => ({ default: () => <div>panel-security</div> }))
-vi.mock('./AdminMyAccessPanel', () => ({ default: () => <div>panel-access</div> }))
 vi.mock('./AdminActivityPanel', () => ({ default: () => <div>panel-activity</div> }))
 
 function renderAt(initialEntry = '/admin/app/account') {
@@ -27,27 +26,29 @@ describe('AdminAccountSettings', () => {
         full_name: 'Quản trị viên',
         email: 'admin@example.com',
         email_verified: true,
-        admin_access: { is_superuser: true, memberships: [] },
+        admin_access: { is_superuser: true },
       },
     })
   })
 
-  it('renders the four tabs and opens the profile panel by default', () => {
+  it('renders the three tabs and opens the profile panel by default', () => {
     renderAt()
 
     expect(screen.getByRole('heading', { name: 'Tài khoản của tôi' })).toBeInTheDocument()
     expect(screen.getByText('Đã xác minh')).toBeInTheDocument()
-    for (const label of ['Hồ sơ', 'Bảo mật', 'Quyền của tôi', 'Nhật ký hoạt động']) {
+    for (const label of ['Hồ sơ', 'Bảo mật', 'Nhật ký hoạt động']) {
       expect(screen.getByRole('tab', { name: new RegExp(label) })).toBeInTheDocument()
     }
+    expect(screen.queryByRole('tab', { name: /Quyền của tôi/ })).not.toBeInTheDocument()
+    expect(screen.getByText('Superuser')).toBeInTheDocument()
     expect(screen.getByText('panel-profile')).toBeInTheDocument()
   })
 
   it('deep-links to a tab from the query string', () => {
-    renderAt('/admin/app/account?tab=access')
+    renderAt('/admin/app/account?tab=activity')
 
-    expect(screen.getByText('panel-access')).toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: /Quyền của tôi/ })).toHaveAttribute('aria-selected', 'true')
+    expect(screen.getByText('panel-activity')).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: /Nhật ký hoạt động/ })).toHaveAttribute('aria-selected', 'true')
   })
 
   it('falls back to the profile tab for an unknown tab key', () => {

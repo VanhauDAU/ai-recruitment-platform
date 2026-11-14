@@ -3,10 +3,8 @@ import { useIsMutating, useMutation, useQuery, useQueryClient } from '@tanstack/
 import { Alert, Badge, Button, Drawer, Segmented, Skeleton, Table, Tag } from 'antd'
 import { useState } from 'react'
 import { Link, useParams } from 'react-router'
-import { useAdminAccess } from '@/entities/admin-access'
 import { RENDERER_CONTRACTS } from '@/entities/cv'
 import { adminCvTemplates, configureAdminTemplateVersion, createAdminTemplateVersion, getAdminCvTemplate, getAdminTemplateChecklist, publishAdminTemplateVersion, setAdminTemplateColors } from '@/entities/cv-template'
-import { useSession } from '@/entities/session'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { adminPath } from '@/shared/config/portals'
 import { message } from '@/shared/lib/toast'
@@ -40,9 +38,6 @@ function VersionHistory({ versions }) {
 export default function AdminCvTemplateEditor() {
   const { publicId } = useParams()
   const queryClient = useQueryClient()
-  const { user } = useSession()
-  const access = useAdminAccess(user)
-  const can = { manage: access.has('cv_template.manage'), publish: access.has('cv_template.publish') }
   const [pane, setPane] = useState('settings')
   const [historyOpen, setHistoryOpen] = useState(false)
   const [publishOpen, setPublishOpen] = useState(false)
@@ -106,13 +101,13 @@ export default function AdminCvTemplateEditor() {
     {working && <div className="lg:hidden"><Segmented block value={pane} onChange={setPane} options={[{ value: 'settings', label: 'Thiết lập' }, { value: 'preview', label: 'Xem trước' }]} /></div>}
     <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)] xl:grid-cols-[minmax(0,27rem)_minmax(0,1fr)]">
       <div className={`min-w-0 space-y-4 ${pane === 'preview' ? 'hidden lg:block' : ''}`}>
-        <InfoCard template={template} canManage={can.manage} onSave={(payload) => save.mutate({ kind: 'info', payload })} />
+        <InfoCard template={template} onSave={(payload) => save.mutate({ kind: 'info', payload })} />
         <AdminPanel title="Bố cục" description="Số cột và chỗ đặt tên, ảnh, liên hệ. Chấm tròn = có ảnh đại diện.">
-          <LayoutPicker value={(save.isPending && save.variables?.payload?.renderer_key) || working?.renderer_key} disabled={!can.manage} onChange={(renderer_key) => renderer_key !== working?.renderer_key && config({ renderer_key })} />
+          <LayoutPicker value={(save.isPending && save.variables?.payload?.renderer_key) || working?.renderer_key} onChange={(renderer_key) => renderer_key !== working?.renderer_key && config({ renderer_key })} />
         </AdminPanel>
         {working && <>
-          <StyleCard template={template} version={working} canManage={can.manage} onSaveColors={(payload) => save.mutate({ kind: 'colors', payload })} onSaveStyle={(style) => config({ style })} />
-          <SectionsCard key={`${working.id}-${working.renderer_key}`} version={working} canManage={can.manage} onSave={config} />
+          <StyleCard template={template} version={working} onSaveColors={(payload) => save.mutate({ kind: 'colors', payload })} onSaveStyle={(style) => config({ style })} />
+          <SectionsCard key={`${working.id}-${working.renderer_key}`} version={working} onSave={config} />
         </>}
       </div>
       <div className={`min-w-0 lg:sticky lg:top-[calc(var(--admin-topbar-height,72px)_+_1rem)] ${pane === 'settings' ? 'hidden lg:block' : ''}`}>
@@ -121,7 +116,7 @@ export default function AdminCvTemplateEditor() {
           : <div className="rounded-[13px] border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-500">Chọn bố cục để bắt đầu; bản xem trước hiện ở đây.</div>}
       </div>
     </div>
-    <PublishModal open={publishOpen} onClose={() => setPublishOpen(false)} template={template} draft={draft} checklist={checklist.data} canPublish={can.publish} publishing={publish.isPending} onPublish={() => publish.mutate()} />
+    <PublishModal open={publishOpen} onClose={() => setPublishOpen(false)} template={template} draft={draft} checklist={checklist.data} publishing={publish.isPending} onPublish={() => publish.mutate()} />
     <Drawer open={historyOpen} onClose={() => setHistoryOpen(false)} title={`Lịch sử phiên bản (${template.versions.length})`} size="min(560px, 100vw)">
       <VersionHistory versions={template.versions} />
     </Drawer>

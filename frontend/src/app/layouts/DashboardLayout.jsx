@@ -17,6 +17,7 @@ import {
 } from '@/entities/admin-access'
 import {
   adminAccountKeys,
+  adminTierLabel,
   getAdminAccountSummary,
 } from '@/entities/admin-account'
 import {
@@ -170,11 +171,6 @@ export default function DashboardLayout() {
     recruitersSummary.data,
     usersSummary.data,
   ])
-  const hasNoDepartment = (
-    user?.role === 'admin'
-    && !adminAccess.isSuperuser
-    && adminAccess.memberships.length === 0
-  )
   const currentRoute = [...availableRoutes]
     .sort((left, right) => right.path.length - left.path.length)
     .find((item) => matchPath({ path: item.path, end: true }, pathname))
@@ -226,12 +222,6 @@ export default function DashboardLayout() {
               setSidebarPeek(true)
             }}
           />
-          {hasNoDepartment && !sidebarCollapsed && (
-            <p className="admin-sider__notice">
-              Tài khoản chưa được gán phòng ban. Liên hệ quản trị hệ thống
-              (superuser) để được cấp quyền.
-            </p>
-          )}
           {sidebarCollapsed && sidebarPeek && (
             <div
               className="admin-sider__peek"
@@ -245,12 +235,6 @@ export default function DashboardLayout() {
                 requestedOpenKey={sidebarPeekGroup}
                 onNavigate={() => setSidebarPeek(false)}
               />
-              {hasNoDepartment && (
-                <p className="admin-sider__notice">
-                  Tài khoản chưa được gán phòng ban. Liên hệ quản trị hệ thống
-                  để được cấp quyền.
-                </p>
-              )}
             </div>
           )}
         </Sider>
@@ -283,7 +267,6 @@ export default function DashboardLayout() {
               mobile
               onNavigate={() => setMobileNavOpen(false)}
             />
-            {hasNoDepartment && <p className="admin-sider__notice">Tài khoản chưa được gán phòng ban. Liên hệ quản trị hệ thống để được cấp quyền.</p>}
           </div>
         </Drawer>
 
@@ -326,15 +309,9 @@ export default function DashboardLayout() {
                     {user?.full_name || 'Quản trị viên'}
                   </Typography.Text>
                   <div className="mt-0.5 flex min-w-0 items-center gap-1">
-                    {adminAccess.memberships[0] ? (
-                      <Typography.Text type="secondary" ellipsis className="!text-xs">
-                        {`${adminAccess.memberships[0].department.name} · ${adminAccess.memberships[0].role.name}`}
-                      </Typography.Text>
-                    ) : (
-                      <Typography.Text type="secondary" ellipsis className="!text-xs">
-                        {user?.email}
-                      </Typography.Text>
-                    )}
+                    <Typography.Text type="secondary" ellipsis className="!text-xs">
+                      {adminTierLabel(user?.admin_access)}
+                    </Typography.Text>
                   </div>
                 </div>
               </button>

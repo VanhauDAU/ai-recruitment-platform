@@ -26,10 +26,8 @@ import AccountStatusImpactPreview from './AccountStatusImpactPreview'
 
 export default function AdminAccountSecurityActions({
   account,
-  allowStatus = true,
   allowBan = false,
   allowResourceRelease = false,
-  allowSessions = true,
 }) {
   const queryClient = useQueryClient()
   const [form] = Form.useForm()
@@ -160,7 +158,7 @@ export default function AdminAccountSecurityActions({
   return (
     <>
       <Space wrap>
-        {allowStatus && account.status === 'active' && (
+        {account.status === 'active' && (
           <Button
             danger
             icon={<LockOutlined />}
@@ -169,7 +167,7 @@ export default function AdminAccountSecurityActions({
             Tạm khóa tài khoản
           </Button>
         )}
-        {allowStatus && account.status === 'inactive' && (
+        {account.status === 'inactive' && (
           <Button
             type="primary"
             icon={<ReloadOutlined />}
@@ -208,15 +206,13 @@ export default function AdminAccountSecurityActions({
             Rà soát & gỡ giữ tài nguyên
           </Button>
         )}
-        {allowSessions && (
-          <Button
-            danger
-            icon={<StopOutlined />}
-            onClick={() => open({ kind: 'sessions' })}
-          >
-            Thu hồi mọi phiên
-          </Button>
-        )}
+        <Button
+          danger
+          icon={<StopOutlined />}
+          onClick={() => open({ kind: 'sessions' })}
+        >
+          Thu hồi mọi phiên
+        </Button>
       </Space>
       <Modal
         open={Boolean(operation)}
