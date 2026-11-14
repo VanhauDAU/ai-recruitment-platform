@@ -5,7 +5,7 @@ from django.db.models.functions import Cast, Concat
 
 from apps.candidates.models import CandidateNotification
 
-from ..models import Application, ApplicationStatusHistory
+from ..models import Application, ApplicationReview, ApplicationReviewLink, ApplicationStatusHistory
 
 
 def _history_notice():
@@ -171,4 +171,20 @@ def recruiter_application_snapshot_queryset(recruiter):
         )
         .prefetch_related('preferred_locations')
         .distinct()
+    )
+
+
+def recruiter_review_links_queryset(application):
+    return (
+        ApplicationReviewLink.objects.filter(application=application)
+        .select_related('review')
+        .order_by('-created_at', '-id')
+    )
+
+
+def recruiter_reviews_queryset(application):
+    return (
+        ApplicationReview.objects.filter(application=application)
+        .select_related('link')
+        .order_by('-submitted_at', '-id')
     )

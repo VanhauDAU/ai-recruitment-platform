@@ -14,6 +14,12 @@ from .api.views.employer import (
     EmployerApplicationHistoryView,
     EmployerApplicationListView,
 )
+from .api.views.reviews import (
+    PublicApplicationReviewView,
+    RecruiterApplicationReviewListView,
+    RecruiterReviewLinkListCreateView,
+    RecruiterReviewLinkRevokeView,
+)
 from .api.views.v2 import CandidateApplicationV2ListCreateView, RecruiterApplicationSnapshotView
 
 urlpatterns = [
@@ -71,6 +77,26 @@ urlpatterns = [
         'recruiter/applications/<str:public_id>/cv/exports/<str:export_public_id>/download/',
         RecruiterApplicationCvExportDownloadView.as_view(),
         name='recruiter-application-cv-export-download-v2',
+    ),
+    path(
+        'recruiter/applications/<str:public_id>/review-links/',
+        RecruiterReviewLinkListCreateView.as_view(),
+        name='recruiter-application-review-links-v2',
+    ),
+    path(
+        'recruiter/applications/<str:public_id>/review-links/<str:link_public_id>/revoke/',
+        RecruiterReviewLinkRevokeView.as_view(),
+        name='recruiter-application-review-link-revoke-v2',
+    ),
+    path(
+        'recruiter/applications/<str:public_id>/reviews/',
+        RecruiterApplicationReviewListView.as_view(),
+        name='recruiter-application-reviews-v2',
+    ),
+    path(
+        'application-reviews/<str:token>/',
+        PublicApplicationReviewView.as_view(),
+        name='public-application-review-v2',
     ),
     path(
         'recruiter/applications/<str:public_id>/history/',

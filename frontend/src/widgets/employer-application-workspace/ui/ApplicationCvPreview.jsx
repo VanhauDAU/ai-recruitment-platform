@@ -2,6 +2,7 @@ import { FileTextOutlined, MessageOutlined } from '@ant-design/icons'
 import { Alert, Button, Empty, Skeleton, Tooltip } from 'antd'
 import { CvDocumentPreview } from '@/entities/cv'
 import { DownloadApplicationCvButton } from '@/features/download-application-cv'
+import { ShareApplicationReviewButton } from '@/features/share-application-review'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { usePreviewFitZoom } from '@/shared/hooks/use-preview-fit-zoom'
 import { documentFromVersion } from '../model/application-workspace'
@@ -46,6 +47,11 @@ export default function ApplicationCvPreview({
           <div className="aw-toolbar">
             {previewDocument && <span className="aw-zoom">{Math.round(previewZoom * 100)}%</span>}
             <DownloadApplicationCvButton publicId={selectedPublicId} candidateName={candidateName} />
+            <ShareApplicationReviewButton
+              publicId={selectedPublicId}
+              candidateName={candidateName}
+              jobTitle={selectedApplication?.job_title || ''}
+            />
             <Tooltip title="Nhắn tin với ứng viên sắp ra mắt">
               <span>
                 <Button size="small" icon={<MessageOutlined />} disabled>Nhắn tin</Button>

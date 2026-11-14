@@ -7,6 +7,8 @@
 .aw-tone-emerald { --aw-bg: #ecfdf5; --aw-fg: #047857; --aw-dot: #10b981; }
 .aw-tone-violet { --aw-bg: #f5f3ff; --aw-fg: #6d28d9; --aw-dot: #8b5cf6; }
 .aw-tone-teal { --aw-bg: #f0fdfa; --aw-fg: #0f766e; --aw-dot: #0d9488; }
+.aw-tone-amber { --aw-bg: #fffbeb; --aw-fg: #b45309; --aw-dot: #f59e0b; }
+.aw-tone-rose { --aw-bg: #fff1f2; --aw-fg: #be123c; --aw-dot: #f43f5e; }
 .aw-tone-slate { --aw-bg: #f1f5f9; --aw-fg: #475569; --aw-dot: #94a3b8; }
 
 .aw-badge {
@@ -100,3 +102,5 @@
 .aw-tab { border: 0; border-radius: 9px; padding: 8px 12px; background: transparent; color: #64748b; font-size: 13px; font-weight: 700; cursor: pointer; }
 .aw-tab[aria-selected='true'] { background: #0f172a; color: #fff; }
 @media (min-width: 768px) { .aw-tabs { display: none; } }
+
+.aw-review-summary { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }

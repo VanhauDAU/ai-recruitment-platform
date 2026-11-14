@@ -57,13 +57,16 @@ def record_cv_access(
     )
 
 
-def record_application_snapshot_access(*, version, actor, request, channel) -> CvAccessLog:
-    """Recruiter read/download of an application snapshot (``cv`` stays NULL so
-    the record outlives the candidate deleting the library CV)."""
+def record_application_snapshot_access(
+    *, version, actor, request, channel, actor_type=CvAccessLog.ActorType.RECRUITER
+) -> CvAccessLog:
+    """Read/download of an application snapshot (``cv`` stays NULL so the record
+    outlives the candidate deleting the library CV). Reviewers invited through a
+    review link are logged as anonymous on the shared-link channel."""
     return record_cv_access(
         cv=None,
         version=version,
-        actor_type=CvAccessLog.ActorType.RECRUITER,
+        actor_type=actor_type,
         access_channel=channel,
         request=request,
         actor_user=actor,

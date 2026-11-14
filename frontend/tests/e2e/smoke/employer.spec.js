@@ -2483,3 +2483,52 @@ test('employer company page: editing the headline sends it for review and marks 
   expect(submissions).toEqual([{ headline: 'Cùng xây phần mềm cho hàng triệu người' }])
   await expectNoHorizontalOverflow(page)
 })
+
+test('employer review link: invited reviewer reads a de-identified CV and sends a scorecard', async ({ page }) => {
+  await mockPublicApi(page)
+  const submitted = []
+  await page.route('http://localhost:8000/api/v2/application-reviews/expired-token/', async (route) => {
+    await route.fulfill({ status: 404, contentType: 'application/json', body: '{"detail":"Not found."}' })
+  })
+  await page.route('http://localhost:8000/api/v2/application-reviews/review-token/', async (route) => {
+    if (route.request().method() === 'PUT') {
+      submitted.push(route.request().postDataJSON())
+      await route.fulfill({
+        contentType: 'application/json',
+        body: JSON.stringify({ ...submitted.at(-1), reviewer_name: 'Anh Minh', recommendation_label: 'Nên tuyển', updated_at: '2026-11-15T10:00:00+07:00' }),
+      })
+      return
+    }
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        reviewer_name: 'Anh Minh', message: 'Nhờ anh xem kinh nghiệm SQL.', expires_at: '2026-11-22T10:00:00+07:00',
+        job_title: 'Data Engineer', company_name: 'Review Co', candidate_name: 'Trần Bình', submitted_cv_title: 'CV Data',
+        review: null,
+        cv: {
+          schema_version: 1, template_renderer_key: 'single_column_v1', assets: {},
+          content_json: {
+            personal_info: { full_name: 'Trần Bình', headline: 'Data Engineer', email: '', phone: '', address: '' },
+            sections: [{ instance_id: 'summary_1', section_key: 'summary', title: 'Tóm tắt', enabled: true, items: [{ item_id: 's1', value: '5 năm làm dữ liệu.' }] }],
+          },
+          layout_json: { regions: [{ id: 'main', width_percent: 100, section_instance_ids: ['summary_1'] }] },
+          style_json: { theme_color: '#059669', font_family: 'Roboto', font_scale: 1, line_height: 1.4 },
+        },
+      }),
+    })
+  })
+
+  await page.goto('/tuyendung/danh-gia-ho-so/review-token')
+  await expect(page.getByRole('heading', { name: 'Trần Bình — Data Engineer' })).toBeVisible()
+  await expect(page.getByText(/đã được ẩn để đánh giá khách quan/)).toBeVisible()
+  await expect(page.getByLabel('Xem trước CV single_column_v1 trang 1')).toBeVisible()
+  await page.getByText('Nên tuyển', { exact: true }).click()
+  await page.getByLabel('Điểm mạnh').fill('SQL tốt')
+  await page.getByRole('button', { name: 'Gửi đánh giá' }).click()
+  await expect(page.getByText('Bạn đã gửi đánh giá')).toBeVisible()
+  expect(submitted).toEqual([{ recommendation: 'yes', rating: null, strengths: 'SQL tốt', concerns: '' }])
+  await expectNoHorizontalOverflow(page)
+
+  await page.goto('/tuyendung/danh-gia-ho-so/expired-token')
+  await expect(page.getByText('Link đánh giá không còn hiệu lực')).toBeVisible()
+})
