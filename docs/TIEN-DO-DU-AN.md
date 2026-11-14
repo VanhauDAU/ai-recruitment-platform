@@ -7,6 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
+| [Thiết kế lại quản lý tin tuyển dụng của NTD](#thiết-kế-lại-quản-lý-tin-tuyển-dụng-của-ntd-2026-11-15) | ✅ Gộp vào `dev` (nhánh `feat/employer-job-workspace`) |
 | [Gỡ widget Trợ lý ProCV ở cổng ứng viên](#gỡ-widget-trợ-lý-procv-ở-cổng-ứng-viên-2026-11-14) | 🟨 Xong trên nhánh `refactor/remove-candidate-assistant`, chờ gộp PR vào `dev` |
 | [Gỡ phòng ban, chức danh, nhân viên quản trị (ADR-0018)](#gỡ-phòng-ban-chức-danh-nhân-viên-quản-trị-adr-0018-2026-11-14) | 🟨 Xong trên nhánh `refactor/remove-admin-rbac`, chờ gộp PR vào `dev` |
 | [Trang công ty và quyền biên tập (CP)](#trang-công-ty-và-quyền-biên-tập-cp-2026-11-14) | 🟨 CP-0 → CP-7 xong trên nhánh `feat/company-page`, chờ gộp PR |
@@ -18,6 +19,41 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Các epic đã hoàn tất](#các-epic-đã-hoàn-tất) | ✅ |
 | [Lộ trình theo PRD](#lộ-trình-theo-prd) | 🟨 Phần AI lõi (giai đoạn 2–3) còn mở |
 | [Việc còn mở](#việc-còn-mở) | |
+
+## Thiết kế lại quản lý tin tuyển dụng của NTD (2026-11-15)
+
+| Hạng mục | Trạng thái |
+| --- | --- |
+| Danh sách `/tuyendung/app/jobs`: tab trạng thái có số đếm, tìm kiếm tự động, cột hồ sơ/hiệu quả/hạn nộp | ✅ |
+| Chi tiết `/tuyendung/app/jobs/:id`: header gọn, 4 chỉ số bấm được, giữ 4 tab | ✅ |
+| Tab CV ứng tuyển lọc/phân trang phía server, chip trạng thái kèm số | ✅ |
+| API: `status_counts`, `unviewed_application_count`, `application_summary`, `impression_count` | ✅ |
+
+<details><summary>Ghi chú chi tiết</summary>
+
+- Danh sách: tab Tất cả/Đang tuyển/Nháp/Hết hạn/Đã đóng đọc `status_counts`
+  của `GET /api/jobs/mine/` (một aggregate, đếm theo cùng `q`); tìm kiếm debounce
+  400 ms, giữ `status|q|page` trên URL. Mỗi tin hiện số ứng viên, badge "N mới"
+  dẫn tới `/applications?job=…&scope=unread`, lượt xem + tỉ lệ ứng tuyển, hạn
+  nộp có đếm ngược, màu cảnh báo và thanh thời gian đã trôi. Từ 1280px dòng là
+  bảng; hẹp hơn là thẻ xếp chồng. Trạng thái rỗng dùng `MascotEmpty`.
+- Chi tiết: bỏ thông tin lặp (lượt xem xuất hiện ba lần, hai thẻ CV luôn bằng
+  nhau vì chỉ có nguồn `applied`). Header gồm tiêu đề, trạng thái, dòng meta bằng
+  icon, "Xem tin đăng" khi tin đang công khai; "Đóng tin" nằm trong menu và có
+  xác nhận. Bốn chỉ số Lượt xem/Ứng viên/CV chưa xem/Chưa phản hồi; hai chỉ số
+  sau mở tab CV với bộ lọc tương ứng (`cv_filter` trên URL). Mobile dùng
+  `Segmented` thay cho Select chọn tab.
+- Tab CV trước đây tải trang đầu (20 CV) rồi tự tính số liệu, nên sai khi tin
+  có nhiều hồ sơ. Nay số liệu lấy từ `application_summary` của chi tiết tin và
+  danh sách gọi `/api/v2/recruiter/applications/?job=…&latest=1` có phân trang,
+  sắp xếp, tìm kiếm, lọc phía server; gỡ `getRecruiterApplications` không còn
+  nơi dùng. Tab "Ứng viên đã xem tin" thành phễu Hiển thị → Xem → Ứng tuyển.
+- `Application.UNANSWERED_STATUSES` là định nghĩa duy nhất cho "chưa phản hồi"
+  (scope API, báo cáo chiến dịch, summary tin). Budget query danh sách 5 → 6.
+- Style riêng của hai trang nằm trong `employer-jobs.css` đi theo chunk lazy;
+  CSS khởi tạo giảm từ 38,3 xuống 38,0 KiB gzip.
+
+</details>
 
 ## Gỡ widget Trợ lý ProCV ở cổng ứng viên (2026-11-14)
 

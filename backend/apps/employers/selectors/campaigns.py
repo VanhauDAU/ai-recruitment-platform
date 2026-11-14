@@ -230,14 +230,7 @@ def campaign_report(campaign):
         'application_submission_count': applications.count(),
         'application_pair_count': latest_applications.count(),
         'unviewed_count': statuses[Application.Status.SUBMITTED],
-        'unanswered_count': sum(
-            statuses[state]
-            for state in (
-                Application.Status.SUBMITTED,
-                Application.Status.VIEWED,
-                Application.Status.CONSIDERING,
-            )
-        ),
+        'unanswered_count': sum(statuses[state] for state in Application.UNANSWERED_STATUSES),
         'accepted_count': latest_applications.filter(status=Application.Status.ACCEPTED)
         .values('candidate_id')
         .distinct()

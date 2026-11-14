@@ -19963,9 +19963,32 @@ components:
       - document_sha256
       - document_url
       - policy_version
+    EmployerJobApplicationSummary:
+      type: object
+      properties:
+        total:
+          type: integer
+        unviewed:
+          type: integer
+        unanswered:
+          type: integer
+        by_status:
+          type: object
+          additionalProperties:
+            type: integer
+      required:
+      - by_status
+      - total
+      - unanswered
+      - unviewed
     EmployerJobDetail:
       type: object
-      description: Employer form read DTO, including private application recipients.
+      description: |-
+        Employer form read DTO, including private application recipients.
+
+        Also carries the aggregates of the job workspace header: the engagement
+        funnel and the applications per recruiter status. Neither identifies a
+        candidate, so they stay readable while candidate-data access is blocked.
       properties:
         public_id:
           type: string
@@ -20241,8 +20264,16 @@ components:
           format: date-time
           readOnly: true
           nullable: true
+        impression_count:
+          type: integer
+          readOnly: true
+        application_summary:
+          allOf:
+          - $ref: '#/components/schemas/EmployerJobApplicationSummary'
+          readOnly: true
       required:
       - application_count
+      - application_summary
       - approved_at
       - brand_slug
       - campaign_name
@@ -20256,6 +20287,7 @@ components:
       - description
       - first_approved_at
       - has_flash_badge
+      - impression_count
       - is_expired
       - is_hot
       - is_salary_visible
@@ -20861,6 +20893,10 @@ components:
           type: integer
           readOnly: true
           default: 0
+        unviewed_application_count:
+          type: integer
+          readOnly: true
+          default: 0
         candidate_previews:
           type: string
           readOnly: true
@@ -20912,6 +20948,7 @@ components:
       - status
       - submitted_at
       - title
+      - unviewed_application_count
       - updated_at
       - view_count
       - visibility_ends_at
@@ -28461,6 +28498,8 @@ components:
           type: boolean
         business_doc_submitted:
           type: boolean
+        business_doc_current:
+          type: boolean
         business_doc_approved:
           type: boolean
         email_domain_verified:
@@ -28486,6 +28525,7 @@ components:
       required:
       - account_ready
       - business_doc_approved
+      - business_doc_current
       - business_doc_submitted
       - candidate_dpa_approved
       - candidate_dpa_submitted

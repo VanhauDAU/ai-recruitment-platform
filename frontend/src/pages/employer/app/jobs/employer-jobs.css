@@ -1,0 +1,221 @@
+/*
+ * Employer job list and job workspace. These rules ride the lazy route chunks:
+ * Tailwind utilities land in the initial stylesheet, which is at its budget
+ * (frontend/ARCHITECTURE.md), so page-only patterns live here.
+ */
+
+/* Status tones: one class sets the colours, pills and dots read them. */
+.job-tone-emerald { --job-tone-bg: #ecfdf5; --job-tone-fg: #047857; --job-tone-dot: #10b981; }
+.job-tone-red { --job-tone-bg: #fef2f2; --job-tone-fg: #b91c1c; --job-tone-dot: #ef4444; }
+.job-tone-orange { --job-tone-bg: #fff7ed; --job-tone-fg: #c2410c; --job-tone-dot: #f97316; }
+.job-tone-amber { --job-tone-bg: #fffbeb; --job-tone-fg: #b45309; --job-tone-dot: #f59e0b; }
+.job-tone-sky { --job-tone-bg: #f0f9ff; --job-tone-fg: #0369a1; --job-tone-dot: #0ea5e9; }
+.job-tone-cyan { --job-tone-bg: #ecfeff; --job-tone-fg: #0e7490; --job-tone-dot: #06b6d4; }
+.job-tone-violet { --job-tone-bg: #f5f3ff; --job-tone-fg: #6d28d9; --job-tone-dot: #8b5cf6; }
+.job-tone-teal { --job-tone-bg: #f0fdfa; --job-tone-fg: #0f766e; --job-tone-dot: #0d9488; }
+.job-tone-slate { --job-tone-bg: #f1f5f9; --job-tone-fg: #475569; --job-tone-dot: #94a3b8; }
+
+.job-pill {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 6px;
+  border-radius: 9999px;
+  padding: 2px 8px;
+  background: var(--job-tone-bg);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--job-tone-fg) 16%, transparent);
+  color: var(--job-tone-fg);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 16px;
+  white-space: nowrap;
+}
+
+.job-pill--status { font-size: 12px; font-weight: 500; }
+
+.job-pill::before,
+.job-dot {
+  width: 6px;
+  height: 6px;
+  flex-shrink: 0;
+  border-radius: 9999px;
+  background: var(--job-tone-dot);
+}
+
+.job-pill::before { content: ''; }
+
+/* Horizontal strips (status tabs, CV chips) scroll on phones without a bar. */
+.job-strip {
+  display: flex;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.job-strip::-webkit-scrollbar { display: none; }
+
+.job-filter-tab {
+  margin-bottom: -1px;
+  display: inline-flex;
+  height: 44px;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  padding: 0 10px;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 600;
+  transition: color 0.15s;
+}
+
+.job-filter-tab:hover { color: #0f172a; }
+.job-filter-tab[aria-pressed='true'] { border-bottom-color: #059669; color: #047857; }
+
+.job-filter-tab__count {
+  min-width: 24px;
+  border-radius: 9999px;
+  background: #f1f5f9;
+  padding: 1px 6px;
+  color: #475569;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.job-filter-tab[aria-pressed='true'] .job-filter-tab__count { background: #059669; color: #fff; }
+
+.job-chip {
+  display: inline-flex;
+  height: 32px;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #e2e8f0;
+  border-radius: 9999px;
+  background: #fff;
+  padding: 0 12px;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 600;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.job-chip:hover { border-color: #cbd5e1; color: #0f172a; }
+.job-chip > span:last-child { color: #94a3b8; font-variant-numeric: tabular-nums; }
+.job-chip[aria-pressed='true'] { border-color: #059669; background: #059669; color: #fff; }
+.job-chip[aria-pressed='true'] > span:last-child { color: rgb(255 255 255 / 0.8); }
+.job-chip[aria-pressed='true'] .job-dot { background: #fff; }
+
+/* Job rows stack below xl and become table rows from 1280px. */
+.job-row__title { display: block; }
+
+@media (min-width: 640px) {
+  .job-row__title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
+
+.job-row__stats {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+@media (max-width: 639px) {
+  .job-row__stats > :nth-child(2) { justify-self: end; }
+}
+
+@media (min-width: 640px) {
+  .job-row__stats { display: flex; flex-wrap: wrap; column-gap: 20px; }
+}
+
+.job-table-head { display: none; }
+
+@media (min-width: 1280px) {
+  .job-row,
+  .job-table-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 220px 124px 136px 136px;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .job-row__stats {
+    display: contents;
+  }
+
+  .job-row__stack { flex-direction: column; align-items: flex-start; gap: 2px; }
+  .job-row__stack .job-row__inline-only { display: none; }
+}
+
+.job-deadline-bar { display: none; }
+
+@media (min-width: 1280px) {
+  .job-deadline-bar { display: block; max-width: 128px; margin-top: 4px; }
+}
+
+/* CV table of the job workspace. */
+.job-cv-table .ant-table-thead .ant-table-cell {
+  color: #64748b !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+}
+
+.job-cv-table .ant-table-cell:first-child { padding-left: 20px !important; }
+.job-cv-table .ant-table-cell:last-child { padding-right: 20px !important; }
+
+.job-detail-tabs .ant-tabs-content-holder { min-width: 0; }
+.job-detail-tabs > .ant-tabs-nav { display: none !important; }
+
+@media (min-width: 640px) {
+  .job-detail-tabs > .ant-tabs-nav {
+    display: flex !important;
+    margin-bottom: 0 !important;
+    padding: 0 20px;
+  }
+}
+
+.job-detail-tabs .ant-tabs-tab { padding-block: 14px !important; }
+
+.job-pill--plain::before { content: none; }
+
+/* Job list toolbar: search beside the status tabs from xl. */
+.job-list-toolbar { display: flex; flex-direction: column; gap: 12px; }
+.job-list-toolbar > .job-strip { gap: 4px; margin: 0 -12px; padding: 0 6px; }
+
+@media (min-width: 640px) {
+  .job-list-toolbar > .job-strip { margin: 0 -16px; padding: 0 10px; }
+}
+
+@media (min-width: 1280px) {
+  .job-list-toolbar { flex-direction: row-reverse; align-items: center; justify-content: space-between; padding-top: 8px; }
+  .job-list-toolbar > .job-strip { margin: 0; padding: 0; }
+  .job-list-toolbar__search { width: 440px; }
+}
+
+/* Job workspace header. */
+.job-hairline-grid { gap: 1px; }
+
+.job-header-action { flex: 1 1 auto; }
+
+@media (min-width: 640px) {
+  .job-header-action { flex: none; }
+}
+
+.job-cv-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 8px;
+}
+
+.job-cv-toolbar > :first-child { grid-column: 1 / -1; }
+
+@media (min-width: 640px) {
+  .job-cv-toolbar { grid-template-columns: minmax(0, 320px) 160px minmax(0, 1fr) auto; }
+  .job-cv-toolbar > :first-child { grid-column: auto; }
+  .job-cv-toolbar > :nth-child(3) { justify-self: end; }
+}
+
+.job-cv-card__meta { padding-left: 48px; }
+.job-rich > p:last-child { margin-bottom: 0; }

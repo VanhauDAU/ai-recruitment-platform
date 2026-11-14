@@ -19,7 +19,10 @@ from ...models import (
     JobSkill,
     JobWorkSchedule,
 )
-from ...selectors.employer import employer_job_visibility_hold
+from ...selectors.employer import (
+    employer_job_application_summary,
+    employer_job_visibility_hold,
+)
 from ...selectors.presentation import job_presentation
 from ...selectors.verification_badge import (
     BADGE_CACHE_KEY,
@@ -831,8 +834,33 @@ class EmployerJobWriteSerializer(EmployerJobVisibilityHoldMixin, JobSerializer):
         )
 
 
+class EmployerJobApplicationSummarySerializer(serializers.Serializer):
+    total = serializers.IntegerField()
+    unviewed = serializers.IntegerField()
+    unanswered = serializers.IntegerField()
+    by_status = serializers.DictField(child=serializers.IntegerField())
+
+
 class EmployerJobDetailSerializer(EmployerJobWriteSerializer):
-    """Employer form read DTO, including private application recipients."""
+    """Employer form read DTO, including private application recipients.
+
+    Also carries the aggregates of the job workspace header: the engagement
+    funnel and the applications per recruiter status. Neither identifies a
+    candidate, so they stay readable while candidate-data access is blocked.
+    """
+
+    impression_count = serializers.IntegerField(read_only=True)
+    application_summary = serializers.SerializerMethodField()
+
+    class Meta(EmployerJobWriteSerializer.Meta):
+        fields = EmployerJobWriteSerializer.Meta.fields + [
+            'impression_count',
+            'application_summary',
+        ]
+
+    @extend_schema_field(EmployerJobApplicationSummarySerializer)
+    def get_application_summary(self, obj):
+        return employer_job_application_summary(obj)
 
 
 class DraftJobApplicationContactSerializer(JobApplicationContactSerializer):
@@ -869,6 +897,7 @@ class EmployerJobListSerializer(EmployerJobVisibilityHoldMixin, PublicJobListSer
     campaign_name = serializers.CharField(source='campaign.name', read_only=True, allow_null=True)
     is_expired = serializers.BooleanField(read_only=True)
     candidate_count = serializers.IntegerField(read_only=True, default=0)
+    unviewed_application_count = serializers.IntegerField(read_only=True, default=0)
     candidate_previews = serializers.SerializerMethodField()
 
     class Meta(PublicJobListSerializer.Meta):
@@ -892,6 +921,7 @@ class EmployerJobListSerializer(EmployerJobVisibilityHoldMixin, PublicJobListSer
             'campaign_name',
             'application_count',
             'candidate_count',
+            'unviewed_application_count',
             'candidate_previews',
             'view_count',
             'published_at',

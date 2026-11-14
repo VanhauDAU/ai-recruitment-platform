@@ -9,8 +9,10 @@ from .ai_generation import employer_job_ai_generation_queryset, job_ai_admin_ove
 from .alerts import candidate_job_alerts
 from .employer import (
     attach_job_candidate_previews,
+    employer_job_application_summary,
     employer_job_detail_queryset,
     employer_job_list_queryset,
+    employer_job_status_counts,
     employer_job_visibility_hold,
 )
 from .listing import build_job_list_queryset
@@ -37,9 +39,11 @@ __all__ = [
     'candidate_job_alerts',
     'build_job_list_queryset',
     'build_job_stats',
+    'employer_job_application_summary',
     'employer_job_detail_queryset',
     'employer_job_ai_generation_queryset',
     'employer_job_list_queryset',
+    'employer_job_status_counts',
     'employer_job_visibility_hold',
     'badge_criteria_payload',
     'admin_job_detail_queryset',

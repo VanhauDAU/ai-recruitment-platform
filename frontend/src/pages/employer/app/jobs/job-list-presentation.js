@@ -1,20 +1,22 @@
 import dayjs from 'dayjs'
 import { employerAppPath } from '@/shared/config/portals'
 
-export const JOB_STATUS_FILTERS = [
-  { value: '', label: 'Tất cả' },
-  { value: 'active', label: 'Đang tuyển' },
-  { value: 'draft', label: 'Nháp' },
-  { value: 'expired', label: 'Hết hạn' },
-  { value: 'closed', label: 'Đã đóng' },
+// `countKey` reads `status_counts` of GET /api/jobs/mine/, which counts every
+// tab under the current search so the numbers never depend on the open tab.
+export const JOB_STATUS_TABS = [
+  { value: '', label: 'Tất cả', countKey: 'all' },
+  { value: 'active', label: 'Đang tuyển', countKey: 'active' },
+  { value: 'draft', label: 'Nháp', countKey: 'draft' },
+  { value: 'expired', label: 'Hết hạn', countKey: 'expired' },
+  { value: 'closed', label: 'Đã đóng', countKey: 'closed' },
 ]
 
 const STATUS_META = {
-  held: { label: 'Tạm ẩn', className: 'text-red-700', dot: 'bg-red-500' },
-  active: { label: 'Đang tuyển', className: 'text-emerald-700', dot: 'bg-emerald-500' },
-  draft: { label: 'Nháp', className: 'text-slate-500', dot: 'bg-slate-400' },
-  expired: { label: 'Hết hạn', className: 'text-orange-700', dot: 'bg-orange-500' },
-  closed: { label: 'Đã đóng', className: 'text-slate-500', dot: 'bg-slate-400' },
+  held: { label: 'Tạm ẩn', tone: 'red' },
+  active: { label: 'Đang tuyển', tone: 'emerald' },
+  draft: { label: 'Nháp', tone: 'slate' },
+  expired: { label: 'Hết hạn', tone: 'orange' },
+  closed: { label: 'Đã đóng', tone: 'slate' },
 }
 
 // A held job stays `active` for the business flow but candidates cannot see it.
@@ -28,8 +30,12 @@ function jobStatusKey(job) {
 }
 
 export function jobStatusMeta(job) {
-  return STATUS_META[jobStatusKey(job)]
-    || { label: job.status || 'Không xác định', className: 'text-slate-500', dot: 'bg-slate-400' }
+  return STATUS_META[jobStatusKey(job)] || { label: job.status || 'Không xác định', tone: 'slate' }
+}
+
+export function jobDisplayTitle(job) {
+  if (job.title) return job.title
+  return job.status === 'draft' ? 'Tin nháp chưa đặt tên' : 'Tin tuyển dụng chưa đặt tên'
 }
 
 export function formatJobDate(value) {
@@ -38,15 +44,59 @@ export function formatJobDate(value) {
   return date.isValid() ? date.format('DD/MM/YYYY') : '—'
 }
 
+const DEADLINE_TONES = {
+  success: { text: 'text-emerald-700', bar: 'bg-emerald-500' },
+  warning: { text: 'text-amber-700', bar: 'bg-amber-500' },
+  danger: { text: 'text-red-600', bar: 'bg-red-500' },
+  expired: { text: 'text-orange-700', bar: 'bg-orange-500' },
+  muted: { text: 'text-slate-400', bar: 'bg-slate-300' },
+}
+
+/**
+ * Deadline cell of a job: the date, a short countdown and how much of the
+ * posting window has elapsed (only for jobs candidates can still apply to).
+ */
+export function jobDeadlineMeta(job, now = dayjs()) {
+  const date = job.deadline ? formatJobDate(job.deadline) : null
+  const build = (hint, tone, progress = null) => ({ date, hint, progress, tone: DEADLINE_TONES[tone] })
+  if (job.status === 'draft') return build('Chưa đăng tin', 'muted')
+  if (job.status === 'closed') return build('Đã đóng tin', 'muted')
+  if (job.is_expired) return build('Đã hết hạn', 'expired')
+  if (!job.deadline) return build('Không giới hạn', 'success')
+
+  const today = now.startOf('day')
+  const deadline = dayjs(job.deadline).startOf('day')
+  const daysLeft = deadline.diff(today, 'day')
+  const postedAt = dayjs(job.first_approved_at || job.published_at || job.created_at).startOf('day')
+  const window = deadline.diff(postedAt, 'day')
+  const progress = window > 0
+    ? Math.min(100, Math.max(0, Math.round((today.diff(postedAt, 'day') / window) * 100)))
+    : null
+  const tone = daysLeft <= 3 ? 'danger' : daysLeft <= 7 ? 'warning' : 'success'
+  return build(daysLeft <= 0 ? 'Hết hạn hôm nay' : `Còn ${daysLeft} ngày`, tone, progress)
+}
+
+const percentFormat = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 1 })
+
+/** Share of views that ended in an application, e.g. "2,5%"; null without views. */
+export function formatApplyRate(applications, views) {
+  if (!views || !applications) return null
+  return `${percentFormat.format(Math.min(applications / views, 1) * 100)}%`
+}
+
+export function formatCount(value) {
+  return (value || 0).toLocaleString('vi-VN')
+}
+
 export function candidateInitials(name) {
   const words = (name || '').trim().split(/\s+/).filter(Boolean)
   return words.slice(-2).map((word) => word.charAt(0)).join('').toUpperCase() || 'UV'
 }
 
-export function employerJobApplicationsPath(job, application) {
+/** Deep link into the CV workspace, optionally on one application or scope. */
+export function employerJobApplicationsPath(job, { applicationId, scope } = {}) {
   const params = new URLSearchParams({ job: job.public_id })
-  if (application?.application_public_id) {
-    params.set('application', application.application_public_id)
-  }
+  if (scope) params.set('scope', scope)
+  if (applicationId) params.set('application', applicationId)
   return employerAppPath(`/applications?${params}`)
 }

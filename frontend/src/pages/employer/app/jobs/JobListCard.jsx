@@ -1,26 +1,36 @@
-import { EyeOutlined, TeamOutlined } from '@ant-design/icons'
+import {
+  CalendarOutlined,
+  EnvironmentOutlined,
+  EyeOutlined,
+  TeamOutlined,
+  ThunderboltOutlined,
+} from '@ant-design/icons'
 import { Avatar, Tooltip } from 'antd'
 import { Link } from 'react-router'
 import {
   EMPLOYMENT_TYPE_LABELS,
-  formatDeadline,
+  formatJobPostedLabel,
   formatLocations,
 } from '@/entities/job'
 import { employerAppPath } from '@/shared/config/portals'
 import JobListActions from './JobListActions'
+import JobStatusPill from './JobStatusPill'
 import {
   candidateInitials,
   employerJobApplicationsPath,
+  formatApplyRate,
+  formatCount,
   formatJobDate,
-  jobStatusMeta,
+  jobDeadlineMeta,
+  jobDisplayTitle,
 } from './job-list-presentation'
 
-function CandidatePreviews({ job, candidateDataAccess }) {
+function Candidates({ job, candidateDataAccess }) {
   const previews = job.candidate_previews || []
   const candidateCount = job.candidate_count ?? previews.length
-  const applicationCount = job.application_count || 0
+  const unviewed = job.unviewed_application_count || 0
 
-  if (!applicationCount) {
+  if (!job.application_count) {
     return (
       <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-xs text-slate-400">
         <TeamOutlined aria-hidden /> Chưa có hồ sơ
@@ -28,142 +38,139 @@ function CandidatePreviews({ job, candidateDataAccess }) {
     )
   }
 
+  const count = (
+    <Tooltip title={job.application_count > candidateCount ? `${job.application_count} lượt nộp CV` : null}>
+      <strong className="whitespace-nowrap text-sm font-semibold text-slate-800">{formatCount(candidateCount)} ứng viên</strong>
+    </Tooltip>
+  )
+  const newBadge = unviewed > 0 && <span className="job-pill job-pill--plain job-tone-orange">{unviewed} mới</span>
+
   if (!candidateDataAccess) {
-    return (
-      <span className="inline-flex min-w-0 items-center gap-1.5 whitespace-nowrap text-xs text-slate-500">
-        <TeamOutlined aria-hidden />
-        <strong className="font-semibold text-slate-800">{candidateCount} ứng viên</strong>
-        <span className="text-slate-300">·</span>
-        {applicationCount} CV
-      </span>
-    )
+    return <div className="flex min-w-0 items-center gap-2"><TeamOutlined aria-hidden className="text-slate-400" />{count}{newBadge}</div>
   }
 
   return (
     <div className="flex min-w-0 items-center gap-2">
-      <ul
-        aria-label={`Ứng viên gần đây của ${job.title}`}
-        className="m-0 flex shrink-0 list-none p-0 pl-1.5"
-      >
-        {previews.slice(0, 3).map((candidate, index) => (
-          <li
-            key={candidate.application_public_id || candidate.public_id}
-            className="-ml-1.5 first:ml-0"
-            style={{ zIndex: previews.length - index }}
-          >
-            <Tooltip
-              title={`${candidate.full_name}${candidate.cv_title ? ` · ${candidate.cv_title}` : ''}`}
-            >
-              <Link
-                aria-label={`Mở hồ sơ ${candidate.full_name}`}
-                className="block rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500"
-                to={employerJobApplicationsPath(job, candidate)}
-              >
-                <Avatar
-                  size={26}
-                  src={candidate.avatar_url || undefined}
-                  className="!border-2 !border-white !bg-slate-700 !text-[9px] !font-bold shadow-xs"
+      {previews.length === 0 && <TeamOutlined aria-hidden className="text-slate-400" />}
+      {previews.length > 0 && (
+        <ul aria-label={`Ứng viên gần đây của ${jobDisplayTitle(job)}`} className="m-0 flex shrink-0 list-none p-0 pl-1.5">
+          {previews.slice(0, 3).map((candidate, index) => (
+            <li key={candidate.application_public_id || candidate.public_id} className="-ml-1.5 first:ml-0" style={{ zIndex: 3 - index }}>
+              <Tooltip title={`${candidate.full_name}${candidate.cv_title ? ` · ${candidate.cv_title}` : ''}`}>
+                <Link
+                  aria-label={`Mở hồ sơ ${candidate.full_name}`}
+                  className="block rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500"
+                  to={employerJobApplicationsPath(job, { applicationId: candidate.application_public_id })}
                 >
-                  {candidateInitials(candidate.full_name)}
-                </Avatar>
-              </Link>
-            </Tooltip>
-          </li>
-        ))}
-        {previews.length === 0 && (
-          <li className="flex h-[26px] w-[26px] items-center justify-center rounded-full border-2 border-white bg-slate-100 text-[10px] text-slate-500">
-            <TeamOutlined aria-hidden />
-          </li>
-        )}
-      </ul>
-      <Link
-        className="min-w-0 whitespace-nowrap text-xs !text-slate-500 hover:!text-emerald-700"
-        to={employerJobApplicationsPath(job)}
-      >
-        <strong className="font-semibold text-slate-800">{candidateCount} ứng viên</strong>
-        <span className="mx-1 text-slate-300">·</span>
-        {applicationCount} CV
-      </Link>
+                  <Avatar
+                    size={26}
+                    src={candidate.avatar_url || undefined}
+                    className="!border-2 !border-white !bg-slate-700 !text-[9px] !font-bold shadow-xs"
+                  >
+                    {candidateInitials(candidate.full_name)}
+                  </Avatar>
+                </Link>
+              </Tooltip>
+            </li>
+          ))}
+        </ul>
+      )}
+      <Link className="min-w-0 !text-slate-800 hover:!text-emerald-700" to={employerJobApplicationsPath(job)}>{count}</Link>
+      {newBadge && (
+        <Link aria-label={`${unviewed} hồ sơ chưa xem`} to={employerJobApplicationsPath(job, { scope: 'unread' })}>
+          {newBadge}
+        </Link>
+      )}
     </div>
   )
 }
 
-export default function JobListCard({
-  job,
-  closing,
-  deleting,
-  duplicating,
-  onClose,
-  onDelete,
-  onDuplicate,
-  requestConfirmation,
-  candidateDataAccess = false,
-}) {
-  const status = jobStatusMeta(job)
-  const deadlineHelper = formatDeadline(job.deadline)
+function Performance({ job }) {
+  const rate = formatApplyRate(job.candidate_count ?? job.application_count, job.view_count)
+  return (
+    <div className="job-row__stack flex min-w-0 items-center gap-1.5 whitespace-nowrap text-xs text-slate-500">
+      <span className="inline-flex items-center gap-1.5">
+        <EyeOutlined aria-hidden className="text-slate-400" />
+        <strong className="text-sm font-semibold text-slate-800">{formatCount(job.view_count)}</strong> lượt xem
+      </span>
+      {rate && (
+        <Tooltip title="Tỉ lệ ứng viên nộp hồ sơ trên lượt xem tin">
+          <span className="hidden text-slate-400 sm:inline">
+            <span className="job-row__inline-only">· </span>{rate} ứng tuyển
+          </span>
+        </Tooltip>
+      )}
+    </div>
+  )
+}
+
+function Deadline({ job }) {
+  const deadline = jobDeadlineMeta(job)
+  return (
+    <div className="job-row__stack flex min-w-0 items-center gap-1.5 whitespace-nowrap text-xs">
+      <span className="inline-flex items-center gap-1.5 font-medium text-slate-700">
+        <CalendarOutlined aria-hidden className="job-row__inline-only text-slate-400" />
+        {deadline.date || 'Chưa đặt hạn'}
+      </span>
+      <span className={`font-medium ${deadline.tone.text}`}>
+        <span className="job-row__inline-only text-slate-300">· </span>{deadline.hint}
+      </span>
+      {deadline.progress !== null && (
+        <span aria-hidden className="job-deadline-bar h-1 w-full overflow-hidden rounded-full bg-slate-100">
+          <span className={`block h-full rounded-full ${deadline.tone.bar}`} style={{ width: `${deadline.progress}%` }} />
+        </span>
+      )}
+    </div>
+  )
+}
+
+export default function JobListCard({ job, candidateDataAccess = false, ...actionProps }) {
   const location = formatLocations(job)
   const employmentType = EMPLOYMENT_TYPE_LABELS[job.employment_type]
+  const timeline = job.status === 'draft'
+    ? `Tạo ${formatJobDate(job.created_at)}`
+    : formatJobPostedLabel(job)
 
   return (
     <article
       data-testid={`job-list-item-${job.public_id}`}
-      className="group relative px-3 py-3 transition-colors duration-150 hover:bg-slate-50/80 focus-within:bg-slate-50/80 sm:px-4"
+      className="job-row group px-3 py-3.5 transition-colors duration-150 hover:bg-slate-50/80 focus-within:bg-slate-50/80 sm:px-4"
     >
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 lg:grid lg:grid-cols-[minmax(0,1fr)_180px_105px_112px] lg:gap-4">
-        <div className="w-full min-w-0 lg:w-auto">
-          <div className="flex min-w-0 items-center gap-2">
-            <Link
-              className="min-w-0 truncate text-sm font-bold !text-slate-900 hover:!text-emerald-700 sm:text-[15px]"
-              to={employerAppPath(`/jobs/${job.public_id}`)}
-            >
-              {job.title || 'Tin nháp chưa đặt tên'}
-            </Link>
-            <Tooltip title={job.visibility_hold?.reason_label || job.visibility_hold?.label}>
-              <span className={`inline-flex shrink-0 items-center gap-1 text-[10px] font-semibold ${status.className}`}>
-                <span aria-hidden className={`h-1.5 w-1.5 rounded-full ${status.dot}`} />
-                {status.label}
-              </span>
-            </Tooltip>
-          </div>
-          <div className="mt-1 flex min-w-0 items-center gap-1.5 overflow-hidden whitespace-nowrap text-[11px] text-slate-500">
-            {job.campaign_name && (
-              <Link
-                className="min-w-0 truncate !text-slate-500 hover:!text-emerald-700"
-                to={employerAppPath(`/campaigns/${job.campaign}`)}
-              >
-                {job.campaign_name}
-              </Link>
-            )}
-            {job.campaign_name && location && <span className="text-slate-300">·</span>}
-            {location && <span className="truncate">{location}</span>}
-            {employmentType && <span className="hidden text-slate-300 sm:inline">·</span>}
-            {employmentType && <span className="hidden shrink-0 sm:inline">{employmentType}</span>}
-            <span className="shrink-0 text-slate-300">·</span>
-            <span className="shrink-0">Hạn {formatJobDate(job.deadline)}</span>
-            {deadlineHelper && <span className="hidden shrink-0 text-slate-400 xl:inline">· {deadlineHelper}</span>}
-          </div>
+      <div className="min-w-0">
+        <div className="flex min-w-0 items-start gap-2 sm:items-center">
+          <Link
+            className={`job-row__title min-w-0 text-[15px] font-semibold leading-snug !text-slate-900 hover:!text-emerald-700 ${job.title ? '' : 'italic !text-slate-500'}`}
+            to={employerAppPath(`/jobs/${job.public_id}`)}
+          >
+            {jobDisplayTitle(job)}
+          </Link>
+          <JobStatusPill job={job} />
         </div>
+        <div className="mt-1.5 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
+          {job.campaign_name && (
+            <Link
+              className="inline-flex min-w-0 max-w-full items-center gap-1 !text-slate-500 hover:!text-emerald-700"
+              to={employerAppPath(`/campaigns/${job.campaign}`)}
+            >
+              <ThunderboltOutlined aria-hidden className="text-emerald-600" />
+              <span className="truncate">{job.campaign_name}</span>
+            </Link>
+          )}
+          {location && (
+            <span className="inline-flex items-center gap-1">
+              <EnvironmentOutlined aria-hidden className="text-slate-400" />{location}
+            </span>
+          )}
+          {employmentType && <span className="hidden sm:inline">{employmentType}</span>}
+          {timeline && <span className="text-slate-400">{timeline}</span>}
+        </div>
+      </div>
 
-        <CandidatePreviews job={job} candidateDataAccess={candidateDataAccess} />
-
-        <Tooltip title="Lượt xem tin tuyển dụng">
-          <span className="hidden items-center gap-1.5 whitespace-nowrap text-xs text-slate-500 sm:inline-flex">
-            <EyeOutlined aria-hidden />
-            <strong className="font-semibold text-slate-700">{job.view_count || 0}</strong> lượt xem
-          </span>
-        </Tooltip>
-
-        <JobListActions
-          job={job}
-          candidateDataAccess={candidateDataAccess}
-          closing={closing}
-          deleting={deleting}
-          duplicating={duplicating}
-          onClose={onClose}
-          onDelete={onDelete}
-          onDuplicate={onDuplicate}
-          requestConfirmation={requestConfirmation}
-        />
+      <div className="job-row__stats mt-3 border-t border-dashed border-slate-100 pt-3">
+        <Candidates job={job} candidateDataAccess={candidateDataAccess} />
+        <Performance job={job} />
+        <Deadline job={job} />
+        <JobListActions job={job} candidateDataAccess={candidateDataAccess} {...actionProps} />
       </div>
     </article>
   )
