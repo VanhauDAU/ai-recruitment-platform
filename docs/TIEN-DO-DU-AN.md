@@ -27,11 +27,11 @@ Lộ trình 6 giai đoạn của workspace `/tuyendung/app/applications`; mỗi 
 
 | GĐ | Hạng mục | Trạng thái |
 | --- | --- | --- |
-| 1 | Quy trình 6 trạng thái (bỏ `considering`), thông báo ứng viên (chuông + email) có cửa sổ hoàn tác, tải PDF CV kèm nhật ký truy cập, chặn nộp CV rỗng, làm lại giao diện | ✅ Xong trên nhánh `feat/application-workspace-stage-1`, chưa gộp |
+| 1 | Quy trình 6 trạng thái (bỏ `considering`), thông báo ứng viên (chuông + email) có cửa sổ hoàn tác, tải PDF CV kèm nhật ký truy cập, chặn nộp CV rỗng, làm lại giao diện | ✅ Đã gộp vào dev (#195, #199) |
 | 2 | Điểm phù hợp CV–JD có giải thích, xếp hạng danh sách | ⬜ |
-| 3 | Chia sẻ CV bằng link bảo mật + phiếu đánh giá nội bộ | ✅ Xong trên nhánh `feat/application-review-links`, chưa gộp |
-| 4 | Danh sách đen + phát hiện ứng tuyển hàng loạt | ✅ Xong trên nhánh `feat/candidate-blocklist`, chưa gộp |
-| 5 | Kho ứng viên tiềm năng + gợi ý lại khi đăng tin mới | ✅ Xong trên nhánh `feat/talent-pool`, chưa gộp |
+| 3 | Chia sẻ CV bằng link bảo mật + phiếu đánh giá nội bộ | ✅ Đã gộp vào dev (#196) |
+| 4 | Danh sách đen + phát hiện ứng tuyển hàng loạt | ✅ Đã gộp vào dev (#197) |
+| 5 | Kho ứng viên tiềm năng + gợi ý lại khi đăng tin mới | ✅ Đã gộp vào dev (#198) |
 | 6 | Gợi ý kỹ năng còn thiếu cho ứng viên bị từ chối | ⬜ |
 | Sau | Nhắn tin ứng viên (nút đã đặt sẵn), hẹn lịch phỏng vấn | ⬜ |
 
@@ -209,7 +209,7 @@ PR 4 chỉ được triển khai ở môi trường đã chạy `services.0012` 
 | PM-4b | Xóa thư mục app `services` và cấu hình còn lại | ✅ Hoàn tất — pytest 1176 passed, coverage 87,47% |
 | PM-5 | Kiểm thử tích hợp ba cổng | ⬜ Chưa bắt đầu |
 | PM-6 | Dọn docs, xóa `99-tien-do`, dựng lại mục lục | ✅ Hoàn tất — 88 → 46 file, link check đạt |
-| PM-7 | Bổ sung changelog còn thiếu, rút gọn tiến độ, đồng bộ phân tích yêu cầu với báo cáo ĐATN | 🟨 Changelog và tiến độ xong; chờ báo cáo ĐATN |
+| PM-7 | Bổ sung changelog còn thiếu, rút gọn tiến độ, đồng bộ phân tích yêu cầu với báo cáo ĐATN | 🟨 Changelog, tiến độ và sơ đồ use case tổng quát (2026-11-15) xong; chờ báo cáo ĐATN |
 
 Đã chốt (2026-11-13): nhà tuyển dụng không sửa được tin đang bị tạm ẩn; muốn
 khắc phục nội dung phải liên hệ quản trị viên.
@@ -295,10 +295,18 @@ production, staging và soak (ER-8). Lệnh kiểm tra chỉ đọc:
 
 ## Việc còn mở
 
-AI lõi của đồ án:
+AI lõi của đồ án (phạm vi chốt 2026-11-15, xem
+[sơ đồ use case](01-phan-tich/phan-tich-yeu-cau.md#sơ-đồ-use-case-tổng-quát-chốt-2026-11-15)):
 
-- Giai đoạn 2–3: lưu kết quả phân tích CV và đối sánh, trích xuất kỹ năng,
-  semantic matching ([thuật toán AI](07-algorithms/thuat-toan-ai.md)).
+- ⬜ Đối sánh ngữ nghĩa CV–JD chạy local (embedding mã nguồn mở + pgvector,
+  pipeline tự xây), không gọi API ngoài.
+- ⬜ Ứng viên: Phân tích mức độ phù hợp CV–JD (điểm tổng và theo tiêu chí);
+  chuyển Việc làm gợi ý sang module ngữ nghĩa.
+- ⬜ Nhà tuyển dụng: Sàng lọc và xếp hạng hồ sơ ứng tuyển bằng AI; Tìm kiếm hồ
+  sơ ứng viên xếp theo độ phù hợp với một tin (chỉ ứng viên đã bật
+  `recruiter_visibility`).
+- Giai đoạn 2–3: lưu kết quả phân tích CV và đối sánh, trích xuất kỹ năng
+  ([thuật toán AI](07-algorithms/thuat-toan-ai.md)).
 - Import CV gọi thẳng REST của Gemini, OpenAI hoặc Anthropic trong
   `apps/ai_core/services/cv_import.py`, không qua runtime `ai_core`: không bị
   `AI_RUNTIME_ENABLED` chặn, không ghi `AiInvocation`, không quota.
