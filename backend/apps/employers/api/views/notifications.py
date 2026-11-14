@@ -19,37 +19,30 @@ from ..serializers import (
 )
 
 
+def _preference_payload(preference):
+    return {
+        'important_decision_email': True,
+        'intermediate_verification_email': (
+            preference.intermediate_verification_email if preference else True
+        ),
+        'new_application_email': preference.new_application_email if preference else True,
+    }
+
+
 class EmployerNotificationPreferenceView(APIView):
     permission_classes = [IsEmployer]
 
     def get(self, request):
         preference = EmployerNotificationPreference.objects.filter(recipient=request.user).first()
-        return Response(
-            {
-                'important_decision_email': True,
-                'intermediate_verification_email': (
-                    preference.intermediate_verification_email if preference else True
-                ),
-            }
-        )
+        return Response(_preference_payload(preference))
 
     def patch(self, request):
-        serializer = EmployerNotificationPreferenceSerializer(data=request.data)
+        serializer = EmployerNotificationPreferenceSerializer(data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         preference, _ = EmployerNotificationPreference.objects.update_or_create(
-            recipient=request.user,
-            defaults={
-                'intermediate_verification_email': serializer.validated_data[
-                    'intermediate_verification_email'
-                ]
-            },
+            recipient=request.user, defaults=dict(serializer.validated_data)
         )
-        return Response(
-            {
-                'important_decision_email': True,
-                'intermediate_verification_email': preference.intermediate_verification_email,
-            }
-        )
+        return Response(_preference_payload(preference))
 
 
 class EmployerNotificationListView(generics.ListAPIView):

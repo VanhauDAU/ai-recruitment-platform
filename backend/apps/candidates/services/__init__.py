@@ -1,6 +1,7 @@
 """Write workflows for the candidates domain."""
 
 from .email_notifications import patch_candidate_email_notification_settings
+from .notification_emails import email_brand_context
 from .notifications import (
     cancel_candidate_notification,
     deliver_candidate_notification_email,
@@ -21,6 +22,7 @@ from .profiles import (
 __all__ = [
     'cancel_candidate_notification',
     'deliver_candidate_notification_email',
+    'email_brand_context',
     'emit_candidate_notification',
     'mark_all_candidate_notifications_read',
     'mark_candidate_notification_read',

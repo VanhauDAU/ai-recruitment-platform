@@ -14,6 +14,7 @@ from .blocks import (
     lift_candidate_block,
 )
 from .locking import RecruitmentResourceChanged
+from .recruiter_alerts import alert_recruiter_of_application, send_new_application_email
 from .recruiter_cv import open_application_snapshot, record_application_cv_download
 from .reviews import (
     ReviewLinkUnavailable,
@@ -44,6 +45,8 @@ from .talent_pool import (
 )
 
 __all__ = [
+    'alert_recruiter_of_application',
+    'send_new_application_email',
     'TalentPoolConflict',
     'add_to_talent_pool',
     'invite_to_apply',

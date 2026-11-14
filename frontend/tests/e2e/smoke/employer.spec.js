@@ -1680,7 +1680,7 @@ test('employer applications: grouped CV workspace is clear across responsive lay
   await expect(backToJobButton).toBeVisible()
   await expect(candidateList).toBeVisible()
   await expect(page.getByRole('button', { name: 'Thu gọn hồ sơ của Lê Văn Hậu' })).toBeVisible()
-  await expect(candidateList.getByText('2 CV', { exact: true })).toBeVisible()
+  await expect(candidateList.getByText(/^2 CV ·/)).toBeVisible()
   await expect(candidateList.getByRole('button', { name: 'Xem CV Frontend 2026 của Lê Văn Hậu' })).toBeVisible()
   await expect(candidateList.getByRole('button', { name: 'Xem CV Frontend bản đầu của Lê Văn Hậu' })).toBeVisible()
   await expect(cvPreview.getByLabel('Xem trước CV single_column_v1 trang 1')).toBeVisible()

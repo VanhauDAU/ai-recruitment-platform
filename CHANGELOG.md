@@ -8,6 +8,16 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-15
 
+#### Added — Báo NTD khi có hồ sơ mới; làm gọn workspace CV ứng tuyển
+
+- Ứng viên nộp hồ sơ: NTD nhận thông báo trên chuông và email tới các địa chỉ
+  nhận hồ sơ của tin (mặc định email người đăng). Email không chứa tên ứng
+  viên; tắt được trong cài đặt thông báo NTD ("Hồ sơ ứng tuyển mới") hoặc bằng
+  site setting `email_notify_new_application`.
+- Workspace: thao tác với CV (Tải PDF, Mời đánh giá, Nhắn tin) nằm trên thanh
+  riêng; "Lưu vào kho" và "Chặn" thành một hàng hai nút; lọc trạng thái là một
+  ô chọn cạnh ô tìm kiếm thay cho dãy chip.
+
 #### Added — Kho ứng viên tiềm năng (giai đoạn 5)
 
 - NTD lưu ứng viên vào kho kèm ghi chú, nhãn; ứng viên được thông báo, có trang

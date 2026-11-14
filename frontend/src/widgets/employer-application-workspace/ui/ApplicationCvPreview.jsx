@@ -38,28 +38,28 @@ export default function ApplicationCvPreview({
     >
       <header className="aw-panel-head">
         <div className="min-w-0">
-          <h2 id="application-cv-preview-title" className="aw-panel-title flex items-center gap-2 truncate">
+          <h2 id="application-cv-preview-title" className="aw-panel-title flex items-center gap-2">
             <FileTextOutlined className="text-slate-400" aria-hidden /> Xem trước CV
           </h2>
           {selectedPublicId && <p className="aw-panel-sub truncate">{cvTitle}</p>}
         </div>
-        {selectedPublicId && (
-          <div className="aw-toolbar">
-            {previewDocument && <span className="aw-zoom">{Math.round(previewZoom * 100)}%</span>}
-            <DownloadApplicationCvButton publicId={selectedPublicId} candidateName={candidateName} />
-            <ShareApplicationReviewButton
-              publicId={selectedPublicId}
-              candidateName={candidateName}
-              jobTitle={selectedApplication?.job_title || ''}
-            />
-            <Tooltip title="Nhắn tin với ứng viên sắp ra mắt">
-              <span>
-                <Button size="small" icon={<MessageOutlined />} disabled>Nhắn tin</Button>
-              </span>
-            </Tooltip>
-          </div>
-        )}
+        {previewDocument && <span className="aw-count">{Math.round(previewZoom * 100)}%</span>}
       </header>
+      {selectedPublicId && (
+        <div className="aw-actionbar" role="toolbar" aria-label="Thao tác với CV">
+          <DownloadApplicationCvButton publicId={selectedPublicId} candidateName={candidateName} />
+          <ShareApplicationReviewButton
+            publicId={selectedPublicId}
+            candidateName={candidateName}
+            jobTitle={selectedApplication?.job_title || ''}
+          />
+          <Tooltip title="Nhắn tin với ứng viên sắp ra mắt">
+            <span className="aw-actionbar__end">
+              <Button size="small" icon={<MessageOutlined />} disabled>Nhắn tin</Button>
+            </span>
+          </Tooltip>
+        </div>
+      )}
 
       <div className="min-h-96 flex-1 overflow-y-auto overflow-x-hidden bg-slate-100 p-3 sm:p-4">
         {!selectedPublicId && (

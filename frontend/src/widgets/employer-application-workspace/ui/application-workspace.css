@@ -30,16 +30,8 @@
   font-size: 11px; font-weight: 700; white-space: nowrap;
 }
 
-/* Status filter chips */
-.aw-chips { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
-.aw-chips::-webkit-scrollbar { display: none; }
-.aw-chip {
-  flex-shrink: 0; border: 1px solid #e2e8f0; border-radius: 999px; padding: 3px 10px;
-  background: #fff; color: #475569; font-size: 12px; font-weight: 600; cursor: pointer;
-  transition: background .15s, border-color .15s, color .15s;
-}
-.aw-chip:hover { border-color: #cbd5e1; color: #0f172a; }
-.aw-chip[aria-pressed='true'] { border-color: #0f172a; background: #0f172a; color: #fff; }
+/* Search and status filter share one row. */
+.aw-filters { display: grid; grid-template-columns: minmax(0, 1fr) 116px; gap: 6px; }
 
 /* Candidate groups */
 .aw-group { border: 1px solid #e2e8f0; border-radius: 14px; background: #fff; overflow: hidden; }
@@ -59,9 +51,12 @@
 .aw-application.is-unread .aw-application__title { color: #0f172a; font-weight: 800; }
 .aw-application__title { font-size: 12px; font-weight: 600; color: #334155; line-height: 18px; }
 
-/* Preview toolbar */
-.aw-toolbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
-.aw-zoom { font-size: 11px; font-weight: 600; color: #94a3b8; }
+/* Actions on the CV, on their own bar so the title never gets squeezed. */
+.aw-actionbar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+  padding: 8px 16px; border-bottom: 1px solid #f1f5f9; background: #fcfdfe;
+}
+.aw-actionbar__end { margin-left: auto; }
 .aw-source {
   display: inline-flex; padding: 1px 8px; border-radius: 999px; background: #f1f5f9;
   color: #475569; font-size: 11px; font-weight: 600;
@@ -104,3 +99,7 @@
 @media (min-width: 768px) { .aw-tabs { display: none; } }
 
 .aw-review-summary { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+
+/* Secondary actions under the decisions: two equal, quiet buttons. */
+.aw-secondary-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.aw-secondary-actions .ant-btn { height: 34px; border-radius: 10px; font-size: 12px; font-weight: 600; }

@@ -20635,7 +20635,7 @@ components:
           type: string
           readOnly: true
         event_type:
-          $ref: '#/components/schemas/EventTypeFd7Enum'
+          $ref: '#/components/schemas/EventType579Enum'
         summary:
           type: string
           maxLength: 240
@@ -21964,7 +21964,7 @@ components:
           type: string
           readOnly: true
         event_type:
-          $ref: '#/components/schemas/EventTypeFd7Enum'
+          $ref: '#/components/schemas/EventType579Enum'
         title:
           type: string
           maxLength: 180
@@ -22176,7 +22176,7 @@ components:
         * `internship` - Internship
         * `freelance` - Freelance
         * `other` - Khác
-    EventTypeFd7Enum:
+    EventType579Enum:
       enum:
       - verification_approved
       - verification_changes_requested
@@ -22188,6 +22188,7 @@ components:
       - company_link_removed
       - company_page_editor_granted
       - company_page_editor_revoked
+      - application_received
       - application_review_submitted
       type: string
       description: |-
@@ -22201,6 +22202,7 @@ components:
         * `company_link_removed` - Liên kết công ty đã được gỡ
         * `company_page_editor_granted` - Bạn được cấp quyền biên tập trang công ty
         * `company_page_editor_revoked` - Quyền biên tập trang công ty đã bị thu hồi
+        * `application_received` - Có hồ sơ ứng tuyển mới
         * `application_review_submitted` - Có đánh giá mới cho hồ sơ ứng viên
     ExperienceBandEnum:
       enum:

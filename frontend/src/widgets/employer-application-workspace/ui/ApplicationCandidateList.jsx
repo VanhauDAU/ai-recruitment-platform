@@ -53,15 +53,18 @@ export default function ApplicationCandidateList({
         <span className="aw-count">{groups.length} người · {applicationCount} CV</span>
       </header>
 
-      <div className="space-y-2 border-b border-slate-100 p-3">
-        <Input.Search
+      <div className="aw-filters border-b border-slate-100 p-3">
+        <Input
           aria-label="Tìm ứng viên hoặc CV"
           allowClear
           value={keyword}
           prefix={<SearchOutlined className="text-slate-400" />}
-          placeholder="Tên, email hoặc tên CV"
-          onChange={(event) => onKeywordChange(event.target.value)}
-          onSearch={onKeywordSubmit}
+          placeholder="Tên, email, CV"
+          onChange={(event) => {
+            onKeywordChange(event.target.value)
+            if (!event.target.value) onKeywordSubmit('')
+          }}
+          onPressEnter={(event) => onKeywordSubmit(event.currentTarget.value)}
         />
         <ApplicationStatusFilter value={status} onChange={onStatusChange} />
       </div>

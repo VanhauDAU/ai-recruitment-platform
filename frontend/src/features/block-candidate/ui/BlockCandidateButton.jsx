@@ -14,7 +14,14 @@ const DURATIONS = [
 ]
 
 /** Stop a candidate from applying to any of this recruiter's jobs. */
-export default function BlockCandidateButton({ application, candidateName, size = 'small', type = 'default' }) {
+export default function BlockCandidateButton({
+  application,
+  candidateName,
+  size = 'small',
+  type = 'default',
+  block = false,
+  label = 'Chặn ứng viên',
+}) {
   const [open, setOpen] = useState(false)
   const queryClient = useQueryClient()
   const mutation = useMutation({
@@ -35,8 +42,8 @@ export default function BlockCandidateButton({ application, candidateName, size 
 
   return (
     <>
-      <Button size={size} type={type} danger icon={<StopOutlined />} onClick={() => setOpen(true)}>
-        Chặn ứng viên
+      <Button size={size} type={type} danger block={block} icon={<StopOutlined />} aria-label="Chặn ứng viên" onClick={() => setOpen(true)}>
+        {label}
       </Button>
       <Modal open={open} title={`Chặn ${candidateName}`} footer={null} destroyOnHidden onCancel={() => setOpen(false)}>
         <p className="text-xs leading-5 text-slate-500">

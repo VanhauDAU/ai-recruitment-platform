@@ -13,6 +13,9 @@ class EmployerNotificationPreference(models.Model):
         related_name='employer_notification_preference',
     )
     intermediate_verification_email = models.BooleanField(default=True)
+    # Email for every new application to the recruiter's jobs (the bell
+    # notice is always kept).
+    new_application_email = models.BooleanField(default=True)
     updated_at = models.DateTimeField(auto_now=True)
 
 
@@ -42,6 +45,7 @@ class EmployerNotification(models.Model):
             'company_page_editor_revoked',
             'Quyền biên tập trang công ty đã bị thu hồi',
         )
+        APPLICATION_RECEIVED = 'application_received', 'Có hồ sơ ứng tuyển mới'
         APPLICATION_REVIEW_SUBMITTED = (
             'application_review_submitted',
             'Có đánh giá mới cho hồ sơ ứng viên',

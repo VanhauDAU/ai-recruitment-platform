@@ -7,7 +7,7 @@ import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { message } from '@/shared/lib/toast'
 
 /** Keep a candidate for later openings; the candidate is told and may withdraw. */
-export default function SaveToTalentPoolButton({ application, candidateName }) {
+export default function SaveToTalentPoolButton({ application, candidateName, block = false }) {
   const [open, setOpen] = useState(false)
   const queryClient = useQueryClient()
   const mutation = useMutation({
@@ -21,11 +21,11 @@ export default function SaveToTalentPoolButton({ application, candidateName }) {
   })
 
   if (application.in_talent_pool) {
-    return <Button size="small" type="text" icon={<StarFilled className="text-amber-500" />} disabled>Đã trong kho tiềm năng</Button>
+    return <Button size="small" block={block} icon={<StarFilled className="text-amber-500" />} disabled>Đã trong kho</Button>
   }
   return (
     <>
-      <Button size="small" type="text" icon={<StarOutlined />} onClick={() => setOpen(true)}>Lưu vào kho tiềm năng</Button>
+      <Button size="small" block={block} icon={<StarOutlined />} onClick={() => setOpen(true)}>Lưu vào kho</Button>
       <Modal open={open} title={`Lưu ${candidateName} vào kho tiềm năng`} footer={null} destroyOnHidden onCancel={() => setOpen(false)}>
         <p className="text-xs leading-5 text-slate-500">
           Dùng khi hồ sơ chưa hợp vị trí này nhưng có tiềm năng. Khi bạn đăng tin mới, hệ thống gợi ý lại người trong kho.

@@ -110,6 +110,7 @@ class EmployerNotificationApiTests(APITestCase):
             {
                 'important_decision_email': True,
                 'intermediate_verification_email': True,
+                'new_application_email': True,
             },
         )
 
@@ -122,6 +123,8 @@ class EmployerNotificationApiTests(APITestCase):
         self.assertEqual(updated.status_code, status.HTTP_200_OK)
         self.assertEqual(updated.data['important_decision_email'], True)
         self.assertEqual(updated.data['intermediate_verification_email'], False)
+        # A partial PATCH leaves the other switch untouched.
+        self.assertEqual(updated.data['new_application_email'], True)
 
     @override_settings(EMPLOYER_EVENT_RETENTION_DAYS=730)
     def test_retention_removes_old_website_events_and_keeps_current_events(self):

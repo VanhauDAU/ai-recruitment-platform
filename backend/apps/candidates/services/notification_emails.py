@@ -52,7 +52,8 @@ def _application_received_context(notification):
 EVENT_CONTEXT = {'application_received': _application_received_context}
 
 
-def _branding():
+def email_brand_context():
+    """Brand header/footer for any product email, with an email-safe absolute logo."""
     from apps.jobs.services import absolute_url
 
     branding = email_branding()
@@ -64,7 +65,7 @@ def _branding():
 def render_notification_email(notification):
     """Return ``(subject, text, html, from_email, reply_to)`` for one notice."""
     spec = EVENTS[notification.event_type]
-    branding = _branding()
+    branding = email_brand_context()
     extra = EVENT_CONTEXT.get(spec.email_template, lambda _notification: {})(notification)
     subject = notification.title
     if spec.email_subject and extra.get('subject_context'):

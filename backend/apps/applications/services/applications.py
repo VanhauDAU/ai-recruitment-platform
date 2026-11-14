@@ -14,6 +14,7 @@ from apps.employers.models import CampaignActivity
 from apps.employers.services import record_campaign_activity
 
 from ..models import Application, ApplicationStatusHistory
+from .recruiter_alerts import alert_recruiter_of_application
 
 MAX_APPLICATIONS_PER_JOB = 3
 REAPPLICATION_COOLDOWN = timedelta(minutes=5)
@@ -104,4 +105,5 @@ def create_application_record(
         context={'company_name': job.company.company_name, 'job_title': job.title},
         metadata={'application_public_id': application.public_id, 'job_public_id': job.public_id},
     )
+    alert_recruiter_of_application(application)
     return application
