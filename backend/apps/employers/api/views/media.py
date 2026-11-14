@@ -16,6 +16,7 @@ from common.r2_storage import private_media_storage
 
 from ...models import CompanyImage, CompanyMediaUpload, CompanyUpdateRequest, RecruiterProfile
 from ...models.page_access import resolve_company_page_access
+from ...page_content import GALLERY_LIMIT
 from ...services import (
     REQUESTER_EDITABLE_COMPANY_UPDATE_STATUSES,
     EmployerUploadStructureError,
@@ -166,9 +167,13 @@ class CompanyImageUploadView(APIView):
 
         company = _require_media_editor(request.user).company
         update_request = _get_update_request(request, company)
-        if self.kind == 'gallery' and not update_request and company.images.count() >= 10:
+        if (
+            self.kind == 'gallery'
+            and not update_request
+            and company.images.count() >= GALLERY_LIMIT
+        ):
             return Response(
-                {'file': 'Thư viện công ty chỉ được có tối đa 10 ảnh.'},
+                {'file': f'Thư viện công ty chỉ được có tối đa {GALLERY_LIMIT} ảnh.'},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -208,9 +213,11 @@ class CompanyImageUploadView(APIView):
                         final_count = (
                             company.images.exclude(id__in=deletions).count() + len(additions) + 1
                         )
-                        if final_count > 10:
+                        if final_count > GALLERY_LIMIT:
                             raise ValidationError(
-                                {'file': 'Thư viện công ty chỉ được có tối đa 10 ảnh.'}
+                                {
+                                    'file': f'Thư viện công ty chỉ được có tối đa {GALLERY_LIMIT} ảnh.'
+                                }
                             )
                         additions.append(saved['path'])
                         changes['gallery_additions'] = additions

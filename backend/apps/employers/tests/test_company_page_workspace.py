@@ -345,7 +345,17 @@ class CompanyPageWorkspaceReadTests(CompanyPageWorkspaceTestCase):
         data = response.data
         self.assertSetEqual(
             set(data),
-            {'company', 'permissions', 'registry', 'layout', 'pinned_jobs', 'content', 'stats'},
+            {
+                'company',
+                'permissions',
+                'registry',
+                'layout',
+                'pinned_jobs',
+                'content',
+                'content_form',
+                'completeness',
+                'stats',
+            },
         )
         self.assertEqual(
             data['company'],
@@ -362,7 +372,10 @@ class CompanyPageWorkspaceReadTests(CompanyPageWorkspaceTestCase):
             set(data['permissions']),
             {'can_view', 'can_edit_layout', 'can_edit_content', 'can_manage_editors', 'blockers'},
         )
-        self.assertSetEqual(set(data['registry']), {'sections', 'accents', 'limits'})
+        self.assertSetEqual(
+            set(data['registry']),
+            {'sections', 'accents', 'social_networks', 'limits'},
+        )
         self.assertEqual(
             [
                 (item['key'], item['zone'], item['always_on'])
@@ -401,7 +414,10 @@ class CompanyPageWorkspaceReadTests(CompanyPageWorkspaceTestCase):
         for item in data['registry']['accents']:
             self.assertSetEqual(set(item), {'key', 'label', 'primary', 'hover', 'soft'})
             self.assertTrue(item['label'])
-        self.assertEqual(data['registry']['limits'], {'pinned_jobs': 3})
+        self.assertEqual(
+            data['registry']['limits'],
+            {'pinned_jobs': 3, 'benefits': 8, 'offices': 10, 'gallery': 10, 'headline': 160},
+        )
         self.assertEqual(
             data['layout'],
             {

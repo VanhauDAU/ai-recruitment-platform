@@ -59,6 +59,7 @@ from .recruitment_need import RecruitmentNeedSerializer
 from .registration import EmployerRegisterSerializer, EmployerRegistrationProfileSerializer
 from .verification import (
     CompanyDocumentSerializer,
+    CompanyPageContentSerializer,
     CompanyUpdateRequestCloseSerializer,
     CompanyUpdateRequestSerializer,
 )
@@ -97,6 +98,7 @@ __all__ = [
     'FollowedCompanySerializer',
     'PublicCompanyListSerializer',
     'CompanyUpdateRequestSerializer',
+    'CompanyPageContentSerializer',
     'CompanyUpdateRequestCloseSerializer',
     'CampaignStatusSerializer',
     'CampaignActivitySerializer',

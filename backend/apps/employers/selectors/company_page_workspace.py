@@ -17,6 +17,7 @@ from .company_page import (
     company_page_queryset,
     pinned_public_jobs,
 )
+from .company_page_content_form import company_page_content_form
 
 PINNABLE_JOB_LIMIT = 20
 
@@ -57,6 +58,11 @@ def company_page_workspace(recruiter, access, *, request=None):
         apply_layout=False,
         pinned_jobs=pinned_jobs,
     )
+    content_form, completeness = company_page_content_form(
+        company,
+        recruiter=recruiter,
+        request=request,
+    )
     return {
         'company': {
             'public_id': company.public_id,
@@ -71,6 +77,8 @@ def company_page_workspace(recruiter, access, *, request=None):
         'layout': _workspace_layout(company, pinned_jobs),
         'pinned_jobs': [_job_reference(job) for job in pinned_jobs],
         'content': content,
+        'content_form': content_form,
+        'completeness': completeness,
         'stats': {
             'follower_count': company.follower_count,
             'active_public_job_count': content['stats']['active_public_job_count'],

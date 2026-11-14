@@ -83,15 +83,16 @@ Xác thực trong Swagger UI: gọi `POST /api/auth/login/` lấy `access`, bấ
 | DELETE | `/api/employer/company/images/{id}/` | Xóa ảnh giới thiệu (owner hoặc người biên tập trang còn hiệu lực) |
 | GET | `/api/employer/company/page/` | Workspace trang công ty (ADR-0017): `{company, permissions, registry, layout, pinned_jobs, content, stats}`. Mọi recruiter đã liên kết công ty đọc được; chưa liên kết trả `404`. `permissions` do server tính tại thời điểm request. Xem [chi tiết](#workspace-trang-công-ty-của-nhà-tuyển-dụng). |
 | PATCH | `/api/employer/company/page/layout/` | Cần `can_edit_layout`. Body `{lock_version, section_order?, hidden_sections?, accent?, pinned_job_public_ids?}`; áp dụng ngay lên trang công khai và trả lại payload workspace. `409 COMPANY_PAGE_LAYOUT_STALE` kèm `layout` hiện tại khi `lock_version` cũ; `403 COMPANY_PAGE_EDIT_FORBIDDEN`; `400` theo field. Throttle `company_page_layout` 60/giờ theo tài khoản. |
+| POST | `/api/employer/company/page/content/` | Cần `can_edit_content`. Body `{changes: {…}}` chỉ gồm `headline, description, culture, employee_benefits, video_url, social_links, benefits, offices, logo_pending, cover_pending, gallery_pending, gallery_deletions`; gộp vào yêu cầu cập nhật đang mở của chính người gửi (tạo mới nếu chưa có) và trả payload workspace. `409 COMPANY_UPDATE_IN_REVIEW` khi yêu cầu đang thẩm định; `403 COMPANY_PAGE_EDIT_FORBIDDEN`; `400` theo field. Throttle `company_page_content` 30/giờ theo tài khoản. Xem [chi tiết](#nội-dung-trang-qua-kiểm-duyệt). |
 | GET | `/api/employer/company/page/pinnable-jobs/?q=` | Cần `can_edit_layout`. `{results: [{public_id, title, slug, published_at}]}`: tối đa 20 tin đang công khai của công ty, mới nhất trước; `q` khớp tiêu đề không dấu. Chỉ có siêu dữ liệu công khai. |
 | GET/POST | `/api/employer/company/page/editors/` | Cần `can_manage_editors`. GET `{results: [row]}`; POST `{member_id}` trả `201` row của member. `400 {code, detail}` với `EDITOR_NOT_VERIFIED`, `EDITOR_ALREADY_GRANTED`, `EDITOR_IS_OWNER`; member lạ trả `404`. POST/DELETE dùng throttle `company_page_editors` 20/giờ. |
 | DELETE | `/api/employer/company/page/editors/{grant_public_id}/` | Cần `can_manage_editors`. Thu hồi grant đang hiệu lực, trả row của member với `grant: null`; grant lạ hoặc đã thu hồi trả `404`. |
 | GET/POST | `/api/employer/company/documents/` | Giấy tờ công ty; contract chuẩn POST `doc_type` + `upload_session`, có thể kèm `update_request` của chính actor. Purpose là `employer_verification` hoặc `employer_company_update` theo workflow; backend recheck owner/clean/one-time claim và structural validation. Metadata private tiếp tục redacted theo quyền. `trade_name_proof` có thể dùng `source_type=website` + `website_url`; ĐKDN/ủy quyền/định danh nhận JPG/PNG/PDF, `candidate_dpa` nhận PDF/DOCX. Raw `file` chỉ còn compatibility window. |
 | POST | `/api/employer/company/documents/preview/` | Luôn trả `409 UPLOAD_SCAN_REQUIRED`; không parse/convert raw Office file trước malware scan. |
 | GET | `/api/employer/company/documents/{id}/content/` | Mở private binary sau object-level authorization. Uploader/requester và company owner được phép; member khác, outsider hoặc URL website trả `404`. Response dùng `Cache-Control: private, no-store` và không phát storage key/signed URL trước authorization |
-| GET/POST | `/api/employer/company/update-requests/?scope=mine\|company` | Mọi employer đã liên kết công ty có thể tạo yêu cầu riêng, tối đa một active request trên mỗi `(company, requester)`; nhiều member được gửi song song. Recruiter UI chỉ gọi `scope=mine`, không hiển thị lịch sử công ty. Response có `current_revision_public_id`, `allowed_actions`, `submitted_at`, base/lock version; mỗi submit/resubmit tạo revision bất biến. `in_review` read-only; diff rỗng bị từ chối và field không sửa không được tự thêm vào `changes`. |
+| GET/POST | `/api/employer/company/update-requests/?scope=mine\|company` | Mọi employer đã liên kết công ty có thể tạo yêu cầu riêng, tối đa một active request trên mỗi `(company, requester)`; nhiều member được gửi song song. Recruiter UI chỉ gọi `scope=mine`, không hiển thị lịch sử công ty. Response có `current_revision_public_id`, `allowed_actions`, `submitted_at`, base/lock version; mỗi submit/resubmit tạo revision bất biến. `in_review` read-only; diff rỗng bị từ chối và field không sửa không được tự thêm vào `changes`. Các field nội dung trang (`headline, culture, video_url, social_links, benefits, offices`) cần `can_edit_content` của trang công ty, thiếu trả `403 COMPANY_PAGE_EDIT_FORBIDDEN`; field cũ vẫn mở cho mọi member (ER-D05). |
 | POST | `/api/employer/company/update-requests/{public_id}/{withdraw\|cancel}/` | Rút/hủy trước review bằng `lock_version`; requester được withdraw, company owner được cancel. Backend ghi append-only event và recheck quyền/status dưới lock. |
-| GET/POST | `/api/admin/company-update-requests/{public_id}/` · `start-review/` · `review/` | Admin mở exact request, nhận review bằng exact revision/lock rồi mới ra quyết định cuối `approved\|changes_requested\|rejected`. Duyệt từng document không tự quyết định toàn request. Apply so conflict theo field và không partial apply. |
+| GET/POST | `/api/admin/company-update-requests/{public_id}/` · `start-review/` · `review/` | Admin mở exact request, nhận review bằng exact revision/lock rồi mới ra quyết định cuối `approved\|changes_requested\|rejected`. Duyệt từng document không tự quyết định toàn request. Apply so conflict theo field (cả `benefits`, `offices`) và không partial apply. Payload có `previews` cạnh `media_previews`: `previews.benefits: [{name, note}]`, `previews.offices: [{label, address, province_name, is_headquarters}]` (chỉ có key đang được đề xuất); `current_values.benefits`/`current_values.offices` dùng cùng shape. |
 | GET | `/api/admin/companies/{public_id}/public-page/` | Quyền `company.view`. Trả `{public_path, is_indexable, policy_hold: {active, reason, actor_name, at}, profile}`; `profile` là đúng DTO của `GET /api/companies/{slug}/` và vẫn được dựng khi trang đang bị tạm ẩn. |
 | POST | `/api/admin/companies/{public_id}/policy-hold/` | Quyền `company.view` + `company_page.moderate`. Body `{action: apply\|release, reason}` với `reason` 10–500 ký tự; trả cùng payload với `public-page/`. Lặp lại quyết định đang có hiệu lực trả `400`. Mỗi lần ghi `CompanyPageEvent` và nhật ký quản trị, không đổi `Company.updated_at`. |
 | GET | `/api/admin/company-reports/?status=&reason=&company=&q=&ordering=&page=` | Quyền `company_report.view`. Hàng chờ báo cáo trang công ty, phân trang chuẩn. `company` là `public_id` công ty; `q` tìm theo mã báo cáo, mã/tên công ty (không dấu), email người báo cáo, nội dung và ghi chú kết luận. `ordering` chỉ nhận whitelist `company_name\|reason\|detail\|reporter_email\|status\|created_at` (thêm `-` để giảm dần), giá trị khác trả `400`. Không có endpoint summary; đếm hàng chờ bằng `?status=pending&page_size=1`. |
@@ -150,6 +151,7 @@ còn API quản lý ngôn ngữ (`/api/site/locales/`, `/api/site/admin/locales/
   "identity": {
     "display_name": "FPT Software",
     "legal_name": "Công ty TNHH Phần mềm FPT",
+    "headline": "Kiến tạo tương lai số",
     "logo_url": "https://…/logo.png",
     "cover_image_url": "",
     "website_url": "https://fpt-software.com",
@@ -160,12 +162,15 @@ còn API quản lý ngôn ngữ (`/api/site/locales/`, `/api/site/admin/locales/
   "sections": [
     {"key": "about", "type": "rich_text", "title": "Giới thiệu công ty", "body_html": "<p>…</p>"},
     {"key": "jobs", "type": "jobs", "title": "Việc làm đang tuyển", "pinned_job_public_ids": ["jb_ab12"]},
-    {"key": "benefits", "type": "rich_text", "title": "Phúc lợi", "body_html": "<ul>…</ul>"},
-    {"key": "gallery", "type": "gallery", "title": "Hình ảnh công ty", "items": [{"image_url": "https://…", "caption": ""}]}
+    {"key": "benefits", "type": "benefits", "title": "Phúc lợi", "items": [{"name": "Bảo hiểm sức khoẻ", "icon": "shield", "category": "welfare", "note": "Cho cả gia đình"}], "body_html": "<ul>…</ul>"},
+    {"key": "culture", "type": "rich_text", "title": "Văn hoá công ty", "body_html": "<p>…</p>"},
+    {"key": "gallery", "type": "gallery", "title": "Hình ảnh công ty", "items": [{"image_url": "https://…", "caption": ""}]},
+    {"key": "video", "type": "video", "title": "Video giới thiệu", "provider": "youtube", "video_id": "dQw4w9WgXcQ", "embed_url": "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ"}
   ],
   "sidebar": [
     {"key": "general_info", "type": "facts", "title": "Thông tin chung", "items": [{"key": "website", "label": "Website", "value": "fpt-software.com", "href": "https://fpt-software.com"}]},
-    {"key": "offices", "type": "offices", "title": "Địa điểm", "items": [{"label": "Trụ sở chính", "address": "17 Duy Tân, Cầu Giấy, Hà Nội"}]},
+    {"key": "offices", "type": "offices", "title": "Địa điểm", "items": [{"label": "Trụ sở chính", "address": "17 Duy Tân", "province_name": "Hà Nội", "is_headquarters": true}]},
+    {"key": "social_links", "type": "social_links", "title": "Mạng xã hội", "items": [{"network": "facebook", "label": "Facebook", "url": "https://facebook.com/fptsoftware"}]},
     {"key": "share", "type": "share", "title": "Chia sẻ công ty"},
     {"key": "similar_companies", "type": "similar_companies", "title": "Công ty cùng lĩnh vực"}
   ]
@@ -181,8 +186,14 @@ còn API quản lý ngôn ngữ (`/api/site/locales/`, `/api/site/admin/locales/
   `similar_companies`; `general_info.items` chỉ gồm fact có giá trị
   (`company_size`, `industries`, `founded_year`, `website`), riêng `website` có
   thêm `href`.
-- `website_url` và `href` chỉ trả URL `http(s)`; `offices` chỉ lấy từ
-  `Company.public_headquarters` nên hộ kinh doanh không có khối này.
+- `website_url` và `href` chỉ trả URL `http(s)`. `offices` lấy từ các văn phòng
+  đã duyệt (`CompanyOffice`); công ty chưa có văn phòng nào dùng một item từ
+  `Company.public_headquarters` (`province_name` rỗng). Hộ kinh doanh không bao
+  giờ có khối này, kể cả khi đã khai văn phòng.
+- `benefits` có mặt khi có phúc lợi từ danh mục (`items`) hoặc mô tả phúc lợi
+  (`body_html`, rỗng khi không có). `video` chỉ có với video YouTube/Vimeo hợp lệ;
+  `embed_url` do server sinh (`youtube-nocookie.com` hoặc `player.vimeo.com`),
+  frontend chỉ tải khi người xem bấm. `social_links` theo thứ tự registry.
 - `indexable` đúng khi công ty không bị tạm ẩn, có người đại diện hợp lệ, có
   lĩnh vực và có mô tả hoặc ít nhất một tin đang công khai. Sitemap dùng cùng
   định nghĩa này.
@@ -193,7 +204,11 @@ còn API quản lý ngôn ngữ (`/api/site/locales/`, `/api/site/admin/locales/
 
 SEO shell `GET /cong-ty/{slug}` (ngoài `/api`) trả title, description,
 canonical, robots, Open Graph/Twitter và JSON-LD `Organization` +
-`BreadcrumbList`; chỉ `index, follow` khi `indexable` và `seo_robots_index`
+`BreadcrumbList`; `Organization.sameAs` là danh sách website và các mạng xã hội,
+`address` lấy từ văn phòng được đánh dấu trụ sở chính (kèm `addressRegion`);
+công ty chưa khai văn phòng nào dùng địa chỉ đăng ký của doanh nghiệp, và hộ
+kinh doanh không bao giờ có `address`. Chỉ
+`index, follow` khi `indexable` và `seo_robots_index`
 đang bật. Slug lạ hoặc công ty bị tạm ẩn trả HTTP 404 kèm `noindex`.
 `/sitemaps/companies.xml` liệt kê các công ty `indexable` với `lastmod` lấy từ
 `Company.updated_at` và được khai báo trong `/sitemap.xml`.
@@ -240,6 +255,71 @@ canonical, robots, Open Graph/Twitter và JSON-LD `Organization` +
   Tin ghim rời trạng thái công khai tự biến mất khỏi `pinned_job_public_ids`.
   `GET /api/jobs/?company=<public_id>` không kèm `ordering` xếp tin ghim lên
   đầu theo thứ tự ghim.
+
+### Nội dung trang qua kiểm duyệt
+
+Nội dung (chữ, video, mạng xã hội, phúc lợi, văn phòng, ảnh) không lên trang
+ngay mà đi qua `CompanyUpdateRequest` như hồ sơ công ty; bố cục thì áp dụng
+ngay. Workspace `GET /api/employer/company/page/` có thêm:
+
+```json
+{
+  "content_form": {
+    "published": {"headline": "", "description": "<p>…</p>", "culture": "", "employee_benefits": "", "video_url": "",
+                  "social_links": {"facebook": "", "linkedin": "", "youtube": "", "tiktok": "", "instagram": ""},
+                  "benefits": [{"benefit_id": 7, "note": ""}],
+                  "offices": [{"label": "Trụ sở chính", "address_line": "17 Duy Tân", "province_id": 1, "province_name": "Hà Nội", "is_headquarters": true}],
+                  "logo_url": "", "cover_image_url": "", "gallery": [{"id": 3, "image_url": "https://…", "caption": ""}]},
+    "pending": {"culture": "<p>…</p>", "logo_pending": true},
+    "request": {"public_id": "cur_…", "status": "submitted", "submitted_at": "…", "review_note": "", "editable": true, "lock_version": 2, "allowed_actions": ["edit", "withdraw", "cancel"]},
+    "section_status": {"hero": "pending", "about": "published", "benefits": "empty", "culture": "pending", "gallery": "published", "video": "empty", "offices": "empty", "social_links": "empty"}
+  },
+  "completeness": {"score": 30, "items": [{"key": "logo", "label": "Logo", "done": false}]}
+}
+```
+
+- `pending` và `request` là `null` khi người gọi không có yêu cầu đang mở;
+  yêu cầu của member khác không hiện ở đây. `pending` chỉ gồm key nội dung
+  trang của yêu cầu, cùng shape với `published`; ảnh đang chờ trả URL xem trước
+  (`logo_url`, `cover_image_url`, `gallery_additions: [{image_url}]`) và
+  `gallery_deletions: [id]`. `request.lock_version`/`allowed_actions` dùng cho
+  `POST /api/employer/company/update-requests/{public_id}/withdraw/`.
+- `section_status`: khối có key trong yêu cầu đang mở là `pending` (hoặc
+  `changes_requested` khi admin yêu cầu chỉnh sửa); còn lại `published` nếu đã
+  có nội dung công khai, ngược lại `empty`.
+- `completeness.score` là phần trăm của 10 mục đã có nội dung công khai: logo,
+  ảnh bìa, khẩu hiệu, giới thiệu, phúc lợi (danh mục hoặc mô tả), văn hoá,
+  thư viện ảnh, văn phòng, mạng xã hội, video.
+- `registry.social_networks: [{key, label, placeholder}]` và `registry.limits`
+  thêm `benefits: 8, offices: 10, gallery: 10, headline: 160`.
+
+`POST /api/employer/company/page/content/` gộp `changes` vào yêu cầu đang mở:
+key gửi lên ghi đè key cũ, key không gửi giữ nguyên (kể cả thay đổi pháp lý
+gửi từ form hồ sơ), và key gửi đúng bằng giá trị đang công khai bị bỏ khỏi
+yêu cầu. Gộp xong mà không còn gì thì yêu cầu đang mở được rút (`withdrawn`);
+nếu chưa có yêu cầu thì trả `400 {changes}`. Key giữ lại vẫn so xung đột với
+giá trị công khai lúc nó được gửi lần đầu.
+
+Quy tắc kiểm tra (chạy khi gửi và chạy lại khi admin duyệt):
+
+- `headline`: một dòng chữ thuần, tối đa 160 ký tự, không chứa `<`/`>`.
+- `culture`: rich text cùng allow-list với mô tả, tối đa 5.000 ký tự hiển thị.
+- `video_url`: chỉ `youtube.com/watch?v=`, `youtu.be/`, `youtube.com/shorts/`
+  hoặc `vimeo.com/<số>`; lưu dạng chuẩn `https://www.youtube.com/watch?v=<id>`
+  hoặc `https://vimeo.com/<id>`, `""` để xoá. Không bao giờ nhận mã nhúng.
+- `social_links`: chỉ `facebook, linkedin, youtube, tiktok, instagram`; mỗi
+  giá trị là URL `https` thuộc tên miền của mạng đó (kể cả tên miền con như
+  `m.facebook.com`, `vn.linkedin.com`) và trỏ tới một trang cụ thể; chuỗi rỗng
+  bị bỏ.
+- `benefits`: tối đa 8 `{benefit_id, note}` không trùng, `benefit_id` là
+  `Benefit` đang hoạt động (`GET /api/jobs/benefits/`), `note` tối đa 160 ký tự.
+- `offices`: tối đa 10 `{label, address_line, province_id, is_headquarters}`,
+  `province_id` là `Location` cấp tỉnh (`GET /api/locations/?level=province`),
+  tối đa một trụ sở chính.
+- Lỗi trả ở cấp cao nhất theo field; lỗi từng phần tử của danh sách lồng theo
+  chỉ số dạng chuỗi, ví dụ `{"offices": {"1": {"address_line": ["…"]}}}`, lỗi
+  của cả danh sách là `{"offices": ["…"]}`; lỗi mạng xã hội lồng theo mạng,
+  ví dụ `{"social_links": {"facebook": ["…"]}}`.
 
 Row của `editors/`:
 

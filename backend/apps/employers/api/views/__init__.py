@@ -19,6 +19,7 @@ from .company_page import (
     PublicCompanySimilarView,
 )
 from .company_page_workspace import (
+    CompanyPageContentView,
     CompanyPageEditorDetailView,
     CompanyPageEditorListView,
     CompanyPageLayoutView,
@@ -81,6 +82,7 @@ __all__ = [
     'CompanyLogoUploadView',
     'CompanySearchView',
     'CompanyFollowView',
+    'CompanyPageContentView',
     'CompanyPageEditorDetailView',
     'CompanyPageEditorListView',
     'CompanyPageLayoutView',

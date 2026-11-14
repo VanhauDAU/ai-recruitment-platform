@@ -12,14 +12,16 @@ from django.urls import reverse
 from django.utils import timezone
 from rest_framework.test import APITestCase
 
-from apps.jobs.models import Job, JobCategory, JobLocation
+from apps.jobs.models import Benefit, Job, JobCategory, JobLocation
 from apps.locations.models import Location
 
 from ..models import (
     Company,
+    CompanyBenefit,
     CompanyDocument,
     CompanyImage,
     CompanyIndustry,
+    CompanyOffice,
     CompanyReport,
     CompanyUpdateRequest,
     EmployerVerificationCase,
@@ -46,11 +48,15 @@ from .company_page_helpers import (
 RECRUITMENT_NEED_READ_BUDGET = 2
 COMPANY_UPDATE_REQUEST_LIST_BUDGET = 4
 ADMIN_COMPANY_UPDATE_REQUEST_LIST_BUDGET = 8
+# Rows proposing benefits/offices add, once per page: benefit and province
+# names for the proposals, published benefits and offices for current values.
+ADMIN_COMPANY_UPDATE_REQUEST_CONTENT_LIST_BUDGET = ADMIN_COMPANY_UPDATE_REQUEST_LIST_BUDGET + 4
 PUBLIC_COMPANY_LIST_QUERY_BUDGET = 5
 # Company row (indexability is an EXISTS annotation and the saved layout a
 # join of the same SELECT), industries prefetch, gallery prefetch, canonical
-# public-job count, publicly available pinned jobs (CP-5).
-PUBLIC_COMPANY_DETAIL_QUERY_BUDGET = 5
+# public-job count, publicly available pinned jobs (CP-5), benefits with their
+# catalogue entry and offices with their province (CP-6, one prefetch each).
+PUBLIC_COMPANY_DETAIL_QUERY_BUDGET = 7
 # Visible-company lookup, one canonical job aggregate over the same-industry
 # candidates, the ranked projection, industries prefetch.
 PUBLIC_COMPANY_SIMILAR_QUERY_BUDGET = 4
@@ -233,6 +239,22 @@ class PublicCompanyPageQueryBudgetTests(FlatQueryCountMixin, APITestCase):
                     company=self.company,
                     industry=Industry.objects.create(name=f'Company page budget {index}'),
                 )
+                CompanyBenefit.objects.create(
+                    company=self.company,
+                    benefit=Benefit.objects.create(name=f'Company page budget {index}'),
+                    sort_order=index,
+                )
+                CompanyOffice.objects.create(
+                    company=self.company,
+                    label=f'Văn phòng {index}',
+                    address_line=f'{index} Duy Tân',
+                    province=Location.objects.create(
+                        code=f'B{index:02d}',
+                        level=Location.Level.PROVINCE,
+                        name=f'Tỉnh ngân sách {index:02d}',
+                    ),
+                    sort_order=index,
+                )
 
         baseline, expanded = self._assert_flat(
             reverse('public-company-detail', args=[self.company.slug]),
@@ -244,6 +266,10 @@ class PublicCompanyPageQueryBudgetTests(FlatQueryCountMixin, APITestCase):
         self.assertEqual(expanded.data['stats']['active_public_job_count'], 25)
         self.assertEqual(len(expanded.data['identity']['industries']), 25)
         self.assertEqual(len(expanded.data['sections'][-1]['items']), 25)
+        sections = {block['key']: block for block in expanded.data['sections']}
+        sidebar = {block['key']: block for block in expanded.data['sidebar']}
+        self.assertEqual(len(sections['benefits']['items']), 24)
+        self.assertEqual(len(sidebar['offices']['items']), 24)
 
     def _similar_company(self, index):
         company = make_company(
@@ -510,7 +536,7 @@ class AdminCompanyUpdateRequestQueryBudgetTests(APITestCase):
         )
         self.client.force_authenticate(self.admin)
 
-    def _request_with_document(self, index):
+    def _request_with_document(self, index, changes=None):
         requester = get_user_model().objects.create_user(
             email=f'company-request-admin-{index}@example.com',
             password='Password@123',
@@ -528,7 +554,7 @@ class AdminCompanyUpdateRequestQueryBudgetTests(APITestCase):
         update_request = CompanyUpdateRequest.objects.create(
             company=company,
             requested_by=requester,
-            changes={'address': f'Địa chỉ {index}'},
+            changes=changes or {'address': f'Địa chỉ {index}'},
         )
         CompanyDocument.objects.create(
             company=company,
@@ -538,6 +564,7 @@ class AdminCompanyUpdateRequestQueryBudgetTests(APITestCase):
             doc_type=CompanyDocument.DocType.BUSINESS_REGISTRATION,
             file_url=f'employers/admin-budget/document-{index}.pdf',
         )
+        return company
 
     def test_admin_company_update_request_list_query_count_stays_flat(self):
         self._request_with_document(1)
@@ -558,3 +585,60 @@ class AdminCompanyUpdateRequestQueryBudgetTests(APITestCase):
             len(expanded_queries),
             ADMIN_COMPANY_UPDATE_REQUEST_LIST_BUDGET,
         )
+
+
+class AdminCompanyUpdateRequestContentQueryBudgetTests(AdminCompanyUpdateRequestQueryBudgetTests):
+    def setUp(self):
+        super().setUp()
+        self.benefit = Benefit.objects.create(name='Admin content budget')
+        self.province = Location.objects.create(
+            code='AB01',
+            level=Location.Level.PROVINCE,
+            name='Tỉnh duyệt nội dung',
+        )
+
+    def _content_request(self, index):
+        company = self._request_with_document(
+            index,
+            changes={
+                'benefits': [{'benefit_id': self.benefit.pk, 'note': ''}],
+                'offices': [
+                    {
+                        'label': 'Trụ sở',
+                        'address_line': f'{index} Duy Tân',
+                        'province_id': self.province.pk,
+                        'is_headquarters': True,
+                    }
+                ],
+            },
+        )
+        CompanyBenefit.objects.create(company=company, benefit=self.benefit, sort_order=0)
+        CompanyOffice.objects.create(
+            company=company,
+            label='Văn phòng cũ',
+            address_line='1 Phố Cũ',
+            province=self.province,
+            sort_order=0,
+        )
+
+    def test_admin_company_update_request_list_query_count_stays_flat(self):
+        self._content_request(1)
+        with CaptureQueriesContext(connection) as first_queries:
+            first = self.client.get(reverse('admin-company-update-request-list'))
+
+        for index in range(2, 7):
+            self._content_request(index)
+        with CaptureQueriesContext(connection) as expanded_queries:
+            expanded = self.client.get(reverse('admin-company-update-request-list'))
+
+        self.assertEqual((first.data['count'], expanded.data['count']), (1, 6))
+        self.assertEqual(len(first_queries), len(expanded_queries))
+        self.assertLessEqual(
+            len(expanded_queries),
+            ADMIN_COMPANY_UPDATE_REQUEST_CONTENT_LIST_BUDGET,
+        )
+        for row in expanded.data['results']:
+            self.assertEqual(
+                row['previews']['benefits'], [{'name': 'Admin content budget', 'note': ''}]
+            )
+            self.assertEqual(row['current_values']['offices'][0]['label'], 'Văn phòng cũ')

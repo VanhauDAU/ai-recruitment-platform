@@ -150,6 +150,7 @@ class PublicCompanyDetailApiTests(PublicCompanyPageTestCase):
             {
                 'display_name': 'Alpha Tech',
                 'legal_name': 'Công ty TNHH Phần mềm Alpha',
+                'headline': '',
                 'logo_url': 'http://testserver/media/employers/alpha/logo.png',
                 'cover_image_url': 'https://cdn.example.com/cover.png',
                 'website_url': 'https://www.alpha.example/careers',
@@ -207,8 +208,9 @@ class PublicCompanyDetailApiTests(PublicCompanyPageTestCase):
                 },
                 {
                     'key': 'benefits',
-                    'type': 'rich_text',
+                    'type': 'benefits',
                     'title': 'Phúc lợi',
+                    'items': [],
                     'body_html': '<ul><li>Bảo hiểm sức khoẻ</li></ul>',
                 },
                 {
@@ -255,7 +257,14 @@ class PublicCompanyDetailApiTests(PublicCompanyPageTestCase):
                     'key': 'offices',
                     'type': 'offices',
                     'title': 'Địa điểm',
-                    'items': [{'label': 'Trụ sở chính', 'address': '17 Duy Tân, Cầu Giấy, Hà Nội'}],
+                    'items': [
+                        {
+                            'label': 'Trụ sở chính',
+                            'address': '17 Duy Tân, Cầu Giấy, Hà Nội',
+                            'province_name': '',
+                            'is_headquarters': True,
+                        }
+                    ],
                 },
                 {'key': 'share', 'type': 'share', 'title': 'Chia sẻ công ty'},
                 {

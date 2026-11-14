@@ -1,6 +1,11 @@
 from rest_framework import status
 from rest_framework.exceptions import APIException, PermissionDenied
 
+COMPANY_UPDATE_IN_REVIEW = {
+    'code': 'COMPANY_UPDATE_IN_REVIEW',
+    'detail': 'Yêu cầu đang được thẩm định và không thể chỉnh sửa.',
+}
+
 
 class CompanyUpdateConflictResponse(APIException):
     status_code = status.HTTP_409_CONFLICT

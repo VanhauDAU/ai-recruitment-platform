@@ -2,6 +2,7 @@
 
 from .campaign import CampaignActivity, RecruitmentCampaign
 from .company import Company, CompanyImage, CompanyIndustry, CompanyMediaUpload, Industry
+from .company_content import CompanyBenefit, CompanyOffice
 from .company_follow import CompanyFollow
 from .company_page import (
     CompanyPageEditorGrant,
@@ -39,6 +40,8 @@ from .verification import (
 
 __all__ = [
     'Company',
+    'CompanyBenefit',
+    'CompanyOffice',
     'CompanyDocument',
     'CompanyDomainClaim',
     'CompanyDomainClaimEvent',

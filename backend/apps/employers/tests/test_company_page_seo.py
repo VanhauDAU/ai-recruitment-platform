@@ -183,7 +183,7 @@ class CompanySeoShellTests(TestCase):
                 'logo': 'https://cdn.example.com/logo.png',
                 'description': 'Xây dựng sản phẩm & dịch vụ công nghệ.',
                 'foundingDate': '2010',
-                'sameAs': 'https://alpha.example',
+                'sameAs': ['https://alpha.example'],
                 'address': {
                     '@type': 'PostalAddress',
                     'streetAddress': '17 Duy Tân, Cầu Giấy, Hà Nội',

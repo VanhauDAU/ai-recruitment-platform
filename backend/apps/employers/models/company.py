@@ -90,6 +90,14 @@ class Company(models.Model):
     company_size = models.CharField(max_length=100, choices=Size.choices, blank=True)
     description = models.TextField(blank=True)
     employee_benefits = models.TextField(blank=True)
+    # Page content (ADR-0017). Like every column above, written only by an
+    # approved update request; validated in ``services.company_page_content``.
+    headline = models.CharField(max_length=160, blank=True)
+    culture = models.TextField(blank=True)
+    # Canonical YouTube or Vimeo watch URL; the embed URL is derived on read.
+    video_url = models.TextField(blank=True)
+    # ``{network: https URL}`` for the networks of ``employers.page_content``.
+    social_links = models.JSONField(default=dict, blank=True)
     # Danh sách giá trị enum Market/TargetCustomer; để JSON vì hiếm khi cần
     # filter — nâng thành bảng riêng nếu về sau có nhu cầu truy vấn.
     markets = models.JSONField(default=list, blank=True)

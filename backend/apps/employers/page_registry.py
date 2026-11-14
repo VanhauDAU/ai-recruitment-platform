@@ -6,6 +6,14 @@ the frontend renders by ``type`` and never keeps its own copy of the layout.
 
 from dataclasses import dataclass
 
+from .page_content import (
+    BENEFIT_LIMIT,
+    GALLERY_LIMIT,
+    HEADLINE_MAX_LENGTH,
+    OFFICE_LIMIT,
+    SOCIAL_NETWORKS,
+)
+
 
 @dataclass(frozen=True)
 class PageSection:
@@ -20,7 +28,7 @@ class PageSection:
 MAIN_SECTIONS = (
     PageSection('about', 'rich_text', 'Giới thiệu công ty'),
     PageSection('jobs', 'jobs', 'Việc làm đang tuyển', always_on=True),
-    PageSection('benefits', 'rich_text', 'Phúc lợi'),
+    PageSection('benefits', 'benefits', 'Phúc lợi'),
     PageSection('culture', 'rich_text', 'Văn hoá công ty'),
     PageSection('gallery', 'gallery', 'Hình ảnh công ty'),
     PageSection('video', 'video', 'Video giới thiệu'),
@@ -101,5 +109,15 @@ def company_page_registry():
             {'key': key, 'label': ACCENT_LABELS[key], **colours}
             for key, colours in ACCENT_PALETTE.items()
         ],
-        'limits': {'pinned_jobs': PINNED_JOB_LIMIT},
+        'social_networks': [
+            {'key': network.key, 'label': network.label, 'placeholder': network.placeholder}
+            for network in SOCIAL_NETWORKS
+        ],
+        'limits': {
+            'pinned_jobs': PINNED_JOB_LIMIT,
+            'benefits': BENEFIT_LIMIT,
+            'offices': OFFICE_LIMIT,
+            'gallery': GALLERY_LIMIT,
+            'headline': HEADLINE_MAX_LENGTH,
+        },
     }

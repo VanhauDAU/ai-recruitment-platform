@@ -14,7 +14,13 @@ from common.seo import (
     xml_response,
 )
 
-from ...selectors import company_sitemap_rows, public_company_website_url, seo_company_by_slug
+from ...selectors import (
+    company_sitemap_rows,
+    public_company_offices,
+    public_company_social_links,
+    public_company_website_url,
+    seo_company_by_slug,
+)
 
 NO_INDEX = 'noindex, nofollow'
 
@@ -64,16 +70,22 @@ def _organization(request, company, canonical_url, description):
         organization['description'] = description
     if company.founded_year:
         organization['foundingDate'] = str(company.founded_year)
-    if website_url := public_company_website_url(company):
-        organization['sameAs'] = website_url
-    # public_headquarters is the only address allowed to leave the portals: it
-    # is empty for household businesses, whose address is the owner's home.
-    if headquarters := company.public_headquarters:
-        organization['address'] = {
+    same_as = [public_company_website_url(company)]
+    same_as += [link['url'] for link in public_company_social_links(company)]
+    if same_as := [url for url in same_as if url]:
+        organization['sameAs'] = same_as
+    # public_company_offices is the only address allowed to leave the portals:
+    # it is empty for household businesses, whose address is the owner's home.
+    offices = public_company_offices(company)
+    if headquarters := next((item for item in offices if item['is_headquarters']), None):
+        address = {
             '@type': 'PostalAddress',
-            'streetAddress': headquarters,
+            'streetAddress': headquarters['address'],
             'addressCountry': 'VN',
         }
+        if headquarters['province_name']:
+            address['addressRegion'] = headquarters['province_name']
+        organization['address'] = address
     return organization
 
 

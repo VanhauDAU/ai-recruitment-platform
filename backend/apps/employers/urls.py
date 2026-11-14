@@ -15,6 +15,7 @@ from .api.views import (
     CompanyGalleryDeleteView,
     CompanyGalleryUploadView,
     CompanyLogoUploadView,
+    CompanyPageContentView,
     CompanyPageEditorDetailView,
     CompanyPageEditorListView,
     CompanyPageLayoutView,
@@ -154,6 +155,11 @@ urlpatterns = [
         'company/page/layout/',
         CompanyPageLayoutView.as_view(),
         name='employer-company-page-layout',
+    ),
+    path(
+        'company/page/content/',
+        CompanyPageContentView.as_view(),
+        name='employer-company-page-content',
     ),
     path(
         'company/page/pinnable-jobs/',

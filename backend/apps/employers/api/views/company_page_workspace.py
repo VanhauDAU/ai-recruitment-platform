@@ -1,5 +1,6 @@
 """Employer workspace of the public company page (ADR-0017)."""
 
+from django.db import transaction
 from rest_framework import status
 from rest_framework.permissions import SAFE_METHODS
 from rest_framework.response import Response
@@ -17,12 +18,19 @@ from ...selectors import (
 )
 from ...services import (
     CompanyPageLayoutStale,
+    CompanyUpdateInReview,
     grant_company_page_editor,
+    lock_company_update_target,
     revoke_company_page_editor,
+    submit_company_update_request,
     update_company_page_layout,
 )
-from ..exceptions import CompanyPageEditForbidden
-from ..serializers import CompanyPageEditorGrantSerializer, CompanyPageLayoutSerializer
+from ..exceptions import COMPANY_UPDATE_IN_REVIEW, CompanyPageEditForbidden
+from ..serializers import (
+    CompanyPageContentSerializer,
+    CompanyPageEditorGrantSerializer,
+    CompanyPageLayoutSerializer,
+)
 from .onboarding import _require_company
 
 PINNABLE_JOB_QUERY_MAX_LENGTH = 120
@@ -127,3 +135,38 @@ class CompanyPageEditorDetailView(CompanyPageWorkspaceAPIView):
             grant_public_id=grant_public_id,
         )
         return Response(self.editor_row(grant.recruiter.public_id))
+
+
+class CompanyPageContentView(CompanyPageWorkspaceAPIView):
+    """Page content goes through moderation: it merges into the caller's request."""
+
+    throttle_scope = 'company_page_content'
+    required_capability = 'can_edit_content'
+
+    def post(self, request):
+        with transaction.atomic():
+            try:
+                company, active_request = lock_company_update_target(
+                    company_id=self.recruiter.company_id,
+                    requester=request.user,
+                )
+            except CompanyUpdateInReview:
+                return Response(COMPANY_UPDATE_IN_REVIEW, status=status.HTTP_409_CONFLICT)
+            serializer = CompanyPageContentSerializer(
+                data=request.data,
+                context={
+                    'request': request,
+                    'company': company,
+                    'recruiter': self.recruiter,
+                    'page_access': self.access,
+                },
+            )
+            serializer.is_valid(raise_exception=True)
+            submit_company_update_request(
+                company=company,
+                active_request=active_request,
+                requester=request.user,
+                data=serializer.validated_data,
+                merge=True,
+            )
+        return self.workspace()

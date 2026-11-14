@@ -10,7 +10,8 @@ from common.media_storage import media_url_from_value
 from common.rich_text import rich_text_plain_text
 from common.seo import SITEMAP_URL_LIMIT
 
-from ..models import Company, CompanyIndustry, CompanyPageEvent
+from ..models import Company, CompanyBenefit, CompanyIndustry, CompanyOffice, CompanyPageEvent
+from ..page_content import SOCIAL_NETWORKS, video_embed
 from ..page_registry import (
     ACCENT_PALETTE,
     DEFAULT_ACCENT_KEY,
@@ -60,6 +61,8 @@ def company_page_queryset():
         .prefetch_related(
             Prefetch('company_industries', queryset=industries),
             'images',
+            Prefetch('benefit_items', queryset=CompanyBenefit.objects.select_related('benefit')),
+            _offices_prefetch(),
         )
     )
 
@@ -72,8 +75,17 @@ def visible_company_by_public_id(public_id):
     return Company.objects.filter(public_id=public_id, content_policy_hold=False).only('id').first()
 
 
+def _offices_prefetch():
+    return Prefetch('offices', queryset=CompanyOffice.objects.select_related('province'))
+
+
 def seo_company_by_slug(slug):
-    return _companies_with_indexability().filter(slug=slug, content_policy_hold=False).first()
+    return (
+        _companies_with_indexability()
+        .prefetch_related(_offices_prefetch())
+        .filter(slug=slug, content_policy_hold=False)
+        .first()
+    )
 
 
 def company_sitemap_rows():
@@ -105,11 +117,63 @@ def _gallery(company, request):
     return {'items': items} if items else None
 
 
-def _offices(company):
-    headquarters = company.public_headquarters
-    if not headquarters:
+def public_company_offices(company):
+    """Offices any visitor may see; the only source of a public address.
+
+    A household business usually registers the owner's home, so it never shows
+    one. Without office rows an enterprise falls back to its registered
+    headquarters, as the page did before offices existed.
+    """
+    if company.business_type != Company.BusinessType.ENTERPRISE:
+        return []
+    offices = [
+        {
+            'label': office.label,
+            'address': office.address_line,
+            'province_name': office.province.name,
+            'is_headquarters': office.is_headquarters,
+        }
+        for office in company.offices.all()
+    ]
+    if offices or not company.public_headquarters:
+        return offices
+    return [
+        {
+            'label': 'Trụ sở chính',
+            'address': company.public_headquarters,
+            'province_name': '',
+            'is_headquarters': True,
+        }
+    ]
+
+
+def public_company_social_links(company):
+    links = company.social_links or {}
+    return [
+        {'network': network.key, 'label': network.label, 'url': links[network.key]}
+        for network in SOCIAL_NETWORKS
+        if links.get(network.key)
+    ]
+
+
+def _items(items):
+    return {'items': items} if items else None
+
+
+def _benefits(company):
+    items = [
+        {
+            'name': item.benefit.name,
+            'icon': item.benefit.icon,
+            'category': item.benefit.category,
+            'note': item.note,
+        }
+        for item in company.benefit_items.all()
+    ]
+    body = _rich_text(company.employee_benefits)
+    if not items and body is None:
         return None
-    return {'items': [{'label': 'Trụ sở chính', 'address': headquarters}]}
+    return {'items': items, 'body_html': body['body_html'] if body else ''}
 
 
 def _facts(company, industries, website_url):
@@ -232,6 +296,7 @@ def build_public_company_profile(company, *, request=None, apply_layout=True, pi
         'identity': {
             'display_name': display_name,
             'legal_name': '' if company.company_name == display_name else company.company_name,
+            'headline': company.headline,
             'logo_url': media_url_from_value(company.logo_url, request=request),
             'cover_image_url': media_url_from_value(company.cover_image_url, request=request),
             'website_url': website_url,
@@ -252,8 +317,10 @@ def build_public_company_profile(company, *, request=None, apply_layout=True, pi
             {
                 'about': _rich_text(company.description),
                 'jobs': {'pinned_job_public_ids': [job.public_id for job in pinned_jobs]},
-                'benefits': _rich_text(company.employee_benefits),
+                'benefits': _benefits(company),
+                'culture': _rich_text(company.culture),
                 'gallery': _gallery(company, request),
+                'video': video_embed(company.video_url),
             },
             hidden=layout['hidden_sections'],
         ),
@@ -261,7 +328,8 @@ def build_public_company_profile(company, *, request=None, apply_layout=True, pi
             SIDEBAR_SECTIONS,
             {
                 'general_info': {'items': _facts(company, industries, website_url)},
-                'offices': _offices(company),
+                'offices': _items(public_company_offices(company)),
+                'social_links': _items(public_company_social_links(company)),
             },
             hidden=layout['hidden_sections'],
         ),
