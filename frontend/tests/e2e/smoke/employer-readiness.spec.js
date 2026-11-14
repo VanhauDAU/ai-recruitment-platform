@@ -100,6 +100,13 @@ test('job detail keeps aggregate CV count but does not request or render candida
         deadline: '2026-09-30',
         application_count: 8,
         view_count: 20,
+        // Aggregates carry no identity, so they stay visible while blocked.
+        application_summary: {
+          total: 8,
+          unviewed: 3,
+          unanswered: 5,
+          by_status: { submitted: 3, viewed: 2, shortlisted: 3 },
+        },
       }),
     })
   })
@@ -109,7 +116,8 @@ test('job detail keeps aggregate CV count but does not request or render candida
   await expect(page).toHaveURL(/\/tuyendung\/app\/jobs\/jb_private\?active_tab=apply_cv$/)
   await expect(page.getByRole('heading', { name: 'Kỹ sư bảo mật' })).toBeVisible()
   await expect(page.getByTestId('job-metric-total-cvs')).toContainText('8')
-  await expect(page.getByTestId('job-metric-applied-cvs')).toContainText('—')
+  await expect(page.getByTestId('job-metric-unviewed-cvs')).toContainText('3')
+  await expect(page.getByTestId('job-metric-unanswered-cvs')).toContainText('5')
   await expect(page.getByText('Dữ liệu ứng viên đang được bảo vệ')).toBeVisible()
   await expect(page.getByText('Tên ứng viên không được hiển thị')).toHaveCount(0)
   await expect.poll(() => applicationCalls).toBe(0)

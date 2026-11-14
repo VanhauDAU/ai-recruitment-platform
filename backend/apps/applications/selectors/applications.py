@@ -64,13 +64,7 @@ def employer_applications_queryset(
     if scope == 'unread':
         queryset = queryset.filter(status=Application.Status.SUBMITTED)
     elif scope == 'unanswered':
-        queryset = queryset.filter(
-            status__in=[
-                Application.Status.SUBMITTED,
-                Application.Status.VIEWED,
-                Application.Status.CONSIDERING,
-            ]
-        )
+        queryset = queryset.filter(status__in=Application.UNANSWERED_STATUSES)
     order_fields = {
         'oldest': 'applied_at',
         'name': 'candidate__full_name',

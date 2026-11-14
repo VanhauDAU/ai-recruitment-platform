@@ -129,21 +129,62 @@ def attach_job_candidate_previews(jobs, *, limit=4):
     return jobs
 
 
-def employer_job_list_queryset(user, *, status=None, campaign=None, q=None):
-    """Compact query for the employer management table."""
+def _expired_filter():
+    """Jobs that are still `active` but no longer accept applications."""
     now = timezone.now()
     today = timezone.localdate(now, timezone=ZoneInfo('Asia/Ho_Chi_Minh'))
-    expired_filter = Q(deadline__lt=today)
+    expired = Q(deadline__lt=today)
     if str(getattr(settings, 'JOB_LIFECYCLE_V2_MODE', 'legacy')).lower() == 'enforce':
-        expired_filter |= Q(visibility_ends_at__isnull=True) | Q(visibility_ends_at__lte=now)
+        expired |= Q(visibility_ends_at__isnull=True) | Q(visibility_ends_at__lte=now)
+    return expired
+
+
+def _latest_application_per_candidate():
+    """Subquery of the newest submission of the outer application's candidate.
+
+    A candidate may apply to one job up to three times; recruiters work on the
+    latest submission, so every per-job aggregate counts one row per candidate.
+    """
+    return (
+        Application.objects.filter(
+            candidate_id=OuterRef('candidate_id'),
+            job_id=OuterRef('job_id'),
+        )
+        .order_by('-applied_at', '-id')
+        .values('id')[:1]
+    )
+
+
+def _employer_jobs(user, *, campaign=None, q=None):
+    queryset = Job.objects.filter(posted_by=user)
+    if campaign:
+        queryset = queryset.filter(campaign__public_id=campaign)
+    if q:
+        queryset = queryset.filter(title__icontains=q.strip())
+    return queryset
+
+
+def employer_job_list_queryset(user, *, status=None, campaign=None, q=None):
+    """Compact query for the employer management table."""
+    expired_filter = _expired_filter()
     candidate_count = (
         Application.objects.filter(job_id=OuterRef('pk'))
         .values('job_id')
         .annotate(total=Count('candidate_id', distinct=True))
         .values('total')[:1]
     )
+    unviewed_count = (
+        Application.objects.filter(
+            job_id=OuterRef('pk'),
+            status=Application.Status.SUBMITTED,
+            id=Subquery(_latest_application_per_candidate()),
+        )
+        .values('job_id')
+        .annotate(total=Count('id'))
+        .values('total')[:1]
+    )
     queryset = (
-        _with_hold_reason(Job.objects.filter(posted_by=user))
+        _with_hold_reason(_employer_jobs(user, campaign=campaign, q=q))
         .select_related('company', 'campaign')
         .prefetch_related('job_locations__location__parent')
         .defer(
@@ -155,6 +196,10 @@ def employer_job_list_queryset(user, *, status=None, campaign=None, q=None):
         .annotate(
             candidate_count=Coalesce(
                 Subquery(candidate_count, output_field=IntegerField()),
+                0,
+            ),
+            unviewed_application_count=Coalesce(
+                Subquery(unviewed_count, output_field=IntegerField()),
                 0,
             ),
             is_expired_value=Case(
@@ -171,11 +216,48 @@ def employer_job_list_queryset(user, *, status=None, campaign=None, q=None):
         queryset = queryset.filter(status=status)
         if status == Job.Status.ACTIVE:
             queryset = queryset.exclude(expired_filter)
-    if campaign:
-        queryset = queryset.filter(campaign__public_id=campaign)
-    if q:
-        queryset = queryset.filter(title__icontains=q.strip())
     return queryset
+
+
+def employer_job_status_counts(user, *, campaign=None, q=None):
+    """Count every status tab of the list in one query, under the same search."""
+    active = Q(status=Job.Status.ACTIVE)
+    counts = _employer_jobs(user, campaign=campaign, q=q).aggregate(
+        all=Count('id'),
+        active_total=Count('id', filter=active),
+        expired=Count('id', filter=active & _expired_filter()),
+        draft=Count('id', filter=Q(status=Job.Status.DRAFT)),
+        closed=Count('id', filter=Q(status=Job.Status.CLOSED)),
+    )
+    return {
+        'all': counts['all'],
+        'active': counts['active_total'] - counts['expired'],
+        'draft': counts['draft'],
+        'expired': counts['expired'],
+        'closed': counts['closed'],
+    }
+
+
+def employer_job_application_summary(job):
+    """Aggregate the latest submission of each candidate by recruiter status.
+
+    The summary carries no candidate identity, so the job detail can show it
+    even while candidate-data access is blocked.
+    """
+    by_status = dict.fromkeys(Application.Status.values, 0)
+    rows = (
+        Application.objects.filter(job=job, id=Subquery(_latest_application_per_candidate()))
+        .values('status')
+        .annotate(total=Count('id'))
+        .order_by()
+    )
+    by_status.update({row['status']: row['total'] for row in rows})
+    return {
+        'total': sum(by_status.values()),
+        'unviewed': by_status[Application.Status.SUBMITTED],
+        'unanswered': sum(by_status[state] for state in Application.UNANSWERED_STATUSES),
+        'by_status': by_status,
+    }
 
 
 def employer_job_detail_queryset(user):

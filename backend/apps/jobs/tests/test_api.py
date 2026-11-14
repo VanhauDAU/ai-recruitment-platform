@@ -633,6 +633,7 @@ class EmployerJobSerializerTests(APITestCase):
                 'campaign_name',
                 'application_count',
                 'candidate_count',
+                'unviewed_application_count',
                 'candidate_previews',
                 'view_count',
                 'published_at',
@@ -653,7 +654,104 @@ class EmployerJobSerializerTests(APITestCase):
             }.isdisjoint(item)
         )
         self.assertEqual(item['candidate_count'], 0)
+        self.assertEqual(item['unviewed_application_count'], 0)
         self.assertEqual(item['candidate_previews'], [])
+
+    def test_employer_list_counts_every_status_tab_within_the_search(self):
+        today = timezone.localdate()
+        for title, status, deadline in (
+            ('Frontend đang tuyển', Job.Status.ACTIVE, today + timedelta(days=5)),
+            ('Frontend không hạn', Job.Status.ACTIVE, None),
+            ('Frontend hết hạn', Job.Status.ACTIVE, today - timedelta(days=1)),
+            ('Frontend nháp', Job.Status.DRAFT, None),
+            ('Frontend đã đóng', Job.Status.CLOSED, None),
+            ('Kế toán đang tuyển', Job.Status.ACTIVE, today + timedelta(days=5)),
+        ):
+            Job.objects.create(
+                posted_by=self.user,
+                company=self.company,
+                title=title,
+                status=status,
+                deadline=deadline,
+            )
+        self.client.force_authenticate(self.user)
+
+        expired_tab = self.client.get(
+            reverse('employer-job-list-create'), {'status': 'expired', 'q': 'Frontend'}
+        )
+
+        self.assertEqual(expired_tab.status_code, 200, expired_tab.data)
+        self.assertEqual(
+            [item['title'] for item in expired_tab.data['results']], ['Frontend hết hạn']
+        )
+        self.assertEqual(
+            expired_tab.data['status_counts'],
+            {'all': 5, 'active': 2, 'draft': 1, 'expired': 1, 'closed': 1},
+        )
+        everything = self.client.get(reverse('employer-job-list-create'))
+        self.assertEqual(everything.data['status_counts']['all'], 6)
+        self.assertEqual(everything.data['status_counts']['active'], 3)
+
+    def test_job_application_aggregates_count_the_latest_submission_per_candidate(self):
+        job = Job.objects.create(
+            posted_by=self.user,
+            company=self.company,
+            title='Tin có nhiều lượt nộp',
+            status=Job.Status.ACTIVE,
+            impression_count=240,
+            view_count=60,
+        )
+        now = timezone.now()
+        for index, statuses in enumerate(
+            (
+                # Viewed first submission, then a new unviewed one: counts as new.
+                (Application.Status.VIEWED, Application.Status.SUBMITTED),
+                # Unviewed first submission superseded by a shortlisted one.
+                (Application.Status.SUBMITTED, Application.Status.SHORTLISTED),
+                (Application.Status.REJECTED,),
+            )
+        ):
+            candidate = User.objects.create_user(
+                email=f'summary-candidate-{index}@example.com',
+                password='Password@123',
+                role=User.Role.CANDIDATE,
+            )
+            cv = UserCv.objects.create(
+                user=candidate, cv_type=UserCv.CvType.BUILDER, title=f'CV {index}'
+            )
+            version = CvVersion.objects.create(
+                cv=cv, version_number=1, content_hash=f'{index}' * 64, created_by=candidate
+            )
+            for order, status in enumerate(statuses):
+                application = Application.objects.create(
+                    candidate=candidate,
+                    job=job,
+                    cv=cv,
+                    submitted_cv_version=version,
+                    submitted_cv_title=f'CV {index}.{order}',
+                    status=status,
+                )
+                Application.objects.filter(pk=application.pk).update(
+                    applied_at=now - timedelta(days=len(statuses) - order)
+                )
+        self.client.force_authenticate(self.user)
+
+        listing = self.client.get(reverse('employer-job-list-create'))
+        detail = self.client.get(
+            reverse('employer-job-detail', kwargs={'public_id': job.public_id})
+        )
+
+        self.assertEqual(listing.data['results'][0]['unviewed_application_count'], 1)
+        self.assertEqual(detail.status_code, 200, detail.data)
+        self.assertEqual(detail.data['impression_count'], 240)
+        summary = detail.data['application_summary']
+        self.assertEqual(summary['total'], 3)
+        self.assertEqual(summary['unviewed'], 1)
+        self.assertEqual(summary['unanswered'], 1)
+        self.assertEqual(summary['by_status'][Application.Status.SHORTLISTED], 1)
+        self.assertEqual(summary['by_status'][Application.Status.REJECTED], 1)
+        self.assertEqual(summary['by_status'][Application.Status.VIEWED], 0)
+        self.assertEqual(set(summary['by_status']), set(Application.Status.values))
 
     def test_posting_context_exposes_safe_lifecycle_rollout_contract(self):
         self.client.force_authenticate(self.user)

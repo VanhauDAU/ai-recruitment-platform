@@ -594,6 +594,29 @@ pages/employer/app/jobs/JobForm
   và tắt motion theo `prefers-reduced-motion`. Lỗi/cancel luôn giữ đường lui về
   form thủ công; reload phải resume từ public id đã lưu, không tạo lượt mới.
 
+## Ownership map — Danh sách và chi tiết tin của nhà tuyển dụng
+
+```text
+pages/employer/app/jobs/JobList + JobDetail
+  → entities/job, entities/application, entities/employer-profile
+    → shared/api, shared/ui
+```
+
+- Hai page sở hữu UI cục bộ đặt cạnh nhau trong `pages/employer/app/jobs`
+  (`JobListCard`, `JobDetailHeader`, `JobApplicationsWorkspace`, ...); hàm
+  trình bày thuần ở `job-list-presentation.js`/`job-detail-presentation.js`.
+- Số đếm luôn do backend tính: tab trạng thái đọc `status_counts` của
+  `GET /api/jobs/mine/`, badge "N mới" đọc `unviewed_application_count`, chỉ
+  số chi tiết đọc `application_summary`. Không suy số liệu từ trang dữ liệu đã
+  tải. Mọi aggregate ứng tuyển tính trên lần nộp mới nhất của mỗi ứng viên;
+  "chưa phản hồi" là `Application.UNANSWERED_STATUSES`.
+- URL là nguồn chuẩn: danh sách giữ `status|q|page`; chi tiết giữ `active_tab`
+  (`apply_cv|viewed_job|job|cv_label`) và `cv_filter` (`unanswered` hoặc một
+  status). Tab CV gọi `/api/v2/recruiter/applications/?job=…&latest=1` có phân
+  trang server và chỉ mount khi `canAccessCandidateData`.
+- Style riêng của hai route nằm trong `employer-jobs.css` (import từ hai page
+  lazy); không thêm utility Tailwind mới vì CSS khởi tạo sát trần budget.
+
 ## Ownership map — Quản lý tin tuyển dụng quản trị
 
 ```text

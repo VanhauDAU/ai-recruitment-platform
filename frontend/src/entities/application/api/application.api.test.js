@@ -2,8 +2,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   getApplicationHistory,
   getCandidateApplications,
+  getRecruiterApplicationPage,
   getRecruiterApplicationSnapshot,
-  getRecruiterApplications,
   submitJobApplication,
   updateApplicationStatus,
 } from './application.api'
@@ -52,13 +52,16 @@ describe('application V2 API', () => {
   it('reads candidate and recruiter application views through the V2 endpoints', async () => {
     get
       .mockResolvedValueOnce({ data: { results: [{ public_id: 'app_1' }] } })
-      .mockResolvedValueOnce({ data: { results: [{ public_id: 'app_2' }] } })
+      .mockResolvedValueOnce({ data: { count: 1, results: [{ public_id: 'app_2' }] } })
       .mockResolvedValueOnce({ data: { application_public_id: 'app_2' } })
       .mockResolvedValueOnce({ data: { results: [{ to_status: 'viewed' }] } })
     patch.mockResolvedValue({ data: { public_id: 'app_2', status: 'considering' } })
 
     await expect(getCandidateApplications()).resolves.toEqual([{ public_id: 'app_1' }])
-    await expect(getRecruiterApplications({ status: 'submitted' })).resolves.toEqual([{ public_id: 'app_2' }])
+    await expect(getRecruiterApplicationPage({ status: 'submitted' })).resolves.toEqual({
+      count: 1,
+      results: [{ public_id: 'app_2' }],
+    })
     await expect(updateApplicationStatus('app_2', { status: 'considering' })).resolves.toMatchObject({ status: 'considering' })
     await expect(getRecruiterApplicationSnapshot('app_2')).resolves.toEqual({ application_public_id: 'app_2' })
     await expect(getApplicationHistory('app_2')).resolves.toEqual([{ to_status: 'viewed' }])

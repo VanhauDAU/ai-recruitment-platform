@@ -32,11 +32,6 @@ export async function getCandidateApplications() {
   return data.results || data
 }
 
-export async function getRecruiterApplications(params = {}) {
-  const { data } = await api.get('/v2/recruiter/applications/', { params })
-  return data.results || data
-}
-
 export async function getRecruiterApplicationPage(params = {}) {
   const { data } = await api.get('/v2/recruiter/applications/', { params })
   return Array.isArray(data)

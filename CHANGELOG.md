@@ -6,6 +6,32 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ## [Unreleased]
 
+### 2026-11-15
+
+#### Changed — Danh sách và chi tiết tin tuyển dụng của nhà tuyển dụng
+
+- `/tuyendung/app/jobs`: tab trạng thái kèm số đếm thay cho dropdown, tìm kiếm
+  tự chạy sau khi ngừng gõ, mỗi tin hiện ứng viên + badge "N mới", lượt xem và
+  tỉ lệ ứng tuyển, hạn nộp có đếm ngược và thanh thời gian; nút "Hoàn
+  thiện"/"Gia hạn" không còn xuống dòng; trạng thái rỗng dùng mascot.
+- `/tuyendung/app/jobs/:id`: header gọn (meta bằng icon, "Xem tin đăng",
+  "Đóng tin" trong menu và có xác nhận), bốn chỉ số bấm được để lọc CV, giữ
+  nguyên bốn tab. Tab CV lọc/sắp xếp/phân trang phía server với chip trạng
+  thái; tab lượt xem thành phễu Hiển thị → Xem → Ứng tuyển; tab thông tin
+  bố cục lại và render rich text qua `shared/ui/RichContent`.
+- Thông báo lỗi 404 của chi tiết tin bằng tiếng Việt thay cho chuỗi DRF.
+
+#### Added — API workspace tin tuyển dụng
+
+- `GET /api/jobs/mine/` trả thêm `status_counts` và
+  `unviewed_application_count` cho từng tin; `GET /api/jobs/mine/{id}/` trả
+  thêm `impression_count` và `application_summary` (lần nộp mới nhất của mỗi
+  ứng viên). Chỉ thêm trường, không đổi trường cũ.
+
+#### Fixed
+
+- Số liệu CV ở chi tiết tin không còn chỉ tính trên 20 hồ sơ đầu tiên.
+
 ### 2026-11-14
 
 #### Removed — Widget Trợ lý ProCV ở cổng ứng viên

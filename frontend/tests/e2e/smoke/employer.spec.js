@@ -930,6 +930,7 @@ test('employer jobs: compact list keeps candidate previews and contextual action
         count: 2,
         next: null,
         previous: null,
+        status_counts: { all: 2, active: 1, draft: 1, expired: 0, closed: 0 },
         results: [
           {
             public_id: 'jb_compact',
@@ -943,6 +944,7 @@ test('employer jobs: compact list keeps candidate previews and contextual action
             deadline: '2026-08-31',
             application_count: 3,
             candidate_count: 2,
+            unviewed_application_count: 1,
             candidate_previews: [
               {
                 public_id: 'candidate_1',
@@ -990,18 +992,24 @@ test('employer jobs: compact list keeps candidate previews and contextual action
   await expect(activeJob.getByRole('link', { name: 'Kỹ sư Frontend React' })).toBeVisible()
   await expect(activeJob.getByText('Đang tuyển')).toBeVisible()
   await expect(activeJob.getByText('Tuyển đội ngũ sản phẩm')).toBeVisible()
-  await expect(activeJob.getByText('2 ứng viên')).toBeVisible()
-  await expect(activeJob.getByText('3 CV')).toBeVisible()
+  await expect(activeJob.getByRole('link', { name: '2 ứng viên' })).toBeVisible()
+  await expect(activeJob.getByRole('link', { name: '1 hồ sơ chưa xem' }))
+    .toHaveAttribute('href', '/tuyendung/app/applications?job=jb_compact&scope=unread')
   const candidateAvatar = activeJob.getByRole('link', { name: 'Mở hồ sơ Nguyễn Minh Anh' })
   await expect(candidateAvatar).toBeVisible()
   await expect(candidateAvatar.locator('.ant-avatar')).toHaveClass(/ant-avatar-image/)
-  await expect(page.getByTestId('job-list-item-jb_draft').getByRole('link', { name: 'Hoàn thiện' })).toBeVisible()
+  await expect(page.getByTestId('job-list-item-jb_draft').getByRole('link', { name: /Hoàn thiện/ })).toBeVisible()
+  const statusTabs = page.getByRole('group', { name: 'Lọc theo trạng thái tin' })
+  await expect(statusTabs.getByRole('button', { name: /Tất cả\s*2/ })).toHaveAttribute('aria-pressed', 'true')
+  await expect(statusTabs.getByRole('button', { name: /Đã đóng\s*0/ })).toBeAttached()
   await expectNoHorizontalOverflow(page)
 
+  // From xl the rows become a table; narrower screens stack the stats under the title.
+  const usesTableRows = page.viewportSize().width >= 1280
   const cardHeight = await activeJob.evaluate((element) => element.getBoundingClientRect().height)
-  expect(cardHeight).toBeLessThan(page.viewportSize().width >= 1024 ? 100 : 180)
+  expect(cardHeight).toBeLessThan(usesTableRows ? 120 : 200)
 
-  if (page.viewportSize().width >= 1024) {
+  if (usesTableRows) {
     const hoverActions = activeJob.getByTestId('job-hover-actions')
     await expect(hoverActions).toHaveCSS('opacity', '0')
     await activeJob.hover()
@@ -1010,7 +1018,7 @@ test('employer jobs: compact list keeps candidate previews and contextual action
     await activeJob.getByRole('link', { name: 'Kỹ sư Frontend React' }).focus()
     await expect(hoverActions).toHaveCSS('opacity', '1')
   } else {
-    await expect(activeJob.getByTestId('job-mobile-actions')).toBeVisible()
+    await expect(activeJob.getByTestId('job-row-actions')).toBeVisible()
     await activeJob.getByRole('button', { name: 'Mở thao tác cho Kỹ sư Frontend React' }).click()
     await expect(page.getByRole('menuitem', { name: /Chỉnh sửa tin/ })).toBeVisible()
     await page.keyboard.press('Escape')
@@ -1019,6 +1027,11 @@ test('employer jobs: compact list keeps candidate previews and contextual action
   await page.getByRole('searchbox', { name: 'Tìm tin tuyển dụng' }).fill('Frontend')
   await page.getByRole('searchbox', { name: 'Tìm tin tuyển dụng' }).press('Enter')
   await expect(page).toHaveURL(/q=Frontend/)
+  await expect.poll(() => lastJobsQuery.get('q')).toBe('Frontend')
+
+  await statusTabs.getByRole('button', { name: /Nháp/ }).click()
+  await expect(page).toHaveURL(/status=draft/)
+  await expect.poll(() => lastJobsQuery.get('status')).toBe('draft')
   await expect.poll(() => lastJobsQuery.get('q')).toBe('Frontend')
 })
 
@@ -1423,9 +1436,15 @@ test('employer jobs: detail workspace is compact, actionable and responsive', as
     await route.fulfill({
       contentType: 'application/json',
       body: JSON.stringify({
-        public_id: 'jb_workspace', title: 'Kỹ sư Frontend React', status: 'active',
+        public_id: 'jb_workspace', slug: 'ky-su-frontend-react', title: 'Kỹ sư Frontend React', status: 'active',
         campaign: 'camp_product', campaign_name: 'Tuyển đội ngũ sản phẩm',
-        deadline: '2026-08-01', is_expired: true, view_count: 36,
+        deadline: '2026-08-01', is_expired: true, view_count: 36, impression_count: 240,
+        application_summary: {
+          total: 2,
+          unviewed: 1,
+          unanswered: 2,
+          by_status: { submitted: 1, viewed: 0, considering: 1, shortlisted: 0, interviewed: 0, accepted: 0, rejected: 0 },
+        },
         requested_visibility_days: 30,
         first_approved_at: '2026-08-01T02:00:00Z',
         visibility_starts_at: '2026-08-01T02:00:00Z',
@@ -1458,19 +1477,23 @@ test('employer jobs: detail workspace is compact, actionable and responsive', as
       }),
     })
   })
+  const applicationQueries = []
   await page.route(/http:\/\/localhost:8000\/api\/v2\/recruiter\/applications\/.*/, async (route) => {
+    const params = new URL(route.request().url()).searchParams
+    applicationQueries.push(params)
+    const applications = [
+      {
+        public_id: 'app_applied', candidate_name: 'Trần Minh', candidate_email: 'minh@example.com',
+        submitted_cv_title: 'Frontend CV', source: 'applied', status: 'submitted', applied_at: '2026-07-20T08:00:00Z',
+      },
+      {
+        public_id: 'app_considering', candidate_name: 'Lê Hoa', candidate_email: 'hoa@example.com',
+        submitted_cv_title: 'Product CV', source: 'applied', status: 'considering', applied_at: '2026-07-19T08:00:00Z',
+      },
+    ].filter((item) => !params.get('status') || item.status === params.get('status'))
     await route.fulfill({
       contentType: 'application/json',
-      body: JSON.stringify([
-        {
-          public_id: 'app_applied', candidate_name: 'Trần Minh', candidate_email: 'minh@example.com',
-          submitted_cv_title: 'Frontend CV', source: 'applied', status: 'submitted', applied_at: '2026-07-20T08:00:00Z',
-        },
-        {
-          public_id: 'app_recommended', candidate_name: 'Lê Hoa', candidate_email: 'hoa@example.com',
-          submitted_cv_title: 'Product CV', source: 'recommended', status: 'considering', applied_at: '2026-07-19T08:00:00Z',
-        },
-      ]),
+      body: JSON.stringify({ count: applications.length, next: null, previous: null, results: applications }),
     })
   })
 
@@ -1487,13 +1510,16 @@ test('employer jobs: detail workspace is compact, actionable and responsive', as
   await expect(extensionDialog.getByLabel('Tổng thời gian hiển thị từ lần duyệt đầu')).toHaveCount(0)
   await expectNoHorizontalOverflow(page)
   await extensionDialog.getByRole('button', { name: 'Hủy' }).click()
-  await expect(page.getByTestId('job-metric-total-cvs')).toContainText('2')
-  await expect(page.getByTestId('job-metric-applied-cvs')).toContainText('1')
-  await expect(page.getByTestId('job-metric-connected-cvs')).toContainText('1')
   await expect(page.getByTestId('job-metric-views')).toContainText('36')
+  await expect(page.getByTestId('job-metric-views')).toContainText('240 hiển thị')
+  await expect(page.getByTestId('job-metric-total-cvs')).toContainText('2')
+  await expect(page.getByTestId('job-metric-unviewed-cvs')).toContainText('1')
+  await expect(page.getByTestId('job-metric-unanswered-cvs')).toContainText('2')
+  // An expired job is not public, so the header offers no public link.
+  await expect(page.getByRole('link', { name: /Xem tin đăng/ })).toHaveCount(0)
   const usesCompactTabs = page.viewportSize().width < 640
   if (usesCompactTabs) {
-    await expect(page.getByRole('combobox', { name: 'Chọn nội dung quản lý tin' })).toBeVisible()
+    await expect(page.getByRole('radiogroup', { name: 'Chọn nội dung quản lý tin' })).toBeVisible()
   } else {
     await expect(page.getByRole('tab', { name: /CV ứng tuyển/ })).toBeVisible()
     await expect(page.getByRole('tab', { name: /Ứng viên đã xem tin/ })).toBeVisible()
@@ -1501,19 +1527,32 @@ test('employer jobs: detail workspace is compact, actionable and responsive', as
     await expect(page.getByRole('tab', { name: /Nhãn/ })).toBeVisible()
   }
   await expect(page.getByText('Trần Minh').filter({ visible: true })).toBeVisible()
-  await expect(page.getByText('Lê Hoa')).toHaveCount(0)
+  await expect.poll(() => applicationQueries.at(-1)?.get('latest')).toBe('1')
+  await expectNoHorizontalOverflow(page)
+
+  const chips = page.getByRole('group', { name: 'Lọc hồ sơ theo trạng thái' })
+  await chips.getByRole('button', { name: /Cân nhắc\s*1/ }).click()
+  await expect.poll(() => applicationQueries.at(-1)?.get('status')).toBe('considering')
+  await expect(page.getByText('Trần Minh').filter({ visible: true })).toHaveCount(0)
+  await expect(page.getByText('Lê Hoa').filter({ visible: true })).toBeVisible()
+  await expect(page).toHaveURL(/cv_filter=considering/)
   await expectNoHorizontalOverflow(page)
 
   if (usesCompactTabs) {
-    await page.getByRole('combobox', { name: 'Chọn nội dung quản lý tin' }).click()
-    await page.locator('.ant-select-dropdown:visible').getByText('Thông tin tuyển dụng', { exact: true }).click()
+    await page.getByRole('radiogroup', { name: 'Chọn nội dung quản lý tin' }).getByText('Thông tin', { exact: true }).click()
   } else {
     await selectTab(page, /Thông tin tuyển dụng/)
   }
+  await expect(page).toHaveURL(/active_tab=job/)
   await expect(page.getByText('18 - 30 triệu')).toBeVisible()
   await expect(page.getByText('Phường Hải Châu')).toBeVisible()
   await expect(page.getByText('React', { exact: true })).toBeVisible()
   await expect(page.getByText('Bảo hiểm sức khỏe', { exact: true })).toBeVisible()
+  await expectNoHorizontalOverflow(page)
+
+  await page.goto('/tuyendung/app/jobs/jb_workspace?active_tab=viewed_job')
+  await expect(page.getByTestId('job-funnel-impressions')).toContainText('240')
+  await expect(page.getByTestId('job-funnel-views')).toContainText('Chuyển đổi 15%')
   await expectNoHorizontalOverflow(page)
 })
 
