@@ -37,9 +37,10 @@ Kiểm chứng:
   `accounts.0034` chạy tới → lùi `0033` → tới lại trên DB riêng. Suite đầy đủ
   kèm ngưỡng coverage 84% chưa chạy xong cục bộ, để CI xác nhận.
 - Frontend: lint, kiến trúc, build, bundle budget đạt; vitest 1389 test, ratchet
-  coverage đạt. E2E smoke 284 passed, 1 failed chỉ trên mobile
-  (`admin-company.spec.js` — tab bị tràn ngoài viewport; tập tab của superuser
-  không đổi, chưa xác nhận lỗi có sẵn trên `main`).
+  coverage đạt. E2E smoke 284 passed; spec `admin-company.spec.js` vốn fail trên
+  mobile ở CI của `dev` từ khi gộp trang công ty (6 tab tràn khung, antd mobile
+  bỏ menu "…" nên tab ngoài khung không bấm được) — test nay chọn tab bằng bàn
+  phím (focus + Enter), pass cả desktop/tablet/mobile.
 - Chạy thật trên DB riêng `rbac_verify`: superuser đăng nhập → mời admin (không
   có ô chức danh) → link `/invitation` đặt mật khẩu → admin thường đăng nhập,
   thấy 11 khu vực, không có nhóm "Hệ thống"; `/settings` → trang từ chối,
