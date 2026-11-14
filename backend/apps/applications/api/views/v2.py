@@ -13,7 +13,7 @@ from apps.employers.services import ensure_recruiter_candidate_data_access
 
 from ...models import Application
 from ...selectors import candidate_applications_queryset, recruiter_application_snapshot_queryset
-from ...services import InvalidReapplication, create_application_record, mark_application_viewed
+from ...services import InvalidReapplication, create_application_record, open_application_snapshot
 from ..serializers.v2 import (
     CandidateApplicationV2CreateSerializer,
     CandidateApplicationV2Serializer,
@@ -85,7 +85,7 @@ class RecruiterApplicationSnapshotView(APIView):
             # application outside the posting recruiter's scope.
             raise Http404 from error
         ensure_recruiter_candidate_data_access(request.user)
-        application = mark_application_viewed(application, changed_by=request.user)
+        application = open_application_snapshot(application, actor=request.user, request=request)
         return Response(
             RecruiterApplicationSnapshotSerializer(
                 application,

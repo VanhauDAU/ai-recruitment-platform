@@ -1,7 +1,18 @@
 export const applicationKeys = {
   all: ['applications'],
   candidateList: ['applications', 'candidate-list'],
+  recruiterLists: () => ['applications', 'recruiter-list'],
   recruiterList: (params = {}) => ['applications', 'recruiter-list', params],
+  // Kept outside `recruiterLists()` so list cache patches never touch it.
+  recruiterUnreadCount: () => ['applications', 'recruiter-unread-count'],
   recruiterSnapshot: (publicId) => ['applications', 'recruiter-snapshot', publicId],
   history: (publicId) => ['applications', 'history', publicId],
+  reviewLinks: (publicId) => ['applications', 'review-links', publicId],
+  reviews: (publicId) => ['applications', 'reviews', publicId],
+  publicReview: (token) => ['applications', 'public-review', token],
+  candidateBlocks: (page = 1) => ['applications', 'candidate-blocks', page],
+  talentPool: (params = {}) => ['applications', 'talent-pool', params],
+  talentSuggestions: (jobPublicId) => ['applications', 'talent-suggestions', jobPublicId],
+  myTalentPools: ['applications', 'my-talent-pools'],
+  cvExport: (publicId, exportId) => ['applications', 'cv-export', publicId, exportId],
 }

@@ -5,13 +5,29 @@ from .applications import (
     candidate_applications_queryset,
     employer_application_queryset,
     employer_applications_queryset,
+    recruiter_application_history_queryset,
     recruiter_application_snapshot_queryset,
+    recruiter_candidate_blocks_queryset,
+    recruiter_review_links_queryset,
+    recruiter_reviews_queryset,
+)
+from .talent_pool import (
+    candidate_talent_pool_queryset,
+    recruiter_talent_pool_queryset,
+    talent_suggestions_for_job,
 )
 
 __all__ = [
+    'candidate_talent_pool_queryset',
+    'recruiter_talent_pool_queryset',
+    'talent_suggestions_for_job',
     'admin_job_applications_queryset',
     'candidate_applications_queryset',
     'employer_application_queryset',
     'employer_applications_queryset',
+    'recruiter_application_history_queryset',
     'recruiter_application_snapshot_queryset',
+    'recruiter_candidate_blocks_queryset',
+    'recruiter_review_links_queryset',
+    'recruiter_reviews_queryset',
 ]

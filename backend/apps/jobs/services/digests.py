@@ -20,6 +20,7 @@ from apps.candidates.models import (
 from apps.employers.models import CompanyFollow
 from apps.employers.services import employer_badge_state_map
 from apps.sitecontent.models import SiteSetting
+from apps.sitecontent.selectors import get_bool_setting
 from common.email import send_html_email
 from common.metrics import record_metric
 
@@ -30,13 +31,13 @@ from ..models import (
     CandidateJobDigestSchedule,
     CandidateJobEmailReceipt,
     CandidateJobEmailSuppression,
-    Job,
     JobAlert,
 )
 from ..models.alert_queries import followed_company_job_matches, strict_job_alert_matches
 from ..models.querysets import active_jobs_queryset
 from ..models.recommendation_queries import recommend_new_jobs_for_candidate_email
 from .alerts import next_job_alert_run
+from .email_cards import job_email_card
 
 logger = logging.getLogger(__name__)
 
@@ -73,24 +74,7 @@ def _candidate_delivery_lock(candidate_id):
 
 
 def _site_email_enabled():
-    value = (
-        SiteSetting.objects.filter(key='email_notifications_enabled')
-        .values_list('value', flat=True)
-        .first()
-    )
-    if value is None:
-        return True
-    if isinstance(value, bool):
-        return value
-    if isinstance(value, int) and value in {0, 1}:
-        return bool(value)
-    if isinstance(value, str):
-        normalized = value.strip().casefold()
-        if normalized in {'true', '1', 'yes', 'on'}:
-            return True
-        if normalized in {'false', '0', 'no', 'off'}:
-            return False
-    return False
+    return get_bool_setting('email_notifications_enabled', True)
 
 
 def _candidate_email_settings(user):
@@ -908,26 +892,6 @@ def _eligible_digest_items(
     return eligible
 
 
-def _salary_text(job):
-    if job.salary_type == Job.SalaryType.NEGOTIABLE:
-        return 'Thỏa thuận'
-
-    def amount(value):
-        if value is None:
-            return ''
-        if job.currency == Job.Currency.VND:
-            return f'{int(value / 1_000_000)} triệu'
-        return f'{int(value):,} {job.currency}'
-
-    if job.salary_type == Job.SalaryType.FROM:
-        return f'Từ {amount(job.salary_min)}'
-    if job.salary_type == Job.SalaryType.UP_TO:
-        return f'Đến {amount(job.salary_max)}'
-    if job.salary_min == job.salary_max:
-        return amount(job.salary_min or job.salary_max)
-    return f'{amount(job.salary_min)} - {amount(job.salary_max)}'.strip(' -')
-
-
 def _email_context(digest, items):
     alerts = {
         alert.public_id: alert.keyword
@@ -947,11 +911,6 @@ def _email_context(digest, items):
     jobs = []
     for item in items:
         job = item.job
-        locations = []
-        for workplace in job.job_locations.all():
-            province = workplace.location.parent or workplace.location
-            if province.name not in locations:
-                locations.append(province.name)
         source_labels = [
             alerts[public_id]
             for public_id in item._eligible_source_alert_public_ids
@@ -959,31 +918,16 @@ def _email_context(digest, items):
         ]
         if item._eligible_suitable_recommendation:
             source_labels.append('Việc làm phù hợp')
-        badges = []
-        if job.tier == Job.Tier.TOP:
-            badges.append('TOP')
-        elif job.tier == Job.Tier.FEATURED:
-            badges.append('Nổi bật')
-        if job.is_hot:
-            badges.append('HOT')
-        if job.is_urgent:
-            badges.append('GẤP')
-        if job.has_flash_badge:
-            badges.append('Phản hồi nhanh')
-        if badge_map.get((job.company_id, job.posted_by_id)):
-            badges.append('Nhà tuyển dụng đã xác thực')
         jobs.append(
             {
-                'title': job.title,
-                'company_name': job.company.company_name,
-                'locations': ', '.join(locations),
-                'salary': _salary_text(job),
-                'badges': badges,
+                **job_email_card(
+                    job,
+                    verified_employer=bool(badge_map.get((job.company_id, job.posted_by_id))),
+                ),
                 'sources': source_labels,
                 'followed_company': (
                     job.company.company_name if item._eligible_followed_company else ''
                 ),
-                'url': f'{settings.FRONTEND_URL.rstrip("/")}/viec-lam/{job.slug}',
             }
         )
     return {

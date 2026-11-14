@@ -14,7 +14,6 @@ const api = vi.hoisted(() => ({
     list: (page) => ['employer-notifications', 'list', page],
   },
   employerNotificationTone: () => 'warning',
-  formatEmployerEventTime: () => '10/08/2026, 09:00',
 }))
 
 vi.mock('@/entities/employer-notification', () => api)

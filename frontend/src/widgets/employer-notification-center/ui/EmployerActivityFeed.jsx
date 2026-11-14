@@ -4,9 +4,9 @@ import { Button, Empty, Pagination, Result, Skeleton, Timeline } from 'antd'
 import { useState } from 'react'
 import {
   employerNotificationKeys,
-  formatEmployerEventTime,
   getEmployerActivities,
 } from '@/entities/employer-notification'
+import { formatDateTime } from '@/shared/lib/date-time'
 
 export default function EmployerActivityFeed() {
   const [page, setPage] = useState(1)
@@ -22,7 +22,7 @@ export default function EmployerActivityFeed() {
       <article className="pb-2">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <strong className="text-sm text-slate-800">{activity.summary}</strong>
-          <time className="text-[11px] font-medium text-slate-400" dateTime={activity.occurred_at}>{formatEmployerEventTime(activity.occurred_at)}</time>
+          <time className="text-[11px] font-medium text-slate-400" dateTime={activity.occurred_at}>{formatDateTime(activity.occurred_at)}</time>
         </div>
         <p className="mt-1 text-xs text-slate-500">Thực hiện bởi: {activity.actor_name}</p>
       </article>

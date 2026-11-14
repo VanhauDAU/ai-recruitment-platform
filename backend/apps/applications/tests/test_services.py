@@ -5,25 +5,32 @@ from unittest.mock import Mock, patch
 
 from django.contrib.auth import get_user_model
 from django.db import close_old_connections
-from django.test import TestCase, TransactionTestCase
+from django.test import TestCase, TransactionTestCase, override_settings
 from django.utils import timezone
 
+from apps.candidates.models import CandidateNotification
+from apps.candidates.services import release_due_candidate_notifications
 from apps.cvs.models import CvVersion, UserCv
 from apps.cvs.services import create_initial_document
 from apps.employers.models import Company, RecruitmentCampaign
 from apps.employers.tests.readiness_helpers import make_employer_ready
 from apps.jobs.models import Job
 
-from ..api.serializers.employer import ApplicationStatusUpdateSerializer
 from ..models import Application, ApplicationStatusHistory
 from ..services import (
     InvalidApplicationStatusTransition,
     RecruitmentResourceChanged,
-    create_application,
+    StatusChangeNotUndoable,
+    available_status_decisions,
+    change_application_status,
+    create_application_record,
     mark_application_viewed,
-    update_application_status,
+    undo_latest_status_change,
+    update_application_assessment,
 )
 from ..services.automatic_rejection import process_automatic_application_rejections
+
+Status = Application.Status
 
 
 def create_status_application(suffix):
@@ -75,39 +82,33 @@ class ApplicationStatusTransitionServiceTests(TestCase):
     def setUp(self):
         self.candidate, self.employer, self.application = create_status_application('service')
 
-    def serializer(self, **data):
-        serializer = ApplicationStatusUpdateSerializer(
-            Application.objects.get(pk=self.application.pk),
-            data=data,
-            partial=True,
-        )
-        self.assertTrue(serializer.is_valid(), serializer.errors)
-        return serializer
+    def decide(self, status, application=None):
+        application = application or Application.objects.get(pk=self.application.pk)
+        return change_application_status(application, changed_by=self.employer, status=status)
 
     def test_allows_forward_transition_and_records_matching_timestamp(self):
-        serializer = self.serializer(status=Application.Status.SHORTLISTED)
+        application, notice = self.decide(Status.SHORTLISTED)
 
-        application = update_application_status(serializer, changed_by=self.employer)
-
-        self.assertEqual(application.status, Application.Status.SHORTLISTED)
+        self.assertEqual(application.status, Status.SHORTLISTED)
         self.assertIsNotNone(application.shortlisted_at)
         history = application.status_history.get()
-        self.assertEqual(history.from_status, Application.Status.SUBMITTED)
-        self.assertEqual(history.to_status, Application.Status.SHORTLISTED)
+        self.assertEqual(history.from_status, Status.SUBMITTED)
+        self.assertEqual(history.to_status, Status.SHORTLISTED)
         self.assertEqual(history.changed_by, self.employer)
+        self.assertEqual(notice.dedupe_key, history.notification_key)
 
-    def test_rejects_backward_or_reopened_transition(self):
-        Application.objects.filter(pk=self.application.pk).update(
-            status=Application.Status.ACCEPTED,
-            accepted_at=timezone.now(),
+    def test_viewed_is_system_owned_and_terminal_states_are_final(self):
+        self.assertEqual(
+            available_status_decisions(self.application),
+            list(Application.DECISION_STATUSES),
         )
-        serializer = self.serializer(status=Application.Status.VIEWED)
-
         with self.assertRaises(InvalidApplicationStatusTransition):
-            update_application_status(serializer, changed_by=self.employer)
-
-        self.application.refresh_from_db()
-        self.assertEqual(self.application.status, Application.Status.ACCEPTED)
+            self.decide(Status.VIEWED)
+        Application.objects.filter(pk=self.application.pk).update(
+            status=Status.ACCEPTED, accepted_at=timezone.now()
+        )
+        with self.assertRaises(InvalidApplicationStatusTransition):
+            self.decide(Status.REJECTED)
         self.assertFalse(self.application.status_history.exists())
 
     def test_restricted_candidate_can_only_be_rejected(self):
@@ -116,68 +117,70 @@ class ApplicationStatusTransitionServiceTests(TestCase):
         self.candidate.save(update_fields=['status', 'is_active', 'updated_at'])
 
         with self.assertRaises(InvalidApplicationStatusTransition):
-            update_application_status(
-                self.serializer(status=Application.Status.SHORTLISTED),
-                changed_by=self.employer,
-            )
+            self.decide(Status.SHORTLISTED)
 
-        rejected = update_application_status(
-            self.serializer(status=Application.Status.REJECTED),
-            changed_by=self.employer,
-        )
-        self.assertEqual(rejected.status, Application.Status.REJECTED)
+        rejected, _notice = self.decide(Status.REJECTED)
+        self.assertEqual(rejected.status, Status.REJECTED)
 
-    def test_note_only_and_idempotent_status_updates_do_not_reset_timestamp(self):
+    def test_assessment_never_touches_status_or_history(self):
         original_viewed_at = timezone.now()
-        for payload in (
-            {'employer_note': 'Internal note'},
-            {'status': Application.Status.VIEWED, 'employer_note': 'Updated note'},
-        ):
-            with self.subTest(payload=payload):
-                Application.objects.filter(pk=self.application.pk).update(
-                    status=Application.Status.VIEWED,
-                    viewed_at=original_viewed_at,
-                )
-                serializer = self.serializer(**payload)
-
-                application = update_application_status(serializer, changed_by=self.employer)
-
-                self.assertEqual(application.viewed_at, original_viewed_at)
-                self.assertFalse(application.status_history.exists())
-
-    def test_stale_serializer_cannot_override_a_completed_terminal_transition(self):
-        stale_application = Application.objects.get(pk=self.application.pk)
-        winner = self.serializer(status=Application.Status.ACCEPTED)
-        stale_loser = ApplicationStatusUpdateSerializer(
-            stale_application,
-            data={'status': Application.Status.REJECTED},
-            partial=True,
+        Application.objects.filter(pk=self.application.pk).update(
+            status=Status.VIEWED, viewed_at=original_viewed_at
         )
-        self.assertTrue(stale_loser.is_valid(), stale_loser.errors)
 
-        update_application_status(winner, changed_by=self.employer)
+        application = update_application_assessment(
+            self.application,
+            changed_by=self.employer,
+            employer_note='Internal note',
+            employer_rating=4,
+        )
+
+        self.assertEqual(
+            (application.employer_note, application.employer_rating), ('Internal note', 4)
+        )
+        self.assertEqual(application.viewed_at, original_viewed_at)
+        self.assertFalse(application.status_history.exists())
+        self.assertFalse(CandidateNotification.objects.exists())
+
+    def test_stale_application_cannot_override_a_completed_terminal_transition(self):
+        stale_application = Application.objects.get(pk=self.application.pk)
+        self.decide(Status.ACCEPTED)
+
         with self.assertRaises(InvalidApplicationStatusTransition):
-            update_application_status(stale_loser, changed_by=self.employer)
+            self.decide(Status.REJECTED, application=stale_application)
 
         self.application.refresh_from_db()
-        self.assertEqual(self.application.status, Application.Status.ACCEPTED)
-        self.assertIsNotNone(self.application.accepted_at)
+        self.assertEqual(self.application.status, Status.ACCEPTED)
         self.assertIsNone(self.application.rejected_at)
         self.assertEqual(self.application.status_history.count(), 1)
 
     def test_mark_viewed_rechecks_a_stale_application_before_mutating(self):
         stale_application = Application.objects.get(pk=self.application.pk)
-        winner = self.serializer(status=Application.Status.ACCEPTED)
-        update_application_status(winner, changed_by=self.employer)
+        self.decide(Status.ACCEPTED)
 
-        application = mark_application_viewed(
-            stale_application,
-            changed_by=self.employer,
-        )
+        application = mark_application_viewed(stale_application, changed_by=self.employer)
 
-        self.assertEqual(application.status, Application.Status.ACCEPTED)
+        self.assertEqual(application.status, Status.ACCEPTED)
         self.assertIsNone(application.viewed_at)
         self.assertEqual(application.status_history.count(), 1)
+
+    def test_mark_viewed_notifies_candidate_immediately_and_once(self):
+        mark_application_viewed(self.application, changed_by=self.employer)
+        mark_application_viewed(self.application, changed_by=self.employer)
+
+        notice = CandidateNotification.objects.get()
+        self.assertEqual(notice.event_type, CandidateNotification.EventType.APPLICATION_VIEWED)
+        self.assertEqual(notice.supersede_key, '')
+        self.assertLessEqual(notice.deliver_after, timezone.now())
+
+    def test_mark_viewed_is_silent_for_a_restricted_candidate(self):
+        self.candidate.status = get_user_model().Status.INACTIVE
+        self.candidate.save(update_fields=['status', 'updated_at'])
+
+        application = mark_application_viewed(self.application, changed_by=self.employer)
+
+        self.assertEqual(application.status, Status.SUBMITTED)
+        self.assertFalse(CandidateNotification.objects.exists())
 
     def test_campaign_change_between_scope_read_and_job_lock_fails_closed(self):
         recruiter = self.employer.recruiter_profile
@@ -201,33 +204,93 @@ class ApplicationStatusTransitionServiceTests(TestCase):
 
         with (
             patch(
-                'apps.applications.services.applications.Application.objects.filter',
+                'apps.applications.services.locking.Application.objects.filter',
                 return_value=stale_relation,
             ),
             self.assertRaises(RecruitmentResourceChanged),
         ):
-            update_application_status(
-                self.serializer(status=Application.Status.SHORTLISTED),
-                changed_by=self.employer,
-            )
+            self.decide(Status.SHORTLISTED)
 
     def test_auto_rejection_can_be_reopened_during_email_grace_period(self):
         rejected_at = timezone.now()
         Application.objects.filter(pk=self.application.pk).update(
-            status=Application.Status.REJECTED,
+            status=Status.REJECTED,
             rejected_at=rejected_at,
             auto_rejected_at=rejected_at,
             status_updated_at=rejected_at,
         )
 
-        application = update_application_status(
-            self.serializer(status=Application.Status.SHORTLISTED),
-            changed_by=self.employer,
-        )
+        application, _notice = self.decide(Status.SHORTLISTED)
 
-        self.assertEqual(application.status, Application.Status.SHORTLISTED)
+        self.assertEqual(application.status, Status.SHORTLISTED)
         self.assertIsNone(application.auto_rejected_at)
         self.assertIsNone(application.rejected_at)
+
+
+@override_settings(CANDIDATE_STATUS_NOTIFICATION_DELAY=timedelta(minutes=5))
+class StatusDecisionNotificationTests(TestCase):
+    def setUp(self):
+        self.candidate, self.employer, self.application = create_status_application('notice')
+
+    def decide(self, status):
+        application = Application.objects.get(pk=self.application.pk)
+        return change_application_status(application, changed_by=self.employer, status=status)
+
+    def undo(self):
+        return undo_latest_status_change(
+            Application.objects.get(pk=self.application.pk), changed_by=self.employer
+        )
+
+    def test_decision_notice_waits_for_the_undo_window(self):
+        before = timezone.now()
+        _application, notice = self.decide(Status.SHORTLISTED)
+
+        self.assertGreaterEqual(notice.deliver_after, before + timedelta(minutes=5))
+        self.assertEqual(release_due_candidate_notifications(), 0)
+        self.assertEqual(
+            release_due_candidate_notifications(now=notice.deliver_after + timedelta(seconds=1)), 1
+        )
+
+    def test_rapid_decisions_leave_only_the_latest_notice(self):
+        _app, first = self.decide(Status.SHORTLISTED)
+        _app, second = self.decide(Status.INTERVIEWED)
+
+        first.refresh_from_db()
+        self.assertEqual(first.cancel_reason, CandidateNotification.CancelReason.SUPERSEDED)
+        self.assertIsNone(second.cancelled_at)
+        self.assertEqual(
+            release_due_candidate_notifications(now=timezone.now() + timedelta(minutes=6)), 1
+        )
+
+    def test_undo_restores_status_and_the_previous_decision_notice(self):
+        _app, first = self.decide(Status.SHORTLISTED)
+        _app, second = self.decide(Status.INTERVIEWED)
+
+        application = self.undo()
+
+        self.assertEqual(application.status, Status.SHORTLISTED)
+        self.assertIsNone(application.interviewed_at)
+        second.refresh_from_db()
+        first.refresh_from_db()
+        self.assertEqual(second.cancel_reason, CandidateNotification.CancelReason.UNDONE)
+        self.assertIsNone(first.cancelled_at)
+        self.assertIsNotNone(
+            application.status_history.get(to_status=Status.INTERVIEWED).reverted_at
+        )
+
+    def test_undo_after_the_candidate_was_told_is_refused(self):
+        _app, notice = self.decide(Status.REJECTED)
+        release_due_candidate_notifications(now=notice.deliver_after + timedelta(seconds=1))
+
+        with self.assertRaises(StatusChangeNotUndoable):
+            self.undo()
+        self.application.refresh_from_db()
+        self.assertEqual(self.application.status, Status.REJECTED)
+
+    def test_system_view_and_other_recruiters_changes_cannot_be_undone(self):
+        mark_application_viewed(self.application, changed_by=self.employer)
+        with self.assertRaises(StatusChangeNotUndoable):
+            self.undo()
 
 
 class AutomaticApplicationRejectionTests(TestCase):
@@ -280,6 +343,12 @@ class AutomaticApplicationRejectionTests(TestCase):
             ).exists()
         )
         self.assertEqual(len(self.mailbox), 2)
+        notice = CandidateNotification.objects.get()
+        self.assertEqual(notice.event_type, CandidateNotification.EventType.APPLICATION_REJECTED)
+        self.assertEqual(notice.email_status, CandidateNotification.EmailStatus.SKIPPED)
+        self.assertEqual(
+            notice.deliver_after, self.application.auto_rejected_at + timedelta(days=3)
+        )
 
     @property
     def mailbox(self):
@@ -312,16 +381,11 @@ class ApplicationStatusTransitionConcurrencyTests(TransactionTestCase):
             close_old_connections()
             try:
                 stale_application = Application.objects.get(pk=self.application.pk)
-                serializer = ApplicationStatusUpdateSerializer(
-                    stale_application,
-                    data={'status': next_status},
-                    partial=True,
-                )
-                if not serializer.is_valid():
-                    return 'invalid-payload'
                 gate.wait(timeout=5)
                 try:
-                    update_application_status(serializer, changed_by=self.employer)
+                    change_application_status(
+                        stale_application, changed_by=self.employer, status=next_status
+                    )
                 except InvalidApplicationStatusTransition:
                     return 'stale-transition'
                 return next_status
@@ -346,7 +410,7 @@ class ApplicationStatusTransitionConcurrencyTests(TransactionTestCase):
 
 
 class ApplicationSnapshotServiceTests(TestCase):
-    def test_create_application_uses_a_new_immutable_snapshot(self):
+    def test_create_application_record_uses_a_new_immutable_snapshot(self):
         candidate = get_user_model().objects.create_user(
             email='application-snapshot@example.com',
             password='password',
@@ -369,22 +433,14 @@ class ApplicationSnapshotServiceTests(TestCase):
             posted_by=employer,
             company=company,
             title='Application Job',
-            description='A role used to test the legacy application adapter.',
+            description='A role used to test application snapshots.',
         )
-        serializer = Mock()
-        serializer.validated_data = {'cv': cv}
-
-        def save(**kwargs):
-            return Application.objects.create(job=job, cv=cv, **kwargs)
-
-        serializer.save.side_effect = save
-
-        application = create_application(serializer, candidate)
+        application = create_application_record(candidate=candidate, job=job, cv=cv)
 
         snapshot = CvVersion.objects.get(version_kind=CvVersion.VersionKind.APPLICATION_SNAPSHOT)
         self.assertEqual(snapshot.parent_version_id, initial.id)
-        self.assertEqual(serializer.save.call_args.kwargs['submitted_cv_version'], snapshot)
-        self.assertEqual(serializer.save.call_args.kwargs['submitted_cv_title'], 'Applied CV')
+        self.assertEqual(application.submitted_cv_version, snapshot)
+        self.assertEqual(application.submitted_cv_title, 'Applied CV')
         self.assertTrue(
             ApplicationStatusHistory.objects.filter(
                 application=application,
@@ -394,3 +450,7 @@ class ApplicationSnapshotServiceTests(TestCase):
         )
         job.refresh_from_db()
         self.assertEqual(job.application_count, 1)
+        notice = CandidateNotification.objects.get(recipient=candidate)
+        self.assertEqual(notice.event_type, CandidateNotification.EventType.APPLICATION_SUBMITTED)
+        self.assertIn('Application Job', notice.message)
+        self.assertEqual(notice.metadata['job_public_id'], job.public_id)

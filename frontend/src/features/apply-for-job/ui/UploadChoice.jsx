@@ -15,6 +15,7 @@ export default function UploadChoice({
   selected,
   uploading,
   uploadState,
+  analyzing = false,
   file,
   onSelect,
   onChooseFile,
@@ -56,7 +57,11 @@ export default function UploadChoice({
             </span>
           </div>
           <p className="mt-1 text-sm text-slate-400">Hỗ trợ định dạng PDF, DOCX có kích thước dưới 5MB</p>
-          {uploadStateMeta && (
+          {analyzing ? (
+            <p role="status" className="mt-1 text-xs font-medium text-amber-700">
+              Đang phân tích nội dung CV…
+            </p>
+          ) : uploadStateMeta && (
             <p role="status" className={`mt-1 text-xs font-medium ${uploadStateMeta.tone}`}>
               {uploadStateMeta.text}
             </p>

@@ -1,4 +1,10 @@
-"""Owner-scoped immutable CV PDF export orchestration."""
+"""Immutable CV PDF export orchestration.
+
+Two actors export the same artifact type: the CV owner (any library version)
+and the recruiter reading an application snapshot. Snapshot exports carry
+``cv=None`` and are keyed by the immutable version only, so they survive the
+candidate permanently deleting the library CV, exactly like the snapshot.
+"""
 
 from __future__ import annotations
 
@@ -102,104 +108,8 @@ def _record_export_audit(cv, version, actor, request) -> None:
     )
 
 
-def _select_version(cv: UserCv, version_public_id: str | None) -> CvVersion:
-    versions = CvVersion.objects.select_related('template_version').filter(cv=cv)
-    if version_public_id:
-        version = versions.filter(public_id=version_public_id).first()
-    else:
-        version_id = cv.published_version_id or cv.latest_version_id
-        version = versions.filter(pk=version_id).first() if version_id else None
-    if version is None:
-        raise CvExportPermissionError('Select an immutable CV version owned by this CV.')
-    return version
-
-
-@transaction.atomic
-def request_cv_export(
-    *, cv: UserCv, actor, request, version_public_id: str | None = None
-) -> tuple[CvExport, bool]:
-    """Create one PDF job or reuse the valid artifact for the exact render spec."""
-    cv = UserCv.objects.select_for_update(of=('self',)).get(pk=cv.pk)
-    _assert_owner(cv, actor)
-    if cv.is_deleted:
-        raise CvExportUnavailableError('This CV is unavailable.')
-    version = _select_version(cv, version_public_id)
-    render_config = _render_config(version)
-    config_hash = _render_config_hash(render_config)
-    export = (
-        CvExport.objects.select_for_update()
-        .filter(
-            version=version,
-            render_config_hash=config_hash,
-        )
-        .first()
-    )
-    dispatch = False
-    reused = export is not None
-    if export is None:
-        export = CvExport.objects.create(
-            cv=cv,
-            version=version,
-            export_format=CvExport.ExportFormat.PDF,
-            renderer_key=render_config['renderer_key'],
-            renderer_version=render_config['renderer_version'],
-            render_config=render_config,
-            render_config_hash=config_hash,
-            requested_by=actor,
-        )
-        dispatch = True
-    elif export.status == CvExport.Status.COMPLETED and not _artifact_is_valid(export):
-        # A missing/corrupt object is never reusable. Preserve the job identity
-        # and queue a new attempt rather than returning a dead download URL.
-        export.status = CvExport.Status.PENDING
-        export.storage_key = ''
-        export.file_size_bytes = None
-        export.checksum_sha256 = ''
-        export.last_error = ''
-        export.started_at = None
-        export.completed_at = None
-        export.failed_at = None
-        export.queued_at = timezone.now()
-        export.save(
-            update_fields=[
-                'status',
-                'storage_key',
-                'file_size_bytes',
-                'checksum_sha256',
-                'last_error',
-                'started_at',
-                'completed_at',
-                'failed_at',
-                'queued_at',
-                'updated_at',
-            ]
-        )
-        dispatch = True
-        reused = False
-    _record_export_audit(cv, version, actor, request)
-    if dispatch:
-        _dispatch_after_commit(export.pk)
-    return export, reused
-
-
-@transaction.atomic
-def retry_cv_export(*, cv: UserCv, actor, request, export_public_id: str) -> CvExport:
-    """Requeue only a failed owner-scoped job without changing its source version."""
-    cv = UserCv.objects.select_for_update(of=('self',)).get(pk=cv.pk)
-    _assert_owner(cv, actor)
-    try:
-        export = (
-            CvExport.objects.select_for_update()
-            .select_related('version')
-            .get(
-                cv=cv,
-                public_id=export_public_id,
-            )
-        )
-    except CvExport.DoesNotExist as error:
-        raise CvExportUnavailableError('Export does not exist.') from error
-    if export.status != CvExport.Status.FAILED:
-        raise CvExportStateError('Only failed exports can be retried.')
+def _requeue(export: CvExport) -> None:
+    """Reset a job to PENDING, keeping its identity (and download URL shape)."""
     export.status = CvExport.Status.PENDING
     export.storage_key = ''
     export.file_size_bytes = None
@@ -223,6 +133,92 @@ def retry_cv_export(*, cv: UserCv, actor, request, export_public_id: str) -> CvE
             'updated_at',
         ]
     )
+
+
+def _get_or_queue_export(*, cv, version, actor, requeue_failed=False) -> tuple[CvExport, bool]:
+    """Reuse the valid artifact for the exact render spec or queue a render."""
+    render_config = _render_config(version)
+    config_hash = _render_config_hash(render_config)
+    export = (
+        CvExport.objects.select_for_update()
+        .filter(version=version, render_config_hash=config_hash)
+        .first()
+    )
+    if export is None:
+        export = CvExport.objects.create(
+            cv=cv,
+            version=version,
+            export_format=CvExport.ExportFormat.PDF,
+            renderer_key=render_config['renderer_key'],
+            renderer_version=render_config['renderer_version'],
+            render_config=render_config,
+            render_config_hash=config_hash,
+            requested_by=actor,
+        )
+        _dispatch_after_commit(export.pk)
+        return export, False
+    stale = export.status == CvExport.Status.COMPLETED and not _artifact_is_valid(export)
+    failed = requeue_failed and export.status == CvExport.Status.FAILED
+    if stale or failed:
+        # A missing/corrupt object is never reusable. Preserve the job identity
+        # and queue a new attempt rather than returning a dead download URL.
+        _requeue(export)
+        _dispatch_after_commit(export.pk)
+        return export, False
+    return export, True
+
+
+def _select_version(cv: UserCv, version_public_id: str | None) -> CvVersion:
+    versions = (
+        CvVersion.objects.select_related('template_version')
+        .filter(cv=cv)
+        # Snapshots belong to the application (exported by the recruiter path).
+        .exclude(version_kind=CvVersion.VersionKind.APPLICATION_SNAPSHOT)
+    )
+    if version_public_id:
+        version = versions.filter(public_id=version_public_id).first()
+    else:
+        version_id = cv.published_version_id or cv.latest_version_id
+        version = versions.filter(pk=version_id).first() if version_id else None
+    if version is None:
+        raise CvExportPermissionError('Select an immutable CV version owned by this CV.')
+    return version
+
+
+@transaction.atomic
+def request_cv_export(
+    *, cv: UserCv, actor, request, version_public_id: str | None = None
+) -> tuple[CvExport, bool]:
+    """Create one PDF job or reuse the valid artifact for the exact render spec."""
+    cv = UserCv.objects.select_for_update(of=('self',)).get(pk=cv.pk)
+    _assert_owner(cv, actor)
+    if cv.is_deleted:
+        raise CvExportUnavailableError('This CV is unavailable.')
+    version = _select_version(cv, version_public_id)
+    export, reused = _get_or_queue_export(cv=cv, version=version, actor=actor)
+    _record_export_audit(cv, version, actor, request)
+    return export, reused
+
+
+@transaction.atomic
+def retry_cv_export(*, cv: UserCv, actor, request, export_public_id: str) -> CvExport:
+    """Requeue only a failed owner-scoped job without changing its source version."""
+    cv = UserCv.objects.select_for_update(of=('self',)).get(pk=cv.pk)
+    _assert_owner(cv, actor)
+    try:
+        export = (
+            CvExport.objects.select_for_update()
+            .select_related('version')
+            .get(
+                cv=cv,
+                public_id=export_public_id,
+            )
+        )
+    except CvExport.DoesNotExist as error:
+        raise CvExportUnavailableError('Export does not exist.') from error
+    if export.status != CvExport.Status.FAILED:
+        raise CvExportStateError('Only failed exports can be retried.')
+    _requeue(export)
     _record_export_audit(cv, export.version, actor, request)
     _dispatch_after_commit(export.pk)
     return export
@@ -233,6 +229,37 @@ def owner_cv_export(*, cv: UserCv, actor, export_public_id: str) -> CvExport:
     _assert_owner(cv, actor)
     try:
         return CvExport.objects.select_related('version').get(cv=cv, public_id=export_public_id)
+    except CvExport.DoesNotExist as error:
+        raise CvExportUnavailableError('Export does not exist.') from error
+
+
+def _assert_application_snapshot(version: CvVersion) -> None:
+    if version.version_kind != CvVersion.VersionKind.APPLICATION_SNAPSHOT:
+        raise CvExportPermissionError('Only application snapshots use this export path.')
+
+
+@transaction.atomic
+def request_application_snapshot_export(*, version: CvVersion, actor) -> tuple[CvExport, bool]:
+    """Ensure a PDF of one application snapshot; the caller authorizes the recruiter.
+
+    A failed render is requeued too, so one call doubles as "retry".
+    """
+    _assert_application_snapshot(version)
+    version = (
+        CvVersion.objects.select_for_update(of=('self',))
+        .select_related('template_version')
+        .get(pk=version.pk)
+    )
+    return _get_or_queue_export(cv=None, version=version, actor=actor, requeue_failed=True)
+
+
+def application_snapshot_export(*, version: CvVersion, export_public_id: str) -> CvExport:
+    """Resolve an export through its snapshot version to prevent IDOR."""
+    _assert_application_snapshot(version)
+    try:
+        return CvExport.objects.select_related('version').get(
+            version=version, cv__isnull=True, public_id=export_public_id
+        )
     except CvExport.DoesNotExist as error:
         raise CvExportUnavailableError('Export does not exist.') from error
 

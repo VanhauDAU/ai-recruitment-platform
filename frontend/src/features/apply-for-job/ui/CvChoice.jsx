@@ -13,12 +13,17 @@ function formatCvDate(value) {
 }
 
 export default function CvChoice({ cv, selected, onSelect }) {
-  const canEdit = cv.cv_type !== 'uploaded' && cv.is_complete === false
-  const statusText = cv.has_unsaved_changes
-    ? 'Chưa lưu'
-    : cv.is_complete === false
-      ? 'CV chưa hoàn thiện'
-      : ''
+  // Recruiters only read the structured CV, so a CV missing name, contact or
+  // any content cannot be submitted (the server rejects it too).
+  const notReady = cv.application_ready === false
+  const canEdit = notReady || (cv.cv_type !== 'uploaded' && cv.is_complete === false)
+  const statusText = notReady
+    ? 'Chưa đủ thông tin để ứng tuyển'
+    : cv.has_unsaved_changes
+      ? 'Chưa lưu'
+      : cv.is_complete === false
+        ? 'CV chưa hoàn thiện'
+        : ''
 
   return (
     <div

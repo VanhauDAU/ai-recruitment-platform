@@ -1443,7 +1443,7 @@ test('employer jobs: detail workspace is compact, actionable and responsive', as
           total: 2,
           unviewed: 1,
           unanswered: 2,
-          by_status: { submitted: 1, viewed: 0, considering: 1, shortlisted: 0, interviewed: 0, accepted: 0, rejected: 0 },
+          by_status: { submitted: 1, viewed: 0, shortlisted: 0, interviewed: 1, accepted: 0, rejected: 0 },
         },
         requested_visibility_days: 30,
         first_approved_at: '2026-08-01T02:00:00Z',
@@ -1487,8 +1487,8 @@ test('employer jobs: detail workspace is compact, actionable and responsive', as
         submitted_cv_title: 'Frontend CV', source: 'applied', status: 'submitted', applied_at: '2026-07-20T08:00:00Z',
       },
       {
-        public_id: 'app_considering', candidate_name: 'Lê Hoa', candidate_email: 'hoa@example.com',
-        submitted_cv_title: 'Product CV', source: 'applied', status: 'considering', applied_at: '2026-07-19T08:00:00Z',
+        public_id: 'app_interviewed', candidate_name: 'Lê Hoa', candidate_email: 'hoa@example.com',
+        submitted_cv_title: 'Product CV', source: 'applied', status: 'interviewed', applied_at: '2026-07-19T08:00:00Z',
       },
     ].filter((item) => !params.get('status') || item.status === params.get('status'))
     await route.fulfill({
@@ -1531,11 +1531,11 @@ test('employer jobs: detail workspace is compact, actionable and responsive', as
   await expectNoHorizontalOverflow(page)
 
   const chips = page.getByRole('group', { name: 'Lọc hồ sơ theo trạng thái' })
-  await chips.getByRole('button', { name: /Cân nhắc\s*1/ }).click()
-  await expect.poll(() => applicationQueries.at(-1)?.get('status')).toBe('considering')
+  await chips.getByRole('button', { name: /Phỏng vấn\s*1/ }).click()
+  await expect.poll(() => applicationQueries.at(-1)?.get('status')).toBe('interviewed')
   await expect(page.getByText('Trần Minh').filter({ visible: true })).toHaveCount(0)
   await expect(page.getByText('Lê Hoa').filter({ visible: true })).toBeVisible()
-  await expect(page).toHaveURL(/cv_filter=considering/)
+  await expect(page).toHaveURL(/cv_filter=interviewed/)
   await expectNoHorizontalOverflow(page)
 
   if (usesCompactTabs) {
@@ -1580,7 +1580,8 @@ test('employer applications: grouped CV workspace is clear across responsive lay
       candidate_email: 'levanhaum@gmail.com', job: 'jb_987ecf21d547',
       job_title: 'Senior Frontend Developer', submitted_cv_title: 'CV Frontend 2026',
       submitted_cv_version: 'cvv_frontend_2', submitted_cv_source: 'builder',
-      source: 'applied', status: 'submitted', employer_note: 'React tốt', employer_rating: 4,
+      source: 'applied', status: 'viewed', employer_note: 'React tốt', employer_rating: 4,
+      available_decisions: ['shortlisted', 'interviewed', 'accepted', 'rejected'],
       cover_letter: 'Tôi mong muốn đồng hành cùng đội ngũ sản phẩm.',
       applied_at: '2026-08-02T09:20:00+07:00',
     },
@@ -1589,7 +1590,8 @@ test('employer applications: grouped CV workspace is clear across responsive lay
       candidate_email: 'LEVANHAUM@gmail.com', job: 'jb_987ecf21d547',
       job_title: 'Senior Frontend Developer', submitted_cv_title: 'CV Frontend bản đầu',
       submitted_cv_version: 'cvv_frontend_1', submitted_cv_source: 'upload',
-      source: 'applied', status: 'considering', employer_note: '', employer_rating: null,
+      source: 'applied', status: 'submitted', employer_note: '', employer_rating: null,
+      available_decisions: ['shortlisted', 'interviewed', 'accepted', 'rejected'],
       applied_at: '2026-07-28T08:00:00+07:00',
     },
   ]
@@ -1628,14 +1630,45 @@ test('employer applications: grouped CV workspace is clear across responsive lay
       }),
     })
   })
+  const history = [
+    { from_status: '', to_status: 'submitted', note: '', changed_by_name: '', created_at: '2026-08-02T09:20:00+07:00', reverted_at: null, can_undo: false, candidate_notice: null },
+    {
+      from_status: 'submitted', to_status: 'viewed', note: '', changed_by_name: 'HR Team', created_at: '2026-08-02T09:30:00+07:00', reverted_at: null, can_undo: false,
+      candidate_notice: { state: 'delivered', deliver_at: '2026-08-02T09:30:00+07:00', delivered_at: '2026-08-02T09:31:00+07:00', email_sent_at: '2026-08-02T09:31:05+07:00' },
+    },
+  ]
   await page.route('http://localhost:8000/api/v2/recruiter/applications/app_befb3400ade3/history/', async (route) => {
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify(history) })
+  })
+  const decisions = []
+  await page.route('http://localhost:8000/api/v2/recruiter/applications/app_befb3400ade3/status/', async (route) => {
+    const { status } = route.request().postDataJSON()
+    decisions.push(status)
+    applications[0] = { ...applications[0], status, available_decisions: ['interviewed', 'accepted', 'rejected'] }
+    history.push({
+      from_status: 'viewed', to_status: status, note: '', changed_by_name: 'HR Team', created_at: '2026-08-02T10:00:00+07:00', reverted_at: null, can_undo: true,
+      candidate_notice: { state: 'scheduled', deliver_at: '2026-08-02T10:05:00+07:00', delivered_at: null, email_sent_at: null },
+    })
     await route.fulfill({
       contentType: 'application/json',
-      body: JSON.stringify([
-        { from_status: '', to_status: 'submitted', note: '', changed_by_name: '', created_at: '2026-08-02T09:20:00+07:00' },
-        { from_status: 'submitted', to_status: 'viewed', note: '', changed_by_name: 'HR Team', created_at: '2026-08-02T09:30:00+07:00' },
-      ]),
+      body: JSON.stringify({ application: applications[0], candidate_notice_at: '2026-08-02T10:05:00+07:00' }),
     })
+  })
+  await page.route('http://localhost:8000/api/v2/recruiter/applications/app_befb3400ade3/status/undo/', async (route) => {
+    decisions.push('undo')
+    applications[0] = { ...applications[0], status: 'viewed', available_decisions: ['shortlisted', 'interviewed', 'accepted', 'rejected'] }
+    history[history.length - 1] = { ...history.at(-1), reverted_at: '2026-08-02T10:01:00+07:00', can_undo: false, candidate_notice: { ...history.at(-1).candidate_notice, state: 'undone' } }
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify(applications[0]) })
+  })
+  await page.route('http://localhost:8000/api/v2/recruiter/applications/app_befb3400ade3/cv/exports/', async (route) => {
+    await route.fulfill({
+      status: 201,
+      contentType: 'application/json',
+      body: JSON.stringify({ public_id: 'cve_1', status: 'completed', download_url: 'http://localhost:8000/api/v2/recruiter/applications/app_befb3400ade3/cv/exports/cve_1/download/' }),
+    })
+  })
+  await page.route('http://localhost:8000/api/v2/recruiter/applications/app_befb3400ade3/cv/exports/cve_1/download/', async (route) => {
+    await route.fulfill({ contentType: 'application/pdf', body: '%PDF-1.4 snapshot' })
   })
 
   await page.goto('/tuyendung/app/applications?job=jb_987ecf21d547&q=levanhaum%40gmail.com&application=app_befb3400ade3')
@@ -1647,22 +1680,42 @@ test('employer applications: grouped CV workspace is clear across responsive lay
   await expect(backToJobButton).toBeVisible()
   await expect(candidateList).toBeVisible()
   await expect(page.getByRole('button', { name: 'Thu gọn hồ sơ của Lê Văn Hậu' })).toBeVisible()
-  await expect(candidateList.getByText('2 CV', { exact: true })).toBeVisible()
+  await expect(candidateList.getByText(/^2 CV ·/)).toBeVisible()
   await expect(candidateList.getByRole('button', { name: 'Xem CV Frontend 2026 của Lê Văn Hậu' })).toBeVisible()
   await expect(candidateList.getByRole('button', { name: 'Xem CV Frontend bản đầu của Lê Văn Hậu' })).toBeVisible()
   await expect(cvPreview.getByLabel('Xem trước CV single_column_v1 trang 1')).toBeVisible()
+  await expect(cvPreview.getByRole('button', { name: /Nhắn tin/ })).toBeDisabled()
+  const download = page.waitForEvent('download')
+  await cvPreview.getByRole('button', { name: /Tải PDF/ }).click()
+  expect((await download).suggestedFilename()).toBe('CV - Lê Văn Hậu.pdf')
+
   const viewportWidth = page.viewportSize().width
   if (viewportWidth < 768) {
     await expect(inspector).toBeHidden()
-    await page.getByRole('tab', { name: 'Thông tin liên quan' }).click()
+    await page.getByRole('tab', { name: 'Xử lý hồ sơ' }).click()
     await expect(inspector).toBeVisible()
     await expect(cvPreview).toBeHidden()
   }
   await expect(inspector.getByText('levanhaum@gmail.com', { exact: true }).first()).toBeVisible()
   await expect(inspector.getByText('Đà Nẵng, Làm việc từ xa')).toBeVisible()
-  await expect(inspector.getByText('Đã xem', { exact: true })).toBeVisible()
+  await expect(inspector.getByText(/Đã báo ứng viên/)).toBeVisible()
+
+  const decisionBar = inspector.getByRole('group', { name: 'Quyết định cho hồ sơ' })
+  await decisionBar.getByRole('button', { name: 'Phù hợp', exact: true }).click()
+  await expect(inspector.getByRole('status').filter({ hasText: 'Ứng viên sẽ được báo lúc' })).toBeVisible()
+  await inspector.getByRole('button', { name: 'Hoàn tác' }).click()
+  await expect(inspector.getByText('Không gửi: đã hoàn tác')).toBeVisible()
+  expect(decisions).toEqual(['shortlisted', 'undo'])
+
+  await decisionBar.getByRole('button', { name: 'Không phù hợp' }).click()
+  await expect(page.getByRole('dialog')).toContainText('không thể đổi tiếp')
+  await page.getByRole('dialog').getByRole('button', { name: 'Đóng', exact: true }).click()
+  expect(decisions).toEqual(['shortlisted', 'undo'])
 
   if (viewportWidth >= 1280) {
+    // The sidebar opens the "Quản lý CV" group on this page and badges unread CVs.
+    await expect(page.getByRole('menuitem', { name: /CV ứng tuyển/ })).toBeVisible()
+    await expect(page.getByLabel('2 CV mới chưa xem').first()).toBeVisible()
     const [listBox, previewBox, inspectorBox] = await Promise.all([
       candidateList.boundingBox(), cvPreview.boundingBox(), inspector.boundingBox(),
     ])
@@ -1819,7 +1872,7 @@ test('employer campaign detail: TopCV-style workspace is responsive and uses API
         accepted_count: 1,
         applications: { total: 2, new: 1 },
         jobs: { total: 2, active: 1, draft: 1 },
-        funnel: { submitted: 1, considering: 1 },
+        funnel: { submitted: 1, viewed: 1 },
         daily_applications: [
           { date: '2026-07-16', count: 0 },
           { date: '2026-07-17', count: 1 },
@@ -2429,4 +2482,135 @@ test('employer company page: editing the headline sends it for review and marks 
   await expect(page.getByRole('region', { name: 'Yêu cầu cập nhật nội dung' })).toContainText('Đã gửi, chờ duyệt')
   expect(submissions).toEqual([{ headline: 'Cùng xây phần mềm cho hàng triệu người' }])
   await expectNoHorizontalOverflow(page)
+})
+
+test('employer review link: invited reviewer reads a de-identified CV and sends a scorecard', async ({ page }) => {
+  await mockPublicApi(page)
+  const submitted = []
+  await page.route('http://localhost:8000/api/v2/application-reviews/expired-token/', async (route) => {
+    await route.fulfill({ status: 404, contentType: 'application/json', body: '{"detail":"Not found."}' })
+  })
+  await page.route('http://localhost:8000/api/v2/application-reviews/review-token/', async (route) => {
+    if (route.request().method() === 'PUT') {
+      submitted.push(route.request().postDataJSON())
+      await route.fulfill({
+        contentType: 'application/json',
+        body: JSON.stringify({ ...submitted.at(-1), reviewer_name: 'Anh Minh', recommendation_label: 'Nên tuyển', updated_at: '2026-11-15T10:00:00+07:00' }),
+      })
+      return
+    }
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        reviewer_name: 'Anh Minh', message: 'Nhờ anh xem kinh nghiệm SQL.', expires_at: '2026-11-22T10:00:00+07:00',
+        job_title: 'Data Engineer', company_name: 'Review Co', candidate_name: 'Trần Bình', submitted_cv_title: 'CV Data',
+        review: null,
+        cv: {
+          schema_version: 1, template_renderer_key: 'single_column_v1', assets: {},
+          content_json: {
+            personal_info: { full_name: 'Trần Bình', headline: 'Data Engineer', email: '', phone: '', address: '' },
+            sections: [{ instance_id: 'summary_1', section_key: 'summary', title: 'Tóm tắt', enabled: true, items: [{ item_id: 's1', value: '5 năm làm dữ liệu.' }] }],
+          },
+          layout_json: { regions: [{ id: 'main', width_percent: 100, section_instance_ids: ['summary_1'] }] },
+          style_json: { theme_color: '#059669', font_family: 'Roboto', font_scale: 1, line_height: 1.4 },
+        },
+      }),
+    })
+  })
+
+  await page.goto('/tuyendung/danh-gia-ho-so/review-token')
+  await expect(page.getByRole('heading', { name: 'Trần Bình — Data Engineer' })).toBeVisible()
+  await expect(page.getByText(/đã được ẩn để đánh giá khách quan/)).toBeVisible()
+  await expect(page.getByLabel('Xem trước CV single_column_v1 trang 1')).toBeVisible()
+  await page.getByText('Nên tuyển', { exact: true }).click()
+  await page.getByLabel('Điểm mạnh').fill('SQL tốt')
+  await page.getByRole('button', { name: 'Gửi đánh giá' }).click()
+  await expect(page.getByText('Bạn đã gửi đánh giá')).toBeVisible()
+  expect(submitted).toEqual([{ recommendation: 'yes', rating: null, strengths: 'SQL tốt', concerns: '' }])
+  await expectNoHorizontalOverflow(page)
+
+  await page.goto('/tuyendung/danh-gia-ho-so/expired-token')
+  await expect(page.getByText('Link đánh giá không còn hiệu lực')).toBeVisible()
+})
+
+test('employer blocklist: blocked candidates are listed and can be lifted', async ({ page }) => {
+  await mockPublicApi(page)
+  await setEmployerSession(page, {
+    email_verified: true,
+    employer_onboarding_required: false,
+    employer_onboarding_step: 'complete',
+    employer_verification_completed: true,
+  })
+  await page.route('http://localhost:8000/api/employer/me/', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({ public_id: 'rec_blocks', ...READY_EMPLOYER_READINESS, onboarding: { verification_completed: true } }),
+    })
+  })
+  let blocks = [{
+    public_id: 'cbk_1', candidate_name: 'Nguyễn Spam', candidate_email: 'spam@example.com', reason: 'spam',
+    reason_label: 'Ứng tuyển hàng loạt, không phù hợp', note: 'Nộp 8 tin trong 2 ngày', source_job_title: 'Kế toán',
+    expires_at: null, created_at: '2026-11-15T09:00:00+07:00',
+  }]
+  await page.route(/http:\/\/localhost:8000\/api\/v2\/recruiter\/candidate-blocks\/(?:\?.*)?$/, async (route) => {
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify({ count: blocks.length, results: blocks }) })
+  })
+  await page.route('http://localhost:8000/api/v2/recruiter/candidate-blocks/cbk_1/lift/', async (route) => {
+    blocks = []
+    await route.fulfill({ contentType: 'application/json', body: '{}' })
+  })
+
+  await page.goto('/tuyendung/app/candidate-blocks')
+  await expect(page.getByRole('heading', { name: 'Danh sách đen' })).toBeVisible()
+  await expect(page.getByText('Nguyễn Spam')).toBeVisible()
+  await expectNoHorizontalOverflow(page)
+  await page.getByRole('button', { name: 'Gỡ chặn' }).click()
+  await page.getByRole('dialog').getByRole('button', { name: 'Gỡ chặn' }).click()
+  await expect(page.getByText('Bạn chưa chặn ứng viên nào')).toBeVisible()
+})
+
+test('employer talent pool: suggestions for a job and an invitation', async ({ page }) => {
+  await mockPublicApi(page)
+  await setEmployerSession(page, {
+    email_verified: true,
+    employer_onboarding_required: false,
+    employer_onboarding_step: 'complete',
+    employer_verification_completed: true,
+  })
+  await page.route('http://localhost:8000/api/employer/me/', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({ public_id: 'rec_pool', ...READY_EMPLOYER_READINESS, onboarding: { verification_completed: true } }),
+    })
+  })
+  const entry = {
+    public_id: 'tpe_1', candidate_name: 'Lê Tiềm Năng', candidate_email: 'tn@example.com',
+    source_application_public_id: 'app_1', source_job_public_id: 'jb_old', source_job_title: 'Backend Junior',
+    note: 'Tư duy tốt', tags: ['Python'], created_at: '2026-11-15T09:00:00+07:00', expires_at: '2027-11-15T09:00:00+07:00',
+  }
+  let invited = false
+  await page.route(/http:\/\/localhost:8000\/api\/v2\/recruiter\/talent-pool\/(?:\?.*)?$/, async (route) => {
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify({ count: 1, results: [entry] }) })
+  })
+  await page.route(/http:\/\/localhost:8000\/api\/jobs\/mine\/(?:\?.*)?$/, async (route) => {
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify({ count: 1, results: [{ public_id: 'jb_new', title: 'Backend Senior' }] }) })
+  })
+  await page.route(/http:\/\/localhost:8000\/api\/v2\/recruiter\/talent-pool\/suggestions\/.*/, async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify([{ entry, score: 58, reasons: ['Cùng vị trí chuyên môn'], already_invited: invited }]),
+    })
+  })
+  await page.route('http://localhost:8000/api/v2/recruiter/talent-pool/tpe_1/invite/', async (route) => {
+    invited = true
+    await route.fulfill({ status: 204, body: '' })
+  })
+
+  await page.goto('/tuyendung/app/talent-pool?job=jb_new')
+  await expect(page.getByRole('heading', { name: 'Kho ứng viên tiềm năng' })).toBeVisible()
+  await expect(page.getByText('Lê Tiềm Năng').first()).toBeVisible()
+  await expect(page.getByText('58 điểm')).toBeVisible()
+  await expectNoHorizontalOverflow(page)
+  await page.getByRole('button', { name: /Mời ứng tuyển/ }).click()
+  await expect(page.getByRole('button', { name: /Đã mời/ })).toBeVisible()
 })

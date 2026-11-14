@@ -73,8 +73,9 @@ def generate_cv_thumbnail(version_id: int) -> None:
 def _storage_key(export: CvExport) -> str:
     # Attempt number prevents a retry from silently serving a stale partial
     # artifact; the key remains private and is never serialized to clients.
+    scope = export.cv.public_id if export.cv_id else 'application-snapshots'
     return (
-        f'cvs/exports/{export.cv.public_id}/{export.version.public_id}/'
+        f'cvs/exports/{scope}/{export.version.public_id}/'
         f'{export.public_id}/attempt-{export.attempts}.pdf'
     )
 
@@ -150,7 +151,8 @@ def render_cv_export_job(export_id: int) -> None:
                 'updated_at',
             ]
         )
-        UserCv.objects.filter(pk=completed.cv_id).update(last_exported_at=now, updated_at=now)
+        if completed.cv_id:
+            UserCv.objects.filter(pk=completed.cv_id).update(last_exported_at=now, updated_at=now)
 
 
 @shared_task

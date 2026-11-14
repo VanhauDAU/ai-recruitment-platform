@@ -1,7 +1,9 @@
 // Toàn bộ state + nghiệp vụ của form ứng tuyển; UI chỉ compose và render.
+import { useQueryClient } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
 import { submitJobApplication } from '@/entities/application'
-import { getMyCvs, importCvFile } from '@/entities/cv'
+import { candidateNotificationKeys } from '@/entities/candidate-notification'
+import { getMyCvs, importCvFile, waitForCvImport } from '@/entities/cv'
 import { message } from '@/shared/lib/toast'
 
 export const INITIAL_VISIBLE_CVS = 5
@@ -50,6 +52,7 @@ export function useApplyForm({
   candidateEmail,
   candidatePhone,
 }) {
+  const queryClient = useQueryClient()
   const [cvs, setCvs] = useState([])
   const [selectedCvId, setSelectedCvId] = useState()
   const [preferredLocationIds, setPreferredLocationIds] = useState([])
@@ -66,6 +69,7 @@ export function useApplyForm({
   const [loadingCvs, setLoadingCvs] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [uploadState, setUploadState] = useState(null)
+  const [analyzing, setAnalyzing] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const fileInputRef = useRef(null)
@@ -147,9 +151,13 @@ export function useApplyForm({
         targetCv = uploadedCv
         if (!targetCv) {
           setUploading(true)
-          targetCv = await importCvFile(uploadFile, uploadFile.name, {
+          const imported = await importCvFile(uploadFile, uploadFile.name, {
             onUploadStateChange: setUploadState,
           })
+          // The import is parsed asynchronously; submitting before it finishes
+          // would send the recruiter an empty snapshot.
+          setAnalyzing(true)
+          targetCv = await waitForCvImport(imported.public_id)
           setUploadedCv(targetCv)
           setUploading(false)
         }
@@ -166,10 +174,20 @@ export function useApplyForm({
         contactEmail: contactEmail.trim(),
         contactPhone: contactPhone.trim(),
       })
-      message.success('Đã gửi hồ sơ ứng tuyển.')
+      message.success('Chúc mừng bạn đã ứng tuyển thành công!')
+      // The confirmation notice is already in the inbox; refresh the bell now.
+      queryClient.invalidateQueries({ queryKey: candidateNotificationKeys.all })
       onSubmitted?.(application)
       onClose()
     } catch (requestError) {
+      if (requestError?.code === 'import_timeout') {
+        setError('CV vẫn đang được phân tích. Vui lòng chờ thêm giây lát rồi bấm gửi lại.')
+        return
+      }
+      if (requestError?.code && !requestError.response) {
+        setError('Không đọc được nội dung tệp CV. Hãy thử tệp DOCX hoặc PDF có thể bôi đen chữ.')
+        return
+      }
       setError(requestErrorMessage(
         requestError,
         isUploadChoice
@@ -178,6 +196,7 @@ export function useApplyForm({
       ))
     } finally {
       setUploading(false)
+      setAnalyzing(false)
       setSubmitting(false)
     }
   }
@@ -189,7 +208,7 @@ export function useApplyForm({
   const contactComplete = Boolean(contactName.trim() && contactEmail.trim() && contactPhone.trim())
   const cvReady = isUploadChoice
     ? Boolean((uploadFile || uploadedCv) && contactComplete)
-    : Boolean(selectedCv?.latest_version_public_id)
+    : Boolean(selectedCv?.latest_version_public_id && selectedCv.application_ready !== false)
   const selectionReady = Boolean(
     cvReady
     && (!needsLocation || preferredLocationIds.length > 0)
@@ -228,6 +247,7 @@ export function useApplyForm({
     loadingCvs,
     uploading,
     uploadState,
+    analyzing,
     submitting,
     error,
     setError,

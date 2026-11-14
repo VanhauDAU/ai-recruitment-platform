@@ -1,8 +1,8 @@
-import {
-  FileTextOutlined,
-} from '@ant-design/icons'
-import { Alert, Button, Empty, Skeleton } from 'antd'
+import { FileTextOutlined, MessageOutlined } from '@ant-design/icons'
+import { Alert, Button, Empty, Skeleton, Tooltip } from 'antd'
 import { CvDocumentPreview } from '@/entities/cv'
+import { DownloadApplicationCvButton } from '@/features/download-application-cv'
+import { ShareApplicationReviewButton } from '@/features/share-application-review'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { usePreviewFitZoom } from '@/shared/hooks/use-preview-fit-zoom'
 import { documentFromVersion } from '../model/application-workspace'
@@ -14,6 +14,7 @@ const SOURCE_LABELS = {
 }
 
 export default function ApplicationCvPreview({
+  candidateName,
   selectedApplication,
   snapshot,
   selectedPublicId,
@@ -35,17 +36,30 @@ export default function ApplicationCvPreview({
       data-testid="application-cv-preview"
       className={`flex min-h-0 min-w-0 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm md:col-span-2 md:col-start-2 md:row-start-1 xl:col-span-6 xl:col-start-4 xl:h-full ${className}`}
     >
-      <header className="flex items-center justify-between gap-3 border-b border-slate-100 px-4 py-3.5">
+      <header className="aw-panel-head">
         <div className="min-w-0">
-          <h2 id="application-cv-preview-title" className="flex items-center gap-2 truncate text-base font-bold text-slate-900">
+          <h2 id="application-cv-preview-title" className="aw-panel-title flex items-center gap-2">
             <FileTextOutlined className="text-slate-400" aria-hidden /> Xem trước CV
           </h2>
-          {selectedPublicId && <p className="mt-0.5 truncate text-xs text-slate-500">{cvTitle}</p>}
+          {selectedPublicId && <p className="aw-panel-sub truncate">{cvTitle}</p>}
         </div>
-        {previewDocument && (
-          <span className="shrink-0 text-xs font-medium text-slate-400">{Math.round(previewZoom * 100)}%</span>
-        )}
+        {previewDocument && <span className="aw-count">{Math.round(previewZoom * 100)}%</span>}
       </header>
+      {selectedPublicId && (
+        <div className="aw-actionbar" role="toolbar" aria-label="Thao tác với CV">
+          <DownloadApplicationCvButton publicId={selectedPublicId} candidateName={candidateName} />
+          <ShareApplicationReviewButton
+            publicId={selectedPublicId}
+            candidateName={candidateName}
+            jobTitle={selectedApplication?.job_title || ''}
+          />
+          <Tooltip title="Nhắn tin với ứng viên sắp ra mắt">
+            <span className="aw-actionbar__end">
+              <Button size="small" icon={<MessageOutlined />} disabled>Nhắn tin</Button>
+            </span>
+          </Tooltip>
+        </div>
+      )}
 
       <div className="min-h-96 flex-1 overflow-y-auto overflow-x-hidden bg-slate-100 p-3 sm:p-4">
         {!selectedPublicId && (
@@ -90,8 +104,9 @@ export default function ApplicationCvPreview({
       </div>
 
       {previewDocument && (
-        <footer className="border-t border-slate-100 bg-white px-4 py-2.5 text-[11px] text-slate-500">
-          Bản CV tại thời điểm ứng viên nộp · {SOURCE_LABELS[snapshot.submitted_cv_source] || snapshot.submitted_cv_source || 'Nguồn CV'}
+        <footer className="flex items-center justify-between gap-2 border-t border-slate-100 bg-white px-4 py-2.5 text-[11px] text-slate-500">
+          <span>Bản CV tại thời điểm ứng viên nộp</span>
+          <span className="aw-source">{SOURCE_LABELS[snapshot.submitted_cv_source] || snapshot.submitted_cv_source || 'Nguồn CV'}</span>
         </footer>
       )}
     </section>

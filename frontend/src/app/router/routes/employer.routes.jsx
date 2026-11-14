@@ -11,6 +11,9 @@ import {
   EmployerAboutPage,
   EmployerActivitiesPage,
   EmployerApplicationListPage,
+  EmployerApplicationReviewPage,
+  EmployerCandidateBlocksPage,
+  EmployerTalentPoolPage,
   EmployerAccountInformationPage,
   EmployerBusinessLicensePage,
   EmployerCompanySettingsPage,
@@ -50,6 +53,13 @@ export function employerRoutes() {
       <Route path={employerMarketingPath('/dieu-khoan-dich-vu')} element={<EmployerLegalPage />} />
       <Route path={employerMarketingPath('/chinh-sach-quyen-rieng')} element={<EmployerLegalPage />} />
     </Route>,
+
+    // Bearer-link page for invited reviewers: no session, no portal chrome.
+    <Route
+      key="employer-application-review"
+      path={employerMarketingPath('/danh-gia-ho-so/:token')}
+      element={<EmployerApplicationReviewPage />}
+    />,
 
     <Route key="employer-auth" element={<EmployerAuthLayout />}>
       <Route element={<GuestGuard allowedRoles={['employer']} />}>
@@ -120,6 +130,8 @@ export function employerRoutes() {
               <Route path={employerAppPath('/jobs/:publicId')} element={<EmployerJobDetailPage />} />
               <Route element={<CandidateDataGuard />}>
                 <Route path={employerAppPath('/applications')} element={<EmployerApplicationListPage />} />
+                <Route path={employerAppPath('/candidate-blocks')} element={<EmployerCandidateBlocksPage />} />
+                <Route path={employerAppPath('/talent-pool')} element={<EmployerTalentPoolPage />} />
               </Route>
             </Route>
           </Route>

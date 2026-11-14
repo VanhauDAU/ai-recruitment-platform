@@ -8,6 +8,7 @@ import {
   getCvVersions,
   retryCvPdfExport,
 } from '@/entities/cv'
+import { triggerBlobDownload } from '@/shared/lib/download-blob'
 
 const STATUS_LABELS = {
   pending: 'Đang chờ xuất',
@@ -20,14 +21,6 @@ function versionLabel(version) {
   return `Phiên bản ${version.version_number}${version.version_kind === 'published' ? ' (đã publish)' : ''}`
 }
 
-function triggerBrowserDownload(blob, filename) {
-  const objectUrl = window.URL.createObjectURL(blob)
-  const anchor = document.createElement('a')
-  anchor.href = objectUrl
-  anchor.download = filename
-  anchor.click()
-  window.URL.revokeObjectURL(objectUrl)
-}
 
 export default function CvPdfExportControl({ publicId }) {
   const [versions, setVersions] = useState([])
@@ -96,7 +89,7 @@ export default function CvPdfExportControl({ publicId }) {
     setError('')
     try {
       const blob = await downloadCvPdf(exportJob.download_url)
-      triggerBrowserDownload(blob, `cv-${publicId}-v${exportJob.version_public_id}.pdf`)
+      triggerBlobDownload(blob, `cv-${publicId}-v${exportJob.version_public_id}.pdf`)
     } catch {
       setError('Không thể tải PDF. Vui lòng thử lại.')
     } finally {

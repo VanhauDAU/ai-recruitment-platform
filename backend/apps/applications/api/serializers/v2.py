@@ -1,16 +1,18 @@
 """V2 application contracts for candidate submission and recruiter snapshot reads."""
 
+from django.urls import reverse
 from rest_framework import serializers
 
 from apps.cvs.api.serializers.v2 import CvVersionSerializer
 from apps.cvs.models import CvVersion, UserCv
+from apps.cvs.services import application_readiness_issues
 from apps.jobs.models import Job
 from apps.jobs.selectors.listing import publicly_available_job_filter
 from apps.locations.models import Location
 from common.media_storage import media_url_from_value
 
 from ...models import Application
-from ...services import reapplication_error
+from ...services import BLOCKED_APPLY_MESSAGE, is_candidate_blocked, reapplication_error
 
 
 class RecruiterApplicationSnapshotSerializer(serializers.ModelSerializer):
@@ -54,6 +56,25 @@ class RecruiterApplicationSnapshotSerializer(serializers.ModelSerializer):
             'contact_phone',
         ]
         read_only_fields = fields
+
+
+class RecruiterCvExportSerializer(serializers.Serializer):
+    public_id = serializers.CharField()
+    status = serializers.CharField()
+    download_url = serializers.SerializerMethodField()
+    queued_at = serializers.DateTimeField()
+    completed_at = serializers.DateTimeField(allow_null=True)
+    failed_at = serializers.DateTimeField(allow_null=True)
+
+    def get_download_url(self, obj):
+        if not self.context.get('download_ready'):
+            return None
+        url = reverse(
+            'recruiter-application-cv-export-download-v2',
+            args=[self.context['application_public_id'], obj.public_id],
+        )
+        request = self.context.get('request')
+        return request.build_absolute_uri(url) if request else url
 
 
 class CandidateApplicationV2CreateSerializer(serializers.Serializer):
@@ -111,6 +132,25 @@ class CandidateApplicationV2CreateSerializer(serializers.Serializer):
             raise serializers.ValidationError(
                 {'version_public_id': 'Application snapshots cannot be submitted again.'}
             )
+        if cv.processing_status in {
+            UserCv.ProcessingStatus.QUEUED,
+            UserCv.ProcessingStatus.PROCESSING,
+        }:
+            raise serializers.ValidationError(
+                {'cv_public_id': 'CV đang được phân tích, vui lòng chờ trong giây lát.'}
+            )
+        if issues := application_readiness_issues(version):
+            raise serializers.ValidationError(
+                {
+                    'cv_public_id': (
+                        f'CV chưa đủ thông tin để ứng tuyển: thiếu {", ".join(issues)}. '
+                        'Hãy cập nhật CV trước khi nộp.'
+                    )
+                }
+            )
+        # Neutral wording: the candidate is never told they were blocked.
+        if is_candidate_blocked(recruiter_id=job.posted_by_id, candidate_id=candidate.pk):
+            raise serializers.ValidationError({'job_public_id': BLOCKED_APPLY_MESSAGE})
         application_error = reapplication_error(candidate, job)
         if application_error:
             raise serializers.ValidationError({'job_public_id': application_error})
@@ -164,16 +204,16 @@ class CandidateApplicationV2Serializer(serializers.ModelSerializer):
     )
     preferred_location_ids = serializers.SerializerMethodField()
     preferred_location_names = serializers.SerializerMethodField()
+    status = serializers.SerializerMethodField()
     candidate_status = serializers.SerializerMethodField()
     timeline = serializers.SerializerMethodField()
 
     CANDIDATE_STATUS = {
-        Application.Status.SUBMITTED: 'Tiếp nhận',
+        Application.Status.SUBMITTED: 'Đã nộp hồ sơ',
         Application.Status.VIEWED: 'Nhà tuyển dụng đã xem hồ sơ',
-        Application.Status.CONSIDERING: 'Hồ sơ đang được xem xét',
-        Application.Status.SHORTLISTED: 'Hồ sơ đang được xem xét',
-        Application.Status.INTERVIEWED: 'Phỏng vấn',
-        Application.Status.ACCEPTED: 'Đã nhận offer',
+        Application.Status.SHORTLISTED: 'Hồ sơ phù hợp',
+        Application.Status.INTERVIEWED: 'Mời phỏng vấn',
+        Application.Status.ACCEPTED: 'Trúng tuyển',
         Application.Status.REJECTED: 'Chưa phù hợp',
     }
 
@@ -189,8 +229,15 @@ class CandidateApplicationV2Serializer(serializers.ModelSerializer):
     def get_preferred_location_names(self, obj):
         return [location.name for location in obj.preferred_locations.all()]
 
+    def get_status(self, obj):
+        """The status the candidate has been told, not the live one: a decision
+        stays private during the recruiter's undo window (the history prefetch
+        only holds published rows)."""
+        published = list(obj.status_history.all())
+        return published[-1].to_status if published else obj.status
+
     def get_candidate_status(self, obj):
-        return self.CANDIDATE_STATUS[obj.status]
+        return self.CANDIDATE_STATUS[self.get_status(obj)]
 
     def get_timeline(self, obj):
         """Mốc mới nhất đứng đầu — trang 'Việc làm đã ứng tuyển' đọc từ trên xuống theo thời gian lùi."""

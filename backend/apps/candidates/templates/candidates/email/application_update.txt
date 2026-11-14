@@ -1,0 +1,10 @@
+Xin chào {{ candidate_name }},
+
+{{ title }}
+
+{{ message }}
+
+{{ action_label }}: {{ action_url }}
+
+Quản lý email & thông báo: {{ email_settings_url }}
+— {{ site_name }}

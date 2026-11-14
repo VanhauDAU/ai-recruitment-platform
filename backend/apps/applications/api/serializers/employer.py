@@ -1,22 +1,16 @@
 from rest_framework import serializers
 
-from apps.cvs.models import UserCv
-from apps.jobs.models import Job
-from apps.jobs.selectors.listing import publicly_available_job_filter
+from apps.accounts.services import is_account_accessible
 
-from ...models import Application
+from ...models import Application, CandidateBlock
+from ...services import available_status_decisions
 
 
 class ApplicationSerializer(serializers.ModelSerializer):
-    job = serializers.SlugRelatedField(
-        slug_field='public_id', queryset=Job.objects.filter(publicly_available_job_filter())
-    )
-    cv = serializers.SlugRelatedField(
-        slug_field='public_id',
-        queryset=UserCv.objects.filter(is_deleted=False),
-        allow_null=True,
-        required=False,
-    )
+    """Read model of one application in the recruiter workspace."""
+
+    job = serializers.CharField(source='job.public_id', read_only=True)
+    cv = serializers.CharField(source='cv.public_id', read_only=True, default=None)
     job_title = serializers.CharField(source='job.title', read_only=True)
     candidate_name = serializers.CharField(source='candidate.full_name', read_only=True)
     candidate_email = serializers.EmailField(source='candidate.email', read_only=True)
@@ -26,6 +20,10 @@ class ApplicationSerializer(serializers.ModelSerializer):
     submitted_cv_version = serializers.CharField(
         source='submitted_cv_version.public_id', read_only=True
     )
+    available_decisions = serializers.SerializerMethodField()
+    candidate_blocked = serializers.BooleanField(read_only=True, default=False)
+    in_talent_pool = serializers.BooleanField(read_only=True, default=False)
+    mass_apply_signal = serializers.SerializerMethodField()
 
     class Meta:
         model = Application
@@ -46,6 +44,10 @@ class ApplicationSerializer(serializers.ModelSerializer):
             'cover_letter',
             'source',
             'status',
+            'available_decisions',
+            'candidate_blocked',
+            'in_talent_pool',
+            'mass_apply_signal',
             'employer_note',
             'employer_rating',
             'candidate_note',
@@ -57,52 +59,33 @@ class ApplicationSerializer(serializers.ModelSerializer):
             'accepted_at',
             'updated_at',
         ]
-        read_only_fields = [
-            'public_id',
-            'source',
-            'status',
-            'employer_note',
-            'submitted_cv_version',
-            'submitted_cv_title',
-            'submitted_cv_source',
-            'submitted_at',
-            'applied_at',
-            'viewed_at',
-            'shortlisted_at',
-            'interviewed_at',
-            'rejected_at',
-            'accepted_at',
-            'updated_at',
-        ]
+        read_only_fields = fields
 
     def get_candidate_account_restricted(self, obj):
-        return bool(
-            obj.candidate.status != 'active'
-            or not obj.candidate.is_active
-            or obj.candidate.is_deleted
-        )
+        return not is_account_accessible(obj.candidate)
 
-    def validate_cv(self, cv):
-        request = self.context['request']
-        if cv.user_id != request.user.id:
-            raise serializers.ValidationError('You can only apply with your own CV.')
-        return cv
+    def get_available_decisions(self, obj):
+        return available_status_decisions(obj)
 
-    def validate_job(self, job):
-        request = self.context['request']
-        if (
-            self.instance is None
-            and Application.objects.filter(candidate=request.user, job=job).exists()
-        ):
-            raise serializers.ValidationError('You already applied to this job.')
-        return job
+    def get_mass_apply_signal(self, obj):
+        """Suggest blocking a candidate who sprays applications across jobs."""
+        jobs = getattr(obj, 'recent_jobs_applied', 0) or 0
+        if jobs < CandidateBlock.MASS_APPLY_MIN_JOBS or getattr(obj, 'candidate_blocked', False):
+            return None
+        return {'jobs': jobs, 'window_days': CandidateBlock.MASS_APPLY_WINDOW_DAYS}
 
 
-class ApplicationStatusUpdateSerializer(serializers.ModelSerializer):
+class ApplicationAssessmentSerializer(serializers.Serializer):
+    employer_note = serializers.CharField(required=False, allow_blank=True, max_length=5000)
     employer_rating = serializers.IntegerField(
         required=False, allow_null=True, min_value=1, max_value=5
     )
 
-    class Meta:
-        model = Application
-        fields = ['status', 'employer_note', 'employer_rating']
+
+class ApplicationStatusDecisionSerializer(serializers.Serializer):
+    status = serializers.ChoiceField(choices=Application.DECISION_STATUSES)
+
+
+class ApplicationDecisionResultSerializer(serializers.Serializer):
+    application = ApplicationSerializer()
+    candidate_notice_at = serializers.DateTimeField(allow_null=True)

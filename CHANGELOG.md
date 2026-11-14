@@ -8,6 +8,89 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-15
 
+#### Added — Báo NTD khi có hồ sơ mới; làm gọn workspace CV ứng tuyển
+
+- Ứng viên nộp hồ sơ: NTD nhận thông báo trên chuông và email tới các địa chỉ
+  nhận hồ sơ của tin (mặc định email người đăng). Email không chứa tên ứng
+  viên; tắt được trong cài đặt thông báo NTD ("Hồ sơ ứng tuyển mới") hoặc bằng
+  site setting `email_notify_new_application`.
+- Workspace: thao tác với CV (Tải PDF, Mời đánh giá, Nhắn tin) nằm trên thanh
+  riêng; "Lưu vào kho" và "Chặn" thành một hàng hai nút; lọc trạng thái là một
+  ô chọn cạnh ô tìm kiếm thay cho dãy chip.
+
+#### Added — Kho ứng viên tiềm năng (giai đoạn 5)
+
+- NTD lưu ứng viên vào kho kèm ghi chú, nhãn; ứng viên được thông báo, có trang
+  "Nhà tuyển dụng lưu hồ sơ" để rút hồ sơ; mục tự hết hạn sau 12 tháng.
+- Trang "Kho ứng viên tiềm năng": chọn tin đang tuyển để xem người trong kho
+  xếp theo độ tương đồng (có lý do) và mời ứng tuyển; ứng viên nhận lời mời
+  theo kênh Email/Web mới "Lời mời ứng tuyển từ nhà tuyển dụng".
+
+#### Added — Danh sách đen ứng viên (giai đoạn 4)
+
+- NTD chặn ứng viên từ hồ sơ (lý do, thời hạn, tùy chọn từ chối hồ sơ đang
+  chờ); ứng viên bị chặn không nộp được vào các tin của NTD và chỉ thấy thông
+  báo chung.
+- Workspace cảnh báo "ứng tuyển hàng loạt" khi một ứng viên nộp ≥ 5 tin của
+  NTD trong 14 ngày, kèm nút chặn; trang "Danh sách đen" trong sidebar để xem
+  và gỡ chặn.
+
+#### Added — Mời người khác đánh giá hồ sơ (giai đoạn 3)
+
+- Nút "Mời đánh giá" trong workspace hồ sơ: tạo link có hạn, sao chép hoặc gửi
+  qua email của chính NTD, thu hồi bất cứ lúc nào; token chỉ lưu dạng hash.
+- Trang công khai `/tuyendung/danh-gia-ho-so/:token`: CV đã ẩn ảnh, liên hệ và
+  người tham chiếu; phiếu đánh giá (đề xuất, điểm, điểm mạnh, băn khoăn), sửa
+  được tới khi hết hạn. NTD nhận thông báo và xem tổng hợp phiếu.
+
+#### Added — Xử lý hồ sơ ứng tuyển (giai đoạn 1)
+
+- Ứng viên có chuông thông báo và email khi nhà tuyển dụng xem, tải CV hoặc ra
+  quyết định (`CandidateNotification`, `/api/candidate/notifications/…`). Quyết
+  định được báo sau 5 phút (`CANDIDATE_STATUS_NOTIFICATION_DELAY_SECONDS`);
+  bấm nhiều trạng thái liên tiếp chỉ báo trạng thái cuối.
+- Nhà tuyển dụng hoàn tác được quyết định khi ứng viên chưa được báo
+  (`POST …/status/undo/`); trạng thái cuối có hộp xác nhận.
+- Tải PDF đúng bản CV đã nộp (`…/cv/exports/`); mọi lần xem/tải CV ghi
+  `CvAccessLog`, ứng viên được báo một lần cho mỗi hồ sơ.
+- Workspace `/tuyendung/app/applications` làm lại: chip lọc trạng thái, thanh
+  quyết định, lịch sử hiện trạng thái thông báo, nút "Nhắn tin" (sắp ra mắt).
+- Sidebar NTD: nhóm "Quản lý CV" có mục "CV ứng tuyển" (hộp CV của mọi tin,
+  kèm số CV chưa xem) và các mục sắp mở "Kho ứng viên tiềm năng", "Danh sách
+  đen" theo lộ trình.
+
+#### Changed — Quy trình trạng thái hồ sơ
+
+- Còn 6 trạng thái: Mới, Đã xem (hệ thống đặt), Phù hợp, Phỏng vấn, Trúng
+  tuyển, Không phù hợp. Trang "Việc làm đã ứng tuyển" chỉ hiện trạng thái đã
+  báo cho ứng viên.
+- Thông báo trong chuông của hồ sơ bị tự động từ chối hiện sau 3 ngày ân hạn,
+  cùng lúc với email.
+- Nộp hồ sơ bị chặn khi CV đang phân tích hoặc thiếu họ tên / liên hệ / nội
+  dung; form ứng tuyển chờ phân tích CV tải lên xong mới nộp (trước đây có thể
+  nộp bản CV rỗng).
+
+#### Added — Xác nhận nộp hồ sơ và cài đặt nhận thông báo theo kênh
+
+- Nộp hồ sơ thành công: chuông "Hồ sơ đã được tiếp nhận" và email "Chúc mừng
+  bạn đã ứng tuyển thành công vị trí …" với tối đa 5 việc làm tương tự, nút
+  "Xem tất cả việc làm", hotline/email hỗ trợ và mạng xã hội từ site settings.
+- Trang "Cài đặt nhận thông báo": cột Email / Trên web cho hồ sơ ứng tuyển,
+  dòng "Kết quả xử lý hồ sơ" luôn bật, công tắc gợi ý việc làm tương tự; lý do
+  bị từ chối bật hiện ngay dưới công tắc kèm link sửa; lưu một công tắc không
+  khóa các công tắc khác; báo khi email toàn site đang tắt.
+- Email ứng viên chỉ gửi khi email đã xác thực; thẻ việc làm trong email dùng
+  chung `jobs/services/email_cards.py` (digest dùng lại).
+
+#### Removed
+
+- 9 công tắc email không có tác dụng (cập nhật hệ thống, tính năng mới, ưu
+  đãi đối tác, lời mời NTD, …); `employer_viewed_cv` đổi tên `cv_activity_email`.
+- Trạng thái `considering` (dữ liệu gộp vào `viewed`, migration không đảo
+  ngược).
+- `PATCH /api/v2/recruiter/applications/{id}/` không còn nhận `status`; dùng
+  `POST …/status/`.
+
 #### Changed — Danh sách và chi tiết tin tuyển dụng của nhà tuyển dụng
 
 - `/tuyendung/app/jobs`: tab trạng thái kèm số đếm thay cho dropdown, tìm kiếm

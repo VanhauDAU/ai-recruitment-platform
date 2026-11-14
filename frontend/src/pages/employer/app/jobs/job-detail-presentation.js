@@ -1,21 +1,10 @@
 import dayjs from 'dayjs'
-import { RECRUITER_APPLICATION_STATUS_LABELS } from '@/entities/application'
+import { APPLICATION_STATUS_TONES, RECRUITER_APPLICATION_STATUS_LABELS } from '@/entities/application'
 import { jobDetailPath } from '@/entities/job'
 import { MAIN_PORTAL_URL } from '@/shared/config/portals'
 import { isJobHeld } from './job-list-presentation'
 
 export const JOB_DETAIL_TABS = ['apply_cv', 'viewed_job', 'job', 'cv_label']
-
-// Tone names map onto `.job-tone-*` in employer-jobs.css.
-export const APPLICATION_STATUS_TONES = {
-  submitted: 'sky',
-  viewed: 'cyan',
-  considering: 'amber',
-  shortlisted: 'emerald',
-  interviewed: 'violet',
-  accepted: 'teal',
-  rejected: 'slate',
-}
 
 const EMPTY_SUMMARY = { total: 0, unviewed: 0, unanswered: 0, by_status: {} }
 
@@ -37,6 +26,7 @@ export function applicationFilterChips(summary, selected) {
       key: status,
       label,
       count: summary.by_status?.[status] || 0,
+      // Tone names map onto `.job-tone-*` in employer-jobs.css.
       tone: APPLICATION_STATUS_TONES[status],
     })),
   ]

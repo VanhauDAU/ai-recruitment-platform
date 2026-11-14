@@ -1,16 +1,77 @@
 """Read queries for job applications."""
 
-from django.db.models import OuterRef, Q, Subquery
+from datetime import timedelta
 
-from ..models import Application
+from django.db.models import (
+    CharField,
+    Count,
+    Exists,
+    IntegerField,
+    OuterRef,
+    Prefetch,
+    Q,
+    Subquery,
+    Value,
+)
+from django.db.models.functions import Cast, Coalesce, Concat
+from django.utils import timezone
+
+from apps.candidates.models import CandidateNotification
+
+from ..models import (
+    Application,
+    ApplicationReview,
+    ApplicationReviewLink,
+    ApplicationStatusHistory,
+    CandidateBlock,
+    TalentPoolEntry,
+)
+
+
+def _history_notice():
+    """Candidate notice scheduled by the outer history row (same dedupe key)."""
+    return CandidateNotification.objects.filter(
+        recipient_id=OuterRef('application__candidate_id'),
+        dedupe_key=Concat(
+            Value(ApplicationStatusHistory.NOTIFICATION_KEY_PREFIX),
+            Cast(OuterRef('pk'), CharField()),
+        ),
+    )
+
+
+def candidate_published_history_queryset():
+    """History the candidate may see: undone rows and notices not yet
+    delivered (inside the recruiter's undo window) stay hidden."""
+    return ApplicationStatusHistory.objects.filter(reverted_at__isnull=True).exclude(
+        Exists(_history_notice().filter(delivered_at__isnull=True))
+    )
 
 
 def candidate_applications_queryset(candidate):
     return (
         Application.objects.filter(candidate=candidate)
         .select_related('job', 'job__company', 'cv', 'submitted_cv_version')
-        .prefetch_related('preferred_locations', 'status_history')
+        .prefetch_related(
+            'preferred_locations',
+            Prefetch('status_history', queryset=candidate_published_history_queryset()),
+        )
         .order_by('-applied_at')
+    )
+
+
+def _recent_jobs_applied_count():
+    """Distinct jobs of the same recruiter the candidate applied to recently."""
+    since = timezone.now() - timedelta(days=CandidateBlock.MASS_APPLY_WINDOW_DAYS)
+    return (
+        Application.objects.filter(
+            candidate_id=OuterRef('candidate_id'),
+            job__posted_by_id=OuterRef('job__posted_by_id'),
+            applied_at__gte=since,
+        )
+        .order_by()
+        .values('candidate_id')
+        .annotate(jobs=Count('job_id', distinct=True))
+        .values('jobs')[:1]
     )
 
 
@@ -36,6 +97,25 @@ def employer_applications_queryset(
         )
         .prefetch_related(
             'preferred_locations',
+        )
+        .annotate(
+            candidate_blocked=Exists(
+                CandidateBlock.objects.filter(
+                    CandidateBlock.active_q(),
+                    recruiter_id=OuterRef('job__posted_by_id'),
+                    candidate_id=OuterRef('candidate_id'),
+                )
+            ),
+            in_talent_pool=Exists(
+                TalentPoolEntry.objects.filter(
+                    TalentPoolEntry.active_q(),
+                    recruiter_id=OuterRef('job__posted_by_id'),
+                    candidate_id=OuterRef('candidate_id'),
+                )
+            ),
+            recent_jobs_applied=Coalesce(
+                Subquery(_recent_jobs_applied_count(), output_field=IntegerField()), 0
+            ),
         )
     )
     if job_public_id:
@@ -71,6 +151,21 @@ def employer_applications_queryset(
         'newest': '-applied_at',
     }
     return queryset.order_by(order_fields.get(ordering, '-applied_at'), '-id')
+
+
+def recruiter_application_history_queryset(application):
+    """Status history with the delivery state of the notice each row scheduled."""
+    notice = _history_notice()
+    return (
+        application.status_history.select_related('changed_by')
+        .annotate(
+            notice_deliver_after=Subquery(notice.values('deliver_after')[:1]),
+            notice_delivered_at=Subquery(notice.values('delivered_at')[:1]),
+            notice_cancel_reason=Subquery(notice.values('cancel_reason')[:1]),
+            notice_email_sent_at=Subquery(notice.values('email_sent_at')[:1]),
+        )
+        .order_by('created_at', 'id')
+    )
 
 
 def employer_application_queryset(employer):
@@ -122,11 +217,37 @@ def recruiter_application_snapshot_queryset(recruiter):
             submitted_cv_version__version_kind='application_snapshot',
         )
         .select_related(
+            'candidate',
             'job',
+            'job__company',
             'submitted_cv_version',
             'submitted_cv_version__template_version',
             'submitted_cv_version__parent_version',
         )
         .prefetch_related('preferred_locations')
         .distinct()
+    )
+
+
+def recruiter_review_links_queryset(application):
+    return (
+        ApplicationReviewLink.objects.filter(application=application)
+        .select_related('review')
+        .order_by('-created_at', '-id')
+    )
+
+
+def recruiter_reviews_queryset(application):
+    return (
+        ApplicationReview.objects.filter(application=application)
+        .select_related('link')
+        .order_by('-submitted_at', '-id')
+    )
+
+
+def recruiter_candidate_blocks_queryset(recruiter):
+    return (
+        CandidateBlock.objects.filter(recruiter=recruiter, lifted_at__isnull=True)
+        .select_related('candidate', 'source_application__job')
+        .order_by('-created_at', '-id')
     )

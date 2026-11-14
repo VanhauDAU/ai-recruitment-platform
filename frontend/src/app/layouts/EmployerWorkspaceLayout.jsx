@@ -34,8 +34,10 @@ import {
   employerAppPath,
 } from '@/shared/config/portals'
 import EmployerAccountVerificationPopover from './EmployerAccountVerificationPopover'
+import useUnreadApplicationCount from './use-unread-application-count'
 import {
-  EMPLOYER_NAV_ITEMS,
+  CV_MANAGEMENT_MENU_KEY,
+  employerNavItems,
   employerRouteTitle,
   employerSelectedMenuKey,
 } from './EmployerWorkspaceNavigation'
@@ -101,6 +103,7 @@ export default function EmployerWorkspaceLayout() {
   )[0]
   const complianceAction = employerReadinessAction(candidateBlocker?.action)
   const showComplianceNotice = !isChecking && !isAccessError && !readiness.candidateDataAccess
+  const unreadApplications = useUnreadApplicationCount(Boolean(readiness.candidateDataAccess))
   const initials = (user?.full_name || user?.email || 'NTD').trim().charAt(0).toUpperCase()
   const isCampaignList = pathname === employerAppPath('/campaigns')
   const campaignDetailMatch = pathname.match(new RegExp(`^${employerAppPath('/campaigns')}/([^/]+)$`))
@@ -130,15 +133,13 @@ export default function EmployerWorkspaceLayout() {
     }
     if (applicationCampaignId) {
       navigate(`${employerAppPath('/campaigns')}/${encodeURIComponent(applicationCampaignId)}?active_tab=apply_cv`)
-      return
     }
-    navigate(employerAppPath('/jobs'))
   }
+  // Opened from the sidebar (no job/campaign) the page is a top-level inbox
+  // and shows no back button.
   const applicationBackLabel = applicationJobId
     ? 'Quay lại chi tiết tin tuyển dụng'
-    : applicationCampaignId
-      ? 'Quay lại chiến dịch tuyển dụng'
-      : 'Quay lại danh sách tin tuyển dụng'
+    : 'Quay lại chiến dịch tuyển dụng'
   const sidebarCollapsed = collapsed && (isMobileViewport || !isSidebarHovered)
   const isCompactSidebar = sidebarCollapsed && !isMobileViewport
   const accountMenu = {
@@ -282,7 +283,8 @@ export default function EmployerWorkspaceLayout() {
                 mode="inline"
                 inlineCollapsed={isCompactSidebar}
                 selectedKeys={[employerSelectedMenuKey(pathname)]}
-                items={EMPLOYER_NAV_ITEMS}
+                defaultOpenKeys={isApplicationWorkspace || ['/candidate-blocks', '/talent-pool'].map(employerAppPath).includes(pathname) ? [CV_MANAGEMENT_MENU_KEY] : []}
+                items={employerNavItems({ unreadApplications })}
                 onClick={navigateFromMenu}
                 className="!border-0 !bg-white [&>.ant-menu-item]:!px-3 [&>.ant-menu-submenu>.ant-menu-submenu-title]:!px-3 [&_.ant-menu-item]:!mx-2 [&_.ant-menu-item]:!my-0.5 [&_.ant-menu-item]:!h-10 [&_.ant-menu-item]:!w-auto [&_.ant-menu-item]:!rounded-lg [&_.ant-menu-item]:!text-xs [&_.ant-menu-sub_.ant-menu-item]:!pl-8 [&_.ant-menu-item-divider]:!my-2 [&_.ant-menu-item-selected]:!bg-emerald-50 [&_.ant-menu-item-selected]:!font-bold [&_.ant-menu-item-selected]:!text-emerald-600 [&.ant-menu-inline-collapsed_.ant-menu-item]:!flex [&.ant-menu-inline-collapsed_.ant-menu-item]:!w-12 [&.ant-menu-inline-collapsed_.ant-menu-item]:!items-center [&.ant-menu-inline-collapsed_.ant-menu-item]:!justify-center [&.ant-menu-inline-collapsed_.ant-menu-item]:!px-0 [&.ant-menu-inline-collapsed_.ant-menu-item_.anticon]:!mr-0 [&.ant-menu-inline-collapsed_.ant-menu-item_.anticon]:!text-xl"
               />
@@ -299,7 +301,7 @@ export default function EmployerWorkspaceLayout() {
         <Layout className="!min-h-0 !min-w-0 !overflow-hidden !bg-[#edf1f5]">
           <div className="flex min-h-11 shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white px-3 py-2 sm:min-h-12 sm:px-6">
             <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
-              {(isJobForm || isCampaignDetail || isApplicationWorkspace) && (
+              {(isJobForm || isCampaignDetail || (isApplicationWorkspace && (applicationJobId || applicationCampaignId))) && (
                 <Button
                   size="small"
                   icon={<ArrowLeftOutlined />}

@@ -1,5 +1,9 @@
 from .admin import AdminJobApplicationSerializer
-from .employer import ApplicationSerializer, ApplicationStatusUpdateSerializer
+from .employer import (
+    ApplicationAssessmentSerializer,
+    ApplicationSerializer,
+    ApplicationStatusDecisionSerializer,
+)
 from .history import ApplicationStatusHistorySerializer
 from .v2 import (
     CandidateApplicationV2CreateSerializer,
@@ -9,8 +13,9 @@ from .v2 import (
 
 __all__ = [
     'AdminJobApplicationSerializer',
+    'ApplicationAssessmentSerializer',
     'ApplicationSerializer',
-    'ApplicationStatusUpdateSerializer',
+    'ApplicationStatusDecisionSerializer',
     'ApplicationStatusHistorySerializer',
     'CandidateApplicationV2CreateSerializer',
     'CandidateApplicationV2Serializer',

@@ -24,7 +24,6 @@ import { message } from '@/shared/lib/toast'
 const STATUS_COLORS = {
   submitted: 'blue',
   viewed: 'cyan',
-  considering: 'gold',
   shortlisted: 'green',
   interviewed: 'purple',
   accepted: 'success',

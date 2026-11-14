@@ -327,4 +327,25 @@ describe('EmployerWorkspaceLayout', () => {
 
     expect(screen.getByText(/Chiến dịch đang mở/)).toHaveTextContent('?active_tab=apply_cv')
   })
+
+  it('treats the sidebar CV inbox as a top-level page with its menu group open', () => {
+    useSession.mockReturnValue({
+      user: { full_name: 'Nguyễn An', email: 'hr@example.com' },
+      logout: vi.fn(),
+    })
+
+    render(
+      <MemoryRouter initialEntries={['/tuyendung/app/applications']}>
+        <Routes>
+          <Route element={<EmployerWorkspaceLayout />}>
+            <Route path="/tuyendung/app/applications" element={<p>Hộp CV</p>} />
+          </Route>
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    expect(screen.queryByRole('button', { name: /Quay lại/ })).not.toBeInTheDocument()
+    expect(screen.getAllByText('CV ứng tuyển').length).toBeGreaterThan(0)
+    expect(screen.getByText('Kho ứng viên tiềm năng')).toBeInTheDocument()
+  })
 })

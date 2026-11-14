@@ -3,18 +3,17 @@ import { mockPublicApi } from './helpers'
 
 const API_ROUTE = /^https?:\/\/[^/]+\/api\/.*$/
 const EMAIL_NOTIFICATION_DEFAULTS = {
-  important_system_updates: true,
-  employer_viewed_cv: true,
-  new_features_and_cv_templates: true,
-  other_system_notifications: true,
+  application_received_email: true,
+  application_received_web: true,
+  similar_jobs_in_application_email: true,
+  cv_activity_email: true,
+  cv_activity_web: true,
+  employer_invitation_email: true,
+  employer_invitation_web: true,
   configured_job_alerts: true,
   suitable_job_recommendations: true,
-  top_candidate_alerts: true,
-  employer_invitations: true,
-  job_and_career_events: true,
-  service_introductions: true,
-  program_and_event_introductions: true,
-  partner_gifts_and_discounts: true,
+  followed_company_jobs: true,
+  email_delivery_enabled: true,
 }
 
 async function mockCandidatePersonalizationApi(page) {
@@ -141,8 +140,15 @@ test('candidate smoke: personalization pages and compact desktop menu remain usa
   await mockCandidatePersonalizationApi(page)
 
   await page.goto('/tai-khoan/cai-dat-nhan-email')
-  await expect(page.getByRole('heading', { name: 'Cài đặt thông báo qua email' })).toBeVisible()
-  const suitableJobsSwitch = page.getByRole('switch', { name: 'Thông báo việc làm phù hợp' })
+  await expect(page.getByRole('heading', { name: 'Cài đặt nhận thông báo' })).toBeVisible()
+  await expect(page.getByText('Luôn bật')).toBeVisible()
+  const webSwitch = page.getByRole('switch', { name: 'Trên web: Nhà tuyển dụng xem hoặc tải CV' })
+  const webRequest = page.waitForRequest((request) => request.method() === 'PATCH'
+    && request.postDataJSON()?.cv_activity_web === false)
+  await webSwitch.click()
+  await webRequest
+  await expect(webSwitch).not.toBeChecked()
+  const suitableJobsSwitch = page.getByRole('switch', { name: 'Việc làm phù hợp với hồ sơ của bạn' })
   const updateRequest = page.waitForRequest((request) => {
     if (!request.url().endsWith('/api/candidate/email-notification-settings/')) return false
     return request.method() === 'PATCH'
@@ -190,7 +196,7 @@ test('candidate smoke: personalization pages and compact desktop menu remain usa
     expect(logoutBox.y + logoutBox.height).toBeLessThanOrEqual(600)
 
     await accountPopup.getByRole('button', { name: 'Cài đặt email & thông báo' }).click()
-    await expect(accountPopup.getByRole('button', { name: 'Cài đặt thông báo qua email' })).toBeVisible()
+    await expect(accountPopup.getByRole('button', { name: 'Cài đặt nhận thông báo' })).toBeVisible()
     await expect(accountPopup.getByRole('button', { name: 'Cá nhân & Bảo mật' })).toHaveAttribute('aria-expanded', 'false')
   }
 

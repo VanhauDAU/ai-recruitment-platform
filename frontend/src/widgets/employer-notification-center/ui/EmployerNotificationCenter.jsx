@@ -4,11 +4,12 @@ import { Button, Empty, Pagination, Result, Skeleton } from 'antd'
 import { useState } from 'react'
 import {
   employerNotificationKeys,
+  employerNotificationTone,
   getEmployerNotifications,
   markAllEmployerNotificationsRead,
   markEmployerNotificationRead,
 } from '@/entities/employer-notification'
-import NotificationItem from './NotificationItem'
+import NotificationListItem from '@/shared/ui/NotificationListItem'
 
 export default function EmployerNotificationCenter() {
   const [page, setPage] = useState(1)
@@ -36,7 +37,7 @@ export default function EmployerNotificationCenter() {
       {query.isPending && <div className="p-6"><Skeleton active paragraph={{ rows: 6 }} /></div>}
       {query.isError && <Result status="error" title="Không tải được thông báo" extra={<Button icon={<ReloadOutlined />} onClick={() => query.refetch()}>Thử lại</Button>} />}
       {!query.isPending && !query.isError && items.length === 0 && <Empty description="Chưa có thông báo" className="py-16" />}
-      {items.map((item) => <NotificationItem key={item.public_id} item={item} onOpen={(value) => !value.is_read && readMutation.mutate(value.public_id)} />)}
+      {items.map((item) => <NotificationListItem key={item.public_id} item={item} tone={employerNotificationTone(item.event_type)} time={item.created_at} onOpen={(value) => !value.is_read && readMutation.mutate(value.public_id)} />)}
       {(query.data?.count || 0) > 0 && (
         <div className="flex justify-center border-t border-slate-100 p-4">
           <Pagination current={page} total={query.data.count} pageSize={20} showSizeChanger={false} onChange={setPage} />

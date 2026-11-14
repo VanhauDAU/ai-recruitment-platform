@@ -11,6 +11,7 @@ from ..models import EmployerActivity, EmployerNotification, EmployerNotificatio
 VERIFY_PATH = '/tuyendung/app/employer-verify'
 COMPANY_PATH = '/tuyendung/app/account/settings/company'
 COMPANY_PAGE_PATH = '/tuyendung/app/company-page'
+APPLICATIONS_PATH = '/tuyendung/app/applications'
 
 EVENT_PRESENTATION = {
     EmployerNotification.EventType.VERIFICATION_APPROVED: (
@@ -53,9 +54,32 @@ EVENT_PRESENTATION = {
         'Quyền biên tập trang công ty đã bị thu hồi',
         COMPANY_PAGE_PATH,
     ),
+    EmployerNotification.EventType.APPLICATION_RECEIVED: (
+        'Có hồ sơ ứng tuyển mới',
+        APPLICATIONS_PATH,
+    ),
+    EmployerNotification.EventType.APPLICATION_REVIEW_SUBMITTED: (
+        'Có đánh giá mới cho hồ sơ ứng viên',
+        APPLICATIONS_PATH,
+    ),
 }
 
-SAFE_METADATA_KEYS = {'case_public_id', 'company_public_id', 'event_public_id', 'status'}
+SAFE_METADATA_KEYS = {
+    'application_public_id',
+    'case_public_id',
+    'company_public_id',
+    'event_public_id',
+    'status',
+}
+
+
+def new_application_email_enabled(recipient):
+    value = (
+        EmployerNotificationPreference.objects.filter(recipient=recipient)
+        .values_list('new_application_email', flat=True)
+        .first()
+    )
+    return True if value is None else value
 
 
 def intermediate_verification_email_enabled(recipient):
@@ -85,6 +109,7 @@ def emit_employer_event(
     actor=None,
     subject_public_id='',
     metadata=None,
+    action_path='',
 ):
     """Idempotently persist notification + activity in the caller transaction."""
 
@@ -93,7 +118,9 @@ def emit_employer_event(
     normalized_dedupe = str(dedupe_key).strip()[:160]
     if not normalized_dedupe:
         raise ValueError('EMPLOYER_EVENT_DEDUPE_REQUIRED')
-    title, action_path = EVENT_PRESENTATION[event_type]
+    title, default_path = EVENT_PRESENTATION[event_type]
+    # Producers may deep-link inside the event's section (one application).
+    action_path = action_path if action_path.startswith(default_path) else default_path
     normalized_message = str(message or '').strip()[:2000]
     safe_metadata = _safe_metadata(metadata)
     notification, notification_created = EmployerNotification.objects.get_or_create(

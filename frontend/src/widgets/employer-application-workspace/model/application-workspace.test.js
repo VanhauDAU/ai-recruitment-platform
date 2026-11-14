@@ -1,15 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import {
-  availableStatusOptions,
   groupApplicationsByCandidate,
+  initialsOf,
+  pendingNoticeOf,
 } from './application-workspace'
-
-const STATUSES = [
-  ['submitted', 'Tiếp nhận'],
-  ['viewed', 'Đã xem'],
-  ['accepted', 'Đã nhận offer'],
-  ['rejected', 'Từ chối'],
-]
 
 describe('application workspace model', () => {
   it('groups candidate emails case-insensitively and keeps newest CV first', () => {
@@ -22,12 +16,16 @@ describe('application workspace model', () => {
     expect(groups[0].applications.map((item) => item.public_id)).toEqual(['app_new', 'app_old'])
   })
 
-  it('never offers an illegal transition for a restricted or terminal application', () => {
-    expect(availableStatusOptions('viewed', true, STATUSES).map(([value]) => value)).toEqual([
-      'viewed', 'rejected',
-    ])
-    expect(availableStatusOptions('accepted', true, STATUSES).map(([value]) => value)).toEqual([
-      'accepted',
-    ])
+  it('exposes only the decision the recruiter can still undo', () => {
+    expect(pendingNoticeOf([
+      { to_status: 'viewed', can_undo: false, candidate_notice: { state: 'delivered' } },
+      { to_status: 'rejected', can_undo: true, candidate_notice: { state: 'scheduled', deliver_at: '2026-11-15T10:05:00Z' } },
+    ])).toEqual({ deliver_at: '2026-11-15T10:05:00Z' })
+    expect(pendingNoticeOf([{ to_status: 'viewed', can_undo: false }])).toBeNull()
+  })
+
+  it('builds two-letter initials from the last words of a name', () => {
+    expect(initialsOf('Lê Văn Hậu')).toBe('VH')
+    expect(initialsOf('')).toBe('UV')
   })
 })

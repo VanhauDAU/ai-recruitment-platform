@@ -46,6 +46,7 @@ import {
   SecuritySettingsPage,
   ResetPasswordPage,
   SavedJobsPage,
+  TalentPoolsPage,
   TemplateCatalogPage,
   TemplateDetailPage,
   VerifyEmailPage,
@@ -63,6 +64,7 @@ const ACCOUNT_PAGE_BY_KEY = {
   'email-settings': EmailNotificationSettingsPage,
   'job-notifications': JobAlertSettingsPage,
   'matching-jobs': MatchingJobsPage,
+  'talent-pools': TalentPoolsPage,
   security: SecuritySettingsPage,
 }
 

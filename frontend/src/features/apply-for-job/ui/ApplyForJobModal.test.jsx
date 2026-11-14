@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { message } from '@/shared/lib/toast'
@@ -7,6 +8,7 @@ import ApplyForJobModal from './ApplyForJobModal'
 const cvApi = vi.hoisted(() => ({
   getMyCvs: vi.fn(),
   importCvFile: vi.fn(),
+  waitForCvImport: vi.fn(),
 }))
 const applicationApi = vi.hoisted(() => ({ submitJobApplication: vi.fn() }))
 
@@ -47,6 +49,7 @@ describe('ApplyForJobModal', () => {
     applicationApi.submitJobApplication.mockResolvedValue({ public_id: 'app_1' })
 
     render(
+      <QueryClientProvider client={new QueryClient()}>
       <MemoryRouter>
         <ApplyForJobModal
           open
@@ -55,7 +58,8 @@ describe('ApplyForJobModal', () => {
           jobTitle="Kỹ sư"
           workplaceGroups={[{ province_id: 3, province_name: 'Bình Dương' }]}
         />
-      </MemoryRouter>,
+      </MemoryRouter>
+      </QueryClientProvider>,
     )
 
     await waitFor(() => expect(cvApi.getMyCvs).toHaveBeenCalledOnce())
@@ -79,7 +83,7 @@ describe('ApplyForJobModal', () => {
       contactEmail: '',
       contactPhone: '',
     }))
-    expect(message.success).toHaveBeenCalledWith('Đã gửi hồ sơ ứng tuyển.')
+    expect(message.success).toHaveBeenCalledWith('Chúc mừng bạn đã ứng tuyển thành công!')
     expect(onClose).toHaveBeenCalledOnce()
   })
 
@@ -109,9 +113,11 @@ describe('ApplyForJobModal', () => {
     ])
 
     render(
+      <QueryClientProvider client={new QueryClient()}>
       <MemoryRouter>
         <ApplyForJobModal open onClose={vi.fn()} jobPublicId="job_1" jobTitle="Kỹ sư" />
-      </MemoryRouter>,
+      </MemoryRouter>
+      </QueryClientProvider>,
     )
 
     const secondCv = await screen.findByRole('radio', { name: 'CV vận hành' })
@@ -129,6 +135,7 @@ describe('ApplyForJobModal', () => {
 
   it('shows the reapplication warning above the form', async () => {
     render(
+      <QueryClientProvider client={new QueryClient()}>
       <MemoryRouter>
         <ApplyForJobModal
           open
@@ -138,7 +145,8 @@ describe('ApplyForJobModal', () => {
           isReapplication
           retriesRemaining={2}
         />
-      </MemoryRouter>,
+      </MemoryRouter>
+      </QueryClientProvider>,
     )
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Lưu ý')
@@ -156,9 +164,11 @@ describe('ApplyForJobModal', () => {
     })
 
     render(
+      <QueryClientProvider client={new QueryClient()}>
       <MemoryRouter>
         <ApplyForJobModal open onClose={vi.fn()} jobPublicId="job_1" jobTitle="Kỹ sư" />
-      </MemoryRouter>,
+      </MemoryRouter>
+      </QueryClientProvider>,
     )
 
     await screen.findByRole('radio', { name: /CV chính/ })
@@ -173,11 +183,17 @@ describe('ApplyForJobModal', () => {
     const file = new File(['%PDF-1.7 candidate'], 'candidate.pdf', { type: 'application/pdf' })
     cvApi.importCvFile.mockResolvedValue({
       public_id: 'cv_uploaded',
+      latest_version_public_id: 'cvv_blank',
+    })
+    // Submitting must use the version produced once parsing finished.
+    cvApi.waitForCvImport.mockResolvedValue({
+      public_id: 'cv_uploaded',
       latest_version_public_id: 'cvv_uploaded',
     })
     applicationApi.submitJobApplication.mockResolvedValue({ public_id: 'app_2' })
 
     render(
+      <QueryClientProvider client={new QueryClient()}>
       <MemoryRouter>
         <ApplyForJobModal
           open
@@ -188,7 +204,8 @@ describe('ApplyForJobModal', () => {
           candidateEmail="hau@example.com"
           candidatePhone="0909000000"
         />
-      </MemoryRouter>,
+      </MemoryRouter>
+      </QueryClientProvider>,
     )
 
     const uploadRadio = await screen.findByRole('radio', { name: 'Tải CV từ máy tính' })
@@ -209,6 +226,8 @@ describe('ApplyForJobModal', () => {
       'candidate.pdf',
       { onUploadStateChange: expect.any(Function) },
     ))
+    await waitFor(() => expect(cvApi.waitForCvImport).toHaveBeenCalledWith('cv_uploaded'))
+    await waitFor(() => expect(applicationApi.submitJobApplication).toHaveBeenCalled())
     expect(applicationApi.submitJobApplication).toHaveBeenCalledWith(expect.objectContaining({
       cvPublicId: 'cv_uploaded',
       versionPublicId: 'cvv_uploaded',

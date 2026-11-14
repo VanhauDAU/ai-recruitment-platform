@@ -214,8 +214,11 @@ chiến dịch (nếu có) active, không hold và chủ chiến dịch active.
 
 | Bảng (model) | Mục đích và ràng buộc |
 | --- | --- |
-| `Application` | Một lần nộp của ứng viên vào tin. **Không** unique `(candidate, job)`: tối đa 3 lần nộp mỗi tin (`MAX_APPLICATIONS_PER_JOB`, kiểm ở service). `submitted_cv_version` (PROTECT, bắt buộc) trỏ `CvVersion` kind `application_snapshot`; `cv` chỉ là con trỏ thư viện, SET_NULL khi ứng viên xóa CV. Thông tin liên hệ, thư xin việc, `preferred_locations` M2M, consent AI/DLCN, `source` applied/recommended/invited, `status` submitted/viewed/considering/shortlisted/interviewed/rejected/accepted (`chk_applications_status`) cùng các mốc thời gian và mốc tự từ chối. |
-| `ApplicationStatusHistory` | Timeline đổi trạng thái (actor SET_NULL, note); ứng viên chỉ thấy bản đã lọc. |
+| `Application` | Một lần nộp của ứng viên vào tin. **Không** unique `(candidate, job)`: tối đa 3 lần nộp mỗi tin (`MAX_APPLICATIONS_PER_JOB`, kiểm ở service). `submitted_cv_version` (PROTECT, bắt buộc) trỏ `CvVersion` kind `application_snapshot`; `cv` chỉ là con trỏ thư viện, SET_NULL khi ứng viên xóa CV. Thông tin liên hệ, thư xin việc, `preferred_locations` M2M, consent AI/DLCN, `source` applied/recommended/invited, `status` submitted/viewed/shortlisted/interviewed/rejected/accepted (`chk_applications_status`; `considering` gộp vào `viewed` ở migration 0013) cùng các mốc thời gian và mốc tự từ chối. |
+| `TalentPoolEntry`, `TalentPoolInvitation` | Kho ứng viên tiềm năng theo NTD: unique (recruiter, candidate) khi đang mở, `source_application` (tin dùng để đối sánh), `note`, `tags` JSON ≤ 5, `expires_at` = +12 tháng, `removed_at` (NTD gỡ), `withdrawn_at` (ứng viên rút); lời mời unique (entry, job). |
+| `CandidateBlock` | Danh sách đen theo NTD: (recruiter, candidate) unique khi chưa gỡ, `reason`, `note`, `expires_at` (NULL = tới khi gỡ), `lifted_at`. Hằng `MASS_APPLY_WINDOW_DAYS=14`, `MASS_APPLY_MIN_JOBS=5` cho cảnh báo nộp hàng loạt. |
+| `ApplicationReviewLink`, `ApplicationReview` | Link mời đánh giá (token chỉ lưu hash, `expires_at` ≤ 30 ngày, `revoked_at`, đếm lượt mở) và phiếu đánh giá 1-1 theo link (`recommendation`, `rating` 1–5, điểm mạnh, băn khoăn). |
+| `ApplicationStatusHistory` | Timeline đổi trạng thái (actor SET_NULL, note nội bộ, `reverted_at` khi NTD hoàn tác). Mỗi dòng là khóa `application-status:<pk>` của thông báo nó tạo; ứng viên chỉ thấy dòng chưa hoàn tác có thông báo đã giao (hoặc không có thông báo). |
 
 Quyền đọc: nhà tuyển dụng chỉ thấy application của tin mình đăng
 (`job.posted_by`), và chỉ đọc nội dung CV qua `submitted_cv_version`.
@@ -232,9 +235,9 @@ Chi tiết contract document, renderer và API ở
 | `CvDraft` | Một draft autosave mutable mỗi CV (1-1), `base_version`, `document_hash`, optimistic lock. |
 | `CvAsset` | Ảnh avatar/background bất biến, document chỉ tham chiếu public ID; owner null = asset hệ thống. |
 | `CvSharedLink` | Link chia sẻ bearer gắn một version; chỉ lưu `token_hash` (unique), có `expires_at`/`revoked_at`. |
-| `CvExport` | Job + artifact PDF gắn version; unique theo version + `render_config`; `storage_key` nội bộ, tải qua endpoint có phân quyền. |
+| `CvExport` | Job + artifact PDF gắn version; unique theo version + `render_config`; `storage_key` nội bộ, tải qua endpoint có phân quyền. Export snapshot ứng tuyển của NTD có `cv=NULL` (khóa theo version) nên còn sau khi ứng viên xóa CV. |
 | `CvImportJob` | Job nhập PDF/DOCX → canonical (1-1 CV), unique `(user, idempotency_key)`, `result_version`. |
-| `CvAccessLog` | Audit tối thiểu truy cập CV (owner/recruiter/admin/anonymous theo kênh), không lưu payload hay PII thô. |
+| `CvAccessLog` | Audit tối thiểu truy cập CV (owner/recruiter/admin/anonymous theo kênh), không lưu payload hay PII thô. NTD xem (`application`) hoặc tải (`export`) snapshot ghi một dòng `cv=NULL` gắn version. |
 | `CvSkill` | Kỹ năng theo CV trỏ taxonomy `skills.Skill` (cùng bảng với `JobSkill`); unique `(cv, skill)`. Nguồn `manual` được đồng bộ mỗi lần tạo version từ mục kỹ năng và trường riêng `maps_to=skills` (khớp tên chuẩn hóa hoặc alias, mức 1–5 → `beginner/intermediate/advanced`); tên ngoài taxonomy bị bỏ qua. |
 | `CvTemplate` | Identity/catalogue mẫu: slug, tên/mô tả/SEO song ngữ `display_name_vi/en`, `description_vi/en`, `seo_title_vi/en`, `seo_description_vi/en` (rỗng ở ngôn ngữ nào thì không hiện ở kho ngôn ngữ đó), `lifecycle_status` draft/published/archived (nguồn duy nhất cho hiển thị công khai), `current_published_version`, `is_premium`; M2M category/color qua bảng link, ảnh xem trước theo từng màu nằm ở `CvTemplateColorLink`. |
 | `CvTemplateVersion` | Contract renderer bất biến sau publish: `renderer_key` (khóa layout trong registry `apps/cv_templates/layouts.json`), `renderer_version`, schema/default layout/style, `capabilities`, `content_contract`, `version_status` draft/published/retired; unique `(template, version_number)`. |
@@ -254,7 +257,8 @@ Chi tiết contract document, renderer và API ở
 | `candidate_job_preferences` | Nhu cầu tìm việc hiện hành (1-1 profile): lương mong muốn (> 0 khi có), kinh nghiệm, sẵn sàng chuyển nơi ở. |
 | `candidate_desired_specializations`, `candidate_desired_position_others`, `candidate_preferred_provinces`, `candidate_preferred_skills` | Lựa chọn chuẩn hóa (tối đa 5 vị trí chuyên môn; vị trí tự nhập không tạo `JobCategory`; chỉ tỉnh/thành; kỹ năng taxonomy), mỗi bảng unique theo preference–đối tượng. Nguồn cho onboarding và gợi ý việc làm. |
 | `candidate_consents`, `candidate_consent_events` | Quyết định hiện hành theo mục đích (`ai_recommendation`, `recruiter_visibility`; unique profile–loại) và audit trail bất biến (policy, nguồn, đường dẫn, CV). |
-| `candidate_email_notification_settings` | Preference email sản phẩm (1-1 profile). Email gợi ý việc làm mặc định tắt; email bảo mật không thuộc bảng này. Producer phải kiểm tra preference ngay trước khi gửi. |
+| `candidate_email_notification_settings` | Cài đặt nhận thông báo theo kênh (1-1 profile): hồ sơ ứng tuyển có cặp `*_email`/`*_web` (`application_received`, `cv_activity`) và `similar_jobs_in_application_email`; ba email việc làm (gợi ý phù hợp mặc định tắt). Migration `candidates/0010` đổi `employer_viewed_cv` → `cv_activity_email` và xóa 9 cột không có nơi đọc. Producer kiểm tra field email ngay trước khi gửi, field web lúc phát. |
+| `CandidateNotification` | Thông báo trong chuông kiêm outbox email của ứng viên. Unique `(recipient, dedupe_key)`; `deliver_after` hẹn giao, `delivered_at` xor `cancelled_at` (`superseded`/`undone`), `show_in_inbox` (kênh web), `supersede_key` gom các thông báo chỉ cần bản mới nhất; `email_status` pending/sending/sent/failed/skipped. Beat 60s giao và gửi email; giữ 730 ngày. |
 
 ## 9. Nội dung (`blog`, `knowledgebase`, `sitecontent`)
 

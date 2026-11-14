@@ -1,6 +1,13 @@
 """Write workflows for the CV domain."""
 
-from .assets import create_avatar_asset, create_avatar_asset_from_session, create_background_asset
+from .assets import (
+    asset_map,
+    create_avatar_asset,
+    create_avatar_asset_from_session,
+    create_background_asset,
+)
+from .audit import record_application_snapshot_access
+from .completeness import application_readiness_issues
 from .cvs import (
     UnsupportedCvUpload,
     duplicate_cv,
@@ -14,8 +21,10 @@ from .exports import (
     CvExportPermissionError,
     CvExportStateError,
     CvExportUnavailableError,
+    application_snapshot_export,
     export_download_ready,
     owner_cv_export,
+    request_application_snapshot_export,
     request_cv_export,
     retry_cv_export,
 )
@@ -54,6 +63,7 @@ from .versions import (
 )
 
 __all__ = [
+    'asset_map',
     'admin_cv_content',
     'lock_cv',
     'unlock_cv',
@@ -85,6 +95,10 @@ __all__ = [
     'create_v2_cv_once',
     'create_shared_link',
     'request_cv_export',
+    'request_application_snapshot_export',
+    'application_snapshot_export',
+    'record_application_snapshot_access',
+    'application_readiness_issues',
     'create_version',
     'update_cv_metadata',
     'update_draft',

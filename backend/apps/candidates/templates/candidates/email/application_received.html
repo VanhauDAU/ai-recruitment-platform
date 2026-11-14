@@ -1,0 +1,43 @@
+{% extends "candidates/email/_layout.html" %}
+{% block body %}
+  <p style="margin-top:0">Xin chào <strong>{{ candidate_name }}</strong>,</p>
+  <div style="margin:0 0 18px;padding:16px 18px;border-radius:12px;background:#ecfdf5;border:1px solid #a7f3d0">
+    <div style="font-size:18px;font-weight:800;color:#065f46">🎉 Chúc mừng bạn đã ứng tuyển thành công!</div>
+    <p style="margin:8px 0 0;line-height:1.6;color:#065f46">
+      Hồ sơ của bạn cho vị trí
+      {% if job %}<a href="{{ job.url }}" style="color:#047857;font-weight:700">{{ job.title }}</a> tại <strong>{{ job.company_name }}</strong>{% else %}<strong>bạn đã chọn</strong>{% endif %}
+      đã được hệ thống ghi nhận và gửi tới nhà tuyển dụng.
+    </p>
+  </div>
+  <p style="margin:0 0 6px;line-height:1.6">Chúng tôi sẽ thông báo ngay khi nhà tuyển dụng xem hoặc phản hồi hồ sơ của bạn. Trong lúc chờ, bạn có thể:</p>
+  <ul style="margin:0 0 18px;padding-left:20px;line-height:1.8">
+    <li>Theo dõi trạng thái tại <a href="{{ applied_jobs_url }}" style="color:{{ brand.primary_color }}">Việc làm đã ứng tuyển</a>.</li>
+    <li>Giữ điện thoại và email luôn sẵn sàng để không lỡ lịch phỏng vấn.</li>
+    <li><a href="{{ my_cvs_url }}" style="color:{{ brand.primary_color }}">Hoàn thiện CV</a> để tăng cơ hội với các vị trí khác.</li>
+  </ul>
+  <p style="margin:0 0 26px"><a href="{{ applied_jobs_url }}" style="display:inline-block;padding:11px 18px;border-radius:8px;background:{{ brand.primary_color }};color:#fff;text-decoration:none;font-weight:700">Xem hồ sơ đã ứng tuyển</a></p>
+
+  {% if similar_jobs %}
+    <h2 style="margin:0 0 4px;font-size:20px;line-height:1.35;color:#0f172a">{{ similar_jobs|length }} việc làm này đang tìm kiếm ứng viên giống bạn!</h2>
+    <p style="margin:0 0 14px;font-size:13px;font-style:italic;color:#64748b">Mẹo: ứng tuyển sớm vào tin mới đăng giúp hồ sơ của bạn được nhà tuyển dụng chú ý hơn.</p>
+    {% for item in similar_jobs %}
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #eef2f7">
+        <tr>
+          <td width="72" valign="top" style="padding:14px 12px 14px 0">
+            <a href="{{ item.url }}">{% if item.logo_url %}<img src="{{ item.logo_url }}" alt="{{ item.company_name }}" width="64" height="64" style="display:block;width:64px;height:64px;object-fit:contain;border:1px solid #e5e7eb;border-radius:10px;background:#fff">{% else %}<div style="width:64px;height:64px;border-radius:10px;background:#ecfdf5;color:#047857;font-weight:800;font-size:22px;line-height:64px;text-align:center">{{ item.company_name|slice:":1" }}</div>{% endif %}</a>
+          </td>
+          <td valign="top" style="padding:14px 0">
+            <div style="font-size:13px;color:#475569">{{ item.company_name }}</div>
+            <a href="{{ item.url }}" style="display:block;margin-top:2px;font-size:15px;font-weight:800;color:#0f172a;text-decoration:none">{{ item.title }}</a>
+            <div style="margin-top:6px;font-size:13px">
+              <span style="color:{{ brand.primary_color }};font-weight:700">💰 {{ item.salary }}</span>
+              {% if item.days_left is not None %}<span style="color:#64748b"> &nbsp;·&nbsp; ⏳ Còn {{ item.days_left }} ngày</span>{% endif %}
+            </div>
+            {% if item.locations %}<div style="margin-top:4px;font-size:13px;color:#64748b">📍 {{ item.locations }}</div>{% endif %}
+          </td>
+        </tr>
+      </table>
+    {% endfor %}
+    <p style="margin:18px 0 0;text-align:center"><a href="{{ jobs_url }}" style="display:inline-block;padding:11px 26px;border-radius:999px;border:1px solid {{ brand.primary_color }};color:{{ brand.primary_color }};text-decoration:none;font-weight:700">Xem tất cả việc làm</a></p>
+  {% endif %}
+{% endblock %}

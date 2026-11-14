@@ -51,8 +51,36 @@ export async function exportRecruiterApplications(params = {}) {
   }
 }
 
-export async function updateApplicationStatus(publicId, payload) {
+/** Private note/rating only; status changes go through `decideApplicationStatus`. */
+export async function updateApplicationAssessment(publicId, payload) {
   const { data } = await api.patch(`/v2/recruiter/applications/${publicId}/`, payload)
+  return data
+}
+
+/** Returns `{ application, candidate_notice_at }`; the candidate is told at that time. */
+export async function decideApplicationStatus(publicId, status) {
+  const { data } = await api.post(`/v2/recruiter/applications/${publicId}/status/`, { status })
+  return data
+}
+
+export async function undoApplicationStatusChange(publicId) {
+  const { data } = await api.post(`/v2/recruiter/applications/${publicId}/status/undo/`)
+  return data
+}
+
+export async function requestApplicationCvExport(publicId) {
+  const { data } = await api.post(`/v2/recruiter/applications/${publicId}/cv/exports/`)
+  return data
+}
+
+export async function getApplicationCvExport(publicId, exportId) {
+  const { data } = await api.get(`/v2/recruiter/applications/${publicId}/cv/exports/${exportId}/`)
+  return data
+}
+
+/** `downloadUrl` is the absolute URL returned by the export endpoints. */
+export async function downloadApplicationCv(downloadUrl) {
+  const { data } = await api.get(downloadUrl, { responseType: 'blob' })
   return data
 }
 
@@ -64,4 +92,83 @@ export async function getRecruiterApplicationSnapshot(publicId) {
 export async function getApplicationHistory(publicId) {
   const { data } = await api.get(`/v2/recruiter/applications/${publicId}/history/`)
   return data.results || data
+}
+
+export async function getApplicationReviewLinks(publicId) {
+  const { data } = await api.get(`/v2/recruiter/applications/${publicId}/review-links/`)
+  return data
+}
+
+/** Returns `{ link, url }`; `url` carries the only copy of the raw token. */
+export async function createApplicationReviewLink(publicId, payload) {
+  const { data } = await api.post(`/v2/recruiter/applications/${publicId}/review-links/`, payload)
+  return data
+}
+
+export async function revokeApplicationReviewLink(publicId, linkId) {
+  const { data } = await api.post(`/v2/recruiter/applications/${publicId}/review-links/${linkId}/revoke/`)
+  return data
+}
+
+export async function getApplicationReviews(publicId) {
+  const { data } = await api.get(`/v2/recruiter/applications/${publicId}/reviews/`)
+  return data
+}
+
+/** Public reviewer endpoints: the token in the URL is the only credential. */
+export async function getPublicApplicationReview(token) {
+  const { data } = await api.get(`/v2/application-reviews/${encodeURIComponent(token)}/`)
+  return data
+}
+
+export async function submitPublicApplicationReview(token, payload) {
+  const { data } = await api.put(`/v2/application-reviews/${encodeURIComponent(token)}/`, payload)
+  return data
+}
+
+export async function getCandidateBlocks(page = 1) {
+  const { data } = await api.get('/v2/recruiter/candidate-blocks/', { params: { page } })
+  return data
+}
+
+export async function blockCandidate(payload) {
+  const { data } = await api.post('/v2/recruiter/candidate-blocks/', payload)
+  return data
+}
+
+export async function liftCandidateBlock(publicId) {
+  const { data } = await api.post(`/v2/recruiter/candidate-blocks/${publicId}/lift/`)
+  return data
+}
+
+export async function getTalentPool(params = {}) {
+  const { data } = await api.get('/v2/recruiter/talent-pool/', { params })
+  return data
+}
+
+export async function addToTalentPool(payload) {
+  const { data } = await api.post('/v2/recruiter/talent-pool/', payload)
+  return data
+}
+
+export async function removeFromTalentPool(publicId) {
+  await api.delete(`/v2/recruiter/talent-pool/${publicId}/`)
+}
+
+export async function getTalentSuggestions(jobPublicId) {
+  const { data } = await api.get('/v2/recruiter/talent-pool/suggestions/', { params: { job: jobPublicId } })
+  return data
+}
+
+export async function inviteFromTalentPool(publicId, jobPublicId) {
+  await api.post(`/v2/recruiter/talent-pool/${publicId}/invite/`, { job_public_id: jobPublicId })
+}
+
+export async function getMyTalentPools() {
+  const { data } = await api.get('/v2/talent-pools/mine/')
+  return data.results || data
+}
+
+export async function withdrawFromTalentPool(publicId) {
+  await api.post(`/v2/talent-pools/mine/${publicId}/withdraw/`)
 }

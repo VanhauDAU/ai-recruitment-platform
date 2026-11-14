@@ -3670,6 +3670,87 @@ paths:
               schema:
                 $ref: '#/components/schemas/CandidateJobPreference'
           description: ''
+  /api/candidate/notifications/:
+    get:
+      operationId: candidate_notifications_list
+      summary: Thông báo của tôi (mới nhất trước)
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - candidate
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCandidateNotificationList'
+          description: ''
+  /api/candidate/notifications/{public_id}/read/:
+    post:
+      operationId: candidate_notifications_read_create
+      summary: Đánh dấu một thông báo đã đọc
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - candidate
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CandidateNotification'
+          description: ''
+        '404':
+          description: Không tìm thấy
+  /api/candidate/notifications/read-all/:
+    post:
+      operationId: candidate_notifications_read_all_create
+      summary: Đánh dấu tất cả thông báo đã đọc
+      tags:
+      - candidate
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CandidateReadAll'
+          description: ''
+  /api/candidate/notifications/unread-count/:
+    get:
+      operationId: candidate_notifications_unread_count_retrieve
+      summary: Số thông báo chưa đọc
+      tags:
+      - candidate
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CandidateUnreadCount'
+          description: ''
   /api/candidate/profile/:
     get:
       operationId: candidate_profile_retrieve
@@ -10344,6 +10425,59 @@ paths:
               schema:
                 $ref: '#/components/schemas/AdminUserCv'
           description: ''
+  /api/v2/application-reviews/{token}/:
+    get:
+      operationId: v2_application_reviews_retrieve
+      description: Bearer endpoint for invited reviewers; bad, expired and revoked
+        links all 404.
+      summary: Người được mời xem hồ sơ đã ẩn thông tin liên hệ
+      parameters:
+      - in: path
+        name: token
+        schema:
+          type: string
+        required: true
+      tags:
+      - applications-v2
+      security:
+      - {}
+      responses:
+        '200':
+          description: No response body
+    put:
+      operationId: v2_application_reviews_update
+      description: Bearer endpoint for invited reviewers; bad, expired and revoked
+        links all 404.
+      summary: Gửi hoặc cập nhật phiếu đánh giá
+      parameters:
+      - in: path
+        name: token
+        schema:
+          type: string
+        required: true
+      tags:
+      - applications-v2
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviewSubmitRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ReviewSubmitRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ReviewSubmitRequest'
+        required: true
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationReview'
+          description: ''
   /api/v2/applications/:
     get:
       operationId: v2_applications_list
@@ -11508,38 +11642,9 @@ paths:
                 $ref: '#/components/schemas/PaginatedApplicationList'
           description: ''
   /api/v2/recruiter/applications/{public_id}/:
-    put:
-      operationId: v2_recruiter_applications_update
-      parameters:
-      - in: path
-        name: public_id
-        schema:
-          type: string
-        required: true
-      tags:
-      - v2
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ApplicationStatusUpdateRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/ApplicationStatusUpdateRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/ApplicationStatusUpdateRequest'
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApplicationStatusUpdate'
-          description: ''
     patch:
       operationId: v2_recruiter_applications_partial_update
+      summary: NTD cập nhật ghi chú và đánh giá nội bộ (không đổi trạng thái)
       parameters:
       - in: path
         name: public_id
@@ -11547,18 +11652,18 @@ paths:
           type: string
         required: true
       tags:
-      - v2
+      - applications-v2
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PatchedApplicationStatusUpdateRequest'
+              $ref: '#/components/schemas/PatchedApplicationAssessmentRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/PatchedApplicationStatusUpdateRequest'
+              $ref: '#/components/schemas/PatchedApplicationAssessmentRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/PatchedApplicationStatusUpdateRequest'
+              $ref: '#/components/schemas/PatchedApplicationAssessmentRequest'
       security:
       - jwtAuth: []
       responses:
@@ -11566,7 +11671,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApplicationStatusUpdate'
+                $ref: '#/components/schemas/Application'
           description: ''
   /api/v2/recruiter/applications/{public_id}/cv/:
     get:
@@ -11588,6 +11693,86 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RecruiterApplicationSnapshot'
+          description: ''
+  /api/v2/recruiter/applications/{public_id}/cv/exports/:
+    post:
+      operationId: v2_recruiter_applications_cv_exports_create
+      summary: NTD yêu cầu PDF của CV đã nộp (tạo mới hoặc dùng lại bản đã render)
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - applications-v2
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecruiterCvExport'
+          description: ''
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecruiterCvExport'
+          description: ''
+  /api/v2/recruiter/applications/{public_id}/cv/exports/{export_public_id}/:
+    get:
+      operationId: v2_recruiter_applications_cv_exports_retrieve
+      summary: Trạng thái PDF của CV đã nộp
+      parameters:
+      - in: path
+        name: export_public_id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - applications-v2
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecruiterCvExport'
+          description: ''
+  /api/v2/recruiter/applications/{public_id}/cv/exports/{export_public_id}/download/:
+    get:
+      operationId: v2_recruiter_applications_cv_exports_download_retrieve
+      summary: Tải PDF CV đã nộp; ứng viên được báo một lần cho mỗi hồ sơ
+      parameters:
+      - in: path
+        name: export_public_id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - applications-v2
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
           description: ''
   /api/v2/recruiter/applications/{public_id}/history/:
     get:
@@ -11621,11 +11806,434 @@ paths:
               schema:
                 $ref: '#/components/schemas/PaginatedApplicationStatusHistoryList'
           description: ''
+  /api/v2/recruiter/applications/{public_id}/review-links/:
+    get:
+      operationId: v2_recruiter_applications_review_links_list
+      summary: Các link mời đánh giá hồ sơ
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - applications-v2
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ReviewLink'
+          description: ''
+    post:
+      operationId: v2_recruiter_applications_review_links_create
+      summary: Tạo link mời đánh giá (token chỉ trả về một lần)
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - applications-v2
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviewLinkCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ReviewLinkCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ReviewLinkCreateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewLinkCreated'
+          description: ''
+  /api/v2/recruiter/applications/{public_id}/review-links/{link_public_id}/revoke/:
+    post:
+      operationId: v2_recruiter_applications_review_links_revoke_create
+      summary: Thu hồi link mời đánh giá
+      parameters:
+      - in: path
+        name: link_public_id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - applications-v2
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v2/recruiter/applications/{public_id}/reviews/:
+    get:
+      operationId: v2_recruiter_applications_reviews_retrieve
+      summary: Phiếu đánh giá của người được mời và tổng hợp
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - applications-v2
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationReviewList'
+          description: ''
+  /api/v2/recruiter/applications/{public_id}/status/:
+    post:
+      operationId: v2_recruiter_applications_status_create
+      summary: NTD ra quyết định cho hồ sơ; ứng viên được báo sau thời gian chờ hoàn
+        tác
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - applications-v2
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplicationStatusDecisionRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ApplicationStatusDecisionRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ApplicationStatusDecisionRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationDecisionResult'
+          description: ''
+  /api/v2/recruiter/applications/{public_id}/status/undo/:
+    post:
+      operationId: v2_recruiter_applications_status_undo_create
+      summary: NTD hoàn tác quyết định gần nhất khi ứng viên chưa nhận thông báo
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - applications-v2
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Application'
+          description: ''
+        '409':
+          description: STATUS_UNDO_UNAVAILABLE
   /api/v2/recruiter/applications/export/:
     get:
       operationId: v2_recruiter_applications_export_retrieve
       tags:
       - v2
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v2/recruiter/candidate-blocks/:
+    get:
+      operationId: v2_recruiter_candidate_blocks_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - applications-v2
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCandidateBlockList'
+          description: ''
+    post:
+      operationId: v2_recruiter_candidate_blocks_create
+      summary: Chặn ứng viên ứng tuyển vào các tin của tôi
+      tags:
+      - applications-v2
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CandidateBlockCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CandidateBlockCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CandidateBlockCreateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CandidateBlock'
+          description: ''
+  /api/v2/recruiter/candidate-blocks/{public_id}/lift/:
+    post:
+      operationId: v2_recruiter_candidate_blocks_lift_create
+      summary: Gỡ chặn ứng viên
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - applications-v2
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v2/recruiter/talent-pool/:
+    get:
+      operationId: v2_recruiter_talent_pool_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - applications-v2
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedTalentPoolEntryList'
+          description: ''
+    post:
+      operationId: v2_recruiter_talent_pool_create
+      summary: Lưu ứng viên vào kho tiềm năng (ứng viên được thông báo)
+      tags:
+      - applications-v2
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TalentPoolAddRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TalentPoolAddRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TalentPoolAddRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TalentPoolEntry'
+          description: ''
+  /api/v2/recruiter/talent-pool/{public_id}/:
+    patch:
+      operationId: v2_recruiter_talent_pool_partial_update
+      summary: Sửa ghi chú, nhãn
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - applications-v2
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedTalentPoolUpdateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedTalentPoolUpdateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedTalentPoolUpdateRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TalentPoolEntry'
+          description: ''
+    delete:
+      operationId: v2_recruiter_talent_pool_destroy
+      summary: Bỏ ứng viên khỏi kho
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - applications-v2
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v2/recruiter/talent-pool/{public_id}/invite/:
+    post:
+      operationId: v2_recruiter_talent_pool_invite_create
+      summary: Mời ứng viên trong kho ứng tuyển một tin (mỗi tin một lần)
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - applications-v2
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TalentPoolInviteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TalentPoolInviteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TalentPoolInviteRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v2/recruiter/talent-pool/suggestions/:
+    get:
+      operationId: v2_recruiter_talent_pool_suggestions_list
+      summary: Người trong kho phù hợp với một tin (xếp theo độ tương đồng)
+      parameters:
+      - in: query
+        name: job
+        schema:
+          type: string
+        required: true
+      tags:
+      - applications-v2
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TalentSuggestion'
+          description: ''
+  /api/v2/talent-pools/mine/:
+    get:
+      operationId: v2_talent_pools_mine_list
+      summary: Các NTD đang lưu hồ sơ của tôi
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - applications-v2
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCandidateTalentPoolList'
+          description: ''
+  /api/v2/talent-pools/mine/{public_id}/withdraw/:
+    post:
+      operationId: v2_talent_pools_mine_withdraw_create
+      summary: Rút hồ sơ khỏi kho của một NTD
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - applications-v2
       security:
       - jwtAuth: []
       responses:
@@ -16282,12 +16890,14 @@ components:
       - snoozed_until
     Application:
       type: object
+      description: Read model of one application in the recruiter workspace.
       properties:
         public_id:
           type: string
           readOnly: true
         job:
           type: string
+          readOnly: true
         job_title:
           type: string
           readOnly: true
@@ -16306,7 +16916,7 @@ components:
           readOnly: true
         cv:
           type: string
-          nullable: true
+          readOnly: true
         cv_title:
           type: string
           readOnly: true
@@ -16326,6 +16936,7 @@ components:
           nullable: true
         cover_letter:
           type: string
+          readOnly: true
         source:
           allOf:
           - $ref: '#/components/schemas/Source05aEnum'
@@ -16334,16 +16945,30 @@ components:
           allOf:
           - $ref: '#/components/schemas/ApplicationStatusEnum'
           readOnly: true
+        available_decisions:
+          type: string
+          readOnly: true
+        candidate_blocked:
+          type: boolean
+          readOnly: true
+          default: false
+        in_talent_pool:
+          type: boolean
+          readOnly: true
+          default: false
+        mass_apply_signal:
+          type: string
+          readOnly: true
         employer_note:
           type: string
           readOnly: true
         employer_rating:
           type: integer
-          maximum: 32767
-          minimum: 0
+          readOnly: true
           nullable: true
         candidate_note:
           type: string
+          readOnly: true
         applied_at:
           type: string
           format: date-time
@@ -16380,15 +17005,23 @@ components:
       required:
       - accepted_at
       - applied_at
+      - available_decisions
       - candidate_account_restricted
       - candidate_account_status
+      - candidate_blocked
       - candidate_email
       - candidate_name
+      - candidate_note
+      - cover_letter
+      - cv
       - cv_title
       - employer_note
+      - employer_rating
+      - in_talent_pool
       - interviewed_at
       - job
       - job_title
+      - mass_apply_signal
       - public_id
       - rejected_at
       - shortlisted_at
@@ -16411,26 +17044,109 @@ components:
       required:
       - count
       - date
+    ApplicationDecisionResult:
+      type: object
+      properties:
+        application:
+          $ref: '#/components/schemas/Application'
+        candidate_notice_at:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+      - application
+      - candidate_notice_at
+    ApplicationReview:
+      type: object
+      properties:
+        reviewer_name:
+          type: string
+          readOnly: true
+        recommendation:
+          allOf:
+          - $ref: '#/components/schemas/RecommendationEnum'
+          readOnly: true
+        recommendation_label:
+          type: string
+          readOnly: true
+        rating:
+          type: integer
+          readOnly: true
+          nullable: true
+        strengths:
+          type: string
+          readOnly: true
+        concerns:
+          type: string
+          readOnly: true
+        submitted_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - concerns
+      - rating
+      - recommendation
+      - recommendation_label
+      - reviewer_name
+      - strengths
+      - submitted_at
+      - updated_at
+    ApplicationReviewList:
+      type: object
+      properties:
+        summary:
+          type: object
+          additionalProperties: {}
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApplicationReview'
+      required:
+      - results
+      - summary
+    ApplicationStatusDecisionRequest:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/ApplicationStatusDecisionStatusEnum'
+      required:
+      - status
+    ApplicationStatusDecisionStatusEnum:
+      enum:
+      - shortlisted
+      - interviewed
+      - accepted
+      - rejected
+      type: string
+      description: |-
+        * `shortlisted` - shortlisted
+        * `interviewed` - interviewed
+        * `accepted` - accepted
+        * `rejected` - rejected
     ApplicationStatusEnum:
       enum:
       - submitted
       - viewed
-      - considering
       - shortlisted
       - interviewed
       - rejected
       - accepted
       type: string
       description: |-
-        * `submitted` - Submitted
-        * `viewed` - Viewed
-        * `considering` - Considering
-        * `shortlisted` - Shortlisted
-        * `interviewed` - Interviewed
-        * `rejected` - Rejected
-        * `accepted` - Accepted
+        * `submitted` - Mới
+        * `viewed` - Đã xem
+        * `shortlisted` - Phù hợp
+        * `interviewed` - Phỏng vấn
+        * `rejected` - Không phù hợp
+        * `accepted` - Trúng tuyển
     ApplicationStatusHistory:
       type: object
+      description: Expects rows from ``recruiter_application_history_queryset``.
       properties:
         from_status:
           type: string
@@ -16448,36 +17164,26 @@ components:
           type: string
           format: date-time
           readOnly: true
+        reverted_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        candidate_notice:
+          type: string
+          readOnly: true
+        can_undo:
+          type: string
+          readOnly: true
       required:
+      - can_undo
+      - candidate_notice
       - changed_by_name
       - created_at
       - from_status
       - note
+      - reverted_at
       - to_status
-    ApplicationStatusUpdate:
-      type: object
-      properties:
-        status:
-          $ref: '#/components/schemas/ApplicationStatusEnum'
-        employer_note:
-          type: string
-        employer_rating:
-          type: integer
-          maximum: 5
-          minimum: 1
-          nullable: true
-    ApplicationStatusUpdateRequest:
-      type: object
-      properties:
-        status:
-          $ref: '#/components/schemas/ApplicationStatusEnum'
-        employer_note:
-          type: string
-        employer_rating:
-          type: integer
-          maximum: 5
-          minimum: 1
-          nullable: true
     ArticleCreateRequest:
       type: object
       properties:
@@ -16806,8 +17512,7 @@ components:
           type: string
           readOnly: true
         status:
-          allOf:
-          - $ref: '#/components/schemas/ApplicationStatusEnum'
+          type: string
           readOnly: true
         candidate_status:
           type: string
@@ -16953,6 +17658,75 @@ components:
       - data_processing_consent
       - job_public_id
       - version_public_id
+    CandidateBlock:
+      type: object
+      properties:
+        public_id:
+          type: string
+          readOnly: true
+        candidate_name:
+          type: string
+          readOnly: true
+        candidate_email:
+          type: string
+          format: email
+          readOnly: true
+        reason:
+          allOf:
+          - $ref: '#/components/schemas/Reason47eEnum'
+          readOnly: true
+        reason_label:
+          type: string
+          readOnly: true
+        note:
+          type: string
+          readOnly: true
+        source_job_title:
+          type: string
+          readOnly: true
+          default: ''
+        expires_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - candidate_email
+      - candidate_name
+      - created_at
+      - expires_at
+      - note
+      - public_id
+      - reason
+      - reason_label
+      - source_job_title
+    CandidateBlockCreateRequest:
+      type: object
+      properties:
+        application_public_id:
+          type: string
+          minLength: 1
+          maxLength: 50
+        reason:
+          $ref: '#/components/schemas/Reason47eEnum'
+        note:
+          type: string
+          maxLength: 1000
+        duration_days:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/DurationDaysEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        reject_pending:
+          type: boolean
+          default: false
+      required:
+      - application_public_id
+      - reason
     CandidateDataAccessA46Enum:
       enum:
       - eligible_after_recompute
@@ -16984,15 +17758,21 @@ components:
       - slug
     CandidateEmailNotificationSettings:
       type: object
-      description: Candidate-owned email notification preferences.
+      description: Candidate-owned notification channels (email + website).
       properties:
-        important_system_updates:
+        application_received_email:
           type: boolean
-        employer_viewed_cv:
+        application_received_web:
           type: boolean
-        new_features_and_cv_templates:
+        similar_jobs_in_application_email:
           type: boolean
-        other_system_notifications:
+        cv_activity_email:
+          type: boolean
+        cv_activity_web:
+          type: boolean
+        employer_invitation_email:
+          type: boolean
+        employer_invitation_web:
           type: boolean
         configured_job_alerts:
           type: boolean
@@ -17000,18 +17780,11 @@ components:
           type: boolean
         followed_company_jobs:
           type: boolean
-        top_candidate_alerts:
+        email_delivery_enabled:
           type: boolean
-        employer_invitations:
-          type: boolean
-        job_and_career_events:
-          type: boolean
-        service_introductions:
-          type: boolean
-        program_and_event_introductions:
-          type: boolean
-        partner_gifts_and_discounts:
-          type: boolean
+          readOnly: true
+      required:
+      - email_delivery_enabled
     CandidateJobPreference:
       type: object
       description: Read/write contract shared by onboarding and account preference
@@ -17174,6 +17947,72 @@ components:
         * `preferences_required` - preferences_required
         * `consent_required` - consent_required
         * `ready` - ready
+    CandidateNotification:
+      type: object
+      properties:
+        public_id:
+          type: string
+          readOnly: true
+        event_type:
+          allOf:
+          - $ref: '#/components/schemas/CandidateNotificationEventTypeEnum'
+          readOnly: true
+        title:
+          type: string
+          readOnly: true
+        message:
+          type: string
+          readOnly: true
+        action_path:
+          type: string
+          readOnly: true
+        metadata:
+          readOnly: true
+        is_read:
+          type: string
+          readOnly: true
+        read_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        delivered_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+      required:
+      - action_path
+      - delivered_at
+      - event_type
+      - is_read
+      - message
+      - metadata
+      - public_id
+      - read_at
+      - title
+    CandidateNotificationEventTypeEnum:
+      enum:
+      - application_submitted
+      - application_viewed
+      - application_cv_downloaded
+      - application_shortlisted
+      - application_interviewed
+      - application_accepted
+      - application_rejected
+      - talent_pool_saved
+      - job_invitation
+      type: string
+      description: |-
+        * `application_submitted` - Hồ sơ đã được tiếp nhận
+        * `application_viewed` - Nhà tuyển dụng đã xem hồ sơ
+        * `application_cv_downloaded` - Nhà tuyển dụng đã tải CV
+        * `application_shortlisted` - Hồ sơ phù hợp
+        * `application_interviewed` - Mời phỏng vấn
+        * `application_accepted` - Trúng tuyển
+        * `application_rejected` - Chưa phù hợp
+        * `talent_pool_saved` - Được lưu vào kho ứng viên tiềm năng
+        * `job_invitation` - Lời mời ứng tuyển
     CandidatePreferredProvinceRead:
       type: object
       properties:
@@ -17224,6 +18063,49 @@ components:
         gender:
           type: string
           maxLength: 20
+    CandidateReadAll:
+      type: object
+      properties:
+        updated:
+          type: integer
+      required:
+      - updated
+    CandidateTalentPool:
+      type: object
+      description: 'What the candidate sees: who keeps their profile and until when.'
+      properties:
+        public_id:
+          type: string
+          readOnly: true
+        company_name:
+          type: string
+          readOnly: true
+          default: ''
+        source_job_title:
+          type: string
+          readOnly: true
+          default: ''
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        expires_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - company_name
+      - created_at
+      - expires_at
+      - public_id
+      - source_job_title
+    CandidateUnreadCount:
+      type: object
+      properties:
+        count:
+          type: integer
+      required:
+      - count
     CapabilitiesEnum:
       enum:
       - job_workspace
@@ -19384,6 +20266,9 @@ components:
         is_complete:
           type: string
           readOnly: true
+        application_ready:
+          type: string
+          readOnly: true
         import_job:
           type: string
           readOnly: true
@@ -19394,6 +20279,7 @@ components:
           type: string
           readOnly: true
       required:
+      - application_ready
       - archived_at
       - completion_score
       - created_at
@@ -19691,6 +20577,16 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/JobApplicationEmailRequest'
+    DurationDaysEnum:
+      enum:
+      - 30
+      - 90
+      - 180
+      type: integer
+      description: |-
+        * `30` - 30
+        * `90` - 90
+        * `180` - 180
     EducationLevelEnum:
       enum:
       - none
@@ -19739,7 +20635,7 @@ components:
           type: string
           readOnly: true
         event_type:
-          $ref: '#/components/schemas/EventTypeCa5Enum'
+          $ref: '#/components/schemas/EventType579Enum'
         summary:
           type: string
           maxLength: 240
@@ -21068,7 +21964,7 @@ components:
           type: string
           readOnly: true
         event_type:
-          $ref: '#/components/schemas/EventTypeCa5Enum'
+          $ref: '#/components/schemas/EventType579Enum'
         title:
           type: string
           maxLength: 180
@@ -21280,7 +22176,7 @@ components:
         * `internship` - Internship
         * `freelance` - Freelance
         * `other` - Khác
-    EventTypeCa5Enum:
+    EventType579Enum:
       enum:
       - verification_approved
       - verification_changes_requested
@@ -21292,6 +22188,8 @@ components:
       - company_link_removed
       - company_page_editor_granted
       - company_page_editor_revoked
+      - application_received
+      - application_review_submitted
       type: string
       description: |-
         * `verification_approved` - Hồ sơ xác thực đã được duyệt
@@ -21304,6 +22202,8 @@ components:
         * `company_link_removed` - Liên kết công ty đã được gỡ
         * `company_page_editor_granted` - Bạn được cấp quyền biên tập trang công ty
         * `company_page_editor_revoked` - Quyền biên tập trang công ty đã bị thu hồi
+        * `application_received` - Có hồ sơ ứng tuyển mới
+        * `application_review_submitted` - Có đánh giá mới cho hồ sơ ứng viên
     ExperienceBandEnum:
       enum:
       - entry
@@ -21356,6 +22256,18 @@ components:
         * `4` - 4 năm
         * `5` - 5 năm
         * `over_5` - Trên 5 năm
+    ExpiresInDaysEnum:
+      enum:
+      - 3
+      - 7
+      - 14
+      - 30
+      type: integer
+      description: |-
+        * `3` - 3
+        * `7` - 7
+        * `14` - 14
+        * `30` - 30
     ExportFormatEnum:
       enum:
       - pdf
@@ -24266,6 +25178,75 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CandidateApplicationV2'
+    PaginatedCandidateBlockList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/CandidateBlock'
+    PaginatedCandidateNotificationList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/CandidateNotification'
+    PaginatedCandidateTalentPoolList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/CandidateTalentPool'
     PaginatedCompanySearchList:
       type: object
       required:
@@ -24653,6 +25634,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/RecruitmentCampaign'
+    PaginatedTalentPoolEntryList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/TalentPoolEntry'
     PasswordChangeRequest:
       type: object
       description: Đặt mật khẩu lần đầu cho OAuth hoặc đổi mật khẩu của phiên hiện
@@ -24855,13 +25859,12 @@ components:
         revision_token:
           type: integer
           minimum: 1
-    PatchedApplicationStatusUpdateRequest:
+    PatchedApplicationAssessmentRequest:
       type: object
       properties:
-        status:
-          $ref: '#/components/schemas/ApplicationStatusEnum'
         employer_note:
           type: string
+          maxLength: 5000
         employer_rating:
           type: integer
           maximum: 5
@@ -24888,33 +25891,27 @@ components:
           minimum: 1
     PatchedCandidateEmailNotificationSettingsRequest:
       type: object
-      description: Candidate-owned email notification preferences.
+      description: Candidate-owned notification channels (email + website).
       properties:
-        important_system_updates:
+        application_received_email:
           type: boolean
-        employer_viewed_cv:
+        application_received_web:
           type: boolean
-        new_features_and_cv_templates:
+        similar_jobs_in_application_email:
           type: boolean
-        other_system_notifications:
+        cv_activity_email:
+          type: boolean
+        cv_activity_web:
+          type: boolean
+        employer_invitation_email:
+          type: boolean
+        employer_invitation_web:
           type: boolean
         configured_job_alerts:
           type: boolean
         suitable_job_recommendations:
           type: boolean
         followed_company_jobs:
-          type: boolean
-        top_candidate_alerts:
-          type: boolean
-        employer_invitations:
-          type: boolean
-        job_and_career_events:
-          type: boolean
-        service_introductions:
-          type: boolean
-        program_and_event_introductions:
-          type: boolean
-        partner_gifts_and_discounts:
           type: boolean
     PatchedCandidateProfileUpdateRequest:
       type: object
@@ -25498,6 +26495,19 @@ components:
         revision_token:
           type: integer
           minimum: 1
+    PatchedTalentPoolUpdateRequest:
+      type: object
+      properties:
+        note:
+          type: string
+          maxLength: 2000
+        tags:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 30
+          maxItems: 5
     PhaseEnum:
       enum:
       - queued
@@ -26566,6 +27576,18 @@ components:
         * `duplicate` - Tin trùng lặp
         * `expired` - Tin đã tuyển xong nhưng chưa gỡ
         * `other` - Lý do khác
+    Reason47eEnum:
+      enum:
+      - spam
+      - inappropriate
+      - fake_profile
+      - other
+      type: string
+      description: |-
+        * `spam` - Ứng tuyển hàng loạt, không phù hợp
+        * `inappropriate` - Hành vi không phù hợp
+        * `fake_profile` - Hồ sơ giả mạo
+        * `other` - Lý do khác
     ReasonA2aEnum:
       enum:
       - accuracy
@@ -26672,6 +27694,18 @@ components:
       - status_label
       - title
       - view_count
+    RecommendationEnum:
+      enum:
+      - strong_yes
+      - 'yes'
+      - 'no'
+      - strong_no
+      type: string
+      description: |-
+        * `strong_yes` - Rất nên tuyển
+        * `yes` - Nên tuyển
+        * `no` - Chưa nên tuyển
+        * `strong_no` - Không nên tuyển
     RecommendationMatchDetail:
       type: object
       properties:
@@ -27003,6 +28037,34 @@ components:
       - submitted_at
       - submitted_cv_source
       - submitted_cv_title
+    RecruiterCvExport:
+      type: object
+      properties:
+        public_id:
+          type: string
+        status:
+          type: string
+        download_url:
+          type: string
+          readOnly: true
+        queued_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        failed_at:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+      - completed_at
+      - download_url
+      - failed_at
+      - public_id
+      - queued_at
+      - status
     RecruiterProfile:
       type: object
       properties:
@@ -27531,6 +28593,101 @@ components:
           maxLength: 64
       required:
       - public_ids
+    ReviewLink:
+      type: object
+      properties:
+        public_id:
+          type: string
+          readOnly: true
+        reviewer_name:
+          type: string
+          readOnly: true
+        message:
+          type: string
+          readOnly: true
+        status:
+          type: string
+          readOnly: true
+        has_review:
+          type: boolean
+          readOnly: true
+        expires_at:
+          type: string
+          format: date-time
+          readOnly: true
+        revoked_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        last_opened_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        open_count:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - expires_at
+      - has_review
+      - last_opened_at
+      - message
+      - open_count
+      - public_id
+      - reviewer_name
+      - revoked_at
+      - status
+    ReviewLinkCreateRequest:
+      type: object
+      properties:
+        reviewer_name:
+          type: string
+          minLength: 1
+          maxLength: 120
+        message:
+          type: string
+          maxLength: 1000
+        expires_in_days:
+          allOf:
+          - $ref: '#/components/schemas/ExpiresInDaysEnum'
+          default: 7
+      required:
+      - reviewer_name
+    ReviewLinkCreated:
+      type: object
+      properties:
+        link:
+          $ref: '#/components/schemas/ReviewLink'
+        url:
+          type: string
+          format: uri
+      required:
+      - link
+      - url
+    ReviewSubmitRequest:
+      type: object
+      properties:
+        recommendation:
+          $ref: '#/components/schemas/RecommendationEnum'
+        rating:
+          type: integer
+          maximum: 5
+          minimum: 1
+          nullable: true
+        strengths:
+          type: string
+          maxLength: 2000
+        concerns:
+          type: string
+          maxLength: 2000
+      required:
+      - recommendation
     RevisionActionRequest:
       type: object
       properties:
@@ -28281,6 +29438,99 @@ components:
           pattern: ^[-a-zA-Z0-9_]+$
       required:
       - name
+    TalentPoolAddRequest:
+      type: object
+      properties:
+        application_public_id:
+          type: string
+          minLength: 1
+          maxLength: 50
+        note:
+          type: string
+          maxLength: 2000
+        tags:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 30
+          maxItems: 5
+      required:
+      - application_public_id
+    TalentPoolEntry:
+      type: object
+      properties:
+        public_id:
+          type: string
+          readOnly: true
+        candidate_name:
+          type: string
+          readOnly: true
+        candidate_email:
+          type: string
+          format: email
+          readOnly: true
+        source_application_public_id:
+          type: string
+          readOnly: true
+        source_job_public_id:
+          type: string
+          readOnly: true
+        source_job_title:
+          type: string
+          readOnly: true
+          default: ''
+        note:
+          type: string
+          readOnly: true
+        tags:
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        expires_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - candidate_email
+      - candidate_name
+      - created_at
+      - expires_at
+      - note
+      - public_id
+      - source_application_public_id
+      - source_job_public_id
+      - source_job_title
+      - tags
+    TalentPoolInviteRequest:
+      type: object
+      properties:
+        job_public_id:
+          type: string
+          minLength: 1
+          maxLength: 50
+      required:
+      - job_public_id
+    TalentSuggestion:
+      type: object
+      properties:
+        entry:
+          $ref: '#/components/schemas/TalentPoolEntry'
+        score:
+          type: integer
+        reasons:
+          type: array
+          items:
+            type: string
+        already_invited:
+          type: boolean
+      required:
+      - already_invited
+      - entry
+      - reasons
+      - score
     TaxCodeEnum:
       enum:
       - match
