@@ -105,3 +105,13 @@ thoại, người tạo hoặc danh tính recruiter.
   budget riêng cho featured/search phải phẳng theo số bản ghi. Test budget còn
   đếm số lần bảng job xuất hiện trong SQL để không bỏ sót nhiều canonical
   subplan nằm trong cùng một ORM query.
+
+## Bổ sung ngày 14/11/2026 (CP-1, ADR-0017)
+
+Featured và search đều loại công ty có `Company.content_policy_hold = true`.
+Đây là thay đổi so với quyết định "search trả **mọi** bản ghi `Company` khớp
+tên" ở trên: quản trị viên tạm ẩn trang công ty thì công ty rời cả danh bạ nổi
+bật lẫn kết quả tìm kiếm, `count` của trang search đầu cũng không tính công ty
+đó. Các điều kiện khác của hai chế độ giữ nguyên, ngân sách query không đổi vì
+điều kiện mới là một cột có index trên chính bảng `Company`. Xem
+[ADR-0017](./adr-0017-company-page.md).

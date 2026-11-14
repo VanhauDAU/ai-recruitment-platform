@@ -65,7 +65,10 @@ Xác thực trong Swagger UI: gọi `POST /api/auth/login/` lấy `access`, bấ
 | GET | `/api/employer/company/` | Công ty của tôi (chỉ đọc — thay đổi thông tin qua update-requests) |
 | POST | `/api/employer/company/create/` | Tạo hồ sơ catalogue công ty mới, không phụ thuộc trạng thái xác thực SĐT; người tạo là owner và liên kết có hiệu lực ngay. Company không có verification lifecycle. Bị từ chối nếu recruiter đã tạo/chọn một công ty |
 | GET | `/api/employer/company/search/?q=&page=` | Catalogue phân trang `{count,next,previous,results}`, cố định 6 bản ghi/trang. Không có `q`: công ty thật mới tạo, mới nhất trước; có `q`: tìm không dấu theo tên đăng ký / tên thương mại / MST. Không trả placeholder từ luồng đăng ký cũ |
-| GET | `/api/companies/?q=&cursor=` | Danh bạ công khai. Không `q`: tối đa 18 company featured đã qua eligibility, finite và không có `count`. Có `q`: tìm không dấu trên tên/tên thương mại trong mọi `Company`, không áp dụng verification/completeness gate; trang đầu trả exact `count`, trang cursor sau bỏ `count`. DTO public-safe không trả MST/email/phone/raw address/recruiter và luôn redact địa chỉ hộ kinh doanh. |
+| GET | `/api/companies/?q=&cursor=` | Danh bạ công khai. Không `q`: tối đa 18 company featured đã qua eligibility, finite và không có `count`. Có `q`: tìm không dấu trên tên/tên thương mại trong mọi `Company`, không áp dụng verification/completeness gate; trang đầu trả exact `count`, trang cursor sau bỏ `count`. DTO public-safe không trả MST/email/phone/raw address/recruiter và luôn redact địa chỉ hộ kinh doanh. Cả hai chế độ loại công ty đang bị tạm ẩn trang. |
+| GET | `/api/companies/{slug}/` | Trang công ty công khai (ADR-0017), xem [chi tiết bên dưới](#trang-công-ty-công-khai-adr-0017). Slug lạ hoặc công ty bị tạm ẩn trả `404 {detail}`. |
+| GET | `/api/companies/{public_id}/similar/` | `{results}`: tối đa 6 công ty cùng lĩnh vực chính, không bị tạm ẩn, không gồm chính nó; công ty đang tuyển xếp trước. Item cùng shape với danh bạ. |
+| GET | `/api/companies/{public_id}/job-facets/` | `{locations: [{id, name, count}]}`: tỉnh/thành của các tin đang công khai của công ty, xếp theo `count` giảm dần rồi tên; `id` dùng cho `GET /api/jobs/?company=&location=`. |
 | GET | `/api/employer/company/catalogs/` | Source-of-truth cho `business_types`, `company_sizes`, `markets`, `target_customers` của form công ty |
 | POST | `/api/employer/company/join/` | Liên kết ngay với công ty có sẵn, không phụ thuộc trạng thái xác thực SĐT hay admin duyệt: multipart chỉ cần `company`; membership có hiệu lực ngay. API vẫn nhận tùy chọn `proof_type` (`business_registration` hoặc `authorization_and_id`) và file giấy tờ khi cần bổ sung hồ sơ. Bị từ chối nếu recruiter đã tạo/chọn một công ty |
 | GET/POST | `/api/employer/company/domain-claims/` | Liệt kê claim của company hiện tại hoặc tạo DNS TXT challenge cho exact domain được suy từ mailbox hiện tại đã xác thực. Plaintext TXT value chỉ có trong response tạo; list không trả lại secret. Pending không giữ chỗ domain toàn cục. |
@@ -81,6 +84,8 @@ Xác thực trong Swagger UI: gọi `POST /api/auth/login/` lấy `access`, bấ
 | GET/POST | `/api/employer/company/update-requests/?scope=mine\|company` | Mọi employer đã liên kết công ty có thể tạo yêu cầu riêng, tối đa một active request trên mỗi `(company, requester)`; nhiều member được gửi song song. Recruiter UI chỉ gọi `scope=mine`, không hiển thị lịch sử công ty. Response có `current_revision_public_id`, `allowed_actions`, `submitted_at`, base/lock version; mỗi submit/resubmit tạo revision bất biến. `in_review` read-only; diff rỗng bị từ chối và field không sửa không được tự thêm vào `changes`. |
 | POST | `/api/employer/company/update-requests/{public_id}/{withdraw\|cancel}/` | Rút/hủy trước review bằng `lock_version`; requester được withdraw, company owner được cancel. Backend ghi append-only event và recheck quyền/status dưới lock. |
 | GET/POST | `/api/admin/company-update-requests/{public_id}/` · `start-review/` · `review/` | Admin mở exact request, nhận review bằng exact revision/lock rồi mới ra quyết định cuối `approved\|changes_requested\|rejected`. Duyệt từng document không tự quyết định toàn request. Apply so conflict theo field và không partial apply. |
+| GET | `/api/admin/companies/{public_id}/public-page/` | Quyền `company.view`. Trả `{public_path, is_indexable, policy_hold: {active, reason, actor_name, at}, profile}`; `profile` là đúng DTO của `GET /api/companies/{slug}/` và vẫn được dựng khi trang đang bị tạm ẩn. |
+| POST | `/api/admin/companies/{public_id}/policy-hold/` | Quyền `company.view` + `company_page.moderate`. Body `{action: apply\|release, reason}` với `reason` 10–500 ký tự; trả cùng payload với `public-page/`. Lặp lại quyết định đang có hiệu lực trả `400`. Mỗi lần ghi `CompanyPageEvent` và nhật ký quản trị, không đổi `Company.updated_at`. |
 | GET/POST | `/api/admin/company-domain-claims/` · `{public_id}/manual-review-impact/` · `approve-manual/` · `reject-manual/` · `revoke-impact/` · `revoke/` | Hàng chờ domain dùng permission `employer_domain.view/review/revoke`. Mọi quyết định ghi reason, preview signed impact token, recheck stale dưới lock và append audit; manual proof hết hạn sau 12 tháng. |
 | GET | `/api/employer/industries/all/` | Toàn bộ lĩnh vực cho dropdown tạo hồ sơ công ty |
 | GET | `/api/dashboard/employer/` | Read-model dashboard employer: account/verification, KPI tổng hợp, activity 7 ngày, nhu cầu và tin gần đây. `recent_applications` chỉ có khi `candidate_data_access=true`. |
@@ -117,6 +122,65 @@ Xác thực trong Swagger UI: gọi `POST /api/auth/login/` lấy `access`, bấ
 nhận `vi-VN` hoặc `en-US` (enum `CvLanguage` ở
 `apps/cv_templates/models/language.py`); giá trị khác trả `400`. Từ CVT-1a không
 còn API quản lý ngôn ngữ (`/api/site/locales/`, `/api/site/admin/locales/`).
+
+### Trang công ty công khai (ADR-0017)
+
+`GET /api/companies/{slug}/` cho phép anonymous, dùng chung throttle
+`public_companies` với danh bạ. Response do một builder duy nhất sinh ra
+(`build_public_company_profile`); frontend render theo `sections[].type` và
+`sidebar[].type`, không suy luận từ tên cột:
+
+```json
+{
+  "public_id": "co_ab12",
+  "slug": "fpt-software",
+  "canonical_path": "/cong-ty/fpt-software",
+  "indexable": true,
+  "identity": {
+    "display_name": "FPT Software",
+    "legal_name": "Công ty TNHH Phần mềm FPT",
+    "logo_url": "https://…/logo.png",
+    "cover_image_url": "",
+    "website_url": "https://fpt-software.com",
+    "industries": [{"id": 1, "name": "Công nghệ thông tin", "slug": "cong-nghe-thong-tin", "is_primary": true}]
+  },
+  "stats": {"active_public_job_count": 12, "company_size": "100-499", "company_size_display": "100 - 499 nhân viên", "founded_year": 2010},
+  "theme": {"accent": {"key": "brand", "primary": "#00b14f", "hover": "#008a3e", "soft": "#f0fbf5"}},
+  "sections": [
+    {"key": "about", "type": "rich_text", "title": "Giới thiệu công ty", "body_html": "<p>…</p>"},
+    {"key": "jobs", "type": "jobs", "title": "Việc làm đang tuyển"},
+    {"key": "benefits", "type": "rich_text", "title": "Phúc lợi", "body_html": "<ul>…</ul>"},
+    {"key": "gallery", "type": "gallery", "title": "Hình ảnh công ty", "items": [{"image_url": "https://…", "caption": ""}]}
+  ],
+  "sidebar": [
+    {"key": "general_info", "type": "facts", "title": "Thông tin chung", "items": [{"key": "website", "label": "Website", "value": "fpt-software.com", "href": "https://fpt-software.com"}]},
+    {"key": "offices", "type": "offices", "title": "Địa điểm", "items": [{"label": "Trụ sở chính", "address": "17 Duy Tân, Cầu Giấy, Hà Nội"}]},
+    {"key": "share", "type": "share", "title": "Chia sẻ công ty"},
+    {"key": "similar_companies", "type": "similar_companies", "title": "Công ty cùng lĩnh vực"}
+  ]
+}
+```
+
+- `display_name` là tên thương mại, thiếu thì dùng tên đăng ký; `legal_name`
+  rỗng khi trùng `display_name`.
+- Khối rỗng bị bỏ khỏi response. Luôn có `jobs`, `general_info`, `share` và
+  `similar_companies`; `general_info.items` chỉ gồm fact có giá trị
+  (`company_size`, `industries`, `founded_year`, `website`), riêng `website` có
+  thêm `href`.
+- `website_url` và `href` chỉ trả URL `http(s)`; `offices` chỉ lấy từ
+  `Company.public_headquarters` nên hộ kinh doanh không có khối này.
+- `indexable` đúng khi công ty không bị tạm ẩn, có người đại diện hợp lệ, có
+  lĩnh vực và có mô tả hoặc ít nhất một tin đang công khai. Sitemap dùng cùng
+  định nghĩa này.
+- Response không bao giờ chứa mã số thuế, email, số điện thoại, `address` thô,
+  danh tính recruiter hay trạng thái kiểm duyệt.
+
+SEO shell `GET /cong-ty/{slug}` (ngoài `/api`) trả title, description,
+canonical, robots, Open Graph/Twitter và JSON-LD `Organization` +
+`BreadcrumbList`; chỉ `index, follow` khi `indexable` và `seo_robots_index`
+đang bật. Slug lạ hoặc công ty bị tạm ẩn trả HTTP 404 kèm `noindex`.
+`/sitemaps/companies.xml` liệt kê các công ty `indexable` với `lastmod` lấy từ
+`Company.updated_at` và được khai báo trong `/sitemap.xml`.
 
 ### Contract phân quyền admin G1
 
@@ -467,8 +531,8 @@ Mã lỗi ổn định gồm `JOB_AI_DAILY_QUOTA_EXCEEDED` (429),
 | GET | `/api/v2/cvs/{public_id}/view/` | Owner read-only view từ immutable version, không đọc draft. |
 | GET/POST | `/api/v2/cvs/{public_id}/shared-links/` | Quản lý bearer share link theo owner/version. |
 | GET/POST | `/api/v2/cvs/{public_id}/exports/` | Danh sách/yêu cầu PDF export từ immutable version. |
-| GET | `/api/jobs/?category=&location=&work_type=&employment_type=&experience_level=&search=&company=` | Danh sách job đang active, public. `company` nhận `public_id` công ty và khớp chính xác, khác với `search_by=company` khớp theo tên; card trả `company_slug` để dẫn về trang công ty. `category`/`location` nhận **nhiều giá trị**; response là card DTO, không gồm description/requirements/benefits/deadline và dữ liệu quản trị. Boolean legacy `company_verified` thực chất là dấu tick của exact recruiter `posted_by`, được batch-evaluate với query count phẳng. Dùng `?view=preview` khi UI thực sự cần nội dung hover. |
-| GET | `/api/jobs/{slug}/` | Chi tiết job, public và **chỉ đọc** (không tăng `view_count`). Trả `company_slug`; `company_address` chỉ có giá trị với doanh nghiệp, hộ kinh doanh luôn là chuỗi rỗng. Trả relation tối thiểu cùng view-model nhóm sẵn: `primary_specialization`, `domain_knowledge`, `workplace_groups`, `requirement_tags` (**không còn kèm kỹ năng**), `benefit_tags`, `required_skills`, `preferred_skills`, `benefit_groups` (quyền lợi gom theo danh mục, thứ tự theo `Benefit.Category`), `language_requirements[].proficiency_label`; không trả contact nhận hồ sơ hoặc trạng thái quản trị. `company_verification` chỉ có `{verified,criteria}`: khi chưa đủ năm điều kiện, `criteria=[]` để không lộ trạng thái email/phone/pháp lý/tuổi/report; khi đủ mới trả năm nhãn passed. |
+| GET | `/api/jobs/?category=&location=&work_type=&employment_type=&experience_level=&search=&company=` | Danh sách job đang active, public. `company` nhận `public_id` công ty và khớp chính xác, khác với `search_by=company` khớp theo tên; card trả `company_slug` để dẫn về trang công ty (`null` khi trang công ty đang bị tạm ẩn). `category`/`location` nhận **nhiều giá trị**; response là card DTO, không gồm description/requirements/benefits/deadline và dữ liệu quản trị. Boolean legacy `company_verified` thực chất là dấu tick của exact recruiter `posted_by`, được batch-evaluate với query count phẳng. Dùng `?view=preview` khi UI thực sự cần nội dung hover. |
+| GET | `/api/jobs/{slug}/` | Chi tiết job, public và **chỉ đọc** (không tăng `view_count`). Trả `company_slug` (`null` khi trang công ty đang bị tạm ẩn); `company_address` chỉ có giá trị với doanh nghiệp, hộ kinh doanh luôn là chuỗi rỗng. Trả relation tối thiểu cùng view-model nhóm sẵn: `primary_specialization`, `domain_knowledge`, `workplace_groups`, `requirement_tags` (**không còn kèm kỹ năng**), `benefit_tags`, `required_skills`, `preferred_skills`, `benefit_groups` (quyền lợi gom theo danh mục, thứ tự theo `Benefit.Category`), `language_requirements[].proficiency_label`; không trả contact nhận hồ sơ hoặc trạng thái quản trị. `company_verification` chỉ có `{verified,criteria}`: khi chưa đủ năm điều kiện, `criteria=[]` để không lộ trạng thái email/phone/pháp lý/tuổi/report; khi đủ mới trả năm nhãn passed. |
 | POST | `/api/jobs/{public_id}/report/` | Candidate-only, chỉ nhận tin đang public và throttle đồng thời theo account/IP; response tối thiểu `{public_id,status,created_at}`. Chỉ admin-UPHELD thuộc `fake_company\|scam\|wrong_info` làm mất tick recruiter và tự tạo hold ẩn tin; reverse phục hồi badge nhưng không tự public lại tin. |
 | POST | `/api/jobs/{slug}/views/` | Ghi nhận lượt xem riêng, chỉ khi Analytics consent hợp lệ; Redis dedupe 24 giờ, response `{counted, view_count, reason?}`. |
 | GET/POST | `/api/privacy/consent/` | Đọc/lưu lựa chọn cookie ký số (`preferences`, `analytics`, `marketing`); necessary luôn bật, rút Analytics sẽ xóa viewer cookie. |

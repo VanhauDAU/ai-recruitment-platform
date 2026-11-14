@@ -119,6 +119,17 @@ class JobViewTrackingApiTests(APITestCase):
         self.assertEqual(response.data['company_slug'], self.company.slug)
         self.assertEqual(response.data['company_address'], '12 Lý Thường Kiệt, Hà Nội')
 
+    def test_held_company_page_is_not_linked_from_job_detail_or_card(self):
+        Company.objects.filter(pk=self.company.pk).update(content_policy_hold=True)
+
+        detail = self.client.get(reverse('job-detail', kwargs={'slug': self.job.slug}))
+        cards = self.client.get(reverse('job-list'))
+
+        self.assertEqual(detail.status_code, 200)
+        self.assertIsNone(detail.data['company_slug'])
+        self.assertEqual(detail.data['company_name'], 'Views Inc.')
+        self.assertEqual([card['company_slug'] for card in cards.data['results']], [None])
+
     def test_detail_never_exposes_household_business_address(self):
         Company.objects.filter(pk=self.company.pk).update(
             business_type=Company.BusinessType.HOUSEHOLD,

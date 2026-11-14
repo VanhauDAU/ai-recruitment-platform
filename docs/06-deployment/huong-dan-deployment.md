@@ -34,3 +34,11 @@ location /media/ {
     add_header Cache-Control "public";
 }
 ```
+
+## Route SEO do Django phục vụ
+
+Reverse proxy phải chuyển các route SEO shell về Django thay vì trả thẳng
+`index.html` của frontend. Với trang công ty (ADR-0017) đó là `/cong-ty/` (gồm
+`/cong-ty`, `/cong-ty/tim-kiem` và `/cong-ty/<slug>`) cùng
+`/sitemaps/companies.xml`; nếu không, crawler không nhận được meta, JSON-LD và
+HTTP 404 thật của trang công ty.

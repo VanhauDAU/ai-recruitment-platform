@@ -26,6 +26,18 @@ from .companies import (
     featured_public_companies,
     public_company_search_queryset,
     search_companies,
+    similar_public_companies,
+)
+from .company_page import (
+    build_public_company_profile,
+    company_page_policy_hold,
+    company_page_queryset,
+    company_sitemap_rows,
+    public_company_job_locations,
+    public_company_website_url,
+    seo_company_by_slug,
+    visible_company_by_public_id,
+    visible_company_page_by_slug,
 )
 from .company_status import has_explicit_company_link, is_registration_placeholder_company
 from .documents import (
@@ -93,6 +105,16 @@ __all__ = [
     'featured_public_companies',
     'public_company_search_queryset',
     'search_companies',
+    'similar_public_companies',
+    'build_public_company_profile',
+    'company_page_policy_hold',
+    'company_page_queryset',
+    'company_sitemap_rows',
+    'public_company_job_locations',
+    'public_company_website_url',
+    'seo_company_by_slug',
+    'visible_company_by_public_id',
+    'visible_company_page_by_slug',
     'DpaStatus',
     'build_employer_readiness',
     'current_dpa_status',

@@ -4,7 +4,7 @@ from django.test import TransactionTestCase
 
 # Keep employers and accounts at their current schema while jobs is migrated
 # backward; see test_lifecycle_migrations for why the historical state needs it.
-EMPLOYERS_LEAF = ('employers', '0047_company_public_search_indexes')
+EMPLOYERS_LEAF = ('employers', '0048_company_page_policy_hold')
 ACCOUNTS_LEAF = ('accounts', '0030_remove_two_factor')
 BEFORE = [('jobs', '0045_candidate_hidden_job'), EMPLOYERS_LEAF, ACCOUNTS_LEAF]
 AFTER = [('jobs', '0047_remove_job_approval_states'), EMPLOYERS_LEAF, ACCOUNTS_LEAF]

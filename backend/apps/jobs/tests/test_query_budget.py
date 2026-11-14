@@ -71,6 +71,15 @@ class JobListQueryBudgetTests(APITestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.data['results']), 5)
 
+    def test_held_company_hides_its_slug_without_an_extra_query(self):
+        Company.objects.filter(pk=self.company.pk).update(content_policy_hold=True)
+
+        with self.assertNumQueries(JOB_LIST_QUERY_BUDGET):
+            response = self.client.get(reverse('job-list'))
+
+        self.assertEqual(len(response.data['results']), 5)
+        self.assertEqual({job['company_slug'] for job in response.data['results']}, {None})
+
     def test_homepage_best_jobs_query_count_is_flat(self):
         Job.objects.update(tier=Job.Tier.TOP)
 

@@ -11,12 +11,19 @@ from ...selectors import (
     admin_company_detail_queryset,
     admin_company_recruiters_queryset,
     admin_company_summary,
+    build_public_company_profile,
+    company_page_policy_hold,
+    company_page_queryset,
 )
+from ...services import set_company_page_policy_hold
 from ..serializers import (
     AdminCompanyDetailSerializer,
     AdminCompanyListSerializer,
+    AdminCompanyPolicyHoldSerializer,
     AdminCompanyRecruiterSerializer,
 )
+
+PUBLIC_PAGE_ACTIONS = {'public_page', 'policy_hold'}
 
 
 def _has_permission(user, code):
@@ -25,6 +32,16 @@ def _has_permission(user, code):
     except AdminPermissionDenied:
         return False
     return True
+
+
+def _public_page_payload(company, request):
+    return {
+        'public_path': company.public_page_path,
+        'is_indexable': company.is_indexable,
+        'policy_hold': company_page_policy_hold(company),
+        # Built even while on hold: moderators review exactly what was hidden.
+        'profile': build_public_company_profile(company, request=request),
+    }
 
 
 class AdminCompanyViewSet(viewsets.ReadOnlyModelViewSet):
@@ -36,11 +53,15 @@ class AdminCompanyViewSet(viewsets.ReadOnlyModelViewSet):
         'summary': ['company.view'],
         'retrieve': ['company.view'],
         'recruiters': ['company.view', 'company_recruiter.view'],
+        'public_page': ['company.view'],
+        'policy_hold': ['company.view', 'company_page.moderate'],
     }
 
     def get_queryset(self):
         if self.action == 'list':
             return admin_companies_queryset(params=self.request.query_params)
+        if self.action in PUBLIC_PAGE_ACTIONS:
+            return company_page_queryset()
         return admin_company_detail_queryset()
 
     def get_serializer_class(self):
@@ -85,3 +106,20 @@ class AdminCompanyViewSet(viewsets.ReadOnlyModelViewSet):
     @action(detail=False, methods=['get'])
     def summary(self, request):
         return Response(admin_company_summary())
+
+    @action(detail=True, methods=['get'], url_path='public-page')
+    def public_page(self, request, public_id=None):
+        return Response(_public_page_payload(self.get_object(), request))
+
+    @action(detail=True, methods=['post'], url_path='policy-hold')
+    def policy_hold(self, request, public_id=None):
+        serializer = AdminCompanyPolicyHoldSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        set_company_page_policy_hold(
+            self.get_object(),
+            actor=request.user,
+            hold=serializer.validated_data['action'] == 'apply',
+            reason=serializer.validated_data['reason'],
+        )
+        # Reload: the hold flips both the flag and the indexability annotation.
+        return Response(_public_page_payload(self.get_object(), request))

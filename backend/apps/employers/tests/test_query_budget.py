@@ -1,21 +1,24 @@
-"""Query-count contracts for employer recruitment-need reads."""
+"""Query-count contracts for employer and public company reads."""
 
 import re
 from datetime import timedelta
 from urllib.parse import urlsplit
 
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
 from django.db import connection
 from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework.test import APITestCase
 
-from apps.jobs.models import Job, JobCategory
+from apps.jobs.models import Job, JobCategory, JobLocation
+from apps.locations.models import Location
 
 from ..models import (
     Company,
     CompanyDocument,
+    CompanyImage,
     CompanyIndustry,
     CompanyUpdateRequest,
     EmployerVerificationCase,
@@ -23,6 +26,7 @@ from ..models import (
     RecruiterProfile,
     RecruitmentNeed,
 )
+from .company_page_helpers import add_recruiter, make_company, make_employer, publish_job
 
 # Authentication is bypassed with force_authenticate: one recruiter lookup plus
 # one recruitment-need SELECT. The count must remain flat as rows are added.
@@ -30,6 +34,14 @@ RECRUITMENT_NEED_READ_BUDGET = 2
 COMPANY_UPDATE_REQUEST_LIST_BUDGET = 4
 ADMIN_COMPANY_UPDATE_REQUEST_LIST_BUDGET = 8
 PUBLIC_COMPANY_LIST_QUERY_BUDGET = 5
+# Company row (indexability is an EXISTS annotation of the same SELECT),
+# industries prefetch, gallery prefetch, canonical public-job count.
+PUBLIC_COMPANY_DETAIL_QUERY_BUDGET = 4
+# Visible-company lookup, one canonical job aggregate over the same-industry
+# candidates, the ranked projection, industries prefetch.
+PUBLIC_COMPANY_SIMILAR_QUERY_BUDGET = 4
+# Visible-company lookup, one grouped province aggregate.
+PUBLIC_COMPANY_JOB_FACETS_QUERY_BUDGET = 2
 
 
 def _canonical_job_table_references(queries):
@@ -154,6 +166,117 @@ class PublicCompanyListQueryBudgetTests(APITestCase):
         self.assertEqual(len(cursor_page.data['results']), 7)
         self.assertEqual(len(cursor_queries), 3)
         self.assertEqual(_canonical_job_table_references(cursor_queries), 1)
+
+
+class PublicCompanyPageQueryBudgetTests(APITestCase):
+    def setUp(self):
+        cache.clear()
+        self.creator = make_employer('public-company-page-budget@example.com')
+        self.industry = Industry.objects.create(name='Company page budget')
+        self.company = make_company(
+            self.creator,
+            name='Công ty trang ngân sách',
+            industry=self.industry,
+            description='<p>Giới thiệu công ty.</p>',
+        )
+        self.recruiter = add_recruiter(self.company)
+
+    def _assert_flat(self, url, budget, grow):
+        with CaptureQueriesContext(connection) as baseline_queries:
+            baseline = self.client.get(url)
+        grow()
+        with CaptureQueriesContext(connection) as expanded_queries:
+            expanded = self.client.get(url)
+
+        self.assertEqual(baseline.status_code, 200, baseline.data)
+        self.assertEqual(expanded.status_code, 200, expanded.data)
+        self.assertEqual(len(baseline_queries), len(expanded_queries))
+        self.assertLessEqual(len(expanded_queries), budget)
+        return baseline, expanded
+
+    def test_public_company_detail_query_count_stays_flat(self):
+        publish_job(self.company, self.recruiter)
+        CompanyImage.objects.create(company=self.company, image_url='employers/budget/0.png')
+
+        def grow():
+            for index in range(1, 25):
+                publish_job(self.company, self.recruiter)
+                CompanyImage.objects.create(
+                    company=self.company,
+                    image_url=f'employers/budget/{index}.png',
+                )
+                CompanyIndustry.objects.create(
+                    company=self.company,
+                    industry=Industry.objects.create(name=f'Company page budget {index}'),
+                )
+
+        baseline, expanded = self._assert_flat(
+            reverse('public-company-detail', args=[self.company.slug]),
+            PUBLIC_COMPANY_DETAIL_QUERY_BUDGET,
+            grow,
+        )
+
+        self.assertEqual(baseline.data['stats']['active_public_job_count'], 1)
+        self.assertEqual(expanded.data['stats']['active_public_job_count'], 25)
+        self.assertEqual(len(expanded.data['identity']['industries']), 25)
+        self.assertEqual(len(expanded.data['sections'][-1]['items']), 25)
+
+    def _similar_company(self, index):
+        company = make_company(
+            self.creator,
+            name=f'Công ty tương tự {index:02d}',
+            industry=self.industry,
+        )
+        publish_job(company, add_recruiter(company))
+
+    def test_public_company_similar_query_count_stays_flat(self):
+        self._similar_company(0)
+
+        def grow():
+            for index in range(1, 25):
+                self._similar_company(index)
+
+        baseline, expanded = self._assert_flat(
+            reverse('public-company-similar', args=[self.company.public_id]),
+            PUBLIC_COMPANY_SIMILAR_QUERY_BUDGET,
+            grow,
+        )
+
+        self.assertEqual(len(baseline.data['results']), 1)
+        self.assertEqual(len(expanded.data['results']), 6)
+
+    def test_public_company_job_facets_query_count_stays_flat(self):
+        def job_in_new_province(index):
+            province = Location.objects.create(
+                code=f'P{index:02d}',
+                level=Location.Level.PROVINCE,
+                name=f'Tỉnh {index:02d}',
+            )
+            ward = Location.objects.create(
+                code=f'W{index:02d}',
+                level=Location.Level.WARD,
+                name=f'Phường {index:02d}',
+                parent=province,
+            )
+            JobLocation.objects.create(
+                job=publish_job(self.company, self.recruiter),
+                location=ward,
+            )
+
+        job_in_new_province(0)
+
+        def grow():
+            for index in range(1, 25):
+                job_in_new_province(index)
+
+        baseline, expanded = self._assert_flat(
+            reverse('public-company-job-facets', args=[self.company.public_id]),
+            PUBLIC_COMPANY_JOB_FACETS_QUERY_BUDGET,
+            grow,
+        )
+
+        self.assertEqual(len(baseline.data['locations']), 1)
+        self.assertEqual(len(expanded.data['locations']), 25)
 
 
 class RecruitmentNeedQueryBudgetTests(APITestCase):

@@ -3,6 +3,7 @@
 from .admin_companies import (
     AdminCompanyDetailSerializer,
     AdminCompanyListSerializer,
+    AdminCompanyPolicyHoldSerializer,
     AdminCompanyRecruiterSerializer,
 )
 from .admin_verification import (
@@ -53,6 +54,7 @@ __all__ = [
     'CompanyDocumentSerializer',
     'AdminCompanyDetailSerializer',
     'AdminCompanyListSerializer',
+    'AdminCompanyPolicyHoldSerializer',
     'AdminCompanyRecruiterSerializer',
     'AdminVerificationCaseDetailSerializer',
     'AdminVerificationCaseListSerializer',

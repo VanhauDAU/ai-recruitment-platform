@@ -182,6 +182,7 @@ class SitemapIndexView(View):
         urls = [
             absolute_url(request, '/sitemaps/static.xml'),
             absolute_url(request, '/sitemaps/jobs.xml'),
+            absolute_url(request, '/sitemaps/companies.xml'),
             absolute_url(request, '/sitemaps/blog.xml'),
             absolute_url(request, '/sitemaps/cv-templates.xml'),
         ]

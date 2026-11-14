@@ -22,6 +22,8 @@ urlpatterns = [
     path('', include('apps.knowledgebase.urls_seo')),
     path('', include('apps.cv_templates.urls_seo')),
     path('', include('apps.sitecontent.urls_seo')),
+    # After sitecontent: /cong-ty and /cong-ty/tim-kiem must keep resolving there.
+    path('', include('apps.employers.urls_seo')),
     path('api/health/', health_check, name='health-check'),
     path('api/auth/', include('apps.accounts.urls')),
     path('api/admin/', include('apps.accounts.urls_admin')),

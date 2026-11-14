@@ -1,12 +1,16 @@
 """Read-only company queries."""
 
 from django.db.models import (
+    Case,
     Count,
     Exists,
+    IntegerField,
     Max,
     OuterRef,
     Q,
     Subquery,
+    Value,
+    When,
 )
 from django.db.models.functions import Coalesce, Length, Trim
 
@@ -42,7 +46,7 @@ def _catalog_companies_queryset():
     )
 
 
-def _legally_represented_companies_queryset():
+def legally_represented_companies_queryset():
     eligible_representatives = eligible_representatives_queryset().filter(company_id=OuterRef('pk'))
     return Company.objects.alias(
         _has_eligible_representative=Exists(eligible_representatives),
@@ -56,13 +60,14 @@ def _public_company_projection(queryset):
 def _featured_company_candidates_queryset():
     has_industry = CompanyIndustry.objects.filter(company_id=OuterRef('pk'))
     return (
-        _legally_represented_companies_queryset()
+        legally_represented_companies_queryset()
         .alias(
             _logo_length=Length(Trim('logo_url')),
             _cover_length=Length(Trim('cover_image_url')),
             _has_industry=Exists(has_industry),
         )
         .filter(
+            content_policy_hold=False,
             _logo_length__gt=0,
             _cover_length__gt=0,
             _has_industry=True,
@@ -123,6 +128,48 @@ def featured_public_companies(*, limit=18):
     return ranked_companies
 
 
+def similar_public_companies(company, *, limit=6):
+    """Visible companies sharing ``company``'s primary industry, hiring ones first.
+
+    Like the featured pool, one canonical job aggregate over the candidate set
+    ranks the hiring companies; a single projection query then fills the
+    remaining slots by name. A correlated count would rerun the canonical
+    predicate for every company of the industry before the limit.
+    """
+    primary_industry = CompanyIndustry.objects.filter(company_id=company.pk, is_primary=True)
+    candidates = Company.objects.filter(
+        content_policy_hold=False,
+        company_industries__is_primary=True,
+        company_industries__industry_id__in=primary_industry.values('industry_id'),
+    ).exclude(pk=company.pk)
+    counts = {
+        item['company_id']: item['active_public_job_count']
+        for item in (
+            Job.publicly_available_queryset()
+            .filter(company_id__in=Subquery(candidates.order_by().values('pk')))
+            .order_by()
+            .values('company_id')
+            .annotate(active_public_job_count=Count('id', distinct=True))
+            .order_by('-active_public_job_count', 'company_id')[:limit]
+        )
+    }
+    ordering = ['company_name', 'id']
+    if counts:
+        hiring_rank = Case(
+            *(
+                When(pk=company_id, then=Value(position))
+                for position, company_id in enumerate(counts)
+            ),
+            default=Value(len(counts)),
+            output_field=IntegerField(),
+        )
+        ordering.insert(0, hiring_rank)
+    companies = list(_public_company_projection(candidates).order_by(*ordering)[:limit])
+    for similar in companies:
+        similar.active_public_job_count = counts.get(similar.pk, 0)
+    return companies
+
+
 def attach_active_public_job_counts(companies):
     """Attach one grouped canonical count query to an already bounded page."""
     companies = list(companies)
@@ -171,9 +218,9 @@ def search_companies(text):
 
 
 def public_company_search_queryset(*, query):
-    """Return every name-matching company in stable cursor order."""
+    """Return every visible name-matching company in stable cursor order."""
     query = (query or '').strip()
-    queryset = Company.objects.all()
+    queryset = Company.objects.filter(content_policy_hold=False)
     if query:
         queryset = queryset.filter(
             _folded_company_search_q('company_name_search', query)

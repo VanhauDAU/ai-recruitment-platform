@@ -2,6 +2,7 @@
 
 from .campaign import CampaignActivity, RecruitmentCampaign
 from .company import Company, CompanyImage, CompanyIndustry, CompanyMediaUpload, Industry
+from .company_page import CompanyPageEvent
 from .compliance import (
     EmployerComplianceHold,
     EmployerComplianceHoldCampaign,
@@ -38,6 +39,7 @@ __all__ = [
     'CompanyImage',
     'CompanyIndustry',
     'CompanyMediaUpload',
+    'CompanyPageEvent',
     'CompanyUpdateRequest',
     'CompanyUpdateRevision',
     'CompanyUpdateEvent',

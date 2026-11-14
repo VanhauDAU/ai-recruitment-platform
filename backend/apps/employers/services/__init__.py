@@ -27,6 +27,7 @@ from .companies import (
     start_company_update_review,
     validate_company_update_revision,
 )
+from .company_page import set_company_page_policy_hold
 from .company_recovery import (
     COMPANY_UNLINK_PERMISSION,
     CompanyUnlinkError,
@@ -227,6 +228,7 @@ __all__ = [
     'verification_lifecycle_impact',
     'unlock_verification_resubmission',
     'set_company_industries',
+    'set_company_page_policy_hold',
     'update_campaign',
     'verify_sms_phone_challenge',
     'validate_employer_upload_structure',

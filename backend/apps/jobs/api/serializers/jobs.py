@@ -89,7 +89,7 @@ class JobSerializer(serializers.ModelSerializer):
     job_benefits = JobBenefitSerializer(many=True, required=False)
     language_requirements = JobLanguageRequirementSerializer(many=True, required=False)
     company_name = serializers.CharField(source='company.company_name', read_only=True)
-    company_slug = serializers.CharField(source='company.slug', read_only=True)
+    company_slug = serializers.SerializerMethodField()
     company_logo_url = serializers.SerializerMethodField()
     # Legacy HTTP name: value belongs to the recruiter who posted this job,
     # not to Company. Keep until clients migrate to an employer-scoped key.
@@ -345,6 +345,12 @@ class JobSerializer(serializers.ModelSerializer):
             model, related_name = self.NESTED_RELATIONS[field]
             getattr(job, related_name).all().delete()
             model.objects.bulk_create([model(job=job, **item) for item in values])
+
+    @extend_schema_field(serializers.CharField(allow_null=True))
+    def get_company_slug(self, obj):
+        # A held company page answers 404, so no job surface may link to it.
+        company = obj.company
+        return None if company.content_policy_hold else company.slug
 
     def get_company_logo_url(self, obj):
         return media_url_from_value(obj.company.logo_url, request=self.context.get('request'))

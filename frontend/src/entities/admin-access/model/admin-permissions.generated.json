@@ -210,6 +210,15 @@
     "requires": []
   },
   {
+    "code": "company_page.moderate",
+    "module": "company",
+    "label": "Tạm ẩn trang công ty",
+    "description": "Tạm ẩn hoặc khôi phục trang công ty công khai kèm lý do; trang bị ẩn trả 404 và rời danh bạ, sitemap.",
+    "requires": [
+      "company.view"
+    ]
+  },
+  {
     "code": "company_recruiter.view",
     "module": "company",
     "label": "Xem nhà tuyển dụng của công ty",

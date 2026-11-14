@@ -102,6 +102,9 @@ class Company(models.Model):
         default=False,
         help_text='Bật trang thương hiệu — tin tuyển dụng hiển thị dưới URL /brand/... với header công ty',
     )
+    # Moderation switch for the public page. Write it with QuerySet.update()
+    # only: save() moves updated_at, the optimistic-lock base of update requests.
+    content_policy_hold = models.BooleanField(default=False, db_index=True)
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='companies_created'
     )
@@ -149,6 +152,14 @@ class Company(models.Model):
 
     def __str__(self):
         return self.company_name
+
+    @property
+    def display_name(self):
+        return self.trade_name.strip() or self.company_name
+
+    @property
+    def public_page_path(self):
+        return f'/cong-ty/{self.slug}'
 
     @property
     def public_headquarters(self):

@@ -156,6 +156,12 @@ ADMIN_PERMISSIONS = (
         'description': 'Xem danh sách và hồ sơ pháp lý của công ty tuyển dụng.',
     },
     {
+        'code': 'company_page.moderate',
+        'module': 'company',
+        'label': 'Tạm ẩn trang công ty',
+        'description': 'Tạm ẩn hoặc khôi phục trang công ty công khai kèm lý do; trang bị ẩn trả 404 và rời danh bạ, sitemap.',
+    },
+    {
         'code': 'company_recruiter.view',
         'module': 'company',
         'label': 'Xem nhà tuyển dụng của công ty',
@@ -352,6 +358,7 @@ ADMIN_PERMISSION_DEPENDENCIES = {
     'blog.manage': ('blog.view',),
     'blog.publish': ('blog.view',),
     'company.sensitive.view': ('company.view',),
+    'company_page.moderate': ('company.view',),
     'company_recruiter.view': ('company.view',),
     'company_update.review': ('company_update.view',),
     'cv_content.generate_ai': ('cv_template.view',),
