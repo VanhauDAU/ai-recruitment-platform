@@ -25,6 +25,7 @@ class CandidateEmailNotificationSettings(models.Model):
     # Thông báo cơ hội việc làm.
     configured_job_alerts = models.BooleanField(default=True)
     suitable_job_recommendations = models.BooleanField(default=False)
+    followed_company_jobs = models.BooleanField(default=True)
     top_candidate_alerts = models.BooleanField(default=True)
     employer_invitations = models.BooleanField(default=True)
     job_and_career_events = models.BooleanField(default=True)

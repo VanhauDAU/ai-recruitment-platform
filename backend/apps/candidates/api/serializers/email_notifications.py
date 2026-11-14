@@ -15,6 +15,7 @@ class CandidateEmailNotificationSettingsSerializer(serializers.ModelSerializer):
             'other_system_notifications',
             'configured_job_alerts',
             'suitable_job_recommendations',
+            'followed_company_jobs',
             'top_candidate_alerts',
             'employer_invitations',
             'job_and_career_events',

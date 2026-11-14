@@ -164,6 +164,32 @@ class CandidateJobDigestSchedule(models.Model):
         ]
 
 
+class CandidateFollowedCompanyDigestSchedule(models.Model):
+    """Daily cadence and discard cursor for the followed-company digest source.
+
+    The lower bound of each window is the later of ``cursor_at`` and the
+    follow's own ``created_at``, so following a company never emails old jobs.
+    """
+
+    candidate = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='followed_company_digest_schedule',
+    )
+    cursor_at = models.DateTimeField()
+    next_run_at = models.DateTimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [
+            models.Index(
+                fields=['next_run_at'],
+                name='job_digest_followed_due_idx',
+            ),
+        ]
+
+
 class CandidateJobDigest(models.Model):
     """Persisted, retryable email outbox consolidating all due candidate sources."""
 
@@ -186,6 +212,7 @@ class CandidateJobDigest(models.Model):
     scheduled_for = models.DateTimeField()
     source_alert_public_ids = models.JSONField(default=list, blank=True)
     includes_suitable_recommendations = models.BooleanField(default=False)
+    includes_followed_companies = models.BooleanField(default=False)
     source_windows = models.JSONField(default=dict, blank=True)
     recipient_email = models.EmailField()
     recipient_auth_revision = models.PositiveBigIntegerField()
@@ -227,6 +254,7 @@ class CandidateJobDigestItem(models.Model):
     class SourceKind(models.TextChoices):
         CONFIGURED_ALERT = 'configured_alert', 'Thông báo đã cài đặt'
         SUITABLE_RECOMMENDATION = 'suitable_recommendation', 'Việc làm phù hợp'
+        FOLLOWED_COMPANY = 'followed_company', 'Công ty đang theo dõi'
 
     digest = models.ForeignKey(
         CandidateJobDigest,
@@ -250,6 +278,7 @@ class CandidateJobDigestItem(models.Model):
     source_alert_public_ids = models.JSONField(default=list, blank=True)
     source_alert_fingerprints = models.JSONField(default=dict, blank=True)
     includes_suitable_recommendation = models.BooleanField(default=False)
+    includes_followed_company = models.BooleanField(default=False)
     job_published_at = models.DateTimeField()
     sort_order = models.PositiveSmallIntegerField(default=0)
     match_score = models.PositiveSmallIntegerField(null=True, blank=True)

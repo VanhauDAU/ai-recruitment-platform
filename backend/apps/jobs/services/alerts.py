@@ -13,7 +13,13 @@ from apps.accounts.services import lock_account_for_write
 from apps.locations.models import Location
 from common.db.search import fold_accents
 
-from ..models import CandidateJobDigestSchedule, JobAlert, JobAlertCategory, JobCategory
+from ..models import (
+    CandidateFollowedCompanyDigestSchedule,
+    CandidateJobDigestSchedule,
+    JobAlert,
+    JobAlertCategory,
+    JobCategory,
+)
 from ..models.alert_queries import category_leaf_coverage_ids
 
 JOB_ALERT_LIMIT = 5
@@ -278,7 +284,7 @@ def delete_job_alert(user, alert):
 
 
 @transaction.atomic
-def reset_candidate_job_delivery_cursors(user, *, configured=False, suitable=False):
+def reset_candidate_job_delivery_cursors(user, *, configured=False, suitable=False, followed=False):
     """Start opt-in/resume windows at now so disabled periods never create backlog."""
     locked_user = lock_account_for_write(user)
     now = timezone.now()
@@ -295,5 +301,13 @@ def reset_candidate_job_delivery_cursors(user, *, configured=False, suitable=Fal
             defaults={
                 'suitable_cursor_at': now,
                 'suitable_next_run_at': next_job_alert_run(now, JobAlert.Frequency.WEEKLY),
+            },
+        )
+    if followed:
+        CandidateFollowedCompanyDigestSchedule.objects.update_or_create(
+            candidate=locked_user,
+            defaults={
+                'cursor_at': now,
+                'next_run_at': next_job_alert_run(now, JobAlert.Frequency.DAILY),
             },
         )

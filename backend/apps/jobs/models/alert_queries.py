@@ -1,6 +1,6 @@
 """Query primitives for configured job-alert matching and normalization."""
 
-from django.db.models import Exists, OuterRef, Q
+from django.db.models import Exists, F, OuterRef, Q
 
 from common.db.search import search_q
 
@@ -55,6 +55,64 @@ def category_leaf_coverage_ids(category_ids):
     return sorted(leaves or selected)
 
 
+def _unsent_candidate_jobs(candidate, *, published_before, job_ids=None, exclude_digest_id=None):
+    """Public jobs a candidate has not applied to, saved, been emailed or had claimed."""
+    emailed_job = CandidateJobEmailSuppression.objects.filter(
+        candidate=candidate,
+        job_id=OuterRef('pk'),
+    )
+    in_flight = CandidateJobDigestItem.objects.filter(
+        candidate=candidate,
+        job_id=OuterRef('pk'),
+        digest__status__in=('pending', 'sending'),
+    )
+    if exclude_digest_id is not None:
+        in_flight = in_flight.exclude(digest_id=exclude_digest_id)
+    queryset = (
+        active_jobs_queryset()
+        .filter(published_at__lte=published_before)
+        .exclude(applications__candidate=candidate)
+        .exclude(saved_by__candidate=candidate)
+        .annotate(already_emailed=Exists(emailed_job))
+        .annotate(already_claimed=Exists(in_flight))
+        .filter(already_emailed=False, already_claimed=False)
+    )
+    if job_ids is not None:
+        queryset = queryset.filter(pk__in=job_ids)
+    return queryset
+
+
+def followed_company_job_matches(
+    candidate,
+    *,
+    published_before,
+    published_after=None,
+    limit=50,
+    job_ids=None,
+    exclude_digest_id=None,
+):
+    """Match jobs published after the candidate started following their company.
+
+    One filter() call keeps every ``company__follows`` condition on the same
+    follow row; (candidate, company) is unique so the join never duplicates jobs.
+    """
+    queryset = _unsent_candidate_jobs(
+        candidate,
+        published_before=published_before,
+        job_ids=job_ids,
+        exclude_digest_id=exclude_digest_id,
+    ).filter(
+        company__content_policy_hold=False,
+        company__follows__candidate=candidate,
+        company__follows__notify_new_jobs=True,
+        company__follows__created_at__lt=F('published_at'),
+    )
+    if published_after is not None:
+        queryset = queryset.filter(published_at__gt=published_after)
+    queryset = queryset.order_by('-published_at', '-created_at', '-pk')
+    return queryset[:limit] if limit is not None else queryset
+
+
 def strict_job_alert_matches(
     alert,
     *,
@@ -65,30 +123,14 @@ def strict_job_alert_matches(
     ignore_cursor=False,
 ):
     """Match one saved alert using only explicit criteria, never profile/CV consent."""
-    emailed_job = CandidateJobEmailSuppression.objects.filter(
-        candidate=alert.candidate,
-        job_id=OuterRef('pk'),
-    )
-    in_flight = CandidateJobDigestItem.objects.filter(
-        candidate=alert.candidate,
-        job_id=OuterRef('pk'),
-        digest__status__in=('pending', 'sending'),
-    )
-    if exclude_digest_id is not None:
-        in_flight = in_flight.exclude(digest_id=exclude_digest_id)
-    queryset = (
-        active_jobs_queryset()
-        .filter(published_at__lte=published_before)
-        .exclude(applications__candidate=alert.candidate)
-        .exclude(saved_by__candidate=alert.candidate)
-        .annotate(already_emailed=Exists(emailed_job))
-        .annotate(already_claimed=Exists(in_flight))
-        .filter(already_emailed=False, already_claimed=False)
+    queryset = _unsent_candidate_jobs(
+        alert.candidate,
+        published_before=published_before,
+        job_ids=job_ids,
+        exclude_digest_id=exclude_digest_id,
     )
     if not ignore_cursor:
         queryset = queryset.filter(published_at__gt=alert.cursor_at)
-    if job_ids is not None:
-        queryset = queryset.filter(pk__in=job_ids)
 
     title_query = search_q('title', alert.keyword)
     company_query = search_q('company__company_name', alert.keyword)

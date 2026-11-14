@@ -17,12 +17,14 @@ from apps.candidates.models import (
     CandidateJobPreference,
     CandidateProfile,
 )
+from apps.employers.models import CompanyFollow
 from apps.employers.services import employer_badge_state_map
 from apps.sitecontent.models import SiteSetting
 from common.email import send_html_email
 from common.metrics import record_metric
 
 from ..models import (
+    CandidateFollowedCompanyDigestSchedule,
     CandidateJobDigest,
     CandidateJobDigestItem,
     CandidateJobDigestSchedule,
@@ -31,7 +33,7 @@ from ..models import (
     Job,
     JobAlert,
 )
-from ..models.alert_queries import strict_job_alert_matches
+from ..models.alert_queries import followed_company_job_matches, strict_job_alert_matches
 from ..models.querysets import active_jobs_queryset
 from ..models.recommendation_queries import recommend_new_jobs_for_candidate_email
 from .alerts import next_job_alert_run
@@ -94,12 +96,13 @@ def _site_email_enabled():
 def _candidate_email_settings(user):
     value = (
         CandidateEmailNotificationSettings.objects.filter(candidate_profile__user=user)
-        .only('configured_job_alerts', 'suitable_job_recommendations')
+        .only('configured_job_alerts', 'suitable_job_recommendations', 'followed_company_jobs')
         .first()
     )
     return {
         'configured': True if value is None else value.configured_job_alerts,
         'suitable': False if value is None else value.suitable_job_recommendations,
+        'followed': True if value is None else value.followed_company_jobs,
     }
 
 
@@ -181,6 +184,51 @@ def remove_ineligible_suitable_digest_schedules():
     return deleted
 
 
+def initialize_missing_followed_company_digest_schedules(now=None):
+    """Give candidates with a notifying follow a daily schedule, bounded per tick.
+
+    The follow service lives in another app, so this scheduler backstop is the
+    only writer. The cursor starts at the earliest follow: each follow's own
+    ``created_at`` is what keeps a company's older jobs out of the email.
+    """
+    now = now or timezone.now()
+    missing = list(
+        CompanyFollow.objects.filter(
+            notify_new_jobs=True,
+            candidate__role='candidate',
+            candidate__is_active=True,
+            candidate__is_deleted=False,
+            candidate__status='active',
+            candidate__email_verified=True,
+            candidate__followed_company_digest_schedule__isnull=True,
+        )
+        .values('candidate_id')
+        .annotate(first_followed_at=models.Min('created_at'))
+        .order_by('candidate_id')[:MAX_DUE_CANDIDATES]
+    )
+    CandidateFollowedCompanyDigestSchedule.objects.bulk_create(
+        [
+            CandidateFollowedCompanyDigestSchedule(
+                candidate_id=row['candidate_id'],
+                cursor_at=row['first_followed_at'],
+                next_run_at=next_job_alert_run(now, JobAlert.Frequency.DAILY),
+            )
+            for row in missing
+        ],
+        ignore_conflicts=True,
+    )
+    return len(missing)
+
+
+def _followed_due_exists(now):
+    return models.Exists(
+        CandidateFollowedCompanyDigestSchedule.objects.filter(
+            candidate_id=models.OuterRef('pk'),
+            next_run_at__lte=now,
+        )
+    )
+
+
 def _due_candidate_queryset(now):
     notification_settings = CandidateEmailNotificationSettings.objects.filter(
         candidate_profile__user_id=models.OuterRef('pk')
@@ -219,10 +267,22 @@ def _due_candidate_queryset(now):
                 )
             ),
             _suitable_allowed=models.Exists(suitable_allowed),
+            _followed_due=_followed_due_exists(now),
+            _followed_opted_out=models.Exists(
+                notification_settings.filter(followed_company_jobs=False)
+            ),
+            _followed_active=models.Exists(
+                CompanyFollow.objects.filter(
+                    candidate_id=models.OuterRef('pk'),
+                    notify_new_jobs=True,
+                    company__content_policy_hold=False,
+                )
+            ),
         )
         .filter(
             models.Q(_configured_due=True, _configured_opted_out=False)
             | models.Q(_suitable_due=True, _suitable_allowed=True)
+            | models.Q(_followed_due=True, _followed_opted_out=False, _followed_active=True)
         )
         .order_by('pk')
     )
@@ -259,6 +319,20 @@ def _advance_sources_without_delivery(candidate_ids, now):
         ['suitable_cursor_at', 'suitable_next_run_at', 'updated_at'],
     )
 
+    followed_schedules = list(
+        CandidateFollowedCompanyDigestSchedule.objects.select_for_update()
+        .filter(candidate_id__in=candidate_ids, next_run_at__lte=now)
+        .order_by('pk')
+    )
+    for followed_schedule in followed_schedules:
+        followed_schedule.cursor_at = now
+        followed_schedule.next_run_at = next_job_alert_run(now, JobAlert.Frequency.DAILY)
+        followed_schedule.updated_at = now
+    CandidateFollowedCompanyDigestSchedule.objects.bulk_update(
+        followed_schedules,
+        ['cursor_at', 'next_run_at', 'updated_at'],
+    )
+
 
 @transaction.atomic
 def claim_due_candidate_job_digest_candidates(now=None):
@@ -266,6 +340,7 @@ def claim_due_candidate_job_digest_candidates(now=None):
     now = now or timezone.now()
     remove_ineligible_suitable_digest_schedules()
     initialize_missing_suitable_digest_schedules(now)
+    initialize_missing_followed_company_digest_schedules(now)
 
     if not _site_email_enabled():
         candidate_ids = list(
@@ -285,8 +360,13 @@ def claim_due_candidate_job_digest_candidates(now=None):
                         suitable_next_run_at__lte=now,
                     )
                 ),
+                _followed_due=_followed_due_exists(now),
             )
-            .filter(models.Q(_configured_due=True) | models.Q(_suitable_due=True))
+            .filter(
+                models.Q(_configured_due=True)
+                | models.Q(_suitable_due=True)
+                | models.Q(_followed_due=True)
+            )
             .order_by('pk')
             .values_list('pk', flat=True)[:MAX_DUE_CANDIDATES]
         )
@@ -336,6 +416,17 @@ def claim_due_candidate_job_digest_candidates(now=None):
         )
         .order_by('pk')
     )
+    followed_candidate_ids = set(candidate_ids) - set(
+        CandidateEmailNotificationSettings.objects.filter(
+            candidate_profile__user_id__in=candidate_ids,
+            followed_company_jobs=False,
+        ).values_list('candidate_profile__user_id', flat=True)
+    )
+    followed_schedules = list(
+        CandidateFollowedCompanyDigestSchedule.objects.select_for_update()
+        .filter(candidate_id__in=followed_candidate_ids, next_run_at__lte=now)
+        .order_by('pk')
+    )
     lease_until = now + PREPARATION_CLAIM_LEASE
     claimed_candidate_ids = set()
     for alert in alerts:
@@ -350,6 +441,14 @@ def claim_due_candidate_job_digest_candidates(now=None):
     CandidateJobDigestSchedule.objects.bulk_update(
         schedules,
         ['suitable_next_run_at', 'updated_at'],
+    )
+    for followed_schedule in followed_schedules:
+        followed_schedule.next_run_at = lease_until
+        followed_schedule.updated_at = now
+        claimed_candidate_ids.add(followed_schedule.candidate_id)
+    CandidateFollowedCompanyDigestSchedule.objects.bulk_update(
+        followed_schedules,
+        ['next_run_at', 'updated_at'],
     )
     return [
         {'candidate_id': candidate_id, 'claimed_at': now.isoformat()}
@@ -375,6 +474,11 @@ def release_candidate_job_digest_claim(candidate_id, claimed_at):
         updated_at=claimed_at,
         suitable_next_run_at=lease_until,
     ).update(suitable_next_run_at=claimed_at)
+    CandidateFollowedCompanyDigestSchedule.objects.filter(
+        candidate_id=candidate_id,
+        updated_at=claimed_at,
+        next_run_at=lease_until,
+    ).update(next_run_at=claimed_at)
 
 
 def _round_robin_sources(source_queues):
@@ -395,6 +499,7 @@ def _round_robin_sources(source_queues):
             selected_item['includes_suitable_recommendation'] |= item[
                 'includes_suitable_recommendation'
             ]
+            selected_item['includes_followed_company'] |= item['includes_followed_company']
         elif len(selected) < MAX_DIGEST_JOBS:
             selected.append(item)
             selected_by_publication[publication_key] = item
@@ -414,6 +519,7 @@ def _strict_source_queue(alert, now):
                 alert.public_id: alert.criteria_fingerprint,
             },
             'includes_suitable_recommendation': False,
+            'includes_followed_company': False,
             'match_score': None,
             'match_reasons': [],
         }
@@ -440,10 +546,33 @@ def _suitable_source_queue(candidate, schedule, now):
             'source_alert_public_ids': [],
             'source_alert_fingerprints': {},
             'includes_suitable_recommendation': True,
+            'includes_followed_company': False,
             'match_score': item['match_score'],
             'match_reasons': item['match_reasons'],
         }
         for item in payload['results']
+    )
+
+
+def _followed_company_source_queue(candidate, schedule, now):
+    return deque(
+        {
+            'job': job,
+            'source_kind': CandidateJobDigestItem.SourceKind.FOLLOWED_COMPANY,
+            'source_alert': None,
+            'source_alert_public_ids': [],
+            'source_alert_fingerprints': {},
+            'includes_suitable_recommendation': False,
+            'includes_followed_company': True,
+            'match_score': None,
+            'match_reasons': [],
+        }
+        for job in followed_company_job_matches(
+            candidate,
+            published_after=schedule.cursor_at,
+            published_before=now,
+            limit=MAX_MATCHES_PER_SOURCE,
+        )
     )
 
 
@@ -486,12 +615,26 @@ def prepare_candidate_job_digest(candidate_id, now=None, claimed_at=None):
         )
         .first()
     )
-    if not alerts and schedule is None:
+    followed_filters = (
+        {
+            'updated_at': claimed_at,
+            'next_run_at': claimed_at + PREPARATION_CLAIM_LEASE,
+        }
+        if claimed_at
+        else {'next_run_at__lte': now}
+    )
+    followed_schedule = (
+        CandidateFollowedCompanyDigestSchedule.objects.select_for_update()
+        .filter(candidate=candidate, **followed_filters)
+        .first()
+    )
+    if not alerts and schedule is None and followed_schedule is None:
         return None
 
     source_windows = {
         'alerts': {alert.public_id: alert.cursor_at.isoformat() for alert in alerts},
         'suitable': schedule.suitable_cursor_at.isoformat() if schedule else None,
+        'followed': followed_schedule.cursor_at.isoformat() if followed_schedule else None,
     }
     settings_state = _candidate_email_settings(candidate)
     common_allowed = bool(
@@ -535,6 +678,17 @@ def prepare_candidate_job_digest(candidate_id, now=None, claimed_at=None):
         schedule.suitable_next_run_at = next_job_alert_run(now, JobAlert.Frequency.WEEKLY)
         schedule.updated_at = now
 
+    includes_followed = False
+    if followed_schedule is not None:
+        if common_allowed and settings_state['followed']:
+            includes_followed = True
+            eligible_source_count += 1
+            source_queues.append(_followed_company_source_queue(candidate, followed_schedule, now))
+        else:
+            followed_schedule.cursor_at = now
+        followed_schedule.next_run_at = next_job_alert_run(now, JobAlert.Frequency.DAILY)
+        followed_schedule.updated_at = now
+
     JobAlert.objects.bulk_update(alerts, ['cursor_at', 'next_run_at', 'updated_at'])
     if schedule is not None:
         schedule.save(
@@ -544,6 +698,8 @@ def prepare_candidate_job_digest(candidate_id, now=None, claimed_at=None):
                 'updated_at',
             ]
         )
+    if followed_schedule is not None:
+        followed_schedule.save(update_fields=['cursor_at', 'next_run_at', 'updated_at'])
 
     selected = _round_robin_sources(source_queues)
     if not selected and not eligible_source_count:
@@ -562,6 +718,7 @@ def prepare_candidate_job_digest(candidate_id, now=None, claimed_at=None):
         scheduled_for=now,
         source_alert_public_ids=[alert.public_id for alert in alerts],
         includes_suitable_recommendations=includes_suitable,
+        includes_followed_companies=includes_followed,
         source_windows=source_windows,
         recipient_email=candidate.email,
         recipient_auth_revision=candidate.auth_revision,
@@ -579,6 +736,7 @@ def prepare_candidate_job_digest(candidate_id, now=None, claimed_at=None):
                 source_alert_public_ids=item['source_alert_public_ids'],
                 source_alert_fingerprints=item['source_alert_fingerprints'],
                 includes_suitable_recommendation=item['includes_suitable_recommendation'],
+                includes_followed_company=item['includes_followed_company'],
                 job_published_at=item['job'].published_at,
                 sort_order=index,
                 match_score=item['match_score'],
@@ -607,7 +765,7 @@ def _delivery_gate(digest):
         and candidate.auth_revision == digest.recipient_auth_revision
         and _site_email_enabled()
     ):
-        return candidate, {}, False
+        return candidate, {}, False, False
 
     settings_state = _candidate_email_settings(candidate)
     allowed_alert_fingerprints = {}
@@ -624,7 +782,16 @@ def _delivery_gate(digest):
         and settings_state['suitable']
         and _suitable_prerequisites_allowed(candidate)
     )
-    return candidate, allowed_alert_fingerprints, suitable_allowed
+    followed_allowed = bool(digest.includes_followed_companies and settings_state['followed'])
+    return candidate, allowed_alert_fingerprints, suitable_allowed, followed_allowed
+
+
+def _has_eligible_source(item):
+    return bool(
+        item._eligible_source_alert_public_ids
+        or item._eligible_suitable_recommendation
+        or item._eligible_followed_company
+    )
 
 
 def _eligible_digest_items(
@@ -632,6 +799,7 @@ def _eligible_digest_items(
     candidate,
     allowed_alert_fingerprints,
     suitable_allowed,
+    followed_allowed,
 ):
     items = list(digest.items.select_related('job', 'source_alert').order_by('sort_order'))
     source_eligible = []
@@ -645,7 +813,8 @@ def _eligible_digest_items(
         item._eligible_suitable_recommendation = bool(
             item.includes_suitable_recommendation and suitable_allowed
         )
-        if item._eligible_source_alert_public_ids or item._eligible_suitable_recommendation:
+        item._eligible_followed_company = bool(item.includes_followed_company and followed_allowed)
+        if _has_eligible_source(item):
             source_eligible.append(item)
     if not source_eligible:
         return []
@@ -680,17 +849,31 @@ def _eligible_digest_items(
             )
         }
 
+    # A follow removed, muted or put on hold after preparation closes the source.
+    still_followed_job_ids = (
+        set(
+            followed_company_job_matches(
+                candidate,
+                published_before=validation_cutoff,
+                limit=None,
+                job_ids=job_ids,
+                exclude_digest_id=digest.pk,
+            ).values_list('pk', flat=True)
+        )
+        if any(item._eligible_followed_company for item in source_eligible)
+        else set()
+    )
+
     for item in source_eligible:
         item._eligible_source_alert_public_ids = [
             public_id
             for public_id in item._eligible_source_alert_public_ids
             if item.job_id in matching_job_ids_by_alert.get(public_id, set())
         ]
-    source_eligible = [
-        item
-        for item in source_eligible
-        if item._eligible_source_alert_public_ids or item._eligible_suitable_recommendation
-    ]
+        item._eligible_followed_company = bool(
+            item._eligible_followed_company and item.job_id in still_followed_job_ids
+        )
+    source_eligible = [item for item in source_eligible if _has_eligible_source(item)]
     if not source_eligible:
         return []
 
@@ -797,6 +980,9 @@ def _email_context(digest, items):
                 'salary': _salary_text(job),
                 'badges': badges,
                 'sources': source_labels,
+                'followed_company': (
+                    job.company.company_name if item._eligible_followed_company else ''
+                ),
                 'url': f'{settings.FRONTEND_URL.rstrip("/")}/viec-lam/{job.slug}',
             }
         )
@@ -845,6 +1031,15 @@ def _rewind_failed_digest_sources(digest):
             schedule.suitable_cursor_at = previous
             schedule.save(update_fields=['suitable_cursor_at', 'updated_at'])
 
+    followed_window = digest.source_windows.get('followed')
+    if followed_window:
+        previous = parse_datetime(followed_window)
+        if previous is not None:
+            CandidateFollowedCompanyDigestSchedule.objects.filter(
+                candidate_id=digest.candidate_id,
+                cursor_at=digest.scheduled_for,
+            ).update(cursor_at=previous, updated_at=timezone.now())
+
 
 def _deliver_candidate_job_digest_locked(digest_id):
     """Claim, revalidate, send and receipt one digest with retry-safe state changes."""
@@ -883,7 +1078,7 @@ def _deliver_candidate_job_digest_locked(digest_id):
                 reason='already_claimed',
             )
             return 'already_sending'
-        candidate, allowed_alert_ids, suitable_allowed = _delivery_gate(digest)
+        candidate, allowed_alert_ids, suitable_allowed, followed_allowed = _delivery_gate(digest)
         if candidate is None:
             digest.status = CandidateJobDigest.Status.CANCELLED
             digest.save(update_fields=['status', 'updated_at'])
@@ -894,7 +1089,9 @@ def _deliver_candidate_job_digest_locked(digest_id):
                 reason='candidate_unavailable',
             )
             return digest.status
-        items = _eligible_digest_items(digest, candidate, allowed_alert_ids, suitable_allowed)
+        items = _eligible_digest_items(
+            digest, candidate, allowed_alert_ids, suitable_allowed, followed_allowed
+        )
         if not items:
             digest.status = CandidateJobDigest.Status.CANCELLED
             digest.save(update_fields=['status', 'updated_at'])
@@ -913,7 +1110,7 @@ def _deliver_candidate_job_digest_locked(digest_id):
 
     try:
         # A final identity/preference check happens after rendering work and directly before SMTP.
-        candidate, allowed_alert_ids, suitable_allowed = _delivery_gate(digest)
+        candidate, allowed_alert_ids, suitable_allowed, followed_allowed = _delivery_gate(digest)
         if candidate is None:
             CandidateJobDigest.objects.filter(pk=digest.pk).update(
                 status=CandidateJobDigest.Status.CANCELLED
@@ -925,7 +1122,9 @@ def _deliver_candidate_job_digest_locked(digest_id):
                 reason='candidate_changed_before_send',
             )
             return CandidateJobDigest.Status.CANCELLED
-        items = _eligible_digest_items(digest, candidate, allowed_alert_ids, suitable_allowed)
+        items = _eligible_digest_items(
+            digest, candidate, allowed_alert_ids, suitable_allowed, followed_allowed
+        )
         if not items:
             CandidateJobDigest.objects.filter(pk=digest.pk).update(
                 status=CandidateJobDigest.Status.CANCELLED
@@ -945,13 +1144,16 @@ def _deliver_candidate_job_digest_locked(digest_id):
         # Rendering and badge lookup can be non-trivial. Recheck identity,
         # preferences, publication state and permanent suppression immediately
         # before crossing the irreversible SMTP boundary.
-        final_candidate, final_alert_ids, final_suitable_allowed = _delivery_gate(digest)
+        final_candidate, final_alert_ids, final_suitable_allowed, final_followed_allowed = (
+            _delivery_gate(digest)
+        )
         final_items = (
             _eligible_digest_items(
                 digest,
                 final_candidate,
                 final_alert_ids,
                 final_suitable_allowed,
+                final_followed_allowed,
             )
             if final_candidate is not None
             else []
