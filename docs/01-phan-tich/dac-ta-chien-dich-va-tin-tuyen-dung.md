@@ -217,34 +217,50 @@ Ba mốc thời gian độc lập, không suy mốc này từ mốc khác:
 
 ## 7. Pipeline hồ sơ ứng tuyển
 
-| Mã | Nhãn recruiter | Nhãn ứng viên |
-| --- | --- | --- |
-| `submitted` | Mới / Tiếp nhận | Tiếp nhận |
-| `viewed` | Đã xem | Nhà tuyển dụng đã xem hồ sơ |
-| `considering` | Cân nhắc | Hồ sơ đang được xem xét |
-| `shortlisted` | Phù hợp | Hồ sơ đang được xem xét |
-| `interviewed` | Phỏng vấn | Phỏng vấn |
-| `accepted` | Đã tuyển / Đã nhận offer | Đã nhận offer |
-| `rejected` | Từ chối | Chưa phù hợp |
+| Mã | Nhãn recruiter | Nhãn ứng viên | Ai đặt |
+| --- | --- | --- | --- |
+| `submitted` | Mới | Đã nộp hồ sơ | Hệ thống |
+| `viewed` | Đã xem | Nhà tuyển dụng đã xem hồ sơ | Hệ thống, khi NTD mở CV lần đầu |
+| `shortlisted` | Phù hợp | Hồ sơ phù hợp | NTD |
+| `interviewed` | Phỏng vấn | Mời phỏng vấn | NTD |
+| `accepted` | Trúng tuyển (cuối) | Trúng tuyển | NTD, có xác nhận |
+| `rejected` | Không phù hợp (cuối) | Chưa phù hợp | NTD, có xác nhận |
 
+- Bỏ `considering` (2026-11-15): trùng nghĩa "chưa phản hồi" với `viewed`;
+  migration `applications/0013` gộp dữ liệu cũ vào `viewed`. Không phù hợp
+  không yêu cầu lý do.
 - Đồ thị chuyển hợp lệ ở `ALLOWED_STATUS_TRANSITIONS`
-  (`applications/services/applications.py`): được bỏ qua bước trung gian,
-  không lùi; `accepted` và `rejected` là trạng thái cuối.
-- Mở snapshot CV lần đầu tự chuyển `submitted → viewed`.
+  (`applications/services/status.py`): NTD chỉ chọn trong
+  `Application.DECISION_STATUSES`, được bỏ qua bước, không lùi; API trả sẵn
+  `available_decisions` cho từng hồ sơ.
+- Mở snapshot CV lần đầu tự chuyển `submitted → viewed` và báo ứng viên ngay
+  (email theo tùy chọn `employer_viewed_cv`).
+- **Thông báo quyết định có cửa sổ hoàn tác:** mỗi quyết định tạo một
+  `CandidateNotification` hẹn giao sau `CANDIDATE_STATUS_NOTIFICATION_DELAY`
+  (mặc định 5 phút). Quyết định mới hơn trên cùng hồ sơ hủy thông báo chưa giao
+  (bấm nhanh nhiều trạng thái thì ứng viên chỉ nhận trạng thái cuối). Người vừa
+  quyết định được hoàn tác khi thông báo chưa giao; trang của ứng viên chỉ thấy
+  trạng thái đã được báo.
+- NTD tải PDF đúng bản CV đã nộp; mỗi lần xem/tải ghi `CvAccessLog`, ứng viên
+  được báo một lần cho mỗi hồ sơ.
+- Nộp hồ sơ thành công: ứng viên nhận ngay thông báo "Hồ sơ đã được tiếp nhận" và
+  email "Chúc mừng bạn đã ứng tuyển thành công vị trí …" kèm tối đa 5 việc làm
+  tương tự (tính từ chính tin vừa nộp, không dùng hồ sơ cá nhân), theo cài đặt
+  nhận thông báo của ứng viên.
 - Ứng viên bị hạn chế tài khoản chỉ có thể bị chuyển sang `rejected`.
-- `employer_rating` (1–5) và `employer_note` là dữ liệu nội bộ. Ứng viên chỉ
-  nhận nhãn và timeline đã map, không thấy điểm, ghi chú hay khác biệt
-  `considering`/`shortlisted`.
+- `employer_rating` (1–5) và `employer_note` là dữ liệu nội bộ, lưu qua PATCH
+  riêng; không bao giờ xuất hiện trong thông báo, email hay API ứng viên.
 - Ứng tuyển chỉ vào tin đang công khai; mỗi ứng viên tối đa 3 lần cho một tin,
   cách nhau ít nhất 5 phút. Mỗi lần nộp lưu snapshot CV bất biến.
 - **Tự động từ chối:** theo cấu hình của tin (`auto_reject_stale_applications`,
-  `auto_reject_after_days` ∈ 14/21/28/42/56 ngày), hồ sơ ở `submitted`/`viewed`/
-  `considering` không đổi trạng thái quá hạn được chuyển `rejected`. Recruiter
-  nhận nhắc 3 ngày trước đó; ứng viên nhận email (`auto_rejection_email_body`)
-  3 ngày sau khi bị từ chối. Trong 3 ngày này recruiter còn đổi lại được trạng
-  thái.
+  `auto_reject_after_days` ∈ 14/21/28/42/56 ngày), hồ sơ ở `submitted`/`viewed`
+  không đổi trạng thái quá hạn được chuyển `rejected`. Recruiter nhận nhắc 3
+  ngày trước đó; ứng viên nhận email (`auto_rejection_email_body`) và thông báo
+  trong chuông 3 ngày sau khi bị từ chối. Trong 3 ngày này recruiter còn đổi lại
+  được trạng thái (thông báo tự bị thay thế).
 - API: ứng viên `GET/POST /api/v2/applications/`; recruiter
-  `/api/v2/recruiter/applications/` (list, `export/`, `{id}/` cập nhật, `{id}/cv/`,
+  `/api/v2/recruiter/applications/` (list, `export/`, `{id}/` ghi chú/điểm,
+  `{id}/status/`, `{id}/status/undo/`, `{id}/cv/`, `{id}/cv/exports/`,
   `{id}/history/`), luôn lọc `job__posted_by=request.user`.
 
 ## 8. Báo cáo và hậu kiểm của quản trị viên

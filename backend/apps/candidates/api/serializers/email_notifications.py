@@ -1,25 +1,30 @@
 from rest_framework import serializers
 
+from apps.sitecontent.selectors import get_bool_setting
+
 from ...models import CandidateEmailNotificationSettings
 
 
 class CandidateEmailNotificationSettingsSerializer(serializers.ModelSerializer):
-    """Candidate-owned email notification preferences."""
+    """Candidate-owned notification channels (email + website)."""
+
+    email_delivery_enabled = serializers.SerializerMethodField()
 
     class Meta:
         model = CandidateEmailNotificationSettings
         fields = [
-            'important_system_updates',
-            'employer_viewed_cv',
-            'new_features_and_cv_templates',
-            'other_system_notifications',
+            'application_received_email',
+            'application_received_web',
+            'similar_jobs_in_application_email',
+            'cv_activity_email',
+            'cv_activity_web',
             'configured_job_alerts',
             'suitable_job_recommendations',
             'followed_company_jobs',
-            'top_candidate_alerts',
-            'employer_invitations',
-            'job_and_career_events',
-            'service_introductions',
-            'program_and_event_introductions',
-            'partner_gifts_and_discounts',
+            'email_delivery_enabled',
         ]
+        read_only_fields = ['email_delivery_enabled']
+
+    def get_email_delivery_enabled(self, obj) -> bool:
+        # Admin kill switch for all product email; the page explains it.
+        return get_bool_setting('email_notifications_enabled', True)

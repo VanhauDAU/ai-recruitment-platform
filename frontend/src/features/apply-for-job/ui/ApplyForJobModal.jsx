@@ -115,6 +115,7 @@ export default function ApplyForJobModal({
             selected={form.isUploadChoice}
             uploading={form.uploading}
             uploadState={form.uploadState}
+            analyzing={form.analyzing}
             file={form.uploadFile}
             onSelect={() => form.setSelectedCvId(UPLOAD_CHOICE_ID)}
             onChooseFile={() => form.fileInputRef.current?.click()}

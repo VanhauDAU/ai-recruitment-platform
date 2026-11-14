@@ -1,0 +1,18 @@
+Xin chào {{ candidate_name }},
+
+Chúc mừng bạn đã ứng tuyển thành công!
+{% if job %}Hồ sơ của bạn cho vị trí {{ job.title }} tại {{ job.company_name }} đã được hệ thống ghi nhận và gửi tới nhà tuyển dụng.
+{{ job.url }}{% endif %}
+
+Chúng tôi sẽ thông báo ngay khi nhà tuyển dụng xem hoặc phản hồi hồ sơ của bạn.
+Theo dõi trạng thái: {{ applied_jobs_url }}
+Hoàn thiện CV: {{ my_cvs_url }}
+{% if similar_jobs %}
+{{ similar_jobs|length }} việc làm này đang tìm kiếm ứng viên giống bạn:
+{% for item in similar_jobs %}- {{ item.title }} — {{ item.company_name }} ({{ item.salary }}{% if item.locations %}, {{ item.locations }}{% endif %})
+  {{ item.url }}
+{% endfor %}
+Xem tất cả việc làm: {{ jobs_url }}
+{% endif %}
+Quản lý email & thông báo: {{ email_settings_url }}
+— {{ site_name }}

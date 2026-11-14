@@ -64,7 +64,7 @@ describe('CampaignOverviewPanel', () => {
       unviewed_count: 2,
       accepted_count: 1,
       jobs: { total: 5, active: 2, draft: 1, expired: 1, closed: 1 },
-      funnel: { submitted: 2, viewed: 1, considering: 1, shortlisted: 0, interviewed: 0, accepted: 1, rejected: 1 },
+      funnel: { submitted: 2, viewed: 2, shortlisted: 0, interviewed: 0, accepted: 1, rejected: 1 },
     })
 
     const candidates = screen.getByText('Ứng viên duy nhất').closest('article')

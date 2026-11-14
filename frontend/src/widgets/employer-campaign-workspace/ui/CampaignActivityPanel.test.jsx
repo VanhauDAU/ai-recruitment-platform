@@ -107,7 +107,7 @@ describe('CampaignActivityPanel', () => {
       '/tuyendung/app/applications?campaign=camp_1&application=app_1',
     )
     expect(within(latestDay).getByLabelText(
-      'Chuyển trạng thái từ Tiếp nhận sang Đã xem',
+      'Chuyển trạng thái từ Mới sang Đã xem',
     )).toBeInTheDocument()
     expect(within(latestDay).getByText('Kỹ sư Backend')).toHaveAttribute(
       'href',

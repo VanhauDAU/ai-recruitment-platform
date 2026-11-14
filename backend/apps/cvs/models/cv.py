@@ -387,7 +387,10 @@ class CvAccessLog(models.Model):
         SHARED_LINK = 'shared_link', 'Shared link'
         EXPORT = 'export', 'Export'
 
-    cv = models.ForeignKey(UserCv, on_delete=models.PROTECT, related_name='access_logs')
+    # NULL for recruiter access to an application snapshot (keyed by version).
+    cv = models.ForeignKey(
+        UserCv, on_delete=models.PROTECT, null=True, blank=True, related_name='access_logs'
+    )
     version = models.ForeignKey(
         CvVersion, on_delete=models.PROTECT, null=True, blank=True, related_name='access_logs'
     )
@@ -437,7 +440,10 @@ class CvExport(models.Model):
         FAILED = 'failed', 'Failed'
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)
-    cv = models.ForeignKey(UserCv, on_delete=models.PROTECT, related_name='exports')
+    # NULL for application-snapshot exports, which outlive the library CV.
+    cv = models.ForeignKey(
+        UserCv, on_delete=models.PROTECT, null=True, blank=True, related_name='exports'
+    )
     version = models.ForeignKey(CvVersion, on_delete=models.PROTECT, related_name='exports')
     export_format = models.CharField(
         max_length=20, choices=ExportFormat.choices, default=ExportFormat.PDF

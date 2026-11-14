@@ -1,15 +1,40 @@
 """Read queries for job applications."""
 
-from django.db.models import OuterRef, Q, Subquery
+from django.db.models import CharField, Exists, OuterRef, Prefetch, Q, Subquery, Value
+from django.db.models.functions import Cast, Concat
 
-from ..models import Application
+from apps.candidates.models import CandidateNotification
+
+from ..models import Application, ApplicationStatusHistory
+
+
+def _history_notice():
+    """Candidate notice scheduled by the outer history row (same dedupe key)."""
+    return CandidateNotification.objects.filter(
+        recipient_id=OuterRef('application__candidate_id'),
+        dedupe_key=Concat(
+            Value(ApplicationStatusHistory.NOTIFICATION_KEY_PREFIX),
+            Cast(OuterRef('pk'), CharField()),
+        ),
+    )
+
+
+def candidate_published_history_queryset():
+    """History the candidate may see: undone rows and notices not yet
+    delivered (inside the recruiter's undo window) stay hidden."""
+    return ApplicationStatusHistory.objects.filter(reverted_at__isnull=True).exclude(
+        Exists(_history_notice().filter(delivered_at__isnull=True))
+    )
 
 
 def candidate_applications_queryset(candidate):
     return (
         Application.objects.filter(candidate=candidate)
         .select_related('job', 'job__company', 'cv', 'submitted_cv_version')
-        .prefetch_related('preferred_locations', 'status_history')
+        .prefetch_related(
+            'preferred_locations',
+            Prefetch('status_history', queryset=candidate_published_history_queryset()),
+        )
         .order_by('-applied_at')
     )
 
@@ -73,6 +98,21 @@ def employer_applications_queryset(
     return queryset.order_by(order_fields.get(ordering, '-applied_at'), '-id')
 
 
+def recruiter_application_history_queryset(application):
+    """Status history with the delivery state of the notice each row scheduled."""
+    notice = _history_notice()
+    return (
+        application.status_history.select_related('changed_by')
+        .annotate(
+            notice_deliver_after=Subquery(notice.values('deliver_after')[:1]),
+            notice_delivered_at=Subquery(notice.values('delivered_at')[:1]),
+            notice_cancel_reason=Subquery(notice.values('cancel_reason')[:1]),
+            notice_email_sent_at=Subquery(notice.values('email_sent_at')[:1]),
+        )
+        .order_by('created_at', 'id')
+    )
+
+
 def employer_application_queryset(employer):
     """Applications an employer is authorised to update."""
     return Application.objects.filter(job__posted_by=employer)
@@ -122,7 +162,9 @@ def recruiter_application_snapshot_queryset(recruiter):
             submitted_cv_version__version_kind='application_snapshot',
         )
         .select_related(
+            'candidate',
             'job',
+            'job__company',
             'submitted_cv_version',
             'submitted_cv_version__template_version',
             'submitted_cv_version__parent_version',

@@ -13,14 +13,9 @@ from apps.jobs.models import Job, JobApplicationContact
 from common.email import send_html_email
 
 from ..models import Application, ApplicationStatusHistory
+from .status import AUTO_REJECTION_EMAIL_GRACE, notify_candidate_of_status
 
-AUTO_REJECTION_EMAIL_GRACE = timedelta(days=3)
 REMINDER_LEAD_TIME = timedelta(days=3)
-STALE_STATUSES = (
-    Application.Status.SUBMITTED,
-    Application.Status.VIEWED,
-    Application.Status.CONSIDERING,
-)
 
 
 def _age_filter(now, *, reminder=False):
@@ -73,7 +68,7 @@ def send_due_application_reminders(*, now=None, batch_size=200):
         Application.objects.filter(
             _age_filter(now, reminder=True),
             job__auto_reject_stale_applications=True,
-            status__in=STALE_STATUSES,
+            status__in=Application.UNANSWERED_STATUSES,
             auto_rejection_reminder_sent_at__isnull=True,
         )
         .select_related('job', 'job__posted_by')
@@ -94,7 +89,7 @@ def send_due_application_reminders(*, now=None, batch_size=200):
         recipients = list(dict.fromkeys(recipients or [job.posted_by.email]))
         count = len(applications)
         body = (
-            f'{count} hồ sơ ứng tuyển vị trí {job.title} sẽ tự động chuyển sang “Từ chối” '
+            f'{count} hồ sơ ứng tuyển vị trí {job.title} sẽ tự động chuyển sang “Không phù hợp” '
             f'trong vòng 3 ngày nếu chưa được cập nhật trạng thái.'
         )
         action_url = (
@@ -124,7 +119,7 @@ def reject_due_applications(*, now=None, batch_size=200):
         Application.objects.filter(
             _age_filter(now),
             job__auto_reject_stale_applications=True,
-            status__in=STALE_STATUSES,
+            status__in=Application.UNANSWERED_STATUSES,
         )
         .order_by('status_updated_at', 'pk')
         .values_list('pk', flat=True)[:batch_size]
@@ -133,12 +128,14 @@ def reject_due_applications(*, now=None, batch_size=200):
     for application_id in ids:
         with transaction.atomic():
             application = (
-                Application.objects.select_for_update().select_related('job').get(pk=application_id)
+                Application.objects.select_for_update(of=('self',))
+                .select_related('candidate', 'job', 'job__company')
+                .get(pk=application_id)
             )
             cutoff = now - timedelta(days=application.job.auto_reject_after_days)
             if (
                 not application.job.auto_reject_stale_applications
-                or application.status not in STALE_STATUSES
+                or application.status not in Application.UNANSWERED_STATUSES
                 or application.status_updated_at > cutoff
             ):
                 continue
@@ -156,11 +153,19 @@ def reject_due_applications(*, now=None, batch_size=200):
                     'updated_at',
                 ]
             )
-            ApplicationStatusHistory.objects.create(
+            history = ApplicationStatusHistory.objects.create(
                 application=application,
                 from_status=previous_status,
                 to_status=Application.Status.REJECTED,
-                note='Tự động chuyển sang Từ chối do quá hạn xử lý.',
+                note='Tự động chuyển sang Không phù hợp do quá hạn xử lý.',
+            )
+            # The in-app notice waits out the same undo window as the email;
+            # the per-job email below stays the only email for this path.
+            notify_candidate_of_status(
+                application,
+                history,
+                deliver_after=now + AUTO_REJECTION_EMAIL_GRACE,
+                send_email=False,
             )
             rejected += 1
     return rejected

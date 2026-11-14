@@ -2,16 +2,9 @@ import { CheckCircleFilled, DownloadOutlined, LoadingOutlined, ReloadOutlined } 
 import { Alert, Button, Modal, Progress } from 'antd'
 import { useEffect, useRef, useState } from 'react'
 import { createCvPdfExport, downloadCvPdf, getCvPdfExport, retryCvPdfExport } from '@/entities/cv'
+import { triggerBlobDownload } from '@/shared/lib/download-blob'
 import { message } from '@/shared/lib/toast'
 
-function triggerBrowserDownload(blob, filename) {
-  const objectUrl = window.URL.createObjectURL(blob)
-  const anchor = document.createElement('a')
-  anchor.href = objectUrl
-  anchor.download = filename
-  anchor.click()
-  window.setTimeout(() => window.URL.revokeObjectURL(objectUrl), 1_000)
-}
 
 export default function CvDownloadButton({ publicId, versionPublicId, title }) {
   const [open, setOpen] = useState(false)
@@ -36,7 +29,7 @@ export default function CvDownloadButton({ publicId, versionPublicId, title }) {
     setSubmitting(true)
     downloadCvPdf(job.download_url)
       .then((blob) => {
-        triggerBrowserDownload(blob, `${title || 'CV'}.pdf`)
+        triggerBlobDownload(blob, `${title || 'CV'}.pdf`)
         message.success('CV đã sẵn sàng và đang được tải xuống.')
       })
       .catch(() => setError('Không thể tải PDF. Vui lòng thử lại.'))

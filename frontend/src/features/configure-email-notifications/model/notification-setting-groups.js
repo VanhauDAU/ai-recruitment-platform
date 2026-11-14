@@ -1,76 +1,46 @@
-export const NOTIFICATION_SETTING_GROUPS = [
+// Every switch here has a backend consumer (see CandidateEmailNotificationSettings).
+
+/** Application events: one switch per channel; mandatory rows have none. */
+export const APPLICATION_NOTIFICATION_ROWS = [
   {
-    key: 'account',
-    title: 'Thông báo từ hệ thống',
-    items: [
-      {
-        key: 'important_system_updates',
-        label: 'Cập nhật quan trọng từ hệ thống',
-      },
-      {
-        key: 'employer_viewed_cv',
-        label: 'Thông báo nhà tuyển dụng đã xem CV',
-      },
-      {
-        key: 'new_features_and_cv_templates',
-        label: 'Thông báo tính năng và mẫu CV mới',
-      },
-      {
-        key: 'other_system_notifications',
-        label: 'Thông báo khác từ hệ thống',
-      },
-    ],
+    key: 'application_received',
+    label: 'Nộp hồ sơ thành công',
+    description: 'Xác nhận ngay khi bạn ứng tuyển vào một tin.',
+    email: 'application_received_email',
+    web: 'application_received_web',
   },
   {
-    key: 'jobs',
-    title: 'Thông báo cơ hội việc làm',
-    items: [
-      {
-        key: 'configured_job_alerts',
-        label: 'Việc làm theo thiết lập',
-      },
-      {
-        key: 'suitable_job_recommendations',
-        label: 'Thông báo việc làm phù hợp',
-      },
-      {
-        key: 'followed_company_jobs',
-        label: 'Việc làm mới từ công ty đang theo dõi',
-      },
-      {
-        key: 'top_candidate_alerts',
-        label: 'Thông báo việc làm bạn là ứng viên hàng đầu',
-      },
-      {
-        key: 'employer_invitations',
-        label: 'Thông báo nhà tuyển dụng gửi mời lời phỏng vấn / ứng tuyển',
-      },
-      {
-        key: 'job_and_career_events',
-        label: 'Thông tin liên quan đến việc làm, sự kiện nghề nghiệp',
-      },
-    ],
+    key: 'cv_activity',
+    label: 'Nhà tuyển dụng xem hoặc tải CV',
+    description: 'Biết khi hồ sơ của bạn đang được quan tâm.',
+    email: 'cv_activity_email',
+    web: 'cv_activity_web',
   },
   {
-    key: 'updates',
-    title: 'Thông báo giới thiệu dịch vụ',
-    items: [
-      {
-        key: 'service_introductions',
-        label: 'Giới thiệu các dịch vụ',
-      },
-      {
-        key: 'program_and_event_introductions',
-        label: 'Giới thiệu chương trình, sự kiện',
-      },
-      {
-        key: 'partner_gifts_and_discounts',
-        label: 'Quà tặng / Mã giảm giá từ đối tác',
-      },
-    ],
+    key: 'decisions',
+    label: 'Kết quả xử lý hồ sơ',
+    description: 'Phù hợp, mời phỏng vấn, trúng tuyển hoặc chưa phù hợp. Đây là thông tin bắt buộc nên luôn được gửi.',
+    mandatory: true,
   },
 ]
 
-export const NOTIFICATION_SETTING_KEYS = NOTIFICATION_SETTING_GROUPS.flatMap(
-  (group) => group.items.map((item) => item.key),
-)
+export const SIMILAR_JOBS_SETTING = {
+  key: 'similar_jobs_in_application_email',
+  label: 'Kèm gợi ý việc làm tương tự trong email xác nhận',
+  dependsOn: 'application_received_email',
+}
+
+export const JOB_EMAIL_SETTINGS = [
+  { key: 'configured_job_alerts', label: 'Việc làm theo thông báo bạn đã tạo' },
+  { key: 'suitable_job_recommendations', label: 'Việc làm phù hợp với hồ sơ của bạn' },
+  { key: 'followed_company_jobs', label: 'Việc làm mới từ công ty đang theo dõi' },
+]
+
+export const SETTING_LABELS = Object.fromEntries([
+  ...APPLICATION_NOTIFICATION_ROWS.flatMap((row) => (row.mandatory ? [] : [
+    [row.email, `Email: ${row.label}`],
+    [row.web, `Trên web: ${row.label}`],
+  ])),
+  [SIMILAR_JOBS_SETTING.key, SIMILAR_JOBS_SETTING.label],
+  ...JOB_EMAIL_SETTINGS.map((item) => [item.key, item.label]),
+])

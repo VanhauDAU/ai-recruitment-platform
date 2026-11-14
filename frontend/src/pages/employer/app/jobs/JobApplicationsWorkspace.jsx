@@ -5,6 +5,7 @@ import dayjs from 'dayjs'
 import { useState } from 'react'
 import { Link } from 'react-router'
 import {
+  APPLICATION_STATUS_TONES,
   applicationKeys,
   exportRecruiterApplications,
   getRecruiterApplicationPage,
@@ -13,10 +14,10 @@ import {
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { employerAppPath } from '@/shared/config/portals'
 import useDebouncedValue from '@/shared/hooks/use-debounced-value'
+import { triggerBlobDownload } from '@/shared/lib/download-blob'
 import { message } from '@/shared/lib/toast'
 import { MascotEmpty } from '@/shared/ui/mascot'
 import {
-  APPLICATION_STATUS_TONES,
   applicationFilterChips,
   applicationFilterParams,
   formatRelativeDay,
@@ -86,14 +87,7 @@ export default function JobApplicationsWorkspace({ jobPublicId, summary, filter,
   })
   const exportMutation = useMutation({
     mutationFn: () => exportRecruiterApplications(filterParams),
-    onSuccess: ({ blob, filename }) => {
-      const url = URL.createObjectURL(blob)
-      const anchor = document.createElement('a')
-      anchor.href = url
-      anchor.download = filename
-      anchor.click()
-      URL.revokeObjectURL(url)
-    },
+    onSuccess: ({ blob, filename }) => triggerBlobDownload(blob, filename),
     onError: (error) => message.error(getApiErrorMessage(error, 'Không thể xuất danh sách CV.')),
   })
   const pageData = applicationsQuery.data || { count: 0, results: [] }

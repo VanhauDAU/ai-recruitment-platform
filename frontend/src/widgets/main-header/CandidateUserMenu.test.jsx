@@ -4,6 +4,10 @@ import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 import CandidateUserMenu from './CandidateUserMenu'
 
+vi.mock('@/features/view-candidate-notifications', () => ({
+  CandidateNotificationBell: () => <button type="button" aria-label="Mở thông báo" />,
+}))
+
 describe('CandidateUserMenu', () => {
   it('does not show an employer-portal shortcut', async () => {
     render(

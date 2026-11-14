@@ -14,7 +14,6 @@ import { MascotEmpty } from '@/shared/ui/mascot'
 const STATUS_COLORS = {
   submitted: 'blue',
   viewed: 'cyan',
-  considering: 'gold',
   shortlisted: 'green',
   interviewed: 'purple',
   accepted: 'green',

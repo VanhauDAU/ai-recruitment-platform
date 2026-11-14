@@ -627,12 +627,21 @@ CELERY_TASK_ROUTES = {
     'apps.jobs.tasks.ai_generation.*': {'queue': 'ai-generation'},
     'apps.jobs.tasks.*': {'queue': 'candidate-email'},
     'apps.applications.tasks.*': {'queue': 'candidate-email'},
+    'apps.candidates.tasks.*': {'queue': 'candidate-email'},
 }
 CELERY_TASK_ACKS_LATE = True
 CELERY_TASK_REJECT_ON_WORKER_LOST = True
 CELERY_TASK_TIME_LIMIT = 60
 CELERY_TASK_SOFT_TIME_LIMIT = 50
 EMPLOYER_EVENT_RETENTION_DAYS = config('EMPLOYER_EVENT_RETENTION_DAYS', default=730, cast=int)
+CANDIDATE_NOTIFICATION_RETENTION_DAYS = config(
+    'CANDIDATE_NOTIFICATION_RETENTION_DAYS', default=730, cast=int
+)
+# Recruiter decisions reach the candidate only after this window, so the
+# recruiter can undo a mis-click and rapid changes collapse into one notice.
+CANDIDATE_STATUS_NOTIFICATION_DELAY = timedelta(
+    seconds=config('CANDIDATE_STATUS_NOTIFICATION_DELAY_SECONDS', default=300, cast=int)
+)
 EMPLOYER_DOMAIN_DNS_TIMEOUT_SECONDS = config(
     'EMPLOYER_DOMAIN_DNS_TIMEOUT_SECONDS', default=3.0, cast=float
 )
@@ -655,6 +664,14 @@ CELERY_BEAT_SCHEDULE = {
     'process-automatic-application-rejections': {
         'task': 'apps.applications.tasks.process_automatic_application_rejections',
         'schedule': 300.0,
+    },
+    'dispatch-candidate-notifications': {
+        'task': 'apps.candidates.tasks.notifications.dispatch_candidate_notifications',
+        'schedule': 60.0,
+    },
+    'purge-expired-candidate-notifications': {
+        'task': 'apps.candidates.tasks.notifications.purge_expired_candidate_notifications',
+        'schedule': 86400.0,
     },
     'prepare-due-candidate-job-digests': {
         'task': 'apps.jobs.tasks.prepare_due_candidate_job_digests',

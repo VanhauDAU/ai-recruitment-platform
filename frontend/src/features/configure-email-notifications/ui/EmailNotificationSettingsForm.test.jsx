@@ -1,164 +1,115 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { message } from '@/shared/lib/toast'
+import { MemoryRouter } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { message } from '@/shared/lib/toast'
 import EmailNotificationSettingsForm from './EmailNotificationSettingsForm'
 
-const notificationApi = vi.hoisted(() => ({
-  candidateNotificationPreferenceKeys: {
-    preferences: () => ['candidate-notification-preferences', 'preferences'],
-  },
-  candidateNotificationPreferenceMutationKey: ['candidate-notification-preferences', 'update'],
-  candidateNotificationPreferenceMutationScope: { id: 'candidate-notification-preferences-update' },
+const api = vi.hoisted(() => ({
   getCandidateNotificationPreferences: vi.fn(),
   updateCandidateNotificationPreferences: vi.fn(),
 }))
 
-vi.mock('@/entities/candidate-notification-preferences', () => notificationApi)
+vi.mock('@/entities/candidate-notification-preferences', async (importOriginal) => ({
+  ...(await importOriginal()),
+  ...api,
+}))
 
-const ALL_ENABLED = {
-  important_system_updates: true,
-  employer_viewed_cv: true,
-  new_features_and_cv_templates: true,
-  other_system_notifications: true,
+const DEFAULTS = {
+  application_received_email: true,
+  application_received_web: true,
+  similar_jobs_in_application_email: true,
+  cv_activity_email: true,
+  cv_activity_web: true,
   configured_job_alerts: true,
-  suitable_job_recommendations: true,
+  suitable_job_recommendations: false,
   followed_company_jobs: true,
-  top_candidate_alerts: true,
-  employer_invitations: true,
-  job_and_career_events: true,
-  service_introductions: true,
-  program_and_event_introductions: true,
-  partner_gifts_and_discounts: true,
+  email_delivery_enabled: true,
 }
 
 function renderForm() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
     <QueryClientProvider client={client}>
-      <EmailNotificationSettingsForm />
+      <MemoryRouter><EmailNotificationSettingsForm /></MemoryRouter>
     </QueryClientProvider>,
   )
 }
 
+function apiError(code) {
+  return Object.assign(new Error(code), { response: { status: 400, data: { code } } })
+}
+
 describe('EmailNotificationSettingsForm', () => {
   beforeEach(() => {
-    notificationApi.getCandidateNotificationPreferences.mockReset()
-    notificationApi.updateCandidateNotificationPreferences.mockReset()
-    notificationApi.getCandidateNotificationPreferences.mockResolvedValue(ALL_ENABLED)
+    Object.values(api).forEach((mock) => mock.mockReset())
+    api.getCandidateNotificationPreferences.mockResolvedValue(DEFAULTS)
     vi.spyOn(message, 'error').mockImplementation(() => {})
     vi.spyOn(message, 'success').mockImplementation(() => {})
   })
 
-  afterEach(() => {
-    vi.restoreAllMocks()
-  })
+  afterEach(() => vi.restoreAllMocks())
 
-  it('renders the three compact groups with every preference enabled by default', async () => {
+  it('shows application events per channel and the mandatory result row', async () => {
     renderForm()
 
-    expect(await screen.findByText('Thông báo từ hệ thống')).toBeInTheDocument()
-    expect(screen.getByText('Thông báo cơ hội việc làm')).toBeInTheDocument()
-    expect(screen.getByText('Thông báo giới thiệu dịch vụ')).toBeInTheDocument()
-    expect(screen.getAllByRole('switch')).toHaveLength(13)
-    screen.getAllByRole('switch').forEach((item) => expect(item).toBeChecked())
-    expect(screen.queryByText('Email bảo mật luôn được bật')).not.toBeInTheDocument()
+    const applications = await screen.findByRole('region', { name: 'Hồ sơ ứng tuyển' })
+    expect(within(applications).getByRole('switch', { name: 'Email: Nộp hồ sơ thành công' })).toBeChecked()
+    expect(within(applications).getByRole('switch', { name: 'Trên web: Nhà tuyển dụng xem hoặc tải CV' })).toBeChecked()
+    expect(within(applications).getByText('Luôn bật')).toBeInTheDocument()
+    expect(screen.getByRole('switch', { name: 'Việc làm phù hợp với hồ sơ của bạn' })).not.toBeChecked()
+    expect(screen.queryByText(/sự kiện nghề nghiệp|ưu đãi/i)).not.toBeInTheDocument()
   })
 
-  it('saves a disabled preference silently', async () => {
+  it('saves one channel without locking the other switches', async () => {
     const user = userEvent.setup()
-    notificationApi.getCandidateNotificationPreferences
-      .mockResolvedValueOnce(ALL_ENABLED)
-      .mockResolvedValue({ ...ALL_ENABLED, suitable_job_recommendations: false })
-    notificationApi.updateCandidateNotificationPreferences.mockResolvedValue({
-      suitable_job_recommendations: false,
-    })
-    renderForm()
-
-    const recommendationSwitch = await screen.findByRole(
-      'switch',
-      { name: 'Thông báo việc làm phù hợp' },
+    let release
+    api.updateCandidateNotificationPreferences.mockImplementation(
+      (payload) => new Promise((resolve) => { release = () => resolve({ ...DEFAULTS, ...payload }) }),
     )
-    await user.click(recommendationSwitch)
-
-    await waitFor(() => expect(recommendationSwitch).not.toBeChecked())
-    await waitFor(() => {
-      expect(notificationApi.updateCandidateNotificationPreferences).toHaveBeenCalledWith({
-        suitable_job_recommendations: false,
-      })
-    })
-    expect(screen.queryByText('Đã lưu tự động')).not.toBeInTheDocument()
-    expect(message.success).not.toHaveBeenCalled()
-  })
-
-  it('shows a toast only after enabling a preference', async () => {
-    const user = userEvent.setup()
-    notificationApi.getCandidateNotificationPreferences
-      .mockResolvedValueOnce({
-        ...ALL_ENABLED,
-        suitable_job_recommendations: false,
-      })
-      .mockResolvedValue(ALL_ENABLED)
-    notificationApi.updateCandidateNotificationPreferences.mockResolvedValue({
-      suitable_job_recommendations: true,
-    })
     renderForm()
 
-    await user.click(await screen.findByRole('switch', { name: 'Thông báo việc làm phù hợp' }))
+    await user.click(await screen.findByRole('switch', { name: 'Trên web: Nộp hồ sơ thành công' }))
 
-    await waitFor(() => {
-      expect(message.success).toHaveBeenCalledWith('Đã bật: Thông báo việc làm phù hợp.')
-    })
+    expect(api.updateCandidateNotificationPreferences).toHaveBeenCalledWith({ application_received_web: false })
+    expect(screen.getByRole('switch', { name: 'Email: Nộp hồ sơ thành công' })).toBeEnabled()
+    release()
+    await waitFor(() => expect(screen.getByRole('switch', { name: 'Trên web: Nộp hồ sơ thành công' })).not.toBeChecked())
   })
 
-  it('patches only the followed-company preference when its switch is turned off', async () => {
-    const user = userEvent.setup()
-    notificationApi.getCandidateNotificationPreferences
-      .mockResolvedValueOnce(ALL_ENABLED)
-      .mockResolvedValue({ ...ALL_ENABLED, followed_company_jobs: false })
-    notificationApi.updateCandidateNotificationPreferences.mockResolvedValue({
-      followed_company_jobs: false,
-    })
+  it('disables the similar-jobs option while the confirmation email is off', async () => {
+    api.getCandidateNotificationPreferences.mockResolvedValue({ ...DEFAULTS, application_received_email: false })
     renderForm()
 
-    const followedCompanySwitch = await screen.findByRole('switch', {
-      name: 'Việc làm mới từ công ty đang theo dõi',
-    })
-    await user.click(followedCompanySwitch)
-
-    await waitFor(() => expect(followedCompanySwitch).not.toBeChecked())
-    expect(notificationApi.updateCandidateNotificationPreferences).toHaveBeenCalledWith({
-      followed_company_jobs: false,
-    })
+    expect(await screen.findByRole('switch', { name: 'Kèm gợi ý việc làm tương tự trong email xác nhận' })).toBeDisabled()
   })
 
-  it('rolls back the switch when the PATCH request fails', async () => {
+  it('explains a refused opt-in next to the switch and keeps the server state', async () => {
     const user = userEvent.setup()
-    notificationApi.updateCandidateNotificationPreferences.mockRejectedValue({
-      response: { status: 400, data: { detail: 'Không thể cập nhật lúc này.' } },
-    })
+    api.updateCandidateNotificationPreferences.mockRejectedValue(apiError('consent_required'))
     renderForm()
 
-    const configuredJobSwitch = await screen.findByRole('switch', { name: 'Việc làm theo thiết lập' })
-    await user.click(configuredJobSwitch)
+    const toggle = await screen.findByRole('switch', { name: 'Việc làm phù hợp với hồ sơ của bạn' })
+    await user.click(toggle)
 
-    await waitFor(() => expect(configuredJobSwitch).toBeChecked())
-    expect(message.error).toHaveBeenCalledWith('Không thể cập nhật lúc này.')
+    expect(await screen.findByText('Cần sự đồng ý dùng dữ liệu hồ sơ')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Đi tới cài đặt' })).toHaveAttribute('href', '/tai-khoan/cai-dat-goi-y-viec-lam')
+    await waitFor(() => expect(toggle).not.toBeChecked())
+    expect(message.error).not.toHaveBeenCalled()
+  })
+
+  it('warns when email is paused for the whole site', async () => {
+    api.getCandidateNotificationPreferences.mockResolvedValue({ ...DEFAULTS, email_delivery_enabled: false })
+    renderForm()
+
+    expect(await screen.findByText('Email đang tạm dừng trên toàn hệ thống')).toBeInTheDocument()
   })
 
   it('shows a retry action when the initial request fails', async () => {
-    const user = userEvent.setup()
-    notificationApi.getCandidateNotificationPreferences
-      .mockRejectedValueOnce({ response: { status: 503, data: {} } })
-      .mockResolvedValueOnce(ALL_ENABLED)
-
+    api.getCandidateNotificationPreferences.mockRejectedValueOnce(new Error('boom'))
     renderForm()
 
-    expect(await screen.findByText('Chưa tải được cài đặt nhận email')).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: 'Thử lại' }))
-
-    expect(await screen.findByText('Thông báo từ hệ thống')).toBeInTheDocument()
-    expect(notificationApi.getCandidateNotificationPreferences).toHaveBeenCalledTimes(2)
+    expect(await screen.findByRole('button', { name: 'Thử lại' })).toBeInTheDocument()
   })
 })

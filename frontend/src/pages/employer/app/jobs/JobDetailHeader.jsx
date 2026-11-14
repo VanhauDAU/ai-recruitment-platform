@@ -163,7 +163,7 @@ export default function JobDetailHeader({ job, publicId, summary, closing, onClo
           label="Chưa phản hồi"
           value={formatCount(summary.unanswered)}
           accent={summary.unanswered ? 'text-amber-600' : null}
-          tooltip="Hồ sơ ở trạng thái Tiếp nhận, Đã xem hoặc Cân nhắc"
+          tooltip="Hồ sơ ở trạng thái Mới hoặc Đã xem"
           onClick={() => onSelectFilter('unanswered')}
         />
       </div>

@@ -18,7 +18,7 @@ from io import StringIO
 
 from django.contrib.auth import get_user_model
 from django.core.management import call_command
-from django.db import connection
+from django.db import connection, transaction
 from django.db.migrations.executor import MigrationExecutor
 from django.test import TransactionTestCase
 
@@ -243,3 +243,64 @@ class ApplicationSnapshotMigrationTests(TransactionTestCase):
         executor = MigrationExecutor(connection)
         executor.loader.build_graph()
         self._migrate(executor.loader.graph.leaf_nodes())
+
+
+class CollapseConsideringStatusMigrationTests(TransactionTestCase):
+    """0013 folds the retired `considering` status into `viewed`."""
+
+    BEFORE = [('applications', '0012_application_auto_rejected_at_and_more')]
+    AFTER = [('applications', '0014_status_decisions')]
+
+    def _migrate(self, targets):
+        executor = MigrationExecutor(connection)
+        executor.loader.build_graph()
+        executor.migrate(targets)
+        return executor.loader.project_state(targets).apps
+
+    def tearDown(self):
+        self._migrate(MigrationExecutor(connection).loader.graph.leaf_nodes())
+        super().tearDown()
+
+    def test_considering_rows_become_viewed_and_no_op_history_is_dropped(self):
+        from apps.cv_templates.tests.factories import make_published_template
+        from apps.cvs.services import create_application_snapshot, create_v2_cv
+        from apps.employers.models import Company
+        from apps.jobs.models import Job
+
+        users = get_user_model().objects
+        candidate = users.create_user(
+            email='mig-c@example.com', password='x', role='candidate', email_verified=True
+        )
+        owner = users.create_user(email='mig-o@example.com', password='x', role='employer')
+        company = Company.objects.create(company_name='Mig Co', created_by=owner)
+        job = Job.objects.create(posted_by=owner, company=company, title='Mig', description='d')
+        template, _version = make_published_template('Mig template')
+        cv = create_v2_cv(actor=candidate, title='Mig CV', template=template)
+        with transaction.atomic():
+            snapshot = create_application_snapshot(cv, candidate)
+
+        old_apps = self._migrate(self.BEFORE)
+        application = old_apps.get_model('applications', 'Application').objects.create(
+            public_id='app-mig-considering',
+            candidate_id=candidate.pk,
+            job_id=job.pk,
+            cv_id=cv.pk,
+            submitted_cv_version_id=snapshot.pk,
+            status='considering',
+        )
+        history = old_apps.get_model('applications', 'ApplicationStatusHistory').objects
+        history.create(application_id=application.pk, from_status='', to_status='submitted')
+        history.create(application_id=application.pk, from_status='submitted', to_status='viewed')
+        history.create(application_id=application.pk, from_status='viewed', to_status='considering')
+
+        new_apps = self._migrate(self.AFTER)
+        migrated = new_apps.get_model('applications', 'Application').objects.get(pk=application.pk)
+        rows = list(
+            new_apps.get_model('applications', 'ApplicationStatusHistory')
+            .objects.filter(application_id=application.pk)
+            .order_by('id')
+            .values_list('from_status', 'to_status')
+        )
+        self.assertEqual(migrated.status, 'viewed')
+        self.assertIsNotNone(migrated.viewed_at)
+        self.assertEqual(rows, [('', 'submitted'), ('submitted', 'viewed')])

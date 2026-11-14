@@ -18,17 +18,26 @@ class Application(models.Model):
         INVITED = 'invited', 'Invited'
 
     class Status(models.TextChoices):
-        SUBMITTED = 'submitted', 'Submitted'
-        VIEWED = 'viewed', 'Viewed'
-        CONSIDERING = 'considering', 'Considering'
-        SHORTLISTED = 'shortlisted', 'Shortlisted'
-        INTERVIEWED = 'interviewed', 'Interviewed'
-        REJECTED = 'rejected', 'Rejected'
-        ACCEPTED = 'accepted', 'Accepted'
+        SUBMITTED = 'submitted', 'Mới'
+        VIEWED = 'viewed', 'Đã xem'
+        SHORTLISTED = 'shortlisted', 'Phù hợp'
+        INTERVIEWED = 'interviewed', 'Phỏng vấn'
+        REJECTED = 'rejected', 'Không phù hợp'
+        ACCEPTED = 'accepted', 'Trúng tuyển'
 
     # Statuses the recruiter has not answered yet. One definition shared by the
-    # `scope=unanswered` filter and every aggregate that reports this number.
-    UNANSWERED_STATUSES = (Status.SUBMITTED, Status.VIEWED, Status.CONSIDERING)
+    # `scope=unanswered` filter, automatic rejection and every aggregate that
+    # reports this number.
+    UNANSWERED_STATUSES = (Status.SUBMITTED, Status.VIEWED)
+    # `submitted` and `viewed` are facts recorded by the system; a recruiter
+    # can only answer with one of these decisions.
+    DECISION_STATUSES = (
+        Status.SHORTLISTED,
+        Status.INTERVIEWED,
+        Status.ACCEPTED,
+        Status.REJECTED,
+    )
+    TERMINAL_STATUSES = (Status.ACCEPTED, Status.REJECTED)
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     candidate = models.ForeignKey(
@@ -88,7 +97,6 @@ class Application(models.Model):
                     status__in=[
                         'submitted',
                         'viewed',
-                        'considering',
                         'shortlisted',
                         'interviewed',
                         'rejected',

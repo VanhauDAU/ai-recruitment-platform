@@ -1443,7 +1443,7 @@ test('employer jobs: detail workspace is compact, actionable and responsive', as
           total: 2,
           unviewed: 1,
           unanswered: 2,
-          by_status: { submitted: 1, viewed: 0, considering: 1, shortlisted: 0, interviewed: 0, accepted: 0, rejected: 0 },
+          by_status: { submitted: 1, viewed: 0, shortlisted: 0, interviewed: 1, accepted: 0, rejected: 0 },
         },
         requested_visibility_days: 30,
         first_approved_at: '2026-08-01T02:00:00Z',
@@ -1487,8 +1487,8 @@ test('employer jobs: detail workspace is compact, actionable and responsive', as
         submitted_cv_title: 'Frontend CV', source: 'applied', status: 'submitted', applied_at: '2026-07-20T08:00:00Z',
       },
       {
-        public_id: 'app_considering', candidate_name: 'Lê Hoa', candidate_email: 'hoa@example.com',
-        submitted_cv_title: 'Product CV', source: 'applied', status: 'considering', applied_at: '2026-07-19T08:00:00Z',
+        public_id: 'app_interviewed', candidate_name: 'Lê Hoa', candidate_email: 'hoa@example.com',
+        submitted_cv_title: 'Product CV', source: 'applied', status: 'interviewed', applied_at: '2026-07-19T08:00:00Z',
       },
     ].filter((item) => !params.get('status') || item.status === params.get('status'))
     await route.fulfill({
@@ -1531,11 +1531,11 @@ test('employer jobs: detail workspace is compact, actionable and responsive', as
   await expectNoHorizontalOverflow(page)
 
   const chips = page.getByRole('group', { name: 'Lọc hồ sơ theo trạng thái' })
-  await chips.getByRole('button', { name: /Cân nhắc\s*1/ }).click()
-  await expect.poll(() => applicationQueries.at(-1)?.get('status')).toBe('considering')
+  await chips.getByRole('button', { name: /Phỏng vấn\s*1/ }).click()
+  await expect.poll(() => applicationQueries.at(-1)?.get('status')).toBe('interviewed')
   await expect(page.getByText('Trần Minh').filter({ visible: true })).toHaveCount(0)
   await expect(page.getByText('Lê Hoa').filter({ visible: true })).toBeVisible()
-  await expect(page).toHaveURL(/cv_filter=considering/)
+  await expect(page).toHaveURL(/cv_filter=interviewed/)
   await expectNoHorizontalOverflow(page)
 
   if (usesCompactTabs) {
@@ -1580,7 +1580,8 @@ test('employer applications: grouped CV workspace is clear across responsive lay
       candidate_email: 'levanhaum@gmail.com', job: 'jb_987ecf21d547',
       job_title: 'Senior Frontend Developer', submitted_cv_title: 'CV Frontend 2026',
       submitted_cv_version: 'cvv_frontend_2', submitted_cv_source: 'builder',
-      source: 'applied', status: 'submitted', employer_note: 'React tốt', employer_rating: 4,
+      source: 'applied', status: 'viewed', employer_note: 'React tốt', employer_rating: 4,
+      available_decisions: ['shortlisted', 'interviewed', 'accepted', 'rejected'],
       cover_letter: 'Tôi mong muốn đồng hành cùng đội ngũ sản phẩm.',
       applied_at: '2026-08-02T09:20:00+07:00',
     },
@@ -1589,7 +1590,8 @@ test('employer applications: grouped CV workspace is clear across responsive lay
       candidate_email: 'LEVANHAUM@gmail.com', job: 'jb_987ecf21d547',
       job_title: 'Senior Frontend Developer', submitted_cv_title: 'CV Frontend bản đầu',
       submitted_cv_version: 'cvv_frontend_1', submitted_cv_source: 'upload',
-      source: 'applied', status: 'considering', employer_note: '', employer_rating: null,
+      source: 'applied', status: 'submitted', employer_note: '', employer_rating: null,
+      available_decisions: ['shortlisted', 'interviewed', 'accepted', 'rejected'],
       applied_at: '2026-07-28T08:00:00+07:00',
     },
   ]
@@ -1628,14 +1630,45 @@ test('employer applications: grouped CV workspace is clear across responsive lay
       }),
     })
   })
+  const history = [
+    { from_status: '', to_status: 'submitted', note: '', changed_by_name: '', created_at: '2026-08-02T09:20:00+07:00', reverted_at: null, can_undo: false, candidate_notice: null },
+    {
+      from_status: 'submitted', to_status: 'viewed', note: '', changed_by_name: 'HR Team', created_at: '2026-08-02T09:30:00+07:00', reverted_at: null, can_undo: false,
+      candidate_notice: { state: 'delivered', deliver_at: '2026-08-02T09:30:00+07:00', delivered_at: '2026-08-02T09:31:00+07:00', email_sent_at: '2026-08-02T09:31:05+07:00' },
+    },
+  ]
   await page.route('http://localhost:8000/api/v2/recruiter/applications/app_befb3400ade3/history/', async (route) => {
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify(history) })
+  })
+  const decisions = []
+  await page.route('http://localhost:8000/api/v2/recruiter/applications/app_befb3400ade3/status/', async (route) => {
+    const { status } = route.request().postDataJSON()
+    decisions.push(status)
+    applications[0] = { ...applications[0], status, available_decisions: ['interviewed', 'accepted', 'rejected'] }
+    history.push({
+      from_status: 'viewed', to_status: status, note: '', changed_by_name: 'HR Team', created_at: '2026-08-02T10:00:00+07:00', reverted_at: null, can_undo: true,
+      candidate_notice: { state: 'scheduled', deliver_at: '2026-08-02T10:05:00+07:00', delivered_at: null, email_sent_at: null },
+    })
     await route.fulfill({
       contentType: 'application/json',
-      body: JSON.stringify([
-        { from_status: '', to_status: 'submitted', note: '', changed_by_name: '', created_at: '2026-08-02T09:20:00+07:00' },
-        { from_status: 'submitted', to_status: 'viewed', note: '', changed_by_name: 'HR Team', created_at: '2026-08-02T09:30:00+07:00' },
-      ]),
+      body: JSON.stringify({ application: applications[0], candidate_notice_at: '2026-08-02T10:05:00+07:00' }),
     })
+  })
+  await page.route('http://localhost:8000/api/v2/recruiter/applications/app_befb3400ade3/status/undo/', async (route) => {
+    decisions.push('undo')
+    applications[0] = { ...applications[0], status: 'viewed', available_decisions: ['shortlisted', 'interviewed', 'accepted', 'rejected'] }
+    history[history.length - 1] = { ...history.at(-1), reverted_at: '2026-08-02T10:01:00+07:00', can_undo: false, candidate_notice: { ...history.at(-1).candidate_notice, state: 'undone' } }
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify(applications[0]) })
+  })
+  await page.route('http://localhost:8000/api/v2/recruiter/applications/app_befb3400ade3/cv/exports/', async (route) => {
+    await route.fulfill({
+      status: 201,
+      contentType: 'application/json',
+      body: JSON.stringify({ public_id: 'cve_1', status: 'completed', download_url: 'http://localhost:8000/api/v2/recruiter/applications/app_befb3400ade3/cv/exports/cve_1/download/' }),
+    })
+  })
+  await page.route('http://localhost:8000/api/v2/recruiter/applications/app_befb3400ade3/cv/exports/cve_1/download/', async (route) => {
+    await route.fulfill({ contentType: 'application/pdf', body: '%PDF-1.4 snapshot' })
   })
 
   await page.goto('/tuyendung/app/applications?job=jb_987ecf21d547&q=levanhaum%40gmail.com&application=app_befb3400ade3')
@@ -1651,18 +1684,38 @@ test('employer applications: grouped CV workspace is clear across responsive lay
   await expect(candidateList.getByRole('button', { name: 'Xem CV Frontend 2026 của Lê Văn Hậu' })).toBeVisible()
   await expect(candidateList.getByRole('button', { name: 'Xem CV Frontend bản đầu của Lê Văn Hậu' })).toBeVisible()
   await expect(cvPreview.getByLabel('Xem trước CV single_column_v1 trang 1')).toBeVisible()
+  await expect(cvPreview.getByRole('button', { name: /Nhắn tin/ })).toBeDisabled()
+  const download = page.waitForEvent('download')
+  await cvPreview.getByRole('button', { name: /Tải PDF/ }).click()
+  expect((await download).suggestedFilename()).toBe('CV - Lê Văn Hậu.pdf')
+
   const viewportWidth = page.viewportSize().width
   if (viewportWidth < 768) {
     await expect(inspector).toBeHidden()
-    await page.getByRole('tab', { name: 'Thông tin liên quan' }).click()
+    await page.getByRole('tab', { name: 'Xử lý hồ sơ' }).click()
     await expect(inspector).toBeVisible()
     await expect(cvPreview).toBeHidden()
   }
   await expect(inspector.getByText('levanhaum@gmail.com', { exact: true }).first()).toBeVisible()
   await expect(inspector.getByText('Đà Nẵng, Làm việc từ xa')).toBeVisible()
-  await expect(inspector.getByText('Đã xem', { exact: true })).toBeVisible()
+  await expect(inspector.getByText(/Đã báo ứng viên/)).toBeVisible()
+
+  const decisionBar = inspector.getByRole('group', { name: 'Quyết định cho hồ sơ' })
+  await decisionBar.getByRole('button', { name: 'Phù hợp', exact: true }).click()
+  await expect(inspector.getByRole('status').filter({ hasText: 'Ứng viên sẽ được báo lúc' })).toBeVisible()
+  await inspector.getByRole('button', { name: 'Hoàn tác' }).click()
+  await expect(inspector.getByText('Không gửi: đã hoàn tác')).toBeVisible()
+  expect(decisions).toEqual(['shortlisted', 'undo'])
+
+  await decisionBar.getByRole('button', { name: 'Không phù hợp' }).click()
+  await expect(page.getByRole('dialog')).toContainText('không thể đổi tiếp')
+  await page.getByRole('dialog').getByRole('button', { name: 'Đóng', exact: true }).click()
+  expect(decisions).toEqual(['shortlisted', 'undo'])
 
   if (viewportWidth >= 1280) {
+    // The sidebar opens the "Quản lý CV" group on this page and badges unread CVs.
+    await expect(page.getByRole('menuitem', { name: /CV ứng tuyển/ })).toBeVisible()
+    await expect(page.getByLabel('2 CV mới chưa xem').first()).toBeVisible()
     const [listBox, previewBox, inspectorBox] = await Promise.all([
       candidateList.boundingBox(), cvPreview.boundingBox(), inspector.boundingBox(),
     ])
@@ -1819,7 +1872,7 @@ test('employer campaign detail: TopCV-style workspace is responsive and uses API
         accepted_count: 1,
         applications: { total: 2, new: 1 },
         jobs: { total: 2, active: 1, draft: 1 },
-        funnel: { submitted: 1, considering: 1 },
+        funnel: { submitted: 1, viewed: 1 },
         daily_applications: [
           { date: '2026-07-16', count: 0 },
           { date: '2026-07-17', count: 1 },

@@ -4,10 +4,12 @@ from .profile import CandidateProfile
 
 
 class CandidateEmailNotificationSettings(models.Model):
-    """Candidate-managed email notification categories.
+    """Candidate-managed notification channels (email and website bell).
 
-    Recommendation emails are deliberately opt-in because they read profile/CV
-    signals. The remaining categories preserve the historical enabled defaults.
+    Every field here has a consumer; a switch nobody reads is not offered.
+    Recruiter decisions on an application (shortlisted, interview, result)
+    are mandatory and have no switch. Job recommendation emails stay opt-in
+    because they read profile/CV signals.
     """
 
     candidate_profile = models.OneToOneField(
@@ -16,24 +18,17 @@ class CandidateEmailNotificationSettings(models.Model):
         related_name='email_notification_settings',
     )
 
-    # Thông báo từ hệ thống.
-    important_system_updates = models.BooleanField(default=True)
-    employer_viewed_cv = models.BooleanField(default=True)
-    new_features_and_cv_templates = models.BooleanField(default=True)
-    other_system_notifications = models.BooleanField(default=True)
+    # Hồ sơ ứng tuyển — hai kênh.
+    application_received_email = models.BooleanField(default=True)
+    application_received_web = models.BooleanField(default=True)
+    similar_jobs_in_application_email = models.BooleanField(default=True)
+    cv_activity_email = models.BooleanField(default=True)
+    cv_activity_web = models.BooleanField(default=True)
 
-    # Thông báo cơ hội việc làm.
+    # Email việc làm (consumer: apps/jobs/services/digests.py).
     configured_job_alerts = models.BooleanField(default=True)
     suitable_job_recommendations = models.BooleanField(default=False)
     followed_company_jobs = models.BooleanField(default=True)
-    top_candidate_alerts = models.BooleanField(default=True)
-    employer_invitations = models.BooleanField(default=True)
-    job_and_career_events = models.BooleanField(default=True)
-
-    # Thông báo giới thiệu dịch vụ.
-    service_introductions = models.BooleanField(default=True)
-    program_and_event_introductions = models.BooleanField(default=True)
-    partner_gifts_and_discounts = models.BooleanField(default=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

@@ -5,7 +5,6 @@ import {
   WORK_TYPE_LABELS,
 } from '@/entities/job'
 
-export const JOB_PREFERENCE_SETTINGS_PATH = '/tai-khoan/cai-dat-goi-y-viec-lam'
 
 export const JOB_ALERT_SCOPE_OPTIONS = [
   { value: 'title', label: 'Tên vị trí tuyển dụng' },

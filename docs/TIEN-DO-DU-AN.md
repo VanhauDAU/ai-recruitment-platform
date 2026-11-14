@@ -20,6 +20,44 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Lộ trình theo PRD](#lộ-trình-theo-prd) | 🟨 Phần AI lõi (giai đoạn 2–3) còn mở |
 | [Việc còn mở](#việc-còn-mở) | |
 
+## Xử lý hồ sơ ứng tuyển — giai đoạn 1 (2026-11-15)
+
+Lộ trình 6 giai đoạn của workspace `/tuyendung/app/applications`; mỗi giai
+đoạn một PR.
+
+| GĐ | Hạng mục | Trạng thái |
+| --- | --- | --- |
+| 1 | Quy trình 6 trạng thái (bỏ `considering`), thông báo ứng viên (chuông + email) có cửa sổ hoàn tác, tải PDF CV kèm nhật ký truy cập, chặn nộp CV rỗng, làm lại giao diện | ✅ Xong trên nhánh `feat/application-workspace-stage-1`, chưa gộp |
+| 2 | Điểm phù hợp CV–JD có giải thích, xếp hạng danh sách | ⬜ |
+| 3 | Chia sẻ CV bằng link bảo mật + phiếu đánh giá nội bộ | ⬜ |
+| 4 | Danh sách đen + phát hiện ứng tuyển hàng loạt | ⬜ |
+| 5 | Kho ứng viên tiềm năng + gợi ý lại khi đăng tin mới | ⬜ |
+| 6 | Gợi ý kỹ năng còn thiếu cho ứng viên bị từ chối | ⬜ |
+| Sau | Nhắn tin ứng viên (nút đã đặt sẵn), hẹn lịch phỏng vấn | ⬜ |
+
+<details><summary>Ghi chú giai đoạn 1</summary>
+
+- Trạng thái: `submitted`/`viewed` do hệ thống đặt; NTD chọn Phù hợp, Phỏng
+  vấn, Trúng tuyển, Không phù hợp (không cần lý do). Trạng thái cuối có xác
+  nhận.
+- `CandidateNotification` (app `candidates`) vừa là hộp thư vừa là outbox
+  email. Quyết định hẹn giao sau 5 phút; quyết định mới hơn trên cùng hồ sơ
+  thay thế thông báo chưa giao; hoàn tác hủy thông báo. Giao và hủy là hai
+  UPDATE có điều kiện nên không tranh chấp. Beat `dispatch-candidate-notifications`
+  60s. Ứng viên chỉ thấy trạng thái đã được báo.
+- NTD tải PDF qua `CvExport` của snapshot (`cv=NULL`, còn sau khi ứng viên xóa
+  CV); mọi lần xem/tải ghi `CvAccessLog` (trước đây không nơi nào ghi).
+- Lỗi tìm thấy: form ứng tuyển nộp CV DOCX/PDF trước khi phân tích xong nên NTD
+  nhận CV rỗng. Nay chờ `waitForCvImport` và server chặn CV thiếu họ tên /
+  liên hệ / nội dung.
+- Sửa thêm: GET snapshot của ứng viên bị hạn chế trả 500.
+- Xác nhận nộp hồ sơ (chuông + email có việc làm tương tự) và trang "Cài đặt
+  nhận thông báo" theo kênh Email/Web; xóa 9 công tắc không có tác dụng.
+- Sidebar NTD: "Quản lý CV" → "CV ứng tuyển" (mọi tin, badge CV chưa xem);
+  "Kho ứng viên tiềm năng" và "Danh sách đen" hiện "Sắp mở" theo GĐ 4–5.
+
+</details>
+
 ## Thiết kế lại quản lý tin tuyển dụng của NTD (2026-11-15)
 
 | Hạng mục | Trạng thái |

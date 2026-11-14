@@ -1,6 +1,7 @@
 import { ArrowRightOutlined, FileSearchOutlined, InboxOutlined, PlusOutlined, UserOutlined } from '@ant-design/icons'
 import { Avatar } from 'antd'
 import { Link } from 'react-router'
+import { RECRUITER_APPLICATION_STATUS_LABELS } from '@/entities/application'
 import { employerAppPath } from '@/shared/config/portals'
 
 const dateFormatter = new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })
@@ -9,14 +10,13 @@ const JOB_STATUS = {
   draft: { label: 'Bản nháp', className: 'bg-slate-100 text-slate-600' },
   closed: { label: 'Đã đóng', className: 'bg-slate-100 text-slate-500' },
 }
-const APPLICATION_STATUS = {
-  submitted: { label: 'Mới', className: 'bg-blue-50 text-blue-700' },
-  viewed: { label: 'Đã xem', className: 'bg-cyan-50 text-cyan-700' },
-  considering: { label: 'Cân nhắc', className: 'bg-orange-50 text-orange-700' },
-  shortlisted: { label: 'Phù hợp', className: 'bg-amber-50 text-amber-700' },
-  interviewed: { label: 'Phỏng vấn', className: 'bg-violet-50 text-violet-700' },
-  accepted: { label: 'Đã nhận', className: 'bg-emerald-50 text-emerald-700' },
-  rejected: { label: 'Từ chối', className: 'bg-red-50 text-red-700' },
+const APPLICATION_STATUS_CLASSES = {
+  submitted: 'bg-blue-50 text-blue-700',
+  viewed: 'bg-cyan-50 text-cyan-700',
+  shortlisted: 'bg-amber-50 text-amber-700',
+  interviewed: 'bg-violet-50 text-violet-700',
+  accepted: 'bg-emerald-50 text-emerald-700',
+  rejected: 'bg-red-50 text-red-700',
 }
 
 function EmptyState({ type }) {
@@ -76,7 +76,10 @@ export function RecentApplicationsCard({ applications = [] }) {
       {!applications.length ? <EmptyState type="applications" /> : (
         <div className="divide-y divide-slate-100">
           {applications.map((application) => {
-            const status = APPLICATION_STATUS[application.status] || { label: application.status_label || application.status, className: 'bg-slate-100 text-slate-600' }
+            const status = {
+              label: RECRUITER_APPLICATION_STATUS_LABELS[application.status] || application.status_label || application.status,
+              className: APPLICATION_STATUS_CLASSES[application.status] || 'bg-slate-100 text-slate-600',
+            }
             return (
               <Link to={`${employerAppPath('/applications')}?job=${encodeURIComponent(application.job_public_id)}`} key={application.public_id} className="group flex items-center gap-3 py-3.5 first:pt-1 last:pb-0">
                 <Avatar className="!shrink-0 !bg-emerald-50 !font-bold !text-emerald-700">{application.candidate_name?.trim()?.charAt(0)?.toUpperCase() || 'U'}</Avatar>

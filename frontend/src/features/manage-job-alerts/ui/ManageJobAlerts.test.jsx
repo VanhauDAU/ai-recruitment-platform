@@ -30,7 +30,8 @@ vi.mock('@/entities/candidate-job-alert', () => ({
   getCandidateJobAlerts: mocks.getCandidateJobAlerts,
   updateCandidateJobAlert: mocks.updateCandidateJobAlert,
 }))
-vi.mock('@/entities/candidate-notification-preferences', () => ({
+vi.mock('@/entities/candidate-notification-preferences', async (importOriginal) => ({
+  PREFERENCE_ISSUES: (await importOriginal()).PREFERENCE_ISSUES,
   candidateNotificationPreferenceKeys: { preferences: () => ['candidate-notification-preferences', 'preferences'] },
   candidateNotificationPreferenceMutationKey: ['candidate-notification-preferences', 'update'],
   candidateNotificationPreferenceMutationScope: { id: 'candidate-notification-preferences-update' },

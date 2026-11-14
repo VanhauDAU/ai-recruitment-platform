@@ -4,6 +4,8 @@ Số query phải phẳng theo số bản ghi. Tăng budget phải kèm giải t
 """
 
 from django.contrib.auth import get_user_model
+from django.db import connection
+from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from rest_framework.test import APITestCase
 
@@ -11,6 +13,7 @@ from apps.accounts.services.tokens import issue_tokens
 from apps.cv_templates.tests.factories import make_published_template
 from apps.cvs.services import create_v2_cv
 from apps.employers.models import Company
+from apps.employers.tests.readiness_helpers import make_employer_ready
 from apps.jobs.models import Job
 
 from ..services import create_application_record
@@ -53,3 +56,51 @@ class CandidateApplicationListQueryBudgetTests(APITestCase):
             response = self.client.get(reverse('candidate-application-list-create-v2'))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.data['results']), 3)
+
+
+class RecruiterApplicationListQueryBudgetTests(APITestCase):
+    """`available_decisions` is computed in Python from loaded rows: no N+1."""
+
+    def setUp(self):
+        user_model = get_user_model()
+        self.employer = user_model.objects.create_user(
+            email='budget-recruiter@example.com', password='password', role='employer'
+        )
+        company = Company.objects.create(
+            company_name='Recruiter Budget Co', created_by=self.employer
+        )
+        make_employer_ready(self.employer, company=company, candidate_data=True)
+        self.job = Job.objects.create(
+            posted_by=self.employer,
+            company=company,
+            title='Recruiter Budget Job',
+            description='Description',
+            status=Job.Status.ACTIVE,
+        )
+        self.template, _version = make_published_template('Recruiter budget template')
+        tokens = issue_tokens(self.employer)
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {tokens["access"]}')
+
+    def add_applications(self, count, offset=0):
+        for index in range(offset, offset + count):
+            candidate = get_user_model().objects.create_user(
+                email=f'budget-applicant-{index}@example.com',
+                password='password',
+                role='candidate',
+                email_verified=True,
+            )
+            cv = create_v2_cv(actor=candidate, title=f'CV {index}', template=self.template)
+            create_application_record(candidate=candidate, job=self.job, cv=cv)
+
+    def count_list_queries(self):
+        with CaptureQueriesContext(connection) as queries:
+            response = self.client.get(reverse('recruiter-application-list-v2'))
+        self.assertEqual(response.status_code, 200)
+        return len(queries)
+
+    def test_recruiter_application_list_query_count_is_flat(self):
+        self.add_applications(1)
+        single = self.count_list_queries()
+        self.add_applications(2, offset=1)
+
+        self.assertEqual(self.count_list_queries(), single)

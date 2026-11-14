@@ -65,7 +65,7 @@ describe('CampaignDetail', () => {
       application_pair_count: 5,
       applications: { total: 7, new: 2 },
       jobs: { total: 2, active: 1 },
-      funnel: { submitted: 2, considering: 2, accepted: 1 },
+      funnel: { submitted: 2, viewed: 2, accepted: 1 },
     })
     getCampaignJobPerformance.mockResolvedValue({
       summary: {

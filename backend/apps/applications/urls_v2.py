@@ -1,11 +1,18 @@
 from django.urls import path
 
 from .api.views.admin import AdminJobApplicationListView
+from .api.views.cv_exports import (
+    RecruiterApplicationCvExportDetailView,
+    RecruiterApplicationCvExportDownloadView,
+    RecruiterApplicationCvExportView,
+)
 from .api.views.employer import (
+    EmployerApplicationAssessmentView,
+    EmployerApplicationDecisionUndoView,
+    EmployerApplicationDecisionView,
     EmployerApplicationExportView,
     EmployerApplicationHistoryView,
     EmployerApplicationListView,
-    EmployerApplicationStatusUpdateView,
 )
 from .api.views.v2 import CandidateApplicationV2ListCreateView, RecruiterApplicationSnapshotView
 
@@ -32,13 +39,38 @@ urlpatterns = [
     ),
     path(
         'recruiter/applications/<str:public_id>/',
-        EmployerApplicationStatusUpdateView.as_view(),
-        name='recruiter-application-status-v2',
+        EmployerApplicationAssessmentView.as_view(),
+        name='recruiter-application-assessment-v2',
+    ),
+    path(
+        'recruiter/applications/<str:public_id>/status/',
+        EmployerApplicationDecisionView.as_view(),
+        name='recruiter-application-decision-v2',
+    ),
+    path(
+        'recruiter/applications/<str:public_id>/status/undo/',
+        EmployerApplicationDecisionUndoView.as_view(),
+        name='recruiter-application-decision-undo-v2',
     ),
     path(
         'recruiter/applications/<str:public_id>/cv/',
         RecruiterApplicationSnapshotView.as_view(),
         name='recruiter-application-snapshot-v2',
+    ),
+    path(
+        'recruiter/applications/<str:public_id>/cv/exports/',
+        RecruiterApplicationCvExportView.as_view(),
+        name='recruiter-application-cv-export-v2',
+    ),
+    path(
+        'recruiter/applications/<str:public_id>/cv/exports/<str:export_public_id>/',
+        RecruiterApplicationCvExportDetailView.as_view(),
+        name='recruiter-application-cv-export-detail-v2',
+    ),
+    path(
+        'recruiter/applications/<str:public_id>/cv/exports/<str:export_public_id>/download/',
+        RecruiterApplicationCvExportDownloadView.as_view(),
+        name='recruiter-application-cv-export-download-v2',
     ),
     path(
         'recruiter/applications/<str:public_id>/history/',

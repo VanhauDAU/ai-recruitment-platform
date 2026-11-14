@@ -51,8 +51,36 @@ export async function exportRecruiterApplications(params = {}) {
   }
 }
 
-export async function updateApplicationStatus(publicId, payload) {
+/** Private note/rating only; status changes go through `decideApplicationStatus`. */
+export async function updateApplicationAssessment(publicId, payload) {
   const { data } = await api.patch(`/v2/recruiter/applications/${publicId}/`, payload)
+  return data
+}
+
+/** Returns `{ application, candidate_notice_at }`; the candidate is told at that time. */
+export async function decideApplicationStatus(publicId, status) {
+  const { data } = await api.post(`/v2/recruiter/applications/${publicId}/status/`, { status })
+  return data
+}
+
+export async function undoApplicationStatusChange(publicId) {
+  const { data } = await api.post(`/v2/recruiter/applications/${publicId}/status/undo/`)
+  return data
+}
+
+export async function requestApplicationCvExport(publicId) {
+  const { data } = await api.post(`/v2/recruiter/applications/${publicId}/cv/exports/`)
+  return data
+}
+
+export async function getApplicationCvExport(publicId, exportId) {
+  const { data } = await api.get(`/v2/recruiter/applications/${publicId}/cv/exports/${exportId}/`)
+  return data
+}
+
+/** `downloadUrl` is the absolute URL returned by the export endpoints. */
+export async function downloadApplicationCv(downloadUrl) {
+  const { data } = await api.get(downloadUrl, { responseType: 'blob' })
   return data
 }
 
