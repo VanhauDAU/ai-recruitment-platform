@@ -12,21 +12,15 @@ from rest_framework_simplejwt.tokens import AccessToken
 from apps.accounts import oauth
 from apps.accounts.models import (
     AdminAccessAuditLog,
-    AdminPermission,
-    AdminRole,
     AuthEmailJob,
     AuthSession,
-    Department,
     SocialAccount,
     User,
 )
-from apps.accounts.services import (
-    assign_membership,
-    email_verification,
-    password_reset,
-)
+from apps.accounts.services import email_verification, password_reset
 from apps.accounts.services.refresh_cookies import cookie_name
 from apps.accounts.services.tokens import issue_tokens
+from apps.accounts.tests.helpers import make_admin
 
 
 @override_settings(
@@ -42,14 +36,8 @@ class AccountIdentityRecoveryApiTests(APITestCase):
         cache.clear()
         self.delay = patch('apps.accounts.tasks.auth_email.deliver_auth_email_job.delay').start()
         self.addCleanup(patch.stopall)
-        self.superuser = User.objects.create_user(
-            email='identity-root@example.com',
-            password=self.password,
-            role=User.Role.ADMIN,
-            status=User.Status.ACTIVE,
-            is_active=True,
-            is_staff=True,
-            is_superuser=True,
+        self.superuser = make_admin(
+            'identity-root@example.com', superuser=True, password=self.password
         )
         self.target = User.objects.create_user(
             email='identity-old@example.com',
@@ -294,47 +282,12 @@ class AccountIdentityRecoveryApiTests(APITestCase):
         stale = self._confirm('change-email', payload, impact['impact_token'])
         self.assertEqual(stale.status_code, status.HTTP_409_CONFLICT)
 
-    def test_non_superuser_cannot_recover_an_admin_target(self):
-        email_permission = AdminPermission.objects.get(code='account.email.manage')
-        supporting_permissions = [
-            AdminPermission.objects.get_or_create(
-                code=code,
-                defaults={'module': 'account', 'label': code},
-            )[0]
-            for code in (
-                'account.view',
-                'account.security.manage',
-                'account.admin.view',
-            )
-        ]
-        department = Department.objects.create(
-            code='identity-recovery',
-            name='Khôi phục danh tính',
-        )
-        role = AdminRole.objects.create(
-            department=department,
-            code='identity-recovery-operator',
-            name='Nhân viên khôi phục',
-        )
-        role.permissions.add(email_permission, *supporting_permissions)
-        operator = User.objects.create_user(
-            email='identity-operator@example.com',
-            password=self.password,
-            role=User.Role.ADMIN,
-            status=User.Status.ACTIVE,
-            is_active=True,
-        )
-        assign_membership(operator, role, actor=self.superuser)
-        admin_target = User.objects.create_user(
-            email='admin-target@example.com',
-            password=self.password,
-            role=User.Role.ADMIN,
-            status=User.Status.ACTIVE,
-            is_active=True,
-        )
-        self.client.force_authenticate(operator)
+    def test_regular_admin_recovers_candidates_but_not_admin_targets(self):
+        self.client.force_authenticate(make_admin('identity-operator@example.com'))
+        admin_target = make_admin('admin-target@example.com')
 
-        response = self.client.post(
+        self._impact('email-impact', self._email_payload())
+        hidden = self.client.post(
             reverse(
                 'admin-account-email-impact',
                 kwargs={'public_id': admin_target.public_id},
@@ -343,23 +296,7 @@ class AccountIdentityRecoveryApiTests(APITestCase):
             format='json',
         )
 
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-
-    def test_permissions_are_seeded_without_default_role_grants(self):
-        codes = {'account.email.manage'}
-        self.assertEqual(
-            set(
-                AdminPermission.objects.filter(code__in=codes).values_list(
-                    'code',
-                    flat=True,
-                )
-            ),
-            codes,
-        )
-        self.assertFalse(AdminRole.objects.filter(permissions__code__in=codes).exists())
-        self.assertFalse(
-            AdminPermission.objects.filter(code='account.mfa.reset', is_active=True).exists()
-        )
+        self.assertEqual(hidden.status_code, status.HTTP_404_NOT_FOUND)
 
 
 @override_settings(

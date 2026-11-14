@@ -1,84 +1,47 @@
-from django.core.cache import cache
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from .announcement_helpers import create_admin_with_permissions, revision_payload
+from apps.accounts.models import User
+from apps.accounts.tests.helpers import make_admin
+
+from .announcement_helpers import revision_payload
 
 
 class AnnouncementPermissionTests(APITestCase):
     def setUp(self):
-        cache.clear()
         self.list_url = reverse('site-admin-announcements')
 
-    def test_view_only_admin_can_read_but_cannot_create(self):
-        viewer = create_admin_with_permissions('announcement.view', email='ann-view@example.com')
-        self.client.force_authenticate(viewer)
-
-        get_response = self.client.get(self.list_url)
-        post_response = self.client.post(
-            self.list_url,
-            {'internal_name': 'Không được tạo', 'revision': revision_payload()},
-            format='json',
-        )
-
-        self.assertEqual(get_response.status_code, status.HTTP_200_OK)
-        self.assertEqual(post_response.status_code, status.HTTP_403_FORBIDDEN)
-
-    def test_manager_cannot_publish_and_publisher_cannot_create_revision(self):
-        manager = create_admin_with_permissions(
-            'announcement.view',
-            'announcement.manage',
-            email='ann-manager@example.com',
-        )
-        self.client.force_authenticate(manager)
+    def test_regular_admin_can_create_publish_and_revise(self):
+        self.client.force_authenticate(make_admin('ann-admin@example.com'))
         created = self.client.post(
             self.list_url,
-            {'internal_name': 'Phân quyền', 'revision': revision_payload()},
+            {'internal_name': 'Thông báo admin thường', 'revision': revision_payload()},
             format='json',
         )
         public_id = created.data['public_id']
-        denied_publish = self.client.post(
+        published = self.client.post(
             reverse('site-admin-announcement-publish', kwargs={'public_id': public_id}),
             {'revision_token': 1, 'revision': 1},
             format='json',
         )
-
-        publisher = create_admin_with_permissions(
-            'announcement.view',
-            'announcement.publish',
-            email='ann-publisher@example.com',
-        )
-        self.client.force_authenticate(publisher)
-        allowed_publish = self.client.post(
-            reverse('site-admin-announcement-publish', kwargs={'public_id': public_id}),
-            {'revision_token': 1, 'revision': 1},
-            format='json',
-        )
-        denied_revision = self.client.post(
+        revised = self.client.post(
             reverse('site-admin-announcement-revisions', kwargs={'public_id': public_id}),
             {
-                'revision_token': allowed_publish.data['revision_token'],
-                'revision': revision_payload(message_vi='Không được tạo'),
+                'revision_token': published.data['revision_token'],
+                'revision': revision_payload(message_vi='Bản sửa đổi'),
             },
             format='json',
         )
 
-        self.assertEqual(created.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(denied_publish.status_code, status.HTTP_403_FORBIDDEN)
-        self.assertEqual(allowed_publish.status_code, status.HTTP_200_OK)
-        self.assertEqual(denied_revision.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(created.status_code, status.HTTP_201_CREATED, created.data)
+        self.assertEqual(published.status_code, status.HTTP_200_OK, published.data)
+        self.assertEqual(revised.status_code, status.HTTP_201_CREATED, revised.data)
 
-    def test_manage_or_publish_without_view_fails_closed(self):
-        manager_without_view = create_admin_with_permissions(
-            'announcement.manage',
-            email='ann-invalid-manager@example.com',
+    def test_non_admin_is_rejected(self):
+        candidate = User.objects.create_user(
+            'ann-candidate@example.com', 'Password@123', role=User.Role.CANDIDATE
         )
-        self.client.force_authenticate(manager_without_view)
-        response = self.client.post(
-            self.list_url,
-            {'internal_name': 'Thiếu quyền xem', 'revision': revision_payload()},
-            format='json',
-        )
+        self.client.force_authenticate(candidate)
 
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(self.client.get(self.list_url).status_code, status.HTTP_403_FORBIDDEN)

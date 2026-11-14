@@ -2,14 +2,6 @@ from datetime import timedelta
 
 from django.utils import timezone
 
-from apps.accounts.models import (
-    AdminMembership,
-    AdminPermission,
-    AdminRole,
-    Department,
-    User,
-)
-
 from ..models import AnnouncementRevision
 
 
@@ -42,34 +34,3 @@ def revision_payload(**overrides):
     }
     payload.update(overrides)
     return payload
-
-
-def create_admin_with_permissions(*codes, email='announcement-admin@example.com'):
-    admin = User.objects.create_user(
-        email=email,
-        password='Password@123',
-        role=User.Role.ADMIN,
-    )
-    department = Department.objects.create(
-        code=f'announcements-{admin.pk}',
-        name='Thông báo',
-    )
-    role = AdminRole.objects.create(
-        department=department,
-        code='operator',
-        name='Điều phối thông báo',
-        rank=10,
-    )
-    permissions = []
-    for code in codes:
-        permission, _ = AdminPermission.objects.get_or_create(
-            code=code,
-            defaults={
-                'module': 'announcement',
-                'label': code,
-            },
-        )
-        permissions.append(permission)
-    role.permissions.set(permissions)
-    AdminMembership.objects.create(user=admin, role=role, is_primary=True)
-    return admin

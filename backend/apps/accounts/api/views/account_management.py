@@ -10,11 +10,11 @@ from rest_framework.views import APIView
 
 from common.pagination import StandardPagination
 
-from ...admin_access_rules import InvalidImpactToken, StaleImpactToken
 from ...admin_invitation_tokens import InvalidAdminInvitationToken
 from ...exceptions import AdminPermissionDenied, AdminResourceChanged
+from ...impact_token_rules import InvalidImpactToken, StaleImpactToken
 from ...models import AuthEmailJob, User
-from ...permissions import HasAdminPermission, require_admin_permission
+from ...permissions import AdminPortalPermission
 from ...selectors import (
     account_activity_queryset,
     account_email_change_impact,
@@ -24,20 +24,15 @@ from ...selectors import (
     account_status_impact,
     account_summary,
     accounts_queryset,
-    available_invitation_roles,
     invitation_queryset,
-    provisioning_scope_status_impact,
-    provisioning_scopes_queryset,
 )
 from ...services import (
     accept_admin_invitation,
     confirm_account_email,
     confirm_account_status,
-    confirm_provisioning_scope_status,
     confirm_release_account_resource_holds,
     confirm_revoke_account_sessions,
     create_admin_invitation,
-    create_provisioning_scope,
     ensure_account_recovery_allowed,
     ensure_account_status_change_allowed,
     ensure_account_write_allowed,
@@ -46,7 +41,6 @@ from ...services import (
     resolve_admin_invitation,
     revoke_admin_invitation,
     update_account_profile,
-    update_admin_invitation_role,
     update_managed_account_profile,
 )
 from ..serializers.account_management import (
@@ -63,19 +57,13 @@ from ..serializers.account_management import (
     AdminInvitationCreateSerializer,
     AdminInvitationSerializer,
     AdminInvitationTokenSerializer,
-    AdminInvitationUpdateSerializer,
     EmployerCompanyUnlinkConfirmSerializer,
     EmployerCompanyUnlinkImpactResponseSerializer,
     EmployerCompanyUnlinkImpactSerializer,
-    InvitationRoleSerializer,
     ManagedAccountDetailSerializer,
     ManagedAccountSerializer,
     ManagedAccountUpdateSerializer,
     ManagedSessionSerializer,
-    ProvisioningScopeConfirmSerializer,
-    ProvisioningScopeCreateSerializer,
-    ProvisioningScopeSerializer,
-    ProvisioningScopeStatusSerializer,
     ReasonSerializer,
     RevokeSessionsSerializer,
 )
@@ -115,14 +103,6 @@ def _serialize_account(user, actor, *, detail=False):
     return serializer(current, context={'can_view_sensitive': False}).data
 
 
-def _can_view_sensitive(user):
-    try:
-        require_admin_permission(user, 'account.sensitive.view')
-    except AdminPermissionDenied:
-        return False
-    return True
-
-
 def _validated_account_params(query_params):
     params = query_params.copy()
     scope = params.get('scope', '').strip()
@@ -147,84 +127,9 @@ def _validated_account_params(query_params):
 class AdminAccountViewSet(
     viewsets.GenericViewSet, mixins.ListModelMixin, mixins.RetrieveModelMixin
 ):
-    permission_classes = [HasAdminPermission]
-    permission_match = 'any'
+    permission_classes = [AdminPortalPermission]
     pagination_class = StandardPagination
     lookup_field = 'public_id'
-    required_admin_permissions = {
-        'list': [
-            'account.view',
-            'account.employer.view',
-            'account.admin.view',
-            'account.admin.invite',
-            'employer_verification.view',
-            'company_update.view',
-        ],
-        'retrieve': [
-            'account.view',
-            'account.employer.view',
-            'account.admin.view',
-            'account.admin.invite',
-            'employer_verification.view',
-            'company_update.view',
-        ],
-        'summary': [
-            'account.view',
-            'account.employer.view',
-            'account.admin.view',
-            'account.admin.invite',
-            'employer_verification.view',
-            'company_update.view',
-        ],
-        'update': ['account.profile.manage'],
-        'partial_update': ['account.profile.manage'],
-        'profile': [
-            'account.view',
-            'account.employer.view',
-            'account.admin.view',
-            'account.profile.manage',
-            'employer_verification.view',
-            'company_update.view',
-        ],
-        'cvs': ['account.view'],
-        'applications': ['account.view'],
-        'consents': ['account.view'],
-        'recruitment_needs': [
-            'account.view',
-            'account.employer.view',
-            'employer_verification.view',
-        ],
-        'jobs': ['account.view', 'account.employer.view', 'employer_verification.view'],
-        'campaigns': [
-            'account.view',
-            'account.employer.view',
-            'employer_verification.view',
-        ],
-        'sessions': [
-            'account.view',
-            'account.employer.view',
-            'account.admin.view',
-            'account.admin.invite',
-        ],
-        'activity': [
-            'account.view',
-            'account.employer.view',
-            'account.admin.view',
-            'account.admin.invite',
-        ],
-        'status_impact': ['account.status.manage', 'account.admin.manage'],
-        'change_status': ['account.status.manage', 'account.admin.manage'],
-        'resource_hold_impact': ['account.resource_hold.release'],
-        'release_resource_holds': ['account.resource_hold.release'],
-        'revoke_sessions_impact': ['account.security.manage', 'account.admin.manage'],
-        'revoke_sessions': ['account.security.manage', 'account.admin.manage'],
-        'send_password_reset': ['account.security.manage', 'account.admin.manage'],
-        'resend_verification': ['account.security.manage', 'account.admin.manage'],
-        'email_impact': ['account.email.manage'],
-        'change_email': ['account.email.manage'],
-        'company_unlink_impact': ['employer_verification.unlink_company'],
-        'unlink_company': ['employer_verification.unlink_company'],
-    }
 
     def get_queryset(self):
         params = (
@@ -283,7 +188,6 @@ class AdminAccountViewSet(
     def profile(self, request, public_id=None):
         user = self.get_object()
         if request.method == 'PATCH':
-            require_admin_permission(request.user, 'account.profile.manage')
             serializer = AdminAccountProfileUpdateSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             user = _call(
@@ -302,7 +206,6 @@ class AdminAccountViewSet(
 
         reveal = request.query_params.get('reveal', '').lower() in {'1', 'true'}
         if reveal:
-            require_admin_permission(request.user, 'account.sensitive.view')
             from ...services import record_admin_action
 
             record_admin_action(
@@ -316,7 +219,7 @@ class AdminAccountViewSet(
             AdminAccountProfileSerializer(
                 user,
                 context={
-                    'can_view_sensitive': reveal and _can_view_sensitive(request.user),
+                    'can_view_sensitive': reveal,
                     'request': request,
                 },
             ).data
@@ -463,7 +366,6 @@ class AdminAccountViewSet(
             ensure_account_write_allowed,
             actor=request.user,
             user=user,
-            permission='account.resource_hold.release',
         )
         if not request.user.is_superuser:
             raise AdminPermissionDenied('Gỡ policy hold chỉ dành cho superuser.')
@@ -495,7 +397,6 @@ class AdminAccountViewSet(
             ensure_account_write_allowed,
             actor=request.user,
             user=user,
-            permission='account.security.manage',
         )
         return Response(account_revoke_sessions_impact(user, **serializer.validated_data))
 
@@ -523,7 +424,6 @@ class AdminAccountViewSet(
             ensure_account_recovery_allowed,
             actor=request.user,
             user=user,
-            permission='account.email.manage',
         )
         return Response(account_email_change_impact(user, **serializer.validated_data))
 
@@ -630,27 +530,17 @@ class AdminInvitationViewSet(
     mixins.RetrieveModelMixin,
     mixins.CreateModelMixin,
 ):
-    permission_classes = [HasAdminPermission]
+    permission_classes = [AdminPortalPermission]
     pagination_class = StandardPagination
     lookup_field = 'public_id'
-    required_admin_permissions = {
-        'list': ['account.admin.invite'],
-        'retrieve': ['account.admin.invite'],
-        'create': ['account.admin.invite'],
-        'available_roles': ['account.admin.invite'],
-        'partial_update': ['account.admin.invite'],
-        'resend': ['account.admin.invite'],
-        'revoke': ['account.admin.invite'],
-    }
+    require_superuser = True
 
     def get_queryset(self):
-        return invitation_queryset(self.request.user, params=self.request.query_params)
+        return invitation_queryset(params=self.request.query_params)
 
     def get_serializer_class(self):
         if self.action == 'create':
             return AdminInvitationCreateSerializer
-        if self.action == 'partial_update':
-            return AdminInvitationUpdateSerializer
         return AdminInvitationSerializer
 
     def create(self, request, *args, **kwargs):
@@ -662,30 +552,8 @@ class AdminInvitationViewSet(
             **serializer.validated_data,
         )
         return Response(
-            AdminInvitationSerializer(invitation_queryset(request.user).get(pk=invitation.pk)).data,
+            AdminInvitationSerializer(invitation_queryset().get(pk=invitation.pk)).data,
             status=status.HTTP_201_CREATED,
-        )
-
-    def partial_update(self, request, *args, **kwargs):
-        serializer = AdminInvitationUpdateSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        invitation = _call(
-            update_admin_invitation_role,
-            invitation=self.get_object(),
-            actor=request.user,
-            **serializer.validated_data,
-        )
-        return Response(
-            AdminInvitationSerializer(invitation_queryset(request.user).get(pk=invitation.pk)).data
-        )
-
-    @action(detail=False, methods=['get'], url_path='available-roles')
-    def available_roles(self, request):
-        return Response(
-            InvitationRoleSerializer(
-                available_invitation_roles(request.user),
-                many=True,
-            ).data
         )
 
     @action(detail=True, methods=['post'])
@@ -695,9 +563,7 @@ class AdminInvitationViewSet(
             invitation=self.get_object(),
             actor=request.user,
         )
-        return Response(
-            AdminInvitationSerializer(invitation_queryset(request.user).get(pk=invitation.pk)).data
-        )
+        return Response(AdminInvitationSerializer(invitation_queryset().get(pk=invitation.pk)).data)
 
     @action(detail=True, methods=['post'])
     def revoke(self, request, public_id=None):
@@ -710,80 +576,6 @@ class AdminInvitationViewSet(
             **serializer.validated_data,
         )
         return Response(AdminInvitationSerializer(invitation).data)
-
-
-class AdminProvisioningScopeViewSet(
-    viewsets.GenericViewSet,
-    mixins.ListModelMixin,
-    mixins.RetrieveModelMixin,
-    mixins.CreateModelMixin,
-):
-    permission_classes = [HasAdminPermission]
-    pagination_class = None
-    lookup_field = 'public_id'
-    require_superuser = True
-    required_admin_permissions = {
-        'list': ['account.admin.manage'],
-        'retrieve': ['account.admin.manage'],
-        'create': ['account.admin.manage'],
-        'status_impact': ['account.admin.manage'],
-        'activate': ['account.admin.manage'],
-        'deactivate': ['account.admin.manage'],
-    }
-
-    def get_queryset(self):
-        return provisioning_scopes_queryset()
-
-    def get_serializer_class(self):
-        return (
-            ProvisioningScopeCreateSerializer
-            if self.action == 'create'
-            else ProvisioningScopeSerializer
-        )
-
-    def create(self, request, *args, **kwargs):
-        serializer = ProvisioningScopeCreateSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        scope = _call(
-            create_provisioning_scope,
-            actor=request.user,
-            **serializer.validated_data,
-        )
-        return Response(
-            ProvisioningScopeSerializer(self.get_queryset().get(pk=scope.pk)).data,
-            status=status.HTTP_201_CREATED,
-        )
-
-    @action(detail=True, methods=['post'], url_path='status-impact')
-    def status_impact(self, request, public_id=None):
-        serializer = ProvisioningScopeStatusSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        return Response(
-            provisioning_scope_status_impact(
-                self.get_object(),
-                **serializer.validated_data,
-            )
-        )
-
-    def _change_status(self, request, desired):
-        payload = {**request.data, 'is_active': desired}
-        serializer = ProvisioningScopeConfirmSerializer(data=payload)
-        serializer.is_valid(raise_exception=True)
-        scope = _confirmed_call(
-            confirm_provisioning_scope_status,
-            scope=self.get_object(),
-            actor=request.user,
-            **serializer.validated_data,
-        )
-        return Response(ProvisioningScopeSerializer(self.get_queryset().get(pk=scope.pk)).data)
-
-    @action(detail=True, methods=['post'])
-    def activate(self, request, public_id=None):
-        return self._change_status(request, True)
-
-    @action(detail=True, methods=['post'])
-    def deactivate(self, request, public_id=None):
-        return self._change_status(request, False)
 
 
 class AdminInvitationValidateView(APIView):
@@ -801,7 +593,6 @@ class AdminInvitationValidateView(APIView):
                 'email': invitation.user.email,
                 'full_name': invitation.user.full_name,
                 'expires_at': invitation.expires_at,
-                'target_role': InvitationRoleSerializer(invitation.target_role).data,
             }
         )
 

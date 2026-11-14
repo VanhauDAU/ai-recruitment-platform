@@ -44,7 +44,7 @@ Xác thực trong Swagger UI: gọi `POST /api/auth/login/` lấy `access`, bấ
 | GET/PATCH | `/api/candidate/email-notification-settings/` | Đọc/cập nhật từng phần 13 preference email candidate. GET chưa có row trả defaults bật mà không ghi DB; PATCH partial tạo khi ghi lần đầu. Email xác thực/reset mật khẩu là email giao dịch, không thuộc contract hay UI preference. `followed_company_jobs` (mặc định bật) là công tắc chung cho nguồn thứ ba của email việc làm gộp: mỗi ngày (08:00 giờ Việt Nam) gom tin đang công khai của các công ty ứng viên theo dõi với `notify_new_jobs=true`, chỉ lấy tin đăng sau thời điểm theo dõi, bỏ công ty đang bị tạm ẩn trang; một tin không bao giờ gửi hai lần kể cả khi cũng khớp thông báo việc làm hoặc gợi ý phù hợp. Bật lại yêu cầu email đã xác thực (`email_unverified`) và bắt đầu cửa sổ mới từ lúc bật, không gửi bù giai đoạn đã tắt. |
 | GET/PATCH | `/api/candidate/recruiter-visibility/` | Đọc/bật-tắt consent để NTD tìm thấy hồ sơ; bật yêu cầu xác nhận và mọi quyết định được audit. |
 | GET/PATCH | `/api/employer/me/` | Hồ sơ nhà tuyển dụng của tôi + canonical `job_workspace_ready`, `verification_approved`, `candidate_data_access`, `dpa_status`, `blockers[]`, `account_verification` (Cấp 0–3/quota) và `badge_eligibility` (năm tiêu chí dấu tick tách biệt; chỉ self mới thấy failure/action). Chỉ `position_title` sửa được. |
-| POST | `/api/admin/accounts/{public_id}/company-unlink-impact/` | Admin permission riêng xem tác động gỡ company chọn nhầm; reason bắt buộc, chỉ trả signed token khi relation clean |
+| POST | `/api/admin/accounts/{public_id}/company-unlink-impact/` | Xem tác động gỡ company chọn nhầm; reason bắt buộc, chỉ trả signed token khi relation clean |
 | POST | `/api/admin/accounts/{public_id}/unlink-company/` | Confirm bằng exact reason + impact token; stale trả 409, relation đã có dữ liệu bị khóa, company/history không bị xóa |
 | POST | `/api/employer/register/` | Đăng ký employer, tạo atomically user/recruiter/consent, trả JWT và gửi email xác thực. **Không tự tạo hoặc liên kết company**; company chỉ có sau thao tác rõ ràng ở settings |
 | POST | `/api/employer/onboarding/registration/` | Hoàn thiện profile bắt buộc cho employer mới qua Google |
@@ -93,10 +93,10 @@ Xác thực trong Swagger UI: gọi `POST /api/auth/login/` lấy `access`, bấ
 | GET/POST | `/api/employer/company/update-requests/?scope=mine\|company` | Mọi employer đã liên kết công ty có thể tạo yêu cầu riêng, tối đa một active request trên mỗi `(company, requester)`; nhiều member được gửi song song. Recruiter UI chỉ gọi `scope=mine`, không hiển thị lịch sử công ty. Response có `current_revision_public_id`, `allowed_actions`, `submitted_at`, base/lock version; mỗi submit/resubmit tạo revision bất biến. `in_review` read-only; diff rỗng bị từ chối và field không sửa không được tự thêm vào `changes`. Các field nội dung trang (`headline, culture, video_url, social_links, benefits, offices`) cần `can_edit_content` của trang công ty, thiếu trả `403 COMPANY_PAGE_EDIT_FORBIDDEN`; field cũ vẫn mở cho mọi member (ER-D05). |
 | POST | `/api/employer/company/update-requests/{public_id}/{withdraw\|cancel}/` | Rút/hủy trước review bằng `lock_version`; requester được withdraw, company owner được cancel. Backend ghi append-only event và recheck quyền/status dưới lock. |
 | GET/POST | `/api/admin/company-update-requests/{public_id}/` · `start-review/` · `review/` | Admin mở exact request, nhận review bằng exact revision/lock rồi mới ra quyết định cuối `approved\|changes_requested\|rejected`. Duyệt từng document không tự quyết định toàn request. Apply so conflict theo field (cả `benefits`, `offices`) và không partial apply. Payload có `previews` cạnh `media_previews`: `previews.benefits: [{name, note}]`, `previews.offices: [{label, address, province_name, is_headquarters}]` (chỉ có key đang được đề xuất); `current_values.benefits`/`current_values.offices` dùng cùng shape. |
-| GET | `/api/admin/companies/{public_id}/public-page/` | Quyền `company.view`. Trả `{public_path, is_indexable, policy_hold: {active, reason, actor_name, at}, profile}`; `profile` là đúng DTO của `GET /api/companies/{slug}/` và vẫn được dựng khi trang đang bị tạm ẩn. |
-| POST | `/api/admin/companies/{public_id}/policy-hold/` | Quyền `company.view` + `company_page.moderate`. Body `{action: apply\|release, reason}` với `reason` 10–500 ký tự; trả cùng payload với `public-page/`. Lặp lại quyết định đang có hiệu lực trả `400`. Mỗi lần ghi `CompanyPageEvent` và nhật ký quản trị, không đổi `Company.updated_at`. |
-| GET | `/api/admin/company-reports/?status=&reason=&company=&q=&ordering=&page=` | Quyền `company_report.view`. Hàng chờ báo cáo trang công ty, phân trang chuẩn. `company` là `public_id` công ty; `q` tìm theo mã báo cáo, mã/tên công ty (không dấu), email người báo cáo, nội dung và ghi chú kết luận. `ordering` chỉ nhận whitelist `company_name\|reason\|detail\|reporter_email\|status\|created_at` (thêm `-` để giảm dần), giá trị khác trả `400`. Không có endpoint summary; đếm hàng chờ bằng `?status=pending&page_size=1`. |
-| POST | `/api/admin/company-reports/{public_id}/resolve/` | Quyền `company_report.view` + `company_report.resolve`. Body `{status: upheld\|dismissed, note, apply_hold}`; `note` bắt buộc, tối đa 1000 ký tự. `apply_hold=true` chỉ hợp lệ với `upheld`, cần thêm quyền `company_page.moderate` (thiếu trả `403`), tạm ẩn trang trong cùng transaction với `note` làm lý do và bỏ qua nếu trang đã bị ẩn. Chỉ báo cáo `pending` được kết luận. Trả row đã cập nhật; ghi nhật ký `resolve_company_report`. Không ảnh hưởng huy hiệu xác thực của recruiter. |
+| GET | `/api/admin/companies/{public_id}/public-page/` | Trả `{public_path, is_indexable, policy_hold: {active, reason, actor_name, at}, profile}`; `profile` là đúng DTO của `GET /api/companies/{slug}/` và vẫn được dựng khi trang đang bị tạm ẩn. |
+| POST | `/api/admin/companies/{public_id}/policy-hold/` | Body `{action: apply\|release, reason}` với `reason` 10–500 ký tự; trả cùng payload với `public-page/`. Lặp lại quyết định đang có hiệu lực trả `400`. Mỗi lần ghi `CompanyPageEvent` và nhật ký quản trị, không đổi `Company.updated_at`. |
+| GET | `/api/admin/company-reports/?status=&reason=&company=&q=&ordering=&page=` | Hàng chờ báo cáo trang công ty, phân trang chuẩn. `company` là `public_id` công ty; `q` tìm theo mã báo cáo, mã/tên công ty (không dấu), email người báo cáo, nội dung và ghi chú kết luận. `ordering` chỉ nhận whitelist `company_name\|reason\|detail\|reporter_email\|status\|created_at` (thêm `-` để giảm dần), giá trị khác trả `400`. Không có endpoint summary; đếm hàng chờ bằng `?status=pending&page_size=1`. |
+| POST | `/api/admin/company-reports/{public_id}/resolve/` | Body `{status: upheld\|dismissed, note, apply_hold}`; `note` bắt buộc, tối đa 1000 ký tự. `apply_hold=true` chỉ hợp lệ với `upheld`, tạm ẩn trang trong cùng transaction với `note` làm lý do và bỏ qua nếu trang đã bị ẩn. Chỉ báo cáo `pending` được kết luận. Trả row đã cập nhật; ghi nhật ký `resolve_company_report`. Không ảnh hưởng huy hiệu xác thực của recruiter. |
 | POST | `/api/admin/company-reports/{public_id}/reverse/` | Quyền như `resolve/`. Body `{note}` bắt buộc. Đưa báo cáo `upheld`/`dismissed` về `pending`, xoá `resolution_note`/`resolved_at`/`resolved_by_email`, thêm một dòng lịch sử; không bao giờ gỡ tạm ẩn trang. Bị từ chối `400` nếu người báo cáo đã có báo cáo `pending` khác cho cùng công ty. Ghi nhật ký `reverse_company_report`. |
 | GET/POST | `/api/admin/company-domain-claims/` · `{public_id}/manual-review-impact/` · `approve-manual/` · `reject-manual/` · `revoke-impact/` · `revoke/` | Hàng chờ domain dùng permission `employer_domain.view/review/revoke`. Mọi quyết định ghi reason, preview signed impact token, recheck stale dưới lock và append audit; manual proof hết hạn sau 12 tháng. |
 | GET | `/api/employer/industries/all/` | Toàn bộ lĩnh vực cho dropdown tạo hồ sơ công ty |
@@ -389,33 +389,20 @@ của tin bằng object `company` và thêm `section_key`, `section_title`:
 }
 ```
 
-### Contract phân quyền admin G1
+### Phân quyền admin (hai cấp, ADR-0018)
 
 `GET /api/auth/me/` trả thêm `admin_access` với admin và `null` với
 candidate/employer:
 
 ```json
-{
-  "is_superuser": false,
-  "permissions": ["job_moderation.enforce_visibility", "job_moderation.view"],
-  "primary_department": {
-    "code": "job-moderation",
-    "name": "Kiểm duyệt tin tuyển dụng"
-  },
-  "memberships": [
-    {
-      "department": {
-        "code": "job-moderation",
-        "name": "Kiểm duyệt tin tuyển dụng"
-      },
-      "role": {"code": "staff", "name": "Nhân viên", "rank": 10}
-    }
-  ]
-}
+{"is_superuser": false}
 ```
 
-`primary_department` có thể `null`. Permission luôn sort theo code. Khi thiếu
-quyền, endpoint RBAC trả:
+Mọi endpoint quản trị dùng `AdminPortalPermission`: tài khoản `role=admin` còn
+truy cập được đều dùng chức năng nghiệp vụ. Thao tác chỉ dành cho superuser:
+tài khoản quản trị (đọc/ghi), lời mời quản trị, site locale/settings/upload,
+tổng quan cấu hình AI, cấm và khôi phục tài khoản bị cấm, gỡ policy hold,
+nhật ký toàn hệ thống (`/api/admin/audit-logs/?scope=all`). Khi bị từ chối:
 
 ```json
 {
@@ -424,51 +411,33 @@ quyền, endpoint RBAC trả:
 }
 ```
 
-| Bề mặt admin | Trạng thái G1 |
-| --- | --- |
-| Site locale/settings/upload | `HasAdminPermission`, luôn `require_superuser` |
-| CV catalogue | `cv_template.view/create/edit/publish/archive/delete` theo action |
-| Job moderation | `.view` để đọc, `.enforce_visibility` để tạm ẩn hoặc khôi phục, `.resolve_report` để xử lý báo cáo |
-| `/api/dashboard/` | Vẫn `IsAdmin`, chuyển ở G2 |
-
-Các field lifecycle CV được bảo vệ riêng để quyền `.edit` không thể phát hành
-qua PATCH: `CvTemplate.lifecycle_status/current_published_version`,
-`is_active` của category/color/background và
-`CvSampleContent.status/published_at`. Staff tạo template ở `inactive`; các tài
-nguyên `is_active` mặc định `false`; sample/version tiếp tục ở `draft`. Chuyển
-ẩn → hiện cần `.publish`, hiện → ẩn cần `.archive`; gửi lại giá trị không đổi
-không bị chặn.
-
 ### API quản lý tài khoản G3
 
 Base quản trị: `/api/admin/`; public accept: `/api/auth/admin-invitations/`.
 
 | Method | Endpoint | Mô tả |
 | --- | --- | --- |
-| GET | `/accounts/`, `/accounts/summary/`, `/accounts/{id}/` | Danh sách, KPI và chi tiết theo permission đọc |
+| GET | `/accounts/`, `/accounts/summary/`, `/accounts/{id}/` | Danh sách, KPI và chi tiết; admin thường chỉ thấy ứng viên và NTD, superuser thấy cả quản trị viên |
 | PATCH | `/accounts/{id}/` | Sửa họ tên/SĐT; Admin active vẫn superuser-only |
 | GET | `/accounts/{id}/sessions/`, `/activity/` | Phiên và audit liên quan |
 | POST | `/accounts/{id}/status-impact/`, `/change-status/` | Preview/xác nhận state machine tạm khóa, cấm, bắt đầu khôi phục hoặc mở lại; payload cấm cần `violation_category` và `enforcement_evidence` |
 | POST | `/accounts/{id}/resource-hold-impact/`, `/release-resource-holds/` | Superuser preview/xác nhận gỡ `ban_review`/`legacy_lock`; account vẫn inactive |
 | POST | `/accounts/{id}/revoke-sessions-impact/`, `/revoke-sessions/` | Preview/xác nhận thu hồi phiên |
 | POST | `/accounts/{id}/send-password-reset/`, `/resend-verification/` | Xếp lịch email bảo mật. Admin nhận template/link cổng Admin; không gửi reset cho tài khoản `inactive`/`banned`. |
-| GET/POST | `/account-invitations/` | Danh sách theo scope người mời / tạo lời mời |
-| GET | `/account-invitations/available-roles/` | Chức danh backend đã lọc theo whitelist |
-| PATCH | `/account-invitations/{id}/` | Đổi chức danh trước khi accept |
-| POST | `/account-invitations/{id}/resend/`, `/revoke/` | Làm token cũ mất hiệu lực / thu hồi |
-| GET/POST | `/provisioning-scopes/` | Đọc/tạo whitelist; ghi superuser-only |
-| POST | `/provisioning-scopes/{id}/status-impact/`, `/activate/`, `/deactivate/` | Impact token và xác nhận trạng thái scope |
-| GET | `/api/auth/admin-invitations/validate/?token=...` | Kiểm tra link mời công khai |
+| GET/POST | `/account-invitations/` | Superuser xem/tạo lời mời; body tạo `{email, full_name, reason}` |
+| POST | `/account-invitations/{id}/resend/`, `/revoke/` | Superuser gửi lại (token cũ mất hiệu lực) / thu hồi |
+| GET | `/api/auth/admin-invitations/validate/?token=...` | Kiểm tra link mời công khai; trả `{email, full_name, expires_at}` |
 | POST | `/api/auth/admin-invitations/accept/` | Đặt mật khẩu và kích hoạt tài khoản admin được mời |
 
 Filter tài khoản gồm `q`, `role`, `status`, `email_verified`,
-`has_active_session`, `department`, `admin_role`, `company`, khoảng ngày tạo,
-khoảng lần đăng nhập và `ordering`. Lời mời hỗ trợ `q`, `status`, `department`,
-`role`; superuser có thêm `invited_by`.
+`has_active_session`, `company`, khoảng ngày tạo, khoảng lần đăng nhập và
+`ordering`. Lời mời hỗ trợ `q`, `status`, `invited_by`. Không có tự đăng ký
+quản trị: superuser đầu tiên tạo bằng `createsuperuser`, quên mật khẩu do
+superuser gửi link đặt lại.
 
 Các POST xác nhận impact bắt buộc gửi lại `impact_token` từ preview. Token stale
-trả `409 admin_resource_changed`. Role ngoài whitelist và thao tác vượt scope
-trả `403 admin_permission_denied`; validation field thông thường trả `400`.
+trả `409 admin_resource_changed`. Thao tác vượt cấp quản trị trả
+`403 admin_permission_denied`; validation field thông thường trả `400`.
 
 Contract trạng thái tài khoản:
 
@@ -488,62 +457,10 @@ Contract trạng thái tài khoản:
   `enforcement_evidence` (20–500 ký tự); chỉ superuser, chỉ áp dụng cho employer
   `inactive` có `ban_review`/`legacy_lock`. Thao tác không đổi status nghiệp vụ
   và không tự mở account.
-- Thiếu permission trả `403`; account `PENDING` hoặc transition sai trả `400`;
+- Admin thường thao tác trên tài khoản quản trị hoặc cấm tài khoản trả `403`; account `PENDING` hoặc transition sai trả `400`;
   soft-deleted fail-closed thành `404`; input/snapshot/global audit revision
   đổi giữa preview và confirm trả `409`. Client phải tải preview mới nhưng
   không tự gửi confirm lại.
-
-### API quản trị phân quyền G2
-
-Base path: `/api/admin/`. Cột “SU” nghĩa là endpoint bắt buộc
-`is_superuser=True`, kể cả khi tài khoản có permission tương ứng.
-
-| Method | Endpoint | Permission | SU |
-| --- | --- | --- | :---: |
-| GET | `/departments/`, `/departments/{public_id}/` | `admin_access.view` | |
-| POST/PATCH | `/departments/`, `/departments/{public_id}/` | `admin_access.manage_department` | ✓ |
-| POST | `/departments/{id}/status-impact/`, `activate/`, `deactivate/` | `admin_access.manage_department` | ✓ |
-| GET/POST | `/departments/{id}/restore-system-default/` | `admin_access.manage_department` | ✓ |
-| GET | `/roles/?department={code}`, `/roles/{public_id}/` | `admin_access.view` | |
-| POST/PATCH | `/roles/`, `/roles/{public_id}/` | `admin_access.manage_role` | ✓ |
-| POST | `/roles/{id}/status-impact/`, `activate/`, `deactivate/` | `admin_access.manage_role` | ✓ |
-| POST/PUT | `/roles/{id}/permissions-impact/`, `/roles/{id}/permissions/` | `admin_access.manage_role` | ✓ |
-| GET/POST | `/roles/{id}/restore-system-default/` | `admin_access.manage_role` | ✓ |
-| GET | `/permissions/?role={role_public_id}` | `admin_access.view` | |
-| GET | `/memberships/?department=&user=&include_revoked=` | `admin_access.view` | ✓ |
-| POST | `/memberships/assignment-impact/`, `/memberships/` | `admin_access.manage_staff` | ✓ |
-| GET/POST | `/memberships/{id}/revoke-impact/`, `revoke/` | `admin_access.manage_staff` | ✓ |
-| GET | `/staff/?q={email}` | `admin_access.view` | ✓ |
-
-Mỗi nhân viên chỉ có **một membership đang hiệu lực**. `POST /memberships/`
-thay chức danh hiện tại trong cùng transaction: membership cũ được thu hồi, quyền
-hiệu dụng được cache-bust và audit ghi lại cả trước/sau. Preview assignment trả
-`permissions_gained`, `permissions_lost` và `replaced_membership`; client không
-tự tính diff. Không còn endpoint hay payload `set-primary` / `is_primary`.
-
-Action xác nhận nhận `impact_token` từ preview tương ứng. Token chỉ dùng đúng
-operation/resource/payload đã xem và hết hạn sau 600 giây. Operation hợp lệ:
-
-```text
-department.status.change · department.restore
-role.status.change · role.permissions.update · role.restore
-membership.assign · membership.revoke
-```
-
-Thiếu quyền trả `403 admin_permission_denied`. Preview stale, đổi payload, dùng
-token sai resource/operation hoặc có audit mới xen giữa trả:
-
-```json
-{
-  "code": "admin_resource_changed",
-  "message": "Dữ liệu đã thay đổi. Vui lòng xem lại tác động trước khi tiếp tục."
-}
-```
-
-Permission picker chỉ đọc `/permissions/?role=...`; JSON generated là contract
-build-time. Permission deprecated đang được role giữ vẫn xuất hiện với
-`is_active=false`, `is_granted_to_role=true` và không được gửi trong
-`permission_codes` active.
 
 ### Hậu kiểm tin tuyển dụng (ADR-0014)
 
@@ -555,7 +472,7 @@ trị viên chỉ hậu kiểm.
 | GET | `/api/jobs/admin/moderation/` | Danh sách vận hành; mỗi dòng có `published_job_count`, `pending_report_count`, `is_publicly_visible` |
 | GET | `/api/jobs/admin/moderation/summary/` | `total`, `draft`, `active`, `expired`, `closed`, `held`, `pending_reports` |
 | GET | `/api/jobs/admin/moderation/{public_id}/` | Trả `review_token`, `state_actions` (`hide` hoặc `restore`), `blocked_reasons`, `content_changes` (khác biệt so với nội dung của lần đăng gần nhất) |
-| POST | `/api/jobs/admin/moderation/{public_id}/decisions/` | Chỉ nhận `action=hide\|restore`, yêu cầu quyền `job_moderation.enforce_visibility`; `hide` cần `reason_code` và `note`, `restore` cần `note` |
+| POST | `/api/jobs/admin/moderation/{public_id}/decisions/` | Chỉ nhận `action=hide\|restore`; `hide` cần `reason_code` và `note`, `restore` cần `note` |
 
 Điều kiện đăng được kiểm tra khi nhà tuyển dụng gọi `submit` hoặc `reopen`.
 Không đạt thì API trả HTTP 400 với payload máy đọc được và tin giữ nguyên
@@ -613,11 +530,8 @@ trả cờ `visibility_held` cho từng tin.
 | POST | `/api/admin/employer-verifications/{public_id}/expire-impact/`, `/expire/` | Preview/xác nhận hết hiệu lực manual |
 | POST | `/api/admin/employer-verifications/{public_id}/unlock-resubmission/` | Mở khóa ngoại lệ sau ba final rejection; body `{reason, lock_version}`, giữ nguyên rejection count/history |
 
-`decision` yêu cầu `employer_verification.review`; revoke/expire yêu cầu
-`employer_verification.revoke`. Approve với tax advisory không matched cần thêm
-`employer_verification.tax_override` và `tax_override_reason`. Hai quyền rủi ro
-cao không được grant mặc định cho manager/staff; Super Admin có bypass hiện hữu,
-Compliance Lead phải được gán tường minh qua RBAC.
+Mọi admin được review, quyết định, revoke/expire. Approve với tax advisory
+không matched cần thêm `tax_override_reason`.
 
 Document review không phải final decision. Revoke/expire không downgrade
 company; compliance hold chỉ chặn candidate-data/job approval và public job,
@@ -629,8 +543,7 @@ List/detail verification trả `final_rejection_count`, `rejection_limit`,
 `rejection_impact`. Chỉ final `rejected` tăng count. Document reject/yêu cầu bổ
 sung không tính lượt; sau khi recruiter thay đủ bộ giấy tờ cần sửa, cùng case
 được resubmit với `revision++`. Lần final reject thứ ba khóa nộp lại nhưng không
-tự ban `User`. Endpoint unlock yêu cầu permission
-`employer_verification.resubmission_unlock`, reason và optimistic lock; stale
+tự ban `User`. Endpoint unlock yêu cầu reason và optimistic lock; stale
 trả `409 admin_resource_changed`.
 
 ### CV catalogue admin (admin-only)
@@ -743,8 +656,8 @@ Mã lỗi ổn định gồm `JOB_AI_DAILY_QUOTA_EXCEEDED` (429),
 | POST | `/api/jobs/{public_id}/report/` | Candidate-only, chỉ nhận tin đang public và throttle đồng thời theo account/IP; response tối thiểu `{public_id,status,created_at}`. Chỉ admin-UPHELD thuộc `fake_company\|scam\|wrong_info` làm mất tick recruiter và tự tạo hold ẩn tin; reverse phục hồi badge nhưng không tự public lại tin. |
 | POST | `/api/jobs/{slug}/views/` | Ghi nhận lượt xem riêng, chỉ khi Analytics consent hợp lệ; Redis dedupe 24 giờ, response `{counted, view_count, reason?}`. |
 | GET/POST | `/api/privacy/consent/` | Đọc/lưu lựa chọn cookie ký số (`preferences`, `analytics`, `marketing`); necessary luôn bật, rút Analytics sẽ xóa viewer cookie. |
-| GET/POST | `/api/jobs/mine/` | Workspace recruiter owner-only và yêu cầu `job_workspace_ready=true`. `POST ?as=draft` lưu nháp thiếu dữ liệu; POST thường validate form, cam kết (`responsibility_statement_version`), điều kiện đăng và quota rồi đăng tin ở trạng thái `active`. Form giữ contract nested hiện hữu. Candidate preview chỉ gắn khi `candidate_data_access=true`. Mỗi dòng có `visibility_hold`. |
-| GET/PATCH/DELETE | `/api/jobs/mine/{public_id}/` | Chỉ người tạo và workspace-ready được đọc/sửa; chỉ xóa nháp chưa từng đăng. Cập nhật tin `active` có hiệu lực ngay và không đổi `published_at`. |
+| GET/POST | `/api/jobs/mine/` | Workspace recruiter owner-only và yêu cầu `job_workspace_ready=true`. `POST ?as=draft` lưu nháp thiếu dữ liệu; POST thường validate form, cam kết (`responsibility_statement_version`), điều kiện đăng và quota rồi đăng tin ở trạng thái `active`. Form giữ contract nested hiện hữu. Candidate preview chỉ gắn khi `candidate_data_access=true`. Mỗi dòng có `visibility_hold` và `unviewed_application_count` (số ứng viên có lần nộp mới nhất còn `submitted`). GET phân trang trả thêm `status_counts {all, active, draft, expired, closed}` đếm mọi tab trạng thái trong cùng phạm vi `campaign`/`q` (bỏ qua `status`), một query aggregate. |
+| GET/PATCH/DELETE | `/api/jobs/mine/{public_id}/` | Chỉ người tạo và workspace-ready được đọc/sửa; chỉ xóa nháp chưa từng đăng. Cập nhật tin `active` có hiệu lực ngay và không đổi `published_at`. Response đọc có thêm `impression_count` và `application_summary {total, unviewed, unanswered, by_status}` tính trên lần nộp mới nhất của mỗi ứng viên; aggregate không chứa danh tính nên vẫn trả khi `candidate_data_access=false`. `unanswered` = `submitted`+`viewed`+`considering`, cùng định nghĩa với `scope=unanswered` của `/api/v2/recruiter/applications/`. |
 | GET | `/api/jobs/mine/posting-context/` | Endpoint compliance không bị workspace guard để luôn trả quota + `job_workspace_ready`, `candidate_data_access`, `dpa_status`, `blockers[]`, `job_postable`, `block_reason`, policy hạn hồ sơ (`default_deadline_days`, `max_deadline_days`, `max_public_lifetime_days`) và `responsibility_statement {version, text}` là bản cam kết đang có hiệu lực. |
 | POST | `/api/jobs/mine/{public_id}/submit/` | Đăng một tin nháp: tin công khai ngay (`active`). Body `{responsibility_statement_version}`; thiếu hoặc khác phiên bản đang có hiệu lực trả `400 JOB_RESPONSIBILITY_REQUIRED`. Trả `400 JOB_PUBLICATION_BLOCKED` kèm `blocked_reasons[]` khi nhà tuyển dụng chưa đạt điều kiện đăng. Gọi lại với tin đã `active` là idempotent và không cần cam kết. |
 | POST | `/api/jobs/mine/{public_id}/close/`, `/reopen/`, `/extend/`, `/duplicate/` | Đóng, mở lại (tin `active` ngay, body `{deadline, responsibility_statement_version}`, cùng cam kết và điều kiện đăng), gia hạn tin active hoặc tạo nháp sao chép. Tin đang bị tạm ẩn trả `400 RECRUITMENT_HOLD_ACTIVE` cho sửa, mở lại, gia hạn và sao chép. |
@@ -874,16 +787,16 @@ active hoặc không được gán cho template, API trả `400 theme_color`. M�
 | `PUT` | `/api/site/announcements/{public_id}/state/` | Authenticated | Dismiss/snooze idempotent theo revision và dismissal version |
 | `POST` | `/api/site/announcements/events/` | Consent + throttle | Batch analytics best-effort; luôn không chặn runtime/CTA |
 | `POST` | `/api/site/announcements/runtime-events/` | AllowAny + throttle | Operational event PII-free cho feed/contract/render failure |
-| `GET/POST` | `/api/site/admin/announcements/` | `announcement.view/manage` | List/create |
-| `GET/PATCH` | `/api/site/admin/announcements/{public_id}/` | `announcement.view/manage` | Detail/lịch sử và đổi tên vận hành |
-| `POST` | `/api/site/admin/announcements/{public_id}/revisions/` | `announcement.manage` | Tạo revision mới |
-| `POST` | `/api/site/admin/announcements/{public_id}/publish/` | `announcement.publish` | Publish ngay hoặc schedule |
-| `POST` | `/api/site/admin/announcements/{public_id}/pause/` | `announcement.publish` | Pause |
-| `POST` | `/api/site/admin/announcements/{public_id}/resume/` | `announcement.publish` | Resume |
-| `POST` | `/api/site/admin/announcements/{public_id}/archive/` | `announcement.publish` | Archive |
-| `POST` | `/api/site/admin/announcements/{public_id}/reset-dismissals/` | `announcement.publish` | Tăng `dismissal_version` để hiện lại cho người đã đóng |
-| `POST` | `/api/site/admin/announcements/{public_id}/duplicate/` | `announcement.manage` | Tạo draft độc lập |
-| `GET` | `/api/site/admin/announcements/{public_id}/metrics/` | `announcement.view` | Summary và daily metrics toàn bộ revision, mặc định 30 ngày |
+| `GET/POST` | `/api/site/admin/announcements/` | Admin | List/create |
+| `GET/PATCH` | `/api/site/admin/announcements/{public_id}/` | Admin | Detail/lịch sử và đổi tên vận hành |
+| `POST` | `/api/site/admin/announcements/{public_id}/revisions/` | Admin | Tạo revision mới |
+| `POST` | `/api/site/admin/announcements/{public_id}/publish/` | Admin | Publish ngay hoặc schedule |
+| `POST` | `/api/site/admin/announcements/{public_id}/pause/` | Admin | Pause |
+| `POST` | `/api/site/admin/announcements/{public_id}/resume/` | Admin | Resume |
+| `POST` | `/api/site/admin/announcements/{public_id}/archive/` | Admin | Archive |
+| `POST` | `/api/site/admin/announcements/{public_id}/reset-dismissals/` | Admin | Tăng `dismissal_version` để hiện lại cho người đã đóng |
+| `POST` | `/api/site/admin/announcements/{public_id}/duplicate/` | Admin | Tạo draft độc lập |
+| `GET` | `/api/site/admin/announcements/{public_id}/metrics/` | Admin | Summary và daily metrics toàn bộ revision, mặc định 30 ngày |
 
 Public feed yêu cầu `surface`, chấp nhận `path` và `locale`. Role/auth state lấy
 từ request. Surface/path/locale sai trả `400`; không có item trả `200` với mảng
@@ -920,7 +833,7 @@ nguyên admin/data. `GET /api/site/settings/` đồng thời trả capability bo
 `knowledgebase_public_enabled` lấy trực tiếp từ switch này để frontend ẩn/hiện
 entry point. Response còn có `knowledgebase_search_index_enabled`, chỉ true khi
 public và index switch backend cùng bật; cả hai không phải row site setting mà
-admin có thể sửa. Admin API luôn yêu cầu tài khoản quản trị, permission cụ thể và trả
+admin có thể sửa. Admin API luôn yêu cầu tài khoản quản trị và trả
 `Cache-Control: private, no-store`.
 
 `KNOWLEDGEBASE_SEARCH_INDEX_ENABLED=false` giữ toàn bộ Help Center `noindex` và

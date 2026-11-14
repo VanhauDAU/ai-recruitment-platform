@@ -110,7 +110,6 @@ export default function CompanyUpdateComparisonModal({
   open,
   updateRequest,
   canReview,
-  canViewSensitive,
   canApply,
   requestConflict,
   documentLoading,
@@ -280,7 +279,7 @@ export default function CompanyUpdateComparisonModal({
                   </div>
                   <Space wrap>
                     <Tag color={document.status === 'approved' ? 'green' : document.status === 'rejected' ? 'red' : 'gold'}>{document.status_label}</Tag>
-                    <Button type="link" disabled={!canViewSensitive && !document.source_url} onClick={() => onOpenDocument(document)}>Mở</Button>
+                    <Button type="link" onClick={() => onOpenDocument(document)}>Mở</Button>
                     {canReview && (
                       <>
                         <Button type="link" disabled={document.status === 'approved'} loading={documentLoading} onClick={() => onReviewDocument(document, 'approved')}>{document.status === 'approved' ? 'Đã duyệt' : 'Duyệt'}</Button>

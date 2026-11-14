@@ -1,5 +1,4 @@
 import {
-  EditOutlined,
   MailOutlined,
   PlusOutlined,
   ReloadOutlined,
@@ -15,7 +14,6 @@ import {
   Select,
   Space,
   Table,
-  Tag,
   Tooltip,
   Typography,
 } from 'antd'
@@ -26,10 +24,8 @@ import {
   createAdminInvitation,
   formatAdminDate,
   getAdminInvitations,
-  getAvailableAdminInvitationRoles,
   resendAdminInvitation,
   revokeAdminInvitation,
-  updateAdminInvitation,
 } from '@/entities/admin-account'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { message } from '@/shared/lib/toast'
@@ -39,8 +35,6 @@ import { InvitationStatusTag } from './AccountStatusTag'
 const INVITATION_QUERY_KEYS = {
   q: 'invite_q',
   status: 'invite_status',
-  department: 'invite_department',
-  role: 'invite_role',
   invited_by: 'invite_by',
   page: 'invite_page',
   ordering: 'invite_ordering',
@@ -51,57 +45,19 @@ function invitationFiltersFromQuery(searchParams) {
   return {
     q: searchParams.get(INVITATION_QUERY_KEYS.q) || '',
     status: searchParams.get(INVITATION_QUERY_KEYS.status) || '',
-    department: searchParams.get(INVITATION_QUERY_KEYS.department) || '',
-    role: searchParams.get(INVITATION_QUERY_KEYS.role) || '',
     invited_by: searchParams.get(INVITATION_QUERY_KEYS.invited_by) || '',
     page: Number.isInteger(page) && page > 0 ? page : 1,
     ordering: searchParams.get(INVITATION_QUERY_KEYS.ordering) || '-created_at',
   }
 }
 
-function RoleSummary({ role }) {
-  if (!role) return null
-  return (
-    <div className="invitation-role-summary">
-      <div>
-        <span>Phòng ban</span>
-        <strong>{role.department.name}</strong>
-      </div>
-      <div>
-        <span>Chức danh</span>
-        <strong>{role.name}</strong>
-      </div>
-      <div className="invitation-role-summary__permissions">
-        <span>{`${role.permission_codes.length} quyền sẽ được cấp`}</span>
-        <div className="mt-2 flex flex-wrap gap-1.5">
-          {role.permission_codes.slice(0, 8).map((code) => <Tag key={code}>{code}</Tag>)}
-          {role.permission_codes.length > 8 && (
-            <Tag>{`+${role.permission_codes.length - 8} quyền`}</Tag>
-          )}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function InvitationModal({
-  editor,
-  roles,
-  loading,
-  form,
-  onClose,
-  onSave,
-}) {
-  const selectedRoleId = Form.useWatch('target_role_public_id', form)
-  const selectedRole = roles.find((item) => item.public_id === selectedRoleId)
-  const editing = Boolean(editor?.invitation)
-
+function InvitationModal({ open, loading, form, onClose, onSave }) {
   return (
     <Modal
-      open={Boolean(editor)}
+      open={open}
       width={680}
-      title={editing ? 'Đổi chức danh lời mời' : 'Mời Admin mới'}
-      okText={editing ? 'Lưu và gửi lại' : 'Gửi lời mời'}
+      title="Mời Admin mới"
+      okText="Gửi lời mời"
       cancelText="Hủy"
       confirmLoading={loading}
       onCancel={onClose}
@@ -125,7 +81,7 @@ function InvitationModal({
               { min: 2, message: 'Họ tên cần ít nhất 2 ký tự.' },
             ]}
           >
-            <Input disabled={editing} autoFocus={!editing} placeholder="Nguyễn Văn An" />
+            <Input autoFocus placeholder="Nguyễn Văn An" />
           </Form.Item>
           <Form.Item
             name="email"
@@ -135,26 +91,9 @@ function InvitationModal({
               { type: 'email', message: 'Email chưa đúng định dạng.' },
             ]}
           >
-            <Input disabled={editing} placeholder="an.nguyen@company.vn" />
+            <Input placeholder="an.nguyen@company.vn" />
           </Form.Item>
         </div>
-        <Form.Item
-          name="target_role_public_id"
-          label="Chức danh được cấp"
-          rules={[{ required: true, message: 'Chọn chức danh.' }]}
-          extra="Danh sách này do backend trả về theo whitelist của chức danh hiện tại."
-        >
-          <Select
-            showSearch
-            optionFilterProp="label"
-            placeholder="Chọn chức danh phù hợp"
-            options={roles.map((role) => ({
-              value: role.public_id,
-              label: `${role.department.name} · ${role.name}`,
-            }))}
-          />
-        </Form.Item>
-        <RoleSummary role={selectedRole} />
         <Form.Item
           name="reason"
           label="Lý do cấp tài khoản"
@@ -175,7 +114,7 @@ function InvitationModal({
   )
 }
 
-export default function InvitationPanel({ departments, roles: allRoles, isSuperuser }) {
+export default function InvitationPanel() {
   const queryClient = useQueryClient()
   const [searchParams, setSearchParams] = useSearchParams()
   const [form] = Form.useForm()
@@ -188,7 +127,7 @@ export default function InvitationPanel({ departments, roles: allRoles, isSuperu
     ...filters,
     q: deferredSearch,
   }), [deferredSearch, filters])
-  const [editor, setEditor] = useState(null)
+  const [inviting, setInviting] = useState(false)
   const [saving, setSaving] = useState(false)
   const [revoking, setRevoking] = useState(null)
   const [revokeReason, setRevokeReason] = useState('')
@@ -197,15 +136,10 @@ export default function InvitationPanel({ departments, roles: allRoles, isSuperu
     queryKey: adminAccountKeys.invitations(params),
     queryFn: ({ signal }) => getAdminInvitations(params, { signal }),
   })
-  const rolesQuery = useQuery({
-    queryKey: adminAccountKeys.availableRoles,
-    queryFn: ({ signal }) => getAvailableAdminInvitationRoles({ signal }),
-  })
   const invitations = useMemo(
     () => invitationsQuery.data?.results || [],
     [invitationsQuery.data?.results],
   )
-  const availableRoles = rolesQuery.data || []
   const inviters = useMemo(() => Array.from(
     new Map(invitations.map((item) => [item.invited_by.public_id, item.invited_by])).values(),
   ), [invitations])
@@ -223,36 +157,18 @@ export default function InvitationPanel({ departments, roles: allRoles, isSuperu
     setSearchParams(next)
   }
 
-  const openEditor = (invitation = null) => {
-    form.setFieldsValue(invitation ? {
-      full_name: invitation.user.full_name,
-      email: invitation.user.email,
-      target_role_public_id: invitation.target_role.public_id,
-      reason: invitation.reason,
-    } : {
-      full_name: '',
-      email: '',
-      target_role_public_id: availableRoles[0]?.public_id,
-      reason: '',
-    })
-    setEditor({ invitation })
+  const openInvite = () => {
+    form.resetFields()
+    setInviting(true)
   }
 
   const save = async () => {
     const values = await form.validateFields()
     setSaving(true)
     try {
-      if (editor.invitation) {
-        await updateAdminInvitation(editor.invitation.public_id, {
-          target_role_public_id: values.target_role_public_id,
-          reason: values.reason,
-        })
-        message.success('Đã cập nhật chức danh và làm mới liên kết mời.')
-      } else {
-        await createAdminInvitation(values)
-        message.success('Đã tạo lời mời Admin.')
-      }
-      setEditor(null)
+      await createAdminInvitation(values)
+      message.success('Đã tạo lời mời Admin.')
+      setInviting(false)
       form.resetFields()
       await queryClient.invalidateQueries({ queryKey: adminAccountKeys.all })
     } catch (error) {
@@ -294,15 +210,18 @@ export default function InvitationPanel({ departments, roles: allRoles, isSuperu
     }
   }
 
+  const sortOrderOf = (key) => {
+    if (filters.ordering === key) return 'ascend'
+    return filters.ordering === `-${key}` ? 'descend' : null
+  }
+
   const columns = [
     {
       title: 'Người được mời',
       key: 'user__full_name',
       width: 250,
       sorter: true,
-      sortOrder: filters.ordering === 'user__full_name'
-        ? 'ascend'
-        : filters.ordering === '-user__full_name' ? 'descend' : null,
+      sortOrder: sortOrderOf('user__full_name'),
       render: (_, row) => (
         <div className="min-w-0">
           <Typography.Text strong ellipsis className="!block">
@@ -315,28 +234,11 @@ export default function InvitationPanel({ departments, roles: allRoles, isSuperu
       ),
     },
     {
-      title: 'Phòng ban / chức danh',
-      key: 'target_role__name',
-      width: 240,
-      sorter: true,
-      sortOrder: filters.ordering === 'target_role__name'
-        ? 'ascend'
-        : filters.ordering === '-target_role__name' ? 'descend' : null,
-      render: (_, row) => (
-        <div>
-          <strong className="block">{row.target_role.name}</strong>
-          <span className="text-xs text-slate-500">{row.target_role.department.name}</span>
-        </div>
-      ),
-    },
-    {
       title: 'Người mời',
       key: 'invited_by__full_name',
       width: 210,
       sorter: true,
-      sortOrder: filters.ordering === 'invited_by__full_name'
-        ? 'ascend'
-        : filters.ordering === '-invited_by__full_name' ? 'descend' : null,
+      sortOrder: sortOrderOf('invited_by__full_name'),
       render: (_, row) => row.invited_by.full_name || row.invited_by.email,
     },
     {
@@ -345,9 +247,7 @@ export default function InvitationPanel({ departments, roles: allRoles, isSuperu
       key: 'status',
       width: 145,
       sorter: true,
-      sortOrder: filters.ordering === 'status'
-        ? 'ascend'
-        : filters.ordering === '-status' ? 'descend' : null,
+      sortOrder: sortOrderOf('status'),
       render: (value) => <InvitationStatusTag status={value} />,
     },
     {
@@ -356,9 +256,7 @@ export default function InvitationPanel({ departments, roles: allRoles, isSuperu
       key: 'expires_at',
       width: 155,
       sorter: true,
-      sortOrder: filters.ordering === 'expires_at'
-        ? 'ascend'
-        : filters.ordering === '-expires_at' ? 'descend' : null,
+      sortOrder: sortOrderOf('expires_at'),
       render: (value) => formatAdminDate(value),
     },
     {
@@ -367,26 +265,16 @@ export default function InvitationPanel({ departments, roles: allRoles, isSuperu
       key: 'created_at',
       width: 155,
       sorter: true,
-      sortOrder: filters.ordering === 'created_at'
-        ? 'ascend'
-        : filters.ordering === '-created_at' ? 'descend' : null,
+      sortOrder: sortOrderOf('created_at'),
       render: (value) => formatAdminDate(value),
     },
     {
       title: '',
       key: 'actions',
       fixed: 'right',
-      width: 138,
+      width: 96,
       render: (_, row) => row.status === 'pending' ? (
         <Space size={2}>
-          <Tooltip title="Đổi chức danh">
-            <Button
-              type="text"
-              aria-label="Đổi chức danh"
-              icon={<EditOutlined />}
-              onClick={() => openEditor(row)}
-            />
-          </Tooltip>
           <ConfirmAction
             title="Gửi lại lời mời"
             description={<>Bạn có chắc muốn gửi lại lời mời tới <strong>{row.user.email}</strong>? Liên kết hiện tại sẽ mất hiệu lực và được thay bằng liên kết mới.</>}
@@ -438,63 +326,23 @@ export default function InvitationPanel({ departments, roles: allRoles, isSuperu
             allowClear
             showSearch
             optionFilterProp="label"
-            placeholder="Phòng ban"
-            value={filters.department || undefined}
-            onChange={(value) => patchFilter('department', value || '')}
-            options={departments.map((item) => ({
+            placeholder="Người mời"
+            value={filters.invited_by || undefined}
+            onChange={(value) => patchFilter('invited_by', value || '')}
+            options={inviters.map((item) => ({
               value: item.public_id,
-              label: item.name,
+              label: item.full_name || item.email,
             }))}
           />
-          <Select
-            allowClear
-            showSearch
-            optionFilterProp="label"
-            placeholder="Chức danh"
-            value={filters.role || undefined}
-            onChange={(value) => patchFilter('role', value || '')}
-            options={allRoles.map((item) => ({
-              value: item.public_id,
-              label: `${item.department.name} · ${item.name}`,
-            }))}
-          />
-          {isSuperuser && (
-            <Select
-              allowClear
-              showSearch
-              optionFilterProp="label"
-              placeholder="Người mời"
-              value={filters.invited_by || undefined}
-              onChange={(value) => patchFilter('invited_by', value || '')}
-              options={inviters.map((item) => ({
-                value: item.public_id,
-                label: item.full_name || item.email,
-              }))}
-            />
-          )}
         </div>
         <Button
           type="primary"
           icon={<PlusOutlined />}
-          disabled={!availableRoles.length}
-          loading={rolesQuery.isLoading}
-          onClick={() => openEditor()}
+          onClick={openInvite}
         >
           Mời Admin
         </Button>
       </div>
-
-      {!rolesQuery.isLoading && availableRoles.length === 0 && (
-        <Alert
-          className="mb-4"
-          type="warning"
-          showIcon
-          title="Chưa có chức danh nào bạn được phép mời"
-          description={isSuperuser
-            ? 'Hãy tạo một chức danh hoạt động có quyền trước khi gửi lời mời.'
-            : 'Superuser cần thêm quy tắc mời Admin cho chức danh của bạn.'}
-        />
-      )}
 
       <div className="overflow-x-auto">
         <Table
@@ -502,7 +350,7 @@ export default function InvitationPanel({ departments, roles: allRoles, isSuperu
           loading={invitationsQuery.isLoading}
           dataSource={invitations}
           columns={columns}
-          scroll={{ x: 1250 }}
+          scroll={{ x: 1010 }}
           pagination={{
             current: filters.page,
             total: invitationsQuery.data?.count || 0,
@@ -524,11 +372,10 @@ export default function InvitationPanel({ departments, roles: allRoles, isSuperu
       </div>
 
       <InvitationModal
-        editor={editor}
-        roles={availableRoles}
+        open={inviting}
         loading={saving}
         form={form}
-        onClose={() => setEditor(null)}
+        onClose={() => setInviting(false)}
         onSave={save}
       />
       <Modal

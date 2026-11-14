@@ -27,7 +27,6 @@ export default function EmployerCompanyLinkRecovery({
   publicId,
   company,
   companyRole,
-  enabled,
 }) {
   const queryClient = useQueryClient()
   const [form] = Form.useForm()
@@ -58,7 +57,7 @@ export default function EmployerCompanyLinkRecovery({
     },
   })
 
-  if (!enabled || !company) return null
+  if (!company) return null
   const close = () => {
     if (previewMutation.isPending || confirmMutation.isPending) return
     setOpen(false)

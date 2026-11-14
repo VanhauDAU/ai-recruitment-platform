@@ -13,15 +13,9 @@ from rest_framework import status
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.test import APITestCase
 
-from apps.accounts.admin_access_cache import bust_admin_permission_cache
-from apps.accounts.models import (
-    AdminAccessAuditLog,
-    AdminPermission,
-    AdminRole,
-    Department,
-    User,
-)
-from apps.accounts.services import StaleImpactToken, assign_membership
+from apps.accounts.models import AdminAccessAuditLog, User
+from apps.accounts.services import StaleImpactToken
+from apps.accounts.tests.helpers import make_admin
 from apps.jobs.models import Job
 from apps.jobs.selectors.listing import active_jobs_queryset
 from apps.jobs.services import RESPONSIBILITY_STATEMENT_VERSION, reopen_job
@@ -60,53 +54,7 @@ class EmployerVerificationStateMachineTests(APITestCase):
             email='er5-superadmin@example.com',
             password='Password@123',
         )
-        self.reviewer = User.objects.create_user(
-            email='er5-reviewer@example.com',
-            password='Password@123',
-            role=User.Role.ADMIN,
-        )
-        self.compliance_lead = User.objects.create_user(
-            email='er5-compliance@example.com',
-            password='Password@123',
-            role=User.Role.ADMIN,
-        )
-        self.unprivileged_admin = User.objects.create_user(
-            email='er5-unprivileged@example.com',
-            password='Password@123',
-            role=User.Role.ADMIN,
-        )
-        department = Department.objects.create(
-            code='er5-compliance',
-            name='ER-5 Compliance',
-        )
-        review_role = AdminRole.objects.create(
-            department=department,
-            code='reviewer',
-            name='Reviewer',
-        )
-        compliance_role = AdminRole.objects.create(
-            department=department,
-            code='compliance-lead',
-            name='Compliance Lead',
-        )
-        permissions = {
-            code: AdminPermission.objects.get(code=code)
-            for code in (
-                'employer_verification.view',
-                'employer_verification.review',
-                'employer_verification.revoke',
-                'employer_verification.resubmission_unlock',
-                'employer_verification.tax_override',
-            )
-        }
-        review_role.permissions.add(
-            permissions['employer_verification.view'],
-            permissions['employer_verification.review'],
-        )
-        compliance_role.permissions.add(*permissions.values())
-        assign_membership(self.reviewer, review_role, actor=self.superadmin)
-        assign_membership(self.compliance_lead, compliance_role, actor=self.superadmin)
-        bust_admin_permission_cache([self.reviewer.pk, self.compliance_lead.pk])
+        self.reviewer = make_admin('er5-reviewer@example.com')
 
         self.employer = User.objects.create_user(
             email='er5-employer@example.com',
@@ -209,14 +157,14 @@ class EmployerVerificationStateMachineTests(APITestCase):
         self.case.refresh_from_db()
         impact = verification_lifecycle_impact(
             self.case,
-            actor=self.compliance_lead,
+            actor=self.reviewer,
             action=action,
             reason='Bằng chứng đại diện không còn hiệu lực.',
         )
         self.assertNotIn('company_impact', impact)
         self.case = confirm_verification_lifecycle_action(
             self.case,
-            actor=self.compliance_lead,
+            actor=self.reviewer,
             action=action,
             reason='Bằng chứng đại diện không còn hiệu lực.',
             impact_token=impact['impact_token'],
@@ -287,16 +235,16 @@ class EmployerVerificationStateMachineTests(APITestCase):
             case.events.filter(event_type=EmployerVerificationEvent.EventType.APPROVED).exists()
         )
 
-    def test_review_services_enforce_permission_without_relying_on_api(self):
+    def test_review_services_reject_non_admin_actors_without_relying_on_api(self):
         document = self.case.documents.get(doc_type=CompanyDocument.DocType.BUSINESS_REGISTRATION)
         original_lock_version = self.case.lock_version
 
         with self.assertRaises(PermissionDenied):
-            start_verification_review(self.case, actor=self.unprivileged_admin)
+            start_verification_review(self.case, actor=self.employer)
         with self.assertRaises(PermissionDenied):
             review_verification_document(
                 document,
-                actor=self.unprivileged_admin,
+                actor=self.employer,
                 decision=CompanyDocument.Status.APPROVED,
                 reason='',
                 lock_version=original_lock_version,
@@ -305,7 +253,7 @@ class EmployerVerificationStateMachineTests(APITestCase):
         self.case.refresh_from_db()
         document.refresh_from_db()
         self.assertEqual(self.case.lock_version, original_lock_version)
-        self.assertNotEqual(document.reviewed_by, self.unprivileged_admin)
+        self.assertNotEqual(document.reviewed_by, self.employer)
 
     def test_company_relink_is_blocked_and_public_job_fails_closed(self):
         self._approve()
@@ -500,17 +448,9 @@ class EmployerVerificationStateMachineTests(APITestCase):
             ]
         )
 
-        with self.assertRaises(PermissionDenied):
-            unlock_verification_resubmission(
-                self.case,
-                actor=self.reviewer,
-                reason='Reviewer không có quyền rủi ro cao.',
-                lock_version=self.case.lock_version,
-            )
-
         self.case = unlock_verification_resubmission(
             self.case,
-            actor=self.compliance_lead,
+            actor=self.reviewer,
             reason='Đã chấp thuận khiếu nại và đối chiếu bản gốc.',
             lock_version=self.case.lock_version,
         )
@@ -525,13 +465,13 @@ class EmployerVerificationStateMachineTests(APITestCase):
         )
         self.assertTrue(
             AdminAccessAuditLog.objects.filter(
-                actor=self.compliance_lead,
+                actor=self.reviewer,
                 action='unlock_employer_verification_resubmission',
                 target_public_id=self.case.public_id,
             ).exists()
         )
 
-    def test_resubmission_unlock_endpoint_enforces_permission_and_lock_version(self):
+    def test_resubmission_unlock_endpoint_enforces_lock_version(self):
         self.case.status = EmployerVerificationCase.Status.REJECTED
         self.case.final_rejection_count = 3
         self.case.resubmission_locked_at = timezone.now()
@@ -549,14 +489,6 @@ class EmployerVerificationStateMachineTests(APITestCase):
         )
 
         self.client.force_authenticate(self.reviewer)
-        denied = self.client.post(
-            url,
-            {'reason': 'Không đủ quyền.', 'lock_version': self.case.lock_version},
-            format='json',
-        )
-        self.assertEqual(denied.status_code, status.HTTP_403_FORBIDDEN)
-
-        self.client.force_authenticate(self.compliance_lead)
         stale = self.client.post(
             url,
             {'reason': 'Đã đối chiếu khiếu nại.', 'lock_version': 999},
@@ -631,7 +563,7 @@ class EmployerVerificationStateMachineTests(APITestCase):
 
     def test_tax_pending_cannot_be_overridden(self):
         self._replace_tax_evidence(CompanyTaxLookupEvidence.Status.PENDING)
-        self.client.force_authenticate(self.compliance_lead)
+        self.client.force_authenticate(self.reviewer)
 
         response = self.client.post(
             reverse(
@@ -681,7 +613,7 @@ class EmployerVerificationStateMachineTests(APITestCase):
         self.assertEqual(decided.status, EmployerVerificationCase.Status.REJECTED)
         self.assertEqual(decided.final_rejection_count, 1)
 
-    def test_tax_override_is_denied_to_reviewer_and_audited_for_compliance_lead(self):
+    def test_tax_override_by_regular_admin_is_audited(self):
         self._replace_tax_evidence(CompanyTaxLookupEvidence.Status.FOUND, mismatch=True)
         url = reverse(
             'admin-employer-verification-decision-impact',
@@ -693,10 +625,6 @@ class EmployerVerificationStateMachineTests(APITestCase):
             'tax_override_reason': 'Đã đối chiếu giấy phép bản gốc.',
         }
         self.client.force_authenticate(self.reviewer)
-        denied = self.client.post(url, payload, format='json')
-        self.assertEqual(denied.status_code, status.HTTP_403_FORBIDDEN, denied.data)
-
-        self.client.force_authenticate(self.compliance_lead)
         impact = self.client.post(url, payload, format='json')
         self.assertEqual(impact.status_code, status.HTTP_200_OK, impact.data)
         confirmed = self.client.post(
@@ -711,7 +639,7 @@ class EmployerVerificationStateMachineTests(APITestCase):
         self.assertEqual(confirmed.status_code, status.HTTP_200_OK, confirmed.data)
         self.case.refresh_from_db()
         self.assertEqual(self.case.status, EmployerVerificationCase.Status.APPROVED)
-        self.assertEqual(self.case.tax_override_by, self.compliance_lead)
+        self.assertEqual(self.case.tax_override_by, self.reviewer)
         self.assertEqual(
             self.case.tax_override_reason,
             'Đã đối chiếu giấy phép bản gốc.',
@@ -728,38 +656,11 @@ class EmployerVerificationStateMachineTests(APITestCase):
             action='decide_employer_verification',
             target_public_id=self.case.public_id,
         ).latest('id')
-        self.assertEqual(audit.actor, self.compliance_lead)
+        self.assertEqual(audit.actor, self.reviewer)
         self.assertEqual(
             audit.payload['tax_override_reason'],
             'Đã đối chiếu giấy phép bản gốc.',
         )
-
-    def test_superuser_bypasses_explicit_tax_override_grant(self):
-        self._replace_tax_evidence(CompanyTaxLookupEvidence.Status.FOUND, mismatch=True)
-
-        self._approve(
-            actor=self.superadmin,
-            tax_override=True,
-            tax_override_reason='Super Admin đối chiếu bản gốc.',
-        )
-
-        self.case.refresh_from_db()
-        self.assertEqual(self.case.tax_override_by, self.superadmin)
-
-    def test_reviewer_cannot_revoke_but_explicit_compliance_role_can_preview(self):
-        self._approve(actor=self.reviewer)
-        url = reverse(
-            'admin-employer-verification-revoke-impact',
-            kwargs={'public_id': self.case.public_id},
-        )
-        self.client.force_authenticate(self.reviewer)
-        denied = self.client.post(url, {'reason': 'Rà soát lại.'}, format='json')
-        self.assertEqual(denied.status_code, status.HTTP_403_FORBIDDEN, denied.data)
-
-        self.client.force_authenticate(self.compliance_lead)
-        allowed = self.client.post(url, {'reason': 'Rà soát lại.'}, format='json')
-        self.assertEqual(allowed.status_code, status.HTTP_200_OK, allowed.data)
-        self.assertNotIn('company_impact', allowed.data)
 
     def test_revoke_updates_recruiter_case_and_holds_without_company_impact(self):
         self._approve()
@@ -847,7 +748,7 @@ class EmployerVerificationStateMachineTests(APITestCase):
 
         impact = verification_lifecycle_impact(
             self.case,
-            actor=self.compliance_lead,
+            actor=self.reviewer,
             action=EmployerVerificationCase.Status.REVOKED,
             reason='Rà soát lại bằng chứng đại diện.',
         )
@@ -1016,7 +917,7 @@ class EmployerVerificationStateMachineTests(APITestCase):
 
     def test_same_count_job_replacement_stales_lifecycle_snapshot(self):
         self._approve()
-        self.client.force_authenticate(self.compliance_lead)
+        self.client.force_authenticate(self.reviewer)
         impact_url = reverse(
             'admin-employer-verification-revoke-impact',
             kwargs={'public_id': self.case.public_id},

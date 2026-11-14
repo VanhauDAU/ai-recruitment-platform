@@ -11,6 +11,8 @@ from apps.employers.selectors import build_employer_initial_onboarding
 from apps.jobs.models import Job
 from common.media_storage import media_url_from_value
 
+from .auth import admin_access_payload
+
 
 def _masked(value, *, visible, keep=4):
     if visible or value in (None, ''):
@@ -192,23 +194,7 @@ class AdminAccountProfileSerializer(serializers.Serializer):
         }
 
     def _admin(self, user):
-        memberships = getattr(user, 'active_admin_memberships', [])
-        return {
-            'is_superuser': user.is_superuser,
-            'memberships': [
-                {
-                    'public_id': membership.public_id,
-                    'role': membership.role.name,
-                    'department': membership.role.department.name,
-                    'permissions': sorted(
-                        permission.code
-                        for permission in membership.role.permissions.all()
-                        if permission.is_active
-                    ),
-                }
-                for membership in memberships
-            ],
-        }
+        return admin_access_payload(user)
 
 
 class AdminAccountProfileUpdateSerializer(serializers.Serializer):

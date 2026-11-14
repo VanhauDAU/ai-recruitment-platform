@@ -55,16 +55,7 @@ test('knowledgebase admin: explicit save, review and publish workflow', async ({
     full_name: 'Biên tập viên',
     role: 'admin',
     status: 'active',
-    admin_access: {
-      is_superuser: false,
-      permissions: [
-        'knowledgebase.view',
-        'knowledgebase.manage',
-        'knowledgebase.review',
-        'knowledgebase.publish',
-      ],
-      memberships: [],
-    },
+    admin_access: { is_superuser: false },
   }
 
   const responseArticle = () => JSON.parse(JSON.stringify(article))

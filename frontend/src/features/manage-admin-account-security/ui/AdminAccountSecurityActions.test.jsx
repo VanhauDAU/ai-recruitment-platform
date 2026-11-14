@@ -140,7 +140,6 @@ describe('AdminAccountSecurityActions', () => {
         status: 'banned',
         status_enforcement: { requires_resource_review: true },
       },
-      allowSessions: false,
     })
 
     expect(screen.getByRole('button', { name: /Bắt đầu khôi phục/ })).toBeInTheDocument()

@@ -223,14 +223,6 @@ class AdminTaxLookupEvidenceSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = fields
 
-    def to_representation(self, instance):
-        data = super().to_representation(instance)
-        if not self.context.get('can_view_sensitive', False):
-            data['tax_code'] = _masked_tax_code(data['tax_code'])
-            data['returned_tax_code'] = _masked_tax_code(data['returned_tax_code'])
-            data['response_hash'] = ''
-        return data
-
     def get_comparison(self, obj):
         if obj.status != CompanyTaxLookupEvidence.Status.FOUND:
             return {
@@ -290,26 +282,9 @@ class AdminVerificationDocumentSerializer(serializers.ModelSerializer):
         return getattr(obj, 'duplicate_company_count', 0)
 
     def get_source_url(self, obj):
-        if not self.context.get('can_view_sensitive', False):
-            return None
         if obj.file_url.startswith(('http://', 'https://')):
             return obj.file_url
         return None
-
-    def to_representation(self, instance):
-        data = super().to_representation(instance)
-        if not self.context.get('can_view_sensitive', False):
-            data.update(
-                {
-                    'file_name': '',
-                    'mime_type': '',
-                    'file_size': 0,
-                    'sha256': '',
-                    'uploaded_by_email': '',
-                    'source_url': None,
-                }
-            )
-        return data
 
 
 class AdminVerificationEventSerializer(serializers.ModelSerializer):
@@ -327,18 +302,6 @@ class AdminVerificationEventSerializer(serializers.ModelSerializer):
             'created_at',
         ]
         read_only_fields = fields
-
-    def to_representation(self, instance):
-        data = super().to_representation(instance)
-        if not self.context.get('can_view_sensitive', False):
-            payload = data.get('payload')
-            if isinstance(payload, dict):
-                data['payload'] = {
-                    key: value
-                    for key, value in payload.items()
-                    if key not in {'document_file_name'}
-                }
-        return data
 
 
 class AdminVerificationCaseListSerializer(serializers.ModelSerializer):
@@ -401,14 +364,10 @@ class AdminVerificationCaseListSerializer(serializers.ModelSerializer):
     def get_company(self, obj):
         if obj.company_id is None:
             return None
-        sensitive = self.context.get('can_view_sensitive', False)
-        tax_code = obj.company.tax_code or ''
-        if tax_code and not sensitive:
-            tax_code = f'***{tax_code[-4:]}' if len(tax_code) > 4 else '****'
         return {
             'public_id': obj.company.public_id,
             'name': obj.company.company_name,
-            'tax_code': tax_code,
+            'tax_code': obj.company.tax_code or '',
             'duplicate_tax_code_company_count': getattr(
                 obj,
                 'duplicate_tax_code_company_count',
@@ -879,13 +838,10 @@ class AdminCompanyUpdateRequestSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
     def get_company(self, obj):
-        tax_code = obj.company.tax_code or ''
-        if tax_code and not self.context.get('can_view_sensitive', False):
-            tax_code = f'***{tax_code[-4:]}' if len(tax_code) > 4 else '****'
         return {
             'public_id': obj.company.public_id,
             'name': obj.company.company_name,
-            'tax_code': tax_code,
+            'tax_code': obj.company.tax_code or '',
         }
 
     def get_current_values(self, obj):

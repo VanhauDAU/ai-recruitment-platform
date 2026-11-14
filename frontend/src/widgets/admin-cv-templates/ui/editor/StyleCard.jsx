@@ -18,13 +18,13 @@ function Swatch({ color, selected, label, onClick, disabled }) {
 
 // Màu ứng viên được chọn (bấm để thêm/bỏ), màu mặc định, font, cỡ chữ, giãn dòng.
 // Màu lưu ngay vào mẫu; font/cỡ chữ lưu vào bản nháp.
-export default function StyleCard({ template, version, canManage, onSaveColors, onSaveStyle }) {
+export default function StyleCard({ template, version, onSaveColors, onSaveStyle }) {
   const library = useQuery({ queryKey: ['admin-cv-library', 'colors'], queryFn: () => adminCvColors.list() })
   const chosenIds = template.colors.map((color) => color.public_id)
   const defaultId = template.colors.find((color) => color.is_default)?.public_id || chosenIds[0]
   const palette = (library.data || []).filter((color) => color.is_active || chosenIds.includes(color.public_id))
   const style = version?.default_style_json
-  const editableStyle = canManage && Boolean(style)
+  const editableStyle = Boolean(style)
 
   const toggle = (color) => {
     const chosen = chosenIds.includes(color.public_id)
@@ -38,12 +38,12 @@ export default function StyleCard({ template, version, canManage, onSaveColors, 
     <div className="space-y-4">
       <div>
         <p className="mb-2 flex items-center justify-between text-sm font-semibold text-slate-700">Bảng màu<span className="text-xs font-normal text-slate-500">{chosenIds.length}/{MAX_COLORS} màu</span></p>
-        <div className="flex flex-wrap gap-2.5">{palette.map((color) => <Swatch key={color.public_id} color={color} selected={chosenIds.includes(color.public_id)} disabled={!canManage} label={`${chosenIds.includes(color.public_id) ? 'Bỏ' : 'Thêm'} màu ${color.name}`} onClick={() => toggle(color)} />)}</div>
+        <div className="flex flex-wrap gap-2.5">{palette.map((color) => <Swatch key={color.public_id} color={color} selected={chosenIds.includes(color.public_id)} label={`${chosenIds.includes(color.public_id) ? 'Bỏ' : 'Thêm'} màu ${color.name}`} onClick={() => toggle(color)} />)}</div>
         {library.data && palette.length === 0 && <p className="text-xs text-slate-500">Thư viện chưa có màu nào đang bật.</p>}
       </div>
       {template.colors.length > 1 && <div>
         <p className="mb-2 text-sm font-semibold text-slate-700">Màu mặc định</p>
-        <div className="flex flex-wrap gap-2">{template.colors.map((color) => <button key={color.public_id} type="button" disabled={!canManage} aria-pressed={color.public_id === defaultId} onClick={() => color.public_id !== defaultId && onSaveColors({ colorIds: chosenIds, defaultId: color.public_id })}
+        <div className="flex flex-wrap gap-2">{template.colors.map((color) => <button key={color.public_id} type="button" aria-pressed={color.public_id === defaultId} onClick={() => color.public_id !== defaultId && onSaveColors({ colorIds: chosenIds, defaultId: color.public_id })}
           className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition disabled:cursor-not-allowed ${color.public_id === defaultId ? 'border-slate-800 bg-slate-800 text-white' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-400'}`}>
           <span className="h-3 w-3 rounded-full border border-white/40" style={{ background: color.hex_code }} />{color.name}
         </button>)}</div>

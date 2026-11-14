@@ -61,7 +61,7 @@ function formatDate(value) {
   }).format(new Date(value))
 }
 
-function DocumentPreview({ verificationCase, document, canViewSensitive }) {
+function DocumentPreview({ verificationCase, document }) {
   const queryClient = useQueryClient()
   const query = useQuery({
     queryKey: adminEmployerVerificationKeys.document(
@@ -73,7 +73,7 @@ function DocumentPreview({ verificationCase, document, canViewSensitive }) {
       document.public_id,
       { signal },
     ),
-    enabled: Boolean(document && canViewSensitive),
+    enabled: Boolean(document),
     staleTime: 60_000,
     gcTime: 60_000,
     refetchOnWindowFocus: false,
@@ -141,16 +141,6 @@ function DocumentPreview({ verificationCase, document, canViewSensitive }) {
   }, [previewKind, query.data])
 
   if (!document) return <Empty description="Chọn giấy tờ để xem" />
-  if (!canViewSensitive) {
-    return (
-      <Alert
-        showIcon
-        type="warning"
-        title="Nội dung giấy tờ đang được bảo vệ"
-        description="Cần quyền xem dữ liệu nhạy cảm để preview hoặc tải file."
-      />
-    )
-  }
   if (query.isLoading) return <Skeleton active paragraph={{ rows: 8 }} />
   if (query.isError) {
     return (
@@ -339,14 +329,6 @@ export default function EmployerVerificationReview({
   companyPublicId,
   companyUpdateRequestPublicId,
   companyUpdateRequesterPublicId,
-  canViewVerification,
-  canReviewVerification,
-  canRevokeVerification,
-  canUnlockVerificationResubmission,
-  canOverrideVerificationTax,
-  canViewCompanyUpdates,
-  canReviewCompanyUpdates,
-  canViewSensitive,
 }) {
   const queryClient = useQueryClient()
   const [selectedDocumentId, setSelectedDocumentId] = useState('')
@@ -354,7 +336,7 @@ export default function EmployerVerificationReview({
   const query = useQuery({
     queryKey: adminEmployerVerificationKeys.detail(casePublicId),
     queryFn: ({ signal }) => getAdminEmployerVerification(casePublicId, { signal }),
-    enabled: Boolean(casePublicId && canViewVerification),
+    enabled: Boolean(casePublicId),
   })
   const verificationCase = query.data
   const currentDocuments = useMemo(
@@ -421,27 +403,6 @@ export default function EmployerVerificationReview({
       await refresh()
     },
   })
-  if (!canViewVerification) {
-    return (
-      <div className="verification-review-layout">
-        <Alert
-          showIcon
-          type="info"
-          title="Phạm vi xử lý yêu cầu sửa công ty"
-          description="Tài khoản chỉ được xem hoặc duyệt yêu cầu cập nhật công ty, không có quyền xem hồ sơ xác thực nhà tuyển dụng."
-        />
-        {canViewCompanyUpdates && (
-          <CompanyUpdateReviewPanel
-            companyPublicId={companyPublicId}
-            requestPublicId={companyUpdateRequestPublicId}
-            requesterPublicId={companyUpdateRequesterPublicId}
-            canReview={canReviewCompanyUpdates}
-            canViewSensitive={canViewSensitive}
-          />
-        )}
-      </div>
-    )
-  }
   if (!casePublicId) {
     return (
       <div className="verification-review-layout">
@@ -449,15 +410,11 @@ export default function EmployerVerificationReview({
           description="Tài khoản này chưa có hồ sơ xác thực"
           image={Empty.PRESENTED_IMAGE_SIMPLE}
         />
-        {canViewCompanyUpdates && (
-          <CompanyUpdateReviewPanel
-            companyPublicId={companyPublicId}
-            requestPublicId={companyUpdateRequestPublicId}
-            requesterPublicId={companyUpdateRequesterPublicId}
-            canReview={canReviewCompanyUpdates}
-            canViewSensitive={canViewSensitive}
-          />
-        )}
+        <CompanyUpdateReviewPanel
+          companyPublicId={companyPublicId}
+          requestPublicId={companyUpdateRequestPublicId}
+          requesterPublicId={companyUpdateRequesterPublicId}
+        />
       </div>
     )
   }
@@ -477,8 +434,7 @@ export default function EmployerVerificationReview({
   const pendingDocumentCount = currentDocuments.filter(
     (document) => document.status === 'pending',
   ).length
-  const canReviewDocuments = canReviewVerification
-    && verificationCase.status === 'in_review'
+  const canReviewDocuments = verificationCase.status === 'in_review'
   return (
     <div className="verification-review-layout">
       <Card size="small" className="account-detail-card verification-overview-card">
@@ -500,19 +456,17 @@ export default function EmployerVerificationReview({
               {`${verificationCase.full_name || 'Chưa cập nhật họ tên'} · ${verificationCase.email}`}
             </Typography.Text>
           </div>
-          {canReviewVerification && (
-            <Space wrap>
-              {verificationCase.status === 'pending' && (
-                <Button
-                  icon={<EyeOutlined />}
-                  loading={startMutation.isPending}
-                  onClick={() => startMutation.mutate()}
-                >
-                  {verificationCase.revision > 1 ? 'Nhận xử lý lại' : 'Nhận xử lý'}
-                </Button>
-              )}
-            </Space>
-          )}
+          <Space wrap>
+            {verificationCase.status === 'pending' && (
+              <Button
+                icon={<EyeOutlined />}
+                loading={startMutation.isPending}
+                onClick={() => startMutation.mutate()}
+              >
+                {verificationCase.revision > 1 ? 'Nhận xử lý lại' : 'Nhận xử lý'}
+              </Button>
+            )}
+          </Space>
         </div>
         <dl className="verification-case-facts">
           <div>
@@ -552,16 +506,12 @@ export default function EmployerVerificationReview({
         )}
       </Card>
 
-      {canViewCompanyUpdates && (
-        <CompanyUpdateReviewPanel
-          companyPublicId={verificationCase.company?.public_id || companyPublicId}
-          requestPublicId={companyUpdateRequestPublicId}
-          requesterPublicId={companyUpdateRequesterPublicId}
-          canReview={canReviewCompanyUpdates}
-          canViewSensitive={canViewSensitive}
-          onChanged={refresh}
-        />
-      )}
+      <CompanyUpdateReviewPanel
+        companyPublicId={verificationCase.company?.public_id || companyPublicId}
+        requestPublicId={companyUpdateRequestPublicId}
+        requesterPublicId={companyUpdateRequesterPublicId}
+        onChanged={refresh}
+      />
 
       <section className="verification-review-workspace">
         <div className="verification-review-main">
@@ -608,7 +558,6 @@ export default function EmployerVerificationReview({
               <DocumentPreview
                 verificationCase={verificationCase}
                 document={selectedDocument}
-                canViewSensitive={canViewSensitive}
               />
             </Card>
           </section>
@@ -616,7 +565,7 @@ export default function EmployerVerificationReview({
           <TaxLookupEvidenceCard
             evidence={verificationCase.tax_lookup_evidence}
             recruiterCompanyRole={verificationCase.recruiter?.company_role}
-            canRefresh={canReviewVerification}
+            canRefresh
             refreshing={taxLookupMutation.isPending}
             onRefresh={() => taxLookupMutation.mutate()}
           />
@@ -625,10 +574,6 @@ export default function EmployerVerificationReview({
         <aside className="verification-review-rail" aria-label="Điều kiện và quyết định hồ sơ">
           <VerificationFinalDecisionPanel
             verificationCase={verificationCase}
-            canReview={canReviewVerification}
-            canRevoke={canRevokeVerification}
-            canUnlockResubmission={canUnlockVerificationResubmission}
-            canTaxOverride={canOverrideVerificationTax}
             taxEvidence={verificationCase.tax_lookup_evidence}
             onChanged={refresh}
           />

@@ -3,9 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Button, Dropdown, Input, Progress, Select, Table, Tabs, Tag } from 'antd'
 import { useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
-import { useAdminAccess } from '@/entities/admin-access'
 import { adminCvPositions, adminCvSamples, exportAdminCvPositions, getAdminCvCoverage, importAdminCvPositions } from '@/entities/cv-template'
-import { useSession } from '@/entities/session'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { adminPath } from '@/shared/config/portals'
 import { message } from '@/shared/lib/toast'
@@ -31,9 +29,6 @@ function ContentStatus({ coverage }) {
 }
 
 export default function AdminCvPositions() {
-  const { user } = useSession()
-  const access = useAdminAccess(user)
-  const can = { manage: access.has('cv_template.manage'), publish: access.has('cv_template.publish'), generate: access.has('cv_content.generate_ai') }
   const queryClient = useQueryClient()
   const [params, setParams] = useSearchParams()
   const [generating, setGenerating] = useState(false)
@@ -61,7 +56,7 @@ export default function AdminCvPositions() {
   const tab = params.get('tab') === 'review' ? 'review' : 'positions'
   const moreItems = [
     { key: 'export', icon: <DownloadOutlined />, label: 'Xuất cấu hình (JSON)', onClick: async () => downloadJson(await exportAdminCvPositions(), 'cv-positions.json') },
-    ...(can.manage ? [{ key: 'import', icon: <UploadOutlined />, label: 'Nhập cấu hình (JSON)', onClick: () => fileInput.current?.click() }] : []),
+    { key: 'import', icon: <UploadOutlined />, label: 'Nhập cấu hình (JSON)', onClick: () => fileInput.current?.click() },
   ]
 
   const list = <AdminPanel padded={false}>
@@ -69,7 +64,7 @@ export default function AdminCvPositions() {
       <Input allowClear prefix={<SearchOutlined className="text-slate-400" />} placeholder="Tìm vị trí" onChange={(event) => setSearch(event.target.value)} className="!w-full sm:!w-56" />
       <Select allowClear showSearch placeholder="Mọi ngành" value={industry} onChange={setIndustry} options={industries.map((name) => ({ value: name, label: name }))} className="w-full sm:w-48" />
       <span className="flex gap-2 sm:ml-auto">
-        {can.generate && <Button type="primary" icon={<RobotOutlined />} onClick={() => setGenerating(true)}>Nhờ AI viết nội dung</Button>}
+        <Button type="primary" icon={<RobotOutlined />} onClick={() => setGenerating(true)}>Nhờ AI viết nội dung</Button>
         <Dropdown menu={{ items: moreItems }} trigger={['click']}><Button icon={<MoreOutlined />} aria-label="Thao tác khác" /></Dropdown>
         <input ref={fileInput} type="file" accept="application/json" hidden onChange={(event) => { if (event.target.files[0]) importJson.mutate(event.target.files[0]); event.target.value = '' }} />
       </span>
@@ -87,7 +82,7 @@ export default function AdminCvPositions() {
   return <div className="space-y-3">
     <Tabs activeKey={tab} onChange={(next) => setParams(next === 'review' ? { tab: next } : {}, { replace: true })} items={[
       { key: 'positions', label: 'Danh sách vị trí', children: list },
-      { key: 'review', label: <span>Bản AI chờ duyệt {review.data?.length > 0 && <Tag color="purple" className="!ml-1 !mr-0">{review.data.length}</Tag>}</span>, children: <ReviewQueue canPublish={can.publish} canManage={can.manage} canGenerate={can.generate} /> },
+      { key: 'review', label: <span>Bản AI chờ duyệt {review.data?.length > 0 && <Tag color="purple" className="!ml-1 !mr-0">{review.data.length}</Tag>}</span>, children: <ReviewQueue /> },
     ]} />
     {generating && <GenerateSamplesModal open positions={positions.data || []} onClose={() => setGenerating(false)} onFinished={refresh} />}
   </div>

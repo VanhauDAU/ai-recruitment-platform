@@ -4,6 +4,7 @@ import tempfile
 
 from django.urls import reverse
 
+from ..models import User
 from ..services.refresh_cookies import cookie_name
 
 # PNG 1x1 hợp lệ — dùng cho mọi test upload ảnh.
@@ -31,3 +32,16 @@ def set_refresh_cookie(client, portal, refresh):
 
 def refresh_session(client, portal='main'):
     return client.post(reverse('auth-refresh'), {'portal': portal}, format='json')
+
+
+def make_admin(email='admin@example.com', *, superuser=False, password='Password@123', **extra):
+    """Tài khoản cổng quản trị (ADR-0018): superuser hoặc admin thường."""
+
+    return User.objects.create_user(
+        email,
+        password,
+        role=User.Role.ADMIN,
+        is_superuser=superuser,
+        is_staff=superuser,
+        **extra,
+    )

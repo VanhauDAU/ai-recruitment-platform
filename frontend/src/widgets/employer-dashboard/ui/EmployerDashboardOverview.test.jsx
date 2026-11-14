@@ -47,7 +47,7 @@ describe('EmployerDashboardOverview', () => {
           verification={{
             phone_verified: true,
             company_linked: true,
-            business_doc_submitted: true,
+            business_doc_current: true,
             candidate_dpa_submitted: true,
             dpa_accepted: true,
           }}

@@ -11,7 +11,7 @@ import { bandLabel, localeLabel, sampleDocument } from '../model/catalog'
 import SampleEditorDrawer from './SampleEditorDrawer'
 
 // Bản AI chờ duyệt: đọc bản xem trước rồi Duyệt (đến tay ứng viên) / Sửa / Viết lại / Bỏ.
-export default function ReviewQueue({ canPublish, canManage, canGenerate }) {
+export default function ReviewQueue() {
   const queryClient = useQueryClient()
   const [selectedId, setSelectedId] = useState(null)
   const [editing, setEditing] = useState(null)
@@ -43,10 +43,10 @@ export default function ReviewQueue({ canPublish, canManage, canGenerate }) {
       <ul className="divide-y divide-slate-100">{data.map((sample) => <li key={sample.public_id}><button type="button" onClick={() => setSelectedId(sample.public_id)} className={`w-full px-4 py-3 text-left text-sm hover:bg-slate-50 ${sample.public_id === selected.public_id ? 'bg-emerald-50' : ''}`}><p className="font-semibold">{sample.position_name}</p><p className="mt-1 flex flex-wrap gap-1"><Tag>{localeLabel(sample.locale)}</Tag><Tag>Kinh nghiệm {bandLabel(sample.experience_band).toLowerCase()}</Tag></p></button></li>)}</ul>
     </AdminPanel>
     <AdminPanel title={selected.title} extra={<div className="flex flex-wrap gap-2">
-      {canPublish && <Button size="small" type="primary" icon={<CheckOutlined />} loading={act.isPending} onClick={() => act.mutate({ action: 'approve', sample: selected })}>Duyệt & dùng</Button>}
-      {canManage && <Button size="small" icon={<EditOutlined />} onClick={() => setEditing(selected)}>Sửa</Button>}
-      {canGenerate && <Button size="small" icon={<ReloadOutlined />} onClick={() => act.mutate({ action: 'regenerate', sample: selected })}>Viết lại</Button>}
-      {canPublish && <Button size="small" danger icon={<CloseOutlined />} onClick={() => act.mutate({ action: 'reject', sample: selected })}>Bỏ</Button>}
+      <Button size="small" type="primary" icon={<CheckOutlined />} loading={act.isPending} onClick={() => act.mutate({ action: 'approve', sample: selected })}>Duyệt & dùng</Button>
+      <Button size="small" icon={<EditOutlined />} onClick={() => setEditing(selected)}>Sửa</Button>
+      <Button size="small" icon={<ReloadOutlined />} onClick={() => act.mutate({ action: 'regenerate', sample: selected })}>Viết lại</Button>
+      <Button size="small" danger icon={<CloseOutlined />} onClick={() => act.mutate({ action: 'reject', sample: selected })}>Bỏ</Button>
     </div>}>
       <div className="max-h-[75vh] overflow-y-auto bg-slate-100 p-3 [scrollbar-gutter:stable]"><FittedCvPreview document={sampleDocument(selected.content_json)} rendererKey="single_column_v1" /></div>
     </AdminPanel>

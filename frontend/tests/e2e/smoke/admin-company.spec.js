@@ -6,11 +6,15 @@ const adminUser = {
   full_name: 'System Admin',
   role: 'admin',
   status: 'active',
-  admin_access: {
-    is_superuser: true,
-    permissions: [],
-    memberships: [],
-  },
+  admin_access: { is_superuser: true },
+}
+
+// Trên thiết bị di động antd bỏ menu "…" và chỉ cho vuốt thanh tab, nên tab tràn
+// nằm ngoài khung nhìn. Chọn bằng bàn phím: focus khiến rc-tabs cuộn tab vào
+// khung nhìn, Enter kích hoạt tab.
+async function selectTab(page, name) {
+  await page.getByRole('tab', { name, exact: true }).focus()
+  await page.keyboard.press('Enter')
 }
 
 const company = {
@@ -186,7 +190,7 @@ test('admin company directory: three-level navigation, detail and owner roster',
   await expect(
     page.getByLabel('Nhà tuyển dụng (2)').getByText('Đã xác thực', { exact: true }),
   ).toBeVisible()
-  await page.getByRole('tab', { name: 'Tin tuyển dụng' }).click()
+  await selectTab(page, 'Tin tuyển dụng')
   await expect(page.getByText('Backend Engineer', { exact: true })).toBeVisible()
   await expect.poll(() => companyJobsRequest?.searchParams.get('company')).toBe('co_alpha')
   expect(companyJobsRequest.searchParams.get('ordering')).toBe('-created_at')

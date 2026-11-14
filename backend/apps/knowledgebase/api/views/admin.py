@@ -9,7 +9,7 @@ from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.accounts.permissions import HasAdminPermission
+from apps.accounts.permissions import AdminPortalPermission
 from common.metrics import record_metric
 from common.pagination import StandardPagination
 
@@ -168,11 +168,7 @@ def _article_response(request, article, *, response_status=status.HTTP_200_OK):
 
 @extend_schema(tags=['knowledgebase-admin'])
 class AdminCategoryListCreateView(PrivateNoStoreMixin, generics.ListAPIView):
-    permission_classes = [HasAdminPermission]
-    required_admin_permissions = {
-        'GET': ['knowledgebase.view'],
-        'POST': ['knowledgebase.view', 'knowledgebase.manage'],
-    }
+    permission_classes = [AdminPortalPermission]
     pagination_class = None
     serializer_class = AdminCategorySerializer
     queryset = admin_categories_queryset()
@@ -193,11 +189,7 @@ class AdminCategoryListCreateView(PrivateNoStoreMixin, generics.ListAPIView):
 
 @extend_schema(tags=['knowledgebase-admin'])
 class AdminCategoryDetailView(PrivateNoStoreMixin, APIView):
-    permission_classes = [HasAdminPermission]
-    required_admin_permissions = {
-        'GET': ['knowledgebase.view'],
-        'PATCH': ['knowledgebase.view', 'knowledgebase.manage'],
-    }
+    permission_classes = [AdminPortalPermission]
 
     def get(self, request, public_id):
         return _category_response(request, _category(public_id))
@@ -224,8 +216,7 @@ class AdminCategoryDetailView(PrivateNoStoreMixin, APIView):
 
 
 class AdminCategoryReorderView(PrivateNoStoreMixin, APIView):
-    permission_classes = [HasAdminPermission]
-    required_admin_permissions = {'POST': ['knowledgebase.view', 'knowledgebase.manage']}
+    permission_classes = [AdminPortalPermission]
 
     @extend_schema(
         request=ReorderSerializer,
@@ -248,8 +239,7 @@ class AdminCategoryReorderView(PrivateNoStoreMixin, APIView):
 
 
 class AdminCategoryLifecycleView(PrivateNoStoreMixin, APIView):
-    permission_classes = [HasAdminPermission]
-    required_admin_permissions = {'POST': ['knowledgebase.view', 'knowledgebase.publish']}
+    permission_classes = [AdminPortalPermission]
     is_active = None
 
     @extend_schema(
@@ -283,11 +273,7 @@ class AdminCategoryDeactivateView(AdminCategoryLifecycleView):
 
 @extend_schema(tags=['knowledgebase-admin'])
 class AdminArticleListCreateView(PrivateNoStoreMixin, generics.ListAPIView):
-    permission_classes = [HasAdminPermission]
-    required_admin_permissions = {
-        'GET': ['knowledgebase.view'],
-        'POST': ['knowledgebase.view', 'knowledgebase.manage'],
-    }
+    permission_classes = [AdminPortalPermission]
     pagination_class = StandardPagination
     serializer_class = AdminArticleListSerializer
 
@@ -313,8 +299,7 @@ class AdminArticleListCreateView(PrivateNoStoreMixin, generics.ListAPIView):
 
 
 class AdminArticleSummaryView(PrivateNoStoreMixin, APIView):
-    permission_classes = [HasAdminPermission]
-    required_admin_permissions = {'GET': ['knowledgebase.view']}
+    permission_classes = [AdminPortalPermission]
 
     @extend_schema(
         responses={200: AdminArticleSummarySerializer, **ERROR_RESPONSES},
@@ -328,11 +313,7 @@ class AdminArticleSummaryView(PrivateNoStoreMixin, APIView):
 
 @extend_schema(tags=['knowledgebase-admin'])
 class AdminArticleDetailView(PrivateNoStoreMixin, APIView):
-    permission_classes = [HasAdminPermission]
-    required_admin_permissions = {
-        'GET': ['knowledgebase.view'],
-        'PATCH': ['knowledgebase.view', 'knowledgebase.manage'],
-    }
+    permission_classes = [AdminPortalPermission]
 
     def get(self, request, public_id):
         return _article_response(request, _article(public_id))
@@ -360,8 +341,7 @@ class AdminArticleDetailView(PrivateNoStoreMixin, APIView):
 
 
 class AdminArticleReorderView(PrivateNoStoreMixin, APIView):
-    permission_classes = [HasAdminPermission]
-    required_admin_permissions = {'POST': ['knowledgebase.view', 'knowledgebase.manage']}
+    permission_classes = [AdminPortalPermission]
 
     @extend_schema(
         request=ReorderSerializer,
@@ -393,11 +373,7 @@ class AdminArticleReorderView(PrivateNoStoreMixin, APIView):
 
 @extend_schema(tags=['knowledgebase-admin'])
 class AdminRevisionListCreateView(PrivateNoStoreMixin, APIView):
-    permission_classes = [HasAdminPermission]
-    required_admin_permissions = {
-        'GET': ['knowledgebase.view'],
-        'POST': ['knowledgebase.view', 'knowledgebase.manage'],
-    }
+    permission_classes = [AdminPortalPermission]
 
     @extend_schema(operation_id='knowledgebase_admin_revision_list')
     def get(self, request, public_id):
@@ -429,11 +405,7 @@ class AdminRevisionListCreateView(PrivateNoStoreMixin, APIView):
 
 @extend_schema(tags=['knowledgebase-admin'])
 class AdminRevisionDetailView(PrivateNoStoreMixin, APIView):
-    permission_classes = [HasAdminPermission]
-    required_admin_permissions = {
-        'GET': ['knowledgebase.view'],
-        'PATCH': ['knowledgebase.view', 'knowledgebase.manage'],
-    }
+    permission_classes = [AdminPortalPermission]
 
     @extend_schema(operation_id='knowledgebase_admin_revision_detail')
     def get(self, request, public_id, number):
@@ -466,13 +438,8 @@ class AdminRevisionDetailView(PrivateNoStoreMixin, APIView):
 
 
 class AdminRevisionActionView(PrivateNoStoreMixin, APIView):
-    permission_classes = [HasAdminPermission]
+    permission_classes = [AdminPortalPermission]
     action = None
-
-    def get_required_admin_permissions(self, request):
-        if self.action in {'approve', 'reject'}:
-            return ['knowledgebase.view', 'knowledgebase.review']
-        return ['knowledgebase.view', 'knowledgebase.manage']
 
     @extend_schema(
         request=RevisionActionSerializer,
@@ -515,8 +482,7 @@ class AdminRevisionRejectView(AdminRevisionActionView):
 
 
 class AdminArticlePublishView(PrivateNoStoreMixin, APIView):
-    permission_classes = [HasAdminPermission]
-    required_admin_permissions = {'POST': ['knowledgebase.view', 'knowledgebase.publish']}
+    permission_classes = [AdminPortalPermission]
 
     @extend_schema(
         request=PublishSerializer,
@@ -541,8 +507,7 @@ class AdminArticlePublishView(PrivateNoStoreMixin, APIView):
 
 
 class AdminArticleLifecycleView(PrivateNoStoreMixin, APIView):
-    permission_classes = [HasAdminPermission]
-    required_admin_permissions = {'POST': ['knowledgebase.view', 'knowledgebase.publish']}
+    permission_classes = [AdminPortalPermission]
     lifecycle_action = None
 
     @extend_schema(
@@ -576,11 +541,7 @@ class AdminArticleRestoreView(AdminArticleLifecycleView):
 
 @extend_schema(tags=['knowledgebase-admin'])
 class AdminMediaListCreateView(PrivateNoStoreMixin, generics.ListAPIView):
-    permission_classes = [HasAdminPermission]
-    required_admin_permissions = {
-        'GET': ['knowledgebase.view'],
-        'POST': ['knowledgebase.view', 'knowledgebase.manage'],
-    }
+    permission_classes = [AdminPortalPermission]
     pagination_class = StandardPagination
     serializer_class = MediaSerializer
     parser_classes = [MultiPartParser, FormParser]

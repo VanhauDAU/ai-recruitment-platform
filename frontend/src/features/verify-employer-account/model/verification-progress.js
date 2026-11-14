@@ -1,7 +1,9 @@
 export const EMPLOYER_VERIFICATION_STEP_KEYS = [
   'phone_verified',
   'company_linked',
-  'business_doc_submitted',
+  // Server clears this when the verification case expired, was revoked or
+  // reopened, so the checklist asks for new documents.
+  'business_doc_current',
   'candidate_dpa_submitted',
   'dpa_accepted',
 ]

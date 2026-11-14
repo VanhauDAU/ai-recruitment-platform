@@ -21,7 +21,7 @@ vi.mock('@/entities/admin-employer-verification', () => ({
   ...api,
 }))
 
-function renderPanel({ canReview = false, requestPublicId = 'cur_1' } = {}) {
+function renderPanel({ requestPublicId = 'cur_1' } = {}) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
     <QueryClientProvider client={queryClient}>
@@ -30,8 +30,6 @@ function renderPanel({ canReview = false, requestPublicId = 'cur_1' } = {}) {
           companyPublicId="co_1"
           requestPublicId={requestPublicId}
           requesterPublicId="usr_owner"
-          canReview={canReview}
-          canViewSensitive
         />
       </App>
     </QueryClientProvider>,
@@ -125,7 +123,7 @@ describe('CompanyUpdateReviewPanel', () => {
       status_label: 'Đã duyệt',
     })
 
-    renderPanel({ canReview: true, requestPublicId: 'cur_done' })
+    renderPanel({ requestPublicId: 'cur_done' })
 
     expect(await screen.findByText('Yêu cầu cập nhật đã được xử lý')).toBeInTheDocument()
     expect(screen.getByText('Trạng thái hiện tại: Đã duyệt.')).toBeInTheDocument()
@@ -179,7 +177,7 @@ describe('CompanyUpdateReviewPanel', () => {
       }],
     })
 
-    renderPanel({ canReview: true, requestPublicId: 'cur_revision' })
+    renderPanel({ requestPublicId: 'cur_revision' })
     await userEvent.click(await screen.findByRole('button', { name: /Xem chi tiết và đối chiếu/ }))
 
     const dialog = screen.getByRole('dialog', { name: 'Đối chiếu yêu cầu sửa thông tin công ty' })
@@ -233,7 +231,7 @@ describe('CompanyUpdateReviewPanel', () => {
       },
     })
 
-    renderPanel({ canReview: true, requestPublicId: 'cur_base_conflict' })
+    renderPanel({ requestPublicId: 'cur_base_conflict' })
     await userEvent.click(await screen.findByRole('button', { name: /Xem chi tiết và đối chiếu/ }))
     const dialog = screen.getByRole('dialog', { name: 'Đối chiếu yêu cầu sửa thông tin công ty' })
     const approveButton = within(dialog).getByRole('button', { name: 'Duyệt và áp dụng' })

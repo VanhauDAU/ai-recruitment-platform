@@ -11,7 +11,7 @@ const name = (key) => getSectionDisplayName(key, 'vi-VN')
 
 // Mục nào nằm ở vùng nào, thứ tự, bắt buộc/bật sẵn/ẩn sẵn và độ rộng cột. Mẫu mới
 // đã được xếp sẵn hợp lý nên phần này thu gọn mặc định. Mỗi thay đổi lưu ngay.
-export default function SectionsCard({ version, canManage, onSave }) {
+export default function SectionsCard({ version, onSave }) {
   const contract = getRendererContract(version.renderer_key)
   const [open, setOpen] = useState(false)
   const [rows, setRows] = useState(version.sections)
@@ -38,7 +38,7 @@ export default function SectionsCard({ version, canManage, onSave }) {
     {open && <div className="space-y-4">
       {pair && <label className="block text-sm font-semibold text-slate-700">
         Độ rộng {getRegionLabel(pair[0].id).toLowerCase()}: {widths[pair[0].id]}%
-        <Slider key={`${version.id}-${widths[pair[0].id]}`} min={contract.resize.min} max={contract.resize.max} disabled={!canManage} defaultValue={widths[pair[0].id]} tooltip={{ formatter: (value) => `${value}%` }} onChangeComplete={(value) => onSave({ widths: { [pair[0].id]: value, [pair[1].id]: 100 - value } })} />
+        <Slider key={`${version.id}-${widths[pair[0].id]}`} min={contract.resize.min} max={contract.resize.max} defaultValue={widths[pair[0].id]} tooltip={{ formatter: (value) => `${value}%` }} onChangeComplete={(value) => onSave({ widths: { [pair[0].id]: value, [pair[1].id]: 100 - value } })} />
       </label>}
       {regionIds.map((regionId) => <section key={regionId}>
         {regionIds.length > 1 && <h3 className="mb-1.5 text-xs font-bold uppercase tracking-wide text-slate-500">{getRegionLabel(regionId)}</h3>}
@@ -48,18 +48,18 @@ export default function SectionsCard({ version, canManage, onSave }) {
             const others = regionIds.filter((id) => id !== regionId)
             return <li key={row.section_key} className="flex items-center gap-1 px-2 py-1.5 text-sm">
               <span className={`min-w-0 flex-1 truncate ${sectionState(row) === 'off' ? 'text-slate-400' : 'font-medium text-slate-800'}`}>{name(row.section_key)}</span>
-              <Select size="small" variant="borderless" aria-label={`Trạng thái ${name(row.section_key)}`} className="w-[6.5rem]" disabled={!canManage || identity} value={sectionState(row)} options={SECTION_STATES.map(({ value, label }) => ({ value, label }))} onChange={(state) => patch(row.section_key, sectionFlags(state))} popupMatchSelectWidth={false} />
-              {others.length > 0 && <Dropdown disabled={!canManage} trigger={['click']} menu={{ items: others.map((id) => ({ key: id, label: `Chuyển sang ${getRegionLabel(id).toLowerCase()}` })), onClick: ({ key }) => patch(row.section_key, { region_key: key }) }}>
+              <Select size="small" variant="borderless" aria-label={`Trạng thái ${name(row.section_key)}`} className="w-[6.5rem]" disabled={identity} value={sectionState(row)} options={SECTION_STATES.map(({ value, label }) => ({ value, label }))} onChange={(state) => patch(row.section_key, sectionFlags(state))} popupMatchSelectWidth={false} />
+              {others.length > 0 && <Dropdown trigger={['click']} menu={{ items: others.map((id) => ({ key: id, label: `Chuyển sang ${getRegionLabel(id).toLowerCase()}` })), onClick: ({ key }) => patch(row.section_key, { region_key: key }) }}>
                 <Button size="small" type="text" icon={<SwapOutlined />} aria-label={`Chuyển vùng ${name(row.section_key)}`} />
               </Dropdown>}
-              <Button size="small" type="text" icon={<ArrowUpOutlined />} aria-label={`Đưa ${name(row.section_key)} lên`} disabled={!canManage} onClick={() => move(row.section_key, -1)} />
-              <Button size="small" type="text" icon={<ArrowDownOutlined />} aria-label={`Đưa ${name(row.section_key)} xuống`} disabled={!canManage} onClick={() => move(row.section_key, 1)} />
+              <Button size="small" type="text" icon={<ArrowUpOutlined />} aria-label={`Đưa ${name(row.section_key)} lên`} onClick={() => move(row.section_key, -1)} />
+              <Button size="small" type="text" icon={<ArrowDownOutlined />} aria-label={`Đưa ${name(row.section_key)} xuống`} onClick={() => move(row.section_key, 1)} />
             </li>
           })}
           {!rows.some((row) => row.region_key === regionId) && <li className="px-2 py-2 text-xs text-slate-400">Chưa có mục nào.</li>}
         </ul>
       </section>)}
-      {canManage && unused.length > 0 && <Select aria-label="Thêm mục" placeholder="+ Thêm mục khác" value={null} className="w-full" onChange={(key) => update([...rows, { section_key: key, region_key: regionIds.at(-1), ...sectionFlags('on') }])} options={unused.map((definition) => ({ value: definition.key, label: name(definition.key) }))} />}
+      {unused.length > 0 && <Select aria-label="Thêm mục" placeholder="+ Thêm mục khác" value={null} className="w-full" onChange={(key) => update([...rows, { section_key: key, region_key: regionIds.at(-1), ...sectionFlags('on') }])} options={unused.map((definition) => ({ value: definition.key, label: name(definition.key) }))} />}
     </div>}
   </AdminPanel>
 }

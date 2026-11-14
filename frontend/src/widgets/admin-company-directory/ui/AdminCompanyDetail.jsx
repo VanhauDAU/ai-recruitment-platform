@@ -27,8 +27,6 @@ import {
   getAdminCompanyRecruiters,
   recruiterVerificationMeta,
 } from '@/entities/admin-company'
-import { useAdminAccess } from '@/entities/admin-access'
-import { useSession } from '@/entities/session'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { adminPath } from '@/shared/config/portals'
 import { sanitizeHtml } from '@/shared/lib/sanitize-html'
@@ -167,7 +165,7 @@ function Overview({ company }) {
   )
 }
 
-function RecruiterRoster({ company, enabled }) {
+function RecruiterRoster({ company }) {
   const navigate = useNavigate()
   const location = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -190,7 +188,6 @@ function RecruiterRoster({ company, enabled }) {
       params,
       { signal },
     ),
-    enabled,
   })
   const recruiters = recruitersQuery.data || EMPTY_PAGE
   const updateParams = (changes, resetPage = true) => {
@@ -201,17 +198,6 @@ function RecruiterRoster({ company, enabled }) {
     })
     if (resetPage) next.delete('recruiter_page')
     setSearchParams(next)
-  }
-
-  if (!enabled) {
-    return (
-      <Alert
-        showIcon
-        type="warning"
-        title="Bạn chưa có quyền xem nhà tuyển dụng của công ty"
-        description="Cần quyền company_recruiter.view để mở roster owner/member."
-      />
-    )
   }
 
   const columns = [
@@ -473,10 +459,6 @@ function RecruiterVerification({ company }) {
 export default function AdminCompanyDetail({ publicId }) {
   const navigate = useNavigate()
   const location = useLocation()
-  const { user } = useSession()
-  const { has, isSuperuser } = useAdminAccess(user)
-  const canViewRecruiters = isSuperuser || has('company_recruiter.view')
-  const canViewJobs = isSuperuser || has('job_moderation.view')
   const [searchParams, setSearchParams] = useSearchParams()
   const requestedTab = searchParams.get('tab') || 'overview'
   const activeTab = TAB_KEYS.has(requestedTab) ? requestedTab : 'overview'
@@ -522,7 +504,7 @@ export default function AdminCompanyDetail({ publicId }) {
     {
       key: 'recruiters',
       label: `Nhà tuyển dụng (${company.recruiter_count})`,
-      children: <RecruiterRoster company={company} enabled={canViewRecruiters} />,
+      children: <RecruiterRoster company={company} />,
     },
     {
       key: 'verification',
@@ -549,7 +531,7 @@ export default function AdminCompanyDetail({ publicId }) {
       children: (
         <CompanyJobs
           company={company}
-          enabled={canViewJobs && activeTab === 'jobs'}
+          enabled={activeTab === 'jobs'}
         />
       ),
     },
@@ -560,7 +542,6 @@ export default function AdminCompanyDetail({ publicId }) {
         <CompanyPublicPage
           company={company}
           enabled={activeTab === 'public-page'}
-          canModerate={has('company_page.moderate')}
         />
       ),
     },

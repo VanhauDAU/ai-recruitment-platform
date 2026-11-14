@@ -24,7 +24,6 @@ function renderRecovery(props = {}) {
           publicId="usr_employer"
           company={{ public_id: 'com_wrong', name: 'Công ty chọn nhầm' }}
           companyRole="member"
-          enabled
           {...props}
         />
       </QueryClientProvider>

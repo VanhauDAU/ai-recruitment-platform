@@ -59,10 +59,6 @@ function workflowPayload(mode, values) {
 
 export default function VerificationFinalDecisionPanel({
   verificationCase,
-  canReview,
-  canRevoke,
-  canUnlockResubmission,
-  canTaxOverride,
   taxEvidence,
   onChanged,
 }) {
@@ -182,8 +178,7 @@ export default function VerificationFinalDecisionPanel({
   const rejectionCount = Number(verificationCase.final_rejection_count || 0)
   const rejectionLimit = Number(verificationCase.rejection_limit || 3)
   const taxReview = getTaxReviewState(taxEvidence)
-  const manualApprovalUnavailable = taxReview.requiresManualApproval && !canTaxOverride
-  const approvalUnavailable = taxReview.blocksApproval || manualApprovalUnavailable
+  const approvalUnavailable = taxReview.blocksApproval
   const modalMeta = mode?.type === 'unlock'
     ? { label: 'Mở khóa nộp lại', icon: <UnlockOutlined /> }
     : mode?.type === 'lifecycle'
@@ -254,7 +249,7 @@ export default function VerificationFinalDecisionPanel({
       )}
 
       <div className="verification-final-actions mt-4">
-        {isReviewing && canReview && Object.entries(DECISION_ACTIONS).map(([action, meta]) => (
+        {isReviewing && Object.entries(DECISION_ACTIONS).map(([action, meta]) => (
           <Button
             key={action}
             className={`verification-final-action is-${action}`}
@@ -271,7 +266,7 @@ export default function VerificationFinalDecisionPanel({
             {meta.label}
           </Button>
         ))}
-        {isApproved && canRevoke && Object.entries(LIFECYCLE_ACTIONS).map(([action, meta]) => (
+        {isApproved && Object.entries(LIFECYCLE_ACTIONS).map(([action, meta]) => (
           <Button
             key={action}
             className={`verification-final-action is-${action}`}
@@ -283,7 +278,7 @@ export default function VerificationFinalDecisionPanel({
             {meta.label}
           </Button>
         ))}
-        {isResubmissionLocked && canUnlockResubmission && (
+        {isResubmissionLocked && (
           <Button
             className="verification-final-action is-unlock"
             icon={<UnlockOutlined />}

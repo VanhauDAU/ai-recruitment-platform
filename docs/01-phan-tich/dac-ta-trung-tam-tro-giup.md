@@ -206,24 +206,25 @@ và `ETag` tính từ payload + generation cache; khớp `If-None-Match` trả `
 Mọi mutation ảnh hưởng public tăng generation
 (`invalidate_knowledge_public_cache`); cache lỗi không chặn đọc hay ghi.
 
-**Admin** (`HasAdminPermission`, luôn `private, no-store`):
+**Admin** (`AdminPortalPermission` — mọi admin, ADR-0018; luôn `private, no-store`):
 
-| Endpoint | Method | Permission ghi |
-| --- | --- | --- |
-| `admin/categories/` | GET, POST | manage |
-| `admin/categories/reorder/` | POST (đủ toàn bộ ID) | manage |
-| `admin/categories/:publicId/` | GET, PATCH | manage |
-| `admin/categories/:publicId/activate/`, `deactivate/` | POST | publish |
-| `admin/articles/` | GET, POST (tạo article + revision 1) | manage |
-| `admin/articles/summary/` | GET (KPI tổng/published/in review/overdue theo filter) | — |
-| `admin/articles/reorder/` | POST (đủ ID trong một category) | manage |
-| `admin/articles/:publicId/` | GET, PATCH (không nhận title/body) | manage |
-| `admin/articles/:publicId/revisions/` | GET, POST | manage |
-| `admin/articles/:publicId/revisions/:number/` | GET, PATCH (chỉ `DRAFT`) | manage |
-| `…/revisions/:number/submit/` | POST | manage |
-| `…/revisions/:number/approve/`, `reject/` | POST | review |
-| `admin/articles/:publicId/publish/`, `archive/`, `restore/` | POST | publish |
-| `admin/media/` | GET, POST multipart | manage |
+| Endpoint | Method |
+| --- | --- |
+| `admin/categories/` | GET, POST |
+| `admin/categories/reorder/` | POST (đủ toàn bộ ID) |
+| `admin/categories/:publicId/` | GET, PATCH |
+| `admin/categories/:publicId/activate/`, `deactivate/` | POST |
+| `admin/articles/` | GET, POST (tạo article + revision 1) |
+| `admin/articles/summary/` | GET (KPI tổng/published/in review/overdue theo filter) |
+| `admin/articles/reorder/` | POST (đủ ID trong một category) |
+| `admin/articles/:publicId/` | GET, PATCH (không nhận title/body) |
+| `admin/articles/:publicId/revisions/` | GET, POST |
+| `admin/articles/:publicId/revisions/:number/` | GET, PATCH (chỉ `DRAFT`) |
+| `…/revisions/:number/submit/` | POST |
+| `…/revisions/:number/approve/`, `reject/` | POST |
+| `admin/articles/:publicId/publish/`, `archive/`, `restore/` | POST |
+| `admin/media/` | GET, POST multipart |
+
 
 Admin list nhận `category`, `type`, `lifecycle`, `revision_status`,
 `review_due` (`overdue` hoặc `due_soon` = 30 ngày tới), `q`, `ordering`
@@ -275,7 +276,8 @@ mất dữ liệu. Quy trình bật/tắt nằm ở
 ## 8. Việc còn mở
 
 - **Chatbot/RAG (`KB-AI`):** chưa có chunk, embedding hay read function cho
-  chatbot; `widgets/candidate-assistant` vẫn chạy kịch bản tĩnh. Hợp đồng đã
+  chatbot; widget trợ lý kịch bản tĩnh `candidate-assistant` đã gỡ
+  (2026-11-14), cổng ứng viên hiện không có UI chatbot. Hợp đồng đã
   chốt: chỉ dùng revision approved đang publish của article active trong
   category active, gắn chunk với revision public ID + `content_hash`, re-export
   read function qua `apps.knowledgebase.services`, không lộ `source_reference`

@@ -38,7 +38,7 @@ function apiError(error, fallback) {
   return data?.name?.[0] || data?.slug?.[0] || data?.detail || fallback
 }
 
-export default function BlogTagManagement({ canManage = false }) {
+export default function BlogTagManagement() {
   const queryClient = useQueryClient()
   const { confirmationModal, requestConfirmation } = useConfirmAction()
   const [query, setQuery] = useState('')
@@ -95,7 +95,6 @@ export default function BlogTagManagement({ canManage = false }) {
   })
 
   const openEditor = (tag = {}) => {
-    if (!canManage) return
     setEditing(tag)
     form.resetFields()
     form.setFieldsValue({ name: tag.name, slug: tag.slug, is_active: tag.is_active ?? true })
@@ -112,8 +111,8 @@ export default function BlogTagManagement({ canManage = false }) {
     { title: 'Tên thẻ', dataIndex: 'name', render: (name, tag) => <div><p className="font-semibold text-slate-800">{name}</p><p className="text-xs text-slate-400">/{tag.slug}</p></div> },
     { title: 'Số bài sử dụng', dataIndex: 'post_count', width: 150 },
     { title: 'Bản sửa', dataIndex: 'working_copy_count', width: 100 },
-    { title: 'Trạng thái', width: 130, render: (_, tag) => <Space><Switch aria-label={`Hiển thị thẻ ${tag.name}`} checked={tag.is_active} disabled={!canManage} loading={visibilityMutation.isPending} onChange={(is_active) => visibilityMutation.mutate({ tag, is_active })} /><span>{tag.is_active ? 'Hiển thị' : 'Đã ẩn'}</span></Space> },
-    { title: 'Thao tác', width: 250, render: (_, tag) => canManage ? <Space wrap><Button icon={<EditOutlined />} onClick={() => openEditor(tag)}>Sửa</Button><Button icon={<SwapOutlined />} onClick={() => { setMerging(tag); setMergeTarget(undefined) }}>Gộp</Button><Button danger icon={<DeleteOutlined />} disabled={tag.usage_count > 0} onClick={() => confirmDelete(tag)}>Xóa</Button></Space> : <span className="text-xs text-slate-400">Chỉ xem</span> },
+    { title: 'Trạng thái', width: 130, render: (_, tag) => <Space><Switch aria-label={`Hiển thị thẻ ${tag.name}`} checked={tag.is_active} loading={visibilityMutation.isPending} onChange={(is_active) => visibilityMutation.mutate({ tag, is_active })} /><span>{tag.is_active ? 'Hiển thị' : 'Đã ẩn'}</span></Space> },
+    { title: 'Thao tác', width: 250, render: (_, tag) => <Space wrap><Button icon={<EditOutlined />} onClick={() => openEditor(tag)}>Sửa</Button><Button icon={<SwapOutlined />} onClick={() => { setMerging(tag); setMergeTarget(undefined) }}>Gộp</Button><Button danger icon={<DeleteOutlined />} disabled={tag.usage_count > 0} onClick={() => confirmDelete(tag)}>Xóa</Button></Space> },
   ]
 
   return (
@@ -121,7 +120,7 @@ export default function BlogTagManagement({ canManage = false }) {
       <section className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div><h2 className="text-lg font-semibold text-slate-900">Quản lý thẻ bài viết</h2><p className="mt-1 text-sm text-slate-500">Chuẩn hóa, gộp và kiểm soát thẻ dùng trong Cẩm nang nghề nghiệp.</p></div>
-        {canManage && <Button type="primary" icon={<PlusOutlined />} onClick={() => openEditor()}>Thêm thẻ</Button>}
+        <Button type="primary" icon={<PlusOutlined />} onClick={() => openEditor()}>Thêm thẻ</Button>
       </div>
 
       {similarGroups.length > 0 && <Alert type="warning" showIcon title={`Phát hiện ${similarGroups.length} nhóm thẻ có thể trùng`} description={similarGroups.slice(0, 3).map((group) => group.map((tag) => tag.name).join(' ↔ ')).join('; ')} />}
@@ -133,7 +132,7 @@ export default function BlogTagManagement({ canManage = false }) {
         </div>
         <div className="hidden overflow-x-auto md:block"><Table rowKey="public_id" loading={tagsQuery.isLoading} dataSource={rows} columns={columns} pagination={{ pageSize: 20, showSizeChanger: false }} /></div>
         <div className="space-y-3 md:hidden">
-          {rows.map((tag) => <Card key={tag.public_id} size="small"><div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="font-semibold text-slate-800">{tag.name}</p><p className="truncate text-xs text-slate-400">/{tag.slug}</p></div><Tag color={tag.is_active ? 'green' : 'default'}>{tag.is_active ? 'Hiển thị' : 'Đã ẩn'}</Tag></div><p className="mt-3 text-sm text-slate-500">{tag.post_count} bài viết · {tag.working_copy_count} bản sửa</p>{canManage && <Space wrap className="mt-3"><Button onClick={() => openEditor(tag)}>Sửa</Button><Button onClick={() => { setMerging(tag); setMergeTarget(undefined) }}>Gộp</Button><Button danger disabled={tag.usage_count > 0} onClick={() => confirmDelete(tag)}>Xóa</Button></Space>}</Card>)}
+          {rows.map((tag) => <Card key={tag.public_id} size="small"><div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="font-semibold text-slate-800">{tag.name}</p><p className="truncate text-xs text-slate-400">/{tag.slug}</p></div><Tag color={tag.is_active ? 'green' : 'default'}>{tag.is_active ? 'Hiển thị' : 'Đã ẩn'}</Tag></div><p className="mt-3 text-sm text-slate-500">{tag.post_count} bài viết · {tag.working_copy_count} bản sửa</p><Space wrap className="mt-3"><Button onClick={() => openEditor(tag)}>Sửa</Button><Button onClick={() => { setMerging(tag); setMergeTarget(undefined) }}>Gộp</Button><Button danger disabled={tag.usage_count > 0} onClick={() => confirmDelete(tag)}>Xóa</Button></Space></Card>)}
           {!tagsQuery.isLoading && rows.length === 0 && <Empty description="Không có thẻ phù hợp" />}
         </div>
       </Card>

@@ -3,6 +3,11 @@
 > Tài liệu sống: mỗi quyết định đã xác nhận được ghi ngày, phạm vi và hệ quả.
 > Đặc tả triển khai: [chatbot-ung-vien-faq.md](../07-algorithms/chatbot-ung-vien-faq.md)
 > Nguồn kiến thức: [dac-ta-trung-tam-tro-giup.md](../01-phan-tich/dac-ta-trung-tam-tro-giup.md) (KB-P6 hoàn tất)
+>
+> **2026-11-14:** widget `candidate-assistant` (nút "Trợ lý ProCV" góc phải
+> dưới) đã bị gỡ khỏi dự án. Epic chatbot chưa có backend nên không còn mã
+> nào thực thi đặc tả này; nếu mở lại CB-P2 phải dựng UI mới thay vì nối vào
+> widget cũ. Các tham chiếu `candidate-assistant` bên dưới là lịch sử.
 
 ## Nguyên tắc nền (đã khẳng định qua FAQ)
 

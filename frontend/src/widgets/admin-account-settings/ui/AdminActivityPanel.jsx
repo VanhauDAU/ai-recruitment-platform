@@ -28,8 +28,7 @@ const ACTION_OPTIONS = [
 
 export default function AdminActivityPanel() {
   const { user } = useSession()
-  const adminAccess = useAdminAccess(user)
-  const canViewAll = adminAccess.has('audit_log.view')
+  const canViewAll = useAdminAccess(user).isSuperuser
   const [scopeAll, setScopeAll] = useState(false)
   const [action, setAction] = useState('')
   const [page, setPage] = useState(1)

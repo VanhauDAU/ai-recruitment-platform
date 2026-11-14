@@ -3,9 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Alert, Button, Skeleton } from 'antd'
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router'
-import { useAdminAccess } from '@/entities/admin-access'
 import { adminJobKeys, getAdminJob } from '@/entities/admin-job'
-import { useSession } from '@/entities/session'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { adminPath } from '@/shared/config/portals'
 import { AdminPanel } from '@/shared/ui/admin'
@@ -34,8 +32,6 @@ const CONTENT_TABS = ['content', 'conditions', 'workplace']
 const REVIEW_TABS = ['employer', 'contact', 'reports']
 
 export default function AdminJobDetail({ publicId }) {
-  const { user } = useSession()
-  const adminAccess = useAdminAccess(user)
   const location = useLocation()
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('content')
@@ -52,12 +48,6 @@ export default function AdminJobDetail({ publicId }) {
   const backTarget = origin?.pathname?.startsWith(adminPath(''))
     ? `${origin.pathname}${origin.search || ''}`
     : fallback
-  const canViewEmployerProfile = adminAccess.hasAny([
-    'account.employer.view',
-    'account.view',
-    'employer_verification.view',
-    'company_update.view',
-  ])
 
   useEffect(() => {
     if (!jobPublicId) return
@@ -157,11 +147,7 @@ export default function AdminJobDetail({ publicId }) {
             <AdminJobContentSections job={job} tab={activeTab} />
           )}
           {REVIEW_TABS.includes(activeTab) && (
-            <AdminJobReviewPanels
-              canViewEmployerProfile={canViewEmployerProfile}
-              job={job}
-              tab={activeTab}
-            />
+            <AdminJobReviewPanels job={job} tab={activeTab} />
           )}
           {activeTab === 'history' && <AdminJobHistory job={job} />}
         </section>

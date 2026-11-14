@@ -4,15 +4,11 @@ import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import AdminAccountManagement from './AdminAccountManagement'
 
-const { accountApi, accessApi, verificationApi, useSession } = vi.hoisted(() => ({
+const { accountApi, verificationApi, useSession } = vi.hoisted(() => ({
   accountApi: {
     getAdminAccounts: vi.fn(),
     getAdminAccountSummary: vi.fn(),
     updateAdminAccount: vi.fn(),
-  },
-  accessApi: {
-    getAdminDepartments: vi.fn(),
-    getAdminRoles: vi.fn(),
   },
   verificationApi: {
     getAdminCompanyDomainClaims: vi.fn(),
@@ -25,10 +21,6 @@ const { accountApi, accessApi, verificationApi, useSession } = vi.hoisted(() => 
 vi.mock('@/entities/admin-account', async (importOriginal) => ({
   ...(await importOriginal()),
   ...accountApi,
-}))
-vi.mock('@/entities/admin-access', async (importOriginal) => ({
-  ...(await importOriginal()),
-  ...accessApi,
 }))
 vi.mock('@/entities/admin-employer-verification', async (importOriginal) => ({
   ...(await importOriginal()),
@@ -53,19 +45,13 @@ const SUMMARY = {
 
 function renderWidget({
   isSuperuser = true,
-  permissions = [],
   scope = 'accounts',
   initialEntry = '/',
 } = {}) {
   useSession.mockReturnValue({
     user: {
       role: 'admin',
-      admin_access: {
-        is_superuser: isSuperuser,
-        permissions,
-        primary_department: null,
-        memberships: [],
-      },
+      admin_access: { is_superuser: isSuperuser },
     },
   })
   const queryClient = new QueryClient({
@@ -93,8 +79,6 @@ describe('AdminAccountManagement overview', () => {
     vi.clearAllMocks()
     accountApi.getAdminAccountSummary.mockResolvedValue(SUMMARY)
     accountApi.getAdminAccounts.mockResolvedValue({ count: 0, results: [] })
-    accessApi.getAdminDepartments.mockResolvedValue([])
-    accessApi.getAdminRoles.mockResolvedValue([])
     verificationApi.getAdminEmployerVerifications.mockResolvedValue({ count: 0, results: [] })
     verificationApi.getAdminCompanyDomainClaims.mockResolvedValue({ count: 0, results: [] })
     verificationApi.getAdminCompanyDomainClaimSummary.mockResolvedValue({
@@ -141,12 +125,8 @@ describe('AdminAccountManagement overview', () => {
     expect(screen.getByLabelText('Tổng quan nhà tuyển dụng')).toBeInTheDocument()
   })
 
-  it('uses the dedicated employer account permission for recruiter browsing', async () => {
-    renderWidget({
-      isSuperuser: false,
-      permissions: ['account.employer.view'],
-      scope: 'recruiters',
-    })
+  it('opens the whole recruiter workspace to a regular admin', async () => {
+    renderWidget({ isSuperuser: false, scope: 'recruiters' })
 
     expect(await screen.findByRole('tab', { name: /Danh sách NTD/ })).toHaveAttribute(
       'aria-selected',
@@ -156,7 +136,33 @@ describe('AdminAccountManagement overview', () => {
       expect.objectContaining({ scope: 'recruiters' }),
       expect.objectContaining({ signal: expect.any(AbortSignal) }),
     ))
-    expect(screen.queryByRole('tab', { name: /Chờ xác thực NTD/ })).not.toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: /Chờ xác thực NTD/ })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: /Xác minh domain/ })).toBeInTheDocument()
+  })
+
+  it('shows admin accounts and invitations to a superuser only', async () => {
+    renderWidget()
+
+    await waitForSummary()
+    expect(screen.getByRole('tab', { name: /Tất cả người dùng/ })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: /Quản trị viên/ })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: /Lời mời quản trị/ })).toBeInTheDocument()
+  })
+
+  it('limits a regular admin to candidate accounts, even from an admin-tab URL', async () => {
+    renderWidget({ isSuperuser: false, initialEntry: '/?tab=invitations' })
+
+    expect(await screen.findByRole('tab', { name: /Ứng viên/ })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    )
+    expect(screen.queryByRole('tab', { name: /Tất cả người dùng/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('tab', { name: /Quản trị viên/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('tab', { name: /Lời mời quản trị/ })).not.toBeInTheDocument()
+    await waitFor(() => expect(accountApi.getAdminAccounts).toHaveBeenCalledWith(
+      expect.objectContaining({ scope: 'users', role: 'candidate' }),
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    ))
   })
 
   it('does not mix company-update requests into account tabs', async () => {

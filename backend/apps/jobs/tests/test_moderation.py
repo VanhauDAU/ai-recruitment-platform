@@ -7,8 +7,7 @@ from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from apps.accounts.models import AdminPermission, AdminRole, Department
-from apps.accounts.services import assign_membership
+from apps.accounts.tests.helpers import make_admin
 from apps.employers.models import Company, EmployerVerificationCase
 from apps.employers.services import recruiter_job_publication_state
 from apps.employers.tests.readiness_helpers import make_employer_ready
@@ -23,60 +22,14 @@ from ..services import build_job_content_snapshot, lifecycle_local_date
 
 
 class JobModerationFixture:
-    """One public job plus the reviewer profiles the suites compare."""
+    """One public job plus an employer and a regular admin reviewer."""
 
     def setUp(self):
         user_model = get_user_model()
         self.employer = user_model.objects.create_user(
             email='job-owner@example.com', password='Password@123', role=user_model.Role.EMPLOYER
         )
-        self.admin = user_model.objects.create_user(
-            email='job-admin@example.com',
-            password='Password@123',
-            role=user_model.Role.ADMIN,
-        )
-        self.restricted_admin = user_model.objects.create_user(
-            email='job-admin-restricted@example.com',
-            password='Password@123',
-            role=user_model.Role.ADMIN,
-        )
-        self.viewer_admin = user_model.objects.create_user(
-            email='job-admin-viewer@example.com',
-            password='Password@123',
-            role=user_model.Role.ADMIN,
-        )
-        department = Department.objects.create(
-            code='job-moderation',
-            name='Kiểm duyệt tin',
-        )
-        permissions = {
-            code: AdminPermission.objects.create(code=code, module='job_moderation', label=code)
-            for code in (
-                'job_moderation.view',
-                'job_moderation.enforce_visibility',
-                'job_moderation.view_sensitive_contact',
-            )
-        }
-        role = AdminRole.objects.create(department=department, code='staff', name='Nhân viên')
-        role.permissions.add(*permissions.values())
-        restricted_role = AdminRole.objects.create(
-            department=department,
-            code='staff-restricted',
-            name='Nhân viên hạn chế',
-        )
-        restricted_role.permissions.add(
-            permissions['job_moderation.view'],
-            permissions['job_moderation.enforce_visibility'],
-        )
-        viewer_role = AdminRole.objects.create(
-            department=department,
-            code='staff-viewer',
-            name='Nhân viên chỉ xem',
-        )
-        viewer_role.permissions.add(permissions['job_moderation.view'])
-        assign_membership(self.admin, role, actor=self.admin)
-        assign_membership(self.restricted_admin, restricted_role, actor=self.admin)
-        assign_membership(self.viewer_admin, viewer_role, actor=self.admin)
+        self.admin = make_admin('job-admin@example.com')
         company = Company.objects.create(company_name='Moderation Co', created_by=self.employer)
         self.company = company
         self.recruiter = make_employer_ready(self.employer, company=company, candidate_data=True)
@@ -241,25 +194,6 @@ class JobModerationApiTests(JobModerationFixture, APITestCase):
         self.assertEqual(self.job.status, Job.Status.ACTIVE)
         self.assertFalse(self.job.moderation_events.exists())
 
-    def test_decision_endpoint_requires_the_visibility_permission(self):
-        self.client.force_authenticate(self.viewer_admin)
-        token = self.client.get(self.detail_url()).data['review_token']
-
-        response = self.client.post(
-            self.decision_url(),
-            {
-                'action': 'hide',
-                'review_token': token,
-                'reason_code': 'fraud_risk',
-                'note': 'Không có quyền tạm ẩn.',
-            },
-            format='json',
-        )
-
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN, response.data)
-        self.job.refresh_from_db()
-        self.assertEqual(self.job.moderation_hold, Job.ModerationHold.NONE)
-
     def test_decision_endpoint_rejects_a_stale_preview(self):
         self.client.force_authenticate(self.admin)
         token = self.client.get(self.detail_url()).data['review_token']
@@ -375,7 +309,7 @@ class JobPublishedContentChangesTests(JobModerationFixture, APITestCase):
         self.assertFalse(changes['has_baseline'])
         self.assertEqual(changes['changes'], [])
 
-    def test_contact_changes_stay_hidden_from_reviewers_without_the_permission(self):
+    def test_contact_changes_are_visible_to_every_admin(self):
         contact = JobApplicationContact.objects.create(
             job=self.job,
             recipient_name='Nguyễn Văn A',
@@ -389,14 +323,10 @@ class JobPublishedContentChangesTests(JobModerationFixture, APITestCase):
         self.edit_job(title='Backend Engineer (Senior)')
 
         self.client.force_authenticate(self.admin)
-        privileged = self.client.get(self.detail_url()).data['content_changes']
-        self.client.force_authenticate(self.restricted_admin)
-        restricted = self.client.get(self.detail_url()).data['content_changes']
+        changes = self.client.get(self.detail_url()).data['content_changes']
 
-        self.assertIn('contact_phone', {item['key'] for item in privileged['changes']})
-        self.assertNotIn('contact_phone', {item['key'] for item in restricted['changes']})
-        self.assertEqual(restricted['hidden_sensitive_count'], 1)
-        self.assertEqual(restricted['changed_count'], privileged['changed_count'])
+        self.assertIn('contact_phone', {item['key'] for item in changes['changes']})
+        self.assertEqual(changes['hidden_sensitive_count'], 0)
 
     def test_public_visibility_flag_tracks_the_candidate_facing_predicate(self):
         draft = Job.objects.create(

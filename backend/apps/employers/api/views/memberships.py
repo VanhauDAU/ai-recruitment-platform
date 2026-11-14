@@ -12,6 +12,7 @@ from rest_framework.views import APIView
 
 from apps.accounts.permissions import IsEmployer
 from apps.uploads.services import UploadServiceError, claim_clean_upload
+from common.file_signatures import PDF_SIGNATURE, SIGNATURE_WINDOW_BYTES, has_pdf_header
 from common.public_id import generate_public_id
 from common.r2_storage import private_media_storage
 
@@ -33,7 +34,7 @@ from ..serializers import RecruiterProfileSerializer
 DOCUMENT_SIGNATURES = {
     'jpg': (b'\xff\xd8\xff', {'image/jpeg'}),
     'png': (b'\x89PNG\r\n\x1a\n', {'image/png'}),
-    'pdf': (b'%PDF-', {'application/pdf'}),
+    'pdf': (PDF_SIGNATURE, {'application/pdf'}),
     'doc': (b'\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1', {'application/msword'}),
     'docx': (
         b'PK\x03\x04',
@@ -60,6 +61,12 @@ VERIFICATION_METHOD_DOCUMENT_TYPES = {
 VERIFICATION_DOCUMENT_TYPES = frozenset().union(*VERIFICATION_METHOD_DOCUMENT_TYPES.values())
 
 
+def _matches_signature(extension, header, signature):
+    if extension == 'pdf':
+        return has_pdf_header(header)
+    return header.startswith(signature)
+
+
 def _allowed_extensions(doc_type):
     if doc_type == CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT:
         return {'pdf', 'doc', 'docx'}
@@ -76,14 +83,14 @@ def _save_document_file(upload, directory, doc_type):
     if upload.size > max_size:
         raise ValidationError({'file': 'Giấy tờ phải nhỏ hơn 5 MB.'})
 
-    header = upload.read(16)
+    header = upload.read(SIGNATURE_WINDOW_BYTES)
     upload.seek(0)
     extension = next(
         (
             key
             for key, (signature, content_types) in DOCUMENT_SIGNATURES.items()
             if key in _allowed_extensions(doc_type)
-            and header.startswith(signature)
+            and _matches_signature(key, header, signature)
             and upload.content_type in content_types
         ),
         None,

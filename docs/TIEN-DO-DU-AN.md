@@ -7,6 +7,9 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
+| [Thiết kế lại quản lý tin tuyển dụng của NTD](#thiết-kế-lại-quản-lý-tin-tuyển-dụng-của-ntd-2026-11-15) | ✅ Gộp vào `dev` (nhánh `feat/employer-job-workspace`) |
+| [Gỡ widget Trợ lý ProCV ở cổng ứng viên](#gỡ-widget-trợ-lý-procv-ở-cổng-ứng-viên-2026-11-14) | 🟨 Xong trên nhánh `refactor/remove-candidate-assistant`, chờ gộp PR vào `dev` |
+| [Gỡ phòng ban, chức danh, nhân viên quản trị (ADR-0018)](#gỡ-phòng-ban-chức-danh-nhân-viên-quản-trị-adr-0018-2026-11-14) | 🟨 Xong trên nhánh `refactor/remove-admin-rbac`, chờ gộp PR vào `dev` |
 | [Trang công ty và quyền biên tập (CP)](#trang-công-ty-và-quyền-biên-tập-cp-2026-11-14) | 🟨 CP-0 → CP-7 xong trên nhánh `feat/company-page`, chờ gộp PR |
 | [Làm lại Template CV, tạo CV, trích xuất upload (CVT-v3)](#làm-lại-template-cv-cvt-v3-2026-11-13) | 🟨 CVT-0 → CVT-2 đã gộp vào `dev` (PR #176, #178–#182); CVT-3 xong code |
 | [Gỡ xác thực hai bước (ADR-0016)](#gỡ-xác-thực-hai-bước-adr-0016-2026-11-13) | 🟨 Xong trên nhánh `refactor/remove-two-factor`, chưa commit/gộp |
@@ -16,6 +19,80 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Các epic đã hoàn tất](#các-epic-đã-hoàn-tất) | ✅ |
 | [Lộ trình theo PRD](#lộ-trình-theo-prd) | 🟨 Phần AI lõi (giai đoạn 2–3) còn mở |
 | [Việc còn mở](#việc-còn-mở) | |
+
+## Thiết kế lại quản lý tin tuyển dụng của NTD (2026-11-15)
+
+| Hạng mục | Trạng thái |
+| --- | --- |
+| Danh sách `/tuyendung/app/jobs`: tab trạng thái có số đếm, tìm kiếm tự động, cột hồ sơ/hiệu quả/hạn nộp | ✅ |
+| Chi tiết `/tuyendung/app/jobs/:id`: header gọn, 4 chỉ số bấm được, giữ 4 tab | ✅ |
+| Tab CV ứng tuyển lọc/phân trang phía server, chip trạng thái kèm số | ✅ |
+| API: `status_counts`, `unviewed_application_count`, `application_summary`, `impression_count` | ✅ |
+
+<details><summary>Ghi chú chi tiết</summary>
+
+- Danh sách: tab Tất cả/Đang tuyển/Nháp/Hết hạn/Đã đóng đọc `status_counts`
+  của `GET /api/jobs/mine/` (một aggregate, đếm theo cùng `q`); tìm kiếm debounce
+  400 ms, giữ `status|q|page` trên URL. Mỗi tin hiện số ứng viên, badge "N mới"
+  dẫn tới `/applications?job=…&scope=unread`, lượt xem + tỉ lệ ứng tuyển, hạn
+  nộp có đếm ngược, màu cảnh báo và thanh thời gian đã trôi. Từ 1280px dòng là
+  bảng; hẹp hơn là thẻ xếp chồng. Trạng thái rỗng dùng `MascotEmpty`.
+- Chi tiết: bỏ thông tin lặp (lượt xem xuất hiện ba lần, hai thẻ CV luôn bằng
+  nhau vì chỉ có nguồn `applied`). Header gồm tiêu đề, trạng thái, dòng meta bằng
+  icon, "Xem tin đăng" khi tin đang công khai; "Đóng tin" nằm trong menu và có
+  xác nhận. Bốn chỉ số Lượt xem/Ứng viên/CV chưa xem/Chưa phản hồi; hai chỉ số
+  sau mở tab CV với bộ lọc tương ứng (`cv_filter` trên URL). Mobile dùng
+  `Segmented` thay cho Select chọn tab.
+- Tab CV trước đây tải trang đầu (20 CV) rồi tự tính số liệu, nên sai khi tin
+  có nhiều hồ sơ. Nay số liệu lấy từ `application_summary` của chi tiết tin và
+  danh sách gọi `/api/v2/recruiter/applications/?job=…&latest=1` có phân trang,
+  sắp xếp, tìm kiếm, lọc phía server; gỡ `getRecruiterApplications` không còn
+  nơi dùng. Tab "Ứng viên đã xem tin" thành phễu Hiển thị → Xem → Ứng tuyển.
+- `Application.UNANSWERED_STATUSES` là định nghĩa duy nhất cho "chưa phản hồi"
+  (scope API, báo cáo chiến dịch, summary tin). Budget query danh sách 5 → 6.
+- Style riêng của hai trang nằm trong `employer-jobs.css` đi theo chunk lazy;
+  CSS khởi tạo giảm từ 38,3 xuống 38,0 KiB gzip.
+
+</details>
+
+## Gỡ widget Trợ lý ProCV ở cổng ứng viên (2026-11-14)
+
+Xóa toàn bộ `frontend/src/widgets/candidate-assistant` (nút nổi góc phải dưới,
+panel chat, kịch bản keyword tĩnh, CSS, unit test) và điểm mount trong
+`MainLayout`. Widget không gọi API nên backend không đổi; khóa
+`sessionStorage` `procv-assistant-greeting-seen` không còn được ghi. Smoke E2E
+bỏ luồng hỏi trợ lý, test tablet chỉ còn kiểm tra nút nổi hỗ trợ. Mascot,
+`use-progressive-reply` và `use-visual-viewport-bottom-inset` giữ lại vì
+onboarding, hero và nút hỗ trợ còn dùng. Đặc tả chatbot (CB) ghi chú tạm dừng:
+mở lại CB-P2 phải dựng UI mới.
+
+## Gỡ phòng ban, chức danh, nhân viên quản trị (ADR-0018, 2026-11-14)
+
+Quyết định: [`adr-0018-remove-admin-rbac.md`](02-tong-quan/adr-0018-remove-admin-rbac.md).
+Còn hai cấp quản trị: superuser và admin thường. Xóa phòng ban, chức danh, gán
+nhân viên, phạm vi cấp tài khoản và danh mục 56 mã quyền (backend, frontend,
+docs); trang `/access-control` và bước CI đồng bộ quyền bị gỡ. Superuser mời
+admin qua email (không chọn chức danh), đăng nhập/đặt lại mật khẩu giữ nguyên.
+Migration `accounts.0034` (xóa dữ liệu RBAC — cần `pg_dump` trước khi chạy) và
+`sitecontent.0023` (xóa nhóm settings `admin_roles`).
+
+Kiểm chứng:
+
+- Backend: ruff, import-linter, layering, `makemigrations --check` sạch. Test
+  theo nhóm: accounts/knowledgebase/sitecontent 264 passed, employers 468
+  passed, applications/blog/cv_templates/cvs/jobs 463 passed (3 test
+  `test_pdf_renderer` lỗi do venv local thiếu `playwright`, không liên quan).
+  `accounts.0034` chạy tới → lùi `0033` → tới lại trên DB riêng. Suite đầy đủ
+  kèm ngưỡng coverage 84% chưa chạy xong cục bộ, để CI xác nhận.
+- Frontend: lint, kiến trúc, build, bundle budget đạt; vitest 1389 test, ratchet
+  coverage đạt. E2E smoke 284 passed; spec `admin-company.spec.js` vốn fail trên
+  mobile ở CI của `dev` từ khi gộp trang công ty (6 tab tràn khung, antd mobile
+  bỏ menu "…" nên tab ngoài khung không bấm được) — test nay chọn tab bằng bàn
+  phím (focus + Enter), pass cả desktop/tablet/mobile.
+- Chạy thật trên DB riêng `rbac_verify`: superuser đăng nhập → mời admin (không
+  có ô chức danh) → link `/invitation` đặt mật khẩu → admin thường đăng nhập,
+  thấy 11 khu vực, không có nhóm "Hệ thống"; `/settings` → trang từ chối,
+  `/access-control` → 404; API lời mời/settings/audit toàn hệ thống trả 403.
 
 ## Trang công ty và quyền biên tập (CP, 2026-11-14)
 
@@ -175,7 +252,7 @@ production, staging và soak (ER-8). Lệnh kiểm tra chỉ đọc:
 | 3 — Tối ưu tìm kiếm / matching | ⬜ | Embedding (pgvector) và semantic matching CV–JD |
 | 4 — CV nâng cao | 🟨 | Còn import LinkedIn, AI writer, review CV bằng AI |
 | 5 — Tuyển dụng nâng cao | ✅ | Việc đã lưu, lịch sử trạng thái hồ sơ, notification center của nhà tuyển dụng |
-| 6 — Thương mại & quản trị | ✅ | Quản trị, RBAC, blog, marketing. Gói đăng ký và quota trả phí (6.1, 6.2) bỏ khỏi phạm vi theo ADR-0015 |
+| 6 — Thương mại & quản trị | ✅ | Quản trị (hai cấp superuser/admin theo ADR-0018), blog, marketing. Gói đăng ký và quota trả phí (6.1, 6.2) bỏ khỏi phạm vi theo ADR-0015 |
 | 7 — Deployment | 🟨 | Docker Compose local có; cấu hình production đã bỏ ở P3, chưa triển khai |
 
 ## Việc còn mở

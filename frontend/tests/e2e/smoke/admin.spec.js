@@ -35,18 +35,7 @@ test('admin account management: filters, table actions and quick detail are resp
     full_name: 'System Admin',
     role: 'admin',
     status: 'active',
-    admin_access: {
-      is_superuser: true,
-      permissions: [
-        'account.view',
-        'account.admin.view',
-        'account.admin.invite',
-        'account.profile.manage',
-        'account.security.manage',
-        'account.status.manage',
-      ],
-      memberships: [],
-    },
+    admin_access: { is_superuser: true },
   }
   const candidate = {
     public_id: 'usr_candidate',
@@ -156,8 +145,6 @@ test('admin account management: filters, table actions and quick detail are resp
               }
           : path === '/api/privacy/consent/'
             ? { consent: { necessary: true, preferences: false, analytics: false, marketing: false } }
-          : path === '/api/admin/departments/' || path === '/api/admin/roles/'
-            ? []
             : {}
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) })
   })
@@ -229,6 +216,51 @@ test('admin account management: filters, table actions and quick detail are resp
   )
 })
 
+test('regular admin: candidate accounts only, no admin accounts, invitations or settings', async ({ page }) => {
+  const accountRequests = []
+  await page.route(API_ROUTE, async (route) => {
+    const requestUrl = new URL(route.request().url())
+    const path = requestUrl.pathname
+    if (path === '/api/admin/accounts/') accountRequests.push(requestUrl.searchParams.get('role'))
+    const body = path === '/api/auth/refresh/'
+      ? { access: 'e2e-access' }
+      : path === '/api/auth/me/'
+        ? {
+            public_id: 'usr_staff',
+            email: 'staff@example.com',
+            full_name: 'Nhân viên vận hành',
+            role: 'admin',
+            status: 'active',
+            admin_access: { is_superuser: false },
+          }
+        : path === '/api/admin/accounts/summary/'
+          ? {
+              scope: 'users',
+              totals: { total: 1, active: 1, restricted: 0, unverified: 0 },
+              by_role: { candidate: { total: 1, active: 1, restricted: 0, unverified: 0 } },
+            }
+          : path === '/api/admin/accounts/'
+            ? { count: 0, next: null, previous: null, results: [] }
+            : path === '/api/privacy/consent/'
+              ? { consent: { necessary: true, preferences: false, analytics: false, marketing: false } }
+              : {}
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) })
+  })
+
+  await page.goto('/admin/app/accounts?tab=invitations')
+  await expect(page.getByRole('tab', { name: /Ứng viên/ })).toHaveAttribute('aria-selected', 'true', {
+    timeout: 15_000,
+  })
+  await expect(page.getByRole('tab', { name: /Quản trị viên/ })).toHaveCount(0)
+  await expect(page.getByRole('tab', { name: /Lời mời quản trị/ })).toHaveCount(0)
+  await expect(page.getByRole('tab', { name: /Tất cả người dùng/ })).toHaveCount(0)
+  await expect.poll(() => accountRequests).toContain('candidate')
+  expect(accountRequests).not.toContain('admin')
+
+  await page.goto('/admin/app/settings')
+  await expect(page).toHaveURL('/admin/app/access-denied')
+})
+
 test('superuser recovers email, then sends password reset', async ({ page }) => {
   const calls = []
   const adminUser = {
@@ -237,7 +269,7 @@ test('superuser recovers email, then sends password reset', async ({ page }) => 
     full_name: 'System Admin',
     role: 'admin',
     status: 'active',
-    admin_access: { is_superuser: true, permissions: [], memberships: [] },
+    admin_access: { is_superuser: true },
   }
   let account = {
     public_id: 'usr_recovery',
@@ -411,7 +443,7 @@ test('admin employer detail: company media and compact verification comparison r
     full_name: 'System Admin',
     role: 'admin',
     status: 'active',
-    admin_access: { is_superuser: true, permissions: [], memberships: [] },
+    admin_access: { is_superuser: true },
   }
   const employer = {
     public_id: 'usr_employer',
@@ -723,212 +755,6 @@ test('admin employer detail: company media and compact verification comparison r
   )
 })
 
-test('admin detail: complete effective permissions render in access tab', async ({ page }) => {
-  const currentAdmin = {
-    public_id: 'usr_root',
-    email: 'root@example.com',
-    full_name: 'System Admin',
-    role: 'admin',
-    status: 'active',
-    admin_access: { is_superuser: true, permissions: [], memberships: [] },
-  }
-  const managedAdmin = {
-    public_id: 'usr_moderator',
-    email: 'moderator@example.com',
-    full_name: 'Nguyễn Kiểm Duyệt',
-    role: 'admin',
-    status: 'active',
-    email_verified: true,
-    has_usable_password: true,
-    active_session_count: 1,
-    date_joined: '2026-07-01T08:00:00Z',
-    context: { kind: 'admin' },
-    invitation: {
-      status: 'accepted',
-      invited_by_email: currentAdmin.email,
-      expires_at: '2026-07-30T08:00:00Z',
-      accepted_at: '2026-07-20T08:00:00Z',
-    },
-    admin_access: {
-      is_superuser: false,
-      access_source: 'role',
-      permissions: [
-        'job_moderation.enforce_visibility',
-        'job_moderation.resolve_report',
-        'job_moderation.view',
-      ],
-      permission_count: 3,
-      membership: {
-        is_active: true,
-        is_primary: true,
-        assigned_at: '2026-07-20T08:00:00Z',
-        assigned_by_name: currentAdmin.full_name,
-        assigned_by_email: currentAdmin.email,
-        role: {
-          code: 'moderator',
-          name: 'Nhân viên kiểm duyệt',
-          description: 'Rà soát tin tuyển dụng và xử lý báo cáo vi phạm.',
-          rank: 10,
-          is_active: true,
-          is_system_managed: true,
-          permission_codes: [
-            'job_moderation.enforce_visibility',
-            'job_moderation.resolve_report',
-            'job_moderation.view',
-          ],
-          department: {
-            code: 'job-moderation',
-            name: 'Kiểm duyệt tin tuyển dụng',
-            description: 'Đảm bảo chất lượng nội dung tuyển dụng.',
-            is_active: true,
-            is_system_managed: true,
-          },
-        },
-      },
-    },
-  }
-  await page.route(API_ROUTE, async (route) => {
-    const path = new URL(route.request().url()).pathname
-    const body = path === '/api/auth/refresh/'
-      ? { access: 'e2e-access' }
-      : path === '/api/auth/me/'
-        ? currentAdmin
-      : path === '/api/admin/accounts/usr_moderator/'
-        ? managedAdmin
-        : path === '/api/privacy/consent/'
-          ? { consent: { necessary: true, preferences: false, analytics: false, marketing: false } }
-          : {}
-    await route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) })
-  })
-
-  await page.goto('/admin/app/accounts/usr_moderator?tab=access')
-
-  await expect(page.getByRole('tab', { name: 'Quyền truy cập' })).toHaveAttribute('aria-selected', 'true')
-  await expect(page.getByText('Nhân viên kiểm duyệt')).toBeVisible()
-  await expect(page.getByText('Kiểm duyệt tin tuyển dụng', { exact: true })).toBeVisible()
-  await expect(page.getByRole('heading', { name: 'Quyền hiệu lực' })).toBeVisible()
-  await expect(page.getByText('Tạm ẩn hoặc khôi phục tin tuyển dụng', { exact: true })).toBeVisible()
-  await expect(page.getByText('Xử lý báo cáo tin tuyển dụng', { exact: true })).toBeVisible()
-  await expect(page.getByText('Xem quản lý tin tuyển dụng', { exact: true })).toBeVisible()
-  await expect(page.getByText('3 quyền')).toBeVisible()
-  await expect(page.getByText('Đã chấp nhận')).toBeVisible()
-  await expect(page.locator('html')).toHaveJSProperty(
-    'scrollWidth',
-    await page.locator('html').evaluate((element) => element.clientWidth),
-  )
-})
-
-test('admin access control: wide permission picker supports search and dependent rights', async ({ page }) => {
-  const currentAdmin = {
-    public_id: 'usr_root',
-    email: 'root@example.com',
-    full_name: 'System Admin',
-    role: 'admin',
-    status: 'active',
-    admin_access: { is_superuser: true, permissions: [], memberships: [] },
-  }
-  const department = {
-    public_id: 'dept_company',
-    code: 'company-operations',
-    name: 'Vận hành công ty',
-    description: 'Xử lý dữ liệu công ty.',
-    is_active: true,
-    is_system_managed: false,
-    is_restorable: false,
-    role_count: 1,
-    active_member_count: 1,
-    revoked_member_count: 0,
-  }
-  const role = {
-    public_id: 'arole_company',
-    code: 'company-reviewer',
-    name: 'Chuyên viên duyệt công ty',
-    description: 'Đối chiếu và duyệt thay đổi công ty.',
-    rank: 20,
-    is_active: true,
-    is_system_managed: false,
-    is_restorable: false,
-    department: {
-      public_id: department.public_id,
-      code: department.code,
-      name: department.name,
-    },
-    permission_codes: [],
-    active_member_count: 1,
-  }
-  const permissions = [
-    {
-      code: 'company_update.view',
-      module: 'company_update',
-      label: 'Xem yêu cầu sửa công ty',
-      description: 'Xem hàng chờ và đối chiếu nội dung đề xuất.',
-      requires: [],
-      is_active: true,
-      is_granted_to_role: false,
-    },
-    {
-      code: 'company_update.review',
-      module: 'company_update',
-      label: 'Duyệt sửa thông tin công ty',
-      description: 'Duyệt và áp dụng thay đổi công ty.',
-      requires: ['company_update.view'],
-      is_active: true,
-      is_granted_to_role: false,
-    },
-    {
-      code: 'cv_template.view',
-      module: 'cv_template',
-      label: 'Xem catalogue CV',
-      description: 'Xem catalogue CV.',
-      requires: [],
-      is_active: true,
-      is_granted_to_role: false,
-    },
-  ]
-  await page.route(API_ROUTE, async (route) => {
-    const url = new URL(route.request().url())
-    const path = url.pathname
-    let body = {}
-    if (path === '/api/auth/refresh/') body = { access: 'e2e-access' }
-    else if (path === '/api/auth/me/') body = currentAdmin
-    else if (path === '/api/admin/departments/') body = [department]
-    else if (path === '/api/admin/roles/') body = [role]
-    else if (path === '/api/admin/permissions/') body = permissions
-    else if (path === '/api/admin/memberships/') body = { count: 0, next: null, previous: null, results: [] }
-    else if (path === '/api/privacy/consent/') {
-      body = { consent: { necessary: true, preferences: false, analytics: false, marketing: false } }
-    }
-    await route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) })
-  })
-
-  await page.goto('/admin/app/access-control')
-  await page.getByRole('tab', { name: 'Chức danh' }).click()
-  await page.getByRole('button', { name: `Quyền của ${role.name}` }).click()
-
-  const dialog = page.getByRole('dialog', { name: /Sửa quyền/ })
-  await expect(dialog).toBeVisible()
-  await expect(dialog.getByText(`${department.name} · ${role.name}`)).toBeVisible()
-  await expect(dialog.getByText('Quyền nền được đồng bộ tự động')).toBeVisible()
-  const viewport = page.viewportSize()
-  await expect.poll(async () => {
-    const box = await dialog.boundingBox()
-    return box.width / viewport.width
-  }).toBeGreaterThan(0.82)
-
-  await dialog.getByRole('textbox', { name: 'Tìm quyền' }).fill('company_update')
-  await expect(dialog.getByText(/2 quyền phù hợp/)).toBeVisible()
-  const reviewPermission = dialog.getByRole('checkbox', { name: 'Duyệt sửa thông tin công ty' })
-  const viewPermission = dialog.getByRole('checkbox', { name: 'Xem yêu cầu sửa công ty' })
-  await reviewPermission.check()
-  await expect(reviewPermission).toBeChecked()
-  await expect(viewPermission).toBeChecked()
-  await expect(dialog.getByText('2/3 quyền đã chọn')).toBeVisible()
-  await expect(page.locator('html')).toHaveJSProperty(
-    'scrollWidth',
-    await page.locator('html').evaluate((element) => element.clientWidth),
-  )
-})
-
 test('admin invitation acceptance activates the account with a password', async ({ page }) => {
   await mockPublicApi(page)
   await page.route('**/api/auth/admin-invitations/**', async (route) => {
@@ -937,10 +763,7 @@ test('admin invitation acceptance activates the account with a password', async 
       ? {
           email: 'new-admin@example.com',
           full_name: 'Admin mới',
-          target_role: {
-            name: 'Nhân viên kiểm duyệt',
-            department: { name: 'Kiểm duyệt tin' },
-          },
+          expires_at: '2026-12-31T00:00:00Z',
         }
       : {
           user_public_id: 'usr_new_admin',
@@ -951,6 +774,7 @@ test('admin invitation acceptance activates the account with a password', async 
   await page.goto('/admin/app/invitation?token=signed-token')
   await expect(page).toHaveTitle('Hoàn tất tài khoản quản trị | ProCV')
   await expect(page.getByRole('heading', { name: 'Hoàn tất tài khoản quản trị' })).toBeVisible()
+  await expect(page.getByText('new-admin@example.com')).toBeVisible()
   await page.getByLabel('Mật khẩu mới').fill('StrongPass123')
   await page.getByLabel('Xác nhận mật khẩu').fill('StrongPass123')
   await page.getByRole('button', { name: 'Kích hoạt tài khoản' }).click()
@@ -999,16 +823,7 @@ test('admin job management: list, detail and revision-bound hide workflow', asyn
     full_name: 'Nguyễn Kiểm Duyệt',
     role: 'admin',
     status: 'active',
-    admin_access: {
-      is_superuser: false,
-      permissions: [
-        'job_moderation.view',
-        'job_moderation.enforce_visibility',
-        'job_moderation.view_sensitive_contact',
-        'employer_verification.view',
-      ],
-      memberships: [],
-    },
+    admin_access: { is_superuser: false },
   }
   const baseJob = {
     public_id: 'job_active',
@@ -1164,7 +979,7 @@ test('admin job management: list, detail and revision-bound hide workflow', asyn
   )
 })
 
-test('admin job reports: deep link, filter and resolve workflow are permission-gated', async ({ page }) => {
+test('admin job reports: deep link, filter and resolve workflow', async ({ page }) => {
   let status = 'pending'
   let resolvePayload
   const adminUser = {
@@ -1173,11 +988,7 @@ test('admin job reports: deep link, filter and resolve workflow are permission-g
     full_name: 'Nguyễn Kiểm Duyệt',
     role: 'admin',
     status: 'active',
-    admin_access: {
-      is_superuser: false,
-      permissions: ['job_moderation.view', 'job_moderation.resolve_report'],
-      memberships: [],
-    },
+    admin_access: { is_superuser: false },
   }
   const report = {
     public_id: 'jrep_1',
@@ -1260,11 +1071,7 @@ test('admin company reports: queue resolves a report and can hide the company pa
     full_name: 'Nguyễn Kiểm Duyệt',
     role: 'admin',
     status: 'active',
-    admin_access: {
-      is_superuser: false,
-      permissions: ['company.view', 'company_page.moderate', 'company_report.view', 'company_report.resolve'],
-      memberships: [],
-    },
+    admin_access: { is_superuser: false },
   }
   const report = {
     public_id: 'crp_1',

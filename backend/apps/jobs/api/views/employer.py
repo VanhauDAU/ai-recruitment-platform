@@ -9,6 +9,7 @@ from ...selectors import (
     attach_job_candidate_previews,
     employer_job_detail_queryset,
     employer_job_list_queryset,
+    employer_job_status_counts,
 )
 from ...services import (
     close_job,
@@ -75,7 +76,15 @@ class EmployerJobListCreateView(EmployerJobWorkspaceReadMixin, generics.ListCrea
             if self.employer_workspace_readiness()['candidate_data_access']:
                 attach_job_candidate_previews(page)
             serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
+            response = self.get_paginated_response(serializer.data)
+            # Counts of every status tab under the same campaign/search scope,
+            # so the tabs stay correct whichever tab the page is showing.
+            response.data['status_counts'] = employer_job_status_counts(
+                request.user,
+                campaign=request.query_params.get('campaign'),
+                q=request.query_params.get('q'),
+            )
+            return response
 
         jobs = list(queryset)
         if self.employer_workspace_readiness()['candidate_data_access']:

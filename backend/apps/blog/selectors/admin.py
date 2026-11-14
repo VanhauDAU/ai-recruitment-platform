@@ -53,7 +53,7 @@ def _with_completeness_sort(queryset):
     return queryset.annotate(_completeness_sort=score)
 
 
-def admin_posts_queryset(*, actor, can_publish, params=None):
+def admin_posts_queryset(params=None):
     params = params or {}
     queryset = Post.objects.select_related(
         'category',
@@ -139,13 +139,13 @@ def admin_posts_queryset(*, actor, can_publish, params=None):
     return queryset.order_by(f'{prefix}{field}', f'{prefix}id')
 
 
-def admin_post_detail_queryset(*, actor, can_publish):
-    return admin_posts_queryset(actor=actor, can_publish=can_publish).prefetch_related(
+def admin_post_detail_queryset():
+    return admin_posts_queryset().prefetch_related(
         'tags', 'working_copy__tags', 'status_history__actor'
     )
 
 
-def admin_post_summary(*, actor, can_publish):
+def admin_post_summary():
     queryset = Post.objects.all()
     return {
         'all': queryset.count(),

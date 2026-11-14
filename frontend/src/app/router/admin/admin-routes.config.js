@@ -6,7 +6,6 @@ export const ADMIN_ROUTES = [
     title: 'Bảng điều khiển',
     navLabel: 'Trang chủ',
     iconKey: 'dashboard',
-    permission: 'dashboard.view',
     showInNav: true,
   },
   {
@@ -16,7 +15,6 @@ export const ADMIN_ROUTES = [
     title: 'Danh sách công ty',
     navLabel: 'Công ty',
     iconKey: 'companies',
-    permissionsAny: ['company.view', 'company_update.view'],
     showInNav: true,
   },
   {
@@ -24,7 +22,6 @@ export const ADMIN_ROUTES = [
     segment: '/companies/:publicId',
     lazyKey: 'AdminCompanyDetailPage',
     title: 'Chi tiết công ty',
-    permission: 'company.view',
     showInNav: false,
   },
   {
@@ -34,7 +31,6 @@ export const ADMIN_ROUTES = [
     title: 'Tổng quan Mẫu CV',
     navLabel: 'Mẫu CV',
     iconKey: 'cv',
-    permission: 'cv_template.view',
     showInNav: true,
   },
   {
@@ -42,7 +38,6 @@ export const ADMIN_ROUTES = [
     segment: '/cv/templates',
     lazyKey: 'AdminCvTemplatesPage',
     title: 'Mẫu CV',
-    permission: 'cv_template.view',
     showInNav: false,
   },
   {
@@ -50,7 +45,6 @@ export const ADMIN_ROUTES = [
     segment: '/cv/templates/:publicId',
     lazyKey: 'AdminCvTemplateEditorPage',
     title: 'Mẫu CV',
-    permission: 'cv_template.view',
     showInNav: false,
   },
   {
@@ -58,7 +52,6 @@ export const ADMIN_ROUTES = [
     segment: '/cv/positions',
     lazyKey: 'AdminCvPositionsPage',
     title: 'Nội dung theo vị trí',
-    permission: 'cv_template.view',
     showInNav: false,
   },
   {
@@ -66,7 +59,6 @@ export const ADMIN_ROUTES = [
     segment: '/cv/positions/:publicId',
     lazyKey: 'AdminCvPositionDetailPage',
     title: 'Vị trí',
-    permission: 'cv_template.view',
     showInNav: false,
   },
   {
@@ -74,7 +66,6 @@ export const ADMIN_ROUTES = [
     segment: '/cv/library',
     lazyKey: 'AdminCvLibraryPage',
     title: 'Thư viện Mẫu CV',
-    permission: 'cv_template.view',
     showInNav: false,
   },
   {
@@ -82,7 +73,6 @@ export const ADMIN_ROUTES = [
     segment: '/cv/user-cvs',
     lazyKey: 'AdminCvUserCvsPage',
     title: 'CV ứng viên',
-    permission: 'cv_user.view',
     showInNav: false,
   },
   {
@@ -92,7 +82,6 @@ export const ADMIN_ROUTES = [
     title: 'Quản lý tin tuyển dụng',
     navLabel: 'Quản lý tin tuyển dụng',
     iconKey: 'moderation',
-    permission: 'job_moderation.view',
     showInNav: true,
   },
   {
@@ -100,7 +89,6 @@ export const ADMIN_ROUTES = [
     segment: '/job-moderation/:publicId',
     lazyKey: 'AdminJobModerationDetailPage',
     title: 'Chi tiết tin tuyển dụng',
-    permission: 'job_moderation.view',
     showInNav: false,
   },
   {
@@ -110,7 +98,6 @@ export const ADMIN_ROUTES = [
     title: 'Báo cáo công ty',
     navLabel: 'Báo cáo công ty',
     iconKey: 'moderation',
-    permission: 'company_report.view',
     showInNav: true,
   },
   {
@@ -120,7 +107,6 @@ export const ADMIN_ROUTES = [
     title: 'Cẩm nang nghề nghiệp',
     navLabel: 'Bài viết',
     iconKey: 'blog',
-    permission: 'blog.view',
     showInNav: true,
   },
   {
@@ -130,7 +116,6 @@ export const ADMIN_ROUTES = [
     title: 'Trung tâm FAQ & hướng dẫn',
     navLabel: 'FAQ & hướng dẫn',
     iconKey: 'blog',
-    permission: 'knowledgebase.view',
     showInNav: true,
   },
   {
@@ -138,7 +123,6 @@ export const ADMIN_ROUTES = [
     segment: '/knowledgebase/new',
     lazyKey: 'AdminKnowledgeArticleNewPage',
     title: 'Tạo nội dung trợ giúp',
-    permissionsAll: ['knowledgebase.view', 'knowledgebase.manage'],
     showInNav: false,
   },
   {
@@ -146,7 +130,6 @@ export const ADMIN_ROUTES = [
     segment: '/knowledgebase/:publicId',
     lazyKey: 'AdminKnowledgeArticleEditPage',
     title: 'Biên tập nội dung trợ giúp',
-    permission: 'knowledgebase.view',
     showInNav: false,
   },
   {
@@ -154,7 +137,6 @@ export const ADMIN_ROUTES = [
     segment: '/blog/new',
     lazyKey: 'AdminBlogNewPage',
     title: 'Tạo bài viết',
-    permissionsAll: ['blog.view', 'blog.manage'],
     showInNav: false,
   },
   {
@@ -162,7 +144,6 @@ export const ADMIN_ROUTES = [
     segment: '/blog/:publicId/edit',
     lazyKey: 'AdminBlogEditPage',
     title: 'Biên tập bài viết',
-    permission: 'blog.view',
     showInNav: false,
   },
   {
@@ -172,7 +153,6 @@ export const ADMIN_ROUTES = [
     title: 'Trung tâm thông báo',
     navLabel: 'Thông báo',
     iconKey: 'announcements',
-    permission: 'announcement.view',
     showInNav: true,
   },
   {
@@ -182,11 +162,6 @@ export const ADMIN_ROUTES = [
     title: 'Quản lý tài khoản',
     navLabel: 'Tài khoản',
     iconKey: 'accounts',
-    permissionsAny: [
-      'account.view',
-      'account.admin.view',
-      'account.admin.invite',
-    ],
     showInNav: true,
   },
   {
@@ -196,12 +171,6 @@ export const ADMIN_ROUTES = [
     title: 'Nhà tuyển dụng',
     navLabel: 'Nhà tuyển dụng',
     iconKey: 'accounts',
-    permissionsAny: [
-      'account.employer.view',
-      'account.view',
-      'employer_verification.view',
-      'employer_domain.view',
-    ],
     showInNav: true,
   },
   {
@@ -209,12 +178,6 @@ export const ADMIN_ROUTES = [
     segment: '/recruiters/:publicId',
     lazyKey: 'AdminRecruiterDetailPage',
     title: 'Chi tiết nhà tuyển dụng',
-    permissionsAny: [
-      'account.employer.view',
-      'account.view',
-      'employer_verification.view',
-      'company_update.view',
-    ],
     showInNav: false,
   },
   {
@@ -222,25 +185,7 @@ export const ADMIN_ROUTES = [
     segment: '/accounts/:publicId',
     lazyKey: 'AdminAccountDetailPage',
     title: 'Chi tiết tài khoản',
-    permissionsAny: [
-      'account.view',
-      'account.employer.view',
-      'account.admin.view',
-      'account.admin.invite',
-      'employer_verification.view',
-      'company_update.view',
-    ],
     showInNav: false,
-  },
-  {
-    id: 'accessControl',
-    segment: '/access-control',
-    lazyKey: 'AdminAccessControlPage',
-    title: 'Phân quyền quản trị',
-    navLabel: 'Phân quyền',
-    iconKey: 'shield',
-    permission: 'admin_access.view',
-    showInNav: true,
   },
   {
     id: 'settings',
@@ -249,7 +194,6 @@ export const ADMIN_ROUTES = [
     title: 'Cài đặt hệ thống',
     navLabel: 'Cài đặt hệ thống',
     iconKey: 'settings',
-    permission: 'site_setting.view',
     requireSuperuser: true,
     showInNav: true,
   },
@@ -260,7 +204,6 @@ export const ADMIN_ROUTES = [
     title: 'Cài đặt tài khoản',
     navLabel: 'Tài khoản của tôi',
     iconKey: 'account',
-    permission: null,
     showInNav: true,
   },
   {
@@ -268,7 +211,6 @@ export const ADMIN_ROUTES = [
     segment: '/access-denied',
     lazyKey: 'AdminAccessDeniedPage',
     title: 'Không có quyền truy cập',
-    permission: null,
     showInNav: false,
   },
 ]

@@ -12,14 +12,12 @@ const {
   getAdminCompanyRecruiters,
   getAdminCompanySummary,
   getAdminJobs,
-  useSession,
 } = vi.hoisted(() => ({
   getAdminCompanies: vi.fn(),
   getAdminCompany: vi.fn(),
   getAdminCompanyRecruiters: vi.fn(),
   getAdminCompanySummary: vi.fn(),
   getAdminJobs: vi.fn(),
-  useSession: vi.fn(),
 }))
 
 vi.mock('@/entities/admin-company', async (importOriginal) => ({
@@ -33,7 +31,6 @@ vi.mock('@/entities/admin-job', async (importOriginal) => ({
   ...await importOriginal(),
   getAdminJobs,
 }))
-vi.mock('@/entities/session', () => ({ useSession }))
 
 const company = {
   public_id: 'co_alpha',
@@ -112,12 +109,6 @@ function renderWithApp(element, initialEntry) {
 describe('admin company directory', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    useSession.mockReturnValue({
-      user: {
-        role: 'admin',
-        admin_access: { is_superuser: true, permissions: [], memberships: [] },
-      },
-    })
     getAdminCompanies.mockResolvedValue({ count: 1, results: [company] })
     getAdminCompany.mockResolvedValue(company)
     getAdminCompanyRecruiters.mockResolvedValue({ count: 0, results: [] })
@@ -309,27 +300,5 @@ describe('admin company directory', () => {
     expect(screen.getByTestId('location')).toHaveTextContent(
       '/admin/app/job-moderation/job_alpha',
     )
-  })
-
-  it('explains the required permission instead of requesting company jobs', async () => {
-    useSession.mockReturnValue({
-      user: {
-        role: 'admin',
-        admin_access: {
-          is_superuser: false,
-          permissions: ['company.view'],
-          memberships: [],
-        },
-      },
-    })
-    renderWithApp(
-      <AdminCompanyDetail publicId="co_alpha" />,
-      '/admin/app/companies/co_alpha?tab=jobs',
-    )
-
-    expect(await screen.findByText(
-      'Bạn chưa có quyền xem tin tuyển dụng của công ty',
-    )).toBeInTheDocument()
-    expect(getAdminJobs).not.toHaveBeenCalled()
   })
 })

@@ -6,7 +6,73 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ## [Unreleased]
 
+### 2026-11-15
+
+#### Changed — Danh sách và chi tiết tin tuyển dụng của nhà tuyển dụng
+
+- `/tuyendung/app/jobs`: tab trạng thái kèm số đếm thay cho dropdown, tìm kiếm
+  tự chạy sau khi ngừng gõ, mỗi tin hiện ứng viên + badge "N mới", lượt xem và
+  tỉ lệ ứng tuyển, hạn nộp có đếm ngược và thanh thời gian; nút "Hoàn
+  thiện"/"Gia hạn" không còn xuống dòng; trạng thái rỗng dùng mascot.
+- `/tuyendung/app/jobs/:id`: header gọn (meta bằng icon, "Xem tin đăng",
+  "Đóng tin" trong menu và có xác nhận), bốn chỉ số bấm được để lọc CV, giữ
+  nguyên bốn tab. Tab CV lọc/sắp xếp/phân trang phía server với chip trạng
+  thái; tab lượt xem thành phễu Hiển thị → Xem → Ứng tuyển; tab thông tin
+  bố cục lại và render rich text qua `shared/ui/RichContent`.
+- Thông báo lỗi 404 của chi tiết tin bằng tiếng Việt thay cho chuỗi DRF.
+
+#### Added — API workspace tin tuyển dụng
+
+- `GET /api/jobs/mine/` trả thêm `status_counts` và
+  `unviewed_application_count` cho từng tin; `GET /api/jobs/mine/{id}/` trả
+  thêm `impression_count` và `application_summary` (lần nộp mới nhất của mỗi
+  ứng viên). Chỉ thêm trường, không đổi trường cũ.
+
+#### Fixed
+
+- Số liệu CV ở chi tiết tin không còn chỉ tính trên 20 hồ sơ đầu tiên.
+
 ### 2026-11-14
+
+#### Removed — Widget Trợ lý ProCV ở cổng ứng viên
+
+- Gỡ nút nổi "Trợ lý ProCV" góc phải dưới cùng panel chat kịch bản tĩnh
+  (`widgets/candidate-assistant`) khỏi `MainLayout`. Không đổi backend hay API.
+- Đặc tả chatbot ứng viên (CB-P0) ghi chú tạm dừng; CB-P2 cần UI mới.
+
+#### Removed — Phòng ban, chức danh và nhân viên quản trị (ADR-0018)
+
+- Theo [ADR-0018](docs/02-tong-quan/adr-0018-remove-admin-rbac.md): cổng quản
+  trị còn hai cấp superuser và admin thường. Admin thường dùng mọi chức năng
+  nghiệp vụ; superuser thêm tài khoản quản trị, lời mời, site settings, cấu
+  hình AI, cấm tài khoản, gỡ policy hold và audit toàn hệ thống.
+- Xóa model `AdminPermission`, `Department`, `AdminRole`, `AdminMembership`,
+  `AdminProvisioningScope`, danh mục mã quyền, API
+  `/api/admin/departments|roles|permissions|memberships|staff|provisioning-scopes/`,
+  `account-invitations/available-roles/`, PATCH đổi chức danh lời mời, trang
+  `/access-control`, lệnh `seed_admin_access`, `sync_admin_permissions`,
+  `export_admin_permissions`, `purge_deprecated_admin_permissions`,
+  `check_admin_access_readiness` và script `check_admin_permissions_sync.sh`.
+- `HasAdminPermission` → `AdminPortalPermission`; `/api/auth/me/` chỉ còn
+  `admin_access: {is_superuser}`. Lời mời admin do superuser tạo với
+  `{email, full_name, reason}`.
+- Nhóm site settings `admin_roles` (bốn khóa không được đọc) bị xóa.
+- Migration `accounts.0034_remove_admin_rbac` xóa vĩnh viễn dữ liệu RBAC;
+  `sitecontent.0023_remove_admin_roles_settings`.
+
+#### Fixed — Checklist xác thực sau khi hồ sơ hết hiệu lực, tải PDF có ký tự đầu
+
+- Khi admin cho hồ sơ xác thực hết hiệu lực, thu hồi, từ chối hoặc yêu cầu bổ
+  sung, bước "Nộp giấy tờ chứng minh quyền đại diện" không còn tick xanh ở
+  checklist, bảng tin và popover cấp tài khoản. Backend trả thêm
+  `onboarding.business_doc_current` và `business_doc_approved` tính cả trạng
+  thái hồ sơ; `business_doc_submitted` giữ nguyên nên quyền xem workspace không
+  đổi.
+- PDF có khoảng trắng hoặc BOM trước `%PDF-` (ví dụ tệp xuất từ TopCV) không
+  còn bị báo "Nội dung tệp không khớp định dạng đã khai báo". Kiểm tra cấu trúc
+  đọc từ vị trí header; nội dung khác đứng trước header vẫn bị từ chối.
+- Khi máy quét virus không phản hồi, giao diện báo "Dịch vụ kiểm tra an toàn
+  tệp đang tạm gián đoạn" thay vì yêu cầu tải lại tệp.
 
 #### Added — Trang công ty và quyền biên tập (CP-1 → CP-7)
 

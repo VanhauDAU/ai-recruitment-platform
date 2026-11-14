@@ -9,7 +9,7 @@ from django.db import transaction
 from django.db.models import Q
 
 from apps.accounts.models import User
-from apps.accounts.permissions import require_admin_permission
+from apps.accounts.permissions import require_admin
 from apps.accounts.services import (
     StaleImpactToken,
     create_impact_token,
@@ -33,7 +33,6 @@ from ..models import (
 from .company_page_editors import revoke_page_editor_grants_on_unlink
 from .notifications import emit_employer_event
 
-COMPANY_UNLINK_PERMISSION = 'employer_verification.unlink_company'
 COMPANY_UNLINK_OPERATION = 'employer.company.unlink'
 
 
@@ -157,7 +156,7 @@ def _clean_snapshot(user, recruiter, verification_case, company):
 
 
 def company_unlink_impact(user, *, actor, reason):
-    require_admin_permission(actor, COMPANY_UNLINK_PERMISSION)
+    require_admin(actor)
     normalized_reason = (reason or '').strip()
     if not normalized_reason:
         raise CompanyUnlinkError('COMPANY_UNLINK_REASON_REQUIRED', 'Nhập lý do gỡ liên kết.')
@@ -191,7 +190,7 @@ def company_unlink_impact(user, *, actor, reason):
 
 @transaction.atomic
 def confirm_company_unlink(user, *, actor, reason, impact_token):
-    require_admin_permission(actor, COMPANY_UNLINK_PERMISSION)
+    require_admin(actor)
     normalized_reason = (reason or '').strip()
     if not normalized_reason:
         raise CompanyUnlinkError('COMPANY_UNLINK_REASON_REQUIRED', 'Nhập lý do gỡ liên kết.')

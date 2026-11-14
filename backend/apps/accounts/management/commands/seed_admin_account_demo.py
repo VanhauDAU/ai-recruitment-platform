@@ -2,79 +2,18 @@ from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
-from apps.accounts.models import (
-    AdminMembership,
-    AdminPermission,
-    AdminRole,
-    Department,
-    User,
-)
-from apps.accounts.services import (
-    assign_membership,
-    create_provisioning_scope,
-    record_admin_action,
-    set_role_permissions,
-    sync_permission_catalog,
-)
+from apps.accounts.models import User
+from apps.accounts.services import record_admin_action
 
 DEMO_PASSWORD = 'AdminDemo123!'
 DEMO_ACCOUNTS = (
-    {
-        'email': 'admin-root@demo.local',
-        'name': 'Superuser Demo',
-        'is_superuser': True,
-        'role_code': None,
-    },
-    {
-        'email': 'hr-provisioner@demo.local',
-        'name': 'Nhân sự cấp tài khoản',
-        'is_superuser': False,
-        'role_code': 'internal-hr',
-    },
-    {
-        'email': 'moderator-admin@demo.local',
-        'name': 'Nhân viên kiểm duyệt',
-        'is_superuser': False,
-        'role_code': 'moderator',
-    },
-)
-
-ROLE_DEFINITIONS = (
-    {
-        'code': 'internal-hr',
-        'name': 'Nhân sự nội bộ',
-        'description': 'Được mời Admin vào các chức danh đã whitelist.',
-        'permissions': (
-            'dashboard.view',
-            'admin_access.view',
-            'account.admin.invite',
-        ),
-    },
-    {
-        'code': 'moderator',
-        'name': 'Nhân viên kiểm duyệt',
-        'description': 'Kiểm duyệt tin tuyển dụng.',
-        'permissions': (
-            'dashboard.view',
-            'job_moderation.view',
-            'job_moderation.resolve_report',
-        ),
-    },
-    {
-        'code': 'content',
-        'name': 'Nhân viên nội dung',
-        'description': 'Quản lý nội dung trong phạm vi được giao.',
-        'permissions': (
-            'dashboard.view',
-            'blog.view',
-            'blog.manage',
-        ),
-    },
+    {'email': 'admin-root@demo.local', 'name': 'Superuser Demo', 'is_superuser': True},
+    {'email': 'moderator-admin@demo.local', 'name': 'Quản trị viên Demo', 'is_superuser': False},
 )
 
 
 class Command(BaseCommand):
-    help = 'Tạo tài khoản và whitelist demo Account Management G3 cho Docker local.'
+    help = 'Tạo một superuser và một admin thường để demo cổng quản trị trên Docker local.'
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -90,47 +29,13 @@ class Command(BaseCommand):
             )
 
         with transaction.atomic():
-            sync_permission_catalog(source='seed', actor_identifier='seed_admin_account_demo')
-            root = self._upsert_account(DEMO_ACCOUNTS[0])
-            department, _ = Department.objects.update_or_create(
-                code='people-operations',
-                defaults={
-                    'name': 'Vận hành nhân sự',
-                    'description': 'Phòng ban demo cho luồng cấp tài khoản Admin G3.',
-                    'is_active': True,
-                    'is_system_managed': False,
-                },
-            )
-            roles = self._upsert_roles(department, root)
-            for definition in DEMO_ACCOUNTS[1:]:
-                user = self._upsert_account(definition)
-                desired_role = roles[definition['role_code']]
-                current_role_id = (
-                    AdminMembership.objects.filter(user=user, is_active=True)
-                    .values_list('role_id', flat=True)
-                    .first()
-                )
-                if current_role_id != desired_role.pk:
-                    assign_membership(
-                        user,
-                        desired_role,
-                        actor=root,
-                        source='seed',
-                        actor_identifier='seed_admin_account_demo',
-                    )
-            for target_code in ('moderator', 'content'):
-                create_provisioning_scope(
-                    source_role=roles['internal-hr'],
-                    target_role=roles[target_code],
-                    actor=root,
-                )
+            for definition in DEMO_ACCOUNTS:
+                self._upsert_account(definition)
 
-        self.stdout.write(self.style.SUCCESS('Đã đồng bộ demo Account Management G3.'))
+        self.stdout.write(self.style.SUCCESS('Đã đồng bộ tài khoản quản trị demo.'))
         self.stdout.write(f'Mật khẩu chung: {DEMO_PASSWORD}')
         for definition in DEMO_ACCOUNTS:
-            kind = (
-                'Superuser' if definition['is_superuser'] else roles[definition['role_code']].name
-            )
+            kind = 'Superuser' if definition['is_superuser'] else 'Quản trị viên'
             self.stdout.write(f'- {definition["email"]} | {kind}')
 
     def _upsert_account(self, definition):
@@ -173,30 +78,3 @@ class Command(BaseCommand):
                 },
             )
         return user
-
-    def _upsert_roles(self, department, root):
-        active_permissions = {
-            item.code: item for item in AdminPermission.objects.filter(is_active=True)
-        }
-        roles = {}
-        for index, definition in enumerate(ROLE_DEFINITIONS, start=1):
-            role, _ = AdminRole.objects.update_or_create(
-                department=department,
-                code=definition['code'],
-                defaults={
-                    'name': definition['name'],
-                    'description': definition['description'],
-                    'rank': index * 10,
-                    'is_active': True,
-                    'is_system_managed': False,
-                },
-            )
-            set_role_permissions(
-                role,
-                {code for code in definition['permissions'] if code in active_permissions},
-                actor=root,
-                source='seed',
-                actor_identifier='seed_admin_account_demo',
-            )
-            roles[definition['code']] = role
-        return roles

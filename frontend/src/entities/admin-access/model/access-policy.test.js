@@ -1,39 +1,24 @@
-import { describe, expect, it, vi } from 'vitest'
-import { canAccessAdminRoute } from './access-policy'
+import { describe, expect, it } from 'vitest'
+import { canAccessAdminRoute, firstAccessibleAdminRoute } from './access-policy'
 
 describe('canAccessAdminRoute', () => {
-  it('allows account management when any delegated account permission is present', () => {
-    const has = vi.fn((code) => code === 'account.admin.invite')
-    expect(canAccessAdminRoute({
-      permissionsAny: ['account.view', 'account.admin.view', 'account.admin.invite'],
-    }, {
-      has,
-      isSuperuser: false,
-    })).toBe(true)
+  it('opens every regular route to any admin', () => {
+    expect(canAccessAdminRoute({ segment: '/blog' }, { isSuperuser: false })).toBe(true)
   })
 
-  it('keeps superuser-only independent from permission-any routing', () => {
-    expect(canAccessAdminRoute({
-      permissionsAny: ['account.admin.manage'],
-      requireSuperuser: true,
-    }, {
-      has: () => true,
-      isSuperuser: false,
-    })).toBe(false)
+  it('keeps superuser-only routes closed to regular admins', () => {
+    const route = { segment: '/settings', requireSuperuser: true }
+    expect(canAccessAdminRoute(route, { isSuperuser: false })).toBe(false)
+    expect(canAccessAdminRoute(route, { isSuperuser: true })).toBe(true)
   })
 
-  it('requires every permission declared by a route', () => {
-    expect(canAccessAdminRoute({
-      permissionsAll: ['blog.view', 'blog.manage'],
-    }, {
-      has: (code) => code === 'blog.manage',
-      isSuperuser: false,
-    })).toBe(false)
-    expect(canAccessAdminRoute({
-      permissionsAll: ['blog.view', 'blog.manage'],
-    }, {
-      has: (code) => ['blog.view', 'blog.manage'].includes(code),
-      isSuperuser: false,
-    })).toBe(true)
+  it('lands on the first navigable route the admin can open', () => {
+    const routes = [
+      { segment: '/settings', requireSuperuser: true, showInNav: true },
+      { segment: '/detail', showInNav: false },
+      { segment: '/blog', showInNav: true },
+    ]
+    expect(firstAccessibleAdminRoute(routes, { isSuperuser: false }).segment).toBe('/blog')
+    expect(firstAccessibleAdminRoute(routes, { isSuperuser: true }).segment).toBe('/settings')
   })
 })

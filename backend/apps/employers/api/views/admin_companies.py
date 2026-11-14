@@ -2,8 +2,7 @@ from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from apps.accounts.exceptions import AdminPermissionDenied
-from apps.accounts.permissions import HasAdminPermission, require_admin_permission
+from apps.accounts.permissions import AdminPortalPermission
 from common.pagination import StandardPagination
 
 from ...selectors import (
@@ -26,14 +25,6 @@ from ..serializers import (
 PUBLIC_PAGE_ACTIONS = {'public_page', 'policy_hold'}
 
 
-def _has_permission(user, code):
-    try:
-        require_admin_permission(user, code)
-    except AdminPermissionDenied:
-        return False
-    return True
-
-
 def _public_page_payload(company, request):
     return {
         'public_path': company.public_page_path,
@@ -45,17 +36,9 @@ def _public_page_payload(company, request):
 
 
 class AdminCompanyViewSet(viewsets.ReadOnlyModelViewSet):
-    permission_classes = [HasAdminPermission]
+    permission_classes = [AdminPortalPermission]
     pagination_class = StandardPagination
     lookup_field = 'public_id'
-    required_admin_permissions = {
-        'list': ['company.view'],
-        'summary': ['company.view'],
-        'retrieve': ['company.view'],
-        'recruiters': ['company.view', 'company_recruiter.view'],
-        'public_page': ['company.view'],
-        'policy_hold': ['company.view', 'company_page.moderate'],
-    }
 
     def get_queryset(self):
         if self.action == 'list':
@@ -72,18 +55,9 @@ class AdminCompanyViewSet(viewsets.ReadOnlyModelViewSet):
     def get_serializer_context(self):
         return {
             **super().get_serializer_context(),
-            'can_view_sensitive': _has_permission(
-                self.request.user,
-                'company.sensitive.view',
-            ),
-            'can_view_account_sensitive': _has_permission(
-                self.request.user,
-                'account.sensitive.view',
-            ),
-            'can_view_verification': _has_permission(
-                self.request.user,
-                'employer_verification.view',
-            ),
+            'can_view_sensitive': True,
+            'can_view_account_sensitive': True,
+            'can_view_verification': True,
         }
 
     @action(detail=True, methods=['get'])

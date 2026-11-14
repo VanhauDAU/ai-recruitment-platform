@@ -23,7 +23,6 @@ export const AdminKnowledgeBasePage = lazy(() => import('@/pages/admin/app/Knowl
 export const AdminKnowledgeArticleNewPage = lazy(() => import('@/pages/admin/app/KnowledgeArticleNew'))
 export const AdminKnowledgeArticleEditPage = lazy(() => import('@/pages/admin/app/KnowledgeArticleEdit'))
 export const AdminAnnouncementsPage = lazy(() => import('@/pages/admin/app/Announcements'))
-export const AdminAccessControlPage = lazy(() => import('@/pages/admin/app/AccessControl'))
 export const AdminAccountsPage = lazy(() => import('@/pages/admin/app/Accounts'))
 export const AdminRecruitersPage = lazy(() => import('@/pages/admin/app/Recruiters'))
 export const AdminRecruiterDetailPage = lazy(() => import('@/pages/admin/app/RecruiterDetail'))
@@ -55,7 +54,6 @@ export const ADMIN_PAGE_BY_KEY = {
   AdminKnowledgeArticleNewPage,
   AdminKnowledgeArticleEditPage,
   AdminAnnouncementsPage,
-  AdminAccessControlPage,
   AdminAccountsPage,
   AdminRecruitersPage,
   AdminRecruiterDetailPage,

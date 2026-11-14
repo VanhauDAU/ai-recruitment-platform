@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
-from apps.accounts.permissions import HasAdminPermission, IsCandidate
+from apps.accounts.permissions import AdminPortalPermission, IsCandidate
 from common.throttling import ClientIPScopedRateThrottle
 
 from ...models import Job, JobReport
@@ -65,8 +65,7 @@ class JobReportCreateView(APIView):
     tags=['jobs-admin'],
 )
 class AdminJobReportListView(generics.ListAPIView):
-    permission_classes = [HasAdminPermission]
-    required_admin_permissions = {'GET': ['job_moderation.view']}
+    permission_classes = [AdminPortalPermission]
     serializer_class = AdminJobReportSerializer
 
     def get_queryset(self):
@@ -82,8 +81,7 @@ class AdminJobReportListView(generics.ListAPIView):
     tags=['jobs'],
 )
 class AdminJobReportResolveView(APIView):
-    permission_classes = [HasAdminPermission]
-    required_admin_permissions = {'POST': ['job_moderation.view', 'job_moderation.resolve_report']}
+    permission_classes = [AdminPortalPermission]
 
     def post(self, request, public_id):
         report = get_object_or_404(JobReport, public_id=public_id)
@@ -105,8 +103,7 @@ class AdminJobReportResolveView(APIView):
     tags=['jobs'],
 )
 class AdminJobReportReverseView(APIView):
-    permission_classes = [HasAdminPermission]
-    required_admin_permissions = {'POST': ['job_moderation.view', 'job_moderation.resolve_report']}
+    permission_classes = [AdminPortalPermission]
 
     def post(self, request, public_id):
         report = get_object_or_404(JobReport, public_id=public_id)

@@ -8,10 +8,10 @@ export default function AccessDenied() {
       <Result
         status="403"
         title="Không có quyền truy cập"
-        subTitle="Tài khoản của bạn chưa được cấp quyền cho khu vực này."
+        subTitle="Khu vực này chỉ dành cho superuser."
         extra={(
-          <Link to={`${adminPath('/account')}?tab=access`}>
-            <Button type="primary">Xem quyền của tôi</Button>
+          <Link to={adminPath('/dashboard')}>
+            <Button type="primary">Về bảng điều khiển</Button>
           </Link>
         )}
       />

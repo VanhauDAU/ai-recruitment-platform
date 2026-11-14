@@ -81,7 +81,6 @@ const ROUTES = Object.freeze({
     ['Duyệt tin tuyển dụng', '/job-moderation', ANNOUNCEMENT_ROUTE_ACCESS.AUTHENTICATED],
     ['Tài khoản', '/accounts', ANNOUNCEMENT_ROUTE_ACCESS.AUTHENTICATED],
     ['Nhà tuyển dụng', '/recruiters', ANNOUNCEMENT_ROUTE_ACCESS.AUTHENTICATED],
-    ['Phân quyền', '/access-control', ANNOUNCEMENT_ROUTE_ACCESS.AUTHENTICATED],
     ['Cài đặt hệ thống', '/settings', ANNOUNCEMENT_ROUTE_ACCESS.AUTHENTICATED],
     ['Tài khoản của tôi', '/account', ANNOUNCEMENT_ROUTE_ACCESS.AUTHENTICATED],
   ],

@@ -1,7 +1,7 @@
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Alert, Button, Empty, Input, Pagination, Select, Skeleton } from 'antd'
-import { useEffect, useMemo, useState } from 'react'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Alert, Button, Empty, Input, Pagination, Skeleton } from 'antd'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import {
   closeEmployerJob,
@@ -14,32 +14,53 @@ import { useEmployerReadiness } from '@/entities/employer-profile'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { employerAppPath } from '@/shared/config/portals'
 import { message } from '@/shared/lib/toast'
+import { MascotEmpty } from '@/shared/ui/mascot'
 import useConfirmAction from '@/shared/ui/use-confirm-action'
 import JobListCard from './JobListCard'
-import { JOB_STATUS_FILTERS } from './job-list-presentation'
+import { JOB_STATUS_TABS, formatCount } from './job-list-presentation'
+import './employer-jobs.css'
 
+const PAGE_SIZE = 20
+const SEARCH_DELAY_MS = 400
 const EMPTY_PAGE = { count: 0, next: null, previous: null, results: [] }
+const primaryLinkClass = 'inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-lg !bg-emerald-600 px-3.5 text-sm font-semibold !text-white shadow-sm transition hover:!bg-emerald-500'
 
 function JobListSkeleton() {
   return (
     <div className="divide-y divide-slate-100" aria-label="Đang tải danh sách tin tuyển dụng">
-      {[1, 2, 3].map((item) => (
-        <div key={item} className="px-4 py-3">
-          <Skeleton active avatar={false} paragraph={{ rows: 1 }} />
+      {[1, 2, 3, 4].map((item) => (
+        <div key={item} className="job-row flex flex-col gap-3 px-4 py-4">
+          <Skeleton active title={{ width: '55%' }} paragraph={{ rows: 1, width: '80%' }} />
+          <Skeleton.Input active size="small" className="!w-40" />
+          <Skeleton.Input active size="small" className="!w-28" />
+          <Skeleton.Input active size="small" className="!w-28" />
         </div>
       ))}
     </div>
   )
 }
 
+function useJobMutation(mutationFn, success, failure) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['jobs', 'employer-list'] })
+      message.success(success)
+    },
+    onError: (error) => message.error(getApiErrorMessage(error, failure)),
+  })
+}
+
 export default function JobList() {
   const [searchParams, setSearchParams] = useSearchParams()
-  const [searchValue, setSearchValue] = useState(searchParams.get('q') || '')
-  const queryClient = useQueryClient()
-  const { confirmationModal, requestConfirmation } = useConfirmAction()
   const status = searchParams.get('status') || ''
   const query = searchParams.get('q') || ''
   const page = Math.max(Number(searchParams.get('page')) || 1, 1)
+  const [searchValue, setSearchValue] = useState(query)
+  const searchTimer = useRef(null)
+  const { confirmationModal, requestConfirmation } = useConfirmAction()
+  const { canAccessCandidateData } = useEmployerReadiness()
   const queryParams = useMemo(() => ({
     page,
     ...(status ? { status } : {}),
@@ -48,102 +69,102 @@ export default function JobList() {
   const jobsQuery = useQuery({
     queryKey: jobKeys.employerList(queryParams),
     queryFn: () => getEmployerJobPage(queryParams),
+    // Keep the rows and tab counts on screen while the next tab/page loads.
+    placeholderData: keepPreviousData,
   })
-  const { canAccessCandidateData } = useEmployerReadiness()
+  const closeMutation = useJobMutation(closeEmployerJob, 'Đã đóng tin tuyển dụng.', 'Không thể đóng tin.')
+  const duplicateMutation = useJobMutation(duplicateEmployerJob, 'Đã tạo bản nháp sao chép.', 'Không thể sao chép tin.')
+  const deleteMutation = useJobMutation(deleteEmployerJob, 'Đã xóa bản nháp.', 'Không thể xóa bản nháp.')
   const pageData = jobsQuery.data || EMPTY_PAGE
   const jobs = pageData.results || []
+  const counts = pageData.status_counts
+  const hasFilters = Boolean(query || status)
 
-  useEffect(() => setSearchValue(query), [query])
+  // Follow back/forward navigation without trimming what the user is typing.
+  useEffect(() => {
+    setSearchValue((current) => (current.trim() === query ? current : query))
+  }, [query])
+  useEffect(() => () => window.clearTimeout(searchTimer.current), [])
 
-  const invalidate = () => queryClient.invalidateQueries({
-    queryKey: ['jobs', 'employer-list'],
-  })
-  const closeMutation = useMutation({
-    mutationFn: closeEmployerJob,
-    onSuccess: () => {
-      invalidate()
-      message.success('Đã đóng tin tuyển dụng.')
-    },
-    onError: (error) => message.error(getApiErrorMessage(error, 'Không thể đóng tin.')),
-  })
-  const duplicateMutation = useMutation({
-    mutationFn: duplicateEmployerJob,
-    onSuccess: () => {
-      invalidate()
-      message.success('Đã tạo bản nháp sao chép.')
-    },
-    onError: (error) => message.error(getApiErrorMessage(error, 'Không thể sao chép tin.')),
-  })
-  const deleteMutation = useMutation({
-    mutationFn: deleteEmployerJob,
-    onSuccess: () => {
-      invalidate()
-      message.success('Đã xóa bản nháp.')
-    },
-    onError: (error) => message.error(getApiErrorMessage(error, 'Không thể xóa bản nháp.')),
-  })
+  // Functional update so a debounced search never overwrites a newer tab/page.
+  const replaceFilters = useCallback((next, options) => {
+    setSearchParams((current) => {
+      const params = new URLSearchParams(current)
+      Object.entries(next).forEach(([key, value]) => {
+        if (value) params.set(key, String(value))
+        else params.delete(key)
+      })
+      if (!Object.hasOwn(next, 'page')) params.delete('page')
+      return params
+    }, options)
+  }, [setSearchParams])
 
-  function replaceFilters(next) {
-    const values = Object.fromEntries(searchParams)
-    Object.entries(next).forEach(([key, value]) => {
-      if (value) values[key] = String(value)
-      else delete values[key]
-    })
-    if (!Object.hasOwn(next, 'page')) delete values.page
-    setSearchParams(values)
+  function search(value, delay = SEARCH_DELAY_MS) {
+    setSearchValue(value)
+    window.clearTimeout(searchTimer.current)
+    searchTimer.current = window.setTimeout(() => replaceFilters({ q: value.trim() }, { replace: true }), delay)
   }
+
+  function clearFilters() {
+    window.clearTimeout(searchTimer.current)
+    setSearchValue('')
+    setSearchParams({})
+  }
+
+  const isBusy = (mutation, publicId) => mutation.isPending && mutation.variables === publicId
+  const firstRow = (page - 1) * PAGE_SIZE + 1
+  const lastRow = Math.min(page * PAGE_SIZE, pageData.count || 0)
 
   return (
     <section className="pb-5 pt-3">
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xs">
-        <div className="border-b border-slate-100 px-3 py-3 sm:px-4">
-          <div className="mb-2 flex items-center justify-between sm:hidden">
-            <span className="text-xs font-medium text-slate-500">
-              {pageData.count || 0} tin tuyển dụng
-            </span>
-            <Link
-              className="inline-flex h-8 items-center gap-1.5 rounded-lg !bg-emerald-600 px-3 text-xs font-semibold !text-white hover:!bg-emerald-500"
-              to={employerAppPath('/jobs/new')}
-            >
-              <PlusOutlined aria-hidden /> Đăng tin tuyển dụng
-            </Link>
-          </div>
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+        <div className="job-list-toolbar border-b border-slate-200 px-3 pt-3 sm:px-4">
+          <div className="job-list-toolbar__search flex items-center gap-2">
             <Input
               allowClear
               aria-label="Tìm tin tuyển dụng"
-              className="w-full sm:!w-80"
+              className="!h-9 min-w-0 flex-1"
               prefix={<SearchOutlined className="text-slate-400" aria-hidden />}
-              placeholder="Tìm theo tên tin, nhấn Enter"
+              placeholder="Tìm theo tên tin tuyển dụng"
               type="search"
               value={searchValue}
-              onChange={(event) => setSearchValue(event.target.value)}
-              onClear={() => replaceFilters({ q: '' })}
-              onPressEnter={() => replaceFilters({ q: searchValue.trim() })}
+              onChange={(event) => search(event.target.value)}
+              onClear={() => search('', 0)}
+              onPressEnter={() => search(searchValue, 0)}
             />
-            <Select
-              aria-label="Lọc trạng thái tin tuyển dụng"
-              className="!w-full sm:!w-44"
-              value={status}
-              options={JOB_STATUS_FILTERS}
-              onChange={(value) => replaceFilters({ status: value })}
-            />
-            <span className="ml-auto hidden whitespace-nowrap text-xs font-medium text-slate-500 sm:block">
-              {pageData.count || 0} tin tuyển dụng
-            </span>
-            <Link
-              className="hidden h-8 shrink-0 items-center gap-1.5 rounded-lg !bg-emerald-600 px-3 text-xs font-semibold !text-white transition hover:!bg-emerald-500 sm:inline-flex"
-              to={employerAppPath('/jobs/new')}
-            >
-              <PlusOutlined aria-hidden /> Đăng tin tuyển dụng
+            <Link aria-label="Đăng tin tuyển dụng" className={primaryLinkClass} to={employerAppPath('/jobs/new')}>
+              <PlusOutlined aria-hidden />
+              <span className="hidden sm:inline">Đăng tin tuyển dụng</span>
+              <span className="sm:hidden">Đăng tin</span>
             </Link>
+          </div>
+          <div role="group" aria-label="Lọc theo trạng thái tin" className="job-strip">
+            {JOB_STATUS_TABS.map((tab) => {
+              const active = status === tab.value
+              const count = counts?.[tab.countKey]
+              return (
+                <button
+                  key={tab.countKey}
+                  type="button"
+                  aria-pressed={active}
+                  className="job-filter-tab"
+                  onClick={() => replaceFilters({ status: tab.value })}
+                >
+                  {tab.label}
+                  {count === undefined
+                    ? <span aria-hidden className="h-4 w-6 animate-pulse rounded-full bg-slate-100" />
+                    : <span className="job-filter-tab__count">{formatCount(count)}</span>}
+                </button>
+              )
+            })}
           </div>
         </div>
 
-        <div className="hidden grid-cols-[minmax(0,1fr)_180px_105px_112px] gap-4 border-b border-slate-100 bg-slate-50/70 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-400 lg:grid">
+        <div className="job-table-head border-b border-slate-100 bg-slate-50/70 px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
           <span>Tin tuyển dụng</span>
-          <span>Ứng viên / CV</span>
+          <span>Hồ sơ ứng tuyển</span>
           <span>Hiệu quả</span>
+          <span>Hạn nhận hồ sơ</span>
           <span className="sr-only">Thao tác</span>
         </div>
 
@@ -152,8 +173,7 @@ export default function JobList() {
             <Alert
               type="error"
               showIcon
-              title="Không thể tải danh sách tin tuyển dụng"
-              description={getApiErrorMessage(jobsQuery.error, 'Vui lòng thử lại sau.')}
+              title={`Không thể tải danh sách tin tuyển dụng. ${getApiErrorMessage(jobsQuery.error, 'Vui lòng thử lại sau.')}`}
               action={<Button size="small" danger onClick={() => jobsQuery.refetch()}>Thử lại</Button>}
             />
           </div>
@@ -162,39 +182,31 @@ export default function JobList() {
         {jobsQuery.isLoading ? (
           <JobListSkeleton />
         ) : jobs.length === 0 && !jobsQuery.isError ? (
-          <div className="py-14">
-            <Empty
-              description={query || status
-                ? 'Không có tin phù hợp với bộ lọc'
-                : 'Bạn chưa có tin tuyển dụng nào'}
-            >
-              {(query || status) ? (
-                <Button onClick={() => {
-                  setSearchValue('')
-                  setSearchParams({})
-                }}>
-                  Xóa bộ lọc
-                </Button>
-              ) : (
-                <Link
-                  className="inline-flex h-9 items-center justify-center gap-2 rounded-lg !bg-emerald-600 px-4 text-sm font-semibold !text-white transition hover:!bg-emerald-500"
-                  to={employerAppPath('/jobs/new')}
-                >
-                  <PlusOutlined /> Đăng tin đầu tiên
-                </Link>
-              )}
-            </Empty>
-          </div>
+          hasFilters ? (
+            <div className="py-14">
+              <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Không có tin phù hợp với bộ lọc">
+                <Button onClick={clearFilters}>Xóa bộ lọc</Button>
+              </Empty>
+            </div>
+          ) : (
+            <MascotEmpty className="py-12" description="Bạn chưa có tin tuyển dụng nào. Đăng tin đầu tiên để bắt đầu nhận hồ sơ.">
+              <Link className={primaryLinkClass} to={employerAppPath('/jobs/new')}>
+                <PlusOutlined /> Đăng tin đầu tiên
+              </Link>
+            </MascotEmpty>
+          )
         ) : (
-          <div className="divide-y divide-slate-100" aria-live="polite">
+          <div
+            aria-busy={jobsQuery.isFetching}
+            aria-live="polite"
+            className={`divide-y divide-slate-100 transition-opacity ${jobsQuery.isPlaceholderData ? 'opacity-60' : ''}`}
+          >
             {jobs.map((job) => (
               <JobListCard
                 key={job.public_id}
                 job={job}
                 candidateDataAccess={canAccessCandidateData}
-                closing={closeMutation.isPending && closeMutation.variables === job.public_id}
-                deleting={deleteMutation.isPending && deleteMutation.variables === job.public_id}
-                duplicating={duplicateMutation.isPending && duplicateMutation.variables === job.public_id}
+                busy={[closeMutation, deleteMutation, duplicateMutation].some((item) => isBusy(item, job.public_id))}
                 onClose={(publicId) => closeMutation.mutateAsync(publicId)}
                 onDelete={(publicId) => deleteMutation.mutateAsync(publicId)}
                 onDuplicate={(publicId) => duplicateMutation.mutate(publicId)}
@@ -204,15 +216,19 @@ export default function JobList() {
           </div>
         )}
 
-        {pageData.count > 20 && (
-          <div className="flex justify-center border-t border-slate-100 py-3">
-            <Pagination
-              current={page}
-              pageSize={20}
-              total={pageData.count}
-              showSizeChanger={false}
-              onChange={(nextPage) => replaceFilters({ page: nextPage })}
-            />
+        {pageData.count > 0 && (
+          <div className="flex flex-col items-center justify-between gap-2 border-t border-slate-100 px-4 py-3 text-xs text-slate-500 sm:flex-row">
+            <span>Hiển thị {firstRow}–{lastRow} trên {formatCount(pageData.count)} tin</span>
+            {pageData.count > PAGE_SIZE && (
+              <Pagination
+                size="small"
+                current={page}
+                pageSize={PAGE_SIZE}
+                total={pageData.count}
+                showSizeChanger={false}
+                onChange={(nextPage) => replaceFilters({ page: nextPage })}
+              />
+            )}
           </div>
         )}
       </div>

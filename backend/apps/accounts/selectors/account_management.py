@@ -26,26 +26,14 @@ from apps.employers.models import (
 )
 from apps.jobs.models import Job
 
-from ..admin_access_rules import create_impact_token
+from ..impact_token_rules import create_impact_token
 from ..models import (
     AdminAccessAuditLog,
     AdminInvitation,
-    AdminMembership,
-    AdminProvisioningScope,
-    AdminRole,
     AuthSession,
     User,
 )
-from .admin_access import current_rbac_revision, effective_permission_codes
-
-SENSITIVE_PROVISIONING_CODES = frozenset(
-    {
-        'account.admin.invite',
-        'account.admin.manage',
-        'admin_access.manage_role',
-        'admin_access.manage_staff',
-    }
-)
+from .admin_audit import current_audit_revision
 
 ACCOUNT_SCOPE_USERS = 'users'
 ACCOUNT_SCOPE_RECRUITERS = 'recruiters'
@@ -74,23 +62,11 @@ def _with_recruiter_initial_onboarding(queryset):
 
 
 def _account_visibility(actor):
+    """Superuser thấy mọi tài khoản; admin thường chỉ thấy ứng viên và NTD."""
+
     if actor.is_superuser:
         return Q()
-    permissions = effective_permission_codes(actor)
-    visible = Q(pk__in=[])
-    if 'account.view' in permissions:
-        visible |= Q(role__in=[User.Role.CANDIDATE, User.Role.EMPLOYER])
-    if 'account.employer.view' in permissions:
-        visible |= Q(role=User.Role.EMPLOYER)
-    if 'employer_verification.view' in permissions:
-        visible |= Q(role=User.Role.EMPLOYER)
-    if 'company_update.view' in permissions:
-        visible |= Q(role=User.Role.EMPLOYER)
-    if 'account.admin.view' in permissions:
-        visible |= Q(role=User.Role.ADMIN)
-    if 'account.admin.invite' in permissions:
-        visible |= Q(role=User.Role.ADMIN, admin_invitations_received__invited_by=actor)
-    return visible
+    return Q(role__in=[User.Role.CANDIDATE, User.Role.EMPLOYER])
 
 
 def accounts_queryset(actor, *, params=None):
@@ -107,13 +83,6 @@ def accounts_queryset(actor, *, params=None):
             'recruiter_profile__work_location',
         )
         .prefetch_related(
-            Prefetch(
-                'admin_memberships',
-                queryset=AdminMembership.objects.filter(is_active=True)
-                .select_related('role__department', 'assigned_by')
-                .prefetch_related('role__permissions'),
-                to_attr='active_admin_memberships',
-            ),
             Prefetch(
                 'admin_invitations_received',
                 queryset=AdminInvitation.objects.select_related('invited_by').order_by(
@@ -178,16 +147,6 @@ def accounts_queryset(actor, *, params=None):
                 if session_filter == 'true'
                 else {'active_session_count': 0}
             )
-        )
-    if params.get('department'):
-        queryset = queryset.filter(
-            admin_memberships__is_active=True,
-            admin_memberships__role__department__public_id=params['department'],
-        )
-    if params.get('admin_role'):
-        queryset = queryset.filter(
-            admin_memberships__is_active=True,
-            admin_memberships__role__public_id=params['admin_role'],
         )
     if params.get('company'):
         queryset = queryset.filter(recruiter_profile__company__public_id=params['company'])
@@ -264,10 +223,13 @@ def account_summary(actor, *, scope=''):
     base = User.objects.filter(is_deleted=False).filter(_account_visibility(actor)).distinct()
     if scope == ACCOUNT_SCOPE_USERS:
         users = base.filter(role__in=[User.Role.CANDIDATE, User.Role.ADMIN])
-        pending_invitations = invitation_queryset(
-            actor,
-            params={'status': AdminInvitation.Status.PENDING},
-        ).filter(expires_at__gt=timezone.now())
+        pending_invitations = (
+            invitation_queryset(params={'status': AdminInvitation.Status.PENDING})
+            .filter(expires_at__gt=timezone.now())
+            .count()
+            if actor.is_superuser
+            else 0
+        )
         return {
             'scope': ACCOUNT_SCOPE_USERS,
             'totals': _status_summary(users),
@@ -276,7 +238,7 @@ def account_summary(actor, *, scope=''):
                 User.Role.ADMIN: _status_summary(users.filter(role=User.Role.ADMIN)),
             },
             'queues': {
-                'pending_admin_invitations': pending_invitations.count(),
+                'pending_admin_invitations': pending_invitations,
             },
         }
     if scope == ACCOUNT_SCOPE_RECRUITERS:
@@ -353,25 +315,14 @@ def account_activity_queryset(user):
     ).select_related('actor')
 
 
-def invitation_queryset(actor, *, params=None):
+def invitation_queryset(*, params=None):
+    """Lời mời quản trị — view chỉ cho superuser gọi."""
+
     params = params or {}
-    queryset = AdminInvitation.objects.select_related(
-        'user',
-        'target_role__department',
-        'provisioning_scope__source_role',
-        'invited_by',
-    ).prefetch_related('target_role__permissions')
-    if not actor.is_superuser:
-        if 'account.admin.invite' not in effective_permission_codes(actor):
-            return queryset.none()
-        queryset = queryset.filter(invited_by=actor)
+    queryset = AdminInvitation.objects.select_related('user', 'invited_by')
     if params.get('status'):
         queryset = queryset.filter(status=params['status'])
-    if params.get('department'):
-        queryset = queryset.filter(target_role__department__public_id=params['department'])
-    if params.get('role'):
-        queryset = queryset.filter(target_role__public_id=params['role'])
-    if actor.is_superuser and params.get('invited_by'):
+    if params.get('invited_by'):
         queryset = queryset.filter(invited_by__public_id=params['invited_by'])
     query = params.get('q', '').strip()
     if query:
@@ -385,8 +336,6 @@ def invitation_queryset(actor, *, params=None):
     allowed = {
         'user__full_name',
         '-user__full_name',
-        'target_role__name',
-        '-target_role__name',
         'invited_by__full_name',
         '-invited_by__full_name',
         'status',
@@ -400,90 +349,6 @@ def invitation_queryset(actor, *, params=None):
         ordering if ordering in allowed else '-created_at',
         '-id',
     )
-
-
-def available_invitation_roles(actor):
-    queryset = (
-        AdminRole.objects.filter(is_active=True, department__is_active=True)
-        .select_related('department')
-        .prefetch_related('permissions')
-    )
-    if actor.is_superuser:
-        return queryset.order_by('department__name', '-rank', 'name')
-    membership = (
-        AdminMembership.objects.filter(
-            user=actor,
-            is_active=True,
-            role__is_active=True,
-            role__department__is_active=True,
-        )
-        .select_related('role')
-        .first()
-    )
-    if membership is None or 'account.admin.invite' not in effective_permission_codes(actor):
-        return queryset.none()
-    return (
-        queryset.filter(
-            provisioned_by_scopes__source_role=membership.role,
-            provisioned_by_scopes__is_active=True,
-        )
-        .exclude(permissions__code__in=SENSITIVE_PROVISIONING_CODES)
-        .distinct()
-        .order_by('department__name', '-rank', 'name')
-    )
-
-
-def provisioning_scopes_queryset():
-    return (
-        AdminProvisioningScope.objects.select_related(
-            'source_role__department',
-            'target_role__department',
-            'configured_by',
-        )
-        .prefetch_related('source_role__permissions', 'target_role__permissions')
-        .annotate(
-            pending_invitation_count=Count(
-                'admin_invitations',
-                filter=Q(admin_invitations__status=AdminInvitation.Status.PENDING),
-            )
-        )
-    )
-
-
-def provisioning_scope_status_impact(scope, *, is_active):
-    pending_qs = AdminInvitation.objects.filter(
-        provisioning_scope=scope,
-        status=AdminInvitation.Status.PENDING,
-    ).select_related('user')
-    count = pending_qs.count() if not is_active else 0
-    pending = list(pending_qs.order_by('created_at', 'id')[:20])
-    payload = {'is_active': bool(is_active)}
-    return {
-        'operation': 'provisioning_scope.status.change',
-        'target': {
-            'public_id': scope.public_id,
-            'source_role': scope.source_role.name,
-            'target_role': scope.target_role.name,
-        },
-        'is_active': bool(is_active),
-        'pending_invitation_count': count,
-        'affected_accounts': [
-            {
-                'public_id': invitation.user.public_id,
-                'email': invitation.user.email,
-                'full_name': invitation.user.full_name,
-            }
-            for invitation in pending
-        ],
-        'has_more': count > len(pending),
-        'can_apply': scope.is_active != bool(is_active),
-        'impact_token': create_impact_token(
-            revision=current_rbac_revision(),
-            operation='provisioning_scope.status.change',
-            resource_key=f'provisioning-scope:{scope.public_id}',
-            normalized_payload=payload,
-        ),
-    }
 
 
 def _group_counts(queryset, *fields):
@@ -666,7 +531,7 @@ def account_status_impact(
         ),
         'can_apply': transition_allowed and not review_required,
         'impact_token': create_impact_token(
-            revision=current_rbac_revision(),
+            revision=current_audit_revision(),
             operation='account.status.change',
             resource_key=f'account:{user.public_id}',
             normalized_payload=payload,
@@ -712,7 +577,7 @@ def account_resource_hold_impact(
             and (campaign_count or job_count)
         ),
         'impact_token': create_impact_token(
-            revision=current_rbac_revision(),
+            revision=current_audit_revision(),
             operation='account.resource_hold.release',
             resource_key=f'account:{user.public_id}',
             normalized_payload=payload,
@@ -749,7 +614,7 @@ def account_revoke_sessions_impact(user, *, reason):
         'has_more': len(sessions) > 20,
         'can_apply': bool(sessions),
         'impact_token': create_impact_token(
-            revision=current_rbac_revision(),
+            revision=current_audit_revision(),
             operation='account.sessions.revoke',
             resource_key=f'account:{user.public_id}',
             normalized_payload=payload,
@@ -812,7 +677,7 @@ def account_email_change_impact(user, *, email, reason, verification_evidence):
         'email_verification_required': True,
         'can_apply': before['email'] != email,
         'impact_token': create_impact_token(
-            revision=current_rbac_revision(),
+            revision=current_audit_revision(),
             operation='account.email.change',
             resource_key=f'account:{user.public_id}',
             normalized_payload=payload,

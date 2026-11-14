@@ -25,8 +25,6 @@ export function companyReportColumns({
   ordering,
   origin,
   busy,
-  canOpenCompany,
-  canResolve,
   onDecide,
   onFilterCompany,
 }) {
@@ -52,15 +50,13 @@ export function companyReportColumns({
       width: 260,
       render: (company, report) => (
         <div className="min-w-0">
-          {canOpenCompany ? (
-            <Link
-              className="font-semibold !text-slate-900 hover:!text-[var(--brand-primary)]"
-              state={{ origin }}
-              to={`${adminPath(`/companies/${company.public_id}`)}?tab=public-page`}
-            >
-              {company.display_name}
-            </Link>
-          ) : <span className="font-semibold text-slate-900">{company.display_name}</span>}
+          <Link
+            className="font-semibold !text-slate-900 hover:!text-[var(--brand-primary)]"
+            state={{ origin }}
+            to={`${adminPath(`/companies/${company.public_id}`)}?tab=public-page`}
+          >
+            {company.display_name}
+          </Link>
           {company.content_policy_hold && <Tag className="!ml-2" color="red">Đang tạm ẩn</Tag>}
           <p className="mt-1 font-mono text-[11px] text-slate-400">{report.public_id}</p>
           {onFilterCompany && (
@@ -129,7 +125,6 @@ export function companyReportColumns({
       fixed: 'right',
       width: 96,
       render: (_, report) => {
-        if (!canResolve) return <span className="text-xs text-slate-500">Chỉ xem</span>
         if (report.status === 'pending') {
           return (
             <Space className="whitespace-nowrap" size={4}>

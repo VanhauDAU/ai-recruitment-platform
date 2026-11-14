@@ -3,7 +3,6 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Alert, Button, Skeleton, Space, Tag } from 'antd'
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
-import { useAdminAccess } from '@/entities/admin-access'
 import {
   KNOWLEDGE_LIFECYCLE_STATUS,
   KNOWLEDGE_REVISION_STATUS,
@@ -11,7 +10,6 @@ import {
   getAdminKnowledgeArticle,
   getAdminKnowledgeCategories,
 } from '@/entities/knowledgebase'
-import { useSession } from '@/entities/session'
 import { KnowledgeRevisionEditor } from '@/features/edit-knowledge-revision'
 import { KnowledgePublishActions } from '@/features/publish-knowledge-article'
 import { KnowledgeRevisionReview } from '@/features/review-knowledge-revision'
@@ -23,8 +21,6 @@ export default function AdminKnowledgeArticleWorkspace({ publicId }) {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { confirmationModal, requestConfirmation } = useConfirmAction()
-  const { user } = useSession()
-  const access = useAdminAccess(user)
   const [dirty, setDirty] = useState(false)
   const articleQuery = useQuery({
     queryKey: adminKnowledgeKeys.article(publicId),
@@ -71,7 +67,7 @@ export default function AdminKnowledgeArticleWorkspace({ publicId }) {
           </div>
         </div>
         <Space wrap>
-          <KnowledgePublishActions article={article} canPublish={access.has('knowledgebase.publish')} onArticleChange={sync} disabled={dirty} />
+          <KnowledgePublishActions article={article} onArticleChange={sync} disabled={dirty} />
         </Space>
       </header>
 
@@ -79,8 +75,6 @@ export default function AdminKnowledgeArticleWorkspace({ publicId }) {
         <section className="knowledge-article-workspace__workflow">
           <KnowledgeRevisionReview
             article={article}
-            canManage={access.has('knowledgebase.manage')}
-            canReview={access.has('knowledgebase.review')}
             onArticleChange={sync}
             disabled={dirty}
           />
@@ -90,7 +84,6 @@ export default function AdminKnowledgeArticleWorkspace({ publicId }) {
       <KnowledgeRevisionEditor
         article={article}
         categories={categoriesQuery.data || []}
-        canManage={access.has('knowledgebase.manage')}
         onArticleChange={sync}
         onDirtyChange={setDirty}
       />

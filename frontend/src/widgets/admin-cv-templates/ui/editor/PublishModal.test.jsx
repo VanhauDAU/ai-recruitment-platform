@@ -10,7 +10,7 @@ const checklist = (failing) => ({ items: [
   { key: 'colors', ok: !failing, label: 'Có ít nhất một màu và một màu mặc định' },
   { key: 'test_pdf', ok: !failing, label: 'Đã xuất PDF thử thành công cho phiên bản này' },
 ] })
-const renderModal = (props) => render(withQueryClient(<PublishModal open template={template} draft={draft} onClose={vi.fn()} onPublish={vi.fn()} canPublish {...props} />))
+const renderModal = (props) => render(withQueryClient(<PublishModal open template={template} draft={draft} onClose={vi.fn()} onPublish={vi.fn()} {...props} />))
 
 describe('PublishModal', () => {
   it('blocks publishing and says where to fix each failing check', () => {
@@ -30,12 +30,5 @@ describe('PublishModal', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Xuất bản' }))
     expect(onPublish).toHaveBeenCalled()
     expect(screen.getByText(/CV ứng viên đã tạo vẫn giữ phiên bản cũ/)).toBeInTheDocument()
-  })
-
-  it('explains when the admin cannot publish', () => {
-    renderModal({ checklist: checklist(false), canPublish: false })
-
-    expect(screen.getByText('Bạn cần quyền phát hành mẫu CV để xuất bản.')).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Xuất bản' })).not.toBeInTheDocument()
   })
 })

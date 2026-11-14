@@ -3,9 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Alert, Button, Form, Input, Modal, Select, Switch, Table, Tabs, Tag, Upload } from 'antd'
 import { useState } from 'react'
 import { useSearchParams } from 'react-router'
-import { useAdminAccess } from '@/entities/admin-access'
 import { adminCvBackgrounds, adminCvCategories, adminCvColors } from '@/entities/cv-template'
-import { useSession } from '@/entities/session'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { message } from '@/shared/lib/toast'
 import { AdminPanel } from '@/shared/ui/admin'
@@ -52,7 +50,7 @@ const COLLECTIONS = {
   },
 }
 
-function CollectionTab({ kind, canManage, canPublish }) {
+function CollectionTab({ kind }) {
   const config = COLLECTIONS[kind]
   const queryClient = useQueryClient()
   const [editing, setEditing] = useState(null)
@@ -68,10 +66,10 @@ function CollectionTab({ kind, canManage, canPublish }) {
   const columns = [
     ...config.columns,
     { title: 'Mẫu dùng', dataIndex: 'template_count', align: 'right', width: 96 },
-    { title: 'Hiển thị', dataIndex: 'is_active', width: 90, render: (active, row) => <Switch size="small" checked={active} disabled={!canPublish} aria-label={`Hiển thị ${row.name}`} onChange={(is_active) => run.mutate({ action: 'update', row, values: { is_active } })} /> },
-    ...(canManage ? [{ title: '', width: 96, render: (_, row) => <span className="flex gap-1"><Button size="small" type="text" icon={<EditOutlined />} aria-label={`Sửa ${row.name}`} onClick={() => open(row)} /><Button size="small" type="text" danger icon={<DeleteOutlined />} aria-label={`Xóa ${row.name}`} disabled={row.template_count > 0} title={row.template_count > 0 ? 'Đang được mẫu CV dùng' : undefined} onClick={() => run.mutate({ action: 'remove', row })} /></span> }] : []),
+    { title: 'Hiển thị', dataIndex: 'is_active', width: 90, render: (active, row) => <Switch size="small" checked={active} aria-label={`Hiển thị ${row.name}`} onChange={(is_active) => run.mutate({ action: 'update', row, values: { is_active } })} /> },
+    { title: '', width: 96, render: (_, row) => <span className="flex gap-1"><Button size="small" type="text" icon={<EditOutlined />} aria-label={`Sửa ${row.name}`} onClick={() => open(row)} /><Button size="small" type="text" danger icon={<DeleteOutlined />} aria-label={`Xóa ${row.name}`} disabled={row.template_count > 0} title={row.template_count > 0 ? 'Đang được mẫu CV dùng' : undefined} onClick={() => run.mutate({ action: 'remove', row })} /></span> },
   ]
-  return <AdminPanel padded={false} title={config.title} extra={canManage && <Button size="small" type="primary" icon={<PlusOutlined />} onClick={() => open(null)}>Thêm</Button>}>
+  return <AdminPanel padded={false} title={config.title} extra={<Button size="small" type="primary" icon={<PlusOutlined />} onClick={() => open(null)}>Thêm</Button>}>
     <Table size="small" rowKey="public_id" loading={isLoading} dataSource={data} columns={columns} pagination={{ pageSize: 20, hideOnSinglePage: true }} scroll={{ x: 560 }} />
     <Modal open={Boolean(editing)} title={editing?.public_id ? `Sửa ${config.title.toLowerCase()}` : `Thêm ${config.title.toLowerCase()}`} okText="Lưu" cancelText="Hủy" confirmLoading={run.isPending} onCancel={() => setEditing(null)} onOk={() => form.validateFields().then((values) => run.mutate({ action: editing?.public_id ? 'update' : 'create', row: editing, values }))}>
       <Form form={form} layout="vertical">{config.fields.map((field) => <Form.Item key={field.name} name={field.name} label={field.label} rules={[...(field.required === false ? [] : [{ required: true, message: 'Bắt buộc' }]), ...(field.rules || [])]}>{field.options ? <Select options={field.options} /> : <Input />}</Form.Item>)}</Form>
@@ -79,7 +77,7 @@ function CollectionTab({ kind, canManage, canPublish }) {
   </AdminPanel>
 }
 
-function BackgroundsTab({ canManage, canPublish }) {
+function BackgroundsTab() {
   const queryClient = useQueryClient()
   const { data = [], isLoading } = useQuery({ queryKey: ['admin-cv-library', 'backgrounds'], queryFn: () => adminCvBackgrounds.list() })
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['admin-cv-library', 'backgrounds'] })
@@ -88,27 +86,24 @@ function BackgroundsTab({ canManage, canPublish }) {
     onSuccess: () => { refresh(); message.success('Đã lưu.') },
     onError: (error) => message.error(getApiErrorMessage(error, 'Không thể lưu hình nền.')),
   })
-  return <AdminPanel padded={false} title="Hình nền" extra={canManage && <Upload accept="image/png,image/jpeg,image/webp" showUploadList={false} beforeUpload={(file) => { run.mutate({ action: 'upload', file }); return false }}><Button size="small" type="primary" icon={<UploadOutlined />} loading={run.isPending}>Tải lên</Button></Upload>}>
+  return <AdminPanel padded={false} title="Hình nền" extra={<Upload accept="image/png,image/jpeg,image/webp" showUploadList={false} beforeUpload={(file) => { run.mutate({ action: 'upload', file }); return false }}><Button size="small" type="primary" icon={<UploadOutlined />} loading={run.isPending}>Tải lên</Button></Upload>}>
     <Table size="small" rowKey="public_id" loading={isLoading} dataSource={data} pagination={{ pageSize: 20, hideOnSinglePage: true }} scroll={{ x: 520 }} columns={[
       { title: 'Ảnh', dataIndex: 'url', width: 88, render: (url, row) => url ? <img src={url} alt={row.title || 'Hình nền'} className="h-14 w-10 rounded border border-slate-200 object-cover" loading="lazy" /> : null },
       { title: 'Tên', dataIndex: 'title', render: (title) => title || 'Chưa đặt tên' },
       { title: 'Kích thước', render: (_, row) => `${row.width}×${row.height}`, responsive: ['md'] },
-      { title: 'Hiển thị', dataIndex: 'is_active', width: 90, render: (active, row) => <Switch size="small" checked={active} disabled={!canPublish} aria-label={`Hiển thị ${row.title || row.public_id}`} onChange={(is_active) => run.mutate({ action: 'update', row, values: { is_active } })} /> },
-      ...(canManage ? [{ title: '', width: 56, render: (_, row) => <Button size="small" type="text" danger icon={<DeleteOutlined />} aria-label={`Xóa ${row.title || row.public_id}`} onClick={() => run.mutate({ action: 'remove', row })} /> }] : []),
+      { title: 'Hiển thị', dataIndex: 'is_active', width: 90, render: (active, row) => <Switch size="small" checked={active} aria-label={`Hiển thị ${row.title || row.public_id}`} onChange={(is_active) => run.mutate({ action: 'update', row, values: { is_active } })} /> },
+      { title: '', width: 56, render: (_, row) => <Button size="small" type="text" danger icon={<DeleteOutlined />} aria-label={`Xóa ${row.title || row.public_id}`} onClick={() => run.mutate({ action: 'remove', row })} /> },
     ]} />
   </AdminPanel>
 }
 
 export default function AdminCvLibrary() {
-  const { user } = useSession()
-  const access = useAdminAccess(user)
   const [params, setParams] = useSearchParams()
-  const permissions = { canManage: access.has('cv_template.manage'), canPublish: access.has('cv_template.publish') }
   const tab = ['colors', 'categories', 'backgrounds'].includes(params.get('tab')) ? params.get('tab') : 'colors'
   const withHint = (key, content) => <div className="space-y-3"><Alert type="info" showIcon message={HINTS[key]} />{content}</div>
   return <Tabs activeKey={tab} onChange={(next) => setParams({ tab: next }, { replace: true })} items={[
-    { key: 'colors', label: 'Màu', children: withHint('colors', <CollectionTab kind="colors" {...permissions} />) },
-    { key: 'categories', label: 'Danh mục', children: withHint('categories', <CollectionTab kind="categories" {...permissions} />) },
-    { key: 'backgrounds', label: 'Hình nền', children: withHint('backgrounds', <BackgroundsTab {...permissions} />) },
+    { key: 'colors', label: 'Màu', children: withHint('colors', <CollectionTab kind="colors" />) },
+    { key: 'categories', label: 'Danh mục', children: withHint('categories', <CollectionTab kind="categories" />) },
+    { key: 'backgrounds', label: 'Hình nền', children: withHint('backgrounds', <BackgroundsTab />) },
   ]} />
 }

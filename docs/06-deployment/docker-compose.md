@@ -93,12 +93,10 @@ môi trường local luôn đăng nhập được:
 | Persona | Email | Mật khẩu |
 | --- | --- | --- |
 | Superuser | `admin-root@demo.local` | `AdminDemo123!` |
-| Nhân sự cấp tài khoản | `hr-provisioner@demo.local` | `AdminDemo123!` |
-| Nhân viên kiểm duyệt | `moderator-admin@demo.local` | `AdminDemo123!` |
+| Quản trị viên | `moderator-admin@demo.local` | `AdminDemo123!` |
 
-Persona Nhân sự có `account.admin.invite` và được whitelist cấp ba chức danh
-thường: kiểm duyệt, nội dung và chăm sóc khách hàng. Persona này không thể cấp
-chức danh chứa quyền cấp phát hoặc quản trị đặc quyền. Không dùng các thông tin
+Quản trị viên dùng được mọi chức năng nghiệp vụ; chỉ superuser quản lý tài
+khoản quản trị, lời mời và site settings (ADR-0018). Không dùng các thông tin
 demo trên staging/production.
 
 ## Vận hành

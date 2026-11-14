@@ -31,7 +31,7 @@ function categoryPayload(values) {
   }
 }
 
-export default function KnowledgeCategoryManager({ open, onClose, canManage, canPublish }) {
+export default function KnowledgeCategoryManager({ open, onClose }) {
   const [form] = Form.useForm()
   const queryClient = useQueryClient()
   const { confirmationModal, requestConfirmation } = useConfirmAction()
@@ -112,52 +112,50 @@ export default function KnowledgeCategoryManager({ open, onClose, canManage, can
           <strong>Cấu trúc trung tâm trợ giúp</strong>
           <p>Sắp xếp cách người dùng khám phá nội dung và đặt chu kỳ rà soát mặc định.</p>
         </div>
-        {canManage && !editing && (
+        {!editing && (
           <Button type="primary" icon={<PlusOutlined />} onClick={() => form.resetFields()}>
             Thêm chuyên mục
           </Button>
         )}
       </div>
 
-      {canManage && (
-        <Form
-          className="knowledge-category-form"
-          form={form}
-          layout="vertical"
-          initialValues={{ review_interval_days: 180 }}
-          onFinish={(values) => saveMutation.mutate(values)}
-        >
-          <div className="knowledge-category-form__heading">
-            <strong>{editing ? `Sửa “${editing.name}”` : 'Tạo chuyên mục mới'}</strong>
-            {editing && <Button type="link" onClick={cancelEdit}>Hủy chỉnh sửa</Button>}
-          </div>
-          <div className="knowledge-category-form__grid">
-            <Form.Item name="name" label="Tên chuyên mục" rules={[{ required: true, message: 'Nhập tên chuyên mục.' }]}>
-              <Input maxLength={120} placeholder="Ví dụ: Tài khoản và đăng nhập" />
-            </Form.Item>
-            <Form.Item name="slug" label="Slug" rules={[{ required: true, message: 'Nhập slug.' }, { pattern: /^[a-z0-9]+(?:-[a-z0-9]+)*$/, message: 'Slug chỉ gồm chữ thường, số và dấu gạch ngang.' }]}>
-              <Input maxLength={160} placeholder="tai-khoan-va-dang-nhap" />
-            </Form.Item>
-          </div>
-          <Form.Item name="description" label="Mô tả ngắn">
-            <Input.TextArea rows={2} maxLength={300} showCount />
+      <Form
+        className="knowledge-category-form"
+        form={form}
+        layout="vertical"
+        initialValues={{ review_interval_days: 180 }}
+        onFinish={(values) => saveMutation.mutate(values)}
+      >
+        <div className="knowledge-category-form__heading">
+          <strong>{editing ? `Sửa “${editing.name}”` : 'Tạo chuyên mục mới'}</strong>
+          {editing && <Button type="link" onClick={cancelEdit}>Hủy chỉnh sửa</Button>}
+        </div>
+        <div className="knowledge-category-form__grid">
+          <Form.Item name="name" label="Tên chuyên mục" rules={[{ required: true, message: 'Nhập tên chuyên mục.' }]}>
+            <Input maxLength={120} placeholder="Ví dụ: Tài khoản và đăng nhập" />
           </Form.Item>
-          <div className="knowledge-category-form__grid">
-            <Form.Item name="review_interval_days" label="Rà soát lại sau (ngày)" rules={[{ required: true }]}>
-              <InputNumber min={30} max={365} className="w-full" />
-            </Form.Item>
-            <Form.Item name="seo_title" label="SEO title">
-              <Input maxLength={200} showCount />
-            </Form.Item>
-          </div>
-          <Form.Item name="seo_description" label="SEO description">
-            <Input.TextArea rows={2} maxLength={300} showCount />
+          <Form.Item name="slug" label="Slug" rules={[{ required: true, message: 'Nhập slug.' }, { pattern: /^[a-z0-9]+(?:-[a-z0-9]+)*$/, message: 'Slug chỉ gồm chữ thường, số và dấu gạch ngang.' }]}>
+            <Input maxLength={160} placeholder="tai-khoan-va-dang-nhap" />
           </Form.Item>
-          <Button type="primary" htmlType="submit" loading={saveMutation.isPending}>
-            {editing ? 'Lưu thay đổi' : 'Tạo chuyên mục'}
-          </Button>
-        </Form>
-      )}
+        </div>
+        <Form.Item name="description" label="Mô tả ngắn">
+          <Input.TextArea rows={2} maxLength={300} showCount />
+        </Form.Item>
+        <div className="knowledge-category-form__grid">
+          <Form.Item name="review_interval_days" label="Rà soát lại sau (ngày)" rules={[{ required: true }]}>
+            <InputNumber min={30} max={365} className="w-full" />
+          </Form.Item>
+          <Form.Item name="seo_title" label="SEO title">
+            <Input maxLength={200} showCount />
+          </Form.Item>
+        </div>
+        <Form.Item name="seo_description" label="SEO description">
+          <Input.TextArea rows={2} maxLength={300} showCount />
+        </Form.Item>
+        <Button type="primary" htmlType="submit" loading={saveMutation.isPending}>
+          {editing ? 'Lưu thay đổi' : 'Tạo chuyên mục'}
+        </Button>
+      </Form>
 
       <div className="knowledge-category-list" aria-label="Danh sách chuyên mục">
         {(categoriesQuery.data || []).map((category, index) => (
@@ -178,37 +176,31 @@ export default function KnowledgeCategoryManager({ open, onClose, canManage, can
               </div>
             </div>
             <Space direction="vertical" size={6}>
-              {canManage && (
-                <Button size="small" icon={<EditOutlined />} onClick={() => startEdit(category)}>
-                  Sửa
-                </Button>
-              )}
-              {canManage && (
-                <Space.Compact>
-                  <Button aria-label={`Đưa ${category.name} lên`} size="small" icon={<ArrowUpOutlined />} disabled={index === 0 || reorderMutation.isPending} onClick={() => move(index, -1)} />
-                  <Button aria-label={`Đưa ${category.name} xuống`} size="small" icon={<ArrowDownOutlined />} disabled={index === (categoriesQuery.data?.length || 0) - 1 || reorderMutation.isPending} onClick={() => move(index, 1)} />
-                </Space.Compact>
-              )}
-              {canPublish && (
-                <Switch
-                  checked={category.is_active}
-                  checkedChildren="Bật"
-                  unCheckedChildren="Ẩn"
-                  loading={stateMutation.isPending}
-                  onChange={(active) => {
-                    if (!active && category.public_article_count) {
-                      requestConfirmation({
-                        title: 'Ẩn chuyên mục',
-                        description: <>Bạn có chắc muốn ẩn <strong>{category.name}</strong>? {category.public_article_count} bài công khai sẽ không còn xuất hiện trong trung tâm trợ giúp.</>,
-                        confirmText: 'Ẩn chuyên mục',
-                        danger: true,
-                        cancelText: 'Giữ hiển thị',
-                        onConfirm: () => stateMutation.mutateAsync({ category, active }),
-                      })
-                    } else stateMutation.mutate({ category, active })
-                  }}
-                />
-              )}
+              <Button size="small" icon={<EditOutlined />} onClick={() => startEdit(category)}>
+                Sửa
+              </Button>
+              <Space.Compact>
+                <Button aria-label={`Đưa ${category.name} lên`} size="small" icon={<ArrowUpOutlined />} disabled={index === 0 || reorderMutation.isPending} onClick={() => move(index, -1)} />
+                <Button aria-label={`Đưa ${category.name} xuống`} size="small" icon={<ArrowDownOutlined />} disabled={index === (categoriesQuery.data?.length || 0) - 1 || reorderMutation.isPending} onClick={() => move(index, 1)} />
+              </Space.Compact>
+              <Switch
+                checked={category.is_active}
+                checkedChildren="Bật"
+                unCheckedChildren="Ẩn"
+                loading={stateMutation.isPending}
+                onChange={(active) => {
+                  if (!active && category.public_article_count) {
+                    requestConfirmation({
+                      title: 'Ẩn chuyên mục',
+                      description: <>Bạn có chắc muốn ẩn <strong>{category.name}</strong>? {category.public_article_count} bài công khai sẽ không còn xuất hiện trong trung tâm trợ giúp.</>,
+                      confirmText: 'Ẩn chuyên mục',
+                      danger: true,
+                      cancelText: 'Giữ hiển thị',
+                      onConfirm: () => stateMutation.mutateAsync({ category, active }),
+                    })
+                  } else stateMutation.mutate({ category, active })
+                }}
+              />
             </Space>
           </article>
         ))}

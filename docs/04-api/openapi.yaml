@@ -78,36 +78,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/AdminInvitation'
           description: ''
-    patch:
-      operationId: admin_account_invitations_partial_update
-      parameters:
-      - in: path
-        name: public_id
-        schema:
-          type: string
-        required: true
-      tags:
-      - admin
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchedAdminInvitationUpdateRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PatchedAdminInvitationUpdateRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PatchedAdminInvitationUpdateRequest'
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AdminInvitationUpdate'
-          description: ''
   /api/admin/account-invitations/{public_id}/resend/:
     post:
       operationId: admin_account_invitations_resend_create
@@ -163,20 +133,6 @@ paths:
             schema:
               $ref: '#/components/schemas/AdminInvitationRequest'
         required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AdminInvitation'
-          description: ''
-  /api/admin/account-invitations/available-roles/:
-    get:
-      operationId: admin_account_invitations_available_roles_retrieve
-      tags:
-      - admin
       security:
       - jwtAuth: []
       responses:
@@ -914,11 +870,8 @@ paths:
       description: |-
         Nhật ký hoạt động cho trang Cài đặt tài khoản.
 
-        Mặc định chỉ trả log của chính người gọi nên mọi quản trị viên đều xem được,
-        kể cả tài khoản chưa được gán phòng ban. ``?scope=all`` mở rộng ra toàn hệ
-        thống và yêu cầu quyền ``audit_log.view`` — vì thế permission class là
-        ``IsAdmin`` chứ không phải ``HasAdminPermission`` (class đó fail-closed khi
-        view không khai báo sẵn permission code).
+        Mặc định chỉ trả log của chính người gọi nên mọi quản trị viên đều xem được.
+        ``?scope=all`` mở rộng ra toàn hệ thống và chỉ dành cho superuser.
       parameters:
       - name: page
         required: false
@@ -973,6 +926,58 @@ paths:
   /api/admin/companies/{public_id}/:
     get:
       operationId: admin_companies_retrieve
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - admin
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminCompanyDetail'
+          description: ''
+  /api/admin/companies/{public_id}/policy-hold/:
+    post:
+      operationId: admin_companies_policy_hold_create
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminCompanyDetailRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AdminCompanyDetailRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AdminCompanyDetailRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminCompanyDetail'
+          description: ''
+  /api/admin/companies/{public_id}/public-page/:
+    get:
+      operationId: admin_companies_public_page_retrieve
       parameters:
       - in: path
         name: public_id
@@ -1209,6 +1214,73 @@ paths:
               schema:
                 $ref: '#/components/schemas/AdminCompanyDomainClaim'
           description: ''
+  /api/admin/company-reports/:
+    get:
+      operationId: admin_company_reports_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - admin
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAdminCompanyReportList'
+          description: ''
+  /api/admin/company-reports/{public_id}/resolve/:
+    post:
+      operationId: admin_company_reports_resolve_create
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - admin
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminCompanyReport'
+          description: ''
+  /api/admin/company-reports/{public_id}/reverse/:
+    post:
+      operationId: admin_company_reports_reverse_create
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - admin
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminCompanyReport'
+          description: ''
   /api/admin/company-update-requests/:
     get:
       operationId: admin_company_update_requests_list
@@ -1411,275 +1483,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AdminCompanyUpdateRequest'
-          description: ''
-  /api/admin/departments/:
-    get:
-      operationId: admin_departments_list
-      tags:
-      - admin
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/DepartmentRead'
-          description: ''
-    post:
-      operationId: admin_departments_create
-      tags:
-      - admin
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DepartmentCreateRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/DepartmentCreateRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/DepartmentCreateRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '201':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DepartmentCreate'
-          description: ''
-  /api/admin/departments/{public_id}/:
-    get:
-      operationId: admin_departments_retrieve
-      parameters:
-      - in: path
-        name: public_id
-        schema:
-          type: string
-        required: true
-      tags:
-      - admin
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DepartmentRead'
-          description: ''
-    put:
-      operationId: admin_departments_update
-      parameters:
-      - in: path
-        name: public_id
-        schema:
-          type: string
-        required: true
-      tags:
-      - admin
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DepartmentUpdateRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/DepartmentUpdateRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/DepartmentUpdateRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DepartmentUpdate'
-          description: ''
-    patch:
-      operationId: admin_departments_partial_update
-      parameters:
-      - in: path
-        name: public_id
-        schema:
-          type: string
-        required: true
-      tags:
-      - admin
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchedDepartmentUpdateRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PatchedDepartmentUpdateRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PatchedDepartmentUpdateRequest'
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DepartmentUpdate'
-          description: ''
-  /api/admin/departments/{public_id}/activate/:
-    post:
-      operationId: admin_departments_activate_create
-      parameters:
-      - in: path
-        name: public_id
-        schema:
-          type: string
-        required: true
-      tags:
-      - admin
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DepartmentReadRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/DepartmentReadRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/DepartmentReadRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DepartmentRead'
-          description: ''
-  /api/admin/departments/{public_id}/deactivate/:
-    post:
-      operationId: admin_departments_deactivate_create
-      parameters:
-      - in: path
-        name: public_id
-        schema:
-          type: string
-        required: true
-      tags:
-      - admin
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DepartmentReadRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/DepartmentReadRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/DepartmentReadRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DepartmentRead'
-          description: ''
-  /api/admin/departments/{public_id}/restore-system-default/:
-    get:
-      operationId: admin_departments_restore_system_default_retrieve
-      parameters:
-      - in: path
-        name: public_id
-        schema:
-          type: string
-        required: true
-      tags:
-      - admin
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DepartmentRead'
-          description: ''
-    post:
-      operationId: admin_departments_restore_system_default_create
-      parameters:
-      - in: path
-        name: public_id
-        schema:
-          type: string
-        required: true
-      tags:
-      - admin
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DepartmentReadRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/DepartmentReadRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/DepartmentReadRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DepartmentRead'
-          description: ''
-  /api/admin/departments/{public_id}/status-impact/:
-    post:
-      operationId: admin_departments_status_impact_create
-      parameters:
-      - in: path
-        name: public_id
-        schema:
-          type: string
-        required: true
-      tags:
-      - admin
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DepartmentReadRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/DepartmentReadRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/DepartmentReadRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DepartmentRead'
           description: ''
   /api/admin/employer-verifications/:
     get:
@@ -2420,726 +2223,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AdminVerificationCaseDetail'
-          description: ''
-  /api/admin/memberships/:
-    get:
-      operationId: admin_memberships_list
-      parameters:
-      - name: page
-        required: false
-        in: query
-        description: A page number within the paginated result set.
-        schema:
-          type: integer
-      - name: page_size
-        required: false
-        in: query
-        description: Number of results to return per page.
-        schema:
-          type: integer
-      tags:
-      - admin
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PaginatedAdminMembershipReadList'
-          description: ''
-    post:
-      operationId: admin_memberships_create
-      tags:
-      - admin
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AdminMembershipCreateRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/AdminMembershipCreateRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/AdminMembershipCreateRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '201':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AdminMembershipCreate'
-          description: ''
-  /api/admin/memberships/{public_id}/:
-    get:
-      operationId: admin_memberships_retrieve
-      parameters:
-      - in: path
-        name: public_id
-        schema:
-          type: string
-        required: true
-      tags:
-      - admin
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AdminMembershipRead'
-          description: ''
-  /api/admin/memberships/{public_id}/revoke/:
-    post:
-      operationId: admin_memberships_revoke_create
-      parameters:
-      - in: path
-        name: public_id
-        schema:
-          type: string
-        required: true
-      tags:
-      - admin
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AdminMembershipReadRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/AdminMembershipReadRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/AdminMembershipReadRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AdminMembershipRead'
-          description: ''
-  /api/admin/memberships/{public_id}/revoke-impact/:
-    get:
-      operationId: admin_memberships_revoke_impact_retrieve
-      parameters:
-      - in: path
-        name: public_id
-        schema:
-          type: string
-        required: true
-      tags:
-      - admin
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AdminMembershipRead'
-          description: ''
-  /api/admin/memberships/assignment-impact/:
-    post:
-      operationId: admin_memberships_assignment_impact_create
-      tags:
-      - admin
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AdminMembershipReadRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/AdminMembershipReadRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/AdminMembershipReadRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AdminMembershipRead'
-          description: ''
-  /api/admin/permissions/:
-    get:
-      operationId: admin_permissions_list
-      tags:
-      - admin
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/AdminPermission'
-          description: ''
-  /api/admin/permissions/{code}/:
-    get:
-      operationId: admin_permissions_retrieve
-      parameters:
-      - in: path
-        name: code
-        schema:
-          type: string
-        required: true
-      tags:
-      - admin
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AdminPermission'
-          description: ''
-  /api/admin/provisioning-scopes/:
-    get:
-      operationId: admin_provisioning_scopes_list
-      tags:
-      - admin
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/ProvisioningScope'
-          description: ''
-    post:
-      operationId: admin_provisioning_scopes_create
-      tags:
-      - admin
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ProvisioningScopeCreateRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/ProvisioningScopeCreateRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/ProvisioningScopeCreateRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '201':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProvisioningScopeCreate'
-          description: ''
-  /api/admin/provisioning-scopes/{public_id}/:
-    get:
-      operationId: admin_provisioning_scopes_retrieve
-      parameters:
-      - in: path
-        name: public_id
-        schema:
-          type: string
-        required: true
-      tags:
-      - admin
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProvisioningScope'
-          description: ''
-  /api/admin/provisioning-scopes/{public_id}/activate/:
-    post:
-      operationId: admin_provisioning_scopes_activate_create
-      parameters:
-      - in: path
-        name: public_id
-        schema:
-          type: string
-        required: true
-      tags:
-      - admin
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ProvisioningScopeRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/ProvisioningScopeRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/ProvisioningScopeRequest'
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProvisioningScope'
-          description: ''
-  /api/admin/provisioning-scopes/{public_id}/deactivate/:
-    post:
-      operationId: admin_provisioning_scopes_deactivate_create
-      parameters:
-      - in: path
-        name: public_id
-        schema:
-          type: string
-        required: true
-      tags:
-      - admin
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ProvisioningScopeRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/ProvisioningScopeRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/ProvisioningScopeRequest'
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProvisioningScope'
-          description: ''
-  /api/admin/provisioning-scopes/{public_id}/status-impact/:
-    post:
-      operationId: admin_provisioning_scopes_status_impact_create
-      parameters:
-      - in: path
-        name: public_id
-        schema:
-          type: string
-        required: true
-      tags:
-      - admin
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ProvisioningScopeRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/ProvisioningScopeRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/ProvisioningScopeRequest'
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProvisioningScope'
-          description: ''
-  /api/admin/roles/:
-    get:
-      operationId: admin_roles_list
-      tags:
-      - admin
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/AdminRoleRead'
-          description: ''
-    post:
-      operationId: admin_roles_create
-      tags:
-      - admin
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AdminRoleCreateRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/AdminRoleCreateRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/AdminRoleCreateRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '201':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AdminRoleCreate'
-          description: ''
-  /api/admin/roles/{public_id}/:
-    get:
-      operationId: admin_roles_retrieve
-      parameters:
-      - in: path
-        name: public_id
-        schema:
-          type: string
-        required: true
-      tags:
-      - admin
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AdminRoleRead'
-          description: ''
-    put:
-      operationId: admin_roles_update
-      parameters:
-      - in: path
-        name: public_id
-        schema:
-          type: string
-        required: true
-      tags:
-      - admin
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AdminRoleUpdateRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/AdminRoleUpdateRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/AdminRoleUpdateRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AdminRoleUpdate'
-          description: ''
-    patch:
-      operationId: admin_roles_partial_update
-      parameters:
-      - in: path
-        name: public_id
-        schema:
-          type: string
-        required: true
-      tags:
-      - admin
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchedAdminRoleUpdateRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PatchedAdminRoleUpdateRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PatchedAdminRoleUpdateRequest'
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AdminRoleUpdate'
-          description: ''
-  /api/admin/roles/{public_id}/activate/:
-    post:
-      operationId: admin_roles_activate_create
-      parameters:
-      - in: path
-        name: public_id
-        schema:
-          type: string
-        required: true
-      tags:
-      - admin
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AdminRoleReadRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/AdminRoleReadRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/AdminRoleReadRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AdminRoleRead'
-          description: ''
-  /api/admin/roles/{public_id}/deactivate/:
-    post:
-      operationId: admin_roles_deactivate_create
-      parameters:
-      - in: path
-        name: public_id
-        schema:
-          type: string
-        required: true
-      tags:
-      - admin
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AdminRoleReadRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/AdminRoleReadRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/AdminRoleReadRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AdminRoleRead'
-          description: ''
-  /api/admin/roles/{public_id}/permissions/:
-    put:
-      operationId: admin_roles_permissions_update
-      parameters:
-      - in: path
-        name: public_id
-        schema:
-          type: string
-        required: true
-      tags:
-      - admin
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AdminRoleReadRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/AdminRoleReadRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/AdminRoleReadRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AdminRoleRead'
-          description: ''
-  /api/admin/roles/{public_id}/permissions-impact/:
-    post:
-      operationId: admin_roles_permissions_impact_create
-      parameters:
-      - in: path
-        name: public_id
-        schema:
-          type: string
-        required: true
-      tags:
-      - admin
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AdminRoleReadRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/AdminRoleReadRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/AdminRoleReadRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AdminRoleRead'
-          description: ''
-  /api/admin/roles/{public_id}/restore-system-default/:
-    get:
-      operationId: admin_roles_restore_system_default_retrieve
-      parameters:
-      - in: path
-        name: public_id
-        schema:
-          type: string
-        required: true
-      tags:
-      - admin
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AdminRoleRead'
-          description: ''
-    post:
-      operationId: admin_roles_restore_system_default_create
-      parameters:
-      - in: path
-        name: public_id
-        schema:
-          type: string
-        required: true
-      tags:
-      - admin
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AdminRoleReadRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/AdminRoleReadRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/AdminRoleReadRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AdminRoleRead'
-          description: ''
-  /api/admin/roles/{public_id}/status-impact/:
-    post:
-      operationId: admin_roles_status_impact_create
-      parameters:
-      - in: path
-        name: public_id
-        schema:
-          type: string
-        required: true
-      tags:
-      - admin
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AdminRoleReadRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/AdminRoleReadRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/AdminRoleReadRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AdminRoleRead'
-          description: ''
-  /api/admin/staff/:
-    get:
-      operationId: admin_staff_list
-      parameters:
-      - name: page
-        required: false
-        in: query
-        description: A page number within the paginated result set.
-        schema:
-          type: integer
-      - name: page_size
-        required: false
-        in: query
-        description: Number of results to return per page.
-        schema:
-          type: integer
-      tags:
-      - admin
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PaginatedAdminStaffList'
-          description: ''
-  /api/admin/staff/{public_id}/:
-    get:
-      operationId: admin_staff_retrieve
-      parameters:
-      - in: path
-        name: public_id
-        schema:
-          type: string
-        required: true
-      tags:
-      - admin
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AdminStaff'
           description: ''
   /api/ai/admin/overview/:
     get:
@@ -4517,6 +3600,33 @@ paths:
               schema:
                 $ref: '#/components/schemas/CandidateEmailNotificationSettings'
           description: ''
+  /api/candidate/followed-companies/:
+    get:
+      operationId: candidate_followed_companies_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - candidate
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedFollowedCompanyList'
+          description: ''
   /api/candidate/job-preferences/:
     get:
       operationId: candidate_job_preferences_retrieve
@@ -4667,6 +3777,128 @@ paths:
               schema:
                 $ref: '#/components/schemas/PaginatedPublicCompanyListList'
           description: ''
+  /api/companies/{public_id}/follow/:
+    get:
+      operationId: companies_follow_retrieve
+      description: Read, set or drop the caller's follow; PUT and DELETE are idempotent.
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - companies
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    put:
+      operationId: companies_follow_update
+      description: Read, set or drop the caller's follow; PUT and DELETE are idempotent.
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - companies
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    delete:
+      operationId: companies_follow_destroy
+      description: Read, set or drop the caller's follow; PUT and DELETE are idempotent.
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - companies
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/companies/{public_id}/job-facets/:
+    get:
+      operationId: companies_job_facets_retrieve
+      description: 'Shares the directory throttle: one client budget for all company
+        reads.'
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - companies
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/companies/{public_id}/reports/:
+    post:
+      operationId: companies_reports_create
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - companies
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/companies/{public_id}/similar/:
+    get:
+      operationId: companies_similar_retrieve
+      description: 'Shares the directory throttle: one client budget for all company
+        reads.'
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - companies
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/companies/{slug}/:
+    get:
+      operationId: companies_retrieve
+      description: 'Shares the directory throttle: one client budget for all company
+        reads.'
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - companies
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
   /api/dashboard/employer/:
     get:
       operationId: dashboard_employer_retrieve
@@ -5377,6 +4609,89 @@ paths:
               schema:
                 $ref: '#/components/schemas/Company'
           description: ''
+  /api/employer/company/page/:
+    get:
+      operationId: employer_company_page_retrieve
+      description: Resolves the caller's company and page policy once per request.
+      tags:
+      - employer
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/employer/company/page/content/:
+    post:
+      operationId: employer_company_page_content_create
+      description: 'Page content goes through moderation: it merges into the caller''s
+        request.'
+      tags:
+      - employer
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/employer/company/page/editors/:
+    get:
+      operationId: employer_company_page_editors_retrieve
+      description: Resolves the caller's company and page policy once per request.
+      tags:
+      - employer
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    post:
+      operationId: employer_company_page_editors_create
+      description: Resolves the caller's company and page policy once per request.
+      tags:
+      - employer
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/employer/company/page/editors/{grant_public_id}/:
+    delete:
+      operationId: employer_company_page_editors_destroy
+      description: Resolves the caller's company and page policy once per request.
+      parameters:
+      - in: path
+        name: grant_public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - employer
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/employer/company/page/layout/:
+    patch:
+      operationId: employer_company_page_layout_partial_update
+      description: Resolves the caller's company and page policy once per request.
+      tags:
+      - employer
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/employer/company/page/pinnable-jobs/:
+    get:
+      operationId: employer_company_page_pinnable_jobs_retrieve
+      description: Resolves the caller's company and page policy once per request.
+      tags:
+      - employer
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
   /api/employer/company/search/:
     get:
       operationId: employer_company_search_list
@@ -9263,6 +8578,8 @@ paths:
   /api/v2/admin/cv-backgrounds/:
     get:
       operationId: v2_admin_cv_backgrounds_list
+      description: Không xóa mục thư viện đang được dùng (CVT-4); trả số nơi đang
+        dùng.
       tags:
       - v2
       security:
@@ -9278,6 +8595,8 @@ paths:
           description: ''
     post:
       operationId: v2_admin_cv_backgrounds_create
+      description: Không xóa mục thư viện đang được dùng (CVT-4); trả số nơi đang
+        dùng.
       tags:
       - v2
       requestBody:
@@ -9303,6 +8622,8 @@ paths:
   /api/v2/admin/cv-backgrounds/{public_id}/:
     get:
       operationId: v2_admin_cv_backgrounds_retrieve
+      description: Không xóa mục thư viện đang được dùng (CVT-4); trả số nơi đang
+        dùng.
       parameters:
       - in: path
         name: public_id
@@ -9322,6 +8643,8 @@ paths:
           description: ''
     put:
       operationId: v2_admin_cv_backgrounds_update
+      description: Không xóa mục thư viện đang được dùng (CVT-4); trả số nơi đang
+        dùng.
       parameters:
       - in: path
         name: public_id
@@ -9352,6 +8675,8 @@ paths:
           description: ''
     patch:
       operationId: v2_admin_cv_backgrounds_partial_update
+      description: Không xóa mục thư viện đang được dùng (CVT-4); trả số nơi đang
+        dùng.
       parameters:
       - in: path
         name: public_id
@@ -9382,6 +8707,8 @@ paths:
           description: ''
     delete:
       operationId: v2_admin_cv_backgrounds_destroy
+      description: Không xóa mục thư viện đang được dùng (CVT-4); trả số nơi đang
+        dùng.
       parameters:
       - in: path
         name: public_id
@@ -9398,6 +8725,8 @@ paths:
   /api/v2/admin/cv-categories/:
     get:
       operationId: v2_admin_cv_categories_list
+      description: Không xóa mục thư viện đang được dùng (CVT-4); trả số nơi đang
+        dùng.
       tags:
       - v2
       security:
@@ -9413,6 +8742,8 @@ paths:
           description: ''
     post:
       operationId: v2_admin_cv_categories_create
+      description: Không xóa mục thư viện đang được dùng (CVT-4); trả số nơi đang
+        dùng.
       tags:
       - v2
       requestBody:
@@ -9439,6 +8770,8 @@ paths:
   /api/v2/admin/cv-categories/{public_id}/:
     get:
       operationId: v2_admin_cv_categories_retrieve
+      description: Không xóa mục thư viện đang được dùng (CVT-4); trả số nơi đang
+        dùng.
       parameters:
       - in: path
         name: public_id
@@ -9458,6 +8791,8 @@ paths:
           description: ''
     put:
       operationId: v2_admin_cv_categories_update
+      description: Không xóa mục thư viện đang được dùng (CVT-4); trả số nơi đang
+        dùng.
       parameters:
       - in: path
         name: public_id
@@ -9489,6 +8824,8 @@ paths:
           description: ''
     patch:
       operationId: v2_admin_cv_categories_partial_update
+      description: Không xóa mục thư viện đang được dùng (CVT-4); trả số nơi đang
+        dùng.
       parameters:
       - in: path
         name: public_id
@@ -9519,6 +8856,8 @@ paths:
           description: ''
     delete:
       operationId: v2_admin_cv_categories_destroy
+      description: Không xóa mục thư viện đang được dùng (CVT-4); trả số nơi đang
+        dùng.
       parameters:
       - in: path
         name: public_id
@@ -9535,6 +8874,8 @@ paths:
   /api/v2/admin/cv-colors/:
     get:
       operationId: v2_admin_cv_colors_list
+      description: Không xóa mục thư viện đang được dùng (CVT-4); trả số nơi đang
+        dùng.
       tags:
       - v2
       security:
@@ -9550,6 +8891,8 @@ paths:
           description: ''
     post:
       operationId: v2_admin_cv_colors_create
+      description: Không xóa mục thư viện đang được dùng (CVT-4); trả số nơi đang
+        dùng.
       tags:
       - v2
       requestBody:
@@ -9576,6 +8919,8 @@ paths:
   /api/v2/admin/cv-colors/{public_id}/:
     get:
       operationId: v2_admin_cv_colors_retrieve
+      description: Không xóa mục thư viện đang được dùng (CVT-4); trả số nơi đang
+        dùng.
       parameters:
       - in: path
         name: public_id
@@ -9595,6 +8940,8 @@ paths:
           description: ''
     put:
       operationId: v2_admin_cv_colors_update
+      description: Không xóa mục thư viện đang được dùng (CVT-4); trả số nơi đang
+        dùng.
       parameters:
       - in: path
         name: public_id
@@ -9626,6 +8973,8 @@ paths:
           description: ''
     patch:
       operationId: v2_admin_cv_colors_partial_update
+      description: Không xóa mục thư viện đang được dùng (CVT-4); trả số nơi đang
+        dùng.
       parameters:
       - in: path
         name: public_id
@@ -9656,6 +9005,8 @@ paths:
           description: ''
     delete:
       operationId: v2_admin_cv_colors_destroy
+      description: Không xóa mục thư viện đang được dùng (CVT-4); trả số nơi đang
+        dùng.
       parameters:
       - in: path
         name: public_id
@@ -10140,38 +9491,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/CvSampleContentAdmin'
           description: ''
-  /api/v2/admin/cv-sample-contents/{public_id}/preview/:
-    post:
-      operationId: v2_admin_cv_sample_contents_preview_create
-      parameters:
-      - in: path
-        name: public_id
-        schema:
-          type: string
-        required: true
-      tags:
-      - v2
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CvSampleContentAdminRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/CvSampleContentAdminRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/CvSampleContentAdminRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CvSampleContentAdmin'
-          description: ''
   /api/v2/admin/cv-sample-contents/{public_id}/publish/:
     post:
       operationId: v2_admin_cv_sample_contents_publish_create
@@ -10270,6 +9589,33 @@ paths:
               schema:
                 $ref: '#/components/schemas/CvSampleGeneration'
           description: ''
+  /api/v2/admin/cv-sample-generations/estimate/:
+    get:
+      operationId: v2_admin_cv_sample_generations_estimate_retrieve
+      description: Chi phí ước tính cho `count` lượt, theo trung bình các lượt thành
+        công gần đây.
+      tags:
+      - v2
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CvSampleGeneration'
+          description: ''
+  /api/v2/admin/cv-stats/overview/:
+    get:
+      operationId: v2_admin_cv_stats_overview_retrieve
+      description: Số liệu và việc cần làm của trang Tổng quan Mẫu CV.
+      tags:
+      - v2
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
   /api/v2/admin/cv-templates/:
     get:
       operationId: v2_admin_cv_templates_list
@@ -10288,6 +9634,8 @@ paths:
           description: ''
     post:
       operationId: v2_admin_cv_templates_create
+      description: Tạo mẫu; gửi kèm `renderer_key` thì mẫu có ngay bản nháp đủ section
+        và màu.
       tags:
       - v2
       requestBody:
@@ -10407,6 +9755,136 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/v2/admin/cv-templates/{public_id}/colors/:
+    put:
+      operationId: v2_admin_cv_templates_colors_update
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - v2
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CvTemplateAdminRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CvTemplateAdminRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CvTemplateAdminRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CvTemplateAdmin'
+          description: ''
+  /api/v2/admin/cv-templates/{public_id}/duplicate/:
+    post:
+      operationId: v2_admin_cv_templates_duplicate_create
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - v2
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CvTemplateAdminRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CvTemplateAdminRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CvTemplateAdminRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CvTemplateAdmin'
+          description: ''
+  /api/v2/admin/cv-templates/{public_id}/lifecycle/:
+    post:
+      operationId: v2_admin_cv_templates_lifecycle_create
+      description: Ẩn (lưu trữ) hoặc hiện lại template đã có phiên bản xuất bản.
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - v2
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CvTemplateAdminRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CvTemplateAdminRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CvTemplateAdminRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CvTemplateAdmin'
+          description: ''
+  /api/v2/admin/cv-templates/{public_id}/preview/:
+    post:
+      operationId: v2_admin_cv_templates_preview_create
+      description: Document xem trước của một phiên bản (mặc định bản đang xuất bản).
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - v2
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CvTemplateAdminRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CvTemplateAdminRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CvTemplateAdminRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CvTemplateAdmin'
+          description: ''
   /api/v2/admin/cv-templates/{public_id}/snapshots/regenerate/:
     post:
       operationId: v2_admin_cv_templates_snapshots_regenerate_create
@@ -10462,6 +9940,70 @@ paths:
             schema:
               $ref: '#/components/schemas/CvTemplateAdminRequest'
         required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CvTemplateAdmin'
+          description: ''
+  /api/v2/admin/cv-templates/{public_id}/versions/{version_pk}/checklist/:
+    get:
+      operationId: v2_admin_cv_templates_versions_checklist_retrieve
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: version_pk
+        schema:
+          type: string
+          pattern: ^\d+$
+        required: true
+      tags:
+      - v2
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CvTemplateAdmin'
+          description: ''
+  /api/v2/admin/cv-templates/{public_id}/versions/{version_pk}/config/:
+    patch:
+      operationId: v2_admin_cv_templates_versions_config_partial_update
+      description: Lưu một bước của wizard vào phiên bản nháp.
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: version_pk
+        schema:
+          type: string
+          pattern: ^\d+$
+        required: true
+      tags:
+      - v2
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedCvTemplateAdminRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedCvTemplateAdminRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedCvTemplateAdminRequest'
       security:
       - jwtAuth: []
       responses:
@@ -10547,6 +10089,91 @@ paths:
               schema:
                 $ref: '#/components/schemas/CvTemplateAdmin'
           description: ''
+  /api/v2/admin/cv-templates/{public_id}/versions/{version_pk}/test-pdf/:
+    post:
+      operationId: v2_admin_cv_templates_versions_test_pdf_create
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: version_pk
+        schema:
+          type: string
+          pattern: ^\d+$
+        required: true
+      tags:
+      - v2
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CvTemplateAdminRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CvTemplateAdminRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CvTemplateAdminRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CvTemplateAdmin'
+          description: ''
+  /api/v2/admin/cv-templates/reorder/:
+    post:
+      operationId: v2_admin_cv_templates_reorder_create
+      tags:
+      - v2
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CvTemplateAdminRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CvTemplateAdminRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CvTemplateAdminRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CvTemplateAdmin'
+          description: ''
+  /api/v2/admin/cv-templates/test-pdf/{token}/:
+    get:
+      operationId: v2_admin_cv_templates_test_pdf_retrieve
+      parameters:
+      - in: path
+        name: token
+        schema:
+          type: string
+          pattern: ^[0-9a-f]{32}$
+        required: true
+      tags:
+      - v2
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CvTemplateAdmin'
+          description: ''
   /api/v2/admin/jobs/{job_public_id}/applications/:
     get:
       operationId: v2_admin_jobs_applications_list
@@ -10608,6 +10235,114 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PaginatedAdminJobApplicationList'
+          description: ''
+  /api/v2/admin/user-cvs/:
+    get:
+      operationId: v2_admin_user_cvs_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - v2
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAdminUserCvList'
+          description: ''
+  /api/v2/admin/user-cvs/{public_id}/:
+    get:
+      operationId: v2_admin_user_cvs_retrieve
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - v2
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminUserCv'
+          description: ''
+  /api/v2/admin/user-cvs/{public_id}/content/:
+    post:
+      operationId: v2_admin_user_cvs_content_create
+      description: Nội dung phiên bản mới nhất; mỗi lần xem ghi nhật ký kèm lý do.
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - v2
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminUserCv'
+          description: ''
+  /api/v2/admin/user-cvs/{public_id}/lock/:
+    post:
+      operationId: v2_admin_user_cvs_lock_create
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - v2
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminUserCv'
+          description: ''
+  /api/v2/admin/user-cvs/{public_id}/unlock/:
+    post:
+      operationId: v2_admin_user_cvs_unlock_create
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - v2
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminUserCv'
           description: ''
   /api/v2/applications/:
     get:
@@ -10809,12 +10544,6 @@ paths:
         required: false
         in: query
         description: A page number within the paginated result set.
-        schema:
-          type: integer
-      - name: page_size
-        required: false
-        in: query
-        description: Number of results to return per page.
         schema:
           type: integer
       tags:
@@ -12785,6 +12514,43 @@ components:
       - recruiter_verification_summary
       - tax_code
       - updated_at
+    AdminCompanyDetailRequest:
+      type: object
+      properties:
+        company_name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        trade_name:
+          type: string
+          maxLength: 255
+        business_type:
+          $ref: '#/components/schemas/BusinessTypeEnum'
+        website_url:
+          type: string
+        address:
+          type: string
+        company_size:
+          oneOf:
+          - $ref: '#/components/schemas/CompanySizeEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        description:
+          type: string
+        employee_benefits:
+          type: string
+        markets: {}
+        target_customers: {}
+        founded_year:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          nullable: true
+        has_brand_page:
+          type: boolean
+          description: Bật trang thương hiệu — tin tuyển dụng hiển thị dưới URL /brand/...
+            với header công ty
+      required:
+      - company_name
     AdminCompanyDomainClaim:
       type: object
       properties:
@@ -13232,6 +12998,92 @@ components:
       - recruiter_verification_summary
       - tax_code
       - updated_at
+    AdminCompanyReport:
+      type: object
+      description: The admin job-report row with the job keys replaced by ``company``.
+      properties:
+        public_id:
+          type: string
+          readOnly: true
+        company:
+          type: string
+          readOnly: true
+        reporter_email:
+          type: string
+          format: email
+          readOnly: true
+          default: ''
+        reason:
+          allOf:
+          - $ref: '#/components/schemas/AdminCompanyReportReasonEnum'
+          readOnly: true
+        reason_label:
+          type: string
+          readOnly: true
+        section_key:
+          type: string
+          readOnly: true
+        section_title:
+          type: string
+          readOnly: true
+        detail:
+          type: string
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/ToStatusEnum'
+          readOnly: true
+        resolution_note:
+          type: string
+          readOnly: true
+        resolved_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        resolved_by_email:
+          type: string
+          format: email
+          readOnly: true
+          default: ''
+        resolution_history:
+          type: array
+          items:
+            $ref: '#/components/schemas/CompanyReportResolutionEvent'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - company
+      - created_at
+      - detail
+      - public_id
+      - reason
+      - reason_label
+      - reporter_email
+      - resolution_history
+      - resolution_note
+      - resolved_at
+      - resolved_by_email
+      - section_key
+      - section_title
+      - status
+    AdminCompanyReportReasonEnum:
+      enum:
+      - wrong_info
+      - impersonation
+      - inappropriate_content
+      - scam
+      - other
+      type: string
+      description: |-
+        * `wrong_info` - Thông tin công ty sai sự thật
+        * `impersonation` - Mạo danh doanh nghiệp khác
+        * `inappropriate_content` - Nội dung hoặc hình ảnh không phù hợp
+        * `scam` - Dấu hiệu lừa đảo
+        * `other` - Lý do khác
     AdminCompanyUpdateEvent:
       type: object
       properties:
@@ -13316,6 +13168,9 @@ components:
           type: string
           readOnly: true
         media_previews:
+          type: string
+          readOnly: true
+        previews:
           type: string
           readOnly: true
         is_sensitive:
@@ -13403,6 +13258,7 @@ components:
       - is_sensitive
       - lock_version
       - media_previews
+      - previews
       - proof_type
       - proof_type_label
       - public_id
@@ -13453,10 +13309,6 @@ components:
         user:
           type: string
           readOnly: true
-        target_role:
-          allOf:
-          - $ref: '#/components/schemas/InvitationRole'
-          readOnly: true
         invited_by:
           type: string
           readOnly: true
@@ -13492,7 +13344,6 @@ components:
       - public_id
       - reason
       - status
-      - target_role
       - updated_at
       - user
     AdminInvitationCreate:
@@ -13504,8 +13355,6 @@ components:
         full_name:
           type: string
           maxLength: 255
-        target_role_public_id:
-          type: string
         reason:
           type: string
           maxLength: 500
@@ -13513,7 +13362,6 @@ components:
       - email
       - full_name
       - reason
-      - target_role_public_id
     AdminInvitationCreateRequest:
       type: object
       properties:
@@ -13525,9 +13373,6 @@ components:
           type: string
           minLength: 1
           maxLength: 255
-        target_role_public_id:
-          type: string
-          minLength: 1
         reason:
           type: string
           minLength: 1
@@ -13536,7 +13381,6 @@ components:
       - email
       - full_name
       - reason
-      - target_role_public_id
     AdminInvitationRequest:
       type: object
       properties:
@@ -13558,17 +13402,6 @@ components:
       required:
       - expires_at
       - reason
-    AdminInvitationUpdate:
-      type: object
-      properties:
-        target_role_public_id:
-          type: string
-        reason:
-          type: string
-          maxLength: 500
-      required:
-      - reason
-      - target_role_public_id
     AdminJobApplication:
       type: object
       properties:
@@ -14359,113 +14192,6 @@ components:
           maxLength: 1000
       required:
       - note
-    AdminMembershipCreate:
-      type: object
-      properties:
-        user_public_id:
-          type: string
-        role_public_id:
-          type: string
-      required:
-      - role_public_id
-      - user_public_id
-    AdminMembershipCreateRequest:
-      type: object
-      properties:
-        user_public_id:
-          type: string
-          minLength: 1
-        role_public_id:
-          type: string
-          minLength: 1
-        impact_token:
-          type: string
-          writeOnly: true
-          minLength: 1
-      required:
-      - impact_token
-      - role_public_id
-      - user_public_id
-    AdminMembershipRead:
-      type: object
-      properties:
-        public_id:
-          type: string
-          readOnly: true
-        user:
-          type: string
-          readOnly: true
-        department:
-          type: string
-          readOnly: true
-        role:
-          type: string
-          readOnly: true
-        is_active:
-          type: boolean
-        assigned_at:
-          type: string
-          format: date-time
-          readOnly: true
-        revoked_at:
-          type: string
-          format: date-time
-          nullable: true
-        assigned_by_email:
-          type: string
-          format: email
-          nullable: true
-      required:
-      - assigned_at
-      - assigned_by_email
-      - department
-      - public_id
-      - role
-      - user
-    AdminMembershipReadRequest:
-      type: object
-      properties:
-        is_active:
-          type: boolean
-        revoked_at:
-          type: string
-          format: date-time
-          nullable: true
-        assigned_by_email:
-          type: string
-          format: email
-          nullable: true
-          minLength: 1
-      required:
-      - assigned_by_email
-    AdminPermission:
-      type: object
-      properties:
-        code:
-          type: string
-          maxLength: 64
-        module:
-          type: string
-          maxLength: 32
-        label:
-          type: string
-          maxLength: 120
-        description:
-          type: string
-        requires:
-          type: string
-          readOnly: true
-        is_active:
-          type: boolean
-        is_granted_to_role:
-          type: string
-          readOnly: true
-      required:
-      - code
-      - is_granted_to_role
-      - label
-      - module
-      - requires
     AdminPinnedPost:
       type: object
       properties:
@@ -14722,172 +14448,6 @@ components:
         base_revision:
           type: integer
           minimum: 1
-    AdminRoleCreate:
-      type: object
-      properties:
-        department:
-          type: string
-        code:
-          type: string
-          maxLength: 64
-          pattern: ^[-a-zA-Z0-9_]+$
-        name:
-          type: string
-          maxLength: 120
-        description:
-          type: string
-        rank:
-          type: integer
-          maximum: 32767
-          minimum: 0
-      required:
-      - code
-      - department
-      - name
-    AdminRoleCreateRequest:
-      type: object
-      properties:
-        department:
-          type: string
-          minLength: 1
-        code:
-          type: string
-          minLength: 1
-          maxLength: 64
-          pattern: ^[-a-zA-Z0-9_]+$
-        name:
-          type: string
-          minLength: 1
-          maxLength: 120
-        description:
-          type: string
-        rank:
-          type: integer
-          maximum: 32767
-          minimum: 0
-      required:
-      - code
-      - department
-      - name
-    AdminRoleRead:
-      type: object
-      properties:
-        public_id:
-          type: string
-          readOnly: true
-        department:
-          type: string
-          readOnly: true
-        code:
-          type: string
-          maxLength: 64
-          pattern: ^[-a-zA-Z0-9_]+$
-        name:
-          type: string
-          maxLength: 120
-        description:
-          type: string
-        rank:
-          type: integer
-          maximum: 32767
-          minimum: 0
-        is_active:
-          type: boolean
-        is_system_managed:
-          type: boolean
-        is_restorable:
-          type: string
-          readOnly: true
-        permission_codes:
-          type: array
-          items:
-            type: string
-          readOnly: true
-        active_member_count:
-          type: integer
-          readOnly: true
-      required:
-      - active_member_count
-      - code
-      - department
-      - is_restorable
-      - name
-      - permission_codes
-      - public_id
-    AdminRoleReadRequest:
-      type: object
-      properties:
-        code:
-          type: string
-          minLength: 1
-          maxLength: 64
-          pattern: ^[-a-zA-Z0-9_]+$
-        name:
-          type: string
-          minLength: 1
-          maxLength: 120
-        description:
-          type: string
-        rank:
-          type: integer
-          maximum: 32767
-          minimum: 0
-        is_active:
-          type: boolean
-        is_system_managed:
-          type: boolean
-      required:
-      - code
-      - name
-    AdminRoleUpdate:
-      type: object
-      properties:
-        name:
-          type: string
-          maxLength: 120
-        description:
-          type: string
-        rank:
-          type: integer
-          maximum: 32767
-          minimum: 0
-      required:
-      - name
-    AdminRoleUpdateRequest:
-      type: object
-      properties:
-        name:
-          type: string
-          minLength: 1
-          maxLength: 120
-        description:
-          type: string
-        rank:
-          type: integer
-          maximum: 32767
-          minimum: 0
-      required:
-      - name
-    AdminStaff:
-      type: object
-      properties:
-        public_id:
-          type: string
-          readOnly: true
-        email:
-          type: string
-          format: email
-          maxLength: 254
-        full_name:
-          type: string
-          maxLength: 255
-        active_membership_count:
-          type: integer
-          readOnly: true
-      required:
-      - active_membership_count
-      - email
-      - public_id
     AdminTag:
       type: object
       properties:
@@ -14937,6 +14497,84 @@ components:
           description: Ẩn thẻ khỏi phía ứng viên và form chọn thẻ
       required:
       - name
+    AdminUserCv:
+      type: object
+      properties:
+        public_id:
+          type: string
+          readOnly: true
+        candidate_public_id:
+          type: string
+          readOnly: true
+        template_name:
+          type: string
+          readOnly: true
+          default: ''
+        language:
+          allOf:
+          - $ref: '#/components/schemas/LanguageEnum'
+          readOnly: true
+        cv_type:
+          allOf:
+          - $ref: '#/components/schemas/CvTypeEnum'
+          readOnly: true
+        source:
+          allOf:
+          - $ref: '#/components/schemas/Source39cEnum'
+          readOnly: true
+        lifecycle_status:
+          allOf:
+          - $ref: '#/components/schemas/LifecycleStatusEnum'
+          readOnly: true
+        processing_status:
+          allOf:
+          - $ref: '#/components/schemas/ProcessingStatusEnum'
+          readOnly: true
+        import_status:
+          type: string
+          readOnly: true
+        import_failure_code:
+          type: string
+          readOnly: true
+        application_count:
+          type: integer
+          readOnly: true
+        is_locked:
+          type: string
+          readOnly: true
+        moderation_lock_reason:
+          type: string
+          readOnly: true
+        moderation_locked_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - application_count
+      - candidate_public_id
+      - created_at
+      - cv_type
+      - import_failure_code
+      - import_status
+      - is_locked
+      - language
+      - lifecycle_status
+      - moderation_lock_reason
+      - moderation_locked_at
+      - processing_status
+      - public_id
+      - source
+      - template_name
+      - updated_at
     AdminVerificationCaseDetail:
       type: object
       properties:
@@ -17360,6 +16998,8 @@ components:
           type: boolean
         suitable_job_recommendations:
           type: boolean
+        followed_company_jobs:
+          type: boolean
         top_candidate_alerts:
           type: boolean
         employer_invitations:
@@ -18052,6 +17692,39 @@ components:
         * `pending` - pending
         * `unavailable` - unavailable
         * `stale_input` - stale_input
+    CompanyReportResolutionEvent:
+      type: object
+      properties:
+        public_id:
+          type: string
+          readOnly: true
+        from_status:
+          allOf:
+          - $ref: '#/components/schemas/ToStatusEnum'
+          readOnly: true
+        to_status:
+          allOf:
+          - $ref: '#/components/schemas/ToStatusEnum'
+          readOnly: true
+        note:
+          type: string
+          readOnly: true
+        actor_email:
+          type: string
+          format: email
+          readOnly: true
+          default: ''
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - actor_email
+      - created_at
+      - from_status
+      - note
+      - public_id
+      - to_status
     CompanyRequest:
       type: object
       description: |-
@@ -18451,7 +18124,6 @@ components:
           maxLength: 50
     CvBackgroundAdmin:
       type: object
-      description: Protect public lifecycle transitions independently from edit access.
       properties:
         public_id:
           type: string
@@ -18495,7 +18167,6 @@ components:
       - width
     CvBackgroundAdminRequest:
       type: object
-      description: Protect public lifecycle transitions independently from edit access.
       properties:
         title:
           type: string
@@ -18534,11 +18205,14 @@ components:
       - slug
     CvCategoryAdmin:
       type: object
-      description: Protect public lifecycle transitions independently from edit access.
       properties:
         id:
           type: integer
           readOnly: true
+        template_count:
+          type: integer
+          readOnly: true
+          default: 0
         public_id:
           type: string
           readOnly: true
@@ -18574,10 +18248,10 @@ components:
       - name
       - public_id
       - slug
+      - template_count
       - updated_at
     CvCategoryAdminRequest:
       type: object
-      description: Protect public lifecycle transitions independently from edit access.
       properties:
         category_type:
           $ref: '#/components/schemas/CategoryTypeA75Enum'
@@ -18604,11 +18278,14 @@ components:
       - slug
     CvColorAdmin:
       type: object
-      description: Protect public lifecycle transitions independently from edit access.
       properties:
         id:
           type: integer
           readOnly: true
+        template_count:
+          type: integer
+          readOnly: true
+          default: 0
         public_id:
           type: string
           readOnly: true
@@ -18644,10 +18321,10 @@ components:
       - name
       - public_id
       - slug
+      - template_count
       - updated_at
     CvColorAdminRequest:
       type: object
-      description: Protect public lifecycle transitions independently from edit access.
       properties:
         name:
           type: string
@@ -18956,6 +18633,10 @@ components:
         position_name:
           type: string
           readOnly: true
+        industry_name:
+          type: string
+          readOnly: true
+          default: ''
         section_preset: {}
         keywords: {}
         is_active:
@@ -18979,6 +18660,7 @@ components:
       required:
       - created_at
       - field_count
+      - industry_name
       - position_name
       - position_public_id
       - public_id
@@ -19001,7 +18683,6 @@ components:
       - position_public_id
     CvSampleContentAdmin:
       type: object
-      description: Protect public lifecycle transitions independently from edit access.
       properties:
         public_id:
           type: string
@@ -19065,7 +18746,6 @@ components:
       - updated_at
     CvSampleContentAdminRequest:
       type: object
-      description: Protect public lifecycle transitions independently from edit access.
       properties:
         position_public_id:
           type: string
@@ -19254,7 +18934,6 @@ components:
       - token
     CvTemplateAdmin:
       type: object
-      description: Protect public lifecycle transitions independently from edit access.
       properties:
         public_id:
           type: string
@@ -19292,6 +18971,9 @@ components:
           type: integer
           maximum: 2147483647
           minimum: -2147483648
+        usage_count:
+          type: integer
+          readOnly: true
         lifecycle_status:
           allOf:
           - $ref: '#/components/schemas/LifecycleStatusEnum'
@@ -19299,20 +18981,32 @@ components:
         current_published_version_id:
           type: integer
           readOnly: true
+        category_public_ids:
+          type: array
+          items:
+            type: string
+        colors:
+          type: string
+          readOnly: true
+        thumbnail_url:
+          type: string
+          readOnly: true
         versions:
           type: array
           items:
             $ref: '#/components/schemas/CvTemplateVersionAdmin'
           readOnly: true
       required:
+      - colors
       - current_published_version_id
       - lifecycle_status
       - name
       - public_id
+      - thumbnail_url
+      - usage_count
       - versions
     CvTemplateAdminRequest:
       type: object
-      description: Protect public lifecycle transitions independently from edit access.
       properties:
         name:
           type: string
@@ -19348,6 +19042,11 @@ components:
           type: integer
           maximum: 2147483647
           minimum: -2147483648
+        category_public_ids:
+          type: array
+          items:
+            type: string
+            minLength: 1
       required:
       - name
     CvTemplateCard:
@@ -19484,6 +19183,12 @@ components:
         id:
           type: integer
           readOnly: true
+        sections:
+          type: string
+          readOnly: true
+        published_by_name:
+          type: string
+          readOnly: true
         version_number:
           type: integer
           readOnly: true
@@ -19525,8 +19230,10 @@ components:
       - created_at
       - id
       - published_at
+      - published_by_name
       - renderer_key
       - retired_at
+      - sections
       - version_number
       - version_status
     CvTemplateVersionAdminRequest:
@@ -19590,7 +19297,7 @@ components:
           readOnly: true
         source:
           allOf:
-          - $ref: '#/components/schemas/CvV2SourceEnum'
+          - $ref: '#/components/schemas/Source39cEnum'
           readOnly: true
         file_name:
           type: string
@@ -19816,16 +19523,6 @@ components:
           type: string
           minLength: 1
           pattern: ^#[0-9A-Fa-f]{6}$
-    CvV2SourceEnum:
-      enum:
-      - builder
-      - uploaded
-      - imported
-      type: string
-      description: |-
-        * `builder` - Builder
-        * `uploaded` - Uploaded
-        * `imported` - Imported
     CvVersion:
       type: object
       properties:
@@ -19936,119 +19633,6 @@ components:
         * `explicit_admin` - Quyết định quản trị tường minh
         * `legacy_auto` - Tự duyệt lịch sử
         * `legacy_unknown` - Không xác định nguồn lịch sử
-    DepartmentCreate:
-      type: object
-      properties:
-        code:
-          type: string
-          maxLength: 64
-          pattern: ^[-a-zA-Z0-9_]+$
-        name:
-          type: string
-          maxLength: 120
-        description:
-          type: string
-      required:
-      - code
-      - name
-    DepartmentCreateRequest:
-      type: object
-      properties:
-        code:
-          type: string
-          minLength: 1
-          maxLength: 64
-          pattern: ^[-a-zA-Z0-9_]+$
-        name:
-          type: string
-          minLength: 1
-          maxLength: 120
-        description:
-          type: string
-      required:
-      - code
-      - name
-    DepartmentRead:
-      type: object
-      properties:
-        public_id:
-          type: string
-          readOnly: true
-        code:
-          type: string
-          maxLength: 64
-          pattern: ^[-a-zA-Z0-9_]+$
-        name:
-          type: string
-          maxLength: 120
-        description:
-          type: string
-        is_active:
-          type: boolean
-        is_system_managed:
-          type: boolean
-        is_restorable:
-          type: string
-          readOnly: true
-        role_count:
-          type: integer
-          readOnly: true
-        active_member_count:
-          type: integer
-          readOnly: true
-        revoked_member_count:
-          type: integer
-          readOnly: true
-      required:
-      - active_member_count
-      - code
-      - is_restorable
-      - name
-      - public_id
-      - revoked_member_count
-      - role_count
-    DepartmentReadRequest:
-      type: object
-      properties:
-        code:
-          type: string
-          minLength: 1
-          maxLength: 64
-          pattern: ^[-a-zA-Z0-9_]+$
-        name:
-          type: string
-          minLength: 1
-          maxLength: 120
-        description:
-          type: string
-        is_active:
-          type: boolean
-        is_system_managed:
-          type: boolean
-      required:
-      - code
-      - name
-    DepartmentUpdate:
-      type: object
-      properties:
-        name:
-          type: string
-          maxLength: 120
-        description:
-          type: string
-      required:
-      - name
-    DepartmentUpdateRequest:
-      type: object
-      properties:
-        name:
-          type: string
-          minLength: 1
-          maxLength: 120
-        description:
-          type: string
-      required:
-      - name
     DocTypeEnum:
       enum:
       - business_registration
@@ -20155,7 +19739,7 @@ components:
           type: string
           readOnly: true
         event_type:
-          $ref: '#/components/schemas/EventTypeC1eEnum'
+          $ref: '#/components/schemas/EventTypeCa5Enum'
         summary:
           type: string
           maxLength: 240
@@ -20379,9 +19963,32 @@ components:
       - document_sha256
       - document_url
       - policy_version
+    EmployerJobApplicationSummary:
+      type: object
+      properties:
+        total:
+          type: integer
+        unviewed:
+          type: integer
+        unanswered:
+          type: integer
+        by_status:
+          type: object
+          additionalProperties:
+            type: integer
+      required:
+      - by_status
+      - total
+      - unanswered
+      - unviewed
     EmployerJobDetail:
       type: object
-      description: Employer form read DTO, including private application recipients.
+      description: |-
+        Employer form read DTO, including private application recipients.
+
+        Also carries the aggregates of the job workspace header: the engagement
+        funnel and the applications per recruiter status. Neither identifies a
+        candidate, so they stay readable while candidate-data access is blocked.
       properties:
         public_id:
           type: string
@@ -20395,6 +20002,10 @@ components:
           maxLength: 255
         company_name:
           type: string
+          readOnly: true
+        company_slug:
+          type: string
+          nullable: true
           readOnly: true
         company_logo_url:
           type: string
@@ -20653,8 +20264,16 @@ components:
           format: date-time
           readOnly: true
           nullable: true
+        impression_count:
+          type: integer
+          readOnly: true
+        application_summary:
+          allOf:
+          - $ref: '#/components/schemas/EmployerJobApplicationSummary'
+          readOnly: true
       required:
       - application_count
+      - application_summary
       - approved_at
       - brand_slug
       - campaign_name
@@ -20662,11 +20281,13 @@ components:
       - company_cover_url
       - company_logo_url
       - company_name
+      - company_slug
       - company_verified
       - created_at
       - description
       - first_approved_at
       - has_flash_badge
+      - impression_count
       - is_expired
       - is_hot
       - is_salary_visible
@@ -20704,6 +20325,10 @@ components:
           maxLength: 255
         company_name:
           type: string
+          readOnly: true
+        company_slug:
+          type: string
+          nullable: true
           readOnly: true
         company_logo_url:
           type: string
@@ -20971,6 +20596,7 @@ components:
       - company_cover_url
       - company_logo_url
       - company_name
+      - company_slug
       - company_verified
       - created_at
       - first_approved_at
@@ -21267,6 +20893,10 @@ components:
           type: integer
           readOnly: true
           default: 0
+        unviewed_application_count:
+          type: integer
+          readOnly: true
+          default: 0
         candidate_previews:
           type: string
           readOnly: true
@@ -21318,6 +20948,7 @@ components:
       - status
       - submitted_at
       - title
+      - unviewed_application_count
       - updated_at
       - view_count
       - visibility_ends_at
@@ -21437,7 +21068,7 @@ components:
           type: string
           readOnly: true
         event_type:
-          $ref: '#/components/schemas/EventTypeC1eEnum'
+          $ref: '#/components/schemas/EventTypeCa5Enum'
         title:
           type: string
           maxLength: 180
@@ -21649,7 +21280,7 @@ components:
         * `internship` - Internship
         * `freelance` - Freelance
         * `other` - Khác
-    EventTypeC1eEnum:
+    EventTypeCa5Enum:
       enum:
       - verification_approved
       - verification_changes_requested
@@ -21659,6 +21290,8 @@ components:
       - document_changes_requested
       - document_rejected
       - company_link_removed
+      - company_page_editor_granted
+      - company_page_editor_revoked
       type: string
       description: |-
         * `verification_approved` - Hồ sơ xác thực đã được duyệt
@@ -21669,6 +21302,8 @@ components:
         * `document_changes_requested` - Giấy tờ xác thực cần bổ sung
         * `document_rejected` - Giấy tờ xác thực bị từ chối
         * `company_link_removed` - Liên kết công ty đã được gỡ
+        * `company_page_editor_granted` - Bạn được cấp quyền biên tập trang công ty
+        * `company_page_editor_revoked` - Quyền biên tập trang công ty đã bị thu hồi
     ExperienceBandEnum:
       enum:
       - entry
@@ -21874,6 +21509,72 @@ components:
         * `cover` - Phủ toàn dải
         * `repeat-x` - Lặp ngang
         * `contain` - Vừa khung
+    FollowedCompany:
+      type: object
+      description: Directory card of a followed company plus the candidate's own follow.
+      properties:
+        public_id:
+          type: string
+          readOnly: true
+        slug:
+          type: string
+          readOnly: true
+          pattern: ^[-a-zA-Z0-9_]+$
+        company_name:
+          type: string
+          readOnly: true
+        trade_name:
+          type: string
+          readOnly: true
+        logo_url:
+          type: string
+          readOnly: true
+        cover_image_url:
+          type: string
+          readOnly: true
+        description_excerpt:
+          type: string
+          readOnly: true
+        headquarters:
+          type: string
+          readOnly: true
+        active_public_job_count:
+          type: integer
+          readOnly: true
+        company_size:
+          allOf:
+          - $ref: '#/components/schemas/CompanySizeEnum'
+          readOnly: true
+        company_size_display:
+          type: string
+          readOnly: true
+        industries_detail:
+          type: array
+          items:
+            $ref: '#/components/schemas/Industry'
+          readOnly: true
+        followed_at:
+          type: string
+          format: date-time
+          readOnly: true
+        notify_new_jobs:
+          type: boolean
+          readOnly: true
+      required:
+      - active_public_job_count
+      - company_name
+      - company_size
+      - company_size_display
+      - cover_image_url
+      - description_excerpt
+      - followed_at
+      - headquarters
+      - industries_detail
+      - logo_url
+      - notify_new_jobs
+      - public_id
+      - slug
+      - trade_name
     FrequencyEnum:
       enum:
       - daily
@@ -22015,56 +21716,6 @@ components:
         * `not_shown` - not_shown
         * `preferences_required` - preferences_required
         * `consent_required` - consent_required
-    InvitationRole:
-      type: object
-      properties:
-        public_id:
-          type: string
-          readOnly: true
-        code:
-          type: string
-          maxLength: 64
-          pattern: ^[-a-zA-Z0-9_]+$
-        name:
-          type: string
-          maxLength: 120
-        rank:
-          type: integer
-          maximum: 32767
-          minimum: 0
-        department:
-          type: string
-          readOnly: true
-        permission_codes:
-          type: array
-          items:
-            type: string
-          readOnly: true
-      required:
-      - code
-      - department
-      - name
-      - permission_codes
-      - public_id
-    InvitationRoleRequest:
-      type: object
-      properties:
-        code:
-          type: string
-          minLength: 1
-          maxLength: 64
-          pattern: ^[-a-zA-Z0-9_]+$
-        name:
-          type: string
-          minLength: 1
-          maxLength: 120
-        rank:
-          type: integer
-          maximum: 32767
-          minimum: 0
-      required:
-      - code
-      - name
     JobAiBriefRequest:
       type: object
       properties:
@@ -22664,6 +22315,10 @@ components:
         company_name:
           type: string
           readOnly: true
+        company_slug:
+          type: string
+          nullable: true
+          readOnly: true
         company_logo_url:
           type: string
           readOnly: true
@@ -22910,6 +22565,7 @@ components:
       - company_logo_url
       - company_name
       - company_size
+      - company_slug
       - company_verification
       - company_verified
       - company_website_url
@@ -24311,6 +23967,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/AdminCompanyList'
+    PaginatedAdminCompanyReportList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminCompanyReport'
     PaginatedAdminCompanyUpdateRequestList:
       type: object
       required:
@@ -24426,29 +24105,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/AdminJobReport'
-    PaginatedAdminMembershipReadList:
-      type: object
-      required:
-      - count
-      - results
-      properties:
-        count:
-          type: integer
-          example: 123
-        next:
-          type: string
-          nullable: true
-          format: uri
-          example: http://api.example.org/accounts/?page=4
-        previous:
-          type: string
-          nullable: true
-          format: uri
-          example: http://api.example.org/accounts/?page=2
-        results:
-          type: array
-          items:
-            $ref: '#/components/schemas/AdminMembershipRead'
     PaginatedAdminPostListList:
       type: object
       required:
@@ -24472,7 +24128,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/AdminPostList'
-    PaginatedAdminStaffList:
+    PaginatedAdminUserCvList:
       type: object
       required:
       - count
@@ -24494,7 +24150,7 @@ components:
         results:
           type: array
           items:
-            $ref: '#/components/schemas/AdminStaff'
+            $ref: '#/components/schemas/AdminUserCv'
     PaginatedAdminVerificationCaseListList:
       type: object
       required:
@@ -24771,6 +24427,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/EmployerNotification'
+    PaginatedFollowedCompanyList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/FollowedCompany'
     PaginatedJobCategoryListList:
       type: object
       required:
@@ -25113,16 +24792,6 @@ components:
       - reauth_max_age_seconds
       - reauth_provider
       - requires_reauth
-    PatchedAdminInvitationUpdateRequest:
-      type: object
-      properties:
-        target_role_public_id:
-          type: string
-          minLength: 1
-        reason:
-          type: string
-          minLength: 1
-          maxLength: 500
     PatchedAdminPinnedPostRequest:
       type: object
       properties:
@@ -25162,19 +24831,6 @@ components:
         is_active:
           type: boolean
           description: Tắt danh mục mà không xóa bài
-    PatchedAdminRoleUpdateRequest:
-      type: object
-      properties:
-        name:
-          type: string
-          minLength: 1
-          maxLength: 120
-        description:
-          type: string
-        rank:
-          type: integer
-          maximum: 32767
-          minimum: 0
     PatchedAdminTagRequest:
       type: object
       properties:
@@ -25246,6 +24902,8 @@ components:
           type: boolean
         suitable_job_recommendations:
           type: boolean
+        followed_company_jobs:
+          type: boolean
         top_candidate_alerts:
           type: boolean
         employer_invitations:
@@ -25299,7 +24957,6 @@ components:
           minimum: 1
     PatchedCvBackgroundAdminRequest:
       type: object
-      description: Protect public lifecycle transitions independently from edit access.
       properties:
         title:
           type: string
@@ -25312,7 +24969,6 @@ components:
           type: boolean
     PatchedCvCategoryAdminRequest:
       type: object
-      description: Protect public lifecycle transitions independently from edit access.
       properties:
         category_type:
           $ref: '#/components/schemas/CategoryTypeA75Enum'
@@ -25335,7 +24991,6 @@ components:
           type: boolean
     PatchedCvColorAdminRequest:
       type: object
-      description: Protect public lifecycle transitions independently from edit access.
       properties:
         name:
           type: string
@@ -25411,7 +25066,6 @@ components:
           minimum: -2147483648
     PatchedCvSampleContentAdminRequest:
       type: object
-      description: Protect public lifecycle transitions independently from edit access.
       properties:
         position_public_id:
           type: string
@@ -25432,7 +25086,6 @@ components:
           minimum: 0
     PatchedCvTemplateAdminRequest:
       type: object
-      description: Protect public lifecycle transitions independently from edit access.
       properties:
         name:
           type: string
@@ -25468,6 +25121,11 @@ components:
           type: integer
           maximum: 2147483647
           minimum: -2147483648
+        category_public_ids:
+          type: array
+          items:
+            type: string
+            minLength: 1
     PatchedCvV2MetadataUpdateRequest:
       type: object
       properties:
@@ -25486,15 +25144,6 @@ components:
           oneOf:
           - $ref: '#/components/schemas/PositionLevel615Enum'
           - $ref: '#/components/schemas/BlankEnum'
-    PatchedDepartmentUpdateRequest:
-      type: object
-      properties:
-        name:
-          type: string
-          minLength: 1
-          maxLength: 120
-        description:
-          type: string
     PatchedEmployerJobDraftRequest:
       type: object
       description: Partial draft contract; final validation happens only at publication
@@ -26148,73 +25797,6 @@ components:
         * `not_found` - Không tìm thấy
         * `unavailable` - Nguồn không khả dụng
         * `invalid_response` - Phản hồi không hợp lệ
-    ProvisioningScope:
-      type: object
-      properties:
-        public_id:
-          type: string
-          readOnly: true
-        source_role:
-          allOf:
-          - $ref: '#/components/schemas/InvitationRole'
-          readOnly: true
-        target_role:
-          allOf:
-          - $ref: '#/components/schemas/InvitationRole'
-          readOnly: true
-        is_active:
-          type: boolean
-        configured_by_email:
-          type: string
-          format: email
-          readOnly: true
-          nullable: true
-        pending_invitation_count:
-          type: integer
-          readOnly: true
-        created_at:
-          type: string
-          format: date-time
-          readOnly: true
-        updated_at:
-          type: string
-          format: date-time
-          readOnly: true
-      required:
-      - configured_by_email
-      - created_at
-      - pending_invitation_count
-      - public_id
-      - source_role
-      - target_role
-      - updated_at
-    ProvisioningScopeCreate:
-      type: object
-      properties:
-        source_role_public_id:
-          type: string
-        target_role_public_id:
-          type: string
-      required:
-      - source_role_public_id
-      - target_role_public_id
-    ProvisioningScopeCreateRequest:
-      type: object
-      properties:
-        source_role_public_id:
-          type: string
-          minLength: 1
-        target_role_public_id:
-          type: string
-          minLength: 1
-      required:
-      - source_role_public_id
-      - target_role_public_id
-    ProvisioningScopeRequest:
-      type: object
-      properties:
-        is_active:
-          type: boolean
     PublicArticleCategory:
       type: object
       properties:
@@ -26478,6 +26060,10 @@ components:
         company_name:
           type: string
           readOnly: true
+        company_slug:
+          type: string
+          nullable: true
+          readOnly: true
         company_logo_url:
           type: string
           readOnly: true
@@ -26619,6 +26205,7 @@ components:
       - category
       - company_logo_url
       - company_name
+      - company_slug
       - company_verified
       - created_at
       - currency
@@ -26688,6 +26275,10 @@ components:
           readOnly: true
         company_name:
           type: string
+          readOnly: true
+        company_slug:
+          type: string
+          nullable: true
           readOnly: true
         company_logo_url:
           type: string
@@ -26881,6 +26472,7 @@ components:
       - category
       - company_logo_url
       - company_name
+      - company_slug
       - company_verified
       - created_at
       - currency
@@ -27168,6 +26760,10 @@ components:
         company_name:
           type: string
           readOnly: true
+        company_slug:
+          type: string
+          nullable: true
+          readOnly: true
         company_logo_url:
           type: string
           readOnly: true
@@ -27321,6 +26917,7 @@ components:
       - category
       - company_logo_url
       - company_name
+      - company_slug
       - company_verified
       - created_at
       - currency
@@ -28114,6 +27711,10 @@ components:
         company_name:
           type: string
           readOnly: true
+        company_slug:
+          type: string
+          nullable: true
+          readOnly: true
         company_logo_url:
           type: string
           readOnly: true
@@ -28265,6 +27866,7 @@ components:
       - category
       - company_logo_url
       - company_name
+      - company_slug
       - company_verified
       - created_at
       - currency
@@ -28543,6 +28145,16 @@ components:
         * `applied` - Applied
         * `recommended` - Recommended
         * `invited` - Invited
+    Source39cEnum:
+      enum:
+      - builder
+      - uploaded
+      - imported
+      type: string
+      description: |-
+        * `builder` - Builder
+        * `uploaded` - Uploaded
+        * `imported` - Imported
     Status4b9Enum:
       enum:
       - queued
@@ -28886,6 +28498,8 @@ components:
           type: boolean
         business_doc_submitted:
           type: boolean
+        business_doc_current:
+          type: boolean
         business_doc_approved:
           type: boolean
         email_domain_verified:
@@ -28911,6 +28525,7 @@ components:
       required:
       - account_ready
       - business_doc_approved
+      - business_doc_current
       - business_doc_submitted
       - candidate_dpa_approved
       - candidate_dpa_submitted

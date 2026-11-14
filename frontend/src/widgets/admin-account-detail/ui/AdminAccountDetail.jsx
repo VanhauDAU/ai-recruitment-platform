@@ -23,6 +23,7 @@ import { useEffect, useState } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router'
 import {
   adminAccountKeys,
+  adminTierLabel,
   formatAdminDate,
   getAdminAccount,
   getAdminAccountActivity,
@@ -39,7 +40,6 @@ import { AdminAccountSecurityActions } from '@/features/manage-admin-account-sec
 import { EmployerCompanyLinkRecovery } from '@/features/recover-employer-company-link'
 import { EmployerVerificationReview } from '@/features/review-employer-verification'
 import {
-  canRecoverAccountIdentity,
   ChangeAccountEmailButton,
   IdentityRecoveryGuide,
 } from '@/features/recover-account-identity'
@@ -50,7 +50,6 @@ import { message } from '@/shared/lib/toast'
 import AccountProfilePanel from './AccountProfilePanel'
 import '../admin-account-detail.css'
 import { resolveActiveAdminAccountTab } from '../model/tab-state'
-import AdminAccountAccessPanel from './AdminAccountAccessPanel'
 
 const ROLE_META = {
   candidate: { label: 'Ứng viên', color: 'blue' },
@@ -105,11 +104,6 @@ function ResourceTable({ publicId, resource, columns, rowKey = 'public_id' }) {
 function SecurityPanel({
   publicId,
   account,
-  canEmailRecovery,
-  canManage,
-  canReleaseResourceHolds,
-  canStatus,
-  canBan,
   isSuperuser,
 }) {
   const [recoveryProgress, setRecoveryProgress] = useState({
@@ -146,39 +140,37 @@ function SecurityPanel({
   }
   return (
     <div className="space-y-5">
-      {(canManage || canEmailRecovery) && (
-        <IdentityRecoveryGuide
-          account={account}
-          emailCompleted={recoveryProgress.emailCompleted}
-          passwordResetSent={recoveryProgress.passwordResetSent}
-          emailAction={canEmailRecovery ? (
-            <ChangeAccountEmailButton
-              account={account}
-              publicId={publicId}
-              disabled={account.status === 'pending'}
-              disabledReason="Tài khoản đang chờ phải xử lý qua quy trình lời mời."
-              onSuccess={() => setRecoveryProgress((current) => ({
-                ...current,
-                emailCompleted: true,
-                passwordResetSent: false,
-              }))}
-            />
-          ) : null}
-          passwordResetAction={canManage && emailRecoveryStarted ? (
-            <SendAccountPasswordResetButton
-              account={account}
-              publicId={publicId}
-              accountEmail={account.email}
-              disabled={account.status !== 'active'}
-              disabledReason="Phải mở lại tài khoản bằng workflow trạng thái trước khi gửi password reset."
-              onSuccess={() => setRecoveryProgress((current) => ({
-                ...current,
-                passwordResetSent: true,
-              }))}
-            />
-          ) : null}
-        />
-      )}
+      <IdentityRecoveryGuide
+        account={account}
+        emailCompleted={recoveryProgress.emailCompleted}
+        passwordResetSent={recoveryProgress.passwordResetSent}
+        emailAction={(
+          <ChangeAccountEmailButton
+            account={account}
+            publicId={publicId}
+            disabled={account.status === 'pending'}
+            disabledReason="Tài khoản đang chờ phải xử lý qua quy trình lời mời."
+            onSuccess={() => setRecoveryProgress((current) => ({
+              ...current,
+              emailCompleted: true,
+              passwordResetSent: false,
+            }))}
+          />
+        )}
+        passwordResetAction={emailRecoveryStarted ? (
+          <SendAccountPasswordResetButton
+            account={account}
+            publicId={publicId}
+            accountEmail={account.email}
+            disabled={account.status !== 'active'}
+            disabledReason="Phải mở lại tài khoản bằng workflow trạng thái trước khi gửi password reset."
+            onSuccess={() => setRecoveryProgress((current) => ({
+              ...current,
+              passwordResetSent: true,
+            }))}
+          />
+        ) : null}
+      />
       <Card title="Xác thực & quyền truy cập">
         <Descriptions bordered size="small" column={{ xs: 1, md: 2 }}>
           <Descriptions.Item label="Email">
@@ -190,46 +182,39 @@ function SecurityPanel({
             {account.active_session_count}
           </Descriptions.Item>
         </Descriptions>
-        {(canManage || canEmailRecovery || canStatus) && (
-          <div className="mt-4 border-t border-slate-100 pt-4">
-            <div className="mb-3">
-              <Typography.Text strong>Thao tác bảo mật độc lập</Typography.Text>
-              <div>
-                <Typography.Text type="secondary" className="!text-xs">
-                  Dùng khi không thực hiện quy trình đổi email ở phía trên.
-                </Typography.Text>
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {!emailRecoveryStarted && canManage && (
-                <SendAccountPasswordResetButton
-                  account={account}
-                  publicId={publicId}
-                  accountEmail={account.email}
-                  disabled={account.status !== 'active'}
-                  disabledReason="Phải mở lại tài khoản trước khi gửi password reset."
-                />
-              )}
-              {canManage && !account.email_verified && (
-                <Button loading={sending} icon={<MailOutlined />} onClick={sendVerification}>
-                  Gửi lại xác minh email
-                </Button>
-              )}
-              {/* Backend (`ensure_account_write_allowed`) cho superuser đổi trạng
-                  thái tài khoản admin; UI phải mở tương ứng, nếu không một admin
-                  bị cấm sẽ không còn đường mở lại từ giao diện. */}
-              {(canManage || canStatus) && (
-                <AdminAccountSecurityActions
-                  account={account}
-                  allowStatus={canStatus && (account.role !== 'admin' || isSuperuser)}
-                  allowBan={canBan}
-                  allowResourceRelease={canReleaseResourceHolds}
-                  allowSessions={canManage}
-                />
-              )}
+        <div className="mt-4 border-t border-slate-100 pt-4">
+          <div className="mb-3">
+            <Typography.Text strong>Thao tác bảo mật độc lập</Typography.Text>
+            <div>
+              <Typography.Text type="secondary" className="!text-xs">
+                Dùng khi không thực hiện quy trình đổi email ở phía trên.
+              </Typography.Text>
             </div>
           </div>
-        )}
+          <div className="flex flex-wrap gap-2">
+            {!emailRecoveryStarted && (
+              <SendAccountPasswordResetButton
+                account={account}
+                publicId={publicId}
+                accountEmail={account.email}
+                disabled={account.status !== 'active'}
+                disabledReason="Phải mở lại tài khoản trước khi gửi password reset."
+              />
+            )}
+            {!account.email_verified && (
+              <Button loading={sending} icon={<MailOutlined />} onClick={sendVerification}>
+                Gửi lại xác minh email
+              </Button>
+            )}
+            {/* Chi tiết tài khoản admin chỉ superuser mở được (backend), nên
+                mọi tài khoản hiển thị ở đây đều được đổi trạng thái. */}
+            <AdminAccountSecurityActions
+              account={account}
+              allowBan={isSuperuser}
+              allowResourceRelease={isSuperuser}
+            />
+          </div>
+        </div>
       </Card>
       <Card title="Danh sách phiên">
         <Table
@@ -477,7 +462,7 @@ function EmployerRecruitment({ publicId }) {
 
 export default function AdminAccountDetail({ publicId, routeScope = 'users' }) {
   const { user } = useSession()
-  const { has, isSuperuser } = useAdminAccess(user)
+  const { isSuperuser } = useAdminAccess(user)
   const navigate = useNavigate()
   const location = useLocation()
   const queryClient = useQueryClient()
@@ -498,33 +483,6 @@ export default function AdminAccountDetail({ publicId, routeScope = 'users' }) {
     onError: (error) => message.error(getApiErrorMessage(error)),
   })
 
-  const canEdit = isSuperuser || has('account.profile.manage')
-  const canReveal = isSuperuser || has('account.sensitive.view')
-  const canSecurity = isSuperuser || has('account.security.manage') || has('account.admin.manage')
-  const canStatus = isSuperuser || has('account.status.manage') || has('account.admin.manage')
-  const canBan = Boolean(isSuperuser)
-  const canReleaseResourceHolds = Boolean(isSuperuser)
-  const recoveryAccess = {
-    hasPermission: has,
-    isSuperuser,
-    targetRole: account?.role,
-  }
-  const canEmailRecovery = Boolean(account) && canRecoverAccountIdentity({
-    ...recoveryAccess,
-    permission: 'account.email.manage',
-  })
-  const canViewVerification = isSuperuser || has('employer_verification.view')
-  const canReviewVerification = isSuperuser || has('employer_verification.review')
-  const canRevokeVerification = isSuperuser || has('employer_verification.revoke')
-  const canUnlockVerificationResubmission = isSuperuser
-    || has('employer_verification.resubmission_unlock')
-  const canOverrideVerificationTax = isSuperuser
-    || has('employer_verification.tax_override')
-  const canUnlinkEmployerCompany = isSuperuser
-    || has('employer_verification.unlink_company')
-  const canViewCompanyUpdates = isSuperuser || has('company_update.view')
-  const canReviewCompanyUpdates = isSuperuser || has('company_update.review')
-  const canViewSensitiveDocument = canReveal
   const activeTab = searchParams.get('tab') || 'overview'
   const fallbackPath = adminPath(routeScope === 'recruiters' ? '/recruiters' : '/accounts')
   const origin = location.state?.origin
@@ -543,8 +501,7 @@ export default function AdminAccountDetail({ publicId, routeScope = 'users' }) {
     <AccountProfilePanel
       publicId={publicId}
       account={account}
-      canReveal={canReveal}
-      onEdit={canEdit ? setEditState : null}
+      onEdit={setEditState}
     />
   )
   const companyPanel = account && (
@@ -552,14 +509,12 @@ export default function AdminAccountDetail({ publicId, routeScope = 'users' }) {
       <AccountProfilePanel
         publicId={publicId}
         account={account}
-        canReveal={canReveal}
         section="company"
       />
       <EmployerCompanyLinkRecovery
         publicId={publicId}
         company={account.context?.company}
         companyRole={account.context?.company_role}
-        enabled={canUnlinkEmployerCompany}
       />
     </>
   )
@@ -567,11 +522,6 @@ export default function AdminAccountDetail({ publicId, routeScope = 'users' }) {
     <SecurityPanel
       publicId={publicId}
       account={account}
-      canEmailRecovery={canEmailRecovery}
-      canManage={canSecurity}
-      canStatus={canStatus}
-      canBan={canBan}
-      canReleaseResourceHolds={canReleaseResourceHolds}
       isSuperuser={isSuperuser}
     />
   )
@@ -586,13 +536,7 @@ export default function AdminAccountDetail({ publicId, routeScope = 'users' }) {
         { key: 'overview', label: 'Tổng quan' },
         { key: 'profile', label: 'Hồ sơ NTD', children: profilePanel },
         { key: 'company', label: 'Công ty', children: companyPanel },
-        ...((canViewVerification
-          || canReviewVerification
-          || canRevokeVerification
-          || canUnlockVerificationResubmission
-          || canOverrideVerificationTax
-          || canViewCompanyUpdates
-          || canReviewCompanyUpdates) ? [{
+        {
           key: 'verification',
           label: 'Xác thực',
           children: (
@@ -601,17 +545,9 @@ export default function AdminAccountDetail({ publicId, routeScope = 'users' }) {
               companyPublicId={account.context?.company?.public_id}
               companyUpdateRequestPublicId={searchParams.get('company_update') || ''}
               companyUpdateRequesterPublicId={publicId}
-              canViewVerification={canViewVerification}
-              canReviewVerification={canReviewVerification}
-              canRevokeVerification={canRevokeVerification}
-              canUnlockVerificationResubmission={canUnlockVerificationResubmission}
-              canOverrideVerificationTax={canOverrideVerificationTax}
-              canViewCompanyUpdates={canViewCompanyUpdates}
-              canReviewCompanyUpdates={canReviewCompanyUpdates}
-              canViewSensitive={canViewSensitiveDocument}
             />
           ),
-        }] : []),
+        },
         {
           key: 'recruitment',
           label: 'Hoạt động tuyển dụng',
@@ -623,11 +559,6 @@ export default function AdminAccountDetail({ publicId, routeScope = 'users' }) {
     }
     return [
       { key: 'overview', label: 'Tổng quan' },
-      {
-        key: 'access',
-        label: 'Quyền truy cập',
-        children: <AdminAccountAccessPanel account={account} />,
-      },
       { key: 'security', label: 'Bảo mật', children: security },
       { key: 'activity', label: 'Hoạt động', children: activity },
     ]
@@ -702,6 +633,11 @@ export default function AdminAccountDetail({ publicId, routeScope = 'users' }) {
             </Typography.Text>
             <Space wrap className="mt-3">
               <StatusTag role value={account.role} />
+              {account.role === 'admin' && (
+                <Tag color={account.admin_access?.is_superuser ? 'gold' : 'default'}>
+                  {adminTierLabel(account.admin_access)}
+                </Tag>
+              )}
               <StatusTag value={account.status} />
               {account.email_verified && <Tag color="green">Email đã xác minh</Tag>}
               {account.context?.verification && (
@@ -712,21 +648,19 @@ export default function AdminAccountDetail({ publicId, routeScope = 'users' }) {
             </Space>
           </div>
         </div>
-        {canEdit && (
-          <Button
-            icon={<EditOutlined />}
-            onClick={async () => {
-              try {
-                const profile = await getAdminAccountProfile(publicId)
-                setEditState(profile)
-              } catch (error) {
-                message.error(getApiErrorMessage(error))
-              }
-            }}
-          >
-            Sửa hồ sơ
-          </Button>
-        )}
+        <Button
+          icon={<EditOutlined />}
+          onClick={async () => {
+            try {
+              const profile = await getAdminAccountProfile(publicId)
+              setEditState(profile)
+            } catch (error) {
+              message.error(getApiErrorMessage(error))
+            }
+          }}
+        >
+          Sửa hồ sơ
+        </Button>
       </section>
       <section className="admin-panel account-detail-tabs">
         <Tabs

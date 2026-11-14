@@ -11,7 +11,6 @@ import {
 } from '../model/announcement-options'
 
 export default function AnnouncementFilters({
-  canCreate,
   filters,
   actions,
   onChange,
@@ -32,11 +31,9 @@ export default function AnnouncementFilters({
         </div>
         <Space wrap>
           {actions}
-          {canCreate && (
-            <Button type="primary" icon={<PlusOutlined />} onClick={onCreate}>
-              Tạo thông báo
-            </Button>
-          )}
+          <Button type="primary" icon={<PlusOutlined />} onClick={onCreate}>
+            Tạo thông báo
+          </Button>
         </Space>
       </div>
       <div className="announcement-filters__controls">

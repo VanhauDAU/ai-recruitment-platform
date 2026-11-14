@@ -6,8 +6,6 @@ import {
   decideAdminJob,
   JOB_DECISION_REASONS,
 } from '@/entities/admin-job'
-import { useAdminAccess } from '@/entities/admin-access'
-import { useSession } from '@/entities/session'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { message } from '@/shared/lib/toast'
 
@@ -17,14 +15,11 @@ const HOLD_OPTIONS = [
 ]
 
 export default function JobVisibilityActions({ job }) {
-  const { user } = useSession()
-  const access = useAdminAccess(user)
   const queryClient = useQueryClient()
   const [action, setAction] = useState('')
   const [form] = Form.useForm()
-  const canEnforce = access.has('job_moderation.enforce_visibility')
-  const canHide = canEnforce && job.state_actions?.includes('hide')
-  const canRestore = canEnforce && job.state_actions?.includes('restore')
+  const canHide = job.state_actions?.includes('hide')
+  const canRestore = job.state_actions?.includes('restore')
 
   const mutation = useMutation({
     mutationFn: (payload) => decideAdminJob(job.public_id, {

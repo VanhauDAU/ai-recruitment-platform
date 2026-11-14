@@ -23,8 +23,17 @@ const UPLOAD_STATE_PRESENTATION = {
   uploading: { tone: 'text-slate-600', text: 'Đang tải tệp vào vùng kiểm tra an toàn…' },
 }
 
+const SCANNER_UNAVAILABLE_PRESENTATION = {
+  tone: 'text-red-600',
+  text: 'Dịch vụ kiểm tra an toàn tệp đang tạm gián đoạn. Vui lòng thử lại sau ít phút.',
+}
+
 export function getUploadStatePresentation(session) {
-  return session?.state ? UPLOAD_STATE_PRESENTATION[session.state] : null
+  if (!session?.state) return null
+  if (session.state === 'error' && session.result_code === 'scanner_unavailable') {
+    return SCANNER_UNAVAILABLE_PRESENTATION
+  }
+  return UPLOAD_STATE_PRESENTATION[session.state]
 }
 
 export function forgetPreparedUpload(file, purpose) {

@@ -5,13 +5,14 @@ import {
   EditOutlined,
   MoreOutlined,
   StopOutlined,
+  SyncOutlined,
   TeamOutlined,
 } from '@ant-design/icons'
 import { Button, Dropdown, Tooltip } from 'antd'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router'
 import { employerAppPath } from '@/shared/config/portals'
-import { employerJobApplicationsPath, isJobHeld } from './job-list-presentation'
+import { employerJobApplicationsPath, isJobHeld, jobDisplayTitle } from './job-list-presentation'
 
 const iconActionClass = 'inline-flex h-8 w-8 items-center justify-center rounded-lg !text-slate-500 transition hover:!bg-slate-100 hover:!text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500'
 
@@ -19,27 +20,17 @@ const iconActionClass = 'inline-flex h-8 w-8 items-center justify-center rounded
 function primaryAction(job) {
   if (isJobHeld(job)) return null
   if (job.status === 'draft') {
-    return { label: 'Hoàn thiện', to: employerAppPath(`/jobs/${job.public_id}/edit`) }
+    return { label: 'Hoàn thiện', icon: <EditOutlined />, to: employerAppPath(`/jobs/${job.public_id}/edit`) }
   }
   if (job.is_expired) {
-    return { label: 'Gia hạn', to: employerAppPath(`/jobs/${job.public_id}`) }
+    return { label: 'Gia hạn', icon: <SyncOutlined />, to: employerAppPath(`/jobs/${job.public_id}`) }
   }
   return null
 }
 
-function jobDisplayTitle(job) {
-  if (job.title) return job.title
-  return job.status === 'draft' ? 'Tin nháp chưa đặt tên' : 'Tin tuyển dụng chưa đặt tên'
-}
+const canEdit = (job) => !isJobHeld(job) && !['draft', 'closed'].includes(job.status)
 
-function menuItems(job, {
-  candidateDataAccess,
-  onClose,
-  onDelete,
-  onDuplicate,
-  closeMenu,
-  queueConfirmation,
-}) {
+function menuItems(job, { candidateDataAccess, onDuplicate, closeMenu, queueConfirmation, onClose, onDelete }) {
   const jobTitle = jobDisplayTitle(job)
   const items = [
     {
@@ -55,14 +46,14 @@ function menuItems(job, {
       label: <Link to={employerJobApplicationsPath(job)}>Xem hồ sơ ứng tuyển</Link>,
     })
   }
+  if (canEdit(job)) {
+    items.push({
+      key: 'edit',
+      icon: <EditOutlined />,
+      label: <Link to={employerAppPath(`/jobs/${job.public_id}/edit`)}>Chỉnh sửa tin</Link>,
+    })
+  }
   if (!isJobHeld(job)) {
-    if (!['draft', 'closed'].includes(job.status)) {
-      items.push({
-        key: 'edit',
-        icon: <EditOutlined />,
-        label: <Link to={employerAppPath(`/jobs/${job.public_id}/edit`)}>Chỉnh sửa tin</Link>,
-      })
-    }
     items.push({
       key: 'duplicate',
       icon: <CopyOutlined />,
@@ -74,95 +65,55 @@ function menuItems(job, {
     })
   }
   if (job.status === 'active' && !job.is_expired) {
-    items.push(
-      { type: 'divider' },
-      {
-        key: 'close',
+    items.push({ type: 'divider' }, {
+      key: 'close',
+      danger: true,
+      icon: <StopOutlined />,
+      label: 'Đóng tin',
+      onClick: () => queueConfirmation({
+        cancelText: 'Đóng',
+        confirmText: 'Đóng tin',
         danger: true,
-        icon: <StopOutlined />,
-        label: 'Đóng tin',
-        onClick: () => queueConfirmation({
-          cancelText: 'Đóng',
-          confirmText: 'Đóng tin',
-          danger: true,
-          description: (
-            <>
-              Bạn có chắc muốn đóng tin tuyển dụng <strong>{jobTitle}</strong> không?
-              <br />
-              Tin sẽ ngừng hiển thị với ứng viên.
-            </>
-          ),
-          onConfirm: () => onClose(job.public_id),
-          title: 'Đóng tin tuyển dụng',
-        }),
-      },
-    )
+        description: (
+          <>
+            Bạn có chắc muốn đóng tin tuyển dụng <strong>{jobTitle}</strong> không?
+            <br />
+            Tin sẽ ngừng hiển thị với ứng viên.
+          </>
+        ),
+        onConfirm: () => onClose(job.public_id),
+        title: 'Đóng tin tuyển dụng',
+      }),
+    })
   }
   if (job.status === 'draft') {
-    items.push(
-      { type: 'divider' },
-      {
-        key: 'delete',
+    items.push({ type: 'divider' }, {
+      key: 'delete',
+      danger: true,
+      icon: <DeleteOutlined />,
+      label: 'Xóa bản nháp',
+      onClick: () => queueConfirmation({
+        cancelText: 'Đóng',
+        confirmText: 'Xóa bản nháp',
         danger: true,
-        icon: <DeleteOutlined />,
-        label: 'Xóa bản nháp',
-        onClick: () => queueConfirmation({
-          cancelText: 'Đóng',
-          confirmText: 'Xóa bản nháp',
-          danger: true,
-          description: (
-            <>
-              Bạn có chắc muốn xóa bản nháp <strong>{jobTitle}</strong> không?
-              <br />
-              Bản nháp sẽ bị xóa vĩnh viễn và không thể hoàn tác.
-            </>
-          ),
-          onConfirm: () => onDelete(job.public_id),
-          title: 'Xóa bản nháp',
-        }),
-      },
-    )
+        description: (
+          <>
+            Bạn có chắc muốn xóa bản nháp <strong>{jobTitle}</strong> không?
+            <br />
+            Bản nháp sẽ bị xóa vĩnh viễn và không thể hoàn tác.
+          </>
+        ),
+        onConfirm: () => onDelete(job.public_id),
+        title: 'Xóa bản nháp',
+      }),
+    })
   }
   return items
 }
 
-function QuickActions({ job, candidateDataAccess }) {
-  return (
-    <div
-      data-testid="job-hover-actions"
-      className="pointer-events-none hidden items-center gap-0.5 opacity-0 transition-opacity duration-150 lg:flex lg:group-hover:pointer-events-auto lg:group-hover:opacity-100 lg:group-focus-within:pointer-events-auto lg:group-focus-within:opacity-100"
-    >
-      {candidateDataAccess && job.application_count > 0 && (
-        <Tooltip title="Xem hồ sơ ứng tuyển">
-          <Link
-            aria-label="Xem hồ sơ ứng tuyển"
-            className={iconActionClass}
-            to={employerJobApplicationsPath(job)}
-          >
-            <TeamOutlined />
-          </Link>
-        </Tooltip>
-      )}
-      {!isJobHeld(job) && !['draft', 'closed'].includes(job.status) && (
-        <Tooltip title="Chỉnh sửa tin">
-          <Link
-            aria-label="Chỉnh sửa tin"
-            className={iconActionClass}
-            to={employerAppPath(`/jobs/${job.public_id}/edit`)}
-          >
-            <EditOutlined />
-          </Link>
-        </Tooltip>
-      )}
-    </div>
-  )
-}
-
 export default function JobListActions({
   job,
-  closing,
-  deleting,
-  duplicating,
+  busy,
   onClose,
   onDelete,
   onDuplicate,
@@ -170,12 +121,12 @@ export default function JobListActions({
   candidateDataAccess = false,
 }) {
   const action = primaryAction(job)
-  const jobTitle = jobDisplayTitle(job)
   const [menuOpen, setMenuOpen] = useState(false)
   const confirmationTimer = useRef(null)
 
   useEffect(() => () => window.clearTimeout(confirmationTimer.current), [])
 
+  // Let the dropdown close before the modal opens so focus returns cleanly.
   const queueConfirmation = (options) => {
     setMenuOpen(false)
     window.clearTimeout(confirmationTimer.current)
@@ -183,15 +134,34 @@ export default function JobListActions({
   }
 
   return (
-    <div data-testid="job-mobile-actions" className="relative ml-auto flex items-center justify-end gap-1">
-      {!action && <QuickActions job={job} candidateDataAccess={candidateDataAccess} />}
-      {action && (
+    <div data-testid="job-row-actions" className="ml-auto flex shrink-0 items-center justify-end gap-1">
+      {action ? (
         <Link
-          className="inline-flex h-8 items-center rounded-lg px-2 text-xs font-semibold !text-emerald-700 transition hover:bg-emerald-50"
+          className="inline-flex h-8 items-center gap-1.5 whitespace-nowrap rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 text-xs font-semibold !text-emerald-700 transition hover:border-emerald-300 hover:!bg-emerald-100"
           to={action.to}
         >
-          {action.label}
+          {action.icon} {action.label}
         </Link>
+      ) : (
+        <div
+          data-testid="job-hover-actions"
+          className="pointer-events-none hidden items-center gap-0.5 opacity-0 transition-opacity duration-150 lg:flex lg:group-hover:pointer-events-auto lg:group-hover:opacity-100 lg:group-focus-within:pointer-events-auto lg:group-focus-within:opacity-100"
+        >
+          {candidateDataAccess && job.application_count > 0 && (
+            <Tooltip title="Xem hồ sơ ứng tuyển">
+              <Link aria-label="Xem hồ sơ ứng tuyển" className={iconActionClass} to={employerJobApplicationsPath(job)}>
+                <TeamOutlined />
+              </Link>
+            </Tooltip>
+          )}
+          {canEdit(job) && (
+            <Tooltip title="Chỉnh sửa tin">
+              <Link aria-label="Chỉnh sửa tin" className={iconActionClass} to={employerAppPath(`/jobs/${job.public_id}/edit`)}>
+                <EditOutlined />
+              </Link>
+            </Tooltip>
+          )}
+        </div>
       )}
       <Dropdown
         menu={{
@@ -211,10 +181,10 @@ export default function JobListActions({
       >
         <Button
           type="text"
-          aria-label={`Mở thao tác cho ${jobTitle}`}
+          aria-label={`Mở thao tác cho ${jobDisplayTitle(job)}`}
           className="!h-8 !w-8 !rounded-lg !p-0 !text-slate-500 hover:!bg-slate-100 hover:!text-slate-900"
           icon={<MoreOutlined />}
-          loading={closing || deleting || duplicating}
+          loading={busy}
         />
       </Dropdown>
     </div>

@@ -4,7 +4,7 @@ from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.accounts.permissions import HasAdminPermission, require_admin_permission
+from apps.accounts.permissions import AdminPortalPermission
 from common.media_storage import save_image_upload
 from common.pagination import StandardPagination
 
@@ -114,19 +114,15 @@ class BlogImageUploadView(generics.ListAPIView):
     lưu URL cuối cùng (khác thumbnail lưu storage key).
     """
 
-    permission_classes = [HasAdminPermission]
+    permission_classes = [AdminPortalPermission]
     parser_classes = [MultiPartParser, FormParser]
     serializer_class = BlogMediaAssetSerializer
     pagination_class = StandardPagination
-
-    def get_required_admin_permissions(self, request):
-        return ['blog.view']
 
     def get_queryset(self):
         return admin_media_queryset(self.request.query_params)
 
     def post(self, request):
-        require_admin_permission(request.user, 'blog.manage', 'blog.publish', match='any')
         upload = request.FILES.get('file') or request.FILES.get('image')
         if upload is None:
             return Response(
@@ -138,12 +134,10 @@ class BlogImageUploadView(generics.ListAPIView):
 
 
 class BlogThumbnailUploadView(APIView):
-    permission_classes = [HasAdminPermission]
-    required_admin_permissions = {'POST': ['blog.view']}
+    permission_classes = [AdminPortalPermission]
     parser_classes = [MultiPartParser, FormParser]
 
     def post(self, request):
-        require_admin_permission(request.user, 'blog.manage', 'blog.publish', match='any')
         upload = request.FILES.get('file') or request.FILES.get('image')
         if upload is None:
             return Response({'detail': 'Thiếu file ảnh (field "file").'}, status=400)

@@ -63,7 +63,7 @@ function createPost(allowedActions, editorialState = 'draft') {
   }
 }
 
-async function mockBlogApi(page, permissions, allowedActions, editorialState = 'draft', { isSuperuser = false } = {}) {
+async function mockBlogApi(page, allowedActions, editorialState = 'draft', { isSuperuser = false } = {}) {
   const { post, detail } = createPost(allowedActions, editorialState)
   let currentEditorialState = editorialState
   const user = {
@@ -72,11 +72,7 @@ async function mockBlogApi(page, permissions, allowedActions, editorialState = '
     full_name: 'Nhân viên hiện tại',
     role: 'admin',
     status: 'active',
-    admin_access: {
-      is_superuser: isSuperuser,
-      permissions,
-      memberships: [],
-    },
+    admin_access: { is_superuser: isSuperuser },
   }
   await page.route(API_ROUTE, async (route) => {
     const path = new URL(route.request().url()).pathname
@@ -119,17 +115,16 @@ async function mockBlogApi(page, permissions, allowedActions, editorialState = '
   })
 }
 
-test('admin blog: publish permission can edit another employee article', async ({ page }) => {
+test('admin blog: an admin can edit another employee article', async ({ page }) => {
   await mockBlogApi(
     page,
-    ['blog.view', 'blog.publish'],
     ['edit', 'submit', 'return', 'publish', 'archive'],
     'pending',
   )
 
   await page.goto('/admin/app/blog')
   await expect(page.getByText('Bài viết của đồng nghiệp khác').filter({ visible: true })).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Tạo bài viết' })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Tạo bài viết' })).toBeVisible()
 
   await page.goto('/admin/app/blog/ps_other/edit')
   await expect(page.getByLabel('Tiêu đề bài viết')).toBeEnabled()
@@ -139,13 +134,10 @@ test('admin blog: publish permission can edit another employee article', async (
   await expect(page.getByRole('dialog', { name: 'Gửi duyệt lại' })).toContainText(
     'Các thay đổi mới nhất sẽ được cập nhật trong hàng chờ duyệt',
   )
-
-  await page.goto('/admin/app/blog/new')
-  await expect(page).toHaveURL('/admin/app/access-denied')
 })
 
-test('admin blog: view-only permission sees another employee article in read-only mode', async ({ page }) => {
-  await mockBlogApi(page, ['blog.view'], [])
+test('admin blog: an article the server allows no action on opens read-only', async ({ page }) => {
+  await mockBlogApi(page, [])
 
   await page.goto('/admin/app/blog')
   await expect(page.getByText('Bài viết của đồng nghiệp khác').filter({ visible: true })).toBeVisible()
@@ -159,14 +151,12 @@ test('admin blog: view-only permission sees another employee article in read-onl
 })
 
 for (const access of [
-  { name: 'superuser', permissions: [], isSuperuser: true },
-  { name: 'blog manager', permissions: ['blog.view', 'blog.manage'] },
-  { name: 'blog publisher', permissions: ['blog.view', 'blog.publish'] },
+  { name: 'superuser', isSuperuser: true },
+  { name: 'regular admin', isSuperuser: false },
 ]) {
   test(`admin blog: ${access.name} can restore an archived article from read-only mode`, async ({ page }) => {
     await mockBlogApi(
       page,
-      access.permissions,
       ['view', 'restore'],
       'archived',
       { isSuperuser: access.isSuperuser },

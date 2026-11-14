@@ -26,6 +26,10 @@ class Application(models.Model):
         REJECTED = 'rejected', 'Rejected'
         ACCEPTED = 'accepted', 'Accepted'
 
+    # Statuses the recruiter has not answered yet. One definition shared by the
+    # `scope=unanswered` filter and every aggregate that reports this number.
+    UNANSWERED_STATUSES = (Status.SUBMITTED, Status.VIEWED, Status.CONSIDERING)
+
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     candidate = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='applications'

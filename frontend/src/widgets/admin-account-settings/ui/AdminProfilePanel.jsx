@@ -6,7 +6,6 @@ import { useSession } from '@/entities/session'
 import { updateProfile, uploadAvatar } from '@/features/edit-profile'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { message } from '@/shared/lib/toast'
-import { primaryDepartmentLabel } from '../model/department-label'
 
 const ROLE_LABELS = { admin: 'Quản trị viên', employer: 'Nhà tuyển dụng', candidate: 'Ứng viên' }
 
@@ -102,18 +101,6 @@ export default function AdminProfilePanel() {
             <dd className="mb-0 mt-1 flex flex-wrap items-center gap-2 font-medium text-slate-800">
               {ROLE_LABELS[user?.role] || user?.role}
               {adminAccess.isSuperuser && <Tag color="gold" className="!m-0">Superuser</Tag>}
-            </dd>
-          </div>
-          <div className="sm:col-span-2">
-            <dt className="text-xs font-semibold uppercase tracking-wide text-slate-400">Phòng ban</dt>
-            <dd className="mb-0 mt-1 text-slate-800">
-              {adminAccess.primaryDepartment ? (
-                <Tag color="green">
-                  {primaryDepartmentLabel(adminAccess.primaryDepartment, adminAccess.memberships)}
-                </Tag>
-              ) : (
-                <span className="text-slate-500">Chưa được gán phòng ban.</span>
-              )}
             </dd>
           </div>
         </dl>

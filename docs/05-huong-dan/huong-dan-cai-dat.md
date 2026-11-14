@@ -64,23 +64,20 @@ python manage.py seed_job_categories
 python manage.py seed_sitecontent
 python manage.py seed_cv_catalog     # hồ sơ vị trí CV + nội dung mẫu (chung 4 nhóm kinh nghiệm, riêng 9 vị trí) + bảng màu
 python manage.py seed_cv_templates   # 10 mẫu CV đã publish — thiếu thì trang /mau-cv rỗng
-python manage.py sync_admin_permissions
-python manage.py seed_admin_access
 
 # Seed dữ liệu demo cho trang chủ/danh sách việc làm (tuỳ chọn nhưng nên chạy khi dev UI)
 python manage.py seed_demo_jobs
 python manage.py seed_blog           # bài viết mẫu cho trang cẩm nang
 
+# Superuser đầu tiên của cổng quản trị (ADR-0018: hai cấp superuser/admin).
 python manage.py createsuperuser
 # Tùy chọn: đánh dấu email admin đã xác thực từ CLI tin cậy.
 python manage.py verify_admin_email <email-admin> --actor-email <email-superuser>
 
-# Tài khoản nhân viên admin: không dùng createsuperuser vì sẽ bypass RBAC.
-# Command hỏi mật khẩu tương tác và tạo is_superuser=False, is_staff=False:
-python manage.py create_admin_user <email-nhan-vien> \
+# Admin thường: superuser mời qua email tại /admin/app/accounts?tab=invitations.
+# Không có mạng gửi mail thì tạo từ CLI (hỏi mật khẩu, is_superuser=False):
+python manage.py create_admin_user <email-quan-tri> \
   --actor-email <email-superuser>
-# Tùy chọn: đánh dấu email nhân viên đã xác thực.
-python manage.py verify_admin_email <email-nhan-vien> --actor-email <email-superuser>
 python manage.py runserver 8000
 ```
 

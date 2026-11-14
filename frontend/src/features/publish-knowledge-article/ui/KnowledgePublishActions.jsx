@@ -12,7 +12,7 @@ import {
 import { message } from '@/shared/lib/toast'
 import ConfirmAction from '@/shared/ui/ConfirmAction'
 
-export default function KnowledgePublishActions({ article, canPublish, onArticleChange, disabled }) {
+export default function KnowledgePublishActions({ article, onArticleChange, disabled }) {
   const queryClient = useQueryClient()
   const [publishOpen, setPublishOpen] = useState(false)
   const [reviewDueAt, setReviewDueAt] = useState(null)
@@ -45,7 +45,7 @@ export default function KnowledgePublishActions({ article, canPublish, onArticle
     onError: (error) => message.error(knowledgeErrorMessage(error)),
   })
 
-  if (!article || !canPublish) return null
+  if (!article) return null
   return (
     <>
       <Space wrap>

@@ -34,7 +34,7 @@ function DetailRows({ items }) {
   )
 }
 
-export default function AdminJobReviewPanels({ job, tab, canViewEmployerProfile }) {
+export default function AdminJobReviewPanels({ job, tab }) {
   if (tab === 'contact') {
     return (
       <AdminJobPanel
@@ -115,11 +115,9 @@ export default function AdminJobReviewPanels({ job, tab, canViewEmployerProfile 
         { key: 'role', label: 'Vai trò công ty', value: job.company_role_label },
         { key: 'status', label: 'Tình trạng', value: adminJobEnumLabel(job.employer_account_status) },
       ]} />
-      {canViewEmployerProfile && (
-        <Link className="admin-job-inline-link" to={adminPath(`/recruiters/${job.employer_public_id}`)}>
-          <UserOutlined /> Xem hồ sơ nhà tuyển dụng
-        </Link>
-      )}
+      <Link className="admin-job-inline-link" to={adminPath(`/recruiters/${job.employer_public_id}`)}>
+        <UserOutlined /> Xem hồ sơ nhà tuyển dụng
+      </Link>
     </AdminJobPanel>
   )
 }

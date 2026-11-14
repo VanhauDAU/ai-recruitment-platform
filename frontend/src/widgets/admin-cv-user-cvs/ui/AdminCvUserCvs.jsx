@@ -3,10 +3,8 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import { Alert, Button, Checkbox, Drawer, Input, Modal, Select, Table, Tag } from 'antd'
 import { useState } from 'react'
 import { useSearchParams } from 'react-router'
-import { useAdminAccess } from '@/entities/admin-access'
 import { FittedCvPreview } from '@/entities/cv'
 import { getAdminUserCvs, lockAdminUserCv, unlockAdminUserCv, viewAdminUserCvContent } from '@/entities/cv-template'
-import { useSession } from '@/entities/session'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { message } from '@/shared/lib/toast'
 import { AdminPanel } from '@/shared/ui/admin'
@@ -26,9 +24,6 @@ function ReasonModal({ action, onCancel, onSubmit, loading }) {
 }
 
 export default function AdminCvUserCvs() {
-  const { user } = useSession()
-  const access = useAdminAccess(user)
-  const canViewContent = access.has('cv_user.view_content')
   const queryClient = useQueryClient()
   const [params, setParams] = useSearchParams()
   const [action, setAction] = useState(null)
@@ -67,15 +62,15 @@ export default function AdminCvUserCvs() {
     { title: 'Trạng thái', dataIndex: 'lifecycle_status', render: (status) => STATUSES[status] || status, responsive: ['md'] },
     { title: 'Ứng tuyển', dataIndex: 'application_count', align: 'right', responsive: ['md'] },
     { title: 'Cập nhật', dataIndex: 'updated_at', render: formatDate, responsive: ['lg'] },
-    ...(canViewContent ? [{ title: '', width: 96, render: (_, row) => <span className="flex gap-1">
+    { title: '', width: 96, render: (_, row) => <span className="flex gap-1">
       <Button size="small" type="text" icon={<EyeOutlined />} aria-label={`Xem nội dung ${row.public_id}`} onClick={() => ask('content', row)} />
       {row.is_locked
         ? <Button size="small" type="text" icon={<UnlockOutlined />} aria-label={`Mở khóa ${row.public_id}`} onClick={() => submit.mutate({ kind: 'unlock', row })} />
         : <Button size="small" type="text" danger icon={<LockOutlined />} aria-label={`Khóa ${row.public_id}`} onClick={() => ask('lock', row)} />}
-    </span> }] : []),
+    </span> },
   ]
   return <div className="space-y-3">
-    <Alert type="info" showIcon message="Chỉ hiện thông tin quản lý. Xem nội dung CV cần quyền riêng và lý do; mỗi lần xem được ghi nhật ký." />
+    <Alert type="info" showIcon message="Chỉ hiện thông tin quản lý. Xem nội dung CV cần nêu lý do; mỗi lần xem được ghi nhật ký." />
     <AdminPanel padded={false} title="CV ứng viên" extra={<div className="flex flex-wrap items-center gap-2">
       <Input.Search allowClear size="small" placeholder="Mã CV hoặc mã ứng viên" defaultValue={filters.q} onSearch={(value) => setFilter('q', value.trim())} style={{ width: 230 }} />
       <Select allowClear size="small" placeholder="Nguồn" value={filters.source} onChange={(value) => setFilter('source', value)} options={Object.entries(SOURCES).map(([value, label]) => ({ value, label }))} style={{ width: 140 }} />

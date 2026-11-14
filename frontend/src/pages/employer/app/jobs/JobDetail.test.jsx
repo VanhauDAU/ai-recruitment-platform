@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import JobDetail from './JobDetail'
@@ -7,7 +7,8 @@ import JobDetail from './JobDetail'
 const mocks = vi.hoisted(() => ({
   getEmployerJob: vi.fn(),
   getJobPostingContext: vi.fn(),
-  getRecruiterApplications: vi.fn(),
+  getRecruiterApplicationPage: vi.fn(),
+  closeEmployerJob: vi.fn(),
   reopenEmployerJob: vi.fn(),
   readinessState: {
     readiness: {
@@ -29,17 +30,17 @@ const mocks = vi.hoisted(() => ({
   },
 }))
 
-vi.mock('@/entities/application', () => ({
-  applicationKeys: {
-    recruiterList: (params) => ['applications', 'recruiter-list', params],
-  },
-  getRecruiterApplications: mocks.getRecruiterApplications,
+vi.mock('@/entities/application', async (importOriginal) => ({
+  ...await importOriginal(),
+  exportRecruiterApplications: vi.fn(),
+  getRecruiterApplicationPage: mocks.getRecruiterApplicationPage,
 }))
 vi.mock('@/entities/job', () => ({
-  closeEmployerJob: vi.fn(),
+  closeEmployerJob: mocks.closeEmployerJob,
   extendEmployerJob: vi.fn(),
   getEmployerJob: mocks.getEmployerJob,
   getJobPostingContext: mocks.getJobPostingContext,
+  jobDetailPath: (job) => `/viec-lam/${job.slug}`,
   jobKeys: {
     employerDetail: (id) => ['jobs', 'employer-detail', id],
     postingContext: ['jobs', 'posting-context'],
@@ -50,18 +51,13 @@ vi.mock('@/entities/employer-profile', async (importOriginal) => ({
   ...await importOriginal(),
   useEmployerReadiness: () => mocks.readinessState,
 }))
-vi.mock('./JobApplicationsWorkspace', () => ({
-  default: ({ applications }) => (
-    <div>{applications.map((application) => (
-      <p key={application.public_id}>{application.candidate_name}</p>
-    ))}</div>
-  ),
-}))
 vi.mock('./JobDetailHeader', () => ({
-  default: ({ job, onDeadlineAction }) => (
+  default: ({ job, onClose, onDeadlineAction, onSelectFilter }) => (
     <>
       <h1>{job.title}</h1>
       <button type="button" onClick={() => onDeadlineAction('reopen')}>Mô phỏng mở lại</button>
+      <button type="button" onClick={() => onSelectFilter('unanswered')}>Mô phỏng lọc chưa phản hồi</button>
+      <button type="button" onClick={onClose}>Mô phỏng đóng tin</button>
     </>
   ),
 }))
@@ -100,18 +96,31 @@ describe('JobDetail candidate-data boundary', () => {
       status: 'active',
       application_count: 8,
       view_count: 20,
+      application_summary: {
+        total: 6,
+        unviewed: 2,
+        unanswered: 3,
+        by_status: { submitted: 2, viewed: 1, shortlisted: 3 },
+      },
     })
     mocks.getJobPostingContext.mockReset().mockResolvedValue({
       default_deadline_days: 30,
       max_deadline_days: 90,
       max_public_lifetime_days: 90,
     })
-    mocks.getRecruiterApplications.mockReset().mockResolvedValue([{
-      public_id: 'application_1',
-      candidate_name: 'Nguyễn Minh Anh',
-      source: 'applied',
-      status: 'submitted',
-    }])
+    mocks.getRecruiterApplicationPage.mockReset().mockResolvedValue({
+      count: 1,
+      results: [{
+        public_id: 'application_1',
+        candidate_name: 'Nguyễn Minh Anh',
+        candidate_email: 'anh@example.com',
+        submitted_cv_title: 'CV Frontend',
+        source: 'applied',
+        status: 'submitted',
+        applied_at: '2026-11-10T08:00:00Z',
+      }],
+    })
+    mocks.closeEmployerJob.mockReset().mockResolvedValue({ public_id: 'job_1', status: 'closed' })
   })
 
   it.each([
@@ -122,7 +131,7 @@ describe('JobDetail candidate-data boundary', () => {
     renderPage()
 
     expect(await screen.findByRole('heading', { name: 'Kỹ sư Frontend' })).toBeInTheDocument()
-    expect(mocks.getRecruiterApplications).not.toHaveBeenCalled()
+    expect(mocks.getRecruiterApplicationPage).not.toHaveBeenCalled()
     expect(screen.getByTestId('job-detail-location')).toHaveTextContent(
       '/tuyendung/app/jobs/job_1?active_tab=apply_cv',
     )
@@ -201,8 +210,8 @@ describe('JobDetail candidate-data boundary', () => {
     mocks.readinessState.readiness.candidateDataAccess = true
     const page = renderPage()
 
-    expect(await screen.findByText('Nguyễn Minh Anh')).toBeInTheDocument()
-    expect(mocks.getRecruiterApplications).toHaveBeenCalledTimes(1)
+    expect((await screen.findAllByText('Nguyễn Minh Anh')).length).toBeGreaterThan(0)
+    expect(mocks.getRecruiterApplicationPage).toHaveBeenCalledTimes(1)
 
     mocks.readinessState.canAccessCandidateData = false
     mocks.readinessState.readiness.candidateDataAccess = false
@@ -217,8 +226,58 @@ describe('JobDetail candidate-data boundary', () => {
     )
 
     await waitFor(() => expect(screen.queryByText('Nguyễn Minh Anh')).not.toBeInTheDocument())
-    expect(mocks.getRecruiterApplications).toHaveBeenCalledTimes(1)
+    expect(mocks.getRecruiterApplicationPage).toHaveBeenCalledTimes(1)
     expect(screen.getByText('Dữ liệu ứng viên đang được bảo vệ')).toBeInTheDocument()
+  })
+
+  it('loads one server page of the latest submissions and filters it from the status chips', async () => {
+    mocks.readinessState.canAccessCandidateData = true
+    renderPage()
+
+    await waitFor(() => expect(mocks.getRecruiterApplicationPage).toHaveBeenCalledWith({
+      job: 'job_1',
+      latest: 1,
+      ordering: 'newest',
+      page: 1,
+      page_size: 10,
+    }))
+    const chips = screen.getByRole('group', { name: 'Lọc hồ sơ theo trạng thái' })
+    expect(within(chips).getByRole('button', { name: /Tất cả\s*6/ })).toHaveAttribute('aria-pressed', 'true')
+    expect(within(chips).getByRole('button', { name: /Phù hợp\s*3/ })).toBeInTheDocument()
+    expect(within(chips).queryByRole('button', { name: /Từ chối/ })).not.toBeInTheDocument()
+
+    fireEvent.click(within(chips).getByRole('button', { name: /Phù hợp\s*3/ }))
+    await waitFor(() => expect(mocks.getRecruiterApplicationPage).toHaveBeenLastCalledWith(
+      expect.objectContaining({ status: 'shortlisted', page: 1 }),
+    ))
+    expect(screen.getByTestId('job-detail-location')).toHaveTextContent('cv_filter=shortlisted')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Mô phỏng lọc chưa phản hồi' }))
+    await waitFor(() => expect(mocks.getRecruiterApplicationPage).toHaveBeenLastCalledWith(
+      expect.objectContaining({ scope: 'unanswered' }),
+    ))
+    expect(mocks.getRecruiterApplicationPage.mock.lastCall[0]).not.toHaveProperty('status')
+  })
+
+  it('asks for confirmation before closing the job', async () => {
+    renderPage('job')
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Mô phỏng đóng tin' }))
+    const dialog = await screen.findByRole('dialog')
+    expect(dialog).toHaveTextContent('Tin sẽ ngừng hiển thị với ứng viên.')
+    expect(mocks.closeEmployerJob).not.toHaveBeenCalled()
+
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Đóng tin' }))
+    await waitFor(() => expect(mocks.closeEmployerJob).toHaveBeenCalledWith('job_1', expect.any(Object)))
+  })
+
+  it('explains a job that is not in the account without a retry loop', async () => {
+    mocks.getEmployerJob.mockRejectedValue({ response: { status: 404, data: { detail: 'No Job matches the given query.' } } })
+    renderPage()
+
+    expect(await screen.findByText('Không tìm thấy tin tuyển dụng này trong tài khoản của bạn.')).toBeInTheDocument()
+    expect(screen.queryByText(/No Job matches/)).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Thử lại' })).not.toBeInTheDocument()
   })
 
   it('falls back to the CV tab for an unknown active_tab', async () => {

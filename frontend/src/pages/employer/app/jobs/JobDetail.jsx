@@ -1,19 +1,15 @@
 import {
+  ArrowLeftOutlined,
   EyeOutlined,
   FileTextOutlined,
-  LinkOutlined,
   TagsOutlined,
   TeamOutlined,
 } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Alert, Select, Skeleton, Tabs } from 'antd'
+import { Alert, Button, Segmented, Skeleton, Tabs } from 'antd'
 import dayjs from 'dayjs'
-import { useMemo, useState } from 'react'
-import { useParams, useSearchParams } from 'react-router'
-import {
-  applicationKeys,
-  getRecruiterApplications,
-} from '@/entities/application'
+import { useState } from 'react'
+import { Link, useParams, useSearchParams } from 'react-router'
 import {
   closeEmployerJob,
   extendEmployerJob,
@@ -28,74 +24,56 @@ import {
   useEmployerReadiness,
 } from '@/entities/employer-profile'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
+import { employerAppPath } from '@/shared/config/portals'
 import { message } from '@/shared/lib/toast'
+import useConfirmAction from '@/shared/ui/use-confirm-action'
 import JobApplicationsWorkspace from './JobApplicationsWorkspace'
 import JobDetailHeader from './JobDetailHeader'
+import JobEngagementPanel from './JobEngagementPanel'
 import JobInformationPanel from './JobInformationPanel'
 import JobLifecycleModal from './JobLifecycleModal'
 import JobVisibilityHoldAlert from './JobVisibilityHoldAlert'
+import {
+  JOB_DETAIL_TABS,
+  applicationSummary,
+  deadlineBounds,
+  publicJobUrl,
+} from './job-detail-presentation'
+import { formatCount, jobDisplayTitle } from './job-list-presentation'
+import './employer-jobs.css'
 
-const CONNECTED_STATUSES = new Set(['considering', 'shortlisted', 'interviewed', 'accepted'])
-const VALID_TABS = new Set(['apply_cv', 'viewed_job', 'job', 'cv_label'])
-const EMPTY_APPLICATIONS = []
 const FALLBACK_DEADLINE_POLICY = {
   default_deadline_days: 30,
   max_deadline_days: 90,
   max_public_lifetime_days: 90,
 }
-
-function MetricCard({ icon, label, value, helper, tone = 'emerald', testId }) {
-  const tones = {
-    emerald: 'bg-emerald-50 text-emerald-600',
-    blue: 'bg-blue-50 text-blue-600',
-    violet: 'bg-violet-50 text-violet-600',
-    amber: 'bg-amber-50 text-amber-600',
-  }
-  return (
-    <article data-testid={testId} className="min-w-0 rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</p>
-          <p className="mt-2 text-2xl font-black text-slate-900">{value}</p>
-        </div>
-        <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-lg ${tones[tone]}`}>
-          {icon}
-        </span>
-      </div>
-      <p className="mt-2 truncate text-xs text-slate-400" title={helper}>{helper}</p>
-    </article>
-  )
-}
-
-function ViewedCandidatesPanel({ viewCount }) {
-  return (
-    <div className="grid gap-4 p-4 sm:p-5 lg:grid-cols-[minmax(0,1fr)_280px]">
-      <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-6 text-center sm:p-10">
-        <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-blue-100 text-2xl text-blue-600"><EyeOutlined /></span>
-        <h2 className="mt-4 text-base font-bold text-slate-800">Dữ liệu lượt xem tin tuyển dụng</h2>
-        <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-slate-500">
-          Hệ thống hiện ghi nhận lượt xem tổng hợp và không lưu danh tính ứng viên chỉ xem tin nhưng chưa ứng tuyển.
-        </p>
-      </div>
-      <aside className="rounded-xl border border-blue-100 bg-blue-50 p-5">
-        <p className="text-sm font-semibold text-blue-700">Tổng lượt xem</p>
-        <p className="mt-2 text-4xl font-black text-blue-700">{viewCount || 0}</p>
-        <p className="mt-2 text-xs leading-5 text-blue-600">Số liệu được cập nhật từ thống kê của tin tuyển dụng.</p>
-      </aside>
-    </div>
-  )
+const TAB_META = {
+  apply_cv: { icon: <TeamOutlined />, label: 'CV ứng tuyển', short: 'Ứng tuyển' },
+  viewed_job: { icon: <EyeOutlined />, label: 'Ứng viên đã xem tin', short: 'Lượt xem' },
+  job: { icon: <FileTextOutlined />, label: 'Thông tin tuyển dụng', short: 'Thông tin' },
+  cv_label: { icon: <TagsOutlined />, label: 'Nhãn', short: 'Nhãn' },
 }
 
 function LabelsPanel() {
   return (
-    <div className="p-4 sm:p-5">
-      <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-8 text-center">
-        <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-violet-100 text-2xl text-violet-600"><TagsOutlined /></span>
-        <h2 className="mt-4 font-bold text-slate-800">Nhãn quản lý CV đang được hoàn thiện</h2>
-        <p className="mt-2 text-sm text-slate-500">Khi tính năng được mở, bạn có thể phân nhóm và lọc ứng viên theo nhãn ngay tại đây.</p>
-        <span className="mt-4 inline-flex rounded-full bg-slate-200 px-3 py-1 text-xs font-semibold text-slate-600">Sắp mở</span>
-      </div>
+    <div className="flex flex-col items-center px-4 py-12 text-center">
+      <span className="flex h-12 w-12 items-center justify-center rounded-full bg-violet-50 text-xl text-violet-600"><TagsOutlined /></span>
+      <h2 className="mt-3 text-base font-bold text-slate-800">Nhãn CV sắp ra mắt</h2>
+      <p className="mt-1 max-w-sm text-sm text-slate-500">Bạn sẽ gắn nhãn và lọc ứng viên theo nhãn ngay tại đây.</p>
     </div>
+  )
+}
+
+function JobDetailSkeleton() {
+  return (
+    <section className="space-y-4 pb-4 pt-3" aria-label="Đang tải tin tuyển dụng">
+      <div className="rounded-xl border border-slate-200 bg-white p-5">
+        <Skeleton active title={{ width: '45%' }} paragraph={{ rows: 2, width: ['70%', '40%'] }} />
+      </div>
+      <div className="rounded-xl border border-slate-200 bg-white p-5">
+        <Skeleton active paragraph={{ rows: 6 }} />
+      </div>
+    </section>
   )
 }
 
@@ -103,6 +81,7 @@ export default function JobDetail() {
   const { publicId } = useParams()
   const [searchParams, setSearchParams] = useSearchParams()
   const queryClient = useQueryClient()
+  const { confirmationModal, requestConfirmation } = useConfirmAction()
   const [deadlineAction, setDeadlineAction] = useState(null)
   const [newDeadline, setNewDeadline] = useState(null)
   const [commitmentAccepted, setCommitmentAccepted] = useState(false)
@@ -114,7 +93,8 @@ export default function JobDetail() {
     canAccessCandidateData,
   } = useEmployerReadiness()
   const requestedTab = searchParams.get('active_tab')
-  const activeTab = VALID_TABS.has(requestedTab) ? requestedTab : 'apply_cv'
+  const activeTab = JOB_DETAIL_TABS.includes(requestedTab) ? requestedTab : 'apply_cv'
+  const cvFilter = searchParams.get('cv_filter') || 'all'
   const jobQuery = useQuery({
     queryKey: jobKeys.employerDetail(publicId),
     queryFn: () => getEmployerJob(publicId),
@@ -123,30 +103,6 @@ export default function JobDetail() {
     queryKey: jobKeys.postingContext,
     queryFn: getJobPostingContext,
   })
-  const applicationsQuery = useQuery({
-    queryKey: applicationKeys.recruiterList({ job: publicId }),
-    queryFn: () => getRecruiterApplications({ job: publicId }),
-    enabled: canAccessCandidateData,
-  })
-  const applications = canAccessCandidateData
-    ? applicationsQuery.data || EMPTY_APPLICATIONS
-    : EMPTY_APPLICATIONS
-  const metrics = useMemo(() => ({
-    total: canAccessCandidateData && !applicationsQuery.isLoading
-      ? applications.length
-      : (jobQuery.data?.application_count || 0),
-    applied: canAccessCandidateData
-      ? applications.filter((item) => item.source === 'applied').length
-      : '—',
-    connected: canAccessCandidateData
-      ? applications.filter((item) => CONNECTED_STATUSES.has(item.status)).length
-      : '—',
-  }), [
-    applications,
-    applicationsQuery.isLoading,
-    canAccessCandidateData,
-    jobQuery.data?.application_count,
-  ])
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: jobKeys.employerDetail(publicId) })
@@ -158,6 +114,7 @@ export default function JobDetail() {
       invalidate()
       message.success('Đã đóng tin.')
     },
+    onError: (error) => message.error(getApiErrorMessage(error, 'Không thể đóng tin.')),
   })
   const deadlineMutation = useMutation({
     mutationFn: ({ action, deadline, acceptedStatementVersion }) => (
@@ -206,116 +163,128 @@ export default function JobDetail() {
     })
   }
 
-  function selectTab(tab) {
+  function updateParams(changes) {
     const next = new URLSearchParams(searchParams)
-    next.set('active_tab', tab)
+    Object.entries(changes).forEach(([key, value]) => {
+      if (value) next.set(key, value)
+      else next.delete(key)
+    })
     setSearchParams(next, { replace: true })
   }
 
-  if (jobQuery.isLoading) return <Skeleton active paragraph={{ rows: 12 }} />
-  if (jobQuery.isError) return <Alert type="error" showIcon title="Không thể tải tin tuyển dụng." />
-  const job = jobQuery.data
-  const deadlinePolicy = postingContextQuery.data || FALLBACK_DEADLINE_POLICY
-  const today = dayjs().startOf('day')
-  const maximumByToday = today.add(deadlinePolicy.max_deadline_days, 'day')
-  const maximumByPublicLifetime = deadlineAction === 'extend' && job.first_approved_at
-    ? dayjs(job.first_approved_at).startOf('day').add(
-        deadlinePolicy.max_public_lifetime_days,
-        'day',
-      )
-    : maximumByToday
-  const maximumByVisibility = job.visibility_ends_at
-    ? dayjs(job.visibility_ends_at).startOf('day')
-    : maximumByPublicLifetime
-  const maximumByPolicy = maximumByPublicLifetime.isBefore(maximumByToday, 'day')
-    ? maximumByPublicLifetime
-    : maximumByToday
-  const latestDeadline = maximumByVisibility.isBefore(maximumByPolicy, 'day')
-    ? maximumByVisibility
-    : maximumByPolicy
-  const earliestDeadline = deadlineAction === 'extend' && job.deadline
-    ? dayjs(job.deadline).startOf('day')
-    : today
+  const selectTab = (tab) => updateParams({ active_tab: tab })
+  const selectCvFilter = (key) => updateParams({ active_tab: 'apply_cv', cv_filter: key === 'all' ? '' : key })
 
-  const tabs = [
-    {
-      key: 'apply_cv',
-      label: <span className="inline-flex items-center gap-2"><TeamOutlined /> CV ứng tuyển <strong>{metrics.applied}</strong></span>,
-      children: canAccessCandidateData ? (
-        <JobApplicationsWorkspace
-          jobPublicId={publicId}
-          applications={applications}
-          loading={applicationsQuery.isLoading}
+  if (jobQuery.isLoading) return <JobDetailSkeleton />
+  if (jobQuery.isError) {
+    const notFound = jobQuery.error?.response?.status === 404
+    return (
+      <section className="space-y-3 pb-4 pt-3">
+        <Link to={employerAppPath('/jobs')} className="inline-flex items-center gap-1.5 text-xs font-medium !text-slate-500 hover:!text-emerald-700">
+          <ArrowLeftOutlined aria-hidden /> Tin tuyển dụng
+        </Link>
+        <Alert
+          type="error"
+          showIcon
+          title={notFound
+            ? 'Không tìm thấy tin tuyển dụng này trong tài khoản của bạn.'
+            : `Không thể tải tin tuyển dụng. ${getApiErrorMessage(jobQuery.error, 'Vui lòng thử lại sau.')}`}
+          action={notFound ? null : <Button size="small" danger onClick={() => jobQuery.refetch()}>Thử lại</Button>}
         />
-      ) : (
-        <div className="p-4 sm:p-5">
-          <EmployerReadinessGateState
-            compact
-            capability={EMPLOYER_CAPABILITIES.CANDIDATE_DATA}
-            checking={readinessChecking}
-            error={readinessError}
-            readiness={readiness}
-            onRetry={profileQuery.refetch}
-          />
-        </div>
-      ),
-    },
-    {
-      key: 'viewed_job',
-      label: <span className="inline-flex items-center gap-2"><EyeOutlined /> Ứng viên đã xem tin</span>,
-      children: <ViewedCandidatesPanel viewCount={job.view_count} />,
-    },
-    {
-      key: 'job',
-      label: <span className="inline-flex items-center gap-2"><FileTextOutlined /> Thông tin tuyển dụng</span>,
-      children: <JobInformationPanel job={job} />,
-    },
-    {
-      key: 'cv_label',
-      label: <span className="inline-flex items-center gap-2"><TagsOutlined /> Nhãn</span>,
-      children: <LabelsPanel />,
-    },
-  ]
+      </section>
+    )
+  }
+  const job = jobQuery.data
+  const summary = applicationSummary(job)
+  const bounds = deadlineBounds(job, deadlineAction, postingContextQuery.data || FALLBACK_DEADLINE_POLICY)
+  const panels = {
+    apply_cv: canAccessCandidateData ? (
+      <JobApplicationsWorkspace
+        jobPublicId={publicId}
+        summary={summary}
+        filter={cvFilter}
+        onFilterChange={selectCvFilter}
+        publicUrl={publicJobUrl(job)}
+      />
+    ) : (
+      <div className="p-4 sm:p-5">
+        <EmployerReadinessGateState
+          compact
+          capability={EMPLOYER_CAPABILITIES.CANDIDATE_DATA}
+          checking={readinessChecking}
+          error={readinessError}
+          readiness={readiness}
+          onRetry={profileQuery.refetch}
+        />
+      </div>
+    ),
+    viewed_job: <JobEngagementPanel job={job} applicants={summary.total} />,
+    job: <JobInformationPanel job={job} />,
+    cv_label: <LabelsPanel />,
+  }
 
   return (
-    <section className="mx-auto max-w-[1320px] space-y-4 pb-4">
+    <section className="space-y-3 pb-4 pt-3">
       <JobDetailHeader
         job={job}
         publicId={publicId}
+        summary={summary}
         closing={closeMutation.isPending}
-        onClose={() => closeMutation.mutate(publicId)}
         onDeadlineAction={openDeadlineAction}
+        onSelectFilter={selectCvFilter}
+        onClose={() => requestConfirmation({
+          cancelText: 'Đóng',
+          confirmText: 'Đóng tin',
+          danger: true,
+          description: (
+            <>
+              Bạn có chắc muốn đóng tin tuyển dụng <strong>{jobDisplayTitle(job)}</strong> không?
+              <br />
+              Tin sẽ ngừng hiển thị với ứng viên.
+            </>
+          ),
+          onConfirm: () => closeMutation.mutateAsync(publicId),
+          title: 'Đóng tin tuyển dụng',
+        })}
       />
 
       <JobVisibilityHoldAlert hold={job.visibility_hold} />
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <MetricCard testId="job-metric-total-cvs" icon={<TeamOutlined />} label="Tổng lượng CV ứng viên" value={metrics.total} helper="Tất cả nguồn CV của tin" />
-        <MetricCard testId="job-metric-applied-cvs" icon={<FileTextOutlined />} label="CV ứng tuyển" value={metrics.applied} helper="Ứng viên chủ động nộp CV" tone="blue" />
-        <MetricCard testId="job-metric-connected-cvs" icon={<LinkOutlined />} label="CV đã kết nối" value={metrics.connected} helper="Cân nhắc, phù hợp hoặc đã phỏng vấn" tone="violet" />
-        <MetricCard testId="job-metric-views" icon={<EyeOutlined />} label="Lượt xem tin" value={job.view_count || 0} helper="Tổng lượt xem được ghi nhận" tone="amber" />
-      </div>
-
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div className="border-b border-slate-100 p-3 sm:hidden">
-          <Select
+      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xs">
+        <div className="border-b border-slate-100 p-2 sm:hidden">
+          <Segmented
+            block
             aria-label="Chọn nội dung quản lý tin"
             value={activeTab}
-            className="!w-full"
-            options={[
-              { value: 'apply_cv', label: `CV ứng tuyển (${metrics.applied})` },
-              { value: 'viewed_job', label: 'Ứng viên đã xem tin' },
-              { value: 'job', label: 'Thông tin tuyển dụng' },
-              { value: 'cv_label', label: 'Nhãn' },
-            ]}
             onChange={selectTab}
+            options={JOB_DETAIL_TABS.map((key) => ({
+              value: key,
+              title: TAB_META[key].label,
+              label: (
+                <span className="flex flex-col items-center gap-0.5 py-1 text-[11px] font-semibold leading-tight">
+                  {TAB_META[key].icon}
+                  {TAB_META[key].short}
+                </span>
+              ),
+            }))}
           />
         </div>
         <Tabs
           activeKey={activeTab}
-          items={tabs}
           onChange={selectTab}
-          className="job-detail-tabs [&_.ant-tabs-content-holder]:min-w-0 [&_.ant-tabs-nav]:!hidden sm:[&_.ant-tabs-nav]:!mb-0 sm:[&_.ant-tabs-nav]:!flex sm:[&_.ant-tabs-nav]:px-5 [&_.ant-tabs-tab]:!py-4"
+          className="job-detail-tabs"
+          items={JOB_DETAIL_TABS.map((key) => ({
+            key,
+            label: (
+              <span className="inline-flex items-center gap-2">
+                {TAB_META[key].icon} {TAB_META[key].label}
+                {key === 'apply_cv' && (
+                  <span className="job-filter-tab__count">{formatCount(summary.total)}</span>
+                )}
+              </span>
+            ),
+            children: panels[key],
+          }))}
         />
       </div>
 
@@ -324,16 +293,15 @@ export default function JobDetail() {
         commitment={postingContextQuery.data?.responsibility_statement}
         commitmentAccepted={commitmentAccepted}
         deadline={newDeadline}
-        earliestDeadline={earliestDeadline}
-        latestDeadline={latestDeadline}
+        earliestDeadline={bounds.earliest}
+        latestDeadline={bounds.latest}
         loading={deadlineMutation.isPending}
-        onCancel={() => {
-          setDeadlineAction(null)
-        }}
+        onCancel={() => setDeadlineAction(null)}
         onCommitmentChange={setCommitmentAccepted}
         onDeadlineChange={setNewDeadline}
         onSubmit={submitDeadlineAction}
       />
+      {confirmationModal}
     </section>
   )
 }
