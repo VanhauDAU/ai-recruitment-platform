@@ -1,6 +1,11 @@
 # Đặc tả chatbot ứng viên — FAQ tìm việc (retrieval)
 
-> Trạng thái: **CB-P0 — Đặc tả đã chốt hướng triển khai**
+> Trạng thái: **CB-P0 — Đặc tả đã chốt hướng triển khai; tạm dừng, chưa có UI**
+>
+> **2026-11-14:** widget `candidate-assistant` (nút "Trợ lý ProCV" góc phải
+> dưới) đã bị gỡ khỏi dự án. Epic chatbot chưa có backend nên không còn mã
+> nào thực thi đặc tả này; nếu mở lại CB-P2 phải dựng UI mới thay vì nối vào
+> widget cũ. Các tham chiếu `candidate-assistant` bên dưới là lịch sử.
 >
 > Phạm vi ưu tiên: **Cổng ứng viên / public MainLayout; chỉ FAQ tìm việc & ứng tuyển**
 >
@@ -10,7 +15,7 @@
 >
 > Nguồn nền: [đặc tả trung tâm trợ giúp](../01-phan-tich/dac-ta-trung-tam-tro-giup.md) (KB-P0…KB-P6 **đã hoàn tất**),
 > [đặc tả trung tâm trợ giúp — Việc còn mở](../01-phan-tich/dac-ta-trung-tam-tro-giup.md),
-> UI sẵn có `widgets/candidate-assistant`
+> UI `widgets/candidate-assistant` (đã gỡ 2026-11-14)
 >
 > Biên bản quyết định session: [chatbot-local-decision-log.md](../02-tong-quan/chatbot-local-decision-log.md)
 
@@ -26,9 +31,7 @@ FAQ publish (semantic search), **không** sinh câu trả lời tự do bằng L
 | --- | --- |
 | Help Center public `/tro-giup` | Đã ship (`apps.knowledgebase`, KB-P0…P6) |
 | Public search FAQ | `search_q` (unaccent) trên title/body publish |
-| UI trợ lý | `widgets/candidate-assistant` (launcher, panel, mascot, progressive text) |
-| Logic trả lời | Kịch bản keyword tĩnh trong `model/assistant-script.js` — **chưa gọi API** |
-| Architecture note | Panel lazy-load; phase 1 hiện tại “không gọi API chatbot” (cần cập nhật khi ship CB-P2) |
+| UI trợ lý | **Đã gỡ** (2026-11-14) — widget `candidate-assistant` với kịch bản keyword tĩnh không còn trong repo |
 | Embedding / pgvector / Ollama | **Chưa có** trong repo |
 | App `chatbot` backend | **Chưa có** |
 
@@ -88,7 +91,7 @@ Mở rộng whitelist sau phải cập nhật doc + env/setting allowlist + rein
 | Semantic index | **pgvector** trên PostgreSQL hiện tại | Vector cùng DB, không service search riêng |
 | Embedding model | **`qwen3-embedding:0.6b` qua Ollama** (local) | Khớp hợp đồng FAQ mục 20 |
 | Lexical fallback | `common.db.search.search_q` | Khi Ollama down hoặc điểm thấp |
-| UI | Giữ `widgets/candidate-assistant` | Thay script tĩnh bằng hook gọi API |
+| UI | Dựng widget mới khi mở CB-P2 | Widget `candidate-assistant` cũ đã gỡ 2026-11-14 |
 | Backend app | `apps.chatbot` trong monolith | ADR-0010; không microservice |
 | Nguồn kiến thức | Chỉ revision **APPROVED + published** + category active | Re-export từ `knowledgebase.services` |
 | Auth | `AllowAny` + throttle IP | Khách + ứng viên |
@@ -479,9 +482,8 @@ Heuristic map category → actions (gợi ý):
 
 ## 16. Tham chiếu code hiện tại
 
-- UI: `frontend/src/widgets/candidate-assistant/`
-- Script tĩnh: `.../model/assistant-script.js`, `use-assistant-script.js`
+- UI: chưa có (widget `candidate-assistant` đã gỡ 2026-11-14)
 - Layout mount: `frontend/src/app/layouts/MainLayout.jsx`
 - KB public read: `backend/apps/knowledgebase/selectors/public.py`
 - KB contract chatbot: FAQ doc mục 20
-- Architecture: `frontend/ARCHITECTURE.md` (ownership mascot/assistant)
+- Architecture: `frontend/ARCHITECTURE.md` (ownership mascot)

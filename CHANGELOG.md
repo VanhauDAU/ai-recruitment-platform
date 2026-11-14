@@ -8,6 +8,12 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-14
 
+#### Removed — Widget Trợ lý ProCV ở cổng ứng viên
+
+- Gỡ nút nổi "Trợ lý ProCV" góc phải dưới cùng panel chat kịch bản tĩnh
+  (`widgets/candidate-assistant`) khỏi `MainLayout`. Không đổi backend hay API.
+- Đặc tả chatbot ứng viên (CB-P0) ghi chú tạm dừng; CB-P2 cần UI mới.
+
 #### Removed — Phòng ban, chức danh và nhân viên quản trị (ADR-0018)
 
 - Theo [ADR-0018](docs/02-tong-quan/adr-0018-remove-admin-rbac.md): cổng quản

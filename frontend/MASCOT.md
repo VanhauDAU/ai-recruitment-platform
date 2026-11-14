@@ -8,8 +8,6 @@ Phase 1 tích hợp mascot vào portal ứng viên đã gồm:
   `error`), bảy pose (`neutral`, `wave`, `thumbsUp`, `checklist`,
   `frameGrip`, `coverEyes`, `peek`), hướng nhìn xuống,
   blink, talk, float và hai loại shadow;
-- trợ lý mẫu sticky, panel lazy-load, hội thoại theo từ khóa, quick action điều
-  hướng thật và liên hệ lấy từ site settings;
 - mascot ở hero trang chủ với patrol animation phía trên cụm tìm kiếm, tự đổi
   cảm xúc/pose; cùng các empty state tìm việc, việc đã lưu, CV, hồ sơ đã ứng
   tuyển và việc làm phù hợp;
@@ -18,15 +16,17 @@ Phase 1 tích hợp mascot vào portal ứng viên đã gồm:
 - blink và talk đều dùng hai animation nghịch đảo: lớp mắt thường ẩn đúng lúc
   lớp mắt nhắm xuất hiện, lớp miệng theo cảm xúc ẩn đúng lúc lớp miệng mở xuất
   hiện — tránh chồng hai bộ mắt hoặc hai khẩu hình (rõ nhất ở `success`);
-- xử lý va chạm với banner cookie theo chiều cao thực tế, thanh ứng tuyển mobile
-  và `prefers-reduced-motion`;
+- tôn trọng `prefers-reduced-motion`;
 - form đăng nhập/đăng ký ứng viên: mắt nhìn xuống khi nhập email, che hai mắt
   khi nhập mật khẩu ẩn và hé một mắt khi người dùng bật hiển thị mật khẩu; robot
   nằm ngoài card và dùng hai bàn tay bám vào mép trên nên không chiếm chỗ form;
-- unit/regression test và smoke test responsive cho workflow trợ lý.
+- unit/regression test cho rig mascot.
+
+Trợ lý mẫu sticky (`widgets/candidate-assistant`) từng thuộc phase 1 đã bị gỡ
+ngày 2026-11-14.
 
 Phase này không thay đổi backend, API payload, route, auth guard, storage token
-hoặc `BrandLoader`. Chatbot luôn ghi rõ câu trả lời đang dùng kịch bản mẫu.
+hoặc `BrandLoader`.
 Onboarding phỏng vấn cũng giữ nguyên payload `PUT /api/candidate/job-preferences/`
 và cờ `job_preferences_configured`.
 

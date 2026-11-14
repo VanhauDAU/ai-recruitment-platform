@@ -462,13 +462,12 @@ app/router + app/layouts
   `canAccessAdminRoute` chỉ đánh giá `requireSuperuser`; backend vẫn là nơi
   quyết định và trả `admin_permission_denied` khi từ chối.
 
-## Ownership map — Mascot và trợ lý ứng viên
+## Ownership map — Mascot
 
 ```text
-app/layouts/MainLayout + pages/main
-  → widgets/candidate-assistant
-    → shared/ui/mascot
-      → public/images/mascot
+pages/main, features/auth
+  → shared/ui/mascot
+    → public/images/mascot
 
 app/layouts/OnboardingLayout + pages/main/onboarding
   → widgets/onboarding-interview
@@ -483,18 +482,15 @@ app/layouts/OnboardingLayout + pages/main/onboarding
   miệng nói đều dùng cặp animation nghịch đảo để không bao giờ chồng hai khẩu
   hình hoặc hai bộ mắt. Animation phải tắt khi người dùng bật
   `prefers-reduced-motion`.
-- `widgets/candidate-assistant` sở hữu launcher, panel, kịch bản mẫu và quick
-  action của portal ứng viên. Panel được lazy-load khi mở lần đầu; phase 1 không
-  gọi API chatbot và phải hiển thị rõ đây là câu trả lời mẫu.
-- Widget chỉ mount trong nhánh thường của `MainLayout`, không mount trong CV
-  editor. Vị trí launcher phải tránh banner cookie theo chiều cao thực tế và
-  thanh ứng tuyển mobile ở trang chi tiết việc làm.
+- Cổng ứng viên không có widget trợ lý/chatbot nổi; widget
+  `candidate-assistant` (kịch bản tĩnh) đã gỡ 2026-11-14. Nếu mở lại epic
+  chatbot, dựng widget mới theo [đặc tả](../docs/07-algorithms/chatbot-ung-vien-faq.md).
 - `widgets/onboarding-interview` sở hữu cuộc phỏng vấn onboarding: kịch bản
   tĩnh, state machine năm bước và bản đồ trạng thái mascot. Widget compose
   `configure-job-preferences`; bước phỏng vấn giữ nguyên tên trường và payload
   `PUT` của form một trang.
-- `shared/hooks/use-progressive-reply` sở hữu hiệu ứng typewriter dùng chung cho
-  trợ lý và onboarding; nằm ở `shared` vì hai widget khác nhau đều cần.
+- `shared/hooks/use-progressive-reply` sở hữu hiệu ứng typewriter của
+  onboarding; giữ ở `shared` vì không biết domain và dùng lại được cho chat sau.
 - WebP trong `public/images/mascot` được tái tạo bằng
   `npm run build:mascot-assets -- --src <folder>`; không commit PNG nguồn hoặc
   các ảnh `states/` có thể dựng lại bằng rig.

@@ -842,61 +842,13 @@ test('public smoke: tablet floating actions stay inside the visual viewport', as
   await mockPublicApi(page)
   await page.goto('/')
 
-  const assistant = page.getByTestId('candidate-assistant')
   const support = page.getByTestId('floating-actions')
-  const initialAssistantBottom = await assistant.evaluate((element) => Number.parseFloat(getComputedStyle(element).bottom))
   const initialSupportBottom = await support.evaluate((element) => Number.parseFloat(getComputedStyle(element).bottom))
 
   await page.evaluate(() => window.visualViewport.setGeometry(880, 24))
   await expect.poll(
-    () => assistant.evaluate((element) => Number.parseFloat(getComputedStyle(element).bottom)),
-  ).toBeGreaterThan(initialAssistantBottom + 200)
-  await expect.poll(
     () => support.evaluate((element) => Number.parseFloat(getComputedStyle(element).bottom)),
   ).toBeGreaterThan(initialSupportBottom + 200)
-})
-
-test('public smoke: candidate assistant opens, replies and stays responsive', async ({ page }) => {
-  await mockPublicApi(page)
-  await page.goto('/')
-
-  const launcher = page.getByRole('button', { name: 'Mở trợ lý ProCV' })
-  await expect(launcher).toBeVisible()
-  await launcher.click()
-
-  const panel = page.getByRole('dialog', { name: 'Trợ lý ProCV' })
-  await expect(panel).toBeVisible()
-  await expect(panel.getByText('Trợ lý đang trong giai đoạn thử nghiệm, câu trả lời là mẫu có sẵn.')).toBeVisible()
-  await expect(panel.getByText(/Chào bạn/)).toBeVisible()
-
-  await panel.getByRole('textbox', { name: 'Nhập câu hỏi cho trợ lý' }).fill('Làm sao để tạo CV đẹp?')
-  await panel.getByRole('button', { name: 'Gửi câu hỏi' }).click()
-  await expect(panel.getByRole('status', { name: 'Trợ lý đang trả lời' })).toBeVisible()
-  const progressiveReplies = panel.locator('.assistant-message__bubble--bot [aria-hidden="true"]')
-  await expect(progressiveReplies).toHaveCount(1)
-  const progressiveReply = progressiveReplies.last()
-  await expect(progressiveReply).toBeVisible()
-  await expect(progressiveReply.locator('.assistant-message__caret')).toBeVisible()
-  await expect(progressiveReply).toHaveText(/Bạn có thể chọn mẫu CV/, { timeout: 8000 })
-  await expect(progressiveReply.locator('.assistant-message__caret')).toBeHidden()
-
-  // Response kế tiếp cũng phải khởi tạo typewriter mới, không kế thừa trạng
-  // thái completed/error của câu đầu tiên.
-  await panel.getByRole('textbox', { name: 'Nhập câu hỏi cho trợ lý' }).fill('Tôi muốn ứng tuyển')
-  await panel.getByRole('button', { name: 'Gửi câu hỏi' }).click()
-  await expect(progressiveReplies).toHaveCount(2)
-  const secondReply = progressiveReplies.last()
-  await expect(secondReply.locator('.assistant-message__caret')).toBeVisible()
-  await expect(secondReply.locator('.assistant-message__caret')).toBeHidden({ timeout: 8000 })
-  const messagesPinnedToBottom = await panel.locator('.assistant-panel__messages').evaluate(
-    (element) => element.scrollHeight - element.scrollTop - element.clientHeight < 2,
-  )
-  expect(messagesPinnedToBottom).toBe(true)
-
-  const hasHorizontalOverflow = await page.evaluate(
-    () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
-  )
-  expect(hasHorizontalOverflow).toBe(false)
 })
 
 test('public smoke: CV template colors change preview and detail offers the create flow', async ({ page }) => {

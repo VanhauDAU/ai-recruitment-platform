@@ -197,7 +197,7 @@ body {
 }
 
 /* Trang có thanh hành động cố định ở đáy màn hẹp (vd. nút "Tạo CV" ở trang chi
-   tiết mẫu) gắn class này lên body; nút nổi Góp ý/Hỗ trợ/Trợ lý tự nâng lên. */
+   tiết mẫu) gắn class này lên body; nút nổi Góp ý/Hỗ trợ tự nâng lên. */
 @media (max-width: 1023.98px) {
   body.has-bottom-action-bar {
     --page-bottom-bar-height: 4.5rem;

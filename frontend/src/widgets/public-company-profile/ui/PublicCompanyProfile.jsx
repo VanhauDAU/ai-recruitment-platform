@@ -58,7 +58,7 @@ function CompanyTabs({ ref, slug, isJobsTab, jobCount }) {
 /** Thanh hành động dính đáy trên màn hẹp: nút theo dõi rồi tới nút xem việc làm. */
 function CompanyMobileCta({ children }) {
   useEffect(() => {
-    // Nút nổi (góp ý, trợ lý) tự nâng lên khỏi thanh này nhờ class trên body.
+    // Nút nổi (góp ý, hỗ trợ) tự nâng lên khỏi thanh này nhờ class trên body.
     document.body.classList.add('has-bottom-action-bar')
     return () => document.body.classList.remove('has-bottom-action-bar')
   }, [])

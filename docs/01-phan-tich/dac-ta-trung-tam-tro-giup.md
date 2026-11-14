@@ -276,7 +276,8 @@ mất dữ liệu. Quy trình bật/tắt nằm ở
 ## 8. Việc còn mở
 
 - **Chatbot/RAG (`KB-AI`):** chưa có chunk, embedding hay read function cho
-  chatbot; `widgets/candidate-assistant` vẫn chạy kịch bản tĩnh. Hợp đồng đã
+  chatbot; widget trợ lý kịch bản tĩnh `candidate-assistant` đã gỡ
+  (2026-11-14), cổng ứng viên hiện không có UI chatbot. Hợp đồng đã
   chốt: chỉ dùng revision approved đang publish của article active trong
   category active, gắn chunk với revision public ID + `content_hash`, re-export
   read function qua `apps.knowledgebase.services`, không lộ `source_reference`
