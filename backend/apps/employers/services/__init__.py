@@ -38,7 +38,6 @@ from .company_page import (
 from .company_page_content import PAGE_CONTENT_FIELDS, normalize_page_content_changes
 from .company_page_editors import grant_company_page_editor, revoke_company_page_editor
 from .company_recovery import (
-    COMPANY_UNLINK_PERMISSION,
     CompanyUnlinkError,
     company_unlink_impact,
     confirm_company_unlink,
@@ -149,7 +148,6 @@ from .verification import (
 __all__ = [
     'BADGE_CRITERIA',
     'TRUST_REPORT_REASONS',
-    'COMPANY_UNLINK_PERMISSION',
     'COMPANY_DESCRIPTION_MIN_LENGTH',
     'CompanyUnlinkError',
     'company_unlink_impact',

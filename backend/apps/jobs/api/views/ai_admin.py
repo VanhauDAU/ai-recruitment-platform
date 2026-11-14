@@ -5,7 +5,7 @@ from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, extend_schema
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.accounts.permissions import HasAdminPermission
+from apps.accounts.permissions import AdminPortalPermission
 from apps.ai_core.services import AiRuntimeConfig
 
 from ...selectors import (
@@ -58,8 +58,7 @@ def _runtime_overview(policy):
 
 
 class AdminAiOverviewView(APIView):
-    permission_classes = [HasAdminPermission]
-    required_admin_permissions = {'GET': ['site_setting.view']}
+    permission_classes = [AdminPortalPermission]
     require_superuser = True
 
     @extend_schema(

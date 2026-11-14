@@ -12,6 +12,7 @@ from rest_framework import status
 from rest_framework.test import APIRequestFactory, APITestCase
 
 from apps.accounts.models import User
+from apps.accounts.tests.helpers import make_admin
 
 from ..models import (
     AnnouncementDailyMetric,
@@ -23,7 +24,7 @@ from ..services import (
     publish_announcement,
     record_consented_announcement_events,
 )
-from .announcement_helpers import create_admin_with_permissions, revision_payload
+from .announcement_helpers import revision_payload
 
 
 class AnnouncementStateApiTests(APITestCase):
@@ -285,10 +286,7 @@ class AnnouncementAnalyticsApiTests(APITestCase):
 
 class AnnouncementMetricAdminApiTests(APITestCase):
     def setUp(self):
-        self.viewer = create_admin_with_permissions(
-            'announcement.view',
-            email='announcement-metric-viewer@example.com',
-        )
+        self.viewer = make_admin('announcement-metric-viewer@example.com')
         announcement = create_announcement(
             actor=self.viewer,
             internal_name='Metric dashboard',
@@ -315,7 +313,7 @@ class AnnouncementMetricAdminApiTests(APITestCase):
             kwargs={'public_id': self.announcement.public_id},
         )
 
-    def test_view_permission_reads_server_aggregate_and_rates(self):
+    def test_regular_admin_reads_server_aggregate_and_rates(self):
         self.client.force_authenticate(self.viewer)
 
         response = self.client.get(self.url)
@@ -337,7 +335,7 @@ class AnnouncementMetricAdminApiTests(APITestCase):
         outsider = User.objects.create_user(
             email='announcement-metric-outsider@example.com',
             password='Password@123',
-            role=User.Role.ADMIN,
+            role=User.Role.EMPLOYER,
         )
         self.client.force_authenticate(outsider)
         denied = self.client.get(self.url)

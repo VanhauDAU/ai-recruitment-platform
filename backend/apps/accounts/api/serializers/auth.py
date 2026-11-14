@@ -8,7 +8,6 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, Toke
 from common.media_storage import media_url_from_value
 
 from ...models import User
-from ...selectors import admin_access_snapshot
 from ...services import login_guard
 from ...services.access import is_account_accessible
 
@@ -34,6 +33,14 @@ def password_field():
             ),
         ],
     )
+
+
+def admin_access_payload(user):
+    """Cấp quản trị của tài khoản admin (ADR-0018: superuser hoặc admin thường)."""
+
+    if not user.is_admin_role:
+        return None
+    return {'is_superuser': bool(user.is_superuser)}
 
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -212,7 +219,7 @@ class SessionUserSerializer(serializers.ModelSerializer):
         return self._employer_readiness(obj)['job_workspace_ready']
 
     def get_admin_access(self, obj):
-        return admin_access_snapshot(obj)
+        return admin_access_payload(obj)
 
 
 class ProfileUpdateSerializer(serializers.ModelSerializer):

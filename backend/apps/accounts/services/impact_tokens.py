@@ -1,6 +1,6 @@
 """Public account-domain wrappers for signed admin impact tokens."""
 
-from ..admin_access_rules import (
+from ..impact_token_rules import (
     InvalidImpactToken,
     StaleImpactToken,
     create_impact_token,

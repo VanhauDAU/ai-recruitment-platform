@@ -13,7 +13,7 @@ from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
-from apps.accounts.permissions import HasAdminPermission
+from apps.accounts.permissions import AdminPortalPermission
 from apps.privacy.services import load_consent
 from common.metrics import record_metric
 from common.pagination import StandardPagination
@@ -317,11 +317,7 @@ class AnnouncementRuntimeEventView(APIView):
     ),
 )
 class AdminAnnouncementListCreateView(generics.ListAPIView):
-    permission_classes = [HasAdminPermission]
-    required_admin_permissions = {
-        'GET': ['announcement.view'],
-        'POST': ['announcement.view', 'announcement.manage'],
-    }
+    permission_classes = [AdminPortalPermission]
     pagination_class = StandardPagination
 
     def get_queryset(self):
@@ -359,11 +355,7 @@ class AdminAnnouncementListCreateView(generics.ListAPIView):
     ),
 )
 class AdminAnnouncementDetailView(APIView):
-    permission_classes = [HasAdminPermission]
-    required_admin_permissions = {
-        'GET': ['announcement.view'],
-        'PATCH': ['announcement.view', 'announcement.manage'],
-    }
+    permission_classes = [AdminPortalPermission]
 
     def get(self, request, public_id):
         announcement = _announcement(request, public_id)
@@ -401,8 +393,7 @@ class AdminAnnouncementDetailView(APIView):
     tags=['site-announcements-admin'],
 )
 class AdminAnnouncementRevisionCreateView(APIView):
-    permission_classes = [HasAdminPermission]
-    required_admin_permissions = {'POST': ['announcement.view', 'announcement.manage']}
+    permission_classes = [AdminPortalPermission]
 
     def post(self, request, public_id):
         announcement = _announcement(request, public_id)
@@ -423,8 +414,7 @@ class AdminAnnouncementRevisionCreateView(APIView):
 
 
 class AdminAnnouncementActionView(APIView):
-    permission_classes = [HasAdminPermission]
-    required_admin_permissions = {'POST': ['announcement.view', 'announcement.publish']}
+    permission_classes = [AdminPortalPermission]
     announcement_action = None
 
     @extend_schema(
@@ -500,8 +490,7 @@ class AdminAnnouncementResetDismissalsView(AdminAnnouncementActionView):
     tags=['site-announcements-admin'],
 )
 class AdminAnnouncementDuplicateView(APIView):
-    permission_classes = [HasAdminPermission]
-    required_admin_permissions = {'POST': ['announcement.view', 'announcement.manage']}
+    permission_classes = [AdminPortalPermission]
 
     def post(self, request, public_id):
         announcement = _announcement(request, public_id)
@@ -527,8 +516,7 @@ class AdminAnnouncementDuplicateView(APIView):
     tags=['site-announcements-admin'],
 )
 class AdminAnnouncementMetricView(APIView):
-    permission_classes = [HasAdminPermission]
-    required_admin_permissions = {'GET': ['announcement.view']}
+    permission_classes = [AdminPortalPermission]
 
     def get(self, request, public_id):
         announcement = get_object_or_404(Announcement, public_id=public_id)
@@ -596,8 +584,7 @@ class AdminAnnouncementMetricView(APIView):
 class AdminAnnouncementBackgroundUploadView(APIView):
     """Upload ảnh nền strip (JPEG/PNG/WebP, ngang hẹp, ≤1 MB)."""
 
-    permission_classes = [HasAdminPermission]
-    required_admin_permissions = {'POST': ['announcement.view', 'announcement.manage']}
+    permission_classes = [AdminPortalPermission]
     parser_classes = [MultiPartParser, FormParser]
 
     def post(self, request):

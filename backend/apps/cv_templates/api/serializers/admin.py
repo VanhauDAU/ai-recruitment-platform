@@ -1,7 +1,6 @@
 from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import serializers
 
-from apps.accounts.permissions import require_admin_permission
 from apps.cvs.models import CvAsset
 from apps.jobs.models import JobCategory
 from common.media_storage import media_url_from_value
@@ -20,48 +19,6 @@ from ...models import (
     ExperienceBand,
 )
 from ...renderers import layout_registry
-
-PROTECTED_LIFECYCLE_FIELDS = {
-    'CvTemplate': ('lifecycle_status', 'current_published_version'),
-    'CvCategory': ('is_active',),
-    'CvColor': ('is_active',),
-    'CvAsset': ('is_active',),
-    'CvSampleContent': ('status', 'published_at'),
-}
-
-
-def _is_published_state(field, value):
-    if field == 'is_active':
-        return value is True
-    if field in {'status', 'lifecycle_status'}:
-        return value == 'published'
-    return value is not None
-
-
-class LifecycleFieldGuardMixin:
-    """Protect public lifecycle transitions independently from edit access."""
-
-    def _lifecycle_fields(self):
-        return PROTECTED_LIFECYCLE_FIELDS.get(self.Meta.model.__name__, ())
-
-    def validate(self, attrs):
-        request = self.context.get('request')
-        if request is None:
-            return super().validate(attrs)
-
-        for field in self._lifecycle_fields():
-            if field not in attrs:
-                continue
-            after = attrs[field]
-            if self.instance is None:
-                if _is_published_state(field, after):
-                    require_admin_permission(request.user, 'cv_template.publish')
-                continue
-
-            # Bật/tắt hiển thị hay lưu trữ đều là quyền phát hành (CVT-4).
-            if getattr(self.instance, field) != after:
-                require_admin_permission(request.user, 'cv_template.publish')
-        return super().validate(attrs)
 
 
 class CvTemplateVersionAdminSerializer(serializers.ModelSerializer):
@@ -95,7 +52,7 @@ class CvTemplateVersionAdminSerializer(serializers.ModelSerializer):
         return (getattr(user, 'full_name', '') or user.email) if user else ''
 
 
-class CvTemplateAdminSerializer(LifecycleFieldGuardMixin, serializers.ModelSerializer):
+class CvTemplateAdminSerializer(serializers.ModelSerializer):
     versions = CvTemplateVersionAdminSerializer(many=True, read_only=True)
     current_published_version_id = serializers.IntegerField(read_only=True)
     category_public_ids = serializers.SlugRelatedField(
@@ -219,7 +176,7 @@ class TemplatePreviewSerializer(serializers.Serializer):
     theme_color = serializers.RegexField(r'^#[0-9A-Fa-f]{6}$', required=False)
 
 
-class CvCategoryAdminSerializer(LifecycleFieldGuardMixin, serializers.ModelSerializer):
+class CvCategoryAdminSerializer(serializers.ModelSerializer):
     # Số mẫu đang dùng (annotate ở viewset); mục đang dùng không xóa được.
     template_count = serializers.IntegerField(read_only=True, default=0)
 
@@ -229,7 +186,7 @@ class CvCategoryAdminSerializer(LifecycleFieldGuardMixin, serializers.ModelSeria
         read_only_fields = ['public_id', 'created_at', 'updated_at']
 
 
-class CvColorAdminSerializer(LifecycleFieldGuardMixin, serializers.ModelSerializer):
+class CvColorAdminSerializer(serializers.ModelSerializer):
     # Số mẫu đang dùng (annotate ở viewset); mục đang dùng không xóa được.
     template_count = serializers.IntegerField(read_only=True, default=0)
 
@@ -239,7 +196,7 @@ class CvColorAdminSerializer(LifecycleFieldGuardMixin, serializers.ModelSerializ
         read_only_fields = ['public_id', 'created_at', 'updated_at']
 
 
-class CvBackgroundAdminSerializer(LifecycleFieldGuardMixin, serializers.ModelSerializer):
+class CvBackgroundAdminSerializer(serializers.ModelSerializer):
     file = serializers.FileField(write_only=True, required=False)
     url = serializers.SerializerMethodField()
 
@@ -284,7 +241,7 @@ class PositionProfileField(serializers.SlugRelatedField):
         return obj.job_category.public_id
 
 
-class CvSampleContentAdminSerializer(LifecycleFieldGuardMixin, serializers.ModelSerializer):
+class CvSampleContentAdminSerializer(serializers.ModelSerializer):
     LOCKED_FIELD_NAMES = {'position_profile': 'position_public_id'}
 
     # Mã `JobCategory` của vị trí (null = nội dung chung, có thể chứa `{position}`).

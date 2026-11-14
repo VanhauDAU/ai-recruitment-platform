@@ -1,4 +1,4 @@
-"""Shared deterministic rules for RBAC services and selectors.
+"""Signed impact tokens for two-step administrator confirmations.
 
 This module deliberately performs no database queries and imports no DRF code.
 """
@@ -18,23 +18,6 @@ class InvalidImpactToken(ValueError):
 
 class StaleImpactToken(ValueError):
     """The preview no longer describes the requested operation."""
-
-
-def select_primary_successor(memberships, *, excluded_membership_ids=frozenset()):
-    """Select rank desc, assigned_at asc, id asc from already-valid memberships."""
-
-    excluded = set(excluded_membership_ids)
-    candidates = [item for item in memberships if item.pk not in excluded]
-    if not candidates:
-        return None
-    return min(
-        candidates,
-        key=lambda item: (
-            -item.role.rank,
-            item.assigned_at,
-            item.pk,
-        ),
-    )
 
 
 def normalize_impact_payload(payload):

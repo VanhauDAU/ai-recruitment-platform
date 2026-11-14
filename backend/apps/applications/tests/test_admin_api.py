@@ -3,8 +3,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from apps.accounts.models import AdminPermission, AdminRole, Department
-from apps.accounts.services import assign_membership
+from apps.accounts.tests.helpers import make_admin
 from apps.cv_templates.tests.factories import make_published_template
 from apps.cvs.services import create_v2_cv
 from apps.employers.models import Company
@@ -21,28 +20,7 @@ class AdminJobApplicationListTests(APITestCase):
             password='password',
             role=user_model.Role.EMPLOYER,
         )
-        self.admin = user_model.objects.create_user(
-            email='application-admin@example.com',
-            password='password',
-            role=user_model.Role.ADMIN,
-            is_staff=True,
-            is_superuser=True,
-        )
-        self.limited_admin = user_model.objects.create_user(
-            email='limited-application-admin@example.com',
-            password='password',
-            role=user_model.Role.ADMIN,
-        )
-        department = Department.objects.create(code='applications-audit', name='Kiểm tra hồ sơ')
-        role = AdminRole.objects.create(department=department, code='viewer', name='Người xem')
-        role.permissions.add(
-            AdminPermission.objects.create(
-                code='job_moderation.view',
-                module='job_moderation',
-                label='Xem tin tuyển dụng',
-            )
-        )
-        assign_membership(self.limited_admin, role, actor=self.admin)
+        self.admin = make_admin('application-admin@example.com')
         company = Company.objects.create(
             company_name='Application Audit Co', created_by=self.employer
         )
@@ -83,7 +61,7 @@ class AdminJobApplicationListTests(APITestCase):
             kwargs={'job_public_id': self.job.public_id},
         )
 
-    def test_authorized_admin_can_filter_and_read_application_contact(self):
+    def test_regular_admin_can_filter_and_read_application_contact(self):
         self.client.force_authenticate(self.admin)
 
         response = self.client.get(
@@ -99,8 +77,8 @@ class AdminJobApplicationListTests(APITestCase):
         self.assertEqual(application['submitted_cv_title'], 'CV Platform 3')
         self.assertTrue(application['data_processing_consent'])
 
-    def test_sensitive_contact_permission_is_required(self):
-        self.client.force_authenticate(self.limited_admin)
+    def test_non_admin_is_rejected(self):
+        self.client.force_authenticate(self.employer)
 
         response = self.client.get(self.url())
 

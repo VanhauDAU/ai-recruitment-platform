@@ -11,7 +11,7 @@ from ._admin_access import cli_actor_identifier, resolve_actor
 
 
 class Command(BaseCommand):
-    help = 'Tạo tài khoản admin thường không bypass RBAC.'
+    help = 'Tạo tài khoản admin thường (không phải superuser).'
 
     def add_arguments(self, parser):
         parser.add_argument('email')

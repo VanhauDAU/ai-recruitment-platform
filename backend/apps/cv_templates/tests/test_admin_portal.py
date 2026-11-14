@@ -6,8 +6,7 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
 from rest_framework.test import APIClient
 
-from apps.accounts.models import AdminPermission, AdminRole, Department
-from apps.accounts.services import assign_membership
+from apps.accounts.tests.helpers import make_admin
 
 from ..models import CvCategory, CvColor, CvSectionDefinition, CvTemplate, CvTemplateVersion
 from ..section_registry import section_definition_seed_data
@@ -24,22 +23,6 @@ SECTIONS = [
 ]
 
 
-def make_admin(email, *codes):
-    user = get_user_model().objects.create_user(email=email, password='Password@123', role='admin')
-    department, _ = Department.objects.get_or_create(code='content-cv', defaults={'name': 'CV'})
-    role = AdminRole.objects.create(department=department, code=email.split('@')[0], name=email)
-    role.permissions.add(
-        *[
-            AdminPermission.objects.get_or_create(
-                code=code, defaults={'module': code.split('.')[0], 'label': code}
-            )[0]
-            for code in ('cv_template.view', *codes)
-        ]
-    )
-    assign_membership(user, role, actor=user)
-    return user
-
-
 @override_settings(CACHES=LOCMEM)
 class TemplateWizardApiTests(TestCase):
     def setUp(self):
@@ -47,9 +30,7 @@ class TemplateWizardApiTests(TestCase):
             CvSectionDefinition.objects.update_or_create(
                 section_key=entry['section_key'], defaults=entry
             )
-        self.admin = make_admin(
-            'cv-wizard@example.com', 'cv_template.manage', 'cv_template.publish'
-        )
+        self.admin = make_admin('cv-wizard@example.com')
         self.client = APIClient()
         self.client.force_authenticate(self.admin)
         self.style = CvCategory.objects.create(
@@ -310,7 +291,7 @@ class LibraryAndPermissionTests(TestCase):
         self.client = APIClient()
 
     def test_library_items_in_use_cannot_be_deleted(self):
-        self.client.force_authenticate(make_admin('cv-library@example.com', 'cv_template.manage'))
+        self.client.force_authenticate(make_admin('cv-library@example.com'))
         used = CvColor.objects.create(name='Xanh', slug='xanh', hex_code='#00A66A')
         unused = CvColor.objects.create(name='Đỏ', slug='do', hex_code='#AA2233')
         template = CvTemplate.objects.create(name='Mẫu')
@@ -323,21 +304,19 @@ class LibraryAndPermissionTests(TestCase):
         self.assertIn('1 mẫu CV', str(blocked.data))
         self.assertEqual(deleted.status_code, 204)
 
-    def test_overview_and_generation_need_their_own_permissions(self):
-        manager = make_admin('cv-manage-only@example.com', 'cv_template.manage')
-        self.client.force_authenticate(manager)
+    def test_regular_admin_reaches_overview_and_generation_but_non_admin_is_rejected(self):
+        self.client.force_authenticate(make_admin('cv-overview@example.com'))
 
         overview = self.client.get('/api/v2/admin/cv-stats/overview/')
-        generate = self.client.post('/api/v2/admin/cv-sample-contents/generate/', {}, format='json')
         estimate = self.client.get('/api/v2/admin/cv-sample-generations/estimate/', {'count': 4})
 
         self.assertEqual(overview.status_code, 200)
         self.assertIn('samples_in_review', overview.data['todos'])
-        self.assertEqual(generate.status_code, 403)
-        self.assertEqual(estimate.status_code, 403)
+        self.assertEqual(estimate.status_code, 200)
+        self.assertEqual(estimate.data['count'], 4)
+        self.assertIsNone(estimate.data['estimated_cost_usd'])
 
-        self.client.force_authenticate(make_admin('cv-ai@example.com', 'cv_content.generate_ai'))
-        allowed = self.client.get('/api/v2/admin/cv-sample-generations/estimate/', {'count': 4})
-        self.assertEqual(allowed.status_code, 200)
-        self.assertEqual(allowed.data['count'], 4)
-        self.assertIsNone(allowed.data['estimated_cost_usd'])
+        self.client.force_authenticate(
+            get_user_model().objects.create_user(email='cv-candidate@example.com', password='x')
+        )
+        self.assertEqual(self.client.get('/api/v2/admin/cv-stats/overview/').status_code, 403)

@@ -6,7 +6,7 @@ from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.accounts.permissions import HasAdminPermission, has_admin_permission
+from apps.accounts.permissions import AdminPortalPermission
 from apps.employers.services import recruiter_job_posting_entitlement
 
 from ...models import JobReport
@@ -28,10 +28,7 @@ def _job_detail_response(job, user):
     serializer = AdminJobDetailSerializer(
         job,
         context={
-            'can_view_sensitive_contact': has_admin_permission(
-                user,
-                'job_moderation.view_sensitive_contact',
-            ),
+            'can_view_sensitive_contact': True,
             'employer_entitlement': entitlement,
         },
     )
@@ -60,8 +57,7 @@ def _job_detail_response(job, user):
     tags=['jobs-admin'],
 )
 class AdminJobModerationListView(generics.ListAPIView):
-    permission_classes = [HasAdminPermission]
-    required_admin_permissions = {'GET': ['job_moderation.view']}
+    permission_classes = [AdminPortalPermission]
     serializer_class = AdminJobManagementListSerializer
 
     def get_queryset(self):
@@ -74,8 +70,7 @@ class AdminJobModerationListView(generics.ListAPIView):
     tags=['jobs-admin'],
 )
 class AdminJobModerationSummaryView(APIView):
-    permission_classes = [HasAdminPermission]
-    required_admin_permissions = {'GET': ['job_moderation.view']}
+    permission_classes = [AdminPortalPermission]
 
     def get(self, request):
         return Response(admin_job_management_summary())
@@ -87,8 +82,7 @@ class AdminJobModerationSummaryView(APIView):
     tags=['jobs-admin'],
 )
 class AdminJobModerationDetailView(APIView):
-    permission_classes = [HasAdminPermission]
-    required_admin_permissions = {'GET': ['job_moderation.view']}
+    permission_classes = [AdminPortalPermission]
 
     def get(self, request, public_id):
         job = get_object_or_404(admin_job_detail_queryset(), public_id=public_id)
@@ -102,8 +96,7 @@ class AdminJobModerationDetailView(APIView):
     tags=['jobs-admin'],
 )
 class AdminJobDecisionView(APIView):
-    permission_classes = [HasAdminPermission]
-    required_admin_permissions = {'POST': ['job_moderation.enforce_visibility']}
+    permission_classes = [AdminPortalPermission]
 
     def post(self, request, public_id):
         job = get_object_or_404(admin_job_detail_queryset(), public_id=public_id)

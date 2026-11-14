@@ -8,8 +8,7 @@ from rest_framework.exceptions import APIException, ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.accounts.permissions import HasAdminPermission
-from apps.accounts.selectors import effective_permission_codes
+from apps.accounts.permissions import AdminPortalPermission
 from apps.cvs.models import CvAsset, CvDraft
 from apps.cvs.services import create_background_asset
 from apps.jobs.models import JobCategory
@@ -80,27 +79,8 @@ def _call(service, **kwargs):
 
 
 class AdminModelViewSet(viewsets.ModelViewSet):
-    permission_classes = [HasAdminPermission]
+    permission_classes = [AdminPortalPermission]
     pagination_class = None
-    required_admin_permissions = {
-        'list': ['cv_template.view'],
-        'retrieve': ['cv_template.view'],
-        'create': ['cv_template.manage'],
-        'update': ['cv_template.manage'],
-        'partial_update': ['cv_template.manage'],
-        'destroy': ['cv_template.manage'],
-    }
-
-    def _safe_create_overrides(self, serializer):
-        if 'cv_template.publish' in effective_permission_codes(self.request.user):
-            return {}
-        model = serializer.Meta.model
-        if hasattr(model, 'is_active'):
-            return {'is_active': False}
-        return {}
-
-    def perform_create(self, serializer):
-        serializer.save(**self._safe_create_overrides(serializer))
 
 
 class AdminCvTemplateViewSet(AdminModelViewSet):
@@ -112,22 +92,6 @@ class AdminCvTemplateViewSet(AdminModelViewSet):
         'versions__published_by',
         'versions__sections__section_definition',
     ).order_by('sort_order', 'name')
-    required_admin_permissions = {
-        **AdminModelViewSet.required_admin_permissions,
-        'create_version': ['cv_template.manage'],
-        'publish_version': ['cv_template.publish'],
-        'retire_version': ['cv_template.publish'],
-        'regenerate_snapshots': ['cv_template.manage'],
-        'configure_version': ['cv_template.manage'],
-        'set_colors': ['cv_template.manage'],
-        'preview': ['cv_template.view'],
-        'test_pdf': ['cv_template.manage'],
-        'test_pdf_result': ['cv_template.view'],
-        'checklist': ['cv_template.view'],
-        'duplicate': ['cv_template.manage'],
-        'reorder': ['cv_template.manage'],
-        'lifecycle': ['cv_template.publish'],
-    }
 
     def create(self, request, *args, **kwargs):
         """Tạo mẫu; gửi kèm `renderer_key` thì mẫu có ngay bản nháp đủ section và màu."""
@@ -371,12 +335,10 @@ class AdminCvBackgroundViewSet(UsageGuardMixin, AdminModelViewSet):
         upload = serializer.validated_data.get('file')
         if upload is None:
             raise ValidationError({'file': 'This field is required.'})
-        can_publish = 'cv_template.publish' in effective_permission_codes(request.user)
         with transaction.atomic():
             asset = create_background_asset(
                 upload=upload,
                 title=serializer.validated_data.get('title', ''),
-                is_active=can_publish,
             )
         return Response(
             self.get_serializer(asset).data,
@@ -416,13 +378,6 @@ class SampleGenerationRejected(APIException):
 class AdminCvSampleContentViewSet(AdminModelViewSet):
     serializer_class = CvSampleContentAdminSerializer
     lookup_field = 'public_id'
-    required_admin_permissions = {
-        **AdminModelViewSet.required_admin_permissions,
-        'preview': ['cv_template.view'],
-        'publish': ['cv_template.publish'],
-        'archive': ['cv_template.publish'],
-        'generate': ['cv_content.generate_ai'],
-    }
     FILTERS = {
         'position': 'position_profile__job_category__public_id',
         'locale': 'locale',
@@ -480,10 +435,6 @@ class AdminCvSampleGenerationViewSet(AdminModelViewSet):
     serializer_class = CvSampleGenerationSerializer
     lookup_field = 'public_id'
     http_method_names = ['get', 'head', 'options']
-    required_admin_permissions = {
-        **AdminModelViewSet.required_admin_permissions,
-        'estimate': ['cv_content.generate_ai'],
-    }
 
     @action(detail=False, methods=['get'])
     def estimate(self, request):
@@ -516,12 +467,6 @@ class AdminCvPositionViewSet(AdminModelViewSet):
     serializer_class = CvPositionProfileAdminSerializer
     lookup_field = 'public_id'
     http_method_names = ['get', 'post', 'patch', 'head', 'options']
-    required_admin_permissions = {
-        **AdminModelViewSet.required_admin_permissions,
-        'coverage': ['cv_template.view'],
-        'export': ['cv_template.view'],
-        'import_positions': ['cv_template.manage'],
-    }
 
     def get_queryset(self):
         queryset = CvPositionProfile.objects.select_related('job_category__parent').annotate(
@@ -574,8 +519,7 @@ class AdminCvPositionFieldViewSet(AdminModelViewSet):
 class AdminCvOverviewView(APIView):
     """Số liệu và việc cần làm của trang Tổng quan Mẫu CV."""
 
-    permission_classes = [HasAdminPermission]
-    required_admin_permissions = ['cv_template.view']
+    permission_classes = [AdminPortalPermission]
 
     def get(self, request):
         return Response(cv_admin_overview())

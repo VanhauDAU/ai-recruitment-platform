@@ -17,8 +17,8 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
-from apps.accounts.exceptions import AdminPermissionDenied, AdminResourceChanged
-from apps.accounts.permissions import HasAdminPermission, require_admin_permission
+from apps.accounts.exceptions import AdminResourceChanged
+from apps.accounts.permissions import AdminPortalPermission
 from apps.accounts.services import (
     InvalidImpactToken,
     StaleImpactToken,
@@ -234,39 +234,10 @@ def _supports_inline_preview(content_type):
     )
 
 
-def _can_view_sensitive(user):
-    if user.is_superuser:
-        return True
-    try:
-        require_admin_permission(user, 'account.sensitive.view')
-    except AdminPermissionDenied:
-        return False
-    return True
-
-
 class AdminEmployerVerificationViewSet(viewsets.ReadOnlyModelViewSet):
-    permission_classes = [HasAdminPermission]
+    permission_classes = [AdminPortalPermission]
     pagination_class = StandardPagination
     lookup_field = 'public_id'
-    required_admin_permissions = {
-        'list': ['employer_verification.view'],
-        'retrieve': ['employer_verification.view'],
-        'summary': ['employer_verification.view'],
-        'start_review': ['employer_verification.review'],
-        'review_document': ['employer_verification.review'],
-        'decision_impact': ['employer_verification.review'],
-        'decision': ['employer_verification.review'],
-        'revoke_impact': ['employer_verification.revoke'],
-        'revoke': ['employer_verification.revoke'],
-        'expire_impact': ['employer_verification.revoke'],
-        'expire': ['employer_verification.revoke'],
-        'unlock_resubmission': ['employer_verification.resubmission_unlock'],
-        'refresh_tax_lookup': ['employer_verification.review'],
-        'document_content': [
-            'employer_verification.view',
-            'account.sensitive.view',
-        ],
-    }
 
     def get_queryset(self):
         return admin_verification_cases_queryset(
@@ -282,7 +253,7 @@ class AdminEmployerVerificationViewSet(viewsets.ReadOnlyModelViewSet):
     def get_serializer_context(self):
         return {
             **super().get_serializer_context(),
-            'can_view_sensitive': _can_view_sensitive(self.request.user),
+            'can_view_sensitive': True,
         }
 
     @action(detail=False, methods=['get'])
@@ -633,22 +604,10 @@ class AdminEmployerVerificationViewSet(viewsets.ReadOnlyModelViewSet):
 class AdminCompanyUpdateRequestViewSet(viewsets.ReadOnlyModelViewSet):
     """Admin review workflow for staged company-profile changes."""
 
-    permission_classes = [HasAdminPermission]
+    permission_classes = [AdminPortalPermission]
     pagination_class = StandardPagination
     lookup_field = 'public_id'
     serializer_class = AdminCompanyUpdateRequestSerializer
-    required_admin_permissions = {
-        'list': ['company_update.view'],
-        'retrieve': ['company_update.view'],
-        'review_document': ['company_update.review'],
-        'start_review': ['company_update.review'],
-        'review': ['company_update.review'],
-        'refresh_tax_lookup': ['company_update.review'],
-        'document_content': [
-            'company_update.view',
-            'account.sensitive.view',
-        ],
-    }
 
     def get_queryset(self):
         queryset = CompanyUpdateRequest.objects.select_related(
@@ -708,7 +667,7 @@ class AdminCompanyUpdateRequestViewSet(viewsets.ReadOnlyModelViewSet):
     def get_serializer_context(self):
         return {
             **super().get_serializer_context(),
-            'can_view_sensitive': _can_view_sensitive(self.request.user),
+            'can_view_sensitive': True,
             'industry_labels': dict(Industry.objects.values_list('id', 'name')),
         }
 

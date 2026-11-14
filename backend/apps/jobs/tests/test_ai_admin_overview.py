@@ -3,6 +3,7 @@ from django.urls import reverse
 from rest_framework.test import APIClient
 
 from apps.accounts.models import User
+from apps.accounts.tests.helpers import make_admin
 from apps.sitecontent.models import SiteSetting
 
 
@@ -68,3 +69,12 @@ class AdminAiOverviewTests(TestCase):
         response = client.get(reverse('admin-ai-overview'))
 
         self.assertEqual(response.status_code, 403)
+
+    def test_regular_admin_cannot_read_operational_metrics(self):
+        client = APIClient()
+        client.force_authenticate(make_admin('ai-overview-regular@example.com'))
+
+        response = client.get(reverse('admin-ai-overview'))
+
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.data['code'], 'admin_permission_denied')

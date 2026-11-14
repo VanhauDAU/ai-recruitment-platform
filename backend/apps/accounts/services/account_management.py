@@ -13,66 +13,29 @@ from apps.employers.models import CampaignActivity, RecruiterProfile, Recruitmen
 from apps.jobs.models import Job
 from apps.locations.models import Location
 
-from ..admin_access_cache import bust_admin_permission_cache
-from ..admin_access_rules import StaleImpactToken, decode_impact_token
 from ..admin_invitation_tokens import (
     InvalidAdminInvitationToken,
     decode_admin_invitation_token,
 )
 from ..exceptions import AdminPermissionDenied
+from ..impact_token_rules import StaleImpactToken, decode_impact_token
 from ..models import (
     AccountStatusTransition,
     AdminAccessAuditLog,
     AdminInvitation,
-    AdminMembership,
-    AdminProvisioningScope,
-    AdminRole,
     AuthEmailJob,
     AuthSession,
     User,
 )
 from . import auth_sessions, password_reset
-from .admin_access import assign_membership, record_admin_action
+from .admin_audit import record_admin_action
 from .tokens import revoke_refresh_tokens
 
 INVITATION_TTL = timedelta(hours=72)
-SENSITIVE_PROVISIONING_CODES = frozenset(
-    {
-        'account.admin.invite',
-        'account.admin.manage',
-        'admin_access.manage_role',
-        'admin_access.manage_staff',
-    }
-)
 
 
 def _actor_kwargs(actor):
     return {'actor': actor, 'source': 'api', 'actor_identifier': actor.email}
-
-
-def _has_permission(actor, code):
-    if actor.is_superuser:
-        return True
-    return AdminMembership.objects.filter(
-        user=actor,
-        is_active=True,
-        role__is_active=True,
-        role__department__is_active=True,
-        role__permissions__code=code,
-        role__permissions__is_active=True,
-    ).exists()
-
-
-def _active_membership(actor, *, lock=False):
-    queryset = AdminMembership.objects.filter(
-        user=actor,
-        is_active=True,
-        role__is_active=True,
-        role__department__is_active=True,
-    ).select_related('role__department')
-    if lock:
-        queryset = queryset.select_for_update()
-    return queryset.first()
 
 
 def _queue_invitation_email(invitation):
@@ -114,166 +77,22 @@ def _ensure_verification_evidence(verification_evidence):
     return cleaned
 
 
-def _target_is_sensitive(role):
-    return role.permissions.filter(
-        is_active=True,
-        code__in=SENSITIVE_PROVISIONING_CODES,
-    ).exists()
-
-
-def _resolve_invitation_scope(actor, target_role, *, lock=False):
-    if actor.is_superuser:
-        return None
-    if not _has_permission(actor, 'account.admin.invite'):
-        raise AdminPermissionDenied('Bạn không có quyền mời tài khoản quản trị.')
-    membership = _active_membership(actor, lock=lock)
-    if membership is None:
-        raise ValidationError('Tài khoản chưa có chức danh cấp phát hiệu lực.')
-    scopes = AdminProvisioningScope.objects.filter(
-        source_role=membership.role,
-        target_role=target_role,
-        is_active=True,
-    )
-    if lock:
-        scopes = scopes.select_for_update()
-    scope = scopes.first()
-    if scope is None:
-        raise AdminPermissionDenied('Chức danh nằm ngoài phạm vi được cấp.')
-    if _target_is_sensitive(target_role):
-        raise AdminPermissionDenied('Chức danh nhạy cảm chỉ superuser được phép cấp.')
-    return scope
-
-
-def create_provisioning_scope(*, source_role, target_role, actor):
-    if not actor.is_superuser:
-        raise ValidationError('Chỉ superuser được cấu hình phạm vi cấp tài khoản.')
-    if source_role.pk == target_role.pk or _target_is_sensitive(target_role):
-        raise ValidationError(
-            {'target_role': 'Không thể uỷ quyền cấp chức danh có quyền quản trị đặc quyền.'}
-        )
-    with transaction.atomic():
-        source_role = AdminRole.objects.select_for_update().get(pk=source_role.pk)
-        target_role = AdminRole.objects.select_for_update().get(pk=target_role.pk)
-        if (
-            not source_role.is_active
-            or not source_role.department.is_active
-            or not source_role.permissions.filter(
-                code='account.admin.invite',
-                is_active=True,
-            ).exists()
-        ):
-            raise ValidationError(
-                {'source_role': 'Chức danh nguồn chưa có quyền cấp tài khoản hiệu lực.'}
-            )
-        try:
-            scope, created = AdminProvisioningScope.objects.get_or_create(
-                source_role=source_role,
-                target_role=target_role,
-                defaults={'configured_by': actor},
-            )
-        except IntegrityError as error:
-            raise ValidationError('Phạm vi cấp tài khoản đã tồn tại.') from error
-        reactivated = not created and not scope.is_active
-        if reactivated:
-            scope.is_active = True
-            scope.configured_by = actor
-            scope.save(update_fields=['is_active', 'configured_by', 'updated_at'])
-        if created or reactivated:
-            record_admin_action(
-                **_actor_kwargs(actor),
-                action='create_provisioning_scope',
-                target_type='provisioning_scope',
-                target_public_id=scope.public_id,
-                payload={
-                    'source_role_public_id': source_role.public_id,
-                    'target_role_public_id': target_role.public_id,
-                },
-            )
-        return scope
-
-
 def _current_revision():
     return AdminAccessAuditLog.objects.aggregate(value=Max('id'))['value'] or 0
 
 
-def confirm_provisioning_scope_status(
-    scope,
-    *,
-    is_active,
-    impact_token,
-    actor,
-):
-    if not actor.is_superuser:
-        raise ValidationError('Chỉ superuser được cấu hình phạm vi cấp tài khoản.')
-    claims = decode_impact_token(
-        impact_token,
-        operation='provisioning_scope.status.change',
-        resource_key=f'provisioning-scope:{scope.public_id}',
-        normalized_payload={'is_active': bool(is_active)},
-    )
-    with transaction.atomic():
-        scope = AdminProvisioningScope.objects.select_for_update().get(pk=scope.pk)
-        invitations = list(
-            AdminInvitation.objects.select_for_update().filter(
-                provisioning_scope=scope,
-                status=AdminInvitation.Status.PENDING,
-            )
-        )
-        if _current_revision() != claims['revision']:
-            raise StaleImpactToken('Dữ liệu phân quyền đã thay đổi.')
-        if scope.is_active == bool(is_active):
-            return scope
-        scope.is_active = bool(is_active)
-        scope.configured_by = actor
-        scope.save(update_fields=['is_active', 'configured_by', 'updated_at'])
-        revoked_ids = []
-        if not is_active:
-            now = timezone.now()
-            for invitation in invitations:
-                invitation.status = AdminInvitation.Status.REVOKED
-                invitation.revoked_at = now
-                invitation.token_version += 1
-                invitation.save(
-                    update_fields=['status', 'revoked_at', 'token_version', 'updated_at']
-                )
-                revoked_ids.append(invitation.public_id)
-        record_admin_action(
-            **_actor_kwargs(actor),
-            action='set_provisioning_scope_active',
-            target_type='provisioning_scope',
-            target_public_id=scope.public_id,
-            payload={
-                'is_active': bool(is_active),
-                'revoked_invitation_public_ids': revoked_ids,
-            },
-        )
-        return scope
-
-
-def create_admin_invitation(*, email, full_name, target_role, reason, actor):
+def create_admin_invitation(*, email, full_name, reason, actor):
     reason = _ensure_reason(reason)
     normalized_email = User.objects.normalize_email(email)
     with transaction.atomic():
         actor = User.objects.select_for_update().get(pk=actor.pk)
-        target_role = (
-            AdminRole.objects.select_for_update()
-            .select_related('department')
-            .get(pk=target_role.pk)
-        )
-        if not target_role.is_active or not target_role.department.is_active:
-            raise ValidationError({'target_role': 'Chức danh hoặc phòng ban đang bị khoá.'})
-        if not target_role.permissions.filter(is_active=True).exists():
-            raise ValidationError({'target_role': 'Chức danh chưa có quyền hiệu lực.'})
-        scope = _resolve_invitation_scope(actor, target_role, lock=True)
+        _ensure_superuser_inviter(actor)
         existing = (
             User.objects.select_for_update()
             .filter(email__iexact=normalized_email, role=User.Role.ADMIN)
             .first()
         )
-        if existing and (
-            existing.status == User.Status.ACTIVE
-            or AdminMembership.objects.filter(user=existing, is_active=True).exists()
-        ):
+        if existing and existing.status == User.Status.ACTIVE:
             raise ValidationError({'email': 'Email đã có tài khoản quản trị hoạt động.'})
         if existing is None:
             user = User(
@@ -311,8 +130,6 @@ def create_admin_invitation(*, email, full_name, target_role, reason, actor):
             )
         invitation = AdminInvitation.objects.create(
             user=user,
-            target_role=target_role,
-            provisioning_scope=scope,
             invited_by=actor,
             reason=reason,
             expires_at=timezone.now() + INVITATION_TTL,
@@ -322,85 +139,35 @@ def create_admin_invitation(*, email, full_name, target_role, reason, actor):
             action='create_admin_invitation',
             target_type='admin_invitation',
             target_public_id=invitation.public_id,
-            payload={
-                'user_public_id': user.public_id,
-                'target_role_public_id': target_role.public_id,
-                'source_role_public_id': (
-                    scope.source_role.public_id if scope is not None else None
-                ),
-                'reason': reason,
-            },
+            payload={'user_public_id': user.public_id, 'reason': reason},
         )
         _queue_invitation_email(invitation)
         return invitation
 
 
-def _lock_owned_invitation(invitation, actor):
-    invitation = (
+def _ensure_superuser_inviter(actor):
+    if not actor.is_superuser:
+        raise AdminPermissionDenied('Chỉ superuser được mời và quản lý tài khoản quản trị.')
+
+
+def _lock_invitation(invitation, actor):
+    _ensure_superuser_inviter(actor)
+    return (
         AdminInvitation.objects.select_for_update(of=('self',))
-        .select_related('user', 'target_role__department', 'provisioning_scope')
+        .select_related('user')
         .get(pk=invitation.pk)
     )
-    if not actor.is_superuser and invitation.invited_by_id != actor.pk:
-        raise AdminPermissionDenied('Bạn chỉ được quản lý lời mời do chính mình tạo.')
-    return invitation
-
-
-def update_admin_invitation_role(invitation, *, target_role, reason, actor):
-    reason = _ensure_reason(reason)
-    with transaction.atomic():
-        actor = User.objects.select_for_update().get(pk=actor.pk)
-        invitation = _lock_owned_invitation(invitation, actor)
-        if invitation.status != AdminInvitation.Status.PENDING:
-            raise ValidationError('Chỉ lời mời đang chờ mới được thay đổi.')
-        target_role = (
-            AdminRole.objects.select_for_update()
-            .select_related('department')
-            .get(pk=target_role.pk)
-        )
-        scope = _resolve_invitation_scope(actor, target_role, lock=True)
-        before = invitation.target_role.public_id
-        invitation.target_role = target_role
-        invitation.provisioning_scope = scope
-        invitation.reason = reason
-        invitation.token_version += 1
-        invitation.expires_at = timezone.now() + INVITATION_TTL
-        invitation.save(
-            update_fields=[
-                'target_role',
-                'provisioning_scope',
-                'reason',
-                'token_version',
-                'expires_at',
-                'updated_at',
-            ]
-        )
-        record_admin_action(
-            **_actor_kwargs(actor),
-            action='update_admin_invitation',
-            target_type='admin_invitation',
-            target_public_id=invitation.public_id,
-            payload={
-                'user_public_id': invitation.user.public_id,
-                'before_target_role_public_id': before,
-                'target_role_public_id': target_role.public_id,
-                'reason': reason,
-            },
-        )
-        _queue_invitation_email(invitation)
-        return invitation
 
 
 def resend_admin_invitation(invitation, *, actor):
     with transaction.atomic():
         actor = User.objects.select_for_update().get(pk=actor.pk)
-        invitation = _lock_owned_invitation(invitation, actor)
+        invitation = _lock_invitation(invitation, actor)
         if invitation.status not in {
             AdminInvitation.Status.PENDING,
             AdminInvitation.Status.EXPIRED,
         }:
             raise ValidationError('Lời mời không còn có thể gửi lại.')
-        _resolve_invitation_scope(actor, invitation.target_role, lock=True)
         invitation.status = AdminInvitation.Status.PENDING
         invitation.revoked_at = None
         invitation.token_version += 1
@@ -429,7 +196,7 @@ def revoke_admin_invitation(invitation, *, reason, actor):
     reason = _ensure_reason(reason)
     with transaction.atomic():
         actor = User.objects.select_for_update().get(pk=actor.pk)
-        invitation = _lock_owned_invitation(invitation, actor)
+        invitation = _lock_invitation(invitation, actor)
         if invitation.status != AdminInvitation.Status.PENDING:
             raise ValidationError('Chỉ lời mời đang chờ mới được thu hồi.')
         invitation.status = AdminInvitation.Status.REVOKED
@@ -458,8 +225,7 @@ def revoke_admin_invitation(invitation, *, reason, actor):
 def resolve_admin_invitation(token):
     claims = decode_admin_invitation_token(token)
     invitation = (
-        AdminInvitation.objects.select_related('user', 'target_role__department')
-        .prefetch_related('target_role__permissions')
+        AdminInvitation.objects.select_related('user')
         .filter(public_id=claims['invitation'])
         .first()
     )
@@ -477,12 +243,7 @@ def accept_admin_invitation(*, token, password):
     with transaction.atomic():
         invitation = (
             AdminInvitation.objects.select_for_update(of=('self',))
-            .select_related(
-                'user',
-                'target_role__department',
-                'provisioning_scope',
-                'invited_by',
-            )
+            .select_related('user')
             .filter(public_id=claims['invitation'])
             .first()
         )
@@ -494,23 +255,6 @@ def accept_admin_invitation(*, token, password):
             invitation.status = AdminInvitation.Status.EXPIRED
             invitation.save(update_fields=['status', 'updated_at'])
             raise InvalidAdminInvitationToken('Liên kết mời đã hết hạn.')
-        if invitation.provisioning_scope_id:
-            scope = AdminProvisioningScope.objects.select_for_update().get(
-                pk=invitation.provisioning_scope_id
-            )
-            if not scope.is_active:
-                raise InvalidAdminInvitationToken('Phạm vi cấp tài khoản đã bị thu hồi.')
-        role = (
-            AdminRole.objects.select_for_update()
-            .select_related('department')
-            .get(pk=invitation.target_role_id)
-        )
-        if (
-            not role.is_active
-            or not role.department.is_active
-            or not role.permissions.filter(is_active=True).exists()
-        ):
-            raise ValidationError('Chức danh được mời không còn hiệu lực.')
         user = User.objects.select_for_update().get(pk=invitation.user_id)
         if user.status != User.Status.PENDING:
             raise InvalidAdminInvitationToken('Tài khoản không còn ở trạng thái chờ.')
@@ -527,13 +271,6 @@ def accept_admin_invitation(*, token, password):
                 'updated_at',
             ]
         )
-        membership = assign_membership(
-            user,
-            role,
-            actor=invitation.invited_by,
-            source='invitation',
-            actor_identifier=invitation.invited_by.email,
-        )
         invitation.status = AdminInvitation.Status.ACCEPTED
         invitation.accepted_at = timezone.now()
         invitation.token_version += 1
@@ -545,26 +282,18 @@ def accept_admin_invitation(*, token, password):
             action='accept_admin_invitation',
             target_type='user',
             target_public_id=user.public_id,
-            payload={
-                'user_public_id': user.public_id,
-                'membership_public_id': membership.public_id,
-                'target_role_public_id': role.public_id,
-            },
+            payload={'user_public_id': user.public_id},
         )
         return user
 
 
-def ensure_account_write_allowed(actor, user, permission):
-    if user.is_admin_role:
-        if not actor.is_superuser:
-            raise AdminPermissionDenied('Chỉ superuser được thay đổi tài khoản quản trị.')
-        return
-    if not _has_permission(actor, permission):
-        raise AdminPermissionDenied()
+def ensure_account_write_allowed(actor, user):
+    if user.is_admin_role and not actor.is_superuser:
+        raise AdminPermissionDenied('Chỉ superuser được thay đổi tài khoản quản trị.')
 
 
 def update_account_profile(user, *, full_name, phone, actor):
-    ensure_account_write_allowed(actor, user, 'account.profile.manage')
+    ensure_account_write_allowed(actor, user)
     with transaction.atomic():
         user = User.objects.select_for_update().get(pk=user.pk)
         changed = []
@@ -586,7 +315,7 @@ def update_account_profile(user, *, full_name, phone, actor):
 
 def update_managed_account_profile(user, *, actor, changes):
     """Update only administrator-safe profile fields for the target role."""
-    ensure_account_write_allowed(actor, user, 'account.profile.manage')
+    ensure_account_write_allowed(actor, user)
     account_fields = {'full_name', 'phone'}
     candidate_fields = {
         'date_of_birth',
@@ -743,8 +472,8 @@ def _account_status_resource_snapshot(user):
     return snapshot
 
 
-def ensure_account_recovery_allowed(actor, user, permission):
-    ensure_account_write_allowed(actor, user, permission)
+def ensure_account_recovery_allowed(actor, user):
+    ensure_account_write_allowed(actor, user)
     if actor.pk == user.pk:
         raise ValidationError('Bạn không thể tự khôi phục danh tính tài khoản của mình.')
     if user.is_deleted:
@@ -789,7 +518,7 @@ def confirm_account_email(
     email = User.objects.normalize_email(email)
     reason = _ensure_reason(reason)
     verification_evidence = _ensure_verification_evidence(verification_evidence)
-    ensure_account_recovery_allowed(actor, user, 'account.email.manage')
+    ensure_account_recovery_allowed(actor, user)
     if User.objects.normalize_email(user.email) == email:
         raise ValidationError({'email': 'Email mới trùng với email hiện tại.'})
     if User.objects.email_claimed_for_role(
@@ -801,7 +530,7 @@ def confirm_account_email(
 
     with transaction.atomic():
         user = User.objects.select_for_update().get(pk=user.pk)
-        ensure_account_recovery_allowed(actor, user, 'account.email.manage')
+        ensure_account_recovery_allowed(actor, user)
         sessions = list(
             AuthSession.objects.select_for_update().filter(
                 user=user,
@@ -913,7 +642,7 @@ def _status_transition_kind(before, after):
 
 
 def ensure_account_status_change_allowed(actor, user, status):
-    ensure_account_write_allowed(actor, user, 'account.status.manage')
+    ensure_account_write_allowed(actor, user)
     if actor.pk == user.pk:
         raise ValidationError('Bạn không thể tự thay đổi trạng thái tài khoản của mình.')
     if user.is_deleted:
@@ -1232,7 +961,6 @@ def _confirm_account_status(
                 **effect_summary,
             },
         )
-        transaction.on_commit(lambda: bust_admin_permission_cache({user.pk}))
         return user
 
 
@@ -1246,7 +974,7 @@ def confirm_release_account_resource_holds(
 ):
     reason = _ensure_reason(reason)
     enforcement_evidence = _ensure_verification_evidence(enforcement_evidence)
-    ensure_account_write_allowed(actor, user, 'account.resource_hold.release')
+    ensure_account_write_allowed(actor, user)
     if not actor.is_superuser:
         raise AdminPermissionDenied('Gỡ policy hold chỉ dành cho superuser.')
     if actor.pk == user.pk:
@@ -1373,7 +1101,7 @@ def confirm_release_account_resource_holds(
 
 def confirm_revoke_account_sessions(user, *, reason, impact_token, actor):
     reason = _ensure_reason(reason)
-    ensure_account_write_allowed(actor, user, 'account.security.manage')
+    ensure_account_write_allowed(actor, user)
     claims = decode_impact_token(
         impact_token,
         operation='account.sessions.revoke',
@@ -1413,7 +1141,7 @@ def queue_account_security_email(user, *, kind, actor, reason=None):
     )
     with transaction.atomic():
         user = User.objects.select_for_update().get(pk=user.pk)
-        ensure_account_write_allowed(actor, user, 'account.security.manage')
+        ensure_account_write_allowed(actor, user)
         if kind == AuthEmailJob.Kind.VERIFICATION and user.email_verified:
             raise ValidationError('Email của tài khoản đã được xác minh.')
         if kind == AuthEmailJob.Kind.PASSWORD_RESET and not is_reset_eligible(user):

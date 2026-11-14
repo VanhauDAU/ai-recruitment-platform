@@ -24,7 +24,6 @@ class SiteSetting(models.Model):
         UPLOAD = 'upload', 'Upload file / media'
         FOOTER = 'footer', 'Footer'
         CONTACT = 'contact', 'Liên hệ / hỗ trợ'
-        ADMIN_ROLES = 'admin_roles', 'Phân quyền admin'
         AI = 'ai', 'Cài đặt AI'
         BLOG = 'blog', 'Cẩm nang nghề nghiệp (Blog)'
 

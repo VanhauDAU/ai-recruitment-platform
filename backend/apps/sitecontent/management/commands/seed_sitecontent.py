@@ -703,54 +703,7 @@ SETTINGS = [
     ('contact_zalo_url', 'Zalo', G.CONTACT, T.URL, '', True, '', {}),
     ('contact_messenger_url', 'Facebook Messenger', G.CONTACT, T.URL, '', True, '', {}),
     ('contact_map_embed_url', 'Google Maps embed', G.CONTACT, T.URL, '', True, '', {}),
-    # ---- 14. Phân quyền admin (khung, chưa có nghiệp vụ) ----
-    (
-        'admin_roles_enabled',
-        'Bật phân quyền chi tiết',
-        G.ADMIN_ROLES,
-        T.BOOLEAN,
-        False,
-        False,
-        '',
-        {},
-    ),
-    (
-        'admin_allow_staff_creation',
-        'Cho phép tạo tài khoản quản trị phụ',
-        G.ADMIN_ROLES,
-        T.BOOLEAN,
-        False,
-        False,
-        '',
-        {},
-    ),
-    (
-        'admin_default_role',
-        'Vai trò mặc định',
-        G.ADMIN_ROLES,
-        T.SELECT,
-        'moderator',
-        False,
-        '',
-        {
-            'choices': [
-                {'value': 'superadmin', 'label': 'Super admin'},
-                {'value': 'moderator', 'label': 'Moderator'},
-                {'value': 'content', 'label': 'Content'},
-            ]
-        },
-    ),
-    (
-        'admin_action_log_enabled',
-        'Ghi log thao tác admin',
-        G.ADMIN_ROLES,
-        T.BOOLEAN,
-        False,
-        False,
-        '',
-        {},
-    ),
-    # ---- 15. Cài đặt AI ----
+    # ---- 14. Cài đặt AI ----
     ('ai_enabled', 'Bật tính năng AI', G.AI, T.BOOLEAN, True, True, '', {}),
     (
         'ai_provider',

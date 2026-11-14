@@ -10,25 +10,17 @@ from apps.employers.models import Company, RecruiterProfile, RecruitmentCampaign
 from apps.jobs.models import Job, SavedJob
 from apps.jobs.selectors.listing import publicly_available_job_filter
 
-from ..admin_access_rules import StaleImpactToken
-from ..models import (
-    AccountStatusTransition,
-    AdminMembership,
-    AdminPermission,
-    AdminRole,
-    AuthEmailJob,
-    AuthSession,
-    Department,
-    User,
-)
+from ..models import AccountStatusTransition, AuthEmailJob, AuthSession, User
 from ..selectors import (
     account_resource_hold_impact,
     account_status_impact,
 )
 from ..services import (
+    StaleImpactToken,
     confirm_account_status,
     confirm_release_account_resource_holds,
 )
+from .helpers import make_admin
 
 
 class AccountStatusEnforcementTests(TestCase):
@@ -284,25 +276,7 @@ class AccountStatusEnforcementApiTests(TestCase):
             email='status-api-root@example.com',
             password=self.password,
         )
-        self.operator = User.objects.create_user(
-            email='status-api-operator@example.com',
-            password=self.password,
-            role=User.Role.ADMIN,
-        )
-        department = Department.objects.create(
-            code='status-operations',
-            name='Status Operations',
-        )
-        role = AdminRole.objects.create(
-            department=department,
-            code='status-operator',
-            name='Status operator',
-        )
-        role.permissions.add(
-            AdminPermission.objects.get(code='account.view'),
-            AdminPermission.objects.get(code='account.status.manage'),
-        )
-        AdminMembership.objects.create(user=self.operator, role=role)
+        self.operator = make_admin('status-api-operator@example.com', password=self.password)
         self.target = User.objects.create_user(
             email='status-api-target@example.com',
             password=self.password,
@@ -324,7 +298,7 @@ class AccountStatusEnforcementApiTests(TestCase):
             kwargs={'public_id': (user or self.target).public_id},
         )
 
-    def test_operator_can_suspend_but_cannot_ban(self):
+    def test_regular_admin_can_suspend_but_cannot_ban(self):
         self.client.force_authenticate(self.operator)
         suspend_payload = {
             'status': User.Status.INACTIVE,

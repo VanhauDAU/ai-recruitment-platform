@@ -1,7 +1,6 @@
 from rest_framework.permissions import BasePermission
 
 from .exceptions import AdminPermissionDenied
-from .selectors.admin_access import effective_permission_codes
 from .services.access import is_account_accessible
 
 
@@ -36,43 +35,30 @@ class IsAdmin(BasePermission):
         return _accessible(request) and request.user.is_admin_role
 
 
-def require_admin_permission(user, *codes, match='all'):
-    if not user or not user.is_authenticated or not user.is_admin_role or not codes:
-        raise AdminPermissionDenied()
-    available = effective_permission_codes(user)
-    allowed = (
-        any(code in available for code in codes)
-        if match == 'any'
-        else all(code in available for code in codes)
-    )
-    if not allowed:
+def require_admin(user):
+    """Chặn service nghiệp vụ quản trị khi actor không phải admin."""
+
+    if not user or not user.is_authenticated or not user.is_admin_role:
         raise AdminPermissionDenied()
     return True
 
 
-def has_admin_permission(user, *codes, match='all'):
-    if not user or not user.is_authenticated or not user.is_admin_role or not codes:
-        return False
-    available = effective_permission_codes(user)
-    if match == 'any':
-        return any(code in available for code in codes)
-    return all(code in available for code in codes)
+def require_superuser(user):
+    """Chặn thao tác chỉ dành cho superuser (ADR-0018: hai cấp quản trị)."""
+
+    require_admin(user)
+    if not user.is_superuser:
+        raise AdminPermissionDenied()
+    return True
 
 
-class HasAdminPermission(IsAdmin):
-    """Fail-closed permission gate for administrator endpoints."""
+class AdminPortalPermission(IsAdmin):
+    """Cổng quản trị hai cấp: mọi admin dùng được nghiệp vụ, superuser có thêm
+    thao tác nhạy cảm.
 
-    def _required_permissions(self, request, view):
-        hook = getattr(view, 'get_required_admin_permissions', None)
-        if callable(hook):
-            return hook(request)
-
-        required = getattr(view, 'required_admin_permissions', None)
-        if not isinstance(required, dict):
-            return required
-
-        _, key = _resolve_permission_key(request, view)
-        return required.get(key)
+    View khai báo ``require_superuser`` là ``True`` hoặc
+    ``{'actions': {...}}`` / ``{'methods': {...}}`` để giới hạn theo action.
+    """
 
     def _requires_superuser(self, request, view):
         requirement = getattr(view, 'require_superuser', False)
@@ -86,15 +72,6 @@ class HasAdminPermission(IsAdmin):
     def has_permission(self, request, view):
         if not super().has_permission(request, view):
             return False
-
-        required = self._required_permissions(request, view)
-        if not required:
-            raise AdminPermissionDenied()
-        if self._requires_superuser(request, view) and not request.user.is_superuser:
-            raise AdminPermissionDenied()
-        require_admin_permission(
-            request.user,
-            *required,
-            match=getattr(view, 'permission_match', 'all'),
-        )
+        if self._requires_superuser(request, view):
+            require_superuser(request.user)
         return True
