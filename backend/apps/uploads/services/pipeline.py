@@ -32,6 +32,7 @@ from apps.uploads.models import (
     ensure_upload_transition,
     upload_trust_is_attachable,
 )
+from common.file_signatures import SIGNATURE_WINDOW_BYTES, has_pdf_header
 from common.metrics import record_metric
 from common.public_id import generate_public_id
 from common.r2_storage import private_media_storage, quarantine_storage
@@ -44,7 +45,6 @@ logger = logging.getLogger(__name__)
 PURPOSE_PATTERN = re.compile(r'^[a-z][a-z0-9_.-]{1,63}$')
 REFERENCE_PATTERN = re.compile(r'^[A-Za-z0-9_.:-]{1,64}$')
 SIGNATURES = (
-    (b'%PDF-', 'application/pdf'),
     (b'\x89PNG\r\n\x1a\n', 'image/png'),
     (b'\xff\xd8\xff', 'image/jpeg'),
     (b'GIF87a', 'image/gif'),
@@ -130,6 +130,8 @@ def _normalise_content_type(value):
 
 
 def _detect_content_type(header):
+    if has_pdf_header(header):
+        return 'application/pdf'
     if header.startswith(WEBP_RIFF) and header[8:12] == WEBP_MARKER:
         return 'image/webp'
     for signature, content_type in SIGNATURES:
@@ -370,8 +372,8 @@ def _spool_and_validate(upload, *, session):
             size += len(chunk)
             if size > settings.UPLOAD_MAX_BYTES:
                 raise upload_error('UPLOAD_TOO_LARGE')
-            if len(header) < 16:
-                header.extend(chunk[: 16 - len(header)])
+            if len(header) < SIGNATURE_WINDOW_BYTES:
+                header.extend(chunk[: SIGNATURE_WINDOW_BYTES - len(header)])
             digest.update(chunk)
             temporary.write(chunk)
         if size != session.expected_size_bytes:

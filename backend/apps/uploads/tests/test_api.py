@@ -33,14 +33,14 @@ class UploadSessionApiTests(TemporaryUploadStorageMixin, APITestCase):
         )
         self.client.force_authenticate(self.owner)
 
-    def create_session(self):
+    def create_session(self, payload=PDF_BYTES):
         return self.client.post(
             reverse('uploads:session-create'),
             {
                 'purpose': 'employer_verification',
                 'original_filename': 'license.pdf',
                 'content_type': 'application/pdf',
-                'size_bytes': len(PDF_BYTES),
+                'size_bytes': len(payload),
             },
             format='json',
         )
@@ -115,6 +115,34 @@ class UploadSessionApiTests(TemporaryUploadStorageMixin, APITestCase):
         self.assertEqual(
             UploadSession.objects.get(public_id=public_id).state, UploadState.UPLOADING
         )
+
+    @patch('apps.uploads.api.views.sessions.scan_upload_session.delay')
+    def test_pdf_header_after_leading_whitespace_or_bom_is_accepted(self, delay):
+        for payload in (b'\n' + PDF_BYTES, b'\xef\xbb\xbf' + PDF_BYTES, b'\r\n \t' + PDF_BYTES):
+            with self.subTest(prefix=payload[:4]):
+                public_id = self.create_session(payload).data['public_id']
+
+                response = self.client.post(
+                    reverse('uploads:session-content', args=[public_id]),
+                    {'file': pdf_upload(payload, name='license.pdf')},
+                    format='multipart',
+                )
+
+                self.assertEqual(response.status_code, 200, response.data)
+                self.assertEqual(response.data['state'], UploadState.QUARANTINED)
+
+    def test_pdf_header_behind_other_content_is_rejected(self):
+        payload = b'\x89PNG\r\n\x1a\n' + PDF_BYTES
+        public_id = self.create_session(payload).data['public_id']
+
+        response = self.client.post(
+            reverse('uploads:session-content', args=[public_id]),
+            {'file': pdf_upload(payload, name='license.pdf')},
+            format='multipart',
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data['code'], 'UPLOAD_CONTENT_MISMATCH')
 
     def test_disabled_pipeline_fails_closed(self):
         with override_settings(UPLOAD_QUARANTINE_ENABLED=False):

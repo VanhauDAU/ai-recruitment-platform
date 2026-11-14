@@ -26,7 +26,7 @@ import {
 const VERIFICATION_STEPS = [
   { key: 'phone_verified', label: 'Xác thực số điện thoại', to: EMPLOYER_PHONE_VERIFY_URL },
   { key: 'company_linked', label: 'Cập nhật công ty', to: `${EMPLOYER_COMPANY_SETTINGS_URL}?update=true` },
-  { key: 'business_doc_submitted', label: 'Nộp giấy tờ đại diện', to: EMPLOYER_BUSINESS_LICENSE_URL },
+  { key: 'business_doc_current', label: 'Nộp giấy tờ đại diện', to: EMPLOYER_BUSINESS_LICENSE_URL },
   { key: 'candidate_dpa_submitted', label: 'Nộp văn bản DLCN', to: EMPLOYER_DATA_PROTECTION_URL },
   { key: 'dpa_accepted', label: 'Đồng ý thỏa thuận DPA', to: EMPLOYER_DATA_PROTECTION_URL },
 ]

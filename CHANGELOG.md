@@ -8,6 +8,20 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-14
 
+#### Fixed — Checklist xác thực sau khi hồ sơ hết hiệu lực, tải PDF có ký tự đầu
+
+- Khi admin cho hồ sơ xác thực hết hiệu lực, thu hồi, từ chối hoặc yêu cầu bổ
+  sung, bước "Nộp giấy tờ chứng minh quyền đại diện" không còn tick xanh ở
+  checklist, bảng tin và popover cấp tài khoản. Backend trả thêm
+  `onboarding.business_doc_current` và `business_doc_approved` tính cả trạng
+  thái hồ sơ; `business_doc_submitted` giữ nguyên nên quyền xem workspace không
+  đổi.
+- PDF có khoảng trắng hoặc BOM trước `%PDF-` (ví dụ tệp xuất từ TopCV) không
+  còn bị báo "Nội dung tệp không khớp định dạng đã khai báo". Kiểm tra cấu trúc
+  đọc từ vị trí header; nội dung khác đứng trước header vẫn bị từ chối.
+- Khi máy quét virus không phản hồi, giao diện báo "Dịch vụ kiểm tra an toàn
+  tệp đang tạm gián đoạn" thay vì yêu cầu tải lại tệp.
+
 #### Added — Trang công ty và quyền biên tập (CP-1 → CP-7)
 
 - Trang công khai `/cong-ty/:slug` (tab Tổng quan / Việc làm, lọc từ khoá và

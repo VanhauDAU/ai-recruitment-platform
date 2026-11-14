@@ -16,7 +16,7 @@ describe('EmployerVerificationChecklist', () => {
     render(
       <MemoryRouter>
         <EmployerVerificationChecklist
-          profile={{ onboarding: { business_doc_submitted: true, business_doc_approved: false } }}
+          profile={{ onboarding: { business_doc_submitted: true, business_doc_current: true, business_doc_approved: false } }}
           onContinue={vi.fn()}
         />
       </MemoryRouter>,
@@ -31,6 +31,25 @@ describe('EmployerVerificationChecklist', () => {
     expect(screen.getAllByRole('heading', { level: 3 })).toHaveLength(5)
     expect(screen.queryByText('Xác minh email')).not.toBeInTheDocument()
     expect(screen.queryByText('Admin duyệt tài khoản')).not.toBeInTheDocument()
+  })
+
+  it('asks for new documents after the verification case expired', () => {
+    render(
+      <MemoryRouter>
+        <EmployerVerificationChecklist
+          profile={{
+            onboarding: { business_doc_submitted: true, business_doc_current: false, business_doc_approved: false },
+            verification_case: { status: 'expired' },
+          }}
+          onContinue={vi.fn()}
+        />
+      </MemoryRouter>,
+    )
+
+    const stepRow = screen.getByText('Nộp giấy tờ chứng minh quyền đại diện').closest('.grid')
+
+    expect(within(stepRow).queryByText('Hoàn tất')).not.toBeInTheDocument()
+    expect(within(stepRow).getByRole('button', { name: 'Cập nhật Nộp giấy tờ chứng minh quyền đại diện' })).toBeInTheDocument()
   })
 
   it('keeps the verification page focused on the checklist without duplicate status banners', () => {

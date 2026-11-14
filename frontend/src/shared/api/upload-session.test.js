@@ -75,6 +75,12 @@ describe('upload session API', () => {
       text: 'Tệp đã vượt qua kiểm tra an toàn.',
     })
     expect(getUploadStatePresentation(null)).toBeNull()
+    expect(getUploadStatePresentation({ state: 'error', result_code: 'scanner_unavailable' })).toMatchObject({
+      text: 'Dịch vụ kiểm tra an toàn tệp đang tạm gián đoạn. Vui lòng thử lại sau ít phút.',
+    })
+    expect(getUploadStatePresentation({ state: 'error', result_code: 'scan_failed' })).toMatchObject({
+      text: 'Không thể kiểm tra tệp. Vui lòng thử tải lại.',
+    })
   })
 
   it('can forget a prepared file after the business endpoint claims it', () => {

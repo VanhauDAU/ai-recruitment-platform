@@ -8,6 +8,7 @@ class VerificationProgressSerializer(serializers.Serializer):
     phone_verified = serializers.BooleanField()
     company_linked = serializers.BooleanField()
     business_doc_submitted = serializers.BooleanField()
+    business_doc_current = serializers.BooleanField()
     business_doc_approved = serializers.BooleanField()
     email_domain_verified = serializers.BooleanField()
     no_report_history = serializers.BooleanField()
