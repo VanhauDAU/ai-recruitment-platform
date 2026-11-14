@@ -3,4 +3,8 @@ export const companyKeys = {
   directoryRoot: ['companies', 'directory'],
   featured: (requestKey = 0) => ['companies', 'directory', 'featured', { requestKey }],
   search: (keyword) => ['companies', 'directory', 'search', { keyword }],
+  details: ['companies', 'detail'],
+  detail: (slug) => ['companies', 'detail', slug],
+  similar: (publicId) => ['companies', 'similar', publicId],
+  jobFacets: (publicId) => ['companies', 'job-facets', publicId],
 }

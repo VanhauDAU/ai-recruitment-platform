@@ -1,8 +1,6 @@
 import { ReloadOutlined } from '@ant-design/icons'
 import { Link } from 'react-router'
-import { companyJobsPath } from '@/entities/company'
-import CompanyLogo from './CompanyLogo'
-import { companyDisplayName } from './company-presentation'
+import { companyDetailPath, companyDisplayName, CompanyLogo } from '@/entities/company'
 
 const SIDEBAR_SKELETON_COUNT = 6
 
@@ -48,8 +46,8 @@ export default function TopEmployersSidebar({
             return (
               <Link
                 key={company.public_id}
-                to={companyJobsPath(company)}
-                aria-label={`Xem việc làm tại ${displayName}`}
+                to={companyDetailPath(company)}
+                aria-label={`Xem trang công ty ${displayName}`}
                 title={displayName}
                 className="group flex aspect-square min-w-0 items-center justify-center rounded-2xl border border-slate-200 bg-white p-2 shadow-sm transition hover:border-emerald-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2"
               >

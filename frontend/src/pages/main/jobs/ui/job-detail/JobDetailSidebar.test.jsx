@@ -18,17 +18,31 @@ function renderSidebar(job) {
 }
 
 describe('JobDetailSidebar company destination', () => {
-  it('keeps an official company website external and labels it clearly', () => {
-    renderSidebar({ ...JOB, company_website_url: 'https://company.example/about' })
+  it('always opens the company page and keeps the official website as a secondary link', () => {
+    renderSidebar({
+      ...JOB,
+      company_slug: 'alpha-partners',
+      company_website_url: 'https://company.example/about',
+    })
 
-    const link = screen.getByRole('link', { name: /Website công ty/ })
-    expect(link).toHaveAttribute('href', 'https://company.example/about')
-    expect(link).toHaveAttribute('target', '_blank')
-    expect(link).toHaveAttribute('rel', 'noopener noreferrer')
+    expect(screen.getByRole('link', { name: /Xem trang công ty/ }))
+      .toHaveAttribute('href', '/cong-ty/alpha-partners')
+    const website = screen.getByRole('link', { name: /Website công ty/ })
+    expect(website).toHaveAttribute('href', 'https://company.example/about')
+    expect(website).toHaveAttribute('target', '_blank')
+    expect(website).toHaveAttribute('rel', 'noopener noreferrer')
   })
 
-  it('falls back to the filtered public company directory without a website', () => {
-    renderSidebar(JOB)
+  it('omits the website link when the company has none', () => {
+    renderSidebar({ ...JOB, company_slug: 'alpha-partners' })
+
+    expect(screen.getByRole('link', { name: /Xem trang công ty/ }))
+      .toHaveAttribute('href', '/cong-ty/alpha-partners')
+    expect(screen.queryByRole('link', { name: /Website công ty/ })).not.toBeInTheDocument()
+  })
+
+  it('falls back to the filtered public company directory when the company page is hidden', () => {
+    renderSidebar({ ...JOB, company_slug: null })
 
     expect(screen.getByRole('link', { name: /Xem trang công ty/ }))
       .toHaveAttribute(

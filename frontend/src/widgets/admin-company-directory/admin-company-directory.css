@@ -355,6 +355,14 @@
   padding-top: 20px;
 }
 
+.company-directory__public-preview {
+  border: 1px solid var(--admin-border);
+  border-radius: 12px;
+  background: #f5f7f8;
+  margin-top: 16px;
+  padding: 16px;
+}
+
 .company-directory__section-label {
   color: #64748b;
   font-size: 12px;

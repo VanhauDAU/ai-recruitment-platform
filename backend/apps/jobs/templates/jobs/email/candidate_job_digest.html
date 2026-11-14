@@ -21,6 +21,7 @@
             {% if job.locations %}<div style="margin-top:8px;font-size:13px;color:#6b7280">{{ job.locations }}</div>{% endif %}
             <div style="margin-top:5px;font-size:13px;color:#087443;font-weight:700">{{ job.salary }}</div>
             {% if job.sources %}<div style="margin-top:8px;font-size:12px;color:#9ca3af">Theo: {{ job.sources|join:", " }}</div>{% endif %}
+            {% if job.followed_company %}<div style="margin-top:8px;font-size:12px;color:#9ca3af">Từ công ty bạn theo dõi: {{ job.followed_company }}</div>{% endif %}
             <div style="margin-top:14px"><a href="{{ job.url }}" style="display:inline-block;padding:9px 14px;border-radius:7px;background:#00b14f;color:#fff;text-decoration:none;font-weight:700">Xem việc làm</a></div>
           </div>
         {% endfor %}

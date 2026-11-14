@@ -65,12 +65,14 @@ class CandidateEmailNotificationSettingsAdmin(admin.ModelAdmin):
         'candidate_profile',
         'configured_job_alerts',
         'suitable_job_recommendations',
+        'followed_company_jobs',
         'employer_invitations',
         'updated_at',
     ]
     list_filter = [
         'configured_job_alerts',
         'suitable_job_recommendations',
+        'followed_company_jobs',
         'employer_invitations',
     ]
     search_fields = ['candidate_profile__user__email']

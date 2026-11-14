@@ -216,3 +216,8 @@ class AdminCompanyRecruiterSerializer(serializers.ModelSerializer):
             'submitted_at': case.submitted_at,
             'decided_at': case.decided_at,
         }
+
+
+class AdminCompanyPolicyHoldSerializer(serializers.Serializer):
+    action = serializers.ChoiceField(choices=['apply', 'release'])
+    reason = serializers.CharField(min_length=10, max_length=500)

@@ -34,6 +34,14 @@ class EmployerNotification(models.Model):
         )
         DOCUMENT_REJECTED = 'document_rejected', 'Giấy tờ xác thực bị từ chối'
         COMPANY_LINK_REMOVED = 'company_link_removed', 'Liên kết công ty đã được gỡ'
+        COMPANY_PAGE_EDITOR_GRANTED = (
+            'company_page_editor_granted',
+            'Bạn được cấp quyền biên tập trang công ty',
+        )
+        COMPANY_PAGE_EDITOR_REVOKED = (
+            'company_page_editor_revoked',
+            'Quyền biên tập trang công ty đã bị thu hồi',
+        )
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     recipient = models.ForeignKey(

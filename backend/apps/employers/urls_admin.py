@@ -2,6 +2,7 @@ from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
 from .api.views.admin_companies import AdminCompanyViewSet
+from .api.views.admin_company_reports import AdminCompanyReportViewSet
 from .api.views.admin_domain_claims import AdminCompanyDomainClaimViewSet
 from .api.views.admin_verification import (
     AdminCompanyUpdateRequestViewSet,
@@ -18,6 +19,11 @@ router.register(
     'companies',
     AdminCompanyViewSet,
     basename='admin-company',
+)
+router.register(
+    'company-reports',
+    AdminCompanyReportViewSet,
+    basename='admin-company-report',
 )
 router.register(
     'employer-verifications',

@@ -2,6 +2,7 @@
 
 from .ai_generation import JobAiGeneration
 from .alerts import (
+    CandidateFollowedCompanyDigestSchedule,
     CandidateJobDigest,
     CandidateJobDigestItem,
     CandidateJobDigestSchedule,
@@ -25,6 +26,7 @@ from .skills import JobSkill
 
 __all__ = [
     'Benefit',
+    'CandidateFollowedCompanyDigestSchedule',
     'CandidateJobDigest',
     'CandidateJobDigestItem',
     'CandidateJobDigestSchedule',

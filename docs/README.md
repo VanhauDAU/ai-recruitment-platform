@@ -39,6 +39,7 @@ tại; lịch sử kế hoạch và bằng chứng triển khai nằm trong git 
 | [adr-0014-job-post-moderation.md](02-tong-quan/adr-0014-job-post-moderation.md) | Hậu kiểm tin tuyển dụng thay cho duyệt trước |
 | [adr-0015-remove-commercial-services.md](02-tong-quan/adr-0015-remove-commercial-services.md) | Gỡ gói dịch vụ, quyền lợi và yêu cầu tư vấn |
 | [adr-0016-remove-two-factor-auth.md](02-tong-quan/adr-0016-remove-two-factor-auth.md) | Gỡ xác thực hai bước (2FA/MFA) ở cả ba cổng |
+| [adr-0017-company-page.md](02-tong-quan/adr-0017-company-page.md) | Trang công ty công khai và quyền biên tập trang |
 | [employer-remediation-decision-log.md](02-tong-quan/employer-remediation-decision-log.md) | Biên bản quyết định của đợt hardening cổng nhà tuyển dụng |
 | [chatbot-local-decision-log.md](02-tong-quan/chatbot-local-decision-log.md) | Biên bản quyết định cho chatbot ứng viên chạy local |
 | [employer-flow-security-audit-2026-08.md](02-tong-quan/employer-flow-security-audit-2026-08.md) | Audit luồng và bảo mật nhà tuyển dụng (2026-08) |

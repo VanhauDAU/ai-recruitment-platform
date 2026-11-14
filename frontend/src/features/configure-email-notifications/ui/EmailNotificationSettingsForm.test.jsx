@@ -24,6 +24,7 @@ const ALL_ENABLED = {
   other_system_notifications: true,
   configured_job_alerts: true,
   suitable_job_recommendations: true,
+  followed_company_jobs: true,
   top_candidate_alerts: true,
   employer_invitations: true,
   job_and_career_events: true,
@@ -60,7 +61,7 @@ describe('EmailNotificationSettingsForm', () => {
     expect(await screen.findByText('Thông báo từ hệ thống')).toBeInTheDocument()
     expect(screen.getByText('Thông báo cơ hội việc làm')).toBeInTheDocument()
     expect(screen.getByText('Thông báo giới thiệu dịch vụ')).toBeInTheDocument()
-    expect(screen.getAllByRole('switch')).toHaveLength(12)
+    expect(screen.getAllByRole('switch')).toHaveLength(13)
     screen.getAllByRole('switch').forEach((item) => expect(item).toBeChecked())
     expect(screen.queryByText('Email bảo mật luôn được bật')).not.toBeInTheDocument()
   })
@@ -108,6 +109,27 @@ describe('EmailNotificationSettingsForm', () => {
 
     await waitFor(() => {
       expect(message.success).toHaveBeenCalledWith('Đã bật: Thông báo việc làm phù hợp.')
+    })
+  })
+
+  it('patches only the followed-company preference when its switch is turned off', async () => {
+    const user = userEvent.setup()
+    notificationApi.getCandidateNotificationPreferences
+      .mockResolvedValueOnce(ALL_ENABLED)
+      .mockResolvedValue({ ...ALL_ENABLED, followed_company_jobs: false })
+    notificationApi.updateCandidateNotificationPreferences.mockResolvedValue({
+      followed_company_jobs: false,
+    })
+    renderForm()
+
+    const followedCompanySwitch = await screen.findByRole('switch', {
+      name: 'Việc làm mới từ công ty đang theo dõi',
+    })
+    await user.click(followedCompanySwitch)
+
+    await waitFor(() => expect(followedCompanySwitch).not.toBeChecked())
+    expect(notificationApi.updateCandidateNotificationPreferences).toHaveBeenCalledWith({
+      followed_company_jobs: false,
     })
   })
 

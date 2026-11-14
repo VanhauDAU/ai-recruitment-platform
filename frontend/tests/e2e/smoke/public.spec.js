@@ -150,7 +150,7 @@ test('public smoke: company directory separates finite featured results from com
   await expect(page.getByText('Bạn đã xem hết kết quả tìm kiếm.')).toHaveCount(0)
 
   const lazyFeaturedCard = page.getByRole('link', {
-    name: 'Xem việc làm tại Công ty nổi bật lượt 1-4',
+    name: 'Xem trang công ty Công ty nổi bật lượt 1-4',
     exact: true,
   })
   const lazyCover = lazyFeaturedCard.locator('.company-directory-cover > img')
@@ -172,7 +172,7 @@ test('public smoke: company directory separates finite featured results from com
   await expect(page.getByRole('heading', { name: 'Kết quả Beta 1', exact: true })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Nhà tuyển dụng hàng đầu' })).toBeVisible()
   await expect(page.getByRole('link', {
-    name: 'Xem việc làm tại Công ty nổi bật lượt 1-1',
+    name: 'Xem trang công ty Công ty nổi bật lượt 1-1',
     exact: true,
   })).toBeVisible()
   expect(featuredRequests).toBe(1)
@@ -196,7 +196,7 @@ test('public smoke: company directory separates finite featured results from com
     'rgb(255, 255, 255)',
   )
   const firstSearchCard = page.getByRole('link', {
-    name: 'Xem việc làm tại Kết quả Beta 1',
+    name: 'Xem trang công ty Kết quả Beta 1',
     exact: true,
   })
   await expect(firstSearchCard.getByText('Đang tuyển 5 vị trí')).toBeVisible()
@@ -257,7 +257,7 @@ test('public smoke: company directory separates finite featured results from com
   )).toBe(false)
 })
 
-test('public smoke: featured companies keep platform stats, company search and the logo marquee', async ({ page }) => {
+test('public smoke: featured companies keep platform stats, the company page link and the logo marquee', async ({ page }) => {
   await mockPublicApi(page)
   const logoDataUri = `data:image/svg+xml,${encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40">
@@ -322,18 +322,423 @@ test('public smoke: featured companies keep platform stats, company search and t
   )).toBe(false)
 
   await firstCompanyCard.click()
-  await expect.poll(() => {
-    const url = new URL(page.url())
-    return {
-      pathname: url.pathname,
-      search: url.searchParams.get('search'),
-      searchBy: url.searchParams.get('search_by'),
-    }
-  }).toEqual({
-    pathname: '/viec-lam',
-    search: 'Công ty Alpha & Đối tác',
-    searchBy: 'company',
+  await expect(page).toHaveURL(/\/cong-ty\/cong-ty-mau-1$/)
+})
+
+const COMPANY_PAGE_IMAGE = `data:image/svg+xml,${encodeURIComponent(`
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1152 288">
+    <rect width="1152" height="288" fill="#dbeafe" />
+    <circle cx="920" cy="96" r="120" fill="#60a5fa" />
+  </svg>
+`)}`
+
+function companyPageProfile(overrides = {}) {
+  return {
+    public_id: 'co_ab12',
+    slug: 'fpt-software',
+    canonical_path: '/cong-ty/fpt-software',
+    indexable: true,
+    identity: {
+      display_name: 'FPT Software',
+      legal_name: 'Công ty TNHH Phần mềm FPT',
+      logo_url: '',
+      cover_image_url: COMPANY_PAGE_IMAGE,
+      website_url: 'https://fpt-software.example',
+      industries: [
+        { id: 1, name: 'Công nghệ thông tin', slug: 'cong-nghe-thong-tin', is_primary: true },
+        { id: 2, name: 'Fintech', slug: 'fintech', is_primary: false },
+      ],
+    },
+    stats: {
+      active_public_job_count: 12,
+      company_size: '100-499',
+      company_size_display: '100 - 499 nhân viên',
+      founded_year: 2010,
+    },
+    theme: { accent: { key: 'ocean', primary: '#0b6bcb', hover: '#084f96', soft: '#eef6ff' } },
+    sections: [
+      { key: 'about', type: 'rich_text', title: 'Giới thiệu công ty', body_html: '<p>FPT Software cung cấp dịch vụ phần mềm cho khách hàng toàn cầu.</p><ul><li>Hơn 30 quốc gia</li></ul>' },
+      { key: 'jobs', type: 'jobs', title: 'Việc làm đang tuyển' },
+      { key: 'benefits', type: 'rich_text', title: 'Phúc lợi', body_html: '<ul><li>Bảo hiểm sức khoẻ toàn diện</li><li>Thưởng tháng 13</li></ul>' },
+      { key: 'video', type: 'video', title: 'Video giới thiệu', embed_url: 'https://www.youtube-nocookie.com/embed/x' },
+      {
+        key: 'gallery',
+        type: 'gallery',
+        title: 'Hình ảnh công ty',
+        items: [
+          { image_url: COMPANY_PAGE_IMAGE, caption: 'Văn phòng Hà Nội' },
+          { image_url: COMPANY_PAGE_IMAGE, caption: '' },
+          { image_url: COMPANY_PAGE_IMAGE, caption: '' },
+        ],
+      },
+    ],
+    sidebar: [
+      {
+        key: 'general_info',
+        type: 'facts',
+        title: 'Thông tin chung',
+        items: [
+          { key: 'company_size', label: 'Quy mô', value: '100 - 499 nhân viên' },
+          { key: 'industries', label: 'Lĩnh vực', value: 'Công nghệ thông tin, Fintech' },
+          { key: 'founded_year', label: 'Năm thành lập', value: '2010' },
+          { key: 'website', label: 'Website', value: 'fpt-software.example', href: 'https://fpt-software.example' },
+        ],
+      },
+      { key: 'offices', type: 'offices', title: 'Địa điểm', items: [{ label: 'Trụ sở chính', address: '17 Duy Tân, Cầu Giấy, Hà Nội' }] },
+      { key: 'share', type: 'share', title: 'Chia sẻ công ty' },
+      { key: 'similar_companies', type: 'similar_companies', title: 'Công ty cùng lĩnh vực' },
+    ],
+    ...overrides,
+  }
+}
+
+// Mock đúng contract CP-1: chi tiết theo slug, similar/job-facets theo public_id,
+// tin lọc bằng `company=<public_id>`. Trả về danh sách query của request việc làm.
+async function mockCompanyPage(page, { profile = companyPageProfile(), jobCount = 12, similar = [] } = {}) {
+  const jobRequests = []
+  const json = (body, status = 200) => ({ status, contentType: 'application/json', body: JSON.stringify(body) })
+  await page.route(/\/api\/companies\/[^/?]+\/(?:\?.*)?$/, (route) => route.fulfill(
+    profile ? json(profile) : json({ detail: 'Không tìm thấy.' }, 404),
+  ))
+  await page.route(/\/api\/companies\/[^/?]+\/similar\/(?:\?.*)?$/, (route) => route.fulfill(json({ results: similar })))
+  await page.route(/\/api\/companies\/[^/?]+\/job-facets\/(?:\?.*)?$/, (route) => route.fulfill(json({
+    locations: [{ id: 1, name: 'Hà Nội', count: 7 }, { id: 2, name: 'Đà Nẵng', count: 5 }],
+  })))
+  await page.route(/\/api\/jobs\/\?.*company=/, (route) => {
+    const query = new URL(route.request().url()).searchParams
+    jobRequests.push(Object.fromEntries(query))
+    const total = query.get('search') === 'khong-co' ? 0 : jobCount
+    const pageSize = Number(query.get('page_size')) || 10
+    const offset = (Number(query.get('page') || 1) - 1) * pageSize
+    return route.fulfill(json({
+      count: total,
+      results: Array.from({ length: Math.max(0, Math.min(pageSize, total - offset)) }, (_, index) => ({
+        public_id: `job_${offset + index + 1}`,
+        slug: `ky-su-phan-mem-${offset + index + 1}`,
+        title: `Kỹ sư phần mềm cấp cao phụ trách nền tảng dữ liệu ${offset + index + 1}`,
+        company_name: 'Công ty TNHH Phần mềm FPT',
+        company_slug: 'fpt-software',
+        salary_type: 'range',
+        salary_min: 20_000_000,
+        salary_max: 35_000_000,
+        currency: 'VND',
+        experience_years: '',
+        locations_detail: [{ id: 1, name: 'Hà Nội' }, { id: 2, name: 'Đà Nẵng' }],
+        published_at: new Date().toISOString(),
+      })),
+    }))
   })
+  return jobRequests
+}
+
+async function expectNoHorizontalOverflow(page) {
+  expect(await page.evaluate(
+    () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
+  )).toBe(false)
+}
+
+test('public smoke: company page renders from a direct URL with overview, jobs and similar companies', async ({ page }, testInfo) => {
+  await mockPublicApi(page)
+  // CP-6: phúc lợi dạng thẻ và video nhấp-để-tải; trình phát của nhà cung cấp được mock.
+  await page.route(/^https:\/\/(?:i\.ytimg\.com|www\.youtube-nocookie\.com)\//, (route) => route.fulfill({ status: 200, contentType: 'text/html', body: '<!doctype html><title>player</title>' }))
+  const baseProfile = companyPageProfile()
+  const jobRequests = await mockCompanyPage(page, {
+    profile: companyPageProfile({
+      sections: baseProfile.sections.map((section) => {
+        if (section.key === 'benefits') {
+          return {
+            key: 'benefits',
+            type: 'benefits',
+            title: 'Phúc lợi',
+            items: [
+              { name: 'Bảo hiểm sức khoẻ', icon: '', category: 'welfare', note: 'Cho cả gia đình' },
+              { name: 'Laptop làm việc', icon: '', category: 'equipment', note: '' },
+            ],
+            body_html: '<p>Thưởng tháng 13</p>',
+          }
+        }
+        return section.key === 'video'
+          ? { ...section, provider: 'youtube', video_id: 'dQw4w9WgXcQ', embed_url: 'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ' }
+          : section
+      }),
+    }),
+    similar: [{
+      public_id: 'co_other',
+      slug: 'cmc-global',
+      company_name: 'Công ty TNHH CMC Global',
+      trade_name: 'CMC Global',
+      logo_url: '',
+      active_public_job_count: 3,
+    }],
+  })
+
+  await page.goto('/cong-ty/fpt-software')
+
+  await expect(page.getByRole('heading', { level: 1, name: 'FPT Software' })).toBeVisible()
+  await expect(page).toHaveTitle(/^FPT Software tuyển dụng/)
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', /\/cong-ty\/fpt-software$/)
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'index, follow')
+  await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', /FPT Software cung cấp dịch vụ phần mềm/)
+  expect(await page.locator('script[type="application/ld+json"]').textContent()).toContain('BreadcrumbList')
+
+  const root = page.locator('.company-profile')
+  expect(await root.evaluate((element) => element.style.getPropertyValue('--company-accent'))).toBe('#0b6bcb')
+  await expect(page.getByRole('heading', { name: 'Giới thiệu công ty' })).toHaveCSS('border-left-color', 'rgb(11, 107, 203)')
+  const benefits = page.getByRole('region', { name: 'Phúc lợi' })
+  await expect(benefits.locator('.company-profile-benefit')).toHaveCount(2)
+  await expect(benefits.getByText('Cho cả gia đình')).toBeVisible()
+  await expect(benefits.getByText('Thưởng tháng 13')).toBeVisible()
+  const video = page.getByRole('region', { name: 'Video giới thiệu' })
+  await expect(video.locator('iframe')).toHaveCount(0)
+  await video.getByRole('button', { name: 'Phát Video giới thiệu trên YouTube' }).click()
+  await expect(video.locator('iframe[title="Video giới thiệu"]'))
+    .toHaveAttribute('src', 'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?autoplay=1')
+
+  const tabs = page.getByRole('navigation', { name: 'Nội dung trang công ty' })
+  await expect(tabs.getByRole('link', { name: 'Tổng quan' })).toHaveAttribute('aria-current', 'page')
+
+  const jobs = page.getByRole('region', { name: 'Việc làm đang tuyển' })
+  await expect(jobs.getByRole('article')).toHaveCount(5)
+  await expect(jobs.getByRole('article').first().getByText('20 - 35 triệu')).toBeVisible()
+  await expect(jobs.getByText('Công ty TNHH Phần mềm FPT')).toHaveCount(0)
+  expect(jobRequests).toEqual([{ company: 'co_ab12', page: '1', page_size: '10' }])
+
+  await expect(page.getByRole('region', { name: 'Thông tin chung' }).getByRole('link', { name: 'fpt-software.example' }))
+    .toHaveAttribute('href', 'https://fpt-software.example')
+  await expect(page.getByRole('region', { name: 'Hình ảnh công ty' }).getByRole('img')).toHaveCount(3)
+  await expect(page.getByRole('region', { name: 'Công ty cùng lĩnh vực' }).getByRole('link', { name: /CMC Global/ }))
+    .toHaveAttribute('href', '/cong-ty/cmc-global')
+
+  const mobileCta = page.getByRole('link', { name: 'Xem việc làm (12)' })
+  if (testInfo.project.name === 'desktop-chromium') {
+    await expect(mobileCta).toBeHidden()
+    await expect(page.getByRole('link', { name: 'Xem việc làm', exact: true })).toBeVisible()
+  } else {
+    await expect(mobileCta).toBeVisible()
+  }
+  await expectNoHorizontalOverflow(page)
+
+  await jobs.getByRole('link', { name: 'Xem tất cả việc làm' }).click()
+  await expect(page).toHaveURL(/\/cong-ty\/fpt-software\?tab=viec-lam$/)
+  await expect(tabs.getByRole('link', { name: 'Việc làm (12)' })).toHaveAttribute('aria-current', 'page')
+  await expect(jobs.getByRole('article')).toHaveCount(10)
+  await expect(mobileCta).toHaveCount(0)
+  await expectNoHorizontalOverflow(page)
+})
+
+test('public smoke: company page keeps the jobs tab, keyword and location in the URL', async ({ page }) => {
+  await mockPublicApi(page)
+  const jobRequests = await mockCompanyPage(page, { jobCount: 25 })
+
+  await page.goto('/cong-ty/fpt-software?tab=viec-lam&q=react&location=1&page=2')
+
+  const jobs = page.getByRole('region', { name: 'Việc làm đang tuyển' })
+  await expect(jobs.getByRole('article')).toHaveCount(10)
+  expect(jobRequests).toEqual([
+    { company: 'co_ab12', page: '2', page_size: '10', search: 'react', location: '1' },
+  ])
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'noindex, nofollow')
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', /\/cong-ty\/fpt-software$/)
+  await expect(jobs.getByRole('status')).toHaveText('Tìm thấy 25 việc làm phù hợp')
+  await expect(page.getByRole('heading', { name: 'Giới thiệu công ty' })).toHaveCount(0)
+  await expect(page.getByRole('heading', { name: 'Thông tin chung' })).toBeVisible()
+
+  const keyword = jobs.getByRole('searchbox', { name: 'Tên việc làm' })
+  const location = jobs.getByRole('combobox', { name: 'Địa điểm' })
+  await expect(keyword).toHaveValue('react')
+  await expect(location).toHaveValue('1')
+  await expectNoHorizontalOverflow(page)
+
+  await location.selectOption({ label: 'Đà Nẵng (5)' })
+  await expect(page).toHaveURL(/\?tab=viec-lam&q=react&location=2$/)
+  await expect(jobs.getByRole('article')).toHaveCount(10)
+
+  await keyword.fill('khong-co')
+  await jobs.getByRole('button', { name: 'Tìm kiếm' }).click()
+  await expect(page).toHaveURL(/\?tab=viec-lam&q=khong-co&location=2$/)
+  await expect(jobs.getByText('Không có việc làm khớp bộ lọc.')).toBeVisible()
+
+  await jobs.getByRole('link', { name: 'Xoá bộ lọc' }).click()
+  await expect(page).toHaveURL(/\/cong-ty\/fpt-software\?tab=viec-lam$/)
+  await expect(keyword).toHaveValue('')
+  await expect(jobs.getByRole('article')).toHaveCount(10)
+
+  await page.getByRole('navigation', { name: 'Nội dung trang công ty' }).getByRole('link', { name: 'Tổng quan' }).click()
+  await expect(page).toHaveURL(/\/cong-ty\/fpt-software$/)
+  await expect(page.getByRole('heading', { name: 'Giới thiệu công ty' })).toBeVisible()
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'index, follow')
+})
+
+test('public smoke: company page stays complete for a sparse company and shows a real 404 state', async ({ page }) => {
+  await mockPublicApi(page)
+  const sparse = companyPageProfile({
+    slug: 'cua-hang-binh-minh',
+    canonical_path: '/cong-ty/cua-hang-binh-minh',
+    indexable: false,
+    identity: {
+      display_name: 'Cửa hàng Bình Minh',
+      legal_name: '',
+      logo_url: '',
+      cover_image_url: '',
+      website_url: '',
+      industries: [{ id: 9, name: 'Bán lẻ', slug: 'ban-le', is_primary: true }],
+    },
+    stats: { active_public_job_count: 0, company_size: '', company_size_display: '', founded_year: null },
+    theme: { accent: { key: 'brand', primary: '#00b14f', hover: '#008a3e', soft: '#f0fbf5' } },
+    sections: [{ key: 'jobs', type: 'jobs', title: 'Việc làm đang tuyển' }],
+    sidebar: [
+      { key: 'general_info', type: 'facts', title: 'Thông tin chung', items: [{ key: 'industries', label: 'Lĩnh vực', value: 'Bán lẻ' }] },
+      { key: 'share', type: 'share', title: 'Chia sẻ công ty' },
+      { key: 'similar_companies', type: 'similar_companies', title: 'Công ty cùng lĩnh vực' },
+    ],
+  })
+  await mockCompanyPage(page, { profile: sparse, jobCount: 0 })
+
+  await page.goto('/cong-ty/cua-hang-binh-minh')
+
+  await expect(page.getByRole('heading', { level: 1, name: 'Cửa hàng Bình Minh' })).toBeVisible()
+  await expect(page.locator('.company-profile-cover--fallback')).toBeVisible()
+  await expect(page.locator('.company-profile-cover img')).toHaveCount(0)
+  await expect(page.locator('.company-profile-logo')).toHaveText('C')
+  await expect(page.getByText('Công ty chưa có việc làm đang tuyển.')).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Thông tin chung' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Chia sẻ công ty' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Công ty cùng lĩnh vực' })).toHaveCount(0)
+  await expect(page.getByRole('link', { name: /Xem việc làm/ })).toHaveCount(0)
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'noindex, nofollow')
+  await expectNoHorizontalOverflow(page)
+
+  await page.unrouteAll({ behavior: 'ignoreErrors' })
+  await mockPublicApi(page)
+  await mockCompanyPage(page, { profile: null })
+  await page.goto('/cong-ty/khong-ton-tai')
+
+  await expect(page.getByText('Không tìm thấy công ty')).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Xem danh sách công ty' })).toHaveAttribute('href', '/cong-ty')
+  await expect(page).toHaveTitle(/^Không tìm thấy công ty/)
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'noindex, nofollow')
+  await expectNoHorizontalOverflow(page)
+})
+
+// Phiên ứng viên đặt sau mockPublicApi: route đăng ký sau được ưu tiên.
+async function mockCandidateSession(page) {
+  await page.route(/\/api\/auth\/(?:refresh|me)\/$/, (route) => route.fulfill({
+    contentType: 'application/json',
+    body: JSON.stringify(route.request().url().endsWith('/refresh/')
+      ? { access: 'e2e-access' }
+      : {
+          public_id: 'candidate_1',
+          role: 'candidate',
+          email: 'candidate@example.com',
+          full_name: 'Nguyễn An',
+          email_verified: true,
+          job_preferences_configured: true,
+        }),
+  }))
+}
+
+test('public smoke: company page follow asks guests to sign in and toggles for a candidate', async ({ page }, testInfo) => {
+  const followRequests = []
+  let follow = { following: false, notify_new_jobs: false, follower_count: 12 }
+  await mockPublicApi(page)
+  await mockCompanyPage(page, {
+    profile: companyPageProfile({ stats: { ...companyPageProfile().stats, follower_count: 12 } }),
+  })
+  await page.route(/\/api\/companies\/co_ab12\/follow\/$/, (route) => {
+    const request = route.request()
+    followRequests.push(`${request.method()} ${request.postData() || ''}`.trim())
+    if (request.method() === 'PUT') {
+      follow = {
+        following: true,
+        notify_new_jobs: request.postDataJSON().notify_new_jobs ?? (follow.following ? follow.notify_new_jobs : true),
+        follower_count: follow.following ? follow.follower_count : follow.follower_count + 1,
+      }
+    }
+    if (request.method() === 'DELETE') follow = { following: false, notify_new_jobs: false, follower_count: 12 }
+    return route.fulfill({ contentType: 'application/json', body: JSON.stringify(follow) })
+  })
+
+  await page.goto('/cong-ty/fpt-software')
+  const hero = page.getByRole('region', { name: 'FPT Software' })
+  await expect(hero.getByText('12 người theo dõi')).toBeVisible()
+  // Hero (desktop) và thanh CTA dính đáy (màn hẹp) mỗi nơi một nút; chỉ một nút hiển thị.
+  const followButton = page.getByRole('button', { name: 'Theo dõi', exact: true })
+  await followButton.click()
+  await expect(page.getByTestId('login-submit')).toBeVisible()
+  expect(followRequests).toEqual([])
+
+  await mockCandidateSession(page)
+  await page.reload()
+  await followButton.click()
+  const following = page.getByRole('button', { name: 'Đang theo dõi' })
+  await expect(following).toHaveAttribute('aria-pressed', 'true')
+  await expect(hero.getByText('13 người theo dõi')).toBeVisible()
+
+  const notify = page.getByRole('switch', { name: 'Nhận email việc làm mới' })
+  await expect(notify).toBeChecked()
+  await notify.click()
+  await expect(notify).not.toBeChecked()
+  await expect(notify).toBeEnabled()
+  if (testInfo.project.name !== 'desktop-chromium') {
+    const bar = await page.getByRole('link', { name: 'Xem việc làm (12)' }).boundingBox()
+    expect(bar.x + bar.width).toBeLessThanOrEqual(page.viewportSize().width)
+  }
+  await expectNoHorizontalOverflow(page)
+
+  await following.click()
+  await expect(followButton).toHaveAttribute('aria-pressed', 'false')
+  await expect(hero.getByText('12 người theo dõi')).toBeVisible()
+  await expect(notify).toHaveCount(0)
+  expect(followRequests).toEqual(['GET', 'PUT {}', 'PUT {"notify_new_jobs":false}', 'DELETE'])
+})
+
+test('public smoke: company page report submits a reason with its section and explains a duplicate', async ({ page }) => {
+  const reportPayloads = []
+  await mockPublicApi(page)
+  await mockCandidateSession(page)
+  await mockCompanyPage(page)
+  await page.route(/\/api\/companies\/co_ab12\/reports\/$/, (route) => {
+    reportPayloads.push(route.request().postDataJSON())
+    return route.fulfill(reportPayloads.length === 1
+      ? { status: 201, contentType: 'application/json', body: JSON.stringify({ public_id: 'crp_1', status: 'pending' }) }
+      : {
+          status: 400,
+          contentType: 'application/json',
+          body: JSON.stringify({ detail: 'Bạn đã có một báo cáo đang chờ xử lý cho công ty này.' }),
+        })
+  })
+
+  await page.goto('/cong-ty/fpt-software')
+  const report = page.getByRole('button', { name: 'Báo cáo thông tin sai' })
+  await report.click()
+  const dialog = page.getByRole('dialog')
+  await expect(dialog.getByRole('heading', { name: 'Báo cáo thông tin công ty' })).toBeVisible()
+  await expect(dialog.getByText('FPT Software')).toBeVisible()
+
+  await dialog.getByRole('button', { name: 'Gửi báo cáo' }).click()
+  await expect(dialog.getByText('Chọn lý do báo cáo.')).toBeVisible()
+  await dialog.getByRole('radio', { name: 'Mạo danh doanh nghiệp khác' }).check()
+  await dialog.getByRole('combobox', { name: 'Phần thông tin liên quan' }).click()
+  const sectionOptions = page.locator('.ant-select-item-option-content')
+  await expect(sectionOptions.filter({ hasText: 'Chia sẻ công ty' })).toHaveCount(0)
+  await sectionOptions.filter({ hasText: 'Thông tin chung' }).click()
+  await dialog.getByRole('textbox', { name: 'Mô tả chi tiết' }).fill('Trang dùng tên và logo của doanh nghiệp khác.')
+  await expectNoHorizontalOverflow(page)
+  await dialog.getByRole('button', { name: 'Gửi báo cáo' }).click()
+
+  await expect(dialog).toBeHidden()
+  expect(reportPayloads).toEqual([{
+    reason: 'impersonation',
+    section_key: 'general_info',
+    detail: 'Trang dùng tên và logo của doanh nghiệp khác.',
+  }])
+
+  await report.click()
+  await dialog.getByRole('radio', { name: 'Dấu hiệu lừa đảo' }).check()
+  await dialog.getByRole('button', { name: 'Gửi báo cáo' }).click()
+  await expect(dialog.getByRole('alert')).toContainText('Bạn đã có một báo cáo đang chờ xử lý cho công ty này.')
+  await expect(dialog).toBeVisible()
+  await expectNoHorizontalOverflow(page)
 })
 
 test('public smoke: reapproval keeps the original posted date on job cards and detail', async ({ page }) => {

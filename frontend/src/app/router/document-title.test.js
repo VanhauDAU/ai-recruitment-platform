@@ -27,6 +27,7 @@ describe('admin route titles', () => {
     expect(resolveRouteTitle(adminPath('/job-moderation'))).toBe('Quản lý tin tuyển dụng')
     expect(resolveRouteTitle(adminPath('/job-moderation/job_123'))).toBe('Chi tiết tin tuyển dụng')
     expect(resolveRouteTitle(adminPath('/account'))).toBe('Cài đặt tài khoản')
+    expect(resolveRouteTitle(adminPath('/company-reports'))).toBe('Báo cáo công ty')
   })
 
   it('titles public admin workflows and account details instead of treating them as missing routes', () => {
@@ -42,6 +43,18 @@ describe('candidate route titles', () => {
     window.history.replaceState({}, '', '/cong-ty')
     expect(resolveRouteTitle('/cong-ty')).toBe('Danh sách công ty')
     expect(resolveRouteTitle('/cong-ty/tim-kiem')).toBe('Tìm kiếm công ty')
+  })
+
+  it('titles the company page instead of treating it as a missing route', () => {
+    window.history.replaceState({}, '', '/cong-ty/fpt-software')
+    expect(resolveRouteTitle('/cong-ty/fpt-software')).toBe('Hồ sơ công ty')
+    expect(resolveRouteTitle('/cong-ty/fpt-software/')).toBe('Hồ sơ công ty')
+    expect(resolveRouteTitle('/cong-ty/fpt-software/khac')).toBe('Trang không tồn tại')
+  })
+
+  it('titles the followed companies account page from the candidate menu', () => {
+    window.history.replaceState({}, '', '/tai-khoan/cong-ty-dang-theo-doi')
+    expect(resolveRouteTitle('/tai-khoan/cong-ty-dang-theo-doi')).toBe('Công ty đang theo dõi')
   })
 
   it('uses the dedicated title for the public job comparison route', () => {

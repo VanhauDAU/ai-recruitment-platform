@@ -30,6 +30,7 @@ from ..models import (
     RecruitmentCampaign,
     RecruitmentNeed,
 )
+from .company_page_editors import revoke_page_editor_grants_on_unlink
 from .notifications import emit_employer_event
 
 COMPANY_UNLINK_PERMISSION = 'employer_verification.unlink_company'
@@ -236,6 +237,7 @@ def confirm_company_unlink(user, *, actor, reason, impact_token):
             'event_public_id': event.public_id,
         },
     )
+    revoke_page_editor_grants_on_unlink(recruiter, actor=actor)
     recruiter.company = None
     recruiter.company_role = ''
     recruiter.save(update_fields=['company', 'company_role', 'updated_at'])

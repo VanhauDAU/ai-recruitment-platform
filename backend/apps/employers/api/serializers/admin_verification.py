@@ -5,10 +5,14 @@ from drf_spectacular.helpers import lazy_serializer
 from drf_spectacular.utils import PolymorphicProxySerializer, extend_schema_field
 from rest_framework import serializers
 
+from apps.jobs.models import Benefit
+from apps.locations.models import Location
 from common.media_storage import media_url_from_value
 
 from ...models import (
+    CompanyBenefit,
     CompanyDocument,
+    CompanyOffice,
     CompanyTaxLookupEvidence,
     CompanyUpdateEvent,
     CompanyUpdateRequest,
@@ -21,6 +25,51 @@ from ...services import verification_checks
 def _normalized_legal_text(value):
     value = unicodedata.normalize('NFKC', str(value or '')).upper()
     return ' '.join(re.sub(r'[^\w]+', ' ', value, flags=re.UNICODE).split())
+
+
+def _benefit_previews(items, names):
+    return [{'name': names.get(item['benefit_id'], ''), 'note': item['note']} for item in items]
+
+
+def _office_previews(items, province_names):
+    return [
+        {
+            'label': item['label'],
+            'address': item['address_line'],
+            'province_name': province_names.get(item['province_id'], ''),
+            'is_headquarters': item['is_headquarters'],
+        }
+        for item in items
+    ]
+
+
+def _published_benefits(company_ids):
+    rows = {}
+    for item in (
+        CompanyBenefit.objects.filter(company_id__in=company_ids)
+        .select_related('benefit')
+        .order_by('sort_order', 'id')
+    ):
+        rows.setdefault(item.company_id, []).append({'name': item.benefit.name, 'note': item.note})
+    return rows
+
+
+def _published_offices(company_ids):
+    rows = {}
+    for office in (
+        CompanyOffice.objects.filter(company_id__in=company_ids)
+        .select_related('province')
+        .order_by('sort_order', 'id')
+    ):
+        rows.setdefault(office.company_id, []).append(
+            {
+                'label': office.label,
+                'address': office.address_line,
+                'province_name': office.province.name,
+                'is_headquarters': office.is_headquarters,
+            }
+        )
+    return rows
 
 
 def _masked_tax_code(value):
@@ -785,6 +834,7 @@ class AdminCompanyUpdateRequestSerializer(serializers.ModelSerializer):
     current_values = serializers.SerializerMethodField()
     industry_labels = serializers.SerializerMethodField()
     media_previews = serializers.SerializerMethodField()
+    previews = serializers.SerializerMethodField()
     documents = AdminVerificationDocumentSerializer(many=True, read_only=True)
     tax_lookup_evidence = serializers.SerializerMethodField()
     current_revision_public_id = serializers.CharField(
@@ -805,6 +855,7 @@ class AdminCompanyUpdateRequestSerializer(serializers.ModelSerializer):
             'current_values',
             'industry_labels',
             'media_previews',
+            'previews',
             'is_sensitive',
             'reason',
             'proof_type',
@@ -855,6 +906,12 @@ class AdminCompanyUpdateRequestSerializer(serializers.ModelSerializer):
                 'gallery_deletions',
             }:
                 values[field] = False if field.endswith('_pending') else []
+            elif field == 'benefits':
+                values[field] = self._published_lists(
+                    obj, 'published_benefits', _published_benefits
+                )
+            elif field == 'offices':
+                values[field] = self._published_lists(obj, 'published_offices', _published_offices)
             elif hasattr(company, field):
                 values[field] = getattr(company, field)
         return values
@@ -883,6 +940,46 @@ class AdminCompanyUpdateRequestSerializer(serializers.ModelSerializer):
             for value in changes.get('gallery_additions', [])
             if value
         ]
+        return previews
+
+    def _labels(self, key, loader):
+        """Catalogue names loaded once per response, and only when a row needs them."""
+        labels = self.context.get(key)
+        if labels is None:
+            labels = self.context[key] = dict(loader())
+        return labels
+
+    def _published_lists(self, obj, key, load):
+        """Published benefits or offices of every company on the page, in one query.
+
+        Loaded only when a row proposes that list, so a queue without page
+        content costs nothing extra and a queue with it stays flat.
+        """
+        rows = self.context.get(key)
+        if rows is None or obj.company_id not in rows:
+            page = getattr(self.parent, 'instance', None) or [obj]
+            company_ids = {row.company_id for row in page} | {obj.company_id}
+            rows = self.context[key] = {company_id: [] for company_id in company_ids}
+            rows.update(load(company_ids))
+        return rows[obj.company_id]
+
+    def get_previews(self, obj):
+        """Proposed benefits and offices with names an admin can read."""
+        changes = obj.changes or {}
+        previews = {}
+        if 'benefits' in changes:
+            names = self._labels(
+                'benefit_labels', lambda: Benefit.objects.values_list('id', 'name')
+            )
+            previews['benefits'] = _benefit_previews(changes['benefits'], names)
+        if 'offices' in changes:
+            provinces = self._labels(
+                'province_labels',
+                lambda: Location.objects.filter(level=Location.Level.PROVINCE).values_list(
+                    'id', 'name'
+                ),
+            )
+            previews['offices'] = _office_previews(changes['offices'], provinces)
         return previews
 
     def get_tax_lookup_evidence(self, obj):

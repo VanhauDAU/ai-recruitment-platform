@@ -1,6 +1,7 @@
 import { BellOutlined, DownOutlined, HeartFilled, HeartOutlined, UpOutlined } from '@ant-design/icons'
 import { useEffect, useRef, useState } from 'react'
-import { formatDeadline, JobRichContent } from '@/entities/job'
+import { formatDeadline } from '@/entities/job'
+import RichContent from '@/shared/ui/RichContent'
 import { formatJobDate } from '../../lib/job-detail-presentation'
 import JobCard from '../JobCard'
 import {
@@ -161,7 +162,7 @@ function DetailSection({ id, title, action, children }) {
 
 function JobText({ id, title, content, children }) {
   if (!content?.trim()) return null
-  return <section id={id} className={id ? 'scroll-mt-20' : undefined}><SectionHeading>{title}</SectionHeading><JobRichContent html={content} />{children}</section>
+  return <section id={id} className={id ? 'scroll-mt-20' : undefined}><SectionHeading>{title}</SectionHeading><RichContent html={content} />{children}</section>
 }
 
 function JobClosingActions({ deadline, saved, savePending, applicationStatus, onApply, onSave, onReport }) {

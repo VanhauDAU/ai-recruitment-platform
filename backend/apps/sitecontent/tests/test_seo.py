@@ -24,6 +24,7 @@ class SiteSeoTests(TestCase):
         self.assertContains(response, '"@type":"WebSite"')
         self.assertContains(response, 'rel="canonical" href="http://testserver/"')
         self.assertContains(sitemap, '/sitemaps/jobs.xml')
+        self.assertContains(sitemap, '/sitemaps/companies.xml')
         self.assertContains(sitemap, '/sitemaps/blog.xml')
 
     def test_company_directory_has_indexable_metadata_and_static_sitemap_entry(self):

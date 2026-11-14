@@ -1,3 +1,4 @@
+import { companyDetailPath } from '@/entities/company'
 import { logoUrlFor } from '../lib/logo-url'
 
 const BUBBLE_LAYOUT = [
@@ -56,10 +57,6 @@ export default function EmployerLogoBelt({ employers, navigate }) {
   const estimatedStripWidth = halfStrip.reduce((sum, item) => sum + item.size + BUBBLE_GAP, 0)
   const duration = Math.min(Math.max(estimatedStripWidth / 52, 88), 180)
 
-  function handleEmployerClick(companyName) {
-    navigate(`/viec-lam?search=${encodeURIComponent(companyName)}&search_by=company`)
-  }
-
   const renderBubble = ({ employer, size, top, slot }, i) => {
     const imagePadding = Math.max(9, Math.round(size * 0.18))
     const floatDistance = 3 + (slot % 4) * 1.5
@@ -68,7 +65,7 @@ export default function EmployerLogoBelt({ employers, navigate }) {
       <button
         key={`${employer.public_id || employer.company_name}-${i}`}
         type="button"
-        onClick={() => handleEmployerClick(employer.company_name)}
+        onClick={() => navigate(companyDetailPath(employer))}
         title={employer.company_name}
         className="employer-logo-float shrink-0 cursor-pointer rounded-full border border-gray-100 bg-white shadow-[0_5px_18px_rgba(15,23,42,0.08)] ring-1 ring-gray-100/80 transition-shadow duration-200 hover:shadow-[0_12px_30px_rgba(15,23,42,0.16)]"
         style={{

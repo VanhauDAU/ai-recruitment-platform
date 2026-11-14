@@ -1,5 +1,9 @@
 """Public command API for the employers domain."""
 
+from ..models.verification import (
+    ACTIVE_COMPANY_UPDATE_STATUSES,
+    REQUESTER_EDITABLE_COMPANY_UPDATE_STATUSES,
+)
 from .campaigns import (
     change_campaign_status,
     create_campaign,
@@ -7,10 +11,8 @@ from .campaigns import (
     update_campaign,
 )
 from .companies import (
-    ACTIVE_COMPANY_UPDATE_STATUSES,
     COMPANY_DESCRIPTION_MIN_LENGTH,
     PRE_REVIEW_COMPANY_UPDATE_STATUSES,
-    REQUESTER_EDITABLE_COMPANY_UPDATE_STATUSES,
     SENSITIVE_FIELDS,
     UPDATABLE_COMPANY_FIELDS,
     CompanyUpdateConflict,
@@ -27,13 +29,31 @@ from .companies import (
     start_company_update_review,
     validate_company_update_revision,
 )
+from .company_follows import follow_company, unfollow_company
+from .company_page import (
+    CompanyPageLayoutStale,
+    set_company_page_policy_hold,
+    update_company_page_layout,
+)
+from .company_page_content import PAGE_CONTENT_FIELDS, normalize_page_content_changes
+from .company_page_editors import grant_company_page_editor, revoke_company_page_editor
 from .company_recovery import (
     COMPANY_UNLINK_PERMISSION,
     CompanyUnlinkError,
     company_unlink_impact,
     confirm_company_unlink,
 )
+from .company_reports import (
+    resolve_company_report,
+    reverse_company_report,
+    submit_company_report,
+)
 from .company_update_locks import lock_company_update_request
+from .company_update_submission import (
+    CompanyUpdateInReview,
+    lock_company_update_target,
+    submit_company_update_request,
+)
 from .compliance import (
     apply_dpa_hold,
     apply_expired_dpa_holds_batch,
@@ -227,6 +247,21 @@ __all__ = [
     'verification_lifecycle_impact',
     'unlock_verification_resubmission',
     'set_company_industries',
+    'set_company_page_policy_hold',
+    'CompanyPageLayoutStale',
+    'update_company_page_layout',
+    'grant_company_page_editor',
+    'revoke_company_page_editor',
+    'follow_company',
+    'PAGE_CONTENT_FIELDS',
+    'normalize_page_content_changes',
+    'CompanyUpdateInReview',
+    'lock_company_update_target',
+    'submit_company_update_request',
+    'resolve_company_report',
+    'reverse_company_report',
+    'submit_company_report',
+    'unfollow_company',
     'update_campaign',
     'verify_sms_phone_challenge',
     'validate_employer_upload_structure',

@@ -1,7 +1,7 @@
 import { SolutionOutlined, TeamOutlined, UserOutlined } from '@ant-design/icons'
 import { useMemo } from 'react'
 import { Link } from 'react-router'
-import { COMPANY_DIRECTORY_PATH } from '@/entities/company'
+import { COMPANY_DIRECTORY_PATH, companyDetailPath } from '@/entities/company'
 import { formatNumber } from '@/entities/job'
 import ArrowButton from '@/shared/ui/ArrowButton'
 import { logoUrlFor } from '../lib/logo-url'
@@ -138,7 +138,7 @@ export default function FeaturedEmployers({ employers, navigate, stats }) {
                   <button
                     key={employer.public_id}
                     type="button"
-                    onClick={() => navigate(`/viec-lam?search=${encodeURIComponent(employer.company_name)}&search_by=company`)}
+                    onClick={() => navigate(companyDetailPath(employer))}
                     className="featured-employer-card group flex min-h-[220px] min-w-0 cursor-pointer flex-col items-center rounded-xl border border-emerald-100 bg-white px-3 py-3 text-center transition duration-200 hover:-translate-y-0.5 hover:border-[var(--brand-primary)] hover:shadow-[0_8px_24px_rgba(0,177,79,0.12)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2"
                   >
                     <span className="flex h-[92px] w-full max-w-[120px] items-center justify-center overflow-hidden">

@@ -178,7 +178,7 @@ describe('CompanyDirectory', () => {
       .toHaveClass('rounded-xl', 'p-3')
     expect(screen.getByTestId('company-search-list')).toHaveClass('gap-2.5')
     expect(screen.getByRole('heading', { name: 'Nhà tuyển dụng hàng đầu' })).toBeVisible()
-    expect(await screen.findByRole('link', { name: 'Xem việc làm tại Nhà tuyển dụng Nổi bật' }))
+    expect(await screen.findByRole('link', { name: 'Xem trang công ty Nhà tuyển dụng Nổi bật' }))
       .toBeVisible()
     expect(screen.getByText('Đang tuyển 4 vị trí')).toBeVisible()
     expect(screen.getByText('Hà Nội')).toBeVisible()

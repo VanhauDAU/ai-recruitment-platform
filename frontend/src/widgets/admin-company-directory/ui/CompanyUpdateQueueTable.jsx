@@ -26,6 +26,12 @@ const CHANGE_FIELD_LABELS = {
   tax_code: 'Mã số thuế',
   trade_name: 'Tên giao dịch',
   website_url: 'Website',
+  headline: 'Khẩu hiệu',
+  culture: 'Văn hoá công ty',
+  video_url: 'Video giới thiệu',
+  social_links: 'Mạng xã hội',
+  benefits: 'Phúc lợi dạng thẻ',
+  offices: 'Văn phòng',
 }
 
 const STATUS_PRESENTATION = {

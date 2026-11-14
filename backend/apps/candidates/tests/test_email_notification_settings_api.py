@@ -20,6 +20,7 @@ class CandidateEmailNotificationSettingsApiTests(TestCase):
         'other_system_notifications',
         'configured_job_alerts',
         'suitable_job_recommendations',
+        'followed_company_jobs',
         'top_candidate_alerts',
         'employer_invitations',
         'job_and_career_events',
@@ -212,6 +213,38 @@ class CandidateEmailNotificationSettingsApiTests(TestCase):
         )
         self.assertEqual(disabled.status_code, 200)
         self.assertFalse(disabled.data['configured_job_alerts'])
+
+    def test_reenabling_followed_company_jobs_resets_its_delivery_window(self):
+        CandidateEmailNotificationSettings.objects.create(
+            candidate_profile=self.user.candidate_profile,
+            followed_company_jobs=False,
+        )
+
+        with patch('apps.jobs.services.reset_candidate_job_delivery_cursors') as reset:
+            response = self.client.patch(
+                self.url,
+                {'followed_company_jobs': True},
+                format='json',
+            )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.data['followed_company_jobs'])
+        reset.assert_called_once()
+        self.assertEqual(
+            reset.call_args.kwargs,
+            {'configured': False, 'suitable': False, 'followed': True},
+        )
+
+        self.user.email_verified = False
+        self.user.save(update_fields=['email_verified', 'updated_at'])
+        CandidateEmailNotificationSettings.objects.update(followed_company_jobs=False)
+        blocked = self.client.patch(
+            self.url,
+            {'followed_company_jobs': True},
+            format='json',
+        )
+        self.assertEqual(blocked.status_code, 400)
+        self.assertEqual(blocked.data['code'], 'email_unverified')
 
     @patch(
         'apps.jobs.services.reset_candidate_job_delivery_cursors',

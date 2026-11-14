@@ -10,9 +10,6 @@ from apps.accounts.permissions import IsEmployer
 from common.client_ip import client_ip
 from common.throttling import ClientIPScopedRateThrottle
 
-from ...models import (
-    RecruiterProfile,
-)
 from ...selectors import has_explicit_company_link
 from ...services import (
     DpaPolicyChanged,
@@ -41,15 +38,6 @@ def _require_company(user):
     recruiter = get_or_create_recruiter(user)
     if not has_explicit_company_link(recruiter):
         raise NotFound('Bạn chưa liên kết với công ty nào.')
-    return recruiter
-
-
-def _require_owner(user):
-    recruiter = _require_company(user)
-    if recruiter.company_role != RecruiterProfile.CompanyRole.OWNER:
-        raise ValidationError(
-            {'detail': 'Chỉ người tạo hồ sơ công ty được thực hiện thao tác này.'}
-        )
     return recruiter
 
 

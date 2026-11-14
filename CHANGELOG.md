@@ -6,6 +6,37 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ## [Unreleased]
 
+### 2026-11-14
+
+#### Added — Trang công ty và quyền biên tập (CP-1 → CP-7)
+
+- Trang công khai `/cong-ty/:slug` (tab Tổng quan / Việc làm, lọc từ khoá và
+  tỉnh), SEO shell, `sitemaps/companies.xml`; mọi liên kết công ty dẫn về
+  trang này. Admin tạm ẩn trang được (404 thật, có audit).
+- Ứng viên theo dõi công ty, nhận email việc mới (tắt theo công ty hoặc tắt
+  chung) và báo cáo thông tin sai; admin xử lý ở hàng chờ "Báo cáo công ty".
+- Nhà tuyển dụng tuỳ biến trang ở `/tuyendung/app/company-page`: bố cục áp
+  dụng ngay, nội dung (khẩu hiệu, văn hoá, video, mạng xã hội, phúc lợi,
+  văn phòng, ảnh) qua kiểm duyệt. Chỉ owner đã xác thực và member được owner
+  uỷ quyền mới biên tập (ER-D58 → ER-D64).
+- Migration `employers.0048`–`0052`, `accounts.0032`–`0033`, `jobs.0051`,
+  `candidates.0008` đều chỉ cộng thêm.
+
+#### Added — Nền móng trang công ty (CP-0)
+
+- Theo [ADR-0017](docs/02-tong-quan/adr-0017-company-page.md) và
+  [kế hoạch trang công ty](docs/01-phan-tich/ke-hoach-trang-cong-ty.md).
+- `GET /api/jobs/` nhận `company=<company_public_id>` (khớp chính xác, không
+  thêm query); card và chi tiết tin trả `company_slug`.
+- `Company.public_headquarters` là nguồn duy nhất cho địa chỉ công khai.
+  `company_address` của chi tiết tin không còn trả địa chỉ hộ kinh doanh.
+- Slug `tim-kiem` dành riêng cho route tìm kiếm danh bạ; công ty trùng tên
+  nhận slug có hậu tố `public_id`.
+- Predicate người đại diện hợp lệ chuyển xuống
+  `employers/models/representation.py` để selector và service dùng chung.
+- Frontend: `CompanyLogo` và helper tên công ty thuộc `entities/company`;
+  `RichContent` (thay `JobRichContent`) và `ShareButtons` thuộc `shared/ui`.
+
 ### 2026-11-13
 
 #### Removed — Gỡ xác thực hai bước (2FA/MFA) ở cả ba cổng

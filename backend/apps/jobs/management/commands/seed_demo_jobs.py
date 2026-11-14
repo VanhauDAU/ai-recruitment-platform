@@ -1,12 +1,21 @@
 import random
 from datetime import timedelta
+from io import BytesIO
 
 from django.contrib.auth import get_user_model
+from django.core.files.base import ContentFile
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 from django.utils.text import slugify
+from PIL import Image, ImageDraw, ImageFont
 
-from apps.employers.models import Company, Industry, RecruiterProfile
+from apps.employers.models import (
+    Company,
+    CompanyDocument,
+    EmployerVerificationCase,
+    Industry,
+    RecruiterProfile,
+)
 from apps.jobs.models import (
     Benefit,
     Job,
@@ -21,9 +30,12 @@ from apps.jobs.models import (
 )
 from apps.locations.models import Location
 from apps.skills.models import Skill
+from common.r2_storage import public_media_storage
 
 User = get_user_model()
 DEMO_DOMAIN = '@demo.local'
+DEMO_MEDIA_DIRECTORY = 'employers/demo'
+DEMO_BRAND_COLOURS = ['#0369a1', '#4338ca', '#6d28d9', '#be123c', '#c2410c', '#0f766e', '#334155']
 
 COMPANIES = [
     ('FPT Software', '1000+', 'Công nghệ thông tin'),
@@ -97,6 +109,58 @@ EDU_LEVELS = ['none', 'high_school', 'college', 'university', 'university']
 LANGUAGE_CERTIFICATES = {'en': 'TOEIC 600+', 'ko': 'TOPIK 2', 'ja': 'JLPT N3', 'zh': 'HSK 4'}
 
 
+def save_demo_image(name, size, colour, text=''):
+    """Store a flat placeholder; the featured directory requires a logo and a cover."""
+    image = Image.new('RGB', size, colour)
+    if text:
+        ImageDraw.Draw(image).text(
+            (size[0] / 2, size[1] / 2),
+            text,
+            fill='white',
+            font=ImageFont.load_default(size=size[1] // 2),
+            anchor='mm',
+        )
+    buffer = BytesIO()
+    image.save(buffer, format='PNG')
+    storage = public_media_storage()
+    path = f'{DEMO_MEDIA_DIRECTORY}/{name}.png'
+    if storage.exists(path):
+        storage.delete(path)
+    return storage.save(path, ContentFile(buffer.getvalue()))
+
+
+def approve_demo_representative(recruiter, now):
+    """Give the owner the evidence of legal representation.
+
+    Featured companies, indexable company pages and the page workspace all
+    require an approved case with a current approved business registration.
+    """
+    company = recruiter.company
+    verification_case = EmployerVerificationCase.objects.create(
+        recruiter=recruiter,
+        company=company,
+        verification_method=EmployerVerificationCase.VerificationMethod.BUSINESS_REGISTRATION,
+        status=EmployerVerificationCase.Status.APPROVED,
+        submitted_at=now,
+        decided_at=now,
+        decision_source=EmployerVerificationCase.DecisionSource.EXPLICIT_ADMIN,
+        decision_reason='Dữ liệu demo.',
+    )
+    CompanyDocument.objects.create(
+        company=company,
+        recruiter=recruiter,
+        uploaded_by=recruiter.user,
+        verification_case=verification_case,
+        doc_type=CompanyDocument.DocType.BUSINESS_REGISTRATION,
+        # Metadata only: demo data has no real legal file behind it.
+        file_url=f'{DEMO_MEDIA_DIRECTORY}/{company.slug}-business-registration.pdf',
+        file_name='giay-dang-ky-doanh-nghiep.pdf',
+        mime_type='application/pdf',
+        status=CompanyDocument.Status.APPROVED,
+        reviewed_at=now,
+    )
+
+
 class Command(BaseCommand):
     help = 'Seed demo companies + active jobs (spread over recent days) for the homepage dashboard/demo. Re-runnable.'
 
@@ -153,21 +217,31 @@ class Command(BaseCommand):
                 full_name=cname,
                 status=User.Status.ACTIVE,
             )
+            colour = DEMO_BRAND_COLOURS[i % len(DEMO_BRAND_COLOURS)]
             company = Company.objects.create(
                 company_name=cname,
                 slug=f'{slugify(cname)}-demo-{i + 1}',
                 company_size=size,
+                description=(
+                    f'<p>{cname} là doanh nghiệp hoạt động trong lĩnh vực {industry}, '
+                    'liên tục mở rộng đội ngũ và tìm kiếm nhân sự phù hợp.</p>'
+                ),
+                logo_url=save_demo_image(
+                    f'company-{i + 1}-logo', (400, 400), colour, slugify(cname)[:1].upper()
+                ),
+                cover_image_url=save_demo_image(f'company-{i + 1}-cover', (1200, 400), colour),
                 # Vài công ty lớn bật trang thương hiệu để demo luồng URL /brand/...
                 has_brand_page=i in BRAND_COMPANY_INDEXES,
                 created_by=user,
             )
             industry_obj, _ = Industry.objects.get_or_create(name=industry)
             company.company_industries.create(industry=industry_obj, is_primary=True)
-            RecruiterProfile.objects.create(
+            recruiter = RecruiterProfile.objects.create(
                 user=user,
                 company=company,
                 company_role=RecruiterProfile.CompanyRole.OWNER,
             )
+            approve_demo_representative(recruiter, now)
             companies.append((user, company))
 
         job_count = 0

@@ -3,13 +3,16 @@ import client from '@/shared/api/client'
 import {
   getAdminCompanies,
   getAdminCompany,
+  getAdminCompanyPublicPage,
   getAdminCompanyRecruiters,
   getAdminCompanySummary,
+  setAdminCompanyPolicyHold,
 } from './admin-company.api'
 
 vi.mock('@/shared/api/client', () => ({
   default: {
     get: vi.fn(),
+    post: vi.fn(),
   },
 }))
 
@@ -44,6 +47,26 @@ describe('admin company api', () => {
     await getAdminCompanySummary({ signal: 'signal' })
     expect(client.get).toHaveBeenCalledWith('/admin/companies/summary/', {
       signal: 'signal',
+    })
+  })
+
+  it('reads the public page preview and posts a hold decision with its reason', async () => {
+    const page = { public_path: '/cong-ty/alpha', policy_hold: { active: true } }
+    client.get.mockResolvedValue({ data: page })
+    client.post.mockResolvedValue({ data: page })
+
+    await expect(getAdminCompanyPublicPage('co_123', { signal: 'signal' })).resolves.toBe(page)
+    await expect(setAdminCompanyPolicyHold('co_123', {
+      action: 'apply',
+      reason: 'Nội dung giả mạo thương hiệu',
+    })).resolves.toBe(page)
+
+    expect(client.get).toHaveBeenCalledWith('/admin/companies/co_123/public-page/', {
+      signal: 'signal',
+    })
+    expect(client.post).toHaveBeenCalledWith('/admin/companies/co_123/policy-hold/', {
+      action: 'apply',
+      reason: 'Nội dung giả mạo thương hiệu',
     })
   })
 })

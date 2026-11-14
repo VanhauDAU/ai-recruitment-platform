@@ -1,59 +1,16 @@
 import { FileSearchOutlined } from '@ant-design/icons'
 import { Alert, Button, Descriptions, Image, Modal, Space, Tag, Typography } from 'antd'
 import { sanitizeHtml } from '@/shared/lib/sanitize-html'
+import {
+  FIELD_LABELS,
+  HTML_FIELDS,
+  MEDIA_FIELDS,
+  PENDING_MEDIA_FIELDS,
+  PREVIEW_LIST_FIELDS,
+  SOCIAL_LABELS,
+  VALUE_LABELS,
+} from '../model/company-update-fields'
 import TaxLookupEvidenceCard from './TaxLookupEvidenceCard'
-
-const FIELD_LABELS = {
-  business_type: 'Loại hình',
-  tax_code: 'Mã số thuế',
-  company_name: 'Tên đăng ký',
-  trade_name: 'Tên thương mại',
-  trade_name_same_as_registered: 'Tên thương mại trùng tên đăng ký',
-  website_url: 'Website',
-  has_no_website: 'Không có website',
-  email: 'Email',
-  phone: 'Số điện thoại',
-  address: 'Địa chỉ',
-  company_size: 'Quy mô',
-  description: 'Mô tả',
-  employee_benefits: 'Phúc lợi',
-  markets: 'Thị trường',
-  target_customers: 'Khách hàng mục tiêu',
-  industries: 'Lĩnh vực',
-  primary_industry: 'Lĩnh vực chính',
-  founded_year: 'Năm thành lập',
-  logo_url: 'Logo công ty',
-  logo_pending: 'Logo công ty',
-  cover_image_url: 'Ảnh bìa công ty',
-  cover_pending: 'Ảnh bìa công ty',
-  gallery_additions: 'Ảnh thư viện thêm mới',
-  gallery_deletions: 'Ảnh thư viện xóa',
-  gallery_pending: 'Ảnh thư viện',
-}
-
-const VALUE_LABELS = {
-  business_type: { enterprise: 'Doanh nghiệp', household: 'Hộ kinh doanh' },
-  company_size: {
-    '1-9': '1 - 9 nhân viên',
-    '10-24': '10 - 24 nhân viên',
-    '25-99': '25 - 99 nhân viên',
-    '100-499': '100 - 499 nhân viên',
-    '500-1000': '500 - 1000 nhân viên',
-    '1000+': '1000+ nhân viên',
-    '3000+': '3000+ nhân viên',
-    '5000+': '5000+ nhân viên',
-    '10000+': '10000+ nhân viên',
-  },
-  markets: {
-    domestic: 'Nội địa', asia: 'Châu Á', europe: 'Châu Âu', africa: 'Châu Phi',
-    america: 'Châu Mỹ', australia: 'Châu Úc',
-  },
-  target_customers: { b2b: 'B2B', b2c: 'B2C', b2g: 'B2G' },
-}
-
-const HTML_FIELDS = new Set(['description', 'employee_benefits'])
-const MEDIA_FIELDS = new Set(['logo_url', 'cover_image_url'])
-const PENDING_MEDIA_FIELDS = new Set(['logo_pending', 'cover_pending', 'gallery_pending'])
 
 function formatDate(value) {
   if (!value) return 'Chưa có'
@@ -105,7 +62,34 @@ function MediaPreview({ field, urls }) {
   )
 }
 
-function ComparisonValue({ field, value, industryLabels, mediaPreviews, proposed = false }) {
+function listItemText(field, item) {
+  if (field === 'benefits') return [item.name, item.note].filter(Boolean).join(' — ')
+  const place = [item.address, item.province_name].filter(Boolean).join(', ')
+  return `${item.label ? `${item.label}: ` : ''}${place}${item.is_headquarters ? ' (trụ sở chính)' : ''}`
+}
+
+function ListValue({ field, items }) {
+  if (!Array.isArray(items) || items.length === 0) return <span>Chưa có</span>
+  return (
+    <ul className="company-comparison-list">
+      {items.map((item, index) => <li key={index}>{listItemText(field, item)}</li>)}
+    </ul>
+  )
+}
+
+function SocialValue({ value }) {
+  const links = Object.entries(value || {}).filter(([, url]) => url)
+  if (links.length === 0) return <span>Chưa có</span>
+  return (
+    <ul className="company-comparison-list">
+      {links.map(([network, url]) => <li key={network}>{`${SOCIAL_LABELS[network] || network}: ${url}`}</li>)}
+    </ul>
+  )
+}
+
+function ComparisonValue({ field, value, industryLabels, mediaPreviews, listPreviews, proposed = false }) {
+  if (PREVIEW_LIST_FIELDS.has(field)) return <ListValue field={field} items={proposed ? listPreviews[field] : value} />
+  if (field === 'social_links') return <SocialValue value={value} />
   const previewValue = mediaPreviews[field]
   const previewUrls = Array.isArray(previewValue) ? previewValue : previewValue ? [previewValue] : []
   if (proposed && previewUrls.length > 0) {
@@ -146,6 +130,7 @@ export default function CompanyUpdateComparisonModal({
   const documentsRequiringAction = currentDocuments.filter(({ status }) => ['changes_requested', 'rejected'].includes(status))
   const industryLabels = updateRequest.industry_labels || {}
   const mediaPreviews = updateRequest.media_previews || {}
+  const listPreviews = updateRequest.previews || {}
 
   return (
     <Modal
@@ -245,6 +230,7 @@ export default function CompanyUpdateComparisonModal({
                     value={updateRequest.current_values?.[field]}
                     industryLabels={industryLabels}
                     mediaPreviews={mediaPreviews}
+                    listPreviews={listPreviews}
                   />
                 </div>
                 <div className="company-comparison-grid__value is-proposed" role="cell">
@@ -254,6 +240,7 @@ export default function CompanyUpdateComparisonModal({
                     value={proposedValue}
                     industryLabels={industryLabels}
                     mediaPreviews={mediaPreviews}
+                    listPreviews={listPreviews}
                     proposed
                   />
                 </div>

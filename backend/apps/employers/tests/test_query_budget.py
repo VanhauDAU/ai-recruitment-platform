@@ -1,27 +1,46 @@
-"""Query-count contracts for employer recruitment-need reads."""
+"""Query-count contracts for employer and public company reads."""
 
 import re
 from datetime import timedelta
 from urllib.parse import urlsplit
 
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
 from django.db import connection
 from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework.test import APITestCase
 
-from apps.jobs.models import Job, JobCategory
+from apps.jobs.models import Benefit, Job, JobCategory, JobLocation
+from apps.locations.models import Location
 
 from ..models import (
     Company,
+    CompanyBenefit,
     CompanyDocument,
+    CompanyImage,
     CompanyIndustry,
+    CompanyOffice,
+    CompanyReport,
     CompanyUpdateRequest,
     EmployerVerificationCase,
     Industry,
     RecruiterProfile,
     RecruitmentNeed,
+)
+from ..services import (
+    follow_company,
+    resolve_company_report,
+    reverse_company_report,
+    submit_company_report,
+)
+from .company_page_helpers import (
+    add_recruiter,
+    make_candidate,
+    make_company,
+    make_employer,
+    publish_job,
 )
 
 # Authentication is bypassed with force_authenticate: one recruiter lookup plus
@@ -29,7 +48,28 @@ from ..models import (
 RECRUITMENT_NEED_READ_BUDGET = 2
 COMPANY_UPDATE_REQUEST_LIST_BUDGET = 4
 ADMIN_COMPANY_UPDATE_REQUEST_LIST_BUDGET = 8
+# Rows proposing benefits/offices add, once per page: benefit and province
+# names for the proposals, published benefits and offices for current values.
+ADMIN_COMPANY_UPDATE_REQUEST_CONTENT_LIST_BUDGET = ADMIN_COMPANY_UPDATE_REQUEST_LIST_BUDGET + 4
 PUBLIC_COMPANY_LIST_QUERY_BUDGET = 5
+# Company row (indexability is an EXISTS annotation and the saved layout a
+# join of the same SELECT), industries prefetch, gallery prefetch, canonical
+# public-job count, publicly available pinned jobs (CP-5), benefits with their
+# catalogue entry and offices with their province (CP-6, one prefetch each).
+PUBLIC_COMPANY_DETAIL_QUERY_BUDGET = 7
+# Visible-company lookup, one canonical job aggregate over the same-industry
+# candidates, the ranked projection, industries prefetch.
+PUBLIC_COMPANY_SIMILAR_QUERY_BUDGET = 4
+# Visible-company lookup, one grouped province aggregate.
+PUBLIC_COMPANY_JOB_FACETS_QUERY_BUDGET = 2
+# Visible-company lookup, the caller's follow next to the follower total.
+COMPANY_FOLLOW_STATE_QUERY_BUDGET = 2
+# Pagination count, followed companies (follow columns ride the same join),
+# industries prefetch, one grouped canonical job count for the page.
+FOLLOWED_COMPANY_LIST_QUERY_BUDGET = 4
+# Pagination count, reports joined to company/reporter/resolver, resolution
+# history prefetch, history actors prefetch.
+ADMIN_COMPANY_REPORT_LIST_QUERY_BUDGET = 4
 
 
 def _canonical_job_table_references(queries):
@@ -156,6 +196,243 @@ class PublicCompanyListQueryBudgetTests(APITestCase):
         self.assertEqual(_canonical_job_table_references(cursor_queries), 1)
 
 
+class FlatQueryCountMixin:
+    def _assert_flat(self, url, budget, grow):
+        with CaptureQueriesContext(connection) as baseline_queries:
+            baseline = self.client.get(url)
+        grow()
+        with CaptureQueriesContext(connection) as expanded_queries:
+            expanded = self.client.get(url)
+
+        self.assertEqual(baseline.status_code, 200, baseline.data)
+        self.assertEqual(expanded.status_code, 200, expanded.data)
+        self.assertEqual(len(baseline_queries), len(expanded_queries))
+        self.assertLessEqual(len(expanded_queries), budget)
+        return baseline, expanded
+
+
+class PublicCompanyPageQueryBudgetTests(FlatQueryCountMixin, APITestCase):
+    def setUp(self):
+        cache.clear()
+        self.creator = make_employer('public-company-page-budget@example.com')
+        self.industry = Industry.objects.create(name='Company page budget')
+        self.company = make_company(
+            self.creator,
+            name='Công ty trang ngân sách',
+            industry=self.industry,
+            description='<p>Giới thiệu công ty.</p>',
+        )
+        self.recruiter = add_recruiter(self.company)
+
+    def test_public_company_detail_query_count_stays_flat(self):
+        publish_job(self.company, self.recruiter)
+        CompanyImage.objects.create(company=self.company, image_url='employers/budget/0.png')
+
+        def grow():
+            for index in range(1, 25):
+                publish_job(self.company, self.recruiter)
+                CompanyImage.objects.create(
+                    company=self.company,
+                    image_url=f'employers/budget/{index}.png',
+                )
+                CompanyIndustry.objects.create(
+                    company=self.company,
+                    industry=Industry.objects.create(name=f'Company page budget {index}'),
+                )
+                CompanyBenefit.objects.create(
+                    company=self.company,
+                    benefit=Benefit.objects.create(name=f'Company page budget {index}'),
+                    sort_order=index,
+                )
+                CompanyOffice.objects.create(
+                    company=self.company,
+                    label=f'Văn phòng {index}',
+                    address_line=f'{index} Duy Tân',
+                    province=Location.objects.create(
+                        code=f'B{index:02d}',
+                        level=Location.Level.PROVINCE,
+                        name=f'Tỉnh ngân sách {index:02d}',
+                    ),
+                    sort_order=index,
+                )
+
+        baseline, expanded = self._assert_flat(
+            reverse('public-company-detail', args=[self.company.slug]),
+            PUBLIC_COMPANY_DETAIL_QUERY_BUDGET,
+            grow,
+        )
+
+        self.assertEqual(baseline.data['stats']['active_public_job_count'], 1)
+        self.assertEqual(expanded.data['stats']['active_public_job_count'], 25)
+        self.assertEqual(len(expanded.data['identity']['industries']), 25)
+        self.assertEqual(len(expanded.data['sections'][-1]['items']), 25)
+        sections = {block['key']: block for block in expanded.data['sections']}
+        sidebar = {block['key']: block for block in expanded.data['sidebar']}
+        self.assertEqual(len(sections['benefits']['items']), 24)
+        self.assertEqual(len(sidebar['offices']['items']), 24)
+
+    def _similar_company(self, index):
+        company = make_company(
+            self.creator,
+            name=f'Công ty tương tự {index:02d}',
+            industry=self.industry,
+        )
+        publish_job(company, add_recruiter(company))
+
+    def test_public_company_similar_query_count_stays_flat(self):
+        self._similar_company(0)
+
+        def grow():
+            for index in range(1, 25):
+                self._similar_company(index)
+
+        baseline, expanded = self._assert_flat(
+            reverse('public-company-similar', args=[self.company.public_id]),
+            PUBLIC_COMPANY_SIMILAR_QUERY_BUDGET,
+            grow,
+        )
+
+        self.assertEqual(len(baseline.data['results']), 1)
+        self.assertEqual(len(expanded.data['results']), 6)
+
+    def test_public_company_job_facets_query_count_stays_flat(self):
+        def job_in_new_province(index):
+            province = Location.objects.create(
+                code=f'P{index:02d}',
+                level=Location.Level.PROVINCE,
+                name=f'Tỉnh {index:02d}',
+            )
+            ward = Location.objects.create(
+                code=f'W{index:02d}',
+                level=Location.Level.WARD,
+                name=f'Phường {index:02d}',
+                parent=province,
+            )
+            JobLocation.objects.create(
+                job=publish_job(self.company, self.recruiter),
+                location=ward,
+            )
+
+        job_in_new_province(0)
+
+        def grow():
+            for index in range(1, 25):
+                job_in_new_province(index)
+
+        baseline, expanded = self._assert_flat(
+            reverse('public-company-job-facets', args=[self.company.public_id]),
+            PUBLIC_COMPANY_JOB_FACETS_QUERY_BUDGET,
+            grow,
+        )
+
+        self.assertEqual(len(baseline.data['locations']), 1)
+        self.assertEqual(len(expanded.data['locations']), 25)
+
+
+class CompanyFollowQueryBudgetTests(FlatQueryCountMixin, APITestCase):
+    def setUp(self):
+        cache.clear()
+        self.creator = make_employer('company-follow-budget@example.com')
+        self.industry = Industry.objects.create(name='Company follow budget')
+        self.candidate = make_candidate('company-follow-budget-candidate@example.com')
+        self.client.force_authenticate(self.candidate)
+
+    def _followed_company(self, index):
+        company = make_company(
+            self.creator,
+            name=f'Công ty theo dõi {index:02d}',
+            industry=self.industry,
+        )
+        publish_job(company, add_recruiter(company))
+        follow_company(company=company, candidate=self.candidate)
+        return company
+
+    def test_follow_state_query_count_stays_flat(self):
+        company = self._followed_company(0)
+
+        def grow():
+            for index in range(24):
+                follow_company(
+                    company=company,
+                    candidate=make_candidate(f'company-follow-budget-{index}@example.com'),
+                )
+
+        baseline, expanded = self._assert_flat(
+            reverse('company-follow', args=[company.public_id]),
+            COMPANY_FOLLOW_STATE_QUERY_BUDGET,
+            grow,
+        )
+
+        self.assertEqual(baseline.data['follower_count'], 1)
+        self.assertEqual(expanded.data['follower_count'], 25)
+
+    def test_followed_company_list_query_count_stays_flat(self):
+        self._followed_company(0)
+
+        def grow():
+            for index in range(1, 25):
+                self._followed_company(index)
+
+        baseline, expanded = self._assert_flat(
+            f'{reverse("candidate-followed-companies")}?page_size=60',
+            FOLLOWED_COMPANY_LIST_QUERY_BUDGET,
+            grow,
+        )
+
+        self.assertEqual(len(baseline.data['results']), 1)
+        self.assertEqual(len(expanded.data['results']), 25)
+        self.assertEqual(
+            {item['active_public_job_count'] for item in expanded.data['results']},
+            {1},
+        )
+
+
+class AdminCompanyReportQueryBudgetTests(FlatQueryCountMixin, APITestCase):
+    def setUp(self):
+        cache.clear()
+        self.admin = get_user_model().objects.create_superuser(
+            email='company-report-admin-budget@example.com',
+            password='Password@123',
+        )
+        self.creator = make_employer('company-report-budget@example.com')
+        self.client.force_authenticate(self.admin)
+
+    def _reopened_report(self, index):
+        """A report with two history events, so both prefetches always run."""
+        report = submit_company_report(
+            company=make_company(self.creator, name=f'Công ty bị báo cáo {index:02d}'),
+            reporter=make_candidate(f'company-report-budget-{index}@example.com'),
+            reason=CompanyReport.Reason.WRONG_INFO,
+        )
+        resolve_company_report(
+            report=report,
+            status=CompanyReport.Status.UPHELD,
+            actor=self.admin,
+            note='Đã đối chiếu thông tin.',
+        )
+        reverse_company_report(report=report, actor=self.admin, note='Cần xem lại.')
+
+    def test_admin_company_report_list_query_count_stays_flat(self):
+        self._reopened_report(0)
+
+        def grow():
+            for index in range(1, 25):
+                self._reopened_report(index)
+
+        baseline, expanded = self._assert_flat(
+            f'{reverse("admin-company-report-list")}?page_size=60',
+            ADMIN_COMPANY_REPORT_LIST_QUERY_BUDGET,
+            grow,
+        )
+
+        self.assertEqual(baseline.data['count'], 1)
+        self.assertEqual(len(expanded.data['results']), 25)
+        self.assertEqual(
+            {len(row['resolution_history']) for row in expanded.data['results']},
+            {2},
+        )
+
+
 class RecruitmentNeedQueryBudgetTests(APITestCase):
     def setUp(self):
         self.user = get_user_model().objects.create_user(
@@ -259,7 +536,7 @@ class AdminCompanyUpdateRequestQueryBudgetTests(APITestCase):
         )
         self.client.force_authenticate(self.admin)
 
-    def _request_with_document(self, index):
+    def _request_with_document(self, index, changes=None):
         requester = get_user_model().objects.create_user(
             email=f'company-request-admin-{index}@example.com',
             password='Password@123',
@@ -277,7 +554,7 @@ class AdminCompanyUpdateRequestQueryBudgetTests(APITestCase):
         update_request = CompanyUpdateRequest.objects.create(
             company=company,
             requested_by=requester,
-            changes={'address': f'Địa chỉ {index}'},
+            changes=changes or {'address': f'Địa chỉ {index}'},
         )
         CompanyDocument.objects.create(
             company=company,
@@ -287,6 +564,7 @@ class AdminCompanyUpdateRequestQueryBudgetTests(APITestCase):
             doc_type=CompanyDocument.DocType.BUSINESS_REGISTRATION,
             file_url=f'employers/admin-budget/document-{index}.pdf',
         )
+        return company
 
     def test_admin_company_update_request_list_query_count_stays_flat(self):
         self._request_with_document(1)
@@ -307,3 +585,60 @@ class AdminCompanyUpdateRequestQueryBudgetTests(APITestCase):
             len(expanded_queries),
             ADMIN_COMPANY_UPDATE_REQUEST_LIST_BUDGET,
         )
+
+
+class AdminCompanyUpdateRequestContentQueryBudgetTests(AdminCompanyUpdateRequestQueryBudgetTests):
+    def setUp(self):
+        super().setUp()
+        self.benefit = Benefit.objects.create(name='Admin content budget')
+        self.province = Location.objects.create(
+            code='AB01',
+            level=Location.Level.PROVINCE,
+            name='Tỉnh duyệt nội dung',
+        )
+
+    def _content_request(self, index):
+        company = self._request_with_document(
+            index,
+            changes={
+                'benefits': [{'benefit_id': self.benefit.pk, 'note': ''}],
+                'offices': [
+                    {
+                        'label': 'Trụ sở',
+                        'address_line': f'{index} Duy Tân',
+                        'province_id': self.province.pk,
+                        'is_headquarters': True,
+                    }
+                ],
+            },
+        )
+        CompanyBenefit.objects.create(company=company, benefit=self.benefit, sort_order=0)
+        CompanyOffice.objects.create(
+            company=company,
+            label='Văn phòng cũ',
+            address_line='1 Phố Cũ',
+            province=self.province,
+            sort_order=0,
+        )
+
+    def test_admin_company_update_request_list_query_count_stays_flat(self):
+        self._content_request(1)
+        with CaptureQueriesContext(connection) as first_queries:
+            first = self.client.get(reverse('admin-company-update-request-list'))
+
+        for index in range(2, 7):
+            self._content_request(index)
+        with CaptureQueriesContext(connection) as expanded_queries:
+            expanded = self.client.get(reverse('admin-company-update-request-list'))
+
+        self.assertEqual((first.data['count'], expanded.data['count']), (1, 6))
+        self.assertEqual(len(first_queries), len(expanded_queries))
+        self.assertLessEqual(
+            len(expanded_queries),
+            ADMIN_COMPANY_UPDATE_REQUEST_CONTENT_LIST_BUDGET,
+        )
+        for row in expanded.data['results']:
+            self.assertEqual(
+                row['previews']['benefits'], [{'name': 'Admin content budget', 'note': ''}]
+            )
+            self.assertEqual(row['current_values']['offices'][0]['label'], 'Văn phòng cũ')

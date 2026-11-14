@@ -14,6 +14,7 @@ export const EmployerDashboardPage = lazy(() => import('@/pages/employer/app/Das
 export const EmployerNotificationsPage = lazy(() => import('@/pages/employer/app/Notifications'))
 export const EmployerActivitiesPage = lazy(() => import('@/pages/employer/app/Activities'))
 export const EmployerVerifyPage = lazy(() => import('@/pages/employer/app/EmployerVerify'))
+export const EmployerCompanyWorkspacePage = lazy(() => import('@/pages/employer/app/CompanyPage'))
 export const EmployerPhoneVerifyPage = lazy(() => import('@/pages/employer/app/account/PhoneVerify'))
 export const EmployerAccountInformationPage = lazy(() => import('@/pages/employer/app/account/AccountInformation'))
 export const EmployerPasswordLoginPage = lazy(() => import('@/pages/employer/app/account/PasswordLogin'))

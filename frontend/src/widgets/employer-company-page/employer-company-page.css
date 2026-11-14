@@ -1,0 +1,155 @@
+/* Workspace "Trang công ty" của nhà tuyển dụng. Stylesheet của lazy widget:
+   quy tắc mới đặt ở đây thay vì thêm utility Tailwind vào CSS khởi tạo. */
+
+.employer-company-page {
+  display: grid;
+  min-width: 0;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+.employer-company-page__header,
+.employer-company-page__panel {
+  min-width: 0;
+  border: 1px solid #e2e8f0;
+  border-radius: 1rem;
+  background: #fff;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.05);
+}
+
+.employer-company-page__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1.25rem;
+  padding: 0.875rem 1rem;
+}
+
+.employer-company-page__title,
+.employer-company-page__company,
+.employer-company-preview__title,
+.employer-company-preview__note {
+  margin: 0;
+}
+
+.employer-company-page__title {
+  color: #0f172a;
+  font-size: 1.125rem;
+  font-weight: 800;
+}
+
+.employer-company-page__company,
+.employer-company-preview__note {
+  overflow-wrap: anywhere;
+  color: #64748b;
+  font-size: 0.8125rem;
+}
+
+.employer-company-page__stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  margin: 0;
+  padding: 0;
+  color: #475569;
+  font-size: 0.8125rem;
+  list-style: none;
+}
+
+.employer-company-page__stats strong {
+  color: #0f172a;
+}
+
+.employer-company-page__body {
+  display: grid;
+  min-width: 0;
+  align-items: start;
+  gap: 0.75rem;
+}
+
+.employer-company-page__panel {
+  padding: 0.5rem 1rem 0;
+}
+
+.employer-company-page__aside {
+  position: sticky;
+  top: 0.75rem;
+  padding: 0.875rem 1rem;
+}
+
+.employer-company-preview {
+  display: grid;
+  min-width: 0;
+  gap: 0.625rem;
+}
+
+.employer-company-preview__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.employer-company-preview__title {
+  color: #0f172a;
+  font-size: 0.9375rem;
+  font-weight: 700;
+}
+
+.employer-company-preview__viewport {
+  min-width: 0;
+  max-height: calc(100vh - 13rem);
+  overflow: auto;
+  border-radius: 0.75rem;
+  background: #f5f7f8;
+  padding: 0.75rem;
+}
+
+.employer-company-preview__frame {
+  margin: 0 auto;
+}
+
+.employer-company-preview__pinned {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0 0 0.75rem;
+  padding: 0;
+  color: #1e293b;
+  font-size: 0.875rem;
+  font-weight: 600;
+  list-style: none;
+}
+
+.employer-company-preview__pinned span {
+  margin-right: 0.375rem;
+  border-radius: 9999px;
+  background: #fef3c7;
+  padding: 0.125rem 0.5rem;
+  color: #92400e;
+  font-size: 0.6875rem;
+  font-weight: 700;
+}
+
+.employer-company-page__completeness {
+  flex: 1 1 100%;
+  min-width: 0;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 0.5rem;
+}
+
+.employer-company-preview__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  color: #475569;
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+/* Từ `xl` của antd (1200px) bản xem trước đứng cạnh điều khiển. */
+@media (min-width: 1200px) {
+  .employer-company-page__body {
+    grid-template-columns: minmax(22rem, 2fr) minmax(0, 3fr);
+  }
+}

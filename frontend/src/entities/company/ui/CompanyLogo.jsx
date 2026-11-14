@@ -1,4 +1,4 @@
-import { companyInitial } from './company-presentation'
+import { companyInitial } from '../lib/company-presentation'
 
 export default function CompanyLogo({
   className = '',

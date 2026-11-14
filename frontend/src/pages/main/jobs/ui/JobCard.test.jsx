@@ -107,4 +107,46 @@ describe('JobCard', () => {
     fireEvent.click(compareButton)
     expect(onQuickView).not.toHaveBeenCalled()
   })
+
+  it('links the company name to its page without opening quick view', () => {
+    const onQuickView = vi.fn()
+    render(
+      <MemoryRouter>
+        <JobCard
+          onQuickView={onQuickView}
+          job={{
+            public_id: 'job-5',
+            slug: 'data-engineer-job-5',
+            title: 'Data Engineer',
+            company_name: 'ProCV',
+            company_slug: 'procv',
+          }}
+        />
+      </MemoryRouter>,
+    )
+
+    const companyLink = screen.getByRole('link', { name: 'ProCV' })
+    expect(companyLink).toHaveAttribute('href', '/cong-ty/procv')
+    fireEvent.click(companyLink)
+    expect(onQuickView).not.toHaveBeenCalled()
+  })
+
+  it('keeps the company name as plain text when its page is hidden', () => {
+    render(
+      <MemoryRouter>
+        <JobCard
+          job={{
+            public_id: 'job-6',
+            slug: 'ops-engineer-job-6',
+            title: 'Ops Engineer',
+            company_name: 'ProCV',
+            company_slug: null,
+          }}
+        />
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByText('ProCV')).toBeVisible()
+    expect(screen.queryByRole('link', { name: 'ProCV' })).not.toBeInTheDocument()
+  })
 })

@@ -2,7 +2,7 @@ import { CloseOutlined, HeartFilled, HeartOutlined, RightOutlined } from '@ant-d
 import { Skeleton, Tooltip } from 'antd'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
-import { companyDirectoryPath } from '@/entities/company'
+import { jobCompanyPath } from '@/entities/company'
 import {
   EDUCATION_LEVEL_LABELS,
   EMPLOYMENT_TYPE_LABELS,
@@ -220,7 +220,7 @@ export default function JobQuickView({ job, onClose, isAuthenticated = true, onR
                 <p className="truncate text-sm font-semibold text-gray-900">{job.company_name}</p>
                 <button
                   type="button"
-                  onClick={() => navigate(companyDirectoryPath(job))}
+                  onClick={() => navigate(jobCompanyPath(job))}
                   className="cursor-pointer text-xs font-medium text-[var(--brand-primary)] hover:underline"
                 >
                   Xem trang công ty ↗

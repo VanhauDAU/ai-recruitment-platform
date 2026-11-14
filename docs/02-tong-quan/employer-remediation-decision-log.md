@@ -232,6 +232,22 @@ tiếp ngày 2026-08-10.
 Chủ dự án đã xác nhận toàn bộ kế hoạch và yêu cầu tiếp tục không cần hỏi lại;
 ER-D49 cụ thể hóa tiêu chí “account/company relation còn clean” của ER-D27.
 
+## Session 2026-11-14 — Trang công ty và quyền biên tập
+
+| ID | Quyết định | Hệ quả triển khai |
+| --- | --- | --- |
+| ER-D58 | Người được tuỳ biến trang công ty là owner có `EmployerVerificationCase` đã duyệt cho đúng công ty, cộng member đã xác thực được owner cấp quyền "Biên tập trang công ty" | Không thêm vai trò vào `company_role`; quyền suy ra tại thời điểm request từ predicate đại diện và bảng grant có lịch sử. Owner chưa xác thực thì không ai trong công ty tuỳ biến được |
+| ER-D59 | Quyền biên tập chỉ ràng buộc phần mới: bố cục và các trường nội dung mới của trang. Luật ER-D05 (mọi member gửi được yêu cầu sửa trường đã có) và quyền tải ảnh của owner giữ nguyên; người biên tập còn hiệu lực được tải ảnh thêm | Chỉ mở rộng quyền media, không thu hẹp luồng hiện có |
+| ER-D60 | Kiểm duyệt lai: nội dung đi qua `CompanyUpdateRequest`; bố cục (bật/tắt khối, thứ tự, màu nhấn, tin ghim) áp dụng ngay | Bố cục lưu bảng riêng, có khoá lạc quan và nhật ký chỉ-ghi-thêm; không được làm đổi `Company.updated_at` |
+| ER-D61 | Tuỳ biến theo bộ khối định sẵn: bật/tắt, sắp xếp, màu nhấn từ bảng màu có sẵn, có xem trước. Không có trình dựng trang tự do | Registry khối nằm ở backend và phục vụ qua API |
+| ER-D62 | Ứng viên có theo dõi công ty, báo cáo thông tin sai và email việc mới từ công ty đang theo dõi. Không làm đánh giá công ty | Nhà tuyển dụng chỉ thấy tổng số người theo dõi |
+| ER-D63 | Thông báo việc mới gửi qua email gộp hiện có, bật sẵn khi theo dõi; tắt được theo từng công ty và tắt chung | Không xây trung tâm thông báo trong ứng dụng cho ứng viên ở epic này |
+| ER-D64 | Mọi công ty không bị tạm ẩn đều có trang chi tiết; chỉ index và vào sitemap khi có người đại diện hợp lệ, có lĩnh vực, và có mô tả hoặc tin đang tuyển | Tạm ẩn trả 404 thật và loại công ty khỏi danh bạ, sitemap, gợi ý |
+
+Chủ dự án xác nhận ER-D58 đến ER-D64 ngày 14/11/2026. Kiến trúc tương ứng ghi tại
+[ADR-0017](./adr-0017-company-page.md); lộ trình tại
+[kế hoạch trang công ty](../01-phan-tich/ke-hoach-trang-cong-ty.md).
+
 ## Tài liệu/mô tả bị thay thế
 
 | Tài liệu/mô tả cũ | Phần bị thay thế |

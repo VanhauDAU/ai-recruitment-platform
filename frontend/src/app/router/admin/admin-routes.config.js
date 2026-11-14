@@ -104,6 +104,16 @@ export const ADMIN_ROUTES = [
     showInNav: false,
   },
   {
+    id: 'companyReports',
+    segment: '/company-reports',
+    lazyKey: 'AdminCompanyReportsPage',
+    title: 'Báo cáo công ty',
+    navLabel: 'Báo cáo công ty',
+    iconKey: 'moderation',
+    permission: 'company_report.view',
+    showInNav: true,
+  },
+  {
     id: 'blog',
     segment: '/blog',
     lazyKey: 'AdminBlogManagementPage',

@@ -6,6 +6,10 @@ from django.utils.text import slugify
 from common.db.search import fold_accents
 from common.public_id import generate_public_id
 
+# Path segments owned by static routes under /cong-ty/; a company slug equal to
+# one of them would be unreachable at /cong-ty/<slug>.
+RESERVED_COMPANY_SLUGS = frozenset({'tim-kiem'})
+
 
 class Industry(models.Model):
     """Lĩnh vực hoạt động (Fintech, Bán lẻ, Giáo dục...). Một công ty có thể
@@ -86,6 +90,14 @@ class Company(models.Model):
     company_size = models.CharField(max_length=100, choices=Size.choices, blank=True)
     description = models.TextField(blank=True)
     employee_benefits = models.TextField(blank=True)
+    # Page content (ADR-0017). Like every column above, written only by an
+    # approved update request; validated in ``services.company_page_content``.
+    headline = models.CharField(max_length=160, blank=True)
+    culture = models.TextField(blank=True)
+    # Canonical YouTube or Vimeo watch URL; the embed URL is derived on read.
+    video_url = models.TextField(blank=True)
+    # ``{network: https URL}`` for the networks of ``employers.page_content``.
+    social_links = models.JSONField(default=dict, blank=True)
     # Danh sách giá trị enum Market/TargetCustomer; để JSON vì hiếm khi cần
     # filter — nâng thành bảng riêng nếu về sau có nhu cầu truy vấn.
     markets = models.JSONField(default=list, blank=True)
@@ -98,6 +110,12 @@ class Company(models.Model):
         default=False,
         help_text='Bật trang thương hiệu — tin tuyển dụng hiển thị dưới URL /brand/... với header công ty',
     )
+    # Moderation switch for the public page. Write it with QuerySet.update()
+    # only: save() moves updated_at, the optimistic-lock base of update requests.
+    content_policy_hold = models.BooleanField(default=False, db_index=True)
+    # Number of CompanyFollow rows. Same rule as the hold: QuerySet.update()
+    # with F() only, in the transaction that adds or removes the follow row.
+    follower_count = models.PositiveIntegerField(default=0)
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='companies_created'
     )
@@ -125,7 +143,10 @@ class Company(models.Model):
         if not self.slug:
             base_slug = slugify(self.company_name) or 'company'
             self.slug = base_slug
-            if Company.objects.filter(slug=base_slug).exclude(pk=self.pk).exists():
+            if (
+                base_slug in RESERVED_COMPANY_SLUGS
+                or Company.objects.filter(slug=base_slug).exclude(pk=self.pk).exists()
+            ):
                 self.slug = f'{base_slug}-{self.public_id.lower()}'
         self.tax_code = self.tax_code or None
         self.company_name_search = fold_accents(self.company_name)
@@ -142,6 +163,25 @@ class Company(models.Model):
 
     def __str__(self):
         return self.company_name
+
+    @property
+    def display_name(self):
+        return self.trade_name.strip() or self.company_name
+
+    @property
+    def public_page_path(self):
+        return f'/cong-ty/{self.slug}'
+
+    @property
+    def public_headquarters(self):
+        """Address safe for public surfaces.
+
+        A household business usually registers the owner's home, so only an
+        enterprise address may leave the employer and admin portals.
+        """
+        if self.business_type != self.BusinessType.ENTERPRISE:
+            return ''
+        return self.address.strip()
 
 
 class CompanyIndustry(models.Model):
