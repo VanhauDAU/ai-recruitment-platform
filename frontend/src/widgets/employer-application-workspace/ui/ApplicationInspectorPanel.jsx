@@ -9,7 +9,10 @@ import {
   SolutionOutlined,
 } from '@ant-design/icons'
 import { Alert, Empty, Skeleton } from 'antd'
+import { Link } from 'react-router'
 import { ApplicationDecisionBar } from '@/features/application-status-decision'
+import { BlockCandidateButton } from '@/features/block-candidate'
+import { employerAppPath } from '@/shared/config/portals'
 import { formatApplicationDate, initialsOf, pendingNoticeOf } from '../model/application-workspace'
 import ApplicationAssessmentSection from './ApplicationAssessmentSection'
 import ApplicationHistoryTimeline from './ApplicationHistoryTimeline'
@@ -41,6 +44,37 @@ function TextBlock({ label, children }) {
     <div>
       <p className="text-[11px] font-medium text-slate-400">{label}</p>
       <p className="mt-1 whitespace-pre-wrap rounded-xl bg-slate-50 p-2.5 text-xs leading-5 text-slate-600">{children}</p>
+    </div>
+  )
+}
+
+/** Blocklist state, or the mass-apply signal that suggests blocking. */
+function CandidateTrust({ application, candidateName }) {
+  if (application.candidate_blocked) {
+    return (
+      <Alert
+        showIcon
+        type="error"
+        title="Ứng viên đang trong danh sách đen"
+        action={<Link to={employerAppPath('/candidate-blocks')} className="text-xs font-semibold">Quản lý</Link>}
+      />
+    )
+  }
+  const signal = application.mass_apply_signal
+  if (signal) {
+    return (
+      <Alert
+        showIcon
+        type="warning"
+        title="Có dấu hiệu ứng tuyển hàng loạt"
+        description={`Ứng viên đã nộp vào ${signal.jobs} tin của bạn trong ${signal.window_days} ngày qua.`}
+        action={<BlockCandidateButton application={application} candidateName={candidateName} />}
+      />
+    )
+  }
+  return (
+    <div className="flex justify-end">
+      <BlockCandidateButton application={application} candidateName={candidateName} type="text" />
     </div>
   )
 }
@@ -98,6 +132,7 @@ export default function ApplicationInspectorPanel({
               candidateName={candidateName}
               pendingNotice={pendingNoticeOf(history)}
             />
+            <CandidateTrust application={selectedApplication} candidateName={candidateName} />
           </section>
 
           <section className="aw-section space-y-3">

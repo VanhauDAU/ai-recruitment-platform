@@ -576,10 +576,13 @@ pages/employer/app/applications/ApplicationList
     → features/application-status-decision (4 quyết định, xác nhận trạng thái cuối, hoàn tác)
     → features/download-application-cv (yêu cầu PDF, poll, lưu file)
     → features/share-application-review (tạo/thu hồi link mời đánh giá)
+    → features/block-candidate (chặn ứng viên từ hồ sơ)
       → entities/application, entities/cv
         → shared/lib/{date-time,download-blob}
 ```
 
+- Trang `pages/employer/app/candidate-blocks` (`/tuyendung/app/candidate-blocks`) →
+  `features/manage-candidate-blocks` (liệt kê, gỡ chặn).
 - Trang công khai `pages/employer/review/ApplicationReview` (`/tuyendung/danh-gia-ho-so/:token`,
   không layout, không session) → `features/submit-application-review`.
 - Trạng thái: `submitted`/`viewed` do hệ thống đặt; UI chỉ bật nút nằm trong

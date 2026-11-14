@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from apps.accounts.services import is_account_accessible
 
-from ...models import Application
+from ...models import Application, CandidateBlock
 from ...services import available_status_decisions
 
 
@@ -21,6 +21,8 @@ class ApplicationSerializer(serializers.ModelSerializer):
         source='submitted_cv_version.public_id', read_only=True
     )
     available_decisions = serializers.SerializerMethodField()
+    candidate_blocked = serializers.BooleanField(read_only=True, default=False)
+    mass_apply_signal = serializers.SerializerMethodField()
 
     class Meta:
         model = Application
@@ -42,6 +44,8 @@ class ApplicationSerializer(serializers.ModelSerializer):
             'source',
             'status',
             'available_decisions',
+            'candidate_blocked',
+            'mass_apply_signal',
             'employer_note',
             'employer_rating',
             'candidate_note',
@@ -60,6 +64,13 @@ class ApplicationSerializer(serializers.ModelSerializer):
 
     def get_available_decisions(self, obj):
         return available_status_decisions(obj)
+
+    def get_mass_apply_signal(self, obj):
+        """Suggest blocking a candidate who sprays applications across jobs."""
+        jobs = getattr(obj, 'recent_jobs_applied', 0) or 0
+        if jobs < CandidateBlock.MASS_APPLY_MIN_JOBS or getattr(obj, 'candidate_blocked', False):
+            return None
+        return {'jobs': jobs, 'window_days': CandidateBlock.MASS_APPLY_WINDOW_DAYS}
 
 
 class ApplicationAssessmentSerializer(serializers.Serializer):

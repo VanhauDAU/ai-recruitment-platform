@@ -54,3 +54,11 @@ export const REVIEW_RECOMMENDATIONS = [
   { value: 'no', label: 'Chưa nên tuyển', tone: 'amber' },
   { value: 'strong_no', label: 'Không nên tuyển', tone: 'rose' },
 ]
+
+// Mirrors CandidateBlock.Reason.
+export const CANDIDATE_BLOCK_REASONS = [
+  { value: 'spam', label: 'Ứng tuyển hàng loạt, không phù hợp' },
+  { value: 'inappropriate', label: 'Hành vi không phù hợp' },
+  { value: 'fake_profile', label: 'Hồ sơ giả mạo' },
+  { value: 'other', label: 'Lý do khác' },
+]

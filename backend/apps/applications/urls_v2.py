@@ -1,6 +1,7 @@
 from django.urls import path
 
 from .api.views.admin import AdminJobApplicationListView
+from .api.views.blocks import RecruiterCandidateBlockLiftView, RecruiterCandidateBlockListCreateView
 from .api.views.cv_exports import (
     RecruiterApplicationCvExportDetailView,
     RecruiterApplicationCvExportDownloadView,
@@ -37,6 +38,16 @@ urlpatterns = [
         'recruiter/applications/',
         EmployerApplicationListView.as_view(),
         name='recruiter-application-list-v2',
+    ),
+    path(
+        'recruiter/candidate-blocks/',
+        RecruiterCandidateBlockListCreateView.as_view(),
+        name='recruiter-candidate-blocks-v2',
+    ),
+    path(
+        'recruiter/candidate-blocks/<str:public_id>/lift/',
+        RecruiterCandidateBlockLiftView.as_view(),
+        name='recruiter-candidate-block-lift-v2',
     ),
     path(
         'recruiter/applications/export/',

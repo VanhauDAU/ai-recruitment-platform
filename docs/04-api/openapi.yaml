@@ -11971,6 +11971,76 @@ paths:
       responses:
         '200':
           description: No response body
+  /api/v2/recruiter/candidate-blocks/:
+    get:
+      operationId: v2_recruiter_candidate_blocks_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - applications-v2
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCandidateBlockList'
+          description: ''
+    post:
+      operationId: v2_recruiter_candidate_blocks_create
+      summary: Chặn ứng viên ứng tuyển vào các tin của tôi
+      tags:
+      - applications-v2
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CandidateBlockCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CandidateBlockCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CandidateBlockCreateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CandidateBlock'
+          description: ''
+  /api/v2/recruiter/candidate-blocks/{public_id}/lift/:
+    post:
+      operationId: v2_recruiter_candidate_blocks_lift_create
+      summary: Gỡ chặn ứng viên
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - applications-v2
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
 components:
   schemas:
     AccountResourceHoldChangeRequest:
@@ -16680,6 +16750,13 @@ components:
         available_decisions:
           type: string
           readOnly: true
+        candidate_blocked:
+          type: boolean
+          readOnly: true
+          default: false
+        mass_apply_signal:
+          type: string
+          readOnly: true
         employer_note:
           type: string
           readOnly: true
@@ -16729,6 +16806,7 @@ components:
       - available_decisions
       - candidate_account_restricted
       - candidate_account_status
+      - candidate_blocked
       - candidate_email
       - candidate_name
       - candidate_note
@@ -16740,6 +16818,7 @@ components:
       - interviewed_at
       - job
       - job_title
+      - mass_apply_signal
       - public_id
       - rejected_at
       - shortlisted_at
@@ -17376,6 +17455,75 @@ components:
       - data_processing_consent
       - job_public_id
       - version_public_id
+    CandidateBlock:
+      type: object
+      properties:
+        public_id:
+          type: string
+          readOnly: true
+        candidate_name:
+          type: string
+          readOnly: true
+        candidate_email:
+          type: string
+          format: email
+          readOnly: true
+        reason:
+          allOf:
+          - $ref: '#/components/schemas/Reason47eEnum'
+          readOnly: true
+        reason_label:
+          type: string
+          readOnly: true
+        note:
+          type: string
+          readOnly: true
+        source_job_title:
+          type: string
+          readOnly: true
+          default: ''
+        expires_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - candidate_email
+      - candidate_name
+      - created_at
+      - expires_at
+      - note
+      - public_id
+      - reason
+      - reason_label
+      - source_job_title
+    CandidateBlockCreateRequest:
+      type: object
+      properties:
+        application_public_id:
+          type: string
+          minLength: 1
+          maxLength: 50
+        reason:
+          $ref: '#/components/schemas/Reason47eEnum'
+        note:
+          type: string
+          maxLength: 1000
+        duration_days:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/DurationDaysEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        reject_pending:
+          type: boolean
+          default: false
+      required:
+      - application_public_id
+      - reason
     CandidateDataAccessA46Enum:
       enum:
       - eligible_after_recompute
@@ -20189,6 +20337,16 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/JobApplicationEmailRequest'
+    DurationDaysEnum:
+      enum:
+      - 30
+      - 90
+      - 180
+      type: integer
+      description: |-
+        * `30` - 30
+        * `90` - 90
+        * `180` - 180
     EducationLevelEnum:
       enum:
       - none
@@ -24778,6 +24936,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CandidateApplicationV2'
+    PaginatedCandidateBlockList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/CandidateBlock'
     PaginatedCandidateNotificationList:
       type: object
       required:
@@ -27089,6 +27270,18 @@ components:
         * `wrong_info` - Thông tin tin đăng sai sự thật
         * `duplicate` - Tin trùng lặp
         * `expired` - Tin đã tuyển xong nhưng chưa gỡ
+        * `other` - Lý do khác
+    Reason47eEnum:
+      enum:
+      - spam
+      - inappropriate
+      - fake_profile
+      - other
+      type: string
+      description: |-
+        * `spam` - Ứng tuyển hàng loạt, không phù hợp
+        * `inappropriate` - Hành vi không phù hợp
+        * `fake_profile` - Hồ sơ giả mạo
         * `other` - Lý do khác
     ReasonA2aEnum:
       enum:

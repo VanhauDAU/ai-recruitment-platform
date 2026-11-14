@@ -251,6 +251,10 @@ Ba mốc thời gian độc lập, không suy mốc này từ mốc khác:
   người không có tài khoản (vd. trưởng bộ phận) xem CV đã ẩn thông tin liên hệ
   và ảnh rồi gửi phiếu (đề xuất, điểm 1–5, điểm mạnh, băn khoăn). NTD được báo
   và xem tổng hợp phiếu trong workspace.
+- **Danh sách đen:** NTD chặn ứng viên (lý do, thời hạn 30/90/180 ngày hoặc vô
+  thời hạn, tùy chọn từ chối hồ sơ đang chờ); ứng viên bị chặn không nộp được
+  vào tin của NTD đó và chỉ thấy thông báo chung. Workspace cảnh báo khi một ứng
+  viên nộp ≥ 5 tin của NTD trong 14 ngày.
 - Ứng viên bị hạn chế tài khoản chỉ có thể bị chuyển sang `rejected`.
 - `employer_rating` (1–5) và `employer_note` là dữ liệu nội bộ, lưu qua PATCH
   riêng; không bao giờ xuất hiện trong thông báo, email hay API ứng viên.

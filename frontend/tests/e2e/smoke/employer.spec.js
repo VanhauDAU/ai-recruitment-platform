@@ -2532,3 +2532,39 @@ test('employer review link: invited reviewer reads a de-identified CV and sends 
   await page.goto('/tuyendung/danh-gia-ho-so/expired-token')
   await expect(page.getByText('Link đánh giá không còn hiệu lực')).toBeVisible()
 })
+
+test('employer blocklist: blocked candidates are listed and can be lifted', async ({ page }) => {
+  await mockPublicApi(page)
+  await setEmployerSession(page, {
+    email_verified: true,
+    employer_onboarding_required: false,
+    employer_onboarding_step: 'complete',
+    employer_verification_completed: true,
+  })
+  await page.route('http://localhost:8000/api/employer/me/', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({ public_id: 'rec_blocks', ...READY_EMPLOYER_READINESS, onboarding: { verification_completed: true } }),
+    })
+  })
+  let blocks = [{
+    public_id: 'cbk_1', candidate_name: 'Nguyễn Spam', candidate_email: 'spam@example.com', reason: 'spam',
+    reason_label: 'Ứng tuyển hàng loạt, không phù hợp', note: 'Nộp 8 tin trong 2 ngày', source_job_title: 'Kế toán',
+    expires_at: null, created_at: '2026-11-15T09:00:00+07:00',
+  }]
+  await page.route(/http:\/\/localhost:8000\/api\/v2\/recruiter\/candidate-blocks\/(?:\?.*)?$/, async (route) => {
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify({ count: blocks.length, results: blocks }) })
+  })
+  await page.route('http://localhost:8000/api/v2/recruiter/candidate-blocks/cbk_1/lift/', async (route) => {
+    blocks = []
+    await route.fulfill({ contentType: 'application/json', body: '{}' })
+  })
+
+  await page.goto('/tuyendung/app/candidate-blocks')
+  await expect(page.getByRole('heading', { name: 'Danh sách đen' })).toBeVisible()
+  await expect(page.getByText('Nguyễn Spam')).toBeVisible()
+  await expectNoHorizontalOverflow(page)
+  await page.getByRole('button', { name: 'Gỡ chặn' }).click()
+  await page.getByRole('dialog').getByRole('button', { name: 'Gỡ chặn' }).click()
+  await expect(page.getByText('Bạn chưa chặn ứng viên nào')).toBeVisible()
+})

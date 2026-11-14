@@ -67,6 +67,7 @@ const APPLICATIONS = [
     applied_at: '2026-07-25T08:00:00+07:00',
     status: 'submitted',
     available_decisions: DECISIONS,
+    mass_apply_signal: { jobs: 6, window_days: 14 },
     source: 'applied',
   },
 ]
@@ -180,6 +181,15 @@ describe('EmployerApplicationList', () => {
       expect(params.get('application')).toBe('app_2')
     })
     await waitFor(() => expect(mocks.getRecruiterApplicationSnapshot).toHaveBeenCalledWith('app_2'))
+  })
+
+  it('flags mass applying with a block action', async () => {
+    renderPage('/tuyendung/app/applications?job=jb_1&application=app_2')
+
+    const inspector = await screen.findByTestId('application-inspector')
+    expect(await within(inspector).findByText('Có dấu hiệu ứng tuyển hàng loạt')).toBeVisible()
+    expect(within(inspector).getByText(/6 tin của bạn trong 14 ngày/)).toBeVisible()
+    expect(within(inspector).getAllByRole('button', { name: /Chặn ứng viên/ }).length).toBeGreaterThan(0)
   })
 
   it('filters by status through the URL', async () => {
