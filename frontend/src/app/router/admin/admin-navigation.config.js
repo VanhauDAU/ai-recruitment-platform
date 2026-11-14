@@ -28,6 +28,11 @@ export const ADMIN_NAVIGATION = [
             query: { tab: 'updates' },
             access: { allOf: ['company_update.view'] },
           },
+          {
+            key: 'company-reports',
+            label: 'Báo cáo công ty',
+            routeRef: 'companyReports',
+          },
         ],
       },
       {

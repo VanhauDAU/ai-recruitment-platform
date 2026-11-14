@@ -72,6 +72,12 @@ export const AUDIT_ACTION_LABELS = {
   send_account_password_reset: 'Gửi đặt lại mật khẩu',
   resend_account_verification: 'Gửi lại xác minh email',
 
+  // Trang công ty công khai và báo cáo công ty.
+  apply_company_page_hold: 'Tạm ẩn trang công ty',
+  release_company_page_hold: 'Khôi phục trang công ty',
+  resolve_company_report: 'Kết luận báo cáo công ty',
+  reverse_company_report: 'Gỡ kết luận báo cáo công ty',
+
   // Thao tác từ management command / seed.
   mark_email_verified: 'Đánh dấu email đã xác minh',
 }

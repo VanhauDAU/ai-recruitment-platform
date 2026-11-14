@@ -20,6 +20,7 @@ import {
   CompanyListPage,
   CompanySearchPage,
   EmailNotificationSettingsPage,
+  FollowedCompaniesPage,
   ForgotPasswordPage,
   HomePage,
   JobDetailPage,
@@ -54,6 +55,7 @@ import { AuthLayout, MainLayout, OnboardingLayout } from '../lazy/layouts'
 // Trang tài khoản đã xây thật, map theo item.key trong candidate-menu.
 const ACCOUNT_PAGE_BY_KEY = {
   'applied-jobs': AppliedJobsPage,
+  'followed-companies': FollowedCompaniesPage,
   'personal-info': PersonalInfoPage,
   'my-cv': MyCvsPage,
   'suggestion-settings': JobPreferenceSettingsPage,

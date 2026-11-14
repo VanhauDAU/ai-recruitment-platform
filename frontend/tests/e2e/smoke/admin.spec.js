@@ -1249,3 +1249,101 @@ test('admin job reports: deep link, filter and resolve workflow are permission-g
     await page.locator('html').evaluate((element) => element.clientWidth),
   )
 })
+
+test('admin company reports: queue resolves a report and can hide the company page', async ({ page }) => {
+  let status = 'pending'
+  let resolvePayload
+  const listRequests = []
+  const adminUser = {
+    public_id: 'usr_moderator',
+    email: 'moderator@example.com',
+    full_name: 'Nguyễn Kiểm Duyệt',
+    role: 'admin',
+    status: 'active',
+    admin_access: {
+      is_superuser: false,
+      permissions: ['company.view', 'company_page.moderate', 'company_report.view', 'company_report.resolve'],
+      memberships: [],
+    },
+  }
+  const report = {
+    public_id: 'crp_1',
+    company: { public_id: 'co_alpha', slug: 'alpha', display_name: 'Alpha', logo_url: '', content_policy_hold: false },
+    reporter_email: 'candidate@example.com',
+    reason: 'impersonation',
+    reason_label: 'Mạo danh doanh nghiệp khác',
+    section_key: 'about',
+    section_title: 'Giới thiệu công ty',
+    detail: 'Trang dùng tên của doanh nghiệp khác.',
+    status,
+    resolution_note: '',
+    resolved_at: null,
+    resolved_by_email: '',
+    resolution_history: [],
+    created_at: '2026-11-14T01:00:00Z',
+  }
+
+  await page.route(API_ROUTE, async (route) => {
+    const request = route.request()
+    const url = new URL(request.url())
+    const path = url.pathname
+    if (path === '/api/admin/company-reports/crp_1/resolve/' && request.method() === 'POST') {
+      resolvePayload = request.postDataJSON()
+      status = resolvePayload.status
+    }
+    if (path === '/api/admin/company-reports/') listRequests.push(Object.fromEntries(url.searchParams))
+    const currentReport = {
+      ...report,
+      status,
+      company: { ...report.company, content_policy_hold: status === 'upheld' },
+    }
+    const matchesFilter = !url.searchParams.get('status') || url.searchParams.get('status') === status
+    const body = path === '/api/auth/refresh/'
+      ? { access: 'e2e-access' }
+      : path === '/api/auth/me/'
+        ? adminUser
+        : path === '/api/privacy/consent/'
+          ? { consent: { necessary: true, preferences: false, analytics: false, marketing: false } }
+          : path === '/api/admin/company-reports/'
+            ? { count: matchesFilter ? 1 : 0, next: null, previous: null, results: matchesFilter ? [currentReport] : [] }
+            : path === '/api/admin/company-reports/crp_1/resolve/'
+              ? currentReport
+              : {}
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) })
+  })
+
+  await page.goto('/admin/app/company-reports')
+  await expect(page.getByRole('heading', { level: 1, name: 'Báo cáo công ty' })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Alpha', exact: true })).toHaveAttribute(
+    'href',
+    '/admin/app/companies/co_alpha?tab=public-page',
+  )
+  await expect(page.getByText('Phần: Giới thiệu công ty')).toBeVisible()
+  expect(listRequests[0]).toEqual({ status: 'pending', ordering: '-created_at', page: '1' })
+
+  await page.getByRole('button', { name: 'Xác nhận vi phạm' }).click()
+  const dialog = page.getByRole('dialog')
+  await dialog.getByRole('button', { name: 'Xác nhận vi phạm' }).click()
+  await expect(dialog.getByText('Nhập ghi chú xử lý.')).toBeVisible()
+  await dialog.getByRole('textbox', { name: 'Ghi chú xử lý' }).fill('Đã đối chiếu giấy đăng ký doanh nghiệp.')
+  await dialog.getByRole('checkbox', { name: 'Đồng thời tạm ẩn trang công ty' }).check()
+  await dialog.getByRole('button', { name: 'Xác nhận vi phạm' }).click()
+
+  await expect(dialog).toBeHidden()
+  expect(resolvePayload).toEqual({
+    status: 'upheld',
+    note: 'Đã đối chiếu giấy đăng ký doanh nghiệp.',
+    apply_hold: true,
+  })
+  await expect(page.getByText('Chưa có báo cáo trong hàng đợi.')).toBeVisible()
+
+  await page.getByRole('combobox', { name: 'Lọc trạng thái báo cáo' }).click()
+  await page.locator('.ant-select-item-option-content', { hasText: 'Đã xác nhận vi phạm' }).click()
+  await expect(page).toHaveURL(/\/admin\/app\/company-reports\?status=upheld$/)
+  await expect(page.getByText('Đang tạm ẩn')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Gỡ kết luận' })).toBeVisible()
+  await expect(page.locator('html')).toHaveJSProperty(
+    'scrollWidth',
+    await page.locator('html').evaluate((element) => element.clientWidth),
+  )
+})

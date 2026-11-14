@@ -22,6 +22,7 @@ export const CANDIDATE_MENU = [
       { key: 'saved-jobs', label: 'Việc làm đã lưu', path: '/viec-lam-da-luu', blank: true },
       { key: 'applied-jobs', label: 'Việc làm đã ứng tuyển', path: accountPath('viec-lam-da-ung-tuyen') },
       { key: 'matching-jobs', label: 'Việc làm phù hợp với bạn', path: accountPath('viec-lam-phu-hop') },
+      { key: 'followed-companies', label: 'Công ty đang theo dõi', path: accountPath('cong-ty-dang-theo-doi') },
       { key: 'suggestion-settings', label: 'Cài đặt gợi ý việc làm', path: accountPath('cai-dat-goi-y-viec-lam') },
     ],
   },

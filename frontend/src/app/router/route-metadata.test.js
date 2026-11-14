@@ -27,6 +27,7 @@ describe('route metadata', () => {
     expect(isIndexableRoute('/cong-ty/fpt-software/khac', 'main')).toBe(false)
     expect(isIndexableRoute('/blog/huong-dan', 'main')).toBe(true)
     expect(isIndexableRoute('/tai-khoan/thong-tin', 'main')).toBe(false)
+    expect(isIndexableRoute('/tai-khoan/cong-ty-dang-theo-doi', 'main')).toBe(false)
     expect(isIndexableRoute('/admin/app/dashboard', 'admin')).toBe(false)
 
     expect(resolveRouteMetadata({ pathname: '/blog', portal: 'main', settings }).robots)
@@ -37,6 +38,8 @@ describe('route metadata', () => {
       .toBe('noindex, nofollow')
     expect(resolveRouteMetadata({ pathname: '/so-sanh-viec-lam', portal: 'main', settings }).robots)
       .toBe('noindex, nofollow')
+    expect(resolveRouteMetadata({ pathname: '/tai-khoan/cong-ty-dang-theo-doi', portal: 'main', settings }))
+      .toEqual(expect.objectContaining({ title: 'Công ty đang theo dõi', robots: 'noindex, nofollow' }))
     expect(isIndexableRoute('/so-sanh-viec-lam', 'main')).toBe(false)
   })
 
