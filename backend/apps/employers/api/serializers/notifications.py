@@ -49,4 +49,5 @@ class EmployerActivitySerializer(serializers.ModelSerializer):
 
 class EmployerNotificationPreferenceSerializer(serializers.Serializer):
     important_decision_email = serializers.BooleanField(read_only=True, default=True)
-    intermediate_verification_email = serializers.BooleanField()
+    intermediate_verification_email = serializers.BooleanField(required=False)
+    new_application_email = serializers.BooleanField(required=False)

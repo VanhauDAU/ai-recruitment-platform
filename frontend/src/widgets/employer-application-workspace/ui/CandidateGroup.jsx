@@ -24,13 +24,10 @@ export default function CandidateGroup({ group, expanded, selectedPublicId, onTo
             {blocked && <StopOutlined title="Đã chặn" aria-label="Đã chặn" className="shrink-0 text-red-500" />}
           </span>
           <span className="mt-0.5 block truncate text-xs text-slate-500">
-            {group.candidateEmail || 'Chưa có email'}
+            {group.applications.length} CV · {group.candidateEmail || 'Chưa có email'}
           </span>
         </span>
-        <span className="shrink-0 text-right">
-          <span className="aw-count">{group.applications.length} CV</span>
-          <DownOutlined className={`mt-1.5 block text-[10px] text-slate-400 transition-transform ${expanded ? 'rotate-180' : ''}`} />
-        </span>
+        <DownOutlined className={`shrink-0 text-[10px] text-slate-400 transition-transform ${expanded ? 'rotate-180' : ''}`} />
       </button>
 
       {expanded && (

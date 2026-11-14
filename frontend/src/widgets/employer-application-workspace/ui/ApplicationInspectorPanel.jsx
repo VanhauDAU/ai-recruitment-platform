@@ -74,9 +74,9 @@ function CandidateTrust({ application, candidateName }) {
     )
   }
   return (
-    <div className="flex flex-wrap justify-end gap-1">
-      <SaveToTalentPoolButton application={application} candidateName={candidateName} />
-      <BlockCandidateButton application={application} candidateName={candidateName} type="text" />
+    <div className="aw-secondary-actions">
+      <SaveToTalentPoolButton application={application} candidateName={candidateName} block />
+      <BlockCandidateButton application={application} candidateName={candidateName} block label="Chặn" />
     </div>
   )
 }

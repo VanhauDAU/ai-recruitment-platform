@@ -148,7 +148,7 @@ describe('EmployerApplicationList', () => {
     expect(within(candidateList).getByRole('heading', { name: 'Ứng viên' })).toBeVisible()
     expect(within(candidateList).getByRole('button', { name: 'Không phù hợp' })).toBeVisible()
     expect(await within(candidateList).findByRole('button', { name: 'Thu gọn hồ sơ của Nguyễn An' })).toBeVisible()
-    expect(within(candidateList).getByText('2 CV')).toBeVisible()
+    expect(within(candidateList).getByText(/^2 CV ·/)).toBeVisible()
     expect(within(preview).getByRole('heading', { name: 'Xem trước CV' })).toBeVisible()
     expect(within(preview).getByRole('button', { name: /Tải PDF/ })).toBeEnabled()
     expect(within(preview).getByRole('button', { name: /Nhắn tin/ })).toBeDisabled()
@@ -196,7 +196,8 @@ describe('EmployerApplicationList', () => {
     const user = userEvent.setup()
     renderPage()
 
-    await user.click(await screen.findByRole('button', { name: 'Phỏng vấn', pressed: false }))
+    await user.click(await screen.findByRole('combobox', { name: 'Lọc trạng thái hồ sơ' }))
+    await user.click(await screen.findByTitle('Phỏng vấn'))
 
     await waitFor(() => {
       const params = new URLSearchParams(screen.getByTestId('location-search').textContent)

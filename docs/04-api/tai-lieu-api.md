@@ -106,7 +106,7 @@ Xác thực trong Swagger UI: gọi `POST /api/auth/login/` lấy `access`, bấ
 | GET | `/api/dashboard/employer/` | Read-model dashboard employer: account/verification, KPI tổng hợp, activity 7 ngày, nhu cầu và tin gần đây. `recent_applications` chỉ có khi `candidate_data_access=true`. |
 | GET | `/api/employer/notifications/?page=` | Danh sách thông báo website của employer hiện tại, mới nhất trước; có `is_read`, internal `action_path` và metadata đã redact. |
 | GET | `/api/employer/notifications/unread-count/` | Số thông báo chưa đọc của employer hiện tại. |
-| GET/PATCH | `/api/employer/notification-preferences/` | Email quyết định xác thực quan trọng luôn bật; employer chỉ cấu hình email cập nhật từng giấy tờ. |
+| GET/PATCH | `/api/employer/notification-preferences/` | Email quyết định xác thực quan trọng luôn bật; employer cấu hình `intermediate_verification_email` và `new_application_email` (PATCH từng phần). Hồ sơ mới luôn tạo thông báo `application_received` trên chuông; email gửi tới địa chỉ nhận hồ sơ của tin, không chứa tên ứng viên. |
 | POST | `/api/employer/notifications/{public_id}/read/`, `/api/employer/notifications/read-all/` | Đánh dấu một hoặc toàn bộ notification của chính actor; resource actor khác trả `404`. |
 | GET | `/api/employer/activities/?page=` | Activity business/security đã redact, retention 730 ngày. |
 | GET | `/api/locations/?level=&parent=&search=` | Tra cứu địa điểm (cascading tỉnh -> xã/phường), public — không phân trang (trả tối đa 500 bản ghi/lần) |

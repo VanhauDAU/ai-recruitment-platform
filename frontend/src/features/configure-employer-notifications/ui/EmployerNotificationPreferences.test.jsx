@@ -45,4 +45,20 @@ describe('EmployerNotificationPreferences', () => {
       intermediate_verification_email: false,
     }))
   })
+
+  it('lets the employer turn off new-application emails', async () => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const user = userEvent.setup()
+    render(
+      <QueryClientProvider client={client}>
+        <EmployerNotificationPreferences />
+      </QueryClientProvider>,
+    )
+
+    expect(await screen.findByText('Hồ sơ ứng tuyển mới')).toBeInTheDocument()
+    await user.click(screen.getAllByRole('switch')[2])
+    await waitFor(() => expect(api.updateEmployerNotificationPreferences.mock.calls[0]?.[0]).toEqual({
+      new_application_email: false,
+    }))
+  })
 })

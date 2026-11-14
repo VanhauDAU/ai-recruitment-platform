@@ -1,0 +1,8 @@
+Xin chào nhà tuyển dụng {{ company_name }},
+
+Vị trí {{ job_title }} vừa nhận thêm một hồ sơ lúc {{ applied_at|date:"H:i d/m/Y" }}. Tin này hiện có {{ application_count }} hồ sơ.
+
+Xem hồ sơ: {{ action_url }}
+
+Quản lý email & thông báo: {{ email_settings_url }}
+— {{ site_name }}

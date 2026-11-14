@@ -54,6 +54,10 @@ EVENT_PRESENTATION = {
         'Quyền biên tập trang công ty đã bị thu hồi',
         COMPANY_PAGE_PATH,
     ),
+    EmployerNotification.EventType.APPLICATION_RECEIVED: (
+        'Có hồ sơ ứng tuyển mới',
+        APPLICATIONS_PATH,
+    ),
     EmployerNotification.EventType.APPLICATION_REVIEW_SUBMITTED: (
         'Có đánh giá mới cho hồ sơ ứng viên',
         APPLICATIONS_PATH,
@@ -67,6 +71,15 @@ SAFE_METADATA_KEYS = {
     'event_public_id',
     'status',
 }
+
+
+def new_application_email_enabled(recipient):
+    value = (
+        EmployerNotificationPreference.objects.filter(recipient=recipient)
+        .values_list('new_application_email', flat=True)
+        .first()
+    )
+    return True if value is None else value
 
 
 def intermediate_verification_email_enabled(recipient):

@@ -13,7 +13,7 @@
               </a>
               {% if brand.tagline %}<div style="margin-top:4px;font-size:11px;color:#64748b">{{ brand.tagline }}</div>{% endif %}
             </td>
-            <td align="right"><a href="{{ jobs_url }}" style="display:inline-block;padding:9px 16px;border-radius:999px;background:{{ brand.primary_color }};color:#fff;text-decoration:none;font-size:13px;font-weight:700">Tìm việc làm</a></td>
+            <td align="right"><a href="{% firstof header_cta_url jobs_url %}" style="display:inline-block;padding:9px 16px;border-radius:999px;background:{{ brand.primary_color }};color:#fff;text-decoration:none;font-size:13px;font-weight:700">{% firstof header_cta_label "Tìm việc làm" %}</a></td>
           </tr></table>
         </div>
         <div style="padding:24px">

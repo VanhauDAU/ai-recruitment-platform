@@ -86,7 +86,11 @@ from .dpa import (
     current_dpa_policy,
     start_recruiter_dpa_grace,
 )
-from .notifications import emit_employer_event, intermediate_verification_email_enabled
+from .notifications import (
+    emit_employer_event,
+    intermediate_verification_email_enabled,
+    new_application_email_enabled,
+)
 from .phone_challenges import (
     PhoneChallengeError,
     challenge_code_matches,
@@ -153,6 +157,7 @@ __all__ = [
     'company_unlink_impact',
     'confirm_company_unlink',
     'emit_employer_event',
+    'new_application_email_enabled',
     'intermediate_verification_email_enabled',
     'CompanyUpdateConflict',
     'PhoneChallengeError',
