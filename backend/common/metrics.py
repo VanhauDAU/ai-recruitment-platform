@@ -36,6 +36,8 @@ ALLOWED_METRICS = {
     'employer_badge_policy_shadow',
     'employer_domain_claim_reconciliation',
     'candidate_job_digest',
+    'candidate_notification_event',
+    'candidate_notification_email',
     'ai_generation_request',
     'ai_generation_completion',
     'ai_generation_latency_ms',

@@ -6,7 +6,7 @@ from django.db.models import Prefetch, Q
 
 from common.db.search import fold_accents, search_q
 
-from ..models import JobCategoryAssignment, JobLocation, JobSkill, SavedJob
+from ..models import Job, JobCategoryAssignment, JobLocation, JobSkill, SavedJob
 from .listing import active_jobs_queryset
 
 MAX_SAVED_SOURCES = 20
@@ -366,3 +366,41 @@ def recommend_jobs_from_saved(user, *, limit=12):
         'source_saved_job_count': len(source_contexts),
         'results': fallback,
     }
+
+
+def similar_jobs_for_job(user, job, *, limit=5):
+    """Active jobs resembling ``job`` that ``user`` has not applied to, saved or hidden.
+
+    Built only from the job's own signals (category, title, skills, place),
+    never from the candidate's profile, so it needs no AI consent. Returns an
+    empty list rather than unrelated filler when nothing is similar enough.
+    """
+    source_job = (
+        Job.objects.filter(pk=job.pk)
+        .prefetch_related(
+            Prefetch(
+                'category_assignments',
+                queryset=JobCategoryAssignment.objects.select_related('category__parent__parent'),
+            ),
+            Prefetch(
+                'job_locations', queryset=JobLocation.objects.select_related('location__parent')
+            ),
+            'job_skills',
+        )
+        .first()
+    )
+    if source_job is None:
+        return []
+    source = _job_context(source_job)
+    signals = _source_signal_filter([source])
+    if not signals:
+        return []
+    pool = list(
+        _available_jobs(user)
+        .exclude(pk=job.pk)
+        .exclude(hidden_by_candidates__candidate=user)
+        .filter(signals)
+        .distinct()
+        .order_by('-published_at', '-created_at', '-pk')[:MAX_SCORING_CANDIDATES]
+    )
+    return [item['job'] for item in _rank_similar_jobs(pool, [source])[:limit]]

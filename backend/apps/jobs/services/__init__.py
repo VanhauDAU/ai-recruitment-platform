@@ -34,6 +34,7 @@ from .digests import (
     purge_candidate_job_digest_history,
     release_candidate_job_digest_claim,
 )
+from .email_cards import absolute_url, job_email_card, job_url, salary_text
 from .engagement import (
     record_consented_job_impressions,
     record_consented_job_view,
@@ -71,6 +72,10 @@ from .recommendations import hide_recommended_job, restore_recommended_job
 from .reports import resolve_job_report, reverse_job_report, submit_job_report
 
 __all__ = [
+    'absolute_url',
+    'job_email_card',
+    'job_url',
+    'salary_text',
     'JOB_ALERT_LIMIT',
     'RESPONSIBILITY_STATEMENT_VERSION',
     'apply_job_ai_generation_to_draft',

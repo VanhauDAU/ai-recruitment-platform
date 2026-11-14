@@ -2,6 +2,7 @@ import csv
 
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
+from drf_spectacular.utils import OpenApiResponse, extend_schema
 from rest_framework import generics
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
@@ -13,12 +14,21 @@ from apps.employers.services import ensure_recruiter_candidate_data_access
 from ...selectors import (
     employer_application_queryset,
     employer_applications_queryset,
+    recruiter_application_history_queryset,
 )
 from ...services import (
     InvalidApplicationStatusTransition,
-    update_application_status,
+    change_application_status,
+    undo_latest_status_change,
+    undoable_status_history,
+    update_application_assessment,
 )
-from ..serializers.employer import ApplicationSerializer, ApplicationStatusUpdateSerializer
+from ..serializers.employer import (
+    ApplicationAssessmentSerializer,
+    ApplicationDecisionResultSerializer,
+    ApplicationSerializer,
+    ApplicationStatusDecisionSerializer,
+)
 from ..serializers.history import ApplicationStatusHistorySerializer
 
 
@@ -89,29 +99,81 @@ class EmployerApplicationExportView(APIView):
         return response
 
 
-class EmployerApplicationStatusUpdateView(generics.UpdateAPIView):
-    serializer_class = ApplicationStatusUpdateSerializer
+def _recruiter_application(request, public_id):
+    ensure_recruiter_candidate_data_access(request.user)
+    return get_object_or_404(employer_application_queryset(request.user), public_id=public_id)
+
+
+def _workspace_row(request, application):
+    return ApplicationSerializer(
+        employer_applications_queryset(request.user).get(pk=application.pk)
+    ).data
+
+
+@extend_schema(
+    tags=['applications-v2'],
+    summary='NTD cập nhật ghi chú và đánh giá nội bộ (không đổi trạng thái)',
+    request=ApplicationAssessmentSerializer,
+    responses={200: ApplicationSerializer},
+)
+class EmployerApplicationAssessmentView(APIView):
     permission_classes = [IsEmployer]
-    lookup_field = 'public_id'
 
-    def get_queryset(self):
-        ensure_recruiter_candidate_data_access(self.request.user)
-        return employer_application_queryset(self.request.user)
+    def patch(self, request, public_id):
+        application = _recruiter_application(request, public_id)
+        serializer = ApplicationAssessmentSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        update_application_assessment(
+            application, changed_by=request.user, **serializer.validated_data
+        )
+        return Response(_workspace_row(request, application))
 
-    def perform_update(self, serializer):
+
+@extend_schema(
+    tags=['applications-v2'],
+    summary='NTD ra quyết định cho hồ sơ; ứng viên được báo sau thời gian chờ hoàn tác',
+    request=ApplicationStatusDecisionSerializer,
+    responses={200: ApplicationDecisionResultSerializer},
+)
+class EmployerApplicationDecisionView(APIView):
+    permission_classes = [IsEmployer]
+
+    def post(self, request, public_id):
+        application = _recruiter_application(request, public_id)
+        serializer = ApplicationStatusDecisionSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
         try:
-            update_application_status(serializer, changed_by=self.request.user)
+            application, notice = change_application_status(
+                application,
+                changed_by=request.user,
+                status=serializer.validated_data['status'],
+            )
         except InvalidApplicationStatusTransition as error:
             raise ValidationError({'status': str(error)}) from error
+        return Response(
+            {
+                'application': _workspace_row(request, application),
+                'candidate_notice_at': notice.deliver_after,
+            }
+        )
 
-    def update(self, request, *args, **kwargs):
-        partial = kwargs.pop('partial', False)
-        application = self.get_object()
-        serializer = self.get_serializer(application, data=request.data, partial=partial)
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
-        application = employer_applications_queryset(self.request.user).get(pk=application.pk)
-        return Response(ApplicationSerializer(application).data)
+
+@extend_schema(
+    tags=['applications-v2'],
+    summary='NTD hoàn tác quyết định gần nhất khi ứng viên chưa nhận thông báo',
+    request=None,
+    responses={
+        200: ApplicationSerializer,
+        409: OpenApiResponse(description='STATUS_UNDO_UNAVAILABLE'),
+    },
+)
+class EmployerApplicationDecisionUndoView(APIView):
+    permission_classes = [IsEmployer]
+
+    def post(self, request, public_id):
+        application = _recruiter_application(request, public_id)
+        application = undo_latest_status_change(application, changed_by=request.user)
+        return Response(_workspace_row(request, application))
 
 
 class EmployerApplicationHistoryView(generics.ListAPIView):
@@ -119,8 +181,13 @@ class EmployerApplicationHistoryView(generics.ListAPIView):
     serializer_class = ApplicationStatusHistorySerializer
 
     def get_queryset(self):
-        ensure_recruiter_candidate_data_access(self.request.user)
-        application = get_object_or_404(
-            employer_application_queryset(self.request.user), public_id=self.kwargs['public_id']
-        )
-        return application.status_history.select_related('changed_by')
+        self.application = _recruiter_application(self.request, self.kwargs['public_id'])
+        return recruiter_application_history_queryset(self.application)
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        application = getattr(self, 'application', None)
+        if application is not None:
+            undoable = undoable_status_history(application, user=self.request.user)
+            context['undoable_history_id'] = undoable.pk if undoable else None
+        return context

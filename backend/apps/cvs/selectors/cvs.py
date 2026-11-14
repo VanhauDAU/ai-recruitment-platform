@@ -6,7 +6,7 @@ from ..models import CvVersion, UserCv
 def candidate_cvs_queryset(user):
     return (
         UserCv.objects.filter(user=user, is_deleted=False)
-        .select_related('template', 'position', 'draft', 'draft__base_version')
+        .select_related('template', 'position', 'draft', 'draft__base_version', 'latest_version')
         .prefetch_related('cv_skills__skill')
         .order_by('-is_default', '-updated_at')
     )

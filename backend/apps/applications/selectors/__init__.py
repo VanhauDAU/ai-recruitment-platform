@@ -5,6 +5,7 @@ from .applications import (
     candidate_applications_queryset,
     employer_application_queryset,
     employer_applications_queryset,
+    recruiter_application_history_queryset,
     recruiter_application_snapshot_queryset,
 )
 
@@ -13,5 +14,6 @@ __all__ = [
     'candidate_applications_queryset',
     'employer_application_queryset',
     'employer_applications_queryset',
+    'recruiter_application_history_queryset',
     'recruiter_application_snapshot_queryset',
 ]

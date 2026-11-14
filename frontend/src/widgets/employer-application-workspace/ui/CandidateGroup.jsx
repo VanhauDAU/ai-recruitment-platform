@@ -1,0 +1,70 @@
+import { DownOutlined, LockOutlined } from '@ant-design/icons'
+import { formatApplicationDate, initialsOf } from '../model/application-workspace'
+import ApplicationStatusBadge from './ApplicationStatusBadge'
+
+export default function CandidateGroup({ group, expanded, selectedPublicId, onToggle, onSelect }) {
+  const active = group.applications.some((item) => item.public_id === selectedPublicId)
+  const hasUnread = group.applications.some((item) => item.status === 'submitted')
+  return (
+    <article className={`aw-group${active ? ' is-active' : ''}`}>
+      <button
+        type="button"
+        className="flex w-full items-center gap-3 p-3 text-left transition hover:bg-slate-50"
+        aria-expanded={expanded}
+        aria-label={`${expanded ? 'Thu gọn' : 'Mở'} hồ sơ của ${group.candidateName}`}
+        onClick={onToggle}
+      >
+        <span className="aw-avatar">{initialsOf(group.candidateName)}</span>
+        <span className="min-w-0 flex-1">
+          <span className="flex items-center gap-1.5">
+            <strong className="truncate text-sm text-slate-900">{group.candidateName}</strong>
+            {hasUnread && <span className="aw-new-dot" title="Có CV mới chưa xem" />}
+            {group.restricted && <LockOutlined title="Tài khoản bị hạn chế" className="shrink-0 text-amber-500" />}
+          </span>
+          <span className="mt-0.5 block truncate text-xs text-slate-500">
+            {group.candidateEmail || 'Chưa có email'}
+          </span>
+        </span>
+        <span className="shrink-0 text-right">
+          <span className="aw-count">{group.applications.length} CV</span>
+          <DownOutlined className={`mt-1.5 block text-[10px] text-slate-400 transition-transform ${expanded ? 'rotate-180' : ''}`} />
+        </span>
+      </button>
+
+      {expanded && (
+        <div className="space-y-1 border-t border-slate-100 bg-slate-50/70 p-1.5">
+          {group.applications.map((application, index) => {
+            const selected = application.public_id === selectedPublicId
+            const cvTitle = application.submitted_cv_title || application.cv_title || 'CV ứng viên'
+            return (
+              <button
+                key={application.public_id}
+                type="button"
+                aria-current={selected ? 'true' : undefined}
+                aria-label={`Xem ${cvTitle} của ${group.candidateName}`}
+                className={`aw-application${application.status === 'submitted' ? ' is-unread' : ''}`}
+                onClick={() => onSelect(application)}
+              >
+                <span className="flex items-start justify-between gap-2">
+                  <strong className="aw-application__title line-clamp-2">{cvTitle}</strong>
+                  <span className="shrink-0 text-[10px] font-semibold text-slate-400">
+                    Lần {group.applications.length - index}
+                  </span>
+                </span>
+                <span className="mt-0.5 block truncate text-[11px] text-slate-500">
+                  {application.job_title || 'Tin tuyển dụng'}
+                </span>
+                <span className="mt-2 flex flex-wrap items-center justify-between gap-1.5">
+                  <ApplicationStatusBadge status={application.status} />
+                  <span className="text-[10px] text-slate-400">
+                    {formatApplicationDate(application.applied_at || application.submitted_at)}
+                  </span>
+                </span>
+              </button>
+            )
+          })}
+        </div>
+      )}
+    </article>
+  )
+}

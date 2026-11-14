@@ -5,7 +5,12 @@ import {
   getRecruiterApplicationPage,
   getRecruiterApplicationSnapshot,
   submitJobApplication,
-  updateApplicationStatus,
+  decideApplicationStatus,
+  downloadApplicationCv,
+  getApplicationCvExport,
+  requestApplicationCvExport,
+  undoApplicationStatusChange,
+  updateApplicationAssessment,
 } from './application.api'
 import { applicationKeys } from './application.keys'
 const { get, patch, post } = vi.hoisted(() => ({ get: vi.fn(), patch: vi.fn(), post: vi.fn() }))
@@ -55,22 +60,39 @@ describe('application V2 API', () => {
       .mockResolvedValueOnce({ data: { count: 1, results: [{ public_id: 'app_2' }] } })
       .mockResolvedValueOnce({ data: { application_public_id: 'app_2' } })
       .mockResolvedValueOnce({ data: { results: [{ to_status: 'viewed' }] } })
-    patch.mockResolvedValue({ data: { public_id: 'app_2', status: 'considering' } })
+    patch.mockResolvedValue({ data: { public_id: 'app_2', employer_rating: 4 } })
 
     await expect(getCandidateApplications()).resolves.toEqual([{ public_id: 'app_1' }])
     await expect(getRecruiterApplicationPage({ status: 'submitted' })).resolves.toEqual({
       count: 1,
       results: [{ public_id: 'app_2' }],
     })
-    await expect(updateApplicationStatus('app_2', { status: 'considering' })).resolves.toMatchObject({ status: 'considering' })
+    await expect(updateApplicationAssessment('app_2', { employer_rating: 4 })).resolves.toMatchObject({ employer_rating: 4 })
     await expect(getRecruiterApplicationSnapshot('app_2')).resolves.toEqual({ application_public_id: 'app_2' })
     await expect(getApplicationHistory('app_2')).resolves.toEqual([{ to_status: 'viewed' }])
 
     expect(get).toHaveBeenNthCalledWith(1, '/v2/applications/')
     expect(get).toHaveBeenNthCalledWith(2, '/v2/recruiter/applications/', { params: { status: 'submitted' } })
-    expect(patch).toHaveBeenCalledWith('/v2/recruiter/applications/app_2/', { status: 'considering' })
+    expect(patch).toHaveBeenCalledWith('/v2/recruiter/applications/app_2/', { employer_rating: 4 })
     expect(get).toHaveBeenNthCalledWith(3, '/v2/recruiter/applications/app_2/cv/')
     expect(get).toHaveBeenNthCalledWith(4, '/v2/recruiter/applications/app_2/history/')
+  })
+
+  it('posts decisions, undo and CV export requests to the recruiter endpoints', async () => {
+    post.mockResolvedValue({ data: { ok: true } })
+    get.mockResolvedValueOnce({ data: { status: 'completed' } }).mockResolvedValueOnce({ data: new Blob(['%PDF']) })
+
+    await decideApplicationStatus('app_1', 'rejected')
+    await undoApplicationStatusChange('app_1')
+    await requestApplicationCvExport('app_1')
+    await expect(getApplicationCvExport('app_1', 'cve_1')).resolves.toEqual({ status: 'completed' })
+    await expect(downloadApplicationCv('http://api/x.pdf')).resolves.toBeInstanceOf(Blob)
+
+    expect(post).toHaveBeenNthCalledWith(1, '/v2/recruiter/applications/app_1/status/', { status: 'rejected' })
+    expect(post).toHaveBeenNthCalledWith(2, '/v2/recruiter/applications/app_1/status/undo/')
+    expect(post).toHaveBeenNthCalledWith(3, '/v2/recruiter/applications/app_1/cv/exports/')
+    expect(get).toHaveBeenNthCalledWith(1, '/v2/recruiter/applications/app_1/cv/exports/cve_1/')
+    expect(get).toHaveBeenNthCalledWith(2, 'http://api/x.pdf', { responseType: 'blob' })
   })
 
   it('builds stable cache keys for recruiter lists, snapshots and histories', () => {

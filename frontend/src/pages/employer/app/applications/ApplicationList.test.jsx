@@ -9,30 +9,30 @@ const mocks = vi.hoisted(() => ({
   getRecruiterApplicationPage: vi.fn(),
   getRecruiterApplicationSnapshot: vi.fn(),
   getApplicationHistory: vi.fn(),
-  updateApplicationStatus: vi.fn(),
+  updateApplicationAssessment: vi.fn(),
+  decideApplicationStatus: vi.fn(),
+  undoApplicationStatusChange: vi.fn(),
+  requestApplicationCvExport: vi.fn(),
+  getApplicationCvExport: vi.fn(),
+  downloadApplicationCv: vi.fn(),
+  triggerBlobDownload: vi.fn(),
   cvPreview: vi.fn(),
 }))
 
-vi.mock('@/entities/application', () => ({
-  applicationKeys: {
-    recruiterList: (params) => ['applications', 'recruiter-list', params],
-    recruiterSnapshot: (publicId) => ['applications', 'snapshot', publicId],
-    history: (publicId) => ['applications', 'history', publicId],
-  },
+vi.mock('@/entities/application', async (importOriginal) => ({
+  ...(await importOriginal()),
   getRecruiterApplicationPage: mocks.getRecruiterApplicationPage,
   getRecruiterApplicationSnapshot: mocks.getRecruiterApplicationSnapshot,
   getApplicationHistory: mocks.getApplicationHistory,
-  updateApplicationStatus: mocks.updateApplicationStatus,
-  RECRUITER_APPLICATION_STATUSES: [
-    ['submitted', 'Tiếp nhận'],
-    ['viewed', 'Đã xem'],
-    ['accepted', 'Đã nhận offer'],
-    ['rejected', 'Từ chối'],
-  ],
-  RECRUITER_APPLICATION_STATUS_LABELS: {
-    submitted: 'Tiếp nhận', viewed: 'Đã xem', accepted: 'Đã nhận offer', rejected: 'Từ chối',
-  },
+  updateApplicationAssessment: mocks.updateApplicationAssessment,
+  decideApplicationStatus: mocks.decideApplicationStatus,
+  undoApplicationStatusChange: mocks.undoApplicationStatusChange,
+  requestApplicationCvExport: mocks.requestApplicationCvExport,
+  getApplicationCvExport: mocks.getApplicationCvExport,
+  downloadApplicationCv: mocks.downloadApplicationCv,
 }))
+
+vi.mock('@/shared/lib/download-blob', () => ({ triggerBlobDownload: mocks.triggerBlobDownload }))
 
 vi.mock('@/entities/cv', () => ({
   CvDocumentPreview: (props) => {
@@ -41,6 +41,7 @@ vi.mock('@/entities/cv', () => ({
   },
 }))
 
+const DECISIONS = ['shortlisted', 'interviewed', 'accepted', 'rejected']
 const APPLICATIONS = [
   {
     public_id: 'app_1',
@@ -48,9 +49,9 @@ const APPLICATIONS = [
     candidate_email: 'an@example.com',
     job_title: 'Kỹ sư Frontend',
     submitted_cv_title: 'CV Frontend 2026',
-    submitted_cv_version: 'cvv_1',
     applied_at: '2026-07-22T08:00:00+07:00',
-    status: 'submitted',
+    status: 'viewed',
+    available_decisions: DECISIONS,
     employer_note: 'Có kinh nghiệm React',
     employer_rating: 4,
     source: 'applied',
@@ -61,18 +62,28 @@ const APPLICATIONS = [
     candidate_email: 'AN@example.com',
     job_title: 'Kỹ sư Frontend',
     submitted_cv_title: 'CV Frontend cập nhật',
-    submitted_cv_version: 'cvv_2',
     applied_at: '2026-07-25T08:00:00+07:00',
-    status: 'considering',
+    status: 'submitted',
+    available_decisions: DECISIONS,
     source: 'applied',
   },
 ]
+const VIEWED_ROW = {
+  from_status: 'submitted',
+  to_status: 'viewed',
+  changed_by_name: 'HR Team',
+  note: '',
+  created_at: '2026-07-22T09:00:00+07:00',
+  reverted_at: null,
+  can_undo: false,
+  candidate_notice: { state: 'delivered', deliver_at: '2026-07-22T09:00:00+07:00', delivered_at: '2026-07-22T09:01:00+07:00', email_sent_at: null },
+}
 
 function snapshotFor(publicId) {
-  const application = APPLICATIONS.find((item) => item.public_id === publicId) || APPLICATIONS[0]
+  const application = APPLICATIONS.find((item) => item.public_id === publicId)
   return {
     application_public_id: publicId,
-    status: publicId === 'app_1' ? 'viewed' : application.status,
+    status: 'viewed',
     submitted_cv_title: application.submitted_cv_title,
     submitted_cv_source: 'builder',
     contact_name: 'Nguyễn An',
@@ -82,7 +93,7 @@ function snapshotFor(publicId) {
     allow_ai_analysis: true,
     cv: {
       schema_version: 1,
-      content_json: { profile: { full_name: 'Nguyễn An' } },
+      content_json: { personal_info: { full_name: 'Nguyễn An' } },
       layout_json: {},
       style_json: {},
       template_renderer_key: 'modern-green',
@@ -112,25 +123,15 @@ function renderPage(initialEntry = '/tuyendung/app/applications?job=jb_1&q=an%40
 
 describe('EmployerApplicationList', () => {
   beforeEach(() => {
-    mocks.getRecruiterApplicationPage.mockReset().mockResolvedValue({
+    Object.values(mocks).forEach((mock) => mock.mockReset())
+    mocks.getRecruiterApplicationPage.mockResolvedValue({
       count: 2, next: null, previous: null, results: APPLICATIONS,
     })
-    mocks.getRecruiterApplicationSnapshot.mockReset().mockImplementation(async (publicId) => snapshotFor(publicId))
-    mocks.getApplicationHistory.mockReset().mockResolvedValue([
-      {
-        from_status: 'submitted', to_status: 'viewed', changed_by_name: 'HR Team',
-        note: '', created_at: '2026-07-22T09:00:00+07:00',
-      },
-    ])
-    mocks.updateApplicationStatus.mockReset().mockImplementation(async (publicId, payload) => ({
-      ...APPLICATIONS.find((item) => item.public_id === publicId),
-      ...payload,
-      public_id: publicId,
-    }))
-    mocks.cvPreview.mockReset()
+    mocks.getRecruiterApplicationSnapshot.mockImplementation(async (publicId) => snapshotFor(publicId))
+    mocks.getApplicationHistory.mockResolvedValue([VIEWED_ROW])
   })
 
-  it('renders a three-column workspace and groups multiple CVs under one candidate', async () => {
+  it('renders the three-column workspace with decisions, PDF download and a disabled message action', async () => {
     renderPage()
 
     const candidateList = await screen.findByTestId('application-candidate-list')
@@ -138,19 +139,20 @@ describe('EmployerApplicationList', () => {
     const inspector = screen.getByTestId('application-inspector')
 
     expect(within(candidateList).getByRole('heading', { name: 'Ứng viên' })).toBeVisible()
-    expect(within(preview).getByRole('heading', { name: 'Xem trước CV' })).toBeVisible()
-    expect(within(inspector).getByRole('heading', { name: 'Thông tin liên quan' })).toBeVisible()
+    expect(within(candidateList).getByRole('button', { name: 'Không phù hợp' })).toBeVisible()
     expect(await within(candidateList).findByRole('button', { name: 'Thu gọn hồ sơ của Nguyễn An' })).toBeVisible()
     expect(within(candidateList).getByText('2 CV')).toBeVisible()
-    expect(within(candidateList).getByRole('button', { name: 'Xem CV Frontend 2026 của Nguyễn An' })).toBeVisible()
-    expect(within(candidateList).getByRole('button', { name: 'Xem CV Frontend cập nhật của Nguyễn An' })).toBeVisible()
-
+    expect(within(preview).getByRole('heading', { name: 'Xem trước CV' })).toBeVisible()
+    expect(within(preview).getByRole('button', { name: /Tải PDF/ })).toBeEnabled()
+    expect(within(preview).getByRole('button', { name: /Nhắn tin/ })).toBeDisabled()
+    expect(within(inspector).getByRole('heading', { name: 'Xử lý hồ sơ' })).toBeVisible()
+    const decisions = await within(inspector).findByRole('group', { name: 'Quyết định cho hồ sơ' })
+    expect(within(decisions).getAllByRole('button')).toHaveLength(4)
     expect(await screen.findByTestId('canonical-cv-preview')).toBeVisible()
-    expect(within(inspector).getAllByText('Đã xem').length).toBeGreaterThan(0)
+    expect(await within(inspector).findByText(/Đã báo ứng viên/)).toBeVisible()
     expect(mocks.cvPreview).toHaveBeenCalledWith(expect.objectContaining({
       rendererKey: 'modern-green',
       editorChrome: false,
-      document: expect.objectContaining({ schema_version: 1 }),
     }))
   })
 
@@ -172,8 +174,23 @@ describe('EmployerApplicationList', () => {
     await waitFor(() => expect(mocks.getRecruiterApplicationSnapshot).toHaveBeenCalledWith('app_2'))
   })
 
-  it('saves the internal assessment with the authoritative snapshot status', async () => {
+  it('filters by status through the URL', async () => {
     const user = userEvent.setup()
+    renderPage()
+
+    await user.click(await screen.findByRole('button', { name: 'Phỏng vấn', pressed: false }))
+
+    await waitFor(() => {
+      const params = new URLSearchParams(screen.getByTestId('location-search').textContent)
+      expect(params.get('status')).toBe('interviewed')
+    })
+  })
+
+  it('saves only the private note and rating', async () => {
+    const user = userEvent.setup()
+    mocks.updateApplicationAssessment.mockImplementation(async (publicId, payload) => ({
+      ...APPLICATIONS[0], ...payload,
+    }))
     renderPage()
 
     const inspector = await screen.findByTestId('application-inspector')
@@ -182,10 +199,63 @@ describe('EmployerApplicationList', () => {
     await user.type(note, 'Mời phỏng vấn vòng kỹ thuật')
     await user.click(within(inspector).getByRole('button', { name: 'Lưu đánh giá' }))
 
-    await waitFor(() => expect(mocks.updateApplicationStatus).toHaveBeenCalledWith('app_1', {
-      status: 'viewed',
+    await waitFor(() => expect(mocks.updateApplicationAssessment).toHaveBeenCalledWith('app_1', {
       employer_note: 'Mời phỏng vấn vòng kỹ thuật',
       employer_rating: 4,
     }))
+  })
+
+  it('decides immediately for non-final statuses and offers undo while the notice is pending', async () => {
+    const user = userEvent.setup()
+    mocks.decideApplicationStatus.mockResolvedValue({
+      application: { ...APPLICATIONS[0], status: 'shortlisted', available_decisions: ['interviewed', 'accepted', 'rejected'] },
+      candidate_notice_at: '2026-07-22T09:10:00+07:00',
+    })
+    mocks.undoApplicationStatusChange.mockResolvedValue(APPLICATIONS[0])
+    renderPage()
+
+    const inspector = await screen.findByTestId('application-inspector')
+    const decisions = await within(inspector).findByRole('group', { name: 'Quyết định cho hồ sơ' })
+    mocks.getApplicationHistory.mockResolvedValue([
+      VIEWED_ROW,
+      { ...VIEWED_ROW, from_status: 'viewed', to_status: 'shortlisted', can_undo: true, candidate_notice: { state: 'scheduled', deliver_at: '2026-07-22T09:10:00+07:00', delivered_at: null, email_sent_at: null } },
+    ])
+    await user.click(within(decisions).getByRole('button', { name: 'Phù hợp' }))
+
+    await waitFor(() => expect(mocks.decideApplicationStatus).toHaveBeenCalledWith('app_1', 'shortlisted'))
+    await user.click(await within(inspector).findByRole('button', { name: 'Hoàn tác' }))
+    await waitFor(() => expect(mocks.undoApplicationStatusChange).toHaveBeenCalledWith('app_1'))
+  })
+
+  it('asks for confirmation before a final decision', async () => {
+    const user = userEvent.setup()
+    mocks.decideApplicationStatus.mockResolvedValue({
+      application: { ...APPLICATIONS[0], status: 'rejected', available_decisions: [] },
+      candidate_notice_at: '2026-07-22T09:10:00+07:00',
+    })
+    renderPage()
+
+    const inspector = await screen.findByTestId('application-inspector')
+    const decisions = await within(inspector).findByRole('group', { name: 'Quyết định cho hồ sơ' })
+    await user.click(within(decisions).getByRole('button', { name: 'Không phù hợp' }))
+    expect(mocks.decideApplicationStatus).not.toHaveBeenCalled()
+
+    const dialog = await screen.findByRole('dialog')
+    await user.click(within(dialog).getByRole('button', { name: 'Không phù hợp' }))
+    await waitFor(() => expect(mocks.decideApplicationStatus).toHaveBeenCalledWith('app_1', 'rejected'))
+  })
+
+  it('renders the submitted CV as PDF and saves it', async () => {
+    const user = userEvent.setup()
+    const blob = new Blob(['%PDF'])
+    mocks.requestApplicationCvExport.mockResolvedValue({ public_id: 'cve_1', status: 'completed', download_url: 'http://api/cv.pdf' })
+    mocks.downloadApplicationCv.mockResolvedValue(blob)
+    renderPage()
+
+    const preview = await screen.findByTestId('application-cv-preview')
+    await user.click(within(preview).getByRole('button', { name: /Tải PDF/ }))
+
+    await waitFor(() => expect(mocks.triggerBlobDownload).toHaveBeenCalledWith(blob, 'CV - Nguyễn An.pdf'))
+    expect(mocks.requestApplicationCvExport).toHaveBeenCalledWith('app_1')
   })
 })

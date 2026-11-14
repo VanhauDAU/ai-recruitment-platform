@@ -55,3 +55,16 @@ def record_cv_access(
         user_agent_hash=user_agent_hash,
         reason=reason,
     )
+
+
+def record_application_snapshot_access(*, version, actor, request, channel) -> CvAccessLog:
+    """Recruiter read/download of an application snapshot (``cv`` stays NULL so
+    the record outlives the candidate deleting the library CV)."""
+    return record_cv_access(
+        cv=None,
+        version=version,
+        actor_type=CvAccessLog.ActorType.RECRUITER,
+        access_channel=channel,
+        request=request,
+        actor_user=actor,
+    )

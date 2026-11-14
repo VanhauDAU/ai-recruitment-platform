@@ -12,7 +12,7 @@ from django.utils import timezone
 from rest_framework.test import APIClient, APITestCase
 
 from apps.accounts.services.tokens import issue_tokens
-from apps.cv_templates.tests.factories import make_published_template
+from apps.cv_templates.tests.factories import fill_cv_for_application, make_published_template
 from apps.cvs.models import CvAsset, CvVersion
 from apps.cvs.services import (
     create_application_snapshot,
@@ -287,6 +287,7 @@ class CandidateApplicationV2Tests(APITestCase):
         JobLocation.objects.create(job=self.job, location=self.second_preferred_location)
         template, _template_version = make_published_template('Snapshot template')
         self.cv = create_v2_cv(actor=self.candidate, title='Selected CV', template=template)
+        fill_cv_for_application(self.cv, self.candidate)
         self.other_cv = create_v2_cv(
             actor=self.other_candidate, title='Other CV', template=template
         )
@@ -506,8 +507,14 @@ class RecruiterApplicationRoutesV2Tests(TestCase):
         response = APIClient().get(reverse('recruiter-application-list-v2'))
         self.assertEqual(response.status_code, 401)
 
-    def test_recruiter_status_update_requires_authentication(self):
-        response = APIClient().patch(
-            reverse('recruiter-application-status-v2', args=['app_x']), {'status': 'reviewing'}
-        )
-        self.assertEqual(response.status_code, 401)
+    def test_recruiter_write_routes_require_authentication(self):
+        client = APIClient()
+        for method, name in (
+            ('patch', 'recruiter-application-assessment-v2'),
+            ('post', 'recruiter-application-decision-v2'),
+            ('post', 'recruiter-application-decision-undo-v2'),
+            ('post', 'recruiter-application-cv-export-v2'),
+        ):
+            with self.subTest(name=name):
+                response = getattr(client, method)(reverse(name, args=['app_x']), {})
+                self.assertEqual(response.status_code, 401)

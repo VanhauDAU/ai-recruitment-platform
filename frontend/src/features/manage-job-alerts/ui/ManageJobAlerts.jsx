@@ -14,6 +14,7 @@ import {
   candidateNotificationPreferenceMutationKey,
   candidateNotificationPreferenceMutationScope,
   getCandidateNotificationPreferences,
+  PREFERENCE_ISSUES,
   updateCandidateNotificationPreferences,
 } from '@/entities/candidate-notification-preferences'
 import { getJobCategories, jobKeys } from '@/entities/job'
@@ -22,7 +23,6 @@ import { useSession } from '@/entities/session'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { message } from '@/shared/lib/toast'
 import {
-  JOB_PREFERENCE_SETTINGS_PATH,
   jobAlertErrorCode,
   jobAlertFormValues,
 } from '../model/job-alert-form'
@@ -216,13 +216,13 @@ export default function ManageJobAlerts({ initialCreateValues, openCreateOnMount
         />
       )}
 
-      {preferenceIssue && (
+      {PREFERENCE_ISSUES[preferenceIssue] && (
         <Alert
           showIcon
-          type="info"
-          title="Hoàn thiện cài đặt gợi ý việc làm"
-          description="Hệ thống cần nhu cầu công việc và sự đồng ý của bạn trước khi gửi việc làm phù hợp tự động."
-          action={<Link to={JOB_PREFERENCE_SETTINGS_PATH} className="font-semibold text-sky-700 hover:underline">Đi tới cài đặt</Link>}
+          type={PREFERENCE_ISSUES[preferenceIssue].type}
+          title={PREFERENCE_ISSUES[preferenceIssue].title}
+          description={PREFERENCE_ISSUES[preferenceIssue].description}
+          action={<Link to={PREFERENCE_ISSUES[preferenceIssue].actionPath} className="font-semibold text-sky-700 hover:underline">{PREFERENCE_ISSUES[preferenceIssue].actionLabel}</Link>}
         />
       )}
 

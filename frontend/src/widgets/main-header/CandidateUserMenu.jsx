@@ -1,11 +1,12 @@
 import {
-  BellOutlined, CaretRightOutlined, CheckCircleFilled, IdcardOutlined,
+  CaretRightOutlined, CheckCircleFilled, IdcardOutlined,
   LogoutOutlined, MessageOutlined, WarningFilled,
 } from '@ant-design/icons'
 import { Avatar, Dropdown } from 'antd'
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router'
 import { CANDIDATE_MENU } from '@/entities/account'
+import { CandidateNotificationBell } from '@/features/view-candidate-notifications'
 import { message } from '@/shared/lib/toast'
 
 const SECTIONS = CANDIDATE_MENU
@@ -89,16 +90,6 @@ export default function CandidateUserMenu({ user, logout }) {
     else navigate(it.path)
   }
 
-  const notifPanel = (
-    <div className="w-[340px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-xl">
-      <p className="border-b border-gray-100 px-5 py-3 text-sm font-semibold text-gray-800">Thông báo</p>
-      <div className="flex flex-col items-center gap-2 px-5 py-10 text-center text-gray-400">
-        <BellOutlined className="text-3xl" />
-        <span className="text-sm">Bạn chưa có thông báo mới</span>
-      </div>
-    </div>
-  )
-
   const userPanel = (
     <div className="flex max-h-[calc(100dvh-5rem)] w-[360px] max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-xl">
       <div className="flex shrink-0 items-center gap-3 px-4 py-3">
@@ -138,11 +129,7 @@ export default function CandidateUserMenu({ user, logout }) {
 
   return (
     <div className="flex items-center gap-4">
-      <Dropdown trigger={['hover', 'click']} placement="bottomRight" popupRender={() => notifPanel}>
-        <button type="button" aria-label="Mở thông báo" className="flex cursor-pointer text-xl text-gray-500 transition-colors hover:text-[var(--brand-primary)]">
-          <BellOutlined />
-        </button>
-      </Dropdown>
+      <CandidateNotificationBell />
 
       <button type="button" aria-label="Mở tin nhắn" className="flex cursor-pointer text-xl text-gray-500 transition-colors hover:text-[var(--brand-primary)]" onClick={() => message.info('Tính năng sẽ sớm ra mắt.')}>
         <MessageOutlined />

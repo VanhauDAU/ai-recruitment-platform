@@ -565,6 +565,48 @@ pages/main/jobs/JobDetail
   lựa chọn CV hoặc state modal.
 - `features/apply-for-job` sở hữu tải CV/version, cảnh báo publish và submit
   explicit `version_public_id`. Page chỉ kiểm tra session/role rồi mở feature.
+  CV tải lên phải chờ `waitForCvImport` xong mới nộp; CV có
+  `application_ready=false` bị khóa (server cũng chặn).
+
+## Ownership map — Xử lý hồ sơ ứng tuyển của nhà tuyển dụng
+
+```text
+pages/employer/app/applications/ApplicationList
+  → widgets/employer-application-workspace (3 cột, URL state, CSS lazy)
+    → features/application-status-decision (4 quyết định, xác nhận trạng thái cuối, hoàn tác)
+    → features/download-application-cv (yêu cầu PDF, poll, lưu file)
+      → entities/application, entities/cv
+        → shared/lib/{date-time,download-blob}
+```
+
+- Trạng thái: `submitted`/`viewed` do hệ thống đặt; UI chỉ bật nút nằm trong
+  `available_decisions` của API, không tự suy luận đồ thị chuyển.
+- Ghi chú/điểm nội bộ đi PATCH riêng; quyết định đi `status/` và `status/undo/`.
+- Snapshot CV `staleTime: Infinity`: mỗi lần GET bị ghi `CvAccessLog`.
+- Sidebar (`app/layouts/EmployerWorkspaceNavigation.jsx`): nhóm "Quản lý CV"
+  có mục "CV ứng tuyển" (`/applications` không tham số = hộp CV của mọi tin,
+  không có nút Quay lại) kèm số CV chưa xem từ
+  `applicationKeys.recruiterUnreadCount()`; mở hồ sơ hoặc ra quyết định phải
+  invalidate key này. Các mục còn lại là "Sắp mở" theo lộ trình.
+- Style riêng nằm ở `application-workspace.css` và `application-decision.css`
+  (lazy theo route) để không tăng CSS khởi tạo.
+
+## Ownership map — Thông báo của ứng viên
+
+```text
+widgets/main-header/CandidateUserMenu
+  → features/view-candidate-notifications (chuông, poll số chưa đọc 60s)
+    → entities/candidate-notification
+      → shared/ui/NotificationListItem (dùng chung với chuông NTD)
+```
+
+- Danh sách chỉ tải khi mở popover; server chỉ trả thông báo đã giao và bật
+  kênh web.
+- Cài đặt nhận thông báo: `features/configure-email-notifications` (cột Email /
+  Trên web, dòng bắt buộc "Luôn bật"); mỗi công tắc lưu riêng, mutation chung
+  `scope` nên chạy tuần tự mà không khóa công tắc khác. Lý do bị từ chối bật
+  (`PREFERENCE_ISSUES`) nằm ở `entities/candidate-notification-preferences`,
+  dùng chung với `features/manage-job-alerts`.
 
 ## Ownership map — Employer job editor và AI generation
 

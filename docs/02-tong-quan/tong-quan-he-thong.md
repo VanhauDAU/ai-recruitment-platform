@@ -115,8 +115,9 @@ response ở [`frontend-response-contracts.md`](../04-api/frontend-response-cont
    hold, hạn hợp lệ) và NTD xác nhận cam kết trách nhiệm; vòng đời
    `draft → active → closed` ([ADR-0014](./adr-0014-job-post-moderation.md),
    vòng đời hiển thị theo [ADR-0012](./adr-0012-job-services-architecture.md)).
-5. Xử lý hồ sơ: `submitted → viewed → considering → shortlisted → interviewed
-   → accepted | rejected`, có lịch sử và quy tắc tự động từ chối.
+5. Xử lý hồ sơ: hệ thống ghi `submitted → viewed`, NTD quyết định
+   `shortlisted → interviewed → accepted | rejected`; ứng viên được báo (chuông
+   + email) sau một cửa sổ hoàn tác, có lịch sử và quy tắc tự động từ chối.
 
 Đặc tả chi tiết: [`dac-ta-nha-tuyen-dung.md`](../01-phan-tich/dac-ta-nha-tuyen-dung.md),
 [`dac-ta-chien-dich-va-tin-tuyen-dung.md`](../01-phan-tich/dac-ta-chien-dich-va-tin-tuyen-dung.md);

@@ -36,7 +36,7 @@ export const CANDIDATE_MENU = [
     key: 'email', title: 'Cài đặt email & thông báo', icon: <MailOutlined />,
     items: [
       { key: 'job-notifications', label: 'Cài đặt thông báo việc làm', path: accountPath('cai-dat-thong-bao-viec-lam') },
-      { key: 'email-settings', label: 'Cài đặt thông báo qua email', path: accountPath('cai-dat-nhan-email') },
+      { key: 'email-settings', label: 'Cài đặt nhận thông báo', path: accountPath('cai-dat-nhan-email') },
     ],
   },
   {

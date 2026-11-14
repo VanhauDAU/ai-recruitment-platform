@@ -544,3 +544,42 @@ class SavedJobRecommendationApiTests(APITestCase):
                         job=unavailable,
                     ).exists()
                 )
+
+
+class SimilarJobsForJobTests(APITestCase):
+    """Jobs shown in the "application received" email."""
+
+    setUp = SavedJobRecommendationApiTests.setUp
+    _create_job = SavedJobRecommendationApiTests._create_job
+    _add_signals = SavedJobRecommendationApiTests._add_signals
+
+    def test_ranks_by_the_applied_job_and_skips_what_the_candidate_already_handled(self):
+        from ..models import CandidateHiddenJob
+        from ..selectors import similar_jobs_for_job
+
+        SavedJob.objects.filter(candidate=self.candidate).delete()
+        similar = self._add_signals(
+            self._create_job('Senior Backend Engineer'),
+            category=self.category,
+            skills=[self.python],
+            location=self.ward,
+        )
+        hidden = self._add_signals(
+            self._create_job('Backend Engineer II'), category=self.category, skills=[self.python]
+        )
+        CandidateHiddenJob.objects.create(candidate=self.candidate, job=hidden)
+        unrelated = self._create_job('Kế toán tổng hợp')
+
+        jobs = similar_jobs_for_job(self.candidate, self.source, limit=5)
+
+        self.assertIn(similar, jobs)
+        self.assertNotIn(self.source, jobs)
+        self.assertNotIn(hidden, jobs)
+        self.assertNotIn(unrelated, jobs)
+
+    def test_returns_nothing_rather_than_unrelated_filler(self):
+        from ..selectors import similar_jobs_for_job
+
+        self._create_job('Kế toán tổng hợp')
+
+        self.assertEqual(similar_jobs_for_job(self.candidate, self.source), [])

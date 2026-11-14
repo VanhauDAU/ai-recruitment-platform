@@ -16,7 +16,11 @@ from apps.jobs.models import Job, JobCategory
 from ...models import CvAsset, CvDraft, CvExport, CvImportJob, CvSharedLink, CvVersion, UserCv
 from ...schemas import validate_cv_document
 from ...services.assets import asset_map, sign_asset
-from ...services.completeness import COMPLETION_THRESHOLD, cv_completion_score
+from ...services.completeness import (
+    COMPLETION_THRESHOLD,
+    application_readiness_issues,
+    cv_completion_score,
+)
 
 
 class CvV2Serializer(serializers.ModelSerializer):
@@ -49,6 +53,7 @@ class CvV2Serializer(serializers.ModelSerializer):
     thumbnail_status = serializers.SerializerMethodField()
     completion_score = serializers.SerializerMethodField()
     is_complete = serializers.SerializerMethodField()
+    application_ready = serializers.SerializerMethodField()
 
     class Meta:
         model = UserCv
@@ -83,6 +88,7 @@ class CvV2Serializer(serializers.ModelSerializer):
             'draft_updated_at',
             'completion_score',
             'is_complete',
+            'application_ready',
             'import_job',
             'thumbnail_url',
             'thumbnail_status',
@@ -109,6 +115,9 @@ class CvV2Serializer(serializers.ModelSerializer):
 
     def get_is_complete(self, obj):
         return cv_completion_score(obj) >= COMPLETION_THRESHOLD
+
+    def get_application_ready(self, obj):
+        return not application_readiness_issues(obj.latest_version)
 
     def get_import_job(self, obj):
         try:

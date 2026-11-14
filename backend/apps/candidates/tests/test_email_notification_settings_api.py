@@ -14,19 +14,15 @@ from ..models import (
 class CandidateEmailNotificationSettingsApiTests(TestCase):
     url = '/api/candidate/email-notification-settings/'
     field_names = {
-        'important_system_updates',
-        'employer_viewed_cv',
-        'new_features_and_cv_templates',
-        'other_system_notifications',
+        'application_received_email',
+        'application_received_web',
+        'similar_jobs_in_application_email',
+        'cv_activity_email',
+        'cv_activity_web',
         'configured_job_alerts',
         'suitable_job_recommendations',
         'followed_company_jobs',
-        'top_candidate_alerts',
-        'employer_invitations',
-        'job_and_career_events',
-        'service_introductions',
-        'program_and_event_introductions',
-        'partner_gifts_and_discounts',
+        'email_delivery_enabled',
     }
 
     def setUp(self):
@@ -60,15 +56,15 @@ class CandidateEmailNotificationSettingsApiTests(TestCase):
         CandidateEmailNotificationSettings.objects.create(
             candidate_profile=self.user.candidate_profile,
             configured_job_alerts=False,
-            service_introductions=False,
+            cv_activity_web=False,
         )
 
         response = self.client.get(self.url)
 
         self.assertEqual(response.status_code, 200)
         self.assertFalse(response.data['configured_job_alerts'])
-        self.assertFalse(response.data['service_introductions'])
-        self.assertTrue(response.data['important_system_updates'])
+        self.assertFalse(response.data['cv_activity_web'])
+        self.assertTrue(response.data['application_received_email'])
         self.assertEqual(CandidateEmailNotificationSettings.objects.count(), 1)
 
     def test_patch_creates_settings_and_preserves_unspecified_enabled_defaults(self):
@@ -76,15 +72,18 @@ class CandidateEmailNotificationSettingsApiTests(TestCase):
             self.url,
             {
                 'suitable_job_recommendations': False,
-                'partner_gifts_and_discounts': False,
+                'application_received_web': False,
+                'important_system_updates': False,
             },
             format='json',
         )
 
         self.assertEqual(response.status_code, 200)
         self.assertFalse(response.data['suitable_job_recommendations'])
-        self.assertFalse(response.data['partner_gifts_and_discounts'])
-        self.assertTrue(response.data['important_system_updates'])
+        self.assertFalse(response.data['application_received_web'])
+        self.assertTrue(response.data['application_received_email'])
+        # Removed switches are ignored rather than accepted silently into a column.
+        self.assertNotIn('important_system_updates', response.data)
         settings = CandidateEmailNotificationSettings.objects.get()
         self.assertEqual(settings.candidate_profile, self.user.candidate_profile)
 
@@ -92,20 +91,20 @@ class CandidateEmailNotificationSettingsApiTests(TestCase):
         settings = CandidateEmailNotificationSettings.objects.create(
             candidate_profile=self.user.candidate_profile,
             configured_job_alerts=False,
-            service_introductions=False,
+            cv_activity_web=False,
         )
 
         response = self.client.patch(
             self.url,
-            {'employer_viewed_cv': False},
+            {'cv_activity_email': False},
             format='json',
         )
 
         self.assertEqual(response.status_code, 200)
         settings.refresh_from_db()
         self.assertFalse(settings.configured_job_alerts)
-        self.assertFalse(settings.service_introductions)
-        self.assertFalse(settings.employer_viewed_cv)
+        self.assertFalse(settings.cv_activity_web)
+        self.assertFalse(settings.cv_activity_email)
         self.assertFalse(settings.suitable_job_recommendations)
 
     def test_enabling_suitable_recommendations_requires_configured_preferences(self):

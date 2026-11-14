@@ -4,12 +4,13 @@ import { Badge, Button, Empty, Popover, Skeleton } from 'antd'
 import { Link } from 'react-router'
 import {
   employerNotificationKeys,
+  employerNotificationTone,
   getEmployerNotifications,
   getEmployerNotificationUnreadCount,
   markEmployerNotificationRead,
 } from '@/entities/employer-notification'
 import { employerAppPath } from '@/shared/config/portals'
-import NotificationItem from './NotificationItem'
+import NotificationListItem from '@/shared/ui/NotificationListItem'
 
 export default function EmployerNotificationBell() {
   const queryClient = useQueryClient()
@@ -39,7 +40,7 @@ export default function EmployerNotificationBell() {
         {listQuery.isPending && <div className="p-4"><Skeleton active paragraph={{ rows: 3 }} /></div>}
         {listQuery.isError && <p className="p-5 text-center text-xs text-red-600">Không tải được thông báo.</p>}
         {!listQuery.isPending && !listQuery.isError && items.length === 0 && <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Chưa có thông báo" className="py-7" />}
-        {items.map((item) => <NotificationItem key={item.public_id} item={item} compact onOpen={(value) => !value.is_read && readMutation.mutate(value.public_id)} />)}
+        {items.map((item) => <NotificationListItem key={item.public_id} item={item} tone={employerNotificationTone(item.event_type)} time={item.created_at} compact onOpen={(value) => !value.is_read && readMutation.mutate(value.public_id)} />)}
       </div>
     </div>
   )
