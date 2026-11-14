@@ -26,7 +26,7 @@ function renderReview() {
   return render(
     <App>
       <QueryClientProvider client={client}>
-        <AdminCompanyDomainReview canReview canRevoke />
+        <AdminCompanyDomainReview />
       </QueryClientProvider>
     </App>,
   )

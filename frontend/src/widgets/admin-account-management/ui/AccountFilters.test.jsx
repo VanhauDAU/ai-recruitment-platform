@@ -5,16 +5,11 @@ import dayjs from 'dayjs'
 import { describe, expect, it, vi } from 'vitest'
 import AccountFilters from './AccountFilters'
 
-const DEPARTMENTS = [{ public_id: 'dep_1', name: 'Vận hành' }]
-const ROLES = [{ public_id: 'rol_1', name: 'Chuyên viên', department: { name: 'Vận hành' } }]
-
 const baseFilters = {
   q: '',
   status: '',
   email_verified: '',
   has_active_session: '',
-  department: '',
-  admin_role: '',
   company: '',
   ordering: '-date_joined',
   created_range: [],
@@ -28,8 +23,6 @@ function setup(filters = {}, props = {}) {
     <App>
       <AccountFilters
         filters={{ ...baseFilters, ...filters }}
-        departments={DEPARTMENTS}
-        roles={ROLES}
         total={128}
         loading={false}
         onChange={onChange}
@@ -62,8 +55,6 @@ describe('AccountFilters', () => {
       q: 'lan',
       status: 'active',
       email_verified: 'true',
-      department: 'dep_1',
-      admin_role: 'rol_1',
       created_range: [dayjs('2026-01-01'), dayjs('2026-01-31')],
     })
 
@@ -71,8 +62,6 @@ describe('AccountFilters', () => {
       'Từ khóa: lan',
       'Trạng thái: Đang hoạt động',
       'Xác minh email: Có',
-      'Phòng ban: Vận hành',
-      'Chức danh: Chuyên viên',
       'Ngày tạo: 01/01/2026 → 31/01/2026',
     ])
     expect(count).toContain('khớp bộ lọc')

@@ -68,17 +68,6 @@ export default function CompanyJobs({ company, enabled }) {
     })
   }
 
-  if (!enabled) {
-    return (
-      <Alert
-        showIcon
-        type="warning"
-        title="Bạn chưa có quyền xem tin tuyển dụng của công ty"
-        description="Cần quyền job_moderation.view để mở danh sách và chi tiết tin tuyển dụng."
-      />
-    )
-  }
-
   return (
     <CompanyPanel
       title={`Tin tuyển dụng (${jobs.count})`}

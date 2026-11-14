@@ -17,7 +17,6 @@ import {
 import dayjs from 'dayjs'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router'
-import { useAdminAccess } from '@/entities/admin-access'
 import { jobDetailPath } from '@/entities/job'
 import {
   getAdminJobReports,
@@ -29,7 +28,6 @@ import {
   resolveAdminJobReport,
   reverseAdminJobReport,
 } from '@/entities/job-report'
-import { useSession } from '@/entities/session'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { message } from '@/shared/lib/toast'
 import { AdminDataActions, AdminPanel } from '@/shared/ui/admin'
@@ -64,9 +62,6 @@ function positivePage(value) {
 }
 
 export default function JobReportQueue() {
-  const { user } = useSession()
-  const adminAccess = useAdminAccess(user)
-  const canResolve = adminAccess.has('job_moderation.resolve_report')
   const [searchParams, setSearchParams] = useSearchParams()
   const rawStatus = searchParams.get('report_status')
   const statusFilter = rawStatus === 'all' ? '' : rawStatus || DEFAULT_STATUS
@@ -270,7 +265,6 @@ export default function JobReportQueue() {
       fixed: 'right',
       width: 96,
       render: (_, report) => {
-        if (!canResolve) return <span className="text-xs text-slate-500">Chỉ xem</span>
         if (report.status === 'pending') {
           return (
             <Space className="whitespace-nowrap" size={4}>
@@ -376,14 +370,6 @@ export default function JobReportQueue() {
         )}
       </div>
 
-      {!canResolve && (
-        <Alert
-          className="mb-4"
-          showIcon
-          title="Bạn có quyền xem nhưng không có quyền xử lý báo cáo."
-          type="info"
-        />
-      )}
       {reportsQuery.isError && (
         <Alert
           action={<Button onClick={() => reportsQuery.refetch()} size="small">Thử lại</Button>}

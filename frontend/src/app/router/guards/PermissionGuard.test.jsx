@@ -8,19 +8,19 @@ const { useSession } = vi.hoisted(() => ({ useSession: vi.fn() }))
 vi.mock('@/entities/session', () => ({ useSession }))
 
 const route = {
-  segment: '/job-moderation',
-  permission: 'job_moderation.view',
+  segment: '/settings',
+  requireSuperuser: true,
 }
 
 function renderGuard() {
   return render(
-    <MemoryRouter initialEntries={['/admin/app/job-moderation']}>
+    <MemoryRouter initialEntries={['/admin/app/settings']}>
       <Routes>
         <Route
-          path="/admin/app/job-moderation"
+          path="/admin/app/settings"
           element={(
             <PermissionGuard route={route}>
-              <p>Moderation page</p>
+              <p>Settings page</p>
             </PermissionGuard>
           )}
         />
@@ -36,26 +36,21 @@ function renderGuard() {
 describe('PermissionGuard', () => {
   beforeEach(() => useSession.mockReset())
 
-  it('renders immediately when the session contains the permission', () => {
+  it('renders a superuser-only route immediately for a superuser', () => {
     useSession.mockReturnValue({
-      user: {
-        admin_access: {
-          permissions: ['job_moderation.view'],
-          memberships: [],
-        },
-      },
+      user: { admin_access: { is_superuser: true } },
       refreshSession: vi.fn(),
     })
     renderGuard()
-    expect(screen.getByText('Moderation page')).toBeInTheDocument()
+    expect(screen.getByText('Settings page')).toBeInTheDocument()
   })
 
-  it('revalidates exactly once before redirecting', async () => {
+  it('revalidates exactly once before redirecting a regular admin', async () => {
     const refreshSession = vi.fn().mockResolvedValue({
-      admin_access: { permissions: [], memberships: [] },
+      admin_access: { is_superuser: false },
     })
     useSession.mockReturnValue({
-      user: { admin_access: { permissions: [], memberships: [] } },
+      user: { admin_access: { is_superuser: false } },
       refreshSession,
     })
     renderGuard()

@@ -19,7 +19,7 @@ function CandidatePreview({ fields }) {
   return <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4"><p className="mb-1 text-sm font-semibold">Ứng viên sẽ điền như thế này</p><p className="mb-3 text-xs font-bold uppercase text-slate-500">Thông tin chuyên môn</p>{items.map((item) => <PositionDetailField key={item.item_id} item={item} locale="vi-VN" onChange={({ value }) => setValues({ ...values, [item.field_key]: value })} />)}</div>
 }
 
-export default function PositionFieldsEditor({ positionPublicId, canManage, onChanged }) {
+export default function PositionFieldsEditor({ positionPublicId, onChanged }) {
   const queryClient = useQueryClient()
   const [form] = Form.useForm()
   const [editing, setEditing] = useState(null)
@@ -49,11 +49,11 @@ export default function PositionFieldsEditor({ positionPublicId, canManage, onCh
   }))
   return <div className="space-y-4">
     <div>
-      {canManage && <Button className="mb-3" type="primary" icon={<PlusOutlined />} onClick={() => open(null)}>Thêm câu hỏi</Button>}
+      <Button className="mb-3" type="primary" icon={<PlusOutlined />} onClick={() => open(null)}>Thêm câu hỏi</Button>
       <Table size="small" rowKey="public_id" loading={isLoading} dataSource={data} pagination={false} scroll={{ x: 460 }} locale={{ emptyText: 'Vị trí chưa có câu hỏi riêng. CV sẽ không có mục "Thông tin chuyên môn".' }} columns={[
         { title: 'Câu hỏi', dataIndex: 'label_vi', render: (label, row) => <span>{label}<span className="block font-mono text-xs text-slate-400">{row.key}</span></span> },
         { title: 'Kiểu trả lời', dataIndex: 'field_type', render: (type, row) => <span className="flex flex-wrap gap-1"><Tag>{typeLabel(type)}</Tag>{row.maps_to === 'skills' && <Tag color="blue">Tính là kỹ năng</Tag>}{!row.is_active && <Tag>Đang tắt</Tag>}</span> },
-        ...(canManage ? [{ title: '', width: 80, render: (_, row) => <span className="flex gap-1"><Button size="small" type="text" icon={<EditOutlined />} aria-label={`Sửa ${row.key}`} onClick={() => open(row)} /><Button size="small" type="text" danger icon={<DeleteOutlined />} aria-label={`Xóa ${row.key}`} onClick={() => run.mutate({ action: 'remove', row })} /></span> }] : []),
+        { title: '', width: 80, render: (_, row) => <span className="flex gap-1"><Button size="small" type="text" icon={<EditOutlined />} aria-label={`Sửa ${row.key}`} onClick={() => open(row)} /><Button size="small" type="text" danger icon={<DeleteOutlined />} aria-label={`Xóa ${row.key}`} onClick={() => run.mutate({ action: 'remove', row })} /></span> },
       ]} />
     </div>
     <CandidatePreview fields={data} />

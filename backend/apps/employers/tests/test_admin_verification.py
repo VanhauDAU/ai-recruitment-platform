@@ -9,9 +9,8 @@ from django.urls import reverse
 from django.utils import timezone
 from rest_framework.test import APITestCase
 
-from apps.accounts.admin_access_cache import bust_admin_permission_cache
-from apps.accounts.models import AdminPermission, AdminRole, Department, User
-from apps.accounts.services import assign_membership
+from apps.accounts.models import User
+from apps.accounts.tests.helpers import make_admin
 from apps.jobs.models import JobCategory
 
 from ..admin import (
@@ -700,31 +699,8 @@ class EmployerAccountVerificationTests(APITestCase):
             [self.first_case.public_id],
         )
 
-    def test_view_only_reviewer_cannot_open_sensitive_document(self):
-        reviewer = User.objects.create_user(
-            email='view-only-reviewer@example.com',
-            password='Password@123',
-            role=User.Role.ADMIN,
-        )
-        permission, _ = AdminPermission.objects.get_or_create(
-            code='employer_verification.view',
-            defaults={
-                'module': 'employer_verification',
-                'label': 'Xem xác thực NTD',
-            },
-        )
-        department = Department.objects.create(
-            code='verification-ops',
-            name='Vận hành xác thực',
-        )
-        role = AdminRole.objects.create(
-            department=department,
-            code='verification-viewer',
-            name='Người xem xác thực',
-        )
-        role.permissions.add(permission)
-        assign_membership(reviewer, role, actor=self.admin)
-        self.client.force_authenticate(reviewer)
+    def test_regular_admin_detail_reveals_evidence_but_only_public_snapshot_keys(self):
+        self.client.force_authenticate(make_admin())
         document = self.first_case.documents.filter(is_current=True).first()
         evidence = self.first_case.tax_lookup_evidences.order_by('-created_at', '-id').first()
         evidence.response_hash = 'f' * 64
@@ -763,20 +739,10 @@ class EmployerAccountVerificationTests(APITestCase):
                 kwargs={'public_id': self.first_case.public_id},
             )
         )
-        content = self.client.get(
-            reverse(
-                'admin-employer-verification-document-content',
-                kwargs={
-                    'public_id': self.first_case.public_id,
-                    'document_public_id': document.public_id,
-                },
-            )
-        )
 
         self.assertEqual(queue.status_code, 200, queue.data)
         self.assertEqual(detail.status_code, 200, detail.data)
-        self.assertEqual(content.status_code, 403, content.data)
-        self.assertEqual(detail.data['tax_lookup_evidence']['response_hash'], '')
+        self.assertEqual(detail.data['tax_lookup_evidence']['response_hash'], 'f' * 64)
         self.assertNotIn('company_impact', detail.data['decision_snapshot'])
         self.assertNotIn('integrity_fingerprint', detail.data['decision_snapshot'])
         self.assertNotIn('future_unknown_field', detail.data['decision_snapshot'])
@@ -785,71 +751,26 @@ class EmployerAccountVerificationTests(APITestCase):
             for item in detail.data['events']
             if item['public_id'] == event.public_id
         )
-        self.assertNotIn('document_file_name', event_payload)
+        self.assertEqual(event_payload['document_file_name'], 'hop-dong-noi-bo.pdf')
 
-    def test_company_update_permissions_are_independent_from_verification_review(self):
-        reviewer = User.objects.create_user(
-            email='company-update-reviewer@example.com',
-            password='Password@123',
-            role=User.Role.ADMIN,
-        )
-        view_permission, _ = AdminPermission.objects.get_or_create(
-            code='company_update.view',
-            defaults={
-                'module': 'company_update',
-                'label': 'Xem yêu cầu sửa công ty',
-            },
-        )
-        review_permission, _ = AdminPermission.objects.get_or_create(
-            code='company_update.review',
-            defaults={
-                'module': 'company_update',
-                'label': 'Duyệt sửa thông tin công ty',
-            },
-        )
-        department = Department.objects.create(
-            code='company-update-ops',
-            name='Vận hành cập nhật công ty',
-        )
-        role = AdminRole.objects.create(
-            department=department,
-            code='company-update-reviewer',
-            name='Chuyên viên duyệt sửa công ty',
-        )
-        role.permissions.add(view_permission)
-        assign_membership(reviewer, role, actor=self.admin)
+    def test_regular_admin_reviews_company_updates_and_verification(self):
         update_request = CompanyUpdateRequest.objects.create(
             company=self.company,
             requested_by=self.first_user,
             changes={'website_url': 'https://example.com/new'},
         )
-        self.client.force_authenticate(reviewer)
+        self.client.force_authenticate(make_admin())
 
         company_queue = self.client.get(reverse('admin-company-update-request-list'))
         account_detail = self.client.get(
             reverse('admin-account-detail', kwargs={'public_id': self.first_user.public_id})
         )
         verification_queue = self.client.get(reverse('admin-employer-verification-list'))
-        denied_review = self.client.post(
-            reverse(
-                'admin-company-update-request-review',
-                kwargs={'public_id': update_request.public_id},
-            ),
-            {
-                'decision': CompanyUpdateRequest.Status.REJECTED,
-                'note': 'Chưa đủ thông tin.',
-                'lock_version': 0,
-            },
-            format='json',
-        )
 
         self.assertEqual(company_queue.status_code, 200, company_queue.data)
         self.assertEqual(account_detail.status_code, 200, account_detail.data)
-        self.assertEqual(verification_queue.status_code, 403, verification_queue.data)
-        self.assertEqual(denied_review.status_code, 403, denied_review.data)
+        self.assertEqual(verification_queue.status_code, 200, verification_queue.data)
 
-        role.permissions.add(review_permission)
-        bust_admin_permission_cache({reviewer.pk})
         started = self.client.post(
             reverse(
                 'admin-company-update-request-start-review',
@@ -877,27 +798,7 @@ class EmployerAccountVerificationTests(APITestCase):
         update_request.refresh_from_db()
         self.assertEqual(update_request.status, CompanyUpdateRequest.Status.REJECTED)
 
-    def test_company_update_viewer_cannot_open_sensitive_document(self):
-        reviewer = User.objects.create_user(
-            email='company-document-viewer@example.com',
-            password='Password@123',
-            role=User.Role.ADMIN,
-        )
-        view_permission, _ = AdminPermission.objects.get_or_create(
-            code='company_update.view',
-            defaults={'module': 'company_update', 'label': 'Xem yêu cầu sửa công ty'},
-        )
-        department = Department.objects.create(
-            code='company-document-view',
-            name='Xem yêu cầu sửa công ty',
-        )
-        role = AdminRole.objects.create(
-            department=department,
-            code='company-document-viewer',
-            name='Người xem yêu cầu sửa công ty',
-        )
-        role.permissions.add(view_permission)
-        assign_membership(reviewer, role, actor=self.admin)
+    def test_regular_admin_sees_company_update_document_metadata(self):
         update_request = CompanyUpdateRequest.objects.create(
             company=self.company,
             requested_by=self.first_user,
@@ -925,43 +826,8 @@ class EmployerAccountVerificationTests(APITestCase):
             file_url='https://evidence.example/private-reference',
             file_name='Website chứng minh tên thương mại',
         )
-        self.client.force_authenticate(reviewer)
+        self.client.force_authenticate(make_admin())
 
-        queue = self.client.get(reverse('admin-company-update-request-list'))
-        detail = self.client.get(
-            reverse(
-                'admin-company-update-request-detail',
-                kwargs={'public_id': update_request.public_id},
-            )
-        )
-        content = self.client.get(
-            reverse(
-                'admin-company-update-request-document-content',
-                kwargs={
-                    'public_id': update_request.public_id,
-                    'document_public_id': document.public_id,
-                },
-            )
-        )
-
-        self.assertEqual(queue.status_code, 200, queue.data)
-        self.assertEqual(detail.status_code, 200, detail.data)
-        self.assertEqual(content.status_code, 403, content.data)
-        redacted_documents = {item['public_id']: item for item in detail.data['documents']}
-        redacted = redacted_documents[document.public_id]
-        self.assertEqual(redacted['file_name'], '')
-        self.assertEqual(redacted['mime_type'], '')
-        self.assertEqual(redacted['file_size'], 0)
-        self.assertEqual(redacted['sha256'], '')
-        self.assertEqual(redacted['uploaded_by_email'], '')
-        self.assertIsNone(redacted_documents[website_document.public_id]['source_url'])
-
-        sensitive_permission, _ = AdminPermission.objects.get_or_create(
-            code='account.sensitive.view',
-            defaults={'module': 'account', 'label': 'Xem dữ liệu nhạy cảm'},
-        )
-        role.permissions.add(sensitive_permission)
-        bust_admin_permission_cache({reviewer.pk})
         revealed_detail = self.client.get(
             reverse(
                 'admin-company-update-request-detail',

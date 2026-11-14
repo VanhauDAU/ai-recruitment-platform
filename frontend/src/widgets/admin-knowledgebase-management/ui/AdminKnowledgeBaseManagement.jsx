@@ -12,7 +12,6 @@ import { useQuery } from '@tanstack/react-query'
 import { Button, Card, Empty, Input, Select, Space, Spin, Table, Tag, Tooltip } from 'antd'
 import { useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
-import { useAdminAccess } from '@/entities/admin-access'
 import {
   KNOWLEDGE_ARTICLE_TYPES,
   KNOWLEDGE_LIFECYCLE_STATUS,
@@ -24,7 +23,6 @@ import {
   getAdminKnowledgeCategories,
   knowledgeTypeLabel,
 } from '@/entities/knowledgebase'
-import { useSession } from '@/entities/session'
 import { KnowledgeCategoryManager } from '@/features/manage-knowledge-categories'
 import { adminPath } from '@/shared/config/portals'
 import { AdminDataActions, AdminStatCard } from '@/shared/ui/admin'
@@ -54,8 +52,6 @@ function controlledSortOrder(ordering, column) {
 
 export default function AdminKnowledgeBaseManagement() {
   const navigate = useNavigate()
-  const { user } = useSession()
-  const access = useAdminAccess(user)
   const [searchParams, setSearchParams] = useSearchParams()
   const [categoryOpen, setCategoryOpen] = useState(false)
   const [searchDraft, setSearchDraft] = useState(searchParams.get('q') || '')
@@ -185,7 +181,7 @@ export default function AdminKnowledgeBaseManagement() {
             rows={rows}
           />
           <Button icon={<FolderOpenOutlined />} onClick={() => setCategoryOpen(true)}>Quản lý chuyên mục</Button>
-          {access.has('knowledgebase.manage') && <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate(adminPath('/knowledgebase/new'))}>Tạo bài viết</Button>}
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate(adminPath('/knowledgebase/new'))}>Tạo bài viết</Button>
         </Space>
       </section>
 
@@ -277,8 +273,6 @@ export default function AdminKnowledgeBaseManagement() {
 
       <KnowledgeCategoryManager
         open={categoryOpen}
-        canManage={access.has('knowledgebase.manage')}
-        canPublish={access.has('knowledgebase.publish')}
         onClose={() => setCategoryOpen(false)}
       />
     </div>

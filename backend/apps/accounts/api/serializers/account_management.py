@@ -7,38 +7,14 @@ from apps.employers.selectors import build_employer_initial_onboarding
 from apps.employers.services import verification_checks
 from common.media_storage import media_url_from_value
 
-from ...constants import ADMIN_PERMISSION_CODES
 from ...models import (
     AdminAccessAuditLog,
     AdminInvitation,
-    AdminProvisioningScope,
-    AdminRole,
     AuthSession,
     User,
 )
 from .admin_account_resources import AdminAccountProfileSerializer
-from .auth import password_field
-
-
-def role_payload(role):
-    return {
-        'public_id': role.public_id,
-        'code': role.code,
-        'name': role.name,
-        'description': role.description,
-        'rank': role.rank,
-        'is_active': role.is_active,
-        'is_system_managed': role.is_system_managed,
-        'department': {
-            'public_id': role.department.public_id,
-            'code': role.department.code,
-            'name': role.department.name,
-            'description': role.department.description,
-            'is_active': role.department.is_active,
-            'is_system_managed': role.department.is_system_managed,
-        },
-        'permission_codes': sorted(item.code for item in role.permissions.all() if item.is_active),
-    }
+from .auth import admin_access_payload, password_field
 
 
 class ManagedAccountSerializer(serializers.ModelSerializer):
@@ -158,47 +134,7 @@ class ManagedAccountSerializer(serializers.ModelSerializer):
         return {'kind': 'admin'}
 
     def get_admin_access(self, obj):
-        if not obj.is_admin_role:
-            return None
-        memberships = getattr(obj, 'active_admin_memberships', [])
-        membership = memberships[0] if memberships else None
-        role = membership.role if membership else None
-        role_is_effective = bool(role and role.is_active and role.department.is_active)
-        permissions = (
-            sorted(ADMIN_PERMISSION_CODES)
-            if obj.is_superuser
-            else role_payload(role)['permission_codes']
-            if role_is_effective
-            else []
-        )
-        return {
-            'is_superuser': obj.is_superuser,
-            'access_source': (
-                'superuser' if obj.is_superuser else 'role' if role_is_effective else 'none'
-            ),
-            'permissions': permissions,
-            'permission_count': len(permissions),
-            'membership': (
-                {
-                    'public_id': membership.public_id,
-                    'is_active': membership.is_active,
-                    'is_primary': membership.is_primary,
-                    'role': role_payload(role),
-                    'assigned_at': membership.assigned_at,
-                    'assigned_by_public_id': (
-                        membership.assigned_by.public_id if membership.assigned_by else None
-                    ),
-                    'assigned_by_email': (
-                        membership.assigned_by.email if membership.assigned_by else None
-                    ),
-                    'assigned_by_name': (
-                        membership.assigned_by.full_name if membership.assigned_by else None
-                    ),
-                }
-                if membership
-                else None
-            ),
-        }
+        return admin_access_payload(obj)
 
     def get_invitation(self, obj):
         invitations = getattr(obj, 'account_admin_invitations', [])
@@ -518,30 +454,8 @@ class AccountActivitySerializer(serializers.ModelSerializer):
         ]
 
 
-class InvitationRoleSerializer(serializers.ModelSerializer):
-    department = serializers.SerializerMethodField()
-    permission_codes = serializers.SlugRelatedField(
-        source='permissions',
-        slug_field='code',
-        many=True,
-        read_only=True,
-    )
-
-    class Meta:
-        model = AdminRole
-        fields = ['public_id', 'code', 'name', 'rank', 'department', 'permission_codes']
-
-    def get_department(self, obj):
-        return {
-            'public_id': obj.department.public_id,
-            'code': obj.department.code,
-            'name': obj.department.name,
-        }
-
-
 class AdminInvitationSerializer(serializers.ModelSerializer):
     user = serializers.SerializerMethodField()
-    target_role = InvitationRoleSerializer(read_only=True)
     invited_by = serializers.SerializerMethodField()
     status = serializers.SerializerMethodField()
 
@@ -550,7 +464,6 @@ class AdminInvitationSerializer(serializers.ModelSerializer):
         fields = [
             'public_id',
             'user',
-            'target_role',
             'invited_by',
             'status',
             'reason',
@@ -585,26 +498,12 @@ class AdminInvitationSerializer(serializers.ModelSerializer):
 class AdminInvitationCreateSerializer(serializers.Serializer):
     email = serializers.EmailField()
     full_name = serializers.CharField(max_length=255, trim_whitespace=True)
-    target_role_public_id = serializers.SlugRelatedField(
-        source='target_role',
-        slug_field='public_id',
-        queryset=AdminRole.objects.all(),
-    )
     reason = serializers.CharField(max_length=500, trim_whitespace=True)
 
     def validate_full_name(self, value):
         if len(value) < 2:
             raise serializers.ValidationError('Họ tên cần ít nhất 2 ký tự.')
         return value
-
-
-class AdminInvitationUpdateSerializer(serializers.Serializer):
-    target_role_public_id = serializers.SlugRelatedField(
-        source='target_role',
-        slug_field='public_id',
-        queryset=AdminRole.objects.all(),
-    )
-    reason = serializers.CharField(max_length=500, trim_whitespace=True)
 
 
 class AdminInvitationTokenSerializer(serializers.Serializer):
@@ -619,48 +518,3 @@ class AdminInvitationAcceptSerializer(AdminInvitationTokenSerializer):
         if attrs['password'] != attrs.pop('password_confirm'):
             raise serializers.ValidationError({'password_confirm': 'Mật khẩu xác nhận không khớp.'})
         return attrs
-
-
-class ProvisioningScopeSerializer(serializers.ModelSerializer):
-    source_role = InvitationRoleSerializer(read_only=True)
-    target_role = InvitationRoleSerializer(read_only=True)
-    configured_by_email = serializers.EmailField(
-        source='configured_by.email',
-        allow_null=True,
-        read_only=True,
-    )
-    pending_invitation_count = serializers.IntegerField(read_only=True)
-
-    class Meta:
-        model = AdminProvisioningScope
-        fields = [
-            'public_id',
-            'source_role',
-            'target_role',
-            'is_active',
-            'configured_by_email',
-            'pending_invitation_count',
-            'created_at',
-            'updated_at',
-        ]
-
-
-class ProvisioningScopeCreateSerializer(serializers.Serializer):
-    source_role_public_id = serializers.SlugRelatedField(
-        source='source_role',
-        slug_field='public_id',
-        queryset=AdminRole.objects.all(),
-    )
-    target_role_public_id = serializers.SlugRelatedField(
-        source='target_role',
-        slug_field='public_id',
-        queryset=AdminRole.objects.all(),
-    )
-
-
-class ProvisioningScopeStatusSerializer(serializers.Serializer):
-    is_active = serializers.BooleanField()
-
-
-class ProvisioningScopeConfirmSerializer(ProvisioningScopeStatusSerializer):
-    impact_token = serializers.CharField(trim_whitespace=True)

@@ -6,11 +6,7 @@ const adminUser = {
   full_name: 'System Admin',
   role: 'admin',
   status: 'active',
-  admin_access: {
-    is_superuser: true,
-    permissions: [],
-    memberships: [],
-  },
+  admin_access: { is_superuser: true },
 }
 
 const company = {

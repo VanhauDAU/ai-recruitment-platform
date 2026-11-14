@@ -5,8 +5,8 @@ from django.urls import reverse
 from django.utils import timezone
 from rest_framework.test import APITestCase
 
-from apps.accounts.models import AdminPermission, AdminRole, Department, User
-from apps.accounts.services import assign_membership
+from apps.accounts.models import User
+from apps.accounts.tests.helpers import make_admin
 from apps.blog.models import BlogMediaAsset, Post, PostCategory, PostWorkingCopy, Tag
 from apps.blog.services import sanitize_blog_html
 
@@ -14,48 +14,8 @@ from apps.blog.services import sanitize_blog_html
 class BlogAdminApiTests(APITestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.editor = User.objects.create_user(
-            email='blog-editor@example.com', password='Password@123', role=User.Role.ADMIN
-        )
-        cls.publisher = User.objects.create_user(
-            email='blog-publisher@example.com', password='Password@123', role=User.Role.ADMIN
-        )
-        cls.viewer = User.objects.create_user(
-            email='blog-viewer@example.com', password='Password@123', role=User.Role.ADMIN
-        )
-        cls.publisher_only = User.objects.create_user(
-            email='blog-publisher-only@example.com',
-            password='Password@123',
-            role=User.Role.ADMIN,
-        )
-        department = Department.objects.create(code='blog-content', name='Nội dung')
-        editor_role = AdminRole.objects.create(
-            department=department, code='editor', name='Biên tập viên'
-        )
-        publisher_role = AdminRole.objects.create(
-            department=department, code='publisher', name='Người duyệt'
-        )
-        viewer_role = AdminRole.objects.create(
-            department=department, code='viewer', name='Người xem'
-        )
-        publisher_only_role = AdminRole.objects.create(
-            department=department, code='publisher-only', name='Chỉ phát hành'
-        )
-        permissions = {
-            code: AdminPermission.objects.create(code=code, module='blog', label=code)
-            for code in ('blog.view', 'blog.manage', 'blog.publish')
-        }
-        editor_role.permissions.add(permissions['blog.view'], permissions['blog.manage'])
-        publisher_role.permissions.add(*permissions.values())
-        viewer_role.permissions.add(permissions['blog.view'])
-        publisher_only_role.permissions.add(
-            permissions['blog.view'],
-            permissions['blog.publish'],
-        )
-        assign_membership(cls.editor, editor_role, actor=cls.publisher)
-        assign_membership(cls.publisher, publisher_role, actor=cls.publisher)
-        assign_membership(cls.viewer, viewer_role, actor=cls.publisher)
-        assign_membership(cls.publisher_only, publisher_only_role, actor=cls.publisher)
+        cls.editor = make_admin('blog-editor@example.com')
+        cls.publisher = make_admin('blog-publisher@example.com')
         cls.category = PostCategory.objects.create(name='Kiến thức nghề nghiệp')
 
     def _create_draft(self):
@@ -80,62 +40,15 @@ class BlogAdminApiTests(APITestCase):
         second = self._create_draft()
         self.assertEqual(second.data['slug'], 'nhan-vien-sales-la-gi-2')
 
-    def test_viewer_can_read_all_posts_but_cannot_mutate_content(self):
-        owned = Post.objects.create(
-            title='Bài cũ của người chỉ xem',
-            category=self.category,
-            author=self.viewer,
-            summary='Sapo',
-            content='<p>Nội dung</p>',
+    def test_non_admin_is_rejected(self):
+        candidate = User.objects.create_user(
+            email='blog-candidate@example.com', password='Password@123'
         )
-        other = Post.objects.create(
-            title='Bài của biên tập viên khác',
-            category=self.category,
-            author=self.editor,
-            summary='Sapo',
-            content='<p>Nội dung</p>',
-        )
-        self.client.force_authenticate(self.viewer)
+        self.client.force_authenticate(candidate)
 
-        listing = self.client.get(reverse('blog-admin-post-list'))
-        self.assertEqual(listing.status_code, 200, listing.data)
-        listed_ids = {item['public_id'] for item in listing.data['results']}
-        self.assertEqual(listed_ids, {owned.public_id, other.public_id})
-        self.assertTrue(all(item['allowed_actions'] == [] for item in listing.data['results']))
+        response = self.client.get(reverse('blog-admin-post-list'))
 
-        denied_requests = (
-            self.client.post(
-                reverse('blog-admin-post-list'),
-                {
-                    'title': 'Không được tạo',
-                    'category_public_id': self.category.public_id,
-                },
-                format='json',
-            ),
-            self.client.patch(
-                reverse('blog-admin-post-draft', args=[owned.public_id]),
-                {'title': 'Không được sửa', 'base_revision': 1},
-                format='json',
-            ),
-            self.client.post(
-                reverse('blog-admin-post-archive', args=[owned.public_id]),
-                {'note': 'Không được ẩn'},
-                format='json',
-            ),
-            self.client.post(
-                reverse('blog-admin-category-list'),
-                {'name': 'Không được tạo danh mục'},
-                format='json',
-            ),
-            self.client.post(
-                reverse('blog-admin-tag-list'),
-                {'name': 'Không được tạo thẻ'},
-                format='json',
-            ),
-            self.client.post(reverse('blog-image-upload'), {}, format='multipart'),
-            self.client.post(reverse('blog-thumbnail-upload'), {}, format='multipart'),
-        )
-        self.assertTrue(all(response.status_code == 403 for response in denied_requests))
+        self.assertEqual(response.status_code, 403)
 
     def test_list_supports_ordering_for_every_data_column(self):
         later_category = PostCategory.objects.create(name='Xu hướng nghề nghiệp')
@@ -195,89 +108,6 @@ class BlogAdminApiTests(APITestCase):
                 [second.public_id, first.public_id],
                 ordering,
             )
-
-    def test_publish_permission_can_edit_and_moderate_posts_but_cannot_create(self):
-        pending = Post.objects.create(
-            title='Bài đang chờ duyệt',
-            category=self.category,
-            author=self.editor,
-            summary='Sapo đủ điều kiện xuất bản',
-            content='<h2>Nội dung</h2><p>Chi tiết</p>',
-            status=Post.Status.PENDING,
-            submitted_at=timezone.now(),
-        )
-        archived = Post.objects.create(
-            title='Bài đã gỡ',
-            category=self.category,
-            author=self.editor,
-            summary='Sapo',
-            content='<p>Nội dung</p>',
-            status=Post.Status.ARCHIVED,
-        )
-        draft = Post.objects.create(
-            title='Bài nháp của biên tập viên',
-            category=self.category,
-            author=self.editor,
-            summary='Sapo cũ',
-            content='<h2>Nội dung</h2><p>Chi tiết</p>',
-        )
-        self.client.force_authenticate(self.publisher_only)
-
-        detail = self.client.get(reverse('blog-admin-post-detail', args=[pending.public_id]))
-        self.assertEqual(detail.status_code, 200, detail.data)
-        self.assertIn('edit', detail.data['allowed_actions'])
-        self.assertIn('submit', detail.data['allowed_actions'])
-        self.assertIn('publish', detail.data['allowed_actions'])
-        self.assertIn('return', detail.data['allowed_actions'])
-        self.assertIn('archive', detail.data['allowed_actions'])
-
-        denied_create = self.client.post(reverse('blog-admin-post-list'), {}, format='json')
-        edited_pending = self.client.patch(
-            reverse('blog-admin-post-draft', args=[pending.public_id]),
-            {'summary': 'Người duyệt đã cập nhật trước khi xuất bản', 'base_revision': 1},
-            format='json',
-        )
-        resubmitted_pending = self.client.post(
-            reverse('blog-admin-post-submit', args=[pending.public_id]),
-            {},
-            format='json',
-        )
-        edited = self.client.patch(
-            reverse('blog-admin-post-draft', args=[draft.public_id]),
-            {'summary': 'Người duyệt đã chỉnh nội dung', 'base_revision': 1},
-            format='json',
-        )
-        restored = self.client.post(
-            reverse('blog-admin-post-restore', args=[archived.public_id]),
-            {},
-            format='json',
-        )
-        content_upload = self.client.post(reverse('blog-image-upload'), {}, format='multipart')
-        thumbnail_upload = self.client.post(
-            reverse('blog-thumbnail-upload'),
-            {},
-            format='multipart',
-        )
-        self.assertEqual(denied_create.status_code, 403)
-        self.assertEqual(edited_pending.status_code, 200, edited_pending.data)
-        self.assertEqual(resubmitted_pending.status_code, 200, resubmitted_pending.data)
-        self.assertEqual(resubmitted_pending.data['editorial_state'], 'pending')
-        self.assertEqual(edited.status_code, 200, edited.data)
-        self.assertEqual(
-            edited.data['editable_version']['summary'], 'Người duyệt đã chỉnh nội dung'
-        )
-        self.assertEqual(restored.status_code, 200, restored.data)
-        self.assertEqual(restored.data['editorial_state'], 'draft')
-        self.assertEqual(content_upload.status_code, 400, content_upload.data)
-        self.assertEqual(thumbnail_upload.status_code, 400, thumbnail_upload.data)
-
-        published = self.client.post(
-            reverse('blog-admin-post-publish', args=[pending.public_id]),
-            {},
-            format='json',
-        )
-        self.assertEqual(published.status_code, 200, published.data)
-        self.assertEqual(published.data['editorial_state'], 'published')
 
     def test_editor_sees_and_edits_all_posts_and_rejects_stale_revision(self):
         created = self._create_draft()

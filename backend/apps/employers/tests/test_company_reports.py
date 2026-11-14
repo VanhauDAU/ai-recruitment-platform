@@ -16,6 +16,7 @@ from rest_framework.test import APITestCase
 from rest_framework.throttling import ScopedRateThrottle
 
 from apps.accounts.models import AdminAccessAuditLog, User
+from apps.accounts.tests.helpers import make_admin
 from apps.jobs.models import JobReport
 
 from ..models import Company, CompanyPageEvent, CompanyReport, CompanyReportResolutionEvent
@@ -32,7 +33,6 @@ from .company_page_helpers import (
     make_candidate,
     make_company,
     make_employer,
-    make_limited_admin,
 )
 
 REPORT_DETAIL = 'Địa chỉ trụ sở trên trang không đúng với thực tế.'
@@ -262,15 +262,7 @@ class AdminCompanyReportApiTests(CompanyReportTestCase):
             (None, 401, 401, 401),
             (self.creator, 403, 403, 403),
             (self.candidate, 403, 403, 403),
-            (make_limited_admin(self.superuser, 'company.view'), 403, 403, 403),
-            (make_limited_admin(self.superuser, 'company_report.view'), 200, 403, 403),
-            (make_limited_admin(self.superuser, 'company_report.resolve'), 403, 403, 403),
-            (
-                make_limited_admin(self.superuser, 'company_report.view', 'company_report.resolve'),
-                200,
-                200,
-                200,
-            ),
+            (make_admin('report-staff@example.com'), 200, 200, 200),
         ]
         for user, expected_list, expected_resolve, expected_reverse in cases:
             with self.subTest(user=getattr(user, 'email', 'anonymous')):
@@ -552,29 +544,13 @@ class AdminCompanyReportApiTests(CompanyReportTestCase):
             False,
         )
 
-    def test_holding_the_page_needs_the_page_moderation_permission(self):
-        resolver = make_limited_admin(
-            self.superuser, 'company_report.view', 'company_report.resolve'
-        )
-        moderator = make_limited_admin(
-            self.superuser,
-            'company_report.view',
-            'company_report.resolve',
-            'company_page.moderate',
-        )
+    def test_regular_admin_can_hold_the_page_while_resolving(self):
+        self.client.force_authenticate(make_admin('report-moderator@example.com'))
 
-        self.client.force_authenticate(resolver)
-        denied = self.resolve(apply_hold=True)
-        self.report.refresh_from_db()
-        status_after_denial = self.report.status
-        self.client.force_authenticate(moderator)
-        allowed = self.resolve(apply_hold=True)
+        response = self.resolve(apply_hold=True)
 
-        self.assertEqual(denied.status_code, 403)
-        self.assertEqual(denied.data['code'], 'admin_permission_denied')
-        self.assertEqual(status_after_denial, CompanyReport.Status.PENDING)
-        self.assertEqual(allowed.status_code, 200, allowed.data)
-        self.assertIs(allowed.data['company']['content_policy_hold'], True)
+        self.assertEqual(response.status_code, 200, response.data)
+        self.assertIs(response.data['company']['content_policy_hold'], True)
 
     def test_reverse_reopens_the_report_and_keeps_the_hold(self):
         self.resolve(apply_hold=True)

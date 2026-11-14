@@ -5,7 +5,7 @@ import { MemoryRouter, Route, Routes, useLocation } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import AdminCompanyWorkspace from './AdminCompanyWorkspace'
 
-const { companyApi, updateApi, useSession } = vi.hoisted(() => ({
+const { companyApi, updateApi } = vi.hoisted(() => ({
   companyApi: {
     getAdminCompanies: vi.fn(),
     getAdminCompanySummary: vi.fn(),
@@ -13,7 +13,6 @@ const { companyApi, updateApi, useSession } = vi.hoisted(() => ({
   updateApi: {
     getAdminCompanyUpdateRequests: vi.fn(),
   },
-  useSession: vi.fn(),
 }))
 
 vi.mock('@/entities/admin-company', async (importOriginal) => ({
@@ -24,24 +23,13 @@ vi.mock('@/entities/admin-employer-verification', async (importOriginal) => ({
   ...(await importOriginal()),
   ...updateApi,
 }))
-vi.mock('@/entities/session', () => ({ useSession }))
 
 function LocationProbe() {
   const location = useLocation()
   return <output data-testid="location">{`${location.pathname}${location.search}`}</output>
 }
 
-function renderWorkspace({ permissions = [], initialEntry = '/admin/app/companies' } = {}) {
-  useSession.mockReturnValue({
-    user: {
-      role: 'admin',
-      admin_access: {
-        is_superuser: false,
-        permissions,
-        memberships: [],
-      },
-    },
-  })
+function renderWorkspace({ initialEntry = '/admin/app/companies' } = {}) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   })
@@ -70,24 +58,8 @@ describe('AdminCompanyWorkspace', () => {
     updateApi.getAdminCompanyUpdateRequests.mockResolvedValue({ count: 0, results: [] })
   })
 
-  it('keeps update requests in the company workspace for its dedicated permission', async () => {
-    renderWorkspace({ permissions: ['company_update.view'] })
-
-    expect(screen.queryByRole('tab', { name: 'Danh sách công ty' })).not.toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: 'Yêu cầu cập nhật' })).toHaveAttribute(
-      'aria-selected',
-      'true',
-    )
-    expect(screen.getByText('Ưu tiên yêu cầu có thay đổi pháp lý')).toBeInTheDocument()
-    await waitFor(() => expect(updateApi.getAdminCompanyUpdateRequests).toHaveBeenCalled())
-    expect(companyApi.getAdminCompanies).not.toHaveBeenCalled()
-  })
-
   it('opens the requested company update tab with its company filter', async () => {
-    renderWorkspace({
-      permissions: ['company.view', 'company_update.view'],
-      initialEntry: '/admin/app/companies?tab=updates&company=co_alpha',
-    })
+    renderWorkspace({ initialEntry: '/admin/app/companies?tab=updates&company=co_alpha' })
 
     expect(screen.getByRole('tab', { name: 'Yêu cầu cập nhật' })).toHaveAttribute(
       'aria-selected',
@@ -105,24 +77,9 @@ describe('AdminCompanyWorkspace', () => {
     expect(companyApi.getAdminCompanies).not.toHaveBeenCalled()
   })
 
-  it('falls back to the directory when update access is unavailable', async () => {
-    renderWorkspace({
-      permissions: ['company.view'],
-      initialEntry: '/admin/app/companies?tab=updates',
-    })
-
-    expect(screen.getByRole('tab', { name: 'Danh sách công ty' })).toHaveAttribute(
-      'aria-selected',
-      'true',
-    )
-    expect(screen.queryByRole('tab', { name: 'Yêu cầu cập nhật' })).not.toBeInTheDocument()
-    await waitFor(() => expect(companyApi.getAdminCompanies).toHaveBeenCalled())
-    expect(updateApi.getAdminCompanyUpdateRequests).not.toHaveBeenCalled()
-  })
-
   it('opens the update queue from the overview shortcut', async () => {
     const user = userEvent.setup()
-    renderWorkspace({ permissions: ['company.view', 'company_update.view'] })
+    renderWorkspace()
 
     await user.click(await screen.findByRole('button', {
       name: 'Yêu cầu cập nhật: 0. Mở hàng đợi xử lý',
@@ -160,10 +117,7 @@ describe('AdminCompanyWorkspace', () => {
         created_at: '2026-07-01T08:00:00Z',
       }],
     })
-    renderWorkspace({
-      permissions: ['company.view', 'company_update.view'],
-      initialEntry: '/admin/app/companies?tab=updates',
-    })
+    renderWorkspace({ initialEntry: '/admin/app/companies?tab=updates' })
 
     expect(await screen.findByText('Công ty Alpha')).toBeInTheDocument()
     expect(screen.getByText('Tên pháp lý')).toBeInTheDocument()

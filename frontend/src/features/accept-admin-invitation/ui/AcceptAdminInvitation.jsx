@@ -4,7 +4,7 @@ import {
   SafetyCertificateOutlined,
 } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
-import { Button, Form, Input, Result, Skeleton, Tag } from 'antd'
+import { Button, Form, Input, Result, Skeleton } from 'antd'
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import {
@@ -67,7 +67,7 @@ export default function AcceptAdminInvitation() {
           status="success"
           icon={<CheckCircleFilled className="text-emerald-600" />}
           title="Tài khoản Admin đã sẵn sàng"
-          subTitle="Mật khẩu và chức danh đã được thiết lập. Đăng nhập cổng quản trị để bắt đầu làm việc."
+          subTitle="Mật khẩu đã được thiết lập. Đăng nhập cổng quản trị để bắt đầu làm việc."
           extra={<Button type="primary" href={adminPath('/login')}>Đăng nhập Admin</Button>}
         />
       </div>
@@ -93,11 +93,7 @@ export default function AcceptAdminInvitation() {
       </div>
 
       <div className="mb-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
-        <div className="flex flex-wrap gap-2">
-          <Tag color="blue">{invitation.target_role.department.name}</Tag>
-          <Tag color="purple">{invitation.target_role.name}</Tag>
-        </div>
-        <p className="mb-0 mt-2 text-sm text-slate-600">{invitation.email}</p>
+        <p className="m-0 text-sm text-slate-600">{invitation.email}</p>
       </div>
 
       <Form form={form} layout="vertical" requiredMark={false} onFinish={submit}>

@@ -168,7 +168,7 @@ describe('SessionProvider', () => {
     getCurrentSessionUser.mockResolvedValue({
       public_id: 'admin-1',
       role: 'admin',
-      admin_access: { permissions: ['dashboard.view'], memberships: [] },
+      admin_access: { is_superuser: false },
     })
     const { result } = renderHook(() => useSession(), { wrapper })
     await waitFor(() => expect(result.current.loading).toBe(false))
@@ -183,19 +183,19 @@ describe('SessionProvider', () => {
     expect(message.warning).toHaveBeenCalledTimes(1)
   })
 
-  it('refreshes the visible admin session periodically after permissions change', async () => {
+  it('refreshes the visible admin session periodically after the admin tier changes', async () => {
     vi.useFakeTimers()
     window.history.replaceState({}, '', '/admin/app/dashboard')
     getCurrentSessionUser
       .mockResolvedValueOnce({
         public_id: 'admin-1',
         role: 'admin',
-        admin_access: { permissions: [], memberships: [] },
+        admin_access: { is_superuser: false },
       })
       .mockResolvedValueOnce({
         public_id: 'admin-1',
         role: 'admin',
-        admin_access: { permissions: ['job_moderation.view'], memberships: [] },
+        admin_access: { is_superuser: true },
     })
 
     const { result } = renderHook(() => useSession(), { wrapper })
@@ -209,6 +209,6 @@ describe('SessionProvider', () => {
     })
 
     expect(getCurrentSessionUser).toHaveBeenCalledTimes(2)
-    expect(result.current.user.admin_access.permissions).toEqual(['job_moderation.view'])
+    expect(result.current.user.admin_access.is_superuser).toBe(true)
   })
 })

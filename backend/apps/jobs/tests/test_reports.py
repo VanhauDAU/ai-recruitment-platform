@@ -11,8 +11,7 @@ from rest_framework import status
 from rest_framework.exceptions import ValidationError
 from rest_framework.test import APITestCase
 
-from apps.accounts.models import AdminPermission, AdminRole, Department
-from apps.accounts.services import assign_membership
+from apps.accounts.tests.helpers import make_admin
 from apps.employers.models import (
     Company,
     CompanyDocument,
@@ -81,34 +80,6 @@ def _employer_job(suffix):
     return employer, job
 
 
-def _admin_with_permissions(email, codes):
-    user_model = get_user_model()
-    admin = user_model.objects.create_user(
-        email=email,
-        password='Password@123',
-        role=user_model.Role.ADMIN,
-    )
-    department = Department.objects.create(
-        code=f'department-{admin.pk}',
-        name=f'Department {admin.pk}',
-    )
-    role = AdminRole.objects.create(
-        department=department,
-        code='staff',
-        name='Nhân viên',
-    )
-    permissions = [
-        AdminPermission.objects.get_or_create(
-            code=code,
-            defaults={'module': 'job_moderation', 'label': code},
-        )[0]
-        for code in codes
-    ]
-    role.permissions.add(*permissions)
-    assign_membership(admin, role, actor=admin)
-    return admin
-
-
 class JobReportAdminApiTests(APITestCase):
     def setUp(self):
         user_model = get_user_model()
@@ -124,14 +95,7 @@ class JobReportAdminApiTests(APITestCase):
             reason=JobReport.Reason.SCAM,
             detail='Tin yêu cầu ứng viên đóng phí.',
         )
-        self.viewer = _admin_with_permissions(
-            'report-viewer@example.com',
-            {'job_moderation.view'},
-        )
-        self.resolver = _admin_with_permissions(
-            'report-resolver@example.com',
-            {'job_moderation.view', 'job_moderation.resolve_report'},
-        )
+        self.admin = make_admin('report-admin@example.com')
 
     def resolve_url(self):
         return reverse(
@@ -145,13 +109,13 @@ class JobReportAdminApiTests(APITestCase):
             kwargs={'public_id': self.report.public_id},
         )
 
-    def test_view_permission_lists_but_cannot_resolve_reports(self):
-        self.client.force_authenticate(self.viewer)
-
+    def test_regular_admin_lists_reports_and_non_admin_cannot_resolve(self):
+        self.client.force_authenticate(self.admin)
         listing = self.client.get(
             reverse('admin-job-report-list'),
             {'status': JobReport.Status.PENDING},
         )
+        self.client.force_authenticate(self.candidate)
         forbidden = self.client.post(
             self.resolve_url(),
             {'status': JobReport.Status.UPHELD},
@@ -189,7 +153,7 @@ class JobReportAdminApiTests(APITestCase):
         JobReport.objects.filter(pk=second_report.pk).update(
             created_at=timezone.now() - timedelta(days=1)
         )
-        self.client.force_authenticate(self.viewer)
+        self.client.force_authenticate(self.admin)
 
         filtered = self.client.get(
             reverse('admin-job-report-list'),
@@ -238,7 +202,7 @@ class JobReportAdminApiTests(APITestCase):
                 reason=JobReport.Reason.OTHER,
                 detail=f'Báo cáo bổ sung {index}',
             )
-        self.client.force_authenticate(self.viewer)
+        self.client.force_authenticate(self.admin)
 
         second_page = self.client.get(
             reverse('admin-job-report-list'),
@@ -263,7 +227,7 @@ class JobReportAdminApiTests(APITestCase):
         self.assertEqual(invalid_range.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_resolve_and_reverse_keep_an_auditable_history(self):
-        self.client.force_authenticate(self.resolver)
+        self.client.force_authenticate(self.admin)
 
         resolved = self.client.post(
             self.resolve_url(),
@@ -340,7 +304,7 @@ class JobReportAdminApiTests(APITestCase):
                 resolve_job_report(
                     report=report,
                     status=JobReport.Status.UPHELD,
-                    actor=self.resolver,
+                    actor=self.admin,
                     note='Đã xác nhận vấn đề vận hành.',
                 )
 
@@ -353,11 +317,7 @@ class JobReportConcurrencyTests(TransactionTestCase):
     def setUp(self):
         user_model = get_user_model()
         self.employer, self.job = _employer_job('concurrent')
-        self.admin = user_model.objects.create_user(
-            email='report-concurrent-admin@example.com',
-            password='Password@123',
-            role=user_model.Role.ADMIN,
-        )
+        self.admin = make_admin('report-concurrent-admin@example.com')
         candidate = user_model.objects.create_user(
             email='report-concurrent-candidate@example.com',
             password='Password@123',

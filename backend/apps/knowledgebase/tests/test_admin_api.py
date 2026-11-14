@@ -9,24 +9,16 @@ from PIL import Image
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from apps.accounts.models import AdminPermission, AdminRole, Department, User
-from apps.accounts.services import assign_membership
+from apps.accounts.models import User
+from apps.accounts.tests.helpers import make_admin
 from apps.knowledgebase.models import KnowledgeArticle, KnowledgeArticleRevision, KnowledgeCategory
 
 
 class KnowledgeAdminApiTests(APITestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.admin = User.objects.create_superuser(
-            email='kb-admin@example.com', password='Password@123'
-        )
-        cls.viewer = User.objects.create_user(
-            email='kb-viewer@example.com', password='Password@123', role=User.Role.ADMIN
-        )
-        department = Department.objects.create(code='kb-api-tests', name='KB API tests')
-        role = AdminRole.objects.create(department=department, code='viewer', name='Viewer')
-        role.permissions.add(AdminPermission.objects.get(code='knowledgebase.view'))
-        assign_membership(cls.viewer, role, actor=cls.admin)
+        # Admin thường (không superuser) được toàn quyền biên tập KB (ADR-0018).
+        cls.admin = make_admin('kb-admin@example.com')
         cls.category = KnowledgeCategory.objects.get(slug='tai-khoan-va-dang-nhap')
 
     def _create_article(self):
@@ -125,22 +117,7 @@ class KnowledgeAdminApiTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST, response.data)
         self.assertIn('review_note', response.data)
 
-    def test_view_permission_cannot_mutate_and_candidate_cannot_read(self):
-        self.client.force_authenticate(self.viewer)
-        self.assertEqual(self.client.get(reverse('kb-admin-article-list')).status_code, 200)
-        denied = self.client.post(
-            reverse('kb-admin-article-list'),
-            {
-                'category_public_id': self.category.public_id,
-                'type': 'FAQ',
-                'title': 'Không được tạo',
-                'body': '<p>Nội dung</p>',
-                'source_reference': '/test',
-            },
-            format='json',
-        )
-        self.assertEqual(denied.status_code, status.HTTP_403_FORBIDDEN)
-
+    def test_non_admin_cannot_read_admin_api(self):
         candidate = User.objects.create_user(
             email='kb-candidate@example.com', password='Password@123', role=User.Role.CANDIDATE
         )

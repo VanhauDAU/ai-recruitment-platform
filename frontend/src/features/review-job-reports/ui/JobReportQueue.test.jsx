@@ -6,20 +6,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import JobReportQueue from './JobReportQueue'
 
 const mocks = vi.hoisted(() => ({
-  canResolve: true,
   getAdminJobReports: vi.fn(),
   resolveAdminJobReport: vi.fn(),
   reverseAdminJobReport: vi.fn(),
-}))
-
-vi.mock('@/entities/admin-access', () => ({
-  useAdminAccess: () => ({
-    has: () => mocks.canResolve,
-  }),
-}))
-
-vi.mock('@/entities/session', () => ({
-  useSession: () => ({ user: { role: 'admin' } }),
 }))
 
 vi.mock('@/entities/job', () => ({
@@ -99,7 +88,6 @@ function renderQueue(initialEntry = '/admin/app/job-moderation?tab=reports') {
 
 describe('JobReportQueue', () => {
   beforeEach(() => {
-    mocks.canResolve = true
     mocks.getAdminJobReports.mockReset()
     mocks.resolveAdminJobReport.mockReset()
     mocks.reverseAdminJobReport.mockReset()
@@ -112,7 +100,7 @@ describe('JobReportQueue', () => {
     mocks.resolveAdminJobReport.mockResolvedValue({ ...REPORT, status: 'upheld' })
   })
 
-  it('resolves a pending report when the admin has permission', async () => {
+  it('resolves a pending report', async () => {
     renderQueue()
 
     expect(screen.getByRole('heading', { name: 'Báo cáo vi phạm' })).toBeVisible()
@@ -173,16 +161,6 @@ describe('JobReportQueue', () => {
       ordering: '-company_name',
       page: 1,
     }, { signal: expect.anything() }))
-  })
-
-  it('is read-only without resolve permission', async () => {
-    mocks.canResolve = false
-    renderQueue()
-
-    expect(await screen.findByText('Bạn có quyền xem nhưng không có quyền xử lý báo cáo.')).toBeVisible()
-    expect(await screen.findByText('Backend Engineer')).toBeVisible()
-    expect(screen.queryByRole('button', { name: 'Xác nhận vi phạm' })).not.toBeInTheDocument()
-    expect(screen.getByText('Chỉ xem')).toBeVisible()
   })
 
   it('requires an audit reason before reversing an upheld report', async () => {

@@ -8,6 +8,26 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-14
 
+#### Removed — Phòng ban, chức danh và nhân viên quản trị (ADR-0018)
+
+- Theo [ADR-0018](docs/02-tong-quan/adr-0018-remove-admin-rbac.md): cổng quản
+  trị còn hai cấp superuser và admin thường. Admin thường dùng mọi chức năng
+  nghiệp vụ; superuser thêm tài khoản quản trị, lời mời, site settings, cấu
+  hình AI, cấm tài khoản, gỡ policy hold và audit toàn hệ thống.
+- Xóa model `AdminPermission`, `Department`, `AdminRole`, `AdminMembership`,
+  `AdminProvisioningScope`, danh mục mã quyền, API
+  `/api/admin/departments|roles|permissions|memberships|staff|provisioning-scopes/`,
+  `account-invitations/available-roles/`, PATCH đổi chức danh lời mời, trang
+  `/access-control`, lệnh `seed_admin_access`, `sync_admin_permissions`,
+  `export_admin_permissions`, `purge_deprecated_admin_permissions`,
+  `check_admin_access_readiness` và script `check_admin_permissions_sync.sh`.
+- `HasAdminPermission` → `AdminPortalPermission`; `/api/auth/me/` chỉ còn
+  `admin_access: {is_superuser}`. Lời mời admin do superuser tạo với
+  `{email, full_name, reason}`.
+- Nhóm site settings `admin_roles` (bốn khóa không được đọc) bị xóa.
+- Migration `accounts.0034_remove_admin_rbac` xóa vĩnh viễn dữ liệu RBAC;
+  `sitecontent.0023_remove_admin_roles_settings`.
+
 #### Fixed — Checklist xác thực sau khi hồ sơ hết hiệu lực, tải PDF có ký tự đầu
 
 - Khi admin cho hồ sơ xác thực hết hiệu lực, thu hồi, từ chối hoặc yêu cầu bổ

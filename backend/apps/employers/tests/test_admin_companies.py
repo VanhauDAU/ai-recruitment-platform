@@ -3,8 +3,8 @@ from django.urls import reverse
 from django.utils import timezone
 from rest_framework.test import APITestCase
 
-from apps.accounts.models import AdminPermission, AdminRole, Department, User
-from apps.accounts.services import assign_membership
+from apps.accounts.models import User
+from apps.accounts.tests.helpers import make_admin
 from apps.jobs.models import JobCategory
 
 from ..models import (
@@ -80,35 +80,6 @@ class AdminCompanyApiTests(APITestCase):
             email_verified=True,
         )
 
-    def _limited_admin(self, *permission_codes):
-        user = User.objects.create_user(
-            email=f'limited-{User.objects.count()}@example.com',
-            password='Password@123',
-            role=User.Role.ADMIN,
-            status=User.Status.ACTIVE,
-        )
-        department = Department.objects.create(
-            code=f'company-{Department.objects.count()}',
-            name='Quản trị công ty',
-        )
-        role = AdminRole.objects.create(
-            department=department,
-            code='staff',
-            name='Nhân viên',
-            rank=10,
-        )
-        for code in permission_codes:
-            permission, _ = AdminPermission.objects.get_or_create(
-                code=code,
-                defaults={
-                    'module': 'company',
-                    'label': code,
-                },
-            )
-            role.permissions.add(permission)
-        assign_membership(user, role, actor=self.superuser)
-        return user
-
     def test_list_exposes_recruiter_verification_without_company_verification_fields(self):
         self.client.force_authenticate(self.superuser)
 
@@ -147,15 +118,14 @@ class AdminCompanyApiTests(APITestCase):
             {self.company.public_id, other_company.public_id},
         )
 
-    def test_list_filters_company_without_owner_and_masks_sensitive_values(self):
+    def test_list_filters_company_without_owner(self):
         no_owner_creator = self._employer('creator@example.com', 'Người tạo')
         no_owner = Company.objects.create(
             company_name='Công ty chưa có owner',
             tax_code='0207654321',
             created_by=no_owner_creator,
         )
-        admin = self._limited_admin('company.view')
-        self.client.force_authenticate(admin)
+        self.client.force_authenticate(make_admin())
 
         response = self.client.get(reverse('admin-company-list'), {'has_owner': 'false'})
 
@@ -163,11 +133,10 @@ class AdminCompanyApiTests(APITestCase):
         self.assertEqual(
             [item['public_id'] for item in response.data['results']], [no_owner.public_id]
         )
-        self.assertEqual(response.data['results'][0]['tax_code'], '***4321')
+        self.assertEqual(response.data['results'][0]['tax_code'], '0207654321')
 
-    def test_sensitive_permission_reveals_company_contact_details(self):
-        admin = self._limited_admin('company.view', 'company.sensitive.view')
-        self.client.force_authenticate(admin)
+    def test_regular_admin_sees_company_contact_details(self):
+        self.client.force_authenticate(make_admin())
 
         response = self.client.get(
             reverse('admin-company-detail', kwargs={'public_id': self.company.public_id})
@@ -185,20 +154,10 @@ class AdminCompanyApiTests(APITestCase):
         ):
             self.assertNotIn(removed_field, response.data)
 
-    def test_recruiter_roster_requires_permission_and_supports_role_and_status_filters(self):
-        view_only = self._limited_admin('company.view')
-        url = reverse(
-            'admin-company-recruiters',
-            kwargs={'public_id': self.company.public_id},
-        )
-        self.client.force_authenticate(view_only)
-        denied = self.client.get(url)
-        self.assertEqual(denied.status_code, 403)
-
-        roster_admin = self._limited_admin('company.view', 'company_recruiter.view')
-        self.client.force_authenticate(roster_admin)
+    def test_recruiter_roster_supports_role_and_status_filters(self):
+        self.client.force_authenticate(make_admin())
         response = self.client.get(
-            url,
+            reverse('admin-company-recruiters', kwargs={'public_id': self.company.public_id}),
             {
                 'role': RecruiterProfile.CompanyRole.OWNER,
                 'verification_status': EmployerVerificationCase.Status.APPROVED,
@@ -211,7 +170,7 @@ class AdminCompanyApiTests(APITestCase):
         self.assertEqual(recruiter['public_id'], self.owner.public_id)
         self.assertEqual(recruiter['company_role'], 'owner')
         self.assertEqual(recruiter['verification']['status'], 'approved')
-        self.assertEqual(recruiter['contact_phone'], '***111')
+        self.assertEqual(recruiter['contact_phone'], '0901111111')
         self.assertTrue(recruiter['initial_onboarding']['completed'])
         self.assertEqual(recruiter['initial_onboarding']['missing_steps'], [])
 

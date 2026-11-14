@@ -24,9 +24,8 @@ const ACTION_COPY = {
 /**
  * Hộp thoại kết luận một báo cáo công ty. `decision` giữ nguyên `action` và
  * `report` khi đóng để tiêu đề và nút không đổi chữ trong lúc modal đang khép.
- * `canHoldPage`: tạm ẩn trang là quyền riêng (`company_page.moderate`).
  */
-export default function CompanyReportDecisionModal({ canHoldPage, decision, onCancel, onSubmit, pending }) {
+export default function CompanyReportDecisionModal({ decision, onCancel, onSubmit, pending }) {
   const [form] = Form.useForm()
   const { action, open, report } = decision
   const copy = ACTION_COPY[action]
@@ -73,7 +72,7 @@ export default function CompanyReportDecisionModal({ canHoldPage, decision, onCa
             showCount
           />
         </Form.Item>
-        {action === 'uphold' && canHoldPage && !report?.company.content_policy_hold && (
+        {action === 'uphold' && !report?.company.content_policy_hold && (
           <Form.Item className="!mb-0" name="apply_hold" valuePropName="checked">
             <Checkbox>Đồng thời tạm ẩn trang công ty</Checkbox>
           </Form.Item>

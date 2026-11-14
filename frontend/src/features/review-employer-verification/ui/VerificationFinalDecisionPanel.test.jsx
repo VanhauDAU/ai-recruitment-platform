@@ -57,10 +57,6 @@ const lifecycleImpact = {
 function renderPanel({
   status = 'in_review',
   revision = 1,
-  canReview = true,
-  canRevoke = false,
-  canTaxOverride = false,
-  canUnlockResubmission = false,
   taxEvidence = {
     status: 'found',
     comparison: { tax_code: 'match', company_name: 'match' },
@@ -85,10 +81,6 @@ function renderPanel({
             rejection_limit: 3,
             resubmission_locked_at: resubmissionLocked ? '2026-08-10T10:00:00Z' : null,
           }}
-          canReview={canReview}
-          canRevoke={canRevoke}
-          canTaxOverride={canTaxOverride}
-          canUnlockResubmission={canUnlockResubmission}
           taxEvidence={taxEvidence}
           onChanged={onChanged}
         />
@@ -134,14 +126,14 @@ describe('VerificationFinalDecisionPanel', () => {
     expect(onChanged).toHaveBeenCalledTimes(1)
   })
 
-  it('requires an audit reason when an authorized actor confirms manual tax review', async () => {
+  it('requires an audit reason when an admin confirms manual tax review', async () => {
     const user = userEvent.setup()
     api.getAdminEmployerDecisionImpact.mockResolvedValue({
       ...approvedImpact,
       tax_advisory: { status: 'mismatch' },
       tax_override: true,
     })
-    renderPanel({ canTaxOverride: true, taxEvidence: { status: 'not_found' } })
+    renderPanel({ taxEvidence: { status: 'not_found' } })
 
     await user.click(screen.getByRole('button', { name: 'Duyệt hồ sơ' }))
     const dialog = screen.getByRole('dialog', { name: 'Duyệt hồ sơ' })
@@ -164,7 +156,7 @@ describe('VerificationFinalDecisionPanel', () => {
   })
 
   it('blocks final approval while tax lookup is pending', () => {
-    renderPanel({ taxEvidence: { status: 'pending' }, canTaxOverride: true })
+    renderPanel({ taxEvidence: { status: 'pending' } })
 
     expect(screen.getByRole('button', { name: 'Duyệt hồ sơ' })).toBeDisabled()
     expect(screen.getByRole('button', { name: 'Duyệt hồ sơ' })).toHaveAttribute(
@@ -177,7 +169,7 @@ describe('VerificationFinalDecisionPanel', () => {
     const user = userEvent.setup()
     api.getAdminEmployerLifecycleImpact.mockResolvedValue(lifecycleImpact)
     api.changeAdminEmployerVerificationLifecycle.mockResolvedValue({ status: 'revoked' })
-    renderPanel({ status: 'approved', canReview: false, canRevoke: true })
+    renderPanel({ status: 'approved' })
 
     await user.click(screen.getByRole('button', { name: 'Thu hồi xác thực' }))
     const dialog = screen.getByRole('dialog', { name: 'Thu hồi xác thực' })
@@ -223,13 +215,6 @@ describe('VerificationFinalDecisionPanel', () => {
     expect(within(dialog).getByRole('button', { name: 'Kiểm tra trước khi duyệt' }))
       .toBeInTheDocument()
     expect(onChanged).toHaveBeenCalledTimes(1)
-  })
-
-  it('does not expose write actions to a view-only actor', () => {
-    renderPanel({ canReview: false, canRevoke: false, canTaxOverride: false })
-
-    expect(screen.queryByRole('button', { name: 'Duyệt hồ sơ' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Thu hồi xác thực' })).not.toBeInTheDocument()
   })
 
   it('explains that a rejected case can enter a new review after complete resubmission', () => {
@@ -278,8 +263,6 @@ describe('VerificationFinalDecisionPanel', () => {
     })
     const { onChanged } = renderPanel({
       status: 'rejected',
-      canReview: false,
-      canUnlockResubmission: true,
       finalRejectionCount: 3,
       resubmissionLocked: true,
     })

@@ -10,7 +10,7 @@ from .mailing import frontend_link, send_html_email, site_setting
 
 def send_admin_invitation_email(invitation_public_id, token_version):
     invitation = (
-        AdminInvitation.objects.select_related('user', 'target_role__department', 'invited_by')
+        AdminInvitation.objects.select_related('user', 'invited_by')
         .filter(
             public_id=invitation_public_id,
             status=AdminInvitation.Status.PENDING,
@@ -28,12 +28,10 @@ def send_admin_invitation_email(invitation_public_id, token_version):
     site_name = site_setting('site_name', 'ProCV')
     name = invitation.user.full_name or invitation.user.email
     inviter = invitation.invited_by.full_name or invitation.invited_by.email
-    department = invitation.target_role.department.name
-    role = invitation.target_role.name
     subject = f'Lời mời tham gia hệ thống quản trị {site_name}'
     text = (
         f'Xin chào {name},\n\n{inviter} đã mời bạn tham gia hệ thống quản trị '
-        f'{site_name} với chức danh {role} thuộc {department}.\n'
+        f'{site_name}.\n'
         f'Hoàn tất tài khoản tại: {link}\n\n'
         'Liên kết có hiệu lực trong 72 giờ và chỉ dùng được một lần.'
     )
@@ -43,10 +41,6 @@ def send_admin_invitation_email(invitation_public_id, token_version):
         <div style="padding:30px;line-height:1.65">
           <p>Xin chào <strong>{escape(name)}</strong>,</p>
           <p><strong>{escape(inviter)}</strong> đã mời bạn tham gia hệ thống quản trị.</p>
-          <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:16px 18px">
-            <div><strong>Phòng ban:</strong> {escape(department)}</div>
-            <div><strong>Chức danh:</strong> {escape(role)}</div>
-          </div>
           <p style="text-align:center;margin:28px 0"><a href="{escape(link)}" style="background:#0369a1;color:#fff;text-decoration:none;padding:13px 28px;border-radius:9px;font-weight:700;display:inline-block">Hoàn tất tài khoản</a></p>
           <p style="font-size:13px;color:#64748b">Liên kết có hiệu lực trong 72 giờ và chỉ dùng được một lần.</p>
         </div>

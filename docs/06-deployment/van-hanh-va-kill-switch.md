@@ -49,25 +49,16 @@ URL hay error message.
 
 | Lệnh | Mục đích |
 | --- | --- |
-| `sync_admin_permissions [--actor-email]` | Đồng bộ registry permission vào DB. Permission bị bỏ khỏi registry được deprecate, giữ M2M; đưa code cũ trở lại rồi sync sẽ phục hồi grant. Chạy sau mỗi `migrate`. |
-| `seed_admin_access [--actor-email] [--assign email:department:role]` | Seed hội tụ phòng ban/chức danh hệ thống (`is_system_managed=True`); bản ghi đã tùy chỉnh qua UI không bị ghi đè. `--assign` bắt buộc `--actor-email`. |
-| `check_admin_access_readiness` | Hard gate, exit khác 0 khi admin thường không có membership hiệu lực, membership không sinh permission, primary trỏ vào role/department bị khóa hoặc một user có nhiều primary. Permission deprecated còn gắn role chỉ là warning. |
-| `create_admin_user <email> [--actor-email]` | Tạo admin thường, không bypass RBAC. Không dùng `createsuperuser` cho nhân viên. |
+| `createsuperuser` | Tạo superuser đầu tiên (hoặc break-glass). Admin thường nên được superuser mời qua email. |
+| `create_admin_user <email> [--actor-email]` | Tạo admin thường (`is_superuser=False`) từ CLI khi không gửi được lời mời. |
 | `verify_admin_email <email> [--actor-email] [--no-input]` | Đánh dấu email admin vừa tạo là đã xác thực. Chỉ dùng khi người vận hành kiểm soát hộp thư; automation phải thêm `--no-input`. |
-| `export_admin_permissions [--output]` | Xuất contract permission cho frontend (`frontend/src/entities/admin-access/model/admin-permissions.generated.json`) từ registry Python, không cần DB. |
-| `purge_deprecated_admin_permissions --confirm [--force]` | Xóa vĩnh viễn permission đã deprecate. Không ghi audit revision. |
 | `reconcile_account_status_holds [--apply]` | Đối soát hold của campaign/job với trạng thái tài khoản. `--apply` chỉ thêm `ban_review`/`legacy_lock` (fail-closed), không tự gỡ hold của tài khoản active. |
-| `seed_admin_account_demo` | Dữ liệu demo; **không** chạy trên staging/production. |
-
-`seed_admin_access` và `purge_deprecated_admin_permissions` chỉ chạy trong cửa
-sổ deploy/maintenance, không đồng thời với thao tác RBAC trên UI.
+| `seed_admin_account_demo` | Một superuser và một admin thường demo; **không** chạy trên staging/production. |
 
 Trình tự sau khi deploy code có migration `accounts`:
 
 ```bash
 docker compose exec backend python manage.py migrate
-docker compose exec backend python manage.py sync_admin_permissions
-docker compose exec backend python manage.py check_admin_access_readiness
 docker compose exec backend python manage.py reconcile_account_status_holds
 ```
 
@@ -83,11 +74,10 @@ docker compose exec backend python manage.py reconcile_account_status_holds
 
 ### Quy tắc vận hành còn hiệu lực
 
-- Superuser bypass toàn bộ RBAC. Duy trì tối thiểu hai superuser độc lập với
-  mật khẩu mạnh, không dùng chung.
-- Permission `account.status.ban`, `account.resource_hold.release`,
-  `account.email.manage` được seed nhưng không gán mặc
-  định cho role nào; chỉ superuser dùng cho tới khi có quy trình four-eyes.
+- Hai cấp quản trị ([ADR-0018](../02-tong-quan/adr-0018-remove-admin-rbac.md)):
+  admin thường làm nghiệp vụ; superuser quản lý tài khoản quản trị, lời mời,
+  site settings, cấu hình AI, cấm tài khoản và gỡ policy hold. Duy trì tối
+  thiểu hai superuser độc lập với mật khẩu mạnh, không dùng chung.
 - Trang đăng nhập Admin không có "Quên mật khẩu" công khai; reset chỉ qua link
   do workflow quản trị phát hành.
 - Khôi phục danh tính (đổi email, gửi reset mật khẩu) và đổi trạng
@@ -101,9 +91,9 @@ docker compose exec backend python manage.py reconcile_account_status_holds
 
 ### Rollback
 
-- Rollback code, không reverse migration, không xóa permission/scope/invitation
-  hoặc transition. Permission bị gỡ khỏi registry phục hồi bằng
-  `sync_admin_permissions` sau khi đưa code trở lại.
+- Rollback code, không reverse migration, không xóa invitation hoặc
+  transition. `accounts.0034_remove_admin_rbac` xóa vĩnh viễn phòng ban/chức
+  danh/membership: quay lại bản trước ADR-0018 phải khôi phục từ `pg_dump`.
 - Trước khi chạy worker cũ không hiểu `account_status_notice`, drain hoặc
   cancel có kiểm soát các job outbox pending loại này.
 - Sau rollback chạy `reconcile_account_status_holds` (chỉ đọc) và xác nhận mọi

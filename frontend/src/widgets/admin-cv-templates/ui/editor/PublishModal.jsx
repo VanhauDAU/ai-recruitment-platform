@@ -1,6 +1,6 @@
 import { CheckCircleFilled, CloseCircleFilled, FilePdfOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Alert, Button, Modal, Skeleton } from 'antd'
+import { Button, Modal, Skeleton } from 'antd'
 import { useState } from 'react'
 import { downloadAdminTemplateTestPdf, getAdminTemplateTestPdf, requestAdminTemplateTestPdf } from '@/entities/cv-template'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
@@ -46,13 +46,13 @@ function TestPdfButton({ template, draft, onReady }) {
   </span>
 }
 
-export default function PublishModal({ open, onClose, template, draft, checklist, canPublish, publishing, onPublish }) {
+export default function PublishModal({ open, onClose, template, draft, checklist, publishing, onPublish }) {
   const queryClient = useQueryClient()
   const items = checklist?.items || []
   const ready = items.length > 0 && items.every((item) => item.ok)
   const refreshChecklist = () => queryClient.invalidateQueries({ queryKey: ['admin-cv-checklist', template.public_id] })
   return <Modal open={open} onCancel={onClose} destroyOnHidden title={`Xuất bản phiên bản ${draft?.version_number ?? ''}`} width={520}
-    footer={[<Button key="cancel" onClick={onClose}>Để sau</Button>, canPublish && <Button key="publish" type="primary" disabled={!ready} loading={publishing} onClick={onPublish}>Xuất bản</Button>]}>
+    footer={[<Button key="cancel" onClick={onClose}>Để sau</Button>, <Button key="publish" type="primary" disabled={!ready} loading={publishing} onClick={onPublish}>Xuất bản</Button>]}>
     {!checklist ? <Skeleton active paragraph={{ rows: 4 }} /> : <div className="space-y-3">
       <ul className="divide-y divide-slate-100 rounded-lg border border-slate-200">{items.map((item) => <li key={item.key} className="flex items-start gap-2.5 px-3 py-2.5 text-sm">
         {item.ok ? <CheckCircleFilled className="mt-0.5 !text-emerald-500" /> : <CloseCircleFilled className="mt-0.5 !text-rose-400" />}
@@ -61,7 +61,6 @@ export default function PublishModal({ open, onClose, template, draft, checklist
         </span>
         {item.key === 'test_pdf' && draft && <TestPdfButton template={template} draft={draft} onReady={refreshChecklist} />}
       </li>)}</ul>
-      {!canPublish && <Alert type="info" showIcon message="Bạn cần quyền phát hành mẫu CV để xuất bản." />}
       {template.current_published_version_id && <p className="text-xs text-slate-500">CV mới dùng phiên bản này; CV ứng viên đã tạo vẫn giữ phiên bản cũ.</p>}
     </div>}
   </Modal>

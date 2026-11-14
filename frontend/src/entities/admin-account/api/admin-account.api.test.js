@@ -6,13 +6,10 @@ import {
   getAdminAccounts,
   getAdminAccountSummary,
   getAccountResourceHoldImpact,
-  getAvailableAdminInvitationRoles,
-  getProvisioningScopeImpact,
   getEmployerCompanyUnlinkImpact,
   resendAdminInvitation,
   releaseAccountResourceHolds,
   revokeAccountSessions,
-  setProvisioningScopeStatus,
   unlinkEmployerCompany,
 } from './admin-account.api'
 
@@ -40,8 +37,6 @@ describe('admin account management API', () => {
       role: 'admin',
       status: 'active',
       email_verified: 'true',
-      department: 'dept_people',
-      admin_role: 'arole_hr',
       ordering: '-last_login',
     }
     await getAdminAccounts(params, { signal: 'signal' })
@@ -59,22 +54,15 @@ describe('admin account management API', () => {
     })
   })
 
-  it('never derives invitation roles locally and posts the selected public id', async () => {
-    await getAvailableAdminInvitationRoles({ signal: 'signal' })
+  it('posts an admin invitation without any role assignment', async () => {
     await createAdminInvitation({
       email: 'admin@example.com',
       full_name: 'Admin mới',
-      target_role_public_id: 'arole_moderator',
       reason: 'Bổ sung ca tối',
     })
-    expect(get).toHaveBeenCalledWith(
-      '/admin/account-invitations/available-roles/',
-      { signal: 'signal' },
-    )
     expect(post).toHaveBeenCalledWith('/admin/account-invitations/', {
       email: 'admin@example.com',
       full_name: 'Admin mới',
-      target_role_public_id: 'arole_moderator',
       reason: 'Bổ sung ca tối',
     })
   })
@@ -98,8 +86,6 @@ describe('admin account management API', () => {
       },
       'impact-hold',
     )
-    await getProvisioningScopeImpact('apscope_1', false)
-    await setProvisioningScopeStatus('apscope_1', false, 'impact-scope')
 
     expect(post).toHaveBeenNthCalledWith(
       1,
@@ -134,16 +120,6 @@ describe('admin account management API', () => {
         enforcement_evidence: 'Biên bản rà soát có đủ hơn hai mươi ký tự.',
         impact_token: 'impact-hold',
       },
-    )
-    expect(post).toHaveBeenNthCalledWith(
-      5,
-      '/admin/provisioning-scopes/apscope_1/status-impact/',
-      { is_active: false },
-    )
-    expect(post).toHaveBeenNthCalledWith(
-      6,
-      '/admin/provisioning-scopes/apscope_1/deactivate/',
-      { impact_token: 'impact-scope' },
     )
   })
 

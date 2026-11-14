@@ -42,7 +42,7 @@ import {
   Tabs,
   Tag,
 } from 'antd'
-import { cloneElement, createContext, isValidElement, useContext, useEffect, useMemo, useState } from 'react'
+import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 import {
   adminBlogKeys,
@@ -61,8 +61,6 @@ import {
   updateAdminBlogCategory,
   updateAdminBlogPin,
 } from '@/entities/blog'
-import { useAdminAccess } from '@/entities/admin-access'
-import { useSession } from '@/entities/session'
 import { adminPath } from '@/shared/config/portals'
 import { message } from '@/shared/lib/toast'
 import { AdminDataActions } from '@/shared/ui/admin'
@@ -241,7 +239,7 @@ function BulkPostActionMenu({ posts, onAction }) {
   )
 }
 
-function PostList({ canManage }) {
+function PostList() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [q, setQ] = useState('')
@@ -438,7 +436,7 @@ function PostList({ canManage }) {
               rows={rows}
             />
             {hasFilters && <Button onClick={clearFilters}>Xóa bộ lọc</Button>}
-            {canManage && <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate(adminPath('/blog/new'))}>Tạo bài viết</Button>}
+            <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate(adminPath('/blog/new'))}>Tạo bài viết</Button>
           </Space>
         </div>
         {postsQuery.isError && (
@@ -660,7 +658,7 @@ function SortableDragOverlay({ item, testId, title, subtitle }) {
   </DragOverlay>
 }
 
-function CategoryManager({ canManage }) {
+function CategoryManager() {
   const refresh = useRefresh()
   const queryClient = useQueryClient()
   const query = useQuery({ queryKey: adminBlogKeys.categories, queryFn: getAdminBlogCategories })
@@ -682,7 +680,7 @@ function CategoryManager({ canManage }) {
   const activeCategory = rows.find((item) => item.public_id === activeCategoryId)
   const reorder = async ({ active, over }) => {
     setActiveCategoryId(null)
-    if (!canManage || !over || active.id === over.id || reordering) return
+    if (!over || active.id === over.id || reordering) return
     const from = rows.findIndex((item) => item.public_id === active.id)
     const to = rows.findIndex((item) => item.public_id === over.id)
     if (from < 0 || to < 0) return
@@ -700,21 +698,21 @@ function CategoryManager({ canManage }) {
       setReordering(false)
     }
   }
-  return <Card title="Danh mục bài viết" extra={canManage ? <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditing({}); form.resetFields() }}>Thêm danh mục</Button> : null}>
-    <p className="mb-4 text-sm text-slate-500">{canManage ? 'Giữ và kéo tay nắm để đổi thứ tự hiển thị. ' : ''}Tắt danh mục chỉ ẩn khỏi điều hướng và mục chuyên đề, không gỡ các bài viết đã xuất bản.{canManage ? ' Có thể dùng phím Space và phím mũi tên khi thao tác bằng bàn phím.' : ''}</p>
+  return <Card title="Danh mục bài viết" extra={<Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditing({}); form.resetFields() }}>Thêm danh mục</Button>}>
+    <p className="mb-4 text-sm text-slate-500">Giữ và kéo tay nắm để đổi thứ tự hiển thị. Tắt danh mục chỉ ẩn khỏi điều hướng và mục chuyên đề, không gỡ các bài viết đã xuất bản. Có thể dùng phím Space và phím mũi tên khi thao tác bằng bàn phím.</p>
     <DndContext
       sensors={sensors}
       collisionDetection={closestCenter}
-      onDragStart={({ active }) => { if (canManage) setActiveCategoryId(active.id) }}
+      onDragStart={({ active }) => setActiveCategoryId(active.id)}
       onDragCancel={() => setActiveCategoryId(null)}
       onDragEnd={reorder}
     >
       <SortableContext items={rows.map((item) => item.public_id)} strategy={verticalListSortingStrategy}>
-        <Table components={{ body: { row: SortableTableRow } }} onRow={() => ({ 'data-drag-disabled': reordering || !canManage })} rowKey="public_id" loading={query.isLoading} dataSource={rows} pagination={false} columns={[
-          { title: <span className="sr-only">Sắp xếp</span>, width: 64, render: (_, row) => <SortableDragHandle disabled={reordering || !canManage} label={`Kéo để sắp xếp danh mục ${row.name}`} /> },
+        <Table components={{ body: { row: SortableTableRow } }} onRow={() => ({ 'data-drag-disabled': reordering })} rowKey="public_id" loading={query.isLoading} dataSource={rows} pagination={false} columns={[
+          { title: <span className="sr-only">Sắp xếp</span>, width: 64, render: (_, row) => <SortableDragHandle disabled={reordering} label={`Kéo để sắp xếp danh mục ${row.name}`} /> },
           { title: 'Thứ tự', dataIndex: 'order', width: 90 }, { title: 'Tên', dataIndex: 'name' }, { title: 'Slug', dataIndex: 'slug' }, { title: 'Số bài', dataIndex: 'post_count', width: 90 },
-          { title: 'Hoạt động', dataIndex: 'is_active', width: 110, render: (value, row) => <Switch checked={value} disabled={!canManage} onChange={(is_active) => updateAdminBlogCategory(row.public_id, { is_active }).then(refresh)} /> },
-          { title: 'Thao tác', width: 100, render: (_, row) => canManage ? <Button onClick={() => { setEditing(row); form.setFieldsValue(row) }}>Sửa</Button> : <span className="text-xs text-slate-400">Chỉ xem</span> },
+          { title: 'Hoạt động', dataIndex: 'is_active', width: 110, render: (value, row) => <Switch checked={value} onChange={(is_active) => updateAdminBlogCategory(row.public_id, { is_active }).then(refresh)} /> },
+          { title: 'Thao tác', width: 100, render: (_, row) => <Button onClick={() => { setEditing(row); form.setFieldsValue(row) }}>Sửa</Button> },
         ]} />
       </SortableContext>
       <SortableDragOverlay item={activeCategory} testId="category-drag-overlay" title={activeCategory?.name} subtitle={activeCategory ? `/${activeCategory.slug}` : ''} />
@@ -725,7 +723,7 @@ function CategoryManager({ canManage }) {
   </Card>
 }
 
-function PinManager({ canManage }) {
+function PinManager() {
   const refresh = useRefresh()
   const queryClient = useQueryClient()
   const pins = useQuery({ queryKey: adminBlogKeys.pins, queryFn: getAdminBlogPins })
@@ -759,13 +757,13 @@ function PinManager({ canManage }) {
     }
   }
   const add = async () => {
-    if (!canManage || !selected) return
+    if (!selected) return
     const saved = await run('add', () => createAdminBlogPin({ post_public_id: selected, order: rows.length + 1, is_active: true }), 'Đã ghim bài viết.')
     if (saved) setSelected(undefined)
   }
   const reorder = async ({ active, over }) => {
     setActivePinId(null)
-    if (!canManage || !over || active.id === over.id || operation) return
+    if (!over || active.id === over.id || operation) return
     const from = rows.findIndex((item) => item.public_id === active.id)
     const to = rows.findIndex((item) => item.public_id === over.id)
     if (from < 0 || to < 0) return
@@ -784,23 +782,23 @@ function PinManager({ canManage }) {
     }
   }
   const availablePosts = (posts.data?.results || []).filter((post) => !rows.some((pin) => pin.post_public_id === post.public_id))
-  return <Card title="Tài liệu hỗ trợ tìm việc" extra={canManage ? <Space wrap><Select showSearch optionFilterProp="label" className="w-full sm:w-64" loading={posts.isLoading} value={selected} onChange={setSelected} placeholder="Chọn bài đã xuất bản" options={availablePosts.map((post) => ({ value: post.public_id, label: post.title }))} /><Button type="primary" disabled={!selected} loading={operation === 'add'} onClick={add}>Ghim bài</Button></Space> : null}>
+  return <Card title="Tài liệu hỗ trợ tìm việc" extra={<Space wrap><Select showSearch optionFilterProp="label" className="w-full sm:w-64" loading={posts.isLoading} value={selected} onChange={setSelected} placeholder="Chọn bài đã xuất bản" options={availablePosts.map((post) => ({ value: post.public_id, label: post.title }))} /><Button type="primary" disabled={!selected} loading={operation === 'add'} onClick={add}>Ghim bài</Button></Space>}>
     {(pins.isError || posts.isError) && <Alert className="mb-4" type="error" showIcon message="Không thể tải dữ liệu bài ghim" description="Hãy tải lại trang hoặc thử lại sau." />}
-    <p className="mb-4 text-sm text-slate-500">{canManage ? 'Giữ và kéo tay nắm để đổi thứ tự hiển thị. Có thể dùng phím Space và phím mũi tên khi thao tác bằng bàn phím.' : 'Bạn đang xem danh sách bài ghim ở chế độ chỉ đọc.'}</p>
+    <p className="mb-4 text-sm text-slate-500">Giữ và kéo tay nắm để đổi thứ tự hiển thị. Có thể dùng phím Space và phím mũi tên khi thao tác bằng bàn phím.</p>
     <DndContext
       sensors={sensors}
       collisionDetection={closestCenter}
-      onDragStart={({ active }) => { if (canManage) setActivePinId(active.id) }}
+      onDragStart={({ active }) => setActivePinId(active.id)}
       onDragCancel={() => setActivePinId(null)}
       onDragEnd={reorder}
     >
       <SortableContext items={rows.map((item) => item.public_id)} strategy={verticalListSortingStrategy}>
-        <Table components={{ body: { row: SortableTableRow } }} onRow={() => ({ 'data-drag-disabled': Boolean(operation) || !canManage })} rowKey="public_id" loading={pins.isLoading} dataSource={rows} pagination={false} columns={[
-          { title: <span className="sr-only">Sắp xếp</span>, width: 64, render: (_, row) => <SortableDragHandle disabled={Boolean(operation) || !canManage} label={`Kéo để sắp xếp bài ghim ${row.title}`} /> },
+        <Table components={{ body: { row: SortableTableRow } }} onRow={() => ({ 'data-drag-disabled': Boolean(operation) })} rowKey="public_id" loading={pins.isLoading} dataSource={rows} pagination={false} columns={[
+          { title: <span className="sr-only">Sắp xếp</span>, width: 64, render: (_, row) => <SortableDragHandle disabled={Boolean(operation)} label={`Kéo để sắp xếp bài ghim ${row.title}`} /> },
           { title: 'Thứ tự', dataIndex: 'order', width: 90 },
           { title: 'Bài viết', dataIndex: 'title' },
-          { title: 'Hoạt động', dataIndex: 'is_active', width: 110, render: (value, row) => <Switch checked={value} loading={operation === `toggle:${row.public_id}`} disabled={!canManage || (Boolean(operation) && operation !== `toggle:${row.public_id}`)} onChange={(is_active) => run(`toggle:${row.public_id}`, () => updateAdminBlogPin(row.public_id, { is_active }), is_active ? 'Đã hiển thị bài ghim.' : 'Đã ẩn bài ghim.')} /> },
-          { title: 'Thao tác', width: 120, render: (_, row) => canManage ? <Button danger loading={operation === `delete:${row.public_id}`} disabled={Boolean(operation) && operation !== `delete:${row.public_id}`} onClick={() => run(`delete:${row.public_id}`, () => deleteAdminBlogPin(row.public_id), 'Đã bỏ ghim bài viết.')}>Bỏ ghim</Button> : <span className="text-xs text-slate-400">Chỉ xem</span> },
+          { title: 'Hoạt động', dataIndex: 'is_active', width: 110, render: (value, row) => <Switch checked={value} loading={operation === `toggle:${row.public_id}`} disabled={Boolean(operation) && operation !== `toggle:${row.public_id}`} onChange={(is_active) => run(`toggle:${row.public_id}`, () => updateAdminBlogPin(row.public_id, { is_active }), is_active ? 'Đã hiển thị bài ghim.' : 'Đã ẩn bài ghim.')} /> },
+          { title: 'Thao tác', width: 120, render: (_, row) => <Button danger loading={operation === `delete:${row.public_id}`} disabled={Boolean(operation) && operation !== `delete:${row.public_id}`} onClick={() => run(`delete:${row.public_id}`, () => deleteAdminBlogPin(row.public_id), 'Đã bỏ ghim bài viết.')}>Bỏ ghim</Button> },
         ]} />
       </SortableContext>
       <SortableDragOverlay item={activePin} testId="pin-drag-overlay" title={activePin?.title} subtitle={activePin ? `/${activePin.slug}` : ''} />
@@ -809,12 +807,8 @@ function PinManager({ canManage }) {
 }
 
 export default function BlogContentManagement({ tagPanel }) {
-  const { user } = useSession()
-  const adminAccess = useAdminAccess(user)
-  const canManage = adminAccess.has('blog.manage')
   const [searchParams, setSearchParams] = useSearchParams()
   const tab = ['posts', 'categories', 'tags', 'pins'].includes(searchParams.get('tab')) ? searchParams.get('tab') : 'posts'
   const changeTab = (key) => { const next = new URLSearchParams(searchParams); if (key === 'posts') next.delete('tab'); else next.set('tab', key); setSearchParams(next, { replace: true }) }
-  const permissionAwareTagPanel = isValidElement(tagPanel) ? cloneElement(tagPanel, { canManage }) : tagPanel
-  return <section className="space-y-4"><Tabs activeKey={tab} onChange={changeTab} items={[{ key: 'posts', label: 'Bài viết', children: <PostList canManage={canManage} /> }, { key: 'categories', label: 'Danh mục', children: <CategoryManager canManage={canManage} /> }, { key: 'tags', label: 'Thẻ', children: permissionAwareTagPanel }, { key: 'pins', label: 'Bài ghim', children: <PinManager canManage={canManage} /> }]} /></section>
+  return <section className="space-y-4"><Tabs activeKey={tab} onChange={changeTab} items={[{ key: 'posts', label: 'Bài viết', children: <PostList /> }, { key: 'categories', label: 'Danh mục', children: <CategoryManager /> }, { key: 'tags', label: 'Thẻ', children: tagPanel }, { key: 'pins', label: 'Bài ghim', children: <PinManager /> }]} /></section>
 }

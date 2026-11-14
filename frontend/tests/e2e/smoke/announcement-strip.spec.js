@@ -250,11 +250,7 @@ test('announcement strip: admin workspace remains below its responsive topbar', 
             full_name: 'Quản trị hệ thống',
             role: 'admin',
             email_verified: true,
-            admin_access: {
-              is_superuser: true,
-              permissions: [],
-              memberships: [],
-            },
+            admin_access: { is_superuser: true },
           }
         : path === '/api/site/announcements/active/'
           ? feed(requestUrl.searchParams.get('surface'))

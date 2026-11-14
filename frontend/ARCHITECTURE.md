@@ -254,7 +254,8 @@ app/router + app/layouts
   và roster NTD. `widgets/admin-company-directory` sở hữu bộ lọc, bảng và cách
   trình bày riêng của portal quản trị; page chỉ lấy route params rồi compose.
 - Sidebar quản trị dùng cây `ADMIN_NAVIGATION` tham chiếu route bằng `routeRef`;
-  permission được lọc từ leaf lên ancestor. Trạng thái pháp lý của công ty và
+  leaf `access: { superuser: true }` bị lọc và nhánh rỗng bị bỏ từ leaf lên
+  ancestor. Trạng thái pháp lý của công ty và
   trạng thái xác thực đại diện của từng NTD là hai contract độc lập.
 
 ## Ownership map — Danh bạ công ty công khai
@@ -340,11 +341,11 @@ pages/main/account/FollowedCompanies
 
 pages/admin/app/CompanyDetail
   → widgets/admin-company-directory (tab "Trang công khai")
-    → entities/admin-company, entities/company, entities/admin-access
+    → entities/admin-company, entities/company
 
 pages/admin/app/CompanyReports
   → features/review-company-reports
-    → entities/company-report, entities/admin-access, entities/session
+    → entities/company-report
 ```
 
 - Một route, một read model (ADR-0017): `/cong-ty/:slug` đọc
@@ -421,21 +422,20 @@ pages/admin/app/CompanyReports
   (HTTP 400 `{"detail": "<chuỗi>"}`, ví dụ còn một báo cáo đang chờ) hiện ở đầu
   form thay vì toast.
 - `features/review-company-reports` sở hữu hàng chờ `/admin/app/company-reports`
-  (quyền `company_report.view`; kết luận và gỡ kết luận cần
-  `company_report.resolve`). Bộ lọc `status|reason|q|company`, `ordering` và
+  (mọi quản trị viên đều xem, kết luận và gỡ kết luận). Bộ lọc `status|reason|q|company`, `ordering` và
   `page` là trạng thái URL; mọi cột dữ liệu sort phía server theo whitelist
   `company_name, reason, detail, reporter_email, status, created_at`, nên phần
   liên quan hiển thị trong ô lý do chứ không thành cột riêng. Ghi chú là bắt
   buộc cho mọi quyết định; ô "Đồng thời tạm ẩn trang công ty" chỉ có khi xác
-  nhận vi phạm và người xử lý có `company_page.moderate`. Gỡ kết luận đưa báo
+  nhận vi phạm. Gỡ kết luận đưa báo
   cáo về hàng chờ và không tự khôi phục trang đang tạm ẩn.
 - Trang không bao giờ hiển thị mã số thuế, email, số điện thoại, địa chỉ hộ
   kinh doanh, danh tính recruiter hoặc trạng thái kiểm duyệt; frontend chỉ
   render những gì read model trả về. Công ty bị tạm ẩn trả 404 thật ở cả API
   lẫn SEO shell; React hiển thị trạng thái 404 nhưng không thay thế status HTTP.
-- Tab quản trị "Trang công khai" đọc `public-page/` (quyền `company.view`) và
-  chỉ hiện nút tạm ẩn/khôi phục cho người có `company_page.moderate`; lý do
-  10 đến 500 ký tự là bắt buộc. Backend vẫn là nơi quyết định quyền.
+- Tab quản trị "Trang công khai" đọc `public-page/` và có nút tạm ẩn/khôi phục
+  cho mọi quản trị viên; lý do 10 đến 500 ký tự là bắt buộc. Backend vẫn là
+  nơi quyết định quyền.
 
 ## Ownership map — Người dùng và nhà tuyển dụng quản trị
 
@@ -453,6 +453,14 @@ app/router + app/layouts
 - `widgets/admin-account-management` sở hữu hai cấu hình workspace riêng.
   `users` chỉ gồm ứng viên và quản trị viên; `recruiters` chỉ gồm tài khoản nhà
   tuyển dụng. Page chỉ chọn scope và compose widget.
+- Quyền quản trị chỉ có hai cấp: `entities/admin-access.useAdminAccess(user)`
+  trả `{ isSuperuser }` đọc từ `admin_access.is_superuser` của `/auth/me/`.
+  Không có catalog permission, phòng ban hay chức danh. Chỉ superuser thấy tab
+  "Tất cả người dùng", "Quản trị viên", "Lời mời quản trị", chi tiết tài khoản
+  admin, cấm tài khoản, gỡ giữ tài nguyên, nhật ký toàn hệ thống và route có
+  `requireSuperuser` (`/settings`); mọi nghiệp vụ khác mở cho mọi quản trị viên.
+  `canAccessAdminRoute` chỉ đánh giá `requireSuperuser`; backend vẫn là nơi
+  quyết định và trả `admin_permission_denied` khi từ chối.
 
 ## Ownership map — Mascot và trợ lý ứng viên
 
@@ -497,7 +505,7 @@ app/layouts/OnboardingLayout + pages/main/onboarding
   `/admin/app/recruiters/:publicId` là route canonical của NTD. Route chi tiết
   phải chuyển bằng `replace` khi role không khớp và giữ `pathname + search` của
   nguồn điều hướng nội bộ để nút quay lại khôi phục đúng workspace.
-- Summary tài khoản, NTD và công ty là aggregate phía server theo permission,
+- Summary tài khoản, NTD và công ty là aggregate phía server theo cấp quản trị,
   không được suy ra từ `results` của một trang phân trang. Trạng thái pháp lý
   công ty, xác thực đại diện NTD và vai trò owner/member là ba contract riêng.
 
@@ -597,7 +605,7 @@ app/router + app/layouts
   → pages/admin/app/JobModeration + JobModerationDetail
     → widgets/admin-job-management
       → features/enforce-job-visibility
-        → entities/admin-job + entities/admin-access + entities/session
+        → entities/admin-job
           → shared/api, shared/ui
 ```
 

@@ -22,15 +22,13 @@ function Field({ label, hint, children }) {
 /** Nội dung dùng chung cho popover (desktop) và drawer (mobile). */
 export default function AccountAdvancedFilters({
   filters,
-  departments,
-  roles,
   recruiterOnly = false,
   onChange,
   onDone,
 }) {
   const patch = (name, value) => onChange({ ...filters, [name]: value })
   const advancedKeys = recruiterOnly
-    ? ADVANCED_KEYS.filter((key) => !['department', 'admin_role'].includes(key))
+    ? ADVANCED_KEYS
     : ADVANCED_KEYS.filter((key) => ![
       'company',
       'company_state',
@@ -101,42 +99,6 @@ export default function AccountAdvancedFilters({
           )}
         </div>
       </section>
-
-      {!recruiterOnly && (
-        <section>
-          <h4>Phân quyền quản trị</h4>
-          <div className="account-filter-grid">
-            <Field label="Phòng ban Admin">
-              <Select
-                allowClear
-                showSearch
-                optionFilterProp="label"
-                placeholder="Chọn phòng ban"
-                value={filters.department || undefined}
-                onChange={(value) => patch('department', value || '')}
-                options={departments.map((item) => ({
-                  value: item.public_id,
-                  label: item.name,
-                }))}
-              />
-            </Field>
-            <Field label="Chức danh Admin">
-              <Select
-                allowClear
-                showSearch
-                optionFilterProp="label"
-                placeholder="Chọn chức danh"
-                value={filters.admin_role || undefined}
-                onChange={(value) => patch('admin_role', value || '')}
-                options={roles.map((item) => ({
-                  value: item.public_id,
-                  label: `${item.department.name} · ${item.name}`,
-                }))}
-              />
-            </Field>
-          </div>
-        </section>
-      )}
 
       <section>
         <h4>Mốc thời gian</h4>

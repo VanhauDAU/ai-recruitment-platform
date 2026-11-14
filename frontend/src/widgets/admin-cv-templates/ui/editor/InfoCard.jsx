@@ -9,7 +9,7 @@ const FIELDS = ['display_name_vi', 'display_name_en', 'category_public_ids', 'de
 const AUTOSAVE_DELAY_MS = 800
 
 // Tên, danh mục (và phần phụ: mô tả, đường dẫn, nổi bật). Tự lưu khi ngừng gõ.
-export default function InfoCard({ template, canManage, onSave }) {
+export default function InfoCard({ template, onSave }) {
   const [form] = Form.useForm()
   const timer = useRef(null)
   const categories = useQuery({ queryKey: ['admin-cv-library', 'categories'], queryFn: () => adminCvCategories.list() })
@@ -33,7 +33,7 @@ export default function InfoCard({ template, canManage, onSave }) {
   }
 
   return <AdminPanel title="Thông tin" description="Tên và danh mục ứng viên thấy trên kho mẫu.">
-    <Form form={form} layout="vertical" requiredMark={false} disabled={!canManage} initialValues={template} onValuesChange={schedule}>
+    <Form form={form} layout="vertical" requiredMark={false} initialValues={template} onValuesChange={schedule}>
       <div className="grid gap-x-3 sm:grid-cols-2">
         <Form.Item name="display_name_vi" label="Tên tiếng Việt" rules={[{ required: true, whitespace: true, message: 'Nhập tên mẫu' }, { max: 255 }]}><Input /></Form.Item>
         <Form.Item name="display_name_en" label="Tên tiếng Anh" rules={[{ required: true, whitespace: true, message: 'Cần cho kho mẫu tiếng Anh' }, { max: 255 }]}><Input /></Form.Item>

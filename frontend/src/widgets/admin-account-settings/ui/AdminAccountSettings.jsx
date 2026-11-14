@@ -7,9 +7,9 @@ import {
   UserOutlined,
 } from '@ant-design/icons'
 import { useSearchParams } from 'react-router'
+import { adminTierLabel } from '@/entities/admin-account'
 import { useSession } from '@/entities/session'
 import AdminActivityPanel from './AdminActivityPanel'
-import AdminMyAccessPanel from './AdminMyAccessPanel'
 import AdminProfilePanel from './AdminProfilePanel'
 import AdminSecurityPanel from './AdminSecurityPanel'
 import './admin-account-settings.css'
@@ -17,7 +17,6 @@ import './admin-account-settings.css'
 const TABS = [
   { key: 'profile', label: 'Hồ sơ', icon: <UserOutlined />, Panel: AdminProfilePanel },
   { key: 'security', label: 'Bảo mật', icon: <SafetyCertificateOutlined />, Panel: AdminSecurityPanel },
-  { key: 'access', label: 'Quyền của tôi', icon: <KeyOutlined />, Panel: AdminMyAccessPanel },
   { key: 'activity', label: 'Nhật ký hoạt động', icon: <HistoryOutlined />, Panel: AdminActivityPanel },
 ]
 
@@ -26,8 +25,8 @@ const DEFAULT_TAB = TABS[0].key
 /**
  * Trang cài đặt tài khoản dùng chung cho superuser và nhân viên quản trị.
  *
- * Tab đồng bộ với query `?tab=` để deep-link được (vd redirect từ route
- * `/my-access` cũ sang `?tab=access`). Tab không hợp lệ rơi về `profile`.
+ * Tab đồng bộ với query `?tab=` để deep-link được. Tab không hợp lệ rơi về
+ * `profile`.
  */
 export default function AdminAccountSettings() {
   const { user } = useSession()
@@ -35,8 +34,6 @@ export default function AdminAccountSettings() {
   const requested = searchParams.get('tab')
   const activeKey = TABS.some((tab) => tab.key === requested) ? requested : DEFAULT_TAB
   const activeTab = TABS.find((tab) => tab.key === activeKey) || TABS[0]
-  const isSuperuser = Boolean(user?.admin_access?.is_superuser || user?.is_superuser)
-  const roleCount = user?.admin_access?.memberships?.length || 0
 
   function selectTab(key) {
     setSearchParams(key === DEFAULT_TAB ? {} : { tab: key }, { replace: true })
@@ -62,7 +59,7 @@ export default function AdminAccountSettings() {
 
         <div className="admin-account-settings__status-grid" aria-label="Trạng thái tài khoản">
           <StatusItem icon={<MailOutlined />} label="Email" value={user?.email_verified ? 'Đã xác minh' : 'Chưa xác minh'} positive={Boolean(user?.email_verified)} />
-          <StatusItem icon={<KeyOutlined />} label="Quyền truy cập" value={isSuperuser ? 'Superuser' : roleCount ? `${roleCount} vai trò` : 'Chưa được gán'} positive={isSuperuser || roleCount > 0} />
+          <StatusItem icon={<KeyOutlined />} label="Quyền truy cập" value={adminTierLabel(user?.admin_access)} positive />
         </div>
 
         <nav className="admin-account-settings__tabs" aria-label="Các mục tài khoản" role="tablist" aria-orientation="vertical">

@@ -11,7 +11,7 @@ from django.db.models import Q
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
-from apps.accounts.permissions import require_admin_permission
+from apps.accounts.permissions import require_admin
 from apps.accounts.services import (
     InvalidImpactToken,
     StaleImpactToken,
@@ -65,9 +65,6 @@ LIFECYCLE_ACTIONS = frozenset(
         EmployerVerificationCase.Status.EXPIRED,
     }
 )
-TAX_OVERRIDE_PERMISSION = 'employer_verification.tax_override'
-VERIFICATION_REVOKE_PERMISSION = 'employer_verification.revoke'
-VERIFICATION_RESUBMISSION_UNLOCK_PERMISSION = 'employer_verification.resubmission_unlock'
 MAX_FINAL_REJECTIONS = 3
 
 
@@ -814,7 +811,7 @@ def record_verification_upload(
 
 @transaction.atomic
 def start_verification_review(case, *, actor):
-    require_admin_permission(actor, 'employer_verification.review')
+    require_admin(actor)
     case = lock_verification_identity(case).case
     if case.status not in {
         EmployerVerificationCase.Status.PENDING,
@@ -850,7 +847,7 @@ def start_verification_review(case, *, actor):
 
 @transaction.atomic
 def review_verification_document(document, *, actor, decision, reason, lock_version):
-    require_admin_permission(actor, 'employer_verification.review')
+    require_admin(actor)
     if document.verification_case_id is None:
         _workflow_error(
             'VERIFICATION_DOCUMENT_NOT_ATTACHED',
@@ -1053,7 +1050,7 @@ def _prepare_final_decision(
     scope=None,
     enforce_current_state=True,
 ):
-    require_admin_permission(actor, 'employer_verification.review')
+    require_admin(actor)
     scope = scope or _verification_snapshot_scope(case)
     if decision not in FINAL_DECISIONS:
         _workflow_error(
@@ -1113,7 +1110,7 @@ def _prepare_final_decision(
                 tax_status=tax['status'],
             )
         if effective_override:
-            require_admin_permission(actor, TAX_OVERRIDE_PERMISSION)
+            require_admin(actor)
             if not normalized_override_reason:
                 _workflow_error(
                     'TAX_OVERRIDE_REASON_REQUIRED',
@@ -1355,7 +1352,7 @@ def confirm_verification_decision(
 
 @transaction.atomic
 def unlock_verification_resubmission(case, *, actor, reason, lock_version):
-    require_admin_permission(actor, VERIFICATION_RESUBMISSION_UNLOCK_PERMISSION)
+    require_admin(actor)
     case = lock_verification_identity(case).case
     reason = reason.strip()
     if not reason:
@@ -1401,7 +1398,7 @@ def unlock_verification_resubmission(case, *, actor, reason, lock_version):
 
 
 def _prepare_lifecycle_action(case, *, actor, action, reason, scope=None):
-    require_admin_permission(actor, VERIFICATION_REVOKE_PERMISSION)
+    require_admin(actor)
     scope = scope or _verification_snapshot_scope(case)
     if action not in LIFECYCLE_ACTIONS:
         _workflow_error(

@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from django.test import RequestFactory, TestCase
 from rest_framework.test import APIClient
 
-from apps.cv_templates.tests.test_admin_portal import make_admin
+from apps.accounts.tests.helpers import make_admin
 
 from ..models import CvAccessLog, CvSharedLink, UserCv
 from ..services.sharing import (
@@ -35,7 +35,7 @@ class AdminUserCvApiTests(TestCase):
         self.url = f'/api/v2/admin/user-cvs/{self.cv.public_id}/'
 
     def test_metadata_list_never_exposes_email_or_content(self):
-        self.client.force_authenticate(make_admin('cv-meta@example.com', 'cv_user.view'))
+        self.client.force_authenticate(make_admin('cv-meta@example.com'))
 
         response = self.client.get('/api/v2/admin/user-cvs/', {'source': 'builder'})
 
@@ -44,13 +44,9 @@ class AdminUserCvApiTests(TestCase):
         self.assertEqual(row['candidate_public_id'], self.candidate.public_id)
         self.assertNotIn('admin-view-candidate@example.com', str(response.data))
         self.assertNotIn('content_json', row)
-        self.assertEqual(
-            self.client.post(f'{self.url}content/', {'reason': 'Hỗ trợ ứng viên #123'}).status_code,
-            403,
-        )
 
     def test_viewing_content_requires_a_reason_and_is_audited(self):
-        admin = make_admin('cv-content@example.com', 'cv_user.view', 'cv_user.view_content')
+        admin = make_admin('cv-content@example.com')
         self.client.force_authenticate(admin)
 
         missing = self.client.post(f'{self.url}content/', {'reason': 'ngắn'})
@@ -68,9 +64,7 @@ class AdminUserCvApiTests(TestCase):
 
     def test_locking_revokes_and_blocks_public_sharing(self):
         link, token = create_shared_link(cv=self.cv, actor=self.candidate)
-        self.client.force_authenticate(
-            make_admin('cv-lock@example.com', 'cv_user.view', 'cv_user.view_content')
-        )
+        self.client.force_authenticate(make_admin('cv-lock@example.com'))
 
         locked = self.client.post(f'{self.url}lock/', {'reason': 'Nội dung vi phạm điều khoản'})
 

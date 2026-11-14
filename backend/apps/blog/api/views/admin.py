@@ -4,8 +4,7 @@ from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.accounts.exceptions import AdminPermissionDenied
-from apps.accounts.permissions import HasAdminPermission, require_admin_permission
+from apps.accounts.permissions import AdminPortalPermission
 from common.pagination import StandardPagination
 
 from ...models import PinnedPost, PostCategory, Tag
@@ -40,45 +39,23 @@ from ..serializers import (
 )
 
 
-def _has_permission(user, code):
-    try:
-        require_admin_permission(user, code)
-        return True
-    except AdminPermissionDenied:
-        return False
-
-
-def _permissions(request):
-    can_publish = _has_permission(request.user, 'blog.publish')
-    return {
-        'can_manage': _has_permission(request.user, 'blog.manage') or can_publish,
-        'can_publish': can_publish,
-    }
-
-
 def _serializer_context(request):
-    return {'request': request, **_permissions(request)}
+    return {'request': request}
 
 
 def _post(request, public_id):
     return get_object_or_404(
-        admin_post_detail_queryset(
-            actor=request.user,
-            can_publish=_has_permission(request.user, 'blog.publish'),
-        ),
+        admin_post_detail_queryset(),
         public_id=public_id,
     )
 
 
 class AdminPostListCreateView(generics.ListCreateAPIView):
-    permission_classes = [HasAdminPermission]
-    required_admin_permissions = {'GET': ['blog.view'], 'POST': ['blog.view', 'blog.manage']}
+    permission_classes = [AdminPortalPermission]
     pagination_class = StandardPagination
 
     def get_queryset(self):
         return admin_posts_queryset(
-            actor=self.request.user,
-            can_publish=_has_permission(self.request.user, 'blog.publish'),
             params=self.request.query_params,
         )
 
@@ -110,21 +87,14 @@ class AdminPostListCreateView(generics.ListCreateAPIView):
 
 
 class AdminPostSummaryView(APIView):
-    permission_classes = [HasAdminPermission]
-    required_admin_permissions = {'GET': ['blog.view']}
+    permission_classes = [AdminPortalPermission]
 
     def get(self, request):
-        return Response(
-            admin_post_summary(
-                actor=request.user,
-                can_publish=_has_permission(request.user, 'blog.publish'),
-            )
-        )
+        return Response(admin_post_summary())
 
 
 class AdminPostDetailView(APIView):
-    permission_classes = [HasAdminPermission]
-    required_admin_permissions = {'GET': ['blog.view']}
+    permission_classes = [AdminPortalPermission]
 
     def get(self, request, public_id):
         post = _post(request, public_id)
@@ -132,11 +102,9 @@ class AdminPostDetailView(APIView):
 
 
 class AdminPostDraftView(APIView):
-    permission_classes = [HasAdminPermission]
-    required_admin_permissions = {'PATCH': ['blog.view']}
+    permission_classes = [AdminPortalPermission]
 
     def patch(self, request, public_id):
-        require_admin_permission(request.user, 'blog.manage', 'blog.publish', match='any')
         post = _post(request, public_id)
         serializer = AdminPostWriteSerializer(
             data=request.data,
@@ -164,13 +132,8 @@ class AdminPostDraftView(APIView):
 
 
 class AdminPostActionView(APIView):
-    permission_classes = [HasAdminPermission]
+    permission_classes = [AdminPortalPermission]
     action = None
-
-    def get_required_admin_permissions(self, request):
-        if self.action in {'return', 'publish', 'archive'}:
-            return ['blog.view', 'blog.publish']
-        return ['blog.view']
 
     def post(self, request, public_id):
         post = _post(request, public_id)
@@ -181,10 +144,6 @@ class AdminPostActionView(APIView):
         )
         serializer.is_valid(raise_exception=True)
         note = serializer.validated_data.get('note', '')
-        if self.action in {'return', 'publish', 'archive'}:
-            require_admin_permission(request.user, 'blog.publish')
-        else:
-            require_admin_permission(request.user, 'blog.manage', 'blog.publish', match='any')
 
         operation = {
             'submit': lambda: submit_post(post=post, actor=request.user),
@@ -224,20 +183,14 @@ class AdminPostDiscardDraftView(AdminPostActionView):
 
 
 class AdminCategoryListCreateView(generics.ListCreateAPIView):
-    permission_classes = [HasAdminPermission]
-    required_admin_permissions = {'GET': ['blog.view'], 'POST': ['blog.view', 'blog.manage']}
+    permission_classes = [AdminPortalPermission]
     pagination_class = None
     serializer_class = AdminPostCategorySerializer
     queryset = admin_categories_queryset()
 
 
 class AdminCategoryDetailView(generics.RetrieveUpdateAPIView):
-    permission_classes = [HasAdminPermission]
-    required_admin_permissions = {
-        'GET': ['blog.view'],
-        'PUT': ['blog.view', 'blog.manage'],
-        'PATCH': ['blog.view', 'blog.manage'],
-    }
+    permission_classes = [AdminPortalPermission]
     serializer_class = AdminPostCategorySerializer
     queryset = PostCategory.objects.all()
     lookup_field = 'public_id'
@@ -245,8 +198,7 @@ class AdminCategoryDetailView(generics.RetrieveUpdateAPIView):
 
 
 class AdminTagListCreateView(generics.ListCreateAPIView):
-    permission_classes = [HasAdminPermission]
-    required_admin_permissions = {'GET': ['blog.view'], 'POST': ['blog.view', 'blog.manage']}
+    permission_classes = [AdminPortalPermission]
     pagination_class = None
     serializer_class = AdminTagSerializer
 
@@ -255,13 +207,7 @@ class AdminTagListCreateView(generics.ListCreateAPIView):
 
 
 class AdminTagDetailView(generics.RetrieveUpdateDestroyAPIView):
-    permission_classes = [HasAdminPermission]
-    required_admin_permissions = {
-        'GET': ['blog.view'],
-        'PUT': ['blog.view', 'blog.manage'],
-        'PATCH': ['blog.view', 'blog.manage'],
-        'DELETE': ['blog.view', 'blog.manage'],
-    }
+    permission_classes = [AdminPortalPermission]
     serializer_class = AdminTagSerializer
     queryset = Tag.objects.all()
     lookup_field = 'public_id'
@@ -276,8 +222,7 @@ class AdminTagDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 
 class AdminTagMergeView(APIView):
-    permission_classes = [HasAdminPermission]
-    required_admin_permissions = {'POST': ['blog.view', 'blog.manage']}
+    permission_classes = [AdminPortalPermission]
 
     def post(self, request, public_id):
         source = get_object_or_404(Tag, public_id=public_id)
@@ -293,21 +238,14 @@ class AdminTagMergeView(APIView):
 
 
 class AdminPinListCreateView(generics.ListCreateAPIView):
-    permission_classes = [HasAdminPermission]
-    required_admin_permissions = {'GET': ['blog.view'], 'POST': ['blog.view', 'blog.manage']}
+    permission_classes = [AdminPortalPermission]
     pagination_class = None
     serializer_class = AdminPinnedPostSerializer
     queryset = admin_pins_queryset()
 
 
 class AdminPinDetailView(generics.RetrieveUpdateDestroyAPIView):
-    permission_classes = [HasAdminPermission]
-    required_admin_permissions = {
-        'GET': ['blog.view'],
-        'PUT': ['blog.view', 'blog.manage'],
-        'PATCH': ['blog.view', 'blog.manage'],
-        'DELETE': ['blog.view', 'blog.manage'],
-    }
+    permission_classes = [AdminPortalPermission]
     serializer_class = AdminPinnedPostSerializer
     queryset = PinnedPost.objects.select_related('post')
     lookup_field = 'public_id'
@@ -315,8 +253,7 @@ class AdminPinDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 
 class AdminReorderView(APIView):
-    permission_classes = [HasAdminPermission]
-    required_admin_permissions = {'POST': ['blog.view', 'blog.manage']}
+    permission_classes = [AdminPortalPermission]
     model = None
 
     def post(self, request):

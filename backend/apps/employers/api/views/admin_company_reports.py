@@ -4,7 +4,7 @@ from rest_framework import mixins, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from apps.accounts.permissions import HasAdminPermission, require_admin_permission
+from apps.accounts.permissions import AdminPortalPermission
 from common.pagination import StandardPagination
 
 from ...selectors import admin_company_reports_queryset
@@ -16,19 +16,12 @@ from ..serializers import (
     AdminCompanyReportSerializer,
 )
 
-RESOLVE_PERMISSIONS = ['company_report.view', 'company_report.resolve']
-
 
 class AdminCompanyReportViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
-    permission_classes = [HasAdminPermission]
+    permission_classes = [AdminPortalPermission]
     pagination_class = StandardPagination
     serializer_class = AdminCompanyReportSerializer
     lookup_field = 'public_id'
-    required_admin_permissions = {
-        'list': ['company_report.view'],
-        'resolve': RESOLVE_PERMISSIONS,
-        'reverse': RESOLVE_PERMISSIONS,
-    }
 
     def get_queryset(self):
         if self.action != 'list':
@@ -45,10 +38,6 @@ class AdminCompanyReportViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     def resolve(self, request, public_id=None):
         serializer = AdminCompanyReportResolveSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        if serializer.validated_data['apply_hold']:
-            # Resolving a report must not become a way around the permission
-            # that guards hiding a public page.
-            require_admin_permission(request.user, 'company_page.moderate')
         resolve_company_report(
             report=self.get_object(),
             actor=request.user,

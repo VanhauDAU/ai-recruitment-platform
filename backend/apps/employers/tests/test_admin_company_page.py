@@ -5,9 +5,10 @@ from django.urls import reverse
 from rest_framework.test import APITestCase
 
 from apps.accounts.models import AdminAccessAuditLog, User
+from apps.accounts.tests.helpers import make_admin
 
 from ..models import Company, CompanyPageEvent, Industry
-from .company_page_helpers import add_recruiter, make_company, make_employer, make_limited_admin
+from .company_page_helpers import add_recruiter, make_company, make_employer
 
 HOLD_REASON = 'Nội dung giới thiệu vi phạm quy định cộng đồng.'
 RELEASE_REASON = 'Doanh nghiệp đã chỉnh sửa nội dung theo yêu cầu.'
@@ -32,9 +33,6 @@ class AdminCompanyPublicPageTests(APITestCase):
         self.public_page_url = reverse('admin-company-public-page', args=[self.company.public_id])
         self.policy_hold_url = reverse('admin-company-policy-hold', args=[self.company.public_id])
 
-    def _limited_admin(self, *permission_codes):
-        return make_limited_admin(self.superuser, *permission_codes)
-
     def _hold(self, action='apply', reason=HOLD_REASON):
         return self.client.post(
             self.policy_hold_url,
@@ -48,10 +46,7 @@ class AdminCompanyPublicPageTests(APITestCase):
             # (user, GET public-page, POST policy-hold)
             (None, 401, 401),
             (employer, 403, 403),
-            (self._limited_admin('dashboard.view'), 403, 403),
-            (self._limited_admin('company.view'), 200, 403),
-            (self._limited_admin('company_page.moderate'), 403, 403),
-            (self._limited_admin('company.view', 'company_page.moderate'), 200, 200),
+            (make_admin('page-staff@example.com'), 200, 200),
         ]
         for user, expected_view, expected_hold in cases:
             with self.subTest(user=getattr(user, 'email', 'anonymous')):

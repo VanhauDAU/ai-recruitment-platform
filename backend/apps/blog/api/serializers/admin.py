@@ -134,22 +134,14 @@ class AdminPostListSerializer(serializers.ModelSerializer):
         return completion_data(getattr(obj, 'working_copy', None) or obj)
 
     def get_allowed_actions(self, obj):
-        can_manage = self.context.get('can_manage', False)
-        can_publish = self.context.get('can_publish', False)
         state = editorial_state(obj)
-        editable = can_manage or can_publish
-        actions = []
-        if editable and state != 'archived':
-            actions.extend(['edit', 'submit'])
-        elif editable:
-            actions.append('view')
-        if can_publish and state in {'pending', 'published_with_pending'}:
+        if state == 'archived':
+            return ['view', 'restore']
+        actions = ['edit', 'submit']
+        if state in {'pending', 'published_with_pending'}:
             actions.extend(['return', 'publish'])
-        if can_publish and state != 'archived':
-            actions.append('archive')
-        if editable and state == 'archived':
-            actions.append('restore')
-        if editable and state in {'draft', 'published_with_draft'}:
+        actions.append('archive')
+        if state in {'draft', 'published_with_draft'}:
             actions.append('discard_draft')
         return actions
 

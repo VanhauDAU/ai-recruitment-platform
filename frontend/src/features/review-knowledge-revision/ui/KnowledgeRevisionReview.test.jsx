@@ -33,7 +33,7 @@ describe('KnowledgeRevisionReview', () => {
     const queryClient = new QueryClient({ defaultOptions: { mutations: { retry: false } } })
     render(
       <QueryClientProvider client={queryClient}>
-        <KnowledgeRevisionReview article={article} canManage canReview />
+        <KnowledgeRevisionReview article={article} />
       </QueryClientProvider>,
     )
 

@@ -4,8 +4,8 @@ from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from apps.accounts.admin_access_rules import InvalidImpactToken, StaleImpactToken
-from apps.accounts.permissions import HasAdminPermission
+from apps.accounts.permissions import AdminPortalPermission
+from apps.accounts.services import InvalidImpactToken, StaleImpactToken
 from common.pagination import StandardPagination
 
 from ...models import CompanyDomainClaim
@@ -45,20 +45,10 @@ def _admin_error_response(error):
 
 
 class AdminCompanyDomainClaimViewSet(viewsets.ReadOnlyModelViewSet):
-    permission_classes = [HasAdminPermission]
+    permission_classes = [AdminPortalPermission]
     pagination_class = StandardPagination
     lookup_field = 'public_id'
     serializer_class = AdminCompanyDomainClaimSerializer
-    required_admin_permissions = {
-        'list': ['employer_domain.view'],
-        'retrieve': ['employer_domain.view'],
-        'summary': ['employer_domain.view'],
-        'manual_review_impact': ['employer_domain.review'],
-        'approve_manual': ['employer_domain.review'],
-        'reject_manual': ['employer_domain.review'],
-        'revoke_impact': ['employer_domain.revoke'],
-        'revoke': ['employer_domain.revoke'],
-    }
 
     def get_queryset(self):
         queryset = admin_domain_claims_queryset(params=self.request.query_params)

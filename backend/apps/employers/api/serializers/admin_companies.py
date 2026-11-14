@@ -44,9 +44,7 @@ class AdminCompanyListSerializer(serializers.ModelSerializer):
         ]
 
     def get_tax_code(self, obj):
-        if self.context.get('can_view_sensitive'):
-            return obj.tax_code or ''
-        return _masked_tax_code(obj.tax_code)
+        return obj.tax_code or ''
 
     def get_logo_url(self, obj):
         return media_url_from_value(obj.logo_url, request=self.context.get('request'))
@@ -102,12 +100,10 @@ class AdminCompanyDetailSerializer(AdminCompanyListSerializer):
         ]
 
     def get_email(self, obj):
-        return obj.email if self.context.get('can_view_sensitive') else ''
+        return obj.email
 
     def get_phone(self, obj):
-        if self.context.get('can_view_sensitive'):
-            return obj.phone
-        return f'***{obj.phone[-3:]}' if obj.phone else ''
+        return obj.phone
 
     def get_industries(self, obj):
         return [
@@ -184,10 +180,7 @@ class AdminCompanyRecruiterSerializer(serializers.ModelSerializer):
         }
 
     def get_contact_phone(self, obj):
-        value = obj.verified_phone or obj.contact_phone or ''
-        if self.context.get('can_view_account_sensitive'):
-            return value
-        return f'***{value[-3:]}' if value else ''
+        return obj.verified_phone or obj.contact_phone or ''
 
     def get_initial_onboarding(self, obj):
         return build_employer_initial_onboarding(

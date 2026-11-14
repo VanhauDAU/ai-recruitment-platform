@@ -2,13 +2,11 @@ import { useQuery } from '@tanstack/react-query'
 import { Alert, App, Button, Drawer } from 'antd'
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router'
-import { useAdminAccess } from '@/entities/admin-access'
 import {
   announcementKeys,
   getAdminAnnouncement,
   getAdminAnnouncements,
 } from '@/entities/announcement'
-import { useSession } from '@/entities/session'
 import {
   getAnnouncementStaleConflict,
   useAnnouncementActions,
@@ -32,10 +30,6 @@ function value(searchParams, key, fallback = '') {
 
 export default function AdminAnnouncementManagement() {
   const { message } = App.useApp()
-  const { user } = useSession()
-  const access = useAdminAccess(user)
-  const canManage = access.has('announcement.manage')
-  const canPublish = access.has('announcement.publish')
   const [searchParams, setSearchParams] = useSearchParams()
   const query = value(searchParams, 'q')
   const page = Number(value(searchParams, 'page', '1')) || 1
@@ -240,7 +234,6 @@ export default function AdminAnnouncementManagement() {
             rows={data.results}
           />
         )}
-        canCreate={canManage}
         filters={filters}
         onChange={updateParams}
         onCreate={() => setEditorMode('create')}
@@ -287,8 +280,6 @@ export default function AdminAnnouncementManagement() {
         detail={detailQuery.data}
         loading={detailQuery.isLoading}
         error={detailQuery.error}
-        canManage={canManage}
-        canPublish={canPublish}
         conflict={conflict}
         pendingType={actions.pendingType}
         onClose={() => {

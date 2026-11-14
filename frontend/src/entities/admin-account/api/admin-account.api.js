@@ -119,16 +119,8 @@ export function getAdminInvitations(params = {}, { signal } = {}) {
   return data(client.get('/admin/account-invitations/', { params, signal }))
 }
 
-export function getAvailableAdminInvitationRoles({ signal } = {}) {
-  return data(client.get('/admin/account-invitations/available-roles/', { signal }))
-}
-
 export function createAdminInvitation(payload) {
   return data(client.post('/admin/account-invitations/', payload))
-}
-
-export function updateAdminInvitation(publicId, payload) {
-  return data(client.patch(`/admin/account-invitations/${publicId}/`, payload))
 }
 
 export function resendAdminInvitation(publicId) {
@@ -148,25 +140,4 @@ export function validateAdminInvitation(token, { signal } = {}) {
 
 export function acceptAdminInvitation(payload) {
   return data(client.post('/auth/admin-invitations/accept/', payload))
-}
-
-export function getProvisioningScopes({ signal } = {}) {
-  return data(client.get('/admin/provisioning-scopes/', { signal }))
-}
-
-export function createProvisioningScope(payload) {
-  return data(client.post('/admin/provisioning-scopes/', payload))
-}
-
-export function getProvisioningScopeImpact(publicId, isActive) {
-  return data(client.post(`/admin/provisioning-scopes/${publicId}/status-impact/`, {
-    is_active: isActive,
-  }))
-}
-
-export function setProvisioningScopeStatus(publicId, isActive, impactToken) {
-  const action = isActive ? 'activate' : 'deactivate'
-  return data(client.post(`/admin/provisioning-scopes/${publicId}/${action}/`, {
-    impact_token: impactToken,
-  }))
 }

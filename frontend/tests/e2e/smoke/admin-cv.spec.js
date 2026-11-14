@@ -23,7 +23,7 @@ const POSITION = { public_id: 'cvpos_1', position_public_id: 'jobcat_1', positio
 function respond(path) {
   if (path === '/api/auth/refresh/') return { access: 'e2e-access' }
   if (path === '/api/privacy/consent/') return { consent: { necessary: true, preferences: false, analytics: false, marketing: false } }
-  if (path === '/api/auth/me/') return { public_id: 'usr_admin', email: 'admin@example.com', full_name: 'Quản trị', role: 'admin', email_verified: true, admin_access: { is_superuser: true, permissions: [], memberships: [] } }
+  if (path === '/api/auth/me/') return { public_id: 'usr_admin', email: 'admin@example.com', full_name: 'Quản trị', role: 'admin', email_verified: true, admin_access: { is_superuser: true } }
   if (path === '/api/v2/admin/cv-stats/overview/') return { templates_published: 1, cvs_created_7d: 2, cvs_created_30d: 5, cvs_uploaded_30d: 1, import_success_rate_30d: 100, ai_cost_month_usd: 0.12, top_templates: [{ public_id: 'tpl_e2e', name: 'Gọn gàng', usage_count: 3, cvs_30d: 2 }], todos: { samples_in_review: 2, positions_without_content: 0, stale_template_drafts: 0, missing_thumbnails: 0, failed_generations_7d: 0 } }
   if (path === '/api/v2/admin/cv-templates/') return [TEMPLATE]
   if (path === '/api/v2/admin/cv-templates/tpl_e2e/') return TEMPLATE

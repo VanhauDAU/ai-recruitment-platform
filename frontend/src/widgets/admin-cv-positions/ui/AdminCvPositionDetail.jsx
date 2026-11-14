@@ -3,9 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Alert, Button, Segmented, Skeleton, Switch, Tabs } from 'antd'
 import { useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router'
-import { useAdminAccess } from '@/entities/admin-access'
 import { adminCvPositions, getAdminCvPosition } from '@/entities/cv-template'
-import { useSession } from '@/entities/session'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { adminPath } from '@/shared/config/portals'
 import { message } from '@/shared/lib/toast'
@@ -23,9 +21,6 @@ const PARTS = {
 
 export default function AdminCvPositionDetail() {
   const { publicId } = useParams()
-  const { user } = useSession()
-  const access = useAdminAccess(user)
-  const can = { manage: access.has('cv_template.manage'), publish: access.has('cv_template.publish'), generate: access.has('cv_content.generate_ai') }
   const queryClient = useQueryClient()
   const [params, setParams] = useSearchParams()
   const [pane, setPane] = useState('settings')
@@ -53,15 +48,15 @@ export default function AdminCvPositionDetail() {
         <h1 className="truncate text-lg font-bold text-slate-900 sm:text-xl">{profile.position_name}</h1>
         {profile.industry_name && <p className="text-xs text-slate-500">{profile.industry_name}</p>}
       </div>
-      <label className="order-2 ml-auto flex items-center gap-2 text-sm text-slate-600 sm:order-3"><Switch size="small" checked={profile.is_active} disabled={!can.manage || save.isPending} onChange={(is_active) => save.mutate({ is_active })} />Ứng viên chọn được</label>
+      <label className="order-2 ml-auto flex items-center gap-2 text-sm text-slate-600 sm:order-3"><Switch size="small" checked={profile.is_active} disabled={save.isPending} onChange={(is_active) => save.mutate({ is_active })} />Ứng viên chọn được</label>
     </header>
     <div className="xl:hidden"><Segmented block value={pane} onChange={setPane} options={[{ value: 'settings', label: 'Thiết lập', icon: <SettingOutlined /> }, { value: 'preview', label: 'CV ứng viên nhận', icon: <EyeOutlined /> }]} /></div>
     <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] 2xl:grid-cols-[minmax(0,1fr)_minmax(0,32rem)]">
       <section className={`min-w-0 rounded-[13px] border border-slate-200 bg-white px-4 pb-4 shadow-sm ${pane === 'preview' ? 'hidden xl:block' : ''}`}>
         <Tabs activeKey={tab} onChange={(next) => setParams({ tab: next }, { replace: true })} items={[
-          part('sections', <SectionPresetEditor key={profile.updated_at} profile={profile} canManage={can.manage} saving={save.isPending} onSave={save.mutate} />),
-          part('fields', <PositionFieldsEditor positionPublicId={profile.position_public_id} canManage={can.manage} onChanged={refreshPreview} />),
-          part('samples', <SampleContentGrid profile={profile} canManage={can.manage} canPublish={can.publish} canGenerate={can.generate} onChanged={refreshPreview} />),
+          part('sections', <SectionPresetEditor key={profile.updated_at} profile={profile} saving={save.isPending} onSave={save.mutate} />),
+          part('fields', <PositionFieldsEditor positionPublicId={profile.position_public_id} onChanged={refreshPreview} />),
+          part('samples', <SampleContentGrid profile={profile} onChanged={refreshPreview} />),
         ]} />
       </section>
       <div className={`min-w-0 xl:sticky xl:top-[calc(var(--admin-topbar-height,72px)_+_1rem)] ${pane === 'settings' ? 'hidden xl:block' : ''}`}><CandidatePreviewPanel positionPublicId={profile.position_public_id} positionName={profile.position_name} /></div>

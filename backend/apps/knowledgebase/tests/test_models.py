@@ -4,7 +4,6 @@ from django.apps import apps as django_apps
 from django.db import IntegrityError, transaction
 from django.test import TestCase
 
-from apps.accounts.models import AdminPermission
 from apps.knowledgebase.models import (
     KnowledgeArticle,
     KnowledgeArticleRevision,
@@ -14,7 +13,7 @@ from apps.knowledgebase.models import (
 
 
 class KnowledgebaseFoundationTests(TestCase):
-    def test_taxonomy_and_permissions_are_seeded(self):
+    def test_taxonomy_is_seeded(self):
         self.assertEqual(KnowledgeCategory.objects.count(), 7)
         self.assertEqual(
             list(KnowledgeCategory.objects.values_list('slug', flat=True)),
@@ -54,19 +53,6 @@ class KnowledgebaseFoundationTests(TestCase):
             ).exists()
         )
         self.assertFalse(articles.filter(published_revision__source_reference='').exists())
-        self.assertEqual(
-            set(
-                AdminPermission.objects.filter(module='knowledgebase').values_list(
-                    'code', flat=True
-                )
-            ),
-            {
-                'knowledgebase.view',
-                'knowledgebase.manage',
-                'knowledgebase.review',
-                'knowledgebase.publish',
-            },
-        )
 
     def test_account_security_article_no_longer_mentions_two_factor(self):
         article = KnowledgeArticle.objects.get(slug='bao-ve-tai-khoan-va-xac-minh-hai-buoc')

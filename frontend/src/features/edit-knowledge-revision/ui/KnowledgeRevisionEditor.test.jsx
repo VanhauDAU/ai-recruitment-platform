@@ -76,7 +76,6 @@ function renderEditorWithLocalDraft() {
         <MemoryRouter>
           <KnowledgeRevisionEditor
             article={ARTICLE}
-            canManage
             categories={CATEGORIES}
           />
         </MemoryRouter>

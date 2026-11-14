@@ -22,11 +22,7 @@ test('admin blog: list is responsive, public links open a new tab and article sl
     full_name: 'Biên tập viên',
     role: 'admin',
     status: 'active',
-    admin_access: {
-      is_superuser: false,
-      permissions: ['blog.view', 'blog.manage', 'blog.publish'],
-      memberships: [],
-    },
+    admin_access: { is_superuser: false },
   }
   const post = {
     public_id: 'ps_sales',

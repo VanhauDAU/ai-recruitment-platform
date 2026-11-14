@@ -1,26 +1,12 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { adminPermissionCatalog } from '@/entities/admin-access'
 import { ADMIN_PAGE_BY_KEY } from '../lazy/admin.pages'
 import { ADMIN_NAVIGATION } from './admin-navigation.config'
 import { flattenAdminNavigation } from './admin-navigation'
 import { ADMIN_ROUTES } from './admin-routes.config'
 
 describe('ADMIN_ROUTES contract', () => {
-  it('references only generated permissions', () => {
-    const codes = new Set(adminPermissionCatalog.map((permission) => permission.code))
-    ADMIN_ROUTES.forEach((route) => {
-      if (route.permission) expect(codes.has(route.permission)).toBe(true)
-      route.permissionsAll?.forEach((permission) => {
-        expect(codes.has(permission)).toBe(true)
-      })
-      route.permissionsAny?.forEach((permission) => {
-        expect(codes.has(permission)).toBe(true)
-      })
-    })
-  })
-
   it('keeps the lazy registry and route config in sync both ways', () => {
     expect(ADMIN_ROUTES.map((route) => route.lazyKey).sort()).toEqual(
       Object.keys(ADMIN_PAGE_BY_KEY).sort(),
@@ -38,25 +24,9 @@ describe('ADMIN_ROUTES contract', () => {
     })
   })
 
-  it('guards the company report queue with its view permission and lands report-only admins on it', () => {
-    expect(ADMIN_ROUTES.find((route) => route.id === 'companyReports')).toEqual({
-      id: 'companyReports',
-      segment: '/company-reports',
-      lazyKey: 'AdminCompanyReportsPage',
-      title: 'Báo cáo công ty',
-      navLabel: 'Báo cáo công ty',
-      iconKey: 'moderation',
-      permission: 'company_report.view',
-      showInNav: true,
-    })
-  })
-
-  it('keeps site settings explicitly superuser-only', () => {
+  it('keeps site settings as the only superuser-only route', () => {
     expect(ADMIN_ROUTES.filter((route) => route.requireSuperuser)).toEqual([
-      expect.objectContaining({
-        segment: '/settings',
-        permission: 'site_setting.view',
-      }),
+      expect.objectContaining({ segment: '/settings' }),
     ])
   })
 

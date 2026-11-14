@@ -8,7 +8,7 @@ from django.conf import settings
 from django.db import IntegrityError, transaction
 from django.utils import timezone
 
-from apps.accounts.permissions import require_admin_permission
+from apps.accounts.permissions import require_admin
 from apps.accounts.services import (
     InvalidImpactToken,
     StaleImpactToken,
@@ -412,10 +412,7 @@ def domain_claim_admin_impact(claim, *, actor, action, reason):
         raise DomainClaimError('reason_required', 'Vui lòng nhập lý do xử lý.')
     if action not in {'approve_manual', 'reject_manual', 'revoke'}:
         raise DomainClaimError('invalid_action', 'Thao tác không hợp lệ.')
-    require_admin_permission(
-        actor,
-        'employer_domain.revoke' if action == 'revoke' else 'employer_domain.review',
-    )
+    require_admin(actor)
     payload = {'action': action, 'reason': reason, 'status': claim.status, 'domain': claim.domain}
     return {
         **payload,
@@ -439,10 +436,7 @@ def confirm_domain_claim_admin_action(
     reason,
     impact_token,
 ):
-    require_admin_permission(
-        actor,
-        'employer_domain.revoke' if action == 'revoke' else 'employer_domain.review',
-    )
+    require_admin(actor)
     locked = (
         CompanyDomainClaim.objects.select_for_update()
         .select_related('requested_by')

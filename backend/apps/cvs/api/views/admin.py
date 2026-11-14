@@ -6,7 +6,7 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
-from apps.accounts.permissions import HasAdminPermission
+from apps.accounts.permissions import AdminPortalPermission
 from common.pagination import StandardPagination
 
 from ...selectors import admin_cvs_queryset
@@ -15,17 +15,10 @@ from ..serializers.admin import AdminCvReasonSerializer, AdminUserCvSerializer
 
 
 class AdminUserCvViewSet(viewsets.ReadOnlyModelViewSet):
-    permission_classes = [HasAdminPermission]
+    permission_classes = [AdminPortalPermission]
     pagination_class = StandardPagination
     serializer_class = AdminUserCvSerializer
     lookup_field = 'public_id'
-    required_admin_permissions = {
-        'list': ['cv_user.view'],
-        'retrieve': ['cv_user.view'],
-        'content': ['cv_user.view_content'],
-        'lock': ['cv_user.view_content'],
-        'unlock': ['cv_user.view_content'],
-    }
 
     def get_queryset(self):
         return admin_cvs_queryset(self.request.query_params)

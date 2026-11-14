@@ -52,7 +52,6 @@ const PROFILE_LABELS = {
 export default function AccountProfilePanel({
   publicId,
   account,
-  canReveal,
   onEdit,
   section = 'profile',
 }) {
@@ -83,14 +82,12 @@ export default function AccountProfilePanel({
         Dữ liệu nhạy cảm được che mặc định và mọi lần xem đều được ghi audit.
       </Typography.Text>
       <Space wrap>
-        {canReveal && (
-          <Button
-            icon={reveal ? <EyeInvisibleOutlined /> : <EyeOutlined />}
-            onClick={() => setReveal((value) => !value)}
-          >
-            {reveal ? 'Che dữ liệu' : 'Hiện dữ liệu nhạy cảm'}
-          </Button>
-        )}
+        <Button
+          icon={reveal ? <EyeInvisibleOutlined /> : <EyeOutlined />}
+          onClick={() => setReveal((value) => !value)}
+        >
+          {reveal ? 'Che dữ liệu' : 'Hiện dữ liệu nhạy cảm'}
+        </Button>
         {!isCompanySection && onEdit && (
           <Button icon={<EditOutlined />} onClick={() => onEdit(profile)}>Sửa hồ sơ</Button>
         )}

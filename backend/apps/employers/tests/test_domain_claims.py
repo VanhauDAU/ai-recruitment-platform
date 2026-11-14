@@ -9,14 +9,9 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 from rest_framework.throttling import ScopedRateThrottle
 
-from apps.accounts.models import (
-    AdminMembership,
-    AdminPermission,
-    AdminRole,
-    Department,
-    User,
-)
+from apps.accounts.models import User
 from apps.accounts.services.tokens import issue_tokens
+from apps.accounts.tests.helpers import make_admin
 
 from ..models import Company, CompanyDomainClaim, CompanyDomainClaimEvent, RecruiterProfile
 from ..selectors import effective_company_domain_claims
@@ -293,31 +288,7 @@ class CompanyDomainClaimPolicyTests(APITestCase):
 class CompanyDomainClaimManualReviewTests(APITestCase):
     def setUp(self):
         self.requester, self.recruiter, self.company = make_linked_employer()
-        self.admin = User.objects.create_superuser(
-            email='domain-admin@example.com',
-            password='Password@123',
-        )
-        self.admin.is_superuser = False
-        self.admin.save(update_fields=['is_superuser'])
-        department = Department.objects.create(
-            code='domain-tests',
-            name='Domain tests',
-            is_system_managed=False,
-        )
-        role = AdminRole.objects.create(
-            department=department,
-            code='reviewer',
-            name='Reviewer',
-        )
-        permissions = []
-        for code in ('employer_domain.view', 'employer_domain.review'):
-            permission, _ = AdminPermission.objects.get_or_create(
-                code=code,
-                defaults={'module': 'employer_domain', 'label': code},
-            )
-            permissions.append(permission)
-        role.permissions.set(permissions)
-        AdminMembership.objects.create(user=self.admin, role=role, is_primary=True)
+        self.admin = make_admin('domain-admin@example.com')
 
     def _manual_claim(self):
         with patch('apps.employers.services.domain_claims._offline_tld_extract', return_value=True):
@@ -377,14 +348,8 @@ class CompanyDomainClaimManualReviewTests(APITestCase):
         self.assertEqual(approved.expires_at.month, approved.verified_at.month)
         self.assertEqual(approved.expires_at.year, approved.verified_at.year + 1)
 
-    def test_admin_endpoint_is_permission_gated(self):
-        outsider = User.objects.create_user(
-            email='admin-no-permission@example.com',
-            password='Password@123',
-            role=User.Role.ADMIN,
-            status=User.Status.ACTIVE,
-        )
-        authenticate(self.client, outsider)
+    def test_admin_endpoint_rejects_non_admins(self):
+        authenticate(self.client, self.requester)
         response = self.client.get(reverse('admin-company-domain-claim-list'))
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
