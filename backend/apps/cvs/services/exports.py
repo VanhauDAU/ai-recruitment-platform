@@ -59,7 +59,7 @@ def _render_config(version: CvVersion) -> dict:
         'renderer_version': contract.version,
         'schema_version': version.schema_version,
         'page_size': 'A4',
-        'engine': 'weasyprint_html_v1',
+        'engine': 'chromium_print_v1',
     }
 
 

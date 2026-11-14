@@ -7,14 +7,18 @@ from .api.views.admin import (
     AdminCvBackgroundViewSet,
     AdminCvCategoryViewSet,
     AdminCvColorViewSet,
+    AdminCvOverviewView,
+    AdminCvPositionFieldViewSet,
+    AdminCvPositionViewSet,
     AdminCvSampleContentViewSet,
+    AdminCvSampleGenerationViewSet,
     AdminCvTemplateViewSet,
 )
 from .api.views.v2 import (
     CvCategoryCatalogListView,
+    CvPositionDetailsView,
     CvPositionOptionListView,
     CvPositionPreviewView,
-    CvSampleContentCatalogDetailView,
     CvSampleContentCatalogListView,
     CvTemplateCatalogDetailView,
     CvTemplateCatalogListView,
@@ -28,6 +32,15 @@ router.register('admin/cv-colors', AdminCvColorViewSet, basename='admin-cv-color
 router.register('admin/cv-backgrounds', AdminCvBackgroundViewSet, basename='admin-cv-background')
 router.register(
     'admin/cv-sample-contents', AdminCvSampleContentViewSet, basename='admin-cv-sample-content'
+)
+router.register(
+    'admin/cv-sample-generations',
+    AdminCvSampleGenerationViewSet,
+    basename='admin-cv-sample-generation',
+)
+router.register('admin/cv-positions', AdminCvPositionViewSet, basename='admin-cv-position')
+router.register(
+    'admin/cv-position-fields', AdminCvPositionFieldViewSet, basename='admin-cv-position-field'
 )
 
 
@@ -51,14 +64,11 @@ urlpatterns = [
         name='cv-position-option-v2-list',
     ),
     path('cv-position-preview/', CvPositionPreviewView.as_view(), name='cv-position-preview-v2'),
+    path('cv-position-details/', CvPositionDetailsView.as_view(), name='cv-position-details-v2'),
+    path('admin/cv-stats/overview/', AdminCvOverviewView.as_view(), name='admin-cv-overview'),
     path(
         'cv-sample-contents/',
         CvSampleContentCatalogListView.as_view(),
         name='cv-sample-content-v2-list',
-    ),
-    path(
-        'cv-sample-contents/<str:public_id>/',
-        CvSampleContentCatalogDetailView.as_view(),
-        name='cv-sample-content-v2-detail',
     ),
 ] + router.urls

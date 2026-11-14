@@ -16,4 +16,13 @@ describe('EmployerWorkspaceNavigation', () => {
     expect(employerRouteTitle('/tuyendung/app/notifications')).toBe('Thông báo hệ thống')
     expect(employerSelectedMenuKey('/tuyendung/app/activities')).toBe('/tuyendung/app/activities')
   })
+
+  it('registers the company page workspace with its own menu item and title', () => {
+    const item = EMPLOYER_NAV_ITEMS.find((entry) => entry.key === '/tuyendung/app/company-page')
+
+    expect(item).toMatchObject({ label: 'Trang công ty', title: 'Trang công ty' })
+    expect(item.disabled).toBeUndefined()
+    expect(employerRouteTitle('/tuyendung/app/company-page')).toBe('Trang công ty')
+    expect(employerSelectedMenuKey('/tuyendung/app/company-page')).toBe('/tuyendung/app/company-page')
+  })
 })

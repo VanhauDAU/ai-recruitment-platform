@@ -6,9 +6,16 @@ export const AdminDashboardPage = lazy(() => import('@/pages/admin/app/Dashboard
 export const AdminCompaniesPage = lazy(() => import('@/pages/admin/app/Companies'))
 export const AdminCompanyDetailPage = lazy(() => import('@/pages/admin/app/CompanyDetail'))
 export const AdminSettingsPage = lazy(() => import('@/pages/admin/app/Settings'))
-export const AdminCvCataloguePage = lazy(() => import('@/pages/admin/app/CvCatalogue'))
+export const AdminCvOverviewPage = lazy(() => import('@/pages/admin/app/CvOverview'))
+export const AdminCvTemplatesPage = lazy(() => import('@/pages/admin/app/CvTemplates'))
+export const AdminCvTemplateEditorPage = lazy(() => import('@/pages/admin/app/CvTemplateEditor'))
+export const AdminCvPositionsPage = lazy(() => import('@/pages/admin/app/CvPositions'))
+export const AdminCvPositionDetailPage = lazy(() => import('@/pages/admin/app/CvPositionDetail'))
+export const AdminCvLibraryPage = lazy(() => import('@/pages/admin/app/CvLibrary'))
+export const AdminCvUserCvsPage = lazy(() => import('@/pages/admin/app/CvUserCvs'))
 export const AdminJobModerationPage = lazy(() => import('@/pages/admin/app/JobModeration'))
 export const AdminJobModerationDetailPage = lazy(() => import('@/pages/admin/app/JobModerationDetail'))
+export const AdminCompanyReportsPage = lazy(() => import('@/pages/admin/app/CompanyReports'))
 export const AdminBlogManagementPage = lazy(() => import('@/pages/admin/app/BlogManagement'))
 export const AdminBlogNewPage = lazy(() => import('@/pages/admin/app/BlogNew'))
 export const AdminBlogEditPage = lazy(() => import('@/pages/admin/app/BlogEdit'))
@@ -31,9 +38,16 @@ export const ADMIN_PAGE_BY_KEY = {
   AdminCompaniesPage,
   AdminCompanyDetailPage,
   AdminSettingsPage,
-  AdminCvCataloguePage,
+  AdminCvOverviewPage,
+  AdminCvTemplatesPage,
+  AdminCvTemplateEditorPage,
+  AdminCvPositionsPage,
+  AdminCvPositionDetailPage,
+  AdminCvLibraryPage,
+  AdminCvUserCvsPage,
   AdminJobModerationPage,
   AdminJobModerationDetailPage,
+  AdminCompanyReportsPage,
   AdminBlogManagementPage,
   AdminBlogNewPage,
   AdminBlogEditPage,

@@ -35,6 +35,16 @@ export async function renameCv(publicId, title) {
   return data
 }
 
+// Hồ sơ ứng tuyển của CV (CVT-3): vị trí mục tiêu và cấp bậc mong muốn, dùng cho
+// gợi ý việc làm; không in lên CV.
+export async function updateCvProfile(publicId, { position_public_id, position_level }) {
+  const payload = {}
+  if (position_public_id !== undefined) payload.position_public_id = position_public_id
+  if (position_level !== undefined) payload.position_level = position_level
+  const { data } = await api.patch(`/v2/cvs/${publicId}/`, payload)
+  return data
+}
+
 export async function setDefaultCv(publicId, isDefault) {
   const { data } = await api.patch(`/v2/cvs/${publicId}/`, { is_default: isDefault })
   return data

@@ -16,6 +16,7 @@ from apps.candidates.models import (
     CandidatePreferredSkill,
 )
 from apps.cvs.models import UserCv
+from apps.cvs.schemas import empty_content
 from apps.cvs.services import create_initial_document
 from apps.employers.models import Company
 from apps.employers.tests.readiness_helpers import make_employer_ready
@@ -204,15 +205,21 @@ class CvJobRecommendationApiTests(APITestCase):
             cv_type=UserCv.CvType.BUILDER,
             source=UserCv.Source.BUILDER,
             title='Hồ sơ cá nhân',
-            cv_data={
-                'sections': [
-                    {
-                        'section_key': 'skills',
-                        'items': [{'name': skill_name} for skill_name in skill_names],
-                    }
-                ]
-            },
         )
+        content = empty_content('vi-VN')
+        content['sections'] = [
+            {
+                'instance_id': 'skills_1',
+                'section_key': 'skills',
+                'title': 'Kỹ năng',
+                'enabled': True,
+                'items': [
+                    {'item_id': f'skill_{index}', 'name': name, 'level': ''}
+                    for index, name in enumerate(skill_names)
+                ],
+            }
+        ]
+        create_initial_document(cv, self.candidate, content_json=content)
 
         response = self.client.get(
             reverse('cv-job-recommendations', kwargs={'cv_public_id': cv.public_id})
@@ -224,6 +231,61 @@ class CvJobRecommendationApiTests(APITestCase):
         )
         self.assertIn('Phù hợp với kỹ năng của bạn', platform_job['match_reasons'])
         self.assertEqual(platform_job['match_score'], 24)
+
+    def test_cv_experience_overrides_the_declared_preference(self):
+        skill = Skill.objects.create(name='Kubernetes')
+        senior_job = Job.objects.create(
+            posted_by=self.employer,
+            company=self.company,
+            title='Kỹ sư vận hành cấp cao',
+            description='Run the platform.',
+            status=Job.Status.ACTIVE,
+            experience_years=Job.ExperienceYears.OVER_5,
+        )
+        JobSkill.objects.create(job=senior_job, skill=skill)
+        cv = UserCv.objects.create(
+            user=self.candidate,
+            cv_type=UserCv.CvType.BUILDER,
+            source=UserCv.Source.BUILDER,
+            title='CV kỹ sư vận hành',
+        )
+        content = empty_content('vi-VN')
+        content['sections'] = [
+            {
+                'instance_id': 'experience_1',
+                'section_key': 'experience',
+                'title': 'Kinh nghiệm',
+                'enabled': True,
+                'items': [
+                    {
+                        'item_id': 'experience_item_1',
+                        'role': 'DevOps',
+                        'company': 'ABC',
+                        'start_date': '2015-01',
+                        'end_date': None,
+                    }
+                ],
+            },
+            {
+                'instance_id': 'skills_1',
+                'section_key': 'skills',
+                'title': 'Kỹ năng',
+                'enabled': True,
+                'items': [{'item_id': 'skill_1', 'name': 'Kubernetes', 'level': ''}],
+            },
+        ]
+        create_initial_document(cv, self.candidate, content_json=content)
+        cv.refresh_from_db()
+
+        response = self.client.get(
+            reverse('cv-job-recommendations', kwargs={'cv_public_id': cv.public_id})
+        )
+
+        self.assertEqual(cv.experience_years, Job.ExperienceYears.OVER_5)
+        job = next(
+            item for item in response.data['results'] if item['public_id'] == senior_job.public_id
+        )
+        self.assertIn('experience', [detail['code'] for detail in job['match_details']])
 
     def test_candidate_page_uses_only_preferences_with_explainable_pagination(self):
         response = self.client.get(
@@ -272,7 +334,6 @@ class CvJobRecommendationApiTests(APITestCase):
             cv_type=UserCv.CvType.UPLOADED,
             source=UserCv.Source.UPLOADED,
             title='CV tải lên bị lỗi',
-            status=UserCv.Status.FAILED,
             processing_status=UserCv.ProcessingStatus.FAILED,
         )
 

@@ -43,12 +43,19 @@ export async function getCvPositionOptions(locale = 'vi-VN', query = '', signal)
   return results(data)
 }
 
+// Khung mục "Thông tin chuyên môn" (trường riêng) của một vị trí; `null` nếu vị trí không có trường riêng.
+export async function getCvPositionDetails(positionPublicId, locale = 'vi-VN') {
+  const { data } = await api.get('/v2/cv-position-details/', { params: { position_public_id: positionPublicId, locale } })
+  return data.section
+}
+
 export async function getCvPositionPreview(positionPublicId, locale = 'vi-VN', templatePublicId, options = {}) {
   const params = {
     ...(positionPublicId ? { position_public_id: positionPublicId } : {}),
     locale,
     ...(templatePublicId ? { template_public_id: templatePublicId } : {}),
     ...(options.source ? { source: options.source } : {}),
+    ...(options.experienceBand ? { experience_band: options.experienceBand } : {}),
     ...(options.themeColor ? { theme_color: options.themeColor } : {}),
   }
   const config = { params }

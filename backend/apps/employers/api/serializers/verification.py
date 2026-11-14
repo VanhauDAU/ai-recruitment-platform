@@ -8,13 +8,27 @@ from rest_framework import serializers
 from common.media_storage import media_url_from_value
 
 from ...models import Company, CompanyDocument, CompanyUpdateRequest, Industry, RecruiterProfile
+from ...models.verification import company_update_allowed_actions
 from ...selectors import can_access_employer_document_content
 from ...services import (
+    PAGE_CONTENT_FIELDS,
     SENSITIVE_FIELDS,
     UPDATABLE_COMPANY_FIELDS,
     normalize_company_rich_text,
     normalize_company_tax_code,
+    normalize_page_content_changes,
 )
+from ..exceptions import CompanyPageEditForbidden
+
+# Everything the page workspace may send (``POST company/page/content/``).
+PAGE_WORKSPACE_FIELDS = PAGE_CONTENT_FIELDS | {
+    'description',
+    'employee_benefits',
+    'logo_pending',
+    'cover_pending',
+    'gallery_pending',
+    'gallery_deletions',
+}
 
 
 class CompanyDocumentSerializer(serializers.ModelSerializer):
@@ -155,19 +169,11 @@ class CompanyUpdateRequestSerializer(serializers.ModelSerializer):
         recruiter = self.context.get('recruiter')
         if request is None or recruiter is None:
             return []
-        actions = []
-        if obj.status in {
-            CompanyUpdateRequest.Status.PENDING,
-            CompanyUpdateRequest.Status.SUBMITTED,
-            CompanyUpdateRequest.Status.CHANGES_REQUESTED,
-        }:
-            if obj.requested_by_id == request.user.id:
-                actions.extend(['edit', 'withdraw'])
-                if obj.status == CompanyUpdateRequest.Status.CHANGES_REQUESTED:
-                    actions.append('resubmit')
-            if recruiter.company_role == RecruiterProfile.CompanyRole.OWNER:
-                actions.append('cancel')
-        return actions
+        return company_update_allowed_actions(
+            obj,
+            user_id=request.user.id,
+            is_owner=recruiter.company_role == RecruiterProfile.CompanyRole.OWNER,
+        )
 
     @extend_schema_field(
         inline_serializer(
@@ -244,23 +250,34 @@ class CompanyUpdateRequestSerializer(serializers.ModelSerializer):
     def validate_changes(self, value):
         if not isinstance(value, dict) or not value:
             raise serializers.ValidationError('Chưa có thay đổi nào.')
-        allowed = UPDATABLE_COMPANY_FIELDS | {
-            'industries',
-            'primary_industry',
-            'gallery_deletions',
-            'logo_pending',
-            'cover_pending',
-            'gallery_pending',
-        }
-        invalid = set(value) - allowed
+        invalid = set(value) - self.allowed_change_fields()
         if invalid:
             raise serializers.ValidationError(
                 f'Trường không được phép cập nhật: {", ".join(sorted(invalid))}'
             )
+        page_access = self.context.get('page_access')
+        if PAGE_CONTENT_FIELDS & set(value) and not (
+            page_access is not None and page_access.can_edit_content
+        ):
+            raise CompanyPageEditForbidden()
         for marker in ('logo_pending', 'cover_pending', 'gallery_pending'):
             if marker in value and value[marker] is not True:
                 raise serializers.ValidationError({marker: 'Trạng thái tải ảnh không hợp lệ.'})
         return value
+
+    def allowed_change_fields(self):
+        return (
+            UPDATABLE_COMPANY_FIELDS
+            | {'benefits', 'offices'}
+            | {
+                'industries',
+                'primary_industry',
+                'gallery_deletions',
+                'logo_pending',
+                'cover_pending',
+                'gallery_pending',
+            }
+        )
 
     def validate(self, attrs):
         # Đổi MST/tên công ty phải kèm lý do + loại giấy tờ chứng minh.
@@ -341,6 +358,8 @@ class CompanyUpdateRequestSerializer(serializers.ModelSerializer):
                 )
             except ValueError as error:
                 raise serializers.ValidationError({field: str(error)}) from error
+
+        cleaned = normalize_page_content_changes(cleaned)
 
         if 'markets' in cleaned:
             invalid = set(cleaned['markets']) - set(Company.Market.values)
@@ -423,6 +442,13 @@ class CompanyUpdateRequestSerializer(serializers.ModelSerializer):
                 cleaned['trade_name'] = name
                 cleaned['trade_name_same_as_registered'] = True
         return cleaned
+
+
+class CompanyPageContentSerializer(CompanyUpdateRequestSerializer):
+    """Page workspace submission: the same rules, limited to page content keys."""
+
+    def allowed_change_fields(self):
+        return PAGE_WORKSPACE_FIELDS
 
 
 class CompanyUpdateRequestCloseSerializer(serializers.Serializer):

@@ -1,5 +1,9 @@
 """Public command API for the employers domain."""
 
+from ..models.verification import (
+    ACTIVE_COMPANY_UPDATE_STATUSES,
+    REQUESTER_EDITABLE_COMPANY_UPDATE_STATUSES,
+)
 from .campaigns import (
     change_campaign_status,
     create_campaign,
@@ -7,10 +11,8 @@ from .campaigns import (
     update_campaign,
 )
 from .companies import (
-    ACTIVE_COMPANY_UPDATE_STATUSES,
     COMPANY_DESCRIPTION_MIN_LENGTH,
     PRE_REVIEW_COMPANY_UPDATE_STATUSES,
-    REQUESTER_EDITABLE_COMPANY_UPDATE_STATUSES,
     SENSITIVE_FIELDS,
     UPDATABLE_COMPANY_FIELDS,
     CompanyUpdateConflict,
@@ -27,13 +29,31 @@ from .companies import (
     start_company_update_review,
     validate_company_update_revision,
 )
+from .company_follows import follow_company, unfollow_company
+from .company_page import (
+    CompanyPageLayoutStale,
+    set_company_page_policy_hold,
+    update_company_page_layout,
+)
+from .company_page_content import PAGE_CONTENT_FIELDS, normalize_page_content_changes
+from .company_page_editors import grant_company_page_editor, revoke_company_page_editor
 from .company_recovery import (
     COMPANY_UNLINK_PERMISSION,
     CompanyUnlinkError,
     company_unlink_impact,
     confirm_company_unlink,
 )
+from .company_reports import (
+    resolve_company_report,
+    reverse_company_report,
+    submit_company_report,
+)
 from .company_update_locks import lock_company_update_request
+from .company_update_submission import (
+    CompanyUpdateInReview,
+    lock_company_update_target,
+    submit_company_update_request,
+)
 from .compliance import (
     apply_dpa_hold,
     apply_expired_dpa_holds_batch,
@@ -85,7 +105,6 @@ from .profiles import (
     ensure_recruiter_candidate_data_access,
     ensure_recruiter_job_workspace,
     get_or_create_recruiter,
-    recruiter_candidate_data_access_allowed,
     recruiter_job_posting_entitlement,
     recruiter_job_publication_state,
     recruiter_posting_readiness,
@@ -96,7 +115,6 @@ from .recruitment_needs import (
     create_initial_recruitment_need,
 )
 from .tax_lookup import (
-    latest_tax_lookup_evidence,
     lookup_company_tax,
     queue_company_tax_lookup,
     refresh_company_update_tax_lookup,
@@ -191,7 +209,6 @@ __all__ = [
     'confirm_verification_lifecycle_action',
     'record_campaign_activity',
     'get_or_create_recruiter',
-    'recruiter_candidate_data_access_allowed',
     'recruiter_has_active_compliance_hold',
     'recruiter_job_publication_state',
     'recruiter_badge_eligibility',
@@ -201,7 +218,6 @@ __all__ = [
     'reconcile_verification_case',
     'recruiter_posting_readiness',
     'recruiter_readiness_state',
-    'latest_tax_lookup_evidence',
     'lookup_company_tax',
     'lock_company_update_request',
     'lock_verification_identity',
@@ -231,6 +247,21 @@ __all__ = [
     'verification_lifecycle_impact',
     'unlock_verification_resubmission',
     'set_company_industries',
+    'set_company_page_policy_hold',
+    'CompanyPageLayoutStale',
+    'update_company_page_layout',
+    'grant_company_page_editor',
+    'revoke_company_page_editor',
+    'follow_company',
+    'PAGE_CONTENT_FIELDS',
+    'normalize_page_content_changes',
+    'CompanyUpdateInReview',
+    'lock_company_update_target',
+    'submit_company_update_request',
+    'resolve_company_report',
+    'reverse_company_report',
+    'submit_company_report',
+    'unfollow_company',
     'update_campaign',
     'verify_sms_phone_challenge',
     'validate_employer_upload_structure',

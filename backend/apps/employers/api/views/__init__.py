@@ -12,6 +12,21 @@ from .campaigns import (
 )
 from .catalogs import AllIndustryListView, CompanyCatalogView, IndustryListView
 from .companies import CompanySearchView, CreateCompanyView, MyCompanyView, PublicCompanyListView
+from .company_follows import CompanyFollowView, FollowedCompanyListView
+from .company_page import (
+    PublicCompanyDetailView,
+    PublicCompanyJobFacetsView,
+    PublicCompanySimilarView,
+)
+from .company_page_workspace import (
+    CompanyPageContentView,
+    CompanyPageEditorDetailView,
+    CompanyPageEditorListView,
+    CompanyPageLayoutView,
+    CompanyPagePinnableJobsView,
+    CompanyPageWorkspaceView,
+)
+from .company_reports import CompanyReportCreateView
 from .domain_claims import (
     CompanyDomainClaimListCreateView,
     CompanyDomainClaimManualReviewView,
@@ -66,7 +81,19 @@ __all__ = [
     'CompanyGalleryUploadView',
     'CompanyLogoUploadView',
     'CompanySearchView',
+    'CompanyFollowView',
+    'CompanyPageContentView',
+    'CompanyPageEditorDetailView',
+    'CompanyPageEditorListView',
+    'CompanyPageLayoutView',
+    'CompanyPagePinnableJobsView',
+    'CompanyPageWorkspaceView',
+    'CompanyReportCreateView',
+    'FollowedCompanyListView',
+    'PublicCompanyDetailView',
+    'PublicCompanyJobFacetsView',
     'PublicCompanyListView',
+    'PublicCompanySimilarView',
     'CompanyDomainClaimListCreateView',
     'CompanyDomainClaimManualReviewView',
     'CompanyDomainClaimRotateView',

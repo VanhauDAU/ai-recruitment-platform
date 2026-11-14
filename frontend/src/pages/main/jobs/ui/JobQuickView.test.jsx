@@ -51,10 +51,10 @@ describe('JobQuickView company destination', () => {
     vi.useRealTimers()
   })
 
-  it('opens the filtered public company directory', async () => {
+  async function openCompanyPage(job) {
     render(
       <MemoryRouter>
-        <JobQuickView job={JOB} onClose={vi.fn()} />
+        <JobQuickView job={job} onClose={vi.fn()} />
       </MemoryRouter>,
     )
 
@@ -62,6 +62,16 @@ describe('JobQuickView company destination', () => {
       await vi.advanceTimersByTimeAsync(400)
     })
     fireEvent.click(screen.getByRole('button', { name: /Xem trang công ty/ }))
+  }
+
+  it('opens the company page by slug', async () => {
+    await openCompanyPage({ ...JOB, company_slug: 'alpha-partners' })
+
+    expect(mocks.navigate).toHaveBeenCalledWith('/cong-ty/alpha-partners')
+  })
+
+  it('falls back to the filtered public company directory without a company slug', async () => {
+    await openCompanyPage(JOB)
 
     expect(mocks.navigate).toHaveBeenCalledWith(
       '/cong-ty/tim-kiem?keyword=C%C3%B4ng+ty+Alpha+%26+Partners',

@@ -21,8 +21,8 @@ cho mỗi role (ràng buộc `(lower(email), role)`), mật khẩu riêng, phiê
 ## Công nghệ
 
 - **Backend**: Python, Django 5.1, Django REST Framework, SimpleJWT,
-  drf-spectacular (OpenAPI), Celery 5 + Redis, WeasyPrint/pypdfium2 (render
-  PDF CV), pypdf/python-docx (trích text import), `google-genai` (AI).
+  drf-spectacular (OpenAPI), Celery 5 + Redis, Playwright Chromium + trang in
+  frontend/pypdfium2 (render PDF và ảnh CV), pypdf/python-docx (trích text import), `google-genai` (AI).
 - **Dữ liệu**: PostgreSQL 16 (tìm kiếm không dấu bằng `unaccent`), Redis 7
   (cache, throttle, broker Celery), lưu file local hoặc Cloudflare R2
   ([`cloudflare-r2-media.md`](../06-deployment/cloudflare-r2-media.md)).
@@ -200,6 +200,7 @@ fail-fast khi cấu hình sai. Cờ rollout và cách tắt khẩn cấp:
 - [ADR-0014](./adr-0014-job-post-moderation.md): hậu kiểm tin thay cho duyệt trước.
 - [ADR-0015](./adr-0015-remove-commercial-services.md): gỡ dịch vụ thương mại.
 - [ADR-0016](./adr-0016-remove-two-factor-auth.md): gỡ xác thực hai bước.
+- [ADR-0017](./adr-0017-company-page.md): trang công ty công khai và quyền biên tập.
 - [`cv-builder-architecture-foundation.md`](./cv-builder-architecture-foundation.md): kiến trúc CV Builder.
 - [`employer-remediation-decision-log.md`](./employer-remediation-decision-log.md),
   [`chatbot-local-decision-log.md`](./chatbot-local-decision-log.md): nhật ký quyết định theo mảng.

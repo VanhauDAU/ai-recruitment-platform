@@ -1,13 +1,17 @@
+import layouts from './cv-layouts.json'
 import { getOrderedItems } from './layout'
 
-export const RENDERER_CONTRACTS = Object.freeze({
-  classic_single_column_v1: { key: 'classic_single_column_v1', regions: ['main'], columns: 1, rows: [['main']] },
-  classic_two_column_v1: { key: 'classic_two_column_v1', regions: ['main', 'sidebar'], columns: 2, rows: [['main', 'sidebar']] },
-  header_two_column_v1: { key: 'header_two_column_v1', regions: ['header', 'main', 'sidebar'], columns: 2, rows: [['header'], ['main', 'sidebar']] },
-})
+// Registry layout dùng chung với backend (backend/apps/cv_templates/layouts.json;
+// cv-layouts.test.js giữ hai bản giống nhau). Mọi layout render bằng một renderer
+// chung nên thêm layout chỉ cần thêm dữ liệu, không thêm component.
+export const DEFAULT_LAYOUT_KEY = 'single_column_v1'
+
+export const RENDERER_CONTRACTS = Object.freeze(Object.fromEntries(
+  Object.entries(layouts).map(([key, layout]) => [key, Object.freeze({ key, ...layout })]),
+))
 
 export function getRendererContract(rendererKey) {
-  return RENDERER_CONTRACTS[rendererKey] || RENDERER_CONTRACTS.classic_single_column_v1
+  return RENDERER_CONTRACTS[rendererKey] || RENDERER_CONTRACTS[DEFAULT_LAYOUT_KEY]
 }
 
 export function projectDocumentForRenderer({ content_json, layout_json }, rendererKey) {
@@ -21,17 +25,24 @@ export function projectDocumentForRenderer({ content_json, layout_json }, render
   const hiddenIds = new Set(layout_json.hidden_section_instance_ids || [])
   const configuredRegions = new Map((layout_json.regions || []).map((region) => [region.id, region]))
   const regions = contract.regions
-    .filter((regionKey) => configuredRegions.has(regionKey))
-    .map((regionKey) => {
-      const region = configuredRegions.get(regionKey)
+    .filter((spec) => configuredRegions.has(spec.id))
+    .map((spec) => {
+      const region = configuredRegions.get(spec.id)
       const sections = (region.section_instance_ids || [])
         .map((instanceId) => byId.get(instanceId))
         .filter(Boolean)
       sections.forEach((section) => assignedIds.add(section.instance_id))
-      return { id: regionKey, row: region.row ?? 0, widthPercent: region.width_percent, sections }
+      return {
+        id: spec.id,
+        row: region.row ?? spec.row,
+        widthPercent: region.width_percent ?? spec.width,
+        tone: spec.tone,
+        arrange: spec.arrange,
+        sections,
+      }
     })
 
-  if (regions.length === 0) regions.push({ id: 'main', widthPercent: 100, sections: [] })
+  if (regions.length === 0) regions.push({ id: 'main', row: 0, widthPercent: 100, tone: 'plain', arrange: 'stack', sections: [] })
   const unassignedSections = content_json.sections
     .filter((section) => !assignedIds.has(section.instance_id) && !hiddenIds.has(section.instance_id))
     .map((section) => byId.get(section.instance_id))
@@ -39,18 +50,19 @@ export function projectDocumentForRenderer({ content_json, layout_json }, render
   return { contract, regions }
 }
 
-function paginateMeasuredRegion(region, measurements, pageCapacityPx) {
+function paginateMeasuredRegion(region, measurements, capacityOf) {
   const sectionHeights = measurements.sections || measurements
   const itemHeights = measurements.items || {}
   const pages = [[]]
   let used = 0
+  const capacity = () => capacityOf(pages.length - 1)
   for (const section of region.sections) {
     const sectionHeight = Number(sectionHeights[section.instance_id])
     const measuredItems = section.items.map((item) => Number(itemHeights[`${section.instance_id}:${item.item_id}`]))
     const canSplitItems = section.items.length > 1 && measuredItems.every((height) => Number.isFinite(height) && height > 0)
     if (!canSplitItems) {
       const height = Number.isFinite(sectionHeight) && sectionHeight > 0 ? sectionHeight : Math.max(72, estimatedSectionHeight(section) * 14)
-      if (pages.at(-1).length && used + height > pageCapacityPx) {
+      if (pages.at(-1).length && used + height > capacity()) {
         pages.push([])
         used = 0
       }
@@ -66,14 +78,14 @@ function paginateMeasuredRegion(region, measurements, pageCapacityPx) {
     for (let index = 0; index < section.items.length; index += 1) {
       const item = section.items[index]
       const itemHeight = measuredItems[index]
-      if (segment.length && used + segmentHeight + itemHeight > pageCapacityPx) {
+      if (segment.length && used + segmentHeight + itemHeight > capacity()) {
         pages.at(-1).push({ ...section, items: segment })
         used += segmentHeight
         pages.push([])
         used = 0
         segment = []
         segmentHeight = headingHeight
-      } else if (!segment.length && pages.at(-1).length && used + segmentHeight + itemHeight > pageCapacityPx) {
+      } else if (!segment.length && pages.at(-1).length && used + segmentHeight + itemHeight > capacity()) {
         pages.push([])
         used = 0
       }
@@ -88,10 +100,16 @@ function paginateMeasuredRegion(region, measurements, pageCapacityPx) {
   return pages
 }
 
-export function paginateMeasuredProjection(projection, measurements = {}, pageCapacityPx = 900) {
-  const regionPages = projection.regions.map((region) => {
-    return paginateMeasuredRegion(region, measurements, pageCapacityPx)
-  })
+// Nội dung chỉ chảy sang trang sau ở hàng cuối (thân CV). Các hàng phía trên
+// (header) chỉ nằm ở trang 1 và chiếm `firstPageReserved` của sức chứa trang 1.
+export function paginateMeasuredProjection(projection, measurements = {}, capacity = {}) {
+  const pageCapacity = capacity.page || 900
+  const reserved = capacity.firstPageReserved || 0
+  const bodyRow = Math.max(...projection.regions.map((region) => region.row ?? 0))
+  const capacityOf = (pageIndex) => pageCapacity - (pageIndex === 0 ? reserved : 0)
+  const regionPages = projection.regions.map((region) => ((region.row ?? 0) < bodyRow
+    ? [region.sections]
+    : paginateMeasuredRegion(region, measurements, capacityOf)))
   const pageCount = Math.max(1, ...regionPages.map((pages) => pages.length))
   return Array.from({ length: pageCount }, (_, index) => ({
     number: index + 1,
@@ -108,33 +126,4 @@ function estimatedSectionHeight(section) {
     return total + 3 + Math.ceil(descriptionLength / 90)
   }, 0)
   return 4 + itemHeight
-}
-
-function paginateRegion(region, pageCapacity) {
-  const pages = [[]]
-  let currentHeight = 0
-  for (const section of region.sections) {
-    const height = estimatedSectionHeight(section)
-    if (pages.at(-1).length && currentHeight + height > pageCapacity) {
-      pages.push([])
-      currentHeight = 0
-    }
-    pages.at(-1).push(section)
-    currentHeight += height
-  }
-  return pages
-}
-
-// Presentation-only pagination: it keeps section and item references intact
-// while exposing visual A4 page breaks before the browser's final layout pass.
-export function paginateRendererProjection(projection, pageCapacity = 42) {
-  const regionPages = projection.regions.map((region) => paginateRegion(region, pageCapacity))
-  const pageCount = Math.max(1, ...regionPages.map((pages) => pages.length))
-  return Array.from({ length: pageCount }, (_, index) => ({
-    number: index + 1,
-    regions: projection.regions.map((region, regionIndex) => ({
-      ...region,
-      sections: regionPages[regionIndex][index] || [],
-    })),
-  }))
 }

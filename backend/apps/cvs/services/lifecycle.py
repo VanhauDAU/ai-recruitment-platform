@@ -2,11 +2,17 @@
 
 from copy import deepcopy
 
+from django.core.cache import cache
 from django.db import transaction
 from django.db.models import F
 from django.utils import timezone
 
-from apps.cv_templates.models import DEFAULT_EXPERIENCE_BAND, CvSampleContent, CvTemplate
+from apps.cv_templates.models import (
+    DEFAULT_CV_LANGUAGE,
+    DEFAULT_EXPERIENCE_BAND,
+    CvSampleContent,
+    CvTemplate,
+)
 from apps.cv_templates.services import resolve_position_content
 
 from ..models import CvDraft, CvVersion, UserCv
@@ -24,24 +30,24 @@ class CvLifecyclePolicyError(ValueError):
     """The requested lifecycle action violates a CV business policy."""
 
 
-def _content_for_create(sample_content, position, language, experience_band):
-    if position is not None:
-        return resolve_position_content(
-            position=position,
-            locale=language,
-            experience_band=experience_band,
-            lock=True,
-        )['content_json']
-    if sample_content is None:
+class CvCreateInProgress(RuntimeError):
+    """Một yêu cầu tạo CV cùng Idempotency-Key đang chạy."""
+
+
+# Bấm "Tạo CV" hai lần (hoặc mạng gửi lại) với cùng Idempotency-Key chỉ tạo một CV.
+CREATE_IDEMPOTENCY_TTL_SECONDS = 10 * 60
+_CREATE_PENDING = 'pending'
+
+
+def _content_for_create(position, language, experience_band):
+    if position is None:
         return empty_content(language)
-    sample_content = CvSampleContent.objects.select_for_update().get(pk=sample_content.pk)
-    if sample_content.status != CvSampleContent.Status.PUBLISHED:
-        raise CvLifecyclePolicyError('The selected sample content is not published.')
-    if sample_content.locale != language:
-        raise CvLifecyclePolicyError(
-            'The selected sample content is not available in this language.'
-        )
-    return sample_content.content_json
+    return resolve_position_content(
+        position=position,
+        locale=language,
+        experience_band=experience_band,
+        lock=True,
+    )['content_json']
 
 
 @transaction.atomic
@@ -50,8 +56,7 @@ def create_v2_cv(
     actor,
     title,
     template,
-    language='vi-VN',
-    sample_content=None,
+    language=DEFAULT_CV_LANGUAGE,
     position=None,
     experience_band=DEFAULT_EXPERIENCE_BAND,
     source_cv=None,
@@ -85,7 +90,7 @@ def create_v2_cv(
         language = content.get('locale') or source_cv.language
         position = source_cv.position
     else:
-        content = _content_for_create(sample_content, position, language, experience_band)
+        content = _content_for_create(position, language, experience_band)
         content = overlay_actor_identity(content, actor, clear_demo_contacts=True)
     try:
         document = compose_cv_document(
@@ -107,9 +112,6 @@ def create_v2_cv(
         source=UserCv.Source.BUILDER,
         title=title,
         language=language,
-        # Retained only for legacy dual-read while V2 is rolled out.
-        cv_data=content,
-        style_config=style,
     )
     create_version(
         cv=cv,
@@ -253,18 +255,7 @@ def switch_draft_template(
     previous_template_id = cv.template_id
     cv.template = template
     cv.current_template_version = template_version
-    # Preserve legacy dual-read projections while the V1 API remains available.
-    cv.cv_data = content
-    cv.style_config = style
-    cv.save(
-        update_fields=[
-            'template',
-            'current_template_version',
-            'cv_data',
-            'style_config',
-            'updated_at',
-        ]
-    )
+    cv.save(update_fields=['template', 'current_template_version', 'updated_at'])
     if previous_template_id != template.pk:
         CvTemplate.objects.filter(pk=template.pk).update(usage_count=F('usage_count') + 1)
     return cv, draft
@@ -344,9 +335,31 @@ def apply_sample_to_draft(
             'updated_at',
         ]
     )
-    UserCv.objects.filter(pk=cv.pk).update(
-        cv_data=merged,
-        style_config=style,
-        updated_at=timezone.now(),
-    )
+    UserCv.objects.filter(pk=cv.pk).update(updated_at=timezone.now())
     return draft
+
+
+def create_v2_cv_once(*, actor, idempotency_key='', **fields):
+    """`create_v2_cv` an toàn khi gửi lại: trả `(cv, replayed)`.
+
+    Khóa gắn với người dùng nên không ai đoán khóa để lấy CV của người khác.
+    """
+    key = (idempotency_key or '').strip()[:100]
+    if not key:
+        return create_v2_cv(actor=actor, **fields), False
+    cache_key = f'cv-create:{actor.pk}:{key}'
+    existing = cache.get(cache_key)
+    if existing and existing != _CREATE_PENDING:
+        cv = UserCv.objects.filter(user=actor, public_id=existing).first()
+        if cv is not None:
+            return cv, True
+        cache.delete(cache_key)  # CV đã bị xóa: cho tạo lại.
+    if not cache.add(cache_key, _CREATE_PENDING, CREATE_IDEMPOTENCY_TTL_SECONDS):
+        raise CvCreateInProgress('A CV with this Idempotency-Key is being created.')
+    try:
+        cv = create_v2_cv(actor=actor, **fields)
+    except Exception:
+        cache.delete(cache_key)
+        raise
+    cache.set(cache_key, cv.public_id, CREATE_IDEMPOTENCY_TTL_SECONDS)
+    return cv, False

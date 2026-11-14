@@ -3,7 +3,6 @@ import { Select, Spin, Upload } from 'antd'
 import { Link } from 'react-router'
 import { useSiteSettings } from '@/entities/site-settings'
 import { getUploadStatePresentation } from '@/shared/api/upload-session'
-import { useCvSource } from '../model/use-cv-source'
 
 function SourceOption({ value, current, onSelect, title, note, disabled, children }) {
   const active = current === value
@@ -40,34 +39,24 @@ function SourceOption({ value, current, onSelect, title, note, disabled, childre
   )
 }
 
-// Cha phải đặt `key={`${template.public_id}:${locale}`}` để panel mount lại khi đổi mẫu/ngôn ngữ.
-export default function CvSourcePanel({
-  template,
-  locale = 'vi-VN',
-  themeColor,
-  initialSelection,
-  onSelectionChange,
-  onCreated,
-  onBack,
-  onPreviewChange,
-  onRequireLogin,
-}) {
+// Chỉ hiển thị: trạng thái và hành động đến từ `useCvSource` (cha giữ lựa chọn).
+// `showActions=false` khi cha tự đặt nút Tạo CV (thanh dưới cùng trên mobile).
+export default function CvSourcePanel({ cv, onBack, showActions = true }) {
   const { siteName } = useSiteSettings()
   const {
     languages,
     source,
-    setSource,
     myCvs,
     selectedCvId,
     setSelectedCvId,
     sampleLocale,
-    setSampleLocale,
     positions,
+    position,
     loadingPositions,
-    loadingPreview,
-    previewError,
-    selectedPosition,
-    setSelectedPosition,
+    preview,
+    experienceBands,
+    experienceBand,
+    select,
     submitting,
     setUploadFile,
     clearUpload,
@@ -78,16 +67,8 @@ export default function CvSourcePanel({
     canSubmit,
     retryUpload,
     submit,
-  } = useCvSource({
-    template,
-    locale,
-    themeColor,
-    initialSelection,
-    onSelectionChange,
-    onCreated,
-    onPreviewChange,
-    onRequireLogin,
-  })
+  } = cv
+  const setSource = (next) => select({ source: next })
   const uploadStateMeta = getUploadStatePresentation(uploadState)
 
   return (
@@ -101,7 +82,7 @@ export default function CvSourcePanel({
                 <button
                   key={item.code}
                   type="button"
-                  onClick={() => setSampleLocale(item.code)}
+                  onClick={() => select({ sampleLocale: item.code })}
                   className={[
                     'rounded-full px-3 py-1 text-xs font-medium transition cursor-pointer',
                     sampleLocale === item.code
@@ -119,17 +100,40 @@ export default function CvSourcePanel({
               virtual={false}
               className="w-full"
               placeholder="Nhập để tìm kiếm vị trí"
-              loading={loadingPositions || loadingPreview}
-              value={selectedPosition}
-              onChange={(val) => setSelectedPosition(val)}
+              loading={loadingPositions || preview.updating}
+              value={position?.slug}
+              onChange={(slug) => select({ positionSlug: slug })}
               optionFilterProp="label"
               notFoundContent={loadingPositions ? <Spin size="small" /> : 'Không tìm thấy vị trí chuyên môn'}
-              options={positions.map((position) => ({
-                value: position.public_id,
-                label: position.display_name || position.name_vi,
+              options={positions.map((item) => ({
+                value: item.slug,
+                label: item.display_name || item.name_vi,
               }))}
             />
-            {previewError && <p className="mt-1.5 text-xs leading-5 text-amber-600">{previewError}</p>}
+            <p className="mb-1.5 mt-3 text-xs font-semibold text-slate-700">Số năm kinh nghiệm</p>
+            <div role="radiogroup" aria-label="Số năm kinh nghiệm" className="flex flex-wrap gap-1.5">
+              {experienceBands.map((band) => (
+                <button
+                  key={band.value}
+                  type="button"
+                  role="radio"
+                  aria-checked={experienceBand === band.value}
+                  title={band.who}
+                  onClick={() => select({ experienceBand: band.value })}
+                  className={[
+                    'rounded-full px-3 py-1 text-xs font-medium transition cursor-pointer',
+                    experienceBand === band.value
+                      ? 'bg-[var(--brand-primary)] text-white'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200',
+                  ].join(' ')}
+                >
+                  {band.label}
+                </button>
+              ))}
+            </div>
+            <p className="mt-1 text-[11px] leading-4 text-slate-500">Nội dung gợi ý được viết theo mức kinh nghiệm bạn chọn.</p>
+            {preview.empty && <p className="mt-1.5 text-xs leading-5 text-amber-600">Chưa có nội dung CV mẫu cho ngôn ngữ này.</p>}
+            {preview.error && <p className="mt-1.5 text-xs leading-5 text-amber-600">Không thể tải bản xem trước. Vui lòng chọn lại nội dung.</p>}
           </div>
         </SourceOption>
 
@@ -207,7 +211,7 @@ export default function CvSourcePanel({
         />
       </div>
 
-      <div className="mt-4 border-t border-slate-200 pt-4">
+      {showActions && <div className="mt-4 border-t border-slate-200 pt-4">
         <button
           type="button"
           disabled={!canSubmit || submitting}
@@ -226,7 +230,7 @@ export default function CvSourcePanel({
             ← Quay lại danh sách mẫu CV
           </button>
         )}
-      </div>
+      </div>}
     </>
   )
 }

@@ -1,27 +1,24 @@
 """Read-only company queries."""
 
 from django.db.models import (
+    Case,
     Count,
     Exists,
-    F,
+    IntegerField,
     Max,
     OuterRef,
     Q,
     Subquery,
+    Value,
+    When,
 )
 from django.db.models.functions import Coalesce, Length, Trim
 
-from apps.accounts.models import User
 from apps.jobs.models import Job
 from common.db.search import fold_accents, search_q
 
-from ..models import (
-    Company,
-    CompanyDocument,
-    CompanyIndustry,
-    EmployerVerificationCase,
-    RecruiterProfile,
-)
+from ..models import Company, CompanyIndustry
+from ..models.representation import eligible_representatives_queryset
 
 PUBLIC_COMPANY_FIELDS = (
     'id',
@@ -49,82 +46,28 @@ def _catalog_companies_queryset():
     )
 
 
-def _eligible_representatives_queryset():
-    """Recruiters whose current legal evidence authorizes this company link."""
-    current_approved_documents = CompanyDocument.objects.filter(
-        verification_case_id=OuterRef('verification_case'),
-        company_id=OuterRef('company_id'),
-        is_current=True,
-        status=CompanyDocument.Status.APPROVED,
-    )
-    return (
-        RecruiterProfile.objects.filter(
-            company_id__isnull=False,
-            user__role=User.Role.EMPLOYER,
-            user__status=User.Status.ACTIVE,
-            user__is_active=True,
-            user__is_deleted=False,
-            verification_case__status=EmployerVerificationCase.Status.APPROVED,
-            verification_case__company_id=F('company_id'),
-        )
-        .alias(
-            _has_business_registration=Exists(
-                current_approved_documents.filter(
-                    doc_type=CompanyDocument.DocType.BUSINESS_REGISTRATION,
-                )
-            ),
-            _has_authorization=Exists(
-                current_approved_documents.filter(
-                    doc_type=CompanyDocument.DocType.AUTHORIZATION_LETTER,
-                )
-            ),
-            _has_identity_document=Exists(
-                current_approved_documents.filter(
-                    doc_type=CompanyDocument.DocType.IDENTITY_DOCUMENT,
-                )
-            ),
-        )
-        .filter(
-            Q(
-                verification_case__verification_method=(
-                    EmployerVerificationCase.VerificationMethod.BUSINESS_REGISTRATION
-                ),
-                _has_business_registration=True,
-            )
-            | Q(
-                verification_case__verification_method=(
-                    EmployerVerificationCase.VerificationMethod.AUTHORIZATION_AND_ID
-                ),
-                _has_authorization=True,
-                _has_identity_document=True,
-            )
-        )
-    )
-
-
-def _legally_represented_companies_queryset():
-    eligible_representatives = _eligible_representatives_queryset().filter(
-        company_id=OuterRef('pk')
-    )
+def legally_represented_companies_queryset():
+    eligible_representatives = eligible_representatives_queryset().filter(company_id=OuterRef('pk'))
     return Company.objects.alias(
         _has_eligible_representative=Exists(eligible_representatives),
     ).filter(_has_eligible_representative=True)
 
 
-def _public_company_projection(queryset):
+def public_company_projection(queryset):
     return queryset.only(*PUBLIC_COMPANY_FIELDS).prefetch_related('industries')
 
 
 def _featured_company_candidates_queryset():
     has_industry = CompanyIndustry.objects.filter(company_id=OuterRef('pk'))
     return (
-        _legally_represented_companies_queryset()
+        legally_represented_companies_queryset()
         .alias(
             _logo_length=Length(Trim('logo_url')),
             _cover_length=Length(Trim('cover_image_url')),
             _has_industry=Exists(has_industry),
         )
         .filter(
+            content_policy_hold=False,
             _logo_length__gt=0,
             _cover_length__gt=0,
             _has_industry=True,
@@ -170,7 +113,7 @@ def featured_public_companies(*, limit=18):
     company_ids = [item['company_id'] for item in metrics]
     companies_by_id = {
         company.pk: company
-        for company in _public_company_projection(
+        for company in public_company_projection(
             Company.objects.filter(pk__in=company_ids),
         )
     }
@@ -183,6 +126,48 @@ def featured_public_companies(*, limit=18):
         company.latest_public_job_at = item['latest_public_job_at']
         ranked_companies.append(company)
     return ranked_companies
+
+
+def similar_public_companies(company, *, limit=6):
+    """Visible companies sharing ``company``'s primary industry, hiring ones first.
+
+    Like the featured pool, one canonical job aggregate over the candidate set
+    ranks the hiring companies; a single projection query then fills the
+    remaining slots by name. A correlated count would rerun the canonical
+    predicate for every company of the industry before the limit.
+    """
+    primary_industry = CompanyIndustry.objects.filter(company_id=company.pk, is_primary=True)
+    candidates = Company.objects.filter(
+        content_policy_hold=False,
+        company_industries__is_primary=True,
+        company_industries__industry_id__in=primary_industry.values('industry_id'),
+    ).exclude(pk=company.pk)
+    counts = {
+        item['company_id']: item['active_public_job_count']
+        for item in (
+            Job.publicly_available_queryset()
+            .filter(company_id__in=Subquery(candidates.order_by().values('pk')))
+            .order_by()
+            .values('company_id')
+            .annotate(active_public_job_count=Count('id', distinct=True))
+            .order_by('-active_public_job_count', 'company_id')[:limit]
+        )
+    }
+    ordering = ['company_name', 'id']
+    if counts:
+        hiring_rank = Case(
+            *(
+                When(pk=company_id, then=Value(position))
+                for position, company_id in enumerate(counts)
+            ),
+            default=Value(len(counts)),
+            output_field=IntegerField(),
+        )
+        ordering.insert(0, hiring_rank)
+    companies = list(public_company_projection(candidates).order_by(*ordering)[:limit])
+    for similar in companies:
+        similar.active_public_job_count = counts.get(similar.pk, 0)
+    return companies
 
 
 def attach_active_public_job_counts(companies):
@@ -233,12 +218,12 @@ def search_companies(text):
 
 
 def public_company_search_queryset(*, query):
-    """Return every name-matching company in stable cursor order."""
+    """Return every visible name-matching company in stable cursor order."""
     query = (query or '').strip()
-    queryset = Company.objects.all()
+    queryset = Company.objects.filter(content_policy_hold=False)
     if query:
         queryset = queryset.filter(
             _folded_company_search_q('company_name_search', query)
             | _folded_company_search_q('trade_name_search', query)
         )
-    return _public_company_projection(queryset).order_by('slug')
+    return public_company_projection(queryset).order_by('slug')

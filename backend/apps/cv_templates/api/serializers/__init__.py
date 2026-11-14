@@ -10,7 +10,6 @@ from .v2 import (
     CvCategorySerializer,
     CvPositionOptionSerializer,
     CvSampleContentCardSerializer,
-    CvSampleContentDetailSerializer,
     CvTemplateCardSerializer,
     CvTemplateDetailSerializer,
 )
@@ -23,7 +22,6 @@ __all__ = [
     'CvPositionOptionSerializer',
     'CvSampleContentAdminSerializer',
     'CvSampleContentCardSerializer',
-    'CvSampleContentDetailSerializer',
     'CvTemplateAdminSerializer',
     'CvTemplateCardSerializer',
     'CvTemplateDetailSerializer',

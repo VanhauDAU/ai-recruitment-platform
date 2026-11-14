@@ -34,6 +34,10 @@ export const NOTIFICATION_SETTING_GROUPS = [
         label: 'Thông báo việc làm phù hợp',
       },
       {
+        key: 'followed_company_jobs',
+        label: 'Việc làm mới từ công ty đang theo dõi',
+      },
+      {
         key: 'top_candidate_alerts',
         label: 'Thông báo việc làm bạn là ứng viên hàng đầu',
       },

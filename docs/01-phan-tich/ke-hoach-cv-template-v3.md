@@ -292,7 +292,7 @@ Rủi ro lớn nhất của 8 layout là viết mỗi layout hai lần (React + 
 - **Phương án A (khuyên dùng):** xuất PDF bằng headless Chromium (Playwright trong worker Celery) render chính trang `/cvs/:id/print` của frontend. Một renderer duy nhất, khớp tuyệt đối. Chi phí: image worker nặng hơn (~400 MB), mỗi PDF ~1–2 s.
 - **Phương án B:** giữ WeasyPrint, viết song song template Django cho từng layout, kèm golden test so ảnh trang đầu (pixel diff ≤ 2%).
 
-Quyết định A/B ở đầu `CVT-2` sau khi đo thời gian xuất trên máy dev (spike 1 ngày).
+**Đã chốt A (CVT-2).** Trang in là entry riêng `cv-print.html` của frontend (không qua router/đăng nhập); worker đưa document vào bằng `page.evaluate`, ảnh nhúng `data:`, trang chỉ được tải tài nguyên cùng origin. Đo trên máy dev: ~0,2 s/PDF khi Chromium đã chạy, ~0,9 s lần đầu; image backend tăng do Chromium headless shell.
 
 ---
 
@@ -616,7 +616,7 @@ Tách hai PR để giữ dưới ngưỡng 60 file của quy trình PR:
   `locale_ref`, tab "Ngôn ngữ" ở admin và entity frontend `locale`; xóa dữ liệu
   mẫu/blueprint/taxonomy tiếng Nhật, Trung. **Không xóa CV người dùng**: các bước
   này không cần đến (điều chỉnh D10).
-- **CVT-1b — Vị trí và nội dung mẫu (🟨 chờ review PR):**
+- **CVT-1b — Vị trí và nội dung mẫu (✅ PR #180):**
   `CvPositionProfile`, `ExperienceBand`, `CvSampleContent` theo
   `(position_profile, locale, experience_band)`, bỏ `CvContentBlueprint` (blueprint
   thành nội dung chung bằng data migration), resolver/picker/preview/tạo CV theo
@@ -624,9 +624,17 @@ Tách hai PR để giữ dưới ngưỡng 60 file của quy trình PR:
   riêng 9 vị trí chuyên môn), gỡ tab/menu "Blueprint" và mục menu "Ngôn ngữ" còn
   sót từ CVT-1a. Danh sách 30 vị trí ưu tiên (I1) chưa có: hồ sơ được tạo cho mọi
   vị trí chuyên môn đang hoạt động.
-- **CVT-1c — Trường matching và dọn legacy:** gỡ `UserCv.cv_data/style_config/status`,
-  `CvTemplate.category/status/layout_config/style_config`, thêm
-  `experience_years`/`position_level`/`education_level` (mục 5.6).
+- **CVT-1c — Trường matching và dọn legacy (✅ PR #181):** thêm
+  `UserCv.experience_years` (giá trị `Job.ExperienceYears`) tính từ mục kinh nghiệm
+  ở mỗi `create_version`, gợi ý việc làm theo CV dùng giá trị này; vị trí mục tiêu
+  dùng `UserCv.position` có sẵn. Gỡ `UserCv.cv_data/style_config/status/
+  current_version/raw_text/normalized_text/pdf_url/last_analyzed_at`,
+  `CvTemplate.category/status/layout_config/style_config/thumbnail_url/preview_url`
+  (ảnh lấy từ màu mặc định), `theme_color`/`color_variants` trên card, đầu vào
+  `sample_content_public_id` khi tạo CV và endpoint chi tiết nội dung mẫu, adapter
+  V1 (`canonicalize_legacy_cv_data`, `sync_legacy_builder_draft`,
+  `update_builder_cv`). `position_level`/`education_level` chuyển sang CVT-3, khi
+  form nhập liệu là nguồn dữ liệu.
 
 Section mới và `schema_version 2` chuyển sang CVT-3, làm cùng form nhập liệu, để
 không đăng ký section chưa có giao diện dùng.
@@ -642,6 +650,7 @@ không đăng ký section chưa có giao diện dùng.
 - **Công việc:** layout registry BE/FE + test đồng bộ; bỏ header cứng; 8 renderer React lazy-load; avatar; editor kéo thả giữa vùng, kéo độ rộng cột; xuất PDF theo phương án đã chọn; sinh thumbnail theo màu.
 - **Đầu ra:** renderer, contract, test golden ảnh từng layout (3 bộ nội dung: ngắn, trung bình, 3 trang).
 - **Nghiệm thu:** mỗi layout render đúng ở preview, editor, PDF (sai lệch ≤ 2% pixel trang đầu); ngắt trang không cắt đôi dòng; nameplate/contact/avatar đặt được ở mọi vùng layout cho phép.
+- **Thực hiện (✅ PR #182):** thay 8 component lazy bằng một renderer chung đọc registry (mỗi layout chỉ là dữ liệu: hàng, độ rộng, tone, cách xếp, biến thể), nên thêm layout không cần code React mới. Vì PDF in từ chính renderer đó, so pixel preview–PDF không còn cần: e2e `cv-print.spec.js` kiểm từng layout trên trang in (tỉ lệ cột, tên/ảnh đúng vùng, không tràn ngang, nội dung dài sang trang theo từng mục). Font chốt 4 font OFL tự host (I5). Thiết kế 8 layout do dev phác, người dùng duyệt qua ảnh chụp (I2).
 
 ### CVT-3 — Vị trí, trường riêng, nội dung mẫu
 
@@ -649,6 +658,7 @@ không đăng ký section chưa có giao diện dùng.
 - **Công việc:** service/selectors cho profile, field, resolver; section `position_details` trong editor (form sinh từ định nghĩa trường); service sinh nội dung mẫu qua runtime `ai_core` + job Celery batch + validator chống PII; import/export JSON.
 - **Đầu ra:** API admin vị trí/nội dung, task sinh AI, test.
 - **Nghiệm thu:** chọn "Kỹ sư phần mềm" và "Nhân viên kinh doanh" cho ra bộ section khác nhau và trường riêng khác nhau; sinh 8 nội dung (1 vị trí × 4 nhóm kinh nghiệm × 2 ngôn ngữ) trong < 2 phút, tất cả qua validator.
+- **Thực hiện (🟨 xong code):** đạt cả hai tiêu chí (test `test_positions_get_different_section_sets_and_their_own_fields`; chạy thật 8 nội dung Sales Online xong trong ~13 giây). Điều chỉnh so với kế hoạch, để không phức tạp hơn mức cần: trường riêng là item của section `position_details` (dùng chung cơ chế item, id ổn định) thay vì mảng `fields`; document giữ `schema_version 1` vì chỉ bổ sung trường tùy chọn; kỹ năng khớp taxonomy theo tên chuẩn hóa/alias khi lưu version thay vì bắt ứng viên chọn `skill_id`; ngoại ngữ CEFR hoãn tới khi JD có yêu cầu ngoại ngữ; lượt sinh AI là model `CvSampleGeneration` để admin theo dõi theo `batch_id`; ràng buộc unique của nội dung mẫu chỉ áp cho bản xuất bản. Giao diện admin cho các API này làm ở CVT-4 (cổng hiện tại đã duyệt được bản AI).
 
 ### CVT-4 — Cổng quản trị mới
 
@@ -656,12 +666,14 @@ không đăng ký section chưa có giao diện dùng.
 - **Công việc:** 6 trang mục 9; wizard 6 bước có autosave; ma trận độ phủ; hàng đợi duyệt AI; CV ứng viên có audit; permission mới; xóa widget/route cũ.
 - **Đầu ra:** `widgets/admin-cv-*` mới, page admin, route, E2E.
 - **Nghiệm thu:** một admin chưa từng dùng tạo và xuất bản template mới trong ≤ 10 phút (đo bằng thử nghiệm người dùng); không có màn nào yêu cầu sửa JSON thô; không cuộn ngang ở 1280 px; dùng được ở 768 px.
+- **Thực hiện (🟨 xong code):** sau thử nghiệm, wizard 6 bước được thay bằng **một trang chỉnh sửa** (thiết lập bên trái gồm Thông tin, Bố cục, Màu & chữ, Các mục — thu gọn mặc định; xem trước dính bên phải; mọi thay đổi tự lưu vào bản nháp tạo tự động). Tạo mẫu chỉ hỏi tên VI/EN và bố cục; backend xếp sẵn mục theo bản đồ `section_plans` dùng chung với seed và gán 6 màu đầu thư viện, nên mẫu mới chỉ còn thiếu PDF thử là xuất bản được. Xuất bản qua hộp checklist có nút PDF thử ngay tại chỗ. Màn hẹp: thiết lập và xem trước là hai tab.
 
 ### CVT-5 — Trang chi tiết mẫu và tạo CV
 
 - **Đầu vào:** layout và API vị trí.
 - **Công việc:** mục 7 đầy đủ: URL state, TanStack Query, panel 4 nguồn, bottom sheet mobile, kho mẫu có bộ lọc mới, tạo CV có idempotency, quay lại đúng URL sau đăng nhập.
 - **Nghiệm thu:** mọi tổ hợp lựa chọn phản ánh đúng ở preview, H1, breadcrumb, `<title>`, URL; đổi màu tức thì; đạt các mục tiêu hiệu năng mục 11 trên Lighthouse mobile.
+- **Thực hiện (🟨 xong code):** `use-template-selection` (trang) đọc/ghi query string; `useCvSource` (feature) nhận lựa chọn từ ngoài nên không còn effect khởi tạo/reset, dữ liệu qua TanStack Query; `CvSourcePanel`/`CvSourcePreview` chỉ hiển thị, dùng chung cho trang chi tiết và hộp "Dùng mẫu". Điều chỉnh: vị trí mặc định không đưa lên URL (giữ trang gốc được lập chỉ mục); "quay lại đúng URL sau đăng nhập" thành đăng nhập bằng hộp thoại ngay tại trang rồi tự tạo CV một lần (upload thì chỉ mở đăng nhập vì tệp không giữ được); idempotency của tạo CV dùng cache 10 phút theo người dùng thay vì cột mới. Lọc kho mẫu theo vị trí chưa làm vì mẫu chưa gắn vị trí; Lighthouse chưa đo (CVT-7).
 
 ### CVT-6 — Upload, trích xuất, rà soát
 
@@ -774,6 +786,6 @@ Hoặc `./scripts/check_all.sh`. Lệnh `manage.py` chạy qua `docker exec` đ�
 
 ## 19. Câu hỏi còn mở
 
-1. Phương án PDF A (Chromium) hay B (WeasyPrint song song) — chốt sau spike đầu CVT-2.
+1. ~~Phương án PDF A hay B~~ — đã chốt A (Chromium) ở CVT-2.
 2. Có hiển thị số lượt dùng mẫu ("1.2k người đã dùng") trên kho mẫu không.
 3. Có cho ứng viên lưu "vị trí mục tiêu" vào hồ sơ để mặc định chọn sẵn ở trang mẫu không (liên quan onboarding).

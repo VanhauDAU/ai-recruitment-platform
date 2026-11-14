@@ -175,6 +175,15 @@ export function uploadEmployerCompanyImage(file, options) {
   return uploadEmployerCompanyMedia('/employer/company/images/', file, options)
 }
 
+export function uploadEmployerCompanyCover(file, options) {
+  return uploadEmployerCompanyMedia('/employer/company/cover/', file, options)
+}
+
+export async function deleteEmployerCompanyCover() {
+  const { data } = await api.delete('/employer/company/cover/')
+  return data
+}
+
 export async function deleteEmployerCompanyLogo() {
   const { data } = await api.delete('/employer/company/logo/')
   return data

@@ -11,6 +11,7 @@ from django.http import Http404
 from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, extend_schema
 from rest_framework import generics, permissions
 from rest_framework.exceptions import ValidationError
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -23,6 +24,7 @@ from apps.cvs.services.composition import (
 from apps.jobs.models import JobCategory
 from common.metrics import record_metric
 
+from ...demo_identity import with_demo_identity
 from ...models import (
     DEFAULT_CV_LANGUAGE,
     DEFAULT_EXPERIENCE_BAND,
@@ -33,17 +35,21 @@ from ...models import (
 from ...selectors import (
     active_cv_categories_queryset,
     active_cv_position_options_queryset,
+    active_position_profile,
     published_sample_contents_queryset,
     published_template_detail_queryset,
     published_template_queryset,
     related_published_templates,
 )
-from ...services import PositionContentUnavailable, resolve_position_content
+from ...services import (
+    PositionContentUnavailable,
+    position_details_section,
+    resolve_position_content,
+)
 from ..serializers.v2 import (
     CvCategorySerializer,
     CvPositionOptionSerializer,
     CvSampleContentCardSerializer,
-    CvSampleContentDetailSerializer,
     CvTemplateCardSerializer,
     CvTemplateDetailSerializer,
 )
@@ -63,33 +69,59 @@ def requested_experience_band(request, *, default=DEFAULT_EXPERIENCE_BAND):
     return band
 
 
+# Kho mẫu công khai: trình duyệt/CDN được lưu nhưng phải hỏi lại máy chủ mỗi lần
+# (ETag → 304). Admin ẩn, hiện hay xuất bản mẫu có hiệu lực ngay; trước đây
+# `max-age=300` khiến danh sách cũ (kèm ảnh mẫu đã thay) còn hiển thị 5 phút.
+PUBLIC_CATALOG_CACHE_CONTROL = 'public, no-cache'
+
+
+def revalidated_response(request, data, etag=None):
+    etag = f'"{etag or sha256(repr(data).encode("utf-8")).hexdigest()}"'
+    headers = {'Cache-Control': PUBLIC_CATALOG_CACHE_CONTROL, 'ETag': etag}
+    if etag in request.headers.get('If-None-Match', ''):
+        return Response(status=304, headers=headers)
+    return Response(data, headers=headers)
+
+
 class PublicCatalogCacheMixin:
+    # Thời gian giữ document xem trước trong cache máy chủ (Redis).
     cache_seconds = 300
 
     def cached_response(self, data):
-        response = Response(data)
-        digest = sha256(repr(data).encode('utf-8')).hexdigest()
-        response['Cache-Control'] = f'public, max-age={self.cache_seconds}'
-        response['ETag'] = f'"{digest}"'
-        return response
+        return revalidated_response(self.request, data)
+
+
+class CatalogPagination(PageNumberPagination):
+    # 24 chia hết cho lưới 2, 3, 4 cột: trang nào cũng lấp đủ hàng.
+    page_size = 24
+
+
+def _optional_flag(request, name):
+    value = request.query_params.get(name, '').strip().lower()
+    if value in ('1', 'true'):
+        return True
+    if value in ('0', 'false'):
+        return False
+    return None
 
 
 class CvTemplateCatalogListView(PublicCatalogCacheMixin, generics.ListAPIView):
     serializer_class = CvTemplateCardSerializer
     permission_classes = [permissions.AllowAny]
+    pagination_class = CatalogPagination
 
     def get_queryset(self):
+        columns = self.request.query_params.get('columns', '').strip()
         return published_template_queryset(
             locale=requested_locale(self.request),
+            has_photo=_optional_flag(self.request, 'has_photo'),
+            columns=int(columns) if columns in ('1', '2') else None,
             category=self.request.query_params.get('category'),
             tag=self.request.query_params.get('tag'),
         ).order_by('-usage_count', 'sort_order', 'name')
 
     def list(self, request, *args, **kwargs):
-        response = super().list(request, *args, **kwargs)
-        response['Cache-Control'] = f'public, max-age={self.cache_seconds}'
-        response['ETag'] = f'"{sha256(repr(response.data).encode("utf-8")).hexdigest()}"'
-        return response
+        return revalidated_response(request, super().list(request, *args, **kwargs).data)
 
 
 @extend_schema(
@@ -154,18 +186,6 @@ class CvSampleContentCatalogListView(PublicCatalogCacheMixin, generics.ListAPIVi
         return self.cached_response(self.get_serializer(self.get_queryset(), many=True).data)
 
 
-class CvSampleContentCatalogDetailView(PublicCatalogCacheMixin, generics.RetrieveAPIView):
-    serializer_class = CvSampleContentDetailSerializer
-    permission_classes = [permissions.AllowAny]
-    lookup_field = 'public_id'
-
-    def get_queryset(self):
-        return published_sample_contents_queryset()
-
-    def retrieve(self, request, *args, **kwargs):
-        return self.cached_response(self.get_serializer(self.get_object()).data)
-
-
 class CvPositionOptionListView(PublicCatalogCacheMixin, generics.ListAPIView):
     serializer_class = CvPositionOptionSerializer
     permission_classes = [permissions.AllowAny]
@@ -179,6 +199,25 @@ class CvPositionOptionListView(PublicCatalogCacheMixin, generics.ListAPIView):
 
     def list(self, request, *args, **kwargs):
         return self.cached_response(self.get_serializer(self.get_queryset(), many=True).data)
+
+
+@extend_schema(
+    summary='Khung mục thông tin chuyên môn (trường riêng) của một vị trí',
+    parameters=[OpenApiParameter('position_public_id', str), OpenApiParameter('locale', str)],
+    responses={200: OpenApiTypes.OBJECT},
+    tags=['cv-templates'],
+)
+class CvPositionDetailsView(PublicCatalogCacheMixin, APIView):
+    """Editor dùng khi ứng viên đổi vị trí: thay section `position_details` theo vị trí mới."""
+
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        public_id = request.query_params.get('position_public_id', '').strip()
+        locale = requested_locale(request)
+        profile = active_position_profile(public_id) if public_id else None
+        section = position_details_section(profile, locale) if profile else None
+        return self.cached_response({'position_public_id': public_id, 'section': section})
 
 
 @extend_schema(
@@ -294,15 +333,19 @@ class CvPositionPreviewView(PublicCatalogCacheMixin, APIView):
                 raise ValidationError({'template_public_id': str(error)}) from error
             cache.set(cache_key, base_document, timeout=self.cache_seconds)
 
+        preview = deepcopy(base_document)
+        if source == 'sample' and not request.user.is_authenticated:
+            # Khách xem mẫu giống ảnh catalogue; người đăng nhập thấy danh tính của mình.
+            preview['content_json'] = with_demo_identity(preview['content_json'], locale)
         document = finalize_preview_document(
-            deepcopy(base_document),
+            preview,
             actor=request.user,
             theme_color=theme_color or None,
         )
         revision = sha256(
             json.dumps(
                 {
-                    'document': base_document,
+                    'document': document,
                     'renderer_key': version.renderer_key,
                     'renderer_version': version.renderer_version,
                 },
@@ -322,12 +365,10 @@ class CvPositionPreviewView(PublicCatalogCacheMixin, APIView):
             },
             'revision': revision,
         }
-        response = Response(data)
         if request.user.is_authenticated:
-            response['Cache-Control'] = 'private, no-store'
+            response = Response(data, headers={'Cache-Control': 'private, no-store'})
         else:
-            response['Cache-Control'] = f'public, max-age={self.cache_seconds}'
-            response['ETag'] = f'"{revision}"'
+            response = revalidated_response(request, data, etag=revision)
         record_metric('cv_preview_cache_hit', int(cache_hit), source=source, locale=locale)
         record_metric(
             'cv_preview_latency_ms',

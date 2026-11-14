@@ -20,6 +20,14 @@ from ..models import (
     CompanyUpdateRevision,
     Industry,
 )
+from ..page_content import GALLERY_LIMIT
+from .company_page_content import (
+    company_benefit_values,
+    company_office_values,
+    normalize_page_content_changes,
+    replace_company_benefits,
+    replace_company_offices,
+)
 from .company_update_locks import lock_company_update_request
 
 UPDATABLE_COMPANY_FIELDS = {
@@ -40,23 +48,12 @@ UPDATABLE_COMPANY_FIELDS = {
     'markets',
     'target_customers',
     'founded_year',
+    'headline',
+    'culture',
+    'video_url',
+    'social_links',
 }
 SENSITIVE_FIELDS = {'tax_code', 'company_name'}
-ACTIVE_COMPANY_UPDATE_STATUSES = frozenset(
-    {
-        CompanyUpdateRequest.Status.PENDING,
-        CompanyUpdateRequest.Status.SUBMITTED,
-        CompanyUpdateRequest.Status.IN_REVIEW,
-        CompanyUpdateRequest.Status.CHANGES_REQUESTED,
-    }
-)
-REQUESTER_EDITABLE_COMPANY_UPDATE_STATUSES = frozenset(
-    {
-        CompanyUpdateRequest.Status.PENDING,
-        CompanyUpdateRequest.Status.SUBMITTED,
-        CompanyUpdateRequest.Status.CHANGES_REQUESTED,
-    }
-)
 COMPANY_DESCRIPTION_MIN_LENGTH = 500
 PRE_REVIEW_COMPANY_UPDATE_STATUSES = frozenset(
     {
@@ -75,7 +72,7 @@ class CompanyUpdateConflict(Exception):
         super().__init__('Thông tin công ty đã thay đổi ở các trường đang được yêu cầu cập nhật.')
 
 
-def _company_update_field_value(company, field):
+def company_update_field_value(company, field):
     if field == 'industries':
         return list(
             company.company_industries.order_by('industry_id').values_list(
@@ -89,6 +86,10 @@ def _company_update_field_value(company, field):
             .values_list('industry_id', flat=True)
             .first()
         )
+    if field == 'benefits':
+        return company_benefit_values(company)
+    if field == 'offices':
+        return company_office_values(company)
     if field in {'gallery_additions', 'gallery_deletions'}:
         return list(company.images.order_by('id').values_list('id', flat=True))
     if field.endswith('_pending'):
@@ -98,7 +99,7 @@ def _company_update_field_value(company, field):
 
 def capture_company_update_base_values(company, changes):
     return {
-        field: _company_update_field_value(company, field)
+        field: company_update_field_value(company, field)
         for field in changes
         if not field.endswith('_pending')
     }
@@ -346,7 +347,7 @@ def company_update_conflicting_fields(company, revision):
     return [
         field
         for field, base_value in (revision.base_values or {}).items()
-        if _company_update_field_value(company, field) != base_value
+        if company_update_field_value(company, field) != base_value
     ]
 
 
@@ -469,6 +470,9 @@ def apply_update_request(
                 )
             except ValueError as error:
                 raise ValidationError({field: str(error)}) from error
+        changes = normalize_page_content_changes(changes)
+        benefits = changes.pop('benefits', None)
+        offices = changes.pop('offices', None)
         industry_ids = changes.pop('industries', None)
         primary_id = changes.pop('primary_industry', None)
         logo_url = changes.pop('logo_url', None)
@@ -501,8 +505,10 @@ def apply_update_request(
         final_gallery_count = (
             company.images.count() - len(images_to_delete) + len(gallery_additions)
         )
-        if final_gallery_count > 10:
-            raise ValidationError({'detail': 'Thư viện công ty chỉ được có tối đa 10 ảnh.'})
+        if final_gallery_count > GALLERY_LIMIT:
+            raise ValidationError(
+                {'detail': f'Thư viện công ty chỉ được có tối đa {GALLERY_LIMIT} ảnh.'}
+            )
         company.save()
         if industry_ids:
             industries = list(Industry.objects.filter(id__in=industry_ids))
@@ -511,6 +517,10 @@ def apply_update_request(
                 industries[0] if industries else None,
             )
             set_company_industries(company, industries, primary)
+        if benefits is not None:
+            replace_company_benefits(company, benefits)
+        if offices is not None:
+            replace_company_offices(company, offices)
         deleted_gallery_paths = [image.image_url for image in images_to_delete]
         if images_to_delete:
             CompanyImage.objects.filter(id__in=[image.id for image in images_to_delete]).delete()

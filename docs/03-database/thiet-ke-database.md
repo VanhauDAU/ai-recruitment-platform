@@ -234,7 +234,7 @@ Chi tiết contract document, renderer và API ở
 
 | Bảng (model) | Mục đích và ràng buộc |
 | --- | --- |
-| `UserCv` | Aggregate CV của ứng viên (builder hoặc upload): metadata, `lifecycle_status`, `processing_status`, `visibility`, con trỏ `current_template_version`/`latest_version`/`published_version`, `lock_version`, `is_default` (partial unique: một CV mặc định chưa xóa mỗi user), soft delete. `cv_data`/`style_config`/`status` là field legacy. |
+| `UserCv` | Aggregate CV của ứng viên (builder hoặc upload): metadata, `lifecycle_status`, `processing_status`, `visibility`, con trỏ `current_template_version`/`latest_version`/`published_version`, `lock_version`, `is_default` (partial unique: một CV mặc định chưa xóa mỗi user), soft delete. Trường matching cùng từ vựng với `Job`: `experience_years` (`Job.ExperienceYears`, tính từ mục kinh nghiệm khi tạo version), `education_level` (`Job.EducationLevel` cao nhất trong mục học vấn, tính khi tạo version), `position_level` (`Job.PositionLevel`, ứng viên chọn) và `position` (FK `JobCategory`). Không lưu văn bản thô của file upload. |
 | `CvVersion` | Document canonical **bất biến** (`content_json`, `layout_json`, `style_json`, `schema_version`, `content_hash`), `version_kind` initial/manual_save/published/application_snapshot/export_snapshot/imported, ghim `template_version`; unique `(cv, version_number)`. Sửa row đã lưu raise `ImmutableCvVersionError`. |
 | `CvDraft` | Một draft autosave mutable mỗi CV (1-1), `base_version`, `document_hash`, optimistic lock. |
 | `CvAsset` | Ảnh avatar/background bất biến, document chỉ tham chiếu public ID; owner null = asset hệ thống. |
@@ -242,14 +242,16 @@ Chi tiết contract document, renderer và API ở
 | `CvExport` | Job + artifact PDF gắn version; unique theo version + `render_config`; `storage_key` nội bộ, tải qua endpoint có phân quyền. |
 | `CvImportJob` | Job nhập PDF/DOCX → canonical (1-1 CV), unique `(user, idempotency_key)`, `result_version`. |
 | `CvAccessLog` | Audit tối thiểu truy cập CV (owner/recruiter/admin/anonymous theo kênh), không lưu payload hay PII thô. |
-| `CvSkill` | Kỹ năng khai báo/AI trích xuất theo CV; unique `(cv, skill)`. |
-| `CvTemplate` | Identity/catalogue mẫu: slug, tên/mô tả/SEO song ngữ `display_name_vi/en`, `description_vi/en`, `seo_title_vi/en`, `seo_description_vi/en` (rỗng ở ngôn ngữ nào thì không hiện ở kho ngôn ngữ đó), `lifecycle_status` draft/published/archived, `status` (công tắc catalogue legacy), `current_published_version`, `is_premium`; M2M category/color qua bảng link. `category`, `layout_config`, `style_config` là field legacy. |
-| `CvTemplateVersion` | Contract renderer bất biến sau publish: `renderer_key`, `renderer_version`, schema/default layout/style, `capabilities`, `content_contract`, `version_status` draft/published/retired; unique `(template, version_number)`. |
+| `CvSkill` | Kỹ năng theo CV trỏ taxonomy `skills.Skill` (cùng bảng với `JobSkill`); unique `(cv, skill)`. Nguồn `manual` được đồng bộ mỗi lần tạo version từ mục kỹ năng và trường riêng `maps_to=skills` (khớp tên chuẩn hóa hoặc alias, mức 1–5 → `beginner/intermediate/advanced`); tên ngoài taxonomy bị bỏ qua. |
+| `CvTemplate` | Identity/catalogue mẫu: slug, tên/mô tả/SEO song ngữ `display_name_vi/en`, `description_vi/en`, `seo_title_vi/en`, `seo_description_vi/en` (rỗng ở ngôn ngữ nào thì không hiện ở kho ngôn ngữ đó), `lifecycle_status` draft/published/archived (nguồn duy nhất cho hiển thị công khai), `current_published_version`, `is_premium`; M2M category/color qua bảng link, ảnh xem trước theo từng màu nằm ở `CvTemplateColorLink`. |
+| `CvTemplateVersion` | Contract renderer bất biến sau publish: `renderer_key` (khóa layout trong registry `apps/cv_templates/layouts.json`), `renderer_version`, schema/default layout/style, `capabilities`, `content_contract`, `version_status` draft/published/retired; unique `(template, version_number)`. |
 | `CvSectionDefinition`, `CvTemplateSection` | Registry section key canonical và cấu hình section theo region của từng version (unique version–section). |
 | `CvCategory`, `CvTemplateCategoryLink` | Taxonomy style/feature/position/audience (unique `(category_type, slug)`), link có thứ tự. |
 | `CvColor`, `CvTemplateColorLink` | Palette dùng lại; link giữ thumbnail/preview, thứ tự, tối đa một màu mặc định mỗi template. |
-| `CvPositionProfile` | Cấu hình CV của một vị trí chuyên môn: 1-1 `JobCategory(specialization)`, `section_preset` (JSON thứ tự/bật section), `is_active`, `sort_order`. Tên/slug lấy từ `JobCategory`. |
-| `CvSampleContent` | Nội dung khởi tạo theo `(position_profile, locale, experience_band)`; `position_profile` null là nội dung chung (token `{position}`), unique riêng cho từng trường hợp bằng partial constraint; `locale` thuộc `CvLanguage`, `experience_band` thuộc `entry/junior/mid/senior`. |
+| `CvPositionProfile` | Cấu hình CV của một vị trí chuyên môn: 1-1 `JobCategory(specialization)`, `section_preset` (JSON thứ tự/bật section), `keywords` (≤ 30 từ khóa kỹ năng), `is_active`, `sort_order`. Tên/slug lấy từ `JobCategory`. |
+| `CvPositionField` | Trường riêng của vị trí: `key` (unique trong profile), nhãn/placeholder `*_vi`/`*_en`, `field_type`, `options` (`[{vi, en}]` cho select), `maps_to` (`none`/`skills`, chỉ cho thẻ/chọn nhiều), `is_required_hint`, `is_active`, `sort_order`. Được chụp vào section `position_details` của document khi dựng CV nên sửa/xóa không ảnh hưởng CV cũ. |
+| `CvSampleGeneration` | Một lượt sinh nội dung mẫu bằng AI: `batch_id`, `position_profile`, `locale`, `experience_band`, `status` (`queued/processing/completed/failed`), `failure_code`, FK `sample`, FK `ai_core.AiInvocation`, `requested_by`. Không lưu prompt hay phản hồi. |
+| `CvSampleContent` | Nội dung khởi tạo theo `(position_profile, locale, experience_band)`; `position_profile` null là nội dung chung (token `{position}`); mỗi tổ hợp chỉ có một bản `published` (partial unique), nháp/chờ duyệt/lưu trữ cùng tồn tại được. `status` `draft/in_review/published/archived`, `origin` `manual/ai/import`, `reviewed_by`/`reviewed_at`; `locale` thuộc `CvLanguage`, `experience_band` thuộc `entry/junior/mid/senior`. Không chứa danh tính. |
 
 ## 8. Ứng viên (`candidates`)
 
@@ -354,6 +356,4 @@ Consent nghiệp vụ của ứng viên nằm ở `candidate_consents` (mục 8)
 
 - Contract migration xóa vật lý các cột verification legacy của
   `employers_company` (đang giữ với DB default sau `employers.0044`).
-- Xóa field legacy của CV: `UserCv.cv_data`/`style_config`/`status`,
-  `CvTemplate.category`/`layout_config`/`style_config`, `default_style_json.color_variants`.
 - Hợp nhất phân quyền blog trong Django admin (Groups) vào RBAC admin.

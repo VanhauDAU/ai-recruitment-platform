@@ -13,7 +13,6 @@ from apps.cv_templates.models import (
 from apps.cv_templates.services import publish_template_version
 from apps.cvs.models import CvVersion, ImmutableCvVersionError, UserCv
 from apps.cvs.schemas import (
-    canonicalize_legacy_cv_data,
     empty_content,
     empty_layout,
     empty_style,
@@ -61,21 +60,6 @@ class CanonicalCvDocumentTests(TestCase):
     def test_accepts_canonical_document(self):
         content, layout, style = self.valid_document()
 
-        validate_cv_document(
-            content_json=content, layout_json=layout, style_json=style, schema_version=1
-        )
-
-    def test_legacy_payload_is_adapted_to_the_canonical_three_document_contract(self):
-        content, layout, style = canonicalize_legacy_cv_data(
-            {
-                'personal': {'full_name': 'Nguyễn Văn A'},
-                'skills': [{'name': 'Django'}],
-            },
-            {'color': '#00A66A', 'font_family': 'Roboto'},
-        )
-
-        self.assertEqual(content['personal_info']['full_name'], 'Nguyễn Văn A')
-        self.assertEqual(content['sections'][0]['items'][0]['item_id'], 'legacy_skills_1')
         validate_cv_document(
             content_json=content, layout_json=layout, style_json=style, schema_version=1
         )
@@ -261,7 +245,7 @@ class MarkerSectionCompositionTests(TestCase):
 
     def test_header_layout_receives_the_identity_markers_it_maps(self):
         template, _ = self._template(
-            'header_two_column_v1',
+            'header_band_two_column_v1',
             [('nameplate', 'header'), ('contact', 'header'), ('summary', 'main')],
             [
                 {'id': 'header', 'row': 0, 'width_percent': 100, 'section_instance_ids': []},
@@ -282,7 +266,7 @@ class MarkerSectionCompositionTests(TestCase):
     def test_a_layout_with_its_own_header_block_gets_no_markers(self):
         """Adding them would print the candidate's name twice."""
         template, _ = self._template(
-            'classic_single_column_v1',
+            'single_column_v1',
             [('summary', 'main')],
             [{'id': 'main', 'row': 0, 'width_percent': 100, 'section_instance_ids': []}],
         )
@@ -293,7 +277,7 @@ class MarkerSectionCompositionTests(TestCase):
 
     def test_markers_already_present_in_content_are_not_duplicated(self):
         template, _ = self._template(
-            'header_two_column_v1',
+            'header_band_two_column_v1',
             [('nameplate', 'header'), ('contact', 'header')],
             [
                 {'id': 'header', 'row': 0, 'width_percent': 100, 'section_instance_ids': []},

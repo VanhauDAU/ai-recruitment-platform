@@ -2,12 +2,14 @@ import { BankOutlined, EditOutlined, LinkOutlined, UploadOutlined } from '@ant-d
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Alert, Avatar, Button, Image, Skeleton, Tag } from 'antd'
 import { useState } from 'react'
+import { Link } from 'react-router'
 import {
   changeEmployerCompanyUpdateRequestLifecycle,
   employerProfileKeys,
   getEmployerCompanyUpdateRequests,
 } from '@/entities/employer-profile'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
+import { employerAppPath } from '@/shared/config/portals'
 import { sanitizeHtml } from '@/shared/lib/sanitize-html'
 import { message } from '@/shared/lib/toast'
 import ConfirmAction from '@/shared/ui/ConfirmAction'
@@ -222,6 +224,7 @@ export default function LinkedCompanyPanel({ profile, catalogs, industries, onRe
             <div className="linked-company-card__name"><h2>{company.company_name}</h2></div>
             <p>{company.address || 'Địa chỉ chưa cập nhật'} <span aria-hidden="true">|</span> {company.company_size ? `${company.company_size} nhân viên` : 'Quy mô chưa cập nhật'}</p>
             <p className="linked-company-card__fixed-note">Liên kết này là cố định; tài khoản không thể chuyển sang công ty khác.</p>
+            <Link to={employerAppPath('/company-page')} className="company-setting-link">Tuỳ biến trang công khai</Link>
           </div>
         </header>
 

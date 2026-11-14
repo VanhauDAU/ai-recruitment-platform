@@ -41,7 +41,7 @@ Xác thực trong Swagger UI: gọi `POST /api/auth/login/` lấy `access`, bấ
 | POST | `/api/auth/oauth/complete/` | Đổi `one_time_code` (1 lần dùng, TTL 60s) lấy `{user, access, refresh}` |
 | GET/PATCH | `/api/candidate/profile/` | Đọc/cập nhật `gender` cho onboarding và cài đặt gợi ý việc làm (tự tạo profile legacy khi cần) |
 | GET/PUT | `/api/candidate/job-preferences/` | Candidate: đọc/lưu nhu cầu việc làm chuẩn hóa. PUT yêu cầu 1–5 `desired_specialization_ids`, ít nhất một `preferred_province_ids`, `experience_level` và `desired_salary_vnd` > 0; đồng thời lưu hai quyết định consent. |
-| GET/PATCH | `/api/candidate/email-notification-settings/` | Đọc/cập nhật từng phần 12 preference email candidate. GET chưa có row trả defaults bật mà không ghi DB; PATCH partial tạo khi ghi lần đầu. Email xác thực/reset mật khẩu là email giao dịch, không thuộc contract hay UI preference. |
+| GET/PATCH | `/api/candidate/email-notification-settings/` | Đọc/cập nhật từng phần 13 preference email candidate. GET chưa có row trả defaults bật mà không ghi DB; PATCH partial tạo khi ghi lần đầu. Email xác thực/reset mật khẩu là email giao dịch, không thuộc contract hay UI preference. `followed_company_jobs` (mặc định bật) là công tắc chung cho nguồn thứ ba của email việc làm gộp: mỗi ngày (08:00 giờ Việt Nam) gom tin đang công khai của các công ty ứng viên theo dõi với `notify_new_jobs=true`, chỉ lấy tin đăng sau thời điểm theo dõi, bỏ công ty đang bị tạm ẩn trang; một tin không bao giờ gửi hai lần kể cả khi cũng khớp thông báo việc làm hoặc gợi ý phù hợp. Bật lại yêu cầu email đã xác thực (`email_unverified`) và bắt đầu cửa sổ mới từ lúc bật, không gửi bù giai đoạn đã tắt. |
 | GET/PATCH | `/api/candidate/recruiter-visibility/` | Đọc/bật-tắt consent để NTD tìm thấy hồ sơ; bật yêu cầu xác nhận và mọi quyết định được audit. |
 | GET/PATCH | `/api/employer/me/` | Hồ sơ nhà tuyển dụng của tôi + canonical `job_workspace_ready`, `verification_approved`, `candidate_data_access`, `dpa_status`, `blockers[]`, `account_verification` (Cấp 0–3/quota) và `badge_eligibility` (năm tiêu chí dấu tick tách biệt; chỉ self mới thấy failure/action). Chỉ `position_title` sửa được. |
 | POST | `/api/admin/accounts/{public_id}/company-unlink-impact/` | Admin permission riêng xem tác động gỡ company chọn nhầm; reason bắt buộc, chỉ trả signed token khi relation clean |
@@ -65,7 +65,13 @@ Xác thực trong Swagger UI: gọi `POST /api/auth/login/` lấy `access`, bấ
 | GET | `/api/employer/company/` | Công ty của tôi (chỉ đọc — thay đổi thông tin qua update-requests) |
 | POST | `/api/employer/company/create/` | Tạo hồ sơ catalogue công ty mới, không phụ thuộc trạng thái xác thực SĐT; người tạo là owner và liên kết có hiệu lực ngay. Company không có verification lifecycle. Bị từ chối nếu recruiter đã tạo/chọn một công ty |
 | GET | `/api/employer/company/search/?q=&page=` | Catalogue phân trang `{count,next,previous,results}`, cố định 6 bản ghi/trang. Không có `q`: công ty thật mới tạo, mới nhất trước; có `q`: tìm không dấu theo tên đăng ký / tên thương mại / MST. Không trả placeholder từ luồng đăng ký cũ |
-| GET | `/api/companies/?q=&cursor=` | Danh bạ công khai. Không `q`: tối đa 18 company featured đã qua eligibility, finite và không có `count`. Có `q`: tìm không dấu trên tên/tên thương mại trong mọi `Company`, không áp dụng verification/completeness gate; trang đầu trả exact `count`, trang cursor sau bỏ `count`. DTO public-safe không trả MST/email/phone/raw address/recruiter và luôn redact địa chỉ hộ kinh doanh. |
+| GET | `/api/companies/?q=&cursor=` | Danh bạ công khai. Không `q`: tối đa 18 company featured đã qua eligibility, finite và không có `count`. Có `q`: tìm không dấu trên tên/tên thương mại trong mọi `Company`, không áp dụng verification/completeness gate; trang đầu trả exact `count`, trang cursor sau bỏ `count`. DTO public-safe không trả MST/email/phone/raw address/recruiter và luôn redact địa chỉ hộ kinh doanh. Cả hai chế độ loại công ty đang bị tạm ẩn trang. |
+| GET | `/api/companies/{slug}/` | Trang công ty công khai (ADR-0017), xem [chi tiết bên dưới](#trang-công-ty-công-khai-adr-0017). Slug lạ hoặc công ty bị tạm ẩn trả `404 {detail}`. |
+| GET | `/api/companies/{public_id}/similar/` | `{results}`: tối đa 6 công ty cùng lĩnh vực chính, không bị tạm ẩn, không gồm chính nó; công ty đang tuyển xếp trước. Item cùng shape với danh bạ. |
+| GET | `/api/companies/{public_id}/job-facets/` | `{locations: [{id, name, count}]}`: tỉnh/thành của các tin đang công khai của công ty, xếp theo `count` giảm dần rồi tên; `id` dùng cho `GET /api/jobs/?company=&location=`. |
+| GET/PUT/DELETE | `/api/companies/{public_id}/follow/` | Candidate-only (anonymous `401`, role khác `403`). Cả ba trả `{following, notify_new_jobs, follower_count}`; PUT nhận `{}` hoặc `{notify_new_jobs}` và idempotent, DELETE idempotent. Công ty lạ hoặc đang bị tạm ẩn trả `404`. PUT/DELETE dùng throttle `company_follow` 60/giờ theo tài khoản. Xem [chi tiết](#theo-dõi-và-báo-cáo-trang-công-ty). |
+| GET | `/api/candidate/followed-companies/?page=&page_size=` | Candidate-only. `{count,next,previous,results}`; item gồm mọi key của danh bạ công ty cộng `followed_at`, `notify_new_jobs`; theo dõi mới nhất trước, loại công ty đang bị tạm ẩn. |
+| POST | `/api/companies/{public_id}/reports/` | Candidate-only. Body `{reason, section_key, detail}`; trả `201 {public_id, status}`. Mỗi ứng viên chỉ có một báo cáo `pending` cho mỗi công ty (trùng trả `400 {detail}`); công ty lạ hoặc bị tạm ẩn trả `404`. Throttle `company_report` 10/giờ theo tài khoản. |
 | GET | `/api/employer/company/catalogs/` | Source-of-truth cho `business_types`, `company_sizes`, `markets`, `target_customers` của form công ty |
 | POST | `/api/employer/company/join/` | Liên kết ngay với công ty có sẵn, không phụ thuộc trạng thái xác thực SĐT hay admin duyệt: multipart chỉ cần `company`; membership có hiệu lực ngay. API vẫn nhận tùy chọn `proof_type` (`business_registration` hoặc `authorization_and_id`) và file giấy tờ khi cần bổ sung hồ sơ. Bị từ chối nếu recruiter đã tạo/chọn một công ty |
 | GET/POST | `/api/employer/company/domain-claims/` | Liệt kê claim của company hiện tại hoặc tạo DNS TXT challenge cho exact domain được suy từ mailbox hiện tại đã xác thực. Plaintext TXT value chỉ có trong response tạo; list không trả lại secret. Pending không giữ chỗ domain toàn cục. |
@@ -73,14 +79,25 @@ Xác thực trong Swagger UI: gọi `POST /api/auth/login/` lấy `access`, bấ
 | POST | `/api/employer/company/domain-claims/{public_id}/rotate/` | Nhận `lock_version`, vô hiệu challenge cũ và trả TXT value mới đúng một lần; stale/email-domain đổi bị từ chối. |
 | POST | `/api/employer/company/domain-claims/{public_id}/request-manual-review/` | Nhận `lock_version` + `reason`, xóa challenge và đưa claim vào hàng chờ admin fallback có audit. |
 | POST | `/api/employer/company/logo/` \| `cover/` \| `images/` | Gắn logo/cover/ảnh giới thiệu từ `upload_session` clean purpose `employer_company_update`; backend tạo public derivative JPG/PNG/WebP tối đa 5 MB và giữ private-original audit link. Raw `file` chỉ còn trong compatibility window; strict mode trả `UPLOAD_SESSION_REQUIRED`. Gallery tối đa 10 ảnh; ảnh lớn được thu về trong 2400×1600, không ép tỉ lệ. |
-| DELETE | `/api/employer/company/logo/` \| `cover/` | Xóa logo/cover (owner); xóa logo đồng thời đặt `has_no_logo=true` |
-| DELETE | `/api/employer/company/images/{id}/` | Xóa ảnh giới thiệu (owner) |
+| DELETE | `/api/employer/company/logo/` \| `cover/` | Xóa logo/cover; xóa logo đồng thời đặt `has_no_logo=true`. Mọi endpoint ảnh công ty (upload và xoá) nhận owner (luật cũ) hoặc recruiter đang có `can_edit_content` của trang công ty; người khác trả `400 {detail}`. |
+| DELETE | `/api/employer/company/images/{id}/` | Xóa ảnh giới thiệu (owner hoặc người biên tập trang còn hiệu lực) |
+| GET | `/api/employer/company/page/` | Workspace trang công ty (ADR-0017): `{company, permissions, registry, layout, pinned_jobs, content, stats}`. Mọi recruiter đã liên kết công ty đọc được; chưa liên kết trả `404`. `permissions` do server tính tại thời điểm request. Xem [chi tiết](#workspace-trang-công-ty-của-nhà-tuyển-dụng). |
+| PATCH | `/api/employer/company/page/layout/` | Cần `can_edit_layout`. Body `{lock_version, section_order?, hidden_sections?, accent?, pinned_job_public_ids?}`; áp dụng ngay lên trang công khai và trả lại payload workspace. `409 COMPANY_PAGE_LAYOUT_STALE` kèm `layout` hiện tại khi `lock_version` cũ; `403 COMPANY_PAGE_EDIT_FORBIDDEN`; `400` theo field. Throttle `company_page_layout` 60/giờ theo tài khoản. |
+| POST | `/api/employer/company/page/content/` | Cần `can_edit_content`. Body `{changes: {…}}` chỉ gồm `headline, description, culture, employee_benefits, video_url, social_links, benefits, offices, logo_pending, cover_pending, gallery_pending, gallery_deletions`; gộp vào yêu cầu cập nhật đang mở của chính người gửi (tạo mới nếu chưa có) và trả payload workspace. `409 COMPANY_UPDATE_IN_REVIEW` khi yêu cầu đang thẩm định; `403 COMPANY_PAGE_EDIT_FORBIDDEN`; `400` theo field. Throttle `company_page_content` 30/giờ theo tài khoản. Xem [chi tiết](#nội-dung-trang-qua-kiểm-duyệt). |
+| GET | `/api/employer/company/page/pinnable-jobs/?q=` | Cần `can_edit_layout`. `{results: [{public_id, title, slug, published_at}]}`: tối đa 20 tin đang công khai của công ty, mới nhất trước; `q` khớp tiêu đề không dấu. Chỉ có siêu dữ liệu công khai. |
+| GET/POST | `/api/employer/company/page/editors/` | Cần `can_manage_editors`. GET `{results: [row]}`; POST `{member_id}` trả `201` row của member. `400 {code, detail}` với `EDITOR_NOT_VERIFIED`, `EDITOR_ALREADY_GRANTED`, `EDITOR_IS_OWNER`; member lạ trả `404`. POST/DELETE dùng throttle `company_page_editors` 20/giờ. |
+| DELETE | `/api/employer/company/page/editors/{grant_public_id}/` | Cần `can_manage_editors`. Thu hồi grant đang hiệu lực, trả row của member với `grant: null`; grant lạ hoặc đã thu hồi trả `404`. |
 | GET/POST | `/api/employer/company/documents/` | Giấy tờ công ty; contract chuẩn POST `doc_type` + `upload_session`, có thể kèm `update_request` của chính actor. Purpose là `employer_verification` hoặc `employer_company_update` theo workflow; backend recheck owner/clean/one-time claim và structural validation. Metadata private tiếp tục redacted theo quyền. `trade_name_proof` có thể dùng `source_type=website` + `website_url`; ĐKDN/ủy quyền/định danh nhận JPG/PNG/PDF, `candidate_dpa` nhận PDF/DOCX. Raw `file` chỉ còn compatibility window. |
 | POST | `/api/employer/company/documents/preview/` | Luôn trả `409 UPLOAD_SCAN_REQUIRED`; không parse/convert raw Office file trước malware scan. |
 | GET | `/api/employer/company/documents/{id}/content/` | Mở private binary sau object-level authorization. Uploader/requester và company owner được phép; member khác, outsider hoặc URL website trả `404`. Response dùng `Cache-Control: private, no-store` và không phát storage key/signed URL trước authorization |
-| GET/POST | `/api/employer/company/update-requests/?scope=mine\|company` | Mọi employer đã liên kết công ty có thể tạo yêu cầu riêng, tối đa một active request trên mỗi `(company, requester)`; nhiều member được gửi song song. Recruiter UI chỉ gọi `scope=mine`, không hiển thị lịch sử công ty. Response có `current_revision_public_id`, `allowed_actions`, `submitted_at`, base/lock version; mỗi submit/resubmit tạo revision bất biến. `in_review` read-only; diff rỗng bị từ chối và field không sửa không được tự thêm vào `changes`. |
+| GET/POST | `/api/employer/company/update-requests/?scope=mine\|company` | Mọi employer đã liên kết công ty có thể tạo yêu cầu riêng, tối đa một active request trên mỗi `(company, requester)`; nhiều member được gửi song song. Recruiter UI chỉ gọi `scope=mine`, không hiển thị lịch sử công ty. Response có `current_revision_public_id`, `allowed_actions`, `submitted_at`, base/lock version; mỗi submit/resubmit tạo revision bất biến. `in_review` read-only; diff rỗng bị từ chối và field không sửa không được tự thêm vào `changes`. Các field nội dung trang (`headline, culture, video_url, social_links, benefits, offices`) cần `can_edit_content` của trang công ty, thiếu trả `403 COMPANY_PAGE_EDIT_FORBIDDEN`; field cũ vẫn mở cho mọi member (ER-D05). |
 | POST | `/api/employer/company/update-requests/{public_id}/{withdraw\|cancel}/` | Rút/hủy trước review bằng `lock_version`; requester được withdraw, company owner được cancel. Backend ghi append-only event và recheck quyền/status dưới lock. |
-| GET/POST | `/api/admin/company-update-requests/{public_id}/` · `start-review/` · `review/` | Admin mở exact request, nhận review bằng exact revision/lock rồi mới ra quyết định cuối `approved\|changes_requested\|rejected`. Duyệt từng document không tự quyết định toàn request. Apply so conflict theo field và không partial apply. |
+| GET/POST | `/api/admin/company-update-requests/{public_id}/` · `start-review/` · `review/` | Admin mở exact request, nhận review bằng exact revision/lock rồi mới ra quyết định cuối `approved\|changes_requested\|rejected`. Duyệt từng document không tự quyết định toàn request. Apply so conflict theo field (cả `benefits`, `offices`) và không partial apply. Payload có `previews` cạnh `media_previews`: `previews.benefits: [{name, note}]`, `previews.offices: [{label, address, province_name, is_headquarters}]` (chỉ có key đang được đề xuất); `current_values.benefits`/`current_values.offices` dùng cùng shape. |
+| GET | `/api/admin/companies/{public_id}/public-page/` | Quyền `company.view`. Trả `{public_path, is_indexable, policy_hold: {active, reason, actor_name, at}, profile}`; `profile` là đúng DTO của `GET /api/companies/{slug}/` và vẫn được dựng khi trang đang bị tạm ẩn. |
+| POST | `/api/admin/companies/{public_id}/policy-hold/` | Quyền `company.view` + `company_page.moderate`. Body `{action: apply\|release, reason}` với `reason` 10–500 ký tự; trả cùng payload với `public-page/`. Lặp lại quyết định đang có hiệu lực trả `400`. Mỗi lần ghi `CompanyPageEvent` và nhật ký quản trị, không đổi `Company.updated_at`. |
+| GET | `/api/admin/company-reports/?status=&reason=&company=&q=&ordering=&page=` | Quyền `company_report.view`. Hàng chờ báo cáo trang công ty, phân trang chuẩn. `company` là `public_id` công ty; `q` tìm theo mã báo cáo, mã/tên công ty (không dấu), email người báo cáo, nội dung và ghi chú kết luận. `ordering` chỉ nhận whitelist `company_name\|reason\|detail\|reporter_email\|status\|created_at` (thêm `-` để giảm dần), giá trị khác trả `400`. Không có endpoint summary; đếm hàng chờ bằng `?status=pending&page_size=1`. |
+| POST | `/api/admin/company-reports/{public_id}/resolve/` | Quyền `company_report.view` + `company_report.resolve`. Body `{status: upheld\|dismissed, note, apply_hold}`; `note` bắt buộc, tối đa 1000 ký tự. `apply_hold=true` chỉ hợp lệ với `upheld`, cần thêm quyền `company_page.moderate` (thiếu trả `403`), tạm ẩn trang trong cùng transaction với `note` làm lý do và bỏ qua nếu trang đã bị ẩn. Chỉ báo cáo `pending` được kết luận. Trả row đã cập nhật; ghi nhật ký `resolve_company_report`. Không ảnh hưởng huy hiệu xác thực của recruiter. |
+| POST | `/api/admin/company-reports/{public_id}/reverse/` | Quyền như `resolve/`. Body `{note}` bắt buộc. Đưa báo cáo `upheld`/`dismissed` về `pending`, xoá `resolution_note`/`resolved_at`/`resolved_by_email`, thêm một dòng lịch sử; không bao giờ gỡ tạm ẩn trang. Bị từ chối `400` nếu người báo cáo đã có báo cáo `pending` khác cho cùng công ty. Ghi nhật ký `reverse_company_report`. |
 | GET/POST | `/api/admin/company-domain-claims/` · `{public_id}/manual-review-impact/` · `approve-manual/` · `reject-manual/` · `revoke-impact/` · `revoke/` | Hàng chờ domain dùng permission `employer_domain.view/review/revoke`. Mọi quyết định ghi reason, preview signed impact token, recheck stale dưới lock và append audit; manual proof hết hạn sau 12 tháng. |
 | GET | `/api/employer/industries/all/` | Toàn bộ lĩnh vực cho dropdown tạo hồ sơ công ty |
 | GET | `/api/dashboard/employer/` | Read-model dashboard employer: account/verification, KPI tổng hợp, activity 7 ngày, nhu cầu và tin gần đây. `recent_applications` chỉ có khi `candidate_data_access=true`. |
@@ -111,11 +128,266 @@ Xác thực trong Swagger UI: gọi `POST /api/auth/login/` lấy `access`, bấ
 | GET | `/api/v2/cv-templates/{slug}/related/` | Template published liên quan theo category, cùng locale. |
 | GET | `/api/v2/cv-categories/?type=` | Taxonomy template active (`style`, `feature`, `position`, `audience`). |
 | GET | `/api/v2/cv-position-options/?locale=&q=` | Vị trí chuyên môn active có `CvPositionProfile` bật, có localization và content resolve được; response gồm `public_id`, `slug` (dùng cho query `vi-tri` của trang chi tiết mẫu), `display_name`, `name_vi`, có ordering quản trị được. |
+| GET | `/api/v2/cv-position-details/?position_public_id=&locale=` | Khung section `position_details` (trường riêng của vị trí, nhãn theo ngôn ngữ, giá trị rỗng) hoặc `section: null`; editor dùng khi ứng viên đổi vị trí. Public cache 5 phút. |
 | GET | `/api/v2/cv-position-preview/?position_public_id=&locale=&experience_band=&template_public_id=&theme_color=` | Resolve nội dung theo nhóm kinh nghiệm gần nhất (`entry/junior/mid/senior`, mặc định `junior`, giá trị khác → 400), riêng của vị trí trước chung; response có `source` (`curated`/`generic`/`blank`), `experience_band`; khi có template trả thêm canonical `document`, `renderer`, `revision`. `source=blank` compose document trống. Contract content-only cũ vẫn hoạt động nếu thiếu template. |
 `locale` trên catalogue/position preview và `language` khi tạo/import CV chỉ
 nhận `vi-VN` hoặc `en-US` (enum `CvLanguage` ở
 `apps/cv_templates/models/language.py`); giá trị khác trả `400`. Từ CVT-1a không
 còn API quản lý ngôn ngữ (`/api/site/locales/`, `/api/site/admin/locales/`).
+
+### Trang công ty công khai (ADR-0017)
+
+`GET /api/companies/{slug}/` cho phép anonymous, dùng chung throttle
+`public_companies` với danh bạ. Response do một builder duy nhất sinh ra
+(`build_public_company_profile`); frontend render theo `sections[].type` và
+`sidebar[].type`, không suy luận từ tên cột:
+
+```json
+{
+  "public_id": "co_ab12",
+  "slug": "fpt-software",
+  "canonical_path": "/cong-ty/fpt-software",
+  "indexable": true,
+  "identity": {
+    "display_name": "FPT Software",
+    "legal_name": "Công ty TNHH Phần mềm FPT",
+    "headline": "Kiến tạo tương lai số",
+    "logo_url": "https://…/logo.png",
+    "cover_image_url": "",
+    "website_url": "https://fpt-software.com",
+    "industries": [{"id": 1, "name": "Công nghệ thông tin", "slug": "cong-nghe-thong-tin", "is_primary": true}]
+  },
+  "stats": {"active_public_job_count": 12, "follower_count": 34, "company_size": "100-499", "company_size_display": "100 - 499 nhân viên", "founded_year": 2010},
+  "theme": {"accent": {"key": "brand", "primary": "#00b14f", "hover": "#008a3e", "soft": "#f0fbf5"}},
+  "sections": [
+    {"key": "about", "type": "rich_text", "title": "Giới thiệu công ty", "body_html": "<p>…</p>"},
+    {"key": "jobs", "type": "jobs", "title": "Việc làm đang tuyển", "pinned_job_public_ids": ["jb_ab12"]},
+    {"key": "benefits", "type": "benefits", "title": "Phúc lợi", "items": [{"name": "Bảo hiểm sức khoẻ", "icon": "shield", "category": "welfare", "note": "Cho cả gia đình"}], "body_html": "<ul>…</ul>"},
+    {"key": "culture", "type": "rich_text", "title": "Văn hoá công ty", "body_html": "<p>…</p>"},
+    {"key": "gallery", "type": "gallery", "title": "Hình ảnh công ty", "items": [{"image_url": "https://…", "caption": ""}]},
+    {"key": "video", "type": "video", "title": "Video giới thiệu", "provider": "youtube", "video_id": "dQw4w9WgXcQ", "embed_url": "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ"}
+  ],
+  "sidebar": [
+    {"key": "general_info", "type": "facts", "title": "Thông tin chung", "items": [{"key": "website", "label": "Website", "value": "fpt-software.com", "href": "https://fpt-software.com"}]},
+    {"key": "offices", "type": "offices", "title": "Địa điểm", "items": [{"label": "Trụ sở chính", "address": "17 Duy Tân", "province_name": "Hà Nội", "is_headquarters": true}]},
+    {"key": "social_links", "type": "social_links", "title": "Mạng xã hội", "items": [{"network": "facebook", "label": "Facebook", "url": "https://facebook.com/fptsoftware"}]},
+    {"key": "share", "type": "share", "title": "Chia sẻ công ty"},
+    {"key": "similar_companies", "type": "similar_companies", "title": "Công ty cùng lĩnh vực"}
+  ]
+}
+```
+
+- `display_name` là tên thương mại, thiếu thì dùng tên đăng ký; `legal_name`
+  rỗng khi trùng `display_name`.
+- Thứ tự và việc ẩn khối trong `sections`/`sidebar` cùng `theme.accent` theo bố
+  cục công ty đã lưu; chưa lưu thì dùng mặc định của registry. Khối `jobs` có
+  `pinned_job_public_ids`: tin ghim còn công khai, theo thứ tự ghim.
+- Khối rỗng bị bỏ khỏi response. Luôn có `jobs`, `general_info`, `share` và
+  `similar_companies`; `general_info.items` chỉ gồm fact có giá trị
+  (`company_size`, `industries`, `founded_year`, `website`), riêng `website` có
+  thêm `href`.
+- `website_url` và `href` chỉ trả URL `http(s)`. `offices` lấy từ các văn phòng
+  đã duyệt (`CompanyOffice`); công ty chưa có văn phòng nào dùng một item từ
+  `Company.public_headquarters` (`province_name` rỗng). Hộ kinh doanh không bao
+  giờ có khối này, kể cả khi đã khai văn phòng.
+- `benefits` có mặt khi có phúc lợi từ danh mục (`items`) hoặc mô tả phúc lợi
+  (`body_html`, rỗng khi không có). `video` chỉ có với video YouTube/Vimeo hợp lệ;
+  `embed_url` do server sinh (`youtube-nocookie.com` hoặc `player.vimeo.com`),
+  frontend chỉ tải khi người xem bấm. `social_links` theo thứ tự registry.
+- `indexable` đúng khi công ty không bị tạm ẩn, có người đại diện hợp lệ, có
+  lĩnh vực và có mô tả hoặc ít nhất một tin đang công khai. Sitemap dùng cùng
+  định nghĩa này.
+- `stats.follower_count` là tổng số ứng viên đang theo dõi; không endpoint nào
+  trả danh tính người theo dõi cho nhà tuyển dụng hay khách.
+- Response không bao giờ chứa mã số thuế, email, số điện thoại, `address` thô,
+  danh tính recruiter hay trạng thái kiểm duyệt.
+
+SEO shell `GET /cong-ty/{slug}` (ngoài `/api`) trả title, description,
+canonical, robots, Open Graph/Twitter và JSON-LD `Organization` +
+`BreadcrumbList`; `Organization.sameAs` là danh sách website và các mạng xã hội,
+`address` lấy từ văn phòng được đánh dấu trụ sở chính (kèm `addressRegion`);
+công ty chưa khai văn phòng nào dùng địa chỉ đăng ký của doanh nghiệp, và hộ
+kinh doanh không bao giờ có `address`. Chỉ
+`index, follow` khi `indexable` và `seo_robots_index`
+đang bật. Slug lạ hoặc công ty bị tạm ẩn trả HTTP 404 kèm `noindex`.
+`/sitemaps/companies.xml` liệt kê các công ty `indexable` với `lastmod` lấy từ
+`Company.updated_at` và được khai báo trong `/sitemap.xml`.
+
+### Workspace trang công ty của nhà tuyển dụng
+
+`GET /api/employer/company/page/`:
+
+```json
+{
+  "company": {"public_id": "co_ab12", "slug": "fpt-software", "display_name": "FPT Software", "public_path": "/cong-ty/fpt-software", "is_public": true, "is_indexable": true},
+  "permissions": {"can_view": true, "can_edit_layout": false, "can_edit_content": false, "can_manage_editors": false, "blockers": [{"code": "NO_GRANT", "message": "…"}]},
+  "registry": {
+    "sections": [{"key": "about", "title": "Giới thiệu công ty", "zone": "main", "always_on": false}],
+    "accents": [{"key": "brand", "label": "Xanh ProCV", "primary": "#00b14f", "hover": "#008a3e", "soft": "#f0fbf5"}],
+    "limits": {"pinned_jobs": 3}
+  },
+  "layout": {"section_order": ["about", "jobs", "benefits", "culture", "gallery", "video"], "hidden_sections": [], "accent": "brand", "pinned_job_public_ids": [], "lock_version": 0},
+  "pinned_jobs": [{"public_id": "jb_ab12", "title": "…", "slug": "…", "published_at": "…"}],
+  "content": {"…": "DTO của GET /api/companies/{slug}/ với mọi khối có nội dung, thứ tự registry, màu brand"},
+  "stats": {"follower_count": 12, "active_public_job_count": 5}
+}
+```
+
+- Quyền là chính sách suy ra tại thời điểm request
+  (`employers/models/page_access.py`), không lưu thành vai trò. Recruiter "đủ
+  điều kiện" khi là người đại diện hợp lệ của chính công ty mình và không có
+  compliance hold đang áp dụng. `can_manage_editors` = owner đủ điều kiện;
+  `can_edit_layout` = `can_edit_content` = owner đủ điều kiện, hoặc member đủ
+  điều kiện có grant còn hiệu lực trong khi owner vẫn đủ điều kiện.
+- `blockers[].code`: `OWNER_NOT_VERIFIED` (owner của công ty không đủ điều
+  kiện, áp cho mọi người kể cả owner), `NOT_VERIFIED`, `COMPLIANCE_HOLD`,
+  `NO_GRANT`. Danh sách rỗng khi và chỉ khi được sửa.
+- `registry.sections` liệt kê vùng `main` rồi `sidebar`; chỉ vùng `main` sắp xếp
+  được, khối `always_on` không ẩn được. `hero` không thuộc registry.
+- `layout.section_order` luôn là hoán vị đầy đủ của các key vùng `main`.
+  `hidden_sections` nhận key của cả hai vùng và được chuẩn hoá theo thứ tự
+  registry. Chưa lưu lần nào thì `lock_version = 0`.
+- PATCH không đổi gì thì trả `200` và giữ nguyên `lock_version`; mỗi thay đổi
+  bố cục hoặc tin ghim tăng `lock_version` một lần và ghi `CompanyPageEvent`
+  (`layout_updated`, `pinned_jobs_updated`) kèm `before`/`after`. Bố cục và tin
+  ghim nằm ở bảng riêng nên không đổi `Company.updated_at`.
+- Tin ghim phải là tin đang công khai của chính công ty, tối đa 3, không trùng.
+  Tin ghim rời trạng thái công khai tự biến mất khỏi `pinned_job_public_ids`.
+  `GET /api/jobs/?company=<public_id>` không kèm `ordering` xếp tin ghim lên
+  đầu theo thứ tự ghim.
+
+### Nội dung trang qua kiểm duyệt
+
+Nội dung (chữ, video, mạng xã hội, phúc lợi, văn phòng, ảnh) không lên trang
+ngay mà đi qua `CompanyUpdateRequest` như hồ sơ công ty; bố cục thì áp dụng
+ngay. Workspace `GET /api/employer/company/page/` có thêm:
+
+```json
+{
+  "content_form": {
+    "published": {"headline": "", "description": "<p>…</p>", "culture": "", "employee_benefits": "", "video_url": "",
+                  "social_links": {"facebook": "", "linkedin": "", "youtube": "", "tiktok": "", "instagram": ""},
+                  "benefits": [{"benefit_id": 7, "note": ""}],
+                  "offices": [{"label": "Trụ sở chính", "address_line": "17 Duy Tân", "province_id": 1, "province_name": "Hà Nội", "is_headquarters": true}],
+                  "logo_url": "", "cover_image_url": "", "gallery": [{"id": 3, "image_url": "https://…", "caption": ""}]},
+    "pending": {"culture": "<p>…</p>", "logo_pending": true},
+    "request": {"public_id": "cur_…", "status": "submitted", "submitted_at": "…", "review_note": "", "editable": true, "lock_version": 2, "allowed_actions": ["edit", "withdraw", "cancel"]},
+    "section_status": {"hero": "pending", "about": "published", "benefits": "empty", "culture": "pending", "gallery": "published", "video": "empty", "offices": "empty", "social_links": "empty"}
+  },
+  "completeness": {"score": 30, "items": [{"key": "logo", "label": "Logo", "done": false}]}
+}
+```
+
+- `pending` và `request` là `null` khi người gọi không có yêu cầu đang mở;
+  yêu cầu của member khác không hiện ở đây. `pending` chỉ gồm key nội dung
+  trang của yêu cầu, cùng shape với `published`; ảnh đang chờ trả URL xem trước
+  (`logo_url`, `cover_image_url`, `gallery_additions: [{image_url}]`) và
+  `gallery_deletions: [id]`. `request.lock_version`/`allowed_actions` dùng cho
+  `POST /api/employer/company/update-requests/{public_id}/withdraw/`.
+- `section_status`: khối có key trong yêu cầu đang mở là `pending` (hoặc
+  `changes_requested` khi admin yêu cầu chỉnh sửa); còn lại `published` nếu đã
+  có nội dung công khai, ngược lại `empty`.
+- `completeness.score` là phần trăm của 10 mục đã có nội dung công khai: logo,
+  ảnh bìa, khẩu hiệu, giới thiệu, phúc lợi (danh mục hoặc mô tả), văn hoá,
+  thư viện ảnh, văn phòng, mạng xã hội, video.
+- `registry.social_networks: [{key, label, placeholder}]` và `registry.limits`
+  thêm `benefits: 8, offices: 10, gallery: 10, headline: 160`.
+
+`POST /api/employer/company/page/content/` gộp `changes` vào yêu cầu đang mở:
+key gửi lên ghi đè key cũ, key không gửi giữ nguyên (kể cả thay đổi pháp lý
+gửi từ form hồ sơ), và key gửi đúng bằng giá trị đang công khai bị bỏ khỏi
+yêu cầu. Gộp xong mà không còn gì thì yêu cầu đang mở được rút (`withdrawn`);
+nếu chưa có yêu cầu thì trả `400 {changes}`. Key giữ lại vẫn so xung đột với
+giá trị công khai lúc nó được gửi lần đầu.
+
+Quy tắc kiểm tra (chạy khi gửi và chạy lại khi admin duyệt):
+
+- `headline`: một dòng chữ thuần, tối đa 160 ký tự, không chứa `<`/`>`.
+- `culture`: rich text cùng allow-list với mô tả, tối đa 5.000 ký tự hiển thị.
+- `video_url`: chỉ `youtube.com/watch?v=`, `youtu.be/`, `youtube.com/shorts/`
+  hoặc `vimeo.com/<số>`; lưu dạng chuẩn `https://www.youtube.com/watch?v=<id>`
+  hoặc `https://vimeo.com/<id>`, `""` để xoá. Không bao giờ nhận mã nhúng.
+- `social_links`: chỉ `facebook, linkedin, youtube, tiktok, instagram`; mỗi
+  giá trị là URL `https` thuộc tên miền của mạng đó (kể cả tên miền con như
+  `m.facebook.com`, `vn.linkedin.com`) và trỏ tới một trang cụ thể; chuỗi rỗng
+  bị bỏ.
+- `benefits`: tối đa 8 `{benefit_id, note}` không trùng, `benefit_id` là
+  `Benefit` đang hoạt động (`GET /api/jobs/benefits/`), `note` tối đa 160 ký tự.
+- `offices`: tối đa 10 `{label, address_line, province_id, is_headquarters}`,
+  `province_id` là `Location` cấp tỉnh (`GET /api/locations/?level=province`),
+  tối đa một trụ sở chính.
+- Lỗi trả ở cấp cao nhất theo field; lỗi từng phần tử của danh sách lồng theo
+  chỉ số dạng chuỗi, ví dụ `{"offices": {"1": {"address_line": ["…"]}}}`, lỗi
+  của cả danh sách là `{"offices": ["…"]}`; lỗi mạng xã hội lồng theo mạng,
+  ví dụ `{"social_links": {"facebook": ["…"]}}`.
+
+Row của `editors/`:
+
+```json
+{"member_id": "rec_ab12cd34ef56", "display_name": "Nguyễn Văn A", "position_title": "Chuyên viên tuyển dụng", "email_masked": "a***@fpt.com", "company_role": "member", "eligible": true,
+ "grant": {"public_id": "cpg_ab12cd34ef56", "granted_at": "2026-11-14T07:00:00Z", "granted_by_name": "Trần Thị B", "effective": true}}
+```
+
+- Owner luôn đứng đầu và không cấp quyền được cho owner. `grant.effective` chỉ
+  đúng khi cả member lẫn owner còn đủ điều kiện.
+- Cấp và thu hồi ghi `CompanyPageEvent` (`editor_granted`, `editor_revoked`) và
+  gửi thông báo website cho member (`company_page_editor_granted`,
+  `company_page_editor_revoked`). Admin gỡ liên kết công ty của member sẽ thu
+  hồi grant với `revoke_reason = company_unlinked`.
+
+### Theo dõi và báo cáo trang công ty
+
+`GET|PUT|DELETE /api/companies/{public_id}/follow/` luôn trả cùng một shape:
+
+```json
+{"following": true, "notify_new_jobs": true, "follower_count": 13}
+```
+
+- Lần theo dõi đầu mặc định `notify_new_jobs=true`; PUT sau đó không gửi key
+  (hoặc gửi `null`) giữ nguyên lựa chọn đã lưu. Khi chưa theo dõi,
+  `notify_new_jobs` luôn là `false`.
+- `Company.follower_count` chỉ được ghi bằng `QuerySet.update(F())` trong cùng
+  transaction với dòng `CompanyFollow`, không đổi `Company.updated_at`. Chiều
+  giảm đi qua một receiver `pre_delete` duy nhất, nên bỏ theo dõi và xoá hẳn
+  tài khoản ứng viên đều giữ `follower_count` bằng đúng số dòng theo dõi.
+- GET không tính vào throttle `company_follow`: mỗi lượt xem trang công ty đều
+  đọc trạng thái này.
+
+`POST /api/companies/{public_id}/reports/`:
+
+```json
+{"reason": "wrong_info", "section_key": "offices", "detail": "Địa chỉ trụ sở không đúng."}
+```
+
+- `reason`: `wrong_info`, `impersonation`, `inappropriate_content`, `scam`,
+  `other`. `section_key` rỗng hoặc là một `key` của khối trên trang (`about`,
+  `jobs`, `benefits`, `culture`, `gallery`, `video`, `general_info`, `offices`,
+  `social_links`, `share`, `similar_companies`). `detail` tối đa 2000 ký tự,
+  bắt buộc từ 10 ký tự khi `reason=other`.
+- Báo cáo lưu lại tên đăng ký và tên thương mại của công ty tại thời điểm gửi.
+
+Row của `GET /api/admin/company-reports/` (và response của `resolve/`,
+`reverse/`) giữ nguyên các key của row báo cáo tin tuyển dụng, thay nhóm key
+của tin bằng object `company` và thêm `section_key`, `section_title`:
+
+```json
+{
+  "public_id": "crp_ab12cd34ef56",
+  "company": {"public_id": "co_ab12", "slug": "fpt-software", "display_name": "FPT Software", "logo_url": "https://…/logo.png", "content_policy_hold": false},
+  "reporter_email": "ung-vien@example.com",
+  "reason": "wrong_info",
+  "reason_label": "Thông tin công ty sai sự thật",
+  "section_key": "offices",
+  "section_title": "Địa điểm",
+  "detail": "Địa chỉ trụ sở không đúng.",
+  "status": "pending",
+  "resolution_note": "",
+  "resolved_at": null,
+  "resolved_by_email": "",
+  "resolution_history": [{"public_id": "crpe_…", "from_status": "pending", "to_status": "upheld", "note": "…", "actor_email": "admin@example.com", "created_at": "…"}],
+  "created_at": "2026-11-14T07:00:00Z"
+}
+```
 
 ### Contract phân quyền admin G1
 
@@ -160,7 +432,7 @@ quyền, endpoint RBAC trả:
 | `/api/dashboard/` | Vẫn `IsAdmin`, chuyển ở G2 |
 
 Các field lifecycle CV được bảo vệ riêng để quyền `.edit` không thể phát hành
-qua PATCH: `CvTemplate.status/lifecycle_status/current_published_version`,
+qua PATCH: `CvTemplate.lifecycle_status/current_published_version`,
 `is_active` của category/color/background và
 `CvSampleContent.status/published_at`. Staff tạo template ở `inactive`; các tài
 nguyên `is_active` mặc định `false`; sample/version tiếp tục ở `draft`. Chuyển
@@ -374,7 +646,13 @@ trả `409 admin_resource_changed`.
 | CRUD | `/api/v2/admin/cv-colors/` | Registry màu. |
 | CRUD | `/api/v2/admin/cv-sample-contents/` | Nội dung canonical draft. |
 | POST | `/api/v2/admin/cv-sample-contents/{public_id}/preview/` | Preview bằng canonical composer. |
-| POST | `/api/v2/admin/cv-sample-contents/{public_id}/publish\|archive/` | Lifecycle curated content. |
+| POST | `/api/v2/admin/cv-sample-contents/{public_id}/publish\|archive/` | Lifecycle curated content. Publish nhận `draft` hoặc `in_review`, ghi người duyệt và lưu trữ bản đang xuất bản cùng tổ hợp. Danh sách lọc `?position=&locale=&band=&status=`. |
+| POST | `/api/v2/admin/cv-sample-contents/generate/` | Sinh nội dung mẫu bằng AI: `{position_public_ids, locales, experience_bands}`, tối đa 16 tổ hợp và 16 lượt đang chạy; `202` + `batch_id`. `503 runtime_disabled\|provider_not_configured`, `409 generation_in_progress`, `400 batch_too_large`. Kết quả ở trạng thái `in_review`. |
+| GET | `/api/v2/admin/cv-sample-generations/?batch=` | Trạng thái từng lượt sinh (`queued/processing/completed/failed`, `failure_code`, `sample_public_id`). |
+| GET/POST/PATCH | `/api/v2/admin/cv-positions/` | Cấu hình CV theo vị trí: `section_preset`, `keywords`, `is_active`, `sort_order`, `field_count`. Không đổi được vị trí của một profile. |
+| GET | `/api/v2/admin/cv-positions/coverage/` | Ma trận nội dung riêng ngôn ngữ × nhóm kinh nghiệm: `published`, `pending` (nháp/chờ duyệt), `generic`. Một truy vấn cho mọi vị trí. |
+| GET/POST | `/api/v2/admin/cv-positions/export/`, `.../import/` | JSON `cv-positions-v1` theo `JobCategory.slug` (gồm trường riêng và nội dung đã xuất bản). Import upsert profile + trường, nội dung vào nháp `origin=import`; lỗi ở một vị trí thì không ghi gì. |
+| CRUD | `/api/v2/admin/cv-position-fields/?position=` | Trường riêng: `key`, nhãn/placeholder vi/en, `field_type` (`text/long_text/url/number/date/select/multi_select/tags`), `options` vi/en, `maps_to` (`none`/`skills`), `is_required_hint`. |
 
 Các action sinh snapshot trả `202 queued`; asset không được tạo trong request
 web. Public card chỉ thấy storage URL mới sau khi worker đã render và swap đủ
@@ -447,9 +725,8 @@ Mã lỗi ổn định gồm `JOB_AI_DAILY_QUOTA_EXCEEDED` (429),
 400 và owner mismatch 404. Provider message/raw content không được trả cho client.
 
 | GET | `/api/v2/cv-sample-contents/?locale=&experience_band=` | Thư viện nội dung mẫu riêng theo vị trí cho editor (không gồm nội dung chung); card có `position_public_id`, `position_slug`, `position_name`, `experience_band`. |
-| GET | `/api/v2/cv-sample-contents/{public_id}/` | Compatibility detail cho client cũ dùng `sample_content_public_id`. |
-| GET/POST | `/api/v2/cvs/` | Candidate lifecycle V2. POST nhận template, language, optional sample/position/`source_cv_public_id`, `experience_band` (khi tạo từ vị trí) và optional màu; các source loại trừ nhau. |
-| GET/PATCH/DELETE | `/api/v2/cvs/{public_id}/` | Candidate metadata/detail: PATCH chỉ nhận `title`, `is_default`; DELETE xóa vĩnh viễn CV và library artifacts. Snapshot của application đã nộp được giữ detached cho recruiter. |
+| GET/POST | `/api/v2/cvs/` | Candidate lifecycle V2. POST nhận template, language, optional `position_public_id` (kèm `experience_band`) hoặc `source_cv_public_id` (loại trừ nhau) và optional màu. |
+| GET/PATCH/DELETE | `/api/v2/cvs/{public_id}/` | Candidate metadata/detail: PATCH nhận `title`, `is_default`, `position_public_id` (vị trí mục tiêu, `null` để bỏ) và `position_level` (`Job.PositionLevel`); response có thêm trường matching `position_level`, `experience_years`, `education_level`; DELETE xóa vĩnh viễn CV và library artifacts. Snapshot của application đã nộp được giữ detached cho recruiter. |
 | POST | `/api/v2/cvs/imports/` | Candidate import PDF/DOCX (`multipart upload_session`, optional `title`/template fields). Response không có storage key/URL; raw `file` chỉ compatibility. |
 | POST | `/api/v2/cvs/{public_id}/duplicate/` | Clone builder CV từ latest immutable version thành CV/draft/version độc lập. Optional `title`; không hỗ trợ uploaded CV để tránh dùng chung file storage. |
 | GET/PUT | `/api/v2/cvs/{public_id}/draft/` | Đọc/autosave canonical draft; PUT bắt buộc `If-Match: "lock-version-N"`. |
@@ -461,8 +738,8 @@ Mã lỗi ổn định gồm `JOB_AI_DAILY_QUOTA_EXCEEDED` (429),
 | GET | `/api/v2/cvs/{public_id}/view/` | Owner read-only view từ immutable version, không đọc draft. |
 | GET/POST | `/api/v2/cvs/{public_id}/shared-links/` | Quản lý bearer share link theo owner/version. |
 | GET/POST | `/api/v2/cvs/{public_id}/exports/` | Danh sách/yêu cầu PDF export từ immutable version. |
-| GET | `/api/jobs/?category=&location=&work_type=&employment_type=&experience_level=&search=` | Danh sách job đang active, public. `category`/`location` nhận **nhiều giá trị**; response là card DTO, không gồm description/requirements/benefits/deadline và dữ liệu quản trị. Boolean legacy `company_verified` thực chất là dấu tick của exact recruiter `posted_by`, được batch-evaluate với query count phẳng. Dùng `?view=preview` khi UI thực sự cần nội dung hover. |
-| GET | `/api/jobs/{slug}/` | Chi tiết job, public và **chỉ đọc** (không tăng `view_count`). Trả relation tối thiểu cùng view-model nhóm sẵn: `primary_specialization`, `domain_knowledge`, `workplace_groups`, `requirement_tags` (**không còn kèm kỹ năng**), `benefit_tags`, `required_skills`, `preferred_skills`, `benefit_groups` (quyền lợi gom theo danh mục, thứ tự theo `Benefit.Category`), `language_requirements[].proficiency_label`; không trả contact nhận hồ sơ hoặc trạng thái quản trị. `company_verification` chỉ có `{verified,criteria}`: khi chưa đủ năm điều kiện, `criteria=[]` để không lộ trạng thái email/phone/pháp lý/tuổi/report; khi đủ mới trả năm nhãn passed. |
+| GET | `/api/jobs/?category=&location=&work_type=&employment_type=&experience_level=&search=&company=` | Danh sách job đang active, public. `company` nhận `public_id` công ty và khớp chính xác, khác với `search_by=company` khớp theo tên; card trả `company_slug` để dẫn về trang công ty (`null` khi trang công ty đang bị tạm ẩn). `category`/`location` nhận **nhiều giá trị**; response là card DTO, không gồm description/requirements/benefits/deadline và dữ liệu quản trị. Boolean legacy `company_verified` thực chất là dấu tick của exact recruiter `posted_by`, được batch-evaluate với query count phẳng. Dùng `?view=preview` khi UI thực sự cần nội dung hover. |
+| GET | `/api/jobs/{slug}/` | Chi tiết job, public và **chỉ đọc** (không tăng `view_count`). Trả `company_slug` (`null` khi trang công ty đang bị tạm ẩn); `company_address` chỉ có giá trị với doanh nghiệp, hộ kinh doanh luôn là chuỗi rỗng. Trả relation tối thiểu cùng view-model nhóm sẵn: `primary_specialization`, `domain_knowledge`, `workplace_groups`, `requirement_tags` (**không còn kèm kỹ năng**), `benefit_tags`, `required_skills`, `preferred_skills`, `benefit_groups` (quyền lợi gom theo danh mục, thứ tự theo `Benefit.Category`), `language_requirements[].proficiency_label`; không trả contact nhận hồ sơ hoặc trạng thái quản trị. `company_verification` chỉ có `{verified,criteria}`: khi chưa đủ năm điều kiện, `criteria=[]` để không lộ trạng thái email/phone/pháp lý/tuổi/report; khi đủ mới trả năm nhãn passed. |
 | POST | `/api/jobs/{public_id}/report/` | Candidate-only, chỉ nhận tin đang public và throttle đồng thời theo account/IP; response tối thiểu `{public_id,status,created_at}`. Chỉ admin-UPHELD thuộc `fake_company\|scam\|wrong_info` làm mất tick recruiter và tự tạo hold ẩn tin; reverse phục hồi badge nhưng không tự public lại tin. |
 | POST | `/api/jobs/{slug}/views/` | Ghi nhận lượt xem riêng, chỉ khi Analytics consent hợp lệ; Redis dedupe 24 giờ, response `{counted, view_count, reason?}`. |
 | GET/POST | `/api/privacy/consent/` | Đọc/lưu lựa chọn cookie ký số (`preferences`, `analytics`, `marketing`); necessary luôn bật, rút Analytics sẽ xóa viewer cookie. |
@@ -548,9 +825,9 @@ Một phần tử `colors` trong card/detail:
 }
 ```
 
-`theme_color` và `color_variants` vẫn có trong response trong cửa sổ tương
-thích. Client mới phải dùng `colors[]`; URL ảnh thuộc quan hệ template–color,
-không suy ra từ hex hoặc hard-code trên frontend.
+Card không còn `theme_color`/`color_variants` (CVT-1c): client dùng `colors[]`;
+`thumbnail_url` của card và `preview_url` của detail là ảnh của màu mặc định. URL
+ảnh thuộc quan hệ template–color, không suy ra từ hex hoặc hard-code trên frontend.
 
 Position picker trả contract tối thiểu, không lộ hai cấp taxonomy trên UI:
 
@@ -579,8 +856,9 @@ Payload tạo CV V2:
 }
 ```
 
-`position_public_id` và `theme_color` đều optional. `sample_content_public_id`
-vẫn được nhận cho client cũ nhưng không được gửi cùng `position_public_id`. Nếu gửi màu không
+`position_public_id`, `experience_band` và `theme_color` đều optional;
+`position_public_id` không được gửi cùng `source_cv_public_id`. Từ CVT-1c API tạo
+CV không còn nhận `sample_content_public_id`. Nếu gửi màu không
 active hoặc không được gán cho template, API trả `400 theme_color`. Màu hợp lệ
 được copy vào `style_json.theme_color` của initial version và draft.
 

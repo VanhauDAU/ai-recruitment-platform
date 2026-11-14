@@ -14,10 +14,10 @@ import {
   getJobDetail,
   jobDetailPath,
   jobKeys,
-  JobRichContent,
   VerifiedEmployerBadge,
 } from '@/entities/job'
 import { message } from '@/shared/lib/toast'
+import RichContent from '@/shared/ui/RichContent'
 import {
   COMPARISON_GROUPS,
   comparisonRowIsDifferent,
@@ -58,7 +58,7 @@ function ExpandableValue({ value }) {
       <div>
         <div id={contentId} className={`relative ${expanded || !expandable ? '' : 'max-h-32 overflow-hidden'}`}>
           {value.kind === 'rich'
-            ? <JobRichContent html={value.display} />
+            ? <RichContent html={value.display} />
             : <p className="whitespace-pre-line text-sm leading-6 text-slate-700">{value.display}</p>}
           {!expanded && expandable && <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-b from-white/0 to-white" />}
         </div>

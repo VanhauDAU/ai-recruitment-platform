@@ -25,6 +25,7 @@ function response(publicId, companyName, overrides = {}) {
     previous: null,
     results: publicId ? [{
       public_id: publicId,
+      slug: publicId,
       company_name: companyName,
       trade_name: '',
       logo_url: '',
@@ -95,8 +96,8 @@ describe('public company routes', () => {
     expect(screen.getByTestId('location')).toHaveTextContent(
       '/cong-ty/tim-kiem?keyword=Beta',
     )
-    expect(screen.getByRole('link', { name: 'Xem việc làm tại Công ty nổi bật cũ' }))
-      .toBeVisible()
+    expect(screen.getByRole('link', { name: 'Xem trang công ty Công ty nổi bật cũ' }))
+      .toHaveAttribute('href', '/cong-ty/featured_old')
     expect(featuredRequestCount).toBe(1)
 
     const search = screen.getByRole('searchbox', { name: 'Tên công ty' })
@@ -132,8 +133,8 @@ describe('public company routes', () => {
     renderRoutes('/cong-ty/tim-kiem?keyword=Alpha')
 
     expect(await screen.findByRole('heading', { name: 'Kết quả Alpha' })).toBeVisible()
-    expect(screen.getByRole('link', { name: 'Xem việc làm tại Nhà tuyển dụng Alpha' }))
-      .toBeVisible()
+    expect(screen.getByRole('link', { name: 'Xem trang công ty Nhà tuyển dụng Alpha' }))
+      .toHaveAttribute('href', '/cong-ty/featured_alpha')
     expect(getPublicCompanies).toHaveBeenCalledTimes(2)
     expect(getPublicCompanies).toHaveBeenCalledWith(
       {},

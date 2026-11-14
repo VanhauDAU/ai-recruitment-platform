@@ -8,11 +8,10 @@ from apps.cv_templates.models import (
     DEFAULT_CV_LANGUAGE,
     DEFAULT_EXPERIENCE_BAND,
     CvLanguage,
-    CvSampleContent,
     CvTemplate,
     ExperienceBand,
 )
-from apps.jobs.models import JobCategory
+from apps.jobs.models import Job, JobCategory
 
 from ...models import CvAsset, CvDraft, CvExport, CvImportJob, CvSharedLink, CvVersion, UserCv
 from ...schemas import validate_cv_document
@@ -63,6 +62,9 @@ class CvV2Serializer(serializers.ModelSerializer):
             'file_type',
             'is_default',
             'position_public_id',
+            'position_level',
+            'experience_years',
+            'education_level',
             'template_public_id',
             'template_version',
             'lifecycle_status',
@@ -137,9 +139,34 @@ class CvV2Serializer(serializers.ModelSerializer):
         return 'ready' if current_thumbnail_ready(obj) else 'pending'
 
 
+def _active_specialization(value):
+    try:
+        return JobCategory.objects.get(
+            public_id=value,
+            status=JobCategory.Status.ACTIVE,
+            category_type=JobCategory.CategoryType.SPECIALIZATION,
+        )
+    except JobCategory.DoesNotExist as error:
+        raise serializers.ValidationError('Unknown active specialization.') from error
+
+
 class CvV2MetadataUpdateSerializer(serializers.Serializer):
     title = serializers.CharField(max_length=255, required=False, trim_whitespace=True)
     is_default = serializers.BooleanField(required=False)
+    # Hồ sơ ứng tuyển (CVT-3): vị trí mục tiêu và cấp bậc mong muốn, dùng cho matching.
+    position_public_id = serializers.CharField(max_length=50, required=False, allow_null=True)
+    position_level = serializers.ChoiceField(
+        choices=Job.PositionLevel.choices, required=False, allow_blank=True
+    )
+
+    def validate_position_public_id(self, value):
+        return None if value is None else _active_specialization(value)
+
+    def to_internal_value(self, data):
+        attrs = super().to_internal_value(data)
+        if 'position_public_id' in attrs:
+            attrs['position'] = attrs.pop('position_public_id')
+        return attrs
 
     def validate(self, attrs):
         if not attrs:
@@ -201,9 +228,6 @@ class CvV2CreateSerializer(serializers.Serializer):
     title = serializers.CharField(max_length=255)
     template_public_id = serializers.CharField(max_length=50)
     language = serializers.ChoiceField(choices=CvLanguage.choices, default=DEFAULT_CV_LANGUAGE)
-    sample_content_public_id = serializers.CharField(
-        max_length=50, required=False, allow_blank=False
-    )
     position_public_id = serializers.CharField(max_length=50, required=False, allow_blank=False)
     experience_band = serializers.ChoiceField(
         choices=ExperienceBand.choices, default=DEFAULT_EXPERIENCE_BAND
@@ -219,22 +243,8 @@ class CvV2CreateSerializer(serializers.Serializer):
         except CvTemplate.DoesNotExist as error:
             raise serializers.ValidationError('Unknown template.') from error
 
-    def validate_sample_content_public_id(self, value):
-        # Nội dung chung còn token `{position}` nên chỉ dùng được qua vị trí.
-        try:
-            return CvSampleContent.objects.get(public_id=value, position_profile__isnull=False)
-        except CvSampleContent.DoesNotExist as error:
-            raise serializers.ValidationError('Unknown sample content.') from error
-
     def validate_position_public_id(self, value):
-        try:
-            return JobCategory.objects.get(
-                public_id=value,
-                status=JobCategory.Status.ACTIVE,
-                category_type=JobCategory.CategoryType.SPECIALIZATION,
-            )
-        except JobCategory.DoesNotExist as error:
-            raise serializers.ValidationError('Unknown active specialization.') from error
+        return _active_specialization(value)
 
     def validate_source_cv_public_id(self, value):
         try:
@@ -247,21 +257,9 @@ class CvV2CreateSerializer(serializers.Serializer):
             raise serializers.ValidationError('Unknown reusable CV.') from error
 
     def validate(self, attrs):
-        sample_content = attrs.get('sample_content_public_id')
-        position = attrs.get('position_public_id')
-        source_cv = attrs.get('source_cv_public_id')
-        selected_sources = [
-            value for value in (sample_content, position, source_cv) if value is not None
-        ]
-        if len(selected_sources) > 1:
+        if attrs.get('position_public_id') and attrs.get('source_cv_public_id'):
             raise serializers.ValidationError(
-                {
-                    'position_public_id': 'Use only one content source.',
-                }
-            )
-        if sample_content is not None and sample_content.locale != attrs['language']:
-            raise serializers.ValidationError(
-                {'sample_content_public_id': 'Sample locale must match language.'}
+                {'position_public_id': 'Use only one content source.'}
             )
         theme_color = attrs.get('theme_color')
         template = attrs['template_public_id']

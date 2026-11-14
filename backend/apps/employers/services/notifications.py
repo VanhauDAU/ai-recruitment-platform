@@ -10,6 +10,7 @@ from ..models import EmployerActivity, EmployerNotification, EmployerNotificatio
 
 VERIFY_PATH = '/tuyendung/app/employer-verify'
 COMPANY_PATH = '/tuyendung/app/account/settings/company'
+COMPANY_PAGE_PATH = '/tuyendung/app/company-page'
 
 EVENT_PRESENTATION = {
     EmployerNotification.EventType.VERIFICATION_APPROVED: (
@@ -43,6 +44,14 @@ EVENT_PRESENTATION = {
     EmployerNotification.EventType.COMPANY_LINK_REMOVED: (
         'Liên kết công ty đã được gỡ',
         COMPANY_PATH,
+    ),
+    EmployerNotification.EventType.COMPANY_PAGE_EDITOR_GRANTED: (
+        'Bạn được cấp quyền biên tập trang công ty',
+        COMPANY_PAGE_PATH,
+    ),
+    EmployerNotification.EventType.COMPANY_PAGE_EDITOR_REVOKED: (
+        'Quyền biên tập trang công ty đã bị thu hồi',
+        COMPANY_PAGE_PATH,
     ),
 }
 

@@ -86,7 +86,6 @@ def queue_cv_import(
             cv.file_url = storage_key
             cv.file_name = upload.name[:255]
             cv.file_type = file_type
-            cv.status = UserCv.Status.PROCESSING
             cv.processing_status = UserCv.ProcessingStatus.QUEUED
             cv.save(
                 update_fields=[
@@ -95,7 +94,6 @@ def queue_cv_import(
                     'file_url',
                     'file_name',
                     'file_type',
-                    'status',
                     'processing_status',
                     'updated_at',
                 ]
@@ -164,7 +162,6 @@ def queue_cv_import_from_session(
     cv.file_name = asset.original_filename[:255]
     cv.file_type = file_type
     cv.title = title or asset.original_filename
-    cv.status = UserCv.Status.PROCESSING
     cv.processing_status = UserCv.ProcessingStatus.QUEUED
     cv.save(
         update_fields=[
@@ -174,7 +171,6 @@ def queue_cv_import_from_session(
             'file_name',
             'file_type',
             'title',
-            'status',
             'processing_status',
             'updated_at',
         ]
@@ -207,9 +203,8 @@ def retry_import(*, cv, actor):
     job.failed_at = None
     job.save(update_fields=['status', 'failure_code', 'failed_at', 'updated_at'])
     cv.processing_status = UserCv.ProcessingStatus.QUEUED
-    cv.status = UserCv.Status.PROCESSING
     cv.error_message = ''
-    cv.save(update_fields=['processing_status', 'status', 'error_message', 'updated_at'])
+    cv.save(update_fields=['processing_status', 'error_message', 'updated_at'])
     from ..tasks import process_cv_import_job
 
     transaction.on_commit(lambda: process_cv_import_job.delay(job.pk))

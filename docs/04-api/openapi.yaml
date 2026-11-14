@@ -9669,6 +9669,308 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/v2/admin/cv-position-fields/:
+    get:
+      operationId: v2_admin_cv_position_fields_list
+      description: Trường riêng của vị trí, lọc theo `?position=` (mã `JobCategory`).
+      tags:
+      - v2
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CvPositionFieldAdmin'
+          description: ''
+    post:
+      operationId: v2_admin_cv_position_fields_create
+      description: Trường riêng của vị trí, lọc theo `?position=` (mã `JobCategory`).
+      tags:
+      - v2
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CvPositionFieldAdminRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CvPositionFieldAdminRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CvPositionFieldAdminRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CvPositionFieldAdmin'
+          description: ''
+  /api/v2/admin/cv-position-fields/{public_id}/:
+    get:
+      operationId: v2_admin_cv_position_fields_retrieve
+      description: Trường riêng của vị trí, lọc theo `?position=` (mã `JobCategory`).
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - v2
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CvPositionFieldAdmin'
+          description: ''
+    put:
+      operationId: v2_admin_cv_position_fields_update
+      description: Trường riêng của vị trí, lọc theo `?position=` (mã `JobCategory`).
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - v2
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CvPositionFieldAdminRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CvPositionFieldAdminRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CvPositionFieldAdminRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CvPositionFieldAdmin'
+          description: ''
+    patch:
+      operationId: v2_admin_cv_position_fields_partial_update
+      description: Trường riêng của vị trí, lọc theo `?position=` (mã `JobCategory`).
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - v2
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedCvPositionFieldAdminRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedCvPositionFieldAdminRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedCvPositionFieldAdminRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CvPositionFieldAdmin'
+          description: ''
+    delete:
+      operationId: v2_admin_cv_position_fields_destroy
+      description: Trường riêng của vị trí, lọc theo `?position=` (mã `JobCategory`).
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - v2
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v2/admin/cv-positions/:
+    get:
+      operationId: v2_admin_cv_positions_list
+      description: 'Cấu hình CV theo vị trí: bộ section, từ khóa; độ phủ nội dung;
+        import/export JSON.'
+      tags:
+      - v2
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CvPositionProfileAdmin'
+          description: ''
+    post:
+      operationId: v2_admin_cv_positions_create
+      description: 'Cấu hình CV theo vị trí: bộ section, từ khóa; độ phủ nội dung;
+        import/export JSON.'
+      tags:
+      - v2
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CvPositionProfileAdminRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CvPositionProfileAdminRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CvPositionProfileAdminRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CvPositionProfileAdmin'
+          description: ''
+  /api/v2/admin/cv-positions/{public_id}/:
+    get:
+      operationId: v2_admin_cv_positions_retrieve
+      description: 'Cấu hình CV theo vị trí: bộ section, từ khóa; độ phủ nội dung;
+        import/export JSON.'
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - v2
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CvPositionProfileAdmin'
+          description: ''
+    patch:
+      operationId: v2_admin_cv_positions_partial_update
+      description: 'Cấu hình CV theo vị trí: bộ section, từ khóa; độ phủ nội dung;
+        import/export JSON.'
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - v2
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedCvPositionProfileAdminRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedCvPositionProfileAdminRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedCvPositionProfileAdminRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CvPositionProfileAdmin'
+          description: ''
+  /api/v2/admin/cv-positions/coverage/:
+    get:
+      operationId: v2_admin_cv_positions_coverage_retrieve
+      description: 'Cấu hình CV theo vị trí: bộ section, từ khóa; độ phủ nội dung;
+        import/export JSON.'
+      tags:
+      - v2
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CvPositionProfileAdmin'
+          description: ''
+  /api/v2/admin/cv-positions/export/:
+    get:
+      operationId: v2_admin_cv_positions_export_retrieve
+      description: 'Cấu hình CV theo vị trí: bộ section, từ khóa; độ phủ nội dung;
+        import/export JSON.'
+      tags:
+      - v2
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CvPositionProfileAdmin'
+          description: ''
+  /api/v2/admin/cv-positions/import/:
+    post:
+      operationId: v2_admin_cv_positions_import_create
+      description: 'Cấu hình CV theo vị trí: bộ section, từ khóa; độ phủ nội dung;
+        import/export JSON.'
+      tags:
+      - v2
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CvPositionProfileAdminRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CvPositionProfileAdminRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CvPositionProfileAdminRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CvPositionProfileAdmin'
+          description: ''
   /api/v2/admin/cv-sample-contents/:
     get:
       operationId: v2_admin_cv_sample_contents_list
@@ -9901,6 +10203,72 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CvSampleContentAdmin'
+          description: ''
+  /api/v2/admin/cv-sample-contents/generate/:
+    post:
+      operationId: v2_admin_cv_sample_contents_generate_create
+      description: Xếp hàng sinh nội dung mẫu bằng AI; kết quả vào trạng thái chờ
+        duyệt.
+      tags:
+      - v2
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CvSampleContentAdminRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CvSampleContentAdminRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CvSampleContentAdminRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CvSampleContentAdmin'
+          description: ''
+  /api/v2/admin/cv-sample-generations/:
+    get:
+      operationId: v2_admin_cv_sample_generations_list
+      description: Trạng thái các lượt sinh AI, lọc theo `?batch=`; chỉ đọc.
+      tags:
+      - v2
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CvSampleGeneration'
+          description: ''
+  /api/v2/admin/cv-sample-generations/{public_id}/:
+    get:
+      operationId: v2_admin_cv_sample_generations_retrieve
+      description: Trạng thái các lượt sinh AI, lọc theo `?batch=`; chỉ đọc.
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - v2
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CvSampleGeneration'
           description: ''
   /api/v2/admin/cv-templates/:
     get:
@@ -10327,6 +10695,34 @@ paths:
                 items:
                   $ref: '#/components/schemas/CvCategory'
           description: ''
+  /api/v2/cv-position-details/:
+    get:
+      operationId: v2_cv_position_details_retrieve
+      description: 'Editor dùng khi ứng viên đổi vị trí: thay section `position_details`
+        theo vị trí mới.'
+      summary: Khung mục thông tin chuyên môn (trường riêng) của một vị trí
+      parameters:
+      - in: query
+        name: locale
+        schema:
+          type: string
+      - in: query
+        name: position_public_id
+        schema:
+          type: string
+      tags:
+      - cv-templates
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
   /api/v2/cv-position-options/:
     get:
       operationId: v2_cv_position_options_list
@@ -10404,27 +10800,6 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/CvSampleContentCard'
-          description: ''
-  /api/v2/cv-sample-contents/{public_id}/:
-    get:
-      operationId: v2_cv_sample_contents_retrieve
-      parameters:
-      - in: path
-        name: public_id
-        schema:
-          type: string
-        required: true
-      tags:
-      - v2
-      security:
-      - jwtAuth: []
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CvSampleContentDetail'
           description: ''
   /api/v2/cv-templates/:
     get:
@@ -18451,6 +18826,104 @@ components:
       - related_positions
       - results
       - strategy
+    CvPositionFieldAdmin:
+      type: object
+      properties:
+        public_id:
+          type: string
+          readOnly: true
+        position_public_id:
+          type: string
+        key:
+          type: string
+          pattern: ^[a-z][a-z0-9_]{0,49}$
+          maxLength: 50
+        label_vi:
+          type: string
+          maxLength: 100
+        label_en:
+          type: string
+          maxLength: 100
+        placeholder_vi:
+          type: string
+          maxLength: 200
+        placeholder_en:
+          type: string
+          maxLength: 200
+        field_type:
+          $ref: '#/components/schemas/FieldTypeEnum'
+        options: {}
+        maps_to:
+          $ref: '#/components/schemas/MapsToEnum'
+        is_required_hint:
+          type: boolean
+        is_active:
+          type: boolean
+        sort_order:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - field_type
+      - key
+      - label_en
+      - label_vi
+      - position_public_id
+      - public_id
+      - updated_at
+    CvPositionFieldAdminRequest:
+      type: object
+      properties:
+        position_public_id:
+          type: string
+          minLength: 1
+        key:
+          type: string
+          minLength: 1
+          pattern: ^[a-z][a-z0-9_]{0,49}$
+          maxLength: 50
+        label_vi:
+          type: string
+          minLength: 1
+          maxLength: 100
+        label_en:
+          type: string
+          minLength: 1
+          maxLength: 100
+        placeholder_vi:
+          type: string
+          maxLength: 200
+        placeholder_en:
+          type: string
+          maxLength: 200
+        field_type:
+          $ref: '#/components/schemas/FieldTypeEnum'
+        options: {}
+        maps_to:
+          $ref: '#/components/schemas/MapsToEnum'
+        is_required_hint:
+          type: boolean
+        is_active:
+          type: boolean
+        sort_order:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+      required:
+      - field_type
+      - key
+      - label_en
+      - label_vi
+      - position_public_id
     CvPositionOption:
       type: object
       properties:
@@ -18472,6 +18945,60 @@ components:
       - name_vi
       - public_id
       - slug
+    CvPositionProfileAdmin:
+      type: object
+      properties:
+        public_id:
+          type: string
+          readOnly: true
+        position_public_id:
+          type: string
+        position_name:
+          type: string
+          readOnly: true
+        section_preset: {}
+        keywords: {}
+        is_active:
+          type: boolean
+        sort_order:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+        field_count:
+          type: integer
+          readOnly: true
+          default: 0
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - field_count
+      - position_name
+      - position_public_id
+      - public_id
+      - updated_at
+    CvPositionProfileAdminRequest:
+      type: object
+      properties:
+        position_public_id:
+          type: string
+          minLength: 1
+        section_preset: {}
+        keywords: {}
+        is_active:
+          type: boolean
+        sort_order:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+      required:
+      - position_public_id
     CvSampleContentAdmin:
       type: object
       description: Protect public lifecycle transitions independently from edit access.
@@ -18500,8 +19027,17 @@ components:
           minimum: 0
         status:
           allOf:
-          - $ref: '#/components/schemas/Status399Enum'
+          - $ref: '#/components/schemas/CvSampleContentAdminStatusEnum'
           readOnly: true
+        origin:
+          allOf:
+          - $ref: '#/components/schemas/OriginEnum'
+          readOnly: true
+        reviewed_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
         published_at:
           type: string
           format: date-time
@@ -18519,9 +19055,11 @@ components:
       - created_at
       - experience_band
       - locale
+      - origin
       - position_name
       - public_id
       - published_at
+      - reviewed_at
       - status
       - title
       - updated_at
@@ -18550,6 +19088,18 @@ components:
       - experience_band
       - locale
       - title
+    CvSampleContentAdminStatusEnum:
+      enum:
+      - draft
+      - in_review
+      - published
+      - archived
+      type: string
+      description: |-
+        * `draft` - Draft
+        * `in_review` - In review
+        * `published` - Published
+        * `archived` - Archived
     CvSampleContentCard:
       type: object
       properties:
@@ -18584,13 +19134,16 @@ components:
       - position_slug
       - public_id
       - title
-    CvSampleContentDetail:
+    CvSampleGeneration:
       type: object
       properties:
         public_id:
           type: string
           readOnly: true
-        title:
+        batch_id:
+          type: string
+          readOnly: true
+        position_public_id:
           type: string
           readOnly: true
         locale:
@@ -18601,30 +19154,48 @@ components:
           allOf:
           - $ref: '#/components/schemas/ExperienceBandEnum'
           readOnly: true
-        position_public_id:
+        status:
+          allOf:
+          - $ref: '#/components/schemas/CvSampleGenerationStatusEnum'
+          readOnly: true
+        failure_code:
           type: string
           readOnly: true
-        position_slug:
+        sample_public_id:
           type: string
           readOnly: true
-        position_name:
+        created_at:
           type: string
+          format: date-time
           readOnly: true
-        content_json:
+        finished_at:
+          type: string
+          format: date-time
           readOnly: true
-        schema_version:
-          type: integer
-          readOnly: true
+          nullable: true
       required:
-      - content_json
+      - batch_id
+      - created_at
       - experience_band
+      - failure_code
+      - finished_at
       - locale
-      - position_name
       - position_public_id
-      - position_slug
       - public_id
-      - schema_version
-      - title
+      - sample_public_id
+      - status
+    CvSampleGenerationStatusEnum:
+      enum:
+      - queued
+      - processing
+      - completed
+      - failed
+      type: string
+      description: |-
+        * `queued` - Đang chờ
+        * `processing` - Đang sinh
+        * `completed` - Hoàn tất
+        * `failed` - Lỗi
     CvSharedLink:
       type: object
       properties:
@@ -18715,14 +19286,8 @@ components:
           type: string
         seo_description_en:
           type: string
-        thumbnail_url:
-          type: string
-        preview_url:
-          type: string
         is_premium:
           type: boolean
-        status:
-          $ref: '#/components/schemas/CvTemplateAdminStatusEnum'
         sort_order:
           type: integer
           maximum: 2147483647
@@ -18777,28 +19342,14 @@ components:
           type: string
         seo_description_en:
           type: string
-        thumbnail_url:
-          type: string
-        preview_url:
-          type: string
         is_premium:
           type: boolean
-        status:
-          $ref: '#/components/schemas/CvTemplateAdminStatusEnum'
         sort_order:
           type: integer
           maximum: 2147483647
           minimum: -2147483648
       required:
       - name
-    CvTemplateAdminStatusEnum:
-      enum:
-      - active
-      - inactive
-      type: string
-      description: |-
-        * `active` - Active
-        * `inactive` - Inactive
     CvTemplateCard:
       type: object
       properties:
@@ -18821,12 +19372,6 @@ components:
         is_premium:
           type: boolean
           readOnly: true
-        theme_color:
-          type: string
-          readOnly: true
-        color_variants:
-          type: string
-          readOnly: true
         colors:
           type: string
           readOnly: true
@@ -18838,7 +19383,6 @@ components:
           readOnly: true
       required:
       - categories
-      - color_variants
       - colors
       - description
       - display_name
@@ -18846,7 +19390,6 @@ components:
       - public_id
       - slug
       - tags
-      - theme_color
       - thumbnail_url
     CvTemplateDetail:
       type: object
@@ -18869,12 +19412,6 @@ components:
           readOnly: true
         is_premium:
           type: boolean
-          readOnly: true
-        theme_color:
-          type: string
-          readOnly: true
-        color_variants:
-          type: string
           readOnly: true
         colors:
           type: string
@@ -18902,7 +19439,6 @@ components:
           readOnly: true
       required:
       - categories
-      - color_variants
       - colors
       - description
       - display_name
@@ -18915,7 +19451,6 @@ components:
       - seo_title
       - slug
       - tags
-      - theme_color
       - thumbnail_url
     CvTemplateSwitchRequest:
       type: object
@@ -19071,6 +19606,15 @@ components:
           type: string
           readOnly: true
           nullable: true
+        position_level:
+          type: string
+          readOnly: true
+        experience_years:
+          type: string
+          readOnly: true
+        education_level:
+          type: string
+          readOnly: true
         template_public_id:
           type: string
           readOnly: true
@@ -19148,6 +19692,8 @@ components:
       - created_at
       - cv_type
       - draft_updated_at
+      - education_level
+      - experience_years
       - file_name
       - file_type
       - has_unsaved_changes
@@ -19157,6 +19703,7 @@ components:
       - language
       - latest_version_public_id
       - lifecycle_status
+      - position_level
       - position_public_id
       - processing_status
       - public_id
@@ -19186,9 +19733,6 @@ components:
           allOf:
           - $ref: '#/components/schemas/LanguageEnum'
           default: vi-VN
-        sample_content_public_id:
-          type: string
-          maxLength: 50
         position_public_id:
           type: string
           maxLength: 50
@@ -19220,10 +19764,6 @@ components:
           allOf:
           - $ref: '#/components/schemas/LanguageEnum'
           default: vi-VN
-        sample_content_public_id:
-          type: string
-          minLength: 1
-          maxLength: 50
         position_public_id:
           type: string
           minLength: 1
@@ -21304,6 +21844,26 @@ components:
           maxLength: 500
       required:
       - content
+    FieldTypeEnum:
+      enum:
+      - text
+      - long_text
+      - url
+      - number
+      - date
+      - select
+      - multi_select
+      - tags
+      type: string
+      description: |-
+        * `text` - Văn bản ngắn
+        * `long_text` - Đoạn văn
+        * `url` - Liên kết
+        * `number` - Số
+        * `date` - Tháng/năm
+        * `select` - Chọn một
+        * `multi_select` - Chọn nhiều
+        * `tags` - Thẻ
     FitEnum:
       enum:
       - cover
@@ -23462,6 +24022,14 @@ components:
           format: date-time
       required:
       - email
+    MapsToEnum:
+      enum:
+      - none
+      - skills
+      type: string
+      description: |-
+        * `none` - Không
+        * `skills` - Kỹ năng
     Media:
       type: object
       properties:
@@ -23582,6 +24150,16 @@ components:
           minLength: 1
       required:
       - code
+    OriginEnum:
+      enum:
+      - manual
+      - ai
+      - import
+      type: string
+      description: |-
+        * `manual` - Manual
+        * `ai` - AI
+        * `import` - Import
     OverlayEnum:
       enum:
       - none
@@ -24779,6 +25357,58 @@ components:
           minimum: -2147483648
         is_active:
           type: boolean
+    PatchedCvPositionFieldAdminRequest:
+      type: object
+      properties:
+        position_public_id:
+          type: string
+          minLength: 1
+        key:
+          type: string
+          minLength: 1
+          pattern: ^[a-z][a-z0-9_]{0,49}$
+          maxLength: 50
+        label_vi:
+          type: string
+          minLength: 1
+          maxLength: 100
+        label_en:
+          type: string
+          minLength: 1
+          maxLength: 100
+        placeholder_vi:
+          type: string
+          maxLength: 200
+        placeholder_en:
+          type: string
+          maxLength: 200
+        field_type:
+          $ref: '#/components/schemas/FieldTypeEnum'
+        options: {}
+        maps_to:
+          $ref: '#/components/schemas/MapsToEnum'
+        is_required_hint:
+          type: boolean
+        is_active:
+          type: boolean
+        sort_order:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+    PatchedCvPositionProfileAdminRequest:
+      type: object
+      properties:
+        position_public_id:
+          type: string
+          minLength: 1
+        section_preset: {}
+        keywords: {}
+        is_active:
+          type: boolean
+        sort_order:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
     PatchedCvSampleContentAdminRequest:
       type: object
       description: Protect public lifecycle transitions independently from edit access.
@@ -24832,14 +25462,8 @@ components:
           type: string
         seo_description_en:
           type: string
-        thumbnail_url:
-          type: string
-        preview_url:
-          type: string
         is_premium:
           type: boolean
-        status:
-          $ref: '#/components/schemas/CvTemplateAdminStatusEnum'
         sort_order:
           type: integer
           maximum: 2147483647
@@ -24853,6 +25477,15 @@ components:
           maxLength: 255
         is_default:
           type: boolean
+        position_public_id:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 50
+        position_level:
+          oneOf:
+          - $ref: '#/components/schemas/PositionLevel615Enum'
+          - $ref: '#/components/schemas/BlankEnum'
     PatchedDepartmentUpdateRequest:
       type: object
       properties:
@@ -27910,16 +28543,6 @@ components:
         * `applied` - Applied
         * `recommended` - Recommended
         * `invited` - Invited
-    Status399Enum:
-      enum:
-      - draft
-      - published
-      - archived
-      type: string
-      description: |-
-        * `draft` - Draft
-        * `published` - Published
-        * `archived` - Archived
     Status4b9Enum:
       enum:
       - queued

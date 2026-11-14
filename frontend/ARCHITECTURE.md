@@ -309,10 +309,133 @@ app/router
   `content-visibility` để giữ chi phí render phẳng. Hero featured và search dùng
   `<picture>` ưu tiên WebP, giữ PNG fallback, khai báo kích thước nguồn và chỉ
   eager-load illustration thuộc route hiện tại.
-- CTA chưa có route chi tiết công ty phải dùng `companyDirectoryPath(name)` để
-  mở danh bạ đã lọc. Card danh bạ có thể dùng `companyJobsPath(name)` để mở
-  contract tìm việc hiện hữu; không tự sinh route `/cong-ty/:slug` cho tới khi
-  API/page chi tiết được triển khai.
+- `entities/company` sở hữu `CompanyLogo` và helper tên hiển thị
+  (`companyDisplayName`, `companyInitial`) để danh bạ và trang chi tiết công ty
+  dùng chung; widget không giữ bản sao. HTML rich text của mọi domain render
+  qua `shared/ui/RichContent` (luôn sanitize), nút chia sẻ trang dùng
+  `shared/ui/ShareButtons`; container của nơi dùng quyết định bố cục.
+- Mọi liên kết tới một công ty phải đi qua `companyDetailPath(slugOrCompany)`
+  (thẻ danh bạ, sidebar nhà tuyển dụng hàng đầu, khối công ty nổi bật và dải
+  logo trên trang chủ). Từ một tin tuyển dụng dùng `jobCompanyPath(job)` hoặc
+  `companyDetailPath(job.company_slug)`: `slug` của tin là slug của chính tin
+  đó, không phải của công ty. Chỉ khi không có slug (công ty bị tạm ẩn trả
+  `company_slug = null`) helper mới lùi về danh bạ lọc theo tên; không tự nối
+  chuỗi `/cong-ty/...` và không quay lại `/viec-lam?search=<tên>&search_by=company`.
+
+## Ownership map — Trang công ty công khai
+
+```text
+app/router
+  → pages/main/companies/CompanyDetail
+    → widgets/public-company-profile
+      → features/auth, saved-jobs, track-job-engagement, follow-company,
+        report-company
+        → entities/company, entities/company-report, entities/job,
+          entities/session
+          → shared/api, shared/ui
+
+pages/main/account/FollowedCompanies
+  → features/follow-company
+    → entities/company, entities/session
+
+pages/admin/app/CompanyDetail
+  → widgets/admin-company-directory (tab "Trang công khai")
+    → entities/admin-company, entities/company, entities/admin-access
+
+pages/admin/app/CompanyReports
+  → features/review-company-reports
+    → entities/company-report, entities/admin-access, entities/session
+```
+
+- Một route, một read model (ADR-0017): `/cong-ty/:slug` đọc
+  `GET /api/companies/<slug>/`. `tim-kiem` là segment tĩnh nên route tìm kiếm
+  luôn thắng `:slug`; backend giữ nó làm slug dành riêng. Tab và bộ lọc là
+  trạng thái URL trên cùng route (`?tab=viec-lam&q=&location=&page=`):
+  `companyDetailPath()` sinh URL, `parseCompanyDetailQuery()` chuẩn hoá ngược
+  lại, cả hai thuộc `entities/company`. Bộ lọc chỉ có nghĩa trong tab việc làm.
+- `pages/main/companies/CompanyDetail` chỉ đọc slug và query, đăng ký metadata
+  rồi compose widget. Page và widget cùng gọi `usePublicCompany(slug)`; React
+  Query gộp thành một request. Metadata: title `<tên> tuyển dụng`, description
+  từ khối giới thiệu, canonical là `canonical_path`, ảnh bìa rồi tới logo,
+  `BreadcrumbList`. Chỉ `index` khi API trả `indexable`, site không tắt index
+  và URL không mang tab/bộ lọc; trạng thái đang tải và 404 luôn `noindex`.
+- **Bộ hiển thị rẽ nhánh theo `section.type`, không theo tên cột của
+  `Company`.** `CompanyProfileView` (entity) render `sections[]` theo đúng thứ
+  tự server trả và `sidebar[]` theo thứ tự cố định. Kiểu chưa biết bị bỏ qua
+  lặng lẽ để backend thêm khối mà không vỡ client cũ; khối không còn nội dung
+  sau khi sanitize thì không render cả tiêu đề. Frontend không giữ bản sao
+  registry khối và không suy ra khối từ DTO danh bạ.
+- Entity không import feature, widget hay entity khác, nên phần thân của khối
+  `jobs` và `similar_companies` do nơi dùng truyền qua `slots` (khoá là
+  `section.type`); không có slot thì khối không hiển thị. `heroActions`,
+  `navigation` và `sidebarFooter` (hành động ít nổi bật dưới sidebar) là ba
+  chỗ gắn còn lại; `focusType` thu cột chính về một kiểu
+  khối (tab việc làm); `preview` dành cho bản xem trước nhúng trong trang khác.
+  Trang công khai, xem trước của quản trị viên và (về sau) của nhà tuyển dụng
+  đều dùng đúng bộ hiển thị này vì widget không được import lẫn nhau.
+- `CompanyProfileView` là export lazy của `entities/company`. Router khởi tạo
+  dùng hằng path từ barrel của entity này, nên mọi thứ barrel export tĩnh đều
+  rơi vào bundle đầu: bộ hiển thị, gallery antd, sanitize HTML và stylesheet
+  của nó phải đứng sau dynamic import, và nơi dùng bọc trong `Suspense`.
+  `usePublicCompany` tải trước chunk đó song song với request dữ liệu. Không
+  thêm UI nặng hay import CSS vào phần export tĩnh của barrel.
+- Màu nhấn lấy từ `theme.accent` và chỉ tồn tại dưới dạng biến CSS cục bộ
+  `--company-accent`, `--company-accent-hover`, `--company-accent-soft` trên
+  phần tử gốc của bộ hiển thị; giá trị không phải mã hex rơi về màu thương
+  hiệu. Màu nhấn chỉ tô chi tiết trang trí (dải nền hero khi thiếu ảnh bìa,
+  vạch tiêu đề khối, chip lĩnh vực, gạch chân tab). Nút hành động của nền tảng
+  giữ `--brand-primary`.
+- Style mới của trang nằm trong `entities/company/ui/company-profile.css` và
+  `widgets/public-company-profile/public-company-profile.css` (đi theo lazy
+  chunk), không thêm utility Tailwind mới: CSS khởi tạo đã sát trần budget.
+- `widgets/public-company-profile` sở hữu tải việc làm
+  (`GET /api/jobs/?company=<public_id>`, lọc theo mã chứ không theo tên), facet
+  tỉnh thành (chỉ tải khi mở tab việc làm), công ty cùng lĩnh vực, thẻ tin rút
+  gọn không có logo/tên công ty, thanh CTA dính đáy trên màn hẹp, skeleton,
+  trạng thái lỗi có thử lại và trạng thái 404. Thanh CTA gắn class
+  `has-bottom-action-bar` lên `body` để nút nổi tự nâng lên. Widget ghép nút
+  theo dõi vào hero (desktop) và thanh CTA (màn hẹp, đứng trước nút xem việc
+  làm), nút báo cáo vào `sidebarFooter`; thanh CTA chỉ hiện khi có ít nhất một
+  trong hai nút.
+- `entities/session.useCandidateAudience()` là quy tắc duy nhất cho hành động
+  dành cho ứng viên trên trang công khai: `guest` được mời đăng nhập qua
+  `useLoginPrompt` (feature không import `features/auth`, nơi ghép truyền
+  `onRequireLogin`), `candidate` thao tác trực tiếp, vai trò khác và phiên đang
+  khôi phục không thấy nút.
+- `features/follow-company` sở hữu HTTP contract `follow/` và
+  `/api/candidate/followed-companies/`, hook `use-company-follow`, nút theo dõi
+  kèm công tắc "Nhận email việc làm mới" và danh sách của trang
+  `/tai-khoan/cong-ty-dang-theo-doi` (mục menu thuộc `entities/account`, luôn
+  `noindex`). Mọi thay đổi áp lạc quan rồi hoàn tác khi lỗi trên ba cache: trạng
+  thái của nút, `stats.follower_count` của read model trang công ty (hero ẩn số
+  này khi bằng 0) và danh sách đang theo dõi. Dòng của danh sách truyền trạng
+  thái đã có vào hook nên không đọc lại từng công ty. Danh sách dùng công tắc
+  gốc của trình duyệt và phân trang tự dựng, form báo cáo import tĩnh: `Switch`,
+  `Pagination` của antd ở một lazy entry nhỏ hoặc một chunk chỉ có `useMutation`
+  làm bundler tách chunk dùng chung và cộng 0,5 đến 0,8 KiB vào bundle đầu.
+- `entities/company-report` sở hữu HTTP contract gửi báo cáo của ứng viên, hàng
+  chờ quản trị (`/api/admin/company-reports/`) và nhãn lý do/trạng thái.
+  `features/report-company` sở hữu nút "Báo cáo thông tin sai" và form; danh
+  sách "phần liên quan" là các khối của chính read model, bỏ
+  khối do nền tảng sinh ra (`share`, `similar_companies`). Từ chối cả báo cáo
+  (HTTP 400 `{"detail": "<chuỗi>"}`, ví dụ còn một báo cáo đang chờ) hiện ở đầu
+  form thay vì toast.
+- `features/review-company-reports` sở hữu hàng chờ `/admin/app/company-reports`
+  (quyền `company_report.view`; kết luận và gỡ kết luận cần
+  `company_report.resolve`). Bộ lọc `status|reason|q|company`, `ordering` và
+  `page` là trạng thái URL; mọi cột dữ liệu sort phía server theo whitelist
+  `company_name, reason, detail, reporter_email, status, created_at`, nên phần
+  liên quan hiển thị trong ô lý do chứ không thành cột riêng. Ghi chú là bắt
+  buộc cho mọi quyết định; ô "Đồng thời tạm ẩn trang công ty" chỉ có khi xác
+  nhận vi phạm và người xử lý có `company_page.moderate`. Gỡ kết luận đưa báo
+  cáo về hàng chờ và không tự khôi phục trang đang tạm ẩn.
+- Trang không bao giờ hiển thị mã số thuế, email, số điện thoại, địa chỉ hộ
+  kinh doanh, danh tính recruiter hoặc trạng thái kiểm duyệt; frontend chỉ
+  render những gì read model trả về. Công ty bị tạm ẩn trả 404 thật ở cả API
+  lẫn SEO shell; React hiển thị trạng thái 404 nhưng không thay thế status HTTP.
+- Tab quản trị "Trang công khai" đọc `public-page/` (quyền `company.view`) và
+  chỉ hiện nút tạm ẩn/khôi phục cho người có `company_page.moderate`; lý do
+  10 đến 500 ký tự là bắt buộc. Backend vẫn là nơi quyết định quyền.
 
 ## Ownership map — Người dùng và nhà tuyển dụng quản trị
 
@@ -650,6 +773,86 @@ pages/employer/app/campaigns/CampaignList|CampaignDetail
   khi chưa có domain backend. Lượt xem tin chỉ được dùng dưới dạng thống kê
   engagement ẩn danh.
 
+## Ownership map — Workspace "Trang công ty" của nhà tuyển dụng
+
+```text
+app/router (employerAppPath('/company-page'), trong DashboardLayout)
+  → pages/employer/app/CompanyPage
+    → widgets/employer-company-page
+      → features/customize-company-page, edit-company-page-content,
+        manage-company-page-editors
+        → entities/employer-company-page, entities/company,
+          entities/employer-profile, entities/job, entities/location
+          → shared/api, shared/config/portals, shared/ui/RichTextEditor
+```
+
+- Route nằm cùng nhóm `AuthGuard → RoleGuard(employer) → EmployerOnboardingGuard
+  → DashboardLayout` với các trang workspace khác và **không** nằm sau
+  `JobWorkspaceGuard`: người chưa đủ điều kiện vẫn vào xem được, backend trả
+  `permissions` và `blockers` để workspace hiển thị ở chế độ chỉ đọc.
+- `entities/employer-company-page` sở hữu HTTP contract
+  `/api/employer/company/page/` (workspace, `layout/`, `pinnable-jobs/`,
+  `editors/`) và query key dưới gốc `['employer', 'company', 'page']`. Frontend
+  không tự suy ra quyền: `can_edit_layout`, `can_manage_editors` và `blockers`
+  đến từ payload, registry khối và bảng màu cũng vậy.
+- `entities/company` sở hữu `applyCompanyLayout(content, layout, registry)`
+  (hàm thuần: xếp lại khối cột chính, bỏ khối ẩn trừ khối `always_on`, đổi
+  `theme.accent`, gắn tin ghim vào khối việc làm) và `CompanyLayoutPreview`,
+  export lazy thứ hai của barrel. Hàm thuần chỉ được import qua component lazy
+  đó để không rơi vào bundle khởi tạo. Breakpoint của bộ hiển thị tính theo
+  viewport, nên biến thể `narrow` (class `company-profile-embedded--narrow`
+  trong `company-profile.css`) dựng lại bố cục một cột cho khung xem trước hẹp.
+- `features/customize-company-page` sở hữu bản nháp bố cục
+  (`useCompanyLayoutDraft`) và tab "Bố cục" (`CompanyLayoutControls`: thứ tự và
+  ẩn/hiện khối, màu nhấn, tin ghim). Bản nháp có cùng hình dạng với
+  `page.layout`; lưu chỉ gửi trường đã đổi kèm `lock_version` của bản mà nháp
+  xuất phát. `409 COMPANY_PAGE_LAYOUT_STALE` thay nháp bằng bố cục server trả về
+  và báo một dòng; `403` bỏ nháp, hiện thông điệp của server và tải lại quyền.
+  Sắp xếp luôn có hai đường: kéo thả (dnd-kit) và nút lên/xuống cho bàn phím.
+- `features/manage-company-page-editors` sở hữu roster thành viên và hai hành
+  động cấp/thu hồi quyền biên tập; chỉ được render khi `can_manage_editors`.
+- `features/edit-company-page-content` sở hữu tab "Nội dung" (nội dung qua
+  kiểm duyệt) và thước đo độ hoàn thiện. Mỗi nhóm (Đầu trang, Giới thiệu, Phúc
+  lợi, Văn hoá, Thư viện ảnh, Video, Mạng xã hội, Văn phòng) là một form riêng,
+  khởi tạo từ `content_form.pending ?? published` theo từng khoá và chỉ gửi các
+  khoá đã đổi của chính nó qua `POST .../page/content/`; server gộp vào yêu
+  cầu cập nhật đang mở của người gửi (dùng chung với thay đổi pháp lý). Ảnh đi
+  hai bước: POST kèm cờ `logo_pending`/`cover_pending`/`gallery_pending` để lấy
+  `content_form.request.public_id`, rồi tải ảnh qua endpoint media của
+  `entities/employer-profile` với `update_request` đó và đọc lại workspace.
+  `409 COMPANY_UPDATE_IN_REVIEW`/`403` tải lại workspace; `400` gắn lỗi vào
+  trường theo đường dẫn lồng. Yêu cầu `in_review` (hoặc `editable: false`)
+  khoá mọi form. Rút yêu cầu dùng endpoint lifecycle hiện có. Tab là export
+  lazy của barrel (`content-editor-loader.js`), nên form antd, danh mục phúc
+  lợi/tỉnh thành và `RichTextEditor` chỉ tải khi mở tab; thước đo là export
+  tĩnh nhẹ. Frontend không tự tính độ hoàn thiện mà hiển thị `completeness`.
+- `entities/company` sở hữu thêm `applyPendingCompanyContent(content,
+  contentForm, { registry, benefits })` (phủ bản chờ duyệt lên DTO cho công tắc
+  "Xem bản đang chờ duyệt"; chỉ import qua `CompanyLayoutPreview`) và
+  `parseCompanyVideoUrl` (nhận diện YouTube/Vimeo, export tĩnh vì rất nhỏ).
+  Bộ hiển thị hỗ trợ `identity.headline`, khối `benefits` (thẻ phúc lợi rồi
+  rich text; `rich_text` cũ vẫn chạy), `video` (mặt tiền nhấp-để-tải, chỉ nhúng
+  khi `embed_url` đúng URL chuẩn của `provider` + `video_id`), `social_links`
+  (chỉ http(s), tab mới, `nofollow`) và văn phòng có tỉnh thành/trụ sở chính.
+- Màn đối chiếu yêu cầu cập nhật của quản trị
+  (`features/review-employer-verification`) đọc nhãn từ
+  `model/company-update-fields.js`; danh sách `benefits`/`offices` hiển thị từ
+  `previews` (đề xuất) và `current_values` (hiện tại) vì `changes` chỉ có mã.
+- `widgets/employer-company-page` giữ query workspace, gọi
+  `useCompanyLayoutDraft` một lần rồi chia bản nháp cho tab "Bố cục" và bản xem
+  trước (ba feature không import nhau). Tab khai báo trong mảng
+  `WORKSPACE_TABS` (`visible(page)`, `render({ page, controller, focusCard })`);
+  tab mới thêm bằng một phần tử. Từ `xl` của antd (1200px) bản xem trước đứng
+  cạnh điều khiển, hẹp hơn thì mở trong Drawer. Chế độ "Máy tính" dựng khung ảo
+  1120px rồi thu nhỏ bằng `zoom`; dưới `lg` khung luôn ở bố cục di động.
+- Style mới nằm trong stylesheet của từng slice lazy
+  (`customize-company-page.css`, `company-page-editors.css`,
+  `edit-company-page-content.css`, `company-completeness.css`,
+  `employer-company-page.css`), không thêm utility Tailwind mới.
+- Trang công khai: `widgets/public-company-profile` gắn nhãn "Nổi bật" cho tin
+  có `public_id` thuộc `pinned_job_public_ids` của khối việc làm; thứ tự do
+  `GET /api/jobs/?company=` quyết định, frontend không tự xếp lại.
+
 ## i18n cổng marketing nhà tuyển dụng
 
 - i18next chỉ được khởi tạo từ `EmployerMarketingLayout`; không import
@@ -819,7 +1022,8 @@ backend public SEO route
   chỉ đặt `document.title` trong React. Shell giữ nguyên body SPA, chỉ thay
   `title`, description, robots, canonical, Open Graph, Twitter và JSON-LD.
 - Owner backend của nội dung sở hữu metadata động và sitemap tương ứng:
-  `jobs`, `blog`, `cv_templates`; `sitecontent` sở hữu homepage, landing tĩnh,
+  `jobs`, `blog`, `cv_templates`, `employers` (`/cong-ty/:slug` và
+  `sitemaps/companies.xml`); `sitecontent` sở hữu homepage, landing tĩnh,
   `robots.txt` và sitemap index. HTML/JSON-LD dùng helper an toàn tại
   `common/seo.py`, không tự nối chuỗi script ở từng app.
 - Reverse proxy chỉ chuyển các route public đã đăng ký qua SEO shell. Fallback

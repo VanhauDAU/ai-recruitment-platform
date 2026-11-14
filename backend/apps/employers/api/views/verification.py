@@ -8,34 +8,34 @@ from django.core.validators import URLValidator
 from django.db import transaction
 from django.db.models import Prefetch
 from django.http import FileResponse, Http404
-from django.utils import timezone
 from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, extend_schema, inline_serializer
 from rest_framework import generics, parsers, serializers, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
 from apps.accounts.permissions import IsEmployer
-from common.media_storage import delete_local_media_url
 from common.r2_storage import private_media_storage
 
-from ...models import Company, CompanyDocument, CompanyUpdateEvent, CompanyUpdateRequest
+from ...models import CompanyDocument, CompanyUpdateRequest
+from ...models.page_access import resolve_company_page_access
 from ...selectors import (
     employer_document_content_queryset,
     employer_document_metadata_queryset,
 )
 from ...services import (
-    ACTIVE_COMPANY_UPDATE_STATUSES,
     REQUESTER_EDITABLE_COMPANY_UPDATE_STATUSES,
     CompanyUpdateConflict,
-    capture_company_update_base_values,
+    CompanyUpdateInReview,
     close_company_update_before_review,
     get_or_create_recruiter,
     lock_company_update_request,
-    queue_company_tax_lookup,
+    lock_company_update_target,
     render_office_document_preview,
     snapshot_company_update_request,
+    submit_company_update_request,
 )
 from ..exceptions import (
+    COMPANY_UPDATE_IN_REVIEW,
     CompanyUpdateConflictResponse,
     UploadPreviewScanRequiredResponse,
     UploadSessionRequiredResponse,
@@ -420,127 +420,38 @@ class CompanyUpdateRequestListCreateView(generics.ListCreateAPIView):
     @transaction.atomic
     def create(self, request, *args, **kwargs):
         recruiter = self.get_recruiter()
-        company = Company.objects.select_for_update().get(pk=recruiter.company_id)
-        active_request = (
-            CompanyUpdateRequest.objects.select_for_update()
-            .filter(
-                company=company,
-                requested_by=self.request.user,
-                status__in=ACTIVE_COMPANY_UPDATE_STATUSES,
+        try:
+            company, active_request = lock_company_update_target(
+                company_id=recruiter.company_id,
+                requester=request.user,
             )
-            .first()
+        except CompanyUpdateInReview as error:
+            raise ValidationError(COMPANY_UPDATE_IN_REVIEW) from error
+        serializer = self.get_serializer(
+            active_request,
+            data=request.data,
+            # Page content fields need the page policy (ER-D59).
+            context={
+                **self.get_serializer_context(),
+                'page_access': resolve_company_page_access(recruiter),
+            },
         )
-        if (
-            active_request is not None
-            and active_request.status == CompanyUpdateRequest.Status.IN_REVIEW
-        ):
-            raise ValidationError(
-                {
-                    'code': 'COMPANY_UPDATE_IN_REVIEW',
-                    'detail': 'Yêu cầu đang được thẩm định và không thể chỉnh sửa.',
-                }
-            )
-        serializer = self.get_serializer(active_request, data=request.data)
         serializer.is_valid(raise_exception=True)
-        expected_base_updated_at = serializer.validated_data.pop(
-            'base_company_updated_at',
-            None,
-        )
-        if expected_base_updated_at and company.updated_at != expected_base_updated_at:
-            raise CompanyUpdateConflictResponse(['company_version'])
-        previous = None
-        staged_paths_to_delete = []
-        previous_status = active_request.status if active_request is not None else None
-        if active_request is not None:
-            previous = {
-                'changes': active_request.changes,
-                'reason': active_request.reason,
-                'proof_type': active_request.proof_type,
-            }
-            next_changes = serializer.validated_data['changes']
-            if 'logo_url' in active_request.changes and not next_changes.get('has_no_logo'):
-                next_changes['logo_url'] = active_request.changes['logo_url']
-            elif 'logo_url' in active_request.changes:
-                staged_paths_to_delete.append(active_request.changes['logo_url'])
-            if 'cover_image_url' in active_request.changes:
-                next_changes['cover_image_url'] = active_request.changes['cover_image_url']
-            if 'gallery_additions' in active_request.changes:
-                next_changes['gallery_additions'] = active_request.changes['gallery_additions']
-        next_changes = serializer.validated_data['changes']
-        base_values = capture_company_update_base_values(company, next_changes)
-        save_kwargs = {
-            'company': company,
-            'submitted_at': timezone.now(),
-            'status': CompanyUpdateRequest.Status.SUBMITTED,
-            'base_company_updated_at': company.updated_at,
-            'base_values': base_values,
-            'reviewed_by': None,
-            'reviewed_at': None,
-            'review_note': '',
-        }
-        if active_request is None:
-            save_kwargs['requested_by'] = self.request.user
-        update_request = serializer.save(
-            **save_kwargs,
-        )
-        current = {
-            'changes': update_request.changes,
-            'reason': update_request.reason,
-            'proof_type': update_request.proof_type,
-        }
-        if previous is not None and previous != current:
-            update_request.documents.filter(is_current=True).update(
-                status=CompanyDocument.Status.PENDING,
-                reviewed_by=None,
-                reviewed_at=None,
-                review_note='',
+        data = dict(serializer.validated_data)
+        expected_base_updated_at = data.pop('base_company_updated_at', None)
+        try:
+            update_request, created = submit_company_update_request(
+                company=company,
+                active_request=active_request,
+                requester=request.user,
+                data=data,
+                expected_base_updated_at=expected_base_updated_at,
             )
-        event_type = (
-            CompanyUpdateEvent.EventType.SUBMITTED
-            if active_request is None
-            else (
-                CompanyUpdateEvent.EventType.RESUBMITTED
-                if previous_status == CompanyUpdateRequest.Status.CHANGES_REQUESTED
-                else CompanyUpdateEvent.EventType.REVISION_CREATED
-            )
-        )
-        snapshot_company_update_request(
-            update_request,
-            actor=request.user,
-            event_type=event_type,
-            base_company_updated_at=company.updated_at,
-            base_values=base_values,
-        )
-        if staged_paths_to_delete:
-
-            def delete_discarded_media():
-                for path in staged_paths_to_delete:
-                    delete_local_media_url(path)
-
-            transaction.on_commit(delete_discarded_media)
-        update_request.refresh_from_db()
-        if update_request.is_sensitive:
-            proposed_tax_code = update_request.changes.get('tax_code', company.tax_code)
-            try:
-                queue_company_tax_lookup(
-                    company=company,
-                    requested_by=request.user,
-                    update_request=update_request,
-                    workflow_revision=update_request.revision,
-                    tax_code=proposed_tax_code,
-                    company_name=update_request.changes.get(
-                        'company_name',
-                        company.company_name,
-                    ),
-                )
-            except ValueError:
-                # The serializer rejects invalid new tax codes. This only
-                # preserves manual review for malformed legacy company data.
-                pass
-        response = self.get_serializer(update_request)
+        except CompanyUpdateConflict as error:
+            raise CompanyUpdateConflictResponse(error.fields) from error
         return Response(
-            response.data,
-            status=status.HTTP_200_OK if active_request is not None else status.HTTP_201_CREATED,
+            self.get_serializer(update_request).data,
+            status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
         )
 
 

@@ -1,13 +1,9 @@
 """Declarative catalogue data for ``seed_cv_templates``.
 
-Only deployed renderer keys and canonical section keys appear here: a template
-version never stores a component, CSS or executable code, so the seed is pure
-configuration over the contracts in ``renderers.py`` and ``section_registry.py``.
+Only deployed layout keys (``layouts.json``) and canonical section keys appear
+here: a template version never stores a component, CSS or executable code, so the
+seed is pure configuration over ``renderers.py`` and ``section_registry.py``.
 """
-
-SINGLE_COLUMN = 'classic_single_column_v1'
-TWO_COLUMN = 'classic_two_column_v1'
-HEADER_TWO_COLUMN = 'header_two_column_v1'
 
 # Palette shared by every template. The first five entries intentionally match
 # ``seed_cv_catalog.DEFAULT_COLORS`` so both commands converge on one row set.
@@ -81,68 +77,10 @@ CATEGORIES = (
     ),
 )
 
-# Canonical section keys ordered per region, per renderer. ``nameplate`` and
-# ``contact`` stay unmapped outside the header renderer: those layouts draw
-# personal info from their own header block, so mapping the markers as well
-# would print the candidate's name twice.
-SECTION_PLANS = {
-    SINGLE_COLUMN: {
-        'main': (
-            'avatar',
-            'summary',
-            'experience',
-            'education',
-            'skills',
-            'projects',
-            'certifications',
-            'languages',
-            'awards',
-            'activities',
-            'interests',
-            'references',
-            'custom',
-        ),
-    },
-    TWO_COLUMN: {
-        'main': (
-            'summary',
-            'experience',
-            'education',
-            'projects',
-            'activities',
-            'awards',
-            'references',
-            'custom',
-        ),
-        'sidebar': ('avatar', 'skills', 'certifications', 'languages', 'interests'),
-    },
-    HEADER_TWO_COLUMN: {
-        'header': ('avatar', 'nameplate', 'contact'),
-        'main': (
-            'summary',
-            'experience',
-            'education',
-            'projects',
-            'activities',
-            'awards',
-            'references',
-            'custom',
-        ),
-        'sidebar': ('skills', 'certifications', 'languages', 'interests'),
-    },
-}
-
-REQUIRED_SECTIONS = frozenset({'experience', 'education', 'skills', 'nameplate', 'contact'})
-DEFAULT_ENABLED_SECTIONS = frozenset(
-    {'summary', 'experience', 'education', 'skills', 'nameplate', 'contact'}
-)
-# Personal-info backed markers render values, never a section heading.
-PERSONAL_INFO_SECTIONS = frozenset({'avatar', 'nameplate', 'contact'})
-
 TEMPLATES = (
     {
         'slug': 'thanh-lich',
-        'renderer_key': SINGLE_COLUMN,
+        'renderer_key': 'single_column_v1',
         'theme_color': '#00A66A',
         'font_family': 'Roboto',
         'font_scale': 1.0,
@@ -161,8 +99,8 @@ TEMPLATES = (
     },
     {
         'slug': 'chuyen-nghiep',
-        'renderer_key': TWO_COLUMN,
-        'sidebar_percent': 35,
+        'renderer_key': 'sidebar_right_v1',
+        'side_percent': 35,
         'theme_color': '#1F2937',
         'font_family': 'Inter',
         'font_scale': 1.0,
@@ -181,8 +119,8 @@ TEMPLATES = (
     },
     {
         'slug': 'hien-dai',
-        'renderer_key': HEADER_TWO_COLUMN,
-        'sidebar_percent': 35,
+        'renderer_key': 'header_band_two_column_v1',
+        'side_percent': 35,
         'theme_color': '#0E7490',
         'font_family': 'Inter',
         'font_scale': 1.0,
@@ -201,9 +139,9 @@ TEMPLATES = (
     },
     {
         'slug': 'toi-gian',
-        'renderer_key': SINGLE_COLUMN,
+        'renderer_key': 'single_column_v1',
         'theme_color': '#334E68',
-        'font_family': 'Source Sans Pro',
+        'font_family': 'Be Vietnam Pro',
         'font_scale': 0.95,
         'line_height': 1.5,
         'margin_mm': 14,
@@ -220,8 +158,8 @@ TEMPLATES = (
     },
     {
         'slug': 'an-tuong',
-        'renderer_key': HEADER_TWO_COLUMN,
-        'sidebar_percent': 38,
+        'renderer_key': 'sidebar_left_photo_v1',
+        'side_percent': 38,
         'theme_color': '#5B2333',
         'font_family': 'Roboto',
         'font_scale': 1.0,
@@ -240,10 +178,10 @@ TEMPLATES = (
     },
     {
         'slug': 'nang-dong',
-        'renderer_key': TWO_COLUMN,
-        'sidebar_percent': 32,
+        'renderer_key': 'sidebar_left_v1',
+        'side_percent': 32,
         'theme_color': '#C2410C',
-        'font_family': 'Calibri',
+        'font_family': 'Be Vietnam Pro',
         'font_scale': 1.0,
         'line_height': 1.45,
         'margin_mm': 12,
@@ -260,9 +198,9 @@ TEMPLATES = (
     },
     {
         'slug': 'tin-cay',
-        'renderer_key': SINGLE_COLUMN,
+        'renderer_key': 'single_column_photo_v1',
         'theme_color': '#1D4ED8',
-        'font_family': 'Arial',
+        'font_family': 'Lora',
         'font_scale': 1.0,
         'line_height': 1.4,
         'margin_mm': 13,
@@ -279,8 +217,7 @@ TEMPLATES = (
     },
     {
         'slug': 'dinh-cao',
-        'renderer_key': HEADER_TWO_COLUMN,
-        'sidebar_percent': 30,
+        'renderer_key': 'timeline_v1',
         'theme_color': '#4338CA',
         'font_family': 'Inter',
         'font_scale': 1.05,
@@ -299,8 +236,8 @@ TEMPLATES = (
     },
     {
         'slug': 'ky-thuat',
-        'renderer_key': TWO_COLUMN,
-        'sidebar_percent': 35,
+        'renderer_key': 'sidebar_right_v1',
+        'side_percent': 35,
         'theme_color': '#0E7490',
         'font_family': 'Roboto',
         'font_scale': 0.95,
@@ -319,7 +256,7 @@ TEMPLATES = (
     },
     {
         'slug': 'tinh-gon',
-        'renderer_key': SINGLE_COLUMN,
+        'renderer_key': 'compact_two_column_v1',
         'theme_color': '#4338CA',
         'font_family': 'Inter',
         'font_scale': 0.9,
@@ -337,48 +274,3 @@ TEMPLATES = (
         },
     },
 )
-
-
-def layout_regions(renderer_key, sidebar_percent=35):
-    """Region geometry for a renderer; widths always total 100 per row."""
-    if renderer_key == SINGLE_COLUMN:
-        return [{'id': 'main', 'row': 0, 'width_percent': 100, 'section_instance_ids': []}]
-    main_percent = 100 - sidebar_percent
-    if renderer_key == TWO_COLUMN:
-        return [
-            {'id': 'main', 'row': 0, 'width_percent': main_percent, 'section_instance_ids': []},
-            {
-                'id': 'sidebar',
-                'row': 0,
-                'width_percent': sidebar_percent,
-                'section_instance_ids': [],
-            },
-        ]
-    return [
-        {'id': 'header', 'row': 0, 'width_percent': 100, 'section_instance_ids': []},
-        {'id': 'main', 'row': 1, 'width_percent': main_percent, 'section_instance_ids': []},
-        {'id': 'sidebar', 'row': 1, 'width_percent': sidebar_percent, 'section_instance_ids': []},
-    ]
-
-
-def layout_capabilities(renderer_key, regions):
-    """Presentation limits the canonical writers enforce for every client.
-
-    ``column_resize`` must stay disabled on a single-column renderer: the
-    validator in ``apps.cvs.schemas`` rejects a resizable template that has no
-    row with two regions to redistribute width between.
-    """
-    resize = (
-        {'enabled': False}
-        if renderer_key == SINGLE_COLUMN
-        else {'enabled': True, 'min_percent': 25, 'max_percent': 75}
-    )
-    return {
-        'layout': {
-            'section_drag': True,
-            'cross_region_drag': renderer_key != SINGLE_COLUMN,
-            'item_drag': True,
-            'column_resize': resize,
-        },
-        'supports_regions': [region['id'] for region in regions],
-    }

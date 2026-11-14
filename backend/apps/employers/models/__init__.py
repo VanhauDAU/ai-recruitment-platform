@@ -2,6 +2,15 @@
 
 from .campaign import CampaignActivity, RecruitmentCampaign
 from .company import Company, CompanyImage, CompanyIndustry, CompanyMediaUpload, Industry
+from .company_content import CompanyBenefit, CompanyOffice
+from .company_follow import CompanyFollow
+from .company_page import (
+    CompanyPageEditorGrant,
+    CompanyPageEvent,
+    CompanyPageSettings,
+    CompanyPinnedJob,
+)
+from .company_report import CompanyReport, CompanyReportResolutionEvent
 from .compliance import (
     EmployerComplianceHold,
     EmployerComplianceHoldCampaign,
@@ -31,13 +40,22 @@ from .verification import (
 
 __all__ = [
     'Company',
+    'CompanyBenefit',
+    'CompanyOffice',
     'CompanyDocument',
     'CompanyDomainClaim',
     'CompanyDomainClaimEvent',
+    'CompanyFollow',
     'CompanyTaxLookupEvidence',
     'CompanyImage',
     'CompanyIndustry',
     'CompanyMediaUpload',
+    'CompanyPageEditorGrant',
+    'CompanyPageEvent',
+    'CompanyPageSettings',
+    'CompanyPinnedJob',
+    'CompanyReport',
+    'CompanyReportResolutionEvent',
     'CompanyUpdateRequest',
     'CompanyUpdateRevision',
     'CompanyUpdateEvent',

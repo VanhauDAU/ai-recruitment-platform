@@ -16,7 +16,7 @@ const immutableResponse = {
   cv: { public_id: 'cv_1', title: 'CV bất biến', language: 'vi-VN' },
   version: {
     public_id: 'cvv_2', version_number: 2, schema_version: 1,
-    template_renderer_key: 'classic_two_column_v1',
+    template_renderer_key: 'sidebar_right_v1',
     content_json: { personal_info: { full_name: 'Nguyễn An' }, sections: [] },
     layout_json: { regions: [] },
     style_json: { theme_color: '#00A66A' },
@@ -33,10 +33,10 @@ describe('read-only CV version viewer', () => {
     )
 
     expect(await screen.findByText('Xem CV Online của CV bất biến')).toBeInTheDocument()
-    expect(screen.getByTestId('immutable-preview')).toHaveTextContent('classic_two_column_v1')
+    expect(screen.getByTestId('immutable-preview')).toHaveTextContent('sidebar_right_v1')
     expect(loadOwnerView).toHaveBeenCalledWith('cv_1')
     expect(preview).toHaveBeenLastCalledWith(expect.objectContaining({
-      rendererKey: 'classic_two_column_v1',
+      rendererKey: 'sidebar_right_v1',
       document: expect.objectContaining({ content_json: immutableResponse.version.content_json }),
     }))
   })

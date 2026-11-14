@@ -28,6 +28,7 @@ from ...selectors import (
     candidate_cvs_queryset,
 )
 from ...services import (
+    CvCreateInProgress,
     CvExportPermissionError,
     CvExportStateError,
     CvExportUnavailableError,
@@ -41,7 +42,7 @@ from ...services import (
     create_avatar_asset,
     create_avatar_asset_from_session,
     create_shared_link,
-    create_v2_cv,
+    create_v2_cv_once,
     duplicate_cv,
     export_download_ready,
     import_v2_cv,
@@ -137,12 +138,12 @@ class CvV2ListCreateView(generics.ListCreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         try:
-            cv = create_v2_cv(
+            cv, replayed = create_v2_cv_once(
                 actor=request.user,
+                idempotency_key=request.headers.get('Idempotency-Key', ''),
                 title=serializer.validated_data['title'],
                 template=serializer.validated_data['template_public_id'],
                 language=serializer.validated_data['language'],
-                sample_content=serializer.validated_data.get('sample_content_public_id'),
                 position=serializer.validated_data.get('position_public_id'),
                 experience_band=serializer.validated_data['experience_band'],
                 source_cv=serializer.validated_data.get('source_cv_public_id'),
@@ -152,7 +153,12 @@ class CvV2ListCreateView(generics.ListCreateAPIView):
             raise ValidationError({'position_public_id': str(error)}) from error
         except CvLifecyclePolicyError as error:
             raise PermissionDenied(str(error)) from error
-        return Response(CvV2Serializer(cv).data, status=status.HTTP_201_CREATED)
+        except CvCreateInProgress as error:
+            return Response({'detail': str(error)}, status=status.HTTP_409_CONFLICT)
+        return Response(
+            CvV2Serializer(cv).data,
+            status=status.HTTP_200_OK if replayed else status.HTTP_201_CREATED,
+        )
 
 
 class CvV2DetailView(CandidateV2CvMixin, APIView):

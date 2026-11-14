@@ -47,10 +47,20 @@ renderer. Create, đổi mẫu, apply sample, position preview, import và snaps
 
 - `CvTemplate` giữ identity/catalogue. `CvTemplateVersion` lưu `renderer_key`,
   `renderer_version`, schema/default layout/style, `capabilities`,
-  `content_contract`. Component không lưu trong DB: `renderer_key` chỉ map tới
-  renderer đã deploy trong `apps/cv_templates/renderers.py` —
-  `classic_single_column_v1`, `classic_two_column_v1`, `header_two_column_v1`
-  (`header` row 0 100%, `main` row 1 60%, `sidebar` row 1 40%).
+  `content_contract`. Component không lưu trong DB: `renderer_key` là khóa trong
+  registry layout `apps/cv_templates/layouts.json` (bản sao giống hệt ở
+  `frontend/src/entities/cv/model/cv-layouts.json`, có test so khớp). Mỗi layout
+  khai báo các vùng theo hàng (`row`, `width`, `tone` plain/tint/band, `arrange`
+  stack/inline), `avatar`, `variant` (standard/timeline/compact) và giới hạn kéo
+  độ rộng cột. Tám layout: `single_column_v1`, `single_column_photo_v1`,
+  `sidebar_left_v1`, `sidebar_left_photo_v1`, `sidebar_right_v1`,
+  `header_band_two_column_v1`, `timeline_v1`, `compact_two_column_v1`.
+- Không layout nào có header dựng cứng: tên (`nameplate`), liên hệ (`contact`) và
+  ảnh (`avatar`) là section lấy dữ liệu từ `personal_info`; template version đặt
+  chúng vào vùng nào thì composition tạo sẵn instance ở đó. Một renderer chung
+  (`CvDocumentPreview`) dựng mọi layout từ registry, dùng cho preview, editor,
+  trang in PDF và ảnh catalogue. Khối tên cũ chỉ còn cho document cũ không có
+  `nameplate`.
 - Version đã published không sửa được renderer/schema/default/capability/section,
   chỉ chuyển sang `retired`. CV ghim version qua `CvVersion.template_version` nên
   publish version mới không đổi cách render CV cũ. Muốn đổi layout cho mẫu cũ thì
@@ -102,8 +112,32 @@ CvTemplate ──< CvTemplateColorLink    >── CvColor
   nhất trước, cùng khoảng cách thì nội dung riêng của vị trí trước nội dung chung;
   nội dung chung được thay `{position}` bằng tên vị trí theo ngôn ngữ. Vị trí mới
   chỉ cần localization tiếng Việt/Anh và profile; không phải tạo sample cho từng
-  template. Thư viện mẫu của editor và `sample_content_public_id` chỉ nhận nội
-  dung riêng của vị trí (nội dung chung còn token).
+  template. Thư viện mẫu của editor (`apply-sample`) chỉ nhận nội dung riêng của
+  vị trí (nội dung chung còn token).
+- Trường matching (CVT-1c): `UserCv.experience_years` là giá trị
+  `Job.ExperienceYears`, tính lại ở mỗi `create_version` từ ngày bắt đầu/kết thúc
+  các mục kinh nghiệm đang bật (gộp khoảng chồng lấn, mục chưa kết thúc tính tới
+  tháng hiện tại) — `apps/cvs/services/matching_profile.py`. Vị trí mục tiêu dùng
+  `UserCv.position` (`JobCategory`). Gợi ý việc làm theo CV dùng giá trị này thay
+  cho khai báo của ứng viên khi CV có kinh nghiệm.
+- Trường riêng theo vị trí (CVT-3): `CvPositionField` do admin định nghĩa (kiểu
+  văn bản, liên kết, số, tháng/năm, chọn một, chọn nhiều, thẻ). Khi dựng CV từ vị
+  trí, định nghĩa được chụp vào section `position_details` (mỗi trường là một item
+  có `field_key`, nhãn, kiểu, lựa chọn, `maps_to`, `value`) — document tự đủ để
+  hiển thị và validate, sửa trường ở admin không làm hỏng CV cũ. Section đứng sau
+  kỹ năng nếu `section_preset` không nhắc tới. Editor có panel "Hồ sơ ứng tuyển"
+  để chọn vị trí mục tiêu và cấp bậc mong muốn (không in lên CV); đổi vị trí thì
+  khung `position_details` đổi theo (`GET /api/v2/cv-position-details/`), giữ giá
+  trị các trường cùng khóa. Thêm section `portfolio`, `publications`; document
+  vẫn `schema_version 1` vì mọi thay đổi là bổ sung tùy chọn.
+- Matching (CVT-3) mở rộng `matching_profile`: `education_level` là bậc
+  `degree_level` cao nhất của mục học vấn (cùng enum `Job.EducationLevel`, chọn
+  trong editor, không in), `CvSkill` đồng bộ từ mục kỹ năng và trường riêng
+  `maps_to=skills` theo tên chuẩn hóa/alias của taxonomy `skills.Skill`; tên chưa
+  có trong taxonomy được bỏ qua (hàng đợi chuẩn hóa làm cùng trích xuất ở CVT-6).
+- `CvTemplate` chỉ dùng `lifecycle_status` để quyết định hiển thị công khai; ảnh
+  xem trước nằm ở `CvTemplateColorLink` (card `thumbnail_url` và detail
+  `preview_url` lấy từ màu mặc định).
 
 ## 5. API V2
 
@@ -133,7 +167,7 @@ Catalogue public (cache control/ETag): `GET /api/v2/cv-templates/` (card gọn,
 không trả layout/style/renderer config, lọc `locale`/`category`/`tag`),
 `/cv-templates/{slug}/`, `/cv-templates/{slug}/related/`, `/cv-categories/`,
 `/cv-backgrounds/`, `/cv-position-options/`, `/cv-position-preview/`,
-`/cv-sample-contents/` (compatibility).
+`/cv-sample-contents/` (thư viện nội dung mẫu riêng theo vị trí của editor).
 
 Ứng tuyển và recruiter:
 
@@ -204,8 +238,16 @@ response shared/recruiter; PDF worker đọc storage nội bộ.
 - Tải PDF: POST export với `version_public_id`, poll job, GET download
   owner-only. `CvExport` unique theo version + `render_config`, `storage_key` chỉ
   nội bộ; không tải draft, không dùng URL storage trực tiếp, không tạo PDF trong
-  browser. PDF render phía server qua HTML/WeasyPrint với parity row/marker/
-  rich text/avatar/background.
+  browser. PDF render phía server: worker mở trang in `cv-print.html` của
+  frontend (`CV_PRINT_URL`) bằng Chromium headless (Playwright), đưa document vào
+  bằng `page.evaluate` và in A4, nên PDF dùng đúng renderer của preview. Trang in
+  chỉ được tải tài nguyên cùng origin và `data:` (ảnh nhúng base64); mọi request
+  khác bị chặn để nội dung CV không thể ra ngoài. Chromium chạy trong một luồng
+  riêng của worker vì Playwright sync API làm Django chặn truy vấn DB trong luồng
+  gọi nó.
+- Font CV tự host (OFL qua `@fontsource`): Inter, Roboto, Be Vietnam Pro, Lora.
+  Font cũ (Arial, Calibri, Source Sans Pro) vẫn hợp lệ trong document đã lưu và
+  được map sang font tự host tương ứng.
 - Link chia sẻ bearer gắn một immutable version, có hạn/thu hồi; token thô chỉ
   xuất hiện trong response tạo. Mọi truy cập CV nhạy cảm ghi `CvAccessLog`.
 
@@ -231,28 +273,34 @@ response shared/recruiter; PDF worker đọc storage nội bộ.
 
 - Portal admin `cv-catalogue` (sau `AuthGuard → RoleGuard`) quản lý template/
   version, category, color, background và sample (structured editor theo
-  section/item); không yêu cầu sửa raw JSON.
+  section/item); không yêu cầu sửa raw JSON. Cổng mới (CVT-4) dùng các API vị
+  trí/trường riêng/độ phủ/import-export/sinh AI đã có từ CVT-3.
+- Nội dung mẫu bằng AI (CVT-3): admin chọn vị trí × ngôn ngữ × nhóm kinh nghiệm,
+  mỗi tổ hợp một `CvSampleGeneration` trên queue `ai-generation`; kết quả là bản
+  `in_review` không danh tính, chỉ xuất bản khi admin duyệt. Mỗi tổ hợp có một bản
+  xuất bản; duyệt bản mới lưu trữ bản cũ. Chi tiết:
+  [`thuat-toan-ai.md`](../07-algorithms/thuat-toan-ai.md) mục 5b.
 - Publish chạy trong transaction với row lock, gọi `full_clean()` trước khi đổi
   con trỏ published, đồng thời retire version cũ.
-- Snapshot thumbnail/preview: canonical composer → HTML/WeasyPrint → raster
+- Snapshot thumbnail/preview: canonical composer → trang in Chromium → raster
   trang đầu bằng `pypdfium2`. Fingerprint gồm template/renderer/màu/source
-  revision; worker idempotent, ghi asset mới trước rồi swap pointer trong
-  transaction, chỉ xóa asset cũ sau commit. Worker cần thư mục Fontconfig cache
-  có quyền ghi.
+  revision/phiên bản snapshot; worker idempotent, ghi asset mới trước rồi swap
+  pointer trong transaction, chỉ xóa asset cũ sau commit.
+- Nội dung mẫu không chứa danh tính. Ảnh catalogue và preview cho khách chưa đăng
+  nhập thêm danh tính minh họa lúc hiển thị (`apps/cv_templates/demo_identity.py`,
+  ảnh catalogue kèm ảnh đại diện bóng người); người đăng nhập thấy danh tính của
+  chính họ. Danh tính minh họa không bao giờ ghi vào DB.
 
 ## 10. Việc còn mở
 
-- Publish template version dùng `header_two_column_v1`, duyệt golden canvas/PDF
-  trên bộ mẫu thật, UAT; sau một release ổn định thì gỡ editor legacy và cờ
+- UAT bộ 8 layout trên dữ liệu thật; sau một release ổn định thì gỡ editor legacy và cờ
   `cv_builder_wysiwyg_enabled`.
-- Contract cleanup: xóa field legacy
-  (`UserCv.cv_data`/`style_config`/`status`, `CvTemplate.category`,
-  `default_style_json.color_variants`, `theme_color`/`color_variants` trên card,
-  input `sample_content_public_id`) sau khi đo không còn client đọc.
 - Purge CV archive mềm còn từ dữ liệu cũ (chỉ sau backup và xác nhận riêng).
 - Audit trail chi tiết người publish/retire template và chặn xóa taxonomy đang
   được dùng.
 - Hardening: retention/revoke tổng thể cho share/export, benchmark catalog,
   autosave và renderer/PDF với CV lớn.
-- Chưa có: AI writer ("Gợi ý viết CV"), import LinkedIn, ATS/matching và quota/
-  consent AI cấp sản phẩm.
+- Chưa có: AI writer ("Gợi ý viết CV"), import LinkedIn, thuật toán matching
+  (dữ liệu đã chuẩn hóa) và quota/consent AI cấp sản phẩm.
+- Ngoại ngữ có cấu trúc (ISO 639-1 + CEFR) chờ tin tuyển dụng có yêu cầu ngoại
+  ngữ để có cùng từ vựng.

@@ -16,7 +16,7 @@ from apps.ai_core.services import AiCvParseError, structure_cv_text
 from common.metrics import record_metric
 from common.pdf_raster import first_pdf_page_image
 
-from .models import CvExport, CvImportJob, UserCv
+from .models import CvDraft, CvExport, CvImportJob, UserCv
 from .services.composition import compose_cv_document, overlay_actor_identity
 from .services.pdf_renderer import render_cv_version_pdf
 from .services.thumbnails import thumbnail_key_for
@@ -223,7 +223,6 @@ def _fail_import(job_id, code):
         job.failed_at = now
         job.save(update_fields=['status', 'failure_code', 'failed_at', 'updated_at'])
         UserCv.objects.filter(pk=job.cv_id).update(
-            status=UserCv.Status.FAILED,
             processing_status=UserCv.ProcessingStatus.FAILED,
             error_message=code,
             updated_at=now,
@@ -252,7 +251,6 @@ def process_cv_import_job(job_id):
         job.started_at = timezone.now()
         job.save(update_fields=['status', 'attempts', 'started_at', 'updated_at'])
         UserCv.objects.filter(pk=job.cv_id).update(
-            status=UserCv.Status.PROCESSING,
             processing_status=UserCv.ProcessingStatus.PROCESSING,
             updated_at=timezone.now(),
         )
@@ -261,7 +259,9 @@ def process_cv_import_job(job_id):
         text_value = _extract_import_text(job.cv)
         content = structure_cv_text(text_value, job.cv.language)
         content = overlay_actor_identity(content, job.user, fill_only=True)
-        theme_color = (job.cv.style_config or {}).get('theme_color')
+        # Màu ứng viên chọn khi upload nằm ở bản nháp ban đầu do create_v2_cv tạo.
+        draft = CvDraft.objects.filter(cv_id=job.cv_id).only('style_json').first()
+        theme_color = (draft.style_json or {}).get('theme_color') if draft else None
         document = compose_cv_document(
             template=job.cv.template,
             content_json=content,
@@ -285,14 +285,8 @@ def process_cv_import_job(job_id):
             )
             now = timezone.now()
             UserCv.objects.filter(pk=current.cv_id).update(
-                cv_data=document['content_json'],
-                style_config=document['style_json'],
-                status=UserCv.Status.ANALYZED,
                 processing_status=UserCv.ProcessingStatus.ANALYZED,
                 error_message='',
-                raw_text='',
-                normalized_text='',
-                last_analyzed_at=now,
                 updated_at=now,
             )
             current.status = CvImportJob.Status.COMPLETED

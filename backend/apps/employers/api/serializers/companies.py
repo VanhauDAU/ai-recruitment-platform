@@ -261,7 +261,7 @@ class PublicCompanyListSerializer(serializers.ModelSerializer):
     logo_url = serializers.SerializerMethodField()
     cover_image_url = serializers.SerializerMethodField()
     description_excerpt = serializers.SerializerMethodField()
-    headquarters = serializers.SerializerMethodField()
+    headquarters = serializers.CharField(source='public_headquarters', read_only=True)
     active_public_job_count = serializers.IntegerField(read_only=True)
     company_size_display = serializers.CharField(source='get_company_size_display', read_only=True)
     industries_detail = IndustrySerializer(source='industries', many=True, read_only=True)
@@ -293,8 +293,3 @@ class PublicCompanyListSerializer(serializers.ModelSerializer):
     def get_description_excerpt(self, obj):
         plain_text = ' '.join(rich_text_plain_text(obj.description).split())
         return plain_text[: self.DESCRIPTION_EXCERPT_LENGTH]
-
-    def get_headquarters(self, obj):
-        if obj.business_type != Company.BusinessType.ENTERPRISE:
-            return ''
-        return obj.address.strip()

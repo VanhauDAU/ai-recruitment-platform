@@ -131,8 +131,10 @@ class CvTemplateSeoShellView(View):
             if not template:
                 return _not_found(request, canonical_path)
             canonical_url = absolute_url(request, canonical_path)
+            links = template.catalog_color_links
+            link = next((item for item in links if item.is_default), links[0] if links else None)
             image = media_url_from_value(
-                template.preview_url or template.thumbnail_url,
+                (link.preview_url or link.thumbnail_url) if link else '',
                 request=request,
             )
             creative_work = {

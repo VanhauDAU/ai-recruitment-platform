@@ -1,4 +1,4 @@
-"""Seed CV Builder taxonomy, template colors, position profiles and sample contents.
+"""Seed CV Builder template colors, position profiles and sample contents.
 
 Idempotent: every row uses get_or_create. Sample contents are keyed by
 (position profile, locale, experience band) — profile null means generic content
@@ -8,16 +8,15 @@ with `{position}` tokens — and are never overwritten once an editor owns them.
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.utils import timezone
-from django.utils.text import slugify
 
 from apps.cv_templates.content_tokens import _materialize_tokens
+from apps.cv_templates.management.commands._cv_position_fields import POSITION_SETUP
 from apps.cv_templates.models import (
-    CvCategory,
     CvColor,
+    CvPositionField,
     CvPositionProfile,
     CvSampleContent,
     CvTemplate,
-    CvTemplateCategoryLink,
     CvTemplateColorLink,
     ExperienceBand,
 )
@@ -173,14 +172,6 @@ def rich_text(value):
     return {'format': 'rich_text_v1', 'content': blocks}
 
 
-def category_type_for(name):
-    return (
-        CvCategory.CategoryType.STYLE
-        if name.casefold() in {'simple', 'modern', 'classic'}
-        else CvCategory.CategoryType.POSITION
-    )
-
-
 def build_generic_content(locale, band):
     """Nội dung chung theo ngôn ngữ và nhóm kinh nghiệm, giữ token `{position}`."""
     texts = LOCALE_TEXTS[locale]
@@ -280,6 +271,7 @@ class Command(BaseCommand):
                 profile.save(update_fields=['section_preset', 'updated_at'])
             profiles[category.name] = profile
 
+        fields_created = self._seed_position_fields(profiles)
         samples_created = 0
         for locale in LOCALE_TEXTS:
             for band in ExperienceBand:
@@ -323,23 +315,11 @@ class Command(BaseCommand):
                     template=template,
                     color=color,
                     defaults={
-                        'thumbnail_url': template.thumbnail_url,
-                        'preview_url': template.preview_url or template.thumbnail_url,
                         'is_default': index == 0 and not has_default,
                         'sort_order': index,
                     },
                 )
                 color_links_created += int(created)
-
-            # Convert legacy comma-separated category values into real links.
-            for raw_name in filter(None, (part.strip() for part in template.category.split(','))):
-                slug = slugify(raw_name)[:140]
-                category, _ = CvCategory.objects.get_or_create(
-                    category_type=category_type_for(raw_name),
-                    slug=slug,
-                    defaults={'name': raw_name},
-                )
-                CvTemplateCategoryLink.objects.get_or_create(template=template, category=category)
 
         names = {
             (item.category_id, item.locale): item.display_name
@@ -366,20 +346,43 @@ class Command(BaseCommand):
 
         self.stdout.write(
             self.style.SUCCESS(
-                f'Done. {color_links_created} template color link(s) and '
+                f'Done. {color_links_created} template color link(s), '
+                f'{fields_created} position field(s) and '
                 f'{samples_created} sample content(s) created.'
             )
         )
+
+    def _seed_position_fields(self, profiles):
+        """Từ khóa và trường riêng đề xuất; không ghi đè cấu hình admin đã có."""
+        created_count = 0
+        for name, setup in POSITION_SETUP.items():
+            profile = profiles.get(name)
+            if profile is None:
+                continue
+            if not profile.keywords:
+                profile.keywords = setup['keywords']
+                profile.full_clean()
+                profile.save(update_fields=['keywords', 'updated_at'])
+            for order, data in enumerate(setup['fields']):
+                field, created = CvPositionField.objects.get_or_create(
+                    profile=profile,
+                    key=data['key'],
+                    defaults={**data, 'sort_order': order},
+                )
+                if created:
+                    field.full_clean()
+                created_count += int(created)
+        return created_count
 
     def _seed_sample(self, *, profile, locale, band, title, content):
         sample, created = CvSampleContent.objects.get_or_create(
             position_profile=profile,
             locale=locale,
             experience_band=band,
+            status=CvSampleContent.Status.PUBLISHED,
             defaults={
                 'title': title,
                 'content_json': content,
-                'status': CvSampleContent.Status.PUBLISHED,
                 'published_at': timezone.now(),
             },
         )

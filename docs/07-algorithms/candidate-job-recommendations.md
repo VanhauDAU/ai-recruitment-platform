@@ -37,7 +37,10 @@ việc đã lưu và lịch sử tìm kiếm không tham gia scoring. Tin đã �
 bị chính ứng viên ẩn được loại trước giới hạn 500 và trước phân trang.
 
 Endpoint `by-cv` là use case độc lập sau khi lưu CV, tiếp tục đọc đúng CV được
-scope theo owner và dùng tín hiệu của CV như trước.
+scope theo owner và dùng tín hiệu của CV như trước. Từ CVT-1c, kinh nghiệm dùng
+`UserCv.experience_years` (cùng enum `Job.ExperienceYears` với tin tuyển dụng,
+tính từ mục kinh nghiệm của CV) thay cho khai báo trong nhu cầu việc làm khi CV
+có kinh nghiệm; CV chưa có mục kinh nghiệm thì giữ khai báo của ứng viên.
 
 ## Consent và phạm vi đọc
 

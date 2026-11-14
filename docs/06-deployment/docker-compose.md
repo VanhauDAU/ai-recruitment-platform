@@ -72,7 +72,8 @@ docker compose exec backend sh -c "\
 
 `seed_cv_templates` dựng 10 mẫu CV (template + version đã publish + mapping
 section + tên/mô tả tiếng Việt, tiếng Anh + danh mục + màu). Thêm `--snapshots` để xếp
-hàng render ảnh preview thật cho từng màu — cần worker Celery có WeasyPrint;
+hàng render ảnh preview thật cho từng màu — cần worker Celery (Chromium) và
+service `frontend` (trang in `CV_PRINT_URL`);
 không chạy thì catalogue dùng ảnh giữ chỗ theo màu chủ đạo.
 
 `seed_locations` gọi `provinces.open-api.vn` nên cần internet ở lần chạy đầu.
@@ -162,8 +163,11 @@ mount; build cache chỉ hỗ trợ build nhanh và không được sử dụng 
 
 ## Ghi chú
 
-- Ảnh backend cài sẵn system libs cho WeasyPrint (pango/cairo/gdk-pixbuf) và
-  fonts Noto/DejaVu — render PDF tiếng Việt hoạt động trong container.
+- Ảnh backend cài sẵn Chromium headless shell của Playwright
+  (`PLAYWRIGHT_BROWSERS_PATH=/opt/ms-playwright`). PDF CV in từ trang
+  `cv-print.html` của frontend (`CV_PRINT_URL`, compose trỏ tới
+  `http://frontend:5173/cv-print.html`); font CV tự host trong bundle frontend.
+  Vite cho phép host `frontend` (`server.allowedHosts`) để backend gọi được.
 - `scripts/check_all.sh` tự fallback chạy backend qua compose khi máy không có
   `backend/venv`.
 - `createsuperuser` + `verify_admin_email` là break-glass có quyền máy chủ,

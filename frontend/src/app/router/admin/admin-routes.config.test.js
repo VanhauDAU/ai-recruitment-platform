@@ -38,6 +38,19 @@ describe('ADMIN_ROUTES contract', () => {
     })
   })
 
+  it('guards the company report queue with its view permission and lands report-only admins on it', () => {
+    expect(ADMIN_ROUTES.find((route) => route.id === 'companyReports')).toEqual({
+      id: 'companyReports',
+      segment: '/company-reports',
+      lazyKey: 'AdminCompanyReportsPage',
+      title: 'Báo cáo công ty',
+      navLabel: 'Báo cáo công ty',
+      iconKey: 'moderation',
+      permission: 'company_report.view',
+      showInNav: true,
+    })
+  })
+
   it('keeps site settings explicitly superuser-only', () => {
     expect(ADMIN_ROUTES.filter((route) => route.requireSuperuser)).toEqual([
       expect.objectContaining({

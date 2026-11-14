@@ -4,9 +4,7 @@ import {
   SolutionOutlined,
 } from '@ant-design/icons'
 import { Link } from 'react-router'
-import { companyJobsPath } from '@/entities/company'
-import CompanyLogo from './CompanyLogo'
-import { companyDisplayName } from './company-presentation'
+import { companyDetailPath, companyDisplayName, CompanyLogo } from '@/entities/company'
 
 function activeJobCount(company) {
   const value = Number(company?.active_public_job_count)
@@ -22,8 +20,8 @@ export default function SearchCompanyCard({ company }) {
   return (
     <article className="company-directory-search-card min-w-0">
       <Link
-        to={companyJobsPath(company)}
-        aria-label={`Xem việc làm tại ${displayName}`}
+        to={companyDetailPath(company)}
+        aria-label={`Xem trang công ty ${displayName}`}
         className="group flex min-w-0 gap-2.5 rounded-lg border border-slate-200 bg-white p-2.5 !text-inherit shadow-sm transition duration-200 hover:border-emerald-200 hover:shadow-[0_8px_20px_rgba(15,118,110,0.1)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2 sm:p-3"
       >
         <CompanyLogo

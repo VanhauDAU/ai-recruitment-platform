@@ -36,6 +36,19 @@ describe('admin navigation tree', () => {
     expect(tree.map((item) => item.label)).not.toContain('Doanh nghiệp')
   })
 
+  it('lists the company report queue under companies, for its own permission', () => {
+    const leaves = (permissions) => flattenAdminNavigation(
+      buildAdminNavigation(ADMIN_NAVIGATION, ADMIN_ROUTES, access(permissions)),
+    )
+    const moderator = leaves(['company.view', 'company_update.view', 'company_report.view'])
+    const queue = moderator.find((leaf) => leaf.key === 'company-reports')
+
+    expect(queue).toMatchObject({ label: 'Báo cáo công ty', href: '/admin/app/company-reports' })
+    expect(moderator[moderator.indexOf(queue) - 1].key).toBe('company-updates')
+    expect(leaves(['company.view']).map((leaf) => leaf.key)).not.toContain('company-reports')
+    expect(leaves(['company_report.view']).map((leaf) => leaf.key)).toEqual(['company-reports', 'personal'])
+  })
+
   it('keeps future items disabled and superuser-only', () => {
     const regular = buildAdminNavigation(
       ADMIN_NAVIGATION,

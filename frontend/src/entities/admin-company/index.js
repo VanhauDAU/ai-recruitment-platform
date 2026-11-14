@@ -1,8 +1,10 @@
 export {
   getAdminCompanies,
   getAdminCompany,
+  getAdminCompanyPublicPage,
   getAdminCompanyRecruiters,
   getAdminCompanySummary,
+  setAdminCompanyPolicyHold,
 } from './api/admin-company.api'
 export { adminCompanyKeys } from './api/admin-company.keys'
 export {

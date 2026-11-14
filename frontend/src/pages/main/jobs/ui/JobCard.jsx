@@ -2,6 +2,7 @@ import { HeartFilled, HeartOutlined } from '@ant-design/icons'
 import { Tooltip } from 'antd'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
+import { companyDetailPath } from '@/entities/company'
 import {
   EDUCATION_LEVEL_LABELS,
   EMPLOYMENT_TYPE_LABELS,
@@ -197,7 +198,17 @@ export default function JobCard({
           <span className="shrink-0 text-sm font-semibold text-[var(--brand-primary)]">{formatSalary(job)}</span>
         </div>
         <JobPresentationLabels job={job} compact className="mt-1.5" />
-        <p className="mt-0.5 truncate text-sm text-gray-500 uppercase">{job.company_name}</p>
+        <p className="mt-0.5 truncate text-sm text-gray-500 uppercase">
+          {job.company_slug ? (
+            <Link
+              to={companyDetailPath(job.company_slug)}
+              onClick={(e) => e.stopPropagation()}
+              className="!text-inherit hover:!text-[var(--brand-primary)] hover:underline"
+            >
+              {job.company_name}
+            </Link>
+          ) : job.company_name}
+        </p>
 
         <div className="mt-2 flex flex-wrap gap-1.5">
           {locationLabel && <Chip elevated={elevated}>{locationLabel}</Chip>}

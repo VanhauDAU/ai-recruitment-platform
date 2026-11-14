@@ -4,9 +4,12 @@ import {
   TeamOutlined,
 } from '@ant-design/icons'
 import { Link } from 'react-router'
-import { companyJobsPath } from '@/entities/company'
-import CompanyLogo from './CompanyLogo'
-import { companyDisplayName, companyInitial } from './company-presentation'
+import {
+  companyDetailPath,
+  companyDisplayName,
+  companyInitial,
+  CompanyLogo,
+} from '@/entities/company'
 
 function CompanyCover({ company, eager }) {
   return (
@@ -45,8 +48,8 @@ export default function CompanyCard({ company, eager = false }) {
   return (
     <article className="company-directory-card h-full min-w-0">
       <Link
-        to={companyJobsPath(company)}
-        aria-label={`Xem việc làm tại ${displayName}`}
+        to={companyDetailPath(company)}
+        aria-label={`Xem trang công ty ${displayName}`}
         className="group flex h-full min-h-[390px] min-w-0 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white !text-inherit shadow-sm transition duration-200 hover:-translate-y-1 hover:border-emerald-200 hover:shadow-[0_16px_36px_rgba(15,118,110,0.12)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2"
       >
         <CompanyCover company={company} eager={eager} />
@@ -99,7 +102,7 @@ export default function CompanyCard({ company, eager = false }) {
               <span className="truncate">{company.company_size_display || 'Quy mô đang cập nhật'}</span>
             </span>
             <span className="inline-flex shrink-0 items-center gap-1 text-sm font-bold text-[var(--brand-primary)]">
-              Việc làm <ArrowRightOutlined className="text-xs transition-transform group-hover:translate-x-0.5" />
+              Xem công ty <ArrowRightOutlined className="text-xs transition-transform group-hover:translate-x-0.5" />
             </span>
           </div>
         </div>

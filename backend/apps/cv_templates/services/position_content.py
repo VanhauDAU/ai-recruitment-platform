@@ -15,6 +15,9 @@ from apps.jobs.models import JobCategory, JobCategoryLocalization
 
 from ..content_tokens import _materialize_tokens
 from ..models import EXPERIENCE_BAND_ORDER, CvPositionProfile, CvSampleContent
+from ..section_registry import blank_section, get_section_contract
+from .position_fields import SECTION_KEY as POSITION_DETAILS_KEY
+from .position_fields import apply_position_details
 
 
 class PositionContentUnavailable(ValueError):
@@ -47,7 +50,11 @@ def _active_profile(position):
         or position.category_type != JobCategory.CategoryType.SPECIALIZATION
     ):
         raise PositionContentUnavailable('Vị trí chuyên môn không hoạt động.')
-    profile = CvPositionProfile.objects.filter(job_category=position, is_active=True).first()
+    profile = (
+        CvPositionProfile.objects.filter(job_category=position, is_active=True)
+        .prefetch_related('fields')
+        .first()
+    )
     if profile is None:
         raise PositionContentUnavailable('Vị trí chưa được bật cho CV.')
     return profile
@@ -67,12 +74,26 @@ def _pick_sample(samples, profile, experience_band):
 
 
 def _apply_section_preset(content, preset):
-    """Sắp xếp và bật/tắt section theo preset; section ngoài preset bị tắt, giữ ở cuối."""
+    """Sắp xếp và bật/tắt section theo preset; section ngoài preset bị tắt, giữ ở cuối.
+
+    Riêng `position_details` (chỉ có khi vị trí có trường riêng) luôn bật và đứng
+    sau kỹ năng nếu preset không nhắc tới, để thêm trường riêng không cần sửa preset.
+    """
     if not preset:
         return content
     positions = {entry['section_key']: index for index, entry in enumerate(preset)}
     enabled = {entry['section_key']: entry.get('enabled', True) for entry in preset}
-    sections = content.get('sections', [])
+    positions.setdefault(POSITION_DETAILS_KEY, positions.get('skills', len(positions)) + 0.5)
+    enabled.setdefault(POSITION_DETAILS_KEY, True)
+    sections = content.setdefault('sections', [])
+    present = {section.get('section_key') for section in sections}
+    # Mục vị trí yêu cầu mà nội dung gợi ý chưa có được thêm ở dạng trống để ứng
+    # viên điền: bộ mục của vị trí quyết định CV có mục nào, không phụ thuộc bản mẫu.
+    for entry in preset:
+        key = entry['section_key']
+        contract = get_section_contract(key)
+        if entry.get('enabled', True) and key not in present and not contract.personal_info_backed:
+            sections.append(blank_section(key, content.get('locale'), f'{key}_1'))
     for section in sections:
         key = section.get('section_key')
         section['enabled'] = enabled.get(key, False)
@@ -98,6 +119,7 @@ def resolve_position_content(*, position, locale, experience_band, lock=False):
     is_generic = sample.position_profile_id is None
     if is_generic:
         content = _materialize_tokens(content, _localized_name(position, locale))
+    content = apply_position_details(content, profile, locale)
     content = _apply_section_preset(content, profile.section_preset)
     return {
         'position_public_id': position.public_id,

@@ -13,9 +13,9 @@ from ..models import (
 )
 
 
-def _reset_delivery_cursors(user, *, configured, suitable):
+def _reset_delivery_cursors(user, *, configured, suitable, followed):
     """Reset inside the preference transaction so Beat cannot observe half a transition."""
-    if not configured and not suitable:
+    if not configured and not suitable and not followed:
         return
 
     from apps.jobs.services import reset_candidate_job_delivery_cursors
@@ -24,6 +24,7 @@ def _reset_delivery_cursors(user, *, configured, suitable):
         user,
         configured=configured,
         suitable=suitable,
+        followed=followed,
     )
 
 
@@ -78,7 +79,12 @@ def patch_candidate_email_notification_settings(user, changes):
         changes.get('suitable_job_recommendations') is True
         and not previous.suitable_job_recommendations
     )
-    if (configured_opted_in or suitable_opted_in) and not locked_user.email_verified:
+    followed_opted_in = (
+        changes.get('followed_company_jobs') is True and not previous.followed_company_jobs
+    )
+    if (
+        configured_opted_in or suitable_opted_in or followed_opted_in
+    ) and not locked_user.email_verified:
         raise ValidationError(
             {
                 'code': 'email_unverified',
@@ -101,5 +107,6 @@ def patch_candidate_email_notification_settings(user, changes):
         locked_user,
         configured=configured_opted_in,
         suitable=suitable_opted_in,
+        followed=followed_opted_in,
     )
     return settings

@@ -403,6 +403,11 @@ REST_FRAMEWORK = {
         'ai_job_generation': '3/min',
         'knowledgebase_public': '120/min',
         'public_companies': '120/min',
+        'company_follow': '60/hour',
+        'company_report': '10/hour',
+        'company_page_layout': '60/hour',
+        'company_page_content': '30/hour',
+        'company_page_editors': '20/hour',
         'upload_session': '30/hour',
         'upload_status': '120/min',
         'upload_content': '20/hour',
@@ -615,6 +620,8 @@ CELERY_TASK_ROUTES = {
     'apps.employers.tasks.phone_sms.*': {'queue': 'auth-sms'},
     'apps.employers.tasks.tax_lookup.*': {'queue': 'default'},
     'apps.employers.tasks.domain_claims.*': {'queue': 'default'},
+    'apps.cv_templates.tasks.generate_cv_sample_content': {'queue': 'ai-generation'},
+    'apps.cv_templates.tasks.render_template_test_pdf': {'queue': 'cv-export'},
     'apps.cvs.tasks.*': {'queue': 'cv-export'},
     'apps.uploads.tasks.*': {'queue': 'upload-scan'},
     'apps.jobs.tasks.ai_generation.*': {'queue': 'ai-generation'},
@@ -793,6 +800,9 @@ ADMIN_FRONTEND_URL = config('ADMIN_FRONTEND_URL', default=FRONTEND_URL)
 # SEO shell fetches the built Vite document from the internal frontend service,
 # then injects route-specific head tags without rendering the React body.
 FRONTEND_SHELL_URL = config('FRONTEND_SHELL_URL', default=FRONTEND_URL).rstrip('/') + '/'
+# Trang in PDF CV (entry `cv-print.html` của frontend). Worker mở trang này bằng
+# Chromium headless và đưa document vào trực tiếp; trang không tải dữ liệu CV.
+CV_PRINT_URL = config('CV_PRINT_URL', default=f'{FRONTEND_SHELL_URL}cv-print.html')
 FRONTEND_SHELL_TIMEOUT_SECONDS = config(
     'FRONTEND_SHELL_TIMEOUT_SECONDS',
     default=2,

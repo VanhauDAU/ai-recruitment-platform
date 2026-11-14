@@ -110,6 +110,38 @@ class JobViewTrackingApiTests(APITestCase):
         self.assertEqual(parse_datetime(response.data['first_approved_at']), first_approved_at)
         self.assertEqual(parse_datetime(response.data['published_at']), latest_published_at)
 
+    def test_detail_links_company_by_slug_and_keeps_enterprise_address(self):
+        Company.objects.filter(pk=self.company.pk).update(address='  12 Lý Thường Kiệt, Hà Nội  ')
+
+        response = self.client.get(reverse('job-detail', kwargs={'slug': self.job.slug}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['company_slug'], self.company.slug)
+        self.assertEqual(response.data['company_address'], '12 Lý Thường Kiệt, Hà Nội')
+
+    def test_held_company_page_is_not_linked_from_job_detail_or_card(self):
+        Company.objects.filter(pk=self.company.pk).update(content_policy_hold=True)
+
+        detail = self.client.get(reverse('job-detail', kwargs={'slug': self.job.slug}))
+        cards = self.client.get(reverse('job-list'))
+
+        self.assertEqual(detail.status_code, 200)
+        self.assertIsNone(detail.data['company_slug'])
+        self.assertEqual(detail.data['company_name'], 'Views Inc.')
+        self.assertEqual([card['company_slug'] for card in cards.data['results']], [None])
+
+    def test_detail_never_exposes_household_business_address(self):
+        Company.objects.filter(pk=self.company.pk).update(
+            business_type=Company.BusinessType.HOUSEHOLD,
+            address='Địa chỉ nhà riêng không công khai',
+        )
+
+        response = self.client.get(reverse('job-detail', kwargs={'slug': self.job.slug}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['company_address'], '')
+        self.assertNotIn('Địa chỉ nhà riêng không công khai', str(response.data))
+
     @override_settings(JOB_LIFECYCLE_V2_MODE='enforce')
     def test_enforced_lifecycle_hides_job_outside_visibility_window(self):
         self.job.deadline = timezone.localdate() + timedelta(days=10)
@@ -383,6 +415,7 @@ class JobSalaryBucketFilterTests(APITestCase):
                 'slug',
                 'title',
                 'company_name',
+                'company_slug',
                 'company_logo_url',
                 'brand_slug',
                 'company_verified',
@@ -412,6 +445,37 @@ class JobSalaryBucketFilterTests(APITestCase):
                 'created_at',
             },
         )
+
+    def test_company_filter_matches_public_id_exactly_not_company_name(self):
+        other_user = User.objects.create_user(
+            email='same-name-employer@example.com',
+            password='Password@123',
+            role=User.Role.EMPLOYER,
+        )
+        same_name_company = Company.objects.create(company_name='Acme', created_by=other_user)
+        make_employer_ready(other_user, company=same_name_company, candidate_data=True)
+        self.create_job('Acme original', 10_000_000, 15_000_000)
+        Job.objects.create(
+            posted_by=other_user,
+            company=same_name_company,
+            title='Acme namesake',
+            description='Description',
+            status=Job.Status.ACTIVE,
+        )
+
+        response = self.client.get(reverse('job-list'), {'company': self.company.public_id})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual([job['title'] for job in response.data['results']], ['Acme original'])
+        self.assertEqual(response.data['results'][0]['company_slug'], self.company.slug)
+
+    def test_company_filter_with_unknown_public_id_returns_no_jobs(self):
+        self.create_job('Visible elsewhere', 10_000_000, 15_000_000)
+
+        response = self.client.get(reverse('job-list'), {'company': 'co_unknown'})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['results'], [])
 
     def test_list_exposes_first_approval_as_the_stable_posted_date(self):
         first_approved_at = timezone.now() - timedelta(days=2)

@@ -1,39 +1,72 @@
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
-from django.db.models import Max
+from django.db.models import Count
+from django.http import HttpResponse
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import APIException, ValidationError
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from apps.accounts.permissions import HasAdminPermission
 from apps.accounts.selectors import effective_permission_codes
-from apps.cvs.models import CvAsset
+from apps.cvs.models import CvAsset, CvDraft
 from apps.cvs.services import create_background_asset
-from apps.cvs.services.composition import compose_cv_document
+from apps.jobs.models import JobCategory
 
 from ...models import (
     CvCategory,
     CvColor,
+    CvPositionField,
+    CvPositionProfile,
     CvSampleContent,
+    CvSampleGeneration,
     CvTemplate,
-    CvTemplateSection,
     CvTemplateVersion,
 )
+from ...selectors import cv_admin_overview
 from ...services import (
+    MAX_BATCH_SIZE,
+    PositionContentUnavailable,
+    SampleGenerationUnavailable,
     archive_sample,
+    average_generation_cost,
+    configure_version,
+    coverage_matrix,
+    create_draft_version,
+    duplicate_template,
+    export_positions,
+    import_positions,
+    preview_document,
+    publish_checklist,
     publish_sample,
     publish_template_version,
+    reorder_templates,
+    request_sample_generations,
+    request_test_pdf,
     retire_template_version,
+    set_template_colors,
+    set_template_visibility,
+    start_template,
+    test_pdf_job,
+    test_pdf_passed,
 )
 from ...tasks import enqueue_template_snapshots, regenerate_all_template_snapshots
 from ..serializers.admin import (
     CvBackgroundAdminSerializer,
     CvCategoryAdminSerializer,
     CvColorAdminSerializer,
+    CvPositionFieldAdminSerializer,
+    CvPositionProfileAdminSerializer,
     CvSampleContentAdminSerializer,
+    CvSampleGenerationRequestSerializer,
+    CvSampleGenerationSerializer,
     CvTemplateAdminSerializer,
     CvTemplateVersionAdminSerializer,
+    TemplateColorsSerializer,
+    TemplateLayoutSerializer,
+    TemplatePreviewSerializer,
+    TemplateVersionConfigSerializer,
 )
 
 
@@ -52,18 +85,16 @@ class AdminModelViewSet(viewsets.ModelViewSet):
     required_admin_permissions = {
         'list': ['cv_template.view'],
         'retrieve': ['cv_template.view'],
-        'create': ['cv_template.create'],
-        'update': ['cv_template.edit'],
-        'partial_update': ['cv_template.edit'],
-        'destroy': ['cv_template.delete'],
+        'create': ['cv_template.manage'],
+        'update': ['cv_template.manage'],
+        'partial_update': ['cv_template.manage'],
+        'destroy': ['cv_template.manage'],
     }
 
     def _safe_create_overrides(self, serializer):
         if 'cv_template.publish' in effective_permission_codes(self.request.user):
             return {}
         model = serializer.Meta.model
-        if model is CvTemplate:
-            return {'status': CvTemplate.Status.INACTIVE}
         if hasattr(model, 'is_active'):
             return {'is_active': False}
         return {}
@@ -75,70 +106,62 @@ class AdminModelViewSet(viewsets.ModelViewSet):
 class AdminCvTemplateViewSet(AdminModelViewSet):
     serializer_class = CvTemplateAdminSerializer
     lookup_field = 'public_id'
-    queryset = CvTemplate.objects.prefetch_related('versions').order_by('sort_order', 'name')
+    queryset = CvTemplate.objects.prefetch_related(
+        'categories',
+        'color_links__color',
+        'versions__published_by',
+        'versions__sections__section_definition',
+    ).order_by('sort_order', 'name')
     required_admin_permissions = {
         **AdminModelViewSet.required_admin_permissions,
-        'create_version': ['cv_template.create'],
+        'create_version': ['cv_template.manage'],
         'publish_version': ['cv_template.publish'],
-        'retire_version': ['cv_template.archive'],
-        'regenerate_snapshots': ['cv_template.edit'],
+        'retire_version': ['cv_template.publish'],
+        'regenerate_snapshots': ['cv_template.manage'],
+        'configure_version': ['cv_template.manage'],
+        'set_colors': ['cv_template.manage'],
+        'preview': ['cv_template.view'],
+        'test_pdf': ['cv_template.manage'],
+        'test_pdf_result': ['cv_template.view'],
+        'checklist': ['cv_template.view'],
+        'duplicate': ['cv_template.manage'],
+        'reorder': ['cv_template.manage'],
+        'lifecycle': ['cv_template.publish'],
     }
+
+    def create(self, request, *args, **kwargs):
+        """Tạo mẫu; gửi kèm `renderer_key` thì mẫu có ngay bản nháp đủ section và màu."""
+        layout = TemplateLayoutSerializer(data=request.data)
+        layout.is_valid(raise_exception=True)
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        with transaction.atomic():
+            template = serializer.save()
+            if layout.validated_data.get('renderer_key'):
+                _call(
+                    start_template,
+                    template=template,
+                    renderer_key=layout.validated_data['renderer_key'],
+                    actor=request.user,
+                )
+        return Response(
+            self.get_serializer(self.get_queryset().get(pk=template.pk)).data,
+            status=status.HTTP_201_CREATED,
+        )
 
     @action(detail=True, methods=['post'], url_path='versions')
     def create_version(self, request, public_id=None):
-        template = self.get_object()
-        source = template.current_published_version
-        if source is None and not request.data:
-            raise ValidationError(
-                {'version': 'Provide renderer/layout/style for the first draft version.'}
-            )
-        defaults = (
-            {
-                key: getattr(source, key)
-                for key in (
-                    'renderer_key',
-                    'renderer_version',
-                    'schema_version',
-                    'layout_schema',
-                    'style_schema',
-                    'default_layout_json',
-                    'default_style_json',
-                    'capabilities',
-                    'content_contract',
-                )
-            }
-            if source
-            else {}
+        layout = TemplateLayoutSerializer(data=request.data)
+        layout.is_valid(raise_exception=True)
+        version = _call(
+            create_draft_version,
+            template=self.get_object(),
+            renderer_key=layout.validated_data.get('renderer_key'),
+            actor=request.user,
         )
-        serializer = CvTemplateVersionAdminSerializer(data={**defaults, **request.data})
-        serializer.is_valid(raise_exception=True)
-        with transaction.atomic():
-            version_number = (
-                template.versions.aggregate(value=Max('version_number'))['value'] or 0
-            ) + 1
-            version = serializer.save(
-                template=template,
-                version_number=version_number,
-                version_status=CvTemplateVersion.VersionStatus.DRAFT,
-                created_by=request.user,
-            )
-            if source:
-                CvTemplateSection.objects.bulk_create(
-                    [
-                        CvTemplateSection(
-                            template_version=version,
-                            section_definition=item.section_definition,
-                            region_key=item.region_key,
-                            default_order=item.default_order,
-                            is_required=item.is_required,
-                            is_default_enabled=item.is_default_enabled,
-                            is_draggable=item.is_draggable,
-                            use_theme_color=item.use_theme_color,
-                            config_json=item.config_json,
-                        )
-                        for item in source.sections.all()
-                    ]
-                )
+        version = CvTemplateVersion.objects.prefetch_related('sections__section_definition').get(
+            pk=version.pk
+        )
         return Response(
             CvTemplateVersionAdminSerializer(version).data, status=status.HTTP_201_CREATED
         )
@@ -152,11 +175,127 @@ class AdminCvTemplateViewSet(AdminModelViewSet):
     @action(detail=True, methods=['post'], url_path=r'versions/(?P<version_pk>\d+)/publish')
     def publish_version(self, request, public_id=None, version_pk=None):
         template = self.get_object()
+        draft = self._version(template, version_pk)
+        failing = [
+            item['key']
+            for item in publish_checklist(template, draft, test_pdf_ok=test_pdf_passed(draft))
+            if not item['ok']
+        ]
+        if failing:
+            raise ValidationError({'checklist': failing})
         version = _call(
-            publish_template_version, template=template, version=self._version(template, version_pk)
+            publish_template_version, template=template, version=draft, actor=request.user
         )
         enqueue_template_snapshots(template)
         return Response(CvTemplateVersionAdminSerializer(version).data)
+
+    @action(detail=True, methods=['patch'], url_path=r'versions/(?P<version_pk>\d+)/config')
+    def configure_version(self, request, public_id=None, version_pk=None):
+        """Lưu một bước của wizard vào phiên bản nháp."""
+        template = self.get_object()
+        serializer = TemplateVersionConfigSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        version = _call(
+            configure_version,
+            version=self._version(template, version_pk),
+            **serializer.validated_data,
+        )
+        version = CvTemplateVersion.objects.prefetch_related('sections__section_definition').get(
+            pk=version.pk
+        )
+        return Response(CvTemplateVersionAdminSerializer(version).data)
+
+    @action(detail=True, methods=['put'], url_path='colors')
+    def set_colors(self, request, public_id=None):
+        serializer = TemplateColorsSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        template = _call(
+            set_template_colors,
+            template=self.get_object(),
+            color_public_ids=serializer.validated_data['color_public_ids'],
+            default_public_id=serializer.validated_data['default_color_public_id'],
+        )
+        return Response(self.get_serializer(self.get_queryset().get(pk=template.pk)).data)
+
+    def _preview_options(self, request):
+        serializer = TemplatePreviewSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = dict(serializer.validated_data)
+        data.pop('version_id', None)
+        return serializer.validated_data.get('version_id'), data
+
+    @action(detail=True, methods=['post'])
+    def preview(self, request, public_id=None):
+        """Document xem trước của một phiên bản (mặc định bản đang xuất bản)."""
+        template = self.get_object()
+        version_id, options = self._preview_options(request)
+        version = (
+            self._version(template, version_id)
+            if version_id
+            else template.current_published_version
+        )
+        if version is None:
+            raise ValidationError({'version_id': 'Chọn một phiên bản để xem trước.'})
+        try:
+            document = preview_document(template, version, **options)
+        except (PositionContentUnavailable, JobCategory.DoesNotExist) as error:
+            raise ValidationError({'position_public_id': 'Vị trí chưa có nội dung mẫu.'}) from error
+        except DjangoValidationError as error:
+            raise ValidationError({'document': error.messages}) from error
+        return Response({'document': document, 'renderer_key': version.renderer_key})
+
+    @action(detail=True, methods=['post'], url_path=r'versions/(?P<version_pk>\d+)/test-pdf')
+    def test_pdf(self, request, public_id=None, version_pk=None):
+        version = self._version(self.get_object(), version_pk)
+        _, options = self._preview_options(request)
+        token = request_test_pdf(version, options)
+        return Response({'token': token, 'status': 'pending'}, status=status.HTTP_202_ACCEPTED)
+
+    @action(detail=False, methods=['get'], url_path=r'test-pdf/(?P<token>[0-9a-f]{32})')
+    def test_pdf_result(self, request, token=None):
+        job = test_pdf_job(token)
+        if job is None:
+            raise ValidationError({'token': 'Kết quả đã hết hạn.'})
+        if job['status'] == 'ready' and request.query_params.get('download'):
+            response = HttpResponse(job['pdf'], content_type='application/pdf')
+            response['Content-Disposition'] = 'inline; filename="cv-template-test.pdf"'
+            response['Cache-Control'] = 'private, no-store'
+            return response
+        return Response({'status': job['status']})
+
+    @action(detail=True, methods=['get'], url_path=r'versions/(?P<version_pk>\d+)/checklist')
+    def checklist(self, request, public_id=None, version_pk=None):
+        template = self.get_object()
+        version = self._version(template, version_pk)
+        return Response(
+            {'items': publish_checklist(template, version, test_pdf_ok=test_pdf_passed(version))}
+        )
+
+    @action(detail=True, methods=['post'])
+    def duplicate(self, request, public_id=None):
+        template = _call(duplicate_template, template=self.get_object(), actor=request.user)
+        return Response(
+            self.get_serializer(self.get_queryset().get(pk=template.pk)).data,
+            status=status.HTTP_201_CREATED,
+        )
+
+    @action(detail=False, methods=['post'])
+    def reorder(self, request):
+        public_ids = request.data.get('public_ids')
+        if not isinstance(public_ids, list) or not public_ids:
+            raise ValidationError({'public_ids': 'Gửi danh sách mã template theo thứ tự.'})
+        _call(reorder_templates, public_ids=public_ids)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=True, methods=['post'])
+    def lifecycle(self, request, public_id=None):
+        """Ẩn (lưu trữ) hoặc hiện lại template đã có phiên bản xuất bản."""
+        template = _call(
+            set_template_visibility,
+            template=self.get_object(),
+            visible=request.data.get('status') == CvTemplate.LifecycleStatus.PUBLISHED,
+        )
+        return Response(self.get_serializer(self.get_queryset().get(pk=template.pk)).data)
 
     @action(detail=True, methods=['post'], url_path=r'versions/(?P<version_pk>\d+)/retire')
     def retire_version(self, request, public_id=None, version_pk=None):
@@ -172,20 +311,54 @@ class AdminCvTemplateViewSet(AdminModelViewSet):
         return Response({'status': 'queued'}, status=status.HTTP_202_ACCEPTED)
 
 
-class AdminCvCategoryViewSet(AdminModelViewSet):
+class UsageGuardMixin:
+    """Không xóa mục thư viện đang được dùng (CVT-4); trả số nơi đang dùng."""
+
+    usage_label = 'mẫu CV'
+
+    def usage_count(self, instance):
+        raise NotImplementedError
+
+    def perform_destroy(self, instance):
+        used = self.usage_count(instance)
+        if used:
+            raise ValidationError(
+                {'detail': f'Đang được {used} {self.usage_label} dùng, không xóa được.'}
+            )
+        super().perform_destroy(instance)
+
+
+class AdminCvCategoryViewSet(UsageGuardMixin, AdminModelViewSet):
     serializer_class = CvCategoryAdminSerializer
+
+    def usage_count(self, instance):
+        return instance.template_links.count()
+
     lookup_field = 'public_id'
-    queryset = CvCategory.objects.all()
+    queryset = CvCategory.objects.annotate(template_count=Count('template_links')).order_by(
+        'category_type', 'sort_order', 'name'
+    )
 
 
-class AdminCvColorViewSet(AdminModelViewSet):
+class AdminCvColorViewSet(UsageGuardMixin, AdminModelViewSet):
     serializer_class = CvColorAdminSerializer
+
+    def usage_count(self, instance):
+        return instance.template_links.count()
+
     lookup_field = 'public_id'
-    queryset = CvColor.objects.all()
+    queryset = CvColor.objects.annotate(template_count=Count('template_links')).order_by(
+        'sort_order', 'name'
+    )
 
 
-class AdminCvBackgroundViewSet(AdminModelViewSet):
+class AdminCvBackgroundViewSet(UsageGuardMixin, AdminModelViewSet):
     serializer_class = CvBackgroundAdminSerializer
+    usage_label = 'CV'
+
+    def usage_count(self, instance):
+        return CvDraft.objects.filter(style_json__background_asset_id=instance.public_id).count()
+
     lookup_field = 'public_id'
     queryset = CvAsset.objects.filter(
         kind=CvAsset.Kind.BACKGROUND,
@@ -225,36 +398,73 @@ class AdminCvBackgroundViewSet(AdminModelViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+class SampleGenerationRejected(APIException):
+    status_code = status.HTTP_400_BAD_REQUEST
+    default_code = 'sample_generation_rejected'
+
+    STATUS_BY_CODE = {
+        'runtime_disabled': status.HTTP_503_SERVICE_UNAVAILABLE,
+        'provider_not_configured': status.HTTP_503_SERVICE_UNAVAILABLE,
+        'generation_in_progress': status.HTTP_409_CONFLICT,
+    }
+
+    def __init__(self, code):
+        self.status_code = self.STATUS_BY_CODE.get(code, status.HTTP_400_BAD_REQUEST)
+        super().__init__({'code': code}, code)
+
+
 class AdminCvSampleContentViewSet(AdminModelViewSet):
     serializer_class = CvSampleContentAdminSerializer
     lookup_field = 'public_id'
-    queryset = CvSampleContent.objects.select_related('position_profile__job_category').order_by(
-        '-updated_at'
-    )
     required_admin_permissions = {
         **AdminModelViewSet.required_admin_permissions,
         'preview': ['cv_template.view'],
         'publish': ['cv_template.publish'],
-        'archive': ['cv_template.archive'],
+        'archive': ['cv_template.publish'],
+        'generate': ['cv_content.generate_ai'],
+    }
+    FILTERS = {
+        'position': 'position_profile__job_category__public_id',
+        'locale': 'locale',
+        'band': 'experience_band',
+        'status': 'status',
     }
 
-    @action(detail=True, methods=['post'])
-    def preview(self, request, public_id=None):
-        sample = self.get_object()
-        try:
-            template = CvTemplate.objects.get(public_id=request.data.get('template_public_id'))
-        except CvTemplate.DoesNotExist as error:
-            raise ValidationError({'template_public_id': 'Unknown template.'}) from error
-        document = compose_cv_document(
-            template=template,
-            content_json=sample.content_json,
-            theme_color=request.data.get('theme_color'),
+    def get_queryset(self):
+        queryset = CvSampleContent.objects.select_related(
+            'position_profile__job_category'
+        ).order_by('-updated_at')
+        params = self.request.query_params
+        return queryset.filter(
+            **{lookup: params[name] for name, lookup in self.FILTERS.items() if params.get(name)}
         )
-        return Response({'document': document})
+
+    @action(detail=False, methods=['post'])
+    def generate(self, request):
+        """Xếp hàng sinh nội dung mẫu bằng AI; kết quả vào trạng thái chờ duyệt."""
+        serializer = CvSampleGenerationRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        try:
+            generations = request_sample_generations(
+                actor=request.user,
+                profiles=data['position_public_ids'],
+                locales=sorted(data['locales']),
+                bands=sorted(data['experience_bands']),
+            )
+        except SampleGenerationUnavailable as error:
+            raise SampleGenerationRejected(error.code) from error
+        return Response(
+            {
+                'batch_id': generations[0].batch_id,
+                'generations': CvSampleGenerationSerializer(generations, many=True).data,
+            },
+            status=status.HTTP_202_ACCEPTED,
+        )
 
     @action(detail=True, methods=['post'])
     def publish(self, request, public_id=None):
-        sample = _call(publish_sample, sample=self.get_object())
+        sample = _call(publish_sample, sample=self.get_object(), actor=request.user)
         regenerate_all_template_snapshots.delay()
         return Response(self.get_serializer(sample).data)
 
@@ -262,3 +472,110 @@ class AdminCvSampleContentViewSet(AdminModelViewSet):
     def archive(self, request, public_id=None):
         sample = _call(archive_sample, sample=self.get_object())
         return Response(self.get_serializer(sample).data)
+
+
+class AdminCvSampleGenerationViewSet(AdminModelViewSet):
+    """Trạng thái các lượt sinh AI, lọc theo `?batch=`; chỉ đọc."""
+
+    serializer_class = CvSampleGenerationSerializer
+    lookup_field = 'public_id'
+    http_method_names = ['get', 'head', 'options']
+    required_admin_permissions = {
+        **AdminModelViewSet.required_admin_permissions,
+        'estimate': ['cv_content.generate_ai'],
+    }
+
+    @action(detail=False, methods=['get'])
+    def estimate(self, request):
+        """Chi phí ước tính cho `count` lượt, theo trung bình các lượt thành công gần đây."""
+        try:
+            count = max(1, min(MAX_BATCH_SIZE, int(request.query_params.get('count', 1))))
+        except ValueError as error:
+            raise ValidationError({'count': 'Phải là số.'}) from error
+        average = average_generation_cost()
+        return Response(
+            {
+                'count': count,
+                'average_cost_usd': average,
+                'estimated_cost_usd': round(average * count, 4) if average is not None else None,
+            }
+        )
+
+    def get_queryset(self):
+        queryset = CvSampleGeneration.objects.select_related(
+            'position_profile__job_category', 'sample'
+        )
+        if batch := self.request.query_params.get('batch'):
+            queryset = queryset.filter(batch_id=batch)
+        return queryset[:200]
+
+
+class AdminCvPositionViewSet(AdminModelViewSet):
+    """Cấu hình CV theo vị trí: bộ section, từ khóa; độ phủ nội dung; import/export JSON."""
+
+    serializer_class = CvPositionProfileAdminSerializer
+    lookup_field = 'public_id'
+    http_method_names = ['get', 'post', 'patch', 'head', 'options']
+    required_admin_permissions = {
+        **AdminModelViewSet.required_admin_permissions,
+        'coverage': ['cv_template.view'],
+        'export': ['cv_template.view'],
+        'import_positions': ['cv_template.manage'],
+    }
+
+    def get_queryset(self):
+        queryset = CvPositionProfile.objects.select_related('job_category__parent').annotate(
+            field_count=Count('fields')
+        )
+        if positions := self.request.query_params.get('position'):
+            queryset = queryset.filter(job_category__public_id__in=positions.split(','))
+        return queryset.order_by('sort_order', 'pk')
+
+    @action(detail=False, methods=['get'])
+    def coverage(self, request):
+        profiles = list(self.get_queryset())
+        matrix = coverage_matrix(profiles)
+        return Response(
+            {
+                'results': [
+                    {
+                        'position_public_id': profile.job_category.public_id,
+                        'position_name': profile.job_category.name,
+                        'coverage': matrix[profile.pk],
+                    }
+                    for profile in profiles
+                ]
+            }
+        )
+
+    @action(detail=False, methods=['get'])
+    def export(self, request):
+        return Response(export_positions(self.get_queryset()))
+
+    @action(detail=False, methods=['post'], url_path='import')
+    def import_positions(self, request):
+        result = _call(import_positions, payload=request.data, actor=request.user)
+        return Response(result, status=status.HTTP_201_CREATED)
+
+
+class AdminCvPositionFieldViewSet(AdminModelViewSet):
+    """Trường riêng của vị trí, lọc theo `?position=` (mã `JobCategory`)."""
+
+    serializer_class = CvPositionFieldAdminSerializer
+    lookup_field = 'public_id'
+
+    def get_queryset(self):
+        queryset = CvPositionField.objects.select_related('profile__job_category')
+        if position := self.request.query_params.get('position'):
+            queryset = queryset.filter(profile__job_category__public_id=position)
+        return queryset.order_by('profile_id', 'sort_order', 'pk')
+
+
+class AdminCvOverviewView(APIView):
+    """Số liệu và việc cần làm của trang Tổng quan Mẫu CV."""
+
+    permission_classes = [HasAdminPermission]
+    required_admin_permissions = ['cv_template.view']
+
+    def get(self, request):
+        return Response(cv_admin_overview())

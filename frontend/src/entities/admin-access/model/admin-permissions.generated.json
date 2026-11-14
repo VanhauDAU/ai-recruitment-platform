@@ -210,6 +210,15 @@
     "requires": []
   },
   {
+    "code": "company_page.moderate",
+    "module": "company",
+    "label": "Tạm ẩn trang công ty",
+    "description": "Tạm ẩn hoặc khôi phục trang công ty công khai kèm lý do; trang bị ẩn trả 404 và rời danh bạ, sitemap.",
+    "requires": [
+      "company.view"
+    ]
+  },
+  {
     "code": "company_recruiter.view",
     "module": "company",
     "label": "Xem nhà tuyển dụng của công ty",
@@ -217,6 +226,22 @@
     "requires": [
       "company.view"
     ]
+  },
+  {
+    "code": "company_report.resolve",
+    "module": "company",
+    "label": "Xử lý báo cáo trang công ty",
+    "description": "Xác nhận, bác bỏ hoặc mở lại báo cáo trang công ty; tạm ẩn trang khi kết luận cần thêm quyền tạm ẩn trang công ty.",
+    "requires": [
+      "company_report.view"
+    ]
+  },
+  {
+    "code": "company_report.view",
+    "module": "company",
+    "label": "Xem báo cáo trang công ty",
+    "description": "Xem hàng chờ báo cáo trang công ty, người báo cáo và lịch sử kết luận.",
+    "requires": []
   },
   {
     "code": "company_update.review",
@@ -235,37 +260,19 @@
     "requires": []
   },
   {
-    "code": "cv_template.archive",
+    "code": "cv_content.generate_ai",
     "module": "cv_template",
-    "label": "Lưu trữ mẫu CV",
-    "description": "Thu hồi mẫu, phiên bản hoặc dữ liệu catalogue CV.",
+    "label": "Sinh nội dung CV mẫu bằng AI",
+    "description": "Chạy sinh nội dung mẫu theo vị trí bằng AI; kết quả chờ duyệt.",
     "requires": [
       "cv_template.view"
     ]
   },
   {
-    "code": "cv_template.create",
+    "code": "cv_template.manage",
     "module": "cv_template",
-    "label": "Tạo mẫu CV",
-    "description": "Tạo mẫu và phiên bản CV mới.",
-    "requires": [
-      "cv_template.view"
-    ]
-  },
-  {
-    "code": "cv_template.delete",
-    "module": "cv_template",
-    "label": "Xoá mẫu CV",
-    "description": "Xoá hoặc gỡ dữ liệu khỏi catalogue CV.",
-    "requires": [
-      "cv_template.view"
-    ]
-  },
-  {
-    "code": "cv_template.edit",
-    "module": "cv_template",
-    "label": "Sửa mẫu CV",
-    "description": "Chỉnh sửa nội dung và ảnh dẫn xuất của mẫu CV.",
+    "label": "Quản lý mẫu CV",
+    "description": "Tạo, sửa mẫu CV, thư viện màu/danh mục/hình nền, vị trí và trường riêng.",
     "requires": [
       "cv_template.view"
     ]
@@ -274,7 +281,7 @@
     "code": "cv_template.publish",
     "module": "cv_template",
     "label": "Phát hành mẫu CV",
-    "description": "Kích hoạt hoặc phát hành dữ liệu catalogue CV.",
+    "description": "Xuất bản, lưu trữ mẫu CV và duyệt nội dung mẫu.",
     "requires": [
       "cv_template.view"
     ]
@@ -282,9 +289,25 @@
   {
     "code": "cv_template.view",
     "module": "cv_template",
-    "label": "Xem catalogue CV",
-    "description": "Xem catalogue và bản xem trước CV.",
+    "label": "Xem mẫu CV",
+    "description": "Xem mọi trang quản trị Mẫu CV.",
     "requires": []
+  },
+  {
+    "code": "cv_user.view",
+    "module": "cv_user",
+    "label": "Xem CV ứng viên",
+    "description": "Xem metadata CV của ứng viên (không gồm nội dung).",
+    "requires": []
+  },
+  {
+    "code": "cv_user.view_content",
+    "module": "cv_user",
+    "label": "Xem nội dung CV ứng viên",
+    "description": "Xem nội dung CV khi có lý do; mỗi lần xem được ghi nhật ký. Khóa CV vi phạm.",
+    "requires": [
+      "cv_user.view"
+    ]
   },
   {
     "code": "dashboard.view",

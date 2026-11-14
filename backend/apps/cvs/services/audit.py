@@ -32,9 +32,17 @@ def request_access_metadata(request) -> tuple[str, str]:
 
 
 def record_cv_access(
-    *, cv, version, actor_type, access_channel, request, actor_user=None, shared_link=None
+    *,
+    cv,
+    version,
+    actor_type,
+    access_channel,
+    request,
+    actor_user=None,
+    shared_link=None,
+    reason='',
 ) -> CvAccessLog:
-    """Persist only actor/channel/version metadata for a sensitive CV action."""
+    """Persist only actor/channel/version metadata (and an admin's stated reason)."""
     ip_hash, user_agent_hash = request_access_metadata(request)
     return CvAccessLog.objects.create(
         cv=cv,
@@ -45,4 +53,5 @@ def record_cv_access(
         shared_link=shared_link,
         ip_hash=ip_hash,
         user_agent_hash=user_agent_hash,
+        reason=reason,
     )

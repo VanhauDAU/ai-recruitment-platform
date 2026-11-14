@@ -13,10 +13,6 @@ from .language import CvLanguage, localized_field
 class CvTemplate(models.Model):
     """CV Builder template (DB doc section 2.4)."""
 
-    class Status(models.TextChoices):
-        ACTIVE = 'active', 'Active'
-        INACTIVE = 'inactive', 'Inactive'
-
     class LifecycleStatus(models.TextChoices):
         DRAFT = 'draft', 'Draft'
         PUBLISHED = 'published', 'Published'
@@ -25,9 +21,6 @@ class CvTemplate(models.Model):
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     name = models.CharField(max_length=255)
     slug = models.SlugField(max_length=255, unique=True, blank=True)
-    category = models.CharField(
-        max_length=100, blank=True, help_text='IT, internship, professional, simple'
-    )
     # Nội dung song ngữ. Template chỉ xuất hiện ở kho mẫu của ngôn ngữ có
     # `display_name_<ngôn ngữ>` khác rỗng.
     display_name_vi = models.CharField(max_length=255, blank=True)
@@ -38,21 +31,12 @@ class CvTemplate(models.Model):
     seo_title_en = models.CharField(max_length=255, blank=True)
     seo_description_vi = models.TextField(blank=True)
     seo_description_en = models.TextField(blank=True)
-    thumbnail_url = models.TextField(blank=True)
-    preview_url = models.TextField(blank=True)
-    layout_config = models.JSONField(
-        default=dict, blank=True, help_text='one-column, two-column, ...'
-    )
-    style_config = models.JSONField(
-        default=dict, blank=True, help_text='color, font, spacing defaults'
-    )
     is_premium = models.BooleanField(default=False)
-    status = models.CharField(max_length=50, choices=Status.choices, default=Status.ACTIVE)
     sort_order = models.IntegerField(default=0)
     usage_count = models.IntegerField(default=0)
-    # `status` is the legacy public-catalogue switch.  Lifecycle and the
-    # current immutable version are the V2 source of truth; both fields stay
-    # during the dual-read window so existing clients remain compatible.
+    # Nguồn sự thật duy nhất cho việc hiển thị công khai: chỉ template
+    # `published` có version đang published mới vào kho mẫu. Ảnh xem trước nằm ở
+    # `CvTemplateColorLink` của từng màu.
     lifecycle_status = models.CharField(
         max_length=20,
         choices=LifecycleStatus.choices,
@@ -203,6 +187,13 @@ class CvTemplateVersion(models.Model):
         blank=True,
         related_name='created_cv_template_versions',
     )
+    published_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='published_cv_template_versions',
+    )
     published_at = models.DateTimeField(null=True, blank=True)
     retired_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -237,6 +228,7 @@ class CvTemplateVersion(models.Model):
         'capabilities',
         'content_contract',
         'created_by_id',
+        'published_by_id',
         'published_at',
         'created_at',
     )
@@ -405,10 +397,15 @@ class CvPositionProfile(models.Model):
     # trí, ví dụ [{"section_key": "skills", "enabled": true}, ...]. Rỗng = giữ
     # nguyên thứ tự của nội dung mẫu.
     section_preset = models.JSONField(default=list, blank=True)
+    # Từ khóa kỹ năng gợi ý của vị trí (dùng cho prompt sinh nội dung mẫu và đối
+    # chiếu vị trí khi trích xuất CV tải lên).
+    keywords = models.JSONField(default=list, blank=True)
     is_active = models.BooleanField(default=True)
     sort_order = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    MAX_KEYWORDS = 30
 
     class Meta:
         ordering = ['sort_order', 'pk']
@@ -430,6 +427,17 @@ class CvPositionProfile(models.Model):
             keys.append(key)
         if len(keys) != len(set(keys)):
             raise ValidationError({'section_preset': 'Section bị lặp.'})
+        if (
+            not isinstance(self.keywords, list)
+            or len(self.keywords) > self.MAX_KEYWORDS
+            or any(
+                not isinstance(word, str) or not 0 < len(word.strip()) <= 60
+                for word in self.keywords
+            )
+        ):
+            raise ValidationError(
+                {'keywords': f'Tối đa {self.MAX_KEYWORDS} từ khóa, mỗi từ khóa 1–60 ký tự.'}
+            )
 
     def save(self, *args, **kwargs):
         if not self.public_id:
@@ -445,8 +453,15 @@ class CvSampleContent(models.Model):
 
     class Status(models.TextChoices):
         DRAFT = 'draft', 'Draft'
+        # Nội dung do AI sinh, chờ admin duyệt (CVT-3).
+        IN_REVIEW = 'in_review', 'In review'
         PUBLISHED = 'published', 'Published'
         ARCHIVED = 'archived', 'Archived'
+
+    class Origin(models.TextChoices):
+        MANUAL = 'manual', 'Manual'
+        AI = 'ai', 'AI'
+        IMPORT = 'import', 'Import'
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     # Null = nội dung chung cho mọi vị trí; chuỗi có thể chứa token
@@ -464,6 +479,7 @@ class CvSampleContent(models.Model):
     content_json = models.JSONField(default=dict)
     schema_version = models.PositiveIntegerField(default=1)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.DRAFT)
+    origin = models.CharField(max_length=20, choices=Origin.choices, default=Origin.MANUAL)
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -471,6 +487,15 @@ class CvSampleContent(models.Model):
         blank=True,
         related_name='created_cv_sample_contents',
     )
+    # Admin đã duyệt nội dung (bắt buộc với nội dung AI trước khi xuất bản).
+    reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='reviewed_cv_sample_contents',
+    )
+    reviewed_at = models.DateTimeField(null=True, blank=True)
     published_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -481,16 +506,18 @@ class CvSampleContent(models.Model):
                 fields=['status', 'locale', 'experience_band'], name='idx_cv_samples_catalog'
             ),
         ]
+        # Mỗi tổ hợp chỉ có một nội dung đang xuất bản; bản nháp, bản AI chờ
+        # duyệt và bản lưu trữ của cùng tổ hợp cùng tồn tại được (CVT-3).
         constraints = [
             models.UniqueConstraint(
                 fields=['position_profile', 'locale', 'experience_band'],
-                condition=models.Q(position_profile__isnull=False),
-                name='uq_cv_sample_position_locale_band',
+                condition=models.Q(position_profile__isnull=False, status='published'),
+                name='uq_cv_sample_published_position',
             ),
             models.UniqueConstraint(
                 fields=['locale', 'experience_band'],
-                condition=models.Q(position_profile__isnull=True),
-                name='uq_cv_sample_generic_locale_band',
+                condition=models.Q(position_profile__isnull=True, status='published'),
+                name='uq_cv_sample_published_generic',
             ),
         ]
         ordering = ['locale', 'experience_band', 'title']

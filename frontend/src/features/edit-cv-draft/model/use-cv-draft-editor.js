@@ -7,6 +7,7 @@ import {
   getCvDraft,
   publishCvVersion,
   renameCv,
+  updateCvProfile,
   recordDocumentCommand,
   redoDocumentCommand,
   saveCvVersion,
@@ -364,6 +365,12 @@ export default function useCvDraftEditor(publicId) {
     return nextCv
   }, [publicId])
 
+  const updateProfile = useCallback(async (changes) => {
+    const nextCv = await updateCvProfile(publicId, changes)
+    setCv(nextCv)
+    return nextCv
+  }, [publicId])
+
   const rememberAsset = useCallback((asset) => {
     if (!asset?.public_id) return
     setAssets((current) => ({ ...current, [asset.public_id]: asset }))
@@ -371,6 +378,7 @@ export default function useCvDraftEditor(publicId) {
 
   return {
     cv,
+    updateProfile,
     assets,
     document,
     phase,

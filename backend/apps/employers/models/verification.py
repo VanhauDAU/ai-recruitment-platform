@@ -272,6 +272,39 @@ class CompanyUpdateRequest(models.Model):
         return f'{self.company_id}:{self.status}'
 
 
+# A requester has at most one request in these states per company.
+ACTIVE_COMPANY_UPDATE_STATUSES = frozenset(
+    {
+        CompanyUpdateRequest.Status.PENDING,
+        CompanyUpdateRequest.Status.SUBMITTED,
+        CompanyUpdateRequest.Status.IN_REVIEW,
+        CompanyUpdateRequest.Status.CHANGES_REQUESTED,
+    }
+)
+# Active states in which the requester may still change the request.
+REQUESTER_EDITABLE_COMPANY_UPDATE_STATUSES = frozenset(
+    {
+        CompanyUpdateRequest.Status.PENDING,
+        CompanyUpdateRequest.Status.SUBMITTED,
+        CompanyUpdateRequest.Status.CHANGES_REQUESTED,
+    }
+)
+
+
+def company_update_allowed_actions(update_request, *, user_id, is_owner):
+    """What ``user_id`` may do with ``update_request`` before review starts."""
+    if update_request.status not in REQUESTER_EDITABLE_COMPANY_UPDATE_STATUSES:
+        return []
+    actions = []
+    if update_request.requested_by_id == user_id:
+        actions.extend(['edit', 'withdraw'])
+        if update_request.status == CompanyUpdateRequest.Status.CHANGES_REQUESTED:
+            actions.append('resubmit')
+    if is_owner:
+        actions.append('cancel')
+    return actions
+
+
 class CompanyUpdateRevision(models.Model):
     """Immutable requester snapshot for one company-update workflow revision."""
 

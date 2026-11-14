@@ -6,8 +6,9 @@ Xin chào {{ candidate_name }},
 {% if job.locations %}Địa điểm: {{ job.locations }}
 {% endif %}Mức lương: {{ job.salary }}
 {% if job.badges %}Nhãn: {{ job.badges|join:", " }}
-{% endif %}Nguồn: {{ job.sources|join:", " }}
-Xem việc làm: {{ job.url }}
+{% endif %}{% if job.sources %}Nguồn: {{ job.sources|join:", " }}
+{% endif %}{% if job.followed_company %}Từ công ty bạn theo dõi: {{ job.followed_company }}
+{% endif %}Xem việc làm: {{ job.url }}
 
 {% endfor %}Quản lý thông báo việc làm: {{ manage_url }}
 Cài đặt nhận email: {{ email_settings_url }}

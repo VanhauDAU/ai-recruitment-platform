@@ -406,6 +406,12 @@ gồm logo, ảnh bìa, gallery, mô tả, phúc lợi do owner quản lý. Mọ
 canonical `/viec-lam/:slug`; `/brand/:companySlug/tuyen-dung/:slug` chỉ còn để
 tương thích và SEO shell phát canonical về `/viec-lam/:slug`.
 
+Trang chi tiết công ty, quyền biên tập trang, theo dõi và báo cáo đang được
+triển khai theo [kế hoạch trang công ty](./ke-hoach-trang-cong-ty.md)
+([ADR-0017](../02-tong-quan/adr-0017-company-page.md)). Địa chỉ công ty trên
+mọi bề mặt công khai đọc từ `Company.public_headquarters`: hộ kinh doanh luôn
+trả chuỗi rỗng, kể cả ở `company_address` của chi tiết tin.
+
 ## 13. Giới hạn đã chấp nhận
 
 - `company/search/` của cổng NTD trả cả danh mục khi `q` rỗng và trả `tax_code`

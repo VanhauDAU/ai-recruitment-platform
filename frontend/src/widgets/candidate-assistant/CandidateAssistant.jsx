@@ -95,7 +95,7 @@ export default function CandidateAssistant() {
     '--assistant-panel-max-height': cookieVisible && cookieMetrics.height
       ? `${Math.max(220, cookieMetrics.viewportHeight - cookieMetrics.height - 164)}px`
       : '540px',
-    bottom: `calc(${bottom} + ${viewportBottomInset}px + env(safe-area-inset-bottom, 0px))`,
+    bottom: `calc(${bottom} + ${viewportBottomInset}px + var(--page-bottom-bar-height, 0px) + env(safe-area-inset-bottom, 0px))`,
     position: 'fixed',
     right: 'clamp(1rem, 2vw, 1.5rem)',
     zIndex: 40,

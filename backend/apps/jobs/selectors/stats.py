@@ -128,7 +128,9 @@ def _latest_jobs(active_jobs, request):
 
 def _featured_employers(active_jobs, request):
     employers = list(
-        active_jobs.values(
+        # Each entry links to the company page, which answers 404 while held.
+        active_jobs.filter(company__content_policy_hold=False)
+        .values(
             'company_id',
             'company__public_id',
             'company__company_name',

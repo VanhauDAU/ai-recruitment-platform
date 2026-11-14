@@ -1,6 +1,10 @@
 import { Navigate, Route } from 'react-router'
 import { ACCOUNT_DEFAULT_PATH, ACCOUNT_LAYOUT_ITEMS, ACCOUNT_ROOT } from '@/entities/account'
-import { COMPANY_DIRECTORY_PATH, COMPANY_SEARCH_PATH } from '@/entities/company'
+import {
+  COMPANY_DETAIL_ROUTE,
+  COMPANY_DIRECTORY_PATH,
+  COMPANY_SEARCH_PATH,
+} from '@/entities/company'
 import { employerAppPath } from '@/shared/config/portals'
 import AuthGuard from '../guards/AuthGuard'
 import GuestGuard from '../guards/GuestGuard'
@@ -12,9 +16,11 @@ import {
   BlogHomePage,
   CandidateAccountLayout,
   ChangePasswordPage,
+  CompanyDetailPage,
   CompanyListPage,
   CompanySearchPage,
   EmailNotificationSettingsPage,
+  FollowedCompaniesPage,
   ForgotPasswordPage,
   HomePage,
   JobDetailPage,
@@ -49,6 +55,7 @@ import { AuthLayout, MainLayout, OnboardingLayout } from '../lazy/layouts'
 // Trang tài khoản đã xây thật, map theo item.key trong candidate-menu.
 const ACCOUNT_PAGE_BY_KEY = {
   'applied-jobs': AppliedJobsPage,
+  'followed-companies': FollowedCompaniesPage,
   'personal-info': PersonalInfoPage,
   'my-cv': MyCvsPage,
   'suggestion-settings': JobPreferenceSettingsPage,
@@ -70,7 +77,10 @@ export function mainRoutes() {
     <Route key="main" element={<MainLayout />}>
       <Route path="/" element={<HomePage />} />
       <Route path={COMPANY_DIRECTORY_PATH} element={<CompanyListPage />} />
+      {/* "tim-kiem" là segment tĩnh nên thắng :slug khi xếp hạng route; backend
+          cũng giữ nó làm slug dành riêng (ADR-0017). */}
       <Route path={COMPANY_SEARCH_PATH} element={<CompanySearchPage />} />
+      <Route path={COMPANY_DETAIL_ROUTE} element={<CompanyDetailPage />} />
       <Route path="/viec-lam" element={<JobListPage />} />
       <Route path="/viec-lam/tai/:locationSlug" element={<JobListPage />} />
       <Route path="/so-sanh-viec-lam" element={<JobComparisonPage />} />

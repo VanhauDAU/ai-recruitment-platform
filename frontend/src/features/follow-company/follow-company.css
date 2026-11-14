@@ -1,0 +1,152 @@
+/* Nút theo dõi công ty và danh sách "đang theo dõi". Stylesheet đi theo lazy
+   chunk của nơi dùng: CSS khởi tạo đã sát trần budget nên không thêm utility
+   Tailwind mới. `.follow-company` không đặt `display` vì nơi dùng điều khiển
+   bằng utility (`hidden lg:inline-flex`) và CSS ngoài layer luôn thắng utility. */
+
+.follow-company {
+  min-width: 0;
+  gap: 0.375rem;
+}
+
+.follow-company__toggle,
+.follow-company__notify {
+  display: inline-flex;
+  height: 2.75rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 1px solid #6ee7b7;
+  border-radius: 0.5rem;
+  background: #fff;
+  color: var(--brand-primary);
+  font-size: 0.875rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+
+.follow-company__toggle {
+  flex: 1 1 auto;
+  padding: 0 1rem;
+}
+
+.follow-company__notify {
+  width: 2.75rem;
+}
+
+.follow-company__toggle:hover,
+.follow-company__notify:hover,
+.follow-company__toggle[aria-pressed='true'],
+.follow-company__notify[aria-checked='true'] {
+  background: var(--brand-primary-soft);
+}
+
+.follow-company__toggle[aria-pressed='true'],
+.follow-company__notify[aria-checked='true'] {
+  border-color: var(--brand-primary);
+}
+
+.follow-company__toggle:focus-visible,
+.follow-company__notify:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+
+.follow-company__toggle:disabled,
+.follow-company__notify:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
+.followed-company {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  padding: 0.875rem;
+}
+
+.followed-company__actions {
+  display: flex;
+  width: 100%;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 0.75rem;
+}
+
+/* Công tắc gốc của trình duyệt: Switch của antd làm tách chunk dùng chung của
+   bundle khởi tạo khi trang này là nơi duy nhất dùng nó ngoài các form lớn. */
+.followed-company__actions input {
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--brand-primary);
+  cursor: inherit;
+}
+
+.followed-company__unfollow,
+.followed-company-pager button {
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  background: #fff;
+  padding: 0.375rem 0.75rem;
+  color: #475569;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.followed-company__unfollow:hover {
+  border-color: #fca5a5;
+  color: #dc2626;
+}
+
+.followed-company-pager button:hover:enabled {
+  border-color: var(--brand-primary);
+  color: var(--brand-primary);
+}
+
+.followed-company__unfollow:focus-visible,
+.followed-company-pager button:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+
+.followed-company__unfollow:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+/* Phân trang tự dựng: Pagination của antd kéo theo Select và làm tách chunk
+   dùng chung của bundle khởi tạo. */
+.followed-company-pager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+  color: #475569;
+  font-size: 0.875rem;
+}
+
+.followed-company-pager button:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .follow-company__toggle,
+  .follow-company__notify,
+  .followed-company__unfollow {
+    transition: none;
+  }
+}

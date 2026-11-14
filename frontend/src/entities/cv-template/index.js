@@ -1,6 +1,7 @@
 export * from './api/cv-template.api'
 export * from './api/cv-template-admin.api'
 export * from './model/cv-languages'
+export * from './model/experience-bands'
 export * from './model/template-colors'
 export { default as CvTemplateCard } from './ui/CvTemplateCard'
 export { default as CvTemplatePreview } from './ui/CvTemplatePreview'

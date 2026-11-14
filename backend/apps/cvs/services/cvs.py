@@ -14,24 +14,13 @@ from .upload_claims import (
     open_clean_candidate_upload,
     release_candidate_cv_source,
 )
-from .versions import create_initial_document, create_version, sync_legacy_builder_draft
+from .versions import create_initial_document, create_version
 
 ALLOWED_UPLOAD_TYPES = {'pdf', 'docx'}
 
 
 class UnsupportedCvUpload(ValueError):
     """Raised when an upload is not a supported CV document."""
-
-
-@transaction.atomic
-def create_builder_cv(serializer, user):
-    cv = serializer.save(
-        user=user,
-        cv_type=UserCv.CvType.BUILDER,
-        source=UserCv.Source.BUILDER,
-    )
-    create_initial_document(cv, user)
-    return cv
 
 
 def _delete_storage_keys(keys):
@@ -70,7 +59,7 @@ def permanently_delete_cv(*, cv, actor):
         claim_scope=CV_SOURCE_CLAIM_SCOPE,
         claim_reference=locked_cv.public_id,
     )
-    storage_keys = [locked_cv.pdf_url, locked_cv.thumbnail_url]
+    storage_keys = [locked_cv.thumbnail_url]
     if source_asset is None:
         storage_keys.append(locked_cv.file_url)
     exports = CvExport.objects.filter(cv=locked_cv)
@@ -109,7 +98,6 @@ def upload_cv(user, upload, title='', *, source=UserCv.Source.UPLOADED):
                 file_url=path,
                 file_name=upload.name,
                 file_type=file_type,
-                status=UserCv.Status.UPLOADED,
             )
             create_initial_document(cv, user, version_kind='imported')
             return cv
@@ -131,7 +119,6 @@ def import_v2_cv_from_session(*, actor, upload_session_public_id, title=''):
         cv_type=UserCv.CvType.UPLOADED,
         source=UserCv.Source.IMPORTED,
         title=title or 'CV đã tải lên',
-        status=UserCv.Status.UPLOADED,
     )
     asset = claim_candidate_upload(
         owner=actor,
@@ -186,8 +173,6 @@ def duplicate_cv(*, cv, actor, title=''):
         source=UserCv.Source.BUILDER,
         title=title or f'{source_cv.title} (copy)',
         language=source_cv.language,
-        cv_data=content_json,
-        style_config=style_json,
     )
     create_version(
         cv=duplicate,
@@ -208,13 +193,20 @@ def duplicate_cv(*, cv, actor, title=''):
     ).get(pk=duplicate.pk)
 
 
+UNCHANGED = object()
+
+
 @transaction.atomic
-def update_cv_metadata(*, cv, actor, title=None, is_default=None):
+def update_cv_metadata(
+    *, cv, actor, title=None, is_default=None, position=UNCHANGED, position_level=None
+):
     """Update the small mutable CV aggregate owned by the candidate.
 
     Draft document changes intentionally stay on the optimistic-locking draft
     endpoint.  The account library only needs a title and one active default
-    CV, so this service makes those invariants explicit.
+    CV, so this service makes those invariants explicit.  The target position
+    (`JobCategory`, ``None`` clears it) and desired `Job.PositionLevel` are the
+    candidate-chosen matching fields of CVT-3; they are never printed on the CV.
     """
     locked_cv = UserCv.objects.select_for_update().get(pk=cv.pk)
     if locked_cv.user_id != actor.pk:
@@ -235,13 +227,12 @@ def update_cv_metadata(*, cv, actor, title=None, is_default=None):
     if is_default is not None and locked_cv.is_default != is_default:
         locked_cv.is_default = is_default
         update_fields.append('is_default')
+    if position is not UNCHANGED and locked_cv.position_id != getattr(position, 'pk', None):
+        locked_cv.position = position
+        update_fields.append('position')
+    if position_level is not None and locked_cv.position_level != position_level:
+        locked_cv.position_level = position_level
+        update_fields.append('position_level')
     if update_fields:
         locked_cv.save(update_fields=[*update_fields, 'updated_at'])
     return locked_cv
-
-
-def update_builder_cv(serializer, user):
-    """Persist legacy fields and mirror them into the V2 mutable draft."""
-    cv = serializer.save()
-    sync_legacy_builder_draft(cv, user)
-    return cv

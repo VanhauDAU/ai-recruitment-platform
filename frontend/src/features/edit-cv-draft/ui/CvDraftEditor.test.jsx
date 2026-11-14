@@ -64,19 +64,19 @@ describe('CV draft editor', () => {
     Object.values(mocks).forEach((mock) => mock.mockReset())
     templateMocks.getCvTemplates.mockReset()
     mocks.getCv.mockResolvedValue({
-      title: 'CV thử nghiệm', template_public_id: 'tpl_single', template_renderer_key: 'classic_single_column_v1',
+      title: 'CV thử nghiệm', template_public_id: 'tpl_single', template_renderer_key: 'single_column_v1',
       template_capabilities: { layout: { section_drag: true, cross_region_drag: true, item_drag: true, column_resize: { enabled: true, min_percent: 25, max_percent: 75 } } },
     })
     mocks.getCvDraft.mockResolvedValue(draft())
     mocks.updateCvDraft.mockResolvedValue({ lock_version: 1 })
     mocks.saveCvVersion.mockResolvedValue({ public_id: 'version_2', version_number: 2 })
     mocks.publishCvVersion.mockResolvedValue({ public_id: 'version_3', version_number: 3, version_kind: 'published' })
-    mocks.renameCv.mockImplementation(async (_publicId, title) => ({ title, template_public_id: 'tpl_single', template_renderer_key: 'classic_single_column_v1' }))
+    mocks.renameCv.mockImplementation(async (_publicId, title) => ({ title, template_public_id: 'tpl_single', template_renderer_key: 'single_column_v1' }))
     templateMocks.getCvTemplates.mockResolvedValue({ results: [{ public_id: 'tpl_single', display_name: 'Một cột' }, { public_id: 'tpl_two', display_name: 'Hai cột' }] })
     templateMocks.getCvBackgrounds.mockResolvedValue([])
     templateMocks.getCvSampleContents.mockResolvedValue([])
     mocks.switchCvTemplate.mockResolvedValue({
-      cv: { title: 'CV thử nghiệm', template_public_id: 'tpl_two', template_renderer_key: 'classic_two_column_v1', template_capabilities: { layout: { item_drag: true, column_resize: { enabled: true, min_percent: 25, max_percent: 75 } } } },
+      cv: { title: 'CV thử nghiệm', template_public_id: 'tpl_two', template_renderer_key: 'sidebar_right_v1', template_capabilities: { layout: { item_drag: true, column_resize: { enabled: true, min_percent: 25, max_percent: 75 } } } },
       draft: { ...draft(), lock_version: 1, layout_json: { ...draft().layout_json, regions: [{ id: 'main', width_percent: 68, section_instance_ids: ['summary_1', 'experience_1'] }, { id: 'sidebar', width_percent: 32, section_instance_ids: ['skills_1'] }] }, style_json: { ...draft().style_json, theme_color: '#2255AA' } },
     })
   })
@@ -162,7 +162,7 @@ describe('CV draft editor', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Áp dụng mẫu CV' }))
 
     await waitFor(() => expect(mocks.switchCvTemplate).toHaveBeenCalledWith('cv_1', 'tpl_two', 0, expect.any(String)))
-    expect(screen.getByText(/classic_two_column_v1/)).toBeInTheDocument()
+    expect(screen.getByText(/sidebar_right_v1/)).toBeInTheDocument()
   })
 
   it('flushes before internal navigation, retries failed autosave, and can restore the server draft', async () => {
@@ -281,7 +281,7 @@ describe('CV draft editor', () => {
     saveableDraft.content_json.personal_info.phone = '0909123456'
     saveableDraft.content_json.personal_info.address = 'Hà Nội'
     mocks.getCv.mockResolvedValueOnce({
-      title: 'CV chưa đặt tên', template_public_id: 'tpl_single', template_renderer_key: 'classic_single_column_v1',
+      title: 'CV chưa đặt tên', template_public_id: 'tpl_single', template_renderer_key: 'single_column_v1',
       template_capabilities: { layout: { section_drag: true } },
     })
     mocks.getCvDraft.mockResolvedValueOnce(saveableDraft)
@@ -323,9 +323,9 @@ describe('CV draft editor', () => {
     await screen.findByLabelText('CV A4 có thể chỉnh sửa')
     fireEvent.click(screen.getByRole('button', { name: 'Thiết kế & Font' }))
     fireEvent.mouseDown(screen.getByLabelText('Font chữ CV'))
-    fireEvent.click(await screen.findByText('Arial'))
+    fireEvent.click(await screen.findByText('Lora'))
 
-    expect(screen.getByLabelText('Xem trước CV classic_single_column_v1 trang 1')).toHaveStyle({ fontFamily: 'Arial, Helvetica, sans-serif' })
+    expect(screen.getByLabelText('Xem trước CV single_column_v1 trang 1')).toHaveStyle({ fontFamily: '"Lora", Georgia, serif' })
   })
 
   // This mounts the complete sortable canvas and waits for the autosave cycle;

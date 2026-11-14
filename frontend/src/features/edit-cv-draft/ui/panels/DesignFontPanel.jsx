@@ -1,13 +1,12 @@
 import { CheckOutlined } from '@ant-design/icons'
 import { Select, Slider } from 'antd'
 import { useEffect, useState } from 'react'
-import { getCvFontStack } from '@/entities/cv'
+import { CV_FONT_FAMILIES, getCvFontStack } from '@/entities/cv'
 import { CV_LANGUAGES, getCvBackgrounds, getCvTemplates } from '@/entities/cv-template'
 import ThemeColorControl from './ThemeColorControl'
 import './DesignFontPanel.css'
 
-const FONT_NAMES = ['Arial', 'Calibri', 'Inter', 'Roboto', 'Source Sans Pro']
-const FONTS = FONT_NAMES.map((value) => ({
+const FONTS = CV_FONT_FAMILIES.map((value) => ({
   value,
   label: <span style={{ fontFamily: getCvFontStack(value) }}>{value}</span>,
 }))

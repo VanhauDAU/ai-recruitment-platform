@@ -1,5 +1,10 @@
 from rest_framework import status
-from rest_framework.exceptions import APIException
+from rest_framework.exceptions import APIException, PermissionDenied
+
+COMPANY_UPDATE_IN_REVIEW = {
+    'code': 'COMPANY_UPDATE_IN_REVIEW',
+    'detail': 'Yêu cầu đang được thẩm định và không thể chỉnh sửa.',
+}
 
 
 class CompanyUpdateConflictResponse(APIException):
@@ -116,4 +121,16 @@ class EmployerUploadSessionResponse(APIException):
                 'retryable': error.retryable,
             },
             code=error.code,
+        )
+
+
+class CompanyPageEditForbidden(PermissionDenied):
+    """The page policy closes this action; ``permissions.blockers`` says why."""
+
+    def __init__(self):
+        super().__init__(
+            detail={
+                'code': 'COMPANY_PAGE_EDIT_FORBIDDEN',
+                'detail': 'Bạn chưa có quyền thực hiện thao tác này trên trang công ty.',
+            }
         )

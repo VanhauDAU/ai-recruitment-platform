@@ -7,17 +7,29 @@ particular CV template or UI renderer.
 
 import json
 import re
-from copy import deepcopy
 
 from django.core.exceptions import ValidationError
 
+from apps.cv_templates.models import CvPositionField
+from apps.cv_templates.models.position import FIELD_KEY_RE, MAX_FIELD_OPTIONS
 from apps.cv_templates.section_registry import get_section_contract
+from apps.jobs.models import Job
 
 CANONICAL_SCHEMA_VERSION = 1
 MAX_DOCUMENT_BYTES = 256 * 1024
-ALLOWED_FONT_FAMILIES = frozenset({'Arial', 'Calibri', 'Inter', 'Roboto', 'Source Sans Pro'})
+# Font được đóng gói (OFL) và chọn được trong editor (CVT-2).
+CV_FONT_FAMILIES = ('Inter', 'Roboto', 'Be Vietnam Pro', 'Lora')
+# Tên font của tài liệu tạo trước CVT-2. Version và snapshot ứng tuyển là bất
+# biến nên vẫn phải hợp lệ; renderer hiển thị chúng bằng font đóng gói gần nhất.
+LEGACY_FONT_FAMILIES = frozenset({'Arial', 'Calibri', 'Source Sans Pro'})
+ALLOWED_FONT_FAMILIES = frozenset(CV_FONT_FAMILIES) | LEGACY_FONT_FAMILIES
 HEX_COLOR_RE = re.compile(r'^#[0-9A-Fa-f]{6}$')
 YEAR_MONTH_RE = re.compile(r'^\d{4}-(0[1-9]|1[0-2])$')
+# Trường riêng theo vị trí (section `position_details`, CVT-3).
+POSITION_FIELD_KEY_RE = re.compile(FIELD_KEY_RE)
+POSITION_FIELD_TEXT_LIMITS = {'text': 200, 'long_text': 2000, 'url': 300, 'select': 100}
+MAX_POSITION_LIST_VALUES = 30
+MAX_POSITION_LIST_VALUE_LENGTH = 60
 SAFE_RICH_TEXT_TYPES = frozenset({'bullet', 'paragraph'})
 SAFE_RICH_TEXT_MARKS = frozenset(
     {
@@ -71,76 +83,6 @@ def empty_style():
         'background_asset_id': None,
         'section_overrides': {},
     }
-
-
-def canonicalize_legacy_cv_data(cv_data, style_config=None, locale='vi-VN'):
-    """Convert the legacy builder payload into a valid V1 canonical document.
-
-    This adapter is intentionally a migration boundary.  New editor code must
-    submit the canonical three-document contract directly.
-    """
-    legacy = cv_data if isinstance(cv_data, dict) else {}
-    if legacy.get('schema_version') == CANONICAL_SCHEMA_VERSION and 'sections' in legacy:
-        content = deepcopy(legacy)
-    else:
-        content = empty_content(legacy.get('locale', locale))
-        personal_info = legacy.get('personal_info', legacy.get('personal', {}))
-        if isinstance(personal_info, dict):
-            content['personal_info'].update(
-                {
-                    key: personal_info.get(key, content['personal_info'][key])
-                    for key in content['personal_info']
-                }
-            )
-        for section_key in (
-            'summary',
-            'experience',
-            'education',
-            'skills',
-            'projects',
-            'certifications',
-            'languages',
-            'awards',
-        ):
-            legacy_items = legacy.get(section_key)
-            if not legacy_items:
-                continue
-            items = legacy_items if isinstance(legacy_items, list) else [legacy_items]
-            content['sections'].append(
-                {
-                    'instance_id': f'legacy_{section_key}_1',
-                    'section_key': section_key,
-                    'title': section_key.replace('_', ' ').title(),
-                    'enabled': True,
-                    'items': [
-                        dict(item, item_id=item.get('item_id', f'legacy_{section_key}_{index + 1}'))
-                        if isinstance(item, dict)
-                        else {'item_id': f'legacy_{section_key}_{index + 1}', 'value': str(item)}
-                        for index, item in enumerate(items)
-                    ],
-                }
-            )
-    content.setdefault('schema_version', CANONICAL_SCHEMA_VERSION)
-    content.setdefault('locale', locale)
-    content.setdefault('personal_info', empty_content(locale)['personal_info'])
-    content.setdefault('sections', [])
-    content.setdefault('custom_fields', {})
-    return content, empty_layout(), _canonical_style(style_config)
-
-
-def _canonical_style(style_config):
-    style = empty_style()
-    if not isinstance(style_config, dict):
-        return style
-    legacy_theme_color = style_config.get('theme_color', style_config.get('color'))
-    if isinstance(legacy_theme_color, str) and HEX_COLOR_RE.fullmatch(legacy_theme_color):
-        style['theme_color'] = legacy_theme_color
-    if style_config.get('font_family') in ALLOWED_FONT_FAMILIES:
-        style['font_family'] = style_config['font_family']
-    for key in ('font_scale', 'line_height', 'background_asset_id', 'section_overrides'):
-        if key in style_config:
-            style[key] = style_config[key]
-    return style
 
 
 def validate_cv_document(*, content_json, layout_json, style_json, schema_version):
@@ -294,6 +236,11 @@ def _validate_content(content, errors):
                 item_ids.add(item_id)
             _validate_item_dates(item, item_path, errors)
             _validate_rich_text(item.get('description'), item_path, errors)
+            if section_key == 'position_details':
+                _validate_position_detail(item, item_path, errors)
+            degree_level = item.get('degree_level', '')
+            if section_key == 'education' and degree_level not in ('', *Job.EducationLevel.values):
+                errors[f'{item_path}.degree_level'] = 'Must be a job education level.'
 
 
 def _validate_item_dates(item, path, errors):
@@ -301,6 +248,60 @@ def _validate_item_dates(item, path, errors):
         value = item.get(key)
         if value is not None and (not isinstance(value, str) or not YEAR_MONTH_RE.fullmatch(value)):
             errors[f'{path}.{key}'] = 'Must be YYYY-MM or null.'
+
+
+def _position_value_is_valid(field_type, value, options):
+    if field_type in CvPositionField.LIST_TYPES:
+        return (
+            isinstance(value, list)
+            and len(value) <= MAX_POSITION_LIST_VALUES
+            and all(
+                isinstance(entry, str) and 0 < len(entry) <= MAX_POSITION_LIST_VALUE_LENGTH
+                for entry in value
+            )
+            and (field_type != CvPositionField.FieldType.MULTI_SELECT or set(value) <= set(options))
+        )
+    if field_type == CvPositionField.FieldType.NUMBER:
+        return isinstance(value, (int, float)) and not isinstance(value, bool) and abs(value) < 1e12
+    if field_type == CvPositionField.FieldType.DATE:
+        return isinstance(value, str) and bool(YEAR_MONTH_RE.fullmatch(value))
+    if not isinstance(value, str) or len(value) > POSITION_FIELD_TEXT_LIMITS[field_type]:
+        return False
+    if field_type == CvPositionField.FieldType.URL:
+        return value.startswith(('https://', 'http://'))
+    if field_type == CvPositionField.FieldType.SELECT:
+        return value in options
+    return True
+
+
+def _validate_position_detail(item, path, errors):
+    """Một trường riêng đã chụp vào document: khóa, nhãn, kiểu và giá trị đúng kiểu."""
+    key = item.get('field_key')
+    if not isinstance(key, str) or not POSITION_FIELD_KEY_RE.fullmatch(key):
+        errors[f'{path}.field_key'] = 'Must be a lowercase field key.'
+    label = item.get('label')
+    if not isinstance(label, str) or not 0 < len(label) <= 100:
+        errors[f'{path}.label'] = 'Must be 1-100 characters.'
+    if item.get('maps_to', CvPositionField.MapsTo.NONE) not in CvPositionField.MapsTo.values:
+        errors[f'{path}.maps_to'] = 'Unknown mapping.'
+    placeholder = item.get('placeholder', '')
+    if not isinstance(placeholder, str) or len(placeholder) > 200:
+        errors[f'{path}.placeholder'] = 'Must be at most 200 characters.'
+    options = item.get('options', [])
+    if (
+        not isinstance(options, list)
+        or len(options) > MAX_FIELD_OPTIONS
+        or any(not isinstance(option, str) or not 0 < len(option) <= 100 for option in options)
+    ):
+        errors[f'{path}.options'] = f'Must be at most {MAX_FIELD_OPTIONS} labels.'
+        return
+    field_type = item.get('field_type')
+    if field_type not in CvPositionField.FieldType.values:
+        errors[f'{path}.field_type'] = 'Unknown field type.'
+        return
+    value = item.get('value')
+    if value not in (None, '', []) and not _position_value_is_valid(field_type, value, options):
+        errors[f'{path}.value'] = f'Invalid value for a {field_type} field.'
 
 
 def _validate_inline_text_styles(styles, errors):

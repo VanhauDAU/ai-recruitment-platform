@@ -28,6 +28,11 @@ export const ADMIN_NAVIGATION = [
             query: { tab: 'updates' },
             access: { allOf: ['company_update.view'] },
           },
+          {
+            key: 'company-reports',
+            label: 'Báo cáo công ty',
+            routeRef: 'companyReports',
+          },
         ],
       },
       {
@@ -168,13 +173,14 @@ export const ADMIN_NAVIGATION = [
         ],
       },
       {
-        key: 'cv-library',
-        label: 'Thư viện CV',
+        key: 'cv-portal',
+        label: 'Mẫu CV',
         children: [
-          { key: 'cv-templates', label: 'Mẫu CV', routeRef: 'cvCatalogue' },
-          { key: 'cv-samples', label: 'Nội dung mẫu', routeRef: 'cvCatalogue', query: { tab: 'samples' } },
-          { key: 'cv-taxonomy', label: 'Danh mục & màu', routeRef: 'cvCatalogue', query: { tab: 'taxonomy' } },
-          { key: 'cv-backgrounds', label: 'Hình nền', routeRef: 'cvCatalogue', query: { tab: 'backgrounds' } },
+          { key: 'cv-overview', label: 'Tổng quan', routeRef: 'cvOverview' },
+          { key: 'cv-templates', label: 'Mẫu CV', routeRef: 'cvTemplates' },
+          { key: 'cv-positions', label: 'Nội dung theo vị trí', routeRef: 'cvPositions' },
+          { key: 'cv-library', label: 'Thư viện', routeRef: 'cvLibrary' },
+          { key: 'cv-user-cvs', label: 'CV ứng viên', routeRef: 'cvUserCvs' },
         ],
       },
     ],
