@@ -255,6 +255,10 @@ Ba mốc thời gian độc lập, không suy mốc này từ mốc khác:
   thời hạn, tùy chọn từ chối hồ sơ đang chờ); ứng viên bị chặn không nộp được
   vào tin của NTD đó và chỉ thấy thông báo chung. Workspace cảnh báo khi một ứng
   viên nộp ≥ 5 tin của NTD trong 14 ngày.
+- **Kho ứng viên tiềm năng:** NTD lưu ứng viên (ghi chú, nhãn); ứng viên được
+  báo, xem được NTD nào đang lưu và rút hồ sơ; mục hết hạn sau 12 tháng. Khi
+  chọn một tin, hệ thống xếp hạng người trong kho theo độ tương đồng giữa tin
+  họ từng nộp và tin mới (có lý do) và cho mời ứng tuyển một lần mỗi tin.
 - Ứng viên bị hạn chế tài khoản chỉ có thể bị chuyển sang `rejected`.
 - `employer_rating` (1–5) và `employer_note` là dữ liệu nội bộ, lưu qua PATCH
   riêng; không bao giờ xuất hiện trong thông báo, email hay API ứng viên.

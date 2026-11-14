@@ -8,6 +8,14 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-15
 
+#### Added — Kho ứng viên tiềm năng (giai đoạn 5)
+
+- NTD lưu ứng viên vào kho kèm ghi chú, nhãn; ứng viên được thông báo, có trang
+  "Nhà tuyển dụng lưu hồ sơ" để rút hồ sơ; mục tự hết hạn sau 12 tháng.
+- Trang "Kho ứng viên tiềm năng": chọn tin đang tuyển để xem người trong kho
+  xếp theo độ tương đồng (có lý do) và mời ứng tuyển; ứng viên nhận lời mời
+  theo kênh Email/Web mới "Lời mời ứng tuyển từ nhà tuyển dụng".
+
 #### Added — Danh sách đen ứng viên (giai đoạn 4)
 
 - NTD chặn ứng viên từ hồ sơ (lý do, thời hạn, tùy chọn từ chối hồ sơ đang

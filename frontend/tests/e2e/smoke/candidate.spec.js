@@ -8,6 +8,8 @@ const EMAIL_NOTIFICATION_DEFAULTS = {
   similar_jobs_in_application_email: true,
   cv_activity_email: true,
   cv_activity_web: true,
+  employer_invitation_email: true,
+  employer_invitation_web: true,
   configured_job_alerts: true,
   suitable_job_recommendations: true,
   followed_company_jobs: true,

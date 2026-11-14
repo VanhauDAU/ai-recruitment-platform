@@ -24,6 +24,9 @@ class CandidateEmailNotificationSettings(models.Model):
     similar_jobs_in_application_email = models.BooleanField(default=True)
     cv_activity_email = models.BooleanField(default=True)
     cv_activity_web = models.BooleanField(default=True)
+    # Invitations to apply from a recruiter's talent pool.
+    employer_invitation_email = models.BooleanField(default=True)
+    employer_invitation_web = models.BooleanField(default=True)
 
     # Email việc làm (consumer: apps/jobs/services/digests.py).
     configured_job_alerts = models.BooleanField(default=True)

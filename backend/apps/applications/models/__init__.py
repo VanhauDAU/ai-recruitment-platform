@@ -4,6 +4,7 @@ from .application import Application
 from .block import CandidateBlock
 from .history import ApplicationStatusHistory
 from .review import ApplicationReview, ApplicationReviewLink
+from .talent_pool import TalentPoolEntry, TalentPoolInvitation
 
 __all__ = [
     'Application',
@@ -11,4 +12,6 @@ __all__ = [
     'ApplicationReviewLink',
     'ApplicationStatusHistory',
     'CandidateBlock',
+    'TalentPoolEntry',
+    'TalentPoolInvitation',
 ]

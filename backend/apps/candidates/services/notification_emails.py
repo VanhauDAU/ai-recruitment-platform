@@ -76,6 +76,7 @@ def render_notification_email(notification):
         'title': notification.title,
         'message': notification.message,
         'action_url': _frontend(notification.action_path or APPLIED_JOBS_PATH),
+        'action_label': spec.action_label,
         'applied_jobs_url': _frontend(APPLIED_JOBS_PATH),
         'jobs_url': _frontend(JOBS_PATH),
         'my_cvs_url': _frontend(MY_CVS_PATH),

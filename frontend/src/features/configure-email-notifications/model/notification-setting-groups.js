@@ -17,6 +17,13 @@ export const APPLICATION_NOTIFICATION_ROWS = [
     web: 'cv_activity_web',
   },
   {
+    key: 'employer_invitation',
+    label: 'Lời mời ứng tuyển từ nhà tuyển dụng',
+    description: 'Khi nhà tuyển dụng lưu hồ sơ của bạn và mời bạn ứng tuyển vị trí mới.',
+    email: 'employer_invitation_email',
+    web: 'employer_invitation_web',
+  },
+  {
     key: 'decisions',
     label: 'Kết quả xử lý hồ sơ',
     description: 'Phù hợp, mời phỏng vấn, trúng tuyển hoặc chưa phù hợp. Đây là thông tin bắt buộc nên luôn được gửi.',

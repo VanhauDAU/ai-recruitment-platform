@@ -23,7 +23,11 @@ from .moderation import (
 )
 from .recommendations import recommend_inline_jobs_for_candidate
 from .reports import ADMIN_JOB_REPORT_ORDERING_FIELDS, job_report_queryset
-from .saved_recommendations import recommend_jobs_from_saved, similar_jobs_for_job
+from .saved_recommendations import (
+    job_similarity_scores,
+    recommend_jobs_from_saved,
+    similar_jobs_for_job,
+)
 from .stats import build_job_stats
 from .verification_badge import (
     badge_criteria_payload,
@@ -54,6 +58,7 @@ __all__ = [
     'job_ai_admin_overview',
     'ADMIN_JOB_REPORT_ORDERING_FIELDS',
     'job_report_queryset',
+    'job_similarity_scores',
     'recommend_jobs_from_saved',
     'similar_jobs_for_job',
     'recommend_inline_jobs_for_candidate',

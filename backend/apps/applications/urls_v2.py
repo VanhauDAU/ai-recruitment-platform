@@ -21,6 +21,14 @@ from .api.views.reviews import (
     RecruiterReviewLinkListCreateView,
     RecruiterReviewLinkRevokeView,
 )
+from .api.views.talent_pool import (
+    CandidateTalentPoolListView,
+    CandidateTalentPoolWithdrawView,
+    RecruiterTalentPoolEntryView,
+    RecruiterTalentPoolInviteView,
+    RecruiterTalentPoolListCreateView,
+    RecruiterTalentSuggestionView,
+)
 from .api.views.v2 import CandidateApplicationV2ListCreateView, RecruiterApplicationSnapshotView
 
 urlpatterns = [
@@ -48,6 +56,36 @@ urlpatterns = [
         'recruiter/candidate-blocks/<str:public_id>/lift/',
         RecruiterCandidateBlockLiftView.as_view(),
         name='recruiter-candidate-block-lift-v2',
+    ),
+    path(
+        'recruiter/talent-pool/',
+        RecruiterTalentPoolListCreateView.as_view(),
+        name='recruiter-talent-pool-v2',
+    ),
+    path(
+        'recruiter/talent-pool/suggestions/',
+        RecruiterTalentSuggestionView.as_view(),
+        name='recruiter-talent-suggestions-v2',
+    ),
+    path(
+        'recruiter/talent-pool/<str:public_id>/',
+        RecruiterTalentPoolEntryView.as_view(),
+        name='recruiter-talent-pool-entry-v2',
+    ),
+    path(
+        'recruiter/talent-pool/<str:public_id>/invite/',
+        RecruiterTalentPoolInviteView.as_view(),
+        name='recruiter-talent-pool-invite-v2',
+    ),
+    path(
+        'talent-pools/mine/',
+        CandidateTalentPoolListView.as_view(),
+        name='candidate-talent-pools-v2',
+    ),
+    path(
+        'talent-pools/mine/<str:public_id>/withdraw/',
+        CandidateTalentPoolWithdrawView.as_view(),
+        name='candidate-talent-pool-withdraw-v2',
     ),
     path(
         'recruiter/applications/export/',

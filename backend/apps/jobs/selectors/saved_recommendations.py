@@ -368,6 +368,35 @@ def recommend_jobs_from_saved(user, *, limit=12):
     }
 
 
+def _with_signals(queryset):
+    return queryset.prefetch_related(
+        Prefetch(
+            'category_assignments',
+            queryset=JobCategoryAssignment.objects.select_related('category__parent__parent'),
+        ),
+        Prefetch('job_locations', queryset=JobLocation.objects.select_related('location__parent')),
+        'job_skills',
+    )
+
+
+def job_similarity_scores(target_job, job_ids):
+    """``{job_id: (score, reasons)}`` of each job against ``target_job``.
+
+    Used to re-match people in a recruiter's talent pool (through the job
+    they once applied to) with a new opening. Same rules as saved-job
+    similarity: no shared specialization or title anchor means 0.
+    """
+    target = _with_signals(Job.objects.filter(pk=target_job.pk)).first()
+    if target is None or not job_ids:
+        return {}
+    target_context = _job_context(target)
+    scores = {}
+    for job in _with_signals(Job.objects.filter(pk__in=set(job_ids))):
+        score, details = _score_pair(_job_context(job), target_context)
+        scores[job.pk] = (score, [detail['label'] for detail in details])
+    return scores
+
+
 def similar_jobs_for_job(user, job, *, limit=5):
     """Active jobs resembling ``job`` that ``user`` has not applied to, saved or hidden.
 
@@ -375,20 +404,7 @@ def similar_jobs_for_job(user, job, *, limit=5):
     never from the candidate's profile, so it needs no AI consent. Returns an
     empty list rather than unrelated filler when nothing is similar enough.
     """
-    source_job = (
-        Job.objects.filter(pk=job.pk)
-        .prefetch_related(
-            Prefetch(
-                'category_assignments',
-                queryset=JobCategoryAssignment.objects.select_related('category__parent__parent'),
-            ),
-            Prefetch(
-                'job_locations', queryset=JobLocation.objects.select_related('location__parent')
-            ),
-            'job_skills',
-        )
-        .first()
-    )
+    source_job = _with_signals(Job.objects.filter(pk=job.pk)).first()
     if source_job is None:
         return []
     source = _job_context(source_job)

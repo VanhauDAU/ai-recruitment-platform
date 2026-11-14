@@ -33,8 +33,24 @@ from .status import (
     undoable_status_history,
     update_application_assessment,
 )
+from .talent_pool import (
+    TalentPoolConflict,
+    add_to_talent_pool,
+    invite_to_apply,
+    purge_lapsed_talent_pool_entries,
+    remove_from_talent_pool,
+    update_talent_pool_entry,
+    withdraw_from_talent_pool,
+)
 
 __all__ = [
+    'TalentPoolConflict',
+    'add_to_talent_pool',
+    'invite_to_apply',
+    'purge_lapsed_talent_pool_entries',
+    'remove_from_talent_pool',
+    'update_talent_pool_entry',
+    'withdraw_from_talent_pool',
     'BLOCKED_APPLY_MESSAGE',
     'CandidateAlreadyBlocked',
     'block_candidate',

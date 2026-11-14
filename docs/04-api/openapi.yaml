@@ -12041,6 +12041,204 @@ paths:
       responses:
         '200':
           description: No response body
+  /api/v2/recruiter/talent-pool/:
+    get:
+      operationId: v2_recruiter_talent_pool_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - applications-v2
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedTalentPoolEntryList'
+          description: ''
+    post:
+      operationId: v2_recruiter_talent_pool_create
+      summary: Lưu ứng viên vào kho tiềm năng (ứng viên được thông báo)
+      tags:
+      - applications-v2
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TalentPoolAddRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TalentPoolAddRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TalentPoolAddRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TalentPoolEntry'
+          description: ''
+  /api/v2/recruiter/talent-pool/{public_id}/:
+    patch:
+      operationId: v2_recruiter_talent_pool_partial_update
+      summary: Sửa ghi chú, nhãn
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - applications-v2
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedTalentPoolUpdateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedTalentPoolUpdateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedTalentPoolUpdateRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TalentPoolEntry'
+          description: ''
+    delete:
+      operationId: v2_recruiter_talent_pool_destroy
+      summary: Bỏ ứng viên khỏi kho
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - applications-v2
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v2/recruiter/talent-pool/{public_id}/invite/:
+    post:
+      operationId: v2_recruiter_talent_pool_invite_create
+      summary: Mời ứng viên trong kho ứng tuyển một tin (mỗi tin một lần)
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - applications-v2
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TalentPoolInviteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TalentPoolInviteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TalentPoolInviteRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v2/recruiter/talent-pool/suggestions/:
+    get:
+      operationId: v2_recruiter_talent_pool_suggestions_list
+      summary: Người trong kho phù hợp với một tin (xếp theo độ tương đồng)
+      parameters:
+      - in: query
+        name: job
+        schema:
+          type: string
+        required: true
+      tags:
+      - applications-v2
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TalentSuggestion'
+          description: ''
+  /api/v2/talent-pools/mine/:
+    get:
+      operationId: v2_talent_pools_mine_list
+      summary: Các NTD đang lưu hồ sơ của tôi
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - applications-v2
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCandidateTalentPoolList'
+          description: ''
+  /api/v2/talent-pools/mine/{public_id}/withdraw/:
+    post:
+      operationId: v2_talent_pools_mine_withdraw_create
+      summary: Rút hồ sơ khỏi kho của một NTD
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - applications-v2
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
 components:
   schemas:
     AccountResourceHoldChangeRequest:
@@ -16754,6 +16952,10 @@ components:
           type: boolean
           readOnly: true
           default: false
+        in_talent_pool:
+          type: boolean
+          readOnly: true
+          default: false
         mass_apply_signal:
           type: string
           readOnly: true
@@ -16815,6 +17017,7 @@ components:
       - cv_title
       - employer_note
       - employer_rating
+      - in_talent_pool
       - interviewed_at
       - job
       - job_title
@@ -17567,6 +17770,10 @@ components:
           type: boolean
         cv_activity_web:
           type: boolean
+        employer_invitation_email:
+          type: boolean
+        employer_invitation_web:
+          type: boolean
         configured_job_alerts:
           type: boolean
         suitable_job_recommendations:
@@ -17793,6 +18000,8 @@ components:
       - application_interviewed
       - application_accepted
       - application_rejected
+      - talent_pool_saved
+      - job_invitation
       type: string
       description: |-
         * `application_submitted` - Hồ sơ đã được tiếp nhận
@@ -17802,6 +18011,8 @@ components:
         * `application_interviewed` - Mời phỏng vấn
         * `application_accepted` - Trúng tuyển
         * `application_rejected` - Chưa phù hợp
+        * `talent_pool_saved` - Được lưu vào kho ứng viên tiềm năng
+        * `job_invitation` - Lời mời ứng tuyển
     CandidatePreferredProvinceRead:
       type: object
       properties:
@@ -17859,6 +18070,35 @@ components:
           type: integer
       required:
       - updated
+    CandidateTalentPool:
+      type: object
+      description: 'What the candidate sees: who keeps their profile and until when.'
+      properties:
+        public_id:
+          type: string
+          readOnly: true
+        company_name:
+          type: string
+          readOnly: true
+          default: ''
+        source_job_title:
+          type: string
+          readOnly: true
+          default: ''
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        expires_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - company_name
+      - created_at
+      - expires_at
+      - public_id
+      - source_job_title
     CandidateUnreadCount:
       type: object
       properties:
@@ -24982,6 +25222,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CandidateNotification'
+    PaginatedCandidateTalentPoolList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/CandidateTalentPool'
     PaginatedCompanySearchList:
       type: object
       required:
@@ -25369,6 +25632,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/RecruitmentCampaign'
+    PaginatedTalentPoolEntryList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/TalentPoolEntry'
     PasswordChangeRequest:
       type: object
       description: Đặt mật khẩu lần đầu cho OAuth hoặc đổi mật khẩu của phiên hiện
@@ -25614,6 +25900,10 @@ components:
         cv_activity_email:
           type: boolean
         cv_activity_web:
+          type: boolean
+        employer_invitation_email:
+          type: boolean
+        employer_invitation_web:
           type: boolean
         configured_job_alerts:
           type: boolean
@@ -26203,6 +26493,19 @@ components:
         revision_token:
           type: integer
           minimum: 1
+    PatchedTalentPoolUpdateRequest:
+      type: object
+      properties:
+        note:
+          type: string
+          maxLength: 2000
+        tags:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 30
+          maxItems: 5
     PhaseEnum:
       enum:
       - queued
@@ -29133,6 +29436,99 @@ components:
           pattern: ^[-a-zA-Z0-9_]+$
       required:
       - name
+    TalentPoolAddRequest:
+      type: object
+      properties:
+        application_public_id:
+          type: string
+          minLength: 1
+          maxLength: 50
+        note:
+          type: string
+          maxLength: 2000
+        tags:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 30
+          maxItems: 5
+      required:
+      - application_public_id
+    TalentPoolEntry:
+      type: object
+      properties:
+        public_id:
+          type: string
+          readOnly: true
+        candidate_name:
+          type: string
+          readOnly: true
+        candidate_email:
+          type: string
+          format: email
+          readOnly: true
+        source_application_public_id:
+          type: string
+          readOnly: true
+        source_job_public_id:
+          type: string
+          readOnly: true
+        source_job_title:
+          type: string
+          readOnly: true
+          default: ''
+        note:
+          type: string
+          readOnly: true
+        tags:
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        expires_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - candidate_email
+      - candidate_name
+      - created_at
+      - expires_at
+      - note
+      - public_id
+      - source_application_public_id
+      - source_job_public_id
+      - source_job_title
+      - tags
+    TalentPoolInviteRequest:
+      type: object
+      properties:
+        job_public_id:
+          type: string
+          minLength: 1
+          maxLength: 50
+      required:
+      - job_public_id
+    TalentSuggestion:
+      type: object
+      properties:
+        entry:
+          $ref: '#/components/schemas/TalentPoolEntry'
+        score:
+          type: integer
+        reasons:
+          type: array
+          items:
+            type: string
+        already_invited:
+          type: boolean
+      required:
+      - already_invited
+      - entry
+      - reasons
+      - score
     TaxCodeEnum:
       enum:
       - match

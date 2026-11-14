@@ -134,10 +134,9 @@ export function employerNavItems({ unreadApplications = 0 } = {}) {
           title: 'CV ứng tuyển',
         },
         {
-          key: 'coming-talent-pool',
-          label: comingSoonLabel('Kho ứng viên tiềm năng'),
-          title: 'Kho ứng viên tiềm năng — Sắp mở',
-          disabled: true,
+          key: employerAppPath('/talent-pool'),
+          label: 'Kho ứng viên tiềm năng',
+          title: 'Kho ứng viên tiềm năng',
         },
         {
           key: employerAppPath('/candidate-blocks'),
@@ -196,6 +195,7 @@ const ROUTE_TITLES = [
   [employerAppPath('/jobs'), 'Tin tuyển dụng'],
   [employerAppPath('/applications'), 'CV ứng tuyển'],
   [employerAppPath('/candidate-blocks'), 'Danh sách đen'],
+  [employerAppPath('/talent-pool'), 'Kho ứng viên tiềm năng'],
   [employerAppPath('/company-page'), 'Trang công ty'],
   [employerAppPath('/employer-verify'), 'Xác thực tài khoản'],
   [employerAppPath('/account/phone-verify'), 'Xác thực số điện thoại'],

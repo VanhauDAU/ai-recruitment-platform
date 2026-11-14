@@ -34,7 +34,7 @@ describe('EmployerWorkspaceNavigation', () => {
     expect(inbox).toMatchObject({ key: '/tuyendung/app/applications', title: 'CV ứng tuyển' })
     expect(inbox.disabled).toBeUndefined()
     expect(blocklist).toMatchObject({ key: '/tuyendung/app/candidate-blocks', title: 'Danh sách đen' })
-    expect(talentPool.disabled).toBe(true)
+    expect(talentPool).toMatchObject({ key: '/tuyendung/app/talent-pool', title: 'Kho ứng viên tiềm năng' })
     expect(upcoming.map((item) => item.title)).toEqual([
       'Quản lý nhãn CV — Sắp mở',
       'Quản lý yêu cầu kết nối CV — Sắp mở',
