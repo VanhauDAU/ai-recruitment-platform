@@ -22,6 +22,7 @@ class ApplicationSerializer(serializers.ModelSerializer):
     )
     available_decisions = serializers.SerializerMethodField()
     candidate_blocked = serializers.BooleanField(read_only=True, default=False)
+    in_talent_pool = serializers.BooleanField(read_only=True, default=False)
     mass_apply_signal = serializers.SerializerMethodField()
 
     class Meta:
@@ -45,6 +46,7 @@ class ApplicationSerializer(serializers.ModelSerializer):
             'status',
             'available_decisions',
             'candidate_blocked',
+            'in_talent_pool',
             'mass_apply_signal',
             'employer_note',
             'employer_rating',

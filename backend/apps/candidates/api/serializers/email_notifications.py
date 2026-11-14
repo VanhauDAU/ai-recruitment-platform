@@ -18,6 +18,8 @@ class CandidateEmailNotificationSettingsSerializer(serializers.ModelSerializer):
             'similar_jobs_in_application_email',
             'cv_activity_email',
             'cv_activity_web',
+            'employer_invitation_email',
+            'employer_invitation_web',
             'configured_job_alerts',
             'suitable_job_recommendations',
             'followed_company_jobs',

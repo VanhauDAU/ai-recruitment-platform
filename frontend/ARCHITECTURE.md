@@ -577,10 +577,14 @@ pages/employer/app/applications/ApplicationList
     → features/download-application-cv (yêu cầu PDF, poll, lưu file)
     → features/share-application-review (tạo/thu hồi link mời đánh giá)
     → features/block-candidate (chặn ứng viên từ hồ sơ)
+    → features/save-to-talent-pool (lưu vào kho tiềm năng)
       → entities/application, entities/cv
         → shared/lib/{date-time,download-blob}
 ```
 
+- Trang `pages/employer/app/talent-pool` → `features/manage-talent-pool` (danh sách,
+  gợi ý theo tin, mời ứng tuyển). Ứng viên: `pages/main/account/TalentPools` →
+  `features/withdraw-from-talent-pool`.
 - Trang `pages/employer/app/candidate-blocks` (`/tuyendung/app/candidate-blocks`) →
   `features/manage-candidate-blocks` (liệt kê, gỡ chặn).
 - Trang công khai `pages/employer/review/ApplicationReview` (`/tuyendung/danh-gia-ho-so/:token`,

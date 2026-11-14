@@ -4,7 +4,7 @@ Xin chào {{ candidate_name }},
 
 {{ message }}
 
-Xem hồ sơ ứng tuyển: {{ action_url }}
+{{ action_label }}: {{ action_url }}
 
 Quản lý email & thông báo: {{ email_settings_url }}
 — {{ site_name }}

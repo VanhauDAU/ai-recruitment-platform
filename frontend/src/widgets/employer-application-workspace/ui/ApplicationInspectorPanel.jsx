@@ -12,6 +12,7 @@ import { Alert, Empty, Skeleton } from 'antd'
 import { Link } from 'react-router'
 import { ApplicationDecisionBar } from '@/features/application-status-decision'
 import { BlockCandidateButton } from '@/features/block-candidate'
+import { SaveToTalentPoolButton } from '@/features/save-to-talent-pool'
 import { employerAppPath } from '@/shared/config/portals'
 import { formatApplicationDate, initialsOf, pendingNoticeOf } from '../model/application-workspace'
 import ApplicationAssessmentSection from './ApplicationAssessmentSection'
@@ -73,7 +74,8 @@ function CandidateTrust({ application, candidateName }) {
     )
   }
   return (
-    <div className="flex justify-end">
+    <div className="flex flex-wrap justify-end gap-1">
+      <SaveToTalentPoolButton application={application} candidateName={candidateName} />
       <BlockCandidateButton application={application} candidateName={candidateName} type="text" />
     </div>
   )

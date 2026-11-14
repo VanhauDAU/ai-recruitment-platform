@@ -31,7 +31,7 @@ Lộ trình 6 giai đoạn của workspace `/tuyendung/app/applications`; mỗi 
 | 2 | Điểm phù hợp CV–JD có giải thích, xếp hạng danh sách | ⬜ |
 | 3 | Chia sẻ CV bằng link bảo mật + phiếu đánh giá nội bộ | ✅ Xong trên nhánh `feat/application-review-links`, chưa gộp |
 | 4 | Danh sách đen + phát hiện ứng tuyển hàng loạt | ✅ Xong trên nhánh `feat/candidate-blocklist`, chưa gộp |
-| 5 | Kho ứng viên tiềm năng + gợi ý lại khi đăng tin mới | ⬜ |
+| 5 | Kho ứng viên tiềm năng + gợi ý lại khi đăng tin mới | ✅ Xong trên nhánh `feat/talent-pool`, chưa gộp |
 | 6 | Gợi ý kỹ năng còn thiếu cho ứng viên bị từ chối | ⬜ |
 | Sau | Nhắn tin ứng viên (nút đã đặt sẵn), hẹn lịch phỏng vấn | ⬜ |
 

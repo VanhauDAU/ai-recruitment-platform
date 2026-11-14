@@ -2568,3 +2568,49 @@ test('employer blocklist: blocked candidates are listed and can be lifted', asyn
   await page.getByRole('dialog').getByRole('button', { name: 'Gỡ chặn' }).click()
   await expect(page.getByText('Bạn chưa chặn ứng viên nào')).toBeVisible()
 })
+
+test('employer talent pool: suggestions for a job and an invitation', async ({ page }) => {
+  await mockPublicApi(page)
+  await setEmployerSession(page, {
+    email_verified: true,
+    employer_onboarding_required: false,
+    employer_onboarding_step: 'complete',
+    employer_verification_completed: true,
+  })
+  await page.route('http://localhost:8000/api/employer/me/', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({ public_id: 'rec_pool', ...READY_EMPLOYER_READINESS, onboarding: { verification_completed: true } }),
+    })
+  })
+  const entry = {
+    public_id: 'tpe_1', candidate_name: 'Lê Tiềm Năng', candidate_email: 'tn@example.com',
+    source_application_public_id: 'app_1', source_job_public_id: 'jb_old', source_job_title: 'Backend Junior',
+    note: 'Tư duy tốt', tags: ['Python'], created_at: '2026-11-15T09:00:00+07:00', expires_at: '2027-11-15T09:00:00+07:00',
+  }
+  let invited = false
+  await page.route(/http:\/\/localhost:8000\/api\/v2\/recruiter\/talent-pool\/(?:\?.*)?$/, async (route) => {
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify({ count: 1, results: [entry] }) })
+  })
+  await page.route(/http:\/\/localhost:8000\/api\/jobs\/mine\/(?:\?.*)?$/, async (route) => {
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify({ count: 1, results: [{ public_id: 'jb_new', title: 'Backend Senior' }] }) })
+  })
+  await page.route(/http:\/\/localhost:8000\/api\/v2\/recruiter\/talent-pool\/suggestions\/.*/, async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify([{ entry, score: 58, reasons: ['Cùng vị trí chuyên môn'], already_invited: invited }]),
+    })
+  })
+  await page.route('http://localhost:8000/api/v2/recruiter/talent-pool/tpe_1/invite/', async (route) => {
+    invited = true
+    await route.fulfill({ status: 204, body: '' })
+  })
+
+  await page.goto('/tuyendung/app/talent-pool?job=jb_new')
+  await expect(page.getByRole('heading', { name: 'Kho ứng viên tiềm năng' })).toBeVisible()
+  await expect(page.getByText('Lê Tiềm Năng').first()).toBeVisible()
+  await expect(page.getByText('58 điểm')).toBeVisible()
+  await expectNoHorizontalOverflow(page)
+  await page.getByRole('button', { name: /Mời ứng tuyển/ }).click()
+  await expect(page.getByRole('button', { name: /Đã mời/ })).toBeVisible()
+})

@@ -11,5 +11,8 @@ export const applicationKeys = {
   reviews: (publicId) => ['applications', 'reviews', publicId],
   publicReview: (token) => ['applications', 'public-review', token],
   candidateBlocks: (page = 1) => ['applications', 'candidate-blocks', page],
+  talentPool: (params = {}) => ['applications', 'talent-pool', params],
+  talentSuggestions: (jobPublicId) => ['applications', 'talent-suggestions', jobPublicId],
+  myTalentPools: ['applications', 'my-talent-pools'],
   cvExport: (publicId, exportId) => ['applications', 'cv-export', publicId, exportId],
 }

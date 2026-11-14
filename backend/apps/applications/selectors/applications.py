@@ -24,6 +24,7 @@ from ..models import (
     ApplicationReviewLink,
     ApplicationStatusHistory,
     CandidateBlock,
+    TalentPoolEntry,
 )
 
 
@@ -101,6 +102,13 @@ def employer_applications_queryset(
             candidate_blocked=Exists(
                 CandidateBlock.objects.filter(
                     CandidateBlock.active_q(),
+                    recruiter_id=OuterRef('job__posted_by_id'),
+                    candidate_id=OuterRef('candidate_id'),
+                )
+            ),
+            in_talent_pool=Exists(
+                TalentPoolEntry.objects.filter(
+                    TalentPoolEntry.active_q(),
                     recruiter_id=OuterRef('job__posted_by_id'),
                     candidate_id=OuterRef('candidate_id'),
                 )

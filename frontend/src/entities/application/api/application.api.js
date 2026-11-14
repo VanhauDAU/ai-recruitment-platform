@@ -140,3 +140,35 @@ export async function liftCandidateBlock(publicId) {
   const { data } = await api.post(`/v2/recruiter/candidate-blocks/${publicId}/lift/`)
   return data
 }
+
+export async function getTalentPool(params = {}) {
+  const { data } = await api.get('/v2/recruiter/talent-pool/', { params })
+  return data
+}
+
+export async function addToTalentPool(payload) {
+  const { data } = await api.post('/v2/recruiter/talent-pool/', payload)
+  return data
+}
+
+export async function removeFromTalentPool(publicId) {
+  await api.delete(`/v2/recruiter/talent-pool/${publicId}/`)
+}
+
+export async function getTalentSuggestions(jobPublicId) {
+  const { data } = await api.get('/v2/recruiter/talent-pool/suggestions/', { params: { job: jobPublicId } })
+  return data
+}
+
+export async function inviteFromTalentPool(publicId, jobPublicId) {
+  await api.post(`/v2/recruiter/talent-pool/${publicId}/invite/`, { job_public_id: jobPublicId })
+}
+
+export async function getMyTalentPools() {
+  const { data } = await api.get('/v2/talent-pools/mine/')
+  return data.results || data
+}
+
+export async function withdrawFromTalentPool(publicId) {
+  await api.post(`/v2/talent-pools/mine/${publicId}/withdraw/`)
+}

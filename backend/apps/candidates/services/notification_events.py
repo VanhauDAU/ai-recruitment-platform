@@ -20,6 +20,7 @@ class EventSpec:
     web_switch: str | None = None  # None: always shown in the bell
     email_subject: str = ''  # defaults to the title
     email_template: str = 'application_update'
+    action_label: str = 'Xem hồ sơ ứng tuyển'
 
 
 # Templates only ever receive the company name and job title: internal notes,
@@ -73,6 +74,23 @@ EVENTS = {
             'Rất tiếc hồ sơ của bạn chưa phù hợp ở thời điểm này. '
             'Chúc bạn sớm tìm được công việc ưng ý.'
         ),
+    ),
+    Event.TALENT_POOL_SAVED: EventSpec(
+        title='Hồ sơ của bạn được lưu vào kho ứng viên tiềm năng',
+        message=(
+            '{company_name} đã lưu hồ sơ của bạn để liên hệ khi có vị trí phù hợp. '
+            'Bạn có thể rút hồ sơ khỏi kho bất cứ lúc nào.'
+        ),
+        email_switch='cv_activity_email',
+        web_switch='cv_activity_web',
+        action_label='Quản lý kho hồ sơ của tôi',
+    ),
+    Event.JOB_INVITATION: EventSpec(
+        title='{company_name} mời bạn ứng tuyển',
+        message='{company_name} nghĩ bạn phù hợp với vị trí {job_title} và mời bạn ứng tuyển.',
+        email_switch='employer_invitation_email',
+        web_switch='employer_invitation_web',
+        action_label='Xem việc làm và ứng tuyển',
     ),
 }
 

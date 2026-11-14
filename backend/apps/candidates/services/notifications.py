@@ -49,6 +49,7 @@ def emit_candidate_notification(
     deliver_after=None,
     send_email=True,
     metadata=None,
+    action_path=APPLIED_JOBS_PATH,
 ):
     """Idempotently schedule one notice inside the caller's transaction.
 
@@ -80,7 +81,7 @@ def emit_candidate_notification(
             'supersede_key': supersede_key[:160],
             'title': render_text(spec.title, context)[:180],
             'message': render_text(spec.message, context),
-            'action_path': APPLIED_JOBS_PATH,
+            'action_path': action_path,
             # The website switch is read now; the email switch at send time.
             'show_in_inbox': switch_enabled(recipient.pk, spec.web_switch),
             'metadata': {
