@@ -1,5 +1,9 @@
 import { findActiveAccountItem } from '@/entities/account'
-import { COMPANY_DIRECTORY_PATH, COMPANY_SEARCH_PATH } from '@/entities/company'
+import {
+  COMPANY_DIRECTORY_PATH,
+  COMPANY_SEARCH_PATH,
+  isCompanyDetailPath,
+} from '@/entities/company'
 import {
   adminPath,
   employerAppPath,
@@ -79,6 +83,7 @@ function mainTitle(pathname) {
 
   const accountItem = findActiveAccountItem(pathname)
   if (accountItem) return accountItem.label
+  if (isCompanyDetailPath(pathname)) return 'Hồ sơ công ty'
   if (pathname === '/tai-khoan') return 'Quản lý tài khoản'
   if (pathname === '/cvs' || pathname.startsWith('/cvs/')) {
     if (pathname.endsWith('/edit')) return 'Chỉnh sửa CV'

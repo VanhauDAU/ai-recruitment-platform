@@ -10,4 +10,5 @@ export const adminCompanyKeys = {
     'recruiters',
     params,
   ],
+  publicPage: (publicId) => [...adminCompanyKeys.detail(publicId), 'public-page'],
 }

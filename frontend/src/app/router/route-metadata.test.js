@@ -23,6 +23,8 @@ describe('route metadata', () => {
   it('indexes public content and noindexes account/workspace routes', () => {
     expect(isIndexableRoute('/cong-ty', 'main')).toBe(true)
     expect(isIndexableRoute('/cong-ty/tim-kiem', 'main')).toBe(false)
+    expect(isIndexableRoute('/cong-ty/fpt-software', 'main')).toBe(true)
+    expect(isIndexableRoute('/cong-ty/fpt-software/khac', 'main')).toBe(false)
     expect(isIndexableRoute('/blog/huong-dan', 'main')).toBe(true)
     expect(isIndexableRoute('/tai-khoan/thong-tin', 'main')).toBe(false)
     expect(isIndexableRoute('/admin/app/dashboard', 'admin')).toBe(false)
@@ -58,6 +60,18 @@ describe('route metadata', () => {
       canonicalPath: '/cong-ty',
       robots: 'noindex, nofollow',
     }))
+  })
+
+  it('gives the company page a real title and its own canonical before data arrives', () => {
+    expect(canonicalPathForRoute('/cong-ty/fpt-software/')).toBe('/cong-ty/fpt-software')
+    expect(resolveRouteMetadata({ pathname: '/cong-ty/fpt-software', portal: 'main', settings }))
+      .toEqual(expect.objectContaining({
+        title: 'Hồ sơ công ty',
+        canonicalPath: '/cong-ty/fpt-software',
+        robots: 'index, follow',
+      }))
+    expect(resolveRouteMetadata({ pathname: '/cong-ty/fpt-software/khac', portal: 'main', settings }))
+      .toEqual(expect.objectContaining({ title: 'Trang không tồn tại', robots: 'noindex, nofollow' }))
   })
 
   it('honors the global indexing kill switch', () => {

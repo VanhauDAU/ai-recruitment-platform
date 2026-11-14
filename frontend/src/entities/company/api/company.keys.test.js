@@ -17,4 +17,11 @@ describe('company query keys', () => {
       { keyword: 'Alpha' },
     ])
   })
+
+  it('keys the company page by slug and its lazy blocks by public id', () => {
+    expect(companyKeys.detail('fpt-software')).toEqual(['companies', 'detail', 'fpt-software'])
+    expect(companyKeys.similar('co_ab12')).toEqual(['companies', 'similar', 'co_ab12'])
+    expect(companyKeys.jobFacets('co_ab12')).toEqual(['companies', 'job-facets', 'co_ab12'])
+    expect(companyKeys.detail('fpt-software').slice(0, 2)).not.toEqual(companyKeys.directoryRoot)
+  })
 })

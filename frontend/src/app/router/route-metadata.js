@@ -1,4 +1,8 @@
-import { COMPANY_DIRECTORY_PATH, COMPANY_SEARCH_PATH } from '@/entities/company'
+import {
+  COMPANY_DIRECTORY_PATH,
+  COMPANY_SEARCH_PATH,
+  isCompanyDetailPath,
+} from '@/entities/company'
 import { employerAppPath, employerMarketingPath } from '@/shared/config/portals'
 import { resolveRouteTitle } from './document-title'
 
@@ -63,6 +67,8 @@ export function isIndexableRoute(pathname, portal) {
   }
   return (
     MAIN_PUBLIC_EXACT_PATHS.has(normalized)
+    // Trang công ty tự hạ xuống noindex theo `indexable` của API và query tab/bộ lọc.
+    || isCompanyDetailPath(normalized)
     || normalized.startsWith('/viec-lam/')
     || normalized.startsWith('/jobs/')
     || normalized.startsWith('/brand/')

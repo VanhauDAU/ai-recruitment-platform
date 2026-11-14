@@ -314,10 +314,83 @@ app/router
   dùng chung; widget không giữ bản sao. HTML rich text của mọi domain render
   qua `shared/ui/RichContent` (luôn sanitize), nút chia sẻ trang dùng
   `shared/ui/ShareButtons`; container của nơi dùng quyết định bố cục.
-- CTA chưa có route chi tiết công ty phải dùng `companyDirectoryPath(name)` để
-  mở danh bạ đã lọc. Card danh bạ có thể dùng `companyJobsPath(name)` để mở
-  contract tìm việc hiện hữu; không tự sinh route `/cong-ty/:slug` cho tới khi
-  API/page chi tiết được triển khai.
+- Mọi liên kết tới một công ty phải đi qua `companyDetailPath(slugOrCompany)`
+  (thẻ danh bạ, sidebar nhà tuyển dụng hàng đầu, khối công ty nổi bật và dải
+  logo trên trang chủ). Từ một tin tuyển dụng dùng `jobCompanyPath(job)` hoặc
+  `companyDetailPath(job.company_slug)`: `slug` của tin là slug của chính tin
+  đó, không phải của công ty. Chỉ khi không có slug (công ty bị tạm ẩn trả
+  `company_slug = null`) helper mới lùi về danh bạ lọc theo tên; không tự nối
+  chuỗi `/cong-ty/...` và không quay lại `/viec-lam?search=<tên>&search_by=company`.
+
+## Ownership map — Trang công ty công khai
+
+```text
+app/router
+  → pages/main/companies/CompanyDetail
+    → widgets/public-company-profile
+      → features/auth, saved-jobs, track-job-engagement
+        → entities/company, entities/job, entities/session
+          → shared/api, shared/ui
+
+pages/admin/app/CompanyDetail
+  → widgets/admin-company-directory (tab "Trang công khai")
+    → entities/admin-company, entities/company, entities/admin-access
+```
+
+- Một route, một read model (ADR-0017): `/cong-ty/:slug` đọc
+  `GET /api/companies/<slug>/`. `tim-kiem` là segment tĩnh nên route tìm kiếm
+  luôn thắng `:slug`; backend giữ nó làm slug dành riêng. Tab và bộ lọc là
+  trạng thái URL trên cùng route (`?tab=viec-lam&q=&location=&page=`):
+  `companyDetailPath()` sinh URL, `parseCompanyDetailQuery()` chuẩn hoá ngược
+  lại, cả hai thuộc `entities/company`. Bộ lọc chỉ có nghĩa trong tab việc làm.
+- `pages/main/companies/CompanyDetail` chỉ đọc slug và query, đăng ký metadata
+  rồi compose widget. Page và widget cùng gọi `usePublicCompany(slug)`; React
+  Query gộp thành một request. Metadata: title `<tên> tuyển dụng`, description
+  từ khối giới thiệu, canonical là `canonical_path`, ảnh bìa rồi tới logo,
+  `BreadcrumbList`. Chỉ `index` khi API trả `indexable`, site không tắt index
+  và URL không mang tab/bộ lọc; trạng thái đang tải và 404 luôn `noindex`.
+- **Bộ hiển thị rẽ nhánh theo `section.type`, không theo tên cột của
+  `Company`.** `CompanyProfileView` (entity) render `sections[]` theo đúng thứ
+  tự server trả và `sidebar[]` theo thứ tự cố định. Kiểu chưa biết bị bỏ qua
+  lặng lẽ để backend thêm khối mà không vỡ client cũ; khối không còn nội dung
+  sau khi sanitize thì không render cả tiêu đề. Frontend không giữ bản sao
+  registry khối và không suy ra khối từ DTO danh bạ.
+- Entity không import feature, widget hay entity khác, nên phần thân của khối
+  `jobs` và `similar_companies` do nơi dùng truyền qua `slots` (khoá là
+  `section.type`); không có slot thì khối không hiển thị. `heroActions` và
+  `navigation` là hai chỗ gắn còn lại; `focusType` thu cột chính về một kiểu
+  khối (tab việc làm); `preview` dành cho bản xem trước nhúng trong trang khác.
+  Trang công khai, xem trước của quản trị viên và (về sau) của nhà tuyển dụng
+  đều dùng đúng bộ hiển thị này vì widget không được import lẫn nhau.
+- `CompanyProfileView` là export lazy của `entities/company`. Router khởi tạo
+  dùng hằng path từ barrel của entity này, nên mọi thứ barrel export tĩnh đều
+  rơi vào bundle đầu: bộ hiển thị, gallery antd, sanitize HTML và stylesheet
+  của nó phải đứng sau dynamic import, và nơi dùng bọc trong `Suspense`.
+  `usePublicCompany` tải trước chunk đó song song với request dữ liệu. Không
+  thêm UI nặng hay import CSS vào phần export tĩnh của barrel.
+- Màu nhấn lấy từ `theme.accent` và chỉ tồn tại dưới dạng biến CSS cục bộ
+  `--company-accent`, `--company-accent-hover`, `--company-accent-soft` trên
+  phần tử gốc của bộ hiển thị; giá trị không phải mã hex rơi về màu thương
+  hiệu. Màu nhấn chỉ tô chi tiết trang trí (dải nền hero khi thiếu ảnh bìa,
+  vạch tiêu đề khối, chip lĩnh vực, gạch chân tab). Nút hành động của nền tảng
+  giữ `--brand-primary`.
+- Style mới của trang nằm trong `entities/company/ui/company-profile.css` và
+  `widgets/public-company-profile/public-company-profile.css` (đi theo lazy
+  chunk), không thêm utility Tailwind mới: CSS khởi tạo đã sát trần budget.
+- `widgets/public-company-profile` sở hữu tải việc làm
+  (`GET /api/jobs/?company=<public_id>`, lọc theo mã chứ không theo tên), facet
+  tỉnh thành (chỉ tải khi mở tab việc làm), công ty cùng lĩnh vực, thẻ tin rút
+  gọn không có logo/tên công ty, thanh CTA dính đáy trên màn hẹp, skeleton,
+  trạng thái lỗi có thử lại và trạng thái 404. Thanh CTA gắn class
+  `has-bottom-action-bar` lên `body` để nút nổi tự nâng lên. Hero và thanh CTA
+  nhận nút bổ sung (theo dõi, báo cáo) qua prop `actions`.
+- Trang không bao giờ hiển thị mã số thuế, email, số điện thoại, địa chỉ hộ
+  kinh doanh, danh tính recruiter hoặc trạng thái kiểm duyệt; frontend chỉ
+  render những gì read model trả về. Công ty bị tạm ẩn trả 404 thật ở cả API
+  lẫn SEO shell; React hiển thị trạng thái 404 nhưng không thay thế status HTTP.
+- Tab quản trị "Trang công khai" đọc `public-page/` (quyền `company.view`) và
+  chỉ hiện nút tạm ẩn/khôi phục cho người có `company_page.moderate`; lý do
+  10 đến 500 ký tự là bắt buộc. Backend vẫn là nơi quyết định quyền.
 
 ## Ownership map — Người dùng và nhà tuyển dụng quản trị
 

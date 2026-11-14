@@ -1,10 +1,11 @@
-import { render } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it } from 'vitest'
 import CompanyCard from './CompanyCard'
 
 const COMPANY = {
   public_id: 'co_alpha',
+  slug: 'cong-ty-alpha',
   company_name: 'Công ty Alpha',
   trade_name: '',
   description_excerpt: '',
@@ -46,5 +47,13 @@ describe('CompanyCard media stability', () => {
 
     expect(container.querySelector('.company-directory-cover-fallback')).toBeInTheDocument()
     expect(container.querySelector('.company-directory-cover > img')).not.toBeInTheDocument()
+  })
+
+  it('links the whole card to the company page by slug', () => {
+    renderCard(COMPANY)
+
+    const link = screen.getByRole('link', { name: 'Xem trang công ty Công ty Alpha' })
+    expect(link).toHaveAttribute('href', '/cong-ty/cong-ty-alpha')
+    expect(link).toHaveTextContent('Xem công ty')
   })
 })

@@ -23,3 +23,12 @@ export function getAdminCompanyRecruiters(publicId, params = {}, { signal } = {}
     signal,
   }))
 }
+
+export function getAdminCompanyPublicPage(publicId, { signal } = {}) {
+  return data(client.get(`/admin/companies/${publicId}/public-page/`, { signal }))
+}
+
+/** `action` là `apply` (tạm ẩn) hoặc `release` (khôi phục); response cùng dạng với public-page. */
+export function setAdminCompanyPolicyHold(publicId, { action, reason }) {
+  return data(client.post(`/admin/companies/${publicId}/policy-hold/`, { action, reason }))
+}

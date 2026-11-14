@@ -8,6 +8,7 @@ import FeaturedEmployers from './FeaturedEmployers'
 const EMPLOYERS = [
   {
     public_id: 'company_alpha',
+    slug: 'cong-ty-a-b',
     company_name: 'Công ty A&B',
     logo_url: '/logos/alpha.png',
     active_public_job_count: 1_000,
@@ -81,7 +82,7 @@ describe('FeaturedEmployers', () => {
     expect(panel.compareDocumentPosition(marquee) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
 
-  it('keeps company-card search navigation and the view-all destination', async () => {
+  it('opens the company page from a card or a marquee logo and keeps the view-all destination', async () => {
     const user = userEvent.setup()
     const navigate = vi.fn()
     render(
@@ -92,13 +93,18 @@ describe('FeaturedEmployers', () => {
 
     const panel = screen.getByRole('region', { name: 'Công ty nổi bật' })
     await user.click(within(panel).getByRole('button', { name: /Công ty A&B/ }))
-    expect(navigate).toHaveBeenLastCalledWith(
-      '/viec-lam?search=C%C3%B4ng%20ty%20A%26B&search_by=company',
-    )
+    expect(navigate).toHaveBeenLastCalledWith('/cong-ty/cong-ty-a-b')
+
+    // Công ty chưa có slug vẫn có đích: danh bạ lọc theo tên.
+    await user.click(within(panel).getByRole('button', { name: /Công ty 2/ }))
+    expect(navigate).toHaveBeenLastCalledWith('/cong-ty/tim-kiem?keyword=C%C3%B4ng+ty+2')
 
     expect(within(panel).getByRole('link', { name: 'Xem tất cả' }))
       .toHaveAttribute('href', COMPANY_DIRECTORY_PATH)
-    expect(navigate).toHaveBeenCalledTimes(1)
+    expect(navigate).toHaveBeenCalledTimes(2)
+
+    await user.click(screen.getAllByTitle('Công ty A&B').find((element) => element.closest('.employer-logo-full-bleed-marquee')))
+    expect(navigate).toHaveBeenLastCalledWith('/cong-ty/cong-ty-a-b')
   })
 
   it('renders nothing when there are no featured employers', () => {

@@ -35,11 +35,12 @@ import { sanitizeHtml } from '@/shared/lib/sanitize-html'
 import CompanyLogo from './CompanyLogo'
 import CompanyJobs from './CompanyJobs'
 import { CompanyPanel } from './CompanyPanel'
+import CompanyPublicPage from './CompanyPublicPage'
 import RecruiterStatusTag from './RecruiterStatusTag'
 import '../admin-company-directory.css'
 
 const EMPTY_PAGE = { count: 0, results: [] }
-const TAB_KEYS = new Set(['overview', 'recruiters', 'verification', 'updates', 'jobs'])
+const TAB_KEYS = new Set(['overview', 'recruiters', 'verification', 'updates', 'jobs', 'public-page'])
 
 function formatDate(value) {
   if (!value) return '—'
@@ -549,6 +550,17 @@ export default function AdminCompanyDetail({ publicId }) {
         <CompanyJobs
           company={company}
           enabled={canViewJobs && activeTab === 'jobs'}
+        />
+      ),
+    },
+    {
+      key: 'public-page',
+      label: 'Trang công khai',
+      children: (
+        <CompanyPublicPage
+          company={company}
+          enabled={activeTab === 'public-page'}
+          canModerate={has('company_page.moderate')}
         />
       ),
     },

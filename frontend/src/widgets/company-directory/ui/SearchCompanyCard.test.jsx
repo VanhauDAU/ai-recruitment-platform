@@ -5,6 +5,7 @@ import SearchCompanyCard from './SearchCompanyCard'
 
 const COMPANY = {
   public_id: 'co_alpha',
+  slug: 'cong-ty-alpha',
   company_name: 'Công ty Alpha',
   trade_name: '',
   logo_url: '/logo.png',
@@ -29,8 +30,9 @@ describe('SearchCompanyCard', () => {
     expect(screen.getByText('Đang tuyển 12 vị trí')).toBeVisible()
     expect(screen.getByText('TP. Hồ Chí Minh')).toBeVisible()
     expect(screen.getByText(COMPANY.description_excerpt)).toBeVisible()
-    expect(screen.getByRole('link', { name: 'Xem việc làm tại Công ty Alpha' }))
-      .toHaveClass('gap-2.5', 'rounded-lg', 'p-2.5', 'sm:p-3')
+    const link = screen.getByRole('link', { name: 'Xem trang công ty Công ty Alpha' })
+    expect(link).toHaveAttribute('href', '/cong-ty/cong-ty-alpha')
+    expect(link).toHaveClass('gap-2.5', 'rounded-lg', 'p-2.5', 'sm:p-3')
     expect(container.querySelector('img[src="/logo.png"]')).toHaveAttribute('width', '64')
     expect(container.querySelector('img[src="/logo.png"]')).toHaveAttribute('height', '64')
     expect(screen.getByRole('heading', { name: 'Công ty Alpha' }))
@@ -44,5 +46,12 @@ describe('SearchCompanyCard', () => {
 
     expect(screen.queryByText('TP. Hồ Chí Minh')).not.toBeInTheDocument()
     expect(screen.getByText('Đang tuyển 0 vị trí')).toBeVisible()
+  })
+
+  it('falls back to the name-filtered directory when the result has no slug', () => {
+    renderCard({ ...COMPANY, slug: '' })
+
+    expect(screen.getByRole('link', { name: 'Xem trang công ty Công ty Alpha' }))
+      .toHaveAttribute('href', '/cong-ty/tim-kiem?keyword=C%C3%B4ng+ty+Alpha')
   })
 })

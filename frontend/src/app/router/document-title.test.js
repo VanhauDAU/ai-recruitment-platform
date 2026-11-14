@@ -44,6 +44,13 @@ describe('candidate route titles', () => {
     expect(resolveRouteTitle('/cong-ty/tim-kiem')).toBe('Tìm kiếm công ty')
   })
 
+  it('titles the company page instead of treating it as a missing route', () => {
+    window.history.replaceState({}, '', '/cong-ty/fpt-software')
+    expect(resolveRouteTitle('/cong-ty/fpt-software')).toBe('Hồ sơ công ty')
+    expect(resolveRouteTitle('/cong-ty/fpt-software/')).toBe('Hồ sơ công ty')
+    expect(resolveRouteTitle('/cong-ty/fpt-software/khac')).toBe('Trang không tồn tại')
+  })
+
   it('uses the dedicated title for the public job comparison route', () => {
     window.history.replaceState({}, '', '/so-sanh-viec-lam')
     expect(resolveRouteTitle('/so-sanh-viec-lam')).toBe('So sánh việc làm')
