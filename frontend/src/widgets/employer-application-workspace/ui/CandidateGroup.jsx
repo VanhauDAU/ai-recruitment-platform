@@ -1,10 +1,11 @@
-import { DownOutlined, LockOutlined } from '@ant-design/icons'
+import { DownOutlined, LockOutlined, StopOutlined } from '@ant-design/icons'
 import { formatApplicationDate, initialsOf } from '../model/application-workspace'
 import ApplicationStatusBadge from './ApplicationStatusBadge'
 
 export default function CandidateGroup({ group, expanded, selectedPublicId, onToggle, onSelect }) {
   const active = group.applications.some((item) => item.public_id === selectedPublicId)
   const hasUnread = group.applications.some((item) => item.status === 'submitted')
+  const blocked = group.applications.some((item) => item.candidate_blocked)
   return (
     <article className={`aw-group${active ? ' is-active' : ''}`}>
       <button
@@ -20,6 +21,7 @@ export default function CandidateGroup({ group, expanded, selectedPublicId, onTo
             <strong className="truncate text-sm text-slate-900">{group.candidateName}</strong>
             {hasUnread && <span className="aw-new-dot" title="Có CV mới chưa xem" />}
             {group.restricted && <LockOutlined title="Tài khoản bị hạn chế" className="shrink-0 text-amber-500" />}
+            {blocked && <StopOutlined title="Đã chặn" aria-label="Đã chặn" className="shrink-0 text-red-500" />}
           </span>
           <span className="mt-0.5 block truncate text-xs text-slate-500">
             {group.candidateEmail || 'Chưa có email'}

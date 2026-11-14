@@ -140,10 +140,9 @@ export function employerNavItems({ unreadApplications = 0 } = {}) {
           disabled: true,
         },
         {
-          key: 'coming-candidate-blocklist',
-          label: comingSoonLabel('Danh sách đen'),
-          title: 'Danh sách đen — Sắp mở',
-          disabled: true,
+          key: employerAppPath('/candidate-blocks'),
+          label: 'Danh sách đen',
+          title: 'Danh sách đen',
         },
         {
           key: 'coming-cv-labels',
@@ -196,6 +195,7 @@ const ROUTE_TITLES = [
   [employerAppPath('/campaigns'), 'Chiến dịch tuyển dụng'],
   [employerAppPath('/jobs'), 'Tin tuyển dụng'],
   [employerAppPath('/applications'), 'CV ứng tuyển'],
+  [employerAppPath('/candidate-blocks'), 'Danh sách đen'],
   [employerAppPath('/company-page'), 'Trang công ty'],
   [employerAppPath('/employer-verify'), 'Xác thực tài khoản'],
   [employerAppPath('/account/phone-verify'), 'Xác thực số điện thoại'],

@@ -6,6 +6,7 @@ export const EmployerAboutPage = lazy(() => import('@/pages/employer/marketing/A
 export const EmployerServicesPage = lazy(() => import('@/pages/employer/marketing/Services'))
 export const EmployerContactPage = lazy(() => import('@/pages/employer/marketing/Contact'))
 export const EmployerLegalPage = lazy(() => import('@/pages/employer/marketing/Legal'))
+export const EmployerCandidateBlocksPage = lazy(() => import('@/pages/employer/app/candidate-blocks/CandidateBlocks'))
 export const EmployerApplicationReviewPage = lazy(() => import('@/pages/employer/review/ApplicationReview'))
 export const EmployerLoginPage = lazy(() => import('@/pages/employer/app/Login'))
 export const EmployerRegisterPage = lazy(() => import('@/pages/employer/app/Register'))

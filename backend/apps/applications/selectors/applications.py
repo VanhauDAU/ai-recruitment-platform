@@ -1,11 +1,30 @@
 """Read queries for job applications."""
 
-from django.db.models import CharField, Exists, OuterRef, Prefetch, Q, Subquery, Value
-from django.db.models.functions import Cast, Concat
+from datetime import timedelta
+
+from django.db.models import (
+    CharField,
+    Count,
+    Exists,
+    IntegerField,
+    OuterRef,
+    Prefetch,
+    Q,
+    Subquery,
+    Value,
+)
+from django.db.models.functions import Cast, Coalesce, Concat
+from django.utils import timezone
 
 from apps.candidates.models import CandidateNotification
 
-from ..models import Application, ApplicationReview, ApplicationReviewLink, ApplicationStatusHistory
+from ..models import (
+    Application,
+    ApplicationReview,
+    ApplicationReviewLink,
+    ApplicationStatusHistory,
+    CandidateBlock,
+)
 
 
 def _history_notice():
@@ -39,6 +58,22 @@ def candidate_applications_queryset(candidate):
     )
 
 
+def _recent_jobs_applied_count():
+    """Distinct jobs of the same recruiter the candidate applied to recently."""
+    since = timezone.now() - timedelta(days=CandidateBlock.MASS_APPLY_WINDOW_DAYS)
+    return (
+        Application.objects.filter(
+            candidate_id=OuterRef('candidate_id'),
+            job__posted_by_id=OuterRef('job__posted_by_id'),
+            applied_at__gte=since,
+        )
+        .order_by()
+        .values('candidate_id')
+        .annotate(jobs=Count('job_id', distinct=True))
+        .values('jobs')[:1]
+    )
+
+
 def employer_applications_queryset(
     employer,
     job_public_id=None,
@@ -61,6 +96,18 @@ def employer_applications_queryset(
         )
         .prefetch_related(
             'preferred_locations',
+        )
+        .annotate(
+            candidate_blocked=Exists(
+                CandidateBlock.objects.filter(
+                    CandidateBlock.active_q(),
+                    recruiter_id=OuterRef('job__posted_by_id'),
+                    candidate_id=OuterRef('candidate_id'),
+                )
+            ),
+            recent_jobs_applied=Coalesce(
+                Subquery(_recent_jobs_applied_count(), output_field=IntegerField()), 0
+            ),
         )
     )
     if job_public_id:
@@ -187,4 +234,12 @@ def recruiter_reviews_queryset(application):
         ApplicationReview.objects.filter(application=application)
         .select_related('link')
         .order_by('-submitted_at', '-id')
+    )
+
+
+def recruiter_candidate_blocks_queryset(recruiter):
+    return (
+        CandidateBlock.objects.filter(recruiter=recruiter, lifted_at__isnull=True)
+        .select_related('candidate', 'source_application__job')
+        .order_by('-created_at', '-id')
     )

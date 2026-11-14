@@ -8,6 +8,15 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-15
 
+#### Added — Danh sách đen ứng viên (giai đoạn 4)
+
+- NTD chặn ứng viên từ hồ sơ (lý do, thời hạn, tùy chọn từ chối hồ sơ đang
+  chờ); ứng viên bị chặn không nộp được vào các tin của NTD và chỉ thấy thông
+  báo chung.
+- Workspace cảnh báo "ứng tuyển hàng loạt" khi một ứng viên nộp ≥ 5 tin của
+  NTD trong 14 ngày, kèm nút chặn; trang "Danh sách đen" trong sidebar để xem
+  và gỡ chặn.
+
 #### Added — Mời người khác đánh giá hồ sơ (giai đoạn 3)
 
 - Nút "Mời đánh giá" trong workspace hồ sơ: tạo link có hạn, sao chép hoặc gửi

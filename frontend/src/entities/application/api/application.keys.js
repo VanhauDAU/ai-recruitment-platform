@@ -10,5 +10,6 @@ export const applicationKeys = {
   reviewLinks: (publicId) => ['applications', 'review-links', publicId],
   reviews: (publicId) => ['applications', 'reviews', publicId],
   publicReview: (token) => ['applications', 'public-review', token],
+  candidateBlocks: (page = 1) => ['applications', 'candidate-blocks', page],
   cvExport: (publicId, exportId) => ['applications', 'cv-export', publicId, exportId],
 }

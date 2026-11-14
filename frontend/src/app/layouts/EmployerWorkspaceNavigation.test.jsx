@@ -29,13 +29,13 @@ describe('EmployerWorkspaceNavigation', () => {
 
   it('groups the CV inbox with the upcoming CV tools and selects it on its route', () => {
     const group = employerNavItems({ unreadApplications: 3 }).find((item) => item.key === CV_MANAGEMENT_MENU_KEY)
-    const [inbox, ...upcoming] = group.children
+    const [inbox, talentPool, blocklist, ...upcoming] = group.children
 
     expect(inbox).toMatchObject({ key: '/tuyendung/app/applications', title: 'CV ứng tuyển' })
     expect(inbox.disabled).toBeUndefined()
+    expect(blocklist).toMatchObject({ key: '/tuyendung/app/candidate-blocks', title: 'Danh sách đen' })
+    expect(talentPool.disabled).toBe(true)
     expect(upcoming.map((item) => item.title)).toEqual([
-      'Kho ứng viên tiềm năng — Sắp mở',
-      'Danh sách đen — Sắp mở',
       'Quản lý nhãn CV — Sắp mở',
       'Quản lý yêu cầu kết nối CV — Sắp mở',
     ])

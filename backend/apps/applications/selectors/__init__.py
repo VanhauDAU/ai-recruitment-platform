@@ -7,6 +7,7 @@ from .applications import (
     employer_applications_queryset,
     recruiter_application_history_queryset,
     recruiter_application_snapshot_queryset,
+    recruiter_candidate_blocks_queryset,
     recruiter_review_links_queryset,
     recruiter_reviews_queryset,
 )
@@ -18,6 +19,7 @@ __all__ = [
     'employer_applications_queryset',
     'recruiter_application_history_queryset',
     'recruiter_application_snapshot_queryset',
+    'recruiter_candidate_blocks_queryset',
     'recruiter_review_links_queryset',
     'recruiter_reviews_queryset',
 ]

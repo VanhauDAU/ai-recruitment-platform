@@ -61,6 +61,7 @@ const EXACT_EMPLOYER_TITLES = new Map([
   [employerAppPath('/campaigns'), 'Quản lý chiến dịch tuyển dụng'],
   [employerAppPath('/jobs'), 'Tin tuyển dụng'],
   [employerAppPath('/applications'), 'Quản lý CV ứng tuyển'],
+  [employerAppPath('/candidate-blocks'), 'Danh sách đen'],
 ])
 
 const EXACT_ADMIN_TITLES = new Map([

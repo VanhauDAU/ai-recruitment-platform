@@ -125,3 +125,18 @@ export async function submitPublicApplicationReview(token, payload) {
   const { data } = await api.put(`/v2/application-reviews/${encodeURIComponent(token)}/`, payload)
   return data
 }
+
+export async function getCandidateBlocks(page = 1) {
+  const { data } = await api.get('/v2/recruiter/candidate-blocks/', { params: { page } })
+  return data
+}
+
+export async function blockCandidate(payload) {
+  const { data } = await api.post('/v2/recruiter/candidate-blocks/', payload)
+  return data
+}
+
+export async function liftCandidateBlock(publicId) {
+  const { data } = await api.post(`/v2/recruiter/candidate-blocks/${publicId}/lift/`)
+  return data
+}

@@ -283,7 +283,7 @@ export default function EmployerWorkspaceLayout() {
                 mode="inline"
                 inlineCollapsed={isCompactSidebar}
                 selectedKeys={[employerSelectedMenuKey(pathname)]}
-                defaultOpenKeys={isApplicationWorkspace ? [CV_MANAGEMENT_MENU_KEY] : []}
+                defaultOpenKeys={isApplicationWorkspace || pathname === employerAppPath('/candidate-blocks') ? [CV_MANAGEMENT_MENU_KEY] : []}
                 items={employerNavItems({ unreadApplications })}
                 onClick={navigateFromMenu}
                 className="!border-0 !bg-white [&>.ant-menu-item]:!px-3 [&>.ant-menu-submenu>.ant-menu-submenu-title]:!px-3 [&_.ant-menu-item]:!mx-2 [&_.ant-menu-item]:!my-0.5 [&_.ant-menu-item]:!h-10 [&_.ant-menu-item]:!w-auto [&_.ant-menu-item]:!rounded-lg [&_.ant-menu-item]:!text-xs [&_.ant-menu-sub_.ant-menu-item]:!pl-8 [&_.ant-menu-item-divider]:!my-2 [&_.ant-menu-item-selected]:!bg-emerald-50 [&_.ant-menu-item-selected]:!font-bold [&_.ant-menu-item-selected]:!text-emerald-600 [&.ant-menu-inline-collapsed_.ant-menu-item]:!flex [&.ant-menu-inline-collapsed_.ant-menu-item]:!w-12 [&.ant-menu-inline-collapsed_.ant-menu-item]:!items-center [&.ant-menu-inline-collapsed_.ant-menu-item]:!justify-center [&.ant-menu-inline-collapsed_.ant-menu-item]:!px-0 [&.ant-menu-inline-collapsed_.ant-menu-item_.anticon]:!mr-0 [&.ant-menu-inline-collapsed_.ant-menu-item_.anticon]:!text-xl"

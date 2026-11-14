@@ -6,6 +6,13 @@ from .applications import (
     reapplication_error,
 )
 from .automatic_rejection import process_automatic_application_rejections
+from .blocks import (
+    BLOCKED_APPLY_MESSAGE,
+    CandidateAlreadyBlocked,
+    block_candidate,
+    is_candidate_blocked,
+    lift_candidate_block,
+)
 from .locking import RecruitmentResourceChanged
 from .recruiter_cv import open_application_snapshot, record_application_cv_download
 from .reviews import (
@@ -28,6 +35,11 @@ from .status import (
 )
 
 __all__ = [
+    'BLOCKED_APPLY_MESSAGE',
+    'CandidateAlreadyBlocked',
+    'block_candidate',
+    'is_candidate_blocked',
+    'lift_candidate_block',
     'InvalidApplicationStatusTransition',
     'InvalidReapplication',
     'RecruitmentResourceChanged',

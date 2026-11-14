@@ -12,6 +12,7 @@ import {
   EmployerActivitiesPage,
   EmployerApplicationListPage,
   EmployerApplicationReviewPage,
+  EmployerCandidateBlocksPage,
   EmployerAccountInformationPage,
   EmployerBusinessLicensePage,
   EmployerCompanySettingsPage,
@@ -128,6 +129,7 @@ export function employerRoutes() {
               <Route path={employerAppPath('/jobs/:publicId')} element={<EmployerJobDetailPage />} />
               <Route element={<CandidateDataGuard />}>
                 <Route path={employerAppPath('/applications')} element={<EmployerApplicationListPage />} />
+                <Route path={employerAppPath('/candidate-blocks')} element={<EmployerCandidateBlocksPage />} />
               </Route>
             </Route>
           </Route>
