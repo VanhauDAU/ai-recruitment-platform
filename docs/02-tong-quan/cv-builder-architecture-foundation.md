@@ -181,8 +181,8 @@ không trả layout/style/renderer config, lọc `locale`/`category`/`tag`),
 - `GET|PATCH /api/candidate/recruiter-visibility/`: bật cần xác nhận tường minh;
   mỗi quyết định cập nhật `CandidateConsent` và append `CandidateConsentEvent`.
 
-Quản trị (`/api/v2/admin/`, kiểm quyền `HasAdminPermission` với
-`cv_template.*`): `cv-templates` (kèm action tạo draft version từ version hiện
+Quản trị (`/api/v2/admin/`, kiểm quyền `AdminPortalPermission`, mọi
+admin): `cv-templates` (kèm action tạo draft version từ version hiện
 hành, publish, retire, regenerate snapshot; nhận các trường song ngữ),
 `cv-categories`, `cv-colors`, `cv-backgrounds`, `cv-sample-contents` (nhận
 `position_public_id`, `experience_band`). Hồ sơ vị trí CV quản lý ở Django admin

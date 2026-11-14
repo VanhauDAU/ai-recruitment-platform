@@ -7,6 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
+| [Gỡ phòng ban, chức danh, nhân viên quản trị (ADR-0018)](#gỡ-phòng-ban-chức-danh-nhân-viên-quản-trị-adr-0018-2026-11-14) | 🟨 Xong trên nhánh `refactor/remove-admin-rbac`, chờ gộp PR vào `dev` |
 | [Trang công ty và quyền biên tập (CP)](#trang-công-ty-và-quyền-biên-tập-cp-2026-11-14) | 🟨 CP-0 → CP-7 xong trên nhánh `feat/company-page`, chờ gộp PR |
 | [Làm lại Template CV, tạo CV, trích xuất upload (CVT-v3)](#làm-lại-template-cv-cvt-v3-2026-11-13) | 🟨 CVT-0 → CVT-2 đã gộp vào `dev` (PR #176, #178–#182); CVT-3 xong code |
 | [Gỡ xác thực hai bước (ADR-0016)](#gỡ-xác-thực-hai-bước-adr-0016-2026-11-13) | 🟨 Xong trên nhánh `refactor/remove-two-factor`, chưa commit/gộp |
@@ -16,6 +17,33 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Các epic đã hoàn tất](#các-epic-đã-hoàn-tất) | ✅ |
 | [Lộ trình theo PRD](#lộ-trình-theo-prd) | 🟨 Phần AI lõi (giai đoạn 2–3) còn mở |
 | [Việc còn mở](#việc-còn-mở) | |
+
+## Gỡ phòng ban, chức danh, nhân viên quản trị (ADR-0018, 2026-11-14)
+
+Quyết định: [`adr-0018-remove-admin-rbac.md`](02-tong-quan/adr-0018-remove-admin-rbac.md).
+Còn hai cấp quản trị: superuser và admin thường. Xóa phòng ban, chức danh, gán
+nhân viên, phạm vi cấp tài khoản và danh mục 56 mã quyền (backend, frontend,
+docs); trang `/access-control` và bước CI đồng bộ quyền bị gỡ. Superuser mời
+admin qua email (không chọn chức danh), đăng nhập/đặt lại mật khẩu giữ nguyên.
+Migration `accounts.0034` (xóa dữ liệu RBAC — cần `pg_dump` trước khi chạy) và
+`sitecontent.0023` (xóa nhóm settings `admin_roles`).
+
+Kiểm chứng:
+
+- Backend: ruff, import-linter, layering, `makemigrations --check` sạch. Test
+  theo nhóm: accounts/knowledgebase/sitecontent 264 passed, employers 468
+  passed, applications/blog/cv_templates/cvs/jobs 463 passed (3 test
+  `test_pdf_renderer` lỗi do venv local thiếu `playwright`, không liên quan).
+  `accounts.0034` chạy tới → lùi `0033` → tới lại trên DB riêng. Suite đầy đủ
+  kèm ngưỡng coverage 84% chưa chạy xong cục bộ, để CI xác nhận.
+- Frontend: lint, kiến trúc, build, bundle budget đạt; vitest 1389 test, ratchet
+  coverage đạt. E2E smoke 284 passed, 1 failed chỉ trên mobile
+  (`admin-company.spec.js` — tab bị tràn ngoài viewport; tập tab của superuser
+  không đổi, chưa xác nhận lỗi có sẵn trên `main`).
+- Chạy thật trên DB riêng `rbac_verify`: superuser đăng nhập → mời admin (không
+  có ô chức danh) → link `/invitation` đặt mật khẩu → admin thường đăng nhập,
+  thấy 11 khu vực, không có nhóm "Hệ thống"; `/settings` → trang từ chối,
+  `/access-control` → 404; API lời mời/settings/audit toàn hệ thống trả 403.
 
 ## Trang công ty và quyền biên tập (CP, 2026-11-14)
 
@@ -175,7 +203,7 @@ production, staging và soak (ER-8). Lệnh kiểm tra chỉ đọc:
 | 3 — Tối ưu tìm kiếm / matching | ⬜ | Embedding (pgvector) và semantic matching CV–JD |
 | 4 — CV nâng cao | 🟨 | Còn import LinkedIn, AI writer, review CV bằng AI |
 | 5 — Tuyển dụng nâng cao | ✅ | Việc đã lưu, lịch sử trạng thái hồ sơ, notification center của nhà tuyển dụng |
-| 6 — Thương mại & quản trị | ✅ | Quản trị, RBAC, blog, marketing. Gói đăng ký và quota trả phí (6.1, 6.2) bỏ khỏi phạm vi theo ADR-0015 |
+| 6 — Thương mại & quản trị | ✅ | Quản trị (hai cấp superuser/admin theo ADR-0018), blog, marketing. Gói đăng ký và quota trả phí (6.1, 6.2) bỏ khỏi phạm vi theo ADR-0015 |
 | 7 — Deployment | 🟨 | Docker Compose local có; cấu hình production đã bỏ ở P3, chưa triển khai |
 
 ## Việc còn mở

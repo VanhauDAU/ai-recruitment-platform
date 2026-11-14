@@ -63,7 +63,7 @@ erDiagram
     CV_TEMPLATE ||--o{ CV_TEMPLATE_VERSION : versions
 ```
 
-## 3. Tài khoản, phiên và RBAC admin (`accounts`)
+## 3. Tài khoản, phiên và quản trị (`accounts`)
 
 | Bảng (model) | Mục đích, field then chốt và ràng buộc |
 | --- | --- |
@@ -72,27 +72,20 @@ erDiagram
 | `AuthSession` | Một phiên/thiết bị: `portal`, `refresh_jti` (unique, chỉ lưu jti), `auth_revision`, `expires_at`, `revoked_at`. Access token bắt buộc có `sid` trỏ tới phiên còn hiệu lực. |
 | `AuthEmailJob` | Outbox email bảo mật (verification, welcome, reset mật khẩu, mời admin, thông báo đổi email/trạng thái); `status` pending→sending→sent/failed/cancelled; tối đa một email welcome mỗi user. |
 | `AccountStatusTransition` | Bằng chứng bất biến cho mỗi quyết định trạng thái tài khoản (mục 3.2). |
-| `AdminPermission` | Mirror registry code-owned `accounts/constants/admin_permissions.py`; `code` unique, `module`, `is_active` (code bị bỏ được deprecate, không xóa). |
-| `Department`, `AdminRole` | Phòng ban và chức danh; role unique `(department, code)`, M2M permission, `rank` chỉ để hiển thị/chọn primary, `is_system_managed` phân biệt bản ghi seed với bản ghi đã tùy chỉnh. Không có DELETE, chỉ activate/deactivate. |
-| `AdminMembership` | Gán chức danh cho tài khoản `role=admin`; `uq_admin_membership_active_user`: **tối đa một membership active mỗi user**. Thu hồi giữ dòng với `revoked_at`/`revoked_by`; gán lại tạo dòng mới. `AdminRole` được `PROTECT`. |
-| `AdminProvisioningScope` | Whitelist "chức danh nguồn được mời chức danh đích"; unique `(source_role, target_role)`. |
-| `AdminInvitation` | Lời mời admin (pending/accepted/revoked/expired), `token_version`, `expires_at`; tối đa một lời mời pending mỗi user. |
-| `AdminAccessAuditLog` | Nhật ký thay đổi quyền; luôn ghi trong cùng transaction, payload chỉ chứa public ID và before/after thực sự đổi — không chứa OTP, secret, token, mật khẩu. |
+| `AdminInvitation` | Lời mời admin do superuser tạo (pending/accepted/revoked/expired), `token_version`, `expires_at`; tối đa một lời mời pending mỗi user. Không gắn chức danh (ADR-0018). |
+| `AdminAccessAuditLog` | Nhật ký thao tác quản trị dùng chung toàn hệ thống; luôn ghi trong cùng transaction, payload chỉ chứa public ID và before/after thực sự đổi — không chứa OTP, secret, token, mật khẩu. |
 
-### 3.1. Bất biến RBAC
+### 3.1. Hai cấp quản trị
 
-- Quyền hiệu dụng = permission của membership active khi role và department cũng
-  active. `is_superuser=True` bypass mọi permission. Ranh giới bảo mật là
-  `HasAdminPermission`/`require_admin_permission` ở backend; frontend chỉ lọc menu.
-- Ma trận mặc định nằm ở `accounts/constants/admin_departments.py` (phòng
-  `content-cv`, `job-moderation`, `employer-operations`…), seed bằng
-  `seed_admin_access`; `sync_admin_permissions` đồng bộ hai chiều registry ↔ DB,
-  `export_admin_permissions` sinh JSON cho frontend (CI kiểm tra lệch).
-- Cache quyền key `admin_perms:{user_id}`, TTL 60 giây, xóa qua
-  `transaction.on_commit`; Redis lỗi thì đọc DB, không fail-open.
-- Action nguy hiểm (khóa phòng ban/role, thu hồi membership) bắt buộc impact
-  preview: token ký 10 phút gồm revision + operation + resource + payload hash;
-  confirm khóa resource, tính lại rồi mới ghi; token cũ trả `409`.
+- Không còn phòng ban/chức danh/mã quyền
+  ([ADR-0018](../02-tong-quan/adr-0018-remove-admin-rbac.md)). Mọi tài khoản
+  `role=admin` còn truy cập được dùng chức năng nghiệp vụ; `is_superuser=True`
+  thêm thao tác nhạy cảm (tài khoản quản trị, lời mời, site settings, cấu hình
+  AI, cấm tài khoản, gỡ policy hold, audit toàn hệ thống). Ranh giới bảo mật là
+  `AdminPortalPermission` + `require_superuser` ở backend; frontend chỉ ẩn menu.
+- Action nguy hiểm trên tài khoản bắt buộc impact preview: token ký 10 phút gồm
+  revision (id audit mới nhất) + operation + resource + payload hash; confirm
+  khóa resource, tính lại rồi mới ghi; token cũ trả `409`.
 
 ### 3.2. Trạng thái tài khoản
 
@@ -279,7 +272,7 @@ Chi tiết contract document, renderer và API ở
 
 Mục lục, breadcrumb và nút chia sẻ suy ra ở frontend, không lưu DB. Banner
 sidebar blog dùng `sitecontent.Banner` (placement `blog_sidebar`/`blog_inline`).
-API quản trị kiểm quyền RBAC `blog.view`/`blog.manage`/`blog.publish`; Django
+API quản trị mở cho mọi admin (ADR-0018); Django
 admin vẫn dùng permission `blog.can_publish_post` và các group `blog_editor`/
 `blog_manager` do `seed_blog` tạo.
 
@@ -356,4 +349,3 @@ Consent nghiệp vụ của ứng viên nằm ở `candidate_consents` (mục 8)
 
 - Contract migration xóa vật lý các cột verification legacy của
   `employers_company` (đang giữ với DB default sau `employers.0044`).
-- Hợp nhất phân quyền blog trong Django admin (Groups) vào RBAC admin.

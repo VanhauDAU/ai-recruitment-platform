@@ -24,7 +24,7 @@ Hệ thống cài đặt schema-driven: mỗi setting là một row `SiteSetting
 1. Thêm tuple vào `SETTINGS` trong `backend/apps/sitecontent/management/commands/seed_sitecontent.py` đúng nhóm.
 2. Chạy `python manage.py seed_sitecontent`.
 3. Nếu frontend công khai cần dùng ngay cả khi API lỗi → thêm fallback vào `DEFAULT_SITE_SETTINGS` (`frontend/src/contexts/siteSettingsContext.js`).
-4. Lưu ý: các setting nhóm payment/admin_roles... hiện là **khung cấu hình** — logic nghiệp vụ sẽ đọc chúng khi tính năng tương ứng được xây (Giai đoạn 6.1–6.3, 7).
+4. Lưu ý: các setting nhóm payment... hiện là **khung cấu hình** — logic nghiệp vụ sẽ đọc chúng khi tính năng tương ứng được xây (Giai đoạn 6.1–6.3, 7).
 
 ## Biến môi trường liên quan (kiểu `env`)
 
@@ -202,20 +202,6 @@ URL bắt đầu bằng `/` được điều hướng nội bộ, URL đầy đ�
 | `contact_zalo_url` | Zalo | url | "" | ✓ |
 | `contact_messenger_url` | Facebook Messenger | url | "" | ✓ |
 | `contact_map_embed_url` | Google Maps embed | url | "" | ✓ |
-
-### Phân quyền admin (`admin_roles`)
-
-| Key | Tên | Kiểu | Mặc định | Public |
-|---|---|---|---|---|
-| `admin_roles_enabled` | Deprecated — RBAC luôn bật, code không đọc cờ này | boolean | false |  |
-| `admin_allow_staff_creation` | Dành cho luồng mời admin ở G2, G1 chưa đọc | boolean | false |  |
-| `admin_default_role` | Deprecated — role hiện thuộc phòng ban | select | "moderator" |  |
-| `admin_action_log_enabled` | Deprecated — audit RBAC luôn ghi, không thể tắt | boolean | false |  |
-
-Các key deprecated không phải security switch. Nguồn quyền là registry
-`AdminPermission → AdminRole → AdminMembership`; `site_setting.*` chỉ dành cho
-superuser ở G1. G2 sẽ thay cấu hình audit bằng retention/detail policy, không
-cho phép tắt việc ghi log.
 
 ### Cài đặt AI (`ai`)
 

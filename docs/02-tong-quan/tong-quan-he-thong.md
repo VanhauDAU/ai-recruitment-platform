@@ -13,7 +13,7 @@ tuyển. Yêu cầu nghiệp vụ gốc ở
 | --- | --- | --- | --- |
 | Ứng viên | `/` | khách, `candidate` | tìm việc, công ty, mẫu CV, CV builder, ứng tuyển, gợi ý việc làm, cẩm nang, trợ giúp |
 | Nhà tuyển dụng | `/tuyendung` (marketing), `/tuyendung/app` (workspace) | `employer` | xác thực công ty, DPA, chiến dịch, tin tuyển dụng, AI tạo tin, hồ sơ ứng tuyển, thông báo |
-| Quản trị | `/admin/app` | `admin` | phân quyền RBAC, tài khoản, kiểm duyệt xác thực/báo cáo tin, nội dung, thông báo, cài đặt, tổng quan AI |
+| Quản trị | `/admin/app` | `admin` | tài khoản (superuser quản lý quản trị viên), kiểm duyệt xác thực/báo cáo tin, nội dung, thông báo, cài đặt, tổng quan AI |
 
 Mỗi cổng là một tài khoản độc lập: cùng email có thể có tối đa một tài khoản
 cho mỗi role (ràng buộc `(lower(email), role)`), mật khẩu riêng, phiên riêng.
@@ -58,7 +58,7 @@ khác dùng `/api/<app>/`.
 
 | App | Trách nhiệm |
 | --- | --- |
-| `accounts` | User theo role, đăng nhập/đăng ký, social login, JWT + `AuthSession`, outbox email xác thực, RBAC admin, lời mời admin, trạng thái tài khoản (`/api/auth/`, `/api/admin/`) |
+| `accounts` | User theo role, đăng nhập/đăng ký, social login, JWT + `AuthSession`, outbox email xác thực, hai cấp quản trị, lời mời admin, trạng thái tài khoản (`/api/auth/`, `/api/admin/`) |
 | `candidates` | Hồ sơ ứng viên, onboarding, nhu cầu công việc, consent, cài đặt email (`/api/candidate/`) |
 | `employers` | Công ty, recruiter, xác thực doanh nghiệp, DPA, OTP SMS, chiến dịch tuyển dụng, compliance hold, domain claim, thông báo NTD, API công ty công khai (`/api/employer/`, `/api/companies/`) |
 | `jobs` | Tin tuyển dụng và vòng đời, tìm kiếm, tin đã lưu/ẩn, báo cáo tin và tạm ẩn, gợi ý việc làm, digest email, AI tạo tin (`/api/jobs/`, `/api/ai/`) |
@@ -151,12 +151,14 @@ onboarding ứng viên đặc tả trong [`dac-ta-onboarding-ung-vien.md`](../01
   ([ADR-0016](./adr-0016-remove-two-factor-auth.md)). Social login:
   [`social-login.md`](../05-huong-dan/social-login.md).
 
-### Phân quyền admin (RBAC)
+### Phân quyền admin (hai cấp)
 
-Admin thường thuộc phòng ban/chức danh (`AdminMembership`, `AdminRole`,
-`Department`); endpoint khai báo permission cần thiết và được
-`HasAdminPermission` kiểm tra, từ chối bằng 403 `admin_permission_denied`.
-Superuser bypass RBAC. Mọi thay đổi quyền có audit. Lệnh đồng bộ và kiểm tra
+Không có phòng ban/chức danh ([ADR-0018](./adr-0018-remove-admin-rbac.md)).
+Admin thường dùng mọi chức năng nghiệp vụ; superuser thêm quản lý tài khoản
+quản trị, mời quản trị viên, site settings, cấu hình AI, cấm tài khoản và
+audit toàn hệ thống. `AdminPortalPermission` kiểm tra ở backend, từ chối bằng
+403 `admin_permission_denied`. Superuser đầu tiên tạo bằng `createsuperuser`,
+admin tiếp theo nhận lời mời qua email. Mọi thao tác quản trị có audit. Lệnh đồng bộ và kiểm tra
 readiness: [`van-hanh-va-kill-switch.md`](../06-deployment/van-hanh-va-kill-switch.md).
 
 ### Trạng thái tài khoản
@@ -201,6 +203,7 @@ fail-fast khi cấu hình sai. Cờ rollout và cách tắt khẩn cấp:
 - [ADR-0015](./adr-0015-remove-commercial-services.md): gỡ dịch vụ thương mại.
 - [ADR-0016](./adr-0016-remove-two-factor-auth.md): gỡ xác thực hai bước.
 - [ADR-0017](./adr-0017-company-page.md): trang công ty công khai và quyền biên tập.
+- [ADR-0018](./adr-0018-remove-admin-rbac.md): gỡ phòng ban/chức danh, còn hai cấp quản trị.
 - [`cv-builder-architecture-foundation.md`](./cv-builder-architecture-foundation.md): kiến trúc CV Builder.
 - [`employer-remediation-decision-log.md`](./employer-remediation-decision-log.md),
   [`chatbot-local-decision-log.md`](./chatbot-local-decision-log.md): nhật ký quyết định theo mảng.
