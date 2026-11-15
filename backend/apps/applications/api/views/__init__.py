@@ -3,8 +3,8 @@ from .employer import (
     EmployerApplicationDecisionUndoView,
     EmployerApplicationDecisionView,
     EmployerApplicationHistoryView,
-    EmployerApplicationSubmissionsView,
     EmployerApplicationListView,
+    EmployerApplicationSubmissionsView,
 )
 from .v2 import CandidateApplicationV2ListCreateView, RecruiterApplicationSnapshotView
 
