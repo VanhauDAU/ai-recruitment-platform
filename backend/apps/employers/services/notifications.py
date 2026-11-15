@@ -71,6 +71,18 @@ EVENT_PRESENTATION = {
         'Tin tuyển dụng cần chỉnh sửa',
         JOBS_PATH,
     ),
+    EmployerNotification.EventType.COMPANY_JOIN_REQUESTED: (
+        'Có yêu cầu tham gia công ty',
+        COMPANY_PATH,
+    ),
+    EmployerNotification.EventType.COMPANY_JOIN_APPROVED: (
+        'Yêu cầu tham gia công ty đã được duyệt',
+        COMPANY_PATH,
+    ),
+    EmployerNotification.EventType.COMPANY_JOIN_REJECTED: (
+        'Yêu cầu tham gia công ty bị từ chối',
+        COMPANY_PATH,
+    ),
 }
 
 SAFE_METADATA_KEYS = {

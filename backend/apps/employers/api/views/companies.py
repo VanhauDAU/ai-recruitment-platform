@@ -1,6 +1,5 @@
 import random
 
-from django.db import transaction
 from rest_framework import generics, permissions
 from rest_framework.exceptions import ValidationError
 from rest_framework.pagination import CursorPagination, PageNumberPagination
@@ -9,15 +8,13 @@ from rest_framework.response import Response
 from apps.accounts.permissions import IsEmployer
 from common.throttling import ClientIPScopedRateThrottle
 
-from ...models import RecruiterProfile
 from ...selectors import (
     attach_active_public_job_counts,
     featured_public_companies,
-    has_explicit_company_link,
     public_company_search_queryset,
     search_companies,
 )
-from ...services import get_or_create_recruiter
+from ...services import create_company_for_recruiter
 from ..serializers import CompanySearchSerializer, CompanySerializer, PublicCompanyListSerializer
 from .onboarding import _require_company
 
@@ -38,18 +35,8 @@ class CreateCompanyView(generics.CreateAPIView):
     serializer_class = CompanySerializer
     permission_classes = [IsEmployer]
 
-    @transaction.atomic
     def perform_create(self, serializer):
-        get_or_create_recruiter(self.request.user)
-        recruiter = RecruiterProfile.objects.select_for_update().get(user=self.request.user)
-        if has_explicit_company_link(recruiter):
-            raise ValidationError(
-                {'detail': 'Bạn đã liên kết với một công ty — không thể tạo hoặc đổi công ty khác.'}
-            )
-        company = serializer.save(created_by=self.request.user)
-        recruiter.company = company
-        recruiter.company_role = RecruiterProfile.CompanyRole.OWNER
-        recruiter.save(update_fields=['company', 'company_role', 'updated_at'])
+        create_company_for_recruiter(self.request.user, serializer)
 
 
 class CompanySearchView(generics.ListAPIView):

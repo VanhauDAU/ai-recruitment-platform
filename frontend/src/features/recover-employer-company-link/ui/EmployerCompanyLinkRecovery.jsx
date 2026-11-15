@@ -10,17 +10,20 @@ import {
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { message } from '@/shared/lib/toast'
 
+// What already took effect for the company, with the step that undoes it.
 const BLOCKER_LABELS = {
-  COMPANY_OWNER_LINK: 'Tài khoản là chủ sở hữu công ty',
-  VERIFICATION_CASE_NOT_CLEAN: 'Hồ sơ xác thực đã bắt đầu xử lý',
-  COMPANY_DOCUMENTS_EXIST: 'Đã có giấy tờ công ty/xác thực',
-  COMPANY_UPDATE_REQUESTS_EXIST: 'Đã có yêu cầu cập nhật công ty',
-  RECRUITMENT_NEEDS_EXIST: 'Đã có nhu cầu tuyển dụng',
-  CAMPAIGNS_EXIST: 'Đã có chiến dịch tuyển dụng',
-  JOBS_EXIST: 'Đã có tin tuyển dụng',
+  COMPANY_OWNER_WITH_MEMBERS: 'Là chủ công ty còn thành viên khác: chuyển quyền chủ trước',
+  VERIFICATION_APPROVED: 'Xác thực đã được duyệt: thu hồi xác thực trước',
+  ACTIVE_JOBS_EXIST: 'Còn tin đang tuyển: đóng các tin trước',
+  OPEN_CAMPAIGNS_EXIST: 'Còn chiến dịch chưa kết thúc: hoàn tất hoặc hủy trước',
   COMPLIANCE_HOLDS_EXIST: 'Đang có compliance hold',
-  VERIFICATION_HISTORY_EXISTS: 'Đã có lịch sử xác thực',
-  TAX_EVIDENCE_EXISTS: 'Đã có bằng chứng tra cứu thuế',
+}
+
+// Submitted for this company but never approved: withdrawn together with the link.
+const WITHDRAWAL_LABELS = {
+  VERIFICATION_CASE: 'Hồ sơ xác thực đang xử lý (về trạng thái nháp)',
+  VERIFICATION_DOCUMENTS: 'Giấy tờ xác thực chưa duyệt',
+  COMPANY_UPDATE_REQUESTS: 'Yêu cầu cập nhật công ty đang chờ (bị hủy)',
 }
 
 export default function EmployerCompanyLinkRecovery({
@@ -123,7 +126,7 @@ export default function EmployerCompanyLinkRecovery({
               showIcon
               title={impact.can_apply
                 ? 'Liên kết đủ điều kiện gỡ an toàn'
-                : 'Liên kết đã phát sinh dữ liệu và bị khóa gỡ tự động'}
+                : 'Cần xử lý các mục dưới đây trước khi gỡ liên kết'}
             />
             {impact.blockers?.length > 0 && (
               <div>
@@ -132,11 +135,19 @@ export default function EmployerCompanyLinkRecovery({
                 ))}
               </div>
             )}
+            {impact.withdrawals?.length > 0 && (
+              <div>
+                <p className="mb-1 text-sm font-medium text-slate-700">Sẽ tự rút khi gỡ liên kết</p>
+                {impact.withdrawals.map((code) => (
+                  <Tag color="orange" key={code}>{WITHDRAWAL_LABELS[code] || code}</Tag>
+                ))}
+              </div>
+            )}
             <Descriptions size="small" column={2} bordered>
-              <Descriptions.Item label="Giấy tờ">{impact.counts.company_documents}</Descriptions.Item>
-              <Descriptions.Item label="Yêu cầu cập nhật">{impact.counts.company_update_requests}</Descriptions.Item>
-              <Descriptions.Item label="Chiến dịch">{impact.counts.campaigns}</Descriptions.Item>
-              <Descriptions.Item label="Tin tuyển dụng">{impact.counts.jobs}</Descriptions.Item>
+              <Descriptions.Item label="Tin đang tuyển">{impact.counts.active_jobs}</Descriptions.Item>
+              <Descriptions.Item label="Chiến dịch chưa kết thúc">{impact.counts.open_campaigns}</Descriptions.Item>
+              <Descriptions.Item label="Thành viên khác">{impact.counts.other_members}</Descriptions.Item>
+              <Descriptions.Item label="Nhu cầu tuyển dụng (giữ lại)">{impact.counts.recruitment_needs}</Descriptions.Item>
             </Descriptions>
           </Space>
         )}

@@ -15,7 +15,7 @@ from apps.employers.services import record_campaign_activity, recruiter_readines
 from apps.jobs.models import Job, publicly_available_job_filter
 
 from ..models import Application, ApplicationStatusHistory
-from .blocks import BLOCKED_APPLY_MESSAGE, is_candidate_blocked
+from .blocks import BLOCKED_APPLY_MESSAGE, is_candidate_blocked_for_job
 from .recruiter_alerts import alert_recruiter_of_application, alert_recruiter_of_withdrawal
 
 MAX_APPLICATIONS_PER_JOB = 3
@@ -98,7 +98,7 @@ def create_application_record(
     if error:
         raise ApplicationNotAllowed(error)
     # Neutral wording: the candidate is never told they were blocked.
-    if is_candidate_blocked(recruiter_id=job.posted_by_id, candidate_id=candidate.pk):
+    if is_candidate_blocked_for_job(job, candidate.pk):
         raise ApplicationNotAllowed(BLOCKED_APPLY_MESSAGE)
     if not job_accepts_applications(job):
         raise ApplicationNotAllowed(JOB_UNAVAILABLE_MESSAGE)

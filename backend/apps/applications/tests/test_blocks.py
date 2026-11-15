@@ -98,6 +98,26 @@ class CandidateBlockTests(APITestCase):
         self.assertNotIn('chặn', str(refused.data).lower())
         self.assertEqual(allowed.status_code, 201, allowed.data)
 
+    def test_a_block_covers_the_jobs_of_colleagues_at_the_same_company(self):
+        colleague = get_user_model().objects.create_user(
+            email='block-colleague@example.com', password='password', role='employer'
+        )
+        make_employer_ready(colleague, company=self.jobs[0].company, candidate_data=True)
+        colleague_job = Job.objects.create(
+            posted_by=colleague,
+            company=self.jobs[0].company,
+            title='Colleague job',
+            description='d',
+            status=Job.Status.ACTIVE,
+            **open_visibility_window(),
+        )
+        self.block()
+
+        refused = self.apply(colleague_job)
+
+        self.assertEqual(refused.status_code, 400, refused.data)
+        self.assertNotIn('chặn', str(refused.data).lower())
+
     def test_block_can_reject_pending_applications_and_be_lifted(self):
         response = self.block(reject_pending=True, duration_days=30)
 

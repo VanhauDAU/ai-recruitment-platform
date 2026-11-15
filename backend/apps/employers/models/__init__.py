@@ -18,7 +18,7 @@ from .compliance import (
 )
 from .domain_claim import CompanyDomainClaim, CompanyDomainClaimEvent
 from .dpa import EmployerDpaAcceptance
-from .membership import EmployerCompanyLinkEvent, RecruiterProfile
+from .membership import CompanyJoinRequest, EmployerCompanyLinkEvent, RecruiterProfile
 from .notifications import (
     EmployerActivity,
     EmployerNotification,
@@ -39,6 +39,7 @@ from .verification import (
 )
 
 __all__ = [
+    'CompanyJoinRequest',
     'Company',
     'CompanyBenefit',
     'CompanyOffice',

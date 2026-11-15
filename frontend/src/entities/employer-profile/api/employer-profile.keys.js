@@ -14,4 +14,6 @@ export const employerProfileKeys = {
   companyUpdateRequests: employerCompanyUpdateRequestsRoot,
   companyUpdateRequestList: (scope) => [...employerCompanyUpdateRequestsRoot, { scope }],
   companyDomainClaims: employerCompanyDomainClaimsRoot,
+  myCompanyJoinRequest: [...employerProfileRoot, 'company-join', 'mine'],
+  companyJoinRequests: [...employerProfileRoot, 'company-join', 'requests'],
 }

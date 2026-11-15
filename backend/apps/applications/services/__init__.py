@@ -14,6 +14,7 @@ from .blocks import (
     CandidateAlreadyBlocked,
     block_candidate,
     is_candidate_blocked,
+    is_candidate_blocked_for_job,
     lift_candidate_block,
 )
 from .locking import RecruitmentResourceChanged
@@ -61,6 +62,7 @@ __all__ = [
     'CandidateAlreadyBlocked',
     'block_candidate',
     'is_candidate_blocked',
+    'is_candidate_blocked_for_job',
     'lift_candidate_block',
     'InvalidApplicationStatusTransition',
     'ApplicationNotAllowed',
