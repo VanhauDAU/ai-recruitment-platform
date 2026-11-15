@@ -20,6 +20,7 @@ import {
   formatApplyRate,
   formatCount,
   formatJobDate,
+  isJobEditableUnderHold,
   isJobHeld,
   jobDeadlineMeta,
   jobDisplayTitle,
@@ -111,7 +112,7 @@ export default function JobDetailHeader({ job, publicId, summary, closing, onClo
                 Xem tin đăng
               </Button>
             )}
-            {!held && job.status !== 'closed' && (
+            {(!held || isJobEditableUnderHold(job)) && job.status !== 'closed' && (
               <Button className={actionClass} icon={<EditOutlined />} onClick={() => navigate(employerAppPath(`/jobs/${publicId}/edit`))}>
                 Chỉnh sửa
               </Button>

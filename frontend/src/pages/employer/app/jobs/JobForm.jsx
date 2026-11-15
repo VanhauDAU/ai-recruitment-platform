@@ -113,8 +113,9 @@ export default function JobForm() {
     return <Skeleton active paragraph={{ rows: 12 }} />
   }
   if (detailQuery.isError) return <Alert type="error" showIcon title="Không thể tải tin tuyển dụng." />
-  // The backend refuses every edit while a job is held, so do not offer the form.
-  if (detailQuery.data?.visibility_hold) {
+  // The backend refuses edits while a job is held, except for requested changes.
+  const hold = detailQuery.data?.visibility_hold
+  if (hold && !hold.editable) {
     return (
       <section className="mx-auto max-w-[1480px] space-y-4">
         <JobVisibilityHoldAlert hold={detailQuery.data.visibility_hold} />
@@ -126,6 +127,7 @@ export default function JobForm() {
   }
   return (
     <section className="mx-auto max-w-[1480px] space-y-5">
+      <JobVisibilityHoldAlert hold={hold} />
 
       {(categoriesQuery.isError || campaignsQuery.isError || postingContextQuery.isError) && (
         <Alert type="warning" showIcon title="Một số danh mục chưa tải được" description="Bạn có thể tải lại trang để lấy đầy đủ vị trí chuyên môn và chiến dịch." />

@@ -12,12 +12,15 @@ import { Button, Dropdown, Tooltip } from 'antd'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router'
 import { employerAppPath } from '@/shared/config/portals'
-import { employerJobApplicationsPath, isJobHeld, jobDisplayTitle } from './job-list-presentation'
+import { employerJobApplicationsPath, isJobEditableUnderHold, isJobHeld, jobDisplayTitle } from './job-list-presentation'
 
 const iconActionClass = 'inline-flex h-8 w-8 items-center justify-center rounded-lg !text-slate-500 transition hover:!bg-slate-100 hover:!text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500'
 
 // The backend refuses edits, extensions and copies while a job is held.
 function primaryAction(job) {
+  if (isJobEditableUnderHold(job)) {
+    return { label: 'Sửa theo yêu cầu', icon: <EditOutlined />, to: employerAppPath(`/jobs/${job.public_id}/edit`) }
+  }
   if (isJobHeld(job)) return null
   if (job.status === 'draft') {
     return { label: 'Hoàn thiện', icon: <EditOutlined />, to: employerAppPath(`/jobs/${job.public_id}/edit`) }
@@ -28,7 +31,8 @@ function primaryAction(job) {
   return null
 }
 
-const canEdit = (job) => !isJobHeld(job) && !['draft', 'closed'].includes(job.status)
+const canEdit = (job) => (!isJobHeld(job) || isJobEditableUnderHold(job))
+  && !['draft', 'closed'].includes(job.status)
 
 function menuItems(job, { candidateDataAccess, onDuplicate, closeMenu, queueConfirmation, onClose, onDelete }) {
   const jobTitle = jobDisplayTitle(job)

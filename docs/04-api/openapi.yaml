@@ -6295,6 +6295,23 @@ paths:
       responses:
         '200':
           description: No response body
+  /api/jobs/mine/{public_id}/resubmit/:
+    post:
+      operationId: jobs_mine_resubmit_create
+      description: Send a job fixed after a change request back to the review queue.
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - jobs
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
   /api/jobs/mine/{public_id}/submit/:
     post:
       operationId: jobs_mine_submit_create
@@ -14217,10 +14234,12 @@ components:
     AdminJobDecisionActionEnum:
       enum:
       - hide
+      - request_changes
       - restore
       type: string
       description: |-
         * `hide` - hide
+        * `request_changes` - request_changes
         * `restore` - restore
     AdminJobDecisionRequest:
       type: object
@@ -20790,7 +20809,7 @@ components:
           type: string
           readOnly: true
         event_type:
-          $ref: '#/components/schemas/EventType756Enum'
+          $ref: '#/components/schemas/EventTypeEe0Enum'
         summary:
           type: string
           maxLength: 240
@@ -22129,13 +22148,24 @@ components:
           type: string
         reason_label:
           type: string
+        editable:
+          type: boolean
+        resubmitted_at:
+          type: string
+          format: date-time
+          nullable: true
+        request_note:
+          type: string
       required:
       - code
+      - editable
       - held_at
       - kind
       - label
       - reason_code
       - reason_label
+      - request_note
+      - resubmitted_at
     EmployerJobVisibilityHoldKindEnum:
       enum:
       - moderation
@@ -22164,7 +22194,7 @@ components:
           type: string
           readOnly: true
         event_type:
-          $ref: '#/components/schemas/EventType756Enum'
+          $ref: '#/components/schemas/EventTypeEe0Enum'
         title:
           type: string
           maxLength: 180
@@ -22386,7 +22416,7 @@ components:
         * `internship` - Internship
         * `freelance` - Freelance
         * `other` - Khác
-    EventType756Enum:
+    EventTypeEe0Enum:
       enum:
       - verification_approved
       - verification_changes_requested
@@ -22400,6 +22430,7 @@ components:
       - company_page_editor_revoked
       - application_received
       - application_withdrawn
+      - job_changes_requested
       - application_review_submitted
       type: string
       description: |-
@@ -22415,6 +22446,7 @@ components:
         * `company_page_editor_revoked` - Quyền biên tập trang công ty đã bị thu hồi
         * `application_received` - Có hồ sơ ứng tuyển mới
         * `application_withdrawn` - Ứng viên đã rút hồ sơ
+        * `job_changes_requested` - Tin tuyển dụng cần chỉnh sửa
         * `application_review_submitted` - Có đánh giá mới cho hồ sơ ứng viên
     ExperienceBandEnum:
       enum:
@@ -23932,12 +23964,16 @@ components:
       - reject
       - hide
       - restore
+      - request_changes
+      - resubmit
       type: string
       description: |-
         * `approve` - Duyệt tin (lịch sử)
         * `reject` - Từ chối tin (lịch sử)
         * `hide` - Tạm ẩn tin
         * `restore` - Khôi phục hiển thị
+        * `request_changes` - Yêu cầu chỉnh sửa
+        * `resubmit` - Nhà tuyển dụng gửi duyệt lại
     JobReportCreateRequest:
       type: object
       properties:
@@ -24904,11 +24940,13 @@ components:
       enum:
       - manual_review
       - confirmed_violation
+      - changes_requested
       type: string
       description: |-
         * `` - Không giữ
         * `manual_review` - Tạm ẩn để rà soát nội dung
         * `confirmed_violation` - Tạm ẩn do vi phạm đã xác nhận
+        * `changes_requested` - Tạm ẩn, cần chỉnh sửa theo yêu cầu
     NullEnum:
       enum:
       - null

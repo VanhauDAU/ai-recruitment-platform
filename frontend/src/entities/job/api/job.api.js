@@ -173,6 +173,12 @@ export async function extendEmployerJob(publicId, deadline) {
   return data
 }
 
+/** Send a job fixed after a moderation change request back for review. */
+export async function resubmitEmployerJob(publicId) {
+  const { data } = await api.post(`/jobs/mine/${publicId}/resubmit/`)
+  return data
+}
+
 export async function duplicateEmployerJob(publicId) {
   const { data } = await api.post(`/jobs/mine/${publicId}/duplicate/`)
   return data

@@ -17,6 +17,7 @@ import {
   getJobPostingContext,
   jobKeys,
   reopenEmployerJob,
+  resubmitEmployerJob,
 } from '@/entities/job'
 import {
   EMPLOYER_CAPABILITIES,
@@ -116,6 +117,14 @@ export default function JobDetail() {
       message.success('Đã đóng tin.')
     },
     onError: (error) => message.error(getApiErrorMessage(error, 'Không thể đóng tin.')),
+  })
+  const resubmitMutation = useMutation({
+    mutationFn: () => resubmitEmployerJob(publicId),
+    onSuccess: () => {
+      invalidate()
+      message.success('Đã gửi tin cho quản trị viên duyệt lại.')
+    },
+    onError: (error) => message.error(getApiErrorMessage(error, 'Không thể gửi duyệt lại tin.')),
   })
   const deadlineMutation = useMutation({
     mutationFn: ({ action, deadline, acceptedStatementVersion }) => (
@@ -249,7 +258,11 @@ export default function JobDetail() {
         })}
       />
 
-      <JobVisibilityHoldAlert hold={job.visibility_hold} />
+      <JobVisibilityHoldAlert
+        hold={job.visibility_hold}
+        onResubmit={() => resubmitMutation.mutate()}
+        resubmitting={resubmitMutation.isPending}
+      />
       <JobVisibilityIssuesAlert job={job} />
 
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xs">
