@@ -1,10 +1,12 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
-import { getRecruiterVisibility, updateRecruiterVisibility } from '@/entities/candidate-preferences'
+import {
+  getRecruiterVisibility,
+  RECRUITER_VISIBILITY_QUERY_KEY,
+  updateRecruiterVisibility,
+} from '@/entities/candidate-preferences'
 import { cvApiErrorMessage, setCvRecruiterSearchable } from '@/entities/cv'
 import { message } from '@/shared/lib/toast'
-
-export const CONSENT_QUERY_KEY = ['candidate', 'recruiter-visibility']
 
 /** Bật/tắt cho NTD tìm thấy một CV; lần bật đầu tiên xin đồng ý ở mức hồ sơ. */
 export function useCvRecruiterSearch(cv, { source = 'cv_library' } = {}) {
@@ -12,7 +14,7 @@ export function useCvRecruiterSearch(cv, { source = 'cv_library' } = {}) {
   const [enabled, setEnabled] = useState(Boolean(cv?.recruiter_searchable))
   const [updating, setUpdating] = useState(false)
   const [consentOpen, setConsentOpen] = useState(false)
-  const consent = useQuery({ queryKey: CONSENT_QUERY_KEY, queryFn: getRecruiterVisibility, staleTime: 60_000 })
+  const consent = useQuery({ queryKey: RECRUITER_VISIBILITY_QUERY_KEY, queryFn: getRecruiterVisibility, staleTime: 60_000 })
   // Popup "Quản lý danh sách" có thể đổi cờ này ở nơi khác.
   useEffect(() => setEnabled(Boolean(cv?.recruiter_searchable)), [cv?.recruiter_searchable])
 
@@ -41,7 +43,7 @@ export function useCvRecruiterSearch(cv, { source = 'cv_library' } = {}) {
         source,
         source_path: window.location.pathname,
       })
-      queryClient.setQueryData(CONSENT_QUERY_KEY, saved)
+      queryClient.setQueryData(RECRUITER_VISIBILITY_QUERY_KEY, saved)
       setConsentOpen(false)
     } catch {
       message.error('Không thể lưu sự đồng ý lúc này.')

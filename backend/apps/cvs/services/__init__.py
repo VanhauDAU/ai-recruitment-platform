@@ -47,6 +47,7 @@ from .lifecycle import (
     switch_draft_template,
 )
 from .moderation import admin_cv_content, lock_cv, unlock_cv
+from .recruiter_search import withdraw_cvs_from_recruiter_search
 from .sharing import (
     CvSharePermissionError,
     CvShareUnavailableError,
@@ -119,4 +120,5 @@ __all__ = [
     'current_thumbnail_ready',
     'request_current_cv_thumbnail',
     'schedule_cv_thumbnail',
+    'withdraw_cvs_from_recruiter_search',
 ]

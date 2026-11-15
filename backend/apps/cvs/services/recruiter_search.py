@@ -6,6 +6,8 @@ from rest_framework.exceptions import APIException
 
 from apps.candidates.models import CandidateConsent
 
+from ..models import UserCv
+
 
 class RecruiterConsentRequired(APIException):
     status_code = HTTPStatus.CONFLICT
@@ -22,3 +24,10 @@ def recruiter_visibility_granted(user):
         consent_type=CandidateConsent.ConsentType.RECRUITER_VISIBILITY,
         decision=CandidateConsent.Decision.GRANTED,
     ).exists()
+
+
+def withdraw_cvs_from_recruiter_search(user):
+    """Revoking profile-level consent takes every CV out of recruiter search."""
+    return UserCv.objects.filter(user=user, recruiter_searchable=True).update(
+        recruiter_searchable=False
+    )

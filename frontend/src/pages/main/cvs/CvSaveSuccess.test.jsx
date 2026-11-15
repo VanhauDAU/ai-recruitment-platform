@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { App } from 'antd'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { withQueryClient } from '@/test/render-with-query-client'
 import CvSaveSuccess from './CvSaveSuccess'
 
 const mocks = vi.hoisted(() => ({
@@ -23,6 +24,7 @@ vi.mock('@/entities/cv', () => ({
 }))
 vi.mock('html-to-image', () => ({ toBlob: mocks.toBlob }))
 vi.mock('@/entities/candidate-preferences', () => ({
+  RECRUITER_VISIBILITY_QUERY_KEY: ['candidate', 'recruiter-visibility'],
   getRecruiterVisibility: mocks.getRecruiterVisibility,
   updateRecruiterVisibility: mocks.updateRecruiterVisibility,
 }))
@@ -46,7 +48,7 @@ const savedVersion = {
 const PREVIEW_CAPTURE_TIMEOUT = 15_000
 
 function renderPage(initialEntry = '/save-cv-success/cv_1?type=create') {
-  return render(<App><MemoryRouter initialEntries={[initialEntry]}><Routes><Route path="/save-cv-success/:publicId" element={<CvSaveSuccess />} /></Routes></MemoryRouter></App>)
+  return render(withQueryClient(<App><MemoryRouter initialEntries={[initialEntry]}><Routes><Route path="/save-cv-success/:publicId" element={<CvSaveSuccess />} /></Routes></MemoryRouter></App>))
 }
 
 describe('CV save success page', () => {

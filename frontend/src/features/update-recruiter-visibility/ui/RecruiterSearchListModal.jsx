@@ -2,10 +2,13 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Button, Checkbox, Modal, Skeleton, Switch } from 'antd'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
-import { getRecruiterVisibility, updateRecruiterVisibility } from '@/entities/candidate-preferences'
+import {
+  getRecruiterVisibility,
+  RECRUITER_VISIBILITY_QUERY_KEY,
+  updateRecruiterVisibility,
+} from '@/entities/candidate-preferences'
 import { cvApiErrorMessage, getMyCvs, setCvRecruiterSearchable } from '@/entities/cv'
 import { message } from '@/shared/lib/toast'
-import { CONSENT_QUERY_KEY } from '../model/use-cv-recruiter-search'
 
 const CV_TYPE_LABELS = { builder: 'CV online', uploaded: 'CV tải lên' }
 
@@ -20,7 +23,7 @@ function formatUpdatedAt(value) {
 export default function RecruiterSearchListModal({ open, onClose }) {
   const queryClient = useQueryClient()
   const cvsQuery = useQuery({ queryKey: ['my-cvs', 'recruiter-searchable'], queryFn: getMyCvs, enabled: open })
-  const consentQuery = useQuery({ queryKey: CONSENT_QUERY_KEY, queryFn: getRecruiterVisibility, enabled: open })
+  const consentQuery = useQuery({ queryKey: RECRUITER_VISIBILITY_QUERY_KEY, queryFn: getRecruiterVisibility, enabled: open })
   const [selected, setSelected] = useState({})
   const [consented, setConsented] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -47,7 +50,7 @@ export default function RecruiterSearchListModal({ open, onClose }) {
           source: 'cv_search_list',
           source_path: window.location.pathname,
         })
-        queryClient.setQueryData(CONSENT_QUERY_KEY, saved)
+        queryClient.setQueryData(RECRUITER_VISIBILITY_QUERY_KEY, saved)
       }
       const changed = cvs.filter((cv) => Boolean(cv.recruiter_searchable) !== selected[cv.public_id])
       await Promise.all(changed.map((cv) => setCvRecruiterSearchable(cv.public_id, selected[cv.public_id])))
