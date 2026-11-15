@@ -11,7 +11,7 @@ import ProfileSidebar from './ui/ProfileSidebar'
  * Layout 3 cột dùng chung cho cụm trang tài khoản ứng viên (/tai-khoan/...):
  * - Trái  (2/12): danh mục trang — accordion mở 1 nhóm/lần (AccountSidebar).
  * - Giữa  (7/12): nội dung từng trang qua <Outlet /> — mỗi trang một file riêng.
- * - Phải  (3/12): cụm thẻ hồ sơ/trạng thái tìm việc (ProfileSidebar).
+ * - Phải  (3/12): cụm thẻ hồ sơ và quyền NTD tìm kiếm (ProfileSidebar).
  * Mobile: cột trái thu vào Drawer (nút "Danh mục"), cột phải dồn xuống dưới.
  * Route con + tiêu đề sinh từ public config của account — một nguồn duy nhất.
  */

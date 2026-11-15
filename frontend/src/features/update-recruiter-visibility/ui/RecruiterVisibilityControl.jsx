@@ -1,10 +1,16 @@
+import { useQueryClient } from '@tanstack/react-query'
 import { Skeleton, Switch } from 'antd'
 import { useEffect, useState } from 'react'
-import { getRecruiterVisibility, updateRecruiterVisibility } from '@/entities/candidate-preferences'
+import {
+  getRecruiterVisibility,
+  RECRUITER_VISIBILITY_QUERY_KEY,
+  updateRecruiterVisibility,
+} from '@/entities/candidate-preferences'
 import { message } from '@/shared/lib/toast'
 import RecruiterConsentModal from './RecruiterConsentModal'
 
 export default function RecruiterVisibilityControl({ cvPublicId }) {
+  const queryClient = useQueryClient()
   const [status, setStatus] = useState(null)
   const [updating, setUpdating] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
@@ -30,6 +36,8 @@ export default function RecruiterVisibilityControl({ cvPublicId }) {
       })
       setStatus(saved)
       setConfirmOpen(false)
+      queryClient.setQueryData(RECRUITER_VISIBILITY_QUERY_KEY, saved)
+      if (!enabled) queryClient.invalidateQueries({ queryKey: ['my-cvs'] })
       message.success(enabled ? 'Đã cho phép nhà tuyển dụng tìm kiếm hồ sơ.' : 'Đã tắt quyền tìm kiếm hồ sơ.')
     } catch {
       message.error('Không thể cập nhật quyền tìm kiếm hồ sơ lúc này.')

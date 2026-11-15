@@ -7,6 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
+| [Thống nhất luồng đăng tin, hiển thị, ứng tuyển, công ty](#thống-nhất-luồng-đăng-tin-hiển-thị-ứng-tuyển-công-ty-2026-11-15) | 🟨 Kế hoạch 6 giai đoạn đã chốt; GĐ6 xong trên nhánh `fix/recruiter-visibility-consent`, làm trước khi tiếp tục AI |
 | [Đối sánh ngữ nghĩa CV–JD chạy local](#đối-sánh-ngữ-nghĩa-cvjd-chạy-local-2026-11-15) | 🟨 Nền tảng (tuần 1) xong trên nhánh `feat/ai-matching-foundation`, chưa mở PR |
 | [CV tải lên: tệp gốc, tiêu chuẩn upload, giới hạn CV, NTD tìm kiếm](#cv-tải-lên-tệp-gốc-tiêu-chuẩn-upload-giới-hạn-cv-ntd-tìm-kiếm-2026-11-15) | ✅ Gộp vào `dev` (#203) |
 | [Việc làm tốt nhất xếp theo chất lượng tin](#việc-làm-tốt-nhất-xếp-theo-chất-lượng-tin-2026-11-15) | ✅ Gộp vào `dev` (#204) |
@@ -22,6 +23,48 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Các epic đã hoàn tất](#các-epic-đã-hoàn-tất) | ✅ |
 | [Lộ trình theo PRD](#lộ-trình-theo-prd) | 🟨 Phần AI lõi (giai đoạn 2–3) còn mở |
 | [Việc còn mở](#việc-còn-mở) | |
+
+## Thống nhất luồng đăng tin, hiển thị, ứng tuyển, công ty (2026-11-15)
+
+Rà soát luồng thấy nhiều khái niệm có nhiều nơi tự tính (trạng thái tin tính ở
+8 chỗ với 2 múi giờ, quyền đăng tin và quyền nhận hồ sơ mỗi thứ có 2 bộ điều
+kiện), dẫn đến luật bị lách và UI hứa tính năng chưa có. Mục tiêu: mỗi khái
+niệm chỉ một hàm làm nguồn sự thật. Làm xong đợt này rồi mới tiếp tục AI; mỗi
+giai đoạn một PR vào `dev`.
+
+Quyết định đã chốt: tài nguyên vẫn theo từng NTD nhưng chặn ứng viên tính cho
+cả công ty và tham gia công ty cần owner duyệt; bắt buộc xác thực + DPA trước
+khi đăng tin; mở lại tin áp luật như gia hạn, không tính lượt; mỗi ứng viên chỉ
+một hồ sơ hiệu lực trên một tin, có trạng thái "Đã rút"; tin bị ẩn vì lý do sửa
+được thì có vòng yêu cầu sửa; công ty bị ẩn, mất DPA hoặc dính compliance hold
+thì tin tự ẩn và tự hiện lại khi khắc phục; gỡ cờ `JOB_LIFECYCLE_V2_MODE`; "Đang
+tuyển" chỉ đếm tin đang công khai, luôn theo giờ Việt Nam; tìm hồ sơ cho NTD làm
+thật trong hạng mục AI.
+
+| GĐ | Hạng mục | Trạng thái |
+| --- | --- | --- |
+| 1 | Trạng thái hiệu lực của tin + lý do ẩn, giờ VN, bộ lọc công khai khớp quyền xem dữ liệu ứng viên | ⬜ |
+| 2 | Dùng chung điều kiện chặn đăng tin; mở lại tin áp luật gia hạn | ⬜ |
+| 3 | Một hồ sơ hiệu lực trên một tin, rút hồ sơ, tự động từ chối và thống kê chỉ tính hồ sơ hiệu lực | ⬜ |
+| 4 | Vòng yêu cầu sửa tin → NTD sửa → gửi duyệt lại | ⬜ |
+| 5 | Chặn ứng viên theo công ty, owner duyệt yêu cầu tham gia, logic công ty vào service | ⬜ |
+| 6 | Tắt đồng ý tìm hồ sơ thì gỡ mọi CV khỏi tìm kiếm; sửa câu chữ hứa tính năng chưa có | 🟨 Xong trên nhánh `fix/recruiter-visibility-consent` |
+
+<details><summary>Ghi chú GĐ6</summary>
+
+- Tắt đồng ý `RECRUITER_VISIBILITY` ở cả hai đường ghi (API
+  `recruiter-visibility` và form nhu cầu công việc) đều đặt
+  `recruiter_searchable=False` cho mọi CV của ứng viên
+  (`withdraw_cvs_from_recruiter_search` trong `apps/cvs/services`).
+- Gỡ khối "Đang bật/tắt tìm việc" ở sidebar tài khoản: công tắc chỉ là state cục
+  bộ và hứa hồ sơ "hiển thị nổi bật" trong tìm kiếm của NTD. Câu chữ ở sidebar,
+  hộp đồng ý và banner "Bật tìm việc cho CV" nói rõ tính năng tìm ứng viên sắp
+  ra mắt.
+- Khi làm tìm ứng viên trong hạng mục AI: chỉ trả CV có `recruiter_searchable`
+  và hồ sơ còn đồng ý; giữ cam kết trong hộp đồng ý là ẩn họ tên, ảnh và thông
+  tin liên hệ cho tới khi ứng viên đồng ý kết nối.
+
+</details>
 
 ## Đối sánh ngữ nghĩa CV–JD chạy local (2026-11-15)
 
@@ -99,7 +142,8 @@ ngoài. Lộ trình 8 tuần (16/11/2026 → 10/01/2027), mỗi giai đoạn m�
   `cvs.0017`), chỉ bật được khi hồ sơ đã đồng ý `RECRUITER_VISIBILITY`. Công tắc
   trên mọi thẻ CV, popup "Quản lý danh sách" (bật/tắt nhiều CV + đồng ý một lần)
   và khối "Bật tìm việc cho CV" đầu trang CV của tôi; sidebar đếm số CV đang bật.
-  Chưa có màn hình NTD tìm ứng viên đọc cờ này (thuộc hạng mục đối sánh CV–JD).
+  Chưa có màn hình NTD tìm ứng viên đọc cờ này (thuộc hạng mục đối sánh CV–JD);
+  tắt đồng ý thì mọi CV về `recruiter_searchable=False` (GĐ6 đợt thống nhất luồng).
 - Trang xem CV `/cvs/<id>/view` và `/cv/share/<token>`: layout riêng không header
   site, thanh mảnh với Tải CV PDF / Sửa CV / Copy CV (nhân bản); bỏ khối chọn
   phiên bản + xuất PDF (`CvPdfExportControl` đã xóa).

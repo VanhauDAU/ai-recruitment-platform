@@ -13,7 +13,7 @@ export default function EnableCvSearchBanner({ cv }) {
         <h2 className="text-lg font-bold text-[#00a848] sm:text-xl">Bật tìm việc cho CV</h2>
         <p className="mt-1.5 text-sm leading-6 text-slate-700">
           <strong className="break-all">{cv.title}</strong> của bạn vừa mới được tạo.
-          {' '}Hãy bật tìm việc để <strong>CV nổi bật hơn</strong> trong danh sách tìm kiếm của NTD.
+          {' '}Bật tìm việc để <strong>NTD tìm thấy CV này</strong> khi tính năng tìm ứng viên ra mắt.
         </p>
         <Button
           type="primary"
