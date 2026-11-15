@@ -50,6 +50,16 @@ thật trong hạng mục AI.
 | 5 | Chặn ứng viên theo công ty, owner duyệt yêu cầu tham gia, logic công ty vào service | ⬜ |
 | 6 | Tắt đồng ý tìm hồ sơ thì gỡ mọi CV khỏi tìm kiếm; sửa câu chữ hứa tính năng chưa có | ✅ Gộp vào `dev` (#208) |
 
+<details><summary>Sửa migration test đỏ sẵn trên dev</summary>
+
+- `ApplicationSnapshotMigrationTests.test_mismatched_snapshot_is_refused` xóa
+  `CvVersion` bằng model runtime khi schema đang ở mốc cũ; Django lan phép xóa
+  sang `matching_matchdocument` (app matching mới) chưa tồn tại ở mốc đó, test
+  hỏng giữa chừng và kéo theo các test migration khác trong cùng worker. Giờ xóa
+  bằng model của trạng thái migration đang áp dụng.
+
+</details>
+
 <details><summary>Ghi chú GĐ1</summary>
 
 - Nguồn duy nhất ở `apps/jobs/models/querysets.py` (xem
