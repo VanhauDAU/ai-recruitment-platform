@@ -57,7 +57,7 @@ test('homepage Best Jobs uses its own rotation seed after browser refresh', asyn
   if (page.viewportSize().width >= 640) {
     await expect(page.getByText('Luân phiên ngẫu nhiên')).toBeVisible()
   }
-  await expect(page.getByText(/đủ điều kiện Việc làm tốt nhất được luân phiên/)).toBeVisible()
+  await expect(page.getByText(/các tin cùng mức được luân phiên/)).toBeVisible()
 
   const reloadedRequestPromise = page.waitForRequest((request) => {
     const url = new URL(request.url())

@@ -7,7 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
-| [CV tải lên: tệp gốc, tiêu chuẩn upload, giới hạn CV, NTD tìm kiếm](#cv-tải-lên-tệp-gốc-tiêu-chuẩn-upload-giới-hạn-cv-ntd-tìm-kiếm-2026-11-15) | 🟨 Xong trên nhánh `feat/cv-upload-experience`, chưa mở PR |
+| [Việc làm tốt nhất xếp theo chất lượng tin](#việc-làm-tốt-nhất-xếp-theo-chất-lượng-tin-2026-11-15) | 🟨 Xong trên nhánh `feat/best-jobs-quality-ranking`, chưa mở PR |
 | [Thiết kế lại quản lý tin tuyển dụng của NTD](#thiết-kế-lại-quản-lý-tin-tuyển-dụng-của-ntd-2026-11-15) | ✅ Gộp vào `dev` (nhánh `feat/employer-job-workspace`) |
 | [Gỡ widget Trợ lý ProCV ở cổng ứng viên](#gỡ-widget-trợ-lý-procv-ở-cổng-ứng-viên-2026-11-14) | 🟨 Xong trên nhánh `refactor/remove-candidate-assistant`, chờ gộp PR vào `dev` |
 | [Gỡ phòng ban, chức danh, nhân viên quản trị (ADR-0018)](#gỡ-phòng-ban-chức-danh-nhân-viên-quản-trị-adr-0018-2026-11-14) | 🟨 Xong trên nhánh `refactor/remove-admin-rbac`, chờ gộp PR vào `dev` |
@@ -21,44 +21,17 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Lộ trình theo PRD](#lộ-trình-theo-prd) | 🟨 Phần AI lõi (giai đoạn 2–3) còn mở |
 | [Việc còn mở](#việc-còn-mở) | |
 
-## CV tải lên: tệp gốc, tiêu chuẩn upload, giới hạn CV, NTD tìm kiếm (2026-11-15)
+## Việc làm tốt nhất xếp theo chất lượng tin (2026-11-15)
 
-- Lỗi tìm thấy: `backend/.env` bật `*_UPLOAD_SESSION_REQUIRED=True` khi quarantine
-  tắt nên mọi upload bị 409; local đã đưa về `False` (bật lại phải kèm
-  `UPLOAD_QUARANTINE_ENABLED=True` + ClamAV). CV tải lên hiện trống vì mọi màn
-  hình dựng từ `content_json` rỗng.
-- Xem tệp gốc: `GET /api/v2/cvs/<id>/source/` (chủ CV) và
-  `GET /api/v2/cvs/shares/<token>/source/` (link chia sẻ, không ghi thêm lượt
-  truy cập); DOCX đổi sang PDF bằng LibreOffice. Hàm đổi chuyển từ `employers`
-  sang `common/office_preview.py`. Trang xem và link chia sẻ của CV tải lên hiện
-  tệp gốc (ẩn thanh công cụ PDF); thẻ CV tải lên là biểu tượng thư mục, không
-  có nút sửa.
-- Tiêu chuẩn upload + nhận dạng CV (`apps/cvs/services/cv_document.py`, dùng
-  chung cho upload trực tiếp, phiên upload và job import AI): PDF/DOCX đúng chữ
-  ký, ≤ 5 MB, ≤ 20 trang, PDF có lớp chữ và không mật khẩu; phải có email/số
-  điện thoại và ≥ 2 nhóm mục CV, trong đó có kinh nghiệm/học vấn/kỹ năng. Từ khóa
-  chỉ tính ở dòng ngắn dạng tiêu đề (≤ 40 ký tự, hoặc phần trước dấu ":") để báo
-  cáo/thư nhắc "kinh nghiệm" trong câu không lọt; so khớp bỏ dấu, bỏ khoảng trắng
-  vì PDF hay tách chữ; văn bản > 30.000 ký tự bị loại. Lỗi trả `CV_REJECTED` kèm
-  `reason`.
-- Giới hạn số CV theo site setting `candidate_max_cvs` (mặc định 6, tính cả CV
-  lưu trữ) áp ở mọi đường tạo CV; lỗi `CV_LIMIT_REACHED` "Hiện tại tài khoản của
-  bạn chỉ hỗ trợ tạo 6 CV!".
-- Cho NTD tìm kiếm theo từng CV: cột `UserCv.recruiter_searchable` (migration
-  `cvs.0017`), chỉ bật được khi hồ sơ đã đồng ý `RECRUITER_VISIBILITY`. Công tắc
-  trên mọi thẻ CV, popup "Quản lý danh sách" (bật/tắt nhiều CV + đồng ý một lần)
-  và khối "Bật tìm việc cho CV" đầu trang CV của tôi; sidebar đếm số CV đang bật.
-  Chưa có màn hình NTD tìm ứng viên đọc cờ này (thuộc hạng mục đối sánh CV–JD).
-- Trang xem CV `/cvs/<id>/view` và `/cv/share/<token>`: layout riêng không header
-  site, thanh mảnh với Tải CV PDF / Sửa CV / Copy CV (nhân bản); bỏ khối chọn
-  phiên bản + xuất PDF (`CvPdfExportControl` đã xóa).
-- Editor CV bỏ tự động lưu: chỉ lưu khi bấm Lưu CV (hoặc trước khi đổi mẫu/áp
-  nội dung mẫu); rời trang khi còn thay đổi thì hỏi xác nhận.
-- Trang `/tai-cv-len` (kéo thả, tiêu chuẩn, lợi ích) và màn hình tải lên thành
-  công gợi ý mẫu CV online (`?nguon=tai-len`).
-- Còn mở: CV tải lên nguyên tệp chưa dùng để ứng tuyển được — version của nó
-  rỗng nên `application_readiness_issues` chặn (cần phân tích nội dung hoặc cho
-  NTD xem tệp gốc).
+- Lỗi tìm thấy: box "Việc làm tốt nhất" ở trang chủ chỉ nhận tin hạng TOP (dịch
+  vụ trả phí đã gỡ), còn 100 tin thật nhập ngày 15/11 đều là tin thường nên box
+  trống.
+- Nay mọi tin đang hoạt động đều đủ điều kiện, xếp theo điểm chất lượng
+  (`apps/jobs/selectors/homepage.py`): công khai lương +3, nhãn HOT/GẤP +2, đăng
+  trong 7 ngày +2 (trong 30 ngày +1), từ 5 lượt ứng tuyển +1. Tin cùng điểm vẫn
+  luân phiên theo seed (F5 ra lượt khác, phân trang ổn định).
+- Feed `/viec-lam` mặc định vẫn xếp theo hạng tin rồi độ mới; không ảnh hưởng vì
+  mọi tin hiện là tin thường.
 
 ## Xử lý hồ sơ ứng tuyển — giai đoạn 1 (2026-11-15)
 
