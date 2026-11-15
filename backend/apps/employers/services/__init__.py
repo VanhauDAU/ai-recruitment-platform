@@ -63,7 +63,6 @@ from .compliance import (
     release_dpa_holds,
     release_verification_holds,
 )
-from .document_preview import render_office_document_preview
 from .domain_claims import (
     DomainClaimError,
     confirm_domain_claim_admin_action,
@@ -190,7 +189,6 @@ __all__ = [
     'create_campaign',
     'create_initial_recruitment_need',
     'create_sms_phone_challenge',
-    'render_office_document_preview',
     'DomainClaimError',
     'confirm_domain_claim_admin_action',
     'create_domain_claim',

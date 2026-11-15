@@ -406,7 +406,7 @@ function CvWysiwygDraftEditor({ publicId, onSaved }) {
 
   return <DndContext sensors={dndSensors} collisionDetection={closestCenter} onDragStart={({ active }) => setActiveDrag(active.id)} onDragCancel={() => setActiveDrag(null)} onDragEnd={handleDragEnd}><div className="flex h-full min-h-0 flex-col overflow-hidden bg-[#eef0f3]">
     <BuilderTopBar editor={editor} onSave={saveCv} onPreview={() => { setPreviewDocument(editor.flushPendingEdits() || editor.document); setPreviewOpen(true) }} />
-    {['failed', 'conflict'].includes(editor.phase) && <div className="z-30 border-b border-slate-200 bg-white px-4 py-2"><EditorSaveState phase={editor.phase} error={editor.error} savedAt={editor.savedAt} onRetry={editor.retryAutosave} onReload={editor.reloadDraft} /></div>}
+    {['failed', 'conflict'].includes(editor.phase) && <div className="z-30 border-b border-slate-200 bg-white px-4 py-2"><EditorSaveState phase={editor.phase} error={editor.error} savedAt={editor.savedAt} onRetry={editor.retrySave} onReload={editor.reloadDraft} /></div>}
     <div className="flex min-h-0 flex-1 gap-3 px-3 pb-3">
       {isDesktop && <><ToolSidebar activeTool={builderUi.activeTool} onChange={chooseTool} />{desktopPanelOpen && <aside className="mt-4 w-[22rem] shrink-0 self-start overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">{activePanel}</aside>}</>}
       <main className="relative min-w-0 flex-1 overflow-auto px-4 py-5 pb-24 lg:px-8">

@@ -12,6 +12,19 @@ class CandidateUploadSessionRequiredResponse(APIException):
     }
 
 
+class CandidateCvRejectedResponse(APIException):
+    """A readable file that fails the CV upload standards or is not a CV."""
+
+    status_code = status.HTTP_400_BAD_REQUEST
+    default_code = 'CV_REJECTED'
+
+    def __init__(self, error):
+        super().__init__(
+            detail={'code': self.default_code, 'reason': error.code, 'message': str(error)},
+            code=self.default_code,
+        )
+
+
 class CandidateUploadSessionResponse(APIException):
     """Preserve safe shared-upload codes at the candidate CV boundary."""
 

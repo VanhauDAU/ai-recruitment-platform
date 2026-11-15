@@ -66,6 +66,7 @@ class CvV2Serializer(serializers.ModelSerializer):
             'file_name',
             'file_type',
             'is_default',
+            'recruiter_searchable',
             'position_public_id',
             'position_level',
             'experience_years',
@@ -162,6 +163,7 @@ def _active_specialization(value):
 class CvV2MetadataUpdateSerializer(serializers.Serializer):
     title = serializers.CharField(max_length=255, required=False, trim_whitespace=True)
     is_default = serializers.BooleanField(required=False)
+    recruiter_searchable = serializers.BooleanField(required=False)
     # Hồ sơ ứng tuyển (CVT-3): vị trí mục tiêu và cấp bậc mong muốn, dùng cho matching.
     position_public_id = serializers.CharField(max_length=50, required=False, allow_null=True)
     position_level = serializers.ChoiceField(

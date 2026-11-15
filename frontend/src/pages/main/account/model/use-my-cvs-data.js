@@ -1,39 +1,15 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { getMyCvs } from '@/entities/cv'
 
-// Data hook cho trang Quản lý CV. requestId chặn set state từ request cũ
-// (refresh chồng nhau hoặc unmount).
+// Data hook cho trang Quản lý CV. Dùng chung key ['my-cvs'] để công tắc và
+// popup "Cho phép NTD tìm kiếm" làm mới danh sách ngay sau khi lưu.
 export function useMyCvsData() {
-  const [cvs, setCvs] = useState([])
-  const [loading, setLoading] = useState(true)
-  const requestIdRef = useRef(0)
-
-  const refresh = useCallback(async () => {
-    const requestId = ++requestIdRef.current
-    setLoading(true)
-    try {
-      const activeCvs = await getMyCvs()
-      if (requestId !== requestIdRef.current) return
-      setCvs(activeCvs)
-    } catch {
-      if (requestId !== requestIdRef.current) return
-      setCvs([])
-    } finally {
-      if (requestId === requestIdRef.current) setLoading(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    refresh()
-    return () => {
-      requestIdRef.current += 1
-    }
-  }, [refresh])
+  const { data: cvs = [], isLoading, refetch } = useQuery({ queryKey: ['my-cvs', 'library'], queryFn: getMyCvs })
 
   return {
     builderCvs: cvs.filter((cv) => cv.cv_type === 'builder'),
     uploadedCvs: cvs.filter((cv) => cv.cv_type === 'uploaded'),
-    loading,
-    refresh,
+    loading: isLoading,
+    refresh: refetch,
   }
 }

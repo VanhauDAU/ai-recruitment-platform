@@ -6,10 +6,11 @@ import { OwnerCvVersionView, SharedCvVersionView } from './CvVersionReadOnly'
 const preview = vi.fn()
 
 vi.mock('@/entities/cv', () => ({
-  CvDocumentPreview: (props) => {
+  FittedCvPreview: (props) => {
     preview(props)
     return <div data-testid="immutable-preview">{props.rendererKey}</div>
   },
+  UploadedCvPreview: ({ publicId }) => <div data-testid="source-file-preview">{publicId}</div>,
 }))
 
 const immutableResponse = {
@@ -32,13 +33,29 @@ describe('read-only CV version viewer', () => {
       </MemoryRouter>,
     )
 
-    expect(await screen.findByText('Xem CV Online của CV bất biến')).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Xem CV Online của CV bất biến' })).toBeInTheDocument()
     expect(screen.getByTestId('immutable-preview')).toHaveTextContent('sidebar_right_v1')
     expect(loadOwnerView).toHaveBeenCalledWith('cv_1')
     expect(preview).toHaveBeenLastCalledWith(expect.objectContaining({
       rendererKey: 'sidebar_right_v1',
       document: expect.objectContaining({ content_json: immutableResponse.version.content_json }),
     }))
+  })
+
+  it('shows the original file instead of the empty imported version for an uploaded CV', async () => {
+    const loadOwnerView = vi.fn().mockResolvedValue({
+      ...immutableResponse,
+      cv: { ...immutableResponse.cv, cv_type: 'uploaded' },
+    })
+    render(
+      <MemoryRouter>
+        <OwnerCvVersionView publicId="cv_1" loadOwnerView={loadOwnerView} />
+      </MemoryRouter>,
+    )
+
+    expect(await screen.findByTestId('source-file-preview')).toHaveTextContent('cv_1')
+    expect(screen.queryByTestId('immutable-preview')).not.toBeInTheDocument()
+    expect(screen.queryByText('Sửa CV')).not.toBeInTheDocument()
   })
 
   it('does not reveal whether a public shared token was invalid, expired, or revoked', async () => {

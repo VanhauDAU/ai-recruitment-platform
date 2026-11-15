@@ -1,12 +1,20 @@
 """Write workflows for candidate-owned CVs."""
 
 from copy import deepcopy
+from io import BytesIO
 from uuid import uuid4
 
 from django.core.files.storage import default_storage
 from django.db import transaction
 
+from common.office_preview import DOCX_CONTENT_TYPE, render_office_document_preview
+from common.r2_storage import private_media_storage
+
 from ..models import CvAccessLog, CvExport, CvSharedLink, CvVersion, UserCv
+from .cv_document import read_cv_document
+from .imports import validate_import_upload
+from .quota import ensure_cv_quota
+from .recruiter_search import RecruiterConsentRequired, recruiter_visibility_granted
 from .upload_claims import (
     CV_SOURCE_CLAIM_SCOPE,
     claim_candidate_upload,
@@ -86,10 +94,12 @@ def upload_cv(user, upload, title='', *, source=UserCv.Source.UPLOADED):
     file_type = upload.name.rsplit('.', 1)[-1].lower() if '.' in upload.name else ''
     if file_type not in ALLOWED_UPLOAD_TYPES:
         raise UnsupportedCvUpload('Only PDF or DOCX files are supported.')
+    read_cv_document(upload, file_type)
 
     path = default_storage.save(f'cvs/uploads/{user.public_id}/{uuid4().hex}.{file_type}', upload)
     try:
         with transaction.atomic():
+            ensure_cv_quota(user)
             cv = UserCv.objects.create(
                 user=user,
                 cv_type=UserCv.CvType.UPLOADED,
@@ -111,9 +121,29 @@ def import_v2_cv(actor, upload, title=''):
     return upload_cv(actor, upload, title, source=UserCv.Source.IMPORTED)
 
 
+def open_uploaded_cv_pdf(cv):
+    """Open an uploaded CV's original file as a PDF stream for its owner.
+
+    DOCX sources are converted on the fly. Returns None when the CV has no
+    readable source or the conversion fails.
+    """
+    if cv.cv_type != UserCv.CvType.UPLOADED or not cv.file_url:
+        return None
+    if cv.file_type == 'docx':
+        preview = render_office_document_preview(cv.file_url, DOCX_CONTENT_TYPE)
+        return BytesIO(preview) if preview is not None else None
+    if cv.file_type != 'pdf':
+        return None
+    try:
+        return private_media_storage().open(cv.file_url, 'rb')
+    except OSError:
+        return None
+
+
 @transaction.atomic
 def import_v2_cv_from_session(*, actor, upload_session_public_id, title=''):
     """Create an uploaded CV from a scanner-approved private object."""
+    ensure_cv_quota(actor)
     cv = UserCv.objects.create(
         user=actor,
         cv_type=UserCv.CvType.UPLOADED,
@@ -127,9 +157,9 @@ def import_v2_cv_from_session(*, actor, upload_session_public_id, title=''):
         claim_reference=cv.public_id,
     )
     with open_clean_candidate_upload(asset) as upload:
-        file_type = upload.name.rsplit('.', 1)[-1].lower() if '.' in upload.name else ''
-        if file_type not in ALLOWED_UPLOAD_TYPES:
-            raise UnsupportedCvUpload('Only PDF or DOCX files are supported.')
+        # Cùng chuẩn với upload trực tiếp: định dạng/chữ ký, dung lượng, nội dung là CV.
+        file_type = validate_import_upload(upload)
+        read_cv_document(upload, file_type)
 
     cv.title = title or asset.original_filename
     cv.file_url = asset.storage_key
@@ -161,6 +191,7 @@ def duplicate_cv(*, cv, actor, title=''):
     source_version = source_cv.latest_version
     if source_version is None:
         raise ValueError('This CV has no immutable version to duplicate.')
+    ensure_cv_quota(actor)
 
     content_json = deepcopy(source_version.content_json)
     layout_json = deepcopy(source_version.layout_json)
@@ -198,7 +229,14 @@ UNCHANGED = object()
 
 @transaction.atomic
 def update_cv_metadata(
-    *, cv, actor, title=None, is_default=None, position=UNCHANGED, position_level=None
+    *,
+    cv,
+    actor,
+    title=None,
+    is_default=None,
+    position=UNCHANGED,
+    position_level=None,
+    recruiter_searchable=None,
 ):
     """Update the small mutable CV aggregate owned by the candidate.
 
@@ -233,6 +271,11 @@ def update_cv_metadata(
     if position_level is not None and locked_cv.position_level != position_level:
         locked_cv.position_level = position_level
         update_fields.append('position_level')
+    if recruiter_searchable is not None and locked_cv.recruiter_searchable != recruiter_searchable:
+        if recruiter_searchable and not recruiter_visibility_granted(actor):
+            raise RecruiterConsentRequired()
+        locked_cv.recruiter_searchable = recruiter_searchable
+        update_fields.append('recruiter_searchable')
     if update_fields:
         locked_cv.save(update_fields=[*update_fields, 'updated_at'])
     return locked_cv

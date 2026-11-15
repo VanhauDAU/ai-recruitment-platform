@@ -224,7 +224,7 @@ SETTINGS = [
         '',
         {},
     ),
-    ('candidate_max_cvs', 'Số CV tối đa mỗi người', G.CANDIDATE, T.NUMBER, 10, True, '', {}),
+    ('candidate_max_cvs', 'Số CV tối đa mỗi người', G.CANDIDATE, T.NUMBER, 6, True, '', {}),
     (
         'candidate_max_applications_per_day',
         'Giới hạn ứng tuyển mỗi ngày',

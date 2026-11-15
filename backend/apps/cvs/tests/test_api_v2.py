@@ -16,6 +16,7 @@ from django.utils import timezone
 from PIL import Image
 from rest_framework.test import APITestCase
 
+from apps.candidates.models import CandidateConsent, CandidateProfile
 from apps.cv_templates.models import (
     CvColor,
     CvPositionProfile,
@@ -25,6 +26,7 @@ from apps.cv_templates.models import (
     CvTemplateVersion,
 )
 from apps.jobs.models import JobCategory, JobCategoryLocalization
+from apps.sitecontent.models import SiteSetting
 
 from ..models import (
     CvAccessLog,
@@ -45,6 +47,7 @@ from ..tasks import (
     process_cv_import_job,
     render_cv_export_job,
 )
+from .fixtures import CV_LINES, cv_pdf_upload, docx_bytes, pdf_bytes
 
 TEST_EXPORT_MEDIA_ROOT = tempfile.mkdtemp()
 
@@ -333,10 +336,130 @@ class CvV2ApiTests(APITestCase):
         self.assertEqual(other.status_code, 201)
         self.assertEqual(UserCv.objects.filter(title='CV một lần').count(), 2)
 
-    def test_import_hard_delete_and_metadata_use_v2_without_legacy_storage_urls(self):
-        uploaded = SimpleUploadedFile(
-            'source.pdf', b'%PDF-1.4 test', content_type='application/pdf'
+    def import_uploaded_cv(self, upload):
+        response = self.client.post(reverse('cv-v2-import'), {'file': upload}, format='multipart')
+        self.assertEqual(response.status_code, 201, response.data)
+        return UserCv.objects.get(public_id=response.data['public_id'])
+
+    def source_file_url(self, cv):
+        return reverse('cv-v2-source-file', kwargs={'public_id': cv.public_id})
+
+    def test_owner_views_uploaded_pdf_source_inline_and_others_cannot(self):
+        cv = self.import_uploaded_cv(cv_pdf_upload('source.pdf'))
+
+        owner_view = self.client.get(self.owner_view_url(cv))
+        response = self.client.get(self.source_file_url(cv))
+
+        self.assertEqual(owner_view.data['cv']['cv_type'], UserCv.CvType.UPLOADED)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/pdf')
+        self.assertTrue(response['Content-Disposition'].startswith('inline'))
+        self.assertEqual(response['Cache-Control'], 'private, no-store')
+        self.assertEqual(b''.join(response.streaming_content), pdf_bytes())
+
+        self.client.force_authenticate(self.other_candidate)
+        self.assertEqual(self.client.get(self.source_file_url(cv)).status_code, 404)
+
+    def test_shared_link_of_uploaded_cv_serves_the_original_file_without_double_audit(self):
+        cv = self.import_uploaded_cv(cv_pdf_upload('source.pdf'))
+        created = self.client.post(
+            self.shared_links_url(cv),
+            {'version_public_id': cv.latest_version.public_id},
+            format='json',
         )
+        self.assertEqual(created.status_code, 201, created.data)
+        token = created.data['token']
+        self.client.force_authenticate(None)
+
+        page = self.client.get(reverse('cv-v2-shared-link-public', kwargs={'token': token}))
+        logs_after_page = CvAccessLog.objects.filter(cv=cv).count()
+        source = self.client.get(reverse('cv-v2-shared-source-file', kwargs={'token': token}))
+        missing = self.client.get(reverse('cv-v2-shared-source-file', kwargs={'token': 'not-real'}))
+
+        self.assertEqual(page.data['cv']['cv_type'], UserCv.CvType.UPLOADED)
+        self.assertEqual(source.status_code, 200)
+        self.assertEqual(b''.join(source.streaming_content), pdf_bytes())
+        self.assertEqual(CvAccessLog.objects.filter(cv=cv).count(), logs_after_page)
+        self.assertEqual(missing.status_code, 404)
+
+    @patch('apps.cvs.services.cvs.render_office_document_preview', return_value=b'%PDF-docx')
+    def test_uploaded_docx_source_is_converted_to_pdf(self, render_preview):
+        cv = self.import_uploaded_cv(self._docx_upload())
+
+        response = self.client.get(self.source_file_url(cv))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(b''.join(response.streaming_content), b'%PDF-docx')
+        render_preview.assert_called_once()
+        self.assertEqual(render_preview.call_args.args[0], cv.file_url)
+
+    @patch('apps.cvs.services.cvs.render_office_document_preview', return_value=None)
+    def test_source_file_is_unavailable_for_builder_cvs_and_failed_conversions(self, _render):
+        builder = self.create_cv()
+        docx = self.import_uploaded_cv(self._docx_upload())
+
+        self.assertEqual(self.client.get(self.source_file_url(builder)).status_code, 404)
+        self.assertEqual(self.client.get(self.source_file_url(docx)).status_code, 404)
+
+    def test_cv_quota_from_admin_setting_blocks_every_create_path(self):
+        SiteSetting.objects.create(key='candidate_max_cvs', value=2)
+        first = self.create_cv()
+        self.create_cv()
+
+        created = self.client.post(
+            reverse('cv-v2-list-create'),
+            {'title': 'CV thứ ba', 'template_public_id': self.template.public_id},
+            format='json',
+        )
+        uploaded = self.client.post(
+            reverse('cv-v2-import'),
+            {'file': cv_pdf_upload()},
+            format='multipart',
+        )
+        duplicated = self.client.post(
+            reverse('cv-v2-duplicate', kwargs={'public_id': first.public_id}), {}, format='json'
+        )
+
+        for response in (created, uploaded, duplicated):
+            self.assertEqual(response.status_code, 409, response.data)
+            self.assertEqual(response.data['code'], 'CV_LIMIT_REACHED')
+            self.assertEqual(
+                response.data['message'], 'Hiện tại tài khoản của bạn chỉ hỗ trợ tạo 2 CV!'
+            )
+        self.assertEqual(UserCv.objects.filter(user=self.candidate).count(), 2)
+
+    def test_upload_that_is_not_a_cv_is_rejected_without_creating_one(self):
+        response = self.client.post(
+            reverse('cv-v2-import'),
+            {'file': cv_pdf_upload('invoice.pdf', ('Hoa don ban hang so 123, tong 500.000 VND',))},
+            format='multipart',
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data['code'], 'CV_REJECTED')
+        self.assertEqual(response.data['reason'], 'not_a_cv')
+        self.assertFalse(UserCv.objects.filter(user=self.candidate).exists())
+
+    def test_recruiter_search_opt_in_per_cv_requires_profile_consent(self):
+        cv = self.import_uploaded_cv(cv_pdf_upload())
+        url = reverse('cv-v2-detail', kwargs={'public_id': cv.public_id})
+
+        blocked = self.client.patch(url, {'recruiter_searchable': True}, format='json')
+        CandidateConsent.objects.create(
+            candidate_profile=CandidateProfile.objects.get_or_create(user=self.candidate)[0],
+            consent_type=CandidateConsent.ConsentType.RECRUITER_VISIBILITY,
+            decision=CandidateConsent.Decision.GRANTED,
+        )
+        enabled = self.client.patch(url, {'recruiter_searchable': True}, format='json')
+        disabled = self.client.patch(url, {'recruiter_searchable': False}, format='json')
+
+        self.assertEqual(blocked.status_code, 409)
+        self.assertEqual(blocked.data['code'], 'RECRUITER_CONSENT_REQUIRED')
+        self.assertTrue(enabled.data['recruiter_searchable'])
+        self.assertFalse(disabled.data['recruiter_searchable'])
+
+    def test_import_hard_delete_and_metadata_use_v2_without_legacy_storage_urls(self):
+        uploaded = cv_pdf_upload('source.pdf')
         imported = self.client.post(
             reverse('cv-v2-import'),
             {'file': uploaded, 'title': 'Imported CV'},
@@ -375,17 +498,10 @@ class CvV2ApiTests(APITestCase):
         )
 
     def _docx_upload(self, name='source.docx'):
-        from docx import Document
-
-        document = Document()
-        document.add_paragraph('Nguyen Van Candidate')
-        document.add_paragraph('candidate@example.com | +84 912 345 678')
-        document.add_paragraph('Software engineer with five years of product experience.')
-        output = BytesIO()
-        document.save(output)
+        content = docx_bytes(('Nguyen Van Candidate', *CV_LINES[1:]))
         return SimpleUploadedFile(
             name,
-            output.getvalue(),
+            content,
             content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         )
 
@@ -450,7 +566,7 @@ class CvV2ApiTests(APITestCase):
     def test_import_accepts_a_pdf_header_after_a_valid_leading_preamble(self):
         upload = SimpleUploadedFile(
             'generated-cv.pdf',
-            b'\xef\xbb\xbf\n%PDF-1.7\ncandidate cv',
+            b'\xef\xbb\xbf\n' + pdf_bytes(),
             content_type='application/pdf',
         )
 

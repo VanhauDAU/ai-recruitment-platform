@@ -13,13 +13,16 @@ import { Dropdown, Input, Modal, Spin } from 'antd'
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import { CvDocumentPreview, getCvOwnerView } from '@/entities/cv'
+import { CvRecruiterSearchSwitch } from '@/features/update-recruiter-visibility'
 import { usePreviewFitZoom } from '@/shared/hooks/use-preview-fit-zoom'
 import ConfirmActionModal from '@/shared/ui/ConfirmActionModal'
 import { useCvCardActions } from '../model/use-cv-card-actions'
+import UploadedCvThumbnail from './UploadedCvThumbnail'
 
 export default function UserCvCard({ cv, onRefresh }) {
   const actions = useCvCardActions(cv, onRefresh)
   const { setIsMainCv } = actions
+  const isUploaded = cv.cv_type === 'uploaded'
 
   // Quản lý trạng thái hover và mở menu của thẻ CV
   const [hovered, setHovered] = useState(false)
@@ -28,6 +31,8 @@ export default function UserCvCard({ cv, onRefresh }) {
   const { data: detail = null, isLoading: loading } = useQuery({
     queryKey: ['cv', 'owner-view', cv.public_id],
     queryFn: () => getCvOwnerView(cv.public_id),
+    // CV tải lên hiển thị biểu tượng tệp, không cần dựng bản version.
+    enabled: !isUploaded,
   })
 
   useEffect(() => {
@@ -90,7 +95,7 @@ export default function UserCvCard({ cv, onRefresh }) {
 
   // Mở CV ở tab mới khi click vào card
   const handleCardClick = () => {
-    if (!loading && documentData) {
+    if (isUploaded || (!loading && documentData)) {
       window.open(`/cvs/${cv.public_id}/view`, '_blank')
     }
   }
@@ -140,7 +145,9 @@ export default function UserCvCard({ cv, onRefresh }) {
           )}
         </button>
 
-        {loading ? (
+        {isUploaded ? (
+          <UploadedCvThumbnail fileType={cv.file_type} />
+        ) : loading ? (
           <div className="flex items-center justify-center h-full w-full">
             <Spin size="small" />
           </div>
@@ -175,16 +182,16 @@ export default function UserCvCard({ cv, onRefresh }) {
                 className="flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[11px] font-bold text-black hover:text-[#00b14f] transition shadow-sm cursor-pointer border border-slate-100 hover:scale-105"
                 style={{ backgroundColor: '#ffffff' }}
               >
-                <DownloadOutlined /> Xem / xuất PDF
+                <DownloadOutlined /> {isUploaded ? 'Xem CV' : 'Xem / xuất PDF'}
               </button>
-              <Link
+              {!isUploaded && <Link
                 to={`/cvs/${cv.public_id}/edit`}
                 onClick={(e) => e.stopPropagation()}
                 className="flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[11px] font-bold text-black hover:text-[#00b14f] transition shadow-sm cursor-pointer border border-slate-100 hover:scale-105"
                 style={{ backgroundColor: '#ffffff' }}
               >
                 <EditOutlined /> Chỉnh sửa
-              </Link>
+              </Link>}
               <Dropdown
                 menu={{ items: dropdownMenuItems }}
                 trigger={['click']}
@@ -215,6 +222,7 @@ export default function UserCvCard({ cv, onRefresh }) {
         <p className="text-xs text-slate-400">
           Cập nhật {formattedDate}
         </p>
+        <CvRecruiterSearchSwitch cv={cv} />
       </div>
 
       {/* Modal Rename */}

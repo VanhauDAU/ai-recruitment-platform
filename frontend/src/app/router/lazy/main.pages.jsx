@@ -39,5 +39,6 @@ export const TemplateCatalogPage = lazy(() => import('@/pages/main/cv-templates/
 export const TemplateDetailPage = lazy(() => import('@/pages/main/cv-templates/TemplateDetail'))
 export const CvEditorPage = lazy(() => import('@/pages/main/cvs/CvEditor'))
 export const CvSaveSuccessPage = lazy(() => import('@/pages/main/cvs/CvSaveSuccess'))
+export const UploadCvPage = lazy(() => import('@/pages/main/cvs/UploadCv'))
 export const CvOwnerViewPage = lazy(() => import('@/pages/main/cvs/CvOwnerView'))
 export const CvSharedViewPage = lazy(() => import('@/pages/main/cvs/CvSharedView'))
