@@ -7,7 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
-| [Thống nhất luồng đăng tin, hiển thị, ứng tuyển, công ty](#thống-nhất-luồng-đăng-tin-hiển-thị-ứng-tuyển-công-ty-2026-11-15) | 🟨 GĐ6, GĐ1, GĐ2, GĐ3 (#208–#213) đã gộp; GĐ4 xong trên nhánh `feat/job-changes-requested`; còn GĐ5 |
+| [Thống nhất luồng đăng tin, hiển thị, ứng tuyển, công ty](#thống-nhất-luồng-đăng-tin-hiển-thị-ứng-tuyển-công-ty-2026-11-15) | 🟨 GĐ1–GĐ4, GĐ6 (#208–#214) đã gộp; GĐ5 xong trên nhánh `fix/company-membership` |
 | [Đối sánh ngữ nghĩa CV–JD chạy local](#đối-sánh-ngữ-nghĩa-cvjd-chạy-local-2026-11-15) | 🟨 Nền tảng (tuần 1) xong trên nhánh `feat/ai-matching-foundation`, chưa mở PR |
 | [CV tải lên: tệp gốc, tiêu chuẩn upload, giới hạn CV, NTD tìm kiếm](#cv-tải-lên-tệp-gốc-tiêu-chuẩn-upload-giới-hạn-cv-ntd-tìm-kiếm-2026-11-15) | ✅ Gộp vào `dev` (#203) |
 | [Việc làm tốt nhất xếp theo chất lượng tin](#việc-làm-tốt-nhất-xếp-theo-chất-lượng-tin-2026-11-15) | ✅ Gộp vào `dev` (#204) |
@@ -46,9 +46,30 @@ thật trong hạng mục AI.
 | 1 | Trạng thái hiệu lực của tin + lý do ẩn, giờ VN, bộ lọc công khai khớp quyền xem dữ liệu ứng viên | ✅ Gộp vào `dev` (#209) |
 | 2 | Dùng chung điều kiện chặn đăng tin; mở lại tin áp luật gia hạn | ✅ Gộp vào `dev` (#211) |
 | 3 | Một hồ sơ hiệu lực trên một tin, rút hồ sơ, tự động từ chối và thống kê chỉ tính hồ sơ hiệu lực | ✅ Gộp vào `dev` (#213) |
-| 4 | Vòng yêu cầu sửa tin → NTD sửa → gửi duyệt lại | 🟨 Xong trên nhánh `feat/job-changes-requested` |
-| 5 | Chặn ứng viên theo công ty, owner duyệt yêu cầu tham gia, logic công ty vào service | ⬜ |
+| 4 | Vòng yêu cầu sửa tin → NTD sửa → gửi duyệt lại | ✅ Gộp vào `dev` (#214) |
+| 5 | Chặn ứng viên theo công ty, owner duyệt yêu cầu tham gia, logic công ty vào service, gỡ liên kết công ty, SMS dev | 🟨 Xong trên nhánh `fix/company-membership` |
 | 6 | Tắt đồng ý tìm hồ sơ thì gỡ mọi CV khỏi tìm kiếm; sửa câu chữ hứa tính năng chưa có | ✅ Gộp vào `dev` (#208) |
+
+<details><summary>Ghi chú GĐ5</summary>
+
+- Tham gia công ty có sẵn tạo `CompanyJoinRequest` chờ chủ công ty duyệt (thông
+  báo cho owner và người xin); chỉ khi duyệt mới gán `RecruiterProfile.company`
+  với vai trò thành viên. Người xin thấy thẻ "Đang chờ duyệt" và hủy được để
+  chọn công ty khác; owner duyệt/từ chối ở trang Thông tin công ty. Logic tạo
+  và tham gia công ty nằm ở `employers/services/company_membership.py`.
+- Chặn ứng viên tính cho cả công ty khi nộp hồ sơ (`is_candidate_blocked_for_job`);
+  "từ chối hồ sơ chờ" khi chặn vẫn chỉ trên tin của chính NTD đó.
+- Gỡ liên kết công ty (admin) chia 3 nhóm: không chặn (nhu cầu tuyển dụng, lịch
+  sử xác thực, tin nháp/đã đóng); tự rút khi gỡ (hồ sơ xác thực chưa duyệt về
+  nháp kèm sự kiện `withdrawn_by_unlink`, giấy tờ chưa duyệt, yêu cầu cập nhật
+  đang chờ); chặn kèm cách xử lý (đã duyệt xác thực, còn tin đang tuyển, chiến
+  dịch chưa kết thúc, compliance hold, chủ công ty còn thành viên khác).
+- SMS OTP trên dev: `EMPLOYER_SMS_OTP_ENABLED=True`, `EMPLOYER_SMS_PROVIDER=console`
+  (đổi `backend/.env` xong phải `docker compose up -d backend worker`), mã OTP
+  hiện trong `docker logs -f ai-recruitment-platform-worker-1`. Production chỉ
+  cho phép provider `http` và cần adapter riêng cho nhà cung cấp được chọn.
+
+</details>
 
 <details><summary>Ghi chú GĐ4</summary>
 

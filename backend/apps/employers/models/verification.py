@@ -118,6 +118,7 @@ class EmployerVerificationEvent(models.Model):
         HOLD_RELEASED = 'hold_released', 'Đã gỡ compliance hold'
         SENSITIVE_VIEWED = 'sensitive_viewed', 'Đã xem dữ liệu nhạy cảm'
         TAX_LOOKUP_REFRESHED = 'tax_lookup_refreshed', 'Đã tra cứu lại mã số thuế'
+        WITHDRAWN_BY_UNLINK = 'withdrawn_by_unlink', 'Đã rút do gỡ liên kết công ty'
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     verification_case = models.ForeignKey(

@@ -14,6 +14,8 @@ from .api.views import (
     CompanyDomainClaimVerifyView,
     CompanyGalleryDeleteView,
     CompanyGalleryUploadView,
+    CompanyJoinRequestDecisionView,
+    CompanyJoinRequestListView,
     CompanyLogoUploadView,
     CompanyPageContentView,
     CompanyPageEditorDetailView,
@@ -33,6 +35,7 @@ from .api.views import (
     EmployerNotificationUnreadCountView,
     IndustryListView,
     JoinCompanyView,
+    MyCompanyJoinRequestView,
     MyCompanyView,
     PhoneAvailabilityView,
     PhoneChallengeView,
@@ -150,6 +153,21 @@ urlpatterns = [
     path('company/search/', CompanySearchView.as_view(), name='employer-company-search'),
     path('company/catalogs/', CompanyCatalogView.as_view(), name='employer-company-catalogs'),
     path('company/join/', JoinCompanyView.as_view(), name='employer-company-join'),
+    path(
+        'company/join/mine/',
+        MyCompanyJoinRequestView.as_view(),
+        name='employer-company-join-mine',
+    ),
+    path(
+        'company/join-requests/',
+        CompanyJoinRequestListView.as_view(),
+        name='employer-company-join-requests',
+    ),
+    path(
+        'company/join-requests/<str:public_id>/<str:decision>/',
+        CompanyJoinRequestDecisionView.as_view(),
+        name='employer-company-join-decision',
+    ),
     path('company/page/', CompanyPageWorkspaceView.as_view(), name='employer-company-page'),
     path(
         'company/page/layout/',

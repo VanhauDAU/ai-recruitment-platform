@@ -39,7 +39,12 @@ from .media import (
     CompanyGalleryUploadView,
     CompanyLogoUploadView,
 )
-from .memberships import JoinCompanyView
+from .memberships import (
+    CompanyJoinRequestDecisionView,
+    CompanyJoinRequestListView,
+    JoinCompanyView,
+    MyCompanyJoinRequestView,
+)
 from .notifications import (
     EmployerActivityListView,
     EmployerNotificationListView,
@@ -102,7 +107,10 @@ __all__ = [
     'CompanyUpdateRequestLifecycleView',
     'CreateCompanyView',
     'IndustryListView',
+    'CompanyJoinRequestDecisionView',
+    'CompanyJoinRequestListView',
     'JoinCompanyView',
+    'MyCompanyJoinRequestView',
     'MyCompanyView',
     'EmployerActivityListView',
     'EmployerNotificationListView',

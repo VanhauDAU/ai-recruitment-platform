@@ -43,7 +43,8 @@ describe('EmployerCompanyLinkRecovery', () => {
     api.getEmployerCompanyUnlinkImpact.mockResolvedValue({
       can_apply: true,
       blockers: [],
-      counts: { company_documents: 0, company_update_requests: 0, campaigns: 0, jobs: 0 },
+      withdrawals: ['VERIFICATION_DOCUMENTS'],
+      counts: { active_jobs: 0, open_campaigns: 0, other_members: 0, recruitment_needs: 1 },
       impact_token: 'impact-clean',
     })
     api.unlinkEmployerCompany.mockResolvedValue({ context: { company: null } })
@@ -55,6 +56,7 @@ describe('EmployerCompanyLinkRecovery', () => {
     await user.click(screen.getByRole('button', { name: 'Xem tác động' }))
     const dialog = await screen.findByRole('dialog')
     expect(await within(dialog).findByText('Liên kết đủ điều kiện gỡ an toàn')).toBeInTheDocument()
+    expect(within(dialog).getByText('Giấy tờ xác thực chưa duyệt')).toBeInTheDocument()
     await user.click(within(dialog).getByRole('button', { name: 'Xác nhận gỡ liên kết' }))
 
     await waitFor(() => {
@@ -66,11 +68,12 @@ describe('EmployerCompanyLinkRecovery', () => {
     })
   })
 
-  it('shows canonical blockers and never offers confirm for a used link', async () => {
+  it('shows what blocks the unlink with the step to undo it, and never offers confirm', async () => {
     api.getEmployerCompanyUnlinkImpact.mockResolvedValue({
       can_apply: false,
-      blockers: ['JOBS_EXIST'],
-      counts: { company_documents: 0, company_update_requests: 0, campaigns: 0, jobs: 1 },
+      blockers: ['ACTIVE_JOBS_EXIST'],
+      withdrawals: [],
+      counts: { active_jobs: 1, open_campaigns: 0, other_members: 0, recruitment_needs: 0 },
       impact_token: '',
     })
     const user = userEvent.setup()
@@ -81,7 +84,7 @@ describe('EmployerCompanyLinkRecovery', () => {
     await user.click(screen.getByRole('button', { name: 'Xem tác động' }))
 
     const dialog = await screen.findByRole('dialog')
-    expect(await within(dialog).findByText('Đã có tin tuyển dụng')).toBeInTheDocument()
+    expect(await within(dialog).findByText('Còn tin đang tuyển: đóng các tin trước')).toBeInTheDocument()
     expect(within(dialog).queryByRole('button', { name: 'Xác nhận gỡ liên kết' })).not.toBeInTheDocument()
     expect(api.unlinkEmployerCompany).not.toHaveBeenCalled()
   })

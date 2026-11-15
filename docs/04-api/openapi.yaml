@@ -4629,11 +4629,11 @@ paths:
     post:
       operationId: employer_company_join_create
       description: |-
-        Liên kết một lần với công ty có sẵn, có hiệu lực ngay.
+        Xin tham gia một công ty có sẵn; chỉ có hiệu lực khi chủ công ty duyệt.
 
         Đây chỉ là gán HR vào công ty, không phải yêu cầu xác thực hay yêu cầu
         chỉnh sửa công ty. Hai nghiệp vụ sau có workflow duyệt riêng.
-      summary: Liên kết ngay với công ty có sẵn
+      summary: Gửi yêu cầu tham gia công ty có sẵn
       tags:
       - employer
       requestBody:
@@ -4641,7 +4641,25 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/JoinCompanyRequest'
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JoinCompanyRequest'
         required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '202':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyJoinRequest'
+          description: ''
+  /api/employer/company/join-requests/:
+    get:
+      operationId: employer_company_join_requests_list
+      description: Pending requests to the company the caller owns.
+      tags:
+      - employer
       security:
       - jwtAuth: []
       responses:
@@ -4649,8 +4667,62 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RecruiterProfile'
+                type: array
+                items:
+                  $ref: '#/components/schemas/CompanyJoinRequest'
           description: ''
+  /api/employer/company/join-requests/{public_id}/{decision}/:
+    post:
+      operationId: employer_company_join_requests_create
+      parameters:
+      - in: path
+        name: decision
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - employer
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyJoinRequest'
+          description: ''
+  /api/employer/company/join/mine/:
+    get:
+      operationId: employer_company_join_mine_retrieve
+      description: 'The caller''s pending request: read it, or cancel it to pick another
+        company.'
+      tags:
+      - employer
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyJoinRequest'
+          description: ''
+    delete:
+      operationId: employer_company_join_mine_destroy
+      description: 'The caller''s pending request: read it, or cancel it to pick another
+        company.'
+      tags:
+      - employer
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
   /api/employer/company/logo/:
     post:
       operationId: employer_company_logo_create
@@ -15937,6 +16009,7 @@ components:
       - hold_released
       - sensitive_viewed
       - tax_lookup_refreshed
+      - withdrawn_by_unlink
       type: string
       description: |-
         * `submitted` - Đã nộp
@@ -15955,6 +16028,7 @@ components:
         * `hold_released` - Đã gỡ compliance hold
         * `sensitive_viewed` - Đã xem dữ liệu nhạy cảm
         * `tax_lookup_refreshed` - Đã tra cứu lại mã số thuế
+        * `withdrawn_by_unlink` - Đã rút do gỡ liên kết công ty
     AdminVerificationHoldImpact:
       type: object
       properties:
@@ -18716,6 +18790,63 @@ components:
         update_request:
           type: string
           minLength: 1
+    CompanyJoinRequest:
+      type: object
+      properties:
+        public_id:
+          type: string
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/CompanyJoinStatusEnum'
+          readOnly: true
+        company_public_id:
+          type: string
+          readOnly: true
+        company_name:
+          type: string
+          readOnly: true
+        requester_name:
+          type: string
+          readOnly: true
+        requester_email:
+          type: string
+          format: email
+          readOnly: true
+        requester_position:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        decided_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+      required:
+      - company_name
+      - company_public_id
+      - created_at
+      - decided_at
+      - public_id
+      - requester_email
+      - requester_name
+      - requester_position
+      - status
+    CompanyJoinStatusEnum:
+      enum:
+      - pending
+      - approved
+      - rejected
+      - cancelled
+      type: string
+      description: |-
+        * `pending` - Chờ duyệt
+        * `approved` - Đã duyệt
+        * `rejected` - Từ chối
+        * `cancelled` - Đã hủy
     CompanyNameEnum:
       enum:
       - match
@@ -20809,7 +20940,7 @@ components:
           type: string
           readOnly: true
         event_type:
-          $ref: '#/components/schemas/EventTypeEe0Enum'
+          $ref: '#/components/schemas/EventTypeB03Enum'
         summary:
           type: string
           maxLength: 240
@@ -22194,7 +22325,7 @@ components:
           type: string
           readOnly: true
         event_type:
-          $ref: '#/components/schemas/EventTypeEe0Enum'
+          $ref: '#/components/schemas/EventTypeB03Enum'
         title:
           type: string
           maxLength: 180
@@ -22416,7 +22547,7 @@ components:
         * `internship` - Internship
         * `freelance` - Freelance
         * `other` - Khác
-    EventTypeEe0Enum:
+    EventTypeB03Enum:
       enum:
       - verification_approved
       - verification_changes_requested
@@ -22431,6 +22562,9 @@ components:
       - application_received
       - application_withdrawn
       - job_changes_requested
+      - company_join_requested
+      - company_join_approved
+      - company_join_rejected
       - application_review_submitted
       type: string
       description: |-
@@ -22447,6 +22581,9 @@ components:
         * `application_received` - Có hồ sơ ứng tuyển mới
         * `application_withdrawn` - Ứng viên đã rút hồ sơ
         * `job_changes_requested` - Tin tuyển dụng cần chỉnh sửa
+        * `company_join_requested` - Có yêu cầu tham gia công ty
+        * `company_join_approved` - Yêu cầu tham gia công ty đã được duyệt
+        * `company_join_rejected` - Yêu cầu tham gia công ty bị từ chối
         * `application_review_submitted` - Có đánh giá mới cho hồ sơ ứng viên
     ExperienceBandEnum:
       enum:
