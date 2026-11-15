@@ -47,7 +47,10 @@ services:
     logging: *default-logging
 
   db:
-    image: postgres:16
+    # PostgreSQL 16 kèm extension `vector` (app matching lưu embedding CV/JD).
+    # Giữ hậu tố -trixie: volume pgdata được tạo trên Debian trixie (glibc 2.41);
+    # tag `pg16` trần là bookworm (glibc 2.36) sẽ gây lệch phiên bản collation.
+    image: pgvector/pgvector:pg16-trixie
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres

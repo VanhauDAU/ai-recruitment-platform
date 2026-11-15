@@ -13,8 +13,10 @@ lặp lại.
 | Tin tương tự tin đã lưu | Similarity pairwise rule-based | `apps/jobs/selectors/saved_recommendations.py` | [`saved-job-recommendations.md`](./saved-job-recommendations.md) |
 | AI tạo tin tuyển dụng | LLM structured output qua `ai_core` | `apps/jobs/services/ai_generation.py` | mục 5, [`ai-job-post-generation.md`](./ai-job-post-generation.md) |
 | Chatbot FAQ ứng viên | Retrieval, không sinh LLM | — | [`chatbot-ung-vien-faq.md`](./chatbot-ung-vien-faq.md) |
+| Đối sánh ngữ nghĩa CV–JD (đang xây) | Bi-encoder đa ngữ fine-tune local, chấm nhiều tiêu chí, vector trong pgvector | `apps/matching` (mới có schema) | mục 7 |
 
-Không có model ML tự train trong production.
+Chưa có mô hình ML tự huấn luyện nào chạy trong sản phẩm; module đối sánh ngữ
+nghĩa ở mục 7 đang được xây.
 
 ## 1. Import và cấu trúc hóa CV
 
@@ -247,13 +249,36 @@ ngữ) xong trong ~13 giây, tất cả qua validator.
 | Runtime AI tắt hoặc ngoài rollout | Tạo tin AI trả 503; form nhập tay vẫn dùng được |
 | Provider tạo tin lỗi/timeout | Generation `failed` với error code chuẩn hóa; không trừ thêm quota khi retry nội bộ |
 
+## 7. Đối sánh ngữ nghĩa CV–JD chạy local (đang xây)
+
+Phần AI tự xây của đồ án: ứng viên chọn một CV và một tin để xem điểm phù hợp,
+kỹ năng khớp/thiếu và gợi ý cải thiện CV. Mô hình chạy và fine-tune trên máy
+local, không gọi API ngoài; phạm vi ở
+[phân tích yêu cầu](../01-phan-tich/phan-tich-yeu-cau.md#phạm-vi-ai-đã-chốt),
+lộ trình ở [tiến độ dự án](../TIEN-DO-DU-AN.md#đối-sánh-ngữ-nghĩa-cvjd-chạy-local-2026-11-15).
+
+Đã có:
+
+- PostgreSQL chạy image `pgvector/pgvector:pg16-trixie`; migration
+  `matching.0001` bật extension `vector`.
+- Ba bảng của `apps/matching`: `MatchDocument` (hồ sơ đã chuẩn hóa và vector 768
+  chiều của một phiên bản CV hoặc một nội dung tin), `MatchChunk` (vector từng
+  đoạn), `MatchAnalysis` (một lần phân tích; khóa cache gồm phiên bản CV, tin,
+  hash nội dung tin, phiên bản mô hình và phiên bản công thức chấm).
+- Môi trường huấn luyện `ml/` chạy trên host bằng Apple MPS
+  (`ml/requirements.txt`, `ml/scripts/smoke_mps.py`); mô hình nền là
+  `intfloat/multilingual-e5-base`.
+
+Chưa có: trích xuất và chuẩn hóa CV/JD, tính embedding, công thức chấm điểm,
+API, worker suy luận và giao diện.
+
 ## Việc còn mở
 
 - Đưa import CV vào runtime `ai_core` để dùng chung hard switch, invocation log
   và quota; hiện import vẫn dùng adapter REST riêng theo Site Setting.
-- Chưa có trích xuất kỹ năng tự động vào `CvSkill`, OCR cho PDF scan, đối sánh
-  phía nhà tuyển dụng hay mô hình học máy; các Site Setting `ai_cv_review_enabled`,
+- Chưa có trích xuất kỹ năng tự động vào `CvSkill`, OCR cho PDF scan hay đối
+  sánh phía nhà tuyển dụng; các Site Setting `ai_cv_review_enabled`,
   `ai_job_match_enabled`, `ai_daily_request_limit` được seed nhưng chưa có code
   đọc.
-- Đối sánh văn bản là so khớp token/chuỗi con, chưa có embedding hay độ tương
-  đồng ngữ nghĩa.
+- Đối sánh đang chạy trong sản phẩm vẫn là so khớp token/chuỗi con; embedding và
+  độ tương đồng ngữ nghĩa thuộc module ở mục 7, chưa có logic.

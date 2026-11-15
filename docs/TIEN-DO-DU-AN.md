@@ -7,6 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
+| [Đối sánh ngữ nghĩa CV–JD chạy local](#đối-sánh-ngữ-nghĩa-cvjd-chạy-local-2026-11-15) | 🟨 Nền tảng (tuần 1) xong trên nhánh `feat/ai-matching-foundation`, chưa mở PR |
 | [CV tải lên: tệp gốc, tiêu chuẩn upload, giới hạn CV, NTD tìm kiếm](#cv-tải-lên-tệp-gốc-tiêu-chuẩn-upload-giới-hạn-cv-ntd-tìm-kiếm-2026-11-15) | ✅ Gộp vào `dev` (#203) |
 | [Việc làm tốt nhất xếp theo chất lượng tin](#việc-làm-tốt-nhất-xếp-theo-chất-lượng-tin-2026-11-15) | ✅ Gộp vào `dev` (#204) |
 | [Thiết kế lại quản lý tin tuyển dụng của NTD](#thiết-kế-lại-quản-lý-tin-tuyển-dụng-của-ntd-2026-11-15) | ✅ Gộp vào `dev` (nhánh `feat/employer-job-workspace`) |
@@ -21,6 +22,55 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Các epic đã hoàn tất](#các-epic-đã-hoàn-tất) | ✅ |
 | [Lộ trình theo PRD](#lộ-trình-theo-prd) | 🟨 Phần AI lõi (giai đoạn 2–3) còn mở |
 | [Việc còn mở](#việc-còn-mở) | |
+
+## Đối sánh ngữ nghĩa CV–JD chạy local (2026-11-15)
+
+AI lõi của đồ án cho phía ứng viên: bấm "Xem độ phù hợp" trên một tin để nhận
+điểm tổng, điểm theo tiêu chí, kỹ năng khớp/thiếu và gợi ý cải thiện CV. Mô hình
+`intfloat/multilingual-e5-base` chạy và fine-tune trên máy local, không gọi API
+ngoài. Lộ trình 8 tuần (16/11/2026 → 10/01/2027), mỗi giai đoạn một PR.
+
+| Tuần | Hạng mục | Trạng thái |
+| --- | --- | --- |
+| 1 | Nền tảng: pgvector, schema `apps/matching`, môi trường huấn luyện `ml/`, kiểm chứng fine-tune trên MPS | 🟨 Code xong trên nhánh, chưa mở PR; còn nhập JD thật và viết rubric chấm điểm |
+| 2 | Trích xuất và chuẩn hóa CV/JD, mở rộng taxonomy kỹ năng, baseline TF-IDF/BM25 (PR 1) | ⬜ |
+| 3 | Encoder zero-shot, chấm điểm, giải thích, API, worker suy luận (PR 2) | ⬜ |
+| 4 | Giao diện "Xem độ phù hợp" ở trang chi tiết tin (PR 3), bản demo tối thiểu | ⬜ |
+| 5 | Tập vàng 150 cặp do người chấm; đo baseline và zero-shot; sinh dữ liệu huấn luyện | ⬜ |
+| 6 | Fine-tune, ablation, chọn mô hình đưa vào sản phẩm | ⬜ |
+| 7 | Đo hiệu năng, nghiệm thu chức năng (PR 4) | ⬜ |
+| 8 | Viết báo cáo, diễn tập demo | ⬜ |
+
+<details><summary>Ghi chú tuần 1</summary>
+
+- Image DB là `pgvector/pgvector:pg16-trixie`, không phải tag `pg16`: volume
+  `pgdata` tạo trên Debian trixie (glibc 2.41), còn `pg16` là bookworm (glibc
+  2.36) nên sẽ lệch phiên bản collation. Bản sao lưu trước khi đổi:
+  `backups/pre-pgvector-20261115.dump`.
+- Ngày 15/11 đã xóa toàn bộ 53 tin mẫu cùng hồ sơ ứng tuyển thử trong DB dev
+  (sao lưu `backups/pre-job-cleanup-20261115.dump`). Tin thật được điền vào
+  `ml/data/jd_input.xlsx` (không commit) rồi nhập bằng
+  `ml/scripts/import_jd.py` (chạy thử trước, `--apply --create-skills` để ghi;
+  bảng đối chiếu mã tin lưu ở `ml/data/jd_import_map.json`); rubric gán nhãn bản
+  nháp ở `ml/labeling/rubric.md`.
+- Ngày 15/11 đã nhập 100 tin thật (90 TopCV, 10 ITviec; 78 tin tiếng Việt, 22
+  tin tiếng Anh; đủ 8 nhóm ngành) vào các công ty demo. Danh mục kỹ năng tăng
+  từ 42 lên 344; bảng gộp cách viết và hai nhóm "Kỹ năng mềm", "Phẩm chất cá
+  nhân" ở `ml/labeling/skill_merge.json`. Sao lưu trước khi nhập:
+  `backups/pre-jd-import-20261115.dump`.
+- `apps/matching` mới có ba bảng (`MatchDocument`, `MatchChunk`,
+  `MatchAnalysis`) và test ràng buộc; chưa có service, API hay task.
+- Đo trên MacBook Pro M5, 16 GB (torch 2.15.0, sentence-transformers 6.3.0):
+  mã hóa 371 câu ngắn/giây trên MPS; fine-tune 5,6 giây/bước ở batch 32, ước
+  45–90 phút cho 5.000 bộ ba × 3 epoch.
+- Fine-tune trên MPS với cấu hình mặc định báo lỗi dropout của
+  `scaled_dot_product_attention`; phải nạp mô hình với
+  `attention_probs_dropout_prob=0.0` (đã đặt sẵn trong `ml/scripts/smoke_mps.py`).
+- Không giới hạn thì vùng nhớ MPS lên khoảng 9,7 GB và swap tăng khoảng 6 GB.
+  Đặt `PYTORCH_MPS_HIGH_WATERMARK_RATIO=0.6` giữ ở khoảng 7,4 GB, chậm hơn
+  khoảng 9% (6,1 giây/bước).
+
+</details>
 
 ## CV tải lên: tệp gốc, tiêu chuẩn upload, giới hạn CV, NTD tìm kiếm (2026-11-15)
 
@@ -340,7 +390,7 @@ production, staging và soak (ER-8). Lệnh kiểm tra chỉ đọc:
 | 0 — Khởi tạo dự án | ✅ | |
 | 1 — MVP lõi | ✅ | Ba cổng, việc làm, CV builder, ứng tuyển, workspace chiến dịch và tin |
 | 2 — AI cơ bản | 🟨 | Đã có: import CV qua AI, đối sánh rule-based (`match_score`), runtime `ai_core` với `AiInvocation` và `AiUsageDaily`. Chưa có: bảng `cv_analysis`, `match_results`, `ai_suggestions`; trích xuất kỹ năng; mô hình phân loại kỹ năng |
-| 3 — Tối ưu tìm kiếm / matching | ⬜ | Embedding (pgvector) và semantic matching CV–JD |
+| 3 — Tối ưu tìm kiếm / matching | 🟨 | Embedding (pgvector) và semantic matching CV–JD: nền tảng đã có, xem [đối sánh ngữ nghĩa CV–JD chạy local](#đối-sánh-ngữ-nghĩa-cvjd-chạy-local-2026-11-15) |
 | 4 — CV nâng cao | 🟨 | Còn import LinkedIn, AI writer, review CV bằng AI |
 | 5 — Tuyển dụng nâng cao | ✅ | Việc đã lưu, lịch sử trạng thái hồ sơ, notification center của nhà tuyển dụng |
 | 6 — Thương mại & quản trị | ✅ | Quản trị (hai cấp superuser/admin theo ADR-0018), blog, marketing. Gói đăng ký và quota trả phí (6.1, 6.2) bỏ khỏi phạm vi theo ADR-0015 |
@@ -351,10 +401,12 @@ production, staging và soak (ER-8). Lệnh kiểm tra chỉ đọc:
 AI lõi của đồ án (phạm vi chốt 2026-11-15, xem
 [sơ đồ use case](01-phan-tich/phan-tich-yeu-cau.md#sơ-đồ-use-case-tổng-quát-chốt-2026-11-15)):
 
-- ⬜ Đối sánh ngữ nghĩa CV–JD chạy local (embedding mã nguồn mở + pgvector,
-  pipeline tự xây), không gọi API ngoài.
-- ⬜ Ứng viên: Phân tích mức độ phù hợp CV–JD (điểm tổng và theo tiêu chí);
-  chuyển Việc làm gợi ý sang module ngữ nghĩa.
+- 🟨 Đối sánh ngữ nghĩa CV–JD chạy và fine-tune local (bi-encoder mã nguồn mở +
+  pgvector, pipeline tự xây), không gọi API ngoài: xem
+  [lộ trình 8 tuần](#đối-sánh-ngữ-nghĩa-cvjd-chạy-local-2026-11-15).
+- ⬜ Ứng viên: Phân tích mức độ phù hợp CV–JD (điểm tổng và theo tiêu chí, kỹ
+  năng khớp/thiếu, gợi ý cải thiện CV); chuyển Việc làm gợi ý sang module ngữ
+  nghĩa.
 - ⬜ Nhà tuyển dụng: Sàng lọc và xếp hạng hồ sơ ứng tuyển bằng AI; Tìm kiếm hồ
   sơ ứng viên xếp theo độ phù hợp với một tin (chỉ ứng viên đã bật
   `recruiter_visibility`).

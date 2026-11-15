@@ -575,6 +575,18 @@ def publish_job(
 
 
 @transaction.atomic
+def publish_operator_imported_job(job, *, user):
+    """Make an operator-imported draft public without the recruiter gates.
+
+    Bulk loads of demo and evaluation postings are run by an operator, not by
+    the recruiter, so verification, DPA, quota and the publication commitment
+    do not apply. The job must still be complete enough to publish.
+    """
+    _validate_publishable(job)
+    return _go_live(job, user=user, previous_status=job.status, acknowledged=False)
+
+
+@transaction.atomic
 def update_employer_job(serializer, user):
     """Persist an employer's existing job through the domain mutation boundary."""
     recruiter = _locked_recruiter(user)
