@@ -7,7 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
-| [Thống nhất luồng đăng tin, hiển thị, ứng tuyển, công ty](#thống-nhất-luồng-đăng-tin-hiển-thị-ứng-tuyển-công-ty-2026-11-15) | 🟨 GĐ6 (#208), GĐ1 (#209), GĐ2 (#211) đã gộp; còn GĐ3–GĐ5; làm hết trước khi tiếp tục AI |
+| [Thống nhất luồng đăng tin, hiển thị, ứng tuyển, công ty](#thống-nhất-luồng-đăng-tin-hiển-thị-ứng-tuyển-công-ty-2026-11-15) | 🟨 GĐ6 (#208), GĐ1 (#209), GĐ2 (#211) đã gộp; GĐ3 xong trên nhánh `fix/application-single-active`; còn GĐ4–GĐ5 |
 | [Đối sánh ngữ nghĩa CV–JD chạy local](#đối-sánh-ngữ-nghĩa-cvjd-chạy-local-2026-11-15) | 🟨 Nền tảng (tuần 1) xong trên nhánh `feat/ai-matching-foundation`, chưa mở PR |
 | [CV tải lên: tệp gốc, tiêu chuẩn upload, giới hạn CV, NTD tìm kiếm](#cv-tải-lên-tệp-gốc-tiêu-chuẩn-upload-giới-hạn-cv-ntd-tìm-kiếm-2026-11-15) | ✅ Gộp vào `dev` (#203) |
 | [Việc làm tốt nhất xếp theo chất lượng tin](#việc-làm-tốt-nhất-xếp-theo-chất-lượng-tin-2026-11-15) | ✅ Gộp vào `dev` (#204) |
@@ -45,10 +45,30 @@ thật trong hạng mục AI.
 | --- | --- | --- |
 | 1 | Trạng thái hiệu lực của tin + lý do ẩn, giờ VN, bộ lọc công khai khớp quyền xem dữ liệu ứng viên | ✅ Gộp vào `dev` (#209) |
 | 2 | Dùng chung điều kiện chặn đăng tin; mở lại tin áp luật gia hạn | ✅ Gộp vào `dev` (#211) |
-| 3 | Một hồ sơ hiệu lực trên một tin, rút hồ sơ, tự động từ chối và thống kê chỉ tính hồ sơ hiệu lực | ⬜ |
+| 3 | Một hồ sơ hiệu lực trên một tin, rút hồ sơ, tự động từ chối và thống kê chỉ tính hồ sơ hiệu lực | 🟨 Xong trên nhánh `fix/application-single-active` |
 | 4 | Vòng yêu cầu sửa tin → NTD sửa → gửi duyệt lại | ⬜ |
 | 5 | Chặn ứng viên theo công ty, owner duyệt yêu cầu tham gia, logic công ty vào service | ⬜ |
 | 6 | Tắt đồng ý tìm hồ sơ thì gỡ mọi CV khỏi tìm kiếm; sửa câu chữ hứa tính năng chưa có | ✅ Gộp vào `dev` (#208) |
+
+<details><summary>Ghi chú GĐ3</summary>
+
+- `Application.is_current` + ràng buộc unique có điều kiện: mỗi ứng viên chỉ một
+  hồ sơ hiệu lực trên một tin; bản nộp cũ là lịch sử chỉ đọc. Migration
+  `applications.0018` đánh dấu bản mới nhất của mỗi cặp là hiệu lực (sao lưu
+  `backups/pre-application-single-active-20261116.dump`).
+- Trạng thái mới `withdrawn` ("Đã rút"): ứng viên rút được khi hồ sơ chưa có kết
+  quả, NTD nhận thông báo trong chuông, thông báo quyết định đang chờ gửi bị hủy;
+  NTD không đổi được trạng thái hồ sơ đã rút.
+- Nộp lại chỉ khi hồ sơ hiệu lực đã bị từ chối hoặc đã rút (vẫn giữ trần 3 lần
+  và chờ 5 phút); hồ sơ Mới/Đã xem thì "Đổi CV" ngay trên hồ sơ đó, NTD thấy
+  như hồ sơ mới và đồng hồ tự động từ chối chạy lại; từ Phù hợp trở đi thì khóa.
+- Tự động từ chối, nhắc hạn, chặn ứng viên kèm từ chối hồ sơ chờ, dashboard,
+  danh sách/xuất CSV của NTD, thống kê chiến dịch và tin chỉ tính hồ sơ hiệu lực;
+  `application_count` đếm ứng viên, không đếm lượt nộp.
+- Ứng viên: trang "Việc làm đã ứng tuyển" có nút "Đổi CV" và "Rút hồ sơ"; nút ở
+  trang tin hiện "Đã ứng tuyển" khi hồ sơ đang được xử lý.
+
+</details>
 
 <details><summary>Sửa migration test đỏ sẵn trên dev</summary>
 

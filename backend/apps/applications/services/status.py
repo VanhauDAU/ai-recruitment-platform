@@ -46,6 +46,8 @@ ALLOWED_STATUS_TRANSITIONS = {
     Status.INTERVIEWED: {Status.ACCEPTED, Status.REJECTED},
     Status.ACCEPTED: set(),
     Status.REJECTED: set(),
+    # The candidate withdrew; nothing is left for the recruiter to decide.
+    Status.WITHDRAWN: set(),
 }
 
 NOTICE_EVENT = {

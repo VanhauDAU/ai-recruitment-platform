@@ -84,10 +84,10 @@ def employer_applications_queryset(
     q=None,
     scope=None,
     ordering=None,
-    latest_only=False,
 ):
+    # Recruiters work on the current application only; replaced ones are history.
     queryset = (
-        Application.objects.filter(job__posted_by=employer)
+        Application.objects.filter(job__posted_by=employer, is_current=True)
         .select_related(
             'candidate',
             'job',
@@ -131,16 +131,6 @@ def employer_applications_queryset(
             | Q(job__title__icontains=q)
             | Q(submitted_cv_title__icontains=q)
         )
-    if latest_only:
-        latest_application_id = (
-            Application.objects.filter(
-                candidate_id=OuterRef('candidate_id'),
-                job_id=OuterRef('job_id'),
-            )
-            .order_by('-applied_at', '-id')
-            .values('id')[:1]
-        )
-        queryset = queryset.filter(id=Subquery(latest_application_id))
     if scope == 'unread':
         queryset = queryset.filter(status=Application.Status.SUBMITTED)
     elif scope == 'unanswered':

@@ -61,6 +61,9 @@ EVENT_PRESENTATION = {
     EmployerNotification.EventType.APPLICATION_REVIEW_SUBMITTED: (
         'Có đánh giá mới cho hồ sơ ứng viên',
         APPLICATIONS_PATH,
+    ),    EmployerNotification.EventType.APPLICATION_WITHDRAWN: (
+        'Ứng viên đã rút hồ sơ',
+        APPLICATIONS_PATH,
     ),
 }
 

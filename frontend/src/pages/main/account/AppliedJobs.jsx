@@ -9,6 +9,7 @@ import {
   applicationKeys,
   getCandidateApplications,
 } from '@/entities/application'
+import { CandidateApplicationActions } from '@/features/manage-candidate-application'
 import { MascotEmpty } from '@/shared/ui/mascot'
 
 const STATUS_COLORS = {
@@ -18,6 +19,7 @@ const STATUS_COLORS = {
   interviewed: 'purple',
   accepted: 'green',
   rejected: 'default',
+  withdrawn: 'default',
 }
 
 const STEPS = [
@@ -112,6 +114,8 @@ function ApplicationCard({ application, expanded, onToggle }) {
           <strong className="font-semibold">{latest?.label || statusLabel}</strong>
           {latest && <span className="text-slate-400"> ({formatDateTime(latest.occurred_at)})</span>}
         </p>
+        <div className="flex flex-wrap items-center gap-2">
+        <CandidateApplicationActions application={application} />
         <Tooltip title="Nhắn tin với nhà tuyển dụng sẽ được mở trong giai đoạn tiếp theo">
           <span
             aria-disabled="true"
@@ -120,6 +124,7 @@ function ApplicationCard({ application, expanded, onToggle }) {
             <MessageOutlined /> Nhắn tin
           </span>
         </Tooltip>
+        </div>
       </div>
 
       {timeline.length > 0 && (
@@ -162,7 +167,8 @@ export default function AppliedJobs() {
 
   if (applicationsQuery.isLoading) return <Skeleton active paragraph={{ rows: 10 }} />
 
-  const applications = applicationsQuery.data || []
+  // Earlier submissions replaced by a resubmission are history, not listed.
+  const applications = (applicationsQuery.data || []).filter((item) => item.is_current !== false)
   const counts = applications.reduce((total, item) => {
     total[item.status] = (total[item.status] || 0) + 1
     return total

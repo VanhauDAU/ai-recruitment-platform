@@ -27,19 +27,11 @@ def campaign_list_queryset(user, *, status=None, scope=None, q=None, ordering=No
     latest_activity = CampaignActivity.objects.filter(campaign_id=OuterRef('pk')).order_by(
         '-occurred_at', '-id'
     )
-    latest_application_for_pair = (
-        Application.objects.filter(
-            candidate_id=OuterRef('candidate_id'),
-            job_id=OuterRef('job_id'),
-        )
-        .order_by('-applied_at', '-id')
-        .values('id')[:1]
-    )
     latest_unviewed = (
         Application.objects.filter(
             job__campaign_id=OuterRef('pk'),
             status=Application.Status.SUBMITTED,
-            id=Subquery(latest_application_for_pair),
+            is_current=True,
         )
         .values('job__campaign_id')
         .annotate(total=Count('id'))
@@ -48,7 +40,7 @@ def campaign_list_queryset(user, *, status=None, scope=None, q=None, ordering=No
     latest_application_pairs = (
         Application.objects.filter(
             job__campaign_id=OuterRef('pk'),
-            id=Subquery(latest_application_for_pair),
+            is_current=True,
         )
         .values('job__campaign_id')
         .annotate(total=Count('id'))
@@ -58,7 +50,7 @@ def campaign_list_queryset(user, *, status=None, scope=None, q=None, ordering=No
         Application.objects.filter(
             job__campaign_id=OuterRef('pk'),
             status=Application.Status.ACCEPTED,
-            id=Subquery(latest_application_for_pair),
+            is_current=True,
         )
         .values('job__campaign_id')
         .annotate(total=Count('candidate_id', distinct=True))
@@ -186,16 +178,7 @@ def campaign_options(user):
 
 def campaign_report(campaign):
     applications = Application.objects.filter(job__campaign=campaign)
-    latest_application_id = (
-        Application.objects.filter(
-            job__campaign=campaign,
-            candidate_id=OuterRef('candidate_id'),
-            job_id=OuterRef('job_id'),
-        )
-        .order_by('-applied_at', '-id')
-        .values('id')[:1]
-    )
-    latest_applications = applications.filter(id=Subquery(latest_application_id))
+    latest_applications = applications.filter(is_current=True)
     statuses = {state: 0 for state in Application.Status.values}
     statuses.update(
         {

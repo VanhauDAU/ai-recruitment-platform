@@ -476,6 +476,8 @@ test('candidate smoke: job application submits the selected immutable CV version
         applied_at: appliedAt,
         submitted_cv_version_public_id: 'cvv_2',
         status: 'submitted',
+        is_current: true,
+        actions: { withdraw: true, update_cv: true, reapply: false },
       }]
     }
     const body = path === '/api/auth/refresh/'
@@ -545,7 +547,8 @@ test('candidate smoke: job application submits the selected immutable CV version
   await applicationDialog.getByRole('checkbox', { name: /Tôi đã đọc và đồng ý/ }).check()
   await applicationDialog.getByRole('button', { name: 'Nộp hồ sơ ứng tuyển' }).click()
   await expect(applicationDialog).toBeHidden()
-  await expect(page.getByRole('button', { name: 'Ứng tuyển lại', exact: true }).first()).toBeVisible()
+  // One current application per job: no resubmission while it is unanswered.
+  await expect(page.getByRole('button', { name: 'Đã ứng tuyển', exact: true }).first()).toBeVisible()
   await expect(page.getByText(/Bạn đã gửi CV cho vị trí này ngày:/)).toContainText(`${appliedDateText}.`)
   await expect(page.getByRole('link', { name: 'Xem CV đã nộp' })).toHaveAttribute('href', '/cvs/cv_1/view')
   expect(applicationPayload).toEqual({
@@ -561,6 +564,9 @@ test('candidate smoke: job application submits the selected immutable CV version
     contact_phone: '',
   })
 
+  // Once the recruiter rejects it, the candidate may apply again.
+  applications = [{ ...applications[0], status: 'rejected', actions: { withdraw: false, update_cv: false, reapply: true } }]
+  await page.reload()
   await page.locator('#job-detail-content').getByRole('button', { name: 'Ứng tuyển lại', exact: true }).click()
   await expect(page.getByRole('dialog').getByRole('alert')).toContainText('Bạn còn 2 lượt ứng tuyển lại')
 })

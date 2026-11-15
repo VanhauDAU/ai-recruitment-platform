@@ -23,6 +23,7 @@ from apps.cvs.services import (
 from apps.employers.models import (
     CampaignActivity,
     Company,
+    EmployerNotification,
     RecruiterProfile,
     RecruitmentCampaign,
 )
@@ -32,6 +33,7 @@ from apps.jobs.tests.helpers import open_visibility_window
 from apps.locations.models import Location
 
 from ..models import Application
+from ..services import InvalidApplicationStatusTransition, change_application_status
 
 
 class RecruiterApplicationSnapshotV2Tests(APITestCase):
@@ -361,57 +363,138 @@ class CandidateApplicationV2Tests(APITestCase):
             Application.objects.filter(candidate=self.candidate, job=self.job).exists()
         )
 
-    def test_candidate_can_reapply_after_five_minutes_up_to_three_submissions(self):
-        self.client.force_authenticate(self.candidate)
-        forbidden_cv = self.client.post(
+    def apply(self, **overrides):
+        return self.client.post(
             reverse('candidate-application-list-create-v2'),
-            self.apply_payload(
-                cv_public_id=self.other_cv.public_id,
-                version_public_id=self.other_cv.latest_version.public_id,
-            ),
-            format='json',
-        )
-        first = self.client.post(
-            reverse('candidate-application-list-create-v2'),
-            self.apply_payload(),
-            format='json',
-        )
-        too_soon = self.client.post(
-            reverse('candidate-application-list-create-v2'),
-            self.apply_payload(),
+            self.apply_payload(**overrides),
             format='json',
         )
 
-        Application.objects.filter(public_id=first.data['public_id']).update(
-            applied_at=timezone.now() - timedelta(minutes=5)
+    def age(self, response, **fields):
+        """Move a submission past the five-minute cooldown, optionally setting fields."""
+        Application.objects.filter(public_id=response.data['public_id']).update(
+            applied_at=timezone.now() - timedelta(minutes=6), **fields
         )
-        second = self.client.post(
-            reverse('candidate-application-list-create-v2'),
-            self.apply_payload(),
-            format='json',
+
+    def test_candidate_resubmits_only_after_a_rejection_or_withdrawal(self):
+        self.client.force_authenticate(self.candidate)
+        forbidden_cv = self.apply(
+            cv_public_id=self.other_cv.public_id,
+            version_public_id=self.other_cv.latest_version.public_id,
         )
-        Application.objects.filter(public_id=second.data['public_id']).update(
-            applied_at=timezone.now() - timedelta(minutes=5)
-        )
-        third = self.client.post(
-            reverse('candidate-application-list-create-v2'),
-            self.apply_payload(),
-            format='json',
-        )
-        exhausted = self.client.post(
-            reverse('candidate-application-list-create-v2'),
-            self.apply_payload(),
-            format='json',
-        )
+        first = self.apply()
+        self.age(first)
+        while_unanswered = self.apply()
+        self.age(first, status=Application.Status.INTERVIEWED)
+        while_interviewing = self.apply()
+        self.age(first, status=Application.Status.REJECTED)
+        second = self.apply()
+        too_soon = self.apply()
 
         self.assertEqual(forbidden_cv.status_code, 400, forbidden_cv.data)
         self.assertEqual(first.status_code, 201, first.data)
-        self.assertEqual(too_soon.status_code, 400, too_soon.data)
-        self.assertIn('5 phút', str(too_soon.data))
+        self.assertIn('Cập nhật CV', str(while_unanswered.data))
+        self.assertIn('đang được nhà tuyển dụng xử lý', str(while_interviewing.data))
         self.assertEqual(second.status_code, 201, second.data)
+        self.assertEqual(too_soon.status_code, 400, too_soon.data)
+        current = Application.objects.filter(candidate=self.candidate, job=self.job)
+        self.assertEqual(
+            list(current.filter(is_current=True).values_list('public_id', flat=True)),
+            [second.data['public_id']],
+        )
+        self.job.refresh_from_db()
+        self.assertEqual(self.job.application_count, 1)
+
+        withdrawn = self.client.post(
+            reverse('candidate-application-withdraw-v2', args=[second.data['public_id']])
+        )
+        self.age(second)
+        third = self.apply()
+        self.age(third, status=Application.Status.REJECTED)
+        exhausted = self.apply()
+
+        self.assertEqual(withdrawn.status_code, 200, withdrawn.data)
+        self.assertEqual(withdrawn.data['status'], Application.Status.WITHDRAWN)
+        self.assertEqual(
+            withdrawn.data['actions'], {'withdraw': False, 'update_cv': False, 'reapply': True}
+        )
         self.assertEqual(third.status_code, 201, third.data)
         self.assertEqual(exhausted.status_code, 400, exhausted.data)
         self.assertIn('hết', str(exhausted.data))
+
+    def test_withdrawal_ends_the_application_and_tells_the_recruiter(self):
+        self.client.force_authenticate(self.candidate)
+        submitted = self.apply()
+        url = reverse('candidate-application-withdraw-v2', args=[submitted.data['public_id']])
+
+        withdrawn = self.client.post(url)
+        again = self.client.post(url)
+
+        self.assertEqual(withdrawn.status_code, 200, withdrawn.data)
+        self.assertEqual(again.status_code, 400, again.data)
+        application = Application.objects.get(public_id=submitted.data['public_id'])
+        self.assertIsNotNone(application.withdrawn_at)
+        self.assertTrue(
+            EmployerNotification.objects.filter(
+                recipient=self.employer,
+                event_type=EmployerNotification.EventType.APPLICATION_WITHDRAWN,
+            ).exists()
+        )
+        with self.assertRaises(InvalidApplicationStatusTransition):
+            change_application_status(
+                application, changed_by=self.employer, status=Application.Status.SHORTLISTED
+            )
+
+    def test_accepted_application_cannot_be_withdrawn(self):
+        self.client.force_authenticate(self.candidate)
+        submitted = self.apply()
+        self.age(submitted, status=Application.Status.ACCEPTED)
+
+        response = self.client.post(
+            reverse('candidate-application-withdraw-v2', args=[submitted.data['public_id']])
+        )
+
+        self.assertEqual(response.status_code, 400, response.data)
+
+    def test_unanswered_application_takes_a_new_cv_in_place(self):
+        self.client.force_authenticate(self.candidate)
+        submitted = self.apply()
+        self.age(submitted, status=Application.Status.VIEWED)
+        new_version = self.cv.latest_version
+        url = reverse('candidate-application-cv-v2', args=[submitted.data['public_id']])
+
+        updated = self.client.post(
+            url,
+            {'cv_public_id': self.cv.public_id, 'version_public_id': new_version.public_id},
+            format='json',
+        )
+        self.age(submitted, status=Application.Status.SHORTLISTED)
+        answered = self.client.post(
+            url,
+            {'cv_public_id': self.cv.public_id, 'version_public_id': new_version.public_id},
+            format='json',
+        )
+
+        self.assertEqual(updated.status_code, 200, updated.data)
+        self.assertEqual(updated.data['public_id'], submitted.data['public_id'])
+        self.assertEqual(updated.data['status'], Application.Status.SUBMITTED)
+        self.assertNotEqual(
+            updated.data['submitted_cv_version_public_id'],
+            submitted.data['submitted_cv_version_public_id'],
+        )
+        self.assertEqual(answered.status_code, 400, answered.data)
+        self.assertEqual(Application.objects.filter(candidate=self.candidate).count(), 1)
+
+    def test_another_candidates_application_is_not_found(self):
+        self.client.force_authenticate(self.candidate)
+        submitted = self.apply()
+        self.client.force_authenticate(self.other_candidate)
+
+        response = self.client.post(
+            reverse('candidate-application-withdraw-v2', args=[submitted.data['public_id']])
+        )
+
+        self.assertEqual(response.status_code, 404)
 
     def test_candidate_must_consent_and_select_a_workplace_offered_by_the_job(self):
         other_location = Location.objects.create(
@@ -448,7 +531,7 @@ class CandidateApplicationV2Tests(APITestCase):
 
         self.assertEqual(response.status_code, 403)
 
-    def test_recruiter_campaign_list_and_export_use_latest_submission_per_candidate_job(self):
+    def test_recruiter_campaign_list_and_export_use_the_current_submission(self):
         recruiter = make_employer_ready(
             self.employer,
             company=self.company,
@@ -469,7 +552,8 @@ class CandidateApplicationV2Tests(APITestCase):
             format='json',
         )
         Application.objects.filter(public_id=first.data['public_id']).update(
-            applied_at=timezone.now() - timedelta(minutes=6)
+            applied_at=timezone.now() - timedelta(minutes=6),
+            status=Application.Status.REJECTED,
         )
         second = self.client.post(
             reverse('candidate-application-list-create-v2'),
@@ -480,7 +564,6 @@ class CandidateApplicationV2Tests(APITestCase):
         self.client.force_authenticate(self.employer)
         params = {
             'campaign': campaign.public_id,
-            'latest': '1',
             'q': self.candidate.email,
         }
         listed = self.client.get(reverse('recruiter-application-list-v2'), params)

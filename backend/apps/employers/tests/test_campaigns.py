@@ -248,6 +248,7 @@ class RecruitmentCampaignApiTests(TestCase):
             cv=cv,
             submitted_cv_version=snapshot,
             submitted_cv_title=cv.title,
+            is_current=False,
         )
         Application.objects.create(
             candidate=candidate,
@@ -520,21 +521,23 @@ class RecruitmentCampaignApiTests(TestCase):
         )
         cv = UserCv.objects.create(user=candidate, title='Data CV')
         snapshot = create_initial_document(cv, candidate)
-        for _ in range(5):
+        for index in range(5):
             Application.objects.create(
                 candidate=candidate,
                 job=job,
                 cv=cv,
                 submitted_cv_version=snapshot,
                 submitted_cv_title=cv.title,
+                is_current=index == 4,
             )
-        for _ in range(2):
+        for index in range(2):
             Application.objects.create(
                 candidate=candidate,
                 job=second_job,
                 cv=cv,
                 submitted_cv_version=snapshot,
                 submitted_cv_title=cv.title,
+                is_current=index == 1,
             )
         historic_application = Application.objects.create(
             candidate=candidate,
@@ -542,6 +545,7 @@ class RecruitmentCampaignApiTests(TestCase):
             cv=cv,
             submitted_cv_version=snapshot,
             submitted_cv_title=cv.title,
+            is_current=False,
         )
         Application.objects.filter(pk=historic_application.pk).update(
             applied_at=job.engagement_tracking_started_at - timedelta(minutes=1)

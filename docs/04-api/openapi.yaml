@@ -10530,6 +10530,60 @@ paths:
               schema:
                 $ref: '#/components/schemas/CandidateApplicationV2Create'
           description: ''
+  /api/v2/applications/{public_id}/cv/:
+    post:
+      operationId: v2_applications_cv_create
+      summary: Ứng viên đổi CV của hồ sơ chưa được phản hồi
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - applications-v2
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CandidateApplicationCvUpdateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CandidateApplicationCvUpdateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CandidateApplicationCvUpdateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CandidateApplicationV2'
+          description: ''
+  /api/v2/applications/{public_id}/withdraw/:
+    post:
+      operationId: v2_applications_withdraw_create
+      summary: Ứng viên rút hồ sơ chưa có kết quả
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - applications-v2
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CandidateApplicationV2'
+          description: ''
   /api/v2/cv-backgrounds/:
     get:
       operationId: v2_cv_backgrounds_list
@@ -17182,6 +17236,7 @@ components:
       - interviewed
       - rejected
       - accepted
+      - withdrawn
       type: string
       description: |-
         * `submitted` - Mới
@@ -17190,6 +17245,7 @@ components:
         * `interviewed` - Phỏng vấn
         * `rejected` - Không phù hợp
         * `accepted` - Trúng tuyển
+        * `withdrawn` - Đã rút
     ApplicationStatusHistory:
       type: object
       description: Expects rows from ``recruiter_application_history_queryset``.
@@ -17516,6 +17572,20 @@ components:
         * `application_status_changed` - Đổi trạng thái ứng viên
         * `account_policy_held` - Giữ do trạng thái tài khoản
         * `account_policy_released` - Gỡ giữ do trạng thái tài khoản
+    CandidateApplicationCvUpdateRequest:
+      type: object
+      properties:
+        cv_public_id:
+          type: string
+          minLength: 1
+          maxLength: 50
+        version_public_id:
+          type: string
+          minLength: 1
+          maxLength: 50
+      required:
+      - cv_public_id
+      - version_public_id
     CandidateApplicationV2:
       type: object
       properties:
@@ -17566,6 +17636,24 @@ components:
         timeline:
           type: string
           readOnly: true
+        is_current:
+          type: boolean
+          readOnly: true
+        withdrawn_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        actions:
+          type: object
+          properties:
+            withdraw:
+              type: boolean
+            update_cv:
+              type: boolean
+            reapply:
+              type: boolean
+          readOnly: true
         preferred_location_ids:
           type: string
           readOnly: true
@@ -17597,6 +17685,7 @@ components:
           format: date-time
           readOnly: true
       required:
+      - actions
       - allow_ai_analysis
       - applied_at
       - candidate_status
@@ -17608,6 +17697,7 @@ components:
       - cover_letter
       - cv_public_id
       - data_processing_consent
+      - is_current
       - job_public_id
       - job_slug
       - job_title
@@ -17621,6 +17711,7 @@ components:
       - submitted_cv_version_public_id
       - timeline
       - updated_at
+      - withdrawn_at
     CandidateApplicationV2Create:
       type: object
       properties:
@@ -20699,7 +20790,7 @@ components:
           type: string
           readOnly: true
         event_type:
-          $ref: '#/components/schemas/EventType579Enum'
+          $ref: '#/components/schemas/EventType756Enum'
         summary:
           type: string
           maxLength: 240
@@ -22073,7 +22164,7 @@ components:
           type: string
           readOnly: true
         event_type:
-          $ref: '#/components/schemas/EventType579Enum'
+          $ref: '#/components/schemas/EventType756Enum'
         title:
           type: string
           maxLength: 180
@@ -22295,7 +22386,7 @@ components:
         * `internship` - Internship
         * `freelance` - Freelance
         * `other` - Khác
-    EventType579Enum:
+    EventType756Enum:
       enum:
       - verification_approved
       - verification_changes_requested
@@ -22308,6 +22399,7 @@ components:
       - company_page_editor_granted
       - company_page_editor_revoked
       - application_received
+      - application_withdrawn
       - application_review_submitted
       type: string
       description: |-
@@ -22322,6 +22414,7 @@ components:
         * `company_page_editor_granted` - Bạn được cấp quyền biên tập trang công ty
         * `company_page_editor_revoked` - Quyền biên tập trang công ty đã bị thu hồi
         * `application_received` - Có hồ sơ ứng tuyển mới
+        * `application_withdrawn` - Ứng viên đã rút hồ sơ
         * `application_review_submitted` - Có đánh giá mới cho hồ sơ ứng viên
     ExperienceBandEnum:
       enum:

@@ -21,7 +21,7 @@ function renderHero(job = JOB) {
       <JobHero
         job={job}
         saved={false}
-        applicationStatus={{ hasApplied: false, isLimitReached: false }}
+        applicationStatus={{ hasApplied: false, isLimitReached: false, applyLabel: 'Ứng tuyển ngay' }}
         onApply={vi.fn()}
         onSave={vi.fn()}
         onShare={vi.fn()}

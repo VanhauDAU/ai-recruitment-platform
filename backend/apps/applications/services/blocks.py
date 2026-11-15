@@ -50,6 +50,7 @@ def block_candidate(
         pending = Application.objects.filter(
             candidate_id=candidate_id,
             job__posted_by=recruiter,
+            is_current=True,
             status__in=Application.UNANSWERED_STATUSES,
         )
         for item in pending:

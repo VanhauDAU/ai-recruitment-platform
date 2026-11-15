@@ -46,6 +46,7 @@ class EmployerNotification(models.Model):
             'Quyền biên tập trang công ty đã bị thu hồi',
         )
         APPLICATION_RECEIVED = 'application_received', 'Có hồ sơ ứng tuyển mới'
+        APPLICATION_WITHDRAWN = 'application_withdrawn', 'Ứng viên đã rút hồ sơ'
         APPLICATION_REVIEW_SUBMITTED = (
             'application_review_submitted',
             'Có đánh giá mới cho hồ sơ ứng viên',

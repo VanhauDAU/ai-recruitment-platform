@@ -27,6 +27,21 @@ export async function submitJobApplication({
   return data
 }
 
+/** Take back an application that has no outcome yet. */
+export async function withdrawCandidateApplication(publicId) {
+  const { data } = await api.post(`/v2/applications/${publicId}/withdraw/`)
+  return data
+}
+
+/** Swap the CV of an application the recruiter has not answered yet. */
+export async function replaceCandidateApplicationCv(publicId, { cvPublicId, versionPublicId }) {
+  const { data } = await api.post(`/v2/applications/${publicId}/cv/`, {
+    cv_public_id: cvPublicId,
+    version_public_id: versionPublicId,
+  })
+  return data
+}
+
 export async function getCandidateApplications() {
   const { data } = await api.get('/v2/applications/')
   return data.results || data

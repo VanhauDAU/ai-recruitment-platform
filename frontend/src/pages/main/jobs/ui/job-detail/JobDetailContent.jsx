@@ -175,7 +175,7 @@ function JobClosingActions({ deadline, saved, savePending, applicationStatus, on
         </p>
       )}
       <div className="mt-4 flex flex-wrap gap-2">
-        <button type="button" onClick={onApply} disabled={applicationStatus.isLimitReached} className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg bg-[var(--brand-primary)] px-4 text-sm font-bold text-white hover:bg-[var(--brand-primary-hover)] disabled:cursor-not-allowed disabled:opacity-60">{applicationStatus.hasApplied && <i className="fa-solid fa-arrow-rotate-right" aria-hidden="true" />}{applicationStatus.hasApplied ? 'Ứng tuyển lại' : 'Ứng tuyển ngay'}</button>
+        <button type="button" onClick={onApply} disabled={applicationStatus.isLimitReached} className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg bg-[var(--brand-primary)] px-4 text-sm font-bold text-white hover:bg-[var(--brand-primary-hover)] disabled:cursor-not-allowed disabled:opacity-60">{applicationStatus.isResubmission && <i className="fa-solid fa-arrow-rotate-right" aria-hidden="true" />}{applicationStatus.applyLabel}</button>
         <button type="button" onClick={onSave} disabled={savePending} className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg border border-emerald-200 px-4 text-sm font-semibold text-[var(--brand-primary)] hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-60">{saved ? <HeartFilled /> : <HeartOutlined />}{saved ? 'Đã lưu tin' : 'Lưu tin'}</button>
       </div>
       <p className="mt-4 rounded-lg bg-[#F2F4F5] px-4 py-3 text-sm leading-7 text-slate-600">

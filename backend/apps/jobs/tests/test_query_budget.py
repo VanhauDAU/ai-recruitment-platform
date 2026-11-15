@@ -150,6 +150,7 @@ class EmployerJobListQueryBudgetTests(APITestCase):
                     cv=cv,
                     submitted_cv_version=version,
                     submitted_cv_title=f'Query budget CV {submission}',
+                    is_current=submission == 1,
                 )
         self.client.force_authenticate(self.employer)
 

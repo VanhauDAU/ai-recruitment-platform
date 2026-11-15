@@ -29,7 +29,12 @@ from .api.views.talent_pool import (
     RecruiterTalentPoolListCreateView,
     RecruiterTalentSuggestionView,
 )
-from .api.views.v2 import CandidateApplicationV2ListCreateView, RecruiterApplicationSnapshotView
+from .api.views.v2 import (
+    CandidateApplicationCvView,
+    CandidateApplicationV2ListCreateView,
+    CandidateApplicationWithdrawView,
+    RecruiterApplicationSnapshotView,
+)
 
 urlpatterns = [
     path(
@@ -41,6 +46,16 @@ urlpatterns = [
         'applications/',
         CandidateApplicationV2ListCreateView.as_view(),
         name='candidate-application-list-create-v2',
+    ),
+    path(
+        'applications/<str:public_id>/withdraw/',
+        CandidateApplicationWithdrawView.as_view(),
+        name='candidate-application-withdraw-v2',
+    ),
+    path(
+        'applications/<str:public_id>/cv/',
+        CandidateApplicationCvView.as_view(),
+        name='candidate-application-cv-v2',
     ),
     path(
         'recruiter/applications/',
