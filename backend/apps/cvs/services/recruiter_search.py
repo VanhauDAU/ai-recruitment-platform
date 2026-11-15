@@ -1,13 +1,14 @@
 """Per-CV opt-in for recruiter search, gated by the profile-level consent."""
 
-from rest_framework import status
+from http import HTTPStatus
+
 from rest_framework.exceptions import APIException
 
 from apps.candidates.models import CandidateConsent
 
 
 class RecruiterConsentRequired(APIException):
-    status_code = status.HTTP_409_CONFLICT
+    status_code = HTTPStatus.CONFLICT
     default_code = 'RECRUITER_CONSENT_REQUIRED'
     default_detail = {
         'code': default_code,

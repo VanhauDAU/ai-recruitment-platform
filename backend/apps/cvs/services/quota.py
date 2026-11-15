@@ -1,6 +1,7 @@
 """Per-account CV quota, configured by admins through `candidate_max_cvs`."""
 
-from rest_framework import status
+from http import HTTPStatus
+
 from rest_framework.exceptions import APIException
 
 from apps.sitecontent.selectors import get_int_setting
@@ -12,7 +13,7 @@ DEFAULT_MAX_CVS = 6
 
 
 class CvQuotaExceeded(APIException):
-    status_code = status.HTTP_409_CONFLICT
+    status_code = HTTPStatus.CONFLICT
     default_code = 'CV_LIMIT_REACHED'
 
     def __init__(self, limit):
