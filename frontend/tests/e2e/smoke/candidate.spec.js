@@ -477,7 +477,7 @@ test('candidate smoke: job application submits the selected immutable CV version
         submitted_cv_version_public_id: 'cvv_2',
         status: 'submitted',
         is_current: true,
-        actions: { withdraw: true, update_cv: true, reapply: false },
+        actions: { withdraw: true, reapply: false },
       }]
     }
     const body = path === '/api/auth/refresh/'
@@ -565,7 +565,7 @@ test('candidate smoke: job application submits the selected immutable CV version
   })
 
   // Once the recruiter rejects it, the candidate may apply again.
-  applications = [{ ...applications[0], status: 'rejected', actions: { withdraw: false, update_cv: false, reapply: true } }]
+  applications = [{ ...applications[0], status: 'rejected', actions: { withdraw: false, reapply: true } }]
   await page.reload()
   await page.locator('#job-detail-content').getByRole('button', { name: 'Ứng tuyển lại', exact: true }).click()
   await expect(page.getByRole('dialog').getByRole('alert')).toContainText('Bạn còn 2 lượt ứng tuyển lại')
@@ -736,4 +736,71 @@ test('candidate smoke: uploaded CVs show the original file, a recruiter-search s
   // Link chia sẻ của CV tải lên hiển thị tệp gốc thay vì version rỗng.
   await page.goto('/cv/share/tok_up')
   await expect(page.getByTitle('CV tải lên')).toBeAttached()
+})
+
+test('candidate smoke: applied jobs list every status and say when the employer stopped recruiting', async ({ page }) => {
+  const day = 24 * 60 * 60 * 1000
+  const at = (daysAgo) => new Date(Date.now() - daysAgo * day).toISOString()
+  const application = (overrides) => ({
+    job_public_id: 'job_1', job_title: 'Kỹ sư phần mềm', job_slug: 'stopped-job', company_name: 'Công ty Mẫu',
+    cv_public_id: 'cv_1', submitted_cv_title: 'CV chính', is_current: true,
+    actions: { withdraw: true, reapply: false, remind: false },
+    ...overrides,
+  })
+  const applications = [
+    application({
+      public_id: 'app_reminded', job_title: 'Chuyên viên tư vấn', job_slug: 'tu-van', status: 'viewed', applied_at: at(9),
+      timeline: [
+        { status: 'reminder', label: 'ProCV đã nhắc nhà tuyển dụng phản hồi CV của bạn', occurred_at: at(2) },
+        { status: 'viewed', label: 'Nhà tuyển dụng đã xem hồ sơ', occurred_at: at(8) },
+        { status: 'submitted', label: 'Đã nộp hồ sơ', occurred_at: at(9) },
+      ],
+    }),
+    application({
+      public_id: 'app_stopped', status: 'submitted', applied_at: at(20), job_stopped_at: at(5),
+      timeline: [{ status: 'submitted', label: 'Đã nộp hồ sơ', occurred_at: at(20) }],
+    }),
+  ]
+  const stoppedJob = {
+    public_id: 'job_1', slug: 'stopped-job', title: 'Kỹ sư phần mềm', company_name: 'Công ty Mẫu',
+    description: '<p>Mô tả</p>', requirements: '', benefits: '', locations_detail: [], requirement_tags: [],
+    benefit_tags: [], domain_knowledge: [], workplace_groups: [], work_schedules: [], language_requirements: [],
+    category: null, experience_years: 'none', salary_type: 'negotiable', view_count: 0,
+    accepting_applications: false, stopped_at: at(5),
+  }
+  await page.route(API_ROUTE, async (route) => {
+    const request = route.request()
+    const path = new URL(request.url()).pathname
+    const body = path === '/api/auth/refresh/'
+      ? { access: 'e2e-access' }
+      : path === '/api/auth/me/'
+        ? { id: 1, role: 'candidate', email_verified: true, job_preferences_configured: true }
+        : path === '/api/privacy/consent/'
+          ? (request.method() === 'POST'
+            ? { necessary: true, preferences: false, analytics: false, marketing: false }
+            : { consent: null })
+          : path === '/api/v2/applications/'
+            ? { results: applications }
+            : path === '/api/jobs/stopped-job/'
+              ? stoppedJob
+              : path === '/api/jobs/'
+                ? { count: 0, results: [] }
+                : {}
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) })
+  })
+
+  await page.goto('/tai-khoan/viec-lam-da-ung-tuyen')
+  await page.getByRole('button', { name: 'Chỉ cookie thiết yếu' }).click()
+  const filters = page.getByRole('tablist', { name: 'Lọc theo trạng thái hồ sơ' })
+  await expect(filters.getByRole('tab')).toHaveText([
+    'Tất cả', 'Tiếp nhận', 'Đã xem', 'Phù hợp', 'Phỏng vấn', 'Trúng tuyển', 'Chưa phù hợp', 'Đã rút',
+  ])
+  await expect(page.getByText('NTD đã xem CV. ProCV đã nhắc NTD phản hồi CV của bạn')).toBeVisible()
+  await expect(page.getByText(/NTD ngừng tuyển vị trí này \(\d{2}-\d{2}-\d{4} \d{2}:\d{2}\)/)).toBeVisible()
+
+  await page.goto('/viec-lam/stopped-job')
+  const related = page.getByRole('button', { name: 'Xem việc làm liên quan' }).filter({ visible: true }).first()
+  await expect(related).toBeVisible()
+  await expect(page.getByText('Hết hạn ứng tuyển').filter({ visible: true }).first()).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Ứng tuyển ngay' })).toHaveCount(0)
 })

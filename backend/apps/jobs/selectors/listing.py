@@ -1,4 +1,4 @@
-from django.db.models import Case, F, IntegerField, OuterRef, Q, Subquery, When
+from django.db.models import BooleanField, Case, F, IntegerField, OuterRef, Q, Subquery, Value, When
 from django.db.models.functions import Coalesce
 from rest_framework.exceptions import ValidationError
 
@@ -11,6 +11,7 @@ from ..models.querysets import (
     active_jobs_queryset,
     filter_salary_bucket_queryset,
     publicly_available_job_filter,
+    stopped_job_filter,
 )
 
 __all__ = [
@@ -33,20 +34,36 @@ def filter_salary_bucket(queryset, bucket_key):
         raise ValidationError({'salary_bucket': 'Invalid salary bucket.'}) from error
 
 
+def job_detail_queryset():
+    """Public jobs plus jobs that stopped recruiting, for the candidate detail page.
+
+    ``accepting_applications`` tells them apart: a stopped job is shown with
+    "Hết hạn ứng tuyển" instead of the apply action.
+    """
+    public = publicly_available_job_filter()
+    return _with_detail_relations(Job.objects.filter(public | stopped_job_filter())).annotate(
+        accepting_applications=Case(
+            When(public, then=Value(True)), default=Value(False), output_field=BooleanField()
+        )
+    )
+
+
 def active_job_detail_queryset():
     """Return active jobs with every relation required by the detail serializer."""
-    return (
-        Job.objects.filter(publicly_available_job_filter())
-        .select_related('company', 'campaign', 'posted_by', 'posted_by__recruiter_profile')
-        .prefetch_related(
-            'category_assignments__category',
-            'job_locations__location__parent',
-            'job_skills__skill',
-            'work_schedules',
-            'job_benefits__benefit',
-            'language_requirements__language',
-            'company__industries',
-        )
+    return _with_detail_relations(Job.objects.filter(publicly_available_job_filter()))
+
+
+def _with_detail_relations(queryset):
+    return queryset.select_related(
+        'company', 'campaign', 'posted_by', 'posted_by__recruiter_profile'
+    ).prefetch_related(
+        'category_assignments__category',
+        'job_locations__location__parent',
+        'job_skills__skill',
+        'work_schedules',
+        'job_benefits__benefit',
+        'language_requirements__language',
+        'company__industries',
     )
 
 

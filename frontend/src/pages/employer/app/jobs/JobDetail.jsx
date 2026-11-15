@@ -114,9 +114,9 @@ export default function JobDetail() {
     mutationFn: closeEmployerJob,
     onSuccess: () => {
       invalidate()
-      message.success('Đã đóng tin.')
+      message.success('Đã ngừng tuyển vị trí này.')
     },
-    onError: (error) => message.error(getApiErrorMessage(error, 'Không thể đóng tin.')),
+    onError: (error) => message.error(getApiErrorMessage(error, 'Không thể ngừng tuyển.')),
   })
   const resubmitMutation = useMutation({
     mutationFn: () => resubmitEmployerJob(publicId),
@@ -244,17 +244,17 @@ export default function JobDetail() {
         onSelectFilter={selectCvFilter}
         onClose={() => requestConfirmation({
           cancelText: 'Đóng',
-          confirmText: 'Đóng tin',
+          confirmText: 'Ngừng tuyển',
           danger: true,
           description: (
             <>
-              Bạn có chắc muốn đóng tin tuyển dụng <strong>{jobDisplayTitle(job)}</strong> không?
+              Bạn có chắc muốn ngừng tuyển vị trí <strong>{jobDisplayTitle(job)}</strong> không?
               <br />
               Tin sẽ ngừng hiển thị với ứng viên.
             </>
           ),
           onConfirm: () => closeMutation.mutateAsync(publicId),
-          title: 'Đóng tin tuyển dụng',
+          title: 'Ngừng tuyển',
         })}
       />
 

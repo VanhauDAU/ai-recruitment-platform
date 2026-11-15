@@ -20,7 +20,7 @@ const FALLBACK_STYLE = [HistoryOutlined, 'Hoạt động', 'bg-slate-100 text-sl
 
 const STATUS_LABELS = {
   campaign: { draft: 'Chưa khởi động', active: 'Đang mở', paused: 'Đang tắt', completed: 'Hoàn tất', cancelled: 'Đã hủy' },
-  job: { draft: 'Nháp', pending: 'Chờ duyệt', active: 'Đang tuyển', closed: 'Đã đóng', rejected: 'Từ chối' },
+  job: { draft: 'Nháp', pending: 'Chờ duyệt', active: 'Đang tuyển', closed: 'Ngừng tuyển', rejected: 'Từ chối' },
   application: RECRUITER_APPLICATION_STATUS_LABELS,
 }
 

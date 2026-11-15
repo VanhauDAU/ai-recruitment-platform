@@ -8,16 +8,14 @@ import CandidateApplicationActions from './CandidateApplicationActions'
 vi.mock('@/entities/application', async (importOriginal) => ({
   ...(await importOriginal()),
   remindRecruiterOfApplication: vi.fn(),
-  replaceCandidateApplicationCv: vi.fn(),
   withdrawCandidateApplication: vi.fn(),
 }))
-vi.mock('@/entities/cv', () => ({ getMyCvs: vi.fn().mockResolvedValue([]) }))
 
 const APPLICATION = {
   public_id: 'app_1',
   job_title: 'Kỹ sư Backend',
   cv_public_id: 'cv_1',
-  actions: { withdraw: true, update_cv: true, reapply: false },
+  actions: { withdraw: true, reapply: false },
 }
 
 describe('CandidateApplicationActions', () => {
@@ -25,11 +23,10 @@ describe('CandidateApplicationActions', () => {
 
   it('offers only the actions the application allows', () => {
     const { rerender } = render(withQueryClient(<CandidateApplicationActions application={APPLICATION} />))
-    expect(screen.getByRole('button', { name: 'Đổi CV' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Rút hồ sơ' })).toBeInTheDocument()
 
     rerender(withQueryClient(
-      <CandidateApplicationActions application={{ ...APPLICATION, actions: { withdraw: false, update_cv: false } }} />,
+      <CandidateApplicationActions application={{ ...APPLICATION, actions: { withdraw: false } }} />,
     ))
     expect(screen.queryByRole('button', { name: 'Rút hồ sơ' })).not.toBeInTheDocument()
   })

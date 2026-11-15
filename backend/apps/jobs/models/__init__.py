@@ -26,6 +26,7 @@ from .querysets import (
     job_state_count_subquery,
     job_state_counts,
     publicly_available_job_filter,
+    stopped_job_filter,
 )
 from .report import JobReport, JobReportResolutionEvent
 from .saved import SavedJob
@@ -66,4 +67,5 @@ __all__ = [
     'job_state_count_subquery',
     'job_state_counts',
     'publicly_available_job_filter',
+    'stopped_job_filter',
 ]

@@ -3,3 +3,8 @@ export function formatJobDate(value) {
   const date = new Date(value)
   return Number.isNaN(date.getTime()) ? null : date.toLocaleDateString('vi-VN')
 }
+
+/** A stopped job stays readable but no longer takes applications. */
+export function isAcceptingApplications(job) {
+  return job?.accepting_applications !== false
+}

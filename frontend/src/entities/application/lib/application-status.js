@@ -25,7 +25,7 @@ export const APPLICATION_STATUS_TONES = {
 
 // Nhãn ngắn cho bộ lọc ở trang "Việc làm đã ứng tuyển"; nhãn dài bên dưới dùng cho mốc tiến trình.
 export const CANDIDATE_APPLICATION_FILTERS = [
-  ['submitted', 'Đã nộp'], ['viewed', 'NTD đã xem'], ['shortlisted', 'Phù hợp'],
+  ['submitted', 'Tiếp nhận'], ['viewed', 'Đã xem'], ['shortlisted', 'Phù hợp'],
   ['interviewed', 'Phỏng vấn'], ['accepted', 'Trúng tuyển'], ['rejected', 'Chưa phù hợp'],
   ['withdrawn', 'Đã rút'],
 ]

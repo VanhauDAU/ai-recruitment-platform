@@ -393,7 +393,7 @@ class CandidateApplicationV2Tests(APITestCase):
 
         self.assertEqual(forbidden_cv.status_code, 400, forbidden_cv.data)
         self.assertEqual(first.status_code, 201, first.data)
-        self.assertIn('Cập nhật CV', str(while_unanswered.data))
+        self.assertIn('rút hồ sơ rồi ứng tuyển lại', str(while_unanswered.data))
         self.assertIn('đang được nhà tuyển dụng xử lý', str(while_interviewing.data))
         self.assertEqual(second.status_code, 201, second.data)
         self.assertEqual(too_soon.status_code, 400, too_soon.data)
@@ -419,7 +419,6 @@ class CandidateApplicationV2Tests(APITestCase):
             withdrawn.data['actions'],
             {
                 'withdraw': False,
-                'update_cv': False,
                 'reapply': True,
                 'remind': False,
                 'remind_available_at': None,
@@ -462,30 +461,6 @@ class CandidateApplicationV2Tests(APITestCase):
         )
 
         self.assertEqual(response.status_code, 400, response.data)
-
-    def test_cv_can_be_swapped_only_before_the_recruiter_opens_it(self):
-        self.client.force_authenticate(self.candidate)
-        submitted = self.apply()
-        submitted_at = Application.objects.get(public_id=submitted.data['public_id']).submitted_at
-        new_version = self.cv.latest_version
-        url = reverse('candidate-application-cv-v2', args=[submitted.data['public_id']])
-        payload = {'cv_public_id': self.cv.public_id, 'version_public_id': new_version.public_id}
-
-        updated = self.client.post(url, payload, format='json')
-        self.age(submitted, status=Application.Status.VIEWED)
-        after_view = self.client.post(url, payload, format='json')
-
-        self.assertEqual(updated.status_code, 200, updated.data)
-        self.assertEqual(updated.data['status'], Application.Status.SUBMITTED)
-        self.assertNotEqual(
-            updated.data['submitted_cv_version_public_id'],
-            submitted.data['submitted_cv_version_public_id'],
-        )
-        # The swap keeps the submission time: it cannot restart the review clock.
-        application = Application.objects.get(public_id=submitted.data['public_id'])
-        self.assertEqual(application.submitted_at, submitted_at)
-        self.assertEqual(after_view.status_code, 400, after_view.data)
-        self.assertIn('rút hồ sơ và ứng tuyển lại', str(after_view.data))
 
     def test_recruiter_sees_the_submission_number_and_earlier_submissions(self):
         self.client.force_authenticate(self.candidate)

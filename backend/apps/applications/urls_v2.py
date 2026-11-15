@@ -31,7 +31,6 @@ from .api.views.talent_pool import (
     RecruiterTalentSuggestionView,
 )
 from .api.views.v2 import (
-    CandidateApplicationCvView,
     CandidateApplicationRemindView,
     CandidateApplicationV2ListCreateView,
     CandidateApplicationWithdrawView,
@@ -58,11 +57,6 @@ urlpatterns = [
         'applications/<str:public_id>/remind/',
         CandidateApplicationRemindView.as_view(),
         name='candidate-application-remind-v2',
-    ),
-    path(
-        'applications/<str:public_id>/cv/',
-        CandidateApplicationCvView.as_view(),
-        name='candidate-application-cv-v2',
     ),
     path(
         'recruiter/applications/',

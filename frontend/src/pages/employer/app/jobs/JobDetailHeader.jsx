@@ -127,7 +127,7 @@ export default function JobDetailHeader({ job, publicId, summary, closing, onClo
               <Dropdown
                 trigger={['click']}
                 placement="bottomRight"
-                menu={{ items: [{ key: 'close', danger: true, icon: <StopOutlined />, label: 'Đóng tin', onClick: onClose }] }}
+                menu={{ items: [{ key: 'close', danger: true, icon: <StopOutlined />, label: 'Ngừng tuyển', onClick: onClose }] }}
               >
                 <Button aria-label="Thêm thao tác với tin" className="!h-9 !w-9 !rounded-lg" icon={<MoreOutlined />} loading={closing} />
               </Dropdown>

@@ -2,7 +2,7 @@ import { BellOutlined, DownOutlined, HeartFilled, HeartOutlined, UpOutlined } fr
 import { useEffect, useRef, useState } from 'react'
 import { formatDeadline } from '@/entities/job'
 import RichContent from '@/shared/ui/RichContent'
-import { formatJobDate } from '../../lib/job-detail-presentation'
+import { formatJobDate, isAcceptingApplications } from '../../lib/job-detail-presentation'
 import JobCard from '../JobCard'
 import {
   AdditionalBenefits,
@@ -14,9 +14,11 @@ import {
   WorkplaceGroups,
   WorkScheduleList,
 } from './JobDetailBlocks'
+import JobApplicationClosed from './JobApplicationClosed'
 import JobQualityRating from './JobQualityRating'
 
 const APPLY_GUIDE = 'Ứng viên nộp hồ sơ trực tuyến bằng cách bấm Ứng tuyển ngay dưới đây.'
+const CLOSED_GUIDE = 'Nhà tuyển dụng đã ngừng nhận hồ sơ cho vị trí này.'
 const MOBILE_COLLAPSED_HEIGHT = 520
 const DESKTOP_COLLAPSED_HEIGHT = 640
 
@@ -101,9 +103,9 @@ export default function JobDetailContent({
             <WorkScheduleList schedules={job.work_schedules} note={job.work_schedule_note} />
             <section>
               <SectionHeading>Cách thức ứng tuyển</SectionHeading>
-              <p className="text-sm leading-6 text-slate-700">{APPLY_GUIDE}</p>
+              <p className="text-sm leading-6 text-slate-700">{isAcceptingApplications(job) ? APPLY_GUIDE : CLOSED_GUIDE}</p>
             </section>
-            <JobClosingActions deadline={job.deadline} saved={saved} savePending={savePending} applicationStatus={applicationStatus} onApply={onApply} onSave={onSave} onReport={onReport} />
+            <JobClosingActions accepting={isAcceptingApplications(job)} deadline={job.deadline} saved={saved} savePending={savePending} applicationStatus={applicationStatus} onApply={onApply} onSave={onSave} onReport={onReport} />
           </div>
           {detailsOverflowing && (
             <div className={detailsExpanded
@@ -165,7 +167,7 @@ function JobText({ id, title, content, children }) {
   return <section id={id} className={id ? 'scroll-mt-20' : undefined}><SectionHeading>{title}</SectionHeading><RichContent html={content} />{children}</section>
 }
 
-function JobClosingActions({ deadline, saved, savePending, applicationStatus, onApply, onSave, onReport }) {
+function JobClosingActions({ accepting, deadline, saved, savePending, applicationStatus, onApply, onSave, onReport }) {
   return (
     <div className="border-t border-slate-100 pt-5">
       {deadline && (
@@ -175,7 +177,7 @@ function JobClosingActions({ deadline, saved, savePending, applicationStatus, on
         </p>
       )}
       <div className="mt-4 flex flex-wrap gap-2">
-        <button type="button" onClick={onApply} disabled={applicationStatus.isLimitReached} className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg bg-[var(--brand-primary)] px-4 text-sm font-bold text-white hover:bg-[var(--brand-primary-hover)] disabled:cursor-not-allowed disabled:opacity-60">{applicationStatus.isResubmission && <i className="fa-solid fa-arrow-rotate-right" aria-hidden="true" />}{applicationStatus.applyLabel}</button>
+        {accepting ? <button type="button" onClick={onApply} disabled={applicationStatus.isLimitReached} className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg bg-[var(--brand-primary)] px-4 text-sm font-bold text-white hover:bg-[var(--brand-primary-hover)] disabled:cursor-not-allowed disabled:opacity-60">{applicationStatus.isResubmission && <i className="fa-solid fa-arrow-rotate-right" aria-hidden="true" />}{applicationStatus.applyLabel}</button> : <JobApplicationClosed compact />}
         <button type="button" onClick={onSave} disabled={savePending} className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg border border-emerald-200 px-4 text-sm font-semibold text-[var(--brand-primary)] hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-60">{saved ? <HeartFilled /> : <HeartOutlined />}{saved ? 'Đã lưu tin' : 'Lưu tin'}</button>
       </div>
       <p className="mt-4 rounded-lg bg-[#F2F4F5] px-4 py-3 text-sm leading-7 text-slate-600">

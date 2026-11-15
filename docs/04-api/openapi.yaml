@@ -10619,39 +10619,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/CandidateApplicationV2Create'
           description: ''
-  /api/v2/applications/{public_id}/cv/:
-    post:
-      operationId: v2_applications_cv_create
-      summary: Ứng viên đổi CV của hồ sơ chưa được phản hồi
-      parameters:
-      - in: path
-        name: public_id
-        schema:
-          type: string
-        required: true
-      tags:
-      - applications-v2
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CandidateApplicationCvUpdateRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/CandidateApplicationCvUpdateRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/CandidateApplicationCvUpdateRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CandidateApplicationV2'
-          description: ''
   /api/v2/applications/{public_id}/remind/:
     post:
       operationId: v2_applications_remind_create
@@ -17719,20 +17686,6 @@ components:
         * `application_status_changed` - Đổi trạng thái ứng viên
         * `account_policy_held` - Giữ do trạng thái tài khoản
         * `account_policy_released` - Gỡ giữ do trạng thái tài khoản
-    CandidateApplicationCvUpdateRequest:
-      type: object
-      properties:
-        cv_public_id:
-          type: string
-          minLength: 1
-          maxLength: 50
-        version_public_id:
-          type: string
-          minLength: 1
-          maxLength: 50
-      required:
-      - cv_public_id
-      - version_public_id
     CandidateApplicationV2:
       type: object
       properties:
@@ -17753,6 +17706,10 @@ components:
           readOnly: true
         company_logo_url:
           type: string
+          readOnly: true
+        job_stopped_at:
+          type: string
+          format: date-time
           readOnly: true
         cv_public_id:
           type: string
@@ -17795,8 +17752,6 @@ components:
           type: object
           properties:
             withdraw:
-              type: boolean
-            update_cv:
               type: boolean
             reapply:
               type: boolean
@@ -17853,6 +17808,7 @@ components:
       - is_current
       - job_public_id
       - job_slug
+      - job_stopped_at
       - job_title
       - preferred_location_ids
       - preferred_location_names
@@ -20969,7 +20925,7 @@ components:
         * `active` - Đang tuyển
         * `hidden` - Bị ẩn
         * `expired` - Hết hạn
-        * `closed` - Đã đóng
+        * `closed` - Ngừng tuyển
     EmployerAccountVerification:
       type: object
       properties:
@@ -23667,6 +23623,14 @@ components:
         title:
           type: string
           readOnly: true
+        accepting_applications:
+          type: boolean
+          readOnly: true
+          default: true
+        stopped_at:
+          type: string
+          format: date-time
+          readOnly: true
         company_name:
           type: string
           readOnly: true
@@ -23904,6 +23868,7 @@ components:
           type: string
           readOnly: true
       required:
+      - accepting_applications
       - age_max
       - age_min
       - application_deadline
@@ -23954,6 +23919,7 @@ components:
       - salary_min
       - salary_type
       - slug
+      - stopped_at
       - title
       - view_count
       - visibility_ends_at

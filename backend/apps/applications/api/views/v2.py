@@ -19,11 +19,9 @@ from ...services import (
     create_application_record,
     open_application_snapshot,
     request_recruiter_reminder,
-    update_application_cv,
     withdraw_application,
 )
 from ..serializers.v2 import (
-    CandidateApplicationCvUpdateSerializer,
     CandidateApplicationV2CreateSerializer,
     CandidateApplicationV2Serializer,
     RecruiterApplicationSnapshotSerializer,
@@ -113,30 +111,6 @@ class CandidateApplicationRemindView(APIView):
     def post(self, request, public_id):
         return _candidate_application_response(
             lambda: request_recruiter_reminder(candidate=request.user, public_id=public_id)
-        )
-
-
-@extend_schema(
-    summary='Ứng viên đổi CV của hồ sơ chưa được phản hồi',
-    request=CandidateApplicationCvUpdateSerializer,
-    responses={200: CandidateApplicationV2Serializer},
-    tags=['applications-v2'],
-)
-class CandidateApplicationCvView(APIView):
-    permission_classes = [IsCandidate]
-
-    def post(self, request, public_id):
-        serializer = CandidateApplicationCvUpdateSerializer(
-            data=request.data, context={'request': request}
-        )
-        serializer.is_valid(raise_exception=True)
-        return _candidate_application_response(
-            lambda: update_application_cv(
-                candidate=request.user,
-                public_id=public_id,
-                cv=serializer.validated_data['cv'],
-                source_version=serializer.validated_data['version'],
-            )
         )
 
 

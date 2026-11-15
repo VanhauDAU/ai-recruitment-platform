@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -5,7 +7,7 @@ from django.utils import timezone
 from django.utils.text import slugify
 
 from common.public_id import generate_public_id
-from common.vietnam_time import vietnam_today
+from common.vietnam_time import vietnam_day_start, vietnam_today
 
 
 def validate_application_reasons(value):
@@ -486,6 +488,21 @@ class Job(models.Model):
             or self.visibility_ends_at is None
             or self.visibility_ends_at <= now
         )
+
+    @property
+    def stopped_at(self):
+        """When the job stopped recruiting, for candidates; ``None`` while it recruits."""
+        if self.status == self.Status.CLOSED:
+            return self.closed_at
+        if self.status != self.Status.ACTIVE:
+            return None
+        now = timezone.now()
+        ends = []
+        if self.deadline is not None and self.deadline < vietnam_today(now):
+            ends.append(vietnam_day_start(self.deadline + timedelta(days=1)))
+        if self.visibility_ends_at is not None and self.visibility_ends_at <= now:
+            ends.append(self.visibility_ends_at)
+        return min(ends) if ends else None
 
     @property
     def editable_for_requested_changes(self):

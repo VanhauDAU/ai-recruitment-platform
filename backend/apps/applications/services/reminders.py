@@ -35,7 +35,11 @@ def _submitted_at(application):
 
 def candidate_reminder_available_at(application, *, now=None):
     """When the candidate may next ask for a reminder; ``None`` when never again."""
-    if not application.is_current or application.status not in Application.UNANSWERED_STATUSES:
+    if (
+        not application.is_current
+        or application.status not in Application.UNANSWERED_STATUSES
+        or application.job.stopped_at is not None
+    ):
         return None
     asked = [
         item.created_at

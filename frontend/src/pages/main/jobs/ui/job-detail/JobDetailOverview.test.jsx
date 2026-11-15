@@ -36,6 +36,14 @@ describe('JobHero', () => {
     vi.restoreAllMocks()
   })
 
+  it('replaces the apply button once the employer stopped recruiting', () => {
+    renderHero({ ...JOB, accepting_applications: false })
+
+    expect(screen.queryByRole('button', { name: /Ứng tuyển ngay/ })).not.toBeInTheDocument()
+    expect(screen.getByText('Hết hạn ứng tuyển')).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Xem việc làm liên quan' })).toBeVisible()
+  })
+
   it('promotes salary as the primary hero metric', () => {
     renderHero()
 

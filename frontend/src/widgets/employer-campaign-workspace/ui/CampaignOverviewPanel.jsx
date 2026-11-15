@@ -82,7 +82,7 @@ export default function CampaignOverviewPanel({ campaign, report, reportLoading 
     { label: 'Đang tuyển', value: report.jobs?.active ?? campaign.active_job_count, dot: 'bg-emerald-500' },
     { label: 'Bản nháp', value: report.jobs?.draft ?? campaign.draft_job_count, dot: 'bg-slate-400' },
     { label: 'Hết hạn', value: report.jobs?.expired ?? campaign.expired_job_count, dot: 'bg-amber-500' },
-    { label: 'Đã đóng', value: report.jobs?.closed ?? campaign.closed_job_count, dot: 'bg-violet-500' },
+    { label: 'Ngừng tuyển', value: report.jobs?.closed ?? campaign.closed_job_count, dot: 'bg-violet-500' },
   ]
 
   return (

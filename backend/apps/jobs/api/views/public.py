@@ -24,6 +24,7 @@ from ...selectors.listing import (
     active_job_detail_queryset,
     active_job_tracking_queryset,
     build_job_list_queryset,
+    job_detail_queryset,
     publicly_available_job_filter,
     suggest_job_search_terms,
 )
@@ -299,7 +300,9 @@ class JobDetailView(generics.RetrieveAPIView):
     def get_queryset(self):
         # Rebuild the availability predicate per request so deadline and
         # campaign status changes take effect without restarting the process.
-        return active_job_detail_queryset()
+        # Stopped jobs stay readable (application history links to them) but
+        # say they no longer take applications.
+        return job_detail_queryset()
 
 
 @extend_schema(

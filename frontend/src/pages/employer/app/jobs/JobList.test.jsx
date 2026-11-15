@@ -226,7 +226,7 @@ describe('JobList', () => {
     }))
     expect(await screen.findByRole('menuitem', { name: /Sao chép thành bản nháp/ }))
       .toBeInTheDocument()
-    expect(await screen.findByRole('menuitem', { name: /Đóng tin/ })).toBeInTheDocument()
+    expect(await screen.findByRole('menuitem', { name: /Ngừng tuyển/ })).toBeInTheDocument()
     await user.keyboard('{Escape}')
 
     const draftCard = screen.getByTestId('job-list-item-job_draft')
@@ -269,7 +269,7 @@ describe('JobList', () => {
     await user.click(within(heldCard).getByRole('button', {
       name: 'Mở thao tác cho Kỹ sư Frontend',
     }))
-    expect(await screen.findByRole('menuitem', { name: /Đóng tin/ })).toBeInTheDocument()
+    expect(await screen.findByRole('menuitem', { name: /Ngừng tuyển/ })).toBeInTheDocument()
     expect(screen.queryByRole('menuitem', { name: /Sao chép thành bản nháp/ }))
       .not.toBeInTheDocument()
     expect(screen.queryByRole('menuitem', { name: /Chỉnh sửa tin/ })).not.toBeInTheDocument()
@@ -366,18 +366,18 @@ describe('JobList', () => {
     await user.click(within(refreshedActiveCard).getByRole('button', {
       name: 'Mở thao tác cho Kỹ sư Frontend',
     }))
-    await user.click(await screen.findByRole('menuitem', { name: /Đóng tin/ }))
+    await user.click(await screen.findByRole('menuitem', { name: /Ngừng tuyển/ }))
     const closeDialog = await screen.findByRole('dialog')
-    expect(within(closeDialog).getByRole('heading', { name: 'Đóng tin tuyển dụng' }))
+    expect(within(closeDialog).getByRole('heading', { name: 'Ngừng tuyển' }))
       .toBeInTheDocument()
     expect(within(closeDialog).getByText('Kỹ sư Frontend')).toBeInTheDocument()
     expect(closeDialog).toHaveTextContent('Tin sẽ ngừng hiển thị với ứng viên.')
-    await user.click(within(closeDialog).getByRole('button', { name: 'Đóng tin' }))
+    await user.click(within(closeDialog).getByRole('button', { name: 'Ngừng tuyển' }))
     await waitFor(() => expect(mocks.closeEmployerJob).toHaveBeenCalledWith(
       'job_active',
       expect.any(Object),
     ))
-    expect(mocks.message.success).toHaveBeenCalledWith('Đã đóng tin tuyển dụng.')
+    expect(mocks.message.success).toHaveBeenCalledWith('Đã ngừng tuyển vị trí này.')
     await waitFor(() => {
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     })
