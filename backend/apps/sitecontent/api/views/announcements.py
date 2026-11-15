@@ -1,10 +1,8 @@
 from datetime import timedelta
 from time import monotonic
-from zoneinfo import ZoneInfo
 
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.shortcuts import get_object_or_404
-from django.utils import timezone
 from drf_spectacular.utils import OpenApiResponse, OpenApiTypes, extend_schema, extend_schema_view
 from rest_framework import generics, permissions, status
 from rest_framework.exceptions import ValidationError
@@ -17,6 +15,7 @@ from apps.accounts.permissions import AdminPortalPermission
 from apps.privacy.services import load_consent
 from common.metrics import record_metric
 from common.pagination import StandardPagination
+from common.vietnam_time import vietnam_today
 
 from ...models import Announcement, AnnouncementRevision
 from ...selectors import (
@@ -522,7 +521,7 @@ class AdminAnnouncementMetricView(APIView):
         announcement = get_object_or_404(Announcement, public_id=public_id)
         query = AnnouncementMetricQuerySerializer(data=request.query_params)
         query.is_valid(raise_exception=True)
-        today = timezone.localdate(timezone=ZoneInfo('Asia/Ho_Chi_Minh'))
+        today = vietnam_today()
         date_to = query.validated_data.get('date_to', today)
         date_from = query.validated_data.get('date_from', date_to - timedelta(days=29))
         if date_from > date_to:

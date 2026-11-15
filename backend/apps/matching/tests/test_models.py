@@ -9,6 +9,7 @@ from apps.cv_templates.tests.factories import make_published_template
 from apps.cvs.services import create_v2_cv
 from apps.employers.models import Company
 from apps.jobs.models import Job
+from apps.jobs.tests.helpers import open_visibility_window
 
 from ..models import EMBEDDING_DIMENSIONS, MatchAnalysis, MatchChunk, MatchDocument
 
@@ -43,6 +44,7 @@ class MatchingModelTests(TestCase):
             title='Backend Developer',
             description='d',
             status=Job.Status.ACTIVE,
+            **open_visibility_window(),
         )
         template, _version = make_published_template('Match template')
         cv = create_v2_cv(actor=cls.candidate, title='Match CV', template=template)

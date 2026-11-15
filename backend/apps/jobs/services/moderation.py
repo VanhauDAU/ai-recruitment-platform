@@ -12,12 +12,10 @@ from apps.accounts.services import (
     StaleImpactToken,
     create_impact_token,
     decode_impact_token,
-    is_account_accessible,
 )
-from apps.employers.services import recruiter_job_publication_state
 
 from ..models import Job, JobModerationEvent
-from .lifecycle import lifecycle_local_date, lifecycle_mode
+from ..models.querysets import job_visibility_issues
 
 REVIEW_OPERATION = 'job.moderation.mutate'
 
@@ -64,43 +62,9 @@ def _verify_review_token(job, review_token):
 
 def job_moderation_state(job):
     """Explain why a job is hidden from candidates and what an administrator may do."""
-    blocked = []
-    if not is_account_accessible(job.posted_by):
-        blocked.append(
-            {'code': 'employer_restricted', 'label': 'Tài khoản nhà tuyển dụng đang bị hạn chế.'}
-        )
-    if job.policy_hold:
-        blocked.append({'code': 'policy_hold', 'label': job.get_policy_hold_display()})
-    if job.moderation_hold:
-        blocked.append({'code': 'moderation_hold', 'label': job.get_moderation_hold_display()})
-    if job.deadline and job.deadline < lifecycle_local_date():
-        blocked.append({'code': 'deadline_expired', 'label': 'Hạn nhận hồ sơ đã qua.'})
-    if (
-        lifecycle_mode() == 'enforce'
-        and job.visibility_ends_at is not None
-        and job.visibility_ends_at <= timezone.now()
-    ):
-        blocked.append(
-            {
-                'code': 'visibility_expired',
-                'label': 'Tin đã hết vòng đời hiển thị và cần một lượt đăng mới.',
-            }
-        )
-    if job.campaign_id:
-        if job.campaign.policy_hold:
-            blocked.append(
-                {'code': 'campaign_policy_hold', 'label': 'Chiến dịch đang bị policy hold.'}
-            )
-        if job.campaign.status != 'active':
-            blocked.append(
-                {'code': 'campaign_inactive', 'label': 'Chiến dịch hiện không hoạt động.'}
-            )
-
-    blocked.extend(
-        recruiter_job_publication_state(job.posted_by, company_id=job.company_id)[
-            'publish_blockers'
-        ]
-    )
+    blocked = [
+        {'code': item['code'], 'label': item['label']} for item in job_visibility_issues(job)
+    ]
 
     actions = []
     if job.status == Job.Status.ACTIVE and not job.moderation_hold:

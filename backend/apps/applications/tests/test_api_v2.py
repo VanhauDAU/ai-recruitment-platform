@@ -28,6 +28,7 @@ from apps.employers.models import (
 )
 from apps.employers.tests.readiness_helpers import make_employer_ready
 from apps.jobs.models import Job, JobLocation
+from apps.jobs.tests.helpers import open_visibility_window
 from apps.locations.models import Location
 
 from ..models import Application
@@ -75,6 +76,7 @@ class RecruiterApplicationSnapshotV2Tests(APITestCase):
             title='Snapshot Job',
             description='Read immutable application snapshots.',
             status=Job.Status.ACTIVE,
+            **open_visibility_window(),
         )
         template, _template_version = make_published_template('Snapshot template')
         self.cv = create_v2_cv(actor=self.candidate, title='Application CV', template=template)
@@ -261,17 +263,14 @@ class CandidateApplicationV2Tests(APITestCase):
         self.company = Company.objects.create(
             company_name='Apply Company', created_by=self.employer
         )
-        RecruiterProfile.objects.create(
-            user=self.employer,
-            company=self.company,
-            company_role=RecruiterProfile.CompanyRole.OWNER,
-        )
+        make_employer_ready(self.employer, company=self.company, candidate_data=True)
         self.job = Job.objects.create(
             posted_by=self.employer,
             company=self.company,
             title='Apply Job',
             description='Candidate selects an immutable CV version.',
             status=Job.Status.ACTIVE,
+            **open_visibility_window(),
         )
         self.preferred_location = Location.objects.create(
             code='74',

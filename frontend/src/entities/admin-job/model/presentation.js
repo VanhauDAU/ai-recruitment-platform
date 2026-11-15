@@ -9,6 +9,7 @@ export const JOB_SCOPE_OPTIONS = [
   { value: 'active', label: 'Đang tuyển' },
   { value: 'reported', label: 'Có báo cáo chờ' },
   { value: 'expired', label: 'Quá hạn' },
+  { value: 'hidden', label: 'Bị ẩn với ứng viên' },
   { value: 'held', label: 'Đang tạm giữ' },
   { value: 'closed', label: 'Đã đóng' },
   { value: 'draft', label: 'Nháp' },

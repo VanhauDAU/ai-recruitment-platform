@@ -17,11 +17,13 @@ from django.utils.text import slugify
 from rest_framework.exceptions import ValidationError
 
 from apps.employers.models import RecruiterProfile
+from apps.employers.services import recruiter_job_publication_state
 from apps.locations.models import Location
 from apps.skills.models import Skill
 from apps.skills.selectors import normalize_skill_name, skills_by_names
 from apps.skills.services import create_skill
 from common.rich_text import sanitize_rich_text
+from common.vietnam_time import vietnam_today
 
 from ..models import (
     Job,
@@ -34,7 +36,7 @@ from ..models import (
     JobSkill,
     Language,
 )
-from .lifecycle import job_lifecycle_policy, lifecycle_local_date
+from .lifecycle import job_lifecycle_policy
 from .posting import job_deadline_policy, publish_operator_imported_job
 
 REQUIRED_TEXT_FIELDS = (
@@ -114,9 +116,11 @@ class _Lookups:
             _fold(language.name): language for language in Language.objects.filter(is_active=True)
         }
         # Tin chỉ hiển thị công khai khi người đăng là recruiter đang hoạt động của
-        # chính công ty đó (xem `publicly_available_job_filter`).
-        self.publishers = list(
-            RecruiterProfile.objects.filter(
+        # chính công ty đó, đã được duyệt xác thực và còn DPA hiện hành, tức được
+        # mở hồ sơ ứng viên (xem `publicly_available_job_filter`).
+        self.publishers = [
+            recruiter
+            for recruiter in RecruiterProfile.objects.filter(
                 company__isnull=False,
                 user__status='active',
                 user__is_active=True,
@@ -124,7 +128,10 @@ class _Lookups:
             )
             .select_related('user', 'company')
             .order_by('company__company_name', 'pk')
-        )
+            if not recruiter_job_publication_state(recruiter.user, company_id=recruiter.company_id)[
+                'publish_blockers'
+            ]
+        ]
         # Công ty có nhiều recruiter thì tin vào tài khoản chủ công ty trước.
         self.publishers.sort(
             key=lambda recruiter: recruiter.company_role != RecruiterProfile.CompanyRole.OWNER
@@ -270,12 +277,14 @@ def _resolve(row, lookups):
 
     recruiter = None
     if not lookups.publishers:
-        errors.append('Hệ thống chưa có tài khoản nhà tuyển dụng nào gắn với công ty.')
+        errors.append(
+            'Hệ thống chưa có nhà tuyển dụng nào đã xác thực và còn DPA hiện hành để đăng tin.'
+        )
     else:
         recruiter = lookups.publisher_for(_text(row, 'company'))
         if recruiter is None:
             errors.append(
-                f'Công ty demo không tồn tại hoặc không có người đăng: {_text(row, "company")}.'
+                f'Công ty không tồn tại hoặc chưa có người đăng đã xác thực: {_text(row, "company")}.'
             )
 
     salary_type, salary_min, salary_max = _salary(row, errors)
@@ -381,8 +390,7 @@ def _create_job(resolved, *, create_missing_skills):
         salary_max=resolved['salary_max'],
         number_of_vacancies=resolved['vacancies'],
         work_schedule_note=resolved['work_schedule_note'],
-        deadline=lifecycle_local_date()
-        + timedelta(days=job_deadline_policy()['max_deadline_days']),
+        deadline=vietnam_today() + timedelta(days=job_deadline_policy()['max_deadline_days']),
         requested_visibility_days=job_lifecycle_policy()['max_visibility_days'],
         status=Job.Status.DRAFT,
     )

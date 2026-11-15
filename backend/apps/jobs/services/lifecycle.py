@@ -1,28 +1,13 @@
 from datetime import timedelta
-from zoneinfo import ZoneInfo
 
 from django.conf import settings
-from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
-LIFECYCLE_MODES = frozenset({'legacy', 'shadow', 'enforce'})
 DEFAULT_VISIBILITY_DAYS = 30
 MAX_VISIBILITY_DAYS = 90
-LIFECYCLE_TIME_ZONE = ZoneInfo('Asia/Ho_Chi_Minh')
-
-
-def lifecycle_mode():
-    mode = str(getattr(settings, 'JOB_LIFECYCLE_V2_MODE', 'legacy')).strip().lower()
-    return mode if mode in LIFECYCLE_MODES else 'legacy'
-
-
-def lifecycle_local_date(value=None):
-    value = value or timezone.now()
-    return timezone.localtime(value, timezone=LIFECYCLE_TIME_ZONE).date()
 
 
 def job_lifecycle_policy():
-    mode = lifecycle_mode()
     maximum_days = min(
         MAX_VISIBILITY_DAYS,
         max(
@@ -50,7 +35,6 @@ def job_lifecycle_policy():
         maximum_days,
     )
     return {
-        'mode': mode,
         'default_visibility_days': default_days,
         'max_visibility_days': maximum_days,
         'timezone': 'Asia/Ho_Chi_Minh',

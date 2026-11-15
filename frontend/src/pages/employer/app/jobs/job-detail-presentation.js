@@ -2,7 +2,6 @@ import dayjs from 'dayjs'
 import { APPLICATION_STATUS_TONES, RECRUITER_APPLICATION_STATUS_LABELS } from '@/entities/application'
 import { jobDetailPath } from '@/entities/job'
 import { MAIN_PORTAL_URL } from '@/shared/config/portals'
-import { isJobHeld } from './job-list-presentation'
 
 export const JOB_DETAIL_TABS = ['apply_cv', 'viewed_job', 'job', 'cv_label']
 
@@ -52,7 +51,7 @@ export function formatRelativeDay(value, now = dayjs()) {
 
 /** Candidates can open the public page only while the job is live. */
 export function publicJobUrl(job) {
-  if (job.status !== 'active' || job.is_expired || isJobHeld(job) || !job.slug) return null
+  if (job.effective_state !== 'active' || !job.slug) return null
   return `${MAIN_PORTAL_URL.replace(/\/$/, '')}${jobDetailPath(job)}`
 }
 

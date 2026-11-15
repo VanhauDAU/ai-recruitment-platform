@@ -13,7 +13,7 @@ from apps.employers.services import ensure_recruiter_candidate_data_access
 
 from ...models import Application
 from ...selectors import candidate_applications_queryset, recruiter_application_snapshot_queryset
-from ...services import InvalidReapplication, create_application_record, open_application_snapshot
+from ...services import ApplicationNotAllowed, create_application_record, open_application_snapshot
 from ..serializers.v2 import (
     CandidateApplicationV2CreateSerializer,
     CandidateApplicationV2Serializer,
@@ -53,7 +53,7 @@ class CandidateApplicationV2ListCreateView(generics.ListCreateAPIView):
                 contact_email=serializer.validated_data['contact_email'],
                 contact_phone=serializer.validated_data['contact_phone'],
             )
-        except InvalidReapplication as error:
+        except ApplicationNotAllowed as error:
             raise ValidationError({'job_public_id': str(error)}) from error
         except ValueError as error:
             raise ValidationError({'version_public_id': str(error)}) from error

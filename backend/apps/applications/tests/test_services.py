@@ -15,6 +15,7 @@ from apps.cvs.services import create_initial_document
 from apps.employers.models import Company, RecruitmentCampaign
 from apps.employers.tests.readiness_helpers import make_employer_ready
 from apps.jobs.models import Job
+from apps.jobs.tests.helpers import open_visibility_window
 
 from ..models import Application, ApplicationStatusHistory
 from ..services import (
@@ -429,11 +430,14 @@ class ApplicationSnapshotServiceTests(TestCase):
             role='employer',
         )
         company = Company.objects.create(company_name='Application Company', created_by=employer)
+        make_employer_ready(employer, company=company, candidate_data=True)
         job = Job.objects.create(
             posted_by=employer,
             company=company,
             title='Application Job',
             description='A role used to test application snapshots.',
+            status=Job.Status.ACTIVE,
+            **open_visibility_window(),
         )
         application = create_application_record(candidate=candidate, job=job, cv=cv)
 

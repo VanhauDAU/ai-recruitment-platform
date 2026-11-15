@@ -12,6 +12,7 @@ from apps.applications.models import Application
 from apps.cvs.models import UserCv
 from apps.cvs.services import create_initial_document
 from apps.jobs.models import Job, JobCategory, JobEngagementDaily
+from apps.jobs.tests.helpers import open_visibility_window
 
 from ..models import (
     CampaignActivity,
@@ -206,6 +207,7 @@ class RecruitmentCampaignApiTests(TestCase):
             description='Build product UI.',
             status=Job.Status.ACTIVE,
             deadline=timezone.localdate() + timedelta(days=10),
+            **open_visibility_window(),
         )
         second_active_job = Job.objects.create(
             posted_by=self.owner,
@@ -215,6 +217,7 @@ class RecruitmentCampaignApiTests(TestCase):
             description='Build product UI.',
             status=Job.Status.ACTIVE,
             deadline=timezone.localdate() + timedelta(days=10),
+            **open_visibility_window(),
         )
         draft_campaign = RecruitmentCampaign.objects.create(
             owner=self.owner_profile,
@@ -319,6 +322,7 @@ class RecruitmentCampaignApiTests(TestCase):
             description='Visible while campaign is active.',
             status=Job.Status.ACTIVE,
             deadline=timezone.localdate() + timedelta(days=5),
+            **open_visibility_window(),
         )
         expired_job = Job.objects.create(
             posted_by=self.owner,
@@ -328,6 +332,7 @@ class RecruitmentCampaignApiTests(TestCase):
             description='Must not become public after resume.',
             status=Job.Status.ACTIVE,
             deadline=timezone.localdate() - timedelta(days=1),
+            **open_visibility_window(),
         )
         self.client.force_authenticate(self.owner)
         url = reverse('employer-campaign-status', kwargs={'public_id': campaign.public_id})
@@ -469,6 +474,7 @@ class RecruitmentCampaignApiTests(TestCase):
             title='Data Engineer',
             description='Build data products.',
             status=Job.Status.ACTIVE,
+            **open_visibility_window(),
         )
         second_job = Job.objects.create(
             posted_by=self.owner,
@@ -477,6 +483,7 @@ class RecruitmentCampaignApiTests(TestCase):
             title='Analytics Engineer',
             description='Build analytics products.',
             status=Job.Status.ACTIVE,
+            **open_visibility_window(),
         )
         foreign_campaign = RecruitmentCampaign.objects.create(
             owner=self.owner_profile,
@@ -491,6 +498,7 @@ class RecruitmentCampaignApiTests(TestCase):
             title='Foreign campaign job',
             description='Must not be selectable from another campaign.',
             status=Job.Status.ACTIVE,
+            **open_visibility_window(),
         )
         report_date = timezone.localdate(timezone=ZoneInfo('Asia/Ho_Chi_Minh'))
         JobEngagementDaily.objects.create(

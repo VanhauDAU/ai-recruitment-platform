@@ -14,6 +14,7 @@ from rest_framework.test import APITestCase
 
 from apps.accounts.models import User
 from apps.jobs.models import Job
+from apps.jobs.tests.helpers import open_visibility_window
 
 from ..models import (
     DpaStatus,
@@ -61,6 +62,7 @@ class EmployerDpaGraceHoldTests(APITestCase):
             title='DPA grace job',
             description='DPA grace test.',
             status=Job.Status.ACTIVE,
+            **open_visibility_window(),
         )
 
     def expire_grace(self):
@@ -278,6 +280,7 @@ class EmployerDpaHoldBatchQueryBudgetTests(APITestCase):
             title=f'DPA batch job {index}',
             description='Query budget.',
             status=Job.Status.ACTIVE,
+            **open_visibility_window(),
         )
         return recruiter
 

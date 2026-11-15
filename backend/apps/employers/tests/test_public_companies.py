@@ -10,6 +10,7 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from apps.jobs.models import Job
+from apps.jobs.tests.helpers import open_visibility_window
 from common.throttling import ClientIPScopedRateThrottle
 
 from ..models import (
@@ -20,6 +21,7 @@ from ..models import (
     Industry,
     RecruiterProfile,
 )
+from .readiness_helpers import current_dpa_fields
 
 
 class PublicCompanyListApiTests(APITestCase):
@@ -67,6 +69,7 @@ class PublicCompanyListApiTests(APITestCase):
             user=user,
             company=company,
             company_role=RecruiterProfile.CompanyRole.OWNER,
+            **current_dpa_fields(),
         )
         verification_case = EmployerVerificationCase.objects.create(
             recruiter=recruiter,
@@ -103,6 +106,7 @@ class PublicCompanyListApiTests(APITestCase):
             'title': f'Vị trí {company.pk}-{Job.objects.count()}',
             'description': 'Mô tả công việc công khai.',
             'status': Job.Status.ACTIVE,
+            **open_visibility_window(),
             'published_at': published_at or timezone.now(),
             'deadline': deadline or timezone.localdate() + timedelta(days=30),
         }

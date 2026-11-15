@@ -42,6 +42,7 @@ const ACTIVE_JOB = {
   public_id: 'job_active',
   title: 'Kỹ sư Frontend',
   status: 'active',
+  effective_state: 'active',
   campaign: 'camp_growth',
   campaign_name: 'Đội sản phẩm Growth',
   deadline: DEADLINE.format('YYYY-MM-DD'),
@@ -73,6 +74,7 @@ const DRAFT_JOB = {
   public_id: 'job_draft',
   title: 'Backend Developer',
   status: 'draft',
+  effective_state: 'draft',
   deadline: null,
   employment_type: 'full_time',
   locations_detail: [],
@@ -120,12 +122,14 @@ describe('JobList', () => {
     mocks.closeEmployerJob.mockReset().mockResolvedValue({
       ...ACTIVE_JOB,
       status: 'closed',
+      effective_state: 'closed',
     })
     mocks.deleteEmployerJob.mockReset().mockResolvedValue(DRAFT_JOB.public_id)
     mocks.duplicateEmployerJob.mockReset().mockResolvedValue({
       ...ACTIVE_JOB,
       public_id: 'job_copy',
       status: 'draft',
+      effective_state: 'draft',
     })
     mocks.message.error.mockReset()
     mocks.message.success.mockReset()
@@ -244,6 +248,8 @@ describe('JobList', () => {
       previous: null,
       results: [{
         ...ACTIVE_JOB,
+        effective_state: 'hidden',
+        visibility_issues: [{ code: 'moderation_hold', label: 'Quản trị viên đang tạm ẩn tin.', action: 'contact_support' }],
         visibility_hold: {
           kind: 'moderation',
           code: 'manual_review',
@@ -257,7 +263,7 @@ describe('JobList', () => {
     renderPage()
 
     const heldCard = await screen.findByTestId('job-list-item-job_active')
-    expect(within(heldCard).getByText('Tạm ẩn')).toBeInTheDocument()
+    expect(within(heldCard).getByText('Bị ẩn')).toBeInTheDocument()
     expect(within(heldCard).queryByText('Đang tuyển')).not.toBeInTheDocument()
     expect(within(heldCard).queryByRole('link', { name: 'Chỉnh sửa tin' })).not.toBeInTheDocument()
     await user.click(within(heldCard).getByRole('button', {

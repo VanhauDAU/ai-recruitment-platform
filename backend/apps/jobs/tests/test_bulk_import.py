@@ -23,7 +23,7 @@ class JobBulkImportTests(TestCase):
             full_name='Người Đăng Tin',
         )
         cls.company = Company.objects.create(company_name='Import Co', created_by=cls.employer)
-        make_employer_ready(cls.employer, company=cls.company)
+        make_employer_ready(cls.employer, company=cls.company, candidate_data=True)
         group = JobCategory.objects.create(
             name='Công nghệ thông tin', category_type=JobCategory.CategoryType.OCCUPATION_GROUP
         )
@@ -262,13 +262,25 @@ class JobBulkImportTests(TestCase):
             email='import-member@example.com', password='password', role='employer'
         )
         company = Company.objects.create(company_name='Second Co', created_by=owner)
-        make_employer_ready(member, company=company)
-        make_employer_ready(owner, company=company)
+        make_employer_ready(member, company=company, candidate_data=True)
+        make_employer_ready(owner, company=company, candidate_data=True)
 
         report = import_job_postings([self.row(company='Second Co')], apply=True)
 
         job = Job.objects.get(public_id=report['rows'][0]['job_public_id'])
         self.assertEqual(job.posted_by, owner)
+
+    def test_unverified_company_cannot_receive_imported_jobs(self):
+        owner = get_user_model().objects.create_user(
+            email='import-unverified@example.com', password='password', role='employer'
+        )
+        company = Company.objects.create(company_name='Unverified Co', created_by=owner)
+        make_employer_ready(owner, company=company)
+
+        report = import_job_postings([self.row(company='Unverified Co')], apply=True)
+
+        self.assertIn('chưa có người đăng đã xác thực', report['rows'][0]['errors'][0])
+        self.assertFalse(Job.objects.filter(company=company).exists())
 
     def test_rich_text_keeps_bullets_and_escapes_markup(self):
         html = rich_text_from_lines('Giới thiệu <script>x</script>\n\n1. Một\n• Hai & ba\nKết')

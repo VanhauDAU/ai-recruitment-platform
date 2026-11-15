@@ -11,6 +11,7 @@ from apps.employers.models import Company
 from apps.employers.tests.readiness_helpers import make_employer_ready
 
 from ..models import Job
+from .helpers import open_visibility_window
 
 
 class OrganicJobListOrderingTests(APITestCase):
@@ -39,6 +40,7 @@ class OrganicJobListOrderingTests(APITestCase):
             deadline=timezone.localdate() + timedelta(days=30),
             first_approved_at=published_at,
             published_at=published_at,
+            **open_visibility_window(),
         )
 
     def titles(self, url, params=None):

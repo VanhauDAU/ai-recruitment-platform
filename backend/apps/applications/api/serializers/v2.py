@@ -12,7 +12,7 @@ from apps.locations.models import Location
 from common.media_storage import media_url_from_value
 
 from ...models import Application
-from ...services import BLOCKED_APPLY_MESSAGE, is_candidate_blocked, reapplication_error
+from ...services import reapplication_error
 
 
 class RecruiterApplicationSnapshotSerializer(serializers.ModelSerializer):
@@ -148,9 +148,6 @@ class CandidateApplicationV2CreateSerializer(serializers.Serializer):
                     )
                 }
             )
-        # Neutral wording: the candidate is never told they were blocked.
-        if is_candidate_blocked(recruiter_id=job.posted_by_id, candidate_id=candidate.pk):
-            raise serializers.ValidationError({'job_public_id': BLOCKED_APPLY_MESSAGE})
         application_error = reapplication_error(candidate, job)
         if application_error:
             raise serializers.ValidationError({'job_public_id': application_error})

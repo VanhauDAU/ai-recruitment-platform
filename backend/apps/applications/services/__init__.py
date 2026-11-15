@@ -1,7 +1,7 @@
 """Application use cases."""
 
 from .applications import (
-    InvalidReapplication,
+    ApplicationNotAllowed,
     create_application_record,
     reapplication_error,
 )
@@ -60,7 +60,7 @@ __all__ = [
     'is_candidate_blocked',
     'lift_candidate_block',
     'InvalidApplicationStatusTransition',
-    'InvalidReapplication',
+    'ApplicationNotAllowed',
     'RecruitmentResourceChanged',
     'ReviewLinkUnavailable',
     'StatusChangeNotUndoable',

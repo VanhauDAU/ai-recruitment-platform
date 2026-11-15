@@ -19,6 +19,7 @@ from apps.accounts.tests.helpers import make_admin
 from apps.jobs.models import Job
 from apps.jobs.selectors.listing import active_jobs_queryset
 from apps.jobs.services import RESPONSIBILITY_STATEMENT_VERSION, reopen_job
+from apps.jobs.tests.helpers import open_visibility_window
 
 from ..models import (
     Company,
@@ -101,6 +102,7 @@ class EmployerVerificationStateMachineTests(APITestCase):
             status=Job.Status.ACTIVE,
             published_at=timezone.now(),
             approved_at=timezone.now(),
+            **open_visibility_window(),
         )
 
     def _replace_tax_evidence(self, evidence_status, *, mismatch=False):
@@ -278,7 +280,8 @@ class EmployerVerificationStateMachineTests(APITestCase):
         self.assertEqual(self.case.company, self.company)
         self.assertEqual(self.client.get(reverse('job-list')).data['count'], 0)
 
-    def test_legacy_active_job_without_verification_case_remains_public(self):
+    def test_legacy_active_job_without_verification_case_is_not_public(self):
+        # Nobody may open its applications, so the job no longer takes any.
         legacy_employer = User.objects.create_user(
             email='er5-legacy-no-case@example.com',
             password='Password@123',
@@ -301,11 +304,12 @@ class EmployerVerificationStateMachineTests(APITestCase):
             description='Legacy job without a verification case.',
             status=Job.Status.ACTIVE,
             published_at=timezone.now(),
+            **open_visibility_window(),
         )
 
         response = self.client.get(reverse('job-list'))
 
-        self.assertTrue(
+        self.assertFalse(
             any(item['public_id'] == legacy_job.public_id for item in response.data['results'])
         )
         self.assertFalse(
@@ -697,6 +701,7 @@ class EmployerVerificationStateMachineTests(APITestCase):
             description='Expired.',
             status=Job.Status.ACTIVE,
             deadline=timezone.localdate() - timedelta(days=1),
+            **open_visibility_window(),
         )
         Job.objects.create(
             posted_by=self.employer,
@@ -706,6 +711,7 @@ class EmployerVerificationStateMachineTests(APITestCase):
             description='Policy held.',
             status=Job.Status.ACTIVE,
             policy_hold=Job.PolicyHold.TEMPORARY_LOCK,
+            **open_visibility_window(),
         )
         Job.objects.create(
             posted_by=self.employer,
@@ -715,6 +721,7 @@ class EmployerVerificationStateMachineTests(APITestCase):
             description='Moderation held.',
             status=Job.Status.ACTIVE,
             moderation_hold=Job.ModerationHold.MANUAL_REVIEW,
+            **open_visibility_window(),
         )
         paused_campaign = RecruitmentCampaign.objects.create(
             owner=self.recruiter,
@@ -729,6 +736,7 @@ class EmployerVerificationStateMachineTests(APITestCase):
             title='ER-5 paused campaign job',
             description='Paused campaign.',
             status=Job.Status.ACTIVE,
+            **open_visibility_window(),
         )
         other_held_job = Job.objects.create(
             posted_by=self.employer,
@@ -737,6 +745,7 @@ class EmployerVerificationStateMachineTests(APITestCase):
             title='ER-5 DPA held job',
             description='Other source hold.',
             status=Job.Status.ACTIVE,
+            **open_visibility_window(),
         )
         dpa_hold = EmployerComplianceHold.objects.create(
             recruiter=self.recruiter,
@@ -934,6 +943,7 @@ class EmployerVerificationStateMachineTests(APITestCase):
             description='Replacement.',
             status=Job.Status.ACTIVE,
             published_at=timezone.now(),
+            **open_visibility_window(),
         )
 
         confirmed = self.client.post(
@@ -1073,6 +1083,7 @@ class EmployerVerificationStateMachineTests(APITestCase):
             description='Second resource for link replacement.',
             status=Job.Status.ACTIVE,
             published_at=timezone.now(),
+            **open_visibility_window(),
         )
         self._approve()
         self._revoke()

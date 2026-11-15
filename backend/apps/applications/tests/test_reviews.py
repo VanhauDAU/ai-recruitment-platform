@@ -15,6 +15,7 @@ from apps.cvs.services import create_application_snapshot, create_v2_cv
 from apps.employers.models import Company, EmployerNotification
 from apps.employers.tests.readiness_helpers import make_employer_ready
 from apps.jobs.models import Job
+from apps.jobs.tests.helpers import open_visibility_window
 
 from ..models import Application, ApplicationReviewLink
 from ..services import deidentified_content
@@ -45,6 +46,7 @@ class ApplicationReviewLinkTests(APITestCase):
             title='Data Engineer',
             description='d',
             status=Job.Status.ACTIVE,
+            **open_visibility_window(),
         )
         template, _version = make_published_template('Review template')
         cv = create_v2_cv(actor=self.candidate, title='Review CV', template=template)

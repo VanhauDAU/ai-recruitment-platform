@@ -1,27 +1,21 @@
 """Read queries owned by an employer for the jobs domain."""
 
 from collections import defaultdict
-from zoneinfo import ZoneInfo
 
-from django.conf import settings
 from django.db.models import (
-    BooleanField,
-    Case,
     CharField,
     Count,
     IntegerField,
     OuterRef,
-    Q,
     Subquery,
     Value,
-    When,
 )
 from django.db.models.functions import Coalesce
-from django.utils import timezone
 
 from apps.applications.models import Application
 
 from ..models import Job, JobModerationEvent
+from ..models.querysets import job_state_counts, with_job_visibility
 
 
 def _latest_hide_reason_codes(job_reference):
@@ -129,16 +123,6 @@ def attach_job_candidate_previews(jobs, *, limit=4):
     return jobs
 
 
-def _expired_filter():
-    """Jobs that are still `active` but no longer accept applications."""
-    now = timezone.now()
-    today = timezone.localdate(now, timezone=ZoneInfo('Asia/Ho_Chi_Minh'))
-    expired = Q(deadline__lt=today)
-    if str(getattr(settings, 'JOB_LIFECYCLE_V2_MODE', 'legacy')).lower() == 'enforce':
-        expired |= Q(visibility_ends_at__isnull=True) | Q(visibility_ends_at__lte=now)
-    return expired
-
-
 def _latest_application_per_candidate():
     """Subquery of the newest submission of the outer application's candidate.
 
@@ -166,7 +150,6 @@ def _employer_jobs(user, *, campaign=None, q=None):
 
 def employer_job_list_queryset(user, *, status=None, campaign=None, q=None):
     """Compact query for the employer management table."""
-    expired_filter = _expired_filter()
     candidate_count = (
         Application.objects.filter(job_id=OuterRef('pk'))
         .values('job_id')
@@ -184,7 +167,7 @@ def employer_job_list_queryset(user, *, status=None, campaign=None, q=None):
         .values('total')[:1]
     )
     queryset = (
-        _with_hold_reason(_employer_jobs(user, campaign=campaign, q=q))
+        with_job_visibility(_with_hold_reason(_employer_jobs(user, campaign=campaign, q=q)))
         .select_related('company', 'campaign')
         .prefetch_related('job_locations__location__parent')
         .defer(
@@ -202,40 +185,18 @@ def employer_job_list_queryset(user, *, status=None, campaign=None, q=None):
                 Subquery(unviewed_count, output_field=IntegerField()),
                 0,
             ),
-            is_expired_value=Case(
-                When(Q(status=Job.Status.ACTIVE) & expired_filter, then=Value(True)),
-                default=Value(False),
-                output_field=BooleanField(),
-            ),
         )
         .order_by('-created_at', '-id')
     )
-    if status == 'expired':
-        queryset = queryset.filter(Q(status=Job.Status.ACTIVE) & expired_filter)
-    elif status:
-        queryset = queryset.filter(status=status)
-        if status == Job.Status.ACTIVE:
-            queryset = queryset.exclude(expired_filter)
+    if status:
+        queryset = queryset.filter(effective_state=status)
     return queryset
 
 
 def employer_job_status_counts(user, *, campaign=None, q=None):
     """Count every status tab of the list in one query, under the same search."""
-    active = Q(status=Job.Status.ACTIVE)
-    counts = _employer_jobs(user, campaign=campaign, q=q).aggregate(
-        all=Count('id'),
-        active_total=Count('id', filter=active),
-        expired=Count('id', filter=active & _expired_filter()),
-        draft=Count('id', filter=Q(status=Job.Status.DRAFT)),
-        closed=Count('id', filter=Q(status=Job.Status.CLOSED)),
-    )
-    return {
-        'all': counts['all'],
-        'active': counts['active_total'] - counts['expired'],
-        'draft': counts['draft'],
-        'expired': counts['expired'],
-        'closed': counts['closed'],
-    }
+    counts = job_state_counts(_employer_jobs(user, campaign=campaign, q=q))
+    return {'all': sum(counts.values()), **counts}
 
 
 def employer_job_application_summary(job):
@@ -263,7 +224,7 @@ def employer_job_application_summary(job):
 def employer_job_detail_queryset(user):
     """Full form query for one employer-owned job."""
     return (
-        _with_hold_reason(Job.objects.filter(posted_by=user))
+        with_job_visibility(_with_hold_reason(Job.objects.filter(posted_by=user)))
         .select_related('company', 'campaign')
         .prefetch_related(
             'category_assignments__category',

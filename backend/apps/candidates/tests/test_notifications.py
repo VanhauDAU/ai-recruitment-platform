@@ -9,6 +9,7 @@ from django.utils import timezone
 from rest_framework.test import APITestCase
 
 from apps.accounts.services.tokens import issue_tokens
+from apps.jobs.tests.helpers import open_visibility_window
 from apps.sitecontent.models import SiteSetting
 
 from ..models import CandidateEmailNotificationSettings, CandidateNotification, CandidateProfile
@@ -279,6 +280,7 @@ class ApplicationReceivedEmailTests(TestCase):
             title='Backend Engineer',
             description='d',
             status=Job.Status.ACTIVE,
+            **open_visibility_window(),
         )
         self.similar = Job.objects.create(
             posted_by=employer,
@@ -286,6 +288,7 @@ class ApplicationReceivedEmailTests(TestCase):
             title='Senior Backend Engineer',
             description='d',
             status=Job.Status.ACTIVE,
+            **open_visibility_window(),
         )
 
     def deliver(self):

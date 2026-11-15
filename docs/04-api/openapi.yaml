@@ -11290,6 +11290,29 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/v2/cvs/{public_id}/source/:
+    get:
+      operationId: v2_cvs_source_retrieve
+      description: Owner-only inline PDF of an uploaded CV's original file.
+      summary: Xem tệp gốc của CV tải lên (PDF)
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - cvs-v2
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+          description: ''
   /api/v2/cvs/{public_id}/template/:
     put:
       operationId: v2_cvs_template_update
@@ -11613,6 +11636,29 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SharedCvView'
+          description: ''
+  /api/v2/cvs/shares/{token}/source/:
+    get:
+      operationId: v2_cvs_shares_source_retrieve
+      description: Original file of an uploaded CV behind a valid share link.
+      summary: Tệp gốc của CV tải lên qua link chia sẻ (PDF)
+      parameters:
+      - in: path
+        name: token
+        schema:
+          type: string
+        required: true
+      tags:
+      - cvs-v2
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
           description: ''
   /api/v2/recruiter/applications/:
     get:
@@ -20191,6 +20237,9 @@ components:
         is_default:
           type: boolean
           readOnly: true
+        recruiter_searchable:
+          type: boolean
+          readOnly: true
         position_public_id:
           type: string
           readOnly: true
@@ -20302,6 +20351,7 @@ components:
       - public_id
       - published_at
       - published_version_public_id
+      - recruiter_searchable
       - source
       - template_capabilities
       - template_public_id
@@ -20605,6 +20655,20 @@ components:
         * `college` - Cao đẳng
         * `university` - Đại học
         * `postgraduate` - Cao học
+    EffectiveStateEnum:
+      enum:
+      - draft
+      - active
+      - hidden
+      - expired
+      - closed
+      type: string
+      description: |-
+        * `draft` - Nháp
+        * `active` - Đang tuyển
+        * `hidden` - Bị ẩn
+        * `expired` - Hết hạn
+        * `closed` - Đã đóng
     EmployerAccountVerification:
       type: object
       properties:
@@ -20807,6 +20871,8 @@ components:
           type: integer
         jobs_active:
           type: integer
+        jobs_hidden:
+          type: integer
         jobs_draft:
           type: integer
         job_views:
@@ -20827,6 +20893,7 @@ components:
       - job_views
       - jobs_active
       - jobs_draft
+      - jobs_hidden
       - jobs_total
     EmployerDpaAcceptanceRequest:
       type: object
@@ -21132,6 +21199,15 @@ components:
         is_expired:
           type: boolean
           readOnly: true
+        effective_state:
+          allOf:
+          - $ref: '#/components/schemas/EffectiveStateEnum'
+          readOnly: true
+        visibility_issues:
+          type: array
+          items:
+            $ref: '#/components/schemas/EmployerJobVisibilityIssue'
+          readOnly: true
         visibility_hold:
           allOf:
           - $ref: '#/components/schemas/EmployerJobVisibilityHold'
@@ -21181,6 +21257,7 @@ components:
       - company_verified
       - created_at
       - description
+      - effective_state
       - first_approved_at
       - has_flash_badge
       - impression_count
@@ -21203,6 +21280,7 @@ components:
       - view_count
       - visibility_ends_at
       - visibility_hold
+      - visibility_issues
       - visibility_starts_at
     EmployerJobDraft:
       type: object
@@ -21455,6 +21533,15 @@ components:
         is_expired:
           type: boolean
           readOnly: true
+        effective_state:
+          allOf:
+          - $ref: '#/components/schemas/EffectiveStateEnum'
+          readOnly: true
+        visibility_issues:
+          type: array
+          items:
+            $ref: '#/components/schemas/EmployerJobVisibilityIssue'
+          readOnly: true
         visibility_hold:
           allOf:
           - $ref: '#/components/schemas/EmployerJobVisibilityHold'
@@ -21495,6 +21582,7 @@ components:
       - company_slug
       - company_verified
       - created_at
+      - effective_state
       - first_approved_at
       - has_flash_badge
       - is_expired
@@ -21515,6 +21603,7 @@ components:
       - view_count
       - visibility_ends_at
       - visibility_hold
+      - visibility_issues
       - visibility_starts_at
     EmployerJobDraftRequest:
       type: object
@@ -21685,8 +21774,6 @@ components:
     EmployerJobLifecyclePolicy:
       type: object
       properties:
-        mode:
-          $ref: '#/components/schemas/EmployerJobLifecyclePolicyModeEnum'
         default_visibility_days:
           type: integer
           minimum: 1
@@ -21698,18 +21785,7 @@ components:
       required:
       - default_visibility_days
       - max_visibility_days
-      - mode
       - timezone
-    EmployerJobLifecyclePolicyModeEnum:
-      enum:
-      - legacy
-      - shadow
-      - enforce
-      type: string
-      description: |-
-        * `legacy` - legacy
-        * `shadow` - shadow
-        * `enforce` - enforce
     EmployerJobList:
       type: object
       description: Compact management-table DTO; rich job content stays on the detail
@@ -21768,6 +21844,15 @@ components:
           readOnly: true
         is_expired:
           type: boolean
+          readOnly: true
+        effective_state:
+          allOf:
+          - $ref: '#/components/schemas/EffectiveStateEnum'
+          readOnly: true
+        visibility_issues:
+          type: array
+          items:
+            $ref: '#/components/schemas/EmployerJobVisibilityIssue'
           readOnly: true
         visibility_hold:
           allOf:
@@ -21833,6 +21918,7 @@ components:
       - company_name
       - created_at
       - deadline
+      - effective_state
       - employment_type
       - first_approved_at
       - is_expired
@@ -21849,6 +21935,7 @@ components:
       - view_count
       - visibility_ends_at
       - visibility_hold
+      - visibility_issues
       - visibility_starts_at
     EmployerJobPostingContext:
       type: object
@@ -21957,6 +22044,19 @@ components:
       description: |-
         * `moderation` - moderation
         * `account` - account
+    EmployerJobVisibilityIssue:
+      type: object
+      properties:
+        code:
+          type: string
+        label:
+          type: string
+        action:
+          type: string
+      required:
+      - action
+      - code
+      - label
     EmployerNotification:
       type: object
       properties:
@@ -24749,7 +24849,10 @@ components:
           type: string
         is_default:
           type: boolean
+        cv_type:
+          type: string
       required:
+      - cv_type
       - is_default
       - language
       - public_id
@@ -26131,6 +26234,8 @@ components:
           minLength: 1
           maxLength: 255
         is_default:
+          type: boolean
+        recruiter_searchable:
           type: boolean
         position_public_id:
           type: string
@@ -28297,6 +28402,10 @@ components:
           type: integer
           readOnly: true
           default: 0
+        hidden_job_count:
+          type: integer
+          readOnly: true
+          default: 0
         closed_job_count:
           type: integer
           readOnly: true
@@ -28321,6 +28430,7 @@ components:
       - created_at
       - draft_job_count
       - expired_job_count
+      - hidden_job_count
       - job_count
       - last_activity
       - name
@@ -29160,7 +29270,10 @@ components:
           type: string
         is_default:
           type: boolean
+        cv_type:
+          type: string
       required:
+      - cv_type
       - is_default
       - language
       - public_id

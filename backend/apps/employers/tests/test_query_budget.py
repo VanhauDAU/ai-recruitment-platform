@@ -13,6 +13,7 @@ from django.utils import timezone
 from rest_framework.test import APITestCase
 
 from apps.jobs.models import Benefit, Job, JobCategory, JobLocation
+from apps.jobs.tests.helpers import open_visibility_window
 from apps.locations.models import Location
 
 from ..models import (
@@ -42,6 +43,7 @@ from .company_page_helpers import (
     make_employer,
     publish_job,
 )
+from .readiness_helpers import current_dpa_fields
 
 # Authentication is bypassed with force_authenticate: one recruiter lookup plus
 # one recruitment-need SELECT. The count must remain flat as rows are added.
@@ -110,6 +112,7 @@ class PublicCompanyListQueryBudgetTests(APITestCase):
             user=representative,
             company=company,
             company_role=RecruiterProfile.CompanyRole.OWNER,
+            **current_dpa_fields(),
         )
         verification_case = EmployerVerificationCase.objects.create(
             recruiter=recruiter,
@@ -135,6 +138,7 @@ class PublicCompanyListQueryBudgetTests(APITestCase):
             status=Job.Status.ACTIVE,
             published_at=timezone.now(),
             deadline=timezone.localdate() + timedelta(days=30),
+            **open_visibility_window(),
         )
         return company
 
@@ -444,6 +448,7 @@ class RecruitmentNeedQueryBudgetTests(APITestCase):
         self.recruiter = RecruiterProfile.objects.create(
             user=self.user,
             registration_completed_at=timezone.now(),
+            **current_dpa_fields(),
         )
         category = JobCategory.objects.create(
             name='Recruitment need budget',
@@ -493,6 +498,7 @@ class CompanyUpdateRequestQueryBudgetTests(APITestCase):
             user=self.user,
             company=self.company,
             company_role=RecruiterProfile.CompanyRole.OWNER,
+            **current_dpa_fields(),
         )
         self.client.force_authenticate(self.user)
 
@@ -550,6 +556,7 @@ class AdminCompanyUpdateRequestQueryBudgetTests(APITestCase):
             user=requester,
             company=company,
             company_role=RecruiterProfile.CompanyRole.OWNER,
+            **current_dpa_fields(),
         )
         update_request = CompanyUpdateRequest.objects.create(
             company=company,

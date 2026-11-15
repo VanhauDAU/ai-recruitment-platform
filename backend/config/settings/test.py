@@ -87,7 +87,6 @@ EMPLOYER_DPA_DOCUMENT_URL = 'https://example.test/employer-dpa/test-dpa-v1'
 EMPLOYER_DPA_GRACE_DAYS = 30
 EMPLOYER_UPLOAD_SESSION_REQUIRED = False
 CANDIDATE_UPLOAD_SESSION_REQUIRED = False
-JOB_LIFECYCLE_V2_MODE = 'legacy'
 EMPLOYER_BADGE_POLICY_MODE = 'enforce'
 
 # Announcement tests exercise every surface by default. Individual kill-switch

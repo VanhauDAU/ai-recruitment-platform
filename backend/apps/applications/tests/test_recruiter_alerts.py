@@ -10,7 +10,9 @@ from django.utils import timezone
 from apps.cv_templates.tests.factories import fill_cv_for_application, make_published_template
 from apps.cvs.services import create_v2_cv
 from apps.employers.models import Company, EmployerNotification, EmployerNotificationPreference
+from apps.employers.tests.readiness_helpers import make_employer_ready
 from apps.jobs.models import Job, JobApplicationContact, JobApplicationEmail
+from apps.jobs.tests.helpers import open_visibility_window
 from apps.sitecontent.models import SiteSetting
 
 from ..models import Application
@@ -30,12 +32,14 @@ class NewApplicationAlertTests(TestCase):
             email='alert-employer@example.com', password='password', role='employer'
         )
         company = Company.objects.create(company_name='Alert Co', created_by=self.employer)
+        make_employer_ready(self.employer, company=company, candidate_data=True)
         self.job = Job.objects.create(
             posted_by=self.employer,
             company=company,
             title='QA Engineer',
             description='d',
             status=Job.Status.ACTIVE,
+            **open_visibility_window(),
         )
         template, _version = make_published_template('Alert template')
         self.cv = create_v2_cv(actor=self.candidate, title='Alert CV', template=template)

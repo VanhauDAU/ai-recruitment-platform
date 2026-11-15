@@ -4,6 +4,7 @@ from django.urls import reverse
 from rest_framework.test import APIClient
 
 from apps.jobs.models import Job
+from apps.jobs.tests.helpers import open_visibility_window
 
 from ..models import Company, RecruitmentCampaign
 from .readiness_helpers import make_employer_ready
@@ -17,11 +18,12 @@ class CampaignJobPerformanceTests(TestCase):
             role='employer',
         )
         self.company = Company.objects.create(company_name='Campaign Co', created_by=self.user)
-        recruiter = make_employer_ready(self.user, company=self.company)
+        recruiter = make_employer_ready(self.user, company=self.company, candidate_data=True)
         self.campaign = RecruitmentCampaign.objects.create(
             owner=recruiter,
             company=self.company,
             name='Tuyển lập trình viên',
+            status=RecruitmentCampaign.Status.ACTIVE,
         )
         self.client = APIClient()
         self.client.force_authenticate(self.user)
@@ -33,6 +35,7 @@ class CampaignJobPerformanceTests(TestCase):
             campaign=self.campaign,
             title='Lập trình viên',
             description='Mô tả công việc.',
+            **open_visibility_window(),
             **overrides,
         )
 

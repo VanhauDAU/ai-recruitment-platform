@@ -1,7 +1,6 @@
 from datetime import timedelta
 from unittest.mock import ANY, patch
 
-from django.test import override_settings
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
@@ -28,6 +27,7 @@ from ..api.serializers import (
 )
 from ..models import Benefit, Job, JobCategory, JobEngagementDaily, Language
 from ..services import RESPONSIBILITY_STATEMENT_VERSION
+from .helpers import open_visibility_window
 
 
 class JobCategoryApiTests(APITestCase):
@@ -61,6 +61,7 @@ class JobSuggestionApiTests(APITestCase):
             title='Nhân viên chăm sóc khách hàng',
             description='Description',
             status=Job.Status.ACTIVE,
+            **open_visibility_window(),
         )
 
         response = self.client.get(reverse('job-suggest'), {'q': 'nhan'})
@@ -88,6 +89,7 @@ class JobViewTrackingApiTests(APITestCase):
             title='Backend Engineer',
             description='Build reliable APIs.',
             status=Job.Status.ACTIVE,
+            **open_visibility_window(),
         )
 
     def test_get_detail_has_no_view_count_side_effect(self):
@@ -119,16 +121,14 @@ class JobViewTrackingApiTests(APITestCase):
         self.assertEqual(response.data['company_slug'], self.company.slug)
         self.assertEqual(response.data['company_address'], '12 Lý Thường Kiệt, Hà Nội')
 
-    def test_held_company_page_is_not_linked_from_job_detail_or_card(self):
+    def test_held_company_takes_its_jobs_off_the_public_site(self):
         Company.objects.filter(pk=self.company.pk).update(content_policy_hold=True)
 
         detail = self.client.get(reverse('job-detail', kwargs={'slug': self.job.slug}))
         cards = self.client.get(reverse('job-list'))
 
-        self.assertEqual(detail.status_code, 200)
-        self.assertIsNone(detail.data['company_slug'])
-        self.assertEqual(detail.data['company_name'], 'Views Inc.')
-        self.assertEqual([card['company_slug'] for card in cards.data['results']], [None])
+        self.assertEqual(detail.status_code, 404)
+        self.assertEqual(cards.data['results'], [])
 
     def test_detail_never_exposes_household_business_address(self):
         Company.objects.filter(pk=self.company.pk).update(
@@ -142,8 +142,7 @@ class JobViewTrackingApiTests(APITestCase):
         self.assertEqual(response.data['company_address'], '')
         self.assertNotIn('Địa chỉ nhà riêng không công khai', str(response.data))
 
-    @override_settings(JOB_LIFECYCLE_V2_MODE='enforce')
-    def test_enforced_lifecycle_hides_job_outside_visibility_window(self):
+    def test_lifecycle_hides_job_outside_visibility_window(self):
         self.job.deadline = timezone.localdate() + timedelta(days=10)
         self.job.visibility_starts_at = timezone.now() - timedelta(days=10)
         self.job.visibility_ends_at = timezone.now() - timedelta(seconds=1)
@@ -155,20 +154,6 @@ class JobViewTrackingApiTests(APITestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data['count'], 0)
-
-    @override_settings(JOB_LIFECYCLE_V2_MODE='legacy')
-    def test_legacy_lifecycle_ignores_shadow_visibility_window(self):
-        self.job.deadline = timezone.localdate() + timedelta(days=10)
-        self.job.visibility_starts_at = timezone.now() - timedelta(days=10)
-        self.job.visibility_ends_at = timezone.now() - timedelta(seconds=1)
-        self.job.save(
-            update_fields=['deadline', 'visibility_starts_at', 'visibility_ends_at', 'updated_at']
-        )
-
-        response = self.client.get(reverse('job-list'))
-
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data['count'], 1)
 
     def test_paused_campaign_hides_job_from_every_public_read_and_tracking_surface(self):
         campaign = RecruitmentCampaign.objects.create(
@@ -366,6 +351,7 @@ class JobSalaryBucketFilterTests(APITestCase):
             salary_max=salary_max,
             salary_type=Job.SalaryType.RANGE,
             status=Job.Status.ACTIVE,
+            **open_visibility_window(),
         )
 
     def test_homepage_under_10_bucket_uses_displayed_upper_salary(self):
@@ -461,6 +447,7 @@ class JobSalaryBucketFilterTests(APITestCase):
             title='Acme namesake',
             description='Description',
             status=Job.Status.ACTIVE,
+            **open_visibility_window(),
         )
 
         response = self.client.get(reverse('job-list'), {'company': self.company.public_id})
@@ -581,6 +568,7 @@ class EmployerJobSerializerTests(APITestCase):
             description='Nội dung tuyển dụng',
             status=Job.Status.ACTIVE,
             deadline=today + timedelta(days=5),
+            **open_visibility_window(),
         )
         self.client.force_authenticate(self.user)
 
@@ -628,6 +616,8 @@ class EmployerJobSerializerTests(APITestCase):
                 'is_visibility_expired',
                 'status',
                 'is_expired',
+                'effective_state',
+                'visibility_issues',
                 'visibility_hold',
                 'campaign',
                 'campaign_name',
@@ -673,6 +663,7 @@ class EmployerJobSerializerTests(APITestCase):
                 title=title,
                 status=status,
                 deadline=deadline,
+                **open_visibility_window(),
             )
         self.client.force_authenticate(self.user)
 
@@ -686,7 +677,7 @@ class EmployerJobSerializerTests(APITestCase):
         )
         self.assertEqual(
             expired_tab.data['status_counts'],
-            {'all': 5, 'active': 2, 'draft': 1, 'expired': 1, 'closed': 1},
+            {'all': 5, 'active': 2, 'draft': 1, 'hidden': 0, 'expired': 1, 'closed': 1},
         )
         everything = self.client.get(reverse('employer-job-list-create'))
         self.assertEqual(everything.data['status_counts']['all'], 6)
@@ -700,6 +691,7 @@ class EmployerJobSerializerTests(APITestCase):
             status=Job.Status.ACTIVE,
             impression_count=240,
             view_count=60,
+            **open_visibility_window(),
         )
         now = timezone.now()
         for index, statuses in enumerate(
@@ -762,7 +754,6 @@ class EmployerJobSerializerTests(APITestCase):
         self.assertEqual(
             response.data['lifecycle_policy'],
             {
-                'mode': 'legacy',
                 'default_visibility_days': 30,
                 'max_visibility_days': 90,
                 'timezone': 'Asia/Ho_Chi_Minh',
@@ -1369,6 +1360,7 @@ class EmployerJobSerializerTests(APITestCase):
             title='Tuyển gấp nhân viên',
             description='Mô tả',
             status=Job.Status.ACTIVE,
+            **open_visibility_window(),
         )
 
         data = JobDetailSerializer(job).data

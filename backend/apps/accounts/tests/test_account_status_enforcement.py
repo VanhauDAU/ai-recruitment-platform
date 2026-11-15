@@ -7,8 +7,10 @@ from django.utils import timezone
 from rest_framework.test import APIClient
 
 from apps.employers.models import Company, RecruiterProfile, RecruitmentCampaign
+from apps.employers.tests.readiness_helpers import make_employer_ready
 from apps.jobs.models import Job, SavedJob
 from apps.jobs.selectors.listing import publicly_available_job_filter
+from apps.jobs.tests.helpers import open_visibility_window
 
 from ..models import AccountStatusTransition, AuthEmailJob, AuthSession, User
 from ..selectors import (
@@ -38,9 +40,8 @@ class AccountStatusEnforcementTests(TestCase):
             company_name='Status Company',
             created_by=self.employer,
         )
-        self.recruiter = RecruiterProfile.objects.create(
-            user=self.employer,
-            company=self.company,
+        self.recruiter = make_employer_ready(
+            self.employer, company=self.company, candidate_data=True
         )
         self.campaign = RecruitmentCampaign.objects.create(
             owner=self.recruiter,
@@ -55,6 +56,7 @@ class AccountStatusEnforcementTests(TestCase):
             title='Backend Engineer',
             description='Build secure recruitment workflows.',
             status=Job.Status.ACTIVE,
+            **open_visibility_window(),
         )
 
     def change_status(
@@ -160,13 +162,14 @@ class AccountStatusEnforcementTests(TestCase):
             password='Password@123',
             role=User.Role.EMPLOYER,
         )
-        RecruiterProfile.objects.create(user=colleague, company=self.company)
+        make_employer_ready(colleague, company=self.company, candidate_data=True)
         colleague_job = Job.objects.create(
             posted_by=colleague,
             company=self.company,
             title='Unaffected role',
             description='This recruiter remains active.',
             status=Job.Status.ACTIVE,
+            **open_visibility_window(),
         )
 
         self.change_status(User.Status.BANNED, category='policy')
