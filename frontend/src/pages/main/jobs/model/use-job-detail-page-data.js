@@ -48,7 +48,7 @@ export default function useJobDetailPageData({ slug, companySlug, navigate }) {
     if (current !== canonical) navigate(canonical, { replace: true })
   }, [job, companySlug, slug, navigate])
 
-  useJobView(job?.slug, {
+  useJobView(job?.accepting_applications === false ? null : job?.slug, {
     onTracked: (result) => {
       if (typeof result?.view_count !== 'number') return
       queryClient.setQueryData(jobKeys.detail(slug), (current) =>

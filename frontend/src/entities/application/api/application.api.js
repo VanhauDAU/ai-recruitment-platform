@@ -45,15 +45,6 @@ export async function getRecruiterApplicationSubmissions(publicId) {
   return data
 }
 
-/** Swap the CV of an application the recruiter has not opened yet. */
-export async function replaceCandidateApplicationCv(publicId, { cvPublicId, versionPublicId }) {
-  const { data } = await api.post(`/v2/applications/${publicId}/cv/`, {
-    cv_public_id: cvPublicId,
-    version_public_id: versionPublicId,
-  })
-  return data
-}
-
 export async function getCandidateApplications() {
   const { data } = await api.get('/v2/applications/')
   return data.results || data

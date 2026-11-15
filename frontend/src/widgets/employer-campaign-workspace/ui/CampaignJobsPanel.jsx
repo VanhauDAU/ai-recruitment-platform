@@ -21,7 +21,7 @@ import CampaignPerformanceChart from './CampaignPerformanceChart'
 const JOB_STATUS = {
   draft: ['Nháp', 'default'],
   active: ['Đang tuyển', 'green'],
-  closed: ['Đã đóng', 'default'],
+  closed: ['Ngừng tuyển', 'default'],
 }
 
 const RANGE_OPTIONS = [

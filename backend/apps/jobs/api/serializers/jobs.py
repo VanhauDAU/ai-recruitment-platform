@@ -518,6 +518,9 @@ class JobDetailSerializer(JobSerializer):
     job_locations = PublicJobLocationSerializer(many=True, read_only=True)
     work_schedules = PublicJobWorkScheduleSerializer(many=True, read_only=True)
     language_requirements = PublicJobLanguageRequirementSerializer(many=True, read_only=True)
+    # A stopped job stays readable but shows "Hết hạn ứng tuyển" instead of apply.
+    accepting_applications = serializers.BooleanField(read_only=True, default=True)
+    stopped_at = serializers.DateTimeField(read_only=True)
 
     class Meta(JobSerializer.Meta):
         model = Job
@@ -525,6 +528,8 @@ class JobDetailSerializer(JobSerializer):
             'public_id',
             'slug',
             'title',
+            'accepting_applications',
+            'stopped_at',
             'company_name',
             'company_slug',
             'company_logo_url',

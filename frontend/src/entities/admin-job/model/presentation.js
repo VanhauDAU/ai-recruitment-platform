@@ -1,7 +1,7 @@
 export const ADMIN_JOB_STATUS = {
   draft: { label: 'Nháp', color: 'default' },
   active: { label: 'Đang tuyển', color: 'green' },
-  closed: { label: 'Đã đóng', color: 'default' },
+  closed: { label: 'Ngừng tuyển', color: 'default' },
 }
 
 export const JOB_SCOPE_OPTIONS = [
@@ -12,7 +12,7 @@ export const JOB_SCOPE_OPTIONS = [
   { value: 'hidden', label: 'Bị ẩn với ứng viên' },
   { value: 'held', label: 'Đang tạm giữ' },
   { value: 'resubmitted', label: 'Chờ duyệt lại' },
-  { value: 'closed', label: 'Đã đóng' },
+  { value: 'closed', label: 'Ngừng tuyển' },
   { value: 'draft', label: 'Nháp' },
 ]
 

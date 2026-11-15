@@ -97,6 +97,21 @@ class RecruiterReminderTests(TestCase):
             2,
         )
 
+    def test_a_stopped_job_leaves_nothing_to_remind_or_withdraw(self):
+        self.age(4)
+        Job.objects.filter(pk=self.application.job_id).update(
+            status=Job.Status.CLOSED, closed_at=timezone.now()
+        )
+        client = APIClient()
+        client.force_authenticate(self.candidate)
+        listed = client.get(reverse('candidate-application-list-create-v2')).data['results'][0]
+
+        self.assertIsNotNone(listed['job_stopped_at'])
+        self.assertFalse(listed['actions']['remind'])
+        self.assertFalse(listed['actions']['withdraw'])
+        with self.assertRaises(ApplicationNotAllowed):
+            self.remind()
+
     def test_answered_application_is_never_reminded(self):
         self.age(10)
         Application.objects.filter(pk=self.application.pk).update(

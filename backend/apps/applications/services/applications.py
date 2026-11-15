@@ -53,7 +53,7 @@ def reapplication_error(candidate, job, *, now=None):
     current = submissions.filter(is_current=True).first()
     if current is not None and current.status not in Application.REAPPLY_ALLOWED_STATUSES:
         if current.status in Application.UNANSWERED_STATUSES:
-            return 'Bạn đã ứng tuyển tin này. Hãy dùng "Cập nhật CV" nếu muốn đổi CV đã nộp.'
+            return 'Bạn đã ứng tuyển tin này. Muốn nộp CV khác, hãy rút hồ sơ rồi ứng tuyển lại.'
         return 'Hồ sơ của bạn đang được nhà tuyển dụng xử lý nên chưa thể nộp lại.'
     if submissions.count() >= MAX_APPLICATIONS_PER_JOB:
         return 'Bạn đã dùng hết 2 lượt ứng tuyển lại cho công việc này.'
@@ -187,36 +187,4 @@ def withdraw_application(*, candidate, public_id):
         changed_by=candidate,
     )
     alert_recruiter_of_withdrawal(application)
-    return application
-
-
-@transaction.atomic
-def update_application_cv(*, candidate, public_id, cv, source_version=None):
-    """Replace the CV of an application the recruiter has not opened yet.
-
-    Once the recruiter viewed it, the CV they judged must stay what they saw:
-    the candidate withdraws and applies again instead. The swap keeps the
-    submission time, so it never restarts the automatic-rejection clock.
-    """
-    candidate = lock_account_for_write(candidate)
-    application = _locked_current_application(candidate, public_id)
-    if application.status != Application.Status.SUBMITTED:
-        raise ApplicationNotAllowed(
-            'Nhà tuyển dụng đã xem hồ sơ này nên không thể đổi CV. '
-            'Bạn có thể rút hồ sơ và ứng tuyển lại.'
-        )
-    snapshot = create_application_snapshot(cv, candidate, source_version=source_version)
-    application.cv = cv
-    application.submitted_cv_version = snapshot
-    application.submitted_cv_title = cv.title
-    application.submitted_cv_source = cv.source
-    application.save(
-        update_fields=[
-            'cv',
-            'submitted_cv_version',
-            'submitted_cv_title',
-            'submitted_cv_source',
-            'updated_at',
-        ]
-    )
     return application

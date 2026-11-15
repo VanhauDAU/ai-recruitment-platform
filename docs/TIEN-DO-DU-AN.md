@@ -50,11 +50,26 @@ thật trong hạng mục AI.
 | 5 | Chặn ứng viên theo công ty, owner duyệt yêu cầu tham gia, logic công ty vào service, gỡ liên kết công ty, SMS dev | ✅ Gộp vào `dev` (#215) |
 | 6 | Tắt đồng ý tìm hồ sơ thì gỡ mọi CV khỏi tìm kiếm; sửa câu chữ hứa tính năng chưa có | ✅ Gộp vào `dev` (#208) |
 
-<details><summary>Hoàn thiện luồng ứng tuyển: đổi CV, nhắc NTD, lịch sử nộp (16/11)</summary>
+<details><summary>Ngừng tuyển và trang "Việc làm đã ứng tuyển" mới (16/11)</summary>
 
-- Đổi CV chỉ được khi NTD **chưa mở** hồ sơ; NTD đã xem thì CV họ đánh giá phải
-  giữ nguyên, ứng viên muốn đổi thì rút và nộp lại (tốn 1 lượt). Đổi CV giữ
-  nguyên thời điểm nộp, không đặt lại đồng hồ tự động từ chối.
+- NTD **ngừng tuyển** (đổi tên từ "Đóng tin"; tin hết hạn nộp/hết thời gian hiển
+  thị cũng tính là ngừng tuyển). Tin ngừng tuyển vẫn xem được chi tiết
+  (`accepting_applications=false`, `stopped_at`), nút ứng tuyển thay bằng nhãn
+  "Hết hạn ứng tuyển" + nút "Xem việc làm liên quan" cuộn xuống cuối trang; tin
+  bị ẩn do kiểm duyệt/công ty vẫn trả 404.
+- Trang "Việc làm đã ứng tuyển" làm lại theo mẫu TopCV: banner hướng dẫn "Nhắc
+  NTD", bộ lọc luôn đủ 8 trạng thái (cuộn hai chiều), dòng trạng thái nổi bật
+  ("NTD ngừng tuyển vị trí này (giờ)", "NTD đã xem CV. ProCV đã nhắc NTD…"),
+  thanh 5 bước có hiệu ứng trượt/ánh sáng, tiến trình chi tiết thu gọn được.
+  Mốc ngừng tuyển thắng nếu đến sau mọi thao tác của ứng viên; hồ sơ đã có kết
+  quả giữ kết quả. Tin đã ngừng tuyển thì không còn nút Nhắc NTD/Rút hồ sơ.
+- **Bỏ tính năng "Đổi CV"** (API `applications/<id>/cv/`, action `update_cv`):
+  muốn nộp CV khác thì rút hồ sơ rồi ứng tuyển lại (tốn 1 lượt).
+
+</details>
+
+<details><summary>Hoàn thiện luồng ứng tuyển: nhắc NTD, lịch sử nộp (16/11)</summary>
+
 - Nhắc NTD (`ApplicationReminder`, thông báo `application_awaiting_reply`):
   hệ thống tự nhắc khi hồ sơ chưa phản hồi 3 ngày và 7 ngày (gom một thông báo
   mỗi tin, task `send_unanswered_application_reminders` chạy mỗi giờ); ứng viên
@@ -111,12 +126,11 @@ thật trong hạng mục AI.
   quả, NTD nhận thông báo trong chuông, thông báo quyết định đang chờ gửi bị hủy;
   NTD không đổi được trạng thái hồ sơ đã rút.
 - Nộp lại chỉ khi hồ sơ hiệu lực đã bị từ chối hoặc đã rút (vẫn giữ trần 3 lần
-  và chờ 5 phút); hồ sơ Mới/Đã xem thì "Đổi CV" ngay trên hồ sơ đó, NTD thấy
-  như hồ sơ mới và đồng hồ tự động từ chối chạy lại; từ Phù hợp trở đi thì khóa.
+  và chờ 5 phút).
 - Tự động từ chối, nhắc hạn, chặn ứng viên kèm từ chối hồ sơ chờ, dashboard,
   danh sách/xuất CSV của NTD, thống kê chiến dịch và tin chỉ tính hồ sơ hiệu lực;
   `application_count` đếm ứng viên, không đếm lượt nộp.
-- Ứng viên: trang "Việc làm đã ứng tuyển" có nút "Đổi CV" và "Rút hồ sơ"; nút ở
+- Ứng viên: trang "Việc làm đã ứng tuyển" có nút "Rút hồ sơ"; nút ở
   trang tin hiện "Đã ứng tuyển" khi hồ sơ đang được xử lý.
 
 </details>

@@ -1003,7 +1003,7 @@ test('employer jobs: compact list keeps candidate previews and contextual action
   await expect(page.getByTestId('job-list-item-jb_draft').getByRole('link', { name: /Hoàn thiện/ })).toBeVisible()
   const statusTabs = page.getByRole('group', { name: 'Lọc theo trạng thái tin' })
   await expect(statusTabs.getByRole('button', { name: /Tất cả\s*2/ })).toHaveAttribute('aria-pressed', 'true')
-  await expect(statusTabs.getByRole('button', { name: /Đã đóng\s*0/ })).toBeAttached()
+  await expect(statusTabs.getByRole('button', { name: /Ngừng tuyển\s*0/ })).toBeAttached()
   await expectNoHorizontalOverflow(page)
 
   // From xl the rows become a table; narrower screens stack the stats under the title.

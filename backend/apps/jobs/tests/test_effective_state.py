@@ -5,6 +5,8 @@ from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
+from django.urls import reverse
+from django.utils import timezone
 
 from apps.applications.services import ApplicationNotAllowed, create_application_record
 from apps.cv_templates.tests.factories import fill_cv_for_application, make_published_template
@@ -13,6 +15,7 @@ from apps.dashboard.selectors import build_employer_dashboard
 from apps.employers.models import Company, RecruitmentCampaign
 from apps.employers.selectors import campaign_list_queryset
 from apps.employers.tests.readiness_helpers import make_employer_ready
+from common.vietnam_time import vietnam_day_start, vietnam_today
 
 from ..models import Job, JobState, publicly_available_job_filter
 from ..models.querysets import job_visibility_issues
@@ -79,7 +82,10 @@ class JobEffectiveStateTests(TestCase):
     def test_held_or_expired_jobs_are_never_counted_as_recruiting(self):
         self.make_job()
         self.make_job(moderation_hold=Job.ModerationHold.MANUAL_REVIEW)
-        self.make_job(visibility_ends_at=VIETNAM_EARLY_MORNING - timedelta(days=1))
+        self.make_job(
+            visibility_starts_at=timezone.now() - timedelta(days=10),
+            visibility_ends_at=timezone.now() - timedelta(hours=1),
+        )
 
         surfaces = self.surfaces()
 
@@ -154,3 +160,58 @@ class ApplicationRequiresCandidateDataAccessTests(TestCase):
         application = create_application_record(candidate=self.candidate, job=self.job, cv=self.cv)
 
         self.assertEqual(application.job, self.job)
+
+
+class StoppedJobDetailTests(TestCase):
+    def setUp(self):
+        employer = get_user_model().objects.create_user(
+            email='stopped-employer@example.com', password='password', role='employer'
+        )
+        company = Company.objects.create(company_name='Stopped Co', created_by=employer)
+        self.recruiter = make_employer_ready(employer, company=company, candidate_data=True)
+        self.job = Job.objects.create(
+            posted_by=employer,
+            company=company,
+            title='Stopped job',
+            description='Mô tả.',
+            status=Job.Status.ACTIVE,
+            **open_visibility_window(),
+        )
+
+    def detail(self):
+        return self.client.get(reverse('job-detail', kwargs={'slug': self.job.slug}))
+
+    def test_open_job_takes_applications(self):
+        response = self.detail()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.data['accepting_applications'])
+        self.assertIsNone(response.data['stopped_at'])
+
+    def test_closed_job_stays_readable_but_stopped(self):
+        closed_at = timezone.now()
+        Job.objects.filter(pk=self.job.pk).update(status=Job.Status.CLOSED, closed_at=closed_at)
+
+        response = self.detail()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(response.data['accepting_applications'])
+        self.assertIsNotNone(response.data['stopped_at'])
+
+    def test_expired_job_reports_when_its_deadline_ended(self):
+        Job.objects.filter(pk=self.job.pk).update(deadline=vietnam_today() - timedelta(days=2))
+
+        response = self.detail()
+
+        self.assertFalse(response.data['accepting_applications'])
+        self.job.refresh_from_db()
+        self.assertEqual(
+            self.job.stopped_at, vietnam_day_start(vietnam_today() - timedelta(days=1))
+        )
+
+    def test_held_job_is_not_readable(self):
+        Job.objects.filter(pk=self.job.pk).update(
+            status=Job.Status.CLOSED, moderation_hold=Job.ModerationHold.MANUAL_REVIEW
+        )
+
+        self.assertEqual(self.detail().status_code, 404)

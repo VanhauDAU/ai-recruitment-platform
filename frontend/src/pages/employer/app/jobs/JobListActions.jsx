@@ -73,20 +73,20 @@ function menuItems(job, { candidateDataAccess, onDuplicate, closeMenu, queueConf
       key: 'close',
       danger: true,
       icon: <StopOutlined />,
-      label: 'Đóng tin',
+      label: 'Ngừng tuyển',
       onClick: () => queueConfirmation({
         cancelText: 'Đóng',
-        confirmText: 'Đóng tin',
+        confirmText: 'Ngừng tuyển',
         danger: true,
         description: (
           <>
-            Bạn có chắc muốn đóng tin tuyển dụng <strong>{jobTitle}</strong> không?
+            Bạn có chắc muốn ngừng tuyển vị trí <strong>{jobTitle}</strong> không?
             <br />
             Tin sẽ ngừng hiển thị với ứng viên.
           </>
         ),
         onConfirm: () => onClose(job.public_id),
-        title: 'Đóng tin tuyển dụng',
+        title: 'Ngừng tuyển',
       }),
     })
   }

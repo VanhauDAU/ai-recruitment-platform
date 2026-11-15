@@ -21,7 +21,8 @@ import {
   VerifiedEmployerBadge,
 } from '@/entities/job'
 import { JobCompareButton } from '@/features/compare-jobs'
-import { formatJobDate } from '../../lib/job-detail-presentation'
+import { formatJobDate, isAcceptingApplications } from '../../lib/job-detail-presentation'
+import JobApplicationClosed from './JobApplicationClosed'
 
 const EMPTY_LABEL = 'Chưa cập nhật'
 
@@ -84,7 +85,7 @@ export function JobHero({ job, saved, applicationStatus, onApply, onSave, onShar
 
         <div className="mt-5 flex gap-2 sm:gap-3">
           <div className="min-w-0 flex-1">
-            <button type="button" onClick={onApply} disabled={applicationStatus.isLimitReached} className="inline-flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-[var(--brand-primary)] px-5 text-sm font-bold text-white shadow-sm transition hover:bg-[var(--brand-primary-hover)] disabled:cursor-not-allowed disabled:opacity-60">{applicationStatus.isResubmission ? <i className="fa-solid fa-arrow-rotate-right" aria-hidden="true" /> : <SafetyCertificateOutlined />} {applicationStatus.applyLabel}</button>
+            {isAcceptingApplications(job) ? <button type="button" onClick={onApply} disabled={applicationStatus.isLimitReached} className="inline-flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-[var(--brand-primary)] px-5 text-sm font-bold text-white shadow-sm transition hover:bg-[var(--brand-primary-hover)] disabled:cursor-not-allowed disabled:opacity-60">{applicationStatus.isResubmission ? <i className="fa-solid fa-arrow-rotate-right" aria-hidden="true" /> : <SafetyCertificateOutlined />} {applicationStatus.applyLabel}</button> : <JobApplicationClosed />}
             <LatestApplicationNotice application={applicationStatus.latestApplication} />
           </div>
           <button type="button" onClick={onSave} disabled={savePending} className="hidden h-11 cursor-pointer items-center justify-center gap-2 rounded-lg border border-emerald-300 px-4 text-sm font-semibold text-[var(--brand-primary)] transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-60 sm:inline-flex">{saved ? <HeartFilled /> : <HeartOutlined />} {saved ? 'Đã lưu' : 'Lưu tin'}</button>

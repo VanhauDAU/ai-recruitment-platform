@@ -4,7 +4,7 @@ const ENUM_LABELS = {
   banned: 'Đã cấm',
   draft: 'Bản nháp',
   pending: 'Chờ duyệt',
-  closed: 'Đã đóng',
+  closed: 'Ngừng tuyển',
   rejected: 'Đã từ chối',
   onsite: 'Tại văn phòng',
   remote: 'Từ xa',

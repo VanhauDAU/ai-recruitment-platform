@@ -198,21 +198,14 @@ class CandidateApplicationV2CreateSerializer(serializers.Serializer):
         return attrs
 
 
-class CandidateApplicationCvUpdateSerializer(serializers.Serializer):
-    cv_public_id = serializers.CharField(max_length=50)
-    version_public_id = serializers.CharField(max_length=50)
-
-    def validate(self, attrs):
-        attrs['cv'], attrs['version'] = validated_cv_selection(self.context['request'].user, attrs)
-        return attrs
-
-
 class CandidateApplicationV2Serializer(serializers.ModelSerializer):
     job_public_id = serializers.CharField(source='job.public_id', read_only=True)
     job_title = serializers.CharField(source='job.title', read_only=True)
     job_slug = serializers.CharField(source='job.slug', read_only=True)
     company_name = serializers.CharField(source='job.company.company_name', read_only=True)
     company_logo_url = serializers.SerializerMethodField()
+    # When the employer stopped recruiting (closed or past its dates); null while open.
+    job_stopped_at = serializers.DateTimeField(source='job.stopped_at', read_only=True)
     cv_public_id = serializers.SerializerMethodField()
     submitted_cv_version_public_id = serializers.CharField(
         source='submitted_cv_version.public_id', read_only=True
@@ -261,7 +254,6 @@ class CandidateApplicationV2Serializer(serializers.ModelSerializer):
             'type': 'object',
             'properties': {
                 'withdraw': {'type': 'boolean'},
-                'update_cv': {'type': 'boolean'},
                 'reapply': {'type': 'boolean'},
                 'remind': {'type': 'boolean'},
                 'remind_available_at': {'type': 'string', 'format': 'date-time', 'nullable': True},
@@ -271,12 +263,11 @@ class CandidateApplicationV2Serializer(serializers.ModelSerializer):
     def get_actions(self, obj):
         """What the candidate may do with this submission now (cap and cooldown
         of a resubmission are checked when it is sent)."""
-        current = obj.is_current
+        # Nothing is left to do once the employer stopped recruiting.
+        current = obj.is_current and obj.job.stopped_at is None
         remind_at = candidate_reminder_available_at(obj)
         return {
             'withdraw': current and obj.status not in Application.TERMINAL_STATUSES,
-            # Only before the recruiter opened it: they judge the CV they saw.
-            'update_cv': current and obj.status == Application.Status.SUBMITTED,
             'reapply': current and obj.status in Application.REAPPLY_ALLOWED_STATUSES,
             'remind': bool(remind_at and remind_at <= timezone.now()),
             'remind_available_at': remind_at,
@@ -314,6 +305,7 @@ class CandidateApplicationV2Serializer(serializers.ModelSerializer):
             'job_slug',
             'company_name',
             'company_logo_url',
+            'job_stopped_at',
             'cv_public_id',
             'submitted_cv_version_public_id',
             'submitted_cv_title',

@@ -1,0 +1,488 @@
+/* Trang "Việc làm đã ứng tuyển": CSS riêng, tải cùng trang để không nới CSS khởi tạo. */
+.applied-jobs {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+}
+
+.applied-jobs__title {
+  color: #0f172a;
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 28px;
+}
+
+.applied-jobs__banner {
+  align-items: center;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 12px;
+  display: flex;
+  gap: 16px;
+  padding: 12px 16px;
+}
+
+.applied-jobs__banner-text {
+  color: #334155;
+  flex: 1;
+  font-size: 14px;
+  line-height: 22px;
+}
+
+.applied-jobs__banner-text strong {
+  color: var(--brand-primary);
+  font-weight: 700;
+}
+
+.applied-jobs__banner img {
+  flex-shrink: 0;
+  height: 72px;
+  object-fit: contain;
+  width: 72px;
+}
+
+.applied-jobs__filters {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+}
+
+.applied-jobs__filter-track {
+  display: flex;
+  flex: 1;
+  gap: 8px;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.applied-jobs__filter-track::-webkit-scrollbar {
+  display: none;
+}
+
+.applied-jobs__filter {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  color: #334155;
+  cursor: pointer;
+  flex-shrink: 0;
+  font-size: 14px;
+  line-height: 20px;
+  padding: 6px 14px;
+  transition: border-color 0.15s, color 0.15s, background-color 0.15s;
+}
+
+.applied-jobs__filter:hover,
+.applied-jobs__filter[aria-selected='true'] {
+  border-color: var(--brand-primary);
+  color: var(--brand-primary);
+}
+
+.applied-jobs__filter[aria-selected='true'] {
+  background: var(--brand-primary-soft);
+  font-weight: 600;
+}
+
+.applied-jobs__filter-arrow {
+  align-items: center;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  color: #475569;
+  cursor: pointer;
+  display: flex;
+  flex-shrink: 0;
+  font-size: 12px;
+  height: 32px;
+  justify-content: center;
+  width: 32px;
+}
+
+.applied-jobs__filter-arrow:hover {
+  border-color: var(--brand-primary);
+  color: var(--brand-primary);
+}
+
+.applied-jobs__list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.applied-job {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.applied-job__head {
+  display: flex;
+  gap: 16px;
+}
+
+.applied-job__logo {
+  align-items: center;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  color: #94a3b8;
+  display: flex;
+  flex-shrink: 0;
+  font-size: 24px;
+  font-weight: 800;
+  height: 80px;
+  justify-content: center;
+  object-fit: contain;
+  width: 80px;
+}
+
+.applied-job__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.applied-job__title {
+  -webkit-box-orient: vertical;
+  color: #0f172a;
+  display: -webkit-box;
+  font-size: 16px;
+  font-weight: 700;
+  -webkit-line-clamp: 2;
+  line-height: 24px;
+  overflow: hidden;
+}
+
+a.applied-job__title:hover {
+  color: var(--brand-primary);
+}
+
+.applied-job__company {
+  color: #64748b;
+  font-size: 13px;
+  line-height: 20px;
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.applied-job__meta {
+  color: #64748b;
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 13px;
+  gap: 4px 16px;
+  line-height: 20px;
+  margin-top: 6px;
+}
+
+.applied-job__meta a {
+  color: #334155;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.applied-job__meta a:hover {
+  color: var(--brand-primary);
+}
+
+.applied-job__status {
+  align-items: flex-start;
+  border-top: 1px solid #f1f5f9;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  justify-content: space-between;
+  margin-top: 12px;
+  padding-top: 12px;
+}
+
+.applied-job__headline {
+  color: #2563eb;
+  flex: 1 1 260px;
+  font-size: 14px;
+  line-height: 22px;
+}
+
+.applied-job__headline time {
+  color: #94a3b8;
+}
+
+.applied-job__headline--muted {
+  color: #64748b;
+}
+
+.applied-job__headline--success {
+  color: var(--brand-primary);
+  font-weight: 600;
+}
+
+.applied-job__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.applied-job__actions .ant-btn {
+  border-radius: 999px;
+}
+
+.applied-job__message {
+  align-items: center;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  color: #94a3b8;
+  cursor: not-allowed;
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 600;
+  gap: 6px;
+  height: 24px;
+  padding: 0 10px;
+}
+
+.applied-job__steps {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+}
+
+.applied-job__step {
+  align-items: center;
+  color: #64748b;
+  display: flex;
+  flex-direction: column;
+  font-size: 12px;
+  gap: 6px;
+  line-height: 16px;
+  position: relative;
+  text-align: center;
+}
+
+/* Đường nối từ tâm bước trước tới tâm bước này, nằm dưới chấm tròn. */
+.applied-job__step + .applied-job__step::before {
+  background: #e2e8f0;
+  content: '';
+  height: 2px;
+  left: -50%;
+  position: absolute;
+  right: 50%;
+  top: 8px;
+}
+
+/* Đoạn đã qua: trượt điền màu lần lượt từng bước rồi có vệt sáng chạy dọc liên tục. */
+.applied-job__step--done + .applied-job__step--done::after {
+  animation:
+    applied-step-fill 0.45s calc(var(--step) * 0.18s) ease-out both,
+    applied-step-shine 2.4s calc(var(--step) * 0.18s + 0.6s) linear infinite;
+  background: linear-gradient(90deg, var(--brand-primary) 35%, #b9f5d0 50%, var(--brand-primary) 65%);
+  background-size: 300% 100%;
+  border-radius: 2px;
+  content: '';
+  height: 3px;
+  left: -50%;
+  position: absolute;
+  right: 50%;
+  top: 7.5px;
+  transform-origin: left center;
+}
+
+.applied-job__dot {
+  align-items: center;
+  background: #fff;
+  border: 2px solid #cbd5e1;
+  border-radius: 999px;
+  color: #fff;
+  display: flex;
+  font-size: 9px;
+  height: 18px;
+  justify-content: center;
+  position: relative;
+  width: 18px;
+  z-index: 1;
+}
+
+.applied-job__step--done .applied-job__dot {
+  animation: applied-step-pop 0.35s calc(var(--step) * 0.18s + 0.2s) ease-out both;
+  background: var(--brand-primary);
+  border-color: var(--brand-primary);
+}
+
+@keyframes applied-step-fill {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+@keyframes applied-step-shine {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: 0 0;
+  }
+}
+
+@keyframes applied-step-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  70% {
+    transform: scale(1.15);
+  }
+}
+
+
+.applied-job__step--done {
+  color: #334155;
+}
+
+.applied-job__step-label .anticon {
+  color: #94a3b8;
+  font-size: 11px;
+  margin-left: 3px;
+}
+
+.applied-job__details {
+  background: #f8fafc;
+  border-radius: 8px;
+  margin-top: 16px;
+}
+
+.applied-job__details-toggle {
+  align-items: center;
+  background: none;
+  border: 0;
+  color: #334155;
+  cursor: pointer;
+  display: flex;
+  font-size: 14px;
+  font-weight: 600;
+  justify-content: space-between;
+  padding: 10px 16px;
+  text-align: left;
+  width: 100%;
+}
+
+.applied-job__details-toggle .anticon {
+  color: #94a3b8;
+  font-size: 12px;
+  transition: transform 0.2s;
+}
+
+.applied-job__details-toggle[aria-expanded='true'] .anticon {
+  transform: rotate(180deg);
+}
+
+.applied-job__timeline {
+  list-style: none;
+  margin: 0;
+  padding: 4px 16px 14px;
+}
+
+.applied-job__event {
+  align-items: flex-start;
+  display: flex;
+  flex-direction: column;
+  padding: 0 0 14px 24px;
+  position: relative;
+}
+
+.applied-job__event:last-child {
+  padding-bottom: 0;
+}
+
+.applied-job__event::before {
+  background: #fff;
+  border: 1px solid #94a3b8;
+  border-radius: 999px;
+  content: '';
+  height: 11px;
+  left: 0;
+  position: absolute;
+  top: 5px;
+  width: 11px;
+}
+
+.applied-job__event:has(.applied-job__latest)::before {
+  top: 29px;
+}
+
+.applied-job__event::after {
+  background: #cbd5e1;
+  bottom: -5px;
+  content: '';
+  left: 5px;
+  position: absolute;
+  top: 18px;
+  width: 1px;
+}
+
+.applied-job__event:has(.applied-job__latest)::after {
+  top: 42px;
+}
+
+.applied-job__event:last-child::after {
+  display: none;
+}
+
+.applied-job__latest {
+  background: #dcfce7;
+  border-radius: 999px;
+  color: #15803d;
+  font-size: 11px;
+  line-height: 18px;
+  margin-bottom: 6px;
+  padding: 0 8px;
+}
+
+.applied-job__event-label {
+  color: #334155;
+  font-size: 14px;
+  line-height: 22px;
+}
+
+.applied-job__event time {
+  color: #94a3b8;
+  font-size: 12px;
+  line-height: 18px;
+}
+
+@media (min-width: 640px) {
+  .applied-jobs {
+    padding: 24px;
+  }
+}
+
+@media (max-width: 639px) {
+  .applied-jobs__banner img {
+    display: none;
+  }
+
+  .applied-job__logo {
+    font-size: 18px;
+    height: 56px;
+    width: 56px;
+  }
+
+  .applied-job__step {
+    font-size: 11px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .applied-job__step--done + .applied-job__step--done::after,
+  .applied-job__step--done .applied-job__dot {
+    animation: none;
+  }
+}

@@ -267,7 +267,7 @@ describe('JobDetail candidate-data boundary', () => {
     expect(dialog).toHaveTextContent('Tin sẽ ngừng hiển thị với ứng viên.')
     expect(mocks.closeEmployerJob).not.toHaveBeenCalled()
 
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Đóng tin' }))
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Ngừng tuyển' }))
     await waitFor(() => expect(mocks.closeEmployerJob).toHaveBeenCalledWith('job_1', expect.any(Object)))
   })
 
