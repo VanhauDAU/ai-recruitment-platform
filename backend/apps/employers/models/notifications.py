@@ -47,6 +47,7 @@ class EmployerNotification(models.Model):
         )
         APPLICATION_RECEIVED = 'application_received', 'Có hồ sơ ứng tuyển mới'
         APPLICATION_WITHDRAWN = 'application_withdrawn', 'Ứng viên đã rút hồ sơ'
+        JOB_CHANGES_REQUESTED = 'job_changes_requested', 'Tin tuyển dụng cần chỉnh sửa'
         APPLICATION_REVIEW_SUBMITTED = (
             'application_review_submitted',
             'Có đánh giá mới cho hồ sơ ứng viên',

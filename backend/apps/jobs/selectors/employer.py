@@ -22,7 +22,10 @@ def _latest_hide_reason_codes(job_reference):
     return (
         JobModerationEvent.objects.filter(
             job_id=job_reference,
-            action=JobModerationEvent.Action.HIDE,
+            action__in=(
+                JobModerationEvent.Action.HIDE,
+                JobModerationEvent.Action.REQUEST_CHANGES,
+            ),
         )
         .order_by('-created_at', '-id')
         .values('reason_code')
@@ -39,11 +42,29 @@ def _with_hold_reason(queryset):
     )
 
 
+def _requested_changes(job):
+    """What the owner needs to fix a job held for changes (the note is written for them)."""
+    if job.moderation_hold != Job.ModerationHold.CHANGES_REQUESTED:
+        return {'editable': False, 'resubmitted_at': None, 'request_note': ''}
+    latest = (
+        JobModerationEvent.objects.filter(job=job, action=JobModerationEvent.Action.REQUEST_CHANGES)
+        .order_by('-created_at', '-id')
+        .values_list('note', flat=True)
+        .first()
+    )
+    return {
+        'editable': job.editable_for_requested_changes,
+        'resubmitted_at': job.moderation_resubmitted_at,
+        'request_note': latest or '',
+    }
+
+
 def employer_job_visibility_hold(job):
     """Explain to the owner why candidates cannot see a job; ``None`` when nothing holds it.
 
-    Only the reason category is exposed. The administrator's note stays
-    internal because it can quote the person who reported the job.
+    Only the reason category is exposed: the note of a hide stays internal
+    because it can quote the person who reported the job. A change request's
+    note is written for the owner and is shown so they know what to fix.
     """
     if job.moderation_hold:
         reason_code = getattr(job, 'moderation_hold_reason_code', None)
@@ -57,10 +78,14 @@ def employer_job_visibility_hold(job):
             'held_at': job.moderation_held_at,
             'reason_code': reason_code,
             'reason_label': dict(JobModerationEvent.Reason.choices).get(reason_code, ''),
+            **_requested_changes(job),
         }
     if job.policy_hold:
         return {
             'kind': 'account',
+            'editable': False,
+            'resubmitted_at': None,
+            'request_note': '',
             'code': job.policy_hold,
             'label': job.get_policy_hold_display(),
             'held_at': job.policy_held_at,

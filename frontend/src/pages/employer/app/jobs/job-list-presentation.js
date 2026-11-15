@@ -26,6 +26,11 @@ export function isJobHeld(job) {
   return Boolean(job.visibility_hold)
 }
 
+// Changes were requested on a fixable reason: the owner edits, then resubmits.
+export function isJobEditableUnderHold(job) {
+  return Boolean(job.visibility_hold?.editable)
+}
+
 export function jobStatusMeta(job) {
   return STATUS_META[job.effective_state] || { label: job.status || 'Không xác định', tone: 'slate' }
 }

@@ -273,7 +273,11 @@ class AdminJobDetailSerializer(AdminJobManagementListSerializer):
 
 class AdminJobDecisionSerializer(serializers.Serializer):
     action = serializers.ChoiceField(
-        choices=[JobModerationEvent.Action.HIDE, JobModerationEvent.Action.RESTORE]
+        choices=[
+            JobModerationEvent.Action.HIDE,
+            JobModerationEvent.Action.REQUEST_CHANGES,
+            JobModerationEvent.Action.RESTORE,
+        ]
     )
     review_token = serializers.CharField(trim_whitespace=True)
     reason_code = serializers.ChoiceField(
@@ -293,7 +297,7 @@ class AdminJobDecisionSerializer(serializers.Serializer):
     source_report_public_id = serializers.CharField(required=False, allow_blank=True)
 
     def validate(self, attrs):
-        if attrs['action'] == JobModerationEvent.Action.HIDE and not attrs.get('reason_code'):
+        if attrs['action'] != JobModerationEvent.Action.RESTORE and not attrs.get('reason_code'):
             raise serializers.ValidationError({'reason_code': 'Chọn lý do xử lý.'})
         if not attrs.get('note', '').strip():
             raise serializers.ValidationError({'note': 'Nhập ghi chú xử lý.'})

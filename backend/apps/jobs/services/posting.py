@@ -171,7 +171,9 @@ def _validate_campaign_for_write(campaign, *, recruiter):
         raise ValidationError({'campaign': 'Chiến dịch này không còn nhận tin tuyển dụng.'})
 
 
-def _validate_job_for_write(job):
+def _validate_job_for_write(job, *, allow_requested_changes=False):
+    if allow_requested_changes and job.editable_for_requested_changes:
+        return
     if job.policy_hold or job.moderation_hold:
         raise ValidationError(
             {
@@ -643,7 +645,7 @@ def update_employer_job(serializer, user):
     )
     if serializer.instance.posted_by_id != user.id:
         raise ValidationError('Bạn không có quyền chỉnh sửa tin này.')
-    _validate_job_for_write(serializer.instance)
+    _validate_job_for_write(serializer.instance, allow_requested_changes=True)
     previous_campaign = locked_campaigns.get(serializer.instance.campaign_id)
     locked_requested_campaign = _locked_requested_campaign(requested_campaign, locked_campaigns)
     _validate_campaign_for_write(locked_requested_campaign, recruiter=recruiter)

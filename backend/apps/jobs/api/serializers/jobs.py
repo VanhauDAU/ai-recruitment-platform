@@ -695,6 +695,10 @@ class EmployerJobVisibilityHoldSerializer(serializers.Serializer):
     held_at = serializers.DateTimeField(allow_null=True)
     reason_code = serializers.CharField(allow_blank=True)
     reason_label = serializers.CharField(allow_blank=True)
+    # Changes requested: the owner edits, then resubmits for review.
+    editable = serializers.BooleanField()
+    resubmitted_at = serializers.DateTimeField(allow_null=True)
+    request_note = serializers.CharField(allow_blank=True)
 
 
 class EmployerJobVisibilityIssueSerializer(serializers.Serializer):

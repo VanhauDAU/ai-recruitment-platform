@@ -42,6 +42,22 @@ từ ứng viên và tạm ẩn tin theo quyết định quản trị.
    `job_moderation.enforce_visibility` và `job_moderation.resolve_report`
    là hai quyền hậu kiểm.
 
+## Bổ sung 16/11/2026: vòng yêu cầu chỉnh sửa
+
+Tạm ẩn từng khóa cứng mọi chỉnh sửa, kể cả khi lý do chỉ là nội dung thiếu,
+nên nhà tuyển dụng không có cách tự sửa. Lý do kiểm duyệt nay chia hai nhóm
+(`JobModerationEvent.FIXABLE_REASONS`):
+
+- **Sửa được** (thiếu nội dung, gây hiểu nhầm, trùng lặp, khác): quản trị viên
+  chọn "Yêu cầu chỉnh sửa" (`request_changes`). Tin chuyển sang hold
+  `changes_requested` và vẫn ẩn; nhà tuyển dụng nhận thông báo kèm ghi chú (ghi
+  chú này viết cho họ nên được hiển thị), được sửa tin rồi "Gửi duyệt lại"
+  (`resubmit`, đặt `moderation_resubmitted_at`). Sau khi gửi thì khóa lại cho
+  tới khi quản trị viên khôi phục hoặc yêu cầu sửa tiếp; hàng chờ admin có bộ
+  lọc "Chờ duyệt lại".
+- **Khóa cứng** (nội dung bị cấm, lừa đảo, báo cáo đã xác nhận): giữ luồng tạm
+  ẩn như cũ, không cho sửa.
+
 ## Chuyển đổi dữ liệu
 
 - Migration chuyển mọi tin `pending` và `rejected` về `draft`, ghi một dòng

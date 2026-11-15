@@ -24,6 +24,7 @@ from .api.views import (
     EmployerJobListCreateView,
     EmployerJobPostingContextView,
     EmployerJobReopenView,
+    EmployerJobResubmitView,
     EmployerJobSubmitView,
     HiddenJobCreateView,
     HiddenJobDestroyView,
@@ -147,6 +148,11 @@ urlpatterns = [
     ),
     path(
         'mine/<str:public_id>/extend/', EmployerJobExtendView.as_view(), name='employer-job-extend'
+    ),
+    path(
+        'mine/<str:public_id>/resubmit/',
+        EmployerJobResubmitView.as_view(),
+        name='employer-job-resubmit',
     ),
     path(
         'mine/<str:public_id>/duplicate/',

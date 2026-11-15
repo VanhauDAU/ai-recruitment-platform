@@ -16,6 +16,7 @@ from .employer import (
     EmployerJobListCreateView,
     EmployerJobPostingContextView,
     EmployerJobReopenView,
+    EmployerJobResubmitView,
     EmployerJobSubmitView,
 )
 from .moderation import (
@@ -76,6 +77,7 @@ __all__ = [
     'EmployerJobDetailView',
     'EmployerJobDuplicateView',
     'EmployerJobExtendView',
+    'EmployerJobResubmitView',
     'EmployerJobListCreateView',
     'EmployerJobPostingContextView',
     'EmployerJobReopenView',

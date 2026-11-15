@@ -15,7 +15,7 @@ from ...selectors import (
     admin_job_management_queryset,
     admin_job_management_summary,
 )
-from ...services import hide_job_visibility, restore_job_visibility
+from ...services import hide_job_visibility, request_job_changes, restore_job_visibility
 from ..serializers import (
     AdminJobDecisionSerializer,
     AdminJobDetailSerializer,
@@ -116,6 +116,15 @@ class AdminJobDecisionView(APIView):
                 note=payload['note'],
                 review_token=payload['review_token'],
                 hold=payload.get('hold'),
+                source_report=source_report,
+            )
+        elif payload['action'] == 'request_changes':
+            request_job_changes(
+                job=job,
+                user=request.user,
+                reason_code=payload['reason_code'],
+                note=payload['note'],
+                review_token=payload['review_token'],
                 source_report=source_report,
             )
         else:

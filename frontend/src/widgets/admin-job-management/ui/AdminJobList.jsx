@@ -31,7 +31,7 @@ function scopeToParams(scope) {
   if (scope === 'all') return {}
   if (scope === 'reported') return { has_reports: 'true' }
   // Candidate-facing states are computed server-side; `held` is an admin hold.
-  if (['active', 'expired', 'hidden', 'held'].includes(scope)) return { scope }
+  if (['active', 'expired', 'hidden', 'held', 'resubmitted'].includes(scope)) return { scope }
   return { status: scope }
 }
 
@@ -243,7 +243,7 @@ export default function AdminJobList() {
     { key: 'all', label: 'Tất cả tin', value: summary.total, detail: 'Toàn bộ vòng đời' },
     { key: 'active', label: 'Đang tuyển', value: summary.active, detail: `${summary.expired || 0} quá hạn · ${summary.hidden || 0} bị ẩn` },
     { key: 'reported', label: 'Báo cáo chờ', value: summary.pending_reports, detail: 'Tin cần hậu kiểm' },
-    { key: 'held', label: 'Đang tạm giữ', value: summary.held, detail: 'Policy hoặc kiểm duyệt' },
+    { key: 'held', label: 'Đang tạm giữ', value: summary.held, detail: `${summary.resubmitted || 0} chờ duyệt lại` },
     { key: 'draft', label: 'Bản nháp', value: summary.draft, detail: 'Chưa đăng' },
   ]
 

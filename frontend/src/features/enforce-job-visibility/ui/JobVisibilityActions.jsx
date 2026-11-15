@@ -5,9 +5,21 @@ import {
   adminJobKeys,
   decideAdminJob,
   JOB_DECISION_REASONS,
+  JOB_FIXABLE_REASONS,
 } from '@/entities/admin-job'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { message } from '@/shared/lib/toast'
+
+const ACTION_COPY = {
+  hide: { button: 'Tạm ẩn tin', title: 'Tạm ẩn tin tuyển dụng', note: 'Ghi chú tạm ẩn', done: 'Đã tạm ẩn tin khỏi các bề mặt công khai.' },
+  request_changes: {
+    button: 'Yêu cầu chỉnh sửa',
+    title: 'Yêu cầu nhà tuyển dụng chỉnh sửa tin',
+    note: 'Nội dung cần chỉnh sửa (gửi cho nhà tuyển dụng)',
+    done: 'Đã tạm ẩn tin và gửi yêu cầu chỉnh sửa cho nhà tuyển dụng.',
+  },
+  restore: { button: 'Khôi phục hiển thị', title: 'Khôi phục hiển thị tin', note: 'Lý do khôi phục', done: 'Đã khôi phục hiển thị tin tuyển dụng.' },
+}
 
 const HOLD_OPTIONS = [
   { value: 'manual_review', label: 'Tạm giữ để kiểm tra thêm' },
@@ -18,8 +30,8 @@ export default function JobVisibilityActions({ job }) {
   const queryClient = useQueryClient()
   const [action, setAction] = useState('')
   const [form] = Form.useForm()
-  const canHide = job.state_actions?.includes('hide')
-  const canRestore = job.state_actions?.includes('restore')
+  const available = ['hide', 'request_changes', 'restore'].filter((key) => job.state_actions?.includes(key))
+  const copy = ACTION_COPY[action] || ACTION_COPY.restore
 
   const mutation = useMutation({
     mutationFn: (payload) => decideAdminJob(job.public_id, {
@@ -30,11 +42,7 @@ export default function JobVisibilityActions({ job }) {
       queryClient.setQueryData(adminJobKeys.detail(job.public_id), updated)
       queryClient.invalidateQueries({ queryKey: adminJobKeys.lists() })
       queryClient.invalidateQueries({ queryKey: adminJobKeys.summary })
-      message.success(
-        payload.action === 'hide'
-          ? 'Đã tạm ẩn tin khỏi các bề mặt công khai.'
-          : 'Đã khôi phục hiển thị tin tuyển dụng.',
-      )
+      message.success(ACTION_COPY[payload.action].done)
       form.resetFields()
       setAction('')
     },
@@ -55,28 +63,27 @@ export default function JobVisibilityActions({ job }) {
     }
     mutation.mutate({
       action,
-      ...(action === 'hide' && {
-        hold: values.hold,
-        reason_code: values.reason_code,
-      }),
+      ...(action === 'hide' && { hold: values.hold }),
+      ...(action !== 'restore' && { reason_code: values.reason_code }),
       note: values.note.trim(),
     })
   }
 
-  if (!canHide && !canRestore) return null
+  if (!available.length) return null
 
   return (
     <>
       <Space wrap>
-        {canHide && <Button danger onClick={() => setAction('hide')}>Tạm ẩn tin</Button>}
-        {canRestore && <Button onClick={() => setAction('restore')}>Khôi phục hiển thị</Button>}
+        {available.map((key) => (
+          <Button key={key} danger={key === 'hide'} onClick={() => setAction(key)}>{ACTION_COPY[key].button}</Button>
+        ))}
       </Space>
       <Modal
         cancelText="Hủy"
         confirmLoading={mutation.isPending}
         destroyOnHidden
         okButtonProps={{ danger: action === 'hide' }}
-        okText={action === 'hide' ? 'Tạm ẩn tin' : 'Khôi phục hiển thị'}
+        okText={copy.button}
         onCancel={() => {
           if (mutation.isPending) return
           form.resetFields()
@@ -84,7 +91,7 @@ export default function JobVisibilityActions({ job }) {
         }}
         onOk={submit}
         open={Boolean(action)}
-        title={action === 'hide' ? 'Tạm ẩn tin tuyển dụng' : 'Khôi phục hiển thị tin'}
+        title={copy.title}
       >
         <Form
           form={form}
@@ -93,21 +100,24 @@ export default function JobVisibilityActions({ job }) {
           preserve={false}
         >
           {action === 'hide' && (
-            <>
-              <Form.Item label="Mức tạm giữ" name="hold" rules={[{ required: true }]}> 
-                <Select options={HOLD_OPTIONS} />
-              </Form.Item>
-              <Form.Item
-                label="Căn cứ xử lý"
-                name="reason_code"
-                rules={[{ required: true, message: 'Chọn căn cứ xử lý.' }]}
-              >
-                <Select options={JOB_DECISION_REASONS} placeholder="Chọn căn cứ" />
-              </Form.Item>
-            </>
+            <Form.Item label="Mức tạm giữ" name="hold" rules={[{ required: true }]}>
+              <Select options={HOLD_OPTIONS} />
+            </Form.Item>
+          )}
+          {action !== 'restore' && (
+            <Form.Item
+              label="Căn cứ xử lý"
+              name="reason_code"
+              rules={[{ required: true, message: 'Chọn căn cứ xử lý.' }]}
+            >
+              <Select
+                options={action === 'request_changes' ? JOB_FIXABLE_REASONS : JOB_DECISION_REASONS}
+                placeholder="Chọn căn cứ"
+              />
+            </Form.Item>
           )}
           <Form.Item
-            label={action === 'hide' ? 'Ghi chú tạm ẩn' : 'Lý do khôi phục'}
+            label={copy.note}
             name="note"
             rules={[{ required: true, whitespace: true, message: 'Nhập ghi chú xử lý.' }]}
           >

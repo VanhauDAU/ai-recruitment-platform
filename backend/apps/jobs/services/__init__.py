@@ -52,7 +52,9 @@ from .moderation import (
     create_job_review_token,
     hide_job_visibility,
     job_moderation_state,
+    request_job_changes,
     restore_job_visibility,
+    resubmit_job_for_review,
 )
 from .posting import (
     RESPONSIBILITY_STATEMENT_VERSION,
@@ -104,6 +106,8 @@ __all__ = [
     'publish_job',
     'pending_candidate_job_digest_ids',
     'hide_job_visibility',
+    'request_job_changes',
+    'resubmit_job_for_review',
     'hide_recommended_job',
     'job_moderation_state',
     'job_ai_policy',

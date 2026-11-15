@@ -13,6 +13,8 @@ class JobModerationEvent(models.Model):
         REJECT = 'reject', 'Từ chối tin (lịch sử)'
         HIDE = 'hide', 'Tạm ẩn tin'
         RESTORE = 'restore', 'Khôi phục hiển thị'
+        REQUEST_CHANGES = 'request_changes', 'Yêu cầu chỉnh sửa'
+        RESUBMIT = 'resubmit', 'Nhà tuyển dụng gửi duyệt lại'
 
     class Reason(models.TextChoices):
         INCOMPLETE_CONTENT = 'incomplete_content', 'Nội dung chưa đầy đủ'
@@ -22,6 +24,14 @@ class JobModerationEvent(models.Model):
         DUPLICATE_POSTING = 'duplicate_posting', 'Tin trùng lặp'
         CONFIRMED_REPORT = 'confirmed_report', 'Báo cáo vi phạm đã xác nhận'
         OTHER = 'other', 'Lý do khác'
+
+    # Reasons the owner can fix by editing; the others keep the job locked.
+    FIXABLE_REASONS = (
+        Reason.INCOMPLETE_CONTENT,
+        Reason.MISLEADING_CONTENT,
+        Reason.DUPLICATE_POSTING,
+        Reason.OTHER,
+    )
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     job = models.ForeignKey(
