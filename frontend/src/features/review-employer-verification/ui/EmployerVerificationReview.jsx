@@ -361,10 +361,6 @@ export default function EmployerVerificationReview({
         exact: true,
       }),
       queryClient.invalidateQueries({
-        queryKey: adminEmployerVerificationKeys.summary,
-        exact: true,
-      }),
-      queryClient.invalidateQueries({
         queryKey: adminCompanyKeys.summary,
         exact: true,
       }),

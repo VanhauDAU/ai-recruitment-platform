@@ -166,3 +166,20 @@ class AdminDashboardApiTests(APITestCase):
             self._apply(job, f'candidate-{index}@example.com')
 
         self.assertEqual(count_queries(), baseline)
+
+    def test_queue_summary_serves_only_queue_counts(self):
+        job = self._job()
+        JobReport.objects.create(job=job, reason=JobReport.Reason.SCAM)
+
+        response = self.client.get(reverse('admin-dashboard-queues'))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+        self.assertEqual(set(response.data), {'generated_at', 'queues', 'knowledge_review_overdue'})
+        counts = {item['key']: item['count'] for item in response.data['queues']}
+        self.assertEqual(counts['job_reports'], 1)
+
+        self.client.force_authenticate(self.employer)
+        self.assertEqual(
+            self.client.get(reverse('admin-dashboard-queues')).status_code,
+            status.HTTP_403_FORBIDDEN,
+        )

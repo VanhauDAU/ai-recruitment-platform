@@ -438,3 +438,14 @@ def build_admin_dashboard(*, days=DEFAULT_DASHBOARD_PERIOD):
         'top_categories': _top_categories(window),
         'ai': _ai(window),
     }
+
+
+def build_admin_queue_summary():
+    """Queue counts only: cheap enough for the admin shell to poll for badges."""
+    now = timezone.now()
+    queues, extra = _queues(now, admin_job_management_summary())
+    return {
+        'generated_at': now,
+        'queues': queues,
+        'knowledge_review_overdue': extra['knowledge_review_overdue'],
+    }

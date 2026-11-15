@@ -1,3 +1,3 @@
-from .dashboard import AdminDashboardView, EmployerDashboardView
+from .dashboard import AdminDashboardView, AdminQueueSummaryView, EmployerDashboardView
 
-__all__ = ['AdminDashboardView', 'EmployerDashboardView']
+__all__ = ['AdminDashboardView', 'AdminQueueSummaryView', 'EmployerDashboardView']

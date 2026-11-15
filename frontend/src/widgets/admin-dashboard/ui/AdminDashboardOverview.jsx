@@ -6,9 +6,10 @@ import { useSearchParams } from 'react-router'
 import {
   ADMIN_DASHBOARD_PERIODS,
   adminDashboardKeys,
+  buildQueues,
   getAdminDashboard,
 } from '@/entities/admin-dashboard'
-import { buildQueues, formatTime, formatToday, greeting } from '../model/dashboard-model'
+import { formatTime, formatToday, greeting } from '../model/dashboard-model'
 import ActionQueue from './ActionQueue'
 import ActivityTrend from './ActivityTrend'
 import {

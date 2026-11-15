@@ -223,3 +223,9 @@ class AdminDashboardSerializer(serializers.Serializer):
     content = AdminDashboardContentSerializer()
     top_categories = AdminDashboardCategorySerializer(many=True)
     ai = AdminDashboardAiSerializer()
+
+
+class AdminQueueSummarySerializer(serializers.Serializer):
+    generated_at = serializers.DateTimeField()
+    queues = AdminDashboardQueueSerializer(many=True)
+    knowledge_review_overdue = serializers.IntegerField()

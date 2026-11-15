@@ -32,6 +32,8 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | --- | --- |
 | `GET /api/dashboard/admin/?period=7\|30\|90`: hàng chờ, KPI so kỳ trước, xu hướng, phễu, an toàn, ngành nghề, AI | 🟨 Xong trên nhánh `feat/admin-dashboard` |
 | Trang chủ quản trị: khối "Cần xử lý" xếp theo hạn xử lý, KPI, biểu đồ, panel sức khỏe nền tảng | 🟨 Xong trên nhánh `feat/admin-dashboard` |
+| Sidebar sáng đồng bộ dashboard: badge mọi hàng chờ (đỏ khi quá hạn), cụm tài khoản + đăng xuất ở đáy, bỏ ô tìm chức năng | 🟨 Xong trên nhánh `feat/admin-dashboard` |
+| Header: breadcrumb, nút Tạo mới, chuông hàng chờ, trợ giúp (sắp ra mắt), menu tài khoản | 🟨 Xong trên nhánh `feat/admin-dashboard` |
 
 <details><summary>Ghi chú chi tiết</summary>
 
@@ -43,6 +45,9 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 - Phễu ứng tuyển tính theo giai đoạn đã đến (`viewed_at`, `shortlisted_at`...)
   của hồ sơ nộp trong kỳ; "tin chưa có hồ sơ" dùng `EXISTS` trên hồ sơ hiện hành.
 - CSS riêng nằm trong chunk lazy của trang (không tăng CSS khởi tạo).
+- Badge sidebar và chuông header đọc chung `GET /api/dashboard/admin/queues/`
+  (thay ba request summary riêng của layout); lời mời quản trị vẫn lấy từ
+  summary tài khoản vì chỉ superuser thấy.
 - Kiểm tra: pytest `apps/dashboard` 10 passed; vitest widget/entity; smoke E2E
   `admin-dashboard.spec.js` pass ở mobile, tablet, desktop.
 

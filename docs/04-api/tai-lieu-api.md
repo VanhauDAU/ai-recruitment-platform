@@ -106,6 +106,7 @@ Xác thực trong Swagger UI: gọi `POST /api/auth/login/` lấy `access`, bấ
 | GET | `/api/employer/industries/all/` | Toàn bộ lĩnh vực cho dropdown tạo hồ sơ công ty |
 | GET | `/api/dashboard/employer/` | Read-model dashboard employer: account/verification, KPI tổng hợp, activity 7 ngày, nhu cầu và tin gần đây. `recent_applications` chỉ có khi `candidate_data_access=true`. |
 | GET | `/api/dashboard/admin/` | Dashboard cổng quản trị (`period` = 7, 30, 90; mặc định 30): hàng chờ kèm quá hạn/thời điểm cũ nhất, KPI so kỳ trước, chuỗi theo ngày, phễu ứng tuyển, tình trạng tin, an toàn, ngành nghề, AI. |
+| GET | `/api/dashboard/admin/queues/` | Chỉ phần hàng chờ của dashboard quản trị (đếm, quá hạn, thời điểm cũ nhất, hạn xử lý) cho badge sidebar và chuông header; cổng quản trị gọi lại mỗi 30 giây. |
 | GET | `/api/employer/notifications/?page=` | Danh sách thông báo website của employer hiện tại, mới nhất trước; có `is_read`, internal `action_path` và metadata đã redact. |
 | GET | `/api/employer/notifications/unread-count/` | Số thông báo chưa đọc của employer hiện tại. |
 | GET/PATCH | `/api/employer/notification-preferences/` | Email quyết định xác thực quan trọng luôn bật; employer cấu hình `intermediate_verification_email` và `new_application_email` (PATCH từng phần). Hồ sơ mới luôn tạo thông báo `application_received` trên chuông; email gửi tới địa chỉ nhận hồ sơ của tin, không chứa tên ứng viên. |

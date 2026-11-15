@@ -5,7 +5,8 @@ import {
   RightOutlined,
 } from '@ant-design/icons'
 import { Link } from 'react-router'
-import { formatAge, formatNumber } from '../model/dashboard-model'
+import { formatAge } from '@/entities/admin-dashboard'
+import { formatNumber } from '../model/dashboard-model'
 
 function QueueRow({ item, now }) {
   const meter = Math.min(item.slaUsed, 1) * 100

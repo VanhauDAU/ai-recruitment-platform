@@ -84,6 +84,14 @@ test('admin dashboard: urgent queues first, period filter and no horizontal over
   await page.route(API_ROUTE, async (route) => {
     const url = new URL(route.request().url())
     const path = url.pathname
+    if (path === '/api/dashboard/admin/queues/') {
+      const { generated_at: generatedAt, queues } = dashboard(30)
+      await route.fulfill({
+        contentType: 'application/json',
+        body: JSON.stringify({ generated_at: generatedAt, queues, knowledge_review_overdue: 3 }),
+      })
+      return
+    }
     if (path === '/api/dashboard/admin/') {
       const period = Number(url.searchParams.get('period'))
       requestedPeriods.push(period)
@@ -114,6 +122,21 @@ test('admin dashboard: urgent queues first, period filter and no horizontal over
   await expect(queue).toContainText('Đã xử lý hết: Xác minh tên miền thủ công, Báo cáo công ty, Bài viết chờ duyệt')
 
   await expect(page.getByText('Mới trong kỳ, 30 ngày trước chưa có')).toBeVisible()
+
+  const bell = page.getByRole('button', { name: '11 mục cần xử lý, 1 quá hạn' })
+  await bell.click()
+  await expect(page.locator('.admin-bell').getByRole('link', { name: /Báo cáo tin tuyển dụng/ }))
+    .toHaveAttribute('href', '/admin/app/job-moderation?tab=reports')
+  await page.keyboard.press('Escape')
+
+  if (page.viewportSize().width < 1024) {
+    await page.getByRole('button', { name: 'Mở điều hướng' }).click()
+    await expect(page.getByRole('dialog').getByRole('button', { name: 'Đăng xuất' })).toBeVisible()
+    await page.getByRole('button', { name: 'Đóng điều hướng' }).click()
+  } else {
+    await expect(page.locator('.admin-sider').getByRole('button', { name: 'Đăng xuất' })).toBeVisible()
+    await expect(page.getByLabel('Tìm chức năng quản trị')).toHaveCount(0)
+  }
   await expect(page.getByText('Phễu ứng tuyển')).toBeVisible()
   expect(requestedPeriods).toContain(30)
 

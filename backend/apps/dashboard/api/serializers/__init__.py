@@ -1,3 +1,7 @@
-from .dashboard import AdminDashboardSerializer, EmployerDashboardSerializer
+from .dashboard import (
+    AdminDashboardSerializer,
+    AdminQueueSummarySerializer,
+    EmployerDashboardSerializer,
+)
 
-__all__ = ['AdminDashboardSerializer', 'EmployerDashboardSerializer']
+__all__ = ['AdminDashboardSerializer', 'AdminQueueSummarySerializer', 'EmployerDashboardSerializer']

@@ -6,9 +6,8 @@ import AdminDashboardOverview from './AdminDashboardOverview'
 
 const { getAdminDashboard } = vi.hoisted(() => ({ getAdminDashboard: vi.fn() }))
 
-vi.mock('@/entities/admin-dashboard', () => ({
-  ADMIN_DASHBOARD_PERIODS: [7, 30, 90],
-  adminDashboardKeys: { detail: (period) => ['admin-dashboard', period] },
+vi.mock('@/entities/admin-dashboard', async (importOriginal) => ({
+  ...await importOriginal(),
   getAdminDashboard,
 }))
 vi.mock('recharts', async (importOriginal) => ({
