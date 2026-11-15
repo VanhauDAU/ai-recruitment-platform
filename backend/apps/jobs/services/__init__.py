@@ -22,6 +22,7 @@ from .alerts import (
     reset_candidate_job_delivery_cursors,
     update_job_alert,
 )
+from .bulk_import import import_job_postings
 from .content_snapshot import (
     build_job_content_snapshot,
     job_published_content_changes,
@@ -100,6 +101,7 @@ __all__ = [
     'lifecycle_local_date',
     'visibility_days_error',
     'job_deadline_policy',
+    'import_job_postings',
     'fail_job_ai_generation',
     'publish_job',
     'pending_candidate_job_digest_ids',

@@ -19,6 +19,11 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
   sơ đã chuẩn hóa, vector 768 chiều và kết quả phân tích. Chưa có API.
 - Thư mục `ml/`: môi trường huấn luyện trên host (Apple MPS) và script kiểm tra
   `ml/scripts/smoke_mps.py`.
+- Nhập hàng loạt tin tuyển dụng thật cho bản demo và tập đánh giá: điền
+  `ml/data/jd_input.xlsx`, chạy `ml/.venv/bin/python ml/scripts/import_jd.py`
+  (mặc định chỉ chạy thử, `--apply --create-skills` để ghi). Phía backend là
+  lệnh `import_job_postings`; tin đi qua cùng bước kiểm tra điều kiện đăng với
+  tin thường, bỏ qua quota và xác thực nhà tuyển dụng vì do người vận hành nhập.
 
 #### Added — Báo NTD khi có hồ sơ mới; làm gọn workspace CV ứng tuyển
 

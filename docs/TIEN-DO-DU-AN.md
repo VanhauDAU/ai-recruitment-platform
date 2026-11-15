@@ -45,6 +45,12 @@ ngoài. Lộ trình 8 tuần (16/11/2026 → 10/01/2027), mỗi giai đoạn m�
   `pgdata` tạo trên Debian trixie (glibc 2.41), còn `pg16` là bookworm (glibc
   2.36) nên sẽ lệch phiên bản collation. Bản sao lưu trước khi đổi:
   `backups/pre-pgvector-20261115.dump`.
+- Ngày 15/11 đã xóa toàn bộ 53 tin mẫu cùng hồ sơ ứng tuyển thử trong DB dev
+  (sao lưu `backups/pre-job-cleanup-20261115.dump`). Tin thật được điền vào
+  `ml/data/jd_input.xlsx` (không commit) rồi nhập bằng
+  `ml/scripts/import_jd.py` (chạy thử trước, `--apply --create-skills` để ghi;
+  bảng đối chiếu mã tin lưu ở `ml/data/jd_import_map.json`); rubric gán nhãn bản
+  nháp ở `ml/labeling/rubric.md`.
 - `apps/matching` mới có ba bảng (`MatchDocument`, `MatchChunk`,
   `MatchAnalysis`) và test ràng buộc; chưa có service, API hay task.
 - Đo trên MacBook Pro M5, 16 GB (torch 2.15.0, sentence-transformers 6.3.0):
