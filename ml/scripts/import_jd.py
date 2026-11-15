@@ -44,7 +44,7 @@ TEXT_COLUMNS = {
     'Quyền lợi': 'benefits',
     'Ghi chú': 'note',
 }
-SOURCE_KEYS = ('source_url', 'source_site', 'collected_on', 'language', 'source_company')
+SOURCE_KEYS = ('source_url', 'source_site', 'collected_on', 'language', 'source_company', 'source_deadline')  # fmt: skip
 
 
 def cell_text(value):
@@ -77,6 +77,12 @@ def read_rows(path):
             continue
         row = {key: cell_text(cells.get(header)) for header, key in TEXT_COLUMNS.items()}
         row['collected_on'] = cell_text(cells.get('Ngày lấy'))
+        # Cột bổ sung, không bắt buộc có trong tệp. Hạn nộp gốc chỉ lưu để trích dẫn:
+        # hệ thống đặt hạn riêng để tin còn hiển thị suốt thời gian thực nghiệm.
+        row['source_deadline'] = cell_text(cells.get('Hạn nộp hồ sơ'))
+        row['address_detail'] = cell_text(cells.get('Địa chỉ làm việc'))
+        row['work_schedule_note'] = cell_text(cells.get('Thời gian làm việc'))
+        row['vacancies'] = cell_text(cells.get('Số lượng tuyển'))
         row['salary_min_million'] = cell_text(cells.get('Lương từ (triệu VND)'))
         row['salary_max_million'] = cell_text(cells.get('Lương đến (triệu VND)'))
         row['domains'] = [

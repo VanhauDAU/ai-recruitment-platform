@@ -51,6 +51,11 @@ ngoài. Lộ trình 8 tuần (16/11/2026 → 10/01/2027), mỗi giai đoạn m�
   `ml/scripts/import_jd.py` (chạy thử trước, `--apply --create-skills` để ghi;
   bảng đối chiếu mã tin lưu ở `ml/data/jd_import_map.json`); rubric gán nhãn bản
   nháp ở `ml/labeling/rubric.md`.
+- Ngày 15/11 đã nhập 100 tin thật (90 TopCV, 10 ITviec; 78 tin tiếng Việt, 22
+  tin tiếng Anh; đủ 8 nhóm ngành) vào các công ty demo. Danh mục kỹ năng tăng
+  từ 42 lên 344; bảng gộp cách viết và hai nhóm "Kỹ năng mềm", "Phẩm chất cá
+  nhân" ở `ml/labeling/skill_merge.json`. Sao lưu trước khi nhập:
+  `backups/pre-jd-import-20261115.dump`.
 - `apps/matching` mới có ba bảng (`MatchDocument`, `MatchChunk`,
   `MatchAnalysis`) và test ràng buộc; chưa có service, API hay task.
 - Đo trên MacBook Pro M5, 16 GB (torch 2.15.0, sentence-transformers 6.3.0):

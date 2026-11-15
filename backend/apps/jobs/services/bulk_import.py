@@ -13,10 +13,12 @@ from decimal import Decimal, InvalidOperation
 from html import escape
 
 from django.db import transaction
+from django.utils.text import slugify
 from rest_framework.exceptions import ValidationError
 
 from apps.employers.models import RecruiterProfile
 from apps.locations.models import Location
+from apps.skills.models import Skill
 from apps.skills.selectors import normalize_skill_name, skills_by_names
 from apps.skills.services import create_skill
 from common.rich_text import sanitize_rich_text
@@ -46,6 +48,8 @@ FALLBACK_RECIPIENT_NAME = 'Phòng Tuyển dụng'
 FALLBACK_PHONE = '0000000000'
 BULLET_PREFIX = re.compile(r'^\s*(?:[-•*+–·▪●]|\d+[.)])\s+')
 MILLION = Decimal(1_000_000)
+MAX_SALARY_MILLION = 10_000
+MAX_ADDRESS_LENGTH = JobLocation._meta.get_field('address_detail').max_length
 
 
 class RowRejected(Exception):
@@ -121,6 +125,10 @@ class _Lookups:
             .select_related('user', 'company')
             .order_by('company__company_name', 'pk')
         )
+        # Công ty có nhiều recruiter thì tin vào tài khoản chủ công ty trước.
+        self.publishers.sort(
+            key=lambda recruiter: recruiter.company_role != RecruiterProfile.CompanyRole.OWNER
+        )
         self.publishers_by_company = {}
         for recruiter in self.publishers:
             self.publishers_by_company.setdefault(_fold(recruiter.company.company_name), recruiter)
@@ -160,6 +168,9 @@ def _amount(raw, label, errors):
     if amount <= 0:
         errors.append(f'"{label}" phải lớn hơn 0.')
         return None
+    if amount > MAX_SALARY_MILLION:
+        errors.append(f'"{label}" tính bằng triệu đồng, giá trị {raw} quá lớn.')
+        return None
     return amount * MILLION
 
 
@@ -175,6 +186,26 @@ def _salary(row, errors):
     if maximum is not None:
         return Job.SalaryType.UP_TO, None, maximum
     return Job.SalaryType.NEGOTIABLE, None, None
+
+
+def _vacancies(row, errors):
+    """Số lượng tuyển: nhận "3" hoặc "3 người"; để trống thì là 1."""
+    raw = _text(row, 'vacancies')
+    if not raw:
+        return 1
+    digits = re.match(r'\d+', raw)
+    if digits is None or int(digits.group()) < 1:
+        errors.append(f'"Số lượng tuyển" không hợp lệ: {raw}.')
+        return 1
+    return int(digits.group())
+
+
+def _address_detail(row, warnings):
+    address = ' '.join(_text(row, 'address_detail').split())
+    if len(address) > MAX_ADDRESS_LENGTH:
+        warnings.append(f'Địa chỉ làm việc dài quá {MAX_ADDRESS_LENGTH} ký tự nên đã bị cắt.')
+        address = address[: MAX_ADDRESS_LENGTH - 1].rstrip() + '…'
+    return address
 
 
 def _language_requirements(row, lookups, errors):
@@ -283,12 +314,26 @@ def _resolve(row, lookups):
         'required_skills': _names(row, 'required_skills'),
         'preferred_skills': _names(row, 'preferred_skills'),
         'languages': _language_requirements(row, lookups, errors),
+        'vacancies': _vacancies(row, errors),
+        'address_detail': _address_detail(row, warnings),
+        'work_schedule_note': _text(row, 'work_schedule_note'),
     }
     if not resolved['required_skills']:
         errors.append('Thiếu "Kỹ năng cần có".')
     if errors:
         raise RowRejected(errors)
     return resolved, warnings
+
+
+def _create_or_reuse_skill(name):
+    """Tạo kỹ năng mới; cách viết khác của kỹ năng đã có (trùng slug) thì dùng lại mục cũ."""
+    try:
+        skill, _created = create_skill(name)
+    except Skill.DoesNotExist:
+        skill = Skill.objects.filter(slug=slugify(name)).first()
+        if skill is None:
+            raise RowRejected([f'Không tạo được kỹ năng: {name}.']) from None
+    return skill
 
 
 def _job_skills(resolved, *, create_missing_skills):
@@ -309,7 +354,7 @@ def _job_skills(resolved, *, create_missing_skills):
     for name, importance in ordered:
         skill = matched.get(normalize_skill_name(name))
         if skill is None:
-            skill, _created = create_skill(name)
+            skill = _create_or_reuse_skill(name)
             matched[normalize_skill_name(name)] = skill
         selected.setdefault(skill.pk, (skill, importance))
     return list(selected.values())
@@ -334,7 +379,8 @@ def _create_job(resolved, *, create_missing_skills):
         salary_type=resolved['salary_type'],
         salary_min=resolved['salary_min'],
         salary_max=resolved['salary_max'],
-        number_of_vacancies=1,
+        number_of_vacancies=resolved['vacancies'],
+        work_schedule_note=resolved['work_schedule_note'],
         deadline=lifecycle_local_date()
         + timedelta(days=job_deadline_policy()['max_deadline_days']),
         requested_visibility_days=job_lifecycle_policy()['max_visibility_days'],
@@ -354,7 +400,9 @@ def _create_job(resolved, *, create_missing_skills):
         )
         for index, domain in enumerate(resolved['domains'])
     )
-    JobLocation.objects.create(job=job, location=resolved['province'])
+    JobLocation.objects.create(
+        job=job, location=resolved['province'], address_detail=resolved['address_detail']
+    )
     JobSkill.objects.bulk_create(
         JobSkill(job=job, skill=skill, importance=importance)
         for skill, importance in _job_skills(resolved, create_missing_skills=create_missing_skills)

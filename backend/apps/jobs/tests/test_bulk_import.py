@@ -215,6 +215,61 @@ class JobBulkImportTests(TestCase):
         self.assertEqual(ok['rows'][0]['company'], 'Import Co')
         self.assertIn('Công ty lạ', missing['rows'][0]['errors'][0])
 
+    def test_variant_spelling_with_the_same_slug_reuses_the_existing_skill(self):
+        report = import_job_postings(
+            [self.row(required_skills=['Python!'])], apply=True, create_missing_skills=True
+        )
+
+        job = Job.objects.get(public_id=report['rows'][0]['job_public_id'])
+        self.assertEqual(job.job_skills.get().skill, self.python)
+        self.assertEqual(Skill.objects.count(), 1)
+
+    def test_optional_workplace_fields_are_stored(self):
+        report = import_job_postings(
+            [
+                self.row(
+                    vacancies='3 người',
+                    address_detail='Tầng 5,  18 Thái Hà\nĐống Đa',
+                    work_schedule_note='Thứ 2 - Thứ 6 (từ 08:00 đến 17:00)',
+                ),
+                self.row(code='JD-002', title='Địa chỉ dài', address_detail='a' * 600),
+                self.row(code='JD-003', title='Sai số lượng', vacancies='nhiều'),
+            ],
+            apply=True,
+        )
+
+        job = Job.objects.get(public_id=report['rows'][0]['job_public_id'])
+        self.assertEqual(job.number_of_vacancies, 3)
+        self.assertEqual(job.work_schedule_note, 'Thứ 2 - Thứ 6 (từ 08:00 đến 17:00)')
+        self.assertEqual(job.job_locations.get().address_detail, 'Tầng 5, 18 Thái Hà Đống Đa')
+        long_address = Job.objects.get(public_id=report['rows'][1]['job_public_id'])
+        self.assertEqual(len(long_address.job_locations.get().address_detail), 500)
+        self.assertEqual(len(report['rows'][1]['warnings']), 1)
+        self.assertIn('Số lượng tuyển', report['rows'][2]['errors'][0])
+
+    def test_salary_entered_in_dong_is_a_row_error(self):
+        report = import_job_postings([self.row(salary_min_million='15000000')], apply=True)
+
+        self.assertIn('triệu đồng', report['rows'][0]['errors'][0])
+        self.assertFalse(Job.objects.exists())
+
+    def test_company_owner_publishes_before_other_members(self):
+        users = get_user_model().objects
+        owner = users.create_user(
+            email='import-owner@example.com', password='password', role='employer'
+        )
+        member = users.create_user(
+            email='import-member@example.com', password='password', role='employer'
+        )
+        company = Company.objects.create(company_name='Second Co', created_by=owner)
+        make_employer_ready(member, company=company)
+        make_employer_ready(owner, company=company)
+
+        report = import_job_postings([self.row(company='Second Co')], apply=True)
+
+        job = Job.objects.get(public_id=report['rows'][0]['job_public_id'])
+        self.assertEqual(job.posted_by, owner)
+
     def test_rich_text_keeps_bullets_and_escapes_markup(self):
         html = rich_text_from_lines('Giới thiệu <script>x</script>\n\n1. Một\n• Hai & ba\nKết')
 
