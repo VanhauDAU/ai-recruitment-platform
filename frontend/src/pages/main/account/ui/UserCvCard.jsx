@@ -122,7 +122,7 @@ export default function UserCvCard({ cv, onRefresh }) {
           setIsMenuOpen(false)
         }}
         onClick={handleCardClick}
-        className="group relative aspect-[3/4] w-full overflow-hidden flex justify-center cursor-pointer"
+        className={`group relative w-full overflow-hidden flex justify-center cursor-pointer ${isUploaded ? 'aspect-[4/3]' : 'aspect-[3/4]'}`}
       >
         {/* Ngôi sao CV chính ở góc trên bên phải - Ẩn mặc định, hiện khi hover hoặc khi là CV chính */}
         <button
@@ -168,7 +168,7 @@ export default function UserCvCard({ cv, onRefresh }) {
           <div
             onClick={handleCardClick}
             className={[
-              'absolute inset-0 bg-gradient-to-t from-black/45 via-black/15 to-transparent flex items-end justify-center pb-5 transition-opacity duration-200',
+              'absolute inset-0 bg-gradient-to-t from-black/45 via-black/15 to-transparent flex items-end justify-center pb-3 transition-opacity duration-200',
               (hovered || isMenuOpen) ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none',
             ].join(' ')}
           >
@@ -179,18 +179,18 @@ export default function UserCvCard({ cv, onRefresh }) {
                   e.stopPropagation()
                   handleDownload()
                 }}
-                className="flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[11px] font-bold text-black hover:text-[#00b14f] transition shadow-sm cursor-pointer border border-slate-100 hover:scale-105"
+                className="flex items-center gap-1 rounded-full px-2.5 py-1.5 text-[11px] font-bold text-black hover:text-[#00b14f] transition shadow-sm cursor-pointer border border-slate-100 hover:scale-105"
                 style={{ backgroundColor: '#ffffff' }}
               >
-                <DownloadOutlined /> {isUploaded ? 'Xem CV' : 'Xem / xuất PDF'}
+                <DownloadOutlined /> Xem
               </button>
               {!isUploaded && <Link
                 to={`/cvs/${cv.public_id}/edit`}
                 onClick={(e) => e.stopPropagation()}
-                className="flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[11px] font-bold text-black hover:text-[#00b14f] transition shadow-sm cursor-pointer border border-slate-100 hover:scale-105"
+                className="flex items-center gap-1 rounded-full px-2.5 py-1.5 text-[11px] font-bold text-black hover:text-[#00b14f] transition shadow-sm cursor-pointer border border-slate-100 hover:scale-105"
                 style={{ backgroundColor: '#ffffff' }}
               >
-                <EditOutlined /> Chỉnh sửa
+                <EditOutlined /> Sửa
               </Link>}
               <Dropdown
                 menu={{ items: dropdownMenuItems }}

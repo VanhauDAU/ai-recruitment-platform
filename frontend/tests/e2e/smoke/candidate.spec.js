@@ -714,7 +714,7 @@ test('candidate smoke: uploaded CVs show the original file, a recruiter-search s
   await expect(page.getByRole('heading', { name: 'CV tải lên', exact: true })).toBeVisible()
   await expect(page.getByRole('img', { name: 'Tệp CV PDF' })).toBeVisible()
   await expect(page.getByRole('switch', { name: 'Cho phép NTD tìm kiếm CV này' })).toBeVisible()
-  await expect(page.getByRole('link', { name: 'Chỉnh sửa' })).toHaveCount(0)
+  await expect(page.getByRole('link', { name: 'Sửa', exact: true })).toHaveCount(0)
   await expect(page.getByRole('heading', { name: 'Bật tìm việc cho CV' })).toBeVisible()
   const enableRequest = page.waitForRequest((request) => request.url().endsWith('/api/v2/cvs/cv_up/') && request.method() === 'PATCH')
   await page.getByRole('button', { name: 'Bật tìm việc ngay' }).click()
