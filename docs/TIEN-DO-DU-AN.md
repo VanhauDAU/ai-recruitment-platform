@@ -7,7 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
-| [Thống nhất luồng đăng tin, hiển thị, ứng tuyển, công ty](#thống-nhất-luồng-đăng-tin-hiển-thị-ứng-tuyển-công-ty-2026-11-15) | 🟨 GĐ6 gộp vào `dev` (#208); GĐ1 xong trên nhánh `fix/job-effective-state`; làm hết trước khi tiếp tục AI |
+| [Thống nhất luồng đăng tin, hiển thị, ứng tuyển, công ty](#thống-nhất-luồng-đăng-tin-hiển-thị-ứng-tuyển-công-ty-2026-11-15) | 🟨 GĐ6 (#208), GĐ1 (#209) đã gộp; GĐ2 xong trên nhánh `fix/job-posting-rules`; làm hết trước khi tiếp tục AI |
 | [Đối sánh ngữ nghĩa CV–JD chạy local](#đối-sánh-ngữ-nghĩa-cvjd-chạy-local-2026-11-15) | 🟨 Nền tảng (tuần 1) xong trên nhánh `feat/ai-matching-foundation`, chưa mở PR |
 | [CV tải lên: tệp gốc, tiêu chuẩn upload, giới hạn CV, NTD tìm kiếm](#cv-tải-lên-tệp-gốc-tiêu-chuẩn-upload-giới-hạn-cv-ntd-tìm-kiếm-2026-11-15) | ✅ Gộp vào `dev` (#203) |
 | [Việc làm tốt nhất xếp theo chất lượng tin](#việc-làm-tốt-nhất-xếp-theo-chất-lượng-tin-2026-11-15) | ✅ Gộp vào `dev` (#204) |
@@ -43,12 +43,28 @@ thật trong hạng mục AI.
 
 | GĐ | Hạng mục | Trạng thái |
 | --- | --- | --- |
-| 1 | Trạng thái hiệu lực của tin + lý do ẩn, giờ VN, bộ lọc công khai khớp quyền xem dữ liệu ứng viên | 🟨 Xong trên nhánh `fix/job-effective-state` |
-| 2 | Dùng chung điều kiện chặn đăng tin; mở lại tin áp luật gia hạn | ⬜ |
+| 1 | Trạng thái hiệu lực của tin + lý do ẩn, giờ VN, bộ lọc công khai khớp quyền xem dữ liệu ứng viên | ✅ Gộp vào `dev` (#209) |
+| 2 | Dùng chung điều kiện chặn đăng tin; mở lại tin áp luật gia hạn | 🟨 Xong trên nhánh `fix/job-posting-rules` |
 | 3 | Một hồ sơ hiệu lực trên một tin, rút hồ sơ, tự động từ chối và thống kê chỉ tính hồ sơ hiệu lực | ⬜ |
 | 4 | Vòng yêu cầu sửa tin → NTD sửa → gửi duyệt lại | ⬜ |
 | 5 | Chặn ứng viên theo công ty, owner duyệt yêu cầu tham gia, logic công ty vào service | ⬜ |
 | 6 | Tắt đồng ý tìm hồ sơ thì gỡ mọi CV khỏi tìm kiếm; sửa câu chữ hứa tính năng chưa có | ✅ Gộp vào `dev` (#208) |
+
+<details><summary>Ghi chú GĐ2</summary>
+
+- `employer_job_posting_context` tính `job_postable` bằng đúng các điều kiện
+  `publish_job` chặn (xác thực đã duyệt, DPA hiện hành, không compliance hold)
+  và trả `publish_blockers`; banner hạn mức ở đầu form liệt kê từng điều kiện
+  kèm liên kết khắc phục, câu chữ quota lấy số lượt Cấp 3 từ site settings
+  (`verified_publish_limit`).
+- `_ensure_public_lifetime` dùng chung cho gia hạn và mở lại: trần 90 ngày tính
+  từ lần duyệt đầu, hạn nộp không vượt thời gian hiển thị, không quá ngày kết
+  thúc chiến dịch. Mở lại vẫn không tính lượt; hết vòng đời thì phải nhân bản.
+- Gia hạn kiểm tra lại xác thực, DPA, compliance hold như khi đăng; sửa lỗi
+  crash khi tin không có hạn nộp.
+- Sửa e2e smoke danh sách tin đỏ sau GĐ1 (mock thiếu `effective_state`).
+
+</details>
 
 <details><summary>Ghi chú GĐ1</summary>
 
