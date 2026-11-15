@@ -24,6 +24,7 @@ from ..models import CvAsset, CvImportJob, UserCv
 from ..schemas import empty_layout, empty_style
 from ..services.upload_claims import CV_AVATAR_CLAIM_SCOPE, CV_SOURCE_CLAIM_SCOPE
 from ..tasks import purge_expired_cv_import_sources
+from .fixtures import pdf_bytes
 
 
 class CandidateCvUploadQuarantineTests(TemporaryUploadStorageMixin, APITestCase):
@@ -61,9 +62,7 @@ class CandidateCvUploadQuarantineTests(TemporaryUploadStorageMixin, APITestCase)
         return session
 
     def test_import_claims_clean_source_before_creating_owner_cv(self):
-        upload = SimpleUploadedFile(
-            'candidate.pdf', b'%PDF-1.7\ncandidate', content_type='application/pdf'
-        )
+        upload = SimpleUploadedFile('candidate.pdf', pdf_bytes(), content_type='application/pdf')
         session = self.create_clean_session(upload)
 
         response = self.client.post(
@@ -220,9 +219,7 @@ class CandidateCvUploadQuarantineTests(TemporaryUploadStorageMixin, APITestCase)
 
     def test_hard_delete_releases_claim_without_deleting_retained_evidence(self):
         session = self.create_clean_session(
-            SimpleUploadedFile(
-                'retained.pdf', b'%PDF-1.7\nretained', content_type='application/pdf'
-            )
+            SimpleUploadedFile('retained.pdf', pdf_bytes(), content_type='application/pdf')
         )
         imported = self.client.post(
             reverse('cv-v2-import'),
@@ -244,9 +241,7 @@ class CandidateCvUploadQuarantineTests(TemporaryUploadStorageMixin, APITestCase)
 
     def test_import_source_expiry_releases_clean_asset_instead_of_deleting_it(self):
         session = self.create_clean_session(
-            SimpleUploadedFile(
-                'expiring.pdf', b'%PDF-1.7\nexpiring', content_type='application/pdf'
-            )
+            SimpleUploadedFile('expiring.pdf', pdf_bytes(), content_type='application/pdf')
         )
         imported = self.client.post(
             reverse('cv-v2-import'),

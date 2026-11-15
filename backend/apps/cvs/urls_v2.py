@@ -21,6 +21,8 @@ from .api.views.v2 import (
     CvV2SharedLinkListCreateView,
     CvV2SharedLinkPublicView,
     CvV2SharedLinkRevokeView,
+    CvV2SharedSourceFileView,
+    CvV2SourceFileView,
     CvV2TemplatePreviewView,
     CvV2TemplateSwitchView,
     CvV2ThumbnailView,
@@ -39,6 +41,11 @@ urlpatterns = [
     path(
         'shares/<str:token>/', CvV2SharedLinkPublicView.as_view(), name='cv-v2-shared-link-public'
     ),
+    path(
+        'shares/<str:token>/source/',
+        CvV2SharedSourceFileView.as_view(),
+        name='cv-v2-shared-source-file',
+    ),
     path('imports/', CvV2ImportView.as_view(), name='cv-v2-import'),
     path('', CvV2ListCreateView.as_view(), name='cv-v2-list-create'),
     path('<str:public_id>/', CvV2DetailView.as_view(), name='cv-v2-detail'),
@@ -47,6 +54,7 @@ urlpatterns = [
         '<str:public_id>/imports/retry/', CvV2ImportRetryView.as_view(), name='cv-v2-import-retry'
     ),
     path('<str:public_id>/view/', CvV2OwnerVersionView.as_view(), name='cv-v2-owner-view'),
+    path('<str:public_id>/source/', CvV2SourceFileView.as_view(), name='cv-v2-source-file'),
     path('<str:public_id>/thumbnail/', CvV2ThumbnailView.as_view(), name='cv-v2-thumbnail'),
     path(
         '<str:public_id>/shared-links/',

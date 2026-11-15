@@ -8,11 +8,13 @@ from .assets import (
 )
 from .audit import record_application_snapshot_access
 from .completeness import application_readiness_issues
+from .cv_document import CvDocumentRejected, read_cv_document
 from .cvs import (
     UnsupportedCvUpload,
     duplicate_cv,
     import_v2_cv,
     import_v2_cv_from_session,
+    open_uploaded_cv_pdf,
     permanently_delete_cv,
     update_cv_metadata,
     upload_cv,
@@ -71,6 +73,8 @@ __all__ = [
     'UnsupportedCvUpload',
     'CvCreateInProgress',
     'CvLifecyclePolicyError',
+    'CvDocumentRejected',
+    'read_cv_document',
     'CvSharePermissionError',
     'CvShareUnavailableError',
     'CvExportPermissionError',
@@ -84,6 +88,7 @@ __all__ = [
     'duplicate_cv',
     'import_v2_cv',
     'import_v2_cv_from_session',
+    'open_uploaded_cv_pdf',
     'permanently_delete_cv',
     'InvalidCvImport',
     'queue_cv_import',

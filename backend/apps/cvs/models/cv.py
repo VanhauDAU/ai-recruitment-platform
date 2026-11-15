@@ -95,6 +95,9 @@ class UserCv(models.Model):
         choices=Visibility.choices,
         default=Visibility.PRIVATE,
     )
+    # Ứng viên chọn CV nào cho NTD tìm thấy. Chỉ bật được khi hồ sơ đã đồng ý
+    # RECRUITER_VISIBILITY; tìm kiếm phía NTD phải kiểm tra cả hai điều kiện.
+    recruiter_searchable = models.BooleanField(default=False)
     current_template_version = models.ForeignKey(
         'cv_templates.CvTemplateVersion',
         on_delete=models.SET_NULL,

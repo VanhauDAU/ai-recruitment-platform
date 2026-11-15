@@ -1,4 +1,6 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { renderHook, waitFor } from '@testing-library/react'
+import { createElement } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { useMyCvsData } from './use-my-cvs-data'
 
@@ -12,6 +14,13 @@ vi.mock('@/entities/cv', () => ({
 
 const builderCv = { public_id: 'cv_1', cv_type: 'builder', title: 'CV builder' }
 const uploadedCv = { public_id: 'cv_2', cv_type: 'uploaded', title: 'CV uploaded' }
+
+function renderMyCvs() {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  const wrapper = ({ children }) => createElement(QueryClientProvider, { client }, children)
+  return { client, ...renderHook(() => useMyCvsData(), { wrapper }) }
+}
+
 describe('useMyCvsData', () => {
   beforeEach(() => {
     mocks.getMyCvs.mockReset()
@@ -20,7 +29,7 @@ describe('useMyCvsData', () => {
   it('tải và tách CV theo cv_type', async () => {
     mocks.getMyCvs.mockResolvedValue([builderCv, uploadedCv])
 
-    const { result } = renderHook(() => useMyCvsData())
+    const { result } = renderMyCvs()
     expect(result.current.loading).toBe(true)
 
     await waitFor(() => expect(result.current.loading).toBe(false))
@@ -28,41 +37,29 @@ describe('useMyCvsData', () => {
     expect(result.current.uploadedCvs).toEqual([uploadedCv])
   })
 
-  it('lỗi tải trả về danh sách rỗng thay vì giữ dữ liệu cũ', async () => {
+  it('lỗi tải trả về danh sách rỗng', async () => {
     mocks.getMyCvs.mockRejectedValue(new Error('network'))
 
-    const { result } = renderHook(() => useMyCvsData())
+    const { result } = renderMyCvs()
     await waitFor(() => expect(result.current.loading).toBe(false))
 
     expect(result.current.builderCvs).toEqual([])
     expect(result.current.uploadedCvs).toEqual([])
   })
 
-  it('refresh gọi lại API và cập nhật danh sách', async () => {
+  it('refresh và việc làm mới key my-cvs đều tải lại danh sách', async () => {
     mocks.getMyCvs.mockResolvedValue([builderCv])
 
-    const { result } = renderHook(() => useMyCvsData())
-    await waitFor(() => expect(result.current.loading).toBe(false))
-    expect(result.current.builderCvs).toEqual([builderCv])
+    const { result, client } = renderMyCvs()
+    await waitFor(() => expect(result.current.builderCvs).toEqual([builderCv]))
 
     mocks.getMyCvs.mockResolvedValue([builderCv, uploadedCv])
     result.current.refresh()
-
     await waitFor(() => expect(result.current.uploadedCvs).toEqual([uploadedCv]))
-    expect(mocks.getMyCvs).toHaveBeenCalledTimes(2)
-  })
 
-  it('không set state cho request đã bị vượt bởi refresh mới hơn', async () => {
-    let resolveFirst
-    mocks.getMyCvs
-      .mockImplementationOnce(() => new Promise((resolve) => { resolveFirst = resolve }))
-      .mockResolvedValue([builderCv, uploadedCv])
-
-    const { result } = renderHook(() => useMyCvsData())
-    result.current.refresh()
-    await waitFor(() => expect(result.current.loading).toBe(false))
-
-    resolveFirst([{ public_id: 'stale', cv_type: 'builder' }])
-    await waitFor(() => expect(result.current.builderCvs).toEqual([builderCv]))
+    mocks.getMyCvs.mockResolvedValue([])
+    await client.invalidateQueries({ queryKey: ['my-cvs'] })
+    await waitFor(() => expect(result.current.builderCvs).toEqual([]))
+    expect(mocks.getMyCvs).toHaveBeenCalledTimes(3)
   })
 })

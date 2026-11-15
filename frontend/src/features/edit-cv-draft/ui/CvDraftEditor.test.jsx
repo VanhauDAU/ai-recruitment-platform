@@ -83,44 +83,28 @@ describe('CV draft editor', () => {
 
   afterEach(() => vi.unstubAllGlobals())
 
-  it('edits canonical form data, autosaves with the lock and only creates a version from the save button', async () => {
+  it('never autosaves; the save button persists the draft with the lock and then creates a version', async () => {
     renderLegacyEditor()
     const fullName = await screen.findByLabelText('Họ và tên')
     fireEvent.change(fullName, { target: { value: 'Nguyễn Bình' } })
     expect(screen.getByText('Chưa lưu')).toBeInTheDocument()
 
-    await waitFor(() => expect(mocks.updateCvDraft).toHaveBeenCalledWith('cv_1', expect.objectContaining({ content_json: expect.objectContaining({ personal_info: expect.objectContaining({ full_name: 'Nguyễn Bình' }) }) }), 0, expect.any(String)), { timeout: 1500 })
-    expect(mocks.saveCvVersion).not.toHaveBeenCalled()
+    await new Promise((resolve) => { setTimeout(resolve, 900) })
+    expect(mocks.updateCvDraft).not.toHaveBeenCalled()
 
     fireEvent.click(screen.getByRole('button', { name: 'Lưu phiên bản' }))
     await waitFor(() => expect(mocks.saveCvVersion).toHaveBeenCalledWith('cv_1', 1))
+    expect(mocks.updateCvDraft).toHaveBeenCalledWith('cv_1', expect.objectContaining({ content_json: expect.objectContaining({ personal_info: expect.objectContaining({ full_name: 'Nguyễn Bình' }) }) }), 0, expect.any(String))
     expect(screen.getByText('Đã tạo phiên bản 2')).toBeInTheDocument()
   })
 
-  it('queues the newest edit when a previous autosave is still in flight', async () => {
-    let resolveFirstSave
-    mocks.updateCvDraft.mockImplementationOnce(() => new Promise((resolve) => { resolveFirstSave = resolve })).mockResolvedValueOnce({ lock_version: 2 })
-    renderLegacyEditor()
-    const fullName = await screen.findByLabelText('Họ và tên')
-
-    fireEvent.change(fullName, { target: { value: 'Bản nháp đầu tiên' } })
-    await waitFor(() => expect(mocks.updateCvDraft).toHaveBeenCalledTimes(1), { timeout: 1500 })
-
-    fireEvent.change(fullName, { target: { value: 'Bản nháp mới nhất' } })
-    resolveFirstSave({ lock_version: 1 })
-
-    await waitFor(() => expect(mocks.updateCvDraft).toHaveBeenCalledTimes(2), { timeout: 1800 })
-    expect(mocks.updateCvDraft).toHaveBeenLastCalledWith('cv_1', expect.objectContaining({
-      content_json: expect.objectContaining({ personal_info: expect.objectContaining({ full_name: 'Bản nháp mới nhất' }) }),
-    }), 1, expect.any(String))
-  })
-
-  it('stops autosave and asks the user to reload on a 409 conflict', async () => {
+  it('stops saving and asks the user to reload on a 409 conflict', async () => {
     mocks.updateCvDraft.mockRejectedValue({ response: { status: 409, data: { current_lock_version: 4 } } })
     renderLegacyEditor()
     fireEvent.change(await screen.findByLabelText('Họ và tên'), { target: { value: 'Tab khác' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Lưu phiên bản' }))
 
-    await screen.findByText('Bản nháp vừa được sửa ở tab khác', {}, { timeout: 1500 })
+    await screen.findByText('Bản nháp vừa được sửa ở tab khác')
     expect(screen.getByRole('button', { name: 'Tải lại bản nháp' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Lưu phiên bản' })).toBeDisabled()
   })
@@ -133,16 +117,17 @@ describe('CV draft editor', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Thêm item experience_1' }))
     expect(screen.getByLabelText('Chức danh experience_item_2')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Di chuyển item experience_item_2 lên' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Lưu phiên bản' }))
 
     await waitFor(() => expect(mocks.updateCvDraft).toHaveBeenCalledWith('cv_1', expect.objectContaining({
       content_json: expect.objectContaining({ sections: expect.arrayContaining([
         expect.objectContaining({ instance_id: 'experience_1', title: 'Kinh nghiệm nổi bật', items: [expect.objectContaining({ item_id: 'experience_item_1' }), expect.objectContaining({ item_id: 'experience_item_2' })] }),
       ]) }),
       layout_json: expect.objectContaining({ item_orders: expect.objectContaining({ experience_1: ['experience_item_2', 'experience_item_1'] }) }),
-    }), 0, expect.any(String)), { timeout: 1500 })
+    }), 0, expect.any(String)))
   })
 
-  it('undoes and redoes edits locally without using autosave as a history command', async () => {
+  it('undoes and redoes edits locally without saving them as history commands', async () => {
     renderLegacyEditor()
     const fullName = await screen.findByLabelText('Họ và tên')
     fireEvent.change(fullName, { target: { value: 'Nguyễn Hoàn tác' } })
@@ -165,8 +150,9 @@ describe('CV draft editor', () => {
     expect(screen.getByText(/sidebar_right_v1/)).toBeInTheDocument()
   })
 
-  it('flushes before internal navigation, retries failed autosave, and can restore the server draft', async () => {
+  it('asks before leaving with unsaved edits, retries a failed save, and can restore the server draft', async () => {
     mocks.updateCvDraft.mockRejectedValueOnce({ response: { data: { detail: 'Mất kết nối' } } }).mockResolvedValue({ lock_version: 1 })
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValueOnce(false).mockReturnValueOnce(true)
     renderLegacyEditor()
     fireEvent.change(await screen.findByLabelText('Họ và tên'), { target: { value: 'Chưa lưu' } })
 
@@ -177,21 +163,29 @@ describe('CV draft editor', () => {
     const destination = document.createElement('a')
     destination.href = '/viec-lam'
     document.body.append(destination)
-    const navigation = new MouseEvent('click', { bubbles: true, cancelable: true })
-    destination.dispatchEvent(navigation)
-    expect(navigation.defaultPrevented).toBe(true)
-    await waitFor(() => expect(mocks.updateCvDraft).toHaveBeenCalledTimes(1))
+    const stay = new MouseEvent('click', { bubbles: true, cancelable: true })
+    destination.dispatchEvent(stay)
+    expect(stay.defaultPrevented).toBe(true)
+    const leave = new MouseEvent('click', { bubbles: true, cancelable: true })
+    leave.preventDefault = vi.fn()
+    destination.dispatchEvent(leave)
+    expect(leave.preventDefault).not.toHaveBeenCalled()
+    expect(confirm).toHaveBeenCalledTimes(2)
+    expect(mocks.updateCvDraft).not.toHaveBeenCalled()
     destination.remove()
 
-    await screen.findByText('Không thể autosave bản nháp', {}, { timeout: 1500 })
+    fireEvent.click(screen.getByRole('button', { name: 'Lưu phiên bản' }))
+    await screen.findByText('Không thể lưu bản nháp')
     fireEvent.click(screen.getByRole('button', { name: 'Thử lưu lại' }))
     await waitFor(() => expect(mocks.updateCvDraft).toHaveBeenCalledTimes(2))
 
     mocks.updateCvDraft.mockRejectedValueOnce({ response: { data: { detail: 'Mất kết nối lần nữa' } } })
     fireEvent.change(screen.getByLabelText('Họ và tên'), { target: { value: 'Cần khôi phục' } })
-    await screen.findByText('Không thể autosave bản nháp', {}, { timeout: 1500 })
+    fireEvent.click(screen.getByRole('button', { name: 'Lưu phiên bản' }))
+    await screen.findByText('Không thể lưu bản nháp')
     fireEvent.click(screen.getByRole('button', { name: 'Khôi phục bản nháp đã lưu' }))
     await waitFor(() => expect(mocks.getCvDraft).toHaveBeenCalledTimes(2))
+    confirm.mockRestore()
   })
 
   it('returns to the saved draft state when retrying after version creation fails', async () => {
@@ -202,7 +196,7 @@ describe('CV draft editor', () => {
     await screen.findByLabelText('Họ và tên')
 
     fireEvent.click(screen.getByRole('button', { name: 'Lưu phiên bản' }))
-    await screen.findByText('Không thể autosave bản nháp')
+    await screen.findByText('Không thể lưu bản nháp')
     expect(mocks.updateCvDraft).not.toHaveBeenCalled()
 
     fireEvent.click(screen.getByRole('button', { name: 'Thử lưu lại' }))
@@ -312,9 +306,8 @@ describe('CV draft editor', () => {
     expect(screen.getByText('Work experience')).toBeInTheDocument()
     expect(screen.getByLabelText('role experience_item_1')).toHaveAttribute('aria-placeholder', 'Job title')
     expect(screen.getByLabelText('company experience_item_1')).toHaveAttribute('aria-placeholder', 'Company')
-    await waitFor(() => expect(mocks.updateCvDraft).toHaveBeenCalledWith('cv_1', expect.objectContaining({
-      content_json: expect.objectContaining({ locale: 'en-US', sections: expect.arrayContaining([expect.objectContaining({ section_key: 'summary', title: 'Career objective' })]) }),
-    }), 0, expect.any(String)), { timeout: 1500 })
+    // Thay đổi chỉ nằm ở bản nháp trên máy cho tới khi người dùng bấm lưu.
+    expect(mocks.updateCvDraft).not.toHaveBeenCalled()
   }, 10_000)
 
   it('applies the selected font stack directly to the A4 document surface', async () => {
@@ -328,9 +321,8 @@ describe('CV draft editor', () => {
     expect(screen.getByLabelText('Xem trước CV single_column_v1 trang 1')).toHaveStyle({ fontFamily: '"Lora", Georgia, serif' })
   })
 
-  // This mounts the complete sortable canvas and waits for the autosave cycle;
-  // keep its wider budget local to this integration test rather than slowing
-  // the unit-test suite globally.
+  // This mounts the complete sortable canvas; keep its wider budget local to
+  // this integration test rather than slowing the unit-test suite globally.
   it('sets a skill level from the canvas notches and clears it on a second click', async () => {
     renderWysiwygEditor()
     await screen.findByLabelText('CV A4 có thể chỉnh sửa')
@@ -338,9 +330,6 @@ describe('CV draft editor', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Mức độ 3 trên 5 skills_item_1' }))
     expect(screen.getByRole('button', { name: 'Mức độ 3 trên 5 skills_item_1' })).toHaveAttribute('aria-pressed', 'true')
     expect(screen.getByRole('button', { name: 'Mức độ 4 trên 5 skills_item_1' })).toHaveAttribute('aria-pressed', 'false')
-    await waitFor(() => expect(mocks.updateCvDraft).toHaveBeenCalledWith('cv_1', expect.objectContaining({
-      content_json: expect.objectContaining({ sections: expect.arrayContaining([expect.objectContaining({ section_key: 'skills', items: [expect.objectContaining({ level: 3 })] })]) }),
-    }), 0, expect.any(String)), { timeout: 1500 })
 
     fireEvent.click(screen.getByRole('button', { name: 'Mức độ 3 trên 5 skills_item_1' }))
     expect(screen.getByRole('button', { name: 'Mức độ 3 trên 5 skills_item_1' })).toHaveAttribute('aria-pressed', 'false')

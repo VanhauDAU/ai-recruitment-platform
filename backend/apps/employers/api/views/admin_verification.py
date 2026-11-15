@@ -24,6 +24,7 @@ from apps.accounts.services import (
     StaleImpactToken,
     record_admin_action,
 )
+from common.office_preview import render_office_document_preview
 from common.pagination import StandardPagination
 from common.r2_storage import private_media_storage
 
@@ -42,7 +43,6 @@ from ...services import (
     confirm_verification_lifecycle_action,
     refresh_company_update_tax_lookup,
     refresh_verification_tax_lookup,
-    render_office_document_preview,
     review_company_update_document,
     review_verification_document,
     start_company_update_review,

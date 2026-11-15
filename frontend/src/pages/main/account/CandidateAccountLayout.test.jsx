@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter, Navigate, Route, Routes } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
@@ -6,6 +7,9 @@ import CandidateAccountLayout from './CandidateAccountLayout'
 const { useSession } = vi.hoisted(() => ({ useSession: vi.fn() }))
 
 vi.mock('@/entities/session', () => ({ useSession }))
+vi.mock('@/entities/cv', () => ({
+  getMyCvs: vi.fn().mockResolvedValue([{ recruiter_searchable: true }, { recruiter_searchable: false }]),
+}))
 vi.mock('@/entities/site-settings', () => ({
   DEFAULT_SITE_SETTINGS: { site_name: 'ProCV' },
   settingText: (value, fallback) => value || fallback,
@@ -22,6 +26,7 @@ function renderAccount(path = '/tai-khoan/thong-tin-ca-nhan') {
   })
 
   return render(
+    <QueryClientProvider client={new QueryClient()}>
     <MemoryRouter initialEntries={[path]}>
       <Routes>
         <Route element={<CandidateAccountLayout />}>
@@ -29,7 +34,8 @@ function renderAccount(path = '/tai-khoan/thong-tin-ca-nhan') {
           <Route path="/tai-khoan/thong-tin-ca-nhan" element={<h1>Thông tin cá nhân</h1>} />
         </Route>
       </Routes>
-    </MemoryRouter>,
+    </MemoryRouter>
+    </QueryClientProvider>,
   )
 }
 
@@ -41,6 +47,12 @@ describe('CandidateAccountLayout', () => {
     expect(screen.getByRole('navigation', { name: 'Danh mục tài khoản' })).toBeInTheDocument()
     expect(screen.getByText('Chào bạn trở lại,')).toBeInTheDocument()
     expect(screen.getByText('Ứng viên thử nghiệm')).toBeInTheDocument()
+  })
+
+  it('counts the CVs opened to recruiter search', async () => {
+    renderAccount()
+
+    expect(await screen.findByText('1 CV')).toBeInTheDocument()
   })
 
   it('keeps the root account route redirect working', () => {
