@@ -1,71 +1,22 @@
 import { UploadOutlined } from '@ant-design/icons'
-import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { importCvFile } from '@/entities/cv'
 import { useSiteSettings } from '@/entities/site-settings'
-import { message } from '@/shared/lib/toast'
-import { getUploadStatePresentation } from '@/shared/api/upload-session'
+import { EnableCvSearchBanner } from '@/features/update-recruiter-visibility'
 import { useMyCvsData } from './model/use-my-cvs-data'
 import CvListSection from './ui/CvListSection'
-import MyCvsBanner from './ui/MyCvsBanner'
 
 export default function MyCvs() {
   const { siteName } = useSiteSettings()
   const navigate = useNavigate()
   const { builderCvs, uploadedCvs, loading, refresh } = useMyCvsData()
-  const fileInputRef = useRef(null)
-  const [uploading, setUploading] = useState(false)
-  const [uploadState, setUploadState] = useState(null)
-  const uploadStateMeta = getUploadStatePresentation(uploadState)
-
-  const handleUploadClick = () => {
-    if (uploading) return
-    fileInputRef.current?.click()
-  }
-
-  const handleFileChange = async (e) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setUploading(true)
-    setUploadState(null)
-    try {
-      await importCvFile(file, '', { onUploadStateChange: setUploadState })
-      message.success(`Đã tải lên tệp ${file.name} thành công.`)
-      refresh()
-      setUploadState(null)
-    } catch (error) {
-      message.error(
-        error?.response?.data?.message
-        || 'Không thể tải CV lên. Chỉ hỗ trợ tệp PDF hoặc DOCX.',
-      )
-    } finally {
-      setUploading(false)
-      e.target.value = ''
-    }
-  }
+  // CV mới nhất chưa bật tìm việc; ẩn khối khi mọi CV đã bật.
+  const cvToPromote = [...builderCvs, ...uploadedCvs]
+    .filter((cv) => !cv.recruiter_searchable)
+    .sort((a, b) => String(b.updated_at || '').localeCompare(String(a.updated_at || '')))[0]
 
   return (
     <div className="space-y-6">
-      {/* Hidden file input for upload */}
-      <input
-        type="file"
-        ref={fileInputRef}
-        onChange={handleFileChange}
-        accept=".pdf,.docx"
-        disabled={uploading}
-        className="hidden"
-      />
-
-      <MyCvsBanner
-        onCreateCv={() => navigate('/mau-cv')}
-        onUploadCv={handleUploadClick}
-        uploading={uploading}
-      />
-      {uploadStateMeta && (
-        <p role="status" className={`text-sm font-medium ${uploadStateMeta.tone}`}>
-          {uploadStateMeta.text}
-        </p>
-      )}
+      {cvToPromote && <EnableCvSearchBanner key={cvToPromote.public_id} cv={cvToPromote} />}
 
       <CvListSection
         title={`CV đã tạo trên ${siteName}`}
@@ -78,7 +29,7 @@ export default function MyCvs() {
 
       <CvListSection
         title={`CV đã tải lên ${siteName}`}
-        action={{ label: <><UploadOutlined /> Tải CV lên</>, onClick: handleUploadClick }}
+        action={{ label: <><UploadOutlined /> Tải CV lên</>, onClick: () => navigate('/tai-cv-len') }}
         emptyText="Chưa có CV nào được tải lên."
         cvs={uploadedCvs}
         loading={loading}

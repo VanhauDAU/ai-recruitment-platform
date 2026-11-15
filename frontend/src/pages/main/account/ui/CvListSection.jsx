@@ -26,7 +26,7 @@ export default function CvListSection({ title, action, emptyText, cvs, loading, 
         ) : cvs.length === 0 ? (
           <MascotEmpty className="py-8" scene="emptyStateCv" description={<p className="font-semibold text-slate-400">{emptyText}</p>} />
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
             {cvs.map((cv) => (
               <UserCvCard key={cv.public_id} cv={cv} onRefresh={onRefresh} />
             ))}

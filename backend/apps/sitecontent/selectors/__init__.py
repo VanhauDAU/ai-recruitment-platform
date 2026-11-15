@@ -14,7 +14,13 @@ from .announcements import (
     revision_targets_request,
 )
 from .links import resolve_link_group_items, resolved_link_groups
-from .settings import email_branding, get_bool_setting, get_settings_map, get_string_setting
+from .settings import (
+    email_branding,
+    get_bool_setting,
+    get_int_setting,
+    get_settings_map,
+    get_string_setting,
+)
 
 __all__ = [
     'PRIORITY_TIER_BY_KIND',
@@ -25,6 +31,7 @@ __all__ = [
     'admin_announcements_queryset',
     'email_branding',
     'get_bool_setting',
+    'get_int_setting',
     'get_settings_map',
     'get_string_setting',
     'normalize_request_path',

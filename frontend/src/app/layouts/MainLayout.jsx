@@ -14,6 +14,10 @@ import { PopularSearches } from '@/widgets/popular-searches'
 export default function MainLayout() {
   const { pathname } = useLocation()
   const isCvRoute = pathname.startsWith('/cvs/') || pathname.startsWith('/cv/')
+  // Trang xem CV (chủ sở hữu và link chia sẻ) tự có thanh thao tác toàn màn hình.
+  const isCvViewer = /^\/cvs\/[^/]+\/view\/?$/.test(pathname) || pathname.startsWith('/cv/share/')
+
+  if (isCvViewer) return <Outlet />
 
   if (isCvRoute) {
     return (

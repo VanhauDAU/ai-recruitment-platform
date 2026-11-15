@@ -29,6 +29,7 @@ from ...selectors import (
 )
 from ...services import (
     CvCreateInProgress,
+    CvDocumentRejected,
     CvExportPermissionError,
     CvExportStateError,
     CvExportUnavailableError,
@@ -47,6 +48,7 @@ from ...services import (
     export_download_ready,
     import_v2_cv,
     import_v2_cv_from_session,
+    open_uploaded_cv_pdf,
     owner_cv_export,
     owner_view_version,
     permanently_delete_cv,
@@ -66,7 +68,11 @@ from ...services import (
 )
 from ...services.assets import resolve_asset_token
 from ...services.composition import CvCompositionError, compose_cv_document
-from ..exceptions import CandidateUploadSessionRequiredResponse, CandidateUploadSessionResponse
+from ..exceptions import (
+    CandidateCvRejectedResponse,
+    CandidateUploadSessionRequiredResponse,
+    CandidateUploadSessionResponse,
+)
 from ..serializers.v2 import (
     CvApplySampleSerializer,
     CvAssetSerializer,
@@ -286,7 +292,9 @@ class CvV2ImportView(APIView):
                 )
         except UploadServiceError as error:
             raise CandidateUploadSessionResponse(error) from error
-        except UnsupportedCvUpload as error:
+        except CvDocumentRejected as error:
+            raise CandidateCvRejectedResponse(error) from error
+        except (UnsupportedCvUpload, InvalidCvImport) as error:
             field = 'upload_session' if upload_session_public_id else 'file'
             raise ValidationError({field: str(error)}) from error
         return Response(CvV2Serializer(cv).data, status=status.HTTP_201_CREATED)
@@ -322,6 +330,7 @@ def read_only_cv_payload(cv, version, request=None):
             'title': cv.title,
             'language': cv.language,
             'is_default': cv.is_default,
+            'cv_type': cv.cv_type,
         },
         'version': SharedCvVersionSerializer(version, context={'request': request}).data,
     }
@@ -345,6 +354,7 @@ class CvV2OwnerVersionView(CandidateV2CvMixin, APIView):
                             'title': serializers.CharField(),
                             'language': serializers.CharField(),
                             'is_default': serializers.BooleanField(),
+                            'cv_type': serializers.CharField(),
                         },
                     ),
                     'version': SharedCvVersionSerializer(),
@@ -448,6 +458,7 @@ class CvV2SharedLinkPublicView(APIView):
                             'title': serializers.CharField(),
                             'language': serializers.CharField(),
                             'is_default': serializers.BooleanField(),
+                            'cv_type': serializers.CharField(),
                         },
                     ),
                     'version': SharedCvVersionSerializer(),
@@ -579,6 +590,51 @@ class CvV2ExportDownloadView(CandidateV2CvMixin, APIView):
             filename=filename,
             content_type='application/pdf',
         )
+
+
+def uploaded_cv_pdf_response(cv):
+    stream = open_uploaded_cv_pdf(cv)
+    if stream is None:
+        raise Http404
+    response = FileResponse(
+        stream, content_type='application/pdf', filename=f'{cv.public_id}.pdf', as_attachment=False
+    )
+    response['Cache-Control'] = 'private, no-store'
+    return response
+
+
+class CvV2SourceFileView(CandidateV2CvMixin, APIView):
+    """Owner-only inline PDF of an uploaded CV's original file."""
+
+    model = UserCv
+
+    @extend_schema(
+        summary='Xem tệp gốc của CV tải lên (PDF)',
+        responses={(200, 'application/pdf'): OpenApiTypes.BINARY},
+        tags=['cvs-v2'],
+    )
+    def get(self, request, public_id):
+        return uploaded_cv_pdf_response(self.get_cv())
+
+
+class CvV2SharedSourceFileView(APIView):
+    """Original file of an uploaded CV behind a valid share link."""
+
+    permission_classes = [permissions.AllowAny]
+    authentication_classes = []
+
+    @extend_schema(
+        summary='Tệp gốc của CV tải lên qua link chia sẻ (PDF)',
+        responses={(200, 'application/pdf'): OpenApiTypes.BINARY},
+        tags=['cvs-v2'],
+    )
+    def get(self, request, token):
+        try:
+            # Lượt xem đã được ghi ở endpoint trang chia sẻ; tệp là một phần của lượt đó.
+            link, _version = resolve_shared_link(raw_token=token, request=request, audit=False)
+        except CvShareUnavailableError as error:
+            raise Http404 from error
+        return uploaded_cv_pdf_response(link.cv)
 
 
 class CvV2ThumbnailView(CandidateV2CvMixin, APIView):

@@ -18,6 +18,7 @@ from common.pdf_raster import first_pdf_page_image
 
 from .models import CvDraft, CvExport, CvImportJob, UserCv
 from .services.composition import compose_cv_document, overlay_actor_identity
+from .services.cv_document import CvDocumentRejected, read_cv_document
 from .services.pdf_renderer import render_cv_version_pdf
 from .services.thumbnails import thumbnail_key_for
 from .services.versions import create_version
@@ -179,39 +180,11 @@ class ImportProcessingError(ValueError):
 def _extract_import_text(cv):
     try:
         with default_storage.open(cv.file_url, 'rb') as source:
-            if cv.file_type == 'pdf':
-                from pypdf import PdfReader
-
-                reader = PdfReader(source)
-                if len(reader.pages) > 20:
-                    raise ImportProcessingError('too_many_pages')
-                text = '\n'.join(page.extract_text() or '' for page in reader.pages)
-            elif cv.file_type == 'docx':
-                from docx import Document
-
-                document = Document(source)
-                paragraphs = [paragraph.text for paragraph in document.paragraphs]
-                table_cells = [
-                    cell.text
-                    for table in document.tables
-                    for row in table.rows
-                    for cell in row.cells
-                ]
-                text = '\n'.join(paragraphs + table_cells)
-            else:
-                raise ImportProcessingError('unsupported_file_type')
-    except ImportProcessingError:
-        raise
-    except Exception as error:
+            return read_cv_document(source, cv.file_type)
+    except CvDocumentRejected as error:
+        raise ImportProcessingError(error.code) from error
+    except OSError as error:
         raise ImportProcessingError('text_extraction_failed') from error
-    text = text.strip()
-    if cv.file_type == 'pdf' and len(text) < 40:
-        raise ImportProcessingError('scanned_pdf_ocr_unavailable')
-    if len(text) < 10:
-        raise ImportProcessingError('insufficient_text')
-    if len(text) > 100_000:
-        raise ImportProcessingError('text_too_long')
-    return text
 
 
 def _fail_import(job_id, code):

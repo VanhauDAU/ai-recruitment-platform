@@ -37,6 +37,7 @@ import {
   CookiePolicyPage,
   CvEditorPage,
   CvSaveSuccessPage,
+  UploadCvPage,
   CvOwnerViewPage,
   CvSharedViewPage,
   OnboardUserPage,
@@ -126,6 +127,7 @@ export function mainRoutes() {
           <Route path="/viec-lam-da-luu" element={<SavedJobsPage />} />
           <Route path="/cvs/:publicId/edit" element={<CvEditorPage />} />
           <Route path="/save-cv-success/:publicId" element={<CvSaveSuccessPage />} />
+          <Route path="/tai-cv-len" element={<UploadCvPage />} />
           <Route path="/cvs/:publicId/view" element={<CvOwnerViewPage />} />
           <Route element={<CandidateAccountLayout />}>
             <Route path={ACCOUNT_ROOT} element={<Navigate to={ACCOUNT_DEFAULT_PATH} replace />} />

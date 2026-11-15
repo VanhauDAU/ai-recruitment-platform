@@ -25,7 +25,7 @@ class InvalidCvImport(ValueError):
 
 def validate_import_upload(upload):
     if upload.size > MAX_IMPORT_BYTES:
-        raise InvalidCvImport('File must not exceed 5 MB.')
+        raise InvalidCvImport('Tệp CV không được vượt quá 5 MB.')
     extension = upload.name.rsplit('.', 1)[-1].lower() if '.' in upload.name else ''
     upload.seek(0)
     signature = upload.read(1024)
