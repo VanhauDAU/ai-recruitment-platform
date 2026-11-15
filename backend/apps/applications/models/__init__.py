@@ -3,11 +3,13 @@
 from .application import Application
 from .block import CandidateBlock
 from .history import ApplicationStatusHistory
+from .reminder import ApplicationReminder
 from .review import ApplicationReview, ApplicationReviewLink
 from .talent_pool import TalentPoolEntry, TalentPoolInvitation
 
 __all__ = [
     'Application',
+    'ApplicationReminder',
     'ApplicationReview',
     'ApplicationReviewLink',
     'ApplicationStatusHistory',

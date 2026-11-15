@@ -5,6 +5,7 @@ from .applications import (
     candidate_applications_queryset,
     employer_application_queryset,
     employer_applications_queryset,
+    previous_submissions_queryset,
     recruiter_application_history_queryset,
     recruiter_application_snapshot_queryset,
     recruiter_candidate_blocks_queryset,
@@ -18,6 +19,7 @@ from .talent_pool import (
 )
 
 __all__ = [
+    'previous_submissions_queryset',
     'candidate_talent_pool_queryset',
     'recruiter_talent_pool_queryset',
     'talent_suggestions_for_job',

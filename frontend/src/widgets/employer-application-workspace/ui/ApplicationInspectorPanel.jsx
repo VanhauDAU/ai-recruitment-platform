@@ -19,6 +19,7 @@ import ApplicationAssessmentSection from './ApplicationAssessmentSection'
 import ApplicationHistoryTimeline from './ApplicationHistoryTimeline'
 import ApplicationReviewsSection from './ApplicationReviewsSection'
 import ApplicationStatusBadge from './ApplicationStatusBadge'
+import PreviousSubmissions from './PreviousSubmissions'
 
 const SOURCE_LABELS = {
   applied: 'Ứng viên chủ động ứng tuyển',
@@ -162,7 +163,13 @@ export default function ApplicationInspectorPanel({
             </InfoRow>
             <InfoRow icon={<CalendarOutlined aria-hidden />} label="Ngày ứng tuyển">
               {formatApplicationDate(selectedApplication.applied_at || snapshot?.submitted_at, true)}
+              {` · Lần ${selectedApplication.submission_number || 1}`}
             </InfoRow>
+            {selectedApplication.last_reminded_at && (
+              <InfoRow icon={<HistoryOutlined aria-hidden />} label="Đang chờ phản hồi">
+                ProCV đã nhắc bạn phản hồi hồ sơ này lúc {formatApplicationDate(selectedApplication.last_reminded_at, true)}
+              </InfoRow>
+            )}
             <InfoRow icon={<CheckCircleOutlined aria-hidden />} label="Nguồn hồ sơ">
               {SOURCE_LABELS[selectedApplication.source] || selectedApplication.source || 'Ứng tuyển trực tiếp'}
             </InfoRow>
@@ -172,6 +179,8 @@ export default function ApplicationInspectorPanel({
             {selectedApplication.cover_letter && <TextBlock label="Thư ứng tuyển">{selectedApplication.cover_letter}</TextBlock>}
             {selectedApplication.candidate_note && <TextBlock label="Ghi chú của ứng viên">{selectedApplication.candidate_note}</TextBlock>}
           </section>
+
+          <PreviousSubmissions application={selectedApplication} />
 
           <ApplicationReviewsSection publicId={selectedApplication.public_id} />
 

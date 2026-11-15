@@ -24,6 +24,8 @@ class ApplicationSerializer(serializers.ModelSerializer):
     candidate_blocked = serializers.BooleanField(read_only=True, default=False)
     in_talent_pool = serializers.BooleanField(read_only=True, default=False)
     mass_apply_signal = serializers.SerializerMethodField()
+    submission_number = serializers.IntegerField(read_only=True, default=1)
+    last_reminded_at = serializers.DateTimeField(read_only=True, default=None)
 
     class Meta:
         model = Application
@@ -52,6 +54,8 @@ class ApplicationSerializer(serializers.ModelSerializer):
             'employer_rating',
             'candidate_note',
             'applied_at',
+            'submission_number',
+            'last_reminded_at',
             'viewed_at',
             'shortlisted_at',
             'interviewed_at',
@@ -73,6 +77,25 @@ class ApplicationSerializer(serializers.ModelSerializer):
         if jobs < CandidateBlock.MASS_APPLY_MIN_JOBS or getattr(obj, 'candidate_blocked', False):
             return None
         return {'jobs': jobs, 'window_days': CandidateBlock.MASS_APPLY_WINDOW_DAYS}
+
+
+class PreviousSubmissionSerializer(serializers.ModelSerializer):
+    """An earlier, replaced submission: what it was and how it ended, read-only."""
+
+    status_label = serializers.CharField(source='get_status_display', read_only=True)
+
+    class Meta:
+        model = Application
+        fields = [
+            'public_id',
+            'applied_at',
+            'status',
+            'status_label',
+            'submitted_cv_title',
+            'withdrawn_at',
+            'rejected_at',
+        ]
+        read_only_fields = fields
 
 
 class ApplicationAssessmentSerializer(serializers.Serializer):

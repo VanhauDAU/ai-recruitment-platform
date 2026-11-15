@@ -67,6 +67,10 @@ EVENT_PRESENTATION = {
         'Ứng viên đã rút hồ sơ',
         APPLICATIONS_PATH,
     ),
+    EmployerNotification.EventType.APPLICATION_AWAITING_REPLY: (
+        'Hồ sơ đang chờ phản hồi',
+        APPLICATIONS_PATH,
+    ),
     EmployerNotification.EventType.JOB_CHANGES_REQUESTED: (
         'Tin tuyển dụng cần chỉnh sửa',
         JOBS_PATH,

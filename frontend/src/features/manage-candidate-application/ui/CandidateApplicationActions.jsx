@@ -1,8 +1,10 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Button } from 'antd'
+import { Button, Tooltip } from 'antd'
+import dayjs from 'dayjs'
 import { useState } from 'react'
 import {
   applicationKeys,
+  remindRecruiterOfApplication,
   replaceCandidateApplicationCv,
   withdrawCandidateApplication,
 } from '@/entities/application'
@@ -28,6 +30,14 @@ export default function CandidateApplicationActions({ application }) {
       message.success('Đã rút hồ sơ.')
     },
   })
+  const remind = useMutation({
+    mutationFn: () => remindRecruiterOfApplication(application.public_id),
+    onSuccess: (saved) => {
+      replaceCached(saved)
+      message.success('ProCV đã nhắc nhà tuyển dụng phản hồi hồ sơ của bạn.')
+    },
+    onError: (error) => message.error(getApiErrorMessage(error, 'Chưa thể nhắc nhà tuyển dụng lúc này.')),
+  })
   const replaceCv = useMutation({
     mutationFn: (selection) => replaceCandidateApplicationCv(application.public_id, selection),
     onSuccess: (saved) => {
@@ -38,9 +48,17 @@ export default function CandidateApplicationActions({ application }) {
     onError: (error) => message.error(getApiErrorMessage(error, 'Không thể đổi CV lúc này.')),
   })
 
-  if (!actions.withdraw && !actions.update_cv) return null
+  const remindLater = !actions.remind && actions.remind_available_at
+  if (!actions.withdraw && !actions.update_cv && !actions.remind && !remindLater) return null
   return (
     <div className="flex flex-wrap gap-2">
+      {(actions.remind || remindLater) && (
+        <Tooltip title={remindLater ? `Bạn có thể nhắc từ ${dayjs(actions.remind_available_at).format('HH:mm DD/MM/YYYY')}` : null}>
+          <Button size="small" disabled={!actions.remind} loading={remind.isPending} onClick={() => remind.mutate()}>
+            Nhắc NTD
+          </Button>
+        </Tooltip>
+      )}
       {actions.update_cv && (
         <Button size="small" onClick={() => setCvModalOpen(true)}>Đổi CV</Button>
       )}

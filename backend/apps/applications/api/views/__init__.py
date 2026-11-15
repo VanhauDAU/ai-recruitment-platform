@@ -3,6 +3,7 @@ from .employer import (
     EmployerApplicationDecisionUndoView,
     EmployerApplicationDecisionView,
     EmployerApplicationHistoryView,
+    EmployerApplicationSubmissionsView,
     EmployerApplicationListView,
 )
 from .v2 import CandidateApplicationV2ListCreateView, RecruiterApplicationSnapshotView
@@ -13,6 +14,7 @@ __all__ = [
     'EmployerApplicationDecisionUndoView',
     'EmployerApplicationDecisionView',
     'EmployerApplicationHistoryView',
+    'EmployerApplicationSubmissionsView',
     'EmployerApplicationListView',
     'RecruiterApplicationSnapshotView',
 ]
