@@ -7,7 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
-| [Thống nhất luồng đăng tin, hiển thị, ứng tuyển, công ty](#thống-nhất-luồng-đăng-tin-hiển-thị-ứng-tuyển-công-ty-2026-11-15) | 🟨 GĐ6 (#208), GĐ1 (#209) đã gộp; GĐ2 xong trên nhánh `fix/job-posting-rules`; làm hết trước khi tiếp tục AI |
+| [Thống nhất luồng đăng tin, hiển thị, ứng tuyển, công ty](#thống-nhất-luồng-đăng-tin-hiển-thị-ứng-tuyển-công-ty-2026-11-15) | 🟨 GĐ6 (#208), GĐ1 (#209), GĐ2 (#211) đã gộp; còn GĐ3–GĐ5; làm hết trước khi tiếp tục AI |
 | [Đối sánh ngữ nghĩa CV–JD chạy local](#đối-sánh-ngữ-nghĩa-cvjd-chạy-local-2026-11-15) | 🟨 Nền tảng (tuần 1) xong trên nhánh `feat/ai-matching-foundation`, chưa mở PR |
 | [CV tải lên: tệp gốc, tiêu chuẩn upload, giới hạn CV, NTD tìm kiếm](#cv-tải-lên-tệp-gốc-tiêu-chuẩn-upload-giới-hạn-cv-ntd-tìm-kiếm-2026-11-15) | ✅ Gộp vào `dev` (#203) |
 | [Việc làm tốt nhất xếp theo chất lượng tin](#việc-làm-tốt-nhất-xếp-theo-chất-lượng-tin-2026-11-15) | ✅ Gộp vào `dev` (#204) |
@@ -44,11 +44,21 @@ thật trong hạng mục AI.
 | GĐ | Hạng mục | Trạng thái |
 | --- | --- | --- |
 | 1 | Trạng thái hiệu lực của tin + lý do ẩn, giờ VN, bộ lọc công khai khớp quyền xem dữ liệu ứng viên | ✅ Gộp vào `dev` (#209) |
-| 2 | Dùng chung điều kiện chặn đăng tin; mở lại tin áp luật gia hạn | 🟨 Xong trên nhánh `fix/job-posting-rules` |
+| 2 | Dùng chung điều kiện chặn đăng tin; mở lại tin áp luật gia hạn | ✅ Gộp vào `dev` (#211) |
 | 3 | Một hồ sơ hiệu lực trên một tin, rút hồ sơ, tự động từ chối và thống kê chỉ tính hồ sơ hiệu lực | ⬜ |
 | 4 | Vòng yêu cầu sửa tin → NTD sửa → gửi duyệt lại | ⬜ |
 | 5 | Chặn ứng viên theo công ty, owner duyệt yêu cầu tham gia, logic công ty vào service | ⬜ |
 | 6 | Tắt đồng ý tìm hồ sơ thì gỡ mọi CV khỏi tìm kiếm; sửa câu chữ hứa tính năng chưa có | ✅ Gộp vào `dev` (#208) |
+
+<details><summary>Sửa migration test đỏ sẵn trên dev</summary>
+
+- `ApplicationSnapshotMigrationTests.test_mismatched_snapshot_is_refused` xóa
+  `CvVersion` bằng model runtime khi schema đang ở mốc cũ; Django lan phép xóa
+  sang `matching_matchdocument` (app matching mới) chưa tồn tại ở mốc đó, test
+  hỏng giữa chừng và kéo theo các test migration khác trong cùng worker. Giờ xóa
+  bằng model của trạng thái migration đang áp dụng.
+
+</details>
 
 <details><summary>Ghi chú GĐ2</summary>
 
