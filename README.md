@@ -9,7 +9,7 @@ Website hỗ trợ tạo CV, phân tích CV và luyện phỏng vấn thông min
 - Đăng ký/đăng nhập JWT, phân quyền theo vai trò (ứng viên / nhà tuyển dụng / admin)
 - Xác thực email qua link, social login OAuth (Google/Facebook/LinkedIn cho ứng viên, Google cho nhà tuyển dụng)
 - Bảo vệ đăng nhập/đăng ký: rate limit + Google reCAPTCHA v3
-- Hồ sơ ứng viên, hồ sơ công ty
+- Hồ sơ ứng viên (ảnh đại diện có cắt vuông và xem trước trước khi tải lên), hồ sơ công ty
 - Danh mục kỹ năng chuẩn, danh mục ngành nghề
 - Danh mục địa điểm hành chính Việt Nam (34 tỉnh/thành + 3.321 xã/phường, dữ liệu thật)
 - Mẫu CV, tạo/sửa/xóa CV (CV Builder), upload CV có sẵn (PDF/DOCX)

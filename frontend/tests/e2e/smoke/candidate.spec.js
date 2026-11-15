@@ -804,3 +804,46 @@ test('candidate smoke: applied jobs list every status and say when the employer 
   await expect(page.getByText('Hết hạn ứng tuyển').filter({ visible: true }).first()).toBeVisible()
   await expect(page.getByRole('button', { name: 'Ứng tuyển ngay' })).toHaveCount(0)
 })
+
+test('candidate smoke: avatar editor crops a square image before uploading', async ({ page }) => {
+  let uploadedContentType = ''
+  await mockCandidatePersonalizationApi(page)
+  await page.route('**/api/auth/avatar/', async (route) => {
+    const body = route.request().postDataBuffer()?.toString('latin1') || ''
+    uploadedContentType = body.match(/Content-Type: (image\/\w+)/)?.[1] || ''
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({ public_id: 'candidate_1', role: 'candidate', email: 'candidate@example.com', full_name: 'Nguyễn An', email_verified: true, avatar_url: '' }),
+    })
+  })
+
+  await page.goto('/tai-khoan/thong-tin-ca-nhan')
+  // Nút có chữ ở trang Thông tin cá nhân (nút camera ở thẻ chào chỉ có aria-label).
+  await page.getByRole('button', { name: 'Đổi ảnh đại diện' }).filter({ hasText: 'Đổi ảnh đại diện' }).click()
+  await expect(page.getByRole('heading', { name: 'Chỉnh sửa ảnh đại diện' })).toBeVisible()
+
+  const png = await page.evaluate(() => {
+    const canvas = document.createElement('canvas')
+    canvas.width = 640
+    canvas.height = 400
+    const context = canvas.getContext('2d')
+    context.fillStyle = '#0ea5e9'
+    context.fillRect(0, 0, 640, 400)
+    return canvas.toDataURL('image/png').split(',')[1]
+  })
+  await page.locator('.ant-modal input[type="file"]').first()
+    .setInputFiles({ name: 'avatar.png', mimeType: 'image/png', buffer: Buffer.from(png, 'base64') })
+
+  const cropFrame = page.getByRole('group', { name: /Vùng cắt 320×320 px/ })
+  await expect(cropFrame).toBeVisible()
+  await expect(page.getByRole('img', { name: 'Xem trước ảnh đại diện' })).toBeVisible()
+  await cropFrame.focus()
+  await page.keyboard.press('ArrowLeft')
+
+  const upload = page.waitForRequest((request) => request.url().endsWith('/api/auth/avatar/') && request.method() === 'POST')
+  await page.getByRole('button', { name: 'Xong' }).click()
+  await upload
+  await expect(page.getByRole('heading', { name: 'Chỉnh sửa ảnh đại diện' })).toBeHidden()
+  expect(uploadedContentType).toBe('image/jpeg')
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
+})

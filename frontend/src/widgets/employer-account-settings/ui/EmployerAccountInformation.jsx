@@ -1,11 +1,11 @@
 import { CameraOutlined, DownloadOutlined, LinkOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
 import { Avatar, Button, Form, Input, Select } from 'antd'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
 import { getEmployerProfile } from '@/entities/employer-profile'
 import { useSession } from '@/entities/session'
-import { updateProfile, uploadAvatar } from '@/features/edit-profile'
+import { AvatarEditorModal, updateProfile } from '@/features/edit-profile'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { EMPLOYER_PHONE_VERIFY_URL } from '@/shared/config/portals'
 import { message } from '@/shared/lib/toast'
@@ -17,10 +17,9 @@ export default function EmployerAccountInformation() {
   const { user, setCurrentUser } = useSession()
   const profileQuery = useQuery({ queryKey: ['employer', 'profile'], queryFn: getEmployerProfile })
   const [saving, setSaving] = useState(false)
-  const [uploadingAvatar, setUploadingAvatar] = useState(false)
+  const [avatarOpen, setAvatarOpen] = useState(false)
   const [phoneEditing, setPhoneEditing] = useState(false)
   const [form] = Form.useForm()
-  const avatarInputRef = useRef(null)
 
   useEffect(() => {
     form.setFieldsValue({ full_name: user?.full_name || '', phone: user?.phone || '' })
@@ -48,26 +47,6 @@ export default function EmployerAccountInformation() {
       message.error(getApiErrorMessage(error, 'Không thể lưu thông tin. Vui lòng thử lại.'))
     } finally {
       setSaving(false)
-    }
-  }
-
-  async function handleAvatarChange(event) {
-    const file = event.target.files?.[0]
-    event.target.value = ''
-    if (!file) return
-    if (file.size > 5 * 1024 * 1024) {
-      message.error('Ảnh đại diện không được vượt quá 5MB.')
-      return
-    }
-    setUploadingAvatar(true)
-    try {
-      const updated = await uploadAvatar(file)
-      setCurrentUser(updated)
-      message.success('Đã cập nhật ảnh đại diện.')
-    } catch (error) {
-      message.error(getApiErrorMessage(error, 'Không thể cập nhật ảnh đại diện.'))
-    } finally {
-      setUploadingAvatar(false)
     }
   }
 
@@ -108,8 +87,8 @@ export default function EmployerAccountInformation() {
             <Avatar size={36} src={user?.avatar_url || undefined} className="!bg-slate-100 !text-slate-500">
               {(user?.full_name || user?.email || 'N').trim().charAt(0).toUpperCase()}
             </Avatar>
-            <input ref={avatarInputRef} type="file" accept="image/png,image/jpeg,image/gif,image/webp" className="!hidden" onChange={handleAvatarChange} />
-            <Button size="small" icon={<CameraOutlined />} loading={uploadingAvatar} onClick={() => avatarInputRef.current?.click()}>Đổi avatar</Button>
+            <Button size="small" icon={<CameraOutlined />} onClick={() => setAvatarOpen(true)}>Đổi avatar</Button>
+            <AvatarEditorModal open={avatarOpen} onClose={() => setAvatarOpen(false)} />
           </div>
 
           <Form.Item name="full_name" label="Họ và tên" rules={[{ required: true, whitespace: true, message: 'Vui lòng nhập họ và tên.' }, { min: 2, message: 'Họ và tên cần ít nhất 2 ký tự.' }, { max: 255, message: 'Họ và tên quá dài.' }]}>

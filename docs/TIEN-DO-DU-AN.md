@@ -7,6 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
+| [Ảnh đại diện dùng chung 3 cổng](#ảnh-đại-diện-dùng-chung-3-cổng-2026-11-16) | 🟨 Xong trên nhánh `feat/avatar-editor`, chưa mở PR |
 | [Thống nhất luồng đăng tin, hiển thị, ứng tuyển, công ty](#thống-nhất-luồng-đăng-tin-hiển-thị-ứng-tuyển-công-ty-2026-11-15) | ✅ Cả 6 giai đoạn đã gộp (#208–#215); hoàn thiện luồng nhắc NTD và lịch sử nộp trên nhánh `feat/application-reminders` |
 | [Đối sánh ngữ nghĩa CV–JD chạy local](#đối-sánh-ngữ-nghĩa-cvjd-chạy-local-2026-11-15) | 🟨 Nền tảng (tuần 1) xong trên nhánh `feat/ai-matching-foundation`, chưa mở PR |
 | [CV tải lên: tệp gốc, tiêu chuẩn upload, giới hạn CV, NTD tìm kiếm](#cv-tải-lên-tệp-gốc-tiêu-chuẩn-upload-giới-hạn-cv-ntd-tìm-kiếm-2026-11-15) | ✅ Gộp vào `dev` (#203) |
@@ -23,6 +24,31 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Các epic đã hoàn tất](#các-epic-đã-hoàn-tất) | ✅ |
 | [Lộ trình theo PRD](#lộ-trình-theo-prd) | 🟨 Phần AI lõi (giai đoạn 2–3) còn mở |
 | [Việc còn mở](#việc-còn-mở) | |
+
+## Ảnh đại diện dùng chung 3 cổng (2026-11-16)
+
+| Hạng mục | Trạng thái |
+| --- | --- |
+| Modal "Chỉnh sửa ảnh đại diện" (cắt vuông, xem trước tròn, đổi/xóa ảnh) ở thẻ chào và trang thông tin cá nhân | 🟨 Xong trên nhánh `feat/avatar-editor` |
+| `DELETE /api/auth/avatar/`; upload thu nhỏ ảnh quá 1024 px | 🟨 Xong trên nhánh `feat/avatar-editor` |
+| Cổng NTD (Thông tin tài khoản) và quản trị (Tài khoản của tôi → Hồ sơ) dùng chung modal | 🟨 Xong trên nhánh `feat/avatar-editor` |
+
+<details><summary>Ghi chú chi tiết</summary>
+
+- Kiểm tra phía client: JPG/PNG/WebP, tối đa 5 MB, cạnh ngắn tối thiểu 200 px,
+  tệp phải đọc được. Backend vẫn kiểm tra chữ ký tệp, dung lượng và decode ảnh.
+- Ảnh được cắt trong trình duyệt (canvas) thành JPEG vuông tối đa 400 px; chỉ
+  ảnh đã cắt được gửi lên. "Xong" mới tải lên/xóa, "Đóng lại (Không lưu)" bỏ
+  mọi thay đổi.
+- "Tài khoản đã xác thực" ở cổng ứng viên chỉ dựa vào `email_verified` (xác
+  thực email qua link/mã, đăng nhập Google, đặt lại mật khẩu, đổi email).
+- Kiểm tra: pytest avatar 5 passed, vitest edit-profile + trang tài khoản 25
+  passed, E2E smoke avatar 3 viewport passed, CSS ban đầu 37,9/38,5 KiB.
+- Modal nằm ở `features/edit-profile` (`AvatarEditorModal`), được widget
+  `employer-account-settings` và `admin-account-settings` dùng lại; hai widget
+  có test mở modal.
+
+</details>
 
 ## Thống nhất luồng đăng tin, hiển thị, ứng tuyển, công ty (2026-11-15)
 

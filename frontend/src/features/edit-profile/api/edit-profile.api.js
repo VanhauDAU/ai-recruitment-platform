@@ -13,3 +13,9 @@ export async function uploadAvatar(file) {
   const { data } = await api.post('/auth/avatar/', formData)
   return data
 }
+
+// Gỡ ảnh đại diện hiện tại; backend xoá file và trả user đã cập nhật.
+export async function deleteAvatar() {
+  const { data } = await api.delete('/auth/avatar/')
+  return data
+}

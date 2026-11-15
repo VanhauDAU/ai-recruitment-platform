@@ -1,9 +1,9 @@
-import { CheckCircleFilled, ExclamationCircleFilled, UploadOutlined, UserOutlined } from '@ant-design/icons'
-import { Avatar, Button, Card, Form, Input, Tag, Upload } from 'antd'
+import { CameraOutlined, CheckCircleFilled, ExclamationCircleFilled, UserOutlined } from '@ant-design/icons'
+import { Avatar, Button, Card, Form, Input, Tag } from 'antd'
 import { useState } from 'react'
 import { useAdminAccess } from '@/entities/admin-access'
 import { useSession } from '@/entities/session'
-import { updateProfile, uploadAvatar } from '@/features/edit-profile'
+import { AvatarEditorModal, updateProfile } from '@/features/edit-profile'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { message } from '@/shared/lib/toast'
 
@@ -14,7 +14,7 @@ export default function AdminProfilePanel() {
   const adminAccess = useAdminAccess(user)
   const [form] = Form.useForm()
   const [saving, setSaving] = useState(false)
-  const [uploading, setUploading] = useState(false)
+  const [avatarOpen, setAvatarOpen] = useState(false)
 
   async function submit(values) {
     setSaving(true)
@@ -28,32 +28,17 @@ export default function AdminProfilePanel() {
     }
   }
 
-  async function handleAvatar(file) {
-    setUploading(true)
-    try {
-      setCurrentUser(await uploadAvatar(file))
-      message.success('Đã cập nhật ảnh đại diện.')
-    } catch (error) {
-      message.error(getApiErrorMessage(error, 'Không thể tải ảnh lên.'))
-    } finally {
-      setUploading(false)
-    }
-    // Trả false để antd không tự upload — file đã được gửi bằng API của app.
-    return false
-  }
-
   return (
     <div className="space-y-5">
       <Card title="Ảnh đại diện">
         <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
           <Avatar size={72} src={user?.avatar_url || undefined} icon={<UserOutlined />} />
           <div>
-            <Upload accept="image/*" showUploadList={false} beforeUpload={handleAvatar}>
-              <Button icon={<UploadOutlined />} loading={uploading}>Tải ảnh lên</Button>
-            </Upload>
-            <p className="mb-0 mt-2 text-xs text-slate-500">JPG, PNG, GIF hoặc WebP, tối đa 5MB.</p>
+            <Button icon={<CameraOutlined />} onClick={() => setAvatarOpen(true)}>Đổi ảnh đại diện</Button>
+            <p className="mb-0 mt-2 text-xs text-slate-500">JPG, PNG hoặc WebP, tối đa 5 MB.</p>
           </div>
         </div>
+        <AvatarEditorModal open={avatarOpen} onClose={() => setAvatarOpen(false)} />
       </Card>
 
       <Card title="Thông tin liên hệ">

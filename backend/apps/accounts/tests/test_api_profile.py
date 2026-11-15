@@ -3,6 +3,7 @@
 import shutil
 from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
+from io import BytesIO
 from threading import Barrier
 
 from django.conf import settings
@@ -13,9 +14,12 @@ from django.db import close_old_connections
 from django.test import TransactionTestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
+from PIL import Image
 from rest_framework import status
 from rest_framework.test import APIClient, APIRequestFactory, APITestCase
 from rest_framework_simplejwt.tokens import AccessToken
+
+from common.r2_storage import public_media_storage
 
 from ..models import AuthEmailJob, AuthSession, SocialAccount, User
 from ..services.refresh_cookies import cookie_name
@@ -45,6 +49,56 @@ class AvatarUploadTests(APITestCase):
         user.refresh_from_db()
         self.assertTrue(user.avatar_url.startswith('users/avatars/'))
         self.assertNotIn('://', user.avatar_url)
+
+    def test_upload_rejects_non_image_payload(self):
+        user = User.objects.create_user(email='candidate@example.com', password='Password@123')
+        self.client.force_authenticate(user=user)
+
+        upload = SimpleUploadedFile('avatar.png', b'not an image', content_type='image/png')
+        response = self.client.post(
+            reverse('auth-avatar-upload'), {'file': upload}, format='multipart'
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        user.refresh_from_db()
+        self.assertEqual(user.avatar_url, '')
+
+    def test_upload_downscales_oversized_avatar(self):
+        buffer = BytesIO()
+        Image.new('RGB', (2000, 1500), 'white').save(buffer, format='JPEG')
+        user = User.objects.create_user(email='candidate@example.com', password='Password@123')
+        self.client.force_authenticate(user=user)
+
+        upload = SimpleUploadedFile('avatar.jpg', buffer.getvalue(), content_type='image/jpeg')
+        response = self.client.post(
+            reverse('auth-avatar-upload'), {'file': upload}, format='multipart'
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        user.refresh_from_db()
+        with public_media_storage().open(user.avatar_url) as stored, Image.open(stored) as image:
+            self.assertLessEqual(max(image.size), 1024)
+
+    def test_delete_avatar_clears_field_and_removes_file(self):
+        user = User.objects.create_user(email='candidate@example.com', password='Password@123')
+        self.client.force_authenticate(user=user)
+        upload = SimpleUploadedFile('avatar.png', PNG_BYTES, content_type='image/png')
+        self.client.post(reverse('auth-avatar-upload'), {'file': upload}, format='multipart')
+        user.refresh_from_db()
+        stored_path = user.avatar_url
+
+        response = self.client.delete(reverse('auth-avatar-upload'))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['avatar_url'], '')
+        user.refresh_from_db()
+        self.assertEqual(user.avatar_url, '')
+        self.assertFalse(public_media_storage().exists(stored_path))
+
+    def test_delete_avatar_requires_authentication(self):
+        response = self.client.delete(reverse('auth-avatar-upload'))
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
 
 class ProfileUpdateTests(APITestCase):
