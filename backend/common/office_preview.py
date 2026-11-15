@@ -1,4 +1,4 @@
-"""Safe, private preview rendering for employer verification documents."""
+"""Safe PDF previews of private Office documents (employer papers, uploaded CVs)."""
 
 from __future__ import annotations
 
@@ -10,9 +10,10 @@ from pathlib import Path
 
 from common.r2_storage import private_media_storage
 
+DOCX_CONTENT_TYPE = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
 OFFICE_DOCUMENT_SUFFIXES = {
     'application/msword': '.doc',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '.docx',
+    DOCX_CONTENT_TYPE: '.docx',
 }
 PREVIEW_TIMEOUT_SECONDS = 30
 MAX_PREVIEW_BYTES = 25 * 1024 * 1024
@@ -49,7 +50,7 @@ def _render_source_to_pdf(source_path: Path) -> bytes | None:
             return None
         return preview_path.read_bytes()
     except (FileNotFoundError, OSError, subprocess.TimeoutExpired):
-        logger.warning('Employer verification office preview conversion failed.')
+        logger.warning('Office document preview conversion failed.')
         return None
 
 
@@ -59,7 +60,7 @@ def render_office_document_preview(file_url: str, content_type: str) -> bytes | 
     if not suffix:
         return None
 
-    with tempfile.TemporaryDirectory(prefix='employer-document-preview-') as directory:
+    with tempfile.TemporaryDirectory(prefix='office-document-preview-') as directory:
         source_path = Path(directory) / f'source{suffix}'
         try:
             with (
@@ -68,6 +69,6 @@ def render_office_document_preview(file_url: str, content_type: str) -> bytes | 
             ):
                 shutil.copyfileobj(source, target)
         except OSError:
-            logger.warning('Employer verification office preview source could not be read.')
+            logger.warning('Office document preview source could not be read.')
             return None
         return _render_source_to_pdf(source_path)

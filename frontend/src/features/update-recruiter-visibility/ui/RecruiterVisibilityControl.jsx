@@ -1,13 +1,13 @@
-import { Checkbox, Modal, Skeleton, Switch } from 'antd'
+import { Skeleton, Switch } from 'antd'
 import { useEffect, useState } from 'react'
 import { getRecruiterVisibility, updateRecruiterVisibility } from '@/entities/candidate-preferences'
 import { message } from '@/shared/lib/toast'
+import RecruiterConsentModal from './RecruiterConsentModal'
 
 export default function RecruiterVisibilityControl({ cvPublicId }) {
   const [status, setStatus] = useState(null)
   const [updating, setUpdating] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
-  const [confirmed, setConfirmed] = useState(false)
 
   useEffect(() => {
     let active = true
@@ -22,7 +22,7 @@ export default function RecruiterVisibilityControl({ cvPublicId }) {
     try {
       const saved = await updateRecruiterVisibility({
         enabled,
-        confirmed: enabled ? confirmed : false,
+        confirmed: enabled,
         cv_public_id: cvPublicId,
         policy_version: status?.policy_version || 'v1',
         source: 'cv_save_success',
@@ -30,7 +30,6 @@ export default function RecruiterVisibilityControl({ cvPublicId }) {
       })
       setStatus(saved)
       setConfirmOpen(false)
-      setConfirmed(false)
       message.success(enabled ? 'Đã cho phép nhà tuyển dụng tìm kiếm hồ sơ.' : 'Đã tắt quyền tìm kiếm hồ sơ.')
     } catch {
       message.error('Không thể cập nhật quyền tìm kiếm hồ sơ lúc này.')
@@ -55,23 +54,12 @@ export default function RecruiterVisibilityControl({ cvPublicId }) {
           {status.enabled ? 'Cho phép NTD tìm kiếm hồ sơ' : 'Chưa cho phép NTD tìm kiếm hồ sơ'}
         </span>
       </div>
-      <Modal
+      <RecruiterConsentModal
         open={confirmOpen}
-        title="Cho phép nhà tuyển dụng tìm kiếm hồ sơ?"
-        okText="Xác nhận cho phép"
-        cancelText="Để sau"
-        okButtonProps={{ disabled: !confirmed, loading: updating, className: '!bg-[#00b14f]' }}
-        onOk={() => persist(true)}
-        onCancel={() => { setConfirmOpen(false); setConfirmed(false) }}
-      >
-        <div className="space-y-4 text-sm leading-6 text-slate-600">
-          <p>Nhà tuyển dụng có thể xem kinh nghiệm, học vấn và kỹ năng trên CV để gửi lời mời kết nối phù hợp.</p>
-          <p className="rounded-lg bg-emerald-50 p-3 text-emerald-800">Họ tên, ảnh, số điện thoại, email và địa chỉ vẫn được ẩn cho tới khi bạn đồng ý lời mời kết nối.</p>
-          <Checkbox checked={confirmed} onChange={(event) => setConfirmed(event.target.checked)}>
-            Tôi đã đọc và đồng ý mở hồ sơ cho nhà tuyển dụng tìm kiếm.
-          </Checkbox>
-        </div>
-      </Modal>
+        loading={updating}
+        onConfirm={() => persist(true)}
+        onCancel={() => setConfirmOpen(false)}
+      />
     </>
   )
 }

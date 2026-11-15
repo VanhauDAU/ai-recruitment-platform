@@ -45,6 +45,18 @@ export async function updateCvProfile(publicId, { position_public_id, position_l
   return data
 }
 
+export async function setCvRecruiterSearchable(publicId, enabled) {
+  const { data } = await api.patch(`/v2/cvs/${publicId}/`, { recruiter_searchable: enabled })
+  return data
+}
+
+/** Thông báo lỗi dễ đọc từ API CV: {code, message} hoặc lỗi theo trường của DRF. */
+export function cvApiErrorMessage(error, fallback) {
+  const data = error?.response?.data
+  const fieldError = data?.file?.[0] || data?.upload_session?.[0] || data?.title?.[0]
+  return data?.message || fieldError || (typeof data?.detail === 'string' ? data.detail : '') || error?.message || fallback
+}
+
 export async function setDefaultCv(publicId, isDefault) {
   const { data } = await api.patch(`/v2/cvs/${publicId}/`, { is_default: isDefault })
   return data
@@ -202,6 +214,16 @@ export async function uploadCvAsset(file, options = {}) {
 
 export async function getCvOwnerView(publicId) {
   const { data } = await api.get(`/v2/cvs/${publicId}/view/`)
+  return data
+}
+
+export async function getUploadedCvFile(publicId) {
+  const { data } = await api.get(`/v2/cvs/${publicId}/source/`, { responseType: 'blob' })
+  return data
+}
+
+export async function getSharedCvFile(token) {
+  const { data } = await api.get(`/v2/cvs/shares/${encodeURIComponent(token)}/source/`, { responseType: 'blob' })
   return data
 }
 

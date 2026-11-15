@@ -1,9 +1,11 @@
 import { createElement } from 'react'
 import { getCvOwnerView, getSharedCv } from '@/entities/cv'
-import { OwnerCvVersionView, SharedCvVersionView } from './ui/CvVersionReadOnly'
+import { OwnerCvVersionView, SharedCvVersionView, VIEWER_ACTION_CLASS } from './ui/CvVersionReadOnly'
 
-export function OwnerCvVersionPage({ publicId }) {
-  return createElement(OwnerCvVersionView, { publicId, loadOwnerView: getCvOwnerView })
+export { VIEWER_ACTION_CLASS }
+
+export function OwnerCvVersionPage({ publicId, renderActions }) {
+  return createElement(OwnerCvVersionView, { publicId, loadOwnerView: getCvOwnerView, renderActions })
 }
 
 export function SharedCvVersionPage({ token }) {

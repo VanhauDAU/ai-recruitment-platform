@@ -14,6 +14,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
 from apps.accounts.permissions import IsEmployer
+from common.office_preview import render_office_document_preview
 from common.r2_storage import private_media_storage
 
 from ...models import CompanyDocument, CompanyUpdateRequest
@@ -30,7 +31,6 @@ from ...services import (
     get_or_create_recruiter,
     lock_company_update_request,
     lock_company_update_target,
-    render_office_document_preview,
     snapshot_company_update_request,
     submit_company_update_request,
 )

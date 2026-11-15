@@ -2,10 +2,13 @@ import {
   CameraOutlined, CheckCircleFilled, CheckOutlined,
   QrcodeOutlined, QuestionCircleOutlined, WarningFilled,
 } from '@ant-design/icons'
+import { useQuery } from '@tanstack/react-query'
 import { Avatar, Switch } from 'antd'
 import { useState } from 'react'
 import { Link } from 'react-router'
+import { getMyCvs } from '@/entities/cv'
 import { useSession } from '@/entities/session'
+import { RecruiterSearchListModal } from '@/features/update-recruiter-visibility'
 import { DEFAULT_SITE_SETTINGS, settingText, useSiteSettings } from '@/entities/site-settings'
 
 // Cột phải của layout tài khoản (theo ảnh mẫu): thẻ chào + trạng thái tìm việc,
@@ -115,8 +118,10 @@ function JobSeekingToggleBlock() {
 }
 
 function RecruiterSearchBlock() {
-  // TODO(candidate-settings): đếm CV đang bật cho phép tìm kiếm từ API user_cvs.
-  const cvCount = 0
+  // Công tắc trên thẻ CV làm mới ['my-cvs'] nên số này cập nhật ngay.
+  const { data: cvs = [] } = useQuery({ queryKey: ['my-cvs', 'recruiter-searchable'], queryFn: getMyCvs })
+  const cvCount = cvs.filter((cv) => cv.recruiter_searchable).length
+  const [listOpen, setListOpen] = useState(false)
 
   return (
     <div className="border-t border-slate-100 px-4 py-3">
@@ -124,12 +129,14 @@ function RecruiterSearchBlock() {
       <p className="mt-1 text-sm text-slate-600">
         Có <b>{cvCount} CV</b> đang bật cho phép NTD tìm kiếm
       </p>
-      <Link
-        to="/tai-khoan/cv-cua-toi"
-        className="mt-2 inline-flex rounded-full border border-[var(--brand-primary)] px-4 py-1.5 text-sm font-semibold text-[var(--brand-primary)] transition-colors hover:bg-[var(--brand-primary-soft)]"
+      <button
+        type="button"
+        onClick={() => setListOpen(true)}
+        className="mt-2 inline-flex cursor-pointer rounded-full border border-[var(--brand-primary)] bg-white px-4 py-1.5 text-sm font-semibold text-[var(--brand-primary)] transition-colors hover:bg-[var(--brand-primary-soft)]"
       >
         Quản lý danh sách
-      </Link>
+      </button>
+      <RecruiterSearchListModal open={listOpen} onClose={() => setListOpen(false)} />
       <div className="mt-3 rounded-xl bg-slate-50 p-3 text-xs leading-5 text-slate-500">
         Khi bạn cho phép Nhà tuyển dụng (NTD) tìm kiếm hồ sơ, các NTD uy tín có thể tiếp cận
         thông tin kinh nghiệm làm việc, học vấn, kỹ năng... trên CV của bạn.

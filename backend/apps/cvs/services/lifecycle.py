@@ -23,6 +23,7 @@ from .composition import (
     layout_for_content,
     overlay_actor_identity,
 )
+from .quota import ensure_cv_quota
 from .versions import create_version, document_hash
 
 
@@ -65,6 +66,7 @@ def create_v2_cv(
     """Create a builder CV with an immutable baseline and a mutable draft."""
     if not actor.email_verified:
         raise CvLifecyclePolicyError('Verify your email before creating a CV.')
+    ensure_cv_quota(actor)
 
     template = (
         CvTemplate.objects.select_for_update(of=('self',))

@@ -1,5 +1,5 @@
-// Chặn mất dữ liệu khi người dùng rời trang soạn CV: cảnh báo reload/đóng tab,
-// flush + lưu trước khi điều hướng nội bộ, và lưu khi tab bị ẩn.
+// Chặn mất dữ liệu khi người dùng rời trang soạn CV: cảnh báo reload/đóng tab và
+// hỏi xác nhận trước khi điều hướng nội bộ (editor không tự động lưu).
 // Tách khỏi use-cv-draft-editor vì đây là mối quan tâm về browser event, không
 // phải nghiệp vụ CV — và cần test riêng được.
 import { useEffect } from 'react'
@@ -10,7 +10,6 @@ export function useUnsavedChangesGuard({
   phaseRef,
   signature,
   flushPendingEdits,
-  runAutosave,
 }) {
   useEffect(() => {
     const hasUnsavedChanges = () => {
@@ -31,24 +30,13 @@ export function useUnsavedChangesGuard({
       if (destination.origin !== window.location.origin || destination.href === window.location.href) return
       flushPendingEdits()
       if (!hasUnsavedChanges()) return
-      event.preventDefault()
-      runAutosave().then((saved) => {
-        if (saved) window.location.assign(destination.href)
-      })
-    }
-    const flushWhenHidden = () => {
-      if (globalThis.document.visibilityState === 'hidden') {
-        flushPendingEdits()
-        if (hasUnsavedChanges()) runAutosave()
-      }
+      if (!window.confirm('CV có thay đổi chưa lưu. Rời trang mà không lưu?')) event.preventDefault()
     }
     window.addEventListener('beforeunload', warnBeforeUnload)
     globalThis.document.addEventListener('click', flushInternalNavigation, true)
-    globalThis.document.addEventListener('visibilitychange', flushWhenHidden)
     return () => {
       window.removeEventListener('beforeunload', warnBeforeUnload)
       globalThis.document.removeEventListener('click', flushInternalNavigation, true)
-      globalThis.document.removeEventListener('visibilitychange', flushWhenHidden)
     }
-  }, [documentRef, lastSavedSignatureRef, phaseRef, signature, flushPendingEdits, runAutosave])
+  }, [documentRef, lastSavedSignatureRef, phaseRef, signature, flushPendingEdits])
 }

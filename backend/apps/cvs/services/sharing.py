@@ -110,8 +110,14 @@ def owner_view_version(*, cv: UserCv, actor, request) -> CvVersion:
 
 
 @transaction.atomic
-def resolve_shared_link(*, raw_token: str, request) -> tuple[CvSharedLink, CvVersion]:
-    """Resolve a valid bearer token and audit it without retaining raw metadata."""
+def resolve_shared_link(
+    *, raw_token: str, request, audit: bool = True
+) -> tuple[CvSharedLink, CvVersion]:
+    """Resolve a valid bearer token and audit it without retaining raw metadata.
+
+    ``audit=False`` is for sub-resources of a page view already audited (the
+    original file of an uploaded CV), so one view is not counted twice.
+    """
     if not raw_token or len(raw_token) > 200:
         raise CvShareUnavailableError('Shared link is invalid.')
     now = timezone.now()
@@ -131,6 +137,8 @@ def resolve_shared_link(*, raw_token: str, request) -> tuple[CvSharedLink, CvVer
     # Load nullable version/template relations after the link row itself is
     # locked; PostgreSQL cannot lock the nullable side of an outer join.
     link = CvSharedLink.objects.select_related('cv', 'version__template_version').get(pk=link.pk)
+    if not audit:
+        return link, link.version
     CvSharedLink.objects.filter(pk=link.pk).update(last_accessed_at=now)
     link.last_accessed_at = now
     record_cv_access(

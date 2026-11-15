@@ -303,16 +303,15 @@ test('candidate smoke: WYSIWYG CV editor uses the V2 draft lifecycle', async ({ 
   await expect(page.getByRole('heading', { name: 'Chỉnh sửa nội dung' })).toHaveCount(0)
   await expect(page.getByLabel('role experience_item_1')).toBeVisible()
 
-  const initialAutosaveRequest = page.waitForRequest((request) => request.url().endsWith('/api/v2/cvs/cv_1/draft/') && request.method() === 'PUT')
+  // Editor không tự động lưu: bản nháp chỉ được gửi khi bấm "Lưu CV".
+  let draftPuts = 0
+  page.on('request', (request) => {
+    if (request.url().endsWith('/api/v2/cvs/cv_1/draft/') && request.method() === 'PUT') draftPuts += 1
+  })
   await page.getByLabel('Họ và tên inline').fill('Nguyễn Bình')
   await page.getByLabel('Họ và tên inline').press('Tab')
-  expect((await initialAutosaveRequest).headers()['if-match']).toBe('"lock-version-0"')
 
   await page.getByRole('button', { name: 'Thêm mục' }).click()
-  const sectionAutosaveRequest = page.waitForRequest((request) => {
-    if (!request.url().endsWith('/api/v2/cvs/cv_1/draft/') || request.method() !== 'PUT') return false
-    return request.postDataJSON()?.layout_json?.item_orders?.education_1?.[0] === 'education_item_2'
-  })
   await page.getByRole('button', { name: '+ Học vấn' }).click()
   await expect(page.locator('#cv-section-education_1')).toBeVisible()
   await page.getByRole('button', { name: 'Đóng bảng công cụ' }).click()
@@ -323,22 +322,26 @@ test('candidate smoke: WYSIWYG CV editor uses the V2 draft lifecycle', async ({ 
   const secondEducationItem = page.locator('[data-cv-item-id="education_1:education_item_2"]')
   await secondEducationItem.hover()
   await secondEducationItem.getByRole('button', { name: 'Đưa item education_item_2 lên' }).click()
-  const sectionAutosave = await sectionAutosaveRequest
-  const autosavePayload = sectionAutosave.postDataJSON()
-  expect(sectionAutosave.headers()['if-match']).toBe('"lock-version-1"')
-  const education = autosavePayload.content_json.sections.find((section) => section.instance_id === 'education_1')
-  expect(education.title).toBe('Đào tạo')
-  expect(education.items.map((item) => item.item_id)).toEqual(['education_item_1', 'education_item_2'])
-  expect(autosavePayload.layout_json.item_orders.education_1).toEqual(['education_item_2', 'education_item_1'])
-  expect(autosavePayload.layout_json.regions[0].section_instance_ids).toContain('education_1')
+  await page.waitForTimeout(1_000)
+  expect(draftPuts).toBe(0)
 
   let saveVersionRequested = false
   page.on('request', (request) => {
     if (request.url().endsWith('/api/v2/cvs/cv_1/save-version/')) saveVersionRequested = true
   })
+  const draftSaveRequest = page.waitForRequest((request) => request.url().endsWith('/api/v2/cvs/cv_1/draft/') && request.method() === 'PUT')
   await page.getByRole('button', { name: 'Lưu CV' }).click()
   await expect(page.getByRole('dialog', { name: 'Lưu CV chưa hoàn thiện' })).toBeVisible()
   await page.getByRole('button', { name: 'Lưu CV, tôi sẽ hoàn thiện sau' }).click()
+  const draftSave = await draftSaveRequest
+  const draftPayload = draftSave.postDataJSON()
+  expect(draftSave.headers()['if-match']).toBe('"lock-version-0"')
+  expect(draftPayload.content_json.personal_info.full_name).toBe('Nguyễn Bình')
+  const education = draftPayload.content_json.sections.find((section) => section.instance_id === 'education_1')
+  expect(education.title).toBe('Đào tạo')
+  expect(education.items.map((item) => item.item_id)).toEqual(['education_item_1', 'education_item_2'])
+  expect(draftPayload.layout_json.item_orders.education_1).toEqual(['education_item_2', 'education_item_1'])
+  expect(draftPayload.layout_json.regions[0].section_instance_ids).toContain('education_1')
   await expect(page).toHaveURL('/save-cv-success/cv_1?type=create')
   await expect(page.getByRole('heading', { name: 'Lưu CV thành công!' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'CV V2' })).toBeVisible()
@@ -382,9 +385,12 @@ test('candidate smoke: owner CV view renders an immutable V2 version, not a draf
   await expect(page.getByText('Nội dung đã lưu')).toBeVisible()
   await expect(page.getByLabel('Xem trước CV single_column_v1 trang 1')).toBeVisible()
   const exportRequest = page.waitForRequest((request) => request.url().endsWith('/api/v2/cvs/cv_1/exports/') && request.method() === 'POST')
-  await page.getByRole('button', { name: 'Xuất PDF' }).click()
+  await expect(page.getByRole('link', { name: 'Sửa CV' })).toHaveAttribute('href', '/cvs/cv_1/edit')
+  await expect(page.getByRole('button', { name: 'Copy CV' })).toBeVisible()
+  await expect(page.getByLabel('Chọn phiên bản PDF')).toHaveCount(0)
+  await page.getByRole('button', { name: 'Tải CV PDF' }).click()
   expect((await exportRequest).postDataJSON()).toEqual({ version_public_id: 'cvv_2' })
-  await expect(page.getByText('Đang chờ xuất')).toBeVisible()
+  await expect(page.getByText('Đang chuẩn bị CV của bạn')).toBeVisible()
 })
 
 test('candidate smoke: CV library permanently deletes a CV through V2', async ({ page }) => {
@@ -420,7 +426,7 @@ test('candidate smoke: CV library permanently deletes a CV through V2', async ({
   })
 
   await page.goto('/tai-khoan/cv-cua-toi')
-  await expect(page.getByText('CV cần xóa', { exact: true })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'CV cần xóa', exact: true })).toBeVisible()
   await page.locator('.group').first().hover()
   await page.getByRole('button', { name: 'Thao tác CV' }).click()
   const deleteMenuItem = page.getByRole('menuitem', { name: 'Xoá' })
@@ -437,7 +443,7 @@ test('candidate smoke: CV library permanently deletes a CV through V2', async ({
     .getByRole('button', { name: 'Xóa', exact: true })
     .press('Enter')
   await deleteRequest
-  await expect(page.getByText('CV cần xóa', { exact: true })).toHaveCount(0)
+  await expect(page.getByRole('heading', { name: 'CV cần xóa', exact: true })).toHaveCount(0)
 })
 
 test('candidate smoke: job application submits the selected immutable CV version through V2', async ({ page }) => {
@@ -665,4 +671,63 @@ test('candidate smoke: verified badge and job report modal work on desktop and m
     'scrollWidth',
     await page.locator('html').evaluate((element) => element.clientWidth),
   )
+})
+
+test('candidate smoke: uploaded CVs show the original file, a recruiter-search switch and the upload page', async ({ page }) => {
+  const uploaded = {
+    public_id: 'cv_up', title: 'CV tải lên', cv_type: 'uploaded', source: 'imported', file_type: 'pdf',
+    is_default: false, recruiter_searchable: false, updated_at: '2026-11-15T00:00:00Z',
+  }
+  let imported = false
+  await page.route(API_ROUTE, async (route) => {
+    const request = route.request()
+    const path = new URL(request.url()).pathname
+    if (path === '/api/v2/cvs/cv_up/source/' || path === '/api/v2/cvs/shares/tok_up/source/') {
+      await route.fulfill({ contentType: 'application/pdf', body: '%PDF-1.4' })
+      return
+    }
+    if (path === '/api/uploads/sessions/') {
+      await route.fulfill({ status: 503, contentType: 'application/json', body: JSON.stringify({ code: 'UPLOAD_PIPELINE_DISABLED' }) })
+      return
+    }
+    const body = path === '/api/auth/refresh/'
+      ? { access: 'e2e-access' }
+      : path === '/api/auth/me/'
+        ? { id: 1, role: 'candidate', email_verified: true, job_preferences_configured: true }
+      : path === '/api/privacy/consent/'
+        ? { consent: { necessary: true, preferences: false, analytics: false, marketing: false } }
+      : path === '/api/v2/cvs/' && request.method() === 'GET'
+        ? { results: [uploaded] }
+      : path === '/api/v2/cvs/cv_up/view/' || path === '/api/v2/cvs/shares/tok_up/'
+        ? { cv: { public_id: 'cv_up', title: uploaded.title, language: 'vi-VN', is_default: false, cv_type: 'uploaded' }, version: { content_json: {}, layout_json: {}, style_json: {} } }
+      : path === '/api/candidate/recruiter-visibility/'
+        ? { enabled: true, policy_version: 'v1' }
+      : path === '/api/v2/cvs/imports/' && request.method() === 'POST'
+        ? ((imported = true), uploaded)
+      : path === '/api/v2/cv-templates/'
+        ? { results: [] }
+        : {}
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) })
+  })
+
+  await page.goto('/tai-khoan/cv-cua-toi')
+  await expect(page.getByRole('heading', { name: 'CV tải lên', exact: true })).toBeVisible()
+  await expect(page.getByRole('img', { name: 'Tệp CV PDF' })).toBeVisible()
+  await expect(page.getByRole('switch', { name: 'Cho phép NTD tìm kiếm CV này' })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Sửa', exact: true })).toHaveCount(0)
+  await expect(page.getByRole('heading', { name: 'Bật tìm việc cho CV' })).toBeVisible()
+  const enableRequest = page.waitForRequest((request) => request.url().endsWith('/api/v2/cvs/cv_up/') && request.method() === 'PATCH')
+  await page.getByRole('button', { name: 'Bật tìm việc ngay' }).click()
+  expect((await enableRequest).postDataJSON()).toEqual({ recruiter_searchable: true })
+
+  await page.getByRole('button', { name: 'Tải CV lên' }).first().click()
+  await expect(page).toHaveURL(/\/tai-cv-len$/)
+  await page.locator('input[type="file"]').setInputFiles({ name: 'cv.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4') })
+  await page.getByRole('button', { name: 'Tải CV lên' }).click()
+  await expect(page.getByRole('heading', { name: 'Đã tải lên CV thành công!' })).toBeVisible()
+  expect(imported).toBe(true)
+
+  // Link chia sẻ của CV tải lên hiển thị tệp gốc thay vì version rỗng.
+  await page.goto('/cv/share/tok_up')
+  await expect(page.getByTitle('CV tải lên')).toBeAttached()
 })
