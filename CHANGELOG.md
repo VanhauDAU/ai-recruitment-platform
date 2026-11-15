@@ -8,6 +8,35 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-16
 
+#### Added — Bảng điều khiển quản trị
+
+- Trang chủ cổng quản trị thay danh sách lối tắt bằng bảng điều khiển: khối
+  "Cần xử lý" gom 8 hàng chờ (báo cáo tin/công ty, xác thực NTD, tên miền, yêu
+  cầu cập nhật công ty, tin nộp lại, bài viết, FAQ), xếp theo mức gấp, hiện thời
+  gian chờ lâu nhất so với hạn xử lý và dẫn thẳng tới danh sách đã lọc.
+- KPI ứng tuyển, tin mới, ứng viên mới, NTD mới so với kỳ trước (7/30/90 ngày),
+  biểu đồ xu hướng kèm bảng số liệu, phễu ứng tuyển, tình trạng tin, an toàn và
+  tuân thủ, ngành nghề nhiều tin nhất, sức khỏe hệ thống AI.
+- API `GET /api/dashboard/admin/?period=` (chỉ cổng quản trị).
+
+#### Changed — Sidebar và header cổng quản trị
+
+- Sidebar chuyển sang nền sáng cùng ngôn ngữ với bảng điều khiển. Badge số lượng
+  có trên mọi mục có hàng chờ (thêm báo cáo công ty, báo cáo vi phạm, tin chờ
+  duyệt lại, bài viết, FAQ chờ duyệt và quá hạn rà soát); badge đỏ khi có mục
+  quá hạn. Bỏ ô "Tìm chức năng".
+- Cụm tài khoản (ảnh, tên, cấp quản trị, cài đặt) và nút "Đăng xuất" ở đáy
+  sidebar, kể cả trong drawer mobile.
+- Header có breadcrumb, nút "Tạo mới" (bài viết, FAQ, thông báo, mời quản trị
+  viên; đăng tin hộ NTD sắp ra mắt), chuông liệt kê hàng chờ theo mức gấp, trợ
+  giúp (sắp ra mắt) và menu tài khoản (hồ sơ, bảo mật, nhật ký hoạt động).
+- API `GET /api/dashboard/admin/queues/` trả số mục chờ cho badge và chuông.
+- Badge cập nhật ngay sau mỗi thao tác duyệt/xử lý thay vì chờ lượt làm mới 30 giây.
+
+#### Fixed
+
+- Trang "Việc làm đã ứng tuyển" không còn lỗi khi trình duyệt không hỗ trợ `scrollIntoView` (lỗi làm unit test báo unhandled error).
+
 #### Added — Ảnh đại diện (ứng viên, NTD, quản trị)
 
 - Modal "Chỉnh sửa ảnh đại diện" theo mẫu TopCV, mở từ nút camera ở thẻ chào

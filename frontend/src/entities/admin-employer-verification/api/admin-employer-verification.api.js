@@ -51,10 +51,6 @@ export function getAdminEmployerVerifications(params = {}, { signal } = {}) {
   return data(client.get('/admin/employer-verifications/', { params, signal }))
 }
 
-export function getAdminEmployerVerificationSummary({ signal } = {}) {
-  return data(client.get('/admin/employer-verifications/summary/', { signal }))
-}
-
 export function getAdminEmployerVerification(publicId, { signal } = {}) {
   return data(client.get(`/admin/employer-verifications/${publicId}/`, { signal }))
 }

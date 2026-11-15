@@ -5,7 +5,6 @@ import {
   buildAdminNavigation,
   findActiveAdminNavigation,
   flattenAdminNavigation,
-  searchAdminNavigation,
 } from './admin-navigation'
 import { ADMIN_ROUTES } from './admin-routes.config'
 
@@ -66,7 +65,6 @@ describe('admin navigation tree', () => {
     expect(leafKeys(ADMIN_NAVIGATION).filter((key) => (
       ['departments', 'roles', 'staff', 'provisioning', 'settings-admin'].includes(key)
     ))).toEqual([])
-    expect(searchAdminNavigation(tree(true), 'phân quyền')).toEqual([])
   })
 
   it('lists the company report queue right after company update requests', () => {
@@ -147,14 +145,6 @@ describe('admin navigation tree', () => {
       'ai',
       'blog',
     ])
-  })
-
-  it('searches only the already-authorized tree and keeps breadcrumbs', () => {
-    const results = searchAdminNavigation(tree(), 'xác thực')
-
-    expect(results.map((leaf) => leaf.key)).toContain('employer-verification')
-    expect(results[0].breadcrumb).toHaveLength(3)
-    expect(searchAdminNavigation(tree(), 'lời mời quản trị')).toEqual([])
   })
 
   it('does not duplicate owner/member filters as a navigation group', () => {

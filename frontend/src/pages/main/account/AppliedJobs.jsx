@@ -72,7 +72,7 @@ function StatusFilters({ value, onChange }) {
             aria-selected={value === status}
             onClick={(event) => {
               onChange(status)
-              event.currentTarget.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' })
+              event.currentTarget.scrollIntoView?.({ behavior: 'smooth', block: 'nearest', inline: 'nearest' })
             }}
             className="applied-jobs__filter"
           >

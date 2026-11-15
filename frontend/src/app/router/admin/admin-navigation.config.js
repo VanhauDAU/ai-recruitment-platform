@@ -29,6 +29,7 @@ export const ADMIN_NAVIGATION = [
           {
             key: 'company-reports',
             label: 'Báo cáo công ty',
+            badgeKey: 'company_reports',
             routeRef: 'companyReports',
           },
         ],
@@ -151,6 +152,13 @@ export const ADMIN_NAVIGATION = [
             query: { job_scope: 'reported' },
           },
           {
+            key: 'resubmitted-jobs',
+            label: 'Tin chờ duyệt lại',
+            badgeKey: 'job_resubmissions',
+            routeRef: 'jobModeration',
+            query: { job_scope: 'resubmitted' },
+          },
+          {
             key: 'held-jobs',
             label: 'Tin đang tạm giữ',
             routeRef: 'jobModeration',
@@ -159,6 +167,7 @@ export const ADMIN_NAVIGATION = [
           {
             key: 'job-reports',
             label: 'Báo cáo vi phạm',
+            badgeKey: 'job_reports',
             routeRef: 'jobModeration',
             query: { tab: 'reports' },
           },
@@ -186,7 +195,7 @@ export const ADMIN_NAVIGATION = [
         key: 'blog',
         label: 'Cẩm nang nghề nghiệp',
         children: [
-          { key: 'blog-posts', label: 'Bài viết', routeRef: 'blog' },
+          { key: 'blog-posts', label: 'Bài viết', badgeKey: 'blog_reviews', routeRef: 'blog' },
           { key: 'blog-categories', label: 'Danh mục', routeRef: 'blog', query: { tab: 'categories' } },
           { key: 'blog-tags', label: 'Thẻ', routeRef: 'blog', query: { tab: 'tags' } },
           { key: 'blog-pins', label: 'Bài ghim', routeRef: 'blog', query: { tab: 'pins' } },
@@ -197,8 +206,8 @@ export const ADMIN_NAVIGATION = [
         label: 'FAQ & hướng dẫn',
         children: [
           { key: 'knowledgebase-articles', label: 'Tất cả nội dung', routeRef: 'knowledgebase' },
-          { key: 'knowledgebase-review', label: 'Hàng chờ duyệt', routeRef: 'knowledgebase', query: { revision_status: 'IN_REVIEW' } },
-          { key: 'knowledgebase-overdue', label: 'Cần rà soát', routeRef: 'knowledgebase', query: { review_due: 'overdue' } },
+          { key: 'knowledgebase-review', label: 'Hàng chờ duyệt', badgeKey: 'knowledge_reviews', routeRef: 'knowledgebase', query: { revision_status: 'IN_REVIEW' } },
+          { key: 'knowledgebase-overdue', label: 'Cần rà soát', badgeKey: 'knowledge_overdue', routeRef: 'knowledgebase', query: { review_due: 'overdue' } },
         ],
       },
       {

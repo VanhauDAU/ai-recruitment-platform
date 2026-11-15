@@ -273,6 +273,12 @@ test('announcement strip: admin workspace remains below its responsive topbar', 
                     },
                   }
                 : {}
+    if (path.startsWith('/api/dashboard/admin/')) {
+      // Dashboard data is not what this test is about: an outage must still
+      // leave the topbar and the strip intact.
+      await route.fulfill({ status: 503, contentType: 'application/json', body: '{}' })
+      return
+    }
     await route.fulfill({
       contentType: 'application/json',
       body: JSON.stringify(body),
@@ -285,7 +291,8 @@ test('announcement strip: admin workspace remains below its responsive topbar', 
     FEEDS.admin_workspace,
     page.locator('.admin-topbar'),
   )
-  await expect(page.getByRole('region', { name: 'Tóm tắt quyền truy cập' })).toBeVisible()
+  await expect(page.getByRole('heading', { level: 1, name: /Quản trị hệ thống/ })).toBeVisible()
+  await expect(page.getByText('Không tải được số liệu bảng điều khiển.')).toBeVisible()
   expect(pageErrors).toEqual([])
 })
 

@@ -8,15 +8,11 @@ import DashboardLayout from './DashboardLayout'
 
 const {
   getAdminAccountSummary,
-  getAdminCompanySummary,
-  getAdminCompanyDomainClaimSummary,
-  getAdminEmployerVerificationSummary,
+  getAdminQueueSummary,
   useSession,
 } = vi.hoisted(() => ({
   getAdminAccountSummary: vi.fn(),
-  getAdminCompanySummary: vi.fn(),
-  getAdminCompanyDomainClaimSummary: vi.fn(),
-  getAdminEmployerVerificationSummary: vi.fn(),
+  getAdminQueueSummary: vi.fn(),
   useSession: vi.fn(),
 }))
 vi.mock('@/entities/session', () => ({ useSession }))
@@ -24,14 +20,9 @@ vi.mock('@/entities/admin-account', async (importOriginal) => ({
   ...(await importOriginal()),
   getAdminAccountSummary,
 }))
-vi.mock('@/entities/admin-company', async (importOriginal) => ({
+vi.mock('@/entities/admin-dashboard', async (importOriginal) => ({
   ...(await importOriginal()),
-  getAdminCompanySummary,
-}))
-vi.mock('@/entities/admin-employer-verification', async (importOriginal) => ({
-  ...(await importOriginal()),
-  getAdminCompanyDomainClaimSummary,
-  getAdminEmployerVerificationSummary,
+  getAdminQueueSummary,
 }))
 vi.mock('@/entities/site-settings', () => ({
   BrandLogo: () => <span>Logo</span>,
@@ -61,10 +52,18 @@ describe('DashboardLayout admin access', () => {
       totals: { restricted: 4 },
       queues: { pending_admin_invitations: 5 },
     })
-    getAdminEmployerVerificationSummary.mockResolvedValue({ pending: 3 })
-    getAdminCompanyDomainClaimSummary.mockResolvedValue({ manual_pending: 2 })
-    getAdminCompanySummary.mockResolvedValue({
-      pending_update_requests: 7,
+    const queue = (key, count, overdue = 0) => ({
+      key, count, overdue, oldest_at: '2026-11-15T08:00:00Z', sla_hours: 72,
+    })
+    getAdminQueueSummary.mockResolvedValue({
+      generated_at: '2026-11-16T08:00:00Z',
+      queues: [
+        queue('recruiter_verification', 3),
+        queue('domain_verification', 2),
+        queue('company_updates', 7),
+        queue('job_reports', 4, 1),
+      ],
+      knowledge_review_overdue: 0,
     })
   })
 
@@ -89,7 +88,7 @@ describe('DashboardLayout admin access', () => {
     expect(screen.getByText('Tin có báo cáo chờ')).toBeInTheDocument()
     expect(screen.getByText('Tài khoản cá nhân')).toBeInTheDocument()
     expect(screen.queryByText('Hệ thống')).not.toBeInTheDocument()
-    expect(screen.getByText('Quản trị viên')).toBeInTheDocument()
+    expect(screen.getAllByText('Quản trị viên').length).toBeGreaterThan(0)
     await user.click(screen.getByRole('button', { name: /^Người dùng/ }))
     await user.click(screen.getByRole('button', { name: /^Tài khoản(?! cá nhân)/ }))
     expect(screen.getByText('Ứng viên')).toBeInTheDocument()
@@ -266,6 +265,11 @@ describe('DashboardLayout admin access', () => {
     await user.click(screen.getByRole('button', { name: /^Kiểm soát/ }))
     const restrictedUsers = screen.getByRole('button', { name: 'Người dùng bị hạn chế' })
     expect(restrictedUsers.querySelector('.admin-nav__count')).toBeNull()
+
+    const recruitmentMenu = screen.getByRole('button', { name: /Tuyển dụng & CV/ })
+    expect(within(recruitmentMenu).getByLabelText('4 mục đang chờ, có mục quá hạn'))
+      .toHaveClass('admin-nav__count--urgent')
+    expect(await screen.findByRole('button', { name: '16 mục cần xử lý, 1 quá hạn' })).toBeInTheDocument()
   })
 
   it('shows the active third-level item in the workspace header', () => {
@@ -284,6 +288,9 @@ describe('DashboardLayout admin access', () => {
     )
 
     expect(screen.getByText('Đang ở: Yêu cầu cập nhật')).toBeInTheDocument()
+    const breadcrumb = screen.getByRole('navigation', { name: 'Vị trí hiện tại' })
+    expect(within(breadcrumb).getAllByRole('listitem').map((item) => item.textContent))
+      .toEqual(['Doanh nghiệp', 'Công ty'])
   })
 
   it('labels a superuser in the workspace header', () => {
@@ -301,7 +308,9 @@ describe('DashboardLayout admin access', () => {
         <DashboardLayout />
       </MemoryRouter>,
     )
-    expect(screen.getByText('Superuser')).toBeInTheDocument()
+    expect(screen.getAllByText('Superuser').length).toBeGreaterThan(0)
+    expect(screen.getByText('Hậu Superuser', { selector: '.admin-sider-footer__meta strong' }))
+      .toBeInTheDocument()
     expect(screen.queryByText(/chưa được gán phòng ban/)).not.toBeInTheDocument()
   })
 
