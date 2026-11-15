@@ -854,6 +854,75 @@ class JobPostingWorkflowTests(TestCase):
         rejected.refresh_from_db()
         self.assertEqual(rejected.status, Job.Status.CLOSED)
 
+    def test_reopen_cannot_extend_past_the_ninety_day_public_lifetime(self):
+        today = vietnam_today()
+        job = self.make_active_job()
+        job.first_approved_at = job.visibility_starts_at = timezone.now() - timedelta(days=80)
+        job.visibility_ends_at = timezone.now() + timedelta(days=10)
+        job.save(update_fields=['first_approved_at', 'visibility_starts_at', 'visibility_ends_at'])
+        closed = close_job(job, self.user)
+
+        with self.assertRaises(ValidationError) as context:
+            reopen_job(closed, self.user, today + timedelta(days=20), **ACCEPTED)
+
+        self.assertIn('nhân bản tin', str(context.exception.detail['deadline']))
+        closed.refresh_from_db()
+        self.assertEqual(closed.status, Job.Status.CLOSED)
+
+    def test_reopen_keeps_the_deadline_inside_the_visibility_window(self):
+        today = vietnam_today()
+        job = self.make_active_job()
+        job.visibility_ends_at = timezone.now() + timedelta(days=5)
+        job.save(update_fields=['visibility_ends_at'])
+        closed = close_job(job, self.user)
+
+        with self.assertRaises(ValidationError) as context:
+            reopen_job(closed, self.user, today + timedelta(days=20), **ACCEPTED)
+
+        self.assertIn('vượt thời gian công khai', str(context.exception.detail['deadline']))
+
+    def test_reopening_does_not_consume_another_publication(self):
+        job = self.make_active_job()
+        submitted_at = job.submitted_at
+        closed = close_job(job, self.user)
+
+        reopened = reopen_job(closed, self.user, vietnam_today() + timedelta(days=7), **ACCEPTED)
+
+        self.assertEqual(reopened.submitted_at, submitted_at)
+
+    def test_extending_a_job_without_a_deadline_does_not_crash(self):
+        job = self.make_active_job()
+        Job.objects.filter(pk=job.pk).update(deadline=None)
+        job.refresh_from_db()
+
+        extended = extend_job_deadline(job, self.user, vietnam_today() + timedelta(days=7))
+
+        self.assertEqual(extended.deadline, vietnam_today() + timedelta(days=7))
+
+    def test_extension_is_refused_once_the_employer_loses_the_current_dpa(self):
+        job = self.make_active_job()
+        self.recruiter.dpa_policy_version = 'old-version'
+        self.recruiter.save(update_fields=['dpa_policy_version', 'updated_at'])
+
+        with self.assertRaises(ValidationError) as context:
+            extend_job_deadline(job, self.user, job.deadline + timedelta(days=3))
+
+        self.assertEqual(context.exception.detail['code'], 'JOB_PUBLICATION_BLOCKED')
+
+    def test_posting_context_refuses_what_publish_would_refuse(self):
+        unverified = employer_job_posting_context(self.other_user)
+        verified = employer_job_posting_context(self.user)
+
+        self.assertFalse(unverified['job_postable'])
+        self.assertEqual(
+            [blocker['code'] for blocker in unverified['publish_blockers']],
+            ['verification_required'],
+        )
+        self.assertEqual(unverified['block_reason'], unverified['publish_blockers'][0]['label'])
+        self.assertTrue(verified['job_postable'])
+        self.assertEqual(verified['publish_blockers'], [])
+        self.assertEqual(verified['verified_publish_limit'], 100)
+
     def test_reopen_cannot_reset_an_expired_visibility_cycle(self):
         job = self.make_active_job()
         job.first_approved_at = timezone.now() - timedelta(days=31)

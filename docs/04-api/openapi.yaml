@@ -21975,10 +21975,17 @@ components:
         published_jobs_count:
           type: integer
           minimum: 0
+        publish_blockers:
+          type: array
+          items:
+            $ref: '#/components/schemas/EmployerPublishBlocker'
         publish_limit:
           type: integer
           minimum: 0
         publish_remain:
+          type: integer
+          minimum: 0
+        verified_publish_limit:
           type: integer
           minimum: 0
         free_publish_limit:
@@ -22006,12 +22013,14 @@ components:
       - lifecycle_policy
       - max_deadline_days
       - max_public_lifetime_days
+      - publish_blockers
       - publish_limit
       - publish_remain
       - published_jobs_count
       - responsibility_statement
       - verification_completed
       - verified_job_quota_eligible
+      - verified_publish_limit
     EmployerJobVisibilityHold:
       type: object
       properties:
@@ -22167,6 +22176,16 @@ components:
       - capabilities
       - code
       - message
+    EmployerPublishBlocker:
+      type: object
+      properties:
+        code:
+          type: string
+        label:
+          type: string
+      required:
+      - code
+      - label
     EmployerReadinessBlocker:
       type: object
       properties:

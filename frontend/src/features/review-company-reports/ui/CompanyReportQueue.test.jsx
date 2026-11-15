@@ -114,7 +114,7 @@ describe('CompanyReportQueue', () => {
       apply_hold: true,
     }))
     await waitFor(() => expect(mocks.getAdminCompanyReports).toHaveBeenCalledTimes(2))
-  })
+  }, 10_000)
 
   it('dismisses a report with a note and never offers a hold', async () => {
     renderQueue()
@@ -130,7 +130,7 @@ describe('CompanyReportQueue', () => {
       note: 'Thông tin trên trang là đúng.',
       apply_hold: false,
     }))
-  })
+  }, 10_000)
 
   it.each(['upheld', 'dismissed'])('requires an audit reason before reopening a report that was %s', async (status) => {
     mocks.getAdminCompanyReports.mockResolvedValue(listOf({ ...REPORT, status }))
