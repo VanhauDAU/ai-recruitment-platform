@@ -1,5 +1,6 @@
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { MemoryRouter } from 'react-router'
 import { describe, expect, it } from 'vitest'
 import PostingQuotaNotice from './PostingQuotaNotice'
 
@@ -68,5 +69,47 @@ describe('PostingQuotaNotice', () => {
       'Bạn vẫn có thể lưu bản nháp. Hoàn tất xác thực Cấp 3 để mở hạn mức đăng tin.',
     )
     expect(within(notice).queryByRole('button', { name: 'Đóng thông báo quota đăng tin' })).not.toBeInTheDocument()
+  })
+
+  it('lists every publication blocker with the way to fix it before the form is filled', () => {
+    render(
+      <MemoryRouter>
+        <PostingQuotaNotice
+          postingContext={{
+            job_postable: false,
+            block_reason: 'Nhà tuyển dụng chưa được duyệt xác thực.',
+            publish_blockers: [
+              { code: 'verification_required', label: 'Nhà tuyển dụng chưa được duyệt xác thực.' },
+              { code: 'dpa_outdated', label: 'Nhà tuyển dụng chưa có chấp thuận DPA còn hiệu lực.' },
+            ],
+            publish_remain: 3,
+            publish_limit: 3,
+          }}
+        />
+      </MemoryRouter>,
+    )
+
+    const alert = within(screen.getByRole('region', { name: 'Hạn mức đăng tin' })).getByRole('alert')
+    expect(alert).toHaveTextContent('Chưa thể đăng tin')
+    expect(within(alert).getByRole('link', { name: 'Xem trạng thái xác thực' })).toBeInTheDocument()
+    expect(within(alert).getByRole('link', { name: 'Cập nhật DPA hiện hành' })).toBeInTheDocument()
+  })
+
+  it('names the verified quota from the site settings', () => {
+    render(
+      <PostingQuotaNotice
+        postingContext={{
+          job_postable: true,
+          verified_job_quota_eligible: false,
+          publish_remain: 3,
+          publish_limit: 3,
+          verified_publish_limit: 100,
+        }}
+      />,
+    )
+
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'Còn 3/3 lượt miễn phí. Hoàn tất xác thực Cấp 3 để có 100 lượt.',
+    )
   })
 })

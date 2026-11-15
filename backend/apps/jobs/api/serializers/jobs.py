@@ -1005,6 +1005,11 @@ class EmployerJobLifecyclePolicySerializer(serializers.Serializer):
     timezone = serializers.CharField()
 
 
+class EmployerPublishBlockerSerializer(serializers.Serializer):
+    code = serializers.CharField()
+    label = serializers.CharField()
+
+
 class EmployerJobPostingContextSerializer(serializers.Serializer):
     default_deadline_days = serializers.IntegerField(min_value=1)
     max_deadline_days = serializers.IntegerField(min_value=1)
@@ -1022,8 +1027,10 @@ class EmployerJobPostingContextSerializer(serializers.Serializer):
     )
     blockers = EmployerPostingBlockerSerializer(many=True)
     published_jobs_count = serializers.IntegerField(min_value=0)
+    publish_blockers = EmployerPublishBlockerSerializer(many=True)
     publish_limit = serializers.IntegerField(min_value=0)
     publish_remain = serializers.IntegerField(min_value=0)
+    verified_publish_limit = serializers.IntegerField(min_value=0)
     free_publish_limit = serializers.IntegerField(min_value=0)
     free_publish_remain = serializers.IntegerField(min_value=0)
     job_postable = serializers.BooleanField()

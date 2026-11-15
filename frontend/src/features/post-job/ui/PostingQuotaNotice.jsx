@@ -5,6 +5,8 @@ import {
   InfoCircleFilled,
 } from '@ant-design/icons'
 import { useState } from 'react'
+import { Link } from 'react-router'
+import { employerReadinessAction } from '@/entities/employer-profile'
 
 const NOTICE_TONES = {
   eligible: {
@@ -30,13 +32,30 @@ const NOTICE_TONES = {
   },
 }
 
+// `publish_blockers` codes of the posting context -> readiness fix actions.
+const BLOCKER_ACTIONS = {
+  verification_required: 'open_verification',
+  dpa_outdated: 'accept_current_dpa',
+  compliance_hold_active: 'contact_support',
+}
+
 function noticeContent(postingContext) {
   const remaining = postingContext.publish_remain ?? postingContext.free_publish_remain
   const limit = postingContext.publish_limit ?? postingContext.free_publish_limit
   const remainingLabel = remaining == null || limit == null ? 'Chưa xác định' : `${remaining}/${limit}`
   const eligibleDescription = `Còn ${remainingLabel} lượt đăng tin · Tài khoản xác thực Cấp 3.`
 
+  const blockers = postingContext.publish_blockers || []
   if (!postingContext.job_postable) {
+    if (blockers.length) {
+      return {
+        state: 'blocked',
+        title: 'Chưa thể đăng tin',
+        badge: null,
+        description: 'Bạn vẫn có thể lưu bản nháp. Tin chỉ đăng được khi xử lý xong:',
+        blockers,
+      }
+    }
     return {
       state: 'blocked',
       title: postingContext.block_reason,
@@ -60,7 +79,9 @@ function noticeContent(postingContext) {
     state: 'free',
     title: 'Hạn mức miễn phí',
     badge: 'Đang sử dụng',
-    description: `Còn ${remainingLabel} lượt miễn phí. Hoàn tất xác thực Cấp 3 để mở hạn mức mở rộng.`,
+    description: postingContext.verified_publish_limit
+      ? `Còn ${remainingLabel} lượt miễn phí. Hoàn tất xác thực Cấp 3 để có ${postingContext.verified_publish_limit} lượt.`
+      : `Còn ${remainingLabel} lượt miễn phí. Hoàn tất xác thực Cấp 3 để mở hạn mức mở rộng.`,
   }
 }
 
@@ -106,6 +127,19 @@ export default function PostingQuotaNotice({ postingContext }) {
           <p className="mt-0.5 break-words text-xs leading-5 text-slate-600 sm:mt-0">
             {content.description}
           </p>
+          {content.blockers && (
+            <ul className="mt-1 space-y-1 text-xs leading-5 text-slate-700">
+              {content.blockers.map((blocker) => {
+                const action = employerReadinessAction(BLOCKER_ACTIONS[blocker.code])
+                return (
+                  <li key={blocker.code}>
+                    {blocker.label}{' '}
+                    <Link className="font-semibold" to={action.to}>{action.label}</Link>
+                  </li>
+                )
+              })}
+            </ul>
+          )}
         </div>
         {dismissible && (
           <button
