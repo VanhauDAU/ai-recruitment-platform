@@ -1,5 +1,4 @@
 from datetime import timedelta
-from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.urls import reverse
@@ -9,8 +8,8 @@ from rest_framework.test import APITestCase
 
 from apps.accounts.tests.helpers import make_admin
 from apps.employers.models import Company, EmployerVerificationCase
-from apps.employers.services import recruiter_job_publication_state
 from apps.employers.tests.readiness_helpers import make_employer_ready
+from common.vietnam_time import vietnam_today
 
 from ..models import (
     Job,
@@ -18,7 +17,8 @@ from ..models import (
     JobApplicationEmail,
     JobModerationEvent,
 )
-from ..services import build_job_content_snapshot, lifecycle_local_date
+from ..services import build_job_content_snapshot
+from .helpers import open_visibility_window
 
 
 class JobModerationFixture:
@@ -41,10 +41,11 @@ class JobModerationFixture:
             title='Backend Engineer',
             description='Xây dựng nền tảng tuyển dụng.',
             status=Job.Status.ACTIVE,
-            deadline=lifecycle_local_date() + timedelta(days=7),
+            deadline=vietnam_today() + timedelta(days=7),
             submitted_at=now,
             published_at=now,
             approved_at=now,
+            **open_visibility_window(),
         )
 
     def detail_url(self):
@@ -73,11 +74,7 @@ class JobModerationApiTests(JobModerationFixture, APITestCase):
             {'q': 'Backend', 'status': 'active', 'ordering': 'title'},
         )
         summary = self.client.get(reverse('admin-job-moderation-summary'))
-        with patch(
-            'apps.jobs.services.moderation.recruiter_job_publication_state',
-            wraps=recruiter_job_publication_state,
-        ) as publication_state:
-            detail = self.client.get(self.detail_url())
+        detail = self.client.get(self.detail_url())
 
         self.assertEqual(listing.status_code, status.HTTP_200_OK, listing.data)
         self.assertEqual(listing.data['count'], 1)
@@ -95,7 +92,6 @@ class JobModerationApiTests(JobModerationFixture, APITestCase):
         self.assertEqual(detail.data['state_actions'], ['hide'])
         self.assertTrue(detail.data['review_token'])
         self.assertIn('moderation_events', detail.data)
-        self.assertEqual(publication_state.call_count, 1)
 
     def test_management_list_filters_jobs_by_company_public_id(self):
         other_company = Company.objects.create(
@@ -167,7 +163,7 @@ class JobModerationApiTests(JobModerationFixture, APITestCase):
         detail = self.client.get(self.detail_url())
 
         blocker_codes = [item['code'] for item in detail.data['blocked_reasons']]
-        self.assertEqual(blocker_codes, ['verification_required', 'dpa_outdated'])
+        self.assertEqual(blocker_codes, ['verification_required', 'dpa_required'])
         self.assertEqual(len(blocker_codes), len(set(blocker_codes)))
         self.assertNotIn('approve_blockers', detail.data)
 

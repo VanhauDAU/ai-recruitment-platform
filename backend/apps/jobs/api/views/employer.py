@@ -157,7 +157,15 @@ class EmployerJobPostingContextView(generics.GenericAPIView):
         return Response(employer_job_posting_context(request.user))
 
 
-class EmployerJobSubmitView(generics.GenericAPIView):
+# Serializes a job a service just changed, with freshly computed visibility
+# (a comment, not a docstring, so it does not become every view's API text).
+class FreshJobDetailMixin:
+    def fresh_detail(self, job):
+        job = employer_job_detail_queryset(self.request.user).get(pk=job.pk)
+        return EmployerJobDetailSerializer(job, context=self.get_serializer_context()).data
+
+
+class EmployerJobSubmitView(FreshJobDetailMixin, generics.GenericAPIView):
     permission_classes = [IsEmployer]
 
     def post(self, request, public_id):
@@ -167,12 +175,10 @@ class EmployerJobSubmitView(generics.GenericAPIView):
             request.user,
             accepted_statement_version=_accepted_statement_version(request),
         )
-        return Response(
-            EmployerJobDetailSerializer(job, context=self.get_serializer_context()).data
-        )
+        return Response(self.fresh_detail(job))
 
 
-class EmployerJobCloseView(generics.GenericAPIView):
+class EmployerJobCloseView(FreshJobDetailMixin, generics.GenericAPIView):
     permission_classes = [IsEmployer]
 
     def post(self, request, public_id):
@@ -180,9 +186,7 @@ class EmployerJobCloseView(generics.GenericAPIView):
             get_object_or_404(employer_job_detail_queryset(request.user), public_id=public_id),
             request.user,
         )
-        return Response(
-            EmployerJobDetailSerializer(job, context=self.get_serializer_context()).data
-        )
+        return Response(self.fresh_detail(job))
 
 
 class DeadlineSerializer(serializers.Serializer):
@@ -206,7 +210,7 @@ class DeadlineSerializer(serializers.Serializer):
         return attrs
 
 
-class EmployerJobReopenView(generics.GenericAPIView):
+class EmployerJobReopenView(FreshJobDetailMixin, generics.GenericAPIView):
     permission_classes = [IsEmployer]
 
     def post(self, request, public_id):
@@ -220,12 +224,10 @@ class EmployerJobReopenView(generics.GenericAPIView):
             serializer.validated_data['deadline'],
             accepted_statement_version=_accepted_statement_version(request),
         )
-        return Response(
-            EmployerJobDetailSerializer(job, context=self.get_serializer_context()).data
-        )
+        return Response(self.fresh_detail(job))
 
 
-class EmployerJobExtendView(generics.GenericAPIView):
+class EmployerJobExtendView(FreshJobDetailMixin, generics.GenericAPIView):
     permission_classes = [IsEmployer]
 
     def post(self, request, public_id):
@@ -236,9 +238,7 @@ class EmployerJobExtendView(generics.GenericAPIView):
             request.user,
             serializer.validated_data['deadline'],
         )
-        return Response(
-            EmployerJobDetailSerializer(job, context=self.get_serializer_context()).data
-        )
+        return Response(self.fresh_detail(job))
 
 
 class EmployerJobDuplicateView(generics.GenericAPIView):

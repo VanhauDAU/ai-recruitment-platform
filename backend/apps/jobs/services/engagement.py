@@ -2,17 +2,16 @@
 
 from hashlib import sha256
 from uuid import uuid4
-from zoneinfo import ZoneInfo
 
 from django.conf import settings
 from django.core import signing
 from django.core.cache import cache
 from django.db import transaction
 from django.db.models import F
-from django.utils import timezone
 
 from apps.privacy.constants import VIEWER_SIGNING_SALT
 from common.metrics import record_metric
+from common.vietnam_time import vietnam_today
 
 from ..models import Job, JobEngagementDaily
 
@@ -77,7 +76,7 @@ def _claim_first_view(keys):
 
 def _tracking_date():
     """Use the product reporting timezone instead of the project's UTC timezone."""
-    return timezone.localdate(timezone=ZoneInfo('Asia/Ho_Chi_Minh'))
+    return vietnam_today()
 
 
 @transaction.atomic

@@ -2,6 +2,7 @@ import random
 from datetime import timedelta
 from io import BytesIO
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
 from django.core.management.base import BaseCommand
@@ -129,13 +130,23 @@ def save_demo_image(name, size, colour, text=''):
     return storage.save(path, ContentFile(buffer.getvalue()))
 
 
+DEMO_VISIBILITY_DAYS = 60
+
+
 def approve_demo_representative(recruiter, now):
     """Give the owner the evidence of legal representation.
 
     Featured companies, indexable company pages and the page workspace all
-    require an approved case with a current approved business registration.
+    require an approved case with a current approved business registration;
+    public jobs also require the current candidate-data DPA.
     """
     company = recruiter.company
+    recruiter.dpa_accepted_at = now
+    recruiter.dpa_policy_version = settings.EMPLOYER_DPA_POLICY_VERSION
+    recruiter.dpa_document_sha256 = settings.EMPLOYER_DPA_DOCUMENT_SHA256
+    recruiter.save(
+        update_fields=['dpa_accepted_at', 'dpa_policy_version', 'dpa_document_sha256', 'updated_at']
+    )
     verification_case = EmployerVerificationCase.objects.create(
         recruiter=recruiter,
         company=company,
@@ -300,6 +311,10 @@ class Command(BaseCommand):
                     deadline=(published + timedelta(days=rnd.choice([7, 15, 30, 45]))).date(),
                     status=Job.Status.ACTIVE,
                     published_at=published,
+                    requested_visibility_days=DEMO_VISIBILITY_DAYS,
+                    first_approved_at=published,
+                    visibility_starts_at=published,
+                    visibility_ends_at=published + timedelta(days=DEMO_VISIBILITY_DAYS),
                 )
                 if category:
                     JobCategoryAssignment.objects.create(

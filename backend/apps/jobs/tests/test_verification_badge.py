@@ -17,9 +17,11 @@ from apps.employers.models import (
     RecruiterProfile,
 )
 from apps.employers.services import account_badge_eligible_at, employer_badge_payload
+from apps.employers.tests.readiness_helpers import current_dpa_fields
 
 from ..models import Job, JobReport
 from ..selectors.verification_badge import job_badge_criteria
+from .helpers import open_visibility_window
 
 
 def _employer_with_verification_case(
@@ -53,6 +55,7 @@ def _employer_with_verification_case(
         contact_phone=user.phone,
         verified_phone=user.phone,
         phone_verified_at=timezone.now(),
+        **current_dpa_fields(),
     )
     case = EmployerVerificationCase.objects.create(
         recruiter=recruiter,
@@ -97,6 +100,7 @@ def _job_for(user, company, suffix=''):
         title=f'Chuyên viên SAP {suffix}'.strip(),
         description='Mô tả',
         status=Job.Status.ACTIVE,
+        **open_visibility_window(),
     )
 
 
@@ -326,6 +330,7 @@ class JobBadgeApiTests(APITestCase):
             title='Chuyên viên SAP',
             description='Mô tả',
             status=Job.Status.ACTIVE,
+            **open_visibility_window(),
         )
 
         response = self.client.get(reverse('job-detail', kwargs={'slug': job.slug}))
@@ -355,6 +360,7 @@ class JobBadgeApiTests(APITestCase):
                 title=f'Vị trí {index}',
                 description='Mô tả',
                 status=Job.Status.ACTIVE,
+                **open_visibility_window(),
             )
 
         with self.assertNumQueries(8):
@@ -394,8 +400,9 @@ class JobBadgeApiTests(APITestCase):
 
         self.assertEqual(response.status_code, 200, response.data)
         badges = {item['public_id']: item['company_verified'] for item in response.data['results']}
-        self.assertTrue(badges[owner_job.public_id])
-        self.assertFalse(badges[member_job.public_id])
+        # The unverified member may not open candidate data, so its job is not public.
+        self.assertEqual(badges, {owner_job.public_id: True})
+        self.assertNotIn(member_job.public_id, badges)
 
 
 class EmployerBadgeAuditCommandTests(APITestCase):
@@ -424,6 +431,7 @@ class JobReportApiTests(APITestCase):
             title='Chuyên viên SAP',
             description='Mô tả',
             status=Job.Status.ACTIVE,
+            **open_visibility_window(),
         )
         self.candidate = User.objects.create_user(
             email='ungvien-report@example.com',

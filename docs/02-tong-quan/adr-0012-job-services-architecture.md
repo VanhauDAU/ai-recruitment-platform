@@ -178,7 +178,7 @@ thanh toán hoặc PII không cần thiết.
 
 | Setting | Giá trị ban đầu | Vai trò |
 | --- | --- | --- |
-| `JOB_LIFECYCLE_V2_MODE` | `legacy` | `legacy`, `shadow`, `enforce` |
+| ~~`JOB_LIFECYCLE_V2_MODE`~~ | — | Đã gỡ 15/11/2026: cửa sổ hiển thị luôn áp dụng ([ADR-0019](adr-0019-job-effective-state.md)) |
 | `JOB_PRESENTATION_V2_ENABLED` | `false` | Bật projection mới |
 | `SERVICE_CATALOG_V2_ENABLED` | `false` | Bật versioned catalogue |
 | `SERVICE_ACTIVATION_ENABLED` | `false` | Cho NTD consume unit |

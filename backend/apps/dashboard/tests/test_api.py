@@ -12,6 +12,7 @@ from apps.cvs.services import create_initial_document
 from apps.employers.models import Company, RecruiterProfile, RecruitmentNeed
 from apps.employers.tests.readiness_helpers import make_employer_ready
 from apps.jobs.models import Job, JobCategory
+from apps.jobs.tests.helpers import open_visibility_window
 
 
 class EmployerDashboardApiTests(APITestCase):
@@ -55,6 +56,7 @@ class EmployerDashboardApiTests(APITestCase):
             status=Job.Status.ACTIVE,
             view_count=120,
             application_count=4,
+            **open_visibility_window(),
         )
         Job.objects.create(
             posted_by=self.user,
@@ -73,7 +75,12 @@ class EmployerDashboardApiTests(APITestCase):
         self.assertEqual(response.data['account']['company_name'], 'Công ty Acme')
         self.assertTrue(response.data['account']['verification']['account_ready'])
         self.assertEqual(response.data['summary']['jobs_total'], 2)
-        self.assertEqual(response.data['summary']['jobs_active'], 1)
+        # The recruiter is not verified yet, so the active job is hidden from candidates.
+        self.assertEqual(response.data['summary']['jobs_active'], 0)
+        self.assertEqual(response.data['summary']['jobs_hidden'], 1)
+        self.assertEqual(
+            [job['status'] for job in response.data['recent_jobs']], ['draft', 'hidden']
+        )
         self.assertEqual(response.data['summary']['jobs_draft'], 1)
         self.assertNotIn('jobs_pending', response.data['summary'])
         self.assertEqual(response.data['summary']['job_views'], 130)

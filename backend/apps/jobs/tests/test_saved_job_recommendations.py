@@ -21,6 +21,7 @@ from ..models import (
     JobSkill,
     SavedJob,
 )
+from .helpers import open_visibility_window
 
 
 class SavedJobRecommendationApiTests(APITestCase):
@@ -84,6 +85,7 @@ class SavedJobRecommendationApiTests(APITestCase):
             'title': title,
             'description': 'Mô tả công việc.',
             'status': Job.Status.ACTIVE,
+            **open_visibility_window(),
         }
         values.update(overrides)
         return Job.objects.create(**values)

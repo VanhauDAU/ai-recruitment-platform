@@ -7,6 +7,8 @@ from apps.employers.models import Company
 from apps.employers.tests.readiness_helpers import make_employer_ready
 from apps.jobs.models import Job
 
+from .helpers import open_visibility_window
+
 SHELL = (
     '<!doctype html><html lang="en"><head><title data-seo-default>Old</title>'
     '</head><body><div id="root"></div></body></html>'
@@ -38,6 +40,7 @@ class JobSeoTests(TestCase):
             salary_min=20_000_000,
             salary_max=30_000_000,
             status=Job.Status.ACTIVE,
+            **open_visibility_window(),
         )
         cls.closed_job = Job.objects.create(
             posted_by=employer,

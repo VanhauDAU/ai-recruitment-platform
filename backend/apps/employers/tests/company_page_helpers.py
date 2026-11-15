@@ -6,6 +6,7 @@ from django.contrib.auth import get_user_model
 from django.utils import timezone
 
 from apps.jobs.models import Job
+from apps.jobs.tests.helpers import open_visibility_window
 
 from ..models import (
     Company,
@@ -14,6 +15,7 @@ from ..models import (
     EmployerVerificationCase,
     RecruiterProfile,
 )
+from .readiness_helpers import accept_current_dpa
 
 
 def make_employer(email):
@@ -48,6 +50,7 @@ def add_recruiter(company, *, approved=True, role=RecruiterProfile.CompanyRole.O
         company_role=role,
     )
     if approved:
+        accept_current_dpa(recruiter)
         verification_case = EmployerVerificationCase.objects.create(
             recruiter=recruiter,
             company=company,
@@ -73,6 +76,7 @@ def publish_job(company, posted_by, **overrides):
         'title': f'Vị trí {Job.objects.count()}',
         'description': 'Mô tả công việc công khai.',
         'status': Job.Status.ACTIVE,
+        **open_visibility_window(),
         'published_at': timezone.now(),
         'deadline': timezone.localdate() + timedelta(days=30),
     }

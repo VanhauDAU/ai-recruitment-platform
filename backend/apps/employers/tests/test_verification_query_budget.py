@@ -8,6 +8,7 @@ from rest_framework.test import APITestCase
 
 from apps.accounts.models import User
 from apps.jobs.models import Job
+from apps.jobs.tests.helpers import open_visibility_window
 
 from ..models import (
     Company,
@@ -113,6 +114,7 @@ class EmployerVerificationQueryBudgetTests(APITestCase):
                 description='Flat query resource.',
                 status=Job.Status.ACTIVE,
                 published_at=timezone.now(),
+                **open_visibility_window(),
             )
 
     def _selected_case(self):

@@ -20,6 +20,7 @@ class RecruitmentCampaignSerializer(serializers.ModelSerializer):
     draft_job_count = serializers.IntegerField(read_only=True, default=0)
     active_job_count = serializers.IntegerField(read_only=True, default=0)
     expired_job_count = serializers.IntegerField(read_only=True, default=0)
+    hidden_job_count = serializers.IntegerField(read_only=True, default=0)
     closed_job_count = serializers.IntegerField(read_only=True, default=0)
 
     class Meta:
@@ -42,6 +43,7 @@ class RecruitmentCampaignSerializer(serializers.ModelSerializer):
             'draft_job_count',
             'active_job_count',
             'expired_job_count',
+            'hidden_job_count',
             'closed_job_count',
             'created_at',
             'updated_at',
@@ -62,6 +64,7 @@ class RecruitmentCampaignSerializer(serializers.ModelSerializer):
             'draft_job_count',
             'active_job_count',
             'expired_job_count',
+            'hidden_job_count',
             'closed_job_count',
             'created_at',
             'updated_at',

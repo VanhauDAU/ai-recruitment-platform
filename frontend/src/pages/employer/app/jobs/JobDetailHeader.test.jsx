@@ -9,6 +9,7 @@ const LIVE_JOB = {
   slug: 'ky-su-frontend',
   title: 'Kỹ sư Frontend',
   status: 'active',
+  effective_state: 'active',
   deadline: '2099-12-31',
   first_approved_at: '2099-12-01T02:00:00Z',
   view_count: 480,
@@ -54,17 +55,17 @@ describe('JobDetailHeader', () => {
   })
 
   it('offers only the lifecycle actions the backend accepts', () => {
-    const extend = renderHeader({ ...LIVE_JOB, is_expired: true, visibility_ends_at: null })
+    const extend = renderHeader({ ...LIVE_JOB, effective_state: 'expired', is_expired: true, visibility_ends_at: null })
     fireEvent.click(screen.getByRole('button', { name: /Gia hạn/ }))
     expect(extend.onDeadlineAction).toHaveBeenCalledWith('extend')
     expect(screen.queryByRole('link', { name: /Xem tin đăng/ })).not.toBeInTheDocument()
   })
 
   it('hides editing and the public link while a job is held', () => {
-    renderHeader({ ...LIVE_JOB, visibility_hold: { kind: 'moderation', label: 'Tạm ẩn' } })
+    renderHeader({ ...LIVE_JOB, effective_state: 'hidden', visibility_hold: { kind: 'moderation', label: 'Tạm ẩn' } })
 
     const heading = screen.getByRole('heading', { name: 'Kỹ sư Frontend' }).parentElement
-    expect(within(heading).getByText('Tạm ẩn')).toBeInTheDocument()
+    expect(within(heading).getByText('Bị ẩn')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /Chỉnh sửa/ })).not.toBeInTheDocument()
     expect(screen.queryByRole('link', { name: /Xem tin đăng/ })).not.toBeInTheDocument()
   })

@@ -20,9 +20,10 @@ from apps.candidates.services import release_due_candidate_notifications
 from apps.cv_templates.tests.factories import fill_cv_for_application, make_published_template
 from apps.cvs.models import CvAccessLog, CvExport, UserCv
 from apps.cvs.services import create_application_snapshot, create_v2_cv
-from apps.employers.models import Company, RecruiterProfile
+from apps.employers.models import Company
 from apps.employers.tests.readiness_helpers import make_employer_ready
 from apps.jobs.models import Job
+from apps.jobs.tests.helpers import open_visibility_window
 
 from ..models import Application
 
@@ -65,6 +66,7 @@ class RecruiterWorkspaceApiTests(APITestCase):
             title='Backend Engineer',
             description='Workspace API tests.',
             status=Job.Status.ACTIVE,
+            **open_visibility_window(),
         )
         template, _version = make_published_template('Workspace template')
         self.cv = create_v2_cv(actor=self.candidate, title='Workspace CV', template=template)
@@ -257,15 +259,14 @@ class CandidateApplyReadinessTests(APITestCase):
             email='ready-employer@example.com', password='password', role='employer'
         )
         company = Company.objects.create(company_name='Ready Co', created_by=employer)
-        RecruiterProfile.objects.create(
-            user=employer, company=company, company_role=RecruiterProfile.CompanyRole.OWNER
-        )
+        make_employer_ready(employer, company=company, candidate_data=True)
         self.job = Job.objects.create(
             posted_by=employer,
             company=company,
             title='Ready Job',
             description='Readiness rules.',
             status=Job.Status.ACTIVE,
+            **open_visibility_window(),
         )
         template, _version = make_published_template('Ready template')
         self.cv = create_v2_cv(actor=self.candidate, title='Blank CV', template=template)

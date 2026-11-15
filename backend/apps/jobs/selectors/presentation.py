@@ -1,11 +1,12 @@
 from datetime import datetime, time
-from zoneinfo import ZoneInfo
 
 from django.utils import timezone
 
+from common.vietnam_time import VIETNAM_TZ
+
 from ..models import Job
 
-VIETNAM_TIME_ZONE = ZoneInfo('Asia/Ho_Chi_Minh')
+VIETNAM_TIME_ZONE = VIETNAM_TZ
 
 
 def _application_deadline_end(job):

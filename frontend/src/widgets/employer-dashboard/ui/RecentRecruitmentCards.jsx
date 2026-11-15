@@ -7,6 +7,8 @@ import { employerAppPath } from '@/shared/config/portals'
 const dateFormatter = new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })
 const JOB_STATUS = {
   active: { label: 'Đang tuyển', className: 'bg-emerald-50 text-emerald-700' },
+  hidden: { label: 'Bị ẩn', className: 'bg-red-50 text-red-700' },
+  expired: { label: 'Hết hạn', className: 'bg-orange-50 text-orange-700' },
   draft: { label: 'Bản nháp', className: 'bg-slate-100 text-slate-600' },
   closed: { label: 'Đã đóng', className: 'bg-slate-100 text-slate-500' },
 }

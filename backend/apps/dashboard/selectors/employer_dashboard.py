@@ -4,21 +4,17 @@ from datetime import timedelta
 
 from django.db.models import Count, Q, Sum, Value
 from django.db.models.functions import Coalesce, TruncDate
-from django.utils import timezone
 
 from apps.applications.models import Application
 from apps.employers.models import RecruiterProfile
 from apps.employers.selectors import build_employer_onboarding_steps, build_employer_readiness
-from apps.jobs.models import Job
+from apps.jobs.models import Job, JobState, job_effective_state_expression, job_state_counts
+from common.vietnam_time import VIETNAM_TZ, vietnam_day_start, vietnam_today
 
 
 def _summary(jobs, applications):
-    job_counts = jobs.aggregate(
-        total=Count('id'),
-        active=Count('id', filter=Q(status=Job.Status.ACTIVE)),
-        draft=Count('id', filter=Q(status=Job.Status.DRAFT)),
-        views=Coalesce(Sum('view_count'), Value(0)),
-    )
+    states = job_state_counts(jobs)
+    views = jobs.aggregate(total=Coalesce(Sum('view_count'), Value(0)))['total']
     application_counts = applications.aggregate(
         total=Count('id'),
         new=Count('id', filter=Q(status=Application.Status.SUBMITTED)),
@@ -26,10 +22,11 @@ def _summary(jobs, applications):
         interviewed=Count('id', filter=Q(status=Application.Status.INTERVIEWED)),
     )
     return {
-        'jobs_total': job_counts['total'],
-        'jobs_active': job_counts['active'],
-        'jobs_draft': job_counts['draft'],
-        'job_views': job_counts['views'],
+        'jobs_total': sum(states.values()),
+        'jobs_active': states[JobState.ACTIVE],
+        'jobs_hidden': states[JobState.HIDDEN],
+        'jobs_draft': states[JobState.DRAFT],
+        'job_views': views,
         'applications_total': application_counts['total'],
         'applications_new': application_counts['new'],
         'applications_shortlisted': application_counts['shortlisted'],
@@ -38,12 +35,11 @@ def _summary(jobs, applications):
 
 
 def _application_activity(applications):
-    today = timezone.localdate()
-    start = today - timedelta(days=6)
+    start = vietnam_today() - timedelta(days=6)
     daily = {
         item['day']: item['count']
-        for item in applications.filter(applied_at__date__gte=start)
-        .annotate(day=TruncDate('applied_at'))
+        for item in applications.filter(applied_at__gte=vietnam_day_start(start))
+        .annotate(day=TruncDate('applied_at', tzinfo=VIETNAM_TZ))
         .values('day')
         .annotate(count=Count('id'))
         .order_by('day')
@@ -62,15 +58,17 @@ def _recent_jobs(jobs):
         {
             'public_id': job.public_id,
             'title': job.title,
-            'status': job.status,
-            'status_label': job.get_status_display(),
+            'status': job.effective_state,
+            'status_label': JobState(job.effective_state).label,
             'deadline': job.deadline,
             'application_count': job.application_count,
             'view_count': job.view_count,
             'published_at': job.published_at,
             'created_at': job.created_at,
         }
-        for job in jobs.order_by('-created_at')[:5]
+        for job in jobs.annotate(effective_state=job_effective_state_expression()).order_by(
+            '-created_at'
+        )[:5]
     ]
 
 

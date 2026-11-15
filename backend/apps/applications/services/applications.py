@@ -11,17 +11,30 @@ from apps.candidates.models import CandidateNotification
 from apps.candidates.services import emit_candidate_notification
 from apps.cvs.services import create_application_snapshot
 from apps.employers.models import CampaignActivity
-from apps.employers.services import record_campaign_activity
+from apps.employers.services import record_campaign_activity, recruiter_readiness_state
+from apps.jobs.models import Job, publicly_available_job_filter
 
 from ..models import Application, ApplicationStatusHistory
+from .blocks import BLOCKED_APPLY_MESSAGE, is_candidate_blocked
 from .recruiter_alerts import alert_recruiter_of_application
 
 MAX_APPLICATIONS_PER_JOB = 3
 REAPPLICATION_COOLDOWN = timedelta(minutes=5)
 
 
-class InvalidReapplication(ValueError):
-    """Raised when a candidate exceeds the retry limit or cooldown."""
+JOB_UNAVAILABLE_MESSAGE = 'Tin tuyển dụng này hiện không nhận hồ sơ.'
+
+
+class ApplicationNotAllowed(ValueError):
+    """Raised when this submission may not be accepted; the message is user-facing."""
+
+
+def job_accepts_applications(job):
+    """A job takes applications only while public and while its poster may open them."""
+    if not Job.objects.filter(publicly_available_job_filter(), pk=job.pk).exists():
+        return False
+    _, readiness = recruiter_readiness_state(job.posted_by)
+    return readiness['candidate_data_access']
 
 
 def reapplication_error(candidate, job, *, now=None):
@@ -61,7 +74,12 @@ def create_application_record(
     candidate = lock_account_for_write(candidate)
     error = reapplication_error(candidate, job)
     if error:
-        raise InvalidReapplication(error)
+        raise ApplicationNotAllowed(error)
+    # Neutral wording: the candidate is never told they were blocked.
+    if is_candidate_blocked(recruiter_id=job.posted_by_id, candidate_id=candidate.pk):
+        raise ApplicationNotAllowed(BLOCKED_APPLY_MESSAGE)
+    if not job_accepts_applications(job):
+        raise ApplicationNotAllowed(JOB_UNAVAILABLE_MESSAGE)
     snapshot = create_application_snapshot(cv, candidate, source_version=source_version)
     application = Application.objects.create(
         candidate=candidate,

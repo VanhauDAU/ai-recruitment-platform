@@ -2,12 +2,18 @@
 
 from django.db.models import BooleanField, Case, CharField, Count, Prefetch, Q, Value, When
 from django.db.models.functions import Coalesce, NullIf
-from django.utils import timezone
 
 from common.db.search import search_q
 
-from ..models import Job, JobModerationEvent, JobReport, JobStatusHistory
-from .listing import publicly_available_job_filter
+from ..models import (
+    Job,
+    JobModerationEvent,
+    JobReport,
+    JobState,
+    JobStatusHistory,
+    job_effective_state_expression,
+    job_state_counts,
+)
 
 
 def _admin_job_queryset():
@@ -28,19 +34,16 @@ def _admin_job_queryset():
             filter=Q(posted_by__posted_jobs__approved_at__isnull=False),
             distinct=True,
         ),
+        # The candidate-facing state, so the admin link never points at a page
+        # that would 404 for the public and "expired" means what employers see.
+        effective_state=job_effective_state_expression(),
         is_expired_value=Case(
-            When(
-                status=Job.Status.ACTIVE,
-                deadline__lt=timezone.localdate(),
-                then=Value(True),
-            ),
+            When(effective_state=JobState.EXPIRED, then=Value(True)),
             default=Value(False),
             output_field=BooleanField(),
         ),
-        # Reuse the candidate-facing predicate so the admin link never points at
-        # a page that would 404 for the public.
         is_publicly_visible=Case(
-            When(publicly_available_job_filter(), then=Value(True)),
+            When(effective_state=JobState.ACTIVE, then=Value(True)),
             default=Value(False),
             output_field=BooleanField(),
         ),
@@ -69,11 +72,8 @@ def admin_job_management_queryset(*, params=None):
 
     scope = params.get('scope') or ''
     status_values = [value for value in (params.get('status') or '').split(',') if value]
-    if scope == 'expired':
-        queryset = queryset.filter(
-            status=Job.Status.ACTIVE,
-            deadline__lt=timezone.localdate(),
-        )
+    if scope in {JobState.ACTIVE, JobState.EXPIRED, JobState.HIDDEN}:
+        queryset = queryset.filter(effective_state=scope)
     elif scope == 'held':
         queryset = queryset.filter(
             ~Q(policy_hold=Job.PolicyHold.NONE) | ~Q(moderation_hold=Job.ModerationHold.NONE)
@@ -151,15 +151,9 @@ def admin_job_detail_queryset():
 
 
 def admin_job_management_summary():
-    jobs = Job.objects.aggregate(
+    jobs = job_state_counts(Job.objects.all())
+    jobs |= Job.objects.aggregate(
         total=Count('id'),
-        draft=Count('id', filter=Q(status=Job.Status.DRAFT)),
-        active=Count('id', filter=Q(status=Job.Status.ACTIVE)),
-        expired=Count(
-            'id',
-            filter=Q(status=Job.Status.ACTIVE, deadline__lt=timezone.localdate()),
-        ),
-        closed=Count('id', filter=Q(status=Job.Status.CLOSED)),
         held=Count(
             'id',
             filter=(

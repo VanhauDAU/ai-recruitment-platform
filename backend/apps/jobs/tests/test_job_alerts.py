@@ -57,6 +57,7 @@ from ..services.digests import (
 from ..tasks import deliver_candidate_job_digest as deliver_candidate_job_digest_task
 from ..tasks import prepare_candidate_job_digest as prepare_candidate_job_digest_task
 from ..tasks import prepare_due_candidate_job_digests as prepare_due_candidate_job_digests_task
+from .helpers import open_visibility_window
 
 
 class JobAlertContractSchemaTests(SimpleTestCase):
@@ -441,6 +442,7 @@ class StrictJobAlertSelectorTests(TestCase):
             'title': title,
             'description': 'Mô tả.',
             'status': Job.Status.ACTIVE,
+            **open_visibility_window(),
             'published_at': self.now - timedelta(minutes=5),
             'work_type': work_type,
         }
@@ -554,6 +556,7 @@ class CandidateJobDigestDeliveryTests(TestCase):
             description='Mô tả.',
             status=Job.Status.ACTIVE,
             published_at=self.now - timedelta(minutes=5),
+            **open_visibility_window(),
         )
 
     def _digest(self, job, *, scheduled_for=None):
@@ -738,6 +741,7 @@ class CandidateJobDigestPreparationTests(TestCase):
             description='Mô tả.',
             status=Job.Status.ACTIVE,
             published_at=self.now - timedelta(minutes=minutes_old),
+            **open_visibility_window(),
         )
 
     def _due_alert(self, keyword):
@@ -1138,6 +1142,7 @@ class FollowedCompanyDigestSourceTests(TestCase):
             description='Mô tả.',
             status=Job.Status.ACTIVE,
             published_at=self.now - timedelta(minutes=minutes_old),
+            **open_visibility_window(),
         )
 
     def _follow(self, *, candidate=None, company=None, hours_ago=24, notify_new_jobs=True):

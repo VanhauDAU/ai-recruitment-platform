@@ -543,10 +543,6 @@ JOB_POSTING_MAX_PUBLIC_LIFETIME_DAYS = config(
     'JOB_POSTING_MAX_PUBLIC_LIFETIME_DAYS', default=90, cast=int
 )
 
-# Job lifecycle V2 is deployed expand-first. ``legacy`` keeps the current
-# candidate availability contract, ``shadow`` computes V2 evidence without
-# changing responses, and ``enforce`` makes the visibility timestamps canonical.
-JOB_LIFECYCLE_V2_MODE = config('JOB_LIFECYCLE_V2_MODE', default='legacy').strip().lower()
 EMPLOYER_BADGE_POLICY_MODE = config('EMPLOYER_BADGE_POLICY_MODE', default='shadow').strip().lower()
 
 # SecurityMiddleware protects Django Admin/session cookies as well as API responses.

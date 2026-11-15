@@ -3,7 +3,6 @@ from datetime import timedelta
 from hashlib import sha256
 from urllib.parse import urlsplit
 from uuid import uuid4
-from zoneinfo import ZoneInfo
 
 from django.conf import settings
 from django.core import signing
@@ -17,6 +16,7 @@ from apps.accounts.models import User
 from apps.accounts.services import record_admin_action
 from apps.privacy.constants import VIEWER_SIGNING_SALT
 from common.metrics import record_metric
+from common.vietnam_time import vietnam_now, vietnam_today
 
 from ..models import (
     Announcement,
@@ -617,11 +617,11 @@ def set_announcement_viewer_cookie(response, viewer_id):
 
 
 def _tracking_date():
-    return timezone.localdate(timezone=ZoneInfo('Asia/Ho_Chi_Minh'))
+    return vietnam_today()
 
 
 def _dedupe_ttl_seconds():
-    local_now = timezone.localtime(timezone.now(), timezone=ZoneInfo('Asia/Ho_Chi_Minh'))
+    local_now = vietnam_now()
     next_day = (local_now + timedelta(days=1)).replace(
         hour=0,
         minute=0,

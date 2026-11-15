@@ -12,6 +12,7 @@ from rest_framework.exceptions import NotFound, ValidationError
 from apps.accounts.services import lock_account_for_write
 from apps.locations.models import Location
 from common.db.search import fold_accents
+from common.vietnam_time import VIETNAM_TZ
 
 from ..models import (
     CandidateFollowedCompanyDigestSchedule,
@@ -23,7 +24,7 @@ from ..models import (
 from ..models.alert_queries import category_leaf_coverage_ids
 
 JOB_ALERT_LIMIT = 5
-DELIVERY_TIME_ZONE = ZoneInfo('Asia/Ho_Chi_Minh')
+DELIVERY_TIME_ZONE = VIETNAM_TZ
 DELIVERY_HOUR = 8
 
 CRITERIA_FIELDS = (

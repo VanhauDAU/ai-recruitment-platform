@@ -203,9 +203,9 @@ Ba mốc thời gian độc lập, không suy mốc này từ mốc khác:
 | Công khai | `first_approved_at`, `visibility_starts_at`, `visibility_ends_at`, `requested_visibility_days` | Chu kỳ hiển thị bắt đầu từ lần đăng đầu, mặc định 30 ngày, tối đa 90. |
 | Sắp xếp | `published_at` | Mốc lần đăng gần nhất; sửa tin không đổi. |
 
-- `JOB_LIFECYCLE_V2_MODE` (`legacy` mặc định, `shadow`, `enforce`): chỉ ở
-  `enforce` cửa sổ hiển thị mới chặn công khai; `legacy`/`shadow` chỉ dùng hạn
-  nhận hồ sơ. Production từ chối giá trị khác.
+- Cửa sổ hiển thị luôn chặn công khai cùng hạn nhận hồ sơ (cờ
+  `JOB_LIFECYCLE_V2_MODE` đã gỡ, xem
+  [ADR-0019](../02-tong-quan/adr-0019-job-effective-state.md)).
 - Anchor chu kỳ (`first_approved_at`, `visibility_starts_at`) bất biến: đóng/mở
   lại không reset. Tin đã đăng không đổi `requested_visibility_days` qua form
   sửa, chỉ qua `extend/`.

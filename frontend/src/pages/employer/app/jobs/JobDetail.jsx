@@ -33,6 +33,7 @@ import JobEngagementPanel from './JobEngagementPanel'
 import JobInformationPanel from './JobInformationPanel'
 import JobLifecycleModal from './JobLifecycleModal'
 import JobVisibilityHoldAlert from './JobVisibilityHoldAlert'
+import JobVisibilityIssuesAlert from './JobVisibilityIssuesAlert'
 import {
   JOB_DETAIL_TABS,
   applicationSummary,
@@ -249,6 +250,7 @@ export default function JobDetail() {
       />
 
       <JobVisibilityHoldAlert hold={job.visibility_hold} />
+      <JobVisibilityIssuesAlert job={job} />
 
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xs">
         <div className="border-b border-slate-100 p-2 sm:hidden">

@@ -181,11 +181,13 @@ stateDiagram-v2
 
 **Bất biến công khai.** Mọi đường candidate-facing (danh sách, chi tiết, lưu,
 gợi ý, email, tracking) dùng một predicate `publicly_available_job_filter`
-(`jobs/models/querysets.py`): tin `active`, không `policy_hold`/`moderation_hold`,
-không compliance hold active; người đăng active, chưa xóa và vẫn thuộc đúng
-`company` của tin (verification case nếu có cũng cùng company); còn hạn
-`deadline` (và khi `JOB_LIFECYCLE_V2_MODE=enforce` thì trong cửa sổ visibility);
-chiến dịch (nếu có) active, không hold và chủ chiến dịch active.
+(`jobs/models/querysets.py`, xem [ADR-0019](../02-tong-quan/adr-0019-job-effective-state.md)):
+tin `active`, không `policy_hold`/`moderation_hold`, không compliance hold
+active (tin, NTD, chiến dịch); người đăng active, chưa xóa, vẫn thuộc đúng
+`company` của tin, có verification case **đã duyệt** cho company đó và DPA hiện
+hành; trang công ty không bị `content_policy_hold`; còn hạn `deadline` theo
+lịch Việt Nam và trong cửa sổ visibility; chiến dịch (nếu có) active, không hold
+và chủ chiến dịch active.
 
 ### 5.2. Bảng chi tiết tin
 
