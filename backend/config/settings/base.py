@@ -82,6 +82,7 @@ INSTALLED_APPS = [
     'apps.jobs',
     'apps.applications',
     'apps.ai_core',
+    'apps.matching',
     'apps.dashboard',
     'apps.sitecontent',
     'apps.blog',

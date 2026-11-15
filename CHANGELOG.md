@@ -8,6 +8,18 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-15
 
+#### Added — Nền tảng đối sánh ngữ nghĩa CV–JD chạy local
+
+- PostgreSQL của Docker Compose và CI chuyển sang image
+  `pgvector/pgvector:pg16-trixie` (có extension `vector`). Sau khi lấy thay đổi
+  này về cần `docker compose up -d db` và `docker compose build backend`; dữ
+  liệu trong volume `pgdata` giữ nguyên. PostgreSQL cài trực tiếp trên máy thì
+  phải tự cài pgvector.
+- App `matching`: ba bảng `MatchDocument`, `MatchChunk`, `MatchAnalysis` lưu hồ
+  sơ đã chuẩn hóa, vector 768 chiều và kết quả phân tích. Chưa có API.
+- Thư mục `ml/`: môi trường huấn luyện trên host (Apple MPS) và script kiểm tra
+  `ml/scripts/smoke_mps.py`.
+
 #### Added — Báo NTD khi có hồ sơ mới; làm gọn workspace CV ứng tuyển
 
 - Ứng viên nộp hồ sơ: NTD nhận thông báo trên chuông và email tới các địa chỉ

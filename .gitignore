@@ -22,6 +22,10 @@ db.sqlite3
 celerybeat-schedule*
 *.rdb
 
+# ML workspace: mô hình đã huấn luyện và dữ liệu thô không commit
+ml/models/
+ml/data/
+
 # Python tooling
 .coverage
 .coverage.*

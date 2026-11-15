@@ -57,12 +57,19 @@ xanh viền đậm là chức năng AI chạy local do hệ thống tự xây d�
 
 ### Phạm vi AI đã chốt
 
-- Đối sánh ngữ nghĩa CV–JD chạy local: mô hình embedding đa ngôn ngữ mã nguồn
-  mở, pipeline tự xây (trích kỹ năng, chấm điểm nhiều tiêu chí, vector lưu bằng
-  pgvector), không gọi API ngoài.
+Mở rộng ngày 2026-11-15: thêm fine-tune mô hình, baseline cho thực nghiệm, kỹ
+năng khớp/thiếu và gợi ý cải thiện CV. Tên các use case không đổi nên sơ đồ giữ
+nguyên. Lộ trình ở [tiến độ dự án](../TIEN-DO-DU-AN.md#đối-sánh-ngữ-nghĩa-cvjd-chạy-local-2026-11-15).
+
+- Đối sánh ngữ nghĩa CV–JD chạy và huấn luyện local: bi-encoder đa ngôn ngữ mã
+  nguồn mở (`intfloat/multilingual-e5-base`) fine-tune trên máy, pipeline tự xây
+  (trích kỹ năng, chấm điểm nhiều tiêu chí, vector lưu bằng pgvector), không gọi
+  API ngoài. TF-IDF và BM25 chỉ làm baseline trong thực nghiệm.
 - Ứng viên: Phân tích mức độ phù hợp CV–JD trả điểm tổng và điểm theo tiêu chí
-  (kỹ năng, kinh nghiệm, học vấn, cấp bậc, địa điểm). Việc làm gợi ý dùng chung
-  module này.
+  (kỹ năng, kinh nghiệm, học vấn, cấp bậc, địa điểm), kỹ năng khớp và kỹ năng
+  còn thiếu, giải thích kèm bằng chứng trong CV, và gợi ý cải thiện CV sinh bằng
+  luật (không dùng LLM). Xử lý được tin tiếng Việt và tiếng Anh. Việc làm gợi ý
+  dùng chung module này.
 - Nhà tuyển dụng: Sàng lọc và xếp hạng hồ sơ ứng tuyển theo điểm. Tìm kiếm hồ sơ
   ứng viên chọn một tin của NTD rồi xếp ứng viên theo độ phù hợp, chỉ gồm ứng
   viên đã cho phép NTD tìm thấy hồ sơ.

@@ -1,0 +1,8 @@
+# Môi trường huấn luyện và thực nghiệm. Chạy trên host macOS (MPS), không dùng
+# trong container. Tạo môi trường từ thư mục gốc của repo:
+#   python3.11 -m venv ml/.venv && ml/.venv/bin/pip install -r ml/requirements.txt
+torch==2.15.0
+sentence-transformers==6.3.0
+transformers==5.23.0
+datasets==5.2.0
+accelerate==1.15.0

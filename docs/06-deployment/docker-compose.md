@@ -35,7 +35,7 @@ thay đổi; không cần sửa `VITE_API_BASE_URL`, CORS hoặc `ALLOWED_HOSTS`
   `localhost:5433/ai_career_coach`, user `postgres`, password `postgres`.
 - Muốn backend chạy ngoài Docker dùng DB trong Docker thì đặt `DB_PORT=5433`
   trong `backend/.env` (mặc định `5432` = Postgres local).
-- Service: `db` (postgres 16), `redis`, `backend` (runserver + auto migrate),
+- Service: `db` (PostgreSQL 16 + pgvector, image `pgvector/pgvector:pg16-trixie`), `redis`, `backend` (runserver + auto migrate),
   `worker` (Celery tác vụ chung), `ai-worker` (chỉ queue `ai-generation`,
   concurrency 2), `beat` (Celery beat) và `frontend` (vite).
 - `frontend_node_modules` được giữ trong named volume. Entrypoint chỉ chạy
