@@ -71,13 +71,33 @@ class OrganicJobListOrderingTests(APITestCase):
             'Top low salary',
         )
 
-    def test_homepage_best_jobs_admit_only_top_tier_jobs(self):
-        self.create_job('Top one', tier=Job.Tier.TOP)
-        self.create_job('Top two', tier=Job.Tier.TOP, age_days=2)
-        self.create_job('Featured', tier=Job.Tier.FEATURED)
-        self.create_job('Standard')
+    def test_homepage_best_jobs_rank_every_active_job_by_quality_not_paid_tier(self):
+        negotiable = self.create_job('Paid top, salary hidden', tier=Job.Tier.TOP, age_days=40)
+        Job.objects.filter(pk=negotiable.pk).update(salary_type=Job.SalaryType.NEGOTIABLE)
+        self.create_job('Salary, old', age_days=40)
+        self.create_job('Salary, this month', age_days=20)
+        hot = self.create_job('Salary, this week, hot', age_days=1)
+        Job.objects.filter(pk=hot.pk).update(is_hot=True)
 
         self.assertEqual(
-            set(self.titles(reverse('homepage-best-job-list'))),
-            {'Top one', 'Top two'},
+            self.titles(reverse('homepage-best-job-list')),
+            [
+                'Salary, this week, hot',
+                'Salary, this month',
+                'Salary, old',
+                'Paid top, salary hidden',
+            ],
         )
+
+    def test_homepage_best_jobs_rotate_jobs_with_the_same_score(self):
+        for index in range(6):
+            self.create_job(f'Same score {index}')
+        url = reverse('homepage-best-job-list')
+
+        first = self.titles(url, {'rotation_seed': 'visit-a'})
+        again = self.titles(url, {'rotation_seed': 'visit-a'})
+        other = self.titles(url, {'rotation_seed': 'visit-b'})
+
+        self.assertEqual(first, again)
+        self.assertEqual(set(first), set(other))
+        self.assertNotEqual(first, other)

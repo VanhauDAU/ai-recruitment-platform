@@ -96,8 +96,6 @@ class JobListQueryBudgetTests(APITestCase):
         self.assertEqual({job['company_slug'] for job in response.data['results']}, {None})
 
     def test_homepage_best_jobs_query_count_is_flat(self):
-        Job.objects.update(tier=Job.Tier.TOP)
-
         with self.assertNumQueries(HOMEPAGE_BEST_JOB_LIST_QUERY_BUDGET):
             response = self.client.get(
                 reverse('homepage-best-job-list'),

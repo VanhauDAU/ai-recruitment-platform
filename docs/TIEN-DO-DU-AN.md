@@ -7,6 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
+| [Việc làm tốt nhất xếp theo chất lượng tin](#việc-làm-tốt-nhất-xếp-theo-chất-lượng-tin-2026-11-15) | 🟨 Xong trên nhánh `feat/best-jobs-quality-ranking`, chưa mở PR |
 | [Thiết kế lại quản lý tin tuyển dụng của NTD](#thiết-kế-lại-quản-lý-tin-tuyển-dụng-của-ntd-2026-11-15) | ✅ Gộp vào `dev` (nhánh `feat/employer-job-workspace`) |
 | [Gỡ widget Trợ lý ProCV ở cổng ứng viên](#gỡ-widget-trợ-lý-procv-ở-cổng-ứng-viên-2026-11-14) | 🟨 Xong trên nhánh `refactor/remove-candidate-assistant`, chờ gộp PR vào `dev` |
 | [Gỡ phòng ban, chức danh, nhân viên quản trị (ADR-0018)](#gỡ-phòng-ban-chức-danh-nhân-viên-quản-trị-adr-0018-2026-11-14) | 🟨 Xong trên nhánh `refactor/remove-admin-rbac`, chờ gộp PR vào `dev` |
@@ -19,6 +20,18 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Các epic đã hoàn tất](#các-epic-đã-hoàn-tất) | ✅ |
 | [Lộ trình theo PRD](#lộ-trình-theo-prd) | 🟨 Phần AI lõi (giai đoạn 2–3) còn mở |
 | [Việc còn mở](#việc-còn-mở) | |
+
+## Việc làm tốt nhất xếp theo chất lượng tin (2026-11-15)
+
+- Lỗi tìm thấy: box "Việc làm tốt nhất" ở trang chủ chỉ nhận tin hạng TOP (dịch
+  vụ trả phí đã gỡ), còn 100 tin thật nhập ngày 15/11 đều là tin thường nên box
+  trống.
+- Nay mọi tin đang hoạt động đều đủ điều kiện, xếp theo điểm chất lượng
+  (`apps/jobs/selectors/homepage.py`): công khai lương +3, nhãn HOT/GẤP +2, đăng
+  trong 7 ngày +2 (trong 30 ngày +1), từ 5 lượt ứng tuyển +1. Tin cùng điểm vẫn
+  luân phiên theo seed (F5 ra lượt khác, phân trang ổn định).
+- Feed `/viec-lam` mặc định vẫn xếp theo hạng tin rồi độ mới; không ảnh hưởng vì
+  mọi tin hiện là tin thường.
 
 ## Xử lý hồ sơ ứng tuyển — giai đoạn 1 (2026-11-15)
 

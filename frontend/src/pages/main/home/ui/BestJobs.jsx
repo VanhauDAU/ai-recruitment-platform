@@ -177,7 +177,7 @@ export default function BestJobs({ categories = [] }) {
       {showHint && (
         <div className="mb-4 flex items-center gap-2 rounded-xl border border-[var(--brand-primary)]/20 bg-gradient-to-r from-[var(--brand-primary-soft)] to-green-50 px-4 py-2.5 text-sm text-gray-600">
           <BulbOutlined className="shrink-0 text-[var(--brand-primary)]" />
-          <span className="flex-1">Các tin đang hoạt động, đủ điều kiện Việc làm tốt nhất được luân phiên; F5 sẽ tạo một lượt hiển thị khác.</span>
+          <span className="flex-1">Ưu tiên tin công khai mức lương, mới đăng và có nhãn HOT/GẤP; các tin cùng mức được luân phiên, F5 sẽ tạo một lượt hiển thị khác.</span>
           <CloseOutlined
             className="shrink-0 cursor-pointer text-gray-400 transition hover:text-gray-600"
             onClick={() => setShowHint(false)}
