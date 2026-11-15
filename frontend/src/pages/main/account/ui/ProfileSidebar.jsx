@@ -1,9 +1,9 @@
 import {
-  CameraOutlined, CheckCircleFilled, CheckOutlined,
+  CameraOutlined, CheckCircleFilled,
   QrcodeOutlined, QuestionCircleOutlined, WarningFilled,
 } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
-import { Avatar, Switch } from 'antd'
+import { Avatar } from 'antd'
 import { useState } from 'react'
 import { Link } from 'react-router'
 import { getMyCvs } from '@/entities/cv'
@@ -12,8 +12,7 @@ import { RecruiterSearchListModal } from '@/features/update-recruiter-visibility
 import { DEFAULT_SITE_SETTINGS, settingText, useSiteSettings } from '@/entities/site-settings'
 
 // Cột phải của layout tài khoản (theo ảnh mẫu): thẻ chào + trạng thái tìm việc,
-// cho phép NTD tìm hồ sơ, banner app và thẻ chất lượng CV.
-// Giai đoạn khung: toggle chỉ đổi state cục bộ — wiring API đánh dấu TODO.
+// gợi ý việc làm, cho phép NTD tìm hồ sơ và banner app.
 export default function ProfileSidebar() {
   return (
     <aside className="flex flex-col gap-4">
@@ -64,7 +63,6 @@ function GreetingCard() {
       </div>
 
       <SuggestionToggleRow />
-      <JobSeekingToggleBlock />
       <RecruiterSearchBlock />
       <AppBanner />
     </section>
@@ -91,32 +89,6 @@ function SuggestionToggleRow() {
   )
 }
 
-function JobSeekingToggleBlock() {
-  // TODO(candidate-settings): đồng bộ trạng thái "đang tìm việc" với backend.
-  const [seeking, setSeeking] = useState(false)
-
-  return (
-    <div className="border-t border-slate-100 px-4 py-3">
-      <div className="flex items-center justify-between gap-3">
-        <span className="text-sm font-bold text-slate-800">
-          Đang {seeking ? 'Bật' : 'Tắt'} tìm việc
-        </span>
-        <Switch checked={seeking} onChange={setSeeking} />
-      </div>
-      <p className="mt-2 text-xs font-medium text-slate-500">Khi bật tìm việc:</p>
-      <ul className="mt-1.5 space-y-1.5">
-        <BenefitLine>
-          Nhà tuyển dụng (NTD) có thể <b>tìm thấy</b> và mang đến cho bạn những cơ hội hấp dẫn
-          (xem thêm tại phần Cho phép NTD tìm kiếm bên dưới).
-        </BenefitLine>
-        <BenefitLine>
-          Hồ sơ của bạn sẽ <b>hiển thị nổi bật</b> trên kết quả tìm kiếm của Nhà tuyển dụng.
-        </BenefitLine>
-      </ul>
-    </div>
-  )
-}
-
 function RecruiterSearchBlock() {
   // Công tắc trên thẻ CV làm mới ['my-cvs'] nên số này cập nhật ngay.
   const { data: cvs = [] } = useQuery({ queryKey: ['my-cvs', 'recruiter-searchable'], queryFn: getMyCvs })
@@ -138,8 +110,8 @@ function RecruiterSearchBlock() {
       </button>
       <RecruiterSearchListModal open={listOpen} onClose={() => setListOpen(false)} />
       <div className="mt-3 rounded-xl bg-slate-50 p-3 text-xs leading-5 text-slate-500">
-        Khi bạn cho phép Nhà tuyển dụng (NTD) tìm kiếm hồ sơ, các NTD uy tín có thể tiếp cận
-        thông tin kinh nghiệm làm việc, học vấn, kỹ năng... trên CV của bạn.
+        Tính năng NTD tìm kiếm ứng viên sắp ra mắt. Khi đó, NTD chỉ tìm thấy những CV bạn bật
+        tại đây; tắt đồng ý sẽ gỡ toàn bộ CV khỏi tìm kiếm.
       </div>
     </div>
   )
@@ -164,14 +136,5 @@ function AppBanner() {
         </span>
       </div>
     </div>
-  )
-}
-
-function BenefitLine({ children }) {
-  return (
-    <li className="flex gap-2 text-xs leading-5 text-slate-500">
-      <CheckOutlined className="mt-0.5 shrink-0 text-[var(--brand-primary)]" />
-      <span>{children}</span>
-    </li>
   )
 }

@@ -6,6 +6,7 @@ from apps.employers.models import Company
 from apps.employers.tests.readiness_helpers import make_employer_ready
 
 from ..models import Job
+from .helpers import open_visibility_window
 
 
 class JobStatsApiTests(APITestCase):
@@ -56,12 +57,14 @@ class JobStatsApiTests(APITestCase):
                 title=f'{name} job',
                 description='Description',
                 status=Job.Status.ACTIVE,
+                **open_visibility_window(),
             )
         Company.objects.filter(pk=companies['Held Co'].pk).update(content_policy_hold=True)
 
         response = self.client.get(reverse('job-stats'))
 
-        self.assertEqual(response.data['active_jobs'], 2)
+        # A held company page also takes its jobs off the public site.
+        self.assertEqual(response.data['active_jobs'], 1)
         self.assertEqual(
             [item['slug'] for item in response.data['featured_employers']],
             [companies['Visible Co'].slug],

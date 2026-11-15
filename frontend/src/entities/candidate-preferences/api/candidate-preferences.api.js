@@ -10,6 +10,9 @@ export async function updateCandidateJobPreferences(preferences) {
   return data
 }
 
+/** Đồng ý cấp hồ sơ; tắt nó thì backend cũng gỡ mọi CV khỏi tìm kiếm của NTD. */
+export const RECRUITER_VISIBILITY_QUERY_KEY = ['candidate', 'recruiter-visibility']
+
 export async function getRecruiterVisibility() {
   const { data } = await api.get('/candidate/recruiter-visibility/')
   return data

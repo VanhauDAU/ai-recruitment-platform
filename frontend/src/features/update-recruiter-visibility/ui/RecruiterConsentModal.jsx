@@ -23,7 +23,7 @@ export default function RecruiterConsentModal({ open, loading, onConfirm, onCanc
       onCancel={close}
     >
       <div className="space-y-4 text-sm leading-6 text-slate-600">
-        <p>Nhà tuyển dụng có thể xem kinh nghiệm, học vấn và kỹ năng trên CV để gửi lời mời kết nối phù hợp.</p>
+        <p>Khi tính năng tìm ứng viên ra mắt, nhà tuyển dụng có thể tìm thấy và xem kinh nghiệm, học vấn, kỹ năng trên những CV bạn bật.</p>
         <p className="rounded-lg bg-emerald-50 p-3 text-emerald-800">Họ tên, ảnh, số điện thoại, email và địa chỉ vẫn được ẩn cho tới khi bạn đồng ý lời mời kết nối.</p>
         <Checkbox checked={confirmed} onChange={(event) => setConfirmed(event.target.checked)}>
           Tôi đã đọc và đồng ý mở hồ sơ cho nhà tuyển dụng tìm kiếm.

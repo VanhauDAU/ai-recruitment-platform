@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { withQueryClient } from '@/test/render-with-query-client'
 import JobPreferencesForm from './JobPreferencesForm'
 
 const mocks = vi.hoisted(() => ({
@@ -11,6 +12,7 @@ const mocks = vi.hoisted(() => ({
 }))
 
 vi.mock('@/entities/candidate-preferences', () => ({
+  RECRUITER_VISIBILITY_QUERY_KEY: ['candidate', 'recruiter-visibility'],
   updateCandidateJobPreferences: mocks.updateCandidateJobPreferences,
 }))
 vi.mock('@/entities/job', () => ({
@@ -40,7 +42,7 @@ describe('JobPreferencesForm', () => {
   })
 
   it('describes recruiter visibility as profile access, not unrelated email updates', async () => {
-    render(
+    render(withQueryClient(
       <JobPreferencesForm
         preference={{
           desired_specializations: [],
@@ -50,7 +52,7 @@ describe('JobPreferencesForm', () => {
         profile={{ gender: 'unspecified' }}
         variant="settings"
       />,
-    )
+    ))
 
     await waitFor(() => expect(mocks.getJobCategories).toHaveBeenCalledOnce())
     expect(screen.getByRole('checkbox', {
@@ -65,7 +67,7 @@ describe('JobPreferencesForm', () => {
       { id: 4, name: 'Python' },
       { id: 8, name: 'Django' },
     ])
-    render(
+    render(withQueryClient(
       <JobPreferencesForm
         preference={{
           ...VALID_PREFERENCE,
@@ -74,7 +76,7 @@ describe('JobPreferencesForm', () => {
         profile={{ gender: 'unspecified' }}
         variant="settings"
       />,
-    )
+    ))
 
     await waitFor(() => expect(mocks.getSkills).toHaveBeenCalledOnce())
     const customPositionItem = screen
@@ -97,13 +99,13 @@ describe('JobPreferencesForm', () => {
     const user = userEvent.setup()
     const skills = Array.from({ length: 21 }, (_, index) => ({ id: index + 1, name: `Kỹ năng ${index + 1}` }))
     mocks.getSkills.mockResolvedValue(skills)
-    render(
+    render(withQueryClient(
       <JobPreferencesForm
         preference={{ ...VALID_PREFERENCE, preferred_skills: skills }}
         profile={{ gender: 'unspecified' }}
         variant="settings"
       />,
-    )
+    ))
 
     await waitFor(() => expect(mocks.getSkills).toHaveBeenCalledOnce())
     await user.click(await screen.findByRole('button', { name: 'Hoàn thành' }))

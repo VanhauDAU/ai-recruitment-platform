@@ -41,8 +41,8 @@ describe('job list presentation', () => {
   })
 
   it('labels a held active job as hidden and links to filtered applications', () => {
-    expect(jobStatusMeta({ status: 'active', visibility_hold: { kind: 'moderation' } }).label).toBe('Tạm ẩn')
-    expect(jobStatusMeta({ status: 'active', is_expired: true }).label).toBe('Hết hạn')
+    expect(jobStatusMeta({ status: 'active', effective_state: 'hidden' }).label).toBe('Bị ẩn')
+    expect(jobStatusMeta({ status: 'active', effective_state: 'expired' }).label).toBe('Hết hạn')
     expect(employerJobApplicationsPath({ public_id: 'jb_1' }, { scope: 'unread' }))
       .toBe('/tuyendung/app/applications?job=jb_1&scope=unread')
   })
@@ -73,10 +73,10 @@ describe('job detail presentation', () => {
   })
 
   it('links the public page only while candidates can see the job', () => {
-    expect(publicJobUrl({ status: 'active', slug: 'ky-su' })).toBe('/viec-lam/ky-su')
-    expect(publicJobUrl({ status: 'active', slug: 'ky-su', is_expired: true })).toBeNull()
-    expect(publicJobUrl({ status: 'active', slug: 'ky-su', visibility_hold: { kind: 'account' } })).toBeNull()
-    expect(publicJobUrl({ status: 'draft', slug: 'ky-su' })).toBeNull()
+    expect(publicJobUrl({ effective_state: 'active', slug: 'ky-su' })).toBe('/viec-lam/ky-su')
+    expect(publicJobUrl({ effective_state: 'expired', slug: 'ky-su' })).toBeNull()
+    expect(publicJobUrl({ effective_state: 'hidden', slug: 'ky-su' })).toBeNull()
+    expect(publicJobUrl({ effective_state: 'draft', slug: 'ky-su' })).toBeNull()
   })
 
   it('bounds an extension by the current deadline, public lifetime and visibility end', () => {

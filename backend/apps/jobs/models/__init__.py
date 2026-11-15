@@ -20,6 +20,13 @@ from .hidden import CandidateHiddenJob
 from .history import JobStatusHistory
 from .languages import JobLanguageRequirement, Language
 from .moderation import JobModerationEvent
+from .querysets import (
+    JobState,
+    job_effective_state_expression,
+    job_state_count_subquery,
+    job_state_counts,
+    publicly_available_job_filter,
+)
 from .report import JobReport, JobReportResolutionEvent
 from .saved import SavedJob
 from .skills import JobSkill
@@ -51,7 +58,12 @@ __all__ = [
     'JobReport',
     'JobReportResolutionEvent',
     'JobSkill',
+    'JobState',
     'JobWorkSchedule',
     'Language',
     'SavedJob',
+    'job_effective_state_expression',
+    'job_state_count_subquery',
+    'job_state_counts',
+    'publicly_available_job_filter',
 ]

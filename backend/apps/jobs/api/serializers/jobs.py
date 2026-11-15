@@ -19,6 +19,7 @@ from ...models import (
     JobSkill,
     JobWorkSchedule,
 )
+from ...models.querysets import JobState, job_visibility_issues
 from ...selectors.employer import (
     employer_job_application_summary,
     employer_job_visibility_hold,
@@ -696,10 +697,31 @@ class EmployerJobVisibilityHoldSerializer(serializers.Serializer):
     reason_label = serializers.CharField(allow_blank=True)
 
 
-class EmployerJobVisibilityHoldMixin(serializers.Serializer):
-    """Tell the owner when, and why, candidates cannot see one of their jobs."""
+class EmployerJobVisibilityIssueSerializer(serializers.Serializer):
+    code = serializers.CharField()
+    label = serializers.CharField()
+    action = serializers.CharField()
 
+
+class EmployerJobVisibilityHoldMixin(serializers.Serializer):
+    """Tell the owner when, and why, candidates cannot see one of their jobs.
+
+    ``visibility_hold`` details an administrator or account hold, the only
+    holds that also freeze editing; ``visibility_issues`` lists every reason.
+    """
+
+    effective_state = serializers.SerializerMethodField()
+    visibility_issues = serializers.SerializerMethodField()
     visibility_hold = serializers.SerializerMethodField()
+
+    @extend_schema_field(serializers.ChoiceField(choices=JobState.choices))
+    def get_effective_state(self, obj):
+        job_visibility_issues(obj)  # loads the state when the queryset did not
+        return obj.effective_state
+
+    @extend_schema_field(EmployerJobVisibilityIssueSerializer(many=True))
+    def get_visibility_issues(self, obj):
+        return EmployerJobVisibilityIssueSerializer(job_visibility_issues(obj), many=True).data
 
     @extend_schema_field(EmployerJobVisibilityHoldSerializer(allow_null=True))
     def get_visibility_hold(self, obj):
@@ -736,6 +758,8 @@ class EmployerJobWriteSerializer(EmployerJobVisibilityHoldMixin, JobSerializer):
             'campaign',
             'campaign_name',
             'is_expired',
+            'effective_state',
+            'visibility_issues',
             'visibility_hold',
             'ai_generation_public_id',
             'auto_reject_stale_applications',
@@ -916,6 +940,8 @@ class EmployerJobListSerializer(EmployerJobVisibilityHoldMixin, PublicJobListSer
             'is_visibility_expired',
             'status',
             'is_expired',
+            'effective_state',
+            'visibility_issues',
             'visibility_hold',
             'campaign',
             'campaign_name',
@@ -974,7 +1000,6 @@ class EmployerPostingBlockerSerializer(serializers.Serializer):
 
 
 class EmployerJobLifecyclePolicySerializer(serializers.Serializer):
-    mode = serializers.ChoiceField(choices=('legacy', 'shadow', 'enforce'))
     default_visibility_days = serializers.IntegerField(min_value=1)
     max_visibility_days = serializers.IntegerField(min_value=1)
     timezone = serializers.CharField()

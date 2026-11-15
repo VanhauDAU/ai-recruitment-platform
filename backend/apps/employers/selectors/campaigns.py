@@ -1,17 +1,22 @@
 from collections import defaultdict
-from datetime import datetime, time, timedelta
-from zoneinfo import ZoneInfo
+from datetime import timedelta
 
 from django.db.models import Count, DateTimeField, F, IntegerField, OuterRef, Q, Subquery
 from django.db.models.functions import Coalesce, TruncDate
-from django.utils import timezone
 
 from apps.applications.models import Application
-from apps.jobs.models import Job, JobEngagementDaily
+from apps.jobs.models import (
+    Job,
+    JobEngagementDaily,
+    JobState,
+    job_effective_state_expression,
+    job_state_count_subquery,
+    job_state_counts,
+    publicly_available_job_filter,
+)
+from common.vietnam_time import VIETNAM_TZ, vietnam_day_start, vietnam_today
 
 from ..models import CampaignActivity, RecruitmentCampaign
-
-REPORT_TIME_ZONE = ZoneInfo('Asia/Ho_Chi_Minh')
 
 
 class CampaignJobPerformanceScopeNotFound(LookupError):
@@ -19,7 +24,6 @@ class CampaignJobPerformanceScopeNotFound(LookupError):
 
 
 def campaign_list_queryset(user, *, status=None, scope=None, q=None, ordering=None):
-    today = timezone.localdate()
     latest_activity = CampaignActivity.objects.filter(campaign_id=OuterRef('pk')).order_by(
         '-occurred_at', '-id'
     )
@@ -69,17 +73,9 @@ def campaign_list_queryset(user, *, status=None, scope=None, q=None, ordering=No
     queryset = queryset.annotate(
         job_count=Count('jobs', distinct=True),
         draft_job_count=Count('jobs', filter=Q(jobs__status='draft'), distinct=True),
-        active_job_count=Count(
-            'jobs',
-            filter=Q(jobs__status='active')
-            & (Q(jobs__deadline__isnull=True) | Q(jobs__deadline__gte=today)),
-            distinct=True,
-        ),
-        expired_job_count=Count(
-            'jobs',
-            filter=Q(jobs__status='active', jobs__deadline__lt=today),
-            distinct=True,
-        ),
+        active_job_count=job_state_count_subquery(JobState.ACTIVE, campaign_id='pk'),
+        expired_job_count=job_state_count_subquery(JobState.EXPIRED, campaign_id='pk'),
+        hidden_job_count=job_state_count_subquery(JobState.HIDDEN, campaign_id='pk'),
         closed_job_count=Count('jobs', filter=Q(jobs__status='closed'), distinct=True),
         application_count=Count('jobs__applications', distinct=True),
         application_submission_count=Count('jobs__applications', distinct=True),
@@ -207,23 +203,16 @@ def campaign_report(campaign):
             for row in latest_applications.values('status').annotate(count=Count('id'))
         }
     )
-    today = timezone.localdate()
-    start = today - timedelta(days=6)
+    start = vietnam_today() - timedelta(days=6)
     by_day = {
         row['day']: row['count']
-        for row in applications.filter(applied_at__date__gte=start)
-        .annotate(day=TruncDate('applied_at'))
+        for row in applications.filter(applied_at__gte=vietnam_day_start(start))
+        .annotate(day=TruncDate('applied_at', tzinfo=VIETNAM_TZ))
         .values('day')
         .annotate(count=Count('id'))
     }
     jobs = campaign.jobs.all()
-    job_statuses = {state: 0 for state in ('draft', 'active', 'closed')}
-    job_statuses.update(
-        {row['status']: row['count'] for row in jobs.values('status').annotate(count=Count('id'))}
-    )
-    expired_jobs = jobs.filter(status='active', deadline__lt=today).count()
-    total_jobs = sum(job_statuses.values())
-    job_statuses['active'] = max(job_statuses['active'] - expired_jobs, 0)
+    job_statuses = job_state_counts(jobs)
     return {
         'campaign_public_id': campaign.public_id,
         'candidate_count': applications.values('candidate_id').distinct().count(),
@@ -236,9 +225,8 @@ def campaign_report(campaign):
         .distinct()
         .count(),
         'jobs': {
-            'total': total_jobs,
+            'total': sum(job_statuses.values()),
             **job_statuses,
-            'expired': expired_jobs,
             'views': sum(jobs.values_list('view_count', flat=True)),
         },
         'applications': {
@@ -266,10 +254,7 @@ def campaign_activity_queryset(campaign, *, group=None):
 
 
 def campaign_pause_impact(campaign):
-    today = timezone.localdate()
-    active_jobs = campaign.jobs.filter(status=Job.Status.ACTIVE).filter(
-        Q(deadline__isnull=True) | Q(deadline__gte=today)
-    )
+    active_jobs = campaign.jobs.filter(publicly_available_job_filter())
     return {
         'campaign_public_id': campaign.public_id,
         'campaign_name': campaign.name,
@@ -289,16 +274,18 @@ def _rate(numerator, denominator):
 
 def campaign_job_performance(campaign, *, days=7, job_public_id=None):
     """Return period-aligned campaign or single-job engagement metrics."""
-    today = timezone.localdate(timezone=REPORT_TIME_ZONE)
+    today = vietnam_today()
     start = today - timedelta(days=days - 1)
     end_exclusive = today + timedelta(days=1)
-    start_at = datetime.combine(start, time.min, tzinfo=REPORT_TIME_ZONE)
-    end_at = datetime.combine(end_exclusive, time.min, tzinfo=REPORT_TIME_ZONE)
+    start_at = vietnam_day_start(start)
+    end_at = vietnam_day_start(end_exclusive)
 
     jobs = list(
         Job.objects.filter(campaign=campaign)
+        .annotate(effective_state=job_effective_state_expression())
         .order_by('-created_at')
         .values(
+            'effective_state',
             'id',
             'public_id',
             'slug',
@@ -333,7 +320,7 @@ def campaign_job_performance(campaign, *, days=7, job_public_id=None):
             applied_at__lt=end_at,
         )
         .filter(applied_at__gte=F('job__engagement_tracking_started_at'))
-        .annotate(day=TruncDate('applied_at', tzinfo=REPORT_TIME_ZONE))
+        .annotate(day=TruncDate('applied_at', tzinfo=VIETNAM_TZ))
         .values('job_id', 'day')
         .annotate(count=Count('id'))
     )
@@ -343,11 +330,7 @@ def campaign_job_performance(campaign, *, days=7, job_public_id=None):
         (row['job_id'], row['day']): row['count'] for row in application_rows
     }
     tracking_dates = {
-        job['id']: timezone.localtime(
-            job['engagement_tracking_started_at'],
-            timezone=REPORT_TIME_ZONE,
-        ).date()
-        for job in jobs
+        job['id']: vietnam_today(job['engagement_tracking_started_at']) for job in jobs
     }
     dates = [start + timedelta(days=offset) for offset in range(days)]
 
@@ -375,10 +358,8 @@ def campaign_job_performance(campaign, *, days=7, job_public_id=None):
                 'title': job['title'],
                 'status': job['status'],
                 'deadline': deadline,
-                'is_expired': bool(
-                    job['status'] == Job.Status.ACTIVE and deadline is not None and deadline < today
-                ),
-                'visibility_held': bool(job['moderation_hold'] or job['policy_hold']),
+                'is_expired': job['effective_state'] == JobState.EXPIRED,
+                'visibility_held': job['effective_state'] == JobState.HIDDEN,
                 'available': available,
                 'data_available_from': tracking_date,
                 'impressions': impressions,

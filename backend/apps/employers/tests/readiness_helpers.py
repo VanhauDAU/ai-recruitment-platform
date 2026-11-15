@@ -15,6 +15,25 @@ from ..models import (
 )
 
 
+def current_dpa_fields():
+    """RecruiterProfile fields of an acceptance of the current DPA."""
+    return {
+        'dpa_accepted_at': timezone.now(),
+        'dpa_policy_version': settings.EMPLOYER_DPA_POLICY_VERSION,
+        'dpa_document_sha256': settings.EMPLOYER_DPA_DOCUMENT_SHA256,
+    }
+
+
+def accept_current_dpa(recruiter):
+    """Record acceptance of the current DPA, which candidate-data access requires."""
+    for field, value in current_dpa_fields().items():
+        setattr(recruiter, field, value)
+    recruiter.save(
+        update_fields=['dpa_accepted_at', 'dpa_policy_version', 'dpa_document_sha256', 'updated_at']
+    )
+    return recruiter
+
+
 def make_employer_ready(user, *, company=None, candidate_data=False):
     """Create the minimum persisted evidence for a canonical readiness state."""
     user.email_verified = True

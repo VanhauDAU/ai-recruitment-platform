@@ -3,6 +3,8 @@
 from django.db import transaction
 from django.utils import timezone
 
+from apps.cvs.services import withdraw_cvs_from_recruiter_search
+
 from ..models import (
     CandidateConsent,
     CandidateConsentEvent,
@@ -38,6 +40,8 @@ def set_recruiter_visibility(
         cv_public_id=cv_public_id,
         decided_at=now,
     )
+    if not enabled:
+        withdraw_cvs_from_recruiter_search(locked_profile.user)
     return consent
 
 
@@ -137,6 +141,8 @@ def replace_candidate_job_preferences(profile, validated_data):
             source='job_preferences',
             decided_at=now,
         )
+    if not recruiter_consent:
+        withdraw_cvs_from_recruiter_search(locked_profile.user)
 
     if not locked_profile.job_preferences_configured:
         locked_profile.job_preferences_configured = True

@@ -7,7 +7,9 @@ from apps.accounts.tests.helpers import make_admin
 from apps.cv_templates.tests.factories import make_published_template
 from apps.cvs.services import create_v2_cv
 from apps.employers.models import Company
+from apps.employers.tests.readiness_helpers import make_employer_ready
 from apps.jobs.models import Job
+from apps.jobs.tests.helpers import open_visibility_window
 
 from ..services import create_application_record
 
@@ -24,12 +26,14 @@ class AdminJobApplicationListTests(APITestCase):
         company = Company.objects.create(
             company_name='Application Audit Co', created_by=self.employer
         )
+        make_employer_ready(self.employer, company=company, candidate_data=True)
         self.job = Job.objects.create(
             posted_by=self.employer,
             company=company,
             title='Platform Engineer',
             description='Build the platform.',
             status=Job.Status.ACTIVE,
+            **open_visibility_window(),
         )
         template, _version = make_published_template('Admin application template')
         self.applications = []

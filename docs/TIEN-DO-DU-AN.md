@@ -7,7 +7,10 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
-| [Việc làm tốt nhất xếp theo chất lượng tin](#việc-làm-tốt-nhất-xếp-theo-chất-lượng-tin-2026-11-15) | 🟨 Xong trên nhánh `feat/best-jobs-quality-ranking`, chưa mở PR |
+| [Thống nhất luồng đăng tin, hiển thị, ứng tuyển, công ty](#thống-nhất-luồng-đăng-tin-hiển-thị-ứng-tuyển-công-ty-2026-11-15) | 🟨 GĐ6 gộp vào `dev` (#208); GĐ1 xong trên nhánh `fix/job-effective-state`; làm hết trước khi tiếp tục AI |
+| [Đối sánh ngữ nghĩa CV–JD chạy local](#đối-sánh-ngữ-nghĩa-cvjd-chạy-local-2026-11-15) | 🟨 Nền tảng (tuần 1) xong trên nhánh `feat/ai-matching-foundation`, chưa mở PR |
+| [CV tải lên: tệp gốc, tiêu chuẩn upload, giới hạn CV, NTD tìm kiếm](#cv-tải-lên-tệp-gốc-tiêu-chuẩn-upload-giới-hạn-cv-ntd-tìm-kiếm-2026-11-15) | ✅ Gộp vào `dev` (#203) |
+| [Việc làm tốt nhất xếp theo chất lượng tin](#việc-làm-tốt-nhất-xếp-theo-chất-lượng-tin-2026-11-15) | ✅ Gộp vào `dev` (#204) |
 | [Thiết kế lại quản lý tin tuyển dụng của NTD](#thiết-kế-lại-quản-lý-tin-tuyển-dụng-của-ntd-2026-11-15) | ✅ Gộp vào `dev` (nhánh `feat/employer-job-workspace`) |
 | [Gỡ widget Trợ lý ProCV ở cổng ứng viên](#gỡ-widget-trợ-lý-procv-ở-cổng-ứng-viên-2026-11-14) | 🟨 Xong trên nhánh `refactor/remove-candidate-assistant`, chờ gộp PR vào `dev` |
 | [Gỡ phòng ban, chức danh, nhân viên quản trị (ADR-0018)](#gỡ-phòng-ban-chức-danh-nhân-viên-quản-trị-adr-0018-2026-11-14) | 🟨 Xong trên nhánh `refactor/remove-admin-rbac`, chờ gộp PR vào `dev` |
@@ -20,6 +23,160 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Các epic đã hoàn tất](#các-epic-đã-hoàn-tất) | ✅ |
 | [Lộ trình theo PRD](#lộ-trình-theo-prd) | 🟨 Phần AI lõi (giai đoạn 2–3) còn mở |
 | [Việc còn mở](#việc-còn-mở) | |
+
+## Thống nhất luồng đăng tin, hiển thị, ứng tuyển, công ty (2026-11-15)
+
+Rà soát luồng thấy nhiều khái niệm có nhiều nơi tự tính (trạng thái tin tính ở
+8 chỗ với 2 múi giờ, quyền đăng tin và quyền nhận hồ sơ mỗi thứ có 2 bộ điều
+kiện), dẫn đến luật bị lách và UI hứa tính năng chưa có. Mục tiêu: mỗi khái
+niệm chỉ một hàm làm nguồn sự thật. Làm xong đợt này rồi mới tiếp tục AI; mỗi
+giai đoạn một PR vào `dev`.
+
+Quyết định đã chốt: tài nguyên vẫn theo từng NTD nhưng chặn ứng viên tính cho
+cả công ty và tham gia công ty cần owner duyệt; bắt buộc xác thực + DPA trước
+khi đăng tin; mở lại tin áp luật như gia hạn, không tính lượt; mỗi ứng viên chỉ
+một hồ sơ hiệu lực trên một tin, có trạng thái "Đã rút"; tin bị ẩn vì lý do sửa
+được thì có vòng yêu cầu sửa; công ty bị ẩn, mất DPA hoặc dính compliance hold
+thì tin tự ẩn và tự hiện lại khi khắc phục; gỡ cờ `JOB_LIFECYCLE_V2_MODE`; "Đang
+tuyển" chỉ đếm tin đang công khai, luôn theo giờ Việt Nam; tìm hồ sơ cho NTD làm
+thật trong hạng mục AI.
+
+| GĐ | Hạng mục | Trạng thái |
+| --- | --- | --- |
+| 1 | Trạng thái hiệu lực của tin + lý do ẩn, giờ VN, bộ lọc công khai khớp quyền xem dữ liệu ứng viên | 🟨 Xong trên nhánh `fix/job-effective-state` |
+| 2 | Dùng chung điều kiện chặn đăng tin; mở lại tin áp luật gia hạn | ⬜ |
+| 3 | Một hồ sơ hiệu lực trên một tin, rút hồ sơ, tự động từ chối và thống kê chỉ tính hồ sơ hiệu lực | ⬜ |
+| 4 | Vòng yêu cầu sửa tin → NTD sửa → gửi duyệt lại | ⬜ |
+| 5 | Chặn ứng viên theo công ty, owner duyệt yêu cầu tham gia, logic công ty vào service | ⬜ |
+| 6 | Tắt đồng ý tìm hồ sơ thì gỡ mọi CV khỏi tìm kiếm; sửa câu chữ hứa tính năng chưa có | ✅ Gộp vào `dev` (#208) |
+
+<details><summary>Ghi chú GĐ1</summary>
+
+- Nguồn duy nhất ở `apps/jobs/models/querysets.py` (xem
+  [ADR-0019](02-tong-quan/adr-0019-job-effective-state.md)): danh sách điều kiện
+  công khai có mã, nhãn, hành động khắc phục; `JobState` gồm nháp, đang tuyển,
+  bị ẩn, hết hạn, đã đóng. Danh sách tin NTD, chiến dịch, dashboard, admin và
+  lý do chặn ở trang kiểm duyệt đều đọc từ đây, luôn theo lịch Việt Nam
+  (`common/vietnam_time.py`).
+- Bộ lọc công khai bắt buộc xác thực đã duyệt, DPA hiện hành, không compliance
+  hold của NTD và trang công ty không bị ẩn, tức khớp `candidate_data_access`.
+  `create_application_record` kiểm tra lại dưới khóa, kèm việc chặn ứng viên
+  (chuyển từ serializer vào service).
+- Gỡ cờ `JOB_LIFECYCLE_V2_MODE`; migration `jobs.0052` điền cửa sổ hiển thị cho
+  tin còn thiếu mốc.
+- NTD thấy tab "Bị ẩn" và khung lý do kèm liên kết khắc phục ở chi tiết tin;
+  dashboard báo số tin đang bị ẩn; admin lọc được tin bị ẩn.
+- Nhập tin hàng loạt và `seed_demo_jobs` chỉ đăng dưới NTD đã xác thực, còn DPA.
+  Ngày 15/11 đã bổ sung bằng chứng demo (hoàn tất đăng ký, SĐT, giấy tờ, DPA,
+  duyệt xác thực) cho 9 NTD demo trên DB dev để 100/100 tin công khai và nhận
+  hồ sơ; sao lưu trước khi sửa: `backups/pre-demo-employer-approval-20261115.dump`.
+
+</details>
+
+<details><summary>Ghi chú GĐ6</summary>
+
+- Tắt đồng ý `RECRUITER_VISIBILITY` ở cả hai đường ghi (API
+  `recruiter-visibility` và form nhu cầu công việc) đều đặt
+  `recruiter_searchable=False` cho mọi CV của ứng viên
+  (`withdraw_cvs_from_recruiter_search` trong `apps/cvs/services`).
+- Gỡ khối "Đang bật/tắt tìm việc" ở sidebar tài khoản: công tắc chỉ là state cục
+  bộ và hứa hồ sơ "hiển thị nổi bật" trong tìm kiếm của NTD. Câu chữ ở sidebar,
+  hộp đồng ý và banner "Bật tìm việc cho CV" nói rõ tính năng tìm ứng viên sắp
+  ra mắt.
+- Khi làm tìm ứng viên trong hạng mục AI: chỉ trả CV có `recruiter_searchable`
+  và hồ sơ còn đồng ý; giữ cam kết trong hộp đồng ý là ẩn họ tên, ảnh và thông
+  tin liên hệ cho tới khi ứng viên đồng ý kết nối.
+
+</details>
+
+## Đối sánh ngữ nghĩa CV–JD chạy local (2026-11-15)
+
+AI lõi của đồ án cho phía ứng viên: bấm "Xem độ phù hợp" trên một tin để nhận
+điểm tổng, điểm theo tiêu chí, kỹ năng khớp/thiếu và gợi ý cải thiện CV. Mô hình
+`intfloat/multilingual-e5-base` chạy và fine-tune trên máy local, không gọi API
+ngoài. Lộ trình 8 tuần (16/11/2026 → 10/01/2027), mỗi giai đoạn một PR.
+
+| Tuần | Hạng mục | Trạng thái |
+| --- | --- | --- |
+| 1 | Nền tảng: pgvector, schema `apps/matching`, môi trường huấn luyện `ml/`, kiểm chứng fine-tune trên MPS | 🟨 Code xong trên nhánh, chưa mở PR; còn nhập JD thật và viết rubric chấm điểm |
+| 2 | Trích xuất và chuẩn hóa CV/JD, mở rộng taxonomy kỹ năng, baseline TF-IDF/BM25 (PR 1) | ⬜ |
+| 3 | Encoder zero-shot, chấm điểm, giải thích, API, worker suy luận (PR 2) | ⬜ |
+| 4 | Giao diện "Xem độ phù hợp" ở trang chi tiết tin (PR 3), bản demo tối thiểu | ⬜ |
+| 5 | Tập vàng 150 cặp do người chấm; đo baseline và zero-shot; sinh dữ liệu huấn luyện | ⬜ |
+| 6 | Fine-tune, ablation, chọn mô hình đưa vào sản phẩm | ⬜ |
+| 7 | Đo hiệu năng, nghiệm thu chức năng (PR 4) | ⬜ |
+| 8 | Viết báo cáo, diễn tập demo | ⬜ |
+
+<details><summary>Ghi chú tuần 1</summary>
+
+- Image DB là `pgvector/pgvector:pg16-trixie`, không phải tag `pg16`: volume
+  `pgdata` tạo trên Debian trixie (glibc 2.41), còn `pg16` là bookworm (glibc
+  2.36) nên sẽ lệch phiên bản collation. Bản sao lưu trước khi đổi:
+  `backups/pre-pgvector-20261115.dump`.
+- Ngày 15/11 đã xóa toàn bộ 53 tin mẫu cùng hồ sơ ứng tuyển thử trong DB dev
+  (sao lưu `backups/pre-job-cleanup-20261115.dump`). Tin thật được điền vào
+  `ml/data/jd_input.xlsx` (không commit) rồi nhập bằng
+  `ml/scripts/import_jd.py` (chạy thử trước, `--apply --create-skills` để ghi;
+  bảng đối chiếu mã tin lưu ở `ml/data/jd_import_map.json`); rubric gán nhãn bản
+  nháp ở `ml/labeling/rubric.md`.
+- Ngày 15/11 đã nhập 100 tin thật (90 TopCV, 10 ITviec; 78 tin tiếng Việt, 22
+  tin tiếng Anh; đủ 8 nhóm ngành) vào các công ty demo. Danh mục kỹ năng tăng
+  từ 42 lên 344; bảng gộp cách viết và hai nhóm "Kỹ năng mềm", "Phẩm chất cá
+  nhân" ở `ml/labeling/skill_merge.json`. Sao lưu trước khi nhập:
+  `backups/pre-jd-import-20261115.dump`.
+- `apps/matching` mới có ba bảng (`MatchDocument`, `MatchChunk`,
+  `MatchAnalysis`) và test ràng buộc; chưa có service, API hay task.
+- Đo trên MacBook Pro M5, 16 GB (torch 2.15.0, sentence-transformers 6.3.0):
+  mã hóa 371 câu ngắn/giây trên MPS; fine-tune 5,6 giây/bước ở batch 32, ước
+  45–90 phút cho 5.000 bộ ba × 3 epoch.
+- Fine-tune trên MPS với cấu hình mặc định báo lỗi dropout của
+  `scaled_dot_product_attention`; phải nạp mô hình với
+  `attention_probs_dropout_prob=0.0` (đã đặt sẵn trong `ml/scripts/smoke_mps.py`).
+- Không giới hạn thì vùng nhớ MPS lên khoảng 9,7 GB và swap tăng khoảng 6 GB.
+  Đặt `PYTORCH_MPS_HIGH_WATERMARK_RATIO=0.6` giữ ở khoảng 7,4 GB, chậm hơn
+  khoảng 9% (6,1 giây/bước).
+
+</details>
+
+## CV tải lên: tệp gốc, tiêu chuẩn upload, giới hạn CV, NTD tìm kiếm (2026-11-15)
+
+- Lỗi tìm thấy: `backend/.env` bật `*_UPLOAD_SESSION_REQUIRED=True` khi quarantine
+  tắt nên mọi upload bị 409; local đã đưa về `False` (bật lại phải kèm
+  `UPLOAD_QUARANTINE_ENABLED=True` + ClamAV). CV tải lên hiện trống vì mọi màn
+  hình dựng từ `content_json` rỗng.
+- Xem tệp gốc: `GET /api/v2/cvs/<id>/source/` (chủ CV) và
+  `GET /api/v2/cvs/shares/<token>/source/` (link chia sẻ, không ghi thêm lượt
+  truy cập); DOCX đổi sang PDF bằng LibreOffice. Hàm đổi chuyển từ `employers`
+  sang `common/office_preview.py`. Trang xem và link chia sẻ của CV tải lên hiện
+  tệp gốc (ẩn thanh công cụ PDF); thẻ CV tải lên là biểu tượng thư mục, không
+  có nút sửa.
+- Tiêu chuẩn upload + nhận dạng CV (`apps/cvs/services/cv_document.py`, dùng
+  chung cho upload trực tiếp, phiên upload và job import AI): PDF/DOCX đúng chữ
+  ký, ≤ 5 MB, ≤ 20 trang, PDF có lớp chữ và không mật khẩu; phải có email/số
+  điện thoại và ≥ 2 nhóm mục CV, trong đó có kinh nghiệm/học vấn/kỹ năng. Từ khóa
+  chỉ tính ở dòng ngắn dạng tiêu đề (≤ 40 ký tự, hoặc phần trước dấu ":") để báo
+  cáo/thư nhắc "kinh nghiệm" trong câu không lọt; so khớp bỏ dấu, bỏ khoảng trắng
+  vì PDF hay tách chữ; văn bản > 30.000 ký tự bị loại. Lỗi trả `CV_REJECTED` kèm
+  `reason`.
+- Giới hạn số CV theo site setting `candidate_max_cvs` (mặc định 6, tính cả CV
+  lưu trữ) áp ở mọi đường tạo CV; lỗi `CV_LIMIT_REACHED` "Hiện tại tài khoản của
+  bạn chỉ hỗ trợ tạo 6 CV!".
+- Cho NTD tìm kiếm theo từng CV: cột `UserCv.recruiter_searchable` (migration
+  `cvs.0017`), chỉ bật được khi hồ sơ đã đồng ý `RECRUITER_VISIBILITY`. Công tắc
+  trên mọi thẻ CV, popup "Quản lý danh sách" (bật/tắt nhiều CV + đồng ý một lần)
+  và khối "Bật tìm việc cho CV" đầu trang CV của tôi; sidebar đếm số CV đang bật.
+  Chưa có màn hình NTD tìm ứng viên đọc cờ này (thuộc hạng mục đối sánh CV–JD);
+  tắt đồng ý thì mọi CV về `recruiter_searchable=False` (GĐ6 đợt thống nhất luồng).
+- Trang xem CV `/cvs/<id>/view` và `/cv/share/<token>`: layout riêng không header
+  site, thanh mảnh với Tải CV PDF / Sửa CV / Copy CV (nhân bản); bỏ khối chọn
+  phiên bản + xuất PDF (`CvPdfExportControl` đã xóa).
+- Editor CV bỏ tự động lưu: chỉ lưu khi bấm Lưu CV (hoặc trước khi đổi mẫu/áp
+  nội dung mẫu); rời trang khi còn thay đổi thì hỏi xác nhận.
+- Trang `/tai-cv-len` (kéo thả, tiêu chuẩn, lợi ích) và màn hình tải lên thành
+  công gợi ý mẫu CV online (`?nguon=tai-len`).
+- Còn mở: CV tải lên nguyên tệp chưa dùng để ứng tuyển được — version của nó
+  rỗng nên `application_readiness_issues` chặn (cần phân tích nội dung hoặc cho
+  NTD xem tệp gốc).
 
 ## Việc làm tốt nhất xếp theo chất lượng tin (2026-11-15)
 
@@ -300,7 +457,7 @@ production, staging và soak (ER-8). Lệnh kiểm tra chỉ đọc:
 | 0 — Khởi tạo dự án | ✅ | |
 | 1 — MVP lõi | ✅ | Ba cổng, việc làm, CV builder, ứng tuyển, workspace chiến dịch và tin |
 | 2 — AI cơ bản | 🟨 | Đã có: import CV qua AI, đối sánh rule-based (`match_score`), runtime `ai_core` với `AiInvocation` và `AiUsageDaily`. Chưa có: bảng `cv_analysis`, `match_results`, `ai_suggestions`; trích xuất kỹ năng; mô hình phân loại kỹ năng |
-| 3 — Tối ưu tìm kiếm / matching | ⬜ | Embedding (pgvector) và semantic matching CV–JD |
+| 3 — Tối ưu tìm kiếm / matching | 🟨 | Embedding (pgvector) và semantic matching CV–JD: nền tảng đã có, xem [đối sánh ngữ nghĩa CV–JD chạy local](#đối-sánh-ngữ-nghĩa-cvjd-chạy-local-2026-11-15) |
 | 4 — CV nâng cao | 🟨 | Còn import LinkedIn, AI writer, review CV bằng AI |
 | 5 — Tuyển dụng nâng cao | ✅ | Việc đã lưu, lịch sử trạng thái hồ sơ, notification center của nhà tuyển dụng |
 | 6 — Thương mại & quản trị | ✅ | Quản trị (hai cấp superuser/admin theo ADR-0018), blog, marketing. Gói đăng ký và quota trả phí (6.1, 6.2) bỏ khỏi phạm vi theo ADR-0015 |
@@ -311,10 +468,12 @@ production, staging và soak (ER-8). Lệnh kiểm tra chỉ đọc:
 AI lõi của đồ án (phạm vi chốt 2026-11-15, xem
 [sơ đồ use case](01-phan-tich/phan-tich-yeu-cau.md#sơ-đồ-use-case-tổng-quát-chốt-2026-11-15)):
 
-- ⬜ Đối sánh ngữ nghĩa CV–JD chạy local (embedding mã nguồn mở + pgvector,
-  pipeline tự xây), không gọi API ngoài.
-- ⬜ Ứng viên: Phân tích mức độ phù hợp CV–JD (điểm tổng và theo tiêu chí);
-  chuyển Việc làm gợi ý sang module ngữ nghĩa.
+- 🟨 Đối sánh ngữ nghĩa CV–JD chạy và fine-tune local (bi-encoder mã nguồn mở +
+  pgvector, pipeline tự xây), không gọi API ngoài: xem
+  [lộ trình 8 tuần](#đối-sánh-ngữ-nghĩa-cvjd-chạy-local-2026-11-15).
+- ⬜ Ứng viên: Phân tích mức độ phù hợp CV–JD (điểm tổng và theo tiêu chí, kỹ
+  năng khớp/thiếu, gợi ý cải thiện CV); chuyển Việc làm gợi ý sang module ngữ
+  nghĩa.
 - ⬜ Nhà tuyển dụng: Sàng lọc và xếp hạng hồ sơ ứng tuyển bằng AI; Tìm kiếm hồ
   sơ ứng viên xếp theo độ phù hợp với một tin (chỉ ứng viên đã bật
   `recruiter_visibility`).

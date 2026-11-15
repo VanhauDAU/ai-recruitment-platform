@@ -45,8 +45,6 @@ if JOB_POSTING_MAX_DEADLINE_DAYS > JOB_POSTING_MAX_PUBLIC_LIFETIME_DAYS:
     _errors.append('JOB_POSTING_MAX_DEADLINE_DAYS không được vượt quá vòng đời công khai tối đa.')
 if JOB_POSTING_MAX_PUBLIC_LIFETIME_DAYS > 90:
     _errors.append('JOB_POSTING_MAX_PUBLIC_LIFETIME_DAYS không được vượt quá 90 ngày.')
-if JOB_LIFECYCLE_V2_MODE not in {'legacy', 'shadow', 'enforce'}:
-    _errors.append('JOB_LIFECYCLE_V2_MODE phải là legacy, shadow hoặc enforce.')
 if EMPLOYER_BADGE_POLICY_MODE not in {'shadow', 'enforce'}:
     _errors.append('EMPLOYER_BADGE_POLICY_MODE phải là shadow hoặc enforce.')
 

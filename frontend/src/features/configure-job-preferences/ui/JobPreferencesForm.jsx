@@ -1,6 +1,8 @@
+import { useQueryClient } from '@tanstack/react-query'
 import { useEffect, useMemo, useState } from 'react'
 import { Button, Checkbox, Form, InputNumber, Radio, Select, Switch } from 'antd'
 import { UnorderedListOutlined, UserOutlined } from '@ant-design/icons'
+import { RECRUITER_VISIBILITY_QUERY_KEY } from '@/entities/candidate-preferences'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { message } from '@/shared/lib/toast'
 import { EXPERIENCE_OPTIONS, toFormValues } from '../model/job-preferences-fields'
@@ -19,6 +21,7 @@ import JobSpecializationPicker from './JobSpecializationPicker'
 const DROPDOWN_CLASS_NAME = '!rounded-2xl !p-1 !shadow-lg [&_.ant-select-item-option]:!rounded-xl'
 
 export default function JobPreferencesForm({ preference, profile, onProfileSaved, onSaved, onSkip, submitLabel = 'Hoàn thành', variant = 'default', renderFooter }) {
+  const queryClient = useQueryClient()
   const [form] = Form.useForm()
   const [saving, setSaving] = useState(false)
   const isAccountSettings = variant === 'settings'
@@ -60,6 +63,8 @@ export default function JobPreferencesForm({ preference, profile, onProfileSaved
         saveJobPreferences({ ...preferenceValues, preferred_skill_ids: preservedSkillIds }, preference),
         variant === 'settings' ? onProfileSaved?.({ gender }) : null,
       ])
+      queryClient.invalidateQueries({ queryKey: RECRUITER_VISIBILITY_QUERY_KEY })
+      if (!saved.recruiter_visibility_consent) queryClient.invalidateQueries({ queryKey: ['my-cvs'] })
       message.success('Đã lưu nhu cầu công việc của bạn.')
       onSaved?.(saved)
     } catch (error) {

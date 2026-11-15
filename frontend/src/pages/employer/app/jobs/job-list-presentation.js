@@ -6,31 +6,28 @@ import { employerAppPath } from '@/shared/config/portals'
 export const JOB_STATUS_TABS = [
   { value: '', label: 'Tất cả', countKey: 'all' },
   { value: 'active', label: 'Đang tuyển', countKey: 'active' },
+  { value: 'hidden', label: 'Bị ẩn', countKey: 'hidden' },
   { value: 'draft', label: 'Nháp', countKey: 'draft' },
   { value: 'expired', label: 'Hết hạn', countKey: 'expired' },
   { value: 'closed', label: 'Đã đóng', countKey: 'closed' },
 ]
 
+// Keys are the backend `effective_state`: what candidates experience now.
 const STATUS_META = {
-  held: { label: 'Tạm ẩn', tone: 'red' },
   active: { label: 'Đang tuyển', tone: 'emerald' },
+  hidden: { label: 'Bị ẩn', tone: 'red' },
   draft: { label: 'Nháp', tone: 'slate' },
   expired: { label: 'Hết hạn', tone: 'orange' },
   closed: { label: 'Đã đóng', tone: 'slate' },
 }
 
-// A held job stays `active` for the business flow but candidates cannot see it.
+// An administrator or account hold, the only hide that also freezes editing.
 export function isJobHeld(job) {
   return Boolean(job.visibility_hold)
 }
 
-function jobStatusKey(job) {
-  if (job.status === 'active' && isJobHeld(job)) return 'held'
-  return job.is_expired ? 'expired' : job.status
-}
-
 export function jobStatusMeta(job) {
-  return STATUS_META[jobStatusKey(job)] || { label: job.status || 'Không xác định', tone: 'slate' }
+  return STATUS_META[job.effective_state] || { label: job.status || 'Không xác định', tone: 'slate' }
 }
 
 export function jobDisplayTitle(job) {

@@ -10,6 +10,8 @@ tldextract==5.1.3
 requests==2.32.3
 celery==5.4.0
 psycopg2-binary==2.9.10
+pgvector==0.5.1
+numpy==2.4.6
 python-decouple==3.8
 django-storages[s3]==1.14.4
 Pillow==11.3.0

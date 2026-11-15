@@ -14,6 +14,7 @@ from apps.cvs.services import create_v2_cv
 from apps.employers.models import Company
 from apps.employers.tests.readiness_helpers import make_employer_ready
 from apps.jobs.models import Job, JobCategory, JobCategoryAssignment
+from apps.jobs.tests.helpers import open_visibility_window
 
 from ..models import CandidateBlock, TalentPoolEntry
 from ..services import create_application_record, purge_lapsed_talent_pool_entries
@@ -49,6 +50,7 @@ class TalentPoolTests(APITestCase):
                 title=title,
                 description='d',
                 status=Job.Status.ACTIVE,
+                **open_visibility_window(),
             )
             JobCategoryAssignment.objects.create(
                 job=created,

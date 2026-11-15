@@ -18,6 +18,7 @@ from apps.employers.services import (
     recruiter_readiness_state,
 )
 from apps.sitecontent.selectors.settings import get_int_setting
+from common.vietnam_time import vietnam_today
 
 from ..models import (
     Job,
@@ -37,8 +38,6 @@ from .lifecycle import (
     extend_job_visibility,
     initialize_job_visibility,
     job_lifecycle_policy,
-    lifecycle_local_date,
-    lifecycle_mode,
     visibility_days_error,
 )
 
@@ -97,7 +96,7 @@ def job_deadline_error(deadline, *, required=True, today=None):
     """Return a localized validation error, keeping date rules in one place."""
     if deadline is None:
         return 'Chọn hạn nhận hồ sơ.' if required else ''
-    today = today or lifecycle_local_date()
+    today = today or vietnam_today()
     if deadline < today:
         return 'Hạn nhận hồ sơ phải từ hôm nay trở đi.'
     maximum_days = job_deadline_policy()['max_deadline_days']
@@ -279,11 +278,7 @@ def _record_job_assignment(job, *, previous_campaign, user):
 
 def _ensure_visibility_window_open(job):
     """Refuse to publish a job whose public cycle has already ended."""
-    if (
-        lifecycle_mode() == 'enforce'
-        and job.visibility_ends_at is not None
-        and job.visibility_ends_at <= timezone.now()
-    ):
+    if job.visibility_ends_at is not None and job.visibility_ends_at <= timezone.now():
         raise ValidationError(
             {
                 'code': 'JOB_VISIBILITY_EXPIRED',
@@ -364,7 +359,7 @@ def _go_live(job, *, user, previous_status, acknowledged, update_fields=()):
 
 def _validate_publishable(job):
     errors = {}
-    today = lifecycle_local_date()
+    today = vietnam_today()
     if not job.title.strip():
         errors['title'] = 'Nhập tiêu đề tin tuyển dụng.'
     if not job.description.strip():
@@ -575,6 +570,19 @@ def publish_job(
 
 
 @transaction.atomic
+def publish_operator_imported_job(job, *, user):
+    """Make an operator-imported draft public without the recruiter gates.
+
+    Bulk loads of demo and evaluation postings are run by an operator, not by
+    the recruiter, so quota and the publication commitment do not apply. The
+    caller only picks publishers allowed to open candidate data, since the
+    public predicate hides any other job.
+    """
+    _validate_publishable(job)
+    return _go_live(job, user=user, previous_status=job.status, acknowledged=False)
+
+
+@transaction.atomic
 def update_employer_job(serializer, user):
     """Persist an employer's existing job through the domain mutation boundary."""
     recruiter = _locked_recruiter(user)
@@ -658,7 +666,7 @@ def extend_job_deadline(job, user, deadline, *, requested_visibility_days=None):
         raise ValidationError('Chỉ có thể gia hạn tin đang tuyển của bạn.')
     _validate_job_for_write(job)
     _validate_campaign_for_write(job.campaign, recruiter=recruiter)
-    today = lifecycle_local_date()
+    today = vietnam_today()
     deadline = deadline or job.deadline
     deadline_extended = bool(
         deadline is not None and (job.deadline is None or deadline > job.deadline)
@@ -680,7 +688,7 @@ def extend_job_deadline(job, user, deadline, *, requested_visibility_days=None):
         )
     lifecycle_anchor = job.first_approved_at or job.published_at
     if lifecycle_anchor:
-        published_date = lifecycle_local_date(lifecycle_anchor)
+        published_date = vietnam_today(lifecycle_anchor)
         maximum_lifetime_days = job_deadline_policy()['max_public_lifetime_days']
         if deadline > published_date + timedelta(days=maximum_lifetime_days):
             raise ValidationError(
@@ -697,9 +705,7 @@ def extend_job_deadline(job, user, deadline, *, requested_visibility_days=None):
         effective_visibility_end = job.visibility_starts_at + timedelta(
             days=requested_visibility_days
         )
-    if effective_visibility_end is not None and deadline > lifecycle_local_date(
-        effective_visibility_end
-    ):
+    if effective_visibility_end is not None and deadline > vietnam_today(effective_visibility_end):
         raise ValidationError(
             {
                 'deadline': (

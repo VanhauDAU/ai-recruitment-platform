@@ -2,6 +2,7 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from rest_framework.test import APIClient
 
+from apps.cvs.models import UserCv
 from apps.jobs.models import JobCategory
 from apps.locations.models import Location
 from apps.skills.models import Skill
@@ -473,3 +474,54 @@ class CandidateProfileApiTests(TestCase):
         self.assertEqual(disabled.status_code, 200)
         self.assertFalse(disabled.data['enabled'])
         self.assertEqual(CandidateConsentEvent.objects.count(), 2)
+
+    def searchable_cv(self, user, title='CV'):
+        return UserCv.objects.create(
+            user=user,
+            title=title,
+            cv_type=UserCv.CvType.BUILDER,
+            source=UserCv.Source.BUILDER,
+            language='vi-VN',
+            recruiter_searchable=True,
+        )
+
+    def test_revoking_recruiter_visibility_withdraws_every_cv_from_search(self):
+        own_cvs = [self.searchable_cv(self.user, f'CV {index}') for index in range(2)]
+        other = get_user_model().objects.create_user(
+            email='other@example.com', password='password', role='candidate'
+        )
+        other_cv = self.searchable_cv(other)
+
+        response = self.client.patch(
+            '/api/candidate/recruiter-visibility/',
+            {'enabled': False, 'source': 'account_settings', 'policy_version': 'v1'},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(
+            UserCv.objects.filter(
+                pk__in=[cv.pk for cv in own_cvs], recruiter_searchable=True
+            ).exists()
+        )
+        other_cv.refresh_from_db()
+        self.assertTrue(other_cv.recruiter_searchable)
+
+    def test_job_preferences_without_recruiter_consent_withdraw_cvs_from_search(self):
+        cv = self.searchable_cv(self.user)
+
+        kept = self.client.put(
+            '/api/candidate/job-preferences/', self.preference_payload(), format='json'
+        )
+        cv.refresh_from_db()
+        self.assertEqual(kept.status_code, 200, kept.data)
+        self.assertTrue(cv.recruiter_searchable)
+
+        revoked = self.client.put(
+            '/api/candidate/job-preferences/',
+            self.preference_payload(recruiter_visibility_consent=False),
+            format='json',
+        )
+        cv.refresh_from_db()
+        self.assertEqual(revoked.status_code, 200, revoked.data)
+        self.assertFalse(cv.recruiter_searchable)

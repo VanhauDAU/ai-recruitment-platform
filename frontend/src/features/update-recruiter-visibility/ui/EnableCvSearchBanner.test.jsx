@@ -7,6 +7,7 @@ import { setCvRecruiterSearchable } from '@/entities/cv'
 import EnableCvSearchBanner from './EnableCvSearchBanner'
 
 vi.mock('@/entities/candidate-preferences', () => ({
+  RECRUITER_VISIBILITY_QUERY_KEY: ['candidate', 'recruiter-visibility'],
   getRecruiterVisibility: vi.fn(),
   updateRecruiterVisibility: vi.fn(),
 }))

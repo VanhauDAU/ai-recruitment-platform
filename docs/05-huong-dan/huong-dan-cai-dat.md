@@ -6,7 +6,9 @@
   dựng backend bằng `./scripts/bootstrap-backend.sh` (tự kiểm tra Python 3.11) hoặc
   `pyenv install 3.11`.
 - Node.js 20.19+ hoặc 22.12+ (Vite 8 yêu cầu các bản này)
-- PostgreSQL 16
+- PostgreSQL 16 có extension [pgvector](https://github.com/pgvector/pgvector)
+  (đã thử với 0.8.7). Migration `matching.0001` chạy `CREATE EXTENSION vector`,
+  nên user DB cần quyền tạo extension. Docker Compose dùng image đã có sẵn.
 - Redis 7+
 
 ## PostgreSQL (macOS, Homebrew)

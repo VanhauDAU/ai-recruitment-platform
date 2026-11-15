@@ -181,11 +181,13 @@ stateDiagram-v2
 
 **Bất biến công khai.** Mọi đường candidate-facing (danh sách, chi tiết, lưu,
 gợi ý, email, tracking) dùng một predicate `publicly_available_job_filter`
-(`jobs/models/querysets.py`): tin `active`, không `policy_hold`/`moderation_hold`,
-không compliance hold active; người đăng active, chưa xóa và vẫn thuộc đúng
-`company` của tin (verification case nếu có cũng cùng company); còn hạn
-`deadline` (và khi `JOB_LIFECYCLE_V2_MODE=enforce` thì trong cửa sổ visibility);
-chiến dịch (nếu có) active, không hold và chủ chiến dịch active.
+(`jobs/models/querysets.py`, xem [ADR-0019](../02-tong-quan/adr-0019-job-effective-state.md)):
+tin `active`, không `policy_hold`/`moderation_hold`, không compliance hold
+active (tin, NTD, chiến dịch); người đăng active, chưa xóa, vẫn thuộc đúng
+`company` của tin, có verification case **đã duyệt** cho company đó và DPA hiện
+hành; trang công ty không bị `content_policy_hold`; còn hạn `deadline` theo
+lịch Việt Nam và trong cửa sổ visibility; chiến dịch (nếu có) active, không hold
+và chủ chiến dịch active.
 
 ### 5.2. Bảng chi tiết tin
 
@@ -327,6 +329,16 @@ App `privacy` **không có bảng**: consent cookie (necessary/preferences/
 analytics/marketing) lưu trong cookie ký (`django.core.signing`) và đọc
 fail-closed; xem [cookie consent và job view tracking](../04-api/cookie-consent-va-job-view-tracking.md).
 Consent nghiệp vụ của ứng viên nằm ở `candidate_consents` (mục 8).
+
+### 11.1. Đối sánh ngữ nghĩa CV–JD (`matching`)
+
+Cần extension `vector` (pgvector); migration `matching.0001` tự bật.
+
+| Bảng | Mục đích và ràng buộc |
+| --- | --- |
+| `matching_matchdocument` | Hồ sơ đã chuẩn hóa (`profile_json`) và vector 768 chiều của một phiên bản CV **hoặc** một nội dung tin (check: đúng một nguồn theo `kind`). Unique theo (nguồn, `content_hash`, `extractor_version`, `model_version`), nên đổi nội dung hay đổi mô hình thì sinh hàng mới; hàng cũ là cache. |
+| `matching_matchchunk` | Từng đoạn của tài liệu kèm vector, unique theo (`document`, `position`); điểm ngữ nghĩa tính ở mức đoạn. |
+| `matching_matchanalysis` | Một lần phân tích độ phù hợp do ứng viên yêu cầu: queued → processing → succeeded/failed, `overall_score` 0–100, `result_json`. Unique theo khóa cache (`cv_version`, `job`, `job_content_hash`, `model_version`, `scoring_version`). Xóa `MatchDocument` chỉ gỡ con trỏ, không xóa kết quả. |
 
 ## 12. Bất biến xuyên domain
 

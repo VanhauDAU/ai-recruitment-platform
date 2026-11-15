@@ -19,10 +19,12 @@ from apps.employers.models import (
     EmployerVerificationCase,
     RecruiterProfile,
 )
+from apps.employers.tests.readiness_helpers import current_dpa_fields
 
 from ..models import Job, JobReport, JobReportResolutionEvent
 from ..selectors.verification_badge import job_badge_criteria
 from ..services import resolve_job_report, submit_job_report
+from .helpers import open_visibility_window
 
 
 def _employer_job(suffix):
@@ -47,6 +49,7 @@ def _employer_job(suffix):
         contact_phone=employer.phone,
         verified_phone=employer.phone,
         phone_verified_at=timezone.now(),
+        **current_dpa_fields(),
     )
     verification_case = EmployerVerificationCase.objects.create(
         recruiter=recruiter,
@@ -76,6 +79,7 @@ def _employer_job(suffix):
         title=f'Backend Engineer {suffix}',
         description='Build reliable services.',
         status=Job.Status.ACTIVE,
+        **open_visibility_window(),
     )
     return employer, job
 
@@ -288,6 +292,7 @@ class JobReportAdminApiTests(APITestCase):
                     title=f'Operational report {index}',
                     description='Still a legitimate employer.',
                     status=Job.Status.ACTIVE,
+                    **open_visibility_window(),
                 )
                 candidate = user_model.objects.create_user(
                     email=f'operational-{index}@example.com',

@@ -17,6 +17,7 @@ from apps.employers.tests.readiness_helpers import make_employer_ready
 from apps.skills.models import Skill
 
 from ..models import Job, JobCategory, JobCategoryAssignment, JobSkill, SavedJob
+from .helpers import open_visibility_window
 
 # 1 COUNT (pagination) + 1 SELECT jobs + 3 prefetch (categories, locations,
 # skills). select_related company nằm trong SELECT chính.
@@ -58,6 +59,7 @@ class JobListQueryBudgetTests(APITestCase):
                 salary_max=20_000_000,
                 salary_type=Job.SalaryType.RANGE,
                 status=Job.Status.ACTIVE,
+                **open_visibility_window(),
             )
 
     def test_job_list_query_count_is_flat_regardless_of_row_count(self):
@@ -85,15 +87,6 @@ class JobListQueryBudgetTests(APITestCase):
             [oldest.public_id, newest.public_id],
         )
         self.assertEqual(len(response.data['results']), 5)
-
-    def test_held_company_hides_its_slug_without_an_extra_query(self):
-        Company.objects.filter(pk=self.company.pk).update(content_policy_hold=True)
-
-        with self.assertNumQueries(JOB_LIST_QUERY_BUDGET):
-            response = self.client.get(reverse('job-list'))
-
-        self.assertEqual(len(response.data['results']), 5)
-        self.assertEqual({job['company_slug'] for job in response.data['results']}, {None})
 
     def test_homepage_best_jobs_query_count_is_flat(self):
         with self.assertNumQueries(HOMEPAGE_BEST_JOB_LIST_QUERY_BUDGET):
@@ -148,6 +141,7 @@ class EmployerJobListQueryBudgetTests(APITestCase):
                 description='Description',
                 status=Job.Status.ACTIVE,
                 application_count=2,
+                **open_visibility_window(),
             )
             for submission in range(2):
                 Application.objects.create(
@@ -260,6 +254,7 @@ class SavedJobRecommendationQueryBudgetTests(APITestCase):
             title=title,
             description='Description',
             status=Job.Status.ACTIVE,
+            **open_visibility_window(),
         )
 
     def test_saved_similarity_query_count_is_flat(self):

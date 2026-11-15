@@ -29,10 +29,10 @@ Chi tiết endpoint: [docs/04-api/tai-lieu-api.md](docs/04-api/tai-lieu-api.md).
 | ---------- | ----------------------------------------------------- |
 | Frontend   | ReactJS + Vite, Tailwind CSS, Ant Design              |
 | Backend    | Django + Django REST Framework, JWT (simplejwt)       |
-| Database   | PostgreSQL                                            |
+| Database   | PostgreSQL 16 + pgvector                              |
 | Cache/OAuth| Redis (token xác thực email, OAuth state/one-time code) |
 | Ảnh        | Pillow (resize favicon/ảnh upload), storage nội bộ    |
-| AI         | PyMuPDF, scikit-learn (đang triển khai ở Giai đoạn 2) |
+| AI         | pypdf, python-docx (trích text CV); đối sánh ngữ nghĩa CV–JD chạy local bằng sentence-transformers (đang xây) |
 
 ## Cấu trúc dự án
 

@@ -33,6 +33,7 @@ from ..models import (
     SavedJob,
 )
 from ..selectors.recommendations import recommend_new_jobs_for_candidate_email
+from .helpers import open_visibility_window
 
 
 class CvJobRecommendationApiTests(APITestCase):
@@ -88,6 +89,7 @@ class CvJobRecommendationApiTests(APITestCase):
             title='Fullstack Developer',
             description='Build products.',
             status=Job.Status.ACTIVE,
+            **open_visibility_window(),
         )
         JobCategoryAssignment.objects.create(
             job=self.matching,
@@ -100,6 +102,7 @@ class CvJobRecommendationApiTests(APITestCase):
             title='Kế toán tổng hợp',
             description='Accounting.',
             status=Job.Status.ACTIVE,
+            **open_visibility_window(),
         )
         self.client.force_authenticate(self.candidate)
 
@@ -194,6 +197,7 @@ class CvJobRecommendationApiTests(APITestCase):
             title='Kỹ sư nền tảng',
             description='Build a platform.',
             status=Job.Status.ACTIVE,
+            **open_visibility_window(),
         )
         for skill_name in skill_names:
             JobSkill.objects.create(
@@ -241,6 +245,7 @@ class CvJobRecommendationApiTests(APITestCase):
             description='Run the platform.',
             status=Job.Status.ACTIVE,
             experience_years=Job.ExperienceYears.OVER_5,
+            **open_visibility_window(),
         )
         JobSkill.objects.create(job=senior_job, skill=skill)
         cv = UserCv.objects.create(
@@ -365,6 +370,7 @@ class CvJobRecommendationApiTests(APITestCase):
             title='Kỹ sư nền tảng',
             description='Build a platform.',
             status=Job.Status.ACTIVE,
+            **open_visibility_window(),
         )
         for index, skill_name in enumerate(['Python', 'Django', 'PostgreSQL', 'REST API']):
             skill = Skill.objects.create(name=skill_name)
@@ -410,6 +416,7 @@ class CvJobRecommendationApiTests(APITestCase):
             salary_min=25_000_000,
             salary_max=25_000_000,
             experience_years=Job.ExperienceYears.THREE,
+            **open_visibility_window(),
         )
         JobCategoryAssignment.objects.create(
             job=weak_match,
@@ -436,6 +443,7 @@ class CvJobRecommendationApiTests(APITestCase):
             status=Job.Status.ACTIVE,
             salary_type=Job.SalaryType.FROM,
             salary_min=20_000_000,
+            **open_visibility_window(),
         )
         up_to_job = Job.objects.create(
             posted_by=self.employer,
@@ -445,6 +453,7 @@ class CvJobRecommendationApiTests(APITestCase):
             status=Job.Status.ACTIVE,
             salary_type=Job.SalaryType.UP_TO,
             salary_max=30_000_000,
+            **open_visibility_window(),
         )
         for job in (from_job, up_to_job):
             JobCategoryAssignment.objects.create(
@@ -548,6 +557,7 @@ class CvJobRecommendationApiTests(APITestCase):
                 title=f'Fullstack Developer {index}',
                 description='Build products.',
                 status=Job.Status.ACTIVE,
+                **open_visibility_window(),
             )
             JobCategoryAssignment.objects.create(
                 job=job,
@@ -612,6 +622,7 @@ class PersonalizedRecommendationControlsApiTests(APITestCase):
             title=f'Backend Developer {index}',
             description='Build services.',
             status=Job.Status.ACTIVE,
+            **open_visibility_window(),
         )
         JobCategoryAssignment.objects.create(
             job=job,
