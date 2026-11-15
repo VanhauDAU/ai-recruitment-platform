@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { updateProfile } from './edit-profile.api'
-const { patch } = vi.hoisted(() => ({ patch: vi.fn() }))
+import { deleteAvatar, updateProfile } from './edit-profile.api'
+const { patch, del } = vi.hoisted(() => ({ patch: vi.fn(), del: vi.fn() }))
 
 vi.mock('@/shared/api/client', () => ({
-  default: { patch },
+  default: { patch, delete: del },
 }))
 
 describe('account API', () => {
@@ -15,5 +15,11 @@ describe('account API', () => {
 
     await expect(updateProfile({ full_name: 'Nguyễn An', phone: '0912345678' })).resolves.toEqual(updatedUser)
     expect(patch).toHaveBeenCalledWith('/auth/me/', { full_name: 'Nguyễn An', phone: '0912345678' })
+  })
+  it('removes the avatar through the avatar endpoint', async () => {
+    del.mockResolvedValue({ data: { avatar_url: '' } })
+
+    await expect(deleteAvatar()).resolves.toEqual({ avatar_url: '' })
+    expect(del).toHaveBeenCalledWith('/auth/avatar/')
   })
 })

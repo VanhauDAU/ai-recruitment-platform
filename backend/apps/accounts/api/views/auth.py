@@ -136,6 +136,11 @@ class MeView(generics.RetrieveUpdateAPIView):
         )
 
 
+# Ảnh đại diện đã được cắt vuông phía client; giới hạn này chặn file gửi thẳng
+# qua API quá lớn (ảnh vẫn được hiển thị tối đa vài trăm px).
+AVATAR_MAX_DIMENSIONS = (1024, 1024)
+
+
 class AvatarUploadView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     parser_classes = [parsers.MultiPartParser]
@@ -158,7 +163,12 @@ class AvatarUploadView(APIView):
 
         user = request.user
         old_url = user.avatar_url
-        saved = save_image_upload(upload, f'users/avatars/{user.public_id}', request=request)
+        saved = save_image_upload(
+            upload,
+            f'users/avatars/{user.public_id}',
+            request=request,
+            max_dimensions=AVATAR_MAX_DIMENSIONS,
+        )
 
         # Database chỉ lưu storage key; serializer sẽ resolve URL theo domain/CDN
         # hiện tại khi trả API.
@@ -166,4 +176,19 @@ class AvatarUploadView(APIView):
         user.save(update_fields=['avatar_url', 'updated_at'])
         delete_local_media_url(old_url)
 
+        return Response(SessionUserSerializer(user, context={'request': request}).data)
+
+    @extend_schema(
+        summary='Xóa avatar người dùng',
+        request=None,
+        responses={200: SessionUserSerializer},
+        tags=['auth'],
+    )
+    def delete(self, request):
+        user = request.user
+        old_url = user.avatar_url
+        if old_url:
+            user.avatar_url = ''
+            user.save(update_fields=['avatar_url', 'updated_at'])
+            delete_local_media_url(old_url)
         return Response(SessionUserSerializer(user, context={'request': request}).data)
