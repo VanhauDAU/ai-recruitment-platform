@@ -8,8 +8,10 @@ from common.public_id import generate_public_id
 class Application(models.Model):
     """A candidate's application to a job (DB doc section 2.15).
 
-    A candidate may submit up to three applications to one job. Each submission
-    keeps its own immutable CV snapshot so recruiters can review every version.
+    A candidate has at most one *current* application per job, the one the
+    recruiter works on; earlier submissions stay as read-only history
+    (``is_current=False``) with their own immutable CV snapshot. A new
+    submission is only allowed once the current one was rejected or withdrawn.
     """
 
     class Source(models.TextChoices):
@@ -24,6 +26,7 @@ class Application(models.Model):
         INTERVIEWED = 'interviewed', 'Phỏng vấn'
         REJECTED = 'rejected', 'Không phù hợp'
         ACCEPTED = 'accepted', 'Trúng tuyển'
+        WITHDRAWN = 'withdrawn', 'Đã rút'
 
     # Statuses the recruiter has not answered yet. One definition shared by the
     # `scope=unanswered` filter, automatic rejection and every aggregate that
@@ -37,7 +40,9 @@ class Application(models.Model):
         Status.ACCEPTED,
         Status.REJECTED,
     )
-    TERMINAL_STATUSES = (Status.ACCEPTED, Status.REJECTED)
+    TERMINAL_STATUSES = (Status.ACCEPTED, Status.REJECTED, Status.WITHDRAWN)
+    # The candidate may submit again only after one of these outcomes.
+    REAPPLY_ALLOWED_STATUSES = (Status.REJECTED, Status.WITHDRAWN)
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     candidate = models.ForeignKey(
@@ -84,6 +89,8 @@ class Application(models.Model):
     interviewed_at = models.DateTimeField(null=True, blank=True)
     rejected_at = models.DateTimeField(null=True, blank=True)
     accepted_at = models.DateTimeField(null=True, blank=True)
+    withdrawn_at = models.DateTimeField(null=True, blank=True)
+    is_current = models.BooleanField(default=True)
     status_updated_at = models.DateTimeField(default=timezone.now)
     auto_rejection_reminder_sent_at = models.DateTimeField(null=True, blank=True)
     auto_rejected_at = models.DateTimeField(null=True, blank=True)
@@ -101,9 +108,15 @@ class Application(models.Model):
                         'interviewed',
                         'rejected',
                         'accepted',
+                        'withdrawn',
                     ]
                 ),
                 name='chk_applications_status',
+            ),
+            models.UniqueConstraint(
+                fields=['candidate', 'job'],
+                condition=models.Q(is_current=True),
+                name='uniq_app_current_per_candidate_job',
             ),
         ]
         indexes = [

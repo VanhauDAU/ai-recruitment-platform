@@ -32,7 +32,8 @@ def _age_filter(now, *, reminder=False):
                 status_updated_at__gt=now - timedelta(days=days),
             )
         query |= condition
-    return query
+    # Replaced submissions are history; only the current one can go stale.
+    return Q(is_current=True) & query
 
 
 def _render_candidate_body(application):

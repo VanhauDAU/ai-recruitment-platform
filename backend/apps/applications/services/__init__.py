@@ -2,8 +2,11 @@
 
 from .applications import (
     ApplicationNotAllowed,
+    ApplicationNotFound,
     create_application_record,
     reapplication_error,
+    update_application_cv,
+    withdraw_application,
 )
 from .automatic_rejection import process_automatic_application_rejections
 from .blocks import (
@@ -61,12 +64,15 @@ __all__ = [
     'lift_candidate_block',
     'InvalidApplicationStatusTransition',
     'ApplicationNotAllowed',
+    'ApplicationNotFound',
     'RecruitmentResourceChanged',
     'ReviewLinkUnavailable',
     'StatusChangeNotUndoable',
     'available_status_decisions',
     'change_application_status',
     'create_application_record',
+    'update_application_cv',
+    'withdraw_application',
     'create_review_link',
     'deidentified_content',
     'mark_application_viewed',

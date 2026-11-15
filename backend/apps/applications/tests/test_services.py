@@ -312,6 +312,18 @@ class AutomaticApplicationRejectionTests(TestCase):
             ]
         )
 
+    def test_a_replaced_submission_is_never_reminded_or_rejected(self):
+        now = timezone.now()
+        Application.objects.filter(pk=self.application.pk).update(
+            is_current=False, status_updated_at=now - timedelta(days=30)
+        )
+
+        result = process_automatic_application_rejections(now=now)
+
+        self.assertEqual(result, {'reminded': 0, 'rejected': 0, 'notified': 0})
+        self.application.refresh_from_db()
+        self.assertEqual(self.application.status, Application.Status.SUBMITTED)
+
     def test_reminds_recruiter_rejects_stale_application_and_delays_candidate_email(self):
         baseline = timezone.now()
         Application.objects.filter(pk=self.application.pk).update(

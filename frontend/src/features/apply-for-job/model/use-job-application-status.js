@@ -9,23 +9,31 @@ export function getJobApplicationStatus(applications, jobPublicId, now = Date.no
   const jobApplications = applications
     .filter((application) => application.job_public_id === jobPublicId)
     .sort((left, right) => new Date(right.applied_at) - new Date(left.applied_at))
-  const latestApplication = jobApplications[0] || null
+  // One current application per job; older submissions are history.
+  const current = jobApplications.find((application) => application.is_current !== false) || null
+  const canResubmit = !current || Boolean(current.actions?.reapply)
   const retryCount = Math.max(0, jobApplications.length - 1)
   const retriesRemaining = Math.max(0, MAX_APPLICATIONS_PER_JOB - jobApplications.length)
-  const retryAvailableAt = latestApplication
-    ? new Date(latestApplication.applied_at).getTime() + REAPPLICATION_COOLDOWN_MS
+  const retryAvailableAt = jobApplications[0]
+    ? new Date(jobApplications[0].applied_at).getTime() + REAPPLICATION_COOLDOWN_MS
     : null
+  const isPending = Boolean(current && !canResubmit)
+  const isLimitReached = Boolean(current && canResubmit && retriesRemaining === 0)
   const isCoolingDown = Boolean(
-    retriesRemaining > 0 && retryAvailableAt && retryAvailableAt > now,
+    current && canResubmit && !isLimitReached && retryAvailableAt && retryAvailableAt > now,
   )
 
   return {
-    latestApplication,
-    hasApplied: jobApplications.length > 0,
+    latestApplication: current,
+    hasApplied: Boolean(current),
+    // Still in the recruiter's hands: changed from the applied-jobs page, not resent.
+    isPending,
+    isResubmission: Boolean(current && canResubmit),
+    applyLabel: isPending ? 'Đã ứng tuyển' : current ? 'Ứng tuyển lại' : 'Ứng tuyển ngay',
     retryCount,
     retriesRemaining,
     isCoolingDown,
-    isLimitReached: jobApplications.length >= MAX_APPLICATIONS_PER_JOB,
+    isLimitReached,
     retryAvailableAt,
   }
 }

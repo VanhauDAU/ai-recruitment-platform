@@ -82,7 +82,7 @@ def attach_job_candidate_previews(jobs, *, limit=4):
 
     remaining_jobs = set(job_ids)
     rows = (
-        Application.objects.filter(job_id__in=job_ids)
+        Application.objects.filter(job_id__in=job_ids, is_current=True)
         .order_by('job_id', '-applied_at', '-id')
         .values(
             'job_id',
@@ -123,22 +123,6 @@ def attach_job_candidate_previews(jobs, *, limit=4):
     return jobs
 
 
-def _latest_application_per_candidate():
-    """Subquery of the newest submission of the outer application's candidate.
-
-    A candidate may apply to one job up to three times; recruiters work on the
-    latest submission, so every per-job aggregate counts one row per candidate.
-    """
-    return (
-        Application.objects.filter(
-            candidate_id=OuterRef('candidate_id'),
-            job_id=OuterRef('job_id'),
-        )
-        .order_by('-applied_at', '-id')
-        .values('id')[:1]
-    )
-
-
 def _employer_jobs(user, *, campaign=None, q=None):
     queryset = Job.objects.filter(posted_by=user)
     if campaign:
@@ -160,7 +144,7 @@ def employer_job_list_queryset(user, *, status=None, campaign=None, q=None):
         Application.objects.filter(
             job_id=OuterRef('pk'),
             status=Application.Status.SUBMITTED,
-            id=Subquery(_latest_application_per_candidate()),
+            is_current=True,
         )
         .values('job_id')
         .annotate(total=Count('id'))
@@ -207,7 +191,7 @@ def employer_job_application_summary(job):
     """
     by_status = dict.fromkeys(Application.Status.values, 0)
     rows = (
-        Application.objects.filter(job=job, id=Subquery(_latest_application_per_candidate()))
+        Application.objects.filter(job=job, is_current=True)
         .values('status')
         .annotate(total=Count('id'))
         .order_by()

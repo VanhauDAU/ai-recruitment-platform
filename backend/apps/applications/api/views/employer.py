@@ -52,7 +52,6 @@ class EmployerApplicationListView(generics.ListAPIView):
             q=self.request.query_params.get('q'),
             scope=self.request.query_params.get('scope'),
             ordering=self.request.query_params.get('ordering'),
-            latest_only=self.request.query_params.get('latest') in {'1', 'true'},
         )
 
 
@@ -69,7 +68,6 @@ class EmployerApplicationExportView(APIView):
             q=request.query_params.get('q'),
             scope=request.query_params.get('scope'),
             ordering=request.query_params.get('ordering'),
-            latest_only=True,
         )
         response = HttpResponse(content_type='text/csv; charset=utf-8')
         response['Content-Disposition'] = 'attachment; filename="campaign-applications.csv"'
