@@ -67,7 +67,9 @@ thật trong hạng mục AI.
 - NTD thấy tab "Bị ẩn" và khung lý do kèm liên kết khắc phục ở chi tiết tin;
   dashboard báo số tin đang bị ẩn; admin lọc được tin bị ẩn.
 - Nhập tin hàng loạt và `seed_demo_jobs` chỉ đăng dưới NTD đã xác thực, còn DPA.
-  DB dev ngày 15/11: 83/100 tin thuộc 9 NTD demo chưa xác thực nên đang bị ẩn.
+  Ngày 15/11 đã bổ sung bằng chứng demo (hoàn tất đăng ký, SĐT, giấy tờ, DPA,
+  duyệt xác thực) cho 9 NTD demo trên DB dev để 100/100 tin công khai và nhận
+  hồ sơ; sao lưu trước khi sửa: `backups/pre-demo-employer-approval-20261115.dump`.
 
 </details>
 
