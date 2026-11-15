@@ -8,6 +8,17 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-16
 
+#### Added — Bảng điều khiển quản trị
+
+- Trang chủ cổng quản trị thay danh sách lối tắt bằng bảng điều khiển: khối
+  "Cần xử lý" gom 8 hàng chờ (báo cáo tin/công ty, xác thực NTD, tên miền, yêu
+  cầu cập nhật công ty, tin nộp lại, bài viết, FAQ), xếp theo mức gấp, hiện thời
+  gian chờ lâu nhất so với hạn xử lý và dẫn thẳng tới danh sách đã lọc.
+- KPI ứng tuyển, tin mới, ứng viên mới, NTD mới so với kỳ trước (7/30/90 ngày),
+  biểu đồ xu hướng kèm bảng số liệu, phễu ứng tuyển, tình trạng tin, an toàn và
+  tuân thủ, ngành nghề nhiều tin nhất, sức khỏe hệ thống AI.
+- API `GET /api/dashboard/admin/?period=` (chỉ cổng quản trị).
+
 #### Added — Ảnh đại diện (ứng viên, NTD, quản trị)
 
 - Modal "Chỉnh sửa ảnh đại diện" theo mẫu TopCV, mở từ nút camera ở thẻ chào

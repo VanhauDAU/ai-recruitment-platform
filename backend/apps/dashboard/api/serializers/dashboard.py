@@ -88,3 +88,138 @@ class EmployerDashboardSerializer(serializers.Serializer):
     recruitment_need = RecruitmentNeedSummarySerializer(allow_null=True)
     recent_jobs = RecentJobSerializer(many=True)
     recent_applications = RecentApplicationSerializer(many=True)
+
+
+class AdminDashboardPeriodSerializer(serializers.Serializer):
+    days = serializers.IntegerField()
+    start = serializers.DateField()
+    end = serializers.DateField()
+
+
+class AdminDashboardQueueSerializer(serializers.Serializer):
+    key = serializers.CharField()
+    count = serializers.IntegerField()
+    overdue = serializers.IntegerField()
+    oldest_at = serializers.DateTimeField(allow_null=True)
+    sla_hours = serializers.IntegerField()
+
+
+class AdminDashboardComparisonSerializer(serializers.Serializer):
+    current = serializers.IntegerField()
+    previous = serializers.IntegerField()
+
+
+class AdminDashboardKpisSerializer(serializers.Serializer):
+    candidates = AdminDashboardComparisonSerializer()
+    employers = AdminDashboardComparisonSerializer()
+    jobs = AdminDashboardComparisonSerializer()
+    applications = AdminDashboardComparisonSerializer()
+
+
+class AdminDashboardActivitySerializer(serializers.Serializer):
+    date = serializers.DateField()
+    candidates = serializers.IntegerField()
+    employers = serializers.IntegerField()
+    jobs = serializers.IntegerField()
+    applications = serializers.IntegerField()
+
+
+class AdminDashboardTotalsSerializer(serializers.Serializer):
+    candidates = serializers.IntegerField()
+    employers = serializers.IntegerField()
+    companies = serializers.IntegerField()
+    jobs_active = serializers.IntegerField()
+
+
+class AdminDashboardJobStatesSerializer(serializers.Serializer):
+    draft = serializers.IntegerField()
+    active = serializers.IntegerField()
+    hidden = serializers.IntegerField()
+    expired = serializers.IntegerField()
+    closed = serializers.IntegerField()
+
+
+class AdminDashboardJobsSerializer(serializers.Serializer):
+    states = AdminDashboardJobStatesSerializer()
+    held = serializers.IntegerField()
+    without_applications = serializers.IntegerField()
+    expiring_soon = serializers.IntegerField()
+
+
+class AdminDashboardFunnelSerializer(serializers.Serializer):
+    submitted = serializers.IntegerField()
+    viewed = serializers.IntegerField()
+    shortlisted = serializers.IntegerField()
+    interviewed = serializers.IntegerField()
+    accepted = serializers.IntegerField()
+    rejected = serializers.IntegerField()
+    withdrawn = serializers.IntegerField()
+
+
+class AdminDashboardApplicationsSerializer(serializers.Serializer):
+    funnel = AdminDashboardFunnelSerializer()
+    avg_first_view_hours = serializers.FloatField(allow_null=True)
+    stale_unviewed = serializers.IntegerField()
+
+
+class AdminDashboardReportStatsSerializer(serializers.Serializer):
+    new = serializers.IntegerField()
+    upheld = serializers.IntegerField()
+    dismissed = serializers.IntegerField()
+
+
+class AdminDashboardRestrictedSerializer(serializers.Serializer):
+    candidates = serializers.IntegerField()
+    employers = serializers.IntegerField()
+
+
+class AdminDashboardTrustSerializer(serializers.Serializer):
+    job_reports = AdminDashboardReportStatsSerializer()
+    company_reports = AdminDashboardReportStatsSerializer()
+    restricted_accounts = AdminDashboardRestrictedSerializer()
+    compliance_holds_active = serializers.IntegerField()
+
+
+class AdminDashboardContentSerializer(serializers.Serializer):
+    knowledge_review_overdue = serializers.IntegerField()
+
+
+class AdminDashboardCategorySerializer(serializers.Serializer):
+    public_id = serializers.CharField()
+    name = serializers.CharField()
+    active_jobs = serializers.IntegerField()
+    applications = serializers.IntegerField()
+
+
+class AdminDashboardMatchSerializer(serializers.Serializer):
+    total = serializers.IntegerField()
+    succeeded = serializers.IntegerField()
+    failed = serializers.IntegerField()
+
+
+class AdminDashboardGenerationSerializer(serializers.Serializer):
+    invocations = serializers.IntegerField()
+    failures = serializers.IntegerField()
+    total_tokens = serializers.IntegerField()
+    cost_usd = serializers.DecimalField(max_digits=18, decimal_places=4, coerce_to_string=False)
+    avg_latency_ms = serializers.IntegerField(allow_null=True)
+
+
+class AdminDashboardAiSerializer(serializers.Serializer):
+    match_analyses = AdminDashboardMatchSerializer()
+    generation = AdminDashboardGenerationSerializer()
+
+
+class AdminDashboardSerializer(serializers.Serializer):
+    generated_at = serializers.DateTimeField()
+    period = AdminDashboardPeriodSerializer()
+    queues = AdminDashboardQueueSerializer(many=True)
+    kpis = AdminDashboardKpisSerializer()
+    activity = AdminDashboardActivitySerializer(many=True)
+    totals = AdminDashboardTotalsSerializer()
+    jobs = AdminDashboardJobsSerializer()
+    applications = AdminDashboardApplicationsSerializer()
+    trust = AdminDashboardTrustSerializer()
+    content = AdminDashboardContentSerializer()
+    top_categories = AdminDashboardCategorySerializer(many=True)
+    ai = AdminDashboardAiSerializer()

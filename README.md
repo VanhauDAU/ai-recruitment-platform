@@ -18,6 +18,7 @@ Website hỗ trợ tạo CV, phân tích CV và luyện phỏng vấn thông min
 - Ứng tuyển bằng CV đã chọn, nhà tuyển dụng xem và cập nhật trạng thái hồ sơ ứng tuyển
 - Workspace tin tuyển dụng cho nhà tuyển dụng: danh sách có tab trạng thái kèm số đếm, CV mới chưa xem, lượt xem/tỉ lệ ứng tuyển và hạn nộp; trang chi tiết có chỉ số lọc nhanh, tab CV lọc/phân trang phía server, phễu Hiển thị → Xem → Ứng tuyển
 - Việc làm đã lưu, phân hạng tin (thường/nổi bật/TOP) + nhãn dịch vụ (HOT/GẤP/Flash), trang thương hiệu riêng cho công ty (`/brand/<company>/tuyen-dung/<job>`)
+- Bảng điều khiển quản trị: hàng chờ cần xử lý theo hạn, KPI so kỳ trước, xu hướng, phễu ứng tuyển, an toàn nền tảng và AI
 - Trang quản trị `/admin/settings`: cấu hình 15 nhóm site settings (banner, footer, liên hệ, SEO...) không cần sửa code
 - Form góp ý người dùng + cụm nút hỗ trợ nổi (Việc làm đã lưu / Góp ý / Hỗ trợ)
 
