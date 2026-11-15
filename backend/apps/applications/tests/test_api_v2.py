@@ -416,7 +416,14 @@ class CandidateApplicationV2Tests(APITestCase):
         self.assertEqual(withdrawn.status_code, 200, withdrawn.data)
         self.assertEqual(withdrawn.data['status'], Application.Status.WITHDRAWN)
         self.assertEqual(
-            withdrawn.data['actions'], {'withdraw': False, 'update_cv': False, 'reapply': True}
+            withdrawn.data['actions'],
+            {
+                'withdraw': False,
+                'update_cv': False,
+                'reapply': True,
+                'remind': False,
+                'remind_available_at': None,
+            },
         )
         self.assertEqual(third.status_code, 201, third.data)
         self.assertEqual(exhausted.status_code, 400, exhausted.data)
@@ -456,34 +463,55 @@ class CandidateApplicationV2Tests(APITestCase):
 
         self.assertEqual(response.status_code, 400, response.data)
 
-    def test_unanswered_application_takes_a_new_cv_in_place(self):
+    def test_cv_can_be_swapped_only_before_the_recruiter_opens_it(self):
         self.client.force_authenticate(self.candidate)
         submitted = self.apply()
-        self.age(submitted, status=Application.Status.VIEWED)
+        submitted_at = Application.objects.get(public_id=submitted.data['public_id']).submitted_at
         new_version = self.cv.latest_version
         url = reverse('candidate-application-cv-v2', args=[submitted.data['public_id']])
+        payload = {'cv_public_id': self.cv.public_id, 'version_public_id': new_version.public_id}
 
-        updated = self.client.post(
-            url,
-            {'cv_public_id': self.cv.public_id, 'version_public_id': new_version.public_id},
-            format='json',
-        )
-        self.age(submitted, status=Application.Status.SHORTLISTED)
-        answered = self.client.post(
-            url,
-            {'cv_public_id': self.cv.public_id, 'version_public_id': new_version.public_id},
-            format='json',
-        )
+        updated = self.client.post(url, payload, format='json')
+        self.age(submitted, status=Application.Status.VIEWED)
+        after_view = self.client.post(url, payload, format='json')
 
         self.assertEqual(updated.status_code, 200, updated.data)
-        self.assertEqual(updated.data['public_id'], submitted.data['public_id'])
         self.assertEqual(updated.data['status'], Application.Status.SUBMITTED)
         self.assertNotEqual(
             updated.data['submitted_cv_version_public_id'],
             submitted.data['submitted_cv_version_public_id'],
         )
-        self.assertEqual(answered.status_code, 400, answered.data)
-        self.assertEqual(Application.objects.filter(candidate=self.candidate).count(), 1)
+        # The swap keeps the submission time: it cannot restart the review clock.
+        application = Application.objects.get(public_id=submitted.data['public_id'])
+        self.assertEqual(application.submitted_at, submitted_at)
+        self.assertEqual(after_view.status_code, 400, after_view.data)
+        self.assertIn('rút hồ sơ và ứng tuyển lại', str(after_view.data))
+
+    def test_recruiter_sees_the_submission_number_and_earlier_submissions(self):
+        self.client.force_authenticate(self.candidate)
+        first = self.apply()
+        self.client.post(
+            reverse('candidate-application-withdraw-v2', args=[first.data['public_id']])
+        )
+        self.age(first)
+        second = self.apply()
+        make_employer_ready(self.employer, company=self.company, candidate_data=True)
+        self.client.force_authenticate(self.employer)
+
+        listed = self.client.get(reverse('recruiter-application-list-v2'))
+        earlier = self.client.get(
+            reverse('recruiter-application-submissions-v2', args=[second.data['public_id']])
+        )
+
+        self.assertEqual(
+            [(item['public_id'], item['submission_number']) for item in listed.data['results']],
+            [(second.data['public_id'], 2)],
+        )
+        self.assertEqual(earlier.status_code, 200, earlier.data)
+        self.assertEqual(
+            [(item['public_id'], item['status']) for item in earlier.data],
+            [(first.data['public_id'], Application.Status.WITHDRAWN)],
+        )
 
     def test_another_candidates_application_is_not_found(self):
         self.client.force_authenticate(self.candidate)

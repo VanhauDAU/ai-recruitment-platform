@@ -192,33 +192,31 @@ def withdraw_application(*, candidate, public_id):
 
 @transaction.atomic
 def update_application_cv(*, candidate, public_id, cv, source_version=None):
-    """Replace the CV of an unanswered application in place, as a new submission.
+    """Replace the CV of an application the recruiter has not opened yet.
 
-    The recruiter sees it as new again and the automatic-rejection clock
-    restarts, since the content they would judge has changed.
+    Once the recruiter viewed it, the CV they judged must stay what they saw:
+    the candidate withdraws and applies again instead. The swap keeps the
+    submission time, so it never restarts the automatic-rejection clock.
     """
     candidate = lock_account_for_write(candidate)
     application = _locked_current_application(candidate, public_id)
-    if application.status not in Application.UNANSWERED_STATUSES:
-        raise ApplicationNotAllowed('Nhà tuyển dụng đã phản hồi hồ sơ này nên không thể đổi CV.')
+    if application.status != Application.Status.SUBMITTED:
+        raise ApplicationNotAllowed(
+            'Nhà tuyển dụng đã xem hồ sơ này nên không thể đổi CV. '
+            'Bạn có thể rút hồ sơ và ứng tuyển lại.'
+        )
     snapshot = create_application_snapshot(cv, candidate, source_version=source_version)
-    now = timezone.now()
-    previous_status = application.status
     application.cv = cv
     application.submitted_cv_version = snapshot
     application.submitted_cv_title = cv.title
     application.submitted_cv_source = cv.source
-    application.submitted_at = now
-    application.status = Application.Status.SUBMITTED
-    application.viewed_at = None
-    application.status_updated_at = now
-    application.auto_rejection_reminder_sent_at = None
-    application.save()
-    if previous_status != Application.Status.SUBMITTED:
-        ApplicationStatusHistory.objects.create(
-            application=application,
-            from_status=previous_status,
-            to_status=Application.Status.SUBMITTED,
-            changed_by=candidate,
-        )
+    application.save(
+        update_fields=[
+            'cv',
+            'submitted_cv_version',
+            'submitted_cv_title',
+            'submitted_cv_source',
+            'updated_at',
+        ]
+    )
     return application

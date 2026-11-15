@@ -1,6 +1,7 @@
 """V2 application contracts for candidate submission and recruiter snapshot reads."""
 
 from django.urls import reverse
+from django.utils import timezone
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
@@ -13,7 +14,7 @@ from apps.locations.models import Location
 from common.media_storage import media_url_from_value
 
 from ...models import Application
-from ...services import reapplication_error
+from ...services import candidate_reminder_available_at, reapplication_error
 
 
 class RecruiterApplicationSnapshotSerializer(serializers.ModelSerializer):
@@ -262,6 +263,8 @@ class CandidateApplicationV2Serializer(serializers.ModelSerializer):
                 'withdraw': {'type': 'boolean'},
                 'update_cv': {'type': 'boolean'},
                 'reapply': {'type': 'boolean'},
+                'remind': {'type': 'boolean'},
+                'remind_available_at': {'type': 'string', 'format': 'date-time', 'nullable': True},
             },
         }
     )
@@ -269,22 +272,38 @@ class CandidateApplicationV2Serializer(serializers.ModelSerializer):
         """What the candidate may do with this submission now (cap and cooldown
         of a resubmission are checked when it is sent)."""
         current = obj.is_current
+        remind_at = candidate_reminder_available_at(obj)
         return {
             'withdraw': current and obj.status not in Application.TERMINAL_STATUSES,
-            'update_cv': current and obj.status in Application.UNANSWERED_STATUSES,
+            # Only before the recruiter opened it: they judge the CV they saw.
+            'update_cv': current and obj.status == Application.Status.SUBMITTED,
             'reapply': current and obj.status in Application.REAPPLY_ALLOWED_STATUSES,
+            'remind': bool(remind_at and remind_at <= timezone.now()),
+            'remind_available_at': remind_at,
         }
 
     def get_timeline(self, obj):
-        """Mốc mới nhất đứng đầu — trang 'Việc làm đã ứng tuyển' đọc từ trên xuống theo thời gian lùi."""
-        return [
+        """Mốc mới nhất đứng đầu — trang 'Việc làm đã ứng tuyển' đọc từ trên xuống theo thời gian lùi.
+
+        Mỗi lần ProCV nhắc nhà tuyển dụng cũng là một mốc của hồ sơ.
+        """
+        statuses = [
             {
                 'status': item.to_status,
                 'label': self.CANDIDATE_STATUS.get(item.to_status, item.to_status),
                 'occurred_at': item.created_at,
             }
-            for item in reversed(list(obj.status_history.all()))
+            for item in obj.status_history.all()
         ]
+        reminders = [
+            {
+                'status': 'reminder',
+                'label': 'ProCV đã nhắc nhà tuyển dụng phản hồi CV của bạn',
+                'occurred_at': item.created_at,
+            }
+            for item in obj.reminders.all()
+        ]
+        return sorted(statuses + reminders, key=lambda item: item['occurred_at'], reverse=True)
 
     class Meta:
         model = Application

@@ -10652,6 +10652,27 @@ paths:
               schema:
                 $ref: '#/components/schemas/CandidateApplicationV2'
           description: ''
+  /api/v2/applications/{public_id}/remind/:
+    post:
+      operationId: v2_applications_remind_create
+      summary: Ứng viên nhờ ProCV nhắc nhà tuyển dụng phản hồi hồ sơ
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - applications-v2
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CandidateApplicationV2'
+          description: ''
   /api/v2/applications/{public_id}/withdraw/:
     post:
       operationId: v2_applications_withdraw_create
@@ -12150,6 +12171,29 @@ paths:
           description: ''
         '409':
           description: STATUS_UNDO_UNAVAILABLE
+  /api/v2/recruiter/applications/{public_id}/submissions/:
+    get:
+      operationId: v2_recruiter_applications_submissions_list
+      description: Earlier submissions of the same candidate to the same job, read-only.
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - v2
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PreviousSubmission'
+          description: ''
   /api/v2/recruiter/applications/export/:
     get:
       operationId: v2_recruiter_applications_export_retrieve
@@ -17166,6 +17210,14 @@ components:
           type: string
           format: date-time
           readOnly: true
+        submission_number:
+          type: integer
+          readOnly: true
+          default: 1
+        last_reminded_at:
+          type: string
+          format: date-time
+          readOnly: true
         viewed_at:
           type: string
           format: date-time
@@ -17214,12 +17266,14 @@ components:
       - interviewed_at
       - job
       - job_title
+      - last_reminded_at
       - mass_apply_signal
       - public_id
       - rejected_at
       - shortlisted_at
       - source
       - status
+      - submission_number
       - submitted_at
       - submitted_cv_source
       - submitted_cv_title
@@ -17746,6 +17800,12 @@ components:
               type: boolean
             reapply:
               type: boolean
+            remind:
+              type: boolean
+            remind_available_at:
+              type: string
+              format: date-time
+              nullable: true
           readOnly: true
         preferred_location_ids:
           type: string
@@ -20940,7 +21000,7 @@ components:
           type: string
           readOnly: true
         event_type:
-          $ref: '#/components/schemas/EventTypeB03Enum'
+          $ref: '#/components/schemas/EventTypeDfeEnum'
         summary:
           type: string
           maxLength: 240
@@ -22325,7 +22385,7 @@ components:
           type: string
           readOnly: true
         event_type:
-          $ref: '#/components/schemas/EventTypeB03Enum'
+          $ref: '#/components/schemas/EventTypeDfeEnum'
         title:
           type: string
           maxLength: 180
@@ -22547,7 +22607,7 @@ components:
         * `internship` - Internship
         * `freelance` - Freelance
         * `other` - Khác
-    EventTypeB03Enum:
+    EventTypeDfeEnum:
       enum:
       - verification_approved
       - verification_changes_requested
@@ -22561,6 +22621,7 @@ components:
       - company_page_editor_revoked
       - application_received
       - application_withdrawn
+      - application_awaiting_reply
       - job_changes_requested
       - company_join_requested
       - company_join_approved
@@ -22580,6 +22641,7 @@ components:
         * `company_page_editor_revoked` - Quyền biên tập trang công ty đã bị thu hồi
         * `application_received` - Có hồ sơ ứng tuyển mới
         * `application_withdrawn` - Ứng viên đã rút hồ sơ
+        * `application_awaiting_reply` - Hồ sơ đang chờ phản hồi
         * `job_changes_requested` - Tin tuyển dụng cần chỉnh sửa
         * `company_join_requested` - Có yêu cầu tham gia công ty
         * `company_join_approved` - Yêu cầu tham gia công ty đã được duyệt
@@ -27132,6 +27194,46 @@ components:
       - public_id
       - thumbnail_url
       - title
+    PreviousSubmission:
+      type: object
+      description: 'An earlier, replaced submission: what it was and how it ended,
+        read-only.'
+      properties:
+        public_id:
+          type: string
+          readOnly: true
+        applied_at:
+          type: string
+          format: date-time
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/ApplicationStatusEnum'
+          readOnly: true
+        status_label:
+          type: string
+          readOnly: true
+        submitted_cv_title:
+          type: string
+          readOnly: true
+        withdrawn_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        rejected_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+      required:
+      - applied_at
+      - public_id
+      - rejected_at
+      - status
+      - status_label
+      - submitted_cv_title
+      - withdrawn_at
     ProcessingStatusEnum:
       enum:
       - idle

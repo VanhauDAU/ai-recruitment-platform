@@ -47,7 +47,7 @@ export default function CandidateGroup({ group, expanded, selectedPublicId, onTo
                 <span className="flex items-start justify-between gap-2">
                   <strong className="aw-application__title line-clamp-2">{cvTitle}</strong>
                   <span className="shrink-0 text-[10px] font-semibold text-slate-400">
-                    Lần {group.applications.length - index}
+                    Lần {application.submission_number || group.applications.length - index}
                   </span>
                 </span>
                 <span className="mt-0.5 block truncate text-[11px] text-slate-500">

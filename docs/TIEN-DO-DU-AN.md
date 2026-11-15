@@ -7,7 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
-| [Thống nhất luồng đăng tin, hiển thị, ứng tuyển, công ty](#thống-nhất-luồng-đăng-tin-hiển-thị-ứng-tuyển-công-ty-2026-11-15) | 🟨 GĐ1–GĐ4, GĐ6 (#208–#214) đã gộp; GĐ5 xong trên nhánh `fix/company-membership` |
+| [Thống nhất luồng đăng tin, hiển thị, ứng tuyển, công ty](#thống-nhất-luồng-đăng-tin-hiển-thị-ứng-tuyển-công-ty-2026-11-15) | ✅ Cả 6 giai đoạn đã gộp (#208–#215); hoàn thiện luồng nhắc NTD và lịch sử nộp trên nhánh `feat/application-reminders` |
 | [Đối sánh ngữ nghĩa CV–JD chạy local](#đối-sánh-ngữ-nghĩa-cvjd-chạy-local-2026-11-15) | 🟨 Nền tảng (tuần 1) xong trên nhánh `feat/ai-matching-foundation`, chưa mở PR |
 | [CV tải lên: tệp gốc, tiêu chuẩn upload, giới hạn CV, NTD tìm kiếm](#cv-tải-lên-tệp-gốc-tiêu-chuẩn-upload-giới-hạn-cv-ntd-tìm-kiếm-2026-11-15) | ✅ Gộp vào `dev` (#203) |
 | [Việc làm tốt nhất xếp theo chất lượng tin](#việc-làm-tốt-nhất-xếp-theo-chất-lượng-tin-2026-11-15) | ✅ Gộp vào `dev` (#204) |
@@ -47,8 +47,25 @@ thật trong hạng mục AI.
 | 2 | Dùng chung điều kiện chặn đăng tin; mở lại tin áp luật gia hạn | ✅ Gộp vào `dev` (#211) |
 | 3 | Một hồ sơ hiệu lực trên một tin, rút hồ sơ, tự động từ chối và thống kê chỉ tính hồ sơ hiệu lực | ✅ Gộp vào `dev` (#213) |
 | 4 | Vòng yêu cầu sửa tin → NTD sửa → gửi duyệt lại | ✅ Gộp vào `dev` (#214) |
-| 5 | Chặn ứng viên theo công ty, owner duyệt yêu cầu tham gia, logic công ty vào service, gỡ liên kết công ty, SMS dev | 🟨 Xong trên nhánh `fix/company-membership` |
+| 5 | Chặn ứng viên theo công ty, owner duyệt yêu cầu tham gia, logic công ty vào service, gỡ liên kết công ty, SMS dev | ✅ Gộp vào `dev` (#215) |
 | 6 | Tắt đồng ý tìm hồ sơ thì gỡ mọi CV khỏi tìm kiếm; sửa câu chữ hứa tính năng chưa có | ✅ Gộp vào `dev` (#208) |
+
+<details><summary>Hoàn thiện luồng ứng tuyển: đổi CV, nhắc NTD, lịch sử nộp (16/11)</summary>
+
+- Đổi CV chỉ được khi NTD **chưa mở** hồ sơ; NTD đã xem thì CV họ đánh giá phải
+  giữ nguyên, ứng viên muốn đổi thì rút và nộp lại (tốn 1 lượt). Đổi CV giữ
+  nguyên thời điểm nộp, không đặt lại đồng hồ tự động từ chối.
+- Nhắc NTD (`ApplicationReminder`, thông báo `application_awaiting_reply`):
+  hệ thống tự nhắc khi hồ sơ chưa phản hồi 3 ngày và 7 ngày (gom một thông báo
+  mỗi tin, task `send_unanswered_application_reminders` chạy mỗi giờ); ứng viên
+  có nút "Nhắc NTD" sau 3 ngày kể từ khi nộp, tối đa 2 lần, cách nhau 3 ngày.
+  Mỗi lần nhắc là một mốc "ProCV đã nhắc nhà tuyển dụng phản hồi CV của bạn"
+  trong lịch sử ứng tuyển của ứng viên; NTD thấy lần nhắc gần nhất trong khung
+  xử lý hồ sơ.
+- NTD thấy đúng "Lần N" của hồ sơ hiện tại và mục "Các lần nộp trước" (chỉ xem,
+  kèm kết quả: đã rút, không phù hợp).
+
+</details>
 
 <details><summary>Ghi chú GĐ5</summary>
 

@@ -7,6 +7,7 @@ export const applicationKeys = {
   recruiterUnreadCount: () => ['applications', 'recruiter-unread-count'],
   recruiterSnapshot: (publicId) => ['applications', 'recruiter-snapshot', publicId],
   history: (publicId) => ['applications', 'history', publicId],
+  submissions: (publicId) => ['applications', 'submissions', publicId],
   reviewLinks: (publicId) => ['applications', 'review-links', publicId],
   reviews: (publicId) => ['applications', 'reviews', publicId],
   publicReview: (token) => ['applications', 'public-review', token],

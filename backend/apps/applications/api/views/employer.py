@@ -14,6 +14,7 @@ from apps.employers.services import ensure_recruiter_candidate_data_access
 from ...selectors import (
     employer_application_queryset,
     employer_applications_queryset,
+    previous_submissions_queryset,
     recruiter_application_history_queryset,
 )
 from ...services import (
@@ -28,6 +29,7 @@ from ..serializers.employer import (
     ApplicationDecisionResultSerializer,
     ApplicationSerializer,
     ApplicationStatusDecisionSerializer,
+    PreviousSubmissionSerializer,
 )
 from ..serializers.history import ApplicationStatusHistorySerializer
 
@@ -172,6 +174,19 @@ class EmployerApplicationDecisionUndoView(APIView):
         application = _recruiter_application(request, public_id)
         application = undo_latest_status_change(application, changed_by=request.user)
         return Response(_workspace_row(request, application))
+
+
+class EmployerApplicationSubmissionsView(generics.ListAPIView):
+    """Earlier submissions of the same candidate to the same job, read-only."""
+
+    permission_classes = [IsEmployer]
+    serializer_class = PreviousSubmissionSerializer
+    pagination_class = None
+
+    def get_queryset(self):
+        return previous_submissions_queryset(
+            _recruiter_application(self.request, self.kwargs['public_id'])
+        )
 
 
 class EmployerApplicationHistoryView(generics.ListAPIView):

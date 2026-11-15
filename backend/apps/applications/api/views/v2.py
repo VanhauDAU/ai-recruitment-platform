@@ -18,6 +18,7 @@ from ...services import (
     ApplicationNotFound,
     create_application_record,
     open_application_snapshot,
+    request_recruiter_reminder,
     update_application_cv,
     withdraw_application,
 )
@@ -97,6 +98,21 @@ class CandidateApplicationWithdrawView(APIView):
     def post(self, request, public_id):
         return _candidate_application_response(
             lambda: withdraw_application(candidate=request.user, public_id=public_id)
+        )
+
+
+@extend_schema(
+    summary='Ứng viên nhờ ProCV nhắc nhà tuyển dụng phản hồi hồ sơ',
+    request=None,
+    responses={200: CandidateApplicationV2Serializer},
+    tags=['applications-v2'],
+)
+class CandidateApplicationRemindView(APIView):
+    permission_classes = [IsCandidate]
+
+    def post(self, request, public_id):
+        return _candidate_application_response(
+            lambda: request_recruiter_reminder(candidate=request.user, public_id=public_id)
         )
 
 

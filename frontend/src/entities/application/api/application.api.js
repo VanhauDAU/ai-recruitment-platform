@@ -33,7 +33,19 @@ export async function withdrawCandidateApplication(publicId) {
   return data
 }
 
-/** Swap the CV of an application the recruiter has not answered yet. */
+/** Ask ProCV to remind the recruiter about an application still unanswered. */
+export async function remindRecruiterOfApplication(publicId) {
+  const { data } = await api.post(`/v2/applications/${publicId}/remind/`)
+  return data
+}
+
+/** Earlier, replaced submissions of the same candidate to the same job. */
+export async function getRecruiterApplicationSubmissions(publicId) {
+  const { data } = await api.get(`/v2/recruiter/applications/${publicId}/submissions/`)
+  return data
+}
+
+/** Swap the CV of an application the recruiter has not opened yet. */
 export async function replaceCandidateApplicationCv(publicId, { cvPublicId, versionPublicId }) {
   const { data } = await api.post(`/v2/applications/${publicId}/cv/`, {
     cv_public_id: cvPublicId,

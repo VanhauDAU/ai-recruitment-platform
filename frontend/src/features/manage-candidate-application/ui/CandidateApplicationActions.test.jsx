@@ -1,12 +1,13 @@
 import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { withdrawCandidateApplication } from '@/entities/application'
+import { remindRecruiterOfApplication, withdrawCandidateApplication } from '@/entities/application'
 import { withQueryClient } from '@/test/render-with-query-client'
 import CandidateApplicationActions from './CandidateApplicationActions'
 
 vi.mock('@/entities/application', async (importOriginal) => ({
   ...(await importOriginal()),
+  remindRecruiterOfApplication: vi.fn(),
   replaceCandidateApplicationCv: vi.fn(),
   withdrawCandidateApplication: vi.fn(),
 }))
@@ -44,5 +45,23 @@ describe('CandidateApplicationActions', () => {
     await user.click(within(dialog).getByRole('button', { name: 'Rút hồ sơ' }))
 
     await waitFor(() => expect(withdrawCandidateApplication).toHaveBeenCalledWith('app_1'))
+  })
+
+  it('reminds the recruiter when allowed and says when it will be allowed otherwise', async () => {
+    remindRecruiterOfApplication.mockResolvedValue({ ...APPLICATION, actions: { remind: false } })
+    const user = userEvent.setup()
+    const { rerender } = render(withQueryClient(
+      <CandidateApplicationActions application={{ ...APPLICATION, actions: { remind: true } }} />,
+    ))
+
+    await user.click(screen.getByRole('button', { name: 'Nhắc NTD' }))
+    await waitFor(() => expect(remindRecruiterOfApplication).toHaveBeenCalledWith('app_1'))
+
+    rerender(withQueryClient(
+      <CandidateApplicationActions
+        application={{ ...APPLICATION, actions: { remind: false, remind_available_at: '2026-11-20T02:00:00Z' } }}
+      />,
+    ))
+    expect(screen.getByRole('button', { name: 'Nhắc NTD' })).toBeDisabled()
   })
 })
