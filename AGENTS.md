@@ -43,6 +43,22 @@ Không tạo `utils` chung không có owner. Component chỉ dùng một page/fe
 6. Protected route phải theo thứ tự `AuthGuard` rồi `RoleGuard`.
 7. Bổ sung unit/regression test và E2E cho route hoặc workflow bị ảnh hưởng.
 
+## Agent skills (`.claude/skills/`, khóa ở `skills-lock.json`)
+
+Cài bằng `npx skills add <repo> --skill <name> -a claude-code -y`; cập nhật bằng
+`npx skills update -p`. Áp dụng theo stack thực tế (Vite SPA + React 19 + antd
+6 + Tailwind 4 + TanStack Query), không phải Next.js:
+
+| Skill                         | Khi nào dùng                                                                                                                                                                                                                                                                                        |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `vercel-react-best-practices` | Viết/review/refactor component. Ưu tiên `async-*`, `bundle-*`, `rerender-*`, `rendering-*`, `js-*`. Bỏ `server-*`, RSC/hydration; `next/dynamic` → `React.lazy` + lazy registry; `client-swr-dedup` → dùng TanStack Query sẵn có. `bundle-barrel-imports` không áp cho public `index.js` của slice. |
+| `web-design-guidelines`       | Audit UI/a11y trước khi bàn giao màn hình mới hoặc khi được yêu cầu review. Bỏ quy tắc "Title Case" (UI tiếng Việt viết hoa đầu câu); ngày/số dùng `Intl.*` locale `vi-VN`.                                                                                                                         |
+| `frontend-design`             | Chỉ cho trang mới cần bản sắc riêng (landing, marketing, onboarding). Màn hình trong cổng ứng viên/NTD/quản trị giữ ngôn ngữ thiết kế hiện có (antd + Tailwind, admin gọn).                                                                                                                         |
+| `find-skills`                 | Khi cần năng lực chưa có skill; chỉ đề xuất nguồn uy tín, cài mức project.                                                                                                                                                                                                                          |
+
+Skill không thay thế các quy tắc trong file này hay `frontend/ARCHITECTURE.md`;
+khi mâu thuẫn, tài liệu của repo thắng.
+
 ## Kiểm tra trước khi bàn giao
 
 Chạy tại `frontend/` theo phạm vi thay đổi:

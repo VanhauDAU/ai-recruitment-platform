@@ -146,7 +146,7 @@ describe('EmployerApplicationList', () => {
     const inspector = screen.getByTestId('application-inspector')
 
     expect(within(candidateList).getByRole('heading', { name: 'Ứng viên' })).toBeVisible()
-    expect(within(candidateList).getByRole('button', { name: 'Không phù hợp' })).toBeVisible()
+    expect(within(candidateList).getByRole('combobox', { name: 'Lọc trạng thái hồ sơ' })).toBeVisible()
     expect(await within(candidateList).findByRole('button', { name: 'Thu gọn hồ sơ của Nguyễn An' })).toBeVisible()
     expect(within(candidateList).getByText(/^2 CV ·/)).toBeVisible()
     expect(within(preview).getByRole('heading', { name: 'Xem trước CV' })).toBeVisible()

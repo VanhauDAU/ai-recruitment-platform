@@ -6,7 +6,8 @@ import { triggerBlobDownload } from '@/shared/lib/download-blob'
 import { message } from '@/shared/lib/toast'
 
 
-export default function CvDownloadButton({ publicId, versionPublicId, title }) {
+/** Tạo PDF từ phiên bản đã lưu rồi tải về; `renderTrigger` đổi kiểu nút theo nơi đặt. */
+export default function CvDownloadButton({ publicId, versionPublicId, title, renderTrigger }) {
   const [open, setOpen] = useState(false)
   const [job, setJob] = useState(null)
   const [error, setError] = useState('')
@@ -66,9 +67,11 @@ export default function CvDownloadButton({ publicId, versionPublicId, title }) {
   const progress = job?.status === 'completed' ? 100 : job?.status === 'processing' ? 72 : 34
   return (
     <>
-      <Button type="primary" shape="round" size="large" icon={<DownloadOutlined />} className="!bg-[#00b14f] hover:!bg-[#009643]" onClick={startDownload}>
-        Tải về
-      </Button>
+      {renderTrigger ? renderTrigger({ onClick: startDownload }) : (
+        <Button type="primary" shape="round" size="large" icon={<DownloadOutlined />} className="!bg-[#00b14f] hover:!bg-[#009643]" onClick={startDownload}>
+          Tải về
+        </Button>
+      )}
       <Modal open={open} footer={null} onCancel={() => setOpen(false)} centered width={480}>
         <div className="px-2 py-4 text-center">
           {job?.status === 'completed' && !error ? (

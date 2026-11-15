@@ -18,8 +18,6 @@ import {
 } from '@/entities/cv'
 import { useUnsavedChangesGuard } from './use-unsaved-changes-guard'
 
-const AUTOSAVE_DELAY = 700
-
 function signature(document) {
   return JSON.stringify(document)
 }
@@ -47,8 +45,6 @@ export default function useCvDraftEditor(publicId) {
   const historyRef = useRef(createDocumentHistory())
   const loadGenerationRef = useRef(0)
   const pendingEditFlushersRef = useRef(new Set())
-  const autosaveTimerRef = useRef(null)
-  const scheduleLatestAutosaveRef = useRef(() => {})
 
   const flushPendingEdits = useCallback(() => {
     for (const flush of [...pendingEditFlushersRef.current]) flush()
@@ -67,45 +63,9 @@ export default function useCvDraftEditor(publicId) {
     setPhaseState(nextPhase)
   }, [])
 
-  const load = useCallback(async () => {
-    const generation = ++loadGenerationRef.current
-    clearTimeout(autosaveTimerRef.current)
-    setSavePhase('loading')
-    setError(null)
-    setLastVersion(null)
-    setValidationErrors([])
-    try {
-      const [nextCv, draft] = await Promise.all([getCv(publicId), getCvDraft(publicId)])
-      if (generation !== loadGenerationRef.current) return
-      const rawDocument = {
-        schema_version: draft.schema_version,
-        content_json: draft.content_json,
-        layout_json: draft.layout_json,
-        style_json: draft.style_json,
-      }
-      const normalized = ensureBasicEditorDocument(rawDocument)
-      const needsInitialAutosave = signature(normalized) !== signature(rawDocument)
-      documentRef.current = normalized
-      lockVersionRef.current = draft.lock_version
-      lastSavedSignatureRef.current = needsInitialAutosave ? signature(rawDocument) : signature(normalized)
-      setDocument(normalized)
-      setCv(nextCv)
-      setAssets(draft.assets || {})
-      setSavedAt(draft.updated_at ? new Date(draft.updated_at) : null)
-      const nextHistory = createDocumentHistory()
-      historyRef.current = nextHistory
-      setHistoryState(nextHistory)
-      setSavePhase(needsInitialAutosave ? 'unsaved' : 'saved')
-    } catch (loadError) {
-      if (generation !== loadGenerationRef.current) return
-      setError(loadError)
-      setSavePhase('failed')
-    }
-  }, [publicId, setSavePhase])
-
-  useEffect(() => { load() }, [load])
-
-  const runAutosave = useCallback(() => {
+  // Chỉ chạy khi người dùng lưu (hoặc trước thao tác cần bản nháp mới nhất trên
+  // máy chủ): editor không còn tự động lưu sau mỗi lần sửa.
+  const persistDraft = useCallback(() => {
     if (inFlightRef.current) return inFlightRef.current
     if (!documentRef.current || phaseRef.current === 'conflict') return Promise.resolve(false)
     const snapshot = documentRef.current
@@ -126,10 +86,6 @@ export default function useCvDraftEditor(publicId) {
       setSavedAt(new Date())
       const hasNewerChanges = signature(documentRef.current) !== snapshotSignature
       setSavePhase(hasNewerChanges ? 'unsaved' : 'saved')
-      // A user may continue typing while the previous request is in flight.
-      // Queue the newer document explicitly; relying only on the phase effect
-      // misses this case when React is already rendering "unsaved".
-      if (hasNewerChanges) scheduleLatestAutosaveRef.current()
       return true
     }).catch((saveError) => {
       if (saveError.response?.status === 409) {
@@ -147,27 +103,44 @@ export default function useCvDraftEditor(publicId) {
     return request
   }, [publicId, setSavePhase])
 
-  useEffect(() => {
-    const schedule = (delay = AUTOSAVE_DELAY) => {
-      clearTimeout(autosaveTimerRef.current)
-      if (!documentRef.current || phaseRef.current === 'conflict') return
-      autosaveTimerRef.current = setTimeout(() => {
-        autosaveTimerRef.current = null
-        runAutosave()
-      }, delay)
+  const load = useCallback(async () => {
+    const generation = ++loadGenerationRef.current
+    setSavePhase('loading')
+    setError(null)
+    setLastVersion(null)
+    setValidationErrors([])
+    try {
+      const [nextCv, draft] = await Promise.all([getCv(publicId), getCvDraft(publicId)])
+      if (generation !== loadGenerationRef.current) return
+      const rawDocument = {
+        schema_version: draft.schema_version,
+        content_json: draft.content_json,
+        layout_json: draft.layout_json,
+        style_json: draft.style_json,
+      }
+      const normalized = ensureBasicEditorDocument(rawDocument)
+      // Bản nháp cũ thiếu cấu trúc cơ bản được chuẩn hóa và đồng bộ một lần.
+      const needsNormalizationSync = signature(normalized) !== signature(rawDocument)
+      documentRef.current = normalized
+      lockVersionRef.current = draft.lock_version
+      lastSavedSignatureRef.current = needsNormalizationSync ? signature(rawDocument) : signature(normalized)
+      setDocument(normalized)
+      setCv(nextCv)
+      setAssets(draft.assets || {})
+      setSavedAt(draft.updated_at ? new Date(draft.updated_at) : null)
+      const nextHistory = createDocumentHistory()
+      historyRef.current = nextHistory
+      setHistoryState(nextHistory)
+      setSavePhase(needsNormalizationSync ? 'unsaved' : 'saved')
+      if (needsNormalizationSync) persistDraft()
+    } catch (loadError) {
+      if (generation !== loadGenerationRef.current) return
+      setError(loadError)
+      setSavePhase('failed')
     }
-    scheduleLatestAutosaveRef.current = schedule
-    return () => {
-      if (scheduleLatestAutosaveRef.current === schedule) scheduleLatestAutosaveRef.current = () => {}
-      clearTimeout(autosaveTimerRef.current)
-    }
-  }, [runAutosave])
+  }, [persistDraft, publicId, setSavePhase])
 
-  useEffect(() => {
-    if (!document || phase !== 'unsaved') return undefined
-    scheduleLatestAutosaveRef.current()
-    return undefined
-  }, [document, phase])
+  useEffect(() => { load() }, [load])
 
   useUnsavedChangesGuard({
     documentRef,
@@ -175,7 +148,6 @@ export default function useCvDraftEditor(publicId) {
     phaseRef,
     signature,
     flushPendingEdits,
-    runAutosave,
   })
 
   const updateDocument = useCallback((updater, commandLabel = 'Cập nhật CV', options = {}) => {
@@ -219,32 +191,30 @@ export default function useCvDraftEditor(publicId) {
     setSavePhase('unsaved')
   }, [flushPendingEdits, setSavePhase])
 
-  const retryAutosave = useCallback(async () => {
+  const retrySave = useCallback(async () => {
     if (phaseRef.current === 'conflict') return Promise.resolve(false)
     setSavePhase('unsaved')
-    const saved = await runAutosave()
+    const saved = await persistDraft()
     if (saved && signature(documentRef.current) === lastSavedSignatureRef.current) {
       setError(null)
       setSavePhase('saved')
     }
     return saved
-  }, [runAutosave, setSavePhase])
+  }, [persistDraft, setSavePhase])
 
   const saveDraft = useCallback(async () => {
     flushPendingEdits()
-    clearTimeout(autosaveTimerRef.current)
-    autosaveTimerRef.current = null
     if (phaseRef.current === 'conflict') return false
 
-    // If an autosave was already in flight, wait for it and persist any newer
+    // If a save was already in flight, wait for it and persist any newer
     // canvas edits before reporting that the explicit save has completed.
     for (let attempt = 0; attempt < 5; attempt += 1) {
-      const saved = await runAutosave()
+      const saved = await persistDraft()
       if (!saved) return false
       if (signature(documentRef.current) === lastSavedSignatureRef.current) return true
     }
     return false
-  }, [flushPendingEdits, runAutosave])
+  }, [flushPendingEdits, persistDraft])
 
   const commitVersion = useCallback(async (publish) => {
     flushPendingEdits()
@@ -254,8 +224,8 @@ export default function useCvDraftEditor(publicId) {
       setValidationErrors(nextValidationErrors)
       return null
     }
-    const didAutosave = await runAutosave()
-    if (!didAutosave) return null
+    const didPersist = await persistDraft()
+    if (!didPersist) return null
     setError(null)
     try {
       const version = await (publish ? publishCvVersion : saveCvVersion)(publicId, lockVersionRef.current)
@@ -273,13 +243,13 @@ export default function useCvDraftEditor(publicId) {
       }
       return null
     }
-  }, [flushPendingEdits, publicId, runAutosave, setSavePhase])
+  }, [flushPendingEdits, publicId, persistDraft, setSavePhase])
 
   const switchTemplate = useCallback(async (templatePublicId) => {
     flushPendingEdits()
     if (phaseRef.current === 'conflict' || !templatePublicId) return null
-    const didAutosave = await runAutosave()
-    if (!didAutosave) return null
+    const didPersist = await persistDraft()
+    if (!didPersist) return null
     setError(null)
     setSavePhase('saving')
     try {
@@ -318,13 +288,13 @@ export default function useCvDraftEditor(publicId) {
       }
       return null
     }
-  }, [flushPendingEdits, publicId, runAutosave, setSavePhase])
+  }, [flushPendingEdits, publicId, persistDraft, setSavePhase])
 
   const applySample = useCallback(async (sampleContentPublicId) => {
     flushPendingEdits()
     if (phaseRef.current === 'conflict' || !sampleContentPublicId) return null
-    const didAutosave = await runAutosave()
-    if (!didAutosave) return null
+    const didPersist = await persistDraft()
+    if (!didPersist) return null
     const before = documentRef.current
     setSavePhase('saving')
     try {
@@ -357,7 +327,7 @@ export default function useCvDraftEditor(publicId) {
       setError(sampleError.response?.data || sampleError)
       return null
     }
-  }, [flushPendingEdits, publicId, runAutosave, setSavePhase])
+  }, [flushPendingEdits, publicId, persistDraft, setSavePhase])
 
   const rename = useCallback(async (title) => {
     const nextCv = await renameCv(publicId, title)
@@ -394,7 +364,7 @@ export default function useCvDraftEditor(publicId) {
     flushPendingEdits,
     undo,
     redo,
-    retryAutosave,
+    retrySave,
     reloadDraft: load,
     saveDraft,
     saveVersion: () => commitVersion(false),

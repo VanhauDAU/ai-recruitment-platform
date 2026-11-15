@@ -23,6 +23,8 @@ function importFailureMessage(code) {
   if (code === 'scanned_pdf_ocr_unavailable') return 'PDF là bản scan chưa có lớp chữ. Hãy dùng PDF có thể bôi đen chữ hoặc tệp DOCX.'
   if (code === 'import_timeout') return 'Quá trình phân tích vẫn đang chạy. Bạn có thể thử kiểm tra lại.'
   if (code === 'too_many_pages') return 'CV vượt quá giới hạn 20 trang.'
+  if (code === 'not_a_cv') return 'Tệp không giống một CV. CV cần có email hoặc số điện thoại và các mục như kinh nghiệm, học vấn, kỹ năng.'
+  if (code === 'encrypted_pdf') return 'PDF đang được đặt mật khẩu. Hãy gỡ mật khẩu rồi tải lên lại.'
   return 'Không thể phân tích tệp thành CV. Bạn có thể thử lại hoặc tạo CV trống.'
 }
 
