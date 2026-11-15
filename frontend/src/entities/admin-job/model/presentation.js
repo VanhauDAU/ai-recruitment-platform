@@ -1,7 +1,7 @@
 export const ADMIN_JOB_STATUS = {
   draft: { label: 'Nháp', color: 'default' },
   active: { label: 'Đang tuyển', color: 'green' },
-  closed: { label: 'Đã đóng', color: 'default' },
+  closed: { label: 'Ngừng tuyển', color: 'default' },
 }
 
 export const JOB_SCOPE_OPTIONS = [
@@ -11,7 +11,8 @@ export const JOB_SCOPE_OPTIONS = [
   { value: 'expired', label: 'Quá hạn' },
   { value: 'hidden', label: 'Bị ẩn với ứng viên' },
   { value: 'held', label: 'Đang tạm giữ' },
-  { value: 'closed', label: 'Đã đóng' },
+  { value: 'resubmitted', label: 'Chờ duyệt lại' },
+  { value: 'closed', label: 'Ngừng tuyển' },
   { value: 'draft', label: 'Nháp' },
 ]
 
@@ -24,6 +25,11 @@ export const JOB_DECISION_REASONS = [
   { value: 'confirmed_report', label: 'Báo cáo vi phạm đã xác nhận' },
   { value: 'other', label: 'Lý do khác' },
 ]
+
+// Reasons the owner can fix by editing (`JobModerationEvent.FIXABLE_REASONS`).
+export const JOB_FIXABLE_REASONS = JOB_DECISION_REASONS.filter((reason) => (
+  ['incomplete_content', 'misleading_content', 'duplicate_posting', 'other'].includes(reason.value)
+))
 
 export function adminJobStatusMeta(job) {
   return ADMIN_JOB_STATUS[job?.status] || {

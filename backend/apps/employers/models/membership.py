@@ -10,9 +10,9 @@ class RecruiterProfile(models.Model):
     """Hồ sơ nhà tuyển dụng — 1-1 với user, gắn với đúng 1 công ty.
 
     Đã gán công ty thì không đổi được (enforce ở tầng service: chỉ set khi
-    đang null). Owner tạo công ty mới hoặc member chọn công ty có sẵn đều có
-    hiệu lực ngay. Xác thực từng nhà tuyển dụng và thay đổi thông tin công ty
-    là các workflow riêng, không phải workflow duyệt thành viên.
+    đang null). Người tạo công ty mới là owner ngay; tham gia công ty có sẵn
+    đi qua ``CompanyJoinRequest`` và chỉ có hiệu lực khi owner duyệt. Xác
+    thực từng nhà tuyển dụng và thay đổi thông tin công ty là workflow riêng.
 
     Các bước onboarding suy ra từ dữ liệu, không có bảng riêng. Xác thực số
     điện thoại và chọn/tạo công ty là hai bước độc lập; company không yêu cầu
@@ -150,4 +150,50 @@ class EmployerCompanyLinkEvent(models.Model):
     def save(self, *args, **kwargs):
         if not self.public_id:
             self.public_id = generate_public_id('ele')
+        super().save(*args, **kwargs)
+
+
+class CompanyJoinRequest(models.Model):
+    """A recruiter's request to join an existing company; the owner decides.
+
+    Linking used to take effect at once, so anyone could attach themselves to
+    any company. A recruiter has at most one pending request.
+    """
+
+    class Status(models.TextChoices):
+        PENDING = 'pending', 'Chờ duyệt'
+        APPROVED = 'approved', 'Đã duyệt'
+        REJECTED = 'rejected', 'Từ chối'
+        CANCELLED = 'cancelled', 'Đã hủy'
+
+    public_id = models.CharField(max_length=50, unique=True, editable=False)
+    recruiter = models.ForeignKey(
+        RecruiterProfile, on_delete=models.CASCADE, related_name='company_join_requests'
+    )
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='join_requests')
+    status = models.CharField(max_length=16, choices=Status.choices, default=Status.PENDING)
+    decided_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='+',
+    )
+    decided_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at', '-id']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['recruiter'],
+                condition=models.Q(status='pending'),
+                name='uniq_pending_company_join_per_recruiter',
+            ),
+        ]
+        indexes = [models.Index(fields=['company', 'status'], name='company_join_status_idx')]
+
+    def save(self, *args, **kwargs):
+        if not self.public_id:
+            self.public_id = generate_public_id('cjr')
         super().save(*args, **kwargs)

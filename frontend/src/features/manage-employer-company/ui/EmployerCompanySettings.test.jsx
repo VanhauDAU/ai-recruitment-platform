@@ -10,6 +10,8 @@ const api = vi.hoisted(() => ({
     companyDocuments: ['employer', 'company', 'documents'],
     companyUpdateRequests: ['employer', 'company', 'update-requests'],
     companyUpdateRequestList: (scope) => ['employer', 'company', 'update-requests', { scope }],
+    myCompanyJoinRequest: ['employer', 'company-join', 'mine'],
+    companyJoinRequests: ['employer', 'company-join', 'requests'],
   },
   getEmployerProfile: vi.fn(),
   getEmployerIndustries: vi.fn(),
@@ -28,6 +30,10 @@ const api = vi.hoisted(() => ({
   uploadEmployerCompanyLogo: vi.fn(),
   getEmployerCompanyUpdateRequests: vi.fn(),
   prepareEmployerUpload: vi.fn(),
+  getMyCompanyJoinRequest: vi.fn(),
+  cancelMyCompanyJoinRequest: vi.fn(),
+  getCompanyJoinRequests: vi.fn(),
+  decideCompanyJoinRequest: vi.fn(),
 }))
 
 vi.mock('@/entities/employer-profile', () => api)
@@ -48,6 +54,8 @@ describe('EmployerCompanySettings', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     api.getEmployerProfile.mockResolvedValue({ onboarding: { company_linked: false, phone_verified: true } })
+    api.getMyCompanyJoinRequest.mockResolvedValue(null)
+    api.getCompanyJoinRequests.mockResolvedValue([])
     api.getEmployerIndustries.mockResolvedValue([{ id: 1, name: 'IT - Phần mềm' }])
     api.getEmployerCompanyCatalogs.mockResolvedValue({
       business_types: [{ value: 'enterprise', label: 'Doanh nghiệp' }],

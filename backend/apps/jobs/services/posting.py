@@ -171,7 +171,9 @@ def _validate_campaign_for_write(campaign, *, recruiter):
         raise ValidationError({'campaign': 'Chiến dịch này không còn nhận tin tuyển dụng.'})
 
 
-def _validate_job_for_write(job):
+def _validate_job_for_write(job, *, allow_requested_changes=False):
+    if allow_requested_changes and job.editable_for_requested_changes:
+        return
     if job.policy_hold or job.moderation_hold:
         raise ValidationError(
             {
@@ -285,6 +287,40 @@ def _ensure_visibility_window_open(job):
                 'detail': 'Tin đã hết vòng đời hiển thị. Cần một lượt đăng mới để tiếp tục.',
             }
         )
+
+
+def _ensure_public_lifetime(job, deadline, *, visibility_end=None):
+    """Rules every renewal shares, whether the job stayed open or was closed.
+
+    The public cycle is capped from its immutable first approval, the
+    application deadline cannot outlive the visibility window, and a campaign
+    job never renews past the campaign's target date.
+    """
+    anchor = job.first_approved_at or job.published_at
+    if anchor:
+        maximum_days = job_deadline_policy()['max_public_lifetime_days']
+        if deadline > vietnam_today(anchor) + timedelta(days=maximum_days):
+            raise ValidationError(
+                {
+                    'deadline': (
+                        f'Tổng thời gian công khai của tin không được quá {maximum_days} ngày. '
+                        'Hãy nhân bản tin để đăng một lượt mới.'
+                    ),
+                }
+            )
+    visibility_end = visibility_end or job.visibility_ends_at
+    if visibility_end is not None and deadline > vietnam_today(visibility_end):
+        raise ValidationError(
+            {
+                'deadline': (
+                    'Hạn nhận hồ sơ vượt thời gian công khai của tin. '
+                    'Vui lòng dùng quyền gia hạn tin trước.'
+                )
+            }
+        )
+    # A paused campaign is already refused by ``_ensure_publication_allowed``.
+    if job.campaign_id and job.campaign.target_date and deadline > job.campaign.target_date:
+        raise ValidationError({'deadline': 'Hạn gia hạn không được sau ngày kết thúc chiến dịch.'})
 
 
 def _ensure_publication_allowed(job, publication_state):
@@ -429,6 +465,13 @@ def employer_job_posting_context(user):
     count = Job.objects.filter(posted_by=user, submitted_at__isnull=False).count()
     reason = ''
     has_company = recruiter is not None and recruiter.company_id is not None
+    # The exact gates publish_job enforces, so the form never promises a post
+    # that the submit would refuse.
+    publish_blockers = (
+        recruiter_job_publication_state(user, company_id=recruiter.company_id)['publish_blockers']
+        if has_company
+        else []
+    )
     if not readiness['job_workspace_ready']:
         workspace_blocker = next(
             (
@@ -441,6 +484,8 @@ def employer_job_posting_context(user):
         reason = workspace_blocker['message'] if workspace_blocker else 'Workspace chưa sẵn sàng.'
     elif not has_company:
         reason = 'Cập nhật thông tin công ty trước khi đăng tin.'
+    elif publish_blockers:
+        reason = publish_blockers[0]['label']
     elif count >= limit:
         reason = _quota_exhausted_message(
             verified_level_three=entitlement['verified_job_quota_eligible'],
@@ -462,12 +507,19 @@ def employer_job_posting_context(user):
         'dpa_status': readiness['dpa_status'],
         'blockers': readiness['blockers'],
         'published_jobs_count': count,
+        'publish_blockers': publish_blockers,
         'publish_limit': limit,
         'publish_remain': max(limit - count, 0),
+        'verified_publish_limit': _verified_level_three_job_quota(),
         # Compatibility for clients deployed before the quota contract rename.
         'free_publish_limit': limit,
         'free_publish_remain': max(limit - count, 0),
-        'job_postable': readiness['job_workspace_ready'] and has_company and count < limit,
+        'job_postable': bool(
+            readiness['job_workspace_ready']
+            and has_company
+            and not publish_blockers
+            and count < limit
+        ),
         'block_reason': reason,
     }
 
@@ -593,7 +645,7 @@ def update_employer_job(serializer, user):
     )
     if serializer.instance.posted_by_id != user.id:
         raise ValidationError('Bạn không có quyền chỉnh sửa tin này.')
-    _validate_job_for_write(serializer.instance)
+    _validate_job_for_write(serializer.instance, allow_requested_changes=True)
     previous_campaign = locked_campaigns.get(serializer.instance.campaign_id)
     locked_requested_campaign = _locked_requested_campaign(requested_campaign, locked_campaigns)
     _validate_campaign_for_write(locked_requested_campaign, recruiter=recruiter)
@@ -648,6 +700,9 @@ def reopen_job(job, user, deadline, *, accepted_statement_version=''):
     if deadline_error := job_deadline_error(deadline):
         raise ValidationError({'deadline': deadline_error})
     _ensure_visibility_window_open(job)
+    # Reopening keeps the original cycle and credit, so it obeys the renewal
+    # rules instead of becoming a way around them.
+    _ensure_public_lifetime(job, deadline)
     job.deadline = deadline
     return _go_live(
         job,
@@ -661,9 +716,15 @@ def reopen_job(job, user, deadline, *, accepted_statement_version=''):
 @transaction.atomic
 def extend_job_deadline(job, user, deadline, *, requested_visibility_days=None):
     recruiter = _locked_recruiter(user)
+    publication_state = recruiter_job_publication_state(
+        user,
+        company_id=job.company_id,
+        lock=True,
+    )
     job, _ = _locked_job(job)
     if job.posted_by_id != user.id or job.status != Job.Status.ACTIVE:
         raise ValidationError('Chỉ có thể gia hạn tin đang tuyển của bạn.')
+    _ensure_publication_allowed(job, publication_state)
     _validate_job_for_write(job)
     _validate_campaign_for_write(job.campaign, recruiter=recruiter)
     today = vietnam_today()
@@ -677,7 +738,9 @@ def extend_job_deadline(job, user, deadline, *, requested_visibility_days=None):
         raise ValidationError({'deadline': 'Không thể rút ngắn hạn nhận hồ sơ khi gia hạn.'})
     if deadline_error := job_deadline_error(deadline, today=today):
         raise ValidationError({'deadline': deadline_error})
-    if job.deadline < today - timedelta(days=EXPIRED_JOB_RENEWAL_GRACE_DAYS):
+    if job.deadline is not None and job.deadline < today - timedelta(
+        days=EXPIRED_JOB_RENEWAL_GRACE_DAYS
+    ):
         raise ValidationError(
             {
                 'deadline': (
@@ -686,41 +749,10 @@ def extend_job_deadline(job, user, deadline, *, requested_visibility_days=None):
                 )
             }
         )
-    lifecycle_anchor = job.first_approved_at or job.published_at
-    if lifecycle_anchor:
-        published_date = vietnam_today(lifecycle_anchor)
-        maximum_lifetime_days = job_deadline_policy()['max_public_lifetime_days']
-        if deadline > published_date + timedelta(days=maximum_lifetime_days):
-            raise ValidationError(
-                {
-                    'deadline': (
-                        'Tổng thời gian công khai của tin không được quá '
-                        f'{maximum_lifetime_days} ngày.'
-                    )
-                }
-            )
-
-    effective_visibility_end = job.visibility_ends_at
+    visibility_end = job.visibility_ends_at
     if requested_visibility_days is not None and job.visibility_starts_at is not None:
-        effective_visibility_end = job.visibility_starts_at + timedelta(
-            days=requested_visibility_days
-        )
-    if effective_visibility_end is not None and deadline > vietnam_today(effective_visibility_end):
-        raise ValidationError(
-            {
-                'deadline': (
-                    'Hạn nhận hồ sơ vượt thời gian công khai của tin. '
-                    'Vui lòng dùng quyền gia hạn tin trước.'
-                )
-            }
-        )
-    if job.campaign_id:
-        if job.campaign.status != job.campaign.Status.ACTIVE:
-            raise ValidationError({'deadline': 'Chỉ có thể gia hạn trong chiến dịch đang chạy.'})
-        if job.campaign.target_date and deadline > job.campaign.target_date:
-            raise ValidationError(
-                {'deadline': 'Hạn gia hạn không được sau ngày kết thúc chiến dịch.'}
-            )
+        visibility_end = job.visibility_starts_at + timedelta(days=requested_visibility_days)
+    _ensure_public_lifetime(job, deadline, visibility_end=visibility_end)
 
     lifecycle_update_fields = []
     if requested_visibility_days is not None:

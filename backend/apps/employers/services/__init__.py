@@ -30,6 +30,13 @@ from .companies import (
     validate_company_update_revision,
 )
 from .company_follows import follow_company, unfollow_company
+from .company_membership import (
+    cancel_company_join,
+    company_owners,
+    create_company_for_recruiter,
+    decide_company_join,
+    request_company_join,
+)
 from .company_page import (
     CompanyPageLayoutStale,
     set_company_page_policy_hold,
@@ -149,6 +156,11 @@ from .verification import (
 )
 
 __all__ = [
+    'cancel_company_join',
+    'company_owners',
+    'create_company_for_recruiter',
+    'decide_company_join',
+    'request_company_join',
     'BADGE_CRITERIA',
     'TRUST_REPORT_REASONS',
     'COMPANY_DESCRIPTION_MIN_LENGTH',

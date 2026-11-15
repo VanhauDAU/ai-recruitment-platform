@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from typing import Protocol
 from urllib.parse import urlparse
@@ -9,6 +10,8 @@ from urllib.parse import urlparse
 import requests
 from cryptography.fernet import Fernet
 from django.conf import settings
+
+logger = logging.getLogger(__name__)
 
 
 class SmsProviderError(Exception):
@@ -80,6 +83,21 @@ class FakeSmsProvider:
         return SmsDispatchReceipt(message_id=f'fake-{message.idempotency_key}')
 
 
+class ConsoleSmsProvider:
+    """Development only: writes the message to the worker log so a person can
+    finish the real verification flow without an SMS gateway."""
+
+    name = 'console'
+
+    def send(self, message: SmsMessage) -> SmsDispatchReceipt:
+        logger.warning(
+            'SMS (console) to %s: %s',
+            message.destination,
+            ', '.join(f'{key}={value}' for key, value in message.template_parameters.items()),
+        )
+        return SmsDispatchReceipt(message_id=f'console-{message.idempotency_key}')
+
+
 class HttpSmsProvider:
     """Generic JSON-over-HTTP adapter to a separately selected SMS gateway."""
 
@@ -141,8 +159,8 @@ def sms_configuration_errors(*, require_enabled=False):
         return errors
 
     provider = settings.EMPLOYER_SMS_PROVIDER
-    if provider not in {'fake', 'http'}:
-        errors.append('EMPLOYER_SMS_PROVIDER phải là fake hoặc http khi bật SMS.')
+    if provider not in {'fake', 'console', 'http'}:
+        errors.append('EMPLOYER_SMS_PROVIDER phải là fake, console hoặc http khi bật SMS.')
     if settings.IS_PRODUCTION and provider != 'http':
         errors.append('Production chỉ cho phép EMPLOYER_SMS_PROVIDER=http.')
     if provider == 'http':
@@ -198,4 +216,6 @@ def get_sms_provider() -> SmsProvider:
         raise SmsProviderMisconfigured()
     if settings.EMPLOYER_SMS_PROVIDER == 'fake':
         return FakeSmsProvider()
+    if settings.EMPLOYER_SMS_PROVIDER == 'console':
+        return ConsoleSmsProvider()
     return HttpSmsProvider()

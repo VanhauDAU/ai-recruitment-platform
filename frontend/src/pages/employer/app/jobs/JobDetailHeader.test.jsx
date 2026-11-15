@@ -50,7 +50,7 @@ describe('JobDetailHeader', () => {
     const props = renderHeader(LIVE_JOB)
 
     fireEvent.click(screen.getByRole('button', { name: 'Thêm thao tác với tin' }))
-    fireEvent.click(await screen.findByRole('menuitem', { name: /Đóng tin/ }))
+    fireEvent.click(await screen.findByRole('menuitem', { name: /Ngừng tuyển/ }))
     expect(props.onClose).toHaveBeenCalledTimes(1)
   })
 

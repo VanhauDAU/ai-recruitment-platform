@@ -7,7 +7,8 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
-| [Thống nhất luồng đăng tin, hiển thị, ứng tuyển, công ty](#thống-nhất-luồng-đăng-tin-hiển-thị-ứng-tuyển-công-ty-2026-11-15) | 🟨 GĐ6 gộp vào `dev` (#208); GĐ1 xong trên nhánh `fix/job-effective-state`; làm hết trước khi tiếp tục AI |
+| [Ảnh đại diện dùng chung 3 cổng](#ảnh-đại-diện-dùng-chung-3-cổng-2026-11-16) | 🟨 Xong trên nhánh `feat/avatar-editor`, chưa mở PR |
+| [Thống nhất luồng đăng tin, hiển thị, ứng tuyển, công ty](#thống-nhất-luồng-đăng-tin-hiển-thị-ứng-tuyển-công-ty-2026-11-15) | ✅ Cả 6 giai đoạn đã gộp (#208–#215); hoàn thiện luồng nhắc NTD và lịch sử nộp trên nhánh `feat/application-reminders` |
 | [Đối sánh ngữ nghĩa CV–JD chạy local](#đối-sánh-ngữ-nghĩa-cvjd-chạy-local-2026-11-15) | 🟨 Nền tảng (tuần 1) xong trên nhánh `feat/ai-matching-foundation`, chưa mở PR |
 | [CV tải lên: tệp gốc, tiêu chuẩn upload, giới hạn CV, NTD tìm kiếm](#cv-tải-lên-tệp-gốc-tiêu-chuẩn-upload-giới-hạn-cv-ntd-tìm-kiếm-2026-11-15) | ✅ Gộp vào `dev` (#203) |
 | [Việc làm tốt nhất xếp theo chất lượng tin](#việc-làm-tốt-nhất-xếp-theo-chất-lượng-tin-2026-11-15) | ✅ Gộp vào `dev` (#204) |
@@ -23,6 +24,31 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Các epic đã hoàn tất](#các-epic-đã-hoàn-tất) | ✅ |
 | [Lộ trình theo PRD](#lộ-trình-theo-prd) | 🟨 Phần AI lõi (giai đoạn 2–3) còn mở |
 | [Việc còn mở](#việc-còn-mở) | |
+
+## Ảnh đại diện dùng chung 3 cổng (2026-11-16)
+
+| Hạng mục | Trạng thái |
+| --- | --- |
+| Modal "Chỉnh sửa ảnh đại diện" (cắt vuông, xem trước tròn, đổi/xóa ảnh) ở thẻ chào và trang thông tin cá nhân | 🟨 Xong trên nhánh `feat/avatar-editor` |
+| `DELETE /api/auth/avatar/`; upload thu nhỏ ảnh quá 1024 px | 🟨 Xong trên nhánh `feat/avatar-editor` |
+| Cổng NTD (Thông tin tài khoản) và quản trị (Tài khoản của tôi → Hồ sơ) dùng chung modal | 🟨 Xong trên nhánh `feat/avatar-editor` |
+
+<details><summary>Ghi chú chi tiết</summary>
+
+- Kiểm tra phía client: JPG/PNG/WebP, tối đa 5 MB, cạnh ngắn tối thiểu 200 px,
+  tệp phải đọc được. Backend vẫn kiểm tra chữ ký tệp, dung lượng và decode ảnh.
+- Ảnh được cắt trong trình duyệt (canvas) thành JPEG vuông tối đa 400 px; chỉ
+  ảnh đã cắt được gửi lên. "Xong" mới tải lên/xóa, "Đóng lại (Không lưu)" bỏ
+  mọi thay đổi.
+- "Tài khoản đã xác thực" ở cổng ứng viên chỉ dựa vào `email_verified` (xác
+  thực email qua link/mã, đăng nhập Google, đặt lại mật khẩu, đổi email).
+- Kiểm tra: pytest avatar 5 passed, vitest edit-profile + trang tài khoản 25
+  passed, E2E smoke avatar 3 viewport passed, CSS ban đầu 37,9/38,5 KiB.
+- Modal nằm ở `features/edit-profile` (`AvatarEditorModal`), được widget
+  `employer-account-settings` và `admin-account-settings` dùng lại; hai widget
+  có test mở modal.
+
+</details>
 
 ## Thống nhất luồng đăng tin, hiển thị, ứng tuyển, công ty (2026-11-15)
 
@@ -43,12 +69,123 @@ thật trong hạng mục AI.
 
 | GĐ | Hạng mục | Trạng thái |
 | --- | --- | --- |
-| 1 | Trạng thái hiệu lực của tin + lý do ẩn, giờ VN, bộ lọc công khai khớp quyền xem dữ liệu ứng viên | 🟨 Xong trên nhánh `fix/job-effective-state` |
-| 2 | Dùng chung điều kiện chặn đăng tin; mở lại tin áp luật gia hạn | ⬜ |
-| 3 | Một hồ sơ hiệu lực trên một tin, rút hồ sơ, tự động từ chối và thống kê chỉ tính hồ sơ hiệu lực | ⬜ |
-| 4 | Vòng yêu cầu sửa tin → NTD sửa → gửi duyệt lại | ⬜ |
-| 5 | Chặn ứng viên theo công ty, owner duyệt yêu cầu tham gia, logic công ty vào service | ⬜ |
+| 1 | Trạng thái hiệu lực của tin + lý do ẩn, giờ VN, bộ lọc công khai khớp quyền xem dữ liệu ứng viên | ✅ Gộp vào `dev` (#209) |
+| 2 | Dùng chung điều kiện chặn đăng tin; mở lại tin áp luật gia hạn | ✅ Gộp vào `dev` (#211) |
+| 3 | Một hồ sơ hiệu lực trên một tin, rút hồ sơ, tự động từ chối và thống kê chỉ tính hồ sơ hiệu lực | ✅ Gộp vào `dev` (#213) |
+| 4 | Vòng yêu cầu sửa tin → NTD sửa → gửi duyệt lại | ✅ Gộp vào `dev` (#214) |
+| 5 | Chặn ứng viên theo công ty, owner duyệt yêu cầu tham gia, logic công ty vào service, gỡ liên kết công ty, SMS dev | ✅ Gộp vào `dev` (#215) |
 | 6 | Tắt đồng ý tìm hồ sơ thì gỡ mọi CV khỏi tìm kiếm; sửa câu chữ hứa tính năng chưa có | ✅ Gộp vào `dev` (#208) |
+
+<details><summary>Ngừng tuyển và trang "Việc làm đã ứng tuyển" mới (16/11)</summary>
+
+- NTD **ngừng tuyển** (đổi tên từ "Đóng tin"; tin hết hạn nộp/hết thời gian hiển
+  thị cũng tính là ngừng tuyển). Tin ngừng tuyển vẫn xem được chi tiết
+  (`accepting_applications=false`, `stopped_at`), nút ứng tuyển thay bằng nhãn
+  "Hết hạn ứng tuyển" + nút "Xem việc làm liên quan" cuộn xuống cuối trang; tin
+  bị ẩn do kiểm duyệt/công ty vẫn trả 404.
+- Trang "Việc làm đã ứng tuyển" làm lại theo mẫu TopCV: banner hướng dẫn "Nhắc
+  NTD", bộ lọc luôn đủ 8 trạng thái (cuộn hai chiều), dòng trạng thái nổi bật
+  ("NTD ngừng tuyển vị trí này (giờ)", "NTD đã xem CV. ProCV đã nhắc NTD…"),
+  thanh 5 bước có hiệu ứng trượt/ánh sáng, tiến trình chi tiết thu gọn được.
+  Mốc ngừng tuyển thắng nếu đến sau mọi thao tác của ứng viên; hồ sơ đã có kết
+  quả giữ kết quả. Tin đã ngừng tuyển thì không còn nút Nhắc NTD/Rút hồ sơ.
+- **Bỏ tính năng "Đổi CV"** (API `applications/<id>/cv/`, action `update_cv`):
+  muốn nộp CV khác thì rút hồ sơ rồi ứng tuyển lại (tốn 1 lượt).
+
+</details>
+
+<details><summary>Hoàn thiện luồng ứng tuyển: nhắc NTD, lịch sử nộp (16/11)</summary>
+
+- Nhắc NTD (`ApplicationReminder`, thông báo `application_awaiting_reply`):
+  hệ thống tự nhắc khi hồ sơ chưa phản hồi 3 ngày và 7 ngày (gom một thông báo
+  mỗi tin, task `send_unanswered_application_reminders` chạy mỗi giờ); ứng viên
+  có nút "Nhắc NTD" sau 3 ngày kể từ khi nộp, tối đa 2 lần, cách nhau 3 ngày.
+  Mỗi lần nhắc là một mốc "ProCV đã nhắc nhà tuyển dụng phản hồi CV của bạn"
+  trong lịch sử ứng tuyển của ứng viên; NTD thấy lần nhắc gần nhất trong khung
+  xử lý hồ sơ.
+- NTD thấy đúng "Lần N" của hồ sơ hiện tại và mục "Các lần nộp trước" (chỉ xem,
+  kèm kết quả: đã rút, không phù hợp).
+
+</details>
+
+<details><summary>Ghi chú GĐ5</summary>
+
+- Tham gia công ty có sẵn tạo `CompanyJoinRequest` chờ chủ công ty duyệt (thông
+  báo cho owner và người xin); chỉ khi duyệt mới gán `RecruiterProfile.company`
+  với vai trò thành viên. Người xin thấy thẻ "Đang chờ duyệt" và hủy được để
+  chọn công ty khác; owner duyệt/từ chối ở trang Thông tin công ty. Logic tạo
+  và tham gia công ty nằm ở `employers/services/company_membership.py`.
+- Chặn ứng viên tính cho cả công ty khi nộp hồ sơ (`is_candidate_blocked_for_job`);
+  "từ chối hồ sơ chờ" khi chặn vẫn chỉ trên tin của chính NTD đó.
+- Gỡ liên kết công ty (admin) chia 3 nhóm: không chặn (nhu cầu tuyển dụng, lịch
+  sử xác thực, tin nháp/đã đóng); tự rút khi gỡ (hồ sơ xác thực chưa duyệt về
+  nháp kèm sự kiện `withdrawn_by_unlink`, giấy tờ chưa duyệt, yêu cầu cập nhật
+  đang chờ); chặn kèm cách xử lý (đã duyệt xác thực, còn tin đang tuyển, chiến
+  dịch chưa kết thúc, compliance hold, chủ công ty còn thành viên khác).
+- SMS OTP trên dev: `EMPLOYER_SMS_OTP_ENABLED=True`, `EMPLOYER_SMS_PROVIDER=console`
+  (đổi `backend/.env` xong phải `docker compose up -d backend worker`), mã OTP
+  hiện trong `docker logs -f ai-recruitment-platform-worker-1`. Production chỉ
+  cho phép provider `http` và cần adapter riêng cho nhà cung cấp được chọn.
+
+</details>
+
+<details><summary>Ghi chú GĐ4</summary>
+
+- Quản trị viên có thao tác "Yêu cầu chỉnh sửa", chỉ với lý do sửa được (thiếu
+  nội dung, gây hiểu nhầm, trùng lặp, khác); tin chuyển hold
+  `changes_requested`, vẫn ẩn, NTD nhận thông báo kèm ghi chú cần sửa.
+- NTD sửa được tin, rồi bấm "Gửi duyệt lại"; sau đó khóa tới khi admin khôi phục
+  hoặc yêu cầu sửa tiếp. Hàng chờ admin có bộ lọc "Chờ duyệt lại", ô tổng hợp
+  đếm số tin chờ.
+- Lý do nặng (bị cấm, lừa đảo, báo cáo đã xác nhận) vẫn khóa cứng. Cập nhật
+  [ADR-0014](02-tong-quan/adr-0014-job-post-moderation.md).
+
+</details>
+
+<details><summary>Ghi chú GĐ3</summary>
+
+- `Application.is_current` + ràng buộc unique có điều kiện: mỗi ứng viên chỉ một
+  hồ sơ hiệu lực trên một tin; bản nộp cũ là lịch sử chỉ đọc. Migration
+  `applications.0018` đánh dấu bản mới nhất của mỗi cặp là hiệu lực (sao lưu
+  `backups/pre-application-single-active-20261116.dump`).
+- Trạng thái mới `withdrawn` ("Đã rút"): ứng viên rút được khi hồ sơ chưa có kết
+  quả, NTD nhận thông báo trong chuông, thông báo quyết định đang chờ gửi bị hủy;
+  NTD không đổi được trạng thái hồ sơ đã rút.
+- Nộp lại chỉ khi hồ sơ hiệu lực đã bị từ chối hoặc đã rút (vẫn giữ trần 3 lần
+  và chờ 5 phút).
+- Tự động từ chối, nhắc hạn, chặn ứng viên kèm từ chối hồ sơ chờ, dashboard,
+  danh sách/xuất CSV của NTD, thống kê chiến dịch và tin chỉ tính hồ sơ hiệu lực;
+  `application_count` đếm ứng viên, không đếm lượt nộp.
+- Ứng viên: trang "Việc làm đã ứng tuyển" có nút "Rút hồ sơ"; nút ở
+  trang tin hiện "Đã ứng tuyển" khi hồ sơ đang được xử lý.
+
+</details>
+
+<details><summary>Sửa migration test đỏ sẵn trên dev</summary>
+
+- `ApplicationSnapshotMigrationTests.test_mismatched_snapshot_is_refused` xóa
+  `CvVersion` bằng model runtime khi schema đang ở mốc cũ; Django lan phép xóa
+  sang `matching_matchdocument` (app matching mới) chưa tồn tại ở mốc đó, test
+  hỏng giữa chừng và kéo theo các test migration khác trong cùng worker. Giờ xóa
+  bằng model của trạng thái migration đang áp dụng.
+
+</details>
+
+<details><summary>Ghi chú GĐ2</summary>
+
+- `employer_job_posting_context` tính `job_postable` bằng đúng các điều kiện
+  `publish_job` chặn (xác thực đã duyệt, DPA hiện hành, không compliance hold)
+  và trả `publish_blockers`; banner hạn mức ở đầu form liệt kê từng điều kiện
+  kèm liên kết khắc phục, câu chữ quota lấy số lượt Cấp 3 từ site settings
+  (`verified_publish_limit`).
+- `_ensure_public_lifetime` dùng chung cho gia hạn và mở lại: trần 90 ngày tính
+  từ lần duyệt đầu, hạn nộp không vượt thời gian hiển thị, không quá ngày kết
+  thúc chiến dịch. Mở lại vẫn không tính lượt; hết vòng đời thì phải nhân bản.
+- Gia hạn kiểm tra lại xác thực, DPA, compliance hold như khi đăng; sửa lỗi
+  crash khi tin không có hạn nộp.
+- Sửa e2e smoke danh sách tin đỏ sau GĐ1 (mock thiếu `effective_state`).
+
+</details>
 
 <details><summary>Ghi chú GĐ1</summary>
 

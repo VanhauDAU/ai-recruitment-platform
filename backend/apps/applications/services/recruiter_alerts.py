@@ -31,6 +31,22 @@ def _workspace_path(application):
     )
 
 
+def alert_recruiter_of_withdrawal(application):
+    """Tell the posting recruiter, in the bell only, that a candidate withdrew."""
+    recruiter = application.job.posted_by
+    if recruiter is None:
+        return
+    emit_employer_event(
+        recipient=recruiter,
+        event_type=EmployerNotification.EventType.APPLICATION_WITHDRAWN,
+        dedupe_key=f'application-withdrawn:{application.public_id}',
+        message=f'Một ứng viên đã rút hồ sơ khỏi vị trí {application.job.title}.',
+        subject_public_id=application.public_id,
+        metadata={'application_public_id': application.public_id},
+        action_path=_workspace_path(application),
+    )
+
+
 def alert_recruiter_of_application(application):
     """Run inside the application's transaction; the email waits for commit."""
     recruiter = application.job.posted_by

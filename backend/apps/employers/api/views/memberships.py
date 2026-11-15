@@ -5,7 +5,7 @@ from uuid import uuid4
 from django.conf import settings
 from django.db import transaction
 from drf_spectacular.utils import extend_schema, inline_serializer
-from rest_framework import parsers, serializers
+from rest_framework import generics, parsers, serializers, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -16,20 +16,26 @@ from common.file_signatures import PDF_SIGNATURE, SIGNATURE_WINDOW_BYTES, has_pd
 from common.public_id import generate_public_id
 from common.r2_storage import private_media_storage
 
-from ...models import Company, CompanyDocument, RecruiterProfile
-from ...selectors import has_explicit_company_link
+from ...models import CompanyDocument
+from ...selectors import (
+    company_join_requests_for_owner,
+    pending_company_join_request,
+)
 from ...services import (
     REQUESTER_EDITABLE_COMPANY_UPDATE_STATUSES,
     EmployerUploadStructureError,
+    cancel_company_join,
+    decide_company_join,
     get_or_create_recruiter,
     get_or_create_verification_case,
     lock_company_update_request,
     record_verification_upload,
+    request_company_join,
     snapshot_company_update_request,
     validate_employer_upload_structure,
 )
 from ..exceptions import EmployerUploadSessionResponse
-from ..serializers import RecruiterProfileSerializer
+from ..serializers.join_requests import CompanyJoinRequestSerializer
 
 DOCUMENT_SIGNATURES = {
     'jpg': (b'\xff\xd8\xff', {'image/jpeg'}),
@@ -305,39 +311,27 @@ def remove_obsolete_verification_documents(verification_case, verification_metho
 
 
 class JoinCompanyView(APIView):
-    """Liên kết một lần với công ty có sẵn, có hiệu lực ngay.
+    """Xin tham gia một công ty có sẵn; chỉ có hiệu lực khi chủ công ty duyệt.
 
     Đây chỉ là gán HR vào công ty, không phải yêu cầu xác thực hay yêu cầu
     chỉnh sửa công ty. Hai nghiệp vụ sau có workflow duyệt riêng.
     """
 
-    # Liên kết không yêu cầu xác thực lại và không nhận giấy tờ.
     permission_classes = [IsEmployer]
-    parser_classes = [parsers.MultiPartParser]
+    parser_classes = [parsers.MultiPartParser, parsers.JSONParser]
 
     @extend_schema(
-        summary='Liên kết ngay với công ty có sẵn',
+        summary='Gửi yêu cầu tham gia công ty có sẵn',
         request=inline_serializer(
             'JoinCompany',
             fields={
                 'company': serializers.CharField(help_text='public_id công ty'),
             },
         ),
-        responses={200: RecruiterProfileSerializer},
+        responses={202: CompanyJoinRequestSerializer},
         tags=['employer'],
     )
-    @transaction.atomic
     def post(self, request):
-        get_or_create_recruiter(request.user)
-        recruiter = RecruiterProfile.objects.select_for_update().get(user=request.user)
-        if has_explicit_company_link(recruiter):
-            raise ValidationError(
-                {'detail': 'Bạn đã liên kết với một công ty — không thể đổi công ty khác.'}
-            )
-
-        company = Company.objects.filter(public_id=request.data.get('company')).first()
-        if company is None:
-            raise ValidationError({'company': 'Không tìm thấy công ty.'})
         legacy_proof_fields = {
             'proof_type',
             'business_registration_file',
@@ -353,8 +347,47 @@ class JoinCompanyView(APIView):
                     'Giấy tờ chỉ được nộp khi xác thực hoặc yêu cầu cập nhật công ty.'
                 }
             )
+        join_request = request_company_join(request.user, request.data.get('company'))
+        return Response(
+            CompanyJoinRequestSerializer(join_request).data, status=status.HTTP_202_ACCEPTED
+        )
 
-        recruiter.company = company
-        recruiter.company_role = RecruiterProfile.CompanyRole.MEMBER
-        recruiter.save(update_fields=['company', 'company_role', 'updated_at'])
-        return Response(RecruiterProfileSerializer(recruiter, context={'request': request}).data)
+
+class MyCompanyJoinRequestView(APIView):
+    """The caller's pending request: read it, or cancel it to pick another company."""
+
+    permission_classes = [IsEmployer]
+
+    @extend_schema(
+        responses={200: CompanyJoinRequestSerializer(allow_null=True)}, tags=['employer']
+    )
+    def get(self, request):
+        pending = pending_company_join_request(request.user)
+        return Response(CompanyJoinRequestSerializer(pending).data if pending else None)
+
+    @extend_schema(responses={204: None}, tags=['employer'])
+    def delete(self, request):
+        cancel_company_join(request.user)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class CompanyJoinRequestListView(generics.ListAPIView):
+    """Pending requests to the company the caller owns."""
+
+    permission_classes = [IsEmployer]
+    serializer_class = CompanyJoinRequestSerializer
+    pagination_class = None
+
+    def get_queryset(self):
+        return company_join_requests_for_owner(self.request.user)
+
+
+class CompanyJoinRequestDecisionView(APIView):
+    permission_classes = [IsEmployer]
+
+    @extend_schema(request=None, responses={200: CompanyJoinRequestSerializer}, tags=['employer'])
+    def post(self, request, public_id, decision):
+        if decision not in {'approve', 'reject'}:
+            raise ValidationError({'decision': 'Chỉ chấp nhận approve hoặc reject.'})
+        join_request = decide_company_join(request.user, public_id, approve=decision == 'approve')
+        return Response(CompanyJoinRequestSerializer(join_request).data)

@@ -6,6 +6,8 @@ from django.db.models import (
     CharField,
     Count,
     Exists,
+    F,
+    Func,
     IntegerField,
     OuterRef,
     Prefetch,
@@ -20,6 +22,7 @@ from apps.candidates.models import CandidateNotification
 
 from ..models import (
     Application,
+    ApplicationReminder,
     ApplicationReview,
     ApplicationReviewLink,
     ApplicationStatusHistory,
@@ -54,6 +57,7 @@ def candidate_applications_queryset(candidate):
         .prefetch_related(
             'preferred_locations',
             Prefetch('status_history', queryset=candidate_published_history_queryset()),
+            'reminders',
         )
         .order_by('-applied_at')
     )
@@ -84,10 +88,10 @@ def employer_applications_queryset(
     q=None,
     scope=None,
     ordering=None,
-    latest_only=False,
 ):
+    # Recruiters work on the current application only; replaced ones are history.
     queryset = (
-        Application.objects.filter(job__posted_by=employer)
+        Application.objects.filter(job__posted_by=employer, is_current=True)
         .select_related(
             'candidate',
             'job',
@@ -113,6 +117,23 @@ def employer_applications_queryset(
                     candidate_id=OuterRef('candidate_id'),
                 )
             ),
+            # Ordinal of this submission for the candidate and job ("Lần N").
+            submission_number=Subquery(
+                Application.objects.filter(
+                    candidate_id=OuterRef('candidate_id'),
+                    job_id=OuterRef('job_id'),
+                    applied_at__lte=OuterRef('applied_at'),
+                )
+                .order_by()
+                .annotate(total=Func(F('id'), function='COUNT'))
+                .values('total'),
+                output_field=IntegerField(),
+            ),
+            last_reminded_at=Subquery(
+                ApplicationReminder.objects.filter(application_id=OuterRef('pk'))
+                .order_by('-created_at')
+                .values('created_at')[:1]
+            ),
             recent_jobs_applied=Coalesce(
                 Subquery(_recent_jobs_applied_count(), output_field=IntegerField()), 0
             ),
@@ -131,16 +152,6 @@ def employer_applications_queryset(
             | Q(job__title__icontains=q)
             | Q(submitted_cv_title__icontains=q)
         )
-    if latest_only:
-        latest_application_id = (
-            Application.objects.filter(
-                candidate_id=OuterRef('candidate_id'),
-                job_id=OuterRef('job_id'),
-            )
-            .order_by('-applied_at', '-id')
-            .values('id')[:1]
-        )
-        queryset = queryset.filter(id=Subquery(latest_application_id))
     if scope == 'unread':
         queryset = queryset.filter(status=Application.Status.SUBMITTED)
     elif scope == 'unanswered':
@@ -251,3 +262,12 @@ def recruiter_candidate_blocks_queryset(recruiter):
         .select_related('candidate', 'source_application__job')
         .order_by('-created_at', '-id')
     )
+
+
+def previous_submissions_queryset(application):
+    """Earlier submissions to the same job, replaced by ``application``; read-only."""
+    return Application.objects.filter(
+        candidate_id=application.candidate_id,
+        job_id=application.job_id,
+        is_current=False,
+    ).order_by('-applied_at', '-id')

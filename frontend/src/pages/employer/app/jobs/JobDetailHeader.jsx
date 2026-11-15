@@ -20,6 +20,7 @@ import {
   formatApplyRate,
   formatCount,
   formatJobDate,
+  isJobEditableUnderHold,
   isJobHeld,
   jobDeadlineMeta,
   jobDisplayTitle,
@@ -111,7 +112,7 @@ export default function JobDetailHeader({ job, publicId, summary, closing, onClo
                 Xem tin đăng
               </Button>
             )}
-            {!held && job.status !== 'closed' && (
+            {(!held || isJobEditableUnderHold(job)) && job.status !== 'closed' && (
               <Button className={actionClass} icon={<EditOutlined />} onClick={() => navigate(employerAppPath(`/jobs/${publicId}/edit`))}>
                 Chỉnh sửa
               </Button>
@@ -126,7 +127,7 @@ export default function JobDetailHeader({ job, publicId, summary, closing, onClo
               <Dropdown
                 trigger={['click']}
                 placement="bottomRight"
-                menu={{ items: [{ key: 'close', danger: true, icon: <StopOutlined />, label: 'Đóng tin', onClick: onClose }] }}
+                menu={{ items: [{ key: 'close', danger: true, icon: <StopOutlined />, label: 'Ngừng tuyển', onClick: onClose }] }}
               >
                 <Button aria-label="Thêm thao tác với tin" className="!h-9 !w-9 !rounded-lg" icon={<MoreOutlined />} loading={closing} />
               </Dropdown>

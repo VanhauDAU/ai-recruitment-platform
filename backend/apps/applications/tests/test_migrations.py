@@ -68,6 +68,13 @@ class ApplicationSnapshotMigrationTests(TransactionTestCase):
             with_applied_migrations=True
         ).apps.get_model('employers', 'Company')
 
+    def _applied_model(self, app_label, model_name):
+        """Model class of the schema the executor has currently applied."""
+        executor = MigrationExecutor(connection)
+        return executor._create_project_state(  # noqa: SLF001 - migration-state test
+            with_applied_migrations=True
+        ).apps.get_model(app_label, model_name)
+
     def _historical_job(self):
         """Return Job from the schema state currently applied by the executor.
 
@@ -234,7 +241,9 @@ class ApplicationSnapshotMigrationTests(TransactionTestCase):
         with self.assertRaises(RuntimeError):
             self._migrate(AFTER)
         # Repair from the fix: remove the corrupt row, then migration completes.
-        bad.delete()
+        # The historical model keeps the delete off tables newer apps add later
+        # (the runtime CvVersion would cascade into matching_matchdocument).
+        self._applied_model('cvs', 'CvVersion').objects.filter(pk=bad.pk).delete()
         self._migrate(AFTER)
         self._assert_backfilled(app_pk, cv)
 

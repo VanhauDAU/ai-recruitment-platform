@@ -72,7 +72,7 @@ export default function JobList() {
     // Keep the rows and tab counts on screen while the next tab/page loads.
     placeholderData: keepPreviousData,
   })
-  const closeMutation = useJobMutation(closeEmployerJob, 'Đã đóng tin tuyển dụng.', 'Không thể đóng tin.')
+  const closeMutation = useJobMutation(closeEmployerJob, 'Đã ngừng tuyển vị trí này.', 'Không thể ngừng tuyển.')
   const duplicateMutation = useJobMutation(duplicateEmployerJob, 'Đã tạo bản nháp sao chép.', 'Không thể sao chép tin.')
   const deleteMutation = useJobMutation(deleteEmployerJob, 'Đã xóa bản nháp.', 'Không thể xóa bản nháp.')
   const pageData = jobsQuery.data || EMPTY_PAGE

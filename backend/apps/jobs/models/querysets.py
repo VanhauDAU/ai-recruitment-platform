@@ -43,7 +43,7 @@ class JobState(models.TextChoices):
     ACTIVE = 'active', 'Đang tuyển'
     HIDDEN = 'hidden', 'Bị ẩn'
     EXPIRED = 'expired', 'Hết hạn'
-    CLOSED = 'closed', 'Đã đóng'
+    CLOSED = 'closed', 'Ngừng tuyển'
 
 
 _RECRUITER = 'posted_by__recruiter_profile__'
@@ -197,6 +197,19 @@ def publicly_available_job_filter(*, at=None):
         Q(status=Job.Status.ACTIVE)
         & _all_of(_visibility_requirements())
         & job_public_time_filter(now=at)
+    )
+
+
+def stopped_job_filter(*, at=None):
+    """Jobs that stopped recruiting (closed or past their dates) but are not held.
+
+    Candidates may still open them, e.g. from their application history, to
+    see what they applied to; they never take applications.
+    """
+    now = at or timezone.now()
+    return _all_of(_visibility_requirements()) & (
+        Q(status=Job.Status.CLOSED)
+        | (Q(status=Job.Status.ACTIVE) & ~job_public_time_filter(now=now))
     )
 
 

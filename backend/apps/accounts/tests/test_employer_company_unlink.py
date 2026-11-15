@@ -1,4 +1,5 @@
 from django.urls import reverse
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APITestCase
 
@@ -8,8 +9,11 @@ from apps.employers.models import (
     CompanyUpdateRequest,
     EmployerCompanyLinkEvent,
     EmployerVerificationCase,
+    EmployerVerificationEvent,
     RecruiterProfile,
+    RecruitmentNeed,
 )
+from apps.jobs.models import JobCategory
 
 from ..models import AdminAccessAuditLog, User
 
@@ -90,36 +94,95 @@ class EmployerCompanyUnlinkApiTests(APITestCase):
             ).exists()
         )
 
-    def test_owner_or_link_with_business_data_is_not_clean(self):
-        self.recruiter.company_role = RecruiterProfile.CompanyRole.OWNER
-        self.recruiter.save(update_fields=['company_role', 'updated_at'])
-        owner_preview = self.preview()
-        self.assertEqual(owner_preview.status_code, status.HTTP_200_OK)
-        self.assertFalse(owner_preview.data['can_apply'])
-        self.assertIn('COMPANY_OWNER_LINK', owner_preview.data['blockers'])
-        self.assertEqual(owner_preview.data['impact_token'], '')
+    def confirm(self, preview):
+        return self.client.post(
+            self.endpoint('unlink-company'),
+            {
+                'reason': 'Nhà tuyển dụng xác nhận đã chọn nhầm công ty.',
+                'impact_token': preview.data['impact_token'],
+            },
+            format='json',
+        )
 
-        self.recruiter.company_role = RecruiterProfile.CompanyRole.MEMBER
-        self.recruiter.save(update_fields=['company_role', 'updated_at'])
-        CompanyDocument.objects.create(
+    def test_unapproved_submissions_are_withdrawn_with_the_link(self):
+        self.case.status = EmployerVerificationCase.Status.PENDING
+        self.case.verification_method = (
+            EmployerVerificationCase.VerificationMethod.BUSINESS_REGISTRATION
+        )
+        self.case.save()
+        document = CompanyDocument.objects.create(
             company=self.company,
             uploaded_by=self.employer,
+            recruiter=self.recruiter,
+            verification_case=self.case,
             doc_type=CompanyDocument.DocType.BUSINESS_REGISTRATION,
             file_url='private/company-link-proof.pdf',
         )
-        document_preview = self.preview()
-        self.assertFalse(document_preview.data['can_apply'])
-        self.assertIn('COMPANY_DOCUMENTS_EXIST', document_preview.data['blockers'])
-
-        CompanyDocument.objects.all().delete()
-        CompanyUpdateRequest.objects.create(
+        update = CompanyUpdateRequest.objects.create(
             company=self.company,
             requested_by=self.employer,
             changes={'company_name': 'Tên mới'},
         )
-        used_preview = self.preview()
-        self.assertFalse(used_preview.data['can_apply'])
-        self.assertIn('COMPANY_UPDATE_REQUESTS_EXIST', used_preview.data['blockers'])
+        RecruitmentNeed.objects.create(
+            recruiter=self.recruiter,
+            position_category=JobCategory.objects.create(
+                name='Unlink need', category_type=JobCategory.CategoryType.SPECIALIZATION
+            ),
+            position_level=RecruitmentNeed.PositionLevel.EMPLOYEE,
+            is_continuous=True,
+            headcount=1,
+            budget_source=RecruitmentNeed.BudgetSource.COMPANY,
+            completed_at=timezone.now(),
+        )
+
+        preview = self.preview()
+        response = self.confirm(preview)
+
+        self.assertTrue(preview.data['can_apply'], preview.data)
+        self.assertEqual(preview.data['blockers'], [])
+        self.assertEqual(
+            preview.data['withdrawals'],
+            ['VERIFICATION_CASE', 'VERIFICATION_DOCUMENTS', 'COMPANY_UPDATE_REQUESTS'],
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+        self.case.refresh_from_db()
+        document.refresh_from_db()
+        update.refresh_from_db()
+        self.assertEqual(self.case.status, EmployerVerificationCase.Status.DRAFT)
+        self.assertIsNone(self.case.company_id)
+        self.assertTrue(
+            self.case.events.filter(
+                event_type=EmployerVerificationEvent.EventType.WITHDRAWN_BY_UNLINK
+            ).exists()
+        )
+        self.assertFalse(document.is_current)
+        self.assertEqual(update.status, CompanyUpdateRequest.Status.CANCELLED)
+        self.assertTrue(RecruitmentNeed.objects.filter(recruiter=self.recruiter).exists())
+
+    def test_what_took_effect_for_the_company_still_blocks(self):
+        self.case.status = EmployerVerificationCase.Status.APPROVED
+        self.case.save(update_fields=['status', 'updated_at'])
+        approved = self.preview()
+
+        self.case.status = EmployerVerificationCase.Status.DRAFT
+        self.case.save(update_fields=['status', 'updated_at'])
+        self.recruiter.company_role = RecruiterProfile.CompanyRole.OWNER
+        self.recruiter.save(update_fields=['company_role', 'updated_at'])
+        sole_owner = self.preview()
+        colleague = User.objects.create_user(
+            email='company-unlink-colleague@example.com',
+            password='Password@123',
+            role=User.Role.EMPLOYER,
+        )
+        RecruiterProfile.objects.create(
+            user=colleague, company=self.company, company_role=RecruiterProfile.CompanyRole.MEMBER
+        )
+        owner_with_members = self.preview()
+
+        self.assertEqual(approved.data['blockers'], ['VERIFICATION_APPROVED'])
+        self.assertEqual(approved.data['impact_token'], '')
+        self.assertTrue(sole_owner.data['can_apply'], sole_owner.data)
+        self.assertEqual(owner_with_members.data['blockers'], ['COMPANY_OWNER_WITH_MEMBERS'])
 
     def test_new_business_data_after_preview_makes_confirmation_stale(self):
         preview = self.preview()

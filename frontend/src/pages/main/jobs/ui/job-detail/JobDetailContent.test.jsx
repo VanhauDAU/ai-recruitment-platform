@@ -44,7 +44,7 @@ describe('JobDetailContent', () => {
         saved={false}
         savePending={false}
         isAuthenticated={false}
-        applicationStatus={{ hasApplied: false, isLimitReached: false }}
+        applicationStatus={{ hasApplied: false, isLimitReached: false, applyLabel: 'Ứng tuyển ngay' }}
         canCreateJobAlert
         onApply={vi.fn()}
         onCreateJobAlert={onCreateJobAlert}

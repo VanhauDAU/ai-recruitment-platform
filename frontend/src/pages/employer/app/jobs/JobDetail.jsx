@@ -17,6 +17,7 @@ import {
   getJobPostingContext,
   jobKeys,
   reopenEmployerJob,
+  resubmitEmployerJob,
 } from '@/entities/job'
 import {
   EMPLOYER_CAPABILITIES,
@@ -113,9 +114,17 @@ export default function JobDetail() {
     mutationFn: closeEmployerJob,
     onSuccess: () => {
       invalidate()
-      message.success('Đã đóng tin.')
+      message.success('Đã ngừng tuyển vị trí này.')
     },
-    onError: (error) => message.error(getApiErrorMessage(error, 'Không thể đóng tin.')),
+    onError: (error) => message.error(getApiErrorMessage(error, 'Không thể ngừng tuyển.')),
+  })
+  const resubmitMutation = useMutation({
+    mutationFn: () => resubmitEmployerJob(publicId),
+    onSuccess: () => {
+      invalidate()
+      message.success('Đã gửi tin cho quản trị viên duyệt lại.')
+    },
+    onError: (error) => message.error(getApiErrorMessage(error, 'Không thể gửi duyệt lại tin.')),
   })
   const deadlineMutation = useMutation({
     mutationFn: ({ action, deadline, acceptedStatementVersion }) => (
@@ -235,21 +244,25 @@ export default function JobDetail() {
         onSelectFilter={selectCvFilter}
         onClose={() => requestConfirmation({
           cancelText: 'Đóng',
-          confirmText: 'Đóng tin',
+          confirmText: 'Ngừng tuyển',
           danger: true,
           description: (
             <>
-              Bạn có chắc muốn đóng tin tuyển dụng <strong>{jobDisplayTitle(job)}</strong> không?
+              Bạn có chắc muốn ngừng tuyển vị trí <strong>{jobDisplayTitle(job)}</strong> không?
               <br />
               Tin sẽ ngừng hiển thị với ứng viên.
             </>
           ),
           onConfirm: () => closeMutation.mutateAsync(publicId),
-          title: 'Đóng tin tuyển dụng',
+          title: 'Ngừng tuyển',
         })}
       />
 
-      <JobVisibilityHoldAlert hold={job.visibility_hold} />
+      <JobVisibilityHoldAlert
+        hold={job.visibility_hold}
+        onResubmit={() => resubmitMutation.mutate()}
+        resubmitting={resubmitMutation.isPending}
+      />
       <JobVisibilityIssuesAlert job={job} />
 
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xs">

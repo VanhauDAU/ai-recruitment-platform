@@ -102,7 +102,7 @@ def build_employer_dashboard(user):
         .get(user=user)
     )
     jobs = Job.objects.filter(posted_by=user)
-    applications = Application.objects.filter(job__posted_by=user)
+    applications = Application.objects.filter(job__posted_by=user, is_current=True)
     verification = build_employer_onboarding_steps(recruiter)
     company = recruiter.company if verification['company_linked'] else None
     need = next(iter(recruiter.recruitment_needs.all()), None)

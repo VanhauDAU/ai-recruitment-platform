@@ -19,6 +19,7 @@ from ...services import (
     extend_job_deadline,
     publish_job,
     reopen_job,
+    resubmit_job_for_review,
     save_job_draft,
     update_employer_job,
 )
@@ -237,6 +238,19 @@ class EmployerJobExtendView(FreshJobDetailMixin, generics.GenericAPIView):
             get_object_or_404(employer_job_detail_queryset(request.user), public_id=public_id),
             request.user,
             serializer.validated_data['deadline'],
+        )
+        return Response(self.fresh_detail(job))
+
+
+class EmployerJobResubmitView(FreshJobDetailMixin, generics.GenericAPIView):
+    """Send a job fixed after a change request back to the review queue."""
+
+    permission_classes = [IsEmployer]
+
+    def post(self, request, public_id):
+        job = resubmit_job_for_review(
+            get_object_or_404(employer_job_detail_queryset(request.user), public_id=public_id),
+            request.user,
         )
         return Response(self.fresh_detail(job))
 

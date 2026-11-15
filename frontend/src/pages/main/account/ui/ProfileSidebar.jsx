@@ -8,6 +8,7 @@ import { useState } from 'react'
 import { Link } from 'react-router'
 import { getMyCvs } from '@/entities/cv'
 import { useSession } from '@/entities/session'
+import { AvatarEditorModal } from '@/features/edit-profile'
 import { RecruiterSearchListModal } from '@/features/update-recruiter-visibility'
 import { DEFAULT_SITE_SETTINGS, settingText, useSiteSettings } from '@/entities/site-settings'
 
@@ -23,7 +24,10 @@ export default function ProfileSidebar() {
 
 function GreetingCard() {
   const { user } = useSession()
+  // "Tài khoản đã xác thực" = đã chứng minh sở hữu email (link/OTP xác thực,
+  // đăng nhập Google, đặt lại mật khẩu hoặc đổi email qua mã).
   const verified = user?.email_verified
+  const [avatarOpen, setAvatarOpen] = useState(false)
 
   return (
     <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -35,14 +39,15 @@ function GreetingCard() {
               Verified
             </span>
           )}
-          {/* TODO(profile): đổi avatar tại chỗ (upload) — làm ở phần thông tin cá nhân */}
           <button
             type="button"
             aria-label="Đổi ảnh đại diện"
+            onClick={() => setAvatarOpen(true)}
             className="absolute -bottom-0.5 -right-0.5 flex h-6 w-6 cursor-pointer items-center justify-center rounded-full bg-[var(--brand-primary)] text-[11px] text-white ring-2 ring-white transition hover:bg-[var(--brand-primary-hover)]"
           >
             <CameraOutlined />
           </button>
+          <AvatarEditorModal open={avatarOpen} onClose={() => setAvatarOpen(false)} />
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-sm text-slate-500">Chào bạn trở lại,</p>

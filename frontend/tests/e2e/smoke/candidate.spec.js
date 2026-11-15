@@ -476,6 +476,8 @@ test('candidate smoke: job application submits the selected immutable CV version
         applied_at: appliedAt,
         submitted_cv_version_public_id: 'cvv_2',
         status: 'submitted',
+        is_current: true,
+        actions: { withdraw: true, reapply: false },
       }]
     }
     const body = path === '/api/auth/refresh/'
@@ -545,7 +547,8 @@ test('candidate smoke: job application submits the selected immutable CV version
   await applicationDialog.getByRole('checkbox', { name: /Tôi đã đọc và đồng ý/ }).check()
   await applicationDialog.getByRole('button', { name: 'Nộp hồ sơ ứng tuyển' }).click()
   await expect(applicationDialog).toBeHidden()
-  await expect(page.getByRole('button', { name: 'Ứng tuyển lại', exact: true }).first()).toBeVisible()
+  // One current application per job: no resubmission while it is unanswered.
+  await expect(page.getByRole('button', { name: 'Đã ứng tuyển', exact: true }).first()).toBeVisible()
   await expect(page.getByText(/Bạn đã gửi CV cho vị trí này ngày:/)).toContainText(`${appliedDateText}.`)
   await expect(page.getByRole('link', { name: 'Xem CV đã nộp' })).toHaveAttribute('href', '/cvs/cv_1/view')
   expect(applicationPayload).toEqual({
@@ -561,6 +564,9 @@ test('candidate smoke: job application submits the selected immutable CV version
     contact_phone: '',
   })
 
+  // Once the recruiter rejects it, the candidate may apply again.
+  applications = [{ ...applications[0], status: 'rejected', actions: { withdraw: false, reapply: true } }]
+  await page.reload()
   await page.locator('#job-detail-content').getByRole('button', { name: 'Ứng tuyển lại', exact: true }).click()
   await expect(page.getByRole('dialog').getByRole('alert')).toContainText('Bạn còn 2 lượt ứng tuyển lại')
 })
@@ -730,4 +736,114 @@ test('candidate smoke: uploaded CVs show the original file, a recruiter-search s
   // Link chia sẻ của CV tải lên hiển thị tệp gốc thay vì version rỗng.
   await page.goto('/cv/share/tok_up')
   await expect(page.getByTitle('CV tải lên')).toBeAttached()
+})
+
+test('candidate smoke: applied jobs list every status and say when the employer stopped recruiting', async ({ page }) => {
+  const day = 24 * 60 * 60 * 1000
+  const at = (daysAgo) => new Date(Date.now() - daysAgo * day).toISOString()
+  const application = (overrides) => ({
+    job_public_id: 'job_1', job_title: 'Kỹ sư phần mềm', job_slug: 'stopped-job', company_name: 'Công ty Mẫu',
+    cv_public_id: 'cv_1', submitted_cv_title: 'CV chính', is_current: true,
+    actions: { withdraw: true, reapply: false, remind: false },
+    ...overrides,
+  })
+  const applications = [
+    application({
+      public_id: 'app_reminded', job_title: 'Chuyên viên tư vấn', job_slug: 'tu-van', status: 'viewed', applied_at: at(9),
+      timeline: [
+        { status: 'reminder', label: 'ProCV đã nhắc nhà tuyển dụng phản hồi CV của bạn', occurred_at: at(2) },
+        { status: 'viewed', label: 'Nhà tuyển dụng đã xem hồ sơ', occurred_at: at(8) },
+        { status: 'submitted', label: 'Đã nộp hồ sơ', occurred_at: at(9) },
+      ],
+    }),
+    application({
+      public_id: 'app_stopped', status: 'submitted', applied_at: at(20), job_stopped_at: at(5),
+      timeline: [{ status: 'submitted', label: 'Đã nộp hồ sơ', occurred_at: at(20) }],
+    }),
+  ]
+  const stoppedJob = {
+    public_id: 'job_1', slug: 'stopped-job', title: 'Kỹ sư phần mềm', company_name: 'Công ty Mẫu',
+    description: '<p>Mô tả</p>', requirements: '', benefits: '', locations_detail: [], requirement_tags: [],
+    benefit_tags: [], domain_knowledge: [], workplace_groups: [], work_schedules: [], language_requirements: [],
+    category: null, experience_years: 'none', salary_type: 'negotiable', view_count: 0,
+    accepting_applications: false, stopped_at: at(5),
+  }
+  await page.route(API_ROUTE, async (route) => {
+    const request = route.request()
+    const path = new URL(request.url()).pathname
+    const body = path === '/api/auth/refresh/'
+      ? { access: 'e2e-access' }
+      : path === '/api/auth/me/'
+        ? { id: 1, role: 'candidate', email_verified: true, job_preferences_configured: true }
+        : path === '/api/privacy/consent/'
+          ? (request.method() === 'POST'
+            ? { necessary: true, preferences: false, analytics: false, marketing: false }
+            : { consent: null })
+          : path === '/api/v2/applications/'
+            ? { results: applications }
+            : path === '/api/jobs/stopped-job/'
+              ? stoppedJob
+              : path === '/api/jobs/'
+                ? { count: 0, results: [] }
+                : {}
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) })
+  })
+
+  await page.goto('/tai-khoan/viec-lam-da-ung-tuyen')
+  await page.getByRole('button', { name: 'Chỉ cookie thiết yếu' }).click()
+  const filters = page.getByRole('tablist', { name: 'Lọc theo trạng thái hồ sơ' })
+  await expect(filters.getByRole('tab')).toHaveText([
+    'Tất cả', 'Tiếp nhận', 'Đã xem', 'Phù hợp', 'Phỏng vấn', 'Trúng tuyển', 'Chưa phù hợp', 'Đã rút',
+  ])
+  await expect(page.getByText('NTD đã xem CV. ProCV đã nhắc NTD phản hồi CV của bạn')).toBeVisible()
+  await expect(page.getByText(/NTD ngừng tuyển vị trí này \(\d{2}-\d{2}-\d{4} \d{2}:\d{2}\)/)).toBeVisible()
+
+  await page.goto('/viec-lam/stopped-job')
+  const related = page.getByRole('button', { name: 'Xem việc làm liên quan' }).filter({ visible: true }).first()
+  await expect(related).toBeVisible()
+  await expect(page.getByText('Hết hạn ứng tuyển').filter({ visible: true }).first()).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Ứng tuyển ngay' })).toHaveCount(0)
+})
+
+test('candidate smoke: avatar editor crops a square image before uploading', async ({ page }) => {
+  let uploadedContentType = ''
+  await mockCandidatePersonalizationApi(page)
+  await page.route('**/api/auth/avatar/', async (route) => {
+    const body = route.request().postDataBuffer()?.toString('latin1') || ''
+    uploadedContentType = body.match(/Content-Type: (image\/\w+)/)?.[1] || ''
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({ public_id: 'candidate_1', role: 'candidate', email: 'candidate@example.com', full_name: 'Nguyễn An', email_verified: true, avatar_url: '' }),
+    })
+  })
+
+  await page.goto('/tai-khoan/thong-tin-ca-nhan')
+  // Nút có chữ ở trang Thông tin cá nhân (nút camera ở thẻ chào chỉ có aria-label).
+  await page.getByRole('button', { name: 'Đổi ảnh đại diện' }).filter({ hasText: 'Đổi ảnh đại diện' }).click()
+  await expect(page.getByRole('heading', { name: 'Chỉnh sửa ảnh đại diện' })).toBeVisible()
+
+  const png = await page.evaluate(() => {
+    const canvas = document.createElement('canvas')
+    canvas.width = 640
+    canvas.height = 400
+    const context = canvas.getContext('2d')
+    context.fillStyle = '#0ea5e9'
+    context.fillRect(0, 0, 640, 400)
+    return canvas.toDataURL('image/png').split(',')[1]
+  })
+  await page.locator('.ant-modal input[type="file"]').first()
+    .setInputFiles({ name: 'avatar.png', mimeType: 'image/png', buffer: Buffer.from(png, 'base64') })
+
+  const cropFrame = page.getByRole('group', { name: /Vùng cắt 320×320 px/ })
+  await expect(cropFrame).toBeVisible()
+  await expect(page.getByRole('img', { name: 'Xem trước ảnh đại diện' })).toBeVisible()
+  await cropFrame.focus()
+  await page.keyboard.press('ArrowLeft')
+
+  const upload = page.waitForRequest((request) => request.url().endsWith('/api/auth/avatar/') && request.method() === 'POST')
+  await page.getByRole('button', { name: 'Xong' }).click()
+  await upload
+  await expect(page.getByRole('heading', { name: 'Chỉnh sửa ảnh đại diện' })).toBeHidden()
+  expect(uploadedContentType).toBe('image/jpeg')
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
 })

@@ -19,7 +19,7 @@ const NOW = dayjs('2026-11-15T10:00:00')
 describe('job list presentation', () => {
   it('describes the deadline of every lifecycle state', () => {
     expect(jobDeadlineMeta({ status: 'draft', deadline: null }, NOW)).toMatchObject({ date: null, hint: 'Chưa đăng tin', progress: null })
-    expect(jobDeadlineMeta({ status: 'closed', deadline: '2026-10-30' }, NOW)).toMatchObject({ date: '30/10/2026', hint: 'Đã đóng tin' })
+    expect(jobDeadlineMeta({ status: 'closed', deadline: '2026-10-30' }, NOW)).toMatchObject({ date: '30/10/2026', hint: 'Đã ngừng tuyển' })
     expect(jobDeadlineMeta({ status: 'active', is_expired: true, deadline: '2026-11-05' }, NOW).hint).toBe('Đã hết hạn')
     expect(jobDeadlineMeta({ status: 'active', deadline: null }, NOW).hint).toBe('Không giới hạn')
   })

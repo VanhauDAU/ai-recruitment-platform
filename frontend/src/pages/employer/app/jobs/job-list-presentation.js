@@ -9,7 +9,7 @@ export const JOB_STATUS_TABS = [
   { value: 'hidden', label: 'Bị ẩn', countKey: 'hidden' },
   { value: 'draft', label: 'Nháp', countKey: 'draft' },
   { value: 'expired', label: 'Hết hạn', countKey: 'expired' },
-  { value: 'closed', label: 'Đã đóng', countKey: 'closed' },
+  { value: 'closed', label: 'Ngừng tuyển', countKey: 'closed' },
 ]
 
 // Keys are the backend `effective_state`: what candidates experience now.
@@ -18,12 +18,17 @@ const STATUS_META = {
   hidden: { label: 'Bị ẩn', tone: 'red' },
   draft: { label: 'Nháp', tone: 'slate' },
   expired: { label: 'Hết hạn', tone: 'orange' },
-  closed: { label: 'Đã đóng', tone: 'slate' },
+  closed: { label: 'Ngừng tuyển', tone: 'slate' },
 }
 
 // An administrator or account hold, the only hide that also freezes editing.
 export function isJobHeld(job) {
   return Boolean(job.visibility_hold)
+}
+
+// Changes were requested on a fixable reason: the owner edits, then resubmits.
+export function isJobEditableUnderHold(job) {
+  return Boolean(job.visibility_hold?.editable)
 }
 
 export function jobStatusMeta(job) {
@@ -57,7 +62,7 @@ export function jobDeadlineMeta(job, now = dayjs()) {
   const date = job.deadline ? formatJobDate(job.deadline) : null
   const build = (hint, tone, progress = null) => ({ date, hint, progress, tone: DEADLINE_TONES[tone] })
   if (job.status === 'draft') return build('Chưa đăng tin', 'muted')
-  if (job.status === 'closed') return build('Đã đóng tin', 'muted')
+  if (job.status === 'closed') return build('Đã ngừng tuyển', 'muted')
   if (job.is_expired) return build('Đã hết hạn', 'expired')
   if (!job.deadline) return build('Không giới hạn', 'success')
 

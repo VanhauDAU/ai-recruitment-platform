@@ -664,6 +664,10 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'apps.applications.tasks.process_automatic_application_rejections',
         'schedule': 300.0,
     },
+    'send-unanswered-application-reminders': {
+        'task': 'apps.applications.tasks.send_unanswered_application_reminders',
+        'schedule': 3600.0,
+    },
     'purge-lapsed-talent-pool-entries': {
         'task': 'apps.applications.tasks.purge_lapsed_talent_pool_entries',
         'schedule': 86400.0,

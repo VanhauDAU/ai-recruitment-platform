@@ -11,6 +11,7 @@ from ..models import EmployerActivity, EmployerNotification, EmployerNotificatio
 VERIFY_PATH = '/tuyendung/app/employer-verify'
 COMPANY_PATH = '/tuyendung/app/account/settings/company'
 COMPANY_PAGE_PATH = '/tuyendung/app/company-page'
+JOBS_PATH = '/tuyendung/app/jobs'
 APPLICATIONS_PATH = '/tuyendung/app/applications'
 
 EVENT_PRESENTATION = {
@@ -61,6 +62,30 @@ EVENT_PRESENTATION = {
     EmployerNotification.EventType.APPLICATION_REVIEW_SUBMITTED: (
         'Có đánh giá mới cho hồ sơ ứng viên',
         APPLICATIONS_PATH,
+    ),
+    EmployerNotification.EventType.APPLICATION_WITHDRAWN: (
+        'Ứng viên đã rút hồ sơ',
+        APPLICATIONS_PATH,
+    ),
+    EmployerNotification.EventType.APPLICATION_AWAITING_REPLY: (
+        'Hồ sơ đang chờ phản hồi',
+        APPLICATIONS_PATH,
+    ),
+    EmployerNotification.EventType.JOB_CHANGES_REQUESTED: (
+        'Tin tuyển dụng cần chỉnh sửa',
+        JOBS_PATH,
+    ),
+    EmployerNotification.EventType.COMPANY_JOIN_REQUESTED: (
+        'Có yêu cầu tham gia công ty',
+        COMPANY_PATH,
+    ),
+    EmployerNotification.EventType.COMPANY_JOIN_APPROVED: (
+        'Yêu cầu tham gia công ty đã được duyệt',
+        COMPANY_PATH,
+    ),
+    EmployerNotification.EventType.COMPANY_JOIN_REJECTED: (
+        'Yêu cầu tham gia công ty bị từ chối',
+        COMPANY_PATH,
     ),
 }
 

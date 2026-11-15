@@ -8,7 +8,7 @@ from django.conf import settings
 from django.core.cache import cache
 from django.core.files.base import ContentFile
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import override_settings
+from django.test import SimpleTestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework import status
@@ -26,17 +26,26 @@ from ..models import (
     Company,
     CompanyDocument,
     CompanyImage,
+    CompanyJoinRequest,
     CompanyTaxLookupEvidence,
     CompanyUpdateRequest,
     EmployerDpaAcceptance,
+    EmployerNotification,
     EmployerVerificationCase,
     Industry,
     PhoneOtp,
     RecruiterProfile,
     RecruitmentNeed,
 )
+from ..services import decide_company_join
 from ..services.phone_challenges import dispatch_sms_phone_challenge
-from ..services.sms_provider import FakeSmsProvider
+from ..services.sms_provider import (
+    ConsoleSmsProvider,
+    FakeSmsProvider,
+    SmsMessage,
+    get_sms_provider,
+    sms_configuration_errors,
+)
 
 PNG_BYTES = (
     b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01'
@@ -864,10 +873,13 @@ class JoinCompanyTests(APITestCase):
         super().tearDownClass()
 
     def setUp(self):
-        owner, _ = make_employer('owner@example.com')
+        self.owner, owner_recruiter = make_employer('owner@example.com')
         self.company = Company.objects.create(
-            company_name='Acme Corp', tax_code='0101234567', created_by=owner
+            company_name='Acme Corp', tax_code='0101234567', created_by=self.owner
         )
+        owner_recruiter.company = self.company
+        owner_recruiter.company_role = RecruiterProfile.CompanyRole.OWNER
+        owner_recruiter.save(update_fields=['company', 'company_role', 'updated_at'])
         self.user, self.recruiter = make_employer('hr2@example.com')
         authenticate_employer(self.client, self.user)
 
@@ -879,6 +891,11 @@ class JoinCompanyTests(APITestCase):
             },
             format='multipart',
         )
+
+    def _approved_join(self):
+        response = self._join()
+        decide_company_join(self.owner, response.data['public_id'], approve=True)
+        return response
 
     def test_search_finds_company_by_name_and_tax_code(self):
         for q in ['Acme', '0101234567']:
@@ -943,14 +960,80 @@ class JoinCompanyTests(APITestCase):
         self.assertNotIn('Placeholder cũ', names)
         self.assertEqual(names[0], 'Công ty mới 6')
 
-    def test_join_links_recruiter_immediately(self):
+    def test_join_waits_for_the_owner_then_links_as_member(self):
         response = self._join()
-        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
-        self.assertNotIn('membership_status', response.data)
+        mine = self.client.get(reverse('employer-company-join-mine'))
+        self.recruiter.refresh_from_db()
 
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED, response.data)
+        self.assertEqual(response.data['status'], CompanyJoinRequest.Status.PENDING)
+        self.assertEqual(mine.data['public_id'], response.data['public_id'])
+        self.assertIsNone(self.recruiter.company)
+        self.assertTrue(
+            EmployerNotification.objects.filter(
+                recipient=self.owner,
+                event_type=EmployerNotification.EventType.COMPANY_JOIN_REQUESTED,
+            ).exists()
+        )
+
+        authenticate_employer(self.client, self.owner)
+        queue = self.client.get(reverse('employer-company-join-requests'))
+        approved = self.client.post(
+            reverse(
+                'employer-company-join-decision',
+                kwargs={'public_id': response.data['public_id'], 'decision': 'approve'},
+            )
+        )
+
+        self.assertEqual([item['public_id'] for item in queue.data], [response.data['public_id']])
+        self.assertEqual(approved.status_code, status.HTTP_200_OK, approved.data)
         self.recruiter.refresh_from_db()
         self.assertEqual(self.recruiter.company, self.company)
         self.assertEqual(self.recruiter.company_role, RecruiterProfile.CompanyRole.MEMBER)
+
+    def test_only_the_owner_decides_and_a_rejection_links_nothing(self):
+        response = self._join()
+        member, member_recruiter = make_employer('member@example.com')
+        member_recruiter.company = self.company
+        member_recruiter.company_role = RecruiterProfile.CompanyRole.MEMBER
+        member_recruiter.save(update_fields=['company', 'company_role', 'updated_at'])
+
+        authenticate_employer(self.client, member)
+        by_member = self.client.post(
+            reverse(
+                'employer-company-join-decision',
+                kwargs={'public_id': response.data['public_id'], 'decision': 'approve'},
+            )
+        )
+        authenticate_employer(self.client, self.owner)
+        rejected = self.client.post(
+            reverse(
+                'employer-company-join-decision',
+                kwargs={'public_id': response.data['public_id'], 'decision': 'reject'},
+            )
+        )
+
+        self.assertEqual(by_member.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(rejected.data['status'], CompanyJoinRequest.Status.REJECTED)
+        self.recruiter.refresh_from_db()
+        self.assertIsNone(self.recruiter.company)
+
+    def test_a_pending_request_can_be_cancelled_to_pick_another_company(self):
+        self._join()
+        other = Company.objects.create(
+            company_name='Công ty khác', tax_code='0207654320', created_by=self.owner
+        )
+        elsewhere = self.client.post(
+            reverse('employer-company-join'), {'company': other.public_id}, format='multipart'
+        )
+        cancelled = self.client.delete(reverse('employer-company-join-mine'))
+        retried = self.client.post(
+            reverse('employer-company-join'), {'company': other.public_id}, format='multipart'
+        )
+
+        self.assertEqual(elsewhere.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(cancelled.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(retried.status_code, status.HTTP_202_ACCEPTED, retried.data)
 
     def test_joining_company_does_not_inherit_other_recruiter_documents(self):
         for doc_type in (
@@ -966,11 +1049,11 @@ class JoinCompanyTests(APITestCase):
                 status=CompanyDocument.Status.APPROVED,
             )
 
-        join_response = self._join()
+        join_response = self._approved_join()
         profile_response = self.client.get(reverse('employer-me'))
         documents_response = self.client.get(reverse('employer-company-documents'))
 
-        self.assertEqual(join_response.status_code, status.HTTP_200_OK, join_response.data)
+        self.assertEqual(join_response.status_code, status.HTTP_202_ACCEPTED, join_response.data)
         self.assertEqual(profile_response.status_code, status.HTTP_200_OK, profile_response.data)
         onboarding = profile_response.data['onboarding']
         self.assertTrue(onboarding['company_linked'])
@@ -988,7 +1071,7 @@ class JoinCompanyTests(APITestCase):
 
         response = self._join()
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED, response.data)
 
     def test_join_rejects_legacy_membership_proof(self):
         response = self.client.post(
@@ -1007,7 +1090,7 @@ class JoinCompanyTests(APITestCase):
         self.assertIn('không yêu cầu', str(response.data))
 
     def test_cannot_select_or_create_another_company_after_joining(self):
-        first = self._join()
+        first = self._approved_join()
         other_company = Company.objects.create(
             company_name='Công ty khác', tax_code='0207654321', created_by=self.user
         )
@@ -1025,9 +1108,9 @@ class JoinCompanyTests(APITestCase):
             format='json',
         )
 
-        self.assertEqual(first.status_code, status.HTTP_200_OK, first.data)
+        self.assertEqual(first.status_code, status.HTTP_202_ACCEPTED, first.data)
         self.assertEqual(second.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn('không thể đổi công ty khác', str(second.data))
+        self.assertIn('đổi công ty khác', str(second.data))
         self.assertEqual(create.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('không thể tạo hoặc đổi công ty khác', str(create.data))
 
@@ -1116,7 +1199,7 @@ class JoinCompanyTests(APITestCase):
     def test_join_with_password_session(self):
         response = self._join()
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED, response.data)
 
     def test_trade_name_proof_can_be_saved_as_website(self):
         self.recruiter.company = self.company
@@ -2239,3 +2322,32 @@ class CompanyImageUploadTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST, response.data)
         update_request.refresh_from_db()
         self.assertEqual(update_request.changes, {'logo_pending': True})
+
+
+class ConsoleSmsProviderTests(SimpleTestCase):
+    @override_settings(EMPLOYER_SMS_OTP_ENABLED=True, EMPLOYER_SMS_PROVIDER='console')
+    def test_development_provider_writes_the_code_to_the_log(self):
+        provider = get_sms_provider()
+        message = SmsMessage(
+            destination='0900000000',
+            template_id='',
+            template_parameters={'code': '482915', 'ttl_minutes': '10'},
+            sender='',
+            idempotency_key='sms_1',
+        )
+
+        with self.assertLogs('apps.employers.services.sms_provider', level='WARNING') as logs:
+            receipt = provider.send(message)
+
+        self.assertIsInstance(provider, ConsoleSmsProvider)
+        self.assertIn('code=482915', logs.output[0])
+        self.assertEqual(receipt.message_id, 'console-sms_1')
+
+    @override_settings(
+        EMPLOYER_SMS_OTP_ENABLED=True, EMPLOYER_SMS_PROVIDER='console', IS_PRODUCTION=True
+    )
+    def test_production_refuses_the_console_provider(self):
+        self.assertIn(
+            'Production chỉ cho phép EMPLOYER_SMS_PROVIDER=http.',
+            sms_configuration_errors(require_enabled=True),
+        )

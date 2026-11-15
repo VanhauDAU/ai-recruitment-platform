@@ -10,7 +10,7 @@ const JOB_STATUS = {
   hidden: { label: 'Bị ẩn', className: 'bg-red-50 text-red-700' },
   expired: { label: 'Hết hạn', className: 'bg-orange-50 text-orange-700' },
   draft: { label: 'Bản nháp', className: 'bg-slate-100 text-slate-600' },
-  closed: { label: 'Đã đóng', className: 'bg-slate-100 text-slate-500' },
+  closed: { label: 'Ngừng tuyển', className: 'bg-slate-100 text-slate-500' },
 }
 const APPLICATION_STATUS_CLASSES = {
   submitted: 'bg-blue-50 text-blue-700',

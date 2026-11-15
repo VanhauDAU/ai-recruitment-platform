@@ -13,7 +13,14 @@ from apps.employers.services import ensure_recruiter_candidate_data_access
 
 from ...models import Application
 from ...selectors import candidate_applications_queryset, recruiter_application_snapshot_queryset
-from ...services import ApplicationNotAllowed, create_application_record, open_application_snapshot
+from ...services import (
+    ApplicationNotAllowed,
+    ApplicationNotFound,
+    create_application_record,
+    open_application_snapshot,
+    request_recruiter_reminder,
+    withdraw_application,
+)
 from ..serializers.v2 import (
     CandidateApplicationV2CreateSerializer,
     CandidateApplicationV2Serializer,
@@ -64,6 +71,46 @@ class CandidateApplicationV2ListCreateView(generics.ListCreateAPIView):
             )
         return Response(
             CandidateApplicationV2Serializer(application).data, status=status.HTTP_201_CREATED
+        )
+
+
+def _candidate_application_response(action):
+    try:
+        application = action()
+    except ApplicationNotFound as error:
+        raise Http404 from error
+    except ApplicationNotAllowed as error:
+        raise ValidationError({'detail': str(error)}) from error
+    return Response(CandidateApplicationV2Serializer(application).data)
+
+
+@extend_schema(
+    summary='Ứng viên rút hồ sơ chưa có kết quả',
+    request=None,
+    responses={200: CandidateApplicationV2Serializer},
+    tags=['applications-v2'],
+)
+class CandidateApplicationWithdrawView(APIView):
+    permission_classes = [IsCandidate]
+
+    def post(self, request, public_id):
+        return _candidate_application_response(
+            lambda: withdraw_application(candidate=request.user, public_id=public_id)
+        )
+
+
+@extend_schema(
+    summary='Ứng viên nhờ ProCV nhắc nhà tuyển dụng phản hồi hồ sơ',
+    request=None,
+    responses={200: CandidateApplicationV2Serializer},
+    tags=['applications-v2'],
+)
+class CandidateApplicationRemindView(APIView):
+    permission_classes = [IsCandidate]
+
+    def post(self, request, public_id):
+        return _candidate_application_response(
+            lambda: request_recruiter_reminder(candidate=request.user, public_id=public_id)
         )
 
 

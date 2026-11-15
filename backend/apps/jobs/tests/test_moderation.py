@@ -4,20 +4,22 @@ from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework import status
+from rest_framework.exceptions import ValidationError
 from rest_framework.test import APITestCase
 
 from apps.accounts.tests.helpers import make_admin
-from apps.employers.models import Company, EmployerVerificationCase
+from apps.employers.models import Company, EmployerNotification, EmployerVerificationCase
 from apps.employers.tests.readiness_helpers import make_employer_ready
 from common.vietnam_time import vietnam_today
 
+from ..api.serializers import EmployerJobWriteSerializer
 from ..models import (
     Job,
     JobApplicationContact,
     JobApplicationEmail,
     JobModerationEvent,
 )
-from ..services import build_job_content_snapshot
+from ..services import build_job_content_snapshot, update_employer_job
 from .helpers import open_visibility_window
 
 
@@ -58,6 +60,97 @@ class JobModerationFixture:
         return reverse('admin-job-decision', kwargs={'public_id': self.job.public_id})
 
 
+class JobChangesRequestedTests(JobModerationFixture, APITestCase):
+    """Fixable content: request changes, owner edits and resubmits, admin restores."""
+
+    NOTE = 'Bổ sung mức lương và địa chỉ làm việc cụ thể.'
+
+    def decide(self, action, **payload):
+        self.client.force_authenticate(self.admin)
+        token = self.client.get(self.detail_url()).data['review_token']
+        return self.client.post(
+            self.decision_url(),
+            {'action': action, 'review_token': token, 'note': self.NOTE, **payload},
+            format='json',
+        )
+
+    def edit_title(self, title):
+        serializer = EmployerJobWriteSerializer(self.job, data={'title': title}, partial=True)
+        serializer.is_valid(raise_exception=True)
+        return update_employer_job(serializer, self.employer)
+
+    def employer_hold(self):
+        self.client.force_authenticate(self.employer)
+        detail = self.client.get(
+            reverse('employer-job-detail', kwargs={'public_id': self.job.public_id})
+        )
+        return detail.data['visibility_hold']
+
+    def test_severe_reasons_cannot_be_turned_into_a_change_request(self):
+        response = self.decide('request_changes', reason_code='fraud_risk')
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST, response.data)
+        self.job.refresh_from_db()
+        self.assertEqual(self.job.moderation_hold, Job.ModerationHold.NONE)
+
+    def test_owner_is_told_what_to_fix_and_may_edit_the_hidden_job(self):
+        response = self.decide('request_changes', reason_code='incomplete_content')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+        self.job.refresh_from_db()
+        self.assertEqual(self.job.moderation_hold, Job.ModerationHold.CHANGES_REQUESTED)
+        self.assertFalse(Job.publicly_available_queryset().filter(pk=self.job.pk).exists())
+        self.assertTrue(
+            EmployerNotification.objects.filter(
+                recipient=self.employer,
+                event_type=EmployerNotification.EventType.JOB_CHANGES_REQUESTED,
+            ).exists()
+        )
+        hold = self.employer_hold()
+        self.assertTrue(hold['editable'])
+        self.assertEqual(hold['request_note'], self.NOTE)
+        self.assertEqual(self.edit_title('Backend Engineer (Go)').title, 'Backend Engineer (Go)')
+
+    def test_resubmitted_job_waits_for_review_and_is_locked_meanwhile(self):
+        self.decide('request_changes', reason_code='misleading_content')
+        self.client.force_authenticate(self.employer)
+        resubmit_url = reverse('employer-job-resubmit', kwargs={'public_id': self.job.public_id})
+
+        resubmitted = self.client.post(resubmit_url)
+        twice = self.client.post(resubmit_url)
+
+        self.assertEqual(resubmitted.status_code, status.HTTP_200_OK, resubmitted.data)
+        self.assertEqual(twice.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertFalse(resubmitted.data['visibility_hold']['editable'])
+        self.job.refresh_from_db()
+        with self.assertRaises(ValidationError):
+            self.edit_title('Đổi sau khi gửi')
+        self.assertFalse(Job.publicly_available_queryset().filter(pk=self.job.pk).exists())
+
+        self.client.force_authenticate(self.admin)
+        queue = self.client.get(reverse('admin-job-moderation-list'), {'scope': 'resubmitted'})
+        summary = self.client.get(reverse('admin-job-moderation-summary'))
+        self.assertEqual(
+            [item['public_id'] for item in queue.data['results']], [self.job.public_id]
+        )
+        self.assertEqual(summary.data['resubmitted'], 1)
+
+        restored = self.decide('restore')
+
+        self.assertEqual(restored.status_code, status.HTTP_200_OK, restored.data)
+        self.job.refresh_from_db()
+        self.assertIsNone(self.job.moderation_resubmitted_at)
+        self.assertTrue(Job.publicly_available_queryset().filter(pk=self.job.pk).exists())
+
+    def test_a_job_hidden_for_review_stays_locked_for_its_owner(self):
+        self.decide('hide', reason_code='fraud_risk', hold=Job.ModerationHold.MANUAL_REVIEW)
+        self.job.refresh_from_db()
+
+        self.assertFalse(self.employer_hold()['editable'])
+        with self.assertRaises(ValidationError):
+            self.edit_title('Không được sửa')
+
+
 class JobModerationApiTests(JobModerationFixture, APITestCase):
     def test_non_admin_cannot_review_jobs(self):
         self.client.force_authenticate(self.employer)
@@ -89,7 +182,7 @@ class JobModerationApiTests(JobModerationFixture, APITestCase):
         self.assertNotIn('rejected', summary.data)
         self.assertEqual(detail.status_code, status.HTTP_200_OK, detail.data)
         self.assertEqual(detail.data['public_id'], self.job.public_id)
-        self.assertEqual(detail.data['state_actions'], ['hide'])
+        self.assertEqual(detail.data['state_actions'], ['hide', 'request_changes'])
         self.assertTrue(detail.data['review_token'])
         self.assertIn('moderation_events', detail.data)
 
@@ -233,7 +326,7 @@ class JobModerationApiTests(JobModerationFixture, APITestCase):
         self.job.refresh_from_db()
         self.assertEqual(self.job.status, Job.Status.ACTIVE)
         self.assertEqual(self.job.moderation_hold, Job.ModerationHold.MANUAL_REVIEW)
-        self.assertEqual(hidden.data['state_actions'], ['restore'])
+        self.assertEqual(hidden.data['state_actions'], ['request_changes', 'restore'])
         hidden_public_list = self.client.get(reverse('job-list'))
         hidden_public_detail = self.client.get(
             reverse('job-detail', kwargs={'slug': self.job.slug})

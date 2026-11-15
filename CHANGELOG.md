@@ -6,6 +6,19 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ## [Unreleased]
 
+### 2026-11-16
+
+#### Added — Ảnh đại diện (ứng viên, NTD, quản trị)
+
+- Modal "Chỉnh sửa ảnh đại diện" theo mẫu TopCV, mở từ nút camera ở thẻ chào
+  và trang "Cài đặt thông tin cá nhân": chọn hoặc kéo thả ảnh, kéo khung vuông
+  để chọn vùng, kéo góc để đổi cỡ (hoặc dùng phím mũi tên), xem trước dạng tròn,
+  đổi/xóa ảnh. Ảnh được cắt trong trình duyệt thành JPEG vuông rồi mới tải lên.
+- Kiểm tra JPG/PNG/WebP, tối đa 5 MB, tối thiểu 200×200 px trước khi đọc ảnh.
+- `DELETE /api/auth/avatar/` xóa ảnh đại diện; upload thu nhỏ ảnh quá 1024 px.
+- Cổng NTD (Thông tin tài khoản → "Đổi avatar") và cổng quản trị (Tài khoản
+  của tôi → Hồ sơ) dùng chung modal này thay cho upload thẳng tệp gốc.
+
 ### 2026-11-15
 
 #### Added — Nền tảng đối sánh ngữ nghĩa CV–JD chạy local

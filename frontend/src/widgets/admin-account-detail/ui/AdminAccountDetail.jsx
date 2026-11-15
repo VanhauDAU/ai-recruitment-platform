@@ -411,7 +411,7 @@ function EmployerRecruitment({ publicId }) {
             { title: 'Cấp bậc', dataIndex: 'position_level_label' },
             { title: 'Số lượng', dataIndex: 'headcount' },
             { title: 'Nguồn ngân sách', dataIndex: 'budget_source_label' },
-            { title: 'Trạng thái', dataIndex: 'is_active', render: (value) => value ? 'Đang tuyển' : 'Đã đóng' },
+            { title: 'Trạng thái', dataIndex: 'is_active', render: (value) => value ? 'Đang tuyển' : 'Ngừng tuyển' },
           ]}
           />,
         },

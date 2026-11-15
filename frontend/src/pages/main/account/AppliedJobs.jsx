@@ -1,151 +1,176 @@
-import { DownOutlined, FileTextOutlined, MessageOutlined } from '@ant-design/icons'
+import { CalendarOutlined, CheckOutlined, DownOutlined, FileTextOutlined, InfoCircleOutlined, LeftOutlined, MessageOutlined, RightOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
-import { Empty, Skeleton, Tag, Timeline, Tooltip } from 'antd'
-import { useState } from 'react'
+import { Empty, Skeleton, Tooltip } from 'antd'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router'
+import { CANDIDATE_APPLICATION_FILTERS, applicationKeys, getCandidateApplications } from '@/entities/application'
+import { CandidateApplicationActions } from '@/features/manage-candidate-application'
+import { MASCOT_SCENES, MascotEmpty } from '@/shared/ui/mascot'
 import {
-  CANDIDATE_APPLICATION_FILTERS,
-  CANDIDATE_APPLICATION_STATUS_LABELS,
-  applicationKeys,
-  getCandidateApplications,
-} from '@/entities/application'
-import { MascotEmpty } from '@/shared/ui/mascot'
+  APPLICATION_STAGES,
+  buildApplicationTimeline,
+  formatAppliedJobTime,
+  getApplicationHeadline,
+  getCompletedStageCount,
+} from './model/applied-job-presentation'
+import './applied-jobs.css'
 
-const STATUS_COLORS = {
-  submitted: 'blue',
-  viewed: 'cyan',
-  shortlisted: 'green',
-  interviewed: 'purple',
-  accepted: 'green',
-  rejected: 'default',
-}
+const FILTERS = [['all', 'Tất cả'], ...CANDIDATE_APPLICATION_FILTERS]
 
-const STEPS = [
-  ['Ứng viên gửi hồ sơ thành công', ''],
-  ['NTD tiếp nhận hồ sơ', 'Bộ phận tuyển dụng xem và đánh giá hồ sơ'],
-  ['NTD xem hồ sơ', 'Phòng ban chuyên môn đánh giá, cân nhắc hồ sơ'],
-  ['NTD xử lý hồ sơ', ''],
-  ['NTD phản hồi ứng viên', ''],
-]
-
-function formatDateTime(value) {
-  if (!value) return ''
-  const date = new Date(value)
-  return Number.isNaN(date.getTime()) ? '' : date.toLocaleString('vi-VN', {
-    day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit',
-  })
-}
-
-function ProcessGuide() {
+function RemindBanner() {
   return (
-    <div className="rounded-xl bg-slate-50 p-4 sm:p-5">
-      <p className="text-center text-xs font-bold uppercase tracking-wide text-slate-500">Quy trình ứng tuyển</p>
-      <ol className="mt-4 grid gap-4 sm:grid-cols-5">
-        {STEPS.map(([label, hint], index) => (
-          <li key={label} className="relative flex gap-3 sm:flex-col sm:items-center sm:text-center">
-            {/*
-              Thanh nối chạy từ tâm bước trước sang tâm bước này: nửa bề rộng một ô (50%) cộng
-              khoảng gap-4 (1rem). Nằm dưới vòng tròn (z-0) nên số thứ tự vẫn nổi lên trên.
-            */}
-            {index > 0 && (
-              <span
-                aria-hidden="true"
-                className="absolute right-1/2 top-3.5 z-0 hidden h-0.5 -translate-y-1/2 bg-slate-200 sm:block"
-                style={{ left: 'calc(-50% - 1rem)' }}
-              />
-            )}
-            <span className="relative z-10 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--brand-primary)] text-xs font-bold text-white">
-              {index + 1}
-            </span>
-            <span className="min-w-0">
-              <span className="block text-xs font-semibold text-slate-700">{label}</span>
-              {hint && <span className="mt-0.5 block text-[11px] leading-4 text-slate-400">{hint}</span>}
-            </span>
-          </li>
-        ))}
-      </ol>
+    <div className="applied-jobs__banner">
+      <p className="applied-jobs__banner-text">
+        Bạn có thể nhấn nút <strong>&quot;Nhắc NTD&quot;</strong> nếu đã quá <strong>3 ngày</strong> từ lúc ứng tuyển mà vẫn
+        chưa được NTD phản hồi. ProCV sẽ thay bạn gửi một lời nhắn chuyên nghiệp tới NTD.
+      </p>
+      <img src={MASCOT_SCENES.cvHelper} alt="" loading="lazy" />
     </div>
   )
 }
 
-function ApplicationCard({ application, expanded, onToggle }) {
-  const timeline = application.timeline || []
-  const latest = timeline[0]
-  const statusLabel = application.candidate_status
-    || CANDIDATE_APPLICATION_STATUS_LABELS[application.status]
+function StatusFilters({ value, onChange }) {
+  const trackRef = useRef(null)
+  const [edges, setEdges] = useState({ start: true, end: true })
+
+  const measure = useCallback(() => {
+    const track = trackRef.current
+    if (!track) return
+    setEdges({
+      start: track.scrollLeft <= 1,
+      end: track.scrollLeft + track.clientWidth >= track.scrollWidth - 1,
+    })
+  }, [])
+
+  useEffect(() => {
+    measure()
+    window.addEventListener('resize', measure)
+    return () => window.removeEventListener('resize', measure)
+  }, [measure])
+
+  const scroll = (direction) => trackRef.current?.scrollBy({ left: direction * 200, behavior: 'smooth' })
 
   return (
-    <article className="rounded-xl border border-slate-200 p-4">
-      <div className="flex gap-3">
-        {application.company_logo_url
-          ? <img src={application.company_logo_url} alt="" className="h-14 w-14 shrink-0 rounded-lg border border-slate-200 object-contain" />
-          : (
-            <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-lg font-black text-slate-400">
-              {(application.company_name || '?').charAt(0).toUpperCase()}
-            </span>
-          )}
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-start justify-between gap-2">
-            <div className="min-w-0">
-              {application.job_slug
-                ? <Link to={`/viec-lam/${application.job_slug}`} className="font-bold text-slate-900 hover:text-[var(--brand-primary)]">{application.job_title}</Link>
-                : <span className="font-bold text-slate-900">{application.job_title}</span>}
-              <p className="mt-0.5 truncate text-xs font-semibold uppercase text-slate-500">{application.company_name}</p>
-            </div>
-            <Tag color={STATUS_COLORS[application.status]} className="!mr-0">{statusLabel}</Tag>
-          </div>
+    <div className="applied-jobs__filters">
+      {!edges.start && (
+        <button type="button" aria-label="Bộ lọc trước" onClick={() => scroll(-1)} className="applied-jobs__filter-arrow">
+          <LeftOutlined />
+        </button>
+      )}
+      <div
+        ref={trackRef}
+        onScroll={measure}
+        className="applied-jobs__filter-track"
+        role="tablist"
+        aria-label="Lọc theo trạng thái hồ sơ"
+      >
+        {FILTERS.map(([status, label]) => (
+          <button
+            key={status}
+            type="button"
+            role="tab"
+            aria-selected={value === status}
+            onClick={(event) => {
+              onChange(status)
+              event.currentTarget.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' })
+            }}
+            className="applied-jobs__filter"
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      {!edges.end && (
+        <button type="button" aria-label="Bộ lọc tiếp theo" onClick={() => scroll(1)} className="applied-jobs__filter-arrow">
+          <RightOutlined />
+        </button>
+      )}
+    </div>
+  )
+}
 
-          <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
-            <span>Ứng tuyển: {formatDateTime(application.applied_at)}</span>
-            <span className="inline-flex items-center gap-1">
-              <FileTextOutlined />
+function ApplicationProgress({ application }) {
+  const completed = getCompletedStageCount(application)
+  return (
+    <ol className="applied-job__steps" aria-label="Các bước xử lý hồ sơ">
+      {APPLICATION_STAGES.map((stage, index) => {
+        const done = index < completed
+        return (
+          <li key={stage.label} className={`applied-job__step${done ? ' applied-job__step--done' : ''}`} style={{ '--step': index }}>
+            <span className="applied-job__dot">{done && <CheckOutlined />}</span>
+            <span className="applied-job__step-label">
+              {stage.label}
+              {stage.hint && (
+                <Tooltip title={stage.hint}>
+                  <InfoCircleOutlined aria-label={stage.hint} />
+                </Tooltip>
+              )}
+            </span>
+          </li>
+        )
+      })}
+    </ol>
+  )
+}
+
+function ApplicationCard({ application, expanded, onToggle }) {
+  const headline = getApplicationHeadline(application)
+  const timeline = buildApplicationTimeline(application)
+
+  return (
+    <article className="applied-job">
+      <div className="applied-job__head">
+        {application.company_logo_url
+          ? <img src={application.company_logo_url} alt="" className="applied-job__logo" loading="lazy" />
+          : <span className="applied-job__logo">{(application.company_name || '?').charAt(0).toUpperCase()}</span>}
+        <div className="applied-job__info">
+          {application.job_slug
+            ? <Link to={`/viec-lam/${application.job_slug}`} className="applied-job__title">{application.job_title}</Link>
+            : <span className="applied-job__title">{application.job_title}</span>}
+          <p className="applied-job__company">{application.company_name}</p>
+          <p className="applied-job__meta">
+            <span><CalendarOutlined /> Ứng tuyển: {formatAppliedJobTime(application.applied_at)}</span>
+            <span>
+              <FileTextOutlined />{' '}
               {application.cv_public_id
-                ? <Link to={`/cvs/${application.cv_public_id}/view`} className="font-medium text-[var(--brand-primary)] hover:underline">{application.submitted_cv_title}</Link>
-                : <span>{application.submitted_cv_title}</span>}
+                ? <Link to={`/cvs/${application.cv_public_id}/view`}>{application.submitted_cv_title}</Link>
+                : application.submitted_cv_title}
             </span>
           </p>
         </div>
       </div>
 
-      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3">
-        <p className="text-sm text-slate-700">
-          <strong className="font-semibold">{latest?.label || statusLabel}</strong>
-          {latest && <span className="text-slate-400"> ({formatDateTime(latest.occurred_at)})</span>}
+      <div className="applied-job__status">
+        <p className={`applied-job__headline applied-job__headline--${headline.tone}`}>
+          {headline.text}
+          {headline.time && <time> ({headline.time})</time>}
         </p>
-        <Tooltip title="Nhắn tin với nhà tuyển dụng sẽ được mở trong giai đoạn tiếp theo">
-          <span
-            aria-disabled="true"
-            className="inline-flex h-8 cursor-not-allowed items-center gap-2 rounded-lg border border-slate-200 px-3 text-xs font-semibold text-slate-400"
-          >
-            <MessageOutlined /> Nhắn tin
-          </span>
-        </Tooltip>
+        <div className="applied-job__actions">
+          <CandidateApplicationActions application={application} />
+          <Tooltip title="Nhắn tin với nhà tuyển dụng sẽ được mở trong giai đoạn tiếp theo">
+            <span aria-disabled="true" className="applied-job__message"><MessageOutlined /> Nhắn tin</span>
+          </Tooltip>
+        </div>
       </div>
 
+      <ApplicationProgress application={application} />
+
       {timeline.length > 0 && (
-        <div className="mt-3 rounded-lg bg-slate-50 px-4 py-3">
-          <button
-            type="button"
-            onClick={onToggle}
-            aria-expanded={expanded}
-            className="flex w-full cursor-pointer items-center justify-between gap-2 text-left text-sm font-semibold text-slate-700"
-          >
-            Tiến trình ứng tuyển
-            <DownOutlined className={`text-xs text-slate-400 transition-transform ${expanded ? 'rotate-180' : ''}`} />
+        <div className="applied-job__details">
+          <button type="button" onClick={onToggle} aria-expanded={expanded} className="applied-job__details-toggle">
+            Chi tiết tiến trình ứng tuyển
+            <DownOutlined />
           </button>
           {expanded && (
-            <Timeline
-              className="mt-4 [&_.ant-timeline-item-last]:!pb-0"
-              items={timeline.map((item, index) => ({
-                color: index === 0 ? 'green' : 'gray',
-                content: (
-                  <>
-                    <span className="block text-sm text-slate-700">{item.label}</span>
-                    <span className="block text-xs text-slate-400">{formatDateTime(item.occurred_at)}</span>
-                  </>
-                ),
-              }))}
-            />
+            <ol className="applied-job__timeline">
+              {timeline.map((item, index) => (
+                <li key={`${item.status}-${item.occurred_at}`} className="applied-job__event">
+                  {index === 0 && <span className="applied-job__latest">Mới nhất</span>}
+                  <span className="applied-job__event-label">{item.label}</span>
+                  <time>{formatAppliedJobTime(item.occurred_at, 'DD-MM-YYYY HH:mm:ss')}</time>
+                </li>
+              ))}
+            </ol>
           )}
         </div>
       )}
@@ -157,80 +182,40 @@ export default function AppliedJobs() {
   const applicationsQuery = useQuery({ queryKey: applicationKeys.candidateList, queryFn: getCandidateApplications })
   const [statusFilter, setStatusFilter] = useState('all')
   // Chỉ tin đầu tiên mở sẵn; các tin sau đóng cho tới khi người dùng bấm mở.
-  const [collapsedIds, setCollapsedIds] = useState(() => new Set())
-  const [expandedIds, setExpandedIds] = useState(() => new Set())
+  const [toggledIds, setToggledIds] = useState(() => new Set())
 
   if (applicationsQuery.isLoading) return <Skeleton active paragraph={{ rows: 10 }} />
 
-  const applications = applicationsQuery.data || []
-  const counts = applications.reduce((total, item) => {
-    total[item.status] = (total[item.status] || 0) + 1
-    return total
-  }, {})
-  const filters = [['all', 'Tất cả'], ...CANDIDATE_APPLICATION_FILTERS.filter(([value]) => counts[value])]
+  // Earlier submissions replaced by a resubmission are history, not listed.
+  const applications = (applicationsQuery.data || []).filter((item) => item.is_current !== false)
   const visible = statusFilter === 'all'
     ? applications
     : applications.filter((item) => item.status === statusFilter)
 
-  function isExpanded(application, index) {
-    if (expandedIds.has(application.public_id)) return true
-    if (collapsedIds.has(application.public_id)) return false
-    return index === 0
-  }
-
-  function toggle(application, index) {
-    const open = isExpanded(application, index)
-    const nextExpanded = new Set(expandedIds)
-    const nextCollapsed = new Set(collapsedIds)
-    if (open) {
-      nextExpanded.delete(application.public_id)
-      nextCollapsed.add(application.public_id)
-    } else {
-      nextCollapsed.delete(application.public_id)
-      nextExpanded.add(application.public_id)
-    }
-    setExpandedIds(nextExpanded)
-    setCollapsedIds(nextCollapsed)
+  function toggle(publicId) {
+    const next = new Set(toggledIds)
+    if (next.has(publicId)) next.delete(publicId)
+    else next.add(publicId)
+    setToggledIds(next)
   }
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
-      <div className="mb-5">
-        <h1 className="text-xl font-extrabold text-slate-900">Việc làm đã ứng tuyển</h1>
-        <p className="mt-1 text-sm text-slate-500">Theo dõi các mốc xử lý hồ sơ mà nhà tuyển dụng chia sẻ với bạn.</p>
-      </div>
+    <section className="applied-jobs">
+      <h1 className="applied-jobs__title">Việc làm đã ứng tuyển</h1>
 
       {!applications.length ? (
         <MascotEmpty className="py-6" scene="cvHelper" description="Bạn chưa ứng tuyển việc làm nào" />
       ) : (
         <>
-          <div className="flex flex-wrap gap-2" role="tablist" aria-label="Lọc theo trạng thái hồ sơ">
-            {filters.map(([value, label]) => (
-              <button
-                key={value}
-                type="button"
-                role="tab"
-                aria-selected={statusFilter === value}
-                onClick={() => setStatusFilter(value)}
-                className={`cursor-pointer rounded-full border px-3.5 py-1.5 text-sm transition ${statusFilter === value
-                  ? 'border-[var(--brand-primary)] bg-[var(--brand-primary-soft)] font-semibold text-[var(--brand-primary)]'
-                  : 'border-slate-200 text-slate-600 hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]'
-                }`}
-              >
-                {label} {value === 'all' ? applications.length : counts[value]}
-              </button>
-            ))}
-          </div>
-
-          <div className="mt-4"><ProcessGuide /></div>
-
-          <div className="mt-4 space-y-4">
+          <RemindBanner />
+          <StatusFilters value={statusFilter} onChange={setStatusFilter} />
+          <div className="applied-jobs__list">
             {visible.map((application, index) => (
               <ApplicationCard
                 key={application.public_id}
                 application={application}
-                expanded={isExpanded(application, index)}
-                onToggle={() => toggle(application, index)}
+                expanded={(index === 0) !== toggledIds.has(application.public_id)}
+                onToggle={() => toggle(application.public_id)}
               />
             ))}
             {!visible.length && <Empty description="Không có hồ sơ nào ở trạng thái này" />}

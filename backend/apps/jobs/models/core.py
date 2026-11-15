@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -5,7 +7,7 @@ from django.utils import timezone
 from django.utils.text import slugify
 
 from common.public_id import generate_public_id
-from common.vietnam_time import vietnam_today
+from common.vietnam_time import vietnam_day_start, vietnam_today
 
 
 def validate_application_reasons(value):
@@ -203,6 +205,8 @@ class Job(models.Model):
         NONE = '', 'Không giữ'
         MANUAL_REVIEW = 'manual_review', 'Tạm ẩn để rà soát nội dung'
         CONFIRMED_VIOLATION = 'confirmed_violation', 'Tạm ẩn do vi phạm đã xác nhận'
+        # Fixable content: the owner may edit, then resubmits for review.
+        CHANGES_REQUESTED = 'changes_requested', 'Tạm ẩn, cần chỉnh sửa theo yêu cầu'
 
     class Tier(models.TextChoices):
         """Hạng hiển thị của tin — quyết định nền card + thứ tự ưu tiên trong danh sách.
@@ -345,6 +349,8 @@ class Job(models.Model):
         blank=True,
     )
     moderation_held_at = models.DateTimeField(null=True, blank=True)
+    # Set when the owner sends a job under CHANGES_REQUESTED back for review.
+    moderation_resubmitted_at = models.DateTimeField(null=True, blank=True)
     view_count = models.IntegerField(default=0)
     impression_count = models.PositiveIntegerField(default=0)
     application_count = models.IntegerField(default=0)
@@ -481,6 +487,30 @@ class Job(models.Model):
             (self.deadline is not None and self.deadline < vietnam_today(now))
             or self.visibility_ends_at is None
             or self.visibility_ends_at <= now
+        )
+
+    @property
+    def stopped_at(self):
+        """When the job stopped recruiting, for candidates; ``None`` while it recruits."""
+        if self.status == self.Status.CLOSED:
+            return self.closed_at
+        if self.status != self.Status.ACTIVE:
+            return None
+        now = timezone.now()
+        ends = []
+        if self.deadline is not None and self.deadline < vietnam_today(now):
+            ends.append(vietnam_day_start(self.deadline + timedelta(days=1)))
+        if self.visibility_ends_at is not None and self.visibility_ends_at <= now:
+            ends.append(self.visibility_ends_at)
+        return min(ends) if ends else None
+
+    @property
+    def editable_for_requested_changes(self):
+        """Owner may still edit: changes were requested and not yet resubmitted."""
+        return bool(
+            not self.policy_hold
+            and self.moderation_hold == self.ModerationHold.CHANGES_REQUESTED
+            and self.moderation_resubmitted_at is None
         )
 
     @property

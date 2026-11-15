@@ -3,6 +3,7 @@
 from datetime import timedelta
 
 from django.db import transaction
+from django.db.models import Q
 from django.utils import timezone
 
 from ..models import Application, CandidateBlock
@@ -19,6 +20,22 @@ def is_candidate_blocked(*, recruiter_id, candidate_id):
     return CandidateBlock.objects.filter(
         CandidateBlock.active_q(), recruiter_id=recruiter_id, candidate_id=candidate_id
     ).exists()
+
+
+def is_candidate_blocked_for_job(job, candidate_id):
+    """A block by any recruiter of the job's company refuses the application.
+
+    Each recruiter keeps their own blocklist, but candidates apply to the
+    company: a block by one colleague must not be bypassed through another.
+    """
+    return (
+        CandidateBlock.objects.filter(CandidateBlock.active_q(), candidate_id=candidate_id)
+        .filter(
+            Q(recruiter_id=job.posted_by_id)
+            | Q(recruiter__recruiter_profile__company_id=job.company_id)
+        )
+        .exists()
+    )
 
 
 @transaction.atomic
@@ -50,6 +67,7 @@ def block_candidate(
         pending = Application.objects.filter(
             candidate_id=candidate_id,
             job__posted_by=recruiter,
+            is_current=True,
             status__in=Application.UNANSWERED_STATUSES,
         )
         for item in pending:

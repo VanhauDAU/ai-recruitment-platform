@@ -97,6 +97,10 @@ class NewApplicationAlertTests(TestCase):
         )
 
     def apply_again(self):
-        # The five-minute re-apply cooldown is not under test here.
-        Application.objects.update(applied_at=timezone.now() - timedelta(minutes=10))
+        # A resubmission needs a rejected current one; the five-minute cooldown
+        # is not under test here.
+        Application.objects.update(
+            applied_at=timezone.now() - timedelta(minutes=10),
+            status=Application.Status.REJECTED,
+        )
         self.apply()

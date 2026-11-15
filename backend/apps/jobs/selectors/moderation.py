@@ -15,6 +15,12 @@ from ..models import (
     job_state_counts,
 )
 
+# Owners fixed the content after a change request and wait for review.
+_RESUBMITTED = Q(
+    moderation_hold=Job.ModerationHold.CHANGES_REQUESTED,
+    moderation_resubmitted_at__isnull=False,
+)
+
 
 def _admin_job_queryset():
     return Job.objects.select_related(
@@ -74,6 +80,8 @@ def admin_job_management_queryset(*, params=None):
     status_values = [value for value in (params.get('status') or '').split(',') if value]
     if scope in {JobState.ACTIVE, JobState.EXPIRED, JobState.HIDDEN}:
         queryset = queryset.filter(effective_state=scope)
+    elif scope == 'resubmitted':
+        queryset = queryset.filter(_RESUBMITTED)
     elif scope == 'held':
         queryset = queryset.filter(
             ~Q(policy_hold=Job.PolicyHold.NONE) | ~Q(moderation_hold=Job.ModerationHold.NONE)
@@ -154,6 +162,7 @@ def admin_job_management_summary():
     jobs = job_state_counts(Job.objects.all())
     jobs |= Job.objects.aggregate(
         total=Count('id'),
+        resubmitted=Count('id', filter=_RESUBMITTED),
         held=Count(
             'id',
             filter=(

@@ -7,10 +7,12 @@ import {
   getEmployerCompanyCatalogs,
   getEmployerIndustries,
   getEmployerProfile,
+  getMyCompanyJoinRequest,
 } from '@/entities/employer-profile'
 import CompanyForm from './CompanyForm'
 import CompanySearchPanel from './CompanySearchPanel'
 import LinkedCompanyPanel from './LinkedCompanyPanel'
+import PendingCompanyJoin from './PendingCompanyJoin'
 import './employer-company-settings.css'
 
 const OPTIONS = [
@@ -34,6 +36,12 @@ export default function EmployerCompanySettings() {
   const profileQuery = useQuery({ queryKey: ['employer', 'profile'], queryFn: getEmployerProfile })
   const industriesQuery = useQuery({ queryKey: ['employer', 'industries'], queryFn: getEmployerIndustries, staleTime: 10 * 60 * 1000 })
   const catalogsQuery = useQuery({ queryKey: ['employer', 'company', 'catalogs'], queryFn: getEmployerCompanyCatalogs, staleTime: 30 * 60 * 1000 })
+  const linked = Boolean(profileQuery.data?.onboarding?.company_linked)
+  const joinRequestQuery = useQuery({
+    queryKey: employerProfileKeys.myCompanyJoinRequest,
+    queryFn: getMyCompanyJoinRequest,
+    enabled: profileQuery.isSuccess && !linked,
+  })
 
   async function refreshProfile() {
     await Promise.all([
@@ -41,6 +49,7 @@ export default function EmployerCompanySettings() {
       queryClient.invalidateQueries({ queryKey: ['employer-dashboard'] }),
       queryClient.invalidateQueries({ queryKey: ['employer', 'companies'] }),
       queryClient.invalidateQueries({ queryKey: employerProfileKeys.companyUpdateRequests }),
+      queryClient.invalidateQueries({ queryKey: employerProfileKeys.myCompanyJoinRequest }),
     ])
   }
 
@@ -54,6 +63,10 @@ export default function EmployerCompanySettings() {
   const industries = industriesQuery.data || []
   if (profile.onboarding?.company_linked) {
     return <LinkedCompanyPanel profile={profile} catalogs={catalogs} industries={industries} onRefresh={refreshProfile} />
+  }
+  if (joinRequestQuery.isLoading) return <Skeleton active paragraph={{ rows: 4 }} />
+  if (joinRequestQuery.data?.public_id) {
+    return <PendingCompanyJoin joinRequest={joinRequestQuery.data} onChanged={refreshProfile} />
   }
 
   return (

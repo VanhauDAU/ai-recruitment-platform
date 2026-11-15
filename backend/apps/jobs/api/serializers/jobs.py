@@ -518,6 +518,9 @@ class JobDetailSerializer(JobSerializer):
     job_locations = PublicJobLocationSerializer(many=True, read_only=True)
     work_schedules = PublicJobWorkScheduleSerializer(many=True, read_only=True)
     language_requirements = PublicJobLanguageRequirementSerializer(many=True, read_only=True)
+    # A stopped job stays readable but shows "Hết hạn ứng tuyển" instead of apply.
+    accepting_applications = serializers.BooleanField(read_only=True, default=True)
+    stopped_at = serializers.DateTimeField(read_only=True)
 
     class Meta(JobSerializer.Meta):
         model = Job
@@ -525,6 +528,8 @@ class JobDetailSerializer(JobSerializer):
             'public_id',
             'slug',
             'title',
+            'accepting_applications',
+            'stopped_at',
             'company_name',
             'company_slug',
             'company_logo_url',
@@ -695,6 +700,10 @@ class EmployerJobVisibilityHoldSerializer(serializers.Serializer):
     held_at = serializers.DateTimeField(allow_null=True)
     reason_code = serializers.CharField(allow_blank=True)
     reason_label = serializers.CharField(allow_blank=True)
+    # Changes requested: the owner edits, then resubmits for review.
+    editable = serializers.BooleanField()
+    resubmitted_at = serializers.DateTimeField(allow_null=True)
+    request_note = serializers.CharField(allow_blank=True)
 
 
 class EmployerJobVisibilityIssueSerializer(serializers.Serializer):
@@ -1005,6 +1014,11 @@ class EmployerJobLifecyclePolicySerializer(serializers.Serializer):
     timezone = serializers.CharField()
 
 
+class EmployerPublishBlockerSerializer(serializers.Serializer):
+    code = serializers.CharField()
+    label = serializers.CharField()
+
+
 class EmployerJobPostingContextSerializer(serializers.Serializer):
     default_deadline_days = serializers.IntegerField(min_value=1)
     max_deadline_days = serializers.IntegerField(min_value=1)
@@ -1022,8 +1036,10 @@ class EmployerJobPostingContextSerializer(serializers.Serializer):
     )
     blockers = EmployerPostingBlockerSerializer(many=True)
     published_jobs_count = serializers.IntegerField(min_value=0)
+    publish_blockers = EmployerPublishBlockerSerializer(many=True)
     publish_limit = serializers.IntegerField(min_value=0)
     publish_remain = serializers.IntegerField(min_value=0)
+    verified_publish_limit = serializers.IntegerField(min_value=0)
     free_publish_limit = serializers.IntegerField(min_value=0)
     free_publish_remain = serializers.IntegerField(min_value=0)
     job_postable = serializers.BooleanField()

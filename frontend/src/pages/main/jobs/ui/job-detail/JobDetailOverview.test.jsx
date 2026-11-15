@@ -21,7 +21,7 @@ function renderHero(job = JOB) {
       <JobHero
         job={job}
         saved={false}
-        applicationStatus={{ hasApplied: false, isLimitReached: false }}
+        applicationStatus={{ hasApplied: false, isLimitReached: false, applyLabel: 'Ứng tuyển ngay' }}
         onApply={vi.fn()}
         onSave={vi.fn()}
         onShare={vi.fn()}
@@ -34,6 +34,14 @@ function renderHero(job = JOB) {
 describe('JobHero', () => {
   afterEach(() => {
     vi.restoreAllMocks()
+  })
+
+  it('replaces the apply button once the employer stopped recruiting', () => {
+    renderHero({ ...JOB, accepting_applications: false })
+
+    expect(screen.queryByRole('button', { name: /Ứng tuyển ngay/ })).not.toBeInTheDocument()
+    expect(screen.getByText('Hết hạn ứng tuyển')).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Xem việc làm liên quan' })).toBeVisible()
   })
 
   it('promotes salary as the primary hero metric', () => {

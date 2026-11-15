@@ -16,6 +16,8 @@ import { JobBreadcrumbs, JobDetailSkeleton, JobHero } from './ui/job-detail/JobD
 import JobDetailSearchBar from './ui/job-detail/JobDetailSearchBar'
 import JobDetailSidebar from './ui/job-detail/JobDetailSidebar'
 import JobDetailStickyBar from './ui/job-detail/JobDetailStickyBar'
+import { isAcceptingApplications } from './lib/job-detail-presentation'
+import JobApplicationClosed from './ui/job-detail/JobApplicationClosed'
 import JobShareRail from './ui/job-detail/JobShareRail'
 import useJobDetailPageData from './model/use-job-detail-page-data'
 
@@ -50,6 +52,10 @@ export default function JobDetail() {
 
   function handleApply() {
     if (!requireCandidate()) return
+    if (applicationStatus.isPending) {
+      message.info('Bạn đã ứng tuyển tin này. Theo dõi hoặc rút hồ sơ trong mục "Việc làm đã ứng tuyển".')
+      return
+    }
     if (applicationStatus.isLimitReached) {
       message.info('Bạn đã dùng hết 2 lượt ứng tuyển lại cho công việc này.')
       return
@@ -149,7 +155,7 @@ export default function JobDetail() {
         candidateName={user?.full_name || ''}
         candidateEmail={user?.email || ''}
         candidatePhone={user?.phone || ''}
-        isReapplication={applicationStatus.hasApplied}
+        isReapplication={applicationStatus.isResubmission}
         retriesRemaining={applicationStatus.retriesRemaining}
         onSubmitted={applicationStatus.recordSubmission}
       />
@@ -172,8 +178,8 @@ function NotFoundState() {
   return <Result status="404" title="Không tìm thấy tin tuyển dụng" extra={<Link to="/viec-lam"><Button type="primary">Xem việc làm khác</Button></Link>} />
 }
 
-function ApplyButtonLabel({ hasApplied }) {
-  return <>{hasApplied && <i className="fa-solid fa-arrow-rotate-right" aria-hidden="true" />} {hasApplied ? 'Ứng tuyển lại' : 'Ứng tuyển ngay'}</>
+function ApplyButtonLabel({ status }) {
+  return <>{status.isResubmission && <i className="fa-solid fa-arrow-rotate-right" aria-hidden="true" />} {status.applyLabel}</>
 }
 
 function MobileActions({ job, saved, applicationStatus, onApply, onSave, savePending }) {
@@ -182,7 +188,7 @@ function MobileActions({ job, saved, applicationStatus, onApply, onSave, savePen
       <div className="mx-auto flex max-w-6xl gap-2">
         <JobCompareButton job={job} />
         <button type="button" onClick={onSave} disabled={savePending} aria-label={saved ? 'Bỏ lưu việc làm' : 'Lưu việc làm'} className="flex h-11 w-12 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-emerald-200 text-[var(--brand-primary)] disabled:cursor-not-allowed disabled:opacity-60">{saved ? <HeartFilled /> : <HeartOutlined />}</button>
-        <button type="button" onClick={onApply} disabled={applicationStatus.isLimitReached} className="inline-flex h-11 flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg bg-[var(--brand-primary)] px-4 text-sm font-bold text-white shadow-sm transition hover:bg-[var(--brand-primary-hover)] disabled:cursor-not-allowed disabled:opacity-60"><ApplyButtonLabel hasApplied={applicationStatus.hasApplied} /></button>
+        {isAcceptingApplications(job) ? <button type="button" onClick={onApply} disabled={applicationStatus.isLimitReached} className="inline-flex h-11 flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg bg-[var(--brand-primary)] px-4 text-sm font-bold text-white shadow-sm transition hover:bg-[var(--brand-primary-hover)] disabled:cursor-not-allowed disabled:opacity-60"><ApplyButtonLabel status={applicationStatus} /></button> : <JobApplicationClosed className="flex-1" />}
       </div>
     </div>
   )

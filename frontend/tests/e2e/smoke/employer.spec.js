@@ -930,12 +930,13 @@ test('employer jobs: compact list keeps candidate previews and contextual action
         count: 2,
         next: null,
         previous: null,
-        status_counts: { all: 2, active: 1, draft: 1, expired: 0, closed: 0 },
+        status_counts: { all: 2, active: 1, hidden: 0, draft: 1, expired: 0, closed: 0 },
         results: [
           {
             public_id: 'jb_compact',
             title: 'Kỹ sư Frontend React',
             status: 'active',
+            effective_state: 'active',
             is_expired: false,
             campaign: 'camp_product',
             campaign_name: 'Tuyển đội ngũ sản phẩm',
@@ -968,6 +969,7 @@ test('employer jobs: compact list keeps candidate previews and contextual action
             public_id: 'jb_draft',
             title: 'Backend Engineer',
             status: 'draft',
+            effective_state: 'draft',
             is_expired: false,
             locations_detail: [],
             deadline: null,
@@ -1001,7 +1003,7 @@ test('employer jobs: compact list keeps candidate previews and contextual action
   await expect(page.getByTestId('job-list-item-jb_draft').getByRole('link', { name: /Hoàn thiện/ })).toBeVisible()
   const statusTabs = page.getByRole('group', { name: 'Lọc theo trạng thái tin' })
   await expect(statusTabs.getByRole('button', { name: /Tất cả\s*2/ })).toHaveAttribute('aria-pressed', 'true')
-  await expect(statusTabs.getByRole('button', { name: /Đã đóng\s*0/ })).toBeAttached()
+  await expect(statusTabs.getByRole('button', { name: /Ngừng tuyển\s*0/ })).toBeAttached()
   await expectNoHorizontalOverflow(page)
 
   // From xl the rows become a table; narrower screens stack the stats under the title.
@@ -1436,7 +1438,7 @@ test('employer jobs: detail workspace is compact, actionable and responsive', as
     await route.fulfill({
       contentType: 'application/json',
       body: JSON.stringify({
-        public_id: 'jb_workspace', slug: 'ky-su-frontend-react', title: 'Kỹ sư Frontend React', status: 'active',
+        public_id: 'jb_workspace', slug: 'ky-su-frontend-react', title: 'Kỹ sư Frontend React', status: 'active', effective_state: 'expired',
         campaign: 'camp_product', campaign_name: 'Tuyển đội ngũ sản phẩm',
         deadline: '2026-08-01', is_expired: true, view_count: 36, impression_count: 240,
         application_summary: {

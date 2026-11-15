@@ -6,7 +6,6 @@ import hashlib
 import json
 
 from django.db import transaction
-from django.db.models import Q
 
 from apps.accounts.models import User
 from apps.accounts.permissions import require_admin
@@ -26,10 +25,12 @@ from ..models import (
     EmployerComplianceHold,
     EmployerNotification,
     EmployerVerificationCase,
+    EmployerVerificationEvent,
     RecruiterProfile,
     RecruitmentCampaign,
     RecruitmentNeed,
 )
+from ..models.verification import REQUESTER_EDITABLE_COMPANY_UPDATE_STATUSES
 from .company_page_editors import revoke_page_editor_grants_on_unlink
 from .notifications import emit_employer_event
 
@@ -86,51 +87,75 @@ def _identity(user, *, lock):
     return user, recruiter, verification_case, recruiter.company
 
 
+def _verification_documents(verification_case):
+    if verification_case is None:
+        return CompanyDocument.objects.none()
+    return CompanyDocument.objects.filter(
+        verification_case=verification_case, is_current=True
+    ).exclude(status=CompanyDocument.Status.APPROVED)
+
+
+def _open_update_requests(user, company):
+    return CompanyUpdateRequest.objects.filter(
+        requested_by=user,
+        company=company,
+        status__in=REQUESTER_EDITABLE_COMPANY_UPDATE_STATUSES
+        | {CompanyUpdateRequest.Status.IN_REVIEW},
+    )
+
+
 def _clean_snapshot(user, recruiter, verification_case, company):
+    """Group what the link carries: kept as is, withdrawn by the unlink, or blocking.
+
+    Recruitment needs belong to the recruiter, and history is audit evidence:
+    neither blocks. Anything not yet approved is withdrawn with the link. Only
+    what already took effect for this company blocks, with the step to undo it.
+    """
+    case_status = verification_case.status if verification_case is not None else ''
     counts = {
-        'company_documents': CompanyDocument.objects.filter(
-            Q(recruiter=recruiter) | Q(uploaded_by=user)
-        ).count(),
-        'company_update_requests': CompanyUpdateRequest.objects.filter(requested_by=user).count(),
         'recruitment_needs': RecruitmentNeed.objects.filter(recruiter=recruiter).count(),
-        'campaigns': RecruitmentCampaign.objects.filter(owner=recruiter).count(),
         'jobs': Job.objects.filter(posted_by=user).count(),
+        'active_jobs': Job.objects.filter(
+            posted_by=user, company=company, status=Job.Status.ACTIVE
+        ).count(),
+        'open_campaigns': RecruitmentCampaign.objects.filter(owner=recruiter)
+        .exclude(
+            status__in=[
+                RecruitmentCampaign.Status.COMPLETED,
+                RecruitmentCampaign.Status.CANCELLED,
+            ]
+        )
+        .count(),
         'active_compliance_holds': EmployerComplianceHold.objects.filter(
             recruiter=recruiter,
             status=EmployerComplianceHold.Status.ACTIVE,
         ).count(),
-        'verification_events': (
-            verification_case.events.count() if verification_case is not None else 0
-        ),
-        'tax_lookup_evidence': (
-            verification_case.tax_lookup_evidences.count() if verification_case is not None else 0
-        ),
+        'other_members': RecruiterProfile.objects.filter(company=company)
+        .exclude(pk=recruiter.pk)
+        .count(),
+        'withdrawn_documents': _verification_documents(verification_case).count(),
+        'cancelled_update_requests': _open_update_requests(user, company).count(),
     }
     blockers = []
-    if recruiter.company_role != RecruiterProfile.CompanyRole.MEMBER:
-        blockers.append('COMPANY_OWNER_LINK')
-    if verification_case is not None and (
-        verification_case.company_id not in {None, company.pk}
-        or verification_case.status != EmployerVerificationCase.Status.DRAFT
-        or verification_case.verification_method
-        or verification_case.submitted_at is not None
-        or verification_case.reviewer_id is not None
-        or verification_case.decided_at is not None
-        or verification_case.decision_reason
-        or verification_case.decision_source
+    if recruiter.company_role == RecruiterProfile.CompanyRole.OWNER and counts['other_members']:
+        blockers.append('COMPANY_OWNER_WITH_MEMBERS')
+    if case_status == EmployerVerificationCase.Status.APPROVED:
+        blockers.append('VERIFICATION_APPROVED')
+    if counts['active_jobs']:
+        blockers.append('ACTIVE_JOBS_EXIST')
+    if counts['open_campaigns']:
+        blockers.append('OPEN_CAMPAIGNS_EXIST')
+    if counts['active_compliance_holds']:
+        blockers.append('COMPLIANCE_HOLDS_EXIST')
+    withdrawals = []
+    if case_status not in {'', EmployerVerificationCase.Status.DRAFT} and (
+        case_status != EmployerVerificationCase.Status.APPROVED
     ):
-        blockers.append('VERIFICATION_CASE_NOT_CLEAN')
-    blocker_by_count = {
-        'company_documents': 'COMPANY_DOCUMENTS_EXIST',
-        'company_update_requests': 'COMPANY_UPDATE_REQUESTS_EXIST',
-        'recruitment_needs': 'RECRUITMENT_NEEDS_EXIST',
-        'campaigns': 'CAMPAIGNS_EXIST',
-        'jobs': 'JOBS_EXIST',
-        'active_compliance_holds': 'COMPLIANCE_HOLDS_EXIST',
-        'verification_events': 'VERIFICATION_HISTORY_EXISTS',
-        'tax_lookup_evidence': 'TAX_EVIDENCE_EXISTS',
-    }
-    blockers.extend(blocker_by_count[key] for key, count in counts.items() if count)
+        withdrawals.append('VERIFICATION_CASE')
+    if counts['withdrawn_documents']:
+        withdrawals.append('VERIFICATION_DOCUMENTS')
+    if counts['cancelled_update_requests']:
+        withdrawals.append('COMPANY_UPDATE_REQUESTS')
     snapshot = {
         'user_public_id': user.public_id,
         'user_status': user.status,
@@ -148,11 +173,45 @@ def _clean_snapshot(user, recruiter, verification_case, company):
             _marker(verification_case.updated_at) if verification_case is not None else ''
         ),
         'counts': counts,
-        'blockers': sorted(set(blockers)),
+        'blockers': blockers,
+        'withdrawals': withdrawals,
     }
     encoded = json.dumps(snapshot, ensure_ascii=False, sort_keys=True, separators=(',', ':'))
     snapshot['integrity_revision'] = int(hashlib.sha256(encoded.encode()).hexdigest()[:15], 16)
     return snapshot
+
+
+def _withdraw_unapproved_evidence(user, verification_case, company, *, actor, event):
+    """What was submitted for this company but never approved goes with the link."""
+    _verification_documents(verification_case).update(is_current=False)
+    _open_update_requests(user, company).update(status=CompanyUpdateRequest.Status.CANCELLED)
+    if verification_case is None:
+        return
+    previous_status = verification_case.status
+    if previous_status != EmployerVerificationCase.Status.DRAFT:
+        EmployerVerificationEvent.objects.create(
+            verification_case=verification_case,
+            actor=actor,
+            event_type=EmployerVerificationEvent.EventType.WITHDRAWN_BY_UNLINK,
+            payload={
+                'company_public_id': company.public_id,
+                'previous_status': previous_status,
+                'link_event_public_id': event.public_id,
+            },
+        )
+    # Back to a clean draft for the next company; anti-abuse counters stay.
+    verification_case.company = None
+    verification_case.status = EmployerVerificationCase.Status.DRAFT
+    verification_case.verification_method = ''
+    verification_case.reviewer = None
+    verification_case.submitted_at = None
+    verification_case.review_started_at = None
+    verification_case.decided_at = None
+    verification_case.decision_reason = ''
+    verification_case.decision_source = ''
+    verification_case.decision_snapshot = {}
+    verification_case.lock_version += 1
+    verification_case.save()
 
 
 def company_unlink_impact(user, *, actor, reason):
@@ -174,6 +233,7 @@ def company_unlink_impact(user, *, actor, reason):
         },
         'counts': snapshot['counts'],
         'blockers': snapshot['blockers'],
+        'withdrawals': snapshot['withdrawals'],
         'can_apply': can_apply,
         'impact_token': (
             create_impact_token(
@@ -207,7 +267,7 @@ def confirm_company_unlink(user, *, actor, reason, impact_token):
     if snapshot['blockers']:
         raise CompanyUnlinkError(
             'COMPANY_LINK_NOT_CLEAN',
-            'Liên kết đã phát sinh dữ liệu nghiệp vụ và không thể gỡ tự động.',
+            'Liên kết đang có dữ liệu đã có hiệu lực với công ty; xử lý các mục chặn trước.',
             blockers=snapshot['blockers'],
         )
 
@@ -237,13 +297,10 @@ def confirm_company_unlink(user, *, actor, reason, impact_token):
         },
     )
     revoke_page_editor_grants_on_unlink(recruiter, actor=actor)
+    _withdraw_unapproved_evidence(user, verification_case, company, actor=actor, event=event)
     recruiter.company = None
     recruiter.company_role = ''
     recruiter.save(update_fields=['company', 'company_role', 'updated_at'])
-    if verification_case is not None:
-        verification_case.company = None
-        verification_case.lock_version += 1
-        verification_case.save(update_fields=['company', 'lock_version', 'updated_at'])
     record_admin_action(
         actor=actor,
         action='unlink_employer_company',

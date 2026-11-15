@@ -258,6 +258,28 @@ export async function changeEmployerCompanyUpdateRequestLifecycle(
   return data
 }
 
+/** The caller's request waiting for an owner, or `null`. */
+export async function getMyCompanyJoinRequest() {
+  const { data } = await api.get('/employer/company/join/mine/')
+  return data
+}
+
+export async function cancelMyCompanyJoinRequest() {
+  await api.delete('/employer/company/join/mine/')
+}
+
+/** Pending requests to the company the caller owns. */
+export async function getCompanyJoinRequests() {
+  const { data } = await api.get('/employer/company/join-requests/')
+  return data
+}
+
+export async function decideCompanyJoinRequest(publicId, decision) {
+  const { data } = await api.post(`/employer/company/join-requests/${publicId}/${decision}/`)
+  return data
+}
+
+/** Sends a join request; nothing is linked until an owner approves it. */
 export async function joinEmployerCompany(payload) {
   const formData = new FormData()
   Object.entries(payload).forEach(([key, value]) => {

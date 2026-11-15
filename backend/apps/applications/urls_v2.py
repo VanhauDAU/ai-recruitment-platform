@@ -14,6 +14,7 @@ from .api.views.employer import (
     EmployerApplicationExportView,
     EmployerApplicationHistoryView,
     EmployerApplicationListView,
+    EmployerApplicationSubmissionsView,
 )
 from .api.views.reviews import (
     PublicApplicationReviewView,
@@ -29,7 +30,12 @@ from .api.views.talent_pool import (
     RecruiterTalentPoolListCreateView,
     RecruiterTalentSuggestionView,
 )
-from .api.views.v2 import CandidateApplicationV2ListCreateView, RecruiterApplicationSnapshotView
+from .api.views.v2 import (
+    CandidateApplicationRemindView,
+    CandidateApplicationV2ListCreateView,
+    CandidateApplicationWithdrawView,
+    RecruiterApplicationSnapshotView,
+)
 
 urlpatterns = [
     path(
@@ -41,6 +47,16 @@ urlpatterns = [
         'applications/',
         CandidateApplicationV2ListCreateView.as_view(),
         name='candidate-application-list-create-v2',
+    ),
+    path(
+        'applications/<str:public_id>/withdraw/',
+        CandidateApplicationWithdrawView.as_view(),
+        name='candidate-application-withdraw-v2',
+    ),
+    path(
+        'applications/<str:public_id>/remind/',
+        CandidateApplicationRemindView.as_view(),
+        name='candidate-application-remind-v2',
     ),
     path(
         'recruiter/applications/',
@@ -146,6 +162,11 @@ urlpatterns = [
         'application-reviews/<str:token>/',
         PublicApplicationReviewView.as_view(),
         name='public-application-review-v2',
+    ),
+    path(
+        'recruiter/applications/<str:public_id>/submissions/',
+        EmployerApplicationSubmissionsView.as_view(),
+        name='recruiter-application-submissions-v2',
     ),
     path(
         'recruiter/applications/<str:public_id>/history/',

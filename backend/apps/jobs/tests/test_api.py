@@ -722,6 +722,7 @@ class EmployerJobSerializerTests(APITestCase):
                     submitted_cv_version=version,
                     submitted_cv_title=f'CV {index}.{order}',
                     status=status,
+                    is_current=order == len(statuses) - 1,
                 )
                 Application.objects.filter(pk=application.pk).update(
                     applied_at=now - timedelta(days=len(statuses) - order)
@@ -876,6 +877,7 @@ class EmployerJobSerializerTests(APITestCase):
             submitted_cv_version=first_version,
             submitted_cv_title='Backend CV v1',
             status=Application.Status.VIEWED,
+            is_current=False,
         )
         second_candidate_submission = Application.objects.create(
             candidate=second_candidate,

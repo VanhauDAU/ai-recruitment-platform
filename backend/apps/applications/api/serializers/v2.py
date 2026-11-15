@@ -1,6 +1,8 @@
 """V2 application contracts for candidate submission and recruiter snapshot reads."""
 
 from django.urls import reverse
+from django.utils import timezone
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from apps.cvs.api.serializers.v2 import CvVersionSerializer
@@ -12,7 +14,7 @@ from apps.locations.models import Location
 from common.media_storage import media_url_from_value
 
 from ...models import Application
-from ...services import reapplication_error
+from ...services import candidate_reminder_available_at, reapplication_error
 
 
 class RecruiterApplicationSnapshotSerializer(serializers.ModelSerializer):
@@ -77,6 +79,51 @@ class RecruiterCvExportSerializer(serializers.Serializer):
         return request.build_absolute_uri(url) if request else url
 
 
+def validated_cv_selection(candidate, attrs):
+    """The candidate's own CV and immutable version, ready to submit; shared by
+    the first submission and the in-place CV update."""
+    try:
+        cv = UserCv.objects.get(
+            public_id=attrs['cv_public_id'],
+            user=candidate,
+            is_deleted=False,
+        )
+    except UserCv.DoesNotExist as error:
+        raise serializers.ValidationError(
+            {'cv_public_id': 'Select one of your active CVs.'}
+        ) from error
+    try:
+        version = CvVersion.objects.get(
+            public_id=attrs['version_public_id'],
+            cv=cv,
+        )
+    except CvVersion.DoesNotExist as error:
+        raise serializers.ValidationError(
+            {'version_public_id': 'Select an immutable version of this CV.'}
+        ) from error
+    if version.version_kind == CvVersion.VersionKind.APPLICATION_SNAPSHOT:
+        raise serializers.ValidationError(
+            {'version_public_id': 'Application snapshots cannot be submitted again.'}
+        )
+    if cv.processing_status in {
+        UserCv.ProcessingStatus.QUEUED,
+        UserCv.ProcessingStatus.PROCESSING,
+    }:
+        raise serializers.ValidationError(
+            {'cv_public_id': 'CV đang được phân tích, vui lòng chờ trong giây lát.'}
+        )
+    if issues := application_readiness_issues(version):
+        raise serializers.ValidationError(
+            {
+                'cv_public_id': (
+                    f'CV chưa đủ thông tin để ứng tuyển: thiếu {", ".join(issues)}. '
+                    'Hãy cập nhật CV trước khi nộp.'
+                )
+            }
+        )
+    return cv, version
+
+
 class CandidateApplicationV2CreateSerializer(serializers.Serializer):
     job_public_id = serializers.CharField(max_length=50)
     cv_public_id = serializers.CharField(max_length=50)
@@ -109,45 +156,7 @@ class CandidateApplicationV2CreateSerializer(serializers.Serializer):
             raise serializers.ValidationError(
                 {'job_public_id': 'This job is unavailable.'}
             ) from error
-        try:
-            cv = UserCv.objects.get(
-                public_id=attrs['cv_public_id'],
-                user=candidate,
-                is_deleted=False,
-            )
-        except UserCv.DoesNotExist as error:
-            raise serializers.ValidationError(
-                {'cv_public_id': 'Select one of your active CVs.'}
-            ) from error
-        try:
-            version = CvVersion.objects.get(
-                public_id=attrs['version_public_id'],
-                cv=cv,
-            )
-        except CvVersion.DoesNotExist as error:
-            raise serializers.ValidationError(
-                {'version_public_id': 'Select an immutable version of this CV.'}
-            ) from error
-        if version.version_kind == CvVersion.VersionKind.APPLICATION_SNAPSHOT:
-            raise serializers.ValidationError(
-                {'version_public_id': 'Application snapshots cannot be submitted again.'}
-            )
-        if cv.processing_status in {
-            UserCv.ProcessingStatus.QUEUED,
-            UserCv.ProcessingStatus.PROCESSING,
-        }:
-            raise serializers.ValidationError(
-                {'cv_public_id': 'CV đang được phân tích, vui lòng chờ trong giây lát.'}
-            )
-        if issues := application_readiness_issues(version):
-            raise serializers.ValidationError(
-                {
-                    'cv_public_id': (
-                        f'CV chưa đủ thông tin để ứng tuyển: thiếu {", ".join(issues)}. '
-                        'Hãy cập nhật CV trước khi nộp.'
-                    )
-                }
-            )
+        cv, version = validated_cv_selection(candidate, attrs)
         application_error = reapplication_error(candidate, job)
         if application_error:
             raise serializers.ValidationError({'job_public_id': application_error})
@@ -195,6 +204,8 @@ class CandidateApplicationV2Serializer(serializers.ModelSerializer):
     job_slug = serializers.CharField(source='job.slug', read_only=True)
     company_name = serializers.CharField(source='job.company.company_name', read_only=True)
     company_logo_url = serializers.SerializerMethodField()
+    # When the employer stopped recruiting (closed or past its dates); null while open.
+    job_stopped_at = serializers.DateTimeField(source='job.stopped_at', read_only=True)
     cv_public_id = serializers.SerializerMethodField()
     submitted_cv_version_public_id = serializers.CharField(
         source='submitted_cv_version.public_id', read_only=True
@@ -204,6 +215,7 @@ class CandidateApplicationV2Serializer(serializers.ModelSerializer):
     status = serializers.SerializerMethodField()
     candidate_status = serializers.SerializerMethodField()
     timeline = serializers.SerializerMethodField()
+    actions = serializers.SerializerMethodField()
 
     CANDIDATE_STATUS = {
         Application.Status.SUBMITTED: 'Đã nộp hồ sơ',
@@ -212,6 +224,7 @@ class CandidateApplicationV2Serializer(serializers.ModelSerializer):
         Application.Status.INTERVIEWED: 'Mời phỏng vấn',
         Application.Status.ACCEPTED: 'Trúng tuyển',
         Application.Status.REJECTED: 'Chưa phù hợp',
+        Application.Status.WITHDRAWN: 'Bạn đã rút hồ sơ',
     }
 
     def get_company_logo_url(self, obj):
@@ -236,16 +249,52 @@ class CandidateApplicationV2Serializer(serializers.ModelSerializer):
     def get_candidate_status(self, obj):
         return self.CANDIDATE_STATUS[self.get_status(obj)]
 
+    @extend_schema_field(
+        {
+            'type': 'object',
+            'properties': {
+                'withdraw': {'type': 'boolean'},
+                'reapply': {'type': 'boolean'},
+                'remind': {'type': 'boolean'},
+                'remind_available_at': {'type': 'string', 'format': 'date-time', 'nullable': True},
+            },
+        }
+    )
+    def get_actions(self, obj):
+        """What the candidate may do with this submission now (cap and cooldown
+        of a resubmission are checked when it is sent)."""
+        # Nothing is left to do once the employer stopped recruiting.
+        current = obj.is_current and obj.job.stopped_at is None
+        remind_at = candidate_reminder_available_at(obj)
+        return {
+            'withdraw': current and obj.status not in Application.TERMINAL_STATUSES,
+            'reapply': current and obj.status in Application.REAPPLY_ALLOWED_STATUSES,
+            'remind': bool(remind_at and remind_at <= timezone.now()),
+            'remind_available_at': remind_at,
+        }
+
     def get_timeline(self, obj):
-        """Mốc mới nhất đứng đầu — trang 'Việc làm đã ứng tuyển' đọc từ trên xuống theo thời gian lùi."""
-        return [
+        """Mốc mới nhất đứng đầu — trang 'Việc làm đã ứng tuyển' đọc từ trên xuống theo thời gian lùi.
+
+        Mỗi lần ProCV nhắc nhà tuyển dụng cũng là một mốc của hồ sơ.
+        """
+        statuses = [
             {
                 'status': item.to_status,
                 'label': self.CANDIDATE_STATUS.get(item.to_status, item.to_status),
                 'occurred_at': item.created_at,
             }
-            for item in reversed(list(obj.status_history.all()))
+            for item in obj.status_history.all()
         ]
+        reminders = [
+            {
+                'status': 'reminder',
+                'label': 'ProCV đã nhắc nhà tuyển dụng phản hồi CV của bạn',
+                'occurred_at': item.created_at,
+            }
+            for item in obj.reminders.all()
+        ]
+        return sorted(statuses + reminders, key=lambda item: item['occurred_at'], reverse=True)
 
     class Meta:
         model = Application
@@ -256,6 +305,7 @@ class CandidateApplicationV2Serializer(serializers.ModelSerializer):
             'job_slug',
             'company_name',
             'company_logo_url',
+            'job_stopped_at',
             'cv_public_id',
             'submitted_cv_version_public_id',
             'submitted_cv_title',
@@ -265,6 +315,9 @@ class CandidateApplicationV2Serializer(serializers.ModelSerializer):
             'status',
             'candidate_status',
             'timeline',
+            'is_current',
+            'withdrawn_at',
+            'actions',
             'preferred_location_ids',
             'preferred_location_names',
             'allow_ai_analysis',

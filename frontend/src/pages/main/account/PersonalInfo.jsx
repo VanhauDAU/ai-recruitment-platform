@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { Button, Form, Input } from 'antd'
-import { updateProfile } from '@/features/edit-profile'
+import { CameraOutlined, UserOutlined } from '@ant-design/icons'
+import { Avatar, Button, Form, Input } from 'antd'
+import { AvatarEditorModal, updateProfile } from '@/features/edit-profile'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { useSession } from '@/entities/session'
 import { message } from '@/shared/lib/toast'
@@ -14,6 +15,7 @@ export default function PersonalInfo() {
   const { user, setCurrentUser } = useSession()
   const [form] = Form.useForm()
   const [saving, setSaving] = useState(false)
+  const [avatarOpen, setAvatarOpen] = useState(false)
 
   async function handleSave(values) {
     setSaving(true)
@@ -48,6 +50,15 @@ export default function PersonalInfo() {
       <p className="mt-1 text-sm text-slate-500">
         <span className="font-semibold text-red-500">(*)</span> Các thông tin bắt buộc
       </p>
+
+      <div className="mt-5 flex items-center gap-4">
+        <Avatar size={72} src={user?.avatar_url || undefined} icon={<UserOutlined />} />
+        <div>
+          <Button icon={<CameraOutlined />} onClick={() => setAvatarOpen(true)}>Đổi ảnh đại diện</Button>
+          <p className="mt-1 text-xs text-slate-500">JPG, PNG hoặc WebP, tối đa 5 MB.</p>
+        </div>
+      </div>
+      <AvatarEditorModal open={avatarOpen} onClose={() => setAvatarOpen(false)} />
 
       <Form
         form={form}

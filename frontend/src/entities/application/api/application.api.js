@@ -27,6 +27,24 @@ export async function submitJobApplication({
   return data
 }
 
+/** Take back an application that has no outcome yet. */
+export async function withdrawCandidateApplication(publicId) {
+  const { data } = await api.post(`/v2/applications/${publicId}/withdraw/`)
+  return data
+}
+
+/** Ask ProCV to remind the recruiter about an application still unanswered. */
+export async function remindRecruiterOfApplication(publicId) {
+  const { data } = await api.post(`/v2/applications/${publicId}/remind/`)
+  return data
+}
+
+/** Earlier, replaced submissions of the same candidate to the same job. */
+export async function getRecruiterApplicationSubmissions(publicId) {
+  const { data } = await api.get(`/v2/recruiter/applications/${publicId}/submissions/`)
+  return data
+}
+
 export async function getCandidateApplications() {
   const { data } = await api.get('/v2/applications/')
   return data.results || data
