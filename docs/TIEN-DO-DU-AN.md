@@ -7,6 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
+| [Bảng điều khiển quản trị](#bảng-điều-khiển-quản-trị-2026-11-16) | 🟨 Xong trên nhánh `feat/admin-dashboard`, chưa mở PR |
 | [Ảnh đại diện dùng chung 3 cổng](#ảnh-đại-diện-dùng-chung-3-cổng-2026-11-16) | 🟨 Xong trên nhánh `feat/avatar-editor`, chưa mở PR |
 | [Thống nhất luồng đăng tin, hiển thị, ứng tuyển, công ty](#thống-nhất-luồng-đăng-tin-hiển-thị-ứng-tuyển-công-ty-2026-11-15) | ✅ Cả 6 giai đoạn đã gộp (#208–#215); hoàn thiện luồng nhắc NTD và lịch sử nộp trên nhánh `feat/application-reminders` |
 | [Đối sánh ngữ nghĩa CV–JD chạy local](#đối-sánh-ngữ-nghĩa-cvjd-chạy-local-2026-11-15) | 🟨 Nền tảng (tuần 1) xong trên nhánh `feat/ai-matching-foundation`, chưa mở PR |
@@ -24,6 +25,33 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Các epic đã hoàn tất](#các-epic-đã-hoàn-tất) | ✅ |
 | [Lộ trình theo PRD](#lộ-trình-theo-prd) | 🟨 Phần AI lõi (giai đoạn 2–3) còn mở |
 | [Việc còn mở](#việc-còn-mở) | |
+
+## Bảng điều khiển quản trị (2026-11-16)
+
+| Hạng mục | Trạng thái |
+| --- | --- |
+| `GET /api/dashboard/admin/?period=7\|30\|90`: hàng chờ, KPI so kỳ trước, xu hướng, phễu, an toàn, ngành nghề, AI | 🟨 Xong trên nhánh `feat/admin-dashboard` |
+| Trang chủ quản trị: khối "Cần xử lý" xếp theo hạn xử lý, KPI, biểu đồ, panel sức khỏe nền tảng | 🟨 Xong trên nhánh `feat/admin-dashboard` |
+| Sidebar sáng đồng bộ dashboard: badge mọi hàng chờ (đỏ khi quá hạn), cụm tài khoản + đăng xuất ở đáy, bỏ ô tìm chức năng | 🟨 Xong trên nhánh `feat/admin-dashboard` |
+| Header: breadcrumb, nút Tạo mới, chuông hàng chờ, trợ giúp (sắp ra mắt), menu tài khoản | 🟨 Xong trên nhánh `feat/admin-dashboard` |
+
+<details><summary>Ghi chú chi tiết</summary>
+
+- Hàng chờ dùng lại summary của từng miền (xác thực NTD, công ty, tin, FAQ) nên
+  khớp số trên badge sidebar. Hạn xử lý: báo cáo và tin nộp lại 48 giờ, còn lại
+  72 giờ; quá hạn xếp đầu và tô đỏ.
+- Số truy vấn cố định (test khẳng định không tăng theo dữ liệu); kỳ thống kê
+  nằm trên URL (`?period=`), tự làm mới mỗi 60 giây.
+- Phễu ứng tuyển tính theo giai đoạn đã đến (`viewed_at`, `shortlisted_at`...)
+  của hồ sơ nộp trong kỳ; "tin chưa có hồ sơ" dùng `EXISTS` trên hồ sơ hiện hành.
+- CSS riêng nằm trong chunk lazy của trang (không tăng CSS khởi tạo).
+- Badge sidebar và chuông header đọc chung `GET /api/dashboard/admin/queues/`
+  (thay ba request summary riêng của layout); lời mời quản trị vẫn lấy từ
+  summary tài khoản vì chỉ superuser thấy.
+- Kiểm tra: pytest `apps/dashboard` 10 passed; vitest widget/entity; smoke E2E
+  `admin-dashboard.spec.js` pass ở mobile, tablet, desktop.
+
+</details>
 
 ## Ảnh đại diện dùng chung 3 cổng (2026-11-16)
 

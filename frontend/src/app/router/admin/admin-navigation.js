@@ -87,14 +87,3 @@ export function findActiveAdminNavigation(navigation, pathname, search = '') {
     })
   return candidates[0] || null
 }
-
-export function searchAdminNavigation(navigation, query) {
-  const normalized = query.trim().toLocaleLowerCase('vi')
-  if (!normalized) return []
-  return flattenAdminNavigation(navigation).filter((leaf) => (
-    [...leaf.breadcrumb, leaf.description || '']
-      .join(' ')
-      .toLocaleLowerCase('vi')
-      .includes(normalized)
-  ))
-}

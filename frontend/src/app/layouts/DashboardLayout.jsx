@@ -1,13 +1,6 @@
-import {
-  CloseOutlined,
-  LogoutOutlined,
-  MenuFoldOutlined,
-  MenuOutlined,
-  MenuUnfoldOutlined,
-  UserOutlined,
-} from '@ant-design/icons'
-import { useQuery } from '@tanstack/react-query'
-import { Avatar, Button, ConfigProvider, Drawer, Layout, Typography } from 'antd'
+import { CloseOutlined } from '@ant-design/icons'
+import { useIsMutating, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Button, ConfigProvider, Drawer, Layout } from 'antd'
 import viVN from 'antd/locale/vi_VN'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { matchPath, Outlet, useLocation, useNavigate } from 'react-router'
@@ -17,24 +10,13 @@ import {
 } from '@/entities/admin-access'
 import {
   adminAccountKeys,
-  adminTierLabel,
   getAdminAccountSummary,
 } from '@/entities/admin-account'
-import {
-  adminCompanyKeys,
-  getAdminCompanySummary,
-} from '@/entities/admin-company'
-import {
-  adminCompanyDomainClaimKeys,
-  adminEmployerVerificationKeys,
-  getAdminCompanyDomainClaimSummary,
-  getAdminEmployerVerificationSummary,
-} from '@/entities/admin-employer-verification'
+import { adminDashboardKeys, getAdminQueueSummary } from '@/entities/admin-dashboard'
 import { ANNOUNCEMENT_SURFACES } from '@/entities/announcement'
 import { useSession } from '@/entities/session'
 import { BrandLogo } from '@/entities/site-settings'
 import { adminPath } from '@/shared/config/portals'
-import ConfirmAction from '@/shared/ui/ConfirmAction'
 import { AnnouncementStrip } from '@/widgets/announcement-strip'
 import { ADMIN_ROUTES } from '../router/admin/admin-routes.config'
 import { ADMIN_NAVIGATION } from '../router/admin/admin-navigation.config'
@@ -43,16 +25,17 @@ import {
   findActiveAdminNavigation,
 } from '../router/admin/admin-navigation'
 import AdminNavigation from './AdminNavigation'
+import AdminSidebarFooter from './AdminSidebarFooter'
+import AdminTopbar from './AdminTopbar'
 import EmployerWorkspaceLayout from './EmployerWorkspaceLayout'
 import './admin-dashboard.css'
 
-const { Header, Sider, Content } = Layout
+const { Sider, Content } = Layout
 
 function AdminBrand({ collapsed = false, action = null }) {
   return (
     <div className={`admin-sider__brand ${collapsed ? 'admin-sider__brand--collapsed' : ''}`}>
       <BrandLogo
-        dark
         className={collapsed ? 'justify-center' : 'min-w-0'}
         imageClassName={collapsed ? 'h-8 w-8 object-contain object-left' : 'h-8 max-w-[148px]'}
         textClassName="text-sm"
@@ -75,17 +58,23 @@ function attachBadgeCounts(nodes, counts) {
     const children = node.children
       ? attachBadgeCounts(node.children, counts)
       : undefined
-    const ownCount = Number(node.badgeKey ? counts[node.badgeKey] || 0 : 0)
-    const childrenCount = children?.reduce(
-      (total, child) => total + Number(child.badgeCount || 0),
-      0,
-    ) || 0
+    const own = node.badgeKey ? counts[node.badgeKey] : null
+    const sum = (field) => children?.reduce((total, child) => total + Number(child[field] || 0), 0) || 0
     return {
       ...node,
-      badgeCount: ownCount + childrenCount,
+      badgeCount: Number(own?.count || 0) + sum('badgeCount'),
+      badgeOverdue: Number(own?.overdue || 0) + sum('badgeOverdue'),
       ...(children ? { children } : {}),
     }
   })
+}
+
+function queueBadgeCounts(summary) {
+  const counts = Object.fromEntries(
+    (summary?.queues || []).map(({ key, count, overdue }) => [key, { count, overdue }]),
+  )
+  counts.knowledge_overdue = { count: summary?.knowledge_review_overdue || 0, overdue: 0 }
+  return counts
 }
 
 export default function DashboardLayout() {
@@ -118,15 +107,6 @@ export default function DashboardLayout() {
   )
   const usersSummaryParams = useMemo(() => ({ scope: 'users' }), [])
   const needsUsersSummary = hasBadgeKey(navigation, ['admin_invitations'])
-  const needsRecruitersSummary = hasBadgeKey(
-    navigation,
-    ['recruiter_verification'],
-  )
-  const needsDomainSummary = hasBadgeKey(navigation, ['domain_verification'])
-  const needsCompaniesSummary = hasBadgeKey(
-    navigation,
-    ['company_updates'],
-  )
   const usersSummary = useQuery({
     queryKey: adminAccountKeys.summary(usersSummaryParams),
     queryFn: ({ signal }) => getAdminAccountSummary(usersSummaryParams, { signal }),
@@ -135,42 +115,29 @@ export default function DashboardLayout() {
     refetchOnWindowFocus: 'always',
     staleTime: 10_000,
   })
-  const recruitersSummary = useQuery({
-    queryKey: adminEmployerVerificationKeys.summary,
-    queryFn: ({ signal }) => getAdminEmployerVerificationSummary({ signal }),
-    enabled: user?.role === 'admin' && needsRecruitersSummary,
+  const queueSummary = useQuery({
+    queryKey: adminDashboardKeys.queues,
+    queryFn: ({ signal }) => getAdminQueueSummary({ signal }),
+    enabled: user?.role === 'admin',
     refetchInterval: 30_000,
     refetchOnWindowFocus: 'always',
     staleTime: 10_000,
   })
-  const domainSummary = useQuery({
-    queryKey: adminCompanyDomainClaimKeys.summary,
-    queryFn: ({ signal }) => getAdminCompanyDomainClaimSummary({ signal }),
-    enabled: user?.role === 'admin' && needsDomainSummary,
-    refetchInterval: 10_000,
-    refetchOnWindowFocus: 'always',
-    staleTime: 0,
-  })
-  const companiesSummary = useQuery({
-    queryKey: adminCompanyKeys.summary,
-    queryFn: ({ signal }) => getAdminCompanySummary({ signal }),
-    enabled: user?.role === 'admin' && needsCompaniesSummary,
-    refetchInterval: 30_000,
-    refetchOnWindowFocus: 'always',
-    staleTime: 10_000,
-  })
+  // Approving or rejecting anything should update the badges right away, not
+  // on the next poll: refresh the queue counts whenever writes settle.
+  const queryClient = useQueryClient()
+  const mutating = useIsMutating()
+  const wasMutating = useRef(false)
+  useEffect(() => {
+    if (wasMutating.current && !mutating) {
+      queryClient.invalidateQueries({ queryKey: adminDashboardKeys.queues })
+    }
+    wasMutating.current = mutating > 0
+  }, [mutating, queryClient])
   const navigationWithBadges = useMemo(() => attachBadgeCounts(navigation, {
-    admin_invitations: usersSummary.data?.queues?.pending_admin_invitations,
-    recruiter_verification: recruitersSummary.data?.pending,
-    domain_verification: domainSummary.data?.manual_pending,
-    company_updates: companiesSummary.data?.pending_update_requests,
-  }), [
-    companiesSummary.data,
-    domainSummary.data,
-    navigation,
-    recruitersSummary.data,
-    usersSummary.data,
-  ])
+    ...queueBadgeCounts(queueSummary.data),
+    admin_invitations: { count: usersSummary.data?.queues?.pending_admin_invitations, overdue: 0 },
+  }), [navigation, queueSummary.data, usersSummary.data])
   const currentRoute = [...availableRoutes]
     .sort((left, right) => right.path.length - left.path.length)
     .find((item) => matchPath({ path: item.path, end: true }, pathname))
@@ -178,6 +145,11 @@ export default function DashboardLayout() {
   const currentTitle = currentRoute?.segment.includes(':')
     ? currentRoute.title
     : activeLeaf?.label || currentRoute?.title
+  const breadcrumb = !activeLeaf
+    ? []
+    : currentTitle === activeLeaf.label
+      ? activeLeaf.breadcrumb.slice(0, -1)
+      : activeLeaf.breadcrumb
   useEffect(() => {
     mainRef.current?.focus({ preventScroll: true })
     setMobileNavOpen(false)
@@ -237,6 +209,7 @@ export default function DashboardLayout() {
               />
             </div>
           )}
+          <AdminSidebarFooter user={user} logout={logout} collapsed={sidebarCollapsed} />
         </Sider>
 
         <Drawer
@@ -245,9 +218,9 @@ export default function DashboardLayout() {
           size={320}
           closable={false}
           onClose={() => setMobileNavOpen(false)}
-          styles={{ body: { padding: 0, background: '#0b172a' } }}
+          styles={{ body: { padding: 0, background: '#ffffff' } }}
         >
-          <div className="admin-sider min-h-full">
+          <div className="admin-sider admin-sider--drawer">
             <AdminBrand
               action={(
                 <Button
@@ -267,71 +240,24 @@ export default function DashboardLayout() {
               mobile
               onNavigate={() => setMobileNavOpen(false)}
             />
+            <AdminSidebarFooter user={user} logout={logout} onNavigate={() => setMobileNavOpen(false)} />
           </div>
         </Drawer>
 
         <Layout className="!min-w-0 !bg-transparent">
-          <Header className="admin-topbar">
-            <div className="flex min-w-0 items-center gap-3">
-              <Button
-                className="admin-icon-button lg:!hidden"
-                icon={<MenuOutlined />}
-                aria-label="Mở điều hướng"
-                onClick={() => setMobileNavOpen(true)}
-              />
-              <Button
-                className="admin-icon-button !hidden lg:!inline-flex"
-                icon={sidebarCollapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-                aria-label={sidebarCollapsed ? 'Mở rộng thanh điều hướng' : 'Thu gọn thanh điều hướng'}
-                onClick={() => {
-                  setSidebarPeek(false)
-                  setSidebarCollapsed((value) => !value)
-                }}
-              />
-              <div className="admin-topbar__location min-w-0">
-                <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">Không gian làm việc</p>
-                <p className="truncate text-sm font-semibold text-slate-800">
-                  {`Đang ở: ${currentTitle || 'Quản trị hệ thống'}`}
-                </p>
-              </div>
-            </div>
-
-            <div className="admin-user">
-              <button
-                type="button"
-                className="flex min-w-0 cursor-pointer items-center gap-3 border-0 bg-transparent p-0 text-left"
-                title="Cài đặt tài khoản"
-                onClick={() => navigate(adminPath('/account'))}
-              >
-                <Avatar className="admin-user__avatar" size={40} src={user?.avatar_url || undefined} icon={<UserOutlined />} />
-                <div className="admin-user__meta min-w-0 max-w-64">
-                  <Typography.Text strong ellipsis className="!block !text-sm">
-                    {user?.full_name || 'Quản trị viên'}
-                  </Typography.Text>
-                  <div className="mt-0.5 flex min-w-0 items-center gap-1">
-                    <Typography.Text type="secondary" ellipsis className="!text-xs">
-                      {adminTierLabel(user?.admin_access)}
-                    </Typography.Text>
-                  </div>
-                </div>
-              </button>
-              <ConfirmAction
-                title="Đăng xuất"
-                description="Bạn có chắc muốn đăng xuất khỏi phiên này? Bạn sẽ cần đăng nhập lại để tiếp tục quản lý hệ thống."
-                confirmText="Đăng xuất"
-                cancelText="Ở lại"
-                danger
-                onConfirm={logout}
-              >
-                <Button
-                  className="admin-icon-button"
-                  icon={<LogoutOutlined />}
-                  aria-label="Đăng xuất"
-                  title="Đăng xuất"
-                />
-              </ConfirmAction>
-            </div>
-          </Header>
+          <AdminTopbar
+            user={user}
+            isSuperuser={Boolean(adminAccess?.isSuperuser)}
+            breadcrumb={breadcrumb}
+            title={currentTitle}
+            queueSummary={queueSummary.data}
+            sidebarCollapsed={sidebarCollapsed}
+            onOpenMobileNav={() => setMobileNavOpen(true)}
+            onToggleSidebar={() => {
+              setSidebarPeek(false)
+              setSidebarCollapsed((value) => !value)
+            }}
+          />
           <AnnouncementStrip
             surface={ANNOUNCEMENT_SURFACES.ADMIN_WORKSPACE}
             path={pathname}

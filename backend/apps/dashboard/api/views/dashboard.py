@@ -1,12 +1,22 @@
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.accounts.permissions import IsEmployer
+from apps.accounts.permissions import AdminPortalPermission, IsEmployer
 from apps.employers.services import get_or_create_recruiter
 
-from ...selectors import build_employer_dashboard
-from ..serializers import EmployerDashboardSerializer
+from ...selectors import (
+    DASHBOARD_PERIODS,
+    build_admin_dashboard,
+    build_admin_queue_summary,
+    build_employer_dashboard,
+    normalize_dashboard_period,
+)
+from ..serializers import (
+    AdminDashboardSerializer,
+    AdminQueueSummarySerializer,
+    EmployerDashboardSerializer,
+)
 
 
 class EmployerDashboardView(APIView):
@@ -24,3 +34,36 @@ class EmployerDashboardView(APIView):
         # into a 500 response.
         get_or_create_recruiter(request.user)
         return Response(build_employer_dashboard(request.user))
+
+
+class AdminDashboardView(APIView):
+    permission_classes = [AdminPortalPermission]
+
+    @extend_schema(
+        summary='Bảng điều khiển cổng quản trị',
+        parameters=[
+            OpenApiParameter(
+                'period',
+                int,
+                description='Số ngày của kỳ thống kê',
+                enum=list(DASHBOARD_PERIODS),
+            )
+        ],
+        responses={200: AdminDashboardSerializer},
+        tags=['admin-dashboard'],
+    )
+    def get(self, request):
+        days = normalize_dashboard_period(request.query_params.get('period'))
+        return Response(AdminDashboardSerializer(build_admin_dashboard(days=days)).data)
+
+
+class AdminQueueSummaryView(APIView):
+    permission_classes = [AdminPortalPermission]
+
+    @extend_schema(
+        summary='Số mục đang chờ xử lý cho badge cổng quản trị',
+        responses={200: AdminQueueSummarySerializer},
+        tags=['admin-dashboard'],
+    )
+    def get(self, request):
+        return Response(AdminQueueSummarySerializer(build_admin_queue_summary()).data)
