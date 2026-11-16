@@ -177,12 +177,7 @@ def recruiter_job_posting_entitlement(user):
     account_level = 0
     if recruiter.user.email_verified:
         account_level = 1
-    phone_verified = bool(
-        recruiter.phone_verified_at
-        and recruiter.verified_phone
-        and recruiter.contact_phone == recruiter.verified_phone
-        and recruiter.user.phone == recruiter.verified_phone
-    )
+    phone_verified = recruiter.has_verified_phone
     if account_level == 1 and phone_verified and business_document_approved:
         account_level = 2
     if account_level == 2 and admin_approved:

@@ -98,7 +98,16 @@ Quyết định nghiệp vụ đã chốt với user ngày 16/11:
 
 | Thành viên | Tab Thành viên cho quản lý công ty: thẻ thành viên đầy đủ (xác thực chi tiết, ngày tham gia, người duyệt, hoạt động tuyển dụng), cấp/thu quyền biên tập, chuyển quyền quản lý, gỡ thành viên; đổi chữ "owner" thành "Quản lý công ty" | ✅ Gộp vào `dev` (#226) |
 
-| Tiếp quản | Quản lý công ty giao toàn bộ tin và chiến dịch của một người (đang ở công ty hoặc đã rời) cho thành viên đã xác thực; mục "Người đã rời công ty" | 🟨 Xong trên nhánh `feat/member-resource-handover` |
+| Tiếp quản | Quản lý công ty giao toàn bộ tin và chiến dịch của một người (đang ở công ty hoặc đã rời) cho thành viên đã xác thực; mục "Người đã rời công ty" | ✅ Gộp vào `dev` (#227) |
+
+| Sửa xác thực sau khi rời công ty | Một định nghĩa "đã xác minh SĐT" (`RecruiterProfile.has_verified_phone`, so số đã chuẩn hóa +84); thu hồi toàn bộ giấy tờ của công ty cũ khi rời; danh sách giấy tờ chỉ theo công ty hiện tại; dọn dữ liệu cũ | 🟨 Xong trên nhánh `fix/phone-verified-single-source` |
+
+<details><summary>Ghi chú sửa xác thực</summary>
+
+- Lỗi "xác minh SĐT thành công nhưng vẫn bị bắt xác minh": cờ `onboarding.phone_verified` lấy từ tiêu chí huy hiệu tin cậy của công ty, nên luôn `False` khi NTD chưa có công ty hoặc vừa bị gỡ. Nay mọi nơi (readiness, checklist, cấp tài khoản, huy hiệu, admin) dùng chung `has_verified_phone`. Migration employers 0063 đồng bộ `contact_phone` và `user.phone` theo số đã xác minh, ở dạng +84.
+- Lỗi "rời công ty rồi vào lại vẫn hiện giấy tờ Đã duyệt": trước đây khi rời chỉ thu hồi giấy tờ chưa duyệt. Nay thu hồi mọi giấy tờ của công ty cũ, và danh sách "giấy tờ của tôi" lọc theo công ty hiện tại. Migration 0064 đặt `is_current=False` cho giấy tờ thuộc hồ sơ xác thực đã bị đặt lại hoặc thuộc công ty khác.
+
+</details>
 
 <details><summary>Ghi chú tiếp quản</summary>
 
@@ -619,7 +628,7 @@ PR 4 chỉ được triển khai ở môi trường đã chạy `services.0012` 
 | PM-4b | Xóa thư mục app `services` và cấu hình còn lại | ✅ Hoàn tất — pytest 1176 passed, coverage 87,47% |
 | PM-5 | Kiểm thử tích hợp ba cổng | ⬜ Chưa bắt đầu |
 | PM-6 | Dọn docs, xóa `99-tien-do`, dựng lại mục lục | ✅ Hoàn tất — 88 → 46 file, link check đạt |
-| PM-7 | Bổ sung changelog còn thiếu, rút gọn tiến độ, đồng bộ phân tích yêu cầu với báo cáo ĐATN | 🟨 Changelog, tiến độ và sơ đồ use case tổng quát (2026-11-15) xong; chờ báo cáo ĐATN |
+| PM-7 | Bổ sung changelog còn thiếu, rút gọn tiến độ, đồng bộ phân tích yêu cầu với báo cáo ĐATN | 🟨 Changelog, tiến độ và sơ đồ use case tổng quát (cập nhật 2026-11-16) xong; chờ báo cáo ĐATN |
 
 Đã chốt (2026-11-13): nhà tuyển dụng không sửa được tin đang bị tạm ẩn; muốn
 khắc phục nội dung phải liên hệ quản trị viên.
@@ -706,7 +715,7 @@ production, staging và soak (ER-8). Lệnh kiểm tra chỉ đọc:
 ## Việc còn mở
 
 AI lõi của đồ án (phạm vi chốt 2026-11-15, xem
-[sơ đồ use case](01-phan-tich/phan-tich-yeu-cau.md#sơ-đồ-use-case-tổng-quát-chốt-2026-11-15)):
+[sơ đồ use case](01-phan-tich/phan-tich-yeu-cau.md#sơ-đồ-use-case-tổng-quát-cập-nhật-2026-11-16)):
 
 - 🟨 Đối sánh ngữ nghĩa CV–JD chạy và fine-tune local (bi-encoder mã nguồn mở +
   pgvector, pipeline tự xây), không gọi API ngoài: xem

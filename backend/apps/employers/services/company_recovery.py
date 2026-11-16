@@ -6,6 +6,7 @@ import hashlib
 import json
 
 from django.db import transaction
+from django.db.models import Q
 
 from apps.accounts.models import User
 from apps.accounts.permissions import require_admin
@@ -88,12 +89,21 @@ def _identity(user, *, lock):
     return user, recruiter, verification_case, recruiter.company
 
 
-def _verification_documents(verification_case):
-    if verification_case is None:
-        return CompanyDocument.objects.none()
-    return CompanyDocument.objects.filter(
-        verification_case=verification_case, is_current=True
-    ).exclude(status=CompanyDocument.Status.APPROVED)
+def _verification_documents(verification_case, *, recruiter=None, company=None):
+    """Current proof for the company being left, approved or not.
+
+    It only ever proved representation of that company, so none of it may
+    show up as current proof for the next one.
+    """
+    owned = Q(pk__in=[])
+    if verification_case is not None:
+        owned |= Q(verification_case=verification_case)
+    if recruiter is not None:
+        owned |= Q(recruiter=recruiter, verification_case__isnull=True, update_request__isnull=True)
+    documents = CompanyDocument.objects.filter(owned, is_current=True)
+    if company is not None:
+        documents = documents.filter(company=company)
+    return documents
 
 
 def _open_update_requests(user, company):
@@ -134,7 +144,9 @@ def _clean_snapshot(user, recruiter, verification_case, company):
         'other_members': RecruiterProfile.objects.filter(company=company)
         .exclude(pk=recruiter.pk)
         .count(),
-        'withdrawn_documents': _verification_documents(verification_case).count(),
+        'withdrawn_documents': _verification_documents(
+            verification_case, recruiter=recruiter, company=company
+        ).count(),
         'cancelled_update_requests': _open_update_requests(user, company).count(),
     }
     blockers = []
@@ -183,8 +195,11 @@ def _clean_snapshot(user, recruiter, verification_case, company):
 
 
 def _withdraw_unapproved_evidence(user, verification_case, company, *, actor, event):
-    """What was submitted for this company but never approved goes with the link."""
-    _verification_documents(verification_case).update(is_current=False)
+    """Every proof submitted for this company stops being current with the link."""
+    recruiter = RecruiterProfile.objects.filter(user=user).first()
+    _verification_documents(verification_case, recruiter=recruiter, company=company).update(
+        is_current=False
+    )
     _open_update_requests(user, company).update(status=CompanyUpdateRequest.Status.CANCELLED)
     if verification_case is None:
         return
