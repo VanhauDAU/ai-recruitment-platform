@@ -1,4 +1,4 @@
-import { BulbOutlined, CloseOutlined, DownOutlined, FilterOutlined, SwapOutlined } from '@ant-design/icons'
+import { BulbOutlined, CloseOutlined, DownOutlined, FilterOutlined } from '@ant-design/icons'
 import { Dropdown } from 'antd'
 import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
@@ -94,17 +94,12 @@ export default function BestJobs({ categories = [] }) {
       <div className="mb-5 flex items-center gap-3">
         <div className="flex items-center gap-2.5">
           <h2 className="text-xl font-bold text-gray-900 md:text-2xl">Việc làm tốt nhất</h2>
-          {/* Rotation policy badge */}
-          <span className="hidden items-center gap-1 rounded-full border border-[var(--brand-primary)]/20 bg-gradient-to-r from-[var(--brand-primary-soft)] to-green-50 px-2.5 py-0.5 text-[11px] font-semibold text-[var(--brand-primary)] sm:inline-flex">
-            <SwapOutlined style={{ fontSize: 10 }} />
-            Luân phiên ngẫu nhiên
-          </span>
         </div>
 
         <div className="ml-auto flex items-center gap-2">
           <button
             onClick={() => navigate('/viec-lam')}
-            className="cursor-pointer rounded-full border border-[var(--brand-primary)] px-3.5 py-1 text-sm font-medium text-[var(--brand-primary)] transition hover:bg-[var(--brand-primary)] hover:text-white"
+            className="cursor-pointer rounded-full border border-(--brand-primary) px-3.5 py-1 text-sm font-medium text-(--brand-primary) transition hover:bg-(--brand-primary) hover:text-white"
           >
             Xem tất cả
           </button>
@@ -124,12 +119,12 @@ export default function BestJobs({ categories = [] }) {
             selectedKeys: [dimension],
           }}
         >
-          <button className="flex h-9 shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3.5 text-sm font-medium text-gray-600 shadow-sm transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]">
+          <button className="flex h-9 shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3.5 text-sm font-medium text-gray-600 shadow-sm transition hover:border-(--brand-primary) hover:text-(--brand-primary)">
             <FilterOutlined className="text-gray-400" style={{ fontSize: 12 }} />
             <span className="hidden sm:inline">Lọc:</span>
-            <span className="text-[var(--brand-primary)]">{dimensionLabel}</span>
+            <span className="text-(--brand-primary)">{dimensionLabel}</span>
             {activeFilterCount > 0 && (
-              <span className="ml-0.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--brand-primary)] px-1 text-[10px] font-bold text-white">
+              <span className="ml-0.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-(--brand-primary) px-1 text-[10px] font-bold text-white">
                 {activeFilterCount}
               </span>
             )}
@@ -157,11 +152,10 @@ export default function BestJobs({ categories = [] }) {
                 onClick={() => {
                   if (Date.now() >= dragState.current.suppressClickUntil) selectChip(chip)
                 }}
-                className={`h-9 shrink-0 cursor-pointer whitespace-nowrap rounded-full border px-4 text-sm font-medium transition-all duration-150 ${
-                  active
-                    ? 'border-[var(--brand-primary)] bg-[var(--brand-primary)] text-white shadow-sm shadow-green-200'
-                    : 'border-gray-200 bg-white text-gray-600 hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]'
-                }`}
+                className={`h-9 shrink-0 cursor-pointer whitespace-nowrap rounded-full border px-4 text-sm font-medium transition-all duration-150 ${active
+                    ? 'border-(--brand-primary) bg-(--brand-primary) text-white shadow-sm shadow-green-200'
+                    : 'border-gray-200 bg-white text-gray-600 hover:border-(--brand-primary) hover:text-(--brand-primary)'
+                  }`}
               >
                 {chip.label}
               </button>
@@ -175,8 +169,8 @@ export default function BestJobs({ categories = [] }) {
 
       {/* ── Hint bar ── */}
       {showHint && (
-        <div className="mb-4 flex items-center gap-2 rounded-xl border border-[var(--brand-primary)]/20 bg-gradient-to-r from-[var(--brand-primary-soft)] to-green-50 px-4 py-2.5 text-sm text-gray-600">
-          <BulbOutlined className="shrink-0 text-[var(--brand-primary)]" />
+        <div className="mb-4 flex items-center gap-2 rounded-xl border border-(--brand-primary)/20 bg-linear-to-r from-(--brand-primary-soft) to-green-50 px-4 py-2.5 text-sm text-gray-600">
+          <BulbOutlined className="shrink-0 text-(--brand-primary)" />
           <span className="flex-1">Ưu tiên tin công khai mức lương, mới đăng và có nhãn HOT/GẤP; các tin cùng mức được luân phiên, F5 sẽ tạo một lượt hiển thị khác.</span>
           <CloseOutlined
             className="shrink-0 cursor-pointer text-gray-400 transition hover:text-gray-600"
@@ -193,7 +187,7 @@ export default function BestJobs({ categories = [] }) {
         <div className="mt-6 flex items-center justify-center gap-4">
           <ArrowButton dir="left" disabled={page <= 1} onClick={() => setPage((current) => Math.max(1, current - 1))} />
           <span className="text-sm text-gray-500">
-            <span className="font-bold text-[var(--brand-primary)]">{page}</span>
+            <span className="font-bold text-(--brand-primary)">{page}</span>
             {' '}/ {totalPages} trang
           </span>
           <ArrowButton dir="right" disabled={page >= totalPages} onClick={() => setPage((current) => Math.min(totalPages, current + 1))} />

@@ -1,7 +1,14 @@
 import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { getCompanyJoinRequests, getCompanyMembers, removeCompanyMember, transferCompanyOwnership } from '@/entities/employer-profile'
+import {
+  getCompanyJoinRequests,
+  getCompanyMembers,
+  getFormerCompanyMembers,
+  handOverCompanyResources,
+  removeCompanyMember,
+  transferCompanyOwnership,
+} from '@/entities/employer-profile'
 import { withQueryClient } from '@/test/render-with-query-client'
 import CompanyMembersPanel from './CompanyMembersPanel'
 
@@ -9,6 +16,8 @@ vi.mock('@/entities/employer-profile', async (importOriginal) => ({
   ...(await importOriginal()),
   getCompanyJoinRequests: vi.fn(),
   getCompanyMembers: vi.fn(),
+  getFormerCompanyMembers: vi.fn(),
+  handOverCompanyResources: vi.fn(),
   removeCompanyMember: vi.fn(),
   transferCompanyOwnership: vi.fn(),
 }))
@@ -17,8 +26,8 @@ const base = {
   avatar_url: '', email_masked: 'ha***@acme.vn', phone_masked: '090****123', position_title: 'Recruiter',
   verification_status: 'approved', verification_label: 'Đã xác thực', is_verified: true, has_compliance_hold: false,
   page_editor_grant_id: null, joined_at: '2026-11-10T02:00:00Z', approved_by_name: 'Chủ A',
-  active_job_count: 0, unanswered_application_count: 0, open_campaign_count: 0, is_me: false,
-  can_transfer: true, can_grant_page_editor: true, removal_blockers: [],
+  job_count: 0, active_job_count: 0, unanswered_application_count: 0, open_campaign_count: 0, is_me: false,
+  can_transfer: true, can_grant_page_editor: true, can_receive_jobs: true, removal_blockers: [],
 }
 const MEMBERS = [
   { ...base, member_id: 'own_1', display_name: 'Chủ A', role: 'manager', role_label: 'Quản lý công ty', is_me: true, can_transfer: false, removal_blockers: ['Hãy chuyển quyền quản lý trước khi rời vai trò này'] },
@@ -36,6 +45,7 @@ describe('company members tab', () => {
     vi.clearAllMocks()
     getCompanyJoinRequests.mockResolvedValue([])
     getCompanyMembers.mockResolvedValue(MEMBERS)
+    getFormerCompanyMembers.mockResolvedValue([])
   })
 
   it('shows roles in plain words, verification and recruiting activity', async () => {
@@ -72,5 +82,22 @@ describe('company members tab', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Gỡ khỏi công ty' }))
 
     await waitFor(() => expect(removeCompanyMember).toHaveBeenCalledWith('mem_2', 'Đã nghỉ việc'))
+  })
+
+  it('hands the jobs of a former member to a verified member', async () => {
+    getFormerCompanyMembers.mockResolvedValue([{
+      member_id: 'old_1', display_name: 'Lý Cũ', avatar_url: '', left_at: '2026-11-12T02:00:00Z',
+      job_count: 3, active_job_count: 1, unanswered_application_count: 4, open_campaign_count: 0,
+    }])
+    handOverCompanyResources.mockResolvedValue({ job_count: 3, campaign_count: 0 })
+    render(withQueryClient(<CompanyMembersPanel />))
+
+    expect(await screen.findByText(/3 tin \(1 đang tuyển\) · 4 hồ sơ chờ phản hồi/)).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Tiếp quản' }))
+    await userEvent.click(await screen.findByLabelText('Chọn người nhận tin tuyển dụng'))
+    await userEvent.click(await screen.findByTitle(/Phạm Thu Hà/))
+    await userEvent.click(screen.getByRole('button', { name: 'Giao tin' }))
+
+    await waitFor(() => expect(handOverCompanyResources).toHaveBeenCalledWith('old_1', 'mem_1'))
   })
 })

@@ -4,6 +4,7 @@ from uuid import uuid4
 
 from django.conf import settings
 from django.db import transaction
+from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import generics, parsers, serializers, status
 from rest_framework.exceptions import PermissionDenied, ValidationError
@@ -20,6 +21,7 @@ from ...models import CompanyDocument
 from ...selectors import (
     company_join_requests_for_owner,
     company_members_queryset,
+    former_company_members_queryset,
     pending_company_join_request,
 )
 from ...services import (
@@ -31,6 +33,7 @@ from ...services import (
     decide_company_join,
     get_or_create_recruiter,
     get_or_create_verification_case,
+    hand_over_recruiter_resources,
     lock_company_update_request,
     record_verification_upload,
     remove_company_member,
@@ -40,7 +43,10 @@ from ...services import (
     validate_employer_upload_structure,
 )
 from ..exceptions import EmployerUploadSessionResponse
-from ..serializers.company_members import CompanyMemberSerializer
+from ..serializers.company_members import (
+    CompanyMemberSerializer,
+    FormerCompanyMemberSerializer,
+)
 from ..serializers.join_requests import CompanyJoinRequestSerializer
 
 DOCUMENT_SIGNATURES = {
@@ -469,3 +475,40 @@ class CompanyMemberRemoveView(APIView):
                 {'code': error.code, 'detail': error.message, 'blockers': list(error.blockers)}
             ) from error
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class FormerCompanyMemberListView(generics.ListAPIView):
+    """People who left but still hold jobs here, waiting to be handed over."""
+
+    permission_classes = [IsEmployer]
+    serializer_class = FormerCompanyMemberSerializer
+    pagination_class = None
+
+    def get_queryset(self):
+        return former_company_members_queryset(_managed_company(self.request.user))
+
+
+class CompanyHandoverView(APIView):
+    """The manager gives one person's jobs and campaigns to a verified member."""
+
+    permission_classes = [IsEmployer]
+
+    @extend_schema(
+        summary='Giao tin tuyển dụng và chiến dịch của một người cho thành viên khác',
+        request=inline_serializer(
+            'CompanyHandover',
+            fields={
+                'source': serializers.CharField(help_text='member_id của người đang giữ tin'),
+                'target': serializers.CharField(help_text='member_id của người nhận'),
+            },
+        ),
+        responses={200: OpenApiTypes.OBJECT},
+        tags=['employer'],
+    )
+    def post(self, request):
+        result = hand_over_recruiter_resources(
+            request.user,
+            source_id=request.data.get('source', ''),
+            target_id=request.data.get('target', ''),
+        )
+        return Response(result)

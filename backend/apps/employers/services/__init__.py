@@ -30,6 +30,7 @@ from .companies import (
     validate_company_update_revision,
 )
 from .company_follows import follow_company, unfollow_company
+from .company_handover import hand_over_recruiter_resources
 from .company_membership import (
     admin_assign_company_owner,
     cancel_company_join,
@@ -161,6 +162,7 @@ from .verification import (
 )
 
 __all__ = [
+    'hand_over_recruiter_resources',
     'MEMBER_REMOVAL_BLOCKERS',
     'remove_company_member',
     'cancel_company_join',

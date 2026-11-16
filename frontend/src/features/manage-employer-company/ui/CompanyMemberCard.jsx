@@ -8,6 +8,7 @@ import {
   MoreOutlined,
   PhoneOutlined,
   RocketOutlined,
+  SendOutlined,
   SafetyCertificateOutlined,
   StopOutlined,
   SwapOutlined,
@@ -53,13 +54,22 @@ function RecruitingActivity({ member }) {
 }
 
 /** One member as the company manager sees it, with every action in one menu. */
-export default function CompanyMemberCard({ member, busy, onTransfer, onToggleEditor, onRemove }) {
+export default function CompanyMemberCard({ member, busy, onTransfer, onToggleEditor, onHandover, onRemove }) {
   const [removing, setRemoving] = useState(false)
   const [reason, setReason] = useState('')
   const manager = member.role === 'manager'
   const blocked = member.removal_blockers.length > 0
+  const holdsWork = member.job_count > 0 || member.open_campaign_count > 0
+  const handover = {
+    key: 'handover',
+    icon: <SendOutlined />,
+    label: holdsWork ? 'Giao tin tuyển dụng cho người khác' : (
+      <Tooltip title="Người này chưa có tin tuyển dụng nào">Giao tin tuyển dụng cho người khác</Tooltip>
+    ),
+    disabled: !holdsWork,
+  }
 
-  const items = manager ? [] : [
+  const items = manager ? (holdsWork ? [handover] : []) : [
     {
       key: 'editor',
       icon: member.page_editor_grant_id ? <StopOutlined /> : <EditOutlined />,
@@ -74,12 +84,13 @@ export default function CompanyMemberCard({ member, busy, onTransfer, onToggleEd
       ),
       disabled: !member.can_transfer,
     },
+    handover,
     { type: 'divider' },
     {
       key: 'remove',
       icon: <DeleteOutlined />,
       danger: true,
-      label: blocked ? <Tooltip title={`Chưa thể gỡ: ${member.removal_blockers.join(', ')}`}>Gỡ khỏi công ty</Tooltip> : 'Gỡ khỏi công ty',
+      label: blocked ? <Tooltip title={`Chưa thể gỡ: ${member.removal_blockers.join(', ')}. Giao tin cho người khác trước.`}>Gỡ khỏi công ty</Tooltip> : 'Gỡ khỏi công ty',
       disabled: blocked,
     },
   ]
@@ -87,6 +98,7 @@ export default function CompanyMemberCard({ member, busy, onTransfer, onToggleEd
   const onMenu = ({ key }) => {
     if (key === 'editor') onToggleEditor(member)
     if (key === 'transfer') onTransfer(member)
+    if (key === 'handover') onHandover(member)
     if (key === 'remove') setRemoving(true)
   }
 
@@ -121,7 +133,7 @@ export default function CompanyMemberCard({ member, busy, onTransfer, onToggleEd
         </p>
         <RecruitingActivity member={member} />
       </div>
-      {!manager && (
+      {items.length > 0 && (
         <Dropdown menu={{ items, onClick: onMenu }} trigger={['click']} placement="bottomRight">
           <Button className="company-member__menu" icon={<MoreOutlined />} loading={busy} aria-label={`Quản lý ${member.display_name}`}>
             Quản lý

@@ -92,6 +92,10 @@ EVENT_PRESENTATION = {
         'Quyền quản lý công ty đã thay đổi',
         COMPANY_MEMBERS_PATH,
     ),
+    EmployerNotification.EventType.JOBS_HANDED_OVER: (
+        'Tin tuyển dụng được giao lại',
+        JOBS_PATH,
+    ),
 }
 
 SAFE_METADATA_KEYS = {
