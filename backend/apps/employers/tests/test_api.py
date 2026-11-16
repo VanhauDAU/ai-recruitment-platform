@@ -1180,6 +1180,7 @@ class JoinCompanyTests(APITestCase):
             file_name='Thỏa thuận xử lý DLCN',
         )
         current_document = CompanyDocument.objects.create(
+            company=self.company,
             recruiter=self.recruiter,
             uploaded_by=self.user,
             doc_type=CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT,
