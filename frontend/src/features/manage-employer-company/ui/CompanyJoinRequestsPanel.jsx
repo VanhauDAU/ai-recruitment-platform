@@ -31,9 +31,9 @@ export default function CompanyJoinRequestsPanel() {
   const canDecide = requests.every((item) => item.can_decide)
 
   return (
-    <section className="company-update-request" aria-label="Duyệt tham gia công ty">
+    <section className="rounded-lg border border-slate-200 p-4" aria-label="Duyệt tham gia công ty">
       <div className="w-full">
-        <h2>Duyệt tham gia công ty</h2>
+        <h2 className="m-0 text-base font-bold text-slate-800">Duyệt tham gia công ty</h2>
         {!canDecide && (
           <Alert
             className="my-2"

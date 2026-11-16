@@ -10,6 +10,7 @@ from ..models import EmployerActivity, EmployerNotification, EmployerNotificatio
 
 VERIFY_PATH = '/tuyendung/app/employer-verify'
 COMPANY_PATH = '/tuyendung/app/account/settings/company'
+COMPANY_MEMBERS_PATH = f'{COMPANY_PATH}?tab=members'
 COMPANY_PAGE_PATH = '/tuyendung/app/company-page'
 JOBS_PATH = '/tuyendung/app/jobs'
 APPLICATIONS_PATH = '/tuyendung/app/applications'
@@ -77,7 +78,7 @@ EVENT_PRESENTATION = {
     ),
     EmployerNotification.EventType.COMPANY_JOIN_REQUESTED: (
         'Có yêu cầu tham gia công ty',
-        COMPANY_PATH,
+        COMPANY_MEMBERS_PATH,
     ),
     EmployerNotification.EventType.COMPANY_JOIN_APPROVED: (
         'Yêu cầu tham gia công ty đã được duyệt',
@@ -86,6 +87,10 @@ EVENT_PRESENTATION = {
     EmployerNotification.EventType.COMPANY_JOIN_REJECTED: (
         'Yêu cầu tham gia công ty bị từ chối',
         COMPANY_PATH,
+    ),
+    EmployerNotification.EventType.COMPANY_OWNERSHIP_CHANGED: (
+        'Quyền owner công ty đã thay đổi',
+        COMPANY_MEMBERS_PATH,
     ),
 }
 

@@ -279,6 +279,11 @@ export async function decideCompanyJoinRequest(publicId, decision) {
   return data
 }
 
+/** The verified owner hands the company to a verified member (`memberId` = member_id). */
+export async function transferCompanyOwnership(memberId) {
+  await api.post('/employer/company/ownership-transfer/', { recruiter: memberId })
+}
+
 /** Sends a join request; nothing is linked until an owner approves it. */
 export async function joinEmployerCompany(payload) {
   const formData = new FormData()

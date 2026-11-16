@@ -46,7 +46,7 @@ from ..services.sms_provider import (
     get_sms_provider,
     sms_configuration_errors,
 )
-from .readiness_helpers import make_employer_ready
+from .readiness_helpers import make_verified_representative
 
 PNG_BYTES = (
     b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01'
@@ -879,7 +879,7 @@ class JoinCompanyTests(APITestCase):
             company_name='Acme Corp', tax_code='0101234567', created_by=self.owner
         )
         # Only a verified owner approves joins.
-        make_employer_ready(self.owner, company=self.company)
+        make_verified_representative(self.owner, company=self.company)
         self.user, self.recruiter = make_employer('hr2@example.com')
         authenticate_employer(self.client, self.user)
 

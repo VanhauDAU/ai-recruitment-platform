@@ -19,7 +19,7 @@ from ..models import (
     RecruiterProfile,
 )
 from ..services import company_owners, request_company_join
-from .readiness_helpers import make_employer_ready
+from .readiness_helpers import make_verified_representative
 
 User = get_user_model()
 
@@ -32,9 +32,9 @@ class CompanyOwnershipTests(APITestCase):
     def setUp(self):
         self.owner = _employer('owner@example.com')
         self.company = Company.objects.create(company_name='Acme', created_by=self.owner)
-        make_employer_ready(self.owner, company=self.company)
+        make_verified_representative(self.owner, company=self.company)
         self.member = _employer('member@example.com')
-        self.member_profile = make_employer_ready(self.member, company=self.company)
+        self.member_profile = make_verified_representative(self.member, company=self.company)
         self.requester = _employer('requester@example.com')
         self.admin = make_admin('ops@example.com')
 

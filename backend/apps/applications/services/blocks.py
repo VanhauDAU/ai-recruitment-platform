@@ -8,7 +8,7 @@ from django.utils import timezone
 from apps.employers.models import RecruiterProfile
 
 from ..models import Application, CandidateBlock
-from .status import change_application_status
+from .status import change_application_status, reject_blocked_application
 
 BLOCKED_APPLY_MESSAGE = 'Bạn không thể ứng tuyển vào tin này lúc này.'
 
@@ -68,10 +68,13 @@ def block_candidate(
             is_current=True,
             status__in=Application.UNANSWERED_STATUSES,
         )
-        for item in pending:
-            change_application_status(
-                item, changed_by=recruiter, status=Application.Status.REJECTED
-            )
+        for item in pending.select_related('job'):
+            if item.job.posted_by_id == recruiter.pk:
+                change_application_status(
+                    item, changed_by=recruiter, status=Application.Status.REJECTED
+                )
+            else:
+                reject_blocked_application(item, blocked_by=recruiter)
     return block
 
 

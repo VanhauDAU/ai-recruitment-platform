@@ -191,6 +191,50 @@ def change_application_status(application, *, changed_by, status):
     return application, notice
 
 
+@transaction.atomic
+def reject_blocked_application(application, *, blocked_by):
+    """Answer an unanswered application on a colleague's job after a company block.
+
+    The blocker does not own that job, so the recruiter write lock does not
+    apply; the candidate is told like any other rejection, never about the block.
+    """
+    application = (
+        Application.objects.select_for_update(of=('self',))
+        .select_related('candidate', 'job', 'job__company')
+        .get(pk=application.pk)
+    )
+    if application.status not in Application.UNANSWERED_STATUSES:
+        return application
+    now = timezone.now()
+    previous_status = application.status
+    application.status = Status.REJECTED
+    application.rejected_at = now
+    application.status_updated_at = now
+    application.auto_rejection_reminder_sent_at = None
+    application.save(
+        update_fields=[
+            'status',
+            'rejected_at',
+            'status_updated_at',
+            'auto_rejection_reminder_sent_at',
+            'updated_at',
+        ]
+    )
+    history = ApplicationStatusHistory.objects.create(
+        application=application,
+        from_status=previous_status,
+        to_status=Status.REJECTED,
+        changed_by=blocked_by,
+        note='Công ty đã chặn ứng viên.',
+    )
+    notify_candidate_of_status(
+        application,
+        history,
+        deliver_after=now + settings.CANDIDATE_STATUS_NOTIFICATION_DELAY,
+    )
+    return application
+
+
 def _active_history(application):
     return application.status_history.filter(reverted_at__isnull=True).order_by(
         '-created_at', '-id'

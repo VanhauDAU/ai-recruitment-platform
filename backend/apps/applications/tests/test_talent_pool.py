@@ -125,7 +125,10 @@ class TalentPoolTests(APITestCase):
     def test_blocked_and_already_applied_people_are_not_suggested(self):
         self.save_to_pool()
         CandidateBlock.objects.create(
-            recruiter=self.employer, candidate=self.candidate, reason='spam'
+            recruiter=self.employer,
+            company=self.new_job.company,
+            candidate=self.candidate,
+            reason='spam',
         )
 
         response = self.client.get(
