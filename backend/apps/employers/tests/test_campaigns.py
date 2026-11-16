@@ -377,7 +377,9 @@ class RecruitmentCampaignApiTests(TestCase):
         self.assertEqual(hidden_detail.status_code, 404)
         self.assertEqual(reopened.status_code, 200, reopened.data)
         self.assertEqual(visible_detail.status_code, 200)
-        self.assertEqual(expired_detail.status_code, 404)
+        # A stopped job stays readable for application history, never applyable.
+        self.assertEqual(expired_detail.status_code, 200)
+        self.assertFalse(expired_detail.data['accepting_applications'])
         self.assertEqual(cancelled.status_code, 200, cancelled.data)
         self.assertEqual(invalid.status_code, 400, invalid.data)
         job.refresh_from_db()

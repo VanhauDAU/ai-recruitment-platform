@@ -9,6 +9,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | --- | --- |
 | [Bảng điều khiển quản trị](#bảng-điều-khiển-quản-trị-2026-11-16) | 🟨 Xong trên nhánh `feat/admin-dashboard`, chưa mở PR |
 | [Ảnh đại diện dùng chung 3 cổng](#ảnh-đại-diện-dùng-chung-3-cổng-2026-11-16) | 🟨 Xong trên nhánh `feat/avatar-editor`, chưa mở PR |
+| [Dọn mâu thuẫn còn lại sau thống nhất luồng](#dọn-mâu-thuẫn-còn-lại-sau-thống-nhất-luồng-2026-11-16) | 🟨 GĐ C xong trên nhánh `fix/vn-date-moderation`; GĐ A, B chưa làm |
 | [Thống nhất luồng đăng tin, hiển thị, ứng tuyển, công ty](#thống-nhất-luồng-đăng-tin-hiển-thị-ứng-tuyển-công-ty-2026-11-15) | ✅ Cả 6 giai đoạn đã gộp (#208–#215); hoàn thiện luồng nhắc NTD và lịch sử nộp trên nhánh `feat/application-reminders` |
 | [Đối sánh ngữ nghĩa CV–JD chạy local](#đối-sánh-ngữ-nghĩa-cvjd-chạy-local-2026-11-15) | 🟨 Nền tảng (tuần 1) xong trên nhánh `feat/ai-matching-foundation`, chưa mở PR |
 | [CV tải lên: tệp gốc, tiêu chuẩn upload, giới hạn CV, NTD tìm kiếm](#cv-tải-lên-tệp-gốc-tiêu-chuẩn-upload-giới-hạn-cv-ntd-tìm-kiếm-2026-11-15) | ✅ Gộp vào `dev` (#203) |
@@ -75,6 +76,29 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 - Modal nằm ở `features/edit-profile` (`AvatarEditorModal`), được widget
   `employer-account-settings` và `admin-account-settings` dùng lại; hai widget
   có test mở modal.
+
+</details>
+
+## Dọn mâu thuẫn còn lại sau thống nhất luồng (2026-11-16)
+
+Quyết định nghiệp vụ đã chốt với user ngày 16/11:
+- Owner **duyệt tham gia** công ty, admin **xác thực tài khoản** NTD. Đây là hai bước tách rời.
+- Công ty không có owner đủ điều kiện thì admin duyệt yêu cầu tham gia.
+- Chặn ứng viên áp dụng theo công ty.
+- Đồng hồ "chưa phản hồi" tính từ ngày nộp.
+- Ứng viên chỉ thấy trạng thái đã công bố.
+
+| GĐ | Nội dung | Trạng thái |
+| --- | --- | --- |
+| A | Owner đủ điều kiện mới duyệt tham gia, admin duyệt khi không có owner, chuyển quyền/chỉ định owner, chặn ứng viên gắn công ty | ⬜ Chưa làm |
+| B | Nút của ứng viên theo trạng thái đã công bố, rút được hồ sơ khi tin ngừng tuyển, một đồng hồ phản hồi, dashboard admin đếm mọi lượt nộp | ⬜ Chưa làm |
+| C | Ngày theo giờ VN (email "còn X ngày", tác động thu hồi xác thực, ngày mục tiêu, quota AI); bù thời gian hiển thị khi tin bị ẩn; chặn gửi duyệt lại khi chưa sửa nội dung | 🟨 Xong trên nhánh `fix/vn-date-moderation` |
+
+<details><summary>Ghi chú GĐ C</summary>
+
+- Mọi chỗ dùng `timezone.localdate()` / `date.today()` ngoài migrations và tests đã chuyển sang `vietnam_today()` / `vietnam_day_start()`. Áp dụng cho cả bucket `AiUsageDaily` và cửa sổ thống kê AI.
+- Khi khôi phục tin, `visibility_ends_at` được cộng thêm thời gian từ `moderation_held_at` đến lúc khôi phục; hạn nộp giữ nguyên. Chuyển từ hold này sang hold khác vẫn giữ mốc ẩn ban đầu.
+- `Job.moderation_content_digest` (migration jobs 0054) lưu băm `build_job_content_snapshot` lúc admin yêu cầu sửa. Gửi duyệt lại mà băm không đổi thì bị từ chối.
 
 </details>
 

@@ -1,11 +1,12 @@
 """Privacy-safe operational aggregates for admin dashboards."""
 
 import math
-from datetime import datetime, time, timedelta
+from datetime import timedelta
 from decimal import Decimal
 
 from django.db.models import Sum
-from django.utils import timezone
+
+from common.vietnam_time import vietnam_day_start, vietnam_today
 
 from ..models import AiInvocation, AiUsageDaily
 
@@ -21,10 +22,10 @@ def ai_usage_overview(*, days=30, use_case=None):
     if use_case is not None and (not isinstance(use_case, str) or not use_case.strip()):
         raise ValueError('use_case must be a non-empty string when provided.')
 
-    end_date = timezone.localdate()
+    end_date = vietnam_today()
     start_date = end_date - timedelta(days=days - 1)
-    start_at = timezone.make_aware(datetime.combine(start_date, time.min))
-    end_at = timezone.make_aware(datetime.combine(end_date + timedelta(days=1), time.min))
+    start_at = vietnam_day_start(start_date)
+    end_at = vietnam_day_start(end_date + timedelta(days=1))
     usage_rows = AiUsageDaily.objects.filter(date__gte=start_date, date__lte=end_date)
     invocations = AiInvocation.objects.filter(
         created_at__gte=start_at,

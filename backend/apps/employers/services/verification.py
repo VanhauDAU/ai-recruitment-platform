@@ -19,6 +19,7 @@ from apps.accounts.services import (
     decode_impact_token,
     record_admin_action,
 )
+from common.vietnam_time import vietnam_today
 
 from ..models import (
     Company,
@@ -386,7 +387,7 @@ def _public_job_ids(case, *, scope=None, ignored_hold_ids=()):
         and recruiter.company_id == case.company_id
     ):
         return set()
-    today = timezone.localdate()
+    today = vietnam_today()
     visible = set()
     for job in jobs:
         if (

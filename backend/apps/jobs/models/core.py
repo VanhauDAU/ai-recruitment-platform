@@ -351,6 +351,9 @@ class Job(models.Model):
     moderation_held_at = models.DateTimeField(null=True, blank=True)
     # Set when the owner sends a job under CHANGES_REQUESTED back for review.
     moderation_resubmitted_at = models.DateTimeField(null=True, blank=True)
+    # Digest of the content an administrator asked to change; a resubmit with
+    # the same digest changed nothing and is refused.
+    moderation_content_digest = models.CharField(max_length=64, blank=True, default='')
     view_count = models.IntegerField(default=0)
     impression_count = models.PositiveIntegerField(default=0)
     application_count = models.IntegerField(default=0)
