@@ -13,10 +13,9 @@ CV và tin tuyển dụng dùng chung từ vựng:
 Cấp bậc mong muốn (`Job.PositionLevel`) do ứng viên chọn, không suy từ document.
 """
 
-from datetime import date
-
 from apps.jobs.models import Job
 from apps.skills.selectors import normalize_skill_name, skills_by_names
+from common.vietnam_time import vietnam_today
 
 from ..models import CvSkill, UserCv
 
@@ -51,7 +50,7 @@ def _month_index(value):
 
 
 def experience_months(content_json, today=None):
-    today = today or date.today()
+    today = today or vietnam_today()
     now = today.year * 12 + today.month - 1
     ranges = []
     for item in _enabled_items(content_json, 'experience'):

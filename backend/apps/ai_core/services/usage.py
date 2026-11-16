@@ -4,6 +4,8 @@ from django.db import IntegrityError, transaction
 from django.db.models import F
 from django.utils import timezone
 
+from common.vietnam_time import vietnam_today
+
 from ..models import AiUsageDaily
 
 
@@ -28,7 +30,7 @@ def record_ai_usage(
     latency_ms,
 ):
     dimensions = {
-        'date': timezone.localdate(),
+        'date': vietnam_today(),
         'use_case': use_case,
         'provider': provider,
         'provider_backend': provider_backend,
@@ -53,7 +55,7 @@ def record_ai_usage(
 def record_ai_quota_rejection(*, use_case, provider, provider_backend, model):
     """Increment a durable quota rejection without fabricating a provider call."""
     dimensions = {
-        'date': timezone.localdate(),
+        'date': vietnam_today(),
         'use_case': use_case,
         'provider': provider,
         'provider_backend': provider_backend,

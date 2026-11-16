@@ -1,6 +1,7 @@
 """Administrative post-moderation of public job postings."""
 
 import hashlib
+import json
 from http import HTTPStatus
 
 from django.db import transaction
@@ -18,6 +19,7 @@ from apps.employers.services import emit_employer_event
 
 from ..models import Job, JobModerationEvent
 from ..models.querysets import job_visibility_issues
+from .content_snapshot import build_job_content_snapshot
 
 REVIEW_OPERATION = 'job.moderation.mutate'
 
@@ -35,6 +37,31 @@ def job_moderation_revision(job):
 def job_content_fingerprint(job):
     value = f'{job.public_id}:{job_moderation_revision(job)}'
     return hashlib.sha256(value.encode()).hexdigest()
+
+
+def job_content_digest(job):
+    """Hash of the reviewable content, independent of unrelated saves."""
+    payload = json.dumps(build_job_content_snapshot(job), sort_keys=True, ensure_ascii=False)
+    return hashlib.sha256(payload.encode()).hexdigest()
+
+
+def _hold_started_at(job, now):
+    # Moving from one hold to another keeps the moment the job left the public
+    # list, so the hidden time given back on restore covers the whole stretch.
+    return job.moderation_held_at if job.moderation_hold and job.moderation_held_at else now
+
+
+def _give_back_hidden_time(job, now):
+    """Extend the display window by the time the job spent hidden.
+
+    Only the remaining window is restored; the application deadline is left as
+    the employer set it.
+    """
+    held_at = job.moderation_held_at
+    if held_at is None or job.visibility_ends_at is None or job.visibility_ends_at <= held_at:
+        return False
+    job.visibility_ends_at += now - held_at
+    return True
 
 
 def create_job_review_token(job):
@@ -187,8 +214,8 @@ def apply_confirmed_report_hold(*, job, actor, report, note):
 
     fingerprint = job_content_fingerprint(job)
     previous_hold = job.moderation_hold
+    job.moderation_held_at = _hold_started_at(job, timezone.now())
     job.moderation_hold = Job.ModerationHold.CONFIRMED_VIOLATION
-    job.moderation_held_at = timezone.now()
     job.save(update_fields=['moderation_hold', 'moderation_held_at', 'updated_at'])
     _record_moderation_event(
         job=job,
@@ -220,14 +247,18 @@ def restore_job_visibility(*, job, user, note, review_token):
 
     fingerprint = job_content_fingerprint(job)
     previous_hold = job.moderation_hold
+    extended = _give_back_hidden_time(job, timezone.now())
     job.moderation_hold = Job.ModerationHold.NONE
     job.moderation_held_at = None
     job.moderation_resubmitted_at = None
+    job.moderation_content_digest = ''
     job.save(
         update_fields=[
             'moderation_hold',
             'moderation_held_at',
             'moderation_resubmitted_at',
+            'moderation_content_digest',
+            *(['visibility_ends_at'] if extended else []),
             'updated_at',
         ]
     )
@@ -270,14 +301,16 @@ def request_job_changes(*, job, user, reason_code, note, review_token, source_re
 
     fingerprint = job_content_fingerprint(job)
     previous_hold = job.moderation_hold
+    job.moderation_held_at = _hold_started_at(job, timezone.now())
     job.moderation_hold = Job.ModerationHold.CHANGES_REQUESTED
-    job.moderation_held_at = timezone.now()
     job.moderation_resubmitted_at = None
+    job.moderation_content_digest = job_content_digest(job)
     job.save(
         update_fields=[
             'moderation_hold',
             'moderation_held_at',
             'moderation_resubmitted_at',
+            'moderation_content_digest',
             'updated_at',
         ]
     )
@@ -317,6 +350,10 @@ def resubmit_job_for_review(job, user):
         raise ValidationError('Tin này không ở trạng thái cần chỉnh sửa.')
     if job.moderation_resubmitted_at is not None:
         raise ValidationError('Tin đã được gửi duyệt lại, vui lòng chờ quản trị viên.')
+    if job.moderation_content_digest and job.moderation_content_digest == job_content_digest(job):
+        raise ValidationError(
+            'Bạn chưa sửa nội dung nào. Hãy chỉnh sửa tin trước khi gửi duyệt lại.'
+        )
     job.moderation_resubmitted_at = timezone.now()
     job.save(update_fields=['moderation_resubmitted_at', 'updated_at'])
     _record_moderation_event(

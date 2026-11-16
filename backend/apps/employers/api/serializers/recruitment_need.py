@@ -2,6 +2,7 @@ from django.utils import timezone
 from rest_framework import serializers
 
 from apps.jobs.models import JobCategory
+from common.vietnam_time import vietnam_today
 
 from ...models import RecruitmentNeed
 from ...services import reconcile_recruiter_verification
@@ -67,7 +68,7 @@ class RecruitmentNeedSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 {'target_date': 'Chọn thời gian cần tuyển xong hoặc chọn Tuyển liên tục.'}
             )
-        if target_date and target_date < timezone.localdate():
+        if target_date and target_date < vietnam_today():
             raise serializers.ValidationError(
                 {'target_date': 'Thời gian cần tuyển xong không được ở trong quá khứ.'}
             )

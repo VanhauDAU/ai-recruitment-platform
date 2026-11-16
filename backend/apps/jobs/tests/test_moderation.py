@@ -115,6 +115,8 @@ class JobChangesRequestedTests(JobModerationFixture, APITestCase):
         self.decide('request_changes', reason_code='misleading_content')
         self.client.force_authenticate(self.employer)
         resubmit_url = reverse('employer-job-resubmit', kwargs={'public_id': self.job.public_id})
+        self.job.refresh_from_db()
+        self.edit_title('Backend Engineer (Go)')
 
         resubmitted = self.client.post(resubmit_url)
         twice = self.client.post(resubmit_url)
@@ -141,6 +143,43 @@ class JobChangesRequestedTests(JobModerationFixture, APITestCase):
         self.job.refresh_from_db()
         self.assertIsNone(self.job.moderation_resubmitted_at)
         self.assertTrue(Job.publicly_available_queryset().filter(pk=self.job.pk).exists())
+
+    def test_resubmitting_without_any_edit_is_refused(self):
+        self.decide('request_changes', reason_code='incomplete_content')
+        self.client.force_authenticate(self.employer)
+        resubmit_url = reverse('employer-job-resubmit', kwargs={'public_id': self.job.public_id})
+
+        unchanged = self.client.post(resubmit_url)
+
+        self.assertEqual(unchanged.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('chưa sửa', str(unchanged.data))
+        self.job.refresh_from_db()
+        self.assertIsNone(self.job.moderation_resubmitted_at)
+
+        self.edit_title('Backend Engineer (Go)')
+        self.assertEqual(self.client.post(resubmit_url).status_code, status.HTTP_200_OK)
+
+    def test_restoring_gives_back_the_display_time_spent_hidden(self):
+        self.job.refresh_from_db()
+        ends_at = self.job.visibility_ends_at
+        deadline = self.job.deadline
+        self.decide('hide', reason_code='fraud_risk', hold=Job.ModerationHold.MANUAL_REVIEW)
+        Job.objects.filter(pk=self.job.pk).update(
+            moderation_held_at=timezone.now() - timedelta(days=4)
+        )
+        # Escalating to a change request keeps the moment the job left the list.
+        self.decide('request_changes', reason_code='incomplete_content')
+
+        self.decide('restore')
+
+        self.job.refresh_from_db()
+        self.assertAlmostEqual(
+            (self.job.visibility_ends_at - ends_at).total_seconds(),
+            timedelta(days=4).total_seconds(),
+            delta=60,
+        )
+        self.assertEqual(self.job.deadline, deadline)
+        self.assertEqual(self.job.moderation_content_digest, '')
 
     def test_a_job_hidden_for_review_stays_locked_for_its_owner(self):
         self.decide('hide', reason_code='fraud_risk', hold=Job.ModerationHold.MANUAL_REVIEW)

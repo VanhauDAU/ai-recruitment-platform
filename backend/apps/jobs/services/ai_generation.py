@@ -17,6 +17,7 @@ from rest_framework.exceptions import APIException, ValidationError
 from apps.employers.services import ensure_recruiter_job_workspace, recruiter_readiness_state
 from apps.sitecontent.models import SiteSetting
 from apps.skills.models import Skill
+from common.vietnam_time import vietnam_today
 
 from ..models import Benefit, Job, JobAiGeneration, JobCategory
 
@@ -337,7 +338,7 @@ def _create_job_ai_generation_locked(*, user, validated_data):
     policy = job_ai_policy(recruiter.company)
     if not policy['enabled']:
         raise JobAiGenerationUnavailable()
-    quota_day = timezone.localdate()
+    quota_day = vietnam_today()
     used = JobAiGeneration.objects.filter(owner=user, quota_day=quota_day).count()
     if used >= policy['daily_limit']:
         raise JobAiGenerationQuotaExceeded(policy['daily_limit'], model=policy['model'])
@@ -359,7 +360,7 @@ def _create_job_ai_generation_locked(*, user, validated_data):
 
 
 def job_ai_quota_remaining(*, user, day=None):
-    day = day or timezone.localdate()
+    day = day or vietnam_today()
     generation = (
         JobAiGeneration.objects.filter(owner=user)
         .select_related('company')

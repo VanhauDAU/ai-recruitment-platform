@@ -4,9 +4,9 @@ Emails are read outside the app, so every URL here is absolute.
 """
 
 from django.conf import settings
-from django.utils import timezone
 
 from common.media_storage import media_url_from_value
+from common.vietnam_time import vietnam_today
 
 from ..models import Job
 
@@ -75,7 +75,7 @@ def job_email_card(job, *, verified_employer=False):
     """Display values of one job; expects ``company`` and ``job_locations`` loaded."""
     days_left = None
     if job.deadline:
-        days_left = max((job.deadline - timezone.localdate()).days, 0)
+        days_left = max((job.deadline - vietnam_today()).days, 0)
     return {
         'title': job.title,
         'company_name': job.company.company_name,

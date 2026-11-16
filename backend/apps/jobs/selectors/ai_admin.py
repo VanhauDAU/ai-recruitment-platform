@@ -1,7 +1,7 @@
 """Privacy-safe read models for the AI job-generation admin dashboard."""
 
 import math
-from datetime import datetime, time, timedelta
+from datetime import timedelta
 from decimal import Decimal
 
 from django.conf import settings
@@ -10,6 +10,7 @@ from django.utils import timezone
 
 from apps.ai_core.models import AiInvocation, AiUsageDaily
 from apps.sitecontent.models import SiteSetting
+from common.vietnam_time import vietnam_day_start, vietnam_today
 
 from ..models import JobAiGeneration
 
@@ -31,10 +32,10 @@ def job_ai_usage_overview(*, days):
     """Aggregate shared AI metadata through its public models only."""
     if isinstance(days, bool) or not isinstance(days, int) or not 1 <= days <= 365:
         raise ValueError('days must be an integer between 1 and 365.')
-    end_date = timezone.localdate()
+    end_date = vietnam_today()
     start_date = end_date - timedelta(days=days - 1)
-    start_at = timezone.make_aware(datetime.combine(start_date, time.min))
-    end_at = timezone.make_aware(datetime.combine(end_date + timedelta(days=1), time.min))
+    start_at = vietnam_day_start(start_date)
+    end_at = vietnam_day_start(end_date + timedelta(days=1))
     usage_rows = AiUsageDaily.objects.filter(
         date__gte=start_date,
         date__lte=end_date,
