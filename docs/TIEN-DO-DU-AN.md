@@ -9,7 +9,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | --- | --- |
 | [Bảng điều khiển quản trị](#bảng-điều-khiển-quản-trị-2026-11-16) | 🟨 Xong trên nhánh `feat/admin-dashboard`, chưa mở PR |
 | [Ảnh đại diện dùng chung 3 cổng](#ảnh-đại-diện-dùng-chung-3-cổng-2026-11-16) | 🟨 Xong trên nhánh `feat/avatar-editor`, chưa mở PR |
-| [Dọn mâu thuẫn còn lại sau thống nhất luồng](#dọn-mâu-thuẫn-còn-lại-sau-thống-nhất-luồng-2026-11-16) | 🟨 GĐ C xong trên nhánh `fix/vn-date-moderation`; GĐ A, B chưa làm |
+| [Dọn mâu thuẫn còn lại sau thống nhất luồng](#dọn-mâu-thuẫn-còn-lại-sau-thống-nhất-luồng-2026-11-16) | 🟨 GĐ C: PR #222; GĐ A xong trên nhánh `fix/company-ownership-blocks`; GĐ B đang làm |
 | [Thống nhất luồng đăng tin, hiển thị, ứng tuyển, công ty](#thống-nhất-luồng-đăng-tin-hiển-thị-ứng-tuyển-công-ty-2026-11-15) | ✅ Cả 6 giai đoạn đã gộp (#208–#215); hoàn thiện luồng nhắc NTD và lịch sử nộp trên nhánh `feat/application-reminders` |
 | [Đối sánh ngữ nghĩa CV–JD chạy local](#đối-sánh-ngữ-nghĩa-cvjd-chạy-local-2026-11-15) | 🟨 Nền tảng (tuần 1) xong trên nhánh `feat/ai-matching-foundation`, chưa mở PR |
 | [CV tải lên: tệp gốc, tiêu chuẩn upload, giới hạn CV, NTD tìm kiếm](#cv-tải-lên-tệp-gốc-tiêu-chuẩn-upload-giới-hạn-cv-ntd-tìm-kiếm-2026-11-15) | ✅ Gộp vào `dev` (#203) |
@@ -90,9 +90,18 @@ Quyết định nghiệp vụ đã chốt với user ngày 16/11:
 
 | GĐ | Nội dung | Trạng thái |
 | --- | --- | --- |
-| A | Owner đủ điều kiện mới duyệt tham gia, admin duyệt khi không có owner, chuyển quyền/chỉ định owner, chặn ứng viên gắn công ty | ⬜ Chưa làm |
+| A | Owner đủ điều kiện mới duyệt tham gia, admin duyệt khi không có owner, chuyển quyền/chỉ định owner, chặn ứng viên gắn công ty; màn công ty của owner tách tab "Thông tin công ty" / "Thành viên" | 🟨 Xong trên nhánh `fix/company-ownership-blocks` |
 | B | Nút của ứng viên theo trạng thái đã công bố, rút được hồ sơ khi tin ngừng tuyển, một đồng hồ phản hồi, dashboard admin đếm mọi lượt nộp | ⬜ Chưa làm |
 | C | Ngày theo giờ VN (email "còn X ngày", tác động thu hồi xác thực, ngày mục tiêu, quota AI); bù thời gian hiển thị khi tin bị ẩn; chặn gửi duyệt lại khi chưa sửa nội dung | 🟨 Xong trên nhánh `fix/vn-date-moderation` |
+
+<details><summary>Ghi chú GĐ A</summary>
+
+- "Duyệt tham gia" do owner làm (`CompanyJoinRequest`). "Xác thực tài khoản" do admin làm (`EmployerVerificationCase`). Owner chỉ được duyệt khi tài khoản đang hoạt động và nằm trong `eligible_representatives_queryset`.
+- Công ty không có owner đủ điều kiện thì admin duyệt thay: `/api/admin/company-join-requests/`, hàng đợi `company_join_requests` trên dashboard và sidebar, tab "Yêu cầu tham gia" ở trang Công ty và trang chi tiết công ty. Khi công ty đã có owner đủ điều kiện, admin chỉ xem được.
+- Owner chuyển quyền cho thành viên đã xác thực ở tab "Thành viên" (`/api/employer/company/ownership-transfer/`). Admin chỉ định owner (`/api/admin/companies/<id>/assign-owner/`) chỉ khi công ty không có owner đủ điều kiện. Mỗi thay đổi ghi một `EmployerCompanyLinkEvent`.
+- `CandidateBlock.company` (migration applications 0020, có backfill) gắn lệnh chặn với công ty, nên chặn có hiệu lực trên mọi tin của công ty. Hồ sơ đang chờ trên tin của đồng nghiệp bị từ chối qua `reject_blocked_application`. Người chặn và owner được gỡ chặn. Lệnh chặn ở lại công ty khi người chặn rời đi.
+
+</details>
 
 <details><summary>Ghi chú GĐ C</summary>
 
