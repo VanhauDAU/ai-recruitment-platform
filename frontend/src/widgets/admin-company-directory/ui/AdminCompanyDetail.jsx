@@ -43,7 +43,7 @@ import RecruiterStatusTag from './RecruiterStatusTag'
 import '../admin-company-directory.css'
 
 const EMPTY_PAGE = { count: 0, results: [] }
-const TAB_KEYS = new Set(['overview', 'recruiters', 'join-requests', 'verification', 'updates', 'jobs', 'public-page'])
+const TAB_KEYS = new Set(['overview', 'recruiters', 'verification', 'updates', 'join-requests', 'jobs', 'public-page'])
 
 function formatDate(value) {
   if (!value) return '—'
@@ -555,11 +555,6 @@ export default function AdminCompanyDetail({ publicId }) {
       children: <RecruiterRoster company={company} />,
     },
     {
-      key: 'join-requests',
-      label: 'Yêu cầu tham gia',
-      children: <AdminCompanyJoinRequestQueue companyPublicId={company.public_id} />,
-    },
-    {
       key: 'verification',
       label: 'Xác thực NTD',
       children: <RecruiterVerification company={company} />,
@@ -577,6 +572,11 @@ export default function AdminCompanyDetail({ publicId }) {
           </Link>
         </CompanyPanel>
       ),
+    },
+    {
+      key: 'join-requests',
+      label: 'Yêu cầu tham gia',
+      children: <AdminCompanyJoinRequestQueue companyPublicId={company.public_id} />,
     },
     {
       key: 'jobs',
