@@ -45,12 +45,14 @@ class CompanyMemberSerializer(serializers.ModelSerializer):
     page_editor_grant_id = serializers.SerializerMethodField()
     joined_at = serializers.SerializerMethodField()
     approved_by_name = serializers.SerializerMethodField()
+    job_count = serializers.IntegerField(read_only=True)
     active_job_count = serializers.IntegerField(read_only=True)
     unanswered_application_count = serializers.IntegerField(read_only=True)
     open_campaign_count = serializers.IntegerField(read_only=True)
     is_me = serializers.SerializerMethodField()
     can_transfer = serializers.SerializerMethodField()
     can_grant_page_editor = serializers.SerializerMethodField()
+    can_receive_jobs = serializers.SerializerMethodField()
     removal_blockers = serializers.SerializerMethodField()
 
     class Meta:
@@ -71,12 +73,14 @@ class CompanyMemberSerializer(serializers.ModelSerializer):
             'page_editor_grant_id',
             'joined_at',
             'approved_by_name',
+            'job_count',
             'active_job_count',
             'unanswered_application_count',
             'open_campaign_count',
             'is_me',
             'can_transfer',
             'can_grant_page_editor',
+            'can_receive_jobs',
             'removal_blockers',
         ]
         read_only_fields = fields
@@ -133,6 +137,9 @@ class CompanyMemberSerializer(serializers.ModelSerializer):
             and not obj.has_compliance_hold
         )
 
+    def get_can_receive_jobs(self, obj) -> bool:
+        return bool(obj.is_verified_representative and not obj.has_compliance_hold)
+
     def get_removal_blockers(self, obj) -> list[str]:
         """Same rules as the removal service, read from the list annotations."""
         if self._is_manager(obj):
@@ -143,3 +150,42 @@ class CompanyMemberSerializer(serializers.ModelSerializer):
             'COMPLIANCE_HOLDS_EXIST': obj.has_compliance_hold,
         }
         return [MEMBER_REMOVAL_BLOCKERS[code] for code, present in found.items() if present]
+
+
+class FormerCompanyMemberSerializer(serializers.ModelSerializer):
+    """Someone who left the company but still holds jobs or campaigns there."""
+
+    member_id = serializers.CharField(source='public_id', read_only=True)
+    display_name = serializers.SerializerMethodField()
+    avatar_url = serializers.SerializerMethodField()
+    email_masked = serializers.SerializerMethodField()
+    left_at = serializers.DateTimeField(read_only=True)
+    job_count = serializers.IntegerField(read_only=True)
+    active_job_count = serializers.IntegerField(read_only=True)
+    unanswered_application_count = serializers.IntegerField(read_only=True)
+    open_campaign_count = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = RecruiterProfile
+        fields = [
+            'member_id',
+            'display_name',
+            'avatar_url',
+            'position_title',
+            'email_masked',
+            'left_at',
+            'job_count',
+            'active_job_count',
+            'unanswered_application_count',
+            'open_campaign_count',
+        ]
+        read_only_fields = fields
+
+    def get_display_name(self, obj) -> str:
+        return obj.user.full_name or _mask_email(obj.user.email)
+
+    def get_avatar_url(self, obj) -> str:
+        return media_url_from_value(obj.user.avatar_url, request=self.context.get('request')) or ''
+
+    def get_email_masked(self, obj) -> str:
+        return _mask_email(obj.user.email)

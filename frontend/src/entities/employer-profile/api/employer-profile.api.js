@@ -285,6 +285,18 @@ export async function getCompanyMembers({ signal } = {}) {
   return data
 }
 
+/** People who left the company but still hold jobs or campaigns there. */
+export async function getFormerCompanyMembers({ signal } = {}) {
+  const { data } = await api.get('/employer/company/former-members/', { signal })
+  return data
+}
+
+/** Give every job and campaign `source` holds at the company to `target` (both member_id). */
+export async function handOverCompanyResources(source, target) {
+  const { data } = await api.post('/employer/company/handover/', { source, target })
+  return data
+}
+
 /** The company manager removes a member; rejected with `blockers` while work is running. */
 export async function removeCompanyMember(memberId, reason) {
   await api.post(`/employer/company/members/${encodeURIComponent(memberId)}/remove/`, { reason })

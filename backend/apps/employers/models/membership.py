@@ -119,6 +119,7 @@ class EmployerCompanyLinkEvent(models.Model):
         OWNERSHIP_TRANSFERRED = 'ownership_transferred', 'Chuyển quyền quản lý công ty'
         OWNER_ASSIGNED = 'owner_assigned', 'Admin chỉ định quản lý công ty'
         MEMBER_REMOVED = 'member_removed', 'Quản lý công ty gỡ thành viên'
+        RESOURCES_HANDED_OVER = 'resources_handed_over', 'Giao tin tuyển dụng cho thành viên khác'
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     recruiter = models.ForeignKey(

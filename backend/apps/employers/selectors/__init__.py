@@ -29,7 +29,7 @@ from .companies import (
     similar_public_companies,
 )
 from .company_follows import company_follow_state, followed_companies_queryset
-from .company_members import company_members_queryset
+from .company_members import company_members_queryset, former_company_members_queryset
 from .company_membership import (
     admin_company_join_requests_queryset,
     company_join_requests_for_owner,
@@ -92,6 +92,7 @@ from .rollout import employer_rollout_counters
 
 __all__ = [
     'company_members_queryset',
+    'former_company_members_queryset',
     'admin_company_join_requests_queryset',
     'company_join_requests_for_owner',
     'pending_join_requests_awaiting_admin',

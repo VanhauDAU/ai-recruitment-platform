@@ -1,6 +1,6 @@
-import { TeamOutlined } from '@ant-design/icons'
+import { HistoryOutlined, TeamOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Alert, Empty, Segmented, Skeleton } from 'antd'
+import { Alert, Avatar, Button, Empty, Segmented, Skeleton } from 'antd'
 import { useState } from 'react'
 import {
   employerCompanyPageKeys,
@@ -10,14 +10,18 @@ import {
 import {
   employerProfileKeys,
   getCompanyMembers,
+  getFormerCompanyMembers,
+  handOverCompanyResources,
   removeCompanyMember,
   transferCompanyOwnership,
 } from '@/entities/employer-profile'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
+import { formatDateTime } from '@/shared/lib/date-time'
 import { message } from '@/shared/lib/toast'
 import useConfirmAction from '@/shared/ui/use-confirm-action'
 import CompanyJoinRequestsPanel from './CompanyJoinRequestsPanel'
 import CompanyMemberCard from './CompanyMemberCard'
+import HandoverModal from './HandoverModal'
 
 const FILTERS = [
   { value: 'all', label: 'Tất cả' },
@@ -33,15 +37,22 @@ const FILTERS = [
 export default function CompanyMembersPanel({ onRefresh }) {
   const queryClient = useQueryClient()
   const [filter, setFilter] = useState('all')
+  const [handoverSource, setHandoverSource] = useState(null)
   const { confirmationModal, requestConfirmation } = useConfirmAction()
   const membersQuery = useQuery({
     queryKey: employerProfileKeys.companyMembers,
     queryFn: ({ signal }) => getCompanyMembers({ signal }),
     retry: false,
   })
+  const formerQuery = useQuery({
+    queryKey: employerProfileKeys.formerCompanyMembers,
+    queryFn: ({ signal }) => getFormerCompanyMembers({ signal }),
+    retry: false,
+  })
   const refreshMembers = () => Promise.all([
     queryClient.invalidateQueries({ queryKey: employerProfileKeys.companyMembers }),
     queryClient.invalidateQueries({ queryKey: employerCompanyPageKeys.editors }),
+    queryClient.invalidateQueries({ queryKey: employerProfileKeys.formerCompanyMembers }),
   ])
   const action = useMutation({
     mutationFn: ({ run }) => run(),
@@ -77,6 +88,12 @@ export default function CompanyMembersPanel({ onRefresh }) {
       : grantEmployerCompanyPageEditor(member.member_id)),
     done: member.page_editor_grant_id ? 'Đã thu hồi quyền biên tập trang công ty.' : 'Đã cấp quyền biên tập trang công ty.',
   })
+  const handOver = (source, target) => action.mutateAsync({
+    member: source.member_id,
+    run: () => handOverCompanyResources(source.member_id, target),
+    done: `Đã giao tin và chiến dịch của ${source.display_name}.`,
+  }).then(() => setHandoverSource(null), () => {})
+  const former = formerQuery.data || []
   const remove = (member, reason) => action.mutateAsync({
     member: member.member_id,
     run: () => removeCompanyMember(member.member_id, reason),
@@ -115,11 +132,50 @@ export default function CompanyMembersPanel({ onRefresh }) {
               busy={action.isPending && action.variables?.member === member.member_id}
               onTransfer={transfer}
               onToggleEditor={toggleEditor}
+              onHandover={setHandoverSource}
               onRemove={remove}
             />
           ))}
         </div>
       </section>
+
+      {former.length > 0 && (
+        <section className="company-members__section" aria-label="Người đã rời công ty">
+          <header className="company-members__header">
+            <div>
+              <h2><HistoryOutlined /> Người đã rời công ty</h2>
+              <p>Họ vẫn đứng tên tin tuyển dụng tại công ty. Không ai xem được hồ sơ ứng tuyển của các tin này cho tới khi bạn giao lại.</p>
+            </div>
+          </header>
+          <ul className="company-join-requests">
+            {former.map((person) => (
+              <li key={person.member_id} className="company-join-request">
+                <Avatar size={40} src={person.avatar_url || undefined} className="company-member__avatar">
+                  {!person.avatar_url && person.display_name.charAt(0).toLocaleUpperCase('vi-VN')}
+                </Avatar>
+                <span className="company-join-request__info">
+                  <strong>{person.display_name}</strong>
+                  <span>
+                    {person.job_count} tin ({person.active_job_count} đang tuyển) · {person.unanswered_application_count} hồ sơ chờ phản hồi
+                    {person.open_campaign_count > 0 && ` · ${person.open_campaign_count} chiến dịch`}
+                  </span>
+                  {person.left_at && <small>Rời công ty {formatDateTime(person.left_at)}</small>}
+                </span>
+                <span className="company-join-request__actions">
+                  <Button type="primary" onClick={() => setHandoverSource(person)}>Tiếp quản</Button>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+      <HandoverModal
+        source={handoverSource}
+        members={members}
+        busy={action.isPending}
+        onConfirm={handOver}
+        onClose={() => setHandoverSource(null)}
+      />
       {confirmationModal}
     </div>
   )

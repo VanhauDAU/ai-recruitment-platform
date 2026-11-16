@@ -17,4 +17,5 @@ export const employerProfileKeys = {
   myCompanyJoinRequest: [...employerProfileRoot, 'company-join', 'mine'],
   companyJoinRequests: [...employerProfileRoot, 'company-join', 'requests'],
   companyMembers: [...employerProfileRoot, 'company-members'],
+  formerCompanyMembers: [...employerProfileRoot, 'company-members', 'former'],
 }

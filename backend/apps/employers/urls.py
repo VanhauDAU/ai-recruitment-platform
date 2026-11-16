@@ -14,6 +14,7 @@ from .api.views import (
     CompanyDomainClaimVerifyView,
     CompanyGalleryDeleteView,
     CompanyGalleryUploadView,
+    CompanyHandoverView,
     CompanyJoinRequestDecisionView,
     CompanyJoinRequestListView,
     CompanyLogoUploadView,
@@ -36,6 +37,7 @@ from .api.views import (
     EmployerNotificationReadAllView,
     EmployerNotificationReadView,
     EmployerNotificationUnreadCountView,
+    FormerCompanyMemberListView,
     IndustryListView,
     JoinCompanyView,
     MyCompanyJoinRequestView,
@@ -172,6 +174,12 @@ urlpatterns = [
         name='employer-company-join-decision',
     ),
     path('company/members/', CompanyMemberListView.as_view(), name='employer-company-members'),
+    path(
+        'company/former-members/',
+        FormerCompanyMemberListView.as_view(),
+        name='employer-company-former-members',
+    ),
+    path('company/handover/', CompanyHandoverView.as_view(), name='employer-company-handover'),
     path(
         'company/members/<str:member_id>/remove/',
         CompanyMemberRemoveView.as_view(),

@@ -96,7 +96,17 @@ Quyết định nghiệp vụ đã chốt với user ngày 16/11:
 
 | Dọn | Bù thời gian cho mọi lần ẩn do nền tảng; một định nghĩa owner đủ điều kiện; cảnh báo nộp hàng loạt theo công ty; người nhận nhắc dự phòng; luật ứng tuyển lấy từ API | 🟨 Xong trên nhánh `fix/flow-loose-ends` |
 
-| Thành viên | Tab Thành viên cho quản lý công ty: thẻ thành viên đầy đủ (xác thực chi tiết, ngày tham gia, người duyệt, hoạt động tuyển dụng), cấp/thu quyền biên tập, chuyển quyền quản lý, gỡ thành viên; đổi chữ "owner" thành "Quản lý công ty" | 🟨 Xong trên nhánh `feat/company-members-tab` |
+| Thành viên | Tab Thành viên cho quản lý công ty: thẻ thành viên đầy đủ (xác thực chi tiết, ngày tham gia, người duyệt, hoạt động tuyển dụng), cấp/thu quyền biên tập, chuyển quyền quản lý, gỡ thành viên; đổi chữ "owner" thành "Quản lý công ty" | ✅ Gộp vào `dev` (#226) |
+
+| Tiếp quản | Quản lý công ty giao toàn bộ tin và chiến dịch của một người (đang ở công ty hoặc đã rời) cho thành viên đã xác thực; mục "Người đã rời công ty" | 🟨 Xong trên nhánh `feat/member-resource-handover` |
+
+<details><summary>Ghi chú tiếp quản</summary>
+
+- `POST /api/employer/company/handover/` với `{source, target}` là `member_id`. Chiến dịch được chuyển trước, rồi đến tin, vì tin chỉ được nằm trong chiến dịch do chính người đăng sở hữu. Hồ sơ ứng tuyển và lịch sử đi theo tin. Ghi `EmployerCompanyLinkEvent.RESOURCES_HANDED_OVER` và gửi thông báo `jobs_handed_over` (migration employers 0062 chỉ đổi nhãn).
+- `GET /api/employer/company/former-members/` liệt kê những người đã rời nhưng vẫn đứng tên tin hoặc chiến dịch tại công ty, kèm số hồ sơ đang chờ.
+- Gỡ một thành viên còn tin đang tuyển: giao tin cho người khác trước, sau đó gỡ được.
+
+</details>
 
 <details><summary>Ghi chú tab Thành viên</summary>
 

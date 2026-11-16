@@ -273,3 +273,72 @@ class CompanyMemberManagementTests(APITestCase):
         self.assertEqual(self_removal.status_code, status.HTTP_400_BAD_REQUEST)
         self.member_profile.refresh_from_db()
         self.assertEqual(self.member_profile.company, self.company)
+
+
+class CompanyHandoverTests(APITestCase):
+    def setUp(self):
+        from apps.jobs.models import Job
+
+        self.manager = _employer('ho-manager@example.com')
+        self.company = Company.objects.create(company_name='Acme', created_by=self.manager)
+        self.manager_profile = make_verified_representative(self.manager, company=self.company)
+        self.leaver = _employer('ho-leaver@example.com')
+        self.leaver_profile = make_verified_representative(self.leaver, company=self.company)
+        self.job = Job.objects.create(
+            posted_by=self.leaver,
+            company=self.company,
+            title='Tin',
+            description='d',
+            status=Job.Status.ACTIVE,
+        )
+        self.client.force_authenticate(self.manager)
+
+    def _hand_over(self, target=None):
+        return self.client.post(
+            reverse('employer-company-handover'),
+            {
+                'source': self.leaver_profile.public_id,
+                'target': target or self.manager_profile.public_id,
+            },
+            format='json',
+        )
+
+    def test_handover_unblocks_removing_a_member_with_running_jobs(self):
+        handed = self._hand_over()
+        removed = self.client.post(
+            reverse('employer-company-member-remove', args=[self.leaver_profile.public_id]),
+            {'reason': 'Nghỉ việc'},
+            format='json',
+        )
+
+        self.assertEqual(handed.status_code, status.HTTP_200_OK, handed.data)
+        self.assertEqual(handed.data['job_count'], 1)
+        self.job.refresh_from_db()
+        self.assertEqual(self.job.posted_by, self.manager)
+        self.assertEqual(removed.status_code, status.HTTP_204_NO_CONTENT, removed.data)
+        self.assertTrue(
+            EmployerNotification.objects.filter(
+                recipient=self.manager, event_type=EmployerNotification.EventType.JOBS_HANDED_OVER
+            ).exists()
+        )
+
+    def test_former_members_with_jobs_are_listed_until_handed_over(self):
+        RecruiterProfile.objects.filter(pk=self.leaver_profile.pk).update(company=None)
+
+        listed = self.client.get(reverse('employer-company-former-members'))
+        self._hand_over()
+        after = self.client.get(reverse('employer-company-former-members'))
+
+        self.assertEqual([row['member_id'] for row in listed.data], [self.leaver_profile.public_id])
+        self.assertEqual(listed.data[0]['active_job_count'], 1)
+        self.assertEqual(after.data, [])
+
+    def test_jobs_only_go_to_a_verified_member(self):
+        stranger = _employer('ho-fresh@example.com')
+        fresh = RecruiterProfile.objects.create(user=stranger, company=self.company)
+
+        response = self._hand_over(target=fresh.public_id)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.job.refresh_from_db()
+        self.assertEqual(self.job.posted_by, self.leaver)
