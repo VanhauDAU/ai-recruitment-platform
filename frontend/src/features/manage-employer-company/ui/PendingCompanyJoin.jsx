@@ -22,8 +22,8 @@ export default function PendingCompanyJoin({ joinRequest, onChanged }) {
       title={`Đang chờ duyệt tham gia ${joinRequest.company_name}`}
       subTitle={`Gửi lúc ${dayjs(joinRequest.created_at).format('DD/MM/YYYY HH:mm')}. ${
         joinRequest.awaiting_admin
-          ? 'Công ty chưa có owner đã xác thực nên quản trị viên ProCV sẽ duyệt.'
-          : 'Owner của công ty sẽ duyệt.'
+          ? 'Công ty chưa có quản lý đã xác thực nên quản trị viên ProCV sẽ duyệt.'
+          : 'Quản lý công ty sẽ duyệt.'
       } Sau khi được duyệt, bạn nộp giấy tờ để xác thực tài khoản (bước riêng do quản trị viên kiểm tra).`}
       extra={<Button loading={cancel.isPending} onClick={() => cancel.mutate()}>Hủy yêu cầu</Button>}
     />

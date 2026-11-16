@@ -12,7 +12,7 @@ import { message } from '@/shared/lib/toast'
 
 // What already took effect for the company, with the step that undoes it.
 const BLOCKER_LABELS = {
-  COMPANY_OWNER_WITH_MEMBERS: 'Là chủ công ty còn thành viên khác: chuyển quyền chủ trước',
+  COMPANY_OWNER_WITH_MEMBERS: 'Là quản lý công ty còn thành viên khác: chuyển quyền quản lý trước',
   VERIFICATION_APPROVED: 'Xác thực đã được duyệt: thu hồi xác thực trước',
   ACTIVE_JOBS_EXIST: 'Còn tin đang tuyển: đóng các tin trước',
   OPEN_CAMPAIGNS_EXIST: 'Còn chiến dịch chưa kết thúc: hoàn tất hoặc hủy trước',

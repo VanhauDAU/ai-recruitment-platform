@@ -107,7 +107,9 @@ def _require_decider(user, company):
     """Eligible owners decide; administrators only when the company has none."""
     if getattr(user, 'is_admin_role', False):
         if company_has_eligible_owner(company):
-            raise PermissionDenied('Công ty đã có owner đã xác thực, yêu cầu này do owner duyệt.')
+            raise PermissionDenied(
+                'Công ty đã có quản lý công ty đã xác thực, yêu cầu này do quản lý công ty duyệt.'
+            )
         return
     if company_owners(company).filter(user=user).exists():
         return
@@ -117,7 +119,7 @@ def _require_decider(user, company):
         raise PermissionDenied(
             'Tài khoản của bạn cần được xác thực trước khi duyệt yêu cầu tham gia.'
         )
-    raise PermissionDenied('Chỉ owner của công ty mới duyệt được yêu cầu tham gia.')
+    raise PermissionDenied('Chỉ quản lý công ty mới duyệt được yêu cầu tham gia.')
 
 
 @transaction.atomic
@@ -199,7 +201,7 @@ def _record_owner_change(*, target, company, actor, event_type, reason, previous
             f'company-owner:{company.public_id}:{target.public_id}:'
             f'{int(timezone.now().timestamp())}'
         ),
-        message=f'Bạn đã trở thành owner của {company.company_name}.',
+        message=f'Bạn đã trở thành quản lý công ty {company.company_name}.',
         subject_public_id=company.public_id,
     )
 
@@ -212,7 +214,9 @@ def transfer_company_ownership(user, recruiter_public_id):
         raise PermissionDenied('Bạn chưa liên kết với công ty nào.')
     company = owner.company
     if not company_owners(company).filter(pk=owner.pk).exists():
-        raise PermissionDenied('Chỉ owner đã xác thực tài khoản mới chuyển được quyền owner.')
+        raise PermissionDenied(
+            'Chỉ quản lý công ty đã xác thực tài khoản mới chuyển được quyền quản lý.'
+        )
     target = _eligible_member(company, recruiter_public_id)
     if target.pk == owner.pk:
         raise ValidationError({'recruiter': 'Hãy chọn một thành viên khác.'})
@@ -225,7 +229,7 @@ def transfer_company_ownership(user, recruiter_public_id):
         company=company,
         actor=user,
         event_type=EmployerCompanyLinkEvent.EventType.OWNERSHIP_TRANSFERRED,
-        reason='Owner chuyển quyền owner.',
+        reason='Quản lý công ty chuyển quyền quản lý.',
         previous_owner_ids=[owner.pk],
     )
     return target
@@ -237,11 +241,13 @@ def admin_assign_company_owner(admin, company, recruiter_public_id, *, reason):
     company = Company.objects.select_for_update().get(pk=company.pk)
     if company_has_eligible_owner(company):
         raise ValidationError(
-            {'detail': 'Công ty đã có owner đã xác thực, owner tự chuyển quyền nếu cần.'}
+            {
+                'detail': 'Công ty đã có quản lý công ty đã xác thực, người đó tự chuyển quyền nếu cần.'
+            }
         )
     reason = (reason or '').strip()
     if not reason:
-        raise ValidationError({'reason': 'Nhập lý do chỉ định owner.'})
+        raise ValidationError({'reason': 'Nhập lý do chỉ định quản lý công ty.'})
     target = _eligible_member(company, recruiter_public_id)
     previous = list(
         RecruiterProfile.objects.select_for_update()

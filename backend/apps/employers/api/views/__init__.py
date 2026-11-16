@@ -42,6 +42,8 @@ from .media import (
 from .memberships import (
     CompanyJoinRequestDecisionView,
     CompanyJoinRequestListView,
+    CompanyMemberListView,
+    CompanyMemberRemoveView,
     CompanyOwnershipTransferView,
     JoinCompanyView,
     MyCompanyJoinRequestView,
@@ -111,6 +113,8 @@ __all__ = [
     'CompanyJoinRequestDecisionView',
     'CompanyOwnershipTransferView',
     'CompanyJoinRequestListView',
+    'CompanyMemberListView',
+    'CompanyMemberRemoveView',
     'JoinCompanyView',
     'MyCompanyJoinRequestView',
     'MyCompanyView',
