@@ -1,10 +1,11 @@
 """Write-side commands for the public company page."""
 
 from django.db import IntegrityError, transaction
+from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
 from apps.accounts.services import record_admin_action
-from apps.jobs.models import Job
+from apps.jobs.models import Job, give_back_hidden_time
 
 from ..models import Company, CompanyPageEvent, CompanyPageSettings, CompanyPinnedJob
 from ..page_registry import PINNED_JOB_LIMIT, resolve_section_order
@@ -34,6 +35,19 @@ def set_company_page_policy_hold(company, *, actor, hold, reason):
                     else 'Trang công ty hiện không bị tạm ẩn.'
                 )
             }
+        )
+    if not hold:
+        # The company's jobs were off the public list meanwhile; give that back.
+        applied = (
+            CompanyPageEvent.objects.filter(
+                company=company, event_type=CompanyPageEvent.EventType.POLICY_HOLD_APPLIED
+            )
+            .order_by('-created_at')
+            .values_list('created_at', flat=True)
+            .first()
+        )
+        give_back_hidden_time(
+            Job.objects.filter(company=company), since=applied, now=timezone.now()
         )
     CompanyPageEvent.objects.create(
         company=company,

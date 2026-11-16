@@ -24,7 +24,7 @@ export default function ApplyForJobModal({
   candidateEmail = '',
   candidatePhone = '',
   isReapplication = false,
-  retriesRemaining = 0,
+  retriesRemaining = null,
 }) {
   const { settings } = useSiteSettings()
   const supportEmail = settingText(settings.support_email, 'support@procv.vn')
@@ -66,7 +66,7 @@ export default function ApplyForJobModal({
             type="warning"
             showIcon
             title={<strong>Lưu ý</strong>}
-            description={<>Việc ứng tuyển nhiều lần sẽ giảm độ chuyên nghiệp của bạn trong mắt nhà tuyển dụng. Bạn còn <strong>{retriesRemaining} lượt</strong> ứng tuyển lại cho công việc này, hãy cân nhắc kỹ!</>}
+            description={<>Việc ứng tuyển nhiều lần sẽ giảm độ chuyên nghiệp của bạn trong mắt nhà tuyển dụng.{retriesRemaining != null && <> Bạn còn <strong>{retriesRemaining} lượt</strong> ứng tuyển lại cho công việc này.</>} Hãy cân nhắc kỹ!</>}
             className="mb-4"
           />
         )}

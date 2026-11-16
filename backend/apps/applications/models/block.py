@@ -21,7 +21,7 @@ class CandidateBlock(models.Model):
         FAKE_PROFILE = 'fake_profile', 'Hồ sơ giả mạo'
         OTHER = 'other', 'Lý do khác'
 
-    # Mass-apply signal: a candidate applying to this many of one recruiter's
+    # Mass-apply signal: a candidate applying to this many of one company's
     # jobs within the window is suggested for blocking (match score will
     # refine it later).
     MASS_APPLY_WINDOW_DAYS = 14

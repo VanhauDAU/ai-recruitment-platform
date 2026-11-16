@@ -5,6 +5,7 @@ from django.http import Http404
 from drf_spectacular.utils import extend_schema
 from rest_framework import generics, status
 from rest_framework.exceptions import ValidationError
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -16,6 +17,7 @@ from ...selectors import candidate_applications_queryset, recruiter_application_
 from ...services import (
     ApplicationNotAllowed,
     ApplicationNotFound,
+    application_rules,
     create_application_record,
     open_application_snapshot,
     request_recruiter_reminder,
@@ -139,3 +141,14 @@ class RecruiterApplicationSnapshotView(APIView):
                 context={'request': request},
             ).data
         )
+
+
+@extend_schema(tags=['applications-v2'], summary='Luật ứng tuyển, nhắc NTD và tự từ chối')
+class ApplicationRulesView(APIView):
+    """The limits the clients show, served from the services that enforce them."""
+
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def get(self, request):
+        return Response(application_rules())

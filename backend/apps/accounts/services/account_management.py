@@ -4,13 +4,13 @@ from datetime import timedelta
 
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
-from django.db.models import Count, Max
+from django.db.models import Count, F, Max
 from django.utils import timezone
 
 from apps.applications.models import Application
 from apps.candidates.models import CandidateProfile
 from apps.employers.models import CampaignActivity, RecruiterProfile, RecruitmentCampaign
-from apps.jobs.models import Job
+from apps.jobs.models import Job, give_back_hidden_time
 from apps.locations.models import Location
 
 from ..admin_invitation_tokens import (
@@ -886,6 +886,7 @@ def _confirm_account_status(
                 policy_hold_transition=None,
             )
         if release_job_qs is not None:
+            give_back_hidden_time(release_job_qs, since=F('policy_held_at'), now=now)
             release_job_qs.update(
                 policy_hold=Job.PolicyHold.NONE,
                 policy_held_at=None,
@@ -1055,10 +1056,9 @@ def confirm_release_account_resource_holds(
             policy_held_at=None,
             policy_hold_transition=None,
         )
-        Job.objects.filter(
-            pk__in=job_ids,
-            policy_hold__in=releasable_job_holds,
-        ).update(
+        released_jobs = Job.objects.filter(pk__in=job_ids, policy_hold__in=releasable_job_holds)
+        give_back_hidden_time(released_jobs, since=F('policy_held_at'), now=timezone.now())
+        released_jobs.update(
             policy_hold=Job.PolicyHold.NONE,
             policy_held_at=None,
             policy_hold_transition=None,

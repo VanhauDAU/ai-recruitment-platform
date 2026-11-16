@@ -168,3 +168,21 @@ class CompanyOwnershipTests(APITestCase):
         )
         self.member_profile.refresh_from_db()
         self.assertEqual(self.member_profile.company_role, RecruiterProfile.CompanyRole.OWNER)
+
+    def test_an_owner_under_compliance_hold_hands_decisions_to_admins(self):
+        from ..models import EmployerComplianceHold
+
+        EmployerComplianceHold.objects.create(
+            recruiter=RecruiterProfile.objects.get(user=self.owner),
+            source=EmployerComplianceHold.Source.DPA,
+            reason=EmployerComplianceHold.Reason.DPA_HOLD,
+        )
+        join_request = self._request()
+        self.client.force_authenticate(self.admin)
+
+        queue = self.client.get(reverse('admin-company-join-request-list'), {'awaiting_admin': '1'})
+
+        self.assertEqual(
+            [row['public_id'] for row in queue.data['results']], [join_request.public_id]
+        )
+        self.assertEqual(list(company_owners(self.company)), [])

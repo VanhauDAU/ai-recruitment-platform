@@ -31,6 +31,7 @@ from .api.views.talent_pool import (
     RecruiterTalentSuggestionView,
 )
 from .api.views.v2 import (
+    ApplicationRulesView,
     CandidateApplicationRemindView,
     CandidateApplicationV2ListCreateView,
     CandidateApplicationWithdrawView,
@@ -38,6 +39,7 @@ from .api.views.v2 import (
 )
 
 urlpatterns = [
+    path('applications/rules/', ApplicationRulesView.as_view(), name='application-rules-v2'),
     path(
         'admin/jobs/<str:job_public_id>/applications/',
         AdminJobApplicationListView.as_view(),

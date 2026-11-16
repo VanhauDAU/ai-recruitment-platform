@@ -146,3 +146,31 @@ class RecruiterReminderTests(TestCase):
         self.assertEqual(
             ApplicationReminder.objects.filter(source=ApplicationReminder.Source.SYSTEM).count(), 1
         )
+
+    def test_a_nudge_reaches_a_colleague_when_poster_and_owners_are_gone(self):
+        from django.contrib.auth import get_user_model
+
+        from apps.employers.models import RecruiterProfile
+
+        colleague = get_user_model().objects.create_user(
+            email='remind-colleague@example.com', password='password', role='employer'
+        )
+        RecruiterProfile.objects.create(user=colleague, company=self.application.job.company)
+        RecruiterProfile.objects.filter(user=self.employer).update(company=None)
+        self.age(4)
+
+        self.remind()
+
+        self.assertTrue(
+            EmployerNotification.objects.filter(recipient=colleague, event_type=AWAITING).exists()
+        )
+
+    def test_rules_endpoint_serves_the_enforced_limits(self):
+        response = APIClient().get(reverse('application-rules-v2'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['max_submissions_per_job'], 3)
+        self.assertEqual(response.data['candidate_reminder_after_days'], 3)
+        self.assertIn(
+            {'value': 21, 'label': '3 tuần'}, response.data['auto_reject_after_day_choices']
+        )

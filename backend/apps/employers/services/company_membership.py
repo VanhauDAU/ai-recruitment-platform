@@ -18,7 +18,10 @@ from ..models import (
     RecruiterProfile,
 )
 from ..models.readiness import has_explicit_company_link
-from ..models.representation import eligible_representatives_queryset
+from ..models.representation import (
+    eligible_owners_queryset,
+    eligible_representatives_queryset,
+)
 from .notifications import emit_employer_event
 from .profiles import get_or_create_recruiter
 
@@ -52,12 +55,8 @@ def create_company_for_recruiter(user, serializer):
 
 
 def company_owners(company):
-    """Owners who may approve joins: active accounts with approved verification."""
-    return (
-        eligible_representatives_queryset()
-        .filter(company=company, company_role=RecruiterProfile.CompanyRole.OWNER)
-        .select_related('user')
-    )
+    """Owners who may approve joins and manage members (see ``eligible_owners_queryset``)."""
+    return eligible_owners_queryset().filter(company=company).select_related('user')
 
 
 def company_has_eligible_owner(company):
