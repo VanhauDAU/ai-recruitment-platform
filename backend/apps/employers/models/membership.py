@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.db import models
 
+from common.phone import same_phone
 from common.public_id import generate_public_id
 
 from .company import Company
@@ -101,6 +102,20 @@ class RecruiterProfile(models.Model):
                 name='employer_dpa_grace_state_consistent',
             ),
         ]
+
+    @property
+    def has_verified_phone(self):
+        """The one rule for "phone verified", used by every screen and gate.
+
+        The verified number must still be the contact and login number; the
+        same line stored as 0xxx or +84xxx counts as one.
+        """
+        return bool(
+            self.phone_verified_at
+            and self.verified_phone
+            and same_phone(self.contact_phone, self.verified_phone)
+            and same_phone(self.user.phone, self.verified_phone)
+        )
 
     def save(self, *args, **kwargs):
         if not self.public_id:

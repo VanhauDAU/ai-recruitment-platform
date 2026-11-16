@@ -198,12 +198,7 @@ def employer_badge_state_map(badge_keys):
             'email_domain_verified': bool(
                 current_domain and (recruiter.company_id, current_domain) in verified_domains
             ),
-            'phone_verified': bool(
-                recruiter.phone_verified_at
-                and recruiter.verified_phone
-                and recruiter.contact_phone == recruiter.verified_phone
-                and user.phone == recruiter.verified_phone
-            ),
+            'phone_verified': recruiter.has_verified_phone,
             'business_doc_approved': _legal_documents_approved(recruiter),
             'account_age_reached': now >= eligible_at,
             'no_report_history': not recruiter.has_trust_violation,

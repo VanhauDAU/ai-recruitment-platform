@@ -353,7 +353,7 @@ class AdminVerificationCaseListSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
     def get_phone_verified(self, obj):
-        return obj.recruiter.phone_verified_at is not None
+        return obj.recruiter.has_verified_phone
 
     def get_rejection_limit(self, obj):
         return 3

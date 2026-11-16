@@ -113,7 +113,7 @@ class AdminCompanyDomainClaimSerializer(CompanyDomainClaimSerializer):
         return {
             'public_id': getattr(profile, 'public_id', None),
             'company_role': getattr(profile, 'company_role', ''),
-            'phone_verified': bool(getattr(profile, 'phone_verified_at', None)),
+            'phone_verified': bool(profile and profile.has_verified_phone),
             'legal_status': getattr(verification_case, 'status', ''),
             'legal_method': getattr(verification_case, 'verification_method', ''),
         }

@@ -253,6 +253,33 @@ class CompanyMemberManagementTests(APITestCase):
             ).exists()
         )
 
+    def test_a_removed_member_keeps_a_verified_phone(self):
+        self._remove(self.member_profile.public_id)
+
+        self.client.force_authenticate(self.member)
+        me = self.client.get(reverse('employer-me'))
+
+        self.assertTrue(me.data['onboarding']['phone_verified'])
+
+    def test_approved_proof_does_not_follow_a_member_back_into_a_company(self):
+        from ..models import CompanyDocument
+
+        self._remove(self.member_profile.public_id)
+        RecruiterProfile.objects.filter(pk=self.member_profile.pk).update(
+            company=self.company, company_role=RecruiterProfile.CompanyRole.MEMBER
+        )
+        self.client.force_authenticate(self.member)
+
+        documents = self.client.get(reverse('employer-company-documents'), {'scope': 'mine'})
+        me = self.client.get(reverse('employer-me'))
+
+        self.assertFalse(
+            CompanyDocument.objects.filter(recruiter=self.member_profile, is_current=True).exists()
+        )
+        self.assertFalse([row for row in documents.data if row.get('is_current') is not False])
+        self.assertFalse(me.data['onboarding']['candidate_dpa_submitted'])
+        self.assertFalse(me.data['onboarding']['business_doc_submitted'])
+
     def test_removal_waits_for_running_jobs_and_never_targets_the_manager(self):
         from apps.jobs.models import Job
 

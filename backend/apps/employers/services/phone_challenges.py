@@ -16,6 +16,7 @@ from django.db import IntegrityError, transaction
 from django.utils import timezone
 
 from common.metrics import record_metric
+from common.phone import canonical_vn_mobile
 from common.public_id import generate_public_id
 
 from ..models import EmployerPhoneVerificationEvent, PhoneOtp
@@ -51,16 +52,10 @@ class PhoneChallengeError(Exception):
 
 def normalize_vietnamese_mobile(value):
     """Return canonical +84 mobile form or raise a domain validation error."""
-
-    compact = ''.join(character for character in (value or '').strip() if character not in ' .-()')
-    if compact.startswith('0'):
-        compact = f'+84{compact[1:]}'
-    if len(compact) != 12 or not compact.startswith('+84'):
+    canonical = canonical_vn_mobile(value)
+    if canonical is None:
         raise ValidationError('Số điện thoại phải là số di động Việt Nam hợp lệ.')
-    subscriber = compact[3:]
-    if len(subscriber) != 9 or subscriber[0] not in '35789' or not subscriber.isdigit():
-        raise ValidationError('Số điện thoại phải là số di động Việt Nam hợp lệ.')
-    return compact
+    return canonical
 
 
 def _hmac_key():

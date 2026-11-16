@@ -19,6 +19,7 @@ import { useSession } from '@/entities/session'
 import { settingText, useSiteSettings } from '@/entities/site-settings'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import {
+  EMPLOYER_ACCOUNT_VERIFY_URL,
   EMPLOYER_PASSWORD_SETTINGS_URL,
   EMPLOYER_PHONE_VERIFY_URL,
 } from '@/shared/config/portals'
@@ -110,13 +111,16 @@ export default function EmployerPhoneVerification() {
           ? 'Số điện thoại mới đã được xác thực.'
           : 'Số điện thoại đã được xác thực.',
       )
-      setChallenge(null)
-      setFlowMode(null)
+      // Load the verified state first: resetting the flow before the profile
+      // refreshes showed the empty verification form again for a moment.
       await Promise.all([
         profileQuery.refetch(),
         refreshSession(),
         queryClient.invalidateQueries({ queryKey: ['employer-dashboard'] }),
+        queryClient.invalidateQueries({ queryKey: ['employer', 'profile'] }),
       ])
+      setChallenge(null)
+      setFlowMode(null)
     },
     onError: (error) => message.error(getApiErrorMessage(error, 'Mã xác thực không hợp lệ.')),
   })
@@ -171,9 +175,11 @@ export default function EmployerPhoneVerification() {
             title="Số điện thoại đã được xác thực"
             subTitle={verifiedPhone}
             extra={[
+              <Link key="continue" to={EMPLOYER_ACCOUNT_VERIFY_URL}>
+                <Button type="primary">Tiếp tục xác thực tài khoản</Button>
+              </Link>,
               <Button
                 key="change"
-                type="primary"
                 onClick={() => {
                   setFlowMode('phone_change')
                   form.setFieldsValue({ phone: '', code: '' })
