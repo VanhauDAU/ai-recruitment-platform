@@ -42,7 +42,6 @@ class ApplicationSerializer(serializers.ModelSerializer):
             'submitted_cv_version',
             'submitted_cv_title',
             'submitted_cv_source',
-            'submitted_at',
             'cover_letter',
             'source',
             'status',
@@ -83,6 +82,15 @@ class PreviousSubmissionSerializer(serializers.ModelSerializer):
     """An earlier, replaced submission: what it was and how it ended, read-only."""
 
     status_label = serializers.CharField(source='get_status_display', read_only=True)
+    # A resubmission restarts at "Mới"; this keeps how far the earlier one got.
+    furthest_stage = serializers.SerializerMethodField()
+
+    FURTHEST_STAGE_FIELDS = (
+        ('accepted', 'accepted_at'),
+        ('interviewed', 'interviewed_at'),
+        ('shortlisted', 'shortlisted_at'),
+        ('viewed', 'viewed_at'),
+    )
 
     class Meta:
         model = Application
@@ -91,11 +99,18 @@ class PreviousSubmissionSerializer(serializers.ModelSerializer):
             'applied_at',
             'status',
             'status_label',
+            'furthest_stage',
             'submitted_cv_title',
             'withdrawn_at',
             'rejected_at',
         ]
         read_only_fields = fields
+
+    def get_furthest_stage(self, obj) -> str:
+        return next(
+            (stage for stage, field in self.FURTHEST_STAGE_FIELDS if getattr(obj, field)),
+            'submitted',
+        )
 
 
 class ApplicationAssessmentSerializer(serializers.Serializer):

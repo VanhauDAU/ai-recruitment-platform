@@ -1,4 +1,4 @@
-import { CalendarOutlined, CheckOutlined, DownOutlined, FileTextOutlined, InfoCircleOutlined, LeftOutlined, MessageOutlined, RightOutlined } from '@ant-design/icons'
+import { CalendarOutlined, CheckOutlined, DownOutlined, FileTextOutlined, InfoCircleOutlined, LeftOutlined, MessageOutlined, RightOutlined, StopOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
 import { Empty, Skeleton, Tooltip } from 'antd'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -12,6 +12,7 @@ import {
   formatAppliedJobTime,
   getApplicationHeadline,
   getCompletedStageCount,
+  getStoppedStageIndex,
 } from './model/applied-job-presentation'
 import './applied-jobs.css'
 
@@ -91,16 +92,19 @@ function StatusFilters({ value, onChange }) {
 
 function ApplicationProgress({ application }) {
   const completed = getCompletedStageCount(application)
+  const stoppedAt = getStoppedStageIndex(application)
   return (
     <ol className="applied-job__steps" aria-label="Các bước xử lý hồ sơ">
       {APPLICATION_STAGES.map((stage, index) => {
         const done = index < completed
+        const stopped = index === stoppedAt
+        const modifier = done ? ' applied-job__step--done' : stopped ? ' applied-job__step--stopped' : ''
         return (
-          <li key={stage.label} className={`applied-job__step${done ? ' applied-job__step--done' : ''}`} style={{ '--step': index }}>
-            <span className="applied-job__dot">{done && <CheckOutlined />}</span>
+          <li key={stage.label} className={`applied-job__step${modifier}`} style={{ '--step': index }}>
+            <span className="applied-job__dot">{done && <CheckOutlined />}{stopped && <StopOutlined />}</span>
             <span className="applied-job__step-label">
-              {stage.label}
-              {stage.hint && (
+              {stopped ? 'NTD ngừng tuyển' : stage.label}
+              {!stopped && stage.hint && (
                 <Tooltip title={stage.hint}>
                   <InfoCircleOutlined aria-label={stage.hint} />
                 </Tooltip>

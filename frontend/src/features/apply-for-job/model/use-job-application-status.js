@@ -26,7 +26,7 @@ export function getJobApplicationStatus(applications, jobPublicId, now = Date.no
   return {
     latestApplication: current,
     hasApplied: Boolean(current),
-    // Still in the recruiter's hands: changed from the applied-jobs page, not resent.
+    // Still in the recruiter's hands: to send another CV, withdraw it on the applied-jobs page first.
     isPending,
     isResubmission: Boolean(current && canResubmit),
     applyLabel: isPending ? 'Đã ứng tuyển' : current ? 'Ứng tuyển lại' : 'Ứng tuyển ngay',

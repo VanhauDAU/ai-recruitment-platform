@@ -162,7 +162,7 @@ export default function ApplicationInspectorPanel({
               {selectedApplication.job_title}
             </InfoRow>
             <InfoRow icon={<CalendarOutlined aria-hidden />} label="Ngày ứng tuyển">
-              {formatApplicationDate(selectedApplication.applied_at || snapshot?.submitted_at, true)}
+              {formatApplicationDate(selectedApplication.applied_at, true)}
               {` · Lần ${selectedApplication.submission_number || 1}`}
             </InfoRow>
             {selectedApplication.last_reminded_at && (

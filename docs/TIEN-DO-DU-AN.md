@@ -9,7 +9,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | --- | --- |
 | [Bảng điều khiển quản trị](#bảng-điều-khiển-quản-trị-2026-11-16) | 🟨 Xong trên nhánh `feat/admin-dashboard`, chưa mở PR |
 | [Ảnh đại diện dùng chung 3 cổng](#ảnh-đại-diện-dùng-chung-3-cổng-2026-11-16) | 🟨 Xong trên nhánh `feat/avatar-editor`, chưa mở PR |
-| [Dọn mâu thuẫn còn lại sau thống nhất luồng](#dọn-mâu-thuẫn-còn-lại-sau-thống-nhất-luồng-2026-11-16) | 🟨 GĐ C: PR #222; GĐ A xong trên nhánh `fix/company-ownership-blocks`; GĐ B đang làm |
+| [Dọn mâu thuẫn còn lại sau thống nhất luồng](#dọn-mâu-thuẫn-còn-lại-sau-thống-nhất-luồng-2026-11-16) | 🟨 Cả 3 GĐ đã có PR: C #222, A #223, B (xếp chồng) |
 | [Thống nhất luồng đăng tin, hiển thị, ứng tuyển, công ty](#thống-nhất-luồng-đăng-tin-hiển-thị-ứng-tuyển-công-ty-2026-11-15) | ✅ Cả 6 giai đoạn đã gộp (#208–#215); hoàn thiện luồng nhắc NTD và lịch sử nộp trên nhánh `feat/application-reminders` |
 | [Đối sánh ngữ nghĩa CV–JD chạy local](#đối-sánh-ngữ-nghĩa-cvjd-chạy-local-2026-11-15) | 🟨 Nền tảng (tuần 1) xong trên nhánh `feat/ai-matching-foundation`, chưa mở PR |
 | [CV tải lên: tệp gốc, tiêu chuẩn upload, giới hạn CV, NTD tìm kiếm](#cv-tải-lên-tệp-gốc-tiêu-chuẩn-upload-giới-hạn-cv-ntd-tìm-kiếm-2026-11-15) | ✅ Gộp vào `dev` (#203) |
@@ -91,8 +91,18 @@ Quyết định nghiệp vụ đã chốt với user ngày 16/11:
 | GĐ | Nội dung | Trạng thái |
 | --- | --- | --- |
 | A | Owner đủ điều kiện mới duyệt tham gia, admin duyệt khi không có owner, chuyển quyền/chỉ định owner, chặn ứng viên gắn công ty; màn công ty của owner tách tab "Thông tin công ty" / "Thành viên" | 🟨 Xong trên nhánh `fix/company-ownership-blocks` |
-| B | Nút của ứng viên theo trạng thái đã công bố, rút được hồ sơ khi tin ngừng tuyển, một đồng hồ phản hồi, dashboard admin đếm mọi lượt nộp | ⬜ Chưa làm |
+| B | Nút của ứng viên theo trạng thái đã công bố, rút được hồ sơ khi tin ngừng tuyển, một đồng hồ phản hồi, dashboard admin đếm mọi lượt nộp | 🟨 Xong trên nhánh `fix/application-response-clock` |
 | C | Ngày theo giờ VN (email "còn X ngày", tác động thu hồi xác thực, ngày mục tiêu, quota AI); bù thời gian hiển thị khi tin bị ẩn; chặn gửi duyệt lại khi chưa sửa nội dung | 🟨 Xong trên nhánh `fix/vn-date-moderation` |
+
+<details><summary>Ghi chú GĐ B</summary>
+
+- `Application.candidate_visible_status()` là trạng thái ứng viên đã được báo (dựa trên `ApplicationStatusHistory.objects.published()`). Mọi luật phía ứng viên đều dùng giá trị này: các nút, ứng tuyển lại, nhắc NTD, rút hồ sơ. Rút hồ sơ khi quyết định chưa công bố thì quyết định đó bị hoàn tác và thông báo bị hủy.
+- Được rút hồ sơ khi tin đã ngừng tuyển. Thanh tiến trình dừng ở bước thật, bước kế tiếp hiện "NTD ngừng tuyển".
+- Tự từ chối tính từ `applied_at`. Mở CV không làm đồng hồ chạy lại. Nếu NTD hoàn tác về trạng thái chưa phản hồi, `auto_reject_due_floor` đảm bảo còn ít nhất 3 ngày và cảnh báo được gửi lại. Đã bỏ `Application.submitted_at` (migration applications 0021).
+- Nhắc NTD sau 3 và 7 ngày chỉ chạy khi tin còn nhận hồ sơ. Nếu ứng viên đã nhắc trong 24 giờ trước đó, hệ thống ghi mốc nhưng không gửi thêm. Người đăng tin đã rời công ty thì nhắc gửi cho owner. Email báo tự từ chối luôn được gửi, kể cả khi NTD đã tắt tính năng sau đó.
+- Dashboard admin: biểu đồ và KPI "hồ sơ mới" đếm mọi lượt nộp. Chỉ số tồn đọng đếm cả "Mới" lẫn "Đã xem" quá 7 ngày. Ở mục các lần nộp trước, NTD thấy hồ sơ cũ từng đến vòng nào.
+
+</details>
 
 <details><summary>Ghi chú GĐ A</summary>
 

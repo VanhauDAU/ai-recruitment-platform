@@ -42,7 +42,6 @@ class AdminJobApplicationSerializer(serializers.ModelSerializer):
             'allow_ai_analysis',
             'data_processing_consent',
             'applied_at',
-            'submitted_at',
             'updated_at',
         ]
         read_only_fields = fields

@@ -62,9 +62,18 @@ export function getApplicationHeadline(application) {
   }
 }
 
-/** Number of completed stages; a withdrawn application keeps the furthest stage it reached. */
+/**
+ * Number of completed stages; a withdrawn application keeps the furthest stage
+ * it reached. A stopped job never counts as an answer from the employer.
+ */
 export function getCompletedStageCount(application) {
-  if (isJobStoppedNews(application)) return APPLICATION_STAGES.length
   const statuses = [application.status, ...(application.timeline || []).map((item) => item.status)]
   return Math.max(1, ...statuses.map((status) => STAGES_REACHED[status] || 0))
+}
+
+/** Index of the stage where recruiting stopped without an answer, or -1. */
+export function getStoppedStageIndex(application) {
+  if (!isJobStoppedNews(application) || application.status === 'withdrawn') return -1
+  const completed = getCompletedStageCount(application)
+  return completed < APPLICATION_STAGES.length ? completed : -1
 }

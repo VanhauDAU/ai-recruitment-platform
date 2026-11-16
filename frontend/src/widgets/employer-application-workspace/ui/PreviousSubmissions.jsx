@@ -4,6 +4,13 @@ import { applicationKeys, getRecruiterApplicationSubmissions } from '@/entities/
 import { formatApplicationDate } from '../model/application-workspace'
 import ApplicationStatusBadge from './ApplicationStatusBadge'
 
+const FURTHEST_STAGE_LABELS = {
+  viewed: 'Đã xem CV',
+  shortlisted: 'Phù hợp',
+  interviewed: 'Phỏng vấn',
+  accepted: 'Trúng tuyển',
+}
+
 /** Earlier submissions this one replaced: how each ended, read-only. */
 export default function PreviousSubmissions({ application }) {
   const hasEarlier = (application.submission_number || 1) > 1
@@ -25,7 +32,10 @@ export default function PreviousSubmissions({ application }) {
               <span className="block truncate text-xs font-semibold text-slate-700">
                 Lần {application.submission_number - index - 1} · {item.submitted_cv_title || 'CV ứng viên'}
               </span>
-              <span className="block text-[11px] text-slate-400">Nộp {formatApplicationDate(item.applied_at)}</span>
+              <span className="block text-[11px] text-slate-400">
+                Nộp {formatApplicationDate(item.applied_at)}
+                {FURTHEST_STAGE_LABELS[item.furthest_stage] && ` · Từng đến vòng ${FURTHEST_STAGE_LABELS[item.furthest_stage]}`}
+              </span>
             </span>
             <ApplicationStatusBadge status={item.status} />
           </li>
