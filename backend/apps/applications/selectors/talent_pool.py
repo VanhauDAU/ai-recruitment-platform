@@ -48,7 +48,7 @@ def talent_suggestions_for_job(recruiter, job, *, limit=20):
             Exists(
                 CandidateBlock.objects.filter(
                     CandidateBlock.active_q(),
-                    recruiter=recruiter,
+                    company_id=job.company_id,
                     candidate_id=OuterRef('candidate_id'),
                 )
             )

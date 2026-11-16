@@ -1,15 +1,18 @@
 import { CheckCircleFilled, PlusOutlined, SearchOutlined } from '@ant-design/icons'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Button, Result, Skeleton } from 'antd'
+import { Badge, Button, Result, Skeleton, Tabs } from 'antd'
 import { useState } from 'react'
+import { useSearchParams } from 'react-router'
 import {
   employerProfileKeys,
   getEmployerCompanyCatalogs,
   getEmployerIndustries,
+  getCompanyJoinRequests,
   getEmployerProfile,
   getMyCompanyJoinRequest,
 } from '@/entities/employer-profile'
 import CompanyForm from './CompanyForm'
+import CompanyMembersPanel from './CompanyMembersPanel'
 import CompanySearchPanel from './CompanySearchPanel'
 import LinkedCompanyPanel from './LinkedCompanyPanel'
 import PendingCompanyJoin from './PendingCompanyJoin'
@@ -62,7 +65,10 @@ export default function EmployerCompanySettings() {
   const catalogs = catalogsQuery.data || { business_types: [], company_sizes: [], markets: [], target_customers: [] }
   const industries = industriesQuery.data || []
   if (profile.onboarding?.company_linked) {
-    return <LinkedCompanyPanel profile={profile} catalogs={catalogs} industries={industries} onRefresh={refreshProfile} />
+    const panel = <LinkedCompanyPanel profile={profile} catalogs={catalogs} industries={industries} onRefresh={refreshProfile} />
+    return profile.company_role === 'owner'
+      ? <OwnerCompanyTabs infoPanel={panel} onRefresh={refreshProfile} />
+      : panel
   }
   if (joinRequestQuery.isLoading) return <Skeleton active paragraph={{ rows: 4 }} />
   if (joinRequestQuery.data?.public_id) {
@@ -89,5 +95,33 @@ export default function EmployerCompanySettings() {
           : <CompanyForm catalogs={catalogs} industries={industries} onCompleted={refreshProfile} />}
       </div>
     </div>
+  )
+}
+
+/** Owners manage the company in two tabs: its information, and its members. */
+function OwnerCompanyTabs({ infoPanel, onRefresh }) {
+  const [searchParams, setSearchParams] = useSearchParams()
+  const activeTab = searchParams.get('tab') === 'members' ? 'members' : 'info'
+  const requestsQuery = useQuery({ queryKey: employerProfileKeys.companyJoinRequests, queryFn: getCompanyJoinRequests })
+  const pending = Array.isArray(requestsQuery.data) ? requestsQuery.data.length : 0
+  const changeTab = (tab) => {
+    const next = new URLSearchParams(searchParams)
+    if (tab === 'members') next.set('tab', 'members')
+    else next.delete('tab')
+    setSearchParams(next, { replace: true })
+  }
+  return (
+    <Tabs
+      activeKey={activeTab}
+      onChange={changeTab}
+      items={[
+        { key: 'info', label: 'Thông tin công ty', children: infoPanel },
+        {
+          key: 'members',
+          label: <span className="inline-flex items-center gap-2">Thành viên {pending > 0 && <Badge count={pending} size="small" />}</span>,
+          children: <CompanyMembersPanel onRefresh={onRefresh} />,
+        },
+      ]}
+    />
   )
 }

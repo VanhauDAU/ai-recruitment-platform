@@ -7,12 +7,22 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.accounts.permissions import IsEmployer
+from apps.employers.models import RecruiterProfile
 from apps.employers.services import ensure_recruiter_candidate_data_access
 
 from ...models import CandidateBlock
 from ...selectors import employer_application_queryset, recruiter_candidate_blocks_queryset
 from ...services import CandidateAlreadyBlocked, block_candidate, lift_candidate_block
 from ..serializers.blocks import CandidateBlockCreateSerializer, CandidateBlockSerializer
+
+
+def _block_context(user):
+    return {
+        'user': user,
+        'is_company_owner': RecruiterProfile.objects.filter(
+            user=user, company__isnull=False, company_role=RecruiterProfile.CompanyRole.OWNER
+        ).exists(),
+    }
 
 
 @extend_schema(tags=['applications-v2'])
@@ -24,8 +34,11 @@ class RecruiterCandidateBlockListCreateView(generics.ListAPIView):
         ensure_recruiter_candidate_data_access(self.request.user)
         return recruiter_candidate_blocks_queryset(self.request.user)
 
+    def get_serializer_context(self):
+        return {**super().get_serializer_context(), **_block_context(self.request.user)}
+
     @extend_schema(
-        summary='Chặn ứng viên ứng tuyển vào các tin của tôi',
+        summary='Chặn ứng viên ứng tuyển vào các tin của công ty',
         request=CandidateBlockCreateSerializer,
         responses={201: CandidateBlockSerializer},
     )
@@ -48,7 +61,10 @@ class RecruiterCandidateBlockListCreateView(generics.ListAPIView):
             )
         except CandidateAlreadyBlocked as error:
             raise ValidationError({'detail': str(error)}) from error
-        return Response(CandidateBlockSerializer(block).data, status=status.HTTP_201_CREATED)
+        return Response(
+            CandidateBlockSerializer(block, context=_block_context(request.user)).data,
+            status=status.HTTP_201_CREATED,
+        )
 
 
 @extend_schema(tags=['applications-v2'], summary='Gỡ chặn ứng viên', request=None)
@@ -61,4 +77,4 @@ class RecruiterCandidateBlockLiftView(APIView):
             block = lift_candidate_block(recruiter=request.user, block_public_id=public_id)
         except CandidateBlock.DoesNotExist as error:
             raise Http404 from error
-        return Response(CandidateBlockSerializer(block).data)
+        return Response(CandidateBlockSerializer(block, context=_block_context(request.user)).data)

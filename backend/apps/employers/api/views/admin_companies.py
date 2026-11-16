@@ -14,7 +14,7 @@ from ...selectors import (
     company_page_policy_hold,
     company_page_queryset,
 )
-from ...services import set_company_page_policy_hold
+from ...services import admin_assign_company_owner, set_company_page_policy_hold
 from ..serializers import (
     AdminCompanyDetailSerializer,
     AdminCompanyListSerializer,
@@ -76,6 +76,20 @@ class AdminCompanyViewSet(viewsets.ReadOnlyModelViewSet):
         if page is not None:
             return self.get_paginated_response(serializer.data)
         return Response(serializer.data)
+
+    @action(detail=True, methods=['post'], url_path='assign-owner')
+    def assign_owner(self, request, public_id=None):
+        company = self.get_object()
+        target = admin_assign_company_owner(
+            request.user,
+            company,
+            request.data.get('recruiter', ''),
+            reason=request.data.get('reason', ''),
+        )
+        row = admin_company_recruiters_queryset(company).get(pk=target.pk)
+        return Response(
+            AdminCompanyRecruiterSerializer(row, context=self.get_serializer_context()).data
+        )
 
     @action(detail=False, methods=['get'])
     def summary(self, request):

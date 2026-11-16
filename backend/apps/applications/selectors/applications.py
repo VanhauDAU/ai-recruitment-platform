@@ -19,6 +19,7 @@ from django.db.models.functions import Cast, Coalesce, Concat
 from django.utils import timezone
 
 from apps.candidates.models import CandidateNotification
+from apps.employers.models import RecruiterProfile
 
 from ..models import (
     Application,
@@ -106,7 +107,7 @@ def employer_applications_queryset(
             candidate_blocked=Exists(
                 CandidateBlock.objects.filter(
                     CandidateBlock.active_q(),
-                    recruiter_id=OuterRef('job__posted_by_id'),
+                    company_id=OuterRef('job__company_id'),
                     candidate_id=OuterRef('candidate_id'),
                 )
             ),
@@ -257,9 +258,14 @@ def recruiter_reviews_queryset(application):
 
 
 def recruiter_candidate_blocks_queryset(recruiter):
+    """Blocks in force for the recruiter's company, or their own when unlinked."""
+    company_id = (
+        RecruiterProfile.objects.filter(user=recruiter).values_list('company_id', flat=True).first()
+    )
+    scope = Q(company_id=company_id) if company_id else Q(recruiter=recruiter)
     return (
-        CandidateBlock.objects.filter(recruiter=recruiter, lifted_at__isnull=True)
-        .select_related('candidate', 'source_application__job')
+        CandidateBlock.objects.filter(scope, CandidateBlock.active_q())
+        .select_related('candidate', 'recruiter', 'source_application__job')
         .order_by('-created_at', '-id')
     )
 

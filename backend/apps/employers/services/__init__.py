@@ -31,11 +31,14 @@ from .companies import (
 )
 from .company_follows import follow_company, unfollow_company
 from .company_membership import (
+    admin_assign_company_owner,
     cancel_company_join,
+    company_has_eligible_owner,
     company_owners,
     create_company_for_recruiter,
     decide_company_join,
     request_company_join,
+    transfer_company_ownership,
 )
 from .company_page import (
     CompanyPageLayoutStale,
@@ -157,10 +160,13 @@ from .verification import (
 
 __all__ = [
     'cancel_company_join',
+    'admin_assign_company_owner',
+    'company_has_eligible_owner',
     'company_owners',
     'create_company_for_recruiter',
     'decide_company_join',
     'request_company_join',
+    'transfer_company_ownership',
     'BADGE_CRITERIA',
     'TRUST_REPORT_REASONS',
     'COMPANY_DESCRIPTION_MIN_LENGTH',

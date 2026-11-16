@@ -17,6 +17,7 @@ from .api.views import (
     CompanyJoinRequestDecisionView,
     CompanyJoinRequestListView,
     CompanyLogoUploadView,
+    CompanyOwnershipTransferView,
     CompanyPageContentView,
     CompanyPageEditorDetailView,
     CompanyPageEditorListView,
@@ -167,6 +168,11 @@ urlpatterns = [
         'company/join-requests/<str:public_id>/<str:decision>/',
         CompanyJoinRequestDecisionView.as_view(),
         name='employer-company-join-decision',
+    ),
+    path(
+        'company/ownership-transfer/',
+        CompanyOwnershipTransferView.as_view(),
+        name='employer-company-ownership-transfer',
     ),
     path('company/page/', CompanyPageWorkspaceView.as_view(), name='employer-company-page'),
     path(

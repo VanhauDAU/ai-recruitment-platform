@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Button, Empty, Skeleton } from 'antd'
+import { Alert, Button, Empty, Skeleton } from 'antd'
 import dayjs from 'dayjs'
 import {
   decideCompanyJoinRequest,
@@ -9,7 +9,10 @@ import {
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { message } from '@/shared/lib/toast'
 
-/** Owner view: recruiters asking to join the company, each approved or rejected. */
+/**
+ * Owner view of "duyệt tham gia": recruiters asking to join the company. Only a
+ * verified owner decides; joining never verifies the new member's account.
+ */
 export default function CompanyJoinRequestsPanel() {
   const queryClient = useQueryClient()
   const requestsQuery = useQuery({
@@ -20,16 +23,25 @@ export default function CompanyJoinRequestsPanel() {
     mutationFn: ({ publicId, decision }) => decideCompanyJoinRequest(publicId, decision),
     onSuccess: (_saved, { decision }) => {
       queryClient.invalidateQueries({ queryKey: employerProfileKeys.companyJoinRequests })
-      message.success(decision === 'approve' ? 'Đã thêm thành viên vào công ty.' : 'Đã từ chối yêu cầu.')
+      message.success(decision === 'approve' ? 'Đã duyệt tham gia. Thành viên mới cần tự xác thực tài khoản.' : 'Đã từ chối yêu cầu.')
     },
     onError: (error) => message.error(getApiErrorMessage(error, 'Không thể xử lý yêu cầu lúc này.')),
   })
   const requests = Array.isArray(requestsQuery.data) ? requestsQuery.data : []
+  const canDecide = requests.every((item) => item.can_decide)
 
   return (
-    <section className="company-update-request" aria-label="Yêu cầu tham gia công ty">
+    <section className="rounded-lg border border-slate-200 p-4" aria-label="Duyệt tham gia công ty">
       <div className="w-full">
-        <h2>Yêu cầu tham gia công ty</h2>
+        <h2 className="m-0 text-base font-bold text-slate-800">Duyệt tham gia công ty</h2>
+        {!canDecide && (
+          <Alert
+            className="my-2"
+            type="warning"
+            showIcon
+            title="Bạn cần xác thực tài khoản trước khi duyệt yêu cầu tham gia."
+          />
+        )}
         {requestsQuery.isLoading && <Skeleton active paragraph={{ rows: 1 }} />}
         {!requestsQuery.isLoading && !requests.length && (
           <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Chưa có yêu cầu nào đang chờ" />
@@ -47,6 +59,7 @@ export default function CompanyJoinRequestsPanel() {
                 <Button
                   size="small"
                   type="primary"
+                  disabled={!item.can_decide}
                   loading={decide.isPending && decide.variables?.publicId === item.public_id && decide.variables?.decision === 'approve'}
                   onClick={() => decide.mutate({ publicId: item.public_id, decision: 'approve' })}
                 >
@@ -55,6 +68,7 @@ export default function CompanyJoinRequestsPanel() {
                 <Button
                   size="small"
                   danger
+                  disabled={!item.can_decide}
                   loading={decide.isPending && decide.variables?.publicId === item.public_id && decide.variables?.decision === 'reject'}
                   onClick={() => decide.mutate({ publicId: item.public_id, decision: 'reject' })}
                 >

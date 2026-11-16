@@ -1,6 +1,9 @@
 export {
+  assignAdminCompanyOwner,
+  decideAdminCompanyJoinRequest,
   getAdminCompanies,
   getAdminCompany,
+  getAdminCompanyJoinRequests,
   getAdminCompanyPublicPage,
   getAdminCompanyRecruiters,
   getAdminCompanySummary,
