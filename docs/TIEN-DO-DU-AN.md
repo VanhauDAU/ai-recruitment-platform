@@ -9,7 +9,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | --- | --- |
 | [Bảng điều khiển quản trị](#bảng-điều-khiển-quản-trị-2026-11-16) | 🟨 Xong trên nhánh `feat/admin-dashboard`, chưa mở PR |
 | [Ảnh đại diện dùng chung 3 cổng](#ảnh-đại-diện-dùng-chung-3-cổng-2026-11-16) | 🟨 Xong trên nhánh `feat/avatar-editor`, chưa mở PR |
-| [Dọn mâu thuẫn còn lại sau thống nhất luồng](#dọn-mâu-thuẫn-còn-lại-sau-thống-nhất-luồng-2026-11-16) | 🟨 Cả 3 GĐ đã có PR: C #222, A #223, B (xếp chồng) |
+| [Dọn mâu thuẫn còn lại sau thống nhất luồng](#dọn-mâu-thuẫn-còn-lại-sau-thống-nhất-luồng-2026-11-16) | ✅ Cả 3 GĐ đã gộp (#222, #223, #224); dọn phần còn hở trên nhánh `fix/flow-loose-ends` |
 | [Thống nhất luồng đăng tin, hiển thị, ứng tuyển, công ty](#thống-nhất-luồng-đăng-tin-hiển-thị-ứng-tuyển-công-ty-2026-11-15) | ✅ Cả 6 giai đoạn đã gộp (#208–#215); hoàn thiện luồng nhắc NTD và lịch sử nộp trên nhánh `feat/application-reminders` |
 | [Đối sánh ngữ nghĩa CV–JD chạy local](#đối-sánh-ngữ-nghĩa-cvjd-chạy-local-2026-11-15) | 🟨 Nền tảng (tuần 1) xong trên nhánh `feat/ai-matching-foundation`, chưa mở PR |
 | [CV tải lên: tệp gốc, tiêu chuẩn upload, giới hạn CV, NTD tìm kiếm](#cv-tải-lên-tệp-gốc-tiêu-chuẩn-upload-giới-hạn-cv-ntd-tìm-kiếm-2026-11-15) | ✅ Gộp vào `dev` (#203) |
@@ -90,9 +90,21 @@ Quyết định nghiệp vụ đã chốt với user ngày 16/11:
 
 | GĐ | Nội dung | Trạng thái |
 | --- | --- | --- |
-| A | Owner đủ điều kiện mới duyệt tham gia, admin duyệt khi không có owner, chuyển quyền/chỉ định owner, chặn ứng viên gắn công ty; màn công ty của owner tách tab "Thông tin công ty" / "Thành viên" | 🟨 Xong trên nhánh `fix/company-ownership-blocks` |
-| B | Nút của ứng viên theo trạng thái đã công bố, rút được hồ sơ khi tin ngừng tuyển, một đồng hồ phản hồi, dashboard admin đếm mọi lượt nộp | 🟨 Xong trên nhánh `fix/application-response-clock` |
-| C | Ngày theo giờ VN (email "còn X ngày", tác động thu hồi xác thực, ngày mục tiêu, quota AI); bù thời gian hiển thị khi tin bị ẩn; chặn gửi duyệt lại khi chưa sửa nội dung | 🟨 Xong trên nhánh `fix/vn-date-moderation` |
+| A | Owner đủ điều kiện mới duyệt tham gia, admin duyệt khi không có owner, chuyển quyền/chỉ định owner, chặn ứng viên gắn công ty; màn công ty của owner tách tab "Thông tin công ty" / "Thành viên" | ✅ Gộp vào `dev` (#223) |
+| B | Nút của ứng viên theo trạng thái đã công bố, rút được hồ sơ khi tin ngừng tuyển, một đồng hồ phản hồi, dashboard admin đếm mọi lượt nộp | ✅ Gộp vào `dev` (#224) |
+| C | Ngày theo giờ VN (email "còn X ngày", tác động thu hồi xác thực, ngày mục tiêu, quota AI); bù thời gian hiển thị khi tin bị ẩn; chặn gửi duyệt lại khi chưa sửa nội dung | ✅ Gộp vào `dev` (#222) |
+
+| Dọn | Bù thời gian cho mọi lần ẩn do nền tảng; một định nghĩa owner đủ điều kiện; cảnh báo nộp hàng loạt theo công ty; người nhận nhắc dự phòng; luật ứng tuyển lấy từ API | 🟨 Xong trên nhánh `fix/flow-loose-ends` |
+
+<details><summary>Ghi chú phần dọn</summary>
+
+- `give_back_hidden_time` (`apps/jobs/models/visibility.py`) cộng lại thời gian bị ẩn khi gỡ: khóa tài khoản (`policy_held_at`), giữ để kiểm tra tuân thủ (`applied_at`, chỉ khi recruiter không còn lệnh giữ nào khác) và ẩn trang công ty (lần `POLICY_HOLD_APPLIED` gần nhất). Các lần ẩn mà NTD tự khắc phục được (hạn nộp, DPA, hồ sơ chưa đủ) không được bù.
+- `eligible_owners_queryset()` = người đại diện đủ điều kiện, có vai trò owner, không bị giữ để kiểm tra tuân thủ. Duyệt tham gia, hàng đợi admin, danh sách thành viên và chỉ định owner đều dùng định nghĩa này.
+- Cảnh báo nộp hàng loạt tính theo công ty. Nhắc NTD gửi theo thứ tự: người đăng tin → owner đủ điều kiện → mọi NTD còn hoạt động của công ty.
+- `GET /api/v2/applications/rules/` trả về: số lần nộp tối đa, thời gian chờ nộp lại, mốc ứng viên được nhắc, các lựa chọn thời hạn tự từ chối, số ngày cảnh báo và số ngày ân hạn email. Frontend không còn chép tay các con số này. Form đăng tin ghi rõ thời hạn "tính từ ngày ứng viên nộp".
+- Đã chốt là thiết kế, không sửa: hồ sơ trên tin của đồng nghiệp bị từ chối do chặn ứng viên thì không hoàn tác được; gỡ chặn xong thì ứng viên nộp lại.
+
+</details>
 
 <details><summary>Ghi chú GĐ B</summary>
 

@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Empty, Skeleton, Tooltip } from 'antd'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router'
-import { CANDIDATE_APPLICATION_FILTERS, applicationKeys, getCandidateApplications } from '@/entities/application'
+import { CANDIDATE_APPLICATION_FILTERS, applicationKeys, getCandidateApplications, useApplicationRules } from '@/entities/application'
 import { CandidateApplicationActions } from '@/features/manage-candidate-application'
 import { MASCOT_SCENES, MascotEmpty } from '@/shared/ui/mascot'
 import {
@@ -19,10 +19,12 @@ import './applied-jobs.css'
 const FILTERS = [['all', 'Tất cả'], ...CANDIDATE_APPLICATION_FILTERS]
 
 function RemindBanner() {
+  const rules = useApplicationRules()
+  const after = rules ? <strong>{rules.candidate_reminder_after_days} ngày</strong> : 'vài ngày'
   return (
     <div className="applied-jobs__banner">
       <p className="applied-jobs__banner-text">
-        Bạn có thể nhấn nút <strong>&quot;Nhắc NTD&quot;</strong> nếu đã quá <strong>3 ngày</strong> từ lúc ứng tuyển mà vẫn
+        Bạn có thể nhấn nút <strong>&quot;Nhắc NTD&quot;</strong> nếu đã quá {after} từ lúc ứng tuyển mà vẫn
         chưa được NTD phản hồi. ProCV sẽ thay bạn gửi một lời nhắn chuyên nghiệp tới NTD.
       </p>
       <img src={MASCOT_SCENES.cvHelper} alt="" loading="lazy" />

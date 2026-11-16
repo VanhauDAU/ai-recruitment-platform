@@ -3,15 +3,11 @@
 from django.db.models import Exists, OuterRef
 
 from ..models import CompanyJoinRequest, RecruiterProfile
-from ..models.representation import eligible_representatives_queryset
+from ..models.representation import eligible_owners_queryset
 
 
 def _has_eligible_owner():
-    return Exists(
-        eligible_representatives_queryset().filter(
-            company_id=OuterRef('company_id'), company_role=RecruiterProfile.CompanyRole.OWNER
-        )
-    )
+    return Exists(eligible_owners_queryset().filter(company_id=OuterRef('company_id')))
 
 
 def pending_company_join_request(user):

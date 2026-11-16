@@ -8,6 +8,7 @@ from django.db.models import Exists, F, OuterRef, Q
 
 from apps.accounts.models import User
 
+from .compliance import EmployerComplianceHold
 from .membership import RecruiterProfile
 from .verification import CompanyDocument, EmployerVerificationCase
 
@@ -62,4 +63,18 @@ def eligible_representatives_queryset():
                 _has_identity_document=True,
             )
         )
+    )
+
+
+def eligible_owners_queryset():
+    """Owners who approve joins and manage members: eligible representatives
+    with no active compliance hold. One definition for services, selectors and
+    the admin queue."""
+    held = EmployerComplianceHold.objects.filter(
+        recruiter_id=OuterRef('pk'), status=EmployerComplianceHold.Status.ACTIVE
+    )
+    return (
+        eligible_representatives_queryset()
+        .filter(company_role=RecruiterProfile.CompanyRole.OWNER)
+        .exclude(Exists(held))
     )

@@ -59,12 +59,25 @@ def candidate_reminder_available_at(application, *, now=None, visible_status=Non
 
 
 def reminder_recipients(job):
-    """The poster while still at the job's company; otherwise its verified owners."""
+    """Who hears about unanswered applications of ``job``.
+
+    The poster while still at the job's company; otherwise its eligible owners;
+    with none, every active recruiter left at the company, so a nudge always
+    reaches someone who can answer.
+    """
     if RecruiterProfile.objects.filter(
         user_id=job.posted_by_id, company_id=job.company_id
     ).exists():
         return [job.posted_by]
-    return [owner.user for owner in company_owners(job.company)]
+    owners = [owner.user for owner in company_owners(job.company)]
+    if owners:
+        return owners
+    return [
+        recruiter.user
+        for recruiter in RecruiterProfile.objects.filter(
+            company_id=job.company_id, user__is_active=True, user__is_deleted=False
+        ).select_related('user')
+    ]
 
 
 def _notify(job, applications, *, reminder_ids):

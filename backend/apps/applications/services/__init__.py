@@ -32,6 +32,7 @@ from .reviews import (
     revoke_review_link,
     submit_review,
 )
+from .rules import application_rules
 from .status import (
     InvalidApplicationStatusTransition,
     StatusChangeNotUndoable,
@@ -53,6 +54,7 @@ from .talent_pool import (
 )
 
 __all__ = [
+    'application_rules',
     'candidate_reminder_available_at',
     'request_recruiter_reminder',
     'send_unanswered_application_reminders',

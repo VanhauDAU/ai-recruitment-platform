@@ -1,17 +1,12 @@
 import { MailOutlined, ThunderboltOutlined } from '@ant-design/icons'
 import { Form, Input, Select, Switch } from 'antd'
-
-const DEADLINE_OPTIONS = [
-  { value: 14, label: '2 tuần' },
-  { value: 21, label: '3 tuần' },
-  { value: 28, label: '4 tuần' },
-  { value: 42, label: '6 tuần' },
-  { value: 56, label: '8 tuần' },
-]
+import { useApplicationRules } from '@/entities/application'
 
 export default function AutomaticApplicationStatusFields() {
   const form = Form.useFormInstance()
   const enabled = Form.useWatch('auto_reject_stale_applications', form)
+  const rules = useApplicationRules()
+  const days = (value) => (value != null ? `${value} ngày` : 'vài ngày')
 
   return (
     <section className="mt-5 overflow-hidden rounded-xl border border-slate-200 bg-white" aria-labelledby="automatic-application-status-title">
@@ -33,14 +28,15 @@ export default function AutomaticApplicationStatusFields() {
       <div className="space-y-5 px-4 py-5 sm:px-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <p className="m-0 min-w-0 flex-1 text-sm leading-6 text-slate-700">
-            Nếu bạn chưa cập nhật trạng thái, hồ sơ tự động chuyển sang <strong>“Từ chối”</strong> sau
+            Nếu bạn chưa đưa ra quyết định, hồ sơ tự động chuyển sang <strong>“Từ chối”</strong> sau khoảng thời gian này, tính từ ngày ứng viên nộp:
           </p>
           <Form.Item name="auto_reject_after_days" noStyle>
             <Select
               aria-label="Thời hạn tự động chuyển hồ sơ"
               className="w-full sm:!w-28"
               disabled={!enabled}
-              options={DEADLINE_OPTIONS}
+              options={rules?.auto_reject_after_day_choices || []}
+              loading={!rules}
             />
           </Form.Item>
           <Form.Item name="auto_reject_stale_applications" valuePropName="checked" noStyle>
@@ -48,13 +44,13 @@ export default function AutomaticApplicationStatusFields() {
           </Form.Item>
         </div>
         <p className="m-0 text-sm text-slate-500">
-          Bạn sẽ nhận được email nhắc trước 3 ngày khi hồ sơ đến thời hạn trên.
+          Bạn sẽ nhận được email nhắc trước {days(rules?.auto_rejection_warning_days)} khi hồ sơ đến thời hạn trên. Mở xem CV không làm thời hạn tính lại.
         </p>
 
         <div className="border-t border-slate-200 pt-5">
           <h4 className="m-0 text-sm font-bold text-slate-800">Email thông báo cho ứng viên</h4>
           <p className="mb-0 mt-1 text-sm leading-6 text-slate-500">
-            Email chỉ được gửi 3 ngày sau khi hồ sơ tự chuyển sang “Từ chối”. Trong thời gian này, bạn vẫn có thể đổi lại trạng thái hồ sơ.
+            Email chỉ được gửi {days(rules?.auto_rejection_email_grace_days)} sau khi hồ sơ tự chuyển sang “Từ chối”. Trong thời gian này, bạn vẫn có thể đổi lại trạng thái hồ sơ.
           </p>
           <Form.Item
             className="!mb-0 !mt-4"

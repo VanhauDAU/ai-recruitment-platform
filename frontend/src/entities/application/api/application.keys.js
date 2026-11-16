@@ -1,6 +1,7 @@
 export const applicationKeys = {
   all: ['applications'],
   candidateList: ['applications', 'candidate-list'],
+  rules: ['applications', 'rules'],
   recruiterLists: () => ['applications', 'recruiter-list'],
   recruiterList: (params = {}) => ['applications', 'recruiter-list', params],
   // Kept outside `recruiterLists()` so list cache patches never touch it.

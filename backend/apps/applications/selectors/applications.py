@@ -61,12 +61,16 @@ def candidate_applications_queryset(candidate):
 
 
 def _recent_jobs_applied_count():
-    """Distinct jobs of the same recruiter the candidate applied to recently."""
+    """Distinct jobs of the same company the candidate applied to recently.
+
+    Company-wide like the blocklist it suggests: spreading applications over
+    several colleagues' jobs is still mass-applying.
+    """
     since = timezone.now() - timedelta(days=CandidateBlock.MASS_APPLY_WINDOW_DAYS)
     return (
         Application.objects.filter(
             candidate_id=OuterRef('candidate_id'),
-            job__posted_by_id=OuterRef('job__posted_by_id'),
+            job__company_id=OuterRef('job__company_id'),
             applied_at__gte=since,
         )
         .order_by()

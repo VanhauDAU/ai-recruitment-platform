@@ -45,6 +45,12 @@ export async function getRecruiterApplicationSubmissions(publicId) {
   return data
 }
 
+/** Limits for submissions, reminders and automatic rejection, as the server enforces them. */
+export async function getApplicationRules() {
+  const { data } = await api.get('/v2/applications/rules/')
+  return data
+}
+
 export async function getCandidateApplications() {
   const { data } = await api.get('/v2/applications/')
   return data.results || data
