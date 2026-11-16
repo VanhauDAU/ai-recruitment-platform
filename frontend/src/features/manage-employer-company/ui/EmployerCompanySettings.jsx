@@ -67,7 +67,7 @@ export default function EmployerCompanySettings() {
   if (profile.onboarding?.company_linked) {
     const panel = <LinkedCompanyPanel profile={profile} catalogs={catalogs} industries={industries} onRefresh={refreshProfile} />
     return profile.company_role === 'owner'
-      ? <OwnerCompanyTabs infoPanel={panel} onRefresh={refreshProfile} />
+      ? <ManagerCompanyTabs infoPanel={panel} onRefresh={refreshProfile} />
       : panel
   }
   if (joinRequestQuery.isLoading) return <Skeleton active paragraph={{ rows: 4 }} />
@@ -98,8 +98,8 @@ export default function EmployerCompanySettings() {
   )
 }
 
-/** Owners manage the company in two tabs: its information, and its members. */
-function OwnerCompanyTabs({ infoPanel, onRefresh }) {
+/** The company manager works in two tabs: company information, and members. */
+function ManagerCompanyTabs({ infoPanel, onRefresh }) {
   const [searchParams, setSearchParams] = useSearchParams()
   const activeTab = searchParams.get('tab') === 'members' ? 'members' : 'info'
   const requestsQuery = useQuery({ queryKey: employerProfileKeys.companyJoinRequests, queryFn: getCompanyJoinRequests })

@@ -74,7 +74,7 @@ export default function AdminCompanyJoinRequestQueue({ companyPublicId }) {
       width: 170,
       render: (_, row) => (row.awaiting_admin
         ? <Tag color="orange">Quản trị viên</Tag>
-        : <Tag color="blue">Owner công ty</Tag>),
+        : <Tag color="blue">Quản lý công ty</Tag>),
     },
     { title: 'Gửi lúc', dataIndex: 'created_at', width: 170, render: formatDate },
     {
@@ -90,14 +90,14 @@ export default function AdminCompanyJoinRequestQueue({ companyPublicId }) {
             Từ chối
           </Button>
         </span>
-      ) : <span className="text-xs text-slate-500">Chờ owner duyệt</span>),
+      ) : <span className="text-xs text-slate-500">Chờ quản lý công ty duyệt</span>),
     },
   ].filter(Boolean)
 
   return (
     <CompanyPanel
       title="Yêu cầu tham gia công ty"
-      description="Duyệt tham gia là bước của owner. Quản trị viên chỉ duyệt khi công ty chưa có owner đã xác thực tài khoản."
+      description="Duyệt tham gia là việc của quản lý công ty. Quản trị viên chỉ duyệt khi công ty chưa có quản lý đã xác thực tài khoản."
     >
       <Segmented
         className="mb-3"

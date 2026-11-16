@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { mockPublicApi } from './helpers'
+import { APPLICATION_RULES, mockPublicApi } from './helpers'
 
 const API_ROUTE = /^https?:\/\/[^/]+\/api\/.*$/
 const EMAIL_NOTIFICATION_DEFAULTS = {
@@ -467,6 +467,10 @@ test('candidate smoke: job application submits the selected immutable CV version
   await page.route(API_ROUTE, async (route) => {
     const request = route.request()
     const path = new URL(request.url()).pathname
+    if (path === '/api/v2/applications/rules/') {
+      await route.fulfill({ contentType: 'application/json', body: JSON.stringify(APPLICATION_RULES) })
+      return
+    }
     if (path === '/api/v2/applications/' && request.method() === 'POST') {
       applicationPayload = request.postDataJSON()
       applications = [{

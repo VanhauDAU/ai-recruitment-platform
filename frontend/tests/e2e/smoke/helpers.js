@@ -2,6 +2,24 @@ import { expect } from '@playwright/test'
 
 export const API_ROUTE = /^https?:\/\/[^/]+\/api\/.*$/
 
+// Mirrors GET /api/v2/applications/rules/ (the limits the server enforces).
+export const APPLICATION_RULES = {
+  max_submissions_per_job: 3,
+  reapply_cooldown_seconds: 300,
+  candidate_reminder_after_days: 3,
+  candidate_reminder_interval_days: 3,
+  max_candidate_reminders: 2,
+  auto_reject_after_day_choices: [
+    { value: 14, label: '2 tuần' },
+    { value: 21, label: '3 tuần' },
+    { value: 28, label: '4 tuần' },
+    { value: 42, label: '6 tuần' },
+    { value: 56, label: '8 tuần' },
+  ],
+  auto_rejection_warning_days: 3,
+  auto_rejection_email_grace_days: 3,
+}
+
 export async function mockPublicApi(page) {
   await page.route('http://localhost:8000/api/**', async (route) => {
     const url = new URL(route.request().url())
@@ -67,6 +85,8 @@ export async function mockPublicApi(page) {
             ? []
           : path === '/api/auth/sessions/'
             ? []
+          : path === '/api/v2/applications/rules/'
+            ? APPLICATION_RULES
             : {}
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) })
   })

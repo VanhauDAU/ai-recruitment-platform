@@ -42,7 +42,7 @@ def _require_media_editor(user):
         raise ValidationError(
             {
                 'detail': (
-                    'Chỉ người tạo hồ sơ công ty hoặc người được cấp quyền biên tập '
+                    'Chỉ quản lý công ty hoặc người được cấp quyền biên tập '
                     'trang công ty được thực hiện thao tác này.'
                 )
             }

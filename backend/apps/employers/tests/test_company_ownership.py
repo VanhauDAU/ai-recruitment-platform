@@ -186,3 +186,90 @@ class CompanyOwnershipTests(APITestCase):
             [row['public_id'] for row in queue.data['results']], [join_request.public_id]
         )
         self.assertEqual(list(company_owners(self.company)), [])
+
+
+class CompanyMemberManagementTests(APITestCase):
+    def setUp(self):
+        self.manager = _employer('manager@example.com')
+        self.company = Company.objects.create(company_name='Acme', created_by=self.manager)
+        make_verified_representative(self.manager, company=self.company)
+        self.member = _employer('member@example.com')
+        self.member_profile = make_verified_representative(self.member, company=self.company)
+
+    def _members(self, user=None):
+        self.client.force_authenticate(user or self.manager)
+        return self.client.get(reverse('employer-company-members'))
+
+    def _remove(self, member_id, reason='Đã nghỉ việc'):
+        self.client.force_authenticate(self.manager)
+        return self.client.post(
+            reverse('employer-company-member-remove', args=[member_id]),
+            {'reason': reason},
+            format='json',
+        )
+
+    def test_manager_sees_members_with_role_verification_and_activity(self):
+        from apps.jobs.models import Job
+
+        Job.objects.create(
+            posted_by=self.member,
+            company=self.company,
+            title='Tin',
+            description='d',
+            status=Job.Status.ACTIVE,
+        )
+
+        response = self._members()
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+        manager, member = response.data
+        self.assertEqual(manager['role_label'], 'Quản lý công ty')
+        self.assertTrue(manager['is_me'])
+        self.assertEqual(member['role'], 'member')
+        self.assertEqual(member['verification_label'], 'Đã xác thực')
+        self.assertEqual(member['active_job_count'], 1)
+        self.assertTrue(member['can_transfer'])
+        self.assertEqual(member['removal_blockers'], ['Còn tin đang tuyển'])
+        self.assertNotIn('member@example.com', str(response.data))
+
+    def test_members_cannot_open_the_member_list(self):
+        self.assertEqual(self._members(self.member).status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_manager_removes_a_member_and_their_link_is_withdrawn(self):
+        response = self._remove(self.member_profile.public_id)
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT, response.data)
+        self.member_profile.refresh_from_db()
+        self.assertIsNone(self.member_profile.company)
+        self.assertTrue(
+            EmployerCompanyLinkEvent.objects.filter(
+                event_type=EmployerCompanyLinkEvent.EventType.MEMBER_REMOVED
+            ).exists()
+        )
+        self.assertTrue(
+            EmployerNotification.objects.filter(
+                recipient=self.member,
+                event_type=EmployerNotification.EventType.COMPANY_LINK_REMOVED,
+            ).exists()
+        )
+
+    def test_removal_waits_for_running_jobs_and_never_targets_the_manager(self):
+        from apps.jobs.models import Job
+
+        Job.objects.create(
+            posted_by=self.member,
+            company=self.company,
+            title='Tin',
+            description='d',
+            status=Job.Status.ACTIVE,
+        )
+        manager_profile = RecruiterProfile.objects.get(user=self.manager)
+
+        blocked = self._remove(self.member_profile.public_id)
+        self_removal = self._remove(manager_profile.public_id)
+
+        self.assertEqual(blocked.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(blocked.data['blockers'], ['ACTIVE_JOBS_EXIST'])
+        self.assertEqual(self_removal.status_code, status.HTTP_400_BAD_REQUEST)
+        self.member_profile.refresh_from_db()
+        self.assertEqual(self.member_profile.company, self.company)

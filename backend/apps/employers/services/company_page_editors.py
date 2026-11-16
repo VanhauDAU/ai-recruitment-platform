@@ -49,7 +49,7 @@ def grant_company_page_editor(*, company, actor, member_id):
         raise ValidationError(
             {
                 'code': 'EDITOR_IS_OWNER',
-                'detail': 'Người tạo hồ sơ công ty không cần được cấp quyền biên tập.',
+                'detail': 'Quản lý công ty không cần được cấp quyền biên tập.',
             }
         )
     if not is_page_eligible(member):
@@ -116,7 +116,7 @@ def revoke_company_page_editor(*, company, actor, grant_public_id):
         grant,
         actor=actor,
         event_type=EmployerNotification.EventType.COMPANY_PAGE_EDITOR_REVOKED,
-        message='Người tạo hồ sơ công ty đã thu hồi quyền biên tập trang công ty của bạn.',
+        message='Quản lý công ty đã thu hồi quyền biên tập trang công ty của bạn.',
     )
     return grant
 

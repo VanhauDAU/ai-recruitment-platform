@@ -124,10 +124,10 @@ export default function AdminCompanyDirectory({ onOpenUpdates }) {
         />
         <CompanyStatCard
           icon={<WarningOutlined />}
-          label="Cần kiểm tra owner"
+          label="Cần kiểm tra quản lý"
           value={summary.companies_without_single_owner}
           tone="amber"
-          hint="Khác một owner"
+          hint="Không đúng một quản lý công ty"
         />
         <CompanyStatCard
           icon={<FileSyncOutlined />}

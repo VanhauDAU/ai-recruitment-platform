@@ -96,6 +96,16 @@ Quyết định nghiệp vụ đã chốt với user ngày 16/11:
 
 | Dọn | Bù thời gian cho mọi lần ẩn do nền tảng; một định nghĩa owner đủ điều kiện; cảnh báo nộp hàng loạt theo công ty; người nhận nhắc dự phòng; luật ứng tuyển lấy từ API | 🟨 Xong trên nhánh `fix/flow-loose-ends` |
 
+| Thành viên | Tab Thành viên cho quản lý công ty: thẻ thành viên đầy đủ (xác thực chi tiết, ngày tham gia, người duyệt, hoạt động tuyển dụng), cấp/thu quyền biên tập, chuyển quyền quản lý, gỡ thành viên; đổi chữ "owner" thành "Quản lý công ty" | 🟨 Xong trên nhánh `feat/company-members-tab` |
+
+<details><summary>Ghi chú tab Thành viên</summary>
+
+- `GET /api/employer/company/members/` chỉ quản lý công ty đủ điều kiện mới gọi được. Dữ liệu lấy bằng số query cố định (`company_members_queryset`). Email và SĐT được che một phần.
+- `POST /api/employer/company/members/<member_id>/remove/` yêu cầu nhập lý do. Bị chặn khi thành viên còn tin đang tuyển, còn chiến dịch đang mở, hoặc đang bị giữ để kiểm tra tuân thủ. Không gỡ được quản lý công ty. Khi gỡ, hồ sơ xác thực của thành viên (kể cả đã duyệt) trở về bản nháp, quyền biên tập trang bị thu hồi, ghi `EmployerCompanyLinkEvent.MEMBER_REMOVED` và gửi thông báo cho thành viên.
+- Vai trò `owner` giữ nguyên trong dữ liệu. Mọi chữ hiển thị (NTD, admin, thông báo, lỗi) đổi thành "Quản lý công ty" (migration employers 0061 chỉ đổi nhãn).
+
+</details>
+
 <details><summary>Ghi chú phần dọn</summary>
 
 - `give_back_hidden_time` (`apps/jobs/models/visibility.py`) cộng lại thời gian bị ẩn khi gỡ: khóa tài khoản (`policy_held_at`), giữ để kiểm tra tuân thủ (`applied_at`, chỉ khi recruiter không còn lệnh giữ nào khác) và ẩn trang công ty (lần `POLICY_HOLD_APPLIED` gần nhất). Các lần ẩn mà NTD tự khắc phục được (hạn nộp, DPA, hồ sơ chưa đủ) không được bù.

@@ -52,7 +52,7 @@ class EmployerNotification(models.Model):
         COMPANY_JOIN_REQUESTED = 'company_join_requested', 'Có yêu cầu tham gia công ty'
         COMPANY_JOIN_APPROVED = 'company_join_approved', 'Yêu cầu tham gia công ty đã được duyệt'
         COMPANY_JOIN_REJECTED = 'company_join_rejected', 'Yêu cầu tham gia công ty bị từ chối'
-        COMPANY_OWNERSHIP_CHANGED = 'company_ownership_changed', 'Quyền owner công ty đã thay đổi'
+        COMPANY_OWNERSHIP_CHANGED = 'company_ownership_changed', 'Quyền quản lý công ty đã thay đổi'
         APPLICATION_REVIEW_SUBMITTED = (
             'application_review_submitted',
             'Có đánh giá mới cho hồ sơ ứng viên',

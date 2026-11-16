@@ -130,7 +130,7 @@ function Overview({ company }) {
               </div>
               <div>
                 <strong>{company.owner_count}</strong>
-                <span>Owner</span>
+                <span>Quản lý</span>
               </div>
               <div>
                 <strong>{company.member_count}</strong>
@@ -138,15 +138,15 @@ function Overview({ company }) {
               </div>
             </div>
             {company.owner_count > 1 && (
-              <Alert className="mt-4" showIcon type="warning" title={`Dữ liệu bất thường: ${company.owner_count} owner`} />
+              <Alert className="mt-4" showIcon type="warning" title={`Dữ liệu bất thường: ${company.owner_count} quản lý công ty`} />
             )}
             {!company.has_eligible_owner && (
               <Alert
                 className="mt-4"
                 showIcon
                 type="warning"
-                title={company.owner_count ? 'Owner chưa xác thực hoặc không còn hoạt động' : 'Công ty chưa có owner'}
-                description="Yêu cầu tham gia của công ty này do quản trị viên duyệt. Có thể chỉ định owner mới ở tab Nhà tuyển dụng."
+                title={company.owner_count ? 'Quản lý công ty chưa xác thực hoặc không còn hoạt động' : 'Công ty chưa có quản lý'}
+                description="Yêu cầu tham gia của công ty này do quản trị viên duyệt. Có thể chỉ định quản lý công ty mới ở tab Nhà tuyển dụng."
               />
             )}
           </CompanyPanel>
@@ -356,7 +356,7 @@ function RecruiterRoster({ company }) {
   return (
     <CompanyPanel
       title={`Nhà tuyển dụng (${recruiters.count})`}
-      description="Owner/member là vai trò trong công ty; trạng thái xác thực thuộc từng tài khoản NTD."
+      description="Quản lý công ty / thành viên là vai trò trong công ty; trạng thái xác thực thuộc từng tài khoản NTD."
     >
       <div className="company-directory__roster-filters">
         <Input.Search
@@ -370,7 +370,7 @@ function RecruiterRoster({ company }) {
           aria-label="Lọc vai trò NTD"
           value={role}
           options={[
-            { value: '', label: 'Owner và member' },
+            { value: '', label: 'Quản lý và thành viên' },
             { value: 'owner', label: 'Owner' },
             { value: 'member', label: 'Member' },
           ]}
@@ -451,17 +451,17 @@ function AssignOwnerButton({ company, recruiter }) {
     mutationFn: () => assignAdminCompanyOwner(company.public_id, { recruiter: recruiter.public_id, reason }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: adminCompanyKeys.detail(company.public_id) })
-      message.success('Đã chỉ định owner mới.')
+      message.success('Đã chỉ định quản lý công ty mới.')
       setOpen(false)
     },
-    onError: (error) => message.error(getApiErrorMessage(error, 'Không thể chỉ định owner.')),
+    onError: (error) => message.error(getApiErrorMessage(error, 'Không thể chỉ định quản lý công ty.')),
   })
   return (
     <>
-      <Button size="small" onClick={() => setOpen(true)}>Chỉ định owner</Button>
+      <Button size="small" onClick={() => setOpen(true)}>Chỉ định quản lý</Button>
       <Modal
         open={open}
-        title={`Chỉ định ${recruiter.account.full_name || recruiter.account.email} làm owner`}
+        title={`Chỉ định ${recruiter.account.full_name || recruiter.account.email} làm quản lý công ty`}
         okText="Chỉ định"
         cancelText="Đóng"
         okButtonProps={{ disabled: !reason.trim(), loading: assign.isPending }}
@@ -469,8 +469,8 @@ function AssignOwnerButton({ company, recruiter }) {
         onCancel={() => setOpen(false)}
         destroyOnHidden
       >
-        <p className="mb-2 text-sm text-slate-600">Owner cũ (nếu có) chuyển thành member. Owner mới sẽ duyệt các yêu cầu tham gia tiếp theo.</p>
-        <Input.TextArea aria-label="Lý do chỉ định owner" rows={3} value={reason} onChange={(event) => setReason(event.target.value)} placeholder="Ví dụ: owner cũ đã nghỉ việc, xác nhận qua email công ty" />
+        <p className="mb-2 text-sm text-slate-600">Quản lý cũ (nếu có) chuyển thành thành viên. Quản lý mới sẽ duyệt các yêu cầu tham gia tiếp theo.</p>
+        <Input.TextArea aria-label="Lý do chỉ định quản lý công ty" rows={3} value={reason} onChange={(event) => setReason(event.target.value)} placeholder="Ví dụ: owner cũ đã nghỉ việc, xác nhận qua email công ty" />
       </Modal>
     </>
   )

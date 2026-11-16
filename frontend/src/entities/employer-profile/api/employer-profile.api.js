@@ -279,7 +279,18 @@ export async function decideCompanyJoinRequest(publicId, decision) {
   return data
 }
 
-/** The verified owner hands the company to a verified member (`memberId` = member_id). */
+/** Members of the company the caller manages, with verification and activity. */
+export async function getCompanyMembers({ signal } = {}) {
+  const { data } = await api.get('/employer/company/members/', { signal })
+  return data
+}
+
+/** The company manager removes a member; rejected with `blockers` while work is running. */
+export async function removeCompanyMember(memberId, reason) {
+  await api.post(`/employer/company/members/${encodeURIComponent(memberId)}/remove/`, { reason })
+}
+
+/** The company manager hands the role to a verified member (`memberId` = member_id). */
 export async function transferCompanyOwnership(memberId) {
   await api.post('/employer/company/ownership-transfer/', { recruiter: memberId })
 }

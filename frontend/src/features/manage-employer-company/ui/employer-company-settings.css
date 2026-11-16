@@ -204,3 +204,54 @@
   .company-form-actions { flex-direction: column-reverse; }
   .company-form-actions .ant-btn { width: 100%; }
 }
+
+/* Members tab (company manager) */
+.company-members { display: grid; gap: 16px; }
+.company-members__section { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px 18px; }
+.company-members__header { align-items: flex-start; display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; margin-bottom: 8px; }
+.company-members__header h2 { align-items: center; color: #1f2937; display: flex; font-size: 16px; font-weight: 700; gap: 8px; margin: 0; }
+.company-members__header h2 .anticon { color: var(--brand-primary); }
+.company-members__header p { color: #6b7280; font-size: 13px; margin: 4px 0 0; }
+.company-members__hint { background: #f8fafc; border-radius: 8px; color: #64748b; font-size: 12px; line-height: 1.6; margin: 0 0 12px; padding: 8px 12px; }
+.company-members__empty { color: #94a3b8; font-size: 13px; margin: 4px 0 0; }
+.company-members__list { display: grid; gap: 10px; }
+
+.company-member { align-items: flex-start; border: 1px solid #e5e7eb; border-radius: 10px; display: flex; gap: 14px; padding: 14px; transition: border-color 0.15s, box-shadow 0.15s; }
+.company-member:hover { border-color: #cbd5e1; box-shadow: 0 2px 10px rgb(15 23 42 / 6%); }
+.company-member--manager { background: linear-gradient(135deg, #fffbeb 0%, #fff 60%); border-color: #fde68a; }
+.company-member__avatar { background: #ecfdf5 !important; color: var(--brand-primary) !important; flex: 0 0 auto; font-weight: 700; }
+.company-member__body { flex: 1; min-width: 0; }
+.company-member__head { align-items: center; display: flex; flex-wrap: wrap; gap: 6px; }
+.company-member__head .ant-tag { margin: 0; }
+.company-member__name { color: #111827; font-size: 15px; }
+.company-member__me { background: #e0f2fe; border-radius: 999px; color: #0369a1; font-size: 11px; font-weight: 600; padding: 1px 8px; }
+.company-member__title { color: #475569; font-size: 13px; margin: 4px 0 0; }
+.company-member__contact { color: #64748b; display: flex; flex-wrap: wrap; font-size: 12px; gap: 4px 14px; margin: 6px 0 0; }
+.company-member__contact .anticon { margin-right: 2px; }
+.company-member__stats { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.company-member__stat { align-items: center; background: #f1f5f9; border-radius: 999px; color: #64748b; display: inline-flex; font-size: 12px; gap: 5px; padding: 3px 10px; }
+.company-member__stat strong { color: #334155; }
+.company-member__stat--green { background: #ecfdf5; color: #047857; }
+.company-member__stat--amber { background: #fffbeb; color: #b45309; }
+.company-member__stat--blue { background: #eff6ff; color: #1d4ed8; }
+.company-member__stats--empty { color: #94a3b8; font-size: 12px; margin-top: 8px; }
+.company-member__stat--green strong, .company-member__stat--amber strong, .company-member__stat--blue strong { color: inherit; }
+.company-member__menu { flex: 0 0 auto; }
+
+.company-join-requests { display: grid; gap: 8px; list-style: none; margin: 0; padding: 0; }
+.company-join-request { align-items: center; background: #f8fafc; border-radius: 10px; display: flex; gap: 12px; padding: 10px 12px; }
+.company-join-request__info { display: grid; flex: 1; gap: 1px; min-width: 0; }
+.company-join-request__info strong { color: #111827; font-size: 14px; }
+.company-join-request__info span, .company-join-request__info small { color: #64748b; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.company-join-request__info small { color: #94a3b8; }
+.company-join-request__actions { display: flex; flex: 0 0 auto; gap: 8px; }
+
+@media (max-width: 640px) {
+  .company-members__section { padding: 14px; }
+  .company-member { flex-wrap: wrap; gap: 12px; }
+  .company-member__body { flex: 1 1 calc(100% - 60px); }
+  .company-member__menu { margin-left: 60px; }
+  .company-join-request { flex-wrap: wrap; }
+  .company-join-request__actions { margin-left: 52px; width: calc(100% - 52px); }
+  .company-join-request__actions .ant-btn { flex: 1; }
+}

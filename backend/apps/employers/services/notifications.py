@@ -89,7 +89,7 @@ EVENT_PRESENTATION = {
         COMPANY_PATH,
     ),
     EmployerNotification.EventType.COMPANY_OWNERSHIP_CHANGED: (
-        'Quyền owner công ty đã thay đổi',
+        'Quyền quản lý công ty đã thay đổi',
         COMPANY_MEMBERS_PATH,
     ),
 }

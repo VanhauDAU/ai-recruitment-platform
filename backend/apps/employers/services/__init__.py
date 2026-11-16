@@ -48,9 +48,11 @@ from .company_page import (
 from .company_page_content import PAGE_CONTENT_FIELDS, normalize_page_content_changes
 from .company_page_editors import grant_company_page_editor, revoke_company_page_editor
 from .company_recovery import (
+    MEMBER_REMOVAL_BLOCKERS,
     CompanyUnlinkError,
     company_unlink_impact,
     confirm_company_unlink,
+    remove_company_member,
 )
 from .company_reports import (
     resolve_company_report,
@@ -159,6 +161,8 @@ from .verification import (
 )
 
 __all__ = [
+    'MEMBER_REMOVAL_BLOCKERS',
+    'remove_company_member',
     'cancel_company_join',
     'admin_assign_company_owner',
     'company_has_eligible_owner',

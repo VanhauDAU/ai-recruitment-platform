@@ -23,7 +23,7 @@ class RecruiterProfile(models.Model):
     """
 
     class CompanyRole(models.TextChoices):
-        OWNER = 'owner', 'Người tạo công ty'
+        OWNER = 'owner', 'Quản lý công ty'
         MEMBER = 'member', 'Thành viên'
 
     class Gender(models.TextChoices):
@@ -116,8 +116,9 @@ class EmployerCompanyLinkEvent(models.Model):
 
     class EventType(models.TextChoices):
         ADMIN_UNLINKED = 'admin_unlinked', 'Admin gỡ liên kết công ty'
-        OWNERSHIP_TRANSFERRED = 'ownership_transferred', 'Owner chuyển quyền owner'
-        OWNER_ASSIGNED = 'owner_assigned', 'Admin chỉ định owner'
+        OWNERSHIP_TRANSFERRED = 'ownership_transferred', 'Chuyển quyền quản lý công ty'
+        OWNER_ASSIGNED = 'owner_assigned', 'Admin chỉ định quản lý công ty'
+        MEMBER_REMOVED = 'member_removed', 'Quản lý công ty gỡ thành viên'
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     recruiter = models.ForeignKey(
