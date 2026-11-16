@@ -52,6 +52,11 @@ def lock_recruiter_application(application, *, changed_by):
         .select_related('candidate', 'job', 'job__campaign', 'job__company')
         .get(pk=application.pk)
     )
-    if locked_application.job_id != job.pk or job.posted_by_id != changed_by.pk:
+    # A replaced submission is read-only history: no decision, undo or note.
+    if (
+        locked_application.job_id != job.pk
+        or job.posted_by_id != changed_by.pk
+        or not locked_application.is_current
+    ):
         raise Application.DoesNotExist
     return locked_application

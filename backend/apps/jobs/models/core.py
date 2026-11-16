@@ -505,6 +505,10 @@ class Job(models.Model):
             ends.append(vietnam_day_start(self.deadline + timedelta(days=1)))
         if self.visibility_ends_at is not None and self.visibility_ends_at <= now:
             ends.append(self.visibility_ends_at)
+        if self.visibility_ends_at is None:
+            # No display window means not public (``is_expired`` agrees); the
+            # last change is the best known moment it stopped.
+            ends.append(self.updated_at)
         return min(ends) if ends else None
 
     @property

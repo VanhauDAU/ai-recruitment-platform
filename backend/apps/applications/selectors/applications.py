@@ -44,11 +44,7 @@ def _history_notice():
 
 
 def candidate_published_history_queryset():
-    """History the candidate may see: undone rows and notices not yet
-    delivered (inside the recruiter's undo window) stay hidden."""
-    return ApplicationStatusHistory.objects.filter(reverted_at__isnull=True).exclude(
-        Exists(_history_notice().filter(delivered_at__isnull=True))
-    )
+    return ApplicationStatusHistory.objects.published()
 
 
 def candidate_applications_queryset(candidate):

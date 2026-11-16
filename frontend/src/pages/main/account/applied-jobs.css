@@ -347,6 +347,15 @@ a.applied-job__title:hover {
   color: #334155;
 }
 
+.applied-job__step--stopped {
+  color: #b45309;
+}
+
+.applied-job__step--stopped .applied-job__dot {
+  background: #f59e0b;
+  border-color: #f59e0b;
+}
+
 .applied-job__step-label .anticon {
   color: #94a3b8;
   font-size: 11px;

@@ -17,6 +17,7 @@ from apps.jobs.models import Job, publicly_available_job_filter
 from ..models import Application, ApplicationStatusHistory
 from .blocks import BLOCKED_APPLY_MESSAGE, is_candidate_blocked_for_job
 from .recruiter_alerts import alert_recruiter_of_application, alert_recruiter_of_withdrawal
+from .status import STATUS_TIMESTAMP_FIELD
 
 MAX_APPLICATIONS_PER_JOB = 3
 REAPPLICATION_COOLDOWN = timedelta(minutes=5)
@@ -45,14 +46,16 @@ def reapplication_error(candidate, job, *, now=None):
     """Return a user-facing reason this submission is not allowed, or ``None``.
 
     One current application per job: a new one replaces it only after the
-    recruiter rejected it or the candidate withdrew it. An unanswered one can
-    take a new CV in place instead.
+    candidate was told it was rejected, or withdrew it. To send another CV the
+    candidate withdraws first. Reads the status the candidate has been told, so
+    a decision still inside its undo window is never revealed here.
     """
     now = now or timezone.now()
     submissions = Application.objects.filter(candidate=candidate, job=job)
     current = submissions.filter(is_current=True).first()
-    if current is not None and current.status not in Application.REAPPLY_ALLOWED_STATUSES:
-        if current.status in Application.UNANSWERED_STATUSES:
+    visible = current.candidate_visible_status() if current is not None else None
+    if current is not None and visible not in Application.REAPPLY_ALLOWED_STATUSES:
+        if visible in Application.UNANSWERED_STATUSES:
             return 'Bạn đã ứng tuyển tin này. Muốn nộp CV khác, hãy rút hồ sơ rồi ứng tuyển lại.'
         return 'Hồ sơ của bạn đang được nhà tuyển dụng xử lý nên chưa thể nộp lại.'
     if submissions.count() >= MAX_APPLICATIONS_PER_JOB:
@@ -116,7 +119,6 @@ def create_application_record(
         submitted_cv_version=snapshot,
         submitted_cv_title=cv.title,
         submitted_cv_source=cv.source,
-        submitted_at=timezone.now(),
         cover_letter=cover_letter,
         allow_ai_analysis=allow_ai_analysis,
         data_processing_consent=data_processing_consent,
@@ -159,32 +161,51 @@ def create_application_record(
 
 @transaction.atomic
 def withdraw_application(*, candidate, public_id):
-    """The candidate takes back a current application that has no outcome yet."""
+    """The candidate takes back a current application they hold no outcome for.
+
+    Allowed even after the job stopped recruiting (an interview may still be
+    running). A decision the candidate has not been told yet loses: it is undone
+    and its notice cancelled, so withdrawing never reveals it.
+    """
     candidate = lock_account_for_write(candidate)
     application = _locked_current_application(candidate, public_id)
-    if application.status in Application.TERMINAL_STATUSES:
+    visible = application.candidate_visible_status()
+    if visible in Application.TERMINAL_STATUSES:
         raise ApplicationNotAllowed('Hồ sơ đã có kết quả nên không thể rút.')
-    # A decision still waiting for its delay must not reach the candidate later.
-    pending = (
-        application.status_history.filter(reverted_at__isnull=True)
-        .order_by('-created_at', '-id')
-        .first()
-    )
-    if pending is not None:
-        cancel_candidate_notification(
-            recipient_id=candidate.pk, dedupe_key=pending.notification_key
-        )
     now = timezone.now()
-    previous_status = application.status
+    _discard_unpublished_decisions(application, candidate_id=candidate.pk, now=now)
     application.status = Application.Status.WITHDRAWN
     application.withdrawn_at = now
     application.status_updated_at = now
-    application.save(update_fields=['status', 'withdrawn_at', 'status_updated_at', 'updated_at'])
+    application.save()
     ApplicationStatusHistory.objects.create(
         application=application,
-        from_status=previous_status,
+        from_status=visible,
         to_status=Application.Status.WITHDRAWN,
         changed_by=candidate,
     )
     alert_recruiter_of_withdrawal(application)
     return application
+
+
+def _discard_unpublished_decisions(application, *, candidate_id, now):
+    """Undo history rows the candidate was never told about, newest first."""
+    published = set(application.status_history.published().values_list('pk', flat=True))
+    hidden = list(
+        application.status_history.filter(reverted_at__isnull=True)
+        .exclude(pk__in=published)
+        .order_by('-created_at', '-id')
+    )
+    for row in hidden:
+        cancel_candidate_notification(recipient_id=candidate_id, dedupe_key=row.notification_key)
+        timestamp = STATUS_TIMESTAMP_FIELD.get(row.to_status)
+        if timestamp:
+            setattr(application, timestamp, None)
+        row.reverted_at = now
+        row.note = (
+            row.note + '\n' if row.note else ''
+        ) + 'Ứng viên rút hồ sơ trước khi nhận kết quả.'
+        row.save(update_fields=['reverted_at', 'note'])
+    if hidden:
+        application.auto_rejected_at = None
+        application.auto_rejection_email_sent_at = None

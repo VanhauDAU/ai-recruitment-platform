@@ -13,27 +13,36 @@ from apps.jobs.models import Job, JobApplicationContact
 from common.email import send_html_email
 
 from ..models import Application, ApplicationStatusHistory
-from .status import AUTO_REJECTION_EMAIL_GRACE, notify_candidate_of_status
+from .status import (
+    AUTO_REJECTION_EMAIL_GRACE,
+    AUTO_REJECTION_MIN_NOTICE,
+    notify_candidate_of_status,
+)
 
-REMINDER_LEAD_TIME = timedelta(days=3)
+# The recruiter is warned this long before; an undo also guarantees it.
+REMINDER_LEAD_TIME = AUTO_REJECTION_MIN_NOTICE
+
+
+def _due_before(moment):
+    """Unanswered applications whose automatic rejection falls due before ``moment``.
+
+    Counted from the submission (opening the CV does not restart it); an undo
+    near the deadline may push it to ``auto_reject_due_floor``.
+    """
+    by_delay = Q()
+    for days, _label in Job.AUTO_REJECTION_AFTER_DAY_CHOICES:
+        by_delay |= Q(
+            job__auto_reject_after_days=days, applied_at__lte=moment - timedelta(days=days)
+        )
+    floor_passed = Q(auto_reject_due_floor__isnull=True) | Q(auto_reject_due_floor__lte=moment)
+    return by_delay & floor_passed
 
 
 def _age_filter(now, *, reminder=False):
-    query = Q()
-    for days, _label in Job.AUTO_REJECTION_AFTER_DAY_CHOICES:
-        condition = Q(
-            job__auto_reject_after_days=days,
-            status_updated_at__lte=now - timedelta(days=days),
-        )
-        if reminder:
-            condition = Q(
-                job__auto_reject_after_days=days,
-                status_updated_at__lte=now - timedelta(days=days) + REMINDER_LEAD_TIME,
-                status_updated_at__gt=now - timedelta(days=days),
-            )
-        query |= condition
     # Replaced submissions are history; only the current one can go stale.
-    return Q(is_current=True) & query
+    if reminder:
+        return Q(is_current=True) & _due_before(now + REMINDER_LEAD_TIME) & ~_due_before(now)
+    return Q(is_current=True) & _due_before(now)
 
 
 def _render_candidate_body(application):
@@ -74,7 +83,7 @@ def send_due_application_reminders(*, now=None, batch_size=200):
         )
         .select_related('job', 'job__posted_by')
         .prefetch_related('job__application_contact__emails')
-        .order_by('job_id', 'status_updated_at', 'pk')[:batch_size]
+        .order_by('job_id', 'applied_at', 'pk')[:batch_size]
     )
     by_job = defaultdict(list)
     for application in due:
@@ -91,7 +100,7 @@ def send_due_application_reminders(*, now=None, batch_size=200):
         count = len(applications)
         body = (
             f'{count} hồ sơ ứng tuyển vị trí {job.title} sẽ tự động chuyển sang “Không phù hợp” '
-            f'trong vòng 3 ngày nếu chưa được cập nhật trạng thái.'
+            f'trong vòng 3 ngày nếu bạn chưa đưa ra quyết định.'
         )
         action_url = (
             f'{settings.EMPLOYER_FRONTEND_URL.rstrip("/")}/tuyendung/app/applications'
@@ -122,7 +131,7 @@ def reject_due_applications(*, now=None, batch_size=200):
             job__auto_reject_stale_applications=True,
             status__in=Application.UNANSWERED_STATUSES,
         )
-        .order_by('status_updated_at', 'pk')
+        .order_by('applied_at', 'pk')
         .values_list('pk', flat=True)[:batch_size]
     )
     rejected = 0
@@ -133,11 +142,10 @@ def reject_due_applications(*, now=None, batch_size=200):
                 .select_related('candidate', 'job', 'job__company')
                 .get(pk=application_id)
             )
-            cutoff = now - timedelta(days=application.job.auto_reject_after_days)
             if (
                 not application.job.auto_reject_stale_applications
                 or application.status not in Application.UNANSWERED_STATUSES
-                or application.status_updated_at > cutoff
+                or application.auto_reject_due_at > now
             ):
                 continue
             previous_status = application.status
@@ -180,7 +188,6 @@ def send_due_auto_rejection_emails(*, now=None, batch_size=200):
             status=Application.Status.REJECTED,
             auto_rejected_at__lte=now - AUTO_REJECTION_EMAIL_GRACE,
             auto_rejection_email_sent_at__isnull=True,
-            job__auto_reject_stale_applications=True,
         )
         .select_related('candidate', 'job', 'job__company')
         .order_by('auto_rejected_at', 'pk')[:batch_size]

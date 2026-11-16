@@ -47,7 +47,7 @@ class RecruiterApplicationSnapshotSerializer(serializers.ModelSerializer):
             'application_public_id',
             'job_public_id',
             'status',
-            'submitted_at',
+            'applied_at',
             'submitted_cv_title',
             'submitted_cv_source',
             'cv',
@@ -80,8 +80,7 @@ class RecruiterCvExportSerializer(serializers.Serializer):
 
 
 def validated_cv_selection(candidate, attrs):
-    """The candidate's own CV and immutable version, ready to submit; shared by
-    the first submission and the in-place CV update."""
+    """The candidate's own CV and immutable version, ready to submit."""
     try:
         cv = UserCv.objects.get(
             public_id=attrs['cv_public_id'],
@@ -243,8 +242,7 @@ class CandidateApplicationV2Serializer(serializers.ModelSerializer):
         """The status the candidate has been told, not the live one: a decision
         stays private during the recruiter's undo window (the history prefetch
         only holds published rows)."""
-        published = list(obj.status_history.all())
-        return published[-1].to_status if published else obj.status
+        return obj.candidate_visible_status(obj.status_history.all())
 
     def get_candidate_status(self, obj):
         return self.CANDIDATE_STATUS[self.get_status(obj)]
@@ -263,12 +261,17 @@ class CandidateApplicationV2Serializer(serializers.ModelSerializer):
     def get_actions(self, obj):
         """What the candidate may do with this submission now (cap and cooldown
         of a resubmission are checked when it is sent)."""
-        # Nothing is left to do once the employer stopped recruiting.
-        current = obj.is_current and obj.job.stopped_at is None
-        remind_at = candidate_reminder_available_at(obj)
+        # Everything reads the status the candidate was told, so no button
+        # reveals a decision still inside its undo window. Withdrawing stays
+        # possible after the job stopped (an interview may still be running).
+        visible = self.get_status(obj)
+        recruiting = obj.job.stopped_at is None
+        remind_at = candidate_reminder_available_at(obj, visible_status=visible)
         return {
-            'withdraw': current and obj.status not in Application.TERMINAL_STATUSES,
-            'reapply': current and obj.status in Application.REAPPLY_ALLOWED_STATUSES,
+            'withdraw': obj.is_current and visible not in Application.TERMINAL_STATUSES,
+            'reapply': obj.is_current
+            and recruiting
+            and visible in Application.REAPPLY_ALLOWED_STATUSES,
             'remind': bool(remind_at and remind_at <= timezone.now()),
             'remind_available_at': remind_at,
         }
@@ -310,7 +313,6 @@ class CandidateApplicationV2Serializer(serializers.ModelSerializer):
             'submitted_cv_version_public_id',
             'submitted_cv_title',
             'submitted_cv_source',
-            'submitted_at',
             'cover_letter',
             'status',
             'candidate_status',

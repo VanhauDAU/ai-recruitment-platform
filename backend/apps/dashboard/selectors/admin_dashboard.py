@@ -255,7 +255,9 @@ def _activity_series(window):
         'candidates': daily(users.filter(role=User.Role.CANDIDATE), 'date_joined'),
         'employers': daily(users.filter(role=User.Role.EMPLOYER), 'date_joined'),
         'jobs': daily(Job.objects.all(), 'published_at'),
-        'applications': daily(Application.objects.filter(is_current=True), 'applied_at'),
+        # Every submission counts on its own day; a later resubmission must not
+        # rewrite the past. The funnel and backlog keep to current ones.
+        'applications': daily(Application.objects.all(), 'applied_at'),
     }
     series = []
     for offset in range(window['days']):
@@ -270,7 +272,7 @@ def _kpis(window):
         'candidates': _compare(users, 'date_joined', window, Q(role=User.Role.CANDIDATE)),
         'employers': _compare(users, 'date_joined', window, Q(role=User.Role.EMPLOYER)),
         'jobs': _compare(Job.objects.all(), 'published_at', window),
-        'applications': _compare(Application.objects.filter(is_current=True), 'applied_at', window),
+        'applications': _compare(Application.objects.all(), 'applied_at', window),
     }
 
 
@@ -290,8 +292,9 @@ def _applications(window, now):
         ),
     )
     avg_first_view = funnel.pop('avg_first_view')
+    # Unanswered (new or only viewed) for a week, counted from the submission.
     stale = current.filter(
-        status=Application.Status.SUBMITTED,
+        status__in=Application.UNANSWERED_STATUSES,
         applied_at__lt=now - timedelta(days=STALE_APPLICATION_DAYS),
     ).count()
     return {

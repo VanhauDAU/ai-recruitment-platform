@@ -299,7 +299,7 @@ export default function CampaignApplyCvPanel({ publicId }) {
                 title: 'Ngày ứng tuyển',
                 render: (_, application) => (
                   <span className="whitespace-nowrap text-slate-600">
-                    {formatDate(application.applied_at || application.submitted_at)}
+                    {formatDate(application.applied_at)}
                   </span>
                 ),
               },

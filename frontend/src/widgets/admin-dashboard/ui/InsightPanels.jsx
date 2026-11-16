@@ -108,7 +108,7 @@ export function ApplicationFunnel({ applications, days }) {
           note="Trung bình từ lúc nộp"
         />
         <Fact
-          label="Chưa được xem quá 7 ngày"
+          label="Chưa phản hồi quá 7 ngày"
           value={formatNumber(stale)}
           tone={stale > 0 ? 'warning' : undefined}
           note="Ứng viên có thể đang chờ phản hồi"

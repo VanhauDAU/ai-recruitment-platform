@@ -315,7 +315,7 @@ class AutomaticApplicationRejectionTests(TestCase):
     def test_a_replaced_submission_is_never_reminded_or_rejected(self):
         now = timezone.now()
         Application.objects.filter(pk=self.application.pk).update(
-            is_current=False, status_updated_at=now - timedelta(days=30)
+            is_current=False, applied_at=now - timedelta(days=30)
         )
 
         result = process_automatic_application_rejections(now=now)
@@ -327,7 +327,9 @@ class AutomaticApplicationRejectionTests(TestCase):
     def test_reminds_recruiter_rejects_stale_application_and_delays_candidate_email(self):
         baseline = timezone.now()
         Application.objects.filter(pk=self.application.pk).update(
-            status_updated_at=baseline - timedelta(days=18),
+            # Counted from the submission: a later status change never restarts it.
+            applied_at=baseline - timedelta(days=18),
+            status_updated_at=baseline,
         )
 
         reminder_result = process_automatic_application_rejections(now=baseline)
@@ -373,7 +375,7 @@ class AutomaticApplicationRejectionTests(TestCase):
         self.application.job.auto_reject_stale_applications = False
         self.application.job.save(update_fields=['auto_reject_stale_applications', 'updated_at'])
         Application.objects.filter(pk=self.application.pk).update(
-            status_updated_at=timezone.now() - timedelta(days=60),
+            applied_at=timezone.now() - timedelta(days=60),
         )
 
         result = process_automatic_application_rejections()
