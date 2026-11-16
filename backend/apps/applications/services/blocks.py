@@ -1,10 +1,11 @@
-"""Recruiter blocklist: refuse applications from a candidate, silently."""
+"""Company blocklist: refuse applications from a candidate, silently."""
 
 from datetime import timedelta
 
 from django.db import transaction
-from django.db.models import Q
 from django.utils import timezone
+
+from apps.employers.models import RecruiterProfile
 
 from ..models import Application, CandidateBlock
 from .status import change_application_status
@@ -16,47 +17,44 @@ class CandidateAlreadyBlocked(ValueError):
     pass
 
 
-def is_candidate_blocked(*, recruiter_id, candidate_id):
+def is_candidate_blocked(*, company_id, candidate_id):
     return CandidateBlock.objects.filter(
-        CandidateBlock.active_q(), recruiter_id=recruiter_id, candidate_id=candidate_id
+        CandidateBlock.active_q(), company_id=company_id, candidate_id=candidate_id
     ).exists()
 
 
 def is_candidate_blocked_for_job(job, candidate_id):
-    """A block by any recruiter of the job's company refuses the application.
+    """A block by the job's company refuses the application, whoever made it."""
+    return is_candidate_blocked(company_id=job.company_id, candidate_id=candidate_id)
 
-    Each recruiter keeps their own blocklist, but candidates apply to the
-    company: a block by one colleague must not be bypassed through another.
-    """
-    return (
-        CandidateBlock.objects.filter(CandidateBlock.active_q(), candidate_id=candidate_id)
-        .filter(
-            Q(recruiter_id=job.posted_by_id)
-            | Q(recruiter__recruiter_profile__company_id=job.company_id)
-        )
-        .exists()
-    )
+
+def _can_manage_company_blocks(recruiter, company_id):
+    return RecruiterProfile.objects.filter(
+        user=recruiter, company_id=company_id, company_role=RecruiterProfile.CompanyRole.OWNER
+    ).exists()
 
 
 @transaction.atomic
 def block_candidate(
     application, *, recruiter, reason, note='', duration_days=None, reject_pending=False
 ):
-    """Block the candidate behind ``application`` for this recruiter's jobs.
+    """Block the candidate behind ``application`` for every job of its company.
 
-    ``reject_pending`` answers the candidate's unanswered applications with
-    "Không phù hợp" through the normal decision flow (so they are notified
-    like any other rejection, never told about the block).
+    ``reject_pending`` answers the candidate's unanswered applications to the
+    company with "Không phù hợp" through the normal decision flow (so they are
+    notified like any other rejection, never told about the block).
     """
     candidate_id = application.candidate_id
+    company_id = application.job.company_id
     # An expired block still holds the unique slot: lift it before re-blocking.
     CandidateBlock.objects.filter(
-        recruiter=recruiter, candidate_id=candidate_id, lifted_at__isnull=True
+        company_id=company_id, candidate_id=candidate_id, lifted_at__isnull=True
     ).exclude(CandidateBlock.active_q()).update(lifted_at=timezone.now())
-    if is_candidate_blocked(recruiter_id=recruiter.pk, candidate_id=candidate_id):
-        raise CandidateAlreadyBlocked('Ứng viên này đã ở trong danh sách đen.')
+    if is_candidate_blocked(company_id=company_id, candidate_id=candidate_id):
+        raise CandidateAlreadyBlocked('Ứng viên này đã ở trong danh sách chặn của công ty.')
     block = CandidateBlock.objects.create(
         recruiter=recruiter,
+        company_id=company_id,
         candidate_id=candidate_id,
         reason=reason,
         note=note.strip(),
@@ -66,7 +64,7 @@ def block_candidate(
     if reject_pending:
         pending = Application.objects.filter(
             candidate_id=candidate_id,
-            job__posted_by=recruiter,
+            job__company_id=company_id,
             is_current=True,
             status__in=Application.UNANSWERED_STATUSES,
         )
@@ -78,10 +76,12 @@ def block_candidate(
 
 
 def lift_candidate_block(*, recruiter, block_public_id):
-    block = CandidateBlock.objects.filter(
-        recruiter=recruiter, public_id=block_public_id, lifted_at__isnull=True
-    ).first()
-    if block is None:
+    """The recruiter who blocked, or an owner of the company, lifts a block."""
+    block = CandidateBlock.objects.filter(public_id=block_public_id, lifted_at__isnull=True).first()
+    if block is None or (
+        block.recruiter_id != recruiter.pk
+        and not _can_manage_company_blocks(recruiter, block.company_id)
+    ):
         raise CandidateBlock.DoesNotExist
     block.lifted_at = timezone.now()
     block.save(update_fields=['lifted_at'])

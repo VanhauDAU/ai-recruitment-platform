@@ -18,6 +18,8 @@ class CandidateBlockSerializer(serializers.ModelSerializer):
     source_job_title = serializers.CharField(
         source='source_application.job.title', read_only=True, default=''
     )
+    blocked_by_name = serializers.SerializerMethodField()
+    can_lift = serializers.SerializerMethodField()
 
     class Meta:
         model = CandidateBlock
@@ -29,6 +31,8 @@ class CandidateBlockSerializer(serializers.ModelSerializer):
             'reason_label',
             'note',
             'source_job_title',
+            'blocked_by_name',
+            'can_lift',
             'expires_at',
             'created_at',
         ]
@@ -36,3 +40,12 @@ class CandidateBlockSerializer(serializers.ModelSerializer):
 
     def get_candidate_name(self, obj) -> str:
         return obj.candidate.full_name or obj.candidate.email
+
+    def get_blocked_by_name(self, obj) -> str:
+        return obj.recruiter.full_name or obj.recruiter.email
+
+    def get_can_lift(self, obj) -> bool:
+        user = self.context.get('user')
+        if user is None:
+            return False
+        return obj.recruiter_id == user.pk or self.context.get('is_company_owner', False)

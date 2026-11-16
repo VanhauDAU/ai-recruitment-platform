@@ -35,7 +35,7 @@ export default function BlockCandidateButton({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: applicationKeys.all })
       setOpen(false)
-      message.success(`Đã chặn ${candidateName}. Ứng viên không thể nộp thêm vào các tin của bạn.`)
+      message.success(`Đã chặn ${candidateName}. Ứng viên không thể nộp thêm vào các tin của công ty.`)
     },
     onError: (error) => message.error(getApiErrorMessage(error, 'Không thể chặn ứng viên.')),
   })
@@ -66,7 +66,7 @@ export default function BlockCandidateButton({
             <Select options={DURATIONS} />
           </Form.Item>
           <Form.Item name="reject_pending" valuePropName="checked">
-            <Checkbox>Chuyển các hồ sơ đang chờ của ứng viên sang "Không phù hợp"</Checkbox>
+            <Checkbox>Chuyển các hồ sơ đang chờ của ứng viên ở mọi tin của công ty sang "Không phù hợp"</Checkbox>
           </Form.Item>
           <Button type="primary" danger htmlType="submit" block loading={mutation.isPending}>Chặn ứng viên</Button>
         </Form>

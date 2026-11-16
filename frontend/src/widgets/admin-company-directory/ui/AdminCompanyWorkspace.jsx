@@ -2,6 +2,7 @@ import { Tabs } from 'antd'
 import { useEffect } from 'react'
 import { useSearchParams } from 'react-router'
 import AdminCompanyDirectory from './AdminCompanyDirectory'
+import AdminCompanyJoinRequestQueue from './AdminCompanyJoinRequestQueue'
 import AdminCompanyUpdateQueue from './AdminCompanyUpdateQueue'
 import '../admin-company-directory.css'
 
@@ -16,7 +17,7 @@ const DIRECTORY_QUERY_KEYS = [
 export default function AdminCompanyWorkspace() {
   const [searchParams, setSearchParams] = useSearchParams()
   const requestedTab = searchParams.get('tab')
-  const activeTab = requestedTab === 'updates' ? 'updates' : 'directory'
+  const activeTab = ['updates', 'join-requests'].includes(requestedTab) ? requestedTab : 'directory'
 
   useEffect(() => {
     if (requestedTab === activeTab || (!requestedTab && activeTab === 'directory')) return
@@ -52,6 +53,11 @@ export default function AdminCompanyWorkspace() {
       key: 'updates',
       label: 'Yêu cầu cập nhật',
       children: <AdminCompanyUpdateQueue />,
+    },
+    {
+      key: 'join-requests',
+      label: 'Yêu cầu tham gia',
+      children: <AdminCompanyJoinRequestQueue />,
     },
   ]
 

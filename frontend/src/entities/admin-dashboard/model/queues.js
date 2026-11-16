@@ -27,6 +27,11 @@ export const QUEUE_CONFIG = {
     hint: 'Công ty không thể xác minh bằng bản ghi DNS',
     to: adminPath('/recruiters?tab=domain-verification'),
   },
+  company_join_requests: {
+    label: 'Yêu cầu tham gia chờ quản trị viên',
+    hint: 'Công ty chưa có owner đã xác thực để duyệt',
+    to: adminPath('/companies?tab=join-requests'),
+  },
   company_updates: {
     label: 'Yêu cầu cập nhật công ty',
     hint: 'Thay đổi thông tin pháp lý cần thẩm định',

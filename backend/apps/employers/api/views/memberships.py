@@ -25,6 +25,7 @@ from ...services import (
     REQUESTER_EDITABLE_COMPANY_UPDATE_STATUSES,
     EmployerUploadStructureError,
     cancel_company_join,
+    company_owners,
     decide_company_join,
     get_or_create_recruiter,
     get_or_create_verification_case,
@@ -32,6 +33,7 @@ from ...services import (
     record_verification_upload,
     request_company_join,
     snapshot_company_update_request,
+    transfer_company_ownership,
     validate_employer_upload_structure,
 )
 from ..exceptions import EmployerUploadSessionResponse
@@ -381,6 +383,14 @@ class CompanyJoinRequestListView(generics.ListAPIView):
     def get_queryset(self):
         return company_join_requests_for_owner(self.request.user)
 
+    def get_serializer_context(self):
+        recruiter = get_or_create_recruiter(self.request.user)
+        can_decide = bool(
+            recruiter.company_id
+            and company_owners(recruiter.company).filter(user=self.request.user).exists()
+        )
+        return {**super().get_serializer_context(), 'can_decide': can_decide}
+
 
 class CompanyJoinRequestDecisionView(APIView):
     permission_classes = [IsEmployer]
@@ -391,3 +401,22 @@ class CompanyJoinRequestDecisionView(APIView):
             raise ValidationError({'decision': 'Chỉ chấp nhận approve hoặc reject.'})
         join_request = decide_company_join(request.user, public_id, approve=decision == 'approve')
         return Response(CompanyJoinRequestSerializer(join_request).data)
+
+
+class CompanyOwnershipTransferView(APIView):
+    """The verified owner hands the company to a verified member."""
+
+    permission_classes = [IsEmployer]
+
+    @extend_schema(
+        summary='Chuyển quyền owner công ty cho thành viên đã xác thực',
+        request=inline_serializer(
+            'CompanyOwnershipTransfer',
+            fields={'recruiter': serializers.CharField(help_text='member_id của thành viên')},
+        ),
+        responses={204: None},
+        tags=['employer'],
+    )
+    def post(self, request):
+        transfer_company_ownership(request.user, request.data.get('recruiter', ''))
+        return Response(status=status.HTTP_204_NO_CONTENT)

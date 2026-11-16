@@ -15,6 +15,7 @@ import { message } from '@/shared/lib/toast'
 import ConfirmAction from '@/shared/ui/ConfirmAction'
 import CompanyForm from './CompanyForm'
 import CompanyJoinRequestsPanel from './CompanyJoinRequestsPanel'
+import TransferOwnershipButton from './TransferOwnershipButton'
 
 const UPDATE_REQUEST_STATUS = {
   pending: ['processing', 'Đang xử lý'],
@@ -126,6 +127,11 @@ export default function LinkedCompanyPanel({ profile, catalogs, industries, onRe
     <div className="linked-company-panel">
       {requestError}
       {owner && <CompanyJoinRequestsPanel />}
+      {owner && (
+        <div className="flex justify-end">
+          <TransferOwnershipButton onTransferred={onRefresh} />
+        </div>
+      )}
 
       <section className="company-update-request" aria-label="Yêu cầu của tôi" aria-busy={mineQuery.isLoading || undefined}>
         {mineQuery.isLoading ? (

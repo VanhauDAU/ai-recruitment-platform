@@ -46,6 +46,7 @@ from ..services.sms_provider import (
     get_sms_provider,
     sms_configuration_errors,
 )
+from .readiness_helpers import make_employer_ready
 
 PNG_BYTES = (
     b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01'
@@ -873,13 +874,12 @@ class JoinCompanyTests(APITestCase):
         super().tearDownClass()
 
     def setUp(self):
-        self.owner, owner_recruiter = make_employer('owner@example.com')
+        self.owner, _ = make_employer('owner@example.com')
         self.company = Company.objects.create(
             company_name='Acme Corp', tax_code='0101234567', created_by=self.owner
         )
-        owner_recruiter.company = self.company
-        owner_recruiter.company_role = RecruiterProfile.CompanyRole.OWNER
-        owner_recruiter.save(update_fields=['company', 'company_role', 'updated_at'])
+        # Only a verified owner approves joins.
+        make_employer_ready(self.owner, company=self.company)
         self.user, self.recruiter = make_employer('hr2@example.com')
         authenticate_employer(self.client, self.user)
 

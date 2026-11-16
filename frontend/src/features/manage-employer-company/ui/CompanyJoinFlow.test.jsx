@@ -26,7 +26,7 @@ describe('company join flow', () => {
       />,
     ))
 
-    expect(screen.getByText('Đang chờ Acme Corp duyệt')).toBeInTheDocument()
+    expect(screen.getByText('Đang chờ duyệt tham gia Acme Corp')).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: 'Hủy yêu cầu' }))
     await waitFor(() => expect(onChanged).toHaveBeenCalled())
   })
@@ -37,6 +37,7 @@ describe('company join flow', () => {
       requester_name: 'Trần Văn A',
       requester_email: 'a@acme.vn',
       requester_position: 'HR',
+      can_decide: true,
       created_at: '2026-11-16T02:00:00Z',
     }])
     decideCompanyJoinRequest.mockResolvedValue({ status: 'approved' })
@@ -44,5 +45,29 @@ describe('company join flow', () => {
 
     await userEvent.click(await screen.findByRole('button', { name: 'Duyệt' }))
     await waitFor(() => expect(decideCompanyJoinRequest).toHaveBeenCalledWith('cjr_1', 'approve'))
+  })
+
+  it('tells an unverified owner to verify before deciding', async () => {
+    getCompanyJoinRequests.mockResolvedValue([{
+      public_id: 'cjr_2',
+      requester_name: 'Lê B',
+      can_decide: false,
+      created_at: '2026-11-16T02:00:00Z',
+    }])
+    render(withQueryClient(<CompanyJoinRequestsPanel />))
+
+    expect(await screen.findByText('Bạn cần xác thực tài khoản trước khi duyệt yêu cầu tham gia.')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Duyệt' })).toBeDisabled()
+  })
+
+  it('says an administrator decides when the company has no verified owner', () => {
+    render(withQueryClient(
+      <PendingCompanyJoin
+        joinRequest={{ company_name: 'Acme Corp', created_at: '2026-11-16T02:00:00Z', awaiting_admin: true }}
+        onChanged={vi.fn()}
+      />,
+    ))
+
+    expect(screen.getByText(/quản trị viên ProCV sẽ duyệt/)).toBeInTheDocument()
   })
 })

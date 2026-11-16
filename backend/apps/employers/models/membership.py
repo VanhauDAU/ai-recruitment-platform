@@ -116,6 +116,8 @@ class EmployerCompanyLinkEvent(models.Model):
 
     class EventType(models.TextChoices):
         ADMIN_UNLINKED = 'admin_unlinked', 'Admin gỡ liên kết công ty'
+        OWNERSHIP_TRANSFERRED = 'ownership_transferred', 'Owner chuyển quyền owner'
+        OWNER_ASSIGNED = 'owner_assigned', 'Admin chỉ định owner'
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     recruiter = models.ForeignKey(
@@ -154,10 +156,12 @@ class EmployerCompanyLinkEvent(models.Model):
 
 
 class CompanyJoinRequest(models.Model):
-    """A recruiter's request to join an existing company; the owner decides.
+    """A recruiter's request to join an existing company ("duyệt tham gia").
 
-    Linking used to take effect at once, so anyone could attach themselves to
-    any company. A recruiter has at most one pending request.
+    An eligible owner (active and verified) decides; when the company has none,
+    an administrator decides instead. Joining never verifies the recruiter:
+    "xác thực tài khoản" is the separate admin review of their documents. A
+    recruiter has at most one pending request.
     """
 
     class Status(models.TextChoices):

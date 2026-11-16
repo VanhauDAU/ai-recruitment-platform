@@ -20,7 +20,7 @@ describe('CandidateBlockList', () => {
     api.getCandidateBlocks.mockReset().mockResolvedValue({
       count: 1,
       results: [{
-        public_id: 'cbk_1', candidate_name: 'Nguyễn An', candidate_email: 'an@example.com', reason: 'spam',
+        public_id: 'cbk_1', candidate_name: 'Nguyễn An', candidate_email: 'an@example.com', reason: 'spam', can_lift: true, blocked_by_name: 'HR A',
         reason_label: 'Ứng tuyển hàng loạt, không phù hợp', note: '', source_job_title: 'Kỹ sư', expires_at: null,
         created_at: '2026-11-15T09:00:00+07:00',
       }],
@@ -45,6 +45,6 @@ describe('CandidateBlockList', () => {
     api.getCandidateBlocks.mockResolvedValue({ count: 0, results: [] })
     renderList()
 
-    expect(await screen.findByText('Bạn chưa chặn ứng viên nào')).toBeInTheDocument()
+    expect(await screen.findByText('Công ty chưa chặn ứng viên nào')).toBeInTheDocument()
   })
 })

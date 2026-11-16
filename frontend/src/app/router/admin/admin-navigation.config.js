@@ -32,6 +32,13 @@ export const ADMIN_NAVIGATION = [
             badgeKey: 'company_reports',
             routeRef: 'companyReports',
           },
+          {
+            key: 'company-join-requests',
+            label: 'Yêu cầu tham gia',
+            badgeKey: 'company_join_requests',
+            routeRef: 'companies',
+            query: { tab: 'join-requests' },
+          },
         ],
       },
       {
