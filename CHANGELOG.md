@@ -8,6 +8,25 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-18
 
+#### Added — Chiến dịch tuyển dụng: mục tiêu, wizard và lịch chạy (GĐ1)
+
+- Mục tiêu chiến dịch ghi được qua API: vị trí, cấp bậc, chỉ tiêu, ngày bắt
+  đầu/kết thúc hoặc tuyển liên tục, ngân sách.
+- Wizard thiết lập `/tuyendung/app/campaigns/:id/setup` gồm ba bước: Mục tiêu →
+  Tin tuyển dụng → Xem lại & kích hoạt. Có checklist, kích hoạt tất cả hoặc
+  không gì cả, hoặc lên lịch theo ngày bắt đầu.
+- App `apps.campaigns`, API `/api/employer/campaigns/<id>/launch/`, beat
+  `run_campaign_schedule`: tự kích hoạt, tự hoàn tất sau ngày kết thúc, nhắc
+  trước 3 ngày, báo khi kích hoạt theo lịch thất bại.
+- Trạng thái chiến dịch `scheduled`; nút Hoàn tất / Hủy / Hủy lịch trong
+  workspace.
+
+#### Changed
+
+- Chiến dịch tạo nhanh ra nháp (tạo ngay trong form đăng tin vẫn chạy luôn).
+- Hoàn tất hoặc hủy chiến dịch đóng các tin đang tuyển thay vì chỉ ẩn.
+- `docs/04-api/openapi.yaml` được sinh lại từ mã hiện tại.
+
 #### Added — Giao diện "Xem độ phù hợp" (tuần 4)
 
 - Thẻ "Xem độ phù hợp" có mascot ở cột phải trang chi tiết tin (điện thoại, máy tính

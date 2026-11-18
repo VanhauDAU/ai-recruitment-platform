@@ -14,6 +14,7 @@ COMPANY_MEMBERS_PATH = f'{COMPANY_PATH}?tab=members'
 COMPANY_PAGE_PATH = '/tuyendung/app/company-page'
 JOBS_PATH = '/tuyendung/app/jobs'
 APPLICATIONS_PATH = '/tuyendung/app/applications'
+CAMPAIGNS_PATH = '/tuyendung/app/campaigns'
 
 EVENT_PRESENTATION = {
     EmployerNotification.EventType.VERIFICATION_APPROVED: (
@@ -96,10 +97,27 @@ EVENT_PRESENTATION = {
         'Tin tuyển dụng được giao lại',
         JOBS_PATH,
     ),
+    EmployerNotification.EventType.CAMPAIGN_ACTIVATED: (
+        'Chiến dịch đã được kích hoạt theo lịch',
+        CAMPAIGNS_PATH,
+    ),
+    EmployerNotification.EventType.CAMPAIGN_ACTIVATION_FAILED: (
+        'Chiến dịch chưa kích hoạt được theo lịch',
+        CAMPAIGNS_PATH,
+    ),
+    EmployerNotification.EventType.CAMPAIGN_ENDING_SOON: (
+        'Chiến dịch sắp đến ngày kết thúc',
+        CAMPAIGNS_PATH,
+    ),
+    EmployerNotification.EventType.CAMPAIGN_AUTO_COMPLETED: (
+        'Chiến dịch đã tự kết thúc',
+        CAMPAIGNS_PATH,
+    ),
 }
 
 SAFE_METADATA_KEYS = {
     'application_public_id',
+    'campaign_public_id',
     'case_public_id',
     'company_public_id',
     'event_public_id',

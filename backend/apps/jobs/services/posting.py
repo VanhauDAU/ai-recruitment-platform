@@ -164,10 +164,7 @@ def _validate_campaign_for_write(campaign, *, recruiter):
                 'detail': 'Chiến dịch đang bị policy hold.',
             }
         )
-    if campaign.status in {
-        RecruitmentCampaign.Status.COMPLETED,
-        RecruitmentCampaign.Status.CANCELLED,
-    }:
+    if campaign.is_terminal:
         raise ValidationError({'campaign': 'Chiến dịch này không còn nhận tin tuyển dụng.'})
 
 
@@ -391,6 +388,15 @@ def _go_live(job, *, user, previous_status, acknowledged, update_fields=()):
     )
     _record_status(job, from_status=previous_status, to_status=Job.Status.ACTIVE, user=user)
     return job
+
+
+def job_publishability_errors(job):
+    """Field errors that would stop ``publish_job``; empty when the draft is complete."""
+    try:
+        _validate_publishable(job)
+    except ValidationError as error:
+        return error.detail
+    return {}
 
 
 def _validate_publishable(job):
@@ -679,6 +685,59 @@ def close_job(job, user):
     job.closed_at = timezone.now()
     job.save(update_fields=['status', 'closed_at', 'updated_at'])
     _record_status(job, from_status=Job.Status.ACTIVE, to_status=Job.Status.CLOSED, user=user)
+    return job
+
+
+@transaction.atomic
+def close_campaign_jobs(campaign, *, user=None):
+    """Stop every public job of a campaign that has just ended.
+
+    Ending a campaign is a recruiting decision, so its jobs become ``closed``
+    with history rather than lingering ``active`` behind a hidden campaign.
+    The caller already holds the campaign row lock; jobs are locked after it.
+    """
+    now = timezone.now()
+    jobs = list(
+        Job.objects.select_for_update(of=('self',))
+        .select_related('campaign')
+        .filter(campaign=campaign, status=Job.Status.ACTIVE)
+        .order_by('pk')
+    )
+    actor_role = JobStatusHistory.ActorRole.EMPLOYER if user else JobStatusHistory.ActorRole.SYSTEM
+    for job in jobs:
+        job.status = Job.Status.CLOSED
+        job.closed_at = now
+        job.save(update_fields=['status', 'closed_at', 'updated_at'])
+        _record_status(
+            job,
+            from_status=Job.Status.ACTIVE,
+            to_status=Job.Status.CLOSED,
+            user=user,
+            note='campaign_ended',
+            actor_role=actor_role,
+        )
+    return len(jobs)
+
+
+@transaction.atomic
+def assign_job_to_campaign(job, user, campaign):
+    """Move one of the recruiter's jobs into ``campaign`` (used when a campaign launches)."""
+    recruiter = _locked_recruiter(user)
+    job, locked_campaigns = _locked_job(job, extra_campaign_ids=(campaign.pk,))
+    if job.posted_by_id != user.id:
+        raise ValidationError('Bạn không có quyền dùng tin này.')
+    if job.campaign_id == campaign.pk:
+        return job
+    previous_campaign = locked_campaigns.get(job.campaign_id)
+    if previous_campaign is not None and not previous_campaign.is_terminal:
+        raise ValidationError({'job': 'Tin đang thuộc một chiến dịch khác còn chạy.'})
+    locked_campaign = _locked_requested_campaign(campaign, locked_campaigns)
+    _validate_campaign_for_write(locked_campaign, recruiter=recruiter)
+    if locked_campaign.target_date and job.deadline and job.deadline > locked_campaign.target_date:
+        raise ValidationError({'deadline': 'Hạn nhận hồ sơ của tin sau ngày kết thúc chiến dịch.'})
+    job.campaign = locked_campaign
+    job.save(update_fields=['campaign', 'updated_at'])
+    _record_job_assignment(job, previous_campaign=previous_campaign, user=user)
     return job
 
 

@@ -32,6 +32,7 @@ urlpatterns = [
     path('api/candidate/', include('apps.employers.urls_candidate')),
     path('api/companies/', include('apps.employers.urls_public')),
     path('api/employer/', include('apps.employers.urls')),
+    path('api/employer/', include('apps.campaigns.urls')),
     path('api/v2/cvs/', include('apps.cvs.urls_v2')),
     path('api/v2/', include('apps.cvs.urls_admin')),
     path('api/v2/', include('apps.cv_templates.urls_v2')),

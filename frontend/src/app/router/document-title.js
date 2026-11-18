@@ -118,6 +118,7 @@ export function resolveEmployerRouteTitle(pathname) {
   if (pathname === employerAppPath('/jobs/new')) return 'Đăng tin tuyển dụng'
   if (pathname.match(new RegExp(`^${employerAppPath('/jobs/')}[^/]+/edit$`))) return 'Chỉnh sửa tin tuyển dụng'
   if (pathname.match(new RegExp(`^${employerAppPath('/jobs/')}[^/]+$`))) return 'Chi tiết tin tuyển dụng'
+  if (pathname.match(new RegExp(`^${employerAppPath('/campaigns/')}[^/]+/setup$`))) return 'Thiết lập chiến dịch tuyển dụng'
   if (pathname.match(new RegExp(`^${employerAppPath('/campaigns/')}[^/]+$`))) return 'Chi tiết chiến dịch tuyển dụng'
   if (pathname.startsWith(employerAppPath('/account/settings/'))) return 'Cài đặt tài khoản'
 

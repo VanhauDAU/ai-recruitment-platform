@@ -58,6 +58,8 @@ from .moderation import (
 )
 from .posting import (
     RESPONSIBILITY_STATEMENT_VERSION,
+    assign_job_to_campaign,
+    close_campaign_jobs,
     close_job,
     delete_job_draft,
     duplicate_job,
@@ -65,6 +67,7 @@ from .posting import (
     extend_job_deadline,
     job_deadline_error,
     job_deadline_policy,
+    job_publishability_errors,
     publish_job,
     reopen_job,
     save_job_draft,
@@ -83,6 +86,8 @@ __all__ = [
     'apply_job_ai_generation_to_draft',
     'apply_confirmed_report_hold',
     'cancel_job_ai_generation',
+    'assign_job_to_campaign',
+    'close_campaign_jobs',
     'close_job',
     'claim_due_candidate_job_digest_candidates',
     'create_job_alert',
@@ -103,6 +108,7 @@ __all__ = [
     'job_deadline_policy',
     'import_job_postings',
     'fail_job_ai_generation',
+    'job_publishability_errors',
     'publish_job',
     'pending_candidate_job_digest_ids',
     'hide_job_visibility',

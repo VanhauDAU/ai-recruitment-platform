@@ -19,7 +19,7 @@ export default function CreateCampaignModal({
       form.resetFields()
       onClose()
       onCreated(campaign)
-      message.success('Đã tạo và mở chiến dịch.')
+      message.success('Đã tạo nháp. Tiếp tục thiết lập mục tiêu và tin tuyển dụng.')
     },
     onError: (error) => message.error(
       getApiErrorMessage(error, 'Không thể tạo chiến dịch.'),

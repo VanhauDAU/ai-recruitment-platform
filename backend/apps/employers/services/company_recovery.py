@@ -130,12 +130,7 @@ def _clean_snapshot(user, recruiter, verification_case, company):
             posted_by=user, company=company, status=Job.Status.ACTIVE
         ).count(),
         'open_campaigns': RecruitmentCampaign.objects.filter(owner=recruiter)
-        .exclude(
-            status__in=[
-                RecruitmentCampaign.Status.COMPLETED,
-                RecruitmentCampaign.Status.CANCELLED,
-            ]
-        )
+        .exclude(status__in=RecruitmentCampaign.TERMINAL_STATUSES)
         .count(),
         'active_compliance_holds': EmployerComplianceHold.objects.filter(
             recruiter=recruiter,

@@ -1,8 +1,6 @@
 import {
   BarChartOutlined,
   EditOutlined,
-  EyeOutlined,
-  FileAddOutlined,
   SearchOutlined,
   TeamOutlined,
   UserOutlined,
@@ -14,7 +12,6 @@ import {
   Alert,
   Empty,
   Input,
-  Modal,
   Pagination,
   Select,
   Table,
@@ -190,7 +187,6 @@ function CampaignCandidateSummary({ campaign, candidateDataAccess }) {
 }
 
 export default function CampaignList() {
-  const [activityCampaign, setActivityCampaign] = useState(null)
   const [editCampaign, setEditCampaign] = useState(null)
   const [searchParams, setSearchParams] = useSearchParams()
   const location = useLocation()
@@ -472,43 +468,8 @@ export default function CampaignList() {
       <CreateCampaignModal
         open={createOpen}
         onClose={() => setCreateOpen(false)}
-        onCreated={setActivityCampaign}
+        onCreated={(campaign) => navigate(employerAppPath(`/campaigns/${campaign.public_id}/setup`))}
       />
-
-      <Modal
-        destroyOnHidden
-        footer={null}
-        open={Boolean(activityCampaign)}
-        title={activityCampaign
-          ? `Khởi động chiến dịch: ${activityCampaign.name}`
-          : 'Khởi động chiến dịch'}
-        onCancel={() => setActivityCampaign(null)}
-      >
-        <p className="mb-4 text-sm text-slate-500">
-          Chiến dịch đã sẵn sàng. Bạn có thể xem chi tiết hoặc đăng tin ngay.
-        </p>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Button
-            type="primary"
-            icon={<EyeOutlined aria-hidden />}
-            className="!h-11 !rounded-xl !border-0 !bg-gradient-to-r !from-emerald-600 !to-teal-600 !font-semibold !shadow-md transition-all duration-200 hover:!-translate-y-0.5 hover:!from-emerald-500 hover:!to-teal-500 hover:!shadow-lg active:!translate-y-0"
-            onClick={() => navigate(
-              employerAppPath(`/campaigns/${activityCampaign.public_id}`),
-            )}
-          >
-            Xem chiến dịch
-          </Button>
-          <Button
-            icon={<FileAddOutlined aria-hidden />}
-            className="!h-11 !rounded-xl !border-slate-200 !bg-white !font-semibold !text-slate-700 !shadow-sm transition-all duration-200 hover:!-translate-y-0.5 hover:!border-emerald-300 hover:!text-emerald-700 hover:!shadow-md active:!translate-y-0"
-            onClick={() => navigate(
-              employerAppPath(`/jobs/new?campaign=${activityCampaign.public_id}`),
-            )}
-          >
-            Đăng tin tuyển dụng
-          </Button>
-        </div>
-      </Modal>
 
       <RenameCampaignModal
         campaign={editCampaign}

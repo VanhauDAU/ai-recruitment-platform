@@ -83,6 +83,7 @@ INSTALLED_APPS = [
     'apps.applications',
     'apps.ai_core',
     'apps.matching',
+    'apps.campaigns',
     'apps.dashboard',
     'apps.sitecontent',
     'apps.blog',
@@ -620,6 +621,7 @@ CELERY_TASK_ROUTES = {
     'apps.employers.tasks.phone_sms.*': {'queue': 'auth-sms'},
     'apps.employers.tasks.tax_lookup.*': {'queue': 'default'},
     'apps.employers.tasks.domain_claims.*': {'queue': 'default'},
+    'apps.campaigns.tasks.*': {'queue': 'default'},
     'apps.cv_templates.tasks.generate_cv_sample_content': {'queue': 'ai-generation'},
     'apps.cv_templates.tasks.render_template_test_pdf': {'queue': 'cv-export'},
     'apps.cvs.tasks.*': {'queue': 'cv-export'},
@@ -737,6 +739,10 @@ CELERY_BEAT_SCHEDULE = {
     'purge-expired-employer-event-history': {
         'task': 'apps.employers.tasks.notifications.purge_expired_employer_event_history',
         'schedule': 86400.0,
+    },
+    'run-campaign-schedule': {
+        'task': 'apps.campaigns.tasks.run_campaign_schedule',
+        'schedule': 300.0,
     },
     'reconcile-company-domain-claims': {
         'task': 'apps.employers.tasks.domain_claims.reconcile_company_domain_claims',

@@ -15,6 +15,7 @@ class RecruitmentCampaign(models.Model):
 
     class Status(models.TextChoices):
         DRAFT = 'draft', 'Nháp'
+        SCHEDULED = 'scheduled', 'Đã lên lịch'
         ACTIVE = 'active', 'Đang chạy'
         PAUSED = 'paused', 'Tạm dừng'
         COMPLETED = 'completed', 'Hoàn tất'
@@ -25,6 +26,16 @@ class RecruitmentCampaign(models.Model):
         TEMPORARY_LOCK = 'temporary_lock', 'Tạm giữ do khóa tài khoản'
         BAN_REVIEW = 'ban_review', 'Giữ để rà soát sau cấm'
         LEGACY_LOCK = 'legacy_lock', 'Giữ do trạng thái khóa cũ'
+
+    class EndedBy(models.TextChoices):
+        NONE = '', 'Chưa kết thúc'
+        USER = 'user', 'Nhà tuyển dụng'
+        SYSTEM = 'system', 'Hệ thống'
+
+    TERMINAL_STATUSES = frozenset({Status.COMPLETED, Status.CANCELLED})
+    NON_TERMINAL_STATUSES = frozenset(
+        {Status.DRAFT, Status.SCHEDULED, Status.ACTIVE, Status.PAUSED}
+    )
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     company = models.ForeignKey(
@@ -70,6 +81,15 @@ class RecruitmentCampaign(models.Model):
         default=PolicyHold.NONE,
         blank=True,
     )
+    # Running-time bookkeeping: health metrics divide by days actually active,
+    # not by calendar age, so pauses do not dilute the CV velocity.
+    first_activated_at = models.DateTimeField(null=True, blank=True)
+    activated_at = models.DateTimeField(null=True, blank=True)
+    active_seconds_accumulated = models.PositiveBigIntegerField(default=0)
+    ended_at = models.DateTimeField(null=True, blank=True)
+    ended_by = models.CharField(
+        max_length=10, choices=EndedBy.choices, default=EndedBy.NONE, blank=True
+    )
     policy_held_at = models.DateTimeField(null=True, blank=True)
     policy_hold_transition = models.ForeignKey(
         'accounts.AccountStatusTransition',
@@ -91,7 +111,25 @@ class RecruitmentCampaign(models.Model):
                 name='emp_camp_hold_status_idx',
             ),
         ]
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(start_date__isnull=True)
+                | models.Q(target_date__isnull=True)
+                | models.Q(target_date__gte=models.F('start_date')),
+                name='emp_camp_target_after_start',
+            ),
+            models.CheckConstraint(
+                condition=models.Q(budget_min__isnull=True)
+                | models.Q(budget_max__isnull=True)
+                | models.Q(budget_max__gte=models.F('budget_min')),
+                name='emp_camp_budget_range',
+            ),
+        ]
         ordering = ['-created_at']
+
+    @property
+    def is_terminal(self):
+        return self.status in self.TERMINAL_STATUSES
 
     def save(self, *args, **kwargs):
         if not self.public_id:
@@ -116,6 +154,12 @@ class CampaignActivity(models.Model):
         CAMPAIGN_UPDATED = 'campaign_updated', 'Cập nhật chiến dịch'
         CAMPAIGN_PAUSED = 'campaign_paused', 'Dừng chiến dịch'
         CAMPAIGN_RESUMED = 'campaign_resumed', 'Mở lại chiến dịch'
+        CAMPAIGN_SCHEDULED = 'campaign_scheduled', 'Lên lịch kích hoạt'
+        CAMPAIGN_UNSCHEDULED = 'campaign_unscheduled', 'Hủy lịch kích hoạt'
+        CAMPAIGN_ACTIVATED = 'campaign_activated', 'Kích hoạt chiến dịch'
+        CAMPAIGN_ACTIVATION_FAILED = 'campaign_activation_failed', 'Kích hoạt theo lịch thất bại'
+        CAMPAIGN_COMPLETED = 'campaign_completed', 'Hoàn tất chiến dịch'
+        CAMPAIGN_CANCELLED = 'campaign_cancelled', 'Hủy chiến dịch'
         JOB_ADDED = 'job_added', 'Thêm tin tuyển dụng'
         JOB_REMOVED = 'job_removed', 'Gỡ tin tuyển dụng'
         JOB_UPDATED = 'job_updated', 'Cập nhật tin tuyển dụng'

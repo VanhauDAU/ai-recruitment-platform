@@ -5,6 +5,8 @@ from ..models.verification import (
     REQUESTER_EDITABLE_COMPANY_UPDATE_STATUSES,
 )
 from .campaigns import (
+    apply_system_campaign_status,
+    campaign_active_seconds,
     change_campaign_status,
     create_campaign,
     record_campaign_activity,
@@ -208,6 +210,8 @@ __all__ = [
     'close_company_update_before_review',
     'company_update_conflicting_fields',
     'current_company_update_revision',
+    'apply_system_campaign_status',
+    'campaign_active_seconds',
     'change_campaign_status',
     'challenge_code_matches',
     'create_campaign',

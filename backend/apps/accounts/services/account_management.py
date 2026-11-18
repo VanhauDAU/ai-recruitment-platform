@@ -793,11 +793,7 @@ def _confirm_account_status(
             job_hold = Job.PolicyHold.BAN_REVIEW
             campaign_qs = RecruitmentCampaign.objects.filter(
                 pk__in=campaign_ids,
-                status__in={
-                    RecruitmentCampaign.Status.DRAFT,
-                    RecruitmentCampaign.Status.ACTIVE,
-                    RecruitmentCampaign.Status.PAUSED,
-                },
+                status__in=RecruitmentCampaign.NON_TERMINAL_STATUSES,
             )
             job_qs = Job.objects.filter(
                 pk__in=job_ids,
@@ -816,11 +812,7 @@ def _confirm_account_status(
             campaign_qs = RecruitmentCampaign.objects.filter(
                 pk__in=campaign_ids,
                 policy_hold=RecruitmentCampaign.PolicyHold.NONE,
-                status__in={
-                    RecruitmentCampaign.Status.DRAFT,
-                    RecruitmentCampaign.Status.ACTIVE,
-                    RecruitmentCampaign.Status.PAUSED,
-                },
+                status__in=RecruitmentCampaign.NON_TERMINAL_STATUSES,
             )
             job_qs = Job.objects.filter(
                 pk__in=job_ids,

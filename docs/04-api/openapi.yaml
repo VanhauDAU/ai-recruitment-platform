@@ -943,6 +943,38 @@ paths:
               schema:
                 $ref: '#/components/schemas/AdminCompanyDetail'
           description: ''
+  /api/admin/companies/{public_id}/assign-owner/:
+    post:
+      operationId: admin_companies_assign_owner_create
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminCompanyDetailRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AdminCompanyDetailRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AdminCompanyDetailRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminCompanyDetail'
+          description: ''
   /api/admin/companies/{public_id}/policy-hold/:
     post:
       operationId: admin_companies_policy_hold_create
@@ -1213,6 +1245,85 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AdminCompanyDomainClaim'
+          description: ''
+  /api/admin/company-join-requests/:
+    get:
+      operationId: admin_company_join_requests_list
+      description: Join requests across companies; administrators decide only those
+        without an owner.
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - admin
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAdminCompanyJoinRequestList'
+          description: ''
+  /api/admin/company-join-requests/{public_id}/:
+    get:
+      operationId: admin_company_join_requests_retrieve
+      description: Join requests across companies; administrators decide only those
+        without an owner.
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - admin
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminCompanyJoinRequest'
+          description: ''
+  /api/admin/company-join-requests/{public_id}/{decision}/:
+    post:
+      operationId: admin_company_join_requests_create
+      description: Join requests across companies; administrators decide only those
+        without an owner.
+      parameters:
+      - in: path
+        name: decision
+        schema:
+          type: string
+          pattern: ^approve|reject$
+        required: true
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - admin
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminCompanyJoinRequest'
           description: ''
   /api/admin/company-reports/:
     get:
@@ -3994,6 +4105,46 @@ paths:
       responses:
         '200':
           description: No response body
+  /api/dashboard/admin/:
+    get:
+      operationId: dashboard_admin_retrieve
+      summary: Bảng điều khiển cổng quản trị
+      parameters:
+      - in: query
+        name: period
+        schema:
+          type: integer
+          enum:
+          - 30
+          - 7
+          - 90
+        description: Số ngày của kỳ thống kê
+      tags:
+      - admin-dashboard
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminDashboard'
+          description: ''
+  /api/dashboard/admin/queues/:
+    get:
+      operationId: dashboard_admin_queues_retrieve
+      summary: Số mục đang chờ xử lý cho badge cổng quản trị
+      tags:
+      - admin-dashboard
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminQueueSummary'
+          description: ''
   /api/dashboard/employer/:
     get:
       operationId: dashboard_employer_retrieve
@@ -4218,6 +4369,58 @@ paths:
       operationId: employer_campaigns_job_performance_retrieve
       description: Authoritatively gate recruiter workspace reads and cache their
         state.
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - employer
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/employer/campaigns/{public_id}/launch/:
+    get:
+      operationId: employer_campaigns_launch_retrieve
+      description: 'Wizard job and review steps: read the checklist, pick jobs, go
+        live.'
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - employer
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    post:
+      operationId: employer_campaigns_launch_create
+      description: 'Wizard job and review steps: read the checklist, pick jobs, go
+        live.'
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - employer
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    put:
+      operationId: employer_campaigns_launch_update
+      description: 'Wizard job and review steps: read the checklist, pick jobs, go
+        live.'
       parameters:
       - in: path
         name: public_id
@@ -4599,6 +4802,54 @@ paths:
               schema:
                 $ref: '#/components/schemas/CompanyDomainClaim'
           description: ''
+  /api/employer/company/former-members/:
+    get:
+      operationId: employer_company_former_members_list
+      description: People who left but still hold jobs here, waiting to be handed
+        over.
+      tags:
+      - employer
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FormerCompanyMember'
+          description: ''
+  /api/employer/company/handover/:
+    post:
+      operationId: employer_company_handover_create
+      description: The manager gives one person's jobs and campaigns to a verified
+        member.
+      summary: Giao tin tuyển dụng và chiến dịch của một người cho thành viên khác
+      tags:
+      - employer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompanyHandoverRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CompanyHandoverRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CompanyHandoverRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
   /api/employer/company/images/:
     post:
       operationId: employer_company_images_create
@@ -4776,6 +5027,79 @@ paths:
               schema:
                 $ref: '#/components/schemas/Company'
           description: ''
+  /api/employer/company/members/:
+    get:
+      operationId: employer_company_members_list
+      description: Members with their verification, activity and what the manager
+        may do.
+      tags:
+      - employer
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CompanyMember'
+          description: ''
+  /api/employer/company/members/{member_id}/remove/:
+    post:
+      operationId: employer_company_members_remove_create
+      description: The manager removes a member who has nothing left running for the
+        company.
+      summary: Gỡ thành viên khỏi công ty
+      parameters:
+      - in: path
+        name: member_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - employer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompanyMemberRemoveRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CompanyMemberRemoveRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CompanyMemberRemoveRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/employer/company/ownership-transfer/:
+    post:
+      operationId: employer_company_ownership_transfer_create
+      description: The verified owner hands the company to a verified member.
+      summary: Chuyển quyền owner công ty cho thành viên đã xác thực
+      tags:
+      - employer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompanyOwnershipTransferRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CompanyOwnershipTransferRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CompanyOwnershipTransferRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
   /api/employer/company/page/:
     get:
       operationId: employer_company_page_retrieve
@@ -7751,6 +8075,119 @@ paths:
                 items:
                   $ref: '#/components/schemas/LocationLookup'
           description: ''
+  /api/matching/analyses/:
+    get:
+      operationId: matching_analyses_list
+      description: 'POST: yêu cầu phân tích một CV với một tin. GET ?job=<slug>: các
+        lần gần nhất.'
+      parameters:
+      - in: query
+        name: job
+        schema:
+          type: string
+        required: true
+      tags:
+      - Matching
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Analysis'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalysisError'
+          description: ''
+    post:
+      operationId: matching_analyses_create
+      description: 'POST: yêu cầu phân tích một CV với một tin. GET ?job=<slug>: các
+        lần gần nhất.'
+      tags:
+      - Matching
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnalysisRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AnalysisRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AnalysisRequestRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Analysis'
+          description: ''
+        '202':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Analysis'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalysisError'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalysisError'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalysisError'
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalysisError'
+          description: ''
+  /api/matching/analyses/{public_id}/:
+    get:
+      operationId: matching_analyses_retrieve
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - Matching
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Analysis'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalysisError'
+          description: ''
   /api/privacy/consent/:
     get:
       operationId: privacy_consent_retrieve
@@ -10675,6 +11112,19 @@ paths:
               schema:
                 $ref: '#/components/schemas/CandidateApplicationV2'
           description: ''
+  /api/v2/applications/rules/:
+    get:
+      operationId: v2_applications_rules_retrieve
+      description: The limits the clients show, served from the services that enforce
+        them.
+      summary: Luật ứng tuyển, nhắc NTD và tự từ chối
+      tags:
+      - applications-v2
+      security:
+      - {}
+      responses:
+        '200':
+          description: No response body
   /api/v2/cv-backgrounds/:
     get:
       operationId: v2_cv_backgrounds_list
@@ -11965,6 +12415,28 @@ paths:
                 type: string
                 format: binary
           description: ''
+  /api/v2/recruiter/applications/{public_id}/cv/file/:
+    get:
+      operationId: v2_recruiter_applications_cv_file_retrieve
+      summary: Tệp CV ứng viên đã tải lên khi nộp (PDF); ?download=1 để tải về
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - applications-v2
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+          description: ''
   /api/v2/recruiter/applications/{public_id}/history/:
     get:
       operationId: v2_recruiter_applications_history_list
@@ -12214,7 +12686,7 @@ paths:
           description: ''
     post:
       operationId: v2_recruiter_candidate_blocks_create
-      summary: Chặn ứng viên ứng tuyển vào các tin của tôi
+      summary: Chặn ứng viên ứng tuyển vào các tin của công ty
       tags:
       - applications-v2
       requestBody:
@@ -13258,6 +13730,10 @@ components:
         owner_count:
           type: integer
           readOnly: true
+        has_eligible_owner:
+          type: boolean
+          readOnly: true
+          default: false
         member_count:
           type: integer
           readOnly: true
@@ -13323,6 +13799,7 @@ components:
       - created_at
       - created_by
       - email
+      - has_eligible_owner
       - images
       - industries
       - logo_url
@@ -13757,6 +14234,67 @@ components:
         * `reverified` - Đã xác minh lại
         * `revoked` - Đã thu hồi
         * `expired` - Đã hết hiệu lực
+    AdminCompanyJoinRequest:
+      type: object
+      properties:
+        public_id:
+          type: string
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/StatusEfcEnum'
+          readOnly: true
+        company_public_id:
+          type: string
+          readOnly: true
+        company_name:
+          type: string
+          readOnly: true
+        requester_name:
+          type: string
+          readOnly: true
+        requester_email:
+          type: string
+          format: email
+          readOnly: true
+        requester_position:
+          type: string
+          readOnly: true
+        awaiting_admin:
+          type: boolean
+          readOnly: true
+        can_decide:
+          type: boolean
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        decided_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        requester_public_id:
+          type: string
+          readOnly: true
+        decided_by_name:
+          type: string
+          readOnly: true
+      required:
+      - awaiting_admin
+      - can_decide
+      - company_name
+      - company_public_id
+      - created_at
+      - decided_at
+      - decided_by_name
+      - public_id
+      - requester_email
+      - requester_name
+      - requester_position
+      - requester_public_id
+      - status
     AdminCompanyList:
       type: object
       properties:
@@ -13789,6 +14327,10 @@ components:
         owner_count:
           type: integer
           readOnly: true
+        has_eligible_owner:
+          type: boolean
+          readOnly: true
+          default: false
         member_count:
           type: integer
           readOnly: true
@@ -13810,6 +14352,7 @@ components:
       - business_type_label
       - company_name
       - created_at
+      - has_eligible_owner
       - logo_url
       - member_count
       - owner_count
@@ -14122,6 +14665,336 @@ components:
           type: string
       required:
       - lock_version
+    AdminDashboard:
+      type: object
+      properties:
+        generated_at:
+          type: string
+          format: date-time
+        period:
+          $ref: '#/components/schemas/AdminDashboardPeriod'
+        queues:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminDashboardQueue'
+        kpis:
+          $ref: '#/components/schemas/AdminDashboardKpis'
+        activity:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminDashboardActivity'
+        totals:
+          $ref: '#/components/schemas/AdminDashboardTotals'
+        jobs:
+          $ref: '#/components/schemas/AdminDashboardJobs'
+        applications:
+          $ref: '#/components/schemas/AdminDashboardApplications'
+        trust:
+          $ref: '#/components/schemas/AdminDashboardTrust'
+        content:
+          $ref: '#/components/schemas/AdminDashboardContent'
+        top_categories:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminDashboardCategory'
+        ai:
+          $ref: '#/components/schemas/AdminDashboardAi'
+      required:
+      - activity
+      - ai
+      - applications
+      - content
+      - generated_at
+      - jobs
+      - kpis
+      - period
+      - queues
+      - top_categories
+      - totals
+      - trust
+    AdminDashboardActivity:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        candidates:
+          type: integer
+        employers:
+          type: integer
+        jobs:
+          type: integer
+        applications:
+          type: integer
+      required:
+      - applications
+      - candidates
+      - date
+      - employers
+      - jobs
+    AdminDashboardAi:
+      type: object
+      properties:
+        match_analyses:
+          $ref: '#/components/schemas/AdminDashboardMatch'
+        generation:
+          $ref: '#/components/schemas/AdminDashboardGeneration'
+      required:
+      - generation
+      - match_analyses
+    AdminDashboardApplications:
+      type: object
+      properties:
+        funnel:
+          $ref: '#/components/schemas/AdminDashboardFunnel'
+        avg_first_view_hours:
+          type: number
+          format: double
+          nullable: true
+        stale_unviewed:
+          type: integer
+      required:
+      - avg_first_view_hours
+      - funnel
+      - stale_unviewed
+    AdminDashboardCategory:
+      type: object
+      properties:
+        public_id:
+          type: string
+        name:
+          type: string
+        active_jobs:
+          type: integer
+        applications:
+          type: integer
+      required:
+      - active_jobs
+      - applications
+      - name
+      - public_id
+    AdminDashboardComparison:
+      type: object
+      properties:
+        current:
+          type: integer
+        previous:
+          type: integer
+      required:
+      - current
+      - previous
+    AdminDashboardContent:
+      type: object
+      properties:
+        knowledge_review_overdue:
+          type: integer
+      required:
+      - knowledge_review_overdue
+    AdminDashboardFunnel:
+      type: object
+      properties:
+        submitted:
+          type: integer
+        viewed:
+          type: integer
+        shortlisted:
+          type: integer
+        interviewed:
+          type: integer
+        accepted:
+          type: integer
+        rejected:
+          type: integer
+        withdrawn:
+          type: integer
+      required:
+      - accepted
+      - interviewed
+      - rejected
+      - shortlisted
+      - submitted
+      - viewed
+      - withdrawn
+    AdminDashboardGeneration:
+      type: object
+      properties:
+        invocations:
+          type: integer
+        failures:
+          type: integer
+        total_tokens:
+          type: integer
+        cost_usd:
+          type: number
+          format: double
+          maximum: 100000000000000
+          minimum: -100000000000000
+          exclusiveMaximum: true
+          exclusiveMinimum: true
+        avg_latency_ms:
+          type: integer
+          nullable: true
+      required:
+      - avg_latency_ms
+      - cost_usd
+      - failures
+      - invocations
+      - total_tokens
+    AdminDashboardJobStates:
+      type: object
+      properties:
+        draft:
+          type: integer
+        active:
+          type: integer
+        hidden:
+          type: integer
+        expired:
+          type: integer
+        closed:
+          type: integer
+      required:
+      - active
+      - closed
+      - draft
+      - expired
+      - hidden
+    AdminDashboardJobs:
+      type: object
+      properties:
+        states:
+          $ref: '#/components/schemas/AdminDashboardJobStates'
+        held:
+          type: integer
+        without_applications:
+          type: integer
+        expiring_soon:
+          type: integer
+      required:
+      - expiring_soon
+      - held
+      - states
+      - without_applications
+    AdminDashboardKpis:
+      type: object
+      properties:
+        candidates:
+          $ref: '#/components/schemas/AdminDashboardComparison'
+        employers:
+          $ref: '#/components/schemas/AdminDashboardComparison'
+        jobs:
+          $ref: '#/components/schemas/AdminDashboardComparison'
+        applications:
+          $ref: '#/components/schemas/AdminDashboardComparison'
+      required:
+      - applications
+      - candidates
+      - employers
+      - jobs
+    AdminDashboardMatch:
+      type: object
+      properties:
+        total:
+          type: integer
+        succeeded:
+          type: integer
+        failed:
+          type: integer
+      required:
+      - failed
+      - succeeded
+      - total
+    AdminDashboardPeriod:
+      type: object
+      properties:
+        days:
+          type: integer
+        start:
+          type: string
+          format: date
+        end:
+          type: string
+          format: date
+      required:
+      - days
+      - end
+      - start
+    AdminDashboardQueue:
+      type: object
+      properties:
+        key:
+          type: string
+        count:
+          type: integer
+        overdue:
+          type: integer
+        oldest_at:
+          type: string
+          format: date-time
+          nullable: true
+        sla_hours:
+          type: integer
+      required:
+      - count
+      - key
+      - oldest_at
+      - overdue
+      - sla_hours
+    AdminDashboardReportStats:
+      type: object
+      properties:
+        new:
+          type: integer
+        upheld:
+          type: integer
+        dismissed:
+          type: integer
+      required:
+      - dismissed
+      - new
+      - upheld
+    AdminDashboardRestricted:
+      type: object
+      properties:
+        candidates:
+          type: integer
+        employers:
+          type: integer
+      required:
+      - candidates
+      - employers
+    AdminDashboardTotals:
+      type: object
+      properties:
+        candidates:
+          type: integer
+        employers:
+          type: integer
+        companies:
+          type: integer
+        jobs_active:
+          type: integer
+      required:
+      - candidates
+      - companies
+      - employers
+      - jobs_active
+    AdminDashboardTrust:
+      type: object
+      properties:
+        job_reports:
+          $ref: '#/components/schemas/AdminDashboardReportStats'
+        company_reports:
+          $ref: '#/components/schemas/AdminDashboardReportStats'
+        restricted_accounts:
+          $ref: '#/components/schemas/AdminDashboardRestricted'
+        compliance_holds_active:
+          type: integer
+      required:
+      - company_reports
+      - compliance_holds_active
+      - job_reports
+      - restricted_accounts
     AdminInvitation:
       type: object
       properties:
@@ -14295,11 +15168,6 @@ components:
           type: string
           format: date-time
           readOnly: true
-        submitted_at:
-          type: string
-          format: date-time
-          readOnly: true
-          nullable: true
         updated_at:
           type: string
           format: date-time
@@ -14323,7 +15191,6 @@ components:
       - source_label
       - status
       - status_label
-      - submitted_at
       - submitted_cv_source
       - submitted_cv_title
       - submitted_cv_version_public_id
@@ -15272,6 +16139,22 @@ components:
         base_revision:
           type: integer
           minimum: 1
+    AdminQueueSummary:
+      type: object
+      properties:
+        generated_at:
+          type: string
+          format: date-time
+        queues:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminDashboardQueue'
+        knowledge_review_overdue:
+          type: integer
+      required:
+      - generated_at
+      - knowledge_review_overdue
+      - queues
     AdminTag:
       type: object
       properties:
@@ -16383,6 +17266,96 @@ components:
       required:
       - company_name
       - tax_code
+    Analysis:
+      type: object
+      description: Trạng thái và kết quả một lần phân tích; `result` chỉ có khi đã
+        hoàn tất.
+      properties:
+        public_id:
+          type: string
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/AnalysisStatusEnum'
+          readOnly: true
+        job:
+          type: string
+          readOnly: true
+        cv:
+          type: string
+          readOnly: true
+        overall_score:
+          type: integer
+          readOnly: true
+          nullable: true
+        result:
+          type: string
+          readOnly: true
+        error_code:
+          type: string
+          readOnly: true
+        cached:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        completed_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+      required:
+      - cached
+      - completed_at
+      - created_at
+      - cv
+      - error_code
+      - job
+      - overall_score
+      - public_id
+      - result
+      - status
+    AnalysisError:
+      type: object
+      properties:
+        code:
+          type: string
+        detail:
+          type: string
+      required:
+      - code
+      - detail
+    AnalysisRequestRequest:
+      type: object
+      properties:
+        job:
+          type: string
+          minLength: 1
+          description: Slug của tin tuyển dụng.
+          maxLength: 255
+          pattern: ^[-a-zA-Z0-9_]+$
+        cv:
+          type: string
+          minLength: 1
+          description: public_id của CV.
+          maxLength: 50
+      required:
+      - cv
+      - job
+    AnalysisStatusEnum:
+      enum:
+      - queued
+      - processing
+      - succeeded
+      - failed
+      type: string
+      description: |-
+        * `queued` - Đang chờ
+        * `processing` - Đang xử lý
+        * `succeeded` - Hoàn tất
+        * `failed` - Thất bại
     AnnouncementActionRequest:
       type: object
       properties:
@@ -17147,11 +18120,6 @@ components:
         submitted_cv_source:
           type: string
           readOnly: true
-        submitted_at:
-          type: string
-          format: date-time
-          readOnly: true
-          nullable: true
         cover_letter:
           type: string
           readOnly: true
@@ -17255,7 +18223,6 @@ components:
       - source
       - status
       - submission_number
-      - submitted_at
       - submitted_cv_source
       - submitted_cv_title
       - submitted_cv_version
@@ -17677,6 +18644,12 @@ components:
       - campaign_updated
       - campaign_paused
       - campaign_resumed
+      - campaign_scheduled
+      - campaign_unscheduled
+      - campaign_activated
+      - campaign_activation_failed
+      - campaign_completed
+      - campaign_cancelled
       - job_added
       - job_removed
       - job_updated
@@ -17692,6 +18665,12 @@ components:
         * `campaign_updated` - Cập nhật chiến dịch
         * `campaign_paused` - Dừng chiến dịch
         * `campaign_resumed` - Mở lại chiến dịch
+        * `campaign_scheduled` - Lên lịch kích hoạt
+        * `campaign_unscheduled` - Hủy lịch kích hoạt
+        * `campaign_activated` - Kích hoạt chiến dịch
+        * `campaign_activation_failed` - Kích hoạt theo lịch thất bại
+        * `campaign_completed` - Hoàn tất chiến dịch
+        * `campaign_cancelled` - Hủy chiến dịch
         * `job_added` - Thêm tin tuyển dụng
         * `job_removed` - Gỡ tin tuyển dụng
         * `job_updated` - Cập nhật tin tuyển dụng
@@ -17737,11 +18716,6 @@ components:
         submitted_cv_source:
           type: string
           readOnly: true
-        submitted_at:
-          type: string
-          format: date-time
-          readOnly: true
-          nullable: true
         cover_letter:
           type: string
           readOnly: true
@@ -17828,7 +18802,6 @@ components:
       - preferred_location_names
       - public_id
       - status
-      - submitted_at
       - submitted_cv_source
       - submitted_cv_title
       - submitted_cv_version_public_id
@@ -17945,6 +18918,12 @@ components:
           type: string
           readOnly: true
           default: ''
+        blocked_by_name:
+          type: string
+          readOnly: true
+        can_lift:
+          type: boolean
+          readOnly: true
         expires_at:
           type: string
           format: date-time
@@ -17955,6 +18934,8 @@ components:
           format: date-time
           readOnly: true
       required:
+      - blocked_by_name
+      - can_lift
       - candidate_email
       - candidate_name
       - created_at
@@ -18778,6 +19759,20 @@ components:
           minimum: 0
       required:
       - lock_version
+    CompanyHandoverRequest:
+      type: object
+      properties:
+        source:
+          type: string
+          minLength: 1
+          description: member_id của người đang giữ tin
+        target:
+          type: string
+          minLength: 1
+          description: member_id của người nhận
+      required:
+      - source
+      - target
     CompanyImage:
       type: object
       properties:
@@ -18828,7 +19823,7 @@ components:
           readOnly: true
         status:
           allOf:
-          - $ref: '#/components/schemas/CompanyJoinStatusEnum'
+          - $ref: '#/components/schemas/StatusEfcEnum'
           readOnly: true
         company_public_id:
           type: string
@@ -18846,6 +19841,12 @@ components:
         requester_position:
           type: string
           readOnly: true
+        awaiting_admin:
+          type: boolean
+          readOnly: true
+        can_decide:
+          type: boolean
+          readOnly: true
         created_at:
           type: string
           format: date-time
@@ -18856,6 +19857,8 @@ components:
           readOnly: true
           nullable: true
       required:
+      - awaiting_admin
+      - can_decide
       - company_name
       - company_public_id
       - created_at
@@ -18865,18 +19868,118 @@ components:
       - requester_name
       - requester_position
       - status
-    CompanyJoinStatusEnum:
-      enum:
-      - pending
-      - approved
-      - rejected
-      - cancelled
-      type: string
-      description: |-
-        * `pending` - Chờ duyệt
-        * `approved` - Đã duyệt
-        * `rejected` - Từ chối
-        * `cancelled` - Đã hủy
+    CompanyMember:
+      type: object
+      description: One member as the company manager sees and manages it.
+      properties:
+        member_id:
+          type: string
+          readOnly: true
+        display_name:
+          type: string
+          readOnly: true
+        avatar_url:
+          type: string
+          readOnly: true
+        position_title:
+          type: string
+          readOnly: true
+        email_masked:
+          type: string
+          readOnly: true
+        phone_masked:
+          type: string
+          readOnly: true
+        role:
+          type: string
+          readOnly: true
+        role_label:
+          type: string
+          readOnly: true
+        verification_status:
+          type: string
+          readOnly: true
+        verification_label:
+          type: string
+          readOnly: true
+        is_verified:
+          type: boolean
+          readOnly: true
+        has_compliance_hold:
+          type: boolean
+          readOnly: true
+        page_editor_grant_id:
+          type: string
+          readOnly: true
+        joined_at:
+          type: string
+          readOnly: true
+        approved_by_name:
+          type: string
+          readOnly: true
+        job_count:
+          type: integer
+          readOnly: true
+        active_job_count:
+          type: integer
+          readOnly: true
+        unanswered_application_count:
+          type: integer
+          readOnly: true
+        open_campaign_count:
+          type: integer
+          readOnly: true
+        is_me:
+          type: boolean
+          readOnly: true
+        can_transfer:
+          type: boolean
+          readOnly: true
+        can_grant_page_editor:
+          type: boolean
+          readOnly: true
+        can_receive_jobs:
+          type: boolean
+          readOnly: true
+        removal_blockers:
+          type: array
+          items:
+            type: string
+          description: Same rules as the removal service, read from the list annotations.
+          readOnly: true
+      required:
+      - active_job_count
+      - approved_by_name
+      - avatar_url
+      - can_grant_page_editor
+      - can_receive_jobs
+      - can_transfer
+      - display_name
+      - email_masked
+      - has_compliance_hold
+      - is_me
+      - is_verified
+      - job_count
+      - joined_at
+      - member_id
+      - open_campaign_count
+      - page_editor_grant_id
+      - phone_masked
+      - position_title
+      - removal_blockers
+      - role
+      - role_label
+      - unanswered_application_count
+      - verification_label
+      - verification_status
+    CompanyMemberRemoveRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+          minLength: 1
+      required:
+      - reason
     CompanyNameEnum:
       enum:
       - match
@@ -18891,6 +19994,15 @@ components:
         * `pending` - pending
         * `unavailable` - unavailable
         * `stale_input` - stale_input
+    CompanyOwnershipTransferRequest:
+      type: object
+      properties:
+        recruiter:
+          type: string
+          minLength: 1
+          description: member_id của thành viên
+      required:
+      - recruiter
     CompanyReportResolutionEvent:
       type: object
       properties:
@@ -19002,7 +20114,7 @@ components:
       - member
       type: string
       description: |-
-        * `owner` - Người tạo công ty
+        * `owner` - Quản lý công ty
         * `member` - Thành viên
     CompanySearch:
       type: object
@@ -20589,6 +21701,9 @@ components:
         application_ready:
           type: string
           readOnly: true
+        has_saved_version:
+          type: string
+          readOnly: true
         import_job:
           type: string
           readOnly: true
@@ -20609,6 +21724,7 @@ components:
       - experience_years
       - file_name
       - file_type
+      - has_saved_version
       - has_unsaved_changes
       - import_job
       - is_complete
@@ -20755,6 +21871,9 @@ components:
         assets:
           type: string
           readOnly: true
+        has_source_file:
+          type: boolean
+          readOnly: true
         plain_text:
           type: string
           readOnly: true
@@ -20776,6 +21895,7 @@ components:
       - content_hash
       - content_json
       - created_at
+      - has_source_file
       - layout_json
       - parent_version_public_id
       - plain_text
@@ -20970,7 +22090,7 @@ components:
           type: string
           readOnly: true
         event_type:
-          $ref: '#/components/schemas/EventTypeDfeEnum'
+          $ref: '#/components/schemas/EventTypeAfaEnum'
         summary:
           type: string
           maxLength: 240
@@ -22355,7 +23475,7 @@ components:
           type: string
           readOnly: true
         event_type:
-          $ref: '#/components/schemas/EventTypeDfeEnum'
+          $ref: '#/components/schemas/EventTypeAfaEnum'
         title:
           type: string
           maxLength: 180
@@ -22577,7 +23697,16 @@ components:
         * `internship` - Internship
         * `freelance` - Freelance
         * `other` - Khác
-    EventTypeDfeEnum:
+    EndedByEnum:
+      enum:
+      - user
+      - system
+      type: string
+      description: |-
+        * `` - Chưa kết thúc
+        * `user` - Nhà tuyển dụng
+        * `system` - Hệ thống
+    EventTypeAfaEnum:
       enum:
       - verification_approved
       - verification_changes_requested
@@ -22596,7 +23725,13 @@ components:
       - company_join_requested
       - company_join_approved
       - company_join_rejected
+      - company_ownership_changed
+      - jobs_handed_over
       - application_review_submitted
+      - campaign_activated
+      - campaign_activation_failed
+      - campaign_ending_soon
+      - campaign_auto_completed
       type: string
       description: |-
         * `verification_approved` - Hồ sơ xác thực đã được duyệt
@@ -22616,7 +23751,13 @@ components:
         * `company_join_requested` - Có yêu cầu tham gia công ty
         * `company_join_approved` - Yêu cầu tham gia công ty đã được duyệt
         * `company_join_rejected` - Yêu cầu tham gia công ty bị từ chối
+        * `company_ownership_changed` - Quyền quản lý công ty đã thay đổi
+        * `jobs_handed_over` - Tin tuyển dụng được giao lại
         * `application_review_submitted` - Có đánh giá mới cho hồ sơ ứng viên
+        * `campaign_activated` - Chiến dịch đã được kích hoạt theo lịch
+        * `campaign_activation_failed` - Chiến dịch chưa kích hoạt được theo lịch
+        * `campaign_ending_soon` - Chiến dịch sắp đến ngày kết thúc
+        * `campaign_auto_completed` - Chiến dịch đã tự kết thúc
     ExperienceBandEnum:
       enum:
       - entry
@@ -22900,6 +24041,53 @@ components:
       - public_id
       - slug
       - trade_name
+    FormerCompanyMember:
+      type: object
+      description: Someone who left the company but still holds jobs or campaigns
+        there.
+      properties:
+        member_id:
+          type: string
+          readOnly: true
+        display_name:
+          type: string
+          readOnly: true
+        avatar_url:
+          type: string
+          readOnly: true
+        position_title:
+          type: string
+          readOnly: true
+        email_masked:
+          type: string
+          readOnly: true
+        left_at:
+          type: string
+          format: date-time
+          readOnly: true
+        job_count:
+          type: integer
+          readOnly: true
+        active_job_count:
+          type: integer
+          readOnly: true
+        unanswered_application_count:
+          type: integer
+          readOnly: true
+        open_campaign_count:
+          type: integer
+          readOnly: true
+      required:
+      - active_job_count
+      - avatar_url
+      - display_name
+      - email_masked
+      - job_count
+      - left_at
+      - member_id
+      - open_campaign_count
+      - position_title
+      - unanswered_application_count
     FrequencyEnum:
       enum:
       - daily
@@ -25288,6 +26476,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/AdminCompanyDomainClaim'
+    PaginatedAdminCompanyJoinRequestList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminCompanyJoinRequest'
     PaginatedAdminCompanyListList:
       type: object
       required:
@@ -26866,13 +28077,54 @@ components:
           type: string
           minLength: 1
           maxLength: 255
+        description:
+          type: string
+        position_category:
+          type: integer
+          nullable: true
+        position_level:
+          oneOf:
+          - $ref: '#/components/schemas/PositionLevelDf0Enum'
+          - $ref: '#/components/schemas/BlankEnum'
+        headcount_target:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+        start_date:
+          type: string
+          format: date
+          nullable: true
+        target_date:
+          type: string
+          format: date
+          nullable: true
+        is_continuous:
+          type: boolean
+        budget_min:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          nullable: true
+        budget_max:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          nullable: true
+        budget_source:
+          $ref: '#/components/schemas/BudgetSourceEnum'
+        activate:
+          type: boolean
+          writeOnly: true
+          default: false
     PatchedRecruitmentNeedRequest:
       type: object
       properties:
         position_category:
           type: integer
         position_level:
-          $ref: '#/components/schemas/RecruitmentNeedPositionLevelEnum'
+          $ref: '#/components/schemas/PositionLevelDf0Enum'
         target_date:
           type: string
           format: date
@@ -27044,6 +28296,26 @@ components:
         * `vice_director` - Phó giám đốc
         * `director` - Giám đốc
         * `intern` - Thực tập sinh
+    PositionLevelDf0Enum:
+      enum:
+      - employee
+      - team_lead
+      - manager
+      - supervisor
+      - branch_manager
+      - vice_director
+      - director
+      - intern
+      type: string
+      description: |-
+        * `employee` - Nhân viên
+        * `team_lead` - Trưởng nhóm
+        * `manager` - Trưởng / Phó phòng
+        * `supervisor` - Quản lý / Giám sát
+        * `branch_manager` - Trưởng chi nhánh
+        * `vice_director` - Phó giám đốc
+        * `director` - Giám đốc
+        * `intern` - Thực tập sinh
     PostCategory:
       type: object
       description: Category link DTO used by navigation, cards, and post detail.
@@ -27193,6 +28465,9 @@ components:
         status_label:
           type: string
           readOnly: true
+        furthest_stage:
+          type: string
+          readOnly: true
         submitted_cv_title:
           type: string
           readOnly: true
@@ -27208,6 +28483,7 @@ components:
           nullable: true
       required:
       - applied_at
+      - furthest_stage
       - public_id
       - rejected_at
       - status
@@ -28468,11 +29744,10 @@ components:
           allOf:
           - $ref: '#/components/schemas/ApplicationStatusEnum'
           readOnly: true
-        submitted_at:
+        applied_at:
           type: string
           format: date-time
           readOnly: true
-          nullable: true
         submitted_cv_title:
           type: string
           readOnly: true
@@ -28501,6 +29776,7 @@ components:
       required:
       - allow_ai_analysis
       - application_public_id
+      - applied_at
       - contact_email
       - contact_name
       - contact_phone
@@ -28508,7 +29784,6 @@ components:
       - job_public_id
       - preferred_location_names
       - status
-      - submitted_at
       - submitted_cv_source
       - submitted_cv_title
     RecruiterCvExport:
@@ -28714,11 +29989,70 @@ components:
         name:
           type: string
           maxLength: 255
+        description:
+          type: string
+        position_category:
+          type: integer
+          nullable: true
+        position_category_name:
+          type: string
+          readOnly: true
+          default: ''
+        position_level:
+          oneOf:
+          - $ref: '#/components/schemas/PositionLevelDf0Enum'
+          - $ref: '#/components/schemas/BlankEnum'
+        headcount_target:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+        start_date:
+          type: string
+          format: date
+          nullable: true
+        target_date:
+          type: string
+          format: date
+          nullable: true
+        is_continuous:
+          type: boolean
+        budget_min:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          nullable: true
+        budget_max:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          nullable: true
+        budget_source:
+          $ref: '#/components/schemas/BudgetSourceEnum'
         status:
           allOf:
           - $ref: '#/components/schemas/RecruitmentCampaignStatusEnum'
           readOnly: true
         status_label:
+          type: string
+          readOnly: true
+        first_activated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        ended_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        ended_by:
+          readOnly: true
+          oneOf:
+          - $ref: '#/components/schemas/EndedByEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        active_days:
           type: string
           readOnly: true
         last_activity:
@@ -28789,6 +30123,7 @@ components:
           readOnly: true
       required:
       - accepted_count
+      - active_days
       - active_job_count
       - application_count
       - application_pair_count
@@ -28798,11 +30133,15 @@ components:
       - closed_job_count
       - created_at
       - draft_job_count
+      - ended_at
+      - ended_by
       - expired_job_count
+      - first_activated_at
       - hidden_job_count
       - job_count
       - last_activity
       - name
+      - position_category_name
       - public_id
       - status
       - status_label
@@ -28816,11 +30155,53 @@ components:
           type: string
           minLength: 1
           maxLength: 255
+        description:
+          type: string
+        position_category:
+          type: integer
+          nullable: true
+        position_level:
+          oneOf:
+          - $ref: '#/components/schemas/PositionLevelDf0Enum'
+          - $ref: '#/components/schemas/BlankEnum'
+        headcount_target:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+        start_date:
+          type: string
+          format: date
+          nullable: true
+        target_date:
+          type: string
+          format: date
+          nullable: true
+        is_continuous:
+          type: boolean
+        budget_min:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          nullable: true
+        budget_max:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          nullable: true
+        budget_source:
+          $ref: '#/components/schemas/BudgetSourceEnum'
+        activate:
+          type: boolean
+          writeOnly: true
+          default: false
       required:
       - name
     RecruitmentCampaignStatusEnum:
       enum:
       - draft
+      - scheduled
       - active
       - paused
       - completed
@@ -28828,6 +30209,7 @@ components:
       type: string
       description: |-
         * `draft` - Nháp
+        * `scheduled` - Đã lên lịch
         * `active` - Đang chạy
         * `paused` - Tạm dừng
         * `completed` - Hoàn tất
@@ -28844,7 +30226,7 @@ components:
           type: string
           readOnly: true
         position_level:
-          $ref: '#/components/schemas/RecruitmentNeedPositionLevelEnum'
+          $ref: '#/components/schemas/PositionLevelDf0Enum'
         position_level_label:
           type: string
           readOnly: true
@@ -28894,33 +30276,13 @@ components:
       - position_level
       - position_level_label
       - public_id
-    RecruitmentNeedPositionLevelEnum:
-      enum:
-      - employee
-      - team_lead
-      - manager
-      - supervisor
-      - branch_manager
-      - vice_director
-      - director
-      - intern
-      type: string
-      description: |-
-        * `employee` - Nhân viên
-        * `team_lead` - Trưởng nhóm
-        * `manager` - Trưởng / Phó phòng
-        * `supervisor` - Quản lý / Giám sát
-        * `branch_manager` - Trưởng chi nhánh
-        * `vice_director` - Phó giám đốc
-        * `director` - Giám đốc
-        * `intern` - Thực tập sinh
     RecruitmentNeedRequest:
       type: object
       properties:
         position_category:
           type: integer
         position_level:
-          $ref: '#/components/schemas/RecruitmentNeedPositionLevelEnum'
+          $ref: '#/components/schemas/PositionLevelDf0Enum'
         target_date:
           type: string
           format: date
@@ -29882,6 +31244,18 @@ components:
         * `active` - active
         * `inactive` - inactive
         * `banned` - banned
+    StatusEfcEnum:
+      enum:
+      - pending
+      - approved
+      - rejected
+      - cancelled
+      type: string
+      description: |-
+        * `pending` - Chờ duyệt
+        * `approved` - Đã duyệt
+        * `rejected` - Từ chối
+        * `cancelled` - Đã hủy
     StatusFacEnum:
       enum:
       - pending

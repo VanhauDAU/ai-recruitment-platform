@@ -7,6 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
+| [Nâng cấp chiến dịch tuyển dụng (4 GĐ)](#nâng-cấp-chiến-dịch-tuyển-dụng-2026-11-18) | 🟨 GĐ1 xong trên nhánh `feat/campaign-goals-lifecycle`, chưa mở PR; GĐ2–4 chưa làm |
 | [Ứng tuyển bằng CV tải lên và form ứng tuyển mới](#ứng-tuyển-bằng-cv-tải-lên-và-form-ứng-tuyển-mới-2026-11-18) | ✅ Gộp vào `dev` (#234) |
 | [Bảng điều khiển quản trị](#bảng-điều-khiển-quản-trị-2026-11-16) | 🟨 Xong trên nhánh `feat/admin-dashboard`, chưa mở PR |
 | [Ảnh đại diện dùng chung 3 cổng](#ảnh-đại-diện-dùng-chung-3-cổng-2026-11-16) | 🟨 Xong trên nhánh `feat/avatar-editor`, chưa mở PR |
@@ -27,6 +28,67 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Các epic đã hoàn tất](#các-epic-đã-hoàn-tất) | ✅ |
 | [Lộ trình theo PRD](#lộ-trình-theo-prd) | 🟨 Phần AI lõi (giai đoạn 2–3) còn mở |
 | [Việc còn mở](#việc-còn-mở) | |
+
+## Nâng cấp chiến dịch tuyển dụng (2026-11-18)
+
+Chốt với user ngày 18/11: chiến dịch được nâng thành quy trình *lập mục tiêu →
+phân phối đa kênh → đo hiệu quả từng kênh → theo dõi sức khỏe → tự kết thúc*.
+Kế hoạch 4 giai đoạn, mỗi giai đoạn một PR.
+
+| GĐ | Nội dung | Trạng thái |
+| --- | --- | --- |
+| 1 | Mục tiêu, vòng đời (`scheduled`), wizard thiết lập, lịch chạy, đóng tin khi kết thúc | 🟨 Xong trên nhánh `feat/campaign-goals-lifecycle` |
+| 2 | Kênh thủ công, link theo dõi `/r/<code>`, ghi nhận nguồn ứng tuyển, trang đích `/tuyen-dung/<slug>`, nội dung bài đăng bằng AI | ⬜ |
+| 3 | Đăng Facebook Page của NTD (OAuth, hẹn giờ, gỡ bài khi kết thúc) | ⬜ |
+| 4 | Sức khỏe chiến dịch (dự báo, cảnh báo), email báo cáo tuần, xuất Excel/PDF | ⬜ |
+
+Quyết định đã chốt:
+- Hai trụ cột: phân phối đa kênh có ghi nhận nguồn; mục tiêu và sức khỏe.
+- Giữ một chủ sở hữu.
+- Chi phí nhập tay theo kênh, không thanh toán trong hệ thống.
+- Tạm dừng giữ bài Facebook, hoàn tất/hủy thì gỡ bài và đóng tin.
+- Ghi nhận nguồn: có consent Analytics thì nhớ 30 ngày, không có thì chỉ nhớ
+  trong phiên.
+
+GĐ1 đã làm:
+- **Mục tiêu**: API ghi được vị trí, cấp bậc, chỉ tiêu, ngày bắt đầu/kết thúc
+  hoặc tuyển liên tục, ngân sách. Có ràng buộc ngày và ngân sách (serializer +
+  CheckConstraint), không rút ngày kết thúc trước hạn nộp của tin đang tuyển.
+  Chiến dịch đã kết thúc không sửa được.
+- **Vòng đời**:
+  - thêm `scheduled`; kích hoạt chỉ qua `launch/`;
+  - tạo nhanh ra `draft` (tạo trong form đăng tin vẫn chạy luôn với
+    `activate=true`);
+  - hoàn tất/hủy đóng mọi tin đang tuyển (`closed` + lịch sử) qua signal
+    `campaign_status_changed`;
+  - ghi mốc chạy thật (`first_activated_at`, `active_seconds_accumulated`,
+    `ended_at`, `ended_by`) để GĐ4 chia theo số ngày chạy thật; API trả
+    `active_days`;
+  - hằng số `TERMINAL_STATUSES`/`NON_TERMINAL_STATUSES` thay cho các danh sách
+    trạng thái viết cứng ở khóa tài khoản, đối soát hold, gỡ thành viên, khôi
+    phục công ty;
+  - migration `employers.0065` điền sẵn mốc cho chiến dịch cũ.
+- **App mới `apps.campaigns`**:
+  - `CampaignLaunchPlan`/`CampaignLaunchJob`;
+  - `GET/PUT/POST /api/employer/campaigns/<id>/launch/`: checklist, chọn tin
+    nháp để đăng / tin đang hiển thị để gắn, kích hoạt tất cả hoặc không gì cả,
+    hoặc lên lịch;
+  - beat `run_campaign_schedule` (5 phút): tự kích hoạt đúng ngày bằng cam kết
+    đã lưu, lỗi thì giữ `scheduled` và báo một lần cho mỗi loại lỗi; tự hoàn
+    tất sau `target_date`; báo trước 3 ngày.
+- **Frontend**:
+  - trang `/tuyendung/app/campaigns/:id/setup?step=goal|jobs|launch`
+    (widget `campaign-setup-wizard`, feature `launch-campaign`,
+    `CampaignGoalForm`);
+  - tạo chiến dịch xong chuyển sang wizard;
+  - form đăng tin mở từ wizard (`return=setup`) lưu nháp xong quay lại bước
+    chọn tin;
+  - workspace: "Sửa mục tiêu", "Tiếp tục thiết lập", Hoàn tất / Hủy / Hủy lịch
+    có xác nhận.
+- Wizard GĐ1 có ba bước; bước "Kênh & lịch" thêm ở GĐ2.
+- Còn mở: chưa xem bằng mắt trên trình duyệt (đã có test API và test giao diện);
+  `openapi.yaml` được sinh lại nên kéo theo phần lệch tích tụ từ các tính năng
+  trước.
 
 ## Ứng tuyển bằng CV tải lên và form ứng tuyển mới (2026-11-18)
 

@@ -61,3 +61,24 @@ export async function getCampaignJobPerformance(publicId, days = 7, jobPublicId 
   })
   return data
 }
+
+export async function getCampaignLaunch(publicId) {
+  const { data } = await api.get(`/employer/campaigns/${publicId}/launch/`)
+  return data
+}
+
+export async function saveCampaignLaunchSelection(publicId, { publishJobIds = [], attachJobIds = [] }) {
+  const { data } = await api.put(`/employer/campaigns/${publicId}/launch/`, {
+    publish_job_ids: publishJobIds,
+    attach_job_ids: attachJobIds,
+  })
+  return data
+}
+
+export async function launchCampaign(publicId, { mode, acceptedStatementVersion }) {
+  const { data } = await api.post(`/employer/campaigns/${publicId}/launch/`, {
+    mode,
+    accepted_statement_version: acceptedStatementVersion,
+  })
+  return data
+}

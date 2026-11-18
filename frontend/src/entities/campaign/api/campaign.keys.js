@@ -4,6 +4,7 @@ export const campaignKeys = {
   detail: (publicId) => ['campaigns', 'detail', publicId],
   options: ['campaigns', 'options'],
   report: (publicId) => ['campaigns', 'report', publicId],
+  launch: (publicId) => ['campaigns', 'launch', publicId],
   pauseImpact: (publicId) => ['campaigns', 'pause-impact', publicId],
   activities: (publicId, params = {}) => ['campaigns', 'activities', publicId, params],
   jobPerformance: (publicId, days, jobPublicId = '') => [

@@ -44,7 +44,7 @@ describe('CampaignLifecycleActions', () => {
     const user = userEvent.setup()
     renderActions()
 
-    await user.click(screen.getByRole('button', { name: /dừng/i }))
+    await user.click(screen.getByRole('button', { name: 'Dừng chiến dịch' }))
     expect(await screen.findByText('1 tin đang công khai sẽ bị ẩn')).toBeInTheDocument()
     expect(screen.getByText('Frontend Engineer')).toBeInTheDocument()
     const confirm = screen.getByRole('button', { name: 'Xác nhận dừng' })
@@ -93,5 +93,17 @@ describe('CampaignLifecycleActions', () => {
 
     expect(await screen.findByText('1 tin đang công khai sẽ bị ẩn')).toBeInTheDocument()
     expect(mocks.changeCampaignStatus).not.toHaveBeenCalled()
+  })
+
+  it('confirms before ending a campaign or cancelling its schedule', async () => {
+    const user = userEvent.setup()
+    renderActions({ public_id: 'camp_frontend', name: 'Tuyển Frontend', status: 'scheduled' })
+
+    expect(screen.queryByRole('button', { name: 'Hoàn tất' })).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Hủy lịch' }))
+    expect(await screen.findByText('Chiến dịch về lại nháp và không tự chạy vào ngày bắt đầu.')).toBeInTheDocument()
+    await user.click(screen.getAllByRole('button', { name: 'Hủy lịch' }).at(-1))
+
+    await waitFor(() => expect(mocks.changeCampaignStatus).toHaveBeenCalledWith('camp_frontend', 'draft', undefined))
   })
 })
