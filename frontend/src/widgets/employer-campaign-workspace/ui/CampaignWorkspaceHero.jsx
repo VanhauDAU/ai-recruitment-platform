@@ -5,10 +5,16 @@ import { Link } from 'react-router'
 import { CAMPAIGN_SETUP_STATUSES, CAMPAIGN_STATUS_LABELS } from '@/entities/campaign'
 import { CampaignLifecycleActions } from '@/features/manage-campaigns'
 import { employerAppPath } from '@/shared/config/portals'
+import HelpTip from '@/shared/ui/HelpTip'
 import './campaign-workspace.css'
 
 const formatDate = (value) => (value ? dayjs(value).format('DD/MM/YYYY') : '')
 const money = (value) => `${Number(value).toLocaleString('vi-VN')} đ`
+
+const FACT_HELP = {
+  'Chỉ tiêu': 'Tổng số lượng tuyển của các tin trong chiến dịch. Sửa số lượng ở từng tin để đổi chỉ tiêu.',
+  'Đã chạy': 'Số ngày chiến dịch thực sự chạy, không tính lúc tạm dừng hay chờ kích hoạt. Dùng để tính tốc độ CV và dự báo.',
+}
 
 function campaignFacts(campaign) {
   const end = campaign.is_continuous ? 'tuyển liên tục' : formatDate(campaign.target_date) || 'chưa đặt'
@@ -73,7 +79,7 @@ export default function CampaignWorkspaceHero({ campaign, onEdit }) {
       <dl className="cw-facts">
         {campaignFacts(campaign).map(([label, value]) => (
           <div key={label} className="cw-fact">
-            <dt>{label}</dt>
+            <dt>{label}{FACT_HELP[label] && <HelpTip label={`Giải thích ${label.toLowerCase()}`}>{FACT_HELP[label]}</HelpTip>}</dt>
             <dd>{value}</dd>
           </div>
         ))}

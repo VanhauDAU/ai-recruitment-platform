@@ -10,7 +10,9 @@ import {
 } from '@/entities/campaign'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { message } from '@/shared/lib/toast'
+import HelpTip from '@/shared/ui/HelpTip'
 import { money } from '../lib/channel-kinds'
+import { CHANNEL_METRIC_HELP as HELP } from '../lib/metric-help'
 
 const KINDS = ['Chạy quảng cáo', 'In ấn tờ rơi', 'Phí đăng tin', 'Thuê người đăng']
 const AMOUNTS = [500_000, 1_000_000, 2_000_000, 5_000_000]
@@ -59,9 +61,9 @@ export default function ChannelCostsPanel({ campaign, channel, editable }) {
 
       <dl className="ch-costs__sum">
         <div><dt>Đã chi cho kênh</dt><dd>{money(spent)}</dd></div>
-        <div><dt>Chi phí mỗi hồ sơ</dt><dd>{perApplication == null ? 'Chưa có hồ sơ' : money(Math.round(perApplication))}</dd></div>
+        <div><dt>Chi phí mỗi hồ sơ<HelpTip label="Giải thích chi phí mỗi hồ sơ">{HELP.costPerApplication}</HelpTip></dt><dd>{perApplication == null ? 'Chưa có hồ sơ' : money(Math.round(perApplication))}</dd></div>
         <div>
-          <dt>Phần ngân sách chiến dịch</dt>
+          <dt>Phần ngân sách chiến dịch<HelpTip label="Giải thích phần ngân sách">{HELP.budgetShare}</HelpTip></dt>
           <dd>{budgetShare == null ? 'Chưa đặt ngân sách' : `${budgetShare.toLocaleString('vi-VN', { maximumFractionDigits: 1 })}%`}</dd>
         </div>
       </dl>

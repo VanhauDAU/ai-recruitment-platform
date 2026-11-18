@@ -8,9 +8,9 @@ export const CAMPAIGN_FUNNEL_STAGES = [
 ]
 
 export const CAMPAIGN_PERFORMANCE_METRICS = [
-  { key: 'impressions', label: 'Hiển thị' },
-  { key: 'views', label: 'Xem tin' },
-  { key: 'applications', label: 'Ứng tuyển' },
-  { key: 'view_rate', label: 'Tỷ lệ xem', rate: true },
-  { key: 'application_rate', label: 'Tỷ lệ ứng tuyển', rate: true },
+  { key: 'impressions', label: 'Hiển thị', help: 'Số lần tin của chiến dịch xuất hiện trong danh sách, kết quả tìm kiếm hay gợi ý trên ProCV.' },
+  { key: 'views', label: 'Xem tin', help: 'Số lần ứng viên mở trang chi tiết tin.' },
+  { key: 'applications', label: 'Ứng tuyển', help: 'Số lượt nộp hồ sơ vào các tin trong khoảng thời gian đã chọn.' },
+  { key: 'view_rate', label: 'Tỷ lệ xem', rate: true, help: 'Xem tin ÷ hiển thị. Cho biết tiêu đề và mức lương có đủ hấp dẫn để người ta bấm vào không.' },
+  { key: 'application_rate', label: 'Tỷ lệ ứng tuyển', rate: true, help: 'Ứng tuyển ÷ xem tin. Cho biết nội dung tin có thuyết phục người đã đọc nộp hồ sơ không.' },
 ]
