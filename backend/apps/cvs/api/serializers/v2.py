@@ -1,5 +1,7 @@
 """Request/response contracts for the CV lifecycle V2 API."""
 
+from datetime import datetime
+
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.utils import timezone
 from rest_framework import serializers
@@ -99,7 +101,7 @@ class CvV2Serializer(serializers.ModelSerializer):
         ]
         read_only_fields = fields
 
-    def get_has_unsaved_changes(self, obj):
+    def get_has_unsaved_changes(self, obj) -> bool:
         try:
             draft = obj.draft
         except CvDraft.DoesNotExist:
@@ -108,27 +110,27 @@ class CvV2Serializer(serializers.ModelSerializer):
             draft.base_version_id is None or draft.document_hash != draft.base_version.content_hash
         )
 
-    def get_draft_updated_at(self, obj):
+    def get_draft_updated_at(self, obj) -> datetime | None:
         try:
             return obj.draft.updated_at
         except CvDraft.DoesNotExist:
             return None
 
-    def get_completion_score(self, obj):
+    def get_completion_score(self, obj) -> int:
         return cv_completion_score(obj)
 
-    def get_is_complete(self, obj):
+    def get_is_complete(self, obj) -> bool:
         return cv_completion_score(obj) >= COMPLETION_THRESHOLD
 
-    def get_application_ready(self, obj):
+    def get_application_ready(self, obj) -> bool:
         return not application_readiness_issues(obj, obj.latest_version)
 
-    def get_has_saved_version(self, obj):
+    def get_has_saved_version(self, obj) -> bool:
         return obj.latest_version_id is not None and not is_unsaved_builder_baseline(
             obj, obj.latest_version
         )
 
-    def get_import_job(self, obj):
+    def get_import_job(self, obj) -> dict | None:
         try:
             job = obj.import_job
         except CvImportJob.DoesNotExist:
@@ -140,7 +142,7 @@ class CvV2Serializer(serializers.ModelSerializer):
             'failure_code': job.failure_code,
         }
 
-    def get_thumbnail_url(self, obj):
+    def get_thumbnail_url(self, obj) -> str | None:
         from django.urls import reverse
 
         from ...services import current_thumbnail_ready
@@ -151,7 +153,7 @@ class CvV2Serializer(serializers.ModelSerializer):
         request = self.context.get('request')
         return request.build_absolute_uri(path) if request else path
 
-    def get_thumbnail_status(self, obj):
+    def get_thumbnail_status(self, obj) -> str:
         from ...services import current_thumbnail_ready
 
         return 'ready' if current_thumbnail_ready(obj) else 'pending'
@@ -315,7 +317,7 @@ class CvDraftSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['lock_version', 'base_version_public_id', 'updated_at']
 
-    def get_assets(self, obj):
+    def get_assets(self, obj) -> dict:
         return asset_map(
             content_json=obj.content_json,
             style_json=obj.style_json,
@@ -387,7 +389,7 @@ class CvAssetSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = fields
 
-    def get_url(self, obj):
+    def get_url(self, obj) -> str:
         from django.urls import reverse
 
         path = reverse('cv-v2-asset-content', kwargs={'asset_public_id': obj.public_id})
@@ -452,7 +454,7 @@ class CvExportSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = fields
 
-    def get_download_url(self, obj):
+    def get_download_url(self, obj) -> str | None:
         from django.urls import reverse
 
         from ...services import export_download_ready
@@ -505,7 +507,7 @@ class CvVersionSerializer(serializers.ModelSerializer):
     def get_has_source_file(self, obj) -> bool:
         return bool(obj.source_file_key)
 
-    def get_assets(self, obj):
+    def get_assets(self, obj) -> dict:
         return asset_map(
             content_json=obj.content_json,
             style_json=obj.style_json,
@@ -568,7 +570,7 @@ class SharedCvVersionSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = fields
 
-    def get_assets(self, obj):
+    def get_assets(self, obj) -> dict:
         return asset_map(
             content_json=obj.content_json,
             style_json=obj.style_json,

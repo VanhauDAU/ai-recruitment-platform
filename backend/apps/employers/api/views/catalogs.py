@@ -1,4 +1,4 @@
-from drf_spectacular.utils import extend_schema, inline_serializer
+from drf_spectacular.utils import extend_schema, extend_schema_view, inline_serializer
 from rest_framework import generics, permissions, serializers
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -6,18 +6,23 @@ from rest_framework.views import APIView
 from apps.accounts.api.permissions import IsEmployer
 
 from ...models import Company, Industry
+from ...selectors import industries_in_use
 from ..serializers import IndustrySerializer
 
 
+@extend_schema_view(get=extend_schema(summary='Lĩnh vực đang có công ty hoạt động'))
 class IndustryListView(generics.ListAPIView):
     """Danh sách lĩnh vực công ty cho bộ lọc "Lĩnh vực công ty" (chỉ những lĩnh vực đang có công ty)."""
 
     serializer_class = IndustrySerializer
     permission_classes = [permissions.AllowAny]
     pagination_class = None
-    queryset = Industry.objects.filter(companies__isnull=False).distinct()
+
+    def get_queryset(self):
+        return industries_in_use()
 
 
+@extend_schema_view(get=extend_schema(summary='Toàn bộ lĩnh vực công ty'))
 class AllIndustryListView(generics.ListAPIView):
     """Toàn bộ lĩnh vực — cho dropdown chọn lĩnh vực khi tạo hồ sơ công ty."""
 

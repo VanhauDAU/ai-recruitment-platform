@@ -94,12 +94,12 @@ class RecruitmentCampaignSerializer(serializers.ModelSerializer):
             'updated_at',
         ]
 
-    def get_active_days(self, obj):
+    def get_active_days(self, obj) -> float | None:
         if obj.first_activated_at is None:
             return None
         return round(obj.active_seconds() / 86400, 1)
 
-    def get_last_activity(self, obj):
+    def get_last_activity(self, obj) -> dict:
         occurred_at = getattr(obj, 'last_activity_at', None) or obj.updated_at
         event_type = getattr(obj, 'last_activity_type', None) or 'campaign_updated'
         label = dict(CampaignActivity.EventType.choices).get(
@@ -112,7 +112,7 @@ class RecruitmentCampaignSerializer(serializers.ModelSerializer):
             'occurred_at': occurred_at,
         }
 
-    def get_candidate_previews(self, obj):
+    def get_candidate_previews(self, obj) -> list[dict]:
         return [
             {
                 'public_id': preview['public_id'],
@@ -177,7 +177,7 @@ class CampaignActivitySerializer(serializers.ModelSerializer):
             'occurred_at',
         ]
 
-    def get_actor_name(self, obj):
+    def get_actor_name(self, obj) -> str:
         if obj.actor is None:
             return 'Hệ thống'
         if obj.group == CampaignActivity.Group.APPLICATION and not self.context.get(
@@ -186,14 +186,14 @@ class CampaignActivitySerializer(serializers.ModelSerializer):
             return 'Người dùng'
         return obj.actor.full_name or obj.actor.email
 
-    def get_subject_public_id(self, obj):
+    def get_subject_public_id(self, obj) -> str:
         if obj.group == CampaignActivity.Group.APPLICATION and not self.context.get(
             'candidate_data_access', False
         ):
             return ''
         return obj.subject_public_id
 
-    def get_metadata(self, obj):
+    def get_metadata(self, obj) -> dict:
         metadata = dict(obj.metadata or {})
         if obj.group == CampaignActivity.Group.APPLICATION and not self.context.get(
             'candidate_data_access', False

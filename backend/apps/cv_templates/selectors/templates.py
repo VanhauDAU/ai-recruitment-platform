@@ -220,3 +220,13 @@ def active_position_profile(position_public_id):
         .prefetch_related('fields')
         .first()
     )
+
+
+def preview_template(public_id):
+    """Template kèm phiên bản đang xuất bản và section để ghép document xem trước, hoặc None."""
+    return (
+        CvTemplate.objects.select_related('current_published_version')
+        .prefetch_related('current_published_version__sections__section_definition')
+        .filter(public_id=public_id)
+        .first()
+    )

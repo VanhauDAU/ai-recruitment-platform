@@ -1,5 +1,4 @@
 from .auth import (
-    PORTAL_ROLE_BY_NAME,
     ChangeEmailSerializer,
     LoginCredentialsSerializer,
     PasswordChangeSerializer,
@@ -25,5 +24,4 @@ __all__ = [
     'RoleTokenObtainPairSerializer',
     'SessionUserSerializer',
     'password_field',
-    'PORTAL_ROLE_BY_NAME',
 ]

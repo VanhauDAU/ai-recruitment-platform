@@ -9,7 +9,8 @@ hiện tại (chạy trong container ml-worker, nơi có mô hình):
 
 from django.core.management.base import BaseCommand
 
-from ...selectors import jobs_for_profile, latest_cv_versions
+from ...models import jobs_for_profile
+from ...selectors import latest_cv_versions
 from ...services import SkillCatalog, ensure_cv_document, ensure_job_document, get_encoder
 from ...tasks import embed_cv_version, embed_job
 

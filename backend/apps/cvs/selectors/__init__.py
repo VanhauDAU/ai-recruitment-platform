@@ -5,6 +5,10 @@ from .cvs import (
     candidate_cv_by_public_id,
     candidate_cv_versions_queryset,
     candidate_cvs_queryset,
+    current_draft_lock_version,
+    cv_draft,
+    cv_exports_queryset,
+    cv_shared_links_queryset,
 )
 
 __all__ = [
@@ -12,4 +16,8 @@ __all__ = [
     'candidate_cv_by_public_id',
     'candidate_cv_versions_queryset',
     'candidate_cvs_queryset',
+    'current_draft_lock_version',
+    'cv_draft',
+    'cv_exports_queryset',
+    'cv_shared_links_queryset',
 ]

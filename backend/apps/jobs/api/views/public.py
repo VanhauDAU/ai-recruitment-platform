@@ -3,7 +3,13 @@ import re
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
-from drf_spectacular.utils import OpenApiTypes, extend_schema, inline_serializer
+from drf_spectacular.utils import (
+    OpenApiParameter,
+    OpenApiTypes,
+    extend_schema,
+    extend_schema_view,
+    inline_serializer,
+)
 from rest_framework import generics, permissions, serializers
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.response import Response
@@ -15,7 +21,7 @@ from apps.cvs.models import UserCv
 from apps.privacy.services import load_consent
 from common.metrics import record_metric
 
-from ...models import Job, SavedJob
+from ...selectors import candidate_saved_job_rows, candidate_saved_jobs_queryset
 from ...selectors.homepage import (
     DEFAULT_BEST_JOBS_ROTATION_SEED,
     build_homepage_best_jobs_queryset,
@@ -25,7 +31,6 @@ from ...selectors.listing import (
     active_job_tracking_queryset,
     build_job_list_queryset,
     job_detail_queryset,
-    publicly_available_job_filter,
     suggest_job_search_terms,
 )
 from ...selectors.recommendations import (
@@ -35,6 +40,7 @@ from ...selectors.recommendations import (
 )
 from ...selectors.stats import build_job_stats
 from ...selectors.verification_badge import prime_badge_cache
+from ...services import save_job_for_candidate
 from ...services.engagement import (
     record_consented_job_impressions,
     record_consented_job_view,
@@ -51,6 +57,11 @@ from ..serializers import (
 )
 
 
+@extend_schema(
+    tags=['jobs'],
+    summary='Danh sách việc làm công khai (lọc, tìm kiếm, sắp xếp)',
+    parameters=[OpenApiParameter('view', str, enum=['preview'])],
+)
 class JobListView(generics.ListAPIView):
     permission_classes = [permissions.AllowAny]
 
@@ -68,6 +79,11 @@ class JobListView(generics.ListAPIView):
         )
 
 
+@extend_schema(
+    tags=['jobs'],
+    summary='Việc làm tốt nhất trên trang chủ (kèm rotation_seed)',
+    parameters=[OpenApiParameter('rotation_seed', str)],
+)
 class HomepageBestJobListView(generics.ListAPIView):
     """Independently rotated jobs admitted to the homepage Best Jobs box."""
 
@@ -292,6 +308,7 @@ class CandidateJobRecommendationView(APIView):
         return Response(_serialize_recommendation_results(payload, request))
 
 
+@extend_schema(tags=['jobs'], summary='Chi tiết việc làm theo slug')
 class JobDetailView(generics.RetrieveAPIView):
     serializer_class = JobDetailSerializer
     permission_classes = [permissions.AllowAny]
@@ -406,6 +423,11 @@ class JobImpressionBatchCreateView(APIView):
         return response
 
 
+@extend_schema_view(
+    list=extend_schema(summary='Tin đã lưu của ứng viên'),
+    create=extend_schema(summary='Lưu tin tuyển dụng'),
+)
+@extend_schema(tags=['jobs'])
 class SavedJobListCreateView(generics.ListCreateAPIView):
     """GET: toàn bộ tin đã lưu của ứng viên. POST {"job": "jb_xxx"}: lưu tin.
 
@@ -418,18 +440,7 @@ class SavedJobListCreateView(generics.ListCreateAPIView):
     pagination_class = None
 
     def get_queryset(self):
-        return (
-            SavedJob.objects.filter(
-                candidate=self.request.user,
-                job_id__in=Job.objects.filter(publicly_available_job_filter()).values('pk'),
-            )
-            .select_related('job__company')
-            .prefetch_related(
-                'job__category_assignments__category',
-                'job__job_locations__location__parent',
-                'job__job_skills__skill',
-            )
-        )
+        return candidate_saved_jobs_queryset(self.request.user)
 
     def list(self, request, *args, **kwargs):
         saved_jobs = list(self.filter_queryset(self.get_queryset()))
@@ -441,7 +452,9 @@ class SavedJobListCreateView(generics.ListCreateAPIView):
         return Response(self.get_serializer(saved_jobs, many=True, context=context).data)
 
     def perform_create(self, serializer):
-        serializer.save(candidate=self.request.user)
+        serializer.instance = save_job_for_candidate(
+            candidate=self.request.user, job=serializer.validated_data['job']
+        )
 
 
 @extend_schema(
@@ -457,4 +470,4 @@ class SavedJobDestroyView(generics.DestroyAPIView):
     lookup_url_kwarg = 'public_id'
 
     def get_queryset(self):
-        return SavedJob.objects.filter(candidate=self.request.user)
+        return candidate_saved_job_rows(self.request.user)

@@ -71,24 +71,24 @@ class CvTemplateCardSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
     # Giá trị theo ngôn ngữ do `published_template_queryset` annotate.
-    def get_display_name(self, template):
+    def get_display_name(self, template) -> str:
         return template.catalog_display_name
 
-    def get_description(self, template):
+    def get_description(self, template) -> str:
         return template.catalog_description
 
-    def get_colors(self, template):
+    def get_colors(self, template) -> list[dict]:
         return _catalog_colors(template, self.context.get('request'))
 
-    def get_thumbnail_url(self, template):
+    def get_thumbnail_url(self, template) -> str:
         """Ảnh của màu mặc định (thumbnail, thiếu thì dùng ảnh preview)."""
         color = _default_color(self.get_colors(template))
         return color.get('thumbnail_url') or color.get('preview_url', '')
 
-    def get_categories(self, template):
+    def get_categories(self, template) -> list[dict]:
         return _catalog_groups(template)[0]
 
-    def get_tags(self, template):
+    def get_tags(self, template) -> list[dict]:
         return _catalog_groups(template)[1]
 
 
@@ -108,10 +108,10 @@ class CvTemplateDetailSerializer(CvTemplateCardSerializer):
             'sections',
         ]
 
-    def get_preview_url(self, template):
+    def get_preview_url(self, template) -> str:
         return _default_color(self.get_colors(template)).get('preview_url', '')
 
-    def get_renderer(self, template):
+    def get_renderer(self, template) -> dict:
         version = template.current_published_version
         return {
             'key': version.renderer_key,
@@ -120,7 +120,7 @@ class CvTemplateDetailSerializer(CvTemplateCardSerializer):
             'capabilities': version.capabilities,
         }
 
-    def get_sections(self, template):
+    def get_sections(self, template) -> list[dict]:
         sections = getattr(template.current_published_version, 'catalog_sections', [])
         return [
             {
@@ -175,10 +175,10 @@ class CvPositionOptionSerializer(serializers.ModelSerializer):
         fields = ['public_id', 'slug', 'display_name', 'name_vi']
         read_only_fields = fields
 
-    def get_display_name(self, obj):
+    def get_display_name(self, obj) -> str:
         localizations = getattr(obj, 'cv_picker_localizations', [])
         return localizations[0].display_name if localizations else obj.name
 
-    def get_name_vi(self, obj):
+    def get_name_vi(self, obj) -> str:
         localizations = getattr(obj, 'cv_picker_vi_localizations', [])
         return localizations[0].display_name if localizations else obj.name

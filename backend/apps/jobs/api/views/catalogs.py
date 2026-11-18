@@ -1,6 +1,13 @@
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import generics, permissions
 
-from ...models import Benefit, JobCategory, Language
+from common.api.params import parse_bool
+
+from ...selectors import (
+    active_benefits_queryset,
+    active_job_categories_queryset,
+    active_languages_queryset,
+)
 from ..serializers import (
     BenefitSerializer,
     JobCategoryListSerializer,
@@ -8,6 +15,14 @@ from ..serializers import (
 )
 
 
+@extend_schema(
+    tags=['jobs'],
+    summary='Danh mục ngành nghề đang dùng',
+    parameters=[
+        OpenApiParameter('category_type', str),
+        OpenApiParameter('all', str, description='`1`/`true`: trả toàn bộ, không phân trang.'),
+    ],
+)
 class JobCategoryListView(generics.ListAPIView):
     serializer_class = JobCategoryListSerializer
     permission_classes = [permissions.AllowAny]
@@ -15,32 +30,31 @@ class JobCategoryListView(generics.ListAPIView):
     def paginate_queryset(self, queryset):
         # Search pickers need the whole bounded taxonomy. Keep normal pagination
         # as the API default for other consumers.
-        if self.request.query_params.get('all') in {'1', 'true'}:
+        if parse_bool(self.request.query_params.get('all')):
             return None
         return super().paginate_queryset(queryset)
 
     def get_queryset(self):
-        queryset = JobCategory.objects.filter(status=JobCategory.Status.ACTIVE).only(
-            'id',
-            'name',
-            'logo_url',
-            'parent_id',
-            'category_type',
+        return active_job_categories_queryset(
+            category_type=self.request.query_params.get('category_type')
         )
-        if category_type := self.request.query_params.get('category_type'):
-            queryset = queryset.filter(category_type=category_type)
-        return queryset
 
 
+@extend_schema(tags=['jobs'], summary='Danh mục quyền lợi')
 class BenefitListView(generics.ListAPIView):
     serializer_class = BenefitSerializer
     permission_classes = [permissions.AllowAny]
     pagination_class = None
-    queryset = Benefit.objects.filter(is_active=True)
+
+    def get_queryset(self):
+        return active_benefits_queryset()
 
 
+@extend_schema(tags=['jobs'], summary='Danh mục ngoại ngữ')
 class LanguageListView(generics.ListAPIView):
     serializer_class = LanguageSerializer
     permission_classes = [permissions.AllowAny]
     pagination_class = None
-    queryset = Language.objects.filter(is_active=True)
+
+    def get_queryset(self):
+        return active_languages_queryset()

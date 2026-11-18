@@ -10,20 +10,18 @@ một row User riêng), việc thu hồi luôn chỉ áp dụng cho đúng token
 
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import permissions, serializers, status
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework_simplejwt.exceptions import TokenError
-from rest_framework_simplejwt.settings import api_settings
-from rest_framework_simplejwt.tokens import RefreshToken
 
-from ...services import auth_sessions
 from ...services.refresh_cookies import (
+    PORTAL_ROLE_BY_NAME,
     VALID_PORTALS,
     clear_refresh_cookie,
     portal_for_user,
     refresh_from_request,
 )
-from ...services.tokens import revoke_refresh_tokens
+from ...services.tokens import revoke_refresh, revoke_refresh_tokens
 
 
 class LogoutView(APIView):
@@ -36,7 +34,7 @@ class LogoutView(APIView):
         request=inline_serializer(
             'LogoutRequest',
             {
-                'portal': serializers.ChoiceField(choices=sorted(VALID_PORTALS)),
+                'portal': serializers.ChoiceField(choices=list(PORTAL_ROLE_BY_NAME)),
             },
         ),
         responses={200: inline_serializer('LogoutResponse', {'detail': serializers.CharField()})},
@@ -45,17 +43,10 @@ class LogoutView(APIView):
     def post(self, request):
         portal = request.data.get('portal') or request.headers.get('X-Auth-Portal')
         if portal not in VALID_PORTALS:
-            return Response(
-                {'portal': 'Cổng đăng nhập không hợp lệ.'}, status=status.HTTP_400_BAD_REQUEST
-            )
+            raise ValidationError({'portal': 'Cổng đăng nhập không hợp lệ.'})
         token = refresh_from_request(request, portal=portal)
         if token:
-            try:
-                parsed = RefreshToken(token)
-                parsed.blacklist()
-                auth_sessions.revoke_session_by_refresh_jti(parsed.get(api_settings.JTI_CLAIM))
-            except TokenError:
-                pass
+            revoke_refresh(token)
         response = Response({'detail': 'Đã đăng xuất.'}, status=status.HTTP_200_OK)
         return clear_refresh_cookie(response, portal=portal)
 

@@ -8,6 +8,19 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-19
 
+#### Changed — Backend: tầng API (ADR-0022, GĐ3)
+
+- Lỗi đi qua exception handler chung: Django `ValidationError` thành 400
+  (`{field: [..]}` hoặc `{"detail": [..]}` — lỗi chung trước đây có nơi trả mảng
+  JSON), lỗi nghiệp vụ là `DomainError` giữ nguyên payload. Gỡ các helper đổi
+  lỗi trong view (`_call`, `_run_mutation`, `_validation_detail`).
+- ORM, transaction, ghi file và `.delay()` chuyển từ view/serializer vào
+  services/selectors ở mọi app; các GET của NTD không còn tạo `RecruiterProfile`.
+- OpenAPI: mọi view có `@extend_schema`, tên enum trùng có override — từ 70 lỗi /
+  340 cảnh báo về 0/0; `docs/04-api/openapi.yaml` sinh lại.
+- `common/api/params.py` (`parse_bool`, `parse_int`) thay ~10 cách parse cờ; bỏ
+  khai báo phân trang thừa; Browsable API chỉ bật khi `DEBUG`.
+
 #### Changed — Backend: ranh giới domain (ADR-0022, GĐ2)
 
 - `RecruitmentCampaign`, `CampaignActivity`, máy trạng thái, selectors, API và

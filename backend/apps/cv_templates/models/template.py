@@ -85,6 +85,12 @@ class CvTemplate(models.Model):
     def localized(self, field, language):
         return getattr(self, localized_field(field, language))
 
+    def offers_color(self, hex_code):
+        """Màu `hex_code` có trong bảng màu đang bật của template."""
+        return self.color_links.filter(
+            color__hex_code__iexact=hex_code, color__is_active=True
+        ).exists()
+
     def __str__(self):
         return self.name
 

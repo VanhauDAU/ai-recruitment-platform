@@ -219,3 +219,30 @@ def submit_company_update_request(
             # preserves manual review for malformed legacy company data.
             pass
     return update_request, active_request is None
+
+
+@transaction.atomic
+def submit_validated_company_update(*, company_id, requester, validate, merge=False):
+    """Lock the target, validate against what is locked, then submit.
+
+    ``validate(company, active_request)`` returns the validated data. It runs
+    under the lock because the form validates against the caller's open
+    request, which a concurrent submission must not change in between. For the
+    profile form an optional ``base_company_updated_at`` guards against a
+    company edited since the form was loaded; a merge keeps only ``changes``.
+    Returns ``(request, created)`` like ``submit_company_update_request``.
+    """
+    company, active_request = lock_company_update_target(
+        company_id=company_id,
+        requester=requester,
+    )
+    data = dict(validate(company, active_request))
+    expected_base_updated_at = None if merge else data.pop('base_company_updated_at', None)
+    return submit_company_update_request(
+        company=company,
+        active_request=active_request,
+        requester=requester,
+        data=data,
+        expected_base_updated_at=expected_base_updated_at,
+        merge=merge,
+    )

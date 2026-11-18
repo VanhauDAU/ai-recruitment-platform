@@ -3,14 +3,15 @@ from io import BytesIO
 from pathlib import PurePosixPath
 from urllib.parse import urlsplit
 
-from django.db.models import Prefetch, Q
-from django.db.models.expressions import RawSQL
 from django.http import FileResponse, Http404
 from drf_spectacular.utils import (
     OpenApiExample,
+    OpenApiParameter,
     OpenApiResponse,
+    OpenApiTypes,
     PolymorphicProxySerializer,
     extend_schema,
+    extend_schema_view,
 )
 from rest_framework import viewsets
 from rest_framework.decorators import action
@@ -24,23 +25,22 @@ from apps.accounts.services import (
     StaleImpactToken,
     record_admin_action,
 )
-from common.api.pagination import StandardPagination
 from common.files.office_preview import render_office_document_preview
 from common.storage.r2 import private_media_storage
 
-from ...models import (
-    CompanyTaxLookupEvidence,
-    CompanyUpdateRequest,
-    EmployerVerificationCase,
-    EmployerVerificationEvent,
-    Industry,
+from ...models import CompanyUpdateRequest, EmployerVerificationCase
+from ...selectors import (
+    admin_company_update_requests_queryset,
+    admin_verification_cases_queryset,
+    admin_verification_summary,
+    industry_labels,
 )
-from ...selectors import admin_verification_cases_queryset, admin_verification_summary
 from ...services import (
     CompanyUpdateConflict,
     apply_update_request,
     confirm_verification_decision,
     confirm_verification_lifecycle_action,
+    record_verification_document_access,
     refresh_company_update_tax_lookup,
     refresh_verification_tax_lookup,
     review_company_update_document,
@@ -205,6 +205,12 @@ ADMIN_VERIFICATION_STALE_RESPONSE = OpenApiResponse(
 )
 
 
+DOCUMENT_PUBLIC_ID_PARAMETER = OpenApiParameter(
+    'document_public_id', str, OpenApiParameter.PATH, description='public_id của giấy tờ'
+)
+DOCUMENT_CONTENT_RESPONSE = {(200, 'application/octet-stream'): OpenApiTypes.BINARY}
+
+
 def _content_type_from_file_name(value):
     path = urlsplit(value or '').path
     extension = PurePosixPath(path).suffix.lower().lstrip('.')
@@ -234,9 +240,15 @@ def _supports_inline_preview(content_type):
     )
 
 
+@extend_schema_view(
+    list=extend_schema(summary='Hàng đợi hồ sơ xác thực nhà tuyển dụng'),
+    retrieve=extend_schema(
+        summary='Chi tiết hồ sơ xác thực',
+        responses={200: AdminVerificationCaseDetailSerializer},
+    ),
+)
 class AdminEmployerVerificationViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [AdminPortalPermission]
-    pagination_class = StandardPagination
     lookup_field = 'public_id'
 
     def get_queryset(self):
@@ -256,10 +268,19 @@ class AdminEmployerVerificationViewSet(viewsets.ReadOnlyModelViewSet):
             'can_view_sensitive': True,
         }
 
+    @extend_schema(
+        summary='Số liệu tổng quan hàng đợi xác thực',
+        responses={200: OpenApiTypes.OBJECT},
+    )
     @action(detail=False, methods=['get'])
     def summary(self, request):
         return Response(admin_verification_summary())
 
+    @extend_schema(
+        summary='Nhận thẩm định hồ sơ xác thực',
+        request=None,
+        responses={200: AdminVerificationCaseDetailSerializer},
+    )
     @action(detail=True, methods=['post'], url_path='start-review')
     def start_review(self, request, public_id=None):
         case = start_verification_review(self.get_object(), actor=request.user)
@@ -271,6 +292,12 @@ class AdminEmployerVerificationViewSet(viewsets.ReadOnlyModelViewSet):
             ).data
         )
 
+    @extend_schema(
+        summary='Duyệt một giấy tờ của hồ sơ xác thực',
+        parameters=[DOCUMENT_PUBLIC_ID_PARAMETER],
+        request=AdminVerificationDocumentReviewSerializer,
+        responses={200: AdminVerificationCaseDetailSerializer},
+    )
     @action(
         detail=True,
         methods=['post'],
@@ -523,6 +550,11 @@ class AdminEmployerVerificationViewSet(viewsets.ReadOnlyModelViewSet):
     def expire(self, request, public_id=None):
         return self._confirm_lifecycle(request, EmployerVerificationCase.Status.EXPIRED)
 
+    @extend_schema(
+        summary='Tra cứu lại mã số thuế của hồ sơ xác thực',
+        request=None,
+        responses={200: AdminVerificationCaseDetailSerializer},
+    )
     @action(detail=True, methods=['post'], url_path='refresh-tax-lookup')
     def refresh_tax_lookup(self, request, public_id=None):
         try:
@@ -540,6 +572,20 @@ class AdminEmployerVerificationViewSet(viewsets.ReadOnlyModelViewSet):
             ).data
         )
 
+    @extend_schema(
+        summary='Xem hoặc tải giấy tờ xác thực (ghi nhật ký truy cập)',
+        parameters=[
+            DOCUMENT_PUBLIC_ID_PARAMETER,
+            OpenApiParameter(
+                'intent',
+                str,
+                OpenApiParameter.QUERY,
+                enum=['preview', 'download'],
+                required=False,
+            ),
+        ],
+        responses=DOCUMENT_CONTENT_RESPONSE,
+    )
     @action(
         detail=True,
         methods=['get'],
@@ -557,26 +603,7 @@ class AdminEmployerVerificationViewSet(viewsets.ReadOnlyModelViewSet):
         intent = request.query_params.get('intent', 'preview')
         if intent not in {'preview', 'download'}:
             intent = 'preview'
-        EmployerVerificationEvent.objects.create(
-            verification_case=document.verification_case,
-            actor=request.user,
-            event_type=EmployerVerificationEvent.EventType.SENSITIVE_VIEWED,
-            payload={
-                'document_public_id': document.public_id,
-                'document_file_name': document.file_name,
-                'document_type': document.doc_type,
-                'document_type_label': document.get_doc_type_display(),
-                'action': intent,
-                'audit_version': 2,
-            },
-        )
-        record_admin_action(
-            actor=request.user,
-            action=f'{intent}_employer_verification_document',
-            target_type='employer_verification_document',
-            target_public_id=document.public_id,
-            payload={'case_public_id': document.verification_case.public_id},
-        )
+        record_verification_document_access(document, actor=request.user, intent=intent)
         content_type = _document_content_type(document)
         if intent == 'preview':
             preview = render_office_document_preview(document.file_url, content_type)
@@ -601,78 +628,30 @@ class AdminEmployerVerificationViewSet(viewsets.ReadOnlyModelViewSet):
         return response
 
 
+@extend_schema_view(
+    list=extend_schema(summary='Hàng đợi yêu cầu cập nhật công ty'),
+    retrieve=extend_schema(summary='Chi tiết yêu cầu cập nhật công ty'),
+)
 class AdminCompanyUpdateRequestViewSet(viewsets.ReadOnlyModelViewSet):
     """Admin review workflow for staged company-profile changes."""
 
     permission_classes = [AdminPortalPermission]
-    pagination_class = StandardPagination
     lookup_field = 'public_id'
     serializer_class = AdminCompanyUpdateRequestSerializer
 
     def get_queryset(self):
-        queryset = CompanyUpdateRequest.objects.select_related(
-            'company',
-            'requested_by',
-            'reviewed_by',
-            'current_revision',
-        ).prefetch_related(
-            'documents__uploaded_by',
-            'documents__reviewed_by',
-            'events__actor',
-            'company__company_industries__industry',
-            Prefetch(
-                'tax_lookup_evidences',
-                queryset=CompanyTaxLookupEvidence.objects.order_by('-created_at', '-id'),
-            ),
-        )
-        params = self.request.query_params
-        if params.get('status'):
-            queryset = queryset.filter(status=params['status'])
-        if params.get('company'):
-            queryset = queryset.filter(company__public_id=params['company'])
-        query = (params.get('q') or '').strip()
-        if query:
-            queryset = queryset.filter(
-                Q(public_id__icontains=query)
-                | Q(company__company_name__icontains=query)
-                | Q(company__tax_code__icontains=query)
-                | Q(requested_by__email__icontains=query)
-            )
-        ordering = params.get('ordering', '-updated_at')
-        if ordering in {'change_count', '-change_count'}:
-            queryset = queryset.annotate(
-                change_count=RawSQL(
-                    '(SELECT COUNT(*) FROM '
-                    'jsonb_object_keys(employers_companyupdaterequest.changes))',
-                    (),
-                )
-            )
-        allowed = {
-            'company__company_name',
-            '-company__company_name',
-            'requested_by__email',
-            '-requested_by__email',
-            'change_count',
-            '-change_count',
-            'is_sensitive',
-            '-is_sensitive',
-            'updated_at',
-            '-updated_at',
-        }
-        return queryset.order_by(
-            ordering if ordering in allowed else '-updated_at',
-            '-id',
-        )
+        return admin_company_update_requests_queryset(params=self.request.query_params)
 
     def get_serializer_context(self):
         return {
             **super().get_serializer_context(),
             'can_view_sensitive': True,
-            'industry_labels': dict(Industry.objects.values_list('id', 'name')),
+            'industry_labels': industry_labels(),
         }
 
     @extend_schema(
         summary='Duyệt tài liệu của phiên bản yêu cầu cập nhật công ty hiện tại',
+        parameters=[DOCUMENT_PUBLIC_ID_PARAMETER],
         request=AdminVerificationDocumentReviewSerializer,
         responses={200: AdminCompanyUpdateRequestSerializer},
     )
@@ -763,6 +742,11 @@ class AdminCompanyUpdateRequestViewSet(viewsets.ReadOnlyModelViewSet):
         current = self.get_queryset().get(pk=update_request.pk)
         return Response(self.get_serializer(current).data)
 
+    @extend_schema(
+        summary='Tra cứu lại mã số thuế của yêu cầu cập nhật công ty',
+        request=None,
+        responses={200: AdminCompanyUpdateRequestSerializer},
+    )
     @action(detail=True, methods=['post'], url_path='refresh-tax-lookup')
     def refresh_tax_lookup(self, request, public_id=None):
         try:
@@ -775,6 +759,11 @@ class AdminCompanyUpdateRequestViewSet(viewsets.ReadOnlyModelViewSet):
         current = self.get_queryset().get(pk=update_request.pk)
         return Response(self.get_serializer(current).data)
 
+    @extend_schema(
+        summary='Xem giấy tờ của yêu cầu cập nhật công ty (ghi nhật ký truy cập)',
+        parameters=[DOCUMENT_PUBLIC_ID_PARAMETER],
+        responses=DOCUMENT_CONTENT_RESPONSE,
+    )
     @action(
         detail=True,
         methods=['get'],

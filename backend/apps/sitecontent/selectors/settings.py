@@ -1,5 +1,6 @@
 """Read site-managed configuration through a small public selector."""
 
+from common.api.params import parse_bool
 from common.vietnam_time import vietnam_today
 
 from ..models import SiteSetting
@@ -20,26 +21,14 @@ def get_int_setting(key, default=0):
         return default
 
 
-_TRUE_VALUES = {'true', '1', 'yes', 'on'}
-_FALSE_VALUES = {'false', '0', 'no', 'off'}
-
-
 def get_bool_setting(key, default=False):
     """Read an admin switch; malformed values fail closed (False)."""
     value = SiteSetting.objects.filter(key=key).values_list('value', flat=True).first()
     if value is None:
         return default
-    if isinstance(value, bool):
-        return value
-    if isinstance(value, int) and value in {0, 1}:
-        return bool(value)
-    if isinstance(value, str):
-        normalized = value.strip().casefold()
-        if normalized in _TRUE_VALUES:
-            return True
-        if normalized in _FALSE_VALUES:
-            return False
-    return False
+    if isinstance(value, int) and not isinstance(value, bool):
+        value = str(value)
+    return parse_bool(value, False)
 
 
 def get_settings_map(keys):
@@ -106,3 +95,11 @@ def email_branding():
             if show_socials and _text(values, key)
         ],
     }
+
+
+def site_settings_by_group():
+    """Every setting grouped by ``SiteSetting.Group``, in the admin display order."""
+    by_group = {}
+    for setting in SiteSetting.objects.order_by('group', 'order', 'key'):
+        by_group.setdefault(setting.group, []).append(setting)
+    return [(key, label, by_group.get(key, [])) for key, label in SiteSetting.Group.choices]

@@ -339,6 +339,11 @@ class CvAsset(models.Model):
             return public_media_storage()
         return private_media_storage()
 
+    def deactivate(self):
+        """Ẩn asset (không xóa tệp): token, catalogue và document mới không dùng được nữa."""
+        self.is_active = False
+        self.save(update_fields=['is_active', 'updated_at'])
+
     def clean(self):
         if self.kind == self.Kind.AVATAR and self.owner_id is None:
             raise ValidationError({'owner': 'Avatar assets require an owner.'})

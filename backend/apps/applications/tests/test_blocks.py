@@ -209,7 +209,11 @@ class CandidateBlockTests(APITestCase):
 
     def test_double_block_and_foreign_application_are_refused(self):
         self.block()
-        self.assertEqual(self.block().status_code, 400)
+        again = self.block()
+        self.assertEqual(again.status_code, 400)
+        self.assertEqual(
+            again.json(), {'detail': 'Ứng viên này đã ở trong danh sách chặn của công ty.'}
+        )
         self.login(self.outsider)
         response = self.client.post(
             reverse('recruiter-candidate-blocks-v2'),

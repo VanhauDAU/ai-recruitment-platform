@@ -2,7 +2,9 @@
 
 from django.db import transaction
 from django.utils import timezone
+from rest_framework.exceptions import ValidationError
 
+from apps.cvs.models import UserCv
 from apps.cvs.services import withdraw_cvs_from_recruiter_search
 
 from ..models import (
@@ -22,6 +24,13 @@ def set_recruiter_visibility(
     profile, *, enabled, policy_version, source, source_path='', cv_public_id=''
 ):
     """Update current consent and append an immutable decision audit event."""
+    if (
+        cv_public_id
+        and not UserCv.objects.filter(
+            user_id=profile.user_id, public_id=cv_public_id, is_deleted=False
+        ).exists()
+    ):
+        raise ValidationError({'cv_public_id': 'CV không thuộc tài khoản hiện tại.'})
     locked_profile = CandidateProfile.objects.select_for_update().get(pk=profile.pk)
     now = timezone.now()
     decision = CandidateConsent.Decision.GRANTED if enabled else CandidateConsent.Decision.DENIED
@@ -46,9 +55,12 @@ def set_recruiter_visibility(
 
 
 @transaction.atomic
-def update_candidate_profile(serializer):
-    """Persist a validated candidate profile update through the domain boundary."""
-    return serializer.save()
+def update_candidate_profile(profile, changes):
+    """Apply validated profile fields (currently only ``gender``) and save."""
+    for field, value in changes.items():
+        setattr(profile, field, value)
+    profile.save()
+    return profile
 
 
 @transaction.atomic

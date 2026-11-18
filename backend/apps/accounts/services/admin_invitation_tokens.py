@@ -2,11 +2,16 @@
 
 from django.core import signing
 
+from common.api.exceptions import DomainError
+
 TOKEN_SALT = 'admin-account-invitation'
 
 
-class InvalidAdminInvitationToken(ValueError):
-    pass
+class InvalidAdminInvitationToken(DomainError):
+    code = 'invalid_admin_invitation'
+
+    def payload(self):
+        return {'token': str(self)}
 
 
 def create_admin_invitation_token(invitation):

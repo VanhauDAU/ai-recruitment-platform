@@ -9,9 +9,15 @@ from .campaigns import (
     campaign_report,
     owned_campaign_queryset,
 )
-from .channels import campaign_channel_report, campaign_channels_queryset
+from .channels import campaign_channel_report, campaign_channels_queryset, channel_costs_queryset
+from .health import campaign_health_history
 from .landing import landing_state, public_campaign_by_slug
 from .report import daily_applications, report_jobs
+from .social import (
+    active_social_connections_queryset,
+    channel_posts_queryset,
+    recruiter_social_connections_queryset,
+)
 
 __all__ = [
     'attach_campaign_candidate_previews',
@@ -25,6 +31,11 @@ __all__ = [
     'owned_campaign_queryset',
     'campaign_channel_report',
     'campaign_channels_queryset',
+    'campaign_health_history',
+    'channel_costs_queryset',
+    'active_social_connections_queryset',
+    'channel_posts_queryset',
+    'recruiter_social_connections_queryset',
     'daily_applications',
     'landing_state',
     'public_campaign_by_slug',

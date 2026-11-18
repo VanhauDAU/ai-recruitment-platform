@@ -52,16 +52,16 @@ class ManagedAccountSerializer(serializers.ModelSerializer):
             'invitation',
         ]
 
-    def get_has_usable_password(self, obj):
+    def get_has_usable_password(self, obj) -> bool:
         return obj.has_usable_password()
 
-    def get_avatar_url(self, obj):
+    def get_avatar_url(self, obj) -> str:
         return media_url_from_value(
             obj.avatar_url,
             request=self.context.get('request'),
         )
 
-    def get_context(self, obj):
+    def get_context(self, obj) -> dict:
         if obj.is_candidate:
             try:
                 profile = obj.candidate_profile
@@ -133,10 +133,10 @@ class ManagedAccountSerializer(serializers.ModelSerializer):
             }
         return {'kind': 'admin'}
 
-    def get_admin_access(self, obj):
+    def get_admin_access(self, obj) -> dict | None:
         return admin_access_payload(obj)
 
-    def get_invitation(self, obj):
+    def get_invitation(self, obj) -> dict | None:
         invitations = getattr(obj, 'account_admin_invitations', [])
         invitation = invitations[0] if invitations else None
         if invitation is None:
@@ -166,7 +166,7 @@ class ManagedAccountDetailSerializer(ManagedAccountSerializer):
             'status_enforcement',
         ]
 
-    def get_profile(self, obj):
+    def get_profile(self, obj) -> dict | None:
         payload = AdminAccountProfileSerializer(
             obj,
             context={
@@ -179,7 +179,7 @@ class ManagedAccountDetailSerializer(ManagedAccountSerializer):
             return payload.get('employer')
         return payload.get('admin')
 
-    def get_section_counts(self, obj):
+    def get_section_counts(self, obj) -> dict:
         counts = {
             'active_sessions': obj.active_session_count,
             'activity': AdminAccessAuditLog.objects.filter(target_public_id=obj.public_id).count(),
@@ -208,7 +208,7 @@ class ManagedAccountDetailSerializer(ManagedAccountSerializer):
             )
         return counts
 
-    def get_status_enforcement(self, obj):
+    def get_status_enforcement(self, obj) -> dict:
         transition = obj.status_transitions.select_related('actor').first()
         payload = {
             'last_transition': (
@@ -278,10 +278,12 @@ class ManagedAccountUpdateSerializer(serializers.Serializer):
         return value
 
 
+# Trạng thái admin chuyển tới được; PENDING chỉ do luồng lời mời đặt.
+MANAGED_ACCOUNT_STATUSES = (User.Status.ACTIVE, User.Status.INACTIVE, User.Status.BANNED)
+
+
 class AccountStatusImpactSerializer(serializers.Serializer):
-    status = serializers.ChoiceField(
-        choices=[User.Status.ACTIVE, User.Status.INACTIVE, User.Status.BANNED]
-    )
+    status = serializers.ChoiceField(choices=MANAGED_ACCOUNT_STATUSES)
     reason = serializers.CharField(max_length=500, trim_whitespace=True)
     enforcement_evidence = serializers.CharField(
         min_length=20,
@@ -474,7 +476,7 @@ class AdminInvitationSerializer(serializers.ModelSerializer):
             'updated_at',
         ]
 
-    def get_user(self, obj):
+    def get_user(self, obj) -> dict:
         return {
             'public_id': obj.user.public_id,
             'email': obj.user.email,
@@ -482,14 +484,14 @@ class AdminInvitationSerializer(serializers.ModelSerializer):
             'status': obj.user.status,
         }
 
-    def get_invited_by(self, obj):
+    def get_invited_by(self, obj) -> dict:
         return {
             'public_id': obj.invited_by.public_id,
             'email': obj.invited_by.email,
             'full_name': obj.invited_by.full_name,
         }
 
-    def get_status(self, obj):
+    def get_status(self, obj) -> str:
         if obj.status == AdminInvitation.Status.PENDING and obj.expires_at <= timezone.now():
             return AdminInvitation.Status.EXPIRED
         return obj.status

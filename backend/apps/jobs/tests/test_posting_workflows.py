@@ -40,6 +40,7 @@ from ..models.querysets import publicly_available_job_filter
 from ..services import (
     RESPONSIBILITY_STATEMENT_VERSION,
     close_job,
+    create_job_record,
     delete_job_draft,
     duplicate_job,
     employer_job_posting_context,
@@ -47,6 +48,7 @@ from ..services import (
     publish_job,
     reopen_job,
     update_employer_job,
+    update_job_record,
 )
 
 ACCEPTED = {'accepted_statement_version': RESPONSIBILITY_STATEMENT_VERSION}
@@ -525,7 +527,7 @@ class JobPostingWorkflowTests(TestCase):
         )
 
         self.assertTrue(serializer.is_valid(), serializer.errors)
-        job = serializer.save()
+        job = update_job_record(serializer.instance, serializer.validated_data)
         self.assertEqual(job.deadline, deadline)
         self.assertEqual(job.requested_visibility_days, 30)
         self.assertNotIn('requested_visibility_days', serializer.validated_data)
@@ -557,7 +559,7 @@ class JobPostingWorkflowTests(TestCase):
             partial=True,
         )
         self.assertTrue(serializer.is_valid(), serializer.errors)
-        serializer.save()
+        update_job_record(job, serializer.validated_data)
         job.refresh_from_db()
         self.assertEqual(
             job.application_reasons,
@@ -717,7 +719,7 @@ class JobPostingWorkflowTests(TestCase):
         )
         serializer.is_valid(raise_exception=True)
 
-        revised = update_employer_job(serializer, self.user)
+        revised = update_employer_job(job, self.user, serializer.validated_data)
 
         self.assertEqual(revised.title, 'Backend Engineer — nội dung mới')
         self.assertEqual(revised.status, Job.Status.ACTIVE)
@@ -754,6 +756,52 @@ class JobPostingWorkflowTests(TestCase):
         self.assertIn('deadline', serializer.errors)
         job.refresh_from_db()
         self.assertEqual(job.status, Job.Status.ACTIVE)
+
+    def test_job_record_create_writes_nested_rows_and_contact(self):
+        job = create_job_record(
+            {
+                'posted_by': self.user,
+                'company': self.company,
+                'title': 'Data Engineer',
+                'description': 'Xây dựng pipeline dữ liệu.',
+                'category_assignments': [
+                    {
+                        'category': self.category,
+                        'role': JobCategoryAssignment.Role.PRIMARY_SPECIALIZATION,
+                    }
+                ],
+                'job_locations': [{'location': self.ward, 'address_detail': 'Cầu Giấy'}],
+                'application_contact': {
+                    'recipient_name': 'HR',
+                    'phone': '0900000001',
+                    'emails': [{'email': 'data-hr@example.com'}],
+                },
+            }
+        )
+
+        self.assertEqual(job.category_assignments.get().category, self.category)
+        self.assertEqual(job.job_locations.get().address_detail, 'Cầu Giấy')
+        self.assertFalse(job.work_schedules.exists())
+        self.assertEqual(
+            list(job.application_contact.emails.values_list('email', flat=True)),
+            ['data-hr@example.com'],
+        )
+
+    def test_job_record_update_replaces_only_the_lists_it_is_given(self):
+        job = self.make_publishable_job()
+
+        update_job_record(
+            job, {'title': 'Backend Lead', 'job_locations': [{'location': self.ward}]}
+        )
+
+        job.refresh_from_db()
+        self.assertEqual(job.title, 'Backend Lead')
+        self.assertEqual(job.job_locations.get().address_detail, '')
+        self.assertEqual(job.work_schedules.count(), 1)
+        self.assertEqual(job.application_contact.emails.get().email, 'hr@example.com')
+
+        update_job_record(job, {'application_contact': None})
+        self.assertFalse(JobApplicationContact.objects.filter(job=job).exists())
 
     @patch('apps.jobs.services.posting.recruiter_job_posting_entitlement')
     def test_another_recruiter_cannot_publish_or_duplicate_the_job(self, entitlement):

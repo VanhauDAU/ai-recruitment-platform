@@ -42,15 +42,15 @@ class AdminUserCvSerializer(serializers.ModelSerializer):
         except UserCv.import_job.RelatedObjectDoesNotExist:
             return None
 
-    def get_import_status(self, obj):
+    def get_import_status(self, obj) -> str:
         job = self._import_job(obj)
         return job.status if job else ''
 
-    def get_import_failure_code(self, obj):
+    def get_import_failure_code(self, obj) -> str:
         job = self._import_job(obj)
         return job.failure_code if job else ''
 
-    def get_is_locked(self, obj):
+    def get_is_locked(self, obj) -> bool:
         return obj.moderation_locked_at is not None
 
 

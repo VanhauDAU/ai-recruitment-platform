@@ -8,10 +8,12 @@ from io import BytesIO
 
 from django.template.loader import render_to_string
 from django.utils import timezone
+from rest_framework.exceptions import ValidationError
 
-from common.pdf.browser import render_html_pdf
+from common.pdf.browser import PdfRenderingError, render_html_pdf
 
 from ..models import CampaignHealthSnapshot
+from .health import campaign_health
 
 STATUS_LABELS = dict(CampaignHealthSnapshot.Status.choices)
 STAGE_LABELS = {
@@ -22,6 +24,45 @@ STAGE_LABELS = {
     'accepted': 'Trúng tuyển',
 }
 JOB_STATUS = {'draft': 'Nháp', 'active': 'Đang tuyển', 'closed': 'Ngừng tuyển'}
+REPORT_CONTENT_TYPES = {
+    'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'pdf': 'application/pdf',
+}
+
+
+def _period(campaign):
+    start = campaign.start_date.strftime('%d/%m/%Y') if campaign.start_date else 'khi kích hoạt'
+    if campaign.is_continuous:
+        return f'Từ {start}, tuyển liên tục'
+    end = campaign.target_date.strftime('%d/%m/%Y') if campaign.target_date else 'chưa đặt'
+    return f'Từ {start} đến {end}'
+
+
+def campaign_report_file(campaign, file_format, *, channels, daily, jobs):
+    """(content, content_type) of the report; ``file_format`` is ``xlsx`` or ``pdf``.
+
+    ``channels``, ``daily`` and ``jobs`` come from the campaign selectors
+    (``campaign_channel_report``, ``daily_applications``, ``report_jobs``).
+    """
+    report = {
+        'campaign': campaign,
+        'period': _period(campaign),
+        'active_days': round(campaign.active_seconds() / 86400, 1),
+        'health': campaign_health(campaign),
+        'channels': channels,
+        'daily': daily,
+        'jobs': jobs,
+    }
+    if file_format == 'pdf':
+        try:
+            content = build_pdf(report)
+        except PdfRenderingError as error:
+            raise ValidationError(
+                {'detail': 'Chưa tạo được PDF, hãy thử lại sau ít phút.'}
+            ) from error
+    else:
+        content = build_xlsx(report)
+    return content, REPORT_CONTENT_TYPES[file_format]
 
 
 def _overview_rows(report):

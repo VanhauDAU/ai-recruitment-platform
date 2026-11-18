@@ -113,11 +113,11 @@ class CompanyMemberSerializer(serializers.ModelSerializer):
     def get_verification_label(self, obj) -> str:
         return VERIFICATION_LABELS.get(self.get_verification_status(obj), 'Chưa nộp hồ sơ xác thực')
 
-    def get_page_editor_grant_id(self, obj):
+    def get_page_editor_grant_id(self, obj) -> str | None:
         grant = next(iter(obj.active_page_grants), None)
         return grant.public_id if grant else None
 
-    def get_joined_at(self, obj):
+    def get_joined_at(self, obj) -> str | None:
         joined = obj.joined_at or (obj.created_at if self._is_manager(obj) else None)
         return serializers.DateTimeField().to_representation(joined) if joined else None
 

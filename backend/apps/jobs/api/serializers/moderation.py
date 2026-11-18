@@ -1,6 +1,9 @@
 """Administrator job-management and moderation contracts."""
 
+from datetime import datetime
+
 from django.core.exceptions import ObjectDoesNotExist
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from ...models import Job, JobModerationEvent, JobStatusHistory
@@ -145,26 +148,26 @@ class AdminJobManagementListSerializer(serializers.ModelSerializer):
         except ObjectDoesNotExist:
             return None
 
-    def get_employer_name(self, obj):
+    def get_employer_name(self, obj) -> str:
         return obj.posted_by.full_name or obj.posted_by.email
 
-    def get_employer_phone_verified(self, obj):
+    def get_employer_phone_verified(self, obj) -> bool:
         recruiter = self._recruiter(obj)
         return bool(recruiter and recruiter.has_verified_phone)
 
-    def get_company_role(self, obj):
+    def get_company_role(self, obj) -> str:
         recruiter = self._recruiter(obj)
         return recruiter.company_role if recruiter else ''
 
-    def get_company_role_label(self, obj):
+    def get_company_role_label(self, obj) -> str:
         recruiter = self._recruiter(obj)
         return recruiter.get_company_role_display() if recruiter else ''
 
-    def get_recruiter_profile_created_at(self, obj):
+    def get_recruiter_profile_created_at(self, obj) -> datetime | None:
         recruiter = self._recruiter(obj)
         return recruiter.created_at if recruiter else None
 
-    def get_is_expired(self, obj):
+    def get_is_expired(self, obj) -> bool:
         return getattr(obj, 'is_expired_value', obj.is_expired)
 
 
@@ -230,6 +233,7 @@ class AdminJobDetailSerializer(AdminJobManagementListSerializer):
             'employer_verification_completed',
         ]
 
+    @extend_schema_field(JobApplicationContactSerializer(allow_null=True))
     def get_application_contact(self, obj):
         if not self.context.get('can_view_sensitive_contact'):
             return None
@@ -239,10 +243,10 @@ class AdminJobDetailSerializer(AdminJobManagementListSerializer):
             return None
         return JobApplicationContactSerializer(contact).data
 
-    def get_can_view_sensitive_contact(self, obj):
+    def get_can_view_sensitive_contact(self, obj) -> bool:
         return bool(self.context.get('can_view_sensitive_contact'))
 
-    def get_review_token(self, obj):
+    def get_review_token(self, obj) -> str:
         return create_job_review_token(obj)
 
     def _state(self, obj):
@@ -252,22 +256,22 @@ class AdminJobDetailSerializer(AdminJobManagementListSerializer):
             self.context['_moderation_state'] = state
         return state
 
-    def get_state_actions(self, obj):
+    def get_state_actions(self, obj) -> list[str]:
         return self._state(obj)['state_actions']
 
-    def get_blocked_reasons(self, obj):
+    def get_blocked_reasons(self, obj) -> list[dict]:
         return self._state(obj)['blocked_reasons']
 
-    def get_content_changes(self, obj):
+    def get_content_changes(self, obj) -> dict:
         return job_published_content_changes(
             obj,
             include_sensitive=bool(self.context.get('can_view_sensitive_contact')),
         )
 
-    def get_employer_account_level(self, obj):
+    def get_employer_account_level(self, obj) -> int:
         return self.context.get('employer_entitlement', {}).get('account_level', 0)
 
-    def get_employer_verification_completed(self, obj):
+    def get_employer_verification_completed(self, obj) -> bool:
         return self.context.get('employer_entitlement', {}).get('verification_completed', False)
 
 

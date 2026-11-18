@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from ...models import Job, SavedJob
-from ...selectors.listing import publicly_available_job_filter
+from ...selectors import public_jobs_queryset
 from .jobs import PublicJobListSerializer
 
 
@@ -21,9 +21,5 @@ class SavedJobSerializer(serializers.ModelSerializer):
         fields = super().get_fields()
         # Rebuild the public-availability predicate for every request so a
         # candidate cannot save a draft/closed/expired job by guessing its ID.
-        fields['job'].queryset = Job.objects.filter(publicly_available_job_filter())
+        fields['job'].queryset = public_jobs_queryset()
         return fields
-
-    def create(self, validated_data):
-        saved_job, _ = SavedJob.objects.get_or_create(**validated_data)
-        return saved_job

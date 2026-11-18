@@ -94,7 +94,7 @@ class CompanyDocumentSerializer(serializers.ModelSerializer):
             recruiter=recruiter,
         )
 
-    def get_source_type(self, obj):
+    def get_source_type(self, obj) -> str:
         # URL ngoài chỉ được dùng cho bằng chứng tên thương mại. Không cần thêm
         # cột mới: URL lưu trong file_url đã là dữ liệu nguồn của document.
         return (

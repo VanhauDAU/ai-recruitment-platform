@@ -25,7 +25,7 @@ class SocialConnectionSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = fields
 
-    def get_simulated(self, obj):
+    def get_simulated(self, obj) -> bool:
         return obj.provider == SocialAccountConnection.Provider.FAKE
 
 
@@ -74,11 +74,11 @@ class ScheduledPostSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = fields
 
-    def get_images(self, obj):
+    def get_images(self, obj) -> list[str]:
         request = self.context.get('request')
         return [media_public_url(path, request=request) for path in obj.images or []]
 
-    def get_error_message(self, obj):
+    def get_error_message(self, obj) -> str:
         code = obj.last_error_code
         if not code:
             return ''

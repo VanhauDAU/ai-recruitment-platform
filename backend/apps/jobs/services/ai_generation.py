@@ -3,6 +3,7 @@
 import hashlib
 import html
 import json
+import logging
 import re
 import unicodedata
 from datetime import timedelta
@@ -20,6 +21,8 @@ from apps.skills.models import Skill
 from common.vietnam_time import vietnam_today
 
 from ..models import Benefit, Job, JobAiGeneration, JobCategory
+
+logger = logging.getLogger(__name__)
 
 PROMPT_VERSION = 'job-post-v2'
 SCHEMA_VERSION = 'job-post-v2'
@@ -306,14 +309,37 @@ def _record_quota_rejection(*, model):
 
 
 def create_job_ai_generation(*, user, validated_data):
-    """Create one quota-consuming generation or replay the idempotent result."""
+    """Create one quota-consuming generation or replay the idempotent result.
+
+    A new generation is queued for the worker once the transaction commits.
+    """
     try:
         with transaction.atomic():
-            return _create_job_ai_generation_locked(user=user, validated_data=validated_data)
+            generation, created, quota_remaining = _create_job_ai_generation_locked(
+                user=user, validated_data=validated_data
+            )
+            if created:
+                _dispatch_after_commit(generation)
+            return generation, created, quota_remaining
     except JobAiGenerationQuotaExceeded as error:
         # The inner transaction (and recruiter lock) has ended before this PII-free metric write.
         _record_quota_rejection(model=error.model)
         raise
+
+
+def _dispatch_after_commit(generation):
+    generation_id, public_id = generation.pk, generation.public_id
+
+    def dispatch():
+        # Imported here: tasks depend on services, not the other way round.
+        from ..tasks.ai_generation import generate_job_post
+
+        try:
+            generate_job_post.delay(generation_id)
+        except Exception:  # noqa: BLE001 - stale-queued recovery will redispatch safely
+            logger.exception('Không thể dispatch job AI generation %s.', public_id)
+
+    transaction.on_commit(dispatch)
 
 
 def _create_job_ai_generation_locked(*, user, validated_data):

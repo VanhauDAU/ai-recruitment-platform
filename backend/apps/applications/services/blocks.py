@@ -4,8 +4,10 @@ from datetime import timedelta
 
 from django.db import transaction
 from django.utils import timezone
+from rest_framework.exceptions import NotFound
 
 from apps.employers.models import RecruiterProfile
+from common.api.exceptions import DomainError
 
 from ..models import Application, CandidateBlock
 from .status import change_application_status, reject_blocked_application
@@ -13,8 +15,9 @@ from .status import change_application_status, reject_blocked_application
 BLOCKED_APPLY_MESSAGE = 'Bạn không thể ứng tuyển vào tin này lúc này.'
 
 
-class CandidateAlreadyBlocked(ValueError):
-    pass
+class CandidateAlreadyBlocked(DomainError):
+    def payload(self):
+        return {'detail': str(self)}
 
 
 def is_candidate_blocked(*, company_id, candidate_id):
@@ -85,7 +88,7 @@ def lift_candidate_block(*, recruiter, block_public_id):
         block.recruiter_id != recruiter.pk
         and not _can_manage_company_blocks(recruiter, block.company_id)
     ):
-        raise CandidateBlock.DoesNotExist
+        raise NotFound
     block.lifted_at = timezone.now()
     block.save(update_fields=['lifted_at'])
     return block

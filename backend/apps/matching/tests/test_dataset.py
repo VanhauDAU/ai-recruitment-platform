@@ -10,7 +10,7 @@ from apps.jobs.models import Job, JobLanguageRequirement, JobSkill, Language
 from apps.jobs.tests.helpers import open_visibility_window
 from apps.skills.models import Skill, SkillGroup
 
-from ..selectors import jobs_for_profile
+from ..models import jobs_for_profile
 from ..services.extraction import EXTRACTOR_VERSION, ExtractionError, job_profile
 from ..services.extraction.job import role_title
 

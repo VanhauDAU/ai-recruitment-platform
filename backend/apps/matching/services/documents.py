@@ -126,7 +126,7 @@ def ensure_cv_document(cv_version, *, encoder, catalog):
 
 
 def ensure_job_document(job, *, encoder):
-    """`job` cần nạp sẵn quan hệ bằng selector `jobs_for_profile`."""
+    """`job` cần nạp sẵn quan hệ bằng `models.jobs_for_profile`."""
     try:
         digest = job_content_hash(job)
     except ExtractionError:

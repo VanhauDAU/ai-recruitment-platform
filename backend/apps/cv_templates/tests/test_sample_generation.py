@@ -283,7 +283,7 @@ class SampleGenerationFlowTests(TestCase):
             origin=CvSampleContent.Origin.AI,
         )
 
-        with patch('apps.cv_templates.api.views.admin.regenerate_all_template_snapshots'):
+        with patch('apps.cv_templates.tasks.template_assets.regenerate_all_template_snapshots'):
             response = self.client.post(
                 f'/api/v2/admin/cv-sample-contents/{reviewed.public_id}/publish/'
             )

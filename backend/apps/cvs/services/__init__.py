@@ -4,7 +4,7 @@ from .assets import (
     asset_map,
     create_avatar_asset,
     create_avatar_asset_from_session,
-    create_background_asset,
+    readable_asset,
 )
 from .audit import record_application_snapshot_access
 from .completeness import application_readiness_issues, is_unsaved_builder_baseline
@@ -115,7 +115,7 @@ __all__ = [
     'apply_sample_to_draft',
     'create_avatar_asset',
     'create_avatar_asset_from_session',
-    'create_background_asset',
+    'readable_asset',
     'duplicate_cv',
     'import_v2_cv',
     'import_v2_cv_from_session',

@@ -5,12 +5,11 @@ from pathlib import PurePosixPath
 from django.conf import settings
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.core.validators import URLValidator
-from django.db import transaction
-from django.db.models import Prefetch
 from django.http import FileResponse, Http404
 from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, extend_schema, inline_serializer
 from rest_framework import generics, parsers, serializers, status
 from rest_framework.exceptions import ValidationError
+from rest_framework.permissions import SAFE_METHODS
 from rest_framework.response import Response
 
 from apps.accounts.api.permissions import IsEmployer
@@ -20,19 +19,22 @@ from common.storage.r2 import private_media_storage
 from ...models import CompanyDocument, CompanyUpdateRequest
 from ...models.page_access import resolve_company_page_access
 from ...selectors import (
+    company_update_request_for_company,
+    company_update_requests_queryset,
     employer_document_content_queryset,
     employer_document_metadata_queryset,
+    existing_recruiter_profile,
+    requester_editable_company_update_request,
 )
 from ...services import (
-    REQUESTER_EDITABLE_COMPANY_UPDATE_STATUSES,
+    VERIFICATION_METHOD_DOCUMENT_TYPES,
     CompanyUpdateConflict,
     CompanyUpdateInReview,
     close_company_update_before_review,
     get_or_create_recruiter,
-    lock_company_update_request,
-    lock_company_update_target,
-    snapshot_company_update_request,
-    submit_company_update_request,
+    save_company_document,
+    save_company_website_proof,
+    submit_validated_company_update,
 )
 from ..exceptions import (
     COMPANY_UPDATE_IN_REVIEW,
@@ -40,17 +42,12 @@ from ..exceptions import (
     UploadPreviewScanRequiredResponse,
     UploadSessionRequiredResponse,
 )
+from ..permissions import require_company_recruiter
 from ..serializers import (
     CompanyDocumentSerializer,
     CompanyUpdateRequestCloseSerializer,
     CompanyUpdateRequestSerializer,
 )
-from .memberships import (
-    VERIFICATION_METHOD_DOCUMENT_TYPES,
-    _save_document,
-    remove_obsolete_verification_documents,
-)
-from .onboarding import _require_company
 
 
 class CompanyDocumentListCreateView(generics.ListCreateAPIView):
@@ -65,10 +62,18 @@ class CompanyDocumentListCreateView(generics.ListCreateAPIView):
 
     def get_recruiter(self):
         if not hasattr(self, '_recruiter'):
-            self._recruiter = get_or_create_recruiter(self.request.user)
+            # Listing never creates the profile; an upload needs one to own the file.
+            self._recruiter = (
+                existing_recruiter_profile(self.request.user)
+                if self.request.method in SAFE_METHODS
+                else get_or_create_recruiter(self.request.user)
+            )
         return self._recruiter
 
     @extend_schema(
+        summary='Giấy tờ công ty và hồ sơ chứng minh actor được xem',
+        responses={200: CompanyDocumentSerializer(many=True)},
+        tags=['employer'],
         parameters=[
             OpenApiParameter(
                 'scope',
@@ -80,7 +85,7 @@ class CompanyDocumentListCreateView(generics.ListCreateAPIView):
                     'bỏ trống để giữ phạm vi tài liệu mà actor có quyền xem.'
                 ),
             )
-        ]
+        ],
     )
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
@@ -89,12 +94,15 @@ class CompanyDocumentListCreateView(generics.ListCreateAPIView):
         scope = self.request.query_params.get('scope', '')
         if scope not in {'', 'mine'}:
             raise ValidationError({'scope': 'Phạm vi phải là mine hoặc để trống.'})
+        recruiter = self.get_recruiter()
+        if recruiter is None:
+            return CompanyDocument.objects.none()
         # Văn bản DLCN mới gắn với recruiter thay thế bản lịch sử từng gắn với
         # company. API phải trả bản mới trước để consumer không vô tình mở tệp
         # công ty cũ khi cả hai cùng tồn tại.
         return employer_document_metadata_queryset(
             user=self.request.user,
-            recruiter=self.get_recruiter(),
+            recruiter=recruiter,
             personal_only=scope == 'mine',
         ).order_by(
             'dpa_owner_priority',
@@ -130,7 +138,7 @@ class CompanyDocumentListCreateView(generics.ListCreateAPIView):
         responses={201: CompanyDocumentSerializer},
         tags=['employer'],
     )
-    def create(self, request, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
         doc_type = request.data.get('doc_type')
         if doc_type not in CompanyDocument.DocType.values:
             raise ValidationError({'doc_type': 'Loại giấy tờ không hợp lệ.'})
@@ -169,13 +177,12 @@ class CompanyDocumentListCreateView(generics.ListCreateAPIView):
         update_request = None
         update_request_id = request.data.get('update_request')
         if update_request_id:
-            recruiter = _require_company(request.user)
-            update_request = CompanyUpdateRequest.objects.filter(
-                public_id=update_request_id,
+            recruiter = require_company_recruiter(request.user)
+            update_request = requester_editable_company_update_request(
                 company=recruiter.company,
-                requested_by=request.user,
-                status__in=REQUESTER_EDITABLE_COMPANY_UPDATE_STATUSES,
-            ).first()
+                requester=request.user,
+                public_id=update_request_id,
+            )
             if update_request is None:
                 raise ValidationError(
                     {'update_request': 'Không tìm thấy yêu cầu cập nhật đang chờ.'}
@@ -211,80 +218,38 @@ class CompanyDocumentListCreateView(generics.ListCreateAPIView):
                 raise ValidationError(
                     {'website_url': 'Nhập URL Website hợp lệ (http hoặc https).'}
                 ) from error
-            with transaction.atomic():
-                existing = None
-                if update_request is not None:
-                    company, update_request = lock_company_update_request(
-                        company_id=recruiter.company_id,
-                        update_request_id=update_request.pk,
-                    )
-                    if (
-                        update_request.requested_by_id != request.user.id
-                        or update_request.status not in REQUESTER_EDITABLE_COMPANY_UPDATE_STATUSES
-                    ):
-                        raise ValidationError(
-                            {'update_request': 'Không tìm thấy yêu cầu cập nhật đang chờ.'}
-                        )
-                    existing = (
-                        CompanyDocument.objects.select_for_update()
-                        .filter(
-                            update_request=update_request,
-                            doc_type=doc_type,
-                            is_current=True,
-                        )
-                        .first()
-                    )
-                    if existing is not None:
-                        existing.is_current = False
-                        existing.save(update_fields=['is_current', 'updated_at'])
-                document = CompanyDocument.objects.create(
-                    company=company
-                    if update_request is not None
-                    else _require_company(request.user).company,
-                    recruiter=recruiter,
-                    uploaded_by=request.user,
-                    update_request=update_request,
-                    supersedes=existing,
-                    version=(existing.version + 1 if existing else 1),
-                    doc_type=doc_type,
-                    file_url=website_url,
-                    file_name='Website chứng minh tên thương mại',
-                )
-                if update_request is not None:
-                    snapshot_company_update_request(
-                        update_request,
-                        actor=request.user,
-                    )
-        elif doc_type == CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT:
-            document = _save_document(
-                request,
-                None,
-                doc_type,
-                upload,
-                upload_session_public_id=upload_session_public_id,
+            document = save_company_website_proof(
+                user=request.user,
                 recruiter=recruiter,
+                website_url=website_url,
+                update_request=update_request,
+                company=(
+                    None if update_request else require_company_recruiter(request.user).company
+                ),
+            )
+        elif doc_type == CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT:
+            document = save_company_document(
+                user=request.user,
+                recruiter=recruiter,
+                company=None,
+                doc_type=doc_type,
+                upload=upload,
+                upload_session_public_id=upload_session_public_id,
                 replace_document_public_id=replace_document_public_id,
             )
         else:
-            company = _require_company(request.user).company
-            with transaction.atomic():
-                document = _save_document(
-                    request,
-                    company,
-                    doc_type,
-                    upload,
-                    upload_session_public_id=upload_session_public_id,
-                    update_request=update_request,
-                    recruiter=recruiter,
-                    verification_method=verification_method or '',
-                    append_to_current_set=append_to_current_set,
-                    replace_document_public_id=replace_document_public_id,
-                )
-                if verification_method:
-                    remove_obsolete_verification_documents(
-                        document.verification_case,
-                        verification_method,
-                    )
+            document = save_company_document(
+                user=request.user,
+                recruiter=recruiter,
+                company=require_company_recruiter(request.user).company,
+                doc_type=doc_type,
+                upload=upload,
+                upload_session_public_id=upload_session_public_id,
+                update_request=update_request,
+                verification_method=verification_method or '',
+                append_to_current_set=append_to_current_set,
+                replace_document_public_id=replace_document_public_id,
+            )
         serializer = self.get_serializer(document)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
@@ -320,7 +285,9 @@ class CompanyDocumentContentView(generics.GenericAPIView):
     permission_classes = [IsEmployer]
 
     def get(self, request, pk):
-        recruiter = get_or_create_recruiter(request.user)
+        recruiter = existing_recruiter_profile(request.user)
+        if recruiter is None:
+            raise Http404
         document = (
             employer_document_content_queryset(
                 user=request.user,
@@ -376,10 +343,13 @@ class CompanyUpdateRequestListCreateView(generics.ListCreateAPIView):
 
     def get_recruiter(self):
         if not hasattr(self, '_recruiter'):
-            self._recruiter = _require_company(self.request.user)
+            self._recruiter = require_company_recruiter(self.request.user)
         return self._recruiter
 
     @extend_schema(
+        summary='Lịch sử yêu cầu cập nhật công ty',
+        responses={200: CompanyUpdateRequestSerializer(many=True)},
+        tags=['employer'],
         parameters=[
             OpenApiParameter(
                 'scope',
@@ -388,7 +358,7 @@ class CompanyUpdateRequestListCreateView(generics.ListCreateAPIView):
                 enum=['mine', 'company'],
                 description='mine: yêu cầu của tôi; company: lịch sử toàn công ty (mặc định).',
             )
-        ]
+        ],
     )
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
@@ -397,19 +367,10 @@ class CompanyUpdateRequestListCreateView(generics.ListCreateAPIView):
         scope = self.request.query_params.get('scope', 'company')
         if scope not in {'mine', 'company'}:
             raise ValidationError({'scope': 'Phạm vi phải là mine hoặc company.'})
-        queryset = (
-            CompanyUpdateRequest.objects.filter(company=self.get_recruiter().company)
-            .select_related('requested_by', 'current_revision')
-            .prefetch_related(
-                Prefetch(
-                    'documents',
-                    queryset=CompanyDocument.objects.select_related('verification_case'),
-                )
-            )
+        return company_update_requests_queryset(
+            company=self.get_recruiter().company,
+            requester=self.request.user if scope == 'mine' else None,
         )
-        if scope == 'mine':
-            queryset = queryset.filter(requested_by=self.request.user)
-        return queryset.order_by('-submitted_at', '-created_at', '-id')
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -417,36 +378,36 @@ class CompanyUpdateRequestListCreateView(generics.ListCreateAPIView):
         context['recruiter'] = self.get_recruiter()
         return context
 
-    @transaction.atomic
-    def create(self, request, *args, **kwargs):
+    @extend_schema(
+        summary='Gửi hoặc sửa yêu cầu cập nhật công ty đang mở của tôi',
+        request=CompanyUpdateRequestSerializer,
+        responses={201: CompanyUpdateRequestSerializer, 200: CompanyUpdateRequestSerializer},
+        tags=['employer'],
+    )
+    def post(self, request, *args, **kwargs):
         recruiter = self.get_recruiter()
+
+        def validate(company, active_request):
+            serializer = self.get_serializer(
+                active_request,
+                data=request.data,
+                # Page content fields need the page policy (ER-D59).
+                context={
+                    **self.get_serializer_context(),
+                    'page_access': resolve_company_page_access(recruiter),
+                },
+            )
+            serializer.is_valid(raise_exception=True)
+            return serializer.validated_data
+
         try:
-            company, active_request = lock_company_update_target(
+            update_request, created = submit_validated_company_update(
                 company_id=recruiter.company_id,
                 requester=request.user,
+                validate=validate,
             )
         except CompanyUpdateInReview as error:
             raise ValidationError(COMPANY_UPDATE_IN_REVIEW) from error
-        serializer = self.get_serializer(
-            active_request,
-            data=request.data,
-            # Page content fields need the page policy (ER-D59).
-            context={
-                **self.get_serializer_context(),
-                'page_access': resolve_company_page_access(recruiter),
-            },
-        )
-        serializer.is_valid(raise_exception=True)
-        data = dict(serializer.validated_data)
-        expected_base_updated_at = data.pop('base_company_updated_at', None)
-        try:
-            update_request, created = submit_company_update_request(
-                company=company,
-                active_request=active_request,
-                requester=request.user,
-                data=data,
-                expected_base_updated_at=expected_base_updated_at,
-            )
         except CompanyUpdateConflict as error:
             raise CompanyUpdateConflictResponse(error.fields) from error
         return Response(
@@ -466,14 +427,10 @@ class CompanyUpdateRequestLifecycleView(generics.GenericAPIView):
         responses={200: CompanyUpdateRequestSerializer},
     )
     def post(self, request, public_id, action):
-        recruiter = _require_company(request.user)
-        update_request = (
-            CompanyUpdateRequest.objects.filter(
-                public_id=public_id,
-                company=recruiter.company,
-            )
-            .select_related('requested_by', 'current_revision')
-            .first()
+        recruiter = require_company_recruiter(request.user)
+        update_request = company_update_request_for_company(
+            company=recruiter.company,
+            public_id=public_id,
         )
         if update_request is None:
             raise Http404

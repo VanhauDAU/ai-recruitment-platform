@@ -62,10 +62,10 @@ class CampaignChannelSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['public_id', 'content_source', 'posted_at', 'created_at']
 
-    def get_link(self, obj):
+    def get_link(self, obj) -> str:
         return channel_link(obj)
 
-    def get_rendered_content(self, obj):
+    def get_rendered_content(self, obj) -> dict:
         return render_content(obj)
 
 

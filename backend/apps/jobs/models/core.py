@@ -521,7 +521,7 @@ class Job(models.Model):
         )
 
     @property
-    def is_visibility_expired(self):
+    def is_visibility_expired(self) -> bool:
         return bool(
             self.status == self.Status.ACTIVE
             and self.visibility_ends_at is not None

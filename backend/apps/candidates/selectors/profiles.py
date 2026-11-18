@@ -3,6 +3,7 @@
 from django.db.models import Prefetch
 
 from ..models import (
+    CandidateConsent,
     CandidateDesiredSpecialization,
     CandidateJobPreference,
     CandidatePreferredProvince,
@@ -41,3 +42,10 @@ def candidate_job_preference_for_user(user):
         )
         .get(pk=preference.pk)
     )
+
+
+def recruiter_visibility_consent(profile):
+    """Current recruiter-search consent of a profile, or ``None`` if never decided."""
+    return profile.consents.filter(
+        consent_type=CandidateConsent.ConsentType.RECRUITER_VISIBILITY,
+    ).first()

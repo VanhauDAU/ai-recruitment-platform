@@ -1,7 +1,12 @@
 from django.core.exceptions import ValidationError as DjangoValidationError
-from drf_spectacular.utils import OpenApiParameter, extend_schema, inline_serializer
+from drf_spectacular.utils import (
+    OpenApiParameter,
+    extend_schema,
+    extend_schema_view,
+    inline_serializer,
+)
 from rest_framework import generics, serializers, status
-from rest_framework.exceptions import NotFound, ValidationError
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
@@ -10,7 +15,6 @@ from apps.accounts.api.permissions import IsEmployer
 from common.api.throttling import ClientIPScopedRateThrottle
 from common.http.client_ip import client_ip
 
-from ...selectors import has_explicit_company_link
 from ...services import (
     DpaPolicyChanged,
     DpaPolicyUnavailable,
@@ -34,13 +38,11 @@ from ..serializers import (
 )
 
 
-def _require_company(user):
-    recruiter = get_or_create_recruiter(user)
-    if not has_explicit_company_link(recruiter):
-        raise NotFound('Bạn chưa liên kết với công ty nào.')
-    return recruiter
-
-
+@extend_schema_view(
+    get=extend_schema(summary='Hồ sơ nhà tuyển dụng của tôi', tags=['employer']),
+    put=extend_schema(summary='Cập nhật chức danh của tôi', tags=['employer']),
+    patch=extend_schema(summary='Cập nhật chức danh của tôi', tags=['employer']),
+)
 class RecruiterMeView(generics.RetrieveUpdateAPIView):
     """Hồ sơ nhà tuyển dụng của tôi + trạng thái onboarding 5 bước."""
 
@@ -48,6 +50,8 @@ class RecruiterMeView(generics.RetrieveUpdateAPIView):
     permission_classes = [IsEmployer]
 
     def get_object(self):
+        # A GET still creates the profile: the response is the profile itself,
+        # including its public_id, so there is nothing to answer without one.
         return get_or_create_recruiter(self.request.user)
 
 

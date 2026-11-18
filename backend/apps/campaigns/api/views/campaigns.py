@@ -2,6 +2,8 @@ from time import perf_counter
 
 from django.http import Http404
 from django.shortcuts import get_object_or_404
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -46,6 +48,11 @@ class EmployerWorkspaceReadMixin:
         return readiness
 
 
+@extend_schema_view(
+    list=extend_schema(summary='Chiến dịch của NTD (kèm status_counts khi phân trang)'),
+    create=extend_schema(summary='Tạo chiến dịch'),
+)
+@extend_schema(tags=['campaigns'])
 class RecruitmentCampaignListCreateView(EmployerWorkspaceReadMixin, generics.ListCreateAPIView):
     permission_classes = [IsEmployer]
     serializer_class = RecruitmentCampaignSerializer
@@ -84,6 +91,7 @@ class RecruitmentCampaignListCreateView(EmployerWorkspaceReadMixin, generics.Lis
         serializer.instance = campaign_detail_queryset(self.request.user).get(pk=campaign.pk)
 
 
+@extend_schema(tags=['campaigns'])
 class RecruitmentCampaignDetailView(EmployerWorkspaceReadMixin, generics.RetrieveUpdateAPIView):
     permission_classes = [IsEmployer]
     serializer_class = RecruitmentCampaignSerializer
@@ -100,6 +108,11 @@ class RecruitmentCampaignDetailView(EmployerWorkspaceReadMixin, generics.Retriev
         serializer.instance = campaign_detail_queryset(self.request.user).get(pk=campaign.pk)
 
 
+@extend_schema(
+    tags=['campaigns'],
+    summary='Chiến dịch còn chọn được khi gắn tin',
+    responses=RecruitmentCampaignSerializer(many=True),
+)
 class RecruitmentCampaignOptionsView(EmployerWorkspaceReadMixin, APIView):
     permission_classes = [IsEmployer]
 
@@ -110,6 +123,12 @@ class RecruitmentCampaignOptionsView(EmployerWorkspaceReadMixin, APIView):
         )
 
 
+@extend_schema(
+    tags=['campaigns'],
+    summary='Đổi trạng thái chiến dịch',
+    request=CampaignStatusSerializer,
+    responses=RecruitmentCampaignSerializer,
+)
 class RecruitmentCampaignStatusView(APIView):
     permission_classes = [IsEmployer]
 
@@ -126,6 +145,11 @@ class RecruitmentCampaignStatusView(APIView):
         return Response(RecruitmentCampaignSerializer(campaign).data)
 
 
+@extend_schema(
+    tags=['campaigns'],
+    summary='Ảnh hưởng của việc tạm dừng chiến dịch',
+    responses=OpenApiTypes.OBJECT,
+)
 class RecruitmentCampaignPauseImpactView(EmployerWorkspaceReadMixin, APIView):
     permission_classes = [IsEmployer]
 
@@ -138,6 +162,7 @@ class RecruitmentCampaignPauseImpactView(EmployerWorkspaceReadMixin, APIView):
         return Response(campaign_pause_impact(campaign))
 
 
+@extend_schema(tags=['campaigns'], summary='Nhật ký hoạt động của chiến dịch')
 class RecruitmentCampaignActivityView(EmployerWorkspaceReadMixin, generics.ListAPIView):
     permission_classes = [IsEmployer]
     serializer_class = CampaignActivitySerializer
@@ -161,6 +186,7 @@ class RecruitmentCampaignActivityView(EmployerWorkspaceReadMixin, generics.ListA
         )
 
 
+@extend_schema(tags=['campaigns'], summary='Báo cáo chiến dịch', responses=OpenApiTypes.OBJECT)
 class RecruitmentCampaignReportView(EmployerWorkspaceReadMixin, APIView):
     permission_classes = [IsEmployer]
 
@@ -170,6 +196,12 @@ class RecruitmentCampaignReportView(EmployerWorkspaceReadMixin, APIView):
         return Response(campaign_report(campaign))
 
 
+@extend_schema(
+    tags=['campaigns'],
+    summary='Hiệu quả theo tin trong chiến dịch',
+    parameters=[CampaignPerformanceQuerySerializer],
+    responses=OpenApiTypes.OBJECT,
+)
 class RecruitmentCampaignJobPerformanceView(EmployerWorkspaceReadMixin, APIView):
     permission_classes = [IsEmployer]
 

@@ -3,6 +3,7 @@
 from django.db.models import BooleanField, Case, CharField, Count, Prefetch, Q, Value, When
 from django.db.models.functions import Coalesce, NullIf
 
+from common.api.params import parse_bool
 from common.db.search import search_q
 
 from ..models import (
@@ -99,7 +100,7 @@ def admin_job_management_queryset(*, params=None):
         queryset = queryset.filter(policy_hold=policy_hold)
     if moderation_hold := params.get('moderation_hold'):
         queryset = queryset.filter(moderation_hold=moderation_hold)
-    if params.get('has_reports') in {'1', 'true'}:
+    if parse_bool(params.get('has_reports')):
         queryset = queryset.filter(pending_report_count__gt=0)
     if submitted_from := params.get('submitted_from'):
         queryset = queryset.filter(submitted_at__date__gte=submitted_from)

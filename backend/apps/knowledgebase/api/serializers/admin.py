@@ -1,3 +1,4 @@
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from common.storage.media import media_url_from_value
@@ -104,13 +105,13 @@ class RevisionSerializer(serializers.ModelSerializer):
             'name': actor.full_name or actor.email,
         }
 
-    def get_created_by(self, obj):
+    def get_created_by(self, obj) -> dict | None:
         return self._actor(obj.created_by)
 
-    def get_submitted_by(self, obj):
+    def get_submitted_by(self, obj) -> dict | None:
         return self._actor(obj.submitted_by)
 
-    def get_reviewed_by(self, obj):
+    def get_reviewed_by(self, obj) -> dict | None:
         return self._actor(obj.reviewed_by)
 
 
@@ -149,11 +150,11 @@ class AdminArticleListSerializer(serializers.ModelSerializer):
             'updated_at',
         ]
 
-    def get_title(self, obj):
+    def get_title(self, obj) -> str:
         revision = _latest_revision(obj)
         return revision.title if revision else ''
 
-    def get_latest_revision(self, obj):
+    def get_latest_revision(self, obj) -> dict | None:
         revision = _latest_revision(obj)
         if not revision:
             return None
@@ -178,7 +179,7 @@ class AuditEventSerializer(serializers.Serializer):
     payload = serializers.JSONField()
     created_at = serializers.DateTimeField()
 
-    def get_actor_name(self, obj):
+    def get_actor_name(self, obj) -> str:
         return obj.actor.full_name or obj.actor.email if obj.actor else 'Hệ thống'
 
 
@@ -189,12 +190,14 @@ class AdminArticleDetailSerializer(AdminArticleListSerializer):
     class Meta(AdminArticleListSerializer.Meta):
         fields = [*AdminArticleListSerializer.Meta.fields, 'revisions', 'audit_events']
 
+    @extend_schema_field(RevisionSerializer(many=True))
     def get_revisions(self, obj):
         revisions = getattr(obj, 'admin_revisions', None)
         if revisions is None:
             revisions = obj.revisions.all()
         return RevisionSerializer(revisions, many=True).data
 
+    @extend_schema_field(AuditEventSerializer(many=True))
     def get_audit_events(self, obj):
         events = self.context.get('audit_events', [])
         return AuditEventSerializer(events, many=True).data
@@ -315,10 +318,10 @@ class MediaSerializer(serializers.ModelSerializer):
             'created_at',
         ]
 
-    def get_url(self, obj):
+    def get_url(self, obj) -> str:
         return media_url_from_value(obj.storage_key, request=self.context.get('request'))
 
-    def get_uploaded_by(self, obj):
+    def get_uploaded_by(self, obj) -> dict | None:
         if not obj.uploaded_by:
             return None
         return {

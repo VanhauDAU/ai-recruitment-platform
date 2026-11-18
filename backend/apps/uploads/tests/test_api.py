@@ -61,7 +61,7 @@ class UploadSessionApiTests(TemporaryUploadStorageMixin, APITestCase):
             )
         self.assertEqual(session.purpose, 'employer_verification')
 
-    @patch('apps.uploads.api.views.sessions.scan_upload_session.delay')
+    @patch('apps.uploads.tasks.scan_upload_session.delay')
     def test_content_stays_quarantined_until_worker_verdict(self, delay):
         public_id = self.create_session().data['public_id']
 
@@ -116,7 +116,7 @@ class UploadSessionApiTests(TemporaryUploadStorageMixin, APITestCase):
             UploadSession.objects.get(public_id=public_id).state, UploadState.UPLOADING
         )
 
-    @patch('apps.uploads.api.views.sessions.scan_upload_session.delay')
+    @patch('apps.uploads.tasks.scan_upload_session.delay')
     def test_pdf_header_after_leading_whitespace_or_bom_is_accepted(self, delay):
         for payload in (b'\n' + PDF_BYTES, b'\xef\xbb\xbf' + PDF_BYTES, b'\r\n \t' + PDF_BYTES):
             with self.subTest(prefix=payload[:4]):

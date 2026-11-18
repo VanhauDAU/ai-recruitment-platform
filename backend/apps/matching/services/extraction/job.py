@@ -102,7 +102,7 @@ def _provinces(job):
 
 
 def job_profile(job):
-    """`job` cần nạp sẵn kỹ năng, ngoại ngữ, địa điểm (selector `jobs_for_profile`)."""
+    """`job` cần nạp sẵn kỹ năng, ngoại ngữ, địa điểm (`models.jobs_for_profile`)."""
     description = content_html_plain_text(job.description)
     requirements = content_html_plain_text(job.requirements)
     text = '\n'.join(part for part in (job.title, description, requirements) if part)

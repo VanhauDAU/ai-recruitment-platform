@@ -12,11 +12,10 @@ from rest_framework.views import APIView
 
 from apps.accounts.api.permissions import AdminPortalPermission
 from apps.privacy.services import load_consent
-from common.api.pagination import StandardPagination
 from common.metrics import record_metric
 from common.vietnam_time import vietnam_today
 
-from ...models import Announcement, AnnouncementRevision
+from ...models import Announcement
 from ...selectors import (
     active_announcements_for_request,
     admin_announcement_detail_queryset,
@@ -26,8 +25,8 @@ from ...selectors import (
     remote_announcements_enabled,
 )
 from ...services import (
-    StaleAnnouncementState,
     archive_announcement,
+    attach_published_revisions,
     create_announcement,
     create_announcement_revision,
     duplicate_announcement,
@@ -168,24 +167,13 @@ class AnnouncementStateView(APIView):
         )
         serializer = AnnouncementStateWriteSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        try:
-            state = set_announcement_user_state(
-                announcement=announcement,
-                user=request.user,
-                revision_number=serializer.validated_data['revision'],
-                dismissal_version=serializer.validated_data['dismissal_version'],
-                action=serializer.validated_data['action'],
-            )
-        except StaleAnnouncementState as error:
-            return Response(
-                {
-                    'code': 'announcement_state_stale',
-                    'detail': 'Thông báo đã thay đổi. Hãy tải lại feed trước khi thao tác.',
-                    'current_revision': error.current_revision,
-                    'current_dismissal_version': error.current_dismissal_version,
-                },
-                status=status.HTTP_409_CONFLICT,
-            )
+        state = set_announcement_user_state(
+            announcement=announcement,
+            user=request.user,
+            revision_number=serializer.validated_data['revision'],
+            dismissal_version=serializer.validated_data['dismissal_version'],
+            action=serializer.validated_data['action'],
+        )
         return Response(
             AnnouncementUserStateSerializer(
                 {
@@ -224,26 +212,7 @@ class AnnouncementEventBatchView(APIView):
             )
             return Response({'accepted': True}, status=status.HTTP_202_ACCEPTED)
 
-        public_ids = {event['public_id'] for event in events}
-        revisions = AnnouncementRevision.objects.filter(
-            announcement__public_id__in=public_ids,
-            published_at__isnull=False,
-        ).select_related('announcement')
-        revisions_by_key = {
-            (revision.announcement.public_id, revision.number): revision for revision in revisions
-        }
-        valid_events = []
-        for event in events:
-            revision = revisions_by_key.get((event['public_id'], event['revision']))
-            if revision is None or event['surface'] not in revision.surfaces:
-                record_metric(
-                    'announcement_analytics',
-                    event=event['event'],
-                    reason='invalid_event',
-                    surface=event['surface'],
-                )
-                continue
-            valid_events.append({**event, 'revision_object': revision})
+        valid_events = attach_published_revisions(events)
 
         response = Response({'accepted': True}, status=status.HTTP_202_ACCEPTED)
         if valid_events:
@@ -291,7 +260,6 @@ class AnnouncementRuntimeEventView(APIView):
 )
 class AdminAnnouncementListCreateView(generics.ListAPIView):
     permission_classes = [AdminPortalPermission]
-    pagination_class = StandardPagination
 
     def get_queryset(self):
         return admin_announcements_queryset(self.request.query_params)

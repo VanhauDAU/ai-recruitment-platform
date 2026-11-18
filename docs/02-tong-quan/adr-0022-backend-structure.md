@@ -101,8 +101,9 @@ Chéo app — app A chỉ được import từ app B:
   (`models/content_schema.py`), section/layout/renderer (`domain/`), ghép document
   (`services/composition.py`) và in PDF (`services/printing.py`, engine Chromium
   ở `common/pdf/browser.py`). `cvs` (CV của người dùng) gọi services của
-  `cv_templates`; `cv_templates` chỉ đọc **model** `cvs.CvAsset` (ảnh nền
-  catalogue đang lưu chung bảng với avatar) và không gọi services của `cvs`.
+  `cv_templates`; `cv_templates` chỉ dùng **model** `cvs.CvAsset` và quy tắc ảnh
+  ở `cvs.domain` (ảnh nền catalogue lưu chung bảng với avatar, do
+  `cv_templates/services/backgrounds.py` tạo), không gọi services của `cvs`.
 - Thao tác thuần trên một bản ghi là method/manager của model, không phải
   service, để app khác dùng mà không tạo vòng giữa các package services — ví dụ
   `CampaignActivity.objects.record(...)`, `RecruitmentCampaign.active_seconds()`,
@@ -127,10 +128,18 @@ Một phiên bản API duy nhất, không tiền tố version:
 
 ### 4. Tầng HTTP
 
-- Lỗi đi qua một `EXCEPTION_HANDLER`: Django `ValidationError` và exception
-  nghiệp vụ được dịch tập trung; view không tự `try/except` để đổi kiểu lỗi.
-- List tăng theo dữ liệu luôn phân trang, envelope `{count,next,previous,results}`.
-- Mọi view DRF có `@extend_schema`; CI chặn warning của drf-spectacular.
+- Lỗi đi qua `common.api.exceptions.api_exception_handler`: Django
+  `ValidationError` thành 400 (`{field: [..]}` hoặc `{"detail": [..]}`); lỗi
+  nghiệp vụ có mã HTTP riêng là `DomainError` (payload giữ nguyên kiểu giá trị,
+  ví dụ 409 xung đột phiên bản). View không tự `try/except` chỉ để đổi kiểu lỗi;
+  `try/except` còn lại là chỗ cố ý gắn lỗi vào một field cụ thể.
+- Cờ và số từ query/setting đọc bằng `common.api.params` (`parse_bool`, `parse_int`).
+- List tăng theo dữ liệu luôn phân trang, envelope `{count,next,previous,results}`;
+  phân trang mặc định là `StandardPagination`, chỉ khai báo paginator riêng khi
+  kích thước trang có lý do (catalogue mẫu CV 24, gợi ý công ty 6).
+- Mọi view DRF có `@extend_schema`; tên enum trùng giữa app khai trong
+  `ENUM_NAME_OVERRIDES`. CI chặn mọi lỗi/cảnh báo của drf-spectacular.
+- Browsable API chỉ bật khi `DEBUG`.
 - CRUD tài nguyên dùng `generics`/`ViewSet` + router; hành động dùng `APIView`.
 
 ### 5. Thuật ngữ
@@ -149,7 +158,7 @@ Một phiên bản API duy nhất, không tiền tố version:
 | layer trong app (`api → services/selectors → models → domain`), `common` ↛ `apps` | `lint-imports` (`backend/pyproject.toml`) |
 | services/selectors/tasks/signals không dùng DRF HTTP | `scripts/check_backend_layering.sh` |
 | import chéo app, module gốc app | `scripts/check_backend_imports.py` |
-| schema OpenAPI hợp lệ, khớp `docs/04-api/openapi.yaml` | `scripts/check_openapi_schema.sh` |
+| schema OpenAPI 0 lỗi/0 cảnh báo, khớp `docs/04-api/openapi.yaml` | `scripts/check_openapi_schema.sh` |
 
 Cả bốn chạy trong `backend-ci.yml` và `scripts/check_all.sh`. Trong GĐ0–GĐ1,
 `check_backend_imports.py` dùng baseline chỉ được giảm (148 → 33 mục); GĐ2 đưa
@@ -164,7 +173,7 @@ về 0 và gỡ baseline, từ đó mọi vi phạm làm fail CI.
 | 0 | ADR này, cổng kiểm tra import/OpenAPI, tách `requirements-dev.txt`, settings an toàn |
 | 1 | Chuẩn hóa bố cục từng app và `common/` (chỉ di chuyển); tên module/lớp `v2` đổi ở GĐ4 cùng URL |
 | 2 | Ranh giới domain: chuyển model chiến dịch sang `campaigns` (migration chỉ đổi state), phá vòng `cvs ↔ cv_templates`, bỏ lazy export của accounts, baseline import về 0 rồi gỡ |
-| 3 | Tầng API: exception handler, nghiệp vụ ra khỏi view/serializer, phân trang, `@extend_schema` |
+| 3 | Tầng API: exception handler + `DomainError`, nghiệp vụ ra khỏi view/serializer, GET không ghi DB, `@extend_schema` đủ (OpenAPI 0/0), `parse_bool`; bật phân trang cho list đang trả mảng dời sang GĐ4 (cùng lúc sửa API client frontend) |
 | 4 | URL theo cổng (backend + frontend cùng PR) |
 | 5 | Tách file lớn, gộp code trùng, gỡ legacy và lệnh chạy một lần |
 | 6 | Baseline migration mới (chưa có production) |

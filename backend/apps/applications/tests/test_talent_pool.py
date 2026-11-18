@@ -93,7 +93,9 @@ class TalentPoolTests(APITestCase):
         self.assertEqual(response.data['tags'], ['Python', 'SQL'])
         notice = CandidateNotification.objects.get(event_type=Event.TALENT_POOL_SAVED)
         self.assertEqual(notice.action_path, '/tai-khoan/kho-ung-vien-tiem-nang')
-        self.assertEqual(self.save_to_pool().status_code, 400)
+        duplicate = self.save_to_pool()
+        self.assertEqual(duplicate.status_code, 400)
+        self.assertEqual(duplicate.json(), {'detail': 'Ứng viên đã có trong kho của bạn.'})
         row = self.client.get(reverse('recruiter-application-list-v2')).data['results'][0]
         self.assertTrue(row['in_talent_pool'])
 
@@ -148,6 +150,8 @@ class TalentPoolTests(APITestCase):
 
         self.assertEqual(withdraw.status_code, 204)
         self.assertEqual(self.client.get(reverse('candidate-talent-pools-v2')).data['results'], [])
+        again = self.client.post(reverse('candidate-talent-pool-withdraw-v2', args=[entry_id]))
+        self.assertEqual(again.status_code, 404)
         self.login(self.employer)
         self.assertEqual(self.client.get(reverse('recruiter-talent-pool-v2')).data['results'], [])
 

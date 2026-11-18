@@ -9,7 +9,6 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.accounts.api.permissions import AdminPortalPermission
-from common.api.pagination import StandardPagination
 from common.metrics import record_metric
 
 from ...selectors import (
@@ -21,7 +20,6 @@ from ...selectors import (
     article_audit_events,
 )
 from ...services import (
-    KnowledgeMediaTooLarge,
     approve_revision,
     archive_article,
     create_article,
@@ -164,6 +162,7 @@ class AdminCategoryListCreateView(PrivateNoStoreMixin, generics.ListAPIView):
 class AdminCategoryDetailView(PrivateNoStoreMixin, APIView):
     permission_classes = [AdminPortalPermission]
 
+    @extend_schema(responses={200: AdminCategorySerializer, **ERROR_RESPONSES})
     def get(self, request, public_id):
         return _category_response(request, _category(public_id))
 
@@ -235,7 +234,6 @@ class AdminCategoryDeactivateView(AdminCategoryLifecycleView):
 @extend_schema(tags=['knowledgebase-admin'])
 class AdminArticleListCreateView(PrivateNoStoreMixin, generics.ListAPIView):
     permission_classes = [AdminPortalPermission]
-    pagination_class = StandardPagination
     serializer_class = AdminArticleListSerializer
 
     def get_queryset(self):
@@ -272,6 +270,7 @@ class AdminArticleSummaryView(PrivateNoStoreMixin, APIView):
 class AdminArticleDetailView(PrivateNoStoreMixin, APIView):
     permission_classes = [AdminPortalPermission]
 
+    @extend_schema(responses={200: AdminArticleDetailSerializer, **ERROR_RESPONSES})
     def get(self, request, public_id):
         return _article_response(request, _article(public_id))
 
@@ -324,7 +323,10 @@ class AdminArticleReorderView(PrivateNoStoreMixin, APIView):
 class AdminRevisionListCreateView(PrivateNoStoreMixin, APIView):
     permission_classes = [AdminPortalPermission]
 
-    @extend_schema(operation_id='knowledgebase_admin_revision_list')
+    @extend_schema(
+        operation_id='knowledgebase_admin_revision_list',
+        responses={200: RevisionSerializer(many=True), **ERROR_RESPONSES},
+    )
     def get(self, request, public_id):
         article = _article(public_id)
         return Response(RevisionSerializer(article.admin_revisions, many=True).data)
@@ -352,7 +354,10 @@ class AdminRevisionListCreateView(PrivateNoStoreMixin, APIView):
 class AdminRevisionDetailView(PrivateNoStoreMixin, APIView):
     permission_classes = [AdminPortalPermission]
 
-    @extend_schema(operation_id='knowledgebase_admin_revision_detail')
+    @extend_schema(
+        operation_id='knowledgebase_admin_revision_detail',
+        responses={200: RevisionSerializer, **ERROR_RESPONSES},
+    )
     def get(self, request, public_id, number):
         article = _article(public_id)
         revision = get_object_or_404(article.revisions.all(), number=number)
@@ -471,7 +476,6 @@ class AdminArticleRestoreView(AdminArticleLifecycleView):
 @extend_schema(tags=['knowledgebase-admin'])
 class AdminMediaListCreateView(PrivateNoStoreMixin, generics.ListAPIView):
     permission_classes = [AdminPortalPermission]
-    pagination_class = StandardPagination
     serializer_class = MediaSerializer
     parser_classes = [MultiPartParser, FormParser]
 
@@ -485,15 +489,12 @@ class AdminMediaListCreateView(PrivateNoStoreMixin, generics.ListAPIView):
     def post(self, request):
         serializer = MediaUploadSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        try:
-            asset = upload_knowledge_media(
-                upload=serializer.validated_data['file'],
-                actor=request.user,
-                default_alt_text=serializer.validated_data.get('default_alt_text', ''),
-                request=request,
-            )
-        except KnowledgeMediaTooLarge as error:
-            return Response({'file': [str(error)]}, status=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE)
+        asset = upload_knowledge_media(
+            upload=serializer.validated_data['file'],
+            actor=request.user,
+            default_alt_text=serializer.validated_data.get('default_alt_text', ''),
+            request=request,
+        )
         return Response(
             MediaSerializer(asset, context={'request': request}).data,
             status=status.HTTP_201_CREATED,

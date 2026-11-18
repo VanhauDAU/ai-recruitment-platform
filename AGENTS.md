@@ -104,7 +104,10 @@ app trong `backend/apps/` theo đúng một layout:
   giữa các package services. `common/` không biết domain, không import `apps`.
 - Endpoint list phải giữ số query phẳng theo số bản ghi — xem
   `apps/<app>/tests/test_query_budget.py`; tăng budget phải kèm giải thích trong PR.
-- API view mới bắt buộc có `@extend_schema`; cổng OpenAPI chặn warning.
+- API view mới bắt buộc có `@extend_schema`; cổng OpenAPI chặn mọi lỗi/cảnh báo.
+- Service báo lỗi bằng `ValidationError` hoặc `DomainError`
+  (`common/api/exceptions.py`); view không `try/except` chỉ để đổi kiểu lỗi.
+  Cờ query đọc bằng `common.api.params.parse_bool`.
 
 ### Kiểm tra trước khi bàn giao (backend)
 

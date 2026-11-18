@@ -14,6 +14,7 @@ from django.conf import settings
 from django.core.cache import cache
 from django.db import transaction
 from django.utils import timezone
+from rest_framework.exceptions import NotFound
 from rest_framework_simplejwt.exceptions import TokenBackendError, TokenError
 from rest_framework_simplejwt.settings import api_settings
 from rest_framework_simplejwt.state import token_backend
@@ -24,6 +25,7 @@ from rest_framework_simplejwt.utils import datetime_from_epoch
 from common.http.client_ip import client_ip as _client_ip
 
 from ..models import AuthSession
+from .admin_audit import record_admin_self_action
 from .refresh_cookies import refresh_from_request
 
 SID_CLAIM = 'sid'
@@ -356,3 +358,26 @@ def active_sessions(user):
         revoked_at__isnull=True,
         expires_at__gt=timezone.now(),
     )
+
+
+def revoke_own_session(user, session_id):
+    """Đăng xuất một thiết bị của chính tài khoản; phiên lạ hoặc đã hết hạn -> 404."""
+    session = active_sessions(user).filter(id=session_id).first()
+    if session is None:
+        raise NotFound('Không tìm thấy phiên đăng nhập.')
+    revoke_session(session)
+    record_admin_self_action(user, 'self_session_revoke', {'device_label': session.device_label})
+    return session
+
+
+def revoke_other_sessions(user, current_sid):
+    """Đăng xuất mọi thiết bị khác, giữ phiên ``current_sid``; trả số phiên đã thu hồi."""
+    sessions = active_sessions(user)
+    if current_sid:
+        sessions = sessions.exclude(id=current_sid)
+    revoked = 0
+    for session in sessions:
+        revoke_session(session)
+        revoked += 1
+    record_admin_self_action(user, 'self_session_revoke_others', {'revoked': revoked})
+    return revoked

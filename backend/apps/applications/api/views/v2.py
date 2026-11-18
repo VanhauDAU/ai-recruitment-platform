@@ -2,7 +2,8 @@
 
 from django.db import IntegrityError
 from django.http import Http404
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import generics, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import AllowAny
@@ -31,6 +32,15 @@ from ..serializers.v2 import (
 )
 
 
+@extend_schema_view(
+    list=extend_schema(summary='Hồ sơ ứng tuyển của ứng viên'),
+    create=extend_schema(
+        summary='Ứng viên nộp hồ sơ (snapshot CV bất biến)',
+        request=CandidateApplicationV2CreateSerializer,
+        responses={201: CandidateApplicationV2Serializer},
+    ),
+)
+@extend_schema(tags=['applications-v2'])
 class CandidateApplicationV2ListCreateView(generics.ListCreateAPIView):
     permission_classes = [IsCandidate]
 
@@ -149,7 +159,11 @@ class RecruiterApplicationSnapshotView(APIView):
         )
 
 
-@extend_schema(tags=['applications-v2'], summary='Luật ứng tuyển, nhắc NTD và tự từ chối')
+@extend_schema(
+    tags=['applications-v2'],
+    summary='Luật ứng tuyển, nhắc NTD và tự từ chối',
+    responses={200: OpenApiTypes.OBJECT},
+)
 class ApplicationRulesView(APIView):
     """The limits the clients show, served from the services that enforce them."""
 

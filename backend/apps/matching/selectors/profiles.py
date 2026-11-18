@@ -1,22 +1,9 @@
 """Truy vấn nạp sẵn dữ liệu cần cho bước trích xuất hồ sơ."""
 
-from django.db.models import Prefetch
-
 from apps.cvs.models import UserCv
-from apps.jobs.models import Job, JobSkill, publicly_available_job_filter
+from apps.jobs.models import publicly_available_job_filter
 
-
-def jobs_for_profile(statuses=(Job.Status.ACTIVE,)):
-    """Tin kèm kỹ năng (và nhóm), yêu cầu ngoại ngữ, địa điểm; không phát sinh N+1.
-
-    `statuses=None` lấy mọi trạng thái (task đang chạy dở khi tin vừa đóng).
-    """
-    queryset = Job.objects.all() if statuses is None else Job.objects.filter(status__in=statuses)
-    return queryset.prefetch_related(
-        Prefetch('job_skills', queryset=JobSkill.objects.select_related('skill__group')),
-        'language_requirements__language',
-        'job_locations__location__parent',
-    ).order_by('pk')
+from ..models import jobs_for_profile
 
 
 def public_job_for_profile(slug):

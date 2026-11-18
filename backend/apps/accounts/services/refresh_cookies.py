@@ -10,6 +10,9 @@ PORTAL_BY_ROLE = {
     User.Role.ADMIN: 'admin',
 }
 VALID_PORTALS = frozenset(PORTAL_BY_ROLE.values())
+# Role của tài khoản tương ứng mỗi cổng — dùng để resolve đúng tài khoản khi
+# đăng nhập/đăng ký/quên mật khẩu (một email có thể có nhiều tài khoản khác cổng).
+PORTAL_ROLE_BY_NAME = {portal: role for role, portal in PORTAL_BY_ROLE.items()}
 
 
 def portal_for_user(user):

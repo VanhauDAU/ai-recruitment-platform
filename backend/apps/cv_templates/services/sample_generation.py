@@ -26,6 +26,7 @@ from apps.cv_templates.models.content_schema import (
     validate_cv_document,
 )
 from apps.jobs.models import Job, JobCategoryLocalization
+from common.api.exceptions import DomainError
 from common.vietnam_time import vietnam_today
 
 from ..models import (
@@ -137,12 +138,26 @@ _PHONE_RE = re.compile(r'(?:\+?\d[\s.-]?){9,}')
 _URL_RE = re.compile(r'https?://|www\.', re.IGNORECASE)
 
 
-class SampleGenerationUnavailable(ValueError):
-    """Yêu cầu sinh không hợp lệ hoặc runtime AI chưa sẵn sàng (mã lỗi an toàn)."""
+class SampleGenerationUnavailable(DomainError):
+    """Yêu cầu sinh không hợp lệ hoặc runtime AI chưa sẵn sàng (mã lỗi an toàn).
+
+    Client nhận `{"code": ...}`: runtime chưa bật/cấu hình là 503, đang có lượt
+    sinh chiếm chỗ là 409, còn lại là 400.
+    """
+
+    STATUS_BY_CODE = {
+        'runtime_disabled': 503,
+        'provider_not_configured': 503,
+        'generation_in_progress': 409,
+    }
 
     def __init__(self, code):
         self.code = code
+        self.status_code = self.STATUS_BY_CODE.get(code, 400)
         super().__init__(code)
+
+    def payload(self):
+        return {'code': self.code}
 
 
 def _strings(value):
@@ -458,3 +473,14 @@ def average_generation_cost(sample_size=50):
         .values_list('cost_usd', flat=True)[:sample_size]
     )
     return round(float(sum(costs)) / len(costs), 6) if costs else None
+
+
+def estimate_generation_cost(count):
+    """Chi phí ước tính cho `count` lượt (kẹp trong 1..MAX_BATCH_SIZE) theo `average_generation_cost`."""
+    count = max(1, min(MAX_BATCH_SIZE, count))
+    average = average_generation_cost()
+    return {
+        'count': count,
+        'average_cost_usd': average,
+        'estimated_cost_usd': round(average * count, 4) if average is not None else None,
+    }

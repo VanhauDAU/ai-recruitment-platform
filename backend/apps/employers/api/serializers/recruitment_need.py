@@ -1,11 +1,9 @@
-from django.utils import timezone
 from rest_framework import serializers
 
 from apps.jobs.models import JobCategory
 from common.vietnam_time import vietnam_today
 
 from ...models import RecruitmentNeed
-from ...services import reconcile_recruiter_verification
 
 MIN_BUDGET = 1_000_000
 
@@ -88,10 +86,3 @@ class RecruitmentNeedSerializer(serializers.ModelSerializer):
                 {'budget_max': 'Ngân sách tối đa phải lớn hơn hoặc bằng ngân sách tối thiểu.'}
             )
         return attrs
-
-    def create(self, validated_data):
-        recruiter = self.context['recruiter']
-        validated_data['completed_at'] = timezone.now()
-        need = RecruitmentNeed.objects.create(recruiter=recruiter, **validated_data)
-        reconcile_recruiter_verification(recruiter, source='recruitment_need_completed')
-        return need

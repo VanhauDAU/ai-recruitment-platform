@@ -3,6 +3,7 @@ import re
 
 from django.utils.html import strip_tags
 from django.utils.text import Truncator
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from common.storage.media import media_url_from_value
@@ -71,10 +72,10 @@ class PostListSerializer(serializers.ModelSerializer):
             'published_at',
         ]
 
-    def get_thumbnail_url(self, obj):
+    def get_thumbnail_url(self, obj) -> str:
         return media_url_from_value(obj.thumbnail_url, request=self.context.get('request'))
 
-    def get_excerpt(self, obj):
+    def get_excerpt(self, obj) -> str:
         if obj.summary.strip():
             return obj.summary
         # Nội dung là rich-text HTML; lấy phần văn bản đầu để card phản ánh đúng
@@ -115,29 +116,30 @@ class PostDetailSerializer(serializers.ModelSerializer):
             'seo_description',
         ]
 
-    def get_thumbnail_url(self, obj):
+    def get_thumbnail_url(self, obj) -> str:
         return media_url_from_value(obj.thumbnail_url, request=self.context.get('request'))
 
-    def get_related_job_category(self, obj):
+    def get_related_job_category(self, obj) -> dict | None:
         if not obj.related_job_category_id:
             return None
         cat = obj.related_job_category
         return {'id': cat.id, 'name': cat.name, 'slug': cat.slug}
 
+    @extend_schema_field(PostListSerializer(many=True))
     def get_related_posts(self, obj):
         related = getattr(obj, 'prefetched_related_posts', None)
         if related is None:
             related = self.context.get('related_posts') or []
         return PostListSerializer(related, many=True, context=self.context).data
 
-    def get_author(self, obj):
+    def get_author(self, obj) -> dict:
         author = getattr(obj, 'author', None)
         if author is None:
             return {'name': DEFAULT_AUTHOR_NAME}
         name = (author.full_name or '').strip() or (author.email or '').strip()
         return {'name': name or DEFAULT_AUTHOR_NAME}
 
-    def get_reading_time_minutes(self, obj):
+    def get_reading_time_minutes(self, obj) -> int:
         html = re.sub(
             r'</(?:p|div|h[1-6]|li|br)\s*>',
             ' ',

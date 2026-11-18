@@ -17,6 +17,7 @@ from apps.cvs.services import (
     request_application_snapshot_export,
 )
 from apps.employers.services import ensure_recruiter_candidate_data_access
+from common.api.params import parse_bool
 from common.storage.r2 import private_media_storage
 
 from ...models import Application
@@ -136,7 +137,7 @@ class RecruiterApplicationCvFileView(APIView):
         stream = open_application_cv_file(application)
         if stream is None:
             raise Http404
-        download = request.query_params.get('download') == '1'
+        download = parse_bool(request.query_params.get('download'), False)
         if download:
             # Reading inline is already logged when the snapshot is opened.
             record_application_cv_download(application, actor=request.user, request=request)
