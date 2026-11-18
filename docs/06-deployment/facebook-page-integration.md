@@ -13,18 +13,24 @@ tuyển dụng (NTD) đúng giờ hẹn và tự gỡ bài khi chiến dịch k�
 
 ## Tạo Meta App để đăng thật (Development mode)
 
-1. **Tạo app.** Vào <https://developers.facebook.com/apps>, chọn **Create app**,
-   loại **Business**, rồi gắn với một Business portfolio (có thể tạo mới).
-2. **Thêm Facebook Login for Business** (hoặc Facebook Login). Trong
-   **Settings**, khai **Valid OAuth Redirect URIs** đúng giá trị của
-   `FACEBOOK_OAUTH_REDIRECT_URI`:
-   - dev: `http://localhost:5173/api/employer/social/facebook/callback/`.
-     Meta cho phép `localhost` khi app ở Development mode;
-   - production: `https://<miền>/api/employer/social/facebook/callback/`.
-3. **Thêm quyền.** Trong **App Review → Permissions and features**, thêm
-   `pages_show_list`, `pages_manage_posts`, `pages_read_engagement`. Ở
-   Development mode không cần duyệt: các quyền này dùng được ngay cho những
-   người có vai trò trong app.
+Giao diện Meta (11/2026) dùng "trường hợp sử dụng" thay cho chọn loại app. App
+dùng cho đăng nhập bằng Facebook **không thêm được** quyền Trang, nên cần một app
+riêng cho việc đăng Fanpage.
+
+1. **Tạo app.** Vào <https://developers.facebook.com/apps>, chọn **Tạo ứng dụng**,
+   đặt tên (ví dụ "ProCV Fanpage"), ở bước **Trường hợp sử dụng** lọc "Quản lý
+   nội dung" rồi chọn **Quản lý mọi thứ trên Trang**. Bước **Doanh nghiệp** có
+   thể chọn "Tôi chưa muốn kết nối hồ sơ doanh nghiệp" khi chỉ chạy Development
+   mode. Meta hỏi lại mật khẩu Facebook trước khi tạo.
+2. **Thêm quyền.** **Trường hợp sử dụng → Quản lý mọi thứ trên Trang → Tùy
+   chỉnh**, bấm **Thêm** cho `pages_manage_posts` và `pages_read_engagement`
+   (`pages_show_list` có sẵn). Ở Development mode các quyền này "Sẵn sàng thử
+   nghiệm" ngay cho người có vai trò trong app, không cần App Review.
+3. **Địa chỉ quay về.** Ở Development mode Meta tự cho phép chuyển hướng về
+   `http://localhost`, không cần khai. Production khai
+   `https://<miền>/api/employer/social/facebook/callback/` trong **Đăng nhập bằng
+   Facebook cho doanh nghiệp → Cài đặt → URI chuyển hướng OAuth hợp lệ**. Code
+   gửi `scope` trong hộp cấp quyền; không cần tạo "cấu hình" (`config_id`).
 4. **Thêm người dùng thử.** Trong **App roles → Roles**, thêm tài khoản
    Facebook sẽ bấm "Kết nối Fanpage" làm Administrator, Developer hoặc Tester.
    Tài khoản đó phải là quản trị viên của Fanpage dùng để thử.
@@ -48,6 +54,15 @@ tuyển dụng (NTD) đúng giờ hẹn và tự gỡ bài khi chiến dịch k�
 
 Muốn người ngoài danh sách vai trò dùng được thì app phải qua **App Review** và
 chuyển sang Live mode. Việc này nằm ngoài phạm vi đồ án.
+
+## Link trong bài khi chạy ở máy cục bộ
+
+Facebook tự đọc link đính kèm để dựng thẻ xem trước; link `localhost` hay IP nội
+bộ thì Graph trả lỗi 1500 ("URL không hợp lệ") và bài không đăng được. Provider
+chỉ gửi trường `link` khi đó là địa chỉ công khai; ngược lại link được chèn vào
+cuối nội dung bài (nếu nội dung chưa có), bài vẫn đăng được nhưng không có thẻ
+xem trước. Muốn thấy thẻ xem trước khi demo, đặt `FRONTEND_URL` thành một địa
+chỉ công khai (ví dụ đường hầm HTTPS) để link theo dõi của kênh là link công khai.
 
 ## Vận hành
 

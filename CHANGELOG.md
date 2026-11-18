@@ -6,6 +6,23 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ## [Unreleased]
 
+### 2026-11-19
+
+#### Changed — Chiến dịch: giao diện kênh, đăng Fanpage và lịch sử hoạt động
+
+- Tab "Kênh & nguồn" chia hai cột: danh sách kênh và chi tiết kênh với các mục
+  Nội dung bài (xem trước như bài mạng xã hội), Đăng Fanpage, Link & QR, Chi phí.
+- Soạn bài Fanpage trong ngăn riêng có xem trước; đăng ngay, hẹn giờ theo khung
+  gợi ý hoặc đăng nhiều lần (nhắc lại sau 3, 7, 14 ngày). Lỗi đăng bài được giải
+  thích kèm cách xử lý.
+- Chi phí kênh chuyển từ popup sang mục riêng có giải thích và chọn nhanh.
+- Lịch sử hoạt động thành timeline một dòng, lọc bằng dải nút.
+
+#### Fixed — Đăng Fanpage với link máy cục bộ
+
+- Facebook từ chối bài kèm link `localhost` (lỗi 1500). Link không công khai giờ
+  được chèn vào nội dung thay vì gửi làm link đính kèm.
+
 ### 2026-11-18
 
 #### Added — Chiến dịch: sức khỏe, cảnh báo và báo cáo (GĐ4)

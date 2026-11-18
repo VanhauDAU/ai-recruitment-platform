@@ -8,7 +8,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | Hạng mục | Trạng thái |
 | --- | --- |
 | [Mô hình hóa yêu cầu cho báo cáo (mục 3.2)](#mô-hình-hóa-yêu-cầu-cho-báo-cáo-mục-32-2026-11-18) | ✅ Nguồn sơ đồ trong `docs/01-phan-tich/mo-hinh-hoa-yeu-cau/` |
-| [Nâng cấp chiến dịch tuyển dụng (4 GĐ)](#nâng-cấp-chiến-dịch-tuyển-dụng-2026-11-18) | 🟨 GĐ1–GĐ3 và các đợt làm gọn giao diện đã gộp (#235–#237, #239, #240); GĐ4 xong trên nhánh `feat/campaign-health` |
+| [Nâng cấp chiến dịch tuyển dụng (4 GĐ)](#nâng-cấp-chiến-dịch-tuyển-dụng-2026-11-18) | 🟨 Cả 4 GĐ đã gộp (#235–#237, #239–#241); đợt làm lại giao diện kênh, đăng Fanpage, chi phí và lịch sử hoạt động trên nhánh `feat/campaign-facebook-ux` |
 | [Ứng tuyển bằng CV tải lên và form ứng tuyển mới](#ứng-tuyển-bằng-cv-tải-lên-và-form-ứng-tuyển-mới-2026-11-18) | ✅ Gộp vào `dev` (#234) |
 | [Bảng điều khiển quản trị](#bảng-điều-khiển-quản-trị-2026-11-16) | 🟨 Xong trên nhánh `feat/admin-dashboard`, chưa mở PR |
 | [Ảnh đại diện dùng chung 3 cổng](#ảnh-đại-diện-dùng-chung-3-cổng-2026-11-16) | 🟨 Xong trên nhánh `feat/avatar-editor`, chưa mở PR |
@@ -55,7 +55,7 @@ Kế hoạch 4 giai đoạn, mỗi giai đoạn một PR.
 | 1 | Mục tiêu, vòng đời (`scheduled`), wizard thiết lập, lịch chạy, đóng tin khi kết thúc | ✅ Gộp vào `dev` (#235, làm gọn ở #236, #237) |
 | 2 | Kênh thủ công, link theo dõi `/r/<code>`, ghi nhận nguồn ứng tuyển, trang đích `/tuyen-dung/<slug>`, nội dung bài đăng bằng AI | ✅ Gộp vào `dev` (#239) |
 | 3 | Đăng Facebook Page của NTD (OAuth, hẹn giờ, gỡ bài khi kết thúc) | ✅ Gộp vào `dev` (#240) |
-| 4 | Sức khỏe chiến dịch (dự báo, cảnh báo), email báo cáo tuần, xuất Excel/PDF | 🟨 Xong trên nhánh `feat/campaign-health` |
+| 4 | Sức khỏe chiến dịch (dự báo, cảnh báo), email báo cáo tuần, xuất Excel/PDF | ✅ Gộp vào `dev` (#241) |
 
 Quyết định đã chốt:
 - Hai trụ cột: phân phối đa kênh có ghi nhận nguồn; mục tiêu và sức khỏe.
@@ -152,7 +152,7 @@ GĐ1 đã làm:
   - hướng dẫn Meta App ở `docs/06-deployment/facebook-page-integration.md`,
     ADR-0021.
   - Chưa thử với Meta App thật; cần user tạo app ở Development mode.
-- GĐ4 đã làm (nhánh `feat/campaign-health`), công thức ở
+- GĐ4 đã làm (#241), công thức ở
   [suc-khoe-chien-dich.md](07-algorithms/suc-khoe-chien-dich.md):
   - `campaign_health`: tốc độ CV, thời gian tới lúc xem, % xem trong 48 giờ,
     tồn đọng, phễu, ngân sách và `burn_ratio`; dự báo
@@ -171,6 +171,20 @@ GĐ1 đã làm:
     đồng bộ (20 lần/giờ) thay cho hàng đợi; chưa có huy hiệu sức khỏe ở danh sách.
   - Sau khi gộp: `docker compose build backend worker beat` (thêm `openpyxl`) rồi
     khởi động lại.
+- Đợt sau GĐ4 (nhánh `feat/campaign-facebook-ux`, 19/11):
+  - đã tạo Meta App "ProCV Fanpage" (Development mode) và thử kết nối thật;
+    bài đầu thất bại với lỗi Graph 1500 vì link `localhost`: provider giờ chỉ
+    gửi `link` khi là địa chỉ công khai, còn lại chèn link vào nội dung;
+  - API bài đăng trả `error_message` (lỗi diễn đạt kèm cách xử lý);
+  - tab Kênh làm lại: danh sách kênh + chi tiết kênh (Nội dung bài có xem trước
+    dạng bài mạng xã hội, Đăng Fanpage, Link & QR, Chi phí); ngăn soạn bài
+    Fanpage có xem trước, đăng ngay / hẹn giờ (gợi ý khung giờ) / đăng nhiều lần;
+    lịch sử bài dạng dòng thời gian; chi phí chuyển từ popup vào mục riêng có
+    giải thích, chọn nhanh loại chi và số tiền; hộp Thêm kênh chọn nền tảng bằng
+    ô có biểu tượng;
+  - tab Lịch sử hoạt động: timeline một dòng (giờ, chấm theo nhóm, dòng phụ),
+    lọc bằng dải nút;
+  - settings test luôn dùng provider giả, không phụ thuộc `.env` máy dev.
 - Còn mở: chưa xem bằng mắt trên trình duyệt (đã có test API và test giao diện);
   `openapi.yaml` được sinh lại nên kéo theo phần lệch tích tụ từ các tính năng
   trước.
