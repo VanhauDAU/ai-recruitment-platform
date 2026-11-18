@@ -56,6 +56,7 @@ const EXACT_EMPLOYER_TITLES = new Map([
   [employerAppPath('/account/settings/personal-data-protection'), 'Văn bản xử lý dữ liệu cá nhân'],
   [employerAppPath('/account/settings/recruitment-demand'), 'Nhu cầu tuyển dụng'],
   [employerAppPath('/account/settings/general-setting'), 'Cài đặt'],
+  [employerAppPath('/account/settings/integrations'), 'Kết nối mạng xã hội'],
   [employerAppPath('/oauth/callback'), 'Đang xác thực tài khoản'],
   [employerAppPath('/dashboard'), 'Bảng tin'],
   [employerAppPath('/campaigns'), 'Quản lý chiến dịch tuyển dụng'],

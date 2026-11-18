@@ -165,6 +165,30 @@ thêm kênh sau khi chiến dịch chạy cũng được.
   - NTD tắt được trang;
   - vỏ SEO trả 404/410/noindex theo trạng thái.
 
+### Đăng tự động lên Facebook Page (GĐ3, 2026-11-18)
+
+- **Kết nối Fanpage**: Cài đặt tài khoản → "Kết nối mạng xã hội" → OAuth của
+  Facebook → chọn Fanpage. Chỉ lưu Page token, mã hóa. Ngắt kết nối thì hủy các
+  bài đang hẹn trên Fanpage đó.
+- **Hẹn đăng**:
+  - kênh loại "Fanpage Facebook" có khối "Đăng tự động lên Fanpage", gồm hẹn
+    đăng ngay hoặc theo giờ, nội dung lấy từ bài đã soạn (có link theo dõi), và
+    sửa được trước khi hẹn;
+  - bài của chiến dịch nháp hoặc đã lên lịch được đăng ngay khi chiến dịch chạy.
+- **Theo trạng thái chiến dịch**:
+  - tạm dừng: bài hẹn chuyển "Hoãn", bài đã đăng giữ nguyên;
+  - mở lại: bài hoãn còn hạn tự về "Đã hẹn giờ", bài quá giờ cần "Đăng lại ngay";
+  - hoàn tất/hủy: gỡ bài đã đăng, hủy bài chưa đăng; gỡ không được thì báo NTD
+    kèm link bài.
+- **Lỗi**:
+  - lỗi tạm thời được thử lại (1/5/15/60 phút), có kiểm tra bài trùng trước khi
+    đăng lại;
+  - token hết hạn thì kết nối chuyển "Hết hạn" và NTD được báo.
+- **Đăng thành công**: kênh tự đánh dấu "Đã đăng" (kèm link bài) và ghi
+  `CampaignActivity`.
+- **Môi trường**: `CAMPAIGN_SOCIAL_PROVIDER=fake` chạy toàn bộ luồng không cần
+  Meta. Đăng thật theo `docs/06-deployment/facebook-page-integration.md`.
+
 ### Trạng thái chiến dịch
 
 ```text

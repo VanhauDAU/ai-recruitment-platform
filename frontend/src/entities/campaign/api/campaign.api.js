@@ -132,3 +132,48 @@ export async function getPublicCampaign(slug) {
   const { data } = await api.get(`/campaigns/public/${slug}/`)
   return data
 }
+
+export async function getSocialConnections() {
+  const { data } = await api.get('/employer/social/connections/')
+  return data
+}
+
+export async function startFacebookConnect() {
+  const { data } = await api.post('/employer/social/facebook/authorize/')
+  return data.url
+}
+
+export async function getPendingFacebookPages(nonce) {
+  const { data } = await api.get(`/employer/social/facebook/pending/${nonce}/`)
+  return data
+}
+
+export async function selectFacebookPage(nonce, pageId) {
+  const { data } = await api.post(`/employer/social/facebook/pending/${nonce}/`, { page_id: pageId })
+  return data
+}
+
+export async function disconnectSocialConnection(connectionId) {
+  await api.delete(`/employer/social/connections/${connectionId}/`)
+}
+
+const postsPath = (publicId, channelId) => `${channelsPath(publicId)}${channelId}/posts/`
+
+export async function getChannelPosts(publicId, channelId) {
+  const { data } = await api.get(postsPath(publicId, channelId))
+  return data
+}
+
+export async function scheduleChannelPost(publicId, channelId, payload) {
+  const { data } = await api.post(postsPath(publicId, channelId), payload)
+  return data
+}
+
+export async function rescheduleChannelPost(publicId, channelId, postId, scheduledFor) {
+  const { data } = await api.patch(`${postsPath(publicId, channelId)}${postId}/`, { scheduled_for: scheduledFor })
+  return data
+}
+
+export async function cancelChannelPost(publicId, channelId, postId) {
+  await api.delete(`${postsPath(publicId, channelId)}${postId}/`)
+}

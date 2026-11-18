@@ -19,6 +19,7 @@ import {
 } from '@/entities/campaign'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { message } from '@/shared/lib/toast'
+import ChannelFacebookPosts from './ChannelFacebookPosts'
 
 const FALLBACK_NOTES = {
   ai_disabled: 'AI đang tắt nên dùng mẫu có sẵn. Bạn có thể sửa lại.',
@@ -172,6 +173,15 @@ export default function ChannelCard({ campaignId, channel, editable, onEditConte
           </div>
         )}
       </section>
+
+      {channel.kind === 'facebook_page' && (
+        <ChannelFacebookPosts
+          campaignId={campaignId}
+          channel={channel}
+          editable={editable}
+          defaultMessage={hasContent ? postText(content) : ''}
+        />
+      )}
 
       {editable && (
         <footer className="ch-card__foot">

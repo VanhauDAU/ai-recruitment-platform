@@ -26,6 +26,7 @@ export const EmployerBusinessLicensePage = lazy(() => import('@/pages/employer/a
 export const EmployerPersonalDataProtectionPage = lazy(() => import('@/pages/employer/app/account/PersonalDataProtection'))
 export const EmployerRecruitmentDemandPage = lazy(() => import('@/pages/employer/app/account/RecruitmentDemand'))
 export const EmployerGeneralSettingsPage = lazy(() => import('@/pages/employer/app/account/GeneralSetting'))
+export const EmployerIntegrationsPage = lazy(() => import('@/pages/employer/app/account/Integrations'))
 export const EmployerCampaignListPage = lazy(() => import('@/pages/employer/app/campaigns/CampaignList'))
 export const EmployerCampaignDetailPage = lazy(() => import('@/pages/employer/app/campaigns/CampaignDetail'))
 export const EmployerCampaignSetupPage = lazy(() => import('@/pages/employer/app/campaigns/CampaignSetup'))

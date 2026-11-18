@@ -8,6 +8,16 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-18
 
+#### Added — Chiến dịch: đăng tự động lên Facebook Page (GĐ3)
+
+- Kết nối Fanpage qua OAuth của Facebook (Cài đặt tài khoản → Kết nối mạng xã
+  hội); chỉ lưu Page token đã mã hóa.
+- Kênh "Fanpage Facebook" hẹn đăng ngay hoặc theo giờ. Bài tự hoãn khi chiến
+  dịch tạm dừng, tự gỡ khi chiến dịch hoàn tất hoặc bị hủy; lỗi tạm thời được
+  thử lại, token hết hạn thì báo NTD.
+- `CAMPAIGN_SOCIAL_PROVIDER=fake` chạy toàn bộ luồng không cần Meta; hướng dẫn
+  tạo Meta App ở `docs/06-deployment/facebook-page-integration.md`.
+
 #### Added — Chiến dịch: phân phối đa kênh và ghi nhận nguồn (GĐ2)
 
 - Kênh phân phối cho chiến dịch: mỗi kênh có link theo dõi `/r/<code>` và mã

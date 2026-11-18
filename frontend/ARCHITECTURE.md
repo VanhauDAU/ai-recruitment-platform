@@ -888,6 +888,12 @@ pages/employer/app/campaigns/CampaignSetup
   thẻ kênh với link, QR, soạn AI, sửa nội dung, đã đăng, chi phí) và
   `ChannelReport` (so sánh theo nguồn). Dùng ở tab "Kênh & nguồn" và bước
   "Kênh phân phối" của wizard.
+- `features/connect-social-account` (`SocialConnectionsPanel`, trang
+  `/account/settings/integrations`) bắt đầu OAuth Facebook, đọc
+  `?fb_select=`/`?fb_error=` khi quay về và cho chọn Fanpage.
+  `features/manage-campaign-channels` có `ChannelFacebookPosts` (hẹn đăng, hẹn
+  lại, hủy) cho kênh `facebook_page`; hai feature chỉ chia sẻ HTTP contract qua
+  `entities/campaign`.
 - `features/track-campaign-ref` (`CampaignRefCapture`, gắn ở `MainLayout`) đọc
   `?ref=` rồi xóa khỏi URL; lưu qua `entities/campaign` (`storeCampaignRef`,
   `readCampaignRef`) theo consent Analytics. `features/apply-for-job` gửi

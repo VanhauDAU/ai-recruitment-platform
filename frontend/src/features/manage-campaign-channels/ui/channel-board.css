@@ -35,6 +35,14 @@
 .ch-cost-form { row-gap: 8px; margin-bottom: 12px; }
 .ch-cost-list { max-height: 320px; overflow-y: auto; }
 
+/* Đăng tự động lên Fanpage */
+.ch-fb { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; border: 1px solid #dbeafe; border-radius: 10px; background: #f8fbff; }
+.ch-fb__head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.ch-fb__title { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: #1d4ed8; }
+.ch-fb__hint { margin: 0; font-size: 12px; color: #64748b; }
+.ch-fb__post { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; font-size: 12px; color: #334155; }
+.ch-fb__when { flex: 1 1 160px; }
+
 /* Bảng so sánh kênh */
 .ch-report { width: 100%; border-collapse: collapse; font-size: 13px; }
 .ch-report th { padding: 8px 10px; border-bottom: 1px solid #e2e8e5; font-size: 12px; font-weight: 600; color: #64748b; text-align: right; white-space: nowrap; }
