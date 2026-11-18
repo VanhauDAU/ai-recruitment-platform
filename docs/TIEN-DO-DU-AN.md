@@ -507,6 +507,23 @@ loại tiêu chí khỏi điểm, kết quả tất định, có golden test và
 
 </details>
 
+<details><summary>Tập vàng: cách gán nhãn (18/11)</summary>
+
+- Người làm đồ án quyết định để Claude gán 150 nhãn theo rubric và tự mình kiểm
+  chứng, thay vì tự chấm cả 150 cặp. Báo cáo ghi đúng như vậy.
+- Năm người gán dùng chung một hướng dẫn, chỉ đọc nội dung tin và CV (không xem
+  điểm hệ thống hay nguồn ghép cặp). Các chỗ mơ hồ (kỹ năng cốt lõi, đúng nghề mà
+  ít kỹ năng, điểm trừ có xuống 0 không, ngoại ngữ thấp hơn mức yêu cầu, suy ra
+  kỹ năng, cộng dồn thiếu hụt, Telesales, thẻ kỹ năng thay thế nhau) được hỏi lại
+  người làm đồ án hai đợt, ghi thành quy tắc A–D trong `ml/labeling/rubric.md`,
+  rồi chấm lại toàn bộ. Kết quả: 0: 38, 1: 61, 2: 29, 3: 14, 4: 8 cặp, không còn
+  cặp "không chắc"; nhãn ở `ml/labeling/gold_pairs_claude.xlsx`.
+- Kiểm chứng: người làm đồ án chấm mù 30 cặp cố định (2 cặp mỗi tin,
+  `ml/labeling/audit_pairs.json`) bằng `ml/scripts/label_server.py --audit`;
+  `ml/scripts/agreement.py` tính quadratic weighted kappa (mục tiêu ≥ 0,70).
+
+</details>
+
 ## CV tải lên: tệp gốc, tiêu chuẩn upload, giới hạn CV, NTD tìm kiếm (2026-11-15)
 
 - Lỗi tìm thấy: `backend/.env` bật `*_UPLOAD_SESSION_REQUIRED=True` khi quarantine
