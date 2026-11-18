@@ -8,7 +8,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | Hạng mục | Trạng thái |
 | --- | --- |
 | [Mô hình hóa yêu cầu cho báo cáo (mục 3.2)](#mô-hình-hóa-yêu-cầu-cho-báo-cáo-mục-32-2026-11-18) | ✅ Nguồn sơ đồ trong `docs/01-phan-tich/mo-hinh-hoa-yeu-cau/` |
-| [Nâng cấp chiến dịch tuyển dụng (4 GĐ)](#nâng-cấp-chiến-dịch-tuyển-dụng-2026-11-18) | 🟨 GĐ1, GĐ2 và các đợt làm gọn giao diện đã gộp (#235–#237, #239); GĐ3 xong trên nhánh `feat/campaign-facebook`; GĐ4 chưa làm |
+| [Nâng cấp chiến dịch tuyển dụng (4 GĐ)](#nâng-cấp-chiến-dịch-tuyển-dụng-2026-11-18) | 🟨 GĐ1–GĐ3 và các đợt làm gọn giao diện đã gộp (#235–#237, #239, #240); GĐ4 xong trên nhánh `feat/campaign-health` |
 | [Ứng tuyển bằng CV tải lên và form ứng tuyển mới](#ứng-tuyển-bằng-cv-tải-lên-và-form-ứng-tuyển-mới-2026-11-18) | ✅ Gộp vào `dev` (#234) |
 | [Bảng điều khiển quản trị](#bảng-điều-khiển-quản-trị-2026-11-16) | 🟨 Xong trên nhánh `feat/admin-dashboard`, chưa mở PR |
 | [Ảnh đại diện dùng chung 3 cổng](#ảnh-đại-diện-dùng-chung-3-cổng-2026-11-16) | 🟨 Xong trên nhánh `feat/avatar-editor`, chưa mở PR |
@@ -54,8 +54,8 @@ Kế hoạch 4 giai đoạn, mỗi giai đoạn một PR.
 | --- | --- | --- |
 | 1 | Mục tiêu, vòng đời (`scheduled`), wizard thiết lập, lịch chạy, đóng tin khi kết thúc | ✅ Gộp vào `dev` (#235, làm gọn ở #236, #237) |
 | 2 | Kênh thủ công, link theo dõi `/r/<code>`, ghi nhận nguồn ứng tuyển, trang đích `/tuyen-dung/<slug>`, nội dung bài đăng bằng AI | ✅ Gộp vào `dev` (#239) |
-| 3 | Đăng Facebook Page của NTD (OAuth, hẹn giờ, gỡ bài khi kết thúc) | 🟨 Xong trên nhánh `feat/campaign-facebook` |
-| 4 | Sức khỏe chiến dịch (dự báo, cảnh báo), email báo cáo tuần, xuất Excel/PDF | ⬜ |
+| 3 | Đăng Facebook Page của NTD (OAuth, hẹn giờ, gỡ bài khi kết thúc) | ✅ Gộp vào `dev` (#240) |
+| 4 | Sức khỏe chiến dịch (dự báo, cảnh báo), email báo cáo tuần, xuất Excel/PDF | 🟨 Xong trên nhánh `feat/campaign-health` |
 
 Quyết định đã chốt:
 - Hai trụ cột: phân phối đa kênh có ghi nhận nguồn; mục tiêu và sức khỏe.
@@ -138,7 +138,7 @@ GĐ1 đã làm:
     riêng; chưa làm sitemap cho trang tuyển dụng.
   - Sửa kèm: test chiến dịch không còn import thẳng class test của app khác
     (pytest đã chạy lặp các class đó).
-- GĐ3 đã làm (nhánh `feat/campaign-facebook`):
+- GĐ3 đã làm (#240):
   - provider adapter (`FacebookPageProvider` gọi Graph API có
     `appsecret_proof`, `FakePageProvider` cho dev/CI);
   - OAuth với state ký và nonce một lần; Page token mã hóa Fernet bằng khóa
@@ -152,6 +152,25 @@ GĐ1 đã làm:
   - hướng dẫn Meta App ở `docs/06-deployment/facebook-page-integration.md`,
     ADR-0021.
   - Chưa thử với Meta App thật; cần user tạo app ở Development mode.
+- GĐ4 đã làm (nhánh `feat/campaign-health`), công thức ở
+  [suc-khoe-chien-dich.md](07-algorithms/suc-khoe-chien-dich.md):
+  - `campaign_health`: tốc độ CV, thời gian tới lúc xem, % xem trong 48 giờ,
+    tồn đọng, phễu, ngân sách và `burn_ratio`; dự báo
+    `F = A + Σ open_s·p_s + v7·R·h` (tỷ lệ trúng tuyển làm trơn Bayes) với trạng
+    thái đúng tiến độ / có rủi ro / chậm / chưa đủ dữ liệu, kèm tốc độ cần đạt;
+  - `CampaignHealthSnapshot` mỗi ngày (beat mỗi giờ); thông báo
+    `campaign_health_alert` khi cảnh báo mới mở, nhắc lại tối đa 7 ngày một lần;
+  - email báo cáo tuần sáng thứ Hai (`CampaignReportDelivery` chống gửi trùng,
+    tắt được trong Cài đặt thông báo); xuất Excel (`openpyxl`) và PDF (Chromium
+    sẵn có của xuất CV, template tự chứa);
+  - frontend: tab "Sức khỏe" (trạng thái, cảnh báo kèm việc cần làm, chỉ số,
+    phễu, ngân sách, biểu đồ dự báo theo ngày, cách tính), nút tải Excel/PDF;
+    sửa chữ chỉ tiêu ở danh sách ("N tin tuyển dụng" + "Cần tuyển M người") và
+    đầu trang chi tiết.
+  - Lệch kế hoạch có chủ ý: ngưỡng là hằng số, chưa thành site setting; PDF xuất
+    đồng bộ (20 lần/giờ) thay cho hàng đợi; chưa có huy hiệu sức khỏe ở danh sách.
+  - Sau khi gộp: `docker compose build backend worker beat` (thêm `openpyxl`) rồi
+    khởi động lại.
 - Còn mở: chưa xem bằng mắt trên trình duyệt (đã có test API và test giao diện);
   `openapi.yaml` được sinh lại nên kéo theo phần lệch tích tụ từ các tính năng
   trước.

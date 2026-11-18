@@ -16,6 +16,7 @@ class EmployerNotificationPreference(models.Model):
     # Email for every new application to the recruiter's jobs (the bell
     # notice is always kept).
     new_application_email = models.BooleanField(default=True)
+    campaign_weekly_report_email = models.BooleanField(default=True)
     updated_at = models.DateTimeField(auto_now=True)
 
 
@@ -70,6 +71,7 @@ class EmployerNotification(models.Model):
             'social_post_delete_failed',
             'Chưa gỡ được bài khỏi Fanpage',
         )
+        CAMPAIGN_HEALTH_ALERT = 'campaign_health_alert', 'Chiến dịch cần chú ý'
         SOCIAL_CONNECTION_EXPIRED = (
             'social_connection_expired',
             'Kết nối Fanpage đã hết hạn',

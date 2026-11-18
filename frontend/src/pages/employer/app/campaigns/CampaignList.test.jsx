@@ -91,7 +91,8 @@ describe('CampaignList', () => {
   it('shows one next action per campaign and the derived headcount', async () => {
     renderPage()
 
-    expect((await screen.findAllByText('2 tin, tuyển 4 người')).length).toBeGreaterThan(0)
+    expect((await screen.findAllByText('2 tin tuyển dụng')).length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Cần tuyển 4 người').length).toBeGreaterThan(0)
     expect(screen.getAllByText('01/12/2026 đến 31/12/2026').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Khi kích hoạt đến tuyển liên tục').length).toBeGreaterThan(0)
     expect(screen.getAllByRole('link', { name: 'Xem 3 CV mới' })[0])

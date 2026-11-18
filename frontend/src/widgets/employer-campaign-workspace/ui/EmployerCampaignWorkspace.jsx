@@ -1,5 +1,6 @@
 import {
   AppstoreOutlined,
+  DashboardOutlined,
   EditOutlined,
   FileTextOutlined,
   HistoryOutlined,
@@ -25,12 +26,14 @@ import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import CampaignActivityPanel from './CampaignActivityPanel'
 import CampaignApplyCvPanel from './CampaignApplyCvPanel'
 import CampaignChannelsPanel from './CampaignChannelsPanel'
+import CampaignHealthPanel from './CampaignHealthPanel'
 import CampaignJobsPanel from './CampaignJobsPanel'
 import CampaignOverviewPanel from './CampaignOverviewPanel'
 import CampaignWorkspaceHero from './CampaignWorkspaceHero'
 
 const TABS = [
   { key: 'overview', label: 'Tổng quan', icon: AppstoreOutlined },
+  { key: 'health', label: 'Sức khỏe', icon: DashboardOutlined },
   { key: 'apply_cv', label: 'CV ứng tuyển', icon: TeamOutlined },
   { key: 'job', label: 'Tin tuyển dụng', icon: FileTextOutlined },
   { key: 'channels', label: 'Kênh & nguồn', icon: ShareAltOutlined },
@@ -204,7 +207,7 @@ export default function EmployerCampaignWorkspace({ publicId }) {
           id={`campaign-panel-${activeTab}`}
           role="tabpanel"
           aria-labelledby={`campaign-tab-${activeTab}`}
-          className={activeTab === 'overview'
+          className={['overview', 'health'].includes(activeTab)
             ? 'mt-4'
             : 'mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm'}
         >
@@ -229,6 +232,7 @@ export default function EmployerCampaignWorkspace({ publicId }) {
               />
             </div>
           ))}
+          {activeTab === 'health' && <CampaignHealthPanel campaign={campaign} />}
           {activeTab === 'channels' && <CampaignChannelsPanel campaign={campaign} />}
           {activeTab === 'job' && (
             <CampaignJobsPanel

@@ -114,6 +114,10 @@ EVENT_PRESENTATION = {
         'Chiến dịch đã tự kết thúc',
         CAMPAIGNS_PATH,
     ),
+    EmployerNotification.EventType.CAMPAIGN_HEALTH_ALERT: (
+        'Chiến dịch cần chú ý',
+        CAMPAIGNS_PATH,
+    ),
     EmployerNotification.EventType.SOCIAL_POST_FAILED: (
         'Bài đăng Fanpage không thành công',
         CAMPAIGNS_PATH,
@@ -131,6 +135,7 @@ EVENT_PRESENTATION = {
 SAFE_METADATA_KEYS = {
     'application_public_id',
     'campaign_public_id',
+    'rule',
     'case_public_id',
     'company_public_id',
     'event_public_id',
@@ -142,6 +147,15 @@ def new_application_email_enabled(recipient):
     value = (
         EmployerNotificationPreference.objects.filter(recipient=recipient)
         .values_list('new_application_email', flat=True)
+        .first()
+    )
+    return True if value is None else value
+
+
+def campaign_weekly_report_email_enabled(recipient):
+    value = (
+        EmployerNotificationPreference.objects.filter(recipient=recipient)
+        .values_list('campaign_weekly_report_email', flat=True)
         .first()
     )
     return True if value is None else value

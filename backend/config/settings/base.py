@@ -752,6 +752,14 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'apps.campaigns.tasks.reconcile_social_posts',
         'schedule': 300.0,
     },
+    'snapshot-campaign-health': {
+        'task': 'apps.campaigns.tasks.snapshot_campaign_health',
+        'schedule': 3600.0,
+    },
+    'send-campaign-weekly-reports': {
+        'task': 'apps.campaigns.tasks.send_campaign_weekly_reports',
+        'schedule': 3600.0,
+    },
     'reconcile-company-domain-claims': {
         'task': 'apps.employers.tasks.domain_claims.reconcile_company_domain_claims',
         'schedule': 86400.0,

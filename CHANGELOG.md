@@ -8,6 +8,17 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-18
 
+#### Added — Chiến dịch: sức khỏe, cảnh báo và báo cáo (GĐ4)
+
+- Tab "Sức khỏe" trong chi tiết chiến dịch: dự báo số người tuyển được so với
+  chỉ tiêu (đúng tiến độ / có rủi ro / chậm), tốc độ CV cần đạt, thời gian phản
+  hồi hồ sơ, phễu, mức chi ngân sách và biểu đồ dự báo theo ngày.
+- Cảnh báo trong chuông khi dự báo thấp, hồ sơ chờ xem quá 48 giờ, kênh đã đăng
+  chưa có CV hoặc chi tiêu nhanh hơn tiến độ; không gửi trùng, nhắc lại tối đa
+  mỗi tuần.
+- Email báo cáo tuần sáng thứ Hai (tắt được), tải báo cáo Excel/PDF.
+- Danh sách chiến dịch ghi rõ "N tin tuyển dụng" và "Cần tuyển M người".
+
 #### Added — Chiến dịch: đăng tự động lên Facebook Page (GĐ3)
 
 - Kết nối Fanpage qua OAuth của Facebook (Cài đặt tài khoản → Kết nối mạng xã

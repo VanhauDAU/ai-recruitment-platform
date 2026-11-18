@@ -894,6 +894,11 @@ pages/employer/app/campaigns/CampaignSetup
   `features/manage-campaign-channels` có `ChannelFacebookPosts` (hẹn đăng, hẹn
   lại, hủy) cho kênh `facebook_page`; hai feature chỉ chia sẻ HTTP contract qua
   `entities/campaign`.
+- `features/export-campaign-report` (`CampaignReportExport`) tải báo cáo
+  Excel/PDF qua API có xác thực rồi lưu bằng `triggerBlobDownload`. Tab "Sức
+  khỏe" (`CampaignHealthPanel`, `?active_tab=health`) của
+  `widgets/employer-campaign-workspace` đọc `GET /health/`; liên kết trong
+  thông báo `campaign_health_alert` trỏ tới tab này.
 - `features/track-campaign-ref` (`CampaignRefCapture`, gắn ở `MainLayout`) đọc
   `?ref=` rồi xóa khỏi URL; lưu qua `entities/campaign` (`storeCampaignRef`,
   `readCampaignRef`) theo consent Analytics. `features/apply-for-job` gửi

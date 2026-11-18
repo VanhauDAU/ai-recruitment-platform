@@ -1,6 +1,13 @@
 from celery import shared_task
 
-from ..services import due_post_ids, publish_post, reconcile_social_posts, run_campaign_schedule
+from ..services import (
+    due_post_ids,
+    publish_post,
+    reconcile_social_posts,
+    run_campaign_schedule,
+    run_health_snapshots,
+    send_weekly_reports,
+)
 
 
 @shared_task(name='apps.campaigns.tasks.run_campaign_schedule')
@@ -24,3 +31,17 @@ def publish_social_post(post_id):
 @shared_task(name='apps.campaigns.tasks.reconcile_social_posts', soft_time_limit=50, time_limit=55)
 def reconcile_social_posts_task(campaign_id=None):
     reconcile_social_posts(campaign_id=campaign_id)
+
+
+@shared_task(
+    name='apps.campaigns.tasks.snapshot_campaign_health', soft_time_limit=50, time_limit=55
+)
+def snapshot_campaign_health():
+    return run_health_snapshots()
+
+
+@shared_task(
+    name='apps.campaigns.tasks.send_campaign_weekly_reports', soft_time_limit=50, time_limit=55
+)
+def send_campaign_weekly_reports():
+    return send_weekly_reports()

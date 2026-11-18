@@ -8,6 +8,7 @@ export const campaignKeys = {
   channels: (publicId) => ['campaigns', 'channels', publicId],
   channelCosts: (publicId, channelId) => ['campaigns', 'channels', publicId, channelId, 'costs'],
   channelReport: (publicId) => ['campaigns', 'channel-report', publicId],
+  health: (publicId) => ['campaigns', 'health', publicId],
   publicLanding: (slug) => ['campaigns', 'public', slug],
   channelPosts: (publicId, channelId) => ['campaigns', 'channels', publicId, channelId, 'posts'],
   socialConnections: ['campaigns', 'social-connections'],

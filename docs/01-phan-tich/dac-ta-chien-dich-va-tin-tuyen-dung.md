@@ -544,11 +544,9 @@ liệu thật và tiêu chí giải thích được:
 - **Matching minh bạch hai chiều:** điểm khớp rule-based từ `JobSkill`, kinh
   nghiệm, học vấn, ngoại ngữ; cùng một engine và cùng phần giải thích cho ứng
   viên (trước khi nộp) và recruiter (trong pipeline).
-- **Sức khỏe chiến dịch:** chỉ số giải thích được như tốc độ CV về, thời gian
-  phản hồi `submitted → viewed`, tiến độ trúng tuyển so với tổng số lượng tuyển
-  của các tin và
-  `target_date`; gợi ý tối ưu JD; benchmark lương chỉ hiển thị khi nhóm đủ
-  ngưỡng mẫu.
+- **Sức khỏe chiến dịch:** đã làm (tab "Sức khỏe", cảnh báo, báo cáo tuần,
+  Excel/PDF; xem [suc-khoe-chien-dich.md](../07-algorithms/suc-khoe-chien-dich.md)).
+  Còn lại: gợi ý tối ưu JD; benchmark lương chỉ hiển thị khi nhóm đủ ngưỡng mẫu.
 - **Talent pool:** lưu ứng viên `rejected` theo vị trí chuyên môn để mời lại ở
   chiến dịch sau; cần consent riêng nếu phạm vi vượt quyền
   `recruiter_visibility` hiện có, và ứng viên phải rút khỏi pool được.

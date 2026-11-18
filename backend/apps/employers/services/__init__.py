@@ -101,6 +101,7 @@ from .dpa import (
     start_recruiter_dpa_grace,
 )
 from .notifications import (
+    campaign_weekly_report_email_enabled,
     emit_employer_event,
     intermediate_verification_email_enabled,
     new_application_email_enabled,
@@ -182,6 +183,7 @@ __all__ = [
     'company_unlink_impact',
     'confirm_company_unlink',
     'emit_employer_event',
+    'campaign_weekly_report_email_enabled',
     'new_application_email_enabled',
     'intermediate_verification_email_enabled',
     'CompanyUpdateConflict',

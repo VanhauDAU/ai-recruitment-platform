@@ -1,0 +1,53 @@
+{% load l10n %}<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<style>
+  @page { size: A4; margin: 16mm 14mm; }
+  body { font-family: Arial, 'Helvetica Neue', sans-serif; color: #0f2a24; font-size: 11px; }
+  h1 { margin: 0 0 4px; font-size: 20px; }
+  h2 { margin: 18px 0 8px; font-size: 13px; color: #047857; }
+  .muted { color: #64748b; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 4px 6px; border-bottom: 1px solid #e2e8e5; text-align: left; }
+  th { color: #64748b; font-weight: 600; }
+  td.num, th.num { text-align: right; }
+  .overview td:first-child { color: #64748b; width: 45%; }
+  .bars { display: block; width: 100%; height: 120px; }
+</style>
+</head>
+<body>
+  <h1>Báo cáo chiến dịch: {{ campaign.name }}</h1>
+  <p class="muted">{{ period }}</p>
+
+  <h2>Tổng quan</h2>
+  <table class="overview">
+    {% for label, value in overview %}<tr><td>{{ label }}</td><td>{% if value is None %}—{% else %}{{ value }}{% endif %}</td></tr>{% endfor %}
+  </table>
+
+  <h2>Phễu hồ sơ</h2>
+  <table>
+    <tr><th>Bước</th><th class="num">Số hồ sơ</th><th class="num">% so với ứng tuyển</th></tr>
+    {% for row in funnel %}<tr><td>{{ row.label }}</td><td class="num">{{ row.count }}</td><td class="num">{% if row.percent_of_applications is None %}—{% else %}{{ row.percent_of_applications }}%{% endif %}</td></tr>{% endfor %}
+  </table>
+
+  <h2>Hồ sơ theo ngày (30 ngày)</h2>
+  <p class="muted">Cao nhất {{ daily_peak }} hồ sơ/ngày</p>
+  {% localize off %}<svg class="bars" viewBox="0 0 100 60" preserveAspectRatio="none">
+    <line x1="0" y1="56" x2="100" y2="56" stroke="#cbd5d1" stroke-width="0.3"></line>
+    {% for bar in bars %}<rect x="{{ bar.x }}" y="{{ bar.y }}" width="{{ bar.width }}" height="{{ bar.height }}" fill="#059669"></rect>{% endfor %}
+  </svg>{% endlocalize %}
+
+  <h2>Nguồn hồ sơ và chi phí</h2>
+  <table>
+    <tr><th>Nguồn</th><th class="num">Người bấm</th><th class="num">Hồ sơ</th><th class="num">Trúng tuyển</th><th class="num">Đã chi</th><th class="num">Chi phí/hồ sơ</th></tr>
+    {% for row in channels.rows %}<tr><td>{{ row.label }}</td><td class="num">{{ row.unique_clicks|default_if_none:"—" }}</td><td class="num">{{ row.applications }}</td><td class="num">{{ row.hires }}</td><td class="num">{{ row.cost }}</td><td class="num">{{ row.cost_per_application|default_if_none:"—" }}</td></tr>{% endfor %}
+  </table>
+
+  <h2>Tin tuyển dụng</h2>
+  <table>
+    <tr><th>Tin</th><th>Trạng thái</th><th class="num">Cần tuyển</th><th class="num">Hồ sơ</th><th class="num">Trúng tuyển</th></tr>
+    {% for job in jobs %}<tr><td>{{ job.title }}</td><td>{{ job.status_label }}</td><td class="num">{{ job.number_of_vacancies }}</td><td class="num">{{ job.current_applications }}</td><td class="num">{{ job.hires }}</td></tr>{% endfor %}
+  </table>
+</body>
+</html>

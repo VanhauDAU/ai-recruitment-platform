@@ -16,7 +16,7 @@ function campaignFacts(campaign) {
     ? `${campaign.budget_min ? `${money(campaign.budget_min)} đến ` : 'tối đa '}${money(campaign.budget_max)}`
     : 'Chưa đặt'
   return [
-    ['Chỉ tiêu', campaign.headcount ? `${campaign.headcount} người qua ${campaign.job_count} tin` : 'Chưa có tin'],
+    ['Chỉ tiêu', campaign.job_count ? `Cần ${campaign.headcount} người (tổng ${campaign.job_count} tin)` : 'Chưa có tin'],
     ['Thời gian', `${formatDate(campaign.start_date) || 'Khi kích hoạt'} đến ${end}`],
     ['Ngân sách', budget],
     ['Đã chạy', campaign.active_days == null ? 'Chưa kích hoạt' : `${campaign.active_days.toLocaleString('vi-VN')} ngày`],

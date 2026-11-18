@@ -4648,6 +4648,24 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/employer/campaigns/{public_id}/health/:
+    get:
+      operationId: employer_campaigns_health_retrieve
+      description: Live indicators and forecast, plus the daily snapshots for the
+        trend chart.
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - employer
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
   /api/employer/campaigns/{public_id}/job-performance/:
     get:
       operationId: employer_campaigns_job_performance_retrieve
@@ -4741,6 +4759,24 @@ paths:
       operationId: employer_campaigns_report_retrieve
       description: Authoritatively gate recruiter workspace reads and cache their
         state.
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - employer
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/employer/campaigns/{public_id}/report/export/:
+    get:
+      operationId: employer_campaigns_report_export_retrieve
+      description: Excel or PDF report of the campaign; aggregates only, no candidate
+        data.
       parameters:
       - in: path
         name: public_id
@@ -22464,7 +22500,7 @@ components:
           type: string
           readOnly: true
         event_type:
-          $ref: '#/components/schemas/EventType225Enum'
+          $ref: '#/components/schemas/EventTypeC3dEnum'
         summary:
           type: string
           maxLength: 240
@@ -23849,7 +23885,7 @@ components:
           type: string
           readOnly: true
         event_type:
-          $ref: '#/components/schemas/EventType225Enum'
+          $ref: '#/components/schemas/EventTypeC3dEnum'
         title:
           type: string
           maxLength: 180
@@ -24080,7 +24116,7 @@ components:
         * `` - Chưa kết thúc
         * `user` - Nhà tuyển dụng
         * `system` - Hệ thống
-    EventType225Enum:
+    EventTypeC3dEnum:
       enum:
       - verification_approved
       - verification_changes_requested
@@ -24108,6 +24144,7 @@ components:
       - campaign_auto_completed
       - social_post_failed
       - social_post_delete_failed
+      - campaign_health_alert
       - social_connection_expired
       type: string
       description: |-
@@ -24137,6 +24174,7 @@ components:
         * `campaign_auto_completed` - Chiến dịch đã tự kết thúc
         * `social_post_failed` - Bài đăng Fanpage không thành công
         * `social_post_delete_failed` - Chưa gỡ được bài khỏi Fanpage
+        * `campaign_health_alert` - Chiến dịch cần chú ý
         * `social_connection_expired` - Kết nối Fanpage đã hết hạn
     ExperienceBandEnum:
       enum:

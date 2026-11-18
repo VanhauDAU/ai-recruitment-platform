@@ -142,9 +142,11 @@ stateDiagram-v2
 | | `CampaignChannelClickDaily` (`apps.campaigns`) | Đếm theo kênh và ngày giờ VN: `click_count`, `unique_click_count`, `preview_count` (crawler), `inactive_click_count` (bấm khi chiến dịch không chạy). Không lưu danh tính người bấm. |
 | | `SocialAccountConnection` (`apps.campaigns`) | Fanpage NTD đã kết nối: `owner` → `RecruiterProfile`, `provider` facebook/fake, `page_id`, `page_name`, `page_picture_url`, `token_ciphertext` (Page token mã hóa Fernet), `status` connected/expired/revoked, `last_error_code`. Unique (`owner`, `provider`, `page_id`). |
 | | `ScheduledSocialPost` (`apps.campaigns`) | Bài hẹn đăng của một kênh lên một Fanpage: `message`, `link` (link theo dõi của kênh), `scheduled_for`, `status` scheduled/publishing/published/postponed/failed/cancelled/deleted/delete_failed, `attempts`, `next_attempt_at`, `external_post_id`, `permalink`, `published_at`, `deleted_at`. Index (`status`, `next_attempt_at`). |
+| | `CampaignHealthSnapshot` (`apps.campaigns`) | Ảnh chụp sức khỏe mỗi ngày VN: `campaign`, `date`, `status` achieved/on_track/at_risk/off_track/insufficient_data/no_target, `metrics` (JSON của `campaign_health`), `open_alerts` `{mã: {since, notified}}` để chỉ báo khi cảnh báo mới mở. Unique (`campaign`, `date`). |
+| | `CampaignReportDelivery` (`apps.campaigns`) | Email báo cáo tuần đã gửi: `campaign`, `week_start` (thứ Hai), `sent_at`. Unique (`campaign`, `week_start`) chống gửi trùng. |
 | | `CampaignLaunchPlan` (`apps.campaigns`) | 1–1 với chiến dịch: phiên bản cam kết đã chấp nhận khi kích hoạt/lên lịch (`accepted_statement_version`, `accepted_at`, `accepted_by`), lỗi kích hoạt theo lịch gần nhất (`last_error` JSON có `fingerprint`, `last_error_at`). |
 | | `CampaignLaunchJob` (`apps.campaigns`) | Tin sẽ xử lý khi kích hoạt: `action` = `publish` (tin nháp của chiến dịch) hoặc `attach` (tin đang hiển thị). Unique (`plan`, `job`); xóa sau khi kích hoạt thành công. |
-| Thông báo | `EmployerNotification`, `EmployerActivity`, `EmployerNotificationPreference` | Thông báo trên web ghi cùng transaction nghiệp vụ (dedupe theo recipient), hoạt động không chứa PII, preference email (quyết định xác thực quan trọng luôn bật). |
+| Thông báo | `EmployerNotification`, `EmployerActivity`, `EmployerNotificationPreference` | Thông báo trên web ghi cùng transaction nghiệp vụ (dedupe theo recipient), hoạt động không chứa PII, preference email (quyết định xác thực quan trọng luôn bật; `campaign_weekly_report_email` bật/tắt báo cáo tuần của chiến dịch). |
 
 ## 5. Tin tuyển dụng (`jobs`)
 
