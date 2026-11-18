@@ -7,9 +7,9 @@ import AnalyzeJobFit from './AnalyzeJobFit'
 import { RESULT } from './fixtures'
 
 const api = vi.hoisted(() => ({ getJobFit: vi.fn(), listJobFits: vi.fn(), requestJobFit: vi.fn() }))
-const cv = vi.hoisted(() => ({ getMyCvs: vi.fn() }))
+const cv = vi.hoisted(() => ({ getMySavedCvs: vi.fn() }))
 vi.mock('../api/job-fit.api', () => api)
-vi.mock('@/entities/cv', async (importOriginal) => ({ ...(await importOriginal()), getMyCvs: cv.getMyCvs }))
+vi.mock('@/entities/cv', async (importOriginal) => ({ ...(await importOriginal()), getMySavedCvs: cv.getMySavedCvs }))
 vi.mock('@/shared/ui/mascot', () => ({ ProcvMascot: () => <span data-testid="mascot" /> }))
 
 const JOB = { slug: 'frontend-jb_1', title: 'Frontend Developer' }
@@ -34,7 +34,7 @@ describe('AnalyzeJobFit', () => {
 
   beforeEach(() => {
     Object.values(api).forEach((mock) => mock.mockReset())
-    cv.getMyCvs.mockReset().mockResolvedValue(CVS)
+    cv.getMySavedCvs.mockReset().mockResolvedValue(CVS)
     api.listJobFits.mockResolvedValue([])
   })
 

@@ -4,6 +4,7 @@ from django.http import Http404
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import permissions, serializers, status
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -18,6 +19,7 @@ from ...selectors import (
 )
 from ...services import (
     ReviewLinkUnavailable,
+    ReviewNotShareable,
     create_review_link,
     open_review_link,
     revoke_review_link,
@@ -65,9 +67,12 @@ class RecruiterReviewLinkListCreateView(APIView):
         application = _application(request, public_id)
         serializer = ReviewLinkCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        link, raw_token = create_review_link(
-            application, actor=request.user, **serializer.validated_data
-        )
+        try:
+            link, raw_token = create_review_link(
+                application, actor=request.user, **serializer.validated_data
+            )
+        except ReviewNotShareable as error:
+            raise ValidationError({'detail': str(error)}) from error
         return Response(
             {'link': ReviewLinkSerializer(link).data, 'url': review_page_url(raw_token)},
             status=status.HTTP_201_CREATED,

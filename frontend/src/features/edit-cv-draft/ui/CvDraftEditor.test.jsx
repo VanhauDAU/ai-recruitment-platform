@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { App } from 'antd'
+import { MemoryRouter, Route, Routes } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { DEFAULT_SITE_SETTINGS, SiteSettingsContext } from '@/entities/site-settings'
 import AppToast from '@/shared/ui/AppToast'
@@ -82,6 +83,24 @@ describe('CV draft editor', () => {
   })
 
   afterEach(() => vi.unstubAllGlobals())
+
+  it.each([true, false])('sends an uploaded CV to its read-only view instead of editing it (wysiwyg %s)', async (wysiwyg) => {
+    mocks.getCv.mockResolvedValue({ public_id: 'cv_1', cv_type: 'uploaded', title: 'CV.pdf' })
+    render(
+      <App>
+        <SiteSettingsContext.Provider value={{ settings: { ...DEFAULT_SITE_SETTINGS, cv_builder_wysiwyg_enabled: wysiwyg } }}>
+          <MemoryRouter initialEntries={['/cvs/cv_1/edit']}>
+            <Routes>
+              <Route path="/cvs/:publicId/edit" element={<CvDraftEditor publicId="cv_1" />} />
+              <Route path="/cvs/:publicId/view" element={<p>Trang xem CV</p>} />
+            </Routes>
+          </MemoryRouter>
+        </SiteSettingsContext.Provider>
+      </App>,
+    )
+
+    expect(await screen.findByText('Trang xem CV')).toBeInTheDocument()
+  })
 
   it('never autosaves; the save button persists the draft with the lock and then creates a version', async () => {
     renderLegacyEditor()

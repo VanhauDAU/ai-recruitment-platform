@@ -1,42 +1,34 @@
-import { DeleteOutlined, FileTextOutlined, UploadOutlined } from '@ant-design/icons'
-import { Button, Input, Spin } from 'antd'
+import { CloudUploadOutlined, DeleteOutlined, FileTextOutlined } from '@ant-design/icons'
+import { Button, Spin } from 'antd'
 import { getUploadStatePresentation } from '@/shared/api/upload-session'
 import { UPLOAD_CHOICE_ID } from '../model/use-apply-form'
 
-function RequiredLabel({ children }) {
-  return (
-    <span className="mb-1.5 block text-sm font-medium text-slate-700">
-      {children} <span className="text-rose-500">*</span>
-    </span>
-  )
-}
-
+/** Lựa chọn "tải tệp CV mới từ máy"; `children` là form liên hệ hiện khi đang chọn. */
 export default function UploadChoice({
   selected,
   uploading,
   uploadState,
-  analyzing = false,
   file,
   onSelect,
   onChooseFile,
   onDeleteFile,
   onDrop,
-  contactName,
-  contactEmail,
-  contactPhone,
-  onContactNameChange,
-  onContactEmailChange,
-  onContactPhoneChange,
+  children,
 }) {
   const uploadStateMeta = getUploadStatePresentation(uploadState)
+  const chooseFile = (event) => {
+    event.stopPropagation()
+    onSelect()
+    onChooseFile()
+  }
   return (
     <div
       onClick={onSelect}
       onDragOver={(event) => event.preventDefault()}
       onDrop={onDrop}
-      className="cursor-pointer rounded-md border border-dashed border-slate-300 px-4 py-4"
+      className={`af-upload${selected ? ' af-upload--selected' : ''}`}
     >
-      <div className="grid grid-cols-[24px_minmax(0,1fr)_24px] items-start gap-2">
+      <div className="af-upload__row">
         <input
           type="radio"
           name="application-cv"
@@ -45,119 +37,44 @@ export default function UploadChoice({
           onChange={onSelect}
           onClick={(event) => event.stopPropagation()}
           aria-label="Tải CV từ máy tính"
-          className="mt-0.5 h-5 w-5 shrink-0 accent-[var(--brand-primary)]"
+          className="af-upload__radio"
         />
-        <div className="flex min-w-0 flex-col items-center text-center">
-          <div className="flex items-center justify-center gap-3">
-            {uploading
-              ? <Spin size="small" />
-              : <span className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-lg text-slate-400"><UploadOutlined /></span>}
-            <span className="text-sm font-semibold text-slate-800">
-              Tải CV từ máy tính, chọn hoặc kéo thả
-            </span>
-          </div>
-          <p className="mt-1 text-sm text-slate-400">Hỗ trợ định dạng PDF, DOCX có kích thước dưới 5MB</p>
-          {analyzing ? (
-            <p role="status" className="mt-1 text-xs font-medium text-amber-700">
-              Đang phân tích nội dung CV…
-            </p>
-          ) : uploadStateMeta && (
-            <p role="status" className={`mt-1 text-xs font-medium ${uploadStateMeta.tone}`}>
-              {uploadStateMeta.text}
-            </p>
+        <div className="af-upload__main">
+          <span className="af-upload__title">
+            {uploading ? <Spin size="small" /> : <CloudUploadOutlined className="af-upload__icon" />}
+            Tải CV từ máy tính, chọn hoặc kéo thả
+          </span>
+          <span className="af-upload__hint">Hỗ trợ định dạng PDF, DOCX có kích thước dưới 5MB</span>
+          {uploadStateMeta && (
+            <span role="status" className={`af-upload__state ${uploadStateMeta.tone}`}>{uploadStateMeta.text}</span>
           )}
-          <Button
-            disabled={uploading}
-            onClick={(event) => {
-              event.stopPropagation()
-              onSelect()
-              onChooseFile()
-            }}
-            className="mt-2 !border-0 !bg-slate-100 !px-7 !font-semibold !text-slate-700 hover:!bg-slate-200"
-          >
-            Chọn CV
-          </Button>
+          {!file && <Button size="small" disabled={uploading} onClick={chooseFile}>Chọn CV</Button>}
         </div>
-        <span />
+        <span className="af-upload__spacer" />
       </div>
 
       {selected && (
-        <div className="mt-4 border-t border-slate-100 pt-3">
+        <div className="af-upload__body">
           {file && (
-            <div className="flex flex-wrap items-center gap-2 border-b border-slate-100 pb-3">
-              <FileTextOutlined className="text-xl text-[var(--brand-primary)]" />
-              <span className="min-w-0 flex-1 truncate text-sm font-semibold text-[var(--brand-primary)]">
-                {file.name}
-              </span>
+            <div className="af-upload__file">
+              <FileTextOutlined className="af-upload__file-icon" />
+              <span className="af-upload__filename">{file.name}</span>
               <button
                 type="button"
                 aria-label="Xóa CV tải lên"
+                disabled={uploading}
                 onClick={(event) => {
                   event.stopPropagation()
                   onDeleteFile()
                 }}
-                className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md bg-rose-50 text-rose-500 hover:bg-rose-100"
+                className="af-upload__remove"
               >
                 <DeleteOutlined />
               </button>
-              <Button
-                onClick={(event) => {
-                  event.stopPropagation()
-                  onChooseFile()
-                }}
-                className="!border-0 !bg-slate-100 !font-semibold !text-slate-700 hover:!bg-slate-200"
-              >
-                Chọn CV khác
-              </Button>
+              <Button size="small" disabled={uploading} onClick={chooseFile}>Chọn CV khác</Button>
             </div>
           )}
-
-          <div className={file ? 'pt-3' : ''}>
-            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-              <p className="text-sm font-medium text-[var(--brand-primary)]">
-                Vui lòng nhập đầy đủ thông tin chi tiết:
-              </p>
-              <p className="text-xs text-rose-500">(*) Thông tin bắt buộc.</p>
-            </div>
-
-            <label className="block">
-              <RequiredLabel>Họ và tên</RequiredLabel>
-              <Input
-                size="large"
-                aria-label="Họ và tên ứng tuyển"
-                value={contactName}
-                onChange={(event) => onContactNameChange(event.target.value)}
-                placeholder="Họ tên hiển thị với Nhà tuyển dụng"
-                className="!rounded-lg"
-              />
-            </label>
-
-            <div className="mt-3 grid gap-3 sm:grid-cols-2">
-              <label>
-                <RequiredLabel>Email</RequiredLabel>
-                <Input
-                  size="large"
-                  type="email"
-                  aria-label="Email ứng tuyển"
-                  value={contactEmail}
-                  onChange={(event) => onContactEmailChange(event.target.value)}
-                  placeholder="Email hiển thị với Nhà tuyển dụng"
-                  className="!rounded-lg"
-                />
-              </label>
-              <label>
-                <RequiredLabel>Số điện thoại</RequiredLabel>
-                <Input
-                  size="large"
-                  aria-label="Số điện thoại ứng tuyển"
-                  value={contactPhone}
-                  onChange={(event) => onContactPhoneChange(event.target.value)}
-                  placeholder="Số điện thoại hiển thị với Nhà tuyển dụng"
-                  className="!rounded-lg"
-                />
-              </label>
-            </div>
-          </div>
+          {children}
         </div>
       )}
     </div>

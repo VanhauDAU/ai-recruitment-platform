@@ -1,6 +1,7 @@
 import { FileTextOutlined, MessageOutlined } from '@ant-design/icons'
 import { Alert, Button, Empty, Skeleton, Tooltip } from 'antd'
-import { CvDocumentPreview } from '@/entities/cv'
+import { applicationKeys, getApplicationCvFile } from '@/entities/application'
+import { CvDocumentPreview, UploadedCvPreview } from '@/entities/cv'
 import { DownloadApplicationCvButton } from '@/features/download-application-cv'
 import { ShareApplicationReviewButton } from '@/features/share-application-review'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
@@ -9,7 +10,7 @@ import { documentFromVersion } from '../model/application-workspace'
 
 const SOURCE_LABELS = {
   builder: 'Tạo trên hệ thống',
-  upload: 'CV tải lên',
+  uploaded: 'CV tải lên',
   imported: 'CV nhập vào',
 }
 
@@ -23,7 +24,9 @@ export default function ApplicationCvPreview({
   onRetry,
   className = '',
 }) {
-  const previewDocument = documentFromVersion(snapshot?.cv)
+  // CV tải lên được nộp bằng tệp gốc: hiện đúng tệp đó thay cho bản dựng từ nội dung.
+  const sourceFile = Boolean(snapshot?.cv?.has_source_file)
+  const previewDocument = sourceFile ? null : documentFromVersion(snapshot?.cv)
   const { containerRef: previewWrapRef, zoom: previewZoom } = usePreviewFitZoom(Boolean(previewDocument))
   const cvTitle = snapshot?.submitted_cv_title
     || selectedApplication?.submitted_cv_title
@@ -47,11 +50,12 @@ export default function ApplicationCvPreview({
       </header>
       {selectedPublicId && (
         <div className="aw-actionbar" role="toolbar" aria-label="Thao tác với CV">
-          <DownloadApplicationCvButton publicId={selectedPublicId} candidateName={candidateName} />
+          <DownloadApplicationCvButton publicId={selectedPublicId} candidateName={candidateName} sourceFile={sourceFile} />
           <ShareApplicationReviewButton
             publicId={selectedPublicId}
             candidateName={candidateName}
             jobTitle={selectedApplication?.job_title || ''}
+            disabledReason={sourceFile ? 'CV là tệp ứng viên tải lên nên không thể ẩn thông tin liên hệ để chia sẻ.' : ''}
           />
           <Tooltip title="Nhắn tin với ứng viên sắp ra mắt">
             <span className="aw-actionbar__end">
@@ -84,7 +88,14 @@ export default function ApplicationCvPreview({
             action={<Button size="small" danger onClick={onRetry}>Thử lại</Button>}
           />
         )}
-        {selectedPublicId && !loading && !error && !previewDocument && (
+        {selectedPublicId && !loading && !error && sourceFile && (
+          <UploadedCvPreview
+            source={{ queryKey: applicationKeys.cvFile(selectedPublicId), load: () => getApplicationCvFile(selectedPublicId) }}
+            title={cvTitle}
+            className="aw-cv-file"
+          />
+        )}
+        {selectedPublicId && !loading && !error && !sourceFile && !previewDocument && (
           <div className="flex min-h-96 items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white">
             <Empty description="Hồ sơ này chưa có bản xem trước CV" />
           </div>
@@ -103,10 +114,10 @@ export default function ApplicationCvPreview({
         )}
       </div>
 
-      {previewDocument && (
+      {(previewDocument || sourceFile) && (
         <footer className="flex items-center justify-between gap-2 border-t border-slate-100 bg-white px-4 py-2.5 text-[11px] text-slate-500">
-          <span>Bản CV tại thời điểm ứng viên nộp</span>
-          <span className="aw-source">{SOURCE_LABELS[snapshot.submitted_cv_source] || snapshot.submitted_cv_source || 'Nguồn CV'}</span>
+          <span>{sourceFile ? 'Tệp CV ứng viên đã nộp' : 'Bản CV tại thời điểm ứng viên nộp'}</span>
+          <span className="aw-source">{sourceFile ? SOURCE_LABELS.uploaded : SOURCE_LABELS[snapshot.submitted_cv_source] || snapshot.submitted_cv_source || 'Nguồn CV'}</span>
         </footer>
       )}
     </section>

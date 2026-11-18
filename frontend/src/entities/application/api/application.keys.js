@@ -17,4 +17,5 @@ export const applicationKeys = {
   talentSuggestions: (jobPublicId) => ['applications', 'talent-suggestions', jobPublicId],
   myTalentPools: ['applications', 'my-talent-pools'],
   cvExport: (publicId, exportId) => ['applications', 'cv-export', publicId, exportId],
+  cvFile: (publicId) => ['applications', 'cv-file', publicId],
 }

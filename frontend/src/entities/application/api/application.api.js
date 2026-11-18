@@ -108,6 +108,15 @@ export async function downloadApplicationCv(downloadUrl) {
   return data
 }
 
+/** The file a candidate uploaded as their CV, as PDF. `download` also tells the candidate. */
+export async function getApplicationCvFile(publicId, { download = false } = {}) {
+  const { data } = await api.get(`/v2/recruiter/applications/${publicId}/cv/file/`, {
+    params: download ? { download: 1 } : undefined,
+    responseType: 'blob',
+  })
+  return data
+}
+
 export async function getRecruiterApplicationSnapshot(publicId) {
   const { data } = await api.get(`/v2/recruiter/applications/${publicId}/cv/`)
   return data

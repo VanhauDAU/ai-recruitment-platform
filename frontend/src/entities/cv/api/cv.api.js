@@ -26,6 +26,12 @@ export async function getMyCvs() {
   return Array.isArray(data) ? data : data.results || []
 }
 
+// CV dùng được để ứng tuyển/phân tích: bỏ CV online tạo từ mẫu mà chủ CV chưa
+// bấm Lưu lần nào (phiên bản gốc chỉ là nội dung mẫu, backend cũng chặn).
+export async function getMySavedCvs() {
+  return (await getMyCvs()).filter((cv) => cv.has_saved_version !== false)
+}
+
 export async function deleteCv(publicId) {
   await api.delete(`/v2/cvs/${publicId}/`)
 }

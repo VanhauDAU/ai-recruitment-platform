@@ -203,6 +203,13 @@ class CvVersion(models.Model):
     style_json = models.JSONField(default=dict)
     plain_text = models.TextField(blank=True)
     content_hash = models.CharField(max_length=64)
+    # Only on the application snapshot of an uploaded CV: a private copy of the
+    # file the candidate submitted, so recruiters read exactly that file even
+    # after the library CV is deleted. Never serialized to clients.
+    # ``db_default``: older data migrations insert versions through historical
+    # models that do not know these columns.
+    source_file_key = models.CharField(max_length=500, blank=True, default='', db_default='')
+    source_file_type = models.CharField(max_length=10, blank=True, default='', db_default='')
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,

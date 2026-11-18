@@ -8,6 +8,7 @@ import {
   decideApplicationStatus,
   downloadApplicationCv,
   getApplicationCvExport,
+  getApplicationCvFile,
   requestApplicationCvExport,
   undoApplicationStatusChange,
   updateApplicationAssessment,
@@ -93,6 +94,16 @@ describe('application V2 API', () => {
     expect(post).toHaveBeenNthCalledWith(3, '/v2/recruiter/applications/app_1/cv/exports/')
     expect(get).toHaveBeenNthCalledWith(1, '/v2/recruiter/applications/app_1/cv/exports/cve_1/')
     expect(get).toHaveBeenNthCalledWith(2, 'http://api/x.pdf', { responseType: 'blob' })
+  })
+
+  it('reads an uploaded CV file inline, and flags a download so the candidate is told', async () => {
+    get.mockResolvedValue({ data: new Blob(['%PDF']) })
+
+    await expect(getApplicationCvFile('app_1')).resolves.toBeInstanceOf(Blob)
+    await getApplicationCvFile('app_1', { download: true })
+
+    expect(get).toHaveBeenNthCalledWith(1, '/v2/recruiter/applications/app_1/cv/file/', { params: undefined, responseType: 'blob' })
+    expect(get).toHaveBeenNthCalledWith(2, '/v2/recruiter/applications/app_1/cv/file/', { params: { download: 1 }, responseType: 'blob' })
   })
 
   it('builds stable cache keys for recruiter lists, snapshots and histories', () => {

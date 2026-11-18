@@ -7,7 +7,7 @@ from rest_framework import serializers
 
 from apps.cvs.api.serializers.v2 import CvVersionSerializer
 from apps.cvs.models import CvVersion, UserCv
-from apps.cvs.services import application_readiness_issues
+from apps.cvs.services import application_readiness_issues, is_unsaved_builder_baseline
 from apps.jobs.models import Job
 from apps.jobs.selectors.listing import publicly_available_job_filter
 from apps.locations.models import Location
@@ -104,6 +104,10 @@ def validated_cv_selection(candidate, attrs):
         raise serializers.ValidationError(
             {'version_public_id': 'Application snapshots cannot be submitted again.'}
         )
+    if is_unsaved_builder_baseline(cv, version):
+        raise serializers.ValidationError(
+            {'cv_public_id': 'CV chưa được lưu lần nào. Hãy mở CV và bấm Lưu trước khi nộp.'}
+        )
     if cv.processing_status in {
         UserCv.ProcessingStatus.QUEUED,
         UserCv.ProcessingStatus.PROCESSING,
@@ -111,7 +115,7 @@ def validated_cv_selection(candidate, attrs):
         raise serializers.ValidationError(
             {'cv_public_id': 'CV đang được phân tích, vui lòng chờ trong giây lát.'}
         )
-    if issues := application_readiness_issues(version):
+    if issues := application_readiness_issues(cv, version):
         raise serializers.ValidationError(
             {
                 'cv_public_id': (
@@ -191,6 +195,16 @@ class CandidateApplicationV2CreateSerializer(serializers.Serializer):
         attrs['contact_name'] = attrs.get('contact_name', '').strip() or candidate.full_name
         attrs['contact_email'] = attrs.get('contact_email', '').strip() or candidate.email
         attrs['contact_phone'] = attrs.get('contact_phone', '').strip() or candidate.phone
+        if cv.cv_type == UserCv.CvType.UPLOADED:
+            # The file is sent as is, so these fields are the only contact
+            # details the recruiter gets in structured form.
+            missing = {
+                field: 'Vui lòng nhập thông tin này để nhà tuyển dụng liên hệ.'
+                for field in ('contact_name', 'contact_email', 'contact_phone')
+                if not attrs[field]
+            }
+            if missing:
+                raise serializers.ValidationError(missing)
         attrs['job'] = job
         attrs['cv'] = cv
         attrs['version'] = version

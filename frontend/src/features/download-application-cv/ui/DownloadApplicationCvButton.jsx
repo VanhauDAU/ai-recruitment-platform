@@ -6,8 +6,8 @@ function safeFilename(name) {
   return `CV - ${(name || 'ung-vien').replace(/[\\/:*?"<>|]+/g, ' ').trim()}.pdf`
 }
 
-export default function DownloadApplicationCvButton({ publicId, candidateName }) {
-  const { download, working, failed } = useApplicationCvDownload(publicId, safeFilename(candidateName))
+export default function DownloadApplicationCvButton({ publicId, candidateName, sourceFile = false }) {
+  const { download, working, failed } = useApplicationCvDownload(publicId, safeFilename(candidateName), { sourceFile })
   return (
     <Tooltip title="Ứng viên sẽ được thông báo khi bạn tải CV lần đầu.">
       <Button
@@ -17,7 +17,7 @@ export default function DownloadApplicationCvButton({ publicId, candidateName })
         disabled={!publicId}
         onClick={download}
       >
-        {working ? 'Đang tạo PDF…' : failed ? 'Thử lại' : 'Tải PDF'}
+        {working ? (sourceFile ? 'Đang tải…' : 'Đang tạo PDF…') : failed ? 'Thử lại' : 'Tải PDF'}
       </Button>
     </Tooltip>
   )

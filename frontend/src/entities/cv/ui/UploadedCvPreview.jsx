@@ -9,13 +9,14 @@ const VIEWER_PARAMS = '#toolbar=0&navpanes=0&scrollbar=0&view=FitH'
 /**
  * Tệp gốc (PDF; DOCX đã được máy chủ đổi sang PDF) của một CV tải lên.
  * Chủ CV đọc theo `publicId`; người xem link chia sẻ đọc theo `shareToken`.
+ * Nguồn khác (vd. nhà tuyển dụng đọc tệp của một hồ sơ) truyền `source = { queryKey, load }`.
  */
-export default function UploadedCvPreview({ publicId, shareToken, title, className = '' }) {
-  const { data: blob, isLoading, isError } = useQuery({
-    queryKey: shareToken ? ['cv', 'shared-source-file', shareToken] : ['cv', 'source-file', publicId],
-    queryFn: () => (shareToken ? getSharedCvFile(shareToken) : getUploadedCvFile(publicId)),
-    staleTime: Infinity,
-  })
+export default function UploadedCvPreview({ publicId, shareToken, source, title, className = '' }) {
+  const ownSource = shareToken
+    ? { queryKey: ['cv', 'shared-source-file', shareToken], load: () => getSharedCvFile(shareToken) }
+    : { queryKey: ['cv', 'source-file', publicId], load: () => getUploadedCvFile(publicId) }
+  const { queryKey, load } = source || ownSource
+  const { data: blob, isLoading, isError } = useQuery({ queryKey, queryFn: load, staleTime: Infinity })
   const [url, setUrl] = useState(null)
 
   useEffect(() => {

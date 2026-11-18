@@ -12,7 +12,7 @@ from rest_framework.throttling import ScopedRateThrottle
 
 from apps.cv_templates.tests.factories import make_published_template
 from apps.cvs.models import CvVersion, UserCv
-from apps.cvs.services import create_version, import_cv_documents
+from apps.cvs.services import create_v2_cv, create_version, import_cv_documents
 from apps.employers.models import Company
 from apps.employers.tests.readiness_helpers import make_employer_ready
 from apps.jobs.models import Job, JobSkill
@@ -151,6 +151,15 @@ class MatchingApiTests(MatchingApiBase):
         )
         self.assertEqual(self.request().status_code, 202)
         self.assertEqual(MatchAnalysis.objects.count(), 2)
+
+    def test_template_sample_of_a_never_saved_cv_is_not_analysed(self):
+        template, _version = make_published_template('Unsaved template')
+        unsaved = create_v2_cv(actor=self.candidate, title='Chưa lưu', template=template)
+
+        response = self.request(cv=unsaved.public_id)
+
+        self.assertEqual((response.status_code, response.data['code']), (422, 'cv_not_saved'))
+        self.assertFalse(MatchAnalysis.objects.filter(cv_version__cv=unsaved).exists())
 
     def test_only_candidates_and_only_their_own_data(self):  # TC-08, TC-09, TC-10
         own = self.request().data['public_id']
