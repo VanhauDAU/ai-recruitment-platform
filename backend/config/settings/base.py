@@ -375,6 +375,9 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': ('rest_framework.permissions.IsAuthenticated',),
     'DEFAULT_PAGINATION_CLASS': 'common.api.pagination.StandardPagination',
     'EXCEPTION_HANDLER': 'common.api.exceptions.api_exception_handler',
+    # Browsable API chỉ cho dev: production trả JSON, không lộ form HTML của DRF.
+    'DEFAULT_RENDERER_CLASSES': ('rest_framework.renderers.JSONRenderer',)
+    + (('rest_framework.renderers.BrowsableAPIRenderer',) if DEBUG else ()),
     'PAGE_SIZE': 20,
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     # Phòng thủ lớp hai cho các throttle chưa dùng ClientIPScopedRateThrottle:
