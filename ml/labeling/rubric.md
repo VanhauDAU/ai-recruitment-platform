@@ -91,3 +91,20 @@ năm kinh nghiệm":
 
 Từ đây không sửa định nghĩa các mức; nếu buộc phải sửa thì chấm lại toàn bộ các
 cặp đã chấm.
+
+## Làm rõ cách áp dụng (18/11/2026, trước khi gán nhãn)
+
+Không đổi định nghĩa các mức; chỉ làm rõ ba chỗ hay phân vân.
+
+| Tình huống | Cách chấm |
+| --- | --- |
+| Kỹ năng tương đương | Chỉ tính khi rất gần, dùng thay nhau được ngay (MySQL ↔ PostgreSQL, Jest ↔ Mocha). Khác framework dù cùng vai trò (ReactJS ↔ Vue, Java ↔ C#) không tính |
+| Thiếu kinh nghiệm, đúng vị trí và đủ kỹ năng | Thiếu chưa tới một nửa số năm tin yêu cầu là "thiếu một bậc" (mức 3); thiếu từ một nửa trở lên là "lệch rõ" (mức 2) |
+| Bậc học thấp hơn yêu cầu | Trừ tối đa 1 điểm |
+
+## Người gán nhãn
+
+Tập vàng 150 cặp do mô hình ngôn ngữ (Claude) gán theo rubric này, chỉ dựa trên
+nội dung tin và CV (không xem điểm hệ thống hay nguồn ghép cặp); các cặp phân vân
+được hỏi lại người làm đồ án. Người làm đồ án chấm mù 30 cặp (2 cặp mỗi tin) để đo
+độ đồng thuận (quadratic weighted kappa). Báo cáo trình bày đúng như vậy.

@@ -1,7 +1,12 @@
 """Trang chấm tập vàng chạy trên máy: đọc và ghi thẳng `ml/labeling/gold_pairs.xlsx`.
 
-    ml/.venv/bin/python ml/scripts/label_server.py
+    ml/.venv/bin/python ml/scripts/label_server.py            # cả 150 cặp
+    ml/.venv/bin/python ml/scripts/label_server.py --audit    # 30 cặp chấm mù kiểm chứng
     → mở http://127.0.0.1:8765
+
+`--audit`: người làm đồ án chấm mù 30 cặp (2 cặp mỗi tin, chọn ngẫu nhiên với seed
+cố định, lưu ở `ml/labeling/audit_pairs.json`) để đo độ đồng thuận với nhãn do
+Claude gán (`gold_pairs_claude.xlsx`, không mở trước khi chấm xong).
 
 Trang chỉ hiện nội dung tin và CV như người sàng lọc đọc, kèm vài phép đếm khách
 quan để chấm nhanh hơn theo rubric (kỹ năng cần có có xuất hiện nguyên chữ trong
@@ -13,8 +18,10 @@ nếu bị ngắt giữa chừng). Lúc khởi động, phiếu hiện tại đ�
 `ml/data/labels/`. Đóng tệp trong Excel trước khi chấm.
 """
 
+import argparse
 import json
 import os
+import random
 import re
 import shutil
 import tempfile
@@ -29,6 +36,9 @@ from paths import GOLD_SHEET, JD_INPUT, LABELING_DIR, LABELS_DIR, SYNTHETIC_CV_D
 
 HOST, PORT = '127.0.0.1', 8765
 PAGE = LABELING_DIR / 'label_app.html'
+AUDIT_FILE = LABELING_DIR / 'audit_pairs.json'
+AUDIT_PER_JD = 2
+AUDIT_SEED = 2026
 SHEET = 'Chấm'
 COLUMNS = ('stt', 'jd_id', 'jd_title', 'cv_id', 'label', 'confidence', 'reason', 'labeled_at')
 CONFIDENCE = ('chắc', 'không chắc')
@@ -159,6 +169,22 @@ def read_rows():
     return rows
 
 
+def audit_pairs():
+    """stt của các cặp chấm kiểm chứng: 2 cặp mỗi tin, cố định qua các lần chạy."""
+    if AUDIT_FILE.exists():
+        return json.loads(AUDIT_FILE.read_text(encoding='utf-8'))['stt']
+    rng = random.Random(AUDIT_SEED)
+    by_jd = {}
+    for row in read_rows():
+        by_jd.setdefault(row['jd_id'], []).append(row['stt'])
+    chosen = sorted(stt for rows in by_jd.values() for stt in rng.sample(rows, AUDIT_PER_JD))
+    AUDIT_FILE.write_text(
+        json.dumps({'seed': AUDIT_SEED, 'per_jd': AUDIT_PER_JD, 'stt': chosen}, indent=2),
+        encoding='utf-8',
+    )
+    return chosen
+
+
 def excel_is_open():
     return (GOLD_SHEET.parent / f'~${GOLD_SHEET.name}').exists()
 
@@ -200,6 +226,11 @@ def backup_sheet():
 
 class LabelHandler(BaseHTTPRequestHandler):
     jds, traits = {}, set()
+    only = None  # tập stt được chấm (chế độ --audit); None là cả phiếu
+
+    def _rows(self):
+        rows = read_rows()
+        return rows if self.only is None else [row for row in rows if row['stt'] in self.only]
 
     def log_message(self, *args):  # gọn terminal
         pass
@@ -217,7 +248,7 @@ class LabelHandler(BaseHTTPRequestHandler):
         if self.path == '/':
             return self._send(HTTPStatus.OK, PAGE.read_bytes(), 'text/html; charset=utf-8')
         if self.path == '/api/pairs':
-            rows = read_rows()
+            rows = self._rows()
             return self._send(
                 HTTPStatus.OK,
                 {
@@ -234,7 +265,7 @@ class LabelHandler(BaseHTTPRequestHandler):
         return self._send(HTTPStatus.NOT_FOUND, {'error': 'not_found'})
 
     def _pair(self, stt):
-        row = next((row for row in read_rows() if row['stt'] == stt), None)
+        row = next((row for row in self._rows() if row['stt'] == stt), None)
         if row is None:
             return self._send(HTTPStatus.NOT_FOUND, {'error': 'not_found'})
         jd = self.jds[row['jd_id']]
@@ -263,6 +294,8 @@ class LabelHandler(BaseHTTPRequestHandler):
             return self._send(HTTPStatus.BAD_REQUEST, {'error': 'Cần điểm 0–4, mức chắc chắn và một dòng lý do.'})
         if excel_is_open():
             return self._send(HTTPStatus.CONFLICT, {'error': 'Phiếu đang mở trong Excel. Đóng Excel rồi lưu lại.'})
+        if self.only is not None and stt not in self.only:
+            return self._send(HTTPStatus.NOT_FOUND, {'error': 'Cặp này không thuộc phần chấm kiểm chứng.'})
         try:
             save_label(stt, label, confidence, reason[:300])
         except KeyError:
@@ -271,6 +304,11 @@ class LabelHandler(BaseHTTPRequestHandler):
 
 
 def main():
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument('--audit', action='store_true', help='Chỉ 30 cặp chấm mù kiểm chứng.')
+    options = parser.parse_args()
+    if options.audit:
+        LabelHandler.only = set(audit_pairs())
     try:
         server = ThreadingHTTPServer((HOST, PORT), LabelHandler)
     except OSError:
@@ -281,7 +319,8 @@ def main():
         ) from None
     LabelHandler.jds, LabelHandler.traits = load_jds(), load_traits()
     print(f'Đã sao lưu phiếu: {backup_sheet()}')
-    print(f'Trang chấm: http://{HOST}:{PORT}  (Ctrl+C để dừng)')
+    scope = f'{len(LabelHandler.only)} cặp kiểm chứng' if LabelHandler.only else 'cả phiếu'
+    print(f'Trang chấm ({scope}): http://{HOST}:{PORT}  (Ctrl+C để dừng)')
     try:
         server.serve_forever()
     except KeyboardInterrupt:

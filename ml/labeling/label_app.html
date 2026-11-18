@@ -315,7 +315,7 @@ async function save() {
   const target = nextOpen(state.index);
   if (target < 0) {
     renderProgress();
-    $('status').textContent = 'Đã chấm hết 150 cặp. Cảm ơn bạn!';
+    $('status').textContent = `Đã chấm hết ${state.pairs.length} cặp. Cảm ơn bạn!`;
     return;
   }
   await load(target);
