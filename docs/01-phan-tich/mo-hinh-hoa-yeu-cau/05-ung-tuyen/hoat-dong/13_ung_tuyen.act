@@ -1,0 +1,44 @@
+title Sơ đồ hoạt động chức năng ứng tuyển việc làm
+Ứng viên bấm "Ứng tuyển" trên trang chi tiết tin
+Hệ thống trả hồ sơ đã nộp và luật nộp lại
+if Được phép ứng tuyển?
+case Không
+  Giao diện yêu cầu đăng nhập hoặc báo lý do
+  stop
+case Có
+endif
+Giao diện mở hộp thoại, chọn sẵn CV và thư gần nhất
+Ứng viên chọn CV, điền liên hệ, đồng ý xử lý dữ liệu
+if Tải CV mới từ máy?
+case Không
+case Có
+  Hệ thống lưu CV dạng tệp mới
+endif
+Hệ thống kiểm tra email, tin, CV và luật nộp lại
+if Dữ liệu hợp lệ?
+case Không
+  Giao diện hiển thị lỗi theo trường
+  stop
+case Có
+endif
+Hệ thống khóa tài khoản, kiểm tra ứng viên bị công ty chặn
+if Bị chặn hoặc tin đã ngừng nhận?
+case Có
+  Giao diện hiển thị thông báo trung lập
+  stop
+case Không
+endif
+Hệ thống hạ lần nộp trước, tạo bản chụp CV
+Hệ thống tạo hồ sơ ứng tuyển và lịch sử trạng thái
+if Trùng yêu cầu nộp đồng thời?
+case Có
+  Hệ thống trả xung đột (409)
+  stop
+case Không
+endif
+Hệ thống tạo thông báo cho ứng viên và nhà tuyển dụng
+fork
+  Giao diện báo nộp thành công
+again
+  Worker gửi email "Có hồ sơ ứng tuyển mới" tới NTD
+endfork

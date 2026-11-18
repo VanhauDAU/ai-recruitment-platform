@@ -1,0 +1,31 @@
+title Sơ đồ hoạt động chức năng sàng lọc và xếp hạng hồ sơ ứng tuyển bằng AI (dự kiến)
+Nhà tuyển dụng mở hồ sơ của một tin, bấm "Xếp hạng bằng AI"
+Hệ thống kiểm tra người đăng tin, quyền đọc dữ liệu, tính năng bật
+if Đủ quyền và tính năng đang bật?
+case Không
+  Giao diện báo lỗi không đủ quyền (403)
+  stop
+case Có
+endif
+Hệ thống lấy hồ sơ hiện hành, chọn hồ sơ đồng ý phân tích AI
+Hệ thống tạo lượt xếp hạng (queued), giao cho ML Worker
+fork
+  while Còn hồ sơ chưa chấm điểm? | Có | Không
+    if Bản chụp CV đã có vector?
+    case Không
+      ML Worker trích hồ sơ và mã hóa CV thành vector
+    case Có
+    endif
+    ML Worker chấm điểm theo công thức hybrid-v1
+    ML Worker lưu điểm, tiêu chí, kỹ năng khớp và thiếu
+  endwhile
+  ML Worker đánh dấu lượt xếp hạng thành công
+again
+  Hệ thống trả mã lượt xếp hạng (202)
+  while Lượt xếp hạng chưa hoàn tất? | Có | Không
+    Giao diện thăm dò trạng thái lượt xếp hạng
+  endwhile
+endfork
+Giao diện hiển thị hồ sơ sắp theo điểm, giải thích tiêu chí
+Giao diện ghi "Chưa có điểm AI" cho hồ sơ không đồng ý
+Nhà tuyển dụng tự quyết định trạng thái từng hồ sơ

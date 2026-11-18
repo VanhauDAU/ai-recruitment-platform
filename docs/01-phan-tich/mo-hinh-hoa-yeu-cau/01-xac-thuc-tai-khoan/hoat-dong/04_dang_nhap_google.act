@@ -1,0 +1,32 @@
+title Sơ đồ hoạt động chức năng đăng nhập bằng Google
+Người dùng bấm "Đăng nhập với Google"
+Hệ thống lưu state (cổng, trang đích) trong 10 phút
+Giao diện chuyển tới trang ủy quyền Google
+Người dùng đăng nhập Google, đồng ý chia sẻ email và hồ sơ
+Hệ thống nhận callback, lấy và xóa state
+if State hợp lệ và người dùng đồng ý?
+case Không
+  Giao diện về trang đăng nhập kèm thông báo lỗi
+  stop
+case Có
+endif
+Hệ thống đổi code lấy token, lấy hồ sơ Google
+Hệ thống tìm tài khoản theo email và vai trò của cổng
+if Email đã được Google xác minh và tài khoản hoạt động?
+case Không
+  Giao diện thông báo lỗi tương ứng
+  stop
+case Có
+endif
+if Tình trạng tài khoản?
+case Đã liên kết Google
+  Hệ thống dùng tài khoản đã liên kết
+case Cùng email, chưa liên kết
+  Hệ thống liên kết Google, đánh dấu email đã xác minh
+case Chưa có tài khoản
+  Hệ thống tạo tài khoản không mật khẩu và liên kết Google
+endif
+Hệ thống tạo mã dùng một lần (60 giây), chuyển về giao diện
+Giao diện gửi mã để hoàn tất đăng nhập
+Hệ thống lấy và xóa mã, tạo phiên OAuth, trả access token và cookie refresh
+Giao diện báo đăng nhập thành công, chuyển trang

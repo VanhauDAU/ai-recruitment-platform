@@ -1,0 +1,32 @@
+TEN = "chức năng quản lý CV"
+MO_TA = [
+    ("Tạo CV từ mẫu", "Ứng viên", "Tạo CV online theo mẫu, ngôn ngữ và vị trí", "Email đã xác minh, chưa đủ số CV tối đa (mặc định 6)", "CV mới có phiên bản đầu và bản nháp"),
+    ("Chọn mẫu CV", "Ứng viên", "Chọn mẫu, màu và nội dung gợi ý theo vị trí", "Mẫu đang được xuất bản", "Nội dung khởi tạo theo mẫu đã chọn"),
+    ("Chỉnh sửa và lưu CV", "Ứng viên", "Sửa các mục CV và lưu thành phiên bản", "CV thuộc ứng viên", "Phiên bản mới được lưu; xung đột chỉnh sửa bị phát hiện"),
+    ("Tải CV dạng PDF", "Ứng viên", "Xuất CV ra tệp PDF khổ A4", "CV có phiên bản đã lưu", "Tệp PDF được tạo bởi worker và tải về máy"),
+    ("Chia sẻ CV bằng liên kết", "Ứng viên", "Tạo liên kết xem CV có thời hạn", "Email đã xác minh, CV không bị khóa", "Liên kết chỉ hiện một lần; có thể thu hồi"),
+    ("Xem CV qua liên kết", "Người xem liên kết", "Xem CV được chia sẻ mà không cần tài khoản", "Có liên kết còn hiệu lực", "Nội dung CV, lượt xem được ghi nhật ký"),
+    ("Tải CV lên", "Ứng viên", "Lưu CV dạng tệp gốc (PDF/DOCX) để ứng tuyển", "Tệp PDF có lớp chữ hoặc DOCX, tối đa 5 MB", "CV dạng tệp được lưu, văn bản được trích để đối sánh"),
+    ("Nhập CV từ tệp PDF/DOCX", "Ứng viên, Dịch vụ AI ngoài", "Chuyển CV có sẵn thành CV online theo mẫu", "Tệp hợp lệ, chưa đủ số CV tối đa", "CV online có nội dung đã nhập, mở trong trình soạn"),
+    ("Quét virus tệp tải lên", "Hệ thống, ClamAV", "Chặn tệp có mã độc trước khi sử dụng", "Bật chế độ cách ly tệp", "Tệp sạch được đưa vào kho; tệp độc bị từ chối"),
+    ("Cấu trúc nội dung CV bằng AI", "Hệ thống, Dịch vụ AI ngoài", "Tách văn bản CV thành các mục có cấu trúc", "Đã trích được văn bản từ tệp", "JSON các mục CV; thiếu khóa API thì dùng bộ phân tích theo luật"),
+    ("Xóa CV", "Ứng viên", "Xóa vĩnh viễn một CV", "CV thuộc ứng viên", "CV, bản xuất, liên kết bị xóa; bản chụp đã nộp vẫn giữ cho NTD"),
+]
+DONG_CHINH = [
+    ("Tạo CV từ mẫu", "Ứng viên", "Chọn mẫu, ngôn ngữ, vị trí, số năm kinh nghiệm >> bấm Tạo CV"),
+    ("Tạo CV từ mẫu", "Hệ thống", "Chống tạo trùng >> kiểm tra email và giới hạn >> dựng nội dung mẫu >> tạo CV, phiên bản, bản nháp"),
+    ("Chỉnh sửa và lưu CV", "Ứng viên", "Sửa nội dung, đổi màu hoặc mẫu >> bấm Lưu CV"),
+    ("Chỉnh sửa và lưu CV", "Hệ thống", "So khớp lock_version >> lưu bản nháp >> tạo phiên bản >> tạo ảnh thu nhỏ, tính vector (nếu bật)"),
+    ("Tải CV dạng PDF", "Ứng viên", "Bấm Tải PDF >> chờ >> nhận tệp"),
+    ("Tải CV dạng PDF", "Hệ thống", "Dùng lại bản xuất cũ hoặc tạo việc xuất >> worker kết xuất bằng Playwright >> trả tệp"),
+    ("Chia sẻ CV bằng liên kết", "Ứng viên", "Chọn hạn dùng >> tạo liên kết >> sao chép"),
+    ("Chia sẻ CV bằng liên kết", "Hệ thống", "Kiểm tra email và trạng thái khóa >> lưu giá trị băm của mã >> trả liên kết một lần"),
+    ("Xem CV qua liên kết", "Người xem", "Mở liên kết"),
+    ("Xem CV qua liên kết", "Hệ thống", "Kiểm tra mã, hạn, thu hồi >> ghi nhật ký truy cập >> trả nội dung CV"),
+    ("Tải CV lên", "Ứng viên", "Chọn tệp PDF/DOCX >> bấm Tải lên"),
+    ("Tải CV lên", "Hệ thống", "Quét virus (nếu bật) >> kiểm tra chữ ký tệp >> trích văn bản >> lưu CV dạng tệp"),
+    ("Nhập CV từ tệp PDF/DOCX", "Ứng viên", "Chọn tệp và mẫu CV >> chờ phân tích"),
+    ("Nhập CV từ tệp PDF/DOCX", "Hệ thống", "Tạo việc nhập >> worker trích văn bản >> gọi AI cấu trúc >> ghép vào mẫu >> mở trình soạn"),
+    ("Xóa CV", "Ứng viên", "Bấm Xóa >> xác nhận"),
+    ("Xóa CV", "Hệ thống", "Xóa phiên bản, bản xuất, liên kết >> giữ bản chụp hồ sơ đã nộp >> dọn tệp"),
+]

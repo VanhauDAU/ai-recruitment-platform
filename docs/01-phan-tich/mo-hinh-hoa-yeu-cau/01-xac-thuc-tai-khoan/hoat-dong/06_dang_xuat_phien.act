@@ -1,0 +1,33 @@
+title Sơ đồ hoạt động chức năng đăng xuất và quản lý phiên đăng nhập
+if Người dùng chọn thao tác?
+case Đăng xuất
+  Người dùng bấm "Đăng xuất"
+  Giao diện gửi yêu cầu đăng xuất kèm cookie refresh
+  if Có cookie refresh?
+  case Không
+  case Có
+    Hệ thống đưa refresh vào danh sách đen, thu hồi phiên
+  endif
+  Hệ thống xóa cookie, trả "Đã đăng xuất"
+  Giao diện xóa access token, báo các tab cùng cổng đăng xuất
+  Giao diện về trang đăng nhập
+case Quản lý phiên
+  Người dùng mở "Cài đặt bảo mật"
+  Hệ thống lấy các phiên còn hiệu lực (thiết bị, IP, lần hoạt động cuối)
+  Giao diện hiển thị danh sách, đánh dấu phiên hiện tại
+  if Người dùng chọn thu hồi?
+  case Một phiên
+    Người dùng bấm "Đăng xuất" ở một thiết bị
+    if Phiên thuộc người dùng?
+    case Không
+      Hệ thống trả không tìm thấy (404)
+    case Có
+      Hệ thống ghi thời điểm thu hồi, đưa jti vào danh sách đen
+    endif
+  case Mọi phiên khác
+    Người dùng bấm "Đăng xuất khỏi các thiết bị khác"
+    Hệ thống thu hồi mọi phiên trừ phiên hiện tại
+  endif
+  Giao diện làm mới danh sách phiên
+  Thiết bị bị thu hồi nhận 401 ở yêu cầu kế tiếp và bị đăng xuất
+endif

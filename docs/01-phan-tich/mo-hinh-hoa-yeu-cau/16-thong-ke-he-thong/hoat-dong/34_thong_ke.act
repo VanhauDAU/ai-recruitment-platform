@@ -1,0 +1,22 @@
+title Sơ đồ hoạt động chức năng xem thống kê hệ thống
+Quản trị viên mở trang tổng quan, chọn kỳ 7 / 30 / 90 ngày
+Hệ thống kiểm tra quyền quản trị
+if Là quản trị viên?
+case Không
+  Giao diện báo lỗi không có quyền (403)
+  stop
+case Có
+endif
+Hệ thống đếm việc trong các hàng chờ và việc quá hạn
+Hệ thống tổng hợp KPI người dùng, tin đăng, hồ sơ, phễu ứng tuyển
+Hệ thống thống kê tin theo trạng thái, ngành nghề, chi phí AI
+Giao diện hiển thị thẻ số liệu, biểu đồ, việc cần xử lý
+fork
+  while Trang quản trị còn mở? | Có | Không
+    Giao diện lấy số việc trong hàng chờ mỗi 30 giây
+    Giao diện cập nhật huy hiệu trên menu
+  endwhile
+again
+  Quản trị viên bấm một hàng chờ
+  Giao diện chuyển tới màn hình xử lý tương ứng
+endfork

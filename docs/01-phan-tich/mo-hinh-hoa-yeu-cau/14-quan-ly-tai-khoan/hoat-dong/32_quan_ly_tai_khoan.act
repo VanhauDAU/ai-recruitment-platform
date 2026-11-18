@@ -1,0 +1,39 @@
+title Sơ đồ hoạt động chức năng quản lý tài khoản
+Quản trị viên tìm tài khoản, mở chi tiết
+Hệ thống trả thông tin tài khoản, tin, chiến dịch liên quan
+Quản trị viên chọn trạng thái mới, nhập lý do, bằng chứng
+if Tự xử lý chính mình hoặc chuyển trạng thái không hợp lệ?
+case Có
+  Giao diện báo lỗi thao tác không hợp lệ
+  stop
+case Không
+endif
+if Cấm tài khoản mà không phải superuser?
+case Có
+  Giao diện báo lỗi admin_permission_denied (403)
+  stop
+case Không
+endif
+Hệ thống tính ảnh hưởng, cấp mã xác nhận
+Giao diện hiển thị hộp thoại xác nhận ảnh hưởng
+Quản trị viên xác nhận thay đổi trạng thái
+if Dữ liệu đã đổi sau khi xem ảnh hưởng?
+case Có
+  Giao diện báo lỗi xung đột dữ liệu (409)
+  stop
+case Không
+endif
+Hệ thống cập nhật trạng thái, ghi lịch sử chuyển trạng thái
+if Trạng thái mới?
+case Tạm khóa hoặc cấm
+  Hệ thống thu hồi mọi phiên và refresh token
+  Hệ thống tạm giữ tin và chiến dịch của nhà tuyển dụng
+case Mở lại
+  Hệ thống gỡ tạm giữ, bù thời gian hiển thị cho tin
+endif
+Hệ thống ghi nhật ký quản trị
+fork
+  Worker gửi email thông báo trạng thái cho người dùng
+again
+  Giao diện báo đã cập nhật trạng thái tài khoản
+endfork

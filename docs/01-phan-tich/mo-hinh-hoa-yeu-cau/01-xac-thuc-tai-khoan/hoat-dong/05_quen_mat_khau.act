@@ -1,0 +1,32 @@
+title Sơ đồ hoạt động chức năng khôi phục mật khẩu
+Người dùng nhập email tại trang "Quên mật khẩu"
+Hệ thống xác minh captcha, tìm tài khoản đang hoạt động theo cổng
+if Tài khoản tồn tại và đã hết thời gian chờ 60 giây?
+case Không
+  Giao diện báo "Nếu email tồn tại, chúng tôi đã gửi hướng dẫn"
+  stop
+case Có
+endif
+Hệ thống đặt thời gian chờ gửi lại, tạo yêu cầu gửi email
+fork
+  Giao diện báo "Nếu email tồn tại, chúng tôi đã gửi hướng dẫn"
+again
+  Worker hủy token cũ, lưu token mới (hạn 30 phút)
+  Worker gửi email chứa liên kết đặt lại mật khẩu
+endfork
+Người dùng mở liên kết đặt lại mật khẩu
+Hệ thống đọc token (không xóa), đối chiếu email và phiên bản xác thực
+if Token hợp lệ?
+case Không
+  Giao diện báo "Liên kết không hợp lệ hoặc đã hết hạn"
+  stop
+case Có
+endif
+Người dùng nhập mật khẩu mới
+while Mật khẩu chưa đạt quy tắc? | Có | Không
+  Giao diện hiển thị quy tắc mật khẩu (token vẫn còn hiệu lực)
+  Người dùng nhập lại mật khẩu mới
+endwhile
+Hệ thống lấy và xóa token
+Hệ thống cập nhật mật khẩu, thu hồi mọi phiên và refresh token
+Giao diện báo thành công, nút về trang đăng nhập đúng cổng

@@ -1,0 +1,50 @@
+title Sơ đồ hoạt động chức năng tải CV dạng PDF và chia sẻ CV
+if Ứng viên chọn thao tác?
+case Tải PDF
+  Ứng viên bấm "Tải PDF"
+  Hệ thống tìm bản xuất cùng phiên bản và cấu hình hiển thị
+  if Đã có bản xuất hợp lệ?
+  case Có
+  case Không
+    Hệ thống tạo yêu cầu xuất ở trạng thái chờ
+    fork
+      Worker kết xuất PDF khổ A4 bằng trình duyệt ẩn
+      if Kết xuất thành công?
+      case Không
+        Worker đánh dấu bản xuất thất bại
+      case Có
+        Worker lưu tệp vào kho riêng, đánh dấu hoàn tất
+      endif
+    again
+      while Bản xuất đang chờ hoặc đang xử lý? | Có | Không
+        Giao diện hỏi lại trạng thái sau 2 giây
+      endwhile
+    endfork
+  endif
+  if Bản xuất hoàn tất?
+  case Không
+    Giao diện báo lỗi, hiện nút "Thử lại"
+    stop
+  case Có
+  endif
+  Giao diện tải tệp PDF về máy
+case Chia sẻ CV
+  Ứng viên tạo liên kết chia sẻ, chọn ngày hết hạn
+  if Email đã xác minh và CV không bị khóa?
+  case Không
+    Giao diện báo không thể chia sẻ (403)
+    stop
+  case Có
+  endif
+  Hệ thống lưu mã băm SHA-256, không lưu mã gốc
+  Giao diện hiển thị liên kết để sao chép (chỉ một lần)
+  Người xem mở liên kết chia sẻ
+  if Mã đúng, còn hạn và chưa thu hồi?
+  case Không
+    Hệ thống trả không tìm thấy (404)
+    stop
+  case Có
+  endif
+  Hệ thống ghi nhật ký truy cập CV
+  Người xem xem nội dung CV
+endif

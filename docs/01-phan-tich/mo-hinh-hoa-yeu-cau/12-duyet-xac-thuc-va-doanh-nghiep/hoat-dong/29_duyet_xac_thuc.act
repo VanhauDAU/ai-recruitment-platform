@@ -1,0 +1,56 @@
+title Sơ đồ hoạt động chức năng duyệt xác thực nhà tuyển dụng
+Quản trị viên mở hàng chờ xác thực, chọn một hồ sơ
+Hệ thống trả hồ sơ, giấy tờ, kết quả tra cứu mã số thuế
+Quản trị viên bấm "Bắt đầu duyệt"
+if Hồ sơ đang ở trạng thái chờ duyệt?
+case Không
+  Giao diện báo lỗi VERIFICATION_INVALID_TRANSITION
+  stop
+case Có
+endif
+Hệ thống chuyển hồ sơ sang "in_review", ghi người duyệt
+while Còn giấy tờ chưa đánh giá? | Có | Không
+  Quản trị viên chọn Đạt / Cần sửa / Từ chối kèm lý do
+  if Giấy tờ hoặc phiên bản đã thay đổi?
+  case Có
+    Giao diện báo lỗi giấy tờ đã thay đổi
+    stop
+  case Không
+  endif
+  Hệ thống cập nhật trạng thái giấy tờ, ghi sự kiện
+endwhile
+Quản trị viên chọn quyết định cuối và lý do
+if Duyệt nhưng còn thiếu điều kiện?
+case Có
+  Giao diện báo lỗi VERIFICATION_REQUIREMENTS_INCOMPLETE
+  stop
+case Không
+endif
+if Mã số thuế không khớp mà chưa ghi lý do bỏ qua?
+case Có
+  Giao diện báo lỗi TAX_OVERRIDE_REQUIRED
+  stop
+case Không
+endif
+Hệ thống trả ảnh hưởng của quyết định, mã xác nhận 10 phút
+Quản trị viên xem ảnh hưởng, bấm xác nhận
+if Dữ liệu đã đổi sau khi xem ảnh hưởng?
+case Có
+  Giao diện báo lỗi xung đột dữ liệu (409)
+  stop
+case Không
+endif
+if Quyết định cuối?
+case Từ chối
+  Hệ thống chuyển "rejected", tăng số lần từ chối (đủ 3 lần thì khóa)
+case Yêu cầu sửa
+  Hệ thống chuyển "changes_requested"
+case Duyệt
+  Hệ thống chuyển "approved", gỡ tạm giữ tuân thủ của tin
+endif
+Hệ thống ghi sự kiện, nhật ký quản trị, thông báo nhà tuyển dụng
+fork
+  Worker gửi email kết quả xác thực cho nhà tuyển dụng
+again
+  Giao diện báo đã lưu quyết định
+endfork

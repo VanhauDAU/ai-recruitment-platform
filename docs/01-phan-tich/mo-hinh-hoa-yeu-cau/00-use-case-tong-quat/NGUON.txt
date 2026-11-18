@@ -1,0 +1,1 @@
+# Ảnh tổng quát lấy từ ../so-do-use-case.png (bản drawio), chuyển trắng đen bằng cong-cu/bw.swift

@@ -1,0 +1,49 @@
+title Sơ đồ hoạt động chức năng quản lý thành viên và quyền biên tập trang công ty
+if Quản lý công ty chọn thao tác?
+case Cấp quyền biên tập
+  Quản lý công ty chọn thành viên, bấm "Cấp quyền biên tập"
+  if Người gọi là quản lý đủ điều kiện?
+  case Không
+    Giao diện báo không đủ quyền
+    stop
+  case Có
+  endif
+  if Thành viên đã xác thực, chưa có quyền?
+  case Không
+    Giao diện báo chưa xác thực hoặc đã có quyền
+    stop
+  case Có
+  endif
+  Hệ thống cấp quyền biên tập, ghi sự kiện
+  Hệ thống thông báo thành viên được cấp quyền
+case Thu quyền biên tập
+  Quản lý công ty bấm "Thu quyền"
+  Hệ thống thu hồi quyền, ghi sự kiện
+  Hệ thống thông báo thành viên bị thu quyền
+case Chuyển quyền quản lý
+  Quản lý công ty chọn thành viên nhận quyền
+  if Người nhận đủ điều kiện, không phải chính mình?
+  case Không
+    Giao diện báo người nhận không hợp lệ
+    stop
+  case Có
+  endif
+  Hệ thống đặt người nhận làm quản lý, người chuyển làm thành viên
+  Hệ thống thông báo người nhận là quản lý mới
+case Gỡ thành viên
+  if Thành viên còn tin hoặc chiến dịch?
+  case Không
+  case Có
+    Quản lý công ty bàn giao tin, chiến dịch cho người khác
+    Hệ thống chuyển người đăng tin và chủ chiến dịch
+  endif
+  Quản lý công ty bấm "Gỡ khỏi công ty", nhập lý do
+  if Có lý do, đã bàn giao hết, không phải quản lý?
+  case Không
+    Giao diện báo lỗi kèm danh sách vướng mắc
+    stop
+  case Có
+  endif
+  Hệ thống hủy liên kết công ty, thu quyền biên tập
+  Hệ thống thông báo thành viên bị gỡ khỏi công ty
+endif

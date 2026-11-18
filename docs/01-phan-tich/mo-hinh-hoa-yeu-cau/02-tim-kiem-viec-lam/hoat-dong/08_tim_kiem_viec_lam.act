@@ -1,0 +1,45 @@
+title Sơ đồ hoạt động chức năng tìm kiếm và xem chi tiết việc làm
+Người dùng nhập từ khóa, chọn bộ lọc (ngành, địa điểm, lương...)
+Hệ thống gợi ý từ khóa trong khi gõ
+Hệ thống kiểm tra tham số lọc và sắp xếp
+if Tham số hợp lệ?
+case Không
+  Giao diện đặt lại bộ lọc
+  stop
+case Có
+endif
+Hệ thống truy vấn tin đang công khai, còn hạn, không bị tạm giữ
+Giao diện hiển thị danh sách kết quả có phân trang
+Người dùng chọn một tin
+if Tin tồn tại?
+case Không
+  Giao diện hiển thị trang "Tin không tồn tại"
+  stop
+case Có
+endif
+Hệ thống lấy tin, công ty, kỹ năng, trạng thái nhận hồ sơ
+Giao diện hiển thị chi tiết tin và tin liên quan
+fork
+  if Đồng ý cookie thống kê và xem đủ 1 giây?
+  case Không
+  case Có
+    Hệ thống khử trùng lượt xem theo người xem (24 giờ)
+    if Lượt xem mới?
+    case Không
+    case Có
+      Hệ thống tăng lượt xem, cập nhật thống kê theo ngày
+    endif
+  endif
+again
+  if Người dùng chọn thao tác?
+  case Lưu tin
+    Ứng viên bấm "Lưu tin"
+    Hệ thống tạo tin đã lưu nếu chưa có
+  case Theo dõi công ty
+    Ứng viên bấm "Theo dõi công ty"
+    Hệ thống tạo lượt theo dõi, tăng số người theo dõi lần đầu
+  case So sánh tin
+    Giao diện so sánh tối đa 3 tin tại trình duyệt
+  case Không thao tác
+  endif
+endfork

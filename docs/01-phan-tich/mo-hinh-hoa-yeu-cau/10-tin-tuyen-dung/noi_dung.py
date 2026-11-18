@@ -1,0 +1,32 @@
+TEN = "chức năng quản lý tin tuyển dụng"
+MO_TA = [
+    ("Lưu nháp tin", "Nhà tuyển dụng", "Soạn tin chưa đăng", "Không gian tuyển dụng sẵn sàng, chiến dịch hợp lệ", "Tin ở trạng thái nháp"),
+    ("Tạo nội dung tin bằng AI", "Nhà tuyển dụng, Google Gemini", "Sinh nội dung tin từ mô tả ngắn hoặc JD có sẵn", "AI đang bật, còn lượt trong ngày (mặc định 10)", "Nội dung đề xuất được áp vào bản nháp để NTD sửa"),
+    ("Đăng tin tuyển dụng", "Nhà tuyển dụng", "Đưa tin lên công khai", "Đủ điều kiện đăng, nội dung hợp lệ, còn hạn mức", "Tin hiển thị ngay, quản trị viên hậu kiểm sau"),
+    ("Kiểm tra điều kiện đăng tin", "Hệ thống", "Chặn đăng khi chưa xác thực, DPA hết hiệu lực, bị tạm giữ, chiến dịch dừng", "NTD gửi yêu cầu đăng hoặc mở lại", "Cho phép đăng hoặc trả danh sách lý do bị chặn"),
+    ("Xác nhận cam kết trách nhiệm", "Nhà tuyển dụng", "Cam kết chịu trách nhiệm về nội dung tin", "Đúng phiên bản cam kết hiện hành", "Thời điểm và phiên bản cam kết được lưu"),
+    ("Chỉnh sửa tin", "Nhà tuyển dụng", "Sửa nội dung tin", "Là người đăng, tin không bị tạm giữ", "Nội dung mới có hiệu lực ngay"),
+    ("Nhân bản tin", "Nhà tuyển dụng", "Tạo bản nháp mới từ tin cũ", "Tin không bị tạm giữ", "Bản nháp mới với chu kỳ hiển thị mới"),
+    ("Gia hạn hạn nộp", "Nhà tuyển dụng", "Kéo dài hạn nhận hồ sơ", "Hạn mới không quá hôm nay + 90 ngày và không quá thời gian hiển thị", "Hạn nộp được cập nhật"),
+    ("Dừng tuyển", "Nhà tuyển dụng", "Ngừng nhận hồ sơ", "Tin đang hoạt động", "Tin chuyển trạng thái đã dừng"),
+    ("Mở lại tin", "Nhà tuyển dụng", "Nhận hồ sơ trở lại", "Tin đã dừng, trong trần 90 ngày từ lần đăng đầu", "Tin hiển thị lại, không trừ hạn mức"),
+    ("Sửa và gửi lại tin bị yêu cầu sửa", "Nhà tuyển dụng", "Khắc phục lỗi theo yêu cầu của quản trị viên", "Tin đang bị yêu cầu sửa", "Bản sửa chờ quản trị viên duyệt lại"),
+]
+DONG_CHINH = [
+    ("Lưu nháp tin", "Nhà tuyển dụng", "Nhập nội dung tin >> bấm Lưu nháp"),
+    ("Lưu nháp tin", "Hệ thống", "Kiểm tra không gian tuyển dụng, chiến dịch >> tạo tin nháp >> ghi lịch sử"),
+    ("Tạo nội dung tin bằng AI", "Nhà tuyển dụng", "Nhập mô tả ngắn >> bấm Tạo bằng AI >> chọn Dùng nội dung này"),
+    ("Tạo nội dung tin bằng AI", "Hệ thống", "Kiểm tra chính sách AI, lượt dùng >> AI Worker gọi Gemini >> chuẩn hóa vào danh mục >> áp vào bản nháp"),
+    ("Đăng tin tuyển dụng", "Nhà tuyển dụng", "Tích cam kết trách nhiệm >> bấm Đăng tin"),
+    ("Đăng tin tuyển dụng", "Hệ thống", "Kiểm tra cam kết, điều kiện, nội dung, hạn mức >> chuyển active >> khởi tạo thời gian hiển thị >> lưu bản gốc"),
+    ("Chỉnh sửa tin", "Nhà tuyển dụng", "Sửa nội dung >> Lưu"),
+    ("Chỉnh sửa tin", "Hệ thống", "Kiểm tra người đăng và tạm giữ >> cập nhật nội dung"),
+    ("Gia hạn hạn nộp", "Nhà tuyển dụng", "Chọn hạn nộp mới >> xác nhận"),
+    ("Gia hạn hạn nộp", "Hệ thống", "Kiểm tra trần 90 ngày, thời gian hiển thị, ân hạn 30 ngày >> cập nhật hạn nộp"),
+    ("Dừng tuyển", "Nhà tuyển dụng", "Bấm Dừng tuyển"),
+    ("Dừng tuyển", "Hệ thống", "Chuyển tin sang đã dừng >> ghi lịch sử"),
+    ("Mở lại tin", "Nhà tuyển dụng", "Bấm Mở lại >> chọn hạn nộp >> xác nhận cam kết"),
+    ("Mở lại tin", "Hệ thống", "Kiểm tra cam kết, điều kiện, giới hạn thời gian >> chuyển active, giữ mốc chu kỳ cũ"),
+    ("Sửa và gửi lại tin bị yêu cầu sửa", "Nhà tuyển dụng", "Sửa nội dung theo lý do >> bấm Gửi lại để duyệt"),
+    ("Sửa và gửi lại tin bị yêu cầu sửa", "Hệ thống", "Kiểm tra nội dung đã thay đổi >> ghi thời điểm gửi lại >> đưa vào hàng chờ duyệt"),
+]

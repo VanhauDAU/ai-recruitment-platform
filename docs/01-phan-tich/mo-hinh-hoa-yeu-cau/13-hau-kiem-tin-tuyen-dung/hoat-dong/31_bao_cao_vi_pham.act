@@ -1,0 +1,40 @@
+title Sơ đồ hoạt động chức năng báo cáo vi phạm và xử lý báo cáo
+Ứng viên bấm "Báo cáo" tin hoặc công ty, chọn lý do, mô tả
+if Tin hoặc công ty đang công khai?
+case Không
+  Giao diện báo lỗi không tìm thấy (404)
+  stop
+case Có
+endif
+if Ứng viên có báo cáo đang chờ xử lý?
+case Có
+  Giao diện báo lỗi đã báo cáo trước đó
+  stop
+case Không
+endif
+Hệ thống tạo báo cáo chờ xử lý, tin vẫn hiển thị
+Giao diện cảm ơn ứng viên đã báo cáo
+Quản trị viên mở hàng chờ báo cáo (hạn xử lý 48 giờ)
+Quản trị viên chọn Xác nhận vi phạm / Bác bỏ, ghi chú
+if Báo cáo đã xử lý hoặc xác nhận mà thiếu ghi chú?
+case Có
+  Giao diện báo lỗi không xử lý được báo cáo
+  stop
+case Không
+endif
+if Kết quả xử lý?
+case Bác bỏ
+  Hệ thống chuyển báo cáo sang "dismissed"
+case Xác nhận lý do khác
+  Hệ thống chuyển báo cáo sang "upheld"
+  Quản trị viên tự quyết thao tác hậu kiểm
+case Xác nhận lừa đảo, giả, sai thông tin
+  Hệ thống chuyển báo cáo sang "upheld", ghi sự kiện
+  Hệ thống tạm giữ tin vi phạm, tin bị ẩn
+endif
+if Báo cáo công ty được xác nhận kèm tạm giữ trang?
+case Có
+  Hệ thống tạm giữ trang công ty, ẩn mọi tin của công ty
+case Không
+endif
+Giao diện báo đã xử lý báo cáo

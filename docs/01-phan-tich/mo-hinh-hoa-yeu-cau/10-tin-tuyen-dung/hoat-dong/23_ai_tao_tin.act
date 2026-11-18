@@ -1,0 +1,45 @@
+title Sơ đồ hoạt động chức năng AI hỗ trợ tạo nội dung tin tuyển dụng
+Nhà tuyển dụng nhập mô tả ngắn hoặc dán JD có sẵn
+Hệ thống kiểm tra điều kiện, cờ AI và hạn mức
+if Kết quả kiểm tra yêu cầu?
+case Chưa sẵn sàng
+  Giao diện báo chưa đủ điều kiện
+  stop
+case AI tắt
+  Giao diện báo AI không khả dụng
+  stop
+case Hết lượt
+  Giao diện báo hết lượt trong ngày
+  stop
+case Trùng khóa
+  Giao diện báo xung đột yêu cầu
+  stop
+case Hợp lệ
+endif
+Hệ thống tạo yêu cầu sinh nội dung ở trạng thái chờ
+fork
+  AI Worker lấy thông tin công ty đã duyệt
+  AI Worker gửi Gemini kèm lược đồ JSON (tối đa 2 lần)
+  AI Worker kiểm tra lược đồ, ánh xạ vào danh mục
+  if Sinh nội dung thành công?
+  case Không
+    AI Worker đánh dấu thất bại kèm mã lỗi
+  case Có
+    AI Worker lưu kết quả, đánh dấu hoàn tất
+  endif
+again
+  Hệ thống trả mã yêu cầu và số lượt còn lại
+  while Yêu cầu còn đang xử lý? | Có | Không
+    Giao diện hỏi trạng thái sau mỗi 1,5 giây
+  endwhile
+endfork
+if Kết quả sinh nội dung?
+case Thất bại
+  Giao diện báo lỗi, cho phép thử lại
+  stop
+case Hoàn tất
+endif
+Giao diện hiển thị bản xem trước nội dung
+Nhà tuyển dụng bấm "Dùng nội dung này"
+Hệ thống áp nội dung vào bản nháp (dùng một lần)
+Giao diện mở biểu mẫu để kiểm tra, chỉnh sửa trước khi đăng

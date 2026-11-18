@@ -1,0 +1,52 @@
+title Sơ đồ hoạt động chức năng phân tích mức độ phù hợp CV–JD
+Ứng viên bấm "Xem độ phù hợp", chọn một CV đã lưu
+Hệ thống kiểm tra cờ tính năng và giới hạn 20 lần/giờ
+if Kết quả kiểm tra yêu cầu?
+case Tắt hoặc vượt giới hạn
+  Giao diện báo tính năng tắt hoặc hết lượt
+  stop
+case Tin, CV không hợp lệ
+  Giao diện báo không tìm thấy tin hoặc CV
+  stop
+case Thiếu dữ liệu
+  Giao diện báo CV chưa lưu hoặc tin quá ngắn
+  stop
+case Hợp lệ
+endif
+Hệ thống tìm kết quả theo phiên bản CV, tin, mô hình, công thức
+if Đã có kết quả thành công?
+case Có
+case Chưa có hoặc lần trước lỗi
+  Hệ thống tạo hoặc đặt lại phân tích ở trạng thái chờ
+  fork
+    ML Worker nhận việc, chuyển sang đang xử lý
+    if Đã có vector của CV và của tin?
+    case Có
+    case Chưa có
+      ML Worker trích hồ sơ, chia đoạn văn bản
+      ML Worker mã hóa các đoạn bằng mô hình e5-base
+      ML Worker lưu vector 768 chiều của tài liệu
+    endif
+    ML Worker chấm 6 tiêu chí theo công thức hybrid-v1
+    ML Worker sinh giải thích, kỹ năng khớp/thiếu, gợi ý
+    if Chấm điểm thành công?
+    case Không
+      ML Worker đánh dấu thất bại kèm mã lỗi
+    case Có
+      ML Worker lưu kết quả và điểm tổng
+    endif
+  again
+    Hệ thống trả mã phân tích, trạng thái chờ
+    while Phân tích còn chờ hoặc đang xử lý? | Có | Không
+      Giao diện hỏi trạng thái sau mỗi 800 ms
+    endwhile
+  endfork
+  if Phân tích thành công?
+  case Không
+    Giao diện báo phân tích thất bại, cho phép thử lại
+    stop
+  case Có
+  endif
+endif
+Giao diện hiển thị điểm tổng, điểm từng tiêu chí, kỹ năng khớp/thiếu
+Giao diện hiển thị gợi ý và lưu ý "không phải quyết định tuyển dụng"

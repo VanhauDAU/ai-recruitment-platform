@@ -1,0 +1,37 @@
+title Sơ đồ hoạt động chức năng đăng nhập và duy trì phiên
+if Tình huống?
+case Đăng nhập
+  Người dùng nhập email, mật khẩu tại cổng của mình
+  Giao diện gửi yêu cầu đăng nhập kèm mã reCAPTCHA
+  Hệ thống xác minh captcha, kiểm tra bộ đếm sai
+  if Đang trong thời gian chờ do sai nhiều lần?
+  case Có
+    Giao diện hiển thị thời gian chờ còn lại
+    stop
+  case Không
+  endif
+  Hệ thống tìm tài khoản theo email và vai trò của cổng
+  if Mật khẩu đúng và tài khoản hoạt động?
+  case Không
+    Hệ thống tăng bộ đếm sai (từ lần 6 chờ 2 giây, gấp đôi, tối đa 15 phút)
+    Giao diện báo "Email hoặc mật khẩu không đúng"
+    stop
+  case Có
+  endif
+  Hệ thống xóa bộ đếm sai, tạo hoặc dùng lại phiên
+  Hệ thống trả access token và cookie refresh của cổng
+  Giao diện lấy thông tin người dùng, chuyển trang theo vai trò
+case Access token hết hạn (15 phút)
+  Hệ thống từ chối yêu cầu API (401)
+  Giao diện gọi làm mới phiên một lần cho các yêu cầu đồng thời
+  Hệ thống khóa phiên, kiểm tra refresh và phiên bản xác thực
+  if Refresh hợp lệ?
+  case Không
+    Hệ thống thu hồi phiên nếu refresh cũ bị dùng lại, xóa cookie
+    Giao diện báo "Phiên đăng nhập đã hết hạn", về trang đăng nhập
+    stop
+  case Có
+  endif
+  Hệ thống đưa refresh cũ vào danh sách đen, cấp access và refresh mới
+  Giao diện gửi lại yêu cầu ban đầu
+endif

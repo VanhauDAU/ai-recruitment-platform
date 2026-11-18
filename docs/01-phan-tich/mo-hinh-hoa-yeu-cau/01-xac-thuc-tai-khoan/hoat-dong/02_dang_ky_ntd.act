@@ -1,0 +1,28 @@
+title Sơ đồ hoạt động chức năng đăng ký tài khoản nhà tuyển dụng
+Khách nhập email, mật khẩu, đồng ý điều khoản (bước 1)
+Giao diện kiểm tra định dạng, mật khẩu nhập lại khớp
+Khách nhập họ tên, giới tính, điện thoại, tỉnh/thành (bước 2)
+Giao diện gửi yêu cầu đăng ký kèm mã reCAPTCHA
+Hệ thống xác minh captcha với Google
+if Captcha đạt?
+case Không
+  Giao diện yêu cầu thử lại
+  stop
+case Có
+endif
+if Email chưa có tài khoản NTD và dữ liệu đúng?
+case Không
+  Giao diện đưa lỗi về đúng bước và trường nhập
+  stop
+case Có
+endif
+Hệ thống tạo tài khoản, hồ sơ NTD, lưu thời điểm đồng ý điều khoản
+Hệ thống tạo yêu cầu gửi email xác minh
+fork
+  Hệ thống tạo phiên, trả access token và cookie refresh
+  Giao diện chuyển tới trang xác minh email cổng NTD
+again
+  Worker gửi email chứa liên kết xác minh
+endfork
+Nhà tuyển dụng xác minh email, khai báo nhu cầu tuyển dụng
+Nhà tuyển dụng chuyển sang bước xác thực tài khoản
