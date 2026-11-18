@@ -21,6 +21,7 @@ from django.db import transaction
 from django.utils import timezone
 from rest_framework.exceptions import APIException
 
+from apps.cvs.services import is_unsaved_builder_baseline
 from apps.sitecontent.selectors import get_bool_setting
 
 from ..models import MatchAnalysis, MatchDocument
@@ -45,6 +46,10 @@ class MatchingRequestError(APIException):
         'feature_disabled': (HTTPStatus.FORBIDDEN, 'Tính năng xem độ phù hợp đang tắt.'),
         'job_not_active': (HTTPStatus.NOT_FOUND, 'Tin tuyển dụng không còn mở.'),
         'cv_not_owned': (HTTPStatus.NOT_FOUND, 'Không tìm thấy CV của bạn.'),
+        'cv_not_saved': (
+            HTTPStatus.UNPROCESSABLE_ENTITY,
+            'CV chưa được lưu lần nào. Hãy mở CV và bấm Lưu trước khi xem độ phù hợp.',
+        ),
         'job_text_too_short': (
             HTTPStatus.UNPROCESSABLE_ENTITY,
             'Tin tuyển dụng không đủ nội dung để phân tích.',
@@ -73,6 +78,8 @@ def request_analysis(*, user, job, cv):
     `job` nạp bằng selector `public_job_for_profile`, `cv` bằng `owner_cv_for_matching`.
     """
     ensure_enabled()
+    if is_unsaved_builder_baseline(cv, cv.latest_version):
+        raise MatchingRequestError('cv_not_saved')
     try:
         digest = job_content_hash(job)
     except ExtractionError as error:

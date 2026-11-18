@@ -121,23 +121,31 @@ def import_v2_cv(actor, upload, title=''):
     return upload_cv(actor, upload, title, source=UserCv.Source.IMPORTED)
 
 
-def open_uploaded_cv_pdf(cv):
-    """Open an uploaded CV's original file as a PDF stream for its owner.
-
-    DOCX sources are converted on the fly. Returns None when the CV has no
-    readable source or the conversion fails.
-    """
-    if cv.cv_type != UserCv.CvType.UPLOADED or not cv.file_url:
+def _open_source_pdf(file_key, file_type):
+    """A stored CV file as a PDF stream; DOCX is converted on the fly. None if unreadable."""
+    if not file_key:
         return None
-    if cv.file_type == 'docx':
-        preview = render_office_document_preview(cv.file_url, DOCX_CONTENT_TYPE)
+    if file_type == 'docx':
+        preview = render_office_document_preview(file_key, DOCX_CONTENT_TYPE)
         return BytesIO(preview) if preview is not None else None
-    if cv.file_type != 'pdf':
+    if file_type != 'pdf':
         return None
     try:
-        return private_media_storage().open(cv.file_url, 'rb')
+        return private_media_storage().open(file_key, 'rb')
     except OSError:
         return None
+
+
+def open_uploaded_cv_pdf(cv):
+    """Open an uploaded CV's original file as a PDF stream for its owner."""
+    if cv.cv_type != UserCv.CvType.UPLOADED:
+        return None
+    return _open_source_pdf(cv.file_url, cv.file_type)
+
+
+def open_snapshot_source_pdf(version):
+    """The file submitted with an application, as a PDF stream; None for builder CVs."""
+    return _open_source_pdf(version.source_file_key, version.source_file_type)
 
 
 @transaction.atomic

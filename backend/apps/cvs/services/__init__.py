@@ -7,7 +7,7 @@ from .assets import (
     create_background_asset,
 )
 from .audit import record_application_snapshot_access
-from .completeness import application_readiness_issues
+from .completeness import application_readiness_issues, is_unsaved_builder_baseline
 from .cv_document import (
     CvDocumentRejected,
     extract_cv_text,
@@ -20,6 +20,7 @@ from .cvs import (
     duplicate_cv,
     import_v2_cv,
     import_v2_cv_from_session,
+    open_snapshot_source_pdf,
     open_uploaded_cv_pdf,
     permanently_delete_cv,
     update_cv_metadata,
@@ -118,6 +119,7 @@ __all__ = [
     'duplicate_cv',
     'import_v2_cv',
     'import_v2_cv_from_session',
+    'open_snapshot_source_pdf',
     'open_uploaded_cv_pdf',
     'permanently_delete_cv',
     'InvalidCvImport',
@@ -134,6 +136,7 @@ __all__ = [
     'application_snapshot_export',
     'record_application_snapshot_access',
     'application_readiness_issues',
+    'is_unsaved_builder_baseline',
     'create_version',
     'create_pdf_twins',
     'import_cv_documents',

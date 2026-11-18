@@ -6,6 +6,7 @@ from .api.views.cv_exports import (
     RecruiterApplicationCvExportDetailView,
     RecruiterApplicationCvExportDownloadView,
     RecruiterApplicationCvExportView,
+    RecruiterApplicationCvFileView,
 )
 from .api.views.employer import (
     EmployerApplicationAssessmentView,
@@ -129,6 +130,11 @@ urlpatterns = [
         'recruiter/applications/<str:public_id>/cv/',
         RecruiterApplicationSnapshotView.as_view(),
         name='recruiter-application-snapshot-v2',
+    ),
+    path(
+        'recruiter/applications/<str:public_id>/cv/file/',
+        RecruiterApplicationCvFileView.as_view(),
+        name='recruiter-application-cv-file-v2',
     ),
     path(
         'recruiter/applications/<str:public_id>/cv/exports/',
