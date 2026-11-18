@@ -1,6 +1,5 @@
 from time import monotonic
 
-from django.core.exceptions import ValidationError as DjangoValidationError
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import OpenApiExample, OpenApiResponse, extend_schema
 from rest_framework import generics, status
@@ -22,7 +21,6 @@ from ...selectors import (
     article_audit_events,
 )
 from ...services import (
-    KnowledgeConflict,
     KnowledgeMediaTooLarge,
     approve_revision,
     archive_article,
@@ -115,27 +113,6 @@ class PrivateNoStoreMixin:
         return response
 
 
-def _validation_detail(error):
-    return getattr(error, 'message_dict', {'detail': error.messages})
-
-
-def _run_mutation(operation):
-    try:
-        return operation()
-    except KnowledgeConflict as error:
-        data = {'code': error.code, 'detail': error.detail}
-        if error.current_revision_token is not None:
-            data['current_revision_token'] = error.current_revision_token
-        if error.open_revision is not None:
-            data['open_revision'] = {
-                'number': error.open_revision.number,
-                'status': error.open_revision.status,
-            }
-        return Response(data, status=status.HTTP_409_CONFLICT)
-    except DjangoValidationError as error:
-        raise ValidationError(_validation_detail(error)) from error
-
-
 def _category(public_id):
     return get_object_or_404(admin_categories_queryset(), public_id=public_id)
 
@@ -179,11 +156,7 @@ class AdminCategoryListCreateView(PrivateNoStoreMixin, generics.ListAPIView):
     def post(self, request):
         serializer = CategoryWriteSerializer(data=request.data, context={'creating': True})
         serializer.is_valid(raise_exception=True)
-        category = _run_mutation(
-            lambda: create_category(actor=request.user, **serializer.validated_data)
-        )
-        if isinstance(category, Response):
-            return category
+        category = create_category(actor=request.user, **serializer.validated_data)
         return _category_response(request, category, response_status=status.HTTP_201_CREATED)
 
 
@@ -202,16 +175,12 @@ class AdminCategoryDetailView(PrivateNoStoreMixin, APIView):
         serializer.is_valid(raise_exception=True)
         data = dict(serializer.validated_data)
         expected = data.pop('revision_token')
-        result = _run_mutation(
-            lambda: update_category(
-                category=_category(public_id),
-                actor=request.user,
-                expected_revision_token=expected,
-                **data,
-            )
+        result = update_category(
+            category=_category(public_id),
+            actor=request.user,
+            expected_revision_token=expected,
+            **data,
         )
-        if isinstance(result, Response):
-            return result
         return _category_response(request, result)
 
 
@@ -226,15 +195,11 @@ class AdminCategoryReorderView(PrivateNoStoreMixin, APIView):
     def post(self, request):
         serializer = ReorderSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        result = _run_mutation(
-            lambda: reorder_categories(
-                categories=list(admin_categories_queryset()),
-                ordered_public_ids=serializer.validated_data['public_ids'],
-                actor=request.user,
-            )
+        reorder_categories(
+            categories=list(admin_categories_queryset()),
+            ordered_public_ids=serializer.validated_data['public_ids'],
+            actor=request.user,
         )
-        if isinstance(result, Response):
-            return result
         return Response(AdminCategorySerializer(admin_categories_queryset(), many=True).data)
 
 
@@ -250,16 +215,12 @@ class AdminCategoryLifecycleView(PrivateNoStoreMixin, APIView):
     def post(self, request, public_id):
         serializer = TokenActionSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        result = _run_mutation(
-            lambda: set_category_active(
-                category=_category(public_id),
-                actor=request.user,
-                is_active=self.is_active,
-                expected_revision_token=serializer.validated_data['revision_token'],
-            )
+        result = set_category_active(
+            category=_category(public_id),
+            actor=request.user,
+            is_active=self.is_active,
+            expected_revision_token=serializer.validated_data['revision_token'],
         )
-        if isinstance(result, Response):
-            return result
         return _category_response(request, result)
 
 
@@ -289,11 +250,7 @@ class AdminArticleListCreateView(PrivateNoStoreMixin, generics.ListAPIView):
     def post(self, request):
         serializer = ArticleCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        result = _run_mutation(
-            lambda: create_article(actor=request.user, **serializer.validated_data)
-        )
-        if isinstance(result, Response):
-            return result
+        result = create_article(actor=request.user, **serializer.validated_data)
         article, _revision = result
         return _article_response(request, article, response_status=status.HTTP_201_CREATED)
 
@@ -327,16 +284,12 @@ class AdminArticleDetailView(PrivateNoStoreMixin, APIView):
         serializer.is_valid(raise_exception=True)
         data = dict(serializer.validated_data)
         expected = data.pop('revision_token')
-        result = _run_mutation(
-            lambda: update_article(
-                article=_article(public_id),
-                actor=request.user,
-                expected_revision_token=expected,
-                **data,
-            )
+        result = update_article(
+            article=_article(public_id),
+            actor=request.user,
+            expected_revision_token=expected,
+            **data,
         )
-        if isinstance(result, Response):
-            return result
         return _article_response(request, result)
 
 
@@ -354,15 +307,11 @@ class AdminArticleReorderView(PrivateNoStoreMixin, APIView):
         category_public_id = serializer.validated_data.get('category_public_id')
         if not category_public_id:
             raise ValidationError({'category_public_id': 'Trường này là bắt buộc.'})
-        result = _run_mutation(
-            lambda: reorder_articles(
-                category=_category(category_public_id),
-                ordered_public_ids=serializer.validated_data['public_ids'],
-                actor=request.user,
-            )
+        reorder_articles(
+            category=_category(category_public_id),
+            ordered_public_ids=serializer.validated_data['public_ids'],
+            actor=request.user,
         )
-        if isinstance(result, Response):
-            return result
         return Response(
             AdminArticleListSerializer(
                 admin_articles_queryset({'category': _category(category_public_id).slug}),
@@ -389,16 +338,12 @@ class AdminRevisionListCreateView(PrivateNoStoreMixin, APIView):
         serializer.is_valid(raise_exception=True)
         data = dict(serializer.validated_data)
         expected = data.pop('revision_token')
-        result = _run_mutation(
-            lambda: create_revision(
-                article=_article(public_id),
-                actor=request.user,
-                expected_revision_token=expected,
-                **data,
-            )
+        result = create_revision(
+            article=_article(public_id),
+            actor=request.user,
+            expected_revision_token=expected,
+            **data,
         )
-        if isinstance(result, Response):
-            return result
         article, _revision = result
         return _article_response(request, article, response_status=status.HTTP_201_CREATED)
 
@@ -422,17 +367,13 @@ class AdminRevisionDetailView(PrivateNoStoreMixin, APIView):
         serializer.is_valid(raise_exception=True)
         data = dict(serializer.validated_data)
         expected = data.pop('revision_token')
-        result = _run_mutation(
-            lambda: update_draft_revision(
-                article=_article(public_id),
-                revision_number=number,
-                actor=request.user,
-                expected_revision_token=expected,
-                **data,
-            )
+        result = update_draft_revision(
+            article=_article(public_id),
+            revision_number=number,
+            actor=request.user,
+            expected_revision_token=expected,
+            **data,
         )
-        if isinstance(result, Response):
-            return result
         article, _revision = result
         return _article_response(request, article)
 
@@ -454,17 +395,13 @@ class AdminRevisionActionView(PrivateNoStoreMixin, APIView):
             'approve': approve_revision,
             'reject': reject_revision,
         }[self.action]
-        result = _run_mutation(
-            lambda: operation(
-                article=_article(public_id),
-                revision_number=number,
-                actor=request.user,
-                expected_revision_token=serializer.validated_data['revision_token'],
-                review_note=serializer.validated_data.get('review_note', ''),
-            )
+        result = operation(
+            article=_article(public_id),
+            revision_number=number,
+            actor=request.user,
+            expected_revision_token=serializer.validated_data['revision_token'],
+            review_note=serializer.validated_data.get('review_note', ''),
         )
-        if isinstance(result, Response):
-            return result
         article, _revision = result
         return _article_response(request, article)
 
@@ -492,17 +429,13 @@ class AdminArticlePublishView(PrivateNoStoreMixin, APIView):
     def post(self, request, public_id):
         serializer = PublishSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        result = _run_mutation(
-            lambda: publish_revision(
-                article=_article(public_id),
-                actor=request.user,
-                expected_revision_token=serializer.validated_data['revision_token'],
-                revision_number=serializer.validated_data['revision_number'],
-                review_due_at=serializer.validated_data.get('review_due_at'),
-            )
+        result = publish_revision(
+            article=_article(public_id),
+            actor=request.user,
+            expected_revision_token=serializer.validated_data['revision_token'],
+            revision_number=serializer.validated_data['revision_number'],
+            review_due_at=serializer.validated_data.get('review_due_at'),
         )
-        if isinstance(result, Response):
-            return result
         return _article_response(request, result)
 
 
@@ -519,15 +452,11 @@ class AdminArticleLifecycleView(PrivateNoStoreMixin, APIView):
         serializer = TokenActionSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         operation = archive_article if self.lifecycle_action == 'archive' else restore_article
-        result = _run_mutation(
-            lambda: operation(
-                article=_article(public_id),
-                actor=request.user,
-                expected_revision_token=serializer.validated_data['revision_token'],
-            )
+        result = operation(
+            article=_article(public_id),
+            actor=request.user,
+            expected_revision_token=serializer.validated_data['revision_token'],
         )
-        if isinstance(result, Response):
-            return result
         return _article_response(request, result)
 
 
@@ -565,8 +494,6 @@ class AdminMediaListCreateView(PrivateNoStoreMixin, generics.ListAPIView):
             )
         except KnowledgeMediaTooLarge as error:
             return Response({'file': [str(error)]}, status=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE)
-        except DjangoValidationError as error:
-            raise ValidationError(_validation_detail(error)) from error
         return Response(
             MediaSerializer(asset, context={'request': request}).data,
             status=status.HTTP_201_CREATED,

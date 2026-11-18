@@ -1,5 +1,4 @@
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db.models import Count
 from drf_spectacular.utils import extend_schema
 from rest_framework import mixins, permissions, status, viewsets
@@ -79,18 +78,9 @@ from ..serializers.admin_account_resources import (
 )
 
 
-def _call(service, **kwargs):
-    try:
-        return service(**kwargs)
-    except DjangoValidationError as error:
-        raise ValidationError(
-            error.message_dict if hasattr(error, 'message_dict') else error.messages
-        ) from error
-
-
 def _confirmed_call(service, **kwargs):
     try:
-        return _call(service, **kwargs)
+        return service(**kwargs)
     except InvalidImpactToken as error:
         raise ValidationError({'impact_token': str(error)}) from error
     except StaleImpactToken as error:
@@ -173,8 +163,7 @@ class AdminAccountViewSet(
         user = self.get_object()
         serializer = ManagedAccountUpdateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        user = _call(
-            update_account_profile,
+        user = update_account_profile(
             user=user,
             actor=request.user,
             **serializer.validated_data,
@@ -190,8 +179,7 @@ class AdminAccountViewSet(
         if request.method == 'PATCH':
             serializer = AdminAccountProfileUpdateSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
-            user = _call(
-                update_managed_account_profile,
+            user = update_managed_account_profile(
                 user=user,
                 actor=request.user,
                 changes=serializer.validated_data,
@@ -319,8 +307,7 @@ class AdminAccountViewSet(
             context={'target': user},
         )
         serializer.is_valid(raise_exception=True)
-        _call(
-            ensure_account_status_change_allowed,
+        ensure_account_status_change_allowed(
             actor=request.user,
             user=user,
             status=serializer.validated_data['status'],
@@ -358,8 +345,7 @@ class AdminAccountViewSet(
         serializer = AccountResourceHoldImpactSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = self.get_object()
-        _call(
-            ensure_account_write_allowed,
+        ensure_account_write_allowed(
             actor=request.user,
             user=user,
         )
@@ -389,8 +375,7 @@ class AdminAccountViewSet(
         serializer = ReasonSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = self.get_object()
-        _call(
-            ensure_account_write_allowed,
+        ensure_account_write_allowed(
             actor=request.user,
             user=user,
         )
@@ -416,8 +401,7 @@ class AdminAccountViewSet(
             context={'target_user': user},
         )
         serializer.is_valid(raise_exception=True)
-        _call(
-            ensure_account_recovery_allowed,
+        ensure_account_recovery_allowed(
             actor=request.user,
             user=user,
         )
@@ -444,8 +428,7 @@ class AdminAccountViewSet(
     def send_password_reset(self, request, public_id=None):
         serializer = ReasonSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        _call(
-            queue_account_security_email,
+        queue_account_security_email(
             user=self.get_object(),
             kind=AuthEmailJob.Kind.PASSWORD_RESET,
             actor=request.user,
@@ -455,8 +438,7 @@ class AdminAccountViewSet(
 
     @action(detail=True, methods=['post'], url_path='resend-verification')
     def resend_verification(self, request, public_id=None):
-        _call(
-            queue_account_security_email,
+        queue_account_security_email(
             user=self.get_object(),
             kind=AuthEmailJob.Kind.VERIFICATION,
             actor=request.user,
@@ -542,8 +524,7 @@ class AdminInvitationViewSet(
     def create(self, request, *args, **kwargs):
         serializer = AdminInvitationCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        invitation = _call(
-            create_admin_invitation,
+        invitation = create_admin_invitation(
             actor=request.user,
             **serializer.validated_data,
         )
@@ -554,8 +535,7 @@ class AdminInvitationViewSet(
 
     @action(detail=True, methods=['post'])
     def resend(self, request, public_id=None):
-        invitation = _call(
-            resend_admin_invitation,
+        invitation = resend_admin_invitation(
             invitation=self.get_object(),
             actor=request.user,
         )
@@ -565,8 +545,7 @@ class AdminInvitationViewSet(
     def revoke(self, request, public_id=None):
         serializer = ReasonSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        invitation = _call(
-            revoke_admin_invitation,
+        invitation = revoke_admin_invitation(
             invitation=self.get_object(),
             actor=request.user,
             **serializer.validated_data,
@@ -600,8 +579,7 @@ class AdminInvitationAcceptView(APIView):
         serializer = AdminInvitationAcceptSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         try:
-            user = _call(
-                accept_admin_invitation,
+            user = accept_admin_invitation(
                 **serializer.validated_data,
             )
         except InvalidAdminInvitationToken as error:

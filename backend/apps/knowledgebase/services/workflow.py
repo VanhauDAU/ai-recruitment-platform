@@ -6,6 +6,7 @@ from django.db.models import Max
 from django.utils import timezone
 
 from apps.accounts.services import record_admin_action
+from common.api.exceptions import DomainError
 from common.db.search import fold_accents
 
 from ..models import KnowledgeArticle, KnowledgeArticleRevision, KnowledgeCategory
@@ -13,13 +14,26 @@ from .cache import invalidate_knowledge_public_cache
 from .content import normalize_revision_content
 
 
-class KnowledgeConflict(Exception):
+class KnowledgeConflict(DomainError):
+    status_code = 409
+
     def __init__(self, code, detail, *, current_revision_token=None, open_revision=None):
         self.code = code
         self.detail = detail
         self.current_revision_token = current_revision_token
         self.open_revision = open_revision
         super().__init__(detail)
+
+    def payload(self):
+        data = {'code': self.code, 'detail': self.detail}
+        if self.current_revision_token is not None:
+            data['current_revision_token'] = self.current_revision_token
+        if self.open_revision is not None:
+            data['open_revision'] = {
+                'number': self.open_revision.number,
+                'status': self.open_revision.status,
+            }
+        return data
 
 
 def _record(*, actor, action, target, payload=None):

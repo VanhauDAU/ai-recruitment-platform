@@ -15,6 +15,7 @@ from django.utils import timezone
 from apps.accounts.models import User
 from apps.accounts.services import record_admin_action
 from apps.privacy.domain import VIEWER_SIGNING_SALT
+from common.api.exceptions import DomainError
 from common.metrics import record_metric
 from common.vietnam_time import vietnam_now, vietnam_today
 
@@ -28,10 +29,20 @@ from ..models import (
 HEX_COLOR_RE = re.compile(r'^#[0-9A-Fa-f]{6}$')
 
 
-class StaleAnnouncementRevision(Exception):
+class StaleAnnouncementRevision(DomainError):
+    status_code = 409
+    code = 'announcement_revision_stale'
+
     def __init__(self, current_revision_token):
         self.current_revision_token = current_revision_token
         super().__init__('Announcement revision token is stale.')
+
+    def payload(self):
+        return {
+            'code': self.code,
+            'detail': 'Thông báo đã được thay đổi. Hãy tải lại và kiểm tra trước khi tiếp tục.',
+            'current_revision_token': self.current_revision_token,
+        }
 
 
 class StaleAnnouncementState(Exception):

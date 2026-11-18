@@ -1,7 +1,6 @@
 from datetime import timedelta
 from time import monotonic
 
-from django.core.exceptions import ValidationError as DjangoValidationError
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import OpenApiResponse, OpenApiTypes, extend_schema, extend_schema_view
 from rest_framework import generics, permissions, status
@@ -27,7 +26,6 @@ from ...selectors import (
     remote_announcements_enabled,
 )
 from ...services import (
-    StaleAnnouncementRevision,
     StaleAnnouncementState,
     archive_announcement,
     create_announcement,
@@ -77,28 +75,6 @@ class FailOpenAnnouncementThrottle(ScopedRateThrottle):
                 scope=getattr(view, 'throttle_scope', 'unknown'),
             )
             return True
-
-
-def _validation_detail(error):
-    return getattr(error, 'message_dict', {'detail': error.messages})
-
-
-def _run_mutation(operation):
-    try:
-        return operation()
-    except StaleAnnouncementRevision as error:
-        return Response(
-            {
-                'code': 'announcement_revision_stale',
-                'detail': (
-                    'Thông báo đã được thay đổi. Hãy tải lại và kiểm tra trước khi tiếp tục.'
-                ),
-                'current_revision_token': error.current_revision_token,
-            },
-            status=status.HTTP_409_CONFLICT,
-        )
-    except DjangoValidationError as error:
-        raise ValidationError(_validation_detail(error)) from error
 
 
 def _announcement(request, public_id):
@@ -210,8 +186,6 @@ class AnnouncementStateView(APIView):
                 },
                 status=status.HTTP_409_CONFLICT,
             )
-        except DjangoValidationError as error:
-            raise ValidationError(_validation_detail(error)) from error
         return Response(
             AnnouncementUserStateSerializer(
                 {
@@ -328,15 +302,11 @@ class AdminAnnouncementListCreateView(generics.ListAPIView):
     def post(self, request):
         serializer = AnnouncementCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        result = _run_mutation(
-            lambda: create_announcement(
-                actor=request.user,
-                internal_name=serializer.validated_data['internal_name'],
-                revision_data=serializer.validated_data['revision'],
-            )
+        result = create_announcement(
+            actor=request.user,
+            internal_name=serializer.validated_data['internal_name'],
+            revision_data=serializer.validated_data['revision'],
         )
-        if isinstance(result, Response):
-            return result
         return _detail_response(request, result, response_status=status.HTTP_201_CREATED)
 
 
@@ -372,16 +342,12 @@ class AdminAnnouncementDetailView(APIView):
         announcement = _announcement(request, public_id)
         serializer = AnnouncementRenameSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        result = _run_mutation(
-            lambda: rename_announcement(
-                announcement=announcement,
-                actor=request.user,
-                internal_name=serializer.validated_data['internal_name'],
-                expected_revision_token=serializer.validated_data['revision_token'],
-            )
+        result = rename_announcement(
+            announcement=announcement,
+            actor=request.user,
+            internal_name=serializer.validated_data['internal_name'],
+            expected_revision_token=serializer.validated_data['revision_token'],
         )
-        if isinstance(result, Response):
-            return result
         return _detail_response(request, result)
 
 
@@ -398,16 +364,12 @@ class AdminAnnouncementRevisionCreateView(APIView):
         announcement = _announcement(request, public_id)
         serializer = AnnouncementRevisionCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        result = _run_mutation(
-            lambda: create_announcement_revision(
-                announcement=announcement,
-                actor=request.user,
-                revision_data=serializer.validated_data['revision'],
-                expected_revision_token=serializer.validated_data['revision_token'],
-            )
+        result = create_announcement_revision(
+            announcement=announcement,
+            actor=request.user,
+            revision_data=serializer.validated_data['revision'],
+            expected_revision_token=serializer.validated_data['revision_token'],
         )
-        if isinstance(result, Response):
-            return result
         updated, _ = result
         return _detail_response(request, updated, response_status=status.HTTP_201_CREATED)
 
@@ -456,9 +418,7 @@ class AdminAnnouncementActionView(APIView):
         }
         if self.announcement_action == 'publish' and 'revision' not in validated:
             raise ValidationError({'revision': 'Chọn revision cần phát hành.'})
-        result = _run_mutation(operations[self.announcement_action])
-        if isinstance(result, Response):
-            return result
+        result = operations[self.announcement_action]()
         return _detail_response(request, result)
 
 
@@ -495,16 +455,12 @@ class AdminAnnouncementDuplicateView(APIView):
         announcement = _announcement(request, public_id)
         serializer = AnnouncementDuplicateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        result = _run_mutation(
-            lambda: duplicate_announcement(
-                announcement=announcement,
-                actor=request.user,
-                internal_name=serializer.validated_data['internal_name'],
-                expected_revision_token=serializer.validated_data['revision_token'],
-            )
+        result = duplicate_announcement(
+            announcement=announcement,
+            actor=request.user,
+            internal_name=serializer.validated_data['internal_name'],
+            expected_revision_token=serializer.validated_data['revision_token'],
         )
-        if isinstance(result, Response):
-            return result
         return _detail_response(request, result, response_status=status.HTTP_201_CREATED)
 
 

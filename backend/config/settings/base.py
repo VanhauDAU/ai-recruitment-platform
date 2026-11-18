@@ -374,6 +374,7 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_PERMISSION_CLASSES': ('rest_framework.permissions.IsAuthenticated',),
     'DEFAULT_PAGINATION_CLASS': 'common.api.pagination.StandardPagination',
+    'EXCEPTION_HANDLER': 'common.api.exceptions.api_exception_handler',
     'PAGE_SIZE': 20,
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     # Phòng thủ lớp hai cho các throttle chưa dùng ClientIPScopedRateThrottle:

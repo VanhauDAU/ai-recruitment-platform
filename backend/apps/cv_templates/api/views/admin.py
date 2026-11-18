@@ -72,15 +72,6 @@ from ..serializers.admin import (
 )
 
 
-def _call(service, **kwargs):
-    try:
-        return service(**kwargs)
-    except DjangoValidationError as error:
-        raise ValidationError(
-            error.message_dict if hasattr(error, 'message_dict') else error.messages
-        ) from error
-
-
 class AdminModelViewSet(viewsets.ModelViewSet):
     permission_classes = [AdminPortalPermission]
     pagination_class = None
@@ -105,8 +96,7 @@ class AdminCvTemplateViewSet(AdminModelViewSet):
         with transaction.atomic():
             template = serializer.save()
             if layout.validated_data.get('renderer_key'):
-                _call(
-                    start_template,
+                start_template(
                     template=template,
                     renderer_key=layout.validated_data['renderer_key'],
                     actor=request.user,
@@ -120,8 +110,7 @@ class AdminCvTemplateViewSet(AdminModelViewSet):
     def create_version(self, request, public_id=None):
         layout = TemplateLayoutSerializer(data=request.data)
         layout.is_valid(raise_exception=True)
-        version = _call(
-            create_draft_version,
+        version = create_draft_version(
             template=self.get_object(),
             renderer_key=layout.validated_data.get('renderer_key'),
             actor=request.user,
@@ -150,9 +139,7 @@ class AdminCvTemplateViewSet(AdminModelViewSet):
         ]
         if failing:
             raise ValidationError({'checklist': failing})
-        version = _call(
-            publish_template_version, template=template, version=draft, actor=request.user
-        )
+        version = publish_template_version(template=template, version=draft, actor=request.user)
         enqueue_template_snapshots(template)
         return Response(CvTemplateVersionAdminSerializer(version).data)
 
@@ -162,8 +149,7 @@ class AdminCvTemplateViewSet(AdminModelViewSet):
         template = self.get_object()
         serializer = TemplateVersionConfigSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        version = _call(
-            configure_version,
+        version = configure_version(
             version=self._version(template, version_pk),
             **serializer.validated_data,
         )
@@ -176,8 +162,7 @@ class AdminCvTemplateViewSet(AdminModelViewSet):
     def set_colors(self, request, public_id=None):
         serializer = TemplateColorsSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        template = _call(
-            set_template_colors,
+        template = set_template_colors(
             template=self.get_object(),
             color_public_ids=serializer.validated_data['color_public_ids'],
             default_public_id=serializer.validated_data['default_color_public_id'],
@@ -240,7 +225,7 @@ class AdminCvTemplateViewSet(AdminModelViewSet):
 
     @action(detail=True, methods=['post'])
     def duplicate(self, request, public_id=None):
-        template = _call(duplicate_template, template=self.get_object(), actor=request.user)
+        template = duplicate_template(template=self.get_object(), actor=request.user)
         return Response(
             self.get_serializer(self.get_queryset().get(pk=template.pk)).data,
             status=status.HTTP_201_CREATED,
@@ -251,14 +236,13 @@ class AdminCvTemplateViewSet(AdminModelViewSet):
         public_ids = request.data.get('public_ids')
         if not isinstance(public_ids, list) or not public_ids:
             raise ValidationError({'public_ids': 'Gửi danh sách mã template theo thứ tự.'})
-        _call(reorder_templates, public_ids=public_ids)
+        reorder_templates(public_ids=public_ids)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=True, methods=['post'])
     def lifecycle(self, request, public_id=None):
         """Ẩn (lưu trữ) hoặc hiện lại template đã có phiên bản xuất bản."""
-        template = _call(
-            set_template_visibility,
+        template = set_template_visibility(
             template=self.get_object(),
             visible=request.data.get('status') == CvTemplate.LifecycleStatus.PUBLISHED,
         )
@@ -267,8 +251,8 @@ class AdminCvTemplateViewSet(AdminModelViewSet):
     @action(detail=True, methods=['post'], url_path=r'versions/(?P<version_pk>\d+)/retire')
     def retire_version(self, request, public_id=None, version_pk=None):
         template = self.get_object()
-        version = _call(
-            retire_template_version, template=template, version=self._version(template, version_pk)
+        version = retire_template_version(
+            template=template, version=self._version(template, version_pk)
         )
         return Response(CvTemplateVersionAdminSerializer(version).data)
 
@@ -422,13 +406,13 @@ class AdminCvSampleContentViewSet(AdminModelViewSet):
 
     @action(detail=True, methods=['post'])
     def publish(self, request, public_id=None):
-        sample = _call(publish_sample, sample=self.get_object(), actor=request.user)
+        sample = publish_sample(sample=self.get_object(), actor=request.user)
         regenerate_all_template_snapshots.delay()
         return Response(self.get_serializer(sample).data)
 
     @action(detail=True, methods=['post'])
     def archive(self, request, public_id=None):
-        sample = _call(archive_sample, sample=self.get_object())
+        sample = archive_sample(sample=self.get_object())
         return Response(self.get_serializer(sample).data)
 
 
@@ -502,7 +486,7 @@ class AdminCvPositionViewSet(AdminModelViewSet):
 
     @action(detail=False, methods=['post'], url_path='import')
     def import_positions(self, request):
-        result = _call(import_positions, payload=request.data, actor=request.user)
+        result = import_positions(payload=request.data, actor=request.user)
         return Response(result, status=status.HTTP_201_CREATED)
 
 
