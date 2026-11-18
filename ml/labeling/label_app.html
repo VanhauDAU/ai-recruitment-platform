@@ -336,10 +336,22 @@ document.addEventListener('keydown', (event) => {
   else if (event.key === 'ArrowRight') load(state.index + 1);
 });
 
+const SERVER_HINT =
+  'Trang này cần máy chủ chấm. Chạy lệnh ml/.venv/bin/python ml/scripts/label_server.py ' +
+  'rồi mở http://127.0.0.1:8765 (không mở tệp label_app.html trực tiếp).';
+
 (async () => {
-  await refreshPairs();
-  const first = nextOpen(-1);
-  await load(first >= 0 ? first : 0);
+  try {
+    if (location.protocol === 'file:') throw new Error('file');
+    await refreshPairs();
+    const first = nextOpen(-1);
+    await load(first >= 0 ? first : 0);
+  } catch {
+    $('banner').textContent = SERVER_HINT;
+    $('banner').style.display = 'block';
+    document.querySelector('main').style.display = 'none';
+    document.querySelector('footer').style.display = 'none';
+  }
 })();
 </script>
 </body>
