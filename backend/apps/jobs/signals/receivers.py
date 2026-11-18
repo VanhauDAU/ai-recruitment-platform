@@ -1,7 +1,7 @@
 from django.dispatch import receiver
 
-from apps.employers.models import RecruitmentCampaign
-from apps.employers.signals import campaign_status_changed
+from apps.campaigns.models import RecruitmentCampaign
+from apps.campaigns.signals import campaign_status_changed
 from apps.jobs.services import close_campaign_jobs
 
 

@@ -5,9 +5,12 @@ from rest_framework.views import APIView
 
 from apps.accounts.api.permissions import IsEmployer
 from apps.accounts.api.serializers import SessionUserSerializer
-from apps.accounts.services import queue_verification_email, verify_request_captcha
-from apps.accounts.services.refresh_cookies import set_refresh_cookie
-from apps.accounts.services.tokens import issue_tokens
+from apps.accounts.services import (
+    issue_tokens,
+    queue_verification_email,
+    set_refresh_cookie,
+    verify_request_captcha,
+)
 from common.api.throttling import ClientIPScopedRateThrottle
 
 from ...services.registration import complete_registration_profile, register_employer

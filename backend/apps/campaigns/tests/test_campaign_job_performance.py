@@ -3,11 +3,11 @@ from django.test import TestCase
 from django.urls import reverse
 from rest_framework.test import APIClient
 
+from apps.campaigns.models import RecruitmentCampaign
+from apps.employers.models import Company
+from apps.employers.tests.readiness_helpers import make_employer_ready
 from apps.jobs.models import Job
 from apps.jobs.tests.helpers import open_visibility_window
-
-from ..models import Company, RecruitmentCampaign
-from .readiness_helpers import make_employer_ready
 
 
 class CampaignJobPerformanceTests(TestCase):

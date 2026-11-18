@@ -16,7 +16,7 @@ from django.core.files.storage import default_storage
 from django.db import transaction
 from django.utils import timezone
 
-from apps.cv_templates.domain.renderers import validate_renderer_contract
+from apps.cv_templates.domain import validate_renderer_contract
 
 from ..models import CvAccessLog, CvExport, CvVersion, UserCv
 from .audit import record_cv_access

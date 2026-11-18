@@ -13,12 +13,9 @@ from django.db.models import Q
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
-from apps.employers.models import (
-    CampaignActivity,
-    EmployerNotification,
-    RecruitmentCampaign,
-)
-from apps.employers.services import emit_employer_event, record_campaign_activity
+from apps.campaigns.models import CampaignActivity, RecruitmentCampaign
+from apps.employers.models import EmployerNotification
+from apps.employers.services import emit_employer_event
 
 from ..models import CampaignChannel, ScheduledSocialPost, SocialAccountConnection
 from .content import render_content
@@ -200,7 +197,7 @@ def _mark_published(post, published):
         channel.posted_at = now
         channel.posted_url = channel.posted_url or published.permalink
         channel.save(update_fields=['posted_at', 'posted_url', 'updated_at'])
-    record_campaign_activity(
+    CampaignActivity.objects.record(
         campaign=channel.campaign,
         event_type=CampaignActivity.EventType.SOCIAL_POST_PUBLISHED,
         group=CampaignActivity.Group.CAMPAIGN,
@@ -281,7 +278,7 @@ def _delete_remote(post):
     post.status = Post.Status.DELETED
     post.deleted_at = timezone.now()
     post.save(update_fields=['status', 'deleted_at', 'updated_at'])
-    record_campaign_activity(
+    CampaignActivity.objects.record(
         campaign=campaign,
         event_type=CampaignActivity.EventType.SOCIAL_POST_DELETED,
         group=CampaignActivity.Group.CAMPAIGN,

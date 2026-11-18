@@ -14,9 +14,9 @@ from uuid import uuid4
 from django.core.cache import cache
 from django.db import transaction
 
+from apps.cv_templates.models.content_schema import empty_content
+from apps.cv_templates.services.composition import compose_cv_document
 from apps.cv_templates.services.demo_identity import with_demo_identity
-from apps.cvs.schemas import empty_content
-from apps.cvs.services.composition import compose_cv_document
 from apps.jobs.models import JobCategory
 
 from .position_content import resolve_position_content

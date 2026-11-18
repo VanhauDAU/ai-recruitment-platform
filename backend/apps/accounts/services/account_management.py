@@ -14,8 +14,9 @@ from apps.accounts.services.admin_invitation_tokens import (
 )
 from apps.accounts.services.exceptions import AdminPermissionDenied
 from apps.applications.models import Application
+from apps.campaigns.models import CampaignActivity, RecruitmentCampaign
 from apps.candidates.models import CandidateProfile
-from apps.employers.models import CampaignActivity, RecruiterProfile, RecruitmentCampaign
+from apps.employers.models import RecruiterProfile
 from apps.jobs.models import Job, give_back_hidden_time
 from apps.locations.models import Location
 

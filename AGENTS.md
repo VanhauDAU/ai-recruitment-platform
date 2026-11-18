@@ -97,9 +97,11 @@ app trong `backend/apps/` theo đúng một layout:
 - `services/` (ghi) và `selectors/` (đọc) KHÔNG import máy móc HTTP của DRF
   (serializers/views/generics/viewsets/response). Được phép:
   `rest_framework.exceptions`, `rest_framework_simplejwt`.
-- Cross-app: chỉ import `apps.X.models`, `apps.X.services`, `apps.X.selectors`
-  (cấp package), `apps.X.signals` và `apps.accounts.api.permissions`; không
-  deep-import nội bộ. `common/` không biết domain, không import `apps`.
+- Cross-app: chỉ import cấp package `apps.X.{models,domain,services,selectors,signals}`,
+  `apps.accounts.api.permissions`, và từ tầng `api` thì thêm
+  `apps.X.api.serializers` (serializer lồng); không deep-import module nội bộ.
+  Thao tác thuần trên một bản ghi đặt ở method/manager của model để tránh vòng
+  giữa các package services. `common/` không biết domain, không import `apps`.
 - Endpoint list phải giữ số query phẳng theo số bản ghi — xem
   `apps/<app>/tests/test_query_budget.py`; tăng budget phải kèm giải thích trong PR.
 - API view mới bắt buộc có `@extend_schema`; cổng OpenAPI chặn warning.

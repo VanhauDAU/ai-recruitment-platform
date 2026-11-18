@@ -87,16 +87,26 @@ Chéo app — app A chỉ được import từ app B:
 
 | Được import | Ghi chú |
 | --- | --- |
-| `apps.B.models` | model, choices, QuerySet |
+| `apps.B.models` | chỉ cấp package — model, choices, QuerySet, validate gắn với model |
+| `apps.B.domain` | chỉ cấp package — định nghĩa thuần (registry, hằng số) |
 | `apps.B.services` | chỉ cấp package — hàm được re-export ở `services/__init__.py` |
 | `apps.B.selectors` | chỉ cấp package — hàm được re-export ở `selectors/__init__.py` |
 | `apps.B.signals` | chỉ khai báo Signal |
+| `apps.B.api.serializers` | chỉ cấp package, chỉ từ tầng `api` của A — serializer lồng (ví dụ CV trong hồ sơ ứng tuyển) |
 | `apps.accounts.api.permissions` | lớp permission dùng chung toàn hệ thống |
 
 - `common/` là hạ tầng không biết domain, dùng bởi ít nhất hai app; không import
   `apps`. Code chỉ một app dùng thì đặt trong app đó.
-- `cvs` phụ thuộc một chiều vào `cv_templates` ("engine tài liệu CV": schema nội
-  dung, section, renderer); `cv_templates` không import `cvs`.
+- `cv_templates` là "engine tài liệu CV": schema nội dung
+  (`models/content_schema.py`), section/layout/renderer (`domain/`), ghép document
+  (`services/composition.py`) và in PDF (`services/printing.py`, engine Chromium
+  ở `common/pdf/browser.py`). `cvs` (CV của người dùng) gọi services của
+  `cv_templates`; `cv_templates` chỉ đọc **model** `cvs.CvAsset` (ảnh nền
+  catalogue đang lưu chung bảng với avatar) và không gọi services của `cvs`.
+- Thao tác thuần trên một bản ghi là method/manager của model, không phải
+  service, để app khác dùng mà không tạo vòng giữa các package services — ví dụ
+  `CampaignActivity.objects.record(...)`, `RecruitmentCampaign.active_seconds()`,
+  `CvAsset.storage()`.
 
 ### 3. URL theo cổng
 
@@ -141,9 +151,9 @@ Một phiên bản API duy nhất, không tiền tố version:
 | import chéo app, module gốc app | `scripts/check_backend_imports.py` |
 | schema OpenAPI hợp lệ, khớp `docs/04-api/openapi.yaml` | `scripts/check_openapi_schema.sh` |
 
-Cả bốn chạy trong `backend-ci.yml` và `scripts/check_all.sh`. Trong lúc chuyển
-đổi, `check_backend_imports.py` đọc baseline `backend/import-baseline.txt`; vi
-phạm mới làm fail CI, vi phạm cũ phải giảm dần và baseline bị xóa khi về 0.
+Cả bốn chạy trong `backend-ci.yml` và `scripts/check_all.sh`. Trong GĐ0–GĐ1,
+`check_backend_imports.py` dùng baseline chỉ được giảm (148 → 33 mục); GĐ2 đưa
+về 0 và gỡ baseline, từ đó mọi vi phạm làm fail CI.
 
 ## Lộ trình
 
@@ -153,7 +163,7 @@ phạm mới làm fail CI, vi phạm cũ phải giảm dần và baseline bị x
 | --- | --- |
 | 0 | ADR này, cổng kiểm tra import/OpenAPI, tách `requirements-dev.txt`, settings an toàn |
 | 1 | Chuẩn hóa bố cục từng app và `common/` (chỉ di chuyển); tên module/lớp `v2` đổi ở GĐ4 cùng URL |
-| 2 | Ranh giới domain: chuyển model chiến dịch sang `campaigns`, phá vòng `cvs ↔ cv_templates`, baseline import về 0 |
+| 2 | Ranh giới domain: chuyển model chiến dịch sang `campaigns` (migration chỉ đổi state), phá vòng `cvs ↔ cv_templates`, bỏ lazy export của accounts, baseline import về 0 rồi gỡ |
 | 3 | Tầng API: exception handler, nghiệp vụ ra khỏi view/serializer, phân trang, `@extend_schema` |
 | 4 | URL theo cổng (backend + frontend cùng PR) |
 | 5 | Tách file lớn, gộp code trùng, gỡ legacy và lệnh chạy một lần |

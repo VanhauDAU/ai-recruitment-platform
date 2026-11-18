@@ -227,7 +227,7 @@ class Job(models.Model):
     )
     company = models.ForeignKey('employers.Company', on_delete=models.CASCADE, related_name='jobs')
     campaign = models.ForeignKey(
-        'employers.RecruitmentCampaign',
+        'campaigns.RecruitmentCampaign',
         on_delete=models.SET_NULL,
         null=True,
         blank=True,

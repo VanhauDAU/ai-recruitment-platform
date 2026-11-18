@@ -17,7 +17,7 @@ class CampaignHealthSnapshot(models.Model):
         NO_TARGET = 'no_target', 'Chưa có chỉ tiêu'
 
     campaign = models.ForeignKey(
-        'employers.RecruitmentCampaign', on_delete=models.CASCADE, related_name='health_snapshots'
+        'campaigns.RecruitmentCampaign', on_delete=models.CASCADE, related_name='health_snapshots'
     )
     date = models.DateField()
     status = models.CharField(max_length=20, choices=Status.choices)
@@ -39,7 +39,7 @@ class CampaignReportDelivery(models.Model):
     """One weekly report email per campaign and week, so reruns never send twice."""
 
     campaign = models.ForeignKey(
-        'employers.RecruitmentCampaign', on_delete=models.CASCADE, related_name='report_deliveries'
+        'campaigns.RecruitmentCampaign', on_delete=models.CASCADE, related_name='report_deliveries'
     )
     week_start = models.DateField()
     sent_at = models.DateTimeField(auto_now_add=True)

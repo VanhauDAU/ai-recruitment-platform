@@ -8,11 +8,12 @@ from django.db import close_old_connections
 from django.test import TestCase, TransactionTestCase, override_settings
 from django.utils import timezone
 
+from apps.campaigns.models import RecruitmentCampaign
 from apps.candidates.models import CandidateNotification
 from apps.candidates.services import release_due_candidate_notifications
 from apps.cvs.models import CvVersion, UserCv
 from apps.cvs.services import create_initial_document
-from apps.employers.models import Company, RecruitmentCampaign
+from apps.employers.models import Company
 from apps.employers.tests.readiness_helpers import make_employer_ready
 from apps.jobs.models import Job
 from apps.jobs.tests.helpers import open_visibility_window

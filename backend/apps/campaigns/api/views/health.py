@@ -3,8 +3,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.throttling import UserRateThrottle
 
-from apps.cvs.services.pdf_renderer import PdfRenderingError
-from apps.employers.services import campaign_active_seconds
+from common.pdf.browser import PdfRenderingError
 
 from ...models import CampaignHealthSnapshot
 from ...selectors import campaign_channel_report, daily_applications, report_jobs
@@ -66,7 +65,7 @@ class CampaignReportExportView(CampaignScopedView):
         report = {
             'campaign': campaign,
             'period': _period(campaign),
-            'active_days': round(campaign_active_seconds(campaign) / 86400, 1),
+            'active_days': round(campaign.active_seconds() / 86400, 1),
             'health': campaign_health(campaign),
             'channels': campaign_channel_report(campaign),
             'daily': daily_applications(campaign),

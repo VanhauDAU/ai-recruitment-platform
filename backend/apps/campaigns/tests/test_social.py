@@ -10,7 +10,8 @@ from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 from rest_framework.test import APIClient
 
-from apps.employers.models import EmployerNotification, RecruitmentCampaign
+from apps.campaigns.models import RecruitmentCampaign
+from apps.employers.models import EmployerNotification
 from apps.employers.tests.readiness_helpers import make_employer_ready
 from apps.jobs.tests import test_posting_workflows
 from common.vietnam_time import vietnam_today

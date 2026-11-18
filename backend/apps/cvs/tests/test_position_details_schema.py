@@ -3,7 +3,7 @@
 from django.core.exceptions import ValidationError
 from django.test import SimpleTestCase
 
-from ..schemas import empty_content, empty_layout, empty_style, validate_cv_document
+from apps.cv_templates.models import empty_content, empty_layout, empty_style, validate_cv_document
 
 
 def detail(field_type, value, **extra):

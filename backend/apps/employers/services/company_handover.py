@@ -10,6 +10,7 @@ from django.db import transaction
 from django.db.models import Q
 from rest_framework.exceptions import NotFound, PermissionDenied, ValidationError
 
+from apps.campaigns.models import RecruitmentCampaign
 from apps.jobs.models import Job
 
 from ..models import (
@@ -17,7 +18,6 @@ from ..models import (
     EmployerComplianceHold,
     EmployerNotification,
     RecruiterProfile,
-    RecruitmentCampaign,
 )
 from ..models.representation import eligible_representatives_queryset
 from .company_membership import company_owners

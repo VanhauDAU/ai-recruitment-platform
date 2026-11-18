@@ -11,7 +11,8 @@ from django.urls import reverse
 from django.utils import timezone
 from rest_framework.test import APIClient, APITestCase
 
-from apps.accounts.services.tokens import issue_tokens
+from apps.accounts.services import issue_tokens
+from apps.campaigns.models import CampaignActivity, RecruitmentCampaign
 from apps.cv_templates.tests.factories import fill_cv_for_application, make_published_template
 from apps.cvs.models import CvAsset, CvVersion
 from apps.cvs.services import (
@@ -20,13 +21,7 @@ from apps.cvs.services import (
     save_draft_as_version,
     update_draft,
 )
-from apps.employers.models import (
-    CampaignActivity,
-    Company,
-    EmployerNotification,
-    RecruiterProfile,
-    RecruitmentCampaign,
-)
+from apps.employers.models import Company, EmployerNotification, RecruiterProfile
 from apps.employers.tests.readiness_helpers import make_employer_ready
 from apps.jobs.models import Job, JobLocation
 from apps.jobs.tests.helpers import open_visibility_window
@@ -184,7 +179,7 @@ class RecruiterApplicationSnapshotV2Tests(APITestCase):
         self.owner_profile.save(update_fields=['dpa_accepted_at', 'updated_at'])
         storage = Mock()
         storage.open.return_value = BytesIO(b'png')
-        with patch('apps.cvs.api.views.v2.cv_asset_storage', return_value=storage):
+        with patch('apps.cvs.models.CvAsset.storage', return_value=storage):
             allowed = self.client.get(content_url)
         self.assertEqual(allowed.status_code, 200)
 

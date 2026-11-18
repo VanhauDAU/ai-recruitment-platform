@@ -5,11 +5,11 @@ from django.utils import timezone
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
-from apps.cvs.api.serializers.v2 import CvVersionSerializer
+from apps.cvs.api.serializers import CvVersionSerializer
 from apps.cvs.models import CvVersion, UserCv
 from apps.cvs.services import application_readiness_issues, is_unsaved_builder_baseline
 from apps.jobs.models import Job
-from apps.jobs.selectors.listing import publicly_available_job_filter
+from apps.jobs.selectors import publicly_available_job_filter
 from apps.locations.models import Location
 from common.storage.media import media_url_from_value
 

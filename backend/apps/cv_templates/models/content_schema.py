@@ -11,9 +11,8 @@ import re
 from django.core.exceptions import ValidationError
 
 from apps.cv_templates.domain.section_registry import get_section_contract
-from apps.cv_templates.models import CvPositionField
-from apps.cv_templates.models.position import FIELD_KEY_RE, MAX_FIELD_OPTIONS
-from apps.jobs.models import Job
+
+from .position import FIELD_KEY_RE, MAX_FIELD_OPTIONS, CvPositionField
 
 CANONICAL_SCHEMA_VERSION = 1
 MAX_DOCUMENT_BYTES = 256 * 1024
@@ -41,6 +40,14 @@ SAFE_RICH_TEXT_MARKS = frozenset(
         'color',
     }
 )
+
+
+def _education_levels():
+    # Nạp lười: module này được re-export ở apps.cv_templates.models, còn
+    # jobs.models gián tiếp nạp cvs.models -> cv_templates.models lúc khởi động.
+    from apps.jobs.models import Job
+
+    return Job.EducationLevel.values
 
 
 def empty_content(locale='vi-VN'):
@@ -239,7 +246,7 @@ def _validate_content(content, errors):
             if section_key == 'position_details':
                 _validate_position_detail(item, item_path, errors)
             degree_level = item.get('degree_level', '')
-            if section_key == 'education' and degree_level not in ('', *Job.EducationLevel.values):
+            if section_key == 'education' and degree_level not in ('', *_education_levels()):
                 errors[f'{item_path}.degree_level'] = 'Must be a job education level.'
 
 

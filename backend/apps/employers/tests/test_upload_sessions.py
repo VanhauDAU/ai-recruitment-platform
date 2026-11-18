@@ -8,7 +8,7 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from apps.accounts.models import User
-from apps.accounts.services.tokens import issue_tokens
+from apps.accounts.services import issue_tokens
 from apps.uploads.models import UploadAsset
 from apps.uploads.services import (
     create_upload_session,

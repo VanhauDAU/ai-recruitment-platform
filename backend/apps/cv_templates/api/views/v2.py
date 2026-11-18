@@ -15,13 +15,15 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.cv_templates.services.demo_identity import with_demo_identity
-from apps.cvs.schemas import empty_content
-from apps.cvs.services.composition import (
+from apps.cv_templates.models.content_schema import empty_content
+from apps.cv_templates.services.composition import (
     CvCompositionError,
     compose_cv_document,
     finalize_preview_document,
 )
+from apps.cv_templates.services.demo_identity import with_demo_identity
+from apps.cvs.api.serializers import CvAssetSerializer
+from apps.cvs.models import CvAsset
 from apps.jobs.models import JobCategory
 from common.metrics import record_metric
 
@@ -378,3 +380,23 @@ class CvPositionPreviewView(PublicCatalogCacheMixin, APIView):
             cache='hit' if cache_hit else 'miss',
         )
         return response
+
+
+class CvBackgroundCatalogListView(APIView):
+    """Ảnh nền catalogue (asset dùng chung, không có chủ) cho trình tạo CV."""
+
+    permission_classes = [permissions.AllowAny]
+    authentication_classes = []
+
+    @extend_schema(
+        summary='Danh sách ảnh nền dùng chung',
+        responses={200: CvAssetSerializer(many=True)},
+        tags=['cvs-v2'],
+    )
+    def get(self, request):
+        assets = CvAsset.objects.filter(
+            kind=CvAsset.Kind.BACKGROUND,
+            owner__isnull=True,
+            is_active=True,
+        ).order_by('created_at')
+        return Response(CvAssetSerializer(assets, many=True, context={'request': request}).data)

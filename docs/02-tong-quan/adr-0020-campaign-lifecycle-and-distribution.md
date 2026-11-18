@@ -40,7 +40,12 @@ thêm.
    phối, đo lường, OAuth, sức khỏe, báo cáo. Model `RecruitmentCampaign`,
    `CampaignActivity` và máy trạng thái ở lại `employers`. Chiều phụ thuộc là
    `campaigns → employers/jobs`.
-7. **Hiệu ứng chéo app đi qua signal.** `employers.signals.campaign_status_changed`
+   *Cập nhật 19/11/2026 ([ADR-0022](adr-0022-backend-structure.md), GĐ2):* model,
+   máy trạng thái, selectors, API và signal `campaign_status_changed` đã chuyển
+   sang `apps.campaigns` (migration chỉ đổi state, bảng giữ tên `employers_*`).
+   `employers` chỉ còn dùng model chiến dịch cho hold tuân thủ, bàn giao và đếm
+   chiến dịch mở; chiều phụ thuộc service vẫn là `campaigns → employers/jobs`.
+7. **Hiệu ứng chéo app đi qua signal.** `campaign_status_changed` (nay ở `campaigns.signals`)
    được gửi trong cùng giao dịch, sau khi lưu trạng thái. `jobs/signals/receivers.py` đóng
    tin. Nhờ vậy `employers.services` không import `jobs.services`; contract
    layers của import-linter cấm đường vòng

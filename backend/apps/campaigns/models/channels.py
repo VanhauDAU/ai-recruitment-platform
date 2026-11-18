@@ -45,7 +45,7 @@ class CampaignChannel(models.Model):
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     campaign = models.ForeignKey(
-        'employers.RecruitmentCampaign', on_delete=models.CASCADE, related_name='channels'
+        'campaigns.RecruitmentCampaign', on_delete=models.CASCADE, related_name='channels'
     )
     kind = models.CharField(max_length=20, choices=Kind.choices)
     label = models.CharField(max_length=120)

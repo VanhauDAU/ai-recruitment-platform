@@ -4,7 +4,7 @@ from http import HTTPStatus
 
 from rest_framework.exceptions import APIException
 
-from apps.employers.models import RecruitmentCampaign
+from apps.campaigns.models import RecruitmentCampaign
 from apps.employers.services import ensure_recruiter_candidate_data_access
 from apps.jobs.models import Job
 

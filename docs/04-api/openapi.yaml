@@ -11560,6 +11560,8 @@ paths:
   /api/v2/cv-backgrounds/:
     get:
       operationId: v2_cv_backgrounds_list
+      description: Ảnh nền catalogue (asset dùng chung, không có chủ) cho trình tạo
+        CV.
       summary: Danh sách ảnh nền dùng chung
       tags:
       - cvs-v2
@@ -12590,23 +12592,6 @@ paths:
               schema:
                 type: string
                 format: binary
-          description: ''
-  /api/v2/cvs/backgrounds/:
-    get:
-      operationId: v2_cvs_backgrounds_list
-      summary: Danh sách ảnh nền dùng chung
-      tags:
-      - cvs-v2
-      security:
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/CvAsset'
           description: ''
   /api/v2/cvs/imports/:
     post:

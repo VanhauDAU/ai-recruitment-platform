@@ -9,15 +9,14 @@ from django.utils import timezone
 from django.utils.text import slugify
 from rest_framework.exceptions import ValidationError
 
-from apps.employers.models import CampaignActivity, RecruitmentCampaign
+from apps.campaigns.models import CampaignActivity, RecruitmentCampaign
 from apps.employers.services import (
     ensure_recruiter_job_workspace,
-    record_campaign_activity,
     recruiter_job_posting_entitlement,
     recruiter_job_publication_state,
     recruiter_readiness_state,
 )
-from apps.sitecontent.selectors.settings import get_int_setting
+from apps.sitecontent.selectors import get_int_setting
 from common.vietnam_time import vietnam_today
 
 from ..models import (
@@ -231,7 +230,7 @@ def _record_status(
         note=note,
     )
     if job.campaign_id:
-        record_campaign_activity(
+        CampaignActivity.objects.record(
             campaign=job.campaign,
             event_type=CampaignActivity.EventType.JOB_STATUS_CHANGED,
             group=CampaignActivity.Group.JOB,
@@ -247,7 +246,7 @@ def _record_status(
 
 def _record_job_assignment(job, *, previous_campaign, user):
     if previous_campaign and previous_campaign.pk != job.campaign_id:
-        record_campaign_activity(
+        CampaignActivity.objects.record(
             campaign=previous_campaign,
             event_type=CampaignActivity.EventType.JOB_REMOVED,
             group=CampaignActivity.Group.JOB,
@@ -256,7 +255,7 @@ def _record_job_assignment(job, *, previous_campaign, user):
             metadata={'title': job.title},
         )
     if job.campaign_id and (previous_campaign is None or previous_campaign.pk != job.campaign_id):
-        record_campaign_activity(
+        CampaignActivity.objects.record(
             campaign=job.campaign,
             event_type=CampaignActivity.EventType.JOB_ADDED,
             group=CampaignActivity.Group.JOB,
@@ -265,7 +264,7 @@ def _record_job_assignment(job, *, previous_campaign, user):
             metadata={'title': job.title},
         )
     elif job.campaign_id:
-        record_campaign_activity(
+        CampaignActivity.objects.record(
             campaign=job.campaign,
             event_type=CampaignActivity.EventType.JOB_UPDATED,
             group=CampaignActivity.Group.JOB,
@@ -823,7 +822,7 @@ def extend_job_deadline(job, user, deadline, *, requested_visibility_days=None):
     job.deadline = deadline
     job.save(update_fields=['deadline', *lifecycle_update_fields, 'updated_at'])
     if job.campaign_id:
-        record_campaign_activity(
+        CampaignActivity.objects.record(
             campaign=job.campaign,
             event_type=CampaignActivity.EventType.JOB_UPDATED,
             group=CampaignActivity.Group.JOB,

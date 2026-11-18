@@ -6,10 +6,11 @@ from django.urls import reverse
 from django.utils import timezone
 from rest_framework.test import APIClient
 
-from apps.employers.models import Company, RecruiterProfile, RecruitmentCampaign
+from apps.campaigns.models import RecruitmentCampaign
+from apps.employers.models import Company, RecruiterProfile
 from apps.employers.tests.readiness_helpers import make_employer_ready
 from apps.jobs.models import Job, SavedJob
-from apps.jobs.selectors.listing import publicly_available_job_filter
+from apps.jobs.selectors import publicly_available_job_filter
 from apps.jobs.tests.helpers import open_visibility_window
 
 from ..models import AccountStatusTransition, AuthEmailJob, AuthSession, User

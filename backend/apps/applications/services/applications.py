@@ -7,11 +7,11 @@ from django.db.models import F
 from django.utils import timezone
 
 from apps.accounts.services import lock_account_for_write
+from apps.campaigns.models import CampaignActivity
 from apps.candidates.models import CandidateNotification
 from apps.candidates.services import cancel_candidate_notification, emit_candidate_notification
 from apps.cvs.services import create_application_snapshot
-from apps.employers.models import CampaignActivity
-from apps.employers.services import record_campaign_activity, recruiter_readiness_state
+from apps.employers.services import recruiter_readiness_state
 from apps.jobs.models import Job, publicly_available_job_filter
 
 from ..models import Application, ApplicationStatusHistory
@@ -139,7 +139,7 @@ def create_application_record(
     if first_submission:
         job.__class__.objects.filter(pk=job.pk).update(application_count=F('application_count') + 1)
     if job.campaign_id:
-        record_campaign_activity(
+        CampaignActivity.objects.record(
             campaign=job.campaign,
             event_type=CampaignActivity.EventType.APPLICATION_RECEIVED,
             group=CampaignActivity.Group.APPLICATION,

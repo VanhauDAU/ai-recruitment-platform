@@ -9,11 +9,12 @@ from django.urls import reverse
 from django.utils import timezone
 
 from apps.applications.services import ApplicationNotAllowed, create_application_record
+from apps.campaigns.models import RecruitmentCampaign
+from apps.campaigns.selectors import campaign_list_queryset
 from apps.cv_templates.tests.factories import fill_cv_for_application, make_published_template
 from apps.cvs.services import create_v2_cv
 from apps.dashboard.selectors import build_employer_dashboard
-from apps.employers.models import Company, RecruitmentCampaign
-from apps.employers.selectors import campaign_list_queryset
+from apps.employers.models import Company
 from apps.employers.tests.readiness_helpers import make_employer_ready
 from common.vietnam_time import vietnam_day_start, vietnam_today
 

@@ -5,6 +5,7 @@ from django.db import models
 from apps.cv_templates.models import CvLanguage
 from apps.skills.models import Skill
 from common.db.public_id import generate_public_id
+from common.storage.r2 import private_media_storage, public_media_storage
 
 
 class UserCv(models.Model):
@@ -233,7 +234,7 @@ class CvVersion(models.Model):
         ordering = ['cv_id', '-version_number']
 
     def clean(self):
-        from ..schemas import validate_cv_document
+        from apps.cv_templates.models import validate_cv_document
 
         validate_cv_document(
             content_json=self.content_json,
@@ -242,7 +243,7 @@ class CvVersion(models.Model):
             schema_version=self.schema_version,
         )
         if self.template_version_id:
-            from apps.cv_templates.domain.renderers import validate_renderer_contract
+            from apps.cv_templates.domain import validate_renderer_contract
 
             validate_renderer_contract(
                 self.template_version.renderer_key,
@@ -289,7 +290,7 @@ class CvDraft(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def clean(self):
-        from ..schemas import validate_cv_document
+        from apps.cv_templates.models import validate_cv_document
 
         validate_cv_document(
             content_json=self.content_json,
@@ -331,6 +332,12 @@ class CvAsset(models.Model):
             models.Index(fields=['kind', 'is_active', 'created_at'], name='idx_cv_assets_catalog'),
             models.Index(fields=['owner', 'kind', 'created_at'], name='idx_cv_assets_owner_kind'),
         ]
+
+    def storage(self):
+        """Ảnh nền là asset catalogue công khai; avatar ứng viên luôn ở storage riêng tư."""
+        if self.kind == self.Kind.BACKGROUND:
+            return public_media_storage()
+        return private_media_storage()
 
     def clean(self):
         if self.kind == self.Kind.AVATAR and self.owner_id is None:

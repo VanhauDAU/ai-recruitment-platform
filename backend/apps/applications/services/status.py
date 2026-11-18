@@ -15,14 +15,13 @@ from django.utils import timezone
 from rest_framework.exceptions import APIException
 
 from apps.accounts.services import is_account_accessible
+from apps.campaigns.models import CampaignActivity
 from apps.candidates.models import CandidateNotification
 from apps.candidates.services import (
     cancel_candidate_notification,
     emit_candidate_notification,
     restore_superseded_candidate_notification,
 )
-from apps.employers.models import CampaignActivity
-from apps.employers.services import record_campaign_activity
 
 from ..models import Application, ApplicationStatusHistory
 from .locking import lock_recruiter_application
@@ -122,7 +121,7 @@ def notify_candidate_of_status(application, history, *, deliver_after, send_emai
 def _record_status_activity(application, *, actor, from_status, to_status):
     if not application.job.campaign_id:
         return
-    record_campaign_activity(
+    CampaignActivity.objects.record(
         campaign=application.job.campaign,
         event_type=CampaignActivity.EventType.APPLICATION_STATUS_CHANGED,
         group=CampaignActivity.Group.APPLICATION,

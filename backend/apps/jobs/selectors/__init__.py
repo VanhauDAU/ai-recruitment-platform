@@ -15,7 +15,7 @@ from .employer import (
     employer_job_status_counts,
     employer_job_visibility_hold,
 )
-from .listing import build_job_list_queryset
+from .listing import build_job_list_queryset, publicly_available_job_filter
 from .moderation import (
     admin_job_detail_queryset,
     admin_job_management_queryset,
@@ -36,6 +36,7 @@ from .verification_badge import (
 )
 
 __all__ = [
+    'publicly_available_job_filter',
     'job_ai_admin_policy_overview',
     'job_ai_queue_overview',
     'job_ai_usage_overview',

@@ -13,7 +13,6 @@ from django.db.models import Count, Q, Sum
 from django.utils import timezone
 
 from apps.applications.models import Application
-from apps.employers.services import campaign_active_seconds
 from apps.jobs.models import Job
 from common.vietnam_time import vietnam_today
 
@@ -180,7 +179,7 @@ def campaign_health(campaign, *, now=None):
         Job.objects.filter(campaign=campaign).aggregate(total=Sum('number_of_vacancies'))['total']
         or 0
     )
-    active_days = campaign_active_seconds(campaign, now=now) / 86400
+    active_days = campaign.active_seconds(now=now) / 86400
     applications = len(rows)
     accepted = sum(1 for row in rows if row['status'] == S.ACCEPTED)
     last_7 = sum(1 for row in rows if row['applied_at'] >= now - timedelta(days=7))

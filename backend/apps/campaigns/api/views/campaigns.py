@@ -7,9 +7,13 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.accounts.api.permissions import IsEmployer
-from common.metrics import record_metric
-
-from ...selectors.campaigns import (
+from apps.campaigns.api.serializers.campaigns import (
+    CampaignActivitySerializer,
+    CampaignPerformanceQuerySerializer,
+    CampaignStatusSerializer,
+    RecruitmentCampaignSerializer,
+)
+from apps.campaigns.selectors.campaigns import (
     CampaignJobPerformanceScopeNotFound,
     attach_campaign_candidate_previews,
     campaign_activity_queryset,
@@ -22,18 +26,13 @@ from ...selectors.campaigns import (
     campaign_status_counts,
     owned_campaign_queryset,
 )
-from ...services import ensure_recruiter_job_workspace
-from ...services.campaigns import (
+from apps.campaigns.services.campaigns import (
     change_campaign_status,
     create_campaign,
     update_campaign,
 )
-from ..serializers.campaigns import (
-    CampaignActivitySerializer,
-    CampaignPerformanceQuerySerializer,
-    CampaignStatusSerializer,
-    RecruitmentCampaignSerializer,
-)
+from apps.employers.services import ensure_recruiter_job_workspace
+from common.metrics import record_metric
 
 
 class EmployerWorkspaceReadMixin:

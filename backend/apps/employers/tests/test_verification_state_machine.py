@@ -16,8 +16,9 @@ from rest_framework.test import APITestCase
 from apps.accounts.models import AdminAccessAuditLog, User
 from apps.accounts.services import StaleImpactToken
 from apps.accounts.tests.helpers import make_admin
+from apps.campaigns.models import RecruitmentCampaign
 from apps.jobs.models import Job
-from apps.jobs.selectors.listing import active_jobs_queryset
+from apps.jobs.selectors import active_jobs_queryset
 from apps.jobs.services import RESPONSIBILITY_STATEMENT_VERSION, reopen_job
 from apps.jobs.tests.helpers import open_visibility_window
 
@@ -29,7 +30,6 @@ from ..models import (
     EmployerComplianceHoldJob,
     EmployerVerificationCase,
     EmployerVerificationEvent,
-    RecruitmentCampaign,
 )
 from ..services import (
     confirm_verification_decision,

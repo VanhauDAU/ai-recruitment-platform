@@ -9,6 +9,8 @@ from io import BytesIO
 from django.template.loader import render_to_string
 from django.utils import timezone
 
+from common.pdf.browser import render_html_pdf
+
 from ..models import CampaignHealthSnapshot
 
 STATUS_LABELS = dict(CampaignHealthSnapshot.Status.choices)
@@ -145,8 +147,6 @@ def _daily_bars(daily):
 
 
 def build_pdf(report):
-    from apps.cvs.services.pdf_renderer import render_html_pdf
-
     html = render_to_string(
         'campaigns/report.html',
         {

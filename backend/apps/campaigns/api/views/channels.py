@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.accounts.api.permissions import IsEmployer
-from apps.employers.models import RecruitmentCampaign
+from apps.campaigns.models import RecruitmentCampaign
 from apps.employers.services import ensure_recruiter_job_workspace
 
 from ...models import CampaignChannelCost

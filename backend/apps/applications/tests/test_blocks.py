@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from django.urls import reverse
 from rest_framework.test import APITestCase
 
-from apps.accounts.services.tokens import issue_tokens
+from apps.accounts.services import issue_tokens
 from apps.cv_templates.tests.factories import fill_cv_for_application, make_published_template
 from apps.cvs.services import create_v2_cv
 from apps.employers.models import Company, RecruiterProfile

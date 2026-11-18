@@ -4,9 +4,10 @@ from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import serializers
 
 from apps.applications.models import Application
+from apps.campaigns.models import RecruitmentCampaign
 from apps.candidates.models import CandidateConsent
 from apps.cvs.models import UserCv
-from apps.employers.models import RecruitmentCampaign, RecruitmentNeed
+from apps.employers.models import RecruitmentNeed
 from apps.employers.selectors import build_employer_initial_onboarding
 from apps.jobs.models import Job
 from common.storage.media import media_url_from_value

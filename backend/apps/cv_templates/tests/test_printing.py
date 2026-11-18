@@ -11,9 +11,11 @@ from unittest.mock import MagicMock, patch
 
 from django.test import SimpleTestCase, override_settings
 
-from ..schemas import empty_content, empty_layout, empty_style
-from ..services import pdf_renderer
-from ..services.pdf_renderer import PdfRenderingError, print_payload, render_cv_version_pdf
+from apps.cv_templates.models import empty_content, empty_layout, empty_style
+from common.pdf import browser as pdf_engine
+from common.pdf.browser import PdfRenderingError
+
+from ..services.printing import print_payload, render_cv_version_pdf, render_document_pdf
 
 PRINT_URL = 'http://frontend:5173/cv-print.html'
 
@@ -62,7 +64,7 @@ class FakeChromium:
 @override_settings(CV_PRINT_URL=PRINT_URL)
 class CvPdfRendererTests(SimpleTestCase):
     def render(self, chromium, cv_version):
-        with patch.object(pdf_renderer, '_browser', return_value=chromium.browser):
+        with patch.object(pdf_engine, '_browser', return_value=chromium.browser):
             return render_cv_version_pdf(cv_version)
 
     def test_payload_carries_the_pinned_layout_and_untouched_document(self):
@@ -133,11 +135,11 @@ class CvPdfRendererTests(SimpleTestCase):
         refuse database queries there, so rendering must use the engine thread."""
         threads = []
 
-        def fake_engine(payload, print_url):
+        def fake_engine(payload, print_url, entrypoint):
             threads.append(threading.get_ident())
             return b'%PDF-1.7'
 
-        with patch.object(pdf_renderer, '_render_in_engine_thread', side_effect=fake_engine):
-            pdf_renderer.render_document_pdf({'renderer_key': 'single_column_v1'})
+        with patch.object(pdf_engine, '_render_in_engine_thread', side_effect=fake_engine):
+            render_document_pdf({'renderer_key': 'single_column_v1'})
 
         self.assertNotEqual(threads, [threading.get_ident()])

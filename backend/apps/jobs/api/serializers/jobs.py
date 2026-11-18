@@ -3,7 +3,8 @@ from django.utils.html import strip_tags
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
-from apps.employers.models import DpaStatus, RecruitmentCampaign
+from apps.campaigns.models import RecruitmentCampaign
+from apps.employers.models import DpaStatus
 from common.html.rich_text import rich_text_plain_text
 from common.storage.media import media_url_from_value
 

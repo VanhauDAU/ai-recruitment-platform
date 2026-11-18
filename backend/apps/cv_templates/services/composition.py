@@ -6,8 +6,7 @@ from django.core.exceptions import ValidationError
 
 from apps.cv_templates.domain.section_registry import SECTION_REGISTRY
 from apps.cv_templates.models import CvTemplate, CvTemplateVersion
-
-from ..schemas import (
+from apps.cv_templates.models.content_schema import (
     empty_layout,
     empty_style,
     validate_cv_document,

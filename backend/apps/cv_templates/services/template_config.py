@@ -15,7 +15,12 @@ from apps.cv_templates.domain.section_plans import (
     REQUIRED_SECTIONS,
     SECTION_PLANS,
 )
-from apps.cvs.schemas import CV_FONT_FAMILIES, HEX_COLOR_RE, empty_layout, empty_style
+from apps.cv_templates.models.content_schema import (
+    CV_FONT_FAMILIES,
+    HEX_COLOR_RE,
+    empty_layout,
+    empty_style,
+)
 
 from ..models import (
     CvColor,

@@ -171,7 +171,7 @@ Trường riêng được lưu trong section mới `position_details` của `con
 }
 ```
 
-Nhãn được **chụp vào document** lúc tạo CV, nên đổi/xóa trường ở admin không làm hỏng CV cũ. Validator `apps/cvs/schemas.py` kiểm tra kiểu và độ dài từng giá trị. Tăng `schema_version` lên `2`.
+Nhãn được **chụp vào document** lúc tạo CV, nên đổi/xóa trường ở admin không làm hỏng CV cũ. Validator `apps/cv_templates/models/content_schema.py` kiểm tra kiểu và độ dài từng giá trị. Tăng `schema_version` lên `2`.
 
 **Section mới vào registry** (`section_registry.py` + `entities/cv/cv/model/section-registry.js`): `position_details`, `languages` (ngoại ngữ + trình độ), `portfolio` (link + mô tả), `publications`. Các section hiện có giữ nguyên.
 
@@ -226,7 +226,7 @@ Cách triển khai để không phức tạp từ đầu:
    Draft autosave không chạy để giữ autosave nhanh.
 3. **Snapshot ứng tuyển** lưu kèm profile tại thời điểm nộp, để điểm match
    của đơn không đổi khi ứng viên sửa CV sau đó.
-4. **Validator** (`apps/cvs/schemas.py`) bắt buộc kiểu cho các trường trên:
+4. **Validator** (`apps/cv_templates/models/content_schema.py`) bắt buộc kiểu cho các trường trên:
    ngày `YYYY-MM`, `degree_level`/`level` thuộc enum, `skill_id` tồn tại.
 5. **Trích xuất AI (mục 8.3)** phải trả đúng các trường này: tên kỹ năng được
    khớp với `Skill` qua bảng alias, kỹ năng chưa có vào hàng đợi chuẩn hóa của
@@ -405,7 +405,7 @@ Tiến trình hiển thị theo bước thật từ job: `Đang tải lên (x%)`
 - Chuyển `apps/ai_core/services/cv_import.py` sang đi qua runtime `ai_core`: ghi `AiInvocation`, tôn trọng `AI_RUNTIME_ENABLED`, quota ngày theo người dùng và toàn hệ thống (`ai_daily_request_limit` đang seed mà chưa dùng).
 - Structured output theo JSON schema cố định (không cho mô hình tự do): `personal_info`, `summary`, `experience[]`, `education[]`, `skills[]`, `languages[]`, `certifications[]`, `projects[]`, `awards[]`, `activities[]`, `unmapped_text[]`, `suggested_position_slug`, `experience_years`, `position_level`, `education_level`, `skills[].skill_id`/`name`/`level`, và `confidence` (0–1) cho từng trường.
 - Prompt gồm danh sách `CvPositionField` của vị trí được gợi ý để AI điền trường riêng nếu có.
-- Văn bản CV được đặt trong khối dữ liệu có ranh giới rõ; output luôn qua validator `apps/cvs/schemas.py`. Mọi chỉ dẫn nằm trong CV (prompt injection) không có tác dụng vì output chỉ là dữ liệu đã kiểm tra kiểu.
+- Văn bản CV được đặt trong khối dữ liệu có ranh giới rõ; output luôn qua validator `apps/cv_templates/models/content_schema.py`. Mọi chỉ dẫn nằm trong CV (prompt injection) không có tác dụng vì output chỉ là dữ liệu đã kiểm tra kiểu.
 - Ngôn ngữ: phát hiện ngôn ngữ CV gốc; nếu khác ngôn ngữ đã chọn thì **giữ nguyên văn bản gốc**, đặt `language` CV theo ngôn ngữ gốc và báo cho ứng viên (không dịch — ngoài phạm vi).
 - Fallback heuristic hiện có giữ lại khi provider lỗi/thiếu key, đánh dấu toàn bộ trường `confidence = 0.3`.
 - Không bao giờ mất chữ: mọi đoạn AI không phân loại được vào `unmapped_text`, hiện ở màn rà soát.

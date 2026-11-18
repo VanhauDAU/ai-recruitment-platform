@@ -108,7 +108,7 @@ Cảnh báo đã hết thì bị xóa khỏi `open_alerts`, lần sau mở lại
 - **Excel** (`openpyxl`): sheet Tổng quan, Phễu, Nguồn và chi phí, Theo ngày (30
   ngày), Tin tuyển dụng.
 - **PDF**: template Django tự chứa (biểu đồ cột SVG dựng ở server), in bằng
-  Chromium của `apps.cvs.services.pdf_renderer.render_html_pdf`; mọi request
+  Chromium của `common.pdf.browser.render_html_pdf`; mọi request
   mạng ngoài `data:` bị chặn.
 
 ## Lệch kế hoạch có chủ ý

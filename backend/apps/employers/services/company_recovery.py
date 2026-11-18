@@ -16,6 +16,7 @@ from apps.accounts.services import (
     decode_impact_token,
     record_admin_action,
 )
+from apps.campaigns.models import RecruitmentCampaign
 from apps.jobs.models import Job
 
 from ..models import (
@@ -28,7 +29,6 @@ from ..models import (
     EmployerVerificationCase,
     EmployerVerificationEvent,
     RecruiterProfile,
-    RecruitmentCampaign,
     RecruitmentNeed,
 )
 from ..models.verification import REQUESTER_EDITABLE_COMPANY_UPDATE_STATUSES

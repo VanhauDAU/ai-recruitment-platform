@@ -1,7 +1,7 @@
 from django.db import transaction
 from django.dispatch import receiver
 
-from apps.employers.signals import campaign_status_changed
+from apps.campaigns.signals import campaign_status_changed
 
 
 @receiver(campaign_status_changed)

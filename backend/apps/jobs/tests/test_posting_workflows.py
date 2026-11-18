@@ -11,13 +11,12 @@ from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 from rest_framework.test import APIClient
 
+from apps.campaigns.models import CampaignActivity, RecruitmentCampaign
 from apps.employers.models import (
-    CampaignActivity,
     Company,
     CompanyDocument,
     EmployerVerificationCase,
     RecruiterProfile,
-    RecruitmentCampaign,
     RecruitmentNeed,
 )
 from apps.employers.services import recruiter_job_posting_entitlement

@@ -1,6 +1,18 @@
+from .composition import (
+    CvCompositionError,
+    compose_cv_document,
+    finalize_preview_document,
+    layout_for_content,
+    overlay_actor_identity,
+)
 from .position_catalog import coverage_matrix, export_positions, import_positions
 from .position_content import PositionContentUnavailable, resolve_position_content
 from .position_fields import apply_position_details, position_details_section
+from .printing import (
+    print_payload,
+    render_cv_version_pdf,
+    render_document_pdf,
+)
 from .publishing import (
     archive_sample,
     publish_sample,
@@ -36,6 +48,14 @@ from .template_preview import (
 )
 
 __all__ = [
+    'print_payload',
+    'render_cv_version_pdf',
+    'render_document_pdf',
+    'CvCompositionError',
+    'compose_cv_document',
+    'finalize_preview_document',
+    'layout_for_content',
+    'overlay_actor_identity',
     'create_draft_version',
     'start_template',
     'new_version_defaults',

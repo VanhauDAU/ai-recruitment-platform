@@ -3,31 +3,28 @@
 
 Ba luật, áp cho code production trong ``backend/apps`` (bỏ qua migrations, tests):
 
-* ``cross-app``  — app A chỉ được import từ app B các module công khai:
-  ``apps.B.models``, ``apps.B.services``, ``apps.B.selectors``, ``apps.B.signals``
-  và ``apps.accounts.api.permissions``. Deep-import nội bộ bị cấm.
+* ``cross-app``  — app A chỉ được import từ app B các package công khai:
+  ``apps.B.{models,domain,services,selectors,signals}``, ``apps.accounts.api.permissions``
+  và — chỉ từ tầng ``api`` của A — ``apps.B.api.serializers`` (serializer lồng).
+  Deep-import module nội bộ bị cấm.
 * ``root-module`` — gốc app chỉ được chứa ``__init__``, ``apps``, ``admin``,
   ``checks``; mọi module khác phải thuộc một tầng.
 * ``init-code``  — ``__init__.py`` chỉ được re-export (import, ``__all__``,
   docstring, khai báo ``Signal()``), không định nghĩa hàm/lớp hay chạy logic.
 
-Vi phạm có sẵn được ghi trong ``backend/import-baseline.txt``. Vi phạm mới làm
-fail; mục baseline đã hết vi phạm cũng làm fail để baseline chỉ giảm. Chạy với
-``--update-baseline`` để ghi lại baseline sau khi đã sửa bớt vi phạm.
+Mọi vi phạm làm fail CI — không có baseline hay whitelist.
 """
 
 from __future__ import annotations
 
-import argparse
 import ast
 import sys
 from pathlib import Path
 
 BACKEND = Path(__file__).resolve().parent.parent / 'backend'
 APPS_DIR = BACKEND / 'apps'
-BASELINE = BACKEND / 'import-baseline.txt'
 
-PUBLIC_SUBMODULES = {'models', 'services', 'selectors', 'signals'}
+PUBLIC_SUBMODULES = {'models', 'domain', 'services', 'selectors', 'signals'}
 SHARED_MODULES = {'apps.accounts.api.permissions'}
 ROOT_ALLOWED = {'__init__.py', 'apps.py', 'admin.py', 'checks.py'}
 
@@ -82,11 +79,13 @@ def is_submodule(package: str, name: str) -> bool:
     return f'{name}.py' in entries or (name in entries and (base / name / '__init__.py').exists())
 
 
-def cross_app_violation(owner: str, target: str) -> bool:
+def cross_app_violation(owner: str, target: str, *, from_api: bool) -> bool:
     parts = target.split('.')
     if len(parts) < 2 or parts[0] != 'apps' or parts[1] == owner:
         return False
     if target in SHARED_MODULES:
+        return False
+    if from_api and parts[2:] == ['api', 'serializers']:
         return False
     return not (len(parts) == 3 and parts[2] in PUBLIC_SUBMODULES)
 
@@ -132,54 +131,21 @@ def collect() -> set[str]:
             violations.add(f'init-code\t{rel}\t-')
         current = module_name(path)
         for _lineno, target in imported_modules(tree, current, path.name == '__init__.py'):
-            if cross_app_violation(owner, target):
+            if cross_app_violation(owner, target, from_api='api' in app_parts[1:-1]):
                 violations.add(f'cross-app\t{rel}\t{target}')
     return violations
 
 
-def read_baseline() -> set[str]:
-    if not BASELINE.exists():
-        return set()
-    lines = BASELINE.read_text(encoding='utf-8').splitlines()
-    return {line for line in lines if line and not line.startswith('#')}
-
-
-def write_baseline(violations: set[str]) -> None:
-    header = (
-        '# Vi phạm cấu trúc còn tồn tại (ADR-0022) — chỉ được giảm, không thêm.\n'
-        '# Sinh bằng: python scripts/check_backend_imports.py --update-baseline\n'
-        '# rule<TAB>file<TAB>module bị import\n'
-    )
-    BASELINE.write_text(header + ''.join(f'{v}\n' for v in sorted(violations)), encoding='utf-8')
-
-
 def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument('--update-baseline', action='store_true')
-    args = parser.parse_args()
-
-    current = collect()
-    if args.update_baseline:
-        write_baseline(current)
-        print(f'Đã ghi {len(current)} vi phạm vào {BASELINE.relative_to(BACKEND.parent)}')
+    violations = sorted(collect())
+    if not violations:
+        print('✓ Cấu trúc backend OK — import chéo app, module gốc app, __init__ (ADR-0022).')
         return 0
-
-    baseline = read_baseline()
-    new = sorted(current - baseline)
-    fixed = sorted(baseline - current)
-    if new:
-        print('✗ Vi phạm cấu trúc backend mới (ADR-0022):')
-        for item in new:
-            rule, path, target = item.split('\t')
-            print(f'  [{rule}] {path}' + (f' → {target}' if target != '-' else ''))
-    if fixed:
-        print('✗ Baseline có mục đã được sửa — chạy lại với --update-baseline:')
-        for item in fixed:
-            print(f'  {item.replace(chr(9), " ")}')
-    if new or fixed:
-        return 1
-    print(f'✓ Cấu trúc backend: không có vi phạm mới ({len(baseline)} mục baseline còn lại)')
-    return 0
+    print('✗ Vi phạm cấu trúc backend (ADR-0022):')
+    for item in violations:
+        rule, path, target = item.split('\t')
+        print(f'  [{rule}] {path}' + (f' → {target}' if target != '-' else ''))
+    return 1
 
 
 if __name__ == '__main__':
