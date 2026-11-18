@@ -32,7 +32,7 @@ mo-hinh-hoa-yeu-cau/
 | `06-doi-sanh-va-goi-y/` | Chức năng đối sánh CV–JD và gợi ý việc làm | 7 | 4 | 4 |
 | `07-xac-thuc-nha-tuyen-dung/` | Chức năng xác thực tài khoản nhà tuyển dụng | 8 | 1 | 1 |
 | `08-cong-ty-va-thanh-vien/` | Chức năng công ty và thành viên | 11 | 3 | 3 |
-| `09-chien-dich-tuyen-dung/` | Chức năng quản lý chiến dịch tuyển dụng | 8 | 1 | 1 |
+| `09-chien-dich-tuyen-dung/` | Chức năng quản lý chiến dịch tuyển dụng | 20 | 5 | 5 |
 | `10-tin-tuyen-dung/` | Chức năng quản lý tin tuyển dụng | 11 | 3 | 3 |
 | `11-ho-so-ung-tuyen/` | Chức năng quản lý hồ sơ ứng tuyển | 13 | 5 | 5 |
 | `12-duyet-xac-thuc-va-doanh-nghiep/` | Chức năng duyệt xác thực và quản lý doanh nghiệp | 11 | 2 | 2 |

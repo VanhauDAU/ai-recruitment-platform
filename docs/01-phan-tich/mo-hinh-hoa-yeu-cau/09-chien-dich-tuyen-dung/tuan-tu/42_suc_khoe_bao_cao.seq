@@ -1,0 +1,34 @@
+title Sơ đồ tuần tự theo dõi sức khỏe và báo cáo chiến dịch
+actor NTD Nhà tuyển dụng
+participant FE Giao diện web\n(React)
+participant BE Máy chủ API\n(Django REST)
+database DB CSDL\n(PostgreSQL)
+queue LL Bộ lập lịch\n(Celery Beat)
+external EM Dịch vụ email
+group Xem sức khỏe
+NTD -> FE : Mở tab "Sức khỏe"
+FE -> BE : GET /campaigns/{id}/health/
+BE -> DB : Hồ sơ và mốc từng bước, số lượng tuyển của tin, chi phí kênh
+BE -> BE : Tốc độ CV 7 ngày, tỷ lệ trúng tuyển làm trơn, dự báo F so với chỉ tiêu
+BE --> FE : Trạng thái, cảnh báo, chỉ số, 60 ảnh chụp ngày
+end
+group Ảnh chụp và cảnh báo (mỗi giờ)
+LL -> BE : snapshot_campaign_health
+BE -> DB : Ghi CampaignHealthSnapshot của ngày (một dòng mỗi ngày)
+alt Cảnh báo mới mở hoặc đã quá 7 ngày chưa nhắc
+BE -> DB : Thông báo campaign_health_alert (khóa chống trùng)
+end
+end
+group Báo cáo tuần (thứ Hai từ 08:00)
+LL -> BE : send_campaign_weekly_reports
+BE -> DB : Tạo CampaignReportDelivery (chiến dịch, tuần), trùng thì bỏ qua
+opt NTD bật báo cáo tuần
+BE -> EM : Gửi email tóm tắt tiến độ, dự báo, cảnh báo
+end
+end
+group Xuất báo cáo
+NTD -> FE : Bấm "Tải Excel" hoặc "Tải PDF"
+FE -> BE : GET /campaigns/{id}/report/export/?type=xlsx|pdf
+BE -> BE : Dựng Excel (openpyxl) hoặc in PDF (Chromium, chặn tài nguyên ngoài)
+BE --> FE : Tệp báo cáo, chỉ số liệu tổng hợp
+end

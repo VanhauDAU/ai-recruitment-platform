@@ -1,0 +1,27 @@
+title Sơ đồ hoạt động kết nối và đăng bài lên Fanpage
+if Đã kết nối Fanpage?
+case Không
+  Nhà tuyển dụng cấp quyền trên Facebook
+  Hệ thống kiểm tra state, đổi mã lấy token
+  Nhà tuyển dụng chọn Fanpage
+  Hệ thống lưu Page token đã mã hóa
+case Có
+endif
+Nhà tuyển dụng soạn bài, chọn thời điểm đăng
+Hệ thống tạo các bài hẹn đăng
+while Có bài đến hạn? | Có | Không
+  if Chiến dịch đang chạy?
+  case Không
+    Hệ thống hoãn hoặc hủy bài
+  case Có
+    Hệ thống gọi Graph API đăng bài
+    if Kết quả?
+    case Thành công
+      Hệ thống lưu link bài, đánh dấu kênh đã đăng
+    case Lỗi tạm thời
+      Hệ thống hẹn thử lại
+    case Lỗi khác
+      Hệ thống đánh dấu lỗi và báo nhà tuyển dụng
+    endif
+  endif
+endwhile

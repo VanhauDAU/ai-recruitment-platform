@@ -184,7 +184,11 @@ GĐ1 đã làm:
     ô có biểu tượng;
   - tab Lịch sử hoạt động: timeline một dòng (giờ, chấm theo nhóm, dòng phụ),
     lọc bằng dải nút;
-  - settings test luôn dùng provider giả, không phụ thuộc `.env` máy dev.
+  - settings test luôn dùng provider giả, không phụ thuộc `.env` máy dev;
+  - sơ đồ mục 3.2 nhóm `09-chien-dich-tuyen-dung` vẽ lại theo luồng mới:
+    use case (20, thêm tác nhân Bộ lập lịch, Facebook, Ứng viên), 5 sơ đồ tuần
+    tự và 5 sơ đồ hoạt động (thiết lập và kích hoạt, vòng đời, phân phối đa
+    kênh, đăng Fanpage, sức khỏe và báo cáo).
 - Còn mở: chưa xem bằng mắt trên trình duyệt (đã có test API và test giao diện);
   `openapi.yaml` được sinh lại nên kéo theo phần lệch tích tụ từ các tính năng
   trước.

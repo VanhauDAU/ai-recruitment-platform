@@ -1,0 +1,30 @@
+title Sơ đồ hoạt động theo dõi sức khỏe và báo cáo chiến dịch
+fork
+  Nhà tuyển dụng mở tab Sức khỏe
+  Hệ thống tính tốc độ CV, tỷ lệ trúng tuyển, dự báo
+  if Đủ dữ liệu (3 ngày, 5 hồ sơ)?
+  case Không
+    Giao diện hiển thị chưa đủ dữ liệu
+  case Có
+    Giao diện hiển thị trạng thái, cảnh báo và việc cần làm
+  endif
+  if Tải báo cáo?
+  case Có
+    Hệ thống dựng tệp Excel hoặc PDF
+  case Không
+  endif
+again
+  Bộ lập lịch chụp số liệu mỗi giờ
+  if Cảnh báo mới mở hoặc quá 7 ngày chưa nhắc?
+  case Có
+    Hệ thống gửi thông báo cảnh báo
+  case Không
+  endif
+again
+  Bộ lập lịch chạy sáng thứ Hai
+  if Tuần này đã gửi hoặc NTD tắt báo cáo?
+  case Có
+  case Không
+    Hệ thống gửi email báo cáo tuần
+  endif
+endfork
