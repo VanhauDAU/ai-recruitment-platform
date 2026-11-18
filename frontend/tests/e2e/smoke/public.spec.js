@@ -50,6 +50,16 @@ test('public smoke: home and jobs routes load', async ({ page }, testInfo) => {
 
   await page.goto('/viec-lam')
   await expect(page.getByRole('heading', { name: /Tuyển dụng/ })).toBeVisible()
+
+  // Mobile: thanh tìm kiếm cuộn theo trang (không dính che kết quả), gọn trong 2 hàng.
+  const searchBar = page.locator('.job-search-bar')
+  if (testInfo.project.name === 'mobile-chromium') {
+    await expect(searchBar).toHaveCSS('position', 'static')
+    expect((await searchBar.boundingBox()).height).toBeLessThan(140)
+  } else {
+    await expect(searchBar).toHaveCSS('position', 'sticky')
+  }
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
 })
 
 test('public smoke: company directory separates finite featured results from compact infinite search', async ({ page }, testInfo) => {

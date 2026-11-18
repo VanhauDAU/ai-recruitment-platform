@@ -29,6 +29,7 @@ export default function JobResults({
   results,
   searchBy,
   suggestedWards,
+  toolbarAction,
   wardSuggestionInsertIndex,
 }) {
   const recommendedInsertIndex = Math.min(
@@ -38,8 +39,8 @@ export default function JobResults({
 
   return (
     <div className="min-w-0 lg:col-span-1">
-      <div className={quickViewJob ? 'hidden' : 'mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between'}>
-        <div className="flex flex-wrap items-center gap-2">
+      <div className={quickViewJob ? 'hidden' : 'job-results-toolbar mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between'}>
+        <div className="job-list-scroll-row flex flex-wrap items-center gap-2">
           <span className="text-sm text-gray-500">Tìm kiếm theo:</span>
           {SEARCH_BY_TABS.map((tab) => {
             const active = searchBy === tab.key
@@ -48,7 +49,7 @@ export default function JobResults({
                 key={tab.key}
                 type="button"
                 onClick={() => onSearchByChange(tab.key)}
-                className={`cursor-pointer rounded-full border px-3.5 py-1.5 text-sm font-medium transition ${
+                className={`job-list-chip cursor-pointer rounded-full border px-3.5 py-1.5 text-sm font-medium transition ${
                   active
                     ? 'border-[var(--brand-primary)] bg-green-50 text-[var(--brand-primary)]'
                     : 'border-gray-200 bg-white text-gray-600 hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]'
@@ -60,14 +61,17 @@ export default function JobResults({
             )
           })}
         </div>
-        <div className="flex items-center gap-2">
-          <span className="shrink-0 text-sm text-gray-500">Sắp xếp theo:</span>
-          <Select
-            value={ordering}
-            onChange={onSortChange}
-            className="w-40"
-            options={JOB_SORT_OPTIONS}
-          />
+        <div className="job-results-toolbar__sort flex items-center gap-2">
+          {toolbarAction}
+          <span className="flex items-center gap-2">
+            <span className="job-results-toolbar__sort-label shrink-0 text-sm text-gray-500">Sắp xếp theo:</span>
+            <Select
+              value={ordering}
+              onChange={onSortChange}
+              className="job-results-toolbar__select w-40"
+              options={JOB_SORT_OPTIONS}
+            />
+          </span>
         </div>
       </div>
 

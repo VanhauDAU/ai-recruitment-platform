@@ -20,7 +20,7 @@ export default function JobListOverlays({
         size={320}
         styles={{ body: { padding: 0 }, header: { padding: '12px 16px' } }}
         title="Lọc nâng cao"
-        className="lg:hidden"
+        className="job-filter-drawer lg:hidden"
       >
         <div className="h-full [&_.filter-sidebar]:h-full">{filterSidebar}</div>
       </Drawer>

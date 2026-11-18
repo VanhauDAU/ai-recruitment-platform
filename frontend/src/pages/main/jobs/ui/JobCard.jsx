@@ -24,6 +24,7 @@ import {
 import { JobCompareButton } from '@/features/compare-jobs'
 import { useSavedJob } from '@/features/saved-jobs'
 import { useJobImpression } from '@/features/track-job-engagement'
+import './job-card.css'
 
 function savedLabel(value) {
   const savedAt = new Date(value)
@@ -153,20 +154,20 @@ export default function JobCard({
       onClick={handleQuickView}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      className={`group relative flex min-w-0 cursor-pointer gap-4 rounded-xl border transition-colors duration-200 hover:bg-white hover:shadow-md hover:shadow-emerald-600/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]/25 ${
+      className={`job-card group relative flex min-w-0 cursor-pointer gap-4 rounded-xl border transition-colors duration-200 hover:bg-white hover:shadow-md hover:shadow-emerald-600/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]/25 ${
         compact ? 'p-3' : 'p-4'
       } ${active ? 'border-[var(--brand-primary)] bg-white shadow-md shadow-emerald-600/10' : `${jobCardToneClass(job)} hover:border-[var(--brand-primary)]`}`}
     >
       <div className="relative shrink-0">
         <div
-          className={`flex items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white p-1 shadow-sm transition-colors duration-200 group-hover:border-[var(--brand-primary)]/60 ${
+          className={`job-card__logo flex items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white p-1 shadow-sm transition-colors duration-200 group-hover:border-[var(--brand-primary)]/60 ${
             compact ? 'h-14 w-14' : 'h-20 w-20 md:h-24 md:w-24'
           }`}
         >
           {job.company_logo_url ? (
             <img src={job.company_logo_url} alt={job.company_name} className="h-full w-full object-contain p-0.5" loading="lazy" />
           ) : (
-            <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-emerald-50 to-emerald-100 text-2xl font-bold text-[var(--brand-primary)]">
+            <div className="flex h-full w-full items-center justify-center job-card__logo-initial bg-gradient-to-br from-emerald-50 to-emerald-100 text-2xl font-bold text-[var(--brand-primary)]">
               {companyInitial(job.company_name)}
             </div>
           )}
@@ -179,7 +180,7 @@ export default function JobCard({
             {recommendationLabel}
           </span>
         )}
-        <div className={`flex items-start justify-between gap-3 ${compact ? 'flex-col gap-1' : ''}`}>
+        <div className={`job-card__head flex items-start justify-between gap-3 ${compact ? 'flex-col gap-1' : ''}`}>
           <h3 className="min-w-0 font-semibold leading-snug text-slate-950 line-clamp-2">
             <Link
               to={jobDetailPath(job)}
@@ -215,12 +216,12 @@ export default function JobCard({
           {job.experience_years && <Chip elevated={elevated}>{EXPERIENCE_YEARS_LABELS[job.experience_years]}</Chip>}
         </div>
 
-        <div className={`mt-3 flex items-center justify-between gap-3 border-t pt-2.5 transition-colors group-hover:border-gray-200/70 ${elevated ? 'border-emerald-100' : 'border-gray-100'}`}>
+        <div className={`job-card__footer mt-3 flex items-center justify-between gap-3 border-t pt-2.5 transition-colors group-hover:border-gray-200/70 ${elevated ? 'border-emerald-100' : 'border-gray-100'}`}>
           <Tooltip
             placement="topLeft"
             title={<RequirementTooltip details={requirementDetails} />}
           >
-            <p className="min-w-0 truncate text-xs text-gray-500">
+            <p className="job-card__requirements min-w-0 truncate text-xs text-gray-500">
               <span className="font-semibold text-gray-600"></span>
               {requirementSummary.length ? (
                 requirementSummary.map((item, index) => (
@@ -234,9 +235,9 @@ export default function JobCard({
               )}
             </p>
           </Tooltip>
-          <span className="flex shrink-0 items-center gap-3">
+          <span className="job-card__actions flex shrink-0 items-center gap-3">
             {!compact && (savedAtLabel || posted) && (
-              <span className="text-xs text-gray-400">{savedAtLabel || posted}</span>
+              <span className="job-card__posted text-xs text-gray-400">{savedAtLabel || posted}</span>
             )}
             {!compact && (
               <button
@@ -249,7 +250,7 @@ export default function JobCard({
                 Ứng tuyển
               </button>
             )}
-            {comparisonEnabled && <JobCompareButton job={job} variant="reveal" />}
+            {comparisonEnabled && <JobCompareButton job={job} variant="reveal" className="job-card__compare" />}
             <Tooltip title={isAuthenticated ? (saved ? <SavedJobTooltipContent /> : 'Lưu việc làm') : 'Hãy đăng nhập để lưu tin'}>
               <button
                 type="button"

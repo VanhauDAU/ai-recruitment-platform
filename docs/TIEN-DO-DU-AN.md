@@ -546,6 +546,24 @@ loại tiêu chí khỏi điểm, kết quả tất định, có golden test và
 
 </details>
 
+## Trang danh sách việc làm trên mobile (2026-11-18)
+
+- Lỗi: thanh tìm kiếm 4 hàng (danh mục, từ khóa, địa điểm, nút) dính đầu màn
+  hình, cộng header chiếm gần nửa màn hình mobile và che kết quả khi cuộn.
+- Mobile (< 768px): thanh tìm kiếm cuộn theo trang, gọn 2 hàng (từ khóa + nút
+  kính lúp; danh mục | địa điểm chia đôi); dropdown gợi ý neo vào cả thanh. Tiêu
+  đề xuống dòng thay vì bị cắt; hàng lối tắt, chip nhanh, "Tìm kiếm theo" cuộn
+  ngang; nút "Lọc nâng cao" về cùng hàng với sắp xếp (bên phải, tránh cụm nút
+  nổi). Card việc: logo 56px, lương dưới tiêu đề, ẩn dòng yêu cầu bị cắt, nút so
+  sánh tròn cùng cỡ nút lưu. Drawer lọc bỏ tiêu đề lặp.
+- Tablet (768–1023px): thu hẹp danh mục/địa điểm để ô từ khóa không bị bóp, ẩn
+  nhãn "Sắp xếp theo:". Desktop không đổi.
+- Style đặt ở `pages/main/jobs/ui/job-list.css` và `job-card.css` (tải theo
+  route; CSS khởi tạo vẫn 38,0/38,5 KiB). Smoke `public.spec.js` kiểm tra thanh
+  tìm kiếm không dính trên mobile, cao < 140px và không tràn ngang ở 3 viewport.
+- Còn mở: `tests/e2e/jobs.spec.js` (ngoài smoke) đang lỗi sẵn, kể cả test trang
+  chủ; ít nhất test bộ lọc tìm nút "Từ xa" đã bỏ khỏi sidebar.
+
 ## CV tải lên: tệp gốc, tiêu chuẩn upload, giới hạn CV, NTD tìm kiếm (2026-11-15)
 
 - Lỗi tìm thấy: `backend/.env` bật `*_UPLOAD_SESSION_REQUIRED=True` khi quarantine

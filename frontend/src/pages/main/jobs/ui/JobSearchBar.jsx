@@ -3,6 +3,7 @@ import { Button, Input } from 'antd'
 import { JobCategoryTreePicker } from '@/entities/job'
 import { LocationFilter } from '@/entities/location'
 import { SearchDropdown } from '@/features/search-jobs'
+import { useMediaQuery } from '@/shared/hooks/use-media-query'
 
 export default function JobSearchBar({
   categories,
@@ -23,13 +24,20 @@ export default function JobSearchBar({
   selectedLocationLabel,
   selectedLocations,
 }) {
+  // Mobile xếp ô tìm kiếm thành lưới (khối từ khóa bị `display: contents`, không đo được
+  // kích thước), nên dropdown gợi ý neo vào cả thanh thay vì khối từ khóa.
+  const isMdUp = useMediaQuery('(min-width: 768px)')
+
   return (
     <div
       style={{ top: searchTop }}
-      className="sticky z-20 bg-gradient-to-r from-[#00734d] to-[var(--brand-primary)] transition-[top] duration-300"
+      className="job-search-bar sticky z-20 bg-gradient-to-r from-[#00734d] to-[var(--brand-primary)] transition-[top] duration-300"
     >
-      <div className="max-w-6xl mx-auto flex flex-col gap-2 px-4 py-3 md:flex-row">
-        <div className="md:w-64 [&_button]:!h-11 [&_button]:!rounded-lg">
+      <div
+        ref={isMdUp ? undefined : searchBoxRef}
+        className="job-search-bar__inner max-w-6xl mx-auto flex flex-col gap-2 px-4 py-3 md:flex-row"
+      >
+        <div className="job-search-bar__category md:w-64 [&_button]:!h-11 [&_button]:!rounded-lg">
           <JobCategoryTreePicker
             ariaLabel="Danh mục nghề"
             categories={categories}
@@ -38,7 +46,7 @@ export default function JobSearchBar({
             onChange={onCategoryChange}
           />
         </div>
-        <div ref={searchBoxRef} className="relative flex flex-1 flex-col gap-2 md:flex-row">
+        <div ref={isMdUp ? searchBoxRef : undefined} className="job-search-bar__box relative flex flex-1 flex-col gap-2 md:flex-row">
           <Input
             size="large"
             placeholder="Vị trí tuyển dụng, tên công ty"
@@ -48,9 +56,9 @@ export default function JobSearchBar({
             onFocus={onDropdownOpen}
             onPressEnter={() => onRunSearch()}
             allowClear
-            className="flex-1 !h-11 !rounded-lg"
+            className="job-search-bar__keyword flex-1 !h-11 !rounded-lg"
           />
-          <div id="job-location-filter" className="md:w-72 [&>button]:!h-11 [&>button]:!rounded-lg">
+          <div id="job-location-filter" className="job-search-bar__location md:w-72 [&>button]:!h-11 [&>button]:!rounded-lg">
             <LocationFilter
               value={selectedLocations}
               onChange={onLocationChange}
@@ -61,10 +69,12 @@ export default function JobSearchBar({
           <Button
             type="primary"
             size="large"
+            aria-label="Tìm kiếm"
             onClick={() => onRunSearch()}
-            className="!h-11 !rounded-lg !px-8 !font-bold !bg-[var(--brand-primary)] hover:!bg-[var(--brand-primary-hover)]"
+            className="job-search-bar__submit !h-11 !rounded-lg !font-bold !bg-[var(--brand-primary)] hover:!bg-[var(--brand-primary-hover)]"
           >
-            Tìm kiếm
+            <SearchOutlined className="job-search-bar__submit-icon" />
+            <span className="job-search-bar__submit-label">Tìm kiếm</span>
           </Button>
           <SearchDropdown
             open={dropdownOpen}
