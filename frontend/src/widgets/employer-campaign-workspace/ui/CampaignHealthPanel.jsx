@@ -12,6 +12,7 @@ import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YA
 import { campaignKeys, getCampaignHealth } from '@/entities/campaign'
 import { CampaignReportExport } from '@/features/export-campaign-report'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
+import HelpTip from '@/shared/ui/HelpTip'
 import { CampaignMetric, CampaignSectionTitle } from './CampaignOverviewCards'
 
 const num = (value, digits = 1) => (
@@ -142,7 +143,12 @@ export default function CampaignHealthPanel({ campaign }) {
       <section className={`cwh-banner is-${status.tone}`} aria-labelledby="cwh-status">
         <div className="min-w-0">
           <p className="cwh-banner__eyebrow">Sức khỏe chiến dịch</p>
-          <h2 id="cwh-status" className="cwh-banner__title">{status.label}</h2>
+          <h2 id="cwh-status" className="cwh-banner__title">
+            {status.label}
+            <HelpTip label="Giải thích trạng thái sức khỏe">
+              Đúng tiến độ: dự báo đạt chỉ tiêu. Có rủi ro: dự báo từ 70% tới dưới chỉ tiêu. Chậm tiến độ: dưới 70%. Cần ít nhất 3 ngày chạy và 5 hồ sơ mới đánh giá.
+            </HelpTip>
+          </h2>
           <p className="cwh-banner__text">{summary(health, campaign)}</p>
           {judged && health.required_velocity != null && (
             <p className="cwh-banner__text">
@@ -153,7 +159,7 @@ export default function CampaignHealthPanel({ campaign }) {
         </div>
         <div className="cwh-banner__side">
           <div className="cwh-score">
-            <span>Trúng tuyển</span>
+            <span>Trúng tuyển<HelpTip label="Giải thích số trúng tuyển">Số hồ sơ đã trúng tuyển trên chỉ tiêu (tổng số lượng tuyển của các tin).</HelpTip></span>
             <strong>{health.accepted}<small>/{health.headcount || '—'}</small></strong>
           </div>
           <CampaignReportExport campaign={campaign} />
@@ -178,15 +184,18 @@ export default function CampaignHealthPanel({ campaign }) {
       )}
 
       <div className="cw-metrics">
-        <CampaignMetric icon={RiseOutlined} label="CV mỗi ngày (7 ngày)" value={num(health.velocity_7d, 2)} hint={`Cả đợt: ${num(health.velocity_all, 2)}`} tone="blue" />
-        <CampaignMetric icon={ClockCircleOutlined} label="Thời gian tới lúc xem" value={response.median_hours_to_view == null ? '—' : `${num(response.median_hours_to_view)} giờ`} hint="Trung vị, 30 ngày gần nhất" />
-        <CampaignMetric icon={EyeOutlined} label="Xem trong 48 giờ" value={response.viewed_within_48h_percent == null ? '—' : `${num(response.viewed_within_48h_percent)}%`} hint="Trên hồ sơ nộp từ 48 giờ trước" tone="green" />
-        <CampaignMetric icon={InboxOutlined} label="Chờ xem quá 48 giờ" value={num(response.backlog, 0)} hint="Hồ sơ chưa mở" tone={response.backlog ? 'amber' : 'slate'} />
+        <CampaignMetric icon={RiseOutlined} label="CV mỗi ngày (7 ngày)" value={num(health.velocity_7d, 2)} hint={`Cả đợt: ${num(health.velocity_all, 2)}`} help="Số hồ sơ mới trung bình mỗi ngày trong 7 ngày gần nhất. Cả đợt là trung bình từ ngày bắt đầu chạy, không tính ngày tạm dừng." tone="blue" />
+        <CampaignMetric icon={ClockCircleOutlined} label="Thời gian tới lúc xem" value={response.median_hours_to_view == null ? '—' : `${num(response.median_hours_to_view)} giờ`} hint="Trung vị, 30 ngày gần nhất" help="Thời gian từ lúc ứng viên nộp tới lúc bạn mở hồ sơ. Trung vị nghĩa là một nửa số hồ sơ được mở nhanh hơn con số này." />
+        <CampaignMetric icon={EyeOutlined} label="Xem trong 48 giờ" value={response.viewed_within_48h_percent == null ? '—' : `${num(response.viewed_within_48h_percent)}%`} hint="Trên hồ sơ nộp từ 48 giờ trước" help="Trong các hồ sơ đã nộp quá 48 giờ, phần trăm được bạn mở trong 48 giờ đầu. Phản hồi nhanh giúp giữ chân ứng viên tốt." tone="green" />
+        <CampaignMetric icon={InboxOutlined} label="Chờ xem quá 48 giờ" value={num(response.backlog, 0)} hint="Hồ sơ chưa mở" help="Hồ sơ vẫn ở trạng thái Đã nộp, chưa được mở, sau hơn 48 giờ. Từ 5 hồ sơ trở lên hệ thống sẽ cảnh báo." tone={response.backlog ? 'amber' : 'slate'} />
       </div>
 
       <div className="cwh-grid">
         <section className="cwh-card">
-          <CampaignSectionTitle title="Phễu tuyển dụng" description="Số hồ sơ đã tới từng bước, tính trên hồ sơ hiện tại." />
+          <CampaignSectionTitle
+            title={<>Phễu tuyển dụng<HelpTip label="Giải thích phễu">Số hồ sơ đã đi tới từng bước, kể cả hồ sơ sau đó bị từ chối. Phần trăm tính trên tổng hồ sơ, nên thấy được bước nào rơi nhiều nhất.</HelpTip></>}
+            description="Số hồ sơ đã tới từng bước, tính trên hồ sơ hiện tại."
+          />
           <ol className="cwh-funnel">
             {FUNNEL.map(([key, label]) => {
               const row = funnel[key] || { count: 0, percent_of_applications: null }
@@ -205,7 +214,10 @@ export default function CampaignHealthPanel({ campaign }) {
         </section>
 
         <section className="cwh-card">
-          <CampaignSectionTitle title="Ngân sách" description="Chi phí nhập theo từng kênh ở tab Kênh & nguồn." />
+          <CampaignSectionTitle
+            title={<>Ngân sách<HelpTip label="Giải thích tốc độ chi">Tốc độ chi = % ngân sách đã dùng ÷ % thời gian chiến dịch đã chạy. Bằng 1 là chi đều theo kế hoạch; trên 1,2 là chi nhanh hơn và hệ thống sẽ cảnh báo.</HelpTip></>}
+            description="Chi phí nhập theo từng kênh ở tab Kênh & nguồn."
+          />
           {budget.budget_max ? (
             <>
               <p className="cwh-budget"><strong>{money(budget.spent)}</strong> / {money(budget.budget_max)}</p>

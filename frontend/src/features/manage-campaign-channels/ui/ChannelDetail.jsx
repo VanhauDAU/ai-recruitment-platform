@@ -4,7 +4,9 @@ import { App, Button, Dropdown, Tabs } from 'antd'
 import { campaignKeys, deleteCampaignChannel } from '@/entities/campaign'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { message } from '@/shared/lib/toast'
+import HelpTip from '@/shared/ui/HelpTip'
 import { money } from '../lib/channel-kinds'
+import { CHANNEL_METRIC_HELP as HELP } from '../lib/metric-help'
 import ChannelIcon from './ChannelIcon'
 import ChannelContentSection from './ChannelContentSection'
 import ChannelCostsPanel from './ChannelCostsPanel'
@@ -70,10 +72,10 @@ export default function ChannelDetail({ campaign, channel, editable, onEditConte
       </header>
 
       <dl className="ch-kpis">
-        <div><dt>Người bấm link</dt><dd>{channel.unique_clicks.toLocaleString('vi-VN')}</dd></div>
-        <div><dt>Hồ sơ nộp</dt><dd>{channel.applications}</dd><span>{rate(channel.applications, channel.unique_clicks)} người bấm</span></div>
-        <div><dt>Trúng tuyển</dt><dd>{channel.hires}</dd></div>
-        <div><dt>Đã chi</dt><dd>{money(channel.cost)}</dd></div>
+        <div><dt>Người bấm link<HelpTip label="Giải thích người bấm link">{HELP.clicks}</HelpTip></dt><dd>{channel.unique_clicks.toLocaleString('vi-VN')}</dd></div>
+        <div><dt>Hồ sơ nộp<HelpTip label="Giải thích hồ sơ nộp">{`${HELP.applications} Số nhỏ bên dưới là tỷ lệ nộp: ${HELP.applyRate}`}</HelpTip></dt><dd>{channel.applications}</dd><span>{rate(channel.applications, channel.unique_clicks)} người bấm</span></div>
+        <div><dt>Trúng tuyển<HelpTip label="Giải thích trúng tuyển">{HELP.hires}</HelpTip></dt><dd>{channel.hires}</dd></div>
+        <div><dt>Đã chi<HelpTip label="Giải thích đã chi">{HELP.spent}</HelpTip></dt><dd>{money(channel.cost)}</dd></div>
       </dl>
 
       <Tabs className="ch-tabs" items={sections} destroyOnHidden />

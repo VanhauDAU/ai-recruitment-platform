@@ -21,6 +21,7 @@ import {
   CampaignMetric,
   CampaignSectionTitle,
 } from './CampaignOverviewCards'
+import HelpTip from '@/shared/ui/HelpTip'
 import CampaignPerformanceChart from './CampaignPerformanceChart'
 import {
   CAMPAIGN_FUNNEL_STAGES,
@@ -93,6 +94,7 @@ export default function CampaignOverviewPanel({ campaign, report, reportLoading 
           label="Ứng viên duy nhất"
           value={formatNumber(report.candidate_count ?? campaign.candidate_count)}
           hint="Trong toàn chiến dịch"
+          help="Số người khác nhau đã nộp hồ sơ. Một người nộp vào hai tin của chiến dịch vẫn tính là một."
           tone="slate"
         />
         <CampaignMetric
@@ -104,6 +106,7 @@ export default function CampaignOverviewPanel({ campaign, report, reportLoading 
             ?? campaign.application_submission_count
             ?? campaign.application_count)}
           hint="Hồ sơ mới nhất theo từng tin"
+          help="Số cặp ứng viên và tin. Một người nộp vào hai tin tính là hai hồ sơ; nộp lại vào cùng một tin chỉ tính bản mới nhất."
           tone="blue"
         />
         <CampaignMetric
@@ -125,6 +128,7 @@ export default function CampaignOverviewPanel({ campaign, report, reportLoading 
           label="Ứng viên đã tuyển"
           value={formatNumber(report.accepted_count ?? campaign.accepted_count)}
           hint="Ứng viên duy nhất đã nhận"
+          help="Số người khác nhau có hồ sơ ở trạng thái Trúng tuyển trong chiến dịch."
           tone="violet"
         />
       </div>
@@ -168,7 +172,10 @@ export default function CampaignOverviewPanel({ campaign, report, reportLoading 
               <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
                 {CAMPAIGN_PERFORMANCE_METRICS.map((metric) => (
                   <div key={metric.key} className="rounded-xl border border-slate-100 bg-slate-50 px-3 py-3">
-                    <p className="text-xs font-medium text-slate-500">{metric.label}</p>
+                    <p className="text-xs font-medium text-slate-500">
+                      {metric.label}
+                      {metric.help && <HelpTip label={`Giải thích ${metric.label.toLowerCase()}`}>{metric.help}</HelpTip>}
+                    </p>
                     <strong className="mt-1 block text-lg font-bold text-slate-900">
                       {formatPerformanceValue(metric, performance.summary)}
                     </strong>

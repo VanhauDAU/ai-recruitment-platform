@@ -8,6 +8,13 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-19
 
+#### Added — Giải thích chỉ số chiến dịch
+
+- Icon "?" cạnh các chỉ số dễ nhầm (chi phí / hồ sơ, chi phí / trúng tuyển, tỷ
+  lệ nộp, người bấm, ứng viên duy nhất và hồ sơ, tỷ lệ xem, thời gian tới lúc
+  xem, tốc độ chi, chỉ tiêu, số ngày đã chạy...): rê chuột hoặc focus bằng bàn
+  phím để đọc cách tính.
+
 #### Added — Ảnh trong bài đăng Fanpage
 
 - Ngăn soạn bài Fanpage cho tải tối đa 4 ảnh hoặc dùng nhanh ảnh bìa, logo

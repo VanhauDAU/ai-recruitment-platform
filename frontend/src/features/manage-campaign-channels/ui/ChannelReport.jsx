@@ -2,6 +2,8 @@ import { useQuery } from '@tanstack/react-query'
 import { Alert, Skeleton } from 'antd'
 import { campaignKeys, getCampaignChannelReport } from '@/entities/campaign'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
+import HelpTip from '@/shared/ui/HelpTip'
+import { CHANNEL_METRIC_HELP as HELP } from '../lib/metric-help'
 import './channel-board.css'
 
 const number = (value) => (value == null ? '—' : Number(value).toLocaleString('vi-VN'))
@@ -27,13 +29,13 @@ export default function ChannelReport({ campaignId }) {
         <thead>
           <tr>
             <th scope="col">Nguồn</th>
-            <th scope="col">Người bấm</th>
-            <th scope="col">Hồ sơ</th>
-            <th scope="col">Tỷ lệ nộp</th>
-            <th scope="col">Trúng tuyển</th>
-            <th scope="col">Đã chi</th>
-            <th scope="col">Chi phí / hồ sơ</th>
-            <th scope="col">Chi phí / trúng tuyển</th>
+            <th scope="col">Người bấm<HelpTip label="Giải thích người bấm">{HELP.clicks}</HelpTip></th>
+            <th scope="col">Hồ sơ<HelpTip label="Giải thích hồ sơ">{HELP.applications}</HelpTip></th>
+            <th scope="col">Tỷ lệ nộp<HelpTip label="Giải thích tỷ lệ nộp">{HELP.applyRate}</HelpTip></th>
+            <th scope="col">Trúng tuyển<HelpTip label="Giải thích trúng tuyển">{HELP.hires}</HelpTip></th>
+            <th scope="col">Đã chi<HelpTip label="Giải thích đã chi">{HELP.spent}</HelpTip></th>
+            <th scope="col">Chi phí / hồ sơ<HelpTip label="Giải thích chi phí / hồ sơ">{HELP.costPerApplication}</HelpTip></th>
+            <th scope="col">Chi phí / trúng tuyển<HelpTip label="Giải thích chi phí / trúng tuyển">{HELP.costPerHire}</HelpTip></th>
           </tr>
         </thead>
         <tbody>
@@ -42,7 +44,12 @@ export default function ChannelReport({ campaignId }) {
               <td>
                 <span className="ch-report__label">
                   {row.label}
-                  {row.kind === 'organic' && <small>Không qua link theo dõi</small>}
+                  {row.kind === 'organic' && (
+                    <small>
+                      Không qua link theo dõi
+                      <HelpTip label="Giải thích nguồn tự nhiên">Hồ sơ ứng viên tự tìm thấy trên ProCV, được gợi ý hoặc được mời từ kho ứng viên. Không có link nên không đếm được người bấm và không có chi phí.</HelpTip>
+                    </small>
+                  )}
                 </span>
               </td>
               <td>{number(row.unique_clicks)}</td>

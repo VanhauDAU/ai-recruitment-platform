@@ -189,7 +189,10 @@ GĐ1 đã làm:
     use case (20, thêm tác nhân Bộ lập lịch, Facebook, Ứng viên), 5 sơ đồ tuần
     tự và 5 sơ đồ hoạt động (thiết lập và kích hoạt, vòng đời, phân phối đa
     kênh, đăng Fanpage, sức khỏe và báo cáo).
-- Ảnh trong bài Fanpage (nhánh `feat/fanpage-post-images`): tải tối đa 4 ảnh
+- Giải thích chỉ số (nhánh `feat/campaign-metric-help`): `shared/ui/HelpTip`
+  (icon ? có tooltip, bấm được bằng bàn phím) ở bảng so sánh nguồn, chi tiết
+  kênh, chi phí, tab Sức khỏe, Tổng quan và đầu trang chiến dịch.
+- Ảnh trong bài Fanpage (#245): tải tối đa 4 ảnh
   hoặc dùng ảnh bìa/logo công ty; ảnh mã hóa lại, bỏ EXIF; đăng bằng
   `/photos` (chưa công khai) + `/feed` với `attached_media`, chạy được ở máy cục
   bộ vì gửi thẳng tệp. Migration `campaigns.0005` (thêm `images`).
