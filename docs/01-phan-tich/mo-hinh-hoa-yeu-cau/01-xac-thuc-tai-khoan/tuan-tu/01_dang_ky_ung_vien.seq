@@ -1,0 +1,49 @@
+title Sơ đồ tuần tự chức năng đăng ký tài khoản ứng viên và xác minh email
+actor K Khách
+participant FE Giao diện web\n(React)
+participant BE Máy chủ API\n(Django REST)
+database DB CSDL\n(PostgreSQL)
+database RD Bộ nhớ đệm\n(Redis)
+queue WK Worker gửi email\n(Celery + SMTP)
+group Đăng ký
+K -> FE : Nhập họ tên, email, mật khẩu
+FE -> BE : POST /api/auth/register/email-availability/ {email, role}
+BE -> DB : Kiểm tra (email, role) đã có tài khoản chưa
+BE --> FE : {available}
+alt Email đã dùng cho tài khoản ứng viên
+FE --> K : Báo "Email đã được sử dụng", khóa nút đăng ký
+else Email còn trống
+K -> FE : Bấm "Đăng ký"
+FE -> FE : Lấy captcha_token (reCAPTCHA v3)
+FE -> BE : POST /api/auth/register/ {full_name, email, password, role, captcha_token}
+BE -> BE : Xác minh captcha với Google (score ≥ 0,5), kiểm tra mật khẩu
+alt Captcha không đạt hoặc dữ liệu không hợp lệ
+BE --> FE : 400 {captcha_token | email | password}
+FE --> K : Hiển thị lỗi theo trường
+else Hợp lệ
+BE -> DB : Tạo User (email_verified = false) và CandidateProfile
+BE -> RD : Đặt thời gian chờ gửi lại 60 giây
+BE -> DB : Tạo AuthEmailJob (verification)
+BE ->> WK : deliver_auth_email_job
+BE -> DB : Tạo AuthSession và refresh token
+BE --> FE : 201 {user, access} + cookie HttpOnly procv_refresh_main
+FE --> K : Lưu access trong bộ nhớ, chuyển tới khai báo nguyện vọng
+WK -> RD : Lưu token xác minh (hạn 24 giờ)
+WK ->> K : Email chứa liên kết xác minh
+end
+end
+end
+group Xác minh email
+K -> FE : Mở liên kết /tai-khoan/xac-thuc-email?token=...
+FE -> BE : POST /api/auth/verify/confirm/ {token}
+BE -> RD : Lấy và xóa token (dùng một lần)
+alt Token sai, hết hạn hoặc email đã đổi
+BE --> FE : 400 "Liên kết không hợp lệ hoặc đã hết hạn"
+FE --> K : Hiện nút "Gửi lại email xác minh"
+else Token hợp lệ
+BE -> DB : Cập nhật email_verified = true
+BE ->> WK : Gửi email chào mừng
+BE --> FE : 200 "Xác thực email thành công"
+FE --> K : Thông báo thành công
+end
+end

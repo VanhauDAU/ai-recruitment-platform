@@ -1,0 +1,28 @@
+title Sơ đồ tuần tự chức năng đăng ký tài khoản nhà tuyển dụng
+actor K Khách
+participant FE Giao diện web\n(React)
+participant BE Máy chủ API\n(Django REST)
+database DB CSDL\n(PostgreSQL)
+queue WK Worker gửi email\n(Celery + SMTP)
+K -> FE : Bước 1: nhập email, mật khẩu, đồng ý điều khoản
+FE -> FE : Kiểm tra định dạng, mật khẩu nhập lại khớp
+K -> FE : Bước 2: họ tên, giới tính, số điện thoại, tỉnh/thành làm việc
+FE -> FE : Lấy captcha_token (reCAPTCHA v3)
+FE -> BE : POST /api/employer/register/ {email, password, full_name, gender, contact_phone, work_location, terms_accepted, captcha_token}
+BE -> BE : Xác minh captcha với Google
+alt Captcha không đạt
+BE --> FE : 400 {captcha_token}
+FE --> K : Yêu cầu thử lại
+else Email đã có tài khoản NTD hoặc dữ liệu sai
+BE --> FE : 400 {email | contact_phone | work_location}
+FE --> K : Đưa lỗi về đúng bước và trường nhập
+else Hợp lệ
+BE -> DB : Tạo User (role = employer) và RecruiterProfile (thời điểm đồng ý điều khoản, phiên bản chính sách)
+BE -> DB : Tạo AuthEmailJob (verification)
+BE ->> WK : deliver_auth_email_job
+BE -> DB : Tạo AuthSession và refresh token
+BE --> FE : 201 {user, recruiter, access} + cookie procv_refresh_employer
+FE --> K : Chuyển tới trang xác minh email của cổng NTD
+WK ->> K : Email chứa liên kết xác minh
+end
+note over K,BE : Sau khi xác minh email, NTD khai báo nhu cầu tuyển dụng rồi chuyển sang xác thực tài khoản (số điện thoại, giấy tờ, cam kết bảo vệ dữ liệu)

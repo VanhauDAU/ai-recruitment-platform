@@ -1,0 +1,30 @@
+title Sơ đồ tuần tự chức năng xem việc làm gợi ý (hiện tại theo luật)
+actor UV Ứng viên
+participant FE Giao diện web\n(React)
+participant BE Máy chủ API\n(Django REST)
+database DB CSDL\n(PostgreSQL)
+UV -> FE : Mở "Việc làm phù hợp"
+FE -> BE : GET /api/jobs/recommendations/for-me/?page=
+BE -> DB : Đọc nguyện vọng và đồng ý nhận gợi ý của ứng viên
+alt Chưa khai báo nguyện vọng
+BE --> FE : 200 {status: preferences_required}
+FE --> UV : Mời khai báo nguyện vọng
+else Chưa đồng ý nhận gợi ý
+BE --> FE : 200 {status: consent_required}
+FE --> UV : Mời bật quyền nhận gợi ý
+else Đủ điều kiện
+BE -> DB : Lọc trước tối đa 500 tin đang công khai theo ngành, kỹ năng, chức danh; bỏ tin đã ứng tuyển hoặc đã ẩn
+loop Mỗi tin ứng viên
+BE -> BE : Cộng điểm: chuyên môn 38, vị trí 24, kỹ năng 6/kỹ năng (tối đa 24), tỉnh 10, kinh nghiệm 6, lương 8
+end
+BE -> BE : Bỏ tin dưới 20 điểm, sắp theo điểm, hạng tin, độ mới
+BE --> FE : 200 {status: ready, results, match_reasons}
+FE --> UV : Danh sách tin kèm lý do phù hợp
+opt Ứng viên ẩn một tin gợi ý
+UV -> FE : Bấm "Không quan tâm"
+FE -> BE : POST /api/jobs/recommendations/hidden/ {job_public_id}
+BE -> DB : Lưu tin bị ẩn
+BE --> FE : 201
+end
+end
+note over UV,DB : Hướng phát triển: chuyển sang đối sánh ngữ nghĩa dùng chung với chức năng phân tích độ phù hợp

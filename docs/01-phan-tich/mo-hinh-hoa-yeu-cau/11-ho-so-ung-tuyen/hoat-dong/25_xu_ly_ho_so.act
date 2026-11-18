@@ -1,0 +1,45 @@
+title Sơ đồ hoạt động chức năng quản lý hồ sơ ứng tuyển
+Nhà tuyển dụng mở danh sách hồ sơ, lọc theo tin, trạng thái
+Hệ thống kiểm tra quyền đọc dữ liệu ứng viên
+if Có quyền đọc dữ liệu ứng viên?
+case Không
+  Giao diện báo lỗi CANDIDATE_DATA_BLOCKED
+  stop
+case Có
+endif
+Hệ thống trả danh sách hồ sơ của các tin do nhà tuyển dụng đăng
+Nhà tuyển dụng chọn một hồ sơ để xem CV
+Hệ thống ghi nhật ký truy cập CV
+if Hồ sơ đang ở trạng thái "submitted"?
+case Có
+  Hệ thống chuyển "viewed", báo ứng viên CV đã được xem
+case Không
+endif
+Giao diện hiển thị CV và lịch sử hồ sơ
+Nhà tuyển dụng chọn quyết định cho hồ sơ
+Hệ thống khóa hồ sơ, kiểm tra bước chuyển trạng thái
+if Bước chuyển hợp lệ (chỉ đi tiến)?
+case Không
+  Giao diện báo lỗi trạng thái không hợp lệ
+  stop
+case Có
+endif
+Hệ thống cập nhật trạng thái, ghi lịch sử hồ sơ
+Hệ thống tạo thông báo, hẹn công bố sau 5 phút
+Giao diện báo đã lưu, hiển thị nút "Hoàn tác"
+if Nhà tuyển dụng bấm "Hoàn tác"?
+case Có
+  if Thông báo đã gửi tới ứng viên?
+  case Có
+    Giao diện báo "Ứng viên đã nhận thông báo"
+    stop
+  case Không
+    Hệ thống hủy thông báo, khôi phục trạng thái trước
+    Hệ thống lùi hạn tự động từ chối tối thiểu 3 ngày
+    stop
+  endif
+case Không
+endif
+Worker đánh dấu đã công bố thông báo đến hạn (mỗi 60 giây)
+Worker gửi email và thông báo kết quả cho ứng viên
+Ứng viên thấy trạng thái mới ở "Việc làm đã ứng tuyển"

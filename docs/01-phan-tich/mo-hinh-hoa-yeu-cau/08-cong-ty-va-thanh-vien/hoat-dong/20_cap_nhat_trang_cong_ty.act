@@ -1,0 +1,48 @@
+title Sơ đồ hoạt động chức năng cập nhật thông tin trang công ty
+Nhà tuyển dụng sửa thông tin hoặc nội dung trang công ty
+if Loại thay đổi?
+case Bố cục trang
+  Hệ thống kiểm tra quyền, áp dụng bố cục ngay
+  stop
+case Nội dung, thông tin pháp lý
+endif
+Hệ thống kiểm tra quyền biên tập và trạng thái yêu cầu
+if Kết quả kiểm tra yêu cầu?
+case Không có quyền
+  Giao diện báo không có quyền biên tập
+  stop
+case Đang có yêu cầu duyệt
+  Giao diện báo yêu cầu đang được duyệt
+  stop
+case Dữ liệu gốc đã đổi
+  Giao diện báo xung đột dữ liệu gốc
+  stop
+case Hợp lệ
+endif
+Hệ thống lưu yêu cầu cập nhật, ghi sự kiện
+if Đổi tên hoặc mã số thuế?
+case Không
+case Có
+  Hệ thống yêu cầu giấy tờ chứng minh
+  Hệ thống đưa tra cứu mã số thuế vào hàng đợi
+endif
+Giao diện báo "Đã gửi, chờ quản trị viên duyệt"
+Quản trị viên mở yêu cầu, bấm "Bắt đầu duyệt"
+if Đủ giấy tờ và ảnh đã tải xong?
+case Không
+  Giao diện báo yêu cầu chưa sẵn sàng duyệt
+  stop
+case Có
+endif
+Hệ thống chuyển yêu cầu sang đang duyệt
+Quản trị viên so sánh thay đổi, chọn quyết định
+if Kết quả xét duyệt?
+case Xung đột phiên bản
+  Giao diện báo dữ liệu đã thay đổi, tải lại
+  stop
+case Yêu cầu sửa / Từ chối
+  Hệ thống cập nhật trạng thái và ghi chú
+case Duyệt
+  Hệ thống áp thay đổi vào hồ sơ công ty
+  Hệ thống ghi sự kiện và nhật ký quản trị
+endif

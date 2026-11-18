@@ -1,0 +1,35 @@
+title Sơ đồ tuần tự tính trước vector đối sánh ngữ nghĩa CV–JD
+actor UV Ứng viên
+actor NTD Nhà tuyển dụng
+participant BE Máy chủ API\n(Django REST)
+database DB CSDL\n(PostgreSQL + pgvector)
+queue ML ML Worker\n(Celery ai-matching)
+participant M Mô hình e5-base\n(chạy local)
+participant BEAT Bộ lập lịch\n(Celery Beat)
+group CV có phiên bản mới
+UV -> BE : Lưu CV (POST /api/v2/cvs/{cv}/save-version/)
+BE -> DB : Tạo CvVersion
+BE ->> ML : embed_cv_version (tín hiệu post_save, khi bật ai_job_match_enabled và tính trước)
+ML -> DB : Tìm MatchDocument cùng (nguồn, hash nội dung, extract-v2, phiên bản mô hình)
+alt Đã có
+ML -> ML : Bỏ qua (dùng lại)
+else Chưa có
+ML -> ML : Trích hồ sơ CV: kỹ năng (danh mục + bí danh), số tháng kinh nghiệm, học vấn, ngoại ngữ; chia đoạn
+ML -> M : Mã hóa đoạn với tiền tố "passage: "
+M --> ML : Vector 768 chiều (chuẩn hóa)
+ML -> DB : Lưu MatchDocument (ready) và MatchChunk
+end
+end
+group Tin chuyển sang hoạt động hoặc đổi nội dung
+NTD -> BE : Đăng / sửa tin
+BE ->> ML : embed_job
+ML -> ML : Trích hồ sơ tin: yêu cầu, kỹ năng bắt buộc / nên có, cấp bậc, ngoại ngữ, địa điểm
+ML -> M : Mã hóa đoạn với tiền tố "query: "
+M --> ML : Vector
+ML -> DB : Lưu MatchDocument và MatchChunk của tin
+end
+group Phục hồi việc bị treo (mỗi 60 giây)
+BEAT ->> ML : recover_stale_analyses
+ML -> DB : Phân tích queued > 10 phút → failed (analysis_timeout); processing > 60 giây → queued; queued > 30 giây → gửi lại
+end
+note over BE,M : Mô hình chạy trong ml-worker, không gọi API ngoài; nhờ tính trước, lúc ứng viên bấm "Xem độ phù hợp" thường chỉ còn bước chấm điểm

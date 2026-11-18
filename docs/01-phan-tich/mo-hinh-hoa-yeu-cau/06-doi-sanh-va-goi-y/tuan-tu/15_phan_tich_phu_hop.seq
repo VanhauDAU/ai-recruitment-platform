@@ -1,0 +1,47 @@
+title Sơ đồ tuần tự chức năng phân tích mức độ phù hợp CV–JD
+actor UV Ứng viên
+participant FE Giao diện web\n(React)
+participant BE Máy chủ API\n(Django REST)
+database DB CSDL\n(PostgreSQL + pgvector)
+queue ML ML Worker\n(Celery ai-matching)
+participant M Mô hình e5-base\n(chạy local)
+UV -> FE : Bấm "Xem độ phù hợp" trên tin, chọn một CV đã lưu
+FE -> BE : POST /api/matching/analyses/ {job, cv}
+BE -> BE : Kiểm tra cờ ai_job_match_enabled, giới hạn 20 lần/giờ
+alt Tắt tính năng hoặc vượt giới hạn
+BE --> FE : 403 feature_disabled / 429
+FE --> UV : Thông báo tương ứng
+else Tin không công khai hoặc CV không thuộc ứng viên
+BE --> FE : 404 job_not_active / cv_not_owned
+else CV chưa lưu lần nào hoặc tin quá ít nội dung
+BE --> FE : 422 cv_not_saved / job_text_too_short
+else Hợp lệ
+BE -> DB : Tìm MatchAnalysis theo khóa (phiên bản CV, tin, hash nội dung tin, phiên bản mô hình, phiên bản công thức)
+alt Đã có kết quả
+BE --> FE : 200 {cached: true, result}
+FE --> UV : Hiển thị kết quả ngay
+else Chưa có hoặc lần trước lỗi
+BE -> DB : Tạo / đặt lại MatchAnalysis (queued)
+BE ->> ML : run_analysis (sau khi commit)
+BE --> FE : 202 {public_id, status: queued}
+ML -> DB : Nhận việc: queued → processing
+opt Chưa có vector của CV hoặc của tin
+ML -> ML : Trích hồ sơ (kỹ năng, kinh nghiệm, học vấn, cấp bậc, ngoại ngữ), chia đoạn
+ML -> M : Mã hóa các đoạn văn bản
+M --> ML : Vector 768 chiều
+ML -> DB : Lưu MatchDocument và MatchChunk
+end
+ML -> ML : Chấm 6 tiêu chí theo công thức hybrid-v1 (cosine, MaxSim, đối chiếu kỹ năng)
+ML -> ML : Sinh giải thích, kỹ năng khớp/thiếu, gợi ý cải thiện theo luật
+alt Thành công
+ML -> DB : MatchAnalysis = succeeded, lưu result_json, overall_score
+else CV không đủ dữ liệu, quá thời gian hoặc lỗi
+ML -> DB : MatchAnalysis = failed (error_code)
+end
+loop Mỗi 800 ms khi trạng thái là queued/processing
+FE -> BE : GET /api/matching/analyses/{public_id}/
+BE --> FE : status, result
+end
+FE --> UV : Điểm tổng, điểm từng tiêu chí, kỹ năng khớp/thiếu, gợi ý, lưu ý "không phải quyết định tuyển dụng"
+end
+end

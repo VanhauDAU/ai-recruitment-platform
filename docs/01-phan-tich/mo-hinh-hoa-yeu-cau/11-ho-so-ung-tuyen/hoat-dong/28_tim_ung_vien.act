@@ -1,0 +1,31 @@
+title Sơ đồ hoạt động chức năng tìm kiếm hồ sơ ứng viên (dự kiến)
+Nhà tuyển dụng chọn tin đang tuyển, bấm "Tìm ứng viên phù hợp"
+Hệ thống kiểm tra quyền sở hữu tin và đọc dữ liệu ứng viên
+if Đủ quyền?
+case Không
+  Giao diện báo lỗi CANDIDATE_DATA_BLOCKED
+  stop
+case Có
+endif
+Hệ thống lấy vector đã tính sẵn của tin tuyển dụng
+Hệ thống lọc CV ứng viên cho phép nhà tuyển dụng tìm thấy
+Hệ thống tìm K CV gần nhất theo cosine bằng pgvector
+Hệ thống chấm lại theo hybrid-v1, sắp xếp, ẩn thông tin liên hệ
+Giao diện hiển thị ứng viên kèm điểm và lý do phù hợp
+if Nhà tuyển dụng xem chi tiết một CV?
+case Có
+  Hệ thống kiểm tra lại đồng ý của ứng viên
+  if Ứng viên vẫn cho phép tìm thấy CV?
+  case Không
+    Giao diện báo CV không còn khả dụng
+    stop
+  case Có
+  endif
+  Hệ thống ghi nhật ký truy cập CV
+  fork
+    Giao diện hiển thị CV theo phạm vi ứng viên cho phép
+  again
+    Hệ thống thông báo ứng viên "NTD đã xem CV của bạn"
+  endfork
+case Không
+endif

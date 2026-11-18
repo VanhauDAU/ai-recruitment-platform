@@ -1,0 +1,54 @@
+title Sơ đồ tuần tự chức năng tạo hoặc tham gia công ty
+actor NTD Nhà tuyển dụng
+participant FE Giao diện web\n(React)
+participant BE Máy chủ API\n(Django REST)
+database DB CSDL\n(PostgreSQL)
+actor QL Quản lý công ty
+actor QTV Quản trị viên
+NTD -> FE : Tìm công ty theo tên hoặc mã số thuế
+FE -> BE : GET /api/employer/company/search/?q=
+BE --> FE : Danh sách công ty
+alt Công ty chưa có trên hệ thống
+NTD -> FE : Điền thông tin và bấm "Tạo công ty"
+FE -> BE : POST /api/employer/company/create/
+alt NTD đã liên kết công ty khác
+BE --> FE : 400
+else Hợp lệ
+BE -> DB : Hủy yêu cầu tham gia đang chờ (nếu có)
+BE -> DB : Tạo Company, liên kết NTD với vai trò owner
+BE --> FE : 201
+FE --> NTD : Chuyển sang nộp giấy tờ xác thực
+end
+else Công ty đã có
+NTD -> FE : Bấm "Gửi yêu cầu tham gia"
+FE -> BE : POST /api/employer/company/join/ {company}
+alt Đã liên kết hoặc đang chờ ở công ty khác
+BE --> FE : 400
+else Hợp lệ
+BE -> DB : Tạo CompanyJoinRequest (pending)
+BE ->> QL : Thông báo "Có yêu cầu tham gia"
+BE --> FE : 202
+end
+alt Công ty có quản lý đủ điều kiện (đã xác thực, không bị tạm giữ)
+QL -> FE : Mở danh sách yêu cầu, chọn Duyệt / Từ chối
+FE -> BE : POST /api/employer/company/join-requests/{id}/approve | reject/
+else Công ty chưa có quản lý đủ điều kiện
+QTV -> FE : Mở hàng chờ yêu cầu tham gia (cổng quản trị)
+FE -> BE : POST /api/admin/company-join-requests/{id}/approve | reject/
+end
+BE -> BE : Kiểm tra quyền người duyệt
+alt Quản lý chưa xác thực, không phải quản lý, hoặc quản trị viên khi công ty đã có quản lý
+BE --> FE : 403
+else Yêu cầu đã xử lý
+BE --> FE : 400
+else Duyệt
+BE -> DB : Liên kết NTD với vai trò member, yêu cầu = approved
+BE ->> NTD : Thông báo "Đã được duyệt, hãy nộp giấy tờ xác thực"
+BE --> FE : 200
+else Từ chối
+BE -> DB : Yêu cầu = rejected
+BE ->> NTD : Thông báo bị từ chối
+BE --> FE : 200
+end
+end
+note over NTD,QTV : Tham gia công ty không đồng nghĩa đã xác thực; thành viên vẫn phải qua bước duyệt xác thực của quản trị viên

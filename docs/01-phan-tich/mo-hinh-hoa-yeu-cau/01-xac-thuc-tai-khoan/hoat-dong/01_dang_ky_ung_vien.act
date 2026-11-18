@@ -1,0 +1,39 @@
+title Sơ đồ hoạt động chức năng đăng ký tài khoản ứng viên và xác minh email
+Khách nhập họ tên, email, mật khẩu
+Hệ thống kiểm tra email đã có tài khoản ứng viên chưa
+if Email đã được sử dụng?
+case Có
+  Giao diện báo "Email đã được sử dụng", khóa nút đăng ký
+  stop
+case Không
+endif
+Khách bấm "Đăng ký"
+Hệ thống xác minh captcha (điểm ≥ 0,5), kiểm tra mật khẩu
+if Captcha và dữ liệu hợp lệ?
+case Không
+  Giao diện hiển thị lỗi theo trường
+  stop
+case Có
+endif
+Hệ thống tạo tài khoản, hồ sơ ứng viên và yêu cầu gửi email
+fork
+  Hệ thống tạo phiên, trả access token và cookie refresh
+  Giao diện chuyển tới trang khai báo nguyện vọng
+again
+  Worker lưu token xác minh (hạn 24 giờ)
+  Worker gửi email chứa liên kết xác minh
+endfork
+Ứng viên mở liên kết xác minh trong email
+Hệ thống lấy và xóa token (dùng một lần)
+if Token đúng, còn hạn và email chưa đổi?
+case Không
+  Giao diện báo liên kết hết hạn, hiện nút "Gửi lại email"
+  stop
+case Có
+endif
+Hệ thống đánh dấu email đã xác minh
+fork
+  Giao diện thông báo xác thực email thành công
+again
+  Worker gửi email chào mừng
+endfork

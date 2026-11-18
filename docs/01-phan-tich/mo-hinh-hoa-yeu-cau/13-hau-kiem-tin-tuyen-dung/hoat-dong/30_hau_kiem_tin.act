@@ -1,0 +1,49 @@
+title Sơ đồ hoạt động chức năng hậu kiểm tin tuyển dụng
+Quản trị viên mở danh sách tin, chọn một tin
+Hệ thống trả chi tiết, khác biệt so với bản đã đăng, mã phiên duyệt
+Quản trị viên chọn thao tác, lý do, ghi chú
+if Tin đã thay đổi sau khi mở?
+case Có
+  Giao diện báo lỗi job_moderation_stale (409)
+  stop
+case Không
+endif
+if Thao tác được chọn?
+case Ẩn tin
+  Hệ thống tạm giữ tin vi phạm, ghi sự kiện ẩn tin
+  Hệ thống khóa sửa, gia hạn, nhân bản tin
+  stop
+case Yêu cầu sửa
+endif
+if Lý do cho phép yêu cầu sửa?
+case Không
+  Giao diện báo lỗi lý do không hợp lệ
+  stop
+case Có
+endif
+Hệ thống tạm giữ chờ sửa, lưu dấu nội dung, ghi sự kiện
+Hệ thống thông báo nhà tuyển dụng "Tin cần chỉnh sửa"
+while Tin còn chờ nhà tuyển dụng sửa? | Có | Không
+  Nhà tuyển dụng sửa nội dung tin, bấm "Gửi lại để duyệt"
+  if Nội dung chưa thay đổi?
+  case Có
+    Giao diện báo "Bạn chưa chỉnh sửa nội dung"
+    stop
+  case Không
+  endif
+  if Đã gửi lại trước đó?
+  case Có
+    Giao diện báo lỗi tin đã gửi lại
+    stop
+  case Không
+  endif
+  Hệ thống ghi thời điểm gửi lại, sự kiện RESUBMIT
+  Quản trị viên mở hàng chờ "Tin gửi lại", xem bản sửa
+  if Bản gửi lại đạt yêu cầu?
+  case Chưa đạt
+    Hệ thống mở vòng yêu cầu sửa mới, thông báo nhà tuyển dụng
+  case Đạt
+    Hệ thống gỡ tạm giữ, bù thời gian hiển thị, ghi RESTORE
+  endif
+endwhile
+Hệ thống hiển thị lại tin trên trang công khai

@@ -1,0 +1,35 @@
+title Sơ đồ tuần tự chức năng quản lý mẫu CV
+actor QTV Quản trị viên
+participant FE Giao diện quản trị\n(React)
+participant BE Máy chủ API\n(Django REST)
+database DB CSDL\n(PostgreSQL)
+queue WK Worker xuất PDF\n(Celery cv-export)
+QTV -> FE : Tạo mẫu mới (tên, danh mục, bộ dựng giao diện)
+FE -> BE : POST /api/v2/admin/cv-templates/
+BE -> DB : Tạo CvTemplate (draft) và phiên bản nháp
+BE --> FE : 201
+QTV -> FE : Cấu hình theo từng bước (bố cục, mục, màu, phông chữ)
+FE -> BE : PATCH /api/v2/admin/cv-templates/{id}/versions/{v}/config/
+BE -> DB : Lưu cấu hình phiên bản
+QTV -> FE : Bấm "Xuất PDF thử"
+FE -> BE : POST .../versions/{v}/test-pdf/
+BE ->> WK : render_template_test_pdf
+BE --> FE : 202 {token}
+loop Mỗi 1,5 giây
+FE -> BE : GET /api/v2/admin/cv-templates/test-pdf/{token}/
+BE --> FE : Trạng thái / tệp PDF
+end
+QTV -> FE : Bấm "Xuất bản"
+FE -> BE : GET .../versions/{v}/checklist/
+BE --> FE : Danh sách kiểm tra (tên, màu, mục bắt buộc, PDF thử)
+FE -> BE : POST .../versions/{v}/publish/
+alt Danh sách kiểm tra chưa đạt hoặc phiên bản không phải nháp
+BE --> FE : 400 {checklist}
+FE --> QTV : Chỉ ra mục còn thiếu
+else Hợp lệ
+BE -> DB : Phiên bản = published, phiên bản cũ = retired, mẫu = published
+BE ->> WK : generate_template_color_snapshot (ảnh xem trước theo màu)
+BE --> FE : 200
+FE --> QTV : Mẫu xuất hiện trong thư viện cho ứng viên
+end
+note over QTV,DB : Mẫu đang được CV sử dụng thì không xóa được, chỉ ẩn (archived)

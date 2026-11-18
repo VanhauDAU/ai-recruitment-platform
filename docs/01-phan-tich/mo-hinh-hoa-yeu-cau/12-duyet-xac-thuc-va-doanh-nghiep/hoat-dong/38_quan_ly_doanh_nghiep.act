@@ -1,0 +1,47 @@
+title Sơ đồ hoạt động chức năng quản lý doanh nghiệp
+Quản trị viên mở danh sách doanh nghiệp, chọn một công ty
+Hệ thống trả thông tin công ty, thành viên, quản lý đủ điều kiện
+if Quản trị viên chọn thao tác?
+case Duyệt yêu cầu tham gia
+  Quản trị viên chọn Duyệt / Từ chối yêu cầu tham gia
+  if Công ty đã có quản lý đủ điều kiện?
+  case Có
+    Giao diện báo quyền duyệt thuộc quản lý công ty (403)
+    stop
+  case Không
+  endif
+  if Yêu cầu đã được xử lý?
+  case Có
+    Giao diện báo lỗi yêu cầu đã xử lý
+    stop
+  case Không
+  endif
+  Hệ thống cập nhật yêu cầu; duyệt thì thêm làm thành viên
+  Hệ thống thông báo kết quả cho nhà tuyển dụng
+case Chỉ định quản lý
+  Quản trị viên chọn thành viên đã xác thực, nhập lý do
+  if Công ty chưa có quản lý đủ điều kiện, có lý do, thành viên đủ điều kiện?
+  case Không
+    Giao diện báo lỗi không đủ điều kiện chỉ định
+    stop
+  case Có
+  endif
+  Hệ thống hạ quyền quản lý cũ, nâng thành viên làm quản lý
+  Hệ thống thông báo "Bạn là quản lý công ty"
+case Tạm giữ trang
+  Quản trị viên chọn tạm giữ hoặc gỡ tạm giữ, nhập lý do
+  if Trang đã ở trạng thái được yêu cầu?
+  case Có
+    Giao diện báo lỗi trạng thái không đổi
+    stop
+  case Không
+  endif
+  if Hành động?
+  case Tạm giữ
+    Hệ thống bật tạm giữ, ghi sự kiện và nhật ký
+    Hệ thống ẩn mọi tin của công ty khỏi trang công khai
+  case Gỡ tạm giữ
+    Hệ thống gỡ tạm giữ, bù thời gian hiển thị cho tin
+  endif
+endif
+Giao diện báo thao tác thành công

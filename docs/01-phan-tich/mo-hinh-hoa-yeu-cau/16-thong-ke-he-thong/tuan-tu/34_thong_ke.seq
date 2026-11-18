@@ -1,0 +1,25 @@
+title Sơ đồ tuần tự chức năng xem thống kê hệ thống
+actor QTV Quản trị viên
+participant FE Giao diện quản trị\n(React)
+participant BE Máy chủ API\n(Django REST)
+database DB CSDL\n(PostgreSQL)
+QTV -> FE : Mở trang tổng quan, chọn kỳ 7 / 30 / 90 ngày
+FE -> BE : GET /api/dashboard/admin/?period=30
+BE -> BE : Kiểm tra quyền quản trị
+alt Không phải quản trị viên
+BE --> FE : 403
+else Hợp lệ
+BE -> DB : Đếm hàng chờ (xác thực NTD, cập nhật công ty, yêu cầu tham gia, báo cáo, tin gửi lại) và số việc quá hạn
+BE -> DB : Tổng hợp KPI: người dùng mới, tin đăng, hồ sơ nộp theo ngày, phễu ứng tuyển
+BE -> DB : Thống kê tin theo trạng thái, ngành nghề nổi bật, lượt dùng và chi phí AI
+DB --> BE : Số liệu
+BE --> FE : 200 {queues, kpis, series, jobs, applications, ai_usage}
+FE --> QTV : Thẻ số liệu, biểu đồ, danh sách việc cần xử lý
+end
+loop Mỗi 30 giây
+FE -> BE : GET /api/dashboard/admin/queues/
+BE --> FE : Số việc trong từng hàng chờ
+FE --> QTV : Cập nhật huy hiệu trên menu
+end
+QTV -> FE : Bấm một hàng chờ
+FE --> QTV : Chuyển tới màn hình xử lý tương ứng

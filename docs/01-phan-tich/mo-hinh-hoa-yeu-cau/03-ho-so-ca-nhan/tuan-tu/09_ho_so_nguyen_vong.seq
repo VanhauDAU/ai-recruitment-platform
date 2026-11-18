@@ -1,0 +1,54 @@
+title Sơ đồ tuần tự chức năng quản lý hồ sơ cá nhân và nguyện vọng việc làm
+actor UV Ứng viên
+participant FE Giao diện web\n(React)
+participant BE Máy chủ API\n(Django REST)
+database DB CSDL\n(PostgreSQL)
+queue WK Worker nền\n(Celery + SMTP)
+group Thông tin cá nhân
+UV -> FE : Sửa họ tên, số điện thoại, ảnh đại diện, thông tin hồ sơ
+FE -> BE : PATCH /api/auth/me/ và PATCH /api/candidate/profile/
+BE -> DB : Cập nhật User và CandidateProfile
+BE --> FE : 200 Hồ sơ mới
+end
+group Nguyện vọng việc làm và quyền riêng tư
+UV -> FE : Chọn tối đa 5 chuyên môn, vị trí, tỉnh/thành, kỹ năng; bật/tắt nhận gợi ý và cho phép NTD tìm thấy hồ sơ
+FE -> BE : PUT /api/candidate/job-preferences/ {..., ai_recommendation_consent, recruiter_visibility_consent}
+alt Quá 5 chuyên môn, trùng hoặc danh mục không hợp lệ
+BE --> FE : 400
+FE --> UV : Hiển thị lỗi
+else Hợp lệ
+BE -> DB : Thay toàn bộ nguyện vọng trong một giao dịch
+BE -> DB : Cập nhật CandidateConsent và ghi CandidateConsentEvent
+opt Tắt "Cho phép NTD tìm thấy hồ sơ"
+BE -> DB : Đặt recruiter_searchable = false cho mọi CV
+end
+BE --> FE : 200
+FE --> UV : Lưu thành công
+end
+end
+group Bật tìm kiếm cho một CV
+UV -> FE : Bật "Cho NTD tìm thấy CV này"
+FE -> BE : PATCH /api/v2/cvs/{cv}/ {recruiter_searchable: true}
+alt Chưa đồng ý cho phép NTD tìm thấy hồ sơ
+BE --> FE : 409 RECRUITER_CONSENT_REQUIRED
+FE --> UV : Mở hộp thoại xin đồng ý
+UV -> FE : Xác nhận đồng ý
+FE -> BE : PATCH /api/candidate/recruiter-visibility/ {enabled, confirmed, policy_version}
+BE -> DB : Lưu đồng ý và sự kiện
+FE -> BE : PATCH /api/v2/cvs/{cv}/ {recruiter_searchable: true}
+end
+BE -> DB : Cập nhật UserCv
+BE --> FE : 200
+end
+group Thông báo việc làm qua email
+UV -> FE : Tạo thông báo việc làm (từ khóa, địa điểm, tần suất ngày/tuần)
+FE -> BE : POST /api/jobs/alerts/
+alt Email chưa xác minh, đã đủ 5 thông báo hoặc trùng
+BE --> FE : 400 {code}
+else Hợp lệ
+BE -> DB : Tạo JobAlert
+BE --> FE : 201
+end
+WK -> DB : Định kỳ 5 phút: lấy JobAlert tới hạn, chọn tin mới phù hợp
+WK ->> UV : Email tổng hợp việc làm mới
+end

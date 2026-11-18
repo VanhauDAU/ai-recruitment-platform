@@ -1,0 +1,21 @@
+title Sơ đồ tuần tự chức năng xem việc làm gợi ý theo đối sánh ngữ nghĩa (dự kiến)
+actor UV Ứng viên
+participant FE Giao diện web\n(React)
+participant BE Máy chủ API\n(Django REST)
+database DB CSDL\n(PostgreSQL + pgvector)
+UV -> FE : Mở "Việc làm phù hợp"
+FE -> BE : GET /api/jobs/recommendations/for-me/
+BE -> DB : Kiểm tra đồng ý nhận gợi ý, lấy CV chính và MatchDocument của CV
+alt Chưa đồng ý hoặc chưa có CV đã lưu
+BE --> FE : 200 {status: consent_required | cv_required}
+FE --> UV : Hướng dẫn bật quyền hoặc tạo CV
+else Có vector CV
+BE -> DB : Tìm K tin đang công khai gần nhất theo cosine (pgvector), lọc theo nguyện vọng địa điểm
+DB --> BE : Danh sách tin ứng cử
+BE -> BE : Chấm lại theo hybrid-v1, loại tin đã ứng tuyển / đã ẩn, sắp xếp
+BE --> FE : 200 Danh sách tin kèm điểm và kỹ năng khớp
+FE --> UV : Hiển thị gợi ý, mỗi tin có nút "Xem độ phù hợp" chi tiết
+else Chưa có vector (CV vừa lưu)
+BE -> BE : Dùng tạm gợi ý theo luật (profile-rule-v2)
+BE --> FE : 200 Danh sách theo luật
+end

@@ -1,0 +1,59 @@
+title Sơ đồ hoạt động chức năng nhập CV từ tệp PDF/DOCX
+Ứng viên chọn tệp CV (PDF/DOCX ≤ 5 MB) và mẫu CV
+Giao diện kiểm tra đuôi tệp và dung lượng
+if Bật cách ly tệp tải lên?
+case Không
+case Có
+  Hệ thống lưu tệp vào vùng cách ly
+  Worker quét virus bằng ClamAV
+  if Có mã độc?
+  case Có
+    Giao diện báo "Tệp không vượt qua kiểm tra an toàn"
+    stop
+  case Không
+  endif
+  Worker đánh dấu tệp sạch, tạo tài sản tải lên
+endif
+Hệ thống kiểm tra chữ ký tệp và số CV hiện có
+if Kết quả kiểm tra?
+case Tệp không hợp lệ
+  Giao diện báo "Tệp phải là PDF hoặc DOCX hợp lệ"
+  stop
+case Đủ số CV tối đa
+  Giao diện báo giới hạn số CV
+  stop
+case Hợp lệ
+endif
+Hệ thống tạo CV và tác vụ nhập ở trạng thái chờ
+fork
+  Worker trích văn bản, kiểm tra số trang, độ dài, có phải CV
+  if Trích được văn bản CV?
+  case Không
+    Worker đánh dấu tác vụ thất bại
+  case Có
+    if Đã cấu hình khóa API AI?
+    case Có
+      Worker gọi Gemini cấu trúc thành JSON (thử tối đa 2 lần)
+    case Không
+      Worker dùng bộ phân tích theo luật dự phòng
+    endif
+    if Dữ liệu đúng lược đồ?
+    case Không
+      Worker đánh dấu tác vụ thất bại
+    case Có
+      Worker ghép vào mẫu, tạo phiên bản và bản nháp
+      Worker đánh dấu CV đã phân tích
+    endif
+  endif
+again
+  while Đang xử lý và chưa quá 60 giây? | Có | Không
+    Giao diện hỏi trạng thái xử lý mỗi giây
+  endwhile
+endfork
+if CV đã được phân tích?
+case Không
+  Giao diện báo lý do, nút "Thử lại" (tối đa 3 lần)
+  stop
+case Có
+endif
+Giao diện mở trình soạn CV với nội dung đã nhập

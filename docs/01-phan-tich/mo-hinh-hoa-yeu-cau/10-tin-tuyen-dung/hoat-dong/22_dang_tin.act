@@ -1,0 +1,39 @@
+title Sơ đồ hoạt động chức năng đăng tin tuyển dụng
+Nhà tuyển dụng mở trang "Đăng tin"
+Hệ thống đọc xác thực, DPA, tạm giữ, hạn mức đăng tin
+Giao diện hiển thị biểu mẫu, cảnh báo nếu chưa đủ điều kiện
+Nhà tuyển dụng nhập nội dung tin, chọn chiến dịch
+if Nhà tuyển dụng chọn hành động?
+case Lưu nháp
+  Hệ thống kiểm tra không gian tuyển dụng và chiến dịch
+  if Hợp lệ?
+  case Không
+    Giao diện báo lỗi không gian hoặc chiến dịch
+    stop
+  case Có
+  endif
+  Hệ thống tạo tin nháp, ghi lịch sử trạng thái
+  Giao diện báo đã lưu bản nháp
+case Đăng tin
+  Nhà tuyển dụng tích cam kết trách nhiệm, bấm "Đăng tin"
+  Hệ thống khóa tài khoản, tính điều kiện được đăng
+  if Kết quả kiểm tra đăng tin?
+  case Thiếu cam kết
+    Giao diện yêu cầu đồng ý cam kết
+    stop
+  case Bị chặn đăng
+    Giao diện hiển thị việc cần làm để được đăng
+    stop
+  case Nội dung sai
+    Giao diện báo lỗi theo từng trường
+    stop
+  case Vượt hạn mức
+    Giao diện báo vượt hạn mức 3 hoặc 100 tin
+    stop
+  case Hợp lệ
+  endif
+  Hệ thống ghi cam kết, đặt thời gian hiển thị 1–90 ngày
+  Hệ thống kích hoạt tin, lưu bản chụp làm mốc hậu kiểm
+  Hệ thống ghi lịch sử trạng thái tin
+  Giao diện báo tin đã hiển thị công khai
+endif

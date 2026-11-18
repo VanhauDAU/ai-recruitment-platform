@@ -1,0 +1,38 @@
+title Sơ đồ hoạt động chức năng gia hạn, dừng và mở lại tin tuyển dụng
+if Nhà tuyển dụng chọn thao tác?
+case Dừng tuyển
+  Nhà tuyển dụng bấm "Dừng tuyển"
+  if Là tin đang hoạt động của mình?
+  case Không
+    Giao diện báo không thể dừng tin
+    stop
+  case Có
+  endif
+  Hệ thống đóng tin, ghi thời điểm và lịch sử
+case Gia hạn hạn nộp
+  Nhà tuyển dụng chọn hạn nộp mới
+  Hệ thống kiểm tra trạng thái tin và các mốc thời gian
+  if Thỏa mọi điều kiện gia hạn?
+  case Không
+    Giao diện báo lý do, gợi ý nhân bản tin nếu vượt 90 ngày
+    stop
+  case Có
+  endif
+  Hệ thống cập nhật hạn nộp, ghi nhật ký chiến dịch
+case Mở lại tin
+  Nhà tuyển dụng chọn hạn nộp, xác nhận cam kết
+  if Có cam kết và không bị chặn đăng?
+  case Không
+    Giao diện báo thiếu cam kết hoặc bị chặn đăng
+    stop
+  case Có
+  endif
+  if Hạn nộp trong trần 90 ngày và thời gian hiển thị?
+  case Không
+    Giao diện báo hạn nộp vượt giới hạn
+    stop
+  case Có
+  endif
+  Hệ thống kích hoạt lại tin, giữ mốc chu kỳ ban đầu
+  Giao diện báo tin hiển thị lại
+endif

@@ -1,0 +1,46 @@
+title Sơ đồ hoạt động chức năng tạo hoặc tham gia công ty
+Nhà tuyển dụng tìm công ty theo tên hoặc mã số thuế
+if Công ty đã có trên hệ thống?
+case Chưa có
+  Nhà tuyển dụng điền thông tin, bấm "Tạo công ty"
+  if Đã liên kết công ty khác?
+  case Có
+    Giao diện báo đã liên kết công ty khác
+    stop
+  case Không
+  endif
+  Hệ thống hủy yêu cầu tham gia đang chờ (nếu có)
+  Hệ thống tạo công ty, gán vai trò quản lý
+  Giao diện chuyển sang bước nộp giấy tờ xác thực
+case Đã có
+  Nhà tuyển dụng gửi yêu cầu tham gia công ty
+  if Đã liên kết hoặc đang chờ ở công ty khác?
+  case Có
+    Giao diện báo không thể gửi yêu cầu
+    stop
+  case Không
+  endif
+  Hệ thống tạo yêu cầu tham gia chờ duyệt
+  Hệ thống thông báo cho quản lý công ty
+  if Công ty có quản lý đủ điều kiện?
+  case Không
+    Quản trị viên duyệt hoặc từ chối trong hàng chờ
+  case Có
+    Quản lý công ty duyệt hoặc từ chối yêu cầu
+  endif
+  Hệ thống kiểm tra quyền người duyệt
+  if Kết quả xử lý yêu cầu?
+  case Không có quyền
+    Giao diện báo không có quyền duyệt
+    stop
+  case Đã xử lý trước đó
+    Giao diện báo yêu cầu đã được xử lý
+    stop
+  case Từ chối
+    Hệ thống đánh dấu yêu cầu bị từ chối
+    Hệ thống thông báo bị từ chối cho nhà tuyển dụng
+  case Duyệt
+    Hệ thống gán nhà tuyển dụng vai trò thành viên
+    Hệ thống nhắc nhà tuyển dụng nộp giấy tờ xác thực
+  endif
+endif

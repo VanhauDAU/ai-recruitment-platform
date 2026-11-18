@@ -1,0 +1,42 @@
+title Sơ đồ tuần tự chức năng chặn ứng viên theo công ty
+actor NTD Nhà tuyển dụng
+participant FE Giao diện web\n(React)
+participant BE Máy chủ API\n(Django REST)
+database DB CSDL\n(PostgreSQL)
+actor UV Ứng viên
+group Chặn ứng viên
+NTD -> FE : Bấm "Chặn ứng viên" trong hồ sơ, chọn lý do, thời hạn, tùy chọn từ chối các hồ sơ đang chờ
+FE -> BE : POST /api/v2/recruiter/candidate-blocks/ {application, reason, duration_days, reject_pending}
+BE -> DB : Kiểm tra hồ sơ thuộc tin của NTD
+alt Không tìm thấy hồ sơ
+BE --> FE : 404
+else Ứng viên đang bị công ty chặn
+BE --> FE : 400 "Ứng viên đã bị chặn"
+else Hợp lệ
+BE -> DB : Tạo CandidateBlock (company_id, hạn chặn)
+opt reject_pending = true
+loop Mỗi hồ sơ chưa phản hồi của ứng viên trong công ty
+BE -> DB : Chuyển "rejected", tạo thông báo kết quả (hẹn giờ công bố)
+end
+end
+BE --> FE : 201 Đã chặn
+FE --> NTD : Gắn cờ "Đã chặn" trên hồ sơ
+end
+end
+group Ứng viên bị chặn nộp hồ sơ
+UV -> FE : Nộp hồ sơ vào tin của công ty đã chặn
+FE -> BE : POST /api/v2/applications/
+BE -> DB : Kiểm tra chặn theo công ty
+BE --> FE : 400 "Bạn không thể ứng tuyển vào tin này lúc này"
+FE --> UV : Hiển thị thông báo trung lập (không tiết lộ bị chặn)
+end
+group Gỡ chặn
+NTD -> FE : Mở "Ứng viên bị chặn", bấm "Gỡ chặn"
+FE -> BE : POST /api/v2/recruiter/candidate-blocks/{id}/lift/
+alt Không phải người chặn hoặc quản lý công ty
+BE --> FE : 404
+else Được phép
+BE -> DB : Ghi lifted_at
+BE --> FE : 200 Đã gỡ chặn
+end
+end

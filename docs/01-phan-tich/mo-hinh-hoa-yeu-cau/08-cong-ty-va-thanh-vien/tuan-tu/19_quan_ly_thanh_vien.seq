@@ -1,0 +1,53 @@
+title Sơ đồ tuần tự chức năng quản lý thành viên và quyền biên tập trang công ty
+actor QL Quản lý công ty
+participant FE Giao diện web\n(React)
+participant BE Máy chủ API\n(Django REST)
+database DB CSDL\n(PostgreSQL)
+actor TV Thành viên
+group Cấp / thu quyền biên tập trang công ty
+QL -> FE : Chọn thành viên, bấm "Cấp quyền biên tập"
+FE -> BE : POST /api/employer/company/page/editors/ {member_id}
+BE -> BE : Kiểm tra người gọi là quản lý đủ điều kiện
+alt Không đủ quyền
+BE --> FE : 403 COMPANY_PAGE_EDIT_FORBIDDEN
+else Thành viên chưa xác thực hoặc đã có quyền
+BE --> FE : 400 EDITOR_NOT_VERIFIED / EDITOR_ALREADY_GRANTED
+else Hợp lệ
+BE -> DB : Tạo CompanyPageEditorGrant, ghi sự kiện
+BE ->> TV : Thông báo "Được cấp quyền biên tập"
+BE --> FE : 201
+end
+opt Thu quyền
+QL -> FE : Bấm "Thu quyền"
+FE -> BE : DELETE /api/employer/company/page/editors/{grant_id}/
+BE -> DB : Thu hồi quyền, ghi sự kiện
+BE ->> TV : Thông báo bị thu quyền
+BE --> FE : 200
+end
+end
+group Chuyển quyền quản lý
+QL -> FE : Chọn thành viên đã xác thực, bấm "Chuyển quyền quản lý"
+FE -> BE : POST /api/employer/company/ownership-transfer/ {recruiter}
+alt Người nhận chưa đủ điều kiện hoặc là chính mình
+BE --> FE : 400
+else Hợp lệ
+BE -> DB : Người nhận thành owner, người chuyển thành member, ghi sự kiện
+BE ->> TV : Thông báo "Bạn là quản lý công ty"
+BE --> FE : 204
+end
+end
+group Gỡ thành viên và bàn giao tin
+QL -> FE : Bàn giao tin và chiến dịch của thành viên sang người khác
+FE -> BE : POST /api/employer/company/handover/ {source, target}
+BE -> DB : Chuyển posted_by của tin, owner của chiến dịch
+BE --> FE : 200
+QL -> FE : Bấm "Gỡ khỏi công ty", nhập lý do
+FE -> BE : POST /api/employer/company/members/{id}/remove/ {reason}
+alt Thiếu lý do, còn tài nguyên chưa bàn giao hoặc gỡ quản lý
+BE --> FE : 400 {code, blockers}
+else Hợp lệ
+BE -> DB : Hủy liên kết công ty, thu quyền biên tập, ghi sự kiện
+BE ->> TV : Thông báo bị gỡ khỏi công ty
+BE --> FE : 204
+end
+end

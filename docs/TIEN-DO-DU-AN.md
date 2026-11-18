@@ -7,6 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
+| [Mô hình hóa yêu cầu cho báo cáo (mục 3.2)](#mô-hình-hóa-yêu-cầu-cho-báo-cáo-mục-32-2026-11-18) | ✅ Nguồn sơ đồ trong `docs/01-phan-tich/mo-hinh-hoa-yeu-cau/` |
 | [Nâng cấp chiến dịch tuyển dụng (4 GĐ)](#nâng-cấp-chiến-dịch-tuyển-dụng-2026-11-18) | 🟨 GĐ1 xong trên nhánh `feat/campaign-goals-lifecycle`, chưa mở PR; GĐ2–4 chưa làm |
 | [Ứng tuyển bằng CV tải lên và form ứng tuyển mới](#ứng-tuyển-bằng-cv-tải-lên-và-form-ứng-tuyển-mới-2026-11-18) | ✅ Gộp vào `dev` (#234) |
 | [Bảng điều khiển quản trị](#bảng-điều-khiển-quản-trị-2026-11-16) | 🟨 Xong trên nhánh `feat/admin-dashboard`, chưa mở PR |
@@ -28,6 +29,20 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Các epic đã hoàn tất](#các-epic-đã-hoàn-tất) | ✅ |
 | [Lộ trình theo PRD](#lộ-trình-theo-prd) | 🟨 Phần AI lõi (giai đoạn 2–3) còn mở |
 | [Việc còn mở](#việc-còn-mở) | |
+
+## Mô hình hóa yêu cầu cho báo cáo (mục 3.2) (2026-11-18)
+
+Bộ sơ đồ và bảng cho mục 3.2 của báo cáo ĐATN, theo khung báo cáo mẫu, ở
+`docs/01-phan-tich/mo-hinh-hoa-yeu-cau/` (xem README trong thư mục).
+
+- 16 nhóm chức năng, mỗi nhóm một thư mục: sơ đồ use case, bảng mô tả use case,
+  bảng dòng chính, 38 sơ đồ tuần tự và 38 sơ đồ hoạt động cùng tên. Luồng đối
+  chiếu với mã nguồn ngày 18/11; ba chức năng AI phía NTD và gợi ý theo ngữ nghĩa
+  ghi "dự kiến".
+- Ảnh PNG nền trắng nét đen và file Word sinh bằng `cong-cu/build.sh` (bộ vẽ
+  Swift tự viết, không cần PlantUML); ảnh và docx không đưa vào git.
+- Khi đổi luồng nghiệp vụ, sửa tệp `.seq`/`.act`/`noi_dung.py` của nhóm tương ứng
+  rồi chạy lại script.
 
 ## Nâng cấp chiến dịch tuyển dụng (2026-11-18)
 

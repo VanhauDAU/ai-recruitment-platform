@@ -1,0 +1,33 @@
+TEN = "chức năng hậu kiểm tin tuyển dụng và xử lý báo cáo"
+MO_TA = [
+    ("Báo cáo tin tuyển dụng", "Ứng viên", "Báo tin lừa đảo, công ty giả, sai thông tin, trùng lặp", "Đăng nhập ứng viên, tin đang công khai, chưa báo cáo tin này", "Báo cáo chờ xử lý, tin vẫn hiển thị"),
+    ("Báo cáo công ty", "Ứng viên", "Báo công ty sai thông tin, mạo danh, nội dung không phù hợp", "Công ty đang công khai, chưa có báo cáo chờ", "Báo cáo chờ xử lý"),
+    ("Xem danh sách tin cần hậu kiểm", "Quản trị viên", "Xem tin đang hiển thị, bị ẩn, đã gửi lại", "Đăng nhập cổng quản trị", "Danh sách tin theo phạm vi"),
+    ("So sánh với bản đã đăng", "Hệ thống", "Chỉ ra phần nội dung đã đổi so với bản gốc", "Tin có bản gốc đã lưu khi đăng", "Bảng khác biệt và review_token"),
+    ("Ẩn tin vi phạm", "Quản trị viên", "Khóa tin vi phạm nặng", "Tin đang hoạt động, chưa bị tạm giữ", "Tin bị ẩn, NTD không sửa, gia hạn, nhân bản được"),
+    ("Yêu cầu sửa tin", "Quản trị viên", "Cho NTD sửa lỗi sửa được (thiếu, sai lệch, trùng lặp)", "Lý do thuộc nhóm sửa được", "Tin tạm ẩn chờ sửa, NTD được thông báo"),
+    ("Sửa và gửi lại tin", "Nhà tuyển dụng", "Khắc phục lỗi và gửi duyệt lại", "Tin đang chờ sửa, nội dung đã thay đổi", "Tin vào hàng chờ tin gửi lại"),
+    ("Khôi phục tin", "Quản trị viên", "Cho tin hiển thị lại", "Tin đang bị tạm giữ", "Tin công khai trở lại, được bù thời gian bị ẩn"),
+    ("Xử lý báo cáo tin", "Quản trị viên", "Xác nhận vi phạm hoặc bác bỏ báo cáo", "Báo cáo đang chờ, xác nhận phải có ghi chú", "Lừa đảo / công ty giả / sai thông tin: tin bị tạm giữ"),
+    ("Hoàn tác xử lý báo cáo", "Quản trị viên", "Đảo kết quả xử lý sai", "Báo cáo đã xác nhận", "Báo cáo chuyển bác bỏ; khôi phục tin làm riêng"),
+    ("Xử lý báo cáo công ty", "Quản trị viên", "Xác nhận hoặc bác bỏ báo cáo công ty", "Báo cáo đang chờ", "Báo cáo được giải quyết"),
+    ("Tạm giữ trang công ty", "Quản trị viên", "Ẩn trang và tin của công ty khi báo cáo được xác nhận", "Báo cáo được xác nhận kèm tạm giữ", "Mọi tin của công ty bị ẩn"),
+]
+DONG_CHINH = [
+    ("Báo cáo tin tuyển dụng", "Ứng viên", "Bấm Báo cáo trên tin >> chọn lý do, mô tả >> Gửi"),
+    ("Báo cáo tin tuyển dụng", "Hệ thống", "Kiểm tra tin công khai, báo cáo trùng >> tạo báo cáo chờ xử lý"),
+    ("Xem danh sách tin cần hậu kiểm", "Quản trị viên", "Mở Hậu kiểm tin >> chọn phạm vi >> mở một tin"),
+    ("Xem danh sách tin cần hậu kiểm", "Hệ thống", "Trả chi tiết, khác biệt so với bản gốc, thao tác hợp lệ, review_token"),
+    ("Ẩn tin vi phạm", "Quản trị viên", "Chọn Ẩn tin >> chọn lý do, ghi chú"),
+    ("Ẩn tin vi phạm", "Hệ thống", "Kiểm tra token >> đặt tạm giữ >> ghi sự kiện"),
+    ("Yêu cầu sửa tin", "Quản trị viên", "Chọn Yêu cầu sửa >> chọn lý do sửa được >> ghi chú"),
+    ("Yêu cầu sửa tin", "Hệ thống", "Kiểm tra token và lý do >> đặt trạng thái chờ sửa >> thông báo NTD"),
+    ("Sửa và gửi lại tin", "Nhà tuyển dụng", "Sửa nội dung >> bấm Gửi lại để duyệt"),
+    ("Sửa và gửi lại tin", "Hệ thống", "Kiểm tra nội dung đã đổi >> ghi thời điểm gửi lại >> đưa vào hàng chờ"),
+    ("Khôi phục tin", "Quản trị viên", "Mở tin gửi lại >> chọn Khôi phục"),
+    ("Khôi phục tin", "Hệ thống", "Gỡ tạm giữ >> bù thời gian hiển thị >> ghi sự kiện"),
+    ("Xử lý báo cáo tin", "Quản trị viên", "Mở hàng chờ báo cáo >> chọn Xác nhận / Bác bỏ, ghi chú"),
+    ("Xử lý báo cáo tin", "Hệ thống", "Cập nhật báo cáo >> tạm giữ tin với nhóm lý do tin cậy >> ghi sự kiện"),
+    ("Xử lý báo cáo công ty", "Quản trị viên", "Chọn Xác nhận / Bác bỏ >> tùy chọn tạm giữ trang"),
+    ("Xử lý báo cáo công ty", "Hệ thống", "Cập nhật báo cáo >> bật tạm giữ trang nếu chọn >> ẩn tin công ty"),
+]

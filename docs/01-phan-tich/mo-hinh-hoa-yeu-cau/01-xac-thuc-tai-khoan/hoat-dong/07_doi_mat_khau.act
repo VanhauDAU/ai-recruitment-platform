@@ -1,0 +1,34 @@
+title Sơ đồ hoạt động chức năng đổi mật khẩu
+Người dùng mở trang "Đổi mật khẩu"
+Hệ thống trả trạng thái mật khẩu và yêu cầu xác thực lại
+if Chỉ đăng nhập Google và chưa xác thực lại trong 5 phút?
+case Không
+case Có
+  Giao diện yêu cầu xác thực lại bằng Google
+  Người dùng đăng nhập lại Google
+  Hệ thống cập nhật thời điểm xác thực lại của phiên
+endif
+Người dùng nhập mật khẩu hiện tại, mật khẩu mới
+Người dùng tùy chọn "Đăng xuất khỏi các thiết bị khác"
+Hệ thống kiểm tra mật khẩu, phiên refresh và xác thực lại
+if Kết quả kiểm tra?
+case Mật khẩu không hợp lệ
+  Giao diện hiển thị lỗi theo trường
+  stop
+case Thiếu phiên refresh
+  Giao diện báo cần phiên refresh hiện tại
+  stop
+case Cần xác thực lại
+  Giao diện hiện nút xác thực lại bằng Google
+  stop
+case Hợp lệ
+endif
+Hệ thống cập nhật mật khẩu
+if Chọn đăng xuất khỏi thiết bị khác?
+case Có
+  Hệ thống thu hồi mọi phiên và refresh token
+case Không
+  Hệ thống thu hồi phiên hiện tại
+endif
+Hệ thống tạo phiên mới, trả token và cookie refresh mới
+Giao diện thay access token, báo đổi mật khẩu thành công

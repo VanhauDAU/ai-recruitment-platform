@@ -1,0 +1,47 @@
+title Sơ đồ tuần tự chức năng quản lý doanh nghiệp
+actor QTV Quản trị viên
+participant FE Giao diện quản trị\n(React)
+participant BE Máy chủ API\n(Django REST)
+database DB CSDL\n(PostgreSQL)
+actor NTD Nhà tuyển dụng
+QTV -> FE : Mở danh sách doanh nghiệp, chọn một công ty
+FE -> BE : GET /api/admin/companies/{id}/ và /api/admin/companies/{id}/recruiters/
+BE --> FE : Thông tin công ty, thành viên, quản lý đủ điều kiện
+group Duyệt yêu cầu tham gia khi công ty chưa có quản lý đủ điều kiện
+QTV -> FE : Mở hàng chờ yêu cầu tham gia, chọn Duyệt / Từ chối
+FE -> BE : POST /api/admin/company-join-requests/{id}/approve | reject/
+alt Công ty đã có quản lý đủ điều kiện
+BE --> FE : 403 (quyền duyệt thuộc về quản lý công ty)
+else Yêu cầu đã được xử lý
+BE --> FE : 400
+else Hợp lệ
+BE -> DB : Cập nhật yêu cầu; duyệt thì liên kết NTD với vai trò member
+BE ->> NTD : Thông báo kết quả yêu cầu tham gia
+BE --> FE : 200
+end
+end
+group Chỉ định quản lý công ty
+QTV -> FE : Chọn thành viên đã xác thực, nhập lý do, bấm "Chỉ định quản lý"
+FE -> BE : POST /api/admin/companies/{id}/assign-owner/ {recruiter, reason}
+alt Công ty đã có quản lý đủ điều kiện, thiếu lý do hoặc thành viên chưa đủ điều kiện
+BE --> FE : 400
+else Hợp lệ
+BE -> DB : Hạ quyền quản lý cũ không đủ điều kiện, nâng thành viên thành owner, ghi sự kiện
+BE ->> NTD : Thông báo "Bạn là quản lý công ty"
+BE --> FE : 200
+end
+end
+group Tạm giữ / gỡ tạm giữ trang công ty
+QTV -> FE : Chọn "Tạm giữ trang" hoặc "Gỡ tạm giữ", nhập lý do
+FE -> BE : POST /api/admin/companies/{id}/policy-hold/ {action, reason}
+alt Trang đã ở trạng thái được yêu cầu
+BE --> FE : 400
+else Tạm giữ
+BE -> DB : content_policy_hold = true, ghi sự kiện và nhật ký quản trị
+BE --> FE : 200
+note over QTV,NTD : Mọi tin của công ty tự ẩn khỏi trang công khai
+else Gỡ tạm giữ
+BE -> DB : content_policy_hold = false, bù thời gian hiển thị cho các tin bị ẩn, ghi sự kiện và nhật ký quản trị
+BE --> FE : 200
+end
+end

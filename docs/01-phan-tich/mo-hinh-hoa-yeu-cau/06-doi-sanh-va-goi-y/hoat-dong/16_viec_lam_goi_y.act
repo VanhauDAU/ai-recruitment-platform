@@ -1,0 +1,26 @@
+title Sơ đồ hoạt động chức năng xem việc làm gợi ý (hiện tại theo luật)
+Ứng viên mở trang "Việc làm phù hợp"
+Hệ thống đọc nguyện vọng và đồng ý nhận gợi ý
+if Điều kiện nhận gợi ý?
+case Chưa có nguyện vọng
+  Giao diện mời khai báo nguyện vọng
+  stop
+case Chưa đồng ý
+  Giao diện mời bật quyền nhận gợi ý
+  stop
+case Đủ điều kiện
+endif
+Hệ thống lọc trước 500 tin theo ngành, kỹ năng, chức danh
+Hệ thống bỏ các tin đã ứng tuyển hoặc đã ẩn
+while Còn tin chưa chấm điểm? | Có | Không
+  Hệ thống cộng điểm chuyên môn, vị trí, kỹ năng, tỉnh, kinh nghiệm, lương
+endwhile
+Hệ thống bỏ tin dưới 20 điểm
+Hệ thống sắp xếp theo điểm, hạng tin, độ mới
+Giao diện hiển thị danh sách tin kèm lý do phù hợp
+if Ứng viên ẩn một tin gợi ý?
+case Không
+case Có
+  Ứng viên bấm "Không quan tâm" trên tin
+  Hệ thống lưu tin bị ẩn
+endif
