@@ -46,8 +46,7 @@ export function JobHero({ job, saved, applicationStatus, onApply, onSave, onShar
   const published = formatJobPostedLabel(job)
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
-      <div className="h-1.5 bg-gradient-to-r from-[var(--brand-primary)] via-emerald-400 to-emerald-100" />
+    <section className="job-hero overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
       <div className="p-5 sm:p-6">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
@@ -69,7 +68,7 @@ export function JobHero({ job, saved, applicationStatus, onApply, onSave, onShar
           <button type="button" onClick={onShare} className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full border border-gray-200 text-gray-500 transition hover:border-emerald-300 hover:bg-emerald-50 hover:text-[var(--brand-primary)]" aria-label="Chia sẻ việc làm" title="Sao chép liên kết để chia sẻ"><ShareAltOutlined /></button>
         </div>
 
-        <div className="mt-5 grid gap-3 border-y border-gray-100 py-4 sm:grid-cols-[1.15fr_1fr_0.8fr] sm:gap-0 sm:divide-x sm:divide-gray-100">
+        <div className="job-hero__metrics mt-5 grid gap-3 border-y border-gray-100 py-4 sm:grid-cols-[1.15fr_1fr_0.8fr] sm:gap-0 sm:divide-x sm:divide-gray-100">
           <HeroMetric icon={<WalletOutlined />} label="Mức lương" value={formatSalary(job)} note={getSalaryDisplayNote(job)} highlight />
           <HeroMetric icon={<EnvironmentOutlined />} label="Địa điểm" value={locations} className="sm:pl-4" />
           <HeroMetric icon={<UserOutlined />} label="Kinh nghiệm" value={experience} className="sm:pl-4" />
@@ -77,19 +76,19 @@ export function JobHero({ job, saved, applicationStatus, onApply, onSave, onShar
 
         <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
           {deadline && <span className="text-gray-500">Hạn nộp hồ sơ: <strong className="font-semibold text-slate-700">{formatJobDate(job.deadline)} ({deadline})</strong></span>}
-          <span className="inline-flex items-center gap-1.5 text-gray-500" title={`${formatNumber(job.view_count)} lượt xem`}>
+          <span className="job-hero__views inline-flex items-center gap-1.5 text-gray-500" title={`${formatNumber(job.view_count)} lượt xem`}>
             <EyeOutlined className="text-[var(--brand-primary)]" />
             {formatNumber(job.view_count)} lượt xem
           </span>
         </div>
 
-        <div className="mt-5 flex gap-2 sm:gap-3">
+        <div className="job-hero__actions mt-5 flex gap-2 sm:gap-3">
           <div className="min-w-0 flex-1">
-            {isAcceptingApplications(job) ? <button type="button" onClick={onApply} disabled={applicationStatus.isLimitReached} className="inline-flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-[var(--brand-primary)] px-5 text-sm font-bold text-white shadow-sm transition hover:bg-[var(--brand-primary-hover)] disabled:cursor-not-allowed disabled:opacity-60">{applicationStatus.isResubmission ? <i className="fa-solid fa-arrow-rotate-right" aria-hidden="true" /> : <SafetyCertificateOutlined />} {applicationStatus.applyLabel}</button> : <JobApplicationClosed />}
+            {isAcceptingApplications(job) ? <button type="button" onClick={onApply} disabled={applicationStatus.isLimitReached} className="job-hero__cta inline-flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-[var(--brand-primary)] px-5 text-sm font-bold text-white shadow-sm transition hover:bg-[var(--brand-primary-hover)] disabled:cursor-not-allowed disabled:opacity-60">{applicationStatus.isResubmission ? <i className="fa-solid fa-arrow-rotate-right" aria-hidden="true" /> : <SafetyCertificateOutlined />} {applicationStatus.applyLabel}</button> : <JobApplicationClosed className="job-hero__cta" />}
             <LatestApplicationNotice application={applicationStatus.latestApplication} />
           </div>
-          <button type="button" onClick={onSave} disabled={savePending} className="hidden h-11 cursor-pointer items-center justify-center gap-2 rounded-lg border border-emerald-300 px-4 text-sm font-semibold text-[var(--brand-primary)] transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-60 sm:inline-flex">{saved ? <HeartFilled /> : <HeartOutlined />} {saved ? 'Đã lưu' : 'Lưu tin'}</button>
-          <JobCompareButton job={job} variant="reveal" />
+          <button type="button" onClick={onSave} disabled={savePending} className="job-hero__cta hidden h-11 cursor-pointer items-center justify-center gap-2 rounded-lg border border-emerald-300 px-4 text-sm font-semibold text-[var(--brand-primary)] transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-60 sm:inline-flex">{saved ? <HeartFilled /> : <HeartOutlined />} {saved ? 'Đã lưu' : 'Lưu tin'}</button>
+          <JobCompareButton job={job} variant="reveal" className="job-hero__cta" />
         </div>
       </div>
     </section>
@@ -118,9 +117,9 @@ function HeroMetric({ icon, label, value, note, highlight = false, className = '
       <div
         role="group"
         aria-label={`${label}: ${value}${note ? `, ${note}` : ''}`}
-        className="flex min-w-0 items-center gap-3 rounded-xl border border-emerald-200 bg-gradient-to-br from-emerald-50 via-white to-white px-3.5 py-3 shadow-[0_4px_16px_rgba(0,176,80,0.08)] sm:-my-1 sm:mr-4"
+        className="job-hero__salary flex min-w-0 items-center gap-3 rounded-xl border border-emerald-100 bg-emerald-50/60 px-3.5 py-3 sm:-my-1 sm:mr-4"
       >
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--brand-primary)] text-lg text-white shadow-sm">
+        <span className="job-hero__salary-icon flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--brand-primary)] text-lg text-white">
           {icon}
         </span>
         <div className="min-w-0">
@@ -144,5 +143,5 @@ function HeroMetric({ icon, label, value, note, highlight = false, className = '
 }
 
 export function JobDetailSkeleton() {
-  return <><div className="h-[68px] bg-[var(--brand-primary)]" /><div className="mx-auto grid max-w-6xl grid-cols-1 gap-5 px-4 py-6 lg:grid-cols-[minmax(0,1fr)_320px]"><div className="space-y-5"><div className="rounded-2xl border border-gray-200 bg-white p-6"><Skeleton active title={{ width: '65%' }} paragraph={{ rows: 4 }} /></div><div className="rounded-2xl border border-gray-200 bg-white p-6"><Skeleton active paragraph={{ rows: 10 }} /></div></div><div className="rounded-2xl border border-gray-200 bg-white p-6"><Skeleton active avatar paragraph={{ rows: 6 }} /></div></div></>
+  return <><div className="job-detail-search h-[68px] bg-[var(--brand-primary)]" /><div className="mx-auto grid max-w-6xl grid-cols-1 gap-5 px-4 py-6 lg:grid-cols-[minmax(0,1fr)_320px]"><div className="space-y-5"><div className="rounded-2xl border border-gray-200 bg-white p-6"><Skeleton active title={{ width: '65%' }} paragraph={{ rows: 4 }} /></div><div className="rounded-2xl border border-gray-200 bg-white p-6"><Skeleton active paragraph={{ rows: 10 }} /></div></div><div className="rounded-2xl border border-gray-200 bg-white p-6"><Skeleton active avatar paragraph={{ rows: 6 }} /></div></div></>
 }

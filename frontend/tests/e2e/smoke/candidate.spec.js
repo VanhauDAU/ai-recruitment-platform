@@ -523,7 +523,8 @@ test('candidate smoke: job application submits the selected immutable CV version
   await expect(expandDetailsButton).toHaveAttribute('aria-expanded', 'false')
   await expandDetailsButton.click()
   await expect(page.getByRole('button', { name: /Thu gọn mô tả công việc/ })).toHaveAttribute('aria-expanded', 'true')
-  await page.locator('#job-detail-content').getByRole('button', { name: 'Ứng tuyển ngay', exact: true }).click()
+  // Desktop: nút cuối phần chi tiết; mobile: nút ở thanh hành động dưới màn hình.
+  await page.getByRole('button', { name: 'Ứng tuyển ngay', exact: true }).filter({ visible: true }).last().click()
   const applicationDialog = page.getByRole('dialog')
   await expect(applicationDialog).toBeVisible()
   await expect(applicationDialog.getByText('Kỹ sư phần mềm', { exact: true })).toBeVisible()
@@ -571,7 +572,9 @@ test('candidate smoke: job application submits the selected immutable CV version
   // Once the recruiter rejects it, the candidate may apply again.
   applications = [{ ...applications[0], status: 'rejected', actions: { withdraw: false, reapply: true } }]
   await page.reload()
-  await page.locator('#job-detail-content').getByRole('button', { name: 'Ứng tuyển lại', exact: true }).click()
+  // Banner cookie hiện lại sau reload và che thanh ứng tuyển dưới màn hình mobile.
+  await page.getByRole('button', { name: 'Chỉ cookie thiết yếu' }).click()
+  await page.getByRole('button', { name: 'Ứng tuyển lại', exact: true }).filter({ visible: true }).last().click()
   await expect(page.getByRole('dialog').getByRole('alert')).toContainText('Bạn còn 2 lượt ứng tuyển lại')
 })
 

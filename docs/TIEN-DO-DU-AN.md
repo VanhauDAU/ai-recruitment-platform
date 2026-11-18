@@ -546,6 +546,24 @@ loại tiêu chí khỏi điểm, kết quả tất định, có golden test và
 
 </details>
 
+## Trang chi tiết tin: thẻ công ty gọn và bố cục mobile (2026-11-18)
+
+- Thẻ công ty (cột phải desktop): logo 80px, tên công ty, "Quy mô: … nhân viên",
+  "Địa điểm: …", nút viền "Xem trang công ty" mở tab mới. Bỏ ảnh bìa (đè lên
+  tên), lĩnh vực, đoạn mô tả và link website — đã có ở trang công ty.
+- Hero: bỏ dải gradient đầu thẻ, ô lương bỏ gradient/bóng.
+- Mobile (< 768px): ẩn thanh tìm kiếm 4 hàng; hero gọn (lương cả hàng, địa điểm
+  + kinh nghiệm chia đôi, ẩn lượt xem); bỏ nút ứng tuyển/lưu/so sánh trong hero
+  và cuối phần chi tiết vì thanh dưới màn hình đã có; khối đánh giá thành 5 biểu
+  tượng một hàng + nhãn mức đã chọn; ẩn "Danh mục nghề liên quan" (trùng tag
+  Chuyên môn); "Thông tin chung" 2 cột. Trang mobile ngắn từ ~6.100 xuống
+  ~4.900px. Style ở `pages/main/jobs/ui/job-detail/job-detail.css` (CSS khởi tạo
+  37,9/38,5 KiB).
+- Smoke `candidate.spec.js` bấm nút ứng tuyển đang hiển thị (mobile là thanh
+  dưới) và đóng banner cookie sau khi reload.
+- Còn mở: khối "Tìm kiếm phổ biến" ở cuối mọi trang (MainLayout) rất dài trên
+  mobile; cụm nút nổi tim/Góp ý đè nội dung góc trái dưới.
+
 ## Trang danh sách việc làm trên mobile (2026-11-18)
 
 - Lỗi: thanh tìm kiếm 4 hàng (danh mục, từ khóa, địa điểm, nút) dính đầu màn
