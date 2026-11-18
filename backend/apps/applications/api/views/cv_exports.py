@@ -1,4 +1,4 @@
-"""Recruiter PDF export of an application's immutable CV snapshot."""
+"""Recruiter PDF of an application's immutable CV snapshot: rendered export or submitted file."""
 
 from django.http import FileResponse, Http404
 from drf_spectacular.types import OpenApiTypes
@@ -21,7 +21,7 @@ from common.r2_storage import private_media_storage
 
 from ...models import Application
 from ...selectors import recruiter_application_snapshot_queryset
-from ...services import record_application_cv_download
+from ...services import open_application_cv_file, record_application_cv_download
 from ..serializers.v2 import RecruiterCvExportSerializer
 
 
@@ -65,6 +65,9 @@ class RecruiterApplicationCvExportView(APIView):
 
     def post(self, request, public_id):
         application = _snapshot_application(request, public_id)
+        if application.submitted_cv_version.source_file_key:
+            # Rendering the empty structured document would hand over a blank PDF.
+            raise ValidationError({'detail': 'CV này là tệp tải lên, hãy tải tệp gốc.'})
         try:
             export, reused = request_application_snapshot_export(
                 version=application.submitted_cv_version, actor=request.user
@@ -107,10 +110,41 @@ class RecruiterApplicationCvExportDownloadView(APIView):
             raise Http404
         handle = private_media_storage().open(export.storage_key, 'rb')
         record_application_cv_download(application, actor=request.user, request=request)
-        name = application.contact_name or application.submitted_cv_title or 'ung-vien'
         return FileResponse(
             handle,
             as_attachment=True,
-            filename=f'CV - {name} - {application.job.title}.pdf',
+            filename=_download_name(application),
             content_type='application/pdf',
         )
+
+
+def _download_name(application):
+    name = application.contact_name or application.submitted_cv_title or 'ung-vien'
+    return f'CV - {name} - {application.job.title}.pdf'
+
+
+@extend_schema(
+    tags=['applications-v2'],
+    summary='Tệp CV ứng viên đã tải lên khi nộp (PDF); ?download=1 để tải về',
+    responses={(200, 'application/pdf'): OpenApiTypes.BINARY},
+)
+class RecruiterApplicationCvFileView(APIView):
+    permission_classes = [IsEmployer]
+
+    def get(self, request, public_id):
+        application = _snapshot_application(request, public_id)
+        stream = open_application_cv_file(application)
+        if stream is None:
+            raise Http404
+        download = request.query_params.get('download') == '1'
+        if download:
+            # Reading inline is already logged when the snapshot is opened.
+            record_application_cv_download(application, actor=request.user, request=request)
+        response = FileResponse(
+            stream,
+            as_attachment=download,
+            filename=_download_name(application),
+            content_type='application/pdf',
+        )
+        response['Cache-Control'] = 'private, no-store'
+        return response

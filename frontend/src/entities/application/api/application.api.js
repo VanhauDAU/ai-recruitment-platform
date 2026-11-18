@@ -11,6 +11,7 @@ export async function submitJobApplication({
   contactName = '',
   contactEmail = '',
   contactPhone = '',
+  campaignRef = '',
 }) {
   const { data } = await api.post('/v2/applications/', {
     job_public_id: jobPublicId,
@@ -23,6 +24,7 @@ export async function submitJobApplication({
     contact_name: contactName,
     contact_email: contactEmail,
     contact_phone: contactPhone,
+    ...(campaignRef ? { campaign_ref: campaignRef } : {}),
   })
   return data
 }
@@ -42,6 +44,12 @@ export async function remindRecruiterOfApplication(publicId) {
 /** Earlier, replaced submissions of the same candidate to the same job. */
 export async function getRecruiterApplicationSubmissions(publicId) {
   const { data } = await api.get(`/v2/recruiter/applications/${publicId}/submissions/`)
+  return data
+}
+
+/** Limits for submissions, reminders and automatic rejection, as the server enforces them. */
+export async function getApplicationRules() {
+  const { data } = await api.get('/v2/applications/rules/')
   return data
 }
 
@@ -99,6 +107,15 @@ export async function getApplicationCvExport(publicId, exportId) {
 /** `downloadUrl` is the absolute URL returned by the export endpoints. */
 export async function downloadApplicationCv(downloadUrl) {
   const { data } = await api.get(downloadUrl, { responseType: 'blob' })
+  return data
+}
+
+/** The file a candidate uploaded as their CV, as PDF. `download` also tells the candidate. */
+export async function getApplicationCvFile(publicId, { download = false } = {}) {
+  const { data } = await api.get(`/v2/recruiter/applications/${publicId}/cv/file/`, {
+    params: download ? { download: 1 } : undefined,
+    responseType: 'blob',
+  })
   return data
 }
 

@@ -1,0 +1,38 @@
+title Sơ đồ hoạt động chức năng theo dõi và rút hồ sơ ứng tuyển
+Ứng viên mở "Việc làm đã ứng tuyển"
+Hệ thống lấy hồ sơ, lịch sử trạng thái đã công bố, lượt nhắc
+Hệ thống tính trạng thái được thấy và thao tác hợp lệ
+Giao diện hiển thị trạng thái, tiến trình từng hồ sơ
+if Ứng viên chọn thao tác?
+case Chỉ xem
+case Rút hồ sơ
+  Ứng viên bấm "Rút hồ sơ" và xác nhận
+  Hệ thống khóa hồ sơ hiện hành
+  if Tìm thấy hồ sơ hiện hành?
+  case Không
+    Hệ thống trả không tìm thấy (404)
+    stop
+  case Có
+  endif
+  if Hồ sơ đã có kết quả được công bố?
+  case Có
+    Giao diện báo "Hồ sơ đã có kết quả nên không thể rút"
+    stop
+  case Không
+  endif
+  Hệ thống hủy quyết định chưa công bố của NTD
+  Hệ thống chuyển trạng thái đã rút, ghi lịch sử
+  Hệ thống tạo thông báo "Ứng viên đã rút hồ sơ" cho NTD
+  Giao diện hiện nút "Ứng tuyển lại"
+case Nhắc NTD
+  Ứng viên bấm "Nhắc NTD"
+  Hệ thống kiểm tra hồ sơ chưa phản hồi, tin chưa dừng
+  if Đã qua 3 ngày và chưa nhắc quá 2 lần?
+  case Không
+    Giao diện hiển thị thời điểm được nhắc
+    stop
+  case Có
+  endif
+  Hệ thống tạo lời nhắc, thông báo người đăng tin
+  Giao diện báo "Đã gửi lời nhắc"
+endif

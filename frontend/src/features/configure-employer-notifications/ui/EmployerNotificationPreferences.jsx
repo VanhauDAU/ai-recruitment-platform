@@ -1,4 +1,4 @@
-import { InboxOutlined, MailOutlined, SafetyCertificateOutlined } from '@ant-design/icons'
+import { BarChartOutlined, InboxOutlined, MailOutlined, SafetyCertificateOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Skeleton, Switch, Tooltip } from 'antd'
 import {
@@ -64,6 +64,15 @@ export default function EmployerNotificationPreferences() {
         loading={mutation.isPending && mutation.variables?.field === 'new_application_email'}
         onChange={(checked) => mutation.mutate({ field: 'new_application_email', checked })}
         tooltip="Tắt nếu bạn chỉ muốn xem hồ sơ mới trong hệ thống."
+      />
+      <PreferenceRow
+        icon={<BarChartOutlined />}
+        title="Báo cáo tuần của chiến dịch"
+        description="Sáng thứ Hai, mỗi chiến dịch đang chạy gửi một email tóm tắt tiến độ, dự báo và cảnh báo của tuần trước."
+        checked={preferences.campaign_weekly_report_email !== false}
+        loading={mutation.isPending && mutation.variables?.field === 'campaign_weekly_report_email'}
+        onChange={(checked) => mutation.mutate({ field: 'campaign_weekly_report_email', checked })}
+        tooltip="Cảnh báo sức khỏe chiến dịch vẫn hiện trong thông báo trên website."
       />
     </div>
   )

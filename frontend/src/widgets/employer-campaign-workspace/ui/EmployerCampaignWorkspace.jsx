@@ -1,11 +1,13 @@
 import {
   AppstoreOutlined,
+  DashboardOutlined,
   EditOutlined,
   FileTextOutlined,
   HistoryOutlined,
+  ShareAltOutlined,
   TeamOutlined,
 } from '@ant-design/icons'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { Alert, Button, Modal, Select, Skeleton } from 'antd'
 import { useRef, useState } from 'react'
 import { useSearchParams } from 'react-router'
@@ -13,28 +15,28 @@ import {
   campaignKeys,
   getCampaign,
   getCampaignReport,
-  updateCampaign,
 } from '@/entities/campaign'
 import {
   EMPLOYER_CAPABILITIES,
   EmployerReadinessGateState,
   useEmployerReadiness,
 } from '@/entities/employer-profile'
-import {
-  CampaignNameForm,
-} from '@/features/manage-campaigns'
+import { CampaignInfoForm } from '@/features/manage-campaigns'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
-import { message } from '@/shared/lib/toast'
 import CampaignActivityPanel from './CampaignActivityPanel'
 import CampaignApplyCvPanel from './CampaignApplyCvPanel'
+import CampaignChannelsPanel from './CampaignChannelsPanel'
+import CampaignHealthPanel from './CampaignHealthPanel'
 import CampaignJobsPanel from './CampaignJobsPanel'
 import CampaignOverviewPanel from './CampaignOverviewPanel'
 import CampaignWorkspaceHero from './CampaignWorkspaceHero'
 
 const TABS = [
   { key: 'overview', label: 'Tổng quan', icon: AppstoreOutlined },
+  { key: 'health', label: 'Sức khỏe', icon: DashboardOutlined },
   { key: 'apply_cv', label: 'CV ứng tuyển', icon: TeamOutlined },
   { key: 'job', label: 'Tin tuyển dụng', icon: FileTextOutlined },
+  { key: 'channels', label: 'Kênh & nguồn', icon: ShareAltOutlined },
   { key: 'activity', label: 'Lịch sử hoạt động', icon: HistoryOutlined },
 ]
 
@@ -52,7 +54,6 @@ export default function EmployerCampaignWorkspace({ publicId }) {
   const [searchParams, setSearchParams] = useSearchParams()
   const [editing, setEditing] = useState(false)
   const tabRefs = useRef([])
-  const queryClient = useQueryClient()
   const {
     readiness,
     profileQuery,
@@ -69,17 +70,6 @@ export default function EmployerCampaignWorkspace({ publicId }) {
     queryKey: campaignKeys.report(publicId),
     queryFn: () => getCampaignReport(publicId),
     enabled: Boolean(publicId),
-  })
-  const updateMutation = useMutation({
-    mutationFn: (values) => updateCampaign(publicId, values),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: campaignKeys.all })
-      setEditing(false)
-      message.success('Đã cập nhật chiến dịch.')
-    },
-    onError: (error) => message.error(
-      getApiErrorMessage(error, 'Không thể cập nhật chiến dịch.'),
-    ),
   })
 
   const requestedTab = searchParams.get('active_tab')
@@ -217,7 +207,7 @@ export default function EmployerCampaignWorkspace({ publicId }) {
           id={`campaign-panel-${activeTab}`}
           role="tabpanel"
           aria-labelledby={`campaign-tab-${activeTab}`}
-          className={activeTab === 'overview'
+          className={['overview', 'health'].includes(activeTab)
             ? 'mt-4'
             : 'mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm'}
         >
@@ -242,6 +232,8 @@ export default function EmployerCampaignWorkspace({ publicId }) {
               />
             </div>
           ))}
+          {activeTab === 'health' && <CampaignHealthPanel campaign={campaign} />}
+          {activeTab === 'channels' && <CampaignChannelsPanel campaign={campaign} />}
           {activeTab === 'job' && (
             <CampaignJobsPanel
               publicId={publicId}
@@ -270,20 +262,16 @@ export default function EmployerCampaignWorkspace({ publicId }) {
         open={editing}
         destroyOnHidden
         footer={null}
+        width={760}
         title={(
           <span className="inline-flex items-center gap-2">
             <EditOutlined className="text-emerald-600" />
-            Sửa chiến dịch
+            Sửa thông tin chiến dịch
           </span>
         )}
         onCancel={() => setEditing(false)}
       >
-        <CampaignNameForm
-          initialName={campaign.name}
-          submitting={updateMutation.isPending}
-          onCancel={() => setEditing(false)}
-          onSubmit={(values) => updateMutation.mutate(values)}
-        />
+        <CampaignInfoForm campaign={campaign} onSaved={() => setEditing(false)} />
       </Modal>
     </section>
   )

@@ -65,6 +65,8 @@ CACHES = {
     },
 }
 EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'
+# Tests never call Meta, whatever a developer's local .env selects.
+CAMPAIGN_SOCIAL_PROVIDER = 'fake'
 CELERY_TASK_ALWAYS_EAGER = True
 CELERY_TASK_EAGER_PROPAGATES = True
 UPLOAD_QUARANTINE_ENABLED = True
@@ -106,3 +108,8 @@ CSRF_COOKIE_SECURE = False
 SECURE_HSTS_SECONDS = 0
 SECURE_HSTS_INCLUDE_SUBDOMAINS = False
 SECURE_HSTS_PRELOAD = False
+
+# Đối sánh CV–JD: mã hóa tất định không cần torch; không tự tính vector khi lưu
+# CV/tin (test tự gọi khi cần).
+MATCHING_ENCODER_BACKEND = 'hashing'
+MATCHING_PRECOMPUTE_ENABLED = False

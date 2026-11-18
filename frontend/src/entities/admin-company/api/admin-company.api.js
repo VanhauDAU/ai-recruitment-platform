@@ -32,3 +32,17 @@ export function getAdminCompanyPublicPage(publicId, { signal } = {}) {
 export function setAdminCompanyPolicyHold(publicId, { action, reason }) {
   return data(client.post(`/admin/companies/${publicId}/policy-hold/`, { action, reason }))
 }
+
+/** Join requests; `awaiting_admin=1` keeps those only an administrator can decide. */
+export function getAdminCompanyJoinRequests(params = {}, { signal } = {}) {
+  return data(client.get('/admin/company-join-requests/', { params, signal }))
+}
+
+export function decideAdminCompanyJoinRequest(publicId, decision) {
+  return data(client.post(`/admin/company-join-requests/${publicId}/${decision}/`))
+}
+
+/** Only for a company without a verified owner; `recruiter` is the recruiter public_id. */
+export function assignAdminCompanyOwner(publicId, { recruiter, reason }) {
+  return data(client.post(`/admin/companies/${publicId}/assign-owner/`, { recruiter, reason }))
+}

@@ -1,0 +1,32 @@
+title Sơ đồ hoạt động tính trước vector đối sánh ngữ nghĩa CV–JD
+if Sự kiện kích hoạt?
+case Ứng viên lưu phiên bản CV
+  Hệ thống tạo phiên bản CV mới
+  if Bật đối sánh và tính trước?
+  case Không
+    stop
+  case Có
+  endif
+  Hệ thống gửi việc mã hóa CV cho ML Worker
+  ML Worker tìm tài liệu cùng nguồn, hash nội dung, phiên bản
+  if Đã có vector tương ứng?
+  case Có
+    ML Worker bỏ qua, dùng lại vector đã có
+    stop
+  case Chưa có
+  endif
+  ML Worker trích kỹ năng, kinh nghiệm, học vấn, ngoại ngữ
+  ML Worker chia đoạn, mã hóa với tiền tố "passage: "
+  ML Worker lưu vector 768 chiều đã chuẩn hóa
+case Tin hoạt động hoặc đổi nội dung
+  Hệ thống gửi việc mã hóa tin cho ML Worker
+  ML Worker trích yêu cầu, kỹ năng, cấp bậc, ngoại ngữ, địa điểm
+  ML Worker mã hóa các đoạn với tiền tố "query: "
+  ML Worker lưu vector và các đoạn của tin
+  stop
+case Bộ lập lịch (mỗi 60 giây)
+  ML Worker chuyển phân tích chờ quá 10 phút sang thất bại
+  ML Worker đưa phân tích xử lý quá 60 giây về chờ
+  ML Worker gửi lại phân tích chờ quá 30 giây
+  stop
+endif

@@ -106,7 +106,7 @@ export default function EmployerWorkspaceLayout() {
   const unreadApplications = useUnreadApplicationCount(Boolean(readiness.candidateDataAccess))
   const initials = (user?.full_name || user?.email || 'NTD').trim().charAt(0).toUpperCase()
   const isCampaignList = pathname === employerAppPath('/campaigns')
-  const campaignDetailMatch = pathname.match(new RegExp(`^${employerAppPath('/campaigns')}/([^/]+)$`))
+  const campaignDetailMatch = pathname.match(new RegExp(`^${employerAppPath('/campaigns')}/(?!new$)([^/]+)$`))
   const isCampaignDetail = Boolean(campaignDetailMatch)
   const jobEditMatch = pathname.match(new RegExp(`^${employerAppPath('/jobs')}/([^/]+)/edit$`))
   const isJobNew = pathname === employerAppPath('/jobs/new')
@@ -326,7 +326,7 @@ export default function EmployerWorkspaceLayout() {
               )}
             </div>
             {isCampaignList && (
-              <Link to={employerAppPath('/campaigns')} state={{ createCampaign: true }}>
+              <Link to={employerAppPath('/campaigns/new')}>
                 <Button
                   type="primary"
                   icon={<PlusOutlined aria-hidden />}

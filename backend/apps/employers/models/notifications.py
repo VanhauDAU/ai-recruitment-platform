@@ -16,6 +16,7 @@ class EmployerNotificationPreference(models.Model):
     # Email for every new application to the recruiter's jobs (the bell
     # notice is always kept).
     new_application_email = models.BooleanField(default=True)
+    campaign_weekly_report_email = models.BooleanField(default=True)
     updated_at = models.DateTimeField(auto_now=True)
 
 
@@ -52,9 +53,28 @@ class EmployerNotification(models.Model):
         COMPANY_JOIN_REQUESTED = 'company_join_requested', 'Có yêu cầu tham gia công ty'
         COMPANY_JOIN_APPROVED = 'company_join_approved', 'Yêu cầu tham gia công ty đã được duyệt'
         COMPANY_JOIN_REJECTED = 'company_join_rejected', 'Yêu cầu tham gia công ty bị từ chối'
+        COMPANY_OWNERSHIP_CHANGED = 'company_ownership_changed', 'Quyền quản lý công ty đã thay đổi'
+        JOBS_HANDED_OVER = 'jobs_handed_over', 'Tin tuyển dụng được giao lại'
         APPLICATION_REVIEW_SUBMITTED = (
             'application_review_submitted',
             'Có đánh giá mới cho hồ sơ ứng viên',
+        )
+        CAMPAIGN_ACTIVATED = 'campaign_activated', 'Chiến dịch đã được kích hoạt theo lịch'
+        CAMPAIGN_ACTIVATION_FAILED = (
+            'campaign_activation_failed',
+            'Chiến dịch chưa kích hoạt được theo lịch',
+        )
+        CAMPAIGN_ENDING_SOON = 'campaign_ending_soon', 'Chiến dịch sắp đến ngày kết thúc'
+        CAMPAIGN_AUTO_COMPLETED = 'campaign_auto_completed', 'Chiến dịch đã tự kết thúc'
+        SOCIAL_POST_FAILED = 'social_post_failed', 'Bài đăng Fanpage không thành công'
+        SOCIAL_POST_DELETE_FAILED = (
+            'social_post_delete_failed',
+            'Chưa gỡ được bài khỏi Fanpage',
+        )
+        CAMPAIGN_HEALTH_ALERT = 'campaign_health_alert', 'Chiến dịch cần chú ý'
+        SOCIAL_CONNECTION_EXPIRED = (
+            'social_connection_expired',
+            'Kết nối Fanpage đã hết hạn',
         )
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)

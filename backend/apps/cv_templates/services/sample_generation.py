@@ -13,7 +13,7 @@ lọt vào văn bản (danh tính minh họa chỉ được thêm lúc hiển th
 """
 
 import re
-from datetime import date, timedelta
+from datetime import timedelta
 from uuid import uuid4
 
 from django.db import transaction
@@ -21,6 +21,7 @@ from django.utils import timezone
 
 from apps.cvs.schemas import empty_content, empty_layout, empty_style, validate_cv_document
 from apps.jobs.models import Job, JobCategoryLocalization
+from common.vietnam_time import vietnam_today
 
 from ..models import (
     CvLanguage,
@@ -192,7 +193,7 @@ def build_prompt(profile, locale, band):
             f'Vị trí: {_position_name(profile, locale)}.',
             'headline: chức danh mong muốn ngắn gọn (tối đa 60 ký tự), không phải câu mô tả.',
             f'Kinh nghiệm: {vi_years} ({en_years}); viết {roles} mục kinh nghiệm, mới nhất trước,',
-            f'mục mới nhất đang làm (end_date rỗng); hôm nay là {date.today():%Y-%m}.',
+            f'mục mới nhất đang làm (end_date rỗng); hôm nay là {vietnam_today():%Y-%m}.',
             'Kỹ năng gợi ý: ' + (', '.join(profile.keywords) or 'tự chọn theo vị trí') + '.',
             'Trường chuyên môn cần điền (field_key; trường chọn lấy đúng nhãn lựa chọn; '
             'trường thẻ/chọn nhiều điền vào "values", còn lại điền "text"; '

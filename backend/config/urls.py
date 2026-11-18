@@ -24,6 +24,7 @@ urlpatterns = [
     path('', include('apps.sitecontent.urls_seo')),
     # After sitecontent: /cong-ty and /cong-ty/tim-kiem must keep resolving there.
     path('', include('apps.employers.urls_seo')),
+    path('', include('apps.campaigns.urls_seo')),
     path('api/health/', health_check, name='health-check'),
     path('api/auth/', include('apps.accounts.urls')),
     path('api/admin/', include('apps.accounts.urls_admin')),
@@ -32,6 +33,8 @@ urlpatterns = [
     path('api/candidate/', include('apps.employers.urls_candidate')),
     path('api/companies/', include('apps.employers.urls_public')),
     path('api/employer/', include('apps.employers.urls')),
+    path('api/employer/', include('apps.campaigns.urls')),
+    path('api/campaigns/', include('apps.campaigns.urls_public')),
     path('api/v2/cvs/', include('apps.cvs.urls_v2')),
     path('api/v2/', include('apps.cvs.urls_admin')),
     path('api/v2/', include('apps.cv_templates.urls_v2')),

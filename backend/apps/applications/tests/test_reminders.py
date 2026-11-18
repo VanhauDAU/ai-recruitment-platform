@@ -7,8 +7,9 @@ from rest_framework.test import APIClient
 
 from apps.employers.models import EmployerNotification
 from apps.jobs.models import Job
+from apps.jobs.tests.helpers import open_visibility_window
 
-from ..models import Application, ApplicationReminder
+from ..models import Application, ApplicationReminder, ApplicationStatusHistory
 from ..services import (
     ApplicationNotAllowed,
     request_recruiter_reminder,
@@ -22,13 +23,14 @@ AWAITING = EmployerNotification.EventType.APPLICATION_AWAITING_REPLY
 class RecruiterReminderTests(TestCase):
     def setUp(self):
         self.candidate, self.employer, self.application = create_status_application('remind')
-        Job.objects.filter(pk=self.application.job_id).update(status=Job.Status.ACTIVE)
+        Job.objects.filter(pk=self.application.job_id).update(
+            status=Job.Status.ACTIVE, **open_visibility_window()
+        )
 
     def age(self, days, application=None):
         application = application or self.application
         Application.objects.filter(pk=application.pk).update(
             applied_at=timezone.now() - timedelta(days=days),
-            submitted_at=timezone.now() - timedelta(days=days),
         )
 
     def remind(self):
@@ -97,7 +99,7 @@ class RecruiterReminderTests(TestCase):
             2,
         )
 
-    def test_a_stopped_job_leaves_nothing_to_remind_or_withdraw(self):
+    def test_a_stopped_job_leaves_nothing_to_remind_but_still_allows_withdrawing(self):
         self.age(4)
         Job.objects.filter(pk=self.application.job_id).update(
             status=Job.Status.CLOSED, closed_at=timezone.now()
@@ -108,7 +110,9 @@ class RecruiterReminderTests(TestCase):
 
         self.assertIsNotNone(listed['job_stopped_at'])
         self.assertFalse(listed['actions']['remind'])
-        self.assertFalse(listed['actions']['withdraw'])
+        self.assertTrue(listed['actions']['withdraw'])
+        self.assertFalse(listed['actions']['reapply'])
+        self.assertEqual(send_unanswered_application_reminders(), 0)
         with self.assertRaises(ApplicationNotAllowed):
             self.remind()
 
@@ -117,7 +121,56 @@ class RecruiterReminderTests(TestCase):
         Application.objects.filter(pk=self.application.pk).update(
             status=Application.Status.SHORTLISTED
         )
+        # A decision the candidate was told about (no pending notice).
+        ApplicationStatusHistory.objects.create(
+            application=self.application,
+            from_status=Application.Status.SUBMITTED,
+            to_status=Application.Status.SHORTLISTED,
+        )
 
         self.assertEqual(send_unanswered_application_reminders(), 0)
         with self.assertRaises(ApplicationNotAllowed):
             self.remind()
+
+    def test_no_system_nudge_right_after_the_candidate_reminded(self):
+        self.age(4)
+        self.remind()
+
+        self.assertEqual(send_unanswered_application_reminders(), 1)
+        self.assertEqual(
+            EmployerNotification.objects.filter(
+                recipient=self.employer, event_type=AWAITING
+            ).count(),
+            1,
+        )
+        self.assertEqual(
+            ApplicationReminder.objects.filter(source=ApplicationReminder.Source.SYSTEM).count(), 1
+        )
+
+    def test_a_nudge_reaches_a_colleague_when_poster_and_owners_are_gone(self):
+        from django.contrib.auth import get_user_model
+
+        from apps.employers.models import RecruiterProfile
+
+        colleague = get_user_model().objects.create_user(
+            email='remind-colleague@example.com', password='password', role='employer'
+        )
+        RecruiterProfile.objects.create(user=colleague, company=self.application.job.company)
+        RecruiterProfile.objects.filter(user=self.employer).update(company=None)
+        self.age(4)
+
+        self.remind()
+
+        self.assertTrue(
+            EmployerNotification.objects.filter(recipient=colleague, event_type=AWAITING).exists()
+        )
+
+    def test_rules_endpoint_serves_the_enforced_limits(self):
+        response = APIClient().get(reverse('application-rules-v2'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['max_submissions_per_job'], 3)
+        self.assertEqual(response.data['candidate_reminder_after_days'], 3)
+        self.assertIn(
+            {'value': 21, 'label': '3 tuần'}, response.data['auto_reject_after_day_choices']
+        )

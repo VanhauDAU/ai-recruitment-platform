@@ -366,6 +366,30 @@ class SmsLiveWorkflowApiTests(APITestCase):
         dispatch_sms_phone_challenge(challenge.public_id, provider=FakeSmsProvider())
         return challenge
 
+    def test_profile_reports_the_phone_verified_before_any_company_is_linked(self):
+        challenge = self._start()
+        self.client.post(
+            reverse('employer-phone-verify'),
+            {'challenge_id': challenge.public_id, 'code': '123456'},
+            format='json',
+        )
+
+        me = self.client.get(reverse('employer-me'))
+
+        # Regression: the flag came from the company trust badge, empty
+        # without a company, so the page kept asking to verify again.
+        self.assertTrue(me.data['onboarding']['phone_verified'])
+
+    def test_the_same_line_in_another_format_still_counts_as_verified(self):
+        RecruiterProfile.objects.filter(pk=self.profile.pk).update(
+            verified_phone='+84912345678',
+            contact_phone='0912345678',
+            phone_verified_at=timezone.now(),
+        )
+        User.objects.filter(pk=self.user.pk).update(phone='0912 345 678')
+
+        self.assertTrue(RecruiterProfile.objects.get(pk=self.profile.pk).has_verified_phone)
+
     def test_initial_sms_is_actor_bound_and_verifies_exact_challenge(self):
         challenge = self._start()
 

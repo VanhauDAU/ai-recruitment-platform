@@ -18,12 +18,12 @@ from .representation import eligible_representatives_queryset
 
 BLOCKER_MESSAGES = {
     'OWNER_NOT_VERIFIED': (
-        'Người tạo hồ sơ công ty chưa có xác thực nhà tuyển dụng còn hiệu lực '
+        'Quản lý công ty chưa có xác thực nhà tuyển dụng còn hiệu lực '
         'nên trang công ty chưa thể tuỳ biến.'
     ),
     'NOT_VERIFIED': 'Bạn cần hoàn tất xác thực nhà tuyển dụng để tuỳ biến trang công ty.',
     'COMPLIANCE_HOLD': 'Tài khoản của bạn đang bị hạn chế tuân thủ nên chưa thể tuỳ biến trang công ty.',
-    'NO_GRANT': 'Bạn chưa được người tạo hồ sơ công ty cấp quyền biên tập trang công ty.',
+    'NO_GRANT': 'Bạn chưa được quản lý công ty cấp quyền biên tập trang công ty.',
 }
 
 

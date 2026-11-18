@@ -15,6 +15,7 @@ numpy==2.4.6
 python-decouple==3.8
 django-storages[s3]==1.14.4
 Pillow==11.3.0
+openpyxl==3.1.5
 playwright==1.64.1
 pypdfium2==4.30.0
 pypdf==5.7.0

@@ -4,6 +4,7 @@ from rest_framework.routers import DefaultRouter
 from .api.views.admin_companies import AdminCompanyViewSet
 from .api.views.admin_company_reports import AdminCompanyReportViewSet
 from .api.views.admin_domain_claims import AdminCompanyDomainClaimViewSet
+from .api.views.admin_join_requests import AdminCompanyJoinRequestViewSet
 from .api.views.admin_verification import (
     AdminCompanyUpdateRequestViewSet,
     AdminEmployerVerificationViewSet,
@@ -19,6 +20,11 @@ router.register(
     'companies',
     AdminCompanyViewSet,
     basename='admin-company',
+)
+router.register(
+    'company-join-requests',
+    AdminCompanyJoinRequestViewSet,
+    basename='admin-company-join-request',
 )
 router.register(
     'company-reports',

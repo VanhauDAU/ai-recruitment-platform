@@ -36,6 +36,7 @@ import { formatLocationGroups, locationDisplayName } from './lib/job-list-params
 import { relatedCategoryChips, relatedSearchTerms } from './lib/related-terms'
 import { buildJobListTitle } from './lib/job-list-title'
 import { buildJobAlertPrefill } from './lib/job-alert-prefill'
+import './ui/job-list.css'
 
 export default function JobList() {
   const [expandedGroups, setExpandedGroups] = useState({})
@@ -259,6 +260,9 @@ export default function JobList() {
   }
 
   const inlineQuickView = quickViewJob && isDesktop
+  const activeFilterCount = hasFilters
+    ? [...searchParams.keys()].filter((key) => !['search', 'search_by', 'page', 'ordering'].includes(key)).length
+    : 0
 
   // Dùng lại cho cả cột dính (desktop) và drawer lọc (mobile).
   const filterSidebar = (
@@ -379,15 +383,6 @@ export default function JobList() {
           />
         )}
 
-        <button
-          type="button"
-          onClick={() => setFilterDrawerOpen(true)}
-          className="mt-4 flex w-full cursor-pointer items-center justify-center gap-2 rounded-full border border-gray-200 bg-white py-2.5 text-sm font-semibold text-gray-700 shadow-sm lg:hidden"
-        >
-          <FilterOutlined className="text-[var(--brand-primary)]" />
-          Lọc nâng cao{hasFilters ? ` (${[...searchParams.entries()].filter(([key]) => !['search', 'search_by', 'page', 'ordering'].includes(key)).length})` : ''}
-        </button>
-
         <div
           id="job-results"
           className={`mt-4 scroll-mt-40 grid grid-cols-1 gap-5 ${
@@ -432,6 +427,16 @@ export default function JobList() {
             results={results}
             searchBy={searchBy}
             suggestedWards={suggestedWards}
+            toolbarAction={(
+              <button
+                type="button"
+                onClick={() => setFilterDrawerOpen(true)}
+                className="inline-flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 text-sm font-medium text-gray-700 transition hover:border-[var(--brand-primary)] lg:hidden"
+              >
+                <FilterOutlined className="text-[var(--brand-primary)]" />
+                Lọc nâng cao{activeFilterCount ? ` (${activeFilterCount})` : ''}
+              </button>
+            )}
             wardSuggestionInsertIndex={wardSuggestionInsertIndex}
           />
 

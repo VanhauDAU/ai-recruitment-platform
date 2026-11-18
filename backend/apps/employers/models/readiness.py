@@ -394,7 +394,7 @@ def build_annotated_employer_readiness(recruiter, *, dpa_status=None):
             and recruiter.user.email_verified
             and recruiter.readiness_has_recruitment_need
         ),
-        phone_verified=recruiter.phone_verified_at is not None,
+        phone_verified=recruiter.has_verified_phone,
         company_linked=has_explicit_company_link(
             recruiter,
             has_company_industry=recruiter.readiness_has_company_industry,

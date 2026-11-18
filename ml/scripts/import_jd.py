@@ -1,4 +1,4 @@
-"""Nhập tin tuyển dụng từ `ml/data/jd_input.xlsx` vào hệ thống đang chạy bằng Docker Compose.
+"""Nhập tin tuyển dụng từ `ml/data/jd/jd_input.xlsx` vào hệ thống đang chạy bằng Docker Compose.
 
 Chạy từ thư mục gốc của repo:
 
@@ -7,7 +7,7 @@ Chạy từ thư mục gốc của repo:
 
 Chạy thử in ra lỗi từng dòng và danh sách kỹ năng chưa có trong danh mục. Chạy lại
 an toàn: tin đã nhập (trùng tiêu đề và mô tả) được bỏ qua. Sau khi ghi thật, bảng
-đối chiếu mã tin → tin trong hệ thống được lưu ở `ml/data/jd_import_map.json`.
+đối chiếu mã tin → tin trong hệ thống được lưu ở `ml/data/jd/jd_import_map.json`.
 """
 
 import argparse
@@ -17,9 +17,8 @@ from datetime import date, datetime
 from pathlib import Path
 
 from openpyxl import load_workbook
+from paths import JD_IMPORT_MAP, JD_INPUT, REPO_ROOT
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
-DATA_DIR = REPO_ROOT / 'ml' / 'data'
 SHEET_NAME = 'JD'
 EXAMPLE_PREFIX = 'VD'
 # Tiêu đề cột trong Excel → khóa gửi cho lệnh `import_job_postings`.
@@ -181,7 +180,7 @@ def print_report(numbered_rows, held_back, report):
 
 
 def save_map(numbered_rows, report):
-    path = DATA_DIR / 'jd_import_map.json'
+    path = JD_IMPORT_MAP
     mapping = json.loads(path.read_text(encoding='utf-8')) if path.exists() else {}
     sources = {row['code']: row for _, row in numbered_rows}
     for entry in report['rows']:
@@ -198,7 +197,7 @@ def save_map(numbered_rows, report):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument('--file', type=Path, default=DATA_DIR / 'jd_input.xlsx')
+    parser.add_argument('--file', type=Path, default=JD_INPUT)
     parser.add_argument('--apply', action='store_true', help='Ghi thật. Mặc định chỉ chạy thử.')
     parser.add_argument(
         '--create-skills',

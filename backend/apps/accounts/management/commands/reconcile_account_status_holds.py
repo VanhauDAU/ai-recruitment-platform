@@ -24,11 +24,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         apply_changes = options['apply']
         now = timezone.now()
-        campaign_nonterminal = [
-            RecruitmentCampaign.Status.DRAFT,
-            RecruitmentCampaign.Status.ACTIVE,
-            RecruitmentCampaign.Status.PAUSED,
-        ]
+        campaign_nonterminal = RecruitmentCampaign.NON_TERMINAL_STATUSES
         job_nonterminal = [Job.Status.DRAFT, Job.Status.ACTIVE]
 
         banned_campaigns = RecruitmentCampaign.objects.filter(

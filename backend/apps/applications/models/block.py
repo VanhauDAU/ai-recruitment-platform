@@ -7,10 +7,12 @@ from common.public_id import generate_public_id
 
 
 class CandidateBlock(models.Model):
-    """A recruiter refusing further applications from one candidate.
+    """A company refusing further applications from one candidate.
 
-    Scoped to the recruiter (the tenant that owns jobs and applications). The
-    candidate is never told: applying shows a neutral message.
+    The recruiter who blocked is kept for the audit trail, but the block belongs
+    to the company at the time it was made: it covers every job of that company
+    and stays there when the recruiter leaves. The candidate is never told:
+    applying shows a neutral message.
     """
 
     class Reason(models.TextChoices):
@@ -19,7 +21,7 @@ class CandidateBlock(models.Model):
         FAKE_PROFILE = 'fake_profile', 'Hồ sơ giả mạo'
         OTHER = 'other', 'Lý do khác'
 
-    # Mass-apply signal: a candidate applying to this many of one recruiter's
+    # Mass-apply signal: a candidate applying to this many of one company's
     # jobs within the window is suggested for blocking (match score will
     # refine it later).
     MASS_APPLY_WINDOW_DAYS = 14
@@ -28,6 +30,9 @@ class CandidateBlock(models.Model):
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     recruiter = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='candidate_blocks'
+    )
+    company = models.ForeignKey(
+        'employers.Company', on_delete=models.PROTECT, related_name='candidate_blocks'
     )
     candidate = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='blocked_by_recruiters'
@@ -45,9 +50,9 @@ class CandidateBlock(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=['recruiter', 'candidate'],
+                fields=['company', 'candidate'],
                 condition=Q(lifted_at__isnull=True),
-                name='uniq_active_candidate_block',
+                name='uniq_active_company_candidate_block',
             ),
         ]
 

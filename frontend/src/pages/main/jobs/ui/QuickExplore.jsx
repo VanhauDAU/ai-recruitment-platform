@@ -16,12 +16,12 @@ function ShortcutCard({ icon, img, label, active, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className={`group flex w-[128px] shrink-0 cursor-pointer flex-col items-center gap-2 rounded-xl border bg-white px-2 py-3.5 text-center transition ${
+      className={`job-quick-explore__card group flex w-[128px] shrink-0 cursor-pointer flex-col items-center gap-2 rounded-xl border bg-white px-2 py-3.5 text-center transition ${
         active ? 'border-[var(--brand-primary)] bg-green-50/60' : 'border-gray-200 hover:border-[var(--brand-primary)] hover:shadow-sm'
       }`}
     >
       <span
-        className={`flex h-11 w-11 items-center justify-center overflow-hidden rounded-full text-lg ${
+        className={`job-quick-explore__icon flex h-11 w-11 items-center justify-center overflow-hidden rounded-full text-lg ${
           img ? 'bg-white ring-1 ring-gray-100' : active ? 'bg-[var(--brand-primary)] text-white' : 'bg-emerald-50 text-[var(--brand-primary)]'
         }`}
       >
@@ -98,7 +98,7 @@ export default function QuickExplore({
       <div className="relative mt-4">
         <div
           ref={scrollerRef}
-          className="flex gap-2.5 overflow-x-auto scroll-smooth pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="job-list-scroll-row flex gap-2.5 overflow-x-auto scroll-smooth pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           {sidebarLoading
             ? Array.from({ length: 8 }).map((_, index) => (
@@ -135,14 +135,14 @@ export default function QuickExplore({
           <ArrowButton
             dir="left"
             onClick={() => onScroll(-1)}
-            className="absolute left-0 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white shadow-md shadow-black/10"
+            className="job-quick-explore__arrow absolute left-0 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white shadow-md shadow-black/10"
           />
         )}
         {!sidebarLoading && canScrollRight && (
           <ArrowButton
             dir="right"
             onClick={() => onScroll(1)}
-            className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 bg-white shadow-md shadow-black/10"
+            className="job-quick-explore__arrow absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 bg-white shadow-md shadow-black/10"
           />
         )}
       </div>
@@ -154,13 +154,13 @@ export default function QuickExplore({
           ))}
         </div>
       ) : (
-        <div className="mt-3 flex flex-wrap gap-2">
+        <div className="job-list-scroll-row mt-3 flex flex-wrap gap-2">
           {quickPills.map((pill) => (
             <button
               key={pill.key}
               type="button"
               onClick={pill.onClick}
-              className={`inline-flex cursor-pointer items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm font-medium transition ${
+              className={`job-list-chip inline-flex cursor-pointer items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm font-medium transition ${
                 pill.active
                   ? 'border-[var(--brand-primary)] bg-green-50 text-[var(--brand-primary)]'
                   : 'border-gray-200 bg-white text-gray-700 hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]'

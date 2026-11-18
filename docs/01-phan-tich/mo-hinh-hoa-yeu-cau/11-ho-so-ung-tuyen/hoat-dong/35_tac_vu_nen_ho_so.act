@@ -1,0 +1,29 @@
+title Sơ đồ hoạt động tác vụ nền nhắc hạn và tự động từ chối hồ sơ
+Bộ lập lịch kích hoạt tác vụ định kỳ cho Worker
+if Tác vụ được kích hoạt?
+case Nhắc phản hồi (mỗi giờ)
+  Worker lấy hồ sơ chưa phản hồi đã nộp ≥ 3 hoặc ≥ 7 ngày
+  while Còn tin tuyển dụng chưa nhắc? | Có | Không
+    Worker tạo lượt nhắc với nguồn hệ thống
+    if Ứng viên vừa nhắc trong 24 giờ?
+    case Có
+    case Không
+      Worker thông báo nhà tuyển dụng "Hồ sơ đang chờ phản hồi"
+    endif
+  endwhile
+case Tự động từ chối (mỗi 5 phút)
+  Worker lấy hồ sơ còn ≤ 3 ngày tới hạn, chưa cảnh báo
+  if Có hồ sơ sắp tới hạn?
+  case Có
+    Worker gửi email cảnh báo cho nhà tuyển dụng
+    Worker đánh dấu hồ sơ đã cảnh báo
+  case Không
+  endif
+  Worker lấy hồ sơ đã quá số ngày phản hồi của tin
+  while Còn hồ sơ quá hạn? | Có | Không
+    Worker chuyển "rejected" tự động, giữ thông báo 3 ngày
+  endwhile
+  Worker lấy hồ sơ đã qua 3 ngày ân hạn, chưa gửi email
+  Worker gửi email từ chối theo mẫu của tin cho ứng viên
+  Worker ghi thời điểm đã gửi email từ chối
+endif

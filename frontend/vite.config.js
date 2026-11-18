@@ -49,6 +49,11 @@ export default defineConfig(({ mode }) => {
           target: apiProxyTarget,
           changeOrigin: false,
         },
+        // Link theo dõi của kênh chiến dịch: backend đếm lượt bấm rồi chuyển hướng.
+        '^/r/[A-Za-z0-9]+$': {
+          target: apiProxyTarget,
+          changeOrigin: false,
+        },
       },
     },
     build: {

@@ -56,7 +56,7 @@ export default function JobFilterSidebar({
         .filter-sidebar-scroll::-webkit-scrollbar-track { background: transparent; }
       `}</style>
       <div className="filter-sidebar-scroll flex-1 overflow-y-auto p-4">
-        <div className="mb-4 flex items-center gap-2">
+        <div className="job-filter-heading mb-4 flex items-center gap-2">
           <FilterOutlined className="text-[var(--brand-primary)]" />
           <span className="text-base font-bold text-gray-900">Lọc nâng cao</span>
         </div>

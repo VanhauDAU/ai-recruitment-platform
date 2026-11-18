@@ -20,6 +20,7 @@ from ...services.completeness import (
     COMPLETION_THRESHOLD,
     application_readiness_issues,
     cv_completion_score,
+    is_unsaved_builder_baseline,
 )
 
 
@@ -54,6 +55,7 @@ class CvV2Serializer(serializers.ModelSerializer):
     completion_score = serializers.SerializerMethodField()
     is_complete = serializers.SerializerMethodField()
     application_ready = serializers.SerializerMethodField()
+    has_saved_version = serializers.SerializerMethodField()
 
     class Meta:
         model = UserCv
@@ -90,6 +92,7 @@ class CvV2Serializer(serializers.ModelSerializer):
             'completion_score',
             'is_complete',
             'application_ready',
+            'has_saved_version',
             'import_job',
             'thumbnail_url',
             'thumbnail_status',
@@ -118,7 +121,12 @@ class CvV2Serializer(serializers.ModelSerializer):
         return cv_completion_score(obj) >= COMPLETION_THRESHOLD
 
     def get_application_ready(self, obj):
-        return not application_readiness_issues(obj.latest_version)
+        return not application_readiness_issues(obj, obj.latest_version)
+
+    def get_has_saved_version(self, obj):
+        return obj.latest_version_id is not None and not is_unsaved_builder_baseline(
+            obj, obj.latest_version
+        )
 
     def get_import_job(self, obj):
         try:
@@ -470,6 +478,9 @@ class CvVersionSerializer(serializers.ModelSerializer):
         source='parent_version.public_id', read_only=True
     )
     assets = serializers.SerializerMethodField()
+    # True when this snapshot is an uploaded file: readers show that file, not
+    # the (empty) structured document. The storage key itself is never exposed.
+    has_source_file = serializers.SerializerMethodField()
 
     class Meta:
         model = CvVersion
@@ -482,6 +493,7 @@ class CvVersionSerializer(serializers.ModelSerializer):
             'layout_json',
             'style_json',
             'assets',
+            'has_source_file',
             'plain_text',
             'content_hash',
             'template_renderer_key',
@@ -489,6 +501,9 @@ class CvVersionSerializer(serializers.ModelSerializer):
             'created_at',
         ]
         read_only_fields = fields
+
+    def get_has_source_file(self, obj) -> bool:
+        return bool(obj.source_file_key)
 
     def get_assets(self, obj):
         return asset_map(

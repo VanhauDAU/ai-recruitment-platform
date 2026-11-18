@@ -1,8 +1,15 @@
+import unicodedata
 from io import BytesIO
 
 from django.test import SimpleTestCase
 
-from ..services.cv_document import CvDocumentRejected, looks_like_cv, read_cv_document
+from ..services.cv_document import (
+    CvDocumentRejected,
+    clean_document_text,
+    heading_section,
+    looks_like_cv,
+    read_cv_document,
+)
 from .fixtures import docx_bytes, pdf_bytes
 
 
@@ -40,3 +47,18 @@ class CvRecognitionTests(SimpleTestCase):
             with self.subTest(code=code), self.assertRaises(CvDocumentRejected) as raised:
                 read_cv_document(BytesIO(content), 'pdf')
             self.assertEqual(raised.exception.code, code)
+
+
+class CvTextHelpersTests(SimpleTestCase):
+    def test_clean_text_is_nfc_and_keeps_icon_gaps_as_spaces(self):
+        decomposed = unicodedata.normalize('NFD', 'Ứng viên')
+        self.assertEqual(
+            clean_document_text(f'{decomposed}\r\nSep 2020Jun 2021'), 'Ứng viên\nSep 2020 Jun 2021'
+        )
+
+    def test_heading_section_names_cv_sections_only(self):
+        self.assertEqual(heading_section('KINH NGHIỆM LÀM VIỆC'), 'experience')
+        self.assertEqual(heading_section('Technical Skills'), 'skills')
+        self.assertEqual(heading_section('Trình độ ngoại ngữ'), 'languages')
+        self.assertIsNone(heading_section('Nhóm Phát triển SoftSkills'))
+        self.assertIsNone(heading_section('Lập báo cáo tài chính hằng tháng'))

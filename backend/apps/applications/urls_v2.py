@@ -6,6 +6,7 @@ from .api.views.cv_exports import (
     RecruiterApplicationCvExportDetailView,
     RecruiterApplicationCvExportDownloadView,
     RecruiterApplicationCvExportView,
+    RecruiterApplicationCvFileView,
 )
 from .api.views.employer import (
     EmployerApplicationAssessmentView,
@@ -31,6 +32,7 @@ from .api.views.talent_pool import (
     RecruiterTalentSuggestionView,
 )
 from .api.views.v2 import (
+    ApplicationRulesView,
     CandidateApplicationRemindView,
     CandidateApplicationV2ListCreateView,
     CandidateApplicationWithdrawView,
@@ -38,6 +40,7 @@ from .api.views.v2 import (
 )
 
 urlpatterns = [
+    path('applications/rules/', ApplicationRulesView.as_view(), name='application-rules-v2'),
     path(
         'admin/jobs/<str:job_public_id>/applications/',
         AdminJobApplicationListView.as_view(),
@@ -127,6 +130,11 @@ urlpatterns = [
         'recruiter/applications/<str:public_id>/cv/',
         RecruiterApplicationSnapshotView.as_view(),
         name='recruiter-application-snapshot-v2',
+    ),
+    path(
+        'recruiter/applications/<str:public_id>/cv/file/',
+        RecruiterApplicationCvFileView.as_view(),
+        name='recruiter-application-cv-file-v2',
     ),
     path(
         'recruiter/applications/<str:public_id>/cv/exports/',

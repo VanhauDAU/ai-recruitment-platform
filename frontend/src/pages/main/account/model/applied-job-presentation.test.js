@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import {
-  APPLICATION_STAGES,
   buildApplicationTimeline,
   getApplicationHeadline,
   getCompletedStageCount,
+  getStoppedStageIndex,
 } from './applied-job-presentation'
 
 const submitted = { status: 'submitted', label: 'Đã nộp hồ sơ', occurred_at: '2026-11-01T02:00:00Z' }
@@ -16,7 +16,9 @@ describe('applied job presentation', () => {
 
     expect(getApplicationHeadline(application)).toMatchObject({ tone: 'muted', text: 'NTD ngừng tuyển vị trí này' })
     expect(getApplicationHeadline(application).time).toMatch(/^13-11-2026 \d{2}:04$/)
-    expect(getCompletedStageCount(application)).toBe(APPLICATION_STAGES.length)
+    // The stop is not an answer: progress halts at the real stage and the next one says so.
+    expect(getCompletedStageCount(application)).toBe(3)
+    expect(getStoppedStageIndex(application)).toBe(3)
     expect(buildApplicationTimeline(application).map((item) => item.status)).toEqual(['stopped', 'viewed', 'submitted'])
   })
 

@@ -43,7 +43,8 @@ ignore_imports = [
 name = "layer trong mỗi app: api -> services/selectors -> models"
 type = "layers"
 containers = [
-    "apps.accounts", "apps.ai_core", "apps.applications", "apps.blog", "apps.candidates",
+    "apps.accounts", "apps.ai_core", "apps.applications", "apps.blog", "apps.campaigns",
+    "apps.candidates",
     "apps.cv_templates", "apps.cvs", "apps.dashboard", "apps.employers",
     "apps.jobs", "apps.locations", "apps.matching", "apps.privacy",
     "apps.sitecontent", "apps.skills", "apps.knowledgebase", "apps.uploads",

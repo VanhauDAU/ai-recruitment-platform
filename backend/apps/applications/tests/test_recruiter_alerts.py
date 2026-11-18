@@ -15,7 +15,7 @@ from apps.jobs.models import Job, JobApplicationContact, JobApplicationEmail
 from apps.jobs.tests.helpers import open_visibility_window
 from apps.sitecontent.models import SiteSetting
 
-from ..models import Application
+from ..models import Application, ApplicationStatusHistory
 from ..services import create_application_record
 
 
@@ -102,5 +102,9 @@ class NewApplicationAlertTests(TestCase):
         Application.objects.update(
             applied_at=timezone.now() - timedelta(minutes=10),
             status=Application.Status.REJECTED,
+        )
+        # Told to the candidate, so the resubmission is allowed.
+        ApplicationStatusHistory.objects.create(
+            application=Application.objects.get(), to_status=Application.Status.REJECTED
         )
         self.apply()

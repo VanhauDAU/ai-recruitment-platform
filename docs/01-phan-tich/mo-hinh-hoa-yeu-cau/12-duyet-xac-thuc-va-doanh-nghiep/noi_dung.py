@@ -1,0 +1,30 @@
+TEN = "chức năng duyệt xác thực và quản lý doanh nghiệp"
+MO_TA = [
+    ("Xem hàng chờ xác thực", "Quản trị viên", "Xem các hồ sơ xác thực đang chờ, hạn xử lý 72 giờ", "Đăng nhập cổng quản trị", "Danh sách hồ sơ chờ và quá hạn"),
+    ("Duyệt giấy tờ xác thực", "Quản trị viên", "Đánh giá từng giấy tờ: Đạt, Cần sửa, Từ chối", "Hồ sơ đang được duyệt (in_review)", "Trạng thái từng giấy tờ, NTD được báo khi cần sửa"),
+    ("Tra cứu lại mã số thuế", "Quản trị viên", "Lấy lại thông tin doanh nghiệp từ VietQR", "Hồ sơ có mã số thuế", "Bằng chứng tra cứu mới"),
+    ("Ra quyết định xác thực", "Quản trị viên", "Duyệt, yêu cầu sửa hoặc từ chối hồ sơ", "Đủ điều kiện (khi duyệt), mã số thuế khớp hoặc có lý do bỏ qua", "Hồ sơ đổi trạng thái, tạm giữ được gỡ khi duyệt; từ chối lần 3 thì khóa nộp lại"),
+    ("Xem trước ảnh hưởng quyết định", "Hệ thống", "Cho quản trị viên thấy hệ quả trước khi xác nhận", "Quản trị viên chọn quyết định", "Ảnh hưởng và impact_token 10 phút"),
+    ("Thông báo kết quả cho NTD", "Hệ thống, Nhà tuyển dụng", "Báo kết quả xác thực", "Có quyết định cuối", "Thông báo trong ứng dụng và email"),
+    ("Thu hồi / cho hết hạn xác thực", "Quản trị viên", "Rút lại xác thực đã duyệt", "Hồ sơ đang ở trạng thái đã duyệt, có lý do", "Tạm giữ tuân thủ, tin của NTD bị ẩn"),
+    ("Mở khóa nộp lại hồ sơ", "Quản trị viên", "Cho NTD bị từ chối 3 lần nộp lại", "Hồ sơ bị khóa nộp lại", "NTD được nộp lại giấy tờ"),
+    ("Duyệt yêu cầu tham gia thay quản lý", "Quản trị viên", "Duyệt yêu cầu tham gia khi công ty chưa có quản lý đủ điều kiện", "Công ty không có quản lý đủ điều kiện", "Người xin thành thành viên hoặc bị từ chối"),
+    ("Chỉ định quản lý công ty", "Quản trị viên", "Giao vai trò quản lý cho thành viên đủ điều kiện", "Công ty chưa có quản lý đủ điều kiện, có lý do", "Thành viên thành quản lý, được thông báo"),
+    ("Tạm giữ / gỡ tạm giữ trang công ty", "Quản trị viên", "Ẩn trang và tin của công ty vi phạm", "Có lý do; trạng thái khác với yêu cầu", "Trang và tin bị ẩn; gỡ thì tin được bù thời gian hiển thị"),
+]
+DONG_CHINH = [
+    ("Duyệt giấy tờ xác thực", "Quản trị viên", "Mở hồ sơ >> Bắt đầu duyệt >> xem tệp >> chọn Đạt / Cần sửa / Từ chối"),
+    ("Duyệt giấy tờ xác thực", "Hệ thống", "Chuyển hồ sơ in_review >> kiểm tra phiên bản giấy tờ >> lưu đánh giá >> báo NTD nếu cần sửa"),
+    ("Ra quyết định xác thực", "Quản trị viên", "Chọn quyết định cuối >> xem ảnh hưởng >> xác nhận"),
+    ("Ra quyết định xác thực", "Hệ thống", "Kiểm tra điều kiện, mã số thuế >> trả ảnh hưởng và token >> cập nhật hồ sơ >> gỡ / giữ tạm giữ >> thông báo, email"),
+    ("Thu hồi / cho hết hạn xác thực", "Quản trị viên", "Chọn Thu hồi hoặc Hết hạn >> nhập lý do >> xác nhận ảnh hưởng"),
+    ("Thu hồi / cho hết hạn xác thực", "Hệ thống", "Đổi trạng thái hồ sơ >> tạo tạm giữ tuân thủ >> ẩn tin >> thông báo NTD"),
+    ("Mở khóa nộp lại hồ sơ", "Quản trị viên", "Nhập lý do >> bấm Mở khóa"),
+    ("Mở khóa nộp lại hồ sơ", "Hệ thống", "Kiểm tra hồ sơ bị khóa >> gỡ khóa >> ghi sự kiện"),
+    ("Duyệt yêu cầu tham gia thay quản lý", "Quản trị viên", "Mở hàng chờ yêu cầu tham gia >> Duyệt / Từ chối"),
+    ("Duyệt yêu cầu tham gia thay quản lý", "Hệ thống", "Kiểm tra công ty chưa có quản lý đủ điều kiện >> cập nhật yêu cầu >> thông báo"),
+    ("Chỉ định quản lý công ty", "Quản trị viên", "Chọn thành viên đã xác thực >> nhập lý do >> Chỉ định"),
+    ("Chỉ định quản lý công ty", "Hệ thống", "Kiểm tra điều kiện >> hạ quản lý cũ không đủ điều kiện >> nâng thành viên >> thông báo"),
+    ("Tạm giữ / gỡ tạm giữ trang công ty", "Quản trị viên", "Chọn Tạm giữ hoặc Gỡ tạm giữ >> nhập lý do"),
+    ("Tạm giữ / gỡ tạm giữ trang công ty", "Hệ thống", "Cập nhật content_policy_hold >> ẩn hoặc hiện tin >> bù thời gian hiển thị khi gỡ"),
+]

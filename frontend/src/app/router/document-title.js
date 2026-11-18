@@ -56,6 +56,7 @@ const EXACT_EMPLOYER_TITLES = new Map([
   [employerAppPath('/account/settings/personal-data-protection'), 'Văn bản xử lý dữ liệu cá nhân'],
   [employerAppPath('/account/settings/recruitment-demand'), 'Nhu cầu tuyển dụng'],
   [employerAppPath('/account/settings/general-setting'), 'Cài đặt'],
+  [employerAppPath('/account/settings/integrations'), 'Kết nối mạng xã hội'],
   [employerAppPath('/oauth/callback'), 'Đang xác thực tài khoản'],
   [employerAppPath('/dashboard'), 'Bảng tin'],
   [employerAppPath('/campaigns'), 'Quản lý chiến dịch tuyển dụng'],
@@ -118,6 +119,8 @@ export function resolveEmployerRouteTitle(pathname) {
   if (pathname === employerAppPath('/jobs/new')) return 'Đăng tin tuyển dụng'
   if (pathname.match(new RegExp(`^${employerAppPath('/jobs/')}[^/]+/edit$`))) return 'Chỉnh sửa tin tuyển dụng'
   if (pathname.match(new RegExp(`^${employerAppPath('/jobs/')}[^/]+$`))) return 'Chi tiết tin tuyển dụng'
+  if (pathname === employerAppPath('/campaigns/new')) return 'Tạo chiến dịch tuyển dụng'
+  if (pathname.match(new RegExp(`^${employerAppPath('/campaigns/')}[^/]+/setup$`))) return 'Thiết lập chiến dịch tuyển dụng'
   if (pathname.match(new RegExp(`^${employerAppPath('/campaigns/')}[^/]+$`))) return 'Chi tiết chiến dịch tuyển dụng'
   if (pathname.startsWith(employerAppPath('/account/settings/'))) return 'Cài đặt tài khoản'
 

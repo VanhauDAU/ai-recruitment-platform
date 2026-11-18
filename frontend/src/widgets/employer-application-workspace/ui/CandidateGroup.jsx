@@ -56,7 +56,7 @@ export default function CandidateGroup({ group, expanded, selectedPublicId, onTo
                 <span className="mt-2 flex flex-wrap items-center justify-between gap-1.5">
                   <ApplicationStatusBadge status={application.status} />
                   <span className="text-[10px] text-slate-400">
-                    {formatApplicationDate(application.applied_at || application.submitted_at)}
+                    {formatApplicationDate(application.applied_at)}
                   </span>
                 </span>
               </button>

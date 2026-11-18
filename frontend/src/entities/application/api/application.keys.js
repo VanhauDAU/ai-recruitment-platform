@@ -1,6 +1,7 @@
 export const applicationKeys = {
   all: ['applications'],
   candidateList: ['applications', 'candidate-list'],
+  rules: ['applications', 'rules'],
   recruiterLists: () => ['applications', 'recruiter-list'],
   recruiterList: (params = {}) => ['applications', 'recruiter-list', params],
   // Kept outside `recruiterLists()` so list cache patches never touch it.
@@ -16,4 +17,5 @@ export const applicationKeys = {
   talentSuggestions: (jobPublicId) => ['applications', 'talent-suggestions', jobPublicId],
   myTalentPools: ['applications', 'my-talent-pools'],
   cvExport: (publicId, exportId) => ['applications', 'cv-export', publicId, exportId],
+  cvFile: (publicId) => ['applications', 'cv-file', publicId],
 }

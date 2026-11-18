@@ -4,9 +4,10 @@ from uuid import uuid4
 
 from django.conf import settings
 from django.db import transaction
+from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import generics, parsers, serializers, status
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -19,22 +20,33 @@ from common.r2_storage import private_media_storage
 from ...models import CompanyDocument
 from ...selectors import (
     company_join_requests_for_owner,
+    company_members_queryset,
+    former_company_members_queryset,
     pending_company_join_request,
 )
 from ...services import (
     REQUESTER_EDITABLE_COMPANY_UPDATE_STATUSES,
+    CompanyUnlinkError,
     EmployerUploadStructureError,
     cancel_company_join,
+    company_owners,
     decide_company_join,
     get_or_create_recruiter,
     get_or_create_verification_case,
+    hand_over_recruiter_resources,
     lock_company_update_request,
     record_verification_upload,
+    remove_company_member,
     request_company_join,
     snapshot_company_update_request,
+    transfer_company_ownership,
     validate_employer_upload_structure,
 )
 from ..exceptions import EmployerUploadSessionResponse
+from ..serializers.company_members import (
+    CompanyMemberSerializer,
+    FormerCompanyMemberSerializer,
+)
 from ..serializers.join_requests import CompanyJoinRequestSerializer
 
 DOCUMENT_SIGNATURES = {
@@ -381,6 +393,14 @@ class CompanyJoinRequestListView(generics.ListAPIView):
     def get_queryset(self):
         return company_join_requests_for_owner(self.request.user)
 
+    def get_serializer_context(self):
+        recruiter = get_or_create_recruiter(self.request.user)
+        can_decide = bool(
+            recruiter.company_id
+            and company_owners(recruiter.company).filter(user=self.request.user).exists()
+        )
+        return {**super().get_serializer_context(), 'can_decide': can_decide}
+
 
 class CompanyJoinRequestDecisionView(APIView):
     permission_classes = [IsEmployer]
@@ -391,3 +411,104 @@ class CompanyJoinRequestDecisionView(APIView):
             raise ValidationError({'decision': 'Chỉ chấp nhận approve hoặc reject.'})
         join_request = decide_company_join(request.user, public_id, approve=decision == 'approve')
         return Response(CompanyJoinRequestSerializer(join_request).data)
+
+
+class CompanyOwnershipTransferView(APIView):
+    """The verified owner hands the company to a verified member."""
+
+    permission_classes = [IsEmployer]
+
+    @extend_schema(
+        summary='Chuyển quyền owner công ty cho thành viên đã xác thực',
+        request=inline_serializer(
+            'CompanyOwnershipTransfer',
+            fields={'recruiter': serializers.CharField(help_text='member_id của thành viên')},
+        ),
+        responses={204: None},
+        tags=['employer'],
+    )
+    def post(self, request):
+        transfer_company_ownership(request.user, request.data.get('recruiter', ''))
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+def _managed_company(user):
+    """The company ``user`` manages; only its eligible manager gets one."""
+    recruiter = get_or_create_recruiter(user)
+    if (
+        recruiter.company_id is None
+        or not company_owners(recruiter.company).filter(pk=recruiter.pk).exists()
+    ):
+        raise PermissionDenied('Chỉ quản lý công ty đã xác thực mới quản lý được thành viên.')
+    return recruiter.company
+
+
+class CompanyMemberListView(generics.ListAPIView):
+    """Members with their verification, activity and what the manager may do."""
+
+    permission_classes = [IsEmployer]
+    serializer_class = CompanyMemberSerializer
+    pagination_class = None
+
+    def get_queryset(self):
+        return company_members_queryset(_managed_company(self.request.user))
+
+
+class CompanyMemberRemoveView(APIView):
+    """The manager removes a member who has nothing left running for the company."""
+
+    permission_classes = [IsEmployer]
+
+    @extend_schema(
+        summary='Gỡ thành viên khỏi công ty',
+        request=inline_serializer(
+            'CompanyMemberRemove', fields={'reason': serializers.CharField()}
+        ),
+        responses={204: None},
+        tags=['employer'],
+    )
+    def post(self, request, member_id):
+        try:
+            remove_company_member(request.user, member_id, reason=request.data.get('reason', ''))
+        except CompanyUnlinkError as error:
+            raise ValidationError(
+                {'code': error.code, 'detail': error.message, 'blockers': list(error.blockers)}
+            ) from error
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class FormerCompanyMemberListView(generics.ListAPIView):
+    """People who left but still hold jobs here, waiting to be handed over."""
+
+    permission_classes = [IsEmployer]
+    serializer_class = FormerCompanyMemberSerializer
+    pagination_class = None
+
+    def get_queryset(self):
+        return former_company_members_queryset(_managed_company(self.request.user))
+
+
+class CompanyHandoverView(APIView):
+    """The manager gives one person's jobs and campaigns to a verified member."""
+
+    permission_classes = [IsEmployer]
+
+    @extend_schema(
+        summary='Giao tin tuyển dụng và chiến dịch của một người cho thành viên khác',
+        request=inline_serializer(
+            'CompanyHandover',
+            fields={
+                'source': serializers.CharField(help_text='member_id của người đang giữ tin'),
+                'target': serializers.CharField(help_text='member_id của người nhận'),
+            },
+        ),
+        responses={200: OpenApiTypes.OBJECT},
+        tags=['employer'],
+    )
+    def post(self, request):
+        result = hand_over_recruiter_resources(
+            request.user,
+            source_id=request.data.get('source', ''),
+            target_id=request.data.get('target', ''),
+        )
+        return Response(result)

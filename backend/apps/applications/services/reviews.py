@@ -35,9 +35,19 @@ def _token_hash(raw_token):
     return sha256(raw_token.encode('utf-8')).hexdigest()
 
 
+class ReviewNotShareable(ValueError):
+    """This application cannot be sent to an outside reviewer; the message is user-facing."""
+
+
 @transaction.atomic
 def create_review_link(application, *, actor, reviewer_name, message='', expires_in_days=7):
     """Return ``(link, raw_token)``; the raw token is never persisted."""
+    # Reviewers only ever see a de-identified CV, and contact details cannot be
+    # stripped from a file the candidate uploaded.
+    if application.submitted_cv_version.source_file_key:
+        raise ReviewNotShareable(
+            'CV này là tệp ứng viên tải lên nên không thể ẩn thông tin liên hệ để chia sẻ.'
+        )
     raw_token = secrets.token_urlsafe(32)
     link = ApplicationReviewLink.objects.create(
         application=application,

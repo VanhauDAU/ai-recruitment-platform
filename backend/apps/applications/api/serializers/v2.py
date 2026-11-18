@@ -7,7 +7,7 @@ from rest_framework import serializers
 
 from apps.cvs.api.serializers.v2 import CvVersionSerializer
 from apps.cvs.models import CvVersion, UserCv
-from apps.cvs.services import application_readiness_issues
+from apps.cvs.services import application_readiness_issues, is_unsaved_builder_baseline
 from apps.jobs.models import Job
 from apps.jobs.selectors.listing import publicly_available_job_filter
 from apps.locations.models import Location
@@ -47,7 +47,7 @@ class RecruiterApplicationSnapshotSerializer(serializers.ModelSerializer):
             'application_public_id',
             'job_public_id',
             'status',
-            'submitted_at',
+            'applied_at',
             'submitted_cv_title',
             'submitted_cv_source',
             'cv',
@@ -80,8 +80,7 @@ class RecruiterCvExportSerializer(serializers.Serializer):
 
 
 def validated_cv_selection(candidate, attrs):
-    """The candidate's own CV and immutable version, ready to submit; shared by
-    the first submission and the in-place CV update."""
+    """The candidate's own CV and immutable version, ready to submit."""
     try:
         cv = UserCv.objects.get(
             public_id=attrs['cv_public_id'],
@@ -105,6 +104,10 @@ def validated_cv_selection(candidate, attrs):
         raise serializers.ValidationError(
             {'version_public_id': 'Application snapshots cannot be submitted again.'}
         )
+    if is_unsaved_builder_baseline(cv, version):
+        raise serializers.ValidationError(
+            {'cv_public_id': 'CV chưa được lưu lần nào. Hãy mở CV và bấm Lưu trước khi nộp.'}
+        )
     if cv.processing_status in {
         UserCv.ProcessingStatus.QUEUED,
         UserCv.ProcessingStatus.PROCESSING,
@@ -112,7 +115,7 @@ def validated_cv_selection(candidate, attrs):
         raise serializers.ValidationError(
             {'cv_public_id': 'CV đang được phân tích, vui lòng chờ trong giây lát.'}
         )
-    if issues := application_readiness_issues(version):
+    if issues := application_readiness_issues(cv, version):
         raise serializers.ValidationError(
             {
                 'cv_public_id': (
@@ -144,6 +147,8 @@ class CandidateApplicationV2CreateSerializer(serializers.Serializer):
     contact_name = serializers.CharField(required=False, allow_blank=True, max_length=255)
     contact_email = serializers.EmailField(required=False, allow_blank=True)
     contact_phone = serializers.CharField(required=False, allow_blank=True, max_length=20)
+    # Signed reference from a campaign channel link; invalid values count as organic.
+    campaign_ref = serializers.CharField(required=False, allow_blank=True, max_length=200)
 
     def validate(self, attrs):
         candidate = self.context['request'].user
@@ -192,6 +197,16 @@ class CandidateApplicationV2CreateSerializer(serializers.Serializer):
         attrs['contact_name'] = attrs.get('contact_name', '').strip() or candidate.full_name
         attrs['contact_email'] = attrs.get('contact_email', '').strip() or candidate.email
         attrs['contact_phone'] = attrs.get('contact_phone', '').strip() or candidate.phone
+        if cv.cv_type == UserCv.CvType.UPLOADED:
+            # The file is sent as is, so these fields are the only contact
+            # details the recruiter gets in structured form.
+            missing = {
+                field: 'Vui lòng nhập thông tin này để nhà tuyển dụng liên hệ.'
+                for field in ('contact_name', 'contact_email', 'contact_phone')
+                if not attrs[field]
+            }
+            if missing:
+                raise serializers.ValidationError(missing)
         attrs['job'] = job
         attrs['cv'] = cv
         attrs['version'] = version
@@ -243,8 +258,7 @@ class CandidateApplicationV2Serializer(serializers.ModelSerializer):
         """The status the candidate has been told, not the live one: a decision
         stays private during the recruiter's undo window (the history prefetch
         only holds published rows)."""
-        published = list(obj.status_history.all())
-        return published[-1].to_status if published else obj.status
+        return obj.candidate_visible_status(obj.status_history.all())
 
     def get_candidate_status(self, obj):
         return self.CANDIDATE_STATUS[self.get_status(obj)]
@@ -263,12 +277,17 @@ class CandidateApplicationV2Serializer(serializers.ModelSerializer):
     def get_actions(self, obj):
         """What the candidate may do with this submission now (cap and cooldown
         of a resubmission are checked when it is sent)."""
-        # Nothing is left to do once the employer stopped recruiting.
-        current = obj.is_current and obj.job.stopped_at is None
-        remind_at = candidate_reminder_available_at(obj)
+        # Everything reads the status the candidate was told, so no button
+        # reveals a decision still inside its undo window. Withdrawing stays
+        # possible after the job stopped (an interview may still be running).
+        visible = self.get_status(obj)
+        recruiting = obj.job.stopped_at is None
+        remind_at = candidate_reminder_available_at(obj, visible_status=visible)
         return {
-            'withdraw': current and obj.status not in Application.TERMINAL_STATUSES,
-            'reapply': current and obj.status in Application.REAPPLY_ALLOWED_STATUSES,
+            'withdraw': obj.is_current and visible not in Application.TERMINAL_STATUSES,
+            'reapply': obj.is_current
+            and recruiting
+            and visible in Application.REAPPLY_ALLOWED_STATUSES,
             'remind': bool(remind_at and remind_at <= timezone.now()),
             'remind_available_at': remind_at,
         }
@@ -310,7 +329,6 @@ class CandidateApplicationV2Serializer(serializers.ModelSerializer):
             'submitted_cv_version_public_id',
             'submitted_cv_title',
             'submitted_cv_source',
-            'submitted_at',
             'cover_letter',
             'status',
             'candidate_status',

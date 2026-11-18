@@ -176,7 +176,9 @@ function VisibilityCard({ publicId }) {
 }
 
 function JobCard({ job }) {
-  const compatibility = job.is_high_match ? 'Rất phù hợp' : `${job.match_score}% phù hợp`
+  // Chỉ nhãn, không hiện phần trăm: điểm số duy nhất ứng viên thấy là của phân
+  // tích "Xem độ phù hợp" trên trang tin, tránh hai con số mâu thuẫn nhau.
+  const compatibility = job.is_high_match ? 'Rất phù hợp' : 'Phù hợp'
   return (
     <JobImpressionBoundary slug={job.slug}>
       <Link to={jobDetailPath(job)} className="group relative flex gap-4 overflow-hidden rounded-2xl border border-white !bg-white p-4 shadow-[0_2px_12px_rgba(15,23,42,0.05)] transition hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_10px_28px_rgba(0,177,79,0.12)] md:items-center">

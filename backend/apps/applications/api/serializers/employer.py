@@ -17,6 +17,10 @@ class ApplicationSerializer(serializers.ModelSerializer):
     candidate_account_status = serializers.CharField(source='candidate.status', read_only=True)
     candidate_account_restricted = serializers.SerializerMethodField()
     cv_title = serializers.CharField(source='cv.title', read_only=True)
+    # Campaign channel that brought the candidate; empty for organic applications.
+    campaign_channel_label = serializers.CharField(
+        source='campaign_channel.label', read_only=True, default=''
+    )
     submitted_cv_version = serializers.CharField(
         source='submitted_cv_version.public_id', read_only=True
     )
@@ -42,9 +46,10 @@ class ApplicationSerializer(serializers.ModelSerializer):
             'submitted_cv_version',
             'submitted_cv_title',
             'submitted_cv_source',
-            'submitted_at',
             'cover_letter',
             'source',
+            'campaign_channel_label',
+            'acquisition_channel',
             'status',
             'available_decisions',
             'candidate_blocked',
@@ -83,6 +88,15 @@ class PreviousSubmissionSerializer(serializers.ModelSerializer):
     """An earlier, replaced submission: what it was and how it ended, read-only."""
 
     status_label = serializers.CharField(source='get_status_display', read_only=True)
+    # A resubmission restarts at "Mới"; this keeps how far the earlier one got.
+    furthest_stage = serializers.SerializerMethodField()
+
+    FURTHEST_STAGE_FIELDS = (
+        ('accepted', 'accepted_at'),
+        ('interviewed', 'interviewed_at'),
+        ('shortlisted', 'shortlisted_at'),
+        ('viewed', 'viewed_at'),
+    )
 
     class Meta:
         model = Application
@@ -91,11 +105,18 @@ class PreviousSubmissionSerializer(serializers.ModelSerializer):
             'applied_at',
             'status',
             'status_label',
+            'furthest_stage',
             'submitted_cv_title',
             'withdrawn_at',
             'rejected_at',
         ]
         read_only_fields = fields
+
+    def get_furthest_stage(self, obj) -> str:
+        return next(
+            (stage for stage, field in self.FURTHEST_STAGE_FIELDS if getattr(obj, field)),
+            'submitted',
+        )
 
 
 class ApplicationAssessmentSerializer(serializers.Serializer):

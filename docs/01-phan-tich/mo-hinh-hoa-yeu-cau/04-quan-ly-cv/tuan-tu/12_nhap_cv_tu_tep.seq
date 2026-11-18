@@ -1,0 +1,60 @@
+title Sơ đồ tuần tự chức năng nhập CV từ tệp PDF/DOCX
+actor UV Ứng viên
+participant FE Giao diện web\n(React)
+participant BE Máy chủ API\n(Django REST)
+database DB CSDL\n(PostgreSQL)
+queue WK Worker nền\n(Celery)
+external AV ClamAV
+external AI Dịch vụ AI ngoài\n(Gemini)
+UV -> FE : Chọn tệp CV (PDF/DOCX ≤ 5 MB) và mẫu CV muốn dùng
+FE -> FE : Kiểm tra đuôi tệp và dung lượng
+opt Bật cách ly tệp tải lên
+FE -> BE : POST /api/uploads/sessions/ rồi POST .../content/
+BE -> DB : Lưu tệp vào vùng cách ly
+BE ->> WK : scan_upload_session (hàng đợi upload-scan)
+WK -> AV : Quét virus (INSTREAM)
+alt Có mã độc
+WK -> DB : Phiên = rejected
+FE --> UV : "Tệp không vượt qua kiểm tra an toàn"
+else Sạch
+WK -> DB : Phiên = clean, tạo UploadAsset
+end
+end
+FE -> BE : POST /api/v2/cvs/imports/ {upload_session | file, template, language} (Idempotency-Key)
+BE -> BE : Kiểm tra chữ ký tệp PDF/DOCX, dung lượng
+alt Tệp không hợp lệ
+BE --> FE : 400 "Tệp phải là PDF hoặc DOCX hợp lệ"
+else Đã đủ số CV tối đa
+BE --> FE : 409 CV_LIMIT_REACHED
+else Hợp lệ
+BE -> DB : Tạo UserCv (imported, queued) và CvImportJob (queued)
+BE ->> WK : process_cv_import_job (hàng đợi cv-export)
+BE --> FE : 202
+WK -> WK : Trích văn bản (pypdfium2 / python-docx), kiểm tra mã hóa, số trang, độ dài, có phải CV
+alt Không trích được văn bản (CV scan, quá dài, không phải CV)
+WK -> DB : CvImportJob = failed (failure_code)
+else Trích được
+alt Đã cấu hình khóa API
+WK -> AI : Cấu trúc văn bản thành JSON các mục CV
+AI --> WK : JSON theo lược đồ (thử tối đa 2 lần)
+else Thiếu khóa API
+WK -> WK : Dùng bộ phân tích theo luật dự phòng
+end
+alt AI lỗi hoặc sai lược đồ
+WK -> DB : CvImportJob = failed (ai_provider_failed)
+else Có dữ liệu cấu trúc
+WK -> DB : Ghép vào mẫu CV, tạo CvVersion (imported) và bản nháp
+WK -> DB : UserCv = analyzed, CvImportJob = completed
+end
+end
+loop Mỗi giây, tối đa 60 giây
+FE -> BE : GET /api/v2/cvs/{cv}/
+BE --> FE : processing_status
+end
+alt analyzed
+FE --> UV : Mở trình soạn CV với nội dung đã nhập
+else failed
+FE --> UV : Thông báo lý do, nút "Thử lại" (tối đa 3 lần)
+end
+end
+note over UV,BE : Tải CV lên không kèm mẫu thì hệ thống giữ nguyên tệp gốc, trích văn bản đồng bộ, không gọi AI

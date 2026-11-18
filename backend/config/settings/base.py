@@ -83,6 +83,7 @@ INSTALLED_APPS = [
     'apps.applications',
     'apps.ai_core',
     'apps.matching',
+    'apps.campaigns',
     'apps.dashboard',
     'apps.sitecontent',
     'apps.blog',
@@ -402,6 +403,7 @@ REST_FRAMEWORK = {
         'announcement_runtime': '60/hour',
         'cv_import': '10/hour',
         'ai_job_generation': '3/min',
+        'match_analysis': '20/hour',
         'knowledgebase_public': '120/min',
         'public_companies': '120/min',
         # Invited reviewers: open the CV and save a scorecard a few times.
@@ -619,11 +621,13 @@ CELERY_TASK_ROUTES = {
     'apps.employers.tasks.phone_sms.*': {'queue': 'auth-sms'},
     'apps.employers.tasks.tax_lookup.*': {'queue': 'default'},
     'apps.employers.tasks.domain_claims.*': {'queue': 'default'},
+    'apps.campaigns.tasks.*': {'queue': 'default'},
     'apps.cv_templates.tasks.generate_cv_sample_content': {'queue': 'ai-generation'},
     'apps.cv_templates.tasks.render_template_test_pdf': {'queue': 'cv-export'},
     'apps.cvs.tasks.*': {'queue': 'cv-export'},
     'apps.uploads.tasks.*': {'queue': 'upload-scan'},
     'apps.jobs.tasks.ai_generation.*': {'queue': 'ai-generation'},
+    'apps.matching.tasks.*': {'queue': 'ai-matching'},
     'apps.jobs.tasks.*': {'queue': 'candidate-email'},
     'apps.applications.tasks.*': {'queue': 'candidate-email'},
     'apps.candidates.tasks.*': {'queue': 'candidate-email'},
@@ -651,6 +655,10 @@ CELERY_BEAT_SCHEDULE = {
     'purge-expired-ai-runtime-metadata': {
         'task': 'apps.ai_core.tasks.purge_expired_ai_metadata',
         'schedule': 86400.0,
+    },
+    'recover-stale-match-analyses': {
+        'task': 'apps.matching.tasks.recover_stale_analyses',
+        'schedule': 60.0,
     },
     'recover-stale-job-ai-generations': {
         'task': 'apps.jobs.tasks.ai_generation.recover_stale_job_generations',
@@ -732,11 +740,43 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'apps.employers.tasks.notifications.purge_expired_employer_event_history',
         'schedule': 86400.0,
     },
+    'run-campaign-schedule': {
+        'task': 'apps.campaigns.tasks.run_campaign_schedule',
+        'schedule': 300.0,
+    },
+    'dispatch-due-social-posts': {
+        'task': 'apps.campaigns.tasks.dispatch_due_social_posts',
+        'schedule': 60.0,
+    },
+    'reconcile-social-posts': {
+        'task': 'apps.campaigns.tasks.reconcile_social_posts',
+        'schedule': 300.0,
+    },
+    'snapshot-campaign-health': {
+        'task': 'apps.campaigns.tasks.snapshot_campaign_health',
+        'schedule': 3600.0,
+    },
+    'send-campaign-weekly-reports': {
+        'task': 'apps.campaigns.tasks.send_campaign_weekly_reports',
+        'schedule': 3600.0,
+    },
     'reconcile-company-domain-claims': {
         'task': 'apps.employers.tasks.domain_claims.reconcile_company_domain_claims',
         'schedule': 86400.0,
     },
 }
+
+# Đối sánh CV–JD chạy local (apps.matching). Mô hình chỉ nạp trong service
+# `ml-worker` (image có torch); web và CI dùng bộ mã hóa `hashing` tất định.
+# Đổi mô hình: sửa MATCHING_MODEL_PATH + MATCHING_MODEL_VERSION, khởi động lại
+# ml-worker rồi chạy `matching_backfill` (phiên bản mô hình nằm trong khóa cache).
+MATCHING_ENCODER_BACKEND = config('MATCHING_ENCODER_BACKEND', default='hashing').strip()
+MATCHING_MODEL_PATH = config(
+    'MATCHING_MODEL_PATH', default='/models/multilingual-e5-base/zs-v1'
+).strip()
+MATCHING_MODEL_VERSION = config('MATCHING_MODEL_VERSION', default='e5-base-zs-v1').strip()
+# Tính sẵn vector khi CV có phiên bản mới hoặc tin chuyển sang đang mở.
+MATCHING_PRECOMPUTE_ENABLED = config('MATCHING_PRECOMPUTE_ENABLED', default=True, cast=bool)
 
 # Generative AI runtime. The environment flag is the hard kill switch; site
 # settings can only narrow access further. Production therefore stays disabled
@@ -867,6 +907,22 @@ REQUIRE_APPROVED_EMPLOYER_VERIFICATION = config(
     'REQUIRE_APPROVED_EMPLOYER_VERIFICATION',
     default=False,
     cast=bool,
+)
+
+# Đăng bài chiến dịch lên Facebook Page của NTD (GĐ3). ``fake`` chạy toàn bộ luồng
+# OAuth/đăng/gỡ mà không gọi Meta, dùng cho dev và CI. Xem
+# docs/06-deployment/facebook-page-integration.md.
+CAMPAIGN_SOCIAL_PROVIDER = config('CAMPAIGN_SOCIAL_PROVIDER', default='fake')
+FACEBOOK_APP_ID = config('FACEBOOK_APP_ID', default='')
+FACEBOOK_APP_SECRET = config('FACEBOOK_APP_SECRET', default='')
+FACEBOOK_GRAPH_API_VERSION = config('FACEBOOK_GRAPH_API_VERSION', default='v21.0')
+FACEBOOK_OAUTH_REDIRECT_URI = config(
+    'FACEBOOK_OAUTH_REDIRECT_URI',
+    default=f'{FRONTEND_URL.rstrip("/")}/api/employer/social/facebook/callback/',
+)
+CAMPAIGN_SOCIAL_TOKEN_ENCRYPTION_KEY = config('CAMPAIGN_SOCIAL_TOKEN_ENCRYPTION_KEY', default='')
+CAMPAIGN_SOCIAL_HTTP_TIMEOUT_SECONDS = config(
+    'CAMPAIGN_SOCIAL_HTTP_TIMEOUT_SECONDS', default=10.0, cast=float
 )
 
 # Provider-neutral employer phone verification. Production remains disabled

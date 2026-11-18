@@ -10,9 +10,12 @@ from ..models import EmployerActivity, EmployerNotification, EmployerNotificatio
 
 VERIFY_PATH = '/tuyendung/app/employer-verify'
 COMPANY_PATH = '/tuyendung/app/account/settings/company'
+COMPANY_MEMBERS_PATH = f'{COMPANY_PATH}?tab=members'
 COMPANY_PAGE_PATH = '/tuyendung/app/company-page'
 JOBS_PATH = '/tuyendung/app/jobs'
 APPLICATIONS_PATH = '/tuyendung/app/applications'
+CAMPAIGNS_PATH = '/tuyendung/app/campaigns'
+INTEGRATIONS_PATH = '/tuyendung/app/account/settings/integrations'
 
 EVENT_PRESENTATION = {
     EmployerNotification.EventType.VERIFICATION_APPROVED: (
@@ -77,7 +80,7 @@ EVENT_PRESENTATION = {
     ),
     EmployerNotification.EventType.COMPANY_JOIN_REQUESTED: (
         'Có yêu cầu tham gia công ty',
-        COMPANY_PATH,
+        COMPANY_MEMBERS_PATH,
     ),
     EmployerNotification.EventType.COMPANY_JOIN_APPROVED: (
         'Yêu cầu tham gia công ty đã được duyệt',
@@ -87,10 +90,52 @@ EVENT_PRESENTATION = {
         'Yêu cầu tham gia công ty bị từ chối',
         COMPANY_PATH,
     ),
+    EmployerNotification.EventType.COMPANY_OWNERSHIP_CHANGED: (
+        'Quyền quản lý công ty đã thay đổi',
+        COMPANY_MEMBERS_PATH,
+    ),
+    EmployerNotification.EventType.JOBS_HANDED_OVER: (
+        'Tin tuyển dụng được giao lại',
+        JOBS_PATH,
+    ),
+    EmployerNotification.EventType.CAMPAIGN_ACTIVATED: (
+        'Chiến dịch đã được kích hoạt theo lịch',
+        CAMPAIGNS_PATH,
+    ),
+    EmployerNotification.EventType.CAMPAIGN_ACTIVATION_FAILED: (
+        'Chiến dịch chưa kích hoạt được theo lịch',
+        CAMPAIGNS_PATH,
+    ),
+    EmployerNotification.EventType.CAMPAIGN_ENDING_SOON: (
+        'Chiến dịch sắp đến ngày kết thúc',
+        CAMPAIGNS_PATH,
+    ),
+    EmployerNotification.EventType.CAMPAIGN_AUTO_COMPLETED: (
+        'Chiến dịch đã tự kết thúc',
+        CAMPAIGNS_PATH,
+    ),
+    EmployerNotification.EventType.CAMPAIGN_HEALTH_ALERT: (
+        'Chiến dịch cần chú ý',
+        CAMPAIGNS_PATH,
+    ),
+    EmployerNotification.EventType.SOCIAL_POST_FAILED: (
+        'Bài đăng Fanpage không thành công',
+        CAMPAIGNS_PATH,
+    ),
+    EmployerNotification.EventType.SOCIAL_POST_DELETE_FAILED: (
+        'Chưa gỡ được bài khỏi Fanpage',
+        CAMPAIGNS_PATH,
+    ),
+    EmployerNotification.EventType.SOCIAL_CONNECTION_EXPIRED: (
+        'Kết nối Fanpage đã hết hạn',
+        INTEGRATIONS_PATH,
+    ),
 }
 
 SAFE_METADATA_KEYS = {
     'application_public_id',
+    'campaign_public_id',
+    'rule',
     'case_public_id',
     'company_public_id',
     'event_public_id',
@@ -102,6 +147,15 @@ def new_application_email_enabled(recipient):
     value = (
         EmployerNotificationPreference.objects.filter(recipient=recipient)
         .values_list('new_application_email', flat=True)
+        .first()
+    )
+    return True if value is None else value
+
+
+def campaign_weekly_report_email_enabled(recipient):
+    value = (
+        EmployerNotificationPreference.objects.filter(recipient=recipient)
+        .values_list('campaign_weekly_report_email', flat=True)
         .first()
     )
     return True if value is None else value

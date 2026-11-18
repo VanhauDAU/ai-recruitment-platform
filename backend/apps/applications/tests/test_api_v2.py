@@ -32,7 +32,7 @@ from apps.jobs.models import Job, JobLocation
 from apps.jobs.tests.helpers import open_visibility_window
 from apps.locations.models import Location
 
-from ..models import Application
+from ..models import Application, ApplicationStatusHistory
 from ..services import InvalidApplicationStatusTransition, change_application_status
 
 
@@ -371,10 +371,16 @@ class CandidateApplicationV2Tests(APITestCase):
         )
 
     def age(self, response, **fields):
-        """Move a submission past the five-minute cooldown, optionally setting fields."""
-        Application.objects.filter(public_id=response.data['public_id']).update(
-            applied_at=timezone.now() - timedelta(minutes=6), **fields
-        )
+        """Move a submission past the five-minute cooldown, optionally setting fields.
+
+        A ``status`` is recorded as a decision the candidate was already told.
+        """
+        applications = Application.objects.filter(public_id=response.data['public_id'])
+        applications.update(applied_at=timezone.now() - timedelta(minutes=6), **fields)
+        if 'status' in fields:
+            ApplicationStatusHistory.objects.create(
+                application=applications.get(), to_status=fields['status']
+            )
 
     def test_candidate_resubmits_only_after_a_rejection_or_withdrawal(self):
         self.client.force_authenticate(self.candidate)
@@ -554,10 +560,7 @@ class CandidateApplicationV2Tests(APITestCase):
             self.apply_payload(),
             format='json',
         )
-        Application.objects.filter(public_id=first.data['public_id']).update(
-            applied_at=timezone.now() - timedelta(minutes=6),
-            status=Application.Status.REJECTED,
-        )
+        self.age(first, status=Application.Status.REJECTED)
         second = self.client.post(
             reverse('candidate-application-list-create-v2'),
             self.apply_payload(),

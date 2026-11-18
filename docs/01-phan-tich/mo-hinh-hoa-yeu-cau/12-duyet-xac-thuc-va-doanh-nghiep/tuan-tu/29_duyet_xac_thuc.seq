@@ -1,0 +1,52 @@
+title Sơ đồ tuần tự chức năng duyệt xác thực nhà tuyển dụng
+actor QTV Quản trị viên
+participant FE Giao diện quản trị\n(React)
+participant BE Máy chủ API\n(Django REST)
+database DB CSDL\n(PostgreSQL)
+queue WK Worker gửi email\n(Celery + SMTP)
+actor NTD Nhà tuyển dụng
+QTV -> FE : Mở hàng chờ xác thực, chọn một hồ sơ
+FE -> BE : GET /api/admin/employer-verifications/{id}/
+BE --> FE : Hồ sơ, giấy tờ, kết quả tra cứu mã số thuế
+QTV -> FE : Bấm "Bắt đầu duyệt"
+FE -> BE : POST /api/admin/employer-verifications/{id}/start-review/
+alt Hồ sơ không ở trạng thái pending
+BE --> FE : 400 VERIFICATION_INVALID_TRANSITION
+else Hợp lệ
+BE -> DB : pending → in_review, ghi người duyệt
+end
+loop Mỗi giấy tờ
+QTV -> FE : Xem tệp, chọn Đạt / Cần sửa / Từ chối (kèm lý do)
+FE -> BE : POST .../{id}/documents/{doc_id}/review/ {decision, reason, lock_version}
+alt Giấy tờ đã bị thay hoặc phiên bản đã đổi
+BE --> FE : 400 VERIFICATION_DOCUMENT_CHANGED / 409
+else Hợp lệ
+BE -> DB : Cập nhật trạng thái giấy tờ, ghi sự kiện
+end
+end
+QTV -> FE : Chọn quyết định cuối (Duyệt / Yêu cầu sửa / Từ chối)
+FE -> BE : POST .../{id}/decision-impact/ {decision, reason, tax_override}
+alt Duyệt nhưng còn thiếu điều kiện
+BE --> FE : 400 VERIFICATION_REQUIREMENTS_INCOMPLETE {missing_requirements}
+else Mã số thuế không khớp mà chưa ghi lý do bỏ qua
+BE --> FE : 400 TAX_OVERRIDE_REQUIRED
+else Hợp lệ
+BE --> FE : Ảnh hưởng của quyết định + impact_token (10 phút)
+FE --> QTV : Hộp thoại xác nhận ảnh hưởng
+QTV -> FE : Xác nhận
+FE -> BE : POST .../{id}/decision/ {..., impact_token}
+alt Dữ liệu đã đổi sau khi xem ảnh hưởng
+BE --> FE : 409
+else Duyệt
+BE -> DB : Hồ sơ = approved, gỡ tạm giữ tuân thủ (tin được bù thời gian hiển thị)
+else Từ chối
+BE -> DB : Hồ sơ = rejected, tăng số lần từ chối (đủ 3 lần thì khóa nộp lại)
+else Yêu cầu sửa
+BE -> DB : Hồ sơ = changes_requested
+end
+BE -> DB : Ghi sự kiện, nhật ký quản trị, tạo thông báo cho NTD
+BE ->> WK : deliver_employer_verification_notification
+WK ->> NTD : Email kết quả xác thực
+BE --> FE : 200
+end
+note over QTV,NTD : Hồ sơ đã duyệt có thể bị thu hồi hoặc hết hạn; khi đó tin của NTD bị tạm giữ cho tới khi được duyệt lại

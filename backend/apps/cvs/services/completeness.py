@@ -1,6 +1,6 @@
 """Stable, template-agnostic CV completion scoring for candidate workflows."""
 
-from ..models import UserCv
+from ..models import CvVersion, UserCv
 
 COMPLETION_THRESHOLD = 70
 
@@ -52,13 +52,29 @@ def cv_completion_score(cv):
     return sum(weight for weight, complete in checks if complete)
 
 
-def application_readiness_issues(version):
+def is_unsaved_builder_baseline(cv, version):
+    """A builder CV's creation baseline the owner never saved.
+
+    Choosing a template creates the CV at once with position sample content and
+    the owner's identity; until they press Save that sample is not their CV, so
+    it must not be submitted or analysed as if it were.
+    """
+    return (
+        cv.cv_type == UserCv.CvType.BUILDER
+        and version is not None
+        and version.version_kind == CvVersion.VersionKind.INITIAL
+    )
+
+
+def application_readiness_issues(cv, version):
     """What an application CV still lacks for a recruiter to evaluate it.
 
-    Stricter than the completion score, which treats any uploaded file as
-    complete: recruiters only ever read the structured snapshot, so an import
-    that has not been parsed yet would reach them as a blank page.
+    An uploaded CV is submitted as its original file, already checked at upload
+    (format, size, readable text, looks like a CV), so it only needs that file.
+    A builder CV is read from its structured snapshot and needs real content.
     """
+    if cv.cv_type == UserCv.CvType.UPLOADED:
+        return [] if cv.file_url else ['tệp CV']
     content = version.content_json if version and isinstance(version.content_json, dict) else {}
     personal = content.get('personal_info') or {}
     issues = []

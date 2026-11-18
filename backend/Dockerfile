@@ -27,6 +27,22 @@ COPY requirements.txt ./
 RUN --mount=type=cache,target=/root/.cache/pip \
     pip install -r requirements.txt gunicorn
 
+# ---- ml-worker: đối sánh CV–JD (torch CPU + sentence-transformers) ----
+# Đặt trước `runtime` để `runtime` vẫn là stage mặc định: image web không có torch.
+# Không cần Chromium/Playwright (chỉ worker xuất PDF dùng).
+FROM deps AS ml-deps
+COPY requirements-ml.txt ./
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install -r requirements-ml.txt
+
+FROM base AS ml
+COPY --from=ml-deps /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=ml-deps /usr/local/bin /usr/local/bin
+RUN useradd --create-home --uid 1000 appuser
+COPY --chown=appuser:appuser . .
+USER appuser
+CMD ["celery", "-A", "config", "worker", "--loglevel=info", "-Q", "ai-matching", "--concurrency=1"]
+
 # ---- runtime ----
 FROM base AS runtime
 COPY --from=deps /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages

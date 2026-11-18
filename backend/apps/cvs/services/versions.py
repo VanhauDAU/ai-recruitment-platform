@@ -2,10 +2,14 @@
 
 import json
 from hashlib import sha256
+from uuid import uuid4
 
+from django.core.files import File
 from django.db import transaction
 from django.db.models import Max
 from django.utils import timezone
+
+from common.r2_storage import private_media_storage
 
 from ..models import CvDraft, CvVersion, UserCv
 from ..schemas import (
@@ -93,6 +97,8 @@ def create_version(
     parent_version=None,
     update_cv_pointers=True,
     create_or_replace_draft=False,
+    source_file_key='',
+    source_file_type='',
 ):
     """Persist a validated immutable snapshot under a CV row lock."""
     # Bản CV do caller truyền vào không bị bỏ quên: bên dưới nạp lại một instance khoá hàng để ghi,
@@ -140,6 +146,8 @@ def create_version(
         style_json=style_json,
         plain_text=plain_text_from_content(content_json),
         content_hash=document_hash(content_json, layout_json, style_json),
+        source_file_key=source_file_key,
+        source_file_type=source_file_type,
         created_by=actor,
     )
     version.full_clean()
@@ -239,14 +247,40 @@ def create_application_snapshot(cv, actor, source_version=None):
         )
         if base_version is None:
             raise ValueError('Select an immutable CV version owned by this CV.')
-    return create_version(
-        cv=cv,
-        actor=actor,
-        content_json=base_version.content_json,
-        layout_json=base_version.layout_json,
-        style_json=base_version.style_json,
-        version_kind=CvVersion.VersionKind.APPLICATION_SNAPSHOT,
-        template_version=base_version.template_version,
-        parent_version=base_version,
-        update_cv_pointers=False,
-    )
+    source_file_key = _copy_source_file(cv)
+    try:
+        return create_version(
+            cv=cv,
+            actor=actor,
+            content_json=base_version.content_json,
+            layout_json=base_version.layout_json,
+            style_json=base_version.style_json,
+            version_kind=CvVersion.VersionKind.APPLICATION_SNAPSHOT,
+            template_version=base_version.template_version,
+            parent_version=base_version,
+            update_cv_pointers=False,
+            source_file_key=source_file_key,
+            source_file_type=cv.file_type if source_file_key else '',
+        )
+    except Exception:
+        if source_file_key:
+            private_media_storage().delete(source_file_key)
+        raise
+
+
+def _copy_source_file(cv):
+    """Private copy of an uploaded CV's file for one application; '' for builder CVs.
+
+    The recruiter must keep reading the file as submitted after the candidate
+    deletes the library CV, so the snapshot owns its own object.
+    """
+    if cv.cv_type != UserCv.CvType.UPLOADED:
+        return ''
+    storage = private_media_storage()
+    try:
+        with storage.open(cv.file_url, 'rb') as source:
+            return storage.save(
+                f'cvs/application-snapshots/{uuid4().hex}.{cv.file_type}', File(source)
+            )
+    except (OSError, ValueError) as error:
+        raise ValueError('Không đọc được tệp CV đã tải lên. Hãy tải lại tệp.') from error

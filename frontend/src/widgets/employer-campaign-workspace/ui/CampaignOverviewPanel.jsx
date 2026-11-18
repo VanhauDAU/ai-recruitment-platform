@@ -87,7 +87,7 @@ export default function CampaignOverviewPanel({ campaign, report, reportLoading 
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
+      <div className="cw-metrics">
         <CampaignMetric
           icon={TeamOutlined}
           label="Ứng viên duy nhất"

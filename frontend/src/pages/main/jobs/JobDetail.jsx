@@ -3,6 +3,7 @@ import { Button, Result } from 'antd'
 import { useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import { useLoginPrompt } from '@/features/auth'
+import { AnalyzeJobFit } from '@/features/analyze-job-fit'
 import { ApplyForJobModal, useJobApplicationStatus } from '@/features/apply-for-job'
 import { CreateJobAlertModal } from '@/features/manage-job-alerts'
 import { JobCompareButton } from '@/features/compare-jobs'
@@ -20,6 +21,7 @@ import { isAcceptingApplications } from './lib/job-detail-presentation'
 import JobApplicationClosed from './ui/job-detail/JobApplicationClosed'
 import JobShareRail from './ui/job-detail/JobShareRail'
 import useJobDetailPageData from './model/use-job-detail-page-data'
+import './ui/job-detail/job-detail.css'
 
 export default function JobDetail() {
   const { slug, companySlug } = useParams()
@@ -125,6 +127,9 @@ export default function JobDetail() {
                 onShare={handleShare}
                 savePending={savePending}
               />
+              {isAcceptingApplications(job) && (
+                <AnalyzeJobFit job={job} beforeOpen={requireCandidate} onApply={handleApply} placement="inline" />
+              )}
               <JobDetailContent
                 job={job}
                 relatedJobs={relatedJobs}
@@ -140,7 +145,12 @@ export default function JobDetail() {
                 onRequireLogin={promptLogin}
               />
             </div>
-            <JobDetailSidebar job={job} />
+            <JobDetailSidebar
+              job={job}
+              fitAction={isAcceptingApplications(job) && (
+                <AnalyzeJobFit job={job} beforeOpen={requireCandidate} onApply={handleApply} />
+              )}
+            />
           </div>
         </div>
       </main>
@@ -186,8 +196,8 @@ function MobileActions({ job, saved, applicationStatus, onApply, onSave, savePen
   return (
     <div className="fixed inset-x-0 bottom-0 z-40 border-t border-gray-200 bg-white/95 p-3 shadow-[0_-8px_24px_rgba(15,23,42,0.08)] backdrop-blur md:hidden">
       <div className="mx-auto flex max-w-6xl gap-2">
-        <JobCompareButton job={job} />
-        <button type="button" onClick={onSave} disabled={savePending} aria-label={saved ? 'Bỏ lưu việc làm' : 'Lưu việc làm'} className="flex h-11 w-12 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-emerald-200 text-[var(--brand-primary)] disabled:cursor-not-allowed disabled:opacity-60">{saved ? <HeartFilled /> : <HeartOutlined />}</button>
+        <JobCompareButton job={job} className="job-mobile-actions__compare" />
+        <button type="button" onClick={onSave} disabled={savePending} aria-label={saved ? 'Bỏ lưu việc làm' : 'Lưu việc làm'} className="flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-slate-200 text-[var(--brand-primary)] disabled:cursor-not-allowed disabled:opacity-60">{saved ? <HeartFilled /> : <HeartOutlined />}</button>
         {isAcceptingApplications(job) ? <button type="button" onClick={onApply} disabled={applicationStatus.isLimitReached} className="inline-flex h-11 flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg bg-[var(--brand-primary)] px-4 text-sm font-bold text-white shadow-sm transition hover:bg-[var(--brand-primary-hover)] disabled:cursor-not-allowed disabled:opacity-60"><ApplyButtonLabel status={applicationStatus} /></button> : <JobApplicationClosed className="flex-1" />}
       </div>
     </div>

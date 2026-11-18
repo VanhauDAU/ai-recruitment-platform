@@ -53,11 +53,26 @@ Xác thực trong Swagger UI: gọi `POST /api/auth/login/` lấy `access`, bấ
 | POST | `/api/employer/register/` | Đăng ký employer, tạo atomically user/recruiter/consent, trả JWT và gửi email xác thực. **Không tự tạo hoặc liên kết company**; company chỉ có sau thao tác rõ ràng ở settings |
 | POST | `/api/employer/onboarding/registration/` | Hoàn thiện profile bắt buộc cho employer mới qua Google |
 | GET/POST | `/api/employer/consulting-need/` | Đọc hoặc tạo **một lần** nhu cầu tuyển dụng ưu tiên; POST lặp lại trả `400` |
-| GET/POST | `/api/employer/campaigns/` | Danh sách/tạo chiến dịch của chính recruiter. Cả read workspace và mutation yêu cầu `job_workspace_ready=true`; POST chỉ nhận `name`. Filter gồm `status`, `q`, `scope=open|needs_review|active_jobs|expired_jobs`. |
-| GET/PATCH | `/api/employer/campaigns/{public_id}/` | Xem/sửa chiến dịch do chính recruiter sở hữu và workspace đang ready. |
-| GET | `/api/employer/campaigns/options/` | `suggestions/` | Option để gắn tin (trừ chiến dịch hoàn tất/hủy) và nhu cầu tuyển dụng chưa chuyển thành chiến dịch. |
-| POST | `/api/employer/campaigns/from-need/{public_id}/` | Tạo và mở chiến dịch từ nhu cầu tuyển dụng của chính recruiter. |
-| POST/GET | `/api/employer/campaigns/{public_id}/status/` | `report/` | Dừng/mở lại/hoàn tất/hủy theo transition hợp lệ; report trả tổng tin theo trạng thái, lượt xem, tổng/CV mới, phễu và hồ sơ 7 ngày. |
+| GET/POST | `/api/employer/campaigns/` | Danh sách/tạo chiến dịch của chính recruiter. Cả read workspace và mutation yêu cầu `job_workspace_ready=true`. POST nhận `name` và thông tin đợt tuyển (`description`, `start_date`, `target_date`, `is_continuous`, `budget_min`, `budget_max`, `budget_source`); response có `headcount` = tổng số lượng tuyển của các tin trong chiến dịch; chiến dịch tạo ở `draft`, trừ khi gửi `activate=true` (tạo nhanh trong form đăng tin). Filter gồm `status` (một trạng thái, hoặc `ended` = hoàn tất + đã hủy), `q`, `scope=open|needs_review|active_jobs|expired_jobs`; `ordering=status` (mặc định ở giao diện: đang chạy → tạm dừng → đã lên lịch → nháp → hoàn tất → đã hủy) hoặc `activity|newest|oldest|name`. Response phân trang có thêm `status_counts` (số chiến dịch theo từng trạng thái, `ended`, `all`; tôn trọng `q`). |
+| GET/PATCH | `/api/employer/campaigns/{public_id}/` | Xem/sửa chiến dịch do chính recruiter sở hữu và workspace đang ready. PATCH ghi tên và thông tin đợt tuyển; từ chối sửa chiến dịch đã kết thúc, đổi `start_date` sau khi đã chạy, hoặc `target_date` trước hạn nộp của tin đang tuyển. Response có `first_activated_at`, `ended_at`, `ended_by`, `active_days`. |
+| GET | `/api/employer/campaigns/options/` | Option để gắn tin (trừ chiến dịch hoàn tất/hủy). |
+| POST/GET | `/api/employer/campaigns/{public_id}/status/` | `report/` | Dừng/mở lại/hoàn tất/hủy/hủy lịch theo transition hợp lệ (mục 2 của đặc tả chiến dịch); `draft|scheduled → active` trả `CAMPAIGN_LAUNCH_REQUIRED`. Hoàn tất/hủy đóng mọi tin đang tuyển của chiến dịch. Report trả tổng tin theo trạng thái, lượt xem, tổng/CV mới, phễu và hồ sơ 7 ngày. |
+| GET/POST | `/api/employer/campaigns/{public_id}/channels/` | Kênh phân phối (`apps.campaigns`). GET trả từng kênh kèm `link` (`{FRONTEND_URL}/r/<code>`), `rendered_content` (đã thay `{link}`), `clicks`, `unique_clicks`, `applications`, `hires`, `cost`. POST `{kind, label, target: landing|job, job?}`; tên trùng trong chiến dịch, tin không thuộc chiến dịch hoặc chiến dịch đã kết thúc trả 400. |
+| PATCH/DELETE | `/api/employer/campaigns/{public_id}/channels/{channel_id}/` | Sửa `label`, `target`, `job`, `content` (đánh dấu `content_source=manual`), `posted` (true ghi `posted_at`), `posted_url`; DELETE xóa kênh, hồ sơ đã nhận giữ `acquisition_channel`. |
+| POST | `/api/employer/campaigns/{public_id}/channels/{channel_id}/content/` | Soạn nội dung bằng AI (`ai_core.generate_structured`, use case `campaign_channel_post`, chỉ dữ liệu công khai của tin). AI tắt hoặc lỗi thì dùng mẫu có sẵn và trả `fallback_reason` = `ai_disabled`/`ai_failed`; vượt 20 lượt/ngày/người trả 429. |
+| GET/POST, DELETE | `/api/employer/campaigns/{public_id}/channels/{channel_id}/costs/`, `.../costs/{id}/` | Sổ chi phí nhập tay `{amount, incurred_on, note}`. |
+| GET/POST | `/api/employer/campaigns/{public_id}/channels/{channel_id}/posts/` | Bài đăng Fanpage của kênh (chỉ kênh `facebook_page`). POST `{connection, scheduled_for?, message?}`: bỏ trống giờ là đăng ngay, bỏ trống nội dung thì dùng nội dung đã soạn có link theo dõi. Mỗi bài trả `status`, `status_label`, `last_error_code` và `error_message` (lỗi diễn đạt kèm cách xử lý, ví dụ link `localhost` với lỗi Graph 1500). |
+| PATCH/DELETE | `.../posts/{post_id}/` | PATCH `{scheduled_for}` hẹn lại (bài đã hẹn, hoãn hoặc lỗi); DELETE hủy bài chưa đăng. |
+| GET, DELETE | `/api/employer/social/connections/`, `.../{connection_id}/` | Fanpage đã kết nối (không bao giờ trả token; `simulated=true` khi provider giả lập); DELETE ngắt kết nối và hủy bài đang hẹn. |
+| POST | `/api/employer/social/facebook/authorize/` | Trả `{url}` để chuyển sang hộp cấp quyền của Facebook (state ký + nonce một lần, 10 phút). |
+| GET | `/api/employer/social/facebook/callback/` | Callback OAuth (không cần JWT): đổi mã, liệt kê Fanpage, rồi 302 về `/tuyendung/app/account/settings/integrations?fb_select=<nonce>` hoặc `?fb_error=denied|expired|provider`. |
+| GET/POST | `/api/employer/social/facebook/pending/{nonce}/` | GET danh sách Fanpage vừa cấp quyền; POST `{page_id}` lưu kết nối. |
+| GET | `/api/employer/campaigns/{public_id}/channel-report/` | So sánh theo nguồn: mỗi kênh (người bấm, hồ sơ, tỷ lệ nộp = hồ sơ ÷ người bấm, trúng tuyển, đã chi, chi phí/hồ sơ, chi phí/trúng tuyển) và ba nguồn tự nhiên (mời từ kho, gợi ý ProCV, tự tìm thấy); `totals` có % ngân sách đã dùng. |
+| GET | `/api/employer/campaigns/{public_id}/health/` | `{health, history}`: chỉ số và dự báo hiện tại (`status`, `headcount`, `accepted`, `forecast`, `required_velocity`, `velocity_7d`, `hire_rate`, `stage_rates`, `pipeline`, `funnel`, `response`, `budget`, `silent_channels`, `alerts`; chỉ số thiếu mẫu số là `null`) và tối đa 60 ảnh chụp ngày. Công thức ở [suc-khoe-chien-dich.md](../07-algorithms/suc-khoe-chien-dich.md). |
+| GET | `/api/employer/campaigns/{public_id}/report/export/?type=xlsx\|pdf` | Tải báo cáo chiến dịch (chỉ số liệu tổng hợp, không có dữ liệu ứng viên). Throttle 20/giờ; PDF lỗi trả 400. Tham số là `type` vì DRF dành `format` cho renderer. |
+| GET | `/api/campaigns/public/{slug}/` | Trang tuyển dụng công khai (AllowAny, throttle): `name`, `intro`, `state` = open/paused/upcoming/ended, khoảng thời gian, công ty. 404 với nháp, chiến dịch không có công ty, đã tắt trang hoặc chủ tài khoản bị khóa. Danh sách tin lấy qua `GET /api/jobs/?campaign=<public_id>`. |
+| GET | `/r/{code}` (ngoài `/api`) | Link theo dõi: đếm lượt bấm (không cookie, không lưu IP), 302 về `/viec-lam/<slug>` khi kênh trỏ tới tin còn công khai và chiến dịch đang chạy, ngược lại về `/tuyen-dung/<slug>`; luôn kèm `?ref=` ký bằng `TimestampSigner` (hạn 30 ngày). |
+| GET/PUT/POST | `/api/employer/campaigns/{public_id}/launch/` | Wizard thiết lập (`apps.campaigns`). GET trả `draft_jobs`, `attachable_jobs`, `campaign_jobs`, `check` (`ready`, `items[]`, `job_problems[]`), `can_schedule`, `statement_version`, `last_error`. PUT `{publish_job_ids, attach_job_ids}` lưu lựa chọn tin. POST `{mode: now|scheduled, accepted_statement_version}` kích hoạt theo kiểu tất cả hoặc không gì cả; lỗi `CAMPAIGN_NOT_READY` (kèm `items`, `job_problems`), `CAMPAIGN_LAUNCH_FAILED` (kèm `jobs`), `JOB_RESPONSIBILITY_REQUIRED`. Trả `{public_id, status}`. |
 | GET | `/api/employer/campaigns/{public_id}/activities/` | Activity owner-only. Event application chỉ trả candidate actor/name/deep-link khi `candidate_data_access=true`; nếu chỉ workspace-ready thì metadata được allowlist/redact. |
 | POST/GET | `/api/uploads/sessions/` · `/api/uploads/sessions/{public_id}/` | Tạo và poll upload session owner-scoped. State machine `uploading → quarantined → scanning → clean\|rejected\|error\|expired`; response không lộ storage key hoặc scanner evidence. |
 | POST | `/api/uploads/sessions/{public_id}/content/` · `cancel/` · `retry/` | Gửi byte vào quarantine, hủy hoặc retry bounded. Chỉ owner và purpose/role hợp lệ; chỉ `clean` có thể attach vào nghiệp vụ. |
@@ -109,7 +124,7 @@ Xác thực trong Swagger UI: gọi `POST /api/auth/login/` lấy `access`, bấ
 | GET | `/api/dashboard/admin/queues/` | Chỉ phần hàng chờ của dashboard quản trị (đếm, quá hạn, thời điểm cũ nhất, hạn xử lý) cho badge sidebar và chuông header; cổng quản trị gọi lại mỗi 30 giây. |
 | GET | `/api/employer/notifications/?page=` | Danh sách thông báo website của employer hiện tại, mới nhất trước; có `is_read`, internal `action_path` và metadata đã redact. |
 | GET | `/api/employer/notifications/unread-count/` | Số thông báo chưa đọc của employer hiện tại. |
-| GET/PATCH | `/api/employer/notification-preferences/` | Email quyết định xác thực quan trọng luôn bật; employer cấu hình `intermediate_verification_email` và `new_application_email` (PATCH từng phần). Hồ sơ mới luôn tạo thông báo `application_received` trên chuông; email gửi tới địa chỉ nhận hồ sơ của tin, không chứa tên ứng viên. |
+| GET/PATCH | `/api/employer/notification-preferences/` | Email quyết định xác thực quan trọng luôn bật; employer cấu hình `intermediate_verification_email`, `new_application_email` và `campaign_weekly_report_email` (PATCH từng phần). Hồ sơ mới luôn tạo thông báo `application_received` trên chuông; email gửi tới địa chỉ nhận hồ sơ của tin, không chứa tên ứng viên. |
 | POST | `/api/employer/notifications/{public_id}/read/`, `/api/employer/notifications/read-all/` | Đánh dấu một hoặc toàn bộ notification của chính actor; resource actor khác trả `404`. |
 | GET | `/api/employer/activities/?page=` | Activity business/security đã redact, retention 730 ngày. |
 | GET | `/api/locations/?level=&parent=&search=` | Tra cứu địa điểm (cascading tỉnh -> xã/phường), public — không phân trang (trả tối đa 500 bản ghi/lần) |
@@ -667,7 +682,7 @@ Mã lỗi ổn định gồm `JOB_AI_DAILY_QUOTA_EXCEEDED` (429),
 | GET | `/api/jobs/mine/posting-context/` | Endpoint compliance không bị workspace guard để luôn trả quota + `job_workspace_ready`, `candidate_data_access`, `dpa_status`, `blockers[]`, `job_postable`, `block_reason`, policy hạn hồ sơ (`default_deadline_days`, `max_deadline_days`, `max_public_lifetime_days`) và `responsibility_statement {version, text}` là bản cam kết đang có hiệu lực. |
 | POST | `/api/jobs/mine/{public_id}/submit/` | Đăng một tin nháp: tin công khai ngay (`active`). Body `{responsibility_statement_version}`; thiếu hoặc khác phiên bản đang có hiệu lực trả `400 JOB_RESPONSIBILITY_REQUIRED`. Trả `400 JOB_PUBLICATION_BLOCKED` kèm `blocked_reasons[]` khi nhà tuyển dụng chưa đạt điều kiện đăng. Gọi lại với tin đã `active` là idempotent và không cần cam kết. |
 | POST | `/api/jobs/mine/{public_id}/close/`, `/reopen/`, `/extend/`, `/duplicate/` | Đóng, mở lại (tin `active` ngay, body `{deadline, responsibility_statement_version}`, cùng cam kết và điều kiện đăng), gia hạn tin active hoặc tạo nháp sao chép. Tin đang bị tạm ẩn trả `400 RECRUITMENT_HOLD_ACTIVE` cho sửa, mở lại, gia hạn và sao chép. |
-| GET/POST | `/api/v2/applications/` | Candidate application V2. POST bắt buộc `job_public_id`, `cv_public_id`, `version_public_id`; backend từ chối tin hết hạn, CV đang phân tích hoặc CV thiếu họ tên / liên hệ / nội dung (`400 {cv_public_id}`), tạo snapshot CV bất biến. GET trả `status`, `candidate_status` và timeline **đã công bố**: quyết định còn trong cửa sổ hoàn tác của NTD chưa hiện. |
+| GET/POST | `/api/v2/applications/` | Candidate application V2. POST bắt buộc `job_public_id`, `cv_public_id`, `version_public_id`; backend từ chối tin hết hạn, CV đang phân tích hoặc CV thiếu họ tên / liên hệ / nội dung (`400 {cv_public_id}`), tạo snapshot CV bất biến. `campaign_ref` (tùy chọn) là mã `?ref=` của link kênh chiến dịch: hợp lệ thì hồ sơ ghi `campaign_channel`; sai, hết hạn hoặc thuộc chiến dịch khác thì coi là tự nhiên, không bao giờ chặn việc nộp. GET trả `status`, `candidate_status` và timeline **đã công bố**: quyết định còn trong cửa sổ hoàn tác của NTD chưa hiện. |
 | GET | `/api/v2/recruiter/applications/?job=&status=&campaign=&q=` | Hồ sơ của các tin do caller tạo; yêu cầu `candidate_data_access=true`, filter theo tin/pipeline/chiến dịch/tên-email. |
 | PATCH | `/api/v2/recruiter/applications/{public_id}/` | Chỉ `{employer_note?, employer_rating?}` nội bộ; không nhận `status`. Owner-scope, candidate-data gate và canonical lock order được recheck trong transaction. |
 | POST | `/api/v2/recruiter/applications/{public_id}/status/` | `{status}` ∈ `shortlisted`/`interviewed`/`accepted`/`rejected` (phải nằm trong `available_decisions` của list). Trả `{application, candidate_notice_at}`: ứng viên nhận thông báo vào thời điểm đó (mặc định +5 phút), không ngay lập tức. `400 {status}` khi chuyển không hợp lệ. |
@@ -694,6 +709,33 @@ Mã lỗi ổn định gồm `JOB_AI_DAILY_QUOTA_EXCEEDED` (429),
 | GET | `/api/site/admin/settings/` | **Admin**: toàn bộ cấu hình gộp theo 15 nhóm `{groups: [{key, label, settings: [...]}]}`, mỗi setting kèm metadata (`value_type`, `options`, `order`, `is_public`, `env_configured`) để frontend tự render form |
 | PATCH | `/api/site/admin/settings/` | **Admin**: bulk update, body `{"values": {key: value}}`, validate theo `value_type` (boolean/number/color hex/select choices), từ chối key kiểu `env` → `{"updated": [...], "errors": {...}}` |
 | POST | `/api/site/admin/settings/upload/` | **Admin**: upload ảnh cho setting kiểu image (multipart `file` + `key`) → `{"key", "value", "url"}`; ảnh favicon tự resize về tối đa 256×256 |
+
+### Xem độ phù hợp CV–tin (đối sánh chạy local)
+
+Chỉ ứng viên; tắt bằng site setting `ai_job_match_enabled` (mọi endpoint trả
+`403 feature_disabled`). Yêu cầu phân tích giới hạn `20/hour`; xem lại kết quả
+(poll) không tốn lượt. Kết quả được cache theo (phiên bản CV, tin, hash nội dung
+tin, phiên bản mô hình, phiên bản công thức): sửa CV hay tin thì tính lại.
+
+| Method | Endpoint | Mô tả |
+| --- | --- | --- |
+| POST | `/api/matching/analyses/` | Body `{job: <slug tin>, cv: <public_id CV>}`. `200` kèm `cached: true` nếu đã có kết quả, `202` nếu phải tính (task ở `ml-worker`). |
+| GET | `/api/matching/analyses/{public_id}/` | Poll trạng thái `queued`/`processing`/`succeeded`/`failed`; `result` khi hoàn tất. |
+| GET | `/api/matching/analyses/?job=<slug>` | Tối đa 10 lần phân tích gần nhất của chính người dùng cho tin. |
+
+Mã lỗi: `feature_disabled` (403), `job_not_active` (404, tin không còn hiển
+thị), `cv_not_owned` (404), `job_text_too_short` (422), `throttled` (429). Lỗi lúc
+tính nằm ở `error_code` của phân tích: `cv_text_unavailable` (PDF scan),
+`cv_insufficient_content` (CV không có kỹ năng lẫn kinh nghiệm),
+`analysis_timeout`, `internal_error`.
+
+`result` gồm `overall` (`score` 0–100, `level`, `label`, `confidence`),
+`components` (6 tiêu chí: `key`, `score`, `weight`, `status`, `summary`,
+`detail`), `skills` (`matched` kèm `match_type` exact/semantic và câu bằng
+chứng, `missing` kỹ năng cần có trước, `extra`), `requirements` (từng câu yêu
+cầu: `met`/`partial`/`unmet`, câu CV làm bằng chứng), `suggestions` (`code`,
+`priority`, `section`, `message`, `params`), `flags`, `disclaimer`, `meta`
+(phiên bản mô hình, công thức, trích xuất, `latency_ms`).
 
 ### Employer readiness và mã lỗi ER-2
 

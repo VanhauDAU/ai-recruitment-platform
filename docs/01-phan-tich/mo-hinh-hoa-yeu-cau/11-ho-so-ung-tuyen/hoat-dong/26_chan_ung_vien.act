@@ -1,0 +1,41 @@
+title Sơ đồ hoạt động chức năng chặn ứng viên theo công ty
+if Người dùng thực hiện thao tác nào?
+case Chặn ứng viên
+  Nhà tuyển dụng chọn lý do, thời hạn, tùy chọn từ chối hồ sơ chờ
+  Hệ thống kiểm tra hồ sơ thuộc tin của nhà tuyển dụng
+  if Tìm thấy hồ sơ?
+  case Không
+    Giao diện báo lỗi không tìm thấy (404)
+    stop
+  case Có
+  endif
+  if Ứng viên đang bị công ty chặn?
+  case Có
+    Giao diện báo "Ứng viên đã bị chặn"
+    stop
+  case Không
+  endif
+  Hệ thống tạo bản ghi chặn theo công ty kèm hạn chặn
+  if Chọn từ chối các hồ sơ đang chờ?
+  case Có
+    while Còn hồ sơ chưa phản hồi trong công ty? | Có | Không
+      Hệ thống chuyển "rejected", hẹn giờ công bố thông báo
+    endwhile
+  case Không
+  endif
+  Giao diện gắn cờ "Đã chặn" trên hồ sơ
+case Ứng viên bị chặn ứng tuyển
+  Ứng viên nộp hồ sơ vào tin của công ty đã chặn
+  Hệ thống kiểm tra chặn theo công ty, từ chối nhận hồ sơ
+  Giao diện báo trung lập "Bạn không thể ứng tuyển vào tin này lúc này"
+case Gỡ chặn
+  Nhà tuyển dụng mở "Ứng viên bị chặn", bấm "Gỡ chặn"
+  if Là người chặn hoặc quản lý công ty?
+  case Không
+    Giao diện báo lỗi không tìm thấy (404)
+    stop
+  case Có
+  endif
+  Hệ thống ghi thời điểm gỡ chặn
+  Giao diện báo đã gỡ chặn
+endif

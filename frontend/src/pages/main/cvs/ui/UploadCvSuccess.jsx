@@ -19,7 +19,7 @@ function TemplateGrid({ templates, onUse }) {
 }
 
 /** Màn hình sau khi tải CV lên: điều hướng tiếp và gợi ý chuyển sang CV online. */
-export default function UploadCvSuccess({ siteName }) {
+export default function UploadCvSuccess({ siteName, cvPublicId }) {
   const navigate = useNavigate()
   const { data, isLoading } = useQuery({
     queryKey: ['cv-templates', 'upload-success'],
@@ -36,7 +36,7 @@ export default function UploadCvSuccess({ siteName }) {
         <CheckCircleFilled className="text-5xl text-[#00b14f]" />
         <h1 className="mt-3 text-2xl font-extrabold text-[#00a848] md:text-3xl">Đã tải lên CV thành công!</h1>
         <div className="mt-5 flex flex-wrap justify-center gap-3">
-          <Link to="/tai-khoan/cv-cua-toi" className="rounded-full border-2 border-[#00b14f] !bg-white px-6 py-2.5 font-bold !text-[#00b14f] transition hover:!bg-emerald-50">
+          <Link to={`/cvs/${cvPublicId}/view`} target="_blank" rel="noopener noreferrer" className="rounded-full border-2 border-[#00b14f] !bg-white px-6 py-2.5 font-bold !text-[#00b14f] transition hover:!bg-emerald-50">
             Xem CV tải lên của tôi
           </Link>
           <Link to="/viec-lam" className="rounded-full border-2 border-[#00b14f] !bg-[#00b14f] px-6 py-2.5 font-bold !text-white transition hover:!bg-[#009643]">

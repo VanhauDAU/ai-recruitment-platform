@@ -1,0 +1,45 @@
+title Sơ đồ hoạt động chức năng quản lý hồ sơ cá nhân và nguyện vọng việc làm
+if Ứng viên chọn thao tác?
+case Thông tin cá nhân
+  Ứng viên sửa họ tên, điện thoại, ảnh đại diện, hồ sơ
+  Hệ thống cập nhật tài khoản và hồ sơ ứng viên
+  Giao diện hiển thị hồ sơ mới
+case Nguyện vọng
+  Ứng viên chọn chuyên môn, vị trí, tỉnh/thành, kỹ năng
+  Ứng viên bật/tắt nhận gợi ý và cho NTD tìm thấy hồ sơ
+  if Tối đa 5 chuyên môn, không trùng, danh mục hợp lệ?
+  case Không
+    Giao diện hiển thị lỗi
+    stop
+  case Có
+  endif
+  Hệ thống thay toàn bộ nguyện vọng trong một giao dịch
+  Hệ thống cập nhật đồng ý, ghi sự kiện đồng ý
+  if Tắt cho NTD tìm thấy hồ sơ?
+  case Không
+  case Có
+    Hệ thống tắt chế độ tìm kiếm của mọi CV
+  endif
+  Giao diện báo lưu thành công
+case Bật tìm kiếm CV
+  Ứng viên bật "Cho NTD tìm thấy CV này"
+  if Đã đồng ý cho NTD tìm thấy hồ sơ?
+  case Không
+    Giao diện mở hộp thoại xin đồng ý
+    Ứng viên xác nhận đồng ý
+    Hệ thống lưu đồng ý và sự kiện
+  case Có
+  endif
+  Hệ thống bật chế độ tìm kiếm cho CV
+case Thông báo việc làm
+  Ứng viên tạo thông báo (từ khóa, địa điểm, tần suất)
+  if Email đã xác minh, chưa đủ 5 thông báo, không trùng?
+  case Không
+    Giao diện báo lỗi theo mã
+    stop
+  case Có
+  endif
+  Hệ thống tạo thông báo việc làm
+  Worker định kỳ 5 phút chọn tin mới phù hợp
+  Worker gửi email tổng hợp việc làm mới
+endif

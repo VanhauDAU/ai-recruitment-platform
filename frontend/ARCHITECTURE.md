@@ -568,6 +568,31 @@ pages/main/jobs/JobDetail
   CV tải lên phải chờ `waitForCvImport` xong mới nộp; CV có
   `application_ready=false` bị khóa (server cũng chặn).
 
+## Ownership map — Xem độ phù hợp CV–tin
+
+```text
+pages/main/jobs/JobDetail (placement="sidebar": slot dưới thông tin công ty ở JobDetailSidebar, từ 1024 px;
+                          placement="inline": ngay dưới JobHero, dưới 1024 px)
+  → features/analyze-job-fit
+    → entities/cv (CvChoice, getMyCvs), entities/site-settings
+      → shared/api, shared/ui/mascot
+```
+
+- Page quyết định ai được mở (`beforeOpen` = mời đăng nhập/chặn tài khoản không
+  phải ứng viên) và chỉ gắn thẻ cho tin còn nhận hồ sơ; feature tự ẩn khi site
+  setting `ai_job_match_enabled` tắt.
+- `features/analyze-job-fit` sở hữu API `/api/matching/analyses/`, poll 800 ms
+  khi `queued`/`processing`, trình bày kết quả (thước bốn mức 50/65/80, tiêu chí,
+  kỹ năng kèm câu bằng chứng, yêu cầu, gợi ý, câu "không phải quyết định tuyển
+  dụng"). Không tự suy điểm ở frontend; mọi số và câu chữ lấy từ `result_json`.
+- Hộp thoại tải trễ (`React.lazy`). Style nằm trong `job-fit-trigger.css` (chunk
+  của trang) và `job-fit.css` (chunk hộp thoại), không dùng utility Tailwind mới
+  để không tăng CSS khởi tạo. Chuyển động tắt theo `prefers-reduced-motion`.
+- `CvChoice` thuộc `entities/cv/ui`, dùng chung cho `apply-for-job` và
+  `analyze-job-fit` (feature không import nhau).
+- Trang lưu CV thành công chỉ hiện nhãn "Phù hợp/Rất phù hợp" của đối sánh theo
+  luật, không hiện phần trăm: điểm số duy nhất ứng viên thấy là của phân tích AI.
+
 ## Ownership map — Xử lý hồ sơ ứng tuyển của nhà tuyển dụng
 
 ```text
@@ -833,6 +858,10 @@ pages/employer/app/campaigns/CampaignList|CampaignDetail
     → features/manage-campaigns
       → entities/campaign, entities/application, entities/job
         → shared/api
+pages/employer/app/campaigns/CampaignSetup
+  → widgets/campaign-setup-wizard
+    → features/manage-campaigns (CampaignInfoForm), features/launch-campaign
+      → entities/campaign, entities/job
 ```
 
 - `entities/campaign` sở hữu HTTP contract, query key, tên và trạng thái.
@@ -841,9 +870,48 @@ pages/employer/app/campaigns/CampaignList|CampaignDetail
   `capture-employer-recruitment-need`/`manage-employer-recruitment-needs` sở hữu.
   `entities/application` sở hữu list/export hồ sơ phía server;
   `entities/job` sở hữu contract tin tuyển dụng.
-- `features/manage-campaigns` sở hữu các workflow tạo nhanh, đổi tên,
-  dừng và mở lại. Xác nhận dừng luôn tải `pause-impact`, yêu cầu mã chiến dịch
-  khớp hoàn toàn và không tự đổi trạng thái tin.
+- `features/manage-campaigns` sở hữu form thông tin đợt tuyển (`CampaignInfoForm`,
+  tạo khi chưa có `public_id`, sửa khi đã có) và `CampaignLifecycleActions`
+  ("Mở lại" là nút chính khi tạm dừng; dừng, hoàn tất, hủy, hủy lịch nằm trong
+  menu "Thao tác khác"). Không còn modal tạo/đổi tên riêng; tạo mới đi qua
+  `/campaigns/new`.
+  - Xác nhận dừng luôn tải `pause-impact`, yêu cầu mã chiến dịch khớp hoàn toàn
+    và không tự đổi trạng thái tin.
+  - Hoàn tất/hủy báo trước rằng tin đang tuyển sẽ bị đóng.
+- `features/launch-campaign` sở hữu bước chọn tin (đăng tin nháp / gắn tin đang
+  hiển thị) và bước xem lại & kích hoạt (checklist từ `GET /launch/`, cam kết,
+  kích hoạt ngay hoặc lên lịch).
+- `widgets/campaign-setup-wizard` ghép ba bước Thông tin → Tin → Kích hoạt, với thanh lộ trình hiện trạng thái suy ra từ dữ liệu (`setupStepStates` của `features/launch-campaign`);
+  `?step=goal|jobs|launch` là contract URL. Form đăng tin mở từ wizard với
+  `?campaign=…&return=setup`; lưu nháp xong thì quay lại `?step=jobs`.
+- `features/manage-campaign-channels` sở hữu kênh phân phối (`CampaignChannelBoard`:
+  danh sách kênh + `ChannelDetail` với các mục Nội dung bài, Đăng Fanpage, Link &
+  QR, Chi phí; `SocialPostPreview` dựng bản xem trước dạng bài mạng xã hội,
+  `FacebookPostComposer` là ngăn soạn bài Fanpage) và
+  `ChannelReport` (so sánh theo nguồn). Dùng ở tab "Kênh & nguồn" và bước
+  "Kênh phân phối" của wizard.
+- `features/connect-social-account` (`SocialConnectionsPanel`, trang
+  `/account/settings/integrations`) bắt đầu OAuth Facebook, đọc
+  `?fb_select=`/`?fb_error=` khi quay về và cho chọn Fanpage.
+  `features/manage-campaign-channels` có `ChannelFacebookPosts` (hẹn đăng, hẹn
+  lại, hủy) cho kênh `facebook_page`; hai feature chỉ chia sẻ HTTP contract qua
+  `entities/campaign`.
+- `features/export-campaign-report` (`CampaignReportExport`) tải báo cáo
+  Excel/PDF qua API có xác thực rồi lưu bằng `triggerBlobDownload`. Tab "Sức
+  khỏe" (`CampaignHealthPanel`, `?active_tab=health`) của
+  `widgets/employer-campaign-workspace` đọc `GET /health/`; liên kết trong
+  thông báo `campaign_health_alert` trỏ tới tab này.
+- `features/track-campaign-ref` (`CampaignRefCapture`, gắn ở `MainLayout`) đọc
+  `?ref=` rồi xóa khỏi URL; lưu qua `entities/campaign` (`storeCampaignRef`,
+  `readCampaignRef`) theo consent Analytics. `features/apply-for-job` gửi
+  `campaign_ref` khi nộp.
+- Trang tuyển dụng công khai `pages/main/jobs/CampaignLanding` (route
+  `/tuyen-dung/:slug`) dùng lại `JobCard`; CSS `campaign-landing.css` (tiền tố
+  `cpg-`).
+- Trang danh sách: dải trạng thái có số đếm (`status_counts` của API), mặc định
+  `ordering=status`, mỗi dòng một nút việc tiếp theo; style trong
+  `campaign-list.css` (lazy) và tự lo ẩn/hiện bảng/thẻ vì CSS ngoài layer thắng
+  utility `lg:hidden`.
 - `widgets/employer-campaign-workspace` sở hữu header và bốn tab dữ liệu thật:
   Tổng quan, CV ứng tuyển, Tin tuyển dụng và Lịch sử hoạt động. Page chi tiết
   chỉ đọc route param rồi compose widget; query `active_tab` là contract URL,

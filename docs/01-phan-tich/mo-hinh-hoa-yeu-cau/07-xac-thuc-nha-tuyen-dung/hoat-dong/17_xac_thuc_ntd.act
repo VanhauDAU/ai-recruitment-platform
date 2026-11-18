@@ -1,0 +1,53 @@
+title Sơ đồ hoạt động chức năng xác thực tài khoản nhà tuyển dụng
+if Nhà tuyển dụng chọn bước xác thực?
+case Xác minh số điện thoại
+  Nhà tuyển dụng nhập số điện thoại và mật khẩu
+  if Mật khẩu đúng, hết thời gian chờ, SMS bật?
+  case Không
+    Giao diện báo lỗi gửi mã OTP
+    stop
+  case Có
+  endif
+  Hệ thống tạo thử thách OTP
+  Worker nền gửi mã OTP qua dịch vụ SMS
+  Nhà tuyển dụng nhập mã OTP nhận được
+  if Mã đúng, còn hạn, chưa quá 5 lần?
+  case Không
+    Giao diện báo mã sai, hết hạn hoặc quá số lần
+    stop
+  case Có
+  endif
+  Hệ thống đánh dấu số điện thoại đã xác minh
+case Đồng ý cam kết DPA
+  Nhà tuyển dụng đọc và đồng ý cam kết bảo vệ dữ liệu
+  if Phiên bản chính sách còn khớp?
+  case Không
+    Giao diện báo chính sách đã đổi, cần đọc lại
+    stop
+  case Có
+  endif
+  Hệ thống lưu chấp thuận cam kết
+  Hệ thống gỡ tạm giữ do DPA, bù thời gian hiển thị tin
+case Nộp giấy tờ
+  Nhà tuyển dụng chọn phương thức, tải giấy tờ
+  if Đã liên kết công ty, loại giấy tờ hợp lệ?
+  case Không
+    Giao diện báo chưa có công ty hoặc giấy tờ sai loại
+    stop
+  case Có
+  endif
+  if Bị khóa nộp lại sau 3 lần từ chối?
+  case Có
+    Giao diện báo hồ sơ bị khóa nộp lại
+    stop
+  case Không
+  endif
+  Hệ thống lưu giấy tờ chờ duyệt, thay bản cũ cùng loại
+  Hệ thống chuyển hồ sơ xác thực sang chờ duyệt
+  fork
+    Worker nền tra cứu mã số thuế công ty
+    Worker nền lưu bằng chứng cho quản trị viên
+  again
+    Giao diện báo "Đang chờ quản trị viên duyệt"
+  endfork
+endif

@@ -312,7 +312,7 @@ def close_company_update_before_review(
         event_type = CompanyUpdateEvent.EventType.WITHDRAWN
     elif action == CompanyUpdateRequest.Status.CANCELLED:
         if not actor_is_owner:
-            raise ValidationError({'detail': 'Chỉ chủ công ty mới được hủy yêu cầu.'})
+            raise ValidationError({'detail': 'Chỉ quản lý công ty mới được hủy yêu cầu.'})
         if not reason.strip():
             raise ValidationError({'reason': 'Nhập lý do hủy yêu cầu.'})
         event_type = CompanyUpdateEvent.EventType.CANCELLED

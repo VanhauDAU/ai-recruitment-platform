@@ -76,7 +76,7 @@ function CompanyPeople({ company }) {
   return (
     <div className="min-w-0">
       <div className="truncate font-semibold text-slate-800">
-        {owner?.full_name || owner?.email || 'Chưa có owner'}
+        {owner?.full_name || owner?.email || 'Chưa có quản lý'}
       </div>
       <div className="mt-1 flex items-center gap-1.5 text-xs text-slate-500">
         <TeamOutlined aria-hidden="true" />
@@ -115,7 +115,7 @@ export default function CompanyDirectoryTable({
       render: (_, company) => <CompanyIdentity company={company} onOpen={onOpen} />,
     },
     {
-      title: 'Owner & nhà tuyển dụng',
+      title: 'Quản lý & nhà tuyển dụng',
       key: 'owner_count',
       width: 270,
       sorter: true,

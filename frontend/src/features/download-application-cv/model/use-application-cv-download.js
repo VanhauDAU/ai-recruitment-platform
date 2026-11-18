@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import {
   downloadApplicationCv,
   getApplicationCvExport,
+  getApplicationCvFile,
   requestApplicationCvExport,
 } from '@/entities/application'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
@@ -12,8 +13,11 @@ const POLL_INTERVAL_MS = 2_000
 const TIMEOUT_MS = 60_000
 const wait = (ms) => new Promise((resolve) => { setTimeout(resolve, ms) })
 
-/** Render (or reuse) the submitted CV as PDF, poll until ready, then save it. */
-export default function useApplicationCvDownload(publicId, filename) {
+/**
+ * Save the submitted CV as PDF. A builder CV is rendered (or reused) on the
+ * server and polled until ready; an uploaded CV (`sourceFile`) is the file itself.
+ */
+export default function useApplicationCvDownload(publicId, filename, { sourceFile = false } = {}) {
   const [state, setState] = useState('idle')
   const runRef = useRef(0)
 
@@ -29,6 +33,13 @@ export default function useApplicationCvDownload(publicId, filename) {
     const run = ++runRef.current
     setState('working')
     try {
+      if (sourceFile) {
+        const file = await getApplicationCvFile(publicId, { download: true })
+        if (run !== runRef.current) return
+        triggerBlobDownload(file, filename)
+        setState('idle')
+        return
+      }
       const deadline = Date.now() + TIMEOUT_MS
       let job = await requestApplicationCvExport(publicId)
       while (!job.download_url) {

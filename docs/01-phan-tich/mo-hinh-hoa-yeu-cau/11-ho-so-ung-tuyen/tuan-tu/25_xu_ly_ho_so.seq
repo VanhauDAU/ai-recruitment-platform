@@ -1,0 +1,54 @@
+title Sơ đồ tuần tự chức năng quản lý hồ sơ ứng tuyển
+actor NTD Nhà tuyển dụng
+participant FE Giao diện web\n(React)
+participant BE Máy chủ API\n(Django REST)
+database DB CSDL\n(PostgreSQL)
+queue BEAT Tác vụ nền\n(Celery Beat + SMTP)
+actor UV Ứng viên
+group Xem danh sách và mở CV
+NTD -> FE : Mở danh sách hồ sơ (lọc theo tin, chiến dịch, trạng thái)
+FE -> BE : GET /api/v2/recruiter/applications/?job=&status=
+BE -> BE : Kiểm tra quyền đọc dữ liệu ứng viên (đã duyệt xác thực, DPA hiện hành)
+alt Không có quyền
+BE --> FE : 403 CANDIDATE_DATA_BLOCKED
+else Có quyền
+BE -> DB : Truy vấn hồ sơ hiện hành của các tin do NTD đăng
+BE --> FE : 200 Danh sách hồ sơ
+end
+NTD -> FE : Chọn một hồ sơ
+FE -> BE : GET /api/v2/recruiter/applications/{id}/cv/
+BE -> DB : Ghi nhật ký truy cập CV
+opt Trạng thái đang là "submitted"
+BE -> DB : Chuyển sang "viewed", tạo thông báo "NTD đã xem CV"
+end
+BE --> FE : 200 Bản chụp CV
+FE --> NTD : Hiển thị CV và lịch sử
+end
+group Ra quyết định và hoàn tác
+NTD -> FE : Chọn quyết định (Phù hợp / Phỏng vấn / Nhận / Không phù hợp)
+FE -> BE : POST /api/v2/recruiter/applications/{id}/status/ {status}
+BE -> DB : Khóa hồ sơ, kiểm tra bước chuyển hợp lệ (chỉ đi tiến)
+alt Bước chuyển không hợp lệ
+BE --> FE : 400 {status}
+else Hợp lệ
+BE -> DB : Cập nhật trạng thái, ghi lịch sử
+BE -> DB : Tạo thông báo cho ứng viên, hẹn giờ công bố (deliver_after = now + 5 phút)
+BE --> FE : 200 {application, candidate_notice_at}
+FE --> NTD : Báo đã lưu, kèm nút "Hoàn tác"
+opt NTD bấm "Hoàn tác" trước khi công bố
+NTD -> FE : Bấm "Hoàn tác"
+FE -> BE : POST /api/v2/recruiter/applications/{id}/status/undo/
+alt Thông báo đã gửi tới ứng viên
+BE --> FE : 409 "Ứng viên đã nhận thông báo"
+else Còn trong thời gian hoàn tác
+BE -> DB : Hủy thông báo, khôi phục trạng thái trước, lùi hạn tự động từ chối tối thiểu 3 ngày
+BE --> FE : 200 Hồ sơ đã khôi phục
+end
+end
+end
+end
+group Công bố quyết định (mỗi 60 giây)
+BEAT -> DB : Đánh dấu delivered các thông báo đã tới hạn
+BEAT ->> UV : Email và thông báo trong ứng dụng về kết quả
+note over UV : Trạng thái mới hiện ở "Việc làm đã ứng tuyển"
+end

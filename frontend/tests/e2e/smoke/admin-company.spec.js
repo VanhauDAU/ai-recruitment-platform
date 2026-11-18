@@ -33,6 +33,7 @@ const company = {
   }],
   recruiter_count: 2,
   owner_count: 1,
+  has_eligible_owner: true,
   member_count: 1,
   pending_update_count: 1,
   recruiter_verification_summary: {

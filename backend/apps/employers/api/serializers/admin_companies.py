@@ -19,6 +19,7 @@ class AdminCompanyListSerializer(serializers.ModelSerializer):
     owners = serializers.SerializerMethodField()
     recruiter_count = serializers.IntegerField(read_only=True)
     owner_count = serializers.IntegerField(read_only=True)
+    has_eligible_owner = serializers.BooleanField(read_only=True, default=False)
     member_count = serializers.IntegerField(read_only=True)
     pending_update_count = serializers.IntegerField(read_only=True)
     recruiter_verification_summary = serializers.SerializerMethodField()
@@ -36,6 +37,7 @@ class AdminCompanyListSerializer(serializers.ModelSerializer):
             'owners',
             'recruiter_count',
             'owner_count',
+            'has_eligible_owner',
             'member_count',
             'pending_update_count',
             'recruiter_verification_summary',
@@ -139,7 +141,7 @@ class AdminCompanyRecruiterSerializer(serializers.ModelSerializer):
     account = serializers.SerializerMethodField()
     company_role_label = serializers.CharField(source='get_company_role_display', read_only=True)
     contact_phone = serializers.SerializerMethodField()
-    phone_verified = serializers.BooleanField(source='phone_verified_at', read_only=True)
+    phone_verified = serializers.BooleanField(source='has_verified_phone', read_only=True)
     initial_onboarding = serializers.SerializerMethodField()
     onboarding_completed = serializers.BooleanField(
         source='initial_onboarding_completed',

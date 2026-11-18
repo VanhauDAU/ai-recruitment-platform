@@ -14,6 +14,7 @@ from ..services.matching_profile import (
     education_level,
     experience_months,
     experience_years,
+    merged_months,
     sync_matching_profile,
 )
 
@@ -146,3 +147,11 @@ class CvSkillSyncTests(TestCase):
 
         rows = {row.skill.name: row.level for row in self.cv.cv_skills.select_related('skill')}
         self.assertEqual(rows, {'Python': CvSkill.Level.ADVANCED})
+
+
+class MergedMonthsTests(SimpleTestCase):
+    def test_overlaps_merge_and_future_ranges_are_cut(self):
+        now = 2026 * 12 + 10
+        self.assertEqual(merged_months([(now - 5, now - 3), (now - 4, now)], now), 6)
+        self.assertEqual(merged_months([(now - 2, now + 10), (now + 1, now + 3)], now), 3)
+        self.assertEqual(merged_months([], now), 0)

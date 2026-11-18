@@ -1,0 +1,28 @@
+title Sơ đồ tuần tự chức năng tìm kiếm hồ sơ ứng viên (dự kiến)
+actor NTD Nhà tuyển dụng
+participant FE Giao diện web\n(React)
+participant BE Máy chủ API\n(Django REST)
+database DB CSDL\n(PostgreSQL + pgvector)
+actor UV Ứng viên
+NTD -> FE : Chọn một tin đang tuyển, bấm "Tìm ứng viên phù hợp"
+FE -> BE : GET /api/matching/candidate-search/?job=&page= (dự kiến)
+BE -> BE : Kiểm tra NTD sở hữu tin, có quyền đọc dữ liệu ứng viên
+alt Không đủ quyền
+BE --> FE : 403 CANDIDATE_DATA_BLOCKED
+else Hợp lệ
+BE -> DB : Lấy vector của tin (đã tính khi tin chuyển sang active)
+BE -> DB : Truy vấn CV có recruiter_searchable = true của ứng viên bật "Cho phép NTD tìm thấy hồ sơ"
+BE -> DB : Tìm K CV gần nhất theo cosine bằng pgvector
+DB --> BE : Danh sách ứng viên ứng cử
+BE -> BE : Chấm lại theo công thức hybrid-v1, sắp xếp, ẩn thông tin liên hệ
+BE --> FE : 200 Danh sách ứng viên kèm điểm và lý do phù hợp
+FE --> NTD : Hiển thị kết quả
+opt Xem chi tiết một CV
+NTD -> FE : Bấm xem CV
+FE -> BE : GET /api/matching/candidate-search/{cv}/ (dự kiến)
+BE -> DB : Kiểm tra lại đồng ý của ứng viên, ghi CvAccessLog
+BE --> FE : CV (theo phạm vi ứng viên cho phép)
+BE ->> UV : Thông báo "NTD đã xem CV của bạn"
+end
+end
+note over NTD,UV : Ứng viên tắt quyền tìm thấy thì CV lập tức không còn xuất hiện trong kết quả

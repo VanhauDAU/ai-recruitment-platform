@@ -128,7 +128,7 @@ export default function JobApplicationsWorkspace({ jobPublicId, summary, filter,
       ),
     },
     { title: 'Trạng thái', key: 'status', width: 150, render: (_, item) => <StatusPill status={item.status} /> },
-    { title: 'Ngày nộp', key: 'applied_at', width: 130, render: (_, item) => <AppliedAt value={item.applied_at || item.submitted_at} /> },
+    { title: 'Ngày nộp', key: 'applied_at', width: 130, render: (_, item) => <AppliedAt value={item.applied_at} /> },
     {
       title: <span className="sr-only">Thao tác</span>,
       key: 'action',
@@ -243,7 +243,7 @@ export default function JobApplicationsWorkspace({ jobPublicId, summary, filter,
                   <p className="job-cv-card__meta mt-2 flex min-w-0 items-center gap-1.5 text-xs text-slate-500">
                     <span className="truncate">{application.submitted_cv_title || application.cv_title || 'CV ứng viên'}</span>
                     <span className="shrink-0 text-slate-300">·</span>
-                    <span className="shrink-0">{formatRelativeDay(application.applied_at || application.submitted_at)}</span>
+                    <span className="shrink-0">{formatRelativeDay(application.applied_at)}</span>
                   </p>
                 </Link>
               </li>

@@ -19,6 +19,7 @@ from ...selectors.campaigns import (
     campaign_options,
     campaign_pause_impact,
     campaign_report,
+    campaign_status_counts,
     owned_campaign_queryset,
 )
 from ...services import ensure_recruiter_job_workspace
@@ -67,7 +68,11 @@ class RecruitmentCampaignListCreateView(EmployerWorkspaceReadMixin, generics.Lis
             if self.employer_workspace_readiness()['candidate_data_access']:
                 attach_campaign_candidate_previews(page)
             serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
+            response = self.get_paginated_response(serializer.data)
+            response.data['status_counts'] = campaign_status_counts(
+                request.user, q=request.query_params.get('q')
+            )
+            return response
 
         campaigns = list(queryset)
         if self.employer_workspace_readiness()['candidate_data_access']:
@@ -76,7 +81,8 @@ class RecruitmentCampaignListCreateView(EmployerWorkspaceReadMixin, generics.Lis
         return Response(serializer.data)
 
     def perform_create(self, serializer):
-        serializer.instance = create_campaign(user=self.request.user, **serializer.validated_data)
+        campaign = create_campaign(user=self.request.user, **serializer.validated_data)
+        serializer.instance = campaign_detail_queryset(self.request.user).get(pk=campaign.pk)
 
 
 class RecruitmentCampaignDetailView(EmployerWorkspaceReadMixin, generics.RetrieveUpdateAPIView):
@@ -89,9 +95,10 @@ class RecruitmentCampaignDetailView(EmployerWorkspaceReadMixin, generics.Retriev
         return campaign_detail_queryset(self.request.user)
 
     def perform_update(self, serializer):
-        serializer.instance = update_campaign(
+        campaign = update_campaign(
             campaign=serializer.instance, user=self.request.user, **serializer.validated_data
         )
+        serializer.instance = campaign_detail_queryset(self.request.user).get(pk=campaign.pk)
 
 
 class RecruitmentCampaignOptionsView(EmployerWorkspaceReadMixin, APIView):

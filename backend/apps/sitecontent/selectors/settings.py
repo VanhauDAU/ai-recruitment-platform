@@ -1,6 +1,6 @@
 """Read site-managed configuration through a small public selector."""
 
-from django.utils import timezone
+from common.vietnam_time import vietnam_today
 
 from ..models import SiteSetting
 
@@ -98,7 +98,7 @@ def email_branding():
         'hotline': _text(values, 'hotline'),
         'address': _text(values, 'contact_address'),
         'copyright': _text(values, 'footer_copyright', '© {year} {site_name}')
-        .replace('{year}', str(timezone.localdate().year))
+        .replace('{year}', str(vietnam_today().year))
         .replace('{site_name}', site_name),
         'socials': [
             {'label': label, 'url': _text(values, key)}

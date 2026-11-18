@@ -27,6 +27,7 @@ import {
   JobComparisonPage,
   JobAlertSettingsPage,
   JobListPage,
+  CampaignLandingPage,
   KnowledgeCategoryPage,
   KnowledgeDetailPage,
   KnowledgeHomePage,
@@ -88,6 +89,7 @@ export function mainRoutes() {
       <Route path="/viec-lam/tai/:locationSlug" element={<JobListPage />} />
       <Route path="/so-sanh-viec-lam" element={<JobComparisonPage />} />
       <Route path="/viec-lam/:slug" element={<JobDetailPage />} />
+      <Route path="/tuyen-dung/:slug" element={<CampaignLandingPage />} />
       {/* Tin của công ty có trang thương hiệu — cùng JobDetailPage nhưng kèm
           header thương hiệu + URL riêng /brand/... */}
       <Route path="/brand/:companySlug/tuyen-dung/:slug" element={<JobDetailPage />} />

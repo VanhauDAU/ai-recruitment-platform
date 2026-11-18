@@ -1,0 +1,40 @@
+title Sơ đồ hoạt động chức năng tạo và chỉnh sửa CV từ mẫu
+Ứng viên chọn mẫu, ngôn ngữ, vị trí, số năm kinh nghiệm
+Hệ thống giữ khóa chống tạo trùng (Idempotency-Key)
+if Kết quả kiểm tra?
+case Email chưa xác minh
+  Giao diện báo cần xác minh email
+  stop
+case Đủ số CV tối đa
+  Giao diện thông báo giới hạn (mặc định 6 CV)
+  stop
+case Gửi lại cùng khóa
+  Hệ thống trả CV đã tạo trước đó
+case Hợp lệ
+  Hệ thống dựng nội dung từ mẫu vị trí
+  Hệ thống tạo CV, phiên bản đầu tiên và bản nháp
+endif
+Giao diện mở trình soạn CV
+Ứng viên sửa các mục, đổi màu, đổi mẫu
+Giao diện kiểm tra cấu trúc, xem trước ngay trên trình duyệt
+Ứng viên bấm "Lưu CV"
+Hệ thống so khớp phiên bản khóa của bản nháp (If-Match)
+if Bản nháp đã bị sửa ở nơi khác?
+case Có
+  Giao diện báo xung đột, đề nghị tải lại
+  stop
+case Không
+endif
+Hệ thống cập nhật bản nháp, tăng phiên bản khóa
+Hệ thống tạo phiên bản CV (lưu thủ công)
+fork
+  Giao diện chuyển tới trang "Lưu CV thành công"
+again
+  Worker tạo ảnh thu nhỏ CV
+again
+  if Bật đối sánh ngữ nghĩa?
+  case Không
+  case Có
+    Worker tạo vector nhúng cho phiên bản CV
+  endif
+endfork

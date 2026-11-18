@@ -142,3 +142,12 @@ def make_employer_ready(user, *, company=None, candidate_data=False):
             },
         )
     return recruiter
+
+
+def make_verified_representative(user, *, company):
+    """Ready recruiter whose approved evidence makes them an eligible representative."""
+    recruiter = make_employer_ready(user, company=company, candidate_data=True)
+    EmployerVerificationCase.objects.filter(recruiter=recruiter).update(
+        verification_method=EmployerVerificationCase.VerificationMethod.BUSINESS_REGISTRATION
+    )
+    return recruiter

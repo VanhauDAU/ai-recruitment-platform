@@ -1,0 +1,26 @@
+title Sơ đồ hoạt động phân phối đa kênh và ghi nhận nguồn
+Nhà tuyển dụng thêm kênh
+Hệ thống cấp link theo dõi và mã QR
+if Soạn nội dung bằng AI?
+case Có
+  if AI sẵn sàng và còn lượt?
+  case Có
+    Hệ thống sinh nội dung từ thông tin công khai của tin
+  case Không
+    Hệ thống dùng mẫu cố định theo kênh
+  endif
+case Không
+  Nhà tuyển dụng tự soạn nội dung
+endif
+Nhà tuyển dụng đăng bài kèm link lên kênh
+Nhà tuyển dụng ghi chi phí kênh (nếu có)
+Ứng viên bấm link theo dõi
+Hệ thống đếm lượt bấm và chuyển tới trang tuyển dụng kèm mã nguồn
+Ứng viên nộp hồ sơ
+if Mã nguồn hợp lệ, còn hạn, đúng chiến dịch?
+case Có
+  Hệ thống ghi kênh vào hồ sơ
+case Không
+  Hệ thống tính là nguồn tự nhiên
+endif
+Hệ thống cập nhật bảng hiệu quả theo nguồn

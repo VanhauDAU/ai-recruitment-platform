@@ -19,7 +19,7 @@ from apps.candidates.models import CandidateNotification
 from apps.candidates.services import release_due_candidate_notifications
 from apps.cv_templates.tests.factories import fill_cv_for_application, make_published_template
 from apps.cvs.models import CvAccessLog, CvExport, UserCv
-from apps.cvs.services import create_application_snapshot, create_v2_cv
+from apps.cvs.services import create_application_snapshot, create_v2_cv, save_draft_as_version
 from apps.employers.models import Company
 from apps.employers.tests.readiness_helpers import make_employer_ready
 from apps.jobs.models import Job
@@ -286,6 +286,12 @@ class CandidateApplyReadinessTests(APITestCase):
         )
 
     def test_blank_cv_cannot_be_submitted(self):
+        # Saved once, still empty: past the never-saved rule, stopped by the content rule.
+        save_draft_as_version(
+            cv=self.cv, actor=self.candidate, expected_lock_version=self.cv.draft.lock_version
+        )
+        self.cv.refresh_from_db()
+
         response = self.apply()
 
         self.assertEqual(response.status_code, 400)

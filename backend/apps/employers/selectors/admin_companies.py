@@ -20,6 +20,7 @@ from ..models import (
     RecruiterProfile,
     RecruitmentNeed,
 )
+from ..models.representation import eligible_owners_queryset
 
 
 def _company_annotations():
@@ -30,6 +31,9 @@ def _company_annotations():
             filter=Q(recruiters__company_role=RecruiterProfile.CompanyRole.OWNER),
             distinct=True,
         ),
+        # Owners who can approve joins (active, verified). Zero means join
+        # requests fall back to administrators.
+        'has_eligible_owner': Exists(eligible_owners_queryset().filter(company_id=OuterRef('pk'))),
         'member_count': Count(
             'recruiters',
             filter=Q(recruiters__company_role=RecruiterProfile.CompanyRole.MEMBER),
@@ -145,6 +149,8 @@ def admin_companies_queryset(*, params=None):
         queryset = queryset.filter(owner_count__gt=0)
     elif has_owner == 'false':
         queryset = queryset.filter(owner_count=0)
+    elif has_owner == 'ineligible':
+        queryset = queryset.filter(has_eligible_owner=False)
 
     industry = params.get('industry', '').strip()
     if industry:

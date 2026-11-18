@@ -1,20 +1,25 @@
 from django.conf import settings
 from django.db import models
+from django.utils.text import slugify
 
 from common.public_id import generate_public_id
 
-from .choices import BudgetSource, PositionLevel
+from .choices import BudgetSource
 
 
 class RecruitmentCampaign(models.Model):
-    """A recruiter-owned grouping for jobs and their application funnel.
+    """A recruiter-owned hiring round: time window, budget and its jobs.
 
-    A company remains the legal publisher of a job, but it deliberately does
-    not grant access to a campaign. The owning recruiter is the sole tenant.
+    Position, level and headcount belong to each job, so one campaign can hire
+    a director and several staff at once; the campaign headcount is the sum of
+    its jobs' vacancies. A company remains the legal publisher of a job, but it
+    deliberately does not grant access to a campaign. The owning recruiter is
+    the sole tenant.
     """
 
     class Status(models.TextChoices):
         DRAFT = 'draft', 'Nháp'
+        SCHEDULED = 'scheduled', 'Đã lên lịch'
         ACTIVE = 'active', 'Đang chạy'
         PAUSED = 'paused', 'Tạm dừng'
         COMPLETED = 'completed', 'Hoàn tất'
@@ -25,6 +30,16 @@ class RecruitmentCampaign(models.Model):
         TEMPORARY_LOCK = 'temporary_lock', 'Tạm giữ do khóa tài khoản'
         BAN_REVIEW = 'ban_review', 'Giữ để rà soát sau cấm'
         LEGACY_LOCK = 'legacy_lock', 'Giữ do trạng thái khóa cũ'
+
+    class EndedBy(models.TextChoices):
+        NONE = '', 'Chưa kết thúc'
+        USER = 'user', 'Nhà tuyển dụng'
+        SYSTEM = 'system', 'Hệ thống'
+
+    TERMINAL_STATUSES = frozenset({Status.COMPLETED, Status.CANCELLED})
+    NON_TERMINAL_STATUSES = frozenset(
+        {Status.DRAFT, Status.SCHEDULED, Status.ACTIVE, Status.PAUSED}
+    )
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     company = models.ForeignKey(
@@ -46,15 +61,11 @@ class RecruitmentCampaign(models.Model):
     )
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True)
-    position_category = models.ForeignKey(
-        'jobs.JobCategory',
-        on_delete=models.PROTECT,
-        related_name='recruitment_campaigns',
-        null=True,
-        blank=True,
-    )
-    position_level = models.CharField(max_length=30, choices=PositionLevel.choices, blank=True)
-    headcount_target = models.PositiveIntegerField(default=1)
+    # Public landing page /tuyen-dung/<slug>; the slug is frozen once the
+    # campaign has run so links already shared keep working.
+    slug = models.SlugField(max_length=255, unique=True, null=True, blank=True)
+    landing_intro = models.TextField(blank=True)
+    landing_enabled = models.BooleanField(default=True)
     start_date = models.DateField(null=True, blank=True)
     target_date = models.DateField(null=True, blank=True)
     is_continuous = models.BooleanField(default=False)
@@ -69,6 +80,15 @@ class RecruitmentCampaign(models.Model):
         choices=PolicyHold.choices,
         default=PolicyHold.NONE,
         blank=True,
+    )
+    # Running-time bookkeeping: health metrics divide by days actually active,
+    # not by calendar age, so pauses do not dilute the CV velocity.
+    first_activated_at = models.DateTimeField(null=True, blank=True)
+    activated_at = models.DateTimeField(null=True, blank=True)
+    active_seconds_accumulated = models.PositiveBigIntegerField(default=0)
+    ended_at = models.DateTimeField(null=True, blank=True)
+    ended_by = models.CharField(
+        max_length=10, choices=EndedBy.choices, default=EndedBy.NONE, blank=True
     )
     policy_held_at = models.DateTimeField(null=True, blank=True)
     policy_hold_transition = models.ForeignKey(
@@ -91,11 +111,34 @@ class RecruitmentCampaign(models.Model):
                 name='emp_camp_hold_status_idx',
             ),
         ]
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(start_date__isnull=True)
+                | models.Q(target_date__isnull=True)
+                | models.Q(target_date__gte=models.F('start_date')),
+                name='emp_camp_target_after_start',
+            ),
+            models.CheckConstraint(
+                condition=models.Q(budget_min__isnull=True)
+                | models.Q(budget_max__isnull=True)
+                | models.Q(budget_max__gte=models.F('budget_min')),
+                name='emp_camp_budget_range',
+            ),
+        ]
         ordering = ['-created_at']
+
+    @property
+    def is_terminal(self):
+        return self.status in self.TERMINAL_STATUSES
+
+    def build_slug(self):
+        return f'{slugify(self.name)[:200]}-{self.public_id}'.strip('-').replace('_', '-')
 
     def save(self, *args, **kwargs):
         if not self.public_id:
             self.public_id = generate_public_id('camp')
+        if not self.slug:
+            self.slug = self.build_slug()
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -116,6 +159,16 @@ class CampaignActivity(models.Model):
         CAMPAIGN_UPDATED = 'campaign_updated', 'Cập nhật chiến dịch'
         CAMPAIGN_PAUSED = 'campaign_paused', 'Dừng chiến dịch'
         CAMPAIGN_RESUMED = 'campaign_resumed', 'Mở lại chiến dịch'
+        CAMPAIGN_SCHEDULED = 'campaign_scheduled', 'Lên lịch kích hoạt'
+        CAMPAIGN_UNSCHEDULED = 'campaign_unscheduled', 'Hủy lịch kích hoạt'
+        CAMPAIGN_ACTIVATED = 'campaign_activated', 'Kích hoạt chiến dịch'
+        CAMPAIGN_ACTIVATION_FAILED = 'campaign_activation_failed', 'Kích hoạt theo lịch thất bại'
+        CAMPAIGN_COMPLETED = 'campaign_completed', 'Hoàn tất chiến dịch'
+        CAMPAIGN_CANCELLED = 'campaign_cancelled', 'Hủy chiến dịch'
+        CHANNEL_ADDED = 'channel_added', 'Thêm kênh phân phối'
+        CHANNEL_POSTED = 'channel_posted', 'Đã đăng lên kênh'
+        SOCIAL_POST_PUBLISHED = 'social_post_published', 'Đã đăng lên Fanpage'
+        SOCIAL_POST_DELETED = 'social_post_deleted', 'Đã gỡ bài khỏi Fanpage'
         JOB_ADDED = 'job_added', 'Thêm tin tuyển dụng'
         JOB_REMOVED = 'job_removed', 'Gỡ tin tuyển dụng'
         JOB_UPDATED = 'job_updated', 'Cập nhật tin tuyển dụng'

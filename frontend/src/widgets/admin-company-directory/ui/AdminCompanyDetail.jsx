@@ -3,7 +3,7 @@ import {
   EyeOutlined,
   TeamOutlined,
 } from '@ant-design/icons'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   Alert,
   Avatar,
@@ -11,18 +11,21 @@ import {
   Descriptions,
   Empty,
   Input,
+  Modal,
   Select,
   Space,
   Table,
   Tabs,
   Tag,
 } from 'antd'
+import { useState } from 'react'
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router'
 import {
   InitialOnboardingStatus,
 } from '@/entities/admin-account'
 import {
   adminCompanyKeys,
+  assignAdminCompanyOwner,
   getAdminCompany,
   getAdminCompanyRecruiters,
   recruiterVerificationMeta,
@@ -30,6 +33,8 @@ import {
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { adminPath } from '@/shared/config/portals'
 import { sanitizeHtml } from '@/shared/lib/sanitize-html'
+import { message } from '@/shared/lib/toast'
+import AdminCompanyJoinRequestQueue from './AdminCompanyJoinRequestQueue'
 import CompanyLogo from './CompanyLogo'
 import CompanyJobs from './CompanyJobs'
 import { CompanyPanel } from './CompanyPanel'
@@ -38,7 +43,7 @@ import RecruiterStatusTag from './RecruiterStatusTag'
 import '../admin-company-directory.css'
 
 const EMPTY_PAGE = { count: 0, results: [] }
-const TAB_KEYS = new Set(['overview', 'recruiters', 'verification', 'updates', 'jobs', 'public-page'])
+const TAB_KEYS = new Set(['overview', 'recruiters', 'verification', 'updates', 'join-requests', 'jobs', 'public-page'])
 
 function formatDate(value) {
   if (!value) return '—'
@@ -125,21 +130,23 @@ function Overview({ company }) {
               </div>
               <div>
                 <strong>{company.owner_count}</strong>
-                <span>Owner</span>
+                <span>Quản lý</span>
               </div>
               <div>
                 <strong>{company.member_count}</strong>
                 <span>Member</span>
               </div>
             </div>
-            {company.owner_count !== 1 && (
+            {company.owner_count > 1 && (
+              <Alert className="mt-4" showIcon type="warning" title={`Dữ liệu bất thường: ${company.owner_count} quản lý công ty`} />
+            )}
+            {!company.has_eligible_owner && (
               <Alert
                 className="mt-4"
                 showIcon
                 type="warning"
-                title={company.owner_count
-                  ? `Dữ liệu bất thường: ${company.owner_count} owner`
-                  : 'Công ty chưa có owner'}
+                title={company.owner_count ? 'Quản lý công ty chưa xác thực hoặc không còn hoạt động' : 'Công ty chưa có quản lý'}
+                description="Yêu cầu tham gia của công ty này do quản trị viên duyệt. Có thể chỉ định quản lý công ty mới ở tab Nhà tuyển dụng."
               />
             )}
           </CompanyPanel>
@@ -310,6 +317,14 @@ function RecruiterRoster({ company }) {
       sorter: true,
       render: formatDate,
     },
+    !company.has_eligible_owner && {
+      title: '',
+      key: 'assign_owner',
+      width: 130,
+      render: (_, recruiter) => (recruiter.verification?.status === 'approved'
+        ? <AssignOwnerButton company={company} recruiter={recruiter} />
+        : null),
+    },
     {
       title: '',
       key: 'actions',
@@ -341,7 +356,7 @@ function RecruiterRoster({ company }) {
   return (
     <CompanyPanel
       title={`Nhà tuyển dụng (${recruiters.count})`}
-      description="Owner/member là vai trò trong công ty; trạng thái xác thực thuộc từng tài khoản NTD."
+      description="Quản lý công ty / thành viên là vai trò trong công ty; trạng thái xác thực thuộc từng tài khoản NTD."
     >
       <div className="company-directory__roster-filters">
         <Input.Search
@@ -355,7 +370,7 @@ function RecruiterRoster({ company }) {
           aria-label="Lọc vai trò NTD"
           value={role}
           options={[
-            { value: '', label: 'Owner và member' },
+            { value: '', label: 'Quản lý và thành viên' },
             { value: 'owner', label: 'Owner' },
             { value: 'member', label: 'Member' },
           ]}
@@ -392,7 +407,7 @@ function RecruiterRoster({ company }) {
         rowKey="public_id"
         loading={recruitersQuery.isLoading}
         dataSource={recruiters.results}
-        columns={columns.map((column) => ({
+        columns={columns.filter(Boolean).map((column) => ({
           ...column,
           sortOrder: column.sorter && (
             ordering === column.key
@@ -425,6 +440,39 @@ function RecruiterRoster({ company }) {
         }}
       />
     </CompanyPanel>
+  )
+}
+
+function AssignOwnerButton({ company, recruiter }) {
+  const queryClient = useQueryClient()
+  const [open, setOpen] = useState(false)
+  const [reason, setReason] = useState('')
+  const assign = useMutation({
+    mutationFn: () => assignAdminCompanyOwner(company.public_id, { recruiter: recruiter.public_id, reason }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: adminCompanyKeys.detail(company.public_id) })
+      message.success('Đã chỉ định quản lý công ty mới.')
+      setOpen(false)
+    },
+    onError: (error) => message.error(getApiErrorMessage(error, 'Không thể chỉ định quản lý công ty.')),
+  })
+  return (
+    <>
+      <Button size="small" onClick={() => setOpen(true)}>Chỉ định quản lý</Button>
+      <Modal
+        open={open}
+        title={`Chỉ định ${recruiter.account.full_name || recruiter.account.email} làm quản lý công ty`}
+        okText="Chỉ định"
+        cancelText="Đóng"
+        okButtonProps={{ disabled: !reason.trim(), loading: assign.isPending }}
+        onOk={() => assign.mutate()}
+        onCancel={() => setOpen(false)}
+        destroyOnHidden
+      >
+        <p className="mb-2 text-sm text-slate-600">Quản lý cũ (nếu có) chuyển thành thành viên. Quản lý mới sẽ duyệt các yêu cầu tham gia tiếp theo.</p>
+        <Input.TextArea aria-label="Lý do chỉ định quản lý công ty" rows={3} value={reason} onChange={(event) => setReason(event.target.value)} placeholder="Ví dụ: owner cũ đã nghỉ việc, xác nhận qua email công ty" />
+      </Modal>
+    </>
   )
 }
 
@@ -524,6 +572,11 @@ export default function AdminCompanyDetail({ publicId }) {
           </Link>
         </CompanyPanel>
       ),
+    },
+    {
+      key: 'join-requests',
+      label: 'Yêu cầu tham gia',
+      children: <AdminCompanyJoinRequestQueue companyPublicId={company.public_id} />,
     },
     {
       key: 'jobs',

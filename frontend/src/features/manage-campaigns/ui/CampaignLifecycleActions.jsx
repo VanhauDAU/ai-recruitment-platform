@@ -1,10 +1,13 @@
 import {
+  CheckCircleOutlined,
+  MoreOutlined,
   PauseCircleOutlined,
   PlayCircleOutlined,
+  StopOutlined,
   WarningOutlined,
 } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Alert, Button, Input, Modal, Skeleton, Switch } from 'antd'
+import { Alert, Button, Dropdown, Input, Modal, Skeleton } from 'antd'
 import { useState } from 'react'
 import {
   campaignKeys,
@@ -14,13 +17,33 @@ import {
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { message } from '@/shared/lib/toast'
 
-export default function CampaignLifecycleActions({
-  campaign,
-  block = false,
-  variant = 'buttons',
-}) {
+// Kết thúc chiến dịch đóng mọi tin đang tuyển; hủy lịch đưa chiến dịch về nháp.
+const END_ACTIONS = {
+  completed: {
+    title: 'Hoàn tất chiến dịch',
+    okText: 'Hoàn tất',
+    description: 'Các tin đang tuyển trong chiến dịch sẽ chuyển sang ngừng tuyển. Không mở lại được chiến dịch đã hoàn tất.',
+    success: 'Đã hoàn tất chiến dịch và đóng các tin.',
+  },
+  cancelled: {
+    title: 'Hủy chiến dịch',
+    okText: 'Hủy chiến dịch',
+    description: 'Chiến dịch dừng hẳn; các tin đang tuyển trong chiến dịch sẽ chuyển sang ngừng tuyển.',
+    success: 'Đã hủy chiến dịch.',
+  },
+  draft: {
+    title: 'Hủy lịch kích hoạt',
+    okText: 'Hủy lịch',
+    description: 'Chiến dịch về lại nháp và không tự chạy vào ngày bắt đầu.',
+    success: 'Đã hủy lịch, chiến dịch về nháp.',
+  },
+}
+
+// Thao tác vòng đời: "Mở lại" là nút chính khi tạm dừng, còn lại gom trong menu.
+export default function CampaignLifecycleActions({ campaign }) {
   const [pauseOpen, setPauseOpen] = useState(false)
   const [confirmationCode, setConfirmationCode] = useState('')
+  const [endStatus, setEndStatus] = useState('')
   const queryClient = useQueryClient()
   const impactQuery = useQuery({
     queryKey: campaignKeys.pauseImpact(campaign?.public_id),
@@ -36,10 +59,12 @@ export default function CampaignLifecycleActions({
       invalidate()
       setPauseOpen(false)
       setConfirmationCode('')
+      setEndStatus('')
       message.success(
-        variables.status === 'active'
-          ? 'Đã mở lại chiến dịch.'
-          : 'Đã dừng chiến dịch và ẩn các tin đang công khai.',
+        END_ACTIONS[variables.status]?.success
+          || (variables.status === 'active'
+            ? 'Đã mở lại chiến dịch.'
+            : 'Đã dừng chiến dịch và ẩn các tin đang công khai.'),
       )
     },
     onError: (error) => message.error(
@@ -47,60 +72,63 @@ export default function CampaignLifecycleActions({
     ),
   })
   const impact = impactQuery.data
-  const canToggle = ['active', 'paused'].includes(campaign?.status)
-
-  function handleToggle(checked) {
-    if (!checked && campaign?.status === 'active') {
-      setPauseOpen(true)
-      return
-    }
-    if (checked && campaign?.status === 'paused') {
-      mutation.mutate({ status: 'active' })
-    }
-  }
+  const endOptions = {
+    draft: ['cancelled'],
+    scheduled: ['draft', 'cancelled'],
+    active: ['completed', 'cancelled'],
+    paused: ['completed', 'cancelled'],
+  }[campaign?.status] || []
+  const endAction = END_ACTIONS[endStatus]
+  const menuItems = [
+    campaign?.status === 'active' && {
+      key: 'pause',
+      label: 'Dừng chiến dịch',
+      icon: <PauseCircleOutlined aria-hidden />,
+    },
+    ...endOptions.map((status) => ({
+      key: status,
+      label: END_ACTIONS[status].okText,
+      icon: status === 'completed' ? <CheckCircleOutlined aria-hidden /> : <StopOutlined aria-hidden />,
+      danger: status === 'cancelled',
+    })),
+  ].filter(Boolean)
 
   return (
     <>
-      {variant === 'switch' ? (
-        <Switch
-          size="small"
-          checked={campaign?.status === 'active'}
-          disabled={!canToggle}
+      {campaign?.status === 'paused' && (
+        <Button
+          type="primary"
+          icon={<PlayCircleOutlined aria-hidden />}
           loading={mutation.isPending}
-          aria-label={
-            campaign?.status === 'active'
-              ? `Dừng chiến dịch ${campaign.name}`
-              : campaign?.status === 'paused'
-                ? `Mở lại chiến dịch ${campaign.name}`
-                : `Chiến dịch ${campaign?.name} đã kết thúc`
-          }
-          className="!min-w-9 shrink-0 [&.ant-switch-checked]:!bg-emerald-500"
-          onChange={handleToggle}
-        />
-      ) : (
-        <div className={`flex flex-wrap gap-2 ${block ? '[&>*]:flex-1' : ''}`}>
-          {campaign?.status === 'active' && (
-            <Button
-              icon={<PauseCircleOutlined aria-hidden />}
-              className="!h-10 !rounded-xl !border-rose-200 !bg-rose-50/80 !px-4 !font-semibold !text-rose-700 !shadow-sm transition-all duration-200 hover:!-translate-y-0.5 hover:!border-rose-300 hover:!bg-rose-100 hover:!text-rose-800 hover:!shadow-md focus-visible:!outline-2 focus-visible:!outline-offset-2 focus-visible:!outline-rose-400 active:!translate-y-0"
-              onClick={() => setPauseOpen(true)}
-            >
-              Dừng chiến dịch
-            </Button>
-          )}
-          {campaign?.status === 'paused' && (
-            <Button
-              type="primary"
-              icon={<PlayCircleOutlined aria-hidden />}
-              className="!h-10 !rounded-xl !border-0 !bg-gradient-to-r !from-emerald-600 !to-teal-600 !px-4 !font-semibold !shadow-md transition-all duration-200 hover:!-translate-y-0.5 hover:!from-emerald-500 hover:!to-teal-500 hover:!shadow-lg active:!translate-y-0"
-              loading={mutation.isPending}
-              onClick={() => mutation.mutate({ status: 'active' })}
-            >
-              Mở lại chiến dịch
-            </Button>
-          )}
-        </div>
+          onClick={() => mutation.mutate({ status: 'active' })}
+        >
+          Mở lại chiến dịch
+        </Button>
       )}
+      {menuItems.length > 0 && (
+        <Dropdown
+          trigger={['click']}
+          menu={{
+            items: menuItems,
+            onClick: ({ key }) => (key === 'pause' ? setPauseOpen(true) : setEndStatus(key)),
+          }}
+        >
+          <Button icon={<MoreOutlined aria-hidden />}>Thao tác khác</Button>
+        </Dropdown>
+      )}
+      <Modal
+        destroyOnHidden
+        open={Boolean(endAction)}
+        title={endAction?.title}
+        okText={endAction?.okText}
+        cancelText="Đóng"
+        okButtonProps={{ danger: endStatus !== 'completed' }}
+        confirmLoading={mutation.isPending}
+        onCancel={() => setEndStatus('')}
+        onOk={() => mutation.mutate({ status: endStatus })}
+      >
+        <p className="text-sm text-slate-600">{endAction?.description}</p>
+      </Modal>
       <Modal
         destroyOnHidden
         open={pauseOpen}

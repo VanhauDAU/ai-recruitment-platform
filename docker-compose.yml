@@ -31,6 +31,7 @@ x-backend-image: &backend-image
   image: ai-recruitment-platform-backend
   build:
     context: ./backend
+    target: runtime
 
 services:
   # Named volumes are initially owned by root, while Django deliberately runs
@@ -175,6 +176,36 @@ services:
     init: true
     pids_limit: 128
     stop_grace_period: 100s
+    logging: *default-logging
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # Đối sánh CV–JD chạy local: image riêng có torch CPU + sentence-transformers
+  # (Dockerfile target `ml`). Một tiến trình giữ mô hình e5-base (~1,1 GB) trong
+  # RAM; mô hình đọc từ ml/models, không tải từ Internet (HF_HUB_OFFLINE).
+  ml-worker:
+    image: ai-recruitment-platform-ml-worker
+    build:
+      context: ./backend
+      target: ml
+    command: celery -A config worker --loglevel=info -Q ai-matching --concurrency=1 --prefetch-multiplier=1 --max-tasks-per-child=500
+    env_file: ./backend/.env
+    environment:
+      <<: *service-hosts
+      MATCHING_PRELOAD_MODEL: '1'
+      HF_HUB_OFFLINE: '1'
+      TRANSFORMERS_OFFLINE: '1'
+      TOKENIZERS_PARALLELISM: 'false'
+    volumes:
+      - ./backend:/app
+      - ./ml/models:/models:ro
+    mem_limit: 3g
+    init: true
+    pids_limit: 128
+    stop_grace_period: 40s
     logging: *default-logging
     depends_on:
       db:

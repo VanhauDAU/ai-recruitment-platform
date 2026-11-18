@@ -150,7 +150,7 @@ class AdminJobManagementListSerializer(serializers.ModelSerializer):
 
     def get_employer_phone_verified(self, obj):
         recruiter = self._recruiter(obj)
-        return bool(recruiter and recruiter.phone_verified_at)
+        return bool(recruiter and recruiter.has_verified_phone)
 
     def get_company_role(self, obj):
         recruiter = self._recruiter(obj)

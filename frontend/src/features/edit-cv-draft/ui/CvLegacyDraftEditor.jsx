@@ -1,5 +1,6 @@
 import { SaveOutlined, SendOutlined } from '@ant-design/icons'
 import { Alert, Button, Select, Skeleton } from 'antd'
+import { Navigate } from 'react-router'
 import { CV_FONT_FAMILIES, CvDocumentPreview, addItem, addSection, availableSectionKeys, canDragItems, getEditorCapabilities, getOrderedItems, getOrderedSections, getSection, moveItemInLayout, moveItemToIndexInLayout, moveSection, moveSectionToRegion, removeItem, removeSection, renameSection, resizeRegionPair, richTextToText, setSectionEnabled, syncItemOrder, updateItem, updatePersonalInfo, updateStyle, updateSummary } from '@/entities/cv'
 import useCvDraftEditor from '../model/use-cv-draft-editor'
 import CollectionSectionForm from './CollectionSectionForm'
@@ -17,6 +18,7 @@ export default function CvLegacyDraftEditor({ publicId }) {
   const editor = useCvDraftEditor(publicId)
   if (editor.phase === 'loading' || !editor.document) return <div className="mx-auto max-w-7xl px-4 py-10"><Skeleton active paragraph={{ rows: 12 }} /></div>
   if (!editor.cv) return <div className="mx-auto max-w-3xl px-4 py-12"><Alert type="error" showIcon title="Không thể tải CV" /></div>
+  if (editor.cv.cv_type === 'uploaded') return <Navigate to={`/cvs/${editor.cv.public_id}/view`} replace />
 
   const { content_json: content, style_json: style } = editor.document
   const summary = getSection(content, 'summary')

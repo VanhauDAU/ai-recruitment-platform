@@ -1,0 +1,31 @@
+title Sơ đồ hoạt động tạm dừng, tiếp tục và kết thúc chiến dịch
+if Ai thực hiện?
+case Nhà tuyển dụng
+  if Thao tác?
+  case Tạm dừng
+    Giao diện hiển thị các tin sẽ bị ẩn và mã xác nhận
+    Nhà tuyển dụng nhập mã xác nhận
+  case Tiếp tục
+  case Hoàn tất / hủy
+    Giao diện báo các tin đang tuyển sẽ bị đóng
+    Nhà tuyển dụng xác nhận
+  endif
+  if Bước chuyển hợp lệ và không bị tạm giữ?
+  case Không
+    Giao diện báo lỗi
+    stop
+  case Có
+  endif
+case Bộ lập lịch
+  Bộ lập lịch phát hiện chiến dịch qua ngày kết thúc
+endif
+Hệ thống cập nhật trạng thái, ghi nhật ký
+if Trạng thái mới?
+case Tạm dừng
+  Hệ thống ẩn tin, hoãn bài Fanpage hẹn giờ
+case Đang chạy
+  Hệ thống hiện lại tin, đưa bài còn hạn về lịch
+case Hoàn tất / hủy
+  Hệ thống đóng mọi tin đang tuyển
+  Hệ thống gỡ bài Fanpage đã đăng
+endif

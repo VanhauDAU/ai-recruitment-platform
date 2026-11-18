@@ -73,7 +73,7 @@ export default function JobDetailContent({
             type="button"
             aria-haspopup="dialog"
             onClick={onCreateJobAlert}
-            className="ml-auto inline-flex h-10 shrink-0 cursor-pointer items-center justify-end gap-1.5 rounded-md bg-white p-0 text-sm font-normal text-[var(--brand-primary)] transition-colors hover:text-[var(--brand-primary-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2 motion-reduce:transition-none"
+            className="job-detail-alert ml-auto inline-flex h-10 shrink-0 cursor-pointer items-center justify-end gap-1.5 rounded-md bg-white p-0 text-sm font-normal text-[var(--brand-primary)] transition-colors hover:text-[var(--brand-primary-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2 motion-reduce:transition-none"
           >
             <BellOutlined aria-hidden="true" className="text-[var(--brand-primary)]" />
             <span>Gửi tôi việc làm tương tự</span>
@@ -176,7 +176,7 @@ function JobClosingActions({ accepting, deadline, saved, savePending, applicatio
           <strong className="text-slate-800">{formatJobDate(deadline)} ({formatDeadline(deadline)})</strong>
         </p>
       )}
-      <div className="mt-4 flex flex-wrap gap-2">
+      <div className="job-closing__buttons mt-4 flex flex-wrap gap-2">
         {accepting ? <button type="button" onClick={onApply} disabled={applicationStatus.isLimitReached} className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg bg-[var(--brand-primary)] px-4 text-sm font-bold text-white hover:bg-[var(--brand-primary-hover)] disabled:cursor-not-allowed disabled:opacity-60">{applicationStatus.isResubmission && <i className="fa-solid fa-arrow-rotate-right" aria-hidden="true" />}{applicationStatus.applyLabel}</button> : <JobApplicationClosed compact />}
         <button type="button" onClick={onSave} disabled={savePending} className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg border border-emerald-200 px-4 text-sm font-semibold text-[var(--brand-primary)] hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-60">{saved ? <HeartFilled /> : <HeartOutlined />}{saved ? 'Đã lưu tin' : 'Lưu tin'}</button>
       </div>

@@ -1,0 +1,173 @@
+/* Đầu trang chi tiết chiến dịch (route lazy, ngoài CSS khởi tạo). */
+.cw-hero { border: 1px solid #e2e8e5; border-radius: 16px; background: #fff; box-shadow: 0 1px 3px rgb(15 42 36 / .05); }
+.cw-hero__top { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 20px 20px 16px; }
+.cw-hero__heading { min-width: 0; flex: 1 1 360px; }
+.cw-hero__badges { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.cw-hero__id { font-size: 12px; color: #94a3b8; }
+.cw-hero__landing { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; color: #047857; }
+.cw-hero__landing:hover { color: #065f46; text-decoration: underline; }
+.cw-hero__title { margin: 8px 0 0; font-size: 24px; font-weight: 750; line-height: 1.3; letter-spacing: -0.01em; color: #0f2a24; overflow-wrap: anywhere; }
+.cw-hero__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+
+.cw-status { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: #f1f5f9; color: #475569; }
+.cw-status::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.cw-status.is-active { background: #ecfdf5; color: #047857; }
+.cw-status.is-paused { background: #fffbeb; color: #b45309; }
+.cw-status.is-scheduled { background: #ecfeff; color: #0e7490; }
+.cw-status.is-draft { background: #f0f9ff; color: #0369a1; }
+.cw-status.is-cancelled { background: #fff1f2; color: #be123c; }
+
+/* Bốn con số nhận diện chiến dịch, ngăn cách bằng đường kẻ thay vì thẻ rời. */
+.cw-facts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 0; border-top: 1px solid #eef2f0; }
+.cw-fact { padding: 12px 20px; border-left: 1px solid #eef2f0; }
+.cw-fact:first-child { border-left: 0; }
+.cw-fact dt { font-size: 12px; color: #64748b; }
+.cw-fact dd { margin: 2px 0 0; font-size: 14px; font-weight: 600; color: #0f2a24; }
+
+/* Dải chỉ số của tab Tổng quan: một khung, các ô ngăn bằng đường kẻ. */
+.cw-metrics {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); overflow: hidden;
+  border: 1px solid #e2e8e5; border-radius: 16px; background: #e2e8e5; gap: 1px;
+}
+.cw-metric { display: flex; flex-direction: column; gap: 4px; padding: 14px 16px; background: #fff; }
+.cw-metric__label { display: flex; align-items: center; gap: 6px; margin: 0; font-size: 12px; font-weight: 600; color: #64748b; }
+.cw-metric__value { font-size: 24px; font-weight: 750; line-height: 1.15; color: #0f2a24; }
+.cw-metric__hint { font-size: 12px; color: #94a3b8; }
+.cw-metric.is-blue .cw-metric__value { color: #0369a1; }
+.cw-metric.is-amber .cw-metric__value { color: #b45309; }
+.cw-metric.is-green .cw-metric__value { color: #047857; }
+.cw-metric.is-violet .cw-metric__value { color: #6d28d9; }
+
+/* Tab Kênh & nguồn */
+.cw-channels { display: flex; flex-direction: column; gap: 24px; padding: 20px; }
+.cw-section-title { margin: 0; font-size: 16px; font-weight: 700; color: #0f2a24; }
+.cw-section-intro { margin: 4px 0 12px; max-width: 72ch; font-size: 13px; line-height: 20px; color: #64748b; }
+
+@media (max-width: 900px) {
+  .cw-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cw-fact:nth-child(3) { border-left: 0; }
+  .cw-fact:nth-child(n + 3) { border-top: 1px solid #eef2f0; }
+}
+@media (max-width: 560px) {
+  .cw-hero__top { padding: 16px; }
+  .cw-hero__title { font-size: 20px; }
+  .cw-hero__actions { display: grid; grid-template-columns: 1fr 1fr; width: 100%; }
+  .cw-hero__actions > a:first-child { grid-column: 1 / -1; }
+  .cw-hero__actions .ant-btn { width: 100%; }
+  .cw-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cw-metric:last-child:nth-child(odd) { grid-column: 1 / -1; }
+  .cw-metric__value { font-size: 20px; }
+  .cw-fact { padding: 10px 16px; }
+  .cw-channels { padding: 14px; }
+}
+
+/* Tab Sức khỏe */
+.cwh { display: flex; flex-direction: column; gap: 16px; }
+.cwh-banner {
+  display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 16px;
+  padding: 18px 20px; border: 1px solid #e2e8e5; border-left-width: 4px; border-radius: 16px; background: #fff;
+}
+.cwh-banner.is-good { border-left-color: #059669; }
+.cwh-banner.is-warn { border-left-color: #d97706; }
+.cwh-banner.is-bad { border-left-color: #e11d48; }
+.cwh-banner.is-muted { border-left-color: #94a3b8; }
+.cwh-banner__eyebrow { margin: 0; font-size: 12px; font-weight: 600; color: #64748b; }
+.cwh-banner__title { margin: 2px 0 6px; font-size: 22px; font-weight: 750; color: #0f2a24; }
+.cwh-banner.is-good .cwh-banner__title { color: #047857; }
+.cwh-banner.is-warn .cwh-banner__title { color: #b45309; }
+.cwh-banner.is-bad .cwh-banner__title { color: #be123c; }
+.cwh-banner__text { margin: 0; max-width: 64ch; font-size: 14px; line-height: 22px; color: #334155; }
+.cwh-banner__side { display: flex; flex-direction: column; align-items: flex-end; gap: 12px; }
+.cwh-score { display: flex; flex-direction: column; align-items: flex-end; }
+.cwh-score span { font-size: 12px; color: #64748b; }
+.cwh-score strong { font-size: 28px; font-weight: 750; line-height: 1.1; color: #0f2a24; font-variant-numeric: tabular-nums; }
+.cwh-score small { font-size: 16px; font-weight: 600; color: #94a3b8; }
+
+.cwh-alerts { overflow: hidden; border: 1px solid #fde68a; border-radius: 16px; background: #fffbeb; }
+.cwh-alerts__title { margin: 0; padding: 10px 16px; border-bottom: 1px solid #fde68a; font-size: 13px; font-weight: 700; color: #92400e; }
+.cwh-alerts ul { margin: 0; padding: 0; list-style: none; }
+.cwh-alert { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 16px; }
+.cwh-alert + .cwh-alert { border-top: 1px solid #fef3c7; }
+.cwh-alert h3 { margin: 0; font-size: 14px; font-weight: 700; color: #78350f; }
+.cwh-alert p { margin: 2px 0 0; font-size: 13px; line-height: 20px; color: #92400e; overflow-wrap: anywhere; }
+.cwh-alert a { flex-shrink: 0; font-size: 13px; font-weight: 600; color: #b45309; white-space: nowrap; }
+.cwh-alert a:hover { color: #78350f; text-decoration: underline; }
+
+.cwh-grid { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 16px; }
+.cwh-card { padding: 18px 20px; border: 1px solid #e2e8e5; border-radius: 16px; background: #fff; }
+.cwh-empty, .cwh-note { margin: 12px 0 0; font-size: 13px; line-height: 20px; color: #64748b; }
+
+.cwh-funnel { display: flex; flex-direction: column; gap: 10px; margin: 14px 0 0; padding: 0; list-style: none; }
+.cwh-funnel li { display: grid; grid-template-columns: 92px minmax(0, 1fr) 72px; align-items: center; gap: 10px; font-size: 13px; }
+.cwh-funnel__label { color: #475569; }
+.cwh-funnel__bar { height: 10px; overflow: hidden; border-radius: 999px; background: #f1f5f9; }
+.cwh-funnel__bar span { display: block; height: 100%; border-radius: inherit; background: #10b981; }
+.cwh-funnel__value { font-weight: 700; color: #0f2a24; text-align: right; font-variant-numeric: tabular-nums; }
+.cwh-funnel__value small { font-weight: 500; color: #94a3b8; }
+
+.cwh-budget { margin: 14px 0 8px; font-size: 14px; color: #64748b; }
+.cwh-budget strong { font-size: 20px; color: #0f2a24; }
+.cwh-meter { display: block; height: 10px; overflow: hidden; border-radius: 999px; background: #f1f5f9; }
+.cwh-meter span { display: block; height: 100%; border-radius: inherit; background: #059669; }
+.cwh-meter span.is-over { background: #e11d48; }
+
+.cwh-chart { margin-top: 12px; }
+.cwh-legend { display: flex; flex-wrap: wrap; gap: 16px; margin: 8px 0 0; padding: 0; list-style: none; font-size: 12px; color: #475569; }
+.cwh-legend li { display: inline-flex; align-items: center; gap: 6px; }
+.cwh-legend span { width: 18px; }
+.cwh-formula summary { cursor: pointer; font-size: 14px; font-weight: 700; color: #0f2a24; }
+.cwh-formula p, .cwh-formula li { font-size: 13px; line-height: 21px; color: #475569; }
+.cwh-formula ul { margin: 8px 0 0; padding-left: 18px; }
+
+@media (max-width: 900px) {
+  .cwh-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 560px) {
+  .cwh-banner, .cwh-card { padding: 14px; }
+  .cwh-banner__side { width: 100%; flex-direction: row; align-items: center; justify-content: space-between; }
+  .cwh-score { align-items: flex-start; }
+  .cwh-alert { flex-direction: column; align-items: flex-start; gap: 4px; }
+  .cwh-funnel li { grid-template-columns: 78px minmax(0, 1fr) 60px; }
+}
+
+/* Tab Lịch sử hoạt động: timeline một dòng, giờ bên trái, chấm màu theo nhóm. */
+.cwa { padding: 16px 20px 20px; }
+.cwa-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+.cwa-filter { display: inline-flex; flex-wrap: wrap; gap: 2px; padding: 3px; border-radius: 10px; background: #f1f5f4; }
+.cwa-filter__item { padding: 4px 12px; border: 0; border-radius: 8px; background: none; cursor: pointer; font-size: 13px; font-weight: 600; color: #64748b; }
+.cwa-filter__item:hover { color: #0f2a24; }
+.cwa-filter__item.is-on { background: #fff; color: #047857; box-shadow: 0 1px 2px rgb(15 42 36 / .08); }
+.cwa-filter__item:focus-visible { outline: 2px solid #059669; outline-offset: 1px; }
+
+.cwa-day + .cwa-day { margin-top: 14px; }
+.cwa-day__label { position: sticky; top: 64px; z-index: 1; display: flex; align-items: baseline; gap: 8px; margin: 0; padding: 6px 0; background: #fff; font-size: 13px; font-weight: 700; color: #0f2a24; }
+.cwa-day__label span { font-size: 12px; font-weight: 500; color: #94a3b8; }
+.cwa-list { margin: 0; padding: 0; list-style: none; }
+
+.cwa-item { position: relative; display: grid; grid-template-columns: 44px 14px minmax(0, 1fr); column-gap: 10px; padding: 6px 0; }
+.cwa-item::before { content: ''; position: absolute; top: 0; bottom: 0; left: 60px; width: 1px; background: #e2e8e5; }
+.cwa-item:first-child::before { top: 14px; }
+.cwa-item:last-child::before { bottom: calc(100% - 14px); }
+.cwa-item__time { padding-top: 1px; font-size: 12px; color: #94a3b8; font-variant-numeric: tabular-nums; }
+.cwa-item__dot { position: relative; z-index: 1; width: 9px; height: 9px; margin: 5px 0 0 2px; border-radius: 50%; background: #94a3b8; box-shadow: 0 0 0 3px #fff; }
+.cwa-item.is-campaign .cwa-item__dot { background: #7c3aed; }
+.cwa-item.is-job .cwa-item__dot { background: #0284c7; }
+.cwa-item.is-application .cwa-item__dot { background: #059669; }
+.cwa-item__body { min-width: 0; }
+.cwa-item__title { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; margin: 0; font-size: 13px; line-height: 20px; color: #0f2a24; }
+.cwa-item__title strong { font-weight: 600; }
+.cwa-item__subject { color: #475569; overflow-wrap: anywhere; }
+a.cwa-item__subject { color: #047857; }
+a.cwa-item__subject:hover { text-decoration: underline; }
+.cwa-item__meta { display: flex; flex-wrap: wrap; gap: 2px 12px; margin: 1px 0 0; font-size: 12px; line-height: 18px; color: #94a3b8; }
+.cwa-item__meta strong { font-weight: 600; color: #475569; }
+.cwa-move { color: #64748b; }
+.cwa-reason { color: #b45309; }
+.cwa-pages { display: flex; justify-content: center; margin-top: 12px; padding-top: 12px; border-top: 1px solid #eef2f0; }
+
+@media (max-width: 560px) {
+  .cwa { padding: 14px; }
+  .cwa-day__label { top: 56px; }
+  .cwa-item { grid-template-columns: 38px 12px minmax(0, 1fr); column-gap: 8px; }
+  .cwa-item::before { left: 51px; }
+}

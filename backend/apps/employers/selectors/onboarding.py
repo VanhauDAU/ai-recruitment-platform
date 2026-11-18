@@ -134,12 +134,7 @@ def build_employer_onboarding_steps(recruiter, *, badge_eligibility=None):
                     domain=domain,
                 ).exists()
             ),
-            'phone_verified': bool(
-                recruiter.phone_verified_at
-                and recruiter.verified_phone
-                and recruiter.contact_phone == recruiter.verified_phone
-                and recruiter.user.phone == recruiter.verified_phone
-            ),
+            'phone_verified': recruiter.has_verified_phone,
             'no_report_history': not JobReport.objects.filter(
                 posted_by_id_snapshot=recruiter.user_id,
                 status=JobReport.Status.UPHELD,
@@ -154,7 +149,9 @@ def build_employer_onboarding_steps(recruiter, *, badge_eligibility=None):
         badge_criteria = {item['key']: item['passed'] for item in badge_eligibility['criteria']}
     steps = {
         **initial_onboarding['steps'],
-        'phone_verified': badge_criteria['phone_verified'],
+        # Account-scoped, never the company badge: a recruiter without a
+        # company (new, or just removed) still has a verified phone.
+        'phone_verified': recruiter.has_verified_phone,
         'company_linked': company_linked,
         'business_doc_submitted': has_business_doc,
         'business_doc_current': business_doc_current,

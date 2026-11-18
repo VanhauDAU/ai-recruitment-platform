@@ -142,6 +142,42 @@ def _render_in_engine_thread(payload, print_url):
     return pdf
 
 
+def _render_html_in_engine_thread(html):
+    try:
+        from playwright.sync_api import Error as PlaywrightError
+    except ImportError as error:  # pragma: no cover - deployment configuration
+        raise PdfRenderingError('The PDF rendering engine is unavailable.') from error
+    context = _browser().new_context()
+    try:
+        # Self-contained HTML only: every network request is refused.
+        context.route(
+            '**/*',
+            lambda route: (
+                route.continue_() if route.request.url.startswith('data:') else route.abort()
+            ),
+        )
+        page = context.new_page()
+        page.set_default_timeout(RENDER_TIMEOUT_MS)
+        page.set_content(html, wait_until='load')
+        pdf = page.pdf(format='A4', print_background=True, prefer_css_page_size=True)
+    except PlaywrightError as error:
+        raise PdfRenderingError('The PDF rendering engine failed.') from error
+    finally:
+        context.close()
+    if not pdf.startswith(b'%PDF'):
+        raise PdfRenderingError('The PDF rendering engine returned an invalid artifact.')
+    return pdf
+
+
+def render_html_pdf(html):
+    """Render a self-contained HTML report (no external assets) to A4 PDF bytes.
+
+    Shares the CV engine's Chromium thread; used by campaign report exports.
+    """
+    future = _executor().submit(_render_html_in_engine_thread, html)
+    return future.result(timeout=RENDER_TIMEOUT_MS / 1000 + 10)
+
+
 def render_document_pdf(payload):
     future = _executor().submit(_render_in_engine_thread, payload, settings.CV_PRINT_URL)
     return future.result(timeout=RENDER_TIMEOUT_MS / 1000 + 10)

@@ -61,3 +61,132 @@ export async function getCampaignJobPerformance(publicId, days = 7, jobPublicId 
   })
   return data
 }
+
+export async function getCampaignLaunch(publicId) {
+  const { data } = await api.get(`/employer/campaigns/${publicId}/launch/`)
+  return data
+}
+
+export async function saveCampaignLaunchSelection(publicId, { publishJobIds = [], attachJobIds = [] }) {
+  const { data } = await api.put(`/employer/campaigns/${publicId}/launch/`, {
+    publish_job_ids: publishJobIds,
+    attach_job_ids: attachJobIds,
+  })
+  return data
+}
+
+export async function launchCampaign(publicId, { mode, acceptedStatementVersion }) {
+  const { data } = await api.post(`/employer/campaigns/${publicId}/launch/`, {
+    mode,
+    accepted_statement_version: acceptedStatementVersion,
+  })
+  return data
+}
+
+const channelsPath = (publicId) => `/employer/campaigns/${publicId}/channels/`
+
+export async function getCampaignChannels(publicId) {
+  const { data } = await api.get(channelsPath(publicId))
+  return data
+}
+
+export async function createCampaignChannel(publicId, payload) {
+  const { data } = await api.post(channelsPath(publicId), payload)
+  return data
+}
+
+export async function updateCampaignChannel(publicId, channelId, payload) {
+  const { data } = await api.patch(`${channelsPath(publicId)}${channelId}/`, payload)
+  return data
+}
+
+export async function deleteCampaignChannel(publicId, channelId) {
+  await api.delete(`${channelsPath(publicId)}${channelId}/`)
+}
+
+export async function generateCampaignChannelContent(publicId, channelId) {
+  const { data } = await api.post(`${channelsPath(publicId)}${channelId}/content/`)
+  return data
+}
+
+export async function getCampaignChannelCosts(publicId, channelId) {
+  const { data } = await api.get(`${channelsPath(publicId)}${channelId}/costs/`)
+  return data
+}
+
+export async function addCampaignChannelCost(publicId, channelId, payload) {
+  const { data } = await api.post(`${channelsPath(publicId)}${channelId}/costs/`, payload)
+  return data
+}
+
+export async function deleteCampaignChannelCost(publicId, channelId, costId) {
+  await api.delete(`${channelsPath(publicId)}${channelId}/costs/${costId}/`)
+}
+
+export async function getCampaignChannelReport(publicId) {
+  const { data } = await api.get(`/employer/campaigns/${publicId}/channel-report/`)
+  return data
+}
+
+export async function getCampaignHealth(publicId) {
+  const { data } = await api.get(`/employer/campaigns/${publicId}/health/`)
+  return data
+}
+
+export async function downloadCampaignReport(publicId, type) {
+  const { data } = await api.get(`/employer/campaigns/${publicId}/report/export/`, {
+    params: { type },
+    responseType: 'blob',
+  })
+  return data
+}
+
+export async function getPublicCampaign(slug) {
+  const { data } = await api.get(`/campaigns/public/${slug}/`)
+  return data
+}
+
+export async function getSocialConnections() {
+  const { data } = await api.get('/employer/social/connections/')
+  return data
+}
+
+export async function startFacebookConnect() {
+  const { data } = await api.post('/employer/social/facebook/authorize/')
+  return data.url
+}
+
+export async function getPendingFacebookPages(nonce) {
+  const { data } = await api.get(`/employer/social/facebook/pending/${nonce}/`)
+  return data
+}
+
+export async function selectFacebookPage(nonce, pageId) {
+  const { data } = await api.post(`/employer/social/facebook/pending/${nonce}/`, { page_id: pageId })
+  return data
+}
+
+export async function disconnectSocialConnection(connectionId) {
+  await api.delete(`/employer/social/connections/${connectionId}/`)
+}
+
+const postsPath = (publicId, channelId) => `${channelsPath(publicId)}${channelId}/posts/`
+
+export async function getChannelPosts(publicId, channelId) {
+  const { data } = await api.get(postsPath(publicId, channelId))
+  return data
+}
+
+export async function scheduleChannelPost(publicId, channelId, payload) {
+  const { data } = await api.post(postsPath(publicId, channelId), payload)
+  return data
+}
+
+export async function rescheduleChannelPost(publicId, channelId, postId, scheduledFor) {
+  const { data } = await api.patch(`${postsPath(publicId, channelId)}${postId}/`, { scheduled_for: scheduledFor })
+  return data
+}
+
+export async function cancelChannelPost(publicId, channelId, postId) {
+  await api.delete(`${postsPath(publicId, channelId)}${postId}/`)
+}

@@ -7,7 +7,7 @@ from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
 from apps.accounts.models import User
-from apps.jobs.models import Job
+from apps.jobs.models import Job, give_back_hidden_time
 from common.public_id import generate_public_id
 
 from ..models import (
@@ -420,6 +420,20 @@ def apply_expired_dpa_holds_batch(recruiter_ids, *, rollout_id, actor=None):
     return list(hold_by_recruiter.values()), len(created_holds)
 
 
+def _give_back_display_time(released, *, now):
+    """Jobs of a recruiter no longer held get back the time the hold hid them."""
+    for hold in released:
+        if EmployerComplianceHold.objects.filter(
+            recruiter_id=hold.recruiter_id, status=EmployerComplianceHold.Status.ACTIVE
+        ).exists():
+            continue  # still hidden by another hold; that release gives it back
+        give_back_hidden_time(
+            Job.objects.filter(posted_by__recruiter_profile__id=hold.recruiter_id),
+            since=hold.applied_at,
+            now=now,
+        )
+
+
 def release_verification_holds(scope, *, actor, reason):
     """Release only active holds owned by this verification case/source."""
 
@@ -450,6 +464,7 @@ def release_verification_holds(scope, *, actor, reason):
         active,
         ['status', 'released_by', 'released_at', 'release_reason'],
     )
+    _give_back_display_time(active, now=now)
     return active
 
 
@@ -482,6 +497,7 @@ def release_dpa_holds(scope, *, actor, reason):
         active,
         ['status', 'released_by', 'released_at', 'release_reason'],
     )
+    _give_back_display_time(active, now=now)
     return active
 
 

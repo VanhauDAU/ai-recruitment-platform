@@ -1,0 +1,39 @@
+title Sơ đồ tuần tự phân phối đa kênh và ghi nhận nguồn
+actor NTD Nhà tuyển dụng
+actor UV Ứng viên
+participant FE Giao diện web\n(React)
+participant BE Máy chủ API\n(Django REST)
+database DB CSDL\n(PostgreSQL)
+external AI Dịch vụ AI\n(ai_core)
+group Thêm kênh và soạn nội dung
+NTD -> FE : Thêm kênh (loại, tên, đích là trang tuyển dụng hoặc một tin)
+FE -> BE : POST /campaigns/{id}/channels/
+BE -> DB : Tạo CampaignChannel với mã link /r/<mã>
+BE --> FE : Kênh, link theo dõi
+NTD -> FE : Bấm "Soạn bằng AI"
+FE -> BE : POST .../channels/{kênh}/content/
+BE -> AI : Sinh nội dung từ thông tin công khai của tin
+alt AI tắt, lỗi hoặc hết lượt
+BE -> BE : Dùng mẫu cố định theo kênh
+end
+BE --> FE : Nội dung bài để NTD sửa, sao chép
+NTD -> FE : Ghi chi phí đã trả cho kênh
+FE -> BE : POST .../channels/{kênh}/costs/
+end
+group Ứng viên vào qua link
+UV -> BE : GET /r/<mã>
+BE -> DB : Đếm lượt bấm theo ngày (crawler tính riêng, không lưu IP)
+BE --> UV : 302 tới trang tuyển dụng hoặc tin, kèm ?ref có ký
+UV -> FE : Mở trang
+FE -> FE : Lưu ref 30 ngày nếu đồng ý cookie phân tích, không thì chỉ trong phiên
+UV -> FE : Nộp hồ sơ
+FE -> BE : POST ứng tuyển kèm campaign_ref
+BE -> BE : Kiểm tra chữ ký, hạn 30 ngày, đúng chiến dịch của tin
+BE -> DB : Ghi kênh vào hồ sơ (ref sai thì tính nguồn tự nhiên, không chặn nộp)
+end
+group So sánh hiệu quả
+NTD -> FE : Mở tab Kênh & nguồn
+FE -> BE : GET /campaigns/{id}/channel-report/
+BE -> DB : Người bấm, hồ sơ, trúng tuyển, chi phí theo kênh và nguồn tự nhiên
+BE --> FE : Bảng so sánh, chi phí mỗi hồ sơ
+end

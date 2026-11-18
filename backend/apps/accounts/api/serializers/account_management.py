@@ -95,7 +95,7 @@ class ManagedAccountSerializer(serializers.ModelSerializer):
                 # Compatibility for admin clients that have not moved to the
                 # explicit initial_onboarding object yet.
                 'onboarding_completed': initial_onboarding['completed'],
-                'phone_verified': bool(recruiter.phone_verified_at),
+                'phone_verified': recruiter.has_verified_phone,
                 'verification': (
                     {
                         'public_id': verification.public_id,

@@ -2552,7 +2552,7 @@ test('employer blocklist: blocked candidates are listed and can be lifted', asyn
   let blocks = [{
     public_id: 'cbk_1', candidate_name: 'Nguyễn Spam', candidate_email: 'spam@example.com', reason: 'spam',
     reason_label: 'Ứng tuyển hàng loạt, không phù hợp', note: 'Nộp 8 tin trong 2 ngày', source_job_title: 'Kế toán',
-    expires_at: null, created_at: '2026-11-15T09:00:00+07:00',
+    expires_at: null, created_at: '2026-11-15T09:00:00+07:00', blocked_by_name: 'HR A', can_lift: true,
   }]
   await page.route(/http:\/\/localhost:8000\/api\/v2\/recruiter\/candidate-blocks\/(?:\?.*)?$/, async (route) => {
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify({ count: blocks.length, results: blocks }) })
@@ -2568,7 +2568,7 @@ test('employer blocklist: blocked candidates are listed and can be lifted', asyn
   await expectNoHorizontalOverflow(page)
   await page.getByRole('button', { name: 'Gỡ chặn' }).click()
   await page.getByRole('dialog').getByRole('button', { name: 'Gỡ chặn' }).click()
-  await expect(page.getByText('Bạn chưa chặn ứng viên nào')).toBeVisible()
+  await expect(page.getByText('Công ty chưa chặn ứng viên nào')).toBeVisible()
 })
 
 test('employer talent pool: suggestions for a job and an invitation', async ({ page }) => {

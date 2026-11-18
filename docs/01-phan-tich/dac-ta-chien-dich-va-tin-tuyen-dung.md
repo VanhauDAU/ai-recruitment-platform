@@ -33,38 +33,199 @@ Code chính: `backend/apps/jobs/services/posting.py`, `services/moderation.py`,
 
 ## 2. Chiến dịch tuyển dụng
 
-Chiến dịch là workspace riêng tư của recruiter cho một nhu cầu tuyển: mục tiêu,
-tiến độ, phễu hồ sơ. Tin tuyển dụng là kênh thu CV công khai bên trong chiến
-dịch.
+Chiến dịch là một **đợt tuyển** riêng của recruiter: khoảng thời gian, ngân
+sách, các tin tuyển dụng và phễu hồ sơ của chúng. Mỗi tin là một vị trí với
+cấp bậc và số lượng tuyển riêng, nên một chiến dịch có thể tuyển cùng lúc giám
+đốc và nhân viên. Chỉ tiêu của chiến dịch là tổng `number_of_vacancies` của các
+tin (`headcount` trong API), không nhập tay (chốt với user 18/11/2026).
 
 - Liên kết `Job.campaign` là **tùy chọn**; một tin thuộc tối đa một chiến dịch,
   một chiến dịch có thể chứa nhiều tin (ràng buộc một tin/chiến dịch cũ đã bị
   gỡ ở migration `jobs.0028`).
-- Tạo nhanh chỉ cần `name` (modal submit bằng Enter); không cần liên kết công
-  ty hay hoàn tất xác thực. `company` lấy theo recruiter và có thể rỗng. Chiến
-  dịch tạo mới ở trạng thái `active`. Điều kiện xác thực chỉ được kiểm tra khi
-  đăng tin (mục 4).
-- Dữ liệu riêng của chiến dịch: vị trí chuyên môn, cấp bậc, `headcount_target`,
-  `start_date`/`target_date` hoặc `is_continuous`, ngân sách min/max và nguồn,
-  truy ngược `source_need` (nhu cầu tư vấn).
+- "Thêm chiến dịch mới" mở thẳng wizard `/tuyendung/app/campaigns/new`: bước
+  Thông tin lưu lần đầu mới tạo chiến dịch ở **`draft`** rồi chuyển sang bước
+  chọn tin, nên không còn nháp rỗng và không còn hộp "nhập tên" riêng
+  (2026-11-18). Không cần liên kết công ty hay hoàn tất xác thực; `company` lấy
+  theo recruiter và có thể rỗng. Ngoại lệ: tạo nhanh ngay trong form đăng tin gửi
+  `activate=true` để chiến dịch chạy luôn, vì tin sắp đăng cần chiến dịch
+  `active`. Điều kiện xác thực chỉ được kiểm tra khi đăng tin (mục 4).
+- Thông tin của chiến dịch (ghi được qua API từ 2026-11-18):
+  - `start_date`/`target_date` hoặc `is_continuous`;
+  - ngân sách min/max và nguồn;
+  - ghi chú (`description`);
+  - truy ngược `source_need` (nhu cầu tư vấn).
+  Ba trường vị trí chuyên môn, cấp bậc, `headcount_target` (thừa hưởng từ nhu
+  cầu tuyển dụng khi đăng ký, chỉ chứa được một vị trí) đã bị gỡ ở migration
+  `employers.0066`.
+- Ràng buộc (kiểm ở serializer, service và CheckConstraint):
+  - `target_date ≥ start_date`, `budget_max ≥ budget_min`;
+  - chỉ đổi `start_date` khi còn `draft`/`scheduled`;
+  - không rút `target_date` xuống trước hạn nộp của tin đang tuyển;
+  - chiến dịch đã kết thúc không sửa được.
+- Thời gian chạy thật được ghi lại để chỉ số sức khỏe chia theo số ngày thực sự
+  chạy:
+  - `first_activated_at`, `activated_at`;
+  - `active_seconds_accumulated` (không tính thời gian dừng);
+  - `ended_at`, `ended_by` (`user`/`system`).
+  API trả thêm `active_days`.
 - Tin chỉ gắn được vào chiến dịch của chính recruiter, không bị `policy_hold`
   và chưa `completed`/`cancelled`.
+
+### Thiết lập và kích hoạt (wizard)
+
+Trang `/tuyendung/app/campaigns/:id/setup?step=` có ba bước:
+
+Bên trái là thanh lộ trình. Mỗi bước hiện trạng thái suy ra từ dữ liệu, không
+theo thứ tự bước: "Đến 31/12, ngân sách tối đa …", "Chưa chọn tin nào", "2 tin
+sẽ đăng, tuyển 4 người", "Còn 1 điều kiện chưa đạt". Bước xong có dấu xanh, bước
+cần làm có vòng hổ phách. Bấm vào bước nào thì chuyển sang bước đó.
+
+1. **Thông tin**: thời gian (có ngày kết thúc / tuyển liên tục), ngân sách, ghi
+   chú.
+2. **Tin tuyển dụng**: chọn tin nháp của chiến dịch để *đăng* khi kích hoạt,
+   hoặc tin đang hiển thị (chưa thuộc chiến dịch nào còn chạy) để *gắn*. Tin
+   đang hiển thị chưa được gắn ngay, vì gắn vào chiến dịch chưa chạy sẽ làm tin
+   bị ẩn. Lựa chọn lưu ở `CampaignLaunchPlan`/`CampaignLaunchJob`
+   (`apps.campaigns`). Khối "Tạo tin mới cho chiến dịch" mở form đăng tin với
+   `?campaign=…&return=setup` và nhắc bấm **Lưu nháp**; lưu xong thì quay lại
+   bước này. Mỗi tin hiện số người cần tuyển, hạn nộp, và cảnh báo nếu hạn nộp
+   sau ngày kết thúc chiến dịch. Thanh dưới cùng ghi "Đã chọn N tin, tuyển tổng
+   M người".
+3. **Xem lại & kích hoạt**: checklist từ `GET /launch/`:
+   - ngày kết thúc từ hôm nay trở đi hoặc tuyển liên tục;
+   - có ít nhất một tin;
+   - tin nháp đủ nội dung và hạn nộp không sau `target_date`;
+   - tài khoản đủ điều kiện đăng tin (cùng điều kiện với `publish_job`);
+   - còn lượt đăng.
+
+   Màn hình mở đầu bằng "Còn N việc trước khi kích hoạt". Mỗi việc có nút đưa
+   về đúng bước cần sửa; các điều kiện đã đạt gom vào một dòng thu gọn. Dòng
+   "Khi kích hoạt, hệ thống sẽ đăng X tin nháp và gắn Y tin" nói trước kết quả.
+   Nút bị khóa thì luôn ghi lý do.
+
+   NTD chấp nhận cam kết chịu trách nhiệm rồi chọn một trong hai cách:
+   - **Kích hoạt ngay**: chuyển sang `active`, đăng mọi tin nháp đã chọn và gắn
+     các tin đã chọn. Tất cả hoặc không gì cả: một tin lỗi thì không có gì thay
+     đổi và API trả lỗi từng tin. Nếu `start_date` rỗng hoặc ở tương lai thì
+     đặt bằng hôm nay.
+   - **Lên lịch** (cần `start_date` sau hôm nay): chuyển sang `scheduled`; lưu
+     phiên bản cam kết đã chấp nhận để dùng lúc tự kích hoạt.
+
+Bước "Kênh phân phối" (không bắt buộc, GĐ2) nằm giữa bước Tin và Kích hoạt;
+thêm kênh sau khi chiến dịch chạy cũng được.
+
+### Phân phối đa kênh và ghi nhận nguồn (GĐ2, 2026-11-18)
+
+- **Kênh** (`CampaignChannel`) là một nơi NTD đăng tuyển: fanpage, nhóm
+  Facebook, LinkedIn, Zalo, TikTok, email, website công ty, tờ rơi/QR, khác.
+  - Mỗi kênh có một **link theo dõi** `/r/<code>` (8 ký tự ngẫu nhiên) và mã QR
+    tải được.
+  - Link dẫn tới trang tuyển dụng của chiến dịch hoặc một tin trong chiến dịch.
+- **Nội dung đăng**:
+  - "Soạn bằng AI" gọi runtime `ai_core` (Gemini, use case
+    `campaign_channel_post`), văn phong theo loại kênh, chỉ dùng dữ liệu công
+    khai của tin; link chèn bằng `{link}`;
+  - AI tắt, lỗi hoặc thiếu `{link}` thì dùng mẫu cố định;
+  - tối đa 20 lượt/ngày/người;
+  - NTD sửa tay được, sao chép nội dung đã thay sẵn link;
+  - đăng tay rồi đánh dấu "Đã đăng" (kèm link bài, không bắt buộc). Đăng tự
+    động lên Facebook Page là GĐ3.
+- **Chi phí** nhập tay theo kênh (quảng cáo, in ấn...); không thanh toán trong
+  hệ thống.
+- **Đếm lượt bấm** (`/r/<code>`):
+  - không cookie, không lưu IP;
+  - đếm theo kênh và ngày: tổng lượt, người bấm (khử trùng trong ngày bằng hash
+    có salt chỉ nằm trong Redis), lượt xem trước của crawler mạng xã hội, lượt
+    bấm khi chiến dịch không chạy.
+- **Chuyển hướng**:
+  - chiến dịch đang chạy và kênh trỏ tới tin còn công khai thì đi tới
+    `/viec-lam/<slug>`;
+  - còn lại đi tới `/tuyen-dung/<slug>`, nơi trang tự hiện trạng thái tạm dừng /
+    sắp bắt đầu / đã kết thúc kèm việc làm khác của công ty;
+  - luôn kèm `?ref=` ký bằng `TimestampSigner`, hạn 30 ngày.
+- **Ghi nhận nguồn khi ứng tuyển**:
+  - frontend đọc `?ref=` rồi xóa khỏi URL;
+  - có consent Analytics thì nhớ 30 ngày (lần bấm cuối thắng), không có thì chỉ
+    nhớ trong phiên;
+  - gửi `campaign_ref` cùng đơn ứng tuyển; backend kiểm chữ ký, hạn và việc
+    kênh thuộc đúng chiến dịch của tin, rồi ghi `Application.campaign_channel` và
+    `acquisition_channel`;
+  - ref sai không bao giờ chặn việc nộp, chỉ tính là tự nhiên;
+  - NTD thấy "Nguồn hồ sơ: Kênh chiến dịch: <tên>" ở hồ sơ.
+- **Tab "Kênh & nguồn"** của trang chi tiết:
+  - bảng so sánh từng kênh: người bấm, hồ sơ, tỷ lệ nộp, trúng tuyển, đã chi,
+    chi phí/hồ sơ, chi phí/trúng tuyển;
+  - ba nguồn tự nhiên: mời từ kho ứng viên, gợi ý của ProCV, tự tìm thấy;
+  - dòng tổng có % ngân sách đã dùng;
+  - bên dưới là thẻ từng kênh.
+- **Trang tuyển dụng công khai** `/tuyen-dung/<slug>`:
+  - nội dung: tên đợt tuyển, công ty (logo, ảnh bìa), khoảng thời gian, lời giới
+    thiệu, danh sách tin đang tuyển (`/api/jobs/?campaign=`);
+  - slug sinh từ tên + mã, đổi theo tên cho tới lần chạy đầu rồi đóng băng;
+  - NTD tắt được trang;
+  - vỏ SEO trả 404/410/noindex theo trạng thái.
+
+### Đăng tự động lên Facebook Page (GĐ3, 2026-11-18)
+
+- **Kết nối Fanpage**: Cài đặt tài khoản → "Kết nối mạng xã hội" → OAuth của
+  Facebook → chọn Fanpage. Chỉ lưu Page token, mã hóa. Ngắt kết nối thì hủy các
+  bài đang hẹn trên Fanpage đó.
+- **Hẹn đăng**:
+  - kênh loại "Fanpage Facebook" có khối "Đăng tự động lên Fanpage", gồm hẹn
+    đăng ngay hoặc theo giờ, nội dung lấy từ bài đã soạn (có link theo dõi), và
+    sửa được trước khi hẹn;
+  - bài của chiến dịch nháp hoặc đã lên lịch được đăng ngay khi chiến dịch chạy.
+- **Theo trạng thái chiến dịch**:
+  - tạm dừng: bài hẹn chuyển "Hoãn", bài đã đăng giữ nguyên;
+  - mở lại: bài hoãn còn hạn tự về "Đã hẹn giờ", bài quá giờ cần "Đăng lại ngay";
+  - hoàn tất/hủy: gỡ bài đã đăng, hủy bài chưa đăng; gỡ không được thì báo NTD
+    kèm link bài.
+- **Lỗi**:
+  - lỗi tạm thời được thử lại (1/5/15/60 phút), có kiểm tra bài trùng trước khi
+    đăng lại;
+  - token hết hạn thì kết nối chuyển "Hết hạn" và NTD được báo.
+- **Đăng thành công**: kênh tự đánh dấu "Đã đăng" (kèm link bài) và ghi
+  `CampaignActivity`.
+- **Môi trường**: `CAMPAIGN_SOCIAL_PROVIDER=fake` chạy toàn bộ luồng không cần
+  Meta. Đăng thật theo `docs/06-deployment/facebook-page-integration.md`.
 
 ### Trạng thái chiến dịch
 
 ```text
-draft ──> active ⇄ paused
-  │         │        │
-  └──> cancelled <───┤
-            └──> completed <──┘
+draft ──launch(now)──> active ⇄ paused
+  │  └─launch(later)─> scheduled ──(beat: start_date)──> active
+  │                     └─hủy lịch──> draft
+  └──> cancelled <── scheduled/active/paused ──> completed
+                                   (NTD, hoặc hệ thống sau target_date)
 ```
 
-| Từ | Được chuyển sang |
-| --- | --- |
-| `draft` | `active`, `cancelled` |
-| `active` | `paused`, `completed`, `cancelled` |
-| `paused` | `active`, `completed`, `cancelled` |
-| `completed`, `cancelled` | — (trạng thái cuối) |
+| Từ | NTD chuyển qua `status/` | Hệ thống / luồng kích hoạt |
+| --- | --- | --- |
+| `draft` | `cancelled` | `active`, `scheduled` (qua `launch/`) |
+| `scheduled` | `draft`, `cancelled` | `active` (beat vào `start_date`) |
+| `active` | `paused`, `completed`, `cancelled` | `completed` (qua `target_date`) |
+| `paused` | `active`, `completed`, `cancelled` | `completed` (qua `target_date`) |
+| `completed`, `cancelled` | — (trạng thái cuối) | — |
+
+- `status/` từ chối `draft|scheduled → active` với `CAMPAIGN_LAUNCH_REQUIRED`;
+  muốn kích hoạt phải qua `launch/`. Mở lại chiến dịch đã qua `target_date`
+  (không tuyển liên tục) bị từ chối cho tới khi gia hạn ngày kết thúc.
+- **Kết thúc chiến dịch đóng tin:** khi chiến dịch sang `completed` hoặc
+  `cancelled` (NTD bấm, hoặc hệ thống tự kết thúc), mọi tin `active` của nó
+  chuyển `closed`, ghi `JobStatusHistory` (`note=campaign_ended`, actor
+  `system` khi tự động), rồi áp luật tin ngừng tuyển. Hiệu ứng này chạy qua
+  signal `campaign_status_changed` (`employers/signals.py` → `jobs/signals.py`)
+  để `employers` không import service của `jobs`.
+- **Lịch chạy:** Celery beat `run_campaign_schedule` chạy 5 phút một lần, theo
+  ngày giờ Việt Nam, idempotent:
+  - `scheduled` tới `start_date`: kích hoạt bằng cam kết đã lưu. Nếu phiên bản
+    cam kết đã đổi, có blocker hoặc tin lỗi thì vẫn giữ `scheduled`, ghi
+    `CampaignLaunchPlan.last_error`, và báo `campaign_activation_failed` một
+    lần cho mỗi loại lỗi.
+  - `active`/`paused` không tuyển liên tục đã qua `target_date`: chuyển
+    `completed` (`ended_by=system`) và báo `campaign_auto_completed`.
+  - Còn 3 ngày tới `target_date`: báo `campaign_ending_soon`.
+  - Bỏ qua chiến dịch đang `policy_hold`.
 
 - Dừng (`paused`) bắt buộc nhập đúng mã chiến dịch (`confirmation_code =
   public_id`). Trước khi xác nhận, UI gọi `pause-impact/` để liệt kê các tin
@@ -81,10 +242,28 @@ draft ──> active ⇄ paused
 
 ### Giao diện workspace
 
-- Danh sách: tìm theo tên/mã, lọc `scope` = `open` (đang mở), `needs_review`
-  (có CV chưa xem), `active_jobs` (có tin đang hiển thị), `expired_jobs` (có tin
-  hết hạn); sắp xếp theo hoạt động gần nhất, mới/cũ, tên. Mobile dùng card,
-  desktop dùng bảng.
+- Danh sách (làm lại 18/11):
+  - **dải trạng thái có số đếm**: Tất cả, Đang chạy, Tạm dừng, Đã lên lịch,
+    Nháp, Đã kết thúc (`status=ended` gộp hoàn tất và đã hủy);
+  - mặc định **sắp theo trạng thái** (`ordering=status`: đang chạy → tạm dừng →
+    đã lên lịch → nháp → hoàn tất → đã hủy, rồi theo hoạt động gần nhất); vẫn
+    chọn được sắp theo hoạt động, mới/cũ, tên;
+  - tìm theo tên/mã, lọc `scope` = `open`, `needs_review`, `active_jobs`,
+    `expired_jobs`;
+  - mỗi dòng: tên, trạng thái, khoảng thời gian, "N tin, tuyển M người", ứng
+    viên, hoạt động gần nhất, và **một** nút việc tiếp theo ("Thiết lập" cho
+    nháp/đã lên lịch, "Xem N CV mới" khi có CV chưa xem, còn lại "Mở");
+  - bỏ công tắc bật/tắt và các nút hiện khi rê chuột; bảng từ 1024px, thẻ ở màn
+    hẹp hơn.
+- Đầu trang chi tiết (làm lại 18/11):
+  - một nút chính theo trạng thái: "Tiếp tục thiết lập" / "Xem lịch kích hoạt"
+    (nháp, đã lên lịch), "Đăng thêm tin" (đang chạy), "Mở lại chiến dịch" (tạm
+    dừng);
+  - "Sửa thông tin" (ẩn khi đã kết thúc);
+  - menu "Thao tác khác" gom Dừng, Hoàn tất, Hủy, Hủy lịch; mỗi mục có hộp xác
+    nhận nói rõ tin sẽ bị ẩn hoặc đóng;
+  - dải bốn thông tin: Chỉ tiêu, Thời gian, Ngân sách, Đã chạy;
+  - tab Tổng quan gom năm chỉ số vào một dải chung thay cho năm thẻ rời.
 - Chi tiết có bốn tab: Tổng quan (phễu hồ sơ theo trạng thái, CV bảy ngày, tiến
   độ offer/headcount, biểu đồ hiển thị → xem → ứng tuyển theo tin), CV ứng
   tuyển, Tin tuyển dụng, Lịch sử hoạt động.
@@ -365,10 +544,9 @@ liệu thật và tiêu chí giải thích được:
 - **Matching minh bạch hai chiều:** điểm khớp rule-based từ `JobSkill`, kinh
   nghiệm, học vấn, ngoại ngữ; cùng một engine và cùng phần giải thích cho ứng
   viên (trước khi nộp) và recruiter (trong pipeline).
-- **Sức khỏe chiến dịch:** chỉ số giải thích được như tốc độ CV về, thời gian
-  phản hồi `submitted → viewed`, tiến độ offer so với headcount và
-  `target_date`; gợi ý tối ưu JD; benchmark lương chỉ hiển thị khi nhóm đủ
-  ngưỡng mẫu.
+- **Sức khỏe chiến dịch:** đã làm (tab "Sức khỏe", cảnh báo, báo cáo tuần,
+  Excel/PDF; xem [suc-khoe-chien-dich.md](../07-algorithms/suc-khoe-chien-dich.md)).
+  Còn lại: gợi ý tối ưu JD; benchmark lương chỉ hiển thị khi nhóm đủ ngưỡng mẫu.
 - **Talent pool:** lưu ứng viên `rejected` theo vị trí chuyên môn để mời lại ở
   chiến dịch sau; cần consent riêng nếu phạm vi vượt quyền
   `recruiter_visibility` hiện có, và ứng viên phải rút khỏi pool được.

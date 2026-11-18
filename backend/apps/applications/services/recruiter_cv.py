@@ -9,7 +9,7 @@ from django.db import transaction
 from apps.candidates.models import CandidateNotification
 from apps.candidates.services import emit_candidate_notification
 from apps.cvs.models import CvAccessLog
-from apps.cvs.services import record_application_snapshot_access
+from apps.cvs.services import open_snapshot_source_pdf, record_application_snapshot_access
 
 from .status import mark_application_viewed
 
@@ -48,3 +48,8 @@ def record_application_cv_download(application, *, actor, request):
             'job_public_id': application.job.public_id,
         },
     )
+
+
+def open_application_cv_file(application):
+    """The file the candidate submitted, as a PDF stream; None for a builder CV."""
+    return open_snapshot_source_pdf(application.submitted_cv_version)

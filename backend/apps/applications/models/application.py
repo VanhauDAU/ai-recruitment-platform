@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
@@ -66,7 +68,6 @@ class Application(models.Model):
     )
     submitted_cv_title = models.CharField(max_length=255, default='')
     submitted_cv_source = models.CharField(max_length=30, default='builder')
-    submitted_at = models.DateTimeField(null=True, blank=True)
     cover_letter = models.TextField(blank=True)
     preferred_locations = models.ManyToManyField(
         'locations.Location',
@@ -79,6 +80,16 @@ class Application(models.Model):
     allow_ai_analysis = models.BooleanField(default=False)
     data_processing_consent = models.BooleanField(default=False)
     source = models.CharField(max_length=50, choices=Source.choices, default=Source.APPLIED)
+    # Campaign channel whose tracked link brought the candidate (last click within
+    # 30 days); the kind is copied so reports stay right if the channel is deleted.
+    campaign_channel = models.ForeignKey(
+        'campaigns.CampaignChannel',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='applications',
+    )
+    acquisition_channel = models.CharField(max_length=20, blank=True)
     status = models.CharField(max_length=50, choices=Status.choices, default=Status.SUBMITTED)
     employer_note = models.TextField(blank=True)
     employer_rating = models.PositiveSmallIntegerField(null=True, blank=True)
@@ -93,6 +104,9 @@ class Application(models.Model):
     is_current = models.BooleanField(default=True)
     status_updated_at = models.DateTimeField(default=timezone.now)
     auto_rejection_reminder_sent_at = models.DateTimeField(null=True, blank=True)
+    # The automatic rejection is due at ``applied_at`` + the job's delay, or at
+    # this moment when later: an undo near the deadline leaves time to answer.
+    auto_reject_due_floor = models.DateTimeField(null=True, blank=True)
     auto_rejected_at = models.DateTimeField(null=True, blank=True)
     auto_rejection_email_sent_at = models.DateTimeField(null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -133,6 +147,41 @@ class Application(models.Model):
             ),
             models.Index(fields=['submitted_cv_version'], name='idx_app_submitted_cv_version'),
         ]
+
+    @property
+    def auto_reject_due_at(self):
+        """When this application is rejected automatically if still unanswered."""
+        due = self.applied_at + timedelta(days=self.job.auto_reject_after_days)
+        floor = self.auto_reject_due_floor
+        return max(due, floor) if floor else due
+
+    def candidate_visible_status(self, published_history=None):
+        """The status the candidate has been told, not the live one.
+
+        A decision stays private while its notice waits (undo window, grace of
+        an automatic rejection); every candidate-facing rule reads this, so the
+        actions offered never reveal it early. ``published_history`` may be a
+        prefetched ``status_history.published()`` list.
+        """
+        rows = (
+            list(published_history)
+            if published_history is not None
+            else list(
+                self.status_history.model.objects.filter(application=self)
+                .published()
+                .order_by('created_at', 'id')
+            )
+        )
+        if rows:
+            return rows[-1].to_status
+        # Nothing announced yet: the status before the first, still private, change.
+        # Query the model, not the related manager: a prefetch would narrow it
+        # to the published rows again.
+        history = self.status_history.model.objects.filter(
+            application=self, reverted_at__isnull=True
+        )
+        first = history.order_by('created_at', 'id').first()
+        return (first.from_status or self.Status.SUBMITTED) if first else self.status
 
     def save(self, *args, **kwargs):
         if not self.public_id:

@@ -1,0 +1,32 @@
+TEN = "chức năng công ty và thành viên"
+MO_TA = [
+    ("Tìm kiếm công ty", "Nhà tuyển dụng", "Tìm công ty theo tên hoặc mã số thuế trước khi tạo mới", "Đã đăng nhập cổng NTD", "Danh sách công ty khớp"),
+    ("Tạo công ty", "Nhà tuyển dụng", "Tạo công ty chưa có trên hệ thống", "Chưa liên kết công ty nào", "Công ty được tạo, NTD là quản lý (owner)"),
+    ("Gửi yêu cầu tham gia công ty", "Nhà tuyển dụng", "Xin tham gia công ty đã có", "Chưa liên kết công ty, không có yêu cầu chờ ở công ty khác", "Yêu cầu chờ duyệt, quản lý công ty được thông báo"),
+    ("Hủy yêu cầu tham gia", "Nhà tuyển dụng", "Rút yêu cầu đang chờ", "Có yêu cầu đang chờ", "Yêu cầu bị hủy"),
+    ("Duyệt yêu cầu tham gia", "Quản lý công ty, Quản trị viên", "Chấp nhận hoặc từ chối người xin tham gia", "Quản lý đã xác thực; quản trị viên chỉ duyệt khi công ty chưa có quản lý đủ điều kiện", "Người xin thành thành viên hoặc bị từ chối, được thông báo"),
+    ("Cập nhật thông tin trang công ty", "Nhà tuyển dụng có quyền biên tập, Quản lý công ty", "Đề xuất thay đổi thông tin và nội dung trang", "Có quyền biên tập", "Yêu cầu cập nhật chờ quản trị viên duyệt"),
+    ("Duyệt yêu cầu cập nhật công ty", "Quản trị viên", "Kiểm tra và áp thay đổi vào trang công ty", "Yêu cầu đủ giấy tờ (thay đổi nhạy cảm)", "Thay đổi được áp dụng hoặc yêu cầu sửa / từ chối"),
+    ("Cấp / thu quyền biên tập trang", "Quản lý công ty", "Giao quyền biên tập trang cho thành viên", "Thành viên đã xác thực", "Quyền được cấp hoặc thu, thành viên được thông báo"),
+    ("Chuyển quyền quản lý", "Quản lý công ty", "Giao vai trò quản lý cho thành viên khác", "Người nhận đã xác thực, đủ điều kiện", "Người nhận thành quản lý, người chuyển thành thành viên"),
+    ("Gỡ thành viên", "Quản lý công ty", "Đưa thành viên ra khỏi công ty", "Đã bàn giao tài nguyên, có lý do", "Liên kết công ty bị hủy, quyền biên tập bị thu"),
+    ("Bàn giao tin và chiến dịch", "Quản lý công ty", "Chuyển tin và chiến dịch sang thành viên khác", "Người nhận đủ điều kiện", "Người đăng tin và chủ chiến dịch được cập nhật"),
+]
+DONG_CHINH = [
+    ("Tạo công ty", "Nhà tuyển dụng", "Tìm công ty >> không thấy >> điền thông tin >> bấm Tạo công ty"),
+    ("Tạo công ty", "Hệ thống", "Kiểm tra chưa liên kết >> hủy yêu cầu chờ >> tạo công ty >> gán vai trò owner"),
+    ("Gửi yêu cầu tham gia công ty", "Nhà tuyển dụng", "Chọn công ty >> bấm Gửi yêu cầu tham gia"),
+    ("Gửi yêu cầu tham gia công ty", "Hệ thống", "Kiểm tra trạng thái liên kết >> tạo yêu cầu chờ >> thông báo quản lý đủ điều kiện"),
+    ("Duyệt yêu cầu tham gia", "Quản lý công ty / Quản trị viên", "Mở danh sách yêu cầu >> chọn Duyệt hoặc Từ chối"),
+    ("Duyệt yêu cầu tham gia", "Hệ thống", "Kiểm tra quyền người duyệt >> liên kết thành viên hoặc từ chối >> thông báo người xin"),
+    ("Cập nhật thông tin trang công ty", "Nhà tuyển dụng", "Sửa thông tin, nội dung trang >> Gửi duyệt"),
+    ("Cập nhật thông tin trang công ty", "Hệ thống", "Kiểm tra quyền và xung đột >> tạo yêu cầu cập nhật >> tra cứu mã số thuế nếu nhạy cảm"),
+    ("Duyệt yêu cầu cập nhật công ty", "Quản trị viên", "Bắt đầu duyệt >> so sánh >> chọn Duyệt / Yêu cầu sửa / Từ chối"),
+    ("Duyệt yêu cầu cập nhật công ty", "Hệ thống", "Kiểm tra phiên bản >> áp thay đổi vào công ty >> ghi sự kiện, nhật ký"),
+    ("Cấp / thu quyền biên tập trang", "Quản lý công ty", "Chọn thành viên >> Cấp quyền hoặc Thu quyền"),
+    ("Cấp / thu quyền biên tập trang", "Hệ thống", "Kiểm tra quản lý và thành viên đã xác thực >> lưu quyền >> thông báo"),
+    ("Chuyển quyền quản lý", "Quản lý công ty", "Chọn thành viên >> bấm Chuyển quyền quản lý"),
+    ("Chuyển quyền quản lý", "Hệ thống", "Kiểm tra điều kiện người nhận >> hoán đổi vai trò >> thông báo"),
+    ("Gỡ thành viên", "Quản lý công ty", "Bàn giao tin và chiến dịch >> bấm Gỡ khỏi công ty, nhập lý do"),
+    ("Gỡ thành viên", "Hệ thống", "Kiểm tra lý do và tài nguyên còn lại >> hủy liên kết >> thu quyền >> thông báo"),
+]

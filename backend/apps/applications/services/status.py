@@ -29,6 +29,8 @@ from .locking import lock_recruiter_application
 
 Status = Application.Status
 AUTO_REJECTION_EMAIL_GRACE = timedelta(days=3)
+# Least time a recruiter keeps to answer after undoing back to unanswered.
+AUTO_REJECTION_MIN_NOTICE = timedelta(days=3)
 
 STATUS_TIMESTAMP_FIELD = {
     Status.VIEWED: 'viewed_at',
@@ -191,6 +193,50 @@ def change_application_status(application, *, changed_by, status):
     return application, notice
 
 
+@transaction.atomic
+def reject_blocked_application(application, *, blocked_by):
+    """Answer an unanswered application on a colleague's job after a company block.
+
+    The blocker does not own that job, so the recruiter write lock does not
+    apply; the candidate is told like any other rejection, never about the block.
+    """
+    application = (
+        Application.objects.select_for_update(of=('self',))
+        .select_related('candidate', 'job', 'job__company')
+        .get(pk=application.pk)
+    )
+    if application.status not in Application.UNANSWERED_STATUSES:
+        return application
+    now = timezone.now()
+    previous_status = application.status
+    application.status = Status.REJECTED
+    application.rejected_at = now
+    application.status_updated_at = now
+    application.auto_rejection_reminder_sent_at = None
+    application.save(
+        update_fields=[
+            'status',
+            'rejected_at',
+            'status_updated_at',
+            'auto_rejection_reminder_sent_at',
+            'updated_at',
+        ]
+    )
+    history = ApplicationStatusHistory.objects.create(
+        application=application,
+        from_status=previous_status,
+        to_status=Status.REJECTED,
+        changed_by=blocked_by,
+        note='Công ty đã chặn ứng viên.',
+    )
+    notify_candidate_of_status(
+        application,
+        history,
+        deliver_after=now + settings.CANDIDATE_STATUS_NOTIFICATION_DELAY,
+    )
+    return application
+
+
 def _active_history(application):
     return application.status_history.filter(reverted_at__isnull=True).order_by(
         '-created_at', '-id'
@@ -231,18 +277,17 @@ def undo_latest_status_change(application, *, changed_by):
     undone_status = application.status
     application.status = history.from_status
     setattr(application, STATUS_TIMESTAMP_FIELD[undone_status], None)
-    # Restarting the clock is deliberate: the forward change cleared the
-    # auto-rejection reminder, so the old timestamp could auto-reject the
-    # application on the next tick without warning the recruiter.
     application.status_updated_at = now
-    application.save(
-        update_fields=[
-            'status',
-            STATUS_TIMESTAMP_FIELD[undone_status],
-            'status_updated_at',
-            'updated_at',
-        ]
-    )
+    changed = ['status', STATUS_TIMESTAMP_FIELD[undone_status], 'status_updated_at', 'updated_at']
+    if application.status in Application.UNANSWERED_STATUSES:
+        # The clock counts from the submission and never restarts; an undo
+        # near the deadline still leaves the recruiter a warned window.
+        application.auto_reject_due_floor = max(
+            application.auto_reject_due_floor or now, now + AUTO_REJECTION_MIN_NOTICE
+        )
+        application.auto_rejection_reminder_sent_at = None
+        changed += ['auto_reject_due_floor', 'auto_rejection_reminder_sent_at']
+    application.save(update_fields=changed)
     history.reverted_at = now
     history.save(update_fields=['reverted_at'])
 
@@ -292,16 +337,7 @@ def mark_application_viewed(application, *, changed_by):
     application.status = Status.VIEWED
     application.viewed_at = now
     application.status_updated_at = now
-    application.auto_rejection_reminder_sent_at = None
-    application.save(
-        update_fields=[
-            'status',
-            'viewed_at',
-            'status_updated_at',
-            'auto_rejection_reminder_sent_at',
-            'updated_at',
-        ]
-    )
+    application.save(update_fields=['status', 'viewed_at', 'status_updated_at', 'updated_at'])
     history = ApplicationStatusHistory.objects.create(
         application=application,
         from_status=Status.SUBMITTED,

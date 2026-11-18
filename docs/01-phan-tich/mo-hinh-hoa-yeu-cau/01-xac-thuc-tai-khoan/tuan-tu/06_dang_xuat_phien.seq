@@ -1,0 +1,38 @@
+title Sơ đồ tuần tự chức năng đăng xuất và quản lý phiên đăng nhập
+actor ND Người dùng
+participant FE Giao diện web\n(React)
+participant BE Máy chủ API\n(Django REST)
+database DB CSDL\n(PostgreSQL)
+group Đăng xuất khỏi cổng hiện tại
+ND -> FE : Bấm "Đăng xuất"
+FE -> BE : POST /api/auth/logout/ {portal} + cookie refresh
+opt Có cookie refresh
+BE -> DB : Đưa refresh vào danh sách đen, thu hồi AuthSession
+end
+BE --> FE : 200 "Đã đăng xuất" + xóa cookie
+FE -> FE : Xóa access trong bộ nhớ, ghi dấu đăng xuất (các tab khác của cùng cổng tự đăng xuất)
+FE --> ND : Về trang đăng nhập
+end
+group Xem và thu hồi phiên đăng nhập
+ND -> FE : Mở "Cài đặt bảo mật"
+FE -> BE : GET /api/auth/sessions/
+BE -> DB : Lấy AuthSession còn hiệu lực (thiết bị, IP, lần hoạt động cuối)
+BE --> FE : 200 Danh sách phiên (đánh dấu phiên hiện tại)
+alt Thu hồi một phiên
+ND -> FE : Bấm "Đăng xuất" ở một thiết bị
+FE -> BE : DELETE /api/auth/sessions/{session_id}/
+alt Không phải phiên của người dùng
+BE --> FE : 404
+else Hợp lệ
+BE -> DB : Ghi revoked_at, đưa jti vào danh sách đen
+BE --> FE : 204
+end
+else Thu hồi mọi phiên khác
+ND -> FE : Bấm "Đăng xuất khỏi các thiết bị khác"
+FE -> BE : POST /api/auth/sessions/revoke-others/
+BE -> DB : Thu hồi mọi phiên trừ sid hiện tại
+BE --> FE : 200
+end
+FE --> ND : Làm mới danh sách phiên
+note over FE,BE : Thiết bị bị thu hồi nhận 401 ở yêu cầu kế tiếp (kiểm tra sid) và bị đăng xuất
+end

@@ -6,6 +6,170 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ## [Unreleased]
 
+### 2026-11-19
+
+#### Changed — Chiến dịch: giao diện kênh, đăng Fanpage và lịch sử hoạt động
+
+- Tab "Kênh & nguồn" chia hai cột: danh sách kênh và chi tiết kênh với các mục
+  Nội dung bài (xem trước như bài mạng xã hội), Đăng Fanpage, Link & QR, Chi phí.
+- Soạn bài Fanpage trong ngăn riêng có xem trước; đăng ngay, hẹn giờ theo khung
+  gợi ý hoặc đăng nhiều lần (nhắc lại sau 3, 7, 14 ngày). Lỗi đăng bài được giải
+  thích kèm cách xử lý.
+- Chi phí kênh chuyển từ popup sang mục riêng có giải thích và chọn nhanh.
+- Lịch sử hoạt động thành timeline một dòng, lọc bằng dải nút.
+
+#### Fixed — Đăng Fanpage với link máy cục bộ
+
+- Facebook từ chối bài kèm link `localhost` (lỗi 1500). Link không công khai giờ
+  được chèn vào nội dung thay vì gửi làm link đính kèm.
+
+### 2026-11-18
+
+#### Added — Chiến dịch: sức khỏe, cảnh báo và báo cáo (GĐ4)
+
+- Tab "Sức khỏe" trong chi tiết chiến dịch: dự báo số người tuyển được so với
+  chỉ tiêu (đúng tiến độ / có rủi ro / chậm), tốc độ CV cần đạt, thời gian phản
+  hồi hồ sơ, phễu, mức chi ngân sách và biểu đồ dự báo theo ngày.
+- Cảnh báo trong chuông khi dự báo thấp, hồ sơ chờ xem quá 48 giờ, kênh đã đăng
+  chưa có CV hoặc chi tiêu nhanh hơn tiến độ; không gửi trùng, nhắc lại tối đa
+  mỗi tuần.
+- Email báo cáo tuần sáng thứ Hai (tắt được), tải báo cáo Excel/PDF.
+- Danh sách chiến dịch ghi rõ "N tin tuyển dụng" và "Cần tuyển M người".
+
+#### Added — Chiến dịch: đăng tự động lên Facebook Page (GĐ3)
+
+- Kết nối Fanpage qua OAuth của Facebook (Cài đặt tài khoản → Kết nối mạng xã
+  hội); chỉ lưu Page token đã mã hóa.
+- Kênh "Fanpage Facebook" hẹn đăng ngay hoặc theo giờ. Bài tự hoãn khi chiến
+  dịch tạm dừng, tự gỡ khi chiến dịch hoàn tất hoặc bị hủy; lỗi tạm thời được
+  thử lại, token hết hạn thì báo NTD.
+- `CAMPAIGN_SOCIAL_PROVIDER=fake` chạy toàn bộ luồng không cần Meta; hướng dẫn
+  tạo Meta App ở `docs/06-deployment/facebook-page-integration.md`.
+
+#### Added — Chiến dịch: phân phối đa kênh và ghi nhận nguồn (GĐ2)
+
+- Kênh phân phối cho chiến dịch: mỗi kênh có link theo dõi `/r/<code>` và mã
+  QR, nội dung đăng soạn bằng AI (có mẫu dự phòng) hoặc sửa tay, đánh dấu đã
+  đăng, sổ chi phí.
+- Đếm lượt bấm không cookie, không lưu IP. Hồ sơ ứng tuyển ghi kênh đã đưa ứng
+  viên tới (`?ref=` có ký, 30 ngày; không có consent Analytics thì chỉ trong
+  phiên).
+- Tab "Kênh & nguồn": so sánh người bấm, hồ sơ, tỷ lệ nộp, trúng tuyển, chi phí
+  mỗi hồ sơ và mỗi trúng tuyển giữa các kênh và nguồn tự nhiên.
+- Trang tuyển dụng công khai `/tuyen-dung/<slug>` cho từng chiến dịch, có vỏ
+  SEO; bước "Kênh phân phối" trong wizard.
+
+#### Changed — Danh sách và trang chi tiết chiến dịch gọn hơn
+
+- Danh sách: dải trạng thái có số đếm, mặc định sắp theo trạng thái (đang chạy
+  trước, đã kết thúc cuối), bộ lọc `status=ended`, mỗi dòng một nút việc tiếp
+  theo. Bỏ công tắc bật/tắt, nút hiện khi rê chuột, nút đăng tin lặp ở từng dòng.
+- "Thêm chiến dịch mới" mở wizard `/tuyendung/app/campaigns/new`; bỏ hộp nhập
+  tên và hộp đổi tên.
+- Trang chi tiết: một nút chính theo trạng thái, "Sửa thông tin", menu "Thao tác
+  khác" (dừng, hoàn tất, hủy, hủy lịch); dải Chỉ tiêu, Thời gian, Ngân sách, Đã
+  chạy; năm chỉ số Tổng quan gom thành một dải.
+
+#### Changed — Chiến dịch: đợt tuyển nhiều tin, wizard rõ ràng hơn
+
+- Chiến dịch không còn một vị trí, cấp bậc, chỉ tiêu riêng; chỉ tiêu bằng tổng số
+  lượng tuyển của các tin (API trả `headcount`). Migration `employers.0066`.
+- Wizard thiết lập làm lại:
+  - thanh lộ trình theo trạng thái thật;
+  - bước Kích hoạt liệt kê việc còn thiếu kèm nút sửa, chọn cách kích hoạt
+    bằng thẻ, ghi trước kết quả khi kích hoạt;
+  - bước Tin hướng dẫn tạo tin nháp và hiện số người cần tuyển.
+
+#### Added — Chiến dịch tuyển dụng: mục tiêu, wizard và lịch chạy (GĐ1)
+
+- Mục tiêu chiến dịch ghi được qua API: vị trí, cấp bậc, chỉ tiêu, ngày bắt
+  đầu/kết thúc hoặc tuyển liên tục, ngân sách.
+- Wizard thiết lập `/tuyendung/app/campaigns/:id/setup` gồm ba bước: Mục tiêu →
+  Tin tuyển dụng → Xem lại & kích hoạt. Có checklist, kích hoạt tất cả hoặc
+  không gì cả, hoặc lên lịch theo ngày bắt đầu.
+- App `apps.campaigns`, API `/api/employer/campaigns/<id>/launch/`, beat
+  `run_campaign_schedule`: tự kích hoạt, tự hoàn tất sau ngày kết thúc, nhắc
+  trước 3 ngày, báo khi kích hoạt theo lịch thất bại.
+- Trạng thái chiến dịch `scheduled`; nút Hoàn tất / Hủy / Hủy lịch trong
+  workspace.
+
+#### Changed
+
+- Chiến dịch tạo nhanh ra nháp (tạo ngay trong form đăng tin vẫn chạy luôn).
+- Hoàn tất hoặc hủy chiến dịch đóng các tin đang tuyển thay vì chỉ ẩn.
+- `docs/04-api/openapi.yaml` được sinh lại từ mã hiện tại.
+
+#### Added — Giao diện "Xem độ phù hợp" (tuần 4)
+
+- Thẻ "Xem độ phù hợp" có mascot ở cột phải trang chi tiết tin (điện thoại, máy tính
+  bảng: ngay dưới thông tin chính của tin); hộp thoại chọn CV,
+  màn hình AI đang phân tích, kết quả với thước bốn mức, tiêu chí, kỹ năng có/thiếu
+  kèm câu trích từ CV, yêu cầu, gợi ý và cảnh báo không phải quyết định tuyển dụng.
+- Tập vàng 150 cặp CV–tin cho đánh giá (nhãn do Claude gán theo rubric, có quy tắc
+  làm rõ do người làm đồ án chốt; người kiểm tra sơ bộ 5 cặp).
+
+#### Changed
+
+- Trang lưu CV thành công chỉ hiện nhãn mức phù hợp, không hiện phần trăm.
+- Tên site setting `ai_job_match_enabled` trong trang quản trị: "AI xem độ phù hợp CV với tin".
+
+#### Added — Chấm độ phù hợp CV–tin và ml-worker (tuần 3)
+
+- API `/api/matching/analyses/` cho ứng viên: yêu cầu phân tích (cache theo
+  phiên bản CV, nội dung tin, mô hình, công thức), poll kết quả, xem các lần gần
+  nhất của một tin; cờ `ai_job_match_enabled`, giới hạn 20 lượt/giờ.
+- Công thức `hybrid-v1` (`apps/matching/services/scoring/`): kỹ năng, kinh
+  nghiệm (số năm nhân mức liên quan), học vấn, cấp bậc, ngoại ngữ (trần 64 khi
+  thiếu ngoại ngữ bắt buộc), địa điểm; câu tóm tắt và gợi ý theo luật
+  (`explain.py`), không sinh văn bản tự do.
+- Service `ml-worker` (Dockerfile target `ml`, queue `ai-matching`) chạy mô hình
+  `intfloat/multilingual-e5-base` local; vector tính sẵn khi CV/tin được lưu;
+  lệnh `matching_backfill`; beat phục hồi phân tích treo mỗi 60 giây.
+- `ml/scripts/calibrate.py` đo AUC và mốc hiệu chuẩn; `ml/scripts/export_model.py`
+  lưu mô hình cho ml-worker.
+
+#### Added — Trích xuất hồ sơ đối sánh CV–JD (tuần 2)
+
+- `apps/matching/services/extraction/` chuyển CV builder, CV tải lên (PDF/DOCX)
+  và tin tuyển dụng thành `profile_json`: kỹ năng kèm nguồn và câu bằng chứng,
+  số tháng kinh nghiệm kèm cơ sở tính, bậc học, cấp bậc, ngoại ngữ, chunk. Theo
+  quy tắc chống bịa dữ liệu: thiếu thông tin thì ghi vào `quality.missing`,
+  không đoán; chunk không chứa email/số điện thoại; câu yêu cầu về giới tính,
+  tuổi, ngoại hình không được đối sánh.
+- `apps/matching/services/skills.py` nhận diện kỹ năng theo danh mục (tên +
+  alias, đúng hoa thường với tên ngắn như "AI"), loại nhóm "Phẩm chất cá nhân"
+  khỏi điểm.
+- Lệnh `matching_export_dataset` (chỉ đọc) xuất hồ sơ ra JSONL cho các script ở `ml/`.
+- `ml/scripts/`: `extract_check.py` (so thư viện đọc PDF), `baseline.py`
+  (TF-IDF, BM25), `build_gold_pairs.py` (ghép 150 cặp tập vàng, phiếu chấm
+  `ml/labeling/gold_pairs.xlsx`), `export_profiles.py` + `check_profiles.py`
+  (đối chiếu hồ sơ với nhãn); số liệu ở `ml/reports/`.
+
+#### Changed
+
+- Đọc chữ của CV PDF bằng `pypdfium2` (pypdf chỉ còn kiểm tra mật khẩu và số
+  trang): pypdf tách rời chữ có dấu ở khoảng 9% từ của CV tiếng Việt, pypdfium2
+  không tách ở cả 51 PDF đo thử. Văn bản CV chuẩn hóa NFC, icon font của mẫu CV
+  đổi thành khoảng trắng.
+
+#### Fixed
+
+- CV-070 của kho CV tổng hợp lẫn lời thoại của mô hình vào tên tổ chức; đã sửa
+  trong JSON và lưu phiên bản CV mới. `enrich_cvs.py` sinh lại khi ô ngắn dài
+  bất thường (`has_runaway_text`).
+
+#### Added — Kho CV tổng hợp cho thực nghiệm đối sánh CV–JD
+
+- `ml/scripts/generate_cvs.py` sinh CV hư cấu bằng mô hình chạy local (Ollama,
+  `qwen2.5:7b`) từ các tin tuyển dụng đã nhập: đủ 8 nhóm vị trí của tập vàng và
+  các vị trí khác, tiếng Việt và tiếng Anh, ba mức khớp dự kiến, kiểm tra trùng
+  nội dung.
+- Lệnh `import_cv_documents` (app `cvs`) đưa CV dựng sẵn vào hệ thống, mỗi CV một
+  tài khoản ứng viên thử không có mật khẩu dùng được; `ml/scripts/import_cvs.py`
+  gọi lệnh này và ghi kết quả vào tệp theo dõi `ml/data/cv/cv_inventory.xlsx`.
+- `ml/README.md` mô tả cấu trúc thư mục `ml/` và thứ tự chạy; đường dẫn dữ liệu
+  gom vào `ml/scripts/paths.py`.
+
 ### 2026-11-16
 
 #### Added — Bảng điều khiển quản trị

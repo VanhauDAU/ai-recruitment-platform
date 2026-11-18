@@ -1,0 +1,51 @@
+/* Card việc làm trên mobile: logo nhỏ lại, lương xuống dưới tiêu đề, hàng thao tác gọn. */
+@media (max-width: 767px) {
+  .job-card {
+    gap: 12px;
+    padding: 14px;
+  }
+
+  .job-card__logo {
+    height: 56px;
+    width: 56px;
+  }
+
+  /* antd đặt kích thước avatar skeleton bằng style inline. */
+  .job-card__logo-skeleton .ant-skeleton-avatar {
+    height: 56px !important;
+    width: 56px !important;
+  }
+
+  .job-card__logo-initial {
+    font-size: 20px;
+  }
+
+  .job-card__head {
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .job-card__footer {
+    margin-top: 10px;
+    padding-top: 8px;
+  }
+
+  /* Dòng yêu cầu bị cắt còn vài chữ ở bề ngang này; chi tiết đã có ở trang tin. */
+  .job-card__requirements {
+    display: none;
+  }
+
+  .job-card__actions {
+    flex: 1;
+  }
+
+  .job-card__posted {
+    margin-right: auto;
+  }
+
+  .job-card__compare {
+    border-radius: 999px;
+    height: 32px;
+    width: 32px;
+  }
+}

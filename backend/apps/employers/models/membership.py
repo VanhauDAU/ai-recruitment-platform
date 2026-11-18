@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.db import models
 
+from common.phone import same_phone
 from common.public_id import generate_public_id
 
 from .company import Company
@@ -23,7 +24,7 @@ class RecruiterProfile(models.Model):
     """
 
     class CompanyRole(models.TextChoices):
-        OWNER = 'owner', 'Người tạo công ty'
+        OWNER = 'owner', 'Quản lý công ty'
         MEMBER = 'member', 'Thành viên'
 
     class Gender(models.TextChoices):
@@ -102,6 +103,20 @@ class RecruiterProfile(models.Model):
             ),
         ]
 
+    @property
+    def has_verified_phone(self):
+        """The one rule for "phone verified", used by every screen and gate.
+
+        The verified number must still be the contact and login number; the
+        same line stored as 0xxx or +84xxx counts as one.
+        """
+        return bool(
+            self.phone_verified_at
+            and self.verified_phone
+            and same_phone(self.contact_phone, self.verified_phone)
+            and same_phone(self.user.phone, self.verified_phone)
+        )
+
     def save(self, *args, **kwargs):
         if not self.public_id:
             self.public_id = generate_public_id('rec')
@@ -116,6 +131,10 @@ class EmployerCompanyLinkEvent(models.Model):
 
     class EventType(models.TextChoices):
         ADMIN_UNLINKED = 'admin_unlinked', 'Admin gỡ liên kết công ty'
+        OWNERSHIP_TRANSFERRED = 'ownership_transferred', 'Chuyển quyền quản lý công ty'
+        OWNER_ASSIGNED = 'owner_assigned', 'Admin chỉ định quản lý công ty'
+        MEMBER_REMOVED = 'member_removed', 'Quản lý công ty gỡ thành viên'
+        RESOURCES_HANDED_OVER = 'resources_handed_over', 'Giao tin tuyển dụng cho thành viên khác'
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     recruiter = models.ForeignKey(
@@ -154,10 +173,12 @@ class EmployerCompanyLinkEvent(models.Model):
 
 
 class CompanyJoinRequest(models.Model):
-    """A recruiter's request to join an existing company; the owner decides.
+    """A recruiter's request to join an existing company ("duyệt tham gia").
 
-    Linking used to take effect at once, so anyone could attach themselves to
-    any company. A recruiter has at most one pending request.
+    An eligible owner (active and verified) decides; when the company has none,
+    an administrator decides instead. Joining never verifies the recruiter:
+    "xác thực tài khoản" is the separate admin review of their documents. A
+    recruiter has at most one pending request.
     """
 
     class Status(models.TextChoices):

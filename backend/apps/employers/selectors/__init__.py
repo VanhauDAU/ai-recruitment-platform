@@ -29,7 +29,13 @@ from .companies import (
     similar_public_companies,
 )
 from .company_follows import company_follow_state, followed_companies_queryset
-from .company_membership import company_join_requests_for_owner, pending_company_join_request
+from .company_members import company_members_queryset, former_company_members_queryset
+from .company_membership import (
+    admin_company_join_requests_queryset,
+    company_join_requests_for_owner,
+    pending_company_join_request,
+    pending_join_requests_awaiting_admin,
+)
 from .company_page import (
     build_public_company_profile,
     company_page_policy_hold,
@@ -85,7 +91,11 @@ from .recruitment_needs import first_recruitment_need
 from .rollout import employer_rollout_counters
 
 __all__ = [
+    'company_members_queryset',
+    'former_company_members_queryset',
+    'admin_company_join_requests_queryset',
     'company_join_requests_for_owner',
+    'pending_join_requests_awaiting_admin',
     'pending_company_join_request',
     'build_employer_onboarding_steps',
     'build_employer_initial_onboarding',

@@ -1,0 +1,125 @@
+/*
+ * Trang chi tiết tin: bố cục mobile + thanh hành động dưới. Tải cùng route nên
+ * không cộng vào CSS khởi tạo. CSS không layer thắng utility Tailwind, nên rule
+ * chỉ cho mobile phải nằm trong media query.
+ */
+
+/* Nút so sánh ở thanh hành động dưới cùng cỡ nút lưu bên cạnh. */
+.job-mobile-actions__compare {
+  height: 44px;
+  width: 44px;
+}
+
+@media (min-width: 640px) {
+  .job-rating__caption {
+    display: none;
+  }
+}
+
+@media (max-width: 767px) {
+  /* Đang đọc tin thì không cần thanh tìm kiếm 4 hàng chiếm nửa màn hình. */
+  .job-detail-search {
+    display: none;
+  }
+
+  .job-hero > div {
+    padding: 16px;
+  }
+
+  /* Lương chiếm cả hàng, địa điểm + kinh nghiệm chia đôi hàng dưới. */
+  .job-hero__metrics {
+    gap: 12px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-top: 14px;
+    padding-block: 12px;
+  }
+
+  .job-hero__salary {
+    grid-column: 1 / -1;
+    padding: 10px 12px;
+  }
+
+  .job-hero__metrics > div {
+    align-items: flex-start;
+  }
+
+  /* Nửa bề ngang không đủ cho một dòng tên tỉnh: cho xuống tối đa 2 dòng. */
+  .job-hero__metrics .truncate {
+    -webkit-box-orient: vertical;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    white-space: normal;
+  }
+
+  .job-hero__salary-icon {
+    font-size: 16px;
+    height: 36px;
+    width: 36px;
+  }
+
+  .job-hero__views {
+    display: none;
+  }
+
+  /* Ứng tuyển / lưu / so sánh đã có ở thanh dưới màn hình. */
+  .job-hero .job-hero__cta {
+    display: none;
+  }
+
+  .job-hero__actions {
+    margin-top: 0;
+  }
+
+  .job-detail-alert {
+    margin-left: 0;
+  }
+
+  .job-closing__buttons {
+    display: none;
+  }
+
+  /* Trùng tag "Chuyên môn" trong phần chi tiết. */
+  .job-related-topics {
+    display: none;
+  }
+
+  .job-general-info dl {
+    display: grid;
+    gap: 14px 16px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .job-general-info dl > div {
+    margin: 0;
+  }
+
+  .job-general-info dt {
+    display: none;
+  }
+}
+
+@media (max-width: 639px) {
+  /* 5 mức đánh giá trên một hàng, nhãn của mức đã chọn hiện bên dưới. */
+  .job-rating__options {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .job-rating__option {
+    min-height: 52px;
+  }
+
+  .job-rating__option > span:first-child {
+    font-size: 24px;
+  }
+
+  .job-rating__label {
+    display: none;
+  }
+
+  .job-rating__caption {
+    color: #475569;
+    font-size: 13px;
+    margin-top: 10px;
+    text-align: center;
+  }
+}

@@ -162,7 +162,7 @@ export default function ApplicationInspectorPanel({
               {selectedApplication.job_title}
             </InfoRow>
             <InfoRow icon={<CalendarOutlined aria-hidden />} label="Ngày ứng tuyển">
-              {formatApplicationDate(selectedApplication.applied_at || snapshot?.submitted_at, true)}
+              {formatApplicationDate(selectedApplication.applied_at, true)}
               {` · Lần ${selectedApplication.submission_number || 1}`}
             </InfoRow>
             {selectedApplication.last_reminded_at && (
@@ -171,7 +171,9 @@ export default function ApplicationInspectorPanel({
               </InfoRow>
             )}
             <InfoRow icon={<CheckCircleOutlined aria-hidden />} label="Nguồn hồ sơ">
-              {SOURCE_LABELS[selectedApplication.source] || selectedApplication.source || 'Ứng tuyển trực tiếp'}
+              {selectedApplication.campaign_channel_label
+                ? `Kênh chiến dịch: ${selectedApplication.campaign_channel_label}`
+                : SOURCE_LABELS[selectedApplication.source] || selectedApplication.source || 'Ứng tuyển trực tiếp'}
             </InfoRow>
             <InfoRow icon={<CheckCircleOutlined aria-hidden />} label="Phân tích bằng AI">
               {snapshot?.allow_ai_analysis ? 'Ứng viên đã đồng ý' : 'Không có sự đồng ý'}

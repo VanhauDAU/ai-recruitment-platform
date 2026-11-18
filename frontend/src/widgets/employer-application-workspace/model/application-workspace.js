@@ -1,5 +1,5 @@
 function timestampOf(application) {
-  const value = application.applied_at || application.submitted_at
+  const value = application.applied_at
   const timestamp = value ? new Date(value).getTime() : 0
   return Number.isNaN(timestamp) ? 0 : timestamp
 }

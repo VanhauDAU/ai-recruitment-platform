@@ -1,0 +1,31 @@
+title Sơ đồ hoạt động chức năng quản lý mẫu CV
+Quản trị viên tạo mẫu mới: tên, danh mục, bộ dựng giao diện
+Hệ thống tạo mẫu CV và phiên bản nháp
+while Còn bước cấu hình chưa xong? | Có | Không
+  Quản trị viên cấu hình bố cục, mục, màu, phông chữ
+  Hệ thống lưu cấu hình phiên bản nháp
+endwhile
+Quản trị viên bấm "Xuất PDF thử"
+Hệ thống giao việc xuất PDF thử cho Worker
+fork
+  Worker dựng tệp PDF thử theo cấu hình
+again
+  while PDF thử chưa sẵn sàng? | Có | Không
+    Giao diện thăm dò trạng thái mỗi 1,5 giây
+  endwhile
+endfork
+Giao diện hiển thị tệp PDF thử
+Quản trị viên bấm "Xuất bản"
+Hệ thống kiểm tra danh sách điều kiện xuất bản
+if Đạt danh sách kiểm tra và phiên bản là nháp?
+case Không
+  Giao diện chỉ ra mục còn thiếu
+  stop
+case Có
+endif
+Hệ thống xuất bản phiên bản, cho phiên bản cũ ngừng dùng
+fork
+  Worker tạo ảnh xem trước theo từng màu
+again
+  Giao diện báo mẫu đã có trong thư viện của ứng viên
+endfork

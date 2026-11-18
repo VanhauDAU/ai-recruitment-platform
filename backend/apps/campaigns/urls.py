@@ -1,0 +1,104 @@
+from django.urls import path
+
+from .api.views.channels import (
+    CampaignChannelContentView,
+    CampaignChannelCostDetailView,
+    CampaignChannelCostView,
+    CampaignChannelDetailView,
+    CampaignChannelListView,
+    CampaignChannelReportView,
+)
+from .api.views.health import CampaignHealthView, CampaignReportExportView
+from .api.views.launch import CampaignLaunchView
+from .api.views.social import (
+    ChannelPostDetailView,
+    ChannelPostListView,
+    FacebookCallbackView,
+    SocialConnectionDetailView,
+    SocialConnectionListView,
+    SocialConnectStartView,
+    SocialPendingPagesView,
+)
+
+urlpatterns = [
+    path(
+        'campaigns/<str:public_id>/launch/',
+        CampaignLaunchView.as_view(),
+        name='employer-campaign-launch',
+    ),
+    path(
+        'campaigns/<str:public_id>/channels/',
+        CampaignChannelListView.as_view(),
+        name='employer-campaign-channels',
+    ),
+    path(
+        'campaigns/<str:public_id>/channel-report/',
+        CampaignChannelReportView.as_view(),
+        name='employer-campaign-channel-report',
+    ),
+    path(
+        'campaigns/<str:public_id>/channels/<str:channel_id>/',
+        CampaignChannelDetailView.as_view(),
+        name='employer-campaign-channel-detail',
+    ),
+    path(
+        'campaigns/<str:public_id>/channels/<str:channel_id>/content/',
+        CampaignChannelContentView.as_view(),
+        name='employer-campaign-channel-content',
+    ),
+    path(
+        'campaigns/<str:public_id>/channels/<str:channel_id>/costs/',
+        CampaignChannelCostView.as_view(),
+        name='employer-campaign-channel-costs',
+    ),
+    path(
+        'campaigns/<str:public_id>/channels/<str:channel_id>/costs/<int:cost_id>/',
+        CampaignChannelCostDetailView.as_view(),
+        name='employer-campaign-channel-cost-detail',
+    ),
+    path(
+        'campaigns/<str:public_id>/channels/<str:channel_id>/posts/',
+        ChannelPostListView.as_view(),
+        name='employer-campaign-channel-posts',
+    ),
+    path(
+        'campaigns/<str:public_id>/channels/<str:channel_id>/posts/<str:post_id>/',
+        ChannelPostDetailView.as_view(),
+        name='employer-campaign-channel-post-detail',
+    ),
+    path(
+        'social/connections/',
+        SocialConnectionListView.as_view(),
+        name='employer-social-connections',
+    ),
+    path(
+        'social/connections/<str:connection_id>/',
+        SocialConnectionDetailView.as_view(),
+        name='employer-social-connection-detail',
+    ),
+    path(
+        'social/facebook/authorize/',
+        SocialConnectStartView.as_view(),
+        name='employer-social-facebook-authorize',
+    ),
+    path(
+        'social/facebook/callback/',
+        FacebookCallbackView.as_view(),
+        name='employer-social-facebook-callback',
+    ),
+    path(
+        'social/facebook/pending/<str:nonce>/',
+        SocialPendingPagesView.as_view(),
+        name='employer-social-facebook-pending',
+    ),
+    path(
+        'campaigns/<str:public_id>/health/',
+        CampaignHealthView.as_view(),
+        name='employer-campaign-health',
+    ),
+    path(
+        'campaigns/<str:public_id>/report/export/',
+        CampaignReportExportView.as_view(),
+        name='employer-campaign-report-export',
+    ),
+]

@@ -89,11 +89,15 @@ class EmployerAccountVerificationTests(APITestCase):
         )
 
     def _complete_recruiter(self, user):
+        # The verified number is also the contact and login number.
+        User.objects.filter(pk=user.pk).update(phone=f'09{user.pk:08d}')
+        user.phone = f'09{user.pk:08d}'
         recruiter = RecruiterProfile.objects.create(
             user=user,
             company=self.company,
             company_role=RecruiterProfile.CompanyRole.MEMBER,
             verified_phone=f'09{user.pk:08d}',
+            contact_phone=f'09{user.pk:08d}',
             phone_verified_at=timezone.now(),
             registration_completed_at=timezone.now(),
             dpa_accepted_at=timezone.now(),
@@ -562,7 +566,7 @@ class EmployerAccountVerificationTests(APITestCase):
         self.assertFalse(reconciled)
 
         self.first.phone_verified_at = timezone.now()
-        self.first.verified_phone = '0901234567'
+        self.first.verified_phone = self.first.contact_phone
         self.first.save(update_fields=['phone_verified_at', 'verified_phone', 'updated_at'])
         case, reconciled = reconcile_recruiter_verification(
             self.first,

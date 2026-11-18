@@ -3,10 +3,15 @@ from rest_framework import serializers
 from common.media_storage import media_url_from_value
 
 from ...models import CampaignActivity, RecruitmentCampaign
+from ...services import campaign_active_seconds
 
 
 class RecruitmentCampaignSerializer(serializers.ModelSerializer):
     status_label = serializers.CharField(source='get_status_display', read_only=True)
+    # Sum of the vacancies of the campaign's jobs; each job owns its position.
+    headcount = serializers.IntegerField(read_only=True, default=0)
+    active_days = serializers.SerializerMethodField()
+    activate = serializers.BooleanField(write_only=True, required=False, default=False)
     last_activity = serializers.SerializerMethodField()
     candidate_previews = serializers.SerializerMethodField()
     job_count = serializers.IntegerField(read_only=True, default=0)
@@ -28,8 +33,24 @@ class RecruitmentCampaignSerializer(serializers.ModelSerializer):
         fields = [
             'public_id',
             'name',
+            'description',
+            'slug',
+            'landing_intro',
+            'landing_enabled',
+            'headcount',
+            'start_date',
+            'target_date',
+            'is_continuous',
+            'budget_min',
+            'budget_max',
+            'budget_source',
             'status',
             'status_label',
+            'first_activated_at',
+            'ended_at',
+            'ended_by',
+            'active_days',
+            'activate',
             'last_activity',
             'candidate_previews',
             'job_count',
@@ -50,8 +71,13 @@ class RecruitmentCampaignSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = [
             'public_id',
+            'slug',
+            'headcount',
             'status',
             'status_label',
+            'first_activated_at',
+            'ended_at',
+            'ended_by',
             'last_activity',
             'job_count',
             'candidate_count',
@@ -69,6 +95,11 @@ class RecruitmentCampaignSerializer(serializers.ModelSerializer):
             'created_at',
             'updated_at',
         ]
+
+    def get_active_days(self, obj):
+        if obj.first_activated_at is None:
+            return None
+        return round(campaign_active_seconds(obj) / 86400, 1)
 
     def get_last_activity(self, obj):
         occurred_at = getattr(obj, 'last_activity_at', None) or obj.updated_at
@@ -96,16 +127,26 @@ class RecruitmentCampaignSerializer(serializers.ModelSerializer):
             for preview in getattr(obj, 'candidate_previews', [])
         ]
 
-    def to_internal_value(self, data):
-        unexpected_fields = set(data) - {'name'}
-        if unexpected_fields:
+    def validate(self, attrs):
+        if self.instance is not None:
+            attrs.pop('activate', None)
+
+        def current(field):
+            return attrs[field] if field in attrs else getattr(self.instance, field, None)
+
+        start_date, target_date = current('start_date'), current('target_date')
+        if start_date and target_date and target_date < start_date:
             raise serializers.ValidationError(
-                {
-                    field: 'Trường này không thuộc thông tin chiến dịch.'
-                    for field in unexpected_fields
-                }
+                {'target_date': 'Ngày kết thúc phải sau hoặc bằng ngày bắt đầu.'}
             )
-        return super().to_internal_value(data)
+        budget_min, budget_max = current('budget_min'), current('budget_max')
+        if budget_min is not None and budget_max is not None and budget_max < budget_min:
+            raise serializers.ValidationError(
+                {'budget_max': 'Ngân sách tối đa không được nhỏ hơn tối thiểu.'}
+            )
+        if current('is_continuous') and 'target_date' not in attrs and target_date:
+            attrs['target_date'] = None
+        return attrs
 
 
 class CampaignStatusSerializer(serializers.Serializer):

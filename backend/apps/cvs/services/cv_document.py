@@ -32,23 +32,23 @@ REJECTION_MESSAGES = {
     ),
 }
 
-# Section headings, matched without Vietnamese diacritics. The first three
-# groups are the core of any CV; at least one of them must be present.
-_CORE_GROUPS = 3
-_CV_SECTION_GROUPS = (
-    ('kinh nghiem', 'qua trinh cong tac', 'experience', 'employment', 'work history'),
-    ('hoc van', 'trinh do', 'education', 'academic'),
-    ('ky nang', 'skill'),
-    ('muc tieu', 'gioi thieu ban than', 'objective', 'summary', 'profile'),
-    ('du an', 'project'),
-    ('chung chi', 'bang cap', 'certific', 'license'),
-    ('giai thuong', 'thanh tich', 'award', 'achievement'),
-    ('hoat dong', 'activit', 'volunteer'),
-    ('so thich', 'interest', 'hobbies'),
-    ('nguoi tham chieu', 'tham khao', 'reference'),
-    ('ngoai ngu', 'language'),
-    ('thong tin ca nhan', 'personal'),
-)
+# Section headings, matched without Vietnamese diacritics. Experience,
+# education and skills are the core of any CV; at least one must be present.
+_CORE_SECTIONS = ('experience', 'education', 'skills')
+_CV_SECTION_GROUPS = {
+    'experience': ('kinh nghiem', 'qua trinh cong tac', 'experience', 'employment', 'work history'),
+    'education': ('hoc van', 'trinh do', 'education', 'academic'),
+    'skills': ('ky nang', 'skill'),
+    'summary': ('muc tieu', 'gioi thieu ban than', 'objective', 'summary', 'profile'),
+    'projects': ('du an', 'project'),
+    'certifications': ('chung chi', 'bang cap', 'certific', 'license'),
+    'awards': ('giai thuong', 'thanh tich', 'award', 'achievement'),
+    'activities': ('hoat dong', 'activit', 'volunteer'),
+    'interests': ('so thich', 'interest', 'hobbies'),
+    'references': ('nguoi tham chieu', 'tham khao', 'reference'),
+    'languages': ('ngoai ngu', 'language'),
+    'personal': ('thong tin ca nhan', 'personal'),
+}
 _EMAIL = re.compile(r'[\w.+-]+@[\w-]+(?:\.[\w-]+)+')
 _PHONE = re.compile(r'(?<!\d)\+?\d(?:[\s.\-()]*\d){8,13}(?!\d)')
 
@@ -59,16 +59,41 @@ class CvDocumentRejected(ValueError):
         super().__init__(REJECTION_MESSAGES[code])
 
 
+def _read_pdf_text(source):
+    """pypdf checks the password and page count; pypdfium2 reads the text.
+
+    pypdf splits Vietnamese words with diacritics ("Ứ ng viên") in about 9% of
+    words, pypdfium2 split none across 51 test CVs (`ml/reports/extract_check.md`).
+    """
+    import pypdfium2
+    from pypdf import PdfReader
+
+    reader = PdfReader(source)
+    if reader.is_encrypted:
+        raise CvDocumentRejected('encrypted_pdf')
+    if len(reader.pages) > MAX_CV_PAGES:
+        raise CvDocumentRejected('too_many_pages')
+    source.seek(0)
+    document = pypdfium2.PdfDocument(source.read())
+    try:
+        return '\n'.join(page.get_textpage().get_text_bounded() for page in document)
+    finally:
+        document.close()
+
+
+def clean_document_text(text):
+    """NFC, Unix newlines, private-use characters (template icon fonts) as spaces.
+
+    Icons stand between words ("Sep 2020 <icon> Jun 2024"), so they become a
+    space rather than vanish and glue the words together.
+    """
+    text = unicodedata.normalize('NFC', text).replace('\r\n', '\n').replace('\r', '\n')
+    return ''.join(' ' if unicodedata.category(char) == 'Co' else char for char in text)
+
+
 def _read_text(source, file_type):
     if file_type == 'pdf':
-        from pypdf import PdfReader
-
-        reader = PdfReader(source)
-        if reader.is_encrypted:
-            raise CvDocumentRejected('encrypted_pdf')
-        if len(reader.pages) > MAX_CV_PAGES:
-            raise CvDocumentRejected('too_many_pages')
-        return '\n'.join(page.extract_text() or '' for page in reader.pages)
+        return _read_pdf_text(source)
     if file_type == 'docx':
         from docx import Document
 
@@ -82,7 +107,7 @@ def _read_text(source, file_type):
 def extract_cv_text(source, file_type):
     """Return the document text, enforcing the page, text-layer and size standards."""
     try:
-        text = _read_text(source, file_type).strip()
+        text = clean_document_text(_read_text(source, file_type)).strip()
     except CvDocumentRejected:
         raise
     except Exception as error:
@@ -111,14 +136,38 @@ def _compact(text):
 
 
 _WHITESPACE = re.compile(r'\s+')
-_CV_SECTION_KEYS = tuple(tuple(_compact(key) for key in group) for group in _CV_SECTION_GROUPS)
+_CV_SECTION_KEYS = {
+    section: tuple(_compact(key) for key in keys) for section, keys in _CV_SECTION_GROUPS.items()
+}
 
 
-def _heading_candidates(text):
-    for line in text.splitlines():
-        head = _compact(line.split(':', 1)[0])
-        if 0 < len(head) <= MAX_HEADING_CHARS:
-            yield head
+def _heading_key(line):
+    head = _compact(line.split(':', 1)[0])
+    return head if 0 < len(head) <= MAX_HEADING_CHARS else ''
+
+
+# A section heading is the section name plus at most a few words
+# ("Kinh nghiệm làm việc", "Technical Skills"), not a title that merely
+# contains the keyword ("Nhóm Phát triển SoftSkills").
+MAX_HEADING_EXTRA_CHARS = 15
+
+
+def heading_section(line):
+    """CV section a heading line names (`'experience'`, `'skills'`…), or None.
+
+    When several sections match ("Trình độ ngoại ngữ"), the longest keyword wins.
+    """
+    head = _heading_key(line)
+    matches = [
+        (len(key), -order, section)
+        for order, (section, keys) in enumerate(_CV_SECTION_KEYS.items())
+        for key in keys
+        if head and key in head
+    ]
+    if not matches:
+        return None
+    length, _, section = max(matches)
+    return section if len(head) - length <= MAX_HEADING_EXTRA_CHARS else None
 
 
 def looks_like_cv(text):
@@ -129,13 +178,18 @@ def looks_like_cv(text):
     """
     if not (_EMAIL.search(text) or _PHONE.search(text)):
         return False
-    headings = list(_heading_candidates(text))
-    found = [
-        index
-        for index, group in enumerate(_CV_SECTION_KEYS)
-        if any(key in heading for heading in headings for key in group)
-    ]
-    return len(found) >= MIN_CV_SECTION_GROUPS and any(index < _CORE_GROUPS for index in found)
+    headings = [head for head in map(_heading_key, text.splitlines()) if head]
+    found = {
+        section
+        for section, keys in _CV_SECTION_KEYS.items()
+        if any(key in heading for heading in headings for key in keys)
+    }
+    return len(found) >= MIN_CV_SECTION_GROUPS and any(key in found for key in _CORE_SECTIONS)
+
+
+def scrub_contacts(text):
+    """Text without email addresses and phone numbers (kept out of matching profiles)."""
+    return _PHONE.sub('', _EMAIL.sub('', text))
 
 
 def read_cv_document(source, file_type):

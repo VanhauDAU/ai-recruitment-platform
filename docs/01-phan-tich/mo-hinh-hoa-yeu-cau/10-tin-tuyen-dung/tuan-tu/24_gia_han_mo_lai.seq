@@ -1,0 +1,40 @@
+title Sơ đồ tuần tự chức năng gia hạn, dừng và mở lại tin tuyển dụng
+actor NTD Nhà tuyển dụng
+participant FE Giao diện web\n(React)
+participant BE Máy chủ API\n(Django REST)
+database DB CSDL\n(PostgreSQL)
+group Dừng nhận hồ sơ
+NTD -> FE : Bấm "Dừng tuyển"
+FE -> BE : POST /api/jobs/mine/{id}/close/
+alt Không phải tin đang hoạt động của NTD
+BE --> FE : 400
+else Hợp lệ
+BE -> DB : Job = closed, closed_at, ghi lịch sử
+BE --> FE : 200
+end
+end
+group Gia hạn hạn nộp
+NTD -> FE : Chọn hạn nộp mới
+FE -> BE : POST /api/jobs/mine/{id}/extend/ {deadline}
+BE -> BE : Kiểm tra: tin đang hoạt động, không bị chặn đăng, hạn mới muộn hơn hạn cũ, không quá hôm nay + 90 ngày, không quá thời gian hiển thị, tin hết hạn không quá 30 ngày
+alt Vi phạm điều kiện
+BE --> FE : 400 + lý do
+FE --> NTD : Gợi ý "Nhân bản tin" nếu vượt trần 90 ngày
+else Hợp lệ
+BE -> DB : Cập nhật application_deadline, ghi CampaignActivity
+BE --> FE : 200
+end
+end
+group Mở lại tin đã dừng
+NTD -> FE : Bấm "Mở lại", chọn hạn nộp, xác nhận cam kết trách nhiệm
+FE -> BE : POST /api/jobs/mine/{id}/reopen/ {application_deadline, responsibility_statement_version}
+alt Thiếu cam kết hoặc bị chặn đăng
+BE --> FE : 400 JOB_RESPONSIBILITY_REQUIRED / JOB_PUBLICATION_BLOCKED
+else Hạn nộp vượt trần 90 ngày từ lần duyệt đầu hoặc vượt thời gian hiển thị
+BE --> FE : 400
+else Hợp lệ
+BE -> DB : Job = active, giữ mốc chu kỳ ban đầu, không trừ hạn mức đăng tin
+BE --> FE : 200
+FE --> NTD : Tin hiển thị lại
+end
+end

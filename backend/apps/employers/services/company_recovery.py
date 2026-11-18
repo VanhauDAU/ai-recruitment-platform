@@ -6,6 +6,7 @@ import hashlib
 import json
 
 from django.db import transaction
+from django.db.models import Q
 
 from apps.accounts.models import User
 from apps.accounts.permissions import require_admin
@@ -31,6 +32,7 @@ from ..models import (
     RecruitmentNeed,
 )
 from ..models.verification import REQUESTER_EDITABLE_COMPANY_UPDATE_STATUSES
+from .company_membership import company_owners
 from .company_page_editors import revoke_page_editor_grants_on_unlink
 from .notifications import emit_employer_event
 
@@ -87,12 +89,21 @@ def _identity(user, *, lock):
     return user, recruiter, verification_case, recruiter.company
 
 
-def _verification_documents(verification_case):
-    if verification_case is None:
-        return CompanyDocument.objects.none()
-    return CompanyDocument.objects.filter(
-        verification_case=verification_case, is_current=True
-    ).exclude(status=CompanyDocument.Status.APPROVED)
+def _verification_documents(verification_case, *, recruiter=None, company=None):
+    """Current proof for the company being left, approved or not.
+
+    It only ever proved representation of that company, so none of it may
+    show up as current proof for the next one.
+    """
+    owned = Q(pk__in=[])
+    if verification_case is not None:
+        owned |= Q(verification_case=verification_case)
+    if recruiter is not None:
+        owned |= Q(recruiter=recruiter, verification_case__isnull=True, update_request__isnull=True)
+    documents = CompanyDocument.objects.filter(owned, is_current=True)
+    if company is not None:
+        documents = documents.filter(company=company)
+    return documents
 
 
 def _open_update_requests(user, company):
@@ -119,12 +130,7 @@ def _clean_snapshot(user, recruiter, verification_case, company):
             posted_by=user, company=company, status=Job.Status.ACTIVE
         ).count(),
         'open_campaigns': RecruitmentCampaign.objects.filter(owner=recruiter)
-        .exclude(
-            status__in=[
-                RecruitmentCampaign.Status.COMPLETED,
-                RecruitmentCampaign.Status.CANCELLED,
-            ]
-        )
+        .exclude(status__in=RecruitmentCampaign.TERMINAL_STATUSES)
         .count(),
         'active_compliance_holds': EmployerComplianceHold.objects.filter(
             recruiter=recruiter,
@@ -133,7 +139,9 @@ def _clean_snapshot(user, recruiter, verification_case, company):
         'other_members': RecruiterProfile.objects.filter(company=company)
         .exclude(pk=recruiter.pk)
         .count(),
-        'withdrawn_documents': _verification_documents(verification_case).count(),
+        'withdrawn_documents': _verification_documents(
+            verification_case, recruiter=recruiter, company=company
+        ).count(),
         'cancelled_update_requests': _open_update_requests(user, company).count(),
     }
     blockers = []
@@ -182,8 +190,11 @@ def _clean_snapshot(user, recruiter, verification_case, company):
 
 
 def _withdraw_unapproved_evidence(user, verification_case, company, *, actor, event):
-    """What was submitted for this company but never approved goes with the link."""
-    _verification_documents(verification_case).update(is_current=False)
+    """Every proof submitted for this company stops being current with the link."""
+    recruiter = RecruiterProfile.objects.filter(user=user).first()
+    _verification_documents(verification_case, recruiter=recruiter, company=company).update(
+        is_current=False
+    )
     _open_update_requests(user, company).update(status=CompanyUpdateRequest.Status.CANCELLED)
     if verification_case is None:
         return
@@ -313,4 +324,83 @@ def confirm_company_unlink(user, *, actor, reason, impact_token):
             'reason': normalized_reason,
         },
     )
+    return event
+
+
+# What a manager must see cleared before removing a member. A member's approved
+# verification does not block: it proved representation of this company only
+# and is withdrawn with the link.
+MEMBER_REMOVAL_BLOCKERS = {
+    'ACTIVE_JOBS_EXIST': 'Còn tin đang tuyển',
+    'OPEN_CAMPAIGNS_EXIST': 'Còn chiến dịch tuyển dụng đang mở',
+    'COMPLIANCE_HOLDS_EXIST': 'Đang bị giữ để kiểm tra tuân thủ',
+}
+
+
+@transaction.atomic
+def remove_company_member(manager_user, member_public_id, *, reason):
+    """The company manager removes a member; the member leaves with nothing pending."""
+    reason = (reason or '').strip()
+    if not reason:
+        raise CompanyUnlinkError(
+            'COMPANY_MEMBER_REMOVAL_REASON_REQUIRED', 'Nhập lý do gỡ thành viên.'
+        )
+    manager = RecruiterProfile.objects.select_related('company').filter(user=manager_user).first()
+    if (
+        manager is None
+        or manager.company_id is None
+        or not company_owners(manager.company).filter(pk=manager.pk).exists()
+    ):
+        raise CompanyUnlinkError(
+            'COMPANY_MANAGER_REQUIRED', 'Chỉ quản lý công ty đã xác thực mới gỡ được thành viên.'
+        )
+    target = (
+        RecruiterProfile.objects.select_related('user')
+        .filter(company_id=manager.company_id, public_id=member_public_id)
+        .first()
+    )
+    if target is None:
+        raise CompanyUnlinkError('COMPANY_MEMBER_NOT_FOUND', 'Không tìm thấy thành viên này.')
+    if target.company_role == RecruiterProfile.CompanyRole.OWNER:
+        raise CompanyUnlinkError(
+            'COMPANY_MANAGER_NOT_REMOVABLE',
+            'Không thể gỡ quản lý công ty. Hãy chuyển quyền quản lý trước.',
+        )
+    user, recruiter, verification_case, company = _identity(target.user, lock=True)
+    snapshot = _clean_snapshot(user, recruiter, verification_case, company)
+    blockers = [code for code in snapshot['blockers'] if code in MEMBER_REMOVAL_BLOCKERS]
+    if blockers:
+        raise CompanyUnlinkError(
+            'COMPANY_MEMBER_NOT_REMOVABLE',
+            'Chưa thể gỡ: '
+            + ', '.join(MEMBER_REMOVAL_BLOCKERS[code].lower() for code in blockers)
+            + '.',
+            blockers=blockers,
+        )
+    event = EmployerCompanyLinkEvent.objects.create(
+        recruiter=recruiter,
+        company=company,
+        actor=manager_user,
+        event_type=EmployerCompanyLinkEvent.EventType.MEMBER_REMOVED,
+        reason=reason,
+        impact_snapshot={
+            key: value
+            for key, value in snapshot.items()
+            if key not in {'integrity_revision', 'recruiter_updated_at', 'company_updated_at'}
+        },
+    )
+    emit_employer_event(
+        recipient=user,
+        actor=manager_user,
+        event_type=EmployerNotification.EventType.COMPANY_LINK_REMOVED,
+        dedupe_key=f'company-link-event:{event.public_id}',
+        message=f'Quản lý công ty đã gỡ bạn khỏi {company.company_name}.',
+        subject_public_id=company.public_id,
+        metadata={'company_public_id': company.public_id, 'event_public_id': event.public_id},
+    )
+    revoke_page_editor_grants_on_unlink(recruiter, actor=manager_user)
+    _withdraw_unapproved_evidence(user, verification_case, company, actor=manager_user, event=event)
+    recruiter.company = None
+    recruiter.company_role = ''
+    recruiter.save(update_fields=['company', 'company_role', 'updated_at'])
     return event

@@ -4,6 +4,7 @@ import {
   LockOutlined,
   SafetyCertificateOutlined,
   SettingOutlined,
+  ShareAltOutlined,
   SolutionOutlined,
   UserOutlined,
 } from '@ant-design/icons'
@@ -16,6 +17,7 @@ import {
   EMPLOYER_COMPANY_SETTINGS_URL,
   EMPLOYER_DATA_PROTECTION_URL,
   EMPLOYER_GENERAL_SETTINGS_URL,
+  EMPLOYER_INTEGRATIONS_URL,
   EMPLOYER_PASSWORD_SETTINGS_URL,
   EMPLOYER_RECRUITMENT_DEMAND_URL,
 } from '@/shared/config/portals'
@@ -28,6 +30,7 @@ const ITEMS = [
   { to: EMPLOYER_DATA_PROTECTION_URL, label: 'Văn bản xử lý Dữ liệu cá nhân', icon: SafetyCertificateOutlined },
   { to: EMPLOYER_COMPANY_SETTINGS_URL, label: 'Thông tin công ty', icon: BankOutlined },
   { to: EMPLOYER_RECRUITMENT_DEMAND_URL, label: 'Nhu cầu tuyển dụng', icon: SolutionOutlined },
+  { to: EMPLOYER_INTEGRATIONS_URL, label: 'Kết nối mạng xã hội', icon: ShareAltOutlined },
   { to: EMPLOYER_GENERAL_SETTINGS_URL, label: 'Cài đặt', icon: SettingOutlined },
 ]
 

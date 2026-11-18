@@ -351,6 +351,9 @@ class Job(models.Model):
     moderation_held_at = models.DateTimeField(null=True, blank=True)
     # Set when the owner sends a job under CHANGES_REQUESTED back for review.
     moderation_resubmitted_at = models.DateTimeField(null=True, blank=True)
+    # Digest of the content an administrator asked to change; a resubmit with
+    # the same digest changed nothing and is refused.
+    moderation_content_digest = models.CharField(max_length=64, blank=True, default='')
     view_count = models.IntegerField(default=0)
     impression_count = models.PositiveIntegerField(default=0)
     application_count = models.IntegerField(default=0)
@@ -502,6 +505,10 @@ class Job(models.Model):
             ends.append(vietnam_day_start(self.deadline + timedelta(days=1)))
         if self.visibility_ends_at is not None and self.visibility_ends_at <= now:
             ends.append(self.visibility_ends_at)
+        if self.visibility_ends_at is None:
+            # No display window means not public (``is_expired`` agrees); the
+            # last change is the best known moment it stopped.
+            ends.append(self.updated_at)
         return min(ends) if ends else None
 
     @property

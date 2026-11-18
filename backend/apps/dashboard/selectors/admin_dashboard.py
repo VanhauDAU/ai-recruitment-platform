@@ -34,7 +34,11 @@ from apps.employers.models import (
     EmployerComplianceHold,
     EmployerVerificationCase,
 )
-from apps.employers.selectors import admin_company_summary, admin_verification_summary
+from apps.employers.selectors import (
+    admin_company_summary,
+    admin_verification_summary,
+    pending_join_requests_awaiting_admin,
+)
 from apps.employers.services import ACTIVE_COMPANY_UPDATE_STATUSES
 from apps.jobs.models import (
     Job,
@@ -62,6 +66,7 @@ QUEUE_SLA_HOURS = {
     'recruiter_verification': 72,
     'domain_verification': 72,
     'company_updates': 72,
+    'company_join_requests': 72,
     'job_reports': 48,
     'company_reports': 48,
     'job_resubmissions': 48,
@@ -158,6 +163,13 @@ def _queues(now, job_summary):
             now,
             count=company['pending_update_requests'],
         ),
+        # Requests nobody but an administrator can decide (no eligible owner).
+        _queue(
+            'company_join_requests',
+            pending_join_requests_awaiting_admin(),
+            'created_at',
+            now,
+        ),
         _queue(
             'job_reports',
             JobReport.objects.filter(status=JobReport.Status.PENDING),
@@ -243,7 +255,9 @@ def _activity_series(window):
         'candidates': daily(users.filter(role=User.Role.CANDIDATE), 'date_joined'),
         'employers': daily(users.filter(role=User.Role.EMPLOYER), 'date_joined'),
         'jobs': daily(Job.objects.all(), 'published_at'),
-        'applications': daily(Application.objects.filter(is_current=True), 'applied_at'),
+        # Every submission counts on its own day; a later resubmission must not
+        # rewrite the past. The funnel and backlog keep to current ones.
+        'applications': daily(Application.objects.all(), 'applied_at'),
     }
     series = []
     for offset in range(window['days']):
@@ -258,7 +272,7 @@ def _kpis(window):
         'candidates': _compare(users, 'date_joined', window, Q(role=User.Role.CANDIDATE)),
         'employers': _compare(users, 'date_joined', window, Q(role=User.Role.EMPLOYER)),
         'jobs': _compare(Job.objects.all(), 'published_at', window),
-        'applications': _compare(Application.objects.filter(is_current=True), 'applied_at', window),
+        'applications': _compare(Application.objects.all(), 'applied_at', window),
     }
 
 
@@ -278,8 +292,9 @@ def _applications(window, now):
         ),
     )
     avg_first_view = funnel.pop('avg_first_view')
+    # Unanswered (new or only viewed) for a week, counted from the submission.
     stale = current.filter(
-        status=Application.Status.SUBMITTED,
+        status__in=Application.UNANSWERED_STATUSES,
         applied_at__lt=now - timedelta(days=STALE_APPLICATION_DAYS),
     ).count()
     return {

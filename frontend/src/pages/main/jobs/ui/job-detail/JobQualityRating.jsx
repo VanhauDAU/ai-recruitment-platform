@@ -67,26 +67,31 @@ export default function JobQualityRating({ jobId }) {
     <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
       <h2 className="border-l-4 border-[var(--brand-primary)] pl-3 text-base font-bold text-slate-800 sm:text-lg">Đánh giá tin tuyển dụng</h2>
       <p className="mt-4 text-sm text-slate-600">Bạn thấy độ tin cậy và rõ ràng của tin tuyển dụng này thế nào?</p>
-      <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-5">
+      <div className="job-rating__options mt-4 grid grid-cols-1 gap-2 sm:grid-cols-5">
         {RATING_OPTIONS.map((option) => {
           const active = selected === option.value
           return (
             <button
               key={option.value}
               type="button"
+              aria-label={option.label}
+              aria-pressed={active}
               onClick={() => selectRating(option.value)}
-              className={`flex min-h-20 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border px-2 text-center text-xs transition ${
+              className={`job-rating__option flex min-h-20 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border px-2 text-center text-xs transition ${
                 active
                   ? 'border-[var(--brand-primary)] bg-[var(--brand-primary-soft)] font-semibold text-[var(--brand-primary)]'
                   : 'border-slate-200 bg-white text-slate-500 hover:border-emerald-300 hover:bg-emerald-50'
               }`}
             >
               <span className="text-xl">{option.icon}</span>
-              <span>{option.label}</span>
+              <span className="job-rating__label">{option.label}</span>
             </button>
           )
         })}
       </div>
+      <p className="job-rating__caption" aria-hidden="true">
+        {RATING_OPTIONS.find((option) => option.value === selected)?.label || 'Chạm biểu tượng để chọn mức đánh giá'}
+      </p>
       {needsReason && (
         <div className="mt-5">
           <p className="text-sm font-semibold text-slate-700">Những điểm nào trên tin tuyển dụng bạn đang thấy không đủ tin cậy và rõ ràng? <span className="text-red-500">*</span></p>

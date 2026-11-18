@@ -1,7 +1,7 @@
 """Nhập hàng loạt tin tuyển dụng từ JSON, dùng cho dữ liệu demo và tập đánh giá.
 
 Đầu vào là một mảng JSON các dòng tin, đọc từ tệp hoặc từ stdin (`-`);
-`ml/scripts/import_jd.py` tạo nó từ tệp Excel `ml/data/jd_input.xlsx`. Mỗi tin
+`ml/scripts/import_jd.py` tạo nó từ tệp Excel `ml/data/jd/jd_input.xlsx`. Mỗi tin
 được tạo rồi đưa lên công khai qua cùng bước kiểm tra với tin đăng thường.
 Mặc định chỉ chạy thử rồi hoàn tác; báo cáo JSON in ra stdout. Chạy lại an toàn:
 tin đã có (trùng tiêu đề và mô tả) được bỏ qua.

@@ -1,0 +1,42 @@
+title Sơ đồ tuần tự chức năng đăng nhập bằng Google
+actor ND Người dùng
+participant FE Giao diện web\n(React)
+participant BE Máy chủ API\n(Django REST)
+external GG Google OAuth 2.0
+database RD Bộ nhớ đệm\n(Redis)
+database DB CSDL\n(PostgreSQL)
+ND -> FE : Bấm "Đăng nhập với Google"
+FE -> BE : GET /api/auth/oauth/google/start/?portal=&next=
+BE -> RD : Lưu state {provider, portal, next} (10 phút)
+BE --> FE : 302 tới trang ủy quyền Google
+FE -> GG : Mở trang đăng nhập Google
+ND -> GG : Đăng nhập và đồng ý chia sẻ email, hồ sơ
+GG -> BE : GET /api/auth/oauth/google/callback/?code=&state=
+BE -> RD : Lấy và xóa state
+alt State sai hoặc người dùng hủy
+BE --> FE : 302 /oauth/callback?error=invalid_state | access_denied
+FE --> ND : Về trang đăng nhập kèm thông báo lỗi
+else State hợp lệ
+BE -> GG : Đổi code lấy access token
+GG --> BE : Token
+BE -> GG : Lấy thông tin người dùng (email, tên, ảnh)
+GG --> BE : Hồ sơ Google
+BE -> DB : Tìm SocialAccount / User theo (email, role của cổng)
+alt Email chưa được Google xác minh hoặc tài khoản bị khóa
+BE --> FE : 302 ?error=email_not_verified | inactive
+FE --> ND : Thông báo lỗi tương ứng
+else Đã có liên kết Google
+BE -> BE : Dùng tài khoản đã liên kết
+else Có tài khoản cùng email, chưa liên kết
+BE -> DB : Tạo SocialAccount, đánh dấu email đã xác minh
+else Chưa có tài khoản
+BE -> DB : Tạo User (không mật khẩu) và SocialAccount
+end
+BE -> RD : Tạo mã dùng một lần (60 giây)
+BE --> FE : 302 /oauth/callback?code=...&next=...
+FE -> BE : POST /api/auth/oauth/complete/ {code}
+BE -> RD : Lấy và xóa mã
+BE -> DB : Tạo AuthSession (auth_method = oauth)
+BE --> FE : 200 {user, access} + cookie refresh của cổng
+FE --> ND : Đăng nhập thành công, chuyển trang
+end

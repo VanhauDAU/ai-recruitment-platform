@@ -152,7 +152,7 @@ describe('admin company directory', () => {
     expect(screen.getByLabelText('Tóm tắt công ty')).toHaveTextContent('47')
     expect(screen.getByLabelText('Tóm tắt công ty')).toHaveTextContent('2')
     expect(screen.getByLabelText('Tóm tắt công ty')).toHaveTextContent('6')
-    expect(screen.getByLabelText('Tóm tắt công ty')).toHaveTextContent('Cần kiểm tra owner')
+    expect(screen.getByLabelText('Tóm tắt công ty')).toHaveTextContent('Cần kiểm tra quản lý')
   })
 
   it('opens the read-only company detail', async () => {

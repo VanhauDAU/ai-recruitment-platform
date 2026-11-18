@@ -1,0 +1,57 @@
+title Sơ đồ tuần tự chức năng hậu kiểm tin tuyển dụng
+actor QTV Quản trị viên
+participant FE Giao diện web\n(React)
+participant BE Máy chủ API\n(Django REST)
+database DB CSDL\n(PostgreSQL)
+actor NTD Nhà tuyển dụng
+group Quản trị viên xem xét tin
+QTV -> FE : Mở danh sách tin (đang hiển thị, bị ẩn, đã gửi lại)
+FE -> BE : GET /api/jobs/admin/moderation/?scope=
+BE --> FE : Danh sách tin
+QTV -> FE : Mở một tin
+FE -> BE : GET /api/jobs/admin/moderation/{id}/
+BE --> FE : Chi tiết, khác biệt so với bản đã đăng, thao tác hợp lệ, review_token
+QTV -> FE : Chọn thao tác, lý do, ghi chú
+FE -> BE : POST /api/jobs/admin/moderation/{id}/decisions/ {action, review_token, reason_code, note}
+alt Tin đã thay đổi sau khi mở
+BE --> FE : 409 job_moderation_stale
+else Ẩn tin (vi phạm nặng)
+BE -> DB : moderation_hold = confirmed_violation / manual_review, ghi sự kiện HIDE
+BE --> FE : 200
+note over NTD : Tin bị khóa, NTD không sửa, gia hạn hay nhân bản được
+else Yêu cầu sửa (lý do sửa được)
+BE -> DB : moderation_hold = changes_requested, lưu dấu nội dung, ghi sự kiện
+BE ->> NTD : Thông báo "Tin cần chỉnh sửa" kèm lý do
+BE --> FE : 200
+else Lý do không cho phép yêu cầu sửa
+BE --> FE : 400
+end
+end
+group Nhà tuyển dụng sửa và gửi lại
+NTD -> FE : Sửa nội dung tin theo yêu cầu
+FE -> BE : PATCH /api/jobs/mine/{id}/
+BE -> DB : Cập nhật nội dung (chỉ cho phép khi đang chờ sửa)
+NTD -> FE : Bấm "Gửi lại để duyệt"
+FE -> BE : POST /api/jobs/mine/{id}/resubmit/
+alt Nội dung chưa thay đổi
+BE --> FE : 400 "Bạn chưa chỉnh sửa nội dung"
+else Đã gửi lại trước đó
+BE --> FE : 400
+else Hợp lệ
+BE -> DB : Ghi moderation_resubmitted_at, sự kiện RESUBMIT
+BE --> FE : 200
+end
+end
+group Quản trị viên duyệt bản gửi lại
+QTV -> FE : Mở hàng chờ "Tin gửi lại"
+alt Đạt yêu cầu
+FE -> BE : POST .../decisions/ {action: restore}
+BE -> DB : Gỡ tạm giữ, bù thời gian hiển thị bị ẩn, ghi sự kiện RESTORE
+BE --> FE : 200
+else Chưa đạt
+FE -> BE : POST .../decisions/ {action: request_changes}
+BE -> DB : Mở vòng yêu cầu sửa mới
+BE ->> NTD : Thông báo cần sửa tiếp
+BE --> FE : 200
+end
+end

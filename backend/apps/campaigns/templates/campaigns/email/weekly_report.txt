@@ -1,0 +1,15 @@
+Báo cáo tuần: {{ campaign.name }}
+
+Tình trạng: {{ status_label }}
+Hồ sơ mới trong 7 ngày: {{ new_applications }}
+Đã tuyển: {{ health.accepted }}/{{ health.headcount }} người
+Dự báo tuyển được: {{ health.forecast }} người{% if health.required_velocity %}
+Cần khoảng {{ health.required_velocity }} hồ sơ mỗi ngày để kịp chỉ tiêu.{% endif %}
+Hồ sơ chờ quá 48 giờ chưa xem: {{ health.response.backlog }}
+{% if top_channels %}
+Kênh mang lại nhiều hồ sơ nhất:
+{% for channel in top_channels %}- {{ channel.label }}: {{ channel.total }} hồ sơ
+{% endfor %}{% endif %}
+Xem chi tiết: {{ campaign_url }}
+
+Tắt email này trong Cài đặt tài khoản > Cài đặt > Thông báo.

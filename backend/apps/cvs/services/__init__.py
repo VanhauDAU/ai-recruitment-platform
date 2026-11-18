@@ -7,13 +7,20 @@ from .assets import (
     create_background_asset,
 )
 from .audit import record_application_snapshot_access
-from .completeness import application_readiness_issues
-from .cv_document import CvDocumentRejected, read_cv_document
+from .completeness import application_readiness_issues, is_unsaved_builder_baseline
+from .cv_document import (
+    CvDocumentRejected,
+    extract_cv_text,
+    heading_section,
+    read_cv_document,
+    scrub_contacts,
+)
 from .cvs import (
     UnsupportedCvUpload,
     duplicate_cv,
     import_v2_cv,
     import_v2_cv_from_session,
+    open_snapshot_source_pdf,
     open_uploaded_cv_pdf,
     permanently_delete_cv,
     update_cv_metadata,
@@ -46,7 +53,18 @@ from .lifecycle import (
     save_draft_as_version,
     switch_draft_template,
 )
+from .matching_profile import (
+    EDUCATION_ORDER,
+    declared_skills,
+    education_level,
+    enabled_items,
+    experience_months,
+    merged_months,
+    month_index,
+    months_to_experience_years,
+)
 from .moderation import admin_cv_content, lock_cv, unlock_cv
+from .operator_import import SYNTHETIC_EMAIL_DOMAIN, create_pdf_twins, import_cv_documents
 from .recruiter_search import withdraw_cvs_from_recruiter_search
 from .sharing import (
     CvSharePermissionError,
@@ -75,7 +93,19 @@ __all__ = [
     'CvCreateInProgress',
     'CvLifecyclePolicyError',
     'CvDocumentRejected',
+    'extract_cv_text',
+    'heading_section',
     'read_cv_document',
+    'scrub_contacts',
+    'EDUCATION_ORDER',
+    'declared_skills',
+    'education_level',
+    'enabled_items',
+    'experience_months',
+    'merged_months',
+    'month_index',
+    'months_to_experience_years',
+    'SYNTHETIC_EMAIL_DOMAIN',
     'CvSharePermissionError',
     'CvShareUnavailableError',
     'CvExportPermissionError',
@@ -89,6 +119,7 @@ __all__ = [
     'duplicate_cv',
     'import_v2_cv',
     'import_v2_cv_from_session',
+    'open_snapshot_source_pdf',
     'open_uploaded_cv_pdf',
     'permanently_delete_cv',
     'InvalidCvImport',
@@ -105,7 +136,10 @@ __all__ = [
     'application_snapshot_export',
     'record_application_snapshot_access',
     'application_readiness_issues',
+    'is_unsaved_builder_baseline',
     'create_version',
+    'create_pdf_twins',
+    'import_cv_documents',
     'update_cv_metadata',
     'update_draft',
     'upload_cv',

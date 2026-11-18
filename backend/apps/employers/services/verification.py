@@ -19,6 +19,7 @@ from apps.accounts.services import (
     decode_impact_token,
     record_admin_action,
 )
+from common.vietnam_time import vietnam_today
 
 from ..models import (
     Company,
@@ -386,7 +387,7 @@ def _public_job_ids(case, *, scope=None, ignored_hold_ids=()):
         and recruiter.company_id == case.company_id
     ):
         return set()
-    today = timezone.localdate()
+    today = vietnam_today()
     visible = set()
     for job in jobs:
         if (
@@ -577,7 +578,7 @@ def verification_checks(case):
         'email_verified': recruiter.user.email_verified,
         'registration_completed': recruiter.registration_completed_at is not None,
         'consulting_need_completed': consulting_need_completed,
-        'phone_verified': recruiter.phone_verified_at is not None,
+        'phone_verified': recruiter.has_verified_phone,
         'company_linked': recruiter.company_id is not None
         and case.company_id == recruiter.company_id,
         'representative_documents_submitted': business_required.issubset(current_documents),

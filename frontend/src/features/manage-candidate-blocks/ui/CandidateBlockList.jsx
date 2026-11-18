@@ -25,7 +25,7 @@ export default function CandidateBlockList() {
   function lift(block) {
     requestConfirmation({
       title: 'Gỡ chặn ứng viên',
-      description: `${block.candidate_name} sẽ có thể nộp hồ sơ vào các tin của bạn trở lại.`,
+      description: `${block.candidate_name} sẽ có thể nộp hồ sơ vào các tin của công ty trở lại.`,
       confirmText: 'Gỡ chặn',
       onConfirm: () => liftMutation.mutateAsync(block.public_id),
     })
@@ -35,7 +35,7 @@ export default function CandidateBlockList() {
   if (query.isError) {
     return <Alert showIcon type="error" title="Không tải được danh sách đen" description={getApiErrorMessage(query.error, 'Vui lòng thử lại.')} />
   }
-  if (!blocks.length) return <Empty description="Bạn chưa chặn ứng viên nào" className="py-10" />
+  if (!blocks.length) return <Empty description="Công ty chưa chặn ứng viên nào" className="py-10" />
 
   return (
     <div className="space-y-3">
@@ -51,10 +51,10 @@ export default function CandidateBlockList() {
               </div>
               {block.note && <p className="mt-1 text-xs text-slate-600">{block.note}</p>}
               <p className="mt-1 text-[11px] text-slate-400">
-                Chặn lúc {formatDateTime(block.created_at)} · {block.expires_at ? `Hết hạn ${formatDateTime(block.expires_at)}` : 'Không thời hạn'}
+                {block.blocked_by_name} chặn lúc {formatDateTime(block.created_at)} · {block.expires_at ? `Hết hạn ${formatDateTime(block.expires_at)}` : 'Không thời hạn'}
               </p>
             </div>
-            <Button onClick={() => lift(block)}>Gỡ chặn</Button>
+            {block.can_lift && <Button onClick={() => lift(block)}>Gỡ chặn</Button>}
           </li>
         ))}
       </ul>

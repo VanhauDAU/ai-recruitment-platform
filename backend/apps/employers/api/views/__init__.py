@@ -40,8 +40,13 @@ from .media import (
     CompanyLogoUploadView,
 )
 from .memberships import (
+    CompanyHandoverView,
     CompanyJoinRequestDecisionView,
     CompanyJoinRequestListView,
+    CompanyMemberListView,
+    CompanyMemberRemoveView,
+    CompanyOwnershipTransferView,
+    FormerCompanyMemberListView,
     JoinCompanyView,
     MyCompanyJoinRequestView,
 )
@@ -108,7 +113,12 @@ __all__ = [
     'CreateCompanyView',
     'IndustryListView',
     'CompanyJoinRequestDecisionView',
+    'CompanyOwnershipTransferView',
     'CompanyJoinRequestListView',
+    'CompanyHandoverView',
+    'CompanyMemberListView',
+    'FormerCompanyMemberListView',
+    'CompanyMemberRemoveView',
     'JoinCompanyView',
     'MyCompanyJoinRequestView',
     'MyCompanyView',

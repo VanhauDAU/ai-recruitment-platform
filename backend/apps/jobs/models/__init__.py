@@ -31,8 +31,10 @@ from .querysets import (
 from .report import JobReport, JobReportResolutionEvent
 from .saved import SavedJob
 from .skills import JobSkill
+from .visibility import give_back_hidden_time
 
 __all__ = [
+    'give_back_hidden_time',
     'Benefit',
     'CandidateFollowedCompanyDigestSchedule',
     'CandidateJobDigest',

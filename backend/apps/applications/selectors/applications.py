@@ -19,6 +19,7 @@ from django.db.models.functions import Cast, Coalesce, Concat
 from django.utils import timezone
 
 from apps.candidates.models import CandidateNotification
+from apps.employers.models import RecruiterProfile
 
 from ..models import (
     Application,
@@ -43,11 +44,7 @@ def _history_notice():
 
 
 def candidate_published_history_queryset():
-    """History the candidate may see: undone rows and notices not yet
-    delivered (inside the recruiter's undo window) stay hidden."""
-    return ApplicationStatusHistory.objects.filter(reverted_at__isnull=True).exclude(
-        Exists(_history_notice().filter(delivered_at__isnull=True))
-    )
+    return ApplicationStatusHistory.objects.published()
 
 
 def candidate_applications_queryset(candidate):
@@ -64,12 +61,16 @@ def candidate_applications_queryset(candidate):
 
 
 def _recent_jobs_applied_count():
-    """Distinct jobs of the same recruiter the candidate applied to recently."""
+    """Distinct jobs of the same company the candidate applied to recently.
+
+    Company-wide like the blocklist it suggests: spreading applications over
+    several colleagues' jobs is still mass-applying.
+    """
     since = timezone.now() - timedelta(days=CandidateBlock.MASS_APPLY_WINDOW_DAYS)
     return (
         Application.objects.filter(
             candidate_id=OuterRef('candidate_id'),
-            job__posted_by_id=OuterRef('job__posted_by_id'),
+            job__company_id=OuterRef('job__company_id'),
             applied_at__gte=since,
         )
         .order_by()
@@ -98,6 +99,7 @@ def employer_applications_queryset(
             'cv',
             'submitted_cv_version',
             'submitted_cv_version__template_version',
+            'campaign_channel',
         )
         .prefetch_related(
             'preferred_locations',
@@ -106,7 +108,7 @@ def employer_applications_queryset(
             candidate_blocked=Exists(
                 CandidateBlock.objects.filter(
                     CandidateBlock.active_q(),
-                    recruiter_id=OuterRef('job__posted_by_id'),
+                    company_id=OuterRef('job__company_id'),
                     candidate_id=OuterRef('candidate_id'),
                 )
             ),
@@ -257,9 +259,14 @@ def recruiter_reviews_queryset(application):
 
 
 def recruiter_candidate_blocks_queryset(recruiter):
+    """Blocks in force for the recruiter's company, or their own when unlinked."""
+    company_id = (
+        RecruiterProfile.objects.filter(user=recruiter).values_list('company_id', flat=True).first()
+    )
+    scope = Q(company_id=company_id) if company_id else Q(recruiter=recruiter)
     return (
-        CandidateBlock.objects.filter(recruiter=recruiter, lifted_at__isnull=True)
-        .select_related('candidate', 'source_application__job')
+        CandidateBlock.objects.filter(scope, CandidateBlock.active_q())
+        .select_related('candidate', 'recruiter', 'source_application__job')
         .order_by('-created_at', '-id')
     )
 

@@ -279,6 +279,34 @@ export async function decideCompanyJoinRequest(publicId, decision) {
   return data
 }
 
+/** Members of the company the caller manages, with verification and activity. */
+export async function getCompanyMembers({ signal } = {}) {
+  const { data } = await api.get('/employer/company/members/', { signal })
+  return data
+}
+
+/** People who left the company but still hold jobs or campaigns there. */
+export async function getFormerCompanyMembers({ signal } = {}) {
+  const { data } = await api.get('/employer/company/former-members/', { signal })
+  return data
+}
+
+/** Give every job and campaign `source` holds at the company to `target` (both member_id). */
+export async function handOverCompanyResources(source, target) {
+  const { data } = await api.post('/employer/company/handover/', { source, target })
+  return data
+}
+
+/** The company manager removes a member; rejected with `blockers` while work is running. */
+export async function removeCompanyMember(memberId, reason) {
+  await api.post(`/employer/company/members/${encodeURIComponent(memberId)}/remove/`, { reason })
+}
+
+/** The company manager hands the role to a verified member (`memberId` = member_id). */
+export async function transferCompanyOwnership(memberId) {
+  await api.post('/employer/company/ownership-transfer/', { recruiter: memberId })
+}
+
 /** Sends a join request; nothing is linked until an owner approves it. */
 export async function joinEmployerCompany(payload) {
   const formData = new FormData()

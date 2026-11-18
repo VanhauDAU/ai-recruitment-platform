@@ -23,7 +23,7 @@ export default function CompanySearchPanel({ onLinked, onCreateInstead }) {
   const joinMutation = useMutation({
     mutationFn: joinEmployerCompany,
     onSuccess: async () => {
-      message.success('Đã gửi yêu cầu tham gia. Chủ công ty sẽ duyệt yêu cầu của bạn.')
+      message.success('Đã gửi yêu cầu tham gia. Quản lý công ty sẽ duyệt yêu cầu của bạn.')
       await onLinked()
     },
     onError: (error) => message.error(getApiErrorMessage(error, 'Không thể gửi yêu cầu tham gia công ty.')),

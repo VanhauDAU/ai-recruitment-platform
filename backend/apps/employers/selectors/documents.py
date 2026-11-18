@@ -11,7 +11,11 @@ def _owned_document_filter(*, user, recruiter):
 
 
 def _personal_document_filter(*, user, recruiter):
-    visible = Q(recruiter=recruiter) | Q(verification_case__recruiter=recruiter)
+    # Proof belongs to the company it was submitted for: after moving on, the
+    # previous company's documents are history, never current status here.
+    visible = (Q(recruiter=recruiter) | Q(verification_case__recruiter=recruiter)) & Q(
+        company_id=recruiter.company_id
+    )
     if has_explicit_company_link(recruiter):
         visible |= Q(
             company=recruiter.company,

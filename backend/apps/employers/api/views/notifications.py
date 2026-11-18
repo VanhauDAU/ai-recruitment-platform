@@ -26,6 +26,9 @@ def _preference_payload(preference):
             preference.intermediate_verification_email if preference else True
         ),
         'new_application_email': preference.new_application_email if preference else True,
+        'campaign_weekly_report_email': (
+            preference.campaign_weekly_report_email if preference else True
+        ),
     }
 
 

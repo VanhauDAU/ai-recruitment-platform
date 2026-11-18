@@ -10,5 +10,6 @@ export const adminCompanyKeys = {
     'recruiters',
     params,
   ],
+  joinRequests: (params) => [...adminCompanyKeys.all, 'join-requests', params],
   publicPage: (publicId) => [...adminCompanyKeys.detail(publicId), 'public-page'],
 }
