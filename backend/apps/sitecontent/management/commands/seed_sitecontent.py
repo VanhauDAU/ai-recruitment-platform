@@ -733,7 +733,16 @@ SETTINGS = [
         {'env_var': 'GEMINI_API_KEY'},
     ),
     ('ai_cv_review_enabled', 'AI chấm/review CV', G.AI, T.BOOLEAN, True, True, '', {}),
-    ('ai_job_match_enabled', 'AI gợi ý việc phù hợp', G.AI, T.BOOLEAN, True, True, '', {}),
+    (
+        'ai_job_match_enabled',
+        'AI xem độ phù hợp CV với tin',
+        G.AI,
+        T.BOOLEAN,
+        True,
+        True,
+        'Nút "Xem độ phù hợp" trên trang chi tiết tin; tắt thì API trả 403.',
+        {},
+    ),
     ('ai_daily_request_limit', 'Giới hạn request AI/ngày/người', G.AI, T.NUMBER, 50, False, '', {}),
     (
         'ai_job_generation_enabled',

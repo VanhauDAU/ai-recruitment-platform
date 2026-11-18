@@ -1,0 +1,85 @@
+/* Thẻ mở "Xem độ phù hợp": cột phải dưới thông tin công ty (máy tính) hoặc ngay
+   dưới thông tin chính của tin (điện thoại, máy tính bảng).
+   Nạp cùng chunk của trang (route tải trễ), không vào CSS khởi tạo. */
+.jf-trigger {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 72px;
+  margin-top: 18px;
+  padding: 10px 14px 10px 84px;
+  border: 1.5px solid transparent;
+  border-radius: 16px;
+  background:
+    linear-gradient(100deg, #f3fcf7, #ffffff 60%) padding-box,
+    linear-gradient(100deg, var(--brand-primary, #00b14f), #8be0b3, #22b8a5, var(--brand-primary, #00b14f)) border-box;
+  background-size: 100% 100%, 300% 100%;
+  color: #1f2a37;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 8px 22px -14px rgba(0, 120, 60, 0.55);
+  transition: transform 160ms ease, box-shadow 160ms ease;
+  animation: jf-trigger-border 7s linear infinite;
+}
+.jf-trigger:hover { transform: translateY(-1px); box-shadow: 0 12px 26px -14px rgba(0, 120, 60, 0.65); }
+.jf-trigger:focus-visible { outline: 2px solid var(--brand-primary, #00b14f); outline-offset: 3px; }
+
+/* Mascot đứng tràn lên trên mép thẻ. */
+.jf-trigger__mascot {
+  position: absolute;
+  left: 12px;
+  bottom: 2px;
+  transition: transform 220ms ease;
+}
+.jf-trigger:hover .jf-trigger__mascot { transform: translateY(-3px) rotate(-3deg); }
+
+.jf-trigger__text { display: flex; min-width: 0; flex: 1; flex-direction: column; gap: 2px; }
+.jf-trigger__title { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 15px; font-weight: 700; line-height: 1.3; }
+.jf-trigger__hint { font-size: 12.5px; line-height: 1.4; color: #5b6b7c; }
+.jf-trigger__badge {
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: linear-gradient(100deg, var(--brand-primary, #00b14f), #22b8a5);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+.jf-trigger__go {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--brand-primary, #00b14f);
+  color: #fff;
+  font-size: 12px;
+  transition: transform 160ms ease;
+}
+.jf-trigger:hover .jf-trigger__go { transform: translateX(2px); }
+
+/* Mỗi màn hình đúng một thẻ: cột phải từ 1024 px, dưới thông tin tin khi nhỏ hơn. */
+@media (max-width: 1023px) {
+  .jf-trigger--sidebar { display: none; }
+  .jf-trigger--inline { margin-top: 10px; }
+}
+@media (min-width: 1024px) {
+  .jf-trigger--inline { display: none; }
+}
+
+@keyframes jf-trigger-border {
+  to { background-position: 0 0, 300% 0; }
+}
+
+@media (max-width: 479px) {
+  .jf-trigger { padding-left: 72px; }
+  .jf-trigger__mascot { left: 6px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .jf-trigger, .jf-trigger__mascot, .jf-trigger__go { animation: none; transition: none; }
+}

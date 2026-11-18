@@ -26,7 +26,7 @@ export default function JobListHeader({
   return (
     <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
       <div className="min-w-0 flex-1">
-        <h1 className="flex min-w-0 items-center gap-x-1.5 overflow-hidden whitespace-nowrap text-lg font-semibold text-gray-900">
+        <h1 className="job-list-title flex min-w-0 items-center gap-x-1.5 overflow-hidden whitespace-nowrap text-lg font-semibold text-gray-900">
           <span className="shrink-0">Tuyển dụng</span>
           {loading ? (
             <Skeleton.Input active size="small" style={{ width: 90, verticalAlign: 'middle' }} />
@@ -40,7 +40,7 @@ export default function JobListHeader({
               </span>
             </Tooltip>
           )}
-          <span className="shrink-0 text-sm font-semibold text-gray-700">{updateLabel}</span>
+          <span className="job-list-title__update shrink-0 text-sm font-semibold text-gray-700">{updateLabel}</span>
         </h1>
         <nav className="mt-1 flex min-w-0 items-center gap-1.5 overflow-hidden whitespace-nowrap text-sm text-gray-500">
           <Link to="/" className="shrink-0 hover:text-[var(--brand-primary)]">Trang chủ</Link>
@@ -157,7 +157,7 @@ export default function JobListHeader({
           type="button"
           aria-label="Tạo thông báo việc làm"
           onClick={onCreateJobAlert}
-          className="inline-flex w-fit shrink-0 cursor-pointer items-center gap-2 rounded-full border border-emerald-200 bg-white px-4 py-2 text-sm font-semibold text-emerald-700 shadow-sm transition hover:border-emerald-400 hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+          className="job-list-alert inline-flex w-fit shrink-0 cursor-pointer items-center gap-2 rounded-full border border-emerald-200 bg-white px-4 py-2 text-sm font-semibold text-emerald-700 shadow-sm transition hover:border-emerald-400 hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-emerald-200"
         >
           <BellOutlined /> Tạo thông báo việc làm
         </button>

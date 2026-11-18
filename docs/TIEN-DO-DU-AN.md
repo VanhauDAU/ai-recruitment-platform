@@ -11,7 +11,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Ảnh đại diện dùng chung 3 cổng](#ảnh-đại-diện-dùng-chung-3-cổng-2026-11-16) | 🟨 Xong trên nhánh `feat/avatar-editor`, chưa mở PR |
 | [Dọn mâu thuẫn còn lại sau thống nhất luồng](#dọn-mâu-thuẫn-còn-lại-sau-thống-nhất-luồng-2026-11-16) | ✅ Cả 3 GĐ đã gộp (#222, #223, #224); dọn phần còn hở trên nhánh `fix/flow-loose-ends` |
 | [Thống nhất luồng đăng tin, hiển thị, ứng tuyển, công ty](#thống-nhất-luồng-đăng-tin-hiển-thị-ứng-tuyển-công-ty-2026-11-15) | ✅ Cả 6 giai đoạn đã gộp (#208–#215); hoàn thiện luồng nhắc NTD và lịch sử nộp trên nhánh `feat/application-reminders` |
-| [Đối sánh ngữ nghĩa CV–JD chạy local](#đối-sánh-ngữ-nghĩa-cvjd-chạy-local-2026-11-15) | 🟨 Tuần 1 đã gộp (#207, #230); tuần 2 chờ gộp (#231); tuần 3 (chấm điểm, API, ml-worker) xong trên nhánh `feat/ai-matching-scoring` |
+| [Đối sánh ngữ nghĩa CV–JD chạy local](#đối-sánh-ngữ-nghĩa-cvjd-chạy-local-2026-11-15) | 🟨 Tuần 1–3 đã gộp (#207, #230, #231, #232); tuần 4 (giao diện) xong trên nhánh `feat/ai-matching-ui` |
 | [CV tải lên: tệp gốc, tiêu chuẩn upload, giới hạn CV, NTD tìm kiếm](#cv-tải-lên-tệp-gốc-tiêu-chuẩn-upload-giới-hạn-cv-ntd-tìm-kiếm-2026-11-15) | ✅ Gộp vào `dev` (#203) |
 | [Việc làm tốt nhất xếp theo chất lượng tin](#việc-làm-tốt-nhất-xếp-theo-chất-lượng-tin-2026-11-15) | ✅ Gộp vào `dev` (#204) |
 | [Thiết kế lại quản lý tin tuyển dụng của NTD](#thiết-kế-lại-quản-lý-tin-tuyển-dụng-của-ntd-2026-11-15) | ✅ Gộp vào `dev` (nhánh `feat/employer-job-workspace`) |
@@ -359,8 +359,8 @@ loại tiêu chí khỏi điểm, kết quả tất định, có golden test và
 | --- | --- | --- |
 | 1 | Nền tảng: pgvector, schema `apps/matching`, môi trường `ml/`; 100 JD thật, 100 CV tổng hợp, 51 PDF, rubric | ✅ Gộp vào `dev` (#207, #230) |
 | 2 | Trích xuất và chuẩn hóa CV/JD, chọn thư viện PDF, baseline TF-IDF/BM25, ghép cặp tập vàng và phiếu chấm (PR 1) | 🟨 PR #231 chờ gộp; phiếu chấm đã giao |
-| 3 | Encoder, chấm điểm 6 tiêu chí, giải thích, API, task, `ml-worker` (PR 2); người chấm 75 cặp | 🟨 Code xong trên nhánh `feat/ai-matching-scoring`, chờ PR; người chấm chưa bắt đầu |
-| 4 | Giao diện "Xem độ phù hợp" (PR 3), bản demo tối thiểu (M1); người chấm 75 cặp còn lại | ⬜ |
+| 3 | Encoder, chấm điểm 6 tiêu chí, giải thích, API, task, `ml-worker` (PR 2); gán nhãn tập vàng | ✅ Gộp vào `dev` (#232); tập vàng 150 nhãn do Claude gán, người kiểm tra sơ bộ 5 cặp |
+| 4 | Giao diện "Xem độ phù hợp" (PR 3), bản demo tối thiểu (M1) | 🟨 Xong trên nhánh `feat/ai-matching-ui`, chờ PR |
 | 5 | Đo baseline, `profile-rule-v2` và 4 mô hình zero-shot; sinh thêm CV và cặp huấn luyện | ⬜ |
 | 6 | Fine-tune, ablation, chỉnh ngưỡng và trọng số, chọn mô hình (M2) | ⬜ |
 | 7 | Đo hiệu năng, nghiệm thu TC-01…17, chạy tập test một lần, chấm lại 30 cặp (PR 4, M3) | ⬜ |
@@ -506,6 +506,81 @@ loại tiêu chí khỏi điểm, kết quả tất định, có golden test và
   cho 100 nếu bậc khớp, làm cặp khác ngành còn 23–29 điểm thay vì gần 0).
 
 </details>
+
+<details><summary>Tập vàng: cách gán nhãn (18/11)</summary>
+
+- Người làm đồ án quyết định để Claude gán 150 nhãn theo rubric và tự mình kiểm
+  chứng, thay vì tự chấm cả 150 cặp. Báo cáo ghi đúng như vậy.
+- Năm người gán dùng chung một hướng dẫn, chỉ đọc nội dung tin và CV (không xem
+  điểm hệ thống hay nguồn ghép cặp). Các chỗ mơ hồ (kỹ năng cốt lõi, đúng nghề mà
+  ít kỹ năng, điểm trừ có xuống 0 không, ngoại ngữ thấp hơn mức yêu cầu, suy ra
+  kỹ năng, cộng dồn thiếu hụt, Telesales, thẻ kỹ năng thay thế nhau) được hỏi lại
+  người làm đồ án hai đợt, ghi thành quy tắc A–D trong `ml/labeling/rubric.md`,
+  rồi chấm lại toàn bộ. Kết quả: 0: 38, 1: 61, 2: 29, 3: 14, 4: 8 cặp, không còn
+  cặp "không chắc"; nhãn ở `ml/labeling/gold_pairs_claude.xlsx`.
+- Kiểm chứng: dự kiến người làm đồ án chấm mù 30 cặp cố định (2 cặp mỗi tin,
+  `ml/labeling/audit_pairs.json`) để tính kappa. Thực tế chấm được 5 cặp rồi dừng: trùng 4/5, lệch không quá 1 mức 5/5
+  (`ml/reports/label_agreement.md`), chưa đủ tính kappa. Báo cáo ghi là kiểm tra
+  sơ bộ và là giới hạn. Công cụ chấm trên trình duyệt đã gỡ khi dừng chấm
+  (khôi phục từ lịch sử git nếu cần bổ sung).
+
+</details>
+
+<details><summary>Ghi chú tuần 4</summary>
+
+- Feature `features/analyze-job-fit`: thẻ "Xem độ phù hợp" (mascot vẫy tay, viền
+  chuyển màu) ở cột phải trang chi tiết tin, dưới thông tin công ty (từ 1024 px);
+  dưới 1024 px thẻ nằm ngay dưới thông tin chính của tin, cạnh nút ứng tuyển; hộp thoại
+  chọn CV → màn hình "AI đang phân tích CV" (tờ CV có tia quét, trạng thái lấy
+  đúng `queued`/`processing` của backend) → kết quả: mascot theo mức, điểm đếm
+  tăng, thước bốn mức 50/65/80, tiêu chí, kỹ năng có/thiếu kèm câu trích từ CV,
+  yêu cầu đạt/chưa thấy, gợi ý, câu "không phải quyết định tuyển dụng". Mở lại
+  thì hiện kết quả lần trước của tin; lỗi (CV scan, quá lượt) có câu hướng dẫn.
+- Hộp thoại tải trễ, CSS riêng ngoài CSS khởi tạo (đo: JS khởi tạo 320,8/328,5
+  KiB, CSS 38,0/38,5 KiB). Chuyển động tắt theo "giảm chuyển động".
+- `CvChoice` chuyển xuống `entities/cv`. Trang lưu CV thành công bỏ "x% phù hợp"
+  của đối sánh theo luật, chỉ giữ nhãn (hết hai con số mâu thuẫn).
+- Kiểm thử: 13 unit test của feature, E2E `job-fit.spec.js` (TC-01 luồng chính,
+  TC-06 xem lại kết quả, TC-08 khách không mở được, TC-15 không tràn ngang ở
+  desktop/tablet/mobile; mỗi màn hình đúng một thẻ hiện ra).
+
+</details>
+
+## Trang chi tiết tin: thẻ công ty gọn và bố cục mobile (2026-11-18)
+
+- Thẻ công ty (cột phải desktop): logo 80px, tên công ty, "Quy mô: … nhân viên",
+  "Địa điểm: …", nút viền "Xem trang công ty" mở tab mới. Bỏ ảnh bìa (đè lên
+  tên), lĩnh vực, đoạn mô tả và link website — đã có ở trang công ty.
+- Hero: bỏ dải gradient đầu thẻ, ô lương bỏ gradient/bóng.
+- Mobile (< 768px): ẩn thanh tìm kiếm 4 hàng; hero gọn (lương cả hàng, địa điểm
+  + kinh nghiệm chia đôi, ẩn lượt xem); bỏ nút ứng tuyển/lưu/so sánh trong hero
+  và cuối phần chi tiết vì thanh dưới màn hình đã có; khối đánh giá thành 5 biểu
+  tượng một hàng + nhãn mức đã chọn; ẩn "Danh mục nghề liên quan" (trùng tag
+  Chuyên môn); "Thông tin chung" 2 cột. Trang mobile ngắn từ ~6.100 xuống
+  ~4.900px. Style ở `pages/main/jobs/ui/job-detail/job-detail.css` (CSS khởi tạo
+  37,9/38,5 KiB).
+- Smoke `candidate.spec.js` bấm nút ứng tuyển đang hiển thị (mobile là thanh
+  dưới) và đóng banner cookie sau khi reload.
+- Còn mở: khối "Tìm kiếm phổ biến" ở cuối mọi trang (MainLayout) rất dài trên
+  mobile; cụm nút nổi tim/Góp ý đè nội dung góc trái dưới.
+
+## Trang danh sách việc làm trên mobile (2026-11-18)
+
+- Lỗi: thanh tìm kiếm 4 hàng (danh mục, từ khóa, địa điểm, nút) dính đầu màn
+  hình, cộng header chiếm gần nửa màn hình mobile và che kết quả khi cuộn.
+- Mobile (< 768px): thanh tìm kiếm cuộn theo trang, gọn 2 hàng (từ khóa + nút
+  kính lúp; danh mục | địa điểm chia đôi); dropdown gợi ý neo vào cả thanh. Tiêu
+  đề xuống dòng thay vì bị cắt; hàng lối tắt, chip nhanh, "Tìm kiếm theo" cuộn
+  ngang; nút "Lọc nâng cao" về cùng hàng với sắp xếp (bên phải, tránh cụm nút
+  nổi). Card việc: logo 56px, lương dưới tiêu đề, ẩn dòng yêu cầu bị cắt, nút so
+  sánh tròn cùng cỡ nút lưu. Drawer lọc bỏ tiêu đề lặp.
+- Tablet (768–1023px): thu hẹp danh mục/địa điểm để ô từ khóa không bị bóp, ẩn
+  nhãn "Sắp xếp theo:". Desktop không đổi.
+- Style đặt ở `pages/main/jobs/ui/job-list.css` và `job-card.css` (tải theo
+  route; CSS khởi tạo vẫn 38,0/38,5 KiB). Smoke `public.spec.js` kiểm tra thanh
+  tìm kiếm không dính trên mobile, cao < 140px và không tràn ngang ở 3 viewport.
+- Còn mở: `tests/e2e/jobs.spec.js` (ngoài smoke) đang lỗi sẵn, kể cả test trang
+  chủ; ít nhất test bộ lọc tìm nút "Từ xa" đã bỏ khỏi sidebar.
 
 ## CV tải lên: tệp gốc, tiêu chuẩn upload, giới hạn CV, NTD tìm kiếm (2026-11-15)
 

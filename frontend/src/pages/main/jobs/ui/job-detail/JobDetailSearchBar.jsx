@@ -32,7 +32,7 @@ export default function JobDetailSearchBar() {
   }
 
   return (
-    <section className="bg-gradient-to-r from-[#087a51] to-[var(--brand-primary)] shadow-sm">
+    <section className="job-detail-search bg-gradient-to-r from-[#087a51] to-[var(--brand-primary)] shadow-sm">
       <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-3 lg:flex-row">
         <div className="lg:w-64 [&_button]:!h-11 [&_button]:!rounded-lg">
           <JobCategoryTreePicker

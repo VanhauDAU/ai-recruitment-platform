@@ -91,3 +91,64 @@ năm kinh nghiệm":
 
 Từ đây không sửa định nghĩa các mức; nếu buộc phải sửa thì chấm lại toàn bộ các
 cặp đã chấm.
+
+## Làm rõ cách áp dụng (18/11/2026, trước khi gán nhãn)
+
+Không đổi định nghĩa các mức; chỉ làm rõ ba chỗ hay phân vân.
+
+| Tình huống | Cách chấm |
+| --- | --- |
+| Kỹ năng tương đương | Chỉ tính khi rất gần, dùng thay nhau được ngay (MySQL ↔ PostgreSQL, Jest ↔ Mocha). Khác framework dù cùng vai trò (ReactJS ↔ Vue, Java ↔ C#) không tính |
+| Thiếu kinh nghiệm, đúng vị trí và đủ kỹ năng | Thiếu chưa tới một nửa số năm tin yêu cầu là "thiếu một bậc" (mức 3); thiếu từ một nửa trở lên là "lệch rõ" (mức 2) |
+| Bậc học thấp hơn yêu cầu | Trừ tối đa 1 điểm |
+
+## Làm rõ sau đợt gán nhãn đầu (18/11/2026)
+
+Đợt đầu cho thấy năm người gán (cùng một hướng dẫn) xử lý khác nhau một số tình
+huống, nên người làm đồ án chốt thêm (A) và chấm lại toàn bộ 150 cặp theo đó. Các
+quy tắc phụ (B) do Claude đề xuất để đồng nhất.
+
+| | Tình huống | Cách chấm |
+| --- | --- | --- |
+| A1 | Kỹ năng cốt lõi | Theo vai trò của tin: kỹ năng định nghĩa vị trí (tiêu đề, yêu cầu chính). Công cụ chung (Word, Excel, Tin học văn phòng) và kỹ năng mềm không bao giờ là cốt lõi trừ khi tiêu đề nêu đích danh; thứ tự trong danh sách không quyết định. Tiêu đề nêu các lựa chọn ("NodeJS/PHP/Go") thì có một lựa chọn là đủ |
+| A2 | Đúng vị trí nhưng dưới một nửa kỹ năng cần có | Mức nền 2 |
+| A3 | Điểm trừ | Không đưa CV cùng nhóm ngành xuống 0. Ngoại ngữ bắt buộc: trừ 1 khi CV không ghi hoặc ghi thấp hơn mức yêu cầu |
+| A4 | Suy ra kỹ năng | Khi rõ ràng: kỹ năng mềm thể hiện qua việc đã làm, kỹ năng bao trùm (Tin học văn phòng → Word/Excel), SDK của nền tảng CV làm nhiều năm, chứng chỉ chuyên môn. Không suy từ gợi ý mơ hồ |
+| B1 | Ngưỡng mức 4 | Thiếu tối đa 1 kỹ năng được đếm, không thiếu cốt lõi |
+| B2 | Yêu cầu có "hoặc"/"tương đương" | Có một lựa chọn là đáp ứng |
+| B3 | Kinh nghiệm | Chỉ tính mục Kinh nghiệm; thiếu ≤ 1 tháng coi như đủ |
+| B4 | Học vấn của tin | Là bậc tối thiểu; "Sinh viên" thấp hơn bậc đang học một bậc |
+| B5 | Thừa trình độ | Chỉ xét cấp bậc chức danh, từ 2 bậc trở lên |
+| B6 | Nhóm ngành (0 hay 1) | CNTT phần mềm; Kinh doanh – Marketing – CSKH – Telesales – Content; Kế toán – Kiểm toán – Thuế – Tài chính; Hành chính – Nhân sự – Lễ tân – Thư ký; Thiết kế – Media gần với Content |
+
+Đợt chốt cuối (cũng ngày 18/11), sau lần chấm lại thứ hai:
+
+| | Tình huống | Cách chấm |
+| --- | --- | --- |
+| C1 | Đúng nghề, vừa dưới nửa kỹ năng vừa thiếu từ nửa số năm (kể cả 0 tháng) | Mức nền 1 |
+| C2 | Thiếu 1–2 kỹ năng không cốt lõi và thiếu một bậc kinh nghiệm | 2 (cộng dồn) |
+| C3 | Telesales | Cùng nghề với Sales/Kinh doanh; vị trí gần với CSKH và Business Development |
+| C4 | Thẻ kỹ năng thay thế nhau ("hoặc", "ít nhất một trong", Excel ↔ Google Sheets) | Gộp thành một yêu cầu |
+| D1 | Backend cho tin Fullstack | Vị trí gần |
+| D2 | Thiết kế nội thất cho tin Content | Khác ngành |
+| D3 | "Manager/Lead dẫn nhóm" không ghi rõ cấp | Trưởng nhóm |
+| D4–D5 | Testing | "Thực hiện test case" + ISTQB là có Viết test case; Automation không thay thẻ Manual Testing |
+| D6 | Vị trí gần | Tối đa 2 |
+| D7 | Vị trí của CV | Theo chức danh trong mục Kinh nghiệm, không có thì theo headline |
+| D8 | Đúng một nửa kỹ năng và thiếu hẳn kinh nghiệm | Cộng dồn như C1: 1 |
+
+Kết quả (18/11/2026): 150 nhãn, phân bố 0: 38, 1: 61, 2: 29, 3: 14, 4: 8; mọi cặp
+"chắc" sau ba đợt (đợt đầu, chấm lại theo A–B, chấm lại theo C–D). Nhãn ở
+`gold_pairs_claude.xlsx` (cột `annotator = claude`).
+
+## Người gán nhãn
+
+Tập vàng 150 cặp do mô hình ngôn ngữ (Claude) gán theo rubric này, chỉ dựa trên
+nội dung tin và CV (không xem điểm hệ thống hay nguồn ghép cặp); các cặp phân vân
+được hỏi lại người làm đồ án. Người làm đồ án chấm mù 30 cặp (2 cặp mỗi tin) để đo
+độ đồng thuận (quadratic weighted kappa). Báo cáo trình bày đúng như vậy.
+
+Kiểm chứng thực tế (18/11/2026): người làm đồ án chấm mù được 5/30 cặp dự kiến và
+quyết định dừng ở đó. Kết quả sơ bộ: trùng tuyệt đối 4/5, lệch không quá 1 mức 5/5
+(`ml/reports/label_agreement.md`); chưa đủ để tính kappa. Báo cáo phải nêu đây là
+giới hạn: nhãn tập vàng do mô hình ngôn ngữ gán, chỉ được người kiểm tra sơ bộ.

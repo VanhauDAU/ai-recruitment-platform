@@ -12,7 +12,7 @@ const cvApi = vi.hoisted(() => ({
 }))
 const applicationApi = vi.hoisted(() => ({ submitJobApplication: vi.fn() }))
 
-vi.mock('@/entities/cv', () => cvApi)
+vi.mock('@/entities/cv', async (importOriginal) => ({ ...(await importOriginal()), ...cvApi }))
 vi.mock('@/entities/application', () => applicationApi)
 
 describe('ApplyForJobModal', () => {

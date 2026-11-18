@@ -341,7 +341,9 @@ cờ `ai_job_match_enabled`. Vector tính sẵn khi CV có phiên bản mới ho
 container): chấm một cặp đã có vector khoảng 10 ms, p95 tổng 25 ms; CV vừa sửa
 0,5–0,7 s; RAM `ml-worker` 1,7 GB.
 
-Chưa có: giao diện (tuần 4), đánh giá trên nhãn người chấm và fine-tune (tuần 5–6).
+Giao diện: thẻ "Xem độ phù hợp" ở cột phải trang chi tiết tin, hộp thoại kết quả (feature `analyze-job-fit`, xem `frontend/ARCHITECTURE.md`).
+
+Chưa có: đánh giá trên tập vàng và fine-tune (tuần 5–6).
 
 ## Việc còn mở
 

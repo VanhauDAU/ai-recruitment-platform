@@ -16,7 +16,6 @@ DISCLAIMER = (
 MAX_SUGGESTIONS = 6
 MAX_LISTED = 3
 LANGUAGE_NAMES = {'en': 'tiếng Anh', 'ja': 'tiếng Nhật', 'ko': 'tiếng Hàn', 'zh': 'tiếng Trung', 'fr': 'tiếng Pháp', 'vi': 'tiếng Việt'}  # fmt: skip
-CV_LANGUAGE_NAMES = {'vi': 'tiếng Việt', 'en': 'tiếng Anh'}
 EXPERIENCE_LABELS = dict(Job.ExperienceYears.choices)
 EDUCATION_LABELS = dict(Job.EducationLevel.choices)
 POSITION_LABELS = dict(Job.PositionLevel.choices)
