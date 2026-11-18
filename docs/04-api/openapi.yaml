@@ -4556,6 +4556,51 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/employer/campaigns/{public_id}/channels/{channel_id}/post-images/:
+    get:
+      operationId: employer_campaigns_channels_post_images_retrieve
+      description: Upload an image for a Fanpage post, or list the company's ready-made
+        images.
+      parameters:
+      - in: path
+        name: channel_id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - employer
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    post:
+      operationId: employer_campaigns_channels_post_images_create
+      description: Upload an image for a Fanpage post, or list the company's ready-made
+        images.
+      parameters:
+      - in: path
+        name: channel_id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - employer
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
   /api/employer/campaigns/{public_id}/channels/{channel_id}/posts/:
     get:
       operationId: employer_campaigns_channels_posts_retrieve

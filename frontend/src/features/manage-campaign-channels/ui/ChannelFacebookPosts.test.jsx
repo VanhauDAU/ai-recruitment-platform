@@ -12,6 +12,8 @@ const mocks = vi.hoisted(() => ({
   scheduleChannelPost: vi.fn(),
   cancelChannelPost: vi.fn(),
   rescheduleChannelPost: vi.fn(),
+  getChannelPostImageChoices: vi.fn(),
+  uploadChannelPostImage: vi.fn(),
 }))
 vi.mock('@/entities/campaign', async (importOriginal) => ({ ...(await importOriginal()), ...mocks }))
 
@@ -37,6 +39,7 @@ function renderPosts(props = {}) {
 describe('ChannelFacebookPosts', () => {
   beforeEach(() => {
     Object.values(mocks).forEach((mock) => mock.mockReset())
+    mocks.getChannelPostImageChoices.mockResolvedValue({ company_images: [] })
     vi.spyOn(message, 'success').mockImplementation(() => {})
   })
 
@@ -72,8 +75,31 @@ describe('ChannelFacebookPosts', () => {
     await waitFor(() => expect(mocks.scheduleChannelPost).toHaveBeenCalledWith('camp_1', 'chn_1', {
       connection: 'soc_1',
       message: 'Tuyển gấp',
+      images: [],
       scheduled_for: null,
     }))
+  })
+
+  it('attaches the company cover to a post and shows it in the preview', async () => {
+    const user = userEvent.setup()
+    mocks.getChannelPosts.mockResolvedValue([])
+    mocks.getSocialConnections.mockResolvedValue([{ public_id: 'soc_1', page_name: 'Fanpage ProCV', status: 'connected' }])
+    mocks.getChannelPostImageChoices.mockResolvedValue({
+      company_images: [{ kind: 'cover', label: 'Ảnh bìa công ty', path: 'employers/cmp/covers/a.jpg', url: 'http://localhost:8000/media/employers/cmp/covers/a.jpg' }],
+    })
+    mocks.scheduleChannelPost.mockResolvedValue({})
+    renderPosts()
+
+    await user.click(await screen.findByRole('button', { name: 'Tạo bài đăng' }))
+    const drawer = await screen.findByRole('dialog')
+    await user.click(await within(drawer).findByRole('button', { name: /Dùng ảnh bìa công ty/ }))
+    expect(within(drawer).getByRole('img', { name: 'Ảnh 1 của bài' })).toBeInTheDocument()
+    expect(within(drawer).queryByText(/Facebook sẽ hiện dạng chữ/)).not.toBeInTheDocument()
+    await user.click(within(drawer).getByRole('button', { name: 'Đăng ngay' }))
+
+    await waitFor(() => expect(mocks.scheduleChannelPost).toHaveBeenCalledWith('camp_1', 'chn_1', expect.objectContaining({
+      images: ['employers/cmp/covers/a.jpg'],
+    })))
   })
 
   it('schedules a series of posts', async () => {

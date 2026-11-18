@@ -5,7 +5,7 @@ import { isPublicLink } from '../lib/channel-kinds'
 const CLAMP = 320
 
 // Bản xem trước theo khung một bài mạng xã hội: tên trang, giờ, nội dung, thẻ link.
-export default function SocialPostPreview({ name, avatarUrl, meta, text, link, linkTitle }) {
+export default function SocialPostPreview({ name, avatarUrl, meta, text, link, linkTitle, images = [] }) {
   const [expanded, setExpanded] = useState(false)
   const long = text.length > CLAMP
   const shown = long && !expanded ? `${text.slice(0, CLAMP).trimEnd()}…` : text
@@ -34,7 +34,12 @@ export default function SocialPostPreview({ name, avatarUrl, meta, text, link, l
           )}
         </p>
       ) : <p className="ch-post__text is-empty">Nội dung bài sẽ hiện ở đây.</p>}
-      {link && (isPublicLink(link) ? (
+      {images.length > 0 && (
+        <div className={`ch-post__media is-${Math.min(images.length, 4)}`}>
+          {images.slice(0, 4).map((url, index) => <img key={url} src={url} alt={`Ảnh ${index + 1} của bài`} />)}
+        </div>
+      )}
+      {link && images.length === 0 && (isPublicLink(link) ? (
         <div className="ch-post__card">
           <span>{host}</span>
           <strong>{linkTitle}</strong>

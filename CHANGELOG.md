@@ -8,6 +8,12 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-19
 
+#### Added — Ảnh trong bài đăng Fanpage
+
+- Ngăn soạn bài Fanpage cho tải tối đa 4 ảnh hoặc dùng nhanh ảnh bìa, logo
+  công ty; bản xem trước hiện lưới ảnh như Facebook. Ảnh được mã hóa lại (bỏ
+  thông tin vị trí) trước khi lưu và đăng.
+
 #### Changed — Chiến dịch: giao diện kênh, đăng Fanpage và lịch sử hoạt động
 
 - Tab "Kênh & nguồn" chia hai cột: danh sách kênh và chi tiết kênh với các mục

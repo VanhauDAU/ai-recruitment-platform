@@ -182,6 +182,20 @@ export async function scheduleChannelPost(publicId, channelId, payload) {
   return data
 }
 
+const postImagesPath = (publicId, channelId) => `${channelsPath(publicId)}${channelId}/post-images/`
+
+export async function getChannelPostImageChoices(publicId, channelId) {
+  const { data } = await api.get(postImagesPath(publicId, channelId))
+  return data
+}
+
+export async function uploadChannelPostImage(publicId, channelId, file) {
+  const formData = new FormData()
+  formData.append('file', file)
+  const { data } = await api.post(postImagesPath(publicId, channelId), formData)
+  return data
+}
+
 export async function rescheduleChannelPost(publicId, channelId, postId, scheduledFor) {
   const { data } = await api.patch(`${postsPath(publicId, channelId)}${postId}/`, { scheduled_for: scheduledFor })
   return data

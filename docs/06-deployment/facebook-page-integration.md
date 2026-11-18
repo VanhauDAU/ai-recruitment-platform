@@ -55,6 +55,14 @@ riêng cho việc đăng Fanpage.
 Muốn người ngoài danh sách vai trò dùng được thì app phải qua **App Review** và
 chuyển sang Live mode. Việc này nằm ngoài phạm vi đồ án.
 
+## Ảnh trong bài
+
+Bài có ảnh được đăng hai bước: từng ảnh tải lên `/{page}/photos` với
+`published=false` (gửi thẳng tệp nên chạy được cả ở máy cục bộ), rồi một bài
+`/{page}/feed` gắn các ảnh qua `attached_media`. Graph bỏ qua `link` khi bài có
+ảnh, nên link theo dõi luôn nằm trong nội dung. Ảnh chỉ được lấy từ ảnh đã tải
+lên cho chính chiến dịch hoặc ảnh bìa, logo hiện tại của công ty.
+
 ## Link trong bài khi chạy ở máy cục bộ
 
 Facebook tự đọc link đính kèm để dựng thẻ xem trước; link `localhost` hay IP nội

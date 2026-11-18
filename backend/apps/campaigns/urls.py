@@ -12,6 +12,7 @@ from .api.views.health import CampaignHealthView, CampaignReportExportView
 from .api.views.launch import CampaignLaunchView
 from .api.views.social import (
     ChannelPostDetailView,
+    ChannelPostImageView,
     ChannelPostListView,
     FacebookCallbackView,
     SocialConnectionDetailView,
@@ -65,6 +66,11 @@ urlpatterns = [
         'campaigns/<str:public_id>/channels/<str:channel_id>/posts/<str:post_id>/',
         ChannelPostDetailView.as_view(),
         name='employer-campaign-channel-post-detail',
+    ),
+    path(
+        'campaigns/<str:public_id>/channels/<str:channel_id>/post-images/',
+        ChannelPostImageView.as_view(),
+        name='employer-campaign-channel-post-images',
     ),
     path(
         'social/connections/',

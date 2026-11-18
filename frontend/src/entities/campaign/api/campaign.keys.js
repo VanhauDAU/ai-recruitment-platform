@@ -11,6 +11,7 @@ export const campaignKeys = {
   health: (publicId) => ['campaigns', 'health', publicId],
   publicLanding: (slug) => ['campaigns', 'public', slug],
   channelPosts: (publicId, channelId) => ['campaigns', 'channels', publicId, channelId, 'posts'],
+  postImageChoices: (publicId, channelId) => ['campaigns', 'channels', publicId, channelId, 'post-images'],
   socialConnections: ['campaigns', 'social-connections'],
   pendingPages: (nonce) => ['campaigns', 'social-pending', nonce],
   pauseImpact: (publicId) => ['campaigns', 'pause-impact', publicId],
