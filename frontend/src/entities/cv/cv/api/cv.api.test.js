@@ -59,7 +59,7 @@ describe('CV V2 API', () => {
     ] })
 
     await expect(getMySavedCvs()).resolves.toEqual([{ public_id: 'cv_saved', has_saved_version: true }])
-    expect(get).toHaveBeenCalledWith('/v2/cvs/')
+    expect(get).toHaveBeenCalledWith('/candidate/cvs/')
   })
 
   it('keeps account-library metadata and file imports on V2', async () => {
@@ -74,12 +74,12 @@ describe('CV V2 API', () => {
     await expect(importCvFile(file, 'Imported')).resolves.toMatchObject({ source: 'imported' })
     await expect(deleteCv('cv_1')).resolves.toBeUndefined()
 
-    expect(patch).toHaveBeenNthCalledWith(1, '/v2/cvs/cv_1/', { title: 'Renamed' })
-    expect(patch).toHaveBeenNthCalledWith(2, '/v2/cvs/cv_1/', { is_default: true })
+    expect(patch).toHaveBeenNthCalledWith(1, '/candidate/cvs/cv_1/', { title: 'Renamed' })
+    expect(patch).toHaveBeenNthCalledWith(2, '/candidate/cvs/cv_1/', { is_default: true })
     await updateCvProfile('cv_1', { position_public_id: null, position_level: 'team_lead' })
-    expect(patch).toHaveBeenLastCalledWith('/v2/cvs/cv_1/', { position_public_id: null, position_level: 'team_lead' })
-    expect(post).toHaveBeenCalledWith('/v2/cvs/imports/', expect.any(FormData), { headers: {} })
-    const importBody = post.mock.calls.find(([url]) => url === '/v2/cvs/imports/')[1]
+    expect(patch).toHaveBeenLastCalledWith('/candidate/cvs/cv_1/', { position_public_id: null, position_level: 'team_lead' })
+    expect(post).toHaveBeenCalledWith('/candidate/cvs/imports/', expect.any(FormData), { headers: {} })
+    const importBody = post.mock.calls.find(([url]) => url === '/candidate/cvs/imports/')[1]
     expect(importBody.get('upload_session')).toBe('ups_cv_1')
     expect(importBody.has('file')).toBe(false)
     expect(prepareCleanUpload).toHaveBeenCalledWith(
@@ -88,7 +88,7 @@ describe('CV V2 API', () => {
       { onStateChange: undefined, signal: undefined },
     )
     expect(forgetPreparedUpload).toHaveBeenCalledWith(file, 'candidate_cv')
-    expect(remove).toHaveBeenCalledWith('/v2/cvs/cv_1/')
+    expect(remove).toHaveBeenCalledWith('/candidate/cvs/cv_1/')
   })
 
   it('uses the clean-upload contract for candidate avatar assets', async () => {
@@ -99,7 +99,7 @@ describe('CV V2 API', () => {
     await expect(uploadCvAsset(file)).resolves.toEqual({ public_id: 'cva_1' })
 
     const body = post.mock.calls[0][1]
-    expect(post).toHaveBeenCalledWith('/v2/cvs/assets/', expect.any(FormData))
+    expect(post).toHaveBeenCalledWith('/candidate/cvs/assets/', expect.any(FormData))
     expect(body.get('upload_session')).toBe('ups_avatar_1')
     expect(body.has('file')).toBe(false)
     expect(forgetPreparedUpload).toHaveBeenCalledWith(file, 'candidate_cv')
@@ -124,7 +124,7 @@ describe('CV V2 API', () => {
 
     await expect(duplicateCv('cv_1', 'Copy')).resolves.toMatchObject({ public_id: 'cv_copy' })
 
-    expect(post).toHaveBeenNthCalledWith(1, '/v2/cvs/cv_1/duplicate/', { title: 'Copy' })
+    expect(post).toHaveBeenNthCalledWith(1, '/candidate/cvs/cv_1/duplicate/', { title: 'Copy' })
   })
 
   it('uses draft optimistic locking and creates versions only through save-version', async () => {
@@ -140,9 +140,9 @@ describe('CV V2 API', () => {
     await expect(saveCvVersion('cv_1', 4)).resolves.toEqual({ public_id: 'version_4', version_kind: 'manual_save' })
     await expect(publishCvVersion('cv_1', 4)).resolves.toEqual({ public_id: 'version_4', version_kind: 'manual_save' })
 
-    expect(put).toHaveBeenCalledWith('/v2/cvs/cv_1/draft/', { ...document, client_session_id: 'tab_a' }, { headers: { 'If-Match': '"lock-version-3"' } })
-    expect(post).toHaveBeenCalledWith('/v2/cvs/cv_1/save-version/', undefined, { headers: { 'If-Match': '"lock-version-4"' } })
-    expect(post).toHaveBeenCalledWith('/v2/cvs/cv_1/publish/', undefined, { headers: { 'If-Match': '"lock-version-4"' } })
+    expect(put).toHaveBeenCalledWith('/candidate/cvs/cv_1/draft/', { ...document, client_session_id: 'tab_a' }, { headers: { 'If-Match': '"lock-version-3"' } })
+    expect(post).toHaveBeenCalledWith('/candidate/cvs/cv_1/save-version/', undefined, { headers: { 'If-Match': '"lock-version-4"' } })
+    expect(post).toHaveBeenCalledWith('/candidate/cvs/cv_1/publish/', undefined, { headers: { 'If-Match': '"lock-version-4"' } })
   })
 
   it('switches a CV to a published template with the same optimistic lock contract', async () => {
@@ -155,7 +155,7 @@ describe('CV V2 API', () => {
       cv: { template_public_id: 'tpl_two' }, draft: { lock_version: 4, etag: '"lock-version-4"' },
     })
     expect(put).toHaveBeenCalledWith(
-      '/v2/cvs/cv_1/template/',
+      '/candidate/cvs/cv_1/template/',
       { template_public_id: 'tpl_two', client_session_id: 'tab_a', theme_color: '#2255AA' },
       { headers: { 'If-Match': '"lock-version-3"' } },
     )
@@ -174,18 +174,18 @@ describe('CV V2 API', () => {
     await expect(createCvSharedLink('cv_1', { version_public_id: 'cvv_2' })).resolves.toEqual({ link: { public_id: 'cvs_1' }, token: 'raw-token-once' })
     await expect(revokeCvSharedLink('cv_1', 'cvs_1')).resolves.toBeUndefined()
 
-    expect(get).toHaveBeenNthCalledWith(1, '/v2/cvs/cv_1/view/')
-    expect(get).toHaveBeenNthCalledWith(2, '/v2/cvs/shares/token%2Fwith-space/')
-    expect(get).toHaveBeenNthCalledWith(3, '/v2/cvs/cv_1/shared-links/')
-    expect(post).toHaveBeenCalledWith('/v2/cvs/cv_1/shared-links/', { version_public_id: 'cvv_2' })
-    expect(remove).toHaveBeenCalledWith('/v2/cvs/cv_1/shared-links/cvs_1/')
+    expect(get).toHaveBeenNthCalledWith(1, '/candidate/cvs/cv_1/view/')
+    expect(get).toHaveBeenNthCalledWith(2, '/public/cvs/shares/token%2Fwith-space/')
+    expect(get).toHaveBeenNthCalledWith(3, '/candidate/cvs/cv_1/shared-links/')
+    expect(post).toHaveBeenCalledWith('/candidate/cvs/cv_1/shared-links/', { version_public_id: 'cvv_2' })
+    expect(remove).toHaveBeenCalledWith('/candidate/cvs/cv_1/shared-links/cvs_1/')
   })
 
   it('uses owner-scoped immutable PDF export jobs and a controlled download endpoint', async () => {
     get.mockResolvedValueOnce({ data: { results: [{ public_id: 'cvv_2', version_number: 2 }] } })
     get.mockResolvedValueOnce({ data: { public_id: 'cvv_2', content_json: { personal_info: { full_name: 'Saved' } } } })
     post.mockResolvedValueOnce({ data: { public_id: 'cve_1', status: 'pending', version_public_id: 'cvv_2' } })
-    get.mockResolvedValueOnce({ data: { public_id: 'cve_1', status: 'completed', download_url: '/api/v2/cvs/cv_1/exports/cve_1/download/' } })
+    get.mockResolvedValueOnce({ data: { public_id: 'cve_1', status: 'completed', download_url: '/api/candidate/cvs/cv_1/exports/cve_1/download/' } })
     post.mockResolvedValueOnce({ data: { public_id: 'cve_1', status: 'pending' } })
     get.mockResolvedValueOnce({ data: new Blob(['%PDF-1.4']) })
 
@@ -194,27 +194,27 @@ describe('CV V2 API', () => {
     await expect(createCvPdfExport('cv_1', 'cvv_2')).resolves.toMatchObject({ status: 'pending' })
     await expect(getCvPdfExport('cv_1', 'cve_1')).resolves.toMatchObject({ status: 'completed' })
     await expect(retryCvPdfExport('cv_1', 'cve_1')).resolves.toMatchObject({ status: 'pending' })
-    await expect(downloadCvPdf('/api/v2/cvs/cv_1/exports/cve_1/download/')).resolves.toBeInstanceOf(Blob)
+    await expect(downloadCvPdf('/api/candidate/cvs/cv_1/exports/cve_1/download/')).resolves.toBeInstanceOf(Blob)
 
-    expect(get).toHaveBeenNthCalledWith(1, '/v2/cvs/cv_1/versions/')
-    expect(get).toHaveBeenNthCalledWith(2, '/v2/cvs/cv_1/versions/cvv_2/')
-    expect(post).toHaveBeenNthCalledWith(1, '/v2/cvs/cv_1/exports/', { version_public_id: 'cvv_2' })
-    expect(get).toHaveBeenNthCalledWith(3, '/v2/cvs/cv_1/exports/cve_1/')
-    expect(post).toHaveBeenNthCalledWith(2, '/v2/cvs/cv_1/exports/cve_1/retry/', {})
-    expect(get).toHaveBeenNthCalledWith(4, '/api/v2/cvs/cv_1/exports/cve_1/download/', { responseType: 'blob' })
+    expect(get).toHaveBeenNthCalledWith(1, '/candidate/cvs/cv_1/versions/')
+    expect(get).toHaveBeenNthCalledWith(2, '/candidate/cvs/cv_1/versions/cvv_2/')
+    expect(post).toHaveBeenNthCalledWith(1, '/candidate/cvs/cv_1/exports/', { version_public_id: 'cvv_2' })
+    expect(get).toHaveBeenNthCalledWith(3, '/candidate/cvs/cv_1/exports/cve_1/')
+    expect(post).toHaveBeenNthCalledWith(2, '/candidate/cvs/cv_1/exports/cve_1/retry/', {})
+    expect(get).toHaveBeenNthCalledWith(4, '/api/candidate/cvs/cv_1/exports/cve_1/download/', { responseType: 'blob' })
   })
 
   it('requests an idempotent private thumbnail job', async () => {
     post.mockResolvedValue({ data: { status: 'pending', thumbnail_url: null } })
 
     await expect(requestCvThumbnail('cv_1')).resolves.toEqual({ status: 'pending', thumbnail_url: null })
-    expect(post).toHaveBeenCalledWith('/v2/cvs/cv_1/thumbnail/', {})
+    expect(post).toHaveBeenCalledWith('/candidate/cvs/cv_1/thumbnail/', {})
   })
 
   it('downloads a private thumbnail through the authenticated API client', async () => {
     get.mockResolvedValue({ data: new Blob(['webp']) })
 
-    await expect(downloadCvThumbnail('/api/v2/cvs/cv_1/thumbnail/')).resolves.toBeInstanceOf(Blob)
-    expect(get).toHaveBeenCalledWith('/api/v2/cvs/cv_1/thumbnail/', { responseType: 'blob' })
+    await expect(downloadCvThumbnail('/api/candidate/cvs/cv_1/thumbnail/')).resolves.toBeInstanceOf(Blob)
+    expect(get).toHaveBeenCalledWith('/api/candidate/cvs/cv_1/thumbnail/', { responseType: 'blob' })
   })
 })

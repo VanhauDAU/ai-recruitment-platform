@@ -10,7 +10,7 @@ describe('admin dashboard api', () => {
     api.get.mockResolvedValue({ data: { period: { days: 7 } } })
 
     await expect(getAdminDashboard(7, { signal })).resolves.toEqual({ period: { days: 7 } })
-    expect(api.get).toHaveBeenCalledWith('/dashboard/admin/', { params: { period: 7 }, signal })
+    expect(api.get).toHaveBeenCalledWith('/admin/dashboard/', { params: { period: 7 }, signal })
     expect(adminDashboardKeys.detail(30)).toEqual(['admin-dashboard', 30])
   })
 
@@ -18,6 +18,6 @@ describe('admin dashboard api', () => {
     api.get.mockResolvedValue({ data: { queues: [] } })
 
     await expect(getAdminQueueSummary()).resolves.toEqual({ queues: [] })
-    expect(api.get).toHaveBeenLastCalledWith('/dashboard/admin/queues/', { signal: undefined })
+    expect(api.get).toHaveBeenLastCalledWith('/admin/dashboard/queues/', { signal: undefined })
   })
 })

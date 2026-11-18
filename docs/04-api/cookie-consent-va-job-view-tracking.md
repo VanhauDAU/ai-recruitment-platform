@@ -31,7 +31,7 @@ Cần bộ phận pháp lý xác nhận cách đếm này trước khi lên prod
 
 ## API consent
 
-### `GET /api/privacy/consent/`
+### `GET /api/public/privacy/consent/`
 
 Public. Đọc signed cookie hiện hành. Cookie hỏng, bị sửa hoặc policy version
 khác trả về trạng thái chưa quyết định.
@@ -54,7 +54,7 @@ hoặc:
 }
 ```
 
-### `POST /api/privacy/consent/`
+### `POST /api/public/privacy/consent/`
 
 Public. Production throttle `20/hour`; development tắt throttle để QA có thể đổi
 lựa chọn liên tục. Body chỉ nhận nhóm tùy chọn:
@@ -69,11 +69,11 @@ Response trả consent chuẩn hóa và đặt `procv_consent` với `HttpOnly`,
 
 ## API job view
 
-### `GET /api/jobs/{slug}/`
+### `GET /api/public/jobs/{slug}/`
 
 Chỉ đọc dữ liệu. Không làm thay đổi `view_count`.
 
-### `POST /api/jobs/{slug}/views/`
+### `POST /api/public/jobs/{slug}/views/`
 
 Public, throttle `120/hour`, chỉ ghi nhận khi signed consent có
 `analytics=true`.

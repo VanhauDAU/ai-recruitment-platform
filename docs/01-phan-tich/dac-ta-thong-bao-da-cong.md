@@ -141,7 +141,7 @@ màu của preset/kind thuộc code frontend
 (`entities/content/announcement/model/announcement.presentation.js`), dùng chung cho
 strip runtime và preview admin.
 
-Upload ảnh nền: `POST /api/site/admin/announcements/backgrounds/`
+Upload ảnh nền: `POST /api/admin/site/announcements/backgrounds/`
 (`announcement.manage`), lưu vào `site/announcements/backgrounds/`. Chỉ JPEG,
 PNG, WebP (không SVG/GIF), ≤1 MB, rộng 640–2400 px, cao 24–120 px; khuyến nghị
 khoảng 980×31 đến 1920×48. Trả `path`, `url`, `width`, `height`. Public feed trả
@@ -154,7 +154,7 @@ Chi tiết render ở tài liệu runtime frontend.
 
 ## 7. API
 
-Tiền tố `/api/site/`.
+Tiền tố `/api/public/site/`.
 
 | Method | Endpoint | Quyền | Ghi chú |
 | --- | --- | --- | --- |

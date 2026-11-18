@@ -9,6 +9,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.accounts.api.permissions import IsEmployer
+from apps.applications.api.serializers.applications import RecruiterCvExportSerializer
 from apps.cvs.services import (
     CvExportPermissionError,
     CvExportUnavailableError,
@@ -23,7 +24,6 @@ from common.storage.r2 import private_media_storage
 from ...models import Application
 from ...selectors import recruiter_application_snapshot_queryset
 from ...services import open_application_cv_file, record_application_cv_download
-from ..serializers.v2 import RecruiterCvExportSerializer
 
 
 def _snapshot_application(request, public_id):
@@ -56,7 +56,7 @@ def _payload(request, application, export):
 
 
 @extend_schema(
-    tags=['applications-v2'],
+    tags=['applications'],
     summary='NTD yêu cầu PDF của CV đã nộp (tạo mới hoặc dùng lại bản đã render)',
     request=None,
     responses={200: RecruiterCvExportSerializer, 201: RecruiterCvExportSerializer},
@@ -82,7 +82,7 @@ class RecruiterApplicationCvExportView(APIView):
 
 
 @extend_schema(
-    tags=['applications-v2'],
+    tags=['applications'],
     summary='Trạng thái PDF của CV đã nộp',
     responses={200: RecruiterCvExportSerializer},
 )
@@ -97,7 +97,7 @@ class RecruiterApplicationCvExportDetailView(APIView):
 
 
 @extend_schema(
-    tags=['applications-v2'],
+    tags=['applications'],
     summary='Tải PDF CV đã nộp; ứng viên được báo một lần cho mỗi hồ sơ',
     responses={(200, 'application/pdf'): OpenApiTypes.BINARY},
 )
@@ -125,7 +125,7 @@ def _download_name(application):
 
 
 @extend_schema(
-    tags=['applications-v2'],
+    tags=['applications'],
     summary='Tệp CV ứng viên đã tải lên khi nộp (PDF); ?download=1 để tải về',
     responses={(200, 'application/pdf'): OpenApiTypes.BINARY},
 )

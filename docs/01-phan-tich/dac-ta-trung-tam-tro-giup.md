@@ -181,7 +181,7 @@ Mọi mutation ghi audit qua `apps.accounts.services.record_admin_action`
 
 ## 5. API
 
-Tiền tố `/api/knowledgebase/`. Chi tiết field nằm trong
+Tiền tố `/api/public/knowledgebase/`. Chi tiết field nằm trong
 [`openapi.yaml`](../04-api/openapi.yaml).
 
 **Public** (`AllowAny`, throttle `knowledgebase_public` 120/phút theo client IP):

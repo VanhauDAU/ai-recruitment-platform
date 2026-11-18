@@ -378,7 +378,7 @@ class AnnouncementMetricConcurrencyTests(TransactionTestCase):
             close_old_connections()
             try:
                 revision = AnnouncementRevision.objects.get(pk=self.revision_id)
-                request = APIRequestFactory().post('/api/site/announcements/events/')
+                request = APIRequestFactory().post('/api/public/site/announcements/events/')
                 request.user = AnonymousUser()
                 record_consented_announcement_events(
                     request,

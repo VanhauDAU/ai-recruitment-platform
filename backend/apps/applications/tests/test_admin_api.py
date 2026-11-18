@@ -61,7 +61,7 @@ class AdminJobApplicationListTests(APITestCase):
 
     def url(self):
         return reverse(
-            'admin-job-application-list-v2',
+            'admin-job-application-list',
             kwargs={'job_public_id': self.job.public_id},
         )
 

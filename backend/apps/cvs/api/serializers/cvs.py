@@ -14,19 +14,18 @@ from apps.cv_templates.models import (
     ExperienceBand,
     validate_cv_document,
 )
-from apps.jobs.models import Job, JobCategory
-
-from ...models import CvAsset, CvDraft, CvExport, CvImportJob, CvSharedLink, CvVersion, UserCv
-from ...services.assets import asset_map, sign_asset
-from ...services.completeness import (
+from apps.cvs.models import CvAsset, CvDraft, CvExport, CvImportJob, CvSharedLink, CvVersion, UserCv
+from apps.cvs.services.assets import asset_map, sign_asset
+from apps.cvs.services.completeness import (
     COMPLETION_THRESHOLD,
     application_readiness_issues,
     cv_completion_score,
     is_unsaved_builder_baseline,
 )
+from apps.jobs.models import Job, JobCategory
 
 
-class CvV2Serializer(serializers.ModelSerializer):
+class CvSerializer(serializers.ModelSerializer):
     template_public_id = serializers.CharField(source='template.public_id', read_only=True)
     template_version = serializers.CharField(
         source='current_template_version.renderer_key', read_only=True
@@ -145,16 +144,16 @@ class CvV2Serializer(serializers.ModelSerializer):
     def get_thumbnail_url(self, obj) -> str | None:
         from django.urls import reverse
 
-        from ...services import current_thumbnail_ready
+        from apps.cvs.services import current_thumbnail_ready
 
         if not current_thumbnail_ready(obj):
             return None
-        path = reverse('cv-v2-thumbnail', kwargs={'public_id': obj.public_id})
+        path = reverse('cv-thumbnail', kwargs={'public_id': obj.public_id})
         request = self.context.get('request')
         return request.build_absolute_uri(path) if request else path
 
     def get_thumbnail_status(self, obj) -> str:
-        from ...services import current_thumbnail_ready
+        from apps.cvs.services import current_thumbnail_ready
 
         return 'ready' if current_thumbnail_ready(obj) else 'pending'
 
@@ -170,7 +169,7 @@ def _active_specialization(value):
         raise serializers.ValidationError('Unknown active specialization.') from error
 
 
-class CvV2MetadataUpdateSerializer(serializers.Serializer):
+class CvMetadataUpdateSerializer(serializers.Serializer):
     title = serializers.CharField(max_length=255, required=False, trim_whitespace=True)
     is_default = serializers.BooleanField(required=False)
     recruiter_searchable = serializers.BooleanField(required=False)
@@ -195,7 +194,7 @@ class CvV2MetadataUpdateSerializer(serializers.Serializer):
         return attrs
 
 
-class CvV2ImportSerializer(serializers.Serializer):
+class CvImportSerializer(serializers.Serializer):
     file = serializers.FileField(required=False)
     upload_session = serializers.CharField(max_length=50, required=False, trim_whitespace=True)
     title = serializers.CharField(
@@ -239,13 +238,13 @@ class CvV2ImportSerializer(serializers.Serializer):
         return attrs
 
 
-class CvV2DuplicateSerializer(serializers.Serializer):
+class CvDuplicateSerializer(serializers.Serializer):
     title = serializers.CharField(
         max_length=255, required=False, allow_blank=False, trim_whitespace=True
     )
 
 
-class CvV2CreateSerializer(serializers.Serializer):
+class CvCreateSerializer(serializers.Serializer):
     title = serializers.CharField(max_length=255)
     template_public_id = serializers.CharField(max_length=50)
     language = serializers.ChoiceField(choices=CvLanguage.choices, default=DEFAULT_CV_LANGUAGE)
@@ -392,7 +391,7 @@ class CvAssetSerializer(serializers.ModelSerializer):
     def get_url(self, obj) -> str:
         from django.urls import reverse
 
-        path = reverse('cv-v2-asset-content', kwargs={'asset_public_id': obj.public_id})
+        path = reverse('cv-asset-content', kwargs={'asset_public_id': obj.public_id})
         if obj.kind == CvAsset.Kind.AVATAR:
             path = f'{path}?token={sign_asset(obj)}'
         request = self.context.get('request')
@@ -457,12 +456,12 @@ class CvExportSerializer(serializers.ModelSerializer):
     def get_download_url(self, obj) -> str | None:
         from django.urls import reverse
 
-        from ...services import export_download_ready
+        from apps.cvs.services import export_download_ready
 
         if not export_download_ready(obj):
             return None
         url = reverse(
-            'cv-v2-export-download',
+            'cv-export-download',
             kwargs={
                 'public_id': obj.cv.public_id,
                 'export_public_id': obj.public_id,

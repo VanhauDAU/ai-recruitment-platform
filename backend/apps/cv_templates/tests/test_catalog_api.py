@@ -7,12 +7,8 @@ from rest_framework.test import APIClient
 
 from apps.accounts.models import User
 from apps.accounts.tests.helpers import make_admin
-from apps.cv_templates.models.content_schema import empty_content, empty_layout, empty_style
-from apps.cv_templates.services.demo_identity import DEMO_IDENTITY
-from apps.jobs.models import JobCategory, JobCategoryLocalization
-
-from ..management.commands.seed_cv_catalog import build_sample_content
-from ..models import (
+from apps.cv_templates.management.commands.seed_cv_catalog import build_sample_content
+from apps.cv_templates.models import (
     CvCategory,
     CvColor,
     CvPositionProfile,
@@ -25,9 +21,12 @@ from ..models import (
     CvTemplateVersion,
     localized_field,
 )
+from apps.cv_templates.models.content_schema import empty_content, empty_layout, empty_style
+from apps.cv_templates.services.demo_identity import DEMO_IDENTITY
+from apps.jobs.models import JobCategory, JobCategoryLocalization
 
 
-class TemplateCatalogV2Tests(TestCase):
+class TemplateCatalogTests(TestCase):
     def create_template(self, name, *, locale='vi-VN', categories=(), usage_count=0):
         template = CvTemplate.objects.create(
             name=name,
@@ -113,7 +112,7 @@ class TemplateCatalogV2Tests(TestCase):
 
     def test_list_returns_card_contract_and_filters_locale_category_and_tag(self):
         response = self.client.get(
-            '/api/v2/cv-templates/',
+            '/api/public/cv-templates/',
             {
                 'locale': 'vi-VN',
                 'category': 'professional',
@@ -153,23 +152,23 @@ class TemplateCatalogV2Tests(TestCase):
         )
         renderer = self.primary.current_published_version.renderer_key
         one_column = renderer in layout_keys(columns=1)
-        response = self.client.get('/api/v2/cv-templates/', {'locale': 'vi-VN', 'columns': '1'})
+        response = self.client.get('/api/public/cv-templates/', {'locale': 'vi-VN', 'columns': '1'})
         slugs = [card['slug'] for card in response.data['results']]
         self.assertEqual(self.primary.slug in slugs, one_column)
-        unfiltered = self.client.get('/api/v2/cv-templates/', {'columns': 'x'})
+        unfiltered = self.client.get('/api/public/cv-templates/', {'columns': 'x'})
         self.assertEqual(unfiltered.status_code, 200)
 
     def test_hiding_a_template_takes_effect_for_a_cached_catalogue_immediately(self):
         """Hồi quy: "Tất cả" trước đây còn hiện mẫu đã ẩn suốt 5 phút cache."""
         params = {'locale': 'vi-VN'}
-        first = self.client.get('/api/v2/cv-templates/', params)
+        first = self.client.get('/api/public/cv-templates/', params)
         unchanged = self.client.get(
-            '/api/v2/cv-templates/', params, HTTP_IF_NONE_MATCH=first['ETag']
+            '/api/public/cv-templates/', params, HTTP_IF_NONE_MATCH=first['ETag']
         )
         self.primary.lifecycle_status = CvTemplate.LifecycleStatus.ARCHIVED
         self.primary.save(update_fields=['lifecycle_status'])
         after_hide = self.client.get(
-            '/api/v2/cv-templates/', params, HTTP_IF_NONE_MATCH=first['ETag']
+            '/api/public/cv-templates/', params, HTTP_IF_NONE_MATCH=first['ETag']
         )
 
         self.assertEqual(unchanged.status_code, 304)
@@ -178,9 +177,11 @@ class TemplateCatalogV2Tests(TestCase):
         self.assertIn(self.primary.slug, [card['slug'] for card in first.data['results']])
 
     def test_detail_and_related_only_use_current_published_template_versions(self):
-        detail = self.client.get(f'/api/v2/cv-templates/{self.primary.slug}/', {'locale': 'vi-VN'})
+        detail = self.client.get(
+            f'/api/public/cv-templates/{self.primary.slug}/', {'locale': 'vi-VN'}
+        )
         related = self.client.get(
-            f'/api/v2/cv-templates/{self.primary.slug}/related/', {'locale': 'vi-VN'}
+            f'/api/public/cv-templates/{self.primary.slug}/related/', {'locale': 'vi-VN'}
         )
 
         self.assertEqual(detail.status_code, 200)
@@ -190,7 +191,7 @@ class TemplateCatalogV2Tests(TestCase):
         self.assertEqual([item['slug'] for item in related.data], [self.related.slug])
         self.assertEqual(
             self.client.get(
-                f'/api/v2/cv-templates/{self.english.slug}/', {'locale': 'vi-VN'}
+                f'/api/public/cv-templates/{self.english.slug}/', {'locale': 'vi-VN'}
             ).status_code,
             404,
         )
@@ -201,8 +202,8 @@ class TemplateCatalogV2Tests(TestCase):
             'personal_info': {'headline': 'Kỹ sư AI/Machine Learning'},
         }
         self.sample.save(update_fields=['content_json', 'updated_at'])
-        categories = self.client.get('/api/v2/cv-categories/', {'type': 'feature'})
-        samples = self.client.get('/api/v2/cv-sample-contents/', {'locale': 'vi-VN'})
+        categories = self.client.get('/api/public/cv-categories/', {'type': 'feature'})
+        samples = self.client.get('/api/public/cv-sample-contents/', {'locale': 'vi-VN'})
 
         self.assertEqual(categories.status_code, 200)
         self.assertEqual([item['slug'] for item in categories.data], ['ats'])
@@ -230,7 +231,7 @@ class TemplateCatalogV2Tests(TestCase):
             category_type=JobCategory.CategoryType.OCCUPATION_GROUP,
         )
 
-        response = self.client.get('/api/v2/cv-position-options/', {'q': 'Ky su'})
+        response = self.client.get('/api/public/cv-position-options/', {'q': 'Ky su'})
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
@@ -247,7 +248,7 @@ class TemplateCatalogV2Tests(TestCase):
 
     def test_position_preview_can_return_a_composed_template_document(self):
         response = self.client.get(
-            '/api/v2/cv-position-preview/',
+            '/api/public/cv-position-preview/',
             {
                 'position_public_id': self.sample_category.public_id,
                 'locale': 'vi-VN',
@@ -274,7 +275,7 @@ class TemplateCatalogV2Tests(TestCase):
         )
         self.client.force_authenticate(candidate)
         own = self.client.get(
-            '/api/v2/cv-position-preview/',
+            '/api/public/cv-position-preview/',
             {
                 'position_public_id': self.sample_category.public_id,
                 'locale': 'vi-VN',
@@ -339,7 +340,7 @@ class TemplateCatalogV2Tests(TestCase):
         self._generic_sample('en-US', 'junior', 'Ready for {position}.')
 
         response = self.client.get(
-            '/api/v2/cv-position-preview/',
+            '/api/public/cv-position-preview/',
             {
                 'position_public_id': position.public_id,
                 'locale': 'en-US',
@@ -365,7 +366,7 @@ class TemplateCatalogV2Tests(TestCase):
         self._generic_sample('vi-VN', 'senior', 'Hơn 6 năm làm {position}.')
 
         senior = self.client.get(
-            '/api/v2/cv-position-preview/',
+            '/api/public/cv-position-preview/',
             {
                 'position_public_id': self.sample_category.public_id,
                 'locale': 'vi-VN',
@@ -373,7 +374,7 @@ class TemplateCatalogV2Tests(TestCase):
             },
         )
         mid = self.client.get(
-            '/api/v2/cv-position-preview/',
+            '/api/public/cv-position-preview/',
             {
                 'position_public_id': self.sample_category.public_id,
                 'locale': 'vi-VN',
@@ -381,7 +382,7 @@ class TemplateCatalogV2Tests(TestCase):
             },
         )
         invalid = self.client.get(
-            '/api/v2/cv-position-preview/',
+            '/api/public/cv-position-preview/',
             {
                 'position_public_id': self.sample_category.public_id,
                 'experience_band': 'principal',
@@ -396,9 +397,9 @@ class TemplateCatalogV2Tests(TestCase):
         self.assertEqual(invalid.status_code, 400)
 
     def test_unsupported_locale_is_rejected_by_catalogue_and_preview(self):
-        catalogue = self.client.get('/api/v2/cv-templates/', {'locale': 'ja-JP'})
+        catalogue = self.client.get('/api/public/cv-templates/', {'locale': 'ja-JP'})
         preview = self.client.get(
-            '/api/v2/cv-position-preview/',
+            '/api/public/cv-position-preview/',
             {
                 'position_public_id': self.sample_category.public_id,
                 'locale': 'ja-JP',
@@ -411,7 +412,7 @@ class TemplateCatalogV2Tests(TestCase):
     def test_admin_template_version_publish_and_snapshot_regenerate_contract(self):
         self.client.force_authenticate(make_admin('cv-admin@example.com'))
         create_response = self.client.post(
-            f'/api/v2/admin/cv-templates/{self.primary.public_id}/versions/',
+            f'/api/admin/cv-templates/{self.primary.public_id}/versions/',
             {},
             format='json',
         )
@@ -428,7 +429,7 @@ class TemplateCatalogV2Tests(TestCase):
         ):
             with self.captureOnCommitCallbacks(execute=True):
                 publish_response = self.client.post(
-                    f'/api/v2/admin/cv-templates/{self.primary.public_id}/versions/{version_id}/publish/',
+                    f'/api/admin/cv-templates/{self.primary.public_id}/versions/{version_id}/publish/',
                     {},
                     format='json',
                 )
@@ -444,7 +445,7 @@ class TemplateCatalogV2Tests(TestCase):
         self.client.force_authenticate(make_admin('cv-staff@example.com'))
 
         created = self.client.post(
-            '/api/v2/admin/cv-categories/',
+            '/api/admin/cv-categories/',
             {'category_type': 'style', 'name': 'Public', 'slug': 'public-now', 'is_active': True},
             format='json',
         )
@@ -452,7 +453,7 @@ class TemplateCatalogV2Tests(TestCase):
         self.assertTrue(CvCategory.objects.get(public_id=created.data['public_id']).is_active)
 
         archive = self.client.patch(
-            f'/api/v2/admin/cv-categories/{self.style.public_id}/',
+            f'/api/admin/cv-categories/{self.style.public_id}/',
             {'is_active': False},
             format='json',
         )
@@ -461,11 +462,11 @@ class TemplateCatalogV2Tests(TestCase):
         self.assertFalse(self.style.is_active)
 
         # CVT-4: mục chưa dùng ở đâu thì xóa được.
-        deleted = self.client.delete(f'/api/v2/admin/cv-categories/{created.data["public_id"]}/')
+        deleted = self.client.delete(f'/api/admin/cv-categories/{created.data["public_id"]}/')
         self.assertEqual(deleted.status_code, 204)
 
     def test_admin_endpoints_require_admin_role(self):
-        response = self.client.get('/api/v2/admin/cv-templates/')
+        response = self.client.get('/api/admin/cv-templates/')
         self.assertIn(response.status_code, {401, 403})
 
     @patch('apps.cv_templates.tasks.template_assets._save_once')

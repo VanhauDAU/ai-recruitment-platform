@@ -38,7 +38,7 @@ describe('announcement runtime API', () => {
       remoteEnabled: true,
       items: [{ id: 'ann_valid' }],
     })
-    expect(post).toHaveBeenCalledWith('/site/announcements/runtime-events/', {
+    expect(post).toHaveBeenCalledWith('/public/site/announcements/runtime-events/', {
       surface: 'candidate',
       event: 'contract_error',
       reason: 'contract',

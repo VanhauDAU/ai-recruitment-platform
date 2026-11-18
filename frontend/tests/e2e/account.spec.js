@@ -10,8 +10,8 @@ const candidate = {
 }
 
 async function authenticateCandidate(page) {
-  await page.route('**/api/site/settings/', (route) => route.fulfill({ contentType: 'application/json', body: '{}' }))
-  await page.route('**/api/privacy/consent/', (route) => route.fulfill({
+  await page.route('**/api/public/site/settings/', (route) => route.fulfill({ contentType: 'application/json', body: '{}' }))
+  await page.route('**/api/public/privacy/consent/', (route) => route.fulfill({
     contentType: 'application/json',
     body: JSON.stringify({ consent: { necessary: true, preferences: false, analytics: false, marketing: false } }),
   }))
@@ -30,7 +30,7 @@ async function authenticateCandidate(page) {
 
 test.describe('candidate account features', () => {
   test('preserves the protected URL as returnUrl before redirecting to login', async ({ page }) => {
-    await page.route('**/api/site/settings/', (route) => route.fulfill({ contentType: 'application/json', body: '{}' }))
+    await page.route('**/api/public/site/settings/', (route) => route.fulfill({ contentType: 'application/json', body: '{}' }))
 
     await page.goto('/tai-khoan/thong-tin-ca-nhan?source=header')
 

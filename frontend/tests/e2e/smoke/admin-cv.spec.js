@@ -22,17 +22,17 @@ const POSITION = { public_id: 'cvpos_1', position_public_id: 'jobcat_1', positio
 
 function respond(path) {
   if (path === '/api/auth/refresh/') return { access: 'e2e-access' }
-  if (path === '/api/privacy/consent/') return { consent: { necessary: true, preferences: false, analytics: false, marketing: false } }
+  if (path === '/api/public/privacy/consent/') return { consent: { necessary: true, preferences: false, analytics: false, marketing: false } }
   if (path === '/api/auth/me/') return { public_id: 'usr_admin', email: 'admin@example.com', full_name: 'Quản trị', role: 'admin', email_verified: true, admin_access: { is_superuser: true } }
-  if (path === '/api/v2/admin/cv-stats/overview/') return { templates_published: 1, cvs_created_7d: 2, cvs_created_30d: 5, cvs_uploaded_30d: 1, import_success_rate_30d: 100, ai_cost_month_usd: 0.12, top_templates: [{ public_id: 'tpl_e2e', name: 'Gọn gàng', usage_count: 3, cvs_30d: 2 }], todos: { samples_in_review: 2, positions_without_content: 0, stale_template_drafts: 0, missing_thumbnails: 0, failed_generations_7d: 0 } }
-  if (path === '/api/v2/admin/cv-templates/') return [TEMPLATE]
-  if (path === '/api/v2/admin/cv-templates/tpl_e2e/') return TEMPLATE
+  if (path === '/api/admin/cv-stats/overview/') return { templates_published: 1, cvs_created_7d: 2, cvs_created_30d: 5, cvs_uploaded_30d: 1, import_success_rate_30d: 100, ai_cost_month_usd: 0.12, top_templates: [{ public_id: 'tpl_e2e', name: 'Gọn gàng', usage_count: 3, cvs_30d: 2 }], todos: { samples_in_review: 2, positions_without_content: 0, stale_template_drafts: 0, missing_thumbnails: 0, failed_generations_7d: 0 } }
+  if (path === '/api/admin/cv-templates/') return [TEMPLATE]
+  if (path === '/api/admin/cv-templates/tpl_e2e/') return TEMPLATE
   if (path.endsWith('/checklist/')) return CHECKLIST
   if (path.endsWith('/preview/')) return { renderer_key: 'single_column_v1', document: { schema_version: 1, content_json: { schema_version: 1, locale: 'vi-VN', personal_info: { full_name: 'Nguyễn Minh Anh', headline: 'Sales Online' }, sections: [{ instance_id: 'nameplate_1', section_key: 'nameplate', title: 'Danh thiếp', enabled: true, items: [] }] }, layout_json: { regions: [{ id: 'main', row: 0, width_percent: 100, section_instance_ids: ['nameplate_1'] }] }, style_json: { theme_color: '#00A66A', font_family: 'Inter', font_scale: 1, line_height: 1.4 } } }
-  if (path === '/api/v2/admin/cv-positions/') return [POSITION]
-  if (path === '/api/v2/admin/cv-positions/cvpos_1/') return POSITION
-  if (['/api/v2/admin/cv-categories/', '/api/v2/admin/cv-colors/'].includes(path)) return []
-  if (path === '/api/v2/admin/cv-positions/coverage/') return { results: [{ position_public_id: 'jobcat_1', position_name: 'Sales Online', coverage: { 'vi-VN': { entry: 'published', junior: 'pending', mid: 'generic', senior: 'generic' }, 'en-US': { entry: 'generic', junior: 'generic', mid: 'generic', senior: 'generic' } } }] }
+  if (path === '/api/admin/cv-positions/') return [POSITION]
+  if (path === '/api/admin/cv-positions/cvpos_1/') return POSITION
+  if (['/api/admin/cv-categories/', '/api/admin/cv-colors/'].includes(path)) return []
+  if (path === '/api/admin/cv-positions/coverage/') return { results: [{ position_public_id: 'jobcat_1', position_name: 'Sales Online', coverage: { 'vi-VN': { entry: 'published', junior: 'pending', mid: 'generic', senior: 'generic' }, 'en-US': { entry: 'generic', junior: 'generic', mid: 'generic', senior: 'generic' } } }] }
   return {}
 }
 

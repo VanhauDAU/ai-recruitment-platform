@@ -6,17 +6,17 @@ async function data(request) {
 }
 
 export function getAdminJobs(params = {}, { signal } = {}) {
-  return data(client.get('/jobs/admin/moderation/', { params, signal }))
+  return data(client.get('/admin/jobs/moderation/', { params, signal }))
 }
 
 export function getAdminJobSummary({ signal } = {}) {
-  return data(client.get('/jobs/admin/moderation/summary/', { signal }))
+  return data(client.get('/admin/jobs/moderation/summary/', { signal }))
 }
 
 export function getAdminJob(publicId, { signal } = {}) {
-  return data(client.get(`/jobs/admin/moderation/${publicId}/`, { signal }))
+  return data(client.get(`/admin/jobs/moderation/${publicId}/`, { signal }))
 }
 
 export function decideAdminJob(publicId, payload) {
-  return data(client.post(`/jobs/admin/moderation/${publicId}/decisions/`, payload))
+  return data(client.post(`/admin/jobs/moderation/${publicId}/decisions/`, payload))
 }

@@ -41,7 +41,7 @@ class TemplateWizardApiTests(TestCase):
 
     def create_draft(self):
         template = self.client.post(
-            '/api/v2/admin/cv-templates/',
+            '/api/admin/cv-templates/',
             {
                 'name': 'Gọn gàng',
                 'display_name_vi': 'Gọn gàng',
@@ -53,7 +53,7 @@ class TemplateWizardApiTests(TestCase):
         self.assertEqual(template.status_code, 201, template.data)
         public_id = template.data['public_id']
         version = self.client.post(
-            f'/api/v2/admin/cv-templates/{public_id}/versions/',
+            f'/api/admin/cv-templates/{public_id}/versions/',
             {'renderer_key': 'single_column_v1'},
             format='json',
         )
@@ -62,7 +62,7 @@ class TemplateWizardApiTests(TestCase):
 
     def configure(self, public_id, version_id, **payload):
         return self.client.patch(
-            f'/api/v2/admin/cv-templates/{public_id}/versions/{version_id}/config/',
+            f'/api/admin/cv-templates/{public_id}/versions/{version_id}/config/',
             payload,
             format='json',
         )
@@ -83,7 +83,7 @@ class TemplateWizardApiTests(TestCase):
             ],
         )
         colors = self.client.put(
-            f'/api/v2/admin/cv-templates/{public_id}/colors/',
+            f'/api/admin/cv-templates/{public_id}/colors/',
             {
                 'color_public_ids': [self.blue.public_id, self.green.public_id],
                 'default_color_public_id': self.green.public_id,
@@ -91,7 +91,7 @@ class TemplateWizardApiTests(TestCase):
             format='json',
         )
         preview = self.client.post(
-            f'/api/v2/admin/cv-templates/{public_id}/preview/',
+            f'/api/admin/cv-templates/{public_id}/preview/',
             {'version_id': version_id, 'locale': 'en-US', 'theme_color': '#2255AA'},
             format='json',
         )
@@ -120,10 +120,10 @@ class TemplateWizardApiTests(TestCase):
         )
 
         checklist = self.client.get(
-            f'/api/v2/admin/cv-templates/{public_id}/versions/{version_id}/checklist/'
+            f'/api/admin/cv-templates/{public_id}/versions/{version_id}/checklist/'
         )
         blocked = self.client.post(
-            f'/api/v2/admin/cv-templates/{public_id}/versions/{version_id}/publish/'
+            f'/api/admin/cv-templates/{public_id}/versions/{version_id}/publish/'
         )
         self.assertEqual(
             [item['key'] for item in checklist.data['items'] if not item['ok']], ['test_pdf']
@@ -134,7 +134,7 @@ class TemplateWizardApiTests(TestCase):
         finish_test_pdf('a' * 32, CvTemplateVersion.objects.get(pk=version_id), b'%PDF-test')
         with patch('apps.cv_templates.services.publishing.enqueue_template_snapshots'):
             published = self.client.post(
-                f'/api/v2/admin/cv-templates/{public_id}/versions/{version_id}/publish/'
+                f'/api/admin/cv-templates/{public_id}/versions/{version_id}/publish/'
             )
         self.assertEqual(published.status_code, 200, published.data)
         self.assertEqual(published.data['published_by_name'], self.admin.email)
@@ -143,7 +143,7 @@ class TemplateWizardApiTests(TestCase):
     def test_a_new_template_starts_with_a_ready_draft(self):
         """Tạo mẫu kèm bố cục: có ngay bản nháp đủ section và bảng màu khởi đầu."""
         response = self.client.post(
-            '/api/v2/admin/cv-templates/',
+            '/api/admin/cv-templates/',
             {
                 'name': 'Nhanh',
                 'display_name_vi': 'Nhanh',
@@ -163,13 +163,13 @@ class TemplateWizardApiTests(TestCase):
         # Màu đầu thư viện (theo thứ tự rồi tên) là màu mặc định.
         self.assertEqual(draft['default_style_json']['theme_color'], self.blue.hex_code)
         checklist = self.client.get(
-            f'/api/v2/admin/cv-templates/{response.data["public_id"]}/versions/{draft["id"]}/checklist/'
+            f'/api/admin/cv-templates/{response.data["public_id"]}/versions/{draft["id"]}/checklist/'
         )
         self.assertEqual(
             [item['key'] for item in checklist.data['items'] if not item['ok']], ['test_pdf']
         )
         again = self.client.post(
-            f'/api/v2/admin/cv-templates/{response.data["public_id"]}/versions/', format='json'
+            f'/api/admin/cv-templates/{response.data["public_id"]}/versions/', format='json'
         )
         self.assertEqual(again.data['id'], draft['id'])
 
@@ -212,7 +212,7 @@ class TemplateWizardApiTests(TestCase):
         self.configure(public_id, version_id, style={'font_family': 'Lora'})
 
         checklist = self.client.get(
-            f'/api/v2/admin/cv-templates/{public_id}/versions/{version_id}/checklist/'
+            f'/api/admin/cv-templates/{public_id}/versions/{version_id}/checklist/'
         )
         self.assertFalse(
             next(item for item in checklist.data['items'] if item['key'] == 'test_pdf')['ok']
@@ -243,13 +243,13 @@ class TemplateWizardApiTests(TestCase):
             self.captureOnCommitCallbacks(execute=True),
         ):
             queued = self.client.post(
-                f'/api/v2/admin/cv-templates/{public_id}/versions/{version_id}/test-pdf/',
+                f'/api/admin/cv-templates/{public_id}/versions/{version_id}/test-pdf/',
                 {'locale': 'vi-VN'},
                 format='json',
             )
         token = queued.data['token']
         self.assertEqual(
-            self.client.get(f'/api/v2/admin/cv-templates/test-pdf/{token}/').data,
+            self.client.get(f'/api/admin/cv-templates/test-pdf/{token}/').data,
             {'status': 'pending'},
         )
 
@@ -260,7 +260,7 @@ class TemplateWizardApiTests(TestCase):
             return_value=b'%PDF-1.7 ok',
         ):
             render_template_test_pdf(*delay.call_args.args)
-        download = self.client.get(f'/api/v2/admin/cv-templates/test-pdf/{token}/', {'download': 1})
+        download = self.client.get(f'/api/admin/cv-templates/test-pdf/{token}/', {'download': 1})
 
         self.assertEqual(download['Content-Type'], 'application/pdf')
         self.assertEqual(download.content, b'%PDF-1.7 ok')
@@ -269,14 +269,14 @@ class TemplateWizardApiTests(TestCase):
         public_id, version_id = self.create_draft()
         self.configure(public_id, version_id, sections=SECTIONS)
 
-        copy = self.client.post(f'/api/v2/admin/cv-templates/{public_id}/duplicate/')
+        copy = self.client.post(f'/api/admin/cv-templates/{public_id}/duplicate/')
         reorder = self.client.post(
-            '/api/v2/admin/cv-templates/reorder/',
+            '/api/admin/cv-templates/reorder/',
             {'public_ids': [copy.data['public_id'], public_id]},
             format='json',
         )
         show_unpublished = self.client.post(
-            f'/api/v2/admin/cv-templates/{public_id}/lifecycle/',
+            f'/api/admin/cv-templates/{public_id}/lifecycle/',
             {'status': 'published'},
             format='json',
         )
@@ -302,8 +302,8 @@ class LibraryAndPermissionTests(TestCase):
         template = CvTemplate.objects.create(name='Mẫu')
         template.color_links.create(color=used, is_default=True)
 
-        blocked = self.client.delete(f'/api/v2/admin/cv-colors/{used.public_id}/')
-        deleted = self.client.delete(f'/api/v2/admin/cv-colors/{unused.public_id}/')
+        blocked = self.client.delete(f'/api/admin/cv-colors/{used.public_id}/')
+        deleted = self.client.delete(f'/api/admin/cv-colors/{unused.public_id}/')
 
         self.assertEqual(blocked.status_code, 400)
         self.assertIn('1 mẫu CV', str(blocked.data))
@@ -312,8 +312,8 @@ class LibraryAndPermissionTests(TestCase):
     def test_regular_admin_reaches_overview_and_generation_but_non_admin_is_rejected(self):
         self.client.force_authenticate(make_admin('cv-overview@example.com'))
 
-        overview = self.client.get('/api/v2/admin/cv-stats/overview/')
-        estimate = self.client.get('/api/v2/admin/cv-sample-generations/estimate/', {'count': 4})
+        overview = self.client.get('/api/admin/cv-stats/overview/')
+        estimate = self.client.get('/api/admin/cv-sample-generations/estimate/', {'count': 4})
 
         self.assertEqual(overview.status_code, 200)
         self.assertIn('samples_in_review', overview.data['todos'])
@@ -324,4 +324,4 @@ class LibraryAndPermissionTests(TestCase):
         self.client.force_authenticate(
             get_user_model().objects.create_user(email='cv-candidate@example.com', password='x')
         )
-        self.assertEqual(self.client.get('/api/v2/admin/cv-stats/overview/').status_code, 403)
+        self.assertEqual(self.client.get('/api/admin/cv-stats/overview/').status_code, 403)

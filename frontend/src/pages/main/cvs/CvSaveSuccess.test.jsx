@@ -55,7 +55,7 @@ describe('CV save success page', () => {
   beforeEach(() => {
     Object.values(mocks).forEach((mock) => mock.mockReset())
     mocks.getCv.mockResolvedValue({
-      title: 'Marketing', thumbnail_url: '/api/v2/cvs/cv_1/thumbnail/', thumbnail_status: 'ready', latest_version_public_id: 'cvv_2',
+      title: 'Marketing', thumbnail_url: '/api/candidate/cvs/cv_1/thumbnail/', thumbnail_status: 'ready', latest_version_public_id: 'cvv_2',
     })
     mocks.getCvVersion.mockResolvedValue(savedVersion)
     mocks.toBlob.mockResolvedValue(new Blob(['png'], { type: 'image/png' }))

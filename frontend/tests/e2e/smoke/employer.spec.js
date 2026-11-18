@@ -284,7 +284,7 @@ test('employer domain verification creates a one-time DNS challenge responsively
     employer_onboarding_required: false,
     employer_onboarding_step: 'complete',
   })
-  await page.route('**/api/privacy/consent/', async (route) => {
+  await page.route('**/api/public/privacy/consent/', async (route) => {
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify({
       consent: { necessary: true, preferences: false, analytics: false, marketing: false },
     }) })
@@ -381,7 +381,7 @@ test('employer auth: verified session completes recruitment need before dashboar
     employer_onboarding_required: !needCompleted,
     employer_onboarding_step: needCompleted ? 'complete' : 'consulting_need',
   }))
-  await page.route(/http:\/\/localhost:8000\/api\/jobs\/categories\/.*/, async (route) => {
+  await page.route(/http:\/\/localhost:8000\/api\/public\/jobs\/categories\/.*/, async (route) => {
     await route.fulfill({
       contentType: 'application/json',
       body: JSON.stringify([{
@@ -922,7 +922,7 @@ test('employer jobs: compact list keeps candidate previews and contextual action
     })
   })
   const avatar = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMiIgaGVpZ2h0PSIzMiI+PHJlY3QgZmlsbD0iIzBmNzY2ZSIgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIi8+PC9zdmc+'
-  await page.route(/http:\/\/localhost:8000\/api\/jobs\/mine\/\?.*/, async (route) => {
+  await page.route(/http:\/\/localhost:8000\/api\/employer\/jobs\/\?.*/, async (route) => {
     lastJobsQuery = new URL(route.request().url()).searchParams
     await route.fulfill({
       contentType: 'application/json',
@@ -1065,7 +1065,7 @@ test('employer jobs: creation chooser leads to the complete manual five-section 
       }),
     })
   })
-  await page.route(/http:\/\/localhost:8000\/api\/jobs\/categories\/.*/, async (route) => {
+  await page.route(/http:\/\/localhost:8000\/api\/public\/jobs\/categories\/.*/, async (route) => {
     await route.fulfill({
       contentType: 'application/json',
       body: JSON.stringify([
@@ -1079,7 +1079,7 @@ test('employer jobs: creation chooser leads to the complete manual five-section 
   await page.route('http://localhost:8000/api/employer/campaigns/options/', async (route) => {
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify([{ public_id: 'camp_q3', name: 'Tuyển dụng Quý 3' }]) })
   })
-  await page.route('http://localhost:8000/api/jobs/mine/posting-context/', async (route) => {
+  await page.route('http://localhost:8000/api/employer/jobs/posting-context/', async (route) => {
     await route.fulfill({
       contentType: 'application/json',
       body: JSON.stringify({
@@ -1099,29 +1099,29 @@ test('employer jobs: creation chooser leads to the complete manual five-section 
       }),
     })
   })
-  await page.route(/http:\/\/localhost:8000\/api\/jobs\/mine\/\?as=draft$/, async (route) => {
+  await page.route(/http:\/\/localhost:8000\/api\/employer\/jobs\/\?as=draft$/, async (route) => {
     savedDraft = route.request().postDataJSON()
     await route.fulfill({
       contentType: 'application/json',
       body: JSON.stringify({ public_id: 'job_draft', status: 'draft', ...savedDraft }),
     })
   })
-  await page.route('http://localhost:8000/api/jobs/mine/job_draft/', async (route) => {
+  await page.route('http://localhost:8000/api/employer/jobs/job_draft/', async (route) => {
     await route.fulfill({
       contentType: 'application/json',
       body: JSON.stringify({ public_id: 'job_draft', status: 'draft', ...savedDraft }),
     })
   })
-  await page.route('http://localhost:8000/api/jobs/benefits/', async (route) => {
+  await page.route('http://localhost:8000/api/public/jobs/benefits/', async (route) => {
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify([{ id: 1, name: 'Bảo hiểm' }]) })
   })
-  await page.route('http://localhost:8000/api/jobs/languages/', async (route) => {
+  await page.route('http://localhost:8000/api/public/jobs/languages/', async (route) => {
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify([{ id: 2, name: 'Tiếng Anh' }]) })
   })
-  await page.route('http://localhost:8000/api/skills/', async (route) => {
+  await page.route('http://localhost:8000/api/public/skills/', async (route) => {
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify([{ id: 3, name: 'React' }]) })
   })
-  await page.route(/http:\/\/localhost:8000\/api\/locations\/.*/, async (route) => {
+  await page.route(/http:\/\/localhost:8000\/api\/public\/locations\/.*/, async (route) => {
     const level = new URL(route.request().url()).searchParams.get('level')
     await route.fulfill({
       contentType: 'application/json',
@@ -1132,13 +1132,13 @@ test('employer jobs: creation chooser leads to the complete manual five-section 
   })
 
   const initialCatalogResponses = Promise.all([
-    page.waitForResponse((response) => new URL(response.url()).pathname === '/api/jobs/categories/' && response.status() === 200),
+    page.waitForResponse((response) => new URL(response.url()).pathname === '/api/public/jobs/categories/' && response.status() === 200),
     page.waitForResponse((response) => new URL(response.url()).pathname === '/api/employer/campaigns/options/' && response.status() === 200),
-    page.waitForResponse((response) => new URL(response.url()).pathname === '/api/jobs/mine/posting-context/' && response.status() === 200),
-    page.waitForResponse((response) => new URL(response.url()).pathname === '/api/jobs/benefits/' && response.status() === 200),
-    page.waitForResponse((response) => new URL(response.url()).pathname === '/api/jobs/languages/' && response.status() === 200),
-    page.waitForResponse((response) => new URL(response.url()).pathname === '/api/skills/' && response.status() === 200),
-    page.waitForResponse((response) => new URL(response.url()).pathname === '/api/locations/' && response.status() === 200),
+    page.waitForResponse((response) => new URL(response.url()).pathname === '/api/employer/jobs/posting-context/' && response.status() === 200),
+    page.waitForResponse((response) => new URL(response.url()).pathname === '/api/public/jobs/benefits/' && response.status() === 200),
+    page.waitForResponse((response) => new URL(response.url()).pathname === '/api/public/jobs/languages/' && response.status() === 200),
+    page.waitForResponse((response) => new URL(response.url()).pathname === '/api/public/skills/' && response.status() === 200),
+    page.waitForResponse((response) => new URL(response.url()).pathname === '/api/public/locations/' && response.status() === 200),
   ])
 
   await page.goto('/tuyendung/app/jobs/new?campaign=camp_q3')
@@ -1281,7 +1281,7 @@ test('employer jobs: direct AI modes preserve campaign, resume generation and at
       }),
     })
   })
-  await page.route(/http:\/\/localhost:8000\/api\/jobs\/categories\/.*/, async (route) => {
+  await page.route(/http:\/\/localhost:8000\/api\/public\/jobs\/categories\/.*/, async (route) => {
     await route.fulfill({
       contentType: 'application/json',
       body: JSON.stringify([
@@ -1294,7 +1294,7 @@ test('employer jobs: direct AI modes preserve campaign, resume generation and at
   await page.route('http://localhost:8000/api/employer/campaigns/options/', async (route) => {
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify([{ public_id: 'camp_ai', name: 'Chiến dịch AI' }]) })
   })
-  await page.route('http://localhost:8000/api/jobs/mine/posting-context/', async (route) => {
+  await page.route('http://localhost:8000/api/employer/jobs/posting-context/', async (route) => {
     await route.fulfill({
       contentType: 'application/json',
       body: JSON.stringify({
@@ -1308,19 +1308,19 @@ test('employer jobs: direct AI modes preserve campaign, resume generation and at
       }),
     })
   })
-  await page.route('http://localhost:8000/api/jobs/benefits/', async (route) => {
+  await page.route('http://localhost:8000/api/public/jobs/benefits/', async (route) => {
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify([{ id: 1, name: 'Bảo hiểm' }]) })
   })
-  await page.route('http://localhost:8000/api/jobs/languages/', async (route) => {
+  await page.route('http://localhost:8000/api/public/jobs/languages/', async (route) => {
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify([{ id: 2, name: 'Tiếng Anh' }]) })
   })
-  await page.route('http://localhost:8000/api/skills/', async (route) => {
+  await page.route('http://localhost:8000/api/public/skills/', async (route) => {
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify([{ id: 3, name: 'Python' }]) })
   })
-  await page.route(/http:\/\/localhost:8000\/api\/locations\/.*/, async (route) => {
+  await page.route(/http:\/\/localhost:8000\/api\/public\/locations\/.*/, async (route) => {
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify([{ id: 1, name: 'Đà Nẵng', level: 'province' }]) })
   })
-  await page.route('http://localhost:8000/api/jobs/mine/ai-generations/', async (route) => {
+  await page.route('http://localhost:8000/api/employer/jobs/ai-generations/', async (route) => {
     createdGenerationPayload = route.request().postDataJSON()
     await route.fulfill({
       status: 202,
@@ -1333,7 +1333,7 @@ test('employer jobs: direct AI modes preserve campaign, resume generation and at
       }),
     })
   })
-  await page.route('http://localhost:8000/api/jobs/mine/ai-generations/generation_e2e/', async (route) => {
+  await page.route('http://localhost:8000/api/employer/jobs/ai-generations/generation_e2e/', async (route) => {
     await route.fulfill({
       contentType: 'application/json',
       body: JSON.stringify({
@@ -1362,14 +1362,14 @@ test('employer jobs: direct AI modes preserve campaign, resume generation and at
       }),
     })
   })
-  await page.route(/http:\/\/localhost:8000\/api\/jobs\/mine\/\?as=draft$/, async (route) => {
+  await page.route(/http:\/\/localhost:8000\/api\/employer\/jobs\/\?as=draft$/, async (route) => {
     savedAiDraft = route.request().postDataJSON()
     await route.fulfill({
       contentType: 'application/json',
       body: JSON.stringify({ public_id: 'job_ai_draft', status: 'draft', ...savedAiDraft }),
     })
   })
-  await page.route('http://localhost:8000/api/jobs/mine/job_ai_draft/', async (route) => {
+  await page.route('http://localhost:8000/api/employer/jobs/job_ai_draft/', async (route) => {
     await route.fulfill({
       contentType: 'application/json',
       body: JSON.stringify({ public_id: 'job_ai_draft', status: 'draft', ...savedAiDraft }),
@@ -1434,7 +1434,7 @@ test('employer jobs: detail workspace is compact, actionable and responsive', as
       }),
     })
   })
-  await page.route('http://localhost:8000/api/jobs/mine/jb_workspace/', async (route) => {
+  await page.route('http://localhost:8000/api/employer/jobs/jb_workspace/', async (route) => {
     await route.fulfill({
       contentType: 'application/json',
       body: JSON.stringify({
@@ -1469,7 +1469,7 @@ test('employer jobs: detail workspace is compact, actionable and responsive', as
       }),
     })
   })
-  await page.route('http://localhost:8000/api/jobs/mine/posting-context/', async (route) => {
+  await page.route('http://localhost:8000/api/employer/jobs/posting-context/', async (route) => {
     await route.fulfill({
       contentType: 'application/json',
       body: JSON.stringify({
@@ -1480,7 +1480,7 @@ test('employer jobs: detail workspace is compact, actionable and responsive', as
     })
   })
   const applicationQueries = []
-  await page.route(/http:\/\/localhost:8000\/api\/v2\/recruiter\/applications\/.*/, async (route) => {
+  await page.route(/http:\/\/localhost:8000\/api\/employer\/applications\/.*/, async (route) => {
     const params = new URL(route.request().url()).searchParams
     applicationQueries.push(params)
     const applications = [
@@ -1597,13 +1597,13 @@ test('employer applications: grouped CV workspace is clear across responsive lay
       applied_at: '2026-07-28T08:00:00+07:00',
     },
   ]
-  await page.route(/http:\/\/localhost:8000\/api\/v2\/recruiter\/applications\/(?:\?.*)?$/, async (route) => {
+  await page.route(/http:\/\/localhost:8000\/api\/employer\/applications\/(?:\?.*)?$/, async (route) => {
     await route.fulfill({
       contentType: 'application/json',
       body: JSON.stringify({ count: 2, next: null, previous: null, results: applications }),
     })
   })
-  await page.route('http://localhost:8000/api/v2/recruiter/applications/app_befb3400ade3/cv/', async (route) => {
+  await page.route('http://localhost:8000/api/employer/applications/app_befb3400ade3/cv/', async (route) => {
     await route.fulfill({
       contentType: 'application/json',
       body: JSON.stringify({
@@ -1639,11 +1639,11 @@ test('employer applications: grouped CV workspace is clear across responsive lay
       candidate_notice: { state: 'delivered', deliver_at: '2026-08-02T09:30:00+07:00', delivered_at: '2026-08-02T09:31:00+07:00', email_sent_at: '2026-08-02T09:31:05+07:00' },
     },
   ]
-  await page.route('http://localhost:8000/api/v2/recruiter/applications/app_befb3400ade3/history/', async (route) => {
+  await page.route('http://localhost:8000/api/employer/applications/app_befb3400ade3/history/', async (route) => {
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify(history) })
   })
   const decisions = []
-  await page.route('http://localhost:8000/api/v2/recruiter/applications/app_befb3400ade3/status/', async (route) => {
+  await page.route('http://localhost:8000/api/employer/applications/app_befb3400ade3/status/', async (route) => {
     const { status } = route.request().postDataJSON()
     decisions.push(status)
     applications[0] = { ...applications[0], status, available_decisions: ['interviewed', 'accepted', 'rejected'] }
@@ -1656,20 +1656,20 @@ test('employer applications: grouped CV workspace is clear across responsive lay
       body: JSON.stringify({ application: applications[0], candidate_notice_at: '2026-08-02T10:05:00+07:00' }),
     })
   })
-  await page.route('http://localhost:8000/api/v2/recruiter/applications/app_befb3400ade3/status/undo/', async (route) => {
+  await page.route('http://localhost:8000/api/employer/applications/app_befb3400ade3/status/undo/', async (route) => {
     decisions.push('undo')
     applications[0] = { ...applications[0], status: 'viewed', available_decisions: ['shortlisted', 'interviewed', 'accepted', 'rejected'] }
     history[history.length - 1] = { ...history.at(-1), reverted_at: '2026-08-02T10:01:00+07:00', can_undo: false, candidate_notice: { ...history.at(-1).candidate_notice, state: 'undone' } }
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify(applications[0]) })
   })
-  await page.route('http://localhost:8000/api/v2/recruiter/applications/app_befb3400ade3/cv/exports/', async (route) => {
+  await page.route('http://localhost:8000/api/employer/applications/app_befb3400ade3/cv/exports/', async (route) => {
     await route.fulfill({
       status: 201,
       contentType: 'application/json',
-      body: JSON.stringify({ public_id: 'cve_1', status: 'completed', download_url: 'http://localhost:8000/api/v2/recruiter/applications/app_befb3400ade3/cv/exports/cve_1/download/' }),
+      body: JSON.stringify({ public_id: 'cve_1', status: 'completed', download_url: 'http://localhost:8000/api/employer/applications/app_befb3400ade3/cv/exports/cve_1/download/' }),
     })
   })
-  await page.route('http://localhost:8000/api/v2/recruiter/applications/app_befb3400ade3/cv/exports/cve_1/download/', async (route) => {
+  await page.route('http://localhost:8000/api/employer/applications/app_befb3400ade3/cv/exports/cve_1/download/', async (route) => {
     await route.fulfill({ contentType: 'application/pdf', body: '%PDF-1.4 snapshot' })
   })
 
@@ -1954,7 +1954,7 @@ test('employer campaign detail: TopCV-style workspace is responsive and uses API
       }),
     })
   })
-  await page.route(/http:\/\/localhost:8000\/api\/v2\/recruiter\/applications\/(?:\?.*)?$/, async (route) => {
+  await page.route(/http:\/\/localhost:8000\/api\/employer\/applications\/(?:\?.*)?$/, async (route) => {
     await route.fulfill({
       contentType: 'application/json',
       body: JSON.stringify({
@@ -1969,7 +1969,7 @@ test('employer campaign detail: TopCV-style workspace is responsive and uses API
       }),
     })
   })
-  await page.route(/http:\/\/localhost:8000\/api\/jobs\/mine\/(?:\?.*)?$/, async (route) => {
+  await page.route(/http:\/\/localhost:8000\/api\/employer\/jobs\/(?:\?.*)?$/, async (route) => {
     await route.fulfill({
       contentType: 'application/json',
       body: JSON.stringify({
@@ -2466,7 +2466,7 @@ test('employer company page: editing the headline sends it for review and marks 
     pending = { ...pending, ...changes }
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify(workspace()) })
   })
-  await page.route('http://localhost:8000/api/jobs/benefits/', async (route) => {
+  await page.route('http://localhost:8000/api/public/jobs/benefits/', async (route) => {
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify([{ id: 7, name: 'Bảo hiểm sức khoẻ', icon: '', category: 'welfare' }]) })
   })
 
@@ -2489,10 +2489,10 @@ test('employer company page: editing the headline sends it for review and marks 
 test('employer review link: invited reviewer reads a de-identified CV and sends a scorecard', async ({ page }) => {
   await mockPublicApi(page)
   const submitted = []
-  await page.route('http://localhost:8000/api/v2/application-reviews/expired-token/', async (route) => {
+  await page.route('http://localhost:8000/api/public/application-reviews/expired-token/', async (route) => {
     await route.fulfill({ status: 404, contentType: 'application/json', body: '{"detail":"Not found."}' })
   })
-  await page.route('http://localhost:8000/api/v2/application-reviews/review-token/', async (route) => {
+  await page.route('http://localhost:8000/api/public/application-reviews/review-token/', async (route) => {
     if (route.request().method() === 'PUT') {
       submitted.push(route.request().postDataJSON())
       await route.fulfill({
@@ -2554,10 +2554,10 @@ test('employer blocklist: blocked candidates are listed and can be lifted', asyn
     reason_label: 'Ứng tuyển hàng loạt, không phù hợp', note: 'Nộp 8 tin trong 2 ngày', source_job_title: 'Kế toán',
     expires_at: null, created_at: '2026-11-15T09:00:00+07:00', blocked_by_name: 'HR A', can_lift: true,
   }]
-  await page.route(/http:\/\/localhost:8000\/api\/v2\/recruiter\/candidate-blocks\/(?:\?.*)?$/, async (route) => {
+  await page.route(/http:\/\/localhost:8000\/api\/employer\/candidate-blocks\/(?:\?.*)?$/, async (route) => {
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify({ count: blocks.length, results: blocks }) })
   })
-  await page.route('http://localhost:8000/api/v2/recruiter/candidate-blocks/cbk_1/lift/', async (route) => {
+  await page.route('http://localhost:8000/api/employer/candidate-blocks/cbk_1/lift/', async (route) => {
     blocks = []
     await route.fulfill({ contentType: 'application/json', body: '{}' })
   })
@@ -2591,19 +2591,19 @@ test('employer talent pool: suggestions for a job and an invitation', async ({ p
     note: 'Tư duy tốt', tags: ['Python'], created_at: '2026-11-15T09:00:00+07:00', expires_at: '2027-11-15T09:00:00+07:00',
   }
   let invited = false
-  await page.route(/http:\/\/localhost:8000\/api\/v2\/recruiter\/talent-pool\/(?:\?.*)?$/, async (route) => {
+  await page.route(/http:\/\/localhost:8000\/api\/employer\/talent-pool\/(?:\?.*)?$/, async (route) => {
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify({ count: 1, results: [entry] }) })
   })
-  await page.route(/http:\/\/localhost:8000\/api\/jobs\/mine\/(?:\?.*)?$/, async (route) => {
+  await page.route(/http:\/\/localhost:8000\/api\/employer\/jobs\/(?:\?.*)?$/, async (route) => {
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify({ count: 1, results: [{ public_id: 'jb_new', title: 'Backend Senior' }] }) })
   })
-  await page.route(/http:\/\/localhost:8000\/api\/v2\/recruiter\/talent-pool\/suggestions\/.*/, async (route) => {
+  await page.route(/http:\/\/localhost:8000\/api\/employer\/talent-pool\/suggestions\/.*/, async (route) => {
     await route.fulfill({
       contentType: 'application/json',
       body: JSON.stringify([{ entry, score: 58, reasons: ['Cùng vị trí chuyên môn'], already_invited: invited }]),
     })
   })
-  await page.route('http://localhost:8000/api/v2/recruiter/talent-pool/tpe_1/invite/', async (route) => {
+  await page.route('http://localhost:8000/api/employer/talent-pool/tpe_1/invite/', async (route) => {
     invited = true
     await route.fulfill({ status: 204, body: '' })
   })

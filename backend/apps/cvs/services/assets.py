@@ -253,7 +253,7 @@ def asset_map(
     for asset in assets:
         if asset.kind == CvAsset.Kind.AVATAR and owner is not None and asset.owner_id != owner.pk:
             continue
-        path = reverse('cv-v2-asset-content', kwargs={'asset_public_id': asset.public_id})
+        path = reverse('cv-asset-content', kwargs={'asset_public_id': asset.public_id})
         if signed:
             token_context = token_context or {}
             path = f'{path}?token={sign_asset(asset, version, **token_context)}'

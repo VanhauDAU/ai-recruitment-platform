@@ -39,11 +39,11 @@ async function mockCandidatePersonalizationApi(page) {
           has_usable_password: true,
           job_preferences_configured: true,
         }
-      : path === '/api/privacy/consent/'
+      : path === '/api/public/privacy/consent/'
         ? { consent: { necessary: true, preferences: true, analytics: false, marketing: false } }
         : path === '/api/candidate/email-notification-settings/'
           ? emailNotifications
-            : path === '/api/jobs/recommendations/for-me/'
+            : path === '/api/candidate/jobs/recommendations/for-me/'
               ? {
                 status: 'ready',
                 sources: { job_preferences: true, cv: false, search_activity: false },
@@ -84,7 +84,7 @@ async function mockCandidatePersonalizationApi(page) {
                   ],
                 }],
               }
-            : path === '/api/jobs/recommendations/by-saved/'
+            : path === '/api/candidate/jobs/recommendations/by-saved/'
               ? {
                   status: 'ready',
                   strategy: 'recent-active-fallback-v1',
@@ -117,9 +117,9 @@ async function mockCandidatePersonalizationApi(page) {
                     similarity_reasons: [],
                   }],
                 }
-            : path === '/api/jobs/saved/'
+            : path === '/api/candidate/jobs/saved/'
               ? []
-              : path === '/api/site/settings/'
+              : path === '/api/public/site/settings/'
                 ? {}
                 : {}
 
@@ -230,29 +230,29 @@ test('candidate smoke: WYSIWYG CV editor uses the V2 draft lifecycle', async ({ 
       ? { access: 'e2e-access' }
       : path === '/api/auth/me/'
         ? { id: 1, role: 'candidate', email_verified: true, job_preferences_configured: true }
-      : path === '/api/privacy/consent/'
+      : path === '/api/public/privacy/consent/'
         ? { consent: { necessary: true, preferences: false, analytics: false, marketing: false } }
-      : path === '/api/site/settings/'
+      : path === '/api/public/site/settings/'
         ? { cv_builder_wysiwyg_enabled: true }
-      : path === '/api/v2/cvs/cv_1/'
+      : path === '/api/candidate/cvs/cv_1/'
         ? { public_id: 'cv_1', title: 'CV V2', latest_version_public_id: 'version_2', thumbnail_url: null, thumbnail_status: 'pending', template_public_id: 'tpl_1', template_renderer_key: 'single_column_v1', template_capabilities: { layout: { section_drag: true, cross_region_drag: true, item_drag: true } } }
-        : path === '/api/v2/cvs/cv_1/draft/' && request.method() === 'GET'
+        : path === '/api/candidate/cvs/cv_1/draft/' && request.method() === 'GET'
           ? draft
-      : path === '/api/v2/cvs/cv_1/draft/' && request.method() === 'PUT'
+      : path === '/api/candidate/cvs/cv_1/draft/' && request.method() === 'PUT'
             ? { ...draft, lock_version: 1 }
-            : path === '/api/uploads/sessions/' && request.method() === 'POST'
+            : path === '/api/shared/uploads/sessions/' && request.method() === 'POST'
               ? {
                   public_id: 'ups_avatar_1',
                   state: 'uploading',
                   ready_for_submit: false,
                 }
-              : path === '/api/uploads/sessions/ups_avatar_1/content/' && request.method() === 'POST'
+              : path === '/api/shared/uploads/sessions/ups_avatar_1/content/' && request.method() === 'POST'
                 ? {
                     public_id: 'ups_avatar_1',
                     state: 'clean',
                     ready_for_submit: true,
                   }
-            : path === '/api/v2/cvs/assets/' && request.method() === 'POST'
+            : path === '/api/candidate/cvs/assets/' && request.method() === 'POST'
               ? {
                   public_id: 'avatar_uploaded',
                   kind: 'avatar',
@@ -260,18 +260,18 @@ test('candidate smoke: WYSIWYG CV editor uses the V2 draft lifecycle', async ({ 
                   height: 700,
                   url: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="900" height="700"%3E%3Crect width="900" height="700" fill="%232255AA"/%3E%3C/svg%3E',
                 }
-            : path === '/api/v2/cvs/cv_1/save-version/'
+            : path === '/api/candidate/cvs/cv_1/save-version/'
               ? {
                   public_id: 'version_2', version_number: 2, version_kind: 'manual_save',
                   schema_version: draft.schema_version, content_json: draft.content_json,
                   layout_json: draft.layout_json, style_json: draft.style_json, assets: {},
                   template_renderer_key: 'single_column_v1',
                 }
-              : path === '/api/jobs/recommendations/by-cv/cv_1/'
+              : path === '/api/candidate/jobs/recommendations/by-cv/cv_1/'
                 ? { focus_keyword: 'Developer', strategy: 'profile-rule-v1', related_positions: [{ label: 'Frontend Developer', search: 'Frontend Developer' }], results: [] }
                 : path === '/api/candidate/recruiter-visibility/'
                   ? { enabled: false, policy_version: 'v1', decided_at: null }
-                  : path === '/api/v2/cvs/cv_1/thumbnail/'
+                  : path === '/api/candidate/cvs/cv_1/thumbnail/'
                     ? { status: 'pending', thumbnail_url: null }
               : {}
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) })
@@ -306,7 +306,7 @@ test('candidate smoke: WYSIWYG CV editor uses the V2 draft lifecycle', async ({ 
   // Editor không tự động lưu: bản nháp chỉ được gửi khi bấm "Lưu CV".
   let draftPuts = 0
   page.on('request', (request) => {
-    if (request.url().endsWith('/api/v2/cvs/cv_1/draft/') && request.method() === 'PUT') draftPuts += 1
+    if (request.url().endsWith('/api/candidate/cvs/cv_1/draft/') && request.method() === 'PUT') draftPuts += 1
   })
   await page.getByLabel('Họ và tên inline').fill('Nguyễn Bình')
   await page.getByLabel('Họ và tên inline').press('Tab')
@@ -327,9 +327,9 @@ test('candidate smoke: WYSIWYG CV editor uses the V2 draft lifecycle', async ({ 
 
   let saveVersionRequested = false
   page.on('request', (request) => {
-    if (request.url().endsWith('/api/v2/cvs/cv_1/save-version/')) saveVersionRequested = true
+    if (request.url().endsWith('/api/candidate/cvs/cv_1/save-version/')) saveVersionRequested = true
   })
-  const draftSaveRequest = page.waitForRequest((request) => request.url().endsWith('/api/v2/cvs/cv_1/draft/') && request.method() === 'PUT')
+  const draftSaveRequest = page.waitForRequest((request) => request.url().endsWith('/api/candidate/cvs/cv_1/draft/') && request.method() === 'PUT')
   await page.getByRole('button', { name: 'Lưu CV' }).click()
   await expect(page.getByRole('dialog', { name: 'Lưu CV chưa hoàn thiện' })).toBeVisible()
   await page.getByRole('button', { name: 'Lưu CV, tôi sẽ hoàn thiện sau' }).click()
@@ -367,13 +367,13 @@ test('candidate smoke: owner CV view renders an immutable V2 version, not a draf
       ? { access: 'e2e-access' }
       : path === '/api/auth/me/'
         ? { id: 1, role: 'candidate', email_verified: true, job_preferences_configured: true }
-      : path === '/api/v2/cvs/cv_1/'
+      : path === '/api/candidate/cvs/cv_1/'
         ? { public_id: 'cv_1', published_version_public_id: 'cvv_2', latest_version_public_id: 'cvv_2' }
-        : path === '/api/v2/cvs/cv_1/versions/'
+        : path === '/api/candidate/cvs/cv_1/versions/'
           ? { count: 1, results: [{ public_id: 'cvv_2', version_number: 2, version_kind: 'published', template_renderer_key: 'single_column_v1' }] }
-      : path === '/api/v2/cvs/cv_1/view/'
+      : path === '/api/candidate/cvs/cv_1/view/'
         ? { cv: { public_id: 'cv_1', title: 'CV read-only', language: 'vi-VN' }, version }
-        : path === '/api/v2/cvs/cv_1/exports/' && route.request().method() === 'POST'
+        : path === '/api/candidate/cvs/cv_1/exports/' && route.request().method() === 'POST'
           ? { public_id: 'cve_1', version_public_id: 'cvv_2', status: 'pending', renderer_key: 'single_column_v1', renderer_version: '1', download_url: null }
         : {}
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) })
@@ -384,7 +384,7 @@ test('candidate smoke: owner CV view renders an immutable V2 version, not a draf
   await expect(page.getByText('Phiên bản bất biến')).toBeVisible()
   await expect(page.getByText('Nội dung đã lưu')).toBeVisible()
   await expect(page.getByLabel('Xem trước CV single_column_v1 trang 1')).toBeVisible()
-  const exportRequest = page.waitForRequest((request) => request.url().endsWith('/api/v2/cvs/cv_1/exports/') && request.method() === 'POST')
+  const exportRequest = page.waitForRequest((request) => request.url().endsWith('/api/candidate/cvs/cv_1/exports/') && request.method() === 'POST')
   await expect(page.getByRole('link', { name: 'Sửa CV' })).toHaveAttribute('href', '/cvs/cv_1/edit')
   await expect(page.getByRole('button', { name: 'Copy CV' })).toBeVisible()
   await expect(page.getByLabel('Chọn phiên bản PDF')).toHaveCount(0)
@@ -413,13 +413,13 @@ test('candidate smoke: CV library permanently deletes a CV through V2', async ({
       ? { access: 'e2e-access' }
       : path === '/api/auth/me/'
         ? { id: 1, role: 'candidate', email_verified: true, job_preferences_configured: true }
-      : path === '/api/privacy/consent/'
+      : path === '/api/public/privacy/consent/'
         ? { consent: { necessary: true, preferences: false, analytics: false, marketing: false } }
-      : path === '/api/v2/cvs/' && request.method() === 'GET'
+      : path === '/api/candidate/cvs/' && request.method() === 'GET'
         ? { results: deleted ? [] : [cv] }
-        : path === '/api/v2/cvs/cv_1/view/'
+        : path === '/api/candidate/cvs/cv_1/view/'
           ? { cv: { public_id: 'cv_1', title: cv.title, language: 'vi-VN', is_default: false }, version }
-          : path === '/api/v2/cvs/cv_1/' && request.method() === 'DELETE'
+          : path === '/api/candidate/cvs/cv_1/' && request.method() === 'DELETE'
             ? ((deleted = true), {})
             : {}
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) })
@@ -438,7 +438,7 @@ test('candidate smoke: CV library permanently deletes a CV through V2', async ({
   // depending on transient overlay coordinates.
   await deleteMenuItem.press('Enter')
   await expect(deleteDialog).toBeVisible({ timeout: 10_000 })
-  const deleteRequest = page.waitForRequest((request) => request.url().endsWith('/api/v2/cvs/cv_1/') && request.method() === 'DELETE')
+  const deleteRequest = page.waitForRequest((request) => request.url().endsWith('/api/candidate/cvs/cv_1/') && request.method() === 'DELETE')
   await deleteDialog
     .getByRole('button', { name: 'Xóa', exact: true })
     .press('Enter')
@@ -467,11 +467,11 @@ test('candidate smoke: job application submits the selected immutable CV version
   await page.route(API_ROUTE, async (route) => {
     const request = route.request()
     const path = new URL(request.url()).pathname
-    if (path === '/api/v2/applications/rules/') {
+    if (path === '/api/public/applications/rules/') {
       await route.fulfill({ contentType: 'application/json', body: JSON.stringify(APPLICATION_RULES) })
       return
     }
-    if (path === '/api/v2/applications/' && request.method() === 'POST') {
+    if (path === '/api/candidate/applications/' && request.method() === 'POST') {
       applicationPayload = request.postDataJSON()
       applications = [{
         public_id: 'app_1',
@@ -488,27 +488,27 @@ test('candidate smoke: job application submits the selected immutable CV version
       ? { access: 'e2e-access' }
       : path === '/api/auth/me/'
         ? { id: 1, role: 'candidate', email_verified: true, job_preferences_configured: true }
-      : path === '/api/privacy/consent/'
+      : path === '/api/public/privacy/consent/'
         ? (request.method() === 'POST'
           ? { necessary: true, preferences: false, analytics: false, marketing: false }
           : { consent: null })
-      : path === '/api/jobs/apply-job/'
+      : path === '/api/public/jobs/apply-job/'
         ? job
-        : path === '/api/jobs/'
+        : path === '/api/public/jobs/'
           ? { count: 0, results: [] }
-          : path === '/api/jobs/categories/' || path === '/api/locations/'
+          : path === '/api/public/jobs/categories/' || path === '/api/public/locations/'
             ? []
-            : path === '/api/v2/cvs/'
+            : path === '/api/candidate/cvs/'
               ? { results: [{
                   public_id: 'cv_1', title: 'CV chính', is_default: true, cv_type: 'builder',
                   latest_version_public_id: 'cvv_2', has_unsaved_changes: false,
                   completion_score: 85, is_complete: true, updated_at: '2026-07-17T10:00:00Z',
                 }] }
-              : path === '/api/v2/cvs/cv_1/'
+              : path === '/api/candidate/cvs/cv_1/'
                 ? { public_id: 'cv_1', published_version_public_id: 'cvv_2', latest_version_public_id: 'cvv_2' }
-                : path === '/api/v2/cvs/cv_1/versions/'
+                : path === '/api/candidate/cvs/cv_1/versions/'
                   ? { results: [{ public_id: 'cvv_2', version_number: 2, version_kind: 'published' }] }
-              : path === '/api/v2/applications/'
+              : path === '/api/candidate/applications/'
                     ? (request.method() === 'GET'
                       ? { results: applications }
                       : applications[0])
@@ -621,7 +621,7 @@ test('candidate smoke: verified badge and job report modal work on desktop and m
   await page.route(API_ROUTE, async (route) => {
     const request = route.request()
     const path = new URL(request.url()).pathname
-    if (path === '/api/jobs/job_report_1/report/' && request.method() === 'POST') {
+    if (path === '/api/candidate/jobs/job_report_1/report/' && request.method() === 'POST') {
       reportPayload = request.postDataJSON()
     }
     const body = path === '/api/auth/refresh/'
@@ -635,17 +635,17 @@ test('candidate smoke: verified badge and job report modal work on desktop and m
           email_verified: true,
           job_preferences_configured: true,
         }
-      : path === '/api/privacy/consent/'
+      : path === '/api/public/privacy/consent/'
         ? { consent: { necessary: true, preferences: false, analytics: false, marketing: false } }
-        : path === '/api/jobs/report-job/'
+        : path === '/api/public/jobs/report-job/'
           ? job
-          : path === '/api/jobs/job_report_1/report/' && request.method() === 'POST'
+          : path === '/api/candidate/jobs/job_report_1/report/' && request.method() === 'POST'
             ? { public_id: 'jrep_1', status: 'pending' }
-            : path === '/api/jobs/'
+            : path === '/api/public/jobs/'
               ? { count: 0, results: [] }
-              : path === '/api/jobs/categories/' || path === '/api/locations/'
+              : path === '/api/public/jobs/categories/' || path === '/api/public/locations/'
                 ? []
-                : path === '/api/v2/applications/'
+                : path === '/api/candidate/applications/'
                   ? { results: [] }
                   : {}
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) })
@@ -695,11 +695,11 @@ test('candidate smoke: uploaded CVs show the original file, a recruiter-search s
   await page.route(API_ROUTE, async (route) => {
     const request = route.request()
     const path = new URL(request.url()).pathname
-    if (path === '/api/v2/cvs/cv_up/source/' || path === '/api/v2/cvs/shares/tok_up/source/') {
+    if (path === '/api/candidate/cvs/cv_up/source/' || path === '/api/public/cvs/shares/tok_up/source/') {
       await route.fulfill({ contentType: 'application/pdf', body: '%PDF-1.4' })
       return
     }
-    if (path === '/api/uploads/sessions/') {
+    if (path === '/api/shared/uploads/sessions/') {
       await route.fulfill({ status: 503, contentType: 'application/json', body: JSON.stringify({ code: 'UPLOAD_PIPELINE_DISABLED' }) })
       return
     }
@@ -707,17 +707,17 @@ test('candidate smoke: uploaded CVs show the original file, a recruiter-search s
       ? { access: 'e2e-access' }
       : path === '/api/auth/me/'
         ? { id: 1, role: 'candidate', email_verified: true, job_preferences_configured: true }
-      : path === '/api/privacy/consent/'
+      : path === '/api/public/privacy/consent/'
         ? { consent: { necessary: true, preferences: false, analytics: false, marketing: false } }
-      : path === '/api/v2/cvs/' && request.method() === 'GET'
+      : path === '/api/candidate/cvs/' && request.method() === 'GET'
         ? { results: [uploaded] }
-      : path === '/api/v2/cvs/cv_up/view/' || path === '/api/v2/cvs/shares/tok_up/'
+      : path === '/api/candidate/cvs/cv_up/view/' || path === '/api/public/cvs/shares/tok_up/'
         ? { cv: { public_id: 'cv_up', title: uploaded.title, language: 'vi-VN', is_default: false, cv_type: 'uploaded' }, version: { content_json: {}, layout_json: {}, style_json: {} } }
       : path === '/api/candidate/recruiter-visibility/'
         ? { enabled: true, policy_version: 'v1' }
-      : path === '/api/v2/cvs/imports/' && request.method() === 'POST'
+      : path === '/api/candidate/cvs/imports/' && request.method() === 'POST'
         ? ((imported = true), uploaded)
-      : path === '/api/v2/cv-templates/'
+      : path === '/api/public/cv-templates/'
         ? { results: [] }
         : {}
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) })
@@ -729,7 +729,7 @@ test('candidate smoke: uploaded CVs show the original file, a recruiter-search s
   await expect(page.getByRole('switch', { name: 'Cho phép NTD tìm kiếm CV này' })).toBeVisible()
   await expect(page.getByRole('link', { name: 'Sửa', exact: true })).toHaveCount(0)
   await expect(page.getByRole('heading', { name: 'Bật tìm việc cho CV' })).toBeVisible()
-  const enableRequest = page.waitForRequest((request) => request.url().endsWith('/api/v2/cvs/cv_up/') && request.method() === 'PATCH')
+  const enableRequest = page.waitForRequest((request) => request.url().endsWith('/api/candidate/cvs/cv_up/') && request.method() === 'PATCH')
   await page.getByRole('button', { name: 'Bật tìm việc ngay' }).click()
   expect((await enableRequest).postDataJSON()).toEqual({ recruiter_searchable: true })
 
@@ -782,15 +782,15 @@ test('candidate smoke: applied jobs list every status and say when the employer 
       ? { access: 'e2e-access' }
       : path === '/api/auth/me/'
         ? { id: 1, role: 'candidate', email_verified: true, job_preferences_configured: true }
-        : path === '/api/privacy/consent/'
+        : path === '/api/public/privacy/consent/'
           ? (request.method() === 'POST'
             ? { necessary: true, preferences: false, analytics: false, marketing: false }
             : { consent: null })
-          : path === '/api/v2/applications/'
+          : path === '/api/candidate/applications/'
             ? { results: applications }
-            : path === '/api/jobs/stopped-job/'
+            : path === '/api/public/jobs/stopped-job/'
               ? stoppedJob
-              : path === '/api/jobs/'
+              : path === '/api/public/jobs/'
                 ? { count: 0, results: [] }
                 : {}
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) })

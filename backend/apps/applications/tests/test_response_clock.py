@@ -42,7 +42,7 @@ class CandidateVisibleStatusTests(TestCase):
         return Application.objects.select_related('job').get(pk=self.application.pk)
 
     def listed(self):
-        return self.client.get(reverse('candidate-application-list-create-v2')).data['results'][0]
+        return self.client.get(reverse('candidate-application-list-create')).data['results'][0]
 
     def test_buttons_do_not_reveal_a_rejection_still_inside_its_undo_window(self):
         change_application_status(self.reload(), changed_by=self.employer, status=Status.REJECTED)

@@ -36,7 +36,7 @@ describe('candidate job alerts API', () => {
       limit: 5,
       remaining: 4,
     })
-    expect(get).toHaveBeenCalledWith('/jobs/alerts/')
+    expect(get).toHaveBeenCalledWith('/candidate/jobs/alerts/')
   })
 
   it('normalizes a legacy bare array without changing alert DTOs', () => {
@@ -56,14 +56,14 @@ describe('candidate job alerts API', () => {
     await createCandidateJobAlert(createPayload)
     await updateCandidateJobAlert('alert_1', updatePayload)
 
-    expect(post).toHaveBeenCalledWith('/jobs/alerts/', createPayload)
-    expect(patch).toHaveBeenCalledWith('/jobs/alerts/alert_1/', updatePayload)
+    expect(post).toHaveBeenCalledWith('/candidate/jobs/alerts/', createPayload)
+    expect(patch).toHaveBeenCalledWith('/candidate/jobs/alerts/alert_1/', updatePayload)
   })
 
   it('deletes one alert by public ID', async () => {
     deleteRequest.mockResolvedValue({ status: 204 })
 
     await expect(deleteCandidateJobAlert('alert_1')).resolves.toBe('alert_1')
-    expect(deleteRequest).toHaveBeenCalledWith('/jobs/alerts/alert_1/')
+    expect(deleteRequest).toHaveBeenCalledWith('/candidate/jobs/alerts/alert_1/')
   })
 })

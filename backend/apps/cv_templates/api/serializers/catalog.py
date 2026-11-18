@@ -2,10 +2,9 @@
 
 from rest_framework import serializers
 
+from apps.cv_templates.models import CvCategory, CvSampleContent, CvTemplate
 from apps.jobs.models import JobCategory
 from common.storage.media import media_url_from_value
-
-from ...models import CvCategory, CvSampleContent, CvTemplate
 
 
 def _catalog_groups(template):

@@ -9,14 +9,14 @@ async function mockRouteDependencies(page) {
       await route.fulfill({ status: 401, contentType: 'application/json', body: '{"detail":"Unauthenticated"}' })
       return
     }
-    if (path.startsWith('/api/jobs/frontend-job/')) {
+    if (path.startsWith('/api/public/jobs/frontend-job/')) {
       await route.fulfill({ status: 404, contentType: 'application/json', body: '{}' })
       return
     }
 
-    const body = path === '/api/jobs/'
+    const body = path === '/api/public/jobs/'
       ? { count: 0, results: [] }
-      : path === '/api/privacy/consent/'
+      : path === '/api/public/privacy/consent/'
         ? { consent: { necessary: true, preferences: false, analytics: false, marketing: false } }
         : {}
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) })
@@ -33,7 +33,7 @@ test.describe('portal route registries', () => {
     let companyRequests = 0
     page.on('pageerror', (error) => pageErrors.push(error.message))
     page.on('request', (request) => {
-      if (new URL(request.url()).pathname === '/api/companies/') companyRequests += 1
+      if (new URL(request.url()).pathname === '/api/public/companies/') companyRequests += 1
     })
 
     for (const path of [
@@ -83,13 +83,13 @@ test.describe('portal route registries', () => {
         ? { access: 'e2e-access' }
         : path === '/api/auth/me/'
           ? { id: 1, role: 'candidate', email_verified: true, job_preferences_configured: true }
-          : path === '/api/privacy/consent/'
+          : path === '/api/public/privacy/consent/'
             ? { consent: { necessary: true, preferences: false, analytics: false, marketing: false } }
-            : path === '/api/jobs/'
+            : path === '/api/public/jobs/'
               ? { count: 0, results: [] }
-              : path === '/api/jobs/categories/' || path === '/api/locations/'
+              : path === '/api/public/jobs/categories/' || path === '/api/public/locations/'
                 ? []
-                : path === '/api/site/banners/'
+                : path === '/api/public/site/banners/'
                   ? []
                   : {}
       await route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) })
@@ -125,10 +125,10 @@ test.describe('portal route registries', () => {
           recruiter_visibility_consent: false,
         },
         '/api/candidate/profile/': { gender: 'female' },
-        '/api/privacy/consent/': {
+        '/api/public/privacy/consent/': {
           consent: { necessary: true, preferences: false, analytics: false, marketing: false },
         },
-        '/api/jobs/categories/': {
+        '/api/public/jobs/categories/': {
           count: 3,
           results: [
             { id: 1, name: 'Công nghệ thông tin', parent: null, category_type: 'occupation_group' },
@@ -139,8 +139,8 @@ test.describe('portal route registries', () => {
             { id: 6, name: 'Tư vấn bán hàng', parent: 5, category_type: 'specialization' },
           ],
         },
-        '/api/locations/': { count: 1, results: [{ id: 1, name: 'Hà Nội', level: 'province' }] },
-        '/api/skills/': { count: 0, results: [] },
+        '/api/public/locations/': { count: 1, results: [{ id: 1, name: 'Hà Nội', level: 'province' }] },
+        '/api/public/skills/': { count: 0, results: [] },
       }
       await route.fulfill({
         contentType: 'application/json',

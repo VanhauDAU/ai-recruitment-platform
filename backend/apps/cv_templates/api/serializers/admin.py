@@ -205,7 +205,7 @@ class CvBackgroundAdminSerializer(serializers.ModelSerializer):
     def get_url(self, obj) -> str:
         from django.urls import reverse
 
-        path = reverse('cv-v2-asset-content', kwargs={'asset_public_id': obj.public_id})
+        path = reverse('cv-asset-content', kwargs={'asset_public_id': obj.public_id})
         request = self.context.get('request')
         return request.build_absolute_uri(path) if request else path
 

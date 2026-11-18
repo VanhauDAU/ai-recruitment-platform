@@ -66,7 +66,7 @@ describe('CompanyDetail page', () => {
       robots: 'index, follow',
     }))
     expect(lastMetadata().structuredData['@type']).toBe('BreadcrumbList')
-    expect(client.get).toHaveBeenCalledWith('/companies/fpt-software/', expect.any(Object))
+    expect(client.get).toHaveBeenCalledWith('/public/companies/fpt-software/', expect.any(Object))
   })
 
   it('reads tab and filters from the URL and stops indexing that view', async () => {

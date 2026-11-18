@@ -1,3 +1,14 @@
+from apps.cv_templates.api.views.catalog import (
+    CvCategoryCatalogListView,
+    CvPositionDetailsView,
+    CvPositionOptionListView,
+    CvPositionPreviewView,
+    CvSampleContentCatalogListView,
+    CvTemplateCatalogDetailView,
+    CvTemplateCatalogListView,
+    CvTemplateRelatedListView,
+)
+
 from .admin import (
     AdminCvBackgroundViewSet,
     AdminCvCategoryViewSet,
@@ -8,16 +19,6 @@ from .admin import (
     AdminCvSampleGenerationViewSet,
     AdminCvTemplateViewSet,
     AdminModelViewSet,
-)
-from .v2 import (
-    CvCategoryCatalogListView,
-    CvPositionDetailsView,
-    CvPositionOptionListView,
-    CvPositionPreviewView,
-    CvSampleContentCatalogListView,
-    CvTemplateCatalogDetailView,
-    CvTemplateCatalogListView,
-    CvTemplateRelatedListView,
 )
 
 __all__ = [

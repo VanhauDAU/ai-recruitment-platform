@@ -4,6 +4,6 @@ import api from '@/shared/api/client'
 // lần) vẫn chỉ tạo một CV — backend trả lại CV đã tạo.
 export async function createCvFromTemplate(payload, { idempotencyKey } = {}) {
   const config = idempotencyKey ? { headers: { 'Idempotency-Key': idempotencyKey } } : undefined
-  const { data } = await api.post('/v2/cvs/', payload, config)
+  const { data } = await api.post('/candidate/cvs/', payload, config)
   return data
 }

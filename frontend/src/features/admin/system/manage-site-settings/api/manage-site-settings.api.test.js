@@ -29,7 +29,7 @@ describe('manage site settings API', () => {
 
     await expect(updateAdminSettings({ brand_primary_color: '#7c3aed' })).resolves.toEqual(response)
 
-    expect(mocks.patch).toHaveBeenCalledWith('/site/admin/settings/', {
+    expect(mocks.patch).toHaveBeenCalledWith('/admin/site/settings/', {
       values: { brand_primary_color: '#7c3aed' },
     })
     expect(mocks.invalidateRequestCache).toHaveBeenCalledWith('site-settings')

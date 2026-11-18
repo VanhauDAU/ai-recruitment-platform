@@ -1,6 +1,6 @@
 import api from '@/shared/api/client'
 
-const generationPath = (publicId = '') => `/jobs/mine/ai-generations/${publicId ? `${publicId}/` : ''}`
+const generationPath = (publicId = '') => `/employer/jobs/ai-generations/${publicId ? `${publicId}/` : ''}`
 
 export async function createJobAiGeneration(payload) {
   const { data } = await api.post(generationPath(), payload)

@@ -41,7 +41,7 @@ describe('application V2 API', () => {
       contactPhone: '0909000000',
     })).resolves.toMatchObject({ public_id: 'app_1' })
 
-    expect(post).toHaveBeenCalledWith('/v2/applications/', {
+    expect(post).toHaveBeenCalledWith('/candidate/applications/', {
       job_public_id: 'job_1',
       cv_public_id: 'cv_1',
       version_public_id: 'cvv_2',
@@ -72,11 +72,11 @@ describe('application V2 API', () => {
     await expect(getRecruiterApplicationSnapshot('app_2')).resolves.toEqual({ application_public_id: 'app_2' })
     await expect(getApplicationHistory('app_2')).resolves.toEqual([{ to_status: 'viewed' }])
 
-    expect(get).toHaveBeenNthCalledWith(1, '/v2/applications/')
-    expect(get).toHaveBeenNthCalledWith(2, '/v2/recruiter/applications/', { params: { status: 'submitted' } })
-    expect(patch).toHaveBeenCalledWith('/v2/recruiter/applications/app_2/', { employer_rating: 4 })
-    expect(get).toHaveBeenNthCalledWith(3, '/v2/recruiter/applications/app_2/cv/')
-    expect(get).toHaveBeenNthCalledWith(4, '/v2/recruiter/applications/app_2/history/')
+    expect(get).toHaveBeenNthCalledWith(1, '/candidate/applications/')
+    expect(get).toHaveBeenNthCalledWith(2, '/employer/applications/', { params: { status: 'submitted' } })
+    expect(patch).toHaveBeenCalledWith('/employer/applications/app_2/', { employer_rating: 4 })
+    expect(get).toHaveBeenNthCalledWith(3, '/employer/applications/app_2/cv/')
+    expect(get).toHaveBeenNthCalledWith(4, '/employer/applications/app_2/history/')
   })
 
   it('posts decisions, undo and CV export requests to the recruiter endpoints', async () => {
@@ -89,10 +89,10 @@ describe('application V2 API', () => {
     await expect(getApplicationCvExport('app_1', 'cve_1')).resolves.toEqual({ status: 'completed' })
     await expect(downloadApplicationCv('http://api/x.pdf')).resolves.toBeInstanceOf(Blob)
 
-    expect(post).toHaveBeenNthCalledWith(1, '/v2/recruiter/applications/app_1/status/', { status: 'rejected' })
-    expect(post).toHaveBeenNthCalledWith(2, '/v2/recruiter/applications/app_1/status/undo/')
-    expect(post).toHaveBeenNthCalledWith(3, '/v2/recruiter/applications/app_1/cv/exports/')
-    expect(get).toHaveBeenNthCalledWith(1, '/v2/recruiter/applications/app_1/cv/exports/cve_1/')
+    expect(post).toHaveBeenNthCalledWith(1, '/employer/applications/app_1/status/', { status: 'rejected' })
+    expect(post).toHaveBeenNthCalledWith(2, '/employer/applications/app_1/status/undo/')
+    expect(post).toHaveBeenNthCalledWith(3, '/employer/applications/app_1/cv/exports/')
+    expect(get).toHaveBeenNthCalledWith(1, '/employer/applications/app_1/cv/exports/cve_1/')
     expect(get).toHaveBeenNthCalledWith(2, 'http://api/x.pdf', { responseType: 'blob' })
   })
 
@@ -102,8 +102,8 @@ describe('application V2 API', () => {
     await expect(getApplicationCvFile('app_1')).resolves.toBeInstanceOf(Blob)
     await getApplicationCvFile('app_1', { download: true })
 
-    expect(get).toHaveBeenNthCalledWith(1, '/v2/recruiter/applications/app_1/cv/file/', { params: undefined, responseType: 'blob' })
-    expect(get).toHaveBeenNthCalledWith(2, '/v2/recruiter/applications/app_1/cv/file/', { params: { download: 1 }, responseType: 'blob' })
+    expect(get).toHaveBeenNthCalledWith(1, '/employer/applications/app_1/cv/file/', { params: undefined, responseType: 'blob' })
+    expect(get).toHaveBeenNthCalledWith(2, '/employer/applications/app_1/cv/file/', { params: { download: 1 }, responseType: 'blob' })
   })
 
   it('builds stable cache keys for recruiter lists, snapshots and histories', () => {

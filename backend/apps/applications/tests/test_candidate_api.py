@@ -12,6 +12,8 @@ from django.utils import timezone
 from rest_framework.test import APIClient, APITestCase
 
 from apps.accounts.services import issue_tokens
+from apps.applications.models import Application, ApplicationStatusHistory
+from apps.applications.services import InvalidApplicationStatusTransition, change_application_status
 from apps.campaigns.models import CampaignActivity, RecruitmentCampaign
 from apps.cv_templates.tests.factories import fill_cv_for_application, make_published_template
 from apps.cvs.models import CvAsset, CvVersion
@@ -27,11 +29,8 @@ from apps.jobs.models import Job, JobLocation
 from apps.jobs.tests.helpers import open_visibility_window
 from apps.locations.models import Location
 
-from ..models import Application, ApplicationStatusHistory
-from ..services import InvalidApplicationStatusTransition, change_application_status
 
-
-class RecruiterApplicationSnapshotV2Tests(APITestCase):
+class RecruiterApplicationSnapshotTests(APITestCase):
     def setUp(self):
         self.candidate = get_user_model().objects.create_user(
             email='snapshot-candidate@example.com',
@@ -106,7 +105,7 @@ class RecruiterApplicationSnapshotV2Tests(APITestCase):
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + tokens['access'])
         response = self.client.get(
             reverse(
-                'recruiter-application-snapshot-v2',
+                'recruiter-application-snapshot',
                 kwargs={'public_id': self.application.public_id},
             )
         )
@@ -122,7 +121,7 @@ class RecruiterApplicationSnapshotV2Tests(APITestCase):
 
         response = self.client.get(
             reverse(
-                'recruiter-application-snapshot-v2',
+                'recruiter-application-snapshot',
                 kwargs={'public_id': self.application.public_id},
             )
         )
@@ -157,7 +156,7 @@ class RecruiterApplicationSnapshotV2Tests(APITestCase):
 
         snapshot_response = self.client.get(
             reverse(
-                'recruiter-application-snapshot-v2',
+                'recruiter-application-snapshot',
                 kwargs={'public_id': self.application.public_id},
             )
         )
@@ -189,7 +188,7 @@ class RecruiterApplicationSnapshotV2Tests(APITestCase):
 
         response = self.client.get(
             reverse(
-                'recruiter-application-snapshot-v2',
+                'recruiter-application-snapshot',
                 kwargs={'public_id': self.application.public_id},
             )
         )
@@ -202,7 +201,7 @@ class RecruiterApplicationSnapshotV2Tests(APITestCase):
 
         response = self.client.get(
             reverse(
-                'recruiter-application-snapshot-v2',
+                'recruiter-application-snapshot',
                 kwargs={'public_id': self.application.public_id},
             )
         )
@@ -212,9 +211,7 @@ class RecruiterApplicationSnapshotV2Tests(APITestCase):
     def test_candidate_delete_removes_library_cv_but_retains_submitted_snapshot(self):
         self.client.force_authenticate(self.candidate)
 
-        response = self.client.delete(
-            reverse('cv-v2-detail', kwargs={'public_id': self.cv.public_id})
-        )
+        response = self.client.delete(reverse('cv-detail', kwargs={'public_id': self.cv.public_id}))
 
         self.assertEqual(response.status_code, 204, response.data)
         self.assertFalse(type(self.cv).objects.filter(pk=self.cv.pk).exists())
@@ -228,7 +225,7 @@ class RecruiterApplicationSnapshotV2Tests(APITestCase):
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + tokens['access'])
         snapshot_response = self.client.get(
             reverse(
-                'recruiter-application-snapshot-v2',
+                'recruiter-application-snapshot',
                 kwargs={'public_id': self.application.public_id},
             ),
         )
@@ -236,7 +233,7 @@ class RecruiterApplicationSnapshotV2Tests(APITestCase):
         self.assertEqual(snapshot_response.data['cv']['public_id'], self.snapshot.public_id)
 
 
-class CandidateApplicationV2Tests(APITestCase):
+class CandidateApplicationTests(APITestCase):
     def setUp(self):
         self.candidate = get_user_model().objects.create_user(
             email='apply-candidate@example.com',
@@ -309,7 +306,7 @@ class CandidateApplicationV2Tests(APITestCase):
         self.client.force_authenticate(self.candidate)
 
         response = self.client.post(
-            reverse('candidate-application-list-create-v2'),
+            reverse('candidate-application-list-create'),
             self.apply_payload(version_public_id=selected_version.public_id),
             format='json',
         )
@@ -347,7 +344,7 @@ class CandidateApplicationV2Tests(APITestCase):
         self.client.force_authenticate(self.candidate)
 
         response = self.client.post(
-            reverse('candidate-application-list-create-v2'),
+            reverse('candidate-application-list-create'),
             self.apply_payload(version_public_id=other_owned_cv.latest_version.public_id),
             format='json',
         )
@@ -360,7 +357,7 @@ class CandidateApplicationV2Tests(APITestCase):
 
     def apply(self, **overrides):
         return self.client.post(
-            reverse('candidate-application-list-create-v2'),
+            reverse('candidate-application-list-create'),
             self.apply_payload(**overrides),
             format='json',
         )
@@ -407,7 +404,7 @@ class CandidateApplicationV2Tests(APITestCase):
         self.assertEqual(self.job.application_count, 1)
 
         withdrawn = self.client.post(
-            reverse('candidate-application-withdraw-v2', args=[second.data['public_id']])
+            reverse('candidate-application-withdraw', args=[second.data['public_id']])
         )
         self.age(second)
         third = self.apply()
@@ -432,7 +429,7 @@ class CandidateApplicationV2Tests(APITestCase):
     def test_withdrawal_ends_the_application_and_tells_the_recruiter(self):
         self.client.force_authenticate(self.candidate)
         submitted = self.apply()
-        url = reverse('candidate-application-withdraw-v2', args=[submitted.data['public_id']])
+        url = reverse('candidate-application-withdraw', args=[submitted.data['public_id']])
 
         withdrawn = self.client.post(url)
         again = self.client.post(url)
@@ -458,7 +455,7 @@ class CandidateApplicationV2Tests(APITestCase):
         self.age(submitted, status=Application.Status.ACCEPTED)
 
         response = self.client.post(
-            reverse('candidate-application-withdraw-v2', args=[submitted.data['public_id']])
+            reverse('candidate-application-withdraw', args=[submitted.data['public_id']])
         )
 
         self.assertEqual(response.status_code, 400, response.data)
@@ -466,17 +463,15 @@ class CandidateApplicationV2Tests(APITestCase):
     def test_recruiter_sees_the_submission_number_and_earlier_submissions(self):
         self.client.force_authenticate(self.candidate)
         first = self.apply()
-        self.client.post(
-            reverse('candidate-application-withdraw-v2', args=[first.data['public_id']])
-        )
+        self.client.post(reverse('candidate-application-withdraw', args=[first.data['public_id']]))
         self.age(first)
         second = self.apply()
         make_employer_ready(self.employer, company=self.company, candidate_data=True)
         self.client.force_authenticate(self.employer)
 
-        listed = self.client.get(reverse('recruiter-application-list-v2'))
+        listed = self.client.get(reverse('recruiter-application-list'))
         earlier = self.client.get(
-            reverse('recruiter-application-submissions-v2', args=[second.data['public_id']])
+            reverse('recruiter-application-submissions', args=[second.data['public_id']])
         )
 
         self.assertEqual(
@@ -495,7 +490,7 @@ class CandidateApplicationV2Tests(APITestCase):
         self.client.force_authenticate(self.other_candidate)
 
         response = self.client.post(
-            reverse('candidate-application-withdraw-v2', args=[submitted.data['public_id']])
+            reverse('candidate-application-withdraw', args=[submitted.data['public_id']])
         )
 
         self.assertEqual(response.status_code, 404)
@@ -509,12 +504,12 @@ class CandidateApplicationV2Tests(APITestCase):
         self.client.force_authenticate(self.candidate)
 
         missing_consent = self.client.post(
-            reverse('candidate-application-list-create-v2'),
+            reverse('candidate-application-list-create'),
             self.apply_payload(data_processing_consent=False),
             format='json',
         )
         invalid_location = self.client.post(
-            reverse('candidate-application-list-create-v2'),
+            reverse('candidate-application-list-create'),
             self.apply_payload(preferred_location_ids=[other_location.id]),
             format='json',
         )
@@ -528,7 +523,7 @@ class CandidateApplicationV2Tests(APITestCase):
         self.client.force_authenticate(self.employer)
 
         response = self.client.post(
-            reverse('candidate-application-list-create-v2'),
+            reverse('candidate-application-list-create'),
             self.apply_payload(),
             format='json',
         )
@@ -551,13 +546,13 @@ class CandidateApplicationV2Tests(APITestCase):
         self.job.save(update_fields=['campaign', 'updated_at'])
         self.client.force_authenticate(self.candidate)
         first = self.client.post(
-            reverse('candidate-application-list-create-v2'),
+            reverse('candidate-application-list-create'),
             self.apply_payload(),
             format='json',
         )
         self.age(first, status=Application.Status.REJECTED)
         second = self.client.post(
-            reverse('candidate-application-list-create-v2'),
+            reverse('candidate-application-list-create'),
             self.apply_payload(),
             format='json',
         )
@@ -567,8 +562,8 @@ class CandidateApplicationV2Tests(APITestCase):
             'campaign': campaign.public_id,
             'q': self.candidate.email,
         }
-        listed = self.client.get(reverse('recruiter-application-list-v2'), params)
-        exported = self.client.get(reverse('recruiter-application-export-v2'), params)
+        listed = self.client.get(reverse('recruiter-application-list'), params)
+        exported = self.client.get(reverse('recruiter-application-export'), params)
 
         self.assertEqual(listed.status_code, 200, listed.data)
         self.assertEqual(listed.data['count'], 1)
@@ -583,20 +578,20 @@ class CandidateApplicationV2Tests(APITestCase):
         self.assertEqual(received_events.count(), 2)
 
 
-class RecruiterApplicationRoutesV2Tests(TestCase):
+class RecruiterApplicationRoutesTests(TestCase):
     """Route employer port từ v1 sang v2 (AR-P3) phải tồn tại và có guard."""
 
     def test_recruiter_list_requires_authentication(self):
-        response = APIClient().get(reverse('recruiter-application-list-v2'))
+        response = APIClient().get(reverse('recruiter-application-list'))
         self.assertEqual(response.status_code, 401)
 
     def test_recruiter_write_routes_require_authentication(self):
         client = APIClient()
         for method, name in (
-            ('patch', 'recruiter-application-assessment-v2'),
-            ('post', 'recruiter-application-decision-v2'),
-            ('post', 'recruiter-application-decision-undo-v2'),
-            ('post', 'recruiter-application-cv-export-v2'),
+            ('patch', 'recruiter-application-assessment'),
+            ('post', 'recruiter-application-decision'),
+            ('post', 'recruiter-application-decision-undo'),
+            ('post', 'recruiter-application-cv-export'),
         ):
             with self.subTest(name=name):
                 response = getattr(client, method)(reverse(name, args=['app_x']), {})

@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 
 const API_PATTERN = /^http:\/\/(?:localhost|127\.0\.0\.1):\d+\/api\//
-const ALERTS_PATH = '/api/jobs/alerts/'
+const ALERTS_PATH = '/api/candidate/jobs/alerts/'
 
 const EMAIL_NOTIFICATION_DEFAULTS = {
   important_system_updates: true,
@@ -187,7 +187,7 @@ async function mockCandidateJobAlertsApi(page, options = {}) {
       return
     }
 
-    const detailMatch = pathname.match(/^\/api\/jobs\/alerts\/([^/]+)\/$/)
+    const detailMatch = pathname.match(/^\/api\/candidate\/jobs\/alerts\/([^/]+)\/$/)
     if (detailMatch && method === 'PATCH') {
       const payload = request.postDataJSON()
       writes.push({ method, pathname, payload })
@@ -218,30 +218,30 @@ async function mockCandidateJobAlertsApi(page, options = {}) {
         has_usable_password: true,
         job_preferences_configured: true,
       }
-    } else if (pathname === '/api/privacy/consent/') {
+    } else if (pathname === '/api/public/privacy/consent/') {
       body = { consent: { necessary: true, preferences: true, analytics: false, marketing: false } }
     } else if (pathname === '/api/candidate/email-notification-settings/') {
       body = emailNotifications
     } else if (pathname === ALERTS_PATH) {
       body = { results: alerts, limit: 5, remaining: Math.max(0, 5 - alerts.length) }
-    } else if (pathname === '/api/jobs/nhan-vien-kinh-doanh/') {
+    } else if (pathname === '/api/public/jobs/nhan-vien-kinh-doanh/') {
       body = JOB_DETAIL
-    } else if (pathname === '/api/jobs/categories/') {
+    } else if (pathname === '/api/public/jobs/categories/') {
       body = { count: CATEGORIES.length, next: null, previous: null, results: CATEGORIES }
-    } else if (pathname === '/api/locations/' && url.searchParams.get('level') === 'ward') {
+    } else if (pathname === '/api/public/locations/' && url.searchParams.get('level') === 'ward') {
       const parent = Number(url.searchParams.get('parent'))
       body = WARDS.filter((item) => item.parent === parent)
-    } else if (pathname === '/api/locations/') {
+    } else if (pathname === '/api/public/locations/') {
       body = PROVINCES
-    } else if (pathname === '/api/jobs/') {
+    } else if (pathname === '/api/public/jobs/') {
       body = { count: 0, next: null, previous: null, results: [] }
-    } else if (pathname === '/api/jobs/saved/') {
+    } else if (pathname === '/api/candidate/jobs/saved/') {
       body = []
-    } else if (pathname === '/api/v2/applications/') {
+    } else if (pathname === '/api/candidate/applications/') {
       body = { results: [] }
-    } else if (pathname === '/api/employer/industries/' || pathname === '/api/site/banners/') {
+    } else if (pathname === '/api/employer/industries/' || pathname === '/api/public/site/banners/') {
       body = []
-    } else if (pathname === '/api/site/settings/') {
+    } else if (pathname === '/api/public/site/settings/') {
       body = {}
     } else {
       body = {}
@@ -411,7 +411,7 @@ test('candidate job alerts: creates an email alert and keeps global and per-aler
 
   const perAlertSwitch = page.getByRole('switch', { name: /Backend Developer/ })
   const alertRequest = page.waitForRequest((candidate) => (
-    new URL(candidate.url()).pathname === '/api/jobs/alerts/alert_1/'
+    new URL(candidate.url()).pathname === '/api/candidate/jobs/alerts/alert_1/'
       && candidate.method() === 'PATCH'
       && candidate.postDataJSON()?.is_active === false
   ))
@@ -426,7 +426,7 @@ test('candidate job alerts: creates an email alert and keeps global and per-aler
   const editDialog = page.getByRole('dialog', { name: 'Chỉnh sửa thông báo việc làm' })
   await editDialog.getByRole('textbox', { name: 'Từ khóa tìm kiếm', exact: true }).fill('Senior Backend Developer')
   const editRequest = page.waitForRequest((candidate) => (
-    new URL(candidate.url()).pathname === '/api/jobs/alerts/alert_1/'
+    new URL(candidate.url()).pathname === '/api/candidate/jobs/alerts/alert_1/'
       && candidate.method() === 'PATCH'
       && candidate.postDataJSON()?.keyword === 'Senior Backend Developer'
   ))
@@ -436,7 +436,7 @@ test('candidate job alerts: creates an email alert and keeps global and per-aler
   await expect(page.getByText('Senior Backend Developer', { exact: true })).toBeVisible()
 
   const deleteRequest = page.waitForRequest((candidate) => (
-    new URL(candidate.url()).pathname === '/api/jobs/alerts/alert_1/'
+    new URL(candidate.url()).pathname === '/api/candidate/jobs/alerts/alert_1/'
       && candidate.method() === 'DELETE'
   ))
   await page.getByRole('button', { name: 'Xóa Senior Backend Developer' }).click()

@@ -22,7 +22,7 @@ async function prepareCandidateUpload(file, options = {}) {
 }
 
 export async function getMyCvs() {
-  const { data } = await api.get('/v2/cvs/')
+  const { data } = await api.get('/candidate/cvs/')
   return Array.isArray(data) ? data : data.results || []
 }
 
@@ -33,11 +33,11 @@ export async function getMySavedCvs() {
 }
 
 export async function deleteCv(publicId) {
-  await api.delete(`/v2/cvs/${publicId}/`)
+  await api.delete(`/candidate/cvs/${publicId}/`)
 }
 
 export async function renameCv(publicId, title) {
-  const { data } = await api.patch(`/v2/cvs/${publicId}/`, { title })
+  const { data } = await api.patch(`/candidate/cvs/${publicId}/`, { title })
   return data
 }
 
@@ -47,12 +47,12 @@ export async function updateCvProfile(publicId, { position_public_id, position_l
   const payload = {}
   if (position_public_id !== undefined) payload.position_public_id = position_public_id
   if (position_level !== undefined) payload.position_level = position_level
-  const { data } = await api.patch(`/v2/cvs/${publicId}/`, payload)
+  const { data } = await api.patch(`/candidate/cvs/${publicId}/`, payload)
   return data
 }
 
 export async function setCvRecruiterSearchable(publicId, enabled) {
-  const { data } = await api.patch(`/v2/cvs/${publicId}/`, { recruiter_searchable: enabled })
+  const { data } = await api.patch(`/candidate/cvs/${publicId}/`, { recruiter_searchable: enabled })
   return data
 }
 
@@ -64,7 +64,7 @@ export function cvApiErrorMessage(error, fallback) {
 }
 
 export async function setDefaultCv(publicId, isDefault) {
-  const { data } = await api.patch(`/v2/cvs/${publicId}/`, { is_default: isDefault })
+  const { data } = await api.patch(`/candidate/cvs/${publicId}/`, { is_default: isDefault })
   return data
 }
 
@@ -78,7 +78,7 @@ export async function importCvFile(file, title, options = {}) {
   if (options.language) body.append('language', options.language)
   if (options.themeColor) body.append('theme_color', options.themeColor)
   try {
-    const { data } = await api.post('/v2/cvs/imports/', body, {
+    const { data } = await api.post('/candidate/cvs/imports/', body, {
       headers: options.idempotencyKey ? { 'Idempotency-Key': options.idempotencyKey } : {},
     })
     forgetPreparedUpload(file, 'candidate_cv')
@@ -92,7 +92,7 @@ export async function importCvFile(file, title, options = {}) {
 }
 
 export async function retryCvImport(publicId) {
-  const { data } = await api.post(`/v2/cvs/${publicId}/imports/retry/`, {})
+  const { data } = await api.post(`/candidate/cvs/${publicId}/imports/retry/`, {})
   return data
 }
 
@@ -115,19 +115,19 @@ export async function waitForCvImport(publicId, { timeoutMs = 60_000, intervalMs
 
 export async function duplicateCv(publicId, title) {
   const { data } = await api.post(
-    `/v2/cvs/${publicId}/duplicate/`,
+    `/candidate/cvs/${publicId}/duplicate/`,
     title ? { title } : {},
   )
   return data
 }
 
 export async function getCv(publicId) {
-  const { data } = await api.get(`/v2/cvs/${publicId}/`)
+  const { data } = await api.get(`/candidate/cvs/${publicId}/`)
   return data
 }
 
 export async function requestCvThumbnail(publicId) {
-  const { data } = await api.post(`/v2/cvs/${publicId}/thumbnail/`, {})
+  const { data } = await api.post(`/candidate/cvs/${publicId}/thumbnail/`, {})
   return data
 }
 
@@ -137,21 +137,21 @@ export async function downloadCvThumbnail(thumbnailUrl) {
 }
 
 export async function getCvDraft(publicId) {
-  const { data, headers } = await api.get(`/v2/cvs/${publicId}/draft/`)
+  const { data, headers } = await api.get(`/candidate/cvs/${publicId}/draft/`)
   return { ...data, etag: headers.etag }
 }
 
 export async function getCvTemplatePreview(publicId, templatePublicId, signal) {
   const config = { params: { template_public_id: templatePublicId } }
   if (signal) config.signal = signal
-  const { data } = await api.get(`/v2/cvs/${publicId}/template-preview/`, config)
+  const { data } = await api.get(`/candidate/cvs/${publicId}/template-preview/`, config)
   return data
 }
 
 export async function updateCvDraft(publicId, document, lockVersion, clientSessionId) {
   const payload = clientSessionId ? { ...document, client_session_id: clientSessionId } : document
   const { data, headers } = await api.put(
-    `/v2/cvs/${publicId}/draft/`,
+    `/candidate/cvs/${publicId}/draft/`,
     payload,
     { headers: { 'If-Match': `"lock-version-${lockVersion}"` } },
   )
@@ -160,7 +160,7 @@ export async function updateCvDraft(publicId, document, lockVersion, clientSessi
 
 export async function saveCvVersion(publicId, lockVersion) {
   const { data } = await api.post(
-    `/v2/cvs/${publicId}/save-version/`,
+    `/candidate/cvs/${publicId}/save-version/`,
     undefined,
     { headers: { 'If-Match': `"lock-version-${lockVersion}"` } },
   )
@@ -169,7 +169,7 @@ export async function saveCvVersion(publicId, lockVersion) {
 
 export async function publishCvVersion(publicId, lockVersion) {
   const { data } = await api.post(
-    `/v2/cvs/${publicId}/publish/`,
+    `/candidate/cvs/${publicId}/publish/`,
     undefined,
     { headers: { 'If-Match': `"lock-version-${lockVersion}"` } },
   )
@@ -178,7 +178,7 @@ export async function publishCvVersion(publicId, lockVersion) {
 
 export async function switchCvTemplate(publicId, templatePublicId, lockVersion, clientSessionId, themeColor) {
   const { data, headers } = await api.put(
-    `/v2/cvs/${publicId}/template/`,
+    `/candidate/cvs/${publicId}/template/`,
     {
       template_public_id: templatePublicId,
       ...(clientSessionId ? { client_session_id: clientSessionId } : {}),
@@ -191,7 +191,7 @@ export async function switchCvTemplate(publicId, templatePublicId, lockVersion, 
 
 export async function applyCvSample(publicId, sampleContentPublicId, lockVersion, clientSessionId) {
   const { data, headers } = await api.post(
-    `/v2/cvs/${publicId}/apply-sample/`,
+    `/candidate/cvs/${publicId}/apply-sample/`,
     {
       sample_content_public_id: sampleContentPublicId,
       ...(clientSessionId ? { client_session_id: clientSessionId } : {}),
@@ -207,7 +207,7 @@ export async function uploadCvAsset(file, options = {}) {
   if (uploadSession.legacy_file) body.append('file', file)
   else body.append('upload_session', uploadSession.public_id)
   try {
-    const { data } = await api.post('/v2/cvs/assets/', body)
+    const { data } = await api.post('/candidate/cvs/assets/', body)
     forgetPreparedUpload(file, 'candidate_cv')
     return data
   } catch (error) {
@@ -219,64 +219,64 @@ export async function uploadCvAsset(file, options = {}) {
 }
 
 export async function getCvOwnerView(publicId) {
-  const { data } = await api.get(`/v2/cvs/${publicId}/view/`)
+  const { data } = await api.get(`/candidate/cvs/${publicId}/view/`)
   return data
 }
 
 export async function getUploadedCvFile(publicId) {
-  const { data } = await api.get(`/v2/cvs/${publicId}/source/`, { responseType: 'blob' })
+  const { data } = await api.get(`/candidate/cvs/${publicId}/source/`, { responseType: 'blob' })
   return data
 }
 
 export async function getSharedCvFile(token) {
-  const { data } = await api.get(`/v2/cvs/shares/${encodeURIComponent(token)}/source/`, { responseType: 'blob' })
+  const { data } = await api.get(`/public/cvs/shares/${encodeURIComponent(token)}/source/`, { responseType: 'blob' })
   return data
 }
 
 export async function getSharedCv(token) {
-  const { data } = await api.get(`/v2/cvs/shares/${encodeURIComponent(token)}/`)
+  const { data } = await api.get(`/public/cvs/shares/${encodeURIComponent(token)}/`)
   return data
 }
 
 export async function getCvSharedLinks(publicId) {
-  const { data } = await api.get(`/v2/cvs/${publicId}/shared-links/`)
+  const { data } = await api.get(`/candidate/cvs/${publicId}/shared-links/`)
   return data
 }
 
 export async function createCvSharedLink(publicId, options = {}) {
-  const { data } = await api.post(`/v2/cvs/${publicId}/shared-links/`, options)
+  const { data } = await api.post(`/candidate/cvs/${publicId}/shared-links/`, options)
   return data
 }
 
 export async function revokeCvSharedLink(publicId, linkPublicId) {
-  await api.delete(`/v2/cvs/${publicId}/shared-links/${linkPublicId}/`)
+  await api.delete(`/candidate/cvs/${publicId}/shared-links/${linkPublicId}/`)
 }
 
 export async function getCvVersions(publicId) {
-  const { data } = await api.get(`/v2/cvs/${publicId}/versions/`)
+  const { data } = await api.get(`/candidate/cvs/${publicId}/versions/`)
   return Array.isArray(data) ? data : (data.results || [])
 }
 
 export async function getCvVersion(publicId, versionPublicId) {
-  const { data } = await api.get(`/v2/cvs/${publicId}/versions/${versionPublicId}/`)
+  const { data } = await api.get(`/candidate/cvs/${publicId}/versions/${versionPublicId}/`)
   return data
 }
 
 export async function createCvPdfExport(publicId, versionPublicId) {
   const { data } = await api.post(
-    `/v2/cvs/${publicId}/exports/`,
+    `/candidate/cvs/${publicId}/exports/`,
     versionPublicId ? { version_public_id: versionPublicId } : {},
   )
   return data
 }
 
 export async function getCvPdfExport(publicId, exportPublicId) {
-  const { data } = await api.get(`/v2/cvs/${publicId}/exports/${exportPublicId}/`)
+  const { data } = await api.get(`/candidate/cvs/${publicId}/exports/${exportPublicId}/`)
   return data
 }
 
 export async function retryCvPdfExport(publicId, exportPublicId) {
-  const { data } = await api.post(`/v2/cvs/${publicId}/exports/${exportPublicId}/retry/`, {})
+  const { data } = await api.post(`/candidate/cvs/${publicId}/exports/${exportPublicId}/retry/`, {})
   return data
 }
 

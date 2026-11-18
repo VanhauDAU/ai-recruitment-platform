@@ -26,7 +26,7 @@ describe('admin job api', () => {
     client.get.mockResolvedValue({ data: payload })
 
     await expect(getAdminJobs({ page: 2, ordering: '-title' })).resolves.toBe(payload)
-    expect(client.get).toHaveBeenCalledWith('/jobs/admin/moderation/', {
+    expect(client.get).toHaveBeenCalledWith('/admin/jobs/moderation/', {
       params: { page: 2, ordering: '-title' },
       signal: undefined,
     })
@@ -36,10 +36,10 @@ describe('admin job api', () => {
     await getAdminJobSummary({ signal: 'summary-signal' })
     await getAdminJob('job_123', { signal: 'detail-signal' })
 
-    expect(client.get).toHaveBeenNthCalledWith(1, '/jobs/admin/moderation/summary/', {
+    expect(client.get).toHaveBeenNthCalledWith(1, '/admin/jobs/moderation/summary/', {
       signal: 'summary-signal',
     })
-    expect(client.get).toHaveBeenNthCalledWith(2, '/jobs/admin/moderation/job_123/', {
+    expect(client.get).toHaveBeenNthCalledWith(2, '/admin/jobs/moderation/job_123/', {
       signal: 'detail-signal',
     })
   })
@@ -49,7 +49,7 @@ describe('admin job api', () => {
     await decideAdminJob('job_123', payload)
 
     expect(client.post).toHaveBeenCalledWith(
-      '/jobs/admin/moderation/job_123/decisions/',
+      '/admin/jobs/moderation/job_123/decisions/',
       payload,
     )
   })

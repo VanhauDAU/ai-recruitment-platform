@@ -17,16 +17,16 @@ export const publicKnowledgeKeys = {
 }
 
 export function getPublicKnowledgeCategories({ signal } = {}) {
-  return data(api.get('/knowledgebase/categories/', { signal }))
+  return data(api.get('/public/knowledgebase/categories/', { signal }))
 }
 
 export function getPublicKnowledgeArticles(params = {}, { signal } = {}) {
-  return data(api.get('/knowledgebase/articles/', { params, signal }))
+  return data(api.get('/public/knowledgebase/articles/', { params, signal }))
 }
 
 export function getPublicKnowledgeArticle(categorySlug, articleSlug, { signal } = {}) {
   return data(api.get(
-    `/knowledgebase/articles/${encodeURIComponent(categorySlug)}/${encodeURIComponent(articleSlug)}/`,
+    `/public/knowledgebase/articles/${encodeURIComponent(categorySlug)}/${encodeURIComponent(articleSlug)}/`,
     { signal },
   ))
 }

@@ -34,7 +34,7 @@ deleted clean-asset rows are privacy-scrubbed (owner, filename, checksum and
 claim references) before their session is removed. An unreleased claim or legal
 hold blocks both evidence purge and asset scrubbing.
 
-Public endpoints under `/api/uploads/sessions/` are owner-scoped and return 404
+Public endpoints under `/api/shared/uploads/sessions/` are owner-scoped and return 404
 for another owner. They expose state, safe result code and retryability, but no
 storage key, checksum, threat signature, scanner version or endpoint. There is
 intentionally no generic claim or download endpoint. Status polling has its own

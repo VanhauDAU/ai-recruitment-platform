@@ -30,7 +30,7 @@ describe('job AI generation API', () => {
     mocks.post.mockResolvedValue({ data: response })
 
     await expect(createJobAiGeneration(payload)).resolves.toEqual(response)
-    expect(mocks.post).toHaveBeenCalledWith('/jobs/mine/ai-generations/', payload)
+    expect(mocks.post).toHaveBeenCalledWith('/employer/jobs/ai-generations/', payload)
   })
 
   it('reads, cancels and sends feedback for an owned generation', async () => {
@@ -43,8 +43,8 @@ describe('job AI generation API', () => {
     await cancelJobAiGeneration('generation_1')
     await sendJobAiGenerationFeedback('generation_1', { value: 'helpful' })
 
-    expect(mocks.get).toHaveBeenCalledWith('/jobs/mine/ai-generations/generation_1/')
-    expect(mocks.post).toHaveBeenNthCalledWith(1, '/jobs/mine/ai-generations/generation_1/cancel/')
-    expect(mocks.post).toHaveBeenNthCalledWith(2, '/jobs/mine/ai-generations/generation_1/feedback/', { value: 'helpful' })
+    expect(mocks.get).toHaveBeenCalledWith('/employer/jobs/ai-generations/generation_1/')
+    expect(mocks.post).toHaveBeenNthCalledWith(1, '/employer/jobs/ai-generations/generation_1/cancel/')
+    expect(mocks.post).toHaveBeenNthCalledWith(2, '/employer/jobs/ai-generations/generation_1/feedback/', { value: 'helpful' })
   })
 })

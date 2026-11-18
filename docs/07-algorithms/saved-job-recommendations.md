@@ -4,12 +4,12 @@
 
 Tài liệu này mô tả endpoint và giao diện tại `/viec-lam-da-luu`:
 
-- `GET /api/jobs/saved/`: danh sách ứng viên đã lưu.
-- `GET /api/jobs/recommendations/by-saved/?limit=12`: feed gợi ý theo lịch sử
+- `GET /api/candidate/jobs/saved/`: danh sách ứng viên đã lưu.
+- `GET /api/candidate/jobs/recommendations/by-saved/?limit=12`: feed gợi ý theo lịch sử
   lưu, có fallback khi chưa đủ tín hiệu.
 
 Luồng này độc lập với feed “Việc làm phù hợp” tại
-`/api/jobs/recommendations/for-me/`. Nó không đọc CV hoặc
+`/api/candidate/jobs/recommendations/for-me/`. Nó không đọc CV hoặc
 `CandidateJobPreference`, không thay đổi `sources` hay trọng số của feed
 `for-me`.
 
@@ -131,7 +131,7 @@ che danh sách đã lưu.
 ## Privacy và giới hạn
 
 - Endpoint candidate-only và scope toàn bộ nguồn theo `request.user`.
-- `POST /api/jobs/saved/` dùng cùng predicate public-availability, nên không thể
+- `POST /api/candidate/jobs/saved/` dùng cùng predicate public-availability, nên không thể
   lưu tin nháp, đang tạm ẩn, đã đóng/hết hạn hoặc thuộc campaign dừng
   chỉ bằng cách đoán `public_id`.
 - Đây là similarity rule-based trên hành động lưu tường minh, không đọc CV,

@@ -1,6 +1,6 @@
 import api from '@/shared/api/client'
 
-const ANALYSES_PATH = '/matching/analyses/'
+const ANALYSES_PATH = '/candidate/matching/analyses/'
 
 // Yêu cầu phân tích một CV với một tin. Đã có kết quả thì trả ngay (cached),
 // chưa có thì trả bản ghi đang chờ để poll.

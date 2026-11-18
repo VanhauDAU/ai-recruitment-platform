@@ -137,13 +137,13 @@ ngược lại là "Nội dung".
 
 | Endpoint | Mục đích |
 | --- | --- |
-| `GET /api/jobs/admin/moderation/` | Danh sách (`q`, `scope`, `status`, `has_reports`, `company`, `employer`, `tier`, `policy_hold`, `moderation_hold`, khoảng `submitted_*`/`deadline_*`, `ordering`). |
-| `GET /api/jobs/admin/moderation/summary/` | `total`, `draft`, `active`, `expired`, `closed`, `held`, `pending_reports`. |
-| `GET /api/jobs/admin/moderation/{public_id}/` | Chi tiết, `review_token`, `state_actions`, `blocked_reasons`, `content_changes`, báo cáo, lịch sử. |
-| `POST /api/jobs/admin/moderation/{public_id}/decisions/` | `action=hide|restore`. |
-| `GET /api/jobs/admin/reports/` | Hàng chờ báo cáo. |
-| `POST /api/jobs/admin/reports/{public_id}/resolve/` | `status=upheld|dismissed` kèm `note`. |
-| `POST /api/jobs/admin/reports/{public_id}/reverse/` | Gỡ kết luận `upheld`, `note` bắt buộc. |
+| `GET /api/admin/jobs/moderation/` | Danh sách (`q`, `scope`, `status`, `has_reports`, `company`, `employer`, `tier`, `policy_hold`, `moderation_hold`, khoảng `submitted_*`/`deadline_*`, `ordering`). |
+| `GET /api/admin/jobs/moderation/summary/` | `total`, `draft`, `active`, `expired`, `closed`, `held`, `pending_reports`. |
+| `GET /api/admin/jobs/moderation/{public_id}/` | Chi tiết, `review_token`, `state_actions`, `blocked_reasons`, `content_changes`, báo cáo, lịch sử. |
+| `POST /api/admin/jobs/moderation/{public_id}/decisions/` | `action=hide|restore`. |
+| `GET /api/admin/jobs/reports/` | Hàng chờ báo cáo. |
+| `POST /api/admin/jobs/reports/{public_id}/resolve/` | `status=upheld|dismissed` kèm `note`. |
+| `POST /api/admin/jobs/reports/{public_id}/reverse/` | Gỡ kết luận `upheld`, `note` bắt buộc. |
 
 ## UI và responsive
 

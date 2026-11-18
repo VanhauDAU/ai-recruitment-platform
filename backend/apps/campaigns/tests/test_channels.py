@@ -7,7 +7,7 @@ from django.urls import reverse
 from rest_framework.test import APIClient
 
 from apps.applications.models import Application
-from apps.applications.tests import test_api_v2
+from apps.applications.tests import test_candidate_api as test_api_v2
 from apps.campaigns.models import RecruitmentCampaign
 from apps.cvs.models import UserCv
 from apps.cvs.services import create_initial_document
@@ -267,8 +267,8 @@ class CampaignLandingTests(ChannelTestMixin, TestCase):
 
 
 class ApplyAttributionTests(TestCase):
-    setUp_application = test_api_v2.CandidateApplicationV2Tests.setUp
-    apply_payload = test_api_v2.CandidateApplicationV2Tests.apply_payload
+    setUp_application = test_api_v2.CandidateApplicationTests.setUp
+    apply_payload = test_api_v2.CandidateApplicationTests.apply_payload
 
     def setUp(self):
         self.setUp_application()
@@ -288,7 +288,7 @@ class ApplyAttributionTests(TestCase):
         self.client.force_authenticate(self.candidate)
 
         response = self.client.post(
-            reverse('candidate-application-list-create-v2'),
+            reverse('candidate-application-list-create'),
             self.apply_payload(campaign_ref=sign_ref(self.channel.code)),
             format='json',
         )
@@ -302,7 +302,7 @@ class ApplyAttributionTests(TestCase):
         self.client.force_authenticate(self.candidate)
 
         response = self.client.post(
-            reverse('candidate-application-list-create-v2'),
+            reverse('candidate-application-list-create'),
             self.apply_payload(campaign_ref='forged:value'),
             format='json',
         )

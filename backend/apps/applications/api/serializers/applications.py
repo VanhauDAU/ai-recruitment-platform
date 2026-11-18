@@ -5,6 +5,8 @@ from django.utils import timezone
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
+from apps.applications.models import Application
+from apps.applications.services import candidate_reminder_available_at, reapplication_error
 from apps.cvs.api.serializers import CvVersionSerializer
 from apps.cvs.models import CvVersion, UserCv
 from apps.cvs.services import application_readiness_issues, is_unsaved_builder_baseline
@@ -12,9 +14,6 @@ from apps.jobs.models import Job
 from apps.jobs.selectors import publicly_available_job_filter
 from apps.locations.models import Location
 from common.storage.media import media_url_from_value
-
-from ...models import Application
-from ...services import candidate_reminder_available_at, reapplication_error
 
 
 class RecruiterApplicationSnapshotSerializer(serializers.ModelSerializer):
@@ -73,7 +72,7 @@ class RecruiterCvExportSerializer(serializers.Serializer):
         if not self.context.get('download_ready'):
             return None
         url = reverse(
-            'recruiter-application-cv-export-download-v2',
+            'recruiter-application-cv-export-download',
             args=[self.context['application_public_id'], obj.public_id],
         )
         request = self.context.get('request')
@@ -128,7 +127,7 @@ def validated_cv_selection(candidate, attrs):
     return cv, version
 
 
-class CandidateApplicationV2CreateSerializer(serializers.Serializer):
+class CandidateApplicationCreateSerializer(serializers.Serializer):
     job_public_id = serializers.CharField(max_length=50)
     cv_public_id = serializers.CharField(max_length=50)
     version_public_id = serializers.CharField(max_length=50)
@@ -214,7 +213,7 @@ class CandidateApplicationV2CreateSerializer(serializers.Serializer):
         return attrs
 
 
-class CandidateApplicationV2Serializer(serializers.ModelSerializer):
+class CandidateApplicationSerializer(serializers.ModelSerializer):
     job_public_id = serializers.CharField(source='job.public_id', read_only=True)
     job_title = serializers.CharField(source='job.title', read_only=True)
     job_slug = serializers.CharField(source='job.slug', read_only=True)

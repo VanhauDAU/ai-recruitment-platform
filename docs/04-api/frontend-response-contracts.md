@@ -25,25 +25,25 @@ hoặc cấu trúc database.
 | Onboarding / cài đặt gợi ý | `GET/PATCH /api/candidate/profile/` | `CandidateProfileReadSerializer` / `CandidateProfileUpdateSerializer` | `gender` |
 | Onboarding / cài đặt gợi ý | `GET/PUT /api/candidate/job-preferences/` | `CandidateJobPreferenceSerializer` | vị trí chuyên môn taxonomy, danh sách vị trí tự nhập, kỹ năng taxonomy, lương, kinh nghiệm, tỉnh, relocate và hai consent |
 | Cài đặt email candidate | `GET/PATCH /api/candidate/email-notification-settings/` | `CandidateEmailNotificationSettingsSerializer` | 12 boolean preference mặc định bật; PATCH chỉ gửi field vừa đổi, không có field email giao dịch bảo mật |
-| Việc làm phù hợp / homepage | `GET /api/jobs/recommendations/for-me/` | `CandidateJobRecommendationResponseSerializer` (job nền là `PublicJobListSerializer`) | chỉ dùng preference; `sources.cv=false`, `source_cv=null`, pagination; mỗi job thêm score/details/reasons/high-match để tương thích |
-| Tin gợi ý chèn trong `/viec-lam` | `GET /api/jobs/recommendations/inline/?page=&ranking_seed=&excluded=` | `InlineJobRecommendationResponseSerializer` | trạng thái xác suất/setup/consent, `after_result_index` zero-based và 0–2 job dùng nguyên public serializer |
-| Ẩn/hoàn tác tin cá nhân hóa | `POST /api/jobs/recommendations/hidden/`, `DELETE /api/jobs/recommendations/hidden/{public_id}/` | `HiddenJobCreateSerializer` / `HiddenJobResponseSerializer` | POST idempotent với source `matching|homepage|inline`; DELETE owner-scoped và idempotent |
-| Việc làm sau lưu CV | `GET /api/jobs/recommendations/by-cv/{public_id}/` | `CvJobRecommendationResponseSerializer` (job nền là `PublicJobListSerializer`) | `focus_keyword`, related positions và tối đa 6 job giải thích được; `403` khi chưa có consent |
-| Gợi ý từ việc đã lưu | `GET /api/jobs/recommendations/by-saved/?limit=` | `SavedJobRecommendationResponseSerializer` (job nền là `PublicJobListSerializer`) | `status`, `strategy`, `source_saved_job_count`; mỗi job thêm similarity score/details/reasons, fallback có score 0 |
-| Picker địa điểm | `GET /api/locations/` | `LocationLookupSerializer` | `id`, `name`, `level`, `parent`, `merged_from` |
-| Picker vị trí chuyên môn | `GET /api/jobs/categories/` | `JobCategoryListSerializer` | `id`, `name`, `logo_url`, `parent`, `category_type` |
-| Job card / kết quả tìm kiếm / việc đã lưu | `GET /api/jobs/` | `PublicJobListSerializer` | định danh public, tiêu đề/công ty, địa điểm, skill, loại việc, kinh nghiệm/cấp bậc/học vấn/tuổi, lương, badge/tier, thời gian đăng |
-| Việc làm tốt nhất trang chủ | `GET /api/jobs/best/?rotation_seed=` | `PublicJobPreviewSerializer` | chỉ tin `tier=top`, pagination + seed luân phiên; không dùng thứ tự của danh sách chính |
-| Chi tiết / quick view việc làm | `GET /api/jobs/{slug}/` | `JobDetailSerializer` | nội dung chi tiết, thông tin công ty tối thiểu, salary/deadline/view, location/schedule/language và các nhóm view-model |
-| Bảng quản lý tin NTD | `GET /api/jobs/mine/` | `EmployerJobListSerializer` | `public_id`, `title`, `company_name`, `locations_detail`, `employment_type`, `deadline`, `status`, `visibility_hold`, `application_count`, timestamps cần hiển thị |
-| Form tin NTD | `POST/PATCH /api/jobs/mine/...` | `EmployerJobWriteSerializer`; response `EmployerJobDetailSerializer` | dữ liệu form và nested relation, gồm liên hệ nhận hồ sơ; endpoint có `IsEmployer` |
-| Admin hậu kiểm tin | `GET /api/jobs/admin/moderation/{public_id}/`, `POST .../decisions/` | `AdminJobDetailSerializer` / `AdminJobDecisionSerializer` | `review_token`, `state_actions` (`hide`/`restore`), `blocked_reasons`, `content_changes`; hành động hợp lệ do backend tính |
+| Việc làm phù hợp / homepage | `GET /api/candidate/jobs/recommendations/for-me/` | `CandidateJobRecommendationResponseSerializer` (job nền là `PublicJobListSerializer`) | chỉ dùng preference; `sources.cv=false`, `source_cv=null`, pagination; mỗi job thêm score/details/reasons/high-match để tương thích |
+| Tin gợi ý chèn trong `/viec-lam` | `GET /api/candidate/jobs/recommendations/inline/?page=&ranking_seed=&excluded=` | `InlineJobRecommendationResponseSerializer` | trạng thái xác suất/setup/consent, `after_result_index` zero-based và 0–2 job dùng nguyên public serializer |
+| Ẩn/hoàn tác tin cá nhân hóa | `POST /api/candidate/jobs/recommendations/hidden/`, `DELETE /api/candidate/jobs/recommendations/hidden/{public_id}/` | `HiddenJobCreateSerializer` / `HiddenJobResponseSerializer` | POST idempotent với source `matching|homepage|inline`; DELETE owner-scoped và idempotent |
+| Việc làm sau lưu CV | `GET /api/candidate/jobs/recommendations/by-cv/{public_id}/` | `CvJobRecommendationResponseSerializer` (job nền là `PublicJobListSerializer`) | `focus_keyword`, related positions và tối đa 6 job giải thích được; `403` khi chưa có consent |
+| Gợi ý từ việc đã lưu | `GET /api/candidate/jobs/recommendations/by-saved/?limit=` | `SavedJobRecommendationResponseSerializer` (job nền là `PublicJobListSerializer`) | `status`, `strategy`, `source_saved_job_count`; mỗi job thêm similarity score/details/reasons, fallback có score 0 |
+| Picker địa điểm | `GET /api/public/locations/` | `LocationLookupSerializer` | `id`, `name`, `level`, `parent`, `merged_from` |
+| Picker vị trí chuyên môn | `GET /api/public/jobs/categories/` | `JobCategoryListSerializer` | `id`, `name`, `logo_url`, `parent`, `category_type` |
+| Job card / kết quả tìm kiếm / việc đã lưu | `GET /api/public/jobs/` | `PublicJobListSerializer` | định danh public, tiêu đề/công ty, địa điểm, skill, loại việc, kinh nghiệm/cấp bậc/học vấn/tuổi, lương, badge/tier, thời gian đăng |
+| Việc làm tốt nhất trang chủ | `GET /api/public/jobs/best/?rotation_seed=` | `PublicJobPreviewSerializer` | chỉ tin `tier=top`, pagination + seed luân phiên; không dùng thứ tự của danh sách chính |
+| Chi tiết / quick view việc làm | `GET /api/public/jobs/{slug}/` | `JobDetailSerializer` | nội dung chi tiết, thông tin công ty tối thiểu, salary/deadline/view, location/schedule/language và các nhóm view-model |
+| Bảng quản lý tin NTD | `GET /api/employer/jobs/` | `EmployerJobListSerializer` | `public_id`, `title`, `company_name`, `locations_detail`, `employment_type`, `deadline`, `status`, `visibility_hold`, `application_count`, timestamps cần hiển thị |
+| Form tin NTD | `POST/PATCH /api/employer/jobs/...` | `EmployerJobWriteSerializer`; response `EmployerJobDetailSerializer` | dữ liệu form và nested relation, gồm liên hệ nhận hồ sơ; endpoint có `IsEmployer` |
+| Admin hậu kiểm tin | `GET /api/admin/jobs/moderation/{public_id}/`, `POST .../decisions/` | `AdminJobDetailSerializer` / `AdminJobDecisionSerializer` | `review_token`, `state_actions` (`hide`/`restore`), `blocked_reasons`, `content_changes`; hành động hợp lệ do backend tính |
 | Readiness nhà tuyển dụng | `GET /api/employer/me/` | `RecruiterProfileSerializer` + readiness selector | Năm field top-level `job_workspace_ready`, `verification_approved`, `candidate_data_access`, `dpa_status`, `blockers`; onboarding legacy chỉ để tương thích |
 | Thẻ yêu cầu cập nhật của tôi | `GET /api/employer/company/update-requests/?scope=mine` | `CompanyUpdateRequestSerializer` | request của actor, `submitted_at`, status/review note, revision và file/media actor được phép mở |
 | Compatibility/audit company scope | `GET /api/employer/company/update-requests/?scope=company` | `CompanyUpdateRequestSerializer` | backend compatibility có redaction; recruiter company settings không gọi/render contract này |
 | Admin mở đúng yêu cầu cập nhật | `GET /api/admin/company-update-requests/{public_id}/` | `AdminCompanyUpdateRequestSerializer` | exact request, company/requester/status/revision/lock version; document metadata tùy `account.sensitive.view` |
-| Card blog / blog home | `GET /api/blog/`, `/api/blog/home/` | `PostListSerializer` | `public_id`, `title`, `slug`, `excerpt`, `thumbnail_url`, category link, `published_at` |
-| Chi tiết blog | `GET /api/blog/{slug}/` | `PostDetailSerializer` | list identity + `content`, tags, related job category, `seo_title` |
+| Card blog / blog home | `GET /api/public/blog/`, `/api/public/blog/home/` | `PostListSerializer` | `public_id`, `title`, `slug`, `excerpt`, `thumbnail_url`, category link, `published_at` |
+| Chi tiết blog | `GET /api/public/blog/{slug}/` | `PostDetailSerializer` | list identity + `content`, tags, related job category, `seo_title` |
 
 Các catalog nhỏ (industry, benefit, language, skill), site settings/banner/link và
 consent vốn đã dùng explicit field. Admin site settings cố ý trả metadata form
@@ -211,7 +211,7 @@ cache; aggregate không chứa danh tính vẫn được hiển thị.
 
 ### Contract upload session cho employer
 
-- Frontend tạo `POST /api/uploads/sessions/` với purpose
+- Frontend tạo `POST /api/shared/uploads/sessions/` với purpose
   `employer_verification` hoặc `employer_company_update`, gửi byte qua
   `.../{public_id}/content/` rồi poll owner-scoped detail tới khi
   `ready_for_submit=true`. Chỉ `clean` được chuyển vào endpoint nghiệp vụ.
@@ -240,9 +240,9 @@ cache; aggregate không chứa danh tính vẫn được hiển thị.
   đều tạo purpose `candidate_cv`, gửi byte vào quarantine và poll tới
   `ready_for_submit=true`. Business API chỉ nhận `upload_session` clean; frontend
   không gửi raw byte cùng lúc.
-- `POST /api/v2/cvs/imports/` giữ các field `title`, `template_public_id`,
+- `POST /api/candidate/cvs/imports/` giữ các field `title`, `template_public_id`,
   `language`, `theme_color` và `Idempotency-Key`; nguồn file thay bằng
-  `upload_session`. `POST /api/v2/cvs/assets/` dùng cùng field cho avatar.
+  `upload_session`. `POST /api/candidate/cvs/assets/` dùng cùng field cho avatar.
 - Backend claim exact owner/purpose một lần trước structural validation. PDF/DOCX
   được kiểm contract riêng của app `cvs`; avatar được Pillow verify/re-encode.
   Failure rollback claim và không tạo CV/asset.
@@ -385,7 +385,7 @@ AN-P1 được merge. Public feed không phản chiếu model/revision nội b�
 
 ### Active feed
 
-`GET /api/site/announcements/active/?surface=candidate&path=/viec-lam&locale=vi`
+`GET /api/public/site/announcements/active/?surface=candidate&path=/viec-lam&locale=vi`
 
 ```json
 {
@@ -435,7 +435,7 @@ Rules:
 
 ### Functional state
 
-`PUT /api/site/announcements/{public_id}/state/`
+`PUT /api/shared/site/announcements/{public_id}/state/`
 
 ```json
 {
@@ -453,7 +453,7 @@ Endpoint yêu cầu authenticated session. Revision hoặc dismissal version cũ
 
 ### Event batch
 
-`POST /api/site/announcements/events/`
+`POST /api/public/site/announcements/events/`
 
 ```json
 {
@@ -476,7 +476,7 @@ không lưu path, IP hoặc user-agent. CTA không chờ response tracking.
 
 ### Runtime operational event
 
-`POST /api/site/announcements/runtime-events/`
+`POST /api/public/site/announcements/runtime-events/`
 
 ```json
 {
@@ -493,7 +493,7 @@ message, stack, user/cookie identifier hoặc payload API.
 
 ### Admin metrics
 
-`GET /api/site/admin/announcements/{public_id}/metrics/?date_from=2026-07-01&date_to=2026-07-29`
+`GET /api/admin/site/announcements/{public_id}/metrics/?date_from=2026-07-01&date_to=2026-07-29`
 
 - yêu cầu `announcement.view`;
 - mặc định 30 ngày, tối đa 93 ngày, ngày báo cáo theo `Asia/Ho_Chi_Minh`;

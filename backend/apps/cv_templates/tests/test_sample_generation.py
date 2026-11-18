@@ -133,9 +133,7 @@ class SampleGenerationFlowTests(TestCase):
             'experience_bands': ['junior', 'mid'],
             **overrides,
         }
-        return self.client.post(
-            '/api/v2/admin/cv-sample-contents/generate/', payload, format='json'
-        )
+        return self.client.post('/api/admin/cv-sample-contents/generate/', payload, format='json')
 
     @override_settings(AI_RUNTIME_ENABLED=False)
     def test_generation_is_refused_while_the_ai_runtime_is_off(self):
@@ -159,7 +157,7 @@ class SampleGenerationFlowTests(TestCase):
         self.assertEqual(len(response.data['generations']), 4)
         self.assertEqual(delay.call_count, 4)
         listed = self.client.get(
-            '/api/v2/admin/cv-sample-generations/', {'batch': response.data['batch_id']}
+            '/api/admin/cv-sample-generations/', {'batch': response.data['batch_id']}
         )
         self.assertEqual({row['status'] for row in listed.data}, {'queued'})
 
@@ -244,7 +242,7 @@ class SampleGenerationFlowTests(TestCase):
             status=CvSampleContent.Status.PUBLISHED,
             **fields,
         )
-        url = f'/api/v2/admin/cv-sample-contents/{live.public_id}/'
+        url = f'/api/admin/cv-sample-contents/{live.public_id}/'
 
         saved = self.client.patch(
             url,
@@ -285,7 +283,7 @@ class SampleGenerationFlowTests(TestCase):
 
         with patch('apps.cv_templates.tasks.template_assets.regenerate_all_template_snapshots'):
             response = self.client.post(
-                f'/api/v2/admin/cv-sample-contents/{reviewed.public_id}/publish/'
+                f'/api/admin/cv-sample-contents/{reviewed.public_id}/publish/'
             )
 
         self.assertEqual(response.status_code, 200, response.data)

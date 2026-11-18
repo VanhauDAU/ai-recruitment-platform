@@ -13,7 +13,7 @@ describe('AI runtime API', () => {
 
     await expect(getAiRuntimeOverview()).resolves.toEqual(response)
 
-    expect(api.get).toHaveBeenCalledWith('/ai/admin/overview/?days=30', {
+    expect(api.get).toHaveBeenCalledWith('/admin/ai/overview/?days=30', {
       signal: undefined,
     })
   })
@@ -24,7 +24,7 @@ describe('AI runtime API', () => {
 
     await getAiRuntimeOverview({ signal: controller.signal })
 
-    expect(api.get).toHaveBeenCalledWith('/ai/admin/overview/?days=30', {
+    expect(api.get).toHaveBeenCalledWith('/admin/ai/overview/?days=30', {
       signal: controller.signal,
     })
   })

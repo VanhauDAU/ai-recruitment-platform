@@ -41,7 +41,7 @@ def _csv_cell(value):
     return f"'{text}" if text.startswith(('=', '+', '-', '@')) else text
 
 
-@extend_schema(tags=['applications-v2'], summary='Hồ sơ ứng tuyển vào các tin của NTD')
+@extend_schema(tags=['applications'], summary='Hồ sơ ứng tuyển vào các tin của NTD')
 class EmployerApplicationListView(generics.ListAPIView):
     serializer_class = ApplicationSerializer
     permission_classes = [IsEmployer]
@@ -60,7 +60,7 @@ class EmployerApplicationListView(generics.ListAPIView):
 
 
 @extend_schema(
-    tags=['applications-v2'],
+    tags=['applications'],
     summary='Xuất danh sách hồ sơ ứng tuyển ra CSV',
     responses={(200, 'text/csv'): OpenApiTypes.BINARY},
 )
@@ -118,7 +118,7 @@ def _workspace_row(request, application):
 
 
 @extend_schema(
-    tags=['applications-v2'],
+    tags=['applications'],
     summary='NTD cập nhật ghi chú và đánh giá nội bộ (không đổi trạng thái)',
     request=ApplicationAssessmentSerializer,
     responses={200: ApplicationSerializer},
@@ -137,7 +137,7 @@ class EmployerApplicationAssessmentView(APIView):
 
 
 @extend_schema(
-    tags=['applications-v2'],
+    tags=['applications'],
     summary='NTD ra quyết định cho hồ sơ; ứng viên được báo sau thời gian chờ hoàn tác',
     request=ApplicationStatusDecisionSerializer,
     responses={200: ApplicationDecisionResultSerializer},
@@ -166,7 +166,7 @@ class EmployerApplicationDecisionView(APIView):
 
 
 @extend_schema(
-    tags=['applications-v2'],
+    tags=['applications'],
     summary='NTD hoàn tác quyết định gần nhất khi ứng viên chưa nhận thông báo',
     request=None,
     responses={
@@ -183,7 +183,7 @@ class EmployerApplicationDecisionUndoView(APIView):
         return Response(_workspace_row(request, application))
 
 
-@extend_schema(tags=['applications-v2'], summary='Các lần nộp trước của ứng viên vào cùng tin')
+@extend_schema(tags=['applications'], summary='Các lần nộp trước của ứng viên vào cùng tin')
 class EmployerApplicationSubmissionsView(generics.ListAPIView):
     """Earlier submissions of the same candidate to the same job, read-only."""
 
@@ -197,7 +197,7 @@ class EmployerApplicationSubmissionsView(generics.ListAPIView):
         )
 
 
-@extend_schema(tags=['applications-v2'], summary='Lịch sử trạng thái của hồ sơ')
+@extend_schema(tags=['applications'], summary='Lịch sử trạng thái của hồ sơ')
 class EmployerApplicationHistoryView(generics.ListAPIView):
     permission_classes = [IsEmployer]
     serializer_class = ApplicationStatusHistorySerializer

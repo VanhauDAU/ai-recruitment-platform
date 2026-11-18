@@ -2,13 +2,13 @@ import api from '@/shared/api/client'
 import { invalidateRequestCache } from '@/shared/api/request-deduplication'
 
 async function patchAdminSettings(payload) {
-  const { data } = await api.patch('/site/admin/settings/', payload)
+  const { data } = await api.patch('/admin/site/settings/', payload)
   invalidateRequestCache('site-settings')
   return data
 }
 
 export async function getAdminSettings() {
-  const { data } = await api.get('/site/admin/settings/')
+  const { data } = await api.get('/admin/site/settings/')
   return data
 }
 

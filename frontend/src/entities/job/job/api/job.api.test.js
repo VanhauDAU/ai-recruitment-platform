@@ -41,7 +41,7 @@ describe('CV job recommendations API', () => {
     get.mockResolvedValue({ data: { strategy: 'profile-rule-v1', results: [] } })
 
     await expect(getCvJobRecommendations('cv_1')).resolves.toMatchObject({ strategy: 'profile-rule-v1' })
-    expect(get).toHaveBeenCalledWith('/jobs/recommendations/by-cv/cv_1/')
+    expect(get).toHaveBeenCalledWith('/candidate/jobs/recommendations/by-cv/cv_1/')
   })
 
   it('loads the paginated candidate-wide matching feed', async () => {
@@ -59,7 +59,7 @@ describe('CV job recommendations API', () => {
       strategy: 'candidate-profile-rule-v1',
       pagination: { page: 2, total: 12 },
     })
-    expect(get).toHaveBeenCalledWith('/jobs/recommendations/for-me/', {
+    expect(get).toHaveBeenCalledWith('/candidate/jobs/recommendations/for-me/', {
       params: { page: 2, page_size: 10 },
     })
   })
@@ -74,7 +74,7 @@ describe('CV job recommendations API', () => {
       ranking_seed: 'session_seed',
       excludedJobIds: ['job_1', 'job_2'],
     })).resolves.toMatchObject({ results: [{ public_id: 'job_extra' }] })
-    expect(get).toHaveBeenCalledWith('/jobs/recommendations/inline/', {
+    expect(get).toHaveBeenCalledWith('/candidate/jobs/recommendations/inline/', {
       params: {
         page: 3,
         ranking_seed: 'session_seed',
@@ -88,7 +88,7 @@ describe('CV job recommendations API', () => {
     get.mockResolvedValue({ data: { count: 12, results: [] } })
 
     await expect(getHomepageBestJobs(params)).resolves.toEqual({ count: 12, results: [] })
-    expect(get).toHaveBeenCalledWith('/jobs/best/', { params })
+    expect(get).toHaveBeenCalledWith('/public/jobs/best/', { params })
   })
 
   it('uses owner-scoped job workflow endpoints and persists draft data before publishing it', async () => {
@@ -123,32 +123,32 @@ describe('CV job recommendations API', () => {
     await expect(extendEmployerJob('job_1', '2026-08-08')).resolves.toEqual({ public_id: 'job_extended' })
     await expect(duplicateEmployerJob('job_1')).resolves.toEqual({ public_id: 'job_copy' })
 
-    expect(get).toHaveBeenNthCalledWith(1, '/jobs/mine/', { params: { status: 'draft' } })
-    expect(get).toHaveBeenNthCalledWith(2, '/jobs/mine/job_1/')
-    expect(get).toHaveBeenNthCalledWith(3, '/jobs/mine/posting-context/')
-    expect(post).toHaveBeenNthCalledWith(1, '/jobs/mine/?as=draft', { title: 'Nháp' })
-    expect(patch).toHaveBeenNthCalledWith(1, '/jobs/mine/job_1/', { title: 'Sửa' })
-    expect(post).toHaveBeenNthCalledWith(2, '/jobs/mine/', {
+    expect(get).toHaveBeenNthCalledWith(1, '/employer/jobs/', { params: { status: 'draft' } })
+    expect(get).toHaveBeenNthCalledWith(2, '/employer/jobs/job_1/')
+    expect(get).toHaveBeenNthCalledWith(3, '/employer/jobs/posting-context/')
+    expect(post).toHaveBeenNthCalledWith(1, '/employer/jobs/?as=draft', { title: 'Nháp' })
+    expect(patch).toHaveBeenNthCalledWith(1, '/employer/jobs/job_1/', { title: 'Sửa' })
+    expect(post).toHaveBeenNthCalledWith(2, '/employer/jobs/', {
       title: 'Mới',
       responsibility_statement_version: '2026-11',
     })
-    expect(patch).toHaveBeenNthCalledWith(2, '/jobs/mine/job_1/', { title: 'Đã sửa' })
-    expect(post).toHaveBeenNthCalledWith(3, '/jobs/mine/job_1/submit/', {
+    expect(patch).toHaveBeenNthCalledWith(2, '/employer/jobs/job_1/', { title: 'Đã sửa' })
+    expect(post).toHaveBeenNthCalledWith(3, '/employer/jobs/job_1/submit/', {
       responsibility_statement_version: '2026-11',
     })
-    expect(post).toHaveBeenNthCalledWith(4, '/jobs/mine/job_1/close/')
-    expect(post).toHaveBeenNthCalledWith(5, '/jobs/mine/job_1/reopen/', {
+    expect(post).toHaveBeenNthCalledWith(4, '/employer/jobs/job_1/close/')
+    expect(post).toHaveBeenNthCalledWith(5, '/employer/jobs/job_1/reopen/', {
       deadline: '2026-08-01',
       responsibility_statement_version: '2026-11',
     })
-    expect(post).toHaveBeenNthCalledWith(6, '/jobs/mine/job_1/extend/', { deadline: '2026-08-08' })
-    expect(post).toHaveBeenNthCalledWith(7, '/jobs/mine/job_1/duplicate/')
+    expect(post).toHaveBeenNthCalledWith(6, '/employer/jobs/job_1/extend/', { deadline: '2026-08-08' })
+    expect(post).toHaveBeenNthCalledWith(7, '/employer/jobs/job_1/duplicate/')
   })
 
   it('preserves employer pagination metadata and normalizes a legacy list response', async () => {
     const page = {
       count: 42,
-      next: '/api/jobs/mine/?page=2',
+      next: '/api/employer/jobs/?page=2',
       previous: null,
       results: [{ public_id: 'job_1', candidate_count: 3 }],
     }
@@ -164,10 +164,10 @@ describe('CV job recommendations API', () => {
       results: [{ public_id: 'job_legacy' }],
     })
 
-    expect(get).toHaveBeenNthCalledWith(1, '/jobs/mine/', {
+    expect(get).toHaveBeenNthCalledWith(1, '/employer/jobs/', {
       params: { page: 1, status: 'active' },
     })
-    expect(get).toHaveBeenNthCalledWith(2, '/jobs/mine/', {
+    expect(get).toHaveBeenNthCalledWith(2, '/employer/jobs/', {
       params: { q: 'frontend' },
     })
   })
@@ -178,7 +178,7 @@ describe('CV job recommendations API', () => {
     await expect(deleteEmployerJob('job_draft')).resolves.toBe('job_draft')
 
     expect(remove).toHaveBeenCalledOnce()
-    expect(remove).toHaveBeenCalledWith('/jobs/mine/job_draft/')
+    expect(remove).toHaveBeenCalledWith('/employer/jobs/job_draft/')
   })
 
   it('loads the normalized catalogues used by the complete manual form', async () => {
@@ -191,9 +191,9 @@ describe('CV job recommendations API', () => {
     await expect(getJobLanguages()).resolves.toEqual([{ id: 2, name: 'Tiếng Anh' }])
     await expect(getSkills()).resolves.toEqual([{ id: 3, name: 'React' }])
 
-    expect(get).toHaveBeenNthCalledWith(1, '/jobs/benefits/')
-    expect(get).toHaveBeenNthCalledWith(2, '/jobs/languages/')
-    expect(get).toHaveBeenNthCalledWith(3, '/skills/')
+    expect(get).toHaveBeenNthCalledWith(1, '/public/jobs/benefits/')
+    expect(get).toHaveBeenNthCalledWith(2, '/public/jobs/languages/')
+    expect(get).toHaveBeenNthCalledWith(3, '/public/skills/')
   })
 
   it('sends viewable job impressions as one credentialed batch', async () => {
@@ -204,7 +204,7 @@ describe('CV job recommendations API', () => {
     })
 
     expect(post).toHaveBeenCalledWith(
-      '/jobs/impressions/',
+      '/public/jobs/impressions/',
       { slugs: ['backend-engineer'] },
       { withCredentials: true },
     )

@@ -82,7 +82,7 @@ describe('CompanyDirectory', () => {
 
   it('renders featured companies as one finite response without an observer or load-more UI', async () => {
     getPublicCompanies.mockResolvedValue({
-      next: 'https://api.example.com/api/companies/?cursor=must-not-follow',
+      next: 'https://api.example.com/api/public/companies/?cursor=must-not-follow',
       previous: null,
       results: [company('co_featured', 'Công ty Nổi bật')],
     })
@@ -149,7 +149,7 @@ describe('CompanyDirectory', () => {
       if (!params.cursor) {
         return Promise.resolve({
           count: 2_083,
-          next: 'https://api.example.com/api/companies/?q=Alpha&cursor=page-two',
+          next: 'https://api.example.com/api/public/companies/?q=Alpha&cursor=page-two',
           previous: null,
           results: [company('co_alpha', 'Công ty Alpha')],
         })
@@ -157,7 +157,7 @@ describe('CompanyDirectory', () => {
       return Promise.resolve({
         count: 2_083,
         next: null,
-        previous: 'https://api.example.com/api/companies/?cursor=page-one',
+        previous: 'https://api.example.com/api/public/companies/?cursor=page-one',
         results: [company('co_beta', 'Công ty Beta')],
       })
     })

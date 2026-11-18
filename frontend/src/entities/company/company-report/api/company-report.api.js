@@ -1,7 +1,7 @@
 import api from '@/shared/api/client'
 
 export async function submitCompanyReport(companyPublicId, payload) {
-  const { data } = await api.post(`/companies/${companyPublicId}/reports/`, payload)
+  const { data } = await api.post(`/public/companies/${companyPublicId}/reports/`, payload)
   return data
 }
 

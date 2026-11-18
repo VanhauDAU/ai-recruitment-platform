@@ -36,7 +36,7 @@ def _entry(request, public_id):
     return get_object_or_404(recruiter_talent_pool_queryset(request.user), public_id=public_id)
 
 
-@extend_schema(tags=['applications-v2'])
+@extend_schema(tags=['applications'])
 class RecruiterTalentPoolListCreateView(generics.ListAPIView):
     permission_classes = [IsEmployer]
     serializer_class = TalentPoolEntrySerializer
@@ -70,7 +70,7 @@ class RecruiterTalentPoolListCreateView(generics.ListAPIView):
         return Response(TalentPoolEntrySerializer(entry).data, status=status.HTTP_201_CREATED)
 
 
-@extend_schema(tags=['applications-v2'])
+@extend_schema(tags=['applications'])
 class RecruiterTalentPoolEntryView(APIView):
     permission_classes = [IsEmployer]
 
@@ -98,7 +98,7 @@ def _recruiter_job(request, public_id, *, public_only=False):
 
 
 @extend_schema(
-    tags=['applications-v2'],
+    tags=['applications'],
     summary='Người trong kho phù hợp với một tin (xếp theo độ tương đồng)',
     parameters=[OpenApiParameter('job', str, required=True)],
     responses={200: TalentSuggestionSerializer(many=True)},
@@ -114,7 +114,7 @@ class RecruiterTalentSuggestionView(APIView):
 
 
 @extend_schema(
-    tags=['applications-v2'],
+    tags=['applications'],
     summary='Mời ứng viên trong kho ứng tuyển một tin (mỗi tin một lần)',
     request=TalentPoolInviteSerializer,
     responses={204: None},
@@ -131,7 +131,7 @@ class RecruiterTalentPoolInviteView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-@extend_schema(tags=['applications-v2'], summary='Các NTD đang lưu hồ sơ của tôi')
+@extend_schema(tags=['applications'], summary='Các NTD đang lưu hồ sơ của tôi')
 class CandidateTalentPoolListView(generics.ListAPIView):
     permission_classes = [IsCandidate]
     serializer_class = CandidateTalentPoolSerializer
@@ -141,7 +141,7 @@ class CandidateTalentPoolListView(generics.ListAPIView):
 
 
 @extend_schema(
-    tags=['applications-v2'],
+    tags=['applications'],
     summary='Rút hồ sơ khỏi kho của một NTD',
     request=None,
     responses={204: None},

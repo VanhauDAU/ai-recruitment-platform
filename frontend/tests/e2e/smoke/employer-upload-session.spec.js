@@ -68,7 +68,7 @@ test('employer legal document is scanned before it is attached', async ({ page }
       }),
     })
   })
-  await page.route('http://localhost:8000/api/uploads/sessions/', async (route) => {
+  await page.route('http://localhost:8000/api/shared/uploads/sessions/', async (route) => {
     sequence.push('create')
     await route.fulfill({
       contentType: 'application/json',
@@ -81,7 +81,7 @@ test('employer legal document is scanned before it is attached', async ({ page }
     })
   })
   await page.route(
-    'http://localhost:8000/api/uploads/sessions/ups_employer_document/content/',
+    'http://localhost:8000/api/shared/uploads/sessions/ups_employer_document/content/',
     async (route) => {
       sequence.push('content')
       await route.fulfill({
@@ -95,7 +95,7 @@ test('employer legal document is scanned before it is attached', async ({ page }
     },
   )
   await page.route(
-    'http://localhost:8000/api/uploads/sessions/ups_employer_document/',
+    'http://localhost:8000/api/shared/uploads/sessions/ups_employer_document/',
     async (route) => {
       sequence.push('status')
       await new Promise((resolve) => setTimeout(resolve, 250))

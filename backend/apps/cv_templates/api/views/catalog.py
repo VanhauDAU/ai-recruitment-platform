@@ -11,19 +11,21 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.cvs.api.serializers import CvAssetSerializer
-from apps.jobs.models import JobCategory
-from common.api.params import parse_bool
-from common.metrics import record_metric
-
-from ...models import (
+from apps.cv_templates.api.serializers.catalog import (
+    CvCategorySerializer,
+    CvPositionOptionSerializer,
+    CvSampleContentCardSerializer,
+    CvTemplateCardSerializer,
+    CvTemplateDetailSerializer,
+)
+from apps.cv_templates.models import (
     DEFAULT_CV_LANGUAGE,
     DEFAULT_EXPERIENCE_BAND,
     CvLanguage,
     CvTemplate,
     ExperienceBand,
 )
-from ...selectors import (
+from apps.cv_templates.selectors import (
     active_backgrounds_queryset,
     active_cv_categories_queryset,
     active_cv_position_options_queryset,
@@ -34,20 +36,17 @@ from ...selectors import (
     published_template_queryset,
     related_published_templates,
 )
-from ...services import (
+from apps.cv_templates.services import (
     PositionContentUnavailable,
     blank_position_content,
     compose_position_preview,
     position_details_section,
     resolve_position_content,
 )
-from ..serializers.v2 import (
-    CvCategorySerializer,
-    CvPositionOptionSerializer,
-    CvSampleContentCardSerializer,
-    CvTemplateCardSerializer,
-    CvTemplateDetailSerializer,
-)
+from apps.cvs.api.serializers import CvAssetSerializer
+from apps.jobs.models import JobCategory
+from common.api.params import parse_bool
+from common.metrics import record_metric
 
 
 def requested_locale(request):
@@ -326,7 +325,7 @@ class CvBackgroundCatalogListView(APIView):
     @extend_schema(
         summary='Danh sách ảnh nền dùng chung',
         responses={200: CvAssetSerializer(many=True)},
-        tags=['cvs-v2'],
+        tags=['cvs'],
     )
     def get(self, request):
         return Response(

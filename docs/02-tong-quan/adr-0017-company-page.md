@@ -21,11 +21,11 @@ Hai ràng buộc có sẵn định hình lời giải:
 ## Quyết định
 
 1. **Một route, một read model.** Trang công ty nằm tại `/cong-ty/:slug`, đọc
-   từ `GET /api/companies/<slug>/`. Response là danh sách khối có kiểu
+   từ `GET /api/public/companies/<slug>/`. Response là danh sách khối có kiểu
    (`sections[].type`) do một builder duy nhất ở backend sinh ra; frontend không
    suy luận từ tên cột của `Company`. Xem trước của nhà tuyển dụng và của quản
    trị viên dùng lại đúng builder đó.
-2. **Tin của công ty lọc theo mã, không theo tên.** `GET /api/jobs/` nhận
+2. **Tin của công ty lọc theo mã, không theo tên.** `GET /api/public/jobs/` nhận
    `company=<company_public_id>`; DTO tin trả `company_slug` để mọi liên kết
    công ty trỏ về trang chi tiết.
 3. **Kiểm duyệt lai.** Nội dung (chữ, ảnh, video, liên kết, văn phòng) đi qua
@@ -54,7 +54,7 @@ Không hiển thị huy hiệu xác thực cấp công ty và không có gói tr
 
 ## Hệ quả
 
-- Chi tiết tin (`GET /api/jobs/<slug>/`) không còn trả địa chỉ của hộ kinh
+- Chi tiết tin (`GET /api/public/jobs/<slug>/`) không còn trả địa chỉ của hộ kinh
   doanh trong `company_address`.
 - Luật cũ của hồ sơ công ty giữ nguyên: mọi member vẫn gửi được yêu cầu sửa các
   trường đã có (ER-D05). Quyền biên tập chỉ ràng buộc bố cục và các trường nội

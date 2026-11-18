@@ -5,15 +5,15 @@ async function mockJobListDependencies(page) {
     const path = new URL(route.request().url()).pathname
     let body = {}
 
-    if (path === '/api/site/settings/') body = {}
-    if (path === '/api/site/banners/') body = []
-    if (path === '/api/jobs/') body = { count: 0, results: [] }
-    if (path === '/api/jobs/best/') body = { count: 0, results: [] }
-    if (path === '/api/jobs/categories/') body = []
-    if (path === '/api/jobs/stats/') body = { demand: [] }
-    if (path === '/api/locations/') body = []
+    if (path === '/api/public/site/settings/') body = {}
+    if (path === '/api/public/site/banners/') body = []
+    if (path === '/api/public/jobs/') body = { count: 0, results: [] }
+    if (path === '/api/public/jobs/best/') body = { count: 0, results: [] }
+    if (path === '/api/public/jobs/categories/') body = []
+    if (path === '/api/public/jobs/stats/') body = { demand: [] }
+    if (path === '/api/public/locations/') body = []
     if (path === '/api/employer/industries/') body = []
-    if (path === '/api/v2/cv-templates/') body = { count: 0, results: [] }
+    if (path === '/api/public/cv-templates/') body = { count: 0, results: [] }
 
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) })
   })
@@ -23,7 +23,7 @@ test('job list creates a new ranking seed after browser refresh', async ({ page 
   await mockJobListDependencies(page)
   const firstRequestPromise = page.waitForRequest((request) => {
     const url = new URL(request.url())
-    return url.pathname === '/api/jobs/' && url.searchParams.has('ranking_seed')
+    return url.pathname === '/api/public/jobs/' && url.searchParams.has('ranking_seed')
   })
 
   await page.goto('/viec-lam')
@@ -33,7 +33,7 @@ test('job list creates a new ranking seed after browser refresh', async ({ page 
 
   const reloadedRequestPromise = page.waitForRequest((request) => {
     const url = new URL(request.url())
-    return url.pathname === '/api/jobs/' && url.searchParams.has('ranking_seed')
+    return url.pathname === '/api/public/jobs/' && url.searchParams.has('ranking_seed')
   })
   await page.reload()
   const reloadedRequest = await reloadedRequestPromise
@@ -47,7 +47,7 @@ test('homepage Best Jobs uses its own rotation seed after browser refresh', asyn
   await mockJobListDependencies(page)
   const firstRequestPromise = page.waitForRequest((request) => {
     const url = new URL(request.url())
-    return url.pathname === '/api/jobs/best/' && url.searchParams.has('rotation_seed')
+    return url.pathname === '/api/public/jobs/best/' && url.searchParams.has('rotation_seed')
   })
 
   await page.goto('/')
@@ -61,7 +61,7 @@ test('homepage Best Jobs uses its own rotation seed after browser refresh', asyn
 
   const reloadedRequestPromise = page.waitForRequest((request) => {
     const url = new URL(request.url())
-    return url.pathname === '/api/jobs/best/' && url.searchParams.has('rotation_seed')
+    return url.pathname === '/api/public/jobs/best/' && url.searchParams.has('rotation_seed')
   })
   await page.reload()
   const reloadedRequest = await reloadedRequestPromise
@@ -92,7 +92,7 @@ test('job list requests new results after an advanced filter changes', async ({ 
 
   const filteredRequest = page.waitForRequest((request) => {
     const url = new URL(request.url())
-    return url.pathname === '/api/jobs/' && url.searchParams.get('work_type') === 'remote'
+    return url.pathname === '/api/public/jobs/' && url.searchParams.get('work_type') === 'remote'
   })
 
   await page.getByRole('button', { name: 'Từ xa' }).click()

@@ -24,11 +24,11 @@ const featuredPosts = [
 
 test('candidate blog: two featured posts use a balanced sparse layout', async ({ page }) => {
   await mockPublicApi(page)
-  await page.route('http://localhost:8000/api/blog/**', async (route) => {
+  await page.route('http://localhost:8000/api/public/blog/**', async (route) => {
     const path = new URL(route.request().url()).pathname
-    const body = path === '/api/blog/home/'
+    const body = path === '/api/public/blog/home/'
       ? { featured: featuredPosts, sections: [] }
-      : path === '/api/blog/categories/'
+      : path === '/api/public/blog/categories/'
         ? [{ public_id: 'category_career', name: 'Định hướng nghề nghiệp', slug: 'dinh-huong-nghe-nghiep' }]
         : []
 

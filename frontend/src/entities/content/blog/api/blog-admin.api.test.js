@@ -31,12 +31,12 @@ describe('blog admin API', () => {
   it('keeps list filters and cancellation signal intact', async () => {
     const params = { q: 'sales', status: 'pending', page: 2 }
     await getAdminBlogPosts(params, { signal: 'signal' })
-    expect(get).toHaveBeenCalledWith('/blog/admin/posts/', { params, signal: 'signal' })
+    expect(get).toHaveBeenCalledWith('/admin/blog/posts/', { params, signal: 'signal' })
   })
 
   it('loads the reusable media library with search and cancellation', async () => {
     await getAdminBlogMedia({ q: 'sales' }, { signal: 'media-signal' })
-    expect(get).toHaveBeenCalledWith('/blog/admin/uploads/', {
+    expect(get).toHaveBeenCalledWith('/admin/blog/uploads/', {
       params: { q: 'sales' },
       signal: 'media-signal',
     })
@@ -45,20 +45,20 @@ describe('blog admin API', () => {
   it('uses the draft revision endpoint for optimistic autosave', async () => {
     const payload = { title: 'Bài mới', base_revision: 4 }
     await saveAdminBlogDraft('ps_123', payload)
-    expect(patch).toHaveBeenCalledWith('/blog/admin/posts/ps_123/draft/', payload)
+    expect(patch).toHaveBeenCalledWith('/admin/blog/posts/ps_123/draft/', payload)
   })
 
   it('creates without a client-controlled slug and posts explicit workflow actions', async () => {
     const payload = { title: 'Nhân viên Sales là gì?', category_public_id: 'pcat_1' }
     await createAdminBlogPost(payload)
     await runAdminBlogAction('ps_123', 'submit', {})
-    expect(post).toHaveBeenNthCalledWith(1, '/blog/admin/posts/', payload)
-    expect(post).toHaveBeenNthCalledWith(2, '/blog/admin/posts/ps_123/submit/', {})
+    expect(post).toHaveBeenNthCalledWith(1, '/admin/blog/posts/', payload)
+    expect(post).toHaveBeenNthCalledWith(2, '/admin/blog/posts/ps_123/submit/', {})
   })
 
   it('merges a source tag into an explicit target', async () => {
     await mergeAdminBlogTag('ptag_source', 'ptag_target')
-    expect(post).toHaveBeenCalledWith('/blog/admin/tags/ptag_source/merge/', {
+    expect(post).toHaveBeenCalledWith('/admin/blog/tags/ptag_source/merge/', {
       target_public_id: 'ptag_target',
     })
   })
@@ -66,13 +66,13 @@ describe('blog admin API', () => {
   it('creates a pin without requiring placement and clears the public pin cache', async () => {
     const payload = { post_public_id: 'ps_123', order: 1, is_active: true }
     await createAdminBlogPin(payload)
-    expect(post).toHaveBeenCalledWith('/blog/admin/pins/', payload)
+    expect(post).toHaveBeenCalledWith('/admin/blog/pins/', payload)
     expect(invalidateRequestCache).toHaveBeenCalledWith('blog-pinned')
   })
 
   it('reorders categories and clears public category caches', async () => {
     await reorderAdminBlogCategories(['pcat_2', 'pcat_1'])
-    expect(post).toHaveBeenCalledWith('/blog/admin/categories/reorder/', {
+    expect(post).toHaveBeenCalledWith('/admin/blog/categories/reorder/', {
       public_ids: ['pcat_2', 'pcat_1'],
     })
     expect(invalidateRequestCache).toHaveBeenCalledWith('blog-categories')

@@ -12,6 +12,6 @@ describe('employer dashboard API', () => {
     get.mockResolvedValue({ data: { summary: { jobs_active: 2 } } })
 
     await expect(getEmployerDashboard()).resolves.toEqual({ summary: { jobs_active: 2 } })
-    expect(get).toHaveBeenCalledWith('/dashboard/employer/')
+    expect(get).toHaveBeenCalledWith('/employer/dashboard/')
   })
 })

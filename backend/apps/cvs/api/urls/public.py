@@ -1,23 +1,21 @@
 from django.urls import path
 
-from ..views.v2 import (
-    CvV2AssetContentView,
-    CvV2SharedLinkPublicView,
-    CvV2SharedSourceFileView,
+from apps.cvs.api.views.cvs import (
+    CvAssetContentView,
+    CvSharedLinkPublicView,
+    CvSharedSourceFileView,
 )
 
 urlpatterns = [
     path(
         'assets/<str:asset_public_id>/content/',
-        CvV2AssetContentView.as_view(),
-        name='cv-v2-asset-content',
+        CvAssetContentView.as_view(),
+        name='cv-asset-content',
     ),
-    path(
-        'shares/<str:token>/', CvV2SharedLinkPublicView.as_view(), name='cv-v2-shared-link-public'
-    ),
+    path('shares/<str:token>/', CvSharedLinkPublicView.as_view(), name='cv-shared-link-public'),
     path(
         'shares/<str:token>/source/',
-        CvV2SharedSourceFileView.as_view(),
-        name='cv-v2-shared-source-file',
+        CvSharedSourceFileView.as_view(),
+        name='cv-shared-source-file',
     ),
 ]

@@ -22,82 +22,82 @@ from ..views import (
 )
 
 urlpatterns = [
-    path('admin/categories/', AdminCategoryListCreateView.as_view(), name='kb-admin-category-list'),
+    path('categories/', AdminCategoryListCreateView.as_view(), name='kb-admin-category-list'),
     path(
-        'admin/categories/reorder/',
+        'categories/reorder/',
         AdminCategoryReorderView.as_view(),
         name='kb-admin-category-reorder',
     ),
     path(
-        'admin/categories/<str:public_id>/',
+        'categories/<str:public_id>/',
         AdminCategoryDetailView.as_view(),
         name='kb-admin-category-detail',
     ),
     path(
-        'admin/categories/<str:public_id>/activate/',
+        'categories/<str:public_id>/activate/',
         AdminCategoryActivateView.as_view(),
         name='kb-admin-category-activate',
     ),
     path(
-        'admin/categories/<str:public_id>/deactivate/',
+        'categories/<str:public_id>/deactivate/',
         AdminCategoryDeactivateView.as_view(),
         name='kb-admin-category-deactivate',
     ),
-    path('admin/articles/', AdminArticleListCreateView.as_view(), name='kb-admin-article-list'),
+    path('articles/', AdminArticleListCreateView.as_view(), name='kb-admin-article-list'),
     path(
-        'admin/articles/summary/',
+        'articles/summary/',
         AdminArticleSummaryView.as_view(),
         name='kb-admin-article-summary',
     ),
     path(
-        'admin/articles/reorder/',
+        'articles/reorder/',
         AdminArticleReorderView.as_view(),
         name='kb-admin-article-reorder',
     ),
     path(
-        'admin/articles/<str:public_id>/',
+        'articles/<str:public_id>/',
         AdminArticleDetailView.as_view(),
         name='kb-admin-article-detail',
     ),
     path(
-        'admin/articles/<str:public_id>/revisions/',
+        'articles/<str:public_id>/revisions/',
         AdminRevisionListCreateView.as_view(),
         name='kb-admin-revision-list',
     ),
     path(
-        'admin/articles/<str:public_id>/revisions/<int:number>/',
+        'articles/<str:public_id>/revisions/<int:number>/',
         AdminRevisionDetailView.as_view(),
         name='kb-admin-revision-detail',
     ),
     path(
-        'admin/articles/<str:public_id>/revisions/<int:number>/submit/',
+        'articles/<str:public_id>/revisions/<int:number>/submit/',
         AdminRevisionSubmitView.as_view(),
         name='kb-admin-revision-submit',
     ),
     path(
-        'admin/articles/<str:public_id>/revisions/<int:number>/approve/',
+        'articles/<str:public_id>/revisions/<int:number>/approve/',
         AdminRevisionApproveView.as_view(),
         name='kb-admin-revision-approve',
     ),
     path(
-        'admin/articles/<str:public_id>/revisions/<int:number>/reject/',
+        'articles/<str:public_id>/revisions/<int:number>/reject/',
         AdminRevisionRejectView.as_view(),
         name='kb-admin-revision-reject',
     ),
     path(
-        'admin/articles/<str:public_id>/publish/',
+        'articles/<str:public_id>/publish/',
         AdminArticlePublishView.as_view(),
         name='kb-admin-article-publish',
     ),
     path(
-        'admin/articles/<str:public_id>/archive/',
+        'articles/<str:public_id>/archive/',
         AdminArticleArchiveView.as_view(),
         name='kb-admin-article-archive',
     ),
     path(
-        'admin/articles/<str:public_id>/restore/',
+        'articles/<str:public_id>/restore/',
         AdminArticleRestoreView.as_view(),
         name='kb-admin-article-restore',
     ),
-    path('admin/media/', AdminMediaListCreateView.as_view(), name='kb-admin-media-list'),
+    path('media/', AdminMediaListCreateView.as_view(), name='kb-admin-media-list'),
 ]

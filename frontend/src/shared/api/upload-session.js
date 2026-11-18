@@ -77,7 +77,7 @@ function wait(delay, signal) {
 }
 
 export async function createUploadSession(file, purpose) {
-  const { data } = await api.post('/uploads/sessions/', {
+  const { data } = await api.post('/shared/uploads/sessions/', {
     purpose,
     original_filename: file.name,
     content_type: fileContentType(file),
@@ -89,17 +89,17 @@ export async function createUploadSession(file, purpose) {
 export async function uploadSessionContent(publicId, file) {
   const formData = new FormData()
   formData.append('file', file)
-  const { data } = await api.post(`/uploads/sessions/${publicId}/content/`, formData)
+  const { data } = await api.post(`/shared/uploads/sessions/${publicId}/content/`, formData)
   return data
 }
 
 export async function getUploadSession(publicId) {
-  const { data } = await api.get(`/uploads/sessions/${publicId}/`)
+  const { data } = await api.get(`/shared/uploads/sessions/${publicId}/`)
   return data
 }
 
 export async function retryUploadSession(publicId) {
-  const { data } = await api.post(`/uploads/sessions/${publicId}/retry/`)
+  const { data } = await api.post(`/shared/uploads/sessions/${publicId}/retry/`)
   return data
 }
 

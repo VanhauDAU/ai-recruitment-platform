@@ -1,5 +1,5 @@
 from django.urls import path
-from rest_framework.routers import DefaultRouter
+from rest_framework.routers import SimpleRouter
 
 from ..views.admin import (
     AdminCvBackgroundViewSet,
@@ -13,24 +13,24 @@ from ..views.admin import (
     AdminCvTemplateViewSet,
 )
 
-router = DefaultRouter()
-router.register('admin/cv-templates', AdminCvTemplateViewSet, basename='admin-cv-template')
-router.register('admin/cv-categories', AdminCvCategoryViewSet, basename='admin-cv-category')
-router.register('admin/cv-colors', AdminCvColorViewSet, basename='admin-cv-color')
-router.register('admin/cv-backgrounds', AdminCvBackgroundViewSet, basename='admin-cv-background')
+router = SimpleRouter()
+router.register('cv-templates', AdminCvTemplateViewSet, basename='admin-cv-template')
+router.register('cv-categories', AdminCvCategoryViewSet, basename='admin-cv-category')
+router.register('cv-colors', AdminCvColorViewSet, basename='admin-cv-color')
+router.register('cv-backgrounds', AdminCvBackgroundViewSet, basename='admin-cv-background')
 router.register(
-    'admin/cv-sample-contents', AdminCvSampleContentViewSet, basename='admin-cv-sample-content'
+    'cv-sample-contents', AdminCvSampleContentViewSet, basename='admin-cv-sample-content'
 )
 router.register(
-    'admin/cv-sample-generations',
+    'cv-sample-generations',
     AdminCvSampleGenerationViewSet,
     basename='admin-cv-sample-generation',
 )
-router.register('admin/cv-positions', AdminCvPositionViewSet, basename='admin-cv-position')
+router.register('cv-positions', AdminCvPositionViewSet, basename='admin-cv-position')
 router.register(
-    'admin/cv-position-fields', AdminCvPositionFieldViewSet, basename='admin-cv-position-field'
+    'cv-position-fields', AdminCvPositionFieldViewSet, basename='admin-cv-position-field'
 )
 
 urlpatterns = [
-    path('admin/cv-stats/overview/', AdminCvOverviewView.as_view(), name='admin-cv-overview'),
+    path('cv-stats/overview/', AdminCvOverviewView.as_view(), name='admin-cv-overview'),
 ] + router.urls

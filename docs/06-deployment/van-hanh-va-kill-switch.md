@@ -142,7 +142,7 @@ marketing → employer workspace → candidate, bật cả hai lớp cho từng 
 Rollback:
 
 1. Tắt một surface: bỏ khỏi `ANNOUNCEMENT_REMOTE_ENABLED_SURFACES`, rolling
-   restart backend, gọi `GET /api/site/announcements/active/?surface=...` xác
+   restart backend, gọi `GET /api/public/site/announcements/active/?surface=...` xác
    nhận `remote_enabled=false`. Không cần rebuild frontend, không archive dữ
    liệu.
 2. Trả toàn bộ về banner legacy: tắt remote backend, build frontend với
@@ -244,7 +244,7 @@ scan error/provider retry tăng đột biến, hoặc tin công khai vẫn hiệ
 
 ## Trung tâm trợ giúp (knowledgebase)
 
-- `KNOWLEDGEBASE_PUBLIC_ENABLED`: mở API `/api/knowledgebase/`, SEO shell
+- `KNOWLEDGEBASE_PUBLIC_ENABLED`: mở API `/api/public/knowledgebase/`, SEO shell
   `/tro-giup` và entry point frontend.
 - `KNOWLEDGEBASE_SEARCH_INDEX_ENABLED`: cho phép `index, follow` và đưa
   `/sitemaps/knowledgebase.xml` vào sitemap index. Không vượt được public
@@ -252,7 +252,7 @@ scan error/provider retry tăng đột biến, hoặc tin công khai vẫn hiệ
 
 Frontend không có env flag riêng; nó đọc `knowledgebase_public_enabled` và
 `knowledgebase_search_index_enabled` (đã AND với public switch) từ
-`GET /api/site/settings/`. Đặc tả nghiệp vụ xem
+`GET /api/public/site/settings/`. Đặc tả nghiệp vụ xem
 [`dac-ta-trung-tam-tro-giup.md`](../01-phan-tich/dac-ta-trung-tam-tro-giup.md).
 
 Gate trước khi bật:
@@ -351,7 +351,7 @@ Secret không đưa vào Site Setting, frontend, log hay ticket.
 ### Giám sát
 
 Không có metric `product.metrics` riêng; nguồn quan sát là `AiInvocation`,
-`AiUsageDaily` và `GET /api/ai/admin/overview/` (quyền `site_setting.view`):
+`AiUsageDaily` và `GET /api/admin/ai/overview/` (quyền `site_setting.view`):
 số lượt, thành công/thất bại, retry, quota rejection, token, chi phí ước tính,
 p95 latency. Theo dõi thêm tuổi queue `ai-generation` và số stale recovery.
 Dừng rollout khi có PII outbound, trường cấm bị điền, taxonomy ID không tồn

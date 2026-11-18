@@ -42,7 +42,7 @@ def _application(request, public_id):
     return get_object_or_404(employer_application_queryset(request.user), public_id=public_id)
 
 
-@extend_schema(tags=['applications-v2'])
+@extend_schema(tags=['applications'])
 class RecruiterReviewLinkListCreateView(APIView):
     permission_classes = [IsEmployer]
 
@@ -81,7 +81,7 @@ class RecruiterReviewLinkListCreateView(APIView):
 
 
 @extend_schema(
-    tags=['applications-v2'],
+    tags=['applications'],
     summary='Thu hồi link mời đánh giá',
     request=None,
     responses={200: ReviewLinkSerializer},
@@ -99,7 +99,7 @@ class RecruiterReviewLinkRevokeView(APIView):
 
 
 @extend_schema(
-    tags=['applications-v2'],
+    tags=['applications'],
     summary='Phiếu đánh giá của người được mời và tổng hợp',
     responses={
         200: inline_serializer(
@@ -124,7 +124,7 @@ class RecruiterApplicationReviewListView(APIView):
         )
 
 
-@extend_schema(tags=['applications-v2'])
+@extend_schema(tags=['applications'])
 class PublicApplicationReviewView(APIView):
     """Bearer endpoint for invited reviewers; bad, expired and revoked links all 404."""
 
