@@ -15,6 +15,7 @@ COMPANY_PAGE_PATH = '/tuyendung/app/company-page'
 JOBS_PATH = '/tuyendung/app/jobs'
 APPLICATIONS_PATH = '/tuyendung/app/applications'
 CAMPAIGNS_PATH = '/tuyendung/app/campaigns'
+INTEGRATIONS_PATH = '/tuyendung/app/account/settings/integrations'
 
 EVENT_PRESENTATION = {
     EmployerNotification.EventType.VERIFICATION_APPROVED: (
@@ -112,6 +113,18 @@ EVENT_PRESENTATION = {
     EmployerNotification.EventType.CAMPAIGN_AUTO_COMPLETED: (
         'Chiến dịch đã tự kết thúc',
         CAMPAIGNS_PATH,
+    ),
+    EmployerNotification.EventType.SOCIAL_POST_FAILED: (
+        'Bài đăng Fanpage không thành công',
+        CAMPAIGNS_PATH,
+    ),
+    EmployerNotification.EventType.SOCIAL_POST_DELETE_FAILED: (
+        'Chưa gỡ được bài khỏi Fanpage',
+        CAMPAIGNS_PATH,
+    ),
+    EmployerNotification.EventType.SOCIAL_CONNECTION_EXPIRED: (
+        'Kết nối Fanpage đã hết hạn',
+        INTEGRATIONS_PATH,
     ),
 }
 

@@ -8,7 +8,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | Hạng mục | Trạng thái |
 | --- | --- |
 | [Mô hình hóa yêu cầu cho báo cáo (mục 3.2)](#mô-hình-hóa-yêu-cầu-cho-báo-cáo-mục-32-2026-11-18) | ✅ Nguồn sơ đồ trong `docs/01-phan-tich/mo-hinh-hoa-yeu-cau/` |
-| [Nâng cấp chiến dịch tuyển dụng (4 GĐ)](#nâng-cấp-chiến-dịch-tuyển-dụng-2026-11-18) | 🟨 GĐ1 và các đợt làm gọn giao diện đã gộp (#235, #236, #237); GĐ2 xong trên nhánh `feat/campaign-distribution`; GĐ3–4 chưa làm |
+| [Nâng cấp chiến dịch tuyển dụng (4 GĐ)](#nâng-cấp-chiến-dịch-tuyển-dụng-2026-11-18) | 🟨 GĐ1, GĐ2 và các đợt làm gọn giao diện đã gộp (#235–#237, #239); GĐ3 xong trên nhánh `feat/campaign-facebook`; GĐ4 chưa làm |
 | [Ứng tuyển bằng CV tải lên và form ứng tuyển mới](#ứng-tuyển-bằng-cv-tải-lên-và-form-ứng-tuyển-mới-2026-11-18) | ✅ Gộp vào `dev` (#234) |
 | [Bảng điều khiển quản trị](#bảng-điều-khiển-quản-trị-2026-11-16) | 🟨 Xong trên nhánh `feat/admin-dashboard`, chưa mở PR |
 | [Ảnh đại diện dùng chung 3 cổng](#ảnh-đại-diện-dùng-chung-3-cổng-2026-11-16) | 🟨 Xong trên nhánh `feat/avatar-editor`, chưa mở PR |
@@ -53,8 +53,8 @@ Kế hoạch 4 giai đoạn, mỗi giai đoạn một PR.
 | GĐ | Nội dung | Trạng thái |
 | --- | --- | --- |
 | 1 | Mục tiêu, vòng đời (`scheduled`), wizard thiết lập, lịch chạy, đóng tin khi kết thúc | ✅ Gộp vào `dev` (#235, làm gọn ở #236, #237) |
-| 2 | Kênh thủ công, link theo dõi `/r/<code>`, ghi nhận nguồn ứng tuyển, trang đích `/tuyen-dung/<slug>`, nội dung bài đăng bằng AI | 🟨 Xong trên nhánh `feat/campaign-distribution` |
-| 3 | Đăng Facebook Page của NTD (OAuth, hẹn giờ, gỡ bài khi kết thúc) | ⬜ |
+| 2 | Kênh thủ công, link theo dõi `/r/<code>`, ghi nhận nguồn ứng tuyển, trang đích `/tuyen-dung/<slug>`, nội dung bài đăng bằng AI | ✅ Gộp vào `dev` (#239) |
+| 3 | Đăng Facebook Page của NTD (OAuth, hẹn giờ, gỡ bài khi kết thúc) | 🟨 Xong trên nhánh `feat/campaign-facebook` |
 | 4 | Sức khỏe chiến dịch (dự báo, cảnh báo), email báo cáo tuần, xuất Excel/PDF | ⬜ |
 
 Quyết định đã chốt:
@@ -138,6 +138,20 @@ GĐ1 đã làm:
     riêng; chưa làm sitemap cho trang tuyển dụng.
   - Sửa kèm: test chiến dịch không còn import thẳng class test của app khác
     (pytest đã chạy lặp các class đó).
+- GĐ3 đã làm (nhánh `feat/campaign-facebook`):
+  - provider adapter (`FacebookPageProvider` gọi Graph API có
+    `appsecret_proof`, `FakePageProvider` cho dev/CI);
+  - OAuth với state ký và nonce một lần; Page token mã hóa Fernet bằng khóa
+    riêng, production kiểm tra khóa;
+  - `SocialAccountConnection`, `ScheduledSocialPost`; beat đăng mỗi phút, đối
+    soát mỗi 5 phút và ngay khi chiến dịch đổi trạng thái (tạm dừng thì hoãn,
+    mở lại thì đưa về, kết thúc thì gỡ bài); thử lại có kiểm tra bài trùng;
+    token hỏng thì kết nối "Hết hạn" và báo NTD;
+  - frontend: trang "Kết nối mạng xã hội" trong Cài đặt tài khoản; khối "Đăng
+    tự động lên Fanpage" trong thẻ kênh Fanpage;
+  - hướng dẫn Meta App ở `docs/06-deployment/facebook-page-integration.md`,
+    ADR-0021.
+  - Chưa thử với Meta App thật; cần user tạo app ở Development mode.
 - Còn mở: chưa xem bằng mắt trên trình duyệt (đã có test API và test giao diện);
   `openapi.yaml` được sinh lại nên kéo theo phần lệch tích tụ từ các tính năng
   trước.

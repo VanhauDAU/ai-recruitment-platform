@@ -25,6 +25,7 @@ import {
   EmployerConsultingNeedPage,
   EmployerDashboardPage,
   EmployerGeneralSettingsPage,
+  EmployerIntegrationsPage,
   EmployerJobDetailPage,
   EmployerJobFormPage,
   EmployerJobListPage,
@@ -118,6 +119,7 @@ export function employerRoutes() {
             <Route path={employerAppPath('/account/settings/personal-data-protection')} element={<EmployerPersonalDataProtectionPage />} />
             <Route path={employerAppPath('/account/settings/recruitment-demand')} element={<EmployerRecruitmentDemandPage />} />
             <Route path={employerAppPath('/account/settings/general-setting')} element={<EmployerGeneralSettingsPage />} />
+            <Route path={employerAppPath('/account/settings/integrations')} element={<EmployerIntegrationsPage />} />
             <Route path={employerAppPath('/dashboard')} element={<EmployerDashboardPage />} />
             <Route path={employerAppPath('/notifications')} element={<EmployerNotificationsPage />} />
             <Route path={employerAppPath('/activities')} element={<EmployerActivitiesPage />} />

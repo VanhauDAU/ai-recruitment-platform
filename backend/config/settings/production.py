@@ -245,6 +245,26 @@ if not AUTH_REFRESH_COOKIE_SECURE:
 if AUTH_REFRESH_COOKIE_SAMESITE not in {'Lax', 'Strict'}:
     _errors.append('Refresh cookie production phải dùng SameSite=Lax hoặc Strict.')
 
+if CAMPAIGN_SOCIAL_PROVIDER not in {'fake', 'facebook'}:
+    _errors.append('CAMPAIGN_SOCIAL_PROVIDER phải là fake hoặc facebook.')
+if CAMPAIGN_SOCIAL_PROVIDER == 'facebook':
+    if not (FACEBOOK_APP_ID and FACEBOOK_APP_SECRET):
+        _errors.append('FACEBOOK_APP_ID và FACEBOOK_APP_SECRET là bắt buộc khi đăng Facebook.')
+    if not FACEBOOK_OAUTH_REDIRECT_URI.startswith('https://'):
+        _errors.append('FACEBOOK_OAUTH_REDIRECT_URI production phải dùng HTTPS.')
+    try:
+        Fernet(CAMPAIGN_SOCIAL_TOKEN_ENCRYPTION_KEY.encode())
+    except (TypeError, ValueError):
+        _errors.append('CAMPAIGN_SOCIAL_TOKEN_ENCRYPTION_KEY phải là Fernet key hợp lệ.')
+    if CAMPAIGN_SOCIAL_TOKEN_ENCRYPTION_KEY in {
+        SECRET_KEY,
+        SIMPLE_JWT.get('SIGNING_KEY', ''),
+        EMPLOYER_SMS_PAYLOAD_ENCRYPTION_KEY,
+    } - {''}:
+        _errors.append(
+            'CAMPAIGN_SOCIAL_TOKEN_ENCRYPTION_KEY không được dùng lại secret hệ thống khác.'
+        )
+
 if _errors:
     raise ImproperlyConfigured(
         f'Cấu hình production thiếu/sai {len(_errors)} mục:\n- ' + '\n- '.join(_errors),

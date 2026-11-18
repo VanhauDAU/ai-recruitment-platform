@@ -4556,6 +4556,98 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/employer/campaigns/{public_id}/channels/{channel_id}/posts/:
+    get:
+      operationId: employer_campaigns_channels_posts_retrieve
+      parameters:
+      - in: path
+        name: channel_id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - employer
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    post:
+      operationId: employer_campaigns_channels_posts_create
+      parameters:
+      - in: path
+        name: channel_id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - employer
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/employer/campaigns/{public_id}/channels/{channel_id}/posts/{post_id}/:
+    patch:
+      operationId: employer_campaigns_channels_posts_partial_update
+      parameters:
+      - in: path
+        name: channel_id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: post_id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - employer
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    delete:
+      operationId: employer_campaigns_channels_posts_destroy
+      parameters:
+      - in: path
+        name: channel_id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: post_id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - employer
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
   /api/employer/campaigns/{public_id}/job-performance/:
     get:
       operationId: employer_campaigns_job_performance_retrieve
@@ -5996,6 +6088,73 @@ paths:
               schema:
                 $ref: '#/components/schemas/SessionUser'
           description: ''
+  /api/employer/social/connections/:
+    get:
+      operationId: employer_social_connections_retrieve
+      tags:
+      - employer
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/employer/social/connections/{connection_id}/:
+    delete:
+      operationId: employer_social_connections_destroy
+      parameters:
+      - in: path
+        name: connection_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - employer
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/employer/social/facebook/authorize/:
+    post:
+      operationId: employer_social_facebook_authorize_create
+      tags:
+      - employer
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/employer/social/facebook/pending/{nonce}/:
+    get:
+      operationId: employer_social_facebook_pending_retrieve
+      parameters:
+      - in: path
+        name: nonce
+        schema:
+          type: string
+        required: true
+      tags:
+      - employer
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    post:
+      operationId: employer_social_facebook_pending_create
+      parameters:
+      - in: path
+        name: nonce
+        schema:
+          type: string
+        required: true
+      tags:
+      - employer
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
   /api/jobs/:
     get:
       operationId: jobs_list
@@ -18853,6 +19012,8 @@ components:
       - campaign_cancelled
       - channel_added
       - channel_posted
+      - social_post_published
+      - social_post_deleted
       - job_added
       - job_removed
       - job_updated
@@ -18876,6 +19037,8 @@ components:
         * `campaign_cancelled` - Hủy chiến dịch
         * `channel_added` - Thêm kênh phân phối
         * `channel_posted` - Đã đăng lên kênh
+        * `social_post_published` - Đã đăng lên Fanpage
+        * `social_post_deleted` - Đã gỡ bài khỏi Fanpage
         * `job_added` - Thêm tin tuyển dụng
         * `job_removed` - Gỡ tin tuyển dụng
         * `job_updated` - Cập nhật tin tuyển dụng
@@ -22301,7 +22464,7 @@ components:
           type: string
           readOnly: true
         event_type:
-          $ref: '#/components/schemas/EventTypeAfaEnum'
+          $ref: '#/components/schemas/EventType225Enum'
         summary:
           type: string
           maxLength: 240
@@ -23686,7 +23849,7 @@ components:
           type: string
           readOnly: true
         event_type:
-          $ref: '#/components/schemas/EventTypeAfaEnum'
+          $ref: '#/components/schemas/EventType225Enum'
         title:
           type: string
           maxLength: 180
@@ -23917,7 +24080,7 @@ components:
         * `` - Chưa kết thúc
         * `user` - Nhà tuyển dụng
         * `system` - Hệ thống
-    EventTypeAfaEnum:
+    EventType225Enum:
       enum:
       - verification_approved
       - verification_changes_requested
@@ -23943,6 +24106,9 @@ components:
       - campaign_activation_failed
       - campaign_ending_soon
       - campaign_auto_completed
+      - social_post_failed
+      - social_post_delete_failed
+      - social_connection_expired
       type: string
       description: |-
         * `verification_approved` - Hồ sơ xác thực đã được duyệt
@@ -23969,6 +24135,9 @@ components:
         * `campaign_activation_failed` - Chiến dịch chưa kích hoạt được theo lịch
         * `campaign_ending_soon` - Chiến dịch sắp đến ngày kết thúc
         * `campaign_auto_completed` - Chiến dịch đã tự kết thúc
+        * `social_post_failed` - Bài đăng Fanpage không thành công
+        * `social_post_delete_failed` - Chưa gỡ được bài khỏi Fanpage
+        * `social_connection_expired` - Kết nối Fanpage đã hết hạn
     ExperienceBandEnum:
       enum:
       - entry

@@ -65,6 +65,15 @@ class EmployerNotification(models.Model):
         )
         CAMPAIGN_ENDING_SOON = 'campaign_ending_soon', 'Chiến dịch sắp đến ngày kết thúc'
         CAMPAIGN_AUTO_COMPLETED = 'campaign_auto_completed', 'Chiến dịch đã tự kết thúc'
+        SOCIAL_POST_FAILED = 'social_post_failed', 'Bài đăng Fanpage không thành công'
+        SOCIAL_POST_DELETE_FAILED = (
+            'social_post_delete_failed',
+            'Chưa gỡ được bài khỏi Fanpage',
+        )
+        SOCIAL_CONNECTION_EXPIRED = (
+            'social_connection_expired',
+            'Kết nối Fanpage đã hết hạn',
+        )
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     recipient = models.ForeignKey(

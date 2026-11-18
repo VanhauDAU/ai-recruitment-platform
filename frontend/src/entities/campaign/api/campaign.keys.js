@@ -9,6 +9,9 @@ export const campaignKeys = {
   channelCosts: (publicId, channelId) => ['campaigns', 'channels', publicId, channelId, 'costs'],
   channelReport: (publicId) => ['campaigns', 'channel-report', publicId],
   publicLanding: (slug) => ['campaigns', 'public', slug],
+  channelPosts: (publicId, channelId) => ['campaigns', 'channels', publicId, channelId, 'posts'],
+  socialConnections: ['campaigns', 'social-connections'],
+  pendingPages: (nonce) => ['campaigns', 'social-pending', nonce],
   pauseImpact: (publicId) => ['campaigns', 'pause-impact', publicId],
   activities: (publicId, params = {}) => ['campaigns', 'activities', publicId, params],
   jobPerformance: (publicId, days, jobPublicId = '') => [

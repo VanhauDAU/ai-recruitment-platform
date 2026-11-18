@@ -167,6 +167,8 @@ class CampaignActivity(models.Model):
         CAMPAIGN_CANCELLED = 'campaign_cancelled', 'Hủy chiến dịch'
         CHANNEL_ADDED = 'channel_added', 'Thêm kênh phân phối'
         CHANNEL_POSTED = 'channel_posted', 'Đã đăng lên kênh'
+        SOCIAL_POST_PUBLISHED = 'social_post_published', 'Đã đăng lên Fanpage'
+        SOCIAL_POST_DELETED = 'social_post_deleted', 'Đã gỡ bài khỏi Fanpage'
         JOB_ADDED = 'job_added', 'Thêm tin tuyển dụng'
         JOB_REMOVED = 'job_removed', 'Gỡ tin tuyển dụng'
         JOB_UPDATED = 'job_updated', 'Cập nhật tin tuyển dụng'

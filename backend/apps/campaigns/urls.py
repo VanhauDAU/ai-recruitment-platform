@@ -9,6 +9,15 @@ from .api.views.channels import (
     CampaignChannelReportView,
 )
 from .api.views.launch import CampaignLaunchView
+from .api.views.social import (
+    ChannelPostDetailView,
+    ChannelPostListView,
+    FacebookCallbackView,
+    SocialConnectionDetailView,
+    SocialConnectionListView,
+    SocialConnectStartView,
+    SocialPendingPagesView,
+)
 
 urlpatterns = [
     path(
@@ -45,5 +54,40 @@ urlpatterns = [
         'campaigns/<str:public_id>/channels/<str:channel_id>/costs/<int:cost_id>/',
         CampaignChannelCostDetailView.as_view(),
         name='employer-campaign-channel-cost-detail',
+    ),
+    path(
+        'campaigns/<str:public_id>/channels/<str:channel_id>/posts/',
+        ChannelPostListView.as_view(),
+        name='employer-campaign-channel-posts',
+    ),
+    path(
+        'campaigns/<str:public_id>/channels/<str:channel_id>/posts/<str:post_id>/',
+        ChannelPostDetailView.as_view(),
+        name='employer-campaign-channel-post-detail',
+    ),
+    path(
+        'social/connections/',
+        SocialConnectionListView.as_view(),
+        name='employer-social-connections',
+    ),
+    path(
+        'social/connections/<str:connection_id>/',
+        SocialConnectionDetailView.as_view(),
+        name='employer-social-connection-detail',
+    ),
+    path(
+        'social/facebook/authorize/',
+        SocialConnectStartView.as_view(),
+        name='employer-social-facebook-authorize',
+    ),
+    path(
+        'social/facebook/callback/',
+        FacebookCallbackView.as_view(),
+        name='employer-social-facebook-callback',
+    ),
+    path(
+        'social/facebook/pending/<str:nonce>/',
+        SocialPendingPagesView.as_view(),
+        name='employer-social-facebook-pending',
     ),
 ]

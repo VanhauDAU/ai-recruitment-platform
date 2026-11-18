@@ -744,6 +744,14 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'apps.campaigns.tasks.run_campaign_schedule',
         'schedule': 300.0,
     },
+    'dispatch-due-social-posts': {
+        'task': 'apps.campaigns.tasks.dispatch_due_social_posts',
+        'schedule': 60.0,
+    },
+    'reconcile-social-posts': {
+        'task': 'apps.campaigns.tasks.reconcile_social_posts',
+        'schedule': 300.0,
+    },
     'reconcile-company-domain-claims': {
         'task': 'apps.employers.tasks.domain_claims.reconcile_company_domain_claims',
         'schedule': 86400.0,
@@ -891,6 +899,22 @@ REQUIRE_APPROVED_EMPLOYER_VERIFICATION = config(
     'REQUIRE_APPROVED_EMPLOYER_VERIFICATION',
     default=False,
     cast=bool,
+)
+
+# Đăng bài chiến dịch lên Facebook Page của NTD (GĐ3). ``fake`` chạy toàn bộ luồng
+# OAuth/đăng/gỡ mà không gọi Meta, dùng cho dev và CI. Xem
+# docs/06-deployment/facebook-page-integration.md.
+CAMPAIGN_SOCIAL_PROVIDER = config('CAMPAIGN_SOCIAL_PROVIDER', default='fake')
+FACEBOOK_APP_ID = config('FACEBOOK_APP_ID', default='')
+FACEBOOK_APP_SECRET = config('FACEBOOK_APP_SECRET', default='')
+FACEBOOK_GRAPH_API_VERSION = config('FACEBOOK_GRAPH_API_VERSION', default='v21.0')
+FACEBOOK_OAUTH_REDIRECT_URI = config(
+    'FACEBOOK_OAUTH_REDIRECT_URI',
+    default=f'{FRONTEND_URL.rstrip("/")}/api/employer/social/facebook/callback/',
+)
+CAMPAIGN_SOCIAL_TOKEN_ENCRYPTION_KEY = config('CAMPAIGN_SOCIAL_TOKEN_ENCRYPTION_KEY', default='')
+CAMPAIGN_SOCIAL_HTTP_TIMEOUT_SECONDS = config(
+    'CAMPAIGN_SOCIAL_HTTP_TIMEOUT_SECONDS', default=10.0, cast=float
 )
 
 # Provider-neutral employer phone verification. Production remains disabled

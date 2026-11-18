@@ -11,6 +11,22 @@ from .content import ContentQuotaExceeded, generate_channel_content, render_cont
 from .launch import execute_launch, launch_campaign, save_launch_selection
 from .launch_check import campaign_launch_overview
 from .schedule import run_campaign_schedule
+from .social_connections import (
+    complete_page_connection,
+    disconnect_page,
+    pending_pages,
+    select_page,
+    start_page_connection,
+)
+from .social_posts import (
+    cancel_post,
+    due_post_ids,
+    post_message,
+    publish_post,
+    reconcile_social_posts,
+    reschedule_post,
+    schedule_post,
+)
 from .tracking import (
     channel_link,
     landing_url,
@@ -20,6 +36,18 @@ from .tracking import (
 )
 
 __all__ = [
+    'cancel_post',
+    'complete_page_connection',
+    'disconnect_page',
+    'due_post_ids',
+    'pending_pages',
+    'post_message',
+    'publish_post',
+    'reconcile_social_posts',
+    'reschedule_post',
+    'schedule_post',
+    'select_page',
+    'start_page_connection',
     'ContentQuotaExceeded',
     'add_channel_cost',
     'campaign_launch_overview',
