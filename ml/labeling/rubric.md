@@ -147,3 +147,8 @@ Tập vàng 150 cặp do mô hình ngôn ngữ (Claude) gán theo rubric này, c
 nội dung tin và CV (không xem điểm hệ thống hay nguồn ghép cặp); các cặp phân vân
 được hỏi lại người làm đồ án. Người làm đồ án chấm mù 30 cặp (2 cặp mỗi tin) để đo
 độ đồng thuận (quadratic weighted kappa). Báo cáo trình bày đúng như vậy.
+
+Kiểm chứng thực tế (18/11/2026): người làm đồ án chấm mù được 5/30 cặp dự kiến và
+quyết định dừng ở đó. Kết quả sơ bộ: trùng tuyệt đối 4/5, lệch không quá 1 mức 5/5
+(`ml/reports/label_agreement.md`); chưa đủ để tính kappa. Báo cáo phải nêu đây là
+giới hạn: nhãn tập vàng do mô hình ngôn ngữ gán, chỉ được người kiểm tra sơ bộ.
