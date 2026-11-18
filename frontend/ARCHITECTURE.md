@@ -885,7 +885,9 @@ pages/employer/app/campaigns/CampaignSetup
   `?step=goal|jobs|launch` là contract URL. Form đăng tin mở từ wizard với
   `?campaign=…&return=setup`; lưu nháp xong thì quay lại `?step=jobs`.
 - `features/manage-campaign-channels` sở hữu kênh phân phối (`CampaignChannelBoard`:
-  thẻ kênh với link, QR, soạn AI, sửa nội dung, đã đăng, chi phí) và
+  danh sách kênh + `ChannelDetail` với các mục Nội dung bài, Đăng Fanpage, Link &
+  QR, Chi phí; `SocialPostPreview` dựng bản xem trước dạng bài mạng xã hội,
+  `FacebookPostComposer` là ngăn soạn bài Fanpage) và
   `ChannelReport` (so sánh theo nguồn). Dùng ở tab "Kênh & nguồn" và bước
   "Kênh phân phối" của wizard.
 - `features/connect-social-account` (`SocialConnectionsPanel`, trang

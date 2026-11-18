@@ -12,6 +12,8 @@ const mocks = vi.hoisted(() => ({
   generateCampaignChannelContent: vi.fn(),
   updateCampaignChannel: vi.fn(),
   getCampaignChannelReport: vi.fn(),
+  getCampaignChannelCosts: vi.fn(),
+  addCampaignChannelCost: vi.fn(),
 }))
 
 vi.mock('@/entities/campaign', async (importOriginal) => ({ ...(await importOriginal()), ...mocks }))
@@ -51,30 +53,62 @@ describe('campaign channels', () => {
     vi.spyOn(message, 'info').mockImplementation(() => {})
   })
 
-  it('shows each channel with its tracked link and results, and drafts content with AI', async () => {
+  it('lists channels and opens the selected one with its results, content and link', async () => {
     const user = userEvent.setup()
-    mocks.getCampaignChannels.mockResolvedValue([channel])
+    mocks.getCampaignChannels.mockResolvedValue([channel, { ...channel, public_id: 'chn_2', kind: 'linkedin', kind_label: 'LinkedIn', label: 'LinkedIn công ty' }])
     mocks.generateCampaignChannelContent.mockResolvedValue({ ...channel, fallback_reason: 'ai_disabled' })
     renderWithClient(<CampaignChannelBoard campaign={campaign} />)
 
-    const card = (await screen.findByRole('heading', { name: 'Nhóm IT Hà Nội' })).closest('article')
-    expect(within(card).getByText('https://procv.vn/r/AbC123xy')).toBeInTheDocument()
-    expect(within(card).getByText('2.000.000 đ')).toBeInTheDocument()
-    await user.click(within(card).getByRole('button', { name: /Soạn bằng AI/ }))
+    const list = await screen.findByRole('navigation', { name: 'Danh sách kênh' })
+    expect(within(list).getAllByRole('button')).toHaveLength(2)
+    expect(screen.getByRole('heading', { name: 'Nhóm IT Hà Nội' })).toBeInTheDocument()
+    expect(screen.getByText('2.000.000 đ')).toBeInTheDocument()
+    expect(screen.getByText('20% người bấm')).toBeInTheDocument()
 
+    await user.click(screen.getByRole('button', { name: /Soạn bằng AI/ }))
     await waitFor(() => expect(mocks.generateCampaignChannelContent).toHaveBeenCalledWith('camp_1', 'chn_1'))
-    expect(message.info).toHaveBeenCalledWith('AI đang tắt nên dùng mẫu có sẵn. Bạn có thể sửa lại.')
+    expect(message.info).toHaveBeenCalledWith('AI đang tắt nên dùng mẫu có sẵn. Hãy đọc lại và sửa cho hợp.')
+
+    await user.click(screen.getByRole('tab', { name: 'Link & QR' }))
+    expect(await screen.findByText('https://procv.vn/r/AbC123xy')).toBeInTheDocument()
+
+    await user.click(within(list).getByRole('button', { name: /LinkedIn công ty/ }))
+    expect(await screen.findByRole('heading', { name: 'LinkedIn công ty' })).toBeInTheDocument()
   })
 
-  it('marks a channel as posted', async () => {
+  it('marks a manual channel as posted', async () => {
     const user = userEvent.setup()
     mocks.getCampaignChannels.mockResolvedValue([channel])
     mocks.updateCampaignChannel.mockResolvedValue({ ...channel, posted_at: '2026-11-18T10:00:00Z' })
     renderWithClient(<CampaignChannelBoard campaign={campaign} />)
 
-    await user.click(await screen.findByRole('checkbox', { name: 'Đã đăng lên kênh này' }))
+    await user.click(await screen.findByRole('checkbox', { name: 'Tôi đã đăng bài lên kênh này' }))
 
     await waitFor(() => expect(mocks.updateCampaignChannel).toHaveBeenCalledWith('camp_1', 'chn_1', { posted: true }))
+  })
+
+  it('records a cost with a quick pick and explains what costs are for', async () => {
+    const user = userEvent.setup()
+    mocks.getCampaignChannels.mockResolvedValue([channel])
+    mocks.getCampaignChannelCosts.mockResolvedValue([])
+    mocks.addCampaignChannelCost.mockResolvedValue({})
+    renderWithClient(<CampaignChannelBoard campaign={{ ...campaign, budget_max: 10000000 }} />)
+
+    await user.click(await screen.findByRole('tab', { name: 'Chi phí' }))
+    expect(await screen.findByText(/ProCV không thu khoản nào/)).toBeInTheDocument()
+    const summary = screen.getByText('Đã chi cho kênh').closest('dl')
+    expect(within(summary).getByText('1.000.000 đ')).toBeInTheDocument()
+    expect(within(summary).getByText('20%')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Chạy quảng cáo' }))
+    await user.click(screen.getByRole('button', { name: '500.000 đ' }))
+    await user.click(screen.getByRole('button', { name: 'Ghi khoản chi' }))
+
+    await waitFor(() => expect(mocks.addCampaignChannelCost).toHaveBeenCalledWith('camp_1', 'chn_1', {
+      amount: 500000,
+      incurred_on: expect.any(String),
+      note: 'Chạy quảng cáo',
+    }))
   })
 
   it('hides editing on an ended campaign and explains an empty board', async () => {

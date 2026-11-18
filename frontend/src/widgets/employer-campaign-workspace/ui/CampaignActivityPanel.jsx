@@ -1,6 +1,5 @@
-import { ArrowRightOutlined, CalendarOutlined, FileTextOutlined, HistoryOutlined, TeamOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
-import { Alert, Empty, Pagination, Select, Skeleton } from 'antd'
+import { Alert, Button, Empty, Pagination, Skeleton } from 'antd'
 import { useState } from 'react'
 import { Link } from 'react-router'
 import { RECRUITER_APPLICATION_STATUS_LABELS } from '@/entities/application'
@@ -9,14 +8,6 @@ import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { employerAppPath } from '@/shared/config/portals'
 
 const REPORT_TIME_ZONE = 'Asia/Ho_Chi_Minh'
-
-const GROUP_STYLES = {
-  campaign: [HistoryOutlined, 'Chiến dịch', 'bg-violet-50 text-violet-700 ring-violet-100', 'bg-violet-100 text-violet-700 ring-violet-200'],
-  job: [FileTextOutlined, 'Tin tuyển dụng', 'bg-sky-50 text-sky-700 ring-sky-100', 'bg-sky-100 text-sky-700 ring-sky-200'],
-  application: [TeamOutlined, 'Ứng viên', 'bg-emerald-50 text-emerald-700 ring-emerald-100', 'bg-emerald-100 text-emerald-700 ring-emerald-200'],
-}
-
-const FALLBACK_STYLE = [HistoryOutlined, 'Hoạt động', 'bg-slate-100 text-slate-600 ring-slate-200', 'bg-slate-100 text-slate-600 ring-slate-200']
 
 const STATUS_LABELS = {
   campaign: CAMPAIGN_STATUS_LABELS,
@@ -102,7 +93,7 @@ function activityText(activity) {
   const metadata = activity.metadata || {}
   if (activity.group === 'job') return metadata.title || 'Tin tuyển dụng'
   if (activity.group === 'application') {
-    return [metadata.candidate_name, metadata.job_title].filter(Boolean).join(' · ')
+    return [metadata.candidate_name, metadata.job_title].filter(Boolean).join(', ')
       || 'Hồ sơ ứng viên'
   }
   return metadata.label || metadata.name || ''
@@ -119,102 +110,62 @@ function activityLink(publicId, activity) {
   return null
 }
 
-function StatusTransition({ activity }) {
+const GROUPS = [
+  { value: '', label: 'Tất cả' },
+  { value: 'campaign', label: 'Chiến dịch' },
+  { value: 'job', label: 'Tin tuyển dụng' },
+  { value: 'application', label: 'Ứng viên' },
+]
+
+// Dòng phụ ngắn: đổi trạng thái, hạn mới, lý do và người thực hiện.
+function ActivityDetails({ activity }) {
   const metadata = activity.metadata || {}
-  if (metadata.from_status === undefined && metadata.to_status === undefined) return null
+  const reason = readableReason(metadata.reason)
+  const actor = typeof activity.actor_name === 'string' && activity.actor_name.trim() ? activity.actor_name.trim() : 'Hệ thống'
+  const moved = metadata.from_status !== undefined || metadata.to_status !== undefined
   const from = statusLabel(activity.group, metadata.from_status, { initial: true })
   const to = statusLabel(activity.group, metadata.to_status)
 
   return (
-    <div aria-label={`Chuyển trạng thái từ ${from} sang ${to}`} className="flex flex-wrap items-center gap-2 text-xs">
-      <span className="rounded-full bg-slate-100 px-2.5 py-1 font-medium text-slate-600">{from}</span>
-      <ArrowRightOutlined className="text-slate-300" aria-hidden />
-      <span className="rounded-full bg-emerald-50 px-2.5 py-1 font-semibold text-emerald-700">{to}</span>
-    </div>
+    <p className="cwa-item__meta">
+      {moved && (
+        <span className="cwa-move" aria-label={`Chuyển trạng thái từ ${from} sang ${to}`}>
+          {from} <span aria-hidden>→</span> <strong>{to}</strong>
+        </span>
+      )}
+      {metadata.status && !moved && <span>Trạng thái <strong>{statusLabel(activity.group, metadata.status)}</strong></span>}
+      {metadata.deadline && <span>Hạn mới <strong>{formatDate(metadata.deadline)}</strong></span>}
+      {reason && <span className="cwa-reason">{reason}</span>}
+      <span>bởi {actor}</span>
+    </p>
   )
 }
 
-function ActivityMetadata({ activity }) {
-  const metadata = activity.metadata || {}
-  const reason = readableReason(metadata.reason)
-  const hasTransition = metadata.from_status !== undefined || metadata.to_status !== undefined
-  if (!hasTransition && !metadata.status && !metadata.deadline && !reason) return null
-
-  return (
-    <div className="mt-3 space-y-2 border-t border-slate-100 pt-3">
-      <StatusTransition activity={activity} />
-      {metadata.status && (
-        <p className="text-xs text-slate-500">
-          Trạng thái: <strong className="font-semibold text-slate-700">
-            {statusLabel(activity.group, metadata.status)}
-          </strong>
-        </p>
-      )}
-      {metadata.deadline && (
-        <p className="inline-flex items-center gap-1.5 text-xs text-slate-500">
-          <CalendarOutlined className="text-sky-600" aria-hidden />
-          Hạn mới: <strong className="font-semibold text-slate-700">{formatDate(metadata.deadline)}</strong>
-        </p>
-      )}
-      {reason && (
-        <p className="rounded-xl bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-800">
-          <strong>Lý do:</strong> {reason}
-        </p>
-      )}
-    </div>
-  )
-}
-
-function ActivityCard({ activity, publicId }) {
-  const [Icon, groupLabel, badgeClass, iconClass] = GROUP_STYLES[activity.group] || FALLBACK_STYLE
+function ActivityItem({ activity, publicId }) {
   const description = activityText(activity)
   const link = activityLink(publicId, activity)
-  const actorName = typeof activity.actor_name === 'string' && activity.actor_name.trim()
-    ? activity.actor_name.trim()
-    : 'Hệ thống'
 
   return (
-    <article className="group relative flex gap-3 sm:gap-4">
-      <span className={`relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl ring-4 ring-white ${iconClass}`}>
-        <Icon aria-hidden />
-      </span>
-      <div className="min-w-0 flex-1 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition group-hover:-translate-y-0.5 group-hover:border-slate-300 group-hover:shadow-md sm:p-5">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <strong className="text-sm font-bold text-slate-800 sm:text-base">
-                {activity.event_label || activity.event_type || 'Hoạt động chiến dịch'}
-              </strong>
-              <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset ${badgeClass}`}>
-                {activity.group_label || groupLabel}
-              </span>
-            </div>
-            {description && (
-              link
-                ? <Link to={link} className="mt-2 block text-sm font-semibold !text-emerald-700 hover:underline">{description}</Link>
-                : <p className="mt-2 text-sm font-medium text-slate-600">{description}</p>
-            )}
-          </div>
-          <time dateTime={activity.occurred_at || undefined} className="shrink-0 text-xs font-medium text-slate-400">
-            {formatTime(activity.occurred_at)}
-          </time>
-        </div>
-        <ActivityMetadata activity={activity} />
-        <p className="mt-3 text-xs text-slate-400">
-          Thực hiện bởi <span className="font-medium text-slate-600">{actorName}</span>
+    <li className={`cwa-item is-${activity.group || 'other'}`}>
+      <time className="cwa-item__time" dateTime={activity.occurred_at || undefined}>{formatTime(activity.occurred_at)}</time>
+      <span className="cwa-item__dot" aria-hidden />
+      <div className="cwa-item__body">
+        <p className="cwa-item__title">
+          <strong>{activity.event_label || activity.event_type || 'Hoạt động chiến dịch'}</strong>
+          {description && (link
+            ? <Link to={link} className="cwa-item__subject">{description}</Link>
+            : <span className="cwa-item__subject">{description}</span>)}
         </p>
+        <ActivityDetails activity={activity} />
       </div>
-    </article>
+    </li>
   )
 }
 
 export default function CampaignActivityPanel({ publicId }) {
   const [group, setGroup] = useState('')
   const [page, setPage] = useState(1)
-  const params = {
-    page,
-    ...(group ? { group } : {}),
-  }
+  const params = { page, ...(group ? { group } : {}) }
   const query = useQuery({
     queryKey: campaignKeys.activities(publicId, params),
     queryFn: () => getCampaignActivities(publicId, params),
@@ -223,37 +174,24 @@ export default function CampaignActivityPanel({ publicId }) {
   const dayGroups = groupByDay(pageData.results || [])
 
   return (
-    <div className="p-4 lg:p-6">
-      <div className="mb-6 flex flex-col gap-4 border-b border-slate-100 pb-5 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-widest text-emerald-600">
-            Dòng thời gian
-          </p>
-          <h2 className="mt-1 text-lg font-bold text-slate-900">Lịch sử hoạt động</h2>
-          <p className="mt-1 max-w-xl text-sm leading-6 text-slate-500">
-            Theo dõi thay đổi của chiến dịch, tin tuyển dụng và hồ sơ ứng viên theo từng ngày.
-          </p>
-        </div>
-        <div className="w-full sm:w-56">
-          <label className="mb-1.5 block text-xs font-semibold text-slate-500" htmlFor="campaign-activity-group">
-            Nhóm hoạt động
-          </label>
-          <Select
-            id="campaign-activity-group"
-            aria-label="Lọc nhóm hoạt động"
-            value={group}
-            className="w-full"
-            options={[
-              { value: '', label: 'Tất cả hoạt động' },
-              { value: 'campaign', label: 'Chiến dịch' },
-              { value: 'job', label: 'Tin tuyển dụng' },
-              { value: 'application', label: 'Ứng viên' },
-            ]}
-            onChange={(value) => {
-              setGroup(value)
-              setPage(1)
-            }}
-          />
+    <div className="cwa">
+      <div className="cwa-head">
+        <h2 className="cw-section-title">Lịch sử hoạt động</h2>
+        <div className="cwa-filter" role="group" aria-label="Lọc nhóm hoạt động">
+          {GROUPS.map((item) => (
+            <button
+              key={item.value}
+              type="button"
+              aria-pressed={group === item.value}
+              className={`cwa-filter__item ${group === item.value ? 'is-on' : ''}`}
+              onClick={() => {
+                setGroup(item.value)
+                setPage(1)
+              }}
+            >
+              {item.label}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -263,61 +201,33 @@ export default function CampaignActivityPanel({ publicId }) {
           showIcon
           message="Không thể tải lịch sử hoạt động"
           description={getApiErrorMessage(query.error, 'Vui lòng thử lại sau.')}
-          action={(
-            <button
-              type="button"
-              className="font-semibold text-red-700"
-              onClick={() => query.refetch()}
-            >
-              Thử lại
-            </button>
-          )}
+          action={<Button size="small" danger onClick={() => query.refetch()}>Thử lại</Button>}
         />
       ) : query.isLoading ? (
-        <div aria-label="Đang tải lịch sử hoạt động" className="space-y-4">
-          {[0, 1, 2].map((item) => (
-            <div key={item} className="rounded-2xl border border-slate-100 p-5">
-              <Skeleton active title={{ width: '34%' }} paragraph={{ rows: 2 }} />
-            </div>
-          ))}
-        </div>
+        <div aria-label="Đang tải lịch sử hoạt động"><Skeleton active paragraph={{ rows: 6 }} /></div>
       ) : dayGroups.length ? (
         <>
-          <div className="space-y-7">
-            {dayGroups.map((day) => (
-              <section key={day.key} data-testid={`activity-day-${day.key}`}>
-                <div className="mb-3 flex items-center gap-3">
-                  <h3 className="text-sm font-bold text-slate-700">{formatDay(day.occurredAt)}</h3>
-                  <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-500">
-                    {day.activities.length} hoạt động
-                  </span>
-                  <span className="h-px min-w-6 flex-1 bg-slate-100" aria-hidden />
-                </div>
-                <div className="relative space-y-3 before:absolute before:bottom-5 before:left-5 before:top-5 before:w-px before:bg-slate-200">
-                  {day.activities.map((activity) => (
-                    <ActivityCard key={activity.id} activity={activity} publicId={publicId} />
-                  ))}
-                </div>
-              </section>
-            ))}
-          </div>
+          {dayGroups.map((day) => (
+            <section key={day.key} className="cwa-day" data-testid={`activity-day-${day.key}`}>
+              <h3 className="cwa-day__label">
+                {formatDay(day.occurredAt)}
+                <span>{day.activities.length} hoạt động</span>
+              </h3>
+              <ol className="cwa-list">
+                {day.activities.map((activity) => (
+                  <ActivityItem key={activity.id} activity={activity} publicId={publicId} />
+                ))}
+              </ol>
+            </section>
+          ))}
           {pageData.count > 20 && (
-            <div className="mt-7 flex justify-center border-t border-slate-100 pt-5">
-              <Pagination
-                current={page}
-                pageSize={20}
-                total={pageData.count}
-                showSizeChanger={false}
-                responsive
-                onChange={setPage}
-              />
+            <div className="cwa-pages">
+              <Pagination current={page} pageSize={20} total={pageData.count} showSizeChanger={false} size="small" responsive onChange={setPage} />
             </div>
           )}
         </>
       ) : (
-        <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 py-8">
-          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Chưa có hoạt động phù hợp" />
-        </div>
+        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Chưa có hoạt động phù hợp" />
       )}
     </div>
   )

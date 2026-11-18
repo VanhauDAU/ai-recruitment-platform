@@ -1,171 +1,122 @@
-import { FacebookFilled } from '@ant-design/icons'
+import {
+  CheckCircleFilled,
+  ClockCircleOutlined,
+  CloseCircleFilled,
+  FacebookFilled,
+  PauseCircleFilled,
+  SendOutlined,
+  SyncOutlined,
+} from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Alert, Button, DatePicker, Form, Input, Modal, Radio, Select, Skeleton, Tag } from 'antd'
+import { Button, Empty, Skeleton } from 'antd'
 import dayjs from 'dayjs'
 import { useState } from 'react'
-import { Link } from 'react-router'
-import {
-  campaignKeys,
-  cancelChannelPost,
-  getChannelPosts,
-  getSocialConnections,
-  rescheduleChannelPost,
-  scheduleChannelPost,
-} from '@/entities/campaign'
+import { campaignKeys, cancelChannelPost, getChannelPosts, rescheduleChannelPost } from '@/entities/campaign'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
-import { EMPLOYER_INTEGRATIONS_URL } from '@/shared/config/portals'
 import { message } from '@/shared/lib/toast'
+import { postText } from '../lib/channel-kinds'
+import FacebookPostComposer from './FacebookPostComposer'
 
-const STATUS_COLORS = {
-  scheduled: 'blue',
-  publishing: 'processing',
-  published: 'green',
-  postponed: 'orange',
-  failed: 'red',
-  delete_failed: 'red',
+const STATUS = {
+  scheduled: { icon: ClockCircleOutlined, tone: 'blue' },
+  publishing: { icon: SyncOutlined, tone: 'blue' },
+  published: { icon: CheckCircleFilled, tone: 'green' },
+  postponed: { icon: PauseCircleFilled, tone: 'amber' },
+  failed: { icon: CloseCircleFilled, tone: 'red' },
+  delete_failed: { icon: CloseCircleFilled, tone: 'red' },
+  deleted: { icon: CheckCircleFilled, tone: 'slate' },
 }
 const OPEN = ['scheduled', 'postponed', 'failed']
 const when = (value) => dayjs(value).format('HH:mm DD/MM/YYYY')
 
-function ScheduleModal({ campaignId, channel, defaultMessage, onClose }) {
-  const [form] = Form.useForm()
-  const queryClient = useQueryClient()
-  const timing = Form.useWatch('timing', form)
-  const connectionsQuery = useQuery({ queryKey: campaignKeys.socialConnections, queryFn: getSocialConnections })
-  const connections = (connectionsQuery.data || []).filter((item) => item.status === 'connected')
-  const mutation = useMutation({
-    mutationFn: (values) => scheduleChannelPost(campaignId, channel.public_id, {
-      connection: values.connection,
-      message: values.message,
-      scheduled_for: values.timing === 'later' ? values.scheduled_for.toISOString() : null,
-    }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: campaignKeys.channelPosts(campaignId, channel.public_id) })
-      message.success('Đã hẹn đăng. Hệ thống sẽ đăng đúng giờ khi chiến dịch đang chạy.')
-      onClose()
-    },
-    onError: (error) => message.error(getApiErrorMessage(error, 'Không thể hẹn đăng bài.')),
-  })
-
-  return (
-    <Modal
-      open
-      width={600}
-      title="Đăng lên Fanpage"
-      okText="Hẹn đăng"
-      cancelText="Hủy"
-      okButtonProps={{ disabled: !connections.length }}
-      confirmLoading={mutation.isPending}
-      onCancel={onClose}
-      onOk={() => form.submit()}
-    >
-      {connectionsQuery.isLoading ? <Skeleton active paragraph={{ rows: 4 }} /> : !connections.length ? (
-        <Alert
-          type="info"
-          showIcon
-          title="Chưa kết nối Fanpage nào."
-          description={<Link to={EMPLOYER_INTEGRATIONS_URL}>Kết nối Fanpage trong Cài đặt tài khoản</Link>}
-        />
-      ) : (
-        <Form
-          form={form}
-          layout="vertical"
-          initialValues={{
-            connection: connections[0]?.public_id,
-            timing: 'now',
-            scheduled_for: dayjs().add(1, 'hour').startOf('hour'),
-            message: defaultMessage,
-          }}
-          onFinish={(values) => mutation.mutate(values)}
-        >
-          <Form.Item label="Fanpage" name="connection" rules={[{ required: true, message: 'Chọn Fanpage.' }]}>
-            <Select
-              options={connections.map((item) => ({
-                value: item.public_id,
-                label: item.simulated ? `${item.page_name} (giả lập)` : item.page_name,
-              }))}
-            />
-          </Form.Item>
-          <Form.Item label="Thời điểm" name="timing">
-            <Radio.Group
-              options={[
-                { value: 'now', label: 'Đăng ngay' },
-                { value: 'later', label: 'Hẹn giờ' },
-              ]}
-            />
-          </Form.Item>
-          {timing === 'later' && (
-            <Form.Item name="scheduled_for" rules={[{ required: true, message: 'Chọn giờ đăng.' }]}>
-              <DatePicker
-                showTime={{ format: 'HH:mm', minuteStep: 5 }}
-                format="HH:mm DD/MM/YYYY"
-                disabledDate={(day) => day.isBefore(dayjs(), 'day')}
-                className="!w-full"
-              />
-            </Form.Item>
-          )}
-          <Form.Item label="Nội dung bài" name="message" rules={[{ required: true, whitespace: true, message: 'Nhập nội dung.' }]}>
-            <Input.TextArea rows={7} maxLength={5000} showCount />
-          </Form.Item>
-        </Form>
-      )}
-    </Modal>
-  )
+function postTime(post) {
+  if (post.status === 'published') return `Đăng lúc ${when(post.published_at)}`
+  if (post.status === 'deleted') return `Đã gỡ lúc ${when(post.deleted_at)}`
+  return `Hẹn ${when(post.scheduled_for)}`
 }
 
-// Bài đăng tự động lên Fanpage của một kênh "Fanpage Facebook".
-export default function ChannelFacebookPosts({ campaignId, channel, editable, defaultMessage }) {
+// Bài đăng tự động lên Fanpage của kênh: dòng thời gian mới nhất trước, lỗi kèm cách xử lý.
+export default function ChannelFacebookPosts({ campaign, channel, editable }) {
   const queryClient = useQueryClient()
-  const [scheduling, setScheduling] = useState(false)
-  const key = campaignKeys.channelPosts(campaignId, channel.public_id)
-  const postsQuery = useQuery({ queryKey: key, queryFn: () => getChannelPosts(campaignId, channel.public_id) })
+  const [composing, setComposing] = useState(false)
+  const key = campaignKeys.channelPosts(campaign.public_id, channel.public_id)
+  const postsQuery = useQuery({
+    queryKey: key,
+    queryFn: () => getChannelPosts(campaign.public_id, channel.public_id),
+    refetchInterval: (query) => ((query.state.data || []).some((post) => ['publishing', 'scheduled'].includes(post.status)) ? 15_000 : false),
+  })
   const refresh = () => queryClient.invalidateQueries({ queryKey: key })
   const onError = (error) => message.error(getApiErrorMessage(error, 'Không thể cập nhật bài đăng.'))
-  const cancel = useMutation({ mutationFn: (postId) => cancelChannelPost(campaignId, channel.public_id, postId), onSuccess: refresh, onError })
+  const cancel = useMutation({ mutationFn: (postId) => cancelChannelPost(campaign.public_id, channel.public_id, postId), onSuccess: refresh, onError })
   const retry = useMutation({
-    mutationFn: (postId) => rescheduleChannelPost(campaignId, channel.public_id, postId, dayjs().add(1, 'minute').toISOString()),
-    onSuccess: refresh,
+    mutationFn: (postId) => rescheduleChannelPost(campaign.public_id, channel.public_id, postId, dayjs().add(1, 'minute').toISOString()),
+    onSuccess: () => {
+      message.success('Đã xếp bài đăng lại trong khoảng 1 phút.')
+      refresh()
+    },
     onError,
   })
   const posts = (postsQuery.data || []).filter((post) => post.status !== 'cancelled')
+  const text = postText(channel.rendered_content)
 
   return (
-    <section className="ch-fb">
-      <div className="ch-fb__head">
-        <span className="ch-fb__title"><FacebookFilled aria-hidden /> Đăng tự động lên Fanpage</span>
+    <div className="ch-fb">
+      <div className="ch-fb__intro">
+        <FacebookFilled aria-hidden className="ch-fb__logo" />
+        <p className="ch-section-note">
+          ProCV đăng bài lên Fanpage đã kết nối đúng giờ hẹn, tự hoãn khi chiến dịch tạm dừng và tự gỡ bài khi chiến dịch kết thúc.
+        </p>
         {editable && (
-          <Button size="small" onClick={() => setScheduling(true)} disabled={!defaultMessage}>
-            Hẹn đăng
+          <Button type="primary" icon={<SendOutlined aria-hidden />} onClick={() => setComposing(true)}>
+            Tạo bài đăng
           </Button>
         )}
       </div>
-      {!defaultMessage && editable && <p className="ch-fb__hint">Soạn nội dung trước rồi hẹn đăng.</p>}
-      {posts.map((post) => (
-        <div key={post.public_id} className="ch-fb__post">
-          <Tag color={STATUS_COLORS[post.status]}>{post.status_label}</Tag>
-          <span className="ch-fb__when">
-            {post.published_at ? `Đăng lúc ${when(post.published_at)}` : `Hẹn ${when(post.scheduled_for)}`}
-            {post.page_name ? ` trên ${post.page_name}` : ''}
-          </span>
-          {post.permalink && post.status === 'published' && (
-            <a href={post.permalink} target="_blank" rel="noreferrer">Xem bài</a>
-          )}
-          {editable && ['postponed', 'failed'].includes(post.status) && (
-            <Button size="small" type="link" onClick={() => retry.mutate(post.public_id)}>Đăng lại ngay</Button>
-          )}
-          {editable && OPEN.includes(post.status) && (
-            <Button size="small" type="link" danger onClick={() => cancel.mutate(post.public_id)}>Hủy</Button>
-          )}
-        </div>
-      ))}
-      {scheduling && (
-        <ScheduleModal
-          campaignId={campaignId}
-          channel={channel}
-          defaultMessage={defaultMessage}
-          onClose={() => setScheduling(false)}
-        />
+
+      {postsQuery.isLoading ? <Skeleton active paragraph={{ rows: 3 }} /> : posts.length === 0 ? (
+        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Chưa có bài nào. Tạo bài đầu tiên để đăng ngay hoặc hẹn giờ." />
+      ) : (
+        <ol className="ch-timeline" aria-label="Bài đăng trên Fanpage">
+          {posts.map((post) => {
+            const meta = STATUS[post.status] || STATUS.scheduled
+            const Icon = meta.icon
+            return (
+              <li key={post.public_id} className={`ch-timeline__item is-${meta.tone}`}>
+                <Icon aria-hidden className="ch-timeline__dot" spin={post.status === 'publishing'} />
+                <div className="ch-timeline__body">
+                  <div className="ch-timeline__top">
+                    <strong>{post.status_label}</strong>
+                    <span>{postTime(post)}{post.page_name ? ` trên ${post.page_name}` : ''}</span>
+                  </div>
+                  <p className="ch-timeline__text">{post.message}</p>
+                  {post.error_message && <p className="ch-timeline__error">{post.error_message}</p>}
+                  <div className="ch-timeline__actions">
+                    {post.permalink && post.status === 'published' && (
+                      <a href={post.permalink} target="_blank" rel="noreferrer">Mở bài trên Facebook</a>
+                    )}
+                    {editable && ['postponed', 'failed'].includes(post.status) && (
+                      <Button size="small" loading={retry.isPending && retry.variables === post.public_id} onClick={() => retry.mutate(post.public_id)}>
+                        Đăng lại
+                      </Button>
+                    )}
+                    {editable && OPEN.includes(post.status) && (
+                      <Button size="small" type="text" danger onClick={() => cancel.mutate(post.public_id)}>Hủy bài</Button>
+                    )}
+                  </div>
+                </div>
+              </li>
+            )
+          })}
+        </ol>
       )}
-    </section>
+
+      <FacebookPostComposer
+        campaign={campaign}
+        channel={channel}
+        defaultMessage={text}
+        open={composing}
+        onClose={() => setComposing(false)}
+      />
+    </div>
   )
 }

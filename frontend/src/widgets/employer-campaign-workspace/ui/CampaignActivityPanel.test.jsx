@@ -103,7 +103,7 @@ describe('CampaignActivityPanel', () => {
 
     expect(within(latestDay).getByText('2 hoạt động')).toBeInTheDocument()
     expect(within(previousDay).getByText('2 hoạt động')).toBeInTheDocument()
-    expect(within(latestDay).getByText('Nguyễn An · Kỹ sư Frontend')).toHaveAttribute(
+    expect(within(latestDay).getByText('Nguyễn An, Kỹ sư Frontend')).toHaveAttribute(
       'href',
       '/tuyendung/app/applications?campaign=camp_1&application=app_1',
     )
@@ -116,7 +116,7 @@ describe('CampaignActivityPanel', () => {
     )
     expect(within(latestDay).getByText('31/08/2026')).toBeInTheDocument()
     expect(within(previousDay).getByText('Tạm giữ theo trạng thái tài khoản')).toBeInTheDocument()
-    expect(screen.getAllByText('Hệ thống')).toHaveLength(2)
+    expect(screen.getAllByText('bởi Hệ thống')).toHaveLength(2)
   })
 
   it('keeps page and group in the existing activity query contract', async () => {
@@ -136,10 +136,7 @@ describe('CampaignActivityPanel', () => {
       { page: 2 },
     ))
 
-    await user.click(screen.getByRole('combobox', { name: 'Lọc nhóm hoạt động' }))
-    await user.click(await screen.findByText('Tin tuyển dụng', {
-      selector: '.ant-select-item-option-content',
-    }))
+    await user.click(within(screen.getByRole('group', { name: 'Lọc nhóm hoạt động' })).getByRole('button', { name: 'Tin tuyển dụng' }))
 
     await waitFor(() => expect(mocks.getCampaignActivities).toHaveBeenLastCalledWith(
       'camp_1',

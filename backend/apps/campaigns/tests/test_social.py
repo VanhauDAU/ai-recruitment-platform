@@ -231,7 +231,7 @@ class FacebookProviderTests(TestCase):
         ]
 
         published = FacebookPageProvider(session=session).publish(
-            page_id='page_1', page_token='token', message='Hi', link='https://x/r/a'
+            page_id='page_1', page_token='token', message='Hi', link='https://procv.vn/r/a'
         )
 
         self.assertEqual(
@@ -243,6 +243,37 @@ class FacebookProviderTests(TestCase):
             session.request.call_args_list[0].args[1],
             'https://graph.facebook.com/v21.0/page_1/feed',
         )
+        self.assertEqual(
+            session.request.call_args_list[0].kwargs['data'],
+            {'message': 'Hi', 'link': 'https://procv.vn/r/a'},
+        )
+
+    def test_a_link_facebook_cannot_reach_goes_into_the_text_instead(self):
+        session = MagicMock()
+        session.request.side_effect = [
+            self.response(200, {'id': 'page_1_post'}),
+            self.response(200, {'permalink_url': ''}),
+        ] * 3
+
+        provider = FacebookPageProvider(session=session)
+        for link in ['http://localhost:5173/r/a', 'http://192.168.1.5/r/a', 'http://x/r/a']:
+            provider.publish(page_id='page_1', page_token='t', message='Tuyển dụng', link=link)
+        provider.session.request.side_effect = [
+            self.response(200, {'id': 'p'}),
+            self.response(200, {}),
+        ]
+        provider.publish(
+            page_id='page_1',
+            page_token='t',
+            message='Ứng tuyển: http://localhost/r/b',
+            link='http://localhost/r/b',
+        )
+
+        sent = [c.kwargs['data'] for c in session.request.call_args_list if c.args[0] == 'POST']
+        self.assertEqual(sent[0], {'message': 'Tuyển dụng\n\nhttp://localhost:5173/r/a'})
+        self.assertEqual(sent[1], {'message': 'Tuyển dụng\n\nhttp://192.168.1.5/r/a'})
+        self.assertNotIn('link', sent[2])
+        self.assertEqual(sent[3], {'message': 'Ứng tuyển: http://localhost/r/b'})
 
     def test_errors_are_classified(self):
         provider = FacebookPageProvider(session=MagicMock())
@@ -276,3 +307,16 @@ class FacebookProviderTests(TestCase):
         with self.assertRaises(SocialProviderError) as raised:
             provider.publish(page_id='p', page_token='t', message='m', link='l')
         self.assertTrue(raised.exception.transient)
+
+
+class PostErrorMessageTests(TestCase):
+    def test_failures_are_explained_in_words_a_recruiter_can_act_on(self):
+        from ..api.serializers.social import ScheduledPostSerializer
+
+        def message(code):
+            return ScheduledPostSerializer().get_error_message(Post(last_error_code=code))
+
+        self.assertIn('không phải localhost', message('graph_1500'))
+        self.assertIn('kết nối lại', message('graph_190'))
+        self.assertEqual(message('graph_999'), 'Facebook báo lỗi (graph_999). Hãy thử đăng lại.')
+        self.assertEqual(message(''), '')

@@ -2,7 +2,8 @@
 
 import hashlib
 import hmac
-from urllib.parse import urlencode
+import ipaddress
+from urllib.parse import urlencode, urlsplit
 
 import requests
 from django.conf import settings
@@ -13,6 +14,25 @@ SCOPES = 'pages_show_list,pages_manage_posts,pages_read_engagement'
 TOKEN_ERROR_CODES = {190, 102}
 PERMANENT_ERROR_CODES = {10, 200, 368, 100}
 TRANSIENT_ERROR_CODES = {1, 2, 4, 17, 32, 341, 613}
+
+
+def is_public_url(url):
+    """Whether Facebook's crawler can fetch ``url`` to build a link preview.
+
+    Graph rejects a ``link`` it cannot reach (error 1500), which is every
+    local development address.
+    """
+    parts = urlsplit(url or '')
+    host = (parts.hostname or '').lower()
+    if parts.scheme not in {'http', 'https'} or not host:
+        return False
+    if host == 'localhost' or host.endswith(('.localhost', '.local', '.test', '.internal')):
+        return False
+    try:
+        address = ipaddress.ip_address(host)
+    except ValueError:
+        return '.' in host
+    return address.is_global
 
 
 class FacebookPageProvider:
@@ -109,9 +129,12 @@ class FacebookPageProvider:
         ]
 
     def publish(self, *, page_id, page_token, message, link):
-        created = self._call(
-            'POST', f'{page_id}/feed', token=page_token, data={'message': message, 'link': link}
-        )
+        data = {'message': message}
+        if is_public_url(link):
+            data['link'] = link  # Facebook renders a preview card for it
+        elif link and link not in message:
+            data['message'] = f'{message}\n\n{link}'
+        created = self._call('POST', f'{page_id}/feed', token=page_token, data=data)
         post_id = created['id']
         details = self._call('GET', post_id, token=page_token, params={'fields': 'permalink_url'})
         return PublishedPost(post_id=post_id, permalink=details.get('permalink_url', ''))
