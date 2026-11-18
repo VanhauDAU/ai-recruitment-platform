@@ -519,10 +519,10 @@ loại tiêu chí khỏi điểm, kết quả tất định, có golden test và
   rồi chấm lại toàn bộ. Kết quả: 0: 38, 1: 61, 2: 29, 3: 14, 4: 8 cặp, không còn
   cặp "không chắc"; nhãn ở `ml/labeling/gold_pairs_claude.xlsx`.
 - Kiểm chứng: dự kiến người làm đồ án chấm mù 30 cặp cố định (2 cặp mỗi tin,
-  `ml/labeling/audit_pairs.json`, `ml/scripts/label_server.py --audit`) để tính
-  kappa. Thực tế chấm được 5 cặp rồi dừng: trùng 4/5, lệch không quá 1 mức 5/5
+  `ml/labeling/audit_pairs.json`) để tính kappa. Thực tế chấm được 5 cặp rồi dừng: trùng 4/5, lệch không quá 1 mức 5/5
   (`ml/reports/label_agreement.md`), chưa đủ tính kappa. Báo cáo ghi là kiểm tra
-  sơ bộ và là giới hạn; có thể bổ sung sau, kể cả nhờ người khác chấm.
+  sơ bộ và là giới hạn. Công cụ chấm trên trình duyệt đã gỡ khi dừng chấm
+  (khôi phục từ lịch sử git nếu cần bổ sung).
 
 </details>
 
