@@ -6,8 +6,9 @@ CV tổng hợp), nên không xuất CV của người dùng thật.
 
 from pathlib import Path
 
-from apps.cvs.services import CvDocumentRejected, extract_cv_text, open_uploaded_cv_pdf
+from apps.cvs.services import CvDocumentRejected, extract_cv_text
 
+from .documents import read_uploaded_cv_text
 from .extraction import EXTRACTOR_VERSION, ExtractionError, cv_profile, job_profile, text_cv_profile
 from .skills import SkillCatalog
 
@@ -19,14 +20,6 @@ def _text_profile(read, catalog):
         return {'profile': text_cv_profile(read(), catalog)}
     except (CvDocumentRejected, ExtractionError) as error:
         return {'error': error.code}
-
-
-def _read_upload(cv):
-    source = open_uploaded_cv_pdf(cv)
-    if source is None:
-        raise ExtractionError('cv_text_unavailable')
-    with source:
-        return extract_cv_text(source, 'pdf')
 
 
 def _read_file(path):
@@ -62,7 +55,7 @@ def export_cvs(cvs, catalog=None):
             'cv_type': cv.cv_type,
         }
         if cv.cv_type == cv.CvType.UPLOADED:
-            row.update(_text_profile(lambda cv=cv: _read_upload(cv), catalog))
+            row.update(_text_profile(lambda cv=cv: read_uploaded_cv_text(cv), catalog))
         elif cv.latest_version is not None:
             row['version_id'] = cv.latest_version.pk
             row['profile'] = cv_profile(cv.latest_version.content_json, catalog)

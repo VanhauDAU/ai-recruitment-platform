@@ -2,7 +2,7 @@
 
 Kỹ năng, kinh nghiệm, học vấn, cấp bậc, ngoại ngữ lấy từ trường có cấu trúc
 nhà tuyển dụng đã chọn; chunk là tiêu đề, từng câu yêu cầu rồi từng câu mô tả
-(mục yêu cầu được giữ trước khi phải cắt bớt).
+(mục yêu cầu được giữ trước khi phải cắt bớt), cuối cùng là tên từng kỹ năng.
 
 Hai loại câu không thành chunk:
 - tiêu đề con ("Required Skills", "Trình độ và kinh nghiệm:"): không phải yêu cầu;
@@ -40,6 +40,19 @@ _PROTECTED_ATTRIBUTE = re.compile(
     r'|gender|age|years old|appearance|height|marital)(?!\w)',
     re.IGNORECASE,
 )
+
+
+# Tiêu đề tin hay kèm lương, địa điểm, giới tính, quảng cáo ("Kế Toán Quản Trị -
+# Tuyển Nữ (Thu Nhập 15-20 Triệu) - Hóc Môn"); phép so chức danh chỉ dùng phần
+# đầu là tên vị trí.
+_TITLE_EXTRAS = re.compile(r'\s*[(\[{].*?[)\]}]\s*')
+_TITLE_SEPARATOR = re.compile(r'\s+[-–—|/]\s+|\s*[|]\s*')
+
+
+def role_title(title):
+    """Phần tên vị trí của tiêu đề tin: bỏ ngoặc, lấy đoạn trước dấu gạch hay "|" đầu tiên."""
+    cleaned = _TITLE_EXTRAS.sub(' ', title).strip()
+    return _TITLE_SEPARATOR.split(cleaned, maxsplit=1)[0].strip() or title.strip()
 
 
 def _is_subheading(line):
@@ -96,7 +109,7 @@ def job_profile(job):
     if len(text) < MIN_JOB_TEXT_CHARS:
         raise ExtractionError('job_text_too_short')
 
-    entries = [('title', job.title)]
+    entries = [('title', role_title(job.title))]
     entries += [('requirement', sentence) for sentence in _job_sentences(requirements)]
     entries += [('description', sentence) for sentence in _job_sentences(description)]
     skills = _skills(job)
@@ -108,6 +121,12 @@ def job_profile(job):
         'position_level': bool(job.position_level),
     }
     chunks = make_chunks(entries, MAX_JOB_CHUNKS, priority=JOB_SECTION_PRIORITY)
+    # Tên từng kỹ năng được đếm cũng là một chunk: bước chấm so nó với các câu của
+    # CV để nhận kỹ năng viết khác tên (khớp ngữ nghĩa). Không tính vào giới hạn.
+    chunks += [
+        {'index': len(chunks) + order, 'section': 'skill', 'text': skill['name']}
+        for order, skill in enumerate(skill for skill in skills if skill['counted'])
+    ]
     return {
         'kind': 'job',
         'language': detect_language(text),

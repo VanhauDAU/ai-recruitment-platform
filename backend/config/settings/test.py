@@ -106,3 +106,8 @@ CSRF_COOKIE_SECURE = False
 SECURE_HSTS_SECONDS = 0
 SECURE_HSTS_INCLUDE_SUBDOMAINS = False
 SECURE_HSTS_PRELOAD = False
+
+# Đối sánh CV–JD: mã hóa tất định không cần torch; không tự tính vector khi lưu
+# CV/tin (test tự gọi khi cần).
+MATCHING_ENCODER_BACKEND = 'hashing'
+MATCHING_PRECOMPUTE_ENABLED = False

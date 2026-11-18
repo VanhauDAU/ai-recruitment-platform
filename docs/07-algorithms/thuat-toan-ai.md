@@ -269,7 +269,7 @@ lộ trình ở [tiến độ dự án](../TIEN-DO-DU-AN.md#đối-sánh-ngữ-n
   (`ml/requirements.txt`, `ml/scripts/smoke_mps.py`); mô hình nền là
   `intfloat/multilingual-e5-base`.
 
-Trích xuất hồ sơ (`apps/matching/services/extraction/`, phiên bản `extract-v1`):
+Trích xuất hồ sơ (`apps/matching/services/extraction/`, phiên bản `extract-v2`):
 CV builder, CV tải lên và tin tuyển dụng đều thành `profile_json` gồm kỹ năng,
 kinh nghiệm, học vấn, cấp bậc, ngoại ngữ, địa điểm và các chunk (đoạn văn để
 tính vector).
@@ -280,7 +280,7 @@ tính vector).
 | `facts.py` | Khoảng ngày (03/2021, 2021-03, Sep 2021, "Hiện tại"), bậc học (từ chỉ bằng cấp trước tên trường), cấp bậc (chỉ từ khóa chức danh rõ nghĩa), mức ngoại ngữ (từ chỉ mức, IELTS/TOEIC/JLPT…) |
 | `cv_builder.py` | Đọc trường có cấu trúc của `content_json`; số tháng và bậc học dùng chung hàm với trường matching của CV |
 | `cv_upload.py` | Chia mục theo dòng tiêu đề, nhận ra bố cục PDF bị đảo, tính số tháng theo bốn trường hợp (`experience.basis`) |
-| `job.py` | Trường có cấu trúc của tin; chunk là từng câu yêu cầu rồi mô tả |
+| `job.py` | Trường có cấu trúc của tin; chunk là tên vị trí (tiêu đề đã bỏ lương, địa điểm, giới tính), từng câu yêu cầu, mô tả, tên kỹ năng |
 | `services/skills.py` | Khớp tên và alias của danh mục kỹ năng, nguồn `declared`/`listed`/`text`/`job` |
 
 Quy tắc chống bịa dữ liệu:
@@ -297,7 +297,51 @@ Quy tắc chống bịa dữ liệu:
 baseline ở `ml/reports/`. Lệnh `matching_export_dataset` (chỉ đọc) xuất hồ sơ
 cho các script ở `ml/`.
 
-Chưa có: tính embedding, công thức chấm điểm, API, worker suy luận và giao diện.
+Luồng phân tích (`apps/matching/services/`):
+
+| Bước | Tệp | Việc |
+| --- | --- | --- |
+| 1 | `extraction/` | Hồ sơ `profile_json` (như trên) |
+| 2 | `encoder.py` | Câu → vector 768 chiều: E5 (tiền tố `query:` cho tin, `passage:` cho CV) trong `ml-worker`; `hashing` tất định cho test/CI |
+| 3 | `documents.py` | Lưu `MatchDocument`/`MatchChunk` theo (nguồn, hash nội dung, phiên bản trích xuất, phiên bản mô hình); vector tài liệu là vector toàn văn |
+| 4 | `scoring/` | Công thức `hybrid-v1` (bảng dưới) |
+| 5 | `explain.py` | Câu tóm tắt từng tiêu chí và gợi ý theo luật, chỉ dạng "nếu bạn đã có…" |
+| 6 | `analyses.py` | Cache theo khóa, task `run_analysis` ở queue `ai-matching`, phục hồi job treo |
+
+Công thức `hybrid-v1` (mỗi tiêu chí 0–100; tiêu chí thiếu dữ liệu hoặc tin
+không yêu cầu bị loại, trọng số chuẩn hóa lại):
+
+| Tiêu chí | Trọng số | Cách tính |
+| --- | ---: | --- |
+| Kỹ năng | 0,40 | `Σ(w·m)/Σw`, w = trọng số × (1 cần có / 0,5 nên có); m = 1 khi CV có kỹ năng theo danh mục, hoặc có câu với cosine ≥ τ_skill tới tên kỹ năng (câu đó là bằng chứng). Tin có kỹ năng mà CV không thể hiện là 0 điểm |
+| Kinh nghiệm | 0,30 | `0,4·Y·R/100 + 0,6·R`; Y theo số năm (đủ 100, thiếu 1 bậc 60, thiếu ≥ 2 bậc 20), R = mức liên quan = trung bình điểm hiệu chuẩn của cosine toàn văn và cosine chức danh |
+| Học vấn | 0,10 | Đủ/vượt 100, thấp 1 bậc 50, thấp hơn 0 |
+| Cấp bậc | 0,10 | Lệch 0/1/2/≥ 3 bậc: 100/70/40/10 |
+| Ngoại ngữ | 0,10 | Đủ mức 100, thấp 1 bậc 50, không có 0; thiếu ngoại ngữ bắt buộc thì điểm tổng tối đa 64 |
+| Địa điểm | 0,10 | Cùng tỉnh hoặc remote 100, khác tỉnh 30; tắt khi so với nhãn người chấm |
+
+Hai thay đổi so với kế hoạch, theo số đo (`ml/reports/calibration_e5-base-zs-v1.md`,
+nhãn yếu, mô hình zero-shot):
+
+- R không dùng MaxSim từng câu yêu cầu: phép đo này gần như không phân biệt cặp
+  khớp và cặp khác ngành (AUC 0,588), trong khi cosine toàn văn đạt 0,899 và
+  cosine chức danh 0,935. MaxSim chỉ còn dùng để chỉ câu bằng chứng cho từng
+  yêu cầu (`met`/`partial` khi vượt phân vị 95/80 của cặp khác ngành).
+- Y nhân R/100: năm làm việc khác nghề không đem lại điểm số năm.
+
+Mốc hiệu chuẩn (cosine → 0–100) theo phiên bản mô hình nằm ở
+`scoring/semantic.py`, đo bằng `ml/scripts/calibrate.py`; tuần 6 đo lại trên tập
+validation do người chấm. Mức: ≥ 80 Rất phù hợp, 65–79 Phù hợp, 50–64 Tương đối
+phù hợp, < 50 Chưa phù hợp. Độ tin cậy giảm khi có tiêu chí thiếu dữ liệu hoặc
+số tháng kinh nghiệm chỉ ước lượng từ PDF bố cục đảo.
+
+API `/api/matching/analyses/` (xem [tài liệu API](../04-api/tai-lieu-api.md)),
+cờ `ai_job_match_enabled`. Vector tính sẵn khi CV có phiên bản mới hoặc tin
+đang mở được lưu (signal, sau commit). Đo trên máy dev (e5-base, CPU trong
+container): chấm một cặp đã có vector khoảng 10 ms, p95 tổng 25 ms; CV vừa sửa
+0,5–0,7 s; RAM `ml-worker` 1,7 GB.
+
+Chưa có: giao diện (tuần 4), đánh giá trên nhãn người chấm và fine-tune (tuần 5–6).
 
 ## Việc còn mở
 

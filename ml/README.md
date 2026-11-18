@@ -22,6 +22,8 @@ ml/
     build_gold_pairs.py   ghép 150 cặp tập vàng (BM25 + e5 + ngẫu nhiên), phiếu chấm
     export_profiles.py    xuất profile_json từ hệ thống (lệnh matching_export_dataset)
     check_profiles.py     đối chiếu profile_json với manifest, kiểm tra "không bịa"
+    calibrate.py          AUC và mốc hiệu chuẩn cosine → điểm của từng phép so
+    export_model.py       lưu mô hình vào models/<tên>/<phiên bản>/ cho ml-worker
   labeling/               tài liệu gán nhãn (commit)
     rubric.md             thang chấm 0–4 đã chốt
     gold_pairs.xlsx       phiếu chấm 150 cặp (tab Chấm), kèm nội dung JD và CV
@@ -39,7 +41,7 @@ ml/
     labels/gold_pool.json nguồn ghép cặp và phép chia validation/test (không xem khi chấm)
     profiles/             profile_json xuất từ hệ thống (*.jsonl)
   reports/                bảng số liệu (commit, đưa vào báo cáo)
-  models/                 KHÔNG commit; mô hình tải về và đã fine-tune
+  models/                 KHÔNG commit; mô hình cho ml-worker (mount /models), kèm model_card.json
 ```
 
 Thư mục cho giai đoạn sau (tạo khi cần, khai báo thêm vào `paths.py`):
@@ -77,5 +79,7 @@ liệu cần Docker Compose đang chạy; mặc định chỉ chạy thử, thê
 6. `scripts/build_gold_pairs.py`: phiếu chấm tập vàng (cần mô hình e5 đã tải; không
    ghi đè phiếu đã có).
 7. `scripts/export_profiles.py`, rồi `scripts/check_profiles.py`: kiểm tra trích xuất.
+8. `scripts/export_model.py`: lưu mô hình cho ml-worker; `scripts/calibrate.py`: đo
+   mốc hiệu chuẩn, chép vào `CALIBRATIONS` của backend khi đổi mô hình.
 
 Các script chạy lại an toàn: bỏ qua phần đã có.

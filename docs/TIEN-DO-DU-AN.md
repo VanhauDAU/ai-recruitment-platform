@@ -11,7 +11,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Ảnh đại diện dùng chung 3 cổng](#ảnh-đại-diện-dùng-chung-3-cổng-2026-11-16) | 🟨 Xong trên nhánh `feat/avatar-editor`, chưa mở PR |
 | [Dọn mâu thuẫn còn lại sau thống nhất luồng](#dọn-mâu-thuẫn-còn-lại-sau-thống-nhất-luồng-2026-11-16) | ✅ Cả 3 GĐ đã gộp (#222, #223, #224); dọn phần còn hở trên nhánh `fix/flow-loose-ends` |
 | [Thống nhất luồng đăng tin, hiển thị, ứng tuyển, công ty](#thống-nhất-luồng-đăng-tin-hiển-thị-ứng-tuyển-công-ty-2026-11-15) | ✅ Cả 6 giai đoạn đã gộp (#208–#215); hoàn thiện luồng nhắc NTD và lịch sử nộp trên nhánh `feat/application-reminders` |
-| [Đối sánh ngữ nghĩa CV–JD chạy local](#đối-sánh-ngữ-nghĩa-cvjd-chạy-local-2026-11-15) | 🟨 Tuần 1 đã gộp (#207, #230); tuần 2 (trích xuất, baseline, tập vàng) đang làm trên nhánh `feat/ai-matching-extraction` |
+| [Đối sánh ngữ nghĩa CV–JD chạy local](#đối-sánh-ngữ-nghĩa-cvjd-chạy-local-2026-11-15) | 🟨 Tuần 1 đã gộp (#207, #230); tuần 2 chờ gộp (#231); tuần 3 (chấm điểm, API, ml-worker) xong trên nhánh `feat/ai-matching-scoring` |
 | [CV tải lên: tệp gốc, tiêu chuẩn upload, giới hạn CV, NTD tìm kiếm](#cv-tải-lên-tệp-gốc-tiêu-chuẩn-upload-giới-hạn-cv-ntd-tìm-kiếm-2026-11-15) | ✅ Gộp vào `dev` (#203) |
 | [Việc làm tốt nhất xếp theo chất lượng tin](#việc-làm-tốt-nhất-xếp-theo-chất-lượng-tin-2026-11-15) | ✅ Gộp vào `dev` (#204) |
 | [Thiết kế lại quản lý tin tuyển dụng của NTD](#thiết-kế-lại-quản-lý-tin-tuyển-dụng-của-ntd-2026-11-15) | ✅ Gộp vào `dev` (nhánh `feat/employer-job-workspace`) |
@@ -358,8 +358,8 @@ loại tiêu chí khỏi điểm, kết quả tất định, có golden test và
 | Tuần | Hạng mục | Trạng thái |
 | --- | --- | --- |
 | 1 | Nền tảng: pgvector, schema `apps/matching`, môi trường `ml/`; 100 JD thật, 100 CV tổng hợp, 51 PDF, rubric | ✅ Gộp vào `dev` (#207, #230) |
-| 2 | Trích xuất và chuẩn hóa CV/JD, chọn thư viện PDF, baseline TF-IDF/BM25, ghép cặp tập vàng và phiếu chấm (PR 1) | 🟨 Xong trên nhánh `feat/ai-matching-extraction`, chờ PR; phiếu chấm đã giao |
-| 3 | Encoder, chấm điểm 6 tiêu chí, giải thích, API, task, `ml-worker` (PR 2); người chấm 75 cặp | ⬜ |
+| 2 | Trích xuất và chuẩn hóa CV/JD, chọn thư viện PDF, baseline TF-IDF/BM25, ghép cặp tập vàng và phiếu chấm (PR 1) | 🟨 PR #231 chờ gộp; phiếu chấm đã giao |
+| 3 | Encoder, chấm điểm 6 tiêu chí, giải thích, API, task, `ml-worker` (PR 2); người chấm 75 cặp | 🟨 Code xong trên nhánh `feat/ai-matching-scoring`, chờ PR; người chấm chưa bắt đầu |
 | 4 | Giao diện "Xem độ phù hợp" (PR 3), bản demo tối thiểu (M1); người chấm 75 cặp còn lại | ⬜ |
 | 5 | Đo baseline, `profile-rule-v2` và 4 mô hình zero-shot; sinh thêm CV và cặp huấn luyện | ⬜ |
 | 6 | Fine-tune, ablation, chỉnh ngưỡng và trọng số, chọn mô hình (M2) | ⬜ |
@@ -471,6 +471,39 @@ loại tiêu chí khỏi điểm, kết quả tất định, có golden test và
   NDCG@5 0,535, BM25 0,531 (`ml/reports/baseline_weak_labels.md`).
 - Nợ còn lại: danh mục kỹ năng gộp quá rộng ở vài chỗ ("PyTorch" là alias của
   "Deep Learning"); một số "kỹ năng" là tên vị trí (Fullstack, Telesales, Kế toán).
+
+</details>
+
+<details><summary>Ghi chú tuần 3</summary>
+
+- Luồng: `encoder` → `documents` → `scoring/` (công thức `hybrid-v1`) →
+  `explain` → `analyses`; API `/api/matching/analyses/`, task ở queue
+  `ai-matching` do service `ml-worker` chạy (Dockerfile target `ml`, torch CPU;
+  image web không có torch). Mô hình zero-shot lưu ở
+  `ml/models/multilingual-e5-base/zs-v1` bằng `ml/scripts/export_model.py`.
+- Phát hiện khi hiệu chuẩn (`ml/reports/calibration_e5-base-zs-v1.md`, nhãn
+  yếu, 40 cặp khớp mạnh / 300 cặp khác ngành): MaxSim từng câu yêu cầu gần như
+  không phân biệt được (AUC 0,588), cosine toàn văn 0,899, cosine chức danh
+  0,935. Vì vậy mức liên quan R trong tiêu chí kinh nghiệm dùng toàn văn +
+  chức danh; MaxSim chỉ để chỉ câu bằng chứng của từng yêu cầu. Điểm số năm
+  được nhân R/100 (năm làm việc khác nghề không được tính), và tin có kỹ năng
+  mà CV không thể hiện là 0 điểm chứ không bị loại khỏi điểm. Cả hai sửa sau
+  khi test golden cho CV kế toán 64 điểm với tin Frontend.
+- Tiêu đề tin chỉ giữ phần tên vị trí khi so ("Kế Toán Quản Trị - Tuyển Nữ (Thu
+  Nhập 15-20 Triệu)…" → "Kế Toán Quản Trị"), nên không so theo giới tính, lương.
+- Chạy thật (e5-base, CPU trong container): khớp mạnh 85–89, khớp một phần
+  57–63, vị trí gần 56, khác ngành 23–29 điểm. 50 lượt liên tiếp không lỗi;
+  đã có vector: p50 23 ms, p95 25 ms; CV vừa sửa 0,46–0,66 s; RAM ml-worker
+  1,67 GB; backfill 101 tin + 126 CV mất khoảng 2 phút.
+- TC-14: dừng ml-worker, gửi yêu cầu, bật lại → hoàn tất sau 7 giây. Lỗi ngoài
+  dự kiến khi chấm chuyển `failed` (`internal_error`) thay vì để vòng phục hồi
+  chạy lại mãi.
+- Test (HashingEncoder): từng tiêu chí, trần 64 khi thiếu ngoại ngữ bắt buộc,
+  không bịa (mọi bằng chứng là câu có thật trong CV), nhiễu (đảo thứ tự và thêm
+  câu thừa lệch ≤ 3 điểm), golden ba cặp, API TC-01/06–13.
+- Còn để tuần 4–6: giao diện; hiệu chuẩn lại và chọn trọng số trên nhãn người
+  chấm; độ tin cậy của học vấn/cấp bậc khi CV khác ngành (hai tiêu chí này vẫn
+  cho 100 nếu bậc khớp, làm cặp khác ngành còn 23–29 điểm thay vì gần 0).
 
 </details>
 

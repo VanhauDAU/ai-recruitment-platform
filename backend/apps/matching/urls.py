@@ -1,3 +1,12 @@
-"""Routes của `/api/matching/`. Endpoint phân tích được thêm cùng lúc với view."""
+"""Routes của `/api/matching/`."""
 
-urlpatterns = []
+from django.urls import path
+
+from .api.views import AnalysisDetailView, AnalysisListCreateView
+
+urlpatterns = [
+    path('analyses/', AnalysisListCreateView.as_view(), name='matching-analyses'),
+    path(
+        'analyses/<str:public_id>/', AnalysisDetailView.as_view(), name='matching-analysis-detail'
+    ),
+]

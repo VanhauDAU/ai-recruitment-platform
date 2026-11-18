@@ -89,6 +89,9 @@ def cv_profile(content_json, catalog, *, today=None):
         '\n'.join(education_lines)
     )
     role = _latest_role(experience_items)
+    # Chức danh là phép so mạnh nhất với tiêu đề tin (xem scoring/semantic.py).
+    if headline or role:
+        entries.insert(0, ('title', headline or role))
     chunks = make_chunks(entries, MAX_CV_CHUNKS)
     return cv_profile_json(
         source='builder',
