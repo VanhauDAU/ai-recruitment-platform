@@ -8,7 +8,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | Hạng mục | Trạng thái |
 | --- | --- |
 | [Mô hình hóa yêu cầu cho báo cáo (mục 3.2)](#mô-hình-hóa-yêu-cầu-cho-báo-cáo-mục-32-2026-11-18) | ✅ Nguồn sơ đồ trong `docs/01-phan-tich/mo-hinh-hoa-yeu-cau/` |
-| [Nâng cấp chiến dịch tuyển dụng (4 GĐ)](#nâng-cấp-chiến-dịch-tuyển-dụng-2026-11-18) | 🟨 Cả 4 GĐ đã gộp (#235–#237, #239–#241); đợt làm lại giao diện kênh, đăng Fanpage, chi phí và lịch sử hoạt động trên nhánh `feat/campaign-facebook-ux` |
+| [Nâng cấp chiến dịch tuyển dụng (4 GĐ)](#nâng-cấp-chiến-dịch-tuyển-dụng-2026-11-18) | ✅ Cả 4 GĐ và đợt làm lại giao diện kênh, Fanpage, chi phí, lịch sử hoạt động đã gộp (#235–#237, #239–#242); sơ đồ phân tích nhóm chiến dịch trên nhánh `docs/campaign-diagrams` |
 | [Ứng tuyển bằng CV tải lên và form ứng tuyển mới](#ứng-tuyển-bằng-cv-tải-lên-và-form-ứng-tuyển-mới-2026-11-18) | ✅ Gộp vào `dev` (#234) |
 | [Bảng điều khiển quản trị](#bảng-điều-khiển-quản-trị-2026-11-16) | 🟨 Xong trên nhánh `feat/admin-dashboard`, chưa mở PR |
 | [Ảnh đại diện dùng chung 3 cổng](#ảnh-đại-diện-dùng-chung-3-cổng-2026-11-16) | 🟨 Xong trên nhánh `feat/avatar-editor`, chưa mở PR |
@@ -171,7 +171,7 @@ GĐ1 đã làm:
     đồng bộ (20 lần/giờ) thay cho hàng đợi; chưa có huy hiệu sức khỏe ở danh sách.
   - Sau khi gộp: `docker compose build backend worker beat` (thêm `openpyxl`) rồi
     khởi động lại.
-- Đợt sau GĐ4 (nhánh `feat/campaign-facebook-ux`, 19/11):
+- Đợt sau GĐ4 (#242, 19/11; sơ đồ phân tích ở nhánh `docs/campaign-diagrams`):
   - đã tạo Meta App "ProCV Fanpage" (Development mode) và thử kết nối thật;
     bài đầu thất bại với lỗi Graph 1500 vì link `localhost`: provider giờ chỉ
     gửi `link` khi là địa chỉ công khai, còn lại chèn link vào nội dung;
