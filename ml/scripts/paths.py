@@ -19,3 +19,15 @@ SYNTHETIC_CV_DIR = CV_DIR / 'synthetic'
 CV_MANIFEST = SYNTHETIC_CV_DIR / 'manifest.json'
 CV_PDF_SYSTEM_DIR = CV_DIR / 'pdf' / 'system'
 CV_PDF_TOPCV_DIR = CV_DIR / 'pdf' / 'topcv'
+
+# Tập vàng: phiếu chấm (commit) và bản đã nộp, thông tin ghép cặp (không commit).
+LABELING_DIR = ML_DIR / 'labeling'
+GOLD_SHEET = LABELING_DIR / 'gold_pairs.xlsx'
+LABELS_DIR = DATA_DIR / 'labels'
+GOLD_POOL = LABELS_DIR / 'gold_pool.json'
+
+# Bảng số liệu đưa vào báo cáo (commit).
+REPORTS_DIR = ML_DIR / 'reports'
+
+# profile_json xuất từ hệ thống (`export_profiles.py`), không commit.
+PROFILES_DIR = DATA_DIR / 'profiles'

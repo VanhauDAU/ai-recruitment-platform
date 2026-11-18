@@ -23,6 +23,15 @@ def skill_lookup_queryset(params):
     return queryset[:LOOKUP_CAP]
 
 
+def active_skill_terms():
+    """`(id, name, aliases, tên nhóm)` của mọi kỹ năng đang hoạt động, cho bộ nhận diện kỹ năng."""
+    return list(
+        Skill.objects.filter(is_active=True)
+        .order_by('id')
+        .values_list('id', 'name', 'aliases', 'group__name')
+    )
+
+
 def normalize_skill_name(name):
     """Khóa so khớp tên kỹ năng, cùng quy tắc với `Skill.normalized_name`."""
     return ' '.join(str(name).split()).lower()

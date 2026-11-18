@@ -8,7 +8,13 @@ from .assets import (
 )
 from .audit import record_application_snapshot_access
 from .completeness import application_readiness_issues
-from .cv_document import CvDocumentRejected, read_cv_document
+from .cv_document import (
+    CvDocumentRejected,
+    extract_cv_text,
+    heading_section,
+    read_cv_document,
+    scrub_contacts,
+)
 from .cvs import (
     UnsupportedCvUpload,
     duplicate_cv,
@@ -46,8 +52,18 @@ from .lifecycle import (
     save_draft_as_version,
     switch_draft_template,
 )
+from .matching_profile import (
+    EDUCATION_ORDER,
+    declared_skills,
+    education_level,
+    enabled_items,
+    experience_months,
+    merged_months,
+    month_index,
+    months_to_experience_years,
+)
 from .moderation import admin_cv_content, lock_cv, unlock_cv
-from .operator_import import create_pdf_twins, import_cv_documents
+from .operator_import import SYNTHETIC_EMAIL_DOMAIN, create_pdf_twins, import_cv_documents
 from .recruiter_search import withdraw_cvs_from_recruiter_search
 from .sharing import (
     CvSharePermissionError,
@@ -76,7 +92,19 @@ __all__ = [
     'CvCreateInProgress',
     'CvLifecyclePolicyError',
     'CvDocumentRejected',
+    'extract_cv_text',
+    'heading_section',
     'read_cv_document',
+    'scrub_contacts',
+    'EDUCATION_ORDER',
+    'declared_skills',
+    'education_level',
+    'enabled_items',
+    'experience_months',
+    'merged_months',
+    'month_index',
+    'months_to_experience_years',
+    'SYNTHETIC_EMAIL_DOMAIN',
     'CvSharePermissionError',
     'CvShareUnavailableError',
     'CvExportPermissionError',

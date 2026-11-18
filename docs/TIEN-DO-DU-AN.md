@@ -11,7 +11,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Ảnh đại diện dùng chung 3 cổng](#ảnh-đại-diện-dùng-chung-3-cổng-2026-11-16) | 🟨 Xong trên nhánh `feat/avatar-editor`, chưa mở PR |
 | [Dọn mâu thuẫn còn lại sau thống nhất luồng](#dọn-mâu-thuẫn-còn-lại-sau-thống-nhất-luồng-2026-11-16) | ✅ Cả 3 GĐ đã gộp (#222, #223, #224); dọn phần còn hở trên nhánh `fix/flow-loose-ends` |
 | [Thống nhất luồng đăng tin, hiển thị, ứng tuyển, công ty](#thống-nhất-luồng-đăng-tin-hiển-thị-ứng-tuyển-công-ty-2026-11-15) | ✅ Cả 6 giai đoạn đã gộp (#208–#215); hoàn thiện luồng nhắc NTD và lịch sử nộp trên nhánh `feat/application-reminders` |
-| [Đối sánh ngữ nghĩa CV–JD chạy local](#đối-sánh-ngữ-nghĩa-cvjd-chạy-local-2026-11-15) | 🟨 Tuần 1: nền tảng đã gộp vào `dev` (#207); kho CV tổng hợp đang làm trên nhánh `feat/ai-synthetic-cvs` |
+| [Đối sánh ngữ nghĩa CV–JD chạy local](#đối-sánh-ngữ-nghĩa-cvjd-chạy-local-2026-11-15) | 🟨 Tuần 1 đã gộp (#207, #230); tuần 2 (trích xuất, baseline, tập vàng) đang làm trên nhánh `feat/ai-matching-extraction` |
 | [CV tải lên: tệp gốc, tiêu chuẩn upload, giới hạn CV, NTD tìm kiếm](#cv-tải-lên-tệp-gốc-tiêu-chuẩn-upload-giới-hạn-cv-ntd-tìm-kiếm-2026-11-15) | ✅ Gộp vào `dev` (#203) |
 | [Việc làm tốt nhất xếp theo chất lượng tin](#việc-làm-tốt-nhất-xếp-theo-chất-lượng-tin-2026-11-15) | ✅ Gộp vào `dev` (#204) |
 | [Thiết kế lại quản lý tin tuyển dụng của NTD](#thiết-kế-lại-quản-lý-tin-tuyển-dụng-của-ntd-2026-11-15) | ✅ Gộp vào `dev` (nhánh `feat/employer-job-workspace`) |
@@ -345,15 +345,25 @@ AI lõi của đồ án cho phía ứng viên: bấm "Xem độ phù hợp" trê
 `intfloat/multilingual-e5-base` chạy và fine-tune trên máy local, không gọi API
 ngoài. Lộ trình 8 tuần (16/11/2026 → 10/01/2027), mỗi giai đoạn một PR.
 
+Kế hoạch bản 2 (18/11) viết lại theo dữ liệu đã có: tập vàng chấm trên CV
+tổng hợp (không có CV thật), thêm tiêu chí Ngoại ngữ vào công thức `hybrid-v1`,
+chọn thư viện đọc PDF để sửa lỗi tách dấu, ghép cặp tập vàng ở tuần 2 để người
+chấm bắt đầu sớm hơn một tuần.
+Bổ sung cùng ngày theo yêu cầu: nâng mục tiêu dữ liệu huấn luyện lên
+8.000–12.000 bộ ba (sinh thêm 700–850 CV qua cổng chất lượng, thêm biến thể văn
+bản đọc từ PDF), và thêm bộ quy tắc chống bịa dữ liệu, chấm điểm trung thực: mọi
+kỹ năng khớp và yêu cầu đạt phải có câu trích nguyên văn từ CV, thiếu dữ liệu thì
+loại tiêu chí khỏi điểm, kết quả tất định, có golden test và test nhiễu.
+
 | Tuần | Hạng mục | Trạng thái |
 | --- | --- | --- |
-| 1 | Nền tảng: pgvector, schema `apps/matching`, môi trường huấn luyện `ml/`, kiểm chứng fine-tune trên MPS | 🟨 Code đã gộp vào `dev` (#207); đã nhập 100 JD thật và 100 CV tổng hợp; rubric đã chốt (18/11) |
-| 2 | Trích xuất và chuẩn hóa CV/JD, mở rộng taxonomy kỹ năng, baseline TF-IDF/BM25 (PR 1) | ⬜ |
-| 3 | Encoder zero-shot, chấm điểm, giải thích, API, worker suy luận (PR 2) | ⬜ |
-| 4 | Giao diện "Xem độ phù hợp" ở trang chi tiết tin (PR 3), bản demo tối thiểu | ⬜ |
-| 5 | Tập vàng 150 cặp do người chấm; đo baseline và zero-shot; sinh dữ liệu huấn luyện | ⬜ |
-| 6 | Fine-tune, ablation, chọn mô hình đưa vào sản phẩm | ⬜ |
-| 7 | Đo hiệu năng, nghiệm thu chức năng (PR 4) | ⬜ |
+| 1 | Nền tảng: pgvector, schema `apps/matching`, môi trường `ml/`; 100 JD thật, 100 CV tổng hợp, 51 PDF, rubric | ✅ Gộp vào `dev` (#207, #230) |
+| 2 | Trích xuất và chuẩn hóa CV/JD, chọn thư viện PDF, baseline TF-IDF/BM25, ghép cặp tập vàng và phiếu chấm (PR 1) | 🟨 Xong trên nhánh `feat/ai-matching-extraction`, chờ PR; phiếu chấm đã giao |
+| 3 | Encoder, chấm điểm 6 tiêu chí, giải thích, API, task, `ml-worker` (PR 2); người chấm 75 cặp | ⬜ |
+| 4 | Giao diện "Xem độ phù hợp" (PR 3), bản demo tối thiểu (M1); người chấm 75 cặp còn lại | ⬜ |
+| 5 | Đo baseline, `profile-rule-v2` và 4 mô hình zero-shot; sinh thêm CV và cặp huấn luyện | ⬜ |
+| 6 | Fine-tune, ablation, chỉnh ngưỡng và trọng số, chọn mô hình (M2) | ⬜ |
+| 7 | Đo hiệu năng, nghiệm thu TC-01…17, chạy tập test một lần, chấm lại 30 cặp (PR 4, M3) | ⬜ |
 | 8 | Viết báo cáo, diễn tập demo | ⬜ |
 
 <details><summary>Ghi chú tuần 1</summary>
@@ -419,6 +429,48 @@ ngoài. Lộ trình 8 tuần (16/11/2026 → 10/01/2027), mỗi giai đoạn m�
 - Không giới hạn thì vùng nhớ MPS lên khoảng 9,7 GB và swap tăng khoảng 6 GB.
   Đặt `PYTORCH_MPS_HIGH_WATERMARK_RATIO=0.6` giữ ở khoảng 7,4 GB, chậm hơn
   khoảng 9% (6,1 giây/bước).
+
+</details>
+
+<details><summary>Ghi chú tuần 2</summary>
+
+- Thư viện đọc PDF: `pypdfium2` (pypdf chỉ còn kiểm tra mật khẩu, số trang). Đo
+  trên 51 PDF: pypdf tách rời 9,07% số từ ở CV tiếng Việt (tối đa 30%),
+  pypdfium2 tách 0%; NFC không sửa được lỗi của pypdf
+  (`ml/reports/extract_check.md`).
+- `apps/matching/services/extraction/` gồm `text`, `facts`, `profile`,
+  `cv_builder`, `cv_upload`, `job`; nhận diện kỹ năng ở `services/skills.py`.
+  Phiên bản trích xuất `extract-v1`.
+- Đối chiếu với nhãn (`ml/reports/extraction_check.md`):
+
+  | Nguồn | Recall kỹ năng | Kinh nghiệm ±3 tháng | Học vấn | Ngôn ngữ | Bằng chứng ngoài CV |
+  | --- | ---: | ---: | ---: | ---: | ---: |
+  | CV builder (100) | 100% | 100% | 100% | 100% | 0 |
+  | PDF hệ thống (15) | 95,6% | 93% | 60% | 100% | 0 |
+  | PDF TopCV (36) | 78,7% | 72% | 36% | 75% | 0 |
+
+  Học vấn của PDF thấp chủ yếu do CV tổng hợp tự mâu thuẫn: chữ ghi "Bachelor
+  of Science" nhưng trường `degree_level` là `college` (6/6 ca lệch ở PDF hệ
+  thống). Bộ trích xuất đọc theo chữ trên CV; cổng chất lượng ở tuần 5 thêm kiểm
+  tra bằng cấp khớp `degree_level`. PDF TopCV hai cột bị đảo thứ tự đọc; những
+  ca đó có `experience.basis = whole_text` để bước chấm hạ độ tin cậy, và hệ
+  thống không bao giờ kết luận "0 tháng" khi bố cục không gọn.
+- 100 tin: trích xuất được cả 100, ngôn ngữ nhận diện khớp ngôn ngữ ghi lúc nhập
+  ở cả 100; trung bình 6,03 kỹ năng được đếm và 18,7 chunk mỗi tin; 39 kỹ năng
+  nhóm "Phẩm chất cá nhân" bị loại khỏi điểm. Câu yêu cầu về giới tính, tuổi
+  không thành chunk.
+- Kiểm tay 20 tin và 20 CV (10 CV builder, 10 PDF): sửa thêm chức danh "Thư ký
+  Tổng Giám đốc" bị nhận là Giám đốc, mức ngoại ngữ "Giao tiếp" bị nhận là kỹ
+  năng, tiêu đề con trong mục yêu cầu bị coi là yêu cầu.
+- Tập vàng: 150 cặp (15 JD × 10 CV, 75 CV khác nhau; 60 cặp từ top-4 BM25, 60
+  từ top-4 e5 zero-shot, 30 ngẫu nhiên; 38/60 CV top BM25 cũng nằm trong top e5).
+  Validation: JD-02, 35, 60, 66, 75; còn lại là test. Phiếu chấm
+  `ml/labeling/gold_pairs.xlsx` (tab Chấm, kèm nội dung JD và CV), nguồn ghép cặp
+  ở `ml/data/labels/gold_pool.json`, không xem khi chấm.
+- Baseline trên nhãn yếu (chỉ kiểm tra hợp lý, 11 JD có ≥ 2 CV neo): TF-IDF
+  NDCG@5 0,535, BM25 0,531 (`ml/reports/baseline_weak_labels.md`).
+- Nợ còn lại: danh mục kỹ năng gộp quá rộng ở vài chỗ ("PyTorch" là alias của
+  "Deep Learning"); một số "kỹ năng" là tên vị trí (Fullstack, Telesales, Kế toán).
 
 </details>
 
