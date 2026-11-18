@@ -7,7 +7,7 @@ from apps.accounts.models import AdminAccessAuditLog, User
 from ..models import Announcement, AnnouncementRevision, AnnouncementUserState
 from ..selectors import active_announcements_for_request
 from ..services import set_announcement_user_state
-from .announcement_helpers import revision_payload
+from .factories import revision_payload
 
 
 class AdminAnnouncementApiTests(APITestCase):

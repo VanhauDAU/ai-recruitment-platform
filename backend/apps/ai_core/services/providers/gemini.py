@@ -59,11 +59,9 @@ class GeminiStructuredOutputProvider:
 
     @staticmethod
     def _default_client(config: AiRuntimeConfig):
-        try:
-            from google import genai
-            from google.genai import types
-        except ImportError:
-            raise AiGenerationError('provider_sdk_unavailable') from None
+        # Imported lazily: the SDK is heavy and only AI workers ever build a client.
+        from google import genai
+        from google.genai import types
 
         http_options = types.HttpOptions(
             api_version=config.api_version,

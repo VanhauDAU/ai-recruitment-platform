@@ -8,20 +8,19 @@ from django.core.files.base import ContentFile
 from PIL import Image
 from rest_framework.exceptions import ValidationError
 
+from common.files.signatures import image_content_type
 from common.storage.r2 import public_media_storage
 
-ALLOWED_IMAGE_SIGNATURES = {
-    'jpg': (b'\xff\xd8\xff', 'image/jpeg'),
-    'png': (b'\x89PNG\r\n\x1a\n', 'image/png'),
-    'gif': (b'GIF87a', 'image/gif'),
-    'webp': (b'RIFF', 'image/webp'),
+_IMAGE_EXTENSIONS = {
+    'image/jpeg': 'jpg',
+    'image/png': 'png',
+    'image/gif': 'gif',
+    'image/webp': 'webp',
 }
-
-WEBP_CONTAINER_MARKER = b'WEBP'
 
 
 def validate_image_upload(upload):
-    max_size = getattr(settings, 'IMAGE_UPLOAD_MAX_SIZE', 5 * 1024 * 1024)
+    max_size = settings.IMAGE_UPLOAD_MAX_SIZE
     if upload.size > max_size:
         max_mb = max_size / 1024 / 1024
         raise ValidationError({'file': f'Image must be smaller than {max_mb:g} MB.'})
@@ -29,15 +28,10 @@ def validate_image_upload(upload):
     header = upload.read(32)
     upload.seek(0)
 
-    for extension, (signature, content_type) in ALLOWED_IMAGE_SIGNATURES.items():
-        if extension == 'webp':
-            if header.startswith(signature) and WEBP_CONTAINER_MARKER in header[8:16]:
-                return extension, content_type
-            continue
-        if header.startswith(signature):
-            return extension, content_type
-
-    raise ValidationError({'file': 'Only JPG, PNG, GIF, or WebP images are supported.'})
+    content_type = image_content_type(header)
+    if not content_type:
+        raise ValidationError({'file': 'Only JPG, PNG, GIF, or WebP images are supported.'})
+    return _IMAGE_EXTENSIONS[content_type], content_type
 
 
 def _downscale_if_needed(upload, extension, max_dimensions):
@@ -99,7 +93,7 @@ def save_image_upload(upload, directory, request=None, max_dimensions=None):
 
 def media_public_url(path, request=None):
     url = public_media_storage().url(path)
-    public_base_url = getattr(settings, 'MEDIA_PUBLIC_BASE_URL', '').strip()
+    public_base_url = settings.MEDIA_PUBLIC_BASE_URL
 
     if public_base_url and url.startswith('/'):
         return urljoin(f'{public_base_url.rstrip("/")}/', url.lstrip('/'))
@@ -126,7 +120,7 @@ def _recognised_media_hosts():
     đường dẫn tương tự không được phép dẫn đến việc xoá nhầm file local.
     """
     hosts = {'localhost', '127.0.0.1', 'testserver'}
-    public_base_url = getattr(settings, 'MEDIA_PUBLIC_BASE_URL', '').strip()
+    public_base_url = settings.MEDIA_PUBLIC_BASE_URL
     if public_base_url:
         host = urlparse(public_base_url).hostname
         if host:

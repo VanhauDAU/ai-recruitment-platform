@@ -6,11 +6,11 @@ from rest_framework.test import APITestCase
 
 from apps.accounts.services import issue_tokens
 from apps.cv_templates.tests.factories import fill_cv_for_application, make_published_template
-from apps.cvs.services import create_v2_cv
+from apps.cvs.services import create_user_cv
 from apps.employers.models import Company, RecruiterProfile
-from apps.employers.tests.readiness_helpers import make_employer_ready
+from apps.employers.tests.factories import make_employer_ready
 from apps.jobs.models import Job
-from apps.jobs.tests.helpers import open_visibility_window
+from apps.jobs.tests.factories import open_visibility_window
 
 from ..models import Application, CandidateBlock
 from ..services import create_application_record
@@ -57,7 +57,7 @@ class CandidateBlockTests(APITestCase):
             **open_visibility_window(),
         )
         template, _version = make_published_template('Block template')
-        self.cv = create_v2_cv(actor=self.candidate, title='Block CV', template=template)
+        self.cv = create_user_cv(actor=self.candidate, title='Block CV', template=template)
         fill_cv_for_application(self.cv, self.candidate)
         self.application = create_application_record(
             candidate=self.candidate, job=self.jobs[0], cv=self.cv

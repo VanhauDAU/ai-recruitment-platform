@@ -12,7 +12,7 @@ from apps.knowledgebase.services import (
     update_category,
 )
 
-from .base import PublishedKnowledgeMixin
+from .factories import PublishedKnowledgeMixin
 
 
 def _all_keys(value):

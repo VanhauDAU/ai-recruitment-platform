@@ -15,18 +15,13 @@ from .alerts import (
     JobAlertWriteSerializer,
 )
 from .catalogs import BenefitSerializer, LanguageSerializer
-from .jobs import (
+from .employer_jobs import (
     EmployerJobDetailSerializer,
     EmployerJobDraftSerializer,
     EmployerJobListSerializer,
-    EmployerJobPostingContextSerializer,
     EmployerJobWriteSerializer,
-    JobDetailSerializer,
-    JobResponsibilityAcknowledgementSerializer,
-    JobSerializer,
-    PublicJobListSerializer,
-    PublicJobPreviewSerializer,
 )
+from .jobs import JobSerializer
 from .moderation import (
     AdminJobDecisionSerializer,
     AdminJobDetailSerializer,
@@ -34,6 +29,11 @@ from .moderation import (
     JobModerationEventSerializer,
     JobStatusHistoryAdminSerializer,
 )
+from .posting_context import (
+    EmployerJobPostingContextSerializer,
+    JobResponsibilityAcknowledgementSerializer,
+)
+from .public_jobs import JobDetailSerializer, PublicJobListSerializer, PublicJobPreviewSerializer
 from .recommendations import (
     CandidateJobRecommendationResponseSerializer,
     CvJobRecommendationResponseSerializer,

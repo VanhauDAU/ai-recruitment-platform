@@ -5,7 +5,7 @@ from django.db import models
 
 from common.db.public_id import generate_public_id
 
-from .state import UploadScanAttemptStatus, UploadState, UploadTrustStatus
+from .state import UploadScanAttemptStatus, UploadState
 
 
 class UploadSession(models.Model):
@@ -77,6 +77,9 @@ class UploadSession(models.Model):
             ),
         ]
 
+    def __str__(self):
+        return f'{self.public_id} ({self.state})'
+
     def save(self, *args, **kwargs):
         if not self.public_id:
             self.public_id = generate_public_id('ups')
@@ -100,7 +103,6 @@ class UploadAsset(models.Model):
         blank=True,
         related_name='asset',
     )
-    trust_status = models.CharField(max_length=24, choices=UploadTrustStatus.choices)
     purpose = models.CharField(max_length=64)
     original_filename = models.CharField(max_length=255)
     content_type = models.CharField(max_length=127)
@@ -158,14 +160,13 @@ class UploadAsset(models.Model):
                 name='upl_asset_hold_complete',
             ),
             models.CheckConstraint(
-                condition=(
-                    models.Q(trust_status=UploadTrustStatus.LEGACY_TRUSTED)
-                    | models.Q(deleted_at__isnull=False)
-                    | ~models.Q(checksum_sha256='')
-                ),
-                name='upl_clean_asset_has_checksum',
+                condition=models.Q(deleted_at__isnull=False) | ~models.Q(checksum_sha256=''),
+                name='upl_asset_has_checksum',
             ),
         ]
+
+    def __str__(self):
+        return f'{self.public_id} ({self.purpose})'
 
     def save(self, *args, **kwargs):
         if not self.public_id:
@@ -214,6 +215,9 @@ class UploadScanAttempt(models.Model):
                 name='upl_scan_completion_valid',
             ),
         ]
+
+    def __str__(self):
+        return f'{self.public_id} ({self.status})'
 
     def save(self, *args, **kwargs):
         if not self.public_id:

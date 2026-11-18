@@ -9,7 +9,8 @@ cổng. Dải hợp nhất hai nguồn:
    CTA, animation, dismiss, theme màu/ảnh nền và số liệu hiệu quả.
 
 Backend do app `apps.sitecontent` sở hữu (`models/announcements.py`,
-`services/announcements.py`, `services/announcement_media.py`,
+`services/announcement_{content,lifecycle,user_state,analytics}.py`,
+`services/announcement_media.py`,
 `selectors/announcements.py`). Tài liệu liên quan:
 
 - runtime frontend (ownership slice, priority resolver, rollout flag build-time,
@@ -222,15 +223,7 @@ Có hai cờ độc lập:
 Frontend chỉ nhận remote item khi `remote_enabled === true`; system message về
 xác thực/tuân thủ và banner fallback vẫn chạy khi remote tắt hoặc lỗi.
 
-Trước khi bật một surface, chạy preflight read-only:
-
-```bash
-python manage.py announcement_rollout_preflight --require-live-surface candidate --json
-```
-
-Lệnh fail khi kill switch chứa surface không hợp lệ, có announcement published
-thiếu active revision, critical thiếu `ends_at`, hoặc surface yêu cầu không có
-item live. Thứ tự bật và ngưỡng dừng nằm ở
+Thứ tự bật và ngưỡng dừng nằm ở
 [vận hành và kill switch](../06-deployment/van-hanh-va-kill-switch.md).
 
 Rollback ưu tiên tắt kill switch hoặc quay code; không reverse migration, không

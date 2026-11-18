@@ -1,5 +1,4 @@
-from .announcements import (
-    ActiveAnnouncementListView,
+from .announcements_admin import (
     AdminAnnouncementArchiveView,
     AdminAnnouncementBackgroundUploadView,
     AdminAnnouncementDetailView,
@@ -11,6 +10,9 @@ from .announcements import (
     AdminAnnouncementResetDismissalsView,
     AdminAnnouncementResumeView,
     AdminAnnouncementRevisionCreateView,
+)
+from .announcements_reader import (
+    ActiveAnnouncementListView,
     AnnouncementEventBatchView,
     AnnouncementRuntimeEventView,
     AnnouncementStateView,

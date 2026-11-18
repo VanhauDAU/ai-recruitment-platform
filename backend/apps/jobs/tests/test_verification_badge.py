@@ -1,8 +1,6 @@
 from datetime import timedelta
-from io import StringIO
 from unittest.mock import patch
 
-from django.core.management import call_command
 from django.test import override_settings
 from django.urls import reverse
 from django.utils import timezone
@@ -17,11 +15,11 @@ from apps.employers.models import (
     RecruiterProfile,
 )
 from apps.employers.services import account_badge_eligible_at, employer_badge_payload
-from apps.employers.tests.readiness_helpers import current_dpa_fields
+from apps.employers.tests.factories import current_dpa_fields
 
 from ..models import Job, JobReport
 from ..selectors.verification_badge import job_badge_criteria
-from .helpers import open_visibility_window
+from .factories import open_visibility_window
 
 
 def _employer_with_verification_case(
@@ -403,23 +401,6 @@ class JobBadgeApiTests(APITestCase):
         # The unverified member may not open candidate data, so its job is not public.
         self.assertEqual(badges, {owner_job.public_id: True})
         self.assertNotIn(member_job.public_id, badges)
-
-
-class EmployerBadgeAuditCommandTests(APITestCase):
-    @override_settings(EMPLOYER_BADGE_POLICY_MODE='enforce')
-    def test_command_emits_only_aggregate_cohorts_and_failure_counts(self):
-        user, company, _, _ = _employer_with_verification_case('audit-command')
-        _job_for(user, company)
-        output = StringIO()
-
-        call_command('audit_employer_badge_policy', stdout=output)
-
-        value = output.getvalue()
-        self.assertIn('total_recruiters=1', value)
-        self.assertIn('legacy_and_policy=1', value)
-        self.assertIn('failed_email_domain_verified=0', value)
-        self.assertNotIn('@', value)
-        self.assertNotIn(user.public_id, value)
 
 
 class JobReportApiTests(APITestCase):

@@ -9,7 +9,6 @@ from rest_framework.exceptions import ValidationError
 from apps.accounts.models import User
 from apps.campaigns.models import RecruitmentCampaign
 from apps.jobs.models import Job, give_back_hidden_time
-from common.db.public_id import generate_public_id
 
 from ..models import (
     Company,
@@ -297,129 +296,6 @@ def apply_dpa_hold(scope, *, rollout_id, actor=None):
     return hold, created
 
 
-@transaction.atomic(savepoint=False)
-def apply_expired_dpa_holds_batch(recruiter_ids, *, rollout_id, actor=None):
-    """Apply DPA holds for a bounded cohort with flat query count."""
-
-    rollout_id = rollout_id.strip()
-    if not rollout_id or len(rollout_id) > 64:
-        raise ValidationError(
-            {'code': 'DPA_ROLLOUT_ID_INVALID', 'detail': 'DPA rollout_id không hợp lệ.'}
-        )
-    recruiter_ids = sorted(set(recruiter_ids))
-    if not recruiter_ids:
-        return [], 0
-    users = tuple(
-        User.objects.select_for_update(of=('self',))
-        .filter(recruiter_profile__id__in=recruiter_ids)
-        .order_by('pk')
-    )
-    recruiters = tuple(
-        RecruiterProfile.objects.select_for_update(of=('self',))
-        .filter(pk__in=recruiter_ids)
-        .order_by('pk')
-    )
-    if len(recruiters) != len(recruiter_ids):
-        raise ValidationError(
-            {'code': 'DPA_ROLLOUT_COHORT_CHANGED', 'detail': 'Cohort DPA đã thay đổi.'}
-        )
-    if {user.pk for user in users} != {recruiter.user_id for recruiter in recruiters}:
-        raise ValidationError(
-            {'code': 'DPA_ROLLOUT_COHORT_CHANGED', 'detail': 'Chủ tài khoản DPA đã thay đổi.'}
-        )
-    from ..models.readiness import DpaStatus, current_dpa_status
-
-    now = timezone.now()
-    recruiters = tuple(
-        recruiter
-        for recruiter in recruiters
-        if recruiter.dpa_grace_rollout_id == rollout_id
-        and recruiter.dpa_grace_expires_at
-        and recruiter.dpa_grace_expires_at <= now
-        and current_dpa_status(recruiter) == DpaStatus.HOLD
-    )
-    if not recruiters:
-        return [], 0
-    recruiter_ids = [recruiter.pk for recruiter in recruiters]
-    eligible_user_ids = [recruiter.user_id for recruiter in recruiters]
-    tuple(
-        EmployerVerificationCase.objects.select_for_update(of=('self',))
-        .filter(recruiter_id__in=recruiter_ids)
-        .order_by('pk')
-    )
-    campaigns = tuple(
-        RecruitmentCampaign.objects.select_for_update(of=('self',))
-        .filter(owner_id__in=recruiter_ids)
-        .order_by('pk')
-    )
-    user_to_recruiter = {recruiter.user_id: recruiter.pk for recruiter in recruiters}
-    jobs = tuple(
-        Job.objects.select_for_update(of=('self',))
-        .filter(posted_by_id__in=eligible_user_ids)
-        .order_by('pk')
-    )
-    existing = tuple(
-        EmployerComplianceHold.objects.select_for_update(of=('self',))
-        .filter(
-            recruiter_id__in=recruiter_ids,
-            source=EmployerComplianceHold.Source.DPA,
-            status=EmployerComplianceHold.Status.ACTIVE,
-        )
-        .order_by('pk')
-    )
-    for hold in existing:
-        if (
-            hold.reason != EmployerComplianceHold.Reason.DPA_HOLD
-            or hold.metadata.get('rollout_id') != rollout_id
-        ):
-            raise ValidationError(
-                {
-                    'code': 'COMPLIANCE_HOLD_SOURCE_CONFLICT',
-                    'detail': f'Recruiter {hold.recruiter_id} có DPA hold khác.',
-                }
-            )
-    hold_by_recruiter = {hold.recruiter_id: hold for hold in existing}
-    missing = [recruiter for recruiter in recruiters if recruiter.pk not in hold_by_recruiter]
-    created_holds = EmployerComplianceHold.objects.bulk_create(
-        [
-            EmployerComplianceHold(
-                public_id=generate_public_id('ech'),
-                recruiter=recruiter,
-                source=EmployerComplianceHold.Source.DPA,
-                reason=EmployerComplianceHold.Reason.DPA_HOLD,
-                applied_by=actor,
-                metadata={
-                    'rollout_id': rollout_id,
-                    'grace_expires_at': recruiter.dpa_grace_expires_at.isoformat(),
-                },
-            )
-            for recruiter in missing
-        ]
-    )
-    hold_by_recruiter.update({hold.recruiter_id: hold for hold in created_holds})
-    EmployerComplianceHoldCampaign.objects.bulk_create(
-        [
-            EmployerComplianceHoldCampaign(
-                hold=hold_by_recruiter[campaign.owner_id],
-                campaign=campaign,
-            )
-            for campaign in campaigns
-        ],
-        ignore_conflicts=True,
-    )
-    EmployerComplianceHoldJob.objects.bulk_create(
-        [
-            EmployerComplianceHoldJob(
-                hold=hold_by_recruiter[user_to_recruiter[job.posted_by_id]],
-                job=job,
-            )
-            for job in jobs
-        ],
-        ignore_conflicts=True,
-    )
-    return list(hold_by_recruiter.values()), len(created_holds)
-
-
 def _give_back_display_time(released, *, now):
     """Jobs of a recruiter no longer held get back the time the hold hid them."""
     for hold in released:
@@ -514,7 +390,6 @@ def recruiter_has_active_compliance_hold(recruiter_id, *, source=None):
 __all__ = [
     'LockedVerificationScope',
     'apply_dpa_hold',
-    'apply_expired_dpa_holds_batch',
     'apply_verification_hold',
     'lock_verification_identity',
     'lock_or_create_verification_identity',

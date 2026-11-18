@@ -11,6 +11,12 @@ from .company_page import (
     CompanyPinnedJob,
 )
 from .company_report import CompanyReport, CompanyReportResolutionEvent
+from .company_update import (
+    ACTIVE_COMPANY_UPDATE_STATUSES,
+    CompanyUpdateEvent,
+    CompanyUpdateRequest,
+    CompanyUpdateRevision,
+)
 from .compliance import (
     EmployerComplianceHold,
     EmployerComplianceHoldCampaign,
@@ -18,6 +24,7 @@ from .compliance import (
 )
 from .domain_claim import CompanyDomainClaim, CompanyDomainClaimEvent
 from .dpa import EmployerDpaAcceptance
+from .evidence import CompanyDocument, CompanyTaxLookupEvidence
 from .membership import CompanyJoinRequest, EmployerCompanyLinkEvent, RecruiterProfile
 from .notifications import (
     EmployerActivity,
@@ -28,17 +35,13 @@ from .otp import EmployerPhoneVerificationEvent, PhoneOtp
 from .readiness import DpaStatus
 from .recruitment_need import RecruitmentNeed
 from .verification import (
-    CompanyDocument,
-    CompanyTaxLookupEvidence,
-    CompanyUpdateEvent,
-    CompanyUpdateRequest,
-    CompanyUpdateRevision,
     EmployerVerificationCase,
     EmployerVerificationEvent,
     EmployerVerificationNotification,
 )
 
 __all__ = [
+    'ACTIVE_COMPANY_UPDATE_STATUSES',
     'BudgetSource',
     'CompanyJoinRequest',
     'Company',

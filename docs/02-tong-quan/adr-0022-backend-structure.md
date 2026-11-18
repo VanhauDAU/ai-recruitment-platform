@@ -55,7 +55,7 @@ apps/<app>/
   trang công ty, chuẩn hóa số điện thoại, salt ký…). Nó không import ORM hay
   tầng nào khác của app, nên mọi tầng đều dùng được.
 - Hàm dựng QuerySet dùng chung cho cả `services/` và `selectors/` (ví dụ
-  `jobs/models/recommendation_queries.py`) đặt trong `models/`: hai tầng đó độc
+  `jobs/models/recommendation_queries/`) đặt trong `models/`: hai tầng đó độc
   lập với nhau, không được import lẫn nhau.
 - `urls/<cổng>.py` phân theo người dùng của endpoint: `auth` (chỉ accounts:
   đăng nhập, phiên, hồ sơ tài khoản), `shared` (cần đăng nhập, dùng ở nhiều cổng
@@ -137,9 +137,16 @@ Một phiên bản API duy nhất, không tiền tố version:
   ví dụ 409 xung đột phiên bản). View không tự `try/except` chỉ để đổi kiểu lỗi;
   `try/except` còn lại là chỗ cố ý gắn lỗi vào một field cụ thể.
 - Cờ và số từ query/setting đọc bằng `common.api.params` (`parse_bool`, `parse_int`).
+- `DomainError` nằm ở `common/errors.py` (không phụ thuộc DRF, services import
+  được mà không tạo vòng); handler nạp `rest_framework.views` trong hàm.
 - List tăng theo dữ liệu luôn phân trang, envelope `{count,next,previous,results}`;
   phân trang mặc định là `StandardPagination`, chỉ khai báo paginator riêng khi
-  kích thước trang có lý do (catalogue mẫu CV 24, gợi ý công ty 6).
+  kích thước trang có lý do (catalogue mẫu CV 24, gợi ý công ty 6). List không
+  phân trang phải có giới hạn tự nhiên: catalog do admin quản lý (ngành, địa
+  điểm, kỹ năng, danh mục blog/FAQ), dữ liệu theo một công ty (thành viên, tài
+  liệu, yêu cầu cập nhật), các lần nộp của một hồ sơ. Việc làm đã lưu của ứng
+  viên trả đủ danh sách vì frontend dùng nó để hiển thị trạng thái "đã lưu" trên
+  mọi thẻ tin; nếu số lượng lớn lên thì tách endpoint danh sách id.
 - Mọi view DRF có `@extend_schema`; tên enum trùng giữa app khai trong
   `ENUM_NAME_OVERRIDES`. CI chặn mọi lỗi/cảnh báo của drf-spectacular.
 - Browsable API chỉ bật khi `DEBUG`.
@@ -176,9 +183,9 @@ về 0 và gỡ baseline, từ đó mọi vi phạm làm fail CI.
 | 0 | ADR này, cổng kiểm tra import/OpenAPI, tách `requirements-dev.txt`, settings an toàn |
 | 1 | Chuẩn hóa bố cục từng app và `common/` (chỉ di chuyển); tên module/lớp `v2` đổi ở GĐ4 cùng URL |
 | 2 | Ranh giới domain: chuyển model chiến dịch sang `campaigns` (migration chỉ đổi state), phá vòng `cvs ↔ cv_templates`, bỏ lazy export của accounts, baseline import về 0 rồi gỡ |
-| 3 | Tầng API: exception handler + `DomainError`, nghiệp vụ ra khỏi view/serializer, GET không ghi DB, `@extend_schema` đủ (OpenAPI 0/0), `parse_bool`; bật phân trang cho list đang trả mảng dời sang GĐ4 (cùng lúc sửa API client frontend) |
+| 3 | Tầng API: exception handler + `DomainError`, nghiệp vụ ra khỏi view/serializer, GET không ghi DB, `@extend_schema` đủ (OpenAPI 0/0), `parse_bool` |
 | 4 | URL theo cổng (backend + frontend cùng PR), bỏ tên `v2` ở module/lớp/route |
-| 5 | Tách file lớn, gộp code trùng, gỡ legacy và lệnh chạy một lần |
+| 5 | Tách file lớn (settings thành `components/`), gộp code trùng (`common/outbox.py`, chính sách AI, chữ ký file, HTML→text), gỡ legacy media và lệnh chạy một lần, bật rule Django của ruff |
 | 6 | Baseline migration mới (chưa có production) |
 
 ## Hệ quả

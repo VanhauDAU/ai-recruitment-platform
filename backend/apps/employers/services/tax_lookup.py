@@ -2,6 +2,7 @@
 
 import hashlib
 import json
+import logging
 import re
 from dataclasses import dataclass
 from urllib.parse import quote
@@ -18,6 +19,8 @@ from ..models import CompanyTaxLookupEvidence, EmployerVerificationEvent
 from .companies import normalize_company_tax_code
 from .company_update_locks import lock_company_update_request
 from .compliance import lock_verification_identity
+
+logger = logging.getLogger(__name__)
 
 PROVIDER_TAX_CODE_PATTERN = re.compile(r'(?:[0-9]{10}|[0-9]{10}-[0-9]{3}|[0-9]{13})')
 
@@ -98,6 +101,7 @@ def _cache_get(key):
     try:
         return cache.get(key)
     except Exception:  # noqa: BLE001 - cache outage must not break provider lookup
+        logger.warning('Tax lookup cache read failed; querying the provider.', exc_info=True)
         return None
 
 
@@ -105,7 +109,7 @@ def _cache_set(key, value, timeout):
     try:
         cache.set(key, value, timeout)
     except Exception:  # noqa: BLE001 - evidence is still persisted without caching
-        return
+        logger.warning('Tax lookup cache write failed; result is not cached.', exc_info=True)
 
 
 def _bounded_text(value, limit):
@@ -252,6 +256,7 @@ def queue_company_tax_lookup(
         try:
             lookup_company_tax_evidence.delay(evidence.pk)
         except Exception:  # noqa: BLE001 - broker outage must not fail submission
+            logger.exception('Could not enqueue tax lookup %s; marked unavailable.', evidence.pk)
             CompanyTaxLookupEvidence.objects.filter(
                 pk=evidence.pk,
                 status=CompanyTaxLookupEvidence.Status.PENDING,

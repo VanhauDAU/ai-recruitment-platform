@@ -18,7 +18,7 @@ from ..services import email_verification, password_reset
 from ..services.refresh_cookies import cookie_name
 from ..services.tokens import issue_tokens
 from ..tasks import deliver_auth_email_job
-from .helpers import GOOGLE_PROFILE, refresh_session
+from .factories import GOOGLE_PROFILE, refresh_session
 
 
 @override_settings(

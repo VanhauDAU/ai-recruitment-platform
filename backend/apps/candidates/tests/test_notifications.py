@@ -9,7 +9,7 @@ from django.utils import timezone
 from rest_framework.test import APITestCase
 
 from apps.accounts.services import issue_tokens
-from apps.jobs.tests.helpers import open_visibility_window
+from apps.jobs.tests.factories import open_visibility_window
 from apps.sitecontent.models import SiteSetting
 
 from ..models import CandidateEmailNotificationSettings, CandidateNotification, CandidateProfile

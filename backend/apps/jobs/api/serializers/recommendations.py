@@ -3,7 +3,7 @@ import re
 from rest_framework import serializers
 
 from ...models import CandidateHiddenJob
-from .jobs import PublicJobListSerializer
+from .public_jobs import PublicJobListSerializer
 
 RANKING_SEED_PATTERN = re.compile(r'^[A-Za-z0-9_-]{1,64}$')
 PUBLIC_ID_PATTERN = re.compile(r'^[A-Za-z0-9_-]{1,50}$')

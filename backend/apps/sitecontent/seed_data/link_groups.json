@@ -1,0 +1,171 @@
+[
+  {
+    "key": "footer-locations",
+    "title": "Việc làm theo khu vực",
+    "source": "locations",
+    "placement": "footer_seo",
+    "order": 1,
+    "items": []
+  },
+  {
+    "key": "footer-categories",
+    "title": "Việc làm theo ngành nghề",
+    "source": "categories",
+    "placement": "footer_seo",
+    "order": 2,
+    "items": []
+  },
+  {
+    "key": "footer-cv",
+    "title": "Mẫu CV & Cẩm nang",
+    "source": "manual",
+    "placement": "footer_seo",
+    "order": 3,
+    "items": [
+      {
+        "label": "Mẫu CV",
+        "url": ""
+      },
+      {
+        "label": "Mẫu CV tiếng Anh",
+        "url": ""
+      },
+      {
+        "label": "Mẫu CV IT",
+        "url": ""
+      },
+      {
+        "label": "Mẫu CV Kế toán",
+        "url": ""
+      },
+      {
+        "label": "Mẫu CV Marketing",
+        "url": ""
+      },
+      {
+        "label": "CV là gì?",
+        "url": ""
+      },
+      {
+        "label": "Cách viết CV xin việc",
+        "url": ""
+      },
+      {
+        "label": "Mẫu Cover Letter",
+        "url": ""
+      }
+    ]
+  },
+  {
+    "key": "footer-tools",
+    "title": "Công cụ & Tra cứu",
+    "source": "manual",
+    "placement": "footer_seo",
+    "order": 4,
+    "items": [
+      {
+        "label": "Tính lương Gross - Net",
+        "url": ""
+      },
+      {
+        "label": "Tính thuế thu nhập cá nhân",
+        "url": ""
+      },
+      {
+        "label": "Trắc nghiệm tính cách MBTI",
+        "url": ""
+      },
+      {
+        "label": "Tra cứu mức lương",
+        "url": ""
+      },
+      {
+        "label": "Cẩm nang ngành CNTT",
+        "url": ""
+      },
+      {
+        "label": "Cẩm nang ngành Logistics",
+        "url": ""
+      },
+      {
+        "label": "Cẩm nang ngành Du lịch",
+        "url": ""
+      }
+    ]
+  },
+  {
+    "key": "footer-about",
+    "title": "Về ProCV",
+    "source": "manual",
+    "placement": "footer_nav",
+    "order": 1,
+    "items": [
+      {
+        "label": "Giới thiệu",
+        "url": ""
+      },
+      {
+        "label": "Góc báo chí",
+        "url": ""
+      },
+      {
+        "label": "Tuyển dụng",
+        "url": ""
+      },
+      {
+        "label": "Liên hệ",
+        "url": ""
+      }
+    ]
+  },
+  {
+    "key": "footer-career",
+    "title": "Hồ sơ & Sự nghiệp",
+    "source": "manual",
+    "placement": "footer_nav",
+    "order": 2,
+    "items": [
+      {
+        "label": "Tìm việc làm",
+        "url": "/viec-lam"
+      },
+      {
+        "label": "Việc làm đã lưu",
+        "url": "/viec-lam-da-luu"
+      },
+      {
+        "label": "Tạo CV chuyên nghiệp",
+        "url": ""
+      },
+      {
+        "label": "Review CV bằng AI",
+        "url": ""
+      }
+    ]
+  },
+  {
+    "key": "footer-employer",
+    "title": "Dành cho nhà tuyển dụng",
+    "source": "manual",
+    "placement": "footer_nav",
+    "order": 3,
+    "items": [
+      {
+        "label": "Đăng tin tuyển dụng",
+        "url": "/tuyendung"
+      },
+      {
+        "label": "Giải pháp tuyển dụng",
+        "url": "/tuyendung/dich-vu"
+      },
+      {
+        "label": "Bảng giá dịch vụ",
+        "url": "/tuyendung/bao-gia"
+      },
+      {
+        "label": "Đăng nhập nhà tuyển dụng",
+        "url": "/tuyendung/app/login"
+      }
+    ]
+  }
+]

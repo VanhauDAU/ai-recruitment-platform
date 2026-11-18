@@ -1,27 +1,16 @@
 """Public command API for the employers domain."""
 
-from ..models.verification import (
+from ..models.company_update import (
     ACTIVE_COMPANY_UPDATE_STATUSES,
     REQUESTER_EDITABLE_COMPANY_UPDATE_STATUSES,
 )
 from .companies import (
     COMPANY_DESCRIPTION_MIN_LENGTH,
-    PRE_REVIEW_COMPANY_UPDATE_STATUSES,
     SENSITIVE_FIELDS,
     UPDATABLE_COMPANY_FIELDS,
-    CompanyUpdateConflict,
-    apply_update_request,
-    capture_company_update_base_values,
-    close_company_update_before_review,
-    company_update_conflicting_fields,
-    current_company_update_revision,
     normalize_company_rich_text,
     normalize_company_tax_code,
-    review_company_update_document,
     set_company_industries,
-    snapshot_company_update_request,
-    start_company_update_review,
-    validate_company_update_revision,
 )
 from .company_documents import (
     VERIFICATION_METHOD_DOCUMENT_TYPES,
@@ -65,6 +54,21 @@ from .company_reports import (
     submit_company_report,
 )
 from .company_update_locks import lock_company_update_request
+from .company_update_review import (
+    PRE_REVIEW_COMPANY_UPDATE_STATUSES,
+    apply_update_request,
+    close_company_update_before_review,
+    review_company_update_document,
+    start_company_update_review,
+)
+from .company_update_revisions import (
+    CompanyUpdateConflict,
+    capture_company_update_base_values,
+    company_update_conflicting_fields,
+    current_company_update_revision,
+    snapshot_company_update_request,
+    validate_company_update_revision,
+)
 from .company_update_submission import (
     CompanyUpdateInReview,
     lock_company_update_target,
@@ -73,7 +77,6 @@ from .company_update_submission import (
 )
 from .compliance import (
     apply_dpa_hold,
-    apply_expired_dpa_holds_batch,
     apply_verification_hold,
     lock_or_create_verification_identity,
     lock_verification_identity,
@@ -162,8 +165,6 @@ from .verification import (
     confirm_verification_decision,
     confirm_verification_lifecycle_action,
     get_or_create_verification_case,
-    reconcile_recruiter_verification,
-    reconcile_verification_case,
     record_verification_document_access,
     record_verification_upload,
     recruiter_is_approved,
@@ -215,7 +216,6 @@ __all__ = [
     'accept_recruiter_dpa',
     'account_badge_eligible_at',
     'apply_dpa_hold',
-    'apply_expired_dpa_holds_batch',
     'apply_expired_recruiter_dpa_hold',
     'current_dpa_policy',
     'apply_verification_hold',
@@ -252,8 +252,6 @@ __all__ = [
     'recruiter_badge_eligibility',
     'recruiter_job_posting_entitlement',
     'get_or_create_verification_case',
-    'reconcile_recruiter_verification',
-    'reconcile_verification_case',
     'recruiter_posting_readiness',
     'recruiter_readiness_state',
     'lookup_company_tax',

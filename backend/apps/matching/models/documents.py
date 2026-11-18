@@ -70,6 +70,9 @@ class MatchDocument(models.Model):
             ),
         ]
 
+    def __str__(self):
+        return f'{self.kind}: {self.content_hash[:12]}'
+
 
 class MatchChunk(models.Model):
     """Một đoạn của tài liệu (một mục kinh nghiệm, một dòng yêu cầu…) kèm vector.
@@ -91,3 +94,6 @@ class MatchChunk(models.Model):
             ),
         ]
         ordering = ['document_id', 'position']
+
+    def __str__(self):
+        return f'{self.document_id}#{self.position}'

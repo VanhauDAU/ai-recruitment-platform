@@ -150,7 +150,7 @@ department `content-cv`: staff có `view` + `manage`; manager có cả bốn. H�
 chưa bắt buộc người duyệt khác người viết. Backend là nguồn kiểm quyền cuối;
 UI chỉ ẩn/disable action.
 
-Quy tắc chuyển trạng thái (`services/workflow.py`):
+Quy tắc chuyển trạng thái (`services/articles.py`):
 
 - Submit chỉ từ `DRAFT`; approve/reject chỉ từ `IN_REVIEW`. `APPROVED` và
   `REJECTED` bất biến; muốn sửa phải tạo revision mới (clone từ revision đang

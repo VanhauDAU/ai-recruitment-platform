@@ -1,6 +1,6 @@
 from http import HTTPStatus
 
-from common.api.exceptions import DomainError
+from common.errors import DomainError
 
 # Mã lỗi không có ở đây là lỗi dữ liệu đầu vào -> 400.
 _HTTP_STATUS = {

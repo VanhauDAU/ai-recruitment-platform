@@ -12,34 +12,22 @@ from django.core.exceptions import ValidationError
 
 from apps.cv_templates.domain.section_registry import get_section_contract
 
+from .content_text import (
+    CV_FONT_FAMILIES,
+    HEX_COLOR_RE,
+    validate_inline_text_styles,
+    validate_rich_text,
+)
 from .position import FIELD_KEY_RE, MAX_FIELD_OPTIONS, CvPositionField
 
 CANONICAL_SCHEMA_VERSION = 1
 MAX_DOCUMENT_BYTES = 256 * 1024
-# Font được đóng gói (OFL) và chọn được trong editor (CVT-2).
-CV_FONT_FAMILIES = ('Inter', 'Roboto', 'Be Vietnam Pro', 'Lora')
-# Tên font của tài liệu tạo trước CVT-2. Version và snapshot ứng tuyển là bất
-# biến nên vẫn phải hợp lệ; renderer hiển thị chúng bằng font đóng gói gần nhất.
-LEGACY_FONT_FAMILIES = frozenset({'Arial', 'Calibri', 'Source Sans Pro'})
-ALLOWED_FONT_FAMILIES = frozenset(CV_FONT_FAMILIES) | LEGACY_FONT_FAMILIES
-HEX_COLOR_RE = re.compile(r'^#[0-9A-Fa-f]{6}$')
 YEAR_MONTH_RE = re.compile(r'^\d{4}-(0[1-9]|1[0-2])$')
 # Trường riêng theo vị trí (section `position_details`, CVT-3).
 POSITION_FIELD_KEY_RE = re.compile(FIELD_KEY_RE)
 POSITION_FIELD_TEXT_LIMITS = {'text': 200, 'long_text': 2000, 'url': 300, 'select': 100}
 MAX_POSITION_LIST_VALUES = 30
 MAX_POSITION_LIST_VALUE_LENGTH = 60
-SAFE_RICH_TEXT_TYPES = frozenset({'bullet', 'paragraph'})
-SAFE_RICH_TEXT_MARKS = frozenset(
-    {
-        'bold',
-        'italic',
-        'underline',
-        'font_family',
-        'font_size_pt',
-        'color',
-    }
-)
 
 
 def _education_levels():
@@ -112,8 +100,8 @@ def validate_template_layout_capabilities(*, layout_json, capabilities):
 
     Template versions may opt into a resizable multi-column layout.  The
     canonical schema remains renderer-agnostic, while this narrow validator
-    makes the template's published min/max percentages authoritative for all
-    V2 writers, not only the browser slider.
+    makes the template's published min/max percentages authoritative for every
+    writer, not only the browser slider.
     """
     layout_capabilities = capabilities.get('layout', {}) if isinstance(capabilities, dict) else {}
     resize = (
@@ -193,7 +181,7 @@ def _validate_content(content, errors):
             zoom = personal_info['avatar_zoom']
             if not isinstance(zoom, (int, float)) or isinstance(zoom, bool) or not 1 <= zoom <= 3:
                 errors['content_json.personal_info.avatar_zoom'] = 'Must be between 1 and 3.'
-    _validate_inline_text_styles(content.get('inline_text_styles', {}), errors)
+    validate_inline_text_styles(content.get('inline_text_styles', {}), errors)
     sections = content.get('sections')
     if not isinstance(sections, list):
         errors['content_json.sections'] = 'Must be a list.'
@@ -242,7 +230,7 @@ def _validate_content(content, errors):
             else:
                 item_ids.add(item_id)
             _validate_item_dates(item, item_path, errors)
-            _validate_rich_text(item.get('description'), item_path, errors)
+            validate_rich_text(item.get('description'), item_path, errors)
             if section_key == 'position_details':
                 _validate_position_detail(item, item_path, errors)
             degree_level = item.get('degree_level', '')
@@ -309,109 +297,6 @@ def _validate_position_detail(item, path, errors):
     value = item.get('value')
     if value not in (None, '', []) and not _position_value_is_valid(field_type, value, options):
         errors[f'{path}.value'] = f'Invalid value for a {field_type} field.'
-
-
-def _validate_inline_text_styles(styles, errors):
-    if not isinstance(styles, dict):
-        errors['content_json.inline_text_styles'] = 'Must be an object.'
-        return
-    for style_id, marks in styles.items():
-        if not isinstance(style_id, str) or not style_id or not isinstance(marks, dict):
-            errors['content_json.inline_text_styles'] = 'Contains an invalid field style.'
-            return
-        if set(marks).difference(SAFE_RICH_TEXT_MARKS):
-            errors['content_json.inline_text_styles'] = 'Contains an unsupported field style mark.'
-            return
-        if any(
-            key in marks and not isinstance(marks[key], bool)
-            for key in ('bold', 'italic', 'underline')
-        ):
-            errors['content_json.inline_text_styles'] = 'Boolean field style marks must be boolean.'
-            return
-        if 'font_family' in marks and marks['font_family'] not in ALLOWED_FONT_FAMILIES:
-            errors['content_json.inline_text_styles'] = 'Contains an unsupported field style font.'
-            return
-        if 'font_size_pt' in marks and (
-            not isinstance(marks['font_size_pt'], (int, float))
-            or not 8 <= marks['font_size_pt'] <= 32
-        ):
-            errors['content_json.inline_text_styles'] = (
-                'Field style font size must be between 8 and 32 pt.'
-            )
-            return
-        if 'color' in marks and (
-            not isinstance(marks['color'], str) or not HEX_COLOR_RE.fullmatch(marks['color'])
-        ):
-            errors['content_json.inline_text_styles'] = (
-                'Field style color must be a six-digit hex color.'
-            )
-            return
-
-
-def _validate_rich_text(description, path, errors):
-    if description is None:
-        return
-    if not isinstance(description, dict) or description.get('format') not in {
-        'rich_text_v1',
-        'rich_text_v2',
-    }:
-        errors[f'{path}.description'] = 'Must use rich_text_v1 or rich_text_v2.'
-        return
-    blocks = description.get('content')
-    if not isinstance(blocks, list):
-        errors[f'{path}.description.content'] = 'Must be a list.'
-        return
-    for block in blocks:
-        if not isinstance(block, dict) or block.get('type') not in SAFE_RICH_TEXT_TYPES:
-            errors[f'{path}.description.content'] = 'Contains an unsafe rich-text block.'
-            return
-        text = block.get('text')
-        if not isinstance(text, str) or '<' in text or '>' in text:
-            errors[f'{path}.description.content'] = 'Rich text must be plain text blocks, not HTML.'
-            return
-        if description.get('format') == 'rich_text_v1':
-            continue
-        runs = block.get('runs')
-        if (
-            not isinstance(runs, list)
-            or ''.join(run.get('text', '') for run in runs if isinstance(run, dict)) != text
-        ):
-            errors[f'{path}.description.content'] = (
-                'rich_text_v2 text must equal the concatenated runs.'
-            )
-            return
-        for run in runs:
-            if not isinstance(run, dict) or not isinstance(run.get('text'), str):
-                errors[f'{path}.description.content'] = 'rich_text_v2 runs must contain text.'
-                return
-            marks = run.get('marks', {})
-            if not isinstance(marks, dict) or set(marks).difference(SAFE_RICH_TEXT_MARKS):
-                errors[f'{path}.description.content'] = 'rich_text_v2 contains unsupported marks.'
-                return
-            if any(
-                key in marks and not isinstance(marks[key], bool)
-                for key in ('bold', 'italic', 'underline')
-            ):
-                errors[f'{path}.description.content'] = 'Boolean rich-text marks must be boolean.'
-                return
-            if 'font_family' in marks and marks['font_family'] not in ALLOWED_FONT_FAMILIES:
-                errors[f'{path}.description.content'] = 'Unsupported rich-text font family.'
-                return
-            if 'font_size_pt' in marks and (
-                not isinstance(marks['font_size_pt'], (int, float))
-                or not 8 <= marks['font_size_pt'] <= 32
-            ):
-                errors[f'{path}.description.content'] = (
-                    'Rich-text font size must be between 8 and 32 pt.'
-                )
-                return
-            if 'color' in marks and (
-                not isinstance(marks['color'], str) or not HEX_COLOR_RE.fullmatch(marks['color'])
-            ):
-                errors[f'{path}.description.content'] = (
-                    'Rich-text color must be a six-digit hex color.'
-                )
-                return
 
 
 def _validate_layout(layout, content, errors):
@@ -528,7 +413,7 @@ def _validate_style(style, errors):
         style['theme_color']
     ):
         errors['style_json.theme_color'] = 'Must be a six-digit hex color.'
-    if style.get('font_family') not in ALLOWED_FONT_FAMILIES:
+    if style.get('font_family') not in CV_FONT_FAMILIES:
         errors['style_json.font_family'] = 'Unsupported font family.'
     if (
         not isinstance(style.get('font_scale'), (int, float))

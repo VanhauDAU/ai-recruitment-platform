@@ -33,26 +33,12 @@ must never silently fall back to local storage.
 
 ## Moving existing media
 
-The one-off R2 migration commands (`migrate_external_media_to_r2`,
+The one-off media migration commands (`migrate_external_media_to_r2`,
 `migrate_frontend_assets_to_r2`, `migrate_local_media_to_r2`,
-`normalize_media_references`) were removed in November 2026 after every
+`normalize_media_references`, `migrate_media_storage_layout` and the
+`LEGACY_MEDIA_ROOT` input it read) were removed in November 2026 after every
 environment had been migrated; recover them from Git history if an old
 deployment still needs them.
 
-If a deployment still has a shared `backend/media` directory, audit and copy it
-into the isolated destinations. The command is dry-run by default, resumable
-with `--cursor`, bounded by `--batch-size`, verifies content hashes, and always
-retains the unserved legacy source:
-
-```bash
-cd backend
-python manage.py migrate_media_storage_layout --json --batch-size 500
-python manage.py migrate_media_storage_layout --apply --json --batch-size 500
-```
-
-Repeat with the returned `next_cursor` until `has_more=false`, then reconcile
-counts before traffic.
-
-`LEGACY_MEDIA_ROOT` must not be exposed by Django, Vite or nginx. Only
-`PUBLIC_MEDIA_ROOT` may be served at `/media/`; private and quarantine buckets
+Only `PUBLIC_MEDIA_ROOT` may be served at `/media/`; private and quarantine buckets
 must return 403/404 on direct object requests.

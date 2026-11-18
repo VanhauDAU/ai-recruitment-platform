@@ -13,9 +13,9 @@ from apps.campaigns.models import CampaignActivity, RecruitmentCampaign
 from apps.cvs.models import UserCv
 from apps.cvs.services import create_initial_document
 from apps.employers.models import Company, DpaStatus, EmployerVerificationCase, RecruiterProfile
-from apps.employers.tests.readiness_helpers import make_employer_ready
+from apps.employers.tests.factories import make_employer_ready
 from apps.jobs.models import Job, JobCategory, JobEngagementDaily
-from apps.jobs.tests.helpers import open_visibility_window
+from apps.jobs.tests.factories import open_visibility_window
 
 
 class RecruitmentCampaignApiTests(TestCase):

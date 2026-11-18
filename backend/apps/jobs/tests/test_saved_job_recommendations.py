@@ -10,7 +10,7 @@ from apps.campaigns.models import RecruitmentCampaign
 from apps.cvs.models import UserCv
 from apps.cvs.services import create_initial_document
 from apps.employers.models import Company
-from apps.employers.tests.readiness_helpers import make_employer_ready
+from apps.employers.tests.factories import make_employer_ready
 from apps.locations.models import Location
 from apps.skills.models import Skill
 
@@ -22,7 +22,7 @@ from ..models import (
     JobSkill,
     SavedJob,
 )
-from .helpers import open_visibility_window
+from .factories import open_visibility_window
 
 
 class SavedJobRecommendationApiTests(APITestCase):

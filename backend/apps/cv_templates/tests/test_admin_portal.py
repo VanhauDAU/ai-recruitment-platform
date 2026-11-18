@@ -6,7 +6,7 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
 from rest_framework.test import APIClient
 
-from apps.accounts.tests.helpers import make_admin
+from apps.accounts.tests.factories import make_admin
 from apps.cv_templates.domain.section_registry import section_definition_seed_data
 
 from ..models import CvCategory, CvColor, CvSectionDefinition, CvTemplate, CvTemplateVersion

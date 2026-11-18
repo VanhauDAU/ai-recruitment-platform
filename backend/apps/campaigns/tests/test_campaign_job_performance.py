@@ -5,9 +5,9 @@ from rest_framework.test import APIClient
 
 from apps.campaigns.models import RecruitmentCampaign
 from apps.employers.models import Company
-from apps.employers.tests.readiness_helpers import make_employer_ready
+from apps.employers.tests.factories import make_employer_ready
 from apps.jobs.models import Job
-from apps.jobs.tests.helpers import open_visibility_window
+from apps.jobs.tests.factories import open_visibility_window
 
 
 class CampaignJobPerformanceTests(TestCase):

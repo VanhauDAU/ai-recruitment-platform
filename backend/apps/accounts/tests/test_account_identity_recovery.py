@@ -19,7 +19,7 @@ from apps.accounts.models import (
 from apps.accounts.services import email_verification, oauth, password_reset
 from apps.accounts.services.refresh_cookies import cookie_name
 from apps.accounts.services.tokens import issue_tokens
-from apps.accounts.tests.helpers import make_admin
+from apps.accounts.tests.factories import make_admin
 
 
 @override_settings(

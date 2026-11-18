@@ -280,8 +280,8 @@ class CvPositionPreviewView(PublicCatalogCacheMixin, APIView):
             except PositionContentUnavailable as error:
                 raise ValidationError({'locale': str(error)}) from error
 
-        # Compatibility: consumers that do not request a template keep the
-        # renderer-neutral content-only response.
+        # Without a template the answer is the renderer-neutral content only;
+        # the admin sample-content grid reads it that way.
         if not template_public_id:
             return self.cached_response(resolved)
 

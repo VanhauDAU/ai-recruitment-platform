@@ -1,18 +1,16 @@
-from apps.cv_templates.api.serializers.catalog import (
+from .admin_library import (
+    CvBackgroundAdminSerializer,
+    CvCategoryAdminSerializer,
+    CvColorAdminSerializer,
+)
+from .admin_samples import CvSampleContentAdminSerializer
+from .admin_templates import CvTemplateAdminSerializer, CvTemplateVersionAdminSerializer
+from .catalog import (
     CvCategorySerializer,
     CvPositionOptionSerializer,
     CvSampleContentCardSerializer,
     CvTemplateCardSerializer,
     CvTemplateDetailSerializer,
-)
-
-from .admin import (
-    CvBackgroundAdminSerializer,
-    CvCategoryAdminSerializer,
-    CvColorAdminSerializer,
-    CvSampleContentAdminSerializer,
-    CvTemplateAdminSerializer,
-    CvTemplateVersionAdminSerializer,
 )
 
 __all__ = [

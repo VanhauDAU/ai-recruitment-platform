@@ -112,6 +112,9 @@ def is_os_environ_call(node: ast.Call) -> bool:
     )
 
 
+ENV_VAR_OPTION = re.compile(r"['\"]env_var['\"]\s*:\s*['\"]([A-Z][A-Z0-9_]+)['\"]")
+
+
 def backend_consumers() -> dict[str, set[str]]:
     consumers: dict[str, set[str]] = defaultdict(set)
     roots = (ROOT / 'backend/config', ROOT / 'backend/apps', ROOT / 'backend/common')
@@ -147,8 +150,13 @@ def backend_consumers() -> dict[str, set[str]]:
                     consumers[key].add(f'{relative}:{getattr(node, "lineno", 0)}')
 
             # Site Settings of type "env" resolve a key name at runtime.
-            for match in re.finditer(r"['\"]env_var['\"]\s*:\s*['\"]([A-Z][A-Z0-9_]+)['\"]", text):
+            for match in ENV_VAR_OPTION.finditer(text):
                 consumers[match.group(1)].add(f'{relative}:dynamic-env-var')
+    # Seed data declares those "env" settings as JSON next to the seed command.
+    for path in (ROOT / 'backend/apps').glob('*/seed_data/*.json'):
+        relative = path.relative_to(ROOT)
+        for match in ENV_VAR_OPTION.finditer(path.read_text(encoding='utf-8')):
+            consumers[match.group(1)].add(f'{relative}:dynamic-env-var')
     return consumers
 
 

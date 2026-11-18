@@ -34,6 +34,9 @@ class ApplicationReviewLink(models.Model):
             models.Index(fields=['application', '-created_at'], name='app_review_link_app_idx'),
         ]
 
+    def __str__(self):
+        return self.public_id
+
     def save(self, *args, **kwargs):
         if not self.public_id:
             self.public_id = generate_public_id('arl')
@@ -69,3 +72,6 @@ class ApplicationReview(models.Model):
                 name='chk_application_review_rating',
             ),
         ]
+
+    def __str__(self):
+        return f'{self.application_id}: {self.recommendation}'

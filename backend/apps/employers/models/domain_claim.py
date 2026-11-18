@@ -95,13 +95,13 @@ class CompanyDomainClaim(models.Model):
             ),
         ]
 
+    def __str__(self):
+        return f'{self.company_id}:{self.domain}:{self.status}'
+
     def save(self, *args, **kwargs):
         if not self.public_id:
             self.public_id = generate_public_id('dcl')
         super().save(*args, **kwargs)
-
-    def __str__(self):
-        return f'{self.company_id}:{self.domain}:{self.status}'
 
 
 class CompanyDomainClaimEvent(models.Model):
@@ -146,6 +146,9 @@ class CompanyDomainClaimEvent(models.Model):
                 name='emp_domain_event_time_idx',
             ),
         ]
+
+    def __str__(self):
+        return f'{self.public_id}:{self.event_type}'
 
     def save(self, *args, **kwargs):
         if self.pk:

@@ -148,6 +148,14 @@ class Application(models.Model):
             models.Index(fields=['submitted_cv_version'], name='idx_app_submitted_cv_version'),
         ]
 
+    def __str__(self):
+        return f'{self.candidate.email} -> {self.job.title}'
+
+    def save(self, *args, **kwargs):
+        if not self.public_id:
+            self.public_id = generate_public_id('app')
+        super().save(*args, **kwargs)
+
     @property
     def auto_reject_due_at(self):
         """When this application is rejected automatically if still unanswered."""
@@ -182,11 +190,3 @@ class Application(models.Model):
         )
         first = history.order_by('created_at', 'id').first()
         return (first.from_status or self.Status.SUBMITTED) if first else self.status
-
-    def save(self, *args, **kwargs):
-        if not self.public_id:
-            self.public_id = generate_public_id('app')
-        super().save(*args, **kwargs)
-
-    def __str__(self):
-        return f'{self.candidate.email} -> {self.job.title}'

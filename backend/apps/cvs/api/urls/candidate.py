@@ -1,6 +1,6 @@
 from django.urls import path
 
-from apps.cvs.api.views.cvs import (
+from ..views import (
     CvApplySampleView,
     CvAssetUploadView,
     CvDetailView,

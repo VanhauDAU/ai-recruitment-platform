@@ -11,7 +11,6 @@ from django.conf import settings
 
 from .contracts import AiGenerationError
 
-DEFAULT_MODEL = 'gemini-3.5-flash-lite'
 GEMINI_DEVELOPER = 'gemini_developer'
 VERTEX = 'vertex'
 SUPPORTED_PROVIDER_BACKENDS = frozenset({GEMINI_DEVELOPER, VERTEX})
@@ -45,7 +44,8 @@ def _positive_float(value: Any, default: float) -> float:
 class AiRuntimeConfig:
     enabled: bool = False
     provider_backend: str = GEMINI_DEVELOPER
-    model: str = DEFAULT_MODEL
+    # Không có model mặc định trong code: tên model chỉ đến từ settings (AI_JOB_GENERATION_MODEL).
+    model: str = ''
     gemini_api_key: str = ''
     google_cloud_project: str = ''
     google_cloud_location: str = 'global'
@@ -58,37 +58,26 @@ class AiRuntimeConfig:
 
     @classmethod
     def from_django_settings(cls, *, model: str | None = None):
-        selected_model = model or getattr(settings, 'AI_JOB_GENERATION_MODEL', DEFAULT_MODEL)
-        pricing = getattr(settings, 'AI_MODEL_PRICING_USD', {})
+        selected_model = (model or settings.AI_JOB_GENERATION_MODEL).strip()
+        pricing = settings.AI_MODEL_PRICING_USD
         model_pricing: Mapping[str, Any] = {}
         if isinstance(pricing, Mapping):
             candidate = pricing.get(selected_model, {})
             if isinstance(candidate, Mapping):
                 model_pricing = candidate
         return cls(
-            enabled=getattr(settings, 'AI_RUNTIME_ENABLED', False) is True,
-            provider_backend=str(
-                getattr(settings, 'AI_PROVIDER_BACKEND', GEMINI_DEVELOPER)
-            ).strip(),
-            model=str(selected_model or DEFAULT_MODEL).strip(),
-            gemini_api_key=str(getattr(settings, 'GEMINI_API_KEY', '') or '').strip(),
-            google_cloud_project=str(getattr(settings, 'GOOGLE_CLOUD_PROJECT', '') or '').strip(),
-            google_cloud_location=str(
-                getattr(settings, 'GOOGLE_CLOUD_LOCATION', 'global') or 'global'
-            ).strip(),
-            api_version=str(getattr(settings, 'AI_PROVIDER_API_VERSION', 'v1') or 'v1').strip(),
-            timeout_seconds=_positive_float(
-                getattr(settings, 'AI_PROVIDER_TIMEOUT_SECONDS', 40),
-                40,
-            ),
-            max_attempts=min(
-                2,
-                _positive_int(getattr(settings, 'AI_PROVIDER_MAX_ATTEMPTS', 2), 2),
-            ),
-            retry_base_seconds=_positive_float(
-                getattr(settings, 'AI_PROVIDER_RETRY_BASE_SECONDS', 0.5),
-                0.5,
-            ),
+            # ``is True`` keeps the hard kill switch fail-closed for non-boolean overrides.
+            enabled=settings.AI_RUNTIME_ENABLED is True,
+            provider_backend=settings.AI_PROVIDER_BACKEND.strip(),
+            model=selected_model,
+            gemini_api_key=settings.GEMINI_API_KEY.strip(),
+            google_cloud_project=settings.GOOGLE_CLOUD_PROJECT.strip(),
+            google_cloud_location=settings.GOOGLE_CLOUD_LOCATION.strip() or 'global',
+            api_version=settings.AI_PROVIDER_API_VERSION.strip() or 'v1',
+            timeout_seconds=_positive_float(settings.AI_PROVIDER_TIMEOUT_SECONDS, 40),
+            # The product budget is at most two provider calls per request, whatever the env says.
+            max_attempts=min(2, _positive_int(settings.AI_PROVIDER_MAX_ATTEMPTS, 2)),
+            retry_base_seconds=_positive_float(settings.AI_PROVIDER_RETRY_BASE_SECONDS, 0.5),
             input_cost_per_million_usd=_decimal(model_pricing.get('input', 0)),
             output_cost_per_million_usd=_decimal(model_pricing.get('output', 0)),
         )

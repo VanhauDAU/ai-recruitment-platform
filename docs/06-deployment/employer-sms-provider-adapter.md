@@ -18,14 +18,13 @@ khi hoàn tất gateway sandbox và rollout gate. Cụ thể:
 ## 2. Boundary dữ liệu
 
 `PhoneOtp` được mở rộng thành challenge có `public_id`, `purpose` và state
-dispatch. Ba purpose SMS là `initial_verification`, `phone_change`, `reverify`;
-`legacy_email` chỉ còn là enum đọc dữ liệu lịch sử; endpoint/task tạo OTP email
-đã bị xóa và không được dùng làm fallback.
+dispatch. Purpose chỉ gồm `initial_verification`, `phone_change`, `reverify`;
+kênh OTP email cũ (`legacy_email`, cột plaintext `phone`) đã bị gỡ ở migration
+`employers.0071` và không được dùng làm fallback.
 
 Challenge SMS mới:
 
 - chỉ nhận số di động Việt Nam và chuẩn hóa thành `+84[35789]xxxxxxxx`;
-- để trống cột plaintext `phone`;
 - mã hóa riêng destination và OTP bằng Fernet key dành cho SMS;
 - lưu OTP hash bằng HMAC gắn với `challenge.public_id`, không dùng SHA-256 trần;
 - Celery chỉ nhận `challenge_public_id`, không nhận phone, OTP hoặc ciphertext;

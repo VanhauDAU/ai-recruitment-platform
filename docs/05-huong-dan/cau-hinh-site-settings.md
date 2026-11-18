@@ -21,7 +21,7 @@ Hệ thống cài đặt schema-driven: mỗi setting là một row `SiteSetting
 
 ## Quy ước thêm setting mới
 
-1. Thêm tuple vào `SETTINGS` trong `backend/apps/sitecontent/management/commands/seed_sitecontent.py` đúng nhóm.
+1. Thêm một object vào `backend/apps/sitecontent/seed_data/settings.json`, đặt cạnh các setting cùng nhóm (vị trí trong file quyết định `order` trong nhóm).
 2. Chạy `python manage.py seed_sitecontent`.
 3. Nếu frontend công khai cần dùng ngay cả khi API lỗi → thêm fallback vào `DEFAULT_SITE_SETTINGS` (`frontend/src/contexts/siteSettingsContext.js`).
 4. Lưu ý: các setting nhóm payment... hiện là **khung cấu hình** — logic nghiệp vụ sẽ đọc chúng khi tính năng tương ứng được xây (Giai đoạn 6.1–6.3, 7).

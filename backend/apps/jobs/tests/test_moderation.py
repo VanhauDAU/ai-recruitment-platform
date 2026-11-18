@@ -7,9 +7,9 @@ from rest_framework import status
 from rest_framework.exceptions import ValidationError
 from rest_framework.test import APITestCase
 
-from apps.accounts.tests.helpers import make_admin
+from apps.accounts.tests.factories import make_admin
 from apps.employers.models import Company, EmployerNotification, EmployerVerificationCase
-from apps.employers.tests.readiness_helpers import make_employer_ready
+from apps.employers.tests.factories import make_employer_ready
 from common.vietnam_time import vietnam_today
 
 from ..api.serializers import EmployerJobWriteSerializer
@@ -20,7 +20,7 @@ from ..models import (
     JobModerationEvent,
 )
 from ..services import build_job_content_snapshot, update_employer_job
-from .helpers import open_visibility_window
+from .factories import open_visibility_window
 
 
 class JobModerationFixture:

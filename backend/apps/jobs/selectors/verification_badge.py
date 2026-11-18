@@ -2,7 +2,6 @@
 
 from apps.employers.services import (
     BADGE_CRITERIA,
-    TRUST_REPORT_REASONS,
     employer_badge_payload,
     employer_badge_state_map,
     recruiter_badge_eligibility,
@@ -50,7 +49,6 @@ def badge_criteria_payload(job):
 __all__ = [
     'BADGE_CACHE_KEY',
     'CRITERIA_LABELS',
-    'TRUST_REPORT_REASONS',
     'badge_criteria_payload',
     'badge_state_map',
     'badge_verified_map',

@@ -21,7 +21,8 @@ from apps.accounts.models import User
 
 from ..models import Company, CompanyFollow, Industry
 from ..services import follow_company, unfollow_company
-from .company_page_helpers import (
+from .cases import LIST_ITEM_KEYS
+from .factories import (
     add_recruiter,
     hold_company,
     make_candidate,
@@ -29,7 +30,6 @@ from .company_page_helpers import (
     make_employer,
     publish_job,
 )
-from .test_company_page import LIST_ITEM_KEYS
 
 NOT_FOLLOWING = {'following': False, 'notify_new_jobs': False}
 

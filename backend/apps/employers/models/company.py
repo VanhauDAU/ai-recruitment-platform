@@ -22,13 +22,13 @@ class Industry(models.Model):
         verbose_name_plural = 'industries'
         ordering = ['name']
 
+    def __str__(self):
+        return self.name
+
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = slugify(self.name)
         super().save(*args, **kwargs)
-
-    def __str__(self):
-        return self.name
 
 
 class Company(models.Model):
@@ -71,7 +71,8 @@ class Company(models.Model):
     )
     # Với hộ kinh doanh là MST người đại diện. Chuỗi rỗng được chuẩn hoá về
     # NULL ở save(); API chỉ nhận mã 10 hoặc 13 chữ số.
-    tax_code = models.CharField(max_length=100, null=True, blank=True)
+    # NULL = chưa khai MST: API trả null và truy vấn lọc theo tax_code__isnull.
+    tax_code = models.CharField(max_length=100, null=True, blank=True)  # noqa: DJ001
     company_name = models.CharField(max_length=255)
     trade_name = models.CharField(max_length=255, blank=True)
     # Materialized accent/case-folded names keep public substring search on a
@@ -137,6 +138,9 @@ class Company(models.Model):
             ),
         ]
 
+    def __str__(self):
+        return self.company_name
+
     def save(self, *args, **kwargs):
         if not self.public_id:
             self.public_id = generate_public_id('co')
@@ -160,9 +164,6 @@ class Company(models.Model):
                 update_fields.add('trade_name_search')
             kwargs['update_fields'] = update_fields
         super().save(*args, **kwargs)
-
-    def __str__(self):
-        return self.company_name
 
     @property
     def display_name(self):
@@ -275,6 +276,9 @@ class CompanyMediaUpload(models.Model):
                 name='emp_media_company_kind_idx',
             ),
         ]
+
+    def __str__(self):
+        return f'{self.public_id}:{self.kind}'
 
     def save(self, *args, **kwargs):
         if not self.public_id:

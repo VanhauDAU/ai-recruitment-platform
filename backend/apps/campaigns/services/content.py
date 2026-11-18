@@ -9,6 +9,7 @@ from django.conf import settings
 from django.utils import timezone
 
 from apps.ai_core.models import AiInvocation
+from apps.ai_core.services import AiGenerationError, generate_structured
 from apps.jobs.models import Job
 from apps.jobs.services import salary_text, sanitize_source_text
 
@@ -133,7 +134,6 @@ def generate_channel_content(*, channel, user):
         ), 'ai_disabled'
     if _quota_left(user) <= 0:
         raise ContentQuotaExceeded
-    from apps.ai_core.services import generate_structured
 
     try:
         result = generate_structured(
@@ -146,7 +146,9 @@ def generate_channel_content(*, channel, user):
             result_validator=_validate,
             correlation_key=f'user:{user.pk}',
         )
-    except Exception:  # noqa: BLE001 - any provider/config failure falls back to the template
+    except AiGenerationError:
+        # ai_core normalizes every provider/config failure to this type; the draft
+        # then falls back to the template so the recruiter is never left empty-handed.
         return save_generated_content(
             channel, template_content(channel, jobs), 'template'
         ), 'ai_failed'

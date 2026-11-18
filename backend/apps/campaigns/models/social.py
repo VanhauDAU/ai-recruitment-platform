@@ -37,13 +37,13 @@ class SocialAccountConnection(models.Model):
             ),
         ]
 
+    def __str__(self):
+        return f'{self.provider}:{self.page_name}'
+
     def save(self, *args, **kwargs):
         if not self.public_id:
             self.public_id = generate_public_id('soc')
         super().save(*args, **kwargs)
-
-    def __str__(self):
-        return f'{self.provider}:{self.page_name}'
 
 
 class ScheduledSocialPost(models.Model):
@@ -90,10 +90,10 @@ class ScheduledSocialPost(models.Model):
             models.Index(fields=['status', 'next_attempt_at'], name='camp_post_due_idx'),
         ]
 
+    def __str__(self):
+        return f'{self.channel_id}:{self.status}'
+
     def save(self, *args, **kwargs):
         if not self.public_id:
             self.public_id = generate_public_id('post')
         super().save(*args, **kwargs)
-
-    def __str__(self):
-        return f'{self.channel_id}:{self.status}'

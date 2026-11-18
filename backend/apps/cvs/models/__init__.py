@@ -1,17 +1,10 @@
 """Public model API for the cvs Django app."""
 
-from .cv import (
-    CvAccessLog,
-    CvAsset,
-    CvDraft,
-    CvExport,
-    CvImportJob,
-    CvSharedLink,
-    CvSkill,
-    CvVersion,
-    ImmutableCvVersionError,
-    UserCv,
-)
+from .assets import CvAsset
+from .cv import CvSkill, UserCv
+from .jobs import CvExport, CvImportJob
+from .sharing import CvAccessLog, CvSharedLink
+from .versions import CvDraft, CvVersion, ImmutableCvVersionError
 
 __all__ = [
     'CvAccessLog',

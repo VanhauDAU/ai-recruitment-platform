@@ -1,7 +1,7 @@
 """Structured content of the public company page that goes through moderation.
 
 Rows here only change when an admin approves a company update request
-(``services.companies.apply_update_request``), like the ``Company`` columns.
+(``services.company_update_review.apply_update_request``), like the ``Company`` columns.
 """
 
 from django.db import models
@@ -59,10 +59,10 @@ class CompanyOffice(models.Model):
             ),
         ]
 
+    def __str__(self):
+        return f'{self.company_id}: {self.label}'
+
     def save(self, *args, **kwargs):
         if not self.public_id:
             self.public_id = generate_public_id('cof')
         super().save(*args, **kwargs)
-
-    def __str__(self):
-        return f'{self.company_id}: {self.label}'

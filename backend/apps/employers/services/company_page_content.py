@@ -19,7 +19,8 @@ from apps.employers.domain.page_content import (
 )
 from apps.jobs.models import Benefit
 from apps.locations.models import Location
-from common.html.rich_text import rich_text_plain_text, sanitize_rich_text
+from common.html.plain_text import html_plain_text
+from common.html.rich_text import sanitize_rich_text
 
 from ..models import CompanyBenefit, CompanyOffice
 
@@ -52,7 +53,7 @@ def _culture(value):
     if not isinstance(value, str):
         raise ValueError('Văn hoá công ty không hợp lệ.')
     sanitized = sanitize_rich_text(value)
-    if len(rich_text_plain_text(sanitized)) > CULTURE_MAX_LENGTH:
+    if len(html_plain_text(sanitized)) > CULTURE_MAX_LENGTH:
         raise ValueError(f'Văn hoá công ty không được vượt quá {CULTURE_MAX_LENGTH} ký tự.')
     return sanitized
 

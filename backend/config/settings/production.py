@@ -191,7 +191,6 @@ _errors.extend(
         public_root=PUBLIC_MEDIA_ROOT,
         private_root=PRIVATE_MEDIA_ROOT,
         quarantine_root=UPLOAD_QUARANTINE_ROOT,
-        legacy_root=LEGACY_MEDIA_ROOT,
         r2_enabled=R2_ENABLED,
         r2_quarantine_enabled=R2_QUARANTINE_ENABLED,
         r2_buckets=(R2_PUBLIC_BUCKET, R2_PRIVATE_BUCKET, R2_QUARANTINE_BUCKET),

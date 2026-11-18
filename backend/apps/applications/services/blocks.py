@@ -7,7 +7,7 @@ from django.utils import timezone
 from rest_framework.exceptions import NotFound
 
 from apps.employers.models import RecruiterProfile
-from common.api.exceptions import DomainError
+from common.errors import DomainError
 
 from ..models import Application, CandidateBlock
 from .status import change_application_status, reject_blocked_application

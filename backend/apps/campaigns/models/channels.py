@@ -80,13 +80,13 @@ class CampaignChannel(models.Model):
             ),
         ]
 
+    def __str__(self):
+        return f'{self.campaign_id}:{self.label}'
+
     def save(self, *args, **kwargs):
         if not self.public_id:
             self.public_id = generate_public_id('chn')
         super().save(*args, **kwargs)
-
-    def __str__(self):
-        return f'{self.campaign_id}:{self.label}'
 
 
 class CampaignChannelCost(models.Model):

@@ -56,6 +56,9 @@ class CandidateBlock(models.Model):
             ),
         ]
 
+    def __str__(self):
+        return self.public_id
+
     def save(self, *args, **kwargs):
         if not self.public_id:
             self.public_id = generate_public_id('cbk')

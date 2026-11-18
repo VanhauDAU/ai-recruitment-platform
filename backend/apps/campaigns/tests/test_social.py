@@ -12,8 +12,8 @@ from rest_framework.test import APIClient
 
 from apps.campaigns.models import RecruitmentCampaign
 from apps.employers.models import EmployerNotification
-from apps.employers.tests.readiness_helpers import make_employer_ready
-from apps.jobs.tests import test_posting_workflows
+from apps.employers.tests.factories import make_employer_ready
+from apps.jobs.tests.factories import JobPostingFixture
 from common.vietnam_time import vietnam_today
 
 from ..models import CampaignChannel, ScheduledSocialPost, SocialAccountConnection
@@ -25,12 +25,10 @@ Status = RecruitmentCampaign.Status
 Post = ScheduledSocialPost
 
 
-class SocialFixtures:
-    setUp_jobs = test_posting_workflows.JobPostingWorkflowTests.setUp
-
+class SocialFixtures(JobPostingFixture):
     def setUp(self):
         cache.clear()
-        self.setUp_jobs()
+        super().setUp()
         self.client = APIClient()
         self.client.force_authenticate(self.user)
         self.campaign = RecruitmentCampaign.objects.create(

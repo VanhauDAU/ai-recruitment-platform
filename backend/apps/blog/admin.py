@@ -34,7 +34,21 @@ class PostAdminForm(forms.ModelForm):
 
     class Meta:
         model = Post
-        fields = '__all__'
+        fields = [
+            'title',
+            'slug',
+            'category',
+            'summary',
+            'status',
+            'thumbnail_url',
+            'content',
+            'related_job_category',
+            'tags',
+            'seo_title',
+            'seo_description',
+            'author',
+            'published_at',
+        ]
         widgets = {
             'content': forms.Textarea(
                 attrs={'rows': 24, 'style': 'font-family: monospace; width: 100%;'}

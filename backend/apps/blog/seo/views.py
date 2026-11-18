@@ -4,7 +4,7 @@ from django.views import View
 
 from apps.blog.selectors.seo import blog_sitemap_rows, seo_category_by_slug, seo_post_by_slug
 from apps.sitecontent.services import resolved_seo_settings
-from common.html.rich_text import rich_text_plain_text
+from common.html.plain_text import html_plain_text
 from common.seo import (
     SeoMetadata,
     absolute_url,
@@ -173,7 +173,7 @@ class BlogDetailSeoShellView(View):
         if image:
             article['image'] = absolute_url(request, image)
         description = truncate_text(
-            post.seo_description or post.summary or rich_text_plain_text(post.content)
+            post.seo_description or post.summary or html_plain_text(post.content)
         )
         return render_seo_shell(
             request,

@@ -16,7 +16,12 @@ from apps.applications.models import Application
 from apps.jobs.models import Job
 from common.vietnam_time import vietnam_today
 
-from ..models import CampaignChannel, CampaignChannelClickDaily, CampaignChannelCost
+from ..models import (
+    CampaignChannel,
+    CampaignChannelClickDaily,
+    CampaignChannelCost,
+    CampaignHealthSnapshot,
+)
 
 # Hire probability of an application still open at a stage, used until the
 # campaign has MIN_STAGE_SAMPLE decided applications that reached that stage.
@@ -31,6 +36,8 @@ RESPONSE_WINDOW = timedelta(hours=48)
 BACKLOG_ALERT = 5
 CHANNEL_SILENT_DAYS = 5
 OVERBURN_RATIO = 1.2
+# Nhãn tình trạng cho email cảnh báo và file báo cáo, cùng nguồn với enum đã lưu.
+HEALTH_STATUS_LABELS = dict(CampaignHealthSnapshot.Status.choices)
 
 S = Application.Status
 DECIDED = {S.ACCEPTED, S.REJECTED, S.WITHDRAWN}

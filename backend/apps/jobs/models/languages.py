@@ -13,13 +13,13 @@ class Language(models.Model):
     class Meta:
         ordering = ['name']
 
+    def __str__(self):
+        return self.name
+
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = slugify(self.name)
         super().save(*args, **kwargs)
-
-    def __str__(self):
-        return self.name
 
 
 class JobLanguageRequirement(models.Model):
@@ -46,3 +46,6 @@ class JobLanguageRequirement(models.Model):
         ordering = ['sort_order', 'id']
         constraints = [models.UniqueConstraint(fields=['job', 'language'], name='uq_job_language')]
         indexes = [models.Index(fields=['language', 'proficiency_level'])]
+
+    def __str__(self):
+        return f'{self.job_id}: {self.language_id}'

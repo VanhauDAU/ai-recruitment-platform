@@ -14,13 +14,20 @@ from rest_framework.exceptions import ValidationError
 
 from apps.uploads.services import UploadServiceError, claim_clean_upload
 from common.db.public_id import generate_public_id
-from common.files.signatures import PDF_SIGNATURE, SIGNATURE_WINDOW_BYTES, has_pdf_header
+from common.files.signatures import (
+    JPEG_SIGNATURE,
+    PDF_SIGNATURE,
+    PNG_SIGNATURE,
+    SIGNATURE_WINDOW_BYTES,
+    ZIP_SIGNATURE,
+    has_pdf_header,
+)
 from common.storage.r2 import private_media_storage
 
 from ..models import CompanyDocument
-from ..models.verification import REQUESTER_EDITABLE_COMPANY_UPDATE_STATUSES
-from .companies import snapshot_company_update_request
+from ..models.company_update import REQUESTER_EDITABLE_COMPANY_UPDATE_STATUSES
 from .company_update_locks import lock_company_update_request
+from .company_update_revisions import snapshot_company_update_request
 from .upload_validation import (
     EmployerUploadSessionRejected,
     EmployerUploadStructureError,
@@ -28,13 +35,16 @@ from .upload_validation import (
 )
 from .verification import get_or_create_verification_case, record_verification_upload
 
+# Only the DPA copy still accepts legacy Word (.doc, an OLE2 compound file), so
+# its signature stays here rather than in the shared table.
+OLE2_SIGNATURE = b'\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1'
 DOCUMENT_SIGNATURES = {
-    'jpg': (b'\xff\xd8\xff', {'image/jpeg'}),
-    'png': (b'\x89PNG\r\n\x1a\n', {'image/png'}),
+    'jpg': (JPEG_SIGNATURE, {'image/jpeg'}),
+    'png': (PNG_SIGNATURE, {'image/png'}),
     'pdf': (PDF_SIGNATURE, {'application/pdf'}),
-    'doc': (b'\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1', {'application/msword'}),
+    'doc': (OLE2_SIGNATURE, {'application/msword'}),
     'docx': (
-        b'PK\x03\x04',
+        ZIP_SIGNATURE,
         {'application/vnd.openxmlformats-officedocument.wordprocessingml.document'},
     ),
 }
@@ -60,10 +70,6 @@ VERIFICATION_DOCUMENT_TYPES = frozenset().union(*VERIFICATION_METHOD_DOCUMENT_TY
 UPDATE_REQUEST_NOT_FOUND = {'update_request': 'Không tìm thấy yêu cầu cập nhật đang chờ.'}
 
 
-def _max_document_size():
-    return getattr(settings, 'IMAGE_UPLOAD_MAX_SIZE', 5 * 1024 * 1024)
-
-
 def _matches_signature(extension, header, signature):
     if extension == 'pdf':
         return has_pdf_header(header)
@@ -77,7 +83,7 @@ def _allowed_extensions(doc_type):
 
 
 def _save_document_file(upload, directory, doc_type):
-    if upload.size > _max_document_size():
+    if upload.size > settings.IMAGE_UPLOAD_MAX_SIZE:
         raise ValidationError({'file': 'Giấy tờ phải nhỏ hơn 5 MB.'})
 
     header = upload.read(SIGNATURE_WINDOW_BYTES)
@@ -115,7 +121,7 @@ def _claim_scanned_document(*, user, upload_session_public_id, doc_type, for_upd
         )
     except UploadServiceError as error:
         raise EmployerUploadSessionRejected(error) from error
-    if upload_asset.size_bytes > _max_document_size():
+    if upload_asset.size_bytes > settings.IMAGE_UPLOAD_MAX_SIZE:
         raise ValidationError({'upload_session': 'Giấy tờ phải nhỏ hơn 5 MB.'})
     allowed_content_types = DOCUMENT_CONTENT_TYPES.get(doc_type, DEFAULT_DOCUMENT_CONTENT_TYPES)
     if upload_asset.content_type not in allowed_content_types:

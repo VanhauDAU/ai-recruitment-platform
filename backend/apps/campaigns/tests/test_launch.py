@@ -8,7 +8,7 @@ from apps.campaigns.models import CampaignActivity, RecruitmentCampaign
 from apps.employers.models import EmployerNotification
 from apps.jobs.models import Job
 from apps.jobs.services import RESPONSIBILITY_STATEMENT_VERSION
-from apps.jobs.tests import test_posting_workflows
+from apps.jobs.tests.factories import JobPostingFixture
 from common.vietnam_time import vietnam_today
 
 from ..models import CampaignLaunchPlan
@@ -17,14 +17,9 @@ from ..services import run_campaign_schedule
 Status = RecruitmentCampaign.Status
 
 
-class CampaignLaunchTests(TestCase):
-    # Borrow fixtures through the module so pytest does not collect that class again.
-    setUp_jobs = test_posting_workflows.JobPostingWorkflowTests.setUp
-    make_publishable_job = test_posting_workflows.JobPostingWorkflowTests.make_publishable_job
-    make_active_job = test_posting_workflows.JobPostingWorkflowTests.make_active_job
-
+class CampaignLaunchTests(JobPostingFixture, TestCase):
     def setUp(self):
-        self.setUp_jobs()
+        super().setUp()
         self.client = APIClient()
         self.client.force_authenticate(self.user)
         self.today = vietnam_today()

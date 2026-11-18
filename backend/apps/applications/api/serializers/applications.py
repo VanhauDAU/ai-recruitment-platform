@@ -137,11 +137,6 @@ class CandidateApplicationCreateSerializer(serializers.Serializer):
         required=False,
         allow_empty=True,
     )
-    preferred_location_id = serializers.IntegerField(
-        required=False,
-        allow_null=True,
-        write_only=True,
-    )
     allow_ai_analysis = serializers.BooleanField(required=False, default=False)
     data_processing_consent = serializers.BooleanField()
     contact_name = serializers.CharField(required=False, allow_blank=True, max_length=255)
@@ -170,9 +165,6 @@ class CandidateApplicationCreateSerializer(serializers.Serializer):
             for item in job.job_locations.select_related('location__parent').all()
         }
         selected_ids = list(dict.fromkeys(attrs.pop('preferred_location_ids', [])))
-        legacy_id = attrs.pop('preferred_location_id', None)
-        if legacy_id is not None and not selected_ids:
-            selected_ids = [legacy_id]
         if province_ids and not selected_ids:
             raise serializers.ValidationError(
                 {

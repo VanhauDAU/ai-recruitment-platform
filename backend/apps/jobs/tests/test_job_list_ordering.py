@@ -8,10 +8,10 @@ from rest_framework.test import APITestCase
 
 from apps.accounts.models import User
 from apps.employers.models import Company
-from apps.employers.tests.readiness_helpers import make_employer_ready
+from apps.employers.tests.factories import make_employer_ready
 
 from ..models import Job
-from .helpers import open_visibility_window
+from .factories import open_visibility_window
 
 
 class OrganicJobListOrderingTests(APITestCase):

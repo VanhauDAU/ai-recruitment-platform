@@ -8,6 +8,20 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-19
 
+#### Changed — Backend: dọn chất lượng (ADR-0022, GĐ5)
+
+- Không còn module production nào trên 500 dòng; settings tách thành
+  `config/settings/components/` (giá trị không đổi).
+- Gộp code trùng: `common/outbox.py`, `common/errors.py` (`DomainError`), một
+  bộ chuyển HTML→text, một bảng chữ ký file, chính sách AI tạo tin một nguồn.
+- **Bảo mật**: captcha và nhật ký truy cập CV lấy IP client qua
+  `common.http.client_ip` (trước đây tin `X-Forwarded-For`/`REMOTE_ADDR`).
+- Gỡ legacy: chuỗi `legacy-media`, 9 lệnh chạy một lần, kênh OTP email cũ, nguồn
+  quyết định `legacy_*`, font CV cũ (Arial/Calibri/Source Sans Pro); bỏ trường API
+  không dùng `application_deadline`, `is_salary_visible`, `preferred_location_id`.
+- `GET /api/public/skills/?group=abc` trả `[]` thay vì 500; ảnh GIF89a được nhận.
+- Bật rule Django của ruff; thêm test privacy/skills/locations, tách file test lớn.
+
 #### Changed — API theo cổng (ADR-0022, GĐ4) — **thay đổi phá vỡ**
 
 - Mọi endpoint chuyển sang `/api/{auth,public,candidate,employer,admin,shared}/`;

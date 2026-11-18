@@ -4,14 +4,17 @@ import requests
 from django.conf import settings
 from rest_framework.exceptions import ValidationError
 
+from common.http.client_ip import client_ip
+
 RECAPTCHA_VERIFY_URL = 'https://www.google.com/recaptcha/api/siteverify'
 
 
 def verify_request_captcha(request, action):
     """Verify the token submitted with an HTTP request for the given action."""
-    remote_ip = request.META.get('REMOTE_ADDR') if request else None
+    # Behind nginx REMOTE_ADDR is the proxy itself; Google scores the token
+    # against the end user's address, so resolve it through the trusted hops.
     token = request.data.get('captcha_token') if request else None
-    verify_recaptcha(token, action, remote_ip)
+    verify_recaptcha(token, action, client_ip(request))
 
 
 def verify_recaptcha(token, action, remote_ip=None):

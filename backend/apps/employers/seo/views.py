@@ -10,7 +10,7 @@ from apps.employers.selectors import (
     seo_company_by_slug,
 )
 from apps.sitecontent.services import resolved_seo_settings
-from common.html.rich_text import rich_text_plain_text
+from common.html.plain_text import html_plain_text
 from common.seo import (
     SeoMetadata,
     absolute_url,
@@ -122,7 +122,7 @@ class CompanySeoShellView(View):
             )
 
         canonical_url = absolute_url(request, company.public_page_path)
-        about = truncate_text(rich_text_plain_text(company.description))
+        about = truncate_text(html_plain_text(company.description))
         description = about or f'Tìm hiểu {company.display_name} và các việc làm đang tuyển.'
         image = media_url_from_value(
             company.cover_image_url or company.logo_url,

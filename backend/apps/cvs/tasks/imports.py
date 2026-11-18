@@ -82,7 +82,7 @@ def process_cv_import_job(job_id):
         text_value = _extract_import_text(job.cv)
         content = structure_cv_text(text_value, job.cv.language)
         content = overlay_actor_identity(content, job.user, fill_only=True)
-        # Màu ứng viên chọn khi upload nằm ở bản nháp ban đầu do create_v2_cv tạo.
+        # Màu ứng viên chọn khi upload nằm ở bản nháp ban đầu do create_user_cv tạo.
         draft = CvDraft.objects.filter(cv_id=job.cv_id).only('style_json').first()
         theme_color = (draft.style_json or {}).get('theme_color') if draft else None
         document = compose_cv_document(

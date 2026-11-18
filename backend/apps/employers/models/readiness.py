@@ -104,9 +104,9 @@ def employer_readiness_queryset():
     # Local imports keep Django model package initialisation acyclic.
     from .company import CompanyIndustry
     from .compliance import EmployerComplianceHold
+    from .evidence import CompanyDocument
     from .membership import RecruiterProfile
     from .recruitment_need import RecruitmentNeed
-    from .verification import CompanyDocument
 
     owned_documents = (
         Q(

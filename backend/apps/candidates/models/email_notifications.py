@@ -28,7 +28,7 @@ class CandidateEmailNotificationSettings(models.Model):
     employer_invitation_email = models.BooleanField(default=True)
     employer_invitation_web = models.BooleanField(default=True)
 
-    # Email việc làm (consumer: apps/jobs/services/digests.py).
+    # Email việc làm (consumer: apps/jobs/services/digests/).
     configured_job_alerts = models.BooleanField(default=True)
     suitable_job_recommendations = models.BooleanField(default=False)
     followed_company_jobs = models.BooleanField(default=True)

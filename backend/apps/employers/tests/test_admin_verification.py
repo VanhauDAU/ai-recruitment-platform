@@ -1,3 +1,5 @@
+"""Admin review of employer verification cases and their documents."""
+
 from datetime import timedelta
 from io import BytesIO
 from unittest.mock import patch
@@ -7,11 +9,8 @@ from django.contrib.admin.sites import AdminSite
 from django.test import override_settings
 from django.urls import reverse
 from django.utils import timezone
-from rest_framework.test import APITestCase
 
-from apps.accounts.models import User
-from apps.accounts.tests.helpers import make_admin
-from apps.jobs.models import JobCategory
+from apps.accounts.tests.factories import make_admin
 
 from ..admin import (
     CompanyAdmin,
@@ -22,154 +21,26 @@ from ..admin import (
 from ..models import (
     Company,
     CompanyDocument,
-    CompanyIndustry,
-    CompanyTaxLookupEvidence,
     CompanyUpdateRequest,
-    EmployerDpaAcceptance,
     EmployerNotification,
     EmployerNotificationPreference,
     EmployerVerificationCase,
     EmployerVerificationEvent,
     EmployerVerificationNotification,
-    Industry,
     RecruiterProfile,
-    RecruitmentNeed,
 )
 from ..services import (
     CandidateDataBlocked,
     confirm_verification_decision,
     ensure_recruiter_candidate_data_access,
-    get_or_create_verification_case,
-    reconcile_recruiter_verification,
     recruiter_is_approved,
     recruiter_posting_readiness,
-    start_company_update_review,
     verification_decision_impact,
 )
+from .cases import AdminVerificationTestCase
 
 
-class EmployerAccountVerificationTests(APITestCase):
-    def setUp(self):
-        self.admin = User.objects.create_superuser(
-            email='verification-admin@example.com',
-            password='Password@123',
-        )
-        self.first_user = self._employer('first-recruiter@example.com')
-        self.company = Company.objects.create(
-            company_name='Công ty dùng chung',
-            tax_code='0109999999',
-            created_by=self.first_user,
-        )
-        self.first = self._complete_recruiter(self.first_user)
-        self.second_user = self._employer('second-recruiter@example.com')
-        self.second = self._complete_recruiter(self.second_user)
-        self.category = JobCategory.objects.create(
-            name='Kiểm thử xác thực NTD',
-            category_type=JobCategory.CategoryType.SPECIALIZATION,
-        )
-        for recruiter in (self.first, self.second):
-            RecruitmentNeed.objects.create(
-                recruiter=recruiter,
-                position_category=self.category,
-                position_level=RecruitmentNeed.PositionLevel.EMPLOYEE,
-                is_continuous=True,
-                headcount=1,
-                budget_source=RecruitmentNeed.BudgetSource.COMPANY,
-                completed_at=timezone.now(),
-            )
-        self.first_case = self._case_with_approved_documents(self.first)
-        self.second_case = self._case_with_approved_documents(self.second)
-
-    def _employer(self, email):
-        return User.objects.create_user(
-            email=email,
-            password='Password@123',
-            role=User.Role.EMPLOYER,
-            email_verified=True,
-        )
-
-    def _complete_recruiter(self, user):
-        # The verified number is also the contact and login number.
-        User.objects.filter(pk=user.pk).update(phone=f'09{user.pk:08d}')
-        user.phone = f'09{user.pk:08d}'
-        recruiter = RecruiterProfile.objects.create(
-            user=user,
-            company=self.company,
-            company_role=RecruiterProfile.CompanyRole.MEMBER,
-            verified_phone=f'09{user.pk:08d}',
-            contact_phone=f'09{user.pk:08d}',
-            phone_verified_at=timezone.now(),
-            registration_completed_at=timezone.now(),
-            dpa_accepted_at=timezone.now(),
-            dpa_policy_version=settings.EMPLOYER_DPA_POLICY_VERSION,
-            dpa_document_sha256=settings.EMPLOYER_DPA_DOCUMENT_SHA256,
-        )
-        EmployerDpaAcceptance.objects.create(
-            recruiter=recruiter,
-            policy_version=settings.EMPLOYER_DPA_POLICY_VERSION,
-            document_sha256=settings.EMPLOYER_DPA_DOCUMENT_SHA256,
-            document_url=settings.EMPLOYER_DPA_DOCUMENT_URL,
-        )
-        return recruiter
-
-    def _case_with_approved_documents(self, recruiter):
-        case = get_or_create_verification_case(recruiter)
-        case.verification_method = EmployerVerificationCase.VerificationMethod.BUSINESS_REGISTRATION
-        case.status = EmployerVerificationCase.Status.PENDING
-        case.submitted_at = timezone.now()
-        case.lock_version = 1
-        case.save()
-        for doc_type in (
-            CompanyDocument.DocType.BUSINESS_REGISTRATION,
-            CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT,
-        ):
-            CompanyDocument.objects.create(
-                company=self.company,
-                recruiter=recruiter,
-                uploaded_by=recruiter.user,
-                verification_case=case,
-                doc_type=doc_type,
-                file_url=f'employers/{recruiter.public_id}/{doc_type}.pdf',
-                file_name=f'{doc_type}.pdf',
-                mime_type='application/pdf',
-                file_size=1024,
-                sha256=f'{recruiter.pk:064x}',
-                status=CompanyDocument.Status.APPROVED,
-            )
-        CompanyTaxLookupEvidence.objects.create(
-            company=self.company,
-            verification_case=case,
-            requested_by=recruiter.user,
-            workflow_revision=case.revision,
-            tax_code=self.company.tax_code,
-            submitted_company_name=self.company.company_name,
-            status=CompanyTaxLookupEvidence.Status.FOUND,
-            returned_tax_code=self.company.tax_code,
-            registered_name=self.company.company_name,
-            completed_at=timezone.now(),
-        )
-        return case
-
-    def _put_in_review(self, case):
-        case.status = EmployerVerificationCase.Status.IN_REVIEW
-        case.reviewer = self.admin
-        case.review_started_at = timezone.now()
-        case.save(update_fields=['status', 'reviewer', 'review_started_at', 'updated_at'])
-        return case
-
-    def _put_company_update_in_review(self, update_request, *, actor=None):
-        update_request.refresh_from_db()
-        return start_company_update_review(
-            update_request,
-            actor=actor or self.admin,
-            lock_version=update_request.lock_version,
-            revision_public_id=(
-                update_request.current_revision.public_id
-                if update_request.current_revision_id
-                else ''
-            ),
-        )
-
+class EmployerAccountVerificationTests(AdminVerificationTestCase):
     def test_recruiters_in_same_company_have_independent_cases(self):
         self._put_in_review(self.first_case)
         impact = verification_decision_impact(
@@ -552,43 +423,6 @@ class EmployerAccountVerificationTests(APITestCase):
         self.assertEqual(evidence.workflow_revision, self.first_case.revision)
         delay.assert_called_once_with(evidence.pk)
 
-    def test_phone_completed_after_document_review_does_not_decide_case(self):
-        self.first.phone_verified_at = None
-        self.first.verified_phone = ''
-        self.first.save(update_fields=['phone_verified_at', 'verified_phone', 'updated_at'])
-        self.first_case.status = EmployerVerificationCase.Status.IN_REVIEW
-        self.first_case.save(update_fields=['status', 'updated_at'])
-
-        _, reconciled = reconcile_recruiter_verification(
-            self.first,
-            source='phone_verified',
-        )
-        self.assertFalse(reconciled)
-
-        self.first.phone_verified_at = timezone.now()
-        self.first.verified_phone = self.first.contact_phone
-        self.first.save(update_fields=['phone_verified_at', 'verified_phone', 'updated_at'])
-        case, reconciled = reconcile_recruiter_verification(
-            self.first,
-            source='phone_verified',
-        )
-        _, reconciled_again = reconcile_recruiter_verification(
-            self.first,
-            source='phone_verified',
-        )
-
-        self.assertFalse(reconciled)
-        self.assertFalse(reconciled_again)
-        self.assertEqual(case.status, EmployerVerificationCase.Status.IN_REVIEW)
-        self.assertEqual(
-            EmployerVerificationEvent.objects.filter(
-                verification_case=self.first_case,
-                event_type=EmployerVerificationEvent.EventType.APPROVED,
-                payload__source='phone_verified',
-            ).count(),
-            0,
-        )
-
     def test_accepting_dpa_last_does_not_approve_a_fully_reviewed_case(self):
         self.first.dpa_acceptances.all().delete()
         self.first.dpa_accepted_at = None
@@ -757,144 +591,6 @@ class EmployerAccountVerificationTests(APITestCase):
         )
         self.assertEqual(event_payload['document_file_name'], 'hop-dong-noi-bo.pdf')
 
-    def test_regular_admin_reviews_company_updates_and_verification(self):
-        update_request = CompanyUpdateRequest.objects.create(
-            company=self.company,
-            requested_by=self.first_user,
-            changes={'website_url': 'https://example.com/new'},
-        )
-        self.client.force_authenticate(make_admin())
-
-        company_queue = self.client.get(reverse('admin-company-update-request-list'))
-        account_detail = self.client.get(
-            reverse('admin-account-detail', kwargs={'public_id': self.first_user.public_id})
-        )
-        verification_queue = self.client.get(reverse('admin-employer-verification-list'))
-
-        self.assertEqual(company_queue.status_code, 200, company_queue.data)
-        self.assertEqual(account_detail.status_code, 200, account_detail.data)
-        self.assertEqual(verification_queue.status_code, 200, verification_queue.data)
-
-        started = self.client.post(
-            reverse(
-                'admin-company-update-request-start-review',
-                kwargs={'public_id': update_request.public_id},
-            ),
-            {'lock_version': update_request.lock_version},
-            format='json',
-        )
-        self.assertEqual(started.status_code, 200, started.data)
-        accepted_review = self.client.post(
-            reverse(
-                'admin-company-update-request-review',
-                kwargs={'public_id': update_request.public_id},
-            ),
-            {
-                'decision': CompanyUpdateRequest.Status.REJECTED,
-                'note': 'Chưa đủ thông tin.',
-                'lock_version': started.data['lock_version'],
-                'revision_public_id': started.data['current_revision_public_id'],
-            },
-            format='json',
-        )
-
-        self.assertEqual(accepted_review.status_code, 200, accepted_review.data)
-        update_request.refresh_from_db()
-        self.assertEqual(update_request.status, CompanyUpdateRequest.Status.REJECTED)
-
-    def test_regular_admin_sees_company_update_document_metadata(self):
-        update_request = CompanyUpdateRequest.objects.create(
-            company=self.company,
-            requested_by=self.first_user,
-            changes={'address': 'Địa chỉ mới'},
-            submitted_at=timezone.now(),
-        )
-        document = CompanyDocument.objects.create(
-            company=self.company,
-            recruiter=self.first,
-            uploaded_by=self.first_user,
-            update_request=update_request,
-            doc_type=CompanyDocument.DocType.BUSINESS_REGISTRATION,
-            file_url='employers/private/company-update.pdf',
-            file_name='dang-ky-kinh-doanh.pdf',
-            mime_type='application/pdf',
-            file_size=2048,
-            sha256='a' * 64,
-        )
-        website_document = CompanyDocument.objects.create(
-            company=self.company,
-            recruiter=self.first,
-            uploaded_by=self.first_user,
-            update_request=update_request,
-            doc_type=CompanyDocument.DocType.TRADE_NAME_PROOF,
-            file_url='https://evidence.example/private-reference',
-            file_name='Website chứng minh tên thương mại',
-        )
-        self.client.force_authenticate(make_admin())
-
-        revealed_detail = self.client.get(
-            reverse(
-                'admin-company-update-request-detail',
-                kwargs={'public_id': update_request.public_id},
-            )
-        )
-
-        self.assertEqual(revealed_detail.status_code, 200, revealed_detail.data)
-        revealed_documents = {item['public_id']: item for item in revealed_detail.data['documents']}
-        revealed = revealed_documents[document.public_id]
-        self.assertEqual(revealed['file_name'], 'dang-ky-kinh-doanh.pdf')
-        self.assertEqual(revealed['mime_type'], 'application/pdf')
-        self.assertEqual(revealed['file_size'], 2048)
-        self.assertEqual(revealed['sha256'], 'a' * 64)
-        self.assertEqual(revealed['uploaded_by_email'], self.first_user.email)
-        self.assertEqual(
-            revealed_documents[website_document.public_id]['source_url'],
-            'https://evidence.example/private-reference',
-        )
-
-    def test_company_update_document_action_is_scoped_to_exact_request(self):
-        other_request = CompanyUpdateRequest.objects.create(
-            company=self.company,
-            requested_by=self.second_user,
-            changes={'address': 'Địa chỉ của thành viên khác'},
-        )
-        other_document = CompanyDocument.objects.create(
-            company=self.company,
-            recruiter=self.second,
-            uploaded_by=self.second_user,
-            update_request=other_request,
-            doc_type=CompanyDocument.DocType.BUSINESS_REGISTRATION,
-            file_url='employers/private/other-company-update.pdf',
-        )
-        first_request = CompanyUpdateRequest.objects.create(
-            company=self.company,
-            requested_by=self.first_user,
-            changes={'address': 'Địa chỉ của thành viên đầu tiên'},
-        )
-        first_request = self._put_company_update_in_review(first_request)
-        self.client.force_authenticate(self.admin)
-
-        response = self.client.post(
-            reverse(
-                'admin-company-update-request-review-document',
-                kwargs={
-                    'public_id': first_request.public_id,
-                    'document_public_id': other_document.public_id,
-                },
-            ),
-            {
-                'decision': CompanyDocument.Status.APPROVED,
-                'reason': '',
-                'lock_version': first_request.lock_version,
-                'revision_public_id': first_request.current_revision.public_id,
-            },
-            format='json',
-        )
-
-        self.assertEqual(response.status_code, 404, response.data)
-        other_document.refresh_from_db()
-        self.assertEqual(other_document.status, CompanyDocument.Status.PENDING)
-
     def test_django_admin_workflow_models_are_read_only(self):
         update_request = CompanyUpdateRequest.objects.create(
             company=self.company,
@@ -950,7 +646,7 @@ class EmployerAccountVerificationTests(APITestCase):
         document.save(update_fields=['file_name', 'file_url', 'mime_type', 'updated_at'])
 
         with patch(
-            'apps.employers.api.views.admin_verification.private_media_storage'
+            'apps.employers.api.views.admin_verification.documents.private_media_storage'
         ) as storage_factory:
             storage_factory.return_value.open.return_value = BytesIO(b'RIFFxxxxWEBP')
             response = self.client.get(
@@ -985,7 +681,7 @@ class EmployerAccountVerificationTests(APITestCase):
         document.save(update_fields=['file_url', 'file_name', 'mime_type', 'updated_at'])
 
         with patch(
-            'apps.employers.api.views.admin_verification.render_office_document_preview',
+            'apps.employers.api.views.admin_verification.documents.render_office_document_preview',
             return_value=b'%PDF-preview',
         ) as render_preview:
             response = self.client.get(
@@ -1006,328 +702,3 @@ class EmployerAccountVerificationTests(APITestCase):
             document.file_url,
             'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         )
-
-    def test_admin_reviews_company_update_proof_before_applying_change(self):
-        update_request = CompanyUpdateRequest.objects.create(
-            company=self.company,
-            requested_by=self.first_user,
-            changes={'company_name': 'Công ty dùng chung mới'},
-            is_sensitive=True,
-            reason='Đổi tên theo đăng ký doanh nghiệp',
-            proof_type=CompanyUpdateRequest.ProofType.BUSINESS_REGISTRATION,
-        )
-        document = CompanyDocument.objects.create(
-            company=self.company,
-            recruiter=self.first,
-            uploaded_by=self.first_user,
-            update_request=update_request,
-            doc_type=CompanyDocument.DocType.BUSINESS_REGISTRATION,
-            file_url='employers/update-requests/business-registration.pdf',
-            file_name='business-registration.pdf',
-            mime_type='application/pdf',
-        )
-        update_request = self._put_company_update_in_review(update_request)
-        self.client.force_authenticate(self.admin)
-
-        document_response = self.client.post(
-            reverse(
-                'admin-company-update-request-review-document',
-                kwargs={
-                    'public_id': update_request.public_id,
-                    'document_public_id': document.public_id,
-                },
-            ),
-            {
-                'decision': CompanyDocument.Status.APPROVED,
-                'reason': '',
-                'lock_version': update_request.lock_version,
-                'revision_public_id': update_request.current_revision.public_id,
-            },
-            format='json',
-        )
-        self.assertEqual(document_response.status_code, 200, document_response.data)
-        self.assertEqual(
-            document_response.data['lock_version'],
-            update_request.lock_version + 1,
-        )
-
-        review_response = self.client.post(
-            reverse(
-                'admin-company-update-request-review',
-                kwargs={'public_id': update_request.public_id},
-            ),
-            {
-                'decision': CompanyUpdateRequest.Status.APPROVED,
-                'note': '',
-                'lock_version': document_response.data['lock_version'],
-                'revision_public_id': document_response.data['current_revision_public_id'],
-            },
-            format='json',
-        )
-
-        self.assertEqual(review_response.status_code, 200, review_response.data)
-        self.company.refresh_from_db()
-        self.assertEqual(self.company.company_name, 'Công ty dùng chung mới')
-
-    def test_duplicate_company_tax_code_does_not_block_company_update(self):
-        existing_company = Company.objects.create(
-            company_name='Công ty đã dùng mã số thuế',
-            tax_code='0402189757',
-            created_by=self.second_user,
-        )
-        update_request = CompanyUpdateRequest.objects.create(
-            company=self.company,
-            requested_by=self.first_user,
-            changes={'tax_code': existing_company.tax_code},
-            is_sensitive=True,
-            reason='Đổi mã số thuế theo đăng ký doanh nghiệp',
-            proof_type=CompanyUpdateRequest.ProofType.BUSINESS_REGISTRATION,
-        )
-        CompanyDocument.objects.create(
-            company=self.company,
-            recruiter=self.first,
-            uploaded_by=self.first_user,
-            update_request=update_request,
-            doc_type=CompanyDocument.DocType.BUSINESS_REGISTRATION,
-            file_url='employers/update-requests/duplicate-tax-code.pdf',
-            file_name='duplicate-tax-code.pdf',
-            mime_type='application/pdf',
-            status=CompanyDocument.Status.APPROVED,
-        )
-        update_request = self._put_company_update_in_review(update_request)
-        self.client.force_authenticate(self.admin)
-
-        response = self.client.post(
-            reverse(
-                'admin-company-update-request-review',
-                kwargs={'public_id': update_request.public_id},
-            ),
-            {
-                'decision': CompanyUpdateRequest.Status.APPROVED,
-                'note': '',
-                'lock_version': update_request.lock_version,
-                'revision_public_id': update_request.current_revision.public_id,
-            },
-            format='json',
-        )
-
-        self.assertEqual(response.status_code, 200, response.data)
-        self.company.refresh_from_db()
-        existing_company.refresh_from_db()
-        update_request.refresh_from_db()
-        self.assertEqual(self.company.tax_code, '0402189757')
-        self.assertEqual(existing_company.tax_code, '0402189757')
-        self.assertEqual(update_request.status, CompanyUpdateRequest.Status.APPROVED)
-
-    def test_employer_sees_company_update_rejection_reason(self):
-        update_request = CompanyUpdateRequest.objects.create(
-            company=self.company,
-            requested_by=self.first_user,
-            changes={'website_url': 'https://example.com/new'},
-        )
-        update_request = self._put_company_update_in_review(update_request)
-        self.client.force_authenticate(self.admin)
-
-        response = self.client.post(
-            reverse(
-                'admin-company-update-request-review',
-                kwargs={'public_id': update_request.public_id},
-            ),
-            {
-                'decision': CompanyUpdateRequest.Status.REJECTED,
-                'note': 'Không liên hệ được khách hàng.',
-                'lock_version': update_request.lock_version,
-                'revision_public_id': update_request.current_revision.public_id,
-            },
-            format='json',
-        )
-
-        self.assertEqual(response.status_code, 200, response.data)
-        self.client.force_authenticate(self.first_user)
-        employer_response = self.client.get(reverse('employer-company-update-requests'))
-
-        self.assertEqual(employer_response.status_code, 200, employer_response.data)
-        employer_request = next(
-            item for item in employer_response.data if item['public_id'] == update_request.public_id
-        )
-        self.company.refresh_from_db()
-        self.assertEqual(employer_request['status'], CompanyUpdateRequest.Status.REJECTED)
-        self.assertEqual(
-            employer_request['rejection_reason'],
-            'Không liên hệ được khách hàng.',
-        )
-        self.assertEqual(self.company.website_url, '')
-
-    def test_admin_can_refresh_company_update_tax_lookup(self):
-        update_request = CompanyUpdateRequest.objects.create(
-            company=self.company,
-            requested_by=self.first_user,
-            changes={'company_name': 'Công ty dùng chung mới'},
-            is_sensitive=True,
-            reason='Đổi tên theo đăng ký doanh nghiệp',
-            proof_type=CompanyUpdateRequest.ProofType.BUSINESS_REGISTRATION,
-        )
-        self.client.force_authenticate(self.admin)
-
-        response = self.client.post(
-            reverse(
-                'admin-company-update-request-refresh-tax-lookup',
-                kwargs={'public_id': update_request.public_id},
-            ),
-            format='json',
-        )
-
-        self.assertEqual(response.status_code, 200, response.data)
-        self.assertEqual(response.data['lock_version'], 1)
-        self.assertEqual(response.data['tax_lookup_evidence']['status'], 'pending')
-        evidence = CompanyTaxLookupEvidence.objects.get(update_request=update_request)
-        self.assertEqual(evidence.workflow_revision, update_request.revision)
-        self.assertEqual(evidence.submitted_company_name, 'Công ty dùng chung mới')
-
-    def test_employer_sees_company_update_document_revision_request(self):
-        update_request = CompanyUpdateRequest.objects.create(
-            company=self.company,
-            requested_by=self.first_user,
-            changes={'company_name': 'Công ty dùng chung mới'},
-            is_sensitive=True,
-            reason='Đổi tên theo đăng ký doanh nghiệp',
-            proof_type=CompanyUpdateRequest.ProofType.BUSINESS_REGISTRATION,
-        )
-        document = CompanyDocument.objects.create(
-            company=self.company,
-            recruiter=self.first,
-            uploaded_by=self.first_user,
-            update_request=update_request,
-            doc_type=CompanyDocument.DocType.BUSINESS_REGISTRATION,
-            file_url='employers/update-requests/business-registration.pdf',
-            file_name='business-registration.pdf',
-            mime_type='application/pdf',
-        )
-        update_request = self._put_company_update_in_review(update_request)
-        self.client.force_authenticate(self.admin)
-
-        response = self.client.post(
-            reverse(
-                'admin-company-update-request-review-document',
-                kwargs={
-                    'public_id': update_request.public_id,
-                    'document_public_id': document.public_id,
-                },
-            ),
-            {
-                'decision': CompanyDocument.Status.CHANGES_REQUESTED,
-                'reason': 'Ảnh chụp bị mờ, vui lòng tải bản rõ đủ bốn góc.',
-                'lock_version': update_request.lock_version,
-                'revision_public_id': update_request.current_revision.public_id,
-            },
-            format='json',
-        )
-
-        self.assertEqual(response.status_code, 200, response.data)
-        self.client.force_authenticate(self.first_user)
-        employer_response = self.client.get(reverse('employer-company-update-requests'))
-        current_document = employer_response.data[0]['documents'][0]
-        self.assertEqual(current_document['status'], CompanyDocument.Status.CHANGES_REQUESTED)
-        self.assertEqual(current_document['status_label'], 'Cần bổ sung')
-        self.assertEqual(current_document['doc_type_label'], 'Giấy đăng ký doanh nghiệp')
-        self.assertEqual(
-            current_document['review_note'],
-            'Ảnh chụp bị mờ, vui lòng tải bản rõ đủ bốn góc.',
-        )
-
-    def test_admin_company_update_includes_current_values_for_comparison(self):
-        current_industry = Industry.objects.create(name='Lĩnh vực hiện tại đối chiếu')
-        proposed_industry = Industry.objects.create(name='Lĩnh vực đề xuất đối chiếu')
-        CompanyIndustry.objects.create(
-            company=self.company,
-            industry=current_industry,
-            is_primary=True,
-        )
-        CompanyUpdateRequest.objects.create(
-            company=self.company,
-            requested_by=self.first_user,
-            changes={
-                'company_name': 'Công ty dùng chung mới',
-                'industries': [proposed_industry.id],
-                'primary_industry': proposed_industry.id,
-                'gallery_additions': ['employers/company/gallery/proposed.jpg'],
-            },
-        )
-        self.client.force_authenticate(self.admin)
-
-        response = self.client.get(reverse('admin-company-update-request-list'))
-
-        self.assertEqual(response.status_code, 200, response.data)
-        request_data = response.data['results'][0]
-        self.assertEqual(request_data['current_values']['company_name'], 'Công ty dùng chung')
-        self.assertEqual(request_data['current_values']['industries'], [current_industry.id])
-        self.assertEqual(
-            request_data['current_values']['primary_industry'],
-            current_industry.id,
-        )
-        self.assertEqual(
-            request_data['industry_labels'][str(proposed_industry.id)],
-            'Lĩnh vực đề xuất đối chiếu',
-        )
-        self.assertEqual(
-            request_data['media_previews']['gallery_additions'],
-            ['http://testserver/media/employers/company/gallery/proposed.jpg'],
-        )
-
-    def test_stale_company_update_review_returns_conflict(self):
-        update_request = CompanyUpdateRequest.objects.create(
-            company=self.company,
-            requested_by=self.first_user,
-            changes={'website_url': 'https://example.com/new'},
-            status=CompanyUpdateRequest.Status.IN_REVIEW,
-            lock_version=2,
-        )
-        self.client.force_authenticate(self.admin)
-
-        response = self.client.post(
-            reverse(
-                'admin-company-update-request-review',
-                kwargs={'public_id': update_request.public_id},
-            ),
-            {
-                'decision': CompanyUpdateRequest.Status.APPROVED,
-                'note': '',
-                'lock_version': 1,
-            },
-            format='json',
-        )
-
-        self.assertEqual(response.status_code, 409, response.data)
-        update_request.refresh_from_db()
-        self.assertEqual(update_request.status, CompanyUpdateRequest.Status.IN_REVIEW)
-
-    def test_admin_cannot_approve_legacy_short_company_description(self):
-        original_description = self.company.description
-        update_request = CompanyUpdateRequest.objects.create(
-            company=self.company,
-            requested_by=self.first_user,
-            changes={'description': f'<p>{"A" * 499}</p>'},
-        )
-        update_request = self._put_company_update_in_review(update_request)
-        self.client.force_authenticate(self.admin)
-
-        response = self.client.post(
-            reverse(
-                'admin-company-update-request-review',
-                kwargs={'public_id': update_request.public_id},
-            ),
-            {
-                'decision': CompanyUpdateRequest.Status.APPROVED,
-                'note': '',
-                'lock_version': update_request.lock_version,
-                'revision_public_id': update_request.current_revision.public_id,
-            },
-            format='json',
-        )
-
-        self.assertEqual(response.status_code, 400, response.data)
-        self.assertIn('description', response.data)
-        self.company.refresh_from_db()
-        update_request.refresh_from_db()
-        self.assertEqual(self.company.description, original_description)
-        self.assertEqual(update_request.status, CompanyUpdateRequest.Status.IN_REVIEW)

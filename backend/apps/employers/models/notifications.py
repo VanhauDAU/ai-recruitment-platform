@@ -19,6 +19,9 @@ class EmployerNotificationPreference(models.Model):
     campaign_weekly_report_email = models.BooleanField(default=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    def __str__(self):
+        return f'{self.recipient_id}:notification-preferences'
+
 
 class EmployerNotification(models.Model):
     """Recruiter-facing website notification persisted with the domain transaction."""
@@ -107,6 +110,9 @@ class EmployerNotification(models.Model):
             ),
         ]
 
+    def __str__(self):
+        return f'{self.public_id}:{self.event_type}'
+
     def save(self, *args, **kwargs):
         if not self.public_id:
             self.public_id = generate_public_id('eno')
@@ -150,6 +156,9 @@ class EmployerActivity(models.Model):
                 name='emp_activity_user_time_idx',
             ),
         ]
+
+    def __str__(self):
+        return f'{self.public_id}:{self.event_type}'
 
     def save(self, *args, **kwargs):
         if not self.public_id:

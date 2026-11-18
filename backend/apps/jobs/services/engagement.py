@@ -1,5 +1,6 @@
 """Job engagement write use cases with consent-aware Redis deduplication."""
 
+import logging
 from hashlib import sha256
 from uuid import uuid4
 
@@ -8,12 +9,15 @@ from django.core import signing
 from django.core.cache import cache
 from django.db import transaction
 from django.db.models import F
+from redis.exceptions import RedisError
 
 from apps.privacy.domain import VIEWER_SIGNING_SALT
 from common.metrics import record_metric
 from common.vietnam_time import vietnam_today
 
 from ..models import Job, JobEngagementDaily
+
+logger = logging.getLogger(__name__)
 
 _DEDUPLICATE_VIEW_SCRIPT = """
 for _, key in ipairs(KEYS) do
@@ -55,22 +59,26 @@ def _impression_dedupe_keys(*, job_id, viewer_id, user_id=None):
 
 
 def _claim_first_view(keys):
-    """Atomically reserve every dedupe key in Redis, or fail closed."""
+    """Atomically reserve every dedupe key in Redis, or fail closed.
+
+    ``None`` means "not counted": without Redis (non-django-redis cache or an
+    outage) a view cannot be deduplicated, so it is never counted twice.
+    """
+    client = getattr(cache, 'client', None)
+    if client is None:
+        return None
+    redis_keys = [cache.make_key(key) for key in keys]
     try:
-        client = getattr(cache, 'client', None)
-        if client is None:
-            return None
-        redis_client = client.get_client(write=True)
-        redis_keys = [cache.make_key(key) for key in keys]
         return bool(
-            redis_client.eval(
+            client.get_client(write=True).eval(
                 _DEDUPLICATE_VIEW_SCRIPT,
                 len(redis_keys),
                 *redis_keys,
                 settings.JOB_VIEW_DEDUP_TTL_SECONDS,
             )
         )
-    except Exception:
+    except RedisError:
+        logger.warning('Redis unavailable for job engagement dedupe; event not counted.')
         return None
 
 

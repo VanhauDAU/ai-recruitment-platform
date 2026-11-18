@@ -10,7 +10,7 @@ from ..services.cv_document import (
     looks_like_cv,
     read_cv_document,
 )
-from .fixtures import docx_bytes, pdf_bytes
+from .factories import docx_bytes, pdf_bytes
 
 
 class CvRecognitionTests(SimpleTestCase):

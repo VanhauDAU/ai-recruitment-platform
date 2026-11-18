@@ -3,7 +3,7 @@
 import re
 import unicodedata
 
-from common.html.content import content_html_plain_text
+from common.html.plain_text import html_plain_text
 
 # Tỷ lệ chữ cái riêng của tiếng Việt (có dấu, đ) trên tổng chữ cái để coi là tiếng Việt.
 VIETNAMESE_LETTER_RATIO = 0.02
@@ -32,7 +32,7 @@ def plain_text(value):
     if isinstance(value, list):
         return '\n'.join(plain_text(item) for item in value)
     text = str(value or '')
-    return content_html_plain_text(text) if '<' in text else text
+    return html_plain_text(text) if '<' in text else text
 
 
 def join_parts(*parts, separator=' — '):

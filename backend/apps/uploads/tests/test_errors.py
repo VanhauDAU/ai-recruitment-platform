@@ -23,6 +23,6 @@ class UploadErrorContractTests(SimpleTestCase):
 
     @patch('apps.uploads.tasks.scan_upload_session.delay', side_effect=ConnectionError)
     def test_enqueue_scan_swallows_broker_errors(self, delay):
-        with self.assertLogs('apps.uploads.services.pipeline', level='WARNING'):
+        with self.assertLogs('apps.uploads.services.sessions', level='WARNING'):
             enqueue_upload_scan(42)
         delay.assert_called_once_with(42)

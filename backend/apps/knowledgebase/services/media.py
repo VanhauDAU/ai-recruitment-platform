@@ -2,7 +2,7 @@ from http import HTTPStatus
 
 from django.core.exceptions import ValidationError
 
-from common.api.exceptions import DomainError
+from common.errors import DomainError
 from common.storage.media import delete_local_media_url, save_image_upload
 
 from ..models import KnowledgeMediaAsset

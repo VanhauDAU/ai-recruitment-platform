@@ -13,9 +13,6 @@ STATIC_URL = 'static/'
 # MEDIA_ROOT remains a compatibility alias for the public root. Sensitive and
 # untrusted files have independent roots that are never served by web routes.
 MEDIA_URL = '/media/'
-LEGACY_MEDIA_ROOT = Path(
-    config('LEGACY_MEDIA_ROOT', default=str(BASE_DIR / 'media')).strip()
-).expanduser()
 PUBLIC_MEDIA_ROOT = Path(
     config('PUBLIC_MEDIA_ROOT', default=str(BASE_DIR / 'public-media')).strip()
 ).expanduser()

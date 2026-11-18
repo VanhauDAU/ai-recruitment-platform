@@ -2,7 +2,7 @@ from http import HTTPStatus
 
 from rest_framework.exceptions import APIException, PermissionDenied
 
-from common.api.exceptions import DomainError
+from common.errors import DomainError
 
 
 class AdminPermissionDenied(PermissionDenied):

@@ -9,9 +9,9 @@ lặp lại.
 | --- | --- | --- | --- |
 | Import và cấu trúc hóa CV | Trích text + LLM structured JSON, fallback heuristic | `apps/cvs/tasks/exports.py`, `apps/ai_core/services/cv_import.py` | mục 1 |
 | Điểm hoàn thiện CV | Rule có trọng số | `apps/cvs/services/completeness.py` | mục 2 |
-| Đối sánh CV/nhu cầu – tin tuyển dụng | Rule-based có trọng số, giải thích được | `apps/jobs/models/recommendation_queries.py` | mục 3, [`candidate-job-recommendations.md`](./candidate-job-recommendations.md) |
+| Đối sánh CV/nhu cầu – tin tuyển dụng | Rule-based có trọng số, giải thích được | `apps/jobs/models/recommendation_queries/` | mục 3, [`candidate-job-recommendations.md`](./candidate-job-recommendations.md) |
 | Tin tương tự tin đã lưu | Similarity pairwise rule-based | `apps/jobs/selectors/saved_recommendations.py` | [`saved-job-recommendations.md`](./saved-job-recommendations.md) |
-| AI tạo tin tuyển dụng | LLM structured output qua `ai_core` | `apps/jobs/services/ai_generation.py` | mục 5, [`ai-job-post-generation.md`](./ai-job-post-generation.md) |
+| AI tạo tin tuyển dụng | LLM structured output qua `ai_core` | `apps/jobs/services/ai_generation/` (chính sách: `apps/jobs/domain/ai_policy.py`) | mục 5, [`ai-job-post-generation.md`](./ai-job-post-generation.md) |
 | Chatbot FAQ ứng viên | Retrieval, không sinh LLM | — | [`chatbot-ung-vien-faq.md`](./chatbot-ung-vien-faq.md) |
 | Đối sánh ngữ nghĩa CV–JD (đang xây) | Bi-encoder đa ngữ fine-tune local, chấm nhiều tiêu chí, vector trong pgvector | `apps/matching` (mới có schema) | mục 7 |
 
@@ -170,7 +170,7 @@ cấu trúc; prompt, schema và policy thuộc app sử dụng (hiện chỉ `jo
 | `model_not_found` | không | 404 |
 | `invalid_provider_request` | không | 4xx khác |
 | `provider_failed` | không | Lỗi không phân loại |
-| `runtime_disabled`, `provider_not_configured`, `unsupported_provider_backend`, `provider_sdk_unavailable` | không | Cấu hình |
+| `runtime_disabled`, `provider_not_configured`, `unsupported_provider_backend` | không | Cấu hình |
 
 Lỗi của `result_validator` cũng tính là một attempt và theo cùng quy tắc retry.
 

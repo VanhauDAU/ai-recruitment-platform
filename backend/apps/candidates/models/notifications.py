@@ -101,10 +101,10 @@ class CandidateNotification(models.Model):
             ),
         ]
 
+    def __str__(self):
+        return f'CandidateNotification<{self.recipient_id}:{self.event_type}>'
+
     def save(self, *args, **kwargs):
         if not self.public_id:
             self.public_id = generate_public_id('cno')
         super().save(*args, **kwargs)
-
-    def __str__(self):
-        return f'CandidateNotification<{self.recipient_id}:{self.event_type}>'

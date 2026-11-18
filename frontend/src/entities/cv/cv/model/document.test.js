@@ -97,9 +97,6 @@ describe('canonical CV editor document', () => {
   it('uses deterministic browser font stacks so each supported choice has a usable fallback', () => {
     expect(getCvFontStack('Inter')).toMatch(/^"Inter"/)
     expect(getCvFontStack('Lora')).toContain('serif')
-    // Tên font của tài liệu cũ hiển thị bằng font đóng gói gần nhất.
-    expect(getCvFontStack('Arial')).toBe(getCvFontStack('Inter'))
-    expect(getCvFontStack('Source Sans Pro')).toBe(getCvFontStack('Be Vietnam Pro'))
     expect(getCvFontStack('Unknown')).toBe(getCvFontStack('Inter'))
   })
 

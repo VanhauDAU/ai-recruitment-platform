@@ -126,7 +126,7 @@ stateDiagram-v2
 | | `CompanyDomainClaim`, `CompanyDomainClaimEvent` | Chứng minh công ty sở hữu domain email (DNS TXT hoặc admin duyệt); status pending/verified/grace/rejected/revoked/expired/legacy_inferred; unique `(company, domain)` và mỗi domain chỉ một claim ở trạng thái verified/grace trên toàn hệ thống. Event append-only. |
 | Recruiter | `RecruiterProfile` | 1-1 `User`; FK `company` (PROTECT, nullable cho tới khi chọn/tạo công ty; chỉ set khi đang null — admin gỡ liên kết qua workflow riêng), `company_role` owner/member, thông tin đăng ký, `verified_phone` (partial unique: một SĐT chỉ một recruiter), các mốc DPA và cửa sổ gia hạn DPA (check `employer_dpa_grace_state_consistent`). Các bước onboarding suy ra từ dữ liệu, không có bảng riêng. |
 | | `EmployerCompanyLinkEvent` | Append-only: admin gỡ liên kết recruiter–công ty kèm `impact_snapshot`. |
-| | `PhoneOtp`, `EmployerPhoneVerificationEvent` | Challenge OTP SMS theo purpose (initial/phone_change/reverify): OTP lưu HMAC, đích mã hóa chỉ tồn tại tới khi worker gửi rồi bị purge; event không chứa SĐT/OTP, giữ 24 tháng. Dòng `legacy_email` chỉ là lịch sử. |
+| | `PhoneOtp`, `EmployerPhoneVerificationEvent` | Challenge OTP SMS theo purpose (initial/phone_change/reverify): OTP lưu HMAC, đích mã hóa chỉ tồn tại tới khi worker gửi rồi bị purge; event không chứa SĐT/OTP, giữ 24 tháng. |
 | | `RecruitmentNeed` | Nhu cầu tuyển dụng khai báo khi onboarding (vị trí, cấp bậc…); có thể làm `source_need` của chiến dịch. |
 | | `EmployerDpaAcceptance` | Bằng chứng append-only recruiter chấp nhận đúng một văn bản DPA (version + SHA-256, phiên đăng nhập); unique `(recruiter, policy_version, document_sha256)`. `dpa_accepted_at` cũ không có dòng tương ứng được coi là `legacy_unversioned`. |
 | Xác thực | `EmployerVerificationCase` | 1-1 recruiter: chứng minh recruiter được đại diện **một** công ty. `verification_method` (GPKD hoặc ủy quyền + định danh), `status` draft → pending → in_review → approved/rejected, thêm changes_requested/revoked/expired; `decision_source` (explicit_admin/legacy_auto/legacy_unknown), `decision_snapshot`, đếm từ chối cuối và khóa nộp lại, `lock_version`. Quyết định không thay đổi `Company`. |
@@ -329,7 +329,7 @@ Quy tắc chi tiết: [đặc tả thông báo đa cổng](../01-phan-tich/dac-t
 | Bảng | Mục đích và ràng buộc |
 | --- | --- |
 | `upload_sessions` | Upload tạm theo owner, bytes chưa tin cậy tới khi quét: state uploading → quarantined → scanning → clean/rejected/error/expired, lease upload/scan, `lock_version`, legal hold. |
-| `upload_assets` | Object private bền vững sinh từ session sạch (1-1), `trust_status` clean/legacy_trusted; business app chỉ dùng qua **claim một lần** (`claim_scope`, `claim_reference`); retention/legal hold; check claim/release/hold đầy đủ và asset clean phải có checksum. |
+| `upload_assets` | Object private bền vững chỉ sinh từ session sạch (1-1); business app chỉ dùng qua **claim một lần** (`claim_scope`, `claim_reference`); retention/legal hold; check claim/release/hold đầy đủ và asset chưa xóa phải có checksum. |
 | `upload_scan_attempts` | Bằng chứng tối thiểu cho từng lần quét malware (unique theo session–attempt). |
 | `ai_invocations` | Một lần gọi provider AI (use case, provider/backend Gemini Developer hoặc Vertex, model, hash prompt/schema, token, chi phí, latency, lỗi); không lưu prompt hay output. |
 | `ai_usage_daily` | Tổng hợp theo ngày cho `(date, use_case, provider, backend, model)`. |

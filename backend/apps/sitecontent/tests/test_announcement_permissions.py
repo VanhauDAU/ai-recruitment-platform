@@ -3,9 +3,9 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from apps.accounts.models import User
-from apps.accounts.tests.helpers import make_admin
+from apps.accounts.tests.factories import make_admin
 
-from .announcement_helpers import revision_payload
+from .factories import revision_payload
 
 
 class AnnouncementPermissionTests(APITestCase):

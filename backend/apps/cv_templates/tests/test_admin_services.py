@@ -6,7 +6,7 @@ from unittest.mock import patch
 from django.test import TestCase, override_settings
 from rest_framework.exceptions import ValidationError
 
-from apps.accounts.tests.helpers import make_admin
+from apps.accounts.tests.factories import make_admin
 from apps.cv_templates.domain.section_registry import section_definition_seed_data
 from apps.cv_templates.models.content_schema import empty_content
 

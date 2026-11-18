@@ -74,6 +74,9 @@ class CompanyReport(models.Model):
         ]
         ordering = ['-created_at']
 
+    def __str__(self):
+        return f'{self.public_id} - {self.company_id} - {self.status}'
+
     def save(self, *args, **kwargs):
         if self._state.adding:
             self.public_id = generate_public_id('crp')
@@ -85,9 +88,6 @@ class CompanyReport(models.Model):
 
     def delete(self, *args, **kwargs):
         raise ValueError('CompanyReport là bằng chứng kiểm duyệt cần được lưu giữ.')
-
-    def __str__(self):
-        return f'{self.public_id} - {self.company_id} - {self.status}'
 
 
 class CompanyReportResolutionEvent(models.Model):
@@ -120,6 +120,9 @@ class CompanyReportResolutionEvent(models.Model):
             ),
         ]
 
+    def __str__(self):
+        return f'{self.report_id}: {self.from_status} -> {self.to_status}'
+
     def save(self, *args, **kwargs):
         if self.pk and type(self).objects.filter(pk=self.pk).exists():
             raise ValueError('CompanyReportResolutionEvent là lịch sử bất biến.')
@@ -129,6 +132,3 @@ class CompanyReportResolutionEvent(models.Model):
 
     def delete(self, *args, **kwargs):
         raise ValueError('CompanyReportResolutionEvent là lịch sử bất biến.')
-
-    def __str__(self):
-        return f'{self.report_id}: {self.from_status} -> {self.to_status}'

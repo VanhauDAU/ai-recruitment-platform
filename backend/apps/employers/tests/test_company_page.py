@@ -17,28 +17,14 @@ from apps.jobs.models import Job, JobLocation
 from apps.locations.models import Location
 
 from ..models import Company, CompanyImage, CompanyIndustry, Industry
-from .company_page_helpers import (
+from .cases import LIST_ITEM_KEYS
+from .factories import (
     add_recruiter,
     hold_company,
     make_company,
     make_employer,
     publish_job,
 )
-
-LIST_ITEM_KEYS = {
-    'public_id',
-    'slug',
-    'company_name',
-    'trade_name',
-    'logo_url',
-    'cover_image_url',
-    'description_excerpt',
-    'headquarters',
-    'active_public_job_count',
-    'company_size',
-    'company_size_display',
-    'industries_detail',
-}
 
 
 def _contrast_with_white(hex_colour):

@@ -7,7 +7,7 @@ from django.test import TestCase
 
 from apps.employers.models import Company
 from apps.jobs.models import Job, JobLanguageRequirement, JobSkill, Language
-from apps.jobs.tests.helpers import open_visibility_window
+from apps.jobs.tests.factories import open_visibility_window
 from apps.skills.models import Skill, SkillGroup
 
 from ..models import jobs_for_profile

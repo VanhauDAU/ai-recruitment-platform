@@ -12,11 +12,11 @@ from rest_framework.throttling import ScopedRateThrottle
 
 from apps.cv_templates.tests.factories import make_published_template
 from apps.cvs.models import CvVersion, UserCv
-from apps.cvs.services import create_v2_cv, create_version, import_cv_documents
+from apps.cvs.services import create_user_cv, create_version, import_cv_documents
 from apps.employers.models import Company
-from apps.employers.tests.readiness_helpers import make_employer_ready
+from apps.employers.tests.factories import make_employer_ready
 from apps.jobs.models import Job, JobSkill
-from apps.jobs.tests.helpers import open_visibility_window
+from apps.jobs.tests.factories import open_visibility_window
 from apps.sitecontent.models import SiteSetting
 from apps.skills.models import Skill
 
@@ -168,7 +168,7 @@ class MatchingApiTests(MatchingApiBase):
 
     def test_template_sample_of_a_never_saved_cv_is_not_analysed(self):
         template, _version = make_published_template('Unsaved template')
-        unsaved = create_v2_cv(actor=self.candidate, title='Chưa lưu', template=template)
+        unsaved = create_user_cv(actor=self.candidate, title='Chưa lưu', template=template)
 
         response = self.request(cv=unsaved.public_id)
 

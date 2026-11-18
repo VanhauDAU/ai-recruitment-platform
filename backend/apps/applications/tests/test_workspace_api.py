@@ -19,11 +19,11 @@ from apps.candidates.models import CandidateNotification
 from apps.candidates.services import release_due_candidate_notifications
 from apps.cv_templates.tests.factories import fill_cv_for_application, make_published_template
 from apps.cvs.models import CvAccessLog, CvExport, UserCv
-from apps.cvs.services import create_application_snapshot, create_v2_cv, save_draft_as_version
+from apps.cvs.services import create_application_snapshot, create_user_cv, save_draft_as_version
 from apps.employers.models import Company
-from apps.employers.tests.readiness_helpers import make_employer_ready
+from apps.employers.tests.factories import make_employer_ready
 from apps.jobs.models import Job
-from apps.jobs.tests.helpers import open_visibility_window
+from apps.jobs.tests.factories import open_visibility_window
 
 from ..models import Application
 
@@ -69,7 +69,7 @@ class RecruiterWorkspaceApiTests(APITestCase):
             **open_visibility_window(),
         )
         template, _version = make_published_template('Workspace template')
-        self.cv = create_v2_cv(actor=self.candidate, title='Workspace CV', template=template)
+        self.cv = create_user_cv(actor=self.candidate, title='Workspace CV', template=template)
         fill_cv_for_application(self.cv, self.candidate)
         snapshot = create_application_snapshot(self.cv, self.candidate)
         self.application = Application.objects.create(
@@ -269,7 +269,7 @@ class CandidateApplyReadinessTests(APITestCase):
             **open_visibility_window(),
         )
         template, _version = make_published_template('Ready template')
-        self.cv = create_v2_cv(actor=self.candidate, title='Blank CV', template=template)
+        self.cv = create_user_cv(actor=self.candidate, title='Blank CV', template=template)
         tokens = issue_tokens(self.candidate, auth_method='password')
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + tokens['access'])
 

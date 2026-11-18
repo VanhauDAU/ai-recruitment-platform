@@ -7,6 +7,8 @@ from hashlib import sha256
 
 from django.conf import settings
 
+from common.http.client_ip import client_ip
+
 from ..models import CvAccessLog
 
 
@@ -21,14 +23,15 @@ def _metadata_hash(value: str) -> str:
 
 
 def request_access_metadata(request) -> tuple[str, str]:
-    """Hash request metadata without retaining raw IP, UA, token, or CV data."""
-    forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR', '')
-    ip_address = (
-        forwarded_for.split(',', 1)[0].strip()
-        if forwarded_for
-        else request.META.get('REMOTE_ADDR', '')
+    """Hash request metadata without retaining raw IP, UA, token, or CV data.
+
+    The IP comes from ``client_ip`` so a client cannot plant an arbitrary
+    ``X-Forwarded-For`` value into the audit trail of a shared CV.
+    """
+    return (
+        _metadata_hash(client_ip(request) or ''),
+        _metadata_hash(request.META.get('HTTP_USER_AGENT', '')),
     )
-    return _metadata_hash(ip_address), _metadata_hash(request.META.get('HTTP_USER_AGENT', ''))
 
 
 def record_cv_access(

@@ -1,6 +1,6 @@
 """Knowledgebase API views."""
 
-from .admin import (
+from .admin_articles import (
     AdminArticleArchiveView,
     AdminArticleDetailView,
     AdminArticleListCreateView,
@@ -8,17 +8,21 @@ from .admin import (
     AdminArticleReorderView,
     AdminArticleRestoreView,
     AdminArticleSummaryView,
-    AdminCategoryActivateView,
-    AdminCategoryDeactivateView,
-    AdminCategoryDetailView,
-    AdminCategoryListCreateView,
-    AdminCategoryReorderView,
-    AdminMediaListCreateView,
     AdminRevisionApproveView,
     AdminRevisionDetailView,
     AdminRevisionListCreateView,
     AdminRevisionRejectView,
     AdminRevisionSubmitView,
+)
+from .admin_categories import (
+    AdminCategoryActivateView,
+    AdminCategoryDeactivateView,
+    AdminCategoryDetailView,
+    AdminCategoryListCreateView,
+    AdminCategoryReorderView,
+)
+from .admin_media import (
+    AdminMediaListCreateView,
 )
 from .public import (
     PublicArticleDetailView,

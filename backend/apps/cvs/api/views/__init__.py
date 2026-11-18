@@ -1,29 +1,27 @@
-from apps.cvs.api.views.cvs import (
-    CvApplySampleView,
-    CvAssetContentView,
-    CvAssetUploadView,
+from .assets import CvAssetContentView, CvAssetUploadView
+from .cvs import (
     CvDetailView,
-    CvDraftView,
     CvDuplicateView,
+    CvListCreateView,
+    CvOwnerVersionView,
+    CvSourceFileView,
+    CvThumbnailView,
+)
+from .drafts import CvApplySampleView, CvDraftView, CvTemplatePreviewView, CvTemplateSwitchView
+from .exports import (
     CvExportDetailView,
     CvExportDownloadView,
     CvExportListCreateView,
     CvExportRetryView,
-    CvImportRetryView,
-    CvImportView,
-    CvListCreateView,
-    CvOwnerVersionView,
-    CvPublishView,
-    CvSaveVersionView,
+)
+from .imports import CvImportRetryView, CvImportView
+from .shares import (
     CvSharedLinkListCreateView,
     CvSharedLinkPublicView,
     CvSharedLinkRevokeView,
-    CvTemplatePreviewView,
-    CvTemplateSwitchView,
-    CvThumbnailView,
-    CvVersionDetailView,
-    CvVersionListView,
+    CvSharedSourceFileView,
 )
+from .versions import CvPublishView, CvSaveVersionView, CvVersionDetailView, CvVersionListView
 
 __all__ = [
     'CvApplySampleView',
@@ -45,6 +43,8 @@ __all__ = [
     'CvSharedLinkListCreateView',
     'CvSharedLinkPublicView',
     'CvSharedLinkRevokeView',
+    'CvSharedSourceFileView',
+    'CvSourceFileView',
     'CvTemplatePreviewView',
     'CvTemplateSwitchView',
     'CvThumbnailView',

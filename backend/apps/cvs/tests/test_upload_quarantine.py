@@ -18,12 +18,12 @@ from apps.uploads.services import (
     process_upload_scan,
     store_quarantined_upload,
 )
+from apps.uploads.tests.factories import TemporaryUploadStorageMixin
 from apps.uploads.tests.fakes import FakeUploadScanner
-from apps.uploads.tests.helpers import TemporaryUploadStorageMixin
 
 from ..models import CvAsset, CvImportJob, UserCv
 from ..services.upload_claims import CV_AVATAR_CLAIM_SCOPE, CV_SOURCE_CLAIM_SCOPE
-from .fixtures import pdf_bytes
+from .factories import pdf_bytes
 
 
 class CandidateCvUploadQuarantineTests(TemporaryUploadStorageMixin, APITestCase):
@@ -164,7 +164,7 @@ class CandidateCvUploadQuarantineTests(TemporaryUploadStorageMixin, APITestCase)
         raw = SimpleUploadedFile('legacy.pdf', b'%PDF-1.7\nlegacy', content_type='application/pdf')
         with (
             override_settings(CANDIDATE_UPLOAD_SESSION_REQUIRED=True),
-            patch('apps.cvs.api.views.cvs.validate_import_upload') as validate_raw,
+            patch('apps.cvs.api.views.imports.validate_import_upload') as validate_raw,
         ):
             raw_response = self.client.post(
                 reverse('cv-import'),

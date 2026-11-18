@@ -117,18 +117,18 @@ SPECTACULAR_SETTINGS = {
     # Đặt tên enum tường minh để tránh trùng tên tự sinh (status/level dùng ở nhiều bảng)
     'ENUM_NAME_OVERRIDES': {
         # Va chạm tên enum giữa các app (ADR-0022 GĐ3): đặt tên theo nghĩa thay cho hash.
-        'CompanyDocumentStatusEnum': 'apps.employers.models.verification.CompanyDocument.Status',
-        'CompanyUpdateRequestStatusEnum': 'apps.employers.models.verification.CompanyUpdateRequest.Status',
-        'EmployerVerificationCaseStatusEnum': 'apps.employers.models.verification.EmployerVerificationCase.Status',
-        'EmployerVerificationMethodEnum': 'apps.employers.models.verification.EmployerVerificationCase.VerificationMethod',
-        'CompanyJoinRequestStatusEnum': 'apps.employers.models.membership.CompanyJoinRequest.Status',
-        'CompanyDomainClaimStatusEnum': 'apps.employers.models.domain_claim.CompanyDomainClaim.Status',
-        'CompanyReportReasonEnum': 'apps.employers.models.company_report.CompanyReport.Reason',
-        'EmployerNotificationEventTypeEnum': 'apps.employers.models.notifications.EmployerNotification.EventType',
+        'CompanyDocumentStatusEnum': 'apps.employers.models.CompanyDocument.Status',
+        'CompanyUpdateRequestStatusEnum': 'apps.employers.models.CompanyUpdateRequest.Status',
+        'EmployerVerificationCaseStatusEnum': 'apps.employers.models.EmployerVerificationCase.Status',
+        'EmployerVerificationMethodEnum': 'apps.employers.models.EmployerVerificationCase.VerificationMethod',
+        'CompanyJoinRequestStatusEnum': 'apps.employers.models.CompanyJoinRequest.Status',
+        'CompanyDomainClaimStatusEnum': 'apps.employers.models.CompanyDomainClaim.Status',
+        'CompanyReportReasonEnum': 'apps.employers.models.CompanyReport.Reason',
+        'EmployerNotificationEventTypeEnum': 'apps.employers.models.EmployerNotification.EventType',
         'RecruitmentNeedPositionLevelEnum': 'apps.employers.models.choices.PositionLevel',
-        'UserCvSourceEnum': 'apps.cvs.models.cv.UserCv.Source',
-        'CvCategoryTypeEnum': 'apps.cv_templates.models.template.CvCategory.CategoryType',
-        'ExperienceBandEnum': 'apps.cv_templates.models.experience.ExperienceBand',
+        'UserCvSourceEnum': 'apps.cvs.models.UserCv.Source',
+        'CvCategoryTypeEnum': 'apps.cv_templates.models.CvCategory.CategoryType',
+        'ExperienceBandEnum': 'apps.cv_templates.models.ExperienceBand',
         'ReportResolutionEnum': [('upheld', 'upheld'), ('dismissed', 'dismissed')],
         'VerificationReviewDecisionEnum': [
             ('approved', 'approved'),
@@ -149,7 +149,7 @@ SPECTACULAR_SETTINGS = {
             ('blocked', 'blocked'),
         ],
         'CapabilityUnchangedEnum': [('unchanged', 'unchanged')],
-        'LocaleEnum': 'apps.jobs.models.core.JobCategoryLocalization.Locale',
+        'LocaleEnum': 'apps.jobs.models.JobCategoryLocalization.Locale',
         'JobStatusEnum': 'apps.jobs.models.Job.Status',
         'ApplicationStatusEnum': 'apps.applications.models.Application.Status',
         'ApplicationSourceEnum': 'apps.applications.models.Application.Source',
@@ -177,10 +177,10 @@ SPECTACULAR_SETTINGS = {
         'AnnouncementAnimationEnum': 'apps.sitecontent.models.AnnouncementRevision.Animation',
         'AnnouncementDismissModeEnum': ('apps.sitecontent.models.AnnouncementRevision.DismissMode'),
         'AnnouncementRuntimeEventEnum': (
-            'apps.sitecontent.api.serializers.announcements.ANNOUNCEMENT_RUNTIME_EVENTS'
+            'apps.sitecontent.api.serializers.announcements_reader.ANNOUNCEMENT_RUNTIME_EVENTS'
         ),
         'AnnouncementRuntimeReasonEnum': (
-            'apps.sitecontent.api.serializers.announcements.ANNOUNCEMENT_RUNTIME_REASONS'
+            'apps.sitecontent.api.serializers.announcements_reader.ANNOUNCEMENT_RUNTIME_REASONS'
         ),
         'UserRoleEnum': 'apps.accounts.models.User.Role',
         'SelfServiceRoleEnum': 'apps.accounts.api.serializers.auth.SELF_SERVICE_ROLES',
@@ -188,7 +188,7 @@ SPECTACULAR_SETTINGS = {
         'AuthPortalEnum': 'apps.accounts.services.refresh_cookies.PORTAL_ROLE_BY_NAME',
         'AccountStatusEnum': 'apps.accounts.models.User.Status',
         'ManagedAccountStatusEnum': (
-            'apps.accounts.api.serializers.account_management.MANAGED_ACCOUNT_STATUSES'
+            'apps.accounts.api.serializers.account_actions.MANAGED_ACCOUNT_STATUSES'
         ),
         'BlogPostStatusEnum': 'apps.blog.models.Post.Status',
         'KnowledgeArticleTypeEnum': 'apps.knowledgebase.models.KnowledgeArticle.ArticleType',

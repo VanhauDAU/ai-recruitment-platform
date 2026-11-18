@@ -19,14 +19,14 @@ from apps.cv_templates.tests.factories import fill_cv_for_application, make_publ
 from apps.cvs.models import CvAsset, CvVersion
 from apps.cvs.services import (
     create_application_snapshot,
-    create_v2_cv,
+    create_user_cv,
     save_draft_as_version,
     update_draft,
 )
 from apps.employers.models import Company, EmployerNotification, RecruiterProfile
-from apps.employers.tests.readiness_helpers import make_employer_ready
+from apps.employers.tests.factories import make_employer_ready
 from apps.jobs.models import Job, JobLocation
-from apps.jobs.tests.helpers import open_visibility_window
+from apps.jobs.tests.factories import open_visibility_window
 from apps.locations.models import Location
 
 
@@ -75,7 +75,7 @@ class RecruiterApplicationSnapshotTests(APITestCase):
             **open_visibility_window(),
         )
         template, _template_version = make_published_template('Snapshot template')
-        self.cv = create_v2_cv(actor=self.candidate, title='Application CV', template=template)
+        self.cv = create_user_cv(actor=self.candidate, title='Application CV', template=template)
         self.snapshot = create_application_snapshot(self.cv, self.candidate)
         self.application = Application.objects.create(
             candidate=self.candidate,
@@ -279,9 +279,9 @@ class CandidateApplicationTests(APITestCase):
         JobLocation.objects.create(job=self.job, location=self.preferred_location)
         JobLocation.objects.create(job=self.job, location=self.second_preferred_location)
         template, _template_version = make_published_template('Snapshot template')
-        self.cv = create_v2_cv(actor=self.candidate, title='Selected CV', template=template)
+        self.cv = create_user_cv(actor=self.candidate, title='Selected CV', template=template)
         fill_cv_for_application(self.cv, self.candidate)
-        self.other_cv = create_v2_cv(
+        self.other_cv = create_user_cv(
             actor=self.other_candidate, title='Other CV', template=template
         )
 
@@ -336,7 +336,7 @@ class CandidateApplicationTests(APITestCase):
         self.assertEqual(response.data['contact_phone'], '0909000000')
 
     def test_candidate_cannot_mix_a_cv_with_a_version_from_another_owned_cv(self):
-        other_owned_cv = create_v2_cv(
+        other_owned_cv = create_user_cv(
             actor=self.candidate,
             title='Another owned CV',
             template=self.cv.template,

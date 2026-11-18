@@ -25,10 +25,8 @@ from ..services import (
     normalize_page_content_changes,
     start_company_update_review,
 )
-from .company_page_helpers import add_recruiter
-from .test_api import PNG_BYTES
-from .test_company_page_seo import SHELL, _structured_data
-from .test_company_page_workspace import MEMBER, CompanyPageWorkspaceTestCase
+from .cases import MEMBER, SHELL, CompanyPageWorkspaceTestCase, structured_data
+from .factories import PNG_BYTES, add_recruiter
 
 LONG_DESCRIPTION = '<p>' + 'Alpha xây dựng sản phẩm phần mềm cho doanh nghiệp. ' * 12 + '</p>'
 CULTURE = '<p>Làm việc <strong>minh bạch</strong>, học hỏi mỗi ngày.</p>'
@@ -819,7 +817,7 @@ class PublicPageContentTests(CompanyPageWorkspaceTestCase):
         with override_settings(FRONTEND_SHELL_HTML=SHELL):
             html = self.client.get(reverse('seo-company-detail', args=[company.slug]))
         html = html.content.decode()
-        return html, _structured_data(html)
+        return html, structured_data(html)
 
     def test_household_company_never_shows_an_address(self):
         Company.objects.filter(pk=self.company.pk).update(

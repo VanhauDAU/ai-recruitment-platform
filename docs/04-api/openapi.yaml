@@ -138,6 +138,7 @@ paths:
   /api/admin/accounts/:
     get:
       operationId: admin_accounts_list
+      description: Paginated per-account resources; relies on the host viewset's ``_paginated``.
       summary: Danh sách tài khoản
       parameters:
       - name: page
@@ -166,6 +167,7 @@ paths:
   /api/admin/accounts/{public_id}/:
     get:
       operationId: admin_accounts_retrieve
+      description: Paginated per-account resources; relies on the host viewset's ``_paginated``.
       summary: Chi tiết tài khoản
       parameters:
       - in: path
@@ -186,6 +188,7 @@ paths:
           description: ''
     put:
       operationId: admin_accounts_update
+      description: Paginated per-account resources; relies on the host viewset's ``_paginated``.
       summary: Sửa thông tin tài khoản
       parameters:
       - in: path
@@ -218,6 +221,7 @@ paths:
           description: ''
     patch:
       operationId: admin_accounts_partial_update
+      description: Paginated per-account resources; relies on the host viewset's ``_paginated``.
       summary: Sửa thông tin tài khoản
       parameters:
       - in: path
@@ -250,6 +254,7 @@ paths:
   /api/admin/accounts/{public_id}/activity/:
     get:
       operationId: admin_accounts_activity_list
+      description: Paginated per-account resources; relies on the host viewset's ``_paginated``.
       summary: Nhật ký hoạt động của tài khoản
       parameters:
       - name: page
@@ -283,6 +288,7 @@ paths:
   /api/admin/accounts/{public_id}/applications/:
     get:
       operationId: admin_accounts_applications_list
+      description: Paginated per-account resources; relies on the host viewset's ``_paginated``.
       summary: Hồ sơ ứng tuyển của tài khoản
       parameters:
       - name: page
@@ -316,6 +322,7 @@ paths:
   /api/admin/accounts/{public_id}/campaigns/:
     get:
       operationId: admin_accounts_campaigns_list
+      description: Paginated per-account resources; relies on the host viewset's ``_paginated``.
       summary: Chiến dịch tuyển dụng của NTD
       parameters:
       - name: page
@@ -349,6 +356,7 @@ paths:
   /api/admin/accounts/{public_id}/change-email/:
     post:
       operationId: admin_accounts_change_email_create
+      description: Paginated per-account resources; relies on the host viewset's ``_paginated``.
       summary: Xác nhận đổi email đăng nhập
       parameters:
       - in: path
@@ -382,6 +390,7 @@ paths:
   /api/admin/accounts/{public_id}/change-status/:
     post:
       operationId: admin_accounts_change_status_create
+      description: Paginated per-account resources; relies on the host viewset's ``_paginated``.
       summary: Xác nhận thay đổi trạng thái tài khoản
       parameters:
       - in: path
@@ -415,6 +424,7 @@ paths:
   /api/admin/accounts/{public_id}/company-unlink-impact/:
     post:
       operationId: admin_accounts_company_unlink_impact_create
+      description: Paginated per-account resources; relies on the host viewset's ``_paginated``.
       summary: Xem tác động trước khi gỡ liên kết công ty chọn nhầm
       parameters:
       - in: path
@@ -448,6 +458,7 @@ paths:
   /api/admin/accounts/{public_id}/consents/:
     get:
       operationId: admin_accounts_consents_list
+      description: Paginated per-account resources; relies on the host viewset's ``_paginated``.
       summary: Đồng ý dữ liệu của ứng viên
       parameters:
       - name: page
@@ -481,6 +492,7 @@ paths:
   /api/admin/accounts/{public_id}/cvs/:
     get:
       operationId: admin_accounts_cvs_list
+      description: Paginated per-account resources; relies on the host viewset's ``_paginated``.
       summary: CV của tài khoản
       parameters:
       - name: page
@@ -514,6 +526,7 @@ paths:
   /api/admin/accounts/{public_id}/email-impact/:
     post:
       operationId: admin_accounts_email_impact_create
+      description: Paginated per-account resources; relies on the host viewset's ``_paginated``.
       summary: Preview tác động đổi email đăng nhập
       parameters:
       - in: path
@@ -548,6 +561,7 @@ paths:
   /api/admin/accounts/{public_id}/jobs/:
     get:
       operationId: admin_accounts_jobs_list
+      description: Paginated per-account resources; relies on the host viewset's ``_paginated``.
       summary: Tin tuyển dụng của NTD
       parameters:
       - name: page
@@ -581,6 +595,7 @@ paths:
   /api/admin/accounts/{public_id}/profile/:
     get:
       operationId: admin_accounts_profile_retrieve
+      description: Paginated per-account resources; relies on the host viewset's ``_paginated``.
       summary: 'Hồ sơ chi tiết của tài khoản (PATCH: sửa hồ sơ)'
       parameters:
       - in: path
@@ -597,6 +612,7 @@ paths:
           description: No response body
     patch:
       operationId: admin_accounts_profile_partial_update
+      description: Paginated per-account resources; relies on the host viewset's ``_paginated``.
       summary: 'Hồ sơ chi tiết của tài khoản (PATCH: sửa hồ sơ)'
       parameters:
       - in: path
@@ -625,6 +641,7 @@ paths:
   /api/admin/accounts/{public_id}/recruitment-needs/:
     get:
       operationId: admin_accounts_recruitment_needs_list
+      description: Paginated per-account resources; relies on the host viewset's ``_paginated``.
       summary: Nhu cầu tuyển dụng của NTD
       parameters:
       - name: page
@@ -658,6 +675,7 @@ paths:
   /api/admin/accounts/{public_id}/release-resource-holds/:
     post:
       operationId: admin_accounts_release_resource_holds_create
+      description: Paginated per-account resources; relies on the host viewset's ``_paginated``.
       summary: Xác nhận gỡ policy hold sau rà soát
       parameters:
       - in: path
@@ -691,6 +709,7 @@ paths:
   /api/admin/accounts/{public_id}/resend-verification/:
     post:
       operationId: admin_accounts_resend_verification_create
+      description: Paginated per-account resources; relies on the host viewset's ``_paginated``.
       summary: Gửi lại email xác minh cho tài khoản
       parameters:
       - in: path
@@ -712,6 +731,7 @@ paths:
   /api/admin/accounts/{public_id}/resource-hold-impact/:
     post:
       operationId: admin_accounts_resource_hold_impact_create
+      description: Paginated per-account resources; relies on the host viewset's ``_paginated``.
       summary: Preview tác động gỡ policy hold của tài khoản
       parameters:
       - in: path
@@ -745,6 +765,7 @@ paths:
   /api/admin/accounts/{public_id}/revoke-sessions/:
     post:
       operationId: admin_accounts_revoke_sessions_create
+      description: Paginated per-account resources; relies on the host viewset's ``_paginated``.
       summary: Xác nhận thu hồi mọi phiên đăng nhập
       parameters:
       - in: path
@@ -778,6 +799,7 @@ paths:
   /api/admin/accounts/{public_id}/revoke-sessions-impact/:
     post:
       operationId: admin_accounts_revoke_sessions_impact_create
+      description: Paginated per-account resources; relies on the host viewset's ``_paginated``.
       summary: Preview tác động thu hồi phiên đăng nhập
       parameters:
       - in: path
@@ -812,6 +834,7 @@ paths:
   /api/admin/accounts/{public_id}/send-password-reset/:
     post:
       operationId: admin_accounts_send_password_reset_create
+      description: Paginated per-account resources; relies on the host viewset's ``_paginated``.
       summary: Gửi email đặt lại mật khẩu cho tài khoản
       parameters:
       - in: path
@@ -845,6 +868,7 @@ paths:
   /api/admin/accounts/{public_id}/sessions/:
     get:
       operationId: admin_accounts_sessions_list
+      description: Paginated per-account resources; relies on the host viewset's ``_paginated``.
       summary: Phiên đăng nhập của tài khoản
       parameters:
       - name: page
@@ -878,6 +902,7 @@ paths:
   /api/admin/accounts/{public_id}/status-impact/:
     post:
       operationId: admin_accounts_status_impact_create
+      description: Paginated per-account resources; relies on the host viewset's ``_paginated``.
       summary: Preview tác động thay đổi trạng thái tài khoản
       parameters:
       - in: path
@@ -911,6 +936,7 @@ paths:
   /api/admin/accounts/{public_id}/unlink-company/:
     post:
       operationId: admin_accounts_unlink_company_create
+      description: Paginated per-account resources; relies on the host viewset's ``_paginated``.
       summary: Xác nhận gỡ liên kết công ty chọn nhầm khi account còn clean
       parameters:
       - in: path
@@ -944,6 +970,7 @@ paths:
   /api/admin/accounts/summary/:
     get:
       operationId: admin_accounts_summary_retrieve
+      description: Paginated per-account resources; relies on the host viewset's ``_paginated``.
       summary: Thống kê tài khoản theo trạng thái
       tags:
       - admin
@@ -12016,6 +12043,7 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/DeadlineRequest'
+        required: true
       security:
       - jwtAuth: []
       responses:
@@ -12048,6 +12076,7 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/DeadlineRequest'
+        required: true
       security:
       - jwtAuth: []
       responses:
@@ -21563,10 +21592,6 @@ components:
           type: array
           items:
             type: integer
-        preferred_location_id:
-          type: integer
-          writeOnly: true
-          nullable: true
         allow_ai_analysis:
           type: boolean
           default: false
@@ -24940,19 +24965,13 @@ components:
         deadline:
           type: string
           format: date
-        application_deadline:
-          type: string
-          format: date
+      required:
+      - deadline
     DecisionSourceEnum:
       enum:
       - explicit_admin
-      - legacy_auto
-      - legacy_unknown
       type: string
-      description: |-
-        * `explicit_admin` - Quyết định quản trị tường minh
-        * `legacy_auto` - Tự duyệt lịch sử
-        * `legacy_unknown` - Không xác định nguồn lịch sử
+      description: '* `explicit_admin` - Quyết định quản trị tường minh'
     DocTypeEnum:
       enum:
       - business_registration
@@ -25485,14 +25504,7 @@ components:
           $ref: '#/components/schemas/IncomeDisplayTypeEnum'
         currency:
           $ref: '#/components/schemas/CurrencyEnum'
-        is_salary_visible:
-          type: boolean
-          readOnly: true
         deadline:
-          type: string
-          format: date
-          nullable: true
-        application_deadline:
           type: string
           format: date
           nullable: true
@@ -25655,7 +25667,6 @@ components:
       - impression_count
       - is_expired
       - is_hot
-      - is_salary_visible
       - is_urgent
       - locations_detail
       - presentation
@@ -25827,14 +25838,7 @@ components:
           $ref: '#/components/schemas/IncomeDisplayTypeEnum'
         currency:
           $ref: '#/components/schemas/CurrencyEnum'
-        is_salary_visible:
-          type: boolean
-          readOnly: true
         deadline:
-          type: string
-          format: date
-          nullable: true
-        application_deadline:
           type: string
           format: date
           nullable: true
@@ -25987,7 +25991,6 @@ components:
       - has_flash_badge
       - is_expired
       - is_hot
-      - is_salary_visible
       - is_urgent
       - locations_detail
       - presentation
@@ -26124,10 +26127,6 @@ components:
           type: string
           format: date
           nullable: true
-        application_deadline:
-          type: string
-          format: date
-          nullable: true
         job_skills:
           type: array
           items:
@@ -26215,11 +26214,6 @@ components:
           format: date
           readOnly: true
           nullable: true
-        application_deadline:
-          type: string
-          format: date
-          nullable: true
-          readOnly: true
         requested_visibility_days:
           type: integer
           readOnly: true
@@ -26317,7 +26311,6 @@ components:
           readOnly: true
       required:
       - application_count
-      - application_deadline
       - approved_at
       - campaign
       - campaign_name
@@ -28086,11 +28079,6 @@ components:
           format: date
           readOnly: true
           nullable: true
-        application_deadline:
-          type: string
-          format: date
-          nullable: true
-          readOnly: true
         first_approved_at:
           type: string
           format: date-time
@@ -28209,7 +28197,6 @@ components:
       - accepting_applications
       - age_max
       - age_min
-      - application_deadline
       - benefit_groups
       - benefit_tags
       - benefits
@@ -31504,10 +31491,6 @@ components:
           type: string
           format: date
           nullable: true
-        application_deadline:
-          type: string
-          format: date
-          nullable: true
         job_skills:
           type: array
           items:
@@ -32822,11 +32805,6 @@ components:
           type: string
           format: date
           nullable: true
-        application_deadline:
-          type: string
-          format: date
-          nullable: true
-          readOnly: true
         visibility_ends_at:
           type: string
           format: date-time
@@ -32834,7 +32812,6 @@ components:
       required:
       - age_max
       - age_min
-      - application_deadline
       - brand_slug
       - category
       - company_logo_url

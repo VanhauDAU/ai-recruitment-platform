@@ -7,9 +7,7 @@ from apps.uploads.domain.configuration import CLAMAV_BACKEND, upload_scanning_co
 from apps.uploads.models import (
     UploadState,
     UploadStateError,
-    UploadTrustStatus,
     ensure_upload_transition,
-    upload_trust_is_attachable,
 )
 from apps.uploads.services.scanners import (
     ClamAVStreamScanner,
@@ -31,11 +29,6 @@ class UploadStateInvariantTests(SimpleTestCase):
             ensure_upload_transition(UploadState.UPLOADING, UploadState.CLEAN)
         with self.assertRaises(UploadStateError):
             ensure_upload_transition(UploadState.ERROR, UploadState.CLEAN)
-
-    def test_legacy_is_attachable_but_is_never_relabelled_clean(self):
-        self.assertTrue(upload_trust_is_attachable(UploadTrustStatus.CLEAN))
-        self.assertTrue(upload_trust_is_attachable(UploadTrustStatus.LEGACY_TRUSTED))
-        self.assertNotEqual(UploadTrustStatus.LEGACY_TRUSTED, UploadTrustStatus.CLEAN)
 
 
 class ScannerAdapterTests(SimpleTestCase):

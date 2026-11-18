@@ -6,7 +6,6 @@ __pycache__/
 .env.*
 !.env.example
 media/
-legacy-media/
 public-media/
 private-media/
 quarantine/

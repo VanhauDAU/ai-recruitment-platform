@@ -49,11 +49,11 @@ class Location(models.Model):
             models.Index(fields=['name']),
         ]
 
+    def __str__(self):
+        return f'{self.name} ({self.level})'
+
     def save(self, *args, **kwargs):
         if not self.slug:
             base_slug = slugify(self.name)
             self.slug = f'{base_slug}-{self.code}' if self.level == self.Level.WARD else base_slug
         super().save(*args, **kwargs)
-
-    def __str__(self):
-        return f'{self.name} ({self.level})'

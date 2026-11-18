@@ -5,9 +5,7 @@ from .state import (
     UploadScanAttemptStatus,
     UploadState,
     UploadStateError,
-    UploadTrustStatus,
     ensure_upload_transition,
-    upload_trust_is_attachable,
 )
 from .upload import UploadAsset, UploadScanAttempt, UploadSession
 
@@ -19,7 +17,5 @@ __all__ = [
     'UploadSession',
     'UploadState',
     'UploadStateError',
-    'UploadTrustStatus',
     'ensure_upload_transition',
-    'upload_trust_is_attachable',
 ]

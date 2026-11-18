@@ -15,7 +15,7 @@ from apps.uploads.api.views import (
 )
 from apps.uploads.models import UploadSession, UploadState
 from apps.uploads.selectors import owned_upload_session
-from apps.uploads.tests.helpers import PDF_BYTES, TemporaryUploadStorageMixin, pdf_upload
+from apps.uploads.tests.factories import PDF_BYTES, TemporaryUploadStorageMixin, pdf_upload
 
 
 class UploadSessionApiTests(TemporaryUploadStorageMixin, APITestCase):

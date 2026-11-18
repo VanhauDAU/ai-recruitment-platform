@@ -4,7 +4,7 @@ from django.db.models import Prefetch, Q
 from django.db.models.expressions import RawSQL
 
 from ..models import CompanyDocument, CompanyTaxLookupEvidence, CompanyUpdateRequest
-from ..models.verification import REQUESTER_EDITABLE_COMPANY_UPDATE_STATUSES
+from ..models.company_update import REQUESTER_EDITABLE_COMPANY_UPDATE_STATUSES
 
 ADMIN_COMPANY_UPDATE_REQUEST_ORDERING_FIELDS = {
     'company__company_name',

@@ -218,13 +218,5 @@ VITE_ANNOUNCEMENT_ROLLOUT_SURFACES=none
 
 Không archive hoặc xóa dữ liệu để rollback giao diện.
 
-Trước khi rollout một surface, vận hành chạy read-only preflight:
-
-```bash
-python manage.py announcement_rollout_preflight \
-  --require-live-surface candidate \
-  --json
-```
-
 Kill switch runtime, failure injection, monitoring threshold và rollout tuần
 tự phải theo [vận hành và kill switch](../06-deployment/van-hanh-va-kill-switch.md).

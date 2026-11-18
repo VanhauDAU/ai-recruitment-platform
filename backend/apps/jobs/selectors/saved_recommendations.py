@@ -7,22 +7,11 @@ from django.db.models import Prefetch, Q
 from common.db.search import fold_accents, search_q
 
 from ..models import Job, JobCategoryAssignment, JobLocation, JobSkill, SavedJob
+from ..models.recommendation_queries import EXPERIENCE_RANK, MAX_SCORING_CANDIDATES
 from .listing import active_jobs_queryset
 
 MAX_SAVED_SOURCES = 20
-MAX_SCORING_CANDIDATES = 500
 MIN_SIMILARITY_SCORE = 20
-
-EXPERIENCE_RANK = {
-    'none': 0,
-    'under_1': 1,
-    '1': 2,
-    '2': 3,
-    '3': 4,
-    '4': 5,
-    '5': 6,
-    'over_5': 7,
-}
 
 TITLE_STOP_WORDS = {
     'admin',

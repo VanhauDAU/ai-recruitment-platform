@@ -1,28 +1,32 @@
-"""Request/response contracts for the CV lifecycle V2 API."""
+"""CV library contracts: the CV card/detail and its create, metadata and duplicate requests."""
 
 from datetime import datetime
 
-from django.core.exceptions import ValidationError as DjangoValidationError
-from django.utils import timezone
+from django.urls import reverse
 from rest_framework import serializers
 
 from apps.cv_templates.models import (
     DEFAULT_CV_LANGUAGE,
     DEFAULT_EXPERIENCE_BAND,
     CvLanguage,
-    CvTemplate,
     ExperienceBand,
-    validate_cv_document,
 )
-from apps.cvs.models import CvAsset, CvDraft, CvExport, CvImportJob, CvSharedLink, CvVersion, UserCv
-from apps.cvs.services.assets import asset_map, sign_asset
+from apps.cvs.models import CvDraft, CvImportJob, UserCv
 from apps.cvs.services.completeness import (
     COMPLETION_THRESHOLD,
     application_readiness_issues,
     cv_completion_score,
     is_unsaved_builder_baseline,
 )
-from apps.jobs.models import Job, JobCategory
+from apps.cvs.services.thumbnails import current_thumbnail_ready
+from apps.jobs.models import Job
+
+from .lookups import (
+    THEME_COLOR_PATTERN,
+    active_specialization,
+    normalize_theme_color,
+    template_by_public_id,
+)
 
 
 class CvSerializer(serializers.ModelSerializer):
@@ -142,10 +146,6 @@ class CvSerializer(serializers.ModelSerializer):
         }
 
     def get_thumbnail_url(self, obj) -> str | None:
-        from django.urls import reverse
-
-        from apps.cvs.services import current_thumbnail_ready
-
         if not current_thumbnail_ready(obj):
             return None
         path = reverse('cv-thumbnail', kwargs={'public_id': obj.public_id})
@@ -153,20 +153,7 @@ class CvSerializer(serializers.ModelSerializer):
         return request.build_absolute_uri(path) if request else path
 
     def get_thumbnail_status(self, obj) -> str:
-        from apps.cvs.services import current_thumbnail_ready
-
         return 'ready' if current_thumbnail_ready(obj) else 'pending'
-
-
-def _active_specialization(value):
-    try:
-        return JobCategory.objects.get(
-            public_id=value,
-            status=JobCategory.Status.ACTIVE,
-            category_type=JobCategory.CategoryType.SPECIALIZATION,
-        )
-    except JobCategory.DoesNotExist as error:
-        raise serializers.ValidationError('Unknown active specialization.') from error
 
 
 class CvMetadataUpdateSerializer(serializers.Serializer):
@@ -180,7 +167,7 @@ class CvMetadataUpdateSerializer(serializers.Serializer):
     )
 
     def validate_position_public_id(self, value):
-        return None if value is None else _active_specialization(value)
+        return None if value is None else active_specialization(value)
 
     def to_internal_value(self, data):
         attrs = super().to_internal_value(data)
@@ -191,50 +178,6 @@ class CvMetadataUpdateSerializer(serializers.Serializer):
     def validate(self, attrs):
         if not attrs:
             raise serializers.ValidationError('Provide at least one mutable field.')
-        return attrs
-
-
-class CvImportSerializer(serializers.Serializer):
-    file = serializers.FileField(required=False)
-    upload_session = serializers.CharField(max_length=50, required=False, trim_whitespace=True)
-    title = serializers.CharField(
-        max_length=255, required=False, allow_blank=False, trim_whitespace=True
-    )
-    template_public_id = serializers.CharField(max_length=50, required=False)
-    language = serializers.ChoiceField(choices=CvLanguage.choices, default=DEFAULT_CV_LANGUAGE)
-    theme_color = serializers.RegexField(r'^#[0-9A-Fa-f]{6}$', required=False)
-
-    def validate_template_public_id(self, value):
-        try:
-            return CvTemplate.objects.select_related('current_published_version').get(
-                public_id=value
-            )
-        except CvTemplate.DoesNotExist as error:
-            raise serializers.ValidationError('Unknown template.') from error
-
-    def validate(self, attrs):
-        upload = attrs.get('file')
-        upload_session = attrs.get('upload_session')
-        if bool(upload) == bool(upload_session):
-            raise serializers.ValidationError(
-                {'upload_session': 'Gửi đúng một trong file hoặc upload_session.'}
-            )
-        template = attrs.get('template_public_id')
-        theme_color = attrs.get('theme_color')
-        if theme_color and template is None:
-            raise serializers.ValidationError({'theme_color': 'template_public_id is required.'})
-        if (
-            theme_color
-            and not template.color_links.filter(
-                color__hex_code__iexact=theme_color,
-                color__is_active=True,
-            ).exists()
-        ):
-            raise serializers.ValidationError(
-                {'theme_color': 'Color is not available for this template.'}
-            )
-        if theme_color:
-            attrs['theme_color'] = theme_color.upper()
         return attrs
 
 
@@ -253,18 +196,13 @@ class CvCreateSerializer(serializers.Serializer):
         choices=ExperienceBand.choices, default=DEFAULT_EXPERIENCE_BAND
     )
     source_cv_public_id = serializers.CharField(max_length=50, required=False, allow_blank=False)
-    theme_color = serializers.RegexField(r'^#[0-9A-Fa-f]{6}$', required=False)
+    theme_color = serializers.RegexField(THEME_COLOR_PATTERN, required=False)
 
     def validate_template_public_id(self, value):
-        try:
-            return CvTemplate.objects.select_related('current_published_version').get(
-                public_id=value
-            )
-        except CvTemplate.DoesNotExist as error:
-            raise serializers.ValidationError('Unknown template.') from error
+        return template_by_public_id(value)
 
     def validate_position_public_id(self, value):
-        return _active_specialization(value)
+        return active_specialization(value)
 
     def validate_source_cv_public_id(self, value):
         try:
@@ -281,299 +219,5 @@ class CvCreateSerializer(serializers.Serializer):
             raise serializers.ValidationError(
                 {'position_public_id': 'Use only one content source.'}
             )
-        theme_color = attrs.get('theme_color')
-        template = attrs['template_public_id']
-        if (
-            theme_color
-            and not template.color_links.filter(
-                color__hex_code__iexact=theme_color,
-                color__is_active=True,
-            ).exists()
-        ):
-            raise serializers.ValidationError(
-                {'theme_color': 'Color is not available for this template.'}
-            )
-        if theme_color:
-            attrs['theme_color'] = theme_color.upper()
+        normalize_theme_color(attrs, attrs['template_public_id'])
         return attrs
-
-
-class CvDraftSerializer(serializers.ModelSerializer):
-    base_version_public_id = serializers.CharField(source='base_version.public_id', read_only=True)
-    assets = serializers.SerializerMethodField()
-
-    class Meta:
-        model = CvDraft
-        fields = [
-            'schema_version',
-            'content_json',
-            'layout_json',
-            'style_json',
-            'assets',
-            'lock_version',
-            'base_version_public_id',
-            'updated_at',
-        ]
-        read_only_fields = ['lock_version', 'base_version_public_id', 'updated_at']
-
-    def get_assets(self, obj) -> dict:
-        return asset_map(
-            content_json=obj.content_json,
-            style_json=obj.style_json,
-            request=self.context.get('request'),
-            owner=obj.cv.user,
-            signed=True,
-        )
-
-
-class CvDraftWriteSerializer(serializers.Serializer):
-    schema_version = serializers.IntegerField(default=1)
-    content_json = serializers.JSONField()
-    layout_json = serializers.JSONField()
-    style_json = serializers.JSONField()
-    client_session_id = serializers.CharField(max_length=100, required=False, allow_blank=True)
-
-    def validate(self, attrs):
-        try:
-            validate_cv_document(
-                content_json=attrs['content_json'],
-                layout_json=attrs['layout_json'],
-                style_json=attrs['style_json'],
-                schema_version=attrs['schema_version'],
-            )
-        except DjangoValidationError as error:
-            raise serializers.ValidationError(
-                error.message_dict if hasattr(error, 'message_dict') else error.messages
-            ) from error
-        return attrs
-
-
-class CvTemplateSwitchSerializer(serializers.Serializer):
-    template_public_id = serializers.CharField(max_length=50)
-    theme_color = serializers.RegexField(r'^#[0-9A-Fa-f]{6}$', required=False)
-    client_session_id = serializers.CharField(max_length=100, required=False, allow_blank=True)
-
-
-class CvApplySampleSerializer(serializers.Serializer):
-    sample_content_public_id = serializers.CharField(max_length=50)
-    client_session_id = serializers.CharField(max_length=100, required=False, allow_blank=True)
-
-
-class CvAssetUploadSerializer(serializers.Serializer):
-    file = serializers.FileField(required=False)
-    upload_session = serializers.CharField(max_length=50, required=False, trim_whitespace=True)
-
-    def validate(self, attrs):
-        if bool(attrs.get('file')) == bool(attrs.get('upload_session')):
-            raise serializers.ValidationError(
-                {'upload_session': 'Gửi đúng một trong file hoặc upload_session.'}
-            )
-        return attrs
-
-
-class CvAssetSerializer(serializers.ModelSerializer):
-    url = serializers.SerializerMethodField()
-
-    class Meta:
-        model = CvAsset
-        fields = [
-            'public_id',
-            'kind',
-            'title',
-            'content_type',
-            'size_bytes',
-            'width',
-            'height',
-            'url',
-        ]
-        read_only_fields = fields
-
-    def get_url(self, obj) -> str:
-        from django.urls import reverse
-
-        path = reverse('cv-asset-content', kwargs={'asset_public_id': obj.public_id})
-        if obj.kind == CvAsset.Kind.AVATAR:
-            path = f'{path}?token={sign_asset(obj)}'
-        request = self.context.get('request')
-        return request.build_absolute_uri(path) if request else path
-
-
-class CvSharedLinkCreateSerializer(serializers.Serializer):
-    version_public_id = serializers.CharField(max_length=50, required=False, allow_blank=False)
-    expires_at = serializers.DateTimeField(required=False, allow_null=True)
-
-    def validate_expires_at(self, value):
-        if value is not None and value <= timezone.now():
-            raise serializers.ValidationError('Expiry must be in the future.')
-        return value
-
-
-class CvSharedLinkSerializer(serializers.ModelSerializer):
-    version_public_id = serializers.CharField(source='version.public_id', read_only=True)
-
-    class Meta:
-        model = CvSharedLink
-        fields = [
-            'public_id',
-            'version_public_id',
-            'expires_at',
-            'revoked_at',
-            'last_accessed_at',
-            'created_at',
-        ]
-        read_only_fields = fields
-
-
-class CvExportCreateSerializer(serializers.Serializer):
-    """The version is optional; service defaults to published then latest."""
-
-    version_public_id = serializers.CharField(max_length=50, required=False, allow_blank=False)
-
-
-class CvExportSerializer(serializers.ModelSerializer):
-    version_public_id = serializers.CharField(source='version.public_id', read_only=True)
-    download_url = serializers.SerializerMethodField()
-
-    class Meta:
-        model = CvExport
-        fields = [
-            'public_id',
-            'version_public_id',
-            'export_format',
-            'status',
-            'renderer_key',
-            'renderer_version',
-            'attempts',
-            'download_url',
-            'queued_at',
-            'started_at',
-            'completed_at',
-            'failed_at',
-            'created_at',
-        ]
-        read_only_fields = fields
-
-    def get_download_url(self, obj) -> str | None:
-        from django.urls import reverse
-
-        from apps.cvs.services import export_download_ready
-
-        if not export_download_ready(obj):
-            return None
-        url = reverse(
-            'cv-export-download',
-            kwargs={
-                'public_id': obj.cv.public_id,
-                'export_public_id': obj.public_id,
-            },
-        )
-        request = self.context.get('request')
-        return request.build_absolute_uri(url) if request else url
-
-
-class CvVersionSerializer(serializers.ModelSerializer):
-    template_renderer_key = serializers.CharField(
-        source='template_version.renderer_key', read_only=True
-    )
-    parent_version_public_id = serializers.CharField(
-        source='parent_version.public_id', read_only=True
-    )
-    assets = serializers.SerializerMethodField()
-    # True when this snapshot is an uploaded file: readers show that file, not
-    # the (empty) structured document. The storage key itself is never exposed.
-    has_source_file = serializers.SerializerMethodField()
-
-    class Meta:
-        model = CvVersion
-        fields = [
-            'public_id',
-            'version_number',
-            'version_kind',
-            'schema_version',
-            'content_json',
-            'layout_json',
-            'style_json',
-            'assets',
-            'has_source_file',
-            'plain_text',
-            'content_hash',
-            'template_renderer_key',
-            'parent_version_public_id',
-            'created_at',
-        ]
-        read_only_fields = fields
-
-    def get_has_source_file(self, obj) -> bool:
-        return bool(obj.source_file_key)
-
-    def get_assets(self, obj) -> dict:
-        return asset_map(
-            content_json=obj.content_json,
-            style_json=obj.style_json,
-            request=self.context.get('request'),
-            owner=obj.cv.user if obj.cv_id else None,
-            version=obj,
-            signed=True,
-            token_context=self.context.get('asset_token_context'),
-        )
-
-
-class CvVersionSummarySerializer(serializers.ModelSerializer):
-    """Small immutable history card used by owner export/version selection."""
-
-    template_renderer_key = serializers.CharField(
-        source='template_version.renderer_key', read_only=True
-    )
-    template_renderer_version = serializers.CharField(
-        source='template_version.renderer_version', read_only=True
-    )
-
-    class Meta:
-        model = CvVersion
-        fields = [
-            'public_id',
-            'version_number',
-            'version_kind',
-            'schema_version',
-            'template_renderer_key',
-            'template_renderer_version',
-            'created_at',
-        ]
-        read_only_fields = fields
-
-
-class SharedCvVersionSerializer(serializers.ModelSerializer):
-    """Bearer-link response: canonical rendering data only, never draft or hashes."""
-
-    template_renderer_key = serializers.CharField(
-        source='template_version.renderer_key', read_only=True
-    )
-    template_renderer_version = serializers.CharField(
-        source='template_version.renderer_version', read_only=True
-    )
-    assets = serializers.SerializerMethodField()
-
-    class Meta:
-        model = CvVersion
-        fields = [
-            'public_id',
-            'version_number',
-            'schema_version',
-            'content_json',
-            'layout_json',
-            'style_json',
-            'assets',
-            'template_renderer_key',
-            'template_renderer_version',
-            'created_at',
-        ]
-        read_only_fields = fields
-
-    def get_assets(self, obj) -> dict:
-        return asset_map(
-            content_json=obj.content_json,
-            style_json=obj.style_json,
-            request=self.context.get('request'),
-            version=obj,
-            signed=True,
-        )

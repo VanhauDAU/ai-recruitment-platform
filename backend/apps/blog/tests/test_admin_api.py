@@ -6,7 +6,7 @@ from django.utils import timezone
 from rest_framework.test import APITestCase
 
 from apps.accounts.models import User
-from apps.accounts.tests.helpers import make_admin
+from apps.accounts.tests.factories import make_admin
 from apps.blog.models import BlogMediaAsset, Post, PostCategory, PostWorkingCopy, Tag
 from apps.blog.services import sanitize_blog_html
 
