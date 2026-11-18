@@ -9,7 +9,9 @@ const JobFitDialog = lazy(() => import('./JobFitDialog'))
 
 // Thẻ "Xem độ phù hợp" trên trang chi tiết tin. `beforeOpen` do trang truyền vào
 // (mời đăng nhập, chặn tài khoản không phải ứng viên); trả false thì không mở.
-export default function AnalyzeJobFit({ job, beforeOpen = () => true, onApply }) {
+// `placement`: `sidebar` chỉ hiện từ 1024 px (cột phải), `inline` chỉ hiện dưới
+// 1024 px (ngay dưới thông tin chính của tin), để mỗi màn hình có đúng một thẻ.
+export default function AnalyzeJobFit({ job, beforeOpen = () => true, onApply, placement = 'sidebar' }) {
   const { settings } = useSiteSettings()
   const [open, setOpen] = useState(false)
   if (settings.ai_job_match_enabled !== true) return null
@@ -18,7 +20,7 @@ export default function AnalyzeJobFit({ job, beforeOpen = () => true, onApply })
     <>
       <button
         type="button"
-        className="jf-trigger"
+        className={`jf-trigger jf-trigger--${placement}`}
         aria-label="Xem độ phù hợp với CV của bạn"
         onClick={() => beforeOpen() && setOpen(true)}
       >

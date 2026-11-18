@@ -10,7 +10,8 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 #### Added — Giao diện "Xem độ phù hợp" (tuần 4)
 
-- Thẻ "Xem độ phù hợp" có mascot ở cột phải trang chi tiết tin; hộp thoại chọn CV,
+- Thẻ "Xem độ phù hợp" có mascot ở cột phải trang chi tiết tin (điện thoại, máy tính
+  bảng: ngay dưới thông tin chính của tin); hộp thoại chọn CV,
   màn hình AI đang phân tích, kết quả với thước bốn mức, tiêu chí, kỹ năng có/thiếu
   kèm câu trích từ CV, yêu cầu, gợi ý và cảnh báo không phải quyết định tuyển dụng.
 - Tập vàng 150 cặp CV–tin cho đánh giá (nhãn do Claude gán theo rubric, có quy tắc

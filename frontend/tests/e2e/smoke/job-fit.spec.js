@@ -82,8 +82,13 @@ test('candidate smoke: job fit analyses a CV and explains the result with eviden
   await page.goto(`/viec-lam/${JOB.slug}`)
   await page.getByRole('button', { name: 'Chỉ cookie thiết yếu' }).click()
 
+  // Mỗi màn hình đúng một thẻ: cột phải từ 1024 px, dưới thông tin tin khi nhỏ hơn.
   const trigger = page.getByRole('button', { name: /Xem độ phù hợp với CV của bạn/ })
+  await expect(trigger).toHaveCount(1)
   await expect(trigger).toBeVisible()
+  const narrow = page.viewportSize().width < 1024
+  await expect(trigger).toHaveClass(narrow ? /jf-trigger--inline/ : /jf-trigger--sidebar/)
+  await trigger.scrollIntoViewIfNeeded()
   if (SHOTS) await page.screenshot({ path: `${SHOTS}/${testInfo.project.name}-1-trigger.png` })
   await trigger.click()
 

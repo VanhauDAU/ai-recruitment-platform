@@ -126,6 +126,9 @@ export default function JobDetail() {
                 onShare={handleShare}
                 savePending={savePending}
               />
+              {isAcceptingApplications(job) && (
+                <AnalyzeJobFit job={job} beforeOpen={requireCandidate} onApply={handleApply} placement="inline" />
+              )}
               <JobDetailContent
                 job={job}
                 relatedJobs={relatedJobs}

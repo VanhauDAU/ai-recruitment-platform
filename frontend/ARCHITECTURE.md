@@ -571,7 +571,8 @@ pages/main/jobs/JobDetail
 ## Ownership map — Xem độ phù hợp CV–tin
 
 ```text
-pages/main/jobs/JobDetail (slot dưới thông tin công ty ở JobDetailSidebar)
+pages/main/jobs/JobDetail (placement="sidebar": slot dưới thông tin công ty ở JobDetailSidebar, từ 1024 px;
+                          placement="inline": ngay dưới JobHero, dưới 1024 px)
   → features/analyze-job-fit
     → entities/cv (CvChoice, getMyCvs), entities/site-settings
       → shared/api, shared/ui/mascot

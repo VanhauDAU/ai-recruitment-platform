@@ -1,4 +1,5 @@
-/* Thẻ mở "Xem độ phù hợp" ở cột phải trang chi tiết tin, dưới thông tin công ty.
+/* Thẻ mở "Xem độ phù hợp": cột phải dưới thông tin công ty (máy tính) hoặc ngay
+   dưới thông tin chính của tin (điện thoại, máy tính bảng).
    Nạp cùng chunk của trang (route tải trễ), không vào CSS khởi tạo. */
 .jf-trigger {
   position: relative;
@@ -60,6 +61,15 @@
   transition: transform 160ms ease;
 }
 .jf-trigger:hover .jf-trigger__go { transform: translateX(2px); }
+
+/* Mỗi màn hình đúng một thẻ: cột phải từ 1024 px, dưới thông tin tin khi nhỏ hơn. */
+@media (max-width: 1023px) {
+  .jf-trigger--sidebar { display: none; }
+  .jf-trigger--inline { margin-top: 10px; }
+}
+@media (min-width: 1024px) {
+  .jf-trigger--inline { display: none; }
+}
 
 @keyframes jf-trigger-border {
   to { background-position: 0 0, 300% 0; }

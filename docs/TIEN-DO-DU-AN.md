@@ -529,7 +529,8 @@ loại tiêu chí khỏi điểm, kết quả tất định, có golden test và
 <details><summary>Ghi chú tuần 4</summary>
 
 - Feature `features/analyze-job-fit`: thẻ "Xem độ phù hợp" (mascot vẫy tay, viền
-  chuyển màu) ở cột phải trang chi tiết tin, dưới thông tin công ty; hộp thoại
+  chuyển màu) ở cột phải trang chi tiết tin, dưới thông tin công ty (từ 1024 px);
+  dưới 1024 px thẻ nằm ngay dưới thông tin chính của tin, cạnh nút ứng tuyển; hộp thoại
   chọn CV → màn hình "AI đang phân tích CV" (tờ CV có tia quét, trạng thái lấy
   đúng `queued`/`processing` của backend) → kết quả: mascot theo mức, điểm đếm
   tăng, thước bốn mức 50/65/80, tiêu chí, kỹ năng có/thiếu kèm câu trích từ CV,
@@ -541,8 +542,7 @@ loại tiêu chí khỏi điểm, kết quả tất định, có golden test và
   của đối sánh theo luật, chỉ giữ nhãn (hết hai con số mâu thuẫn).
 - Kiểm thử: 13 unit test của feature, E2E `job-fit.spec.js` (TC-01 luồng chính,
   TC-06 xem lại kết quả, TC-08 khách không mở được, TC-15 không tràn ngang ở
-  desktop/tablet/mobile).
-- Trên điện thoại, cột phải xếp sau nội dung tin nên thẻ nằm khá sâu.
+  desktop/tablet/mobile; mỗi màn hình đúng một thẻ hiện ra).
 
 </details>
 
