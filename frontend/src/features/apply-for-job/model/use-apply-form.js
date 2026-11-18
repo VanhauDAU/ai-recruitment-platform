@@ -2,6 +2,7 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
 import { getCandidateApplications, submitJobApplication } from '@/entities/application'
+import { readCampaignRef } from '@/entities/campaign'
 import { candidateNotificationKeys } from '@/entities/candidate-notification'
 import { getMySavedCvs, importCvFile, isCvApplicationReady } from '@/entities/cv'
 import { message } from '@/shared/lib/toast'
@@ -181,6 +182,7 @@ export function useApplyForm({
         contactName: contactName.trim(),
         contactEmail: contactEmail.trim(),
         contactPhone: contactPhone.trim(),
+        campaignRef: readCampaignRef(),
       })
       message.success('Chúc mừng bạn đã ứng tuyển thành công!')
       // The confirmation notice is already in the inbox; refresh the bell now.

@@ -197,6 +197,7 @@ def filter_job_list_queryset(params, include_preview=False, *, at=None):
         'position_level': 'position_level',
         'industry': 'company__industries__id',
         'company': 'company__public_id',
+        'campaign': 'campaign__public_id',
     }
     for param_name, model_field in scalar_filters.items():
         if value := params.get(param_name):

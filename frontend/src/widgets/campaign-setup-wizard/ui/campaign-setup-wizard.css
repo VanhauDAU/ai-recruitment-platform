@@ -47,6 +47,7 @@
 .csw-step__summary { font-size: 12.5px; line-height: 18px; color: #64748b; }
 .csw-step.is-todo .csw-step__summary { color: #b45309; }
 .csw-step.is-done .csw-step__summary { color: #047857; }
+.csw-step.is-optional .csw-step__summary { color: #94a3b8; }
 
 /* Nội dung bước */
 .csw-panel { padding: 24px; border: 1px solid #e2e8e5; border-radius: 16px; background: #fff; box-shadow: 0 1px 3px rgb(15 42 36 / .05); }
@@ -54,10 +55,13 @@
 .csw-panel__title { margin: 0; font-size: 19px; font-weight: 700; color: #0f2a24; }
 .csw-panel__intro { margin: 4px 0 0; font-size: 14px; color: #64748b; }
 
+.csw-channels { display: flex; flex-direction: column; gap: 16px; }
+.csw-next { display: flex; justify-content: flex-end; padding-top: 14px; border-top: 1px solid #e2e8e5; }
+
 @media (max-width: 900px) {
   .csw-body { grid-template-columns: 1fr; gap: 12px; }
   .csw-rail { position: static; overflow-x: auto; }
-  .csw-rail__list { display: grid; grid-template-columns: repeat(3, minmax(150px, 1fr)); gap: 6px; }
+  .csw-rail__list { display: grid; grid-template-columns: repeat(4, minmax(140px, 1fr)); gap: 6px; }
   .csw-step { padding-bottom: 0; }
   .csw-step:not(:last-child)::after { display: none; }
   .csw-step__button { padding: 10px; }
@@ -70,7 +74,7 @@
   .csw-panel { padding: 16px; }
   .csw-step__summary { display: none; }
   .csw-step__button { padding: 8px 4px; }
-  .csw-rail__list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .csw-rail__list { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .csw-step__button { flex-direction: column; align-items: center; gap: 4px; text-align: center; }
   .csw-step__title { font-size: 12px; }
 }

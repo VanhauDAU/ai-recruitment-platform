@@ -1,4 +1,4 @@
-import { EditOutlined, PlusOutlined, SettingOutlined } from '@ant-design/icons'
+import { EditOutlined, GlobalOutlined, PlusOutlined, SettingOutlined } from '@ant-design/icons'
 import { Button } from 'antd'
 import dayjs from 'dayjs'
 import { Link } from 'react-router'
@@ -56,6 +56,11 @@ export default function CampaignWorkspaceHero({ campaign, onEdit }) {
               {CAMPAIGN_STATUS_LABELS[campaign.status] || campaign.status_label || campaign.status}
             </span>
             <span className="cw-hero__id">{campaign.public_id}</span>
+            {campaign.slug && campaign.status !== 'draft' && campaign.landing_enabled !== false && (
+              <a className="cw-hero__landing" href={`/tuyen-dung/${campaign.slug}`} target="_blank" rel="noreferrer">
+                <GlobalOutlined aria-hidden /> Xem trang tuyển dụng
+              </a>
+            )}
           </div>
           <h1 className="cw-hero__title">{campaign.name}</h1>
         </div>

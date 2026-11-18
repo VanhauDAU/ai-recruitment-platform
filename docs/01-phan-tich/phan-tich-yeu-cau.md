@@ -46,7 +46,7 @@ cột "Gồm" hoặc mục cuối.
 | Nhà tuyển dụng | Xác thực tài khoản nhà tuyển dụng | Giấy phép kinh doanh, số điện thoại, cam kết bảo vệ dữ liệu | ✅ |
 | Nhà tuyển dụng | Tạo hoặc tham gia công ty | Gửi yêu cầu tham gia, chờ quản lý công ty duyệt | ✅ |
 | Nhà tuyển dụng | Quản lý trang công ty và thành viên | Biên tập trang (khi có quyền); quản lý công ty duyệt tham gia, cấp/thu quyền biên tập, chuyển quyền, gỡ thành viên, giao tin và chiến dịch | ✅ |
-| Nhà tuyển dụng | Quản lý chiến dịch tuyển dụng | Thiết lập đợt tuyển (thời gian, ngân sách, các tin; chỉ tiêu = tổng số lượng tuyển của các tin); kích hoạt ngay hoặc lên lịch qua wizard; tự kích hoạt/tự kết thúc theo ngày (đóng tin); thống kê theo chiến dịch | ✅ |
+| Nhà tuyển dụng | Quản lý chiến dịch tuyển dụng | Thiết lập đợt tuyển (thời gian, ngân sách, các tin; chỉ tiêu = tổng số lượng tuyển của các tin); kích hoạt ngay hoặc lên lịch qua wizard; tự kích hoạt/tự kết thúc theo ngày (đóng tin); phân phối đa kênh (link theo dõi + QR + nội dung soạn bằng AI, chi phí theo kênh), ghi nhận nguồn hồ sơ, trang tuyển dụng công khai; so sánh hiệu quả theo nguồn | ✅ |
 | Nhà tuyển dụng | Quản lý tin tuyển dụng | Gia hạn, mở lại, sửa và gửi lại khi bị yêu cầu sửa | ✅ |
 | Nhà tuyển dụng | Tìm kiếm hồ sơ ứng viên («include» Đối sánh ngữ nghĩa CV–JD) | | ⬜ |
 | Nhà tuyển dụng | Quản lý hồ sơ ứng tuyển | Đổi trạng thái, chặn ứng viên theo công ty | ✅ |

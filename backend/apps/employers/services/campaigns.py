@@ -210,6 +210,8 @@ def update_campaign(*, campaign, user, **data):
         return campaign
     for field, value in data.items():
         setattr(campaign, field, value)
+    if 'name' in changed_fields and campaign.first_activated_at is None:
+        campaign.slug = campaign.build_slug()
     campaign.save()
     record_campaign_activity(
         campaign=campaign,

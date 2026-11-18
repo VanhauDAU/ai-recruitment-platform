@@ -171,7 +171,9 @@ export default function ApplicationInspectorPanel({
               </InfoRow>
             )}
             <InfoRow icon={<CheckCircleOutlined aria-hidden />} label="Nguồn hồ sơ">
-              {SOURCE_LABELS[selectedApplication.source] || selectedApplication.source || 'Ứng tuyển trực tiếp'}
+              {selectedApplication.campaign_channel_label
+                ? `Kênh chiến dịch: ${selectedApplication.campaign_channel_label}`
+                : SOURCE_LABELS[selectedApplication.source] || selectedApplication.source || 'Ứng tuyển trực tiếp'}
             </InfoRow>
             <InfoRow icon={<CheckCircleOutlined aria-hidden />} label="Phân tích bằng AI">
               {snapshot?.allow_ai_analysis ? 'Ứng viên đã đồng ý' : 'Không có sự đồng ý'}

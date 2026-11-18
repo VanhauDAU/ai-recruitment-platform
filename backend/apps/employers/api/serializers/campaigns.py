@@ -34,6 +34,9 @@ class RecruitmentCampaignSerializer(serializers.ModelSerializer):
             'public_id',
             'name',
             'description',
+            'slug',
+            'landing_intro',
+            'landing_enabled',
             'headcount',
             'start_date',
             'target_date',
@@ -68,6 +71,7 @@ class RecruitmentCampaignSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = [
             'public_id',
+            'slug',
             'headcount',
             'status',
             'status_label',

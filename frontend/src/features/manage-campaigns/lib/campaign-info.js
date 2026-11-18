@@ -7,6 +7,8 @@ export function campaignInfoValues(campaign) {
   return {
     name: campaign.name || '',
     description: campaign.description || '',
+    landing_intro: campaign.landing_intro || '',
+    landing_enabled: campaign.landing_enabled !== false,
     start_date: toDay(campaign.start_date),
     target_date: toDay(campaign.target_date),
     is_continuous: Boolean(campaign.is_continuous),
@@ -21,6 +23,7 @@ export function campaignInfoPayload(values) {
     ...values,
     name: values.name.trim(),
     description: (values.description || '').trim(),
+    landing_intro: (values.landing_intro || '').trim(),
     start_date: toIso(values.start_date),
     target_date: values.is_continuous ? null : toIso(values.target_date),
   }

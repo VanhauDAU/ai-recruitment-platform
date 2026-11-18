@@ -8,7 +8,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | Hạng mục | Trạng thái |
 | --- | --- |
 | [Mô hình hóa yêu cầu cho báo cáo (mục 3.2)](#mô-hình-hóa-yêu-cầu-cho-báo-cáo-mục-32-2026-11-18) | ✅ Nguồn sơ đồ trong `docs/01-phan-tich/mo-hinh-hoa-yeu-cau/` |
-| [Nâng cấp chiến dịch tuyển dụng (4 GĐ)](#nâng-cấp-chiến-dịch-tuyển-dụng-2026-11-18) | 🟨 GĐ1 xong trên nhánh `feat/campaign-goals-lifecycle`, chưa mở PR; GĐ2–4 chưa làm |
+| [Nâng cấp chiến dịch tuyển dụng (4 GĐ)](#nâng-cấp-chiến-dịch-tuyển-dụng-2026-11-18) | 🟨 GĐ1 và các đợt làm gọn giao diện đã gộp (#235, #236, #237); GĐ2 xong trên nhánh `feat/campaign-distribution`; GĐ3–4 chưa làm |
 | [Ứng tuyển bằng CV tải lên và form ứng tuyển mới](#ứng-tuyển-bằng-cv-tải-lên-và-form-ứng-tuyển-mới-2026-11-18) | ✅ Gộp vào `dev` (#234) |
 | [Bảng điều khiển quản trị](#bảng-điều-khiển-quản-trị-2026-11-16) | 🟨 Xong trên nhánh `feat/admin-dashboard`, chưa mở PR |
 | [Ảnh đại diện dùng chung 3 cổng](#ảnh-đại-diện-dùng-chung-3-cổng-2026-11-16) | 🟨 Xong trên nhánh `feat/avatar-editor`, chưa mở PR |
@@ -52,8 +52,8 @@ Kế hoạch 4 giai đoạn, mỗi giai đoạn một PR.
 
 | GĐ | Nội dung | Trạng thái |
 | --- | --- | --- |
-| 1 | Mục tiêu, vòng đời (`scheduled`), wizard thiết lập, lịch chạy, đóng tin khi kết thúc | 🟨 Xong trên nhánh `feat/campaign-goals-lifecycle` |
-| 2 | Kênh thủ công, link theo dõi `/r/<code>`, ghi nhận nguồn ứng tuyển, trang đích `/tuyen-dung/<slug>`, nội dung bài đăng bằng AI | ⬜ |
+| 1 | Mục tiêu, vòng đời (`scheduled`), wizard thiết lập, lịch chạy, đóng tin khi kết thúc | ✅ Gộp vào `dev` (#235, làm gọn ở #236, #237) |
+| 2 | Kênh thủ công, link theo dõi `/r/<code>`, ghi nhận nguồn ứng tuyển, trang đích `/tuyen-dung/<slug>`, nội dung bài đăng bằng AI | 🟨 Xong trên nhánh `feat/campaign-distribution` |
 | 3 | Đăng Facebook Page của NTD (OAuth, hẹn giờ, gỡ bài khi kết thúc) | ⬜ |
 | 4 | Sức khỏe chiến dịch (dự báo, cảnh báo), email báo cáo tuần, xuất Excel/PDF | ⬜ |
 
@@ -119,6 +119,25 @@ GĐ1 đã làm:
     modal đổi tên);
   - trang chi tiết còn một nút chính, "Sửa thông tin" và menu "Thao tác khác";
     dải bốn thông tin; chỉ số Tổng quan gom thành một dải.
+- GĐ2 đã làm (nhánh `feat/campaign-distribution`):
+  - **Backend**: app `apps.campaigns` thêm `CampaignChannel` (một kênh một link
+    `/r/<code>`), `CampaignChannelCost`, `CampaignChannelClickDaily`;
+    `Application.campaign_channel` + `acquisition_channel`; `slug`,
+    `landing_intro`, `landing_enabled` cho chiến dịch.
+  - **Redirect** đếm lượt bấm không cookie, không lưu IP; `ref` có ký hạn 30
+    ngày.
+  - **Nội dung AI** qua `ai_core`, có mẫu dự phòng, 20 lượt/ngày.
+  - **Báo cáo** so sánh kênh và nguồn tự nhiên; API trang tuyển dụng công
+    khai + vỏ SEO (404/410/noindex); bộ lọc `?campaign=` cho danh sách tin.
+  - **Frontend**: tab "Kênh & nguồn" (bảng so sánh + thẻ kênh: link, QR, soạn
+    AI, sửa nội dung, đánh dấu đã đăng, chi phí); bước "Kênh phân phối" trong
+    wizard; trang `/tuyen-dung/:slug`; bắt `?ref=` theo consent và gửi khi ứng
+    tuyển; nguồn hiện ở hồ sơ trong trang quản lý CV; Vite proxy `/r`.
+  - Lệch kế hoạch có chủ ý: một kênh đúng một link (không tách bảng link);
+    sinh nội dung AI đồng bộ, dùng `AiInvocation` sẵn có thay cho bảng lần sinh
+    riêng; chưa làm sitemap cho trang tuyển dụng.
+  - Sửa kèm: test chiến dịch không còn import thẳng class test của app khác
+    (pytest đã chạy lặp các class đó).
 - Còn mở: chưa xem bằng mắt trên trình duyệt (đã có test API và test giao diện);
   `openapi.yaml` được sinh lại nên kéo theo phần lệch tích tụ từ các tính năng
   trước.

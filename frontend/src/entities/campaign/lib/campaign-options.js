@@ -48,3 +48,15 @@ export const CAMPAIGN_BUDGET_SOURCE_OPTIONS = [
   { value: 'company', label: 'Công ty chi trả' },
   { value: 'personal', label: 'Cá nhân chi trả' },
 ]
+
+export const CAMPAIGN_CHANNEL_KINDS = [
+  { value: 'facebook_page', label: 'Fanpage Facebook' },
+  { value: 'facebook_group', label: 'Nhóm Facebook' },
+  { value: 'linkedin', label: 'LinkedIn' },
+  { value: 'zalo', label: 'Zalo' },
+  { value: 'tiktok', label: 'TikTok' },
+  { value: 'email', label: 'Email' },
+  { value: 'website', label: 'Website công ty' },
+  { value: 'qr_offline', label: 'Tờ rơi / QR' },
+  { value: 'other', label: 'Kênh khác' },
+]

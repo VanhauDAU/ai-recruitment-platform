@@ -8,7 +8,9 @@ export default function SetupStepRail({ steps, states, current, onSelect, locked
       <ol className="csw-rail__list">
         {steps.map((step, index) => {
           const state = states[step.key]
-          const tone = state.done ? 'done' : step.key === 'launch' && state.ready ? 'ready' : 'todo'
+          const tone = state.done
+            ? 'done'
+            : step.optional ? 'optional' : step.key === 'launch' && state.ready ? 'ready' : 'todo'
           const isCurrent = step.key === current
           return (
             <li key={step.key} className={`csw-step is-${tone}${isCurrent ? ' is-current' : ''}`}>
@@ -20,7 +22,9 @@ export default function SetupStepRail({ steps, states, current, onSelect, locked
                 onClick={() => onSelect(step.key)}
               >
                 <span className="csw-step__mark" aria-hidden>
-                  {tone === 'done' ? <CheckOutlined /> : tone === 'todo' && !isCurrent ? <ExclamationOutlined /> : index + 1}
+                  {tone === 'done'
+                    ? <CheckOutlined />
+                    : tone === 'todo' && !isCurrent ? <ExclamationOutlined /> : index + 1}
                 </span>
                 <span className="csw-step__text">
                   <span className="csw-step__title">{step.title}</span>

@@ -147,6 +147,8 @@ class CandidateApplicationV2CreateSerializer(serializers.Serializer):
     contact_name = serializers.CharField(required=False, allow_blank=True, max_length=255)
     contact_email = serializers.EmailField(required=False, allow_blank=True)
     contact_phone = serializers.CharField(required=False, allow_blank=True, max_length=20)
+    # Signed reference from a campaign channel link; invalid values count as organic.
+    campaign_ref = serializers.CharField(required=False, allow_blank=True, max_length=200)
 
     def validate(self, attrs):
         candidate = self.context['request'].user

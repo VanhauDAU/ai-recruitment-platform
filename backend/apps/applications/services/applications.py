@@ -92,6 +92,7 @@ def create_application_record(
     contact_name='',
     contact_email='',
     contact_phone='',
+    campaign_channel=None,
 ):
     """Persist one candidate application and its immutable selected CV snapshot."""
     # Serialise submissions of one candidate, then repeat the validation made
@@ -125,6 +126,8 @@ def create_application_record(
         contact_name=contact_name,
         contact_email=contact_email,
         contact_phone=contact_phone,
+        campaign_channel=campaign_channel,
+        acquisition_channel=campaign_channel.kind if campaign_channel else '',
     )
     application.preferred_locations.set(preferred_locations)
     ApplicationStatusHistory.objects.create(
@@ -145,6 +148,7 @@ def create_application_record(
             metadata={
                 'candidate_name': candidate.full_name or candidate.email,
                 'job_title': job.title,
+                'channel': campaign_channel.label if campaign_channel else '',
             },
         )
     # Delivered right away: the candidate's confirmation (bell + email).

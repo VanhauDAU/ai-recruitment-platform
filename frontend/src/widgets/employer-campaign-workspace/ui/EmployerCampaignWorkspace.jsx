@@ -3,6 +3,7 @@ import {
   EditOutlined,
   FileTextOutlined,
   HistoryOutlined,
+  ShareAltOutlined,
   TeamOutlined,
 } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
@@ -23,6 +24,7 @@ import { CampaignInfoForm } from '@/features/manage-campaigns'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import CampaignActivityPanel from './CampaignActivityPanel'
 import CampaignApplyCvPanel from './CampaignApplyCvPanel'
+import CampaignChannelsPanel from './CampaignChannelsPanel'
 import CampaignJobsPanel from './CampaignJobsPanel'
 import CampaignOverviewPanel from './CampaignOverviewPanel'
 import CampaignWorkspaceHero from './CampaignWorkspaceHero'
@@ -31,6 +33,7 @@ const TABS = [
   { key: 'overview', label: 'Tổng quan', icon: AppstoreOutlined },
   { key: 'apply_cv', label: 'CV ứng tuyển', icon: TeamOutlined },
   { key: 'job', label: 'Tin tuyển dụng', icon: FileTextOutlined },
+  { key: 'channels', label: 'Kênh & nguồn', icon: ShareAltOutlined },
   { key: 'activity', label: 'Lịch sử hoạt động', icon: HistoryOutlined },
 ]
 
@@ -226,6 +229,7 @@ export default function EmployerCampaignWorkspace({ publicId }) {
               />
             </div>
           ))}
+          {activeTab === 'channels' && <CampaignChannelsPanel campaign={campaign} />}
           {activeTab === 'job' && (
             <CampaignJobsPanel
               publicId={publicId}

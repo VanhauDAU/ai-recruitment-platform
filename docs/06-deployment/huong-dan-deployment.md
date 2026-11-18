@@ -42,3 +42,12 @@ Reverse proxy phải chuyển các route SEO shell về Django thay vì trả th
 `/cong-ty`, `/cong-ty/tim-kiem` và `/cong-ty/<slug>`) cùng
 `/sitemaps/companies.xml`; nếu không, crawler không nhận được meta, JSON-LD và
 HTTP 404 thật của trang công ty.
+
+Chiến dịch tuyển dụng (2026-11-18) thêm hai route nữa phải về Django:
+- `/tuyen-dung/<slug>`: vỏ SEO trang tuyển dụng của chiến dịch. Trả 404 khi
+  không công khai, 410 khi chiến dịch đã kết thúc.
+- `/r/<code>`: link theo dõi của kênh. Django đếm lượt bấm rồi trả 302 về trang
+  tuyển dụng hoặc tin, kèm `?ref=` có ký.
+
+Khi dev, Vite proxy `/r/<code>` xuống backend; `/tuyen-dung/<slug>` do SPA hiển
+thị.
