@@ -37,7 +37,17 @@ thay đổi; không cần sửa `VITE_API_BASE_URL`, CORS hoặc `ALLOWED_HOSTS`
   trong `backend/.env` (mặc định `5432` = Postgres local).
 - Service: `db` (PostgreSQL 16 + pgvector, image `pgvector/pgvector:pg16-trixie`), `redis`, `backend` (runserver + auto migrate),
   `worker` (Celery tác vụ chung), `ai-worker` (chỉ queue `ai-generation`,
-  concurrency 2), `beat` (Celery beat) và `frontend` (vite).
+  concurrency 2), `ml-worker` (chỉ queue `ai-matching`, xem dưới), `beat`
+  (Celery beat) và `frontend` (vite).
+- **`ml-worker`** chạy đối sánh CV–JD bằng mô hình local: image riêng
+  `ai-recruitment-platform-ml-worker` (Dockerfile target `ml`, có torch CPU và
+  sentence-transformers; image web vẫn là target `runtime`, không có torch),
+  concurrency 1, `mem_limit: 3g`, đọc mô hình từ `./ml/models` (mount
+  `/models:ro`, không tải từ Internet). Lần đầu: lưu mô hình bằng
+  `ml/.venv/bin/python ml/scripts/export_model.py`, đặt
+  `MATCHING_ENCODER_BACKEND=sentence_transformers` trong `backend/.env`, chạy
+  `docker compose up -d --build ml-worker` rồi
+  `docker compose exec ml-worker python manage.py matching_backfill --inline`.
 - `frontend_node_modules` được giữ trong named volume. Entrypoint chỉ chạy
   `npm ci` khi `package-lock.json` thay đổi hoặc volume còn trống, nên restart
   frontend không còn cài lại toàn bộ dependency.

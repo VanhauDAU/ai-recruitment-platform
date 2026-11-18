@@ -1,0 +1,7 @@
+# Thư viện suy luận cho service ml-worker (Dockerfile target `ml`). Image web
+# và CI không cài: tests dùng bộ mã hóa `hashing`. Cùng phiên bản với
+# ml/requirements.txt (môi trường huấn luyện) để vector tính ở hai nơi khớp nhau.
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.15.0
+sentence-transformers==6.3.0
+transformers==5.23.0

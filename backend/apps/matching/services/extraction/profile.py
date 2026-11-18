@@ -4,7 +4,7 @@ from apps.cvs.services import months_to_experience_years, scrub_contacts
 
 from .text import word_count
 
-EXTRACTOR_VERSION = 'extract-v1'
+EXTRACTOR_VERSION = 'extract-v2'
 
 MAX_CV_CHARS = 20_000
 MAX_CV_CHUNKS = 40
@@ -15,6 +15,7 @@ MIN_JOB_TEXT_CHARS = 200
 
 # Thứ tự giữ lại khi CV dài quá `MAX_CV_CHUNKS`: phần chứng minh chuyên môn trước.
 CV_SECTION_PRIORITY = (
+    'title',
     'experience',
     'projects',
     'summary',
@@ -39,7 +40,7 @@ class ExtractionError(ValueError):
 def make_chunks(entries, limit, priority=CV_SECTION_PRIORITY):
     """[(mục, câu)] → [{index, section, text}].
 
-    Bỏ email/số điện thoại, câu dưới hai từ và câu trùng. Quá `limit` thì giữ theo
+    Bỏ email/số điện thoại, câu dưới hai từ (trừ chức danh) và câu trùng. Quá `limit` thì giữ theo
     thứ tự ưu tiên mục; kết quả vẫn theo thứ tự xuất hiện trong tài liệu.
     """
     rank = {section: order for order, section in enumerate(priority)}
@@ -47,7 +48,9 @@ def make_chunks(entries, limit, priority=CV_SECTION_PRIORITY):
     candidates = []
     for position, (section, text) in enumerate(entries):
         text = ' '.join(scrub_contacts(text).split())[:MAX_CHUNK_CHARS]
-        if word_count(text) < 2 or (section, text) in seen:
+        # Chức danh một từ ("Telesales") vẫn giữ; câu khác cần ít nhất hai từ.
+        too_short = word_count(text) < (1 if section == 'title' else 2)
+        if too_short or (section, text) in seen:
             continue
         seen.add((section, text))
         candidates.append((rank.get(section, len(rank)), position, section, text))

@@ -8,6 +8,21 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-18
 
+#### Added — Chấm độ phù hợp CV–tin và ml-worker (tuần 3)
+
+- API `/api/matching/analyses/` cho ứng viên: yêu cầu phân tích (cache theo
+  phiên bản CV, nội dung tin, mô hình, công thức), poll kết quả, xem các lần gần
+  nhất của một tin; cờ `ai_job_match_enabled`, giới hạn 20 lượt/giờ.
+- Công thức `hybrid-v1` (`apps/matching/services/scoring/`): kỹ năng, kinh
+  nghiệm (số năm nhân mức liên quan), học vấn, cấp bậc, ngoại ngữ (trần 64 khi
+  thiếu ngoại ngữ bắt buộc), địa điểm; câu tóm tắt và gợi ý theo luật
+  (`explain.py`), không sinh văn bản tự do.
+- Service `ml-worker` (Dockerfile target `ml`, queue `ai-matching`) chạy mô hình
+  `intfloat/multilingual-e5-base` local; vector tính sẵn khi CV/tin được lưu;
+  lệnh `matching_backfill`; beat phục hồi phân tích treo mỗi 60 giây.
+- `ml/scripts/calibrate.py` đo AUC và mốc hiệu chuẩn; `ml/scripts/export_model.py`
+  lưu mô hình cho ml-worker.
+
 #### Added — Trích xuất hồ sơ đối sánh CV–JD (tuần 2)
 
 - `apps/matching/services/extraction/` chuyển CV builder, CV tải lên (PDF/DOCX)

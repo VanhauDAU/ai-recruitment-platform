@@ -695,6 +695,33 @@ Mã lỗi ổn định gồm `JOB_AI_DAILY_QUOTA_EXCEEDED` (429),
 | PATCH | `/api/site/admin/settings/` | **Admin**: bulk update, body `{"values": {key: value}}`, validate theo `value_type` (boolean/number/color hex/select choices), từ chối key kiểu `env` → `{"updated": [...], "errors": {...}}` |
 | POST | `/api/site/admin/settings/upload/` | **Admin**: upload ảnh cho setting kiểu image (multipart `file` + `key`) → `{"key", "value", "url"}`; ảnh favicon tự resize về tối đa 256×256 |
 
+### Xem độ phù hợp CV–tin (đối sánh chạy local)
+
+Chỉ ứng viên; tắt bằng site setting `ai_job_match_enabled` (mọi endpoint trả
+`403 feature_disabled`). Yêu cầu phân tích giới hạn `20/hour`; xem lại kết quả
+(poll) không tốn lượt. Kết quả được cache theo (phiên bản CV, tin, hash nội dung
+tin, phiên bản mô hình, phiên bản công thức): sửa CV hay tin thì tính lại.
+
+| Method | Endpoint | Mô tả |
+| --- | --- | --- |
+| POST | `/api/matching/analyses/` | Body `{job: <slug tin>, cv: <public_id CV>}`. `200` kèm `cached: true` nếu đã có kết quả, `202` nếu phải tính (task ở `ml-worker`). |
+| GET | `/api/matching/analyses/{public_id}/` | Poll trạng thái `queued`/`processing`/`succeeded`/`failed`; `result` khi hoàn tất. |
+| GET | `/api/matching/analyses/?job=<slug>` | Tối đa 10 lần phân tích gần nhất của chính người dùng cho tin. |
+
+Mã lỗi: `feature_disabled` (403), `job_not_active` (404, tin không còn hiển
+thị), `cv_not_owned` (404), `job_text_too_short` (422), `throttled` (429). Lỗi lúc
+tính nằm ở `error_code` của phân tích: `cv_text_unavailable` (PDF scan),
+`cv_insufficient_content` (CV không có kỹ năng lẫn kinh nghiệm),
+`analysis_timeout`, `internal_error`.
+
+`result` gồm `overall` (`score` 0–100, `level`, `label`, `confidence`),
+`components` (6 tiêu chí: `key`, `score`, `weight`, `status`, `summary`,
+`detail`), `skills` (`matched` kèm `match_type` exact/semantic và câu bằng
+chứng, `missing` kỹ năng cần có trước, `extra`), `requirements` (từng câu yêu
+cầu: `met`/`partial`/`unmet`, câu CV làm bằng chứng), `suggestions` (`code`,
+`priority`, `section`, `message`, `params`), `flags`, `disclaimer`, `meta`
+(phiên bản mô hình, công thức, trích xuất, `latency_ms`).
+
 ### Employer readiness và mã lỗi ER-2
 
 `blockers[]` có đúng bốn field `code`, `capabilities[]`, `message`, `action`.

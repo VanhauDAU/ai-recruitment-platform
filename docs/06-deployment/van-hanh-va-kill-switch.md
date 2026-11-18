@@ -42,6 +42,8 @@ URL hay error message.
 | `AI_RUNTIME_ENABLED` | backend env | `not IS_PRODUCTION` | `False` |
 | `ai_job_generation_enabled` | Site Setting | `False` | `False` |
 | `ai_enabled` | Site Setting | `True` | `False` (tắt import CV bằng AI) |
+| `ai_job_match_enabled` | Site Setting | `True` (seed) | `False` (tắt xem độ phù hợp CV–tin) |
+| `MATCHING_PRECOMPUTE_ENABLED` | backend env | `True` | `False` (không tính sẵn vector khi lưu CV/tin) |
 
 ## Quyền admin và tài khoản
 
@@ -271,6 +273,23 @@ Admin workspace vẫn hoạt động, nội dung và revision không đổi; b�
 Giám sát: `knowledgebase_public_request`, `knowledgebase_public_latency_ms`,
 error status, search `result_bucket=zero`. Chưa có ngưỡng cứng; đặt alert theo
 baseline production.
+
+## Đối sánh CV–tin chạy local
+
+Kiến trúc xem mục 7 của [`thuat-toan-ai.md`](../07-algorithms/thuat-toan-ai.md).
+Không gọi dịch vụ ngoài; mô hình chạy trong service `ml-worker`.
+
+- Tắt nhanh: Site Setting `ai_job_match_enabled = False` (API trả 403, không tạo
+  phân tích mới). Dừng hẳn tính toán: `docker compose stop ml-worker`; yêu cầu
+  đang chờ quá 10 phút tự chuyển `failed` (`analysis_timeout`).
+- Beat chạy `recover_stale_analyses` mỗi 60 giây: gửi lại phân tích chờ quá 30
+  giây, đưa phân tích đang xử lý quá 60 giây (worker chết) về hàng chờ.
+- Đổi mô hình: sửa `MATCHING_MODEL_PATH` + `MATCHING_MODEL_VERSION`, khởi động
+  lại `ml-worker`, chạy `docker compose exec ml-worker python manage.py
+  matching_backfill --inline`. Quay lui: đặt lại hai biến về bản cũ (kết quả cũ
+  vẫn còn trong cache theo phiên bản).
+- `MATCHING_ENCODER_BACKEND=hashing` chỉ để thử luồng khi chưa có mô hình; điểm
+  không có ý nghĩa.
 
 ## AI tạo tin tuyển dụng
 

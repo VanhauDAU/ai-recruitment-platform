@@ -402,6 +402,7 @@ REST_FRAMEWORK = {
         'announcement_runtime': '60/hour',
         'cv_import': '10/hour',
         'ai_job_generation': '3/min',
+        'match_analysis': '20/hour',
         'knowledgebase_public': '120/min',
         'public_companies': '120/min',
         # Invited reviewers: open the CV and save a scorecard a few times.
@@ -624,6 +625,7 @@ CELERY_TASK_ROUTES = {
     'apps.cvs.tasks.*': {'queue': 'cv-export'},
     'apps.uploads.tasks.*': {'queue': 'upload-scan'},
     'apps.jobs.tasks.ai_generation.*': {'queue': 'ai-generation'},
+    'apps.matching.tasks.*': {'queue': 'ai-matching'},
     'apps.jobs.tasks.*': {'queue': 'candidate-email'},
     'apps.applications.tasks.*': {'queue': 'candidate-email'},
     'apps.candidates.tasks.*': {'queue': 'candidate-email'},
@@ -651,6 +653,10 @@ CELERY_BEAT_SCHEDULE = {
     'purge-expired-ai-runtime-metadata': {
         'task': 'apps.ai_core.tasks.purge_expired_ai_metadata',
         'schedule': 86400.0,
+    },
+    'recover-stale-match-analyses': {
+        'task': 'apps.matching.tasks.recover_stale_analyses',
+        'schedule': 60.0,
     },
     'recover-stale-job-ai-generations': {
         'task': 'apps.jobs.tasks.ai_generation.recover_stale_job_generations',
@@ -737,6 +743,18 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': 86400.0,
     },
 }
+
+# Đối sánh CV–JD chạy local (apps.matching). Mô hình chỉ nạp trong service
+# `ml-worker` (image có torch); web và CI dùng bộ mã hóa `hashing` tất định.
+# Đổi mô hình: sửa MATCHING_MODEL_PATH + MATCHING_MODEL_VERSION, khởi động lại
+# ml-worker rồi chạy `matching_backfill` (phiên bản mô hình nằm trong khóa cache).
+MATCHING_ENCODER_BACKEND = config('MATCHING_ENCODER_BACKEND', default='hashing').strip()
+MATCHING_MODEL_PATH = config(
+    'MATCHING_MODEL_PATH', default='/models/multilingual-e5-base/zs-v1'
+).strip()
+MATCHING_MODEL_VERSION = config('MATCHING_MODEL_VERSION', default='e5-base-zs-v1').strip()
+# Tính sẵn vector khi CV có phiên bản mới hoặc tin chuyển sang đang mở.
+MATCHING_PRECOMPUTE_ENABLED = config('MATCHING_PRECOMPUTE_ENABLED', default=True, cast=bool)
 
 # Generative AI runtime. The environment flag is the hard kill switch; site
 # settings can only narrow access further. Production therefore stays disabled

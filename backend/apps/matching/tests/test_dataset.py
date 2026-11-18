@@ -11,7 +11,8 @@ from apps.jobs.tests.helpers import open_visibility_window
 from apps.skills.models import Skill, SkillGroup
 
 from ..selectors import jobs_for_profile
-from ..services.extraction import ExtractionError, job_profile
+from ..services.extraction import EXTRACTOR_VERSION, ExtractionError, job_profile
+from ..services.extraction.job import role_title
 
 REQUIREMENTS = (
     '<p>Yêu cầu ứng viên:</p><ul>'
@@ -86,6 +87,22 @@ class JobProfileTests(TestCase):
             for job in jobs:
                 job_profile(job)
 
+    def test_title_chunk_keeps_only_the_role(self):
+        cases = {
+            'Kế Toán Quản Trị - Tuyển Nữ (Thu Nhập 15-20 Triệu) - Hóc Môn': 'Kế Toán Quản Trị',
+            'Fullstack Developer (NodeJS/PHP/Go) – E-Commerce': 'Fullstack Developer',
+            'Senior Data Engineer | Thưởng Sign On': 'Senior Data Engineer',
+            'Event Executive|Chuyên Viên Tổ Chức Sự Kiện': 'Event Executive',
+            'Nhân Viên An Ninh': 'Nhân Viên An Ninh',
+        }
+        for title, role in cases.items():
+            with self.subTest(title=title):
+                self.assertEqual(role_title(title), role)
+        self.assertEqual(
+            self.profile()['chunks'][0],
+            {'index': 0, 'section': 'title', 'text': 'Frontend Developer'},
+        )
+
     def test_too_short_job_is_refused(self):
         Job.objects.filter(pk=self.job.pk).update(description='Ngắn', requirements='')
         with self.assertRaises(ExtractionError) as raised:
@@ -97,7 +114,7 @@ class JobProfileTests(TestCase):
         call_command('matching_export_dataset', 'jobs', stdout=output)
         rows = [json.loads(line) for line in output.getvalue().splitlines()]
         self.assertEqual([row['job_public_id'] for row in rows], [self.job.public_id])
-        self.assertEqual(rows[0]['extractor_version'], 'extract-v1')
+        self.assertEqual(rows[0]['extractor_version'], EXTRACTOR_VERSION)
         skills = StringIO()
         call_command('matching_export_dataset', 'skills', stdout=skills)
         self.assertIn('reactjs', json.loads(skills.getvalue().splitlines()[0])['terms'])
