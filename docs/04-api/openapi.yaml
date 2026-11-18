@@ -3681,6 +3681,22 @@ paths:
                 items:
                   $ref: '#/components/schemas/PinnedPost'
           description: ''
+  /api/campaigns/public/{slug}/:
+    get:
+      operationId: campaigns_public_retrieve
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - campaigns
+      security:
+      - {}
+      responses:
+        '200':
+          description: No response body
   /api/candidate/email-notification-settings/:
     get:
       operationId: candidate_email_notification_settings_retrieve
@@ -4364,6 +4380,182 @@ paths:
               schema:
                 $ref: '#/components/schemas/PaginatedCampaignActivityList'
           description: ''
+  /api/employer/campaigns/{public_id}/channel-report/:
+    get:
+      operationId: employer_campaigns_channel_report_retrieve
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - employer
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/employer/campaigns/{public_id}/channels/:
+    get:
+      operationId: employer_campaigns_channels_retrieve
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - employer
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    post:
+      operationId: employer_campaigns_channels_create
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - employer
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/employer/campaigns/{public_id}/channels/{channel_id}/:
+    patch:
+      operationId: employer_campaigns_channels_partial_update
+      parameters:
+      - in: path
+        name: channel_id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - employer
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    delete:
+      operationId: employer_campaigns_channels_destroy
+      parameters:
+      - in: path
+        name: channel_id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - employer
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/employer/campaigns/{public_id}/channels/{channel_id}/content/:
+    post:
+      operationId: employer_campaigns_channels_content_create
+      parameters:
+      - in: path
+        name: channel_id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - employer
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/employer/campaigns/{public_id}/channels/{channel_id}/costs/:
+    get:
+      operationId: employer_campaigns_channels_costs_retrieve
+      parameters:
+      - in: path
+        name: channel_id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - employer
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    post:
+      operationId: employer_campaigns_channels_costs_create
+      parameters:
+      - in: path
+        name: channel_id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - employer
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/employer/campaigns/{public_id}/channels/{channel_id}/costs/{cost_id}/:
+    delete:
+      operationId: employer_campaigns_channels_costs_destroy
+      parameters:
+      - in: path
+        name: channel_id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: cost_id
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - employer
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
   /api/employer/campaigns/{public_id}/job-performance/:
     get:
       operationId: employer_campaigns_job_performance_retrieve
@@ -18127,6 +18319,13 @@ components:
           allOf:
           - $ref: '#/components/schemas/Source05aEnum'
           readOnly: true
+        campaign_channel_label:
+          type: string
+          readOnly: true
+          default: ''
+        acquisition_channel:
+          type: string
+          readOnly: true
         status:
           allOf:
           - $ref: '#/components/schemas/ApplicationStatusEnum'
@@ -18198,8 +18397,10 @@ components:
           readOnly: true
       required:
       - accepted_at
+      - acquisition_channel
       - applied_at
       - available_decisions
+      - campaign_channel_label
       - candidate_account_restricted
       - candidate_account_status
       - candidate_blocked
@@ -18650,6 +18851,8 @@ components:
       - campaign_activation_failed
       - campaign_completed
       - campaign_cancelled
+      - channel_added
+      - channel_posted
       - job_added
       - job_removed
       - job_updated
@@ -18671,6 +18874,8 @@ components:
         * `campaign_activation_failed` - Kích hoạt theo lịch thất bại
         * `campaign_completed` - Hoàn tất chiến dịch
         * `campaign_cancelled` - Hủy chiến dịch
+        * `channel_added` - Thêm kênh phân phối
+        * `channel_posted` - Đã đăng lên kênh
         * `job_added` - Thêm tin tuyển dụng
         * `job_removed` - Gỡ tin tuyển dụng
         * `job_updated` - Cập nhật tin tuyển dụng
@@ -18841,6 +19046,9 @@ components:
         contact_phone:
           type: string
           maxLength: 20
+        campaign_ref:
+          type: string
+          maxLength: 200
       required:
       - cv_public_id
       - data_processing_consent
@@ -18886,6 +19094,9 @@ components:
         contact_phone:
           type: string
           maxLength: 20
+        campaign_ref:
+          type: string
+          maxLength: 200
       required:
       - cv_public_id
       - data_processing_consent
@@ -28079,6 +28290,10 @@ components:
           maxLength: 255
         description:
           type: string
+        landing_intro:
+          type: string
+        landing_enabled:
+          type: boolean
         start_date:
           type: string
           format: date
@@ -29960,6 +30175,15 @@ components:
           maxLength: 255
         description:
           type: string
+        slug:
+          type: string
+          readOnly: true
+          nullable: true
+          pattern: ^[-a-zA-Z0-9_]+$
+        landing_intro:
+          type: string
+        landing_enabled:
+          type: boolean
         headcount:
           type: integer
           readOnly: true
@@ -30101,6 +30325,7 @@ components:
       - last_activity
       - name
       - public_id
+      - slug
       - status
       - status_label
       - unviewed_application_count
@@ -30115,6 +30340,10 @@ components:
           maxLength: 255
         description:
           type: string
+        landing_intro:
+          type: string
+        landing_enabled:
+          type: boolean
         start_date:
           type: string
           format: date

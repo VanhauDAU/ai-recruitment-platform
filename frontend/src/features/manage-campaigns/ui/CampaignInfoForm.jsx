@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Button, DatePicker, Form, Input, InputNumber, Radio, Select } from 'antd'
+import { Button, Checkbox, DatePicker, Form, Input, InputNumber, Radio, Select } from 'antd'
 import dayjs from 'dayjs'
 import {
   CAMPAIGN_BUDGET_SOURCE_OPTIONS,
@@ -147,7 +147,20 @@ export default function CampaignInfoForm({ campaign, submitLabel = 'Lưu thông 
         </div>
       </section>
 
-      <Form.Item label="Ghi chú cho chiến dịch" name="description">
+      <section className="cg-section">
+        <h3 className="cg-section__title">Trang tuyển dụng công khai</h3>
+        <p className="cg-hint">
+          Link của các kênh dẫn ứng viên tới trang này: giới thiệu đợt tuyển, công ty và các tin đang tuyển.
+        </p>
+        <Form.Item name="landing_enabled" valuePropName="checked" className="cg-switch">
+          <Checkbox>Cho phép xem trang tuyển dụng của chiến dịch</Checkbox>
+        </Form.Item>
+        <Form.Item label="Lời giới thiệu" name="landing_intro">
+          <Input.TextArea rows={3} maxLength={1500} showCount placeholder="Vì sao ứng viên nên tham gia đợt tuyển này" />
+        </Form.Item>
+      </section>
+
+      <Form.Item label="Ghi chú nội bộ" name="description">
         <Input.TextArea rows={3} maxLength={2000} showCount placeholder="Bối cảnh tuyển dụng, yêu cầu riêng của đợt này" />
       </Form.Item>
 

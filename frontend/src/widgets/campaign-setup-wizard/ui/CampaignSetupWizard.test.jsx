@@ -17,16 +17,22 @@ vi.mock('@/features/launch-campaign', () => ({
   SETUP_STEPS: [
     { key: 'goal', title: 'Thông tin' },
     { key: 'jobs', title: 'Tin tuyển dụng' },
+    { key: 'channels', title: 'Kênh phân phối', optional: true },
     { key: 'launch', title: 'Kích hoạt' },
   ],
   setupStepStates: () => ({
     goal: { done: true, summary: 'Đến 31/12' },
     jobs: { done: false, summary: 'Chưa chọn tin nào' },
+    channels: { done: false, summary: 'Không bắt buộc, thêm sau cũng được' },
     launch: { done: false, ready: false, summary: 'Còn 1 điều kiện chưa đạt' },
   }),
   useCampaignLaunch: () => ({ isLoading: false, data: { draft_jobs: [] }, error: null }),
   CampaignJobSelection: () => <p>Bước chọn tin</p>,
   CampaignLaunchReview: () => <p>Bước kích hoạt</p>,
+}))
+vi.mock('@/features/manage-campaign-channels', () => ({
+  useCampaignChannels: () => ({ data: [] }),
+  CampaignChannelBoard: () => <p>Bảng kênh</p>,
 }))
 vi.mock('@/features/manage-campaigns', () => ({
   CampaignInfoForm: ({ onSaved }) => <button type="button" onClick={onSaved}>Lưu mục tiêu giả</button>,

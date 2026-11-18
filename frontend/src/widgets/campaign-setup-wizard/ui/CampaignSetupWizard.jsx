@@ -10,6 +10,7 @@ import {
   setupStepStates,
   useCampaignLaunch,
 } from '@/features/launch-campaign'
+import { CampaignChannelBoard, useCampaignChannels } from '@/features/manage-campaign-channels'
 import { CampaignInfoForm } from '@/features/manage-campaigns'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { employerAppPath } from '@/shared/config/portals'
@@ -18,6 +19,7 @@ import './campaign-setup-wizard.css'
 
 const STEP_INTRO = {
   goal: ['Thông tin đợt tuyển', 'Đợt tuyển chạy trong bao lâu và dùng bao nhiêu ngân sách. Vị trí, cấp bậc và số người cần tuyển đặt ở từng tin.'],
+  channels: ['Kênh phân phối', 'Mỗi nơi bạn đăng tuyển là một kênh có link và mã QR riêng, để biết kênh nào mang lại hồ sơ. Có thể thêm sau khi kích hoạt.'],
   jobs: ['Tin tuyển dụng', 'Mỗi tin là một vị trí với cấp bậc và số người cần tuyển riêng. Chỉ tiêu của chiến dịch là tổng số người của các tin.'],
   launch: ['Kích hoạt', 'Kiểm tra lần cuối rồi cho chiến dịch chạy ngay hoặc theo lịch.'],
 }
@@ -35,6 +37,7 @@ export default function CampaignSetupWizard({ publicId }) {
     enabled: !isNew,
   })
   const launchQuery = useCampaignLaunch(publicId)
+  const channelsQuery = useCampaignChannels(publicId)
   const workspacePath = isNew ? employerAppPath('/campaigns') : employerAppPath(`/campaigns/${publicId}`)
   const requested = searchParams.get('step')
   const current = !isNew && SETUP_STEPS.some((step) => step.key === requested) ? requested : 'goal'
@@ -77,7 +80,7 @@ export default function CampaignSetupWizard({ publicId }) {
         <div className="csw-body">
           <SetupStepRail
             steps={SETUP_STEPS}
-            states={setupStepStates(campaign, overview)}
+            states={setupStepStates(campaign, overview, channelsQuery.data?.length || 0)}
             current={current}
             onSelect={goTo}
             locked={isNew}
@@ -98,8 +101,16 @@ export default function CampaignSetupWizard({ publicId }) {
               <CampaignJobSelection
                 campaign={campaign}
                 overview={overview}
-                onSaved={() => goTo('launch')}
+                onSaved={() => goTo('channels')}
               />
+            )}
+            {current === 'channels' && (
+              <div className="csw-channels">
+                <CampaignChannelBoard campaign={campaign} />
+                <div className="csw-next">
+                  <Button type="primary" onClick={() => goTo('launch')}>Tiếp tục</Button>
+                </div>
+              </div>
             )}
             {current === 'launch' && (
               <CampaignLaunchReview

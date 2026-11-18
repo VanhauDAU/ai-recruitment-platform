@@ -11,7 +11,7 @@ from apps.employers.models import (
 )
 from apps.jobs.models import Job
 from apps.jobs.services import RESPONSIBILITY_STATEMENT_VERSION
-from apps.jobs.tests.test_posting_workflows import JobPostingWorkflowTests
+from apps.jobs.tests import test_posting_workflows
 from common.vietnam_time import vietnam_today
 
 from ..models import CampaignLaunchPlan
@@ -21,9 +21,10 @@ Status = RecruitmentCampaign.Status
 
 
 class CampaignLaunchTests(TestCase):
-    setUp_jobs = JobPostingWorkflowTests.setUp
-    make_publishable_job = JobPostingWorkflowTests.make_publishable_job
-    make_active_job = JobPostingWorkflowTests.make_active_job
+    # Borrow fixtures through the module so pytest does not collect that class again.
+    setUp_jobs = test_posting_workflows.JobPostingWorkflowTests.setUp
+    make_publishable_job = test_posting_workflows.JobPostingWorkflowTests.make_publishable_job
+    make_active_job = test_posting_workflows.JobPostingWorkflowTests.make_active_job
 
     def setUp(self):
         self.setUp_jobs()

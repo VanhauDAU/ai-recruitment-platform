@@ -10,6 +10,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.accounts.permissions import IsCandidate, IsEmployer
+from apps.campaigns.services import resolve_campaign_attribution
 from apps.employers.services import ensure_recruiter_candidate_data_access
 
 from ...models import Application
@@ -48,6 +49,10 @@ class CandidateApplicationV2ListCreateView(generics.ListCreateAPIView):
             raise ValidationError({'detail': 'Verify your email before applying for a job.'})
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        channel = resolve_campaign_attribution(
+            job=serializer.validated_data['job'],
+            ref=serializer.validated_data.get('campaign_ref', ''),
+        )
         try:
             application = create_application_record(
                 candidate=request.user,
@@ -61,6 +66,7 @@ class CandidateApplicationV2ListCreateView(generics.ListCreateAPIView):
                 contact_name=serializer.validated_data['contact_name'],
                 contact_email=serializer.validated_data['contact_email'],
                 contact_phone=serializer.validated_data['contact_phone'],
+                campaign_channel=channel,
             )
         except ApplicationNotAllowed as error:
             raise ValidationError({'job_public_id': str(error)}) from error

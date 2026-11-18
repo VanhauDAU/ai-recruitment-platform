@@ -80,6 +80,16 @@ class Application(models.Model):
     allow_ai_analysis = models.BooleanField(default=False)
     data_processing_consent = models.BooleanField(default=False)
     source = models.CharField(max_length=50, choices=Source.choices, default=Source.APPLIED)
+    # Campaign channel whose tracked link brought the candidate (last click within
+    # 30 days); the kind is copied so reports stay right if the channel is deleted.
+    campaign_channel = models.ForeignKey(
+        'campaigns.CampaignChannel',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='applications',
+    )
+    acquisition_channel = models.CharField(max_length=20, blank=True)
     status = models.CharField(max_length=50, choices=Status.choices, default=Status.SUBMITTED)
     employer_note = models.TextField(blank=True)
     employer_rating = models.PositiveSmallIntegerField(null=True, blank=True)

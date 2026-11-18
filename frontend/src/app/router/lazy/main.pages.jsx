@@ -6,6 +6,7 @@ export const CompanyListPage = lazy(() => import('@/pages/main/companies/Company
 export const CompanySearchPage = lazy(() => import('@/pages/main/companies/CompanySearch'))
 export const CompanyDetailPage = lazy(() => import('@/pages/main/companies/CompanyDetail'))
 export const JobListPage = lazy(() => import('@/pages/main/jobs/JobList'))
+export const CampaignLandingPage = lazy(() => import('@/pages/main/jobs/CampaignLanding'))
 export const JobDetailPage = lazy(() => import('@/pages/main/jobs/JobDetail'))
 export const JobComparisonPage = lazy(() => import('@/pages/main/jobs/JobComparison'))
 export const SavedJobsPage = lazy(() => import('@/pages/main/jobs/SavedJobs'))

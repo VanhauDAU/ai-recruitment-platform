@@ -884,6 +884,17 @@ pages/employer/app/campaigns/CampaignSetup
 - `widgets/campaign-setup-wizard` ghép ba bước Thông tin → Tin → Kích hoạt, với thanh lộ trình hiện trạng thái suy ra từ dữ liệu (`setupStepStates` của `features/launch-campaign`);
   `?step=goal|jobs|launch` là contract URL. Form đăng tin mở từ wizard với
   `?campaign=…&return=setup`; lưu nháp xong thì quay lại `?step=jobs`.
+- `features/manage-campaign-channels` sở hữu kênh phân phối (`CampaignChannelBoard`:
+  thẻ kênh với link, QR, soạn AI, sửa nội dung, đã đăng, chi phí) và
+  `ChannelReport` (so sánh theo nguồn). Dùng ở tab "Kênh & nguồn" và bước
+  "Kênh phân phối" của wizard.
+- `features/track-campaign-ref` (`CampaignRefCapture`, gắn ở `MainLayout`) đọc
+  `?ref=` rồi xóa khỏi URL; lưu qua `entities/campaign` (`storeCampaignRef`,
+  `readCampaignRef`) theo consent Analytics. `features/apply-for-job` gửi
+  `campaign_ref` khi nộp.
+- Trang tuyển dụng công khai `pages/main/jobs/CampaignLanding` (route
+  `/tuyen-dung/:slug`) dùng lại `JobCard`; CSS `campaign-landing.css` (tiền tố
+  `cpg-`).
 - Trang danh sách: dải trạng thái có số đếm (`status_counts` của API), mặc định
   `ordering=status`, mỗi dòng một nút việc tiếp theo; style trong
   `campaign-list.css` (lazy) và tự lo ẩn/hiện bảng/thẻ vì CSS ngoài layer thắng

@@ -2,6 +2,7 @@ import { Outlet, useLocation } from 'react-router'
 import { EmailVerificationBanner, LoginPromptProvider } from '@/features/auth'
 import { SavedJobsProvider } from '@/features/saved-jobs'
 import { JobComparisonDock, JobComparisonProvider } from '@/features/compare-jobs'
+import { CampaignRefCapture } from '@/features/track-campaign-ref'
 import { ANNOUNCEMENT_SURFACES } from '@/entities/announcement'
 import { JobListRankingSync } from '@/entities/job'
 import { AnnouncementStrip } from '@/widgets/announcement-strip'
@@ -47,6 +48,7 @@ export default function MainLayout() {
     <JobComparisonProvider>
       <SavedJobsProvider>
         <JobListRankingSync />
+        <CampaignRefCapture />
         <LoginPromptProvider>
           <div className="min-h-screen flex flex-col bg-gray-50">
             <Header />

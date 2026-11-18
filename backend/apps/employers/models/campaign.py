@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from django.utils.text import slugify
 
 from common.public_id import generate_public_id
 
@@ -60,6 +61,11 @@ class RecruitmentCampaign(models.Model):
     )
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True)
+    # Public landing page /tuyen-dung/<slug>; the slug is frozen once the
+    # campaign has run so links already shared keep working.
+    slug = models.SlugField(max_length=255, unique=True, null=True, blank=True)
+    landing_intro = models.TextField(blank=True)
+    landing_enabled = models.BooleanField(default=True)
     start_date = models.DateField(null=True, blank=True)
     target_date = models.DateField(null=True, blank=True)
     is_continuous = models.BooleanField(default=False)
@@ -125,9 +131,14 @@ class RecruitmentCampaign(models.Model):
     def is_terminal(self):
         return self.status in self.TERMINAL_STATUSES
 
+    def build_slug(self):
+        return f'{slugify(self.name)[:200]}-{self.public_id}'.strip('-').replace('_', '-')
+
     def save(self, *args, **kwargs):
         if not self.public_id:
             self.public_id = generate_public_id('camp')
+        if not self.slug:
+            self.slug = self.build_slug()
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -154,6 +165,8 @@ class CampaignActivity(models.Model):
         CAMPAIGN_ACTIVATION_FAILED = 'campaign_activation_failed', 'Kích hoạt theo lịch thất bại'
         CAMPAIGN_COMPLETED = 'campaign_completed', 'Hoàn tất chiến dịch'
         CAMPAIGN_CANCELLED = 'campaign_cancelled', 'Hủy chiến dịch'
+        CHANNEL_ADDED = 'channel_added', 'Thêm kênh phân phối'
+        CHANNEL_POSTED = 'channel_posted', 'Đã đăng lên kênh'
         JOB_ADDED = 'job_added', 'Thêm tin tuyển dụng'
         JOB_REMOVED = 'job_removed', 'Gỡ tin tuyển dụng'
         JOB_UPDATED = 'job_updated', 'Cập nhật tin tuyển dụng'

@@ -82,3 +82,53 @@ export async function launchCampaign(publicId, { mode, acceptedStatementVersion 
   })
   return data
 }
+
+const channelsPath = (publicId) => `/employer/campaigns/${publicId}/channels/`
+
+export async function getCampaignChannels(publicId) {
+  const { data } = await api.get(channelsPath(publicId))
+  return data
+}
+
+export async function createCampaignChannel(publicId, payload) {
+  const { data } = await api.post(channelsPath(publicId), payload)
+  return data
+}
+
+export async function updateCampaignChannel(publicId, channelId, payload) {
+  const { data } = await api.patch(`${channelsPath(publicId)}${channelId}/`, payload)
+  return data
+}
+
+export async function deleteCampaignChannel(publicId, channelId) {
+  await api.delete(`${channelsPath(publicId)}${channelId}/`)
+}
+
+export async function generateCampaignChannelContent(publicId, channelId) {
+  const { data } = await api.post(`${channelsPath(publicId)}${channelId}/content/`)
+  return data
+}
+
+export async function getCampaignChannelCosts(publicId, channelId) {
+  const { data } = await api.get(`${channelsPath(publicId)}${channelId}/costs/`)
+  return data
+}
+
+export async function addCampaignChannelCost(publicId, channelId, payload) {
+  const { data } = await api.post(`${channelsPath(publicId)}${channelId}/costs/`, payload)
+  return data
+}
+
+export async function deleteCampaignChannelCost(publicId, channelId, costId) {
+  await api.delete(`${channelsPath(publicId)}${channelId}/costs/${costId}/`)
+}
+
+export async function getCampaignChannelReport(publicId) {
+  const { data } = await api.get(`/employer/campaigns/${publicId}/channel-report/`)
+  return data
+}
+
+export async function getPublicCampaign(slug) {
+  const { data } = await api.get(`/campaigns/public/${slug}/`)
+  return data
+}

@@ -111,8 +111,59 @@ cần làm có vòng hổ phách. Bấm vào bước nào thì chuyển sang bư
    - **Lên lịch** (cần `start_date` sau hôm nay): chuyển sang `scheduled`; lưu
      phiên bản cam kết đã chấp nhận để dùng lúc tự kích hoạt.
 
-Bước "Kênh & lịch đăng" được thêm vào giữa bước 2 và 3 ở giai đoạn phân phối
-đa kênh.
+Bước "Kênh phân phối" (không bắt buộc, GĐ2) nằm giữa bước Tin và Kích hoạt;
+thêm kênh sau khi chiến dịch chạy cũng được.
+
+### Phân phối đa kênh và ghi nhận nguồn (GĐ2, 2026-11-18)
+
+- **Kênh** (`CampaignChannel`) là một nơi NTD đăng tuyển: fanpage, nhóm
+  Facebook, LinkedIn, Zalo, TikTok, email, website công ty, tờ rơi/QR, khác.
+  - Mỗi kênh có một **link theo dõi** `/r/<code>` (8 ký tự ngẫu nhiên) và mã QR
+    tải được.
+  - Link dẫn tới trang tuyển dụng của chiến dịch hoặc một tin trong chiến dịch.
+- **Nội dung đăng**:
+  - "Soạn bằng AI" gọi runtime `ai_core` (Gemini, use case
+    `campaign_channel_post`), văn phong theo loại kênh, chỉ dùng dữ liệu công
+    khai của tin; link chèn bằng `{link}`;
+  - AI tắt, lỗi hoặc thiếu `{link}` thì dùng mẫu cố định;
+  - tối đa 20 lượt/ngày/người;
+  - NTD sửa tay được, sao chép nội dung đã thay sẵn link;
+  - đăng tay rồi đánh dấu "Đã đăng" (kèm link bài, không bắt buộc). Đăng tự
+    động lên Facebook Page là GĐ3.
+- **Chi phí** nhập tay theo kênh (quảng cáo, in ấn...); không thanh toán trong
+  hệ thống.
+- **Đếm lượt bấm** (`/r/<code>`):
+  - không cookie, không lưu IP;
+  - đếm theo kênh và ngày: tổng lượt, người bấm (khử trùng trong ngày bằng hash
+    có salt chỉ nằm trong Redis), lượt xem trước của crawler mạng xã hội, lượt
+    bấm khi chiến dịch không chạy.
+- **Chuyển hướng**:
+  - chiến dịch đang chạy và kênh trỏ tới tin còn công khai thì đi tới
+    `/viec-lam/<slug>`;
+  - còn lại đi tới `/tuyen-dung/<slug>`, nơi trang tự hiện trạng thái tạm dừng /
+    sắp bắt đầu / đã kết thúc kèm việc làm khác của công ty;
+  - luôn kèm `?ref=` ký bằng `TimestampSigner`, hạn 30 ngày.
+- **Ghi nhận nguồn khi ứng tuyển**:
+  - frontend đọc `?ref=` rồi xóa khỏi URL;
+  - có consent Analytics thì nhớ 30 ngày (lần bấm cuối thắng), không có thì chỉ
+    nhớ trong phiên;
+  - gửi `campaign_ref` cùng đơn ứng tuyển; backend kiểm chữ ký, hạn và việc
+    kênh thuộc đúng chiến dịch của tin, rồi ghi `Application.campaign_channel` và
+    `acquisition_channel`;
+  - ref sai không bao giờ chặn việc nộp, chỉ tính là tự nhiên;
+  - NTD thấy "Nguồn hồ sơ: Kênh chiến dịch: <tên>" ở hồ sơ.
+- **Tab "Kênh & nguồn"** của trang chi tiết:
+  - bảng so sánh từng kênh: người bấm, hồ sơ, tỷ lệ nộp, trúng tuyển, đã chi,
+    chi phí/hồ sơ, chi phí/trúng tuyển;
+  - ba nguồn tự nhiên: mời từ kho ứng viên, gợi ý của ProCV, tự tìm thấy;
+  - dòng tổng có % ngân sách đã dùng;
+  - bên dưới là thẻ từng kênh.
+- **Trang tuyển dụng công khai** `/tuyen-dung/<slug>`:
+  - nội dung: tên đợt tuyển, công ty (logo, ảnh bìa), khoảng thời gian, lời giới
+    thiệu, danh sách tin đang tuyển (`/api/jobs/?campaign=`);
+  - slug sinh từ tên + mã, đổi theo tên cho tới lần chạy đầu rồi đóng băng;
+  - NTD tắt được trang;
+  - vỏ SEO trả 404/410/noindex theo trạng thái.
 
 ### Trạng thái chiến dịch
 

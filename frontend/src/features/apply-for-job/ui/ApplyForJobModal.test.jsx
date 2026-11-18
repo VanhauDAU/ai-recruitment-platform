@@ -82,6 +82,7 @@ describe('ApplyForJobModal', () => {
       contactName: '',
       contactEmail: '',
       contactPhone: '',
+      campaignRef: '',
     }))
     expect(message.success).toHaveBeenCalledWith('Chúc mừng bạn đã ứng tuyển thành công!')
     expect(onClose).toHaveBeenCalledOnce()

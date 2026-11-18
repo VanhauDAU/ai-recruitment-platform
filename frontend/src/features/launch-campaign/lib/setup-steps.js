@@ -5,6 +5,7 @@ import dayjs from 'dayjs'
 export const SETUP_STEPS = [
   { key: 'goal', title: 'Thông tin' },
   { key: 'jobs', title: 'Tin tuyển dụng' },
+  { key: 'channels', title: 'Kênh phân phối', optional: true },
   { key: 'launch', title: 'Kích hoạt' },
 ]
 
@@ -35,7 +36,7 @@ export function jobSelection(overview) {
   }
 }
 
-export function setupStepStates(campaign, overview) {
+export function setupStepStates(campaign, overview, channelCount = 0) {
   const goalDone = Boolean(campaign.is_continuous || campaign.target_date)
   const end = campaign.is_continuous ? 'Tuyển liên tục' : `Đến ${shortDate(campaign.target_date)}`
   const budget = campaign.budget_max ? `, ngân sách tối đa ${Number(campaign.budget_max).toLocaleString('vi-VN')} đ` : ''
@@ -55,6 +56,10 @@ export function setupStepStates(campaign, overview) {
     jobs: {
       done: selection.total > 0,
       summary: jobParts.length ? jobParts.join(', ') : 'Chưa chọn tin nào',
+    },
+    channels: {
+      done: channelCount > 0,
+      summary: channelCount ? `${channelCount} kênh có link theo dõi` : 'Không bắt buộc, thêm sau cũng được',
     },
     launch: overview.check
       ? {

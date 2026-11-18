@@ -11,6 +11,7 @@ export async function submitJobApplication({
   contactName = '',
   contactEmail = '',
   contactPhone = '',
+  campaignRef = '',
 }) {
   const { data } = await api.post('/v2/applications/', {
     job_public_id: jobPublicId,
@@ -23,6 +24,7 @@ export async function submitJobApplication({
     contact_name: contactName,
     contact_email: contactEmail,
     contact_phone: contactPhone,
+    ...(campaignRef ? { campaign_ref: campaignRef } : {}),
   })
   return data
 }

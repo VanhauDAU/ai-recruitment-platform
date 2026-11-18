@@ -5,6 +5,10 @@ export const campaignKeys = {
   options: ['campaigns', 'options'],
   report: (publicId) => ['campaigns', 'report', publicId],
   launch: (publicId) => ['campaigns', 'launch', publicId],
+  channels: (publicId) => ['campaigns', 'channels', publicId],
+  channelCosts: (publicId, channelId) => ['campaigns', 'channels', publicId, channelId, 'costs'],
+  channelReport: (publicId) => ['campaigns', 'channel-report', publicId],
+  publicLanding: (slug) => ['campaigns', 'public', slug],
   pauseImpact: (publicId) => ['campaigns', 'pause-impact', publicId],
   activities: (publicId, params = {}) => ['campaigns', 'activities', publicId, params],
   jobPerformance: (publicId, days, jobPublicId = '') => [

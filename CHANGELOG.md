@@ -8,6 +8,19 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-18
 
+#### Added — Chiến dịch: phân phối đa kênh và ghi nhận nguồn (GĐ2)
+
+- Kênh phân phối cho chiến dịch: mỗi kênh có link theo dõi `/r/<code>` và mã
+  QR, nội dung đăng soạn bằng AI (có mẫu dự phòng) hoặc sửa tay, đánh dấu đã
+  đăng, sổ chi phí.
+- Đếm lượt bấm không cookie, không lưu IP. Hồ sơ ứng tuyển ghi kênh đã đưa ứng
+  viên tới (`?ref=` có ký, 30 ngày; không có consent Analytics thì chỉ trong
+  phiên).
+- Tab "Kênh & nguồn": so sánh người bấm, hồ sơ, tỷ lệ nộp, trúng tuyển, chi phí
+  mỗi hồ sơ và mỗi trúng tuyển giữa các kênh và nguồn tự nhiên.
+- Trang tuyển dụng công khai `/tuyen-dung/<slug>` cho từng chiến dịch, có vỏ
+  SEO; bước "Kênh phân phối" trong wizard.
+
 #### Changed — Danh sách và trang chi tiết chiến dịch gọn hơn
 
 - Danh sách: dải trạng thái có số đếm, mặc định sắp theo trạng thái (đang chạy

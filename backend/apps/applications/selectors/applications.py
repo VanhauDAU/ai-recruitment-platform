@@ -99,6 +99,7 @@ def employer_applications_queryset(
             'cv',
             'submitted_cv_version',
             'submitted_cv_version__template_version',
+            'campaign_channel',
         )
         .prefetch_related(
             'preferred_locations',

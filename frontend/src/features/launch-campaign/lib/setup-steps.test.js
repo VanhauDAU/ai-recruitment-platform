@@ -22,6 +22,8 @@ describe('setup step states', () => {
     expect(states.goal).toEqual({ done: true, summary: 'Đến 31/12, ngân sách tối đa 15.000.000 đ' })
     expect(states.jobs).toEqual({ done: true, summary: '1 tin sẽ đăng, 1 tin sẽ gắn, tuyển 4 người' })
     expect(states.launch).toMatchObject({ ready: false, summary: 'Còn 1 điều kiện chưa đạt' })
+    expect(states.channels).toEqual({ done: false, summary: 'Không bắt buộc, thêm sau cũng được' })
+    expect(setupStepStates({}, overview, 2).channels).toEqual({ done: true, summary: '2 kênh có link theo dõi' })
   })
 
   it('flags an empty goal and an empty job selection', () => {

@@ -17,6 +17,10 @@ class ApplicationSerializer(serializers.ModelSerializer):
     candidate_account_status = serializers.CharField(source='candidate.status', read_only=True)
     candidate_account_restricted = serializers.SerializerMethodField()
     cv_title = serializers.CharField(source='cv.title', read_only=True)
+    # Campaign channel that brought the candidate; empty for organic applications.
+    campaign_channel_label = serializers.CharField(
+        source='campaign_channel.label', read_only=True, default=''
+    )
     submitted_cv_version = serializers.CharField(
         source='submitted_cv_version.public_id', read_only=True
     )
@@ -44,6 +48,8 @@ class ApplicationSerializer(serializers.ModelSerializer):
             'submitted_cv_source',
             'cover_letter',
             'source',
+            'campaign_channel_label',
+            'acquisition_channel',
             'status',
             'available_decisions',
             'candidate_blocked',
