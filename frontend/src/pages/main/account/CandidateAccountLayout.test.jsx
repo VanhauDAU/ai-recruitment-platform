@@ -6,11 +6,11 @@ import CandidateAccountLayout from './CandidateAccountLayout'
 
 const { useSession } = vi.hoisted(() => ({ useSession: vi.fn() }))
 
-vi.mock('@/entities/session', () => ({ useSession }))
-vi.mock('@/entities/cv', () => ({
+vi.mock('@/entities/account/session', () => ({ useSession }))
+vi.mock('@/entities/cv/cv', () => ({
   getMyCvs: vi.fn().mockResolvedValue([{ recruiter_searchable: true }, { recruiter_searchable: false }]),
 }))
-vi.mock('@/entities/site-settings', () => ({
+vi.mock('@/entities/system/site-settings', () => ({
   DEFAULT_SITE_SETTINGS: { site_name: 'ProCV' },
   settingText: (value, fallback) => value || fallback,
   useSiteSettings: () => ({ settings: { site_name: 'ProCV' } }),

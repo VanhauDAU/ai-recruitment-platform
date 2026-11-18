@@ -1,5 +1,5 @@
 import dayjs from 'dayjs'
-import { CANDIDATE_APPLICATION_STATUS_LABELS } from '@/entities/application'
+import { CANDIDATE_APPLICATION_STATUS_LABELS } from '@/entities/application/application'
 
 export const APPLICATION_STAGES = [
   { label: 'UV nộp CV' },

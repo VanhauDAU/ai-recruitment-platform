@@ -7,17 +7,17 @@ import { matchPath, Outlet, useLocation, useNavigate } from 'react-router'
 import {
   canAccessAdminRoute,
   useAdminAccess,
-} from '@/entities/admin-access'
+} from '@/entities/account/admin-access'
 import {
   adminAccountKeys,
   getAdminAccountSummary,
-} from '@/entities/admin-account'
-import { adminDashboardKeys, getAdminQueueSummary } from '@/entities/admin-dashboard'
-import { ANNOUNCEMENT_SURFACES } from '@/entities/announcement'
-import { useSession } from '@/entities/session'
-import { BrandLogo } from '@/entities/site-settings'
+} from '@/entities/account/admin-account'
+import { adminDashboardKeys, getAdminQueueSummary } from '@/entities/dashboard/admin-dashboard'
+import { ANNOUNCEMENT_SURFACES } from '@/entities/content/announcement'
+import { useSession } from '@/entities/account/session'
+import { BrandLogo } from '@/entities/system/site-settings'
 import { adminPath } from '@/shared/config/portals'
-import { AnnouncementStrip } from '@/widgets/announcement-strip'
+import { AnnouncementStrip } from '@/widgets/common/announcement-strip'
 import { ADMIN_ROUTES } from '../router/admin/admin-routes.config'
 import { ADMIN_NAVIGATION } from '../router/admin/admin-navigation.config'
 import {

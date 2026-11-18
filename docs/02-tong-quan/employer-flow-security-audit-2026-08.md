@@ -96,9 +96,9 @@ frontend API/workflow đạt 8/8; migration drift sạch.
 
 **Evidence**
 
-- `frontend/src/features/manage-employer-company/ui/LinkedCompanyPanel.jsx`
+- `frontend/src/features/employer/company/manage-employer-company/ui/LinkedCompanyPanel.jsx`
   dùng `requestsQuery.data || []`, lấy `requests[0]` và render placeholder ngày.
-- `frontend/src/entities/employer-profile/api/employer-profile.api.js` gọi list
+- `frontend/src/entities/account/employer-profile/api/employer-profile.api.js` gọi list
   không có actor/company scope tường minh.
 - Backend employer list hiện lọc theo company.
 

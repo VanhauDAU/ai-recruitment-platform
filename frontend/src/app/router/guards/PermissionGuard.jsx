@@ -4,8 +4,8 @@ import {
   canAccessAdminRoute,
   createAdminAccess,
   useAdminAccess,
-} from '@/entities/admin-access'
-import { useSession } from '@/entities/session'
+} from '@/entities/account/admin-access'
+import { useSession } from '@/entities/account/session'
 import { adminPath } from '@/shared/config/portals'
 import PageLoading from '@/shared/ui/PageLoading'
 

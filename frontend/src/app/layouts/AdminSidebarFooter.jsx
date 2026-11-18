@@ -1,9 +1,9 @@
 import { LogoutOutlined, SettingOutlined, UserOutlined } from '@ant-design/icons'
 import { Avatar, Button, Tooltip } from 'antd'
 import { Link } from 'react-router'
-import { adminTierLabel } from '@/entities/admin-account'
+import { adminTierLabel } from '@/entities/account/admin-account'
 import { adminPath } from '@/shared/config/portals'
-import ConfirmAction from '@/shared/ui/ConfirmAction'
+import ConfirmAction from '@/shared/ui/confirm-action/ConfirmAction'
 
 /** Identity and sign-out pinned to the bottom of the admin sidebar. */
 export default function AdminSidebarFooter({ user, logout, collapsed = false, onNavigate }) {

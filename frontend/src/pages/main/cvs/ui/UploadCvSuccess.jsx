@@ -2,7 +2,7 @@ import { CheckCircleFilled, EditOutlined, FolderOpenOutlined, TrophyOutlined } f
 import { useQuery } from '@tanstack/react-query'
 import { Skeleton } from 'antd'
 import { Link, useNavigate } from 'react-router'
-import { CvTemplateCard, getCvTemplates } from '@/entities/cv-template'
+import { CvTemplateCard, getCvTemplates } from '@/entities/cv/cv-template'
 
 const CV_ONLINE_BENEFITS = [
   { icon: TrophyOutlined, title: 'Ấn tượng hơn với NTD', text: 'Mẫu CV được thiết kế chuyên nghiệp, bố cục rõ ràng và thân thiện với phần mềm ATS.' },

@@ -2,7 +2,7 @@ import {
   COMPANY_DIRECTORY_PATH,
   companyDetailPath,
   companyProfileSummary,
-} from '@/entities/company'
+} from '@/entities/company/company'
 
 function absoluteUrl(path) {
   return new URL(path, window.location.origin).href

@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { useLocation, useParams } from 'react-router'
-import { CvSaveSuccessView } from '@/widgets/cv-save-success'
+import { CvSaveSuccessView } from '@/widgets/main/cv-save-success'
 import { setDocumentTitle } from '@/shared/config/document-title'
 
 export default function CvSaveSuccess() {

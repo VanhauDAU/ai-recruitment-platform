@@ -2,7 +2,7 @@ import { CloseOutlined, HeartFilled, HeartOutlined, RightOutlined } from '@ant-d
 import { Skeleton, Tooltip } from 'antd'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
-import { jobCompanyPath } from '@/entities/company'
+import { jobCompanyPath } from '@/entities/company/company'
 import {
   EDUCATION_LEVEL_LABELS,
   EMPLOYMENT_TYPE_LABELS,
@@ -16,10 +16,10 @@ import {
   jobDetailPath,
   SavedJobTooltipContent,
   VerifiedEmployerBadge,
-} from '@/entities/job'
-import { JobCompareButton } from '@/features/compare-jobs'
-import { useSavedJob } from '@/features/saved-jobs'
-import { useJobView } from '@/features/track-job-engagement'
+} from '@/entities/job/job'
+import { JobCompareButton } from '@/features/main/job/compare-jobs'
+import { useSavedJob } from '@/features/main/job/saved-jobs'
+import { useJobView } from '@/features/main/job/track-job-engagement'
 import { normalizeRichTextHtml } from '@/shared/lib/rich-text-html'
 import { sanitizeHtml } from '@/shared/lib/sanitize-html'
 

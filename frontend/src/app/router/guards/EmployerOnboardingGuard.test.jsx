@@ -5,7 +5,7 @@ import EmployerOnboardingGuard from './EmployerOnboardingGuard'
 
 const { useSession } = vi.hoisted(() => ({ useSession: vi.fn() }))
 
-vi.mock('@/entities/session', () => ({ useSession }))
+vi.mock('@/entities/account/session', () => ({ useSession }))
 
 describe('EmployerOnboardingGuard', () => {
   beforeEach(() => useSession.mockReset())

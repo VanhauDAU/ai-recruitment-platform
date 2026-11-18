@@ -2,7 +2,7 @@
 // từ nhu cầu vừa lưu — danh mục chuyên môn đã chọn (`cat`), vị trí tự nhập
 // làm từ khoá tìm kiếm (`search`) và tỉnh/thành đầu tiên (`locations` + path
 // dạng /viec-lam/tai/<slug> giống link chia sẻ của trang việc làm).
-import { normalizeDesiredPositionOthers } from '@/features/configure-job-preferences'
+import { normalizeDesiredPositionOthers } from '@/features/main/job/configure-job-preferences'
 
 function slugifyVietnamese(text = '') {
   return text

@@ -1,9 +1,9 @@
-import { findActiveAccountItem } from '@/entities/account'
+import { findActiveAccountItem } from '@/entities/account/account'
 import {
   COMPANY_DIRECTORY_PATH,
   COMPANY_SEARCH_PATH,
   isCompanyDetailPath,
-} from '@/entities/company'
+} from '@/entities/company/company'
 import {
   adminPath,
   employerAppPath,

@@ -5,7 +5,7 @@ import AuthGuard from './AuthGuard'
 
 const { useSession } = vi.hoisted(() => ({ useSession: vi.fn() }))
 
-vi.mock('@/entities/session', () => ({ useSession }))
+vi.mock('@/entities/account/session', () => ({ useSession }))
 
 describe('AuthGuard', () => {
   beforeEach(() => useSession.mockReset())

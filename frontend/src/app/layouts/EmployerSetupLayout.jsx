@@ -1,8 +1,8 @@
 import { LogoutOutlined } from '@ant-design/icons'
 import { Button, ConfigProvider } from 'antd'
 import { Outlet } from 'react-router'
-import { useSession } from '@/entities/session'
-import { BrandLogo } from '@/entities/site-settings'
+import { useSession } from '@/entities/account/session'
+import { BrandLogo } from '@/entities/system/site-settings'
 
 export default function EmployerSetupLayout() {
   const { user, logout } = useSession()

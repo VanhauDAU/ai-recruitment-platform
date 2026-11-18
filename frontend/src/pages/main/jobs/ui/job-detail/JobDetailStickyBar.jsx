@@ -1,6 +1,6 @@
 import { FileTextOutlined, HeartOutlined, SendOutlined } from '@ant-design/icons'
 import { useEffect, useState } from 'react'
-import { JobCompareButton } from '@/features/compare-jobs'
+import { JobCompareButton } from '@/features/main/job/compare-jobs'
 import { useHideOnScroll } from '@/shared/hooks/use-hide-on-scroll'
 import { isAcceptingApplications } from '../../lib/job-detail-presentation'
 import JobApplicationClosed from './JobApplicationClosed'

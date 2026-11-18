@@ -9,7 +9,7 @@ const { useEmployerReadiness, refetch } = vi.hoisted(() => ({
   refetch: vi.fn(),
 }))
 
-vi.mock('@/entities/employer-profile', async (importOriginal) => ({
+vi.mock('@/entities/account/employer-profile', async (importOriginal) => ({
   ...await importOriginal(),
   useEmployerReadiness,
 }))

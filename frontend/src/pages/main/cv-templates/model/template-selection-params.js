@@ -1,7 +1,7 @@
 // Đồng bộ lựa chọn ở cột phải trang chi tiết mẫu CV với query string.
 // Chỉ đưa dữ liệu không nhạy cảm lên URL: không có mã CV, tên tệp hay dữ liệu
 // cá nhân. Giá trị mặc định bị lược bỏ để URL gọn và canonical ổn định.
-import { CV_LANGUAGES, DEFAULT_CV_EXPERIENCE_BAND, cvLanguage, isCvExperienceBand } from '@/entities/cv-template'
+import { CV_LANGUAGES, DEFAULT_CV_EXPERIENCE_BAND, cvLanguage, isCvExperienceBand } from '@/entities/cv/cv-template'
 
 const SOURCE_PARAMS = { sample: 'mau', previous: 'cv-cu', upload: 'tai-len', blank: 'trong' }
 const PARAM_SOURCES = Object.fromEntries(Object.entries(SOURCE_PARAMS).map(([source, param]) => [param, source]))

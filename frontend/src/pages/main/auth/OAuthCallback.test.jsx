@@ -9,13 +9,13 @@ const mocks = vi.hoisted(() => ({
   success: vi.fn(),
 }))
 
-vi.mock('@/features/auth', () => ({
+vi.mock('@/features/common/account/auth', () => ({
   completeOAuth: mocks.completeOAuth,
   getAuthDestination: () => '/dashboard',
   getSafeReturnUrl: (value) => value,
   withReturnUrl: (path) => path,
 }))
-vi.mock('@/entities/session', () => ({
+vi.mock('@/entities/account/session', () => ({
   useSession: () => ({ setCurrentUser: mocks.setCurrentUser }),
 }))
 vi.mock('@/shared/lib/toast', () => ({

@@ -1,4 +1,4 @@
-import { canAccessAdminRoute } from '@/entities/admin-access'
+import { canAccessAdminRoute } from '@/entities/account/admin-access'
 import { adminPath } from '@/shared/config/portals'
 
 function accessAllowed(access, adminAccess) {

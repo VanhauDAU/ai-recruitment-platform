@@ -30,9 +30,9 @@ loading/empty/error (có nút thử lại)/404 riêng.
 
 - `FloatingActions`: "Các câu hỏi thường gặp" → `/tro-giup`; "Hướng dẫn tìm
   việc an toàn" → `/tro-giup/tim-viec-an-toan`
-  (`widgets/floating-actions/knowledgebase-support-links.js`);
+  (`widgets/main/floating-actions/knowledgebase-support-links.js`);
 - header: "Hướng dẫn viết CV" → `/tro-giup/cv-va-mau-cv`
-  (`widgets/main-header/header-navigation-config.jsx`, cờ
+  (`widgets/main/header/header-navigation-config.jsx`, cờ
   `requiresKnowledgebase`).
 
 ### 1.1. Trang danh sách
@@ -236,9 +236,9 @@ whitelist trả `400`.
 Widget `admin-knowledgebase-management` ghép các feature
 `edit-knowledge-revision`, `review-knowledge-revision`,
 `publish-knowledge-article`, `manage-knowledge-categories` trên
-`entities/knowledgebase`: bảng bài filter/sort/pagination server-side (URL là
+`entities/content/knowledgebase`: bảng bài filter/sort/pagination server-side (URL là
 nguồn chuẩn, reorder kéo thả trong một category), drawer chuyên mục, editor
-`shared/ui/RichTextEditor` lưu tường minh (không autosave, cảnh báo rời trang,
+`shared/ui/rich-text/RichTextEditor` lưu tường minh (không autosave, cảnh báo rời trang,
 giữ bản nhập tạm trong `localStorage` khi lưu lỗi), modal **Tạo revision mới**
 cho bài đã publish, diff plain text khi review, lịch sử revision và audit.
 

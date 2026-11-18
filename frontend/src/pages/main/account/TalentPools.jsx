@@ -1,4 +1,4 @@
-import { MyTalentPools } from '@/features/withdraw-from-talent-pool'
+import { MyTalentPools } from '@/features/main/application/withdraw-from-talent-pool'
 
 export default function TalentPools() {
   return (

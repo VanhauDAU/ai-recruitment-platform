@@ -1,4 +1,4 @@
-import { SALARY_RANGES } from '@/entities/job'
+import { SALARY_RANGES } from '@/entities/job/job'
 
 function positiveId(value) {
   const parsed = Number(value)

@@ -1,11 +1,11 @@
 import { CompassOutlined, FileTextOutlined, ReloadOutlined } from '@ant-design/icons'
 import { Alert, Button } from 'antd'
 import { Link, Navigate } from 'react-router'
-import { useSession } from '@/entities/session'
+import { useSession } from '@/entities/account/session'
 import {
   useSavedJobRecommendations,
   useSavedJobs,
-} from '@/features/saved-jobs'
+} from '@/features/main/job/saved-jobs'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { MascotEmpty } from '@/shared/ui/mascot'
 import JobCard from './ui/JobCard'

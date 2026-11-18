@@ -49,7 +49,7 @@ renderer. Create, đổi mẫu, apply sample, position preview, import và snaps
   `renderer_version`, schema/default layout/style, `capabilities`,
   `content_contract`. Component không lưu trong DB: `renderer_key` là khóa trong
   registry layout `apps/cv_templates/layouts.json` (bản sao giống hệt ở
-  `frontend/src/entities/cv/model/cv-layouts.json`, có test so khớp). Mỗi layout
+  `frontend/src/entities/cv/cv/model/cv-layouts.json`, có test so khớp). Mỗi layout
   khai báo các vùng theo hàng (`row`, `width`, `tone` plain/tint/band, `arrange`
   stack/inline), `avatar`, `variant` (standard/timeline/compact) và giới hạn kéo
   độ rộng cột. Tám layout: `single_column_v1`, `single_column_photo_v1`,
@@ -93,7 +93,7 @@ CvTemplate ──< CvTemplateColorLink    >── CvColor
 - Ngôn ngữ CV là enum `CvLanguage` (`vi-VN`, `en-US`) ở
   `apps/cv_templates/models/language.py`, kèm `CATALOG_LANGUAGES` (path kho mẫu,
   nhãn, hậu tố trường song ngữ); frontend mirror ở
-  `entities/cv-template/model/cv-languages.js`. Tên/mô tả/SEO của template là
+  `entities/cv/cv-template/model/cv-languages.js`. Tên/mô tả/SEO của template là
   các trường `*_vi`/`*_en` trên `CvTemplate` (CVT-1a gộp `CvTemplateLocalization`
   và gỡ bảng `sitecontent.Locale`). Kho `/mau-cv-tieng-nhat`,
   `/mau-cv-tieng-trung`, `/mau-cv/ngon-ngu/:locale` redirect 301 về `/mau-cv`.
@@ -195,8 +195,8 @@ workflow nằm ở feature `edit-cv-draft`:
 
 ```text
 pages/main/cvs/CvEditor
-  → features/edit-cv-draft
-    → entities/cv, entities/cv-template, entities/locale
+  → features/common/cv/edit-cv-draft
+    → entities/cv/cv, entities/cv/cv-template, entities/locale
       → shared
 ```
 

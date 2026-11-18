@@ -9,7 +9,7 @@ import {
   TeamOutlined,
 } from '@ant-design/icons'
 import { useTranslation } from 'react-i18next'
-import { useSiteSetting } from '@/entities/site-settings'
+import { useSiteSetting } from '@/entities/system/site-settings'
 
 const FUNCTION_ITEMS = [
   ['posting', NotificationOutlined],

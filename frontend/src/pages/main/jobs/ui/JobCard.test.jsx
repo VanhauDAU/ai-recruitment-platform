@@ -3,11 +3,11 @@ import { MemoryRouter } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import JobCard from './JobCard'
 
-vi.mock('@/features/saved-jobs', () => ({
+vi.mock('@/features/main/job/saved-jobs', () => ({
   useSavedJob: () => [false, vi.fn(), false],
 }))
 
-vi.mock('@/features/track-job-engagement', () => ({
+vi.mock('@/features/main/job/track-job-engagement', () => ({
   useJobImpression: () => vi.fn(),
 }))
 

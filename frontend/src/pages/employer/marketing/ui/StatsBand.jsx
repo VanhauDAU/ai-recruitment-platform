@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { useSiteSetting } from '@/entities/site-settings'
+import { useSiteSetting } from '@/entities/system/site-settings'
 import { useCountUp } from '@/shared/hooks/use-count-up'
 
 function AnimatedStatValue({ value, language }) {

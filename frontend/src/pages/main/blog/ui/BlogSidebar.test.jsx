@@ -3,7 +3,7 @@ import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 import BlogSidebar from './BlogSidebar'
 
-vi.mock('@/entities/site-settings', () => ({
+vi.mock('@/entities/system/site-settings', () => ({
   getBanners: vi.fn(() => Promise.resolve([])),
   settingText: (value, fallback) => value || fallback,
   useSiteSettings: () => ({
@@ -11,15 +11,15 @@ vi.mock('@/entities/site-settings', () => ({
   }),
 }))
 
-vi.mock('@/entities/job', () => ({
+vi.mock('@/entities/job/job', () => ({
   getJobSuggestions: vi.fn(() => Promise.resolve([])),
 }))
 
-vi.mock('@/entities/location', () => ({
+vi.mock('@/entities/system/location', () => ({
   getProvinces: vi.fn(() => Promise.resolve([])),
 }))
 
-vi.mock('@/entities/blog', () => ({
+vi.mock('@/entities/content/blog', () => ({
   blogPostPath: (slug) => `/blog/${slug}`,
   getBlogPinnedPosts: vi.fn(() => Promise.resolve([
     { slug: 'kinh-nghiem-phong-van', title: 'Kinh nghiệm phỏng vấn' },

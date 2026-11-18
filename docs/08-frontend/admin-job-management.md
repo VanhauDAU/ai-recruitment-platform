@@ -11,8 +11,8 @@ có thao tác duyệt/từ chối. Quy tắc nghiệp vụ đầy đủ ở
 
 | Route | Page | Quyền |
 | --- | --- | --- |
-| `/admin/app/job-moderation` | `pages/admin/app/JobModeration.jsx` | `job_moderation.view` |
-| `/admin/app/job-moderation/:publicId` | `pages/admin/app/JobModerationDetail.jsx` | `job_moderation.view` |
+| `/admin/app/job-moderation` | `pages/admin/jobs/JobModeration.jsx` | `job_moderation.view` |
+| `/admin/app/job-moderation/:publicId` | `pages/admin/jobs/JobModerationDetail.jsx` | `job_moderation.view` |
 
 Route đăng ký ở `app/router/admin/admin-routes.config.js`, loader lazy ở
 `app/router/lazy/admin.pages.jsx`. Mục menu "Quản lý tin tuyển dụng".
@@ -34,11 +34,11 @@ sơ nhà tuyển dụng chỉ hiện khi admin có một trong các quyền
 ## Kiến trúc
 
 ```text
-pages/admin/app/JobModeration*.jsx
-  -> widgets/admin-job-management      (AdminJobManagement, AdminJobDetail)
-      -> features/enforce-job-visibility (JobVisibilityActions)
-      -> features/review-job-reports     (JobReportQueue, JobReportDecisionModal)
-      -> entities/admin-job, entities/job-report, entities/admin-access
+pages/admin/jobs/JobModeration*.jsx
+  -> widgets/admin/job-management      (AdminJobManagement, AdminJobDetail)
+      -> features/admin/job/enforce-job-visibility (JobVisibilityActions)
+      -> features/admin/job/review-job-reports     (JobReportQueue, JobReportDecisionModal)
+      -> entities/job/admin-job, entities/job/job-report, entities/account/admin-access
       -> shared/ui/admin
 ```
 

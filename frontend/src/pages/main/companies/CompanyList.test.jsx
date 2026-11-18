@@ -9,11 +9,11 @@ import {
   useNavigate,
 } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { getPublicCompanies } from '@/entities/company'
+import { getPublicCompanies } from '@/entities/company/company'
 import CompanyList from './CompanyList'
 import CompanySearch from './CompanySearch'
 
-vi.mock('@/entities/company', async (importOriginal) => ({
+vi.mock('@/entities/company/company', async (importOriginal) => ({
   ...(await importOriginal()),
   getPublicCompanies: vi.fn(),
 }))

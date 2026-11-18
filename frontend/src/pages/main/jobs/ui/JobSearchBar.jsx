@@ -1,8 +1,8 @@
 import { SearchOutlined } from '@ant-design/icons'
 import { Button, Input } from 'antd'
-import { JobCategoryTreePicker } from '@/entities/job'
-import { LocationFilter } from '@/entities/location'
-import { SearchDropdown } from '@/features/search-jobs'
+import { JobCategoryTreePicker } from '@/entities/job/job'
+import { LocationFilter } from '@/entities/system/location'
+import { SearchDropdown } from '@/features/main/job/search-jobs'
 import { useMediaQuery } from '@/shared/hooks/use-media-query'
 
 export default function JobSearchBar({

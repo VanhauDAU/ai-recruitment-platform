@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { getInlineJobRecommendations, jobKeys } from '@/entities/job'
+import { getInlineJobRecommendations, jobKeys } from '@/entities/job/job'
 
 export default function useInlineJobRecommendations({
   enabled,

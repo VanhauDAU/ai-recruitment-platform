@@ -2,7 +2,7 @@ import { ConfigProvider, theme as antdTheme } from 'antd'
 import { Outlet, useLocation } from 'react-router'
 import { GoogleReCaptchaProvider } from 'react-google-recaptcha-v3'
 import ThemeToggle from '@/shared/ui/ThemeToggle'
-import { useConsentedColorScheme } from '@/entities/consent'
+import { useConsentedColorScheme } from '@/entities/system/consent'
 import { getCurrentPortal } from '@/shared/config/portals'
 
 export default function AuthLayout() {

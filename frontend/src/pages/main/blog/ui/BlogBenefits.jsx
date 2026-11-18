@@ -1,7 +1,7 @@
 import { ArrowRightOutlined, CloseOutlined } from '@ant-design/icons'
 import { useState } from 'react'
 import { Link } from 'react-router'
-import { DEFAULT_SITE_SETTINGS, settingText, useSiteSettings } from '@/entities/site-settings'
+import { DEFAULT_SITE_SETTINGS, settingText, useSiteSettings } from '@/entities/system/site-settings'
 import { legacyAsset } from '@/shared/config/assets'
 
 const BENEFITS = [

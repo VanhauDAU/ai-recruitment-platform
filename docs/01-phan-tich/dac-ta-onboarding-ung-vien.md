@@ -6,8 +6,8 @@ thực công ty, domain `employers`) và không dùng query/URL làm căn cứ p
 
 Code chính: `backend/apps/candidates` (models `profile.py`, `services/profiles.py`,
 `api/serializers/profile.py`); frontend `pages/main/onboarding/OnboardUser.jsx`,
-`widgets/onboarding-interview`, `features/configure-job-preferences`,
-`entities/candidate-preferences`, `pages/main/account/JobPreferenceSettings.jsx`.
+`widgets/main/onboarding-interview`, `features/main/job/configure-job-preferences`,
+`entities/job/candidate-preferences`, `pages/main/account/JobPreferenceSettings.jsx`.
 
 ## 1. Luồng người dùng
 
@@ -23,7 +23,7 @@ Code chính: `backend/apps/candidates` (models `profile.py`, `services/profiles.
   dùng `OnboardingLayout`. URL cũ `/onboard-user-setting` chuyển hướng về
   `/onboard-user` để link đã phát ra vẫn chạy.
 - Điểm đến sau đăng nhập do `getAuthDestination`
-  (`features/auth/model/password-login-destination.js`) quyết định cho **mọi**
+  (`features/common/account/auth/model/password-login-destination.js`) quyết định cho **mọi**
   luồng xác thực: đăng nhập mật khẩu, callback OAuth (`OAuthCallback.jsx`) và
   `GuestGuard`. Ứng viên chưa cấu hình luôn được đưa tới `/onboard-user` trước
   khi về `returnUrl`.
@@ -36,7 +36,7 @@ Code chính: `backend/apps/candidates` (models `profile.py`, `services/profiles.
 ### Trang onboarding
 
 Toàn bộ onboarding là một cuộc trò chuyện với trợ lý trên một trang
-(`OnboardingChat`). Kịch bản ở `widgets/onboarding-interview/model/interview-script.js`:
+(`OnboardingChat`). Kịch bản ở `widgets/main/onboarding-interview/model/interview-script.js`:
 
 | Bước | Trường | Ghi chú |
 | --- | --- | --- |

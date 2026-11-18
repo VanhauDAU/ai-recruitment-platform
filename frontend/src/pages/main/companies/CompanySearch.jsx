@@ -7,9 +7,9 @@ import {
 import {
   COMPANY_DIRECTORY_PATH,
   companySearchPath,
-} from '@/entities/company'
+} from '@/entities/company/company'
 import { useDocumentMetadata } from '@/shared/hooks/use-document-metadata'
-import { CompanyDirectory } from '@/widgets/company-directory'
+import { CompanyDirectory } from '@/widgets/main/company-directory'
 import {
   createFeaturedRequestKey,
   FEATURED_REQUEST_STATE_KEY,

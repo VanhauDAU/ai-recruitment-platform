@@ -1,6 +1,6 @@
 import { Navigate, Outlet } from 'react-router'
-import { getAuthDestination } from '@/features/auth'
-import { useSession } from '@/entities/session'
+import { getAuthDestination } from '@/features/common/account/auth'
+import { useSession } from '@/entities/account/session'
 import PageLoading from '@/shared/ui/PageLoading'
 import { resolveAdminDestination } from '../admin/admin-destination'
 

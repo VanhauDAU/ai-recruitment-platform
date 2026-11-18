@@ -1,10 +1,10 @@
 import { Navigate, Route } from 'react-router'
-import { ACCOUNT_DEFAULT_PATH, ACCOUNT_LAYOUT_ITEMS, ACCOUNT_ROOT } from '@/entities/account'
+import { ACCOUNT_DEFAULT_PATH, ACCOUNT_LAYOUT_ITEMS, ACCOUNT_ROOT } from '@/entities/account/account'
 import {
   COMPANY_DETAIL_ROUTE,
   COMPANY_DIRECTORY_PATH,
   COMPANY_SEARCH_PATH,
-} from '@/entities/company'
+} from '@/entities/company/company'
 import { employerAppPath } from '@/shared/config/portals'
 import AuthGuard from '../guards/AuthGuard'
 import GuestGuard from '../guards/GuestGuard'

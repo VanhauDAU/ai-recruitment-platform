@@ -1,5 +1,5 @@
-import { startOAuthReauth } from '@/features/auth'
-import { ChangePasswordForm } from '@/features/change-password'
+import { startOAuthReauth } from '@/features/common/account/auth'
+import { ChangePasswordForm } from '@/features/common/account/change-password'
 
 export default function ChangePassword() {
   return (

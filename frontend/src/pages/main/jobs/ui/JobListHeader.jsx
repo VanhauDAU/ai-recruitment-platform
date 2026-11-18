@@ -1,7 +1,7 @@
 import { BellOutlined, RightOutlined } from '@ant-design/icons'
 import { Skeleton, Tooltip } from 'antd'
 import { Link } from 'react-router'
-import { formatNumber } from '@/entities/job'
+import { formatNumber } from '@/entities/job/job'
 
 export default function JobListHeader({
   canCreateJobAlert = true,

@@ -1,7 +1,7 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { useEffect, useMemo, useState } from 'react'
-import { getHomepageBestJobs, jobKeys } from '@/entities/job'
-import { getProvinces, getWardsByParents } from '@/entities/location'
+import { getHomepageBestJobs, jobKeys } from '@/entities/job/job'
+import { getProvinces, getWardsByParents } from '@/entities/system/location'
 import {
   BEST_JOBS_PAGE_SIZE,
   BEST_JOBS_ROTATE_MS,

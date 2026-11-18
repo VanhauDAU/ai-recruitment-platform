@@ -1,6 +1,6 @@
 import { MailOutlined, PhoneOutlined } from '@ant-design/icons'
 import { useTranslation } from 'react-i18next'
-import { settingText, useSiteSettings } from '@/entities/site-settings'
+import { settingText, useSiteSettings } from '@/entities/system/site-settings'
 
 function ContactCard({ icon, label, value, href }) {
   return (

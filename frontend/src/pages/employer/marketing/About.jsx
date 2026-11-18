@@ -2,7 +2,7 @@ import { BarChartOutlined, HeartOutlined, RobotOutlined } from '@ant-design/icon
 import { Button } from 'antd'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
-import { useSiteSettings } from '@/entities/site-settings'
+import { useSiteSettings } from '@/entities/system/site-settings'
 import { employerAppPath, employerMarketingPath } from '@/shared/config/portals'
 import ContactBand from './ui/ContactBand'
 import StatsBand from './ui/StatsBand'

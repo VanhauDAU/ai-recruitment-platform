@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
-import { saveHistory } from '@/features/search-jobs'
-import { SALARY_RANGES } from '@/entities/job'
+import { saveHistory } from '@/features/main/job/search-jobs'
+import { SALARY_RANGES } from '@/entities/job/job'
 import {
   FILTER_KEYS,
   SALARY_UNIT,

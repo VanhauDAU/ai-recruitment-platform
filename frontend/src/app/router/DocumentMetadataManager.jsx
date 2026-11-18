@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useLocation } from 'react-router'
-import { useSiteSettings } from '@/entities/site-settings'
+import { useSiteSettings } from '@/entities/system/site-settings'
 import { DocumentMetadataContext } from '@/shared/config/document-metadata-context'
 import { applyDocumentMetadata } from '@/shared/config/document-meta'
 import { getCurrentPortal } from '@/shared/config/portals'

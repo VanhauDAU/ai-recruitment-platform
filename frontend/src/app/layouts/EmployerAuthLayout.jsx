@@ -2,7 +2,7 @@ import { BarChartOutlined, CheckCircleFilled, RobotOutlined, TeamOutlined } from
 import { ConfigProvider } from 'antd'
 import { GoogleReCaptchaProvider } from 'react-google-recaptcha-v3'
 import { Outlet, useLocation } from 'react-router'
-import { useSiteSettings } from '@/entities/site-settings'
+import { useSiteSettings } from '@/entities/system/site-settings'
 
 function HiringFunnelVisual() {
   return (

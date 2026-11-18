@@ -157,15 +157,15 @@ Tất cả endpoint mới có throttle riêng và test ngân sách query (phẳn
 
 | Slice | Nội dung |
 |---|---|
-| `entities/company` (mở rộng) | API chi tiết/tương tự/facets, keys, `companyDetailPath()`, bộ hiển thị dùng chung `CompanyProfileView` + `CompanySectionRenderer` (cho trang công khai, xem trước NTD và xem trước admin; widget không được import chéo nhau) |
-| `shared/ui` | `RichContent` (tách từ `entities/job/JobRichContent`, luôn qua `sanitizeHtml`), `ShareButtons` (tách từ `JobShareRail`) |
-| `widgets/public-company-profile` (mới) | Trang công khai, tab việc làm, thẻ tin rút gọn, công ty tương tự, CTA di động, skeleton, not-found |
-| `features/follow-company`, `report-company`, `review-company-reports` (mới) | Theo dõi (optimistic + rollback), modal báo cáo, hàng chờ admin |
-| `features/customize-company-page`, `manage-company-page-editors` (mới) | Danh sách khối (`@dnd-kit` đã cài), bảng màu, tin ghim, form nội dung, trạng thái chờ duyệt, thước hoàn thiện, phân quyền |
-| `widgets/employer-company-page` (mới) | Ba tab + xem trước |
-| `entities/employer-company-page`, `entities/company-report` (mới) | API workspace và báo cáo |
+| `entities/company/company` (mở rộng) | API chi tiết/tương tự/facets, keys, `companyDetailPath()`, bộ hiển thị dùng chung `CompanyProfileView` + `CompanySectionRenderer` (cho trang công khai, xem trước NTD và xem trước admin; widget không được import chéo nhau) |
+| `shared/ui` | `RichContent` (tách từ `entities/job/job/JobRichContent`, luôn qua `sanitizeHtml`), `ShareButtons` (tách từ `JobShareRail`) |
+| `widgets/main/public-company-profile` (mới) | Trang công khai, tab việc làm, thẻ tin rút gọn, công ty tương tự, CTA di động, skeleton, not-found |
+| `features/main/company/follow-company`, `report-company`, `review-company-reports` (mới) | Theo dõi (optimistic + rollback), modal báo cáo, hàng chờ admin |
+| `features/employer/company/customize-company-page`, `manage-company-page-editors` (mới) | Danh sách khối (`@dnd-kit` đã cài), bảng màu, tin ghim, form nội dung, trạng thái chờ duyệt, thước hoàn thiện, phân quyền |
+| `widgets/employer/company-page` (mới) | Ba tab + xem trước |
+| `entities/company/employer-company-page`, `entities/company/company-report` (mới) | API workspace và báo cáo |
 
-Trang và route: `pages/main/companies/CompanyDetail.jsx`, `pages/main/account/FollowedCompanies.jsx`, `pages/employer/app/CompanyPage.jsx`; đăng ký qua `app/router/lazy/*.pages.jsx` và `routes/*.routes.jsx`; cập nhật `route-metadata.js`, `document-title.js`, menu NTD, menu tài khoản ứng viên.
+Trang và route: `pages/main/companies/CompanyDetail.jsx`, `pages/main/account/FollowedCompanies.jsx`, `pages/employer/company/CompanyPage.jsx`; đăng ký qua `app/router/lazy/*.pages.jsx` và `routes/*.routes.jsx`; cập nhật `route-metadata.js`, `document-title.js`, menu NTD, menu tài khoản ứng viên.
 
 Thay mọi liên kết theo tên bằng `companyDetailPath`: `CompanyCard`, `SearchCompanyCard`, `TopEmployersSidebar`, `JobDetailSidebar`, `JobQuickView`, `FeaturedEmployers`, `EmployerLogoBelt`.
 

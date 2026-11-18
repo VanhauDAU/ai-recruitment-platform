@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { BellOutlined } from '@ant-design/icons'
-import { submitFeedback } from '@/features/submit-feedback'
+import { submitFeedback } from '@/features/main/account/submit-feedback'
 import { message } from '@/shared/lib/toast'
 
 // Cụm cuối danh sách kết quả (kiểu TopCV, hiện cả khi có lẫn không có kết quả):
