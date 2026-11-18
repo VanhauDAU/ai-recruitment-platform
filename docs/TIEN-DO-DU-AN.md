@@ -11,7 +11,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Ảnh đại diện dùng chung 3 cổng](#ảnh-đại-diện-dùng-chung-3-cổng-2026-11-16) | 🟨 Xong trên nhánh `feat/avatar-editor`, chưa mở PR |
 | [Dọn mâu thuẫn còn lại sau thống nhất luồng](#dọn-mâu-thuẫn-còn-lại-sau-thống-nhất-luồng-2026-11-16) | ✅ Cả 3 GĐ đã gộp (#222, #223, #224); dọn phần còn hở trên nhánh `fix/flow-loose-ends` |
 | [Thống nhất luồng đăng tin, hiển thị, ứng tuyển, công ty](#thống-nhất-luồng-đăng-tin-hiển-thị-ứng-tuyển-công-ty-2026-11-15) | ✅ Cả 6 giai đoạn đã gộp (#208–#215); hoàn thiện luồng nhắc NTD và lịch sử nộp trên nhánh `feat/application-reminders` |
-| [Đối sánh ngữ nghĩa CV–JD chạy local](#đối-sánh-ngữ-nghĩa-cvjd-chạy-local-2026-11-15) | 🟨 Nền tảng (tuần 1) xong trên nhánh `feat/ai-matching-foundation`, chưa mở PR |
+| [Đối sánh ngữ nghĩa CV–JD chạy local](#đối-sánh-ngữ-nghĩa-cvjd-chạy-local-2026-11-15) | 🟨 Tuần 1: nền tảng đã gộp vào `dev` (#207); kho CV tổng hợp đang làm trên nhánh `feat/ai-synthetic-cvs` |
 | [CV tải lên: tệp gốc, tiêu chuẩn upload, giới hạn CV, NTD tìm kiếm](#cv-tải-lên-tệp-gốc-tiêu-chuẩn-upload-giới-hạn-cv-ntd-tìm-kiếm-2026-11-15) | ✅ Gộp vào `dev` (#203) |
 | [Việc làm tốt nhất xếp theo chất lượng tin](#việc-làm-tốt-nhất-xếp-theo-chất-lượng-tin-2026-11-15) | ✅ Gộp vào `dev` (#204) |
 | [Thiết kế lại quản lý tin tuyển dụng của NTD](#thiết-kế-lại-quản-lý-tin-tuyển-dụng-của-ntd-2026-11-15) | ✅ Gộp vào `dev` (nhánh `feat/employer-job-workspace`) |
@@ -347,7 +347,7 @@ ngoài. Lộ trình 8 tuần (16/11/2026 → 10/01/2027), mỗi giai đoạn m�
 
 | Tuần | Hạng mục | Trạng thái |
 | --- | --- | --- |
-| 1 | Nền tảng: pgvector, schema `apps/matching`, môi trường huấn luyện `ml/`, kiểm chứng fine-tune trên MPS | 🟨 Code xong trên nhánh, chưa mở PR; còn nhập JD thật và viết rubric chấm điểm |
+| 1 | Nền tảng: pgvector, schema `apps/matching`, môi trường huấn luyện `ml/`, kiểm chứng fine-tune trên MPS | 🟨 Code đã gộp vào `dev` (#207); đã nhập 100 JD thật và 100 CV tổng hợp; rubric đã chốt (18/11) |
 | 2 | Trích xuất và chuẩn hóa CV/JD, mở rộng taxonomy kỹ năng, baseline TF-IDF/BM25 (PR 1) | ⬜ |
 | 3 | Encoder zero-shot, chấm điểm, giải thích, API, worker suy luận (PR 2) | ⬜ |
 | 4 | Giao diện "Xem độ phù hợp" ở trang chi tiết tin (PR 3), bản demo tối thiểu | ⬜ |
@@ -364,15 +364,50 @@ ngoài. Lộ trình 8 tuần (16/11/2026 → 10/01/2027), mỗi giai đoạn m�
   `backups/pre-pgvector-20261115.dump`.
 - Ngày 15/11 đã xóa toàn bộ 53 tin mẫu cùng hồ sơ ứng tuyển thử trong DB dev
   (sao lưu `backups/pre-job-cleanup-20261115.dump`). Tin thật được điền vào
-  `ml/data/jd_input.xlsx` (không commit) rồi nhập bằng
+  `ml/data/jd/jd_input.xlsx` (không commit) rồi nhập bằng
   `ml/scripts/import_jd.py` (chạy thử trước, `--apply --create-skills` để ghi;
-  bảng đối chiếu mã tin lưu ở `ml/data/jd_import_map.json`); rubric gán nhãn bản
+  bảng đối chiếu mã tin lưu ở `ml/data/jd/jd_import_map.json`); rubric gán nhãn bản
   nháp ở `ml/labeling/rubric.md`.
 - Ngày 15/11 đã nhập 100 tin thật (90 TopCV, 10 ITviec; 78 tin tiếng Việt, 22
   tin tiếng Anh; đủ 8 nhóm ngành) vào các công ty demo. Danh mục kỹ năng tăng
   từ 42 lên 344; bảng gộp cách viết và hai nhóm "Kỹ năng mềm", "Phẩm chất cá
   nhân" ở `ml/labeling/skill_merge.json`. Sao lưu trước khi nhập:
   `backups/pre-jd-import-20261115.dump`.
+- Ngày 18/11: chưa xin được CV thật nên dùng CV tổng hợp sinh bằng
+  `qwen2.5:7b` chạy local qua Ollama (`ml/scripts/generate_cvs.py`), từ chính
+  100 JD đã nhập. Script quyết định vị trí, số tháng kinh nghiệm, bậc học, kỹ
+  năng có mặt và mức khớp dự kiến (`strong`/`partial`/`adjacent`, ghi trong
+  `ml/data/cv/synthetic/manifest.json`, dùng làm nhãn yếu, không thay điểm
+  người chấm); mô hình chỉ viết phần chữ. Mỗi CV vào hệ thống dưới một tài
+  khoản ứng viên thử riêng `cv-xxx@synthetic.procv.test` qua lệnh
+  `import_cv_documents` (`ml/scripts/import_cvs.py`). Tập vàng vẫn nên có 10–15
+  CV thật; nếu không có, báo cáo ghi rõ là giới hạn.
+- Kết quả 18/11: 100 CV tổng hợp đã nằm trong hệ thống (68 tiếng Việt, 32 tiếng
+  Anh; 40 khớp mạnh, 40 khớp một phần, 20 vị trí gần; 62 CV cho 8 nhóm vị trí
+  của tập vàng, 38 CV rải các vị trí khác). Mỗi CV có đủ mục kinh nghiệm, học
+  vấn, kỹ năng, dự án, ngoại ngữ (88 CV) và các mục phụ; 508 kỹ năng khớp danh
+  mục. Một CV bị mô hình viết lẫn tiếng Trung đã được sinh lại; script giờ tự
+  sinh lại khi gặp chữ Trung/Nhật/Hàn. Sao lưu trước khi nhập:
+  `backups/pre-synthetic-cvs-20261118.dump`.
+- 15 CV (trải đều 8 nhóm vị trí, 8 tiếng Việt và 7 tiếng Anh) có thêm bản PDF
+  tải lên: xuất PDF từ CV builder (in kèm email thử của tài khoản, vì CV tải lên
+  bắt buộc có email hoặc số điện thoại) rồi tải lên lại cho cùng tài khoản, bằng
+  `ml/scripts/import_cvs.py --pdf-twins --apply` (lệnh `create_pdf_twins`). Bản
+  PDF lưu ở `ml/data/cv/pdf/system/`. Phát hiện cho tuần 2: `pypdf` tách rời chữ có
+  dấu tiếng Việt khi đọc PDF ("Ứ ng viên", "NGH Ề NGHI Ệ P"), khoảng 300–440 chỗ
+  mỗi CV tiếng Việt, gần như không có ở CV tiếng Anh; bước trích xuất CV tải lên
+  phải xử lý (đổi thư viện đọc PDF hoặc ghép lại ký tự).
+- Ngày 18/11: 36 PDF bố cục đa dạng xuất từ TopCV (tài khoản Pro, 36 mẫu khác
+  nhau, 1–3 trang, một và hai cột, 26 tiếng Việt và 10 tiếng Anh) ở
+  `ml/data/cv/pdf/topcv/`. Nội dung điền từ `ml/data/cv/synthetic/CV-xxx.json`
+  cùng mã, nên dùng chung nhãn với bản JSON; không có ảnh và thông tin liên hệ
+  thật (đã quét cả 51 PDF). Các CV tạm trên TopCV đã xóa sau khi tải. Những PDF
+  này cũng bị `pypdf` tách dấu, xác nhận lỗi nằm ở thư viện đọc chứ không ở bộ
+  xuất PDF của hệ thống; một số tệp TopCV có dòng trống trước `%PDF` (pypdf vẫn
+  đọc được, chỉ cảnh báo).
+- Ngày 18/11: sắp lại `ml/` cho giai đoạn sau. Dữ liệu chia `data/jd/` và
+  `data/cv/` (`synthetic/`, `pdf/system/`, `pdf/topcv/`); mọi đường dẫn khai báo
+  một chỗ ở `ml/scripts/paths.py`; cấu trúc và thứ tự chạy ở `ml/README.md`.
 - `apps/matching` mới có ba bảng (`MatchDocument`, `MatchChunk`,
   `MatchAnalysis`) và test ràng buộc; chưa có service, API hay task.
 - Đo trên MacBook Pro M5, 16 GB (torch 2.15.0, sentence-transformers 6.3.0):

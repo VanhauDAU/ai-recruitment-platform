@@ -47,6 +47,7 @@ from .lifecycle import (
     switch_draft_template,
 )
 from .moderation import admin_cv_content, lock_cv, unlock_cv
+from .operator_import import create_pdf_twins, import_cv_documents
 from .recruiter_search import withdraw_cvs_from_recruiter_search
 from .sharing import (
     CvSharePermissionError,
@@ -106,6 +107,8 @@ __all__ = [
     'record_application_snapshot_access',
     'application_readiness_issues',
     'create_version',
+    'create_pdf_twins',
+    'import_cv_documents',
     'update_cv_metadata',
     'update_draft',
     'upload_cv',
