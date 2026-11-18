@@ -12,7 +12,8 @@ function formatCvDate(value) {
   })
 }
 
-export default function CvChoice({ cv, selected, onSelect }) {
+// Một dòng chọn CV (radio) dùng chung cho các luồng cần chọn một CV của ứng viên.
+export default function CvChoice({ cv, selected, onSelect, name = 'cv-choice' }) {
   // Recruiters only read the structured CV, so a CV missing name, contact or
   // any content cannot be submitted (the server rejects it too).
   const notReady = cv.application_ready === false
@@ -37,7 +38,7 @@ export default function CvChoice({ cv, selected, onSelect }) {
     >
       <input
         type="radio"
-        name="application-cv"
+        name={name}
         value={cv.public_id}
         checked={selected}
         onChange={() => onSelect(cv.public_id)}

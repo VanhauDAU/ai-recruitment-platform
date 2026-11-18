@@ -8,6 +8,19 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-18
 
+#### Added — Giao diện "Xem độ phù hợp" (tuần 4)
+
+- Thẻ "Xem độ phù hợp" có mascot ở cột phải trang chi tiết tin; hộp thoại chọn CV,
+  màn hình AI đang phân tích, kết quả với thước bốn mức, tiêu chí, kỹ năng có/thiếu
+  kèm câu trích từ CV, yêu cầu, gợi ý và cảnh báo không phải quyết định tuyển dụng.
+- Tập vàng 150 cặp CV–tin cho đánh giá (nhãn do Claude gán theo rubric, có quy tắc
+  làm rõ do người làm đồ án chốt; người kiểm tra sơ bộ 5 cặp).
+
+#### Changed
+
+- Trang lưu CV thành công chỉ hiện nhãn mức phù hợp, không hiện phần trăm.
+- Tên site setting `ai_job_match_enabled` trong trang quản trị: "AI xem độ phù hợp CV với tin".
+
 #### Added — Chấm độ phù hợp CV–tin và ml-worker (tuần 3)
 
 - API `/api/matching/analyses/` cho ứng viên: yêu cầu phân tích (cache theo

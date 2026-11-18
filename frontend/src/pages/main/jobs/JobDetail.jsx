@@ -3,6 +3,7 @@ import { Button, Result } from 'antd'
 import { useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import { useLoginPrompt } from '@/features/auth'
+import { AnalyzeJobFit } from '@/features/analyze-job-fit'
 import { ApplyForJobModal, useJobApplicationStatus } from '@/features/apply-for-job'
 import { CreateJobAlertModal } from '@/features/manage-job-alerts'
 import { JobCompareButton } from '@/features/compare-jobs'
@@ -140,7 +141,12 @@ export default function JobDetail() {
                 onRequireLogin={promptLogin}
               />
             </div>
-            <JobDetailSidebar job={job} />
+            <JobDetailSidebar
+              job={job}
+              fitAction={isAcceptingApplications(job) && (
+                <AnalyzeJobFit job={job} beforeOpen={requireCandidate} onApply={handleApply} />
+              )}
+            />
           </div>
         </div>
       </main>

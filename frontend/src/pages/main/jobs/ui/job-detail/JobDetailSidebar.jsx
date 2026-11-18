@@ -12,7 +12,7 @@ import {
 import JobSafetyTips from './JobSafetyTips'
 import JobSidebarPromos from './JobSidebarPromos'
 
-export default function JobDetailSidebar({ job }) {
+export default function JobDetailSidebar({ job, fitAction = null }) {
   // Không lặp "Kinh nghiệm" ở đây — đã có ở Hero và tag Yêu cầu.
   const generalInfo = [
     { icon: <SolutionOutlined />, label: 'Cấp bậc', value: POSITION_LEVEL_LABELS[job.position_level] },
@@ -22,7 +22,7 @@ export default function JobDetailSidebar({ job }) {
     { icon: <ClockCircleOutlined />, label: 'Loại hình làm việc', value: EMPLOYMENT_TYPE_LABELS[job.employment_type] },
   ].filter((item) => item.value)
 
-  return <aside className="space-y-5 lg:sticky lg:top-[84px]"><CompanyCard job={job} /><GeneralInfo items={generalInfo} /><RelatedTopics job={job} /><JobSafetyTips /><JobSidebarPromos /></aside>
+  return <aside className="space-y-5 lg:sticky lg:top-[84px]"><CompanyCard job={job} />{fitAction}<GeneralInfo items={generalInfo} /><RelatedTopics job={job} /><JobSafetyTips /><JobSidebarPromos /></aside>
 }
 
 function CompanyCard({ job }) {

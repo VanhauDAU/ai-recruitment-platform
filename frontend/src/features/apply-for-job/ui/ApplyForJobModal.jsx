@@ -8,9 +8,9 @@ import {
   SafetyCertificateOutlined,
 } from '@ant-design/icons'
 import { Alert, Button, Checkbox, Input, Modal, Select, Spin } from 'antd'
+import { CvChoice } from '@/entities/cv'
 import { settingText, useSiteSettings } from '@/entities/site-settings'
 import { INITIAL_VISIBLE_CVS, UPLOAD_CHOICE_ID, useApplyForm } from '../model/use-apply-form'
-import CvChoice from './CvChoice'
 import UploadChoice from './UploadChoice'
 
 export default function ApplyForJobModal({
@@ -92,6 +92,7 @@ export default function ApplyForJobModal({
                   cv={cv}
                   selected={cv.public_id === form.selectedCvId}
                   onSelect={form.setSelectedCvId}
+                  name="application-cv"
                 />
               ))
             )}

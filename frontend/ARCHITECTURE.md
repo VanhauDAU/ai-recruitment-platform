@@ -568,6 +568,30 @@ pages/main/jobs/JobDetail
   CV tải lên phải chờ `waitForCvImport` xong mới nộp; CV có
   `application_ready=false` bị khóa (server cũng chặn).
 
+## Ownership map — Xem độ phù hợp CV–tin
+
+```text
+pages/main/jobs/JobDetail (slot dưới thông tin công ty ở JobDetailSidebar)
+  → features/analyze-job-fit
+    → entities/cv (CvChoice, getMyCvs), entities/site-settings
+      → shared/api, shared/ui/mascot
+```
+
+- Page quyết định ai được mở (`beforeOpen` = mời đăng nhập/chặn tài khoản không
+  phải ứng viên) và chỉ gắn thẻ cho tin còn nhận hồ sơ; feature tự ẩn khi site
+  setting `ai_job_match_enabled` tắt.
+- `features/analyze-job-fit` sở hữu API `/api/matching/analyses/`, poll 800 ms
+  khi `queued`/`processing`, trình bày kết quả (thước bốn mức 50/65/80, tiêu chí,
+  kỹ năng kèm câu bằng chứng, yêu cầu, gợi ý, câu "không phải quyết định tuyển
+  dụng"). Không tự suy điểm ở frontend; mọi số và câu chữ lấy từ `result_json`.
+- Hộp thoại tải trễ (`React.lazy`). Style nằm trong `job-fit-trigger.css` (chunk
+  của trang) và `job-fit.css` (chunk hộp thoại), không dùng utility Tailwind mới
+  để không tăng CSS khởi tạo. Chuyển động tắt theo `prefers-reduced-motion`.
+- `CvChoice` thuộc `entities/cv/ui`, dùng chung cho `apply-for-job` và
+  `analyze-job-fit` (feature không import nhau).
+- Trang lưu CV thành công chỉ hiện nhãn "Phù hợp/Rất phù hợp" của đối sánh theo
+  luật, không hiện phần trăm: điểm số duy nhất ứng viên thấy là của phân tích AI.
+
 ## Ownership map — Xử lý hồ sơ ứng tuyển của nhà tuyển dụng
 
 ```text
