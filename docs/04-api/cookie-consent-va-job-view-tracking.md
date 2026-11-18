@@ -8,11 +8,11 @@ khi production cần được bộ phận pháp lý xác nhận.
 | Key | Nơi lưu | Mục đích | Nhóm | Thời hạn/cleanup | Owner |
 | --- | --- | --- | --- | --- | --- |
 | `procv_consent` | Signed HttpOnly cookie | Nguồn quyết định consent | Thiết yếu | 180 ngày | `apps.privacy` |
-| `procv_consent_v1` | localStorage | Mirror không nhạy cảm để render UI | Thiết yếu | Xóa khi cookie không hợp lệ | `entities/consent` |
-| `color-scheme` | localStorage | Ghi nhớ giao diện sáng/tối | Tùy chọn | Xóa khi tắt Preferences | `entities/consent` |
-| `search_history` | localStorage | Lịch sử tìm việc | Tùy chọn | Không đọc/ghi và tự xóa khi tắt Preferences | `features/search-jobs` |
+| `procv_consent_v1` | localStorage | Mirror không nhạy cảm để render UI | Thiết yếu | Xóa khi cookie không hợp lệ | `entities/system/consent` |
+| `color-scheme` | localStorage | Ghi nhớ giao diện sáng/tối | Tùy chọn | Xóa khi tắt Preferences | `entities/system/consent` |
+| `search_history` | localStorage | Lịch sử tìm việc | Tùy chọn | Không đọc/ghi và tự xóa khi tắt Preferences | `features/main/job/search-jobs` |
 | `procv_viewer_id` | Signed HttpOnly cookie | Chống đếm trùng lượt xem | Analytics | 365 ngày; xóa khi rút Analytics | `apps.jobs` |
-| `procv_campaign_ref_v1` | localStorage | Nhớ kênh chiến dịch đã đưa ứng viên tới (`?ref=` có ký) để ghi nguồn khi ứng tuyển, lần bấm cuối thắng | Analytics | 30 ngày; xóa khi rút Analytics. Không có consent thì chỉ giữ trong bộ nhớ của phiên SPA | `entities/campaign`, `features/track-campaign-ref` |
+| `procv_campaign_ref_v1` | localStorage | Nhớ kênh chiến dịch đã đưa ứng viên tới (`?ref=` có ký) để ghi nguồn khi ứng tuyển, lần bấm cuối thắng | Analytics | 30 ngày; xóa khi rút Analytics. Không có consent thì chỉ giữ trong bộ nhớ của phiên SPA | `entities/campaign/campaign`, `features/main/job/track-campaign-ref` |
 | Django session/CSRF | Cookie | Bảo mật và vận hành Django admin | Thiết yếu | Theo Django | Django |
 | access/refresh token | localStorage | Phiên JWT hiện tại | Thiết yếu trong phạm vi auth hiện hữu | Theo luồng auth | `shared/api/token-store` |
 

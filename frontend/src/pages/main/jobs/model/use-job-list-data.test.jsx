@@ -7,7 +7,7 @@ const mocks = vi.hoisted(() => ({
   getJobs: vi.fn(),
 }))
 
-vi.mock('@/entities/job', () => ({
+vi.mock('@/entities/job/job', () => ({
   getJobs: mocks.getJobs,
   jobKeys: {
     list: (params) => ['jobs', 'list', params.toString()],

@@ -2,15 +2,15 @@ import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
-import { getCandidateApplications } from '@/entities/application'
+import { getCandidateApplications } from '@/entities/application/application'
 import { withQueryClient } from '@/test/render-with-query-client'
 import AppliedJobs from './AppliedJobs'
 
-vi.mock('@/entities/application', async (importOriginal) => ({
+vi.mock('@/entities/application/application', async (importOriginal) => ({
   ...(await importOriginal()),
   getCandidateApplications: vi.fn(),
 }))
-vi.mock('@/features/manage-candidate-application', () => ({
+vi.mock('@/features/main/application/manage-candidate-application', () => ({
   CandidateApplicationActions: () => null,
 }))
 

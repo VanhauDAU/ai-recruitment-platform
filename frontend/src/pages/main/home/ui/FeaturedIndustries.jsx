@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { formatNumber } from '@/entities/job'
+import { formatNumber } from '@/entities/job/job'
 import { categoryLogoUrlFor } from '../lib/logo-url'
 import { chunkItems, usePagedDrag } from '../model/use-paged-drag'
 import { CarouselHeader, PagedTrack } from './PagedCarousel'

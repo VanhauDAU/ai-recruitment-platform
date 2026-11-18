@@ -1,5 +1,5 @@
 import { Button, Pagination, Select } from 'antd'
-import { SEARCH_BY_TABS } from '@/features/search-jobs'
+import { SEARCH_BY_TABS } from '@/features/main/job/search-jobs'
 import { MascotEmpty } from '@/shared/ui/mascot'
 import { JOB_SORT_OPTIONS } from '../lib/job-sort-options'
 import { PAGE_SIZE } from '../lib/job-list-params'

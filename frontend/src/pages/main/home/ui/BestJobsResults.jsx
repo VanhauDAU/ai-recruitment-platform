@@ -12,11 +12,11 @@ import {
   resolveJobPresentation,
   SavedJobTooltipContent,
   stripCompanyPrefix,
-} from '@/entities/job'
-import { useLoginPrompt } from '@/features/auth'
-import { useSession } from '@/entities/session'
-import { useSavedJobs } from '@/features/saved-jobs'
-import { JobImpressionBoundary } from '@/features/track-job-engagement'
+} from '@/entities/job/job'
+import { useLoginPrompt } from '@/features/common/account/auth'
+import { useSession } from '@/entities/account/session'
+import { useSavedJobs } from '@/features/main/job/saved-jobs'
+import { JobImpressionBoundary } from '@/features/main/job/track-job-engagement'
 import { bestJobCardClass, isTopEmployerJob } from '../lib/best-job-card-presentation'
 import { BEST_JOBS_PAGE_SIZE, BEST_JOBS_PREVIEW_DELAY_MS } from '../lib/best-jobs-config'
 

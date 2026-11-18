@@ -9,7 +9,8 @@ nguồn chi tiết; file này là checklist bắt buộc khi làm việc trong r
 app → pages → widgets → features → entities → shared
 ```
 
-- Chỉ import xuống layer thấp hơn. `features` không import feature khác.
+- Chỉ import xuống layer thấp hơn. `features` không import feature khác, kể cả
+  cùng cổng và module.
 - Import feature/entity/widget qua public `index.js`; không deep-import nội bộ
   slice khác.
 - `shared` được import theo segment cụ thể, ví dụ `@/shared/api/client`.
@@ -20,14 +21,19 @@ app → pages → widgets → features → entities → shared
 
 ## Chọn nơi đặt code
 
-| Nhu cầu                                        | Vị trí                                     |
-| ---------------------------------------------- | ------------------------------------------ |
-| Route-level composition theo portal            | `frontend/src/pages/{main,employer,admin}` |
-| Provider, router, guard, layout, lazy registry | `frontend/src/app`                         |
-| Hành động/workflow người dùng                  | `frontend/src/features/<action>`           |
-| Domain model, API hoặc UI domain tái sử dụng   | `frontend/src/entities/<domain>`           |
-| Khối UI lớn ghép nhiều domain                  | `frontend/src/widgets/<name>`              |
-| UI nguyên tử hoặc hạ tầng không biết domain    | `frontend/src/shared`                      |
+| Nhu cầu                                        | Vị trí                                                |
+| ---------------------------------------------- | ----------------------------------------------------- |
+| Route-level composition theo portal            | `frontend/src/pages/<cổng>/<mục>`                     |
+| Provider, router, guard, layout, lazy registry | `frontend/src/app`                                    |
+| Hành động/workflow người dùng                  | `frontend/src/features/<cổng>/<module>/<action>`      |
+| Domain model, API hoặc UI domain tái sử dụng   | `frontend/src/entities/<domain>/<entity>`             |
+| Khối UI lớn ghép nhiều domain                  | `frontend/src/widgets/<cổng>/<name>`                  |
+| UI nguyên tử hoặc hạ tầng không biết domain    | `frontend/src/shared`                                 |
+
+`<cổng>` là `main`, `employer`, `admin` hoặc `common` (chỉ khi từ hai cổng trở
+lên dùng); `<module>` là danh từ nghiệp vụ đã có (`job`, `cv`, `campaign`…).
+Page/widget chỉ dùng feature/widget cùng cổng hoặc `common`. Chi tiết ở mục
+"Tổ chức thư mục trong từng layer" của `frontend/ARCHITECTURE.md`.
 
 Không tạo `utils` chung không có owner. Component chỉ dùng một page/feature phải
 đặt gần owner thay vì đưa vào `shared`.

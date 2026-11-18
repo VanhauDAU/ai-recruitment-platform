@@ -1,4 +1,5 @@
 import { spawnSync } from 'node:child_process'
+import { existsSync, readdirSync } from 'node:fs'
 import path from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
@@ -48,8 +49,10 @@ const errorRuleNames = new Set(
 )
 const expectedRuleNames = new Set([
   'no-circular',
-  'no-cross-entity-import-account',
+  'no-cross-entity-import',
   'no-cross-page-portal-main',
+  'no-cross-feature-import',
+  'no-cross-portal-slice',
 ])
 const missingRuleNames = [...expectedRuleNames]
   .filter((ruleName) => !errorRuleNames.has(ruleName))
@@ -62,6 +65,47 @@ if (missingRuleNames.length > 0 || unexpectedRuleNames.length > 0) {
     `Missing: ${missingRuleNames.join(', ') || 'none'}.`,
     `Unexpected: ${unexpectedRuleNames.join(', ') || 'none'}.`,
   ].join(' '))
+}
+
+// features: <cổng|common>/<module>/<slice>; widgets: <cổng|common>/<slice>;
+// entities: <domain>/<entity>. Mỗi slice có index.js. Thư mục nhóm chỉ chứa thư
+// mục con (không file, không index.js); tên cổng phải là một portal của pages
+// hoặc common để no-cross-portal-slice luôn khớp.
+const SRC_DIR = path.join(FRONTEND_DIR, 'src')
+const listEntries = (dir) => readdirSync(dir, { withFileTypes: true })
+const portalGroups = new Set([
+  'common',
+  ...listEntries(path.join(SRC_DIR, 'pages'))
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name),
+])
+const structureErrors = []
+
+const checkGroup = (groupPath, depth) => {
+  for (const entry of listEntries(path.join(SRC_DIR, groupPath))) {
+    const entryPath = `${groupPath}/${entry.name}`
+    if (!entry.isDirectory()) {
+      structureErrors.push(`${entryPath}: thư mục nhóm không được chứa file`)
+    } else if (depth > 1) {
+      checkGroup(entryPath, depth - 1)
+    } else if (!existsSync(path.join(SRC_DIR, entryPath, 'index.js'))) {
+      structureErrors.push(`${entryPath}: slice thiếu public API index.js`)
+    }
+  }
+}
+
+for (const [layer, depth, byPortal] of [['features', 2, true], ['widgets', 1, true], ['entities', 1, false]]) {
+  for (const group of listEntries(path.join(SRC_DIR, layer))) {
+    if (!group.isDirectory() || (byPortal && !portalGroups.has(group.name))) {
+      structureErrors.push(`${layer}/${group.name}: chỉ cho phép thư mục ${byPortal ? [...portalGroups].join(', ') : 'nhóm domain'}`)
+    } else {
+      checkGroup(`${layer}/${group.name}`, depth)
+    }
+  }
+}
+
+if (structureErrors.length > 0) {
+  throw new Error(`Slice group structure invalid:\n${structureErrors.join('\n')}`)
 }
 
 console.log(

@@ -2,7 +2,7 @@ import { ArrowRightOutlined, BgColorsOutlined, CrownFilled, EditOutlined, FilePd
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
-import { CvTemplatePreview, getCvTemplates, TemplateColorSwatches, templateColors, templatePreviewForColor } from '@/entities/cv-template'
+import { CvTemplatePreview, getCvTemplates, TemplateColorSwatches, templateColors, templatePreviewForColor } from '@/entities/cv/cv-template'
 
 const FEATURES = [
   { icon: <BgColorsOutlined />, label: 'Mẫu thiết kế đa dạng', detail: 'Đổi màu tự do theo cá tính' },

@@ -7,6 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
+| [Tổ chức lại cấu trúc thư mục frontend](#tổ-chức-lại-cấu-trúc-thư-mục-frontend-2026-11-19) | 🟨 Xong trên nhánh `refactor/portal-groups`, chưa mở PR |
 | [Mô hình hóa yêu cầu cho báo cáo (mục 3.2)](#mô-hình-hóa-yêu-cầu-cho-báo-cáo-mục-32-2026-11-18) | ✅ Nguồn sơ đồ trong `docs/01-phan-tich/mo-hinh-hoa-yeu-cau/` |
 | [Nâng cấp chiến dịch tuyển dụng (4 GĐ)](#nâng-cấp-chiến-dịch-tuyển-dụng-2026-11-18) | ✅ Cả 4 GĐ và đợt làm lại giao diện kênh, Fanpage, chi phí, lịch sử hoạt động đã gộp (#235–#237, #239–#242); sơ đồ phân tích nhóm chiến dịch trên nhánh `docs/campaign-diagrams` |
 | [Ứng tuyển bằng CV tải lên và form ứng tuyển mới](#ứng-tuyển-bằng-cv-tải-lên-và-form-ứng-tuyển-mới-2026-11-18) | ✅ Gộp vào `dev` (#234) |
@@ -29,6 +30,25 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Các epic đã hoàn tất](#các-epic-đã-hoàn-tất) | ✅ |
 | [Lộ trình theo PRD](#lộ-trình-theo-prd) | 🟨 Phần AI lõi (giai đoạn 2–3) còn mở |
 | [Việc còn mở](#việc-còn-mở) | |
+
+## Tổ chức lại cấu trúc thư mục frontend (2026-11-19)
+
+Mọi layer của `frontend/src` dùng chung một bộ tên cổng và nghiệp vụ, thay cho
+các danh sách phẳng (76 feature, 40 widget, 32 entity, 33 trang admin chung một thư mục).
+Quy tắc ở mục "Tổ chức thư mục trong từng layer" của `frontend/ARCHITECTURE.md`.
+
+- `features/<cổng>/<module>/<slice>`: 4 cổng (`main`, `employer`, `admin`,
+  `common`), 19 module.
+- `widgets/<cổng>/<widget>`: bỏ tiền tố cổng bị lặp trong tên.
+- `entities/<domain>/<entity>`: 10 domain.
+- `pages/<cổng>/<mục>`: bỏ cấp `app` của admin và NTD; trang admin chia
+  thành 10 mục.
+- `shared/ui`: gom các cụm `rich-text`, `confirm-action`, `toast`.
+- `frontend/MASCOT.md` chuyển sang `docs/08-frontend/mascot.md`.
+- Gate kiến trúc mới: `no-cross-portal-slice` (trang/widget không dùng feature
+  của cổng khác), các rule chéo slice dùng capture group, kiểm tra cấu trúc thư
+  mục nhóm, kèm negative fixture.
+- Không đổi URL, API, storage key hay guard.
 
 ## Mô hình hóa yêu cầu cho báo cáo (mục 3.2) (2026-11-18)
 
@@ -284,7 +304,7 @@ luồng cho ProCV.
   thực email qua link/mã, đăng nhập Google, đặt lại mật khẩu, đổi email).
 - Kiểm tra: pytest avatar 5 passed, vitest edit-profile + trang tài khoản 25
   passed, E2E smoke avatar 3 viewport passed, CSS ban đầu 37,9/38,5 KiB.
-- Modal nằm ở `features/edit-profile` (`AvatarEditorModal`), được widget
+- Modal nằm ở `features/common/account/edit-profile` (`AvatarEditorModal`), được widget
   `employer-account-settings` và `admin-account-settings` dùng lại; hai widget
   có test mở modal.
 
@@ -739,7 +759,7 @@ loại tiêu chí khỏi điểm, kết quả tất định, có golden test và
 
 <details><summary>Ghi chú tuần 4</summary>
 
-- Feature `features/analyze-job-fit`: thẻ "Xem độ phù hợp" (mascot vẫy tay, viền
+- Feature `features/main/application/analyze-job-fit`: thẻ "Xem độ phù hợp" (mascot vẫy tay, viền
   chuyển màu) ở cột phải trang chi tiết tin, dưới thông tin công ty (từ 1024 px);
   dưới 1024 px thẻ nằm ngay dưới thông tin chính của tin, cạnh nút ứng tuyển; hộp thoại
   chọn CV → màn hình "AI đang phân tích CV" (tờ CV có tia quét, trạng thái lấy
@@ -749,7 +769,7 @@ loại tiêu chí khỏi điểm, kết quả tất định, có golden test và
   thì hiện kết quả lần trước của tin; lỗi (CV scan, quá lượt) có câu hướng dẫn.
 - Hộp thoại tải trễ, CSS riêng ngoài CSS khởi tạo (đo: JS khởi tạo 320,8/328,5
   KiB, CSS 38,0/38,5 KiB). Chuyển động tắt theo "giảm chuyển động".
-- `CvChoice` chuyển xuống `entities/cv`. Trang lưu CV thành công bỏ "x% phù hợp"
+- `CvChoice` chuyển xuống `entities/cv/cv`. Trang lưu CV thành công bỏ "x% phù hợp"
   của đối sánh theo luật, chỉ giữ nhãn (hết hai con số mâu thuẫn).
 - Kiểm thử: 13 unit test của feature, E2E `job-fit.spec.js` (TC-01 luồng chính,
   TC-06 xem lại kết quả, TC-08 khách không mở được, TC-15 không tràn ngang ở
@@ -963,7 +983,7 @@ Quyết định: [ADR-0017](02-tong-quan/adr-0017-company-page.md), ER-D58 đế
 
 | Giai đoạn | Nội dung | Trạng thái |
 | --- | --- | --- |
-| CP-0 | Nền móng: predicate người đại diện chuyển xuống `employers/models/representation.py`; `GET /api/jobs/?company=<public_id>` (0 query phát sinh) và `company_slug` trên DTO tin; slug `tim-kiem` dành riêng; `Company.public_headquarters` dùng chung cho danh bạ và chi tiết tin (hộ kinh doanh không lộ địa chỉ); frontend chuyển `CompanyLogo` + helper tên công ty vào `entities/company`, `RichContent` và `ShareButtons` vào `shared/ui` | ✅ Xong trên nhánh, chưa gộp |
+| CP-0 | Nền móng: predicate người đại diện chuyển xuống `employers/models/representation.py`; `GET /api/jobs/?company=<public_id>` (0 query phát sinh) và `company_slug` trên DTO tin; slug `tim-kiem` dành riêng; `Company.public_headquarters` dùng chung cho danh bạ và chi tiết tin (hộ kinh doanh không lộ địa chỉ); frontend chuyển `CompanyLogo` + helper tên công ty vào `entities/company/company`, `RichContent` và `ShareButtons` vào `shared/ui` | ✅ Xong trên nhánh, chưa gộp |
 | CP-1 | `GET /api/companies/<slug>/` dạng khối có kiểu (một builder), công ty tương tự, facets tỉnh/thành; admin tạm ẩn trang (`company_page.moderate`, 404 thật, loại khỏi danh bạ/sitemap/gợi ý); SEO shell `/cong-ty/<slug>` + `Organization`/`BreadcrumbList`, `sitemaps/companies.xml`; seed tạo owner đã xác thực | ✅ Xong trên nhánh, chưa gộp |
 | CP-2 | Trang `/cong-ty/:slug` (Tổng quan / Việc làm qua URL, lọc từ khoá + tỉnh), thay mọi liên kết công ty theo tên bằng slug, tab admin "Trang công khai" | ✅ Xong trên nhánh, chưa gộp |
 | CP-3 | Theo dõi công ty (idempotent, `follower_count` qua `F()`), trang `/tai-khoan/cong-ty-dang-theo-doi` | ✅ Xong trên nhánh, chưa gộp |

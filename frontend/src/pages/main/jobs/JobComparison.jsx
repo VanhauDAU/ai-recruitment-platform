@@ -1,4 +1,4 @@
-import { JobComparisonWorkspace } from '@/features/compare-jobs'
+import { JobComparisonWorkspace } from '@/features/main/job/compare-jobs'
 import { useDocumentMetadata } from '@/shared/hooks/use-document-metadata'
 
 export default function JobComparison() {

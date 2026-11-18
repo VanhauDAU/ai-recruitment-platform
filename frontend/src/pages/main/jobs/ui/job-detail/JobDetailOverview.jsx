@@ -19,8 +19,8 @@ import {
   getSalaryDisplayNote,
   JobPresentationLabels,
   VerifiedEmployerBadge,
-} from '@/entities/job'
-import { JobCompareButton } from '@/features/compare-jobs'
+} from '@/entities/job/job'
+import { JobCompareButton } from '@/features/main/job/compare-jobs'
 import { formatJobDate, isAcceptingApplications } from '../../lib/job-detail-presentation'
 import JobApplicationClosed from './JobApplicationClosed'
 

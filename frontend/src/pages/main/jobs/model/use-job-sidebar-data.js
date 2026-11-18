@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
-import { getIndustries, getJobCategories, getJobStats, getJobs, jobKeys } from '@/entities/job'
-import { getProvinces } from '@/entities/location'
+import { getIndustries, getJobCategories, getJobStats, getJobs, jobKeys } from '@/entities/job/job'
+import { getProvinces } from '@/entities/system/location'
 
 // Dữ liệu tĩnh của sidebar (danh mục, tỉnh thành, ngành) đổi rất chậm —
 // giữ tươi 5 phút để không refetch khi điều hướng qua lại.

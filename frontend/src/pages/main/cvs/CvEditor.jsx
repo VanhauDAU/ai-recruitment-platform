@@ -1,5 +1,5 @@
 import { useNavigate, useParams, useSearchParams } from 'react-router'
-import { CvDraftEditor } from '@/features/edit-cv-draft'
+import { CvDraftEditor } from '@/features/common/cv/edit-cv-draft'
 
 export default function CvEditor() {
   const { publicId } = useParams()

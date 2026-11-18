@@ -3,7 +3,7 @@ import { MemoryRouter, Route, Routes, useLocation } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import EmployerWorkspaceLayout from './EmployerWorkspaceLayout'
 
-vi.mock('@/widgets/announcement-strip', () => ({ AnnouncementStrip: () => null }))
+vi.mock('@/widgets/common/announcement-strip', () => ({ AnnouncementStrip: () => null }))
 
 const { useSession, profileQueryState, useEmployerReadiness } = vi.hoisted(() => ({
   useSession: vi.fn(),
@@ -19,12 +19,12 @@ vi.mock('@tanstack/react-query', () => ({
   useQueryClient: () => ({ invalidateQueries: vi.fn() }),
   useMutation: () => ({ mutate: vi.fn(), isPending: false }),
 }))
-vi.mock('@/entities/employer-profile', async (importOriginal) => ({
+vi.mock('@/entities/account/employer-profile', async (importOriginal) => ({
   ...await importOriginal(),
   useEmployerReadiness,
 }))
-vi.mock('@/entities/session', () => ({ useSession }))
-vi.mock('@/entities/campaign', () => ({
+vi.mock('@/entities/account/session', () => ({ useSession }))
+vi.mock('@/entities/campaign/campaign', () => ({
   campaignKeys: {
     detail: (id) => ['campaigns', 'detail', id],
     report: (id) => ['campaigns', 'report', id],

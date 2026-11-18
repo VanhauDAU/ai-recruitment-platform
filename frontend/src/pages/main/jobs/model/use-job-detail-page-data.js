@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
-import { getJobDetail, getJobs, jobDetailPath, jobKeys } from '@/entities/job'
-import { useJobView } from '@/features/track-job-engagement'
+import { getJobDetail, getJobs, jobDetailPath, jobKeys } from '@/entities/job/job'
+import { useJobView } from '@/features/main/job/track-job-engagement'
 import { useDocumentMetadata } from '@/shared/hooks/use-document-metadata'
 
 const RELATED_PAGE_SIZE = 4

@@ -1,9 +1,9 @@
 import { CopyOutlined, DownloadOutlined, EditOutlined } from '@ant-design/icons'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
-import { cvApiErrorMessage, duplicateCv, getUploadedCvFile } from '@/entities/cv'
-import { CvDownloadButton } from '@/features/export-cv-pdf'
-import { VIEWER_ACTION_CLASS } from '@/features/view-cv-version'
+import { cvApiErrorMessage, duplicateCv, getUploadedCvFile } from '@/entities/cv/cv'
+import { CvDownloadButton } from '@/features/main/cv/export-cv-pdf'
+import { VIEWER_ACTION_CLASS } from '@/features/main/cv/view-cv-version'
 import { triggerBlobDownload } from '@/shared/lib/download-blob'
 import { message } from '@/shared/lib/toast'
 

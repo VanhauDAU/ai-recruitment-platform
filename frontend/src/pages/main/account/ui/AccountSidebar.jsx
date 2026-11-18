@@ -1,7 +1,7 @@
 import { CaretRightOutlined } from '@ant-design/icons'
 import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router'
-import { CANDIDATE_MENU, findGroupKeyByPath } from '@/entities/account'
+import { CANDIDATE_MENU, findGroupKeyByPath } from '@/entities/account/account'
 
 // Sidebar trái của layout tài khoản: accordion CHỈ MỞ 1 NHÓM một lúc (mở nhóm
 // này thì nhóm kia tự đóng), có animation, hover và trạng thái active theo

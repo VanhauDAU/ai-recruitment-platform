@@ -1,6 +1,6 @@
 import { Navigate, Outlet, useLocation } from 'react-router'
-import { withReturnUrl } from '@/features/auth'
-import { useSession } from '@/entities/session'
+import { withReturnUrl } from '@/features/common/account/auth'
+import { useSession } from '@/entities/account/session'
 import PageLoading from '@/shared/ui/PageLoading'
 
 // Chỉ quyết định trạng thái session. Role/portal được giao cho RoleGuard.

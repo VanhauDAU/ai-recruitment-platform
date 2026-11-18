@@ -17,9 +17,9 @@ import {
   passwordValidationRule,
   register,
   SocialLoginButtons,
-} from '@/features/auth'
-import { useSiteSettings } from '@/entities/site-settings'
-import { useSession } from '@/entities/session'
+} from '@/features/common/account/auth'
+import { useSiteSettings } from '@/entities/system/site-settings'
+import { useSession } from '@/entities/account/session'
 
 export default function Register() {
   const { siteName } = useSiteSettings()

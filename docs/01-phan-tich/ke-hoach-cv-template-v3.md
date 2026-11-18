@@ -17,12 +17,12 @@ Kết quả rà soát code trên nhánh `dev` (commit `658c4073`):
 | # | Vấn đề người dùng nêu | Nguyên nhân trong code |
 | --- | --- | --- |
 | H1 | Kho mẫu có 4 ngôn ngữ (Việt, Anh, Nhật, Trung), rối và kém hiệu quả | Ngôn ngữ là dữ liệu động ở `sitecontent.Locale`; route cứng cho 4 path ở `app/router/routes/main.routes.jsx` cộng route động `/mau-cv/ngon-ngu/:locale`; `CvTemplateLocalization`, `CvSampleContent`, `CvContentBlueprint` đều dual-read `locale` ↔ `locale_ref` |
-| H2 | Chọn mẫu thì preview không hiện, phải bấm qua mục khác rồi bấm lại "Nội dung CV mẫu … gợi ý" | `features/create-cv-from-template/model/use-cv-source.js`: effect khởi tạo phụ thuộc `locales`, `user`, `onPreviewChange` nên chạy lại khi các giá trị đó tải xong; mỗi lần chạy nó đặt `positionsLocale = null`. Effect tải vị trí chỉ phụ thuộc `[source, sampleLocale]` nên không chạy lại → `resolvePreviewSelection` trả `waiting` vĩnh viễn. Đổi `source` mới kích hoạt lại effect. Ba effect lồng nhau với 20 `useState` tạo race condition khó kiểm soát |
+| H2 | Chọn mẫu thì preview không hiện, phải bấm qua mục khác rồi bấm lại "Nội dung CV mẫu … gợi ý" | `features/main/cv/create-cv-from-template/model/use-cv-source.js`: effect khởi tạo phụ thuộc `locales`, `user`, `onPreviewChange` nên chạy lại khi các giá trị đó tải xong; mỗi lần chạy nó đặt `positionsLocale = null`. Effect tải vị trí chỉ phụ thuộc `[source, sampleLocale]` nên không chạy lại → `resolvePreviewSelection` trả `waiting` vĩnh viễn. Đổi `source` mới kích hoạt lại effect. Ba effect lồng nhau với 20 `useState` tạo race condition khó kiểm soát |
 | H3 | Mục "Khôi phục bản chưa lưu" thừa | Nguồn `restore` trong `use-cv-source.js`, `CvSourcePanel.jsx`, `preview-selection.js`, API `getLatestRecoverableDraft` |
 | H4 | Tiêu đề, breadcrumb, URL không khớp lựa chọn ở cột phải | `TemplateDetail.jsx` dựng H1/breadcrumb chỉ từ `template` + `locale` của path; lựa chọn nguồn/vị trí/màu chỉ nằm trong state, reload là mất |
 | H5 | Chọn vị trí chỉ đổi chữ mẫu, mọi vị trí cùng một cấu trúc | `CvSampleContent` và `CvContentBlueprint` chỉ có `content_json`; blueprint hard-code 4 nhóm (tóm tắt, kinh nghiệm, học vấn, kỹ năng); không có khái niệm section/trường riêng theo vị trí |
 | H6 | Quản trị template sơ sài, rối, không dùng được | `widgets/admin-cv-catalogue/ui/AdminCvCatalogue.jsx` (332 dòng) là 6 tab bảng thô (template, nội dung mẫu, blueprint, ngôn ngữ, danh mục & màu, hình nền); không có wizard, không có preview, không thấy độ phủ nội dung theo vị trí, không quản lý CV ứng viên |
-| H7 | Khung CV không đa dạng, thông tin cá nhân luôn nằm trên cùng | `entities/cv/ui/CvDocumentPreview.jsx` dòng 138 dựng cứng `<header>` họ tên + liên hệ ở trang 1 phía trên mọi region (trừ `header_two_column_v1`). Chỉ có 3 renderer ở `apps/cv_templates/renderers.py`. `nameplate`, `contact`, `avatar` đã là section marker trong registry nhưng renderer không cho đặt tự do |
+| H7 | Khung CV không đa dạng, thông tin cá nhân luôn nằm trên cùng | `entities/cv/cv/ui/CvDocumentPreview.jsx` dòng 138 dựng cứng `<header>` họ tên + liên hệ ở trang 1 phía trên mọi region (trừ `header_two_column_v1`). Chỉ có 3 renderer ở `apps/cv_templates/renderers.py`. `nameplate`, `contact`, `avatar` đã là section marker trong registry nhưng renderer không cho đặt tự do |
 | H8 | Upload CV chưa điền vào mẫu đã chọn một cách tin cậy | Pipeline đã có (`POST /api/v2/cvs/imports/` → `process_cv_import_job` → `structure_cv_text`) nhưng: gọi thẳng REST provider, không qua runtime `ai_core` (không quota, không `AiInvocation`, không kill switch); gửi nguyên văn bản có PII sang AI; không có độ tin cậy theo trường; mở thẳng editor, không có bước rà soát |
 | H9 | PDF có thể lệch với preview | Preview dùng React (`CvDocumentPreview`), PDF dùng Django template + WeasyPrint (`apps/cvs/services/pdf_renderer.py`, `apps/cvs/templates/pdf`). Mỗi layout phải viết hai lần |
 
@@ -106,7 +106,7 @@ Vì được xóa dữ liệu cũ (D10), làm sạch luôn thay vì giữ dual-r
 - Enum `CvLanguage` ở `apps/cv_templates/models/language.py`: `vi-VN`, `en-US`
   (mã BCP 47, không đổi sang mã ngắn để tránh chuyển đổi dữ liệu và API không
   cần thiết). `CATALOG_LANGUAGES` giữ path kho mẫu, nhãn và hậu tố trường song
-  ngữ; frontend mirror ở `entities/cv-template/model/cv-languages.js`.
+  ngữ; frontend mirror ở `entities/cv/cv-template/model/cv-languages.js`.
 - Gỡ bảng `sitecontent.Locale`, API `/api/site/locales/`, `/api/site/admin/locales/`
   và mọi FK `locale_ref` (kể cả ở `JobCategoryLocalization`, vốn chỉ phục vụ kho
   CV). `JobCategoryLocalization.Locale` còn `vi-VN`/`en-US`.
@@ -173,7 +173,7 @@ Trường riêng được lưu trong section mới `position_details` của `con
 
 Nhãn được **chụp vào document** lúc tạo CV, nên đổi/xóa trường ở admin không làm hỏng CV cũ. Validator `apps/cvs/schemas.py` kiểm tra kiểu và độ dài từng giá trị. Tăng `schema_version` lên `2`.
 
-**Section mới vào registry** (`section_registry.py` + `entities/cv/model/section-registry.js`): `position_details`, `languages` (ngoại ngữ + trình độ), `portfolio` (link + mô tả), `publications`. Các section hiện có giữ nguyên.
+**Section mới vào registry** (`section_registry.py` + `entities/cv/cv/model/section-registry.js`): `position_details`, `languages` (ngoại ngữ + trình độ), `portfolio` (link + mô tả), `publications`. Các section hiện có giữ nguyên.
 
 ### 5.4 Nội dung mẫu
 
@@ -242,7 +242,7 @@ và đồng bộ `CvSkill` ở `CVT-3`; AI trả trường chuẩn ở `CVT-6`.
 
 ### 6.1 Layout registry
 
-Mỗi layout là một contract trong code, mirror ở `apps/cv_templates/layouts.py` và `entities/cv/model/layouts.js` (test so khớp hai bên bằng snapshot JSON xuất từ backend):
+Mỗi layout là một contract trong code, mirror ở `apps/cv_templates/layouts.py` và `entities/cv/cv/model/layouts.js` (test so khớp hai bên bằng snapshot JSON xuất từ backend):
 
 ```python
 LayoutContract(
@@ -486,7 +486,7 @@ Quản lý ở mức **metadata** để bảo vệ ứng viên:
 | `cv_user.view` | Xem metadata CV ứng viên |
 | `cv_user.view_content` | Xem nội dung CV ứng viên (có audit) |
 
-Cập nhật `apps/accounts/constants/admin_permissions.py`, `admin_departments.py`, `entities/admin-access/model/module-labels.js` và test `test_admin_access*.py`.
+Cập nhật `apps/accounts/constants/admin_permissions.py`, `admin_departments.py`, `entities/account/admin-access/model/module-labels.js` và test `test_admin_access*.py`.
 
 ---
 

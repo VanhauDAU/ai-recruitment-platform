@@ -119,7 +119,7 @@ Danh mục CTA/prefix là metadata có kiểm soát, không tự quét JSX route
 thống không thể suy ra chính xác tên thân thiện, surface và yêu cầu đăng nhập.
 Khi thêm một route có thể dùng trong thông báo, lập trình viên đăng ký route
 đúng một lần tại
-`frontend/src/widgets/admin-announcement-management/model/route-catalog.js`.
+`frontend/src/widgets/admin/announcement-management/model/route-catalog.js`.
 Test catalog bắt buộc mọi CTA an toàn, prefix hợp lệ và access chỉ thuộc
 `public` hoặc `authenticated`.
 

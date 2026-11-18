@@ -1,7 +1,7 @@
 import { UploadOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router'
-import { useSiteSettings } from '@/entities/site-settings'
-import { EnableCvSearchBanner } from '@/features/update-recruiter-visibility'
+import { useSiteSettings } from '@/entities/system/site-settings'
+import { EnableCvSearchBanner } from '@/features/main/cv/update-recruiter-visibility'
 import { useMyCvsData } from './model/use-my-cvs-data'
 import CvListSection from './ui/CvListSection'
 

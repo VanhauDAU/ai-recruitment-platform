@@ -1,4 +1,4 @@
-import { FollowedCompanyList } from '@/features/follow-company'
+import { FollowedCompanyList } from '@/features/main/company/follow-company'
 
 export default function FollowedCompanies() {
   return (

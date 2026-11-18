@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { FilterOutlined } from '@ant-design/icons'
-import { useLoginPrompt } from '@/features/auth'
-import { CreateJobAlertModal } from '@/features/manage-job-alerts'
+import { useLoginPrompt } from '@/features/common/account/auth'
+import { CreateJobAlertModal } from '@/features/main/job/manage-job-alerts'
 import { message } from '@/shared/lib/toast'
-import { useSession } from '@/entities/session'
+import { useSession } from '@/entities/account/session'
 import { useHideOnScroll } from '@/shared/hooks/use-hide-on-scroll'
 import { useMediaQuery } from '@/shared/hooks/use-media-query'
 import { useDocumentMetadata } from '@/shared/hooks/use-document-metadata'
@@ -13,7 +13,7 @@ import {
   nodeCheckState,
   selectedLeafSet,
   toggleCategoryIds,
-} from '@/entities/job'
+} from '@/entities/job/job'
 import JobEmptyExtras from './ui/JobEmptyExtras'
 import JobFilterSidebar from './ui/JobFilterSidebar'
 import JobListFooter from './ui/JobListFooter'

@@ -14,21 +14,21 @@ import {
 import { Avatar, Button, Dropdown, Layout, Menu, Popover, Tooltip } from 'antd'
 import { useState } from 'react'
 import { Link, Outlet, useLocation, useNavigate } from 'react-router'
-import { ANNOUNCEMENT_SURFACES } from '@/entities/announcement'
+import { ANNOUNCEMENT_SURFACES } from '@/entities/content/announcement'
 import {
   EMPLOYER_CAPABILITIES,
   employerReadinessAction,
   employerReadinessBlockersFor,
   useEmployerReadiness,
-} from '@/entities/employer-profile'
-import { useSession } from '@/entities/session'
-import { BrandLogo } from '@/entities/site-settings'
+} from '@/entities/account/employer-profile'
+import { useSession } from '@/entities/account/session'
+import { BrandLogo } from '@/entities/system/site-settings'
 import {
   getEmployerAccountVerificationLevel,
   isEmployerVerificationInvalidated,
-} from '@/features/verify-employer-account'
-import { AnnouncementStrip } from '@/widgets/announcement-strip'
-import { EmployerNotificationBell } from '@/widgets/employer-notification-center'
+} from '@/features/employer/account/verify-employer-account'
+import { AnnouncementStrip } from '@/widgets/common/announcement-strip'
+import { EmployerNotificationBell } from '@/widgets/employer/notification-center'
 import {
   EMPLOYER_ACCOUNT_SETTINGS_URL,
   employerAppPath,

@@ -1,6 +1,6 @@
 import { Navigate, Outlet } from 'react-router'
-import { getAuthDestination } from '@/features/auth'
-import { useSession } from '@/entities/session'
+import { getAuthDestination } from '@/features/common/account/auth'
+import { useSession } from '@/entities/account/session'
 
 // Tài khoản nhà tuyển dụng chỉ vào workspace sau khi đã xác thực email và
 // hoàn tất hồ sơ bắt buộc. AuthGuard và RoleGuard luôn bao ngoài guard này.

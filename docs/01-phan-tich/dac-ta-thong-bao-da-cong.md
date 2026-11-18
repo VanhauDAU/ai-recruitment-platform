@@ -138,7 +138,7 @@ dismiss/còn snooze ở `dismissal_version` hiện tại. Feed trả
 `normalize_theme_and_background` xóa field không dùng theo mode, nên dữ liệu
 lưu luôn nhất quán. Client không bao giờ gửi chuỗi CSS hay gradient tự do. Token
 màu của preset/kind thuộc code frontend
-(`entities/announcement/model/announcement.presentation.js`), dùng chung cho
+(`entities/content/announcement/model/announcement.presentation.js`), dùng chung cho
 strip runtime và preview admin.
 
 Upload ảnh nền: `POST /api/site/admin/announcements/backgrounds/`

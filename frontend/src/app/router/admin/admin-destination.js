@@ -2,7 +2,7 @@ import {
   createAdminAccess,
   firstAccessibleAdminRoute,
   canAccessAdminRoute,
-} from '@/entities/admin-access'
+} from '@/entities/account/admin-access'
 import { adminPath } from '@/shared/config/portals'
 import { ADMIN_ROUTES } from './admin-routes.config'
 

@@ -3,7 +3,7 @@ import { useEffect } from 'react'
 import AppProviders from './app/providers/AppProviders'
 import AppRouter from './app/router/AppRouter'
 import DocumentMetadataManager from './app/router/DocumentMetadataManager'
-import { CookieConsentLayer } from '@/widgets/cookie-consent-layer'
+import { CookieConsentLayer } from '@/widgets/common/cookie-consent-layer'
 
 function ScrollRestorationGuard() {
   const { pathname, search } = useLocation()

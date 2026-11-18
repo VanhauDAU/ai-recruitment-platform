@@ -1,5 +1,5 @@
 import { useParams } from 'react-router'
-import { OwnerCvVersionPage } from '@/features/view-cv-version'
+import { OwnerCvVersionPage } from '@/features/main/cv/view-cv-version'
 import OwnerCvActions from './ui/OwnerCvActions'
 
 export default function CvOwnerView() {

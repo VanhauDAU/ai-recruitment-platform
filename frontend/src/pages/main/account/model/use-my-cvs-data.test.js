@@ -8,7 +8,7 @@ const mocks = vi.hoisted(() => ({
   getMyCvs: vi.fn(),
 }))
 
-vi.mock('@/entities/cv', () => ({
+vi.mock('@/entities/cv/cv', () => ({
   getMyCvs: mocks.getMyCvs,
 }))
 

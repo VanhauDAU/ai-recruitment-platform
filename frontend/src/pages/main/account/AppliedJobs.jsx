@@ -3,8 +3,8 @@ import { useQuery } from '@tanstack/react-query'
 import { Empty, Skeleton, Tooltip } from 'antd'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router'
-import { CANDIDATE_APPLICATION_FILTERS, applicationKeys, getCandidateApplications, useApplicationRules } from '@/entities/application'
-import { CandidateApplicationActions } from '@/features/manage-candidate-application'
+import { CANDIDATE_APPLICATION_FILTERS, applicationKeys, getCandidateApplications, useApplicationRules } from '@/entities/application/application'
+import { CandidateApplicationActions } from '@/features/main/application/manage-candidate-application'
 import { MASCOT_SCENES, MascotEmpty } from '@/shared/ui/mascot'
 import {
   APPLICATION_STAGES,

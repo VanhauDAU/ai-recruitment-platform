@@ -1,6 +1,6 @@
 import { FileProtectOutlined, SafetyCertificateOutlined } from '@ant-design/icons'
 import { useLocation } from 'react-router'
-import { useSiteSettings } from '@/entities/site-settings'
+import { useSiteSettings } from '@/entities/system/site-settings'
 
 const termsSections = [
   ['1. Phạm vi dịch vụ', 'Cổng nhà tuyển dụng hỗ trợ tạo hồ sơ doanh nghiệp, đăng tin, quản lý ứng viên và sử dụng các công cụ tuyển dụng được công bố trên từng gói dịch vụ.'],

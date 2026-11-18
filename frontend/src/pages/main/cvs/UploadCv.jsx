@@ -3,9 +3,9 @@ import { useQuery } from '@tanstack/react-query'
 import { Alert } from 'antd'
 import { useState } from 'react'
 import { Link } from 'react-router'
-import { getMyCvs } from '@/entities/cv'
-import { useSiteSettings } from '@/entities/site-settings'
-import { UploadCvForm } from '@/features/upload-cv'
+import { getMyCvs } from '@/entities/cv/cv'
+import { useSiteSettings } from '@/entities/system/site-settings'
+import { UploadCvForm } from '@/features/main/cv/upload-cv'
 import UploadCvSuccess from './ui/UploadCvSuccess'
 
 const BENEFITS = [

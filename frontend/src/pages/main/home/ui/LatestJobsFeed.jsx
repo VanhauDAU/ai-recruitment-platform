@@ -9,8 +9,8 @@ import {
   formatSalary,
   JobPresentationLabels,
   jobDetailPath,
-} from '@/entities/job'
-import { JobImpressionBoundary } from '@/features/track-job-engagement'
+} from '@/entities/job/job'
+import { JobImpressionBoundary } from '@/features/main/job/track-job-engagement'
 import { legacyAsset } from '@/shared/config/assets'
 import { DEMAND_COLORS } from '../lib/market-stats-palette'
 import { useLatestJobsFeed } from '../model/use-latest-jobs-feed'

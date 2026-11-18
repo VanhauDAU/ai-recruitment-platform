@@ -1,5 +1,5 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
-import { getJobs, jobKeys } from '@/entities/job'
+import { getJobs, jobKeys } from '@/entities/job/job'
 import { toApiParams } from '../lib/job-list-params'
 
 export const JOB_LIST_RANKING_SEED = globalThis.crypto?.randomUUID?.()

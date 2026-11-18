@@ -1,7 +1,7 @@
 import { BellOutlined, DownOutlined, HeartFilled, HeartOutlined, UpOutlined } from '@ant-design/icons'
 import { useEffect, useRef, useState } from 'react'
-import { formatDeadline } from '@/entities/job'
-import RichContent from '@/shared/ui/RichContent'
+import { formatDeadline } from '@/entities/job/job'
+import RichContent from '@/shared/ui/rich-text/RichContent'
 import { formatJobDate, isAcceptingApplications } from '../../lib/job-detail-presentation'
 import JobCard from '../JobCard'
 import {

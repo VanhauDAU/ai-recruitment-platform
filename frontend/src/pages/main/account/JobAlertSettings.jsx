@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { useSearchParams } from 'react-router'
-import { ManageJobAlerts, jobAlertPrefillFromSearchParams } from '@/features/manage-job-alerts'
+import { ManageJobAlerts, jobAlertPrefillFromSearchParams } from '@/features/main/job/manage-job-alerts'
 
 export default function JobAlertSettings() {
   const [searchParams] = useSearchParams()

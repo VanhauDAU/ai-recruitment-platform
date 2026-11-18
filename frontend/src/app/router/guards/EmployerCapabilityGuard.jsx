@@ -3,7 +3,7 @@ import {
   EMPLOYER_CAPABILITIES,
   EmployerReadinessGateState,
   useEmployerReadiness,
-} from '@/entities/employer-profile'
+} from '@/entities/account/employer-profile'
 import { EMPLOYER_VERIFY_URL } from '@/shared/config/portals'
 
 const ACCESS_FIELDS = {

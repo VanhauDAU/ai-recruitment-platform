@@ -1,12 +1,12 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { App as AntApp, ConfigProvider } from 'antd'
 import { useMemo } from 'react'
-import { SessionProvider } from '@/entities/session'
-import { DEFAULT_SITE_SETTINGS, settingText, SiteSettingsProvider, useSiteSettings } from '@/entities/site-settings'
-import { ConsentProvider } from '@/entities/consent'
-import AppToast from '@/shared/ui/AppToast'
+import { SessionProvider } from '@/entities/account/session'
+import { DEFAULT_SITE_SETTINGS, settingText, SiteSettingsProvider, useSiteSettings } from '@/entities/system/site-settings'
+import { ConsentProvider } from '@/entities/system/consent'
+import AppToast from '@/shared/ui/toast/AppToast'
 import BrandLoader from '@/shared/ui/BrandLoader'
-import ToastSoundEffect from '@/shared/ui/ToastSoundEffect'
+import ToastSoundEffect from '@/shared/ui/toast/ToastSoundEffect'
 
 // Mọi <Spin> trong app dùng chung linh vật ProCV. `em` bám token size của Spin;
 // inline style thắng CSS-in-JS của antd mà không kéo rule riêng vào initial CSS.

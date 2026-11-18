@@ -1,6 +1,6 @@
 import { BankOutlined, ClockCircleOutlined, ExportOutlined, ReadOutlined, SolutionOutlined, TagsOutlined, TeamOutlined } from '@ant-design/icons'
 import { Link } from 'react-router'
-import { jobCompanyPath } from '@/entities/company'
+import { jobCompanyPath } from '@/entities/company/company'
 import {
   EDUCATION_LEVEL_LABELS,
   EMPLOYMENT_TYPE_LABELS,
@@ -8,7 +8,7 @@ import {
   WORK_TYPE_LABELS,
   companyInitial,
   VerifiedEmployerBadge,
-} from '@/entities/job'
+} from '@/entities/job/job'
 import JobSafetyTips from './JobSafetyTips'
 import JobSidebarPromos from './JobSidebarPromos'
 

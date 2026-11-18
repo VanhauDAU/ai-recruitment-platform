@@ -2,16 +2,16 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { getPublicCompanies } from '@/entities/company'
-import { getJobStats } from '@/entities/job'
+import { getPublicCompanies } from '@/entities/company/company'
+import { getJobStats } from '@/entities/job/job'
 import FeaturedIndustriesEmployers from './FeaturedIndustriesEmployers'
 
-vi.mock('@/entities/company', async (importOriginal) => ({
+vi.mock('@/entities/company/company', async (importOriginal) => ({
   ...(await importOriginal()),
   getPublicCompanies: vi.fn(),
 }))
 
-vi.mock('@/entities/job', async (importOriginal) => ({
+vi.mock('@/entities/job/job', async (importOriginal) => ({
   ...(await importOriginal()),
   getJobStats: vi.fn(),
 }))

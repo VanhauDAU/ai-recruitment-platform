@@ -15,19 +15,19 @@ const {
   getAdminQueueSummary: vi.fn(),
   useSession: vi.fn(),
 }))
-vi.mock('@/entities/session', () => ({ useSession }))
-vi.mock('@/entities/admin-account', async (importOriginal) => ({
+vi.mock('@/entities/account/session', () => ({ useSession }))
+vi.mock('@/entities/account/admin-account', async (importOriginal) => ({
   ...(await importOriginal()),
   getAdminAccountSummary,
 }))
-vi.mock('@/entities/admin-dashboard', async (importOriginal) => ({
+vi.mock('@/entities/dashboard/admin-dashboard', async (importOriginal) => ({
   ...(await importOriginal()),
   getAdminQueueSummary,
 }))
-vi.mock('@/entities/site-settings', () => ({
+vi.mock('@/entities/system/site-settings', () => ({
   BrandLogo: () => <span>Logo</span>,
 }))
-vi.mock('@/widgets/announcement-strip', () => ({ AnnouncementStrip: () => null }))
+vi.mock('@/widgets/common/announcement-strip', () => ({ AnnouncementStrip: () => null }))
 
 function ThemeProbe() {
   const { token } = antdTheme.useToken()

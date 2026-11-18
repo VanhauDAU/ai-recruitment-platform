@@ -179,7 +179,7 @@ trước khi code lệch.
 widgets/candidate-assistant     # UI panel, mascot, progressive text
   → features/ask-candidate-assistant   # send message, map DTO → messages
   → entities/chatbot                   # API client, types, query keys
-  → entities/knowledgebase             # (tuỳ chọn) deep-link helper /tro-giup
+  → entities/content/knowledgebase             # (tuỳ chọn) deep-link helper /tro-giup
 ```
 
 - Widget **không** gọi Axios trực tiếp; qua feature/entity.

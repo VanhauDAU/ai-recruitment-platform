@@ -7,7 +7,7 @@ import {
 } from '@ant-design/icons'
 import { Button } from 'antd'
 import { useTranslation } from 'react-i18next'
-import { settingText, useSiteSettings } from '@/entities/site-settings'
+import { settingText, useSiteSettings } from '@/entities/system/site-settings'
 
 function InfoRow({ icon, label, value, href }) {
   const Container = href ? 'a' : 'div'

@@ -1,4 +1,4 @@
-import { SALARY_RANGES } from '@/entities/job'
+import { SALARY_RANGES } from '@/entities/job/job'
 import { getCommaList, getLocationIds } from './job-list-params'
 
 const SALARY_BUCKETS = new Set(SALARY_RANGES.map((range) => range.key))

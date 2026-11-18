@@ -6,9 +6,9 @@ import {
   CvTemplateCard,
   getCvCategories,
   getCvTemplates,
-} from '@/entities/cv-template'
-import { UseTemplateModal } from '@/features/create-cv-from-template'
-import { useLoginPrompt } from '@/features/auth'
+} from '@/entities/cv/cv-template'
+import { UseTemplateModal } from '@/features/main/cv/create-cv-from-template'
+import { useLoginPrompt } from '@/features/common/account/auth'
 import { useDocumentMetadata } from '@/shared/hooks/use-document-metadata'
 import {
   catalogCategoryFromPath,

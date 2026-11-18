@@ -142,7 +142,7 @@ activation mới vẫn bị overlap guard chặn.
 - `apps.services`: catalogue/version, entitlement, activation, grant và audit.
 - Cross-app write đi qua hàm được export từ `services/__init__.py`; không
   deep-import nội bộ, tuân ADR-0010.
-- Frontend đặt projection và presentation UI tái sử dụng ở `entities/job`;
+- Frontend đặt projection và presentation UI tái sử dụng ở `entities/job/job`;
   workflow kích hoạt ở feature riêng; page chỉ compose.
 
 ## 3. Permission và audit contract

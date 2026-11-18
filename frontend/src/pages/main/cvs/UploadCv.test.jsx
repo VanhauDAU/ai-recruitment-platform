@@ -5,9 +5,9 @@ import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 import UploadCv from './UploadCv'
 
-vi.mock('@/entities/cv', async (importOriginal) => ({ ...(await importOriginal()), getMyCvs: vi.fn().mockResolvedValue([]) }))
-vi.mock('@/entities/cv-template', () => ({ CvTemplateCard: () => null, getCvTemplates: vi.fn().mockResolvedValue({ results: [] }) }))
-vi.mock('@/features/upload-cv', () => ({
+vi.mock('@/entities/cv/cv', async (importOriginal) => ({ ...(await importOriginal()), getMyCvs: vi.fn().mockResolvedValue([]) }))
+vi.mock('@/entities/cv/cv-template', () => ({ CvTemplateCard: () => null, getCvTemplates: vi.fn().mockResolvedValue({ results: [] }) }))
+vi.mock('@/features/main/cv/upload-cv', () => ({
   UploadCvForm: ({ onUploaded }) => <button type="button" onClick={() => onUploaded({ public_id: 'cv_new' })}>Tải lên</button>,
 }))
 

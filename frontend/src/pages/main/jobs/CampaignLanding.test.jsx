@@ -5,10 +5,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import CampaignLanding from './CampaignLanding'
 
 const mocks = vi.hoisted(() => ({ getPublicCampaign: vi.fn(), getJobs: vi.fn() }))
-vi.mock('@/entities/campaign', async (importOriginal) => ({ ...(await importOriginal()), getPublicCampaign: mocks.getPublicCampaign }))
-vi.mock('@/entities/job', async (importOriginal) => ({ ...(await importOriginal()), getJobs: mocks.getJobs }))
-vi.mock('@/entities/session', () => ({ useSession: () => ({ isAuthenticated: false }) }))
-vi.mock('@/features/auth', () => ({ useLoginPrompt: () => ({ promptLogin: vi.fn() }) }))
+vi.mock('@/entities/campaign/campaign', async (importOriginal) => ({ ...(await importOriginal()), getPublicCampaign: mocks.getPublicCampaign }))
+vi.mock('@/entities/job/job', async (importOriginal) => ({ ...(await importOriginal()), getJobs: mocks.getJobs }))
+vi.mock('@/entities/account/session', () => ({ useSession: () => ({ isAuthenticated: false }) }))
+vi.mock('@/features/common/account/auth', () => ({ useLoginPrompt: () => ({ promptLogin: vi.fn() }) }))
 vi.mock('./ui/JobCard', () => ({ default: ({ job }) => <p>{job.title}</p> }))
 
 const campaign = {

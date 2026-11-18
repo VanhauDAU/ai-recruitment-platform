@@ -1,0 +1,271 @@
+import { BankOutlined, EditOutlined, LinkOutlined, UploadOutlined } from '@ant-design/icons'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Alert, Avatar, Button, Image, Skeleton, Tag } from 'antd'
+import { useState } from 'react'
+import { Link } from 'react-router'
+import {
+  changeEmployerCompanyUpdateRequestLifecycle,
+  employerProfileKeys,
+  getEmployerCompanyUpdateRequests,
+} from '@/entities/account/employer-profile'
+import { getApiErrorMessage } from '@/shared/api/error-mapper'
+import { employerAppPath } from '@/shared/config/portals'
+import { sanitizeHtml } from '@/shared/lib/sanitize-html'
+import { message } from '@/shared/lib/toast'
+import ConfirmAction from '@/shared/ui/confirm-action/ConfirmAction'
+import CompanyForm from './CompanyForm'
+
+const UPDATE_REQUEST_STATUS = {
+  pending: ['processing', 'Đang xử lý'],
+  submitted: ['processing', 'Đã gửi'],
+  in_review: ['processing', 'Đang thẩm định'],
+  changes_requested: ['warning', 'Cần chỉnh sửa'],
+  approved: ['success', 'Đã duyệt'],
+  rejected: ['error', 'Bị từ chối'],
+  withdrawn: ['default', 'Đã rút'],
+  cancelled: ['default', 'Đã hủy'],
+}
+
+const DOCUMENT_LABELS = {
+  business_registration: 'Giấy đăng ký doanh nghiệp',
+  trade_name_proof: 'Chứng minh tên thương mại',
+  authorization_letter: 'Giấy ủy quyền',
+  identity_document: 'Giấy tờ định danh (CCCD/hộ chiếu)',
+}
+
+export default function LinkedCompanyPanel({ profile, catalogs, industries, onRefresh }) {
+  const [editing, setEditing] = useState(false)
+  const queryClient = useQueryClient()
+  const company = profile.company
+  const owner = profile.company_role === 'owner'
+  const canRequestUpdate = Boolean(company)
+  const mineQuery = useQuery({
+    queryKey: employerProfileKeys.companyUpdateRequestList('mine'),
+    queryFn: () => getEmployerCompanyUpdateRequests({ scope: 'mine' }),
+    enabled: canRequestUpdate,
+  })
+  const mineRequests = mineQuery.data || []
+  const latestRequest = mineRequests[0]
+  const activeRequest = mineRequests.find((item) => (
+    ['pending', 'submitted', 'in_review', 'changes_requested'].includes(item.status)
+  ))
+  const editableRequest = activeRequest && activeRequest.status !== 'in_review'
+    ? activeRequest
+    : null
+  const documentsRequiringAction = (editableRequest?.documents || []).filter((document) => (
+    document.is_current && ['changes_requested', 'rejected'].includes(document.status)
+  ))
+  const hasDocumentAction = documentsRequiringAction.length > 0
+  const [defaultRequestStatusColor, defaultRequestStatusText] = UPDATE_REQUEST_STATUS[latestRequest?.status] || []
+  const requestStatusColor = hasDocumentAction ? 'warning' : defaultRequestStatusColor
+  const requestStatusText = hasDocumentAction ? 'Cần bổ sung giấy tờ' : defaultRequestStatusText
+  const requestQueryHasError = mineQuery.isError
+  const requestQueryFetching = mineQuery.isFetching
+  const closeMutation = useMutation({
+    mutationFn: ({ request, action }) => changeEmployerCompanyUpdateRequestLifecycle(
+      request.public_id,
+      action,
+      { lock_version: request.lock_version },
+    ),
+    onSuccess: async () => {
+      message.success('Đã rút yêu cầu cập nhật công ty.')
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: employerProfileKeys.companyUpdateRequestList('mine'),
+          exact: true,
+        }),
+        onRefresh?.(),
+      ])
+    },
+    onError: (error) => message.error(getApiErrorMessage(error, 'Không thể rút yêu cầu.')),
+  })
+  const writeLocked = requestQueryHasError
+    || !mineQuery.isSuccess
+    || requestQueryFetching
+    || closeMutation.isPending
+
+  const retryRequestQuery = () => mineQuery.refetch()
+
+  const requestError = requestQueryHasError && (
+    <Alert
+      type="error"
+      showIcon
+      title="Không tải được dữ liệu yêu cầu chỉnh sửa"
+      description="Thao tác tạo hoặc chỉnh sửa tạm khóa để tránh ghi đè dữ liệu chưa được đồng bộ."
+      action={<Button loading={requestQueryFetching} onClick={retryRequestQuery}>Thử lại</Button>}
+    />
+  )
+
+  if (editing) {
+    return (
+      <div className="linked-company-panel">
+        {requestError}
+        <CompanyForm
+          company={company}
+          pendingRequest={editableRequest}
+          catalogs={catalogs}
+          industries={industries}
+          canManageMedia={owner}
+          disabled={writeLocked}
+          onCompleted={async () => { setEditing(false); await onRefresh() }}
+          onCancel={() => setEditing(false)}
+        />
+      </div>
+    )
+  }
+
+  const latestSubmittedAt = formatDateTime(latestRequest?.submitted_at)
+  const rejectionReason = latestRequest?.status === 'rejected'
+    ? latestRequest.rejection_reason
+      || latestRequest.review_note
+      || 'Quản trị viên chưa cung cấp lý do.'
+    : ''
+
+  return (
+    <div className="linked-company-panel">
+      {requestError}
+
+      <section className="company-update-request" aria-label="Yêu cầu của tôi" aria-busy={mineQuery.isLoading || undefined}>
+        {mineQuery.isLoading ? (
+          <Skeleton className="company-update-request__skeleton" active paragraph={{ rows: 1 }} />
+        ) : (
+          <>
+            <div>
+              <h2>Yêu cầu của tôi</h2>
+              {mineQuery.isError && <p>Không thể xác định trạng thái yêu cầu hiện tại.</p>}
+              {!mineQuery.isError && latestSubmittedAt && <p>Ngày gửi gần nhất: {latestSubmittedAt}</p>}
+              {!mineQuery.isError && rejectionReason && (
+                <p className="company-update-request__rejection">Lý do từ chối: {rejectionReason}</p>
+              )}
+            </div>
+            {!mineQuery.isError && canRequestUpdate && (
+              <div className="company-update-request__actions">
+                {requestStatusText && <Tag color={requestStatusColor}>{requestStatusText}</Tag>}
+                <Button
+                  type="link"
+                  disabled={writeLocked || activeRequest?.status === 'in_review'}
+                  aria-label={
+                    hasDocumentAction
+                      ? 'Bổ sung giấy tờ'
+                      : activeRequest?.status === 'in_review'
+                        ? 'Đang thẩm định'
+                        : undefined
+                  }
+                  icon={hasDocumentAction ? <UploadOutlined /> : <EditOutlined />}
+                  onClick={() => setEditing(true)}
+                >
+                  {hasDocumentAction
+                    ? 'Bổ sung giấy tờ'
+                    : editableRequest
+                      ? activeRequest.status === 'changes_requested'
+                        ? 'Chỉnh sửa và gửi lại'
+                        : 'Chỉnh sửa yêu cầu'
+                      : activeRequest?.status === 'in_review'
+                        ? 'Đang thẩm định'
+                        : 'Tạo yêu cầu'}
+                </Button>
+                {activeRequest?.allowed_actions?.includes('withdraw') && (
+                  <ConfirmAction
+                    title="Rút yêu cầu cập nhật"
+                    description={(
+                      <>
+                        Bạn có chắc muốn rút yêu cầu cập nhật công ty không?
+                        <br />
+                        Yêu cầu sẽ dừng xử lý. Bạn có thể tạo yêu cầu mới sau đó.
+                      </>
+                    )}
+                    confirmText="Rút yêu cầu"
+                    cancelText="Đóng"
+                    danger
+                    onConfirm={() => closeMutation.mutateAsync({
+                      request: activeRequest,
+                      action: 'withdraw',
+                    })}
+                  >
+                    <Button type="link" danger disabled={writeLocked}>
+                      Rút yêu cầu
+                    </Button>
+                  </ConfirmAction>
+                )}
+              </div>
+            )}
+          </>
+        )}
+      </section>
+
+      {hasDocumentAction && (
+        <Alert
+          className="company-update-document-request"
+          type="warning"
+          showIcon
+          title="Quản trị viên yêu cầu bổ sung giấy tờ"
+          description={(
+            <div className="company-update-document-request__content">
+              <ul>
+                {documentsRequiringAction.map((document) => (
+                  <li key={document.public_id || document.id}>
+                    <strong>{document.doc_type_label || DOCUMENT_LABELS[document.doc_type] || document.doc_type}</strong>
+                    <span>{document.review_note || 'Vui lòng tải lên bản giấy tờ mới rõ ràng và đầy đủ hơn.'}</span>
+                  </li>
+                ))}
+              </ul>
+              <Button type="primary" disabled={writeLocked} aria-label="Bổ sung giấy tờ ngay" icon={<UploadOutlined />} onClick={() => setEditing(true)}>
+                Bổ sung giấy tờ ngay
+              </Button>
+            </div>
+          )}
+        />
+      )}
+
+      <section className="linked-company-card">
+        <header className="linked-company-card__header">
+          <Avatar shape="square" size={60} src={company.logo_url || undefined} icon={<BankOutlined />} className="linked-company-card__logo" />
+          <div className="min-w-0">
+            <div className="linked-company-card__name"><h2>{company.company_name}</h2></div>
+            <p>{company.address || 'Địa chỉ chưa cập nhật'} <span aria-hidden="true">|</span> {company.company_size ? `${company.company_size} nhân viên` : 'Quy mô chưa cập nhật'}</p>
+            <p className="linked-company-card__fixed-note">Liên kết này là cố định; tài khoản không thể chuyển sang công ty khác.</p>
+            <Link to={employerAppPath('/company-page')} className="company-setting-link">Tuỳ biến trang công khai</Link>
+          </div>
+        </header>
+
+        <dl className="linked-company-details">
+          <Detail label="Mã số thuế" value={company.tax_code} />
+          <Detail label="Website" value={company.has_no_website ? 'Không có website' : company.website_url} link={!company.has_no_website} />
+          <Detail label="Lĩnh vực hoạt động" value={(company.industries_detail || []).map((item) => item.name).join(', ')} />
+          <Detail label="Lĩnh vực chính" value={(company.industries_detail || []).find((item) => item.is_primary)?.name} />
+          <Detail label="Thị trường hoạt động" value={formatValue(company.markets)} />
+          <Detail label="Khách hàng mục tiêu" value={formatValue(company.target_customers)} />
+          <Detail label="Quy mô" value={company.company_size ? `${company.company_size} nhân viên` : ''} />
+          <Detail label="Email" value={company.email} />
+          <Detail label="Số điện thoại" value={company.phone} />
+          <Detail label="Địa chỉ" value={company.address} />
+          <Detail label="Mô tả công ty" html={company.description} />
+          <Detail label="Phúc lợi nhân viên" html={company.employee_benefits} />
+          <Detail label="Hình ảnh công ty" value={company.images?.length ? null : ''}>
+            {company.images?.length > 0 && <div className="linked-company-gallery">{company.images.map((item) => <Image key={item.id} src={item.image_url} alt="Ảnh công ty" />)}</div>}
+          </Detail>
+        </dl>
+      </section>
+    </div>
+  )
+}
+
+function Detail({ label, value, link = false, html, children }) {
+  const content = children || (html
+    ? <div className="company-rich-output" dangerouslySetInnerHTML={{ __html: sanitizeHtml(html) }} />
+    : link && value ? <a href={value} target="_blank" rel="noreferrer" className="company-setting-link"><LinkOutlined /> {value}</a>
+      : value || '--')
+  return <div className="linked-company-details__row"><dt>{label}:</dt><dd>{content}</dd></div>
+}
+
+function formatValue(value) {
+  if (Array.isArray(value)) return value.length ? value.join(', ') : '--'
+  return value || '--'
+}
+
+function formatDateTime(value) {
+  if (!value) return ''
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return ''
+  return new Intl.DateTimeFormat('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' }).format(date)
+}

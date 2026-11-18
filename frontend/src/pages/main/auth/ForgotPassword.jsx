@@ -3,7 +3,7 @@ import { Alert, Form, Input } from 'antd'
 import { useState } from 'react'
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3'
 import { Link } from 'react-router'
-import { AuthFormStyles, AuthLogo, requestPasswordReset } from '@/features/auth'
+import { AuthFormStyles, AuthLogo, requestPasswordReset } from '@/features/common/account/auth'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 
 // Bước 1: nhập email -> backend gửi link đặt lại. Backend luôn trả cùng một

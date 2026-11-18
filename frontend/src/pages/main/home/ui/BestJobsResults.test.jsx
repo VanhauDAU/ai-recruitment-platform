@@ -3,15 +3,15 @@ import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 import BestJobsResults from './BestJobsResults'
 
-vi.mock('@/entities/session', () => ({
+vi.mock('@/entities/account/session', () => ({
   useSession: () => ({ isAuthenticated: false }),
 }))
 
-vi.mock('@/features/auth', () => ({
+vi.mock('@/features/common/account/auth', () => ({
   useLoginPrompt: () => ({ promptLogin: vi.fn() }),
 }))
 
-vi.mock('@/features/track-job-engagement', () => ({
+vi.mock('@/features/main/job/track-job-engagement', () => ({
   JobImpressionBoundary: ({ children, className }) => <div className={className}>{children}</div>,
 }))
 
