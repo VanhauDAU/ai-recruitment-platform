@@ -89,6 +89,11 @@ export default function ChannelFacebookPosts({ campaign, channel, editable }) {
                     <span>{postTime(post)}{post.page_name ? ` trên ${post.page_name}` : ''}</span>
                   </div>
                   <p className="ch-timeline__text">{post.message}</p>
+                  {post.images?.length > 0 && (
+                    <div className="ch-timeline__images">
+                      {post.images.map((url, index) => <img key={url} src={url} alt={`Ảnh ${index + 1} của bài`} />)}
+                    </div>
+                  )}
                   {post.error_message && <p className="ch-timeline__error">{post.error_message}</p>}
                   <div className="ch-timeline__actions">
                     {post.permalink && post.status === 'published' && (

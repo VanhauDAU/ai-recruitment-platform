@@ -70,6 +70,8 @@ class ScheduledSocialPost(models.Model):
     )
     message = models.TextField()
     link = models.URLField(max_length=500)
+    # Public-media storage keys of attached images, in display order.
+    images = models.JSONField(default=list, blank=True)
     scheduled_for = models.DateTimeField()
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.SCHEDULED)
     attempts = models.PositiveSmallIntegerField(default=0)

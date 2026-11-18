@@ -23,6 +23,7 @@ from apps.employers.services import emit_employer_event, record_campaign_activit
 from ..models import CampaignChannel, ScheduledSocialPost, SocialAccountConnection
 from .content import render_content
 from .social import SocialProviderError, decrypt_token, get_provider
+from .social_post_images import clean_post_images, read_post_images
 from .tracking import channel_link
 
 Post = ScheduledSocialPost
@@ -53,7 +54,7 @@ def _campaign_is_live(campaign):
 
 
 @transaction.atomic
-def schedule_post(*, channel, user, connection, scheduled_for=None, message=''):
+def schedule_post(*, channel, user, connection, scheduled_for=None, message='', images=()):
     campaign = channel.campaign
     if campaign.owner.user_id != user.pk:
         raise ValidationError('Bạn không có quyền với chiến dịch này.')
@@ -81,6 +82,7 @@ def schedule_post(*, channel, user, connection, scheduled_for=None, message=''):
         channel=channel,
         connection=connection,
         message=message[:5000],
+        images=clean_post_images(campaign, images),
         link=channel_link(channel),
         scheduled_for=scheduled_for,
     )
@@ -176,7 +178,11 @@ def _publish_remote(post):
         if existing:
             return existing
     return provider.publish(
-        page_id=post.connection.page_id, page_token=token, message=post.message, link=post.link
+        page_id=post.connection.page_id,
+        page_token=token,
+        message=post.message,
+        link=post.link,
+        images=read_post_images(post.images),
     )
 
 

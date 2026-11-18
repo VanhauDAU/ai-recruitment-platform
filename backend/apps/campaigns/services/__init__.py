@@ -21,6 +21,7 @@ from .social_connections import (
     select_page,
     start_page_connection,
 )
+from .social_post_images import company_post_images, save_post_image
 from .social_posts import (
     cancel_post,
     due_post_ids,
@@ -39,6 +40,8 @@ from .tracking import (
 )
 
 __all__ = [
+    'company_post_images',
+    'save_post_image',
     'build_pdf',
     'build_xlsx',
     'campaign_health',

@@ -3,6 +3,7 @@
 import hashlib
 import hmac
 import ipaddress
+import json
 from urllib.parse import urlencode, urlsplit
 
 import requests
@@ -51,13 +52,18 @@ class FacebookPageProvider:
             settings.FACEBOOK_APP_SECRET.encode(), token.encode(), hashlib.sha256
         ).hexdigest()
 
-    def _call(self, method, path, *, token=None, params=None, data=None):
+    def _call(self, method, path, *, token=None, params=None, data=None, files=None):
         params = dict(params or {})
         if token:
             params.update(access_token=token, appsecret_proof=self._proof(token))
         try:
             response = self.session.request(
-                method, self._url(path), params=params, data=data, timeout=self.timeout
+                method,
+                self._url(path),
+                params=params,
+                data=data,
+                files=files,
+                timeout=self.timeout,
             )
         except requests.Timeout as error:
             raise SocialProviderError('timeout', transient=True) from error
@@ -128,9 +134,23 @@ class FacebookPageProvider:
             if page.get('access_token')
         ]
 
-    def publish(self, *, page_id, page_token, message, link):
+    def publish(self, *, page_id, page_token, message, link, images=()):
         data = {'message': message}
-        if is_public_url(link):
+        if images:
+            # Photos are uploaded unpublished, then attached to one feed post.
+            # Graph ignores ``link`` next to attached media, so it stays in the text.
+            for index, (name, content) in enumerate(images):
+                photo = self._call(
+                    'POST',
+                    f'{page_id}/photos',
+                    token=page_token,
+                    data={'published': 'false'},
+                    files={'source': (name, content)},
+                )
+                data[f'attached_media[{index}]'] = json.dumps({'media_fbid': photo['id']})
+            if link and link not in message:
+                data['message'] = f'{message}\n\n{link}'
+        elif is_public_url(link):
             data['link'] = link  # Facebook renders a preview card for it
         elif link and link not in message:
             data['message'] = f'{message}\n\n{link}'

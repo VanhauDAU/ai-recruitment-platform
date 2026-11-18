@@ -1,5 +1,7 @@
 from rest_framework import serializers
 
+from common.media_storage import media_public_url
+
 from ...models import ScheduledSocialPost, SocialAccountConnection
 
 
@@ -50,6 +52,7 @@ class ScheduledPostSerializer(serializers.ModelSerializer):
     page_name = serializers.CharField(source='connection.page_name', read_only=True)
     page_picture_url = serializers.CharField(source='connection.page_picture_url', read_only=True)
     error_message = serializers.SerializerMethodField()
+    images = serializers.SerializerMethodField()
 
     class Meta:
         model = ScheduledSocialPost
@@ -58,6 +61,7 @@ class ScheduledPostSerializer(serializers.ModelSerializer):
             'page_name',
             'page_picture_url',
             'message',
+            'images',
             'scheduled_for',
             'status',
             'status_label',
@@ -69,6 +73,10 @@ class ScheduledPostSerializer(serializers.ModelSerializer):
             'deleted_at',
         ]
         read_only_fields = fields
+
+    def get_images(self, obj):
+        request = self.context.get('request')
+        return [media_public_url(path, request=request) for path in obj.images or []]
 
     def get_error_message(self, obj):
         code = obj.last_error_code
@@ -83,6 +91,9 @@ class SchedulePostSerializer(serializers.Serializer):
     )
     scheduled_for = serializers.DateTimeField(required=False, allow_null=True)
     message = serializers.CharField(required=False, allow_blank=True, max_length=5000)
+    images = serializers.ListField(
+        child=serializers.CharField(max_length=500), required=False, max_length=4
+    )
 
 
 class ReschedulePostSerializer(serializers.Serializer):

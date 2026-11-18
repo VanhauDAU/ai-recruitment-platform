@@ -7,7 +7,9 @@ from django.shortcuts import get_object_or_404
 from django.views import View
 from rest_framework import status
 from rest_framework.exceptions import ValidationError
+from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
+from rest_framework.throttling import UserRateThrottle
 from rest_framework.views import APIView
 
 from apps.accounts.permissions import IsEmployer
@@ -16,10 +18,12 @@ from apps.employers.services import ensure_recruiter_job_workspace
 from ...models import ScheduledSocialPost, SocialAccountConnection
 from ...services import (
     cancel_post,
+    company_post_images,
     complete_page_connection,
     disconnect_page,
     pending_pages,
     reschedule_post,
+    save_post_image,
     schedule_post,
     select_page,
     start_page_connection,
@@ -108,14 +112,19 @@ class ChannelPostListView(CampaignScopedView):
         posts = ScheduledSocialPost.objects.filter(channel=self.channel()).select_related(
             'connection'
         )
-        return Response(ScheduledPostSerializer(posts, many=True).data)
+        return Response(
+            ScheduledPostSerializer(posts, many=True, context={'request': request}).data
+        )
 
     def post(self, request, public_id, channel_id):
         channel = self.channel()
         serializer = SchedulePostSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         post = schedule_post(channel=channel, user=request.user, **serializer.validated_data)
-        return Response(ScheduledPostSerializer(post).data, status=status.HTTP_201_CREATED)
+        return Response(
+            ScheduledPostSerializer(post, context={'request': request}).data,
+            status=status.HTTP_201_CREATED,
+        )
 
 
 class ChannelPostDetailView(CampaignScopedView):
@@ -130,8 +139,31 @@ class ChannelPostDetailView(CampaignScopedView):
         serializer = ReschedulePostSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         post = reschedule_post(post=self._post(), user=request.user, **serializer.validated_data)
-        return Response(ScheduledPostSerializer(post).data)
+        return Response(ScheduledPostSerializer(post, context={'request': request}).data)
 
     def delete(self, request, public_id, channel_id, post_id):
         cancel_post(post=self._post(), user=request.user)
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class PostImageThrottle(UserRateThrottle):
+    rate = '60/hour'
+
+
+class ChannelPostImageView(CampaignScopedView):
+    """Upload an image for a Fanpage post, or list the company's ready-made images."""
+
+    parser_classes = [MultiPartParser]
+
+    def get_throttles(self):
+        return [PostImageThrottle()] if self.request.method == 'POST' else super().get_throttles()
+
+    def get(self, request, public_id, channel_id):
+        return Response({'company_images': company_post_images(self.campaign())})
+
+    def post(self, request, public_id, channel_id):
+        upload = request.FILES.get('file')
+        if upload is None:
+            raise ValidationError({'file': 'Chọn một ảnh.'})
+        saved = save_post_image(channel=self.channel(), user=request.user, upload=upload)
+        return Response(saved, status=status.HTTP_201_CREATED)

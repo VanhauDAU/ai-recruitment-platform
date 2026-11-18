@@ -19,13 +19,21 @@ BE -> DB : Lưu SocialAccountConnection, Page token mã hóa Fernet
 end
 group Tạo bài đăng
 NTD -> FE : Soạn bài, chọn đăng ngay, hẹn giờ hoặc nhiều lần
+opt Đính kèm ảnh
+FE -> BE : POST .../post-images/ (tệp ảnh) hoặc chọn ảnh bìa công ty
+BE -> BE : Kiểm tra, mã hóa lại ảnh (bỏ EXIF, tối đa 2048 px)
+BE --> FE : {path, url}
+end
 FE -> BE : POST .../channels/{kênh}/posts/ (mỗi lần đăng một yêu cầu)
 BE -> DB : Tạo ScheduledSocialPost (scheduled)
 BE --> FE : 201
 end
 group Đăng bài đến hạn (mỗi phút)
 LL -> DB : Lấy bài đến hạn của chiến dịch đang chạy
-LL -> FB : POST /{page}/feed (link công khai thì đính kèm, link cục bộ thì đưa vào nội dung)
+opt Bài có ảnh
+LL -> FB : POST /{page}/photos (published=false) cho từng ảnh
+end
+LL -> FB : POST /{page}/feed (ảnh qua attached_media; link công khai thì đính kèm, còn lại đưa vào nội dung)
 alt Thành công
 LL -> DB : published, permalink, đánh dấu kênh đã đăng
 else Lỗi tạm thời

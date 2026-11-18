@@ -6,6 +6,7 @@ import { campaignKeys, getSocialConnections, scheduleChannelPost } from '@/entit
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { EMPLOYER_INTEGRATIONS_URL } from '@/shared/config/portals'
 import { message } from '@/shared/lib/toast'
+import PostImagePicker from './PostImagePicker'
 import SocialPostPreview from './SocialPostPreview'
 
 const REPEATS = [3, 7, 14]
@@ -42,6 +43,7 @@ export default function FacebookPostComposer({ campaign, channel, defaultMessage
         await scheduleChannelPost(campaign.public_id, channel.public_id, {
           connection: data.connection,
           message: data.message,
+          images: (data.images || []).map((image) => image.path),
           scheduled_for: at ? at.toISOString() : null,
         })
       }
@@ -92,6 +94,7 @@ export default function FacebookPostComposer({ campaign, channel, defaultMessage
               scheduled_for: presets()[0].value,
               repeats: [7],
               message: defaultMessage,
+              images: [],
             }}
             onFinish={(data) => mutation.mutate(data)}
           >
@@ -110,6 +113,9 @@ export default function FacebookPostComposer({ campaign, channel, defaultMessage
               rules={[{ required: true, whitespace: true, message: 'Nhập nội dung bài.' }]}
             >
               <Input.TextArea autoSize={{ minRows: 8, maxRows: 16 }} maxLength={5000} showCount />
+            </Form.Item>
+            <Form.Item label="Ảnh" name="images">
+              <PostImagePicker campaignId={campaign.public_id} channelId={channel.public_id} />
             </Form.Item>
             <Form.Item label="Thời điểm đăng" name="timing">
               <Segmented
@@ -169,6 +175,7 @@ export default function FacebookPostComposer({ campaign, channel, defaultMessage
               avatarUrl={page?.page_picture_url}
               meta={values.timing === 'now' || !values.scheduled_for ? 'Vừa xong' : when(values.scheduled_for)}
               text={values.message || ''}
+              images={(values.images || []).map((image) => image.url)}
               link={channel.link}
               linkTitle={campaign.name}
             />

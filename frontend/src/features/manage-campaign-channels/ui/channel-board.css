@@ -63,6 +63,26 @@
 .ch-post__bar { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid #e4e6eb; }
 .ch-post__bar span { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 0; font-size: 13px; font-weight: 600; color: #65676b; }
 
+/* Ảnh trong bài: lưới theo số ảnh như Facebook */
+.ch-post__media { display: grid; gap: 2px; background: #fff; }
+.ch-post__media img { width: 100%; height: 100%; object-fit: cover; }
+.ch-post__media.is-1 img { max-height: 420px; }
+.ch-post__media.is-2 { grid-template-columns: 1fr 1fr; height: 220px; }
+.ch-post__media.is-3 { grid-template-columns: 2fr 1fr; grid-template-rows: 1fr 1fr; height: 260px; }
+.ch-post__media.is-3 img:first-child { grid-row: span 2; }
+.ch-post__media.is-4 { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; height: 300px; }
+
+.ch-images { display: flex; flex-direction: column; gap: 8px; }
+.ch-images .ch-chips { margin: 0; }
+.ch-images__grid { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.ch-images__grid li { position: relative; width: 84px; height: 84px; overflow: hidden; border: 1px solid #e2e8e5; border-radius: 10px; }
+.ch-images__grid img { width: 100%; height: 100%; object-fit: cover; }
+.ch-images__grid button { position: absolute; top: 4px; right: 4px; display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border: 0; border-radius: 50%; background: rgb(15 23 42 / .7); cursor: pointer; font-size: 11px; color: #fff; }
+.ch-images__grid button:focus-visible { outline: 2px solid #059669; outline-offset: 1px; }
+.ch-chip:disabled { cursor: not-allowed; opacity: .5; }
+.ch-timeline__images { display: flex; gap: 6px; }
+.ch-timeline__images img { width: 48px; height: 48px; border-radius: 8px; object-fit: cover; }
+
 /* Mục Nội dung bài */
 .ch-content { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); align-items: start; gap: 18px; }
 .ch-content__side { display: flex; flex-direction: column; gap: 12px; }
