@@ -141,7 +141,7 @@ activation mới vẫn bị overlap guard chặn.
 - `apps.jobs`: public lifecycle, availability, job content và candidate query.
 - `apps.services`: catalogue/version, entitlement, activation, grant và audit.
 - Cross-app write đi qua hàm được export từ `services/__init__.py`; không
-  deep-import nội bộ, tuân ADR-0010.
+  deep-import nội bộ, tuân ADR-0010 (nay là ADR-0022).
 - Frontend đặt projection và presentation UI tái sử dụng ở `entities/job/job`;
   workflow kích hoạt ở feature riêng; page chỉ compose.
 

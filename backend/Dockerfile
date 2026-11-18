@@ -23,9 +23,13 @@ WORKDIR /app
 
 # ---- deps layer (cache theo requirements) ----
 FROM base AS deps
-COPY requirements.txt ./
+# Công cụ dev/test (ruff, import-linter, pytest) chỉ cài khi build cho compose dev:
+# docker compose truyền INSTALL_DEV=true; image production giữ mặc định false.
+ARG INSTALL_DEV=false
+COPY requirements.txt requirements-dev.txt ./
 RUN --mount=type=cache,target=/root/.cache/pip \
-    pip install -r requirements.txt gunicorn
+    if [ "$INSTALL_DEV" = "true" ]; then pip install -r requirements-dev.txt; \
+    else pip install -r requirements.txt; fi
 
 # ---- ml-worker: đối sánh CV–JD (torch CPU + sentence-transformers) ----
 # Đặt trước `runtime` để `runtime` vẫn là stage mặc định: image web không có torch.
@@ -36,6 +40,7 @@ RUN --mount=type=cache,target=/root/.cache/pip \
     pip install -r requirements-ml.txt
 
 FROM base AS ml
+ENV DJANGO_SETTINGS_MODULE=config.settings.production
 COPY --from=ml-deps /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 COPY --from=ml-deps /usr/local/bin /usr/local/bin
 RUN useradd --create-home --uid 1000 appuser
@@ -45,6 +50,8 @@ CMD ["celery", "-A", "config", "worker", "--loglevel=info", "-Q", "ai-matching",
 
 # ---- runtime ----
 FROM base AS runtime
+# Image mặc định là production; compose dev ghi đè bằng config.settings.development.
+ENV DJANGO_SETTINGS_MODULE=config.settings.production
 COPY --from=deps /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 COPY --from=deps /usr/local/bin /usr/local/bin
 # Chỉ headless shell của Chromium (nhẹ hơn bản đầy đủ) cùng thư viện hệ thống.

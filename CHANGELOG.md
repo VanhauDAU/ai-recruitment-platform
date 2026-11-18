@@ -8,6 +8,19 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-19
 
+#### Changed — Backend: cổng kiểm tra cấu trúc (ADR-0022, GĐ0)
+
+- ADR-0022 thay ADR-0010: bố cục app, luật import chéo app, URL theo cổng, lộ
+  trình 7 giai đoạn.
+- CI và `check_all.sh` thêm `check_backend_imports.py` (import chéo app, module
+  gốc app, code trong `__init__.py`) và `check_openapi_schema.sh` (schema khớp
+  `docs/04-api/openapi.yaml`, số cảnh báo không tăng); cả hai dùng baseline chỉ
+  được giảm.
+- Công cụ lint/test tách sang `requirements-dev.txt`, không còn trong image
+  production; pin `gunicorn` và `redis`.
+- Gunicorn/Celery/ASGI bắt buộc có `DJANGO_SETTINGS_MODULE`; image Docker mặc
+  định production, compose dev đặt development.
+
 #### Added — Giải thích chỉ số chiến dịch
 
 - Icon "?" cạnh các chỉ số dễ nhầm (chi phí / hồ sơ, chi phí / trúng tuyển, tỷ

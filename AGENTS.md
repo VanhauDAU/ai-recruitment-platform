@@ -81,24 +81,27 @@ Không bỏ qua lỗi kiến trúc bằng alias sâu, shim vô thời hạn ho�
 nếu chưa có ADR và lý do cụ thể. Cập nhật `frontend/ARCHITECTURE.md` khi thêm
 quy tắc, portal hoặc mô hình ownership có tác động lâu dài.
 
-## Backend (ADR-0010)
+## Backend (ADR-0022)
 
-Mọi Django app trong `backend/apps/` theo đúng một layout:
+Nguồn chi tiết: `docs/02-tong-quan/adr-0022-backend-structure.md`. Mọi Django
+app trong `backend/apps/` theo đúng một layout:
 
 ```text
-<app>/api/{views,serializers}/ · models/ · services/ · selectors/ · tasks/ · tests/ · urls.py
+<app>/api/{urls,views,serializers}/ · seo/ · models/ · selectors/ · services/ · tasks/ · signals/ · tests/
 ```
 
-- Chiều phụ thuộc: `api → services/selectors → models`; `tasks → services`.
-  Enforce bằng `import-linter` (`backend/pyproject.toml`) — vi phạm fail CI.
+- Chiều phụ thuộc: `api → services/selectors → models`;
+  `tasks | signals.receivers → services`. Không đặt module nghiệp vụ ở gốc app
+  hay code trong `__init__.py` ngoài re-export.
 - `services/` (ghi) và `selectors/` (đọc) KHÔNG import máy móc HTTP của DRF
   (serializers/views/generics/viewsets/response). Được phép:
   `rest_framework.exceptions`, `rest_framework_simplejwt`.
-- Cross-app: chỉ import model của app khác hoặc hàm được re-export ở
-  `<app>/services/__init__.py`; không deep-import nội bộ.
+- Cross-app: chỉ import `apps.X.models`, `apps.X.services`, `apps.X.selectors`
+  (cấp package), `apps.X.signals` và `apps.accounts.api.permissions`; không
+  deep-import nội bộ. `common/` không biết domain, không import `apps`.
 - Endpoint list phải giữ số query phẳng theo số bản ghi — xem
-  `tests/test_query_budget.py`; tăng budget phải kèm giải thích trong PR.
-- API: miền CV dùng tiền tố `/api/v2/`; app khác `/api/<app>/`. Không còn v1.
+  `apps/<app>/tests/test_query_budget.py`; tăng budget phải kèm giải thích trong PR.
+- API view mới bắt buộc có `@extend_schema`; cổng OpenAPI chặn warning.
 
 ### Kiểm tra trước khi bàn giao (backend)
 
@@ -106,7 +109,10 @@ Mọi Django app trong `backend/apps/` theo đúng một layout:
 cd backend
 ruff check . && ruff format --check .
 lint-imports
+bash ../scripts/check_backend_layering.sh
+python ../scripts/check_backend_imports.py
 python manage.py makemigrations --check --dry-run
+bash ../scripts/check_openapi_schema.sh
 pytest --cov --cov-fail-under=84
 ```
 

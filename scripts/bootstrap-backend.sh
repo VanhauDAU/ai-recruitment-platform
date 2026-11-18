@@ -77,7 +77,7 @@ fi
 
 step "Cài dependencies"
 pip install --upgrade pip >/dev/null
-pip install -r requirements.txt
+pip install -r requirements-dev.txt
 
 if [ ! -f .env ] && [ -f .env.example ]; then
   step "Tạo .env từ .env.example"

@@ -93,7 +93,7 @@ Những thứ **giữ lại** vì đã tốt: document canonical 3 JSON (`conten
  Render:  React renderer (preview + editor)  ──►  PDF  (xem mục 6.4)
 ```
 
-Tuân thủ ADR-0010 (`api → services/selectors → models`, `tasks → services`) và FSD frontend (`app → pages → widgets → features → entities → shared`).
+Tuân thủ ADR-0010, nay là ADR-0022 (`api → services/selectors → models`, `tasks → services`) và FSD frontend (`app → pages → widgets → features → entities → shared`).
 
 ---
 
@@ -217,7 +217,7 @@ Không để matching sau này phải đọc lại rich text hay đoán từ ch�
 Cách triển khai để không phức tạp từ đầu:
 
 1. **Một nguồn sự thật cho enum:** CV import enum từ `apps/jobs` (qua
-   `apps/jobs/services/__init__.py` theo ADR-0010), không sao chép giá trị.
+   `apps/jobs/services/__init__.py` theo ADR-0022), không sao chép giá trị.
    Bảng nhóm `experience_band` ↔ `ExperienceYears` đặt cạnh enum đó.
 2. **Một service dẫn xuất duy nhất:** `apps/cvs/services/matching_profile.py`
    → `build_matching_profile(content_json)` thuần, deterministic, có test; gọi

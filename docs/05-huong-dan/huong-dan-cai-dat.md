@@ -53,7 +53,7 @@ Không dùng `config.settings.production` cho local: module này dừng ngay n�
 cd backend
 python3.11 -m venv venv
 source venv/bin/activate
-pip install -r requirements.txt
+pip install -r requirements-dev.txt  # runtime + ruff/import-linter/pytest
 cp .env.example .env
 python manage.py migrate
 

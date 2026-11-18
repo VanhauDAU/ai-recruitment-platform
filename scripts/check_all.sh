@@ -24,16 +24,19 @@ python3 "$ROOT/scripts/check_markdown_links.py"
 if [ -x backend/venv/bin/python ] \
   && docker compose version >/dev/null 2>&1 \
   && docker compose ps --status running --services 2>/dev/null | grep -qx backend; then
+  be_python="docker compose exec -T backend python"
   run_be() { docker compose exec -T backend python "$@"; }
   run_ruff() { (cd backend && ./venv/bin/ruff "$@"); }
   run_lint_imports() { (cd backend && ./venv/bin/lint-imports "$@"); }
   run_pytest() { docker compose exec -T backend pytest "$@"; }
 elif [ -x backend/venv/bin/python ]; then
+  be_python="./venv/bin/python"
   run_be() { (cd backend && ./venv/bin/python "$@"); }
   run_ruff() { (cd backend && ./venv/bin/ruff "$@"); }
   run_lint_imports() { (cd backend && ./venv/bin/lint-imports "$@"); }
   run_pytest() { (cd backend && ./venv/bin/pytest "$@"); }
 elif docker compose version >/dev/null 2>&1 && docker ps >/dev/null 2>&1; then
+  be_python="docker compose run --rm -T backend python"
   run_be() { docker compose run --rm backend python "$@"; }
   run_ruff() { docker compose run --rm backend ruff "$@"; }
   run_lint_imports() { docker compose run --rm backend lint-imports "$@"; }
@@ -54,11 +57,17 @@ run_lint_imports
 step "Backend: layering DRF"
 "$ROOT/scripts/check_backend_layering.sh"
 
+step "Backend: cấu trúc app + import chéo app (ADR-0022)"
+python3 "$ROOT/scripts/check_backend_imports.py"
+
 step "Backend: Django system check"
 run_be manage.py check
 
 step "Backend: kiểm tra migration treo"
 run_be manage.py makemigrations --check --dry-run
+
+step "Backend: OpenAPI schema"
+BACKEND_RUN="$be_python" "$ROOT/scripts/check_openapi_schema.sh"
 
 step "Backend: test suite + coverage gate"
 run_pytest --cov --cov-fail-under=84
