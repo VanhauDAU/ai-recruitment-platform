@@ -1,0 +1,39 @@
+title Sơ đồ tuần tự kết nối và đăng bài lên Fanpage
+actor NTD Nhà tuyển dụng
+participant FE Giao diện web\n(React)
+participant BE Máy chủ API\n(Django REST)
+database DB CSDL\n(PostgreSQL)
+queue LL Bộ lập lịch\n(Celery)
+external FB Facebook\n(Graph API)
+group Kết nối Fanpage
+NTD -> FE : Bấm "Kết nối Fanpage Facebook"
+FE -> BE : POST /api/employer/social/facebook/authorize/
+BE --> FE : URL hộp cấp quyền (state ký + nonce một lần)
+NTD -> FB : Đồng ý cấp quyền đăng bài cho Fanpage
+FB -> BE : GET .../facebook/callback/?code&state
+BE -> FB : Đổi mã lấy token, lấy danh sách Fanpage
+BE --> FE : 302 về Cài đặt tài khoản ?fb_select=
+NTD -> FE : Chọn Fanpage
+FE -> BE : POST .../facebook/pending/{nonce}/ {page_id}
+BE -> DB : Lưu SocialAccountConnection, Page token mã hóa Fernet
+end
+group Tạo bài đăng
+NTD -> FE : Soạn bài, chọn đăng ngay, hẹn giờ hoặc nhiều lần
+FE -> BE : POST .../channels/{kênh}/posts/ (mỗi lần đăng một yêu cầu)
+BE -> DB : Tạo ScheduledSocialPost (scheduled)
+BE --> FE : 201
+end
+group Đăng bài đến hạn (mỗi phút)
+LL -> DB : Lấy bài đến hạn của chiến dịch đang chạy
+LL -> FB : POST /{page}/feed (link công khai thì đính kèm, link cục bộ thì đưa vào nội dung)
+alt Thành công
+LL -> DB : published, permalink, đánh dấu kênh đã đăng
+else Lỗi tạm thời
+LL -> DB : Hẹn thử lại sau 1, 5, 15, 60 phút
+else Token hỏng
+LL -> DB : Kết nối hết hạn, báo NTD kết nối lại
+else Lỗi khác
+LL -> DB : failed kèm mã lỗi, báo NTD
+end
+end
+NTD -> FE : Xem dòng thời gian bài, đăng lại hoặc hủy

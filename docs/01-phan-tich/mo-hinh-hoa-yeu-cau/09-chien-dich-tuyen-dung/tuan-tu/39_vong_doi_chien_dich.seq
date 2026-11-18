@@ -1,0 +1,36 @@
+title Sơ đồ tuần tự tạm dừng, tiếp tục và kết thúc chiến dịch
+actor NTD Nhà tuyển dụng
+participant FE Giao diện web\n(React)
+participant BE Máy chủ API\n(Django REST)
+database DB CSDL\n(PostgreSQL)
+queue LL Bộ lập lịch\n(Celery Beat)
+group Tạm dừng / tiếp tục
+NTD -> FE : Bấm "Tạm dừng"
+FE -> BE : GET /campaigns/{id}/pause-impact/
+BE --> FE : Các tin công khai sẽ bị ẩn + mã xác nhận
+NTD -> FE : Nhập mã, xác nhận
+FE -> BE : POST /campaigns/{id}/status/ {status, confirmation_code}
+alt Sai mã, bước chuyển không hợp lệ hoặc đang bị tạm giữ
+BE --> FE : 400
+else Hợp lệ
+BE -> DB : Cập nhật trạng thái, ghi CampaignActivity
+BE ->> LL : Tín hiệu campaign_status_changed (sau commit)
+LL -> DB : Đối soát bài Fanpage: tạm dừng thì hoãn, tiếp tục thì đưa về lịch
+BE --> FE : 200
+end
+end
+group Hoàn tất / hủy
+NTD -> FE : Bấm "Hoàn tất" hoặc "Hủy", xác nhận đóng tin
+FE -> BE : POST /campaigns/{id}/status/ {completed|cancelled}
+BE -> DB : Trạng thái cuối, ended_at, ended_by
+BE -> DB : Đóng mọi tin đang tuyển (closed, ghi lịch sử tin)
+BE ->> LL : Tín hiệu campaign_status_changed
+LL -> DB : Gỡ bài đã đăng trên Fanpage, hủy bài chưa đăng
+BE --> FE : 200
+end
+group Tự kết thúc (mỗi 5 phút)
+LL -> BE : run_campaign_schedule
+BE -> DB : Chiến dịch không liên tục qua ngày kết thúc
+BE -> DB : Hoàn tất (ended_by = hệ thống), đóng tin
+BE -> DB : Báo trước 3 ngày campaign_ending_soon (không trùng)
+end

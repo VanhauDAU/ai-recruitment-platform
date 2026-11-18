@@ -1,0 +1,35 @@
+title Sơ đồ hoạt động thiết lập và kích hoạt chiến dịch
+Nhà tuyển dụng nhập tên, thời gian, ngân sách
+if Không gian tuyển dụng đã sẵn sàng?
+case Không
+  Giao diện hiển thị các bước còn thiếu
+  stop
+case Có
+endif
+Hệ thống tạo chiến dịch nháp
+Nhà tuyển dụng chọn tin cần đăng hoặc gắn
+Nhà tuyển dụng thêm kênh phân phối (không bắt buộc)
+Hệ thống kiểm tra điều kiện kích hoạt
+if Đủ điều kiện?
+case Không
+  Giao diện liệt kê việc cần làm
+  stop
+case Có
+endif
+Nhà tuyển dụng chấp nhận cam kết
+if Chạy ngay?
+case Có
+  Hệ thống chuyển chiến dịch sang đang chạy
+  Hệ thống đăng tin nháp và gắn tin đã chọn
+case Không
+  Hệ thống chuyển chiến dịch sang đã lên lịch
+  Bộ lập lịch chờ tới ngày bắt đầu
+  if Vẫn kích hoạt được?
+  case Không
+    Hệ thống giữ lịch và báo nhà tuyển dụng
+    stop
+  case Có
+    Hệ thống kích hoạt, đăng và gắn tin
+  endif
+endif
+Hệ thống ghi nhật ký hoạt động chiến dịch

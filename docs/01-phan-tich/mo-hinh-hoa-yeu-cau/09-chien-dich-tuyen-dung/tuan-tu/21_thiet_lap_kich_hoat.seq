@@ -1,0 +1,49 @@
+title Sơ đồ tuần tự thiết lập và kích hoạt chiến dịch
+actor NTD Nhà tuyển dụng
+participant FE Giao diện web\n(React)
+participant BE Máy chủ API\n(Django REST)
+database DB CSDL\n(PostgreSQL)
+queue LL Bộ lập lịch\n(Celery Beat)
+group Bước 1: Thông tin chiến dịch
+NTD -> FE : Nhập tên, thời gian, ngân sách
+FE -> BE : POST /api/employer/campaigns/
+BE -> BE : Kiểm tra không gian tuyển dụng đã sẵn sàng
+alt Chưa sẵn sàng
+BE --> FE : 403 EMPLOYER_WORKSPACE_BLOCKED
+FE --> NTD : Hiển thị các bước còn thiếu
+else Hợp lệ
+BE -> DB : Tạo RecruitmentCampaign (draft)
+BE --> FE : 201, chuyển sang bước Tin
+end
+end
+group Bước 2: Tin tuyển dụng
+NTD -> FE : Chọn tin nháp cần đăng, tin đang hiển thị cần gắn
+FE -> BE : PUT /campaigns/{id}/launch/ {publish_job_ids, attach_job_ids}
+BE -> DB : Lưu CampaignLaunchJob (chưa đổi trạng thái tin)
+BE --> FE : Chỉ tiêu = tổng số lượng tuyển của các tin
+end
+group Bước 4: Kích hoạt
+FE -> BE : GET /campaigns/{id}/launch/
+BE -> DB : Kiểm tra điều kiện (tin, ngày, hạn nộp, xác thực)
+BE --> FE : Danh sách điều kiện + phiên bản cam kết
+NTD -> FE : Chấp nhận cam kết, chọn chạy ngay hoặc theo lịch
+FE -> BE : POST /campaigns/{id}/launch/ {mode, accepted_statement_version}
+alt Còn điều kiện chưa đạt
+BE --> FE : 400 kèm danh sách việc cần làm
+else mode = now
+BE -> DB : Chuyển active, đăng tin nháp, gắn tin (một giao dịch)
+BE --> FE : 200 Đang chạy
+else mode = scheduled
+BE -> DB : Lưu cam kết, chuyển scheduled
+BE --> FE : 200 Đã lên lịch
+end
+end
+group Kích hoạt theo lịch (mỗi 5 phút)
+LL -> BE : run_campaign_schedule
+BE -> DB : Tìm chiến dịch scheduled tới ngày bắt đầu
+alt Điều kiện vẫn đạt, cam kết còn hiệu lực
+BE -> DB : Kích hoạt như mode = now (người thực hiện: hệ thống)
+else Không kích hoạt được
+BE -> DB : Giữ scheduled, ghi thông báo campaign_activation_failed (không trùng)
+end
+end
