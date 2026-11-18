@@ -8,3 +8,10 @@ datasets==5.2.0
 accelerate==1.15.0
 # Đọc tệp nhập tin tuyển dụng ml/data/jd/jd_input.xlsx
 openpyxl==3.1.5
+# Baseline từ vựng và đánh giá
+numpy==2.4.6
+scikit-learn==1.9.1
+rank-bm25==0.2.2
+# So thư viện đọc PDF (cùng phiên bản với backend/requirements.txt)
+pypdf==5.7.0
+pypdfium2==4.30.0

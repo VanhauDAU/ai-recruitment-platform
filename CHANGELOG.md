@@ -8,6 +8,36 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-18
 
+#### Added — Trích xuất hồ sơ đối sánh CV–JD (tuần 2)
+
+- `apps/matching/services/extraction/` chuyển CV builder, CV tải lên (PDF/DOCX)
+  và tin tuyển dụng thành `profile_json`: kỹ năng kèm nguồn và câu bằng chứng,
+  số tháng kinh nghiệm kèm cơ sở tính, bậc học, cấp bậc, ngoại ngữ, chunk. Theo
+  quy tắc chống bịa dữ liệu: thiếu thông tin thì ghi vào `quality.missing`,
+  không đoán; chunk không chứa email/số điện thoại; câu yêu cầu về giới tính,
+  tuổi, ngoại hình không được đối sánh.
+- `apps/matching/services/skills.py` nhận diện kỹ năng theo danh mục (tên +
+  alias, đúng hoa thường với tên ngắn như "AI"), loại nhóm "Phẩm chất cá nhân"
+  khỏi điểm.
+- Lệnh `matching_export_dataset` (chỉ đọc) xuất hồ sơ ra JSONL cho các script ở `ml/`.
+- `ml/scripts/`: `extract_check.py` (so thư viện đọc PDF), `baseline.py`
+  (TF-IDF, BM25), `build_gold_pairs.py` (ghép 150 cặp tập vàng, phiếu chấm
+  `ml/labeling/gold_pairs.xlsx`), `export_profiles.py` + `check_profiles.py`
+  (đối chiếu hồ sơ với nhãn); số liệu ở `ml/reports/`.
+
+#### Changed
+
+- Đọc chữ của CV PDF bằng `pypdfium2` (pypdf chỉ còn kiểm tra mật khẩu và số
+  trang): pypdf tách rời chữ có dấu ở khoảng 9% từ của CV tiếng Việt, pypdfium2
+  không tách ở cả 51 PDF đo thử. Văn bản CV chuẩn hóa NFC, icon font của mẫu CV
+  đổi thành khoảng trắng.
+
+#### Fixed
+
+- CV-070 của kho CV tổng hợp lẫn lời thoại của mô hình vào tên tổ chức; đã sửa
+  trong JSON và lưu phiên bản CV mới. `enrich_cvs.py` sinh lại khi ô ngắn dài
+  bất thường (`has_runaway_text`).
+
 #### Added — Kho CV tổng hợp cho thực nghiệm đối sánh CV–JD
 
 - `ml/scripts/generate_cvs.py` sinh CV hư cấu bằng mô hình chạy local (Ollama,

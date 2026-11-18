@@ -30,7 +30,8 @@ SKILL_LEVELS = {
 }
 
 
-def _enabled_items(content_json, section_key):
+def enabled_items(content_json, section_key):
+    """Các item của mọi mục `section_key` đang bật trong document."""
     for section in content_json.get('sections', []):
         if (
             isinstance(section, dict)
@@ -40,7 +41,7 @@ def _enabled_items(content_json, section_key):
             yield from (item for item in section.get('items', []) if isinstance(item, dict))
 
 
-def _month_index(value):
+def month_index(value):
     """`'YYYY-MM'` → số tháng tuyệt đối; `None` nếu sai định dạng."""
     try:
         year, month = (int(part) for part in str(value).split('-')[:2])
@@ -49,20 +50,16 @@ def _month_index(value):
     return year * 12 + month - 1 if 1 <= month <= 12 else None
 
 
-def experience_months(content_json, today=None):
-    today = today or vietnam_today()
-    now = today.year * 12 + today.month - 1
-    ranges = []
-    for item in _enabled_items(content_json, 'experience'):
-        start = _month_index(item.get('start_date'))
-        end = _month_index(item['end_date']) if item.get('end_date') else now
-        if start is None or end is None or start > now or end < start:
-            continue
-        ranges.append((start, min(end, now)))
+def merged_months(ranges, now):
+    """Tổng số tháng của các khoảng (tháng đầu, tháng cuối), gộp chỗ chồng lấn.
 
+    Khoảng bắt đầu sau `now` hoặc kết thúc trước khi bắt đầu bị bỏ; khoảng kéo
+    quá `now` bị cắt tại `now`.
+    """
+    valid = sorted((start, min(end, now)) for start, end in ranges if start <= now and end >= start)
     total = 0
     current = None
-    for start, end in sorted(ranges):
+    for start, end in valid:
         if current and start <= current[1] + 1:
             current = (current[0], max(current[1], end))
             continue
@@ -74,9 +71,23 @@ def experience_months(content_json, today=None):
     return total
 
 
-def experience_years(content_json, today=None):
-    """Giá trị `Job.ExperienceYears` tương ứng tổng thời gian kinh nghiệm."""
-    months = experience_months(content_json, today)
+def experience_ranges(content_json, now):
+    """Khoảng (tháng đầu, tháng cuối) của các mục kinh nghiệm có ngày hợp lệ."""
+    for item in enabled_items(content_json, 'experience'):
+        start = month_index(item.get('start_date'))
+        end = month_index(item['end_date']) if item.get('end_date') else now
+        if start is not None and end is not None:
+            yield start, end
+
+
+def experience_months(content_json, today=None):
+    today = today or vietnam_today()
+    now = today.year * 12 + today.month - 1
+    return merged_months(experience_ranges(content_json, now), now)
+
+
+def months_to_experience_years(months):
+    """Số tháng → giá trị `Job.ExperienceYears` (cùng thang với bộ lọc của tin)."""
     if months == 0:
         return Job.ExperienceYears.NONE
     if months < 12:
@@ -85,11 +96,16 @@ def experience_years(content_json, today=None):
     return Job.ExperienceYears.OVER_5 if years > 5 else Job.ExperienceYears(str(years))
 
 
+def experience_years(content_json, today=None):
+    """Giá trị `Job.ExperienceYears` tương ứng tổng thời gian kinh nghiệm."""
+    return months_to_experience_years(experience_months(content_json, today))
+
+
 def education_level(content_json):
     """`Job.EducationLevel` cao nhất trong các mục học vấn đang bật; rỗng nếu chưa khai."""
     levels = [
         item.get('degree_level')
-        for item in _enabled_items(content_json, 'education')
+        for item in enabled_items(content_json, 'education')
         if item.get('degree_level') in EDUCATION_ORDER
     ]
     return max(levels, key=EDUCATION_ORDER.index, default='')
@@ -98,12 +114,12 @@ def education_level(content_json):
 def declared_skills(content_json):
     """Tên chuẩn hóa → (tên, mức `CvSkill.Level` hoặc rỗng) từ mục kỹ năng và trường riêng."""
     declared = {}
-    for item in _enabled_items(content_json, 'skills'):
+    for item in enabled_items(content_json, 'skills'):
         name = item.get('name')
         if isinstance(name, str) and name.strip():
             level = item.get('level')
             declared[normalize_skill_name(name)] = (name, SKILL_LEVELS.get(level, ''))
-    for item in _enabled_items(content_json, 'position_details'):
+    for item in enabled_items(content_json, 'position_details'):
         if item.get('maps_to') != 'skills' or not isinstance(item.get('value'), list):
             continue
         for name in item['value']:

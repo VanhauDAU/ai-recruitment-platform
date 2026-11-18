@@ -65,6 +65,18 @@ OPTIONAL_SCHEMA = {
     },
     'required': ['activities', 'awards', 'interests'],
 }
+# Tên tổ chức, giải thưởng, sở thích chỉ vài từ. Dài hơn thế là mô hình viết lẫn
+# lời thoại vào ô (đã gặp ở CV-070: "Replies to the previous question: Here's…").
+MAX_SHORT_FIELD_CHARS = 120
+
+
+def has_runaway_text(extra):
+    short = [
+        *(item.get(key, '') for item in extra['activities'] for key in ('name', 'organization')),
+        *extra['awards'],
+        *extra['interests'],
+    ]
+    return any(len(str(value)) > MAX_SHORT_FIELD_CHARS for value in short)
 
 
 def lower(level, steps=1):
@@ -147,10 +159,10 @@ def main():
         seed = rng.randint(1, 10**6)
         for attempt in range(3):
             extra = optional_sections(facts, options.model, seed + attempt)
-            if not has_foreign_script(extra):
+            if not has_foreign_script(extra) and not has_runaway_text(extra):
                 break
         else:
-            raise RuntimeError(f'{code}: mục phụ vẫn lẫn chữ không phải Latin sau 3 lần sinh.')
+            raise RuntimeError(f'{code}: mục phụ vẫn lẫn chữ lạ hoặc lời thoại sau 3 lần sinh.')
         data['languages'] = localized(languages, facts['language'])
         data['activities'] = extra['activities'] if rng.random() < 0.6 else []
         data['awards'] = extra['awards'] if rng.random() < 0.35 else []

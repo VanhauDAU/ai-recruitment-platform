@@ -269,8 +269,35 @@ lộ trình ở [tiến độ dự án](../TIEN-DO-DU-AN.md#đối-sánh-ngữ-n
   (`ml/requirements.txt`, `ml/scripts/smoke_mps.py`); mô hình nền là
   `intfloat/multilingual-e5-base`.
 
-Chưa có: trích xuất và chuẩn hóa CV/JD, tính embedding, công thức chấm điểm,
-API, worker suy luận và giao diện.
+Trích xuất hồ sơ (`apps/matching/services/extraction/`, phiên bản `extract-v1`):
+CV builder, CV tải lên và tin tuyển dụng đều thành `profile_json` gồm kỹ năng,
+kinh nghiệm, học vấn, cấp bậc, ngoại ngữ, địa điểm và các chunk (đoạn văn để
+tính vector).
+
+| Tệp | Việc |
+| --- | --- |
+| `text.py` | NFC, tách câu, nối dòng PDF bị ngắt, nhận diện ngôn ngữ (tỷ lệ chữ có dấu) |
+| `facts.py` | Khoảng ngày (03/2021, 2021-03, Sep 2021, "Hiện tại"), bậc học (từ chỉ bằng cấp trước tên trường), cấp bậc (chỉ từ khóa chức danh rõ nghĩa), mức ngoại ngữ (từ chỉ mức, IELTS/TOEIC/JLPT…) |
+| `cv_builder.py` | Đọc trường có cấu trúc của `content_json`; số tháng và bậc học dùng chung hàm với trường matching của CV |
+| `cv_upload.py` | Chia mục theo dòng tiêu đề, nhận ra bố cục PDF bị đảo, tính số tháng theo bốn trường hợp (`experience.basis`) |
+| `job.py` | Trường có cấu trúc của tin; chunk là từng câu yêu cầu rồi mô tả |
+| `services/skills.py` | Khớp tên và alias của danh mục kỹ năng, nguồn `declared`/`listed`/`text`/`job` |
+
+Quy tắc chống bịa dữ liệu:
+
+- Kỹ năng có `evidence` là câu nguyên văn trong CV kể việc đã làm; kỹ năng chỉ có
+  trong danh sách thì `evidence` rỗng ("không minh chứng" theo rubric).
+- Không xác định được thì để rỗng và ghi vào `quality.missing`; số tháng chỉ là 0
+  khi CV ghi rõ không có kinh nghiệm (CV builder không có mục, PDF bố cục gọn
+  không có mục và không có ngày đi làm), còn lại là `None`.
+- Chunk bỏ email và số điện thoại; câu yêu cầu của tin về giới tính, tuổi, ngoại
+  hình, hôn nhân không được đối sánh.
+
+Đọc chữ PDF bằng `pypdfium2`; số liệu đo thư viện, độ chính xác trích xuất và
+baseline ở `ml/reports/`. Lệnh `matching_export_dataset` (chỉ đọc) xuất hồ sơ
+cho các script ở `ml/`.
+
+Chưa có: tính embedding, công thức chấm điểm, API, worker suy luận và giao diện.
 
 ## Việc còn mở
 
