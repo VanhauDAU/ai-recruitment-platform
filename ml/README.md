@@ -20,6 +20,7 @@ ml/
     extract_check.py      so pypdf và pypdfium2 trên 51 PDF
     baseline.py           TF-IDF và BM25, kiểm tra trên nhãn yếu
     build_gold_pairs.py   ghép 150 cặp tập vàng (BM25 + e5 + ngẫu nhiên), phiếu chấm
+    label_server.py       trang chấm tập vàng trên máy (ghi thẳng gold_pairs.xlsx)
     export_profiles.py    xuất profile_json từ hệ thống (lệnh matching_export_dataset)
     check_profiles.py     đối chiếu profile_json với manifest, kiểm tra "không bịa"
     calibrate.py          AUC và mốc hiệu chuẩn cosine → điểm của từng phép so
@@ -27,6 +28,7 @@ ml/
   labeling/               tài liệu gán nhãn (commit)
     rubric.md             thang chấm 0–4 đã chốt
     gold_pairs.xlsx       phiếu chấm 150 cặp (tab Chấm), kèm nội dung JD và CV
+    label_app.html        giao diện của trang chấm
     skill_merge.json      gộp kỹ năng trùng nghĩa khi nhập tin
   data/                   KHÔNG commit (.gitignore)
     jd/
@@ -64,6 +66,19 @@ Lưu ý khi trích xuất: `pypdf` tách rời dấu tiếng Việt (9% số t�
 nên hệ thống đọc chữ PDF bằng `pypdfium2` (`reports/extract_check.md`). PDF TopCV
 hai cột bị đảo thứ tự đọc và thiếu việc đang làm (rơi khi tạo trên TopCV), nên
 đáp án số tháng của PDF chỉ tính các việc in trong tệp.
+
+## Chấm tập vàng
+
+```bash
+ml/.venv/bin/python ml/scripts/label_server.py
+```
+
+Mở http://127.0.0.1:8765. Mỗi trang là một cặp: tin bên trái, CV bên phải, chọn
+điểm 0–4 (phím `0`–`4`), ghi một dòng lý do, `U` đánh dấu không chắc, `Enter` lưu
+và sang cặp chưa chấm kế tiếp. Nhãn ghi thẳng vào `labeling/gold_pairs.xlsx`;
+lúc khởi động phiếu được sao lưu vào `data/labels/`. Đóng tệp trong Excel khi
+chấm. Trang không hiện điểm hệ thống hay nguồn ghép cặp (chấm mù); phần "thấy
+nguyên chữ" chỉ là tìm chữ giống hệt, kỹ năng tương đương người chấm tự xét.
 
 ## Thứ tự chạy
 
