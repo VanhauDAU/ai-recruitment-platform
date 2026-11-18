@@ -9,7 +9,6 @@ from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.test import APIClient, APITestCase
 from rest_framework_simplejwt.tokens import AccessToken
 
-from apps.accounts import oauth
 from apps.accounts.models import (
     AdminAccessAuditLog,
     AuthEmailJob,
@@ -17,7 +16,7 @@ from apps.accounts.models import (
     SocialAccount,
     User,
 )
-from apps.accounts.services import email_verification, password_reset
+from apps.accounts.services import email_verification, oauth, password_reset
 from apps.accounts.services.refresh_cookies import cookie_name
 from apps.accounts.services.tokens import issue_tokens
 from apps.accounts.tests.helpers import make_admin

@@ -4,8 +4,8 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from django.core.validators import URLValidator
 from rest_framework import serializers
 
-from common.media_storage import media_url_from_value
-from common.rich_text import rich_text_plain_text
+from common.html.rich_text import rich_text_plain_text
+from common.storage.media import media_url_from_value
 
 from ...models import (
     Company,

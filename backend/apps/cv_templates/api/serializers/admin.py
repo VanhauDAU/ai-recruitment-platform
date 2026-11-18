@@ -1,9 +1,10 @@
 from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import serializers
 
+from apps.cv_templates.domain.renderers import layout_registry
 from apps.cvs.models import CvAsset
 from apps.jobs.models import JobCategory
-from common.media_storage import media_url_from_value
+from common.storage.media import media_url_from_value
 
 from ...models import (
     CvCategory,
@@ -18,7 +19,6 @@ from ...models import (
     CvTemplateVersion,
     ExperienceBand,
 )
-from ...renderers import layout_registry
 
 
 class CvTemplateVersionAdminSerializer(serializers.ModelSerializer):

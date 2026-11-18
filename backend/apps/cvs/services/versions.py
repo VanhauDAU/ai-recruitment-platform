@@ -9,7 +9,7 @@ from django.db import transaction
 from django.db.models import Max
 from django.utils import timezone
 
-from common.r2_storage import private_media_storage
+from common.storage.r2 import private_media_storage
 
 from ..models import CvDraft, CvVersion, UserCv
 from ..schemas import (

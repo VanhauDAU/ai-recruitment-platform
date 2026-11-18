@@ -19,10 +19,10 @@ from urllib.parse import urlsplit
 from django.conf import settings
 from django.core.exceptions import ValidationError
 
-from apps.cv_templates.renderers import validate_renderer_contract
-from common.r2_storage import cv_asset_storage
+from apps.cv_templates.domain.renderers import validate_renderer_contract
 
 from ..models import CvAsset
+from .assets import cv_asset_storage
 
 RENDER_TIMEOUT_MS = 20_000
 

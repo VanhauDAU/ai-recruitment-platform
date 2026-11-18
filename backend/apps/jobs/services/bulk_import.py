@@ -22,7 +22,7 @@ from apps.locations.models import Location
 from apps.skills.models import Skill
 from apps.skills.selectors import normalize_skill_name, skills_by_names
 from apps.skills.services import create_skill
-from common.rich_text import sanitize_rich_text
+from common.html.rich_text import sanitize_rich_text
 from common.vietnam_time import vietnam_today
 
 from ..models import (

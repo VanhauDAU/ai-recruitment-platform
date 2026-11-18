@@ -11,7 +11,7 @@ from apps.cvs.services import application_readiness_issues, is_unsaved_builder_b
 from apps.jobs.models import Job
 from apps.jobs.selectors.listing import publicly_available_job_filter
 from apps.locations.models import Location
-from common.media_storage import media_url_from_value
+from common.storage.media import media_url_from_value
 
 from ...models import Application
 from ...services import candidate_reminder_available_at, reapplication_error

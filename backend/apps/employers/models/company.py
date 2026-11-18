@@ -3,8 +3,8 @@ from django.contrib.postgres.indexes import GinIndex
 from django.db import models
 from django.utils.text import slugify
 
+from common.db.public_id import generate_public_id
 from common.db.search import fold_accents
-from common.public_id import generate_public_id
 
 # Path segments owned by static routes under /cong-ty/; a company slug equal to
 # one of them would be unreachable at /cong-ty/<slug>.

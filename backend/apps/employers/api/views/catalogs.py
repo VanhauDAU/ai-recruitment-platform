@@ -3,7 +3,7 @@ from rest_framework import generics, permissions, serializers
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.accounts.permissions import IsEmployer
+from apps.accounts.api.permissions import IsEmployer
 
 from ...models import Company, Industry
 from ..serializers import IndustrySerializer

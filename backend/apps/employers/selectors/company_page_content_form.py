@@ -1,9 +1,10 @@
 """The content tab of the page workspace: published values, the caller's
 pending request, a status per block and the completeness score."""
 
+from apps.employers.domain.page_content import SOCIAL_NETWORKS
 from apps.locations.models import Location
-from common.media_storage import media_url_from_value
-from common.rich_text import rich_text_plain_text
+from common.html.rich_text import rich_text_plain_text
+from common.storage.media import media_url_from_value
 
 from ..models import CompanyUpdateRequest, RecruiterProfile
 from ..models.verification import (
@@ -11,7 +12,6 @@ from ..models.verification import (
     REQUESTER_EDITABLE_COMPANY_UPDATE_STATUSES,
     company_update_allowed_actions,
 )
-from ..page_content import SOCIAL_NETWORKS
 
 TEXT_FIELDS = ('headline', 'description', 'culture', 'employee_benefits', 'video_url')
 MEDIA_MARKERS = ('logo_pending', 'cover_pending', 'gallery_pending')

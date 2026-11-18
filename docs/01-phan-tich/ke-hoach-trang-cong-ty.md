@@ -104,7 +104,7 @@ Người không đủ quyền vào được ở chế độ chỉ xem, kèm lý 
 | Tạm ẩn | `Company.content_policy_hold`, `page_updated_at` | Đọc rẻ ở mọi nơi; lý do nằm trong nhật ký |
 | Nhật ký thay đổi tức thì | Bảng `CompanyPageEvent` chỉ-ghi-thêm | Bố cục không qua admin nên cần dấu vết |
 
-**Registry khối** tại `backend/apps/employers/page_registry.py` (cùng kiểu `cv_templates/section_registry.py`), phục vụ qua API, frontend không giữ bản sao:
+**Registry khối** tại `backend/apps/employers/domain/page_registry.py` (cùng kiểu `cv_templates/domain/section_registry.py`), phục vụ qua API, frontend không giữ bản sao:
 
 - Vùng chính, sắp xếp được: `about`, `jobs`, `benefits`, `culture`, `gallery`, `video`.
 - Sidebar, thứ tự cố định: `general_info`, `offices`, `social_links`, `share`, `similar_companies`.
@@ -125,7 +125,7 @@ Một module chính sách duy nhất: `backend/apps/employers/models/page_access
 
 ### 4.3. API
 
-**Công khai** (`/api/companies/`, mở rộng `urls_public.py`):
+**Công khai** (`/api/companies/`, mở rộng `apps/employers/api/urls/public.py`):
 
 - `GET <slug>/`: DTO dạng khối có kiểu từ một builder duy nhất `build_public_company_profile(company, overrides=None)` (`selectors/company_page.py`). Frontend chỉ đọc `sections[].type`, không suy từ tên cột.
 - `GET <public_id>/similar/`, `GET <public_id>/job-facets/` (tải lười).
@@ -148,8 +148,8 @@ Tất cả endpoint mới có throttle riêng và test ngân sách query (phẳn
 
 ### 4.4. SEO shell
 
-- `backend/apps/employers/urls_seo.py`: `cong-ty/<slug>` và `sitemaps/companies.xml`, include sau `apps.sitecontent.urls_seo`; thêm `tim-kiem` vào tập slug dành riêng.
-- View theo mẫu `jobs/api/views/seo.py`, dùng `common/seo.py`: title, description, canonical, robots, OG/Twitter, JSON-LD `Organization` (không mã số thuế, địa chỉ chỉ với doanh nghiệp) + `BreadcrumbList`.
+- `backend/apps/employers/seo/urls.py`: `cong-ty/<slug>` và `sitemaps/companies.xml`, include sau `apps.sitecontent.seo.urls`; thêm `tim-kiem` vào tập slug dành riêng.
+- View theo mẫu `jobs/seo/views.py`, dùng `common/seo.py`: title, description, canonical, robots, OG/Twitter, JSON-LD `Organization` (không mã số thuế, địa chỉ chỉ với doanh nghiệp) + `BreadcrumbList`.
 - Slug lạ hoặc bị tạm ẩn: HTTP 404 thật.
 - Repo không còn cấu hình nginx, nên yêu cầu "route nginx" được đáp ứng bằng ghi chú trong tài liệu triển khai.
 

@@ -13,9 +13,9 @@ from rest_framework import generics, parsers, serializers, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
-from apps.accounts.permissions import IsEmployer
-from common.office_preview import render_office_document_preview
-from common.r2_storage import private_media_storage
+from apps.accounts.api.permissions import IsEmployer
+from common.files.office_preview import render_office_document_preview
+from common.storage.r2 import private_media_storage
 
 from ...models import CompanyDocument, CompanyUpdateRequest
 from ...models.page_access import resolve_company_page_access

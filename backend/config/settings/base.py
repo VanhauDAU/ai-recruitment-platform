@@ -94,9 +94,9 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'common.security.ApiSecurityHeadersMiddleware',
+    'common.http.security.ApiSecurityHeadersMiddleware',
     'corsheaders.middleware.CorsMiddleware',
-    'common.security.AuthCookieOriginMiddleware',
+    'common.http.security.AuthCookieOriginMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -298,11 +298,11 @@ _LOCAL_MEDIA_STORAGE = {
     'OPTIONS': {'location': PUBLIC_MEDIA_ROOT, 'base_url': MEDIA_URL},
 }
 _LOCAL_PRIVATE_MEDIA_STORAGE = {
-    'BACKEND': 'common.private_storage.PrivateFileSystemStorage',
+    'BACKEND': 'common.storage.private.PrivateFileSystemStorage',
     'OPTIONS': {'location': PRIVATE_MEDIA_ROOT, 'base_url': None},
 }
 _LOCAL_QUARANTINE_STORAGE = {
-    'BACKEND': 'common.private_storage.QuarantineFileSystemStorage',
+    'BACKEND': 'common.storage.private.QuarantineFileSystemStorage',
     'OPTIONS': {'location': UPLOAD_QUARANTINE_ROOT, 'base_url': None},
 }
 STORAGES = {
@@ -320,7 +320,7 @@ if R2_ENABLED:
         'file_overwrite': False,
     }
     STORAGES['default'] = {
-        'BACKEND': 'common.private_storage.PrivateS3Storage',
+        'BACKEND': 'common.storage.private.PrivateS3Storage',
         'OPTIONS': {
             **_R2_COMMON_OPTIONS,
             'bucket_name': R2_PRIVATE_BUCKET,
@@ -332,7 +332,7 @@ if R2_ENABLED:
     STORAGES['private_media'] = STORAGES['default']
     if R2_QUARANTINE_ENABLED:
         STORAGES['quarantine'] = {
-            'BACKEND': 'common.private_storage.QuarantineS3Storage',
+            'BACKEND': 'common.storage.private.QuarantineS3Storage',
             'OPTIONS': {
                 **_R2_COMMON_OPTIONS,
                 'bucket_name': R2_QUARANTINE_BUCKET,
@@ -369,9 +369,11 @@ TRUSTED_PROXY_HOPS = config('TRUSTED_PROXY_HOPS', default=1, cast=int)
 
 # Django REST Framework
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': ('apps.accounts.authentication.AccountJWTAuthentication',),
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'apps.accounts.api.authentication.AccountJWTAuthentication',
+    ),
     'DEFAULT_PERMISSION_CLASSES': ('rest_framework.permissions.IsAuthenticated',),
-    'DEFAULT_PAGINATION_CLASS': 'common.pagination.StandardPagination',
+    'DEFAULT_PAGINATION_CLASS': 'common.api.pagination.StandardPagination',
     'PAGE_SIZE': 20,
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     # Phòng thủ lớp hai cho các throttle chưa dùng ClientIPScopedRateThrottle:
@@ -622,8 +624,10 @@ CELERY_TASK_ROUTES = {
     'apps.employers.tasks.tax_lookup.*': {'queue': 'default'},
     'apps.employers.tasks.domain_claims.*': {'queue': 'default'},
     'apps.campaigns.tasks.*': {'queue': 'default'},
-    'apps.cv_templates.tasks.generate_cv_sample_content': {'queue': 'ai-generation'},
-    'apps.cv_templates.tasks.render_template_test_pdf': {'queue': 'cv-export'},
+    'apps.cv_templates.tasks.template_assets.generate_cv_sample_content': {
+        'queue': 'ai-generation'
+    },
+    'apps.cv_templates.tasks.template_assets.render_template_test_pdf': {'queue': 'cv-export'},
     'apps.cvs.tasks.*': {'queue': 'cv-export'},
     'apps.uploads.tasks.*': {'queue': 'upload-scan'},
     'apps.jobs.tasks.ai_generation.*': {'queue': 'ai-generation'},
@@ -705,15 +709,15 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': 60.0,
     },
     'dispatch-pending-cv-export-jobs': {
-        'task': 'apps.cvs.tasks.dispatch_pending_cv_export_jobs',
+        'task': 'apps.cvs.tasks.exports.dispatch_pending_cv_export_jobs',
         'schedule': 60.0,
     },
     'dispatch-pending-cv-import-jobs': {
-        'task': 'apps.cvs.tasks.dispatch_pending_cv_import_jobs',
+        'task': 'apps.cvs.tasks.imports.dispatch_pending_cv_import_jobs',
         'schedule': 60.0,
     },
     'purge-expired-cv-import-sources': {
-        'task': 'apps.cvs.tasks.purge_expired_cv_import_sources',
+        'task': 'apps.cvs.tasks.imports.purge_expired_cv_import_sources',
         'schedule': 86400.0,
     },
     'dispatch-pending-upload-scans': {

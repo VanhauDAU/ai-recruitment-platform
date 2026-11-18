@@ -8,6 +8,7 @@ from django.urls import reverse
 from rest_framework.exceptions import ValidationError
 
 from apps.accounts.models import User
+from apps.employers.domain.page_content import normalize_video_url, video_embed
 from apps.jobs.models import Benefit
 from apps.locations.models import Location
 
@@ -18,7 +19,6 @@ from ..models import (
     CompanyUpdateEvent,
     CompanyUpdateRequest,
 )
-from ..page_content import normalize_video_url, video_embed
 from ..services import (
     CompanyUpdateConflict,
     apply_update_request,

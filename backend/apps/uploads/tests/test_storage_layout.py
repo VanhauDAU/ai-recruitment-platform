@@ -13,7 +13,7 @@ from django.test import RequestFactory, SimpleTestCase, override_settings
 from django.views.static import serve
 
 from apps.uploads.services import classify_legacy_storage_key
-from common.private_storage import (
+from common.storage.private import (
     PrivateFileSystemStorage,
     PrivateS3Storage,
     PrivateStorageUrlError,
@@ -26,15 +26,15 @@ from common.private_storage import (
 def _local_storages(public_root, private_root, quarantine_root):
     return {
         'default': {
-            'BACKEND': 'common.private_storage.PrivateFileSystemStorage',
+            'BACKEND': 'common.storage.private.PrivateFileSystemStorage',
             'OPTIONS': {'location': private_root, 'base_url': None},
         },
         'private_media': {
-            'BACKEND': 'common.private_storage.PrivateFileSystemStorage',
+            'BACKEND': 'common.storage.private.PrivateFileSystemStorage',
             'OPTIONS': {'location': private_root, 'base_url': None},
         },
         'quarantine': {
-            'BACKEND': 'common.private_storage.QuarantineFileSystemStorage',
+            'BACKEND': 'common.storage.private.QuarantineFileSystemStorage',
             'OPTIONS': {'location': quarantine_root, 'base_url': None},
         },
         'public_media': {

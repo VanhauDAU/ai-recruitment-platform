@@ -9,7 +9,7 @@ from apps.cvs.models import UserCv
 from apps.employers.models import RecruitmentCampaign, RecruitmentNeed
 from apps.employers.selectors import build_employer_initial_onboarding
 from apps.jobs.models import Job
-from common.media_storage import media_url_from_value
+from common.storage.media import media_url_from_value
 
 from .auth import admin_access_payload
 

@@ -16,6 +16,7 @@ from django.db.models import (
 )
 from django.utils import timezone
 
+from apps.accounts.domain.impact_token_rules import create_impact_token
 from apps.applications.models import Application
 from apps.employers.models import (
     CompanyDocument,
@@ -26,7 +27,6 @@ from apps.employers.models import (
 )
 from apps.jobs.models import Job
 
-from ..impact_token_rules import create_impact_token
 from ..models import (
     AdminAccessAuditLog,
     AdminInvitation,

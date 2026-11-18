@@ -108,7 +108,7 @@ def queue_cv_import(
                     days=getattr(settings, 'CV_IMPORT_SOURCE_RETENTION_DAYS', 30),
                 ),
             )
-            from ..tasks import process_cv_import_job
+            from apps.cvs.tasks.imports import process_cv_import_job
 
             transaction.on_commit(lambda: process_cv_import_job.delay(job.pk))
         return cv, job, True
@@ -183,7 +183,7 @@ def queue_cv_import_from_session(
         source_expires_at=timezone.now()
         + timedelta(days=getattr(settings, 'CV_IMPORT_SOURCE_RETENTION_DAYS', 30)),
     )
-    from ..tasks import process_cv_import_job
+    from apps.cvs.tasks.imports import process_cv_import_job
 
     transaction.on_commit(lambda: process_cv_import_job.delay(job.pk))
     return cv, job, True
@@ -205,7 +205,7 @@ def retry_import(*, cv, actor):
     cv.processing_status = UserCv.ProcessingStatus.QUEUED
     cv.error_message = ''
     cv.save(update_fields=['processing_status', 'error_message', 'updated_at'])
-    from ..tasks import process_cv_import_job
+    from apps.cvs.tasks.imports import process_cv_import_job
 
     transaction.on_commit(lambda: process_cv_import_job.delay(job.pk))
     return job

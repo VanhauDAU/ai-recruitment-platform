@@ -19,7 +19,7 @@ from apps.accounts.models import AuthEmailJob, SocialAccount, User
 from apps.accounts.services.tokens import issue_tokens
 from apps.jobs.models import JobCategory
 from apps.locations.models import Location
-from common.r2_storage import private_media_storage
+from common.storage.r2 import private_media_storage
 
 from .. import services
 from ..models import (
@@ -1297,7 +1297,7 @@ class JoinCompanyTests(APITestCase):
         self.assertEqual(preview['Content-Type'], 'application/pdf')
         self.assertEqual(b''.join(preview.streaming_content), b'%PDF-private-preview')
 
-    @patch('common.office_preview.subprocess.run')
+    @patch('common.files.office_preview.subprocess.run')
     def test_raw_word_agreement_preview_requires_scan_without_running_office(self, soffice_run):
         upload = SimpleUploadedFile(
             'thoa-thuan.docx',

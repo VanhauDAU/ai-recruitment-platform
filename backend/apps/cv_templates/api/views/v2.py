@@ -15,6 +15,7 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.cv_templates.services.demo_identity import with_demo_identity
 from apps.cvs.schemas import empty_content
 from apps.cvs.services.composition import (
     CvCompositionError,
@@ -24,7 +25,6 @@ from apps.cvs.services.composition import (
 from apps.jobs.models import JobCategory
 from common.metrics import record_metric
 
-from ...demo_identity import with_demo_identity
 from ...models import (
     DEFAULT_CV_LANGUAGE,
     DEFAULT_EXPERIENCE_BAND,

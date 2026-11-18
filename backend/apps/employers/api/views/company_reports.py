@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
-from apps.accounts.permissions import IsCandidate
+from apps.accounts.api.permissions import IsCandidate
 
 from ...services import submit_company_report
 from ..serializers import CompanyReportCreatedSerializer, CompanyReportCreateSerializer

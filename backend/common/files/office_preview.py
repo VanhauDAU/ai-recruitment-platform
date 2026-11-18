@@ -1,0 +1,74 @@
+"""Safe PDF previews of private Office documents (employer papers, uploaded CVs)."""
+
+from __future__ import annotations
+
+import logging
+import shutil
+import subprocess
+import tempfile
+from pathlib import Path
+
+from common.storage.r2 import private_media_storage
+
+DOCX_CONTENT_TYPE = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+OFFICE_DOCUMENT_SUFFIXES = {
+    'application/msword': '.doc',
+    DOCX_CONTENT_TYPE: '.docx',
+}
+PREVIEW_TIMEOUT_SECONDS = 30
+MAX_PREVIEW_BYTES = 25 * 1024 * 1024
+
+logger = logging.getLogger(__name__)
+
+
+def _render_source_to_pdf(source_path: Path) -> bytes | None:
+    try:
+        subprocess.run(
+            [
+                'soffice',
+                (f'-env:UserInstallation={(source_path.parent / "libreoffice-profile").as_uri()}'),
+                '--headless',
+                '--nologo',
+                '--nodefault',
+                '--nolockcheck',
+                '--nofirststartwizard',
+                '--norestore',
+                '--safe-mode',
+                '--convert-to',
+                'pdf',
+                '--outdir',
+                str(source_path.parent),
+                str(source_path),
+            ],
+            check=False,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            timeout=PREVIEW_TIMEOUT_SECONDS,
+        )
+        preview_path = source_path.with_suffix('.pdf')
+        if not preview_path.is_file() or preview_path.stat().st_size > MAX_PREVIEW_BYTES:
+            return None
+        return preview_path.read_bytes()
+    except (FileNotFoundError, OSError, subprocess.TimeoutExpired):
+        logger.warning('Office document preview conversion failed.')
+        return None
+
+
+def render_office_document_preview(file_url: str, content_type: str) -> bytes | None:
+    """Render a supported private Office document to PDF without exposing its URL."""
+    suffix = OFFICE_DOCUMENT_SUFFIXES.get(content_type)
+    if not suffix:
+        return None
+
+    with tempfile.TemporaryDirectory(prefix='office-document-preview-') as directory:
+        source_path = Path(directory) / f'source{suffix}'
+        try:
+            with (
+                private_media_storage().open(file_url, 'rb') as source,
+                source_path.open('wb') as target,
+            ):
+                shutil.copyfileobj(source, target)
+        except OSError:
+            logger.warning('Office document preview source could not be read.')
+            return None
+        return _render_source_to_pdf(source_path)

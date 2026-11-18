@@ -5,7 +5,7 @@ from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from common.throttling import ClientIPScopedRateThrottle
+from common.api.throttling import ClientIPScopedRateThrottle
 
 from ...selectors import (
     build_public_company_profile,

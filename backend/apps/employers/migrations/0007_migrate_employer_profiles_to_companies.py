@@ -1,6 +1,6 @@
 from django.db import migrations
 
-from common.public_id import generate_public_id
+from common.db.public_id import generate_public_id
 
 # employer_profiles.status -> companies.verification_status
 STATUS_MAP = {'pending': 'pending', 'approved': 'verified', 'rejected': 'rejected'}

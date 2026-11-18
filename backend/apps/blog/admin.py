@@ -3,7 +3,7 @@ from django.contrib import admin
 from django.utils import timezone
 from django.utils.html import format_html
 
-from common.media_storage import delete_local_media_url, media_url_from_value, save_image_upload
+from common.storage.media import delete_local_media_url, media_url_from_value, save_image_upload
 
 from .models import PinnedPost, Post, PostCategory, Tag
 

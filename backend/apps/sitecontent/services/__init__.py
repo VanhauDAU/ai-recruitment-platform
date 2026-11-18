@@ -20,11 +20,13 @@ from .announcements import (
     set_announcement_viewer_cookie,
     validate_cta_url,
 )
-from .seo import SEO_SETTINGS_CACHE_KEY, resolved_seo_settings
+from .cache_keys import PUBLIC_SETTINGS_CACHE_KEY, SEO_SETTINGS_CACHE_KEY
+from .seo import resolved_seo_settings
 
 __all__ = [
     'StaleAnnouncementRevision',
     'StaleAnnouncementState',
+    'PUBLIC_SETTINGS_CACHE_KEY',
     'SEO_SETTINGS_CACHE_KEY',
     'archive_announcement',
     'create_announcement',

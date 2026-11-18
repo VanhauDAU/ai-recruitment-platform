@@ -6,4 +6,4 @@ class EmployersConfig(AppConfig):
     name = 'apps.employers'
 
     def ready(self):
-        from . import signals  # noqa: F401
+        from .signals import receivers  # noqa: F401

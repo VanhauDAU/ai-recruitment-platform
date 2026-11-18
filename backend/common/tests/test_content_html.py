@@ -1,10 +1,6 @@
 from django.test import SimpleTestCase
 
-from common.content_html import (
-    content_html_plain_text,
-    safe_content_url,
-    sanitize_content_html,
-)
+from common.html.content import content_html_plain_text, safe_content_url, sanitize_content_html
 
 
 class ContentHtmlTests(SimpleTestCase):

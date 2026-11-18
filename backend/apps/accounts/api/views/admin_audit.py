@@ -1,8 +1,8 @@
 from rest_framework import mixins, viewsets
 
-from common.pagination import StandardPagination
+from apps.accounts.api.permissions import AdminPortalPermission, require_superuser
+from common.api.pagination import StandardPagination
 
-from ...permissions import AdminPortalPermission, require_superuser
 from ...selectors import audit_logs_queryset
 from ..serializers.admin_audit import AdminAuditLogSerializer
 

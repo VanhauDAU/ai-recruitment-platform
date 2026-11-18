@@ -1,6 +1,6 @@
 from django.core.exceptions import ValidationError
 
-from common.media_storage import delete_local_media_url, save_image_upload
+from common.storage.media import delete_local_media_url, save_image_upload
 
 from ..models import KnowledgeMediaAsset
 

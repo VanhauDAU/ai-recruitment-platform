@@ -4,8 +4,8 @@ from rest_framework import mixins, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from apps.accounts.permissions import AdminPortalPermission
-from common.pagination import StandardPagination
+from apps.accounts.api.permissions import AdminPortalPermission
+from common.api.pagination import StandardPagination
 
 from ...selectors import admin_company_reports_queryset
 from ...services import resolve_company_report, reverse_company_report

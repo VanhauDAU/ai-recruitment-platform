@@ -6,8 +6,9 @@ hay tắt trường sau đó không làm hỏng CV đã có. Khi ứng viên đ�
 trị cùng `field_key` được giữ lại.
 """
 
+from apps.cv_templates.domain.section_registry import get_section_contract
+
 from ..models import CvPositionField
-from ..section_registry import get_section_contract
 
 SECTION_KEY = 'position_details'
 SECTION_TITLES = {'vi-VN': 'Thông tin chuyên môn', 'en-US': 'Professional details'}

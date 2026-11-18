@@ -9,8 +9,7 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.utils import timezone
 
-from apps.cv_templates.content_tokens import _materialize_tokens
-from apps.cv_templates.management.commands._cv_position_fields import POSITION_SETUP
+from apps.cv_templates.domain.content_tokens import _materialize_tokens
 from apps.cv_templates.models import (
     CvColor,
     CvPositionField,
@@ -20,6 +19,7 @@ from apps.cv_templates.models import (
     CvTemplateColorLink,
     ExperienceBand,
 )
+from apps.cv_templates.seed_data.position_fields import POSITION_SETUP
 from apps.jobs.models import JobCategory, JobCategoryLocalization
 
 DEFAULT_COLORS = [

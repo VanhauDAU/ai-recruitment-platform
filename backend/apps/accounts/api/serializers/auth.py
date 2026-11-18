@@ -5,7 +5,7 @@ from rest_framework import serializers
 from rest_framework_simplejwt.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenObtainSerializer
 
-from common.media_storage import media_url_from_value
+from common.storage.media import media_url_from_value
 
 from ...models import User
 from ...services import login_guard

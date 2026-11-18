@@ -16,7 +16,7 @@ from django.core.files.storage import default_storage
 from django.db import transaction
 from django.utils import timezone
 
-from apps.cv_templates.renderers import validate_renderer_contract
+from apps.cv_templates.domain.renderers import validate_renderer_contract
 
 from ..models import CvAccessLog, CvExport, CvVersion, UserCv
 from .audit import record_cv_access
@@ -88,7 +88,7 @@ def _dispatch_after_commit(export_id: int) -> None:
 
     def dispatch():
         try:
-            from apps.cvs.tasks import render_cv_export_job
+            from apps.cvs.tasks.exports import render_cv_export_job
 
             render_cv_export_job.delay(export_id)
         except Exception:  # noqa: BLE001 - persisted pending row remains recoverable by worker dispatch

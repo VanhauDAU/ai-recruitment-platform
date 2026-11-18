@@ -1,4 +1,4 @@
-from common.media_storage import save_image_upload
+from common.storage.media import save_image_upload
 
 from ..models import BlogMediaAsset
 

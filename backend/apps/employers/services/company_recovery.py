@@ -8,8 +8,8 @@ import json
 from django.db import transaction
 from django.db.models import Q
 
+from apps.accounts.api.permissions import require_admin
 from apps.accounts.models import User
-from apps.accounts.permissions import require_admin
 from apps.accounts.services import (
     StaleImpactToken,
     create_impact_token,

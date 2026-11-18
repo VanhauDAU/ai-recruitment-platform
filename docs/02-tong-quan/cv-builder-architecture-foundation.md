@@ -27,7 +27,7 @@ bị từ chối. Rich text có hai dạng cùng hợp lệ:
   `text` phải bằng chuỗi nối `runs[].text`. Mark cho phép: `bold`, `italic`,
   `underline`, `font_family`, `font_size_pt` (8–32) và màu hex.
 
-Section key là registry template-agnostic (`apps/cv_templates/section_registry.py`,
+Section key là registry template-agnostic (`apps/cv_templates/domain/section_registry.py`,
 mirror vào `CvSectionDefinition`), gồm các section nội dung (`personal_info`,
 `summary`, `experience`, `skills`, `activities`, `references`, `interests`…) và
 ba marker `nameplate`, `contact`, `avatar` lấy dữ liệu từ `personal_info`.
@@ -48,7 +48,7 @@ renderer. Create, đổi mẫu, apply sample, position preview, import và snaps
 - `CvTemplate` giữ identity/catalogue. `CvTemplateVersion` lưu `renderer_key`,
   `renderer_version`, schema/default layout/style, `capabilities`,
   `content_contract`. Component không lưu trong DB: `renderer_key` là khóa trong
-  registry layout `apps/cv_templates/layouts.json` (bản sao giống hệt ở
+  registry layout `apps/cv_templates/domain/layouts.json` (bản sao giống hệt ở
   `frontend/src/entities/cv/cv/model/cv-layouts.json`, có test so khớp). Mỗi layout
   khai báo các vùng theo hàng (`row`, `width`, `tone` plain/tint/band, `arrange`
   stack/inline), `avatar`, `variant` (standard/timeline/compact) và giới hạn kéo
@@ -287,7 +287,7 @@ response shared/recruiter; PDF worker đọc storage nội bộ.
   revision/phiên bản snapshot; worker idempotent, ghi asset mới trước rồi swap
   pointer trong transaction, chỉ xóa asset cũ sau commit.
 - Nội dung mẫu không chứa danh tính. Ảnh catalogue và preview cho khách chưa đăng
-  nhập thêm danh tính minh họa lúc hiển thị (`apps/cv_templates/demo_identity.py`,
+  nhập thêm danh tính minh họa lúc hiển thị (`apps/cv_templates/services/demo_identity.py`,
   ảnh catalogue kèm ảnh đại diện bóng người); người đăng nhập thấy danh tính của
   chính họ. Danh tính minh họa không bao giờ ghi vào DB.
 

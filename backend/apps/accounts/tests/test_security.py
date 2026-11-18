@@ -11,7 +11,8 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 from rest_framework_simplejwt.tokens import AccessToken
 
-from .. import oauth
+from apps.accounts.services import oauth
+
 from ..models import AuthEmailJob, User
 from ..services import email_verification, password_reset
 from ..services.refresh_cookies import cookie_name

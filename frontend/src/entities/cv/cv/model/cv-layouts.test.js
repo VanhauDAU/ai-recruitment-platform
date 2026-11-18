@@ -7,7 +7,7 @@ import layouts from './cv-layouts.json'
 // (render). Hai bản phải giống hệt nhau.
 describe('CV layout registry', () => {
   it('matches the backend registry', () => {
-    const backend = JSON.parse(readFileSync(resolve(import.meta.dirname, '../../../../../../backend/apps/cv_templates/layouts.json'), 'utf8'))
+    const backend = JSON.parse(readFileSync(resolve(import.meta.dirname, '../../../../../../backend/apps/cv_templates/domain/layouts.json'), 'utf8'))
     expect(layouts).toEqual(backend)
   })
 

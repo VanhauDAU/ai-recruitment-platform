@@ -8,7 +8,11 @@ from rest_framework.exceptions import APIException, ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.accounts.permissions import AdminPortalPermission
+from apps.accounts.api.permissions import AdminPortalPermission
+from apps.cv_templates.tasks.template_assets import (
+    enqueue_template_snapshots,
+    regenerate_all_template_snapshots,
+)
 from apps.cvs.models import CvAsset, CvDraft
 from apps.cvs.services import create_background_asset
 from apps.jobs.models import JobCategory
@@ -50,7 +54,6 @@ from ...services import (
     test_pdf_job,
     test_pdf_passed,
 )
-from ...tasks import enqueue_template_snapshots, regenerate_all_template_snapshots
 from ..serializers.admin import (
     CvBackgroundAdminSerializer,
     CvCategoryAdminSerializer,

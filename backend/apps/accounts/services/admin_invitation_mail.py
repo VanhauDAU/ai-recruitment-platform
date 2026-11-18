@@ -3,7 +3,8 @@
 from django.conf import settings
 from django.utils.html import escape
 
-from ..admin_invitation_tokens import create_admin_invitation_token
+from apps.accounts.services.admin_invitation_tokens import create_admin_invitation_token
+
 from ..models import AdminInvitation
 from .mailing import frontend_link, send_html_email, site_setting
 

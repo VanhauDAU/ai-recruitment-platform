@@ -15,9 +15,9 @@ from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.db import IntegrityError, transaction
 from django.utils import timezone
 
+from apps.employers.domain.phone import canonical_vn_mobile
+from common.db.public_id import generate_public_id
 from common.metrics import record_metric
-from common.phone import canonical_vn_mobile
-from common.public_id import generate_public_id
 
 from ..models import EmployerPhoneVerificationEvent, PhoneOtp
 from .sms_provider import (

@@ -6,9 +6,9 @@ from urllib.parse import urlsplit
 from django.core.management.base import BaseCommand, CommandError
 from django.utils import timezone
 
-from common.media_storage import media_storage_path
 from common.metrics import record_metric
-from common.r2_storage import public_media_storage
+from common.storage.media import media_storage_path
+from common.storage.r2 import public_media_storage
 
 from ...models import (
     KnowledgeArticle,

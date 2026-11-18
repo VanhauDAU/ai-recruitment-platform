@@ -11,11 +11,11 @@ from copy import deepcopy
 
 from django.db.models import Q
 
+from apps.cv_templates.domain.content_tokens import _materialize_tokens
+from apps.cv_templates.domain.section_registry import blank_section, get_section_contract
 from apps.jobs.models import JobCategory, JobCategoryLocalization
 
-from ..content_tokens import _materialize_tokens
 from ..models import EXPERIENCE_BAND_ORDER, CvPositionProfile, CvSampleContent
-from ..section_registry import blank_section, get_section_contract
 from .position_fields import SECTION_KEY as POSITION_DETAILS_KEY
 from .position_fields import apply_position_details
 

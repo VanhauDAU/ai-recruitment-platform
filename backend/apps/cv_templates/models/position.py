@@ -11,7 +11,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.db import models
 
-from common.public_id import generate_public_id
+from common.db.public_id import generate_public_id
 
 from .experience import ExperienceBand
 from .language import CvLanguage, catalog_language, localized_field

@@ -15,7 +15,7 @@ transaction với thay đổi dữ liệu còn trigger FK chờ xử lý.
 
 from django.db import migrations
 
-import common.public_id
+import common.db.public_id
 
 LEVEL_TO_BAND = {
     'intern': 'entry',
@@ -41,7 +41,7 @@ def forwards(apps, schema_editor):
     for category in JobCategory.objects.filter(category_type='specialization', status='active'):
         profiles[category.pk], _ = CvPositionProfile.objects.get_or_create(
             job_category=category,
-            defaults={'public_id': common.public_id.generate_public_id('cvpos')},
+            defaults={'public_id': common.db.public_id.generate_public_id('cvpos')},
         )
 
     seen = set()
@@ -70,7 +70,7 @@ def forwards(apps, schema_editor):
             continue
         seen.add(key)
         CvSampleContent.objects.create(
-            public_id=common.public_id.generate_public_id('cvsample'),
+            public_id=common.db.public_id.generate_public_id('cvsample'),
             locale=blueprint.locale,
             experience_band=band,
             title='Nội dung mẫu chung',

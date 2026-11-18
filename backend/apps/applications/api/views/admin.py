@@ -4,7 +4,7 @@ from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import generics
 
-from apps.accounts.permissions import AdminPortalPermission
+from apps.accounts.api.permissions import AdminPortalPermission
 from apps.jobs.models import Job
 
 from ...selectors import admin_job_applications_queryset

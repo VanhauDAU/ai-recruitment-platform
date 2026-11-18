@@ -39,15 +39,15 @@ UPLOAD_QUARANTINE_ROOT = _TEST_MEDIA_BASE / 'quarantine'
 # same local media contract as before and must not require network credentials.
 STORAGES = {
     'default': {
-        'BACKEND': 'common.private_storage.PrivateFileSystemStorage',
+        'BACKEND': 'common.storage.private.PrivateFileSystemStorage',
         'OPTIONS': {'location': PRIVATE_MEDIA_ROOT, 'base_url': None},
     },
     'private_media': {
-        'BACKEND': 'common.private_storage.PrivateFileSystemStorage',
+        'BACKEND': 'common.storage.private.PrivateFileSystemStorage',
         'OPTIONS': {'location': PRIVATE_MEDIA_ROOT, 'base_url': None},
     },
     'quarantine': {
-        'BACKEND': 'common.private_storage.QuarantineFileSystemStorage',
+        'BACKEND': 'common.storage.private.QuarantineFileSystemStorage',
         'OPTIONS': {'location': UPLOAD_QUARANTINE_ROOT, 'base_url': None},
     },
     'public_media': {

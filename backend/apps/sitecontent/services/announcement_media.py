@@ -4,7 +4,7 @@ from django.core.exceptions import ValidationError
 from PIL import Image
 from rest_framework.exceptions import ValidationError as DrfValidationError
 
-from common.media_storage import save_image_upload, validate_image_upload
+from common.storage.media import save_image_upload, validate_image_upload
 
 ANNOUNCEMENT_BG_MAX_BYTES = 1 * 1024 * 1024
 ANNOUNCEMENT_BG_MIN_WIDTH = 640

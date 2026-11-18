@@ -3,7 +3,7 @@ from django.core import signing
 from django.urls import reverse
 from rest_framework.test import APITestCase
 
-from apps.privacy.constants import CONSENT_SIGNING_SALT
+from apps.privacy.domain.signing import CONSENT_SIGNING_SALT
 
 
 class ConsentApiTests(APITestCase):

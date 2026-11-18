@@ -2,7 +2,7 @@ from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.accounts.permissions import IsCandidate
+from apps.accounts.api.permissions import IsCandidate
 
 from ...selectors import candidate_email_notification_settings_for_user
 from ...services import patch_candidate_email_notification_settings

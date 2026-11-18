@@ -6,7 +6,7 @@ from django.db import models
 from django.db.models.functions import Lower
 from django.utils import timezone
 
-from common.public_id import generate_public_id
+from common.db.public_id import generate_public_id
 
 
 class UserManager(BaseUserManager):

@@ -1,8 +1,8 @@
 from django.conf import settings
 from django.db import models
 
-from common.phone import same_phone
-from common.public_id import generate_public_id
+from apps.employers.domain.phone import same_phone
+from common.db.public_id import generate_public_id
 
 from .company import Company
 

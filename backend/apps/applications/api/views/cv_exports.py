@@ -8,7 +8,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.accounts.permissions import IsEmployer
+from apps.accounts.api.permissions import IsEmployer
 from apps.cvs.services import (
     CvExportPermissionError,
     CvExportUnavailableError,
@@ -17,7 +17,7 @@ from apps.cvs.services import (
     request_application_snapshot_export,
 )
 from apps.employers.services import ensure_recruiter_candidate_data_access
-from common.r2_storage import private_media_storage
+from common.storage.r2 import private_media_storage
 
 from ...models import Application
 from ...selectors import recruiter_application_snapshot_queryset

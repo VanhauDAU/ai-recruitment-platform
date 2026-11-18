@@ -12,16 +12,16 @@ from django.urls import reverse
 from django.utils import timezone
 from rest_framework.test import APIClient, APIRequestFactory
 
-from apps.accounts.admin_invitation_tokens import create_admin_invitation_token
-from apps.accounts.exceptions import AdminPermissionDenied
+from apps.accounts.api.permissions import AdminPortalPermission
 from apps.accounts.models import AdminAccessAuditLog, AdminInvitation, AuthEmailJob, User
-from apps.accounts.permissions import AdminPortalPermission
 from apps.accounts.selectors import account_status_impact
 from apps.accounts.services import (
     accept_admin_invitation,
     confirm_account_status,
     create_admin_invitation,
 )
+from apps.accounts.services.admin_invitation_tokens import create_admin_invitation_token
+from apps.accounts.services.exceptions import AdminPermissionDenied
 from apps.accounts.tests.helpers import make_admin
 from apps.employers.models import (
     CampaignActivity,

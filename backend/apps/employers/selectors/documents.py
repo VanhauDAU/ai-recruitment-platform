@@ -3,7 +3,7 @@
 from django.db.models import Case, IntegerField, Q, Value, When
 
 from ..models import CompanyDocument, RecruiterProfile
-from .company_status import has_explicit_company_link
+from ..models.readiness import has_explicit_company_link
 
 
 def _owned_document_filter(*, user, recruiter):

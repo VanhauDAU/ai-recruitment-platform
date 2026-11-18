@@ -6,7 +6,7 @@ from rest_framework import permissions, serializers, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from common.throttling import ClientIPScopedRateThrottle
+from common.api.throttling import ClientIPScopedRateThrottle
 
 from ...models import AuthEmailJob, User
 from ...services import email_verification as ev

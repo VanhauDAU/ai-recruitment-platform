@@ -14,7 +14,7 @@ from django.utils import timezone
 
 from apps.accounts.models import User
 from apps.accounts.services import record_admin_action
-from apps.privacy.constants import VIEWER_SIGNING_SALT
+from apps.privacy.domain.signing import VIEWER_SIGNING_SALT
 from common.metrics import record_metric
 from common.vietnam_time import vietnam_now, vietnam_today
 

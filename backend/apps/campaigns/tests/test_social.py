@@ -345,7 +345,7 @@ class PostImageTests(SocialFixtures, TestCase):
     def test_uploads_are_re_encoded_resized_and_kept_under_the_campaign(self):
         from PIL import Image
 
-        from common.r2_storage import public_media_storage
+        from common.storage.r2 import public_media_storage
 
         response = self.client.post(self.url, {'file': image_upload()}, format='multipart')
 
@@ -393,7 +393,7 @@ class PostImageTests(SocialFixtures, TestCase):
         self.assertEqual(len(stored['images']), 1)
 
     def test_company_cover_is_offered_and_accepted(self):
-        from common.r2_storage import public_media_storage
+        from common.storage.r2 import public_media_storage
 
         path = public_media_storage().save(
             f'employers/{self.company.public_id}/covers/cover.jpg',

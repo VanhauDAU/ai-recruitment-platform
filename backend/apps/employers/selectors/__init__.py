@@ -1,5 +1,6 @@
 """Public read/query API for the employers domain."""
 
+from ..models.readiness import has_explicit_company_link, is_registration_placeholder_company
 from .admin_companies import (
     admin_companies_queryset,
     admin_company_detail_queryset,
@@ -59,7 +60,6 @@ from .company_reports import (
     ADMIN_COMPANY_REPORT_ORDERING_FIELDS,
     admin_company_reports_queryset,
 )
-from .company_status import has_explicit_company_link, is_registration_placeholder_company
 from .documents import (
     can_access_employer_document_content,
     employer_document_content_queryset,

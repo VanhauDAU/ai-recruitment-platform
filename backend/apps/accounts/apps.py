@@ -6,4 +6,4 @@ class AccountsConfig(AppConfig):
     name = 'apps.accounts'
 
     def ready(self):
-        from . import schema  # noqa: F401
+        from apps.accounts.api import schema  # noqa: F401

@@ -4,9 +4,9 @@ from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.accounts.permissions import AdminPortalPermission
-from common.media_storage import save_image_upload
-from common.pagination import StandardPagination
+from apps.accounts.api.permissions import AdminPortalPermission
+from common.api.pagination import StandardPagination
+from common.storage.media import save_image_upload
 
 from ...selectors import (
     active_categories,

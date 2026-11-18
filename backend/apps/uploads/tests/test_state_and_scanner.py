@@ -3,10 +3,7 @@ from unittest.mock import patch
 
 from django.test import SimpleTestCase, override_settings
 
-from apps.uploads.configuration import (
-    CLAMAV_BACKEND,
-    upload_scanning_configuration_errors,
-)
+from apps.uploads.domain.configuration import CLAMAV_BACKEND, upload_scanning_configuration_errors
 from apps.uploads.models import (
     UploadState,
     UploadStateError,

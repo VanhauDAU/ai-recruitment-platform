@@ -87,10 +87,11 @@ Nguồn chi tiết: `docs/02-tong-quan/adr-0022-backend-structure.md`. Mọi Dja
 app trong `backend/apps/` theo đúng một layout:
 
 ```text
-<app>/api/{urls,views,serializers}/ · seo/ · models/ · selectors/ · services/ · tasks/ · signals/ · tests/
+<app>/api/{urls,views,serializers}/ · seo/ · models/ · domain/ · selectors/ · services/ · tasks/ · signals/ · tests/
 ```
 
-- Chiều phụ thuộc: `api → services/selectors → models`;
+- Chiều phụ thuộc: `api → services/selectors → models → domain` (`domain/`: định
+  nghĩa thuần không ORM mà models cũng dùng);
   `tasks | signals.receivers → services`. Không đặt module nghiệp vụ ở gốc app
   hay code trong `__init__.py` ngoài re-export.
 - `services/` (ghi) và `selectors/` (đọc) KHÔNG import máy móc HTTP của DRF

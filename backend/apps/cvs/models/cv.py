@@ -4,7 +4,7 @@ from django.db import models
 
 from apps.cv_templates.models import CvLanguage
 from apps.skills.models import Skill
-from common.public_id import generate_public_id
+from common.db.public_id import generate_public_id
 
 
 class UserCv(models.Model):
@@ -242,7 +242,7 @@ class CvVersion(models.Model):
             schema_version=self.schema_version,
         )
         if self.template_version_id:
-            from apps.cv_templates.renderers import validate_renderer_contract
+            from apps.cv_templates.domain.renderers import validate_renderer_contract
 
             validate_renderer_contract(
                 self.template_version.renderer_key,

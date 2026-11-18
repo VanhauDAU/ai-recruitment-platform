@@ -6,7 +6,7 @@ from django.conf import settings
 from django.core.cache import cache
 from django.utils.html import escape
 
-from common.cache_utils import atomic_pop
+from apps.accounts.services.token_cache import atomic_pop
 
 from ..models import User
 from .mailing import frontend_link, send_html_email, site_setting

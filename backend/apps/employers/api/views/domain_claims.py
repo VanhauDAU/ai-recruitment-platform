@@ -5,8 +5,8 @@ from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
-from apps.accounts.permissions import IsEmployer
-from common.throttling import ClientIPScopedRateThrottle, SuffixedScopedRateThrottleMixin
+from apps.accounts.api.permissions import IsEmployer
+from common.api.throttling import ClientIPScopedRateThrottle, SuffixedScopedRateThrottleMixin
 
 from ...selectors import company_domain_claims_queryset
 from ...services import (

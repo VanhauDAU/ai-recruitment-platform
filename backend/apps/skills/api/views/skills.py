@@ -1,7 +1,7 @@
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 
-from apps.accounts.permissions import IsEmployer
+from apps.accounts.api.permissions import IsEmployer
 
 from ...selectors import active_skill_groups_queryset, skill_lookup_queryset
 from ...services import create_skill

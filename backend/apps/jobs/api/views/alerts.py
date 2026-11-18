@@ -5,7 +5,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.accounts.permissions import IsCandidate
+from apps.accounts.api.permissions import IsCandidate
 
 from ...selectors import candidate_job_alerts
 from ...services import JOB_ALERT_LIMIT, create_job_alert, delete_job_alert, update_job_alert

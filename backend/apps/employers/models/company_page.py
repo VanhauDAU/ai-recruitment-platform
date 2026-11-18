@@ -3,9 +3,9 @@
 from django.conf import settings
 from django.db import models
 
-from common.public_id import generate_public_id
+from apps.employers.domain.page_registry import DEFAULT_ACCENT_KEY
+from common.db.public_id import generate_public_id
 
-from ..page_registry import DEFAULT_ACCENT_KEY
 from .company import Company
 from .membership import RecruiterProfile
 

@@ -8,15 +8,15 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.accounts.permissions import IsEmployer
+from apps.accounts.api.permissions import IsEmployer
+from apps.employers.domain.page_content import GALLERY_LIMIT
 from apps.uploads.services import UploadServiceError, claim_clean_upload
-from common.media_storage import delete_local_media_url, save_image_upload, validate_image_upload
-from common.public_id import generate_public_id
-from common.r2_storage import private_media_storage
+from common.db.public_id import generate_public_id
+from common.storage.media import delete_local_media_url, save_image_upload, validate_image_upload
+from common.storage.r2 import private_media_storage
 
 from ...models import CompanyImage, CompanyMediaUpload, CompanyUpdateRequest, RecruiterProfile
 from ...models.page_access import resolve_company_page_access
-from ...page_content import GALLERY_LIMIT
 from ...services import (
     REQUESTER_EDITABLE_COMPANY_UPDATE_STATUSES,
     EmployerUploadStructureError,

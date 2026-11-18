@@ -9,7 +9,7 @@ Ba luật, áp cho code production trong ``backend/apps`` (bỏ qua migrations, 
 * ``root-module`` — gốc app chỉ được chứa ``__init__``, ``apps``, ``admin``,
   ``checks``; mọi module khác phải thuộc một tầng.
 * ``init-code``  — ``__init__.py`` chỉ được re-export (import, ``__all__``,
-  docstring), không định nghĩa hàm/lớp hay chạy logic.
+  docstring, khai báo ``Signal()``), không định nghĩa hàm/lớp hay chạy logic.
 
 Vi phạm có sẵn được ghi trong ``backend/import-baseline.txt``. Vi phạm mới làm
 fail; mục baseline đã hết vi phạm cũng làm fail để baseline chỉ giảm. Chạy với
@@ -91,6 +91,14 @@ def cross_app_violation(owner: str, target: str) -> bool:
     return not (len(parts) == 3 and parts[2] in PUBLIC_SUBMODULES)
 
 
+def is_signal_declaration(value) -> bool:
+    return (
+        isinstance(value, ast.Call)
+        and isinstance(value.func, ast.Name)
+        and value.func.id == 'Signal'
+    )
+
+
 def init_has_code(tree: ast.Module) -> bool:
     for stmt in tree.body:
         if isinstance(stmt, (ast.Import, ast.ImportFrom)):
@@ -101,6 +109,8 @@ def init_has_code(tree: ast.Module) -> bool:
             targets = stmt.targets if isinstance(stmt, ast.Assign) else [stmt.target]
             if all(isinstance(t, ast.Name) and t.id == '__all__' for t in targets):
                 continue
+            if is_signal_declaration(stmt.value):
+                continue  # signals/__init__.py khai báo Signal công khai (ADR-0022)
         return True
     return False
 

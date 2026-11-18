@@ -3,10 +3,10 @@ from django.db.models import Max
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
+from apps.employers.signals import campaign_status_changed
 from common.vietnam_time import vietnam_today
 
 from ..models import CampaignActivity, RecruitmentCampaign
-from ..signals import campaign_status_changed
 from .profiles import ensure_recruiter_job_workspace
 
 

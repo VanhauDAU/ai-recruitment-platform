@@ -7,8 +7,8 @@ from uuid import uuid4
 from django.core.files.storage import default_storage
 from django.db import transaction
 
-from common.office_preview import DOCX_CONTENT_TYPE, render_office_document_preview
-from common.r2_storage import private_media_storage
+from common.files.office_preview import DOCX_CONTENT_TYPE, render_office_document_preview
+from common.storage.r2 import private_media_storage
 
 from ..models import CvAccessLog, CvExport, CvSharedLink, CvVersion, UserCv
 from .cv_document import read_cv_document

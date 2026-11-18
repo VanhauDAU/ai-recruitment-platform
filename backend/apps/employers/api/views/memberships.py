@@ -11,11 +11,11 @@ from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.accounts.permissions import IsEmployer
+from apps.accounts.api.permissions import IsEmployer
 from apps.uploads.services import UploadServiceError, claim_clean_upload
-from common.file_signatures import PDF_SIGNATURE, SIGNATURE_WINDOW_BYTES, has_pdf_header
-from common.public_id import generate_public_id
-from common.r2_storage import private_media_storage
+from common.db.public_id import generate_public_id
+from common.files.signatures import PDF_SIGNATURE, SIGNATURE_WINDOW_BYTES, has_pdf_header
+from common.storage.r2 import private_media_storage
 
 from ...models import CompanyDocument
 from ...selectors import (

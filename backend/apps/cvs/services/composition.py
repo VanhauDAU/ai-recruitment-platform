@@ -4,8 +4,8 @@ from copy import deepcopy
 
 from django.core.exceptions import ValidationError
 
+from apps.cv_templates.domain.section_registry import SECTION_REGISTRY
 from apps.cv_templates.models import CvTemplate, CvTemplateVersion
-from apps.cv_templates.section_registry import SECTION_REGISTRY
 
 from ..schemas import (
     empty_layout,

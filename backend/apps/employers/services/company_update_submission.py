@@ -9,7 +9,7 @@ from django.db import transaction
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
-from common.media_storage import delete_local_media_url
+from common.storage.media import delete_local_media_url
 
 from ..models import Company, CompanyDocument, CompanyUpdateEvent, CompanyUpdateRequest
 from ..models.verification import ACTIVE_COMPANY_UPDATE_STATUSES

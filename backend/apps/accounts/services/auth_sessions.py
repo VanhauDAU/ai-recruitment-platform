@@ -21,7 +21,7 @@ from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, Ou
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.utils import datetime_from_epoch
 
-from common.client_ip import client_ip as _client_ip
+from common.http.client_ip import client_ip as _client_ip
 
 from ..models import AuthSession
 from .refresh_cookies import refresh_from_request

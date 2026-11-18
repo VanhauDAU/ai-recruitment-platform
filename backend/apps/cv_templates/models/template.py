@@ -4,7 +4,7 @@ from django.core.validators import RegexValidator
 from django.db import models
 from django.utils.text import slugify
 
-from common.public_id import generate_public_id
+from common.db.public_id import generate_public_id
 
 from .experience import ExperienceBand
 from .language import CvLanguage, localized_field
@@ -234,7 +234,7 @@ class CvTemplateVersion(models.Model):
     )
 
     def clean(self):
-        from ..renderers import validate_renderer_contract
+        from apps.cv_templates.domain.renderers import validate_renderer_contract
 
         regions = [
             region.get('id')
@@ -411,9 +411,8 @@ class CvPositionProfile(models.Model):
         ordering = ['sort_order', 'pk']
 
     def clean(self):
+        from apps.cv_templates.domain.section_registry import get_section_contract
         from apps.jobs.models import JobCategory
-
-        from ..section_registry import get_section_contract
 
         if self.job_category.category_type != JobCategory.CategoryType.SPECIALIZATION:
             raise ValidationError({'job_category': 'Chỉ gắn với vị trí chuyên môn.'})

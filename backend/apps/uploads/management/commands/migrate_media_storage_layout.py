@@ -10,7 +10,7 @@ from django.conf import settings
 from django.core.files import File
 from django.core.management.base import BaseCommand, CommandError
 
-from common.r2_storage import private_media_storage, public_media_storage
+from common.storage.r2 import private_media_storage, public_media_storage
 
 from ...services import classify_legacy_storage_key
 
