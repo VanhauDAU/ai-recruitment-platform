@@ -2,12 +2,14 @@ import {
   CalendarOutlined,
   ClockCircleOutlined,
   EditOutlined,
+  FlagOutlined,
   PlusOutlined,
   RocketOutlined,
+  SettingOutlined,
 } from '@ant-design/icons'
 import { Button } from 'antd'
 import { Link } from 'react-router'
-import { CAMPAIGN_STATUS_LABELS } from '@/entities/campaign'
+import { CAMPAIGN_SETUP_STATUSES, CAMPAIGN_STATUS_LABELS } from '@/entities/campaign'
 import { CampaignLifecycleActions } from '@/features/manage-campaigns'
 import { employerAppPath } from '@/shared/config/portals'
 
@@ -15,8 +17,16 @@ const STATUS_TONES = {
   active: ['border-emerald-200 bg-emerald-50 text-emerald-700', 'bg-emerald-500'],
   paused: ['border-amber-200 bg-amber-50 text-amber-700', 'bg-amber-500'],
   draft: ['border-sky-200 bg-sky-50 text-sky-700', 'bg-sky-500'],
+  scheduled: ['border-cyan-200 bg-cyan-50 text-cyan-700', 'bg-cyan-500'],
   completed: ['border-slate-200 bg-slate-100 text-slate-600', 'bg-slate-400'],
   cancelled: ['border-rose-200 bg-rose-50 text-rose-700', 'bg-rose-500'],
+}
+
+function goalSummary(campaign) {
+  const end = campaign.is_continuous ? 'tuyển liên tục' : `đến ${formatDate(campaign.target_date)}`
+  const parts = [`Chỉ tiêu ${campaign.headcount_target || 1} người`, `${formatDate(campaign.start_date)} → ${end}`]
+  if (campaign.budget_max) parts.push(`ngân sách tối đa ${Number(campaign.budget_max).toLocaleString('vi-VN')} đ`)
+  return parts.join(' · ')
 }
 
 function formatDate(value, includeTime = false) {
@@ -74,11 +84,26 @@ export default function CampaignWorkspaceHero({ campaign, onEdit }) {
                   <ClockCircleOutlined className="text-slate-400" aria-hidden />
                   Cập nhật {formatDate(campaign.updated_at, true)}
                 </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <FlagOutlined className="text-emerald-600" aria-hidden />
+                  {goalSummary(campaign)}
+                </span>
               </div>
             </div>
           </div>
 
           <div className="grid w-full gap-2 sm:flex sm:w-auto sm:flex-wrap lg:justify-end">
+            {CAMPAIGN_SETUP_STATUSES.includes(campaign.status) && (
+              <Link to={employerAppPath(`/campaigns/${campaign.public_id}/setup`)} className="block sm:inline-flex">
+                <Button
+                  type="primary"
+                  icon={<SettingOutlined aria-hidden />}
+                  className="!h-10 !w-full !rounded-xl !border-0 !bg-emerald-600 !px-4 !font-semibold !shadow-md transition hover:!bg-emerald-500 sm:!w-auto"
+                >
+                  {campaign.status === 'scheduled' ? 'Xem lịch kích hoạt' : 'Tiếp tục thiết lập'}
+                </Button>
+              </Link>
+            )}
             {campaign.status === 'active' && (
               <Link to={`${employerAppPath('/jobs/new')}?campaign=${campaign.public_id}`} className="block sm:inline-flex">
                 <Button
@@ -95,7 +120,7 @@ export default function CampaignWorkspaceHero({ campaign, onEdit }) {
               className="!h-10 !w-full !rounded-xl !border-slate-200 !bg-white !px-4 !font-semibold !text-slate-700 !shadow-sm transition hover:!border-emerald-300 hover:!text-emerald-700 sm:!w-auto"
               onClick={onEdit}
             >
-              Sửa chiến dịch
+              Sửa mục tiêu
             </Button>
             <CampaignLifecycleActions campaign={campaign} block />
           </div>

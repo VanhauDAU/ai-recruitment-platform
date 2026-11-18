@@ -1,6 +1,8 @@
 import {
+  CheckCircleOutlined,
   PauseCircleOutlined,
   PlayCircleOutlined,
+  StopOutlined,
   WarningOutlined,
 } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -14,6 +16,28 @@ import {
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { message } from '@/shared/lib/toast'
 
+// Kết thúc chiến dịch đóng mọi tin đang tuyển; hủy lịch đưa chiến dịch về nháp.
+const END_ACTIONS = {
+  completed: {
+    title: 'Hoàn tất chiến dịch',
+    okText: 'Hoàn tất',
+    description: 'Các tin đang tuyển trong chiến dịch sẽ chuyển sang ngừng tuyển. Không mở lại được chiến dịch đã hoàn tất.',
+    success: 'Đã hoàn tất chiến dịch và đóng các tin.',
+  },
+  cancelled: {
+    title: 'Hủy chiến dịch',
+    okText: 'Hủy chiến dịch',
+    description: 'Chiến dịch dừng hẳn; các tin đang tuyển trong chiến dịch sẽ chuyển sang ngừng tuyển.',
+    success: 'Đã hủy chiến dịch.',
+  },
+  draft: {
+    title: 'Hủy lịch kích hoạt',
+    okText: 'Hủy lịch',
+    description: 'Chiến dịch về lại nháp và không tự chạy vào ngày bắt đầu.',
+    success: 'Đã hủy lịch, chiến dịch về nháp.',
+  },
+}
+
 export default function CampaignLifecycleActions({
   campaign,
   block = false,
@@ -21,6 +45,7 @@ export default function CampaignLifecycleActions({
 }) {
   const [pauseOpen, setPauseOpen] = useState(false)
   const [confirmationCode, setConfirmationCode] = useState('')
+  const [endStatus, setEndStatus] = useState('')
   const queryClient = useQueryClient()
   const impactQuery = useQuery({
     queryKey: campaignKeys.pauseImpact(campaign?.public_id),
@@ -36,10 +61,12 @@ export default function CampaignLifecycleActions({
       invalidate()
       setPauseOpen(false)
       setConfirmationCode('')
+      setEndStatus('')
       message.success(
-        variables.status === 'active'
-          ? 'Đã mở lại chiến dịch.'
-          : 'Đã dừng chiến dịch và ẩn các tin đang công khai.',
+        END_ACTIONS[variables.status]?.success
+          || (variables.status === 'active'
+            ? 'Đã mở lại chiến dịch.'
+            : 'Đã dừng chiến dịch và ẩn các tin đang công khai.'),
       )
     },
     onError: (error) => message.error(
@@ -48,6 +75,13 @@ export default function CampaignLifecycleActions({
   })
   const impact = impactQuery.data
   const canToggle = ['active', 'paused'].includes(campaign?.status)
+  const endOptions = {
+    draft: ['cancelled'],
+    scheduled: ['draft', 'cancelled'],
+    active: ['completed', 'cancelled'],
+    paused: ['completed', 'cancelled'],
+  }[campaign?.status] || []
+  const endAction = END_ACTIONS[endStatus]
 
   function handleToggle(checked) {
     if (!checked && campaign?.status === 'active') {
@@ -99,8 +133,31 @@ export default function CampaignLifecycleActions({
               Mở lại chiến dịch
             </Button>
           )}
+          {endOptions.map((status) => (
+            <Button
+              key={status}
+              icon={status === 'completed' ? <CheckCircleOutlined aria-hidden /> : <StopOutlined aria-hidden />}
+              className="!h-10 !rounded-xl !px-4 !font-semibold"
+              onClick={() => setEndStatus(status)}
+            >
+              {END_ACTIONS[status].okText}
+            </Button>
+          ))}
         </div>
       )}
+      <Modal
+        destroyOnHidden
+        open={Boolean(endAction)}
+        title={endAction?.title}
+        okText={endAction?.okText}
+        cancelText="Đóng"
+        okButtonProps={{ danger: endStatus !== 'completed' }}
+        confirmLoading={mutation.isPending}
+        onCancel={() => setEndStatus('')}
+        onOk={() => mutation.mutate({ status: endStatus })}
+      >
+        <p className="text-sm text-slate-600">{endAction?.description}</p>
+      </Modal>
       <Modal
         destroyOnHidden
         open={pauseOpen}

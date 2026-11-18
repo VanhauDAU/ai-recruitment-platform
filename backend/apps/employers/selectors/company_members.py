@@ -26,11 +26,6 @@ from ..models import (
 )
 from ..models.representation import eligible_representatives_queryset
 
-CLOSED_CAMPAIGN_STATUSES = (
-    RecruitmentCampaign.Status.COMPLETED,
-    RecruitmentCampaign.Status.CANCELLED,
-)
-
 
 def _count(queryset):
     """Correlated COUNT of ``queryset`` as an integer annotation (0 when empty)."""
@@ -87,7 +82,7 @@ def company_members_queryset(company):
             ),
             open_campaign_count=_count(
                 RecruitmentCampaign.objects.filter(owner_id=OuterRef('pk')).exclude(
-                    status__in=CLOSED_CAMPAIGN_STATUSES
+                    status__in=RecruitmentCampaign.TERMINAL_STATUSES
                 )
             ),
         )
@@ -139,7 +134,7 @@ def former_company_members_queryset(company):
             open_campaign_count=_count(
                 RecruitmentCampaign.objects.filter(
                     owner_id=OuterRef('pk'), company_id=company.pk
-                ).exclude(status__in=CLOSED_CAMPAIGN_STATUSES)
+                ).exclude(status__in=RecruitmentCampaign.TERMINAL_STATUSES)
             ),
         )
         .order_by('-unanswered_application_count', 'pk')

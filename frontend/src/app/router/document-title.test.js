@@ -17,6 +17,7 @@ describe('resolveEmployerRouteTitle', () => {
   it('titles campaign and application workspace routes consistently', () => {
     expect(resolveEmployerRouteTitle(employerAppPath('/campaigns'))).toBe('Quản lý chiến dịch tuyển dụng')
     expect(resolveEmployerRouteTitle(employerAppPath('/campaigns/campaign_123'))).toBe('Chi tiết chiến dịch tuyển dụng')
+    expect(resolveEmployerRouteTitle(employerAppPath('/campaigns/campaign_123/setup'))).toBe('Thiết lập chiến dịch tuyển dụng')
     expect(resolveEmployerRouteTitle(employerAppPath('/applications'))).toBe('Quản lý CV ứng tuyển')
   })
 })

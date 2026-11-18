@@ -28,6 +28,7 @@ export const EmployerRecruitmentDemandPage = lazy(() => import('@/pages/employer
 export const EmployerGeneralSettingsPage = lazy(() => import('@/pages/employer/app/account/GeneralSetting'))
 export const EmployerCampaignListPage = lazy(() => import('@/pages/employer/app/campaigns/CampaignList'))
 export const EmployerCampaignDetailPage = lazy(() => import('@/pages/employer/app/campaigns/CampaignDetail'))
+export const EmployerCampaignSetupPage = lazy(() => import('@/pages/employer/app/campaigns/CampaignSetup'))
 export const EmployerJobListPage = lazy(() => import('@/pages/employer/app/jobs/JobList'))
 export const EmployerJobFormPage = lazy(() => import('@/pages/employer/app/jobs/JobForm'))
 export const EmployerJobDetailPage = lazy(() => import('@/pages/employer/app/jobs/JobDetail'))

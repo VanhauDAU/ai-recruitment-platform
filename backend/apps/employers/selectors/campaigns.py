@@ -171,9 +171,7 @@ def owned_campaign_queryset(user):
 
 
 def campaign_options(user):
-    return campaign_list_queryset(user).exclude(
-        status__in=[RecruitmentCampaign.Status.COMPLETED, RecruitmentCampaign.Status.CANCELLED]
-    )
+    return campaign_list_queryset(user).exclude(status__in=RecruitmentCampaign.TERMINAL_STATUSES)
 
 
 def campaign_report(campaign):

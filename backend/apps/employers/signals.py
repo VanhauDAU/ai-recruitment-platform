@@ -1,8 +1,13 @@
 from django.db.models import F
 from django.db.models.signals import pre_delete
-from django.dispatch import receiver
+from django.dispatch import Signal, receiver
 
 from .models import Company, CompanyFollow
+
+# Sent inside the transaction that changed a campaign's status, after the row
+# is saved: ``campaign``, ``previous_status``, ``actor`` (``None`` for the
+# system). Other apps react here so employers never imports their services.
+campaign_status_changed = Signal()
 
 
 @receiver(pre_delete, sender=CompanyFollow)

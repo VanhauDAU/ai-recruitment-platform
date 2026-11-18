@@ -858,6 +858,10 @@ pages/employer/app/campaigns/CampaignList|CampaignDetail
     → features/manage-campaigns
       → entities/campaign, entities/application, entities/job
         → shared/api
+pages/employer/app/campaigns/CampaignSetup
+  → widgets/campaign-setup-wizard
+    → features/manage-campaigns (CampaignGoalForm), features/launch-campaign
+      → entities/campaign, entities/job
 ```
 
 - `entities/campaign` sở hữu HTTP contract, query key, tên và trạng thái.
@@ -866,9 +870,18 @@ pages/employer/app/campaigns/CampaignList|CampaignDetail
   `capture-employer-recruitment-need`/`manage-employer-recruitment-needs` sở hữu.
   `entities/application` sở hữu list/export hồ sơ phía server;
   `entities/job` sở hữu contract tin tuyển dụng.
-- `features/manage-campaigns` sở hữu các workflow tạo nhanh, đổi tên,
-  dừng và mở lại. Xác nhận dừng luôn tải `pause-impact`, yêu cầu mã chiến dịch
-  khớp hoàn toàn và không tự đổi trạng thái tin.
+- `features/manage-campaigns` sở hữu các workflow tạo nhanh (tạo nháp rồi
+  chuyển sang trang thiết lập), đổi tên, sửa mục tiêu (`CampaignGoalForm`),
+  dừng, mở lại, hoàn tất, hủy và hủy lịch.
+  - Xác nhận dừng luôn tải `pause-impact`, yêu cầu mã chiến dịch khớp hoàn toàn
+    và không tự đổi trạng thái tin.
+  - Hoàn tất/hủy báo trước rằng tin đang tuyển sẽ bị đóng.
+- `features/launch-campaign` sở hữu bước chọn tin (đăng tin nháp / gắn tin đang
+  hiển thị) và bước xem lại & kích hoạt (checklist từ `GET /launch/`, cam kết,
+  kích hoạt ngay hoặc lên lịch).
+- `widgets/campaign-setup-wizard` ghép ba bước Mục tiêu → Tin → Kích hoạt;
+  `?step=goal|jobs|launch` là contract URL. Form đăng tin mở từ wizard với
+  `?campaign=…&return=setup`; lưu nháp xong thì quay lại `?step=jobs`.
 - `widgets/employer-campaign-workspace` sở hữu header và bốn tab dữ liệu thật:
   Tổng quan, CV ứng tuyển, Tin tuyển dụng và Lịch sử hoạt động. Page chi tiết
   chỉ đọc route param rồi compose widget; query `active_tab` là contract URL,

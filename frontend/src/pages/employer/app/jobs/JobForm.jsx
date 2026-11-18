@@ -36,6 +36,7 @@ export default function JobForm() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { user } = useSession()
+  const returnToSetup = searchParams.get('return') === 'setup'
   const detailQuery = useQuery({ queryKey: jobKeys.employerDetail(publicId), queryFn: () => getEmployerJob(publicId), enabled: Boolean(publicId) })
   const categoriesQuery = useQuery({ queryKey: jobKeys.categories, queryFn: () => getJobCategories() })
   const campaignsQuery = useQuery({ queryKey: campaignKeys.options, queryFn: getCampaignOptions })
@@ -53,6 +54,11 @@ export default function JobForm() {
     onSuccess: (job) => {
       queryClient.invalidateQueries({ queryKey: ['jobs'] })
       message.success(job.status === 'draft' ? 'Đã lưu nháp.' : 'Đã lưu thay đổi.')
+      // Opened from the campaign setup wizard: go back to its job step.
+      if (returnToSetup && job.campaign) {
+        navigate(employerAppPath(`/campaigns/${job.campaign}/setup?step=jobs`))
+        return
+      }
       navigate(employerAppPath(`/jobs/${job.public_id}/edit`), { replace: true })
     },
     onError: (error) => message.error(
@@ -148,7 +154,7 @@ export default function JobForm() {
         submitting={draftMutation.isPending || publishMutation.isPending}
         errorMessage={mutationError ? jobMutationErrorMessage(mutationError, 'Không thể lưu tin tuyển dụng.') : ''}
         creatingCampaign={quickCampaignMutation.isPending}
-        onCreateCampaign={(name) => quickCampaignMutation.mutateAsync({ name })}
+        onCreateCampaign={(name) => quickCampaignMutation.mutateAsync({ name, activate: true })}
         onCreateSkill={(name) => createSkillMutation.mutateAsync(name)}
         onSaveDraft={(payload, aiGenerationPublicId) => draftMutation.mutate(withAiAttribution(payload, aiGenerationPublicId))}
         onPublish={(payload, aiGenerationPublicId, acceptedStatementVersion) => publishMutation.mutate({

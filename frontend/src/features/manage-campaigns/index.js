@@ -1,3 +1,4 @@
+export { default as CampaignGoalForm } from './ui/CampaignGoalForm'
 export { default as CampaignNameForm } from './ui/CampaignNameForm'
 export { default as CampaignLifecycleActions } from './ui/CampaignLifecycleActions'
 export { default as CreateCampaignModal } from './ui/CreateCampaignModal'

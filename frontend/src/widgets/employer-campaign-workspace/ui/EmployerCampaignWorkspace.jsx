@@ -5,7 +5,7 @@ import {
   HistoryOutlined,
   TeamOutlined,
 } from '@ant-design/icons'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { Alert, Button, Modal, Select, Skeleton } from 'antd'
 import { useRef, useState } from 'react'
 import { useSearchParams } from 'react-router'
@@ -13,18 +13,14 @@ import {
   campaignKeys,
   getCampaign,
   getCampaignReport,
-  updateCampaign,
 } from '@/entities/campaign'
 import {
   EMPLOYER_CAPABILITIES,
   EmployerReadinessGateState,
   useEmployerReadiness,
 } from '@/entities/employer-profile'
-import {
-  CampaignNameForm,
-} from '@/features/manage-campaigns'
+import { CampaignGoalForm } from '@/features/manage-campaigns'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
-import { message } from '@/shared/lib/toast'
 import CampaignActivityPanel from './CampaignActivityPanel'
 import CampaignApplyCvPanel from './CampaignApplyCvPanel'
 import CampaignJobsPanel from './CampaignJobsPanel'
@@ -52,7 +48,6 @@ export default function EmployerCampaignWorkspace({ publicId }) {
   const [searchParams, setSearchParams] = useSearchParams()
   const [editing, setEditing] = useState(false)
   const tabRefs = useRef([])
-  const queryClient = useQueryClient()
   const {
     readiness,
     profileQuery,
@@ -69,17 +64,6 @@ export default function EmployerCampaignWorkspace({ publicId }) {
     queryKey: campaignKeys.report(publicId),
     queryFn: () => getCampaignReport(publicId),
     enabled: Boolean(publicId),
-  })
-  const updateMutation = useMutation({
-    mutationFn: (values) => updateCampaign(publicId, values),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: campaignKeys.all })
-      setEditing(false)
-      message.success('Đã cập nhật chiến dịch.')
-    },
-    onError: (error) => message.error(
-      getApiErrorMessage(error, 'Không thể cập nhật chiến dịch.'),
-    ),
   })
 
   const requestedTab = searchParams.get('active_tab')
@@ -270,20 +254,16 @@ export default function EmployerCampaignWorkspace({ publicId }) {
         open={editing}
         destroyOnHidden
         footer={null}
+        width={760}
         title={(
           <span className="inline-flex items-center gap-2">
             <EditOutlined className="text-emerald-600" />
-            Sửa chiến dịch
+            Sửa mục tiêu chiến dịch
           </span>
         )}
         onCancel={() => setEditing(false)}
       >
-        <CampaignNameForm
-          initialName={campaign.name}
-          submitting={updateMutation.isPending}
-          onCancel={() => setEditing(false)}
-          onSubmit={(values) => updateMutation.mutate(values)}
-        />
+        <CampaignGoalForm campaign={campaign} onSaved={() => setEditing(false)} />
       </Modal>
     </section>
   )

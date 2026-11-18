@@ -58,6 +58,13 @@ class EmployerNotification(models.Model):
             'application_review_submitted',
             'Có đánh giá mới cho hồ sơ ứng viên',
         )
+        CAMPAIGN_ACTIVATED = 'campaign_activated', 'Chiến dịch đã được kích hoạt theo lịch'
+        CAMPAIGN_ACTIVATION_FAILED = (
+            'campaign_activation_failed',
+            'Chiến dịch chưa kích hoạt được theo lịch',
+        )
+        CAMPAIGN_ENDING_SOON = 'campaign_ending_soon', 'Chiến dịch sắp đến ngày kết thúc'
+        CAMPAIGN_AUTO_COMPLETED = 'campaign_auto_completed', 'Chiến dịch đã tự kết thúc'
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     recipient = models.ForeignKey(

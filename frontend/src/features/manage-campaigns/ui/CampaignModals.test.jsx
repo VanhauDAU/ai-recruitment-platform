@@ -48,7 +48,7 @@ describe('campaign create and rename modals', () => {
     vi.restoreAllMocks()
   })
 
-  it('creates a trimmed campaign, invalidates the canonical key and starts its activity flow', async () => {
+  it('creates a trimmed draft campaign, invalidates the canonical key and hands it to setup', async () => {
     const user = userEvent.setup()
     const campaign = { public_id: 'camp_frontend', name: 'Tuyển Frontend' }
     const onClose = vi.fn()
@@ -75,7 +75,7 @@ describe('campaign create and rename modals', () => {
     expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ['campaigns'] })
     expect(onClose).toHaveBeenCalledOnce()
     expect(onCreated).toHaveBeenCalledWith(campaign)
-    expect(message.success).toHaveBeenCalledWith('Đã tạo và mở chiến dịch.')
+    expect(message.success).toHaveBeenCalledWith('Đã tạo nháp. Tiếp tục thiết lập mục tiêu và tin tuyển dụng.')
   })
 
   it('keeps the create flow open and shows the API error when creation fails', async () => {

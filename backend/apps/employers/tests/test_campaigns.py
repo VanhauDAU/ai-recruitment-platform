@@ -71,28 +71,72 @@ class RecruitmentCampaignApiTests(TestCase):
         )
         self.assertEqual(foreign_detail.status_code, 404)
 
-    def test_campaign_can_be_created_from_its_name_only(self):
+    def test_quick_created_campaign_is_a_draft_unless_activated_inline(self):
         self.client.force_authenticate(self.owner)
 
-        response = self.client.post(
+        draft = self.client.post(
             reverse('employer-campaign-list'), {'name': 'Tuyển dụng Quý 3/2026'}, format='json'
         )
-
-        self.assertEqual(response.status_code, 201, response.data)
-        campaign = RecruitmentCampaign.objects.get(public_id=response.data['public_id'])
-        self.assertEqual(campaign.status, RecruitmentCampaign.Status.ACTIVE)
-
-    def test_campaign_api_rejects_job_specific_fields(self):
-        self.client.force_authenticate(self.owner)
-
-        response = self.client.post(
+        inline = self.client.post(
             reverse('employer-campaign-list'),
-            self.payload(headcount_target=3),
+            {'name': 'Tạo từ form đăng tin', 'activate': True},
             format='json',
         )
 
-        self.assertEqual(response.status_code, 400)
-        self.assertIn('headcount_target', response.data)
+        self.assertEqual(draft.status_code, 201, draft.data)
+        self.assertEqual(draft.data['status'], RecruitmentCampaign.Status.DRAFT)
+        self.assertIsNone(draft.data['first_activated_at'])
+        self.assertIsNone(draft.data['active_days'])
+        self.assertEqual(inline.status_code, 201, inline.data)
+        campaign = RecruitmentCampaign.objects.get(public_id=inline.data['public_id'])
+        self.assertEqual(campaign.status, RecruitmentCampaign.Status.ACTIVE)
+        self.assertIsNotNone(campaign.first_activated_at)
+        self.assertEqual(campaign.activated_at, campaign.first_activated_at)
+
+    def test_campaign_goal_fields_are_writable_and_validated(self):
+        self.client.force_authenticate(self.owner)
+        today = timezone.localdate()
+
+        created = self.client.post(
+            reverse('employer-campaign-list'),
+            self.payload(
+                description='Mở rộng đội backend',
+                position_category=self.category.pk,
+                position_level='employee',
+                headcount_target=3,
+                start_date=today.isoformat(),
+                target_date=(today + timedelta(days=30)).isoformat(),
+                budget_min=5_000_000,
+                budget_max=10_000_000,
+            ),
+            format='json',
+        )
+        reversed_dates = self.client.post(
+            reverse('employer-campaign-list'),
+            self.payload(
+                start_date=today.isoformat(),
+                target_date=(today - timedelta(days=1)).isoformat(),
+            ),
+            format='json',
+        )
+        reversed_budget = self.client.post(
+            reverse('employer-campaign-list'),
+            self.payload(budget_min=10, budget_max=5),
+            format='json',
+        )
+        zero_headcount = self.client.post(
+            reverse('employer-campaign-list'), self.payload(headcount_target=0), format='json'
+        )
+
+        self.assertEqual(created.status_code, 201, created.data)
+        self.assertEqual(created.data['headcount_target'], 3)
+        self.assertEqual(created.data['position_category_name'], self.category.name)
+        self.assertEqual(reversed_dates.status_code, 400)
+        self.assertIn('target_date', reversed_dates.data)
+        self.assertEqual(reversed_budget.status_code, 400)
+        self.assertIn('budget_max', reversed_budget.data)
+        self.assertEqual(zero_headcount.status_code, 400)
+        self.assertIn('headcount_target', zero_headcount.data)
 
     def test_campaign_creation_requires_a_ready_workspace(self):
         user_model = get_user_model()
@@ -363,6 +407,14 @@ class RecruitmentCampaignApiTests(TestCase):
         expired_detail = self.client.get(reverse('job-detail', kwargs={'slug': expired_job.slug}))
         cancelled = self.client.post(url, {'status': 'cancelled'}, format='json')
         invalid = self.client.post(url, {'status': 'active'}, format='json')
+        draft = RecruitmentCampaign.objects.create(
+            owner=self.owner_profile, company=self.company, name='Draft campaign'
+        )
+        direct_activation = self.client.post(
+            reverse('employer-campaign-status', kwargs={'public_id': draft.public_id}),
+            {'status': 'active'},
+            format='json',
+        )
         activities = self.client.get(
             reverse('employer-campaign-activities', kwargs={'public_id': campaign.public_id})
         )
@@ -382,13 +434,22 @@ class RecruitmentCampaignApiTests(TestCase):
         self.assertFalse(expired_detail.data['accepting_applications'])
         self.assertEqual(cancelled.status_code, 200, cancelled.data)
         self.assertEqual(invalid.status_code, 400, invalid.data)
+        self.assertEqual(direct_activation.status_code, 400)
+        self.assertEqual(direct_activation.data['code'], 'CAMPAIGN_LAUNCH_REQUIRED')
         job.refresh_from_db()
         expired_job.refresh_from_db()
-        self.assertEqual(job.status, Job.Status.ACTIVE)
-        self.assertEqual(expired_job.status, Job.Status.ACTIVE)
+        campaign.refresh_from_db()
+        # Ending a campaign closes its jobs with history instead of hiding them.
+        self.assertEqual(job.status, Job.Status.CLOSED)
+        self.assertEqual(expired_job.status, Job.Status.CLOSED)
+        self.assertEqual(job.status_history.order_by('-pk').first().to_status, Job.Status.CLOSED)
+        self.assertEqual(campaign.ended_by, RecruitmentCampaign.EndedBy.USER)
+        self.assertIsNotNone(campaign.ended_at)
+        self.assertIsNotNone(campaign.first_activated_at)
         event_types = [item['event_type'] for item in activities.data['results']]
         self.assertIn('campaign_paused', event_types)
         self.assertIn('campaign_resumed', event_types)
+        self.assertIn('campaign_cancelled', event_types)
 
     def test_candidate_activity_is_redacted_when_candidate_access_is_blocked(self):
         campaign = RecruitmentCampaign.objects.create(
@@ -434,34 +495,59 @@ class RecruitmentCampaignApiTests(TestCase):
         self.assertNotIn('application_deep_link', activity['metadata'])
         self.assertEqual(activity['metadata']['job_title'], 'Backend Engineer')
 
-    def test_campaign_can_only_update_its_name(self):
+    def test_campaign_goal_update_respects_running_and_ended_campaigns(self):
+        today = timezone.localdate()
         campaign = RecruitmentCampaign.objects.create(
             owner=self.owner_profile,
             company=self.company,
             name='Campaign name',
+            status=RecruitmentCampaign.Status.ACTIVE,
+            start_date=today,
+            target_date=today + timedelta(days=30),
+        )
+        Job.objects.create(
+            posted_by=self.owner,
+            company=self.company,
+            campaign=campaign,
+            title='Campaign job',
+            description='Open',
+            status=Job.Status.ACTIVE,
+            deadline=today + timedelta(days=20),
+            **open_visibility_window(),
+        )
+        ended = RecruitmentCampaign.objects.create(
+            owner=self.owner_profile,
+            company=self.company,
+            name='Ended',
+            status=RecruitmentCampaign.Status.COMPLETED,
         )
         self.client.force_authenticate(self.owner)
         url = reverse('employer-campaign-detail', kwargs={'public_id': campaign.public_id})
 
         updated = self.client.patch(
-            url,
-            {'name': 'Campaign renamed'},
-            format='json',
+            url, {'name': 'Campaign renamed', 'description': 'Mô tả mới'}, format='json'
         )
-        rejected = self.client.patch(
-            url,
-            {'description': 'Đây là dữ liệu của nhu cầu tuyển dụng.'},
+        moved_start = self.client.patch(
+            url, {'start_date': (today + timedelta(days=1)).isoformat()}, format='json'
+        )
+        shortened = self.client.patch(
+            url, {'target_date': (today + timedelta(days=10)).isoformat()}, format='json'
+        )
+        ended_edit = self.client.patch(
+            reverse('employer-campaign-detail', kwargs={'public_id': ended.public_id}),
+            {'name': 'Renamed after the end'},
             format='json',
         )
 
         self.assertEqual(updated.status_code, 200, updated.data)
         self.assertEqual(updated.data['name'], 'Campaign renamed')
-        self.assertNotIn('description', updated.data)
-        self.assertNotIn('headcount_target', updated.data)
-        self.assertNotIn('insight_completion', updated.data)
+        self.assertEqual(updated.data['description'], 'Mô tả mới')
         self.assertEqual(updated.data['last_activity']['event_type'], 'campaign_updated')
-        self.assertEqual(rejected.status_code, 400)
-        self.assertIn('description', rejected.data)
+        self.assertEqual(moved_start.status_code, 400)
+        self.assertIn('start_date', moved_start.data)
+        self.assertEqual(shortened.status_code, 400)
+        self.assertIn('target_date', shortened.data)
+        self.assertEqual(ended_edit.status_code, 400)
 
     def test_job_performance_uses_period_daily_counters_and_application_rows(self):
         campaign = RecruitmentCampaign.objects.create(

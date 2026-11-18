@@ -13,6 +13,7 @@ const { getCampaign, getCampaignJobPerformance, getCampaignReport } = vi.hoisted
 vi.mock('@/entities/campaign', () => ({
   CAMPAIGN_STATUS_COLORS: { active: 'green' },
   CAMPAIGN_STATUS_LABELS: { active: 'Đang mở' },
+  CAMPAIGN_SETUP_STATUSES: ['draft', 'scheduled'],
   campaignKeys: {
     all: ['campaigns'],
     detail: (id) => ['campaigns', 'detail', id],
@@ -25,7 +26,7 @@ vi.mock('@/entities/campaign', () => ({
   updateCampaign: vi.fn(),
 }))
 vi.mock('@/features/manage-campaigns', () => ({
-  CampaignNameForm: ({ initialName }) => <p>Sửa chiến dịch {initialName}</p>,
+  CampaignGoalForm: ({ campaign }) => <p>Mục tiêu của {campaign.name}</p>,
   CampaignLifecycleActions: () => <button type="button">Dừng</button>,
 }))
 
@@ -107,14 +108,14 @@ describe('CampaignDetail', () => {
     expect(screen.queryByRole('tab', { name: 'Ứng viên đã xem tin' })).not.toBeInTheDocument()
   })
 
-  it('opens the compact campaign editor', async () => {
+  it('opens the campaign goal editor', async () => {
     renderPage()
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Sửa chiến dịch' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Sửa mục tiêu' }))
 
     expect(screen.getByRole('dialog')).toBeInTheDocument()
-    expect(screen.getByText('Sửa chiến dịch', { selector: '.ant-modal-title *' })).toBeInTheDocument()
-    expect(screen.getByText('Sửa chiến dịch Tuyển Frontend')).toBeInTheDocument()
+    expect(screen.getByText('Sửa mục tiêu chiến dịch', { selector: '.ant-modal-title *' })).toBeInTheDocument()
+    expect(screen.getByText('Mục tiêu của Tuyển Frontend')).toBeInTheDocument()
   })
 
   it('switches content and keeps active_tab in the URL', async () => {

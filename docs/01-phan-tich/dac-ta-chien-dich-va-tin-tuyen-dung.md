@@ -42,29 +42,96 @@ dịch.
   gỡ ở migration `jobs.0028`).
 - Tạo nhanh chỉ cần `name` (modal submit bằng Enter); không cần liên kết công
   ty hay hoàn tất xác thực. `company` lấy theo recruiter và có thể rỗng. Chiến
-  dịch tạo mới ở trạng thái `active`. Điều kiện xác thực chỉ được kiểm tra khi
-  đăng tin (mục 4).
-- Dữ liệu riêng của chiến dịch: vị trí chuyên môn, cấp bậc, `headcount_target`,
-  `start_date`/`target_date` hoặc `is_continuous`, ngân sách min/max và nguồn,
-  truy ngược `source_need` (nhu cầu tư vấn).
+  dịch tạo mới ở trạng thái **`draft`** rồi chuyển sang trang thiết lập
+  (2026-11-18). Ngoại lệ: tạo nhanh ngay trong form đăng tin gửi
+  `activate=true` để chiến dịch chạy luôn, vì tin sắp đăng cần chiến dịch
+  `active`. Điều kiện xác thực chỉ được kiểm tra khi đăng tin (mục 4).
+- Mục tiêu của chiến dịch (ghi được qua API từ 2026-11-18):
+  - vị trí chuyên môn, cấp bậc, `headcount_target` (≥ 1);
+  - `start_date`/`target_date` hoặc `is_continuous`;
+  - ngân sách min/max và nguồn;
+  - truy ngược `source_need` (nhu cầu tư vấn).
+- Ràng buộc mục tiêu (kiểm ở serializer, service và CheckConstraint):
+  - `target_date ≥ start_date`, `budget_max ≥ budget_min`;
+  - chỉ đổi `start_date` khi còn `draft`/`scheduled`;
+  - không rút `target_date` xuống trước hạn nộp của tin đang tuyển;
+  - chiến dịch đã kết thúc không sửa được.
+- Thời gian chạy thật được ghi lại để chỉ số sức khỏe chia theo số ngày thực sự
+  chạy:
+  - `first_activated_at`, `activated_at`;
+  - `active_seconds_accumulated` (không tính thời gian dừng);
+  - `ended_at`, `ended_by` (`user`/`system`).
+  API trả thêm `active_days`.
+
+### Thiết lập và kích hoạt (wizard)
+
+Trang `/tuyendung/app/campaigns/:id/setup?step=` có ba bước:
+
+1. **Mục tiêu**: các trường mục tiêu ở trên.
+2. **Tin tuyển dụng**: chọn tin nháp của chiến dịch để *đăng* khi kích hoạt,
+   hoặc tin đang hiển thị (chưa thuộc chiến dịch nào còn chạy) để *gắn*. Tin
+   đang hiển thị chưa được gắn ngay, vì gắn vào chiến dịch chưa chạy sẽ làm tin
+   bị ẩn. Lựa chọn lưu ở `CampaignLaunchPlan`/`CampaignLaunchJob`
+   (`apps.campaigns`). Nút "Tạo tin nháp mới" mở form đăng tin với
+   `?campaign=…&return=setup`; lưu nháp xong thì quay lại bước này.
+3. **Xem lại & kích hoạt**: checklist từ `GET /launch/`:
+   - đủ mục tiêu;
+   - ngày kết thúc từ hôm nay trở đi hoặc tuyển liên tục;
+   - có ít nhất một tin;
+   - tin nháp đủ nội dung và hạn nộp không sau `target_date`;
+   - tài khoản đủ điều kiện đăng tin (cùng điều kiện với `publish_job`);
+   - còn lượt đăng.
+
+   NTD chấp nhận cam kết chịu trách nhiệm rồi chọn một trong hai cách:
+   - **Kích hoạt ngay**: chuyển sang `active`, đăng mọi tin nháp đã chọn và gắn
+     các tin đã chọn. Tất cả hoặc không gì cả: một tin lỗi thì không có gì thay
+     đổi và API trả lỗi từng tin. Nếu `start_date` rỗng hoặc ở tương lai thì
+     đặt bằng hôm nay.
+   - **Lên lịch** (cần `start_date` sau hôm nay): chuyển sang `scheduled`; lưu
+     phiên bản cam kết đã chấp nhận để dùng lúc tự kích hoạt.
+
+Bước "Kênh & lịch đăng" được thêm vào giữa bước 2 và 3 ở giai đoạn phân phối
+đa kênh.
 - Tin chỉ gắn được vào chiến dịch của chính recruiter, không bị `policy_hold`
   và chưa `completed`/`cancelled`.
 
 ### Trạng thái chiến dịch
 
 ```text
-draft ──> active ⇄ paused
-  │         │        │
-  └──> cancelled <───┤
-            └──> completed <──┘
+draft ──launch(now)──> active ⇄ paused
+  │  └─launch(later)─> scheduled ──(beat: start_date)──> active
+  │                     └─hủy lịch──> draft
+  └──> cancelled <── scheduled/active/paused ──> completed
+                                   (NTD, hoặc hệ thống sau target_date)
 ```
 
-| Từ | Được chuyển sang |
-| --- | --- |
-| `draft` | `active`, `cancelled` |
-| `active` | `paused`, `completed`, `cancelled` |
-| `paused` | `active`, `completed`, `cancelled` |
-| `completed`, `cancelled` | — (trạng thái cuối) |
+| Từ | NTD chuyển qua `status/` | Hệ thống / luồng kích hoạt |
+| --- | --- | --- |
+| `draft` | `cancelled` | `active`, `scheduled` (qua `launch/`) |
+| `scheduled` | `draft`, `cancelled` | `active` (beat vào `start_date`) |
+| `active` | `paused`, `completed`, `cancelled` | `completed` (qua `target_date`) |
+| `paused` | `active`, `completed`, `cancelled` | `completed` (qua `target_date`) |
+| `completed`, `cancelled` | — (trạng thái cuối) | — |
+
+- `status/` từ chối `draft|scheduled → active` với `CAMPAIGN_LAUNCH_REQUIRED`;
+  muốn kích hoạt phải qua `launch/`. Mở lại chiến dịch đã qua `target_date`
+  (không tuyển liên tục) bị từ chối cho tới khi gia hạn ngày kết thúc.
+- **Kết thúc chiến dịch đóng tin:** khi chiến dịch sang `completed` hoặc
+  `cancelled` (NTD bấm, hoặc hệ thống tự kết thúc), mọi tin `active` của nó
+  chuyển `closed`, ghi `JobStatusHistory` (`note=campaign_ended`, actor
+  `system` khi tự động), rồi áp luật tin ngừng tuyển. Hiệu ứng này chạy qua
+  signal `campaign_status_changed` (`employers/signals.py` → `jobs/signals.py`)
+  để `employers` không import service của `jobs`.
+- **Lịch chạy:** Celery beat `run_campaign_schedule` chạy 5 phút một lần, theo
+  ngày giờ Việt Nam, idempotent:
+  - `scheduled` tới `start_date`: kích hoạt bằng cam kết đã lưu. Nếu phiên bản
+    cam kết đã đổi, có blocker hoặc tin lỗi thì vẫn giữ `scheduled`, ghi
+    `CampaignLaunchPlan.last_error`, và báo `campaign_activation_failed` một
+    lần cho mỗi loại lỗi.
+  - `active`/`paused` không tuyển liên tục đã qua `target_date`: chuyển
+    `completed` (`ended_by=system`) và báo `campaign_auto_completed`.
+  - Còn 3 ngày tới `target_date`: báo `campaign_ending_soon`.
+  - Bỏ qua chiến dịch đang `policy_hold`.
 
 - Dừng (`paused`) bắt buộc nhập đúng mã chiến dịch (`confirmation_code =
   public_id`). Trước khi xác nhận, UI gọi `pause-impact/` để liệt kê các tin
@@ -85,6 +152,10 @@ draft ──> active ⇄ paused
   (có CV chưa xem), `active_jobs` (có tin đang hiển thị), `expired_jobs` (có tin
   hết hạn); sắp xếp theo hoạt động gần nhất, mới/cũ, tên. Mobile dùng card,
   desktop dùng bảng.
+- Chiến dịch `draft`/`scheduled` có nút "Tiếp tục thiết lập" ở đầu trang. Hero
+  hiện chỉ tiêu, khoảng ngày và ngân sách. "Sửa mục tiêu" mở form mục tiêu đầy
+  đủ. Có nút Hoàn tất, Hủy và Hủy lịch, mỗi nút có hộp xác nhận nói rõ tin sẽ
+  bị đóng.
 - Chi tiết có bốn tab: Tổng quan (phễu hồ sơ theo trạng thái, CV bảy ngày, tiến
   độ offer/headcount, biểu đồ hiển thị → xem → ứng tuyển theo tin), CV ứng
   tuyển, Tin tuyển dụng, Lịch sử hoạt động.
