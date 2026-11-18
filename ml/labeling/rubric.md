@@ -1,4 +1,4 @@
-# Rubric chấm độ phù hợp CV–JD (bản nháp, chờ bạn chốt)
+# Rubric chấm độ phù hợp CV–JD (đã chốt 18/11/2026)
 
 Dùng để gán nhãn tay 150 cặp CV–JD làm tập đánh giá. Người chấm đọc một tin
 tuyển dụng và một CV rồi cho một điểm từ 0 đến 4. Chốt rubric trước khi chấm cặp
@@ -9,8 +9,8 @@ tuyển dụng và một CV rồi cho một điểm từ 0 đến 4. Chốt rubr
 > Nếu tôi là người sàng lọc hồ sơ cho đúng tin này, hồ sơ này đáng được xem xét
 > đến mức nào, chỉ xét về chuyên môn?
 
-Chỉ xét kỹ năng, kinh nghiệm, học vấn và cấp bậc. Không xét giới tính, tuổi,
-ảnh, tên trường, cách trình bày CV, lương mong muốn.
+Chỉ xét kỹ năng, kinh nghiệm, học vấn và cấp bậc. Không xét địa điểm làm việc,
+giới tính, tuổi, ảnh, tên trường, cách trình bày CV, lương mong muốn.
 
 ## Thang điểm
 
@@ -24,6 +24,10 @@ Chỉ xét kỹ năng, kinh nghiệm, học vấn và cấp bậc. Không xét g
 
 ## Quy tắc phân xử
 
+- **Kỹ năng được đếm** là kỹ năng chuyên môn và kỹ năng mềm thể hiện được qua
+  việc đã làm (giao tiếp, đàm phán, thuyết trình…). Không đếm phẩm chất cá nhân
+  (trung thực, cẩn thận, chăm chỉ, chịu áp lực… — nhóm "Phẩm chất cá nhân" trong
+  danh mục kỹ năng), dù tin có ghi trong Kỹ năng cần có.
 - **Kỹ năng cốt lõi** là kỹ năng nằm trong tiêu đề tin hoặc đứng đầu mục yêu cầu.
   CV thiếu kỹ năng cốt lõi thì tối đa 2 điểm.
 - **Kỹ năng tương đương** được tính là có (ví dụ tin ghi MySQL, CV có
@@ -76,11 +80,14 @@ năm kinh nghiệm":
 - **1**: 2 năm kiểm thử phần mềm, có viết script Python.
 - **0**: 3 năm kế toán tổng hợp.
 
-## Những điểm bạn cần chốt
+## Quyết định đã chốt (18/11/2026)
 
-- [ ] Ngưỡng "gần hết kỹ năng cần có" ở mức 4: giữ 80% hay đổi?
-- [ ] Có tính địa điểm làm việc vào nhãn không? Đề xuất: không, vì nhiều CV
-      không ghi nơi ở; khi đo sẽ tắt tiêu chí địa điểm của hệ thống.
-- [ ] Thừa trình độ có bị trừ điểm không? Bản nháp: trừ tối đa một điểm.
-- [ ] Tin không liệt kê kỹ năng rõ ràng thì dựa vào đâu? Đề xuất: dựa vào các
-      dòng trong mục yêu cầu, mỗi dòng tính như một kỹ năng.
+| Điểm | Quyết định | Lý do |
+| --- | --- | --- |
+| Ngưỡng mức 4 | Giữ 80% kỹ năng cần có (được đếm) | Tin trung bình có 5 kỹ năng cần có: thiếu tối đa 1 kỹ năng; tách rõ với mức 3 |
+| Địa điểm làm việc | Không tính vào nhãn | CV tổng hợp và CV đã ẩn danh không có nơi ở; khi đo, tắt tiêu chí địa điểm của hệ thống để so cùng điều kiện |
+| Thừa trình độ | CV cao hơn tin từ hai bậc trở lên: trừ tối đa 1 điểm | Khớp thực tế tuyển dụng và tiêu chí Cấp bậc của hệ thống (lệch hai chiều đều giảm điểm) |
+| Phẩm chất cá nhân | Không đếm khi tính tỷ lệ kỹ năng đáp ứng | CV hiếm khi ghi các mục này nên sẽ luôn bị coi là thiếu; hệ thống loại nhóm "Phẩm chất cá nhân" khi chấm |
+
+Từ đây không sửa định nghĩa các mức; nếu buộc phải sửa thì chấm lại toàn bộ các
+cặp đã chấm.

@@ -1,98 +1,76 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1900" height="2095" viewBox="0 0 1900 2095" font-family="'DejaVu Sans', 'Segoe UI', Arial, Helvetica, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" width="1900" height="1790" viewBox="0 0 1900 1790" font-family="'DejaVu Sans', 'Segoe UI', Arial, Helvetica, sans-serif">
 <defs><marker id="open" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="12" markerHeight="12" orient="auto-start-reverse" markerUnits="userSpaceOnUse"><path d="M1,1 L11,6 L1,11" fill="none" stroke="#111" stroke-width="1.4"/></marker></defs>
-<rect width="1900" height="2095" fill="#fff"/>
-<rect x="237" y="52" width="1380" height="1850" fill="none" stroke="#111" stroke-width="2"/>
+<rect width="1900" height="1790" fill="#fff"/>
+<rect x="237" y="52" width="1380" height="1548" fill="none" stroke="#111" stroke-width="2"/>
 <text x="927.0" y="86" text-anchor="middle" font-size="23" font-weight="bold">Hệ thống tuyển dụng ProCV</text>
-<line x1="130.0" y1="297.0" x2="294.0" y2="147.0" stroke="#111" stroke-width="1.3"/>
-<line x1="130.0" y1="297.0" x2="294.0" y2="247.0" stroke="#111" stroke-width="1.3"/>
-<line x1="130.0" y1="297.0" x2="294.0" y2="347.0" stroke="#111" stroke-width="1.3"/>
-<line x1="130.0" y1="297.0" x2="294.0" y2="447.0" stroke="#111" stroke-width="1.3"/>
-<line x1="130.0" y1="1023.0" x2="294.0" y2="247.0" stroke="#111" stroke-width="1.3"/>
-<line x1="130.0" y1="1023.0" x2="294.0" y2="347.0" stroke="#111" stroke-width="1.3"/>
-<line x1="130.0" y1="1023.0" x2="294.0" y2="447.0" stroke="#111" stroke-width="1.3"/>
-<line x1="130.0" y1="1023.0" x2="294.0" y2="575.0" stroke="#111" stroke-width="1.3"/>
-<line x1="130.0" y1="1023.0" x2="294.0" y2="687.0" stroke="#111" stroke-width="1.3"/>
-<line x1="130.0" y1="1023.0" x2="294.0" y2="799.0" stroke="#111" stroke-width="1.3"/>
-<line x1="130.0" y1="1023.0" x2="294.0" y2="911.0" stroke="#111" stroke-width="1.3"/>
-<line x1="130.0" y1="1023.0" x2="294.0" y2="1023.0" stroke="#111" stroke-width="1.3"/>
-<line x1="130.0" y1="1023.0" x2="294.0" y2="1135.0" stroke="#111" stroke-width="1.3"/>
-<line x1="130.0" y1="1023.0" x2="294.0" y2="1247.0" stroke="#111" stroke-width="1.3"/>
-<line x1="130.0" y1="1023.0" x2="294.0" y2="1359.0" stroke="#111" stroke-width="1.3"/>
-<line x1="130.0" y1="1023.0" x2="294.0" y2="1471.0" stroke="#111" stroke-width="1.3"/>
-<line x1="1718.0" y1="575.0" x2="1542.0" y2="147.0" stroke="#111" stroke-width="1.3"/>
-<line x1="1718.0" y1="575.0" x2="1542.0" y2="239.0" stroke="#111" stroke-width="1.3"/>
-<line x1="1718.0" y1="575.0" x2="1542.0" y2="331.0" stroke="#111" stroke-width="1.3"/>
-<line x1="1718.0" y1="575.0" x2="1542.0" y2="423.0" stroke="#111" stroke-width="1.3"/>
-<line x1="1718.0" y1="575.0" x2="1542.0" y2="515.0" stroke="#111" stroke-width="1.3"/>
-<line x1="1718.0" y1="575.0" x2="1542.0" y2="607.0" stroke="#111" stroke-width="1.3"/>
-<line x1="1718.0" y1="575.0" x2="1542.0" y2="699.0" stroke="#111" stroke-width="1.3"/>
-<line x1="1718.0" y1="575.0" x2="1542.0" y2="791.0" stroke="#111" stroke-width="1.3"/>
-<line x1="1718.0" y1="575.0" x2="1542.0" y2="1003.0" stroke="#111" stroke-width="1.3"/>
-<line x1="1718.0" y1="1418.0" x2="1542.0" y2="1112.0" stroke="#111" stroke-width="1.3"/>
-<line x1="1718.0" y1="1418.0" x2="1542.0" y2="1200.0" stroke="#111" stroke-width="1.3"/>
-<line x1="1718.0" y1="1418.0" x2="1542.0" y2="1288.0" stroke="#111" stroke-width="1.3"/>
-<line x1="1718.0" y1="1418.0" x2="1542.0" y2="1376.0" stroke="#111" stroke-width="1.3"/>
-<line x1="1718.0" y1="1418.0" x2="1542.0" y2="1464.0" stroke="#111" stroke-width="1.3"/>
-<line x1="1718.0" y1="1418.0" x2="1542.0" y2="1552.0" stroke="#111" stroke-width="1.3"/>
-<line x1="1718.0" y1="1418.0" x2="1542.0" y2="1640.0" stroke="#111" stroke-width="1.3"/>
-<line x1="1718.0" y1="1418.0" x2="1542.0" y2="1728.0" stroke="#111" stroke-width="1.3"/>
-<line x1="917.0" y1="1935.0" x2="704.8" y2="1866.4" stroke="#111" stroke-width="1.3"/>
-<line x1="917.0" y1="1935.0" x2="917.0" y2="1876.0" stroke="#111" stroke-width="1.3"/>
-<line x1="917.0" y1="1935.0" x2="1129.2" y2="1866.4" stroke="#111" stroke-width="1.3"/>
+<line x1="130.0" y1="247.0" x2="294.0" y2="147.0" stroke="#111" stroke-width="1.3"/>
+<line x1="130.0" y1="247.0" x2="294.0" y2="247.0" stroke="#111" stroke-width="1.3"/>
+<line x1="130.0" y1="247.0" x2="294.0" y2="347.0" stroke="#111" stroke-width="1.3"/>
+<line x1="130.0" y1="760.0" x2="294.0" y2="247.0" stroke="#111" stroke-width="1.3"/>
+<line x1="130.0" y1="760.0" x2="294.0" y2="347.0" stroke="#111" stroke-width="1.3"/>
+<line x1="130.0" y1="760.0" x2="294.0" y2="480.0" stroke="#111" stroke-width="1.3"/>
+<line x1="130.0" y1="760.0" x2="294.0" y2="592.0" stroke="#111" stroke-width="1.3"/>
+<line x1="130.0" y1="760.0" x2="294.0" y2="704.0" stroke="#111" stroke-width="1.3"/>
+<line x1="130.0" y1="760.0" x2="294.0" y2="816.0" stroke="#111" stroke-width="1.3"/>
+<line x1="130.0" y1="760.0" x2="294.0" y2="928.0" stroke="#111" stroke-width="1.3"/>
+<line x1="130.0" y1="760.0" x2="294.0" y2="1040.0" stroke="#111" stroke-width="1.3"/>
+<line x1="1718.0" y1="423.0" x2="1542.0" y2="147.0" stroke="#111" stroke-width="1.3"/>
+<line x1="1718.0" y1="423.0" x2="1542.0" y2="239.0" stroke="#111" stroke-width="1.3"/>
+<line x1="1718.0" y1="423.0" x2="1542.0" y2="331.0" stroke="#111" stroke-width="1.3"/>
+<line x1="1718.0" y1="423.0" x2="1542.0" y2="423.0" stroke="#111" stroke-width="1.3"/>
+<line x1="1718.0" y1="423.0" x2="1542.0" y2="515.0" stroke="#111" stroke-width="1.3"/>
+<line x1="1718.0" y1="423.0" x2="1542.0" y2="607.0" stroke="#111" stroke-width="1.3"/>
+<line x1="1718.0" y1="423.0" x2="1542.0" y2="699.0" stroke="#111" stroke-width="1.3"/>
+<line x1="1718.0" y1="1160.0" x2="1542.0" y2="930.0" stroke="#111" stroke-width="1.3"/>
+<line x1="1718.0" y1="1160.0" x2="1542.0" y2="1022.0" stroke="#111" stroke-width="1.3"/>
+<line x1="1718.0" y1="1160.0" x2="1542.0" y2="1114.0" stroke="#111" stroke-width="1.3"/>
+<line x1="1718.0" y1="1160.0" x2="1542.0" y2="1206.0" stroke="#111" stroke-width="1.3"/>
+<line x1="1718.0" y1="1160.0" x2="1542.0" y2="1298.0" stroke="#111" stroke-width="1.3"/>
+<line x1="1718.0" y1="1160.0" x2="1542.0" y2="1390.0" stroke="#111" stroke-width="1.3"/>
+<line x1="917.0" y1="1625.0" x2="821.6" y2="1564.6" stroke="#111" stroke-width="1.3"/>
+<line x1="917.0" y1="1625.0" x2="1012.4" y2="1564.6" stroke="#111" stroke-width="1.3"/>
 <line x1="616.0" y1="147.0" x2="781.0" y2="147.0" stroke="#111" stroke-width="1.3" stroke-dasharray="7 5" marker-end="url(#open)"/>
 <text x="698.5" y="138.0" text-anchor="middle" font-size="15" paint-order="stroke" stroke="#fff" stroke-width="5" stroke-linejoin="round">«include»</text>
-<line x1="595.9" y1="704.9" x2="782.8" y2="728.6" stroke="#111" stroke-width="1.3" stroke-dasharray="7 5" marker-end="url(#open)"/>
-<text x="689.4" y="707.7" text-anchor="middle" font-size="15" paint-order="stroke" stroke="#fff" stroke-width="5" stroke-linejoin="round">«include»</text>
-<line x1="598.2" y1="782.1" x2="781.4" y2="760.4" stroke="#111" stroke-width="1.3" stroke-dasharray="7 5" marker-end="url(#open)"/>
-<text x="689.8" y="762.3" text-anchor="middle" font-size="15" paint-order="stroke" stroke="#fff" stroke-width="5" stroke-linejoin="round">«include»</text>
-<line x1="1232.9" y1="713.5" x2="1045.6" y2="731.9" stroke="#111" stroke-width="1.3" stroke-dasharray="7 5" marker-end="url(#open)"/>
-<text x="1139.3" y="713.7" text-anchor="middle" font-size="15" paint-order="stroke" stroke="#fff" stroke-width="5" stroke-linejoin="round">«include»</text>
-<line x1="1287.1" y1="865.0" x2="1006.9" y2="775.3" stroke="#111" stroke-width="1.3" stroke-dasharray="7 5" marker-end="url(#open)"/>
-<text x="1147.0" y="811.1" text-anchor="middle" font-size="15" paint-order="stroke" stroke="#fff" stroke-width="5" stroke-linejoin="round">«include»</text>
-<line x1="771.0" y1="911.0" x2="616.0" y2="911.0" stroke="#111" stroke-width="1.3" stroke-dasharray="7 5" marker-end="url(#open)"/>
-<text x="693.5" y="902.0" text-anchor="middle" font-size="15" paint-order="stroke" stroke="#fff" stroke-width="5" stroke-linejoin="round">«extend»</text>
-<line x1="1381.0" y1="858.0" x2="1381.0" y2="828.0" stroke="#111" stroke-width="1.3" stroke-dasharray="7 5" marker-end="url(#open)"/>
-<text x="1433.0" y="848.0" text-anchor="middle" font-size="15" paint-order="stroke" stroke="#fff" stroke-width="5" stroke-linejoin="round">«extend»</text>
-<polyline points="105,1117 105,1980 880,1980" fill="none" stroke="#111" stroke-width="1.3"/>
-<polygon points="880.0,1980.0 854.0,1993.0 854.0,1967.0" fill="#fff" stroke="#111" stroke-width="1.4"/>
-<polyline points="1768,575 1846,575 1846,1980 954,1980" fill="none" stroke="#111" stroke-width="1.3"/>
-<polygon points="954.0,1980.0 980.0,1967.0 980.0,1993.0" fill="#fff" stroke="#111" stroke-width="1.4"/>
-<polyline points="1743,1512 1743,1980 954,1980" fill="none" stroke="#111" stroke-width="1.3"/>
-<polygon points="954.0,1980.0 980.0,1967.0 980.0,1993.0" fill="#fff" stroke="#111" stroke-width="1.4"/>
+<line x1="597.1" y1="609.4" x2="782.1" y2="632.1" stroke="#111" stroke-width="1.3" stroke-dasharray="7 5" marker-end="url(#open)"/>
+<text x="689.6" y="611.7" text-anchor="middle" font-size="15" paint-order="stroke" stroke="#fff" stroke-width="5" stroke-linejoin="round">«include»</text>
+<line x1="597.1" y1="686.6" x2="782.1" y2="663.9" stroke="#111" stroke-width="1.3" stroke-dasharray="7 5" marker-end="url(#open)"/>
+<text x="689.6" y="666.3" text-anchor="middle" font-size="15" paint-order="stroke" stroke="#fff" stroke-width="5" stroke-linejoin="round">«include»</text>
+<line x1="1230.5" y1="620.2" x2="1047.0" y2="636.2" stroke="#111" stroke-width="1.3" stroke-dasharray="7 5" marker-end="url(#open)"/>
+<text x="1138.8" y="619.2" text-anchor="middle" font-size="15" paint-order="stroke" stroke="#fff" stroke-width="5" stroke-linejoin="round">«include»</text>
+<line x1="1288.3" y1="770.8" x2="1005.8" y2="678.6" stroke="#111" stroke-width="1.3" stroke-dasharray="7 5" marker-end="url(#open)"/>
+<text x="1147.0" y="715.7" text-anchor="middle" font-size="15" paint-order="stroke" stroke="#fff" stroke-width="5" stroke-linejoin="round">«include»</text>
+<line x1="771.0" y1="816.0" x2="616.0" y2="816.0" stroke="#111" stroke-width="1.3" stroke-dasharray="7 5" marker-end="url(#open)"/>
+<text x="693.5" y="807.0" text-anchor="middle" font-size="15" paint-order="stroke" stroke="#fff" stroke-width="5" stroke-linejoin="round">«extend»</text>
+<line x1="1381.0" y1="764.0" x2="1381.0" y2="736.0" stroke="#111" stroke-width="1.3" stroke-dasharray="7 5" marker-end="url(#open)"/>
+<text x="1433.0" y="755.0" text-anchor="middle" font-size="15" paint-order="stroke" stroke="#fff" stroke-width="5" stroke-linejoin="round">«extend»</text>
+<polyline points="105,854 105,1670 880,1670" fill="none" stroke="#111" stroke-width="1.3"/>
+<polygon points="880.0,1670.0 854.0,1683.0 854.0,1657.0" fill="#fff" stroke="#111" stroke-width="1.4"/>
+<polyline points="1768,423 1846,423 1846,1670 954,1670" fill="none" stroke="#111" stroke-width="1.3"/>
+<polygon points="954.0,1670.0 980.0,1657.0 980.0,1683.0" fill="#fff" stroke="#111" stroke-width="1.4"/>
+<polyline points="1743,1254 1743,1670 954,1670" fill="none" stroke="#111" stroke-width="1.3"/>
+<polygon points="954.0,1670.0 980.0,1657.0 980.0,1683.0" fill="#fff" stroke="#111" stroke-width="1.4"/>
 <ellipse cx="455" cy="147" rx="161.0" ry="37.0" fill="#fff" stroke="#111" stroke-width="1.4"/>
 <text x="455" y="153" text-anchor="middle" font-size="17">Đăng ký tài khoản</text>
 <ellipse cx="455" cy="247" rx="161.0" ry="37.0" fill="#fff" stroke="#111" stroke-width="1.4"/>
-<text x="455" y="242" text-anchor="middle" font-size="17">Tìm kiếm, so sánh và xem</text>
+<text x="455" y="242" text-anchor="middle" font-size="17">Tìm kiếm và xem</text>
 <text x="455" y="264" text-anchor="middle" font-size="17">chi tiết việc làm</text>
 <ellipse cx="455" cy="347" rx="161.0" ry="37.0" fill="#fff" stroke="#111" stroke-width="1.4"/>
-<text x="455" y="342" text-anchor="middle" font-size="17">Xem công ty, bài viết</text>
-<text x="455" y="364" text-anchor="middle" font-size="17">và mẫu CV</text>
-<ellipse cx="455" cy="447" rx="161.0" ry="37.0" fill="#fff" stroke="#111" stroke-width="1.4"/>
-<text x="455" y="453" text-anchor="middle" font-size="17">Tra cứu trung tâm trợ giúp</text>
-<ellipse cx="455" cy="575" rx="161.0" ry="37.0" fill="#fff" stroke="#111" stroke-width="1.4"/>
-<text x="455" y="570" text-anchor="middle" font-size="17">Quản lý hồ sơ cá nhân và</text>
-<text x="455" y="592" text-anchor="middle" font-size="17">nguyện vọng việc làm</text>
-<ellipse cx="455" cy="687" rx="161.0" ry="37.0" fill="#fff" stroke="#111" stroke-width="1.4"/>
-<text x="455" y="693" text-anchor="middle" font-size="17">Xem việc làm gợi ý</text>
-<ellipse cx="455" cy="799" rx="161.0" ry="37.0" fill="#E8EEF7" stroke="#111" stroke-width="2.6"/>
-<text x="455" y="794" text-anchor="middle" font-size="17">Phân tích mức độ</text>
-<text x="455" y="816" text-anchor="middle" font-size="17">phù hợp CV–JD</text>
-<ellipse cx="455" cy="911" rx="161.0" ry="37.0" fill="#fff" stroke="#111" stroke-width="1.4"/>
-<text x="455" y="917" text-anchor="middle" font-size="17">Quản lý CV</text>
-<ellipse cx="455" cy="1023" rx="161.0" ry="37.0" fill="#fff" stroke="#111" stroke-width="1.4"/>
-<text x="455" y="1029" text-anchor="middle" font-size="17">Ứng tuyển việc làm</text>
-<ellipse cx="455" cy="1135" rx="161.0" ry="37.0" fill="#fff" stroke="#111" stroke-width="1.4"/>
-<text x="455" y="1130" text-anchor="middle" font-size="17">Theo dõi và rút</text>
-<text x="455" y="1152" text-anchor="middle" font-size="17">hồ sơ ứng tuyển</text>
-<ellipse cx="455" cy="1247" rx="161.0" ry="37.0" fill="#fff" stroke="#111" stroke-width="1.4"/>
-<text x="455" y="1242" text-anchor="middle" font-size="17">Lưu việc làm và</text>
-<text x="455" y="1264" text-anchor="middle" font-size="17">theo dõi công ty</text>
-<ellipse cx="455" cy="1359" rx="161.0" ry="37.0" fill="#fff" stroke="#111" stroke-width="1.4"/>
-<text x="455" y="1354" text-anchor="middle" font-size="17">Đăng ký nhận</text>
-<text x="455" y="1376" text-anchor="middle" font-size="17">thông báo việc làm</text>
-<ellipse cx="455" cy="1471" rx="161.0" ry="37.0" fill="#fff" stroke="#111" stroke-width="1.4"/>
-<text x="455" y="1466" text-anchor="middle" font-size="17">Báo cáo tin tuyển dụng</text>
-<text x="455" y="1488" text-anchor="middle" font-size="17">và công ty</text>
+<text x="455" y="353" text-anchor="middle" font-size="17">Xem trang công ty</text>
+<ellipse cx="455" cy="480" rx="161.0" ry="37.0" fill="#fff" stroke="#111" stroke-width="1.4"/>
+<text x="455" y="475" text-anchor="middle" font-size="17">Quản lý hồ sơ cá nhân và</text>
+<text x="455" y="497" text-anchor="middle" font-size="17">nguyện vọng việc làm</text>
+<ellipse cx="455" cy="592" rx="161.0" ry="37.0" fill="#fff" stroke="#111" stroke-width="1.4"/>
+<text x="455" y="598" text-anchor="middle" font-size="17">Xem việc làm gợi ý</text>
+<ellipse cx="455" cy="704" rx="161.0" ry="37.0" fill="#E8EEF7" stroke="#111" stroke-width="2.6"/>
+<text x="455" y="699" text-anchor="middle" font-size="17">Phân tích mức độ</text>
+<text x="455" y="721" text-anchor="middle" font-size="17">phù hợp CV–JD</text>
+<ellipse cx="455" cy="816" rx="161.0" ry="37.0" fill="#fff" stroke="#111" stroke-width="1.4"/>
+<text x="455" y="822" text-anchor="middle" font-size="17">Quản lý CV</text>
+<ellipse cx="455" cy="928" rx="161.0" ry="37.0" fill="#fff" stroke="#111" stroke-width="1.4"/>
+<text x="455" y="934" text-anchor="middle" font-size="17">Ứng tuyển việc làm</text>
+<ellipse cx="455" cy="1040" rx="161.0" ry="37.0" fill="#fff" stroke="#111" stroke-width="1.4"/>
+<text x="455" y="1035" text-anchor="middle" font-size="17">Theo dõi và rút</text>
+<text x="455" y="1057" text-anchor="middle" font-size="17">hồ sơ ứng tuyển</text>
 <ellipse cx="1381" cy="147" rx="161.0" ry="37.0" fill="#fff" stroke="#111" stroke-width="1.4"/>
 <text x="1381" y="142" text-anchor="middle" font-size="17">Xác thực tài khoản</text>
 <text x="1381" y="164" text-anchor="middle" font-size="17">nhà tuyển dụng</text>
@@ -100,86 +78,73 @@
 <text x="1381" y="234" text-anchor="middle" font-size="17">Tạo hoặc tham gia</text>
 <text x="1381" y="256" text-anchor="middle" font-size="17">công ty</text>
 <ellipse cx="1381" cy="331" rx="161.0" ry="37.0" fill="#fff" stroke="#111" stroke-width="1.4"/>
-<text x="1381" y="337" text-anchor="middle" font-size="17">Quản lý trang công ty</text>
+<text x="1381" y="326" text-anchor="middle" font-size="17">Quản lý trang công ty</text>
+<text x="1381" y="348" text-anchor="middle" font-size="17">và thành viên</text>
 <ellipse cx="1381" cy="423" rx="161.0" ry="37.0" fill="#fff" stroke="#111" stroke-width="1.4"/>
 <text x="1381" y="418" text-anchor="middle" font-size="17">Quản lý chiến dịch</text>
 <text x="1381" y="440" text-anchor="middle" font-size="17">tuyển dụng</text>
 <ellipse cx="1381" cy="515" rx="161.0" ry="37.0" fill="#fff" stroke="#111" stroke-width="1.4"/>
 <text x="1381" y="521" text-anchor="middle" font-size="17">Quản lý tin tuyển dụng</text>
 <ellipse cx="1381" cy="607" rx="161.0" ry="37.0" fill="#fff" stroke="#111" stroke-width="1.4"/>
-<text x="1381" y="613" text-anchor="middle" font-size="17">Xem thống kê tuyển dụng</text>
+<text x="1381" y="613" text-anchor="middle" font-size="17">Tìm kiếm hồ sơ ứng viên</text>
 <ellipse cx="1381" cy="699" rx="161.0" ry="37.0" fill="#fff" stroke="#111" stroke-width="1.4"/>
-<text x="1381" y="705" text-anchor="middle" font-size="17">Tìm kiếm hồ sơ ứng viên</text>
-<ellipse cx="1381" cy="791" rx="161.0" ry="37.0" fill="#fff" stroke="#111" stroke-width="1.4"/>
-<text x="1381" y="797" text-anchor="middle" font-size="17">Quản lý hồ sơ ứng tuyển</text>
-<ellipse cx="1381" cy="895" rx="161.0" ry="37.0" fill="#E8EEF7" stroke="#111" stroke-width="2.6"/>
-<text x="1381" y="890" text-anchor="middle" font-size="17">Sàng lọc và xếp hạng</text>
-<text x="1381" y="912" text-anchor="middle" font-size="17">hồ sơ ứng tuyển bằng AI</text>
-<ellipse cx="1381" cy="1003" rx="161.0" ry="37.0" fill="#fff" stroke="#111" stroke-width="1.4"/>
-<text x="1381" y="998" text-anchor="middle" font-size="17">Quản lý thành viên</text>
-<text x="1381" y="1020" text-anchor="middle" font-size="17">công ty</text>
-<ellipse cx="1381" cy="1112" rx="161.0" ry="37.0" fill="#fff" stroke="#111" stroke-width="1.4"/>
-<text x="1381" y="1118" text-anchor="middle" font-size="17">Quản lý tài khoản</text>
-<ellipse cx="1381" cy="1200" rx="161.0" ry="37.0" fill="#fff" stroke="#111" stroke-width="1.4"/>
-<text x="1381" y="1195" text-anchor="middle" font-size="17">Duyệt xác thực</text>
-<text x="1381" y="1217" text-anchor="middle" font-size="17">nhà tuyển dụng</text>
-<ellipse cx="1381" cy="1288" rx="161.0" ry="37.0" fill="#fff" stroke="#111" stroke-width="1.4"/>
-<text x="1381" y="1294" text-anchor="middle" font-size="17">Quản lý doanh nghiệp</text>
-<ellipse cx="1381" cy="1376" rx="161.0" ry="37.0" fill="#fff" stroke="#111" stroke-width="1.4"/>
-<text x="1381" y="1382" text-anchor="middle" font-size="17">Hậu kiểm tin tuyển dụng</text>
-<ellipse cx="1381" cy="1464" rx="161.0" ry="37.0" fill="#fff" stroke="#111" stroke-width="1.4"/>
-<text x="1381" y="1459" text-anchor="middle" font-size="17">Xử lý báo cáo tin</text>
-<text x="1381" y="1481" text-anchor="middle" font-size="17">tuyển dụng và công ty</text>
-<ellipse cx="1381" cy="1552" rx="161.0" ry="37.0" fill="#fff" stroke="#111" stroke-width="1.4"/>
-<text x="1381" y="1547" text-anchor="middle" font-size="17">Quản lý mẫu CV, bài viết</text>
-<text x="1381" y="1569" text-anchor="middle" font-size="17">và trung tâm trợ giúp</text>
-<ellipse cx="1381" cy="1640" rx="161.0" ry="37.0" fill="#fff" stroke="#111" stroke-width="1.4"/>
-<text x="1381" y="1635" text-anchor="middle" font-size="17">Quản lý thông báo</text>
-<text x="1381" y="1657" text-anchor="middle" font-size="17">và cấu hình</text>
-<ellipse cx="1381" cy="1728" rx="161.0" ry="37.0" fill="#fff" stroke="#111" stroke-width="1.4"/>
-<text x="1381" y="1734" text-anchor="middle" font-size="17">Xem thống kê hệ thống</text>
+<text x="1381" y="705" text-anchor="middle" font-size="17">Quản lý hồ sơ ứng tuyển</text>
+<ellipse cx="1381" cy="801" rx="161.0" ry="37.0" fill="#E8EEF7" stroke="#111" stroke-width="2.6"/>
+<text x="1381" y="796" text-anchor="middle" font-size="17">Sàng lọc và xếp hạng</text>
+<text x="1381" y="818" text-anchor="middle" font-size="17">hồ sơ ứng tuyển bằng AI</text>
+<ellipse cx="1381" cy="930" rx="161.0" ry="37.0" fill="#fff" stroke="#111" stroke-width="1.4"/>
+<text x="1381" y="936" text-anchor="middle" font-size="17">Quản lý tài khoản</text>
+<ellipse cx="1381" cy="1022" rx="161.0" ry="37.0" fill="#fff" stroke="#111" stroke-width="1.4"/>
+<text x="1381" y="1017" text-anchor="middle" font-size="17">Duyệt xác thực</text>
+<text x="1381" y="1039" text-anchor="middle" font-size="17">nhà tuyển dụng</text>
+<ellipse cx="1381" cy="1114" rx="161.0" ry="37.0" fill="#fff" stroke="#111" stroke-width="1.4"/>
+<text x="1381" y="1120" text-anchor="middle" font-size="17">Quản lý doanh nghiệp</text>
+<ellipse cx="1381" cy="1206" rx="161.0" ry="37.0" fill="#fff" stroke="#111" stroke-width="1.4"/>
+<text x="1381" y="1212" text-anchor="middle" font-size="17">Hậu kiểm tin tuyển dụng</text>
+<ellipse cx="1381" cy="1298" rx="161.0" ry="37.0" fill="#fff" stroke="#111" stroke-width="1.4"/>
+<text x="1381" y="1304" text-anchor="middle" font-size="17">Quản lý mẫu CV</text>
+<ellipse cx="1381" cy="1390" rx="161.0" ry="37.0" fill="#fff" stroke="#111" stroke-width="1.4"/>
+<text x="1381" y="1396" text-anchor="middle" font-size="17">Xem thống kê hệ thống</text>
 <ellipse cx="912" cy="147" rx="131.0" ry="38.0" fill="#fff" stroke="#111" stroke-width="1.4"/>
 <text x="912" y="153" text-anchor="middle" font-size="17">Xác minh email</text>
-<ellipse cx="912" cy="745" rx="141.0" ry="41.0" fill="#E8EEF7" stroke="#111" stroke-width="2.6"/>
-<text x="912" y="740" text-anchor="middle" font-size="17">Đối sánh ngữ nghĩa</text>
-<text x="912" y="762" text-anchor="middle" font-size="17">CV–JD</text>
-<ellipse cx="912" cy="911" rx="141.0" ry="38.0" fill="#fff" stroke="#111" stroke-width="1.4"/>
-<text x="912" y="906" text-anchor="middle" font-size="17">Nhập CV từ tệp</text>
-<text x="912" y="928" text-anchor="middle" font-size="17">PDF/DOCX</text>
-<ellipse cx="617" cy="1838" rx="132.0" ry="38.0" fill="#fff" stroke="#111" stroke-width="1.4"/>
-<text x="617" y="1844" text-anchor="middle" font-size="17">Đăng nhập</text>
-<ellipse cx="917" cy="1838" rx="132.0" ry="38.0" fill="#fff" stroke="#111" stroke-width="1.4"/>
-<text x="917" y="1844" text-anchor="middle" font-size="17">Đăng xuất</text>
-<ellipse cx="1217" cy="1838" rx="132.0" ry="38.0" fill="#fff" stroke="#111" stroke-width="1.4"/>
-<text x="1217" y="1844" text-anchor="middle" font-size="17">Khôi phục mật khẩu</text>
-<circle cx="105" cy="265" r="13" fill="#fff" stroke="#111" stroke-width="1.8"/>
-<line x1="105" y1="278" x2="105" y2="325" stroke="#111" stroke-width="1.8"/>
-<line x1="80" y1="297" x2="130" y2="297" stroke="#111" stroke-width="1.8"/>
-<line x1="105" y1="325" x2="85" y2="357" stroke="#111" stroke-width="1.8"/>
-<line x1="105" y1="325" x2="125" y2="357" stroke="#111" stroke-width="1.8"/>
-<text x="105" y="381" text-anchor="middle" font-size="19" font-weight="bold">Khách</text>
-<circle cx="105" cy="991" r="13" fill="#fff" stroke="#111" stroke-width="1.8"/>
-<line x1="105" y1="1004" x2="105" y2="1051" stroke="#111" stroke-width="1.8"/>
-<line x1="80" y1="1023" x2="130" y2="1023" stroke="#111" stroke-width="1.8"/>
-<line x1="105" y1="1051" x2="85" y2="1083" stroke="#111" stroke-width="1.8"/>
-<line x1="105" y1="1051" x2="125" y2="1083" stroke="#111" stroke-width="1.8"/>
-<text x="105" y="1107" text-anchor="middle" font-size="19" font-weight="bold">Ứng viên</text>
-<circle cx="1743" cy="543" r="13" fill="#fff" stroke="#111" stroke-width="1.8"/>
-<line x1="1743" y1="556" x2="1743" y2="603" stroke="#111" stroke-width="1.8"/>
-<line x1="1718" y1="575" x2="1768" y2="575" stroke="#111" stroke-width="1.8"/>
-<line x1="1743" y1="603" x2="1723" y2="635" stroke="#111" stroke-width="1.8"/>
-<line x1="1743" y1="603" x2="1763" y2="635" stroke="#111" stroke-width="1.8"/>
-<text x="1743" y="659" text-anchor="middle" font-size="19" font-weight="bold">Nhà tuyển dụng</text>
-<circle cx="1743" cy="1386" r="13" fill="#fff" stroke="#111" stroke-width="1.8"/>
-<line x1="1743" y1="1399" x2="1743" y2="1446" stroke="#111" stroke-width="1.8"/>
-<line x1="1718" y1="1418" x2="1768" y2="1418" stroke="#111" stroke-width="1.8"/>
-<line x1="1743" y1="1446" x2="1723" y2="1478" stroke="#111" stroke-width="1.8"/>
-<line x1="1743" y1="1446" x2="1763" y2="1478" stroke="#111" stroke-width="1.8"/>
-<text x="1743" y="1502" text-anchor="middle" font-size="19" font-weight="bold">Quản trị viên</text>
-<circle cx="917" cy="1948" r="13" fill="#fff" stroke="#111" stroke-width="1.8"/>
-<line x1="917" y1="1961" x2="917" y2="2008" stroke="#111" stroke-width="1.8"/>
-<line x1="892" y1="1980" x2="942" y2="1980" stroke="#111" stroke-width="1.8"/>
-<line x1="917" y1="2008" x2="897" y2="2040" stroke="#111" stroke-width="1.8"/>
-<line x1="917" y1="2008" x2="937" y2="2040" stroke="#111" stroke-width="1.8"/>
-<text x="917" y="2064" text-anchor="middle" font-size="19" font-weight="bold">Người dùng</text>
+<ellipse cx="912" cy="648" rx="141.0" ry="41.0" fill="#E8EEF7" stroke="#111" stroke-width="2.6"/>
+<text x="912" y="643" text-anchor="middle" font-size="17">Đối sánh ngữ nghĩa</text>
+<text x="912" y="665" text-anchor="middle" font-size="17">CV–JD</text>
+<ellipse cx="912" cy="816" rx="141.0" ry="38.0" fill="#fff" stroke="#111" stroke-width="1.4"/>
+<text x="912" y="811" text-anchor="middle" font-size="17">Nhập CV từ tệp</text>
+<text x="912" y="833" text-anchor="middle" font-size="17">PDF/DOCX</text>
+<ellipse cx="767" cy="1530" rx="132.0" ry="38.0" fill="#fff" stroke="#111" stroke-width="1.4"/>
+<text x="767" y="1536" text-anchor="middle" font-size="17">Đăng nhập</text>
+<ellipse cx="1067" cy="1530" rx="132.0" ry="38.0" fill="#fff" stroke="#111" stroke-width="1.4"/>
+<text x="1067" y="1536" text-anchor="middle" font-size="17">Đăng xuất</text>
+<circle cx="105" cy="215" r="13" fill="#fff" stroke="#111" stroke-width="1.8"/>
+<line x1="105" y1="228" x2="105" y2="275" stroke="#111" stroke-width="1.8"/>
+<line x1="80" y1="247" x2="130" y2="247" stroke="#111" stroke-width="1.8"/>
+<line x1="105" y1="275" x2="85" y2="307" stroke="#111" stroke-width="1.8"/>
+<line x1="105" y1="275" x2="125" y2="307" stroke="#111" stroke-width="1.8"/>
+<text x="105" y="331" text-anchor="middle" font-size="19" font-weight="bold">Khách</text>
+<circle cx="105" cy="728" r="13" fill="#fff" stroke="#111" stroke-width="1.8"/>
+<line x1="105" y1="741" x2="105" y2="788" stroke="#111" stroke-width="1.8"/>
+<line x1="80" y1="760" x2="130" y2="760" stroke="#111" stroke-width="1.8"/>
+<line x1="105" y1="788" x2="85" y2="820" stroke="#111" stroke-width="1.8"/>
+<line x1="105" y1="788" x2="125" y2="820" stroke="#111" stroke-width="1.8"/>
+<text x="105" y="844" text-anchor="middle" font-size="19" font-weight="bold">Ứng viên</text>
+<circle cx="1743" cy="391" r="13" fill="#fff" stroke="#111" stroke-width="1.8"/>
+<line x1="1743" y1="404" x2="1743" y2="451" stroke="#111" stroke-width="1.8"/>
+<line x1="1718" y1="423" x2="1768" y2="423" stroke="#111" stroke-width="1.8"/>
+<line x1="1743" y1="451" x2="1723" y2="483" stroke="#111" stroke-width="1.8"/>
+<line x1="1743" y1="451" x2="1763" y2="483" stroke="#111" stroke-width="1.8"/>
+<text x="1743" y="507" text-anchor="middle" font-size="19" font-weight="bold">Nhà tuyển dụng</text>
+<circle cx="1743" cy="1128" r="13" fill="#fff" stroke="#111" stroke-width="1.8"/>
+<line x1="1743" y1="1141" x2="1743" y2="1188" stroke="#111" stroke-width="1.8"/>
+<line x1="1718" y1="1160" x2="1768" y2="1160" stroke="#111" stroke-width="1.8"/>
+<line x1="1743" y1="1188" x2="1723" y2="1220" stroke="#111" stroke-width="1.8"/>
+<line x1="1743" y1="1188" x2="1763" y2="1220" stroke="#111" stroke-width="1.8"/>
+<text x="1743" y="1244" text-anchor="middle" font-size="19" font-weight="bold">Quản trị viên</text>
+<circle cx="917" cy="1638" r="13" fill="#fff" stroke="#111" stroke-width="1.8"/>
+<line x1="917" y1="1651" x2="917" y2="1698" stroke="#111" stroke-width="1.8"/>
+<line x1="892" y1="1670" x2="942" y2="1670" stroke="#111" stroke-width="1.8"/>
+<line x1="917" y1="1698" x2="897" y2="1730" stroke="#111" stroke-width="1.8"/>
+<line x1="917" y1="1698" x2="937" y2="1730" stroke="#111" stroke-width="1.8"/>
+<text x="917" y="1754" text-anchor="middle" font-size="19" font-weight="bold">Người dùng</text>
 </svg>

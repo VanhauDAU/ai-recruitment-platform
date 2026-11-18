@@ -6,6 +6,20 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ## [Unreleased]
 
+### 2026-11-18
+
+#### Added — Kho CV tổng hợp cho thực nghiệm đối sánh CV–JD
+
+- `ml/scripts/generate_cvs.py` sinh CV hư cấu bằng mô hình chạy local (Ollama,
+  `qwen2.5:7b`) từ các tin tuyển dụng đã nhập: đủ 8 nhóm vị trí của tập vàng và
+  các vị trí khác, tiếng Việt và tiếng Anh, ba mức khớp dự kiến, kiểm tra trùng
+  nội dung.
+- Lệnh `import_cv_documents` (app `cvs`) đưa CV dựng sẵn vào hệ thống, mỗi CV một
+  tài khoản ứng viên thử không có mật khẩu dùng được; `ml/scripts/import_cvs.py`
+  gọi lệnh này và ghi kết quả vào tệp theo dõi `ml/data/cv/cv_inventory.xlsx`.
+- `ml/README.md` mô tả cấu trúc thư mục `ml/` và thứ tự chạy; đường dẫn dữ liệu
+  gom vào `ml/scripts/paths.py`.
+
 ### 2026-11-16
 
 #### Added — Bảng điều khiển quản trị

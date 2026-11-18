@@ -6,5 +6,5 @@ sentence-transformers==6.3.0
 transformers==5.23.0
 datasets==5.2.0
 accelerate==1.15.0
-# Đọc tệp nhập tin tuyển dụng ml/data/jd_input.xlsx
+# Đọc tệp nhập tin tuyển dụng ml/data/jd/jd_input.xlsx
 openpyxl==3.1.5
