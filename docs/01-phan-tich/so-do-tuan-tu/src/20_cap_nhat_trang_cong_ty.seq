@@ -1,0 +1,46 @@
+title Sơ đồ tuần tự chức năng cập nhật thông tin trang công ty
+actor NTD Nhà tuyển dụng (có quyền biên tập)
+participant FE Giao diện web\n(React)
+participant BE Máy chủ API\n(Django REST)
+database DB CSDL\n(PostgreSQL)
+actor QTV Quản trị viên
+group Gửi yêu cầu cập nhật
+NTD -> FE : Sửa thông tin công ty / nội dung trang (giới thiệu, ảnh, quy mô...)
+FE -> BE : POST /api/employer/company/update-requests/ (hoặc POST /api/employer/company/page/content/)
+BE -> BE : Kiểm tra quyền biên tập
+alt Không có quyền
+BE --> FE : 403 COMPANY_PAGE_EDIT_FORBIDDEN
+else Yêu cầu đang được duyệt
+BE --> FE : 400 / 409 COMPANY_UPDATE_IN_REVIEW
+else Dữ liệu gốc đã đổi
+BE --> FE : 409 company_update_base_conflict
+else Hợp lệ
+BE -> DB : Tạo hoặc sửa CompanyUpdateRequest (submitted), ghi sự kiện
+opt Đổi tên hoặc mã số thuế (thay đổi nhạy cảm)
+BE -> DB : Yêu cầu giấy tờ chứng minh, đưa tra cứu mã số thuế vào hàng đợi
+end
+BE --> FE : 201 / 200
+FE --> NTD : "Đã gửi, chờ quản trị viên duyệt"
+end
+end
+group Quản trị viên duyệt
+QTV -> FE : Mở yêu cầu cập nhật, bấm "Bắt đầu duyệt"
+FE -> BE : POST /api/admin/company-update-requests/{id}/start-review/ {lock_version}
+alt Thiếu giấy tờ hoặc ảnh chưa tải xong
+BE --> FE : 400 COMPANY_UPDATE_NOT_READY
+else Hợp lệ
+BE -> DB : Yêu cầu = in_review
+end
+QTV -> FE : So sánh thay đổi, chọn Duyệt / Yêu cầu sửa / Từ chối
+FE -> BE : POST /api/admin/company-update-requests/{id}/review/ {decision, note, lock_version}
+alt Phiên bản đã đổi hoặc xung đột dữ liệu
+BE --> FE : 409
+else Duyệt
+BE -> DB : Áp thay đổi vào Company, ghi CompanyUpdateEvent và nhật ký quản trị
+BE --> FE : 200
+else Yêu cầu sửa / Từ chối
+BE -> DB : Cập nhật trạng thái yêu cầu và ghi chú
+BE --> FE : 200
+end
+end
+note over NTD,QTV : Bố cục trang (thứ tự khối) áp dụng ngay, không qua duyệt; nội dung và thông tin pháp lý phải qua duyệt

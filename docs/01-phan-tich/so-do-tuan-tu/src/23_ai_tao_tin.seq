@@ -1,0 +1,45 @@
+title Sơ đồ tuần tự chức năng AI hỗ trợ tạo nội dung tin tuyển dụng
+actor NTD Nhà tuyển dụng
+participant FE Giao diện web\n(React)
+participant BE Máy chủ API\n(Django REST)
+database DB CSDL\n(PostgreSQL)
+queue AW AI Worker\n(Celery ai-generation)
+external GM Google Gemini
+NTD -> FE : Mở bảng "Tạo bằng AI", nhập mô tả ngắn hoặc dán JD có sẵn
+FE -> BE : POST /api/jobs/mine/ai-generations/ {mode, locale, brief, idempotency_key}
+alt Không gian tuyển dụng chưa sẵn sàng
+BE --> FE : 403
+else AI đang tắt hoặc chưa được phép
+BE --> FE : 503 JOB_AI_GENERATION_UNAVAILABLE
+else Hết lượt trong ngày (mặc định 10)
+BE --> FE : 429 JOB_AI_DAILY_QUOTA_EXCEEDED
+else Trùng khóa nhưng khác nội dung
+BE --> FE : 409 JOB_AI_IDEMPOTENCY_CONFLICT
+else Hợp lệ
+BE -> DB : Tạo JobAiGeneration (queued)
+BE ->> AW : generate_job_post
+BE --> FE : 202 {public_id, status, quota_remaining}
+AW -> DB : Nhận việc, phase = preparing_context (lấy thông tin công ty đã duyệt)
+AW -> GM : Gửi yêu cầu kèm lược đồ JSON (tối đa 2 lần)
+GM --> AW : Nội dung tin dạng JSON
+AW -> AW : Kiểm tra lược đồ, ánh xạ ngành nghề, kỹ năng, phúc lợi vào danh mục
+alt Thành công
+AW -> DB : completed, lưu kết quả và AiInvocation
+else Lỗi hoặc quá thời gian
+AW -> DB : failed (error_code)
+end
+loop Mỗi 1,5 giây khi đang xử lý
+FE -> BE : GET /api/jobs/mine/ai-generations/{id}/
+BE --> FE : status, phase, result
+end
+alt completed
+FE --> NTD : Xem trước nội dung đề xuất
+NTD -> FE : Bấm "Dùng nội dung này"
+FE -> BE : POST /api/jobs/mine/?as=draft {..., ai_generation_public_id}
+BE -> DB : Áp nội dung vào bản nháp (mỗi kết quả dùng một lần)
+BE --> FE : 201 Bản nháp
+FE --> NTD : Mở biểu mẫu để NTD kiểm tra, chỉnh sửa trước khi đăng
+else failed
+FE --> NTD : Thông báo lỗi, có thể thử lại
+end
+end

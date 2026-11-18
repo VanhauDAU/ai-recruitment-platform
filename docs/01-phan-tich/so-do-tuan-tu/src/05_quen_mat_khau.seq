@@ -1,0 +1,44 @@
+title Sơ đồ tuần tự chức năng khôi phục mật khẩu
+actor ND Người dùng
+participant FE Giao diện web\n(React)
+participant BE Máy chủ API\n(Django REST)
+database RD Bộ nhớ đệm\n(Redis)
+database DB CSDL\n(PostgreSQL)
+queue WK Worker gửi email\n(Celery + SMTP)
+group Yêu cầu khôi phục
+ND -> FE : Nhập email tại trang "Quên mật khẩu"
+FE -> BE : POST /api/auth/password-reset/ {email, captcha_token, portal}
+BE -> BE : Xác minh captcha
+BE -> DB : Tìm tài khoản đang hoạt động theo (email, role của cổng)
+opt Tài khoản tồn tại và đã hết thời gian chờ 60 giây
+BE -> RD : Đặt thời gian chờ gửi lại
+BE -> DB : Tạo AuthEmailJob (password_reset)
+BE ->> WK : deliver_auth_email_job
+WK -> RD : Hủy token cũ, lưu token mới (hạn 30 phút)
+WK ->> ND : Email chứa liên kết đặt lại mật khẩu
+end
+BE --> FE : 200 (luôn cùng một thông báo, không lộ email có tồn tại hay không)
+FE --> ND : "Nếu email tồn tại, chúng tôi đã gửi hướng dẫn"
+end
+group Đặt mật khẩu mới
+ND -> FE : Mở liên kết /reset-password?token=...
+FE -> BE : GET /api/auth/password-reset/validate/?token=
+BE -> RD : Đọc token (không xóa), đối chiếu email và auth_revision
+alt Token không hợp lệ
+BE --> FE : 400
+FE --> ND : "Liên kết không hợp lệ hoặc đã hết hạn"
+else Hợp lệ
+BE --> FE : 200 {email, role}
+ND -> FE : Nhập mật khẩu mới
+FE -> BE : POST /api/auth/password-reset/confirm/ {token, password}
+alt Mật khẩu không đạt quy tắc
+BE --> FE : 400 {password} (token vẫn còn hiệu lực)
+FE --> ND : Hiển thị quy tắc mật khẩu
+else Hợp lệ
+BE -> RD : Lấy và xóa token
+BE -> DB : Cập nhật mật khẩu, thu hồi mọi phiên và refresh token
+BE --> FE : 200 {role}
+FE --> ND : Thông báo thành công, nút về trang đăng nhập đúng cổng
+end
+end
+end

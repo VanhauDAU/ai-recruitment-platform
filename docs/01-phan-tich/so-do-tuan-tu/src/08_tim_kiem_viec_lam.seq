@@ -1,0 +1,56 @@
+title Sơ đồ tuần tự chức năng tìm kiếm và xem chi tiết việc làm
+actor UV Khách / Ứng viên
+participant FE Giao diện web\n(React)
+participant BE Máy chủ API\n(Django REST)
+database RD Bộ nhớ đệm\n(Redis)
+database DB CSDL\n(PostgreSQL)
+group Tìm kiếm việc làm
+UV -> FE : Nhập từ khóa, chọn bộ lọc (ngành, địa điểm, mức lương, kinh nghiệm...)
+FE -> BE : GET /api/jobs/suggest/?q= (gợi ý khi gõ)
+BE --> FE : Danh sách gợi ý
+FE -> BE : GET /api/jobs/?search=&category=&location=&ordering=&page=
+BE -> BE : Kiểm tra tham số lọc và sắp xếp
+alt Tham số không hợp lệ
+BE --> FE : 400
+FE --> UV : Đặt lại bộ lọc
+else Hợp lệ
+BE -> DB : Truy vấn tin đang công khai (còn hạn, trong thời gian hiển thị, không bị tạm giữ)
+DB --> BE : Trang kết quả
+BE --> FE : 200 Danh sách tin (phân trang)
+FE --> UV : Hiển thị kết quả
+end
+end
+group Xem chi tiết tin
+UV -> FE : Chọn một tin
+FE -> BE : GET /api/jobs/{slug}/
+alt Không tìm thấy tin
+BE --> FE : 404
+FE --> UV : Trang "Tin không tồn tại"
+else Có tin
+BE -> DB : Lấy tin, công ty, kỹ năng, trạng thái còn nhận hồ sơ
+BE --> FE : 200 Chi tiết tin
+FE --> UV : Hiển thị chi tiết, tin liên quan
+opt Đã đồng ý cookie thống kê và xem đủ 1 giây
+FE -> BE : POST /api/jobs/{slug}/views/
+BE -> RD : Khử trùng lượt xem theo người xem (24 giờ)
+alt Lượt xem mới
+BE -> DB : Tăng view_count, cập nhật thống kê theo ngày
+BE --> FE : {counted: true}
+else Đã đếm trong 24 giờ
+BE --> FE : {counted: false, reason: duplicate}
+end
+end
+end
+end
+group Lưu tin và theo dõi công ty (ứng viên đã đăng nhập)
+UV -> FE : Bấm "Lưu tin"
+FE -> BE : POST /api/jobs/saved/ {job}
+BE -> DB : Tạo SavedJob nếu chưa có (không tạo trùng)
+BE --> FE : 201 / 200
+UV -> FE : Bấm "Theo dõi công ty"
+FE -> BE : PUT /api/companies/{public_id}/follow/ {notify_new_jobs}
+BE -> DB : Tạo CompanyFollow, tăng follower_count lần đầu
+BE --> FE : 200
+FE --> UV : Cập nhật trạng thái nút
+end
+note over UV,FE : So sánh việc làm (tối đa 3 tin) xử lý ở trình duyệt, chỉ gọi lại GET /api/jobs/{slug}/ cho từng tin

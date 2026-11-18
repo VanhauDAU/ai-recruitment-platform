@@ -1,0 +1,42 @@
+title Sơ đồ tuần tự chức năng báo cáo vi phạm và xử lý báo cáo
+actor UV Ứng viên
+participant FE Giao diện web\n(React)
+participant BE Máy chủ API\n(Django REST)
+database DB CSDL\n(PostgreSQL)
+actor QTV Quản trị viên
+group Ứng viên báo cáo tin / công ty
+UV -> FE : Bấm "Báo cáo", chọn lý do (lừa đảo, sai thông tin, công ty giả...), mô tả
+FE -> BE : POST /api/jobs/{public_id}/report/ (hoặc POST /api/companies/{public_id}/reports/)
+alt Tin hoặc công ty không công khai
+BE --> FE : 404
+else Đã báo cáo và đang chờ xử lý
+BE --> FE : 400
+else Hợp lệ
+BE -> DB : Tạo báo cáo (pending); tin vẫn hiển thị
+BE --> FE : 201
+FE --> UV : "Cảm ơn bạn đã báo cáo"
+end
+end
+group Quản trị viên xử lý
+QTV -> FE : Mở hàng chờ báo cáo (hạn xử lý 48 giờ)
+FE -> BE : GET /api/jobs/admin/reports/
+BE --> FE : Danh sách báo cáo
+QTV -> FE : Chọn Xác nhận vi phạm / Bác bỏ, ghi chú
+FE -> BE : POST /api/jobs/admin/reports/{id}/resolve/ {status, note}
+alt Báo cáo đã xử lý hoặc xác nhận mà thiếu ghi chú
+BE --> FE : 400
+else Xác nhận vi phạm thuộc nhóm lừa đảo / công ty giả / sai thông tin
+BE -> DB : Báo cáo = upheld, ghi sự kiện
+BE -> DB : Tạm giữ tin (confirmed_violation), tin bị ẩn
+BE --> FE : 200
+else Xác nhận lý do khác
+BE -> DB : Báo cáo = upheld (quản trị viên tự quyết thao tác hậu kiểm)
+BE --> FE : 200
+else Bác bỏ
+BE -> DB : Báo cáo = dismissed
+BE --> FE : 200
+end
+opt Báo cáo công ty được xác nhận kèm tạm giữ trang
+BE -> DB : content_policy_hold = true, mọi tin của công ty bị ẩn
+end
+end

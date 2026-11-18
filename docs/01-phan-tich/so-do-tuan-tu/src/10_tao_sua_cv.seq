@@ -1,0 +1,45 @@
+title Sơ đồ tuần tự chức năng tạo và chỉnh sửa CV từ mẫu
+actor UV Ứng viên
+participant FE Giao diện web\n(React)
+participant BE Máy chủ API\n(Django REST)
+database RD Bộ nhớ đệm\n(Redis)
+database DB CSDL\n(PostgreSQL)
+queue Q Hàng đợi\n(Celery)
+group Tạo CV
+UV -> FE : Chọn mẫu CV, ngôn ngữ, vị trí, số năm kinh nghiệm
+FE -> BE : POST /api/v2/cvs/ (Idempotency-Key) {title, template, language, position}
+BE -> RD : Giữ khóa chống tạo trùng
+alt Gửi lại cùng khóa
+BE --> FE : 200 CV đã tạo trước đó
+else Email chưa xác minh
+BE --> FE : 403
+else Đã đủ số CV tối đa (mặc định 6)
+BE --> FE : 409 CV_LIMIT_REACHED
+FE --> UV : Thông báo giới hạn
+else Hợp lệ
+BE -> DB : Dựng nội dung từ mẫu vị trí, tạo UserCv, CvVersion (initial), CvDraft
+BE --> FE : 201 CV mới
+FE --> UV : Mở trình soạn CV
+end
+end
+group Chỉnh sửa và lưu
+UV -> FE : Sửa các mục (thông tin, kinh nghiệm, học vấn, kỹ năng), đổi màu, đổi mẫu
+FE -> FE : Kiểm tra cấu trúc tài liệu, xem trước ngay trên trình duyệt
+UV -> FE : Bấm "Lưu CV"
+FE -> BE : PUT /api/v2/cvs/{cv}/draft/ (If-Match: lock_version)
+alt Bản nháp đã bị sửa ở nơi khác
+BE --> FE : 409 {current_lock_version}
+FE --> UV : Báo xung đột, đề nghị tải lại
+else Khớp phiên bản
+BE -> DB : Cập nhật CvDraft, tăng lock_version
+BE --> FE : 200 + ETag mới
+FE -> BE : POST /api/v2/cvs/{cv}/save-version/ (If-Match)
+BE -> DB : Tạo CvVersion (manual_save)
+BE ->> Q : generate_cv_thumbnail (hàng đợi cv-export)
+opt Bật đối sánh ngữ nghĩa
+BE ->> Q : embed_cv_version (hàng đợi ai-matching)
+end
+BE --> FE : 201 Phiên bản đã lưu
+FE --> UV : Chuyển tới trang "Lưu CV thành công"
+end
+end

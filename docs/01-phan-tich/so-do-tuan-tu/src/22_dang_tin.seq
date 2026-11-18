@@ -1,0 +1,42 @@
+title Sơ đồ tuần tự chức năng đăng tin tuyển dụng
+actor NTD Nhà tuyển dụng
+participant FE Giao diện web\n(React)
+participant BE Máy chủ API\n(Django REST)
+database DB CSDL\n(PostgreSQL)
+NTD -> FE : Mở trang "Đăng tin"
+FE -> BE : GET /api/jobs/mine/posting-context/
+BE -> DB : Đọc trạng thái xác thực, DPA, tạm giữ, hạn mức đăng tin
+BE --> FE : {job_postable, publish_blockers, publish_remain, cam kết trách nhiệm}
+FE --> NTD : Biểu mẫu tin (kèm cảnh báo nếu chưa đủ điều kiện đăng)
+NTD -> FE : Nhập tiêu đề, mô tả, yêu cầu, quyền lợi, lương, địa điểm, hạn nộp, số ngày hiển thị, chọn chiến dịch
+alt Lưu nháp
+FE -> BE : POST /api/jobs/mine/?as=draft
+BE -> BE : Kiểm tra không gian tuyển dụng, chiến dịch (thuộc NTD, không bị tạm giữ, chưa kết thúc)
+alt Không hợp lệ
+BE --> FE : 403 / 400
+else Hợp lệ
+BE -> DB : Tạo Job (draft), JobStatusHistory, CampaignActivity
+BE --> FE : 201 Bản nháp
+end
+else Đăng tin
+NTD -> FE : Tích cam kết trách nhiệm nội dung, bấm "Đăng tin"
+FE -> BE : POST /api/jobs/mine/ (hoặc POST /api/jobs/mine/{id}/submit/) {..., responsibility_statement_version}
+BE -> DB : Khóa NTD, tính trạng thái được phép đăng
+alt Chưa đồng ý cam kết đúng phiên bản
+BE --> FE : 400 JOB_RESPONSIBILITY_REQUIRED
+else Chưa được duyệt xác thực, DPA hết hiệu lực, bị tạm giữ hoặc chiến dịch không hoạt động
+BE --> FE : 400 JOB_PUBLICATION_BLOCKED {blocked_reasons}
+FE --> NTD : Hiển thị việc cần làm để được đăng
+else Nội dung thiếu hoặc sai (lương, địa điểm, hạn nộp...)
+BE --> FE : 400 + lỗi theo trường
+else Vượt hạn mức đăng tin (3 tin, hoặc 100 tin khi đạt cấp xác thực 3)
+BE --> FE : 400
+else Hợp lệ
+BE -> DB : Ghi nhận cam kết, khởi tạo thời gian hiển thị (1–90 ngày)
+BE -> DB : Job = active, published_at = now, lưu approved_snapshot làm mốc hậu kiểm
+BE -> DB : Ghi JobStatusHistory
+BE --> FE : 201 / 200 Tin đã đăng
+FE --> NTD : Tin hiển thị công khai ngay (hậu kiểm)
+end
+end
+note over NTD,DB : Tin bị ẩn tự động khi hết hạn nộp, hết thời gian hiển thị, công ty hoặc NTD bị tạm giữ; khắc phục xong tin tự hiện lại

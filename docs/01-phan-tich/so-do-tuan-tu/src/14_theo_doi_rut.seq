@@ -1,0 +1,48 @@
+title Sơ đồ tuần tự chức năng theo dõi và rút hồ sơ ứng tuyển
+actor UV Ứng viên
+participant FE Giao diện web\n(React)
+participant BE Máy chủ API\n(Django REST)
+database DB CSDL\n(PostgreSQL)
+actor NTD Nhà tuyển dụng
+group Theo dõi hồ sơ
+UV -> FE : Mở "Việc làm đã ứng tuyển"
+FE -> BE : GET /api/v2/applications/
+BE -> DB : Lấy hồ sơ, lịch sử trạng thái đã công bố, lượt nhắc
+DB --> BE : Danh sách hồ sơ
+BE -> BE : Tính trạng thái ứng viên được thấy và thao tác hợp lệ (rút, nộp lại, nhắc)
+BE --> FE : 200 Danh sách và dòng thời gian
+FE --> UV : Hiển thị trạng thái, tiến trình từng hồ sơ
+end
+group Rút hồ sơ
+UV -> FE : Bấm "Rút hồ sơ" và xác nhận
+FE -> BE : POST /api/v2/applications/{id}/withdraw/
+BE -> DB : Khóa hồ sơ hiện hành (is_current)
+alt Không tìm thấy hồ sơ hiện hành
+BE --> FE : 404
+else Hồ sơ đã có kết quả được công bố
+BE --> FE : 400 "Hồ sơ đã có kết quả nên không thể rút"
+FE --> UV : Hiển thị lỗi
+else Được rút
+BE -> DB : Hủy quyết định chưa công bố (đang trong thời gian hoàn tác của NTD)
+BE -> DB : Cập nhật trạng thái withdrawn, ghi lịch sử
+BE -> DB : Tạo thông báo "Ứng viên đã rút hồ sơ" cho NTD
+BE --> FE : 200 Hồ sơ đã rút
+FE --> UV : Cập nhật trạng thái, hiện nút "Ứng tuyển lại"
+end
+end
+group Nhắc nhà tuyển dụng
+UV -> FE : Bấm "Nhắc NTD"
+FE -> BE : POST /api/v2/applications/{id}/remind/
+BE -> BE : Kiểm tra hồ sơ chưa được phản hồi, tin chưa dừng, đã qua 3 ngày từ lúc nộp hoặc lần nhắc trước, tối đa 2 lần
+alt Chưa đủ điều kiện
+BE --> FE : 400 "Bạn có thể nhắc từ HH:MM dd/mm/yyyy"
+FE --> UV : Hiển thị thời điểm được nhắc
+else Đủ điều kiện
+BE -> DB : Tạo ApplicationReminder (nguồn: ứng viên)
+BE -> DB : Tạo thông báo cho người đăng tin (hoặc quản lý công ty)
+BE --> FE : 200
+FE --> UV : "Đã gửi lời nhắc"
+BE ->> NTD : Thông báo trong ứng dụng "Hồ sơ đang chờ phản hồi"
+end
+end
+note over UV,FE : Nộp lại sau khi bị từ chối hoặc đã rút dùng lại luồng ứng tuyển (tối đa 3 lần nộp cho một tin)

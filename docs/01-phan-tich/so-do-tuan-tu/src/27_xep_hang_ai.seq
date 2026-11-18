@@ -1,0 +1,30 @@
+title Sơ đồ tuần tự chức năng sàng lọc và xếp hạng hồ sơ ứng tuyển bằng AI (dự kiến)
+actor NTD Nhà tuyển dụng
+participant FE Giao diện web\n(React)
+participant BE Máy chủ API\n(Django REST)
+database DB CSDL\n(PostgreSQL + pgvector)
+queue ML ML Worker\n(Celery ai-matching)
+NTD -> FE : Mở hồ sơ ứng tuyển của một tin, bấm "Xếp hạng bằng AI"
+FE -> BE : POST /api/matching/rankings/ {job} (dự kiến)
+BE -> BE : Kiểm tra NTD là người đăng tin, có quyền đọc dữ liệu ứng viên, tính năng đang bật
+alt Không đủ quyền hoặc tính năng tắt
+BE --> FE : 403
+else Hợp lệ
+BE -> DB : Lấy hồ sơ hiện hành của tin
+BE -> BE : Chỉ chọn hồ sơ ứng viên đã đồng ý allow_ai_analysis
+BE -> DB : Tạo lượt xếp hạng (queued) cho các hồ sơ được chọn
+BE ->> ML : rank_applications (dự kiến)
+BE --> FE : 202 {ranking_id}
+loop Mỗi hồ sơ được chọn
+ML -> DB : Lấy vector của bản chụp CV đã nộp; chưa có thì trích hồ sơ và mã hóa
+ML -> ML : Chấm theo cùng công thức hybrid-v1 với tin (vector tin đã tính sẵn)
+ML -> DB : Lưu điểm, tiêu chí, kỹ năng khớp/thiếu cho hồ sơ
+end
+ML -> DB : Lượt xếp hạng = succeeded
+loop Thăm dò trạng thái
+FE -> BE : GET /api/matching/rankings/{id}/
+BE --> FE : Trạng thái, danh sách đã sắp xếp
+end
+FE --> NTD : Danh sách hồ sơ sắp theo điểm, giải thích từng tiêu chí; hồ sơ không đồng ý phân tích hiện "Chưa có điểm AI"
+end
+note over NTD,ML : Hệ thống chỉ gợi ý thứ tự, không tự loại hay đổi trạng thái hồ sơ; quyết định vẫn do NTD

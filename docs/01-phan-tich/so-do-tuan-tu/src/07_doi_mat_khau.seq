@@ -1,0 +1,35 @@
+title Sơ đồ tuần tự chức năng đổi mật khẩu
+actor ND Người dùng
+participant FE Giao diện web\n(React)
+participant BE Máy chủ API\n(Django REST)
+database DB CSDL\n(PostgreSQL)
+external GG Google OAuth 2.0
+ND -> FE : Mở trang "Đổi mật khẩu"
+FE -> BE : GET /api/auth/password/
+BE --> FE : {has_usable_password, requires_reauth}
+opt Tài khoản chỉ đăng nhập Google và chưa xác thực lại trong 5 phút
+FE --> ND : Yêu cầu xác thực lại bằng Google
+ND -> GG : Đăng nhập lại Google (luồng OAuth)
+GG -> BE : Callback, cập nhật reauthenticated_at của phiên
+end
+ND -> FE : Nhập mật khẩu hiện tại, mật khẩu mới, tùy chọn "Đăng xuất khỏi các thiết bị khác"
+FE -> BE : POST /api/auth/password/ {current_password, password, logout_all_sessions}
+alt Mật khẩu hiện tại sai hoặc mật khẩu mới không đạt
+BE --> FE : 400 {current_password | password}
+FE --> ND : Hiển thị lỗi theo trường
+else Thiếu phiên refresh hiện tại
+BE --> FE : 400 "Cần phiên refresh hiện tại"
+else Cần xác thực lại
+BE --> FE : 403 {code: reauth_required}
+FE --> ND : Hiện nút xác thực lại bằng Google
+else Hợp lệ
+BE -> DB : Cập nhật mật khẩu
+alt logout_all_sessions = true
+BE -> DB : Thu hồi mọi phiên và refresh token
+else Chỉ phiên hiện tại
+BE -> DB : Thu hồi phiên hiện tại
+end
+BE -> DB : Tạo AuthSession mới
+BE --> FE : 200 {user, tokens} + cookie refresh mới
+FE --> ND : Thay access token, báo đổi mật khẩu thành công
+end

@@ -1,0 +1,34 @@
+title Sơ đồ tuần tự tác vụ nền nhắc hạn và tự động từ chối hồ sơ
+participant BEAT Bộ lập lịch\n(Celery Beat)
+queue WK Worker nền\n(Celery + SMTP)
+database DB CSDL\n(PostgreSQL)
+actor NTD Nhà tuyển dụng
+actor UV Ứng viên
+group Nhắc NTD hồ sơ chờ phản hồi (mỗi giờ)
+BEAT ->> WK : send_unanswered_application_reminders
+WK -> DB : Lấy hồ sơ chưa phản hồi đã nộp ≥ 3 ngày (lần 1) hoặc ≥ 7 ngày (lần 2)
+loop Mỗi tin tuyển dụng
+WK -> DB : Tạo ApplicationReminder (nguồn: hệ thống)
+alt Ứng viên vừa nhắc trong 24 giờ
+WK -> WK : Chỉ ghi lượt nhắc, không gửi thông báo
+else Bình thường
+WK ->> NTD : Thông báo trong ứng dụng "Hồ sơ đang chờ phản hồi"
+end
+end
+end
+group Tự động từ chối hồ sơ quá hạn (mỗi 5 phút)
+BEAT ->> WK : process_automatic_application_rejections
+WK -> DB : Lấy hồ sơ còn ≤ 3 ngày tới hạn, chưa cảnh báo
+opt Có hồ sơ sắp tới hạn
+WK ->> NTD : Email cảnh báo "N hồ sơ sẽ tự chuyển Không phù hợp trong 3 ngày"
+WK -> DB : Đánh dấu đã cảnh báo
+end
+WK -> DB : Lấy hồ sơ đã quá hạn (applied_at + số ngày cấu hình của tin)
+loop Mỗi hồ sơ quá hạn
+WK -> DB : Chuyển "rejected" (tự động), thông báo giữ lại 3 ngày
+end
+note over NTD,UV : Trong 3 ngày ân hạn NTD có thể mở lại hồ sơ, ứng viên có thể rút hồ sơ
+WK -> DB : Lấy hồ sơ tự động từ chối đã quá 3 ngày, chưa gửi email
+WK ->> UV : Email từ chối theo mẫu của tin
+WK -> DB : Ghi auto_rejection_email_sent_at
+end

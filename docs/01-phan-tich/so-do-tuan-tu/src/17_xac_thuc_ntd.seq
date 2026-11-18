@@ -1,0 +1,57 @@
+title Sơ đồ tuần tự chức năng xác thực tài khoản nhà tuyển dụng
+actor NTD Nhà tuyển dụng
+participant FE Giao diện web\n(React)
+participant BE Máy chủ API\n(Django REST)
+database DB CSDL\n(PostgreSQL)
+queue WK Worker nền\n(Celery)
+external SMS Dịch vụ SMS
+external TAX Tra cứu mã số thuế\n(VietQR)
+group Xác minh số điện thoại
+NTD -> FE : Nhập số điện thoại và mật khẩu
+FE -> BE : POST /api/employer/phone/send-otp/ {phone, password}
+alt Sai mật khẩu, đang trong thời gian chờ hoặc SMS bị tắt
+BE --> FE : 400 / 429 / 503
+else Hợp lệ
+BE -> DB : Tạo thử thách OTP
+BE ->> WK : dispatch_employer_sms_challenge (hàng đợi auth-sms)
+WK -> SMS : Gửi mã OTP
+SMS ->> NTD : Tin nhắn chứa mã
+BE --> FE : 202 {challenge}
+NTD -> FE : Nhập mã OTP
+FE -> BE : POST /api/employer/phone/verify/ {challenge_id, code}
+alt Sai mã, hết hạn hoặc quá 5 lần
+BE --> FE : 400 / 410 / 429
+else Đúng mã
+BE -> DB : Đánh dấu số điện thoại đã xác minh
+BE --> FE : 200
+end
+end
+end
+group Cam kết bảo vệ dữ liệu ứng viên (DPA)
+NTD -> FE : Đọc và đồng ý cam kết
+FE -> BE : POST /api/employer/dpa/accept/ {policy_version, document_sha256}
+alt Chính sách đã đổi phiên bản
+BE --> FE : 409 DPA_POLICY_CHANGED
+else Khớp
+BE -> DB : Lưu EmployerDpaAcceptance, gỡ tạm giữ do DPA (bù thời gian hiển thị tin)
+BE --> FE : 200
+end
+end
+group Nộp giấy tờ xác thực
+NTD -> FE : Chọn phương thức (giấy phép kinh doanh / ủy quyền + giấy tờ tùy thân), tải tệp
+FE -> BE : POST /api/employer/company/documents/ {doc_type, file, verification_method}
+alt Chưa liên kết công ty hoặc loại giấy tờ không hợp lệ
+BE --> FE : 404 / 400
+else Hồ sơ bị khóa nộp lại (từ chối 3 lần)
+BE --> FE : 400 VERIFICATION_RESUBMISSION_LOCKED
+else Hợp lệ
+BE -> DB : Tạo CompanyDocument (pending), thay bản cũ cùng loại
+BE -> DB : Hồ sơ EmployerVerificationCase = pending, ghi sự kiện SUBMITTED / RESUBMITTED
+BE ->> WK : lookup_company_tax_evidence
+WK -> TAX : Tra cứu mã số thuế công ty
+TAX --> WK : Tên, trạng thái doanh nghiệp
+WK -> DB : Lưu bằng chứng tra cứu cho quản trị viên
+BE --> FE : 201 Giấy tờ đã nộp
+FE --> NTD : Hiển thị "Đang chờ quản trị viên duyệt"
+end
+end

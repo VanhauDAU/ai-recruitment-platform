@@ -1,0 +1,38 @@
+title Sơ đồ tuần tự chức năng quản lý tài khoản
+actor QTV Quản trị viên
+participant FE Giao diện quản trị\n(React)
+participant BE Máy chủ API\n(Django REST)
+database DB CSDL\n(PostgreSQL)
+queue WK Worker gửi email\n(Celery + SMTP)
+actor ND Người dùng\nbị xử lý
+QTV -> FE : Tìm tài khoản, mở chi tiết
+FE -> BE : GET /api/admin/accounts/?q= và /api/admin/accounts/{id}/
+BE --> FE : Thông tin tài khoản, tin, chiến dịch liên quan
+QTV -> FE : Chọn trạng thái mới (tạm khóa / cấm / mở lại), nhập lý do, bằng chứng
+FE -> BE : POST /api/admin/accounts/{id}/status-impact/ {status, reason, evidence}
+alt Tự xử lý chính mình, chuyển trạng thái không hợp lệ
+BE --> FE : 400
+else Cấm tài khoản nhưng không phải superuser
+BE --> FE : 403 admin_permission_denied
+else Hợp lệ
+BE --> FE : Ảnh hưởng (số tin, chiến dịch bị tạm giữ) + impact_token
+FE --> QTV : Hộp thoại xác nhận
+QTV -> FE : Xác nhận
+FE -> BE : POST /api/admin/accounts/{id}/change-status/ {..., impact_token}
+alt Dữ liệu đã đổi
+BE --> FE : 409
+else Hợp lệ
+BE -> DB : Cập nhật trạng thái, ghi AccountStatusTransition
+opt Tạm khóa hoặc cấm
+BE -> DB : Tăng auth_revision, thu hồi mọi phiên và refresh token
+BE -> DB : Tạm giữ tin và chiến dịch của NTD (temporary_lock / ban_review)
+end
+opt Mở lại tài khoản
+BE -> DB : Gỡ temporary_lock, bù thời gian hiển thị cho tin
+end
+BE -> DB : Ghi nhật ký quản trị
+BE ->> WK : Email thông báo trạng thái tài khoản
+WK ->> ND : Email thông báo
+BE --> FE : 200
+end
+end

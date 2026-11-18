@@ -1,0 +1,47 @@
+title Sơ đồ tuần tự chức năng đăng nhập và duy trì phiên
+actor ND Người dùng
+participant FE Giao diện web\n(React)
+participant BE Máy chủ API\n(Django REST)
+database RD Bộ nhớ đệm\n(Redis)
+database DB CSDL\n(PostgreSQL)
+group Đăng nhập bằng email và mật khẩu (theo cổng)
+ND -> FE : Nhập email, mật khẩu tại cổng ứng viên / NTD / quản trị
+FE -> FE : Lấy captcha_token (reCAPTCHA v3)
+FE -> BE : POST /api/auth/login/ {email, password, captcha_token, portal}
+BE -> BE : Xác minh captcha với Google
+BE -> RD : Kiểm tra bộ đếm đăng nhập sai theo (portal, email)
+alt Đang trong thời gian chờ do sai nhiều lần
+BE --> FE : 429 Thử lại sau N giây
+FE --> ND : Hiển thị thời gian chờ
+else Được thử
+BE -> DB : Tìm User theo (email, role của cổng)
+BE -> BE : Kiểm tra mật khẩu và trạng thái tài khoản
+alt Sai mật khẩu, không tồn tại hoặc bị khóa
+BE -> RD : Tăng bộ đếm sai (từ lần thứ 6 chờ 2 giây, tăng gấp đôi, tối đa 15 phút)
+BE --> FE : 401 "Email hoặc mật khẩu không đúng"
+FE --> ND : Hiển thị lỗi, xóa ô mật khẩu
+else Đúng
+BE -> RD : Xóa bộ đếm sai
+BE -> DB : Tạo hoặc dùng lại AuthSession (sid), cập nhật last_login
+BE --> FE : 200 {access} + cookie HttpOnly procv_refresh_{portal}
+FE -> BE : GET /api/auth/me/ (Bearer access)
+BE --> FE : 200 Thông tin người dùng của phiên
+FE --> ND : Chuyển tới trang theo vai trò và bước onboarding
+end
+end
+end
+group Làm mới access token (hết hạn sau 15 phút)
+FE -> BE : Gọi API với access đã hết hạn
+BE --> FE : 401
+FE -> BE : POST /api/auth/refresh/ {portal} + cookie refresh (các yêu cầu đồng thời dùng chung một lần gọi)
+BE -> DB : Khóa AuthSession theo (sid, jti), kiểm tra auth_rev
+alt Refresh hợp lệ
+BE -> DB : Đưa refresh cũ vào danh sách đen, lưu jti mới
+BE --> FE : 200 {access} + cookie refresh mới
+FE -> BE : Gửi lại yêu cầu ban đầu
+else Refresh hết hạn, bị thu hồi hoặc bị dùng lại
+BE -> DB : Thu hồi phiên nếu phát hiện dùng lại refresh cũ
+BE --> FE : 401 + xóa cookie
+FE --> ND : "Phiên đăng nhập đã hết hạn", về trang đăng nhập
+end
+end
