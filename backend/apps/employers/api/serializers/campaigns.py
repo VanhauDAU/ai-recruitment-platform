@@ -1,6 +1,5 @@
 from rest_framework import serializers
 
-from apps.jobs.models import JobCategory
 from common.media_storage import media_url_from_value
 
 from ...models import CampaignActivity, RecruitmentCampaign
@@ -9,14 +8,8 @@ from ...services import campaign_active_seconds
 
 class RecruitmentCampaignSerializer(serializers.ModelSerializer):
     status_label = serializers.CharField(source='get_status_display', read_only=True)
-    position_category = serializers.PrimaryKeyRelatedField(
-        queryset=JobCategory.objects.filter(category_type=JobCategory.CategoryType.SPECIALIZATION),
-        required=False,
-        allow_null=True,
-    )
-    position_category_name = serializers.CharField(
-        source='position_category.name', read_only=True, default=''
-    )
+    # Sum of the vacancies of the campaign's jobs; each job owns its position.
+    headcount = serializers.IntegerField(read_only=True, default=0)
     active_days = serializers.SerializerMethodField()
     activate = serializers.BooleanField(write_only=True, required=False, default=False)
     last_activity = serializers.SerializerMethodField()
@@ -41,10 +34,7 @@ class RecruitmentCampaignSerializer(serializers.ModelSerializer):
             'public_id',
             'name',
             'description',
-            'position_category',
-            'position_category_name',
-            'position_level',
-            'headcount_target',
+            'headcount',
             'start_date',
             'target_date',
             'is_continuous',
@@ -78,6 +68,7 @@ class RecruitmentCampaignSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = [
             'public_id',
+            'headcount',
             'status',
             'status_label',
             'first_activated_at',
@@ -131,11 +122,6 @@ class RecruitmentCampaignSerializer(serializers.ModelSerializer):
             }
             for preview in getattr(obj, 'candidate_previews', [])
         ]
-
-    def validate_headcount_target(self, value):
-        if value < 1:
-            raise serializers.ValidationError('Chỉ tiêu tuyển phải từ 1 người trở lên.')
-        return value
 
     def validate(self, attrs):
         if self.instance is not None:

@@ -394,11 +394,6 @@ class AdminCampaignSerializer(serializers.ModelSerializer):
         source='get_policy_hold_display',
         read_only=True,
     )
-    position_category_name = serializers.CharField(
-        source='position_category.name',
-        allow_null=True,
-        read_only=True,
-    )
     job_count = serializers.IntegerField(read_only=True)
     application_count = serializers.IntegerField(read_only=True)
 
@@ -408,8 +403,6 @@ class AdminCampaignSerializer(serializers.ModelSerializer):
             'public_id',
             'name',
             'description',
-            'position_category_name',
-            'headcount_target',
             'status',
             'status_label',
             'policy_hold',

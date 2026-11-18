@@ -19,7 +19,7 @@ import {
   EmployerReadinessGateState,
   useEmployerReadiness,
 } from '@/entities/employer-profile'
-import { CampaignGoalForm } from '@/features/manage-campaigns'
+import { CampaignInfoForm } from '@/features/manage-campaigns'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import CampaignActivityPanel from './CampaignActivityPanel'
 import CampaignApplyCvPanel from './CampaignApplyCvPanel'
@@ -258,12 +258,12 @@ export default function EmployerCampaignWorkspace({ publicId }) {
         title={(
           <span className="inline-flex items-center gap-2">
             <EditOutlined className="text-emerald-600" />
-            Sửa mục tiêu chiến dịch
+            Sửa thông tin chiến dịch
           </span>
         )}
         onCancel={() => setEditing(false)}
       >
-        <CampaignGoalForm campaign={campaign} onSaved={() => setEditing(false)} />
+        <CampaignInfoForm campaign={campaign} onSaved={() => setEditing(false)} />
       </Modal>
     </section>
   )

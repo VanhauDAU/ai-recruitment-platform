@@ -24,7 +24,10 @@ const STATUS_TONES = {
 
 function goalSummary(campaign) {
   const end = campaign.is_continuous ? 'tuyển liên tục' : `đến ${formatDate(campaign.target_date)}`
-  const parts = [`Chỉ tiêu ${campaign.headcount_target || 1} người`, `${formatDate(campaign.start_date)} → ${end}`]
+  const parts = [
+    campaign.headcount ? `Tuyển ${campaign.headcount} người qua ${campaign.job_count} tin` : 'Chưa có tin',
+    `${formatDate(campaign.start_date)} → ${end}`,
+  ]
   if (campaign.budget_max) parts.push(`ngân sách tối đa ${Number(campaign.budget_max).toLocaleString('vi-VN')} đ`)
   return parts.join(' · ')
 }
@@ -120,7 +123,7 @@ export default function CampaignWorkspaceHero({ campaign, onEdit }) {
               className="!h-10 !w-full !rounded-xl !border-slate-200 !bg-white !px-4 !font-semibold !text-slate-700 !shadow-sm transition hover:!border-emerald-300 hover:!text-emerald-700 sm:!w-auto"
               onClick={onEdit}
             >
-              Sửa mục tiêu
+              Sửa thông tin
             </Button>
             <CampaignLifecycleActions campaign={campaign} block />
           </div>

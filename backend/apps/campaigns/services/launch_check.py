@@ -49,16 +49,10 @@ def campaign_launch_check(campaign, user, *, entries, scheduled=False, today=Non
     today = today or vietnam_today()
     items = [
         _item(
-            'goal',
-            'Mục tiêu: vị trí và chỉ tiêu tuyển',
-            campaign.position_category_id and campaign.headcount_target >= 1,
-            'Chọn vị trí tuyển và chỉ tiêu ở bước Mục tiêu.',
-        ),
-        _item(
             'end_date',
-            'Ngày kết thúc hoặc tuyển liên tục',
+            'Thời gian: ngày kết thúc hoặc tuyển liên tục',
             campaign.is_continuous or (campaign.target_date and campaign.target_date >= today),
-            'Chọn ngày kết thúc từ hôm nay trở đi, hoặc bật tuyển liên tục.',
+            'Chọn ngày kết thúc từ hôm nay trở đi, hoặc bật tuyển liên tục ở bước Thông tin.',
         ),
     ]
     if scheduled:
@@ -143,6 +137,7 @@ def _job_row(job, action=''):
         'title': job.title,
         'status': job.status,
         'deadline': job.deadline,
+        'number_of_vacancies': job.number_of_vacancies,
         'action': action,
     }
 

@@ -1,0 +1,77 @@
+/*
+ * Khung wizard thiết lập chiến dịch (route lazy, ngoài CSS khởi tạo).
+ * Thanh lộ trình bên trái là điểm nhấn: mỗi bước nói trạng thái thật của dữ liệu.
+ */
+.csw { max-width: 1080px; margin: 0 auto; padding: 12px 0 40px; }
+.csw-skeleton { margin-top: 12px; padding: 24px; border-radius: 16px; background: #fff; }
+.csw-alert { margin-top: 12px; }
+.csw-back { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; color: #475569; }
+.csw-back:hover { color: #047857; }
+
+.csw-head { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 12px; margin: 14px 0 20px; }
+.csw-head__kicker { flex-basis: 100%; margin: 0 0 2px; font-size: 13px; font-weight: 600; color: #047857; }
+.csw-head__title { margin: 0; font-size: 26px; font-weight: 750; line-height: 1.25; letter-spacing: -0.01em; color: #0f2a24; overflow-wrap: anywhere; }
+.csw-status { padding: 2px 10px; border-radius: 999px; background: #f1f5f9; font-size: 12px; font-weight: 600; color: #475569; }
+.csw-status.is-scheduled { background: #ecfeff; color: #0e7490; }
+
+.csw-body { display: grid; grid-template-columns: 264px minmax(0, 1fr); gap: 20px; align-items: start; }
+
+/* Lộ trình */
+.csw-rail { position: sticky; top: 16px; }
+.csw-rail__list { position: relative; margin: 0; padding: 0; list-style: none; }
+.csw-step { position: relative; padding-bottom: 6px; }
+.csw-step:not(:last-child)::after {
+  content: ''; position: absolute; top: 46px; bottom: -2px; left: 27px; width: 2px; border-radius: 2px; background: #dfe7e3;
+}
+.csw-step.is-done:not(:last-child)::after { background: #34d399; }
+.csw-step__button {
+  display: flex; align-items: flex-start; gap: 12px; width: 100%; padding: 12px; border: 1px solid transparent;
+  border-radius: 14px; background: transparent; text-align: left; cursor: pointer; transition: background .15s, border-color .15s;
+}
+.csw-step__button:hover { background: rgb(255 255 255 / .7); }
+.csw-step__button:focus-visible { outline: 2px solid #059669; outline-offset: 2px; }
+.csw-step.is-current .csw-step__button { border-color: #d5e3dd; background: #fff; box-shadow: 0 1px 2px rgb(15 42 36 / .06); }
+.csw-step__mark {
+  position: relative; z-index: 1; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+  width: 32px; height: 32px; border-radius: 50%; border: 2px solid #cbd5d1; background: #fff;
+  font-size: 13px; font-weight: 700; color: #64748b;
+}
+.csw-step.is-done .csw-step__mark { border-color: #059669; background: #059669; color: #fff; }
+.csw-step.is-todo .csw-step__mark { border-color: #f59e0b; color: #b45309; background: #fffbeb; }
+.csw-step.is-ready .csw-step__mark { border-color: #059669; color: #047857; }
+.csw-step.is-current .csw-step__mark { box-shadow: 0 0 0 4px rgb(16 185 129 / .14); }
+.csw-step__text { display: flex; flex-direction: column; gap: 2px; min-width: 0; padding-top: 5px; }
+.csw-step__title { font-size: 14px; font-weight: 700; color: #0f2a24; }
+.csw-step__summary { font-size: 12.5px; line-height: 18px; color: #64748b; }
+.csw-step.is-todo .csw-step__summary { color: #b45309; }
+.csw-step.is-done .csw-step__summary { color: #047857; }
+
+/* Nội dung bước */
+.csw-panel { padding: 24px; border: 1px solid #e2e8e5; border-radius: 16px; background: #fff; box-shadow: 0 1px 3px rgb(15 42 36 / .05); }
+.csw-panel__head { margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid #eef2f0; }
+.csw-panel__title { margin: 0; font-size: 19px; font-weight: 700; color: #0f2a24; }
+.csw-panel__intro { margin: 4px 0 0; font-size: 14px; color: #64748b; }
+
+@media (max-width: 900px) {
+  .csw-body { grid-template-columns: 1fr; gap: 12px; }
+  .csw-rail { position: static; overflow-x: auto; }
+  .csw-rail__list { display: grid; grid-template-columns: repeat(3, minmax(150px, 1fr)); gap: 6px; }
+  .csw-step { padding-bottom: 0; }
+  .csw-step:not(:last-child)::after { display: none; }
+  .csw-step__button { padding: 10px; }
+  .csw-step__mark { width: 26px; height: 26px; font-size: 12px; }
+  .csw-step__text { padding-top: 2px; }
+}
+@media (max-width: 640px) {
+  .csw { padding-top: 4px; }
+  .csw-head__title { font-size: 21px; }
+  .csw-panel { padding: 16px; }
+  .csw-step__summary { display: none; }
+  .csw-step__button { padding: 8px 4px; }
+  .csw-rail__list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .csw-step__button { flex-direction: column; align-items: center; gap: 4px; text-align: center; }
+  .csw-step__title { font-size: 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .csw-step__button { transition: none; }
+}

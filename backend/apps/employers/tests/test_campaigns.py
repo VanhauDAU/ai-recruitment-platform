@@ -101,14 +101,16 @@ class RecruitmentCampaignApiTests(TestCase):
             reverse('employer-campaign-list'),
             self.payload(
                 description='Mở rộng đội backend',
-                position_category=self.category.pk,
-                position_level='employee',
-                headcount_target=3,
                 start_date=today.isoformat(),
                 target_date=(today + timedelta(days=30)).isoformat(),
                 budget_min=5_000_000,
                 budget_max=10_000_000,
             ),
+            format='json',
+        )
+        position_fields = self.client.post(
+            reverse('employer-campaign-list'),
+            self.payload(position_level='director'),
             format='json',
         )
         reversed_dates = self.client.post(
@@ -124,19 +126,16 @@ class RecruitmentCampaignApiTests(TestCase):
             self.payload(budget_min=10, budget_max=5),
             format='json',
         )
-        zero_headcount = self.client.post(
-            reverse('employer-campaign-list'), self.payload(headcount_target=0), format='json'
-        )
 
         self.assertEqual(created.status_code, 201, created.data)
-        self.assertEqual(created.data['headcount_target'], 3)
-        self.assertEqual(created.data['position_category_name'], self.category.name)
+        self.assertEqual(created.data['budget_max'], 10_000_000)
+        self.assertEqual(created.data['headcount'], 0)
+        # Position and level belong to each job, not to the campaign.
+        self.assertNotIn('position_level', position_fields.data)
         self.assertEqual(reversed_dates.status_code, 400)
         self.assertIn('target_date', reversed_dates.data)
         self.assertEqual(reversed_budget.status_code, 400)
         self.assertIn('budget_max', reversed_budget.data)
-        self.assertEqual(zero_headcount.status_code, 400)
-        self.assertIn('headcount_target', zero_headcount.data)
 
     def test_campaign_creation_requires_a_ready_workspace(self):
         user_model = get_user_model()
@@ -511,6 +510,7 @@ class RecruitmentCampaignApiTests(TestCase):
             campaign=campaign,
             title='Campaign job',
             description='Open',
+            number_of_vacancies=4,
             status=Job.Status.ACTIVE,
             deadline=today + timedelta(days=20),
             **open_visibility_window(),
@@ -542,6 +542,7 @@ class RecruitmentCampaignApiTests(TestCase):
         self.assertEqual(updated.status_code, 200, updated.data)
         self.assertEqual(updated.data['name'], 'Campaign renamed')
         self.assertEqual(updated.data['description'], 'Mô tả mới')
+        self.assertEqual(updated.data['headcount'], 4)
         self.assertEqual(updated.data['last_activity']['event_type'], 'campaign_updated')
         self.assertEqual(moved_start.status_code, 400)
         self.assertIn('start_date', moved_start.data)

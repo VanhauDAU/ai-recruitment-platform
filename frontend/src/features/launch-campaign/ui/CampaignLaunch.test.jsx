@@ -61,7 +61,7 @@ describe('campaign launch steps', () => {
     mocks.saveCampaignLaunchSelection.mockResolvedValue(overview)
     renderWithClient(<CampaignJobSelection campaign={campaign} overview={overview} onSaved={onSaved} />)
 
-    await user.click(screen.getByLabelText('Chọn Backend đang tuyển'))
+    await user.click(screen.getByRole('checkbox', { name: /Backend đang tuyển/ }))
     await user.click(screen.getByRole('button', { name: 'Lưu và tiếp tục' }))
 
     await waitFor(() => expect(onSaved).toHaveBeenCalled())
@@ -69,7 +69,8 @@ describe('campaign launch steps', () => {
       publishJobIds: ['job_draft'],
       attachJobIds: ['job_live'],
     })
-    expect(screen.getByRole('link', { name: 'Tạo tin nháp mới' })).toHaveAttribute(
+    expect(screen.getByText('Đã chọn 2 tin')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Tạo tin mới cho chiến dịch/ })).toHaveAttribute(
       'href',
       '/tuyendung/app/jobs/new?campaign=camp_1&return=setup',
     )
@@ -92,6 +93,7 @@ describe('campaign launch steps', () => {
       mode: 'scheduled',
       acceptedStatementVersion: '2026-11',
     })
+    expect(screen.getByText('Khi kích hoạt, hệ thống sẽ đăng 1 tin nháp.')).toBeInTheDocument()
   })
 
   it('keeps launch disabled and lists what blocks a not-ready campaign', () => {
@@ -110,9 +112,34 @@ describe('campaign launch steps', () => {
       />,
     )
 
+    expect(screen.getByRole('heading', { name: 'Còn 1 việc trước khi kích hoạt' })).toBeInTheDocument()
     expect(screen.getByText('Chọn tin.')).toBeInTheDocument()
+    expect(screen.getByText('Còn 1 việc cần xong trước khi kích hoạt.')).toBeInTheDocument()
     expect(screen.getByText('Tin nháp còn thiếu: benefits')).toBeInTheDocument()
     expect(screen.getByRole('radio', { name: /Lên lịch/ })).toBeDisabled()
     expect(screen.getByRole('button', { name: 'Kích hoạt chiến dịch' })).toBeDisabled()
+  })
+
+  it('sends each failing item back to the step that fixes it', async () => {
+    const user = userEvent.setup()
+    const onGoToStep = vi.fn()
+    renderWithClient(
+      <CampaignLaunchReview
+        campaign={campaign}
+        onGoToStep={onGoToStep}
+        overview={{
+          ...overview,
+          check: {
+            ready: false,
+            job_problems: [],
+            items: [{ code: 'jobs', label: 'Có ít nhất một tin tuyển dụng', ok: false, detail: '' }],
+          },
+        }}
+      />,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Sửa ở bước Tin tuyển dụng' }))
+
+    expect(onGoToStep).toHaveBeenCalledWith('jobs')
   })
 })

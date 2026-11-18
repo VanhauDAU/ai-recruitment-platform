@@ -36,8 +36,6 @@ class CampaignLaunchTests(TestCase):
             'owner': self.recruiter,
             'company': self.company,
             'name': 'Tuyển Backend Q4',
-            'position_category': self.category,
-            'headcount_target': 2,
             'target_date': self.today + timedelta(days=30),
         }
         data.update(overrides)

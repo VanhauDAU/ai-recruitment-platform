@@ -1,7 +1,7 @@
 from collections import defaultdict
 from datetime import timedelta
 
-from django.db.models import Count, DateTimeField, F, IntegerField, OuterRef, Q, Subquery
+from django.db.models import Count, DateTimeField, F, IntegerField, OuterRef, Q, Subquery, Sum
 from django.db.models.functions import Coalesce, TruncDate
 
 from apps.applications.models import Application
@@ -56,6 +56,12 @@ def campaign_list_queryset(user, *, status=None, scope=None, q=None, ordering=No
         .annotate(total=Count('candidate_id', distinct=True))
         .values('total')[:1]
     )
+    vacancy_total = (
+        Job.objects.filter(campaign_id=OuterRef('pk'))
+        .values('campaign_id')
+        .annotate(total=Sum('number_of_vacancies'))
+        .values('total')[:1]
+    )
     queryset = RecruitmentCampaign.objects.filter(owner__user=user)
     if status:
         queryset = queryset.filter(status=status)
@@ -64,6 +70,7 @@ def campaign_list_queryset(user, *, status=None, scope=None, q=None, ordering=No
         queryset = queryset.filter(Q(name__icontains=term) | Q(public_id__icontains=term))
     queryset = queryset.annotate(
         job_count=Count('jobs', distinct=True),
+        headcount=Coalesce(Subquery(vacancy_total, output_field=IntegerField()), 0),
         draft_job_count=Count('jobs', filter=Q(jobs__status='draft'), distinct=True),
         active_job_count=job_state_count_subquery(JobState.ACTIVE, campaign_id='pk'),
         expired_job_count=job_state_count_subquery(JobState.EXPIRED, campaign_id='pk'),

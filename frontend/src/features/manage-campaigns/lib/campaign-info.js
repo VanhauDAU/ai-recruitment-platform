@@ -3,13 +3,10 @@ import dayjs from 'dayjs'
 const toDay = (value) => (value ? dayjs(value) : null)
 const toIso = (value) => (value ? value.format('YYYY-MM-DD') : null)
 
-export function campaignGoalValues(campaign) {
+export function campaignInfoValues(campaign) {
   return {
     name: campaign.name,
     description: campaign.description || '',
-    position_category: campaign.position_category ?? undefined,
-    position_level: campaign.position_level || undefined,
-    headcount_target: campaign.headcount_target || 1,
     start_date: toDay(campaign.start_date),
     target_date: toDay(campaign.target_date),
     is_continuous: Boolean(campaign.is_continuous),
@@ -19,7 +16,7 @@ export function campaignGoalValues(campaign) {
   }
 }
 
-export function campaignGoalPayload(values) {
+export function campaignInfoPayload(values) {
   return {
     ...values,
     name: values.name.trim(),

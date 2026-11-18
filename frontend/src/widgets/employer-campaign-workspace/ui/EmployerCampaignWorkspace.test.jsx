@@ -44,7 +44,7 @@ vi.mock('@/entities/employer-profile', async (importOriginal) => ({
   useEmployerReadiness: () => mocks.readinessState,
 }))
 vi.mock('@/features/manage-campaigns', () => ({
-  CampaignGoalForm: () => null,
+  CampaignInfoForm: () => null,
 }))
 vi.mock('./CampaignApplyCvPanel', () => ({
   default: (props) => {

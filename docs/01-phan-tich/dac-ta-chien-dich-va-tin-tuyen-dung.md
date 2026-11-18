@@ -33,9 +33,11 @@ Code chính: `backend/apps/jobs/services/posting.py`, `services/moderation.py`,
 
 ## 2. Chiến dịch tuyển dụng
 
-Chiến dịch là workspace riêng tư của recruiter cho một nhu cầu tuyển: mục tiêu,
-tiến độ, phễu hồ sơ. Tin tuyển dụng là kênh thu CV công khai bên trong chiến
-dịch.
+Chiến dịch là một **đợt tuyển** riêng của recruiter: khoảng thời gian, ngân
+sách, các tin tuyển dụng và phễu hồ sơ của chúng. Mỗi tin là một vị trí với
+cấp bậc và số lượng tuyển riêng, nên một chiến dịch có thể tuyển cùng lúc giám
+đốc và nhân viên. Chỉ tiêu của chiến dịch là tổng `number_of_vacancies` của các
+tin (`headcount` trong API), không nhập tay (chốt với user 18/11/2026).
 
 - Liên kết `Job.campaign` là **tùy chọn**; một tin thuộc tối đa một chiến dịch,
   một chiến dịch có thể chứa nhiều tin (ràng buộc một tin/chiến dịch cũ đã bị
@@ -46,12 +48,15 @@ dịch.
   (2026-11-18). Ngoại lệ: tạo nhanh ngay trong form đăng tin gửi
   `activate=true` để chiến dịch chạy luôn, vì tin sắp đăng cần chiến dịch
   `active`. Điều kiện xác thực chỉ được kiểm tra khi đăng tin (mục 4).
-- Mục tiêu của chiến dịch (ghi được qua API từ 2026-11-18):
-  - vị trí chuyên môn, cấp bậc, `headcount_target` (≥ 1);
+- Thông tin của chiến dịch (ghi được qua API từ 2026-11-18):
   - `start_date`/`target_date` hoặc `is_continuous`;
   - ngân sách min/max và nguồn;
+  - ghi chú (`description`);
   - truy ngược `source_need` (nhu cầu tư vấn).
-- Ràng buộc mục tiêu (kiểm ở serializer, service và CheckConstraint):
+  Ba trường vị trí chuyên môn, cấp bậc, `headcount_target` (thừa hưởng từ nhu
+  cầu tuyển dụng khi đăng ký, chỉ chứa được một vị trí) đã bị gỡ ở migration
+  `employers.0066`.
+- Ràng buộc (kiểm ở serializer, service và CheckConstraint):
   - `target_date ≥ start_date`, `budget_max ≥ budget_min`;
   - chỉ đổi `start_date` khi còn `draft`/`scheduled`;
   - không rút `target_date` xuống trước hạn nộp của tin đang tuyển;
@@ -62,25 +67,40 @@ dịch.
   - `active_seconds_accumulated` (không tính thời gian dừng);
   - `ended_at`, `ended_by` (`user`/`system`).
   API trả thêm `active_days`.
+- Tin chỉ gắn được vào chiến dịch của chính recruiter, không bị `policy_hold`
+  và chưa `completed`/`cancelled`.
 
 ### Thiết lập và kích hoạt (wizard)
 
 Trang `/tuyendung/app/campaigns/:id/setup?step=` có ba bước:
 
-1. **Mục tiêu**: các trường mục tiêu ở trên.
+Bên trái là thanh lộ trình. Mỗi bước hiện trạng thái suy ra từ dữ liệu, không
+theo thứ tự bước: "Đến 31/12, ngân sách tối đa …", "Chưa chọn tin nào", "2 tin
+sẽ đăng, tuyển 4 người", "Còn 1 điều kiện chưa đạt". Bước xong có dấu xanh, bước
+cần làm có vòng hổ phách. Bấm vào bước nào thì chuyển sang bước đó.
+
+1. **Thông tin**: thời gian (có ngày kết thúc / tuyển liên tục), ngân sách, ghi
+   chú.
 2. **Tin tuyển dụng**: chọn tin nháp của chiến dịch để *đăng* khi kích hoạt,
    hoặc tin đang hiển thị (chưa thuộc chiến dịch nào còn chạy) để *gắn*. Tin
    đang hiển thị chưa được gắn ngay, vì gắn vào chiến dịch chưa chạy sẽ làm tin
    bị ẩn. Lựa chọn lưu ở `CampaignLaunchPlan`/`CampaignLaunchJob`
-   (`apps.campaigns`). Nút "Tạo tin nháp mới" mở form đăng tin với
-   `?campaign=…&return=setup`; lưu nháp xong thì quay lại bước này.
+   (`apps.campaigns`). Khối "Tạo tin mới cho chiến dịch" mở form đăng tin với
+   `?campaign=…&return=setup` và nhắc bấm **Lưu nháp**; lưu xong thì quay lại
+   bước này. Mỗi tin hiện số người cần tuyển, hạn nộp, và cảnh báo nếu hạn nộp
+   sau ngày kết thúc chiến dịch. Thanh dưới cùng ghi "Đã chọn N tin, tuyển tổng
+   M người".
 3. **Xem lại & kích hoạt**: checklist từ `GET /launch/`:
-   - đủ mục tiêu;
    - ngày kết thúc từ hôm nay trở đi hoặc tuyển liên tục;
    - có ít nhất một tin;
    - tin nháp đủ nội dung và hạn nộp không sau `target_date`;
    - tài khoản đủ điều kiện đăng tin (cùng điều kiện với `publish_job`);
    - còn lượt đăng.
+
+   Màn hình mở đầu bằng "Còn N việc trước khi kích hoạt". Mỗi việc có nút đưa
+   về đúng bước cần sửa; các điều kiện đã đạt gom vào một dòng thu gọn. Dòng
+   "Khi kích hoạt, hệ thống sẽ đăng X tin nháp và gắn Y tin" nói trước kết quả.
+   Nút bị khóa thì luôn ghi lý do.
 
    NTD chấp nhận cam kết chịu trách nhiệm rồi chọn một trong hai cách:
    - **Kích hoạt ngay**: chuyển sang `active`, đăng mọi tin nháp đã chọn và gắn
@@ -92,8 +112,6 @@ Trang `/tuyendung/app/campaigns/:id/setup?step=` có ba bước:
 
 Bước "Kênh & lịch đăng" được thêm vào giữa bước 2 và 3 ở giai đoạn phân phối
 đa kênh.
-- Tin chỉ gắn được vào chiến dịch của chính recruiter, không bị `policy_hold`
-  và chưa `completed`/`cancelled`.
 
 ### Trạng thái chiến dịch
 
@@ -153,8 +171,8 @@ draft ──launch(now)──> active ⇄ paused
   hết hạn); sắp xếp theo hoạt động gần nhất, mới/cũ, tên. Mobile dùng card,
   desktop dùng bảng.
 - Chiến dịch `draft`/`scheduled` có nút "Tiếp tục thiết lập" ở đầu trang. Hero
-  hiện chỉ tiêu, khoảng ngày và ngân sách. "Sửa mục tiêu" mở form mục tiêu đầy
-  đủ. Có nút Hoàn tất, Hủy và Hủy lịch, mỗi nút có hộp xác nhận nói rõ tin sẽ
+  hiện "Tuyển N người qua M tin", khoảng ngày và ngân sách. "Sửa thông tin" mở
+  form thông tin chiến dịch. Có nút Hoàn tất, Hủy và Hủy lịch, mỗi nút có hộp xác nhận nói rõ tin sẽ
   bị đóng.
 - Chi tiết có bốn tab: Tổng quan (phễu hồ sơ theo trạng thái, CV bảy ngày, tiến
   độ offer/headcount, biểu đồ hiển thị → xem → ứng tuyển theo tin), CV ứng
@@ -437,7 +455,8 @@ liệu thật và tiêu chí giải thích được:
   nghiệm, học vấn, ngoại ngữ; cùng một engine và cùng phần giải thích cho ứng
   viên (trước khi nộp) và recruiter (trong pipeline).
 - **Sức khỏe chiến dịch:** chỉ số giải thích được như tốc độ CV về, thời gian
-  phản hồi `submitted → viewed`, tiến độ offer so với headcount và
+  phản hồi `submitted → viewed`, tiến độ trúng tuyển so với tổng số lượng tuyển
+  của các tin và
   `target_date`; gợi ý tối ưu JD; benchmark lương chỉ hiển thị khi nhóm đủ
   ngưỡng mẫu.
 - **Talent pool:** lưu ứng viên `rejected` theo vị trí chuyên môn để mời lại ở
