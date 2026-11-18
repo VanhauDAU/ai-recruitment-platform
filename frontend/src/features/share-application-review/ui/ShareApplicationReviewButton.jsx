@@ -1,5 +1,5 @@
 import { CopyOutlined, MailOutlined, ShareAltOutlined } from '@ant-design/icons'
-import { Alert, Button, Empty, Form, Input, Modal, Select, Skeleton, Tag } from 'antd'
+import { Alert, Button, Empty, Form, Input, Modal, Select, Skeleton, Tag, Tooltip } from 'antd'
 import { useState } from 'react'
 import { formatDateTime } from '@/shared/lib/date-time'
 import { message } from '@/shared/lib/toast'
@@ -19,8 +19,11 @@ function mailtoLink({ url, candidateName, jobTitle }) {
   return `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
 }
 
-/** Invite a hiring manager (no account needed) to review this application. */
-export default function ShareApplicationReviewButton({ publicId, candidateName, jobTitle }) {
+/**
+ * Invite a hiring manager (no account needed) to review this application.
+ * `disabledReason` explains why this application cannot be shared.
+ */
+export default function ShareApplicationReviewButton({ publicId, candidateName, jobTitle, disabledReason = '' }) {
   const [open, setOpen] = useState(false)
   const [created, setCreated] = useState(null)
   const [form] = Form.useForm()
@@ -55,9 +58,11 @@ export default function ShareApplicationReviewButton({ publicId, candidateName, 
 
   return (
     <>
-      <Button size="small" icon={<ShareAltOutlined />} disabled={!publicId} onClick={() => setOpen(true)}>
-        Mời đánh giá
-      </Button>
+      <Tooltip title={disabledReason}>
+        <Button size="small" icon={<ShareAltOutlined />} disabled={!publicId || Boolean(disabledReason)} onClick={() => setOpen(true)}>
+          Mời đánh giá
+        </Button>
+      </Tooltip>
       <Modal
         open={open}
         title="Mời người khác đánh giá hồ sơ"

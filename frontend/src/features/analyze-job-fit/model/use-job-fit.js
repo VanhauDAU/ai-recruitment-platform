@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
-import { getMyCvs } from '@/entities/cv'
+import { getMySavedCvs } from '@/entities/cv'
 import { getJobFit, listJobFits, requestJobFit } from '../api/job-fit.api'
 import { isAnalysisActive } from './job-fit'
 
@@ -12,7 +12,7 @@ const analysisKey = (publicId) => ['job-fit', 'analysis', publicId]
 export function useJobFit(jobSlug) {
   const queryClient = useQueryClient()
   const [publicId, setPublicId] = useState(null)
-  const cvsQuery = useQuery({ queryKey: ['job-fit', 'cvs'], queryFn: getMyCvs })
+  const cvsQuery = useQuery({ queryKey: ['job-fit', 'cvs'], queryFn: getMySavedCvs })
   const recentQuery = useQuery({
     queryKey: ['job-fit', 'recent', jobSlug],
     queryFn: () => listJobFits(jobSlug),

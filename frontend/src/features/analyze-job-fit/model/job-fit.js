@@ -46,6 +46,7 @@ const REQUEST_ERROR_COPY = {
   feature_disabled: 'Tính năng xem độ phù hợp đang tạm tắt.',
   job_not_active: 'Tin tuyển dụng này không còn nhận phân tích.',
   cv_not_owned: 'Không tìm thấy CV này trong tài khoản của bạn.',
+  cv_not_saved: 'CV chưa được lưu lần nào. Mở CV và bấm Lưu rồi phân tích lại.',
   job_text_too_short: ANALYSIS_ERROR_COPY.job_text_too_short,
 }
 

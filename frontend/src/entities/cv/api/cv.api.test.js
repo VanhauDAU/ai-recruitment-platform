@@ -13,6 +13,7 @@ import {
   getCvSharedLinks,
   getCvVersion,
   getCvVersions,
+  getMySavedCvs,
   getSharedCv,
   importCvFile,
   publishCvVersion,
@@ -49,6 +50,16 @@ describe('CV V2 API', () => {
     forgetPreparedUpload.mockReset()
     put.mockReset()
     remove.mockReset()
+  })
+
+  it('leaves out online CVs whose owner never saved them', async () => {
+    get.mockResolvedValue({ data: [
+      { public_id: 'cv_saved', has_saved_version: true },
+      { public_id: 'cv_template_only', has_saved_version: false },
+    ] })
+
+    await expect(getMySavedCvs()).resolves.toEqual([{ public_id: 'cv_saved', has_saved_version: true }])
+    expect(get).toHaveBeenCalledWith('/v2/cvs/')
   })
 
   it('keeps account-library metadata and file imports on V2', async () => {

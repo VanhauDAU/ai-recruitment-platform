@@ -31,6 +31,15 @@ describe('UploadedCvPreview', () => {
     expect(frame).toHaveAttribute('src', 'blob:cv-source#toolbar=0&navpanes=0&scrollbar=0&view=FitH')
   })
 
+  it('reads the file from a caller-supplied source, such as an application', async () => {
+    const load = vi.fn().mockResolvedValue(new Blob(['%PDF'], { type: 'application/pdf' }))
+    renderPreview({ source: { queryKey: ['applications', 'cv-file', 'app_1'], load } })
+
+    await screen.findByTitle('CV của tôi')
+    expect(load).toHaveBeenCalledOnce()
+    expect(getUploadedCvFile).not.toHaveBeenCalled()
+  })
+
   it('reads the file through the share token for shared links', async () => {
     getSharedCvFile.mockResolvedValue(new Blob(['%PDF'], { type: 'application/pdf' }))
     renderPreview({ shareToken: 'tok_1' })

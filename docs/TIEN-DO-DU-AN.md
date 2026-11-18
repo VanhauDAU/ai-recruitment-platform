@@ -7,6 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
+| [Ứng tuyển bằng CV tải lên và form ứng tuyển mới](#ứng-tuyển-bằng-cv-tải-lên-và-form-ứng-tuyển-mới-2026-11-18) | 🟨 Xong code trên nhánh `feat/ai-matching-ui`, chưa commit |
 | [Bảng điều khiển quản trị](#bảng-điều-khiển-quản-trị-2026-11-16) | 🟨 Xong trên nhánh `feat/admin-dashboard`, chưa mở PR |
 | [Ảnh đại diện dùng chung 3 cổng](#ảnh-đại-diện-dùng-chung-3-cổng-2026-11-16) | 🟨 Xong trên nhánh `feat/avatar-editor`, chưa mở PR |
 | [Dọn mâu thuẫn còn lại sau thống nhất luồng](#dọn-mâu-thuẫn-còn-lại-sau-thống-nhất-luồng-2026-11-16) | ✅ Cả 3 GĐ đã gộp (#222, #223, #224); dọn phần còn hở trên nhánh `fix/flow-loose-ends` |
@@ -26,6 +27,44 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Các epic đã hoàn tất](#các-epic-đã-hoàn-tất) | ✅ |
 | [Lộ trình theo PRD](#lộ-trình-theo-prd) | 🟨 Phần AI lõi (giai đoạn 2–3) còn mở |
 | [Việc còn mở](#việc-còn-mở) | |
+
+## Ứng tuyển bằng CV tải lên và form ứng tuyển mới (2026-11-18)
+
+Đối chiếu quy trình ứng tuyển của TopCV (trang Hỏi đáp + form thực tế) rồi chốt
+luồng cho ProCV.
+
+- Lỗi tìm thấy: từ đợt 15/11, ứng tuyển đòi nội dung có cấu trúc nên **mọi CV
+  tải lên đều bị chặn** (19/19 CV trong DB local), còn mục "Tải CV từ máy tính"
+  trong form chờ một bước phân tích không bao giờ chạy rồi báo lỗi sau 60 giây.
+- CV tải lên được nộp bằng **tệp gốc**: `application_readiness_issues(cv, version)`
+  chỉ đòi có tệp (tệp đã qua tiêu chuẩn upload). Khi nộp, bản chụp hồ sơ giữ một
+  bản sao riêng của tệp (`CvVersion.source_file_key/type`, migration `cvs.0018`,
+  có `db_default` vì migration cũ tạo version bằng model lịch sử) nên ứng viên
+  xóa CV thì NTD vẫn đọc được; xóa bản chụp thì tệp bị dọn theo.
+- Nộp CV tải lên bắt buộc họ tên, email, số điện thoại (điền sẵn từ tài khoản).
+- NTD: `GET /api/v2/recruiter/applications/<id>/cv/file/` trả PDF (DOCX được
+  đổi sang PDF), `?download=1` để tải và báo ứng viên như tải bản dựng. Khung
+  xem trước hiện đúng tệp đó. Với CV dạng tệp: không tạo bản dựng PDF, không tạo
+  link mời người ngoài đánh giá (không ẩn danh được thông tin trong tệp).
+- CV online tạo từ mẫu nhưng chưa bấm Lưu lần nào (`has_saved_version=false`)
+  không hiện khi chọn CV ứng tuyển / xem độ phù hợp; API nộp hồ sơ và API phân
+  tích (`cv_not_saved`) đều từ chối. CV có chỉnh sửa chưa lưu vẫn nộp được bản
+  đã lưu gần nhất, kèm nhãn nói rõ.
+- CV tải lên không còn nút "Sửa CV"; mở `/cvs/<id>/edit` của CV tải lên sẽ
+  chuyển sang trang xem.
+- Form ứng tuyển làm lại gọn: nhãn "CV ứng tuyển gần nhất" (đưa lên đầu, chọn
+  sẵn), nút "Xem" luôn hiện, CV chưa đủ thông tin bị khóa kèm "Sửa CV", form
+  liên hệ mở ngay trong thẻ CV dạng tệp, "Sử dụng thư giới thiệu gần nhất", khối
+  lưu ý thu gọn. Style nằm trong `apply-form.css` và `cv-choice.css` (không thêm
+  utility vào CSS khởi tạo).
+- Màn tải CV thành công: "Xem CV tải lên của tôi" mở trang xem của đúng CV vừa
+  tải ở thẻ mới.
+- Chủ ý khác TopCV: tệp không đọc được chữ vẫn bị từ chối ngay cả ở bước ứng
+  tuyển (AI độ phù hợp cần chữ); chưa có giới hạn 50 lượt/24 giờ và 200 lượt/30
+  ngày; vẫn cho rút hồ sơ theo quyết định 16/11.
+- Còn mở: chưa kiểm tra bằng mắt phía NTD trên trình duyệt (đã có test API và
+  test giao diện); bản chụp CV không bị xóa khi xóa tài khoản ứng viên (hành vi
+  có từ trước) nên tệp nộp kèm cũng còn lại.
 
 ## Bảng điều khiển quản trị (2026-11-16)
 
@@ -618,9 +657,8 @@ loại tiêu chí khỏi điểm, kết quả tất định, có golden test và
   nội dung mẫu); rời trang khi còn thay đổi thì hỏi xác nhận.
 - Trang `/tai-cv-len` (kéo thả, tiêu chuẩn, lợi ích) và màn hình tải lên thành
   công gợi ý mẫu CV online (`?nguon=tai-len`).
-- Còn mở: CV tải lên nguyên tệp chưa dùng để ứng tuyển được — version của nó
-  rỗng nên `application_readiness_issues` chặn (cần phân tích nội dung hoặc cho
-  NTD xem tệp gốc).
+- Đã đóng 18/11: CV tải lên nguyên tệp nay ứng tuyển được, NTD xem tệp gốc —
+  xem [mục riêng](#ứng-tuyển-bằng-cv-tải-lên-và-form-ứng-tuyển-mới-2026-11-18).
 
 ## Việc làm tốt nhất xếp theo chất lượng tin (2026-11-15)
 

@@ -1,9 +1,9 @@
 // Toàn bộ state + nghiệp vụ của form ứng tuyển; UI chỉ compose và render.
 import { useQueryClient } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
-import { submitJobApplication } from '@/entities/application'
+import { getCandidateApplications, submitJobApplication } from '@/entities/application'
 import { candidateNotificationKeys } from '@/entities/candidate-notification'
-import { getMyCvs, importCvFile, waitForCvImport } from '@/entities/cv'
+import { getMySavedCvs, importCvFile, isCvApplicationReady } from '@/entities/cv'
 import { message } from '@/shared/lib/toast'
 
 export const INITIAL_VISIBLE_CVS = 5
@@ -55,6 +55,9 @@ export function useApplyForm({
   const queryClient = useQueryClient()
   const [cvs, setCvs] = useState([])
   const [selectedCvId, setSelectedCvId] = useState()
+  // Lần ứng tuyển gần nhất: gợi ý CV đã dùng và thư giới thiệu để dùng lại.
+  const [lastAppliedCvId, setLastAppliedCvId] = useState(null)
+  const [lastCoverLetter, setLastCoverLetter] = useState('')
   const [preferredLocationIds, setPreferredLocationIds] = useState([])
   const [locationDropdownOpen, setLocationDropdownOpen] = useState(false)
   const [coverLetter, setCoverLetter] = useState('')
@@ -69,7 +72,6 @@ export function useApplyForm({
   const [loadingCvs, setLoadingCvs] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [uploadState, setUploadState] = useState(null)
-  const [analyzing, setAnalyzing] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const fileInputRef = useRef(null)
@@ -95,11 +97,18 @@ export function useApplyForm({
     setUploadedCv(null)
     setUploadState(null)
     setShowAllCvs(false)
-    getMyCvs()
-      .then((items) => {
+    // Lịch sử ứng tuyển chỉ để gợi ý; lỗi tải không được chặn việc nộp hồ sơ.
+    Promise.all([getMySavedCvs(), getCandidateApplications().catch(() => [])])
+      .then(([items, applications]) => {
         if (!active) return
-        setCvs(items)
-        const initial = items.find((cv) => cv.is_default) || items[0]
+        const lastCvId = applications.find((item) => item.cv_public_id)?.cv_public_id || null
+        const ordered = [...items].sort((a, b) => (b.public_id === lastCvId) - (a.public_id === lastCvId))
+        setCvs(ordered)
+        setLastAppliedCvId(lastCvId)
+        setLastCoverLetter(applications.find((item) => item.cover_letter?.trim())?.cover_letter.trim() || '')
+        // Mặc định: CV vừa dùng, rồi CV chính, rồi CV đầu tiên nộp được.
+        const usable = ordered.filter(isCvApplicationReady)
+        const initial = usable.find((cv) => cv.public_id === lastCvId) || usable.find((cv) => cv.is_default) || usable[0]
         setSelectedCvId(initial?.public_id || UPLOAD_CHOICE_ID)
       })
       .catch(() => {
@@ -141,7 +150,8 @@ export function useApplyForm({
     let targetCv = cvs.find((cv) => cv.public_id === selectedCvId)
     if (isUploadChoice && !uploadFile && !uploadedCv) return
     if (!isUploadChoice && !targetCv?.latest_version_public_id) return
-    if (isUploadChoice && (!contactName.trim() || !contactEmail.trim() || !contactPhone.trim())) return
+    const sendsFile = isUploadChoice || targetCv?.cv_type === 'uploaded'
+    if (sendsFile && (!contactName.trim() || !contactEmail.trim() || !contactPhone.trim())) return
     if (!dataProcessingConsent) return
 
     setSubmitting(true)
@@ -151,13 +161,11 @@ export function useApplyForm({
         targetCv = uploadedCv
         if (!targetCv) {
           setUploading(true)
-          const imported = await importCvFile(uploadFile, uploadFile.name, {
+          // Tệp đã qua kiểm tra (virus, định dạng, đọc được chữ) là nộp được ngay:
+          // nhà tuyển dụng nhận đúng tệp này, không có bước phân tích phải chờ.
+          targetCv = await importCvFile(uploadFile, uploadFile.name, {
             onUploadStateChange: setUploadState,
           })
-          // The import is parsed asynchronously; submitting before it finishes
-          // would send the recruiter an empty snapshot.
-          setAnalyzing(true)
-          targetCv = await waitForCvImport(imported.public_id)
           setUploadedCv(targetCv)
           setUploading(false)
         }
@@ -180,14 +188,6 @@ export function useApplyForm({
       onSubmitted?.(application)
       onClose()
     } catch (requestError) {
-      if (requestError?.code === 'import_timeout') {
-        setError('CV vẫn đang được phân tích. Vui lòng chờ thêm giây lát rồi bấm gửi lại.')
-        return
-      }
-      if (requestError?.code && !requestError.response) {
-        setError('Không đọc được nội dung tệp CV. Hãy thử tệp DOCX hoặc PDF có thể bôi đen chữ.')
-        return
-      }
       setError(requestErrorMessage(
         requestError,
         isUploadChoice
@@ -196,7 +196,6 @@ export function useApplyForm({
       ))
     } finally {
       setUploading(false)
-      setAnalyzing(false)
       setSubmitting(false)
     }
   }
@@ -206,9 +205,12 @@ export function useApplyForm({
   const isUploadChoice = selectedCvId === UPLOAD_CHOICE_ID
   const needsLocation = locationOptions.length > 0
   const contactComplete = Boolean(contactName.trim() && contactEmail.trim() && contactPhone.trim())
-  const cvReady = isUploadChoice
-    ? Boolean((uploadFile || uploadedCv) && contactComplete)
-    : Boolean(selectedCv?.latest_version_public_id && selectedCv.application_ready !== false)
+  // CV dạng tệp (mới tải hoặc đã có trong thư viện) được nộp nguyên tệp, nên cần thông tin liên hệ.
+  const needsContact = isUploadChoice || selectedCv?.cv_type === 'uploaded'
+  const cvChosen = isUploadChoice
+    ? Boolean(uploadFile || uploadedCv)
+    : Boolean(selectedCv?.latest_version_public_id && isCvApplicationReady(selectedCv))
+  const cvReady = cvChosen && (!needsContact || contactComplete)
   const selectionReady = Boolean(
     cvReady
     && (!needsLocation || preferredLocationIds.length > 0)
@@ -221,6 +223,9 @@ export function useApplyForm({
     selectedCvId,
     setSelectedCvId,
     isUploadChoice,
+    needsContact,
+    lastAppliedCvId,
+    lastCoverLetter,
     preferredLocationIds,
     setPreferredLocationIds,
     locationDropdownOpen,
@@ -247,7 +252,6 @@ export function useApplyForm({
     loadingCvs,
     uploading,
     uploadState,
-    analyzing,
     submitting,
     error,
     setError,

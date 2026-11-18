@@ -1,4 +1,5 @@
 export * from './api/cv.api'
+export * from './model/cv-choice'
 export * from './model/document'
 export * from './model/history'
 export * from './model/layout'

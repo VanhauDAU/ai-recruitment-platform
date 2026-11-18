@@ -17,12 +17,12 @@ const BENEFITS = [
 
 export default function UploadCv() {
   const { siteName, settings } = useSiteSettings()
-  const [uploaded, setUploaded] = useState(false)
+  const [uploadedCv, setUploadedCv] = useState(null)
   const { data: cvs } = useQuery({ queryKey: ['my-cvs', 'upload-limit'], queryFn: getMyCvs })
   const maxCvs = Number(settings.candidate_max_cvs) || 0
   const limitReached = maxCvs > 0 && (cvs?.length || 0) >= maxCvs
 
-  if (uploaded) return <UploadCvSuccess siteName={siteName} />
+  if (uploadedCv) return <UploadCvSuccess siteName={siteName} cvPublicId={uploadedCv.public_id} />
 
   return (
     <div className="bg-slate-100 px-4 py-6 md:py-10">
@@ -47,7 +47,7 @@ export default function UploadCv() {
               description={<>Hãy xóa bớt CV không dùng trong <Link to="/tai-khoan/cv-cua-toi">CV của tôi</Link> để tải CV mới.</>}
             />
           )}
-          <UploadCvForm disabled={limitReached} onUploaded={() => setUploaded(true)} />
+          <UploadCvForm disabled={limitReached} onUploaded={setUploadedCv} />
 
           <div className="grid gap-4 border-t border-slate-200 pt-6 md:grid-cols-2">
             {BENEFITS.map(({ icon: Icon, tone, title, text }) => (

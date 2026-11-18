@@ -6,11 +6,10 @@ import { MemoryRouter } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import ApplyForJobModal from './ApplyForJobModal'
 const cvApi = vi.hoisted(() => ({
-  getMyCvs: vi.fn(),
+  getMySavedCvs: vi.fn(),
   importCvFile: vi.fn(),
-  waitForCvImport: vi.fn(),
 }))
-const applicationApi = vi.hoisted(() => ({ submitJobApplication: vi.fn() }))
+const applicationApi = vi.hoisted(() => ({ getCandidateApplications: vi.fn(), submitJobApplication: vi.fn() }))
 
 vi.mock('@/entities/cv', async (importOriginal) => ({ ...(await importOriginal()), ...cvApi }))
 vi.mock('@/entities/application', () => applicationApi)
@@ -29,8 +28,9 @@ describe('ApplyForJobModal', () => {
     })
     Object.values(cvApi).forEach((mock) => mock.mockReset())
     applicationApi.submitJobApplication.mockReset()
+    applicationApi.getCandidateApplications.mockReset().mockResolvedValue([])
     vi.spyOn(message, 'success').mockImplementation(() => {})
-    cvApi.getMyCvs.mockResolvedValue([{
+    cvApi.getMySavedCvs.mockResolvedValue([{
       public_id: 'cv_1',
       title: 'CV chính',
       is_default: true,
@@ -62,9 +62,9 @@ describe('ApplyForJobModal', () => {
       </QueryClientProvider>,
     )
 
-    await waitFor(() => expect(cvApi.getMyCvs).toHaveBeenCalledOnce())
+    await waitFor(() => expect(cvApi.getMySavedCvs).toHaveBeenCalledOnce())
     expect(screen.getByRole('radio', { name: /CV chính/ })).toBeChecked()
-    expect(screen.getByRole('link', { name: /Xem/ })).toHaveClass('opacity-0', 'group-hover:opacity-100')
+    expect(screen.getByRole('link', { name: /Xem/ })).toHaveAttribute('href', '/cvs/cv_1/view')
     const locationSelect = screen.getByRole('combobox', { name: 'Địa điểm làm việc mong muốn' })
     await user.click(locationSelect)
     await user.click(await screen.findByText('Bình Dương', { selector: '.ant-select-item-option-content' }))
@@ -89,7 +89,7 @@ describe('ApplyForJobModal', () => {
 
   it('switches CV locally without reloading the form or CV list', async () => {
     const user = userEvent.setup()
-    cvApi.getMyCvs.mockResolvedValue([
+    cvApi.getMySavedCvs.mockResolvedValue([
       {
         public_id: 'cv_1',
         title: 'CV chính',
@@ -129,8 +129,83 @@ describe('ApplyForJobModal', () => {
 
     expect(secondCv).toBeChecked()
     expect(screen.getByRole('textbox', { name: 'Thư giới thiệu' })).toHaveValue('Nội dung đang nhập')
-    expect(screen.getByText('Chưa lưu')).toBeInTheDocument()
-    expect(cvApi.getMyCvs).toHaveBeenCalledOnce()
+    expect(screen.getByText('Có chỉnh sửa chưa lưu')).toBeInTheDocument()
+    expect(screen.getByText(/Nhà tuyển dụng sẽ nhận bản đã lưu gần nhất/)).toBeInTheDocument()
+    expect(cvApi.getMySavedCvs).toHaveBeenCalledOnce()
+  })
+
+  it('sends an uploaded CV as its file with the contact details, and never offers editing', async () => {
+    const user = userEvent.setup()
+    cvApi.getMySavedCvs.mockResolvedValue([{
+      public_id: 'cv_up',
+      title: 'CV tải lên.pdf',
+      is_default: true,
+      cv_type: 'uploaded',
+      latest_version_public_id: 'cvv_up',
+      has_unsaved_changes: true,
+      application_ready: true,
+      is_complete: true,
+    }])
+    applicationApi.submitJobApplication.mockResolvedValue({ public_id: 'app_up' })
+
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+      <MemoryRouter>
+        <ApplyForJobModal open onClose={vi.fn()} jobPublicId="job_1" jobTitle="Kỹ sư" candidateName="Lê Văn Hậu" candidateEmail="hau@example.com" />
+      </MemoryRouter>
+      </QueryClientProvider>,
+    )
+
+    expect(await screen.findByRole('radio', { name: /CV tải lên.pdf/ })).toBeChecked()
+    expect(screen.queryByRole('link', { name: /Sửa CV/ })).not.toBeInTheDocument()
+    expect(screen.queryByText('Có chỉnh sửa chưa lưu')).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Xem' })).toHaveAttribute('href', '/cvs/cv_up/view')
+    expect(screen.getByRole('textbox', { name: 'Họ và tên ứng tuyển' })).toHaveValue('Lê Văn Hậu')
+
+    // Thiếu số điện thoại: chưa nộp được dù đã đồng ý điều khoản.
+    await user.click(screen.getByRole('checkbox', { name: /Tôi đã đọc và đồng ý/ }))
+    expect(screen.getByRole('button', { name: 'Nộp hồ sơ ứng tuyển' })).toBeDisabled()
+    await user.type(screen.getByRole('textbox', { name: 'Số điện thoại ứng tuyển' }), '0909000000')
+    await user.click(screen.getByRole('button', { name: 'Nộp hồ sơ ứng tuyển' }))
+
+    await waitFor(() => expect(applicationApi.submitJobApplication).toHaveBeenCalledWith(expect.objectContaining({
+      cvPublicId: 'cv_up',
+      versionPublicId: 'cvv_up',
+      contactName: 'Lê Văn Hậu',
+      contactEmail: 'hau@example.com',
+      contactPhone: '0909000000',
+    })))
+  })
+
+  it('locks a CV that cannot be submitted and starts on the last CV applied with', async () => {
+    const user = userEvent.setup()
+    cvApi.getMySavedCvs.mockResolvedValue([
+      { public_id: 'cv_blank', title: 'CV thiếu', is_default: true, cv_type: 'builder', latest_version_public_id: 'cvv_b', application_ready: false },
+      { public_id: 'cv_ok', title: 'CV đầy đủ', is_default: false, cv_type: 'builder', latest_version_public_id: 'cvv_ok', application_ready: true, is_complete: true },
+      { public_id: 'cv_last', title: 'CV đã nộp', is_default: false, cv_type: 'builder', latest_version_public_id: 'cvv_l', application_ready: true, is_complete: true },
+    ])
+    applicationApi.getCandidateApplications.mockResolvedValue([
+      { public_id: 'app_new', cv_public_id: 'cv_last', cover_letter: '' },
+      { public_id: 'app_old', cv_public_id: 'cv_ok', cover_letter: 'Thư lần trước' },
+    ])
+
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+      <MemoryRouter>
+        <ApplyForJobModal open onClose={vi.fn()} jobPublicId="job_1" jobTitle="Kỹ sư" />
+      </MemoryRouter>
+      </QueryClientProvider>,
+    )
+
+    expect(await screen.findByRole('radio', { name: 'CV đã nộp' })).toBeChecked()
+    expect(screen.getAllByRole('radio')[0]).toHaveAccessibleName('CV đã nộp')
+    expect(screen.getByText('CV ứng tuyển gần nhất')).toBeInTheDocument()
+    expect(screen.getByRole('radio', { name: /CV thiếu/ })).toBeDisabled()
+    expect(screen.getByText('Chưa đủ thông tin')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Sửa CV/ })).toHaveAttribute('href', '/cvs/cv_blank/edit')
+
+    await user.click(screen.getByRole('button', { name: 'Sử dụng thư giới thiệu gần nhất' }))
+    expect(screen.getByRole('textbox', { name: 'Thư giới thiệu' })).toHaveValue('Thư lần trước')
   })
 
   it('shows the reapplication warning above the form', async () => {
@@ -181,13 +256,10 @@ describe('ApplyForJobModal', () => {
   it('opens the upload radio form and uploads only when the application is submitted', async () => {
     const user = userEvent.setup()
     const file = new File(['%PDF-1.7 candidate'], 'candidate.pdf', { type: 'application/pdf' })
+    // The checked file is submitted as is: nothing to wait for after the upload.
     cvApi.importCvFile.mockResolvedValue({
       public_id: 'cv_uploaded',
-      latest_version_public_id: 'cvv_blank',
-    })
-    // Submitting must use the version produced once parsing finished.
-    cvApi.waitForCvImport.mockResolvedValue({
-      public_id: 'cv_uploaded',
+      cv_type: 'uploaded',
       latest_version_public_id: 'cvv_uploaded',
     })
     applicationApi.submitJobApplication.mockResolvedValue({ public_id: 'app_2' })
@@ -226,7 +298,6 @@ describe('ApplyForJobModal', () => {
       'candidate.pdf',
       { onUploadStateChange: expect.any(Function) },
     ))
-    await waitFor(() => expect(cvApi.waitForCvImport).toHaveBeenCalledWith('cv_uploaded'))
     await waitFor(() => expect(applicationApi.submitJobApplication).toHaveBeenCalled())
     expect(applicationApi.submitJobApplication).toHaveBeenCalledWith(expect.objectContaining({
       cvPublicId: 'cv_uploaded',

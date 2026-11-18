@@ -103,3 +103,14 @@
 /* Secondary actions under the decisions: two equal, quiet buttons. */
 .aw-secondary-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .aw-secondary-actions .ant-btn { height: 34px; border-radius: 10px; font-size: 12px; font-weight: 600; }
+
+/* Tệp CV ứng viên tải lên, hiện nguyên bản trong khung xem trước. */
+.aw-cv-file {
+  width: 100%;
+  max-width: 48rem;
+  height: 78vh;
+  min-height: 24rem;
+  margin: 0 auto;
+  border-radius: 2px;
+  box-shadow: 0 20px 25px -5px rgb(15 23 42 / 0.1);
+}
