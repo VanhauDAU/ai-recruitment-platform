@@ -271,9 +271,16 @@ class LabelHandler(BaseHTTPRequestHandler):
 
 
 def main():
+    try:
+        server = ThreadingHTTPServer((HOST, PORT), LabelHandler)
+    except OSError:
+        raise SystemExit(
+            f'Cổng {PORT} đang được dùng: trang chấm có lẽ đã chạy sẵn, chỉ cần mở '
+            f'http://{HOST}:{PORT}. Nếu không mở được, dừng tiến trình đang giữ cổng '
+            f'(lsof -iTCP:{PORT} -sTCP:LISTEN) rồi chạy lại.'
+        ) from None
     LabelHandler.jds, LabelHandler.traits = load_jds(), load_traits()
     print(f'Đã sao lưu phiếu: {backup_sheet()}')
-    server = ThreadingHTTPServer((HOST, PORT), LabelHandler)
     print(f'Trang chấm: http://{HOST}:{PORT}  (Ctrl+C để dừng)')
     try:
         server.serve_forever()
