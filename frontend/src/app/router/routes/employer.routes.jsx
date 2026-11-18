@@ -124,6 +124,7 @@ export function employerRoutes() {
             <Route path={employerAppPath('/company-page')} element={<EmployerCompanyWorkspacePage />} />
             <Route element={<JobWorkspaceGuard />}>
               <Route path={employerAppPath('/campaigns')} element={<EmployerCampaignListPage />} />
+              <Route path={employerAppPath('/campaigns/new')} element={<EmployerCampaignSetupPage />} />
               <Route path={employerAppPath('/campaigns/:publicId/setup')} element={<EmployerCampaignSetupPage />} />
               <Route path={employerAppPath('/campaigns/:publicId')} element={<EmployerCampaignDetailPage />} />
               <Route path={employerAppPath('/jobs')} element={<EmployerJobListPage />} />

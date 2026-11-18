@@ -8,6 +8,17 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-18
 
+#### Changed — Danh sách và trang chi tiết chiến dịch gọn hơn
+
+- Danh sách: dải trạng thái có số đếm, mặc định sắp theo trạng thái (đang chạy
+  trước, đã kết thúc cuối), bộ lọc `status=ended`, mỗi dòng một nút việc tiếp
+  theo. Bỏ công tắc bật/tắt, nút hiện khi rê chuột, nút đăng tin lặp ở từng dòng.
+- "Thêm chiến dịch mới" mở wizard `/tuyendung/app/campaigns/new`; bỏ hộp nhập
+  tên và hộp đổi tên.
+- Trang chi tiết: một nút chính theo trạng thái, "Sửa thông tin", menu "Thao tác
+  khác" (dừng, hoàn tất, hủy, hủy lịch); dải Chỉ tiêu, Thời gian, Ngân sách, Đã
+  chạy; năm chỉ số Tổng quan gom thành một dải.
+
 #### Changed — Chiến dịch: đợt tuyển nhiều tin, wizard rõ ràng hơn
 
 - Chiến dịch không còn một vị trí, cấp bậc, chỉ tiêu riêng; chỉ tiêu bằng tổng số

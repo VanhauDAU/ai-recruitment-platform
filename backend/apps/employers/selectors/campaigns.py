@@ -1,7 +1,19 @@
 from collections import defaultdict
 from datetime import timedelta
 
-from django.db.models import Count, DateTimeField, F, IntegerField, OuterRef, Q, Subquery, Sum
+from django.db.models import (
+    Case,
+    Count,
+    DateTimeField,
+    F,
+    IntegerField,
+    OuterRef,
+    Q,
+    Subquery,
+    Sum,
+    Value,
+    When,
+)
 from django.db.models.functions import Coalesce, TruncDate
 
 from apps.applications.models import Application
@@ -17,6 +29,39 @@ from apps.jobs.models import (
 from common.vietnam_time import VIETNAM_TZ, vietnam_day_start, vietnam_today
 
 from ..models import CampaignActivity, RecruitmentCampaign
+
+# Default list order: what needs attention first, finished campaigns last.
+STATUS_DISPLAY_ORDER = (
+    RecruitmentCampaign.Status.ACTIVE,
+    RecruitmentCampaign.Status.PAUSED,
+    RecruitmentCampaign.Status.SCHEDULED,
+    RecruitmentCampaign.Status.DRAFT,
+    RecruitmentCampaign.Status.COMPLETED,
+    RecruitmentCampaign.Status.CANCELLED,
+)
+# ``status=ended`` groups both terminal states in the list filter.
+ENDED_STATUS_FILTER = 'ended'
+
+
+def _status_filter(status):
+    if status == ENDED_STATUS_FILTER:
+        return Q(status__in=RecruitmentCampaign.TERMINAL_STATUSES)
+    return Q(status=status)
+
+
+def campaign_status_counts(user, *, q=None):
+    """Campaign count per status (plus ``ended``) for the list's status tabs."""
+    queryset = RecruitmentCampaign.objects.filter(owner__user=user)
+    if q:
+        term = q.strip()
+        queryset = queryset.filter(Q(name__icontains=term) | Q(public_id__icontains=term))
+    counts = dict.fromkeys(RecruitmentCampaign.Status.values, 0)
+    counts.update(queryset.values_list('status').annotate(total=Count('id')).order_by())
+    counts[ENDED_STATUS_FILTER] = sum(
+        counts[status] for status in RecruitmentCampaign.TERMINAL_STATUSES
+    )
+    counts['all'] = sum(counts[status] for status in RecruitmentCampaign.Status.values)
+    return counts
 
 
 class CampaignJobPerformanceScopeNotFound(LookupError):
@@ -64,7 +109,7 @@ def campaign_list_queryset(user, *, status=None, scope=None, q=None, ordering=No
     )
     queryset = RecruitmentCampaign.objects.filter(owner__user=user)
     if status:
-        queryset = queryset.filter(status=status)
+        queryset = queryset.filter(_status_filter(status))
     if q:
         term = q.strip()
         queryset = queryset.filter(Q(name__icontains=term) | Q(public_id__icontains=term))
@@ -115,7 +160,16 @@ def campaign_list_queryset(user, *, status=None, scope=None, q=None, ordering=No
         'activity': '-last_activity_at',
         'name': 'name',
     }
-    return queryset.order_by(order_fields.get(ordering, '-last_activity_at'), '-created_at')
+    if ordering in order_fields:
+        return queryset.order_by(order_fields[ordering], '-created_at')
+    status_rank = Case(
+        *(
+            When(status=status, then=Value(rank))
+            for rank, status in enumerate(STATUS_DISPLAY_ORDER)
+        ),
+        output_field=IntegerField(),
+    )
+    return queryset.order_by(status_rank, '-last_activity_at', '-created_at')
 
 
 def campaign_detail_queryset(user):

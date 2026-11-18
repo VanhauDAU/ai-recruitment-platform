@@ -36,15 +36,16 @@ function Search() {
   return <span data-testid="search">{useLocation().search}</span>
 }
 
-function renderWizard(entry = '/tuyendung/app/campaigns/camp_1/setup') {
+function renderWizard(entry = '/tuyendung/app/campaigns/camp_1/setup', publicId = 'camp_1') {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter initialEntries={[entry]}>
         <Routes>
+          <Route path="/tuyendung/app/campaigns/new" element={<CampaignSetupWizard />} />
           <Route
             path="/tuyendung/app/campaigns/:publicId/setup"
-            element={<><CampaignSetupWizard publicId="camp_1" /><Search /></>}
+            element={<><CampaignSetupWizard publicId={publicId} /><Search /></>}
           />
         </Routes>
       </MemoryRouter>
@@ -84,5 +85,14 @@ describe('CampaignSetupWizard', () => {
 
     expect(await screen.findByText('Chiến dịch đã chạy, không còn ở bước thiết lập.')).toBeInTheDocument()
     expect(screen.queryByText('Bước kích hoạt')).not.toBeInTheDocument()
+  })
+
+  it('creates a campaign from the first step before the other steps unlock', async () => {
+    renderWizard('/tuyendung/app/campaigns/new', undefined)
+
+    expect(await screen.findByRole('heading', { name: 'Tạo chiến dịch tuyển dụng' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Lưu mục tiêu giả' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Tin tuyển dụng/ })).toBeDisabled()
+    expect(mocks.getCampaign).not.toHaveBeenCalled()
   })
 })

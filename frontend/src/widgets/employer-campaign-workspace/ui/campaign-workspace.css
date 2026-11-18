@@ -1,0 +1,54 @@
+/* Đầu trang chi tiết chiến dịch (route lazy, ngoài CSS khởi tạo). */
+.cw-hero { border: 1px solid #e2e8e5; border-radius: 16px; background: #fff; box-shadow: 0 1px 3px rgb(15 42 36 / .05); }
+.cw-hero__top { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 20px 20px 16px; }
+.cw-hero__heading { min-width: 0; flex: 1 1 360px; }
+.cw-hero__badges { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.cw-hero__id { font-size: 12px; color: #94a3b8; }
+.cw-hero__title { margin: 8px 0 0; font-size: 24px; font-weight: 750; line-height: 1.3; letter-spacing: -0.01em; color: #0f2a24; overflow-wrap: anywhere; }
+.cw-hero__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+
+.cw-status { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: #f1f5f9; color: #475569; }
+.cw-status::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.cw-status.is-active { background: #ecfdf5; color: #047857; }
+.cw-status.is-paused { background: #fffbeb; color: #b45309; }
+.cw-status.is-scheduled { background: #ecfeff; color: #0e7490; }
+.cw-status.is-draft { background: #f0f9ff; color: #0369a1; }
+.cw-status.is-cancelled { background: #fff1f2; color: #be123c; }
+
+/* Bốn con số nhận diện chiến dịch, ngăn cách bằng đường kẻ thay vì thẻ rời. */
+.cw-facts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 0; border-top: 1px solid #eef2f0; }
+.cw-fact { padding: 12px 20px; border-left: 1px solid #eef2f0; }
+.cw-fact:first-child { border-left: 0; }
+.cw-fact dt { font-size: 12px; color: #64748b; }
+.cw-fact dd { margin: 2px 0 0; font-size: 14px; font-weight: 600; color: #0f2a24; }
+
+/* Dải chỉ số của tab Tổng quan: một khung, các ô ngăn bằng đường kẻ. */
+.cw-metrics {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); overflow: hidden;
+  border: 1px solid #e2e8e5; border-radius: 16px; background: #e2e8e5; gap: 1px;
+}
+.cw-metric { display: flex; flex-direction: column; gap: 4px; padding: 14px 16px; background: #fff; }
+.cw-metric__label { display: flex; align-items: center; gap: 6px; margin: 0; font-size: 12px; font-weight: 600; color: #64748b; }
+.cw-metric__value { font-size: 24px; font-weight: 750; line-height: 1.15; color: #0f2a24; }
+.cw-metric__hint { font-size: 12px; color: #94a3b8; }
+.cw-metric.is-blue .cw-metric__value { color: #0369a1; }
+.cw-metric.is-amber .cw-metric__value { color: #b45309; }
+.cw-metric.is-green .cw-metric__value { color: #047857; }
+.cw-metric.is-violet .cw-metric__value { color: #6d28d9; }
+
+@media (max-width: 900px) {
+  .cw-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cw-fact:nth-child(3) { border-left: 0; }
+  .cw-fact:nth-child(n + 3) { border-top: 1px solid #eef2f0; }
+}
+@media (max-width: 560px) {
+  .cw-hero__top { padding: 16px; }
+  .cw-hero__title { font-size: 20px; }
+  .cw-hero__actions { display: grid; grid-template-columns: 1fr 1fr; width: 100%; }
+  .cw-hero__actions > a:first-child { grid-column: 1 / -1; }
+  .cw-hero__actions .ant-btn { width: 100%; }
+  .cw-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cw-metric:last-child:nth-child(odd) { grid-column: 1 / -1; }
+  .cw-metric__value { font-size: 20px; }
+  .cw-fact { padding: 10px 16px; }
+}

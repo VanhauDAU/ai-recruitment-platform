@@ -870,9 +870,11 @@ pages/employer/app/campaigns/CampaignSetup
   `capture-employer-recruitment-need`/`manage-employer-recruitment-needs` sở hữu.
   `entities/application` sở hữu list/export hồ sơ phía server;
   `entities/job` sở hữu contract tin tuyển dụng.
-- `features/manage-campaigns` sở hữu các workflow tạo nhanh (tạo nháp rồi
-  chuyển sang trang thiết lập), đổi tên, sửa thông tin đợt tuyển (`CampaignInfoForm`),
-  dừng, mở lại, hoàn tất, hủy và hủy lịch.
+- `features/manage-campaigns` sở hữu form thông tin đợt tuyển (`CampaignInfoForm`,
+  tạo khi chưa có `public_id`, sửa khi đã có) và `CampaignLifecycleActions`
+  ("Mở lại" là nút chính khi tạm dừng; dừng, hoàn tất, hủy, hủy lịch nằm trong
+  menu "Thao tác khác"). Không còn modal tạo/đổi tên riêng; tạo mới đi qua
+  `/campaigns/new`.
   - Xác nhận dừng luôn tải `pause-impact`, yêu cầu mã chiến dịch khớp hoàn toàn
     và không tự đổi trạng thái tin.
   - Hoàn tất/hủy báo trước rằng tin đang tuyển sẽ bị đóng.
@@ -882,6 +884,10 @@ pages/employer/app/campaigns/CampaignSetup
 - `widgets/campaign-setup-wizard` ghép ba bước Thông tin → Tin → Kích hoạt, với thanh lộ trình hiện trạng thái suy ra từ dữ liệu (`setupStepStates` của `features/launch-campaign`);
   `?step=goal|jobs|launch` là contract URL. Form đăng tin mở từ wizard với
   `?campaign=…&return=setup`; lưu nháp xong thì quay lại `?step=jobs`.
+- Trang danh sách: dải trạng thái có số đếm (`status_counts` của API), mặc định
+  `ordering=status`, mỗi dòng một nút việc tiếp theo; style trong
+  `campaign-list.css` (lazy) và tự lo ẩn/hiện bảng/thẻ vì CSS ngoài layer thắng
+  utility `lg:hidden`.
 - `widgets/employer-campaign-workspace` sở hữu header và bốn tab dữ liệu thật:
   Tổng quan, CV ứng tuyển, Tin tuyển dụng và Lịch sử hoạt động. Page chi tiết
   chỉ đọc route param rồi compose widget; query `active_tab` là contract URL,

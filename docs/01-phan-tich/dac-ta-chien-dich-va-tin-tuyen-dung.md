@@ -42,10 +42,11 @@ tin (`headcount` trong API), không nhập tay (chốt với user 18/11/2026).
 - Liên kết `Job.campaign` là **tùy chọn**; một tin thuộc tối đa một chiến dịch,
   một chiến dịch có thể chứa nhiều tin (ràng buộc một tin/chiến dịch cũ đã bị
   gỡ ở migration `jobs.0028`).
-- Tạo nhanh chỉ cần `name` (modal submit bằng Enter); không cần liên kết công
-  ty hay hoàn tất xác thực. `company` lấy theo recruiter và có thể rỗng. Chiến
-  dịch tạo mới ở trạng thái **`draft`** rồi chuyển sang trang thiết lập
-  (2026-11-18). Ngoại lệ: tạo nhanh ngay trong form đăng tin gửi
+- "Thêm chiến dịch mới" mở thẳng wizard `/tuyendung/app/campaigns/new`: bước
+  Thông tin lưu lần đầu mới tạo chiến dịch ở **`draft`** rồi chuyển sang bước
+  chọn tin, nên không còn nháp rỗng và không còn hộp "nhập tên" riêng
+  (2026-11-18). Không cần liên kết công ty hay hoàn tất xác thực; `company` lấy
+  theo recruiter và có thể rỗng. Ngoại lệ: tạo nhanh ngay trong form đăng tin gửi
   `activate=true` để chiến dịch chạy luôn, vì tin sắp đăng cần chiến dịch
   `active`. Điều kiện xác thực chỉ được kiểm tra khi đăng tin (mục 4).
 - Thông tin của chiến dịch (ghi được qua API từ 2026-11-18):
@@ -166,14 +167,28 @@ draft ──launch(now)──> active ⇄ paused
 
 ### Giao diện workspace
 
-- Danh sách: tìm theo tên/mã, lọc `scope` = `open` (đang mở), `needs_review`
-  (có CV chưa xem), `active_jobs` (có tin đang hiển thị), `expired_jobs` (có tin
-  hết hạn); sắp xếp theo hoạt động gần nhất, mới/cũ, tên. Mobile dùng card,
-  desktop dùng bảng.
-- Chiến dịch `draft`/`scheduled` có nút "Tiếp tục thiết lập" ở đầu trang. Hero
-  hiện "Tuyển N người qua M tin", khoảng ngày và ngân sách. "Sửa thông tin" mở
-  form thông tin chiến dịch. Có nút Hoàn tất, Hủy và Hủy lịch, mỗi nút có hộp xác nhận nói rõ tin sẽ
-  bị đóng.
+- Danh sách (làm lại 18/11):
+  - **dải trạng thái có số đếm**: Tất cả, Đang chạy, Tạm dừng, Đã lên lịch,
+    Nháp, Đã kết thúc (`status=ended` gộp hoàn tất và đã hủy);
+  - mặc định **sắp theo trạng thái** (`ordering=status`: đang chạy → tạm dừng →
+    đã lên lịch → nháp → hoàn tất → đã hủy, rồi theo hoạt động gần nhất); vẫn
+    chọn được sắp theo hoạt động, mới/cũ, tên;
+  - tìm theo tên/mã, lọc `scope` = `open`, `needs_review`, `active_jobs`,
+    `expired_jobs`;
+  - mỗi dòng: tên, trạng thái, khoảng thời gian, "N tin, tuyển M người", ứng
+    viên, hoạt động gần nhất, và **một** nút việc tiếp theo ("Thiết lập" cho
+    nháp/đã lên lịch, "Xem N CV mới" khi có CV chưa xem, còn lại "Mở");
+  - bỏ công tắc bật/tắt và các nút hiện khi rê chuột; bảng từ 1024px, thẻ ở màn
+    hẹp hơn.
+- Đầu trang chi tiết (làm lại 18/11):
+  - một nút chính theo trạng thái: "Tiếp tục thiết lập" / "Xem lịch kích hoạt"
+    (nháp, đã lên lịch), "Đăng thêm tin" (đang chạy), "Mở lại chiến dịch" (tạm
+    dừng);
+  - "Sửa thông tin" (ẩn khi đã kết thúc);
+  - menu "Thao tác khác" gom Dừng, Hoàn tất, Hủy, Hủy lịch; mỗi mục có hộp xác
+    nhận nói rõ tin sẽ bị ẩn hoặc đóng;
+  - dải bốn thông tin: Chỉ tiêu, Thời gian, Ngân sách, Đã chạy;
+  - tab Tổng quan gom năm chỉ số vào một dải chung thay cho năm thẻ rời.
 - Chi tiết có bốn tab: Tổng quan (phễu hồ sơ theo trạng thái, CV bảy ngày, tiến
   độ offer/headcount, biểu đồ hiển thị → xem → ứng tuyển theo tin), CV ứng
   tuyển, Tin tuyển dụng, Lịch sử hoạt động.

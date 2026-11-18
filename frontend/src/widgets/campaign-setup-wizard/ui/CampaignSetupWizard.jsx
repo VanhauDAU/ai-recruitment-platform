@@ -22,40 +22,48 @@ const STEP_INTRO = {
   launch: ['Kích hoạt', 'Kiểm tra lần cuối rồi cho chiến dịch chạy ngay hoặc theo lịch.'],
 }
 
+const NEW_CAMPAIGN = { name: '', status: 'draft', budget_source: 'company', is_continuous: false }
+const EMPTY_OVERVIEW = { draft_jobs: [], attachable_jobs: [], campaign_jobs: [], check: null }
+
 export default function CampaignSetupWizard({ publicId }) {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
+  const isNew = !publicId
   const campaignQuery = useQuery({
     queryKey: campaignKeys.detail(publicId),
     queryFn: () => getCampaign(publicId),
+    enabled: !isNew,
   })
   const launchQuery = useCampaignLaunch(publicId)
-  const workspacePath = employerAppPath(`/campaigns/${publicId}`)
+  const workspacePath = isNew ? employerAppPath('/campaigns') : employerAppPath(`/campaigns/${publicId}`)
   const requested = searchParams.get('step')
-  const current = SETUP_STEPS.some((step) => step.key === requested) ? requested : 'goal'
+  const current = !isNew && SETUP_STEPS.some((step) => step.key === requested) ? requested : 'goal'
   const goTo = (key) => setSearchParams({ step: key }, { replace: true })
+  const handleInfoSaved = (saved) => (isNew
+    ? navigate(employerAppPath(`/campaigns/${saved.public_id}/setup?step=jobs`), { replace: true })
+    : goTo('jobs'))
 
-  if (campaignQuery.isLoading || launchQuery.isLoading) {
+  if (!isNew && (campaignQuery.isLoading || launchQuery.isLoading)) {
     return <Skeleton active className="csw-skeleton" paragraph={{ rows: 10 }} />
   }
-  const error = campaignQuery.error || launchQuery.error
+  const error = !isNew && (campaignQuery.error || launchQuery.error)
   if (error) {
     return <Alert className="csw-alert" type="error" showIcon title={getApiErrorMessage(error, 'Không thể tải chiến dịch.')} />
   }
-  const campaign = campaignQuery.data
-  const overview = launchQuery.data
+  const campaign = isNew ? NEW_CAMPAIGN : campaignQuery.data
+  const overview = isNew ? EMPTY_OVERVIEW : launchQuery.data
   const inSetup = CAMPAIGN_SETUP_STATUSES.includes(campaign.status)
   const [title, intro] = STEP_INTRO[current]
 
   return (
     <section className="csw">
       <Link to={workspacePath} className="csw-back">
-        <ArrowLeftOutlined aria-hidden /> Về chiến dịch
+        <ArrowLeftOutlined aria-hidden /> {isNew ? 'Về danh sách chiến dịch' : 'Về chiến dịch'}
       </Link>
       <header className="csw-head">
-        <p className="csw-head__kicker">Thiết lập chiến dịch</p>
-        <h1 className="csw-head__title">{campaign.name}</h1>
-        <span className={`csw-status is-${campaign.status}`}>{CAMPAIGN_STATUS_LABELS[campaign.status]}</span>
+        <p className="csw-head__kicker">{isNew ? 'Chiến dịch mới' : 'Thiết lập chiến dịch'}</p>
+        <h1 className="csw-head__title">{campaign.name || 'Tạo chiến dịch tuyển dụng'}</h1>
+        {!isNew && <span className={`csw-status is-${campaign.status}`}>{CAMPAIGN_STATUS_LABELS[campaign.status]}</span>}
       </header>
 
       {!inSetup ? (
@@ -72,6 +80,7 @@ export default function CampaignSetupWizard({ publicId }) {
             states={setupStepStates(campaign, overview)}
             current={current}
             onSelect={goTo}
+            locked={isNew}
           />
           <div className="csw-panel">
             <div className="csw-panel__head">
@@ -79,7 +88,11 @@ export default function CampaignSetupWizard({ publicId }) {
               <p className="csw-panel__intro">{intro}</p>
             </div>
             {current === 'goal' && (
-              <CampaignInfoForm campaign={campaign} submitLabel="Lưu và tiếp tục" onSaved={() => goTo('jobs')} />
+              <CampaignInfoForm
+                campaign={campaign}
+                submitLabel={isNew ? 'Tạo và tiếp tục' : 'Lưu và tiếp tục'}
+                onSaved={handleInfoSaved}
+              />
             )}
             {current === 'jobs' && (
               <CampaignJobSelection

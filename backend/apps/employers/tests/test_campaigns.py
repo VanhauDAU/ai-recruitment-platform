@@ -137,6 +137,44 @@ class RecruitmentCampaignApiTests(TestCase):
         self.assertEqual(reversed_budget.status_code, 400)
         self.assertIn('budget_max', reversed_budget.data)
 
+    def test_campaign_list_orders_by_status_and_counts_each_status(self):
+        for name, status in [
+            ('Cancelled', RecruitmentCampaign.Status.CANCELLED),
+            ('Draft', RecruitmentCampaign.Status.DRAFT),
+            ('Running', RecruitmentCampaign.Status.ACTIVE),
+            ('Completed', RecruitmentCampaign.Status.COMPLETED),
+            ('Paused', RecruitmentCampaign.Status.PAUSED),
+        ]:
+            RecruitmentCampaign.objects.create(
+                owner=self.owner_profile, company=self.company, name=name, status=status
+            )
+        self.client.force_authenticate(self.owner)
+
+        listed = self.client.get(reverse('employer-campaign-list'), {'ordering': 'status'})
+        ended = self.client.get(reverse('employer-campaign-list'), {'status': 'ended'})
+
+        self.assertEqual(listed.status_code, 200, listed.data)
+        self.assertEqual(
+            [item['name'] for item in listed.data['results']],
+            ['Running', 'Paused', 'Draft', 'Completed', 'Cancelled'],
+        )
+        self.assertEqual(
+            listed.data['status_counts'],
+            {
+                'draft': 1,
+                'scheduled': 0,
+                'active': 1,
+                'paused': 1,
+                'completed': 1,
+                'cancelled': 1,
+                'ended': 2,
+                'all': 5,
+            },
+        )
+        self.assertEqual(
+            sorted(item['name'] for item in ended.data['results']), ['Cancelled', 'Completed']
+        )
+
     def test_campaign_creation_requires_a_ready_workspace(self):
         user_model = get_user_model()
         unconfigured_employer = user_model.objects.create_user(
@@ -736,7 +774,8 @@ class RecruitmentCampaignApiTests(TestCase):
         )
         self.client.force_authenticate(self.owner)
 
-        with self.assertNumQueries(4):
+        # +1 fixed query for the status tab counts.
+        with self.assertNumQueries(5):
             response = self.client.get(reverse('employer-campaign-list'))
 
         self.assertEqual(response.status_code, 200)

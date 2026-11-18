@@ -56,10 +56,12 @@ export function setupStepStates(campaign, overview) {
       done: selection.total > 0,
       summary: jobParts.length ? jobParts.join(', ') : 'Chưa chọn tin nào',
     },
-    launch: {
-      done: false,
-      summary: failing ? `Còn ${failing} điều kiện chưa đạt` : 'Sẵn sàng kích hoạt',
-      ready: failing === 0,
-    },
+    launch: overview.check
+      ? {
+          done: false,
+          summary: failing ? `Còn ${failing} điều kiện chưa đạt` : 'Sẵn sàng kích hoạt',
+          ready: failing === 0,
+        }
+      : { done: false, summary: 'Kiểm tra sau khi chọn tin', ready: false },
   }
 }
