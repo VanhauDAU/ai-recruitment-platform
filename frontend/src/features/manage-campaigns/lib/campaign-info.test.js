@@ -1,24 +1,23 @@
 import dayjs from 'dayjs'
 import { describe, expect, it } from 'vitest'
-import { campaignGoalPayload, campaignGoalValues } from './campaign-goal'
+import { campaignInfoPayload, campaignInfoValues } from './campaign-info'
 
-describe('campaign goal values', () => {
+describe('campaign info values', () => {
   it('maps API dates to pickers and back, dropping the end date when continuous', () => {
-    const values = campaignGoalValues({
+    const values = campaignInfoValues({
       name: 'Tuyển Backend',
       start_date: '2026-12-01',
       target_date: '2026-12-31',
-      headcount_target: 3,
     })
 
     expect(values.start_date.format('YYYY-MM-DD')).toBe('2026-12-01')
     expect(values.budget_source).toBe('company')
-    expect(campaignGoalPayload({ ...values, name: '  Tuyển Backend ' })).toMatchObject({
+    expect(campaignInfoPayload({ ...values, name: '  Tuyển Backend ' })).toMatchObject({
       name: 'Tuyển Backend',
       start_date: '2026-12-01',
       target_date: '2026-12-31',
     })
-    expect(campaignGoalPayload({
+    expect(campaignInfoPayload({
       ...values,
       is_continuous: true,
       target_date: dayjs('2026-12-31'),

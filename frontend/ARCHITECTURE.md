@@ -860,7 +860,7 @@ pages/employer/app/campaigns/CampaignList|CampaignDetail
         → shared/api
 pages/employer/app/campaigns/CampaignSetup
   → widgets/campaign-setup-wizard
-    → features/manage-campaigns (CampaignGoalForm), features/launch-campaign
+    → features/manage-campaigns (CampaignInfoForm), features/launch-campaign
       → entities/campaign, entities/job
 ```
 
@@ -871,7 +871,7 @@ pages/employer/app/campaigns/CampaignSetup
   `entities/application` sở hữu list/export hồ sơ phía server;
   `entities/job` sở hữu contract tin tuyển dụng.
 - `features/manage-campaigns` sở hữu các workflow tạo nhanh (tạo nháp rồi
-  chuyển sang trang thiết lập), đổi tên, sửa mục tiêu (`CampaignGoalForm`),
+  chuyển sang trang thiết lập), đổi tên, sửa thông tin đợt tuyển (`CampaignInfoForm`),
   dừng, mở lại, hoàn tất, hủy và hủy lịch.
   - Xác nhận dừng luôn tải `pause-impact`, yêu cầu mã chiến dịch khớp hoàn toàn
     và không tự đổi trạng thái tin.
@@ -879,7 +879,7 @@ pages/employer/app/campaigns/CampaignSetup
 - `features/launch-campaign` sở hữu bước chọn tin (đăng tin nháp / gắn tin đang
   hiển thị) và bước xem lại & kích hoạt (checklist từ `GET /launch/`, cam kết,
   kích hoạt ngay hoặc lên lịch).
-- `widgets/campaign-setup-wizard` ghép ba bước Mục tiêu → Tin → Kích hoạt;
+- `widgets/campaign-setup-wizard` ghép ba bước Thông tin → Tin → Kích hoạt, với thanh lộ trình hiện trạng thái suy ra từ dữ liệu (`setupStepStates` của `features/launch-campaign`);
   `?step=goal|jobs|launch` là contract URL. Form đăng tin mở từ wizard với
   `?campaign=…&return=setup`; lưu nháp xong thì quay lại `?step=jobs`.
 - `widgets/employer-campaign-workspace` sở hữu header và bốn tab dữ liệu thật:

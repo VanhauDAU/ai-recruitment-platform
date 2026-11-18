@@ -26,7 +26,7 @@ vi.mock('@/entities/campaign', () => ({
   updateCampaign: vi.fn(),
 }))
 vi.mock('@/features/manage-campaigns', () => ({
-  CampaignGoalForm: ({ campaign }) => <p>Mục tiêu của {campaign.name}</p>,
+  CampaignInfoForm: ({ campaign }) => <p>Thông tin của {campaign.name}</p>,
   CampaignLifecycleActions: () => <button type="button">Dừng</button>,
 }))
 
@@ -108,14 +108,14 @@ describe('CampaignDetail', () => {
     expect(screen.queryByRole('tab', { name: 'Ứng viên đã xem tin' })).not.toBeInTheDocument()
   })
 
-  it('opens the campaign goal editor', async () => {
+  it('opens the campaign info editor', async () => {
     renderPage()
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Sửa mục tiêu' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Sửa thông tin' }))
 
     expect(screen.getByRole('dialog')).toBeInTheDocument()
-    expect(screen.getByText('Sửa mục tiêu chiến dịch', { selector: '.ant-modal-title *' })).toBeInTheDocument()
-    expect(screen.getByText('Mục tiêu của Tuyển Frontend')).toBeInTheDocument()
+    expect(screen.getByText('Sửa thông tin chiến dịch', { selector: '.ant-modal-title *' })).toBeInTheDocument()
+    expect(screen.getByText('Thông tin của Tuyển Frontend')).toBeInTheDocument()
   })
 
   it('switches content and keeps active_tab in the URL', async () => {

@@ -3,14 +3,17 @@ from django.db import models
 
 from common.public_id import generate_public_id
 
-from .choices import BudgetSource, PositionLevel
+from .choices import BudgetSource
 
 
 class RecruitmentCampaign(models.Model):
-    """A recruiter-owned grouping for jobs and their application funnel.
+    """A recruiter-owned hiring round: time window, budget and its jobs.
 
-    A company remains the legal publisher of a job, but it deliberately does
-    not grant access to a campaign. The owning recruiter is the sole tenant.
+    Position, level and headcount belong to each job, so one campaign can hire
+    a director and several staff at once; the campaign headcount is the sum of
+    its jobs' vacancies. A company remains the legal publisher of a job, but it
+    deliberately does not grant access to a campaign. The owning recruiter is
+    the sole tenant.
     """
 
     class Status(models.TextChoices):
@@ -57,15 +60,6 @@ class RecruitmentCampaign(models.Model):
     )
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True)
-    position_category = models.ForeignKey(
-        'jobs.JobCategory',
-        on_delete=models.PROTECT,
-        related_name='recruitment_campaigns',
-        null=True,
-        blank=True,
-    )
-    position_level = models.CharField(max_length=30, choices=PositionLevel.choices, blank=True)
-    headcount_target = models.PositiveIntegerField(default=1)
     start_date = models.DateField(null=True, blank=True)
     target_date = models.DateField(null=True, blank=True)
     is_continuous = models.BooleanField(default=False)

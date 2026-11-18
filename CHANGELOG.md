@@ -8,6 +8,16 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-18
 
+#### Changed — Chiến dịch: đợt tuyển nhiều tin, wizard rõ ràng hơn
+
+- Chiến dịch không còn một vị trí, cấp bậc, chỉ tiêu riêng; chỉ tiêu bằng tổng số
+  lượng tuyển của các tin (API trả `headcount`). Migration `employers.0066`.
+- Wizard thiết lập làm lại:
+  - thanh lộ trình theo trạng thái thật;
+  - bước Kích hoạt liệt kê việc còn thiếu kèm nút sửa, chọn cách kích hoạt
+    bằng thẻ, ghi trước kết quả khi kích hoạt;
+  - bước Tin hướng dẫn tạo tin nháp và hiện số người cần tuyển.
+
 #### Added — Chiến dịch tuyển dụng: mục tiêu, wizard và lịch chạy (GĐ1)
 
 - Mục tiêu chiến dịch ghi được qua API: vị trí, cấp bậc, chỉ tiêu, ngày bắt

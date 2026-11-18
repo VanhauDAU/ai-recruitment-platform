@@ -282,14 +282,10 @@ class AdminAccountViewSet(
     def campaigns(self, request, public_id=None):
         user = self.get_object()
         try:
-            queryset = (
-                user.recruiter_profile.campaigns.select_related('position_category')
-                .annotate(
-                    job_count=Count('jobs', distinct=True),
-                    application_count=Count('jobs__applications', distinct=True),
-                )
-                .order_by('-updated_at', '-id')
-            )
+            queryset = user.recruiter_profile.campaigns.annotate(
+                job_count=Count('jobs', distinct=True),
+                application_count=Count('jobs__applications', distinct=True),
+            ).order_by('-updated_at', '-id')
         except ObjectDoesNotExist:
             queryset = user.posted_jobs.none()
         return self._paginated(queryset, AdminCampaignSerializer)

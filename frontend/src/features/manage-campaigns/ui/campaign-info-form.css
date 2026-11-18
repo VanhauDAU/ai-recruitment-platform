@@ -1,0 +1,16 @@
+/* Form thông tin chiến dịch (wizard và hộp sửa trong workspace; cả hai đều lazy). */
+.cg-form { display: flex; flex-direction: column; }
+.cg-section { margin: 4px 0 8px; padding-top: 16px; border-top: 1px solid #eef2f0; }
+.cg-section__title { margin: 0 0 12px; font-size: 15px; font-weight: 700; color: #0f2a24; }
+.cg-optional { margin-left: 6px; font-size: 12px; font-weight: 500; color: #94a3b8; }
+.cg-grid { display: grid; column-gap: 16px; }
+.cg-grid--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.cg-grid--3 { grid-template-columns: 2fr 1.4fr 1fr; }
+.cg-switch.ant-form-item { margin-bottom: 4px; }
+.cg-hint { margin: 0 0 14px; font-size: 13px; color: #64748b; }
+.cg-actions { display: flex; justify-content: flex-end; padding-top: 14px; border-top: 1px solid #eef2f0; }
+
+@media (max-width: 640px) {
+  .cg-grid--2, .cg-grid--3 { grid-template-columns: 1fr; }
+  .cg-actions .ant-btn { width: 100%; }
+}

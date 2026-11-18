@@ -440,7 +440,6 @@ function EmployerRecruitment({ publicId }) {
           label: 'Chiến dịch',
           children: <ResourceTable publicId={publicId} resource="campaigns" columns={[
             { title: 'Tên chiến dịch', dataIndex: 'name' },
-            { title: 'Chuyên môn', dataIndex: 'position_category_name' },
             { title: 'Trạng thái', dataIndex: 'status_label' },
             {
               title: 'Policy hold',

@@ -28079,17 +28079,6 @@ components:
           maxLength: 255
         description:
           type: string
-        position_category:
-          type: integer
-          nullable: true
-        position_level:
-          oneOf:
-          - $ref: '#/components/schemas/PositionLevelDf0Enum'
-          - $ref: '#/components/schemas/BlankEnum'
-        headcount_target:
-          type: integer
-          maximum: 2147483647
-          minimum: 0
         start_date:
           type: string
           format: date
@@ -28124,7 +28113,7 @@ components:
         position_category:
           type: integer
         position_level:
-          $ref: '#/components/schemas/PositionLevelDf0Enum'
+          $ref: '#/components/schemas/RecruitmentNeedPositionLevelEnum'
         target_date:
           type: string
           format: date
@@ -28291,26 +28280,6 @@ components:
         * `employee` - Nhân viên
         * `team_lead` - Trưởng nhóm
         * `manager` - Trưởng/Phó phòng
-        * `supervisor` - Quản lý / Giám sát
-        * `branch_manager` - Trưởng chi nhánh
-        * `vice_director` - Phó giám đốc
-        * `director` - Giám đốc
-        * `intern` - Thực tập sinh
-    PositionLevelDf0Enum:
-      enum:
-      - employee
-      - team_lead
-      - manager
-      - supervisor
-      - branch_manager
-      - vice_director
-      - director
-      - intern
-      type: string
-      description: |-
-        * `employee` - Nhân viên
-        * `team_lead` - Trưởng nhóm
-        * `manager` - Trưởng / Phó phòng
         * `supervisor` - Quản lý / Giám sát
         * `branch_manager` - Trưởng chi nhánh
         * `vice_director` - Phó giám đốc
@@ -29991,21 +29960,10 @@ components:
           maxLength: 255
         description:
           type: string
-        position_category:
+        headcount:
           type: integer
-          nullable: true
-        position_category_name:
-          type: string
           readOnly: true
-          default: ''
-        position_level:
-          oneOf:
-          - $ref: '#/components/schemas/PositionLevelDf0Enum'
-          - $ref: '#/components/schemas/BlankEnum'
-        headcount_target:
-          type: integer
-          maximum: 2147483647
-          minimum: 0
+          default: 0
         start_date:
           type: string
           format: date
@@ -30137,11 +30095,11 @@ components:
       - ended_by
       - expired_job_count
       - first_activated_at
+      - headcount
       - hidden_job_count
       - job_count
       - last_activity
       - name
-      - position_category_name
       - public_id
       - status
       - status_label
@@ -30157,17 +30115,6 @@ components:
           maxLength: 255
         description:
           type: string
-        position_category:
-          type: integer
-          nullable: true
-        position_level:
-          oneOf:
-          - $ref: '#/components/schemas/PositionLevelDf0Enum'
-          - $ref: '#/components/schemas/BlankEnum'
-        headcount_target:
-          type: integer
-          maximum: 2147483647
-          minimum: 0
         start_date:
           type: string
           format: date
@@ -30226,7 +30173,7 @@ components:
           type: string
           readOnly: true
         position_level:
-          $ref: '#/components/schemas/PositionLevelDf0Enum'
+          $ref: '#/components/schemas/RecruitmentNeedPositionLevelEnum'
         position_level_label:
           type: string
           readOnly: true
@@ -30276,13 +30223,33 @@ components:
       - position_level
       - position_level_label
       - public_id
+    RecruitmentNeedPositionLevelEnum:
+      enum:
+      - employee
+      - team_lead
+      - manager
+      - supervisor
+      - branch_manager
+      - vice_director
+      - director
+      - intern
+      type: string
+      description: |-
+        * `employee` - Nhân viên
+        * `team_lead` - Trưởng nhóm
+        * `manager` - Trưởng / Phó phòng
+        * `supervisor` - Quản lý / Giám sát
+        * `branch_manager` - Trưởng chi nhánh
+        * `vice_director` - Phó giám đốc
+        * `director` - Giám đốc
+        * `intern` - Thực tập sinh
     RecruitmentNeedRequest:
       type: object
       properties:
         position_category:
           type: integer
         position_level:
-          $ref: '#/components/schemas/PositionLevelDf0Enum'
+          $ref: '#/components/schemas/RecruitmentNeedPositionLevelEnum'
         target_date:
           type: string
           format: date

@@ -75,7 +75,7 @@ describe('campaign create and rename modals', () => {
     expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ['campaigns'] })
     expect(onClose).toHaveBeenCalledOnce()
     expect(onCreated).toHaveBeenCalledWith(campaign)
-    expect(message.success).toHaveBeenCalledWith('Đã tạo nháp. Tiếp tục thiết lập mục tiêu và tin tuyển dụng.')
+    expect(message.success).toHaveBeenCalledWith('Đã tạo nháp. Tiếp tục thiết lập thời gian và tin tuyển dụng.')
   })
 
   it('keeps the create flow open and shows the API error when creation fails', async () => {

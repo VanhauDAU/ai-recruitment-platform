@@ -1,18 +1,26 @@
 import { ArrowLeftOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
-import { Alert, Button, Skeleton, Steps } from 'antd'
+import { Alert, Button, Skeleton } from 'antd'
 import { Link, useNavigate, useSearchParams } from 'react-router'
-import { CAMPAIGN_SETUP_STATUSES, campaignKeys, getCampaign } from '@/entities/campaign'
-import { CampaignJobSelection, CampaignLaunchReview, useCampaignLaunch } from '@/features/launch-campaign'
-import { CampaignGoalForm } from '@/features/manage-campaigns'
+import { CAMPAIGN_SETUP_STATUSES, CAMPAIGN_STATUS_LABELS, campaignKeys, getCampaign } from '@/entities/campaign'
+import {
+  CampaignJobSelection,
+  CampaignLaunchReview,
+  SETUP_STEPS,
+  setupStepStates,
+  useCampaignLaunch,
+} from '@/features/launch-campaign'
+import { CampaignInfoForm } from '@/features/manage-campaigns'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { employerAppPath } from '@/shared/config/portals'
+import SetupStepRail from './SetupStepRail'
+import './campaign-setup-wizard.css'
 
-const STEPS = [
-  { key: 'goal', title: 'Mục tiêu' },
-  { key: 'jobs', title: 'Tin tuyển dụng' },
-  { key: 'launch', title: 'Xem lại & kích hoạt' },
-]
+const STEP_INTRO = {
+  goal: ['Thông tin đợt tuyển', 'Đợt tuyển chạy trong bao lâu và dùng bao nhiêu ngân sách. Vị trí, cấp bậc và số người cần tuyển đặt ở từng tin.'],
+  jobs: ['Tin tuyển dụng', 'Mỗi tin là một vị trí với cấp bậc và số người cần tuyển riêng. Chỉ tiêu của chiến dịch là tổng số người của các tin.'],
+  launch: ['Kích hoạt', 'Kiểm tra lần cuối rồi cho chiến dịch chạy ngay hoặc theo lịch.'],
+}
 
 export default function CampaignSetupWizard({ publicId }) {
   const navigate = useNavigate()
@@ -23,29 +31,34 @@ export default function CampaignSetupWizard({ publicId }) {
   })
   const launchQuery = useCampaignLaunch(publicId)
   const workspacePath = employerAppPath(`/campaigns/${publicId}`)
-  const stepIndex = Math.max(0, STEPS.findIndex((step) => step.key === searchParams.get('step')))
-  const goTo = (index) => setSearchParams({ step: STEPS[index].key }, { replace: true })
+  const requested = searchParams.get('step')
+  const current = SETUP_STEPS.some((step) => step.key === requested) ? requested : 'goal'
+  const goTo = (key) => setSearchParams({ step: key }, { replace: true })
 
   if (campaignQuery.isLoading || launchQuery.isLoading) {
-    return <Skeleton active className="mt-3 rounded-2xl bg-white p-6" paragraph={{ rows: 10 }} />
+    return <Skeleton active className="csw-skeleton" paragraph={{ rows: 10 }} />
   }
   const error = campaignQuery.error || launchQuery.error
   if (error) {
-    return <Alert className="mt-3" type="error" showIcon title={getApiErrorMessage(error, 'Không thể tải chiến dịch.')} />
+    return <Alert className="csw-alert" type="error" showIcon title={getApiErrorMessage(error, 'Không thể tải chiến dịch.')} />
   }
   const campaign = campaignQuery.data
   const overview = launchQuery.data
+  const inSetup = CAMPAIGN_SETUP_STATUSES.includes(campaign.status)
+  const [title, intro] = STEP_INTRO[current]
 
   return (
-    <section className="mx-auto max-w-4xl space-y-4 pb-8 pt-3">
-      <Link to={workspacePath} className="inline-flex items-center gap-1 text-sm text-slate-600">
+    <section className="csw">
+      <Link to={workspacePath} className="csw-back">
         <ArrowLeftOutlined aria-hidden /> Về chiến dịch
       </Link>
-      <header>
-        <h1 className="text-xl font-bold text-slate-900 sm:text-2xl">Thiết lập chiến dịch</h1>
-        <p className="text-sm text-slate-500">{campaign.name}</p>
+      <header className="csw-head">
+        <p className="csw-head__kicker">Thiết lập chiến dịch</p>
+        <h1 className="csw-head__title">{campaign.name}</h1>
+        <span className={`csw-status is-${campaign.status}`}>{CAMPAIGN_STATUS_LABELS[campaign.status]}</span>
       </header>
-      {!CAMPAIGN_SETUP_STATUSES.includes(campaign.status) ? (
+
+      {!inSetup ? (
         <Alert
           type="info"
           showIcon
@@ -53,23 +66,37 @@ export default function CampaignSetupWizard({ publicId }) {
           action={<Button size="small" onClick={() => navigate(workspacePath)}>Mở chiến dịch</Button>}
         />
       ) : (
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
-          <Steps
-            size="small"
-            current={stepIndex}
-            onChange={goTo}
-            items={STEPS.map((step) => ({ title: step.title }))}
-            className="!mb-6"
+        <div className="csw-body">
+          <SetupStepRail
+            steps={SETUP_STEPS}
+            states={setupStepStates(campaign, overview)}
+            current={current}
+            onSelect={goTo}
           />
-          {stepIndex === 0 && (
-            <CampaignGoalForm campaign={campaign} submitLabel="Lưu và tiếp tục" onSaved={() => goTo(1)} />
-          )}
-          {stepIndex === 1 && (
-            <CampaignJobSelection campaign={campaign} overview={overview} onSaved={() => goTo(2)} />
-          )}
-          {stepIndex === 2 && (
-            <CampaignLaunchReview campaign={campaign} overview={overview} onLaunched={() => navigate(workspacePath)} />
-          )}
+          <div className="csw-panel">
+            <div className="csw-panel__head">
+              <h2 className="csw-panel__title">{title}</h2>
+              <p className="csw-panel__intro">{intro}</p>
+            </div>
+            {current === 'goal' && (
+              <CampaignInfoForm campaign={campaign} submitLabel="Lưu và tiếp tục" onSaved={() => goTo('jobs')} />
+            )}
+            {current === 'jobs' && (
+              <CampaignJobSelection
+                campaign={campaign}
+                overview={overview}
+                onSaved={() => goTo('launch')}
+              />
+            )}
+            {current === 'launch' && (
+              <CampaignLaunchReview
+                campaign={campaign}
+                overview={overview}
+                onGoToStep={goTo}
+                onLaunched={() => navigate(workspacePath)}
+              />
+            )}
+          </div>
         </div>
       )}
     </section>

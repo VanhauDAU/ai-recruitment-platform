@@ -79,13 +79,24 @@ GĐ1 đã làm:
 - **Frontend**:
   - trang `/tuyendung/app/campaigns/:id/setup?step=goal|jobs|launch`
     (widget `campaign-setup-wizard`, feature `launch-campaign`,
-    `CampaignGoalForm`);
+    `CampaignInfoForm`);
   - tạo chiến dịch xong chuyển sang wizard;
   - form đăng tin mở từ wizard (`return=setup`) lưu nháp xong quay lại bước
     chọn tin;
   - workspace: "Sửa mục tiêu", "Tiếp tục thiết lập", Hoàn tất / Hủy / Hủy lịch
     có xác nhận.
 - Wizard GĐ1 có ba bước; bước "Kênh & lịch" thêm ở GĐ2.
+- Làm lại giao diện wizard (18/11, nhánh `feat/campaign-setup-ui`, sau phản hồi
+  của user):
+  - thanh lộ trình hiện trạng thái thật từng bước;
+  - bước Kích hoạt mở đầu bằng "Còn N việc" kèm nút đi thẳng tới bước cần sửa,
+    hai thẻ chọn cách kích hoạt, dòng "Khi kích hoạt sẽ…";
+  - bước Tin có khối "Tạo tin mới" (nhắc bấm Lưu nháp), cảnh báo hạn nộp sau
+    ngày kết thúc;
+  - style để trong CSS lazy.
+- Chốt lại mô hình (18/11): chiến dịch là một **đợt tuyển** nhiều tin. Gỡ vị
+  trí, cấp bậc, `headcount_target` ở cấp chiến dịch (`employers.0066`). Chỉ
+  tiêu = tổng số lượng tuyển của các tin (`headcount`).
 - Còn mở: chưa xem bằng mắt trên trình duyệt (đã có test API và test giao diện);
   `openapi.yaml` được sinh lại nên kéo theo phần lệch tích tụ từ các tính năng
   trước.
