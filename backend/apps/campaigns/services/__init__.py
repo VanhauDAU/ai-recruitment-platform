@@ -8,8 +8,11 @@ from .channels import (
     update_channel,
 )
 from .content import ContentQuotaExceeded, generate_channel_content, render_content
+from .health import campaign_health
 from .launch import execute_launch, launch_campaign, save_launch_selection
 from .launch_check import campaign_launch_overview
+from .monitoring import run_health_snapshots, send_weekly_reports, snapshot_campaign
+from .report_export import build_pdf, build_xlsx
 from .schedule import run_campaign_schedule
 from .social_connections import (
     complete_page_connection,
@@ -36,6 +39,12 @@ from .tracking import (
 )
 
 __all__ = [
+    'build_pdf',
+    'build_xlsx',
+    'campaign_health',
+    'run_health_snapshots',
+    'send_weekly_reports',
+    'snapshot_campaign',
     'cancel_post',
     'complete_page_connection',
     'disconnect_page',

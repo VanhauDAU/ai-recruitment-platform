@@ -8,6 +8,7 @@ from .api.views.channels import (
     CampaignChannelListView,
     CampaignChannelReportView,
 )
+from .api.views.health import CampaignHealthView, CampaignReportExportView
 from .api.views.launch import CampaignLaunchView
 from .api.views.social import (
     ChannelPostDetailView,
@@ -89,5 +90,15 @@ urlpatterns = [
         'social/facebook/pending/<str:nonce>/',
         SocialPendingPagesView.as_view(),
         name='employer-social-facebook-pending',
+    ),
+    path(
+        'campaigns/<str:public_id>/health/',
+        CampaignHealthView.as_view(),
+        name='employer-campaign-health',
+    ),
+    path(
+        'campaigns/<str:public_id>/report/export/',
+        CampaignReportExportView.as_view(),
+        name='employer-campaign-report-export',
     ),
 ]

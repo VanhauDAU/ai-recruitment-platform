@@ -60,3 +60,72 @@
   .cw-fact { padding: 10px 16px; }
   .cw-channels { padding: 14px; }
 }
+
+/* Tab Sức khỏe */
+.cwh { display: flex; flex-direction: column; gap: 16px; }
+.cwh-banner {
+  display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 16px;
+  padding: 18px 20px; border: 1px solid #e2e8e5; border-left-width: 4px; border-radius: 16px; background: #fff;
+}
+.cwh-banner.is-good { border-left-color: #059669; }
+.cwh-banner.is-warn { border-left-color: #d97706; }
+.cwh-banner.is-bad { border-left-color: #e11d48; }
+.cwh-banner.is-muted { border-left-color: #94a3b8; }
+.cwh-banner__eyebrow { margin: 0; font-size: 12px; font-weight: 600; color: #64748b; }
+.cwh-banner__title { margin: 2px 0 6px; font-size: 22px; font-weight: 750; color: #0f2a24; }
+.cwh-banner.is-good .cwh-banner__title { color: #047857; }
+.cwh-banner.is-warn .cwh-banner__title { color: #b45309; }
+.cwh-banner.is-bad .cwh-banner__title { color: #be123c; }
+.cwh-banner__text { margin: 0; max-width: 64ch; font-size: 14px; line-height: 22px; color: #334155; }
+.cwh-banner__side { display: flex; flex-direction: column; align-items: flex-end; gap: 12px; }
+.cwh-score { display: flex; flex-direction: column; align-items: flex-end; }
+.cwh-score span { font-size: 12px; color: #64748b; }
+.cwh-score strong { font-size: 28px; font-weight: 750; line-height: 1.1; color: #0f2a24; font-variant-numeric: tabular-nums; }
+.cwh-score small { font-size: 16px; font-weight: 600; color: #94a3b8; }
+
+.cwh-alerts { overflow: hidden; border: 1px solid #fde68a; border-radius: 16px; background: #fffbeb; }
+.cwh-alerts__title { margin: 0; padding: 10px 16px; border-bottom: 1px solid #fde68a; font-size: 13px; font-weight: 700; color: #92400e; }
+.cwh-alerts ul { margin: 0; padding: 0; list-style: none; }
+.cwh-alert { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 16px; }
+.cwh-alert + .cwh-alert { border-top: 1px solid #fef3c7; }
+.cwh-alert h3 { margin: 0; font-size: 14px; font-weight: 700; color: #78350f; }
+.cwh-alert p { margin: 2px 0 0; font-size: 13px; line-height: 20px; color: #92400e; overflow-wrap: anywhere; }
+.cwh-alert a { flex-shrink: 0; font-size: 13px; font-weight: 600; color: #b45309; white-space: nowrap; }
+.cwh-alert a:hover { color: #78350f; text-decoration: underline; }
+
+.cwh-grid { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 16px; }
+.cwh-card { padding: 18px 20px; border: 1px solid #e2e8e5; border-radius: 16px; background: #fff; }
+.cwh-empty, .cwh-note { margin: 12px 0 0; font-size: 13px; line-height: 20px; color: #64748b; }
+
+.cwh-funnel { display: flex; flex-direction: column; gap: 10px; margin: 14px 0 0; padding: 0; list-style: none; }
+.cwh-funnel li { display: grid; grid-template-columns: 92px minmax(0, 1fr) 72px; align-items: center; gap: 10px; font-size: 13px; }
+.cwh-funnel__label { color: #475569; }
+.cwh-funnel__bar { height: 10px; overflow: hidden; border-radius: 999px; background: #f1f5f9; }
+.cwh-funnel__bar span { display: block; height: 100%; border-radius: inherit; background: #10b981; }
+.cwh-funnel__value { font-weight: 700; color: #0f2a24; text-align: right; font-variant-numeric: tabular-nums; }
+.cwh-funnel__value small { font-weight: 500; color: #94a3b8; }
+
+.cwh-budget { margin: 14px 0 8px; font-size: 14px; color: #64748b; }
+.cwh-budget strong { font-size: 20px; color: #0f2a24; }
+.cwh-meter { display: block; height: 10px; overflow: hidden; border-radius: 999px; background: #f1f5f9; }
+.cwh-meter span { display: block; height: 100%; border-radius: inherit; background: #059669; }
+.cwh-meter span.is-over { background: #e11d48; }
+
+.cwh-chart { margin-top: 12px; }
+.cwh-legend { display: flex; flex-wrap: wrap; gap: 16px; margin: 8px 0 0; padding: 0; list-style: none; font-size: 12px; color: #475569; }
+.cwh-legend li { display: inline-flex; align-items: center; gap: 6px; }
+.cwh-legend span { width: 18px; }
+.cwh-formula summary { cursor: pointer; font-size: 14px; font-weight: 700; color: #0f2a24; }
+.cwh-formula p, .cwh-formula li { font-size: 13px; line-height: 21px; color: #475569; }
+.cwh-formula ul { margin: 8px 0 0; padding-left: 18px; }
+
+@media (max-width: 900px) {
+  .cwh-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 560px) {
+  .cwh-banner, .cwh-card { padding: 14px; }
+  .cwh-banner__side { width: 100%; flex-direction: row; align-items: center; justify-content: space-between; }
+  .cwh-score { align-items: flex-start; }
+  .cwh-alert { flex-direction: column; align-items: flex-start; gap: 4px; }
+  .cwh-funnel li { grid-template-columns: 78px minmax(0, 1fr) 60px; }
+}

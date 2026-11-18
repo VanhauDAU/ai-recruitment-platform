@@ -128,6 +128,19 @@ export async function getCampaignChannelReport(publicId) {
   return data
 }
 
+export async function getCampaignHealth(publicId) {
+  const { data } = await api.get(`/employer/campaigns/${publicId}/health/`)
+  return data
+}
+
+export async function downloadCampaignReport(publicId, type) {
+  const { data } = await api.get(`/employer/campaigns/${publicId}/report/export/`, {
+    params: { type },
+    responseType: 'blob',
+  })
+  return data
+}
+
 export async function getPublicCampaign(slug) {
   const { data } = await api.get(`/campaigns/public/${slug}/`)
   return data
