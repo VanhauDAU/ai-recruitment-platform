@@ -14,7 +14,7 @@ from common.storage.private import storage_boundary_configuration_errors
 from config.env import config
 
 from .base import *
-from .base import _DEFAULT_SECRET_KEY
+from .components.core import _DEFAULT_SECRET_KEY
 
 _errors: list[str] = []
 
