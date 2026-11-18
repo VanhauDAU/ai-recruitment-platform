@@ -5,7 +5,7 @@ const toIso = (value) => (value ? value.format('YYYY-MM-DD') : null)
 
 export function campaignInfoValues(campaign) {
   return {
-    name: campaign.name,
+    name: campaign.name || '',
     description: campaign.description || '',
     start_date: toDay(campaign.start_date),
     target_date: toDay(campaign.target_date),

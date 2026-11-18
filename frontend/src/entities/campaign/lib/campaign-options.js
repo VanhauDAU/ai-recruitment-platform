@@ -1,8 +1,8 @@
 export const CAMPAIGN_STATUS_LABELS = {
   draft: 'Nháp',
   scheduled: 'Đã lên lịch',
-  active: 'Đang mở',
-  paused: 'Đang tắt',
+  active: 'Đang chạy',
+  paused: 'Tạm dừng',
   completed: 'Hoàn tất',
   cancelled: 'Đã hủy',
 }
@@ -23,16 +23,18 @@ export const CAMPAIGN_SCOPE_OPTIONS = [
   { value: 'expired_jobs', label: 'Có tin tuyển dụng hết hạn' },
 ]
 
-export const CAMPAIGN_STATUS_OPTIONS = [
-  { value: '', label: 'Tất cả trạng thái' },
-  { value: 'draft', label: 'Nháp' },
-  { value: 'scheduled', label: 'Đã lên lịch' },
-  { value: 'active', label: 'Đang hoạt động' },
-  { value: 'paused', label: 'Đang tắt' },
-  { value: 'completed', label: 'Hoàn tất' },
+// Dải lọc trạng thái của danh sách; ``ended`` gộp hoàn tất và đã hủy.
+export const CAMPAIGN_STATUS_TABS = [
+  { value: '', label: 'Tất cả', countKey: 'all' },
+  { value: 'active', label: 'Đang chạy', countKey: 'active' },
+  { value: 'paused', label: 'Tạm dừng', countKey: 'paused' },
+  { value: 'scheduled', label: 'Đã lên lịch', countKey: 'scheduled' },
+  { value: 'draft', label: 'Nháp', countKey: 'draft' },
+  { value: 'ended', label: 'Đã kết thúc', countKey: 'ended' },
 ]
 
 export const CAMPAIGN_ORDERING_OPTIONS = [
+  { value: 'status', label: 'Theo trạng thái' },
   { value: 'activity', label: 'Hoạt động gần nhất' },
   { value: 'newest', label: 'Mới tạo gần đây' },
   { value: 'oldest', label: 'Cũ nhất' },

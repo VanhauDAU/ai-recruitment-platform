@@ -4,6 +4,7 @@ import dayjs from 'dayjs'
 import {
   CAMPAIGN_BUDGET_SOURCE_OPTIONS,
   campaignKeys,
+  createCampaign,
   updateCampaign,
 } from '@/entities/campaign'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
@@ -12,21 +13,23 @@ import { campaignInfoPayload, campaignInfoValues } from '../lib/campaign-info'
 import './campaign-info-form.css'
 
 // Thông tin đợt tuyển (thời gian, ngân sách, ghi chú): bước 1 của wizard và hộp sửa trong workspace.
+// Chưa có ``public_id`` thì form tạo chiến dịch (nháp) khi lưu.
 // Vị trí, cấp bậc và số người cần tuyển thuộc từng tin, không thuộc chiến dịch.
 export default function CampaignInfoForm({ campaign, submitLabel = 'Lưu thông tin', onSaved }) {
   const [form] = Form.useForm()
   const queryClient = useQueryClient()
   const isContinuous = Form.useWatch('is_continuous', form)
-  const startLocked = !['draft', 'scheduled'].includes(campaign.status)
+  const isNew = !campaign.public_id
+  const startLocked = !isNew && !['draft', 'scheduled'].includes(campaign.status)
   const mutation = useMutation({
-    mutationFn: (payload) => updateCampaign(campaign.public_id, payload),
+    mutationFn: (payload) => (isNew ? createCampaign(payload) : updateCampaign(campaign.public_id, payload)),
     onSuccess: (updated) => {
-      queryClient.setQueryData(campaignKeys.detail(campaign.public_id), (current) => ({
+      queryClient.setQueryData(campaignKeys.detail(updated.public_id), (current) => ({
         ...current,
         ...updated,
       }))
       queryClient.invalidateQueries({ queryKey: campaignKeys.all })
-      message.success('Đã lưu thông tin chiến dịch.')
+      message.success(isNew ? 'Đã tạo chiến dịch nháp.' : 'Đã lưu thông tin chiến dịch.')
       onSaved?.(updated)
     },
     onError: (error) => {
@@ -63,7 +66,7 @@ export default function CampaignInfoForm({ campaign, submitLabel = 'Lưu thông 
         name="name"
         rules={[{ required: true, whitespace: true, message: 'Nhập tên chiến dịch.' }]}
       >
-        <Input maxLength={255} />
+        <Input maxLength={255} autoFocus={isNew} placeholder="Ví dụ: Tuyển đội marketing tháng 12" />
       </Form.Item>
 
       <section className="cg-section">

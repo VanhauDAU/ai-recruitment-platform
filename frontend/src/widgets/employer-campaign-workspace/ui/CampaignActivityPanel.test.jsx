@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
 }))
 
 vi.mock('@/entities/campaign', () => ({
+  CAMPAIGN_STATUS_LABELS: { draft: 'Nháp', active: 'Đang chạy', paused: 'Tạm dừng', completed: 'Hoàn tất', cancelled: 'Đã hủy' },
   campaignKeys: {
     activities: (publicId, params) => ['campaigns', 'activities', publicId, params],
   },

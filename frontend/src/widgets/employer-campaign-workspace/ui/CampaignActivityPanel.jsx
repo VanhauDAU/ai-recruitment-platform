@@ -4,7 +4,7 @@ import { Alert, Empty, Pagination, Select, Skeleton } from 'antd'
 import { useState } from 'react'
 import { Link } from 'react-router'
 import { RECRUITER_APPLICATION_STATUS_LABELS } from '@/entities/application'
-import { campaignKeys, getCampaignActivities } from '@/entities/campaign'
+import { CAMPAIGN_STATUS_LABELS, campaignKeys, getCampaignActivities } from '@/entities/campaign'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { employerAppPath } from '@/shared/config/portals'
 
@@ -19,7 +19,7 @@ const GROUP_STYLES = {
 const FALLBACK_STYLE = [HistoryOutlined, 'Hoạt động', 'bg-slate-100 text-slate-600 ring-slate-200', 'bg-slate-100 text-slate-600 ring-slate-200']
 
 const STATUS_LABELS = {
-  campaign: { draft: 'Chưa khởi động', active: 'Đang mở', paused: 'Đang tắt', completed: 'Hoàn tất', cancelled: 'Đã hủy' },
+  campaign: CAMPAIGN_STATUS_LABELS,
   job: { draft: 'Nháp', pending: 'Chờ duyệt', active: 'Đang tuyển', closed: 'Ngừng tuyển', rejected: 'Từ chối' },
   application: RECRUITER_APPLICATION_STATUS_LABELS,
 }

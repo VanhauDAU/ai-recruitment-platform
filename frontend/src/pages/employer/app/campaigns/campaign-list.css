@@ -1,0 +1,51 @@
+/* Danh sách chiến dịch (route lazy, ngoài CSS khởi tạo). */
+.cpl { display: flex; flex-direction: column; gap: 16px; }
+
+/* Dải trạng thái: lọc chính của trang, có số đếm từng nhóm. */
+.cpl-tabs {
+  display: flex; gap: 4px; overflow-x: auto; padding: 8px 12px 0; border-bottom: 1px solid #e2e8e5;
+  scrollbar-width: none;
+}
+.cpl-tabs::-webkit-scrollbar { display: none; }
+.cpl-tab {
+  display: inline-flex; align-items: center; gap: 8px; flex-shrink: 0; padding: 10px 12px 12px;
+  border: 0; border-bottom: 2px solid transparent; background: none; cursor: pointer;
+  font-size: 14px; font-weight: 600; color: #64748b; white-space: nowrap;
+}
+.cpl-tab:hover { color: #0f2a24; }
+.cpl-tab:focus-visible { outline: 2px solid #059669; outline-offset: -2px; border-radius: 6px; }
+.cpl-tab.is-active { border-bottom-color: #059669; color: #047857; }
+.cpl-tab__count {
+  min-width: 22px; padding: 0 7px; border-radius: 999px; background: #f1f5f9;
+  font-size: 12px; line-height: 20px; color: #475569; text-align: center;
+}
+.cpl-tab.is-active .cpl-tab__count { background: #d1fae5; color: #047857; }
+
+.cpl-filters { display: grid; grid-template-columns: minmax(0, 1fr) 240px 190px; gap: 10px; padding: 12px; }
+
+/* Ô tên chiến dịch */
+.cpl-name { display: flex; flex-direction: column; gap: 6px; min-width: 240px; }
+.cpl-name__title { font-size: 15px; font-weight: 700; line-height: 1.35; color: #0f2a24; overflow-wrap: anywhere; }
+.cpl-name__title:hover { color: #047857; }
+.cpl-name__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 12px; color: #64748b; }
+
+.cpl-activity { display: flex; flex-direction: column; gap: 2px; font-size: 13px; color: #334155; }
+.cpl-activity time { font-size: 12px; color: #94a3b8; }
+
+/* Bảng từ 1024px, thẻ ở màn hẹp hơn (CSS này nằm ngoài layer nên tự lo ẩn/hiện). */
+.cpl-table { overflow: hidden; }
+.cpl-cards { display: none; flex-direction: column; gap: 12px; }
+.cpl-card__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 14px; padding: 12px; border-radius: 12px; background: #f8faf9; }
+.cpl-card__foot { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin-top: 12px; }
+
+@media (max-width: 1023px) {
+  .cpl-table { display: none; }
+  .cpl-cards { display: flex; }
+  .cpl-filters { grid-template-columns: 1fr 1fr; }
+  .cpl-filters > :first-child { grid-column: 1 / -1; }
+}
+@media (max-width: 560px) {
+  .cpl-filters { grid-template-columns: 1fr; }
+  .cpl-card__grid { grid-template-columns: 1fr; }
+  .cpl-name { min-width: 0; }
+}

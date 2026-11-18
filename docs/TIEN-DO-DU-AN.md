@@ -97,6 +97,13 @@ GĐ1 đã làm:
 - Chốt lại mô hình (18/11): chiến dịch là một **đợt tuyển** nhiều tin. Gỡ vị
   trí, cấp bậc, `headcount_target` ở cấp chiến dịch (`employers.0066`). Chỉ
   tiêu = tổng số lượng tuyển của các tin (`headcount`).
+- Làm gọn danh sách và trang chi tiết (18/11, nhánh `feat/campaign-list-detail-ui`):
+  - danh sách có dải trạng thái kèm số đếm, mặc định sắp theo trạng thái, mỗi
+    dòng một nút việc tiếp theo;
+  - "Thêm chiến dịch mới" mở thẳng wizard `/campaigns/new` (bỏ modal nhập tên,
+    modal đổi tên);
+  - trang chi tiết còn một nút chính, "Sửa thông tin" và menu "Thao tác khác";
+    dải bốn thông tin; chỉ số Tổng quan gom thành một dải.
 - Còn mở: chưa xem bằng mắt trên trình duyệt (đã có test API và test giao diện);
   `openapi.yaml` được sinh lại nên kéo theo phần lệch tích tụ từ các tính năng
   trước.

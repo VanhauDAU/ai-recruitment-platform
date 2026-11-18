@@ -1,228 +1,104 @@
-import {
-  BarChartOutlined,
-  EditOutlined,
-  SearchOutlined,
-  TeamOutlined,
-  UserOutlined,
-} from '@ant-design/icons'
+import { SearchOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
-import {
-  Button,
-  Card,
-  Alert,
-  Empty,
-  Input,
-  Pagination,
-  Select,
-  Table,
-  Tag,
-} from 'antd'
+import { Alert, Button, Card, Empty, Input, Pagination, Select, Table, Tag } from 'antd'
+import dayjs from 'dayjs'
 import { useMemo, useState } from 'react'
-import { Link, useLocation, useNavigate, useSearchParams } from 'react-router'
+import { Link, useSearchParams } from 'react-router'
 import {
   CAMPAIGN_ORDERING_OPTIONS,
   CAMPAIGN_SCOPE_OPTIONS,
+  CAMPAIGN_SETUP_STATUSES,
   CAMPAIGN_STATUS_COLORS,
   CAMPAIGN_STATUS_LABELS,
-  CAMPAIGN_STATUS_OPTIONS,
+  CAMPAIGN_STATUS_TABS,
   campaignKeys,
   getCampaigns,
 } from '@/entities/campaign'
 import { useEmployerReadiness } from '@/entities/employer-profile'
-import {
-  CampaignLifecycleActions,
-  CreateCampaignModal,
-  RenameCampaignModal,
-} from '@/features/manage-campaigns'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { employerAppPath } from '@/shared/config/portals'
+import CampaignCandidateSummary from './CampaignCandidates'
 import CampaignJobsSummary from './CampaignJobsSummary'
+import './campaign-list.css'
 
-const ACTION_TONES = {
-  primary: 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-300 hover:bg-emerald-100 hover:text-emerald-800',
-  neutral: 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900',
-  blue: 'border-sky-200 bg-sky-50 text-sky-700 hover:border-sky-300 hover:bg-sky-100 hover:text-sky-800',
+const PAGE_SIZE = 20
+const detailPath = (campaign, suffix = '') => employerAppPath(`/campaigns/${campaign.public_id}${suffix}`)
+const shortDate = (value) => (value ? dayjs(value).format('DD/MM/YYYY') : '')
+
+function campaignPeriod(campaign) {
+  const start = shortDate(campaign.start_date) || 'Khi kích hoạt'
+  const end = campaign.is_continuous ? 'tuyển liên tục' : shortDate(campaign.target_date) || 'chưa đặt ngày kết thúc'
+  return `${start} đến ${end}`
 }
 
-function CampaignActionButton({ icon, tone = 'neutral', onClick, children }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`inline-flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-semibold shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500 active:translate-y-0 active:shadow-xs ${ACTION_TONES[tone]}`}
-    >
-      {icon}
-      <span>{children}</span>
-    </button>
-  )
-}
-
-function ActionRow({ children, className = '' }) {
-  return (
-    <div className={`flex flex-wrap items-center gap-2 ${className}`}>
-      {children}
-    </div>
-  )
-}
-
-function formatDate(value, withTime = false) {
-  if (!value) return '—'
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return '—'
-  return date.toLocaleString('vi-VN', withTime
-    ? { dateStyle: 'short', timeStyle: 'short' }
-    : { dateStyle: 'short' })
-}
-
-const AVATAR_TONES = [
-  'bg-sky-500',
-  'bg-violet-500',
-  'bg-rose-500',
-  'bg-amber-500',
-  'bg-teal-500',
-]
-
-function initials(name) {
-  const words = (name || '').trim().split(/\s+/).filter(Boolean)
-  return words.slice(-2).map((word) => word[0]).join('').toUpperCase() || 'ƯV'
-}
-
-function CandidateAvatar({ candidate, index, total }) {
-  const [imageFailed, setImageFailed] = useState(false)
-  const hasImage = Boolean(candidate.avatar_url) && !imageFailed
-
-  return (
-    <span
-      title={candidate.full_name}
-      style={{ zIndex: total - index }}
-      className={`-ml-2.5 inline-flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border-2 border-white text-[10px] font-bold text-white shadow-sm first:ml-0 ${AVATAR_TONES[index % AVATAR_TONES.length]}`}
-    >
-      {hasImage ? (
-        <img
-          alt=""
-          className="h-full w-full object-cover"
-          src={candidate.avatar_url}
-          onError={() => setImageFailed(true)}
-        />
-      ) : candidate.public_id === 'candidate-placeholder' ? (
-        <UserOutlined aria-hidden className="text-sm" />
-      ) : initials(candidate.full_name)}
-    </span>
-  )
-}
-
-function CampaignCandidateAvatars({ campaign }) {
-  const candidateCount = Number(campaign.candidate_count) || 0
-  const previews = (campaign.candidate_previews || []).slice(0, 5)
-  const candidates = previews.length > 0
-    ? previews
-    : candidateCount > 0
-      ? [{ public_id: 'candidate-placeholder', full_name: 'Ứng viên' }]
-      : []
-  const extraCount = Math.max(candidateCount - candidates.length, 0)
-
-  if (candidateCount === 0) {
-    return <span className="text-sm text-slate-500">Chưa có ứng viên</span>
+// Mỗi dòng chỉ có một hành động: việc tiếp theo hợp lý nhất cho trạng thái đó.
+function nextAction(campaign, candidateDataAccess) {
+  if (CAMPAIGN_SETUP_STATUSES.includes(campaign.status)) {
+    return { label: 'Thiết lập', to: detailPath(campaign, '/setup'), primary: true }
   }
-
-  return (
-    <div
-      aria-label={`${candidateCount} ứng viên`}
-      className="flex h-8 items-center pl-1"
-      role="img"
-    >
-      {candidates.map((candidate, index) => (
-        <CandidateAvatar
-          key={candidate.public_id}
-          candidate={candidate}
-          index={index}
-          total={candidates.length}
-        />
-      ))}
-      {extraCount > 0 && (
-        <span
-          className="-ml-2.5 inline-flex h-8 min-w-8 items-center justify-center rounded-full border-2 border-white bg-slate-700 px-1 text-[10px] font-bold text-white shadow-sm"
-          title={`${extraCount} ứng viên khác`}
-        >
-          +{extraCount}
-        </span>
-      )}
-    </div>
-  )
+  const unviewed = campaign.unviewed_count ?? campaign.unviewed_application_count ?? 0
+  if (candidateDataAccess && unviewed > 0) {
+    return { label: `Xem ${unviewed} CV mới`, to: detailPath(campaign, '?active_tab=apply_cv'), primary: true }
+  }
+  return { label: 'Mở', to: detailPath(campaign) }
 }
 
-function CampaignCandidateSummary({ campaign, candidateDataAccess }) {
-  const applicationCount = campaign.application_pair_count
-    ?? campaign.application_submission_count
-    ?? campaign.application_count
-    ?? 0
-  if (!candidateDataAccess) {
-    return (
-      <div className="min-w-36 text-slate-700">
-        <span className="block text-sm font-semibold">
-          {Number(campaign.candidate_count) || 0} ứng viên
-        </span>
-        <span className="mt-1 block text-xs text-slate-500">
-          {applicationCount} hồ sơ ứng tuyển
-        </span>
-      </div>
-    )
-  }
+function CampaignName({ campaign }) {
   return (
-    <Link
-      to={employerAppPath(`/campaigns/${campaign.public_id}?active_tab=apply_cv`)}
-      className="block min-w-36 !text-slate-700"
-    >
-      <CampaignCandidateAvatars campaign={campaign} />
-      <span className="mt-1 block text-xs text-slate-500">
-        {applicationCount} hồ sơ ứng tuyển
-      </span>
-      {(campaign.unviewed_count ?? campaign.unviewed_application_count) > 0 && (
-        <Tag className="mt-2" color="green">
-          {campaign.unviewed_count ?? campaign.unviewed_application_count} chưa xem
+    <div className="cpl-name">
+      <Link className="cpl-name__title" to={detailPath(campaign)}>{campaign.name}</Link>
+      <div className="cpl-name__meta">
+        <Tag color={CAMPAIGN_STATUS_COLORS[campaign.status]} className="!m-0">
+          {CAMPAIGN_STATUS_LABELS[campaign.status]}
         </Tag>
-      )}
+        <span>{campaignPeriod(campaign)}</span>
+      </div>
+    </div>
+  )
+}
+
+function NextActionButton({ campaign, candidateDataAccess }) {
+  const action = nextAction(campaign, candidateDataAccess)
+  return (
+    <Link to={action.to}>
+      <Button type={action.primary ? 'primary' : 'default'} size="small">{action.label}</Button>
     </Link>
   )
 }
 
+function LastActivity({ campaign }) {
+  const occurredAt = campaign.last_activity?.occurred_at
+  return (
+    <div className="cpl-activity">
+      <span>{campaign.last_activity?.label || 'Cập nhật chiến dịch'}</span>
+      <time>{occurredAt ? dayjs(occurredAt).format('HH:mm DD/MM/YYYY') : '—'}</time>
+    </div>
+  )
+}
+
 export default function CampaignList() {
-  const [editCampaign, setEditCampaign] = useState(null)
   const [searchParams, setSearchParams] = useSearchParams()
-  const location = useLocation()
-  const createOpen = Boolean(location.state?.createCampaign)
   const [searchValue, setSearchValue] = useState(searchParams.get('q') || '')
-  const navigate = useNavigate()
   const status = searchParams.get('status') || ''
   const scope = searchParams.get('scope') || ''
-  const ordering = searchParams.get('ordering') || 'activity'
+  const ordering = searchParams.get('ordering') || 'status'
   const page = Number(searchParams.get('page')) || 1
+  const query = searchParams.get('q') || ''
   const queryParams = useMemo(() => ({
     page,
     ordering,
     ...(status ? { status } : {}),
     ...(scope ? { scope } : {}),
-    ...(searchParams.get('q') ? { q: searchParams.get('q') } : {}),
-  }), [ordering, page, scope, searchParams, status])
+    ...(query ? { q: query } : {}),
+  }), [ordering, page, query, scope, status])
   const campaignsQuery = useQuery({
     queryKey: campaignKeys.list(queryParams),
     queryFn: () => getCampaigns(queryParams),
   })
   const { canAccessCandidateData } = useEmployerReadiness()
-  const pageData = campaignsQuery.data || {
-    count: 0,
-    next: null,
-    previous: null,
-    results: [],
-  }
+  const pageData = campaignsQuery.data || { count: 0, results: [] }
   const campaigns = pageData.results || []
-
-  function setCreateOpen(open) {
-    navigate(`${location.pathname}${location.search}`, {
-      replace: true,
-      state: open ? { ...location.state, createCampaign: true } : null,
-    })
-  }
+  const counts = pageData.status_counts || {}
 
   function replaceFilters(next) {
     const values = Object.fromEntries(searchParams)
@@ -234,127 +110,60 @@ export default function CampaignList() {
     setSearchParams(values)
   }
 
-  function CampaignInlineActions({ campaign }) {
-    return (
-      <ActionRow>
-        <CampaignActionButton
-          icon={<EditOutlined aria-hidden />}
-          tone="primary"
-          onClick={() => setEditCampaign(campaign)}
-        >
-          Sửa chiến dịch
-        </CampaignActionButton>
-        <CampaignActionButton
-          icon={<BarChartOutlined aria-hidden />}
-          onClick={() => navigate(
-            employerAppPath(`/campaigns/${campaign.public_id}?active_tab=overview`),
-          )}
-        >
-          Tổng quan
-        </CampaignActionButton>
-        {canAccessCandidateData && (
-          <CampaignActionButton
-            icon={<TeamOutlined aria-hidden />}
-            tone="blue"
-            onClick={() => navigate(
-              employerAppPath(`/campaigns/${campaign.public_id}?active_tab=apply_cv`),
-            )}
-          >
-            Xem CV
-          </CampaignActionButton>
-        )}
-      </ActionRow>
-    )
-  }
-
+  const empty = (
+    <Empty description={status || scope || query ? 'Không có chiến dịch phù hợp bộ lọc' : 'Chưa có chiến dịch nào'} />
+  )
   const columns = [
+    { title: 'Chiến dịch', render: (_, campaign) => <CampaignName campaign={campaign} /> },
+    { title: 'Tin tuyển dụng', width: 280, render: (_, campaign) => <CampaignJobsSummary campaign={campaign} /> },
     {
-      title: 'Chiến dịch tuyển dụng',
-      render: (_, campaign) => (
-        <div className="flex min-w-64 items-start gap-3">
-          <div className="pt-0.5">
-            <CampaignLifecycleActions campaign={campaign} variant="switch" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <span className="text-xs text-slate-400">#{campaign.public_id}</span>
-            <Link
-              className="mt-1 block font-bold !text-slate-900 hover:!text-emerald-700"
-              to={employerAppPath(`/campaigns/${campaign.public_id}`)}
-            >
-              {campaign.name}
-            </Link>
-            <Tag className="mt-2" color={CAMPAIGN_STATUS_COLORS[campaign.status]}>
-              {CAMPAIGN_STATUS_LABELS[campaign.status]}
-            </Tag>
-            <div className="mt-3 transition-all duration-200 lg:pointer-events-none lg:translate-y-1 lg:opacity-0 lg:group-hover:pointer-events-auto lg:group-hover:translate-y-0 lg:group-hover:opacity-100 lg:group-focus-within:pointer-events-auto lg:group-focus-within:translate-y-0 lg:group-focus-within:opacity-100">
-              <CampaignInlineActions campaign={campaign} />
-            </div>
-          </div>
-        </div>
-      ),
-    },
-    {
-      title: 'Tin tuyển dụng',
-      width: 300,
-      render: (_, campaign) => (
-        <CampaignJobsSummary
-          campaign={campaign}
-          onCreate={() => navigate(
-            employerAppPath(`/jobs/new?campaign=${campaign.public_id}`),
-          )}
-        />
-      ),
-    },
-    {
-      title: 'Ứng viên / Hồ sơ',
+      title: 'Ứng viên',
       width: 180,
       render: (_, campaign) => (
-        <CampaignCandidateSummary
-          campaign={campaign}
-          candidateDataAccess={canAccessCandidateData}
-        />
+        <CampaignCandidateSummary campaign={campaign} candidateDataAccess={canAccessCandidateData} />
       ),
     },
+    { title: 'Hoạt động gần nhất', width: 190, render: (_, campaign) => <LastActivity campaign={campaign} /> },
     {
-      title: 'Hoạt động gần nhất',
-      width: 180,
-      render: (_, campaign) => (
-        <div className="text-sm">
-          <strong className="block text-slate-700">
-            {campaign.last_activity?.label || 'Cập nhật chiến dịch'}
-          </strong>
-          <span className="mt-1 block text-xs text-slate-400">
-            {formatDate(campaign.last_activity?.occurred_at, true)}
-          </span>
-        </div>
-      ),
+      title: '',
+      width: 130,
+      align: 'right',
+      render: (_, campaign) => <NextActionButton campaign={campaign} candidateDataAccess={canAccessCandidateData} />,
     },
   ]
 
   return (
-    <section className="space-y-5">
-      <Card styles={{ body: { padding: 16 } }}>
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[180px_240px_minmax(220px,1fr)_210px]">
-          <Select
-            aria-label="Lọc trạng thái chiến dịch"
-            value={status}
-            options={CAMPAIGN_STATUS_OPTIONS}
-            onChange={(value) => replaceFilters({ status: value })}
+    <section className="cpl">
+      <Card styles={{ body: { padding: 0 } }}>
+        <nav className="cpl-tabs" aria-label="Lọc chiến dịch theo trạng thái">
+          {CAMPAIGN_STATUS_TABS.map((tab) => (
+            <button
+              key={tab.countKey}
+              type="button"
+              aria-pressed={status === tab.value}
+              className={`cpl-tab${status === tab.value ? ' is-active' : ''}`}
+              onClick={() => replaceFilters({ status: tab.value })}
+            >
+              {tab.label}
+              <span className="cpl-tab__count">{counts[tab.countKey] ?? 0}</span>
+            </button>
+          ))}
+        </nav>
+        <div className="cpl-filters">
+          <Input
+            allowClear
+            value={searchValue}
+            prefix={<SearchOutlined className="text-slate-400" />}
+            placeholder="Tìm theo tên hoặc mã chiến dịch, nhấn Enter"
+            onChange={(event) => setSearchValue(event.target.value)}
+            onClear={() => replaceFilters({ q: '' })}
+            onPressEnter={() => replaceFilters({ q: searchValue.trim() })}
           />
           <Select
             aria-label="Lọc nhu cầu xử lý"
             value={scope}
             options={CAMPAIGN_SCOPE_OPTIONS}
             onChange={(value) => replaceFilters({ scope: value })}
-          />
-          <Input
-            allowClear
-            value={searchValue}
-            prefix={<SearchOutlined className="text-slate-400" />}
-            placeholder="Tìm chiến dịch (Nhấn Enter để tìm kiếm)"
-            onChange={(event) => setSearchValue(event.target.value)}
-            onClear={() => replaceFilters({ q: '' })}
-            onPressEnter={() => replaceFilters({ q: searchValue.trim() })}
           />
           <Select
             aria-label="Sắp xếp chiến dịch"
@@ -363,118 +172,63 @@ export default function CampaignList() {
             onChange={(value) => replaceFilters({ ordering: value })}
           />
         </div>
-        <p className="mt-4 text-sm text-slate-500">
-          Tìm thấy <strong className="text-slate-800">{pageData.count || 0}</strong> chiến dịch
-        </p>
       </Card>
 
       {campaignsQuery.isError && (
         <Alert
           type="error"
           showIcon
-          message="Không thể tải danh sách chiến dịch"
-          description={getApiErrorMessage(campaignsQuery.error, 'Vui lòng thử lại sau.')}
-          action={(
-            <Button size="small" danger onClick={() => campaignsQuery.refetch()}>
-              Thử lại
-            </Button>
-          )}
+          title={getApiErrorMessage(campaignsQuery.error, 'Không thể tải danh sách chiến dịch.')}
+          action={<Button size="small" danger onClick={() => campaignsQuery.refetch()}>Thử lại</Button>}
         />
       )}
 
-      <div className="space-y-3 lg:hidden">
+      <div className="cpl-cards">
         {campaignsQuery.isLoading && <Card loading />}
-        {!campaignsQuery.isLoading && campaigns.length === 0 && (
-          <Card><Empty description="Chưa có chiến dịch phù hợp" /></Card>
-        )}
+        {!campaignsQuery.isLoading && campaigns.length === 0 && <Card>{empty}</Card>}
         {campaigns.map((campaign) => (
-          <Card key={campaign.public_id}>
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex min-w-0 items-start gap-3">
-                <div className="pt-0.5">
-                  <CampaignLifecycleActions campaign={campaign} variant="switch" />
-                </div>
-                <div className="min-w-0">
-                  <span className="text-xs text-slate-400">#{campaign.public_id}</span>
-                  <Link
-                    className="mt-1 block break-words text-base font-bold !text-slate-900"
-                    to={employerAppPath(`/campaigns/${campaign.public_id}`)}
-                  >
-                    {campaign.name}
-                  </Link>
-                </div>
-              </div>
-              <Tag color={CAMPAIGN_STATUS_COLORS[campaign.status]}>
-                {CAMPAIGN_STATUS_LABELS[campaign.status]}
-              </Tag>
+          <Card key={campaign.public_id} styles={{ body: { padding: 16 } }}>
+            <CampaignName campaign={campaign} />
+            <div className="cpl-card__grid">
+              <CampaignJobsSummary campaign={campaign} />
+              <CampaignCandidateSummary campaign={campaign} candidateDataAccess={canAccessCandidateData} />
             </div>
-            <div className="mt-4 rounded-lg bg-slate-50 p-3">
-              <CampaignCandidateSummary
-                campaign={campaign}
-                candidateDataAccess={canAccessCandidateData}
-              />
-            </div>
-            <div className="mt-4">
-              <CampaignJobsSummary
-                compact
-                campaign={campaign}
-                onCreate={() => navigate(
-                  employerAppPath(`/jobs/new?campaign=${campaign.public_id}`),
-                )}
-              />
-            </div>
-            <p className="mt-3 text-xs text-slate-500">
-              {campaign.last_activity?.label || 'Cập nhật'} ·{' '}
-              {formatDate(campaign.last_activity?.occurred_at, true)}
-            </p>
-            <div className="mt-4 border-t border-slate-100 pt-4">
-              <CampaignInlineActions campaign={campaign} />
+            <div className="cpl-card__foot">
+              <LastActivity campaign={campaign} />
+              <NextActionButton campaign={campaign} candidateDataAccess={canAccessCandidateData} />
             </div>
           </Card>
         ))}
-        {pageData.count > 20 && (
-          <div className="flex justify-center">
-            <Pagination
-              current={page}
-              pageSize={20}
-              total={pageData.count}
-              showSizeChanger={false}
-              onChange={(nextPage) => replaceFilters({ page: nextPage })}
-            />
-          </div>
+        {pageData.count > PAGE_SIZE && (
+          <Pagination
+            align="center"
+            current={page}
+            pageSize={PAGE_SIZE}
+            total={pageData.count}
+            showSizeChanger={false}
+            onChange={(nextPage) => replaceFilters({ page: nextPage })}
+          />
         )}
       </div>
 
-      <Card className="hidden overflow-hidden border-slate-300 lg:block" styles={{ body: { padding: 0 } }}>
+      <Card className="cpl-table" styles={{ body: { padding: 0 } }}>
         <Table
-          bordered
           rowKey="public_id"
           loading={campaignsQuery.isLoading}
           dataSource={campaigns}
-          locale={{ emptyText: <Empty description="Chưa có chiến dịch phù hợp" /> }}
+          locale={{ emptyText: empty }}
           pagination={{
             current: page,
-            pageSize: 20,
+            pageSize: PAGE_SIZE,
             total: pageData.count,
             showSizeChanger: false,
+            hideOnSinglePage: true,
             onChange: (nextPage) => replaceFilters({ page: nextPage }),
           }}
-          scroll={{ x: 1100 }}
-          onRow={() => ({ className: 'group' })}
+          scroll={{ x: 1000 }}
           columns={columns}
         />
       </Card>
-
-      <CreateCampaignModal
-        open={createOpen}
-        onClose={() => setCreateOpen(false)}
-        onCreated={(campaign) => navigate(employerAppPath(`/campaigns/${campaign.public_id}/setup`))}
-      />
-
-      <RenameCampaignModal
-        campaign={editCampaign}
-        onClose={() => setEditCampaign(null)}
-      />
     </section>
   )
 }
