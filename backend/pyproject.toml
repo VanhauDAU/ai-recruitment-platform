@@ -53,7 +53,8 @@ exhaustive = false
 DJANGO_SETTINGS_MODULE = "config.settings.test"
 python_files = ["test_*.py", "tests.py"]
 # --reuse-db bị cấm: TransactionTestCase truncate cả data seed từ migration,
-# lần chạy sau sẽ fail giả. Luôn tạo DB test mới.
+# lần chạy sau sẽ fail giả. Luôn tạo DB test mới — clone từ template đã migrate
+# sẵn (backend/conftest.py), template dựng lại khi migration đổi.
 addopts = "--create-db --durations=30"
 faulthandler_timeout = 120
 junit_family = "xunit2"
