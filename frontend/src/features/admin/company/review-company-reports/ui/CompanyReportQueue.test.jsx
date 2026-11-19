@@ -3,7 +3,7 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import { App } from 'antd'
 import { MemoryRouter, useLocation } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { findTableRow, getTableRow } from '@/test/table'
+import { findTableRow, getTableRow } from '@/test/antd-queries'
 import CompanyReportQueue from './CompanyReportQueue'
 
 const mocks = vi.hoisted(() => ({

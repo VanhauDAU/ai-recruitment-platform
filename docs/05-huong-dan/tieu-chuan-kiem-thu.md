@@ -45,13 +45,17 @@ do đo được trong PR.
 
 ### Frontend
 
-- **Không truy vấn role trên toàn trang có antd.** `getByRole`/`getByLabelText`
-  phải tính computed style của mọi node trước CSS mà antd chèn vào, có lúc mất
-  hàng giây (AdminCompanyWorkspace từng mất 7,6s cho một truy vấn). Hãy thu phạm
-  vi trước:
-  - dòng bảng: `within(getTableRow('<rowKey>'))` từ `@/test/table`;
-  - dialog: `within(screen.getByRole('dialog'))`;
-  - vùng có nhãn: `within(screen.getByRole('navigation', { name }))`.
+- **Hạn chế `getByRole`/`getByLabelText` trên màn hình antd.** Để biết phần tử có
+  bị ẩn không, các truy vấn này tính computed style của phần tử và mọi tổ tiên tới
+  `<body>` trước toàn bộ CSS antd chèn vào. Một truy vấn có thể mất 2–3s
+  (AdminCompanyWorkspace từng mất 7,6s), và `within(...)` không tránh được bước
+  duyệt tổ tiên đó. Helper trong `@/test/antd-queries`:
+  - `getTableRow('<rowKey>')` / `findTableRow(...)`: lấy dòng antd Table;
+  - `getButtonByText(container, 'Nhãn')`: lấy nút có chữ.
+  Chỉ dùng `getByRole` khi chính vai trò hoặc tên truy cập là điều cần kiểm (nút
+  icon chỉ có `aria-label`, `tab`, `dialog`).
+- Timeout mỗi test của Vitest: 5s khi chạy cục bộ, 10s trên CI (bằng ngưỡng cứng).
+  Không thêm timeout riêng cho từng test để che test chậm.
 - **Không chờ timer thật.** Độ trễ UX (gõ chữ, thời gian lưu tối thiểu, đếm ngược)
   dùng fake timer, ví dụ `vi.useFakeTimers()` rồi
   `await act(() => vi.advanceTimersByTimeAsync(ms))`. Với hiệu ứng có nhánh reduced

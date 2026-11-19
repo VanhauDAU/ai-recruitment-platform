@@ -3,7 +3,7 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { getTableRow } from '@/test/table'
+import { getTableRow } from '@/test/antd-queries'
 import AdminCompanyDirectory from './AdminCompanyDirectory'
 import AdminCompanyDetail from './AdminCompanyDetail'
 
@@ -230,7 +230,9 @@ describe('admin company directory', () => {
     expect(screen.getByText('Đã đủ hồ sơ, email và nhu cầu')).toBeInTheDocument()
     await waitFor(() => expect(getAdminCompanyRecruiters).toHaveBeenCalled())
 
-    fireEvent.click(within(row).getByRole('button', { name: /Chi tiết/ }))
+    // Text, not role: a role query walks the computed style of every ancestor
+    // up to <body> under antd's injected CSS (2.7s here in jsdom).
+    fireEvent.click(within(row).getByText('Chi tiết').closest('button'))
     expect(screen.getByTestId('location')).toHaveTextContent(
       '/admin/app/recruiters/usr_owner',
     )
