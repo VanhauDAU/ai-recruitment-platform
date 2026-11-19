@@ -2022,6 +2022,39 @@ paths:
               schema:
                 $ref: '#/components/schemas/AdminCompanyRecruiter'
           description: ''
+  /api/admin/companies/{public_id}/content-review/:
+    post:
+      operationId: admin_companies_content_review_create
+      summary: Bật hoặc tắt duyệt trước nội dung trang công ty
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminCompanyContentReviewRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AdminCompanyContentReviewRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AdminCompanyContentReviewRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminCompanyPublicPage'
+          description: ''
   /api/admin/companies/{public_id}/policy-hold/:
     post:
       operationId: admin_companies_policy_hold_create
@@ -2124,6 +2157,139 @@ paths:
               schema:
                 type: object
                 additionalProperties: {}
+          description: ''
+  /api/admin/company-content-changes/:
+    get:
+      operationId: admin_company_content_changes_list
+      description: Page content published by editors, for review after the fact.
+      summary: Thay đổi nội dung trang công ty đã đăng, chờ hậu kiểm
+      parameters:
+      - in: query
+        name: company
+        schema:
+          type: string
+        description: public_id của công ty
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: q
+        schema:
+          type: string
+        description: Tên công ty hoặc email người sửa
+      - in: query
+        name: status
+        schema:
+          type: string
+          enum:
+          - all
+          - reverted
+          - reviewed
+          - unreviewed
+        description: Mặc định `unreviewed`
+      tags:
+      - admin
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAdminCompanyContentChangeList'
+          description: ''
+  /api/admin/company-content-changes/{public_id}/:
+    get:
+      operationId: admin_company_content_changes_retrieve
+      description: Page content published by editors, for review after the fact.
+      summary: Chi tiết một thay đổi nội dung trang công ty
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - admin
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminCompanyContentChange'
+          description: ''
+  /api/admin/company-content-changes/{public_id}/revert/:
+    post:
+      operationId: admin_company_content_changes_revert_create
+      description: Page content published by editors, for review after the fact.
+      summary: Hoàn tác một thay đổi nội dung và báo lý do cho người sửa
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminContentChangeRevertRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AdminContentChangeRevertRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AdminContentChangeRevertRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminCompanyContentChange'
+          description: ''
+  /api/admin/company-content-changes/mark-reviewed/:
+    post:
+      operationId: admin_company_content_changes_mark_reviewed_create
+      description: Page content published by editors, for review after the fact.
+      summary: Đánh dấu đã xem các thay đổi nội dung
+      tags:
+      - admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminContentChangeReviewRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AdminContentChangeReviewRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AdminContentChangeReviewRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminContentChangeReviewResult'
           description: ''
   /api/admin/company-domain-claims/:
     get:
@@ -11405,9 +11571,11 @@ paths:
   /api/employer/company/page/content/:
     post:
       operationId: employer_company_page_content_create
-      description: 'Page content goes through moderation: it merges into the caller''s
-        request.'
-      summary: Gửi nội dung trang công ty vào yêu cầu cập nhật chờ duyệt
+      description: 'Trả workspace kèm `content_change`: mã thay đổi vừa đăng để tải
+        ảnh đã báo trước bằng cờ `*_pending`; `null` khi nội dung vào yêu cầu cập
+        nhật chờ duyệt.'
+      summary: Lưu nội dung trang công ty (đăng ngay hoặc gửi duyệt nếu công ty bị
+        duyệt trước)
       tags:
       - employer
       requestBody:
@@ -15728,6 +15896,99 @@ components:
           minLength: 1
       required:
       - recruiter
+    AdminCompanyContentChange:
+      type: object
+      description: |-
+        ``changed_fields`` lists each changed field with display-ready ``before``/``after``.
+
+        Needs ``labels`` in the context (``content_change_labels``) for benefit and
+        province names.
+      properties:
+        public_id:
+          type: string
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/AdminCompanyContentChangeStatusEnum'
+          readOnly: true
+        status_label:
+          type: string
+          readOnly: true
+        company:
+          allOf:
+          - $ref: '#/components/schemas/AdminContentChangeCompany'
+          readOnly: true
+        actor_email:
+          type: string
+          format: email
+          readOnly: true
+        sections:
+          type: array
+          items:
+            type: string
+          readOnly: true
+        changed_fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminContentChangeField'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        reviewed_by_email:
+          type: string
+          readOnly: true
+        reviewed_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        review_note:
+          type: string
+          readOnly: true
+      required:
+      - actor_email
+      - changed_fields
+      - company
+      - created_at
+      - public_id
+      - review_note
+      - reviewed_at
+      - reviewed_by_email
+      - sections
+      - status
+      - status_label
+    AdminCompanyContentChangeStatusEnum:
+      enum:
+      - unreviewed
+      - reviewed
+      - reverted
+      type: string
+      description: |-
+        * `unreviewed` - Chưa xem
+        * `reviewed` - Đã xem
+        * `reverted` - Đã hoàn tác
+    AdminCompanyContentReviewActionEnum:
+      enum:
+      - require
+      - release
+      type: string
+      description: |-
+        * `require` - require
+        * `release` - release
+    AdminCompanyContentReviewRequest:
+      type: object
+      properties:
+        action:
+          $ref: '#/components/schemas/AdminCompanyContentReviewActionEnum'
+        reason:
+          type: string
+          minLength: 10
+          maxLength: 500
+      required:
+      - action
+      - reason
     AdminCompanyDetail:
       type: object
       properties:
@@ -16402,8 +16663,11 @@ components:
           type: boolean
         policy_hold:
           nullable: true
+        content_review_required:
+          type: boolean
         profile: {}
       required:
+      - content_review_required
       - is_indexable
       - policy_hold
       - profile
@@ -16790,6 +17054,87 @@ components:
           type: string
       required:
       - lock_version
+    AdminContentChangeCompany:
+      type: object
+      properties:
+        public_id:
+          type: string
+        name:
+          type: string
+        public_path:
+          type: string
+        content_review_required:
+          type: boolean
+      required:
+      - content_review_required
+      - name
+      - public_id
+      - public_path
+    AdminContentChangeField:
+      type: object
+      properties:
+        field:
+          type: string
+        label:
+          type: string
+        kind:
+          $ref: '#/components/schemas/AdminContentChangeFieldKindEnum'
+        before:
+          nullable: true
+        after:
+          nullable: true
+      required:
+      - after
+      - before
+      - field
+      - kind
+      - label
+    AdminContentChangeFieldKindEnum:
+      enum:
+      - text
+      - html
+      - image
+      - images
+      - list
+      type: string
+      description: |-
+        * `text` - text
+        * `html` - html
+        * `image` - image
+        * `images` - images
+        * `list` - list
+    AdminContentChangeRevertRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+          minLength: 10
+          maxLength: 500
+        require_review:
+          type: boolean
+          default: false
+      required:
+      - reason
+    AdminContentChangeReviewRequest:
+      type: object
+      properties:
+        public_ids:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 50
+          maxItems: 100
+          minItems: 1
+      required:
+      - public_ids
+    AdminContentChangeReviewResult:
+      type: object
+      properties:
+        count:
+          type: integer
+      required:
+      - count
     AdminCv:
       type: object
       properties:
@@ -22687,6 +23032,11 @@ components:
         update_request:
           type: string
           minLength: 1
+        content_change:
+          type: string
+          minLength: 1
+          description: Thay đổi nội dung trang đã báo trước ảnh này (đăng ngay, hậu
+            kiểm)
     CompanyJoinRequest:
       type: object
       properties:
@@ -26524,6 +26874,7 @@ components:
       - company_link_removed
       - company_page_editor_granted
       - company_page_editor_revoked
+      - company_content_reverted
       - application_received
       - application_withdrawn
       - application_awaiting_reply
@@ -26554,6 +26905,7 @@ components:
         * `company_link_removed` - Liên kết công ty đã được gỡ
         * `company_page_editor_granted` - Bạn được cấp quyền biên tập trang công ty
         * `company_page_editor_revoked` - Quyền biên tập trang công ty đã bị thu hồi
+        * `company_content_reverted` - Nội dung trang công ty đã bị hoàn tác
         * `application_received` - Có hồ sơ ứng tuyển mới
         * `application_withdrawn` - Ứng viên đã rút hồ sơ
         * `application_awaiting_reply` - Hồ sơ đang chờ phản hồi
@@ -29766,6 +30118,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/AdminCandidateConsent'
+    PaginatedAdminCompanyContentChangeList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminCompanyContentChange'
     PaginatedAdminCompanyDomainClaimList:
       type: object
       required:

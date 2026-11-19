@@ -7,9 +7,10 @@ import {
 } from '@/entities/account/employer-profile'
 
 /**
- * Gửi nội dung của một thẻ vào yêu cầu cập nhật đang mở. Ảnh đi hai bước: POST
- * nội dung kèm cờ `*_pending` để có `content_form.request.public_id`, rồi tải
- * từng ảnh với `update_request` đó và đọc lại workspace.
+ * Lưu nội dung của một thẻ: đăng ngay (trả `content_change`) hoặc, khi công ty bị
+ * duyệt trước, gộp vào yêu cầu cập nhật đang mở. Ảnh đi hai bước: POST nội dung
+ * kèm cờ `*_pending`, rồi tải từng ảnh vào `content_change` (hoặc
+ * `content_form.request.public_id`) và đọc lại workspace.
  * `submission` là `{ changes, files: { logo?, cover?, gallery?: File[] } }`.
  */
 export function useCompanyContentSubmit() {
@@ -19,7 +20,7 @@ export function useCompanyContentSubmit() {
   return useMutation({
     mutationFn: async ({ changes, files = {} }) => {
       const gallery = files.gallery || []
-      const page = await submitEmployerCompanyPageContent({
+      const { content_change: contentChange, ...page } = await submitEmployerCompanyPageContent({
         ...changes,
         ...(files.logo ? { logo_pending: true } : {}),
         ...(files.cover ? { cover_pending: true } : {}),
@@ -33,9 +34,9 @@ export function useCompanyContentSubmit() {
       ].filter(Boolean)
       if (!uploads.length) return page
 
-      const updateRequest = page.content_form?.request?.public_id
+      const target = contentChange ? { contentChange } : { updateRequest: page.content_form?.request?.public_id }
       try {
-        for (const [upload, file] of uploads) await upload(file, { updateRequest })
+        for (const [upload, file] of uploads) await upload(file, target)
       } catch (cause) {
         throw Object.assign(new Error('Company media upload failed.'), { mediaFailed: true, cause })
       }

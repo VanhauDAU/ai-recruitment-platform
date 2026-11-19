@@ -2387,14 +2387,14 @@ test('employer company page: hiding a section updates the preview and saves the 
   await expect(save).toBeDisabled()
 })
 
-test('employer company page: editing the headline sends it for review and marks the card pending', { tag: '@responsive' }, async ({ page }) => {
+test('employer company page: saving the headline publishes it at once', { tag: '@responsive' }, async ({ page }) => {
   await mockPublicApi(page)
   await setEmployerSession(page, {
     email_verified: true,
     employer_onboarding_required: false,
     employer_onboarding_step: 'complete',
   })
-  let pending = null
+  let headline = ''
   const workspace = () => ({
     company: { public_id: 'co_acme', slug: 'acme', display_name: 'ACME Việt Nam', public_path: '/cong-ty/acme', is_public: true, is_indexable: true },
     permissions: { can_view: true, can_edit_layout: true, can_edit_content: true, can_manage_editors: false, blockers: [] },
@@ -2423,21 +2423,22 @@ test('employer company page: editing the headline sends it for review and marks 
       sidebar: [{ key: 'general_info', type: 'facts', title: 'Thông tin chung', items: [{ key: 'company_size', label: 'Quy mô', value: '25 - 99 nhân viên' }] }],
     },
     content_form: {
+      review_mode: 'direct',
       published: {
-        headline: '', description: '<p>Chúng tôi làm phần mềm.</p>', culture: '', employee_benefits: '', video_url: '',
+        headline, description: '<p>Chúng tôi làm phần mềm.</p>', culture: '', employee_benefits: '', video_url: '',
         social_links: { facebook: '' }, benefits: [], offices: [], logo_url: '', cover_image_url: '', gallery: [],
       },
-      pending,
-      request: pending ? { public_id: 'cur_1', status: 'submitted', submitted_at: '2026-11-14T03:00:00Z', review_note: '', editable: true } : null,
+      pending: null,
+      request: null,
       section_status: {
-        hero: pending ? 'pending' : 'empty', about: 'published', benefits: 'empty', culture: 'empty',
+        hero: headline ? 'published' : 'empty', about: 'published', benefits: 'empty', culture: 'empty',
         gallery: 'empty', video: 'empty', offices: 'empty', social_links: 'empty',
       },
     },
     completeness: {
-      score: pending ? 20 : 10,
+      score: headline ? 20 : 10,
       items: [
-        { key: 'headline', label: 'Khẩu hiệu', done: Boolean(pending) },
+        { key: 'headline', label: 'Khẩu hiệu', done: Boolean(headline) },
         { key: 'about', label: 'Giới thiệu', done: true },
         { key: 'video', label: 'Video', done: false },
       ],
@@ -2451,8 +2452,8 @@ test('employer company page: editing the headline sends it for review and marks 
   await page.route('http://localhost:8000/api/employer/company/page/content/', async (route) => {
     const { changes } = route.request().postDataJSON()
     submissions.push(changes)
-    pending = { ...pending, ...changes }
-    await route.fulfill({ contentType: 'application/json', body: JSON.stringify(workspace()) })
+    headline = changes.headline
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify({ ...workspace(), content_change: 'cch_1' }) })
   })
   await page.route('http://localhost:8000/api/public/jobs/benefits/', async (route) => {
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify([{ id: 7, name: 'Bảo hiểm sức khoẻ', icon: '', category: 'welfare' }]) })
@@ -2465,11 +2466,11 @@ test('employer company page: editing the headline sends it for review and marks 
   const hero = page.getByRole('region', { name: 'Đầu trang' })
   await expect(hero.getByText('Chưa có', { exact: true })).toBeVisible()
   await hero.getByLabel('Khẩu hiệu').fill('Cùng xây phần mềm cho hàng triệu người')
-  await hero.getByRole('button', { name: 'Gửi duyệt Đầu trang' }).click()
+  await hero.getByRole('button', { name: 'Lưu Đầu trang' }).click()
 
-  await expect(hero.getByText('Chờ duyệt', { exact: true })).toBeVisible()
+  await expect(hero.getByText('Đã công khai', { exact: true })).toBeVisible()
   await expect(hero.getByLabel('Khẩu hiệu')).toHaveValue('Cùng xây phần mềm cho hàng triệu người')
-  await expect(page.getByRole('region', { name: 'Yêu cầu cập nhật nội dung' })).toContainText('Đã gửi, chờ duyệt')
+  await expect(page.getByRole('region', { name: 'Yêu cầu cập nhật nội dung' })).toHaveCount(0)
   expect(submissions).toEqual([{ headline: 'Cùng xây phần mềm cho hàng triệu người' }])
   await expectNoHorizontalOverflow(page)
 })

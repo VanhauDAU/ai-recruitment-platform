@@ -34,7 +34,7 @@ export const QUEUE_CONFIG = {
   },
   company_updates: {
     label: 'Yêu cầu cập nhật công ty',
-    hint: 'Thay đổi thông tin pháp lý cần thẩm định',
+    hint: 'Sửa hồ sơ công ty chờ thẩm định, gồm đổi tên và mã số thuế',
     to: adminPath('/companies?tab=updates'),
   },
   blog_reviews: {

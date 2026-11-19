@@ -163,6 +163,7 @@ async function uploadEmployerCompanyMedia(endpoint, file, options = {}) {
   if (uploadSession.legacy_file) formData.append('file', file)
   else formData.append('upload_session', uploadSession.public_id)
   if (options.updateRequest) formData.append('update_request', options.updateRequest)
+  if (options.contentChange) formData.append('content_change', options.contentChange)
   const { data } = await api.post(endpoint, formData)
   return data
 }

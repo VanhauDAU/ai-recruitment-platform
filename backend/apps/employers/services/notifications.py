@@ -59,6 +59,10 @@ EVENT_PRESENTATION = {
         'Quyền biên tập trang công ty đã bị thu hồi',
         COMPANY_PAGE_PATH,
     ),
+    EmployerNotification.EventType.COMPANY_CONTENT_REVERTED: (
+        'Nội dung trang công ty đã bị hoàn tác',
+        COMPANY_PAGE_PATH,
+    ),
     EmployerNotification.EventType.APPLICATION_RECEIVED: (
         'Có hồ sơ ứng tuyển mới',
         APPLICATIONS_PATH,

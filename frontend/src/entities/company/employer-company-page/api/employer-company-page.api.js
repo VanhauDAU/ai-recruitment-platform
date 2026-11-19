@@ -15,8 +15,9 @@ export async function updateEmployerCompanyPageLayout(payload) {
 }
 
 /**
- * Gộp `changes` (chỉ các khoá nội dung đã đổi, kèm cờ `*_pending` khi sẽ tải ảnh)
- * vào yêu cầu cập nhật đang mở của người gọi; trả lại toàn bộ workspace.
+ * Lưu `changes` (chỉ các khoá nội dung đã đổi, kèm cờ `*_pending` khi sẽ tải ảnh):
+ * đăng ngay rồi hậu kiểm, hoặc gộp vào yêu cầu cập nhật đang mở khi công ty bị
+ * duyệt trước. Trả workspace kèm `content_change` (mã để tải ảnh; `null` khi chờ duyệt).
  */
 export async function submitEmployerCompanyPageContent(changes) {
   const { data } = await api.post(`${PAGE_URL}content/`, { changes })

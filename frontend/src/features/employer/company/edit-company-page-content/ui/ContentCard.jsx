@@ -9,7 +9,7 @@ const hasFiles = (files) => Boolean(files.logo || files.cover || files.gallery?.
 
 /**
  * Một nhóm nội dung của trang công ty với form riêng: chỉ gửi các khoá của
- * chính nhóm đó. `toSubmission(values)` trả `{ changes, files }`;
+ * chính nhóm đó. `direct` là lưu đăng ngay (hậu kiểm); không thì gửi duyệt. `toSubmission(values)` trả `{ changes, files }`;
  * `errorName(path)` dịch đường dẫn lỗi của API sang tên trường của form (mặc
  * định giữ nguyên). Lỗi không gắn được vào trường nào hiện ở đầu thẻ.
  */
@@ -19,6 +19,7 @@ export default function ContentCard({
   description,
   status = 'empty',
   reviewNote,
+  direct = false,
   readOnly,
   initialValues,
   toSubmission,
@@ -31,18 +32,22 @@ export default function ContentCard({
   const submit = useCompanyContentSubmit()
   const [statusColor, statusLabel] = CONTENT_STATUS[status] || CONTENT_STATUS.empty
   const headingId = `${contentCardId(card)}-title`
+  const actionLabel = direct ? 'Lưu' : 'Gửi duyệt'
 
   async function finish(values) {
     const { changes, files = NO_FILES } = toSubmission(values)
     if (!Object.keys(changes).length && !hasFiles(files)) {
       setDirty(false)
-      message.info('Không có thay đổi để gửi.')
+      message.info('Không có thay đổi để lưu.')
       return
     }
     setCardError('')
     try {
       await submit.mutateAsync({ changes, files })
-      message.success('Đã gửi thay đổi. Nội dung sẽ lên trang sau khi được duyệt.')
+      setDirty(false)
+      message.success(direct
+        ? 'Đã lưu. Nội dung đã hiển thị trên trang công ty.'
+        : 'Đã gửi thay đổi. Nội dung sẽ lên trang sau khi được duyệt.')
     } catch (error) {
       const outcome = contentSubmitOutcome(error)
       if (outcome.kind !== 'invalid') {
@@ -80,8 +85,8 @@ export default function ContentCard({
         {typeof children === 'function' ? children({ form, readOnly: readOnly || submit.isPending }) : children}
         {!readOnly && (
           <div className="company-content-card__actions">
-            <Button type="primary" htmlType="submit" disabled={!dirty} loading={submit.isPending} aria-label={`Gửi duyệt ${title}`}>
-              Gửi duyệt
+            <Button type="primary" htmlType="submit" disabled={!dirty} loading={submit.isPending} aria-label={`${actionLabel} ${title}`}>
+              {actionLabel}
             </Button>
           </div>
         )}

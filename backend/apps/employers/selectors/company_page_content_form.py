@@ -1,5 +1,5 @@
 """The content tab of the page workspace: published values, the caller's
-pending request, a status per block and the completeness score."""
+pending request, a status per block, how saving behaves and the completeness score."""
 
 from apps.employers.domain.page_content import SOCIAL_NETWORKS
 from apps.locations.models import Location
@@ -193,6 +193,9 @@ def company_page_content_form(company, *, recruiter, request=None):
         for section, keys in SECTION_REQUEST_KEYS.items()
     }
     content_form = {
+        # ``direct``: a save publishes at once and is reviewed afterwards;
+        # ``review``: an administrator requires review first (update request).
+        'review_mode': 'review' if company.content_review_required else 'direct',
         'published': published,
         'pending': _pending(changes, request) if update_request is not None else None,
         'request': (

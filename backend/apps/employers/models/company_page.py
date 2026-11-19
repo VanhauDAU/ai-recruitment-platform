@@ -28,6 +28,8 @@ class CompanyPageEvent(models.Model):
         PINNED_JOBS_UPDATED = 'pinned_jobs_updated', 'Đã đổi tin ghim'
         EDITOR_GRANTED = 'editor_granted', 'Đã cấp quyền biên tập'
         EDITOR_REVOKED = 'editor_revoked', 'Đã thu hồi quyền biên tập'
+        CONTENT_REVIEW_REQUIRED = 'content_review_required', 'Đã bật duyệt trước nội dung'
+        CONTENT_REVIEW_RELEASED = 'content_review_released', 'Đã tắt duyệt trước nội dung'
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     company = models.ForeignKey(

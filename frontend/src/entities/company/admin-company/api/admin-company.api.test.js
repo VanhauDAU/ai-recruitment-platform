@@ -7,6 +7,9 @@ import {
   getAdminCompanyPublicPage,
   getAdminCompanyRecruiters,
   getAdminCompanySummary,
+  markAdminCompanyContentChangesReviewed,
+  revertAdminCompanyContentChange,
+  setAdminCompanyContentReview,
   setAdminCompanyPolicyHold,
 } from './admin-company.api'
 
@@ -69,5 +72,17 @@ describe('admin company api', () => {
       action: 'apply',
       reason: 'Nội dung giả mạo thương hiệu',
     })
+  })
+
+  it('reviews, reverts and gates page content changes', async () => {
+    client.post.mockResolvedValue({ data: {} })
+    await markAdminCompanyContentChangesReviewed(['cch_1', 'cch_2'])
+    await revertAdminCompanyContentChange('cch_1', { reason: 'Logo sai công ty.', requireReview: true })
+    await setAdminCompanyContentReview('co_1', { action: 'require', reason: 'Nhiều báo cáo.' })
+    expect(client.post.mock.calls).toEqual([
+      ['/admin/company-content-changes/mark-reviewed/', { public_ids: ['cch_1', 'cch_2'] }],
+      ['/admin/company-content-changes/cch_1/revert/', { reason: 'Logo sai công ty.', require_review: true }],
+      ['/admin/companies/co_1/content-review/', { action: 'require', reason: 'Nhiều báo cáo.' }],
+    ])
   })
 })

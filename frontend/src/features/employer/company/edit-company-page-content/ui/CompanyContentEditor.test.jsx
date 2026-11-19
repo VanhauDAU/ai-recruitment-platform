@@ -36,6 +36,7 @@ vi.mock('@/shared/ui/rich-text/RichTextEditor', () => ({
 }))
 
 const CONTENT_FORM = {
+  review_mode: 'review',
   published: {
     headline: 'Khẩu hiệu cũ',
     description: '<p>Giới thiệu</p>',
@@ -265,5 +266,53 @@ describe('CompanyContentEditor', () => {
     await user.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Rút yêu cầu' }))
 
     await waitFor(() => expect(profileApi.changeEmployerCompanyUpdateRequestLifecycle).toHaveBeenCalledWith('cur_1', 'withdraw', {}))
+  })
+
+  describe('when content publishes directly', () => {
+    const direct = (overrides = {}) => contentPage({ ...overrides, content_form: { review_mode: 'direct', ...overrides.content_form } })
+
+    it('saves a card at once and says the page is already updated', async () => {
+      const user = userEvent.setup()
+      pageApi.submitEmployerCompanyPageContent.mockResolvedValue({ ...direct(), content_change: 'cch_1' })
+      renderEditor(direct())
+      const hero = card('Đầu trang')
+
+      expect(screen.getByText(/hiển thị ngay trên trang công ty/)).toBeInTheDocument()
+      await user.clear(within(hero).getByLabelText('Khẩu hiệu'))
+      await user.type(within(hero).getByLabelText('Khẩu hiệu'), 'Mới')
+      await user.click(within(hero).getByRole('button', { name: 'Lưu Đầu trang' }))
+
+      await waitFor(() => expect(toast.success).toHaveBeenCalledWith('Đã lưu. Nội dung đã hiển thị trên trang công ty.'))
+      expect(pageApi.submitEmployerCompanyPageContent).toHaveBeenCalledWith({ headline: 'Mới' })
+      expect(screen.queryByRole('button', { name: /Gửi duyệt/ })).not.toBeInTheDocument()
+    })
+
+    it('uploads a new logo into the returned content change', async () => {
+      const user = userEvent.setup()
+      pageApi.submitEmployerCompanyPageContent.mockResolvedValue({ ...direct(), content_change: 'cch_2' })
+      pageApi.getEmployerCompanyPage.mockResolvedValue(direct())
+      profileApi.uploadEmployerCompanyLogo.mockResolvedValue({})
+      renderEditor(direct())
+      const hero = card('Đầu trang')
+
+      const logo = new File(['logo'], 'logo.png', { type: 'image/png' })
+      fireEvent.change(within(hero).getByLabelText('Chọn logo'), { target: { files: [logo] } })
+      await user.click(within(hero).getByRole('button', { name: 'Lưu Đầu trang' }))
+
+      await waitFor(() => expect(profileApi.uploadEmployerCompanyLogo).toHaveBeenCalledWith(logo, { contentChange: 'cch_2' }))
+    })
+
+    it('locks only the cards still held by a request in review', () => {
+      renderEditor(direct({
+        content_form: {
+          request: { public_id: 'cur_1', status: 'in_review', submitted_at: '2026-11-10T03:00:00Z', review_note: '', editable: false },
+          section_status: { hero: 'published', about: 'pending', culture: 'empty' },
+        },
+      }))
+
+      expect(screen.getByText(/đang được thẩm định nên tạm khoá/)).toBeInTheDocument()
+      expect(within(card('Giới thiệu')).getByRole('textbox')).toBeDisabled()
+      expect(within(card('Đầu trang')).getByLabelText('Khẩu hiệu')).toBeEnabled()
+    })
   })
 })

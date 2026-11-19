@@ -6,6 +6,12 @@ from .admin_companies import (
     AdminCompanyPolicyHoldSerializer,
     AdminCompanyRecruiterSerializer,
 )
+from .admin_content_changes import (
+    AdminCompanyContentChangeSerializer,
+    AdminCompanyContentReviewSerializer,
+    AdminContentChangeRevertSerializer,
+    AdminContentChangeReviewSerializer,
+)
 from .admin_verification import (
     AdminVerificationCaseDetailSerializer,
     AdminVerificationCaseListSerializer,
@@ -58,6 +64,10 @@ from .verification import (
 )
 
 __all__ = [
+    'AdminCompanyContentChangeSerializer',
+    'AdminCompanyContentReviewSerializer',
+    'AdminContentChangeReviewSerializer',
+    'AdminContentChangeRevertSerializer',
     'CompanyDocumentSerializer',
     'AdminCompanyDetailSerializer',
     'AdminCompanyListSerializer',

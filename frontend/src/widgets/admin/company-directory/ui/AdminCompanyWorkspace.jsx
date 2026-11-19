@@ -1,11 +1,16 @@
-import { Tabs } from 'antd'
+import { useQuery } from '@tanstack/react-query'
+import { Badge, Tabs } from 'antd'
 import { useEffect } from 'react'
 import { useSearchParams } from 'react-router'
+import { adminCompanyKeys, getAdminCompanySummary } from '@/entities/company/admin-company'
+import { CompanyContentChangeQueue } from '@/features/admin/company/review-company-content-changes'
 import AdminCompanyDirectory from './AdminCompanyDirectory'
 import AdminCompanyJoinRequestQueue from './AdminCompanyJoinRequestQueue'
 import AdminCompanyUpdateQueue from './AdminCompanyUpdateQueue'
+import { CompanyPanel } from './CompanyPanel'
 import '../admin-company-directory.css'
 
+const TABS = ['updates', 'content-changes', 'join-requests']
 const DIRECTORY_QUERY_KEYS = [
   'q',
   'recruiter_verification_status',
@@ -17,7 +22,12 @@ const DIRECTORY_QUERY_KEYS = [
 export default function AdminCompanyWorkspace() {
   const [searchParams, setSearchParams] = useSearchParams()
   const requestedTab = searchParams.get('tab')
-  const activeTab = ['updates', 'join-requests'].includes(requestedTab) ? requestedTab : 'directory'
+  const activeTab = TABS.includes(requestedTab) ? requestedTab : 'directory'
+  const summary = useQuery({
+    queryKey: adminCompanyKeys.summary,
+    queryFn: ({ signal }) => getAdminCompanySummary({ signal }),
+  })
+  const unreviewed = summary.data?.unreviewed_content_changes || 0
 
   useEffect(() => {
     if (requestedTab === activeTab || (!requestedTab && activeTab === 'directory')) return
@@ -53,6 +63,22 @@ export default function AdminCompanyWorkspace() {
       key: 'updates',
       label: 'Yêu cầu cập nhật',
       children: <AdminCompanyUpdateQueue />,
+    },
+    {
+      key: 'content-changes',
+      label: (
+        <span>
+          Thay đổi nội dung <Badge count={unreviewed} size="small" overflowCount={99} />
+        </span>
+      ),
+      children: (
+        <CompanyPanel
+          title="Hậu kiểm nội dung trang công ty"
+          description="Nội dung trang công ty lên trang ngay khi nhà tuyển dụng lưu. Xem lại theo lô, hoàn tác nội dung vi phạm và bật duyệt trước cho công ty tái phạm."
+        >
+          <CompanyContentChangeQueue />
+        </CompanyPanel>
+      ),
     },
     {
       key: 'join-requests',

@@ -95,6 +95,17 @@ ACTIVE_COMPANY_UPDATE_STATUSES = frozenset(
 )
 
 
+# Active states that wait on an administrator (``changes_requested`` waits on
+# the requester), which is what review queues count.
+ADMIN_PENDING_COMPANY_UPDATE_STATUSES = frozenset(
+    {
+        CompanyUpdateRequest.Status.PENDING,
+        CompanyUpdateRequest.Status.SUBMITTED,
+        CompanyUpdateRequest.Status.IN_REVIEW,
+    }
+)
+
+
 # Active states in which the requester may still change the request.
 REQUESTER_EDITABLE_COMPANY_UPDATE_STATUSES = frozenset(
     {

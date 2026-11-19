@@ -10,6 +10,7 @@ const { api, toast } = vi.hoisted(() => ({
     getAdminCompany: vi.fn(),
     getAdminCompanyPublicPage: vi.fn(),
     setAdminCompanyPolicyHold: vi.fn(),
+    setAdminCompanyContentReview: vi.fn(),
   },
   toast: { success: vi.fn(), error: vi.fn() },
 }))
@@ -55,6 +56,7 @@ function publicPage(hold = {}) {
     public_path: '/cong-ty/alpha',
     is_indexable: true,
     policy_hold: { active: false, reason: '', actor_name: '', at: null, ...hold },
+    content_review_required: false,
     profile: PROFILE,
   }
 }
@@ -188,5 +190,24 @@ describe('admin company public page tab', () => {
     expect(await screen.findByRole('alert')).toBeVisible()
     await user.click(screen.getByRole('button', { name: 'Thử lại' }))
     expect(await screen.findByText('Đang hiển thị')).toBeVisible()
+  })
+
+  it('sends a company back to review-first with a reason', async () => {
+    const user = userEvent.setup()
+    api.setAdminCompanyContentReview.mockResolvedValue({ ...publicPage(), content_review_required: true })
+    renderTab()
+
+    expect(await screen.findByText('Nội dung: đăng ngay, hậu kiểm')).toBeVisible()
+    await user.click(screen.getByRole('button', { name: 'Bật duyệt trước' }))
+    const dialog = await screen.findByRole('dialog', { name: 'Bật duyệt trước nội dung' })
+    await user.type(within(dialog).getByRole('textbox', { name: 'Lý do bật duyệt trước' }), 'Logo giả mạo thương hiệu khác')
+    await user.click(within(dialog).getByRole('button', { name: 'Bật duyệt trước' }))
+
+    await waitFor(() => expect(api.setAdminCompanyContentReview).toHaveBeenCalledWith('co_alpha', {
+      action: 'require',
+      reason: 'Logo giả mạo thương hiệu khác',
+    }))
+    expect(await screen.findByText('Nội dung: duyệt trước')).toBeVisible()
+    expect(api.setAdminCompanyPolicyHold).not.toHaveBeenCalled()
   })
 })

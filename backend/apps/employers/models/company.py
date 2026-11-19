@@ -114,6 +114,10 @@ class Company(models.Model):
     # Moderation switch for the public page. Write it with QuerySet.update()
     # only: save() moves updated_at, the optimistic-lock base of update requests.
     content_policy_hold = models.BooleanField(default=False, db_index=True)
+    # Page content of a company publishes at once and is reviewed afterwards;
+    # an administrator turns this on to send it back through update requests.
+    # Same write rule as the hold.
+    content_review_required = models.BooleanField(default=False)
     # Number of CompanyFollow rows. Same rule as the hold: QuerySet.update()
     # with F() only, in the transaction that adds or removes the follow row.
     follower_count = models.PositiveIntegerField(default=0)
