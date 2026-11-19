@@ -7,7 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
-| [Tái cấu trúc backend (ADR-0022, GĐ0–GĐ6)](#tái-cấu-trúc-backend-adr-0022-2026-11-19) | 🟨 GĐ0 #248, GĐ1 #249, GĐ2 #251, GĐ3 #252, GĐ4 #253, GĐ5 trên nhánh `refactor/backend-gd5-cleanup`; GĐ6 chưa làm |
+| [Tái cấu trúc backend (ADR-0022, GĐ0–GĐ6)](#tái-cấu-trúc-backend-adr-0022-2026-11-19) | 🟨 GĐ0 #248, GĐ1 #249, GĐ2 #251, GĐ3 #252, GĐ4 #253, GĐ5 #254, GĐ6 trên nhánh `refactor/backend-gd6-migrations` — đủ 7 GĐ |
 | [Tổ chức lại cấu trúc thư mục frontend](#tổ-chức-lại-cấu-trúc-thư-mục-frontend-2026-11-19) | ✅ Gộp vào `dev` (#247) |
 | [Mô hình hóa yêu cầu cho báo cáo (mục 3.2)](#mô-hình-hóa-yêu-cầu-cho-báo-cáo-mục-32-2026-11-18) | ✅ Nguồn sơ đồ trong `docs/01-phan-tich/mo-hinh-hoa-yeu-cau/` |
 | [Nâng cấp chiến dịch tuyển dụng (4 GĐ)](#nâng-cấp-chiến-dịch-tuyển-dụng-2026-11-18) | ✅ Cả 4 GĐ và đợt làm lại giao diện kênh, Fanpage, chi phí, lịch sử hoạt động đã gộp (#235–#237, #239–#242); sơ đồ phân tích nhóm chiến dịch trên nhánh `docs/campaign-diagrams` |
@@ -46,8 +46,8 @@ GĐ một PR về `dev`.
 | 2 | Model + máy trạng thái + API chiến dịch sang `campaigns` (3 migration chỉ đổi state, ContentType chuyển theo); `cv_templates` thành engine tài liệu CV (schema, composition, in PDF), engine Chromium vào `common/pdf/`; bỏ lazy export của accounts; gỡ route trùng `/api/candidate/cvs/backgrounds/`; import chéo app 33 → 0, gỡ baseline | 🟨 PR #251 |
 | 3 | Exception handler chung + `DomainError` (gỡ `_call`, `_run_mutation`…); ORM/transaction/`.delay()` ra khỏi view và `create/update` của serializer ở 4 cụm app; GET không còn tạo hồ sơ NTD; `@extend_schema` cho mọi view, OpenAPI từ 70 lỗi/340 cảnh báo về **0/0** (cổng siết không baseline); `parse_bool`/`parse_int` dùng chung; Browsable API chỉ khi DEBUG | 🟨 PR #252 |
 | 4 | API theo cổng `/api/{auth,public,candidate,employer,admin,shared}/` (237 route đổi, bảng [url-map](04-api/url-map-2026-11.md)), bỏ `/api/v2/` và tên `v2` ở module/lớp/route, router `SimpleRouter`, gỡ route SEO legacy `/jobs`; frontend: 51 API client + mock unit/E2E | 🟨 PR #253 |
-| 5 | Không còn module production > 500 dòng: settings tách 8 component (giá trị không đổi), `verification`/`digests`/`pipeline`/`ai_generation`/`account_management`/`posting`… thành package; gộp trùng: `common/outbox.py`, `common/errors.py`, một bộ HTML→text, một bảng chữ ký file, chính sách AI một nguồn (`jobs/domain/ai_policy.py`); sửa 2 chỗ lấy IP client giả mạo được (captcha, audit CV); gỡ chuỗi legacy media, 9 lệnh chạy một lần, kênh OTP email cũ, font CV cũ; bật ruff DJ001/007/008/012; thêm test privacy/skills/locations, tách file test > 1000 dòng | 🟨 Nhánh `refactor/backend-gd5-cleanup` (xếp trên GĐ4) |
-| 6 | Baseline migration mới, lệnh `seed_all` | ⬜ |
+| 5 | Không còn module production > 500 dòng: settings tách 8 component (giá trị không đổi), `verification`/`digests`/`pipeline`/`ai_generation`/`account_management`/`posting`… thành package; gộp trùng: `common/outbox.py`, `common/errors.py`, một bộ HTML→text, một bảng chữ ký file, chính sách AI một nguồn (`jobs/domain/ai_policy.py`); sửa 2 chỗ lấy IP client giả mạo được (captcha, audit CV); gỡ chuỗi legacy media, 9 lệnh chạy một lần, kênh OTP email cũ, font CV cũ; bật ruff DJ001/007/008/012; thêm test privacy/skills/locations, tách file test > 1000 dòng | 🟨 PR #254 |
+| 6 | 274 migration → baseline `0001_initial` (+`0002_initial` khi FK vòng) và `00xx_reference_data` nạp JSON qua `common/db/reference_data.py`; schema mới khớp schema cũ (trừ 4 cột mồ côi của `employers_company` đã dọn và bảng chiến dịch sang `campaigns_*`); gỡ 8 test migration và job CI `backend-migration-tests`; `scripts/reset_local_db.sh` (pg_dump → migrate → seed) | 🟨 Nhánh `refactor/backend-gd6-migrations` (xếp trên GĐ5) |
 
 GĐ1 chỉ di chuyển code; bảo đảm không đổi hành vi bằng: ảnh chụp bảng URL
 (887 route, 679 đường dẫn mẫu resolve ra cùng view) trước/sau, routing queue

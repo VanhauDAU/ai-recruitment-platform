@@ -1,0 +1,330 @@
+[
+{
+ "model": "employers.industry",
+ "pk": 1,
+ "fields": {
+  "name": "IT - Phần mềm",
+  "slug": "it-phan-mem"
+ }
+},
+{
+ "model": "employers.industry",
+ "pk": 2,
+ "fields": {
+  "name": "Kế toán / Kiểm toán",
+  "slug": "ke-toan-kiem-toan"
+ }
+},
+{
+ "model": "employers.industry",
+ "pk": 3,
+ "fields": {
+  "name": "Luật",
+  "slug": "luat"
+ }
+},
+{
+ "model": "employers.industry",
+ "pk": 4,
+ "fields": {
+  "name": "Bảo hiểm",
+  "slug": "bao-hiem"
+ }
+},
+{
+ "model": "employers.industry",
+ "pk": 5,
+ "fields": {
+  "name": "Bất động sản",
+  "slug": "bat-ong-san"
+ }
+},
+{
+ "model": "employers.industry",
+ "pk": 6,
+ "fields": {
+  "name": "Dược phẩm / Y tế / Công nghệ sinh học",
+  "slug": "duoc-pham-y-te-cong-nghe-sinh-hoc"
+ }
+},
+{
+ "model": "employers.industry",
+ "pk": 7,
+ "fields": {
+  "name": "Internet / Online",
+  "slug": "internet-online"
+ }
+},
+{
+ "model": "employers.industry",
+ "pk": 8,
+ "fields": {
+  "name": "Marketing / Truyền thông / Quảng cáo",
+  "slug": "marketing-truyen-thong-quang-cao"
+ }
+},
+{
+ "model": "employers.industry",
+ "pk": 9,
+ "fields": {
+  "name": "Nhà hàng / Khách sạn",
+  "slug": "nha-hang-khach-san"
+ }
+},
+{
+ "model": "employers.industry",
+ "pk": 10,
+ "fields": {
+  "name": "In ấn / Xuất bản",
+  "slug": "in-an-xuat-ban"
+ }
+},
+{
+ "model": "employers.industry",
+ "pk": 11,
+ "fields": {
+  "name": "Bán lẻ - Hàng tiêu dùng - FMCG",
+  "slug": "ban-le-hang-tieu-dung-fmcg"
+ }
+},
+{
+ "model": "employers.industry",
+ "pk": 12,
+ "fields": {
+  "name": "Sản xuất",
+  "slug": "san-xuat"
+ }
+},
+{
+ "model": "employers.industry",
+ "pk": 13,
+ "fields": {
+  "name": "Chứng khoán",
+  "slug": "chung-khoan"
+ }
+},
+{
+ "model": "employers.industry",
+ "pk": 14,
+ "fields": {
+  "name": "Xây dựng",
+  "slug": "xay-dung"
+ }
+},
+{
+ "model": "employers.industry",
+ "pk": 15,
+ "fields": {
+  "name": "Ngân hàng",
+  "slug": "ngan-hang"
+ }
+},
+{
+ "model": "employers.industry",
+ "pk": 16,
+ "fields": {
+  "name": "Nhân sự",
+  "slug": "nhan-su"
+ }
+},
+{
+ "model": "employers.industry",
+ "pk": 17,
+ "fields": {
+  "name": "Thiết kế / kiến trúc",
+  "slug": "thiet-ke-kien-truc"
+ }
+},
+{
+ "model": "employers.industry",
+ "pk": 18,
+ "fields": {
+  "name": "Môi trường",
+  "slug": "moi-truong"
+ }
+},
+{
+ "model": "employers.industry",
+ "pk": 19,
+ "fields": {
+  "name": "Xuất nhập khẩu",
+  "slug": "xuat-nhap-khau"
+ }
+},
+{
+ "model": "employers.industry",
+ "pk": 20,
+ "fields": {
+  "name": "Bảo trì / Sửa chữa",
+  "slug": "bao-tri-sua-chua"
+ }
+},
+{
+ "model": "employers.industry",
+ "pk": 21,
+ "fields": {
+  "name": "Điện tử / Điện lạnh",
+  "slug": "ien-tu-ien-lanh"
+ }
+},
+{
+ "model": "employers.industry",
+ "pk": 22,
+ "fields": {
+  "name": "Thời trang",
+  "slug": "thoi-trang"
+ }
+},
+{
+ "model": "employers.industry",
+ "pk": 23,
+ "fields": {
+  "name": "Cơ khí",
+  "slug": "co-khi"
+ }
+},
+{
+ "model": "employers.industry",
+ "pk": 24,
+ "fields": {
+  "name": "Tư vấn",
+  "slug": "tu-van"
+ }
+},
+{
+ "model": "employers.industry",
+ "pk": 25,
+ "fields": {
+  "name": "Viễn thông",
+  "slug": "vien-thong"
+ }
+},
+{
+ "model": "employers.industry",
+ "pk": 26,
+ "fields": {
+  "name": "Giáo dục / Đào tạo",
+  "slug": "giao-duc-ao-tao"
+ }
+},
+{
+ "model": "employers.industry",
+ "pk": 27,
+ "fields": {
+  "name": "Thương mại điện tử",
+  "slug": "thuong-mai-ien-tu"
+ }
+},
+{
+ "model": "employers.industry",
+ "pk": 28,
+ "fields": {
+  "name": "Logistics - Vận tải",
+  "slug": "logistics-van-tai"
+ }
+},
+{
+ "model": "employers.industry",
+ "pk": 29,
+ "fields": {
+  "name": "Tổ chức phi lợi nhuận",
+  "slug": "to-chuc-phi-loi-nhuan"
+ }
+},
+{
+ "model": "employers.industry",
+ "pk": 30,
+ "fields": {
+  "name": "Cơ quan nhà nước",
+  "slug": "co-quan-nha-nuoc"
+ }
+},
+{
+ "model": "employers.industry",
+ "pk": 31,
+ "fields": {
+  "name": "Du lịch",
+  "slug": "du-lich"
+ }
+},
+{
+ "model": "employers.industry",
+ "pk": 32,
+ "fields": {
+  "name": "Tự động hóa",
+  "slug": "tu-ong-hoa"
+ }
+},
+{
+ "model": "employers.industry",
+ "pk": 33,
+ "fields": {
+  "name": "Agency (Design/Development)",
+  "slug": "agency-designdevelopment"
+ }
+},
+{
+ "model": "employers.industry",
+ "pk": 34,
+ "fields": {
+  "name": "Agency (Marketing/Advertising)",
+  "slug": "agency-marketingadvertising"
+ }
+},
+{
+ "model": "employers.industry",
+ "pk": 35,
+ "fields": {
+  "name": "Năng lượng",
+  "slug": "nang-luong"
+ }
+},
+{
+ "model": "employers.industry",
+ "pk": 36,
+ "fields": {
+  "name": "Giải trí",
+  "slug": "giai-tri"
+ }
+},
+{
+ "model": "employers.industry",
+ "pk": 37,
+ "fields": {
+  "name": "IT - Phần cứng",
+  "slug": "it-phan-cung"
+ }
+},
+{
+ "model": "employers.industry",
+ "pk": 38,
+ "fields": {
+  "name": "Nông Lâm Ngư nghiệp",
+  "slug": "nong-lam-ngu-nghiep"
+ }
+},
+{
+ "model": "employers.industry",
+ "pk": 39,
+ "fields": {
+  "name": "Tài chính",
+  "slug": "tai-chinh"
+ }
+},
+{
+ "model": "employers.industry",
+ "pk": 40,
+ "fields": {
+  "name": "Thương mại tổng hợp",
+  "slug": "thuong-mai-tong-hop"
+ }
+},
+{
+ "model": "employers.industry",
+ "pk": 41,
+ "fields": {
+  "name": "Khác",
+  "slug": "khac"
+ }
+}
+]

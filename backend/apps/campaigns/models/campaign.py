@@ -102,8 +102,6 @@ class RecruitmentCampaign(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        # Chuyển từ app employers (ADR-0022, GĐ2) chỉ ở state; bảng giữ tên cũ.
-        db_table = 'employers_recruitmentcampaign'
         indexes = [
             models.Index(
                 fields=['owner', 'status', '-created_at'], name='emp_camp_owner_status_idx'
@@ -245,7 +243,6 @@ class CampaignActivity(models.Model):
     objects = CampaignActivityManager()
 
     class Meta:
-        db_table = 'employers_campaignactivity'
         ordering = ['-occurred_at', '-id']
         indexes = [
             models.Index(

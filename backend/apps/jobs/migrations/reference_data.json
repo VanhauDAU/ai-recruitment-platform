@@ -1,0 +1,351 @@
+[
+{
+ "model": "jobs.benefit",
+ "pk": 1,
+ "fields": {
+  "name": "Bảo hiểm xã hội",
+  "slug": "bao-hiem-xa-hoi",
+  "icon": "",
+  "description": "",
+  "category": "welfare",
+  "is_active": true,
+  "sort_order": 7
+ }
+},
+{
+ "model": "jobs.benefit",
+ "pk": 2,
+ "fields": {
+  "name": "Thưởng tháng 13",
+  "slug": "thuong-thang-13",
+  "icon": "",
+  "description": "",
+  "category": "welfare",
+  "is_active": true,
+  "sort_order": 17
+ }
+},
+{
+ "model": "jobs.benefit",
+ "pk": 3,
+ "fields": {
+  "name": "Phụ cấp",
+  "slug": "phu-cap",
+  "icon": "",
+  "description": "",
+  "category": "other",
+  "is_active": true,
+  "sort_order": 30
+ }
+},
+{
+ "model": "jobs.benefit",
+ "pk": 4,
+ "fields": {
+  "name": "Đào tạo",
+  "slug": "dao-tao",
+  "icon": "",
+  "description": "",
+  "category": "other",
+  "is_active": true,
+  "sort_order": 40
+ }
+},
+{
+ "model": "jobs.benefit",
+ "pk": 5,
+ "fields": {
+  "name": "Du lịch",
+  "slug": "du-lich",
+  "icon": "",
+  "description": "",
+  "category": "other",
+  "is_active": true,
+  "sort_order": 50
+ }
+},
+{
+ "model": "jobs.benefit",
+ "pk": 6,
+ "fields": {
+  "name": "Khám sức khỏe",
+  "slug": "kham-suc-khoe",
+  "icon": "",
+  "description": "",
+  "category": "other",
+  "is_active": true,
+  "sort_order": 60
+ }
+},
+{
+ "model": "jobs.benefit",
+ "pk": 7,
+ "fields": {
+  "name": "Ăn trưa",
+  "slug": "an-trua",
+  "icon": "",
+  "description": "",
+  "category": "allowance",
+  "is_active": true,
+  "sort_order": 0
+ }
+},
+{
+ "model": "jobs.benefit",
+ "pk": 8,
+ "fields": {
+  "name": "Xăng xe",
+  "slug": "xang-xe",
+  "icon": "",
+  "description": "",
+  "category": "allowance",
+  "is_active": true,
+  "sort_order": 1
+ }
+},
+{
+ "model": "jobs.benefit",
+ "pk": 9,
+ "fields": {
+  "name": "Trang điểm",
+  "slug": "trang-iem",
+  "icon": "",
+  "description": "",
+  "category": "allowance",
+  "is_active": true,
+  "sort_order": 2
+ }
+},
+{
+ "model": "jobs.benefit",
+ "pk": 10,
+ "fields": {
+  "name": "Cước điện thoại",
+  "slug": "cuoc-ien-thoai",
+  "icon": "",
+  "description": "",
+  "category": "allowance",
+  "is_active": true,
+  "sort_order": 3
+ }
+},
+{
+ "model": "jobs.benefit",
+ "pk": 11,
+ "fields": {
+  "name": "Điện thoại",
+  "slug": "ien-thoai",
+  "icon": "",
+  "description": "",
+  "category": "equipment",
+  "is_active": true,
+  "sort_order": 4
+ }
+},
+{
+ "model": "jobs.benefit",
+ "pk": 12,
+ "fields": {
+  "name": "Tai nghe",
+  "slug": "tai-nghe",
+  "icon": "",
+  "description": "",
+  "category": "equipment",
+  "is_active": true,
+  "sort_order": 5
+ }
+},
+{
+ "model": "jobs.benefit",
+ "pk": 13,
+ "fields": {
+  "name": "Máy tính",
+  "slug": "may-tinh",
+  "icon": "",
+  "description": "",
+  "category": "equipment",
+  "is_active": true,
+  "sort_order": 6
+ }
+},
+{
+ "model": "jobs.benefit",
+ "pk": 14,
+ "fields": {
+  "name": "Bảo hiểm sức khỏe",
+  "slug": "bao-hiem-suc-khoe",
+  "icon": "",
+  "description": "",
+  "category": "welfare",
+  "is_active": true,
+  "sort_order": 8
+ }
+},
+{
+ "model": "jobs.benefit",
+ "pk": 15,
+ "fields": {
+  "name": "Bảo hiểm sức khỏe người thân",
+  "slug": "bao-hiem-suc-khoe-nguoi-than",
+  "icon": "",
+  "description": "",
+  "category": "welfare",
+  "is_active": true,
+  "sort_order": 9
+ }
+},
+{
+ "model": "jobs.benefit",
+ "pk": 16,
+ "fields": {
+  "name": "Bảo hiểm full lương",
+  "slug": "bao-hiem-full-luong",
+  "icon": "",
+  "description": "",
+  "category": "welfare",
+  "is_active": true,
+  "sort_order": 10
+ }
+},
+{
+ "model": "jobs.benefit",
+ "pk": 17,
+ "fields": {
+  "name": "Khám sức khỏe định kỳ",
+  "slug": "kham-suc-khoe-inh-ky",
+  "icon": "",
+  "description": "",
+  "category": "welfare",
+  "is_active": true,
+  "sort_order": 11
+ }
+},
+{
+ "model": "jobs.benefit",
+ "pk": 18,
+ "fields": {
+  "name": "Team building",
+  "slug": "team-building",
+  "icon": "",
+  "description": "",
+  "category": "welfare",
+  "is_active": true,
+  "sort_order": 12
+ }
+},
+{
+ "model": "jobs.benefit",
+ "pk": 19,
+ "fields": {
+  "name": "Du lịch hàng năm",
+  "slug": "du-lich-hang-nam",
+  "icon": "",
+  "description": "",
+  "category": "welfare",
+  "is_active": true,
+  "sort_order": 13
+ }
+},
+{
+ "model": "jobs.benefit",
+ "pk": 20,
+ "fields": {
+  "name": "Phụ cấp thâm niên",
+  "slug": "phu-cap-tham-nien",
+  "icon": "",
+  "description": "",
+  "category": "welfare",
+  "is_active": true,
+  "sort_order": 14
+ }
+},
+{
+ "model": "jobs.benefit",
+ "pk": 21,
+ "fields": {
+  "name": "Signing bonus",
+  "slug": "signing-bonus",
+  "icon": "",
+  "description": "",
+  "category": "welfare",
+  "is_active": true,
+  "sort_order": 15
+ }
+},
+{
+ "model": "jobs.benefit",
+ "pk": 22,
+ "fields": {
+  "name": "ESOP",
+  "slug": "esop",
+  "icon": "",
+  "description": "",
+  "category": "welfare",
+  "is_active": true,
+  "sort_order": 16
+ }
+},
+{
+ "model": "jobs.benefit",
+ "pk": 23,
+ "fields": {
+  "name": "Thưởng hiệu quả làm việc",
+  "slug": "thuong-hieu-qua-lam-viec",
+  "icon": "",
+  "description": "",
+  "category": "welfare",
+  "is_active": true,
+  "sort_order": 18
+ }
+},
+{
+ "model": "jobs.language",
+ "pk": 1,
+ "fields": {
+  "name": "Tiếng Anh",
+  "code": "en",
+  "slug": "tieng-anh",
+  "is_active": true
+ }
+},
+{
+ "model": "jobs.language",
+ "pk": 2,
+ "fields": {
+  "name": "Tiếng Hàn",
+  "code": "ko",
+  "slug": "tieng-han",
+  "is_active": true
+ }
+},
+{
+ "model": "jobs.language",
+ "pk": 3,
+ "fields": {
+  "name": "Tiếng Nhật",
+  "code": "ja",
+  "slug": "tieng-nhat",
+  "is_active": true
+ }
+},
+{
+ "model": "jobs.language",
+ "pk": 4,
+ "fields": {
+  "name": "Tiếng Trung",
+  "code": "zh",
+  "slug": "tieng-trung",
+  "is_active": true
+ }
+},
+{
+ "model": "jobs.language",
+ "pk": 5,
+ "fields": {
+  "name": "Tiếng Pháp",
+  "code": "fr",
+  "slug": "tieng-phap",
+  "is_active": true
+ }
+}
+]
