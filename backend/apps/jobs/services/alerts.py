@@ -7,6 +7,7 @@ from zoneinfo import ZoneInfo
 
 from django.db import transaction
 from django.utils import timezone
+from django.utils.translation import gettext
 from rest_framework.exceptions import NotFound, ValidationError
 
 from apps.accounts.services import lock_account_for_write
@@ -66,7 +67,7 @@ def _validated_categories(categories):
     categories = list(categories or [])
     category_ids = _category_ids(categories)
     if len(category_ids) != len(set(category_ids)):
-        raise ValidationError({'category_ids': ['Không được chọn trùng ngành nghề.']})
+        raise ValidationError({'category_ids': [gettext('Không được chọn trùng ngành nghề.')]})
     active_categories = {
         category.pk: category
         for category in JobCategory.objects.filter(
@@ -75,20 +76,24 @@ def _validated_categories(categories):
         )
     }
     if set(active_categories) != set(category_ids):
-        raise ValidationError({'category_ids': ['Ngành nghề đã chọn không còn hoạt động.']})
+        raise ValidationError(
+            {'category_ids': [gettext('Ngành nghề đã chọn không còn hoạt động.')]}
+        )
     return [active_categories[category_id] for category_id in category_ids]
 
 
 def _validate_location_pair(province, ward):
     """Validate the merged location state while the owned alert row is locked."""
     if province and (not province.is_active or province.level != Location.Level.PROVINCE):
-        raise ValidationError({'province_id': 'Địa điểm này không phải tỉnh/thành.'})
+        raise ValidationError({'province_id': gettext('Địa điểm này không phải tỉnh/thành.')})
     if ward and (not ward.is_active or ward.level != Location.Level.WARD):
-        raise ValidationError({'ward_id': 'Địa điểm này không phải phường/xã.'})
+        raise ValidationError({'ward_id': gettext('Địa điểm này không phải phường/xã.')})
     if ward and not province:
-        raise ValidationError({'province_id': 'Cần chọn tỉnh/thành trước khi chọn phường/xã.'})
+        raise ValidationError(
+            {'province_id': gettext('Cần chọn tỉnh/thành trước khi chọn phường/xã.')}
+        )
     if ward and ward.parent_id != province.pk:
-        raise ValidationError({'ward_id': 'Phường/xã không thuộc tỉnh/thành đã chọn.'})
+        raise ValidationError({'ward_id': gettext('Phường/xã không thuộc tỉnh/thành đã chọn.')})
 
 
 def job_alert_fingerprint(values):
@@ -150,7 +155,7 @@ def _email_verification_error():
     return ValidationError(
         {
             'code': 'email_unverified',
-            'detail': 'Hãy xác thực email tài khoản trước khi bật thông báo việc làm.',
+            'detail': gettext('Hãy xác thực email tài khoản trước khi bật thông báo việc làm.'),
         }
     )
 
@@ -159,7 +164,7 @@ def _duplicate_error():
     return ValidationError(
         {
             'code': 'duplicate_alert',
-            'detail': 'Bạn đã có một thông báo việc làm với cùng tiêu chí.',
+            'detail': gettext('Bạn đã có một thông báo việc làm với cùng tiêu chí.'),
         }
     )
 
@@ -174,7 +179,8 @@ def create_job_alert(user, validated_data):
         raise ValidationError(
             {
                 'code': 'alert_limit_reached',
-                'detail': f'Bạn chỉ có thể tạo tối đa {JOB_ALERT_LIMIT} thông báo việc làm.',
+                'detail': gettext('Bạn chỉ có thể tạo tối đa %(limit)s thông báo việc làm.')
+                % {'limit': JOB_ALERT_LIMIT},
             }
         )
 
@@ -216,7 +222,7 @@ def update_job_alert(user, alert, validated_data):
     _refresh_candidate_alert_fingerprints(locked_user)
     alert = JobAlert.objects.select_for_update().filter(pk=alert.pk, candidate=locked_user).first()
     if alert is None:
-        raise NotFound('Thông báo việc làm không còn tồn tại.')
+        raise NotFound(gettext('Thông báo việc làm không còn tồn tại.'))
     enabling = validated_data.get('is_active') is True and not alert.is_active
     if enabling and not locked_user.email_verified:
         raise _email_verification_error()

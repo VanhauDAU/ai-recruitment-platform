@@ -5,6 +5,8 @@ published values it was based on, so review can tell which fields changed
 underneath the requester.
 """
 
+from django.utils.translation import gettext as _
+
 from apps.accounts.services import StaleImpactToken
 
 from ..models import (
@@ -23,7 +25,9 @@ class CompanyUpdateConflict(Exception):
 
     def __init__(self, fields):
         self.fields = tuple(sorted(set(fields)))
-        super().__init__('Thông tin công ty đã thay đổi ở các trường đang được yêu cầu cập nhật.')
+        super().__init__(
+            _('Thông tin công ty đã thay đổi ở các trường đang được yêu cầu cập nhật.')
+        )
 
 
 def company_update_field_value(company, field):
@@ -162,9 +166,9 @@ def validate_company_update_revision(update_request, revision_public_id=''):
             payload={'compatibility_snapshot': True},
         )
     if revision is None:
-        raise StaleImpactToken('Yêu cầu chưa có revision hiện hành. Vui lòng tải lại.')
+        raise StaleImpactToken(_('Yêu cầu chưa có revision hiện hành. Vui lòng tải lại.'))
     if revision_public_id and revision.public_id != revision_public_id:
-        raise StaleImpactToken('Phiên yêu cầu đã thay đổi. Vui lòng tải lại.')
+        raise StaleImpactToken(_('Phiên yêu cầu đã thay đổi. Vui lòng tải lại.'))
     return revision
 
 

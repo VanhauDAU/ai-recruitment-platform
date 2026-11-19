@@ -2,6 +2,7 @@
 
 from django.db import IntegrityError
 from django.http import Http404
+from django.utils.translation import gettext as _
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import generics, status
@@ -86,7 +87,7 @@ class CandidateApplicationListCreateView(generics.ListCreateAPIView):
             raise ValidationError({'version_public_id': str(error)}) from error
         except IntegrityError:
             return Response(
-                {'detail': 'Không thể gửi thêm hồ sơ ứng tuyển vào lúc này.'},
+                {'detail': _('Không thể gửi thêm hồ sơ ứng tuyển vào lúc này.')},
                 status=status.HTTP_409_CONFLICT,
             )
         return Response(

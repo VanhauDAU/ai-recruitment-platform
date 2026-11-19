@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils.translation import gettext_lazy
 
 from .categories import JobCategory
 from .core import Job
@@ -8,8 +9,8 @@ class JobCategoryAssignment(models.Model):
     """One primary specialization and optional domain knowledge tags."""
 
     class Role(models.TextChoices):
-        PRIMARY_SPECIALIZATION = 'primary_specialization', 'Vị trí chuyên môn chính'
-        DOMAIN_KNOWLEDGE = 'domain_knowledge', 'Kiến thức chuyên ngành'
+        PRIMARY_SPECIALIZATION = 'primary_specialization', gettext_lazy('Vị trí chuyên môn chính')
+        DOMAIN_KNOWLEDGE = 'domain_knowledge', gettext_lazy('Kiến thức chuyên ngành')
 
     job = models.ForeignKey(Job, on_delete=models.CASCADE, related_name='category_assignments')
     category = models.ForeignKey(

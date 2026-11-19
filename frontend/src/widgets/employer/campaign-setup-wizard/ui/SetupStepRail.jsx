@@ -1,10 +1,11 @@
 import { CheckOutlined, ExclamationOutlined } from '@ant-design/icons'
+import { m } from '@/shared/config/i18n'
 
 // Lộ trình thiết lập: mỗi bước hiện trạng thái thật của dữ liệu, bấm để chuyển bước.
 // ``locked``: chiến dịch chưa được tạo, chỉ bước đầu dùng được.
 export default function SetupStepRail({ steps, states, current, onSelect, locked = false }) {
   return (
-    <nav aria-label="Các bước thiết lập chiến dịch" className="csw-rail">
+    <nav aria-label={m.employer_campaign_setup_rail_aria()} className="csw-rail">
       <ol className="csw-rail__list">
         {steps.map((step, index) => {
           const state = states[step.key]

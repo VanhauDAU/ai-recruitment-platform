@@ -22,6 +22,7 @@ import { EMPLOYER_ACCOUNT_VERIFY_URL, EMPLOYER_COMPLETE_PROFILE_URL, employerApp
 import { toastSoundOptions } from '@/shared/lib/sound-effects'
 import { message } from '@/shared/lib/toast'
 import { shouldSubmitRegistrationOnEnter } from './registration-keyboard'
+import { m } from '@/shared/config/i18n'
 
 const REGISTRATION_FIELDS = new Set([
   'email', 'password', 'full_name', 'gender', 'contact_phone',
@@ -49,7 +50,7 @@ function RegistrationRules({ expanded, hotline, onToggle, siteName }) {
         onClick={onToggle}
         className="flex min-h-12 w-full cursor-pointer items-center justify-between gap-4 px-4 py-3 text-left text-emerald-700 transition-colors hover:bg-emerald-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-emerald-600 sm:px-5"
       >
-        <span id="registration-rules-title" className="text-base font-bold">Quy định</span>
+        <span id="registration-rules-title" className="text-base font-bold">{m.employer_account_register_rules_title()}</span>
         <span className="flex shrink-0 items-center gap-2 text-sm font-semibold">
           {expanded ? <UpOutlined aria-hidden="true" /> : <DownOutlined aria-hidden="true" />}
         </span>
@@ -58,18 +59,18 @@ function RegistrationRules({ expanded, hotline, onToggle, siteName }) {
       {expanded && (
         <div id="registration-rules-content" className="border-t border-emerald-100 px-4 pb-5 pt-4 text-sm leading-6 text-slate-600 sm:px-5">
           <p>
-            Để đảm bảo chất lượng dịch vụ, <strong className="font-semibold text-slate-800">{siteName}</strong> không cho phép một người dùng tạo nhiều tài khoản nhà tuyển dụng khác nhau.
+            {m.employer_account_register_rules_1_before()}<strong className="font-semibold text-slate-800">{siteName}</strong>{m.employer_account_register_rules_1_after()}
           </p>
           <p className="mt-3">
-            Nếu phát hiện vi phạm, {siteName} có thể ngừng cung cấp dịch vụ tới các tài khoản trùng lặp hoặc tạm chặn quyền truy cập hệ thống để xác minh.
+            {m.employer_account_register_rules_2({ siteName })}
           </p>
           <p className="mt-3">
-            Sau khi đăng ký và cung cấp đầy đủ thông tin cần thiết, nhà tuyển dụng có thể được hỗ trợ hiển thị tin tuyển dụng cơ bản. Số lượng tin đăng và cách thức hiển thị phụ thuộc vào quy định của {siteName} tại từng thời điểm.
+            {m.employer_account_register_rules_3({ siteName })}
           </p>
           {hotline && (
             <p className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-1 font-medium text-slate-700">
               <PhoneOutlined className="text-emerald-600" aria-hidden="true" />
-              Cần hỗ trợ? Liên hệ hotline
+              {m.employer_account_register_rules_hotline()}
               <a href={phoneHref} className="font-bold !text-emerald-700 hover:!text-emerald-800 hover:underline">{hotline}</a>
             </p>
           )}
@@ -161,7 +162,7 @@ export default function EmployerRegister() {
     if (!executeRecaptcha) {
       clearPasswords()
       setStep(1)
-      setError('Captcha chưa sẵn sàng, vui lòng thử lại.')
+      setError(m.employer_account_register_captcha_not_ready())
       return
     }
     setError('')
@@ -180,16 +181,16 @@ export default function EmployerRegister() {
         captcha_token: captchaToken,
       })
       setCurrentUser(result.user)
-      message.success('Đăng ký thành công.', toastSoundOptions('done'))
+      message.success(m.employer_account_register_success(), toastSoundOptions('done'))
       sessionStorage.removeItem('employer_registration_consent')
       navigate(`${EMPLOYER_ACCOUNT_VERIFY_URL}?registered=1`, { replace: true })
     } catch (err) {
       const apiErrors = mapApiErrors(err)
       if (apiErrors.step) setStep(apiErrors.step)
       if (err.response?.status === 429) {
-        setError('Bạn thao tác quá nhanh, vui lòng thử lại sau ít phút.')
+        setError(m.employer_account_register_rate_limited())
       } else if (!apiErrors.hasErrors) {
-        setError(getApiErrorMessage(err, 'Đăng ký thất bại. Vui lòng thử lại.'))
+        setError(getApiErrorMessage(err, m.employer_account_register_failed()))
       }
     } finally {
       setLoading(false)
@@ -202,11 +203,11 @@ export default function EmployerRegister() {
       <header className="login-card mb-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <AuthLogo className="!mx-0 !h-12 !w-12 !rounded-xl" />
-          <span className="rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700">Chỉ mất khoảng 3 phút</span>
+          <span className="rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700">{m.employer_account_register_badge()}</span>
         </div>
-        <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">Đăng ký tài khoản Nhà tuyển dụng</h1>
+        <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">{m.employer_account_register_title()}</h1>
         <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
-          Tạo tài khoản để quản lý ứng viên, thiết lập nhu cầu tuyển dụng và theo dõi hiệu quả trong một nơi.
+          {m.employer_account_register_subtitle()}
         </p>
       </header>
 
@@ -230,38 +231,38 @@ export default function EmployerRegister() {
       >
         {step === 1 ? (
           <section className="login-field">
-            <RegistrationSectionTitle title="Tạo thông tin đăng nhập" description="Dùng email công ty nếu có để việc xác thực nhà tuyển dụng thuận lợi hơn." />
+            <RegistrationSectionTitle title={m.employer_account_register_step1_title()} description={m.employer_account_register_step1_desc()} />
             <div className="border-b border-slate-100 pb-5">
-              <p className="mb-3 text-sm font-semibold text-slate-700">Trước khi tiếp tục, vui lòng xác nhận lựa chọn của bạn</p>
+              <p className="mb-3 text-sm font-semibold text-slate-700">{m.employer_account_register_consent_prompt()}</p>
               <EmployerConsentFields compact />
             </div>
             <div className="mt-5">
               <SocialLoginButtons
                 portal="employer"
-                action="Đăng ký"
+                action={m.account_social_action_register()}
                 appearance="employer"
                 disabled={!termsAccepted}
                 next={EMPLOYER_COMPLETE_PROFILE_URL}
                 onBeforeRedirect={rememberSocialConsent}
               />
-              {!termsAccepted && <p className="mt-2 text-center text-xs text-slate-400">Đồng ý điều khoản để tiếp tục đăng ký bằng Google.</p>}
+              {!termsAccepted && <p className="mt-2 text-center text-xs text-slate-400">{m.employer_account_register_terms_for_google()}</p>}
             </div>
-            <div className="my-6 flex items-center gap-3"><div className="divider-line" /><span className="shrink-0 text-xs font-semibold uppercase tracking-widest text-slate-400">Hoặc dùng email</span><div className="divider-line" /></div>
+            <div className="my-6 flex items-center gap-3"><div className="divider-line" /><span className="shrink-0 text-xs font-semibold uppercase tracking-widest text-slate-400">{m.employer_account_register_or_email()}</span><div className="divider-line" /></div>
 
             <div className="grid gap-x-5 md:grid-cols-2">
               <Form.Item
                 name="email"
-                label="Email đăng nhập"
+                label={m.employer_account_register_email_label()}
                 validateTrigger="onBlur"
                 className="md:col-span-2"
                 rules={[
-                  { required: true, message: 'Vui lòng nhập email' },
-                  { type: 'email', message: 'Email không hợp lệ' },
+                  { required: true, message: m.employer_account_register_email_required() },
+                  { type: 'email', message: m.employer_account_register_email_invalid() },
                   {
                     validator: async (_, value) => {
                       if (!value || !/^\S+@\S+\.\S+$/.test(value)) return
                       const available = await checkRegistrationEmail(value, { role: 'employer' })
-                      if (!available) throw new Error('Email này đã được sử dụng cho một tài khoản nhà tuyển dụng')
+                      if (!available) throw new Error(m.employer_account_register_email_taken())
                     },
                   },
                 ]}
@@ -270,13 +271,13 @@ export default function EmployerRegister() {
               </Form.Item>
               <p className="-mt-3 mb-5 flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2.5 text-xs leading-5 text-amber-900 md:col-span-2">
                 <InfoCircleOutlined className="mt-0.5 shrink-0 text-amber-600" aria-hidden="true" />
-                <span>Trường hợp bạn đăng ký tài khoản bằng email không phải email tên miền công ty, một số dịch vụ trên tài khoản có thể sẽ bị giới hạn quyền mua hoặc sử dụng.</span>
+                <span>{m.employer_account_register_domain_warning()}</span>
               </p>
-              <Form.Item name="password" label="Mật khẩu" rules={[{ required: true, message: 'Vui lòng nhập mật khẩu' }, { validator: employerPasswordValidationRule }]} className="!mb-1">
+              <Form.Item name="password" label={m.employer_account_register_password_label()} rules={[{ required: true, message: m.employer_account_register_password_required() }, { validator: employerPasswordValidationRule }]} className="!mb-1">
                 <Input.Password
                   autoComplete="new-password"
                   prefix={<LockOutlined className="text-emerald-600" />}
-                  placeholder="Nhập mật khẩu"
+                  placeholder={m.employer_account_register_password_placeholder()}
                   className="!h-12 !rounded-lg !text-base"
                   onFocus={() => setPasswordFocused(true)}
                   onBlur={() => setPasswordFocused(false)}
@@ -284,34 +285,34 @@ export default function EmployerRegister() {
               </Form.Item>
               <Form.Item
                 name="confirm_password"
-                label="Nhập lại mật khẩu"
+                label={m.employer_account_register_confirm_label()}
                 dependencies={['password']}
                 rules={[
-                  { required: true, message: 'Vui lòng nhập lại mật khẩu' },
+                  { required: true, message: m.employer_account_register_confirm_required() },
                   ({ getFieldValue }) => ({
                     validator: (_, value) => !value || getFieldValue('password') === value
                       ? Promise.resolve()
-                      : Promise.reject(new Error('Mật khẩu nhập lại không khớp')),
+                      : Promise.reject(new Error(m.employer_account_register_password_mismatch())),
                   }),
                 ]}
               >
-                <Input.Password autoComplete="new-password" prefix={<LockOutlined className="text-emerald-600" />} placeholder="Nhập lại mật khẩu" className="!h-12 !rounded-lg !text-base" />
+                <Input.Password autoComplete="new-password" prefix={<LockOutlined className="text-emerald-600" />} placeholder={m.employer_account_register_confirm_label()} className="!h-12 !rounded-lg !text-base" />
               </Form.Item>
               {passwordFocused && <div className="md:col-span-2"><PasswordRequirements password={password} mode="employer" /></div>}
             </div>
 
             <button type="submit" className="submit-btn mt-6 flex w-full cursor-pointer items-center justify-center gap-2.5 rounded-xl px-6 py-4 text-base font-bold text-white">
-              <span>Tiếp tục</span><ArrowRightOutlined />
+              <span>{m.employer_account_register_continue()}</span><ArrowRightOutlined />
             </button>
           </section>
         ) : (
           <section className="login-field">
-            <RegistrationSectionTitle title="Thông tin nhà tuyển dụng" description="Bổ sung người liên hệ; bạn sẽ tìm hoặc tạo đúng hồ sơ công ty ở bước xác thực riêng." />
+            <RegistrationSectionTitle title={m.employer_account_register_step2_title()} description={m.employer_account_register_step2_desc()} />
             <EmployerRegistrationFields provinces={provincesQuery.data || []} locationsLoading={provincesQuery.isLoading} />
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              <button type="button" onClick={returnToAccount} className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-slate-200 px-6 py-4 text-base font-bold text-slate-700 transition hover:border-emerald-300 hover:text-emerald-700"><ArrowLeftOutlined />Quay lại</button>
+              <button type="button" onClick={returnToAccount} className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-slate-200 px-6 py-4 text-base font-bold text-slate-700 transition hover:border-emerald-300 hover:text-emerald-700"><ArrowLeftOutlined />{m.employer_account_register_back()}</button>
               <button type="submit" disabled={loading} className="submit-btn flex cursor-pointer items-center justify-center gap-2.5 rounded-xl px-6 py-4 text-base font-bold text-white disabled:cursor-not-allowed disabled:opacity-70">
-                {loading ? 'Đang tạo tài khoản...' : <><span>Hoàn tất đăng ký</span><ArrowRightOutlined /></>}
+                {loading ? m.employer_account_register_submitting() : <><span>{m.employer_account_register_submit()}</span><ArrowRightOutlined /></>}
               </button>
             </div>
           </section>
@@ -319,8 +320,8 @@ export default function EmployerRegister() {
       </Form>
 
       <p className="login-field mt-6 text-center text-sm text-slate-500">
-        Đã có tài khoản?{' '}
-        <Link to={employerAppPath('/login')} className="font-semibold !text-emerald-700 hover:underline">Đăng nhập ngay</Link>
+        {m.employer_account_register_have_account()}{' '}
+        <Link to={employerAppPath('/login')} className="font-semibold !text-emerald-700 hover:underline">{m.employer_account_register_login_now()}</Link>
       </p>
     </div>
   )

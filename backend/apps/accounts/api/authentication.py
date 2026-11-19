@@ -1,5 +1,6 @@
 """JWT adapters that enforce the accounts-domain access policy."""
 
+from django.utils.translation import gettext as _
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
@@ -13,11 +14,11 @@ class AccountJWTAuthentication(JWTAuthentication):
     def get_user(self, validated_token):
         user = super().get_user(validated_token)
         if not is_account_accessible(user):
-            raise AuthenticationFailed('Tài khoản không còn khả dụng.', code='user_inactive')
+            raise AuthenticationFailed(_('Tài khoản không còn khả dụng.'), code='user_inactive')
         auth_revision = validated_token.get('auth_rev', 1)
         if auth_revision != user.auth_revision:
             raise AuthenticationFailed(
-                'Thông tin xác thực đã thay đổi. Vui lòng đăng nhập lại.',
+                _('Thông tin xác thực đã thay đổi. Vui lòng đăng nhập lại.'),
                 code='session_revoked',
             )
         if (
@@ -29,7 +30,7 @@ class AccountJWTAuthentication(JWTAuthentication):
             is None
         ):
             raise AuthenticationFailed(
-                'Phiên đăng nhập đã hết hạn hoặc bị thu hồi.',
+                _('Phiên đăng nhập đã hết hạn hoặc bị thu hồi.'),
                 code='session_revoked',
             )
         return user

@@ -2,6 +2,7 @@
 
 from django.conf import settings
 from django.db import models
+from django.utils.translation import gettext_lazy
 
 from common.db.public_id import generate_public_id
 
@@ -14,11 +15,11 @@ class CompanyTaxLookupEvidence(models.Model):
     """Immutable VietQR lookup evidence for one submitted workflow revision."""
 
     class Status(models.TextChoices):
-        PENDING = 'pending', 'Đang tra cứu'
-        FOUND = 'found', 'Đã tìm thấy'
-        NOT_FOUND = 'not_found', 'Không tìm thấy'
-        UNAVAILABLE = 'unavailable', 'Nguồn không khả dụng'
-        INVALID_RESPONSE = 'invalid_response', 'Phản hồi không hợp lệ'
+        PENDING = 'pending', gettext_lazy('Đang tra cứu')
+        FOUND = 'found', gettext_lazy('Đã tìm thấy')
+        NOT_FOUND = 'not_found', gettext_lazy('Không tìm thấy')
+        UNAVAILABLE = 'unavailable', gettext_lazy('Nguồn không khả dụng')
+        INVALID_RESPONSE = 'invalid_response', gettext_lazy('Phản hồi không hợp lệ')
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     provider = models.CharField(max_length=30, default='vietqr', editable=False)
@@ -105,17 +106,20 @@ class CompanyDocument(models.Model):
     """
 
     class DocType(models.TextChoices):
-        BUSINESS_REGISTRATION = 'business_registration', 'Giấy đăng ký doanh nghiệp'
-        TRADE_NAME_PROOF = 'trade_name_proof', 'Chứng minh tên thương mại'
-        AUTHORIZATION_LETTER = 'authorization_letter', 'Giấy ủy quyền'
-        IDENTITY_DOCUMENT = 'identity_document', 'Giấy tờ định danh (CCCD/hộ chiếu)'
-        DATA_PROCESSING_AGREEMENT = 'data_processing_agreement', 'Thỏa thuận xử lý dữ liệu cá nhân'
+        BUSINESS_REGISTRATION = 'business_registration', gettext_lazy('Giấy đăng ký doanh nghiệp')
+        TRADE_NAME_PROOF = 'trade_name_proof', gettext_lazy('Chứng minh tên thương mại')
+        AUTHORIZATION_LETTER = 'authorization_letter', gettext_lazy('Giấy ủy quyền')
+        IDENTITY_DOCUMENT = 'identity_document', gettext_lazy('Giấy tờ định danh (CCCD/hộ chiếu)')
+        DATA_PROCESSING_AGREEMENT = (
+            'data_processing_agreement',
+            gettext_lazy('Thỏa thuận xử lý dữ liệu cá nhân'),
+        )
 
     class Status(models.TextChoices):
-        PENDING = 'pending', 'Chờ duyệt'
-        CHANGES_REQUESTED = 'changes_requested', 'Cần bổ sung'
-        APPROVED = 'approved', 'Đã duyệt'
-        REJECTED = 'rejected', 'Từ chối'
+        PENDING = 'pending', gettext_lazy('Chờ duyệt')
+        CHANGES_REQUESTED = 'changes_requested', gettext_lazy('Cần bổ sung')
+        APPROVED = 'approved', gettext_lazy('Đã duyệt')
+        REJECTED = 'rejected', gettext_lazy('Từ chối')
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     company = models.ForeignKey(

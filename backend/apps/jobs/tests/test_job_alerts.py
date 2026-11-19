@@ -188,6 +188,34 @@ class CandidateJobAlertApiTests(APITestCase):
         self.assertEqual(enable_response.status_code, 400)
         self.assertEqual(enable_response.data['code'], 'email_unverified')
 
+    def test_error_detail_follows_the_request_language(self):
+        self.candidate.email_verified = False
+        self.candidate.save(update_fields=['email_verified', 'updated_at'])
+        payload = {'keyword': 'Python', 'frequency': JobAlert.Frequency.DAILY}
+
+        vietnamese = self.client.post(self.list_url, payload, format='json')
+        english = self.client.post(self.list_url, payload, format='json', HTTP_ACCEPT_LANGUAGE='en')
+        duplicate_category = self.client.post(
+            self.list_url,
+            {**payload, 'category_ids': [self.backend_category.pk, self.backend_category.pk]},
+            format='json',
+            HTTP_ACCEPT_LANGUAGE='en',
+        )
+
+        self.assertEqual(
+            str(vietnamese.data['detail']),
+            'Hãy xác thực email tài khoản trước khi bật thông báo việc làm.',
+        )
+        self.assertEqual(english.data['code'], 'email_unverified')
+        self.assertEqual(
+            str(english.data['detail']), 'Verify your account email before turning on job alerts.'
+        )
+        self.assertEqual(duplicate_category.status_code, 400)
+        self.assertEqual(
+            duplicate_category.data['category_ids'],
+            ['Job categories must not be selected twice.'],
+        )
+
     def test_post_rejects_state_and_category_validation_is_strict(self):
         self.assertNotIn('is_active', JobAlertCreateSerializer().fields)
         state_response = self._post(is_active=False)

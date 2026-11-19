@@ -10,6 +10,8 @@ from django.conf import settings
 from django.core.files.base import File
 from django.db import transaction
 from django.db.models import Max
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 from rest_framework.exceptions import ValidationError
 
 from apps.employers.domain.page_content import GALLERY_LIMIT
@@ -32,8 +34,13 @@ from .upload_validation import (
 EMPLOYER_MEDIA_PURPOSE = 'employer_company_update'
 EMPLOYER_MEDIA_CLAIM_SCOPE = 'employer_company_media'
 IMAGE_MAX_DIMENSIONS = (2400, 1600)
-GALLERY_LIMIT_MESSAGE = f'Thư viện công ty chỉ được có tối đa {GALLERY_LIMIT} ảnh.'
-UPDATE_REQUEST_JUST_PROCESSED = {'update_request': 'Yêu cầu cập nhật này vừa được xử lý.'}
+UPDATE_REQUEST_JUST_PROCESSED = {
+    'update_request': gettext_lazy('Yêu cầu cập nhật này vừa được xử lý.')
+}
+
+
+def _gallery_limit_message():
+    return _('Thư viện công ty chỉ được có tối đa %(limit)s ảnh.') % {'limit': GALLERY_LIMIT}
 
 
 def _image_field(kind):
@@ -53,14 +60,14 @@ def _save_scanned_image_derivative(*, user, company, update_request, kind, publi
         raise EmployerUploadSessionRejected(error) from error
 
     if asset.size_bytes > settings.IMAGE_UPLOAD_MAX_SIZE:
-        raise ValidationError({'upload_session': 'Ảnh phải nhỏ hơn 5 MB.'})
+        raise ValidationError({'upload_session': _('Ảnh phải nhỏ hơn 5 MB.')})
     if asset.content_type not in {'image/jpeg', 'image/png', 'image/webp'}:
-        raise ValidationError({'upload_session': 'Chỉ chấp nhận ảnh JPG, PNG hoặc WebP.'})
+        raise ValidationError({'upload_session': _('Chỉ chấp nhận ảnh JPG, PNG hoặc WebP.')})
     try:
         validate_employer_upload_structure(asset)
     except EmployerUploadStructureError as error:
         raise ValidationError(
-            {'upload_session': 'Nội dung ảnh bị lỗi hoặc không đúng định dạng khai báo.'}
+            {'upload_session': _('Nội dung ảnh bị lỗi hoặc không đúng định dạng khai báo.')}
         ) from error
 
     with private_media_storage().open(asset.storage_key, 'rb') as stored_file:
@@ -93,7 +100,7 @@ def _stage_image(update_request, company, kind, path):
         deletions = set(changes.get('gallery_deletions', []))
         final_count = company.images.exclude(id__in=deletions).count() + len(additions) + 1
         if final_count > GALLERY_LIMIT:
-            raise ValidationError({'file': GALLERY_LIMIT_MESSAGE})
+            raise ValidationError({'file': _gallery_limit_message()})
         additions.append(path)
         changes['gallery_additions'] = additions
         changes.pop('gallery_pending', None)
@@ -150,7 +157,7 @@ def save_company_image(
     a staged image it replaces is removed after commit.
     """
     if kind == 'gallery' and update_request is None and company.images.count() >= GALLERY_LIMIT:
-        raise ValidationError({'file': GALLERY_LIMIT_MESSAGE})
+        raise ValidationError({'file': _gallery_limit_message()})
 
     saved = None
     try:

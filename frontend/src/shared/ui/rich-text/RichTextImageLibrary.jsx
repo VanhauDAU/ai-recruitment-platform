@@ -1,6 +1,7 @@
 import { CloudUploadOutlined, FileImageOutlined, LinkOutlined, SearchOutlined } from '@ant-design/icons'
 import { Alert, Button, Empty, Input, Modal, Skeleton, Tabs, Upload } from 'antd'
 import { useEffect, useState } from 'react'
+import { m } from '@/shared/config/i18n'
 import { message } from '@/shared/lib/toast'
 
 const DEFAULT_ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
@@ -44,7 +45,7 @@ export default function RichTextImageLibrary({
   onUploadImage,
   allowExternalImage = false,
   acceptedImageTypes = DEFAULT_ACCEPTED_IMAGE_TYPES,
-  uploadHint = 'JPG, PNG, GIF, WebP · tối đa 5 MB · ảnh lớn tự thu về tối đa 1600 px',
+  uploadHint = m.ui_image_upload_hint(),
 }) {
   const [activeTab, setActiveTab] = useState('library')
   const [query, setQuery] = useState('')
@@ -70,7 +71,7 @@ export default function RichTextImageLibrary({
         setItems(response?.results || [])
       } catch (requestError) {
         if (controller.signal.aborted) return
-        const text = errorMessage(requestError, 'Không thể tải kho hình ảnh. Vui lòng thử lại.')
+        const text = errorMessage(requestError, m.ui_image_library_load_failed())
         setError(text)
         message.error(text)
       } finally {
@@ -101,7 +102,7 @@ export default function RichTextImageLibrary({
   const upload = async (file) => {
     if (!onUploadImage) return Upload.LIST_IGNORE
     if (!acceptedImageTypes.includes(file.type) || file.size > MAX_IMAGE_SIZE) {
-      const text = `Chỉ hỗ trợ ${uploadHint}.`
+      const text = m.ui_image_only_supports({ hint: uploadHint })
       setError(text)
       message.error(text)
       return Upload.LIST_IGNORE
@@ -114,9 +115,9 @@ export default function RichTextImageLibrary({
       setItems((current) => [uploaded, ...current.filter((item) => item.public_id !== uploaded.public_id)])
       choose(uploaded)
       setActiveTab('library')
-      message.success('Đã tải ảnh lên kho hình ảnh.')
+      message.success(m.ui_image_uploaded())
     } catch (uploadError) {
-      const text = errorMessage(uploadError, `Không thể tải ảnh. Chỉ hỗ trợ ${uploadHint}.`)
+      const text = errorMessage(uploadError, m.ui_image_upload_failed({ hint: uploadHint }))
       setError(text)
       message.error(text)
     } finally {
@@ -141,18 +142,18 @@ export default function RichTextImageLibrary({
     <div className="rich-image-library">
       <Input
         allowClear
-        aria-label="Tìm trong kho hình ảnh"
+        aria-label={m.ui_image_search()}
         prefix={<SearchOutlined />}
-        placeholder="Tìm theo tên hình ảnh…"
+        placeholder={m.ui_image_search_placeholder()}
         size="large"
         value={query}
         onChange={(event) => setQuery(event.target.value)}
       />
-      {error && <Alert className="mt-4" type="error" showIcon message={error} action={<Button size="small" onClick={() => setReloadKey((current) => current + 1)}>Thử lại</Button>} />}
+      {error && <Alert className="mt-4" type="error" showIcon message={error} action={<Button size="small" onClick={() => setReloadKey((current) => current + 1)}>{m.ui_image_retry()}</Button>} />}
       {loading ? (
         <div className="rich-image-library__skeleton"><Skeleton.Image active /><Skeleton.Image active /><Skeleton.Image active /></div>
       ) : items.length ? (
-        <div className="rich-image-library__grid" role="listbox" aria-label="Kho hình ảnh">
+        <div className="rich-image-library__grid" role="listbox" aria-label={m.ui_image_library()}>
           {items.map((item) => (
             <button
               className={`rich-image-library__item ${selected?.public_id === item.public_id ? 'rich-image-library__item--selected' : ''}`}
@@ -169,7 +170,7 @@ export default function RichTextImageLibrary({
           ))}
         </div>
       ) : (
-        <Empty className="py-10" image={Empty.PRESENTED_IMAGE_SIMPLE} description={query ? 'Không tìm thấy hình ảnh phù hợp' : 'Kho hình ảnh chưa có dữ liệu'} />
+        <Empty className="py-10" image={Empty.PRESENTED_IMAGE_SIMPLE} description={query ? m.ui_image_no_match() : m.ui_image_library_empty()} />
       )}
     </div>
   )
@@ -185,9 +186,9 @@ export default function RichTextImageLibrary({
         showUploadList={false}
       >
         <p className="ant-upload-drag-icon"><CloudUploadOutlined /></p>
-        <p className="ant-upload-text">Kéo thả ảnh vào đây hoặc bấm để chọn</p>
+        <p className="ant-upload-text">{m.ui_image_drop()}</p>
         <p className="ant-upload-hint">{uploadHint}</p>
-        {uploading && <Button className="mt-4" loading>Đang tải ảnh…</Button>}
+        {uploading && <Button className="mt-4" loading>{m.ui_image_uploading()}</Button>}
       </Upload.Dragger>
     </div>
   )
@@ -197,27 +198,27 @@ export default function RichTextImageLibrary({
       <Alert
         type="info"
         showIcon
-        message="Có thể chèn ảnh trực tiếp mà không cần tải lên kho ProCV."
-        description="Chỉ dùng URL HTTPS tin cậy hoặc đường dẫn nội bộ. Nếu nguồn ảnh bị xóa, ảnh trong bài cũng sẽ không còn hiển thị."
+        message={m.ui_image_external_info()}
+        description={m.ui_image_external_warning()}
       />
-      <label htmlFor="rich-image-external-url">URL hình ảnh</label>
+      <label htmlFor="rich-image-external-url">{m.ui_image_url()}</label>
       <Input
         id="rich-image-external-url"
-        aria-label="URL hình ảnh"
+        aria-label={m.ui_image_url()}
         placeholder="https://example.com/image.webp"
         status={externalUrl && !isAllowedImageUrl(externalUrl) ? 'error' : undefined}
         value={externalUrl}
         onChange={(event) => setExternalUrl(event.target.value)}
       />
       {externalUrl && !isAllowedImageUrl(externalUrl) && (
-        <p className="rich-image-library__field-error">Nhập URL HTTPS hoặc đường dẫn nội bộ bắt đầu bằng /.</p>
+        <p className="rich-image-library__field-error">{m.ui_image_url_invalid()}</p>
       )}
-      <label htmlFor="rich-image-external-alt">Mô tả ảnh (alt text)</label>
+      <label htmlFor="rich-image-external-alt">{m.ui_image_alt()}</label>
       <Input
         id="rich-image-external-alt"
-        aria-label="Mô tả ảnh từ URL"
+        aria-label={m.ui_image_alt_from_url()}
         maxLength={255}
-        placeholder="Mô tả ngắn nội dung ảnh"
+        placeholder={m.ui_image_alt_placeholder()}
         value={externalAlt}
         onChange={(event) => setExternalAlt(event.target.value)}
       />
@@ -233,9 +234,9 @@ export default function RichTextImageLibrary({
       className="rich-image-library-modal"
       width={900}
       open={open}
-      title={<span><FileImageOutlined className="mr-2" />Chèn hình ảnh</span>}
-      okText="Chèn vào bài viết"
-      cancelText="Hủy"
+      title={<span><FileImageOutlined className="mr-2" />{m.ui_rich_insert_image()}</span>}
+      okText={m.ui_image_insert_into_post()}
+      cancelText={m.common_action_cancel()}
       okButtonProps={{ disabled: !canInsert }}
       onCancel={onCancel}
       onOk={insert}
@@ -244,10 +245,10 @@ export default function RichTextImageLibrary({
         activeKey={activeTab}
         onChange={(key) => { setActiveTab(key); setError('') }}
         items={[
-          { key: 'library', label: 'Kho hình ảnh', children: library },
-          { key: 'upload', label: 'Tải ảnh mới', children: uploader },
+          { key: 'library', label: m.ui_image_library(), children: library },
+          { key: 'upload', label: m.ui_image_upload_new(), children: uploader },
           ...(allowExternalImage
-            ? [{ key: 'url', label: <span><LinkOutlined /> Từ URL</span>, children: externalImage }]
+            ? [{ key: 'url', label: <span><LinkOutlined /> {m.ui_image_from_url()}</span>, children: externalImage }]
             : []),
         ]}
       />
@@ -256,8 +257,8 @@ export default function RichTextImageLibrary({
           <img src={selected.url} alt="" />
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-semibold text-slate-800">{selected.original_name || selected.name}</p>
-            <label className="mt-2 block text-xs font-medium text-slate-600" htmlFor="rich-image-alt">Mô tả ảnh (alt text)</label>
-            <Input id="rich-image-alt" className="mt-1" value={alt} maxLength={255} onChange={(event) => setAlt(event.target.value)} placeholder="Mô tả ngắn nội dung ảnh" />
+            <label className="mt-2 block text-xs font-medium text-slate-600" htmlFor="rich-image-alt">{m.ui_image_alt()}</label>
+            <Input id="rich-image-alt" className="mt-1" value={alt} maxLength={255} onChange={(event) => setAlt(event.target.value)} placeholder={m.ui_image_alt_placeholder()} />
           </div>
         </div>
       )}

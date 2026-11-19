@@ -1,6 +1,7 @@
 import { CloseOutlined, EnvironmentOutlined, LeftOutlined, RightOutlined, SearchOutlined } from '@ant-design/icons'
 import { Button, Checkbox, Input, Popover, Skeleton } from 'antd'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { m } from '@/shared/config/i18n'
 import { getProvinces, getWards } from '../api/location.api'
 
 // Selection model: draft[provinceId] = 'ALL' | number[] (specific ward ids).
@@ -128,13 +129,13 @@ export default function LocationFilter({ value = [], onChange, size = 'middle', 
   const shortName = (name) => name.replace(/^Thành phố |^Tỉnh /, '')
   const triggerLabel = useMemo(() => {
     if (!value.length) return null
-    if (provinces.length === 0) return `Đã chọn ${value.length} địa điểm`
+    if (provinces.length === 0) return m.location_filter_selected_locations({ count: value.length })
     const grouped = groupValue(value)
     const pids = Object.keys(grouped.draft)
-    if (!pids.length) return `Đã chọn ${value.length} địa điểm`
+    if (!pids.length) return m.location_filter_selected_locations({ count: value.length })
     const first = provinces.find((p) => p.id === Number(pids[0]))
     const d = grouped.draft[pids[0]]
-    const detail = d === 'ALL' ? 'Tất cả' : `${d.length} phường/xã`
+    const detail = d === 'ALL' ? m.location_filter_all() : m.location_filter_ward_count({ count: d.length })
     const others = pids.length - 1 + (grouped.loose.length ? 1 : 0)
     return `${shortName(first.name)} (${detail})${others > 0 ? ` +${others}` : ''}`
   }, [value, provinces, wardsCache]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -156,7 +157,7 @@ export default function LocationFilter({ value = [], onChange, size = 'middle', 
         <div className={`md:pr-3 ${wardView ? 'hidden md:block' : 'block'}`}>
           <Input
             allowClear
-            placeholder="Nhập Tỉnh/Thành phố"
+            placeholder={m.location_filter_province_placeholder()}
             prefix={<SearchOutlined className="text-gray-400" />}
             value={provinceQuery}
             onChange={(e) => setProvinceQuery(e.target.value)}
@@ -201,11 +202,11 @@ export default function LocationFilter({ value = [], onChange, size = 'middle', 
             onClick={() => setWardView(false)}
             className="md:hidden flex items-center gap-1.5 mb-2 text-sm text-[var(--brand-primary)] cursor-pointer"
           >
-            <LeftOutlined className="text-xs" /> Tỉnh/Thành phố
+            <LeftOutlined className="text-xs" /> {m.location_filter_provinces()}
           </button>
           <Input
             allowClear
-            placeholder="Nhập Phường/Xã"
+            placeholder={m.location_filter_ward_placeholder()}
             prefix={<SearchOutlined className="text-gray-400" />}
             value={wardQuery}
             onChange={(e) => setWardQuery(e.target.value)}
@@ -214,7 +215,7 @@ export default function LocationFilter({ value = [], onChange, size = 'middle', 
           />
           <ul className="h-80 overflow-auto pr-1">
             {!activeId ? (
-              <li className="text-gray-400 px-3 py-2">Chọn Tỉnh/Thành để xem Phường/Xã</li>
+              <li className="text-gray-400 px-3 py-2">{m.location_filter_pick_province()}</li>
             ) : loadingWards ? (
               <li className="px-3"><Skeleton active paragraph={{ rows: 7 }} title={false} /></li>
             ) : (
@@ -228,7 +229,7 @@ export default function LocationFilter({ value = [], onChange, size = 'middle', 
                     checked={allWardsChecked}
                     indeterminate={someWardsChecked}
                   />
-                  <span>Tất cả</span>
+                  <span>{m.location_filter_all()}</span>
                 </li>
                 {activeWards.map((w) => (
                   <li
@@ -251,11 +252,11 @@ export default function LocationFilter({ value = [], onChange, size = 'middle', 
 
       <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
         <Button type="link" className="!px-0" onClick={() => { setDraft({}); setLoose([]) }} disabled={selectedCount === 0}>
-          Bỏ chọn tất cả
+          {m.location_filter_clear_all()}
         </Button>
         <div className="flex items-center gap-3">
-          {selectedCount > 0 && <span className="text-gray-500">Đã chọn {selectedCount}</span>}
-          <Button type="primary" onClick={apply}>Áp dụng</Button>
+          {selectedCount > 0 && <span className="text-gray-500">{m.location_filter_selected_count({ count: selectedCount })}</span>}
+          <Button type="primary" onClick={apply}>{m.location_filter_apply()}</Button>
         </div>
       </div>
     </div>
@@ -277,15 +278,15 @@ export default function LocationFilter({ value = [], onChange, size = 'middle', 
 
         {/* Label */}
         <span className={`flex-1 truncate font-medium ${displayLabel || triggerLabel ? 'text-gray-800' : 'text-gray-400'}`}>
-          {displayLabel || triggerLabel || 'Địa điểm'}
+          {displayLabel || triggerLabel || m.location_filter_placeholder()}
         </span>
 
         {value.length > 0 && (
           <span
             role="button"
             tabIndex={0}
-            aria-label="Xóa địa điểm đã chọn"
-            title="Xóa địa điểm"
+            aria-label={m.location_filter_clear_label()}
+            title={m.location_filter_clear_title()}
             onClick={clearSelected}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') clearSelected(e)

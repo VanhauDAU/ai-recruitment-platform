@@ -1,3 +1,5 @@
+import { m } from '@/shared/config/i18n'
+
 export const COMPANY_FORM_FIELDS = [
   'business_type', 'tax_code', 'company_name', 'trade_name',
   'trade_name_same_as_registered', 'has_no_logo', 'website_url', 'has_no_website', 'email',
@@ -20,9 +22,9 @@ export const COMPANY_DESCRIPTION_MIN_LENGTH = 500
 
 export function companyTaxCodeValidationError(value) {
   const taxCode = String(value ?? '')
-  if (!taxCode.trim()) return 'Nhập mã số thuế.'
-  if (!/^\d+$/.test(taxCode)) return 'Mã số thuế chỉ được gồm chữ số.'
-  if (![10, 13].includes(taxCode.length)) return 'Mã số thuế phải gồm đúng 10 hoặc 13 chữ số.'
+  if (!taxCode.trim()) return m.employer_company_tax_code_required()
+  if (!/^\d+$/.test(taxCode)) return m.employer_company_tax_code_digits()
+  if (![10, 13].includes(taxCode.length)) return m.employer_company_tax_code_length()
   return ''
 }
 
@@ -37,9 +39,9 @@ export function companyDescriptionTextLength(value) {
 
 export function companyDescriptionValidationError(value) {
   const length = companyDescriptionTextLength(value)
-  if (!length) return 'Nhập mô tả công ty.'
+  if (!length) return m.employer_company_description_required()
   if (length < COMPANY_DESCRIPTION_MIN_LENGTH) {
-    return `Mô tả công ty phải có ít nhất ${COMPANY_DESCRIPTION_MIN_LENGTH} ký tự (hiện có ${length}).`
+    return m.employer_company_description_min_length({ min: COMPANY_DESCRIPTION_MIN_LENGTH, length })
   }
   return ''
 }
@@ -95,7 +97,7 @@ export function hasCompanyFormValueChanges(values = {}, initialValues = {}) {
 
 export function validateCompanyImage(file) {
   const allowed = ['image/jpeg', 'image/png', 'image/webp']
-  if (!allowed.includes(file.type)) return 'Chỉ chấp nhận ảnh JPG, PNG hoặc WebP.'
-  if (file.size > 5 * 1024 * 1024) return 'Mỗi ảnh phải nhỏ hơn hoặc bằng 5 MB.'
+  if (!allowed.includes(file.type)) return m.employer_company_image_type()
+  if (file.size > 5 * 1024 * 1024) return m.employer_company_image_size()
   return ''
 }

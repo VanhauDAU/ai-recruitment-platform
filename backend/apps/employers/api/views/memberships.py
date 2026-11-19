@@ -1,3 +1,4 @@
+from django.utils.translation import gettext as _
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema, extend_schema_view, inline_serializer
 from rest_framework import generics, parsers, serializers, status
@@ -63,8 +64,10 @@ class JoinCompanyView(APIView):
         ):
             raise ValidationError(
                 {
-                    'detail': 'Tham gia công ty không yêu cầu hoặc nhận giấy tờ chứng minh. '
-                    'Giấy tờ chỉ được nộp khi xác thực hoặc yêu cầu cập nhật công ty.'
+                    'detail': _(
+                        'Tham gia công ty không yêu cầu hoặc nhận giấy tờ chứng minh. '
+                        'Giấy tờ chỉ được nộp khi xác thực hoặc yêu cầu cập nhật công ty.'
+                    )
                 }
             )
         join_request = request_company_join(request.user, request.data.get('company'))
@@ -121,7 +124,7 @@ class CompanyJoinRequestDecisionView(APIView):
     @extend_schema(request=None, responses={200: CompanyJoinRequestSerializer}, tags=['employer'])
     def post(self, request, public_id, decision):
         if decision not in {'approve', 'reject'}:
-            raise ValidationError({'decision': 'Chỉ chấp nhận approve hoặc reject.'})
+            raise ValidationError({'decision': _('Chỉ chấp nhận approve hoặc reject.')})
         join_request = decide_company_join(request.user, public_id, approve=decision == 'approve')
         return Response(CompanyJoinRequestSerializer(join_request).data)
 

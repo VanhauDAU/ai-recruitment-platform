@@ -2,6 +2,7 @@
 
 from django.db import transaction
 from django.utils import timezone
+from django.utils.translation import gettext
 from rest_framework.exceptions import ValidationError
 
 from apps.accounts.services import StaleImpactToken, record_admin_action
@@ -76,19 +77,19 @@ def start_company_update_review(
         update_request_id=update_request.pk,
     )
     if update_request.lock_version != lock_version:
-        raise StaleImpactToken('Yêu cầu đã thay đổi. Vui lòng tải lại.')
+        raise StaleImpactToken(gettext('Yêu cầu đã thay đổi. Vui lòng tải lại.'))
     validate_company_update_revision(update_request, revision_public_id)
     if update_request.status not in {
         CompanyUpdateRequest.Status.PENDING,
         CompanyUpdateRequest.Status.SUBMITTED,
     }:
-        raise ValidationError({'detail': 'Chỉ yêu cầu đã gửi mới được nhận thẩm định.'})
+        raise ValidationError({'detail': gettext('Chỉ yêu cầu đã gửi mới được nhận thẩm định.')})
     blockers = _request_review_blockers(update_request)
     if blockers:
         raise ValidationError(
             {
                 'code': 'COMPANY_UPDATE_NOT_READY',
-                'detail': 'Yêu cầu chưa đủ dữ liệu để bắt đầu thẩm định.',
+                'detail': gettext('Yêu cầu chưa đủ dữ liệu để bắt đầu thẩm định.'),
                 'blockers': blockers,
             }
         )
@@ -131,21 +132,23 @@ def close_company_update_before_review(
         update_request_id=update_request.pk,
     )
     if update_request.lock_version != lock_version:
-        raise StaleImpactToken('Yêu cầu đã thay đổi. Vui lòng tải lại.')
+        raise StaleImpactToken(gettext('Yêu cầu đã thay đổi. Vui lòng tải lại.'))
     if update_request.status not in PRE_REVIEW_COMPANY_UPDATE_STATUSES:
-        raise ValidationError({'detail': 'Yêu cầu đã vào thẩm định hoặc đã kết thúc.'})
+        raise ValidationError({'detail': gettext('Yêu cầu đã vào thẩm định hoặc đã kết thúc.')})
     if action == CompanyUpdateRequest.Status.WITHDRAWN:
         if update_request.requested_by_id != actor.id:
-            raise ValidationError({'detail': 'Chỉ người tạo yêu cầu mới được rút yêu cầu.'})
+            raise ValidationError(
+                {'detail': gettext('Chỉ người tạo yêu cầu mới được rút yêu cầu.')}
+            )
         event_type = CompanyUpdateEvent.EventType.WITHDRAWN
     elif action == CompanyUpdateRequest.Status.CANCELLED:
         if not actor_is_owner:
-            raise ValidationError({'detail': 'Chỉ quản lý công ty mới được hủy yêu cầu.'})
+            raise ValidationError({'detail': gettext('Chỉ quản lý công ty mới được hủy yêu cầu.')})
         if not reason.strip():
-            raise ValidationError({'reason': 'Nhập lý do hủy yêu cầu.'})
+            raise ValidationError({'reason': gettext('Nhập lý do hủy yêu cầu.')})
         event_type = CompanyUpdateEvent.EventType.CANCELLED
     else:
-        raise ValidationError({'action': 'Thao tác không hợp lệ.'})
+        raise ValidationError({'action': gettext('Thao tác không hợp lệ.')})
     update_request.status = action
     update_request.review_note = reason.strip()
     update_request.reviewed_by = actor
@@ -195,11 +198,13 @@ def apply_update_request(
         update_request.Status.CHANGES_REQUESTED,
         update_request.Status.REJECTED,
     }:
-        raise ValidationError({'decision': 'Kết quả xử lý yêu cầu không hợp lệ.'})
+        raise ValidationError({'decision': gettext('Kết quả xử lý yêu cầu không hợp lệ.')})
     if update_request.status != update_request.Status.IN_REVIEW:
-        raise ValidationError({'detail': 'Yêu cầu này đã được xử lý.'})
+        raise ValidationError({'detail': gettext('Yêu cầu này đã được xử lý.')})
     if lock_version is not None and update_request.lock_version != lock_version:
-        raise StaleImpactToken('Yêu cầu đã được chỉnh sửa. Vui lòng tải lại trước khi duyệt.')
+        raise StaleImpactToken(
+            gettext('Yêu cầu đã được chỉnh sửa. Vui lòng tải lại trước khi duyệt.')
+        )
     revision = validate_company_update_revision(update_request, revision_public_id)
 
     if decision == update_request.Status.APPROVED:
@@ -210,7 +215,9 @@ def apply_update_request(
             update_request.changes
         )
         if request_markers:
-            raise ValidationError({'detail': 'Yêu cầu còn tệp hình ảnh chưa tải lên thành công.'})
+            raise ValidationError(
+                {'detail': gettext('Yêu cầu còn tệp hình ảnh chưa tải lên thành công.')}
+            )
         if update_request.is_sensitive:
             approved_document_types = set(
                 update_request.documents.filter(
@@ -227,7 +234,11 @@ def apply_update_request(
                 }.issubset(approved_document_types)
             if not complete:
                 raise ValidationError(
-                    {'detail': ('Yêu cầu nhạy cảm chưa có đủ giấy tờ chứng minh đã được duyệt.')}
+                    {
+                        'detail': (
+                            gettext('Yêu cầu nhạy cảm chưa có đủ giấy tờ chứng minh đã được duyệt.')
+                        )
+                    }
                 )
         changes = dict(update_request.changes)
         if 'tax_code' in changes:
@@ -236,8 +247,8 @@ def apply_update_request(
             except ValueError as error:
                 raise ValidationError({'tax_code': str(error)}) from error
         for field, required, label in (
-            ('description', True, 'Mô tả công ty'),
-            ('employee_benefits', False, 'Phúc lợi nhân viên'),
+            ('description', True, gettext('Mô tả công ty')),
+            ('employee_benefits', False, gettext('Phúc lợi nhân viên')),
         ):
             if field not in changes:
                 continue
@@ -286,7 +297,10 @@ def apply_update_request(
         )
         if final_gallery_count > GALLERY_LIMIT:
             raise ValidationError(
-                {'detail': f'Thư viện công ty chỉ được có tối đa {GALLERY_LIMIT} ảnh.'}
+                {
+                    'detail': gettext('Thư viện công ty chỉ được có tối đa %(limit)s ảnh.')
+                    % {'limit': GALLERY_LIMIT}
+                }
             )
         company.save()
         if industry_ids:
@@ -407,13 +421,15 @@ def review_company_update_document(
     )
     document = CompanyDocument.objects.select_for_update().get(pk=document.pk)
     if document.update_request_id != update_request.pk:
-        raise ValidationError({'detail': 'Giấy tờ không còn thuộc yêu cầu cập nhật này.'})
+        raise ValidationError({'detail': gettext('Giấy tờ không còn thuộc yêu cầu cập nhật này.')})
     if update_request.status != update_request.Status.IN_REVIEW:
-        raise ValidationError({'detail': 'Yêu cầu cập nhật này đã được xử lý.'})
+        raise ValidationError({'detail': gettext('Yêu cầu cập nhật này đã được xử lý.')})
     if not document.is_current:
-        raise ValidationError({'detail': 'Đây không còn là phiên bản giấy tờ hiện tại.'})
+        raise ValidationError({'detail': gettext('Đây không còn là phiên bản giấy tờ hiện tại.')})
     if lock_version is not None and update_request.lock_version != lock_version:
-        raise StaleImpactToken('Yêu cầu đã được chỉnh sửa. Vui lòng tải lại trước khi duyệt.')
+        raise StaleImpactToken(
+            gettext('Yêu cầu đã được chỉnh sửa. Vui lòng tải lại trước khi duyệt.')
+        )
     validate_company_update_revision(update_request, revision_public_id)
     allowed = {
         CompanyDocument.Status.APPROVED,
@@ -421,9 +437,9 @@ def review_company_update_document(
         CompanyDocument.Status.REJECTED,
     }
     if decision not in allowed:
-        raise ValidationError({'decision': 'Kết quả duyệt giấy tờ không hợp lệ.'})
+        raise ValidationError({'decision': gettext('Kết quả duyệt giấy tờ không hợp lệ.')})
     if decision != CompanyDocument.Status.APPROVED and not note.strip():
-        raise ValidationError({'note': 'Nhập lý do khi yêu cầu bổ sung hoặc từ chối.'})
+        raise ValidationError({'note': gettext('Nhập lý do khi yêu cầu bổ sung hoặc từ chối.')})
 
     document.status = decision
     document.reviewed_by = admin_user

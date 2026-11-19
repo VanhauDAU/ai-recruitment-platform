@@ -1,3 +1,4 @@
+from django.utils.translation import gettext
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
@@ -201,7 +202,7 @@ class RecruiterProfileSerializer(serializers.ModelSerializer):
             return {
                 'public_id': None,
                 'status': 'draft',
-                'status_label': 'Chưa nộp',
+                'status_label': gettext('Chưa nộp'),
                 'decision_reason': '',
                 'revision': 1,
                 'submitted_at': None,

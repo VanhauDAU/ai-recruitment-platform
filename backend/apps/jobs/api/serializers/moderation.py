@@ -3,6 +3,7 @@
 from datetime import datetime
 
 from django.core.exceptions import ObjectDoesNotExist
+from django.utils.translation import gettext as _
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
@@ -302,7 +303,7 @@ class AdminJobDecisionSerializer(serializers.Serializer):
 
     def validate(self, attrs):
         if attrs['action'] != JobModerationEvent.Action.RESTORE and not attrs.get('reason_code'):
-            raise serializers.ValidationError({'reason_code': 'Chọn lý do xử lý.'})
+            raise serializers.ValidationError({'reason_code': _('Chọn lý do xử lý.')})
         if not attrs.get('note', '').strip():
-            raise serializers.ValidationError({'note': 'Nhập ghi chú xử lý.'})
+            raise serializers.ValidationError({'note': _('Nhập ghi chú xử lý.')})
         return attrs

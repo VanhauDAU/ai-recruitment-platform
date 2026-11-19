@@ -9,6 +9,7 @@ from datetime import timedelta
 from django.db import IntegrityError, transaction
 from django.db.models import Q
 from django.utils import timezone
+from django.utils.translation import gettext as _
 from rest_framework.exceptions import NotFound
 
 from apps.candidates.models import CandidateNotification
@@ -48,7 +49,7 @@ def add_to_talent_pool(application, *, recruiter, note='', tags=()):
                 tags=_clean_tags(tags),
             )
     except IntegrityError as error:
-        raise TalentPoolConflict('Ứng viên đã có trong kho của bạn.') from error
+        raise TalentPoolConflict(_('Ứng viên đã có trong kho của bạn.')) from error
     emit_candidate_notification(
         recipient=application.candidate,
         event_type=CandidateNotification.EventType.TALENT_POOL_SAVED,
@@ -96,7 +97,7 @@ def invite_to_apply(entry, *, job):
         with transaction.atomic():
             TalentPoolInvitation.objects.create(entry=entry, job=job)
     except IntegrityError as error:
-        raise TalentPoolConflict('Bạn đã mời ứng viên này ứng tuyển tin này.') from error
+        raise TalentPoolConflict(_('Bạn đã mời ứng viên này ứng tuyển tin này.')) from error
     emit_candidate_notification(
         recipient=entry.candidate,
         event_type=CandidateNotification.EventType.JOB_INVITATION,
@@ -111,7 +112,7 @@ def purge_lapsed_talent_pool_entries(*, now=None):
     """Delete expired entries and those closed more than 30 days ago."""
     now = now or timezone.now()
     grace = now - timedelta(days=30)
-    deleted, _ = TalentPoolEntry.objects.filter(
+    deleted, _per_model = TalentPoolEntry.objects.filter(
         Q(expires_at__lte=now) | Q(removed_at__lte=grace) | Q(withdrawn_at__lte=grace)
     ).delete()
     return deleted

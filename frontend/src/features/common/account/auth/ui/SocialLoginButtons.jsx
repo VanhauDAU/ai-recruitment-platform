@@ -1,5 +1,6 @@
 import { oauthStartUrl } from '../api/auth.api'
 import { getReturnUrl } from '../model/return-url'
+import { m } from '@/shared/config/i18n'
 
 function GoogleIcon() {
   return (
@@ -57,7 +58,7 @@ function defaultNext() {
 export default function SocialLoginButtons({
   portal = 'main',
   providers,
-  action = 'Đăng nhập',
+  action = m.account_social_action_login(),
   appearance = 'default',
   disabled = false,
   next,
@@ -81,7 +82,7 @@ export default function SocialLoginButtons({
             key={key}
             type="button"
             disabled={disabled}
-            aria-label={`${action} bằng ${label}`}
+            aria-label={m.account_social_aria({ action, provider: label })}
             onClick={() => {
               onBeforeRedirect?.()
               window.location.assign(oauthStartUrl(key, { portal, next: next ?? defaultNext() }))
@@ -89,7 +90,7 @@ export default function SocialLoginButtons({
             className={`social-oauth-btn ${span} flex h-11 items-center justify-center gap-2 border px-4 text-sm font-medium cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 ${appearanceClasses} ${border}`}
           >
             <Icon />
-            <span>{appearance === 'employer' ? `${action} với ${label}` : label}</span>
+            <span>{appearance === 'employer' ? m.account_social_button({ action, provider: label }) : label}</span>
           </button>
         )
       })}

@@ -2,6 +2,7 @@
 
 from django.db import models
 from django.utils.text import slugify
+from django.utils.translation import gettext_lazy
 
 from common.db.public_id import generate_public_id
 
@@ -10,9 +11,9 @@ class JobCategory(models.Model):
     """Industry/field taxonomy for filtering jobs (DB doc section 2.10)."""
 
     class CategoryType(models.TextChoices):
-        OCCUPATION_GROUP = 'occupation_group', 'Nhóm nghề'
-        DOMAIN = 'domain', 'Kiến thức chuyên ngành'
-        SPECIALIZATION = 'specialization', 'Vị trí chuyên môn'
+        OCCUPATION_GROUP = 'occupation_group', gettext_lazy('Nhóm nghề')
+        DOMAIN = 'domain', gettext_lazy('Kiến thức chuyên ngành')
+        SPECIALIZATION = 'specialization', gettext_lazy('Vị trí chuyên môn')
 
     class Status(models.TextChoices):
         ACTIVE = 'active', 'Active'
@@ -56,8 +57,8 @@ class JobCategoryLocalization(models.Model):
     """Admin-managed display/search text for one taxonomy node and locale."""
 
     class Locale(models.TextChoices):
-        VI = 'vi-VN', 'Tiếng Việt'
-        EN = 'en-US', 'Tiếng Anh'
+        VI = 'vi-VN', gettext_lazy('Tiếng Việt')
+        EN = 'en-US', gettext_lazy('Tiếng Anh')
 
     category = models.ForeignKey(
         JobCategory,

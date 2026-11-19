@@ -11,6 +11,7 @@ import {
   getEmployerProfile,
   getMyCompanyJoinRequest,
 } from '@/entities/account/employer-profile'
+import { m } from '@/shared/config/i18n'
 import CompanyForm from './CompanyForm'
 import CompanyMembersPanel from './CompanyMembersPanel'
 import CompanySearchPanel from './CompanySearchPanel'
@@ -22,14 +23,14 @@ const OPTIONS = [
   {
     key: 'search',
     icon: <SearchOutlined />,
-    title: 'Tìm kiếm thông tin công ty',
-    description: 'Dành cho doanh nghiệp đã có hồ sơ trên hệ thống.',
+    title: m.employer_company_flow_search_title(),
+    description: m.employer_company_flow_search_description(),
   },
   {
     key: 'create',
     icon: <PlusOutlined />,
-    title: 'Tạo công ty mới',
-    description: 'Dành cho doanh nghiệp lần đầu sử dụng hệ thống.',
+    title: m.employer_company_flow_create_title(),
+    description: m.employer_company_flow_create_description(),
   },
 ]
 
@@ -58,7 +59,7 @@ export default function EmployerCompanySettings() {
 
   if (profileQuery.isLoading || industriesQuery.isLoading || catalogsQuery.isLoading) return <Skeleton active paragraph={{ rows: 14 }} />
   if (profileQuery.isError || industriesQuery.isError || catalogsQuery.isError) {
-    return <Result status="error" title="Không tải được trang thông tin công ty" extra={<Button type="primary" onClick={() => { profileQuery.refetch(); industriesQuery.refetch(); catalogsQuery.refetch() }}>Thử lại</Button>} />
+    return <Result status="error" title={m.employer_company_settings_load_error()} extra={<Button type="primary" onClick={() => { profileQuery.refetch(); industriesQuery.refetch(); catalogsQuery.refetch() }}>{m.employer_company_retry()}</Button>} />
   }
 
   const profile = profileQuery.data || {}
@@ -77,7 +78,7 @@ export default function EmployerCompanySettings() {
 
   return (
     <div className="employer-company-settings">
-      <div className="company-flow-options" role="tablist" aria-label="Chọn cách cập nhật thông tin công ty">
+      <div className="company-flow-options" role="tablist" aria-label={m.employer_company_flow_options_label()}>
         {OPTIONS.map((option) => {
           const active = option.key === activeFlow
           return (
@@ -115,10 +116,10 @@ function ManagerCompanyTabs({ infoPanel, onRefresh }) {
       activeKey={activeTab}
       onChange={changeTab}
       items={[
-        { key: 'info', label: 'Thông tin công ty', children: infoPanel },
+        { key: 'info', label: m.employer_company_tab_info(), children: infoPanel },
         {
           key: 'members',
-          label: <span className="inline-flex items-center gap-2">Thành viên {pending > 0 && <Badge count={pending} size="small" />}</span>,
+          label: <span className="inline-flex items-center gap-2">{m.employer_company_tab_members()} {pending > 0 && <Badge count={pending} size="small" />}</span>,
           children: <CompanyMembersPanel onRefresh={onRefresh} />,
         },
       ]}

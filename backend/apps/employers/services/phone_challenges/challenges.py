@@ -10,6 +10,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.utils import timezone
+from django.utils.translation import gettext as _
 
 from common.db.public_id import generate_public_id
 
@@ -106,16 +107,16 @@ def start_sms_phone_verification(*, user, phone, password):
     if not settings.EMPLOYER_SMS_OTP_ENABLED:
         raise PhoneChallengeError(
             'PHONE_SMS_DISABLED',
-            'Xác thực SMS hiện chưa sẵn sàng. Vui lòng thử lại sau.',
+            _('Xác thực SMS hiện chưa sẵn sàng. Vui lòng thử lại sau.'),
             retryable=True,
         )
     if not user.has_usable_password():
         raise PhoneChallengeError(
             'PHONE_REAUTH_REQUIRED',
-            'Tài khoản chưa có mật khẩu. Hãy tạo mật khẩu trước khi xác thực số điện thoại.',
+            _('Tài khoản chưa có mật khẩu. Hãy tạo mật khẩu trước khi xác thực số điện thoại.'),
         )
     if not user.check_password((password or '').strip()):
-        raise PhoneChallengeError('PHONE_REAUTH_FAILED', 'Mật khẩu không đúng.')
+        raise PhoneChallengeError('PHONE_REAUTH_FAILED', _('Mật khẩu không đúng.'))
 
     locked_user = user.__class__.objects.select_for_update().get(pk=user.pk)
     from ..profiles import get_or_create_recruiter
@@ -132,7 +133,7 @@ def start_sms_phone_verification(*, user, phone, password):
         )
         raise PhoneChallengeError(
             'PHONE_OTP_COOLDOWN',
-            'Vui lòng chờ trước khi gửi lại mã.',
+            _('Vui lòng chờ trước khi gửi lại mã.'),
             retryable=True,
             retry_after_seconds=retry_after,
         )
@@ -151,7 +152,7 @@ def get_sms_phone_challenge(*, user, public_id):
         public_id=public_id,
     ).first()
     if challenge is None:
-        raise PhoneChallengeError('RESOURCE_NOT_FOUND', 'Không tìm thấy yêu cầu xác thực.')
+        raise PhoneChallengeError('RESOURCE_NOT_FOUND', _('Không tìm thấy yêu cầu xác thực.'))
     return challenge
 
 
@@ -169,23 +170,23 @@ def _verify_sms_phone_challenge(*, user, public_id, code):
         .first()
     )
     if challenge is None:
-        raise PhoneChallengeError('RESOURCE_NOT_FOUND', 'Không tìm thấy yêu cầu xác thực.')
+        raise PhoneChallengeError('RESOURCE_NOT_FOUND', _('Không tìm thấy yêu cầu xác thực.'))
     now = timezone.now()
     if challenge.invalidated_at is not None:
-        raise PhoneChallengeError('PHONE_CHALLENGE_INVALIDATED', 'Mã này đã bị thay thế.')
+        raise PhoneChallengeError('PHONE_CHALLENGE_INVALIDATED', _('Mã này đã bị thay thế.'))
     if challenge.verified_at is not None:
-        raise PhoneChallengeError('PHONE_CHALLENGE_USED', 'Mã này đã được sử dụng.')
+        raise PhoneChallengeError('PHONE_CHALLENGE_USED', _('Mã này đã được sử dụng.'))
     if challenge.expires_at <= now:
-        raise PhoneChallengeError('PHONE_CHALLENGE_EXPIRED', 'Mã đã hết hạn.')
+        raise PhoneChallengeError('PHONE_CHALLENGE_EXPIRED', _('Mã đã hết hạn.'))
     if challenge.dispatch_status != PhoneOtp.DispatchStatus.SENT:
         raise PhoneChallengeError(
             'PHONE_CHALLENGE_NOT_READY',
-            'Tin nhắn chưa được gửi thành công.',
+            _('Tin nhắn chưa được gửi thành công.'),
             retryable=challenge.dispatch_status
             in {PhoneOtp.DispatchStatus.QUEUED, PhoneOtp.DispatchStatus.DISPATCHING},
         )
     if challenge.attempts >= SMS_MAX_VERIFY_ATTEMPTS:
-        raise PhoneChallengeError('PHONE_ATTEMPTS_EXHAUSTED', 'Mã đã hết lượt xác thực.')
+        raise PhoneChallengeError('PHONE_ATTEMPTS_EXHAUSTED', _('Mã đã hết lượt xác thực.'))
 
     challenge.attempts += 1
     if not challenge_code_matches(challenge, (code or '').strip()):
@@ -195,7 +196,7 @@ def _verify_sms_phone_challenge(*, user, public_id, code):
             challenge.invalidation_reason = 'verify_attempts_exhausted'
             update_fields.extend(['invalidated_at', 'invalidation_reason'])
         challenge.save(update_fields=update_fields)
-        return None, PhoneChallengeError('PHONE_CODE_INVALID', 'Mã xác thực không đúng.')
+        return None, PhoneChallengeError('PHONE_CODE_INVALID', _('Mã xác thực không đúng.'))
 
     canonical_phone = normalize_vietnamese_mobile(decrypt_payload(challenge.destination_ciphertext))
     from ...models import RecruiterProfile
@@ -211,7 +212,7 @@ def _verify_sms_phone_challenge(*, user, public_id, code):
     ):
         raise PhoneChallengeError(
             'PHONE_UNAVAILABLE',
-            'Không thể dùng số điện thoại này cho tài khoản.',
+            _('Không thể dùng số điện thoại này cho tài khoản.'),
         )
 
     challenge.verified_at = now
@@ -233,7 +234,7 @@ def _verify_sms_phone_challenge(*, user, public_id, code):
     except IntegrityError as error:
         raise PhoneChallengeError(
             'PHONE_UNAVAILABLE',
-            'Không thể dùng số điện thoại này cho tài khoản.',
+            _('Không thể dùng số điện thoại này cho tài khoản.'),
         ) from error
     if locked_user.phone != canonical_phone:
         locked_user.phone = canonical_phone
@@ -262,7 +263,7 @@ def create_sms_phone_challenge(*, user, phone, purpose):
     """Create one encrypted challenge and invalidate every older active one."""
 
     if purpose not in PhoneOtp.Purpose.values:
-        raise ValidationError('Mục đích xác minh số điện thoại không hợp lệ.')
+        raise ValidationError(_('Mục đích xác minh số điện thoại không hợp lệ.'))
     user.__class__.objects.select_for_update().only('pk').get(pk=user.pk)
     now = timezone.now()
     active = PhoneOtp.objects.select_for_update().filter(

@@ -5,12 +5,13 @@ import {
 } from '@/widgets/employer/account-settings'
 import { EmployerCompanyDomainVerification } from '@/features/employer/account/verify-company-domain'
 import { EmployerTrustBadgeEligibility } from '@/features/employer/account/verify-employer-account'
+import { m } from '@/shared/config/i18n'
 
 export default function EmployerAccountInformationPage() {
   return (
     <EmployerAccountSettingsShell
-      title="Thông tin tài khoản"
-      description="Cập nhật thông tin liên hệ và quản lý hồ sơ tài khoản tuyển dụng của bạn."
+      title={m.employer_account_settings_nav_account()}
+      description={m.employer_account_page_account_desc()}
     >
       <EmployerAccountVerificationCard />
       <EmployerTrustBadgeEligibility className="mb-5" />

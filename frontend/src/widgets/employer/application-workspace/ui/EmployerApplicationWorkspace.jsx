@@ -1,10 +1,11 @@
+import { m } from '@/shared/config/i18n'
 import useApplicationWorkspace, { PAGE_SIZE } from '../model/use-application-workspace'
 import ApplicationCandidateList from './ApplicationCandidateList'
 import ApplicationCvPreview from './ApplicationCvPreview'
 import ApplicationInspectorPanel from './ApplicationInspectorPanel'
 import './application-workspace.css'
 
-const MOBILE_TABS = [['cv', 'Xem trước CV'], ['info', 'Xử lý hồ sơ']]
+const MOBILE_TABS = [['cv', m.employer_workspace_app_cv_preview()], ['info', m.employer_workspace_app_inspector_title()]]
 
 export default function EmployerApplicationWorkspace() {
   const workspace = useApplicationWorkspace()
@@ -12,7 +13,7 @@ export default function EmployerApplicationWorkspace() {
   const candidateName = snapshotQuery.data?.contact_name
     || selectedApplication?.candidate_name
     || selectedApplication?.candidate_email
-    || 'Ứng viên'
+    || m.employer_workspace_app_candidate_fallback()
 
   return (
     <section className="space-y-4 pb-5 pt-3">
@@ -35,7 +36,7 @@ export default function EmployerApplicationWorkspace() {
           onSelect={workspace.selectApplication}
         />
         {selectedPublicId && (
-          <div role="tablist" aria-label="Nội dung hồ sơ trên thiết bị di động" className="aw-tabs">
+          <div role="tablist" aria-label={m.employer_workspace_app_mobile_tabs()} className="aw-tabs">
             {MOBILE_TABS.map(([key, label]) => (
               <button
                 key={key}

@@ -1,5 +1,6 @@
 """Admin review of staged company-profile changes (company update requests)."""
 
+from django.utils.translation import gettext as _
 from rest_framework import serializers
 
 from apps.jobs.models import Benefit
@@ -264,7 +265,7 @@ class AdminCompanyUpdateReviewSerializer(serializers.Serializer):
             and not attrs.get('note', '').strip()
         ):
             raise serializers.ValidationError(
-                {'note': 'Nhập lý do khi yêu cầu chỉnh sửa hoặc từ chối.'}
+                {'note': _('Nhập lý do khi yêu cầu chỉnh sửa hoặc từ chối.')}
             )
         return attrs
 

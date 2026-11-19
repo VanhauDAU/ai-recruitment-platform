@@ -2,6 +2,7 @@
 
 from django.conf import settings
 from django.db import models
+from django.utils.translation import gettext_lazy
 
 from common.db.public_id import generate_public_id
 
@@ -12,21 +13,24 @@ class EmployerVerificationCase(models.Model):
     """Account-scoped proof that one recruiter may represent one company."""
 
     class VerificationMethod(models.TextChoices):
-        BUSINESS_REGISTRATION = 'business_registration', 'Giấy đăng ký doanh nghiệp'
-        AUTHORIZATION_AND_ID = 'authorization_and_id', 'Giấy ủy quyền + giấy tờ định danh'
+        BUSINESS_REGISTRATION = 'business_registration', gettext_lazy('Giấy đăng ký doanh nghiệp')
+        AUTHORIZATION_AND_ID = (
+            'authorization_and_id',
+            gettext_lazy('Giấy ủy quyền + giấy tờ định danh'),
+        )
 
     class Status(models.TextChoices):
-        DRAFT = 'draft', 'Chưa nộp'
-        PENDING = 'pending', 'Chờ duyệt'
-        IN_REVIEW = 'in_review', 'Đang xử lý'
-        CHANGES_REQUESTED = 'changes_requested', 'Cần bổ sung'
-        REJECTED = 'rejected', 'Bị từ chối'
-        APPROVED = 'approved', 'Đã xác thực'
-        REVOKED = 'revoked', 'Đã thu hồi'
-        EXPIRED = 'expired', 'Hết hiệu lực'
+        DRAFT = 'draft', gettext_lazy('Chưa nộp')
+        PENDING = 'pending', gettext_lazy('Chờ duyệt')
+        IN_REVIEW = 'in_review', gettext_lazy('Đang xử lý')
+        CHANGES_REQUESTED = 'changes_requested', gettext_lazy('Cần bổ sung')
+        REJECTED = 'rejected', gettext_lazy('Bị từ chối')
+        APPROVED = 'approved', gettext_lazy('Đã xác thực')
+        REVOKED = 'revoked', gettext_lazy('Đã thu hồi')
+        EXPIRED = 'expired', gettext_lazy('Hết hiệu lực')
 
     class DecisionSource(models.TextChoices):
-        EXPLICIT_ADMIN = 'explicit_admin', 'Quyết định quản trị tường minh'
+        EXPLICIT_ADMIN = 'explicit_admin', gettext_lazy('Quyết định quản trị tường minh')
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     recruiter = models.OneToOneField(
@@ -101,23 +105,23 @@ class EmployerVerificationEvent(models.Model):
     """Append-only event timeline for an employer verification case."""
 
     class EventType(models.TextChoices):
-        SUBMITTED = 'submitted', 'Đã nộp'
-        REVIEW_STARTED = 'review_started', 'Bắt đầu xử lý'
-        DOCUMENT_REVIEWED = 'document_reviewed', 'Đã xử lý giấy tờ'
-        DOCUMENT_REPLACED = 'document_replaced', 'Đã thay giấy tờ'
-        CHANGES_REQUESTED = 'changes_requested', 'Yêu cầu bổ sung'
-        RESUBMITTED = 'resubmitted', 'Đã nộp lại'
-        RESUBMISSION_UNLOCKED = 'resubmission_unlocked', 'Đã mở khóa nộp lại'
-        APPROVED = 'approved', 'Đã duyệt'
-        REJECTED = 'rejected', 'Đã từ chối'
-        REVOKED = 'revoked', 'Đã thu hồi'
-        EXPIRED = 'expired', 'Hết hiệu lực'
-        REAPPROVED = 'reapproved', 'Đã duyệt lại'
-        HOLD_APPLIED = 'hold_applied', 'Đã áp dụng compliance hold'
-        HOLD_RELEASED = 'hold_released', 'Đã gỡ compliance hold'
-        SENSITIVE_VIEWED = 'sensitive_viewed', 'Đã xem dữ liệu nhạy cảm'
-        TAX_LOOKUP_REFRESHED = 'tax_lookup_refreshed', 'Đã tra cứu lại mã số thuế'
-        WITHDRAWN_BY_UNLINK = 'withdrawn_by_unlink', 'Đã rút do gỡ liên kết công ty'
+        SUBMITTED = 'submitted', gettext_lazy('Đã nộp')
+        REVIEW_STARTED = 'review_started', gettext_lazy('Bắt đầu xử lý')
+        DOCUMENT_REVIEWED = 'document_reviewed', gettext_lazy('Đã xử lý giấy tờ')
+        DOCUMENT_REPLACED = 'document_replaced', gettext_lazy('Đã thay giấy tờ')
+        CHANGES_REQUESTED = 'changes_requested', gettext_lazy('Yêu cầu bổ sung')
+        RESUBMITTED = 'resubmitted', gettext_lazy('Đã nộp lại')
+        RESUBMISSION_UNLOCKED = 'resubmission_unlocked', gettext_lazy('Đã mở khóa nộp lại')
+        APPROVED = 'approved', gettext_lazy('Đã duyệt')
+        REJECTED = 'rejected', gettext_lazy('Đã từ chối')
+        REVOKED = 'revoked', gettext_lazy('Đã thu hồi')
+        EXPIRED = 'expired', gettext_lazy('Hết hiệu lực')
+        REAPPROVED = 'reapproved', gettext_lazy('Đã duyệt lại')
+        HOLD_APPLIED = 'hold_applied', gettext_lazy('Đã áp dụng compliance hold')
+        HOLD_RELEASED = 'hold_released', gettext_lazy('Đã gỡ compliance hold')
+        SENSITIVE_VIEWED = 'sensitive_viewed', gettext_lazy('Đã xem dữ liệu nhạy cảm')
+        TAX_LOOKUP_REFRESHED = 'tax_lookup_refreshed', gettext_lazy('Đã tra cứu lại mã số thuế')
+        WITHDRAWN_BY_UNLINK = 'withdrawn_by_unlink', gettext_lazy('Đã rút do gỡ liên kết công ty')
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     verification_case = models.ForeignKey(
@@ -158,10 +162,10 @@ class EmployerVerificationNotification(models.Model):
     """Transactional outbox for recruiter-facing verification results."""
 
     class Status(models.TextChoices):
-        PENDING = 'pending', 'Chờ gửi'
-        SENDING = 'sending', 'Đang gửi'
-        SENT = 'sent', 'Đã gửi'
-        FAILED = 'failed', 'Gửi thất bại'
+        PENDING = 'pending', gettext_lazy('Chờ gửi')
+        SENDING = 'sending', gettext_lazy('Đang gửi')
+        SENT = 'sent', gettext_lazy('Đã gửi')
+        FAILED = 'failed', gettext_lazy('Gửi thất bại')
 
     verification_case = models.ForeignKey(
         EmployerVerificationCase,

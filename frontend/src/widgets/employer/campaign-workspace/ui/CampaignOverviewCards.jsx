@@ -1,4 +1,5 @@
 import HelpTip from '@/shared/ui/HelpTip'
+import { explainLabel } from './campaign-overview-options'
 
 // Chỉ số trong một dải chung (khung ở .cw-metrics); màu chỉ dùng cho con số.
 export function CampaignMetric({ icon: Icon, label, value, hint, help, tone = 'slate' }) {
@@ -6,7 +7,7 @@ export function CampaignMetric({ icon: Icon, label, value, hint, help, tone = 's
     <article className={`cw-metric is-${tone}`}>
       <p className="cw-metric__label">
         <Icon aria-hidden /> {label}
-        {help && <HelpTip label={`Giải thích ${label.toLowerCase()}`}>{help}</HelpTip>}
+        {help && <HelpTip label={explainLabel(label)}>{help}</HelpTip>}
       </p>
       <strong className="cw-metric__value">{value}</strong>
       {hint && <span className="cw-metric__hint">{hint}</span>}

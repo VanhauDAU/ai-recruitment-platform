@@ -1,5 +1,7 @@
 """Request/response contracts of the impact-preview + confirm account actions."""
 
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 from rest_framework import serializers
 
 from ...models import (
@@ -57,13 +59,13 @@ class AccountStatusImpactSerializer(serializers.Serializer):
             raise serializers.ValidationError(
                 {
                     'enforcement_evidence': (
-                        'Bằng chứng xử lý cần mô tả cụ thể và có ít nhất 20 ký tự.'
+                        _('Bằng chứng xử lý cần mô tả cụ thể và có ít nhất 20 ký tự.')
                     )
                 }
             )
         if attrs['status'] == User.Status.BANNED and not attrs.get('violation_category'):
             raise serializers.ValidationError(
-                {'violation_category': 'Chọn nhóm vi phạm khi cấm tài khoản.'}
+                {'violation_category': _('Chọn nhóm vi phạm khi cấm tài khoản.')}
             )
         return attrs
 
@@ -154,8 +156,8 @@ class AccountRecoverySerializer(ReasonSerializer):
         max_length=500,
         trim_whitespace=True,
         error_messages={
-            'min_length': 'Bằng chứng xác minh cần có ít nhất 20 ký tự.',
-            'max_length': 'Bằng chứng xác minh không được vượt quá 500 ký tự.',
+            'min_length': gettext_lazy('Bằng chứng xác minh cần có ít nhất 20 ký tự.'),
+            'max_length': gettext_lazy('Bằng chứng xác minh không được vượt quá 500 ký tự.'),
         },
     )
 
@@ -168,13 +170,13 @@ class AccountEmailImpactSerializer(AccountRecoverySerializer):
         value = User.objects.normalize_email(value)
         user = self.context['target_user']
         if value == User.objects.normalize_email(user.email):
-            raise serializers.ValidationError('Email mới trùng với email hiện tại.')
+            raise serializers.ValidationError(_('Email mới trùng với email hiện tại.'))
         if User.objects.email_claimed_for_role(
             value,
             user.role,
             exclude_user_id=user.pk,
         ):
-            raise serializers.ValidationError('Email này đã thuộc một tài khoản cùng loại.')
+            raise serializers.ValidationError(_('Email này đã thuộc một tài khoản cùng loại.'))
         return value
 
 

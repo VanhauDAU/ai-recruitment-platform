@@ -5,6 +5,7 @@ import secrets
 
 import idna
 from django.conf import settings
+from django.utils.translation import gettext
 
 from apps.employers.domain.company_email import PUBLIC_EMAIL_DOMAINS
 
@@ -26,7 +27,7 @@ def _offline_tld_extract(domain):
     except ImportError as error:
         raise DomainClaimError(
             'domain_validation_unavailable',
-            'Dịch vụ kiểm tra hậu tố tên miền chưa sẵn sàng.',
+            gettext('Dịch vụ kiểm tra hậu tố tên miền chưa sẵn sàng.'),
         ) from error
     result = tldextract.TLDExtract(suffix_list_urls=())(domain)
     return bool(result.domain and result.suffix)
@@ -37,19 +38,21 @@ def normalize_company_domain(value):
 
     candidate = (value or '').strip().rstrip('.').lower()
     if not candidate or '@' in candidate or candidate.startswith('*.'):
-        raise DomainClaimError('invalid_domain', 'Tên miền không hợp lệ.')
+        raise DomainClaimError('invalid_domain', gettext('Tên miền không hợp lệ.'))
     try:
         normalized = idna.encode(candidate, uts46=True, std3_rules=True).decode('ascii')
     except (idna.IDNAError, UnicodeError) as error:
-        raise DomainClaimError('invalid_domain', 'Tên miền không hợp lệ.') from error
+        raise DomainClaimError('invalid_domain', gettext('Tên miền không hợp lệ.')) from error
     if len(normalized) > 253 or any(len(label) > 63 for label in normalized.split('.')):
-        raise DomainClaimError('invalid_domain', 'Tên miền không hợp lệ.')
+        raise DomainClaimError('invalid_domain', gettext('Tên miền không hợp lệ.'))
     if not _offline_tld_extract(normalized):
-        raise DomainClaimError('public_suffix', 'Tên miền phải có hậu tố công khai hợp lệ.')
+        raise DomainClaimError(
+            'public_suffix', gettext('Tên miền phải có hậu tố công khai hợp lệ.')
+        )
     if normalized in PUBLIC_EMAIL_DOMAINS:
         raise DomainClaimError(
             'public_email_domain',
-            'Không thể xác minh tên miền của dịch vụ email công cộng.',
+            gettext('Không thể xác minh tên miền của dịch vụ email công cộng.'),
         )
     return normalized
 
@@ -58,11 +61,11 @@ def verified_email_domain(user):
     if not user.email_verified:
         raise DomainClaimError(
             'email_not_verified',
-            'Hãy xác thực email công việc trước khi xác minh tên miền.',
+            gettext('Hãy xác thực email công việc trước khi xác minh tên miền.'),
         )
     _, separator, raw_domain = (user.email or '').strip().rpartition('@')
     if not separator:
-        raise DomainClaimError('invalid_email', 'Email hiện tại không hợp lệ.')
+        raise DomainClaimError('invalid_email', gettext('Email hiện tại không hợp lệ.'))
     return normalize_company_domain(raw_domain)
 
 
@@ -92,14 +95,16 @@ def dns_txt_values(name):
     except ImportError as error:
         raise DomainClaimError(
             'dns_unavailable',
-            'Dịch vụ kiểm tra DNS chưa sẵn sàng.',
+            gettext('Dịch vụ kiểm tra DNS chưa sẵn sàng.'),
         ) from error
     resolver = dns.resolver.Resolver(configure=True)
     resolver.lifetime = settings.EMPLOYER_DOMAIN_DNS_TIMEOUT_SECONDS
     try:
         answers = resolver.resolve(name, 'TXT')
     except (dns.exception.DNSException, OSError) as error:
-        raise DomainClaimError('dns_check_failed', 'Chưa tìm thấy bản ghi TXT hợp lệ.') from error
+        raise DomainClaimError(
+            'dns_check_failed', gettext('Chưa tìm thấy bản ghi TXT hợp lệ.')
+        ) from error
     values = set()
     for answer in answers:
         strings = getattr(answer, 'strings', None)

@@ -28,7 +28,7 @@ if [ -x backend/venv/bin/python ] \
   run_be() { docker compose exec -T backend python "$@"; }
   run_ruff() { (cd backend && ./venv/bin/ruff "$@"); }
   run_lint_imports() { (cd backend && ./venv/bin/lint-imports "$@"); }
-  run_pytest() { docker compose exec -T backend pytest "$@"; }
+  run_pytest() { docker compose exec -T backend pytest --ds=config.settings.test "$@"; }
 elif [ -x backend/venv/bin/python ]; then
   be_python="./venv/bin/python"
   run_be() { (cd backend && ./venv/bin/python "$@"); }
@@ -40,7 +40,7 @@ elif docker compose version >/dev/null 2>&1 && docker ps >/dev/null 2>&1; then
   run_be() { docker compose run --rm backend python "$@"; }
   run_ruff() { docker compose run --rm backend ruff "$@"; }
   run_lint_imports() { docker compose run --rm backend lint-imports "$@"; }
-  run_pytest() { docker compose run --rm backend pytest "$@"; }
+  run_pytest() { docker compose run --rm backend pytest --ds=config.settings.test "$@"; }
 else
   echo "Không tìm thấy backend/venv và Docker daemon không chạy — cần một trong hai." >&2
   exit 1

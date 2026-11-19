@@ -1,9 +1,10 @@
 import { Tooltip } from 'antd'
+import { m } from '@/shared/config/i18n'
 
 const JOB_STATUS_SUMMARIES = [
-  { key: 'active_job_count', label: 'Đang tuyển', className: 'bg-emerald-50 text-emerald-700' },
-  { key: 'draft_job_count', label: 'Nháp', className: 'bg-slate-100 text-slate-600' },
-  { key: 'expired_job_count', label: 'Hết hạn', className: 'bg-orange-50 text-orange-700' },
+  { key: 'active_job_count', label: m.employer_campaign_jobs_status_active(), className: 'bg-emerald-50 text-emerald-700' },
+  { key: 'draft_job_count', label: m.employer_campaign_jobs_status_draft(), className: 'bg-slate-100 text-slate-600' },
+  { key: 'expired_job_count', label: m.employer_campaign_jobs_expired(), className: 'bg-orange-50 text-orange-700' },
 ]
 
 function count(value) {
@@ -17,10 +18,10 @@ export default function CampaignJobsSummary({ campaign }) {
 
   return (
     <div className="min-w-0" data-testid={`campaign-jobs-${campaign.public_id}`}>
-      <strong className="block text-sm text-slate-800">{total ? `${total} tin tuyển dụng` : 'Chưa có tin'}</strong>
+      <strong className="block text-sm text-slate-800">{total ? m.employer_campaign_jobs_summary_total({ count: total }) : m.employer_campaign_hero_no_jobs()}</strong>
       {total > 0 && (
-        <Tooltip title="Tổng số lượng tuyển của các tin trong chiến dịch">
-          <span className="text-xs text-slate-500">Cần tuyển {count(campaign.headcount)} người</span>
+        <Tooltip title={m.employer_campaign_jobs_summary_headcount_tooltip()}>
+          <span className="text-xs text-slate-500">{m.employer_campaign_jobs_summary_headcount({ count: count(campaign.headcount) })}</span>
         </Tooltip>
       )}
       {statuses.length > 0 && (

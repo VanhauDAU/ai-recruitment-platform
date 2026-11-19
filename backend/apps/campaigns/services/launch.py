@@ -2,6 +2,7 @@
 
 from django.db import transaction
 from django.utils import timezone
+from django.utils.translation import gettext as _
 from rest_framework.exceptions import ValidationError
 
 from apps.campaigns.models import CampaignActivity, RecruitmentCampaign
@@ -28,16 +29,16 @@ Status = RecruitmentCampaign.Status
 
 def _lock_owned_campaign(campaign, user):
     """Lock in the documented order: user and recruiter, then the campaign."""
-    recruiter, _ = ensure_recruiter_job_workspace(user, lock=True)
+    recruiter, _readiness = ensure_recruiter_job_workspace(user, lock=True)
     campaign = RecruitmentCampaign.objects.select_for_update(of=('self',)).get(pk=campaign.pk)
     if campaign.owner_id != recruiter.pk:
-        raise ValidationError('Bạn không có quyền thiết lập chiến dịch này.')
+        raise ValidationError(_('Bạn không có quyền thiết lập chiến dịch này.'))
     if campaign.policy_hold:
         raise ValidationError(
-            {'code': 'RECRUITMENT_HOLD_ACTIVE', 'detail': 'Chiến dịch đang bị policy hold.'}
+            {'code': 'RECRUITMENT_HOLD_ACTIVE', 'detail': _('Chiến dịch đang bị policy hold.')}
         )
     if campaign.status not in LAUNCHABLE_STATUSES:
-        raise ValidationError({'status': 'Chiến dịch đã chạy, không còn ở bước thiết lập.'})
+        raise ValidationError({'status': _('Chiến dịch đã chạy, không còn ở bước thiết lập.')})
     return campaign
 
 
@@ -46,7 +47,9 @@ def _resolve(queryset, public_ids, label):
     jobs = list(queryset.filter(public_id__in=public_ids))
     missing = set(public_ids) - {job.public_id for job in jobs}
     if missing:
-        raise ValidationError({label: f'Không dùng được các tin: {", ".join(sorted(missing))}.'})
+        raise ValidationError(
+            {label: _('Không dùng được các tin: %(jobs)s.') % {'jobs': ', '.join(sorted(missing))}}
+        )
     return jobs
 
 
@@ -55,7 +58,7 @@ def save_launch_selection(*, campaign, user, publish_job_ids, attach_job_ids):
     """Replace which jobs the launch publishes or attaches."""
     campaign = _lock_owned_campaign(campaign, user)
     if set(publish_job_ids) & set(attach_job_ids):
-        raise ValidationError({'detail': 'Một tin chỉ được chọn một thao tác.'})
+        raise ValidationError({'detail': _('Một tin chỉ được chọn một thao tác.')})
     publish_jobs = _resolve(
         Job.objects.filter(posted_by=user, campaign=campaign, status=Job.Status.DRAFT),
         publish_job_ids,
@@ -64,7 +67,7 @@ def save_launch_selection(*, campaign, user, publish_job_ids, attach_job_ids):
     attach_jobs = _resolve(
         attachable_jobs_queryset(user, campaign), attach_job_ids, 'attach_job_ids'
     )
-    plan, _ = CampaignLaunchPlan.objects.get_or_create(campaign=campaign)
+    plan, _created = CampaignLaunchPlan.objects.get_or_create(campaign=campaign)
     plan.jobs.all().delete()
     CampaignLaunchJob.objects.bulk_create(
         [
@@ -83,7 +86,7 @@ def _ensure_ready(campaign, user, *, scheduled, today=None):
         raise ValidationError(
             {
                 'code': 'CAMPAIGN_NOT_READY',
-                'detail': 'Chiến dịch chưa đủ điều kiện kích hoạt.',
+                'detail': _('Chiến dịch chưa đủ điều kiện kích hoạt.'),
                 'items': [item for item in check['items'] if not item['ok']],
                 'job_problems': check['job_problems'],
             }
@@ -95,7 +98,9 @@ def _ensure_statement(version):
         raise ValidationError(
             {
                 'code': 'JOB_RESPONSIBILITY_REQUIRED',
-                'detail': 'Xác nhận cam kết chịu trách nhiệm về nội dung tin trước khi kích hoạt.',
+                'detail': _(
+                    'Xác nhận cam kết chịu trách nhiệm về nội dung tin trước khi kích hoạt.'
+                ),
             }
         )
 
@@ -128,7 +133,7 @@ def execute_launch(campaign, *, user, actor, accepted_statement_version, today=N
         raise ValidationError(
             {
                 'code': 'CAMPAIGN_LAUNCH_FAILED',
-                'detail': 'Không kích hoạt được vì có tin chưa đăng hoặc gắn được.',
+                'detail': _('Không kích hoạt được vì có tin chưa đăng hoặc gắn được.'),
                 'jobs': failures,
             }
         )
@@ -142,7 +147,7 @@ def launch_campaign(*, campaign, user, mode, accepted_statement_version):
     """Activate now, or schedule activation for the campaign's start date."""
     campaign = _lock_owned_campaign(campaign, user)
     _ensure_statement(accepted_statement_version)
-    plan, _ = CampaignLaunchPlan.objects.get_or_create(campaign=campaign)
+    plan, _created = CampaignLaunchPlan.objects.get_or_create(campaign=campaign)
     plan.accepted_statement_version = accepted_statement_version
     plan.accepted_at = timezone.now()
     plan.accepted_by = user

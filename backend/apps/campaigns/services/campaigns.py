@@ -1,6 +1,7 @@
 from django.db import transaction
 from django.db.models import Max
 from django.utils import timezone
+from django.utils.translation import gettext as _
 from rest_framework.exceptions import ValidationError
 
 from apps.campaigns.models import CampaignActivity, RecruitmentCampaign
@@ -10,7 +11,7 @@ from common.vietnam_time import vietnam_today
 
 
 def _recruiter_for(user):
-    recruiter, _ = ensure_recruiter_job_workspace(user, lock=True)
+    recruiter, _readiness = ensure_recruiter_job_workspace(user, lock=True)
     return recruiter
 
 
@@ -19,7 +20,7 @@ def _ensure_campaign_not_held(campaign):
         raise ValidationError(
             {
                 'code': 'RECRUITMENT_HOLD_ACTIVE',
-                'detail': 'Chiến dịch đang bị policy hold.',
+                'detail': _('Chiến dịch đang bị policy hold.'),
             }
         )
 
@@ -99,7 +100,9 @@ def _ensure_resumable(campaign):
     ):
         raise ValidationError(
             {
-                'target_date': 'Chiến dịch đã qua ngày kết thúc. Gia hạn ngày kết thúc trước khi mở lại.'
+                'target_date': _(
+                    'Chiến dịch đã qua ngày kết thúc. Gia hạn ngày kết thúc trước khi mở lại.'
+                )
             }
         )
 
@@ -129,17 +132,17 @@ def create_campaign(*, user, activate=False, **data):
 def _validate_goal_update(campaign, data):
     changed = {field for field, value in data.items() if getattr(campaign, field) != value}
     if campaign.is_terminal and changed:
-        raise ValidationError({'detail': 'Chiến dịch đã kết thúc, không thể chỉnh sửa.'})
+        raise ValidationError({'detail': _('Chiến dịch đã kết thúc, không thể chỉnh sửa.')})
     if 'start_date' in changed and campaign.status not in {Status.DRAFT, Status.SCHEDULED}:
         raise ValidationError(
-            {'start_date': 'Chỉ đổi được ngày bắt đầu trước khi chiến dịch chạy.'}
+            {'start_date': _('Chỉ đổi được ngày bắt đầu trước khi chiến dịch chạy.')}
         )
     start_date = data.get('start_date', campaign.start_date)
     if campaign.status == Status.SCHEDULED and (
         start_date is None or start_date <= vietnam_today()
     ):
         raise ValidationError(
-            {'start_date': 'Chiến dịch đã lên lịch cần ngày bắt đầu sau hôm nay.'}
+            {'start_date': _('Chiến dịch đã lên lịch cần ngày bắt đầu sau hôm nay.')}
         )
     target_date = data.get('target_date', campaign.target_date)
     if 'target_date' in changed and target_date is not None:
@@ -151,10 +154,11 @@ def _validate_goal_update(campaign, data):
         if latest_deadline and target_date < latest_deadline:
             raise ValidationError(
                 {
-                    'target_date': (
+                    'target_date': _(
                         'Ngày kết thúc không được trước hạn nhận hồ sơ của tin đang tuyển '
-                        f'({latest_deadline:%d/%m/%Y}).'
+                        '(%(deadline)s).'
                     )
+                    % {'deadline': f'{latest_deadline:%d/%m/%Y}'}
                 }
             )
     return sorted(changed)
@@ -165,7 +169,7 @@ def update_campaign(*, campaign, user, **data):
     recruiter = _recruiter_for(user)
     campaign = RecruitmentCampaign.objects.select_for_update(of=('self',)).get(pk=campaign.pk)
     if campaign.owner_id != recruiter.id:
-        raise ValidationError('Bạn không có quyền chỉnh sửa chiến dịch này.')
+        raise ValidationError(_('Bạn không có quyền chỉnh sửa chiến dịch này.'))
     _ensure_campaign_not_held(campaign)
     changed_fields = _validate_goal_update(campaign, data)
     if not changed_fields:
@@ -190,7 +194,7 @@ def change_campaign_status(*, campaign, user, status, confirmation_code=''):
     recruiter = _recruiter_for(user)
     campaign = RecruitmentCampaign.objects.select_for_update(of=('self',)).get(pk=campaign.pk)
     if campaign.owner_id != recruiter.id:
-        raise ValidationError('Bạn không có quyền đổi trạng thái chiến dịch này.')
+        raise ValidationError(_('Bạn không có quyền đổi trạng thái chiến dịch này.'))
     _ensure_campaign_not_held(campaign)
     if status == campaign.status:
         return campaign
@@ -198,13 +202,13 @@ def change_campaign_status(*, campaign, user, status, confirmation_code=''):
         raise ValidationError(
             {
                 'code': 'CAMPAIGN_LAUNCH_REQUIRED',
-                'detail': 'Kích hoạt chiến dịch qua bước Xem lại & Kích hoạt.',
+                'detail': _('Kích hoạt chiến dịch qua bước Xem lại & Kích hoạt.'),
             }
         )
     if status == Status.PAUSED and confirmation_code != campaign.public_id:
-        raise ValidationError({'confirmation_code': 'Nhập đúng mã chiến dịch để xác nhận dừng.'})
+        raise ValidationError({'confirmation_code': _('Nhập đúng mã chiến dịch để xác nhận dừng.')})
     if status not in USER_STATUS_TRANSITIONS[campaign.status]:
-        raise ValidationError({'status': 'Không thể chuyển sang trạng thái đã chọn.'})
+        raise ValidationError({'status': _('Không thể chuyển sang trạng thái đã chọn.')})
     if status == Status.ACTIVE:
         _ensure_resumable(campaign)
     return _set_status(campaign, status, actor=user, ended_by=RecruitmentCampaign.EndedBy.USER)
@@ -217,7 +221,7 @@ def apply_system_campaign_status(*, campaign, status, actor=None, metadata=None)
     """
     _ensure_campaign_not_held(campaign)
     if status not in SYSTEM_STATUS_TRANSITIONS.get(campaign.status, set()):
-        raise ValidationError({'status': 'Không thể chuyển sang trạng thái đã chọn.'})
+        raise ValidationError({'status': _('Không thể chuyển sang trạng thái đã chọn.')})
     return _set_status(
         campaign,
         status,

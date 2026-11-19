@@ -6,9 +6,12 @@ from django.conf import settings
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.utils.html import escape
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 from rest_framework.exceptions import ValidationError as DRFValidationError
 
 from apps.accounts.services.token_cache import atomic_pop
+from common.i18n import recipient_language
 
 from ..models import AuthEmailJob, User
 from .mailing import frontend_link, send_html_email, site_setting
@@ -18,7 +21,7 @@ from .tokens import revoke_refresh_tokens
 _TOKEN_PREFIX = 'password_reset:token:'
 _LATEST_PREFIX = 'password_reset:latest:'
 _COOLDOWN_PREFIX = 'password_reset:cooldown:'
-_INVALID_LINK = 'Liên kết đặt lại mật khẩu không hợp lệ hoặc đã hết hạn.'
+_INVALID_LINK = gettext_lazy('Liên kết đặt lại mật khẩu không hợp lệ hoặc đã hết hạn.')
 
 
 def _token_key(token):
@@ -174,7 +177,7 @@ def reset_password(token, password, portal=None):
 def send_password_reset_email(user, *, expected_email=None, expected_auth_revision=None):
     if not is_reset_eligible(user):
         raise ValidationError(
-            'Không thể gửi liên kết đặt lại mật khẩu cho tài khoản không hoạt động.'
+            _('Không thể gửi liên kết đặt lại mật khẩu cho tài khoản không hoạt động.')
         )
 
     recipient = expected_email or user.email
@@ -200,26 +203,58 @@ def send_password_reset_email(user, *, expected_email=None, expected_auth_revisi
         token=token,
         **({'portal': 'admin'} if is_admin else {}),
     )
+    with recipient_language(user):
+        subject, text, html = _password_reset_content(user, recipient, link)
+    send_html_email(subject=subject, text=text, html=html, to=recipient)
+    return token
+
+
+def _password_reset_content(user, recipient, link):
+    is_admin = user.is_admin_role
+    is_employer = user.role == user.Role.EMPLOYER
     site_name = site_setting('site_name', 'ProCV')
     minutes = settings.PASSWORD_RESET_TTL // 60
     name = user.full_name or recipient
     # Nêu rõ cổng: một email có thể có tài khoản Ứng viên và Nhà tuyển dụng riêng,
     # người dùng cần biết mình đang đặt lại mật khẩu cho tài khoản nào.
-    portal_label = 'Quản trị' if is_admin else 'Nhà tuyển dụng' if is_employer else 'Ứng viên'
+    portal_label = (
+        _('Quản trị') if is_admin else _('Nhà tuyển dụng') if is_employer else _('Ứng viên')
+    )
     accent_color = '#0369a1' if is_admin else '#00b14f'
-    subject = f'Đặt lại mật khẩu tài khoản {portal_label} {site_name}'
+    values = {
+        'portal': portal_label,
+        'site_name': site_name,
+        'name': name,
+        'email': recipient,
+        'minutes': minutes,
+    }
+    html_values = {key: escape(str(value)) for key, value in values.items()}
+    validity = _('Liên kết có hiệu lực trong %(minutes)s phút và chỉ dùng được một lần.') % values
+    subject = _('Đặt lại mật khẩu tài khoản %(portal)s %(site_name)s') % values
     text = (
-        f'Xin chào {name},\n\nChúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản {recipient}. '
-        f'Mở liên kết dưới đây để tạo mật khẩu mới:\n{link}\n\nLiên kết có hiệu lực trong '
-        f'{minutes} phút và chỉ dùng được một lần. Nếu bạn không yêu cầu đặt lại mật khẩu, hãy bỏ qua email này.'
+        _('Xin chào %(name)s,') % values
+        + '\n\n'
+        + _('Chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản %(email)s.') % values
+        + ' '
+        + _('Mở liên kết dưới đây để tạo mật khẩu mới:')
+        + f'\n{link}\n\n'
+        + validity
+        + ' '
+        + _('Nếu bạn không yêu cầu đặt lại mật khẩu, hãy bỏ qua email này.')
+    )
+    request_line = (
+        _(
+            'Chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản %(portal)s '
+            '<strong>%(email)s</strong>.'
+        )
+        % html_values
     )
     html = f'''<div style="font-family:Arial,Helvetica,sans-serif;max-width:480px;margin:0 auto;color:#111">
-      <h2 style="color:{accent_color}">Đặt lại mật khẩu tài khoản {portal_label}</h2>
-      <p>Xin chào <strong>{escape(name)}</strong>,</p>
-      <p>Chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản {portal_label} <strong>{escape(recipient)}</strong>.</p>
-      <p style="text-align:center;margin:28px 0"><a href="{link}" style="background:{accent_color};color:#fff;text-decoration:none;padding:12px 28px;border-radius:9999px;font-weight:bold;display:inline-block">Tạo mật khẩu mới</a></p>
-      <p style="font-size:13px;color:#666">Hoặc mở liên kết: <br>{link}</p>
-      <p style="font-size:12px;color:#999">Liên kết có hiệu lực trong {minutes} phút và chỉ dùng được một lần.</p>
+      <h2 style="color:{accent_color}">{_('Đặt lại mật khẩu tài khoản %(portal)s') % html_values}</h2>
+      <p>{_('Xin chào <strong>%(name)s</strong>,') % html_values}</p>
+      <p>{request_line}</p>
+      <p style="text-align:center;margin:28px 0"><a href="{link}" style="background:{accent_color};color:#fff;text-decoration:none;padding:12px 28px;border-radius:9999px;font-weight:bold;display:inline-block">{_('Tạo mật khẩu mới')}</a></p>
+      <p style="font-size:13px;color:#666">{_('Hoặc mở liên kết:')} <br>{link}</p>
+      <p style="font-size:12px;color:#999">{validity}</p>
     </div>'''
-    send_html_email(subject=subject, text=text, html=html, to=recipient)
-    return token
+    return subject, text, html

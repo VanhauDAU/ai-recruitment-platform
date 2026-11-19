@@ -13,15 +13,16 @@ import {
 import { CampaignChannelBoard, useCampaignChannels } from '@/features/employer/campaign/manage-campaign-channels'
 import { CampaignInfoForm } from '@/features/employer/campaign/manage-campaigns'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
+import { m } from '@/shared/config/i18n'
 import { employerAppPath } from '@/shared/config/portals'
 import SetupStepRail from './SetupStepRail'
 import './campaign-setup-wizard.css'
 
 const STEP_INTRO = {
-  goal: ['Thông tin đợt tuyển', 'Đợt tuyển chạy trong bao lâu và dùng bao nhiêu ngân sách. Vị trí, cấp bậc và số người cần tuyển đặt ở từng tin.'],
-  channels: ['Kênh phân phối', 'Mỗi nơi bạn đăng tuyển là một kênh có link và mã QR riêng, để biết kênh nào mang lại hồ sơ. Có thể thêm sau khi kích hoạt.'],
-  jobs: ['Tin tuyển dụng', 'Mỗi tin là một vị trí với cấp bậc và số người cần tuyển riêng. Chỉ tiêu của chiến dịch là tổng số người của các tin.'],
-  launch: ['Kích hoạt', 'Kiểm tra lần cuối rồi cho chiến dịch chạy ngay hoặc theo lịch.'],
+  goal: [m.employer_campaign_setup_goal_title(), m.employer_campaign_setup_goal_intro()],
+  channels: [m.employer_campaign_step_channels(), m.employer_campaign_setup_channels_intro()],
+  jobs: [m.employer_campaign_step_jobs(), m.employer_campaign_setup_jobs_intro()],
+  launch: [m.employer_campaign_step_launch(), m.employer_campaign_setup_launch_intro()],
 }
 
 const NEW_CAMPAIGN = { name: '', status: 'draft', budget_source: 'company', is_continuous: false }
@@ -51,7 +52,7 @@ export default function CampaignSetupWizard({ publicId }) {
   }
   const error = !isNew && (campaignQuery.error || launchQuery.error)
   if (error) {
-    return <Alert className="csw-alert" type="error" showIcon title={getApiErrorMessage(error, 'Không thể tải chiến dịch.')} />
+    return <Alert className="csw-alert" type="error" showIcon title={getApiErrorMessage(error, m.employer_campaign_setup_load_error())} />
   }
   const campaign = isNew ? NEW_CAMPAIGN : campaignQuery.data
   const overview = isNew ? EMPTY_OVERVIEW : launchQuery.data
@@ -61,11 +62,11 @@ export default function CampaignSetupWizard({ publicId }) {
   return (
     <section className="csw">
       <Link to={workspacePath} className="csw-back">
-        <ArrowLeftOutlined aria-hidden /> {isNew ? 'Về danh sách chiến dịch' : 'Về chiến dịch'}
+        <ArrowLeftOutlined aria-hidden /> {isNew ? m.employer_campaign_setup_back_to_list() : m.employer_campaign_setup_back_to_campaign()}
       </Link>
       <header className="csw-head">
-        <p className="csw-head__kicker">{isNew ? 'Chiến dịch mới' : 'Thiết lập chiến dịch'}</p>
-        <h1 className="csw-head__title">{campaign.name || 'Tạo chiến dịch tuyển dụng'}</h1>
+        <p className="csw-head__kicker">{isNew ? m.employer_campaign_setup_kicker_new() : m.employer_campaign_setup_kicker()}</p>
+        <h1 className="csw-head__title">{campaign.name || m.employer_campaign_setup_title_new()}</h1>
         {!isNew && <span className={`csw-status is-${campaign.status}`}>{CAMPAIGN_STATUS_LABELS[campaign.status]}</span>}
       </header>
 
@@ -73,8 +74,8 @@ export default function CampaignSetupWizard({ publicId }) {
         <Alert
           type="info"
           showIcon
-          title="Chiến dịch đã chạy, không còn ở bước thiết lập."
-          action={<Button size="small" onClick={() => navigate(workspacePath)}>Mở chiến dịch</Button>}
+          title={m.employer_campaign_setup_not_in_setup()}
+          action={<Button size="small" onClick={() => navigate(workspacePath)}>{m.employer_campaign_setup_open_campaign()}</Button>}
         />
       ) : (
         <div className="csw-body">
@@ -93,7 +94,7 @@ export default function CampaignSetupWizard({ publicId }) {
             {current === 'goal' && (
               <CampaignInfoForm
                 campaign={campaign}
-                submitLabel={isNew ? 'Tạo và tiếp tục' : 'Lưu và tiếp tục'}
+                submitLabel={isNew ? m.employer_campaign_setup_create_and_continue() : m.employer_campaign_save_and_continue()}
                 onSaved={handleInfoSaved}
               />
             )}
@@ -108,7 +109,7 @@ export default function CampaignSetupWizard({ publicId }) {
               <div className="csw-channels">
                 <CampaignChannelBoard campaign={campaign} />
                 <div className="csw-next">
-                  <Button type="primary" onClick={() => goTo('launch')}>Tiếp tục</Button>
+                  <Button type="primary" onClick={() => goTo('launch')}>{m.employer_campaign_setup_continue()}</Button>
                 </div>
               </div>
             )}

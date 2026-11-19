@@ -8,6 +8,7 @@ import html
 import re
 
 from django.utils.html import strip_tags
+from django.utils.translation import gettext as _
 from rest_framework.exceptions import ValidationError
 
 from ...models import JobAiGeneration
@@ -47,7 +48,7 @@ def sanitize_generation_input(validated_data):
         source_text = sanitize_source_text(validated_data.get('source_text', ''))
         if not source_text:
             raise ValidationError(
-                {'source_text': 'JD không còn nội dung sau khi loại thông tin liên hệ.'}
+                {'source_text': _('JD không còn nội dung sau khi loại thông tin liên hệ.')}
             )
         return {'source_text': source_text}
 
@@ -65,5 +66,5 @@ def sanitize_generation_input(validated_data):
             plain_text(item, max_length=120) for item in brief.get(key, []) if str(item).strip()
         ][:10]
     if not sanitized.get('position'):
-        raise ValidationError({'brief': {'position': 'Nhập vị trí cần tuyển.'}})
+        raise ValidationError({'brief': {'position': _('Nhập vị trí cần tuyển.')}})
     return {'brief': sanitized}

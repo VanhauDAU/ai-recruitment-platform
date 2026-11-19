@@ -9,6 +9,7 @@ from calendar import monthrange
 from django.conf import settings
 from django.db.models import Exists, OuterRef, Q
 from django.utils import timezone
+from django.utils.translation import gettext_lazy
 
 from apps.accounts.models import User
 from apps.accounts.services import is_account_accessible
@@ -38,23 +39,23 @@ TRUST_REPORT_REASONS = (
 BADGE_CRITERIA = (
     (
         'email_domain_verified',
-        'Đã xác thực email tên miền công ty',
+        gettext_lazy('Đã xác thực email tên miền công ty'),
         'verify_company_domain',
     ),
-    ('phone_verified', 'Đã xác thực số điện thoại', 'verify_phone'),
+    ('phone_verified', gettext_lazy('Đã xác thực số điện thoại'), 'verify_phone'),
     (
         'business_doc_approved',
-        'Hồ sơ pháp lý và quyền đại diện đã được duyệt',
+        gettext_lazy('Hồ sơ pháp lý và quyền đại diện đã được duyệt'),
         'complete_legal_verification',
     ),
     (
         'account_age_reached',
-        'Tài khoản nhà tuyển dụng đã đạt tuổi tối thiểu',
+        gettext_lazy('Tài khoản nhà tuyển dụng đã đạt tuổi tối thiểu'),
         'wait_for_account_age',
     ),
     (
         'no_report_history',
-        'Chưa có tin đăng vi phạm được quản trị viên xác nhận',
+        gettext_lazy('Chưa có tin đăng vi phạm được quản trị viên xác nhận'),
         'review_confirmed_reports',
     ),
 )
@@ -249,7 +250,7 @@ def employer_badge_payload(state, *, expose_failures):
     criteria = [
         {
             'key': key,
-            'label': label,
+            'label': str(label),
             'passed': state[key],
             **({'action': action} if expose_failures else {}),
         }

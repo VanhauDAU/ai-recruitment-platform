@@ -3,19 +3,20 @@ import { Form, Input, Modal, Radio, Select } from 'antd'
 import { CAMPAIGN_CHANNEL_KINDS, campaignKeys, createCampaignChannel } from '@/entities/campaign/campaign'
 import { getEmployerJobs } from '@/entities/job/job'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
+import { m } from '@/shared/config/i18n'
 import { message } from '@/shared/lib/toast'
 import ChannelIcon from './ChannelIcon'
 
 const HINTS = {
-  facebook_page: 'ProCV tự đăng',
-  facebook_group: 'Đăng tay, có nội dung soạn sẵn',
-  qr_offline: 'In mã QR lên tờ rơi',
+  facebook_page: m.employer_campaign_channel_hint_facebook_page(),
+  facebook_group: m.employer_campaign_channel_hint_facebook_group(),
+  qr_offline: m.employer_campaign_channel_hint_qr_offline(),
 }
 const kindLabel = (kind) => CAMPAIGN_CHANNEL_KINDS.find((item) => item.value === kind)?.label || ''
 
 function KindPicker({ value, onChange }) {
   return (
-    <div className="ch-kinds" role="radiogroup" aria-label="Loại kênh">
+    <div className="ch-kinds" role="radiogroup" aria-label={m.employer_campaign_add_channel_kind_aria()}>
       {CAMPAIGN_CHANNEL_KINDS.map((kind) => (
         <button
           key={kind.value}
@@ -50,12 +51,12 @@ export default function AddChannelModal({ campaign, open, onClose, onCreated }) 
     onSuccess: (channel) => {
       queryClient.invalidateQueries({ queryKey: campaignKeys.channels(campaign.public_id) })
       queryClient.invalidateQueries({ queryKey: campaignKeys.channelReport(campaign.public_id) })
-      message.success('Đã thêm kênh. Link theo dõi đã sẵn sàng.')
+      message.success(m.employer_campaign_add_channel_success())
       form.resetFields()
       onCreated?.(channel)
       onClose()
     },
-    onError: (error) => message.error(getApiErrorMessage(error, 'Không thể thêm kênh.')),
+    onError: (error) => message.error(getApiErrorMessage(error, m.employer_campaign_add_channel_error())),
   })
 
   return (
@@ -63,9 +64,9 @@ export default function AddChannelModal({ campaign, open, onClose, onCreated }) 
       destroyOnHidden
       open={open}
       width={680}
-      title="Thêm kênh phân phối"
-      okText="Thêm kênh"
-      cancelText="Hủy"
+      title={m.employer_campaign_add_channel_title()}
+      okText={m.employer_campaign_health_action_add_channel()}
+      cancelText={m.employer_campaign_cancel()}
       confirmLoading={mutation.isPending}
       onCancel={onClose}
       onOk={() => form.submit()}
@@ -80,31 +81,31 @@ export default function AddChannelModal({ campaign, open, onClose, onCreated }) 
           if (changed.kind && !form.isFieldTouched('label')) form.setFieldValue('label', kindLabel(changed.kind))
         }}
       >
-        <Form.Item label="Bạn sẽ đăng ở đâu?" name="kind" rules={[{ required: true, message: 'Chọn loại kênh.' }]}>
+        <Form.Item label={m.employer_campaign_add_channel_where()} name="kind" rules={[{ required: true, message: m.employer_campaign_add_channel_kind_required() }]}>
           <KindPicker />
         </Form.Item>
         <Form.Item
-          label="Tên để phân biệt"
+          label={m.employer_campaign_add_channel_label()}
           name="label"
-          extra="Ví dụ: Nhóm IT Hà Nội. Mỗi nơi đăng là một kênh riêng để so sánh hiệu quả."
-          rules={[{ required: true, whitespace: true, message: 'Nhập tên kênh.' }]}
+          extra={m.employer_campaign_add_channel_label_extra()}
+          rules={[{ required: true, whitespace: true, message: m.employer_campaign_add_channel_label_required() }]}
         >
           <Input maxLength={120} />
         </Form.Item>
-        <Form.Item label="Link dẫn tới" name="target">
+        <Form.Item label={m.employer_campaign_add_channel_target()} name="target">
           <Radio.Group
             options={[
-              { value: 'landing', label: 'Trang tuyển dụng của chiến dịch' },
-              { value: 'job', label: 'Một tin cụ thể' },
+              { value: 'landing', label: m.employer_campaign_add_channel_target_landing() },
+              { value: 'job', label: m.employer_campaign_add_channel_target_job() },
             ]}
           />
         </Form.Item>
         {target === 'job' && (
-          <Form.Item label="Tin" name="job" rules={[{ required: true, message: 'Chọn tin.' }]}>
+          <Form.Item label={m.employer_campaign_add_channel_job()} name="job" rules={[{ required: true, message: m.employer_campaign_add_channel_job_required() }]}>
             <Select
               loading={jobsQuery.isLoading}
               options={(jobsQuery.data || []).map((job) => ({ value: job.public_id, label: job.title }))}
-              placeholder="Chọn tin trong chiến dịch"
+              placeholder={m.employer_campaign_add_channel_job_placeholder()}
             />
           </Form.Item>
         )}

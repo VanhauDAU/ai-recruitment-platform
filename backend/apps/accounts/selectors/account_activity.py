@@ -11,6 +11,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 
 from django.db.models import Count, Q
+from django.utils.translation import gettext as _
 
 from apps.employers.models import (
     CompanyDocument,
@@ -33,9 +34,9 @@ def _actor(user, actor, identifier=''):
     if actor is None:
         if identifier:
             return {'type': 'admin', 'label': identifier}
-        return {'type': 'system', 'label': 'Hệ thống'}
+        return {'type': 'system', 'label': _('Hệ thống')}
     if actor.pk == user.pk:
-        return {'type': 'self', 'label': 'Chính tài khoản'}
+        return {'type': 'self', 'label': _('Chính tài khoản')}
     if actor.is_admin_role:
         return {'type': 'admin', 'label': actor.email}
     return {'type': 'member', 'label': actor.full_name or actor.email}
@@ -75,14 +76,14 @@ def _session_entry(user, session):
     return dict(
         category=rules.SECURITY,
         event='login',
-        title=f'Đăng nhập {portal}',
-        summary=' · '.join(part for part in (method, session.device_label) if part),
-        actor={'type': 'self', 'label': 'Chính tài khoản'},
+        title=_('Đăng nhập %(portal)s') % {'portal': portal},
+        summary=' · '.join(str(part) for part in (method, session.device_label) if part),
+        actor={'type': 'self', 'label': _('Chính tài khoản')},
         details=[
-            _detail('Thiết bị', session.device_label),
-            _detail('Địa chỉ IP', session.ip_address),
-            _detail('Phương thức', method),
-            _detail('Đã đăng xuất lúc', session.revoked_at, 'datetime'),
+            _detail(_('Thiết bị'), session.device_label),
+            _detail(_('Địa chỉ IP'), session.ip_address),
+            _detail(_('Phương thức'), method),
+            _detail(_('Đã đăng xuất lúc'), session.revoked_at, 'datetime'),
         ],
     )
 
@@ -113,11 +114,11 @@ def _audit_entry(user, log):
         summary=payload.get('reason', ''),
         actor=_actor(user, log.actor, log.actor_identifier),
         details=[
-            _detail('Lý do', payload.get('reason')),
-            _detail('Số trường đã sửa', len(changed) or None),
-            _detail('Phiên bị thu hồi', revoked),
-            _detail('Email cũ', payload.get('before_email')),
-            _detail('Email mới', payload.get('after_email')),
+            _detail(_('Lý do'), payload.get('reason')),
+            _detail(_('Số trường đã sửa'), len(changed) or None),
+            _detail(_('Phiên bị thu hồi'), revoked),
+            _detail(_('Email cũ'), payload.get('before_email')),
+            _detail(_('Email mới'), payload.get('after_email')),
         ],
     )
 
@@ -128,7 +129,7 @@ def _transitions(user):
 
 def _transition_entry(user, transition):
     title, tone = rules.STATUS_KIND_META.get(
-        transition.kind, ('Đổi trạng thái tài khoản', 'neutral')
+        transition.kind, (_('Đổi trạng thái tài khoản'), 'neutral')
     )
     return dict(
         category=rules.ACCOUNT,
@@ -139,14 +140,14 @@ def _transition_entry(user, transition):
         actor=_actor(user, transition.actor),
         details=[
             _detail(
-                'Trạng thái',
+                _('Trạng thái'),
                 rules.status_change_label(transition.before_status, transition.after_status)
                 if transition.before_status != transition.after_status
                 else None,
             ),
-            _detail('Lý do', transition.reason),
+            _detail(_('Lý do'), transition.reason),
             _detail(
-                'Nhóm vi phạm',
+                _('Nhóm vi phạm'),
                 rules.VIOLATION_CATEGORY_LABELS.get(transition.violation_category),
             ),
         ],
@@ -168,9 +169,9 @@ def _verification_entry(user, event):
         event=event.event_type,
         title=rules.VERIFICATION_EVENT_TITLES.get(event.event_type, event.get_event_type_display()),
         tone=rules.verification_tone(event.event_type),
-        summary=': '.join(part for part in (doc_label, decision) if part),
+        summary=': '.join(str(part) for part in (doc_label, decision) if part),
         actor=_actor(user, event.actor),
-        details=[_detail('Giấy tờ', doc_label), _detail('Lý do', payload.get('reason'))],
+        details=[_detail(_('Giấy tờ'), doc_label), _detail(_('Lý do'), payload.get('reason'))],
     )
 
 
@@ -189,9 +190,9 @@ def _phone_entry(user, event):
         title=title,
         tone=tone,
         actor=(
-            {'type': 'self', 'label': 'Chính tài khoản'}
+            {'type': 'self', 'label': _('Chính tài khoản')}
             if event.event_type == EmployerPhoneVerificationEvent.EventType.VERIFIED
-            else {'type': 'system', 'label': 'Hệ thống'}
+            else {'type': 'system', 'label': _('Hệ thống')}
         ),
     )
 
@@ -210,7 +211,10 @@ def _link_entry(user, event):
         tone=rules.company_link_tone(event.event_type),
         summary=event.reason,
         actor=_actor(user, event.actor),
-        details=[_detail('Công ty', event.company.company_name), _detail('Lý do', event.reason)],
+        details=[
+            _detail(_('Công ty'), event.company.company_name),
+            _detail(_('Lý do'), event.reason),
+        ],
     )
 
 
@@ -232,8 +236,8 @@ def _company_update_entry(user, event):
         summary=event.update_request.company.company_name,
         actor=_actor(user, event.actor),
         details=[
-            _detail('Phiên bản', event.revision_number),
-            _detail('Lý do', payload.get('reason')),
+            _detail(_('Phiên bản'), event.revision_number),
+            _detail(_('Lý do'), payload.get('reason')),
         ],
     )
 

@@ -4,6 +4,7 @@ import logging
 
 from django.conf import settings
 from django.db import transaction
+from django.utils.translation import gettext
 from rest_framework.exceptions import ValidationError
 
 from ...models import (
@@ -94,7 +95,7 @@ def get_or_create_verification_case(recruiter):
         if case.company_id is not None or recruiter.company_id is None:
             workflow_error(
                 'VERIFICATION_COMPANY_RELINK_REQUIRES_REVIEW',
-                'Không thể tự chuyển hồ sơ xác thực sang công ty khác.',
+                gettext('Không thể tự chuyển hồ sơ xác thực sang công ty khác.'),
             )
         case.company = scope.company
         case.status = EmployerVerificationCase.Status.DRAFT

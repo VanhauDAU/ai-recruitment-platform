@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils.translation import gettext_lazy
 
 
 class ApplicationReminder(models.Model):
@@ -9,8 +10,8 @@ class ApplicationReminder(models.Model):
     """
 
     class Source(models.TextChoices):
-        SYSTEM = 'system', 'Hệ thống tự nhắc'
-        CANDIDATE = 'candidate', 'Ứng viên yêu cầu nhắc'
+        SYSTEM = 'system', gettext_lazy('Hệ thống tự nhắc')
+        CANDIDATE = 'candidate', gettext_lazy('Ứng viên yêu cầu nhắc')
 
     application = models.ForeignKey(
         'applications.Application', on_delete=models.CASCADE, related_name='reminders'

@@ -13,20 +13,21 @@ import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router'
 import { employerAppPath } from '@/shared/config/portals'
 import { employerJobApplicationsPath, isJobEditableUnderHold, isJobHeld, jobDisplayTitle } from './job-list-presentation'
+import { m } from '@/shared/config/i18n'
 
 const iconActionClass = 'inline-flex h-8 w-8 items-center justify-center rounded-lg !text-slate-500 transition hover:!bg-slate-100 hover:!text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500'
 
 // The backend refuses edits, extensions and copies while a job is held.
 function primaryAction(job) {
   if (isJobEditableUnderHold(job)) {
-    return { label: 'Sửa theo yêu cầu', icon: <EditOutlined />, to: employerAppPath(`/jobs/${job.public_id}/edit`) }
+    return { label: m.employer_job_list_edit_as_requested(), icon: <EditOutlined />, to: employerAppPath(`/jobs/${job.public_id}/edit`) }
   }
   if (isJobHeld(job)) return null
   if (job.status === 'draft') {
-    return { label: 'Hoàn thiện', icon: <EditOutlined />, to: employerAppPath(`/jobs/${job.public_id}/edit`) }
+    return { label: m.employer_job_list_complete(), icon: <EditOutlined />, to: employerAppPath(`/jobs/${job.public_id}/edit`) }
   }
   if (job.is_expired) {
-    return { label: 'Gia hạn', icon: <SyncOutlined />, to: employerAppPath(`/jobs/${job.public_id}`) }
+    return { label: m.employer_job_list_extend(), icon: <SyncOutlined />, to: employerAppPath(`/jobs/${job.public_id}`) }
   }
   return null
 }
@@ -40,28 +41,28 @@ function menuItems(job, { candidateDataAccess, onDuplicate, closeMenu, queueConf
     {
       key: 'detail',
       icon: <ArrowRightOutlined />,
-      label: <Link to={employerAppPath(`/jobs/${job.public_id}`)}>Xem chi tiết</Link>,
+      label: <Link to={employerAppPath(`/jobs/${job.public_id}`)}>{m.employer_job_list_view_detail()}</Link>,
     },
   ]
   if (candidateDataAccess && job.application_count > 0) {
     items.push({
       key: 'applications',
       icon: <TeamOutlined />,
-      label: <Link to={employerJobApplicationsPath(job)}>Xem hồ sơ ứng tuyển</Link>,
+      label: <Link to={employerJobApplicationsPath(job)}>{m.employer_job_list_view_applications()}</Link>,
     })
   }
   if (canEdit(job)) {
     items.push({
       key: 'edit',
       icon: <EditOutlined />,
-      label: <Link to={employerAppPath(`/jobs/${job.public_id}/edit`)}>Chỉnh sửa tin</Link>,
+      label: <Link to={employerAppPath(`/jobs/${job.public_id}/edit`)}>{m.employer_job_list_edit()}</Link>,
     })
   }
   if (!isJobHeld(job)) {
     items.push({
       key: 'duplicate',
       icon: <CopyOutlined />,
-      label: 'Sao chép thành bản nháp',
+      label: m.employer_job_list_duplicate(),
       onClick: () => {
         closeMenu()
         onDuplicate(job.public_id)
@@ -73,20 +74,20 @@ function menuItems(job, { candidateDataAccess, onDuplicate, closeMenu, queueConf
       key: 'close',
       danger: true,
       icon: <StopOutlined />,
-      label: 'Ngừng tuyển',
+      label: m.employer_job_detail_stop_hiring(),
       onClick: () => queueConfirmation({
-        cancelText: 'Đóng',
-        confirmText: 'Ngừng tuyển',
+        cancelText: m.employer_job_detail_close(),
+        confirmText: m.employer_job_detail_stop_hiring(),
         danger: true,
         description: (
           <>
-            Bạn có chắc muốn ngừng tuyển vị trí <strong>{jobTitle}</strong> không?
+            {m.employer_job_detail_stop_hiring_before()}<strong>{jobTitle}</strong>{m.employer_job_detail_stop_hiring_after()}
             <br />
-            Tin sẽ ngừng hiển thị với ứng viên.
+            {m.employer_job_detail_stop_hiring_note()}
           </>
         ),
         onConfirm: () => onClose(job.public_id),
-        title: 'Ngừng tuyển',
+        title: m.employer_job_detail_stop_hiring(),
       }),
     })
   }
@@ -95,20 +96,20 @@ function menuItems(job, { candidateDataAccess, onDuplicate, closeMenu, queueConf
       key: 'delete',
       danger: true,
       icon: <DeleteOutlined />,
-      label: 'Xóa bản nháp',
+      label: m.employer_job_list_delete_draft(),
       onClick: () => queueConfirmation({
-        cancelText: 'Đóng',
-        confirmText: 'Xóa bản nháp',
+        cancelText: m.employer_job_detail_close(),
+        confirmText: m.employer_job_list_delete_draft(),
         danger: true,
         description: (
           <>
-            Bạn có chắc muốn xóa bản nháp <strong>{jobTitle}</strong> không?
+            {m.employer_job_list_delete_draft_before()}<strong>{jobTitle}</strong>{m.employer_job_list_delete_draft_after()}
             <br />
-            Bản nháp sẽ bị xóa vĩnh viễn và không thể hoàn tác.
+            {m.employer_job_list_delete_draft_note()}
           </>
         ),
         onConfirm: () => onDelete(job.public_id),
-        title: 'Xóa bản nháp',
+        title: m.employer_job_list_delete_draft(),
       }),
     })
   }
@@ -152,15 +153,15 @@ export default function JobListActions({
           className="pointer-events-none hidden items-center gap-0.5 opacity-0 transition-opacity duration-150 lg:flex lg:group-hover:pointer-events-auto lg:group-hover:opacity-100 lg:group-focus-within:pointer-events-auto lg:group-focus-within:opacity-100"
         >
           {candidateDataAccess && job.application_count > 0 && (
-            <Tooltip title="Xem hồ sơ ứng tuyển">
-              <Link aria-label="Xem hồ sơ ứng tuyển" className={iconActionClass} to={employerJobApplicationsPath(job)}>
+            <Tooltip title={m.employer_job_list_view_applications()}>
+              <Link aria-label={m.employer_job_list_view_applications()} className={iconActionClass} to={employerJobApplicationsPath(job)}>
                 <TeamOutlined />
               </Link>
             </Tooltip>
           )}
           {canEdit(job) && (
-            <Tooltip title="Chỉnh sửa tin">
-              <Link aria-label="Chỉnh sửa tin" className={iconActionClass} to={employerAppPath(`/jobs/${job.public_id}/edit`)}>
+            <Tooltip title={m.employer_job_list_edit()}>
+              <Link aria-label={m.employer_job_list_edit()} className={iconActionClass} to={employerAppPath(`/jobs/${job.public_id}/edit`)}>
                 <EditOutlined />
               </Link>
             </Tooltip>
@@ -185,7 +186,7 @@ export default function JobListActions({
       >
         <Button
           type="text"
-          aria-label={`Mở thao tác cho ${jobDisplayTitle(job)}`}
+          aria-label={m.employer_job_list_more_actions({ title: jobDisplayTitle(job) })}
           className="!h-8 !w-8 !rounded-lg !p-0 !text-slate-500 hover:!bg-slate-100 hover:!text-slate-900"
           icon={<MoreOutlined />}
           loading={busy}

@@ -1,5 +1,6 @@
 import { QuestionCircleOutlined } from '@ant-design/icons'
 import { Tooltip } from 'antd'
+import { m } from '@/shared/config/i18n'
 
 const BUTTON_STYLE = {
   display: 'inline-flex',
@@ -16,7 +17,7 @@ const BUTTON_STYLE = {
 }
 
 // Icon "?" cạnh một chỉ số: rê chuột hoặc focus bằng bàn phím để đọc giải thích.
-export default function HelpTip({ children, label = 'Giải thích' }) {
+export default function HelpTip({ children, label = m.ui_help_tip_label() }) {
   return (
     <Tooltip title={children} styles={{ root: { maxWidth: 320 } }}>
       <button type="button" style={BUTTON_STYLE} aria-label={label} onClick={(event) => event.stopPropagation()}>

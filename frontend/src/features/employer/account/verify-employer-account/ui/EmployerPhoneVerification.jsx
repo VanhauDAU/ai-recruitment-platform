@@ -27,6 +27,7 @@ import { message } from '@/shared/lib/toast'
 import { getPasswordSetupFromPhoneUrl } from '../model/phone-verification-navigation'
 import { isVietnameseMobile } from '../model/vietnamese-mobile'
 import EmployerPhoneChallengeForm from './EmployerPhoneChallengeForm'
+import { m } from '@/shared/config/i18n'
 
 const BANNER_SRC = '/images/employer/phone-verify-banner.png'
 const PASSWORD_SETTINGS_FROM_PHONE_URL = getPasswordSetupFromPhoneUrl(
@@ -38,15 +39,15 @@ const ACTIVE_DISPATCH_STATES = new Set(['queued', 'dispatching', 'retry_pending'
 const BENEFITS = [
   {
     icon: SafetyCertificateOutlined,
-    text: 'Tăng cường bảo mật tài khoản nhà tuyển dụng, chống giả mạo và chiếm quyền sử dụng.',
+    text: m.employer_account_phone_benefit_security(),
   },
   {
     icon: RiseOutlined,
-    text: 'Nâng cao mức độ tin cậy của thương hiệu tuyển dụng với ứng viên.',
+    text: m.employer_account_phone_benefit_trust(),
   },
   {
     icon: CustomerServiceOutlined,
-    text: 'Giúp đội ngũ hỗ trợ xác minh chủ tài khoản nhanh hơn khi có sự cố.',
+    text: m.employer_account_phone_benefit_support(),
   },
 ]
 
@@ -54,7 +55,7 @@ function VerificationBanner() {
   return (
     <img
       src={BANNER_SRC}
-      alt="Xác thực số điện thoại nhà tuyển dụng"
+      alt={m.employer_account_phone_banner_alt()}
       className="block w-full"
       loading="lazy"
     />
@@ -99,17 +100,17 @@ export default function EmployerPhoneVerification() {
       setPasswordOpen(false)
       passwordForm.resetFields()
       form.setFieldValue('code', '')
-      message.success('Yêu cầu gửi mã SMS đã được tiếp nhận.')
+      message.success(m.employer_account_phone_send_accepted())
     },
-    onError: (error) => message.error(getApiErrorMessage(error, 'Không thể gửi mã SMS.')),
+    onError: (error) => message.error(getApiErrorMessage(error, m.employer_account_phone_send_failed())),
   })
   const verifyMutation = useMutation({
     mutationFn: ({ code }) => verifyEmployerPhoneOtp(challenge.public_id, code),
     onSuccess: async () => {
       message.success(
         flowMode === 'phone_change'
-          ? 'Số điện thoại mới đã được xác thực.'
-          : 'Số điện thoại đã được xác thực.',
+          ? m.employer_account_phone_new_verified()
+          : m.employer_account_phone_verified_toast(),
       )
       // Load the verified state first: resetting the flow before the profile
       // refreshes showed the empty verification form again for a moment.
@@ -122,7 +123,7 @@ export default function EmployerPhoneVerification() {
       setChallenge(null)
       setFlowMode(null)
     },
-    onError: (error) => message.error(getApiErrorMessage(error, 'Mã xác thực không hợp lệ.')),
+    onError: (error) => message.error(getApiErrorMessage(error, m.employer_account_phone_invalid_code())),
   })
 
   const submitPassword = async () => {
@@ -153,8 +154,8 @@ export default function EmployerPhoneVerification() {
           <Alert
             type="error"
             showIcon
-            message="Không thể tải trạng thái xác thực"
-            action={<Button onClick={() => profileQuery.refetch()}>Thử lại</Button>}
+            message={m.employer_account_phone_load_failed()}
+            action={<Button onClick={() => profileQuery.refetch()}>{m.employer_account_domain_retry()}</Button>}
           />
         </div>
       </>
@@ -172,11 +173,11 @@ export default function EmployerPhoneVerification() {
           <Result
             status="success"
             icon={<CheckCircleFilled className="text-emerald-500" />}
-            title="Số điện thoại đã được xác thực"
+            title={m.employer_account_phone_verified_title()}
             subTitle={verifiedPhone}
             extra={[
               <Link key="continue" to={EMPLOYER_ACCOUNT_VERIFY_URL}>
-                <Button type="primary">Tiếp tục xác thực tài khoản</Button>
+                <Button type="primary">{m.employer_account_phone_continue_verification()}</Button>
               </Link>,
               <Button
                 key="change"
@@ -185,7 +186,7 @@ export default function EmployerPhoneVerification() {
                   form.setFieldsValue({ phone: '', code: '' })
                 }}
               >
-                Đổi số điện thoại
+                {m.employer_account_phone_change()}
               </Button>,
               <Button
                 key="reverify"
@@ -195,7 +196,7 @@ export default function EmployerPhoneVerification() {
                   setPasswordOpen(true)
                 }}
               >
-                Xác minh lại
+                {m.employer_account_phone_reverify()}
               </Button>,
             ]}
           />
@@ -211,14 +212,14 @@ export default function EmployerPhoneVerification() {
           <Alert
             type="warning"
             showIcon
-            message="Tài khoản chưa có mật khẩu đăng nhập"
+            message={m.account_password_no_password_title()}
             description={(
               <span>
-                Vui lòng{' '}
+                {m.employer_account_phone_no_password_before()}{' '}
                 <Link to={PASSWORD_SETTINGS_FROM_PHONE_URL} className="font-bold">
-                  cập nhật mật khẩu tại đây
+                  {m.employer_account_phone_no_password_link()}
                 </Link>{' '}
-                trước khi xác thực số điện thoại. Hỗ trợ: {hotline} · {supportEmail}.
+                {m.employer_account_phone_no_password_after({ hotline, supportEmail })}
               </span>
             )}
           />
@@ -235,17 +236,17 @@ export default function EmployerPhoneVerification() {
           <div>
             <h2 className="text-xl font-black text-slate-900">
               {flowMode === 'phone_change'
-                ? 'Đổi số điện thoại đã xác thực'
+                ? m.employer_account_phone_title_change()
                 : flowMode === 'reverify'
-                  ? 'Xác minh lại số điện thoại'
-                  : 'Xác thực số điện thoại'}
+                  ? m.employer_account_phone_title_reverify()
+                  : m.employer_account_phone_title()}
             </h2>
             <p className="mt-1 text-sm leading-6 text-slate-500">
-              Mã xác thực được gửi trực tiếp qua SMS và không được gửi qua email.
+              {m.employer_account_phone_subtitle()}
             </p>
           </div>
           {alreadyVerified && (
-            <Button onClick={resetFlow}>Quay lại</Button>
+            <Button onClick={resetFlow}>{m.employer_account_register_back()}</Button>
           )}
         </div>
 
@@ -275,16 +276,16 @@ export default function EmployerPhoneVerification() {
         />
 
         <div className="mt-8 border-t border-slate-100 pt-6">
-          <p className="font-semibold text-slate-800">Lưu ý bảo mật:</p>
+          <p className="font-semibold text-slate-800">{m.employer_account_phone_security_notes()}</p>
           <ul className="mt-2 space-y-1.5 text-sm leading-6 text-slate-500">
-            <li>Mỗi mã chỉ dùng được cho đúng yêu cầu SMS vừa tạo và hết hạn sau 10 phút.</li>
-            <li>Gửi mã mới sẽ vô hiệu mã cũ; không chia sẻ mã với bất kỳ ai.</li>
-            <li>Đổi số không làm mất xác thực hiện tại cho tới khi số mới được xác thực thành công.</li>
+            <li>{m.employer_account_phone_note_1()}</li>
+            <li>{m.employer_account_phone_note_2()}</li>
+            <li>{m.employer_account_phone_note_3()}</li>
           </ul>
         </div>
 
         <div className="mt-8">
-          <p className="font-semibold text-slate-800">Lợi ích khi xác thực số điện thoại:</p>
+          <p className="font-semibold text-slate-800">{m.employer_account_phone_benefits_title()}</p>
           <div className="mt-4 grid gap-5 sm:grid-cols-2">
             {BENEFITS.map(({ icon: Icon, text }) => (
               <div key={text} className="flex gap-3">

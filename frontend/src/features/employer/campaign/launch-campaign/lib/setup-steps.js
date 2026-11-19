@@ -1,13 +1,13 @@
 import dayjs from '@/shared/lib/dayjs'
-import { getIntlLocale } from '@/shared/config/i18n'
+import { getIntlLocale, m } from '@/shared/config/i18n'
 
 // Trạng thái từng bước thiết lập được suy ra từ dữ liệu thật, không từ vị trí bước.
 
 export const SETUP_STEPS = [
-  { key: 'goal', title: 'Thông tin' },
-  { key: 'jobs', title: 'Tin tuyển dụng' },
-  { key: 'channels', title: 'Kênh phân phối', optional: true },
-  { key: 'launch', title: 'Kích hoạt' },
+  { key: 'goal', title: m.employer_campaign_step_goal() },
+  { key: 'jobs', title: m.employer_campaign_step_jobs() },
+  { key: 'channels', title: m.employer_campaign_step_channels(), optional: true },
+  { key: 'launch', title: m.employer_campaign_step_launch() },
 ]
 
 // Mục checklist chưa đạt sẽ dẫn về đúng bước cần sửa.
@@ -39,35 +39,43 @@ export function jobSelection(overview) {
 
 export function setupStepStates(campaign, overview, channelCount = 0) {
   const goalDone = Boolean(campaign.is_continuous || campaign.target_date)
-  const end = campaign.is_continuous ? 'Tuyển liên tục' : `Đến ${shortDate(campaign.target_date)}`
-  const budget = campaign.budget_max ? `, ngân sách tối đa ${Number(campaign.budget_max).toLocaleString(getIntlLocale())} đ` : ''
+  const end = campaign.is_continuous
+    ? m.employer_campaign_info_continuous()
+    : m.employer_campaign_steps_until({ date: shortDate(campaign.target_date) })
+  const budget = campaign.budget_max
+    ? m.employer_campaign_steps_budget({
+        amount: m.employer_campaign_money({ amount: Number(campaign.budget_max).toLocaleString(getIntlLocale()) }),
+      })
+    : ''
   const selection = jobSelection(overview)
   const failing = (overview.check?.items || []).filter((item) => !item.ok).length
   const jobParts = [
-    selection.toPublish && `${selection.toPublish} tin sẽ đăng`,
-    selection.toAttach && `${selection.toAttach} tin sẽ gắn`,
-    selection.already && `${selection.already} tin đang chạy`,
-    selection.headcount && `tuyển ${selection.headcount} người`,
+    selection.toPublish && m.employer_campaign_steps_to_publish({ count: selection.toPublish }),
+    selection.toAttach && m.employer_campaign_steps_to_attach({ count: selection.toAttach }),
+    selection.already && m.employer_campaign_steps_already({ count: selection.already }),
+    selection.headcount && m.employer_campaign_steps_headcount({ count: selection.headcount }),
   ].filter(Boolean)
   return {
     goal: {
       done: goalDone,
-      summary: goalDone ? `${end}${budget}` : 'Chưa chọn ngày kết thúc',
+      summary: goalDone ? `${end}${budget}` : m.employer_campaign_steps_no_end_date(),
     },
     jobs: {
       done: selection.total > 0,
-      summary: jobParts.length ? jobParts.join(', ') : 'Chưa chọn tin nào',
+      summary: jobParts.length ? jobParts.join(', ') : m.employer_campaign_steps_no_jobs(),
     },
     channels: {
       done: channelCount > 0,
-      summary: channelCount ? `${channelCount} kênh có link theo dõi` : 'Không bắt buộc, thêm sau cũng được',
+      summary: channelCount
+        ? m.employer_campaign_steps_channels({ count: channelCount })
+        : m.employer_campaign_steps_channels_optional(),
     },
     launch: overview.check
       ? {
           done: false,
-          summary: failing ? `Còn ${failing} điều kiện chưa đạt` : 'Sẵn sàng kích hoạt',
+          summary: failing ? m.employer_campaign_steps_failing({ count: failing }) : m.employer_campaign_launch_ready(),
           ready: failing === 0,
         }
-      : { done: false, summary: 'Kiểm tra sau khi chọn tin', ready: false },
+      : { done: false, summary: m.employer_campaign_steps_check_after_jobs(), ready: false },
   }
 }

@@ -1,4 +1,5 @@
 from django.shortcuts import get_object_or_404
+from django.utils.translation import gettext as _
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
@@ -103,7 +104,7 @@ class CampaignChannelContentView(CampaignScopedView):
         try:
             channel, fallback = generate_channel_content(channel=self.channel(), user=request.user)
         except ContentQuotaExceeded as error:
-            raise Throttled(detail='Đã dùng hết lượt soạn bằng AI hôm nay.') from error
+            raise Throttled(detail=_('Đã dùng hết lượt soạn bằng AI hôm nay.')) from error
         response = self.channel_response(channel)
         response.data['fallback_reason'] = fallback
         return response

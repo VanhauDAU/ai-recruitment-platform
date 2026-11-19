@@ -10,12 +10,12 @@ import { isDirectPublish } from '../model/content-form'
 import { BenefitsCard, OfficesCard } from './ListContentCards'
 import { GalleryCard, HeroCard, RichTextCard, SocialLinksCard, VideoCard } from './TextContentCards'
 import './edit-company-page-content.css'
-import { getIntlLocale } from '@/shared/config/i18n'
+import { getIntlLocale, m } from '@/shared/config/i18n'
 
 const REQUEST_STATUS = {
-  submitted: ['blue', 'Đã gửi, chờ duyệt'],
-  in_review: ['gold', 'Đang thẩm định'],
-  changes_requested: ['orange', 'Cần bổ sung'],
+  submitted: ['blue', m.employer_company_request_submitted()],
+  in_review: ['gold', m.employer_company_request_in_review()],
+  changes_requested: ['orange', m.employer_company_content_status_changes_requested()],
 }
 
 // Khối không còn khoá nào trong yêu cầu cập nhật.
@@ -38,7 +38,7 @@ function RequestBar({ request, canWithdraw, direct }) {
       request.lock_version === undefined ? {} : { lock_version: request.lock_version },
     ),
     onSuccess: () => {
-      message.success('Đã rút yêu cầu cập nhật công ty.')
+      message.success(m.employer_company_request_withdrawn())
       queryClient.invalidateQueries({ queryKey: employerCompanyPageKeys.page })
       queryClient.invalidateQueries({ queryKey: employerProfileKeys.companyUpdateRequests })
     },
@@ -47,24 +47,24 @@ function RequestBar({ request, canWithdraw, direct }) {
   const submittedAt = formatDateTime(request.submitted_at)
 
   return (
-    <div className="company-content-request" role="region" aria-label="Yêu cầu cập nhật nội dung">
+    <div className="company-content-request" role="region" aria-label={m.employer_company_request_region()}>
       <Tag color={color}>{label}</Tag>
       <span className="company-content-hint">
-        {submittedAt ? `Gửi lúc ${submittedAt}. ` : ''}
+        {submittedAt ? `${m.employer_company_request_sent_at({ time: submittedAt })} ` : ''}
         {direct
-          ? 'Các khối gắn nhãn “Chờ duyệt” chỉ lên trang sau khi quản trị viên duyệt.'
-          : 'Thay đổi chỉ lên trang công khai sau khi quản trị viên duyệt.'}
+          ? m.employer_company_request_direct_hint()
+          : m.employer_company_request_review_hint()}
       </span>
       {canWithdraw && (
         <ConfirmAction
           danger
-          title="Rút yêu cầu cập nhật"
-          description="Mọi thay đổi trong yêu cầu này, kể cả thông tin công ty gửi cùng, sẽ dừng xử lý."
-          confirmText="Rút yêu cầu"
+          title={m.employer_company_request_withdraw_title()}
+          description={m.employer_company_request_withdraw_description()}
+          confirmText={m.employer_company_request_withdraw()}
           onConfirm={() => withdraw.mutateAsync()}
-          onConfirmError={(error) => message.error(getApiErrorMessage(error, 'Không thể rút yêu cầu cập nhật.'))}
+          onConfirmError={(error) => message.error(getApiErrorMessage(error, m.employer_company_request_withdraw_failed()))}
         >
-          <Button size="small" danger>Rút yêu cầu</Button>
+          <Button size="small" danger>{m.employer_company_request_withdraw()}</Button>
         </ConfirmAction>
       )}
     </div>
@@ -94,21 +94,21 @@ export default function CompanyContentEditor({ page, focusCard }) {
   return (
     <div className="company-content-editor">
       {canEdit && (direct
-        ? <p className="company-content-hint">Nội dung lưu xong hiển thị ngay trên trang công ty. Quản trị viên rà soát sau và có thể hoàn tác nội dung vi phạm quy định.</p>
-        : <Alert showIcon type="warning" title="Quản trị viên đang bật duyệt trước: thay đổi chỉ lên trang công ty sau khi được duyệt." />)}
+        ? <p className="company-content-hint">{m.employer_company_content_direct_hint()}</p>
+        : <Alert showIcon type="warning" title={m.employer_company_content_review_mode()} />)}
       {request && <RequestBar request={request} direct={direct} canWithdraw={canEdit && !inReview} />}
       {lockedAny && (
         <Alert
           showIcon
           type="info"
           title={direct
-            ? 'Các khối "Chờ duyệt" đang được thẩm định nên tạm khoá cho tới khi quản trị viên xử lý xong.'
-            : 'Đang được thẩm định. Nội dung tạm khoá cho tới khi quản trị viên xử lý xong.'}
+            ? m.employer_company_content_locked_direct()
+            : m.employer_company_content_locked_review()}
         />
       )}
       {!canEdit && (
         <p className="company-content-hint">
-          {permissions.blockers?.[0]?.message || 'Bạn chỉ có quyền xem nội dung trang công ty.'}
+          {permissions.blockers?.[0]?.message || m.employer_company_content_read_only()}
         </p>
       )}
       <HeroCard page={page} readOnly={isLocked('hero')} />

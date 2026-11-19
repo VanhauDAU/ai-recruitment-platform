@@ -2,18 +2,19 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { employerCompanyPageKeys, updateEmployerCompanyPageLayout } from '@/entities/company/employer-company-page'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
+import { m } from '@/shared/config/i18n'
 import { message } from '@/shared/lib/toast'
 
 const LAYOUT_FIELDS = ['section_order', 'hidden_sections', 'accent', 'pinned_job_public_ids']
 const STALE_CODE = 'COMPANY_PAGE_LAYOUT_STALE'
-const STALE_NOTICE = 'Bố cục vừa được cập nhật ở nơi khác. Đã tải lại bản mới nhất, vui lòng thực hiện lại thay đổi.'
-const LOCK_VERSION_ERROR = 'Phiên bản bố cục không hợp lệ. Vui lòng tải lại trang rồi thử lại.'
+const STALE_NOTICE = m.employer_company_layout_stale()
+const LOCK_VERSION_ERROR = m.employer_company_layout_lock_version()
 
 // 400 là `{field: [câu]}`; lỗi của `lock_version` có thể bằng tiếng Anh nên thay bằng câu chung.
 function badRequestMessage(error) {
   const { lock_version: lockVersion, ...fields } = error.response.data || {}
-  if (Object.keys(fields).length) return getApiErrorMessage({ response: { ...error.response, data: fields } }, 'Không thể lưu bố cục trang công ty.')
-  return lockVersion ? LOCK_VERSION_ERROR : 'Không thể lưu bố cục trang công ty.'
+  if (Object.keys(fields).length) return getApiErrorMessage({ response: { ...error.response, data: fields } }, m.employer_company_layout_save_failed())
+  return lockVersion ? LOCK_VERSION_ERROR : m.employer_company_layout_save_failed()
 }
 
 // Tập khối ẩn không có thứ tự: bật rồi tắt lại một khối không tính là thay đổi.
@@ -55,7 +56,7 @@ export function useCompanyLayoutDraft(page) {
       queryClient.setQueryData(employerCompanyPageKeys.page, nextPage)
       adopt(nextPage.layout)
       setNotice(null)
-      message.success('Đã lưu bố cục trang công ty.')
+      message.success(m.employer_company_layout_saved())
     },
     onError: (error) => {
       const { status, data } = error?.response || {}
@@ -69,9 +70,9 @@ export function useCompanyLayoutDraft(page) {
         setNotice({ type: 'warning', text: STALE_NOTICE })
       } else if (status === 403) {
         setDraft(base)
-        setNotice({ type: 'error', text: getApiErrorMessage(error, 'Bạn không còn quyền tuỳ biến trang công ty.') })
+        setNotice({ type: 'error', text: getApiErrorMessage(error, m.employer_company_layout_forbidden()) })
       } else {
-        message.error(status === 400 ? badRequestMessage(error) : getApiErrorMessage(error, 'Không thể lưu bố cục trang công ty.'))
+        message.error(status === 400 ? badRequestMessage(error) : getApiErrorMessage(error, m.employer_company_layout_save_failed()))
         return
       }
       // Quyền hoặc tin ghim có thể đã đổi cùng lúc: tải lại toàn bộ workspace.
@@ -87,7 +88,7 @@ export function useCompanyLayoutDraft(page) {
     notice,
     saving: mutation.isPending,
     pinnedJobs: (draft.pinned_job_public_ids || []).map((publicId) => (
-      knownJobs.find((job) => job.public_id === publicId) || { public_id: publicId, title: 'Tin tuyển dụng đã ghim' }
+      knownJobs.find((job) => job.public_id === publicId) || { public_id: publicId, title: m.employer_company_pinned_fallback_title() }
     )),
     update: (patch) => setDraft((current) => ({ ...current, ...patch })),
     pinJob(job) {

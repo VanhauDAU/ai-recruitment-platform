@@ -4,6 +4,7 @@ from urllib.parse import urlencode
 from django.conf import settings
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
+from django.utils.translation import gettext as _
 from django.views import View
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema, inline_serializer
@@ -212,6 +213,6 @@ class ChannelPostImageView(CampaignScopedView):
     def post(self, request, public_id, channel_id):
         upload = request.FILES.get('file')
         if upload is None:
-            raise ValidationError({'file': 'Chọn một ảnh.'})
+            raise ValidationError({'file': _('Chọn một ảnh.')})
         saved = save_post_image(channel=self.channel(), user=request.user, upload=upload)
         return Response(saved, status=status.HTTP_201_CREATED)

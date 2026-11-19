@@ -23,6 +23,7 @@ import {
 } from '@/entities/account/employer-profile'
 import { CampaignInfoForm } from '@/features/employer/campaign/manage-campaigns'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
+import { m } from '@/shared/config/i18n'
 import CampaignActivityPanel from './CampaignActivityPanel'
 import CampaignApplyCvPanel from './CampaignApplyCvPanel'
 import CampaignChannelsPanel from './CampaignChannelsPanel'
@@ -32,12 +33,12 @@ import CampaignOverviewPanel from './CampaignOverviewPanel'
 import CampaignWorkspaceHero from './CampaignWorkspaceHero'
 
 const TABS = [
-  { key: 'overview', label: 'Tổng quan', icon: AppstoreOutlined },
-  { key: 'health', label: 'Sức khỏe', icon: DashboardOutlined },
-  { key: 'apply_cv', label: 'CV ứng tuyển', icon: TeamOutlined },
-  { key: 'job', label: 'Tin tuyển dụng', icon: FileTextOutlined },
-  { key: 'channels', label: 'Kênh & nguồn', icon: ShareAltOutlined },
-  { key: 'activity', label: 'Lịch sử hoạt động', icon: HistoryOutlined },
+  { key: 'overview', label: m.employer_campaign_tab_overview(), icon: AppstoreOutlined },
+  { key: 'health', label: m.employer_campaign_tab_health(), icon: DashboardOutlined },
+  { key: 'apply_cv', label: m.employer_campaign_tab_apply_cv(), icon: TeamOutlined },
+  { key: 'job', label: m.employer_campaign_tab_job(), icon: FileTextOutlined },
+  { key: 'channels', label: m.employer_campaign_tab_channels(), icon: ShareAltOutlined },
+  { key: 'activity', label: m.employer_campaign_activity_title(), icon: HistoryOutlined },
 ]
 
 const LEGACY_TAB_MAP = {
@@ -96,11 +97,11 @@ export default function EmployerCampaignWorkspace({ publicId }) {
         className="mt-3"
         type="error"
         showIcon
-        message="Không thể tải chi tiết chiến dịch"
-        description={getApiErrorMessage(campaignQuery.error, 'Vui lòng thử lại sau.')}
+        message={m.employer_campaign_workspace_load_error()}
+        description={getApiErrorMessage(campaignQuery.error, m.employer_campaign_try_again_later())}
         action={(
           <Button size="small" danger onClick={() => campaignQuery.refetch()}>
-            Thử lại
+            {m.employer_campaign_retry()}
           </Button>
         )}
       />
@@ -140,7 +141,7 @@ export default function EmployerCampaignWorkspace({ publicId }) {
           type="warning"
           showIcon
           closable
-          message="Một số chỉ số tổng hợp chưa tải được."
+          message={m.employer_campaign_workspace_report_error()}
         />
       )}
 
@@ -150,7 +151,7 @@ export default function EmployerCampaignWorkspace({ publicId }) {
         <div className="sticky top-0 z-20 overflow-hidden rounded-2xl border border-slate-200 bg-white p-2 shadow-sm">
           <div className="sm:hidden">
             <Select
-              aria-label="Chọn nội dung chiến dịch"
+              aria-label={m.employer_campaign_workspace_select_aria()}
               value={activeTab}
               className="w-full"
               popupMatchSelectWidth
@@ -164,7 +165,7 @@ export default function EmployerCampaignWorkspace({ publicId }) {
             />
           </div>
           <div className="hidden overflow-x-auto sm:block">
-            <div role="tablist" aria-label="Nội dung chiến dịch" className="flex min-w-max gap-1">
+            <div role="tablist" aria-label={m.employer_campaign_workspace_tabs_aria()} className="flex min-w-max gap-1">
               {TABS.map((tab, index) => {
                 const selected = tab.key === activeTab
                 const Icon = tab.icon
@@ -266,7 +267,7 @@ export default function EmployerCampaignWorkspace({ publicId }) {
         title={(
           <span className="inline-flex items-center gap-2">
             <EditOutlined className="text-emerald-600" />
-            Sửa thông tin chiến dịch
+            {m.employer_campaign_workspace_edit_title()}
           </span>
         )}
         onCancel={() => setEditing(false)}

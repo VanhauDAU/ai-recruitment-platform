@@ -1,5 +1,7 @@
 """Post-moderation of company page content for administrators."""
 
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 from drf_spectacular.utils import extend_schema_field, inline_serializer
 from rest_framework import serializers
 
@@ -9,18 +11,18 @@ from ...models import CompanyContentChange
 from ...selectors.company_page_content_form import SECTION_REQUEST_KEYS
 
 FIELD_ORDER = (
-    ('headline', 'Khẩu hiệu'),
+    ('headline', gettext_lazy('Khẩu hiệu')),
     ('logo_url', 'Logo'),
-    ('cover_image_url', 'Ảnh bìa'),
-    ('description', 'Giới thiệu'),
-    ('benefits', 'Phúc lợi'),
-    ('employee_benefits', 'Phúc lợi (mô tả)'),
-    ('culture', 'Văn hoá'),
-    ('gallery_additions', 'Ảnh thư viện mới'),
-    ('gallery_deletions', 'Ảnh thư viện đã xoá'),
+    ('cover_image_url', gettext_lazy('Ảnh bìa')),
+    ('description', gettext_lazy('Giới thiệu')),
+    ('benefits', gettext_lazy('Phúc lợi')),
+    ('employee_benefits', gettext_lazy('Phúc lợi (mô tả)')),
+    ('culture', gettext_lazy('Văn hoá')),
+    ('gallery_additions', gettext_lazy('Ảnh thư viện mới')),
+    ('gallery_deletions', gettext_lazy('Ảnh thư viện đã xoá')),
     ('video_url', 'Video'),
-    ('social_links', 'Mạng xã hội'),
-    ('offices', 'Văn phòng'),
+    ('social_links', gettext_lazy('Mạng xã hội')),
+    ('offices', gettext_lazy('Văn phòng')),
 )
 MEDIA_FIELDS = {'logo_url', 'cover_image_url'}
 # How each field is drawn: plain text, sanitized rich text, image(s), or a list.
@@ -132,8 +134,11 @@ class AdminCompanyContentChangeSerializer(serializers.ModelSerializer):
                     filter(
                         None,
                         [
-                            ('Trụ sở chính: ' if item.get('is_headquarters') else '')
-                            + item.get('label', ''),
+                            (
+                                _('Trụ sở chính: %(office)s') % {'office': item.get('label', '')}
+                                if item.get('is_headquarters')
+                                else item.get('label', '')
+                            ),
                             item.get('address_line', ''),
                             provinces.get(item.get('province_id'), ''),
                         ],
@@ -157,7 +162,7 @@ class AdminCompanyContentChangeSerializer(serializers.ModelSerializer):
             rows.append(
                 {
                     'field': field,
-                    'label': label,
+                    'label': str(label),
                     'kind': FIELD_KINDS.get(field, 'text'),
                     'before': self._display(field, previous.get(field)),
                     'after': self._display(field, after),

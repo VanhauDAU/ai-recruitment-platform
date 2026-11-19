@@ -1,7 +1,8 @@
+import { m } from '@/shared/config/i18n'
 import { getCurrentPortal } from './portals'
 
 export const DEFAULT_SITE_TITLE = 'ProCV'
-export const NOT_FOUND_TITLE = 'Trang không tồn tại'
+export const NOT_FOUND_TITLE = m.title_not_found()
 
 const TITLE_SEPARATOR = ' | '
 const PORTALS = ['employer', 'admin', 'main']
@@ -12,8 +13,8 @@ const PORTALS = ['employer', 'admin', 'main']
  */
 export function portalSiteTitle(portal, siteName = DEFAULT_SITE_TITLE) {
   const name = siteName || DEFAULT_SITE_TITLE
-  if (portal === 'employer') return `${name} cho Nhà tuyển dụng`
-  if (portal === 'admin') return `Quản trị ${name}`
+  if (portal === 'employer') return m.title_employer_suffix({ name })
+  if (portal === 'admin') return m.title_admin_suffix({ name })
   return name
 }
 

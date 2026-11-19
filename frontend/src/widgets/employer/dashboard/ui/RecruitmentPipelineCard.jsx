@@ -2,12 +2,12 @@ import { ArrowRightOutlined } from '@ant-design/icons'
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
 import { Link } from 'react-router'
 import { employerAppPath } from '@/shared/config/portals'
-import { getIntlLocale } from '@/shared/config/i18n'
+import { getIntlLocale, m } from '@/shared/config/i18n'
 
 const PIPELINE_SEGMENTS = [
-  { key: 'applications_new', label: 'Mới nhận', color: '#2563eb' },
-  { key: 'applications_shortlisted', label: 'Phù hợp', color: '#f59e0b' },
-  { key: 'applications_interviewed', label: 'Phỏng vấn', color: '#10b981' },
+  { key: 'applications_new', label: m.employer_workspace_dash_pipeline_new(), color: '#2563eb' },
+  { key: 'applications_shortlisted', label: m.employer_workspace_dash_pipeline_shortlisted(), color: '#f59e0b' },
+  { key: 'applications_interviewed', label: m.employer_workspace_dash_pipeline_interviewed(), color: '#10b981' },
 ]
 
 const numberFormatter = new Intl.NumberFormat(getIntlLocale())
@@ -18,7 +18,7 @@ function PipelineTooltip({ active, payload }) {
   return (
     <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs shadow-xl">
       <span className="text-slate-500">{item.label}</span>
-      <strong className="ml-3 text-slate-900">{numberFormatter.format(item.value)} hồ sơ</strong>
+      <strong className="ml-3 text-slate-900">{m.employer_workspace_dash_application_count({ count: numberFormatter.format(item.value) })}</strong>
     </div>
   )
 }
@@ -28,9 +28,9 @@ export default function RecruitmentPipelineCard({ summary = {} }) {
   const trackedTotal = PIPELINE_SEGMENTS.reduce((sum, item) => sum + Number(summary[item.key] || 0), 0)
   const data = [
     ...PIPELINE_SEGMENTS.map((item) => ({ ...item, value: Number(summary[item.key] || 0) })),
-    { key: 'other', label: 'Đang xử lý khác', color: '#cbd5e1', value: Math.max(0, total - trackedTotal) },
+    { key: 'other', label: m.employer_workspace_dash_pipeline_other(), color: '#cbd5e1', value: Math.max(0, total - trackedTotal) },
   ].filter((item) => item.value > 0)
-  const chartData = data.length ? data : [{ key: 'empty', label: 'Chưa có hồ sơ', color: '#e2e8f0', value: 1 }]
+  const chartData = data.length ? data : [{ key: 'empty', label: m.employer_workspace_dash_pipeline_empty(), color: '#e2e8f0', value: 1 }]
   const interviewRate = total ? Math.round((Number(summary.applications_interviewed || 0) / total) * 100) : 0
 
   return (
@@ -38,13 +38,13 @@ export default function RecruitmentPipelineCard({ summary = {} }) {
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-[11px] font-extrabold uppercase tracking-[.14em] text-emerald-600">Pipeline</p>
-          <h2 id="pipeline-title" className="mt-1 text-lg font-black text-slate-900">Trạng thái hồ sơ</h2>
-          <p className="mt-1 text-xs leading-5 text-slate-500">Phân bổ trên toàn bộ hồ sơ hiện có</p>
+          <h2 id="pipeline-title" className="mt-1 text-lg font-black text-slate-900">{m.employer_workspace_dash_pipeline_title()}</h2>
+          <p className="mt-1 text-xs leading-5 text-slate-500">{m.employer_workspace_dash_pipeline_description()}</p>
         </div>
-        <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-700">{interviewRate}% phỏng vấn</span>
+        <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-700">{m.employer_workspace_dash_pipeline_interview_rate({ rate: interviewRate })}</span>
       </div>
 
-      <div className="relative mx-auto mt-3 h-48 max-w-[260px]" role="img" aria-label={`Biểu đồ pipeline gồm ${total} hồ sơ`}>
+      <div className="relative mx-auto mt-3 h-48 max-w-[260px]" role="img" aria-label={m.employer_workspace_dash_pipeline_chart({ count: total })}>
         <ResponsiveContainer width="100%" height="100%" minWidth={0} initialDimension={{ width: 240, height: 192 }}>
           <PieChart>
             <Pie
@@ -68,7 +68,7 @@ export default function RecruitmentPipelineCard({ summary = {} }) {
         </ResponsiveContainer>
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
           <strong className="text-2xl font-black tracking-tight text-slate-900">{numberFormatter.format(total)}</strong>
-          <span className="text-[11px] font-semibold text-slate-400">Tổng hồ sơ</span>
+          <span className="text-[11px] font-semibold text-slate-400">{m.employer_workspace_dash_total_applications()}</span>
         </div>
       </div>
 
@@ -83,7 +83,7 @@ export default function RecruitmentPipelineCard({ summary = {} }) {
       </div>
 
       <Link to={employerAppPath('/applications')} className="mt-5 flex items-center justify-center gap-2 rounded-xl border border-slate-200 !bg-slate-50 px-3 py-2.5 text-xs font-bold !text-slate-700 transition hover:border-emerald-200 hover:!bg-emerald-50 hover:!text-emerald-700">
-        Xem toàn bộ hồ sơ <ArrowRightOutlined />
+        {m.employer_workspace_dash_view_all_applications()} <ArrowRightOutlined />
       </Link>
     </section>
   )

@@ -24,6 +24,7 @@ import {
   jobDeadlineMeta,
   jobDisplayTitle,
 } from './job-list-presentation'
+import { m } from '@/shared/config/i18n'
 
 function Candidates({ job, candidateDataAccess }) {
   const previews = job.candidate_previews || []
@@ -33,17 +34,17 @@ function Candidates({ job, candidateDataAccess }) {
   if (!job.application_count) {
     return (
       <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-xs text-slate-400">
-        <TeamOutlined aria-hidden /> Chưa có hồ sơ
+        <TeamOutlined aria-hidden /> {m.employer_job_list_no_applications()}
       </span>
     )
   }
 
   const count = (
-    <Tooltip title={job.application_count > candidateCount ? `${job.application_count} lượt nộp CV` : null}>
-      <strong className="whitespace-nowrap text-sm font-semibold text-slate-800">{formatCount(candidateCount)} ứng viên</strong>
+    <Tooltip title={job.application_count > candidateCount ? m.employer_job_list_submission_count({ count: job.application_count }) : null}>
+      <strong className="whitespace-nowrap text-sm font-semibold text-slate-800">{m.employer_job_list_candidate_count({ count: formatCount(candidateCount) })}</strong>
     </Tooltip>
   )
-  const newBadge = unviewed > 0 && <span className="job-pill job-pill--plain job-tone-orange">{unviewed} mới</span>
+  const newBadge = unviewed > 0 && <span className="job-pill job-pill--plain job-tone-orange">{m.employer_job_list_new_count({ count: unviewed })}</span>
 
   if (!candidateDataAccess) {
     return <div className="flex min-w-0 items-center gap-2"><TeamOutlined aria-hidden className="text-slate-400" />{count}{newBadge}</div>
@@ -53,12 +54,12 @@ function Candidates({ job, candidateDataAccess }) {
     <div className="flex min-w-0 items-center gap-2">
       {previews.length === 0 && <TeamOutlined aria-hidden className="text-slate-400" />}
       {previews.length > 0 && (
-        <ul aria-label={`Ứng viên gần đây của ${jobDisplayTitle(job)}`} className="m-0 flex shrink-0 list-none p-0 pl-1.5">
+        <ul aria-label={m.employer_job_list_recent_candidates({ title: jobDisplayTitle(job) })} className="m-0 flex shrink-0 list-none p-0 pl-1.5">
           {previews.slice(0, 3).map((candidate, index) => (
             <li key={candidate.application_public_id || candidate.public_id} className="-ml-1.5 first:ml-0" style={{ zIndex: 3 - index }}>
               <Tooltip title={`${candidate.full_name}${candidate.cv_title ? ` · ${candidate.cv_title}` : ''}`}>
                 <Link
-                  aria-label={`Mở hồ sơ ${candidate.full_name}`}
+                  aria-label={m.employer_job_list_open_application({ name: candidate.full_name })}
                   className="block rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500"
                   to={employerJobApplicationsPath(job, { applicationId: candidate.application_public_id })}
                 >
@@ -77,7 +78,7 @@ function Candidates({ job, candidateDataAccess }) {
       )}
       <Link className="min-w-0 !text-slate-800 hover:!text-emerald-700" to={employerJobApplicationsPath(job)}>{count}</Link>
       {newBadge && (
-        <Link aria-label={`${unviewed} hồ sơ chưa xem`} to={employerJobApplicationsPath(job, { scope: 'unread' })}>
+        <Link aria-label={m.employer_job_list_unviewed_count({ count: unviewed })} to={employerJobApplicationsPath(job, { scope: 'unread' })}>
           {newBadge}
         </Link>
       )}
@@ -91,12 +92,12 @@ function Performance({ job }) {
     <div className="job-row__stack flex min-w-0 items-center gap-1.5 whitespace-nowrap text-xs text-slate-500">
       <span className="inline-flex items-center gap-1.5">
         <EyeOutlined aria-hidden className="text-slate-400" />
-        <strong className="text-sm font-semibold text-slate-800">{formatCount(job.view_count)}</strong> lượt xem
+        <strong className="text-sm font-semibold text-slate-800">{formatCount(job.view_count)}</strong> {m.employer_job_list_views_suffix()}
       </span>
       {rate && (
-        <Tooltip title="Tỉ lệ ứng viên nộp hồ sơ trên lượt xem tin">
+        <Tooltip title={m.employer_job_header_apply_rate_tooltip()}>
           <span className="hidden text-slate-400 sm:inline">
-            <span className="job-row__inline-only">· </span>{rate} ứng tuyển
+            <span className="job-row__inline-only">· </span>{m.employer_job_list_apply_rate_suffix({ rate })}
           </span>
         </Tooltip>
       )}
@@ -110,7 +111,7 @@ function Deadline({ job }) {
     <div className="job-row__stack flex min-w-0 items-center gap-1.5 whitespace-nowrap text-xs">
       <span className="inline-flex items-center gap-1.5 font-medium text-slate-700">
         <CalendarOutlined aria-hidden className="job-row__inline-only text-slate-400" />
-        {deadline.date || 'Chưa đặt hạn'}
+        {deadline.date || m.employer_job_list_no_deadline()}
       </span>
       <span className={`font-medium ${deadline.tone.text}`}>
         <span className="job-row__inline-only text-slate-300">· </span>{deadline.hint}
@@ -128,7 +129,7 @@ export default function JobListCard({ job, candidateDataAccess = false, ...actio
   const location = formatLocations(job)
   const employmentType = EMPLOYMENT_TYPE_LABELS[job.employment_type]
   const timeline = job.status === 'draft'
-    ? `Tạo ${formatJobDate(job.created_at)}`
+    ? m.employer_job_list_created_on({ date: formatJobDate(job.created_at) })
     : formatJobPostedLabel(job)
 
   return (

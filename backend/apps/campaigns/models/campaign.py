@@ -2,6 +2,7 @@ from django.conf import settings
 from django.db import models
 from django.utils import timezone
 from django.utils.text import slugify
+from django.utils.translation import gettext_lazy
 
 from apps.employers.models import BudgetSource
 from common.db.public_id import generate_public_id
@@ -18,23 +19,23 @@ class RecruitmentCampaign(models.Model):
     """
 
     class Status(models.TextChoices):
-        DRAFT = 'draft', 'Nháp'
-        SCHEDULED = 'scheduled', 'Đã lên lịch'
-        ACTIVE = 'active', 'Đang chạy'
-        PAUSED = 'paused', 'Tạm dừng'
-        COMPLETED = 'completed', 'Hoàn tất'
-        CANCELLED = 'cancelled', 'Đã hủy'
+        DRAFT = 'draft', gettext_lazy('Nháp')
+        SCHEDULED = 'scheduled', gettext_lazy('Đã lên lịch')
+        ACTIVE = 'active', gettext_lazy('Đang chạy')
+        PAUSED = 'paused', gettext_lazy('Tạm dừng')
+        COMPLETED = 'completed', gettext_lazy('Hoàn tất')
+        CANCELLED = 'cancelled', gettext_lazy('Đã hủy')
 
     class PolicyHold(models.TextChoices):
-        NONE = '', 'Không giữ'
-        TEMPORARY_LOCK = 'temporary_lock', 'Tạm giữ do khóa tài khoản'
-        BAN_REVIEW = 'ban_review', 'Giữ để rà soát sau cấm'
-        LEGACY_LOCK = 'legacy_lock', 'Giữ do trạng thái khóa cũ'
+        NONE = '', gettext_lazy('Không giữ')
+        TEMPORARY_LOCK = 'temporary_lock', gettext_lazy('Tạm giữ do khóa tài khoản')
+        BAN_REVIEW = 'ban_review', gettext_lazy('Giữ để rà soát sau cấm')
+        LEGACY_LOCK = 'legacy_lock', gettext_lazy('Giữ do trạng thái khóa cũ')
 
     class EndedBy(models.TextChoices):
-        NONE = '', 'Chưa kết thúc'
-        USER = 'user', 'Nhà tuyển dụng'
-        SYSTEM = 'system', 'Hệ thống'
+        NONE = '', gettext_lazy('Chưa kết thúc')
+        USER = 'user', gettext_lazy('Nhà tuyển dụng')
+        SYSTEM = 'system', gettext_lazy('Hệ thống')
 
     TERMINAL_STATUSES = frozenset({Status.COMPLETED, Status.CANCELLED})
     NON_TERMINAL_STATUSES = frozenset(
@@ -187,39 +188,42 @@ class CampaignActivity(models.Model):
     """Employer-visible audit events for one recruitment campaign."""
 
     class Group(models.TextChoices):
-        CAMPAIGN = 'campaign', 'Chiến dịch'
-        JOB = 'job', 'Tin tuyển dụng'
-        APPLICATION = 'application', 'Ứng viên'
+        CAMPAIGN = 'campaign', gettext_lazy('Chiến dịch')
+        JOB = 'job', gettext_lazy('Tin tuyển dụng')
+        APPLICATION = 'application', gettext_lazy('Ứng viên')
 
     class EventType(models.TextChoices):
-        LEGACY_SYNCED = 'legacy_synced', 'Đồng bộ dữ liệu hiện có'
-        CAMPAIGN_CREATED = 'campaign_created', 'Tạo chiến dịch'
-        CAMPAIGN_UPDATED = 'campaign_updated', 'Cập nhật chiến dịch'
-        CAMPAIGN_PAUSED = 'campaign_paused', 'Dừng chiến dịch'
-        CAMPAIGN_RESUMED = 'campaign_resumed', 'Mở lại chiến dịch'
-        CAMPAIGN_SCHEDULED = 'campaign_scheduled', 'Lên lịch kích hoạt'
-        CAMPAIGN_UNSCHEDULED = 'campaign_unscheduled', 'Hủy lịch kích hoạt'
-        CAMPAIGN_ACTIVATED = 'campaign_activated', 'Kích hoạt chiến dịch'
-        CAMPAIGN_ACTIVATION_FAILED = 'campaign_activation_failed', 'Kích hoạt theo lịch thất bại'
-        CAMPAIGN_COMPLETED = 'campaign_completed', 'Hoàn tất chiến dịch'
-        CAMPAIGN_CANCELLED = 'campaign_cancelled', 'Hủy chiến dịch'
-        CHANNEL_ADDED = 'channel_added', 'Thêm kênh phân phối'
-        CHANNEL_POSTED = 'channel_posted', 'Đã đăng lên kênh'
-        SOCIAL_POST_PUBLISHED = 'social_post_published', 'Đã đăng lên Fanpage'
-        SOCIAL_POST_DELETED = 'social_post_deleted', 'Đã gỡ bài khỏi Fanpage'
-        JOB_ADDED = 'job_added', 'Thêm tin tuyển dụng'
-        JOB_REMOVED = 'job_removed', 'Gỡ tin tuyển dụng'
-        JOB_UPDATED = 'job_updated', 'Cập nhật tin tuyển dụng'
-        JOB_STATUS_CHANGED = 'job_status_changed', 'Đổi trạng thái tin'
-        APPLICATION_RECEIVED = 'application_received', 'Nhận CV ứng tuyển'
+        LEGACY_SYNCED = 'legacy_synced', gettext_lazy('Đồng bộ dữ liệu hiện có')
+        CAMPAIGN_CREATED = 'campaign_created', gettext_lazy('Tạo chiến dịch')
+        CAMPAIGN_UPDATED = 'campaign_updated', gettext_lazy('Cập nhật chiến dịch')
+        CAMPAIGN_PAUSED = 'campaign_paused', gettext_lazy('Dừng chiến dịch')
+        CAMPAIGN_RESUMED = 'campaign_resumed', gettext_lazy('Mở lại chiến dịch')
+        CAMPAIGN_SCHEDULED = 'campaign_scheduled', gettext_lazy('Lên lịch kích hoạt')
+        CAMPAIGN_UNSCHEDULED = 'campaign_unscheduled', gettext_lazy('Hủy lịch kích hoạt')
+        CAMPAIGN_ACTIVATED = 'campaign_activated', gettext_lazy('Kích hoạt chiến dịch')
+        CAMPAIGN_ACTIVATION_FAILED = (
+            'campaign_activation_failed',
+            gettext_lazy('Kích hoạt theo lịch thất bại'),
+        )
+        CAMPAIGN_COMPLETED = 'campaign_completed', gettext_lazy('Hoàn tất chiến dịch')
+        CAMPAIGN_CANCELLED = 'campaign_cancelled', gettext_lazy('Hủy chiến dịch')
+        CHANNEL_ADDED = 'channel_added', gettext_lazy('Thêm kênh phân phối')
+        CHANNEL_POSTED = 'channel_posted', gettext_lazy('Đã đăng lên kênh')
+        SOCIAL_POST_PUBLISHED = 'social_post_published', gettext_lazy('Đã đăng lên Fanpage')
+        SOCIAL_POST_DELETED = 'social_post_deleted', gettext_lazy('Đã gỡ bài khỏi Fanpage')
+        JOB_ADDED = 'job_added', gettext_lazy('Thêm tin tuyển dụng')
+        JOB_REMOVED = 'job_removed', gettext_lazy('Gỡ tin tuyển dụng')
+        JOB_UPDATED = 'job_updated', gettext_lazy('Cập nhật tin tuyển dụng')
+        JOB_STATUS_CHANGED = 'job_status_changed', gettext_lazy('Đổi trạng thái tin')
+        APPLICATION_RECEIVED = 'application_received', gettext_lazy('Nhận CV ứng tuyển')
         APPLICATION_STATUS_CHANGED = (
             'application_status_changed',
-            'Đổi trạng thái ứng viên',
+            gettext_lazy('Đổi trạng thái ứng viên'),
         )
-        ACCOUNT_POLICY_HELD = 'account_policy_held', 'Giữ do trạng thái tài khoản'
+        ACCOUNT_POLICY_HELD = 'account_policy_held', gettext_lazy('Giữ do trạng thái tài khoản')
         ACCOUNT_POLICY_RELEASED = (
             'account_policy_released',
-            'Gỡ giữ do trạng thái tài khoản',
+            gettext_lazy('Gỡ giữ do trạng thái tài khoản'),
         )
 
     campaign = models.ForeignKey(

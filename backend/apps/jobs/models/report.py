@@ -2,6 +2,7 @@
 
 from django.conf import settings
 from django.db import models
+from django.utils.translation import gettext_lazy
 
 from common.db.public_id import generate_public_id
 
@@ -15,17 +16,17 @@ class JobReport(models.Model):
     """
 
     class Reason(models.TextChoices):
-        FAKE_COMPANY = 'fake_company', 'Công ty không có thật'
-        SCAM = 'scam', 'Lừa đảo, thu phí ứng viên'
-        WRONG_INFO = 'wrong_info', 'Thông tin tin đăng sai sự thật'
-        DUPLICATE = 'duplicate', 'Tin trùng lặp'
-        EXPIRED = 'expired', 'Tin đã tuyển xong nhưng chưa gỡ'
-        OTHER = 'other', 'Lý do khác'
+        FAKE_COMPANY = 'fake_company', gettext_lazy('Công ty không có thật')
+        SCAM = 'scam', gettext_lazy('Lừa đảo, thu phí ứng viên')
+        WRONG_INFO = 'wrong_info', gettext_lazy('Thông tin tin đăng sai sự thật')
+        DUPLICATE = 'duplicate', gettext_lazy('Tin trùng lặp')
+        EXPIRED = 'expired', gettext_lazy('Tin đã tuyển xong nhưng chưa gỡ')
+        OTHER = 'other', gettext_lazy('Lý do khác')
 
     class Status(models.TextChoices):
-        PENDING = 'pending', 'Chờ xử lý'
-        UPHELD = 'upheld', 'Xác nhận vi phạm'
-        DISMISSED = 'dismissed', 'Bác bỏ'
+        PENDING = 'pending', gettext_lazy('Chờ xử lý')
+        UPHELD = 'upheld', gettext_lazy('Xác nhận vi phạm')
+        DISMISSED = 'dismissed', gettext_lazy('Bác bỏ')
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     job = models.ForeignKey('jobs.Job', on_delete=models.PROTECT, related_name='reports')

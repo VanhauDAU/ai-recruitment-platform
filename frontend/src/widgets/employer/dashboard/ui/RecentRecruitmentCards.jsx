@@ -3,15 +3,15 @@ import { Avatar } from 'antd'
 import { Link } from 'react-router'
 import { RECRUITER_APPLICATION_STATUS_LABELS } from '@/entities/application/application'
 import { employerAppPath } from '@/shared/config/portals'
-import { getIntlLocale } from '@/shared/config/i18n'
+import { getIntlLocale, m } from '@/shared/config/i18n'
 
 const dateFormatter = new Intl.DateTimeFormat(getIntlLocale(), { day: '2-digit', month: '2-digit', year: 'numeric' })
 const JOB_STATUS = {
-  active: { label: 'Đang tuyển', className: 'bg-emerald-50 text-emerald-700' },
-  hidden: { label: 'Bị ẩn', className: 'bg-red-50 text-red-700' },
-  expired: { label: 'Hết hạn', className: 'bg-orange-50 text-orange-700' },
-  draft: { label: 'Bản nháp', className: 'bg-slate-100 text-slate-600' },
-  closed: { label: 'Ngừng tuyển', className: 'bg-slate-100 text-slate-500' },
+  active: { label: m.employer_workspace_dash_job_status_active(), className: 'bg-emerald-50 text-emerald-700' },
+  hidden: { label: m.employer_workspace_dash_job_status_hidden(), className: 'bg-red-50 text-red-700' },
+  expired: { label: m.employer_workspace_dash_job_status_expired(), className: 'bg-orange-50 text-orange-700' },
+  draft: { label: m.employer_workspace_dash_job_status_draft(), className: 'bg-slate-100 text-slate-600' },
+  closed: { label: m.employer_workspace_dash_job_status_closed(), className: 'bg-slate-100 text-slate-500' },
 }
 const APPLICATION_STATUS_CLASSES = {
   submitted: 'bg-blue-50 text-blue-700',
@@ -27,9 +27,9 @@ function EmptyState({ type }) {
   return (
     <div className="flex min-h-44 flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50/60 px-5 text-center">
       <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-white text-xl text-slate-300 shadow-sm">{job ? <FileSearchOutlined /> : <InboxOutlined />}</span>
-      <strong className="mt-3 text-sm text-slate-700">{job ? 'Chưa có tin tuyển dụng' : 'Chưa có hồ sơ ứng tuyển'}</strong>
-      <p className="mt-1 max-w-xs text-xs leading-5 text-slate-400">{job ? 'Tạo tin đầu tiên để bắt đầu tiếp cận ứng viên phù hợp.' : 'Hồ sơ mới sẽ được cập nhật tại đây theo thời gian thực.'}</p>
-      {job && <Link to={employerAppPath('/jobs/new')} className="mt-3 inline-flex h-9 items-center gap-1.5 rounded-lg border border-emerald-600 !bg-emerald-600 px-3 text-xs font-bold !text-white shadow-sm transition hover:border-emerald-700 hover:!bg-emerald-700"><PlusOutlined /> Đăng tin mới</Link>}
+      <strong className="mt-3 text-sm text-slate-700">{job ? m.employer_workspace_dash_empty_jobs_title() : m.employer_workspace_dash_empty_applications_title()}</strong>
+      <p className="mt-1 max-w-xs text-xs leading-5 text-slate-400">{job ? m.employer_workspace_dash_empty_jobs_text() : m.employer_workspace_dash_empty_applications_text()}</p>
+      {job && <Link to={employerAppPath('/jobs/new')} className="mt-3 inline-flex h-9 items-center gap-1.5 rounded-lg border border-emerald-600 !bg-emerald-600 px-3 text-xs font-bold !text-white shadow-sm transition hover:border-emerald-700 hover:!bg-emerald-700"><PlusOutlined /> {m.employer_workspace_dash_new_job()}</Link>}
     </div>
   )
 }
@@ -50,16 +50,16 @@ function SectionHeader({ title, description, icon, to, actionLabel }) {
 export function RecentJobsCard({ jobs = [] }) {
   return (
     <section className="rounded-[20px] border border-slate-200/80 bg-white p-5 shadow-[0_12px_35px_-26px_rgba(15,23,42,.45)] sm:p-6">
-      <SectionHeader title="Tin tuyển dụng gần đây" description="Trạng thái và hiệu suất từng tin" icon={FileSearchOutlined} to={employerAppPath('/jobs')} actionLabel="Xem tất cả" />
+      <SectionHeader title={m.employer_workspace_dash_recent_jobs_title()} description={m.employer_workspace_dash_recent_jobs_description()} icon={FileSearchOutlined} to={employerAppPath('/jobs')} actionLabel={m.employer_workspace_dash_view_all()} />
       {!jobs.length ? <EmptyState type="jobs" /> : (
         <div className="divide-y divide-slate-100">
           {jobs.map((job) => {
             const status = JOB_STATUS[job.status] || { label: job.status_label || job.status, className: 'bg-slate-100 text-slate-600' }
             return (
               <Link to={`${employerAppPath('/jobs')}/${job.public_id}`} key={job.public_id} className="group flex flex-col gap-3 py-4 first:pt-1 last:pb-0 sm:flex-row sm:items-center">
-                <div className="min-w-0 flex-1"><h3 className="truncate text-sm font-bold text-slate-900 transition group-hover:text-emerald-700">{job.title}</h3><p className="mt-1 text-[11px] text-slate-400">Tạo ngày {dateFormatter.format(new Date(job.created_at))}</p></div>
+                <div className="min-w-0 flex-1"><h3 className="truncate text-sm font-bold text-slate-900 transition group-hover:text-emerald-700">{job.title}</h3><p className="mt-1 text-[11px] text-slate-400">{m.employer_workspace_dash_job_created({ date: dateFormatter.format(new Date(job.created_at)) })}</p></div>
                 <div className="flex items-center justify-between gap-4 sm:justify-end">
-                  <div className="flex items-center gap-4 text-[11px] text-slate-500"><span><strong className="text-slate-800">{job.application_count}</strong> hồ sơ</span><span><strong className="text-slate-800">{job.view_count}</strong> lượt xem</span></div>
+                  <div className="flex items-center gap-4 text-[11px] text-slate-500"><span><strong className="text-slate-800">{job.application_count}</strong> {m.employer_workspace_dash_applications_unit({ count: job.application_count })}</span><span><strong className="text-slate-800">{job.view_count}</strong> {m.employer_workspace_dash_views_unit({ count: job.view_count })}</span></div>
                   <span className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold ${status.className}`}>{status.label}</span>
                   <ArrowRightOutlined className="hidden text-xs text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-emerald-500 sm:block" />
                 </div>
@@ -75,7 +75,7 @@ export function RecentJobsCard({ jobs = [] }) {
 export function RecentApplicationsCard({ applications = [] }) {
   return (
     <section className="rounded-[20px] border border-slate-200/80 bg-white p-5 shadow-[0_12px_35px_-26px_rgba(15,23,42,.45)] sm:p-6">
-      <SectionHeader title="Ứng viên mới nhất" description="Hồ sơ theo thời gian ứng tuyển" icon={UserOutlined} to={employerAppPath('/applications')} actionLabel="Xem tất cả" />
+      <SectionHeader title={m.employer_workspace_dash_recent_applications_title()} description={m.employer_workspace_dash_recent_applications_description()} icon={UserOutlined} to={employerAppPath('/applications')} actionLabel={m.employer_workspace_dash_view_all()} />
       {!applications.length ? <EmptyState type="applications" /> : (
         <div className="divide-y divide-slate-100">
           {applications.map((application) => {

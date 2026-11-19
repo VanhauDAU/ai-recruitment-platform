@@ -2,6 +2,7 @@ from django.conf import settings
 from django.contrib.postgres.indexes import GinIndex
 from django.db import models
 from django.utils.text import slugify
+from django.utils.translation import gettext_lazy
 
 from common.db.public_id import generate_public_id
 from common.db.search import fold_accents
@@ -37,27 +38,27 @@ class Company(models.Model):
     """
 
     class BusinessType(models.TextChoices):
-        ENTERPRISE = 'enterprise', 'Doanh nghiệp'
-        HOUSEHOLD = 'household', 'Hộ kinh doanh'
+        ENTERPRISE = 'enterprise', gettext_lazy('Doanh nghiệp')
+        HOUSEHOLD = 'household', gettext_lazy('Hộ kinh doanh')
 
     class Size(models.TextChoices):
-        S1_9 = '1-9', '1 - 9 nhân viên'
-        S10_24 = '10-24', '10 - 24 nhân viên'
-        S25_99 = '25-99', '25 - 99 nhân viên'
-        S100_499 = '100-499', '100 - 499 nhân viên'
-        S500_1000 = '500-1000', '500 - 1000 nhân viên'
-        S1000_PLUS = '1000+', '1000+ nhân viên'
-        S3000_PLUS = '3000+', '3000+ nhân viên'
-        S5000_PLUS = '5000+', '5000+ nhân viên'
-        S10000_PLUS = '10000+', '10000+ nhân viên'
+        S1_9 = '1-9', gettext_lazy('1 - 9 nhân viên')
+        S10_24 = '10-24', gettext_lazy('10 - 24 nhân viên')
+        S25_99 = '25-99', gettext_lazy('25 - 99 nhân viên')
+        S100_499 = '100-499', gettext_lazy('100 - 499 nhân viên')
+        S500_1000 = '500-1000', gettext_lazy('500 - 1000 nhân viên')
+        S1000_PLUS = '1000+', gettext_lazy('1000+ nhân viên')
+        S3000_PLUS = '3000+', gettext_lazy('3000+ nhân viên')
+        S5000_PLUS = '5000+', gettext_lazy('5000+ nhân viên')
+        S10000_PLUS = '10000+', gettext_lazy('10000+ nhân viên')
 
     class Market(models.TextChoices):
-        DOMESTIC = 'domestic', 'Nội địa'
-        ASIA = 'asia', 'Châu Á'
-        EUROPE = 'europe', 'Châu Âu'
-        AFRICA = 'africa', 'Châu Phi'
-        AMERICA = 'america', 'Châu Mỹ'
-        AUSTRALIA = 'australia', 'Châu Úc'
+        DOMESTIC = 'domestic', gettext_lazy('Nội địa')
+        ASIA = 'asia', gettext_lazy('Châu Á')
+        EUROPE = 'europe', gettext_lazy('Châu Âu')
+        AFRICA = 'africa', gettext_lazy('Châu Phi')
+        AMERICA = 'america', gettext_lazy('Châu Mỹ')
+        AUSTRALIA = 'australia', gettext_lazy('Châu Úc')
 
     class TargetCustomer(models.TextChoices):
         B2B = 'b2b', 'B2B'
@@ -236,8 +237,8 @@ class CompanyMediaUpload(models.Model):
 
     class Kind(models.TextChoices):
         LOGO = 'logo', 'Logo'
-        COVER = 'cover', 'Ảnh bìa'
-        GALLERY = 'gallery', 'Ảnh giới thiệu'
+        COVER = 'cover', gettext_lazy('Ảnh bìa')
+        GALLERY = 'gallery', gettext_lazy('Ảnh giới thiệu')
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     company = models.ForeignKey(

@@ -2,6 +2,7 @@ import { UserOutlined } from '@ant-design/icons'
 import { Tag } from 'antd'
 import { useState } from 'react'
 import { Link } from 'react-router'
+import { m } from '@/shared/config/i18n'
 import { employerAppPath } from '@/shared/config/portals'
 
 const AVATAR_TONES = [
@@ -14,7 +15,7 @@ const AVATAR_TONES = [
 
 function initials(name) {
   const words = (name || '').trim().split(/\s+/).filter(Boolean)
-  return words.slice(-2).map((word) => word[0]).join('').toUpperCase() || 'ƯV'
+  return words.slice(-2).map((word) => word[0]).join('').toUpperCase() || m.employer_campaign_candidates_initials_fallback()
 }
 
 function CandidateAvatar({ candidate, index, total }) {
@@ -47,17 +48,17 @@ function CampaignCandidateAvatars({ campaign }) {
   const candidates = previews.length > 0
     ? previews
     : candidateCount > 0
-      ? [{ public_id: 'candidate-placeholder', full_name: 'Ứng viên' }]
+      ? [{ public_id: 'candidate-placeholder', full_name: m.employer_campaign_cv_candidate_fallback() }]
       : []
   const extraCount = Math.max(candidateCount - candidates.length, 0)
 
   if (candidateCount === 0) {
-    return <span className="text-sm text-slate-500">Chưa có ứng viên</span>
+    return <span className="text-sm text-slate-500">{m.employer_campaign_candidates_none()}</span>
   }
 
   return (
     <div
-      aria-label={`${candidateCount} ứng viên`}
+      aria-label={m.employer_campaign_candidates_count({ count: candidateCount })}
       className="flex h-8 items-center pl-1"
       role="img"
     >
@@ -72,7 +73,7 @@ function CampaignCandidateAvatars({ campaign }) {
       {extraCount > 0 && (
         <span
           className="-ml-2.5 inline-flex h-8 min-w-8 items-center justify-center rounded-full border-2 border-white bg-slate-700 px-1 text-[10px] font-bold text-white shadow-sm"
-          title={`${extraCount} ứng viên khác`}
+          title={m.employer_campaign_candidates_extra({ count: extraCount })}
         >
           +{extraCount}
         </span>
@@ -90,10 +91,10 @@ export default function CampaignCandidateSummary({ campaign, candidateDataAccess
     return (
       <div className="min-w-36 text-slate-700">
         <span className="block text-sm font-semibold">
-          {Number(campaign.candidate_count) || 0} ứng viên
+          {m.employer_campaign_candidates_count({ count: Number(campaign.candidate_count) || 0 })}
         </span>
         <span className="mt-1 block text-xs text-slate-500">
-          {applicationCount} hồ sơ ứng tuyển
+          {m.employer_campaign_candidates_applications({ count: applicationCount })}
         </span>
       </div>
     )
@@ -105,11 +106,11 @@ export default function CampaignCandidateSummary({ campaign, candidateDataAccess
     >
       <CampaignCandidateAvatars campaign={campaign} />
       <span className="mt-1 block text-xs text-slate-500">
-        {applicationCount} hồ sơ ứng tuyển
+        {m.employer_campaign_candidates_applications({ count: applicationCount })}
       </span>
       {(campaign.unviewed_count ?? campaign.unviewed_application_count) > 0 && (
         <Tag className="mt-2" color="green">
-          {campaign.unviewed_count ?? campaign.unviewed_application_count} chưa xem
+          {m.employer_campaign_candidates_unviewed({ count: campaign.unviewed_count ?? campaign.unviewed_application_count })}
         </Tag>
       )}
     </Link>

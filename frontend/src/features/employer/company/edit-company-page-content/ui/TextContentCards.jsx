@@ -1,5 +1,6 @@
 import { Form, Input } from 'antd'
 import { parseCompanyVideoUrl } from '@/entities/company/company'
+import { m } from '@/shared/config/i18n'
 import RichTextEditor from '@/shared/ui/rich-text/RichTextEditor'
 import { cardStatus, changedFields, contentValue } from '../model/content-form'
 import ContentCard from './ContentCard'
@@ -16,8 +17,8 @@ export function HeroCard({ page, readOnly }) {
   return (
     <ContentCard
       card="hero"
-      title="Đầu trang"
-      description="Khẩu hiệu hiển thị dưới tên công ty, cùng logo và ảnh bìa."
+      title={m.employer_company_hero_title()}
+      description={m.employer_company_hero_description()}
       {...cardStatus(page, 'hero')}
       readOnly={readOnly}
       initialValues={{ headline, logo_file: null, cover_file: null }}
@@ -29,15 +30,15 @@ export function HeroCard({ page, readOnly }) {
     >
       {({ readOnly: locked }) => (
         <>
-          <Form.Item name="headline" label="Khẩu hiệu">
-            <Input maxLength={page.registry.limits?.headline ?? 160} showCount placeholder="Ví dụ: Cùng xây phần mềm cho hàng triệu người dùng" />
+          <Form.Item name="headline" label={m.employer_company_hero_headline()}>
+            <Input maxLength={page.registry.limits?.headline ?? 160} showCount placeholder={m.employer_company_hero_headline_placeholder()} />
           </Form.Item>
           <div className="company-content-media-row">
             <Form.Item name="logo_file" label="Logo">
               <ImageField label="Logo" currentUrl={form.pending?.logo_url || form.published.logo_url} disabled={locked} />
             </Form.Item>
-            <Form.Item name="cover_file" label="Ảnh bìa" className="company-content-media-row__wide">
-              <ImageField label="Ảnh bìa" wide currentUrl={form.pending?.cover_image_url || form.published.cover_image_url} disabled={locked} />
+            <Form.Item name="cover_file" label={m.employer_company_cover()} className="company-content-media-row__wide">
+              <ImageField label={m.employer_company_cover()} wide currentUrl={form.pending?.cover_image_url || form.published.cover_image_url} disabled={locked} />
             </Form.Item>
           </div>
         </>
@@ -47,8 +48,8 @@ export function HeroCard({ page, readOnly }) {
 }
 
 const RICH_TEXT_CARDS = {
-  about: { field: 'description', title: 'Giới thiệu', label: 'Giới thiệu công ty' },
-  culture: { field: 'culture', title: 'Văn hoá', label: 'Văn hoá công ty' },
+  about: { field: 'description', title: m.employer_company_about_title(), label: m.employer_company_about_label() },
+  culture: { field: 'culture', title: m.employer_company_culture_title(), label: m.employer_company_culture_label() },
 }
 
 export function RichTextCard({ page, card, readOnly }) {
@@ -65,7 +66,7 @@ export function RichTextCard({ page, card, readOnly }) {
     >
       {({ readOnly: locked }) => (
         <Form.Item name={field} label={label}>
-          <RichTextEditor maxLength={10000} disabled={locked} placeholder={`Nhập ${label.toLowerCase()}`} />
+          <RichTextEditor maxLength={10000} disabled={locked} placeholder={m.employer_company_rich_text_placeholder({ label: label.toLowerCase() })} />
         </Form.Item>
       )}
     </ContentCard>
@@ -78,7 +79,7 @@ export function GalleryCard({ page, readOnly }) {
   return (
     <ContentCard
       card="gallery"
-      title="Thư viện ảnh"
+      title={m.employer_company_gallery_title()}
       {...cardStatus(page, 'gallery')}
       readOnly={readOnly}
       initialValues={{ gallery: { deletions, files: [] } }}
@@ -89,7 +90,7 @@ export function GalleryCard({ page, readOnly }) {
       })}
     >
       {({ readOnly: locked }) => (
-        <Form.Item name="gallery" label="Ảnh văn phòng, đội ngũ, hoạt động">
+        <Form.Item name="gallery" label={m.employer_company_gallery_label()}>
           <GalleryField
             published={form.published.gallery || []}
             additions={form.pending?.gallery_additions || []}
@@ -105,12 +106,12 @@ export function GalleryCard({ page, readOnly }) {
 function videoRule(_, value) {
   return !value?.trim() || parseCompanyVideoUrl(value)
     ? Promise.resolve()
-    : Promise.reject(new Error('Chỉ hỗ trợ liên kết video YouTube hoặc Vimeo.'))
+    : Promise.reject(new Error(m.employer_company_video_invalid()))
 }
 
 function VideoHint({ form }) {
   const video = parseCompanyVideoUrl(Form.useWatch('video_url', form))
-  return video ? <p className="company-content-hint" role="status">Video {PROVIDER_LABELS[video.provider]}, mã {video.video_id}.</p> : null
+  return video ? <p className="company-content-hint" role="status">{m.employer_company_video_hint({ provider: PROVIDER_LABELS[video.provider], id: video.video_id })}</p> : null
 }
 
 export function VideoCard({ page, readOnly }) {
@@ -126,7 +127,7 @@ export function VideoCard({ page, readOnly }) {
     >
       {({ form }) => (
         <>
-          <Form.Item name="video_url" label="Liên kết video giới thiệu" rules={[{ validator: videoRule }]}>
+          <Form.Item name="video_url" label={m.employer_company_video_label()} rules={[{ validator: videoRule }]}>
             <Input inputMode="url" maxLength={300} placeholder="https://www.youtube.com/watch?v=…" />
           </Form.Item>
           <VideoHint form={form} />
@@ -143,7 +144,7 @@ export function SocialLinksCard({ page, readOnly }) {
   return (
     <ContentCard
       card="social_links"
-      title="Mạng xã hội"
+      title={m.employer_company_social_title()}
       {...cardStatus(page, 'social_links')}
       readOnly={readOnly}
       initialValues={{ social_links: initial }}
@@ -158,7 +159,7 @@ export function SocialLinksCard({ page, readOnly }) {
             key={network.key}
             name={['social_links', network.key]}
             label={network.label}
-            rules={[{ pattern: HTTP_URL, message: 'Nhập liên kết bắt đầu bằng https://' }]}
+            rules={[{ pattern: HTTP_URL, message: m.employer_company_social_url_invalid() }]}
           >
             <Input inputMode="url" maxLength={300} placeholder={network.placeholder} />
           </Form.Item>

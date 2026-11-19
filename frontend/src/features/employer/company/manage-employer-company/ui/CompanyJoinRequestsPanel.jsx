@@ -8,6 +8,7 @@ import {
   getCompanyJoinRequests,
 } from '@/entities/account/employer-profile'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
+import { m } from '@/shared/config/i18n'
 import { message } from '@/shared/lib/toast'
 import useConfirmAction from '@/shared/ui/confirm-action/use-confirm-action'
 
@@ -26,14 +27,14 @@ export default function CompanyJoinRequestsPanel({ onDecided }) {
     mutationFn: ({ publicId, decision }) => decideCompanyJoinRequest(publicId, decision),
     onSuccess: async (_saved, { decision }) => {
       message.success(decision === 'approve'
-        ? 'Đã duyệt tham gia. Thành viên mới cần tự xác thực tài khoản.'
-        : 'Đã từ chối yêu cầu tham gia.')
+        ? m.employer_company_join_approved()
+        : m.employer_company_join_rejected())
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: employerProfileKeys.companyJoinRequests }),
         onDecided?.(),
       ])
     },
-    onError: (error) => message.error(getApiErrorMessage(error, 'Không thể xử lý yêu cầu lúc này.')),
+    onError: (error) => message.error(getApiErrorMessage(error, m.employer_company_join_decide_failed())),
   })
   const requests = Array.isArray(requestsQuery.data) ? requestsQuery.data : []
   const canDecide = requests.every((item) => item.can_decide)
@@ -42,27 +43,27 @@ export default function CompanyJoinRequestsPanel({ onDecided }) {
     && decide.variables?.decision === decision
 
   const reject = (item) => requestConfirmation({
-    title: 'Từ chối yêu cầu tham gia',
-    description: `${item.requester_name} sẽ nhận thông báo yêu cầu không được chấp nhận và có thể xin tham gia công ty khác.`,
-    confirmText: 'Từ chối',
+    title: m.employer_company_join_reject_title(),
+    description: m.employer_company_join_reject_description({ name: item.requester_name }),
+    confirmText: m.employer_company_reject(),
     danger: true,
     onConfirm: () => decide.mutateAsync({ publicId: item.public_id, decision: 'reject' }),
   })
 
   return (
-    <section className="company-members__section" aria-label="Duyệt tham gia công ty">
+    <section className="company-members__section" aria-label={m.employer_company_join_requests_title()}>
       <header className="company-members__header">
         <div>
-          <h2><UserAddOutlined /> Duyệt tham gia công ty <Badge count={requests.length} size="small" /></h2>
-          <p>Nhà tuyển dụng xin vào công ty. Duyệt xong họ là thành viên và tự nộp giấy tờ để được xác thực.</p>
+          <h2><UserAddOutlined /> {m.employer_company_join_requests_title()} <Badge count={requests.length} size="small" /></h2>
+          <p>{m.employer_company_join_requests_hint()}</p>
         </div>
       </header>
       {!canDecide && (
-        <Alert className="mb-3" type="warning" showIcon title="Bạn cần xác thực tài khoản trước khi duyệt yêu cầu tham gia." />
+        <Alert className="mb-3" type="warning" showIcon title={m.employer_company_join_requests_verify_first()} />
       )}
       {requestsQuery.isLoading && <Skeleton active avatar paragraph={{ rows: 1 }} />}
       {!requestsQuery.isLoading && !requests.length && (
-        <p className="company-members__empty">Không có yêu cầu nào đang chờ duyệt.</p>
+        <p className="company-members__empty">{m.employer_company_join_requests_empty()}</p>
       )}
       <ul className="company-join-requests">
         {requests.map((item) => (
@@ -73,7 +74,7 @@ export default function CompanyJoinRequestsPanel({ onDecided }) {
             <span className="company-join-request__info">
               <strong>{item.requester_name}</strong>
               <span>{[item.requester_position, item.requester_email].filter(Boolean).join(' · ')}</span>
-              <small>Gửi {dayjs(item.created_at).format('HH:mm DD/MM/YYYY')}</small>
+              <small>{m.employer_company_join_requests_sent({ time: dayjs(item.created_at).format('HH:mm DD/MM/YYYY') })}</small>
             </span>
             <span className="company-join-request__actions">
               <Button
@@ -83,7 +84,7 @@ export default function CompanyJoinRequestsPanel({ onDecided }) {
                 loading={busy(item, 'approve')}
                 onClick={() => decide.mutate({ publicId: item.public_id, decision: 'approve' })}
               >
-                Duyệt
+                {m.employer_company_approve()}
               </Button>
               <Button
                 danger
@@ -92,7 +93,7 @@ export default function CompanyJoinRequestsPanel({ onDecided }) {
                 loading={busy(item, 'reject')}
                 onClick={() => reject(item)}
               >
-                Từ chối
+                {m.employer_company_reject()}
               </Button>
             </span>
           </li>

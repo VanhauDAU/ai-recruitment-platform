@@ -1,6 +1,7 @@
 import { MailOutlined } from '@ant-design/icons'
 import { Switch, Tooltip } from 'antd'
 import { EmployerNotificationPreferences } from '@/features/employer/account/configure-employer-notifications'
+import { m } from '@/shared/config/i18n'
 
 export default function EmployerGeneralSettings() {
   return (
@@ -10,12 +11,12 @@ export default function EmployerGeneralSettings() {
         <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-lg text-slate-600"><MailOutlined /></span>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <p className="text-sm font-bold text-slate-800">Thông báo CV ứng tuyển</p>
-            <span className="rounded bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-600">Đang hoạt động</span>
+            <p className="text-sm font-bold text-slate-800">{m.employer_account_settings_cv_notify_title()}</p>
+            <span className="rounded bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-600">{m.employer_account_settings_active()}</span>
           </div>
-          <p className="mt-1 text-sm leading-6 text-slate-500">Tự động gửi email khi ứng viên ứng tuyển vào tin tuyển dụng của bạn</p>
+          <p className="mt-1 text-sm leading-6 text-slate-500">{m.employer_account_settings_cv_notify_desc()}</p>
         </div>
-        <Tooltip title="Thông báo email luôn được bật; tùy chọn cấu hình sẽ có ở giai đoạn tiếp theo."><Switch checked disabled /></Tooltip>
+        <Tooltip title={m.employer_account_settings_cv_notify_tooltip()}><Switch checked disabled /></Tooltip>
       </div>
     </div>
   )

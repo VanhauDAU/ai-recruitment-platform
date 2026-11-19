@@ -15,6 +15,7 @@ import {
   TikTokOutlined,
   YoutubeFilled,
 } from '@ant-design/icons'
+import { m } from '@/shared/config/i18n'
 import { sanitizeHtml } from '@/shared/lib/sanitize-html'
 import RichContent from '@/shared/ui/rich-text/RichContent'
 import ShareButtons from '@/shared/ui/ShareButtons'
@@ -90,8 +91,8 @@ function CompanyOffices({ items }) {
             {(office.label || office.is_headquarters) && (
               <p className="text-xs text-gray-500">
                 {office.label}
-                {office.is_headquarters && office.label !== 'Trụ sở chính' && (
-                  <span className="company-profile-office-tag">Trụ sở chính</span>
+                {office.is_headquarters && office.label !== 'Trụ sở chính' && office.label !== m.company_headquarters() && (
+                  <span className="company-profile-office-tag">{m.company_headquarters()}</span>
                 )}
               </p>
             )}
@@ -175,7 +176,7 @@ function defaultBody(section, preview) {
       // Nút chia sẻ dùng URL hiện tại nên không có nghĩa trong bản xem trước.
       return preview ? null : (
         <div className="flex flex-wrap gap-2">
-          <ShareButtons copiedMessage="Đã sao chép đường dẫn công ty." />
+          <ShareButtons copiedMessage={m.company_link_copied()} />
         </div>
       )
     default:

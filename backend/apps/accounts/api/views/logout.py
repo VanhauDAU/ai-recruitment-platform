@@ -8,6 +8,7 @@ một row User riêng), việc thu hồi luôn chỉ áp dụng cho đúng token
 - ``/auth/logout-all/``  → blacklist mọi refresh token của TÀI KHOẢN đang đăng nhập.
 """
 
+from django.utils.translation import gettext as _
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import permissions, serializers, status
 from rest_framework.exceptions import ValidationError
@@ -43,11 +44,11 @@ class LogoutView(APIView):
     def post(self, request):
         portal = request.data.get('portal') or request.headers.get('X-Auth-Portal')
         if portal not in VALID_PORTALS:
-            raise ValidationError({'portal': 'Cổng đăng nhập không hợp lệ.'})
+            raise ValidationError({'portal': _('Cổng đăng nhập không hợp lệ.')})
         token = refresh_from_request(request, portal=portal)
         if token:
             revoke_refresh(token)
-        response = Response({'detail': 'Đã đăng xuất.'}, status=status.HTTP_200_OK)
+        response = Response({'detail': _('Đã đăng xuất.')}, status=status.HTTP_200_OK)
         return clear_refresh_cookie(response, portal=portal)
 
 
@@ -67,6 +68,6 @@ class LogoutAllView(APIView):
     def post(self, request):
         revoke_refresh_tokens(request.user)
         response = Response(
-            {'detail': 'Đã đăng xuất khỏi tất cả thiết bị.'}, status=status.HTTP_200_OK
+            {'detail': _('Đã đăng xuất khỏi tất cả thiết bị.')}, status=status.HTTP_200_OK
         )
         return clear_refresh_cookie(response, portal=portal_for_user(request.user))

@@ -5,6 +5,7 @@ import { AI_JOB_MODES, AiJobGenerationPanel } from '@/features/employer/job/gene
 import { createJobFormValues, PostJobForm } from '@/features/employer/job/post-job'
 import useConfirmAction from '@/shared/ui/confirm-action/use-confirm-action'
 import JobCreationModeChooser from './JobCreationModeChooser'
+import { m } from '@/shared/config/i18n'
 
 const EMPTY_DRAFTS = {
   ai_brief: {
@@ -75,10 +76,10 @@ export default function EmployerJobEditor({
     }
 
     requestConfirmation({
-      title: 'Đổi cách tạo tin',
-      description: 'Nội dung đang có trong form sẽ được đặt lại. Brief hoặc JD bạn đã nhập vẫn được giữ trong phiên này.',
-      confirmText: 'Đổi cách tạo',
-      cancelText: 'Tiếp tục chỉnh sửa',
+      title: m.employer_job_mode_change_title(),
+      description: m.employer_job_mode_change_description(),
+      confirmText: m.employer_job_mode_change_confirm(),
+      cancelText: m.employer_job_mode_change_cancel(),
       onConfirm: reset,
     })
   }, [form, formDirty, generatedResult, initialValues, requestConfirmation, setUrlState])

@@ -1,5 +1,6 @@
 """Employer workspace of the public company page (ADR-0017)."""
 
+from django.utils.translation import gettext as _
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
@@ -26,7 +27,7 @@ from ...services import (
     submit_validated_company_update,
     update_company_page_layout,
 )
-from ..exceptions import COMPANY_UPDATE_IN_REVIEW, CompanyPageEditForbidden
+from ..exceptions import CompanyPageEditForbidden, company_update_in_review
 from ..permissions import require_company_recruiter
 from ..serializers import (
     CompanyPageContentSerializer,
@@ -101,7 +102,9 @@ class CompanyPageLayoutView(CompanyPageWorkspaceAPIView):
             return Response(
                 {
                     'code': 'COMPANY_PAGE_LAYOUT_STALE',
-                    'detail': 'Bố cục đã được thay đổi ở nơi khác. Vui lòng tải lại rồi thử lại.',
+                    'detail': _(
+                        'Bố cục đã được thay đổi ở nơi khác. Vui lòng tải lại rồi thử lại.'
+                    ),
                     'layout': current_company_page_layout(self.recruiter.company_id),
                 },
                 status=status.HTTP_409_CONFLICT,
@@ -221,7 +224,7 @@ class CompanyPageContentView(CompanyPageWorkspaceAPIView):
                     validate=validate,
                 )
         except CompanyUpdateInReview:
-            return Response(COMPANY_UPDATE_IN_REVIEW, status=status.HTTP_409_CONFLICT)
+            return Response(company_update_in_review(), status=status.HTTP_409_CONFLICT)
         return Response(
             {
                 **company_page_workspace(self.recruiter, self.access, request=request),

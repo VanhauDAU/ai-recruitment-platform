@@ -1,4 +1,5 @@
 from django.db import IntegrityError
+from django.utils.translation import gettext as _
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import status
 from rest_framework.exceptions import ValidationError
@@ -45,12 +46,12 @@ class RecruitmentNeedView(APIView):
         recruiter = get_or_create_recruiter(request.user)
         if not request.user.email_verified:
             raise ValidationError(
-                {'detail': 'Vui lòng xác thực email trước khi khai báo nhu cầu tuyển dụng.'}
+                {'detail': _('Vui lòng xác thực email trước khi khai báo nhu cầu tuyển dụng.')}
             )
         if recruiter.registration_completed_at is None:
-            raise ValidationError({'detail': 'Vui lòng hoàn tất hồ sơ nhà tuyển dụng trước.'})
+            raise ValidationError({'detail': _('Vui lòng hoàn tất hồ sơ nhà tuyển dụng trước.')})
         if recruiter.recruitment_needs.exists():
-            raise ValidationError({'detail': 'Bạn đã hoàn tất khai báo nhu cầu tuyển dụng.'})
+            raise ValidationError({'detail': _('Bạn đã hoàn tất khai báo nhu cầu tuyển dụng.')})
         serializer = RecruitmentNeedSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         try:
@@ -60,7 +61,7 @@ class RecruitmentNeedView(APIView):
             )
         except (InitialRecruitmentNeedAlreadyExists, IntegrityError) as error:
             raise ValidationError(
-                {'detail': 'Bạn đã hoàn tất khai báo nhu cầu tuyển dụng.'}
+                {'detail': _('Bạn đã hoàn tất khai báo nhu cầu tuyển dụng.')}
             ) from error
         return Response(RecruitmentNeedSerializer(need).data, status=status.HTTP_200_OK)
 
@@ -112,7 +113,7 @@ class RecruitmentNeedDetailView(APIView):
         recruiter = existing_recruiter_profile(request.user)
         need = recruiter_recruitment_need(recruiter, public_id) if recruiter else None
         if need is None:
-            raise ValidationError({'detail': 'Không tìm thấy nhu cầu tuyển dụng.'})
+            raise ValidationError({'detail': _('Không tìm thấy nhu cầu tuyển dụng.')})
         return need
 
     def patch(self, request, public_id):

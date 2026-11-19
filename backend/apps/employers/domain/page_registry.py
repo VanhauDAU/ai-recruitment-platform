@@ -6,6 +6,8 @@ the frontend renders by ``type`` and never keeps its own copy of the layout.
 
 from dataclasses import dataclass
 
+from django.utils.translation import gettext_lazy
+
 from apps.employers.domain.page_content import (
     BENEFIT_LIMIT,
     GALLERY_LIMIT,
@@ -26,21 +28,26 @@ class PageSection:
 
 # Main column, in default order.
 MAIN_SECTIONS = (
-    PageSection('about', 'rich_text', 'Giới thiệu công ty'),
-    PageSection('jobs', 'jobs', 'Việc làm đang tuyển', always_on=True),
-    PageSection('benefits', 'benefits', 'Phúc lợi'),
-    PageSection('culture', 'rich_text', 'Văn hoá công ty'),
-    PageSection('gallery', 'gallery', 'Hình ảnh công ty'),
-    PageSection('video', 'video', 'Video giới thiệu'),
+    PageSection('about', 'rich_text', gettext_lazy('Giới thiệu công ty')),
+    PageSection('jobs', 'jobs', gettext_lazy('Việc làm đang tuyển'), always_on=True),
+    PageSection('benefits', 'benefits', gettext_lazy('Phúc lợi')),
+    PageSection('culture', 'rich_text', gettext_lazy('Văn hoá công ty')),
+    PageSection('gallery', 'gallery', gettext_lazy('Hình ảnh công ty')),
+    PageSection('video', 'video', gettext_lazy('Video giới thiệu')),
 )
 
 # Sidebar, in fixed order.
 SIDEBAR_SECTIONS = (
-    PageSection('general_info', 'facts', 'Thông tin chung', always_on=True),
-    PageSection('offices', 'offices', 'Địa điểm'),
-    PageSection('social_links', 'social_links', 'Mạng xã hội'),
-    PageSection('share', 'share', 'Chia sẻ công ty', always_on=True),
-    PageSection('similar_companies', 'similar_companies', 'Công ty cùng lĩnh vực', always_on=True),
+    PageSection('general_info', 'facts', gettext_lazy('Thông tin chung'), always_on=True),
+    PageSection('offices', 'offices', gettext_lazy('Địa điểm')),
+    PageSection('social_links', 'social_links', gettext_lazy('Mạng xã hội')),
+    PageSection('share', 'share', gettext_lazy('Chia sẻ công ty'), always_on=True),
+    PageSection(
+        'similar_companies',
+        'similar_companies',
+        gettext_lazy('Công ty cùng lĩnh vực'),
+        always_on=True,
+    ),
 )
 
 # Every block a visitor can point at, e.g. when reporting wrong information.
@@ -69,14 +76,14 @@ ACCENT_PALETTE = {
 }
 
 ACCENT_LABELS = {
-    'brand': 'Xanh ProCV',
-    'ocean': 'Xanh đại dương',
-    'indigo': 'Chàm',
-    'violet': 'Tím',
-    'rose': 'Đỏ hồng',
-    'orange': 'Cam',
-    'teal': 'Xanh ngọc',
-    'slate': 'Xám đá',
+    'brand': gettext_lazy('Xanh ProCV'),
+    'ocean': gettext_lazy('Xanh đại dương'),
+    'indigo': gettext_lazy('Chàm'),
+    'violet': gettext_lazy('Tím'),
+    'rose': gettext_lazy('Đỏ hồng'),
+    'orange': gettext_lazy('Cam'),
+    'teal': gettext_lazy('Xanh ngọc'),
+    'slate': gettext_lazy('Xám đá'),
 }
 
 
@@ -98,7 +105,7 @@ def company_page_registry():
         'sections': [
             {
                 'key': section.key,
-                'title': section.title,
+                'title': str(section.title),
                 'zone': zone,
                 'always_on': section.always_on,
             }
@@ -106,7 +113,7 @@ def company_page_registry():
             for section in sections
         ],
         'accents': [
-            {'key': key, 'label': ACCENT_LABELS[key], **colours}
+            {'key': key, 'label': str(ACCENT_LABELS[key]), **colours}
             for key, colours in ACCENT_PALETTE.items()
         ],
         'social_networks': [

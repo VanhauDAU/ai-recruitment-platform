@@ -1,4 +1,5 @@
 import { FacebookFilled, LinkedinFilled, LinkOutlined, TwitterOutlined } from '@ant-design/icons'
+import { m } from '@/shared/config/i18n'
 import { message } from '@/shared/lib/toast'
 
 function shareUrl(network) {
@@ -10,7 +11,7 @@ function shareUrl(network) {
 }
 
 /** Nút chia sẻ trang hiện tại; container của nơi dùng quyết định bố cục dọc hay ngang. */
-export default function ShareButtons({ copiedMessage = 'Đã sao chép đường dẫn.' }) {
+export default function ShareButtons({ copiedMessage = m.ui_share_link_copied() }) {
   function share(network) {
     window.open(shareUrl(network), '_blank', 'noopener,noreferrer,width=640,height=520')
   }
@@ -20,16 +21,16 @@ export default function ShareButtons({ copiedMessage = 'Đã sao chép đường
       await navigator.clipboard.writeText(window.location.href)
       message.success(copiedMessage)
     } catch {
-      message.info('Bạn có thể sao chép đường dẫn trên thanh địa chỉ.')
+      message.info(m.ui_share_copy_manually())
     }
   }
 
   return (
     <>
-      <ShareButton label="Chia sẻ qua Facebook" onClick={() => share('facebook')}><FacebookFilled /></ShareButton>
-      <ShareButton label="Chia sẻ qua Twitter" onClick={() => share('twitter')}><TwitterOutlined /></ShareButton>
-      <ShareButton label="Chia sẻ qua LinkedIn" onClick={() => share('linkedin')}><LinkedinFilled /></ShareButton>
-      <ShareButton label="Sao chép đường dẫn" onClick={copyLink}><LinkOutlined /></ShareButton>
+      <ShareButton label={m.ui_share_facebook()} onClick={() => share('facebook')}><FacebookFilled /></ShareButton>
+      <ShareButton label={m.ui_share_twitter()} onClick={() => share('twitter')}><TwitterOutlined /></ShareButton>
+      <ShareButton label={m.ui_share_linkedin()} onClick={() => share('linkedin')}><LinkedinFilled /></ShareButton>
+      <ShareButton label={m.ui_share_copy_link()} onClick={copyLink}><LinkOutlined /></ShareButton>
     </>
   )
 }

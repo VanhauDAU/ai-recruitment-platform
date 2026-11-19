@@ -1,16 +1,16 @@
 import { Empty } from 'antd'
 import { useEffect, useId, useMemo, useState } from 'react'
 import { Area, CartesianGrid, ComposedChart, Line, ResponsiveContainer, XAxis, YAxis } from 'recharts'
-import { getIntlLocale } from '@/shared/config/i18n'
+import { getIntlLocale, m } from '@/shared/config/i18n'
 
 const SERIES = [
-  { key: 'impressions', label: 'Lượt hiển thị', color: '#059669', axis: 'reach', kind: 'area' },
-  { key: 'views', label: 'Lượt xem', color: '#2563eb', axis: 'response', kind: 'line' },
-  { key: 'applications', label: 'Lượt ứng tuyển', color: '#7c3aed', axis: 'response', kind: 'line' },
+  { key: 'impressions', label: m.employer_campaign_metric_impressions(), color: '#059669', axis: 'reach', kind: 'area' },
+  { key: 'views', label: m.employer_campaign_chart_views(), color: '#2563eb', axis: 'response', kind: 'line' },
+  { key: 'applications', label: m.employer_campaign_metric_applications(), color: '#7c3aed', axis: 'response', kind: 'line' },
 ]
 const VIETNAMESE_NUMBER = new Intl.NumberFormat(getIntlLocale())
 const COMPACT_NUMBER = new Intl.NumberFormat(getIntlLocale(), { notation: 'compact', maximumFractionDigits: 1 })
-const CHART_LABEL = 'Biểu đồ lượt hiển thị, lượt xem và lượt ứng tuyển'
+const CHART_LABEL = m.employer_campaign_chart_label()
 
 function numberValue(value) {
   const parsed = Number(value)
@@ -74,18 +74,20 @@ function pointLabel(item) {
   const values = SERIES.map((series) => (
     `${series.label} ${VIETNAMESE_NUMBER.format(numberValue(item[series.key]))}`
   )).join(', ')
-  return `Xem số liệu ngày ${dateParts(item.date).detailed}: ${values}`
+  return m.employer_campaign_chart_point({ date: dateParts(item.date).detailed, values })
 }
 
 function chartSummary(availableData) {
   const first = availableData[0]
   const latest = availableData.at(-1)
-  if (!first || !latest) return 'Chưa có dữ liệu hiệu quả tuyển dụng.'
+  if (!first || !latest) return m.employer_campaign_chart_no_data()
+  const format = (key) => VIETNAMESE_NUMBER.format(numberValue(latest[key]))
+  const range = { count: availableData.length, from: dateParts(first.date).full, to: dateParts(latest.date).full }
   return [
-    `${availableData.length} ngày có dữ liệu từ ${dateParts(first.date).full} đến ${dateParts(latest.date).full}.`,
-    `Ngày gần nhất có ${VIETNAMESE_NUMBER.format(numberValue(latest.impressions))} lượt hiển thị,`,
-    `${VIETNAMESE_NUMBER.format(numberValue(latest.views))} lượt xem và`,
-    `${VIETNAMESE_NUMBER.format(numberValue(latest.applications))} lượt ứng tuyển.`,
+    m.employer_campaign_chart_summary_range(range),
+    m.employer_campaign_chart_summary_latest({
+      impressions: format('impressions'), views: format('views'), applications: format('applications'),
+    }),
   ].join(' ')
 }
 
@@ -121,10 +123,10 @@ function EmptyChart({ summaryId }) {
         aria-describedby={summaryId}
         className="flex min-h-64 flex-col justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50"
       >
-        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Chưa đến thời điểm bắt đầu ghi nhận dữ liệu" />
+        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={m.employer_campaign_chart_empty()} />
       </div>
       <figcaption id={summaryId} className="sr-only">
-        Chưa có dữ liệu hiệu quả tuyển dụng trong khoảng thời gian này.
+        {m.employer_campaign_chart_empty_caption()}
       </figcaption>
     </figure>
   )
@@ -296,7 +298,7 @@ export default function CampaignPerformanceChart({ data = [] }) {
       </div>
 
       <div className="mt-3 flex flex-wrap items-center justify-between gap-x-6 gap-y-2 px-1">
-        <ul aria-label="Chú giải biểu đồ" className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-slate-600">
+        <ul aria-label={m.employer_campaign_chart_legend_aria()} className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-slate-600">
           {SERIES.map((series) => (
             <li key={series.key} className="inline-flex items-center gap-2">
               <span className="relative h-2.5 w-5" aria-hidden>
@@ -307,7 +309,7 @@ export default function CampaignPerformanceChart({ data = [] }) {
             </li>
           ))}
         </ul>
-        <span className="hidden text-xs text-slate-400 lg:inline">Di chuột, chạm hoặc dùng Tab để xem từng ngày</span>
+        <span className="hidden text-xs text-slate-400 lg:inline">{m.employer_campaign_chart_hint()}</span>
       </div>
       <figcaption id={summaryId} className="sr-only">{chartSummary(availableData)}</figcaption>
     </figure>

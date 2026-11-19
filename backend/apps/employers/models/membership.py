@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from django.utils.translation import gettext_lazy
 
 from apps.employers.domain.phone import same_phone
 from common.db.public_id import generate_public_id
@@ -24,13 +25,13 @@ class RecruiterProfile(models.Model):
     """
 
     class CompanyRole(models.TextChoices):
-        OWNER = 'owner', 'Quản lý công ty'
-        MEMBER = 'member', 'Thành viên'
+        OWNER = 'owner', gettext_lazy('Quản lý công ty')
+        MEMBER = 'member', gettext_lazy('Thành viên')
 
     class Gender(models.TextChoices):
         MALE = 'male', 'Nam'
-        FEMALE = 'female', 'Nữ'
-        OTHER = 'other', 'Khác'
+        FEMALE = 'female', gettext_lazy('Nữ')
+        OTHER = 'other', gettext_lazy('Khác')
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     user = models.OneToOneField(
@@ -129,11 +130,17 @@ class EmployerCompanyLinkEvent(models.Model):
     """Append-only audit trail for high-risk recruiter/company recovery."""
 
     class EventType(models.TextChoices):
-        ADMIN_UNLINKED = 'admin_unlinked', 'Admin gỡ liên kết công ty'
-        OWNERSHIP_TRANSFERRED = 'ownership_transferred', 'Chuyển quyền quản lý công ty'
-        OWNER_ASSIGNED = 'owner_assigned', 'Admin chỉ định quản lý công ty'
-        MEMBER_REMOVED = 'member_removed', 'Quản lý công ty gỡ thành viên'
-        RESOURCES_HANDED_OVER = 'resources_handed_over', 'Giao tin tuyển dụng cho thành viên khác'
+        ADMIN_UNLINKED = 'admin_unlinked', gettext_lazy('Admin gỡ liên kết công ty')
+        OWNERSHIP_TRANSFERRED = (
+            'ownership_transferred',
+            gettext_lazy('Chuyển quyền quản lý công ty'),
+        )
+        OWNER_ASSIGNED = 'owner_assigned', gettext_lazy('Admin chỉ định quản lý công ty')
+        MEMBER_REMOVED = 'member_removed', gettext_lazy('Quản lý công ty gỡ thành viên')
+        RESOURCES_HANDED_OVER = (
+            'resources_handed_over',
+            gettext_lazy('Giao tin tuyển dụng cho thành viên khác'),
+        )
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     recruiter = models.ForeignKey(
@@ -184,10 +191,10 @@ class CompanyJoinRequest(models.Model):
     """
 
     class Status(models.TextChoices):
-        PENDING = 'pending', 'Chờ duyệt'
-        APPROVED = 'approved', 'Đã duyệt'
-        REJECTED = 'rejected', 'Từ chối'
-        CANCELLED = 'cancelled', 'Đã hủy'
+        PENDING = 'pending', gettext_lazy('Chờ duyệt')
+        APPROVED = 'approved', gettext_lazy('Đã duyệt')
+        REJECTED = 'rejected', gettext_lazy('Từ chối')
+        CANCELLED = 'cancelled', gettext_lazy('Đã hủy')
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     recruiter = models.ForeignKey(

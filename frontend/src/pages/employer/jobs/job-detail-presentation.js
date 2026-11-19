@@ -2,6 +2,7 @@ import dayjs from '@/shared/lib/dayjs'
 import { APPLICATION_STATUS_TONES, RECRUITER_APPLICATION_STATUS_LABELS } from '@/entities/application/application'
 import { jobDetailPath } from '@/entities/job/job'
 import { MAIN_PORTAL_URL } from '@/shared/config/portals'
+import { m } from '@/shared/config/i18n'
 
 export const JOB_DETAIL_TABS = ['apply_cv', 'viewed_job', 'job', 'cv_label']
 
@@ -19,8 +20,8 @@ export function applicationSummary(job) {
  */
 export function applicationFilterChips(summary, selected) {
   const chips = [
-    { key: 'all', label: 'Tất cả', count: summary.total },
-    { key: 'unanswered', label: 'Chưa phản hồi', count: summary.unanswered },
+    { key: 'all', label: m.employer_job_detail_filter_all(), count: summary.total },
+    { key: 'unanswered', label: m.employer_job_detail_filter_unanswered(), count: summary.unanswered },
     ...Object.entries(RECRUITER_APPLICATION_STATUS_LABELS).map(([status, label]) => ({
       key: status,
       label,
@@ -43,9 +44,9 @@ export function formatRelativeDay(value, now = dayjs()) {
   const date = dayjs(value)
   if (!value || !date.isValid()) return '—'
   const days = now.startOf('day').diff(date.startOf('day'), 'day')
-  if (days <= 0) return 'Hôm nay'
-  if (days === 1) return 'Hôm qua'
-  if (days < 7) return `${days} ngày trước`
+  if (days <= 0) return m.employer_job_detail_today()
+  if (days === 1) return m.employer_job_detail_yesterday()
+  if (days < 7) return m.employer_job_detail_days_ago({ days })
   return date.format('DD/MM/YYYY')
 }
 

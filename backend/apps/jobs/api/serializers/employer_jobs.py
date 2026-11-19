@@ -1,5 +1,6 @@
 """Employer job contracts: the job form, its detail read and the management table."""
 
+from django.utils.translation import gettext as _
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
@@ -106,7 +107,7 @@ class EmployerJobWriteSerializer(EmployerJobVisibilityHoldMixin, JobSerializer):
         attrs = super().validate(attrs)
         if self.instance is not None and attrs.get('ai_generation_public_id'):
             raise serializers.ValidationError(
-                {'ai_generation_public_id': 'Chỉ liên kết kết quả AI khi tạo tin mới.'}
+                {'ai_generation_public_id': _('Chỉ liên kết kết quả AI khi tạo tin mới.')}
             )
         enabled = attrs.get(
             'auto_reject_stale_applications',
@@ -122,7 +123,7 @@ class EmployerJobWriteSerializer(EmployerJobVisibilityHoldMixin, JobSerializer):
         )
         if enabled and not email_body.strip():
             raise serializers.ValidationError(
-                {'auto_rejection_email_body': 'Nhập nội dung email thông báo cho ứng viên.'}
+                {'auto_rejection_email_body': _('Nhập nội dung email thông báo cho ứng viên.')}
             )
         return attrs
 
@@ -136,10 +137,10 @@ class EmployerJobWriteSerializer(EmployerJobVisibilityHoldMixin, JobSerializer):
             return campaign
         request = self.context.get('request')
         if request is None or campaign.owner.user_id != request.user.id:
-            raise serializers.ValidationError('Chiến dịch không thuộc tài khoản này.')
+            raise serializers.ValidationError(_('Chiến dịch không thuộc tài khoản này.'))
         if campaign.is_terminal:
             raise serializers.ValidationError(
-                'Không thể thêm tin tuyển dụng vào chiến dịch đã hủy hoặc hoàn tất.'
+                _('Không thể thêm tin tuyển dụng vào chiến dịch đã hủy hoặc hoàn tất.')
             )
         return campaign
 
@@ -180,10 +181,10 @@ class DraftJobApplicationContactSerializer(JobApplicationContactSerializer):
 
     def validate_emails(self, emails):
         if len(emails) > 5:
-            raise serializers.ValidationError('Chỉ được nhập tối đa 5 email nhận hồ sơ.')
+            raise serializers.ValidationError(_('Chỉ được nhập tối đa 5 email nhận hồ sơ.'))
         normalized = [item['email'].strip().lower() for item in emails]
         if len(normalized) != len(set(normalized)):
-            raise serializers.ValidationError('Email nhận hồ sơ không được trùng nhau.')
+            raise serializers.ValidationError(_('Email nhận hồ sơ không được trùng nhau.'))
         return emails
 
 

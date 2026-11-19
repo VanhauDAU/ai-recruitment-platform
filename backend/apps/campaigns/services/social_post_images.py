@@ -11,6 +11,8 @@ from pathlib import PurePosixPath
 from uuid import uuid4
 
 from django.core.files.base import ContentFile
+from django.utils.translation import gettext as _
+from django.utils.translation import ngettext
 from PIL import Image, UnidentifiedImageError
 from rest_framework.exceptions import ValidationError
 
@@ -30,11 +32,11 @@ def _prefix(campaign):
 def _ensure_postable(channel, user):
     campaign = channel.campaign
     if campaign.owner.user_id != user.pk:
-        raise ValidationError('Bạn không có quyền với chiến dịch này.')
+        raise ValidationError(_('Bạn không có quyền với chiến dịch này.'))
     if campaign.is_terminal:
-        raise ValidationError({'detail': 'Chiến dịch đã kết thúc, không đăng thêm được.'})
+        raise ValidationError({'detail': _('Chiến dịch đã kết thúc, không đăng thêm được.')})
     if channel.kind != CampaignChannel.Kind.FACEBOOK_PAGE:
-        raise ValidationError({'detail': 'Chỉ kênh Fanpage Facebook mới đăng tự động được.'})
+        raise ValidationError({'detail': _('Chỉ kênh Fanpage Facebook mới đăng tự động được.')})
 
 
 def save_post_image(*, channel, user, upload):
@@ -48,7 +50,7 @@ def save_post_image(*, channel, user, upload):
         image = Image.open(upload)
         image.load()
     except (UnidentifiedImageError, OSError, Image.DecompressionBombError) as error:
-        raise ValidationError({'file': 'Ảnh bị lỗi hoặc không đọc được.'}) from error
+        raise ValidationError({'file': _('Ảnh bị lỗi hoặc không đọc được.')}) from error
     image.thumbnail((MAX_SIDE, MAX_SIDE), Image.LANCZOS)
     has_alpha = image.mode in ('RGBA', 'LA') or (image.mode == 'P' and 'transparency' in image.info)
     buffer = BytesIO()
@@ -69,8 +71,8 @@ def company_post_images(campaign):
     company = campaign.company
     choices = []
     for kind, label, value in (
-        ('cover', 'Ảnh bìa công ty', getattr(company, 'cover_image_url', '')),
-        ('logo', 'Logo công ty', getattr(company, 'logo_url', '')),
+        ('cover', _('Ảnh bìa công ty'), getattr(company, 'cover_image_url', '')),
+        ('logo', _('Logo công ty'), getattr(company, 'logo_url', '')),
     ):
         path = media_storage_path(value)
         if path:
@@ -90,12 +92,21 @@ def clean_post_images(campaign, images):
             continue
         own = str(PurePosixPath(path)).startswith(_prefix(campaign))
         if not (own or path in allowed_company):
-            raise ValidationError({'images': 'Ảnh không thuộc chiến dịch hoặc công ty này.'})
+            raise ValidationError({'images': _('Ảnh không thuộc chiến dịch hoặc công ty này.')})
         if not public_media_storage().exists(path):
-            raise ValidationError({'images': 'Ảnh đã bị xóa, hãy tải lại.'})
+            raise ValidationError({'images': _('Ảnh đã bị xóa, hãy tải lại.')})
         cleaned.append(path)
     if len(cleaned) > MAX_POST_IMAGES:
-        raise ValidationError({'images': f'Mỗi bài tối đa {MAX_POST_IMAGES} ảnh.'})
+        raise ValidationError(
+            {
+                'images': ngettext(
+                    'Mỗi bài tối đa %(count)s ảnh.',
+                    'Mỗi bài tối đa %(count)s ảnh.',
+                    MAX_POST_IMAGES,
+                )
+                % {'count': MAX_POST_IMAGES}
+            }
+        )
     return cleaned
 
 

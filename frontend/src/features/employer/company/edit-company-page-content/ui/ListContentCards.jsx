@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Button, Checkbox, Form, Input, Select } from 'antd'
 import { getJobBenefits, jobKeys } from '@/entities/job/job'
 import { getProvinces } from '@/entities/system/location'
+import { m } from '@/shared/config/i18n'
 import RichTextEditor from '@/shared/ui/rich-text/RichTextEditor'
 import { cardStatus, changedFields, contentValue } from '../model/content-form'
 import ContentCard from './ContentCard'
@@ -12,9 +13,9 @@ const asList = (data) => (Array.isArray(data) ? data : [])
 function BenefitNotes({ form, catalogue }) {
   const ids = Form.useWatch('benefit_ids', form) || []
   return ids.map((id) => {
-    const name = catalogue.find((item) => item.id === id)?.name || 'phúc lợi'
+    const name = catalogue.find((item) => item.id === id)?.name || m.employer_company_benefit_fallback()
     return (
-      <Form.Item key={id} name={['benefit_notes', String(id)]} label={`Ghi chú cho "${name}" (không bắt buộc)`}>
+      <Form.Item key={id} name={['benefit_notes', String(id)]} label={m.employer_company_benefit_note_label({ name })}>
         <Input maxLength={160} showCount />
       </Form.Item>
     )
@@ -33,7 +34,7 @@ export function BenefitsCard({ page, readOnly }) {
   return (
     <ContentCard
       card="benefits"
-      title="Phúc lợi"
+      title={m.employer_company_benefits_title()}
       {...cardStatus(page, 'benefits')}
       readOnly={readOnly}
       initialValues={{
@@ -58,20 +59,20 @@ export function BenefitsCard({ page, readOnly }) {
     >
       {({ form: cardForm, readOnly: locked }) => (
         <>
-          <Form.Item name="benefit_ids" label="Phúc lợi nổi bật" extra={`Chọn tối đa ${limit} phúc lợi từ danh mục.`}>
+          <Form.Item name="benefit_ids" label={m.employer_company_benefits_label()} extra={m.employer_company_benefits_extra({ limit })}>
             <Select
               mode="multiple"
               maxCount={limit}
               allowClear
               loading={catalogueQuery.isPending}
               optionFilterProp="label"
-              placeholder="Chọn phúc lợi"
+              placeholder={m.employer_company_benefits_placeholder()}
               options={catalogue.map((item) => ({ value: item.id, label: item.name }))}
             />
           </Form.Item>
           <BenefitNotes form={cardForm} catalogue={catalogue} />
-          <Form.Item name="employee_benefits" label="Mô tả thêm về phúc lợi">
-            <RichTextEditor maxLength={10000} disabled={locked} placeholder="Chế độ đãi ngộ, chính sách dành cho nhân viên" />
+          <Form.Item name="employee_benefits" label={m.employer_company_benefits_more_label()}>
+            <RichTextEditor maxLength={10000} disabled={locked} placeholder={m.employer_company_benefits_more_placeholder()} />
           </Form.Item>
         </>
       )}
@@ -95,7 +96,7 @@ export function OfficesCard({ page, readOnly }) {
   return (
     <ContentCard
       card="offices"
-      title="Văn phòng"
+      title={m.employer_company_offices_title()}
       {...cardStatus(page, 'offices')}
       readOnly={readOnly}
       initialValues={{ offices }}
@@ -107,16 +108,16 @@ export function OfficesCard({ page, readOnly }) {
             <div className="company-content-offices">
               {fields.map(({ key, name }) => (
                 <fieldset key={key} className="company-content-office">
-                  <legend>Văn phòng {name + 1}</legend>
+                  <legend>{m.employer_company_office_legend({ index: name + 1 })}</legend>
                   <div className="company-content-grid">
-                    <Form.Item name={[name, 'label']} label="Tên văn phòng">
-                      <Input maxLength={80} placeholder="Ví dụ: Chi nhánh Đà Nẵng" />
+                    <Form.Item name={[name, 'label']} label={m.employer_company_office_name()}>
+                      <Input maxLength={80} placeholder={m.employer_company_office_name_placeholder()} />
                     </Form.Item>
-                    <Form.Item name={[name, 'province_id']} label="Tỉnh/thành phố" rules={[{ required: true, message: 'Chọn tỉnh/thành phố.' }]}>
-                      <Select showSearch optionFilterProp="label" loading={provincesQuery.isPending} options={provinces} placeholder="Chọn tỉnh/thành phố" />
+                    <Form.Item name={[name, 'province_id']} label={m.employer_company_province()} rules={[{ required: true, message: m.employer_company_province_required() }]}>
+                      <Select showSearch optionFilterProp="label" loading={provincesQuery.isPending} options={provinces} placeholder={m.employer_company_province_placeholder()} />
                     </Form.Item>
                   </div>
-                  <Form.Item name={[name, 'address_line']} label="Địa chỉ" rules={[{ required: true, whitespace: true, message: 'Nhập địa chỉ văn phòng.' }]}>
+                  <Form.Item name={[name, 'address_line']} label={m.employer_company_address()} rules={[{ required: true, whitespace: true, message: m.employer_company_office_address_required() }]}>
                     <Input maxLength={255} />
                   </Form.Item>
                   <div className="company-content-office__footer">
@@ -128,11 +129,11 @@ export function OfficesCard({ page, readOnly }) {
                           form.getFieldValue('offices').map((office, index) => ({ ...office, is_headquarters: index === name })),
                         )}
                       >
-                        Trụ sở chính
+                        {m.employer_company_office_headquarters()}
                       </Checkbox>
                     </Form.Item>
                     <Button type="link" danger size="small" icon={<DeleteOutlined aria-hidden="true" />} disabled={locked} onClick={() => remove(name)}>
-                      Xoá văn phòng {name + 1}
+                      {m.employer_company_office_remove({ index: name + 1 })}
                     </Button>
                   </div>
                 </fieldset>
@@ -142,7 +143,7 @@ export function OfficesCard({ page, readOnly }) {
                 disabled={locked || fields.length >= limit}
                 onClick={() => add({ label: '', address_line: '', province_id: undefined, is_headquarters: fields.length === 0 })}
               >
-                Thêm văn phòng ({fields.length}/{limit})
+                {m.employer_company_office_add({ count: fields.length, limit })}
               </Button>
             </div>
           )}

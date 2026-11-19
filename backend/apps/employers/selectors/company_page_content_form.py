@@ -1,6 +1,8 @@
 """The content tab of the page workspace: published values, the caller's
 pending request, a status per block, how saving behaves and the completeness score."""
 
+from django.utils.translation import gettext_lazy
+
 from apps.employers.domain.page_content import SOCIAL_NETWORKS
 from apps.locations.models import Location
 from common.html.plain_text import html_plain_text
@@ -37,15 +39,15 @@ SECTION_REQUEST_KEYS = {
 
 COMPLETENESS_ITEMS = (
     ('logo', 'Logo'),
-    ('cover', 'Ảnh bìa'),
-    ('headline', 'Khẩu hiệu'),
-    ('about', 'Giới thiệu công ty'),
-    ('benefits', 'Phúc lợi'),
-    ('culture', 'Văn hoá công ty'),
-    ('gallery', 'Hình ảnh công ty'),
-    ('offices', 'Văn phòng'),
-    ('social_links', 'Mạng xã hội'),
-    ('video', 'Video giới thiệu'),
+    ('cover', gettext_lazy('Ảnh bìa')),
+    ('headline', gettext_lazy('Khẩu hiệu')),
+    ('about', gettext_lazy('Giới thiệu công ty')),
+    ('benefits', gettext_lazy('Phúc lợi')),
+    ('culture', gettext_lazy('Văn hoá công ty')),
+    ('gallery', gettext_lazy('Hình ảnh công ty')),
+    ('offices', gettext_lazy('Văn phòng')),
+    ('social_links', gettext_lazy('Mạng xã hội')),
+    ('video', gettext_lazy('Video giới thiệu')),
 )
 
 
@@ -203,7 +205,9 @@ def company_page_content_form(company, *, recruiter, request=None):
         ),
         'section_status': section_status,
     }
-    items = [{'key': key, 'label': label, 'done': done[key]} for key, label in COMPLETENESS_ITEMS]
+    items = [
+        {'key': key, 'label': str(label), 'done': done[key]} for key, label in COMPLETENESS_ITEMS
+    ]
     completeness = {
         'score': round(100 * sum(item['done'] for item in items) / len(items)),
         'items': items,

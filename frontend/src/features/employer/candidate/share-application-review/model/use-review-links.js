@@ -7,6 +7,7 @@ import {
 } from '@/entities/application/application'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { message } from '@/shared/lib/toast'
+import { m } from '@/shared/config/i18n'
 
 export default function useReviewLinks(publicId, { enabled }) {
   const queryClient = useQueryClient()
@@ -20,15 +21,15 @@ export default function useReviewLinks(publicId, { enabled }) {
   const createMutation = useMutation({
     mutationFn: (payload) => createApplicationReviewLink(publicId, payload),
     onSuccess: refresh,
-    onError: (error) => message.error(getApiErrorMessage(error, 'Không thể tạo link mời đánh giá.')),
+    onError: (error) => message.error(getApiErrorMessage(error, m.employer_workspace_share_create_error())),
   })
   const revokeMutation = useMutation({
     mutationFn: (linkId) => revokeApplicationReviewLink(publicId, linkId),
     onSuccess: () => {
       refresh()
-      message.success('Đã thu hồi link. Người nhận không thể mở hồ sơ nữa.')
+      message.success(m.employer_workspace_share_revoked())
     },
-    onError: (error) => message.error(getApiErrorMessage(error, 'Không thể thu hồi link.')),
+    onError: (error) => message.error(getApiErrorMessage(error, m.employer_workspace_share_revoke_error())),
   })
   return { linksQuery, createMutation, revokeMutation }
 }

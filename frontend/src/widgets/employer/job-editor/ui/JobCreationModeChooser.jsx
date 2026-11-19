@@ -1,29 +1,30 @@
 import { ArrowRightOutlined, EditOutlined, FileTextOutlined, RobotOutlined } from '@ant-design/icons'
 import { Button } from 'antd'
 import { ProcvMascot } from '@/shared/ui/mascot'
+import { m } from '@/shared/config/i18n'
 
 const MODES = [
   {
     key: 'manual',
     icon: <EditOutlined aria-hidden="true" />,
-    title: 'Nhập thủ công',
-    description: 'Mở form chuẩn và tự hoàn thiện toàn bộ nội dung tin tuyển dụng.',
-    action: 'Mở form',
+    title: m.employer_job_mode_manual_title(),
+    description: m.employer_job_mode_manual_description(),
+    action: m.employer_job_mode_manual_action(),
   },
   {
     key: 'ai_brief',
     icon: <RobotOutlined aria-hidden="true" />,
-    title: 'Tạo nhanh từ brief',
-    description: 'Trả lời vài câu hỏi có hướng dẫn để AI viết bản nháp tiếng Việt.',
-    action: 'Tạo với AI',
+    title: m.employer_job_mode_brief_title(),
+    description: m.employer_job_mode_brief_description(),
+    action: m.employer_job_mode_brief_action(),
     recommended: true,
   },
   {
     key: 'jd_text',
     icon: <FileTextOutlined aria-hidden="true" />,
-    title: 'Chuẩn hóa JD có sẵn',
-    description: 'Dán nội dung cũ để AI chuyển thành cấu trúc của hệ thống.',
-    action: 'Dán nội dung JD',
+    title: m.employer_job_mode_jd_title(),
+    description: m.employer_job_mode_jd_description(),
+    action: m.employer_job_mode_jd_action(),
   },
 ]
 
@@ -32,12 +33,12 @@ export default function JobCreationModeChooser({ onChoose }) {
     <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm" aria-labelledby="job-creation-mode-title">
       <div className="grid min-w-0 gap-5 bg-gradient-to-br from-emerald-50 to-white p-5 sm:p-7 lg:grid-cols-[minmax(0,1fr)_180px] lg:items-center">
         <div className="min-w-0">
-          <p className="text-sm font-semibold uppercase tracking-wide text-emerald-600">Tin tuyển dụng mới</p>
+          <p className="text-sm font-semibold uppercase tracking-wide text-emerald-600">{m.employer_job_mode_eyebrow()}</p>
           <h1 id="job-creation-mode-title" className="mt-2 break-words text-2xl font-bold text-slate-900 sm:text-3xl">
-            Bạn muốn bắt đầu theo cách nào?
+            {m.employer_job_mode_heading()}
           </h1>
           <p className="mt-2 max-w-2xl break-words text-sm leading-6 text-slate-600 sm:text-base">
-            Dù chọn AI hay nhập thủ công, bạn luôn là người kiểm tra và quyết định lưu hoặc đăng tin.
+            {m.employer_job_mode_subheading()}
           </p>
         </div>
         <div className="hidden justify-center lg:flex" aria-hidden="true">
@@ -56,7 +57,7 @@ export default function JobCreationModeChooser({ onChoose }) {
           >
             {mode.recommended && (
               <span className="absolute right-3 top-3 rounded-full bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-700">
-                Đề xuất
+                {m.employer_job_mode_recommended()}
               </span>
             )}
             <span className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-100 text-lg text-emerald-700">

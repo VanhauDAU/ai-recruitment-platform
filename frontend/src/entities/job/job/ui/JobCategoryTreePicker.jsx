@@ -9,6 +9,7 @@ import {
 } from '@ant-design/icons'
 import { Button, Checkbox, Input, Modal } from 'antd'
 import { useMemo, useState } from 'react'
+import { m } from '@/shared/config/i18n'
 import {
   buildCategoryTree,
   nodeCheckState,
@@ -27,14 +28,14 @@ function normalizeSearch(value = '') {
 }
 
 export default function JobCategoryTreePicker({
-  ariaLabel = 'Danh mục nghề',
+  ariaLabel = m.job_category_picker_label(),
   categories = [],
   className = '',
   disabled = false,
   id,
   loading = false,
   onChange = () => {},
-  placeholder = 'Tất cả ngành nghề',
+  placeholder = m.job_category_picker_all(),
   showSelectionChips = false,
   value = [],
 }) {
@@ -104,14 +105,14 @@ export default function JobCategoryTreePicker({
             ? <LoadingOutlined className="text-[var(--brand-primary)]" />
             : <UnorderedListOutlined className="text-[var(--brand-primary)]" />}
           <span className="min-w-0 flex-1 truncate font-medium text-slate-700">
-            {appliedLeaves.size ? `Đã chọn ${selectedIds.length} tiêu chí ngành nghề` : placeholder}
+            {appliedLeaves.size ? m.job_category_picker_selected_count({ count: selectedIds.length }) : placeholder}
           </span>
           {!appliedLeaves.size && !loading && <DownOutlined className="text-xs text-gray-400" />}
         </button>
         {appliedLeaves.size > 0 && !disabled && (
           <button
             type="button"
-            aria-label="Bỏ chọn tất cả ngành nghề"
+            aria-label={m.job_category_picker_clear_all()}
             onClick={(event) => {
               event.stopPropagation()
               onChange([])
@@ -124,15 +125,15 @@ export default function JobCategoryTreePicker({
       </div>
 
       {showSelectionChips && selectedIds.length > 0 && (
-        <div aria-label="Ngành nghề đã chọn" className="mt-2 flex flex-wrap gap-2">
+        <div aria-label={m.job_category_picker_selected()} className="mt-2 flex flex-wrap gap-2">
           {selectedIds.map((categoryId) => {
-            const label = byId.get(categoryId)?.name || `Danh mục #${categoryId}`
+            const label = byId.get(categoryId)?.name || m.job_category_picker_fallback({ id: categoryId })
             return (
               <span key={categoryId} className="inline-flex min-h-7 max-w-full items-center gap-1 rounded-full bg-emerald-50 px-2.5 text-xs font-semibold text-emerald-700">
                 <span className="min-w-0 truncate">{label}</span>
                 <button
                   type="button"
-                  aria-label={`Bỏ chọn ${label}`}
+                  aria-label={m.job_category_picker_remove({ label })}
                   onClick={() => onChange(selectedIds.filter((item) => item !== categoryId))}
                   className="grid h-5 w-5 shrink-0 place-items-center rounded-full border-0 bg-transparent text-emerald-600 hover:bg-emerald-100"
                 >
@@ -151,12 +152,12 @@ export default function JobCategoryTreePicker({
         width={880}
         style={{ maxWidth: 'calc(100vw - 24px)', top: 20 }}
         styles={{ body: { maxWidth: '100%' } }}
-        title="Chọn Danh mục nghề, Nghề hoặc Vị trí chuyên môn"
+        title={m.job_category_picker_title()}
       >
         <Input
           allowClear
-          aria-label="Tìm kiếm ngành nghề"
-          placeholder="Nhập từ khóa tìm kiếm"
+          aria-label={m.job_category_picker_search()}
+          placeholder={m.job_category_picker_search_placeholder()}
           prefix={<SearchOutlined className="text-gray-400" />}
           value={query}
           onChange={(event) => setQuery(event.target.value)}
@@ -164,7 +165,7 @@ export default function JobCategoryTreePicker({
         />
         <div className="overflow-hidden rounded-lg border border-gray-100 md:grid md:grid-cols-[280px_1fr]">
           <div className={`border-r border-gray-100 ${detailOpen ? 'hidden md:block' : 'block'}`}>
-            <p className="px-4 pb-1 pt-3 text-xs font-semibold tracking-wide text-gray-400">DANH MỤC NGHỀ</p>
+            <p className="px-4 pb-1 pt-3 text-xs font-semibold tracking-wide text-gray-400">{m.job_category_picker_groups_heading()}</p>
             <ul className="h-80 overflow-auto md:h-96">
               {visibleGroups.map((group) => {
                 const state = nodeCheckState(group.id, selectedLeaves, leavesUnder)
@@ -179,14 +180,14 @@ export default function JobCategoryTreePicker({
                     }`}
                   >
                     <Checkbox
-                      aria-label={`Chọn danh mục nghề ${group.name}`}
+                      aria-label={m.job_category_picker_select_group({ name: group.name })}
                       checked={state.checked}
                       indeterminate={state.indeterminate}
                       onChange={() => toggle(group.id)}
                     />
                     <button
                       type="button"
-                      aria-label={`Mở danh mục nghề ${group.name}`}
+                      aria-label={m.job_category_picker_open_group({ name: group.name })}
                       onClick={() => {
                         setActiveId(group.id)
                         setDetailOpen(true)
@@ -200,7 +201,7 @@ export default function JobCategoryTreePicker({
                 )
               })}
               {!visibleGroups.length && (
-                <li className="px-4 py-8 text-center text-sm text-slate-500">Không tìm thấy ngành nghề phù hợp.</li>
+                <li className="px-4 py-8 text-center text-sm text-slate-500">{m.job_category_picker_empty()}</li>
               )}
             </ul>
           </div>
@@ -211,10 +212,10 @@ export default function JobCategoryTreePicker({
               onClick={() => setDetailOpen(false)}
               className="flex items-center gap-1.5 px-4 py-2 text-sm text-[var(--brand-primary)] md:hidden"
             >
-              <LeftOutlined className="text-xs" /> Danh mục nghề
+              <LeftOutlined className="text-xs" /> {m.job_category_picker_label()}
             </button>
             <div className="grid grid-cols-1 px-4 pb-1 pt-2 text-xs font-semibold tracking-wide text-gray-400 md:grid-cols-[220px_1fr] md:pt-3">
-              <span>NGHỀ</span><span className="hidden md:block">VỊ TRÍ CHUYÊN MÔN</span>
+              <span>{m.job_category_picker_jobs_heading()}</span><span className="hidden md:block">{m.job_category_picker_positions_heading()}</span>
             </div>
             <div className="h-80 divide-y divide-gray-50 overflow-auto md:h-96">
               {visibleJobs.map((job) => {
@@ -226,7 +227,7 @@ export default function JobCategoryTreePicker({
                   <div key={job.id} className="grid grid-cols-1 gap-2 px-4 py-3 md:grid-cols-[220px_1fr] md:gap-3">
                     <label className="flex cursor-pointer items-start gap-2.5">
                       <Checkbox
-                        aria-label={`Chọn nghề ${job.name}`}
+                        aria-label={m.job_category_picker_select_job({ name: job.name })}
                         checked={state.checked}
                         indeterminate={state.indeterminate}
                         onChange={() => toggle(job.id)}
@@ -242,7 +243,7 @@ export default function JobCategoryTreePicker({
                           <button
                             key={position.id}
                             type="button"
-                            aria-label={`Chọn vị trí chuyên môn ${position.name}`}
+                            aria-label={m.job_category_picker_select_position({ name: position.name })}
                             aria-pressed={positionState.checked}
                             onClick={() => toggle(position.id)}
                             className={`rounded-full px-3 py-1 text-sm transition ${
@@ -265,11 +266,11 @@ export default function JobCategoryTreePicker({
 
         <div className="mt-4 flex items-center justify-between gap-3">
           <Button type="link" className="!px-0" disabled={!selectedLeaves.size} onClick={() => setSelectedLeaves(new Set())}>
-            Bỏ chọn tất cả{selectedLeaves.size > 0 && ` (${selectedLeaves.size})`}
+            {m.job_category_picker_clear()}{selectedLeaves.size > 0 && ` (${selectedLeaves.size})`}
           </Button>
           <div className="flex gap-2">
-            <Button onClick={() => setOpen(false)}>Hủy</Button>
-            <Button type="primary" onClick={apply}>Chọn ngành nghề</Button>
+            <Button onClick={() => setOpen(false)}>{m.common_action_cancel()}</Button>
+            <Button type="primary" onClick={apply}>{m.job_category_picker_apply()}</Button>
           </div>
         </div>
       </Modal>

@@ -10,6 +10,8 @@ from uuid import uuid4
 
 from django.conf import settings
 from django.db import transaction
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 from rest_framework.exceptions import ValidationError
 
 from apps.uploads.services import UploadServiceError, claim_clean_upload
@@ -67,7 +69,9 @@ VERIFICATION_METHOD_DOCUMENT_TYPES = {
     },
 }
 VERIFICATION_DOCUMENT_TYPES = frozenset().union(*VERIFICATION_METHOD_DOCUMENT_TYPES.values())
-UPDATE_REQUEST_NOT_FOUND = {'update_request': 'Không tìm thấy yêu cầu cập nhật đang chờ.'}
+UPDATE_REQUEST_NOT_FOUND = {
+    'update_request': gettext_lazy('Không tìm thấy yêu cầu cập nhật đang chờ.')
+}
 
 
 def _matches_signature(extension, header, signature):
@@ -84,7 +88,7 @@ def _allowed_extensions(doc_type):
 
 def _save_document_file(upload, directory, doc_type):
     if upload.size > settings.IMAGE_UPLOAD_MAX_SIZE:
-        raise ValidationError({'file': 'Giấy tờ phải nhỏ hơn 5 MB.'})
+        raise ValidationError({'file': _('Giấy tờ phải nhỏ hơn 5 MB.')})
 
     header = upload.read(SIGNATURE_WINDOW_BYTES)
     upload.seek(0)
@@ -100,11 +104,13 @@ def _save_document_file(upload, directory, doc_type):
     )
     if extension is None:
         allowed = (
-            'PDF, DOC hoặc DOCX'
+            _('PDF, DOC hoặc DOCX')
             if doc_type == CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT
-            else 'JPG, PNG hoặc PDF'
+            else _('JPG, PNG hoặc PDF')
         )
-        raise ValidationError({'file': f'Chỉ chấp nhận tệp {allowed} hợp lệ.'})
+        raise ValidationError(
+            {'file': _('Chỉ chấp nhận tệp %(allowed)s hợp lệ.') % {'allowed': allowed}}
+        )
 
     safe_directory = str(PurePosixPath(directory.strip('/')))
     return private_media_storage().save(f'{safe_directory}/{uuid4().hex}.{extension}', upload)
@@ -122,20 +128,25 @@ def _claim_scanned_document(*, user, upload_session_public_id, doc_type, for_upd
     except UploadServiceError as error:
         raise EmployerUploadSessionRejected(error) from error
     if upload_asset.size_bytes > settings.IMAGE_UPLOAD_MAX_SIZE:
-        raise ValidationError({'upload_session': 'Giấy tờ phải nhỏ hơn 5 MB.'})
+        raise ValidationError({'upload_session': _('Giấy tờ phải nhỏ hơn 5 MB.')})
     allowed_content_types = DOCUMENT_CONTENT_TYPES.get(doc_type, DEFAULT_DOCUMENT_CONTENT_TYPES)
     if upload_asset.content_type not in allowed_content_types:
         allowed = (
-            'PDF hoặc DOCX'
+            _('PDF hoặc DOCX')
             if doc_type == CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT
-            else 'JPG, PNG hoặc PDF'
+            else _('JPG, PNG hoặc PDF')
         )
-        raise ValidationError({'upload_session': f'Chỉ chấp nhận tệp {allowed} đã quét an toàn.'})
+        raise ValidationError(
+            {
+                'upload_session': _('Chỉ chấp nhận tệp %(allowed)s đã quét an toàn.')
+                % {'allowed': allowed}
+            }
+        )
     try:
         validate_employer_upload_structure(upload_asset)
     except EmployerUploadStructureError as error:
         raise ValidationError(
-            {'upload_session': 'Nội dung tệp bị lỗi hoặc không đúng định dạng khai báo.'}
+            {'upload_session': _('Nội dung tệp bị lỗi hoặc không đúng định dạng khai báo.')}
         ) from error
     return upload_asset
 
@@ -193,7 +204,7 @@ def save_company_document(
     elif doc_type == CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT and recruiter is not None:
         directory = f'employers/{recruiter.public_id}/documents'
     else:
-        raise ValidationError({'detail': 'Không xác định được chủ sở hữu của giấy tờ.'})
+        raise ValidationError({'detail': _('Không xác định được chủ sở hữu của giấy tờ.')})
 
     verification_case = None
     existing = None
@@ -218,12 +229,12 @@ def save_company_document(
         if replace_document_public_id:
             existing = document_scope.filter(public_id=replace_document_public_id).first()
             if existing is None:
-                raise ValidationError({'replaces': 'Không tìm thấy tệp hiện hành cần thay thế.'})
+                raise ValidationError({'replaces': _('Không tìm thấy tệp hiện hành cần thay thế.')})
             existing.is_current = False
             existing.save(update_fields=['is_current', 'updated_at'])
         elif append_to_current_set:
             if document_scope.count() >= MAX_DOCUMENTS_PER_TYPE:
-                raise ValidationError({'file': 'Mỗi loại giấy tờ được tải tối đa 10 tệp.'})
+                raise ValidationError({'file': _('Mỗi loại giấy tờ được tải tối đa 10 tệp.')})
         else:
             existing = document_scope.order_by('-version', '-created_at', '-id').first()
             if existing is not None:

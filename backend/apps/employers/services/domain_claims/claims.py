@@ -4,6 +4,7 @@ from datetime import timedelta
 
 from django.db import IntegrityError, transaction
 from django.utils import timezone
+from django.utils.translation import gettext as _
 
 from ...models import (
     CompanyDomainClaim,
@@ -37,7 +38,7 @@ def record_claim_event(claim, event_type, *, actor=None, payload=None):
 
 def _assert_company_recruiter(recruiter):
     if recruiter.company_id is None or not has_explicit_company_link(recruiter):
-        raise DomainClaimError('company_required', 'Bạn chưa liên kết với công ty nào.')
+        raise DomainClaimError('company_required', _('Bạn chưa liên kết với công ty nào.'))
 
 
 @transaction.atomic
@@ -57,7 +58,7 @@ def create_domain_claim(*, recruiter):
         CompanyDomainClaim.Status.VERIFIED,
         CompanyDomainClaim.Status.GRACE,
     }:
-        raise DomainClaimError('already_verified', 'Tên miền này đã được xác minh.')
+        raise DomainClaimError('already_verified', _('Tên miền này đã được xác minh.'))
     token, token_hash = new_challenge()
     now = timezone.now()
     if claim is None:
@@ -100,7 +101,7 @@ def _lock_claim_for_recruiter(*, claim_public_id, recruiter):
         .first()
     )
     if claim is None:
-        raise DomainClaimError('not_found', 'Không tìm thấy yêu cầu xác minh tên miền.')
+        raise DomainClaimError('not_found', _('Không tìm thấy yêu cầu xác minh tên miền.'))
     return claim
 
 
@@ -119,7 +120,7 @@ def assert_no_active_conflict(claim):
     if conflicts:
         raise DomainClaimError(
             'domain_owned_by_another_company',
-            'Tên miền đã được một công ty khác xác minh. Vui lòng yêu cầu quản trị hỗ trợ.',
+            _('Tên miền đã được một công ty khác xác minh. Vui lòng yêu cầu quản trị hỗ trợ.'),
         )
 
 
@@ -130,14 +131,14 @@ def verify_domain_claim(*, claim_public_id, recruiter, resolver=None):
         company_id=recruiter.company_id,
     ).first()
     if snapshot is None:
-        raise DomainClaimError('not_found', 'Không tìm thấy yêu cầu xác minh tên miền.')
+        raise DomainClaimError('not_found', _('Không tìm thấy yêu cầu xác minh tên miền.'))
     if verified_email_domain(recruiter.user) != snapshot.domain:
-        raise DomainClaimError('email_domain_changed', 'Email hiện tại không còn khớp tên miền.')
+        raise DomainClaimError('email_domain_changed', _('Email hiện tại không còn khớp tên miền.'))
     if snapshot.method != CompanyDomainClaim.Method.DNS_TXT or snapshot.status not in {
         CompanyDomainClaim.Status.PENDING,
         CompanyDomainClaim.Status.GRACE,
     }:
-        raise DomainClaimError('invalid_status', 'Yêu cầu này không thể kiểm tra DNS.')
+        raise DomainClaimError('invalid_status', _('Yêu cầu này không thể kiểm tra DNS.'))
     resolver_error = None
     try:
         # DNS runs before acquiring a row lock so a slow resolver never holds a
@@ -154,13 +155,13 @@ def verify_domain_claim(*, claim_public_id, recruiter, resolver=None):
         )
         if verified_email_domain(recruiter.user) != claim.domain:
             raise DomainClaimError(
-                'email_domain_changed', 'Email hiện tại không còn khớp tên miền.'
+                'email_domain_changed', _('Email hiện tại không còn khớp tên miền.')
             )
         if claim.method != CompanyDomainClaim.Method.DNS_TXT or claim.status not in {
             CompanyDomainClaim.Status.PENDING,
             CompanyDomainClaim.Status.GRACE,
         }:
-            raise DomainClaimError('invalid_status', 'Yêu cầu này không thể kiểm tra DNS.')
+            raise DomainClaimError('invalid_status', _('Yêu cầu này không thể kiểm tra DNS.'))
         now = timezone.now()
         if claim.status == CompanyDomainClaim.Status.PENDING and (
             claim.challenge_expires_at is None or claim.challenge_expires_at <= now
@@ -172,7 +173,7 @@ def verify_domain_claim(*, claim_public_id, recruiter, resolver=None):
                 claim, CompanyDomainClaimEvent.EventType.EXPIRED, actor=recruiter.user
             )
             outcome_error = DomainClaimError(
-                'challenge_expired', 'Challenge đã hết hạn. Hãy tạo mã mới.'
+                'challenge_expired', _('Challenge đã hết hạn. Hãy tạo mã mới.')
             )
         elif resolver_error or not txt_matches(claim, values):
             claim.last_checked_at = now
@@ -182,7 +183,7 @@ def verify_domain_claim(*, claim_public_id, recruiter, resolver=None):
                 claim, CompanyDomainClaimEvent.EventType.DNS_CHECK_FAILED, actor=recruiter.user
             )
             outcome_error = resolver_error or DomainClaimError(
-                'dns_check_failed', 'Chưa tìm thấy bản ghi TXT hợp lệ.'
+                'dns_check_failed', _('Chưa tìm thấy bản ghi TXT hợp lệ.')
             )
         else:
             assert_no_active_conflict(claim)
@@ -200,7 +201,7 @@ def verify_domain_claim(*, claim_public_id, recruiter, resolver=None):
             except IntegrityError as error:
                 raise DomainClaimError(
                     'domain_owned_by_another_company',
-                    'Tên miền đã được một công ty khác xác minh.',
+                    _('Tên miền đã được một công ty khác xác minh.'),
                 ) from error
             record_claim_event(
                 claim,
@@ -218,7 +219,7 @@ def verify_domain_claim(*, claim_public_id, recruiter, resolver=None):
 def rotate_domain_claim(*, claim_public_id, recruiter, lock_version):
     claim = _lock_claim_for_recruiter(claim_public_id=claim_public_id, recruiter=recruiter)
     if claim.lock_version != lock_version:
-        raise DomainClaimError('resource_changed', 'Dữ liệu đã thay đổi. Vui lòng tải lại.')
+        raise DomainClaimError('resource_changed', _('Dữ liệu đã thay đổi. Vui lòng tải lại.'))
     if claim.status not in {
         CompanyDomainClaim.Status.PENDING,
         CompanyDomainClaim.Status.REJECTED,
@@ -226,11 +227,13 @@ def rotate_domain_claim(*, claim_public_id, recruiter, lock_version):
         CompanyDomainClaim.Status.EXPIRED,
         CompanyDomainClaim.Status.LEGACY_INFERRED,
     }:
-        raise DomainClaimError('invalid_status', 'Không thể đổi challenge ở trạng thái hiện tại.')
+        raise DomainClaimError(
+            'invalid_status', _('Không thể đổi challenge ở trạng thái hiện tại.')
+        )
     # Identity is re-derived on every sensitive action. A changed e-mail cannot
     # rotate a challenge that was issued for the old domain.
     if verified_email_domain(recruiter.user) != claim.domain:
-        raise DomainClaimError('email_domain_changed', 'Email hiện tại không còn khớp tên miền.')
+        raise DomainClaimError('email_domain_changed', _('Email hiện tại không còn khớp tên miền.'))
     token, token_hash = new_challenge()
     now = timezone.now()
     claim.requested_by = recruiter.user
@@ -257,18 +260,20 @@ def rotate_domain_claim(*, claim_public_id, recruiter, lock_version):
 def request_manual_domain_review(*, claim_public_id, recruiter, lock_version, reason):
     claim = _lock_claim_for_recruiter(claim_public_id=claim_public_id, recruiter=recruiter)
     if claim.lock_version != lock_version:
-        raise DomainClaimError('resource_changed', 'Dữ liệu đã thay đổi. Vui lòng tải lại.')
+        raise DomainClaimError('resource_changed', _('Dữ liệu đã thay đổi. Vui lòng tải lại.'))
     reason = (reason or '').strip()
     if not reason:
-        raise DomainClaimError('reason_required', 'Vui lòng nêu lý do cần duyệt thủ công.')
+        raise DomainClaimError('reason_required', _('Vui lòng nêu lý do cần duyệt thủ công.'))
     if verified_email_domain(recruiter.user) != claim.domain:
-        raise DomainClaimError('email_domain_changed', 'Email hiện tại không còn khớp tên miền.')
+        raise DomainClaimError('email_domain_changed', _('Email hiện tại không còn khớp tên miền.'))
     if claim.status not in {
         CompanyDomainClaim.Status.PENDING,
         CompanyDomainClaim.Status.REJECTED,
         CompanyDomainClaim.Status.LEGACY_INFERRED,
     }:
-        raise DomainClaimError('invalid_status', 'Không thể yêu cầu duyệt ở trạng thái hiện tại.')
+        raise DomainClaimError(
+            'invalid_status', _('Không thể yêu cầu duyệt ở trạng thái hiện tại.')
+        )
     claim.requested_by = recruiter.user
     claim.method = CompanyDomainClaim.Method.ADMIN_MANUAL
     claim.status = CompanyDomainClaim.Status.PENDING

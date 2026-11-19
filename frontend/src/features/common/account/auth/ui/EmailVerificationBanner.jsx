@@ -1,6 +1,7 @@
 import { WarningFilled } from '@ant-design/icons'
 import { Link } from 'react-router'
 import { useSession } from '@/entities/account/session'
+import { m } from '@/shared/config/i18n'
 
 export default function EmailVerificationBanner({ verificationPath }) {
   const { user } = useSession()
@@ -14,12 +15,12 @@ export default function EmailVerificationBanner({ verificationPath }) {
       <div className="mx-auto flex max-w-7xl items-center justify-center gap-2 px-10 py-2.5 text-center text-sm">
         <WarningFilled className="shrink-0 text-white/90" />
         <span>
-          Tài khoản của bạn chưa được xác thực. Vui lòng xác thực tài khoản{' '}
+          {m.account_auth_email_unverified()}{' '}
           <Link
             to={verificationPath}
             className="font-semibold !text-white !underline underline-offset-2 hover:!text-white"
           >
-            tại đây
+            {m.account_auth_email_unverified_link()}
           </Link>
           .
         </span>

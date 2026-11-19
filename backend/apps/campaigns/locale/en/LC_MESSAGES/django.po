@@ -1,0 +1,740 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: procv\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Cập nhật chiến dịch"
+msgstr "Campaign updated"
+
+msgid "Hệ thống"
+msgstr "System"
+
+msgid "Người dùng"
+msgstr "User"
+
+msgid "Ngày kết thúc phải sau hoặc bằng ngày bắt đầu."
+msgstr "The end date must be on or after the start date."
+
+msgid "Ngân sách tối đa không được nhỏ hơn tối thiểu."
+msgstr "The maximum budget cannot be lower than the minimum."
+
+msgid "Chi phí phải lớn hơn 0."
+msgstr "The cost must be greater than 0."
+
+msgid "Facebook không mở được link trong bài. Link phải là địa chỉ công khai, không phải localhost."
+msgstr "Facebook could not open the link in the post. The link must be a public address, not localhost."
+
+msgid "Kết nối Fanpage đã hết hạn. Hãy kết nối lại trong Cài đặt tài khoản."
+msgstr "The Facebook Page connection has expired. Reconnect it in Account settings."
+
+msgid "Fanpage chưa cho ProCV quyền đăng bài. Hãy kết nối lại và bật quyền đăng bài."
+msgstr "The Facebook Page has not allowed ProCV to publish posts. Reconnect it and enable the publishing permission."
+
+msgid "Facebook đang tạm chặn đăng bài từ Fanpage này. Hãy thử lại sau."
+msgstr "Facebook is temporarily blocking posts from this Page. Please try again later."
+
+msgid "Facebook từ chối nội dung bài. Hãy sửa nội dung rồi đăng lại."
+msgstr "Facebook rejected the post content. Edit the content and post again."
+
+msgid "Facebook không phản hồi kịp. Hệ thống đã thử lại nhiều lần."
+msgstr "Facebook did not respond in time. The system retried several times."
+
+msgid "Không kết nối được tới Facebook. Hệ thống đã thử lại nhiều lần."
+msgstr "Could not connect to Facebook. The system retried several times."
+
+msgid "Chiến dịch đang tạm dừng nên bài được hoãn."
+msgstr "The recruitment campaign is paused, so the post was postponed."
+
+msgid "Chiến dịch đã kết thúc nên bài bị hủy."
+msgstr "The recruitment campaign has ended, so the post was cancelled."
+
+msgid "Chiến dịch đã bàn giao cho người khác nên bài bị hủy."
+msgstr "The recruitment campaign was handed over to someone else, so the post was cancelled."
+
+msgid "Fanpage đã ngắt kết nối. Hãy kết nối lại trong Cài đặt tài khoản."
+msgstr "The Facebook Page was disconnected. Reconnect it in Account settings."
+
+msgid "Facebook báo lỗi (%(code)s). Hãy thử đăng lại."
+msgstr "Facebook reported an error (%(code)s). Please try posting again."
+
+msgid "Đã dùng hết lượt soạn bằng AI hôm nay."
+msgstr "You have used all of today's AI drafts."
+
+msgid "Chọn xlsx hoặc pdf."
+msgstr "Choose xlsx or pdf."
+
+msgid "Chọn một ảnh."
+msgstr "Choose an image."
+
+msgid "Nháp"
+msgstr "Draft"
+
+msgid "Đã lên lịch"
+msgstr "Scheduled"
+
+msgid "Đang chạy"
+msgstr "Running"
+
+msgid "Tạm dừng"
+msgstr "Paused"
+
+msgid "Hoàn tất"
+msgstr "Completed"
+
+msgid "Đã hủy"
+msgstr "Cancelled"
+
+msgid "Không giữ"
+msgstr "Not held"
+
+msgid "Tạm giữ do khóa tài khoản"
+msgstr "Held while the account is locked"
+
+msgid "Giữ để rà soát sau cấm"
+msgstr "Held for review after a ban"
+
+msgid "Giữ do trạng thái khóa cũ"
+msgstr "Held due to a legacy lock"
+
+msgid "Chưa kết thúc"
+msgstr "Not ended"
+
+msgid "Nhà tuyển dụng"
+msgstr "Employer"
+
+msgid "Chiến dịch"
+msgstr "Recruitment campaign"
+
+msgid "Tin tuyển dụng"
+msgstr "Job posting"
+
+msgid "Ứng viên"
+msgstr "Candidate"
+
+msgid "Đồng bộ dữ liệu hiện có"
+msgstr "Existing data synced"
+
+msgid "Tạo chiến dịch"
+msgstr "Campaign created"
+
+msgid "Dừng chiến dịch"
+msgstr "Campaign paused"
+
+msgid "Mở lại chiến dịch"
+msgstr "Campaign resumed"
+
+msgid "Lên lịch kích hoạt"
+msgstr "Activation scheduled"
+
+msgid "Hủy lịch kích hoạt"
+msgstr "Scheduled activation cancelled"
+
+msgid "Kích hoạt chiến dịch"
+msgstr "Campaign activated"
+
+msgid "Kích hoạt theo lịch thất bại"
+msgstr "Scheduled activation failed"
+
+msgid "Hoàn tất chiến dịch"
+msgstr "Campaign completed"
+
+msgid "Hủy chiến dịch"
+msgstr "Campaign cancelled"
+
+msgid "Thêm kênh phân phối"
+msgstr "Distribution channel added"
+
+msgid "Đã đăng lên kênh"
+msgstr "Posted to channel"
+
+msgid "Đã đăng lên Fanpage"
+msgstr "Posted to Facebook Page"
+
+msgid "Đã gỡ bài khỏi Fanpage"
+msgstr "Post removed from Facebook Page"
+
+msgid "Thêm tin tuyển dụng"
+msgstr "Job posting added"
+
+msgid "Gỡ tin tuyển dụng"
+msgstr "Job posting removed"
+
+msgid "Cập nhật tin tuyển dụng"
+msgstr "Job posting updated"
+
+msgid "Đổi trạng thái tin"
+msgstr "Job posting status changed"
+
+msgid "Nhận CV ứng tuyển"
+msgstr "Application received"
+
+msgid "Đổi trạng thái ứng viên"
+msgstr "Candidate status changed"
+
+msgid "Giữ do trạng thái tài khoản"
+msgstr "Held due to account status"
+
+msgid "Gỡ giữ do trạng thái tài khoản"
+msgstr "Account status hold released"
+
+msgid "Fanpage Facebook"
+msgstr "Facebook Page"
+
+msgid "Nhóm Facebook"
+msgstr "Facebook group"
+
+msgid "Website công ty"
+msgstr "Company website"
+
+msgid "Tờ rơi / QR"
+msgstr "Flyer / QR"
+
+msgid "Kênh khác"
+msgstr "Other channel"
+
+msgid "Trang tuyển dụng của chiến dịch"
+msgstr "Campaign careers page"
+
+msgid "Một tin tuyển dụng"
+msgstr "A single job posting"
+
+msgid "Chưa có"
+msgstr "None yet"
+
+msgid "AI soạn"
+msgstr "AI drafted"
+
+msgid "Mẫu có sẵn"
+msgstr "Ready-made template"
+
+msgid "Tự soạn"
+msgstr "Written manually"
+
+msgid "Đã đủ chỉ tiêu"
+msgstr "Target reached"
+
+msgid "Đúng tiến độ"
+msgstr "On track"
+
+msgid "Có nguy cơ chậm"
+msgstr "At risk of falling behind"
+
+msgid "Đang chậm"
+msgstr "Behind schedule"
+
+msgid "Chưa đủ dữ liệu"
+msgstr "Not enough data"
+
+msgid "Chưa có chỉ tiêu"
+msgstr "No target set"
+
+msgid "Đăng tin nháp"
+msgstr "Publish draft job posting"
+
+msgid "Gắn tin đang hiển thị"
+msgstr "Attach live job posting"
+
+msgid "Giả lập"
+msgstr "Simulated"
+
+msgid "Đang kết nối"
+msgstr "Connected"
+
+msgid "Hết hạn, cần kết nối lại"
+msgstr "Expired, reconnection needed"
+
+msgid "Đã ngắt kết nối"
+msgstr "Disconnected"
+
+msgid "Đã hẹn giờ"
+msgstr "Scheduled"
+
+msgid "Đang đăng"
+msgstr "Publishing"
+
+msgid "Đã đăng"
+msgstr "Published"
+
+msgid "Hoãn do chiến dịch tạm dừng"
+msgstr "Postponed while the campaign is paused"
+
+msgid "Đăng không thành công"
+msgstr "Failed to publish"
+
+msgid "Đã gỡ khỏi Fanpage"
+msgstr "Removed from Facebook Page"
+
+msgid "Chưa gỡ được khỏi Fanpage"
+msgstr "Could not be removed from Facebook Page"
+
+msgid "Mời từ kho ứng viên"
+msgstr "Invited from talent pool"
+
+msgid "Gợi ý của ProCV"
+msgstr "Recommended by ProCV"
+
+msgid "Tự tìm thấy trên ProCV"
+msgstr "Found on ProCV"
+
+msgid "Trang tuyển dụng không tồn tại."
+msgstr "This careers page does not exist."
+
+msgid "%(company)s đang tuyển dụng: %(campaign)s."
+msgstr "%(company)s is hiring: %(campaign)s."
+
+msgid "Không tìm thấy trang tuyển dụng"
+msgstr "Careers page not found"
+
+msgid "Bạn không có quyền chỉnh sửa chiến dịch này."
+msgstr "You do not have permission to edit this recruitment campaign."
+
+msgid "Bạn không có quyền đổi trạng thái chiến dịch này."
+msgstr "You do not have permission to change the status of this recruitment campaign."
+
+msgid "Chiến dịch đang bị policy hold."
+msgstr "This recruitment campaign is under a policy hold."
+
+msgid "Chiến dịch đã qua ngày kết thúc. Gia hạn ngày kết thúc trước khi mở lại."
+msgstr "The recruitment campaign is past its end date. Extend the end date before resuming it."
+
+msgid "Chiến dịch đã kết thúc, không thể chỉnh sửa."
+msgstr "The recruitment campaign has ended and can no longer be edited."
+
+msgid "Chỉ đổi được ngày bắt đầu trước khi chiến dịch chạy."
+msgstr "The start date can only be changed before the campaign starts running."
+
+msgid "Chiến dịch đã lên lịch cần ngày bắt đầu sau hôm nay."
+msgstr "A scheduled campaign needs a start date after today."
+
+msgid "Kích hoạt chiến dịch qua bước Xem lại & Kích hoạt."
+msgstr "Activate the campaign through the Review & Activate step."
+
+msgid "Nhập đúng mã chiến dịch để xác nhận dừng."
+msgstr "Enter the exact campaign code to confirm pausing."
+
+msgid "Không thể chuyển sang trạng thái đã chọn."
+msgstr "Cannot switch to the selected status."
+
+msgid "Ngày kết thúc không được trước hạn nhận hồ sơ của tin đang tuyển (%(deadline)s)."
+msgstr "The end date cannot be earlier than the application deadline of an open job posting (%(deadline)s)."
+
+msgid "Bạn không có quyền với chiến dịch này."
+msgstr "You do not have access to this recruitment campaign."
+
+msgid "Chiến dịch đã kết thúc, không thêm kênh được."
+msgstr "The recruitment campaign has ended, so no channels can be added."
+
+msgid "Chiến dịch đã có kênh cùng tên."
+msgstr "This campaign already has a channel with the same name."
+
+msgid "Chọn tin mà link sẽ dẫn tới."
+msgstr "Choose the job posting the link should lead to."
+
+msgid "Tin này không thuộc chiến dịch."
+msgstr "This job posting does not belong to the campaign."
+
+msgid "Chúng tôi"
+msgstr "We"
+
+msgid "• %(title)s (%(count)s người, %(salary)s)"
+msgid_plural "• %(title)s (%(count)s người, %(salary)s)"
+msgstr[0] "• %(title)s (%(count)s opening, %(salary)s)"
+msgstr[1] "• %(title)s (%(count)s openings, %(salary)s)"
+
+msgid "%(company)s đang tuyển dụng: %(campaign)s"
+msgstr "%(company)s is hiring: %(campaign)s"
+
+msgid "tuyendung"
+msgstr "hiring"
+
+msgid "vieclam"
+msgstr "jobs"
+
+msgid "Ứng tuyển ngay: %(link)s"
+msgstr "Apply now: %(link)s"
+
+msgid "%(company)s đang tìm đồng đội cho các vị trí:"
+msgstr "%(company)s is looking for teammates for these positions:"
+
+msgid "Ứng tuyển tại: %(link)s"
+msgstr "Apply here: %(link)s"
+
+msgid "Bạn không có quyền thiết lập chiến dịch này."
+msgstr "You do not have permission to set up this recruitment campaign."
+
+msgid "Chiến dịch đã chạy, không còn ở bước thiết lập."
+msgstr "The campaign is already running and is no longer in the setup step."
+
+msgid "Một tin chỉ được chọn một thao tác."
+msgstr "Each job posting can only have one action."
+
+msgid "Chiến dịch chưa đủ điều kiện kích hoạt."
+msgstr "The campaign is not yet eligible for activation."
+
+msgid "Xác nhận cam kết chịu trách nhiệm về nội dung tin trước khi kích hoạt."
+msgstr "Confirm that you take responsibility for the job posting content before activating."
+
+msgid "Không kích hoạt được vì có tin chưa đăng hoặc gắn được."
+msgstr "Could not activate because some job postings could not be published or attached."
+
+msgid "Không dùng được các tin: %(jobs)s."
+msgstr "These job postings cannot be used: %(jobs)s."
+
+msgid "Thời gian: ngày kết thúc hoặc tuyển liên tục"
+msgstr "Timing: an end date or continuous hiring"
+
+msgid "Chọn ngày kết thúc từ hôm nay trở đi, hoặc bật tuyển liên tục ở bước Thông tin."
+msgstr "Choose an end date from today onwards, or turn on continuous hiring in the Details step."
+
+msgid "Có ít nhất một tin tuyển dụng"
+msgstr "At least one job posting"
+
+msgid "Chọn tin nháp để đăng hoặc tin đang hiển thị để gắn vào chiến dịch."
+msgstr "Choose a draft job posting to publish or a live job posting to attach to the campaign."
+
+msgid "Tin đủ nội dung và hạn nộp nằm trong chiến dịch"
+msgstr "Job postings are complete and their deadlines fall within the campaign"
+
+msgid "Tài khoản đủ điều kiện đăng tin"
+msgstr "Account is eligible to post jobs"
+
+msgid "Còn lượt đăng tin"
+msgstr "Job posting credits remaining"
+
+msgid "Ngày bắt đầu sau hôm nay"
+msgstr "Start date after today"
+
+msgid "Lên lịch cần ngày bắt đầu sau hôm nay."
+msgstr "Scheduling needs a start date after today."
+
+msgid "Hạn nhận hồ sơ sau ngày kết thúc chiến dịch."
+msgstr "The application deadline is after the campaign end date."
+
+msgid "Cần %(needed)s lượt, còn %(remain)s lượt."
+msgstr "Needs %(needed)s posting credit(s), %(remain)s left."
+
+msgid "Tin không còn hiển thị."
+msgstr "The job posting is no longer live."
+
+msgid "%(count)s tin cần sửa."
+msgid_plural "%(count)s tin cần sửa."
+msgstr[0] "%(count)s job posting needs fixing."
+msgstr[1] "%(count)s job postings need fixing."
+
+msgid "Tin nháp còn thiếu: %(fields)s"
+msgstr "The draft job posting is missing: %(fields)s"
+
+msgid "Chi phí chiến dịch \"%(campaign)s\" đang tiêu nhanh hơn tiến độ thời gian."
+msgstr "Spending on campaign \"%(campaign)s\" is running ahead of its timeline."
+
+msgid "Dự báo chiến dịch \"%(campaign)s\" tuyển được khoảng %(forecast)s/%(headcount)s người. Cần khoảng %(velocity)s hồ sơ mỗi ngày để kịp chỉ tiêu."
+msgstr "Campaign \"%(campaign)s\" is forecast to hire about %(forecast)s/%(headcount)s people. It needs about %(velocity)s applications per day to reach the target."
+
+msgid "%(count)s hồ sơ của chiến dịch \"%(campaign)s\" chờ quá 48 giờ chưa được xem."
+msgstr "%(count)s application(s) in campaign \"%(campaign)s\" have waited more than 48 hours without being viewed."
+
+msgid "Kênh %(channels)s đã đăng nhiều ngày nhưng chưa mang lại hồ sơ nào."
+msgstr "Channel(s) %(channels)s have been posted for several days but have not brought in any applications."
+
+msgid "Báo cáo tuần: %(campaign)s"
+msgstr "Weekly report: %(campaign)s"
+
+msgid "Ứng tuyển"
+msgstr "Applied"
+
+msgid "Đã xem"
+msgstr "Viewed"
+
+msgid "Phù hợp"
+msgstr "Shortlisted"
+
+msgid "Phỏng vấn"
+msgstr "Interviewed"
+
+msgid "Trúng tuyển"
+msgstr "Hired"
+
+msgid "Đang tuyển"
+msgstr "Open"
+
+msgid "Ngừng tuyển"
+msgstr "Closed"
+
+msgid "khi kích hoạt"
+msgstr "on activation"
+
+msgid "chưa đặt"
+msgstr "not set"
+
+msgid "Từ %(start)s đến %(end)s"
+msgstr "From %(start)s to %(end)s"
+
+msgid "Tổng quan"
+msgstr "Overview"
+
+msgid "Phễu"
+msgstr "Funnel"
+
+msgid "Nguồn và chi phí"
+msgstr "Sources and costs"
+
+msgid "Theo ngày"
+msgstr "By day"
+
+msgid "Từ %(start)s, tuyển liên tục"
+msgstr "From %(start)s, continuous hiring"
+
+msgid "Mã"
+msgstr "Code"
+
+msgid "Thời gian"
+msgstr "Period"
+
+msgid "Tình trạng"
+msgstr "Health"
+
+msgid "Chỉ tiêu (người)"
+msgstr "Target (people)"
+
+msgid "Đã tuyển (người)"
+msgstr "Hired (people)"
+
+msgid "Dự báo tuyển được (người)"
+msgstr "Forecast hires (people)"
+
+msgid "Hồ sơ cần mỗi ngày để kịp"
+msgstr "Applications needed per day to stay on track"
+
+msgid "Tổng hồ sơ"
+msgstr "Total applications"
+
+msgid "Hồ sơ mỗi ngày (7 ngày gần nhất)"
+msgstr "Applications per day (last 7 days)"
+
+msgid "Thời gian xem hồ sơ (trung vị, giờ)"
+msgstr "Time to view applications (median, hours)"
+
+msgid "Hồ sơ được xem trong 48 giờ (%)"
+msgstr "Applications viewed within 48 hours (%)"
+
+msgid "Hồ sơ chờ quá 48 giờ"
+msgstr "Applications waiting over 48 hours"
+
+msgid "Đã chi (VNĐ)"
+msgstr "Spent (VND)"
+
+msgid "Ngân sách tối đa (VNĐ)"
+msgstr "Maximum budget (VND)"
+
+msgid "Ngân sách đã dùng (%)"
+msgstr "Budget used (%)"
+
+msgid "Xuất lúc"
+msgstr "Exported at"
+
+msgid "Bước"
+msgstr "Stage"
+
+msgid "Số hồ sơ"
+msgstr "Applications"
+
+msgid "% so với ứng tuyển"
+msgstr "% of applied"
+
+msgid "Nguồn"
+msgstr "Source"
+
+msgid "Người bấm"
+msgstr "Unique clicks"
+
+msgid "Hồ sơ"
+msgstr "Applications"
+
+msgid "Tỷ lệ nộp (%)"
+msgstr "Apply rate (%)"
+
+msgid "Đã chi"
+msgstr "Spent"
+
+msgid "Chi phí/hồ sơ"
+msgstr "Cost per application"
+
+msgid "Chi phí/trúng tuyển"
+msgstr "Cost per hire"
+
+msgid "Ngày"
+msgstr "Date"
+
+msgid "Tin"
+msgstr "Job posting"
+
+msgid "Trạng thái"
+msgstr "Status"
+
+msgid "Cần tuyển"
+msgstr "Openings"
+
+msgid "Hạn nộp"
+msgstr "Deadline"
+
+msgid "Chưa tạo được PDF, hãy thử lại sau ít phút."
+msgstr "Could not create the PDF. Please try again in a few minutes."
+
+msgid "Chiến dịch \"%(campaign)s\" chưa chạy được theo lịch. Mở chiến dịch để xem cần sửa gì."
+msgstr "Campaign \"%(campaign)s\" could not start as scheduled. Open the campaign to see what needs fixing."
+
+msgid "Chiến dịch \"%(campaign)s\" đã qua ngày kết thúc nên tự hoàn tất; các tin đã ngừng tuyển."
+msgstr "Campaign \"%(campaign)s\" passed its end date and was completed automatically; its job postings have stopped accepting applications."
+
+msgid "Chiến dịch \"%(campaign)s\" đã bắt đầu chạy theo lịch."
+msgstr "Campaign \"%(campaign)s\" has started running as scheduled."
+
+msgid "Chiến dịch \"%(campaign)s\" kết thúc ngày %(date)s. Gia hạn nếu cần tuyển tiếp."
+msgstr "Campaign \"%(campaign)s\" ends on %(date)s. Extend it if you need to keep hiring."
+
+msgid "Bạn không có quyền với kết nối này."
+msgstr "You do not have access to this connection."
+
+msgid "Phiên chọn Fanpage đã hết hạn. Hãy kết nối lại."
+msgstr "The Facebook Page selection session has expired. Please connect again."
+
+msgid "Fanpage không có trong danh sách vừa kết nối."
+msgstr "This Facebook Page is not in the list you just connected."
+
+msgid "Ảnh bìa công ty"
+msgstr "Company cover image"
+
+msgid "Logo công ty"
+msgstr "Company logo"
+
+msgid "Chiến dịch đã kết thúc, không đăng thêm được."
+msgstr "The recruitment campaign has ended, so nothing more can be posted."
+
+msgid "Chỉ kênh Fanpage Facebook mới đăng tự động được."
+msgstr "Only Facebook Page channels can be posted automatically."
+
+msgid "Ảnh bị lỗi hoặc không đọc được."
+msgstr "The image is corrupted or cannot be read."
+
+msgid "Ảnh không thuộc chiến dịch hoặc công ty này."
+msgstr "The image does not belong to this campaign or company."
+
+msgid "Ảnh đã bị xóa, hãy tải lại."
+msgstr "The image was deleted. Please upload it again."
+
+msgid "Mỗi bài tối đa %(count)s ảnh."
+msgid_plural "Mỗi bài tối đa %(count)s ảnh."
+msgstr[0] "Each post can have at most %(count)s image."
+msgstr[1] "Each post can have at most %(count)s images."
+
+msgid "Bạn không có quyền với bài đăng này."
+msgstr "You do not have access to this post."
+
+msgid "Kết nối Fanpage \"%(page)s\" đã hết hạn. Hãy kết nối lại để tiếp tục đăng."
+msgstr "The connection to Facebook Page \"%(page)s\" has expired. Reconnect it to keep posting."
+
+msgid "Chưa đăng được bài của kênh \"%(channel)s\" lên Fanpage. Mở chiến dịch để hẹn lại."
+msgstr "The post for channel \"%(channel)s\" could not be published to the Facebook Page. Open the campaign to reschedule it."
+
+msgid "Fanpage chưa kết nối hoặc không thuộc tài khoản này."
+msgstr "The Facebook Page is not connected or does not belong to this account."
+
+msgid "Chọn thời điểm từ bây giờ trở đi."
+msgstr "Choose a time from now onwards."
+
+msgid "Kênh chưa có nội dung. Soạn nội dung trước khi hẹn đăng."
+msgstr "The channel has no content yet. Write the content before scheduling a post."
+
+msgid "Bài đã đăng hoặc đã hủy."
+msgstr "The post has already been published or cancelled."
+
+msgid "Chỉ hẹn lại được bài chưa đăng."
+msgstr "Only unpublished posts can be rescheduled."
+
+msgid "Chưa gỡ được bài kênh \"%(channel)s\" khỏi Fanpage. Hãy tự xóa bài: %(permalink)s"
+msgstr "The post for channel \"%(channel)s\" could not be removed from the Facebook Page. Please delete it yourself: %(permalink)s"
+
+msgid "Báo cáo tuần"
+msgstr "Weekly report"
+
+msgid "Tình trạng:"
+msgstr "Health:"
+
+msgid "Hồ sơ mới trong 7 ngày"
+msgstr "New applications in the last 7 days"
+
+msgid "Đã tuyển"
+msgstr "Hired"
+
+msgid "Dự báo tuyển được"
+msgstr "Forecast hires"
+
+msgid "Kênh mang lại nhiều hồ sơ nhất"
+msgstr "Top channels by applications"
+
+msgid "Xem chi tiết chiến dịch"
+msgstr "View campaign details"
+
+msgid "Tắt email này trong Cài đặt tài khoản, mục Cài đặt, phần thông báo."
+msgstr "Turn off this email in Account settings, under Settings, in the notifications section."
+
+msgid "%(accepted)s/%(target)s người"
+msgstr "%(accepted)s/%(target)s people"
+
+msgid "%(forecast)s người"
+msgstr "%(forecast)s people"
+
+msgid "Cần khoảng <strong>%(velocity)s hồ sơ mỗi ngày</strong> để kịp chỉ tiêu."
+msgstr "You need about <strong>%(velocity)s applications per day</strong> to reach the target."
+
+msgid "%(label)s: %(total)s hồ sơ"
+msgstr "%(label)s: %(total)s application(s)"
+
+msgid "Kênh mang lại nhiều hồ sơ nhất:"
+msgstr "Top channels by applications:"
+
+msgid "Tắt email này trong Cài đặt tài khoản > Cài đặt > Thông báo."
+msgstr "Turn off this email in Account settings > Settings > Notifications."
+
+msgid "Báo cáo tuần: %(name)s"
+msgstr "Weekly report: %(name)s"
+
+msgid "Tình trạng: %(status)s"
+msgstr "Health: %(status)s"
+
+msgid "Hồ sơ mới trong 7 ngày: %(total)s"
+msgstr "New applications in the last 7 days: %(total)s"
+
+msgid "Đã tuyển: %(accepted)s/%(target)s người"
+msgstr "Hired: %(accepted)s/%(target)s people"
+
+msgid "Dự báo tuyển được: %(forecast)s người"
+msgstr "Forecast hires: %(forecast)s people"
+
+msgid "Cần khoảng %(velocity)s hồ sơ mỗi ngày để kịp chỉ tiêu."
+msgstr "You need about %(velocity)s applications per day to reach the target."
+
+msgid "Hồ sơ chờ quá 48 giờ chưa xem: %(backlog)s"
+msgstr "Applications waiting over 48 hours unviewed: %(backlog)s"
+
+msgid "Xem chi tiết: %(url)s"
+msgstr "View details: %(url)s"
+
+msgid "Phễu hồ sơ"
+msgstr "Application funnel"
+
+msgid "Hồ sơ theo ngày (30 ngày)"
+msgstr "Applications by day (30 days)"
+
+msgid "Nguồn hồ sơ và chi phí"
+msgstr "Application sources and costs"
+
+msgid "Báo cáo chiến dịch: %(name)s"
+msgstr "Recruitment campaign report: %(name)s"
+
+msgid "Cao nhất %(peak)s hồ sơ/ngày"
+msgstr "Peak of %(peak)s applications/day"

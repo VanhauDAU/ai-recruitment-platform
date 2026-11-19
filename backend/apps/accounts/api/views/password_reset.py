@@ -1,5 +1,7 @@
 """Đặt lại mật khẩu qua link email — workflow ở services/password_reset.py."""
 
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import permissions, serializers
 from rest_framework.response import Response
@@ -13,7 +15,7 @@ from ..serializers import PasswordResetConfirmSerializer, PasswordResetRequestSe
 
 # Trả về cho MỌI email (tồn tại hay không) để không biến endpoint này thành công
 # cụ dò xem địa chỉ nào đã đăng ký.
-_RESET_SENT_DETAIL = (
+_RESET_SENT_DETAIL = gettext_lazy(
     'Nếu email này đã đăng ký tài khoản, chúng tôi đã gửi liên kết đặt lại mật khẩu. '
     'Vui lòng kiểm tra hòm thư (kể cả mục Spam).'
 )
@@ -99,4 +101,4 @@ class PasswordResetConfirmView(APIView):
             serializer.validated_data['password'],
             serializer.validated_data.get('portal'),
         )
-        return Response({'detail': 'Đặt lại mật khẩu thành công.', 'role': user.role})
+        return Response({'detail': _('Đặt lại mật khẩu thành công.'), 'role': user.role})

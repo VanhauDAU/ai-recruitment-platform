@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils.translation import gettext_lazy
 
 from common.db.public_id import generate_public_id
 
@@ -17,10 +18,13 @@ class RecruitmentNeed(models.Model):
     BudgetSource = BudgetSource
 
     class ConsultationTopic(models.TextChoices):
-        FREE_POSTING = 'free_posting', 'Tôi muốn được đăng tin miễn phí'
-        SERVICE_PACKAGES = 'service_packages', 'Tôi muốn tìm hiểu thêm về các gói dịch vụ'
-        PROMOTIONS = 'promotions', 'Tôi muốn biết thêm về các chương trình ưu đãi'
-        OTHER = 'other', 'Khác'
+        FREE_POSTING = 'free_posting', gettext_lazy('Tôi muốn được đăng tin miễn phí')
+        SERVICE_PACKAGES = (
+            'service_packages',
+            gettext_lazy('Tôi muốn tìm hiểu thêm về các gói dịch vụ'),
+        )
+        PROMOTIONS = 'promotions', gettext_lazy('Tôi muốn biết thêm về các chương trình ưu đãi')
+        OTHER = 'other', gettext_lazy('Khác')
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     recruiter = models.ForeignKey(

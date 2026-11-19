@@ -2,6 +2,7 @@ import { PlusOutlined, ShareAltOutlined } from '@ant-design/icons'
 import { Alert, Button, Skeleton } from 'antd'
 import { useState } from 'react'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
+import { m } from '@/shared/config/i18n'
 import ChannelIcon from './ChannelIcon'
 import { useCampaignChannels } from '../model/use-campaign-channels'
 import AddChannelModal from './AddChannelModal'
@@ -21,18 +22,18 @@ export default function CampaignChannelBoard({ campaign }) {
 
   if (channelsQuery.isLoading) return <Skeleton active paragraph={{ rows: 6 }} />
   if (channelsQuery.isError) {
-    return <Alert type="error" showIcon title={getApiErrorMessage(channelsQuery.error, 'Không thể tải kênh.')} />
+    return <Alert type="error" showIcon title={getApiErrorMessage(channelsQuery.error, m.employer_campaign_board_load_error())} />
   }
 
   return (
     <div className="ch-board">
       <div className="ch-board__bar">
         <p className="ch-section-note">
-          Mỗi nơi đăng tuyển là một kênh có link riêng, nhờ đó biết kênh nào mang về hồ sơ.
+          {m.employer_campaign_board_note()}
         </p>
         {editable && (
           <Button type="primary" icon={<PlusOutlined aria-hidden />} onClick={() => setAdding(true)}>
-            Thêm kênh
+            {m.employer_campaign_health_action_add_channel()}
           </Button>
         )}
       </div>
@@ -40,13 +41,13 @@ export default function CampaignChannelBoard({ campaign }) {
       {channels.length === 0 ? (
         <div className="ch-empty">
           <ShareAltOutlined aria-hidden className="ch-empty__icon" />
-          <p className="ch-empty__title">Chưa có kênh nào</p>
-          <p>Thêm Fanpage, nhóm Facebook, LinkedIn, Zalo hay tờ rơi có mã QR. ProCV soạn sẵn nội dung cho từng kênh.</p>
-          {editable && <Button onClick={() => setAdding(true)}>Thêm kênh đầu tiên</Button>}
+          <p className="ch-empty__title">{m.employer_campaign_board_empty_title()}</p>
+          <p>{m.employer_campaign_board_empty()}</p>
+          {editable && <Button onClick={() => setAdding(true)}>{m.employer_campaign_board_add_first()}</Button>}
         </div>
       ) : (
         <div className="ch-layout">
-          <nav className="ch-list" aria-label="Danh sách kênh">
+          <nav className="ch-list" aria-label={m.employer_campaign_board_list_aria()}>
             {channels.map((channel) => (
               <button
                 key={channel.public_id}
@@ -58,10 +59,10 @@ export default function CampaignChannelBoard({ campaign }) {
                 <ChannelIcon kind={channel.kind} />
                 <span className="ch-list__text">
                   <strong>{channel.label}</strong>
-                  <span>{channel.unique_clicks} người bấm, {channel.applications} hồ sơ</span>
+                  <span>{m.employer_campaign_board_item_stats({ clicks: channel.unique_clicks, applications: channel.applications })}</span>
                 </span>
                 <span className={`ch-dot ${channel.posted_at ? 'is-on' : ''}`} aria-hidden />
-                <span className="ch-sr">{channel.posted_at ? 'Đã đăng' : 'Chưa đăng'}</span>
+                <span className="ch-sr">{channel.posted_at ? m.employer_campaign_board_posted() : m.employer_campaign_board_not_posted()}</span>
               </button>
             ))}
           </nav>

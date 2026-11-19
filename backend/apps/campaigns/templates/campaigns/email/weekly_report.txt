@@ -1,15 +1,15 @@
-Báo cáo tuần: {{ campaign.name }}
+{% load i18n %}{% blocktranslate trimmed with name=campaign.name %}Báo cáo tuần: {{ name }}{% endblocktranslate %}
 
-Tình trạng: {{ status_label }}
-Hồ sơ mới trong 7 ngày: {{ new_applications }}
-Đã tuyển: {{ health.accepted }}/{{ health.headcount }} người
-Dự báo tuyển được: {{ health.forecast }} người{% if health.required_velocity %}
-Cần khoảng {{ health.required_velocity }} hồ sơ mỗi ngày để kịp chỉ tiêu.{% endif %}
-Hồ sơ chờ quá 48 giờ chưa xem: {{ health.response.backlog }}
+{% blocktranslate trimmed with status=status_label %}Tình trạng: {{ status }}{% endblocktranslate %}
+{% blocktranslate trimmed with total=new_applications %}Hồ sơ mới trong 7 ngày: {{ total }}{% endblocktranslate %}
+{% with target=health.headcount %}{% blocktranslate trimmed with accepted=health.accepted %}Đã tuyển: {{ accepted }}/{{ target }} người{% endblocktranslate %}{% endwith %}
+{% blocktranslate trimmed with forecast=health.forecast %}Dự báo tuyển được: {{ forecast }} người{% endblocktranslate %}{% if health.required_velocity %}
+{% blocktranslate trimmed with velocity=health.required_velocity %}Cần khoảng {{ velocity }} hồ sơ mỗi ngày để kịp chỉ tiêu.{% endblocktranslate %}{% endif %}
+{% blocktranslate trimmed with backlog=health.response.backlog %}Hồ sơ chờ quá 48 giờ chưa xem: {{ backlog }}{% endblocktranslate %}
 {% if top_channels %}
-Kênh mang lại nhiều hồ sơ nhất:
-{% for channel in top_channels %}- {{ channel.label }}: {{ channel.total }} hồ sơ
+{% translate "Kênh mang lại nhiều hồ sơ nhất:" %}
+{% for channel in top_channels %}- {% blocktranslate trimmed with label=channel.label total=channel.total %}{{ label }}: {{ total }} hồ sơ{% endblocktranslate %}
 {% endfor %}{% endif %}
-Xem chi tiết: {{ campaign_url }}
+{% blocktranslate trimmed with url=campaign_url %}Xem chi tiết: {{ url }}{% endblocktranslate %}
 
-Tắt email này trong Cài đặt tài khoản > Cài đặt > Thông báo.
+{% translate "Tắt email này trong Cài đặt tài khoản > Cài đặt > Thông báo." %}

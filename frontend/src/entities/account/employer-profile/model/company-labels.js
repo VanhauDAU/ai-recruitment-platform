@@ -1,36 +1,42 @@
 // Nhãn tiếng Việt cho các enum của hồ sơ nhà tuyển dụng và công ty.
 // Giữ khớp với TextChoices ở `backend/apps/employers/models/company.py`
 // và `membership.py`; cập nhật hai nơi cùng lúc khi thêm giá trị mới.
+import { m } from '@/shared/config/i18n'
+
 export const COMPANY_VALUE_LABELS = {
   business_type: {
-    enterprise: 'Doanh nghiệp',
-    household: 'Hộ kinh doanh',
+    enterprise: m.employer_profile_business_enterprise(),
+    household: m.employer_profile_business_household(),
   },
   company_size: {
-    '1-9': '1 - 9 nhân viên',
-    '10-24': '10 - 24 nhân viên',
-    '25-99': '25 - 99 nhân viên',
-    '100-499': '100 - 499 nhân viên',
-    '500-1000': '500 - 1000 nhân viên',
-    '1000+': '1000+ nhân viên',
-    '3000+': '3000+ nhân viên',
-    '5000+': '5000+ nhân viên',
-    '10000+': '10000+ nhân viên',
+    '1-9': m.employer_profile_company_size({ range: '1 - 9' }),
+    '10-24': m.employer_profile_company_size({ range: '10 - 24' }),
+    '25-99': m.employer_profile_company_size({ range: '25 - 99' }),
+    '100-499': m.employer_profile_company_size({ range: '100 - 499' }),
+    '500-1000': m.employer_profile_company_size({ range: '500 - 1000' }),
+    '1000+': m.employer_profile_company_size({ range: '1000+' }),
+    '3000+': m.employer_profile_company_size({ range: '3000+' }),
+    '5000+': m.employer_profile_company_size({ range: '5000+' }),
+    '10000+': m.employer_profile_company_size({ range: '10000+' }),
   },
   markets: {
-    domestic: 'Nội địa',
-    asia: 'Châu Á',
-    europe: 'Châu Âu',
-    africa: 'Châu Phi',
-    america: 'Châu Mỹ',
-    australia: 'Châu Úc',
+    domestic: m.employer_profile_market_domestic(),
+    asia: m.employer_profile_market_asia(),
+    europe: m.employer_profile_market_europe(),
+    africa: m.employer_profile_market_africa(),
+    america: m.employer_profile_market_america(),
+    australia: m.employer_profile_market_australia(),
   },
   target_customers: { b2b: 'B2B', b2c: 'B2C', b2g: 'B2G' },
   company_role: {
-    owner: 'Người tạo công ty',
-    member: 'Thành viên',
+    owner: m.employer_profile_role_owner(),
+    member: m.employer_profile_role_member(),
   },
-  gender: { male: 'Nam', female: 'Nữ', other: 'Khác' },
+  gender: {
+    male: m.employer_profile_gender_male(),
+    female: m.employer_profile_gender_female(),
+    other: m.employer_profile_gender_other(),
+  },
 }
 
 /** Nhãn hiển thị của một giá trị enum; trả lại nguyên giá trị nếu chưa có nhãn. */

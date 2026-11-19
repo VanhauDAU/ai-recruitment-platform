@@ -20,33 +20,33 @@ import {
   isGenerationActive,
 } from '../model/generation'
 import { GuidedBriefFields, PastedJdField } from './GenerationInputFields'
+import { m } from '@/shared/config/i18n'
 
 const generationKey = (publicId) => ['job-ai-generation', publicId]
 const WARNING_COPY = {
-  benefits_without_source_removed: 'AI đã loại quyền lợi không có căn cứ từ JD hoặc hồ sơ công ty đã duyệt.',
-  invalid_employment_type_removed: 'Loại công việc gợi ý không hợp lệ đã được loại bỏ.',
-  invalid_experience_years_removed: 'Mức kinh nghiệm gợi ý không hợp lệ đã được loại bỏ.',
-  invalid_position_level_removed: 'Cấp bậc gợi ý không hợp lệ đã được loại bỏ.',
-  invalid_education_level_removed: 'Trình độ học vấn gợi ý không hợp lệ đã được loại bỏ.',
-  unresolved_taxonomy_suggestions: 'Một số danh mục, kỹ năng hoặc quyền lợi cần được chọn lại trong form.',
+  benefits_without_source_removed: m.employer_job_ai_warning_benefits_removed,
+  invalid_employment_type_removed: m.employer_job_ai_warning_employment_type_removed,
+  invalid_experience_years_removed: m.employer_job_ai_warning_experience_removed,
+  invalid_position_level_removed: m.employer_job_ai_warning_position_level_removed,
+  invalid_education_level_removed: m.employer_job_ai_warning_education_removed,
+  unresolved_taxonomy_suggestions: m.employer_job_ai_warning_unresolved_taxonomy,
 }
 const GENERATION_ERROR_COPY = {
-  queue_timeout: 'Hàng chờ đang quá tải. Brief vẫn được giữ để bạn thử lại sau ít phút.',
-  stale_lease_expired: 'Tiến trình tạo nội dung bị gián đoạn. Bạn có thể thử lại mà không cần nhập lại brief.',
-  generation_timeout: 'AI mất quá nhiều thời gian để phản hồi. Vui lòng thử lại với brief ngắn gọn hơn.',
-  provider_timeout: 'Dịch vụ AI phản hồi quá chậm. Vui lòng thử lại sau ít phút.',
-  rate_limited: 'Dịch vụ AI đang nhận quá nhiều yêu cầu. Vui lòng thử lại sau ít phút.',
-  content_blocked: 'Nội dung đã bị chặn bởi chính sách an toàn. Hãy bỏ dữ liệu nhạy cảm và diễn đạt lại brief.',
-  invalid_ai_schema: 'Kết quả AI chưa đạt cấu trúc yêu cầu. Vui lòng thử lại.',
+  queue_timeout: m.employer_job_ai_error_queue_timeout,
+  stale_lease_expired: m.employer_job_ai_error_stale_lease,
+  generation_timeout: m.employer_job_ai_error_generation_timeout,
+  provider_timeout: m.employer_job_ai_error_provider_timeout,
+  rate_limited: m.employer_job_ai_error_rate_limited,
+  content_blocked: m.employer_job_ai_error_content_blocked,
+  invalid_ai_schema: m.employer_job_ai_error_invalid_schema,
 }
 
 function warningCopy(warning) {
-  return WARNING_COPY[warning] || 'Một gợi ý không hợp lệ đã được loại bỏ. Vui lòng kiểm tra lại form.'
+  return (WARNING_COPY[warning] || m.employer_job_ai_warning_fallback)()
 }
 
 function generationErrorCopy(errorCode) {
-  return GENERATION_ERROR_COPY[errorCode]
-    || 'Hệ thống chưa thể tạo bản nháp. Brief vẫn được giữ để bạn thử lại hoặc chuyển sang nhập thủ công.'
+  return (GENERATION_ERROR_COPY[errorCode] || m.employer_job_ai_error_fallback)()
 }
 
 function GenerationProgress({ generation, hasError = false }) {
@@ -55,10 +55,10 @@ function GenerationProgress({ generation, hasError = false }) {
   const active = !failed && isGenerationActive(generation)
   const phaseLabel = getGenerationPhaseCopy(generation?.phase, generation?.status)
   const title = failed
-    ? 'Chưa thể tạo bản nháp'
+    ? m.employer_job_ai_title_failed()
     : cancelled
-      ? 'Đã hủy yêu cầu'
-      : 'Tạo bản nháp tin tuyển dụng'
+      ? m.employer_job_ai_title_cancelled()
+      : m.employer_job_ai_title_create()
   const palette = failed
     ? 'border-rose-200 bg-rose-50/70'
     : cancelled
@@ -83,10 +83,10 @@ function GenerationProgress({ generation, hasError = false }) {
         </div>
         <p className="mt-1 break-words text-sm text-slate-600">
           {active
-            ? `${phaseLabel}. Bạn có thể chờ tại đây; trạng thái được cập nhật trực tiếp từ hệ thống.`
+            ? m.employer_job_ai_active_hint({ phase: phaseLabel })
             : failed
-              ? 'Bạn có thể thử lại hoặc chuyển sang nhập thủ công.'
-              : 'Brief của bạn vẫn được giữ để có thể thử lại hoặc chuyển sang nhập thủ công.'}
+              ? m.employer_job_ai_failed_hint()
+              : m.employer_job_ai_cancelled_hint()}
         </p>
       </div>
     </div>
@@ -173,19 +173,19 @@ export default function AiJobGenerationPanel({
   if (generation?.status === 'completed' && generation.suggestion) return null
 
   return (
-    <section className="min-w-0 space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6" aria-label="Tạo tin tuyển dụng bằng AI">
+    <section className="min-w-0 space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6" aria-label={m.employer_job_ai_panel_aria()}>
       {!generationPublicId && !createMutation.isPending && (
         <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <Tag color="green">AI hỗ trợ</Tag>
+              <Tag color="green">{m.employer_job_ai_tag()}</Tag>
               <span className="text-xs font-medium uppercase tracking-wide text-slate-400">
-                {mode === 'ai_brief' ? 'Từ brief có hướng dẫn' : 'Chuẩn hóa JD có sẵn'}
+                {mode === 'ai_brief' ? m.employer_job_ai_mode_brief() : m.employer_job_ai_mode_jd()}
               </span>
             </div>
-            <h1 className="mt-2 break-words text-xl font-bold text-slate-900">Tạo bản nháp tin tuyển dụng</h1>
+            <h1 className="mt-2 break-words text-xl font-bold text-slate-900">{m.employer_job_ai_title_create()}</h1>
             <p className="mt-1 max-w-3xl break-words text-sm leading-6 text-slate-600">
-              Nội dung AI là gợi ý và không bao giờ tự lưu hoặc tự đăng. Không nhập dữ liệu ứng viên hay thông tin cá nhân nhạy cảm.
+              {m.employer_job_ai_disclaimer()}
             </p>
           </div>
           <Button
@@ -193,7 +193,7 @@ export default function AiJobGenerationPanel({
             loading={cancelMutation.isPending}
             onClick={() => leaveGeneration(onChooseAnother)}
           >
-            Đổi cách tạo
+            {m.employer_job_ai_change_mode()}
           </Button>
         </div>
       )}
@@ -209,15 +209,15 @@ export default function AiJobGenerationPanel({
               <Alert
                 type="error"
                 showIcon
-                title="Chưa thể tạo bản nháp"
-                description={getApiErrorMessage(createMutation.error, 'Vui lòng kiểm tra dữ liệu và thử lại.')}
+                title={m.employer_job_ai_title_failed()}
+                description={getApiErrorMessage(createMutation.error, m.employer_job_ai_check_and_retry())}
               />
             </div>
           )}
           <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
-            <Button onClick={() => leaveGeneration(onUseManual)}>Chuyển sang nhập thủ công</Button>
+            <Button onClick={() => leaveGeneration(onUseManual)}>{m.employer_job_ai_switch_manual()}</Button>
             <Button type="primary" htmlType="submit" disabled={!canGenerate}>
-              Tạo bản nháp bằng AI
+              {m.employer_job_ai_generate()}
             </Button>
           </div>
         </Form>
@@ -233,15 +233,15 @@ export default function AiJobGenerationPanel({
             <Alert
               type="error"
               showIcon
-              title="Không thể cập nhật yêu cầu AI"
-              description={getApiErrorMessage(error, 'Vui lòng thử lại hoặc chuyển sang nhập thủ công.')}
+              title={m.employer_job_ai_update_failed()}
+              description={getApiErrorMessage(error, m.employer_job_ai_retry_or_manual())}
             />
           )}
           {generation?.status === 'failed' && (
             <Alert
               type="error"
               showIcon
-              title="Chưa thể tạo bản nháp"
+              title={m.employer_job_ai_title_failed()}
               description={generationErrorCopy(generation.error_code)}
             />
           )}
@@ -249,7 +249,7 @@ export default function AiJobGenerationPanel({
             <Alert
               type="warning"
               showIcon
-              title="Có nội dung cần bạn kiểm tra"
+              title={m.employer_job_ai_review_needed()}
               description={<ul className="list-disc pl-5">{generation.warnings.map((warning) => <li key={warning}>{warningCopy(warning)}</li>)}</ul>}
             />
           )}
@@ -261,7 +261,7 @@ export default function AiJobGenerationPanel({
                 loading={cancelMutation.isPending}
                 onClick={() => cancelMutation.mutate()}
               >
-                Hủy tạo bản nháp
+                {m.employer_job_ai_cancel_generation()}
               </Button>
             )}
             {terminalFailure && (
@@ -271,7 +271,7 @@ export default function AiJobGenerationPanel({
                 disabled={!canGenerate}
                 onClick={generate}
               >
-                Thử lại
+                {m.employer_job_ai_retry()}
               </Button>
             )}
             {generation?.status !== 'completed' && (
@@ -279,7 +279,7 @@ export default function AiJobGenerationPanel({
                 loading={cancelMutation.isPending}
                 onClick={() => leaveGeneration(onUseManual)}
               >
-                Chuyển sang nhập thủ công
+                {m.employer_job_ai_switch_manual()}
               </Button>
             )}
           </div>

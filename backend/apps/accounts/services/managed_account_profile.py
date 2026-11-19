@@ -2,6 +2,7 @@
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.utils.translation import gettext as _
 
 from apps.candidates.models import CandidateProfile
 from apps.employers.models import RecruiterProfile
@@ -78,7 +79,9 @@ def update_managed_account_profile(user, *, actor, changes):
             user.save(update_fields=[*user_updates, 'updated_at'])
 
         if user.is_candidate:
-            profile, _ = CandidateProfile.objects.select_for_update().get_or_create(user=user)
+            profile, _created = CandidateProfile.objects.select_for_update().get_or_create(
+                user=user
+            )
             profile_updates = []
             for field in candidate_fields & changes.keys():
                 value = changes[field]
@@ -91,7 +94,9 @@ def update_managed_account_profile(user, *, actor, changes):
             if profile_updates:
                 profile.save(update_fields=[*profile_updates, 'updated_at'])
         elif user.is_employer:
-            recruiter, _ = RecruiterProfile.objects.select_for_update().get_or_create(user=user)
+            recruiter, _created = RecruiterProfile.objects.select_for_update().get_or_create(
+                user=user
+            )
             recruiter_updates = []
             for field in employer_fields & changes.keys():
                 value = changes[field].strip()
@@ -102,7 +107,9 @@ def update_managed_account_profile(user, *, actor, changes):
             if 'work_location_id' in changes:
                 location_id = changes['work_location_id']
                 if location_id is not None and not Location.objects.filter(pk=location_id).exists():
-                    raise ValidationError({'work_location_id': 'Địa điểm làm việc không tồn tại.'})
+                    raise ValidationError(
+                        {'work_location_id': _('Địa điểm làm việc không tồn tại.')}
+                    )
                 if recruiter.work_location_id != location_id:
                     recruiter.work_location_id = location_id
                     recruiter_updates.append('work_location')

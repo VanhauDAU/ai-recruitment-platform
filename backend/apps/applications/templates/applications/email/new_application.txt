@@ -1,8 +1,8 @@
-Xin chào nhà tuyển dụng {{ company_name }},
+{% load i18n %}{% blocktranslate trimmed with company=company_name %}Xin chào nhà tuyển dụng {{ company }},{% endblocktranslate %}
 
-Vị trí {{ job_title }} vừa nhận thêm một hồ sơ lúc {{ applied_at|date:"H:i d/m/Y" }}. Tin này hiện có {{ application_count }} hồ sơ.
+{% with total=application_count %}{% blocktranslate trimmed with job=job_title time=applied_at_text %}Vị trí {{ job }} vừa nhận thêm một hồ sơ lúc {{ time }}. Tin này hiện có {{ total }} hồ sơ.{% endblocktranslate %}{% endwith %}
 
-Xem hồ sơ: {{ action_url }}
+{% blocktranslate trimmed with url=action_url %}Xem hồ sơ: {{ url }}{% endblocktranslate %}
 
-Quản lý email & thông báo: {{ email_settings_url }}
+{% blocktranslate trimmed with url=email_settings_url %}Quản lý email & thông báo: {{ url }}{% endblocktranslate %}
 — {{ site_name }}

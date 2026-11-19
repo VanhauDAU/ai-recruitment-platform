@@ -30,7 +30,12 @@ from ..services.ai_generation.errors import (
     JobAiIdempotencyConflict,
 )
 from ..services.ai_generation.execution import _call_generate_structured
-from ..services.ai_generation.prompt import RESPONSE_SCHEMA, SYSTEM_INSTRUCTION, generation_prompt
+from ..services.ai_generation.prompt import (
+    RESPONSE_SCHEMA,
+    SYSTEM_INSTRUCTION,
+    SYSTEM_INSTRUCTION_EN,
+    generation_prompt,
+)
 from ..services.ai_generation.suggestion import normalize_ai_suggestion
 
 
@@ -71,11 +76,11 @@ class JobAiGenerationFixture:
         make_employer_ready(self.user, company=self.company, candidate_data=True)
         enable_job_ai()
 
-    def brief_payload(self, *, key='request-1', position='Backend Engineer'):
+    def brief_payload(self, *, key='request-1', position='Backend Engineer', locale='vi-VN'):
         return {
             'mode': 'ai_brief',
             'idempotency_key': key,
-            'locale': 'vi-VN',
+            'locale': locale,
             'brief': {
                 'position': position,
                 'responsibilities': ['Xây dựng API'],
@@ -127,6 +132,21 @@ class JobAiGenerationApiTests(JobAiGenerationFixture, APITestCase):
         self.assertNotIn('recruiter_123', source)
         self.assertIn('[url removed]', source)
         delay.assert_called_once_with(generation.pk)
+
+    @patch('apps.jobs.tasks.ai_generation.generate_job_post.delay')
+    def test_create_accepts_the_english_locale(self, delay):
+        self.client.force_authenticate(self.user)
+
+        with self.captureOnCommitCallbacks(execute=True):
+            response = self.client.post(
+                reverse('employer-job-ai-generation-create'),
+                self.brief_payload(key='english-1', locale='en-US'),
+                format='json',
+            )
+
+        self.assertEqual(response.status_code, 202, response.data)
+        generation = JobAiGeneration.objects.get(public_id=response.data['public_id'])
+        self.assertEqual(generation.locale, 'en-US')
 
     @patch('apps.jobs.tasks.ai_generation.generate_job_post.delay')
     def test_idempotent_replay_returns_same_generation_without_second_dispatch(self, delay):
@@ -506,6 +526,27 @@ class JobAiGenerationServiceTests(JobAiGenerationFixture, APITestCase):
         self.assertIn(injection, kwargs['prompt'])
         self.assertNotIn('salary_min', RESPONSE_SCHEMA['properties'])
         self.assertNotIn('gender_requirement', RESPONSE_SCHEMA['properties'])
+
+    @patch('apps.jobs.services.ai_generation.execution.generate_structured')
+    def test_english_locale_asks_the_model_for_english_prose(self, generate):
+        vietnamese = self.create_generation(key='locale-vi')
+        english = self.create_generation(key='locale-en', locale='en-US')
+
+        vietnamese_prompt = generation_prompt(vietnamese, {})
+        english_prompt = generation_prompt(english, {})
+        _call_generate_structured(english, english_prompt)
+
+        self.assertEqual(english.locale, 'en-US')
+        self.assertTrue(vietnamese_prompt.startswith('Soạn một bản nháp tin tuyển dụng'))
+        self.assertTrue(english_prompt.startswith('Draft a usable job posting'))
+        self.assertIn('Write the title and every bullet in English', english_prompt)
+        self.assertIn('"locale":"en-US"', english_prompt)
+        self.assertIn('<generation_data>', english_prompt)
+        kwargs = generate.call_args.kwargs
+        self.assertEqual(kwargs['system_instruction'], SYSTEM_INSTRUCTION_EN)
+        self.assertIn('in English', SYSTEM_INSTRUCTION_EN)
+        # The output contract does not change with the language.
+        self.assertIs(kwargs['response_schema'], RESPONSE_SCHEMA)
 
 
 # The worker is not under test here; committed rows would otherwise run it eagerly.

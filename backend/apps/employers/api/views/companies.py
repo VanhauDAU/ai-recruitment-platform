@@ -1,5 +1,6 @@
 import random
 
+from django.utils.translation import gettext as _
 from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_view
 from rest_framework import generics, permissions
 from rest_framework.exceptions import ValidationError
@@ -118,7 +119,7 @@ class PublicCompanyListView(generics.ListAPIView):
             return self._validated_public_company_query
         query = (self.request.query_params.get('q') or '').strip()
         if len(query) > self.MAX_QUERY_LENGTH:
-            raise ValidationError({'q': 'Từ khóa tìm kiếm không được vượt quá 120 ký tự.'})
+            raise ValidationError({'q': _('Từ khóa tìm kiếm không được vượt quá 120 ký tự.')})
         self._validated_public_company_query = query
         return query
 

@@ -39,7 +39,7 @@ class CompanyCatalogView(APIView):
 
     @staticmethod
     def _choices(choices):
-        return [{'value': value, 'label': label} for value, label in choices]
+        return [{'value': value, 'label': str(label)} for value, label in choices]
 
     @extend_schema(
         summary='Danh mục lựa chọn cho form thông tin công ty',

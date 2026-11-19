@@ -10,6 +10,7 @@ from enum import StrEnum
 from django.conf import settings
 from django.db.models import Exists, OuterRef, Q
 from django.utils import timezone
+from django.utils.translation import gettext as _
 
 from apps.accounts.models import User
 
@@ -214,7 +215,7 @@ def evaluate_employer_readiness(
             _blocker(
                 'account_state_unknown',
                 capabilities=all_capabilities,
-                message='Không xác định được trạng thái tài khoản.',
+                message=_('Không xác định được trạng thái tài khoản.'),
                 action='contact_support',
             )
         )
@@ -223,7 +224,7 @@ def evaluate_employer_readiness(
             _blocker(
                 'account_restricted',
                 capabilities=all_capabilities,
-                message='Tài khoản đang bị hạn chế.',
+                message=_('Tài khoản đang bị hạn chế.'),
                 action='contact_support',
             )
         )
@@ -232,31 +233,31 @@ def evaluate_employer_readiness(
         (
             initial_onboarding_complete,
             'initial_onboarding_required',
-            'Hoàn tất hồ sơ đăng ký, xác minh email và nhu cầu tuyển dụng.',
+            _('Hoàn tất hồ sơ đăng ký, xác minh email và nhu cầu tuyển dụng.'),
             'complete_onboarding',
         ),
         (
             phone_verified,
             'phone_verification_required',
-            'Xác minh số điện thoại trước khi sử dụng workspace.',
+            _('Xác minh số điện thoại trước khi sử dụng workspace.'),
             'verify_phone',
         ),
         (
             company_linked,
             'company_link_required',
-            'Liên kết một công ty trước khi sử dụng workspace.',
+            _('Liên kết một công ty trước khi sử dụng workspace.'),
             'link_company',
         ),
         (
             business_document_submitted,
             'business_document_required',
-            'Nộp giấy tờ đại diện doanh nghiệp còn hiệu lực.',
+            _('Nộp giấy tờ đại diện doanh nghiệp còn hiệu lực.'),
             'upload_business_document',
         ),
         (
             candidate_dpa_submitted,
             'candidate_dpa_document_required',
-            'Nộp thỏa thuận xử lý dữ liệu ứng viên.',
+            _('Nộp thỏa thuận xử lý dữ liệu ứng viên.'),
             'upload_candidate_dpa',
         ),
     )
@@ -280,7 +281,7 @@ def evaluate_employer_readiness(
                     CANDIDATE_DATA_CAPABILITY,
                     JOB_APPROVAL_CAPABILITY,
                 ),
-                message='Hồ sơ đại diện doanh nghiệp chưa được duyệt.',
+                message=_('Hồ sơ đại diện doanh nghiệp chưa được duyệt.'),
                 action='open_verification',
             )
         )
@@ -290,7 +291,7 @@ def evaluate_employer_readiness(
             _blocker(
                 'compliance_hold_active',
                 capabilities=(CANDIDATE_DATA_CAPABILITY, JOB_APPROVAL_CAPABILITY),
-                message='Tài khoản đang có một giới hạn tuân thủ còn hiệu lực.',
+                message=_('Tài khoản đang có một giới hạn tuân thủ còn hiệu lực.'),
                 action='open_compliance',
             )
         )
@@ -299,37 +300,37 @@ def evaluate_employer_readiness(
         DpaStatus.MISSING: (
             'dpa_missing',
             (WORKSPACE_CAPABILITY, CANDIDATE_DATA_CAPABILITY, JOB_APPROVAL_CAPABILITY),
-            'Chưa có chấp thuận DPA.',
+            _('Chưa có chấp thuận DPA.'),
             'accept_dpa',
         ),
         DpaStatus.LEGACY_UNVERSIONED: (
             'dpa_legacy_unversioned',
             (CANDIDATE_DATA_CAPABILITY, JOB_APPROVAL_CAPABILITY),
-            'Chấp thuận DPA cũ chưa có phiên bản bằng chứng.',
+            _('Chấp thuận DPA cũ chưa có phiên bản bằng chứng.'),
             'accept_current_dpa',
         ),
         DpaStatus.OUTDATED: (
             'dpa_outdated',
             (CANDIDATE_DATA_CAPABILITY, JOB_APPROVAL_CAPABILITY),
-            'Chấp thuận DPA không còn là phiên bản hiện hành.',
+            _('Chấp thuận DPA không còn là phiên bản hiện hành.'),
             'accept_current_dpa',
         ),
         DpaStatus.GRACE: (
             'dpa_grace',
             (CANDIDATE_DATA_CAPABILITY, JOB_APPROVAL_CAPABILITY),
-            'DPA đang trong thời gian gia hạn cập nhật.',
+            _('DPA đang trong thời gian gia hạn cập nhật.'),
             'accept_current_dpa',
         ),
         DpaStatus.HOLD: (
             'dpa_hold',
             (WORKSPACE_CAPABILITY, CANDIDATE_DATA_CAPABILITY, JOB_APPROVAL_CAPABILITY),
-            'Tài khoản đang bị giữ do DPA quá hạn.',
+            _('Tài khoản đang bị giữ do DPA quá hạn.'),
             'accept_current_dpa',
         ),
         DpaStatus.UNKNOWN: (
             'dpa_unknown',
             (WORKSPACE_CAPABILITY, CANDIDATE_DATA_CAPABILITY, JOB_APPROVAL_CAPABILITY),
-            'Không xác định được trạng thái DPA.',
+            _('Không xác định được trạng thái DPA.'),
             'contact_support',
         ),
     }

@@ -1,5 +1,6 @@
 """Serializers for reporting a company page and for the admin report queue."""
 
+from django.utils.translation import gettext as _
 from rest_framework import serializers
 
 from apps.employers.domain.page_registry import SECTION_TITLES
@@ -28,7 +29,7 @@ class CompanyReportCreateSerializer(serializers.Serializer):
             and len(attrs.get('detail', '')) < self.OTHER_DETAIL_MIN_LENGTH
         ):
             raise serializers.ValidationError(
-                {'detail': 'Vui lòng mô tả cụ thể ít nhất 10 ký tự khi chọn "Lý do khác".'}
+                {'detail': _('Vui lòng mô tả cụ thể ít nhất 10 ký tự khi chọn "Lý do khác".')}
             )
         return attrs
 
@@ -101,7 +102,7 @@ class AdminCompanyReportSerializer(serializers.ModelSerializer):
         }
 
     def get_section_title(self, obj) -> str:
-        return SECTION_TITLES.get(obj.section_key, '')
+        return str(SECTION_TITLES.get(obj.section_key, ''))
 
 
 class AdminCompanyReportQuerySerializer(serializers.Serializer):

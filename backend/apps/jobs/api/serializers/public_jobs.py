@@ -1,5 +1,6 @@
 """Public job contracts: search cards, the home-page preview and the detail page."""
 
+from django.utils.translation import gettext as _
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
@@ -237,21 +238,23 @@ class JobDetailSerializer(JobSerializer):
     def get_requirement_tags(self, obj) -> list[str]:
         tags = []
         if obj.experience_years == Job.ExperienceYears.NONE:
-            tags.append('Không yêu cầu kinh nghiệm')
+            tags.append(_('Không yêu cầu kinh nghiệm'))
         elif obj.experience_years:
-            tags.append(f'{obj.get_experience_years_display()} kinh nghiệm')
+            tags.append(_('%(years)s kinh nghiệm') % {'years': obj.get_experience_years_display()})
         if obj.age_min and obj.age_max:
-            tags.append(f'Tuổi {obj.age_min} - {obj.age_max}')
+            tags.append(_('Tuổi %(min)s - %(max)s') % {'min': obj.age_min, 'max': obj.age_max})
         elif obj.age_min:
-            tags.append(f'Từ {obj.age_min} tuổi trở lên')
+            tags.append(_('Từ %(age)s tuổi trở lên') % {'age': obj.age_min})
         elif obj.age_max:
-            tags.append(f'Đến {obj.age_max} tuổi')
+            tags.append(_('Đến %(age)s tuổi') % {'age': obj.age_max})
         if obj.education_level == Job.EducationLevel.NONE:
-            tags.append('Không yêu cầu bằng cấp')
+            tags.append(_('Không yêu cầu bằng cấp'))
         elif obj.education_level:
-            tags.append(f'Từ {obj.get_education_level_display()} trở lên')
+            tags.append(_('Từ %(level)s trở lên') % {'level': obj.get_education_level_display()})
         if obj.gender_requirement and obj.gender_requirement != Job.GenderRequirement.ANY:
-            tags.append(f'Giới tính: {obj.get_gender_requirement_display()}')
+            tags.append(
+                _('Giới tính: %(gender)s') % {'gender': obj.get_gender_requirement_display()}
+            )
         # Kỹ năng không nằm ở hàng tag tóm tắt nữa: đã có khối riêng dưới "Yêu cầu ứng viên".
         return tags
 

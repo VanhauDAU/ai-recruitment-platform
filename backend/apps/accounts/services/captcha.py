@@ -2,6 +2,7 @@
 
 import requests
 from django.conf import settings
+from django.utils.translation import gettext as _
 from rest_framework.exceptions import ValidationError
 
 from common.http.client_ip import client_ip
@@ -24,7 +25,7 @@ def verify_recaptcha(token, action, remote_ip=None):
         raise RuntimeError('RECAPTCHA_SECRET_KEY chưa được cấu hình.')
 
     if not token:
-        raise ValidationError({'captcha_token': 'Vui lòng xác thực captcha.'})
+        raise ValidationError({'captcha_token': _('Vui lòng xác thực captcha.')})
 
     payload = {'secret': settings.RECAPTCHA_SECRET_KEY, 'response': token}
     if remote_ip:
@@ -35,12 +36,12 @@ def verify_recaptcha(token, action, remote_ip=None):
         result = response.json()
     except (requests.RequestException, ValueError) as error:
         raise ValidationError(
-            {'captcha_token': 'Không thể xác thực captcha, vui lòng thử lại.'}
+            {'captcha_token': _('Không thể xác thực captcha, vui lòng thử lại.')}
         ) from error
 
     if not result.get('success'):
-        raise ValidationError({'captcha_token': 'Xác thực captcha thất bại.'})
+        raise ValidationError({'captcha_token': _('Xác thực captcha thất bại.')})
     if 'action' in result and result.get('action') != action:
-        raise ValidationError({'captcha_token': 'Captcha không hợp lệ cho hành động này.'})
+        raise ValidationError({'captcha_token': _('Captcha không hợp lệ cho hành động này.')})
     if 'score' in result and result.get('score', 0) < settings.RECAPTCHA_SCORE_THRESHOLD:
-        raise ValidationError({'captcha_token': 'Xác thực captcha thất bại (độ tin cậy thấp).'})
+        raise ValidationError({'captcha_token': _('Xác thực captcha thất bại (độ tin cậy thấp).')})

@@ -1,5 +1,6 @@
 """Administrator invitations: manage (superuser) and accept (public token)."""
 
+from django.utils.translation import gettext as _
 from drf_spectacular.utils import extend_schema, extend_schema_view, inline_serializer
 from rest_framework import mixins, permissions, serializers, status, viewsets
 from rest_framework.decorators import action
@@ -147,7 +148,7 @@ class AdminInvitationAcceptView(APIView):
         user = accept_admin_invitation(**serializer.validated_data)
         return Response(
             {
-                'detail': 'Tài khoản quản trị đã được kích hoạt.',
+                'detail': _('Tài khoản quản trị đã được kích hoạt.'),
                 'user_public_id': user.public_id,
             }
         )

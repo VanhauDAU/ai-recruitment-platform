@@ -1,9 +1,11 @@
+import { m } from '@/shared/config/i18n'
+
 export const EMPLOYER_BADGE_CRITERIA = [
-  { key: 'email_domain_verified', label: 'Email tên miền công ty đã được xác minh' },
-  { key: 'phone_verified', label: 'Số điện thoại đã được xác thực' },
-  { key: 'business_doc_approved', label: 'Hồ sơ pháp lý/quyền đại diện đã được duyệt' },
-  { key: 'account_age_reached', label: 'Tài khoản đã đạt tuổi tối thiểu' },
-  { key: 'no_report_history', label: 'Không có tin vi phạm được quản trị viên xác nhận' },
+  { key: 'email_domain_verified', label: m.employer_profile_badge_email_domain() },
+  { key: 'phone_verified', label: m.employer_profile_badge_phone() },
+  { key: 'business_doc_approved', label: m.employer_profile_badge_business_doc() },
+  { key: 'account_age_reached', label: m.employer_profile_badge_account_age() },
+  { key: 'no_report_history', label: m.employer_profile_badge_no_reports() },
 ]
 
 export function resolveEmployerBadgeEligibility(profile = {}) {

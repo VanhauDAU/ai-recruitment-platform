@@ -8,6 +8,8 @@ from datetime import timedelta
 
 from django.conf import settings
 from django.utils import timezone
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 from rest_framework.exceptions import ValidationError
 
 from apps.campaigns.models import RecruitmentCampaign
@@ -20,7 +22,7 @@ EXPIRED_JOB_RENEWAL_GRACE_DAYS = 30
 # The commitment a recruiter accepts each time a job goes public. Change the
 # version together with the text so stored acknowledgements stay attributable.
 RESPONSIBILITY_STATEMENT_VERSION = '2026-11'
-RESPONSIBILITY_STATEMENT_TEXT = (
+RESPONSIBILITY_STATEMENT_TEXT = gettext_lazy(
     'Tôi cam kết nội dung tin tuyển dụng là đúng sự thật, tuân thủ pháp luật và quy định '
     'đăng tin của ProCV, đồng thời chịu trách nhiệm về tin đã đăng và mọi chỉnh sửa sau đó.'
 )
@@ -44,13 +46,15 @@ def job_deadline_policy():
 def job_deadline_error(deadline, *, required=True, today=None):
     """Return a localized validation error, keeping date rules in one place."""
     if deadline is None:
-        return 'Chọn hạn nhận hồ sơ.' if required else ''
+        return _('Chọn hạn nhận hồ sơ.') if required else ''
     today = today or vietnam_today()
     if deadline < today:
-        return 'Hạn nhận hồ sơ phải từ hôm nay trở đi.'
+        return _('Hạn nhận hồ sơ phải từ hôm nay trở đi.')
     maximum_days = job_deadline_policy()['max_deadline_days']
     if deadline > today + timedelta(days=maximum_days):
-        return f'Hạn nhận hồ sơ không được quá {maximum_days} ngày kể từ hôm nay.'
+        return _('Hạn nhận hồ sơ không được quá %(days)s ngày kể từ hôm nay.') % {
+            'days': maximum_days
+        }
     return ''
 
 
@@ -60,7 +64,7 @@ def _ensure_visibility_window_open(job):
         raise ValidationError(
             {
                 'code': 'JOB_VISIBILITY_EXPIRED',
-                'detail': 'Tin đã hết vòng đời hiển thị. Cần một lượt đăng mới để tiếp tục.',
+                'detail': _('Tin đã hết vòng đời hiển thị. Cần một lượt đăng mới để tiếp tục.'),
             }
         )
 
@@ -78,17 +82,18 @@ def _ensure_public_lifetime(job, deadline, *, visibility_end=None):
         if deadline > vietnam_today(anchor) + timedelta(days=maximum_days):
             raise ValidationError(
                 {
-                    'deadline': (
-                        f'Tổng thời gian công khai của tin không được quá {maximum_days} ngày. '
+                    'deadline': _(
+                        'Tổng thời gian công khai của tin không được quá %(days)s ngày. '
                         'Hãy nhân bản tin để đăng một lượt mới.'
-                    ),
+                    )
+                    % {'days': maximum_days},
                 }
             )
     visibility_end = visibility_end or job.visibility_ends_at
     if visibility_end is not None and deadline > vietnam_today(visibility_end):
         raise ValidationError(
             {
-                'deadline': (
+                'deadline': _(
                     'Hạn nhận hồ sơ vượt thời gian công khai của tin. '
                     'Vui lòng dùng quyền gia hạn tin trước.'
                 )
@@ -96,7 +101,9 @@ def _ensure_public_lifetime(job, deadline, *, visibility_end=None):
         )
     # A paused campaign is already refused by ``_ensure_publication_allowed``.
     if job.campaign_id and job.campaign.target_date and deadline > job.campaign.target_date:
-        raise ValidationError({'deadline': 'Hạn gia hạn không được sau ngày kết thúc chiến dịch.'})
+        raise ValidationError(
+            {'deadline': _('Hạn gia hạn không được sau ngày kết thúc chiến dịch.')}
+        )
 
 
 def _ensure_publication_allowed(job, publication_state):
@@ -107,12 +114,14 @@ def _ensure_publication_allowed(job, publication_state):
     """
     blockers = list(publication_state['publish_blockers'])
     if job.campaign_id and job.campaign.status != RecruitmentCampaign.Status.ACTIVE:
-        blockers.append({'code': 'campaign_inactive', 'label': 'Chiến dịch hiện không hoạt động.'})
+        blockers.append(
+            {'code': 'campaign_inactive', 'label': _('Chiến dịch hiện không hoạt động.')}
+        )
     if blockers:
         raise ValidationError(
             {
                 'code': 'JOB_PUBLICATION_BLOCKED',
-                'detail': 'Chưa thể đăng tin.',
+                'detail': _('Chưa thể đăng tin.'),
                 'blocked_reasons': blockers,
             }
         )
@@ -124,7 +133,7 @@ def _ensure_responsibility_accepted(accepted_statement_version):
         raise ValidationError(
             {
                 'code': 'JOB_RESPONSIBILITY_REQUIRED',
-                'detail': 'Xác nhận cam kết chịu trách nhiệm về nội dung tin trước khi đăng.',
+                'detail': _('Xác nhận cam kết chịu trách nhiệm về nội dung tin trước khi đăng.'),
             }
         )
 
@@ -142,62 +151,62 @@ def _validate_publishable(job):
     errors = {}
     today = vietnam_today()
     if not job.title.strip():
-        errors['title'] = 'Nhập tiêu đề tin tuyển dụng.'
+        errors['title'] = _('Nhập tiêu đề tin tuyển dụng.')
     if not job.description.strip():
-        errors['description'] = 'Nhập mô tả công việc.'
+        errors['description'] = _('Nhập mô tả công việc.')
     if not job.requirements.strip():
-        errors['requirements'] = 'Nhập yêu cầu ứng viên.'
+        errors['requirements'] = _('Nhập yêu cầu ứng viên.')
     if not job.benefits.strip():
-        errors['benefits'] = 'Nhập quyền lợi ứng viên.'
+        errors['benefits'] = _('Nhập quyền lợi ứng viên.')
     if not job.position_level:
-        errors['position_level'] = 'Chọn cấp bậc.'
+        errors['position_level'] = _('Chọn cấp bậc.')
     if not job.employment_type:
-        errors['employment_type'] = 'Chọn loại công việc.'
+        errors['employment_type'] = _('Chọn loại công việc.')
     if not (job.work_types or job.work_type):
-        errors['work_types'] = 'Chọn ít nhất một hình thức làm việc.'
+        errors['work_types'] = _('Chọn ít nhất một hình thức làm việc.')
     if not job.education_level:
-        errors['education_level'] = 'Chọn yêu cầu học vấn.'
+        errors['education_level'] = _('Chọn yêu cầu học vấn.')
     if not job.experience_years:
-        errors['experience_years'] = 'Chọn yêu cầu kinh nghiệm.'
+        errors['experience_years'] = _('Chọn yêu cầu kinh nghiệm.')
     if job.salary_type is None:
-        errors['salary_type'] = 'Chọn loại lương và nhập đầy đủ mức lương.'
+        errors['salary_type'] = _('Chọn loại lương và nhập đầy đủ mức lương.')
     elif job.salary_type == Job.SalaryType.RANGE:
         if job.salary_min is None and job.salary_max is None:
-            errors['salary_type'] = 'Nhập ít nhất một mức lương.'
+            errors['salary_type'] = _('Nhập ít nhất một mức lương.')
         elif (
             job.salary_min is not None
             and job.salary_max is not None
             and job.salary_max < job.salary_min
         ):
-            errors['salary_max'] = 'Mức lương tối đa không được nhỏ hơn mức tối thiểu.'
+            errors['salary_max'] = _('Mức lương tối đa không được nhỏ hơn mức tối thiểu.')
     elif job.salary_type in (Job.SalaryType.FIXED, Job.SalaryType.FROM):
         if job.salary_min is None:
-            errors['salary_min'] = 'Loại lương này cần mức lương tối thiểu.'
+            errors['salary_min'] = _('Loại lương này cần mức lương tối thiểu.')
     elif job.salary_type == Job.SalaryType.UP_TO and job.salary_max is None:
-        errors['salary_max'] = 'Loại lương này cần mức lương tối đa.'
+        errors['salary_max'] = _('Loại lương này cần mức lương tối đa.')
     if not job.number_of_vacancies or job.number_of_vacancies < 1:
-        errors['number_of_vacancies'] = 'Số lượng tuyển phải từ 1 trở lên.'
+        errors['number_of_vacancies'] = _('Số lượng tuyển phải từ 1 trở lên.')
     if not job.job_locations.exists():
-        errors['job_locations'] = 'Thêm ít nhất một địa điểm làm việc.'
+        errors['job_locations'] = _('Thêm ít nhất một địa điểm làm việc.')
     if not job.category_assignments.filter(
         role=JobCategoryAssignment.Role.PRIMARY_SPECIALIZATION
     ).exists():
-        errors['category_assignments'] = 'Chọn một vị trí chuyên môn chính.'
+        errors['category_assignments'] = _('Chọn một vị trí chuyên môn chính.')
     if deadline_error := job_deadline_error(job.deadline, today=today):
         errors['deadline'] = deadline_error
     if visibility_error := visibility_days_error(job.requested_visibility_days):
         errors['requested_visibility_days'] = visibility_error
     contact = getattr(job, 'application_contact', None)
     if contact is None:
-        errors['application_contact'] = 'Nhập thông tin người nhận hồ sơ.'
+        errors['application_contact'] = _('Nhập thông tin người nhận hồ sơ.')
     else:
         contact_errors = {}
         if not contact.recipient_name.strip():
-            contact_errors['recipient_name'] = 'Nhập họ tên người nhận hồ sơ.'
+            contact_errors['recipient_name'] = _('Nhập họ tên người nhận hồ sơ.')
         if not contact.phone.strip():
-            contact_errors['phone'] = 'Nhập số điện thoại người nhận hồ sơ.'
+            contact_errors['phone'] = _('Nhập số điện thoại người nhận hồ sơ.')
         if not contact.emails.exists():
-            contact_errors['emails'] = 'Nhập ít nhất một email nhận hồ sơ.'
+            contact_errors['emails'] = _('Nhập ít nhất một email nhận hồ sơ.')
         if contact_errors:
             errors['application_contact'] = contact_errors
     if errors:

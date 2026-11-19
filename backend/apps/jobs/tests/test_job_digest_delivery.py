@@ -94,6 +94,34 @@ class CandidateJobDigestDeliveryTests(TestCase):
         return digest
 
     @patch('apps.jobs.services.digests.delivery.send_html_email')
+    def test_email_is_vietnamese_by_default(self, send):
+        deliver_candidate_job_digest(self._digest(self._job()).pk)
+
+        email = send.call_args.kwargs
+        self.assertEqual(email['subject'], '1 việc làm mới dành cho bạn · ProCV')
+        self.assertIn('Xin chào Ứng viên Digest,', email['text'])
+        self.assertIn('Mức lương: Thỏa thuận', email['text'])
+        self.assertIn('<html lang="vi">', email['html'])
+
+    @patch('apps.jobs.services.digests.delivery.send_html_email')
+    def test_email_follows_the_candidate_language_not_the_worker_language(self, send):
+        self.candidate.preferred_language = 'en'
+        self.candidate.save(update_fields=['preferred_language', 'updated_at'])
+
+        deliver_candidate_job_digest(self._digest(self._job()).pk)
+
+        email = send.call_args.kwargs
+        self.assertEqual(email['subject'], '1 new job for you · ProCV')
+        self.assertIn('Hello Ứng viên Digest,', email['text'])
+        self.assertIn('ProCV has 1 new job for you:', email['text'])
+        self.assertIn('Salary: Negotiable', email['text'])
+        self.assertIn('This is an automated email from ProCV.', email['text'])
+        self.assertIn('<html lang="en">', email['html'])
+        self.assertIn('There is 1 new job matching the alerts you turned on.', email['html'])
+        self.assertIn('Manage job alerts', email['html'])
+        self.assertNotIn('Xin chào', email['html'])
+
+    @patch('apps.jobs.services.digests.delivery.send_html_email')
     def test_success_persists_receipt_message_id_and_delayed_digest_is_deduped(self, send):
         job = self._job()
         first = self._digest(job)

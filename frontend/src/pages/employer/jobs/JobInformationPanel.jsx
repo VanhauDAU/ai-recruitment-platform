@@ -15,9 +15,18 @@ import {
   formatSalary,
 } from '@/entities/job/job'
 import RichContent from '@/shared/ui/rich-text/RichContent'
+import { m } from '@/shared/config/i18n'
 
-const WEEKDAY_LABELS = { 1: 'Thứ 2', 2: 'Thứ 3', 3: 'Thứ 4', 4: 'Thứ 5', 5: 'Thứ 6', 6: 'Thứ 7', 7: 'Chủ nhật' }
-const GENDER_LABELS = { any: 'Không yêu cầu', male: 'Nam', female: 'Nữ' }
+const WEEKDAY_LABELS = {
+  1: m.employer_job_preview_weekday_1(),
+  2: m.employer_job_preview_weekday_2(),
+  3: m.employer_job_preview_weekday_3(),
+  4: m.employer_job_preview_weekday_4(),
+  5: m.employer_job_preview_weekday_5(),
+  6: m.employer_job_preview_weekday_6(),
+  7: m.employer_job_preview_weekday_7(),
+}
+const GENDER_LABELS = { any: m.employer_job_preview_gender_any(), male: m.employer_job_preview_gender_male(), female: m.employer_job_preview_gender_female() }
 
 const hasText = (html) => Boolean((html || '').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim())
 
@@ -33,10 +42,10 @@ function scheduleLabel(schedule) {
 }
 
 function ageLabel(job) {
-  if (job.age_min && job.age_max) return `${job.age_min} - ${job.age_max} tuổi`
-  if (job.age_min) return `Từ ${job.age_min} tuổi`
-  if (job.age_max) return `Đến ${job.age_max} tuổi`
-  return 'Không yêu cầu'
+  if (job.age_min && job.age_max) return m.employer_job_preview_age_range({ min: job.age_min, max: job.age_max })
+  if (job.age_min) return m.employer_job_preview_age_min({ min: job.age_min })
+  if (job.age_max) return m.employer_job_preview_age_max({ max: job.age_max })
+  return m.employer_job_detail_age_any()
 }
 
 function SideCard({ title, children }) {
@@ -63,19 +72,19 @@ export default function JobInformationPanel({ job }) {
   const skills = job.job_skills || []
   const contact = job.application_contact || {}
   const facts = [
-    ['Mức lương', formatSalary(job)],
-    ['Kinh nghiệm', EXPERIENCE_YEARS_LABELS[job.experience_years]],
-    ['Cấp bậc', POSITION_LEVEL_LABELS[job.position_level]],
-    ['Học vấn', EDUCATION_LEVEL_LABELS[job.education_level]],
-    ['Số lượng tuyển', job.number_of_vacancies ? `${job.number_of_vacancies} người` : ''],
-    ['Loại công việc', EMPLOYMENT_TYPE_LABELS[job.employment_type]],
-    ['Hình thức', workTypes.map((item) => WORK_TYPE_LABELS[item] || item).join(', ')],
-    ['Giới tính · Độ tuổi', `${GENDER_LABELS[job.gender_requirement] || 'Không yêu cầu'} · ${ageLabel(job)}`],
+    [m.employer_job_detail_salary(), formatSalary(job)],
+    [m.employer_job_detail_experience(), EXPERIENCE_YEARS_LABELS[job.experience_years]],
+    [m.employer_job_detail_level(), POSITION_LEVEL_LABELS[job.position_level]],
+    [m.employer_job_detail_education(), EDUCATION_LEVEL_LABELS[job.education_level]],
+    [m.employer_job_detail_vacancies(), job.number_of_vacancies ? m.employer_job_preview_vacancy_count({ count: Number(job.number_of_vacancies) }) : ''],
+    [m.employer_job_detail_employment_type(), EMPLOYMENT_TYPE_LABELS[job.employment_type]],
+    [m.employer_job_detail_work_type(), workTypes.map((item) => WORK_TYPE_LABELS[item] || item).join(', ')],
+    [m.employer_job_detail_gender_age(), `${GENDER_LABELS[job.gender_requirement] || m.employer_job_preview_gender_any()} · ${ageLabel(job)}`],
   ]
   const sections = [
-    ['Mô tả công việc', job.description],
-    ['Yêu cầu ứng viên', job.requirements],
-    ['Quyền lợi', job.benefits],
+    [m.employer_job_detail_description(), job.description],
+    [m.employer_job_detail_requirements(), job.requirements],
+    [m.employer_job_detail_benefits(), job.benefits],
   ]
 
   return (
@@ -85,7 +94,7 @@ export default function JobInformationPanel({ job }) {
           {facts.map(([label, value]) => (
             <div key={label} className="min-w-0 bg-white px-3.5 py-3">
               <dt className="text-xs text-slate-400">{label}</dt>
-              <dd className="mt-1 break-words text-sm font-semibold text-slate-800">{value || 'Chưa cập nhật'}</dd>
+              <dd className="mt-1 break-words text-sm font-semibold text-slate-800">{value || m.employer_job_detail_not_updated()}</dd>
             </div>
           ))}
         </dl>
@@ -96,12 +105,12 @@ export default function JobInformationPanel({ job }) {
               <h3 className="mb-2 text-base font-bold text-slate-900">{title}</h3>
               {hasText(html)
                 ? <RichContent html={html} className="job-rich" />
-                : <p className="text-sm italic text-slate-400">Chưa cập nhật.</p>}
+                : <p className="text-sm italic text-slate-400">{m.employer_job_detail_not_updated_period()}</p>}
             </section>
           ))}
           {job.application_reasons?.length > 0 && (
             <section className="p-4 sm:p-5">
-              <h3 className="mb-2 text-base font-bold text-slate-900">Lý do nên ứng tuyển</h3>
+              <h3 className="mb-2 text-base font-bold text-slate-900">{m.employer_job_detail_reasons()}</h3>
               <ul className="list-disc space-y-1 pl-5 text-sm text-slate-600">
                 {job.application_reasons.map((reason) => <li key={reason}>{reason}</li>)}
               </ul>
@@ -111,18 +120,18 @@ export default function JobInformationPanel({ job }) {
       </div>
 
       <aside className="min-w-0 space-y-3">
-        <SideCard title="Chuyên môn & kỹ năng">
-          <TagGroup label="Vị trí chuyên môn" color="green" items={(job.category_assignments || []).map((item) => item.category_name).filter(Boolean)} />
-          <TagGroup label="Kỹ năng cần có" color="green" items={skills.filter((item) => item.importance === 'required').map((item) => item.skill_name)} />
-          <TagGroup label="Kỹ năng nên có" items={skills.filter((item) => item.importance === 'preferred').map((item) => item.skill_name)} />
+        <SideCard title={m.employer_job_detail_skills_card()}>
+          <TagGroup label={m.employer_job_detail_specialization()} color="green" items={(job.category_assignments || []).map((item) => item.category_name).filter(Boolean)} />
+          <TagGroup label={m.employer_job_detail_required_skills()} color="green" items={skills.filter((item) => item.importance === 'required').map((item) => item.skill_name)} />
+          <TagGroup label={m.employer_job_detail_preferred_skills()} items={skills.filter((item) => item.importance === 'preferred').map((item) => item.skill_name)} />
           <TagGroup
-            label="Ngoại ngữ"
+            label={m.employer_job_detail_languages()}
             items={(job.language_requirements || []).map((item) => `${item.language_name}${item.proficiency_label ? ` · ${item.proficiency_label}` : ''}`)}
           />
-          {!skills.length && !job.category_assignments?.length && <p className="text-slate-400">Chưa cập nhật.</p>}
+          {!skills.length && !job.category_assignments?.length && <p className="text-slate-400">{m.employer_job_detail_not_updated_period()}</p>}
         </SideCard>
 
-        <SideCard title="Địa điểm & thời gian">
+        <SideCard title={m.employer_job_detail_location_time()}>
           {(job.job_locations || []).map((location) => (
             <p key={location.id || `${location.location}-${location.address_detail}`} className="flex gap-2">
               <EnvironmentOutlined aria-hidden className="mt-1 shrink-0 text-emerald-600" />
@@ -136,19 +145,19 @@ export default function JobInformationPanel({ job }) {
             </p>
           ))}
           {!job.job_locations?.length && !job.work_schedules?.length && !job.work_schedule_note && (
-            <p className="text-slate-400">Chưa cập nhật.</p>
+            <p className="text-slate-400">{m.employer_job_detail_not_updated_period()}</p>
           )}
         </SideCard>
 
         {(job.job_benefits || []).length > 0 && (
-          <SideCard title="Phúc lợi">
-            <TagGroup label="Quyền lợi bổ sung" color="cyan" items={job.job_benefits.map((item) => item.benefit_name)} />
+          <SideCard title={m.employer_job_detail_perks()}>
+            <TagGroup label={m.employer_job_detail_extra_benefits()} color="cyan" items={job.job_benefits.map((item) => item.benefit_name)} />
           </SideCard>
         )}
 
-        <SideCard title="Người nhận hồ sơ">
+        <SideCard title={m.employer_job_detail_recipient()}>
           <p className="flex items-center gap-2 font-semibold text-slate-800">
-            <UserOutlined aria-hidden className="text-slate-400" /> {contact.recipient_name || 'Chưa cập nhật'}
+            <UserOutlined aria-hidden className="text-slate-400" /> {contact.recipient_name || m.employer_job_detail_not_updated()}
           </p>
           {contact.phone && <p className="flex items-center gap-2"><PhoneOutlined aria-hidden className="text-slate-400" /> {contact.phone}</p>}
           {(contact.emails || []).map((item) => (

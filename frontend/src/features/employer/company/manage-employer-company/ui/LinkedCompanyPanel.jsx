@@ -14,24 +14,24 @@ import { sanitizeHtml } from '@/shared/lib/sanitize-html'
 import { message } from '@/shared/lib/toast'
 import ConfirmAction from '@/shared/ui/confirm-action/ConfirmAction'
 import CompanyForm from './CompanyForm'
-import { getIntlLocale } from '@/shared/config/i18n'
+import { getIntlLocale, m } from '@/shared/config/i18n'
 
 const UPDATE_REQUEST_STATUS = {
-  pending: ['processing', 'Đang xử lý'],
-  submitted: ['processing', 'Đã gửi'],
-  in_review: ['processing', 'Đang thẩm định'],
-  changes_requested: ['warning', 'Cần chỉnh sửa'],
-  approved: ['success', 'Đã duyệt'],
-  rejected: ['error', 'Bị từ chối'],
-  withdrawn: ['default', 'Đã rút'],
-  cancelled: ['default', 'Đã hủy'],
+  pending: ['processing', m.employer_company_update_status_pending()],
+  submitted: ['processing', m.employer_company_update_status_submitted()],
+  in_review: ['processing', m.employer_company_request_in_review()],
+  changes_requested: ['warning', m.employer_company_update_status_changes_requested()],
+  approved: ['success', m.employer_company_update_status_approved()],
+  rejected: ['error', m.employer_company_update_status_rejected()],
+  withdrawn: ['default', m.employer_company_update_status_withdrawn()],
+  cancelled: ['default', m.employer_company_update_status_cancelled()],
 }
 
 const DOCUMENT_LABELS = {
-  business_registration: 'Giấy đăng ký doanh nghiệp',
-  trade_name_proof: 'Chứng minh tên thương mại',
-  authorization_letter: 'Giấy ủy quyền',
-  identity_document: 'Giấy tờ định danh (CCCD/hộ chiếu)',
+  business_registration: m.employer_company_doc_business_registration(),
+  trade_name_proof: m.employer_company_doc_trade_name_proof(),
+  authorization_letter: m.employer_company_doc_authorization_letter(),
+  identity_document: m.employer_company_doc_identity_document(),
 }
 
 export default function LinkedCompanyPanel({ profile, catalogs, industries, onRefresh }) {
@@ -59,7 +59,7 @@ export default function LinkedCompanyPanel({ profile, catalogs, industries, onRe
   const hasDocumentAction = documentsRequiringAction.length > 0
   const [defaultRequestStatusColor, defaultRequestStatusText] = UPDATE_REQUEST_STATUS[latestRequest?.status] || []
   const requestStatusColor = hasDocumentAction ? 'warning' : defaultRequestStatusColor
-  const requestStatusText = hasDocumentAction ? 'Cần bổ sung giấy tờ' : defaultRequestStatusText
+  const requestStatusText = hasDocumentAction ? m.employer_company_update_needs_documents() : defaultRequestStatusText
   const requestQueryHasError = mineQuery.isError
   const requestQueryFetching = mineQuery.isFetching
   const closeMutation = useMutation({
@@ -69,7 +69,7 @@ export default function LinkedCompanyPanel({ profile, catalogs, industries, onRe
       { lock_version: request.lock_version },
     ),
     onSuccess: async () => {
-      message.success('Đã rút yêu cầu cập nhật công ty.')
+      message.success(m.employer_company_request_withdrawn())
       await Promise.all([
         queryClient.invalidateQueries({
           queryKey: employerProfileKeys.companyUpdateRequestList('mine'),
@@ -78,7 +78,7 @@ export default function LinkedCompanyPanel({ profile, catalogs, industries, onRe
         onRefresh?.(),
       ])
     },
-    onError: (error) => message.error(getApiErrorMessage(error, 'Không thể rút yêu cầu.')),
+    onError: (error) => message.error(getApiErrorMessage(error, m.employer_company_update_withdraw_failed())),
   })
   const writeLocked = requestQueryHasError
     || !mineQuery.isSuccess
@@ -91,9 +91,9 @@ export default function LinkedCompanyPanel({ profile, catalogs, industries, onRe
     <Alert
       type="error"
       showIcon
-      title="Không tải được dữ liệu yêu cầu chỉnh sửa"
-      description="Thao tác tạo hoặc chỉnh sửa tạm khóa để tránh ghi đè dữ liệu chưa được đồng bộ."
-      action={<Button loading={requestQueryFetching} onClick={retryRequestQuery}>Thử lại</Button>}
+      title={m.employer_company_update_load_error()}
+      description={m.employer_company_update_load_error_hint()}
+      action={<Button loading={requestQueryFetching} onClick={retryRequestQuery}>{m.employer_company_retry()}</Button>}
     />
   )
 
@@ -119,24 +119,24 @@ export default function LinkedCompanyPanel({ profile, catalogs, industries, onRe
   const rejectionReason = latestRequest?.status === 'rejected'
     ? latestRequest.rejection_reason
       || latestRequest.review_note
-      || 'Quản trị viên chưa cung cấp lý do.'
+      || m.employer_company_update_no_reason()
     : ''
 
   return (
     <div className="linked-company-panel">
       {requestError}
 
-      <section className="company-update-request" aria-label="Yêu cầu của tôi" aria-busy={mineQuery.isLoading || undefined}>
+      <section className="company-update-request" aria-label={m.employer_company_update_mine()} aria-busy={mineQuery.isLoading || undefined}>
         {mineQuery.isLoading ? (
           <Skeleton className="company-update-request__skeleton" active paragraph={{ rows: 1 }} />
         ) : (
           <>
             <div>
-              <h2>Yêu cầu của tôi</h2>
-              {mineQuery.isError && <p>Không thể xác định trạng thái yêu cầu hiện tại.</p>}
-              {!mineQuery.isError && latestSubmittedAt && <p>Ngày gửi gần nhất: {latestSubmittedAt}</p>}
+              <h2>{m.employer_company_update_mine()}</h2>
+              {mineQuery.isError && <p>{m.employer_company_update_status_unknown()}</p>}
+              {!mineQuery.isError && latestSubmittedAt && <p>{m.employer_company_update_last_sent({ date: latestSubmittedAt })}</p>}
               {!mineQuery.isError && rejectionReason && (
-                <p className="company-update-request__rejection">Lý do từ chối: {rejectionReason}</p>
+                <p className="company-update-request__rejection">{m.employer_company_update_rejection({ reason: rejectionReason })}</p>
               )}
             </div>
             {!mineQuery.isError && canRequestUpdate && (
@@ -147,36 +147,36 @@ export default function LinkedCompanyPanel({ profile, catalogs, industries, onRe
                   disabled={writeLocked || activeRequest?.status === 'in_review'}
                   aria-label={
                     hasDocumentAction
-                      ? 'Bổ sung giấy tờ'
+                      ? m.employer_company_update_add_documents()
                       : activeRequest?.status === 'in_review'
-                        ? 'Đang thẩm định'
+                        ? m.employer_company_request_in_review()
                         : undefined
                   }
                   icon={hasDocumentAction ? <UploadOutlined /> : <EditOutlined />}
                   onClick={() => setEditing(true)}
                 >
                   {hasDocumentAction
-                    ? 'Bổ sung giấy tờ'
+                    ? m.employer_company_update_add_documents()
                     : editableRequest
                       ? activeRequest.status === 'changes_requested'
-                        ? 'Chỉnh sửa và gửi lại'
-                        : 'Chỉnh sửa yêu cầu'
+                        ? m.employer_company_update_edit_resubmit()
+                        : m.employer_company_update_edit_request()
                       : activeRequest?.status === 'in_review'
-                        ? 'Đang thẩm định'
-                        : 'Tạo yêu cầu'}
+                        ? m.employer_company_request_in_review()
+                        : m.employer_company_update_create_request()}
                 </Button>
                 {activeRequest?.allowed_actions?.includes('withdraw') && (
                   <ConfirmAction
-                    title="Rút yêu cầu cập nhật"
+                    title={m.employer_company_request_withdraw_title()}
                     description={(
                       <>
-                        Bạn có chắc muốn rút yêu cầu cập nhật công ty không?
+                        {m.employer_company_update_withdraw_confirm()}
                         <br />
-                        Yêu cầu sẽ dừng xử lý. Bạn có thể tạo yêu cầu mới sau đó.
+                        {m.employer_company_update_withdraw_hint()}
                       </>
                     )}
-                    confirmText="Rút yêu cầu"
-                    cancelText="Đóng"
+                    confirmText={m.employer_company_request_withdraw()}
+                    cancelText={m.employer_company_close()}
                     danger
                     onConfirm={() => closeMutation.mutateAsync({
                       request: activeRequest,
@@ -184,7 +184,7 @@ export default function LinkedCompanyPanel({ profile, catalogs, industries, onRe
                     })}
                   >
                     <Button type="link" danger disabled={writeLocked}>
-                      Rút yêu cầu
+                      {m.employer_company_request_withdraw()}
                     </Button>
                   </ConfirmAction>
                 )}
@@ -199,19 +199,19 @@ export default function LinkedCompanyPanel({ profile, catalogs, industries, onRe
           className="company-update-document-request"
           type="warning"
           showIcon
-          title="Quản trị viên yêu cầu bổ sung giấy tờ"
+          title={m.employer_company_update_documents_requested()}
           description={(
             <div className="company-update-document-request__content">
               <ul>
                 {documentsRequiringAction.map((document) => (
                   <li key={document.public_id || document.id}>
                     <strong>{document.doc_type_label || DOCUMENT_LABELS[document.doc_type] || document.doc_type}</strong>
-                    <span>{document.review_note || 'Vui lòng tải lên bản giấy tờ mới rõ ràng và đầy đủ hơn.'}</span>
+                    <span>{document.review_note || m.employer_company_update_document_default_note()}</span>
                   </li>
                 ))}
               </ul>
-              <Button type="primary" disabled={writeLocked} aria-label="Bổ sung giấy tờ ngay" icon={<UploadOutlined />} onClick={() => setEditing(true)}>
-                Bổ sung giấy tờ ngay
+              <Button type="primary" disabled={writeLocked} aria-label={m.employer_company_update_add_documents_now()} icon={<UploadOutlined />} onClick={() => setEditing(true)}>
+                {m.employer_company_update_add_documents_now()}
               </Button>
             </div>
           )}
@@ -223,27 +223,27 @@ export default function LinkedCompanyPanel({ profile, catalogs, industries, onRe
           <Avatar shape="square" size={60} src={company.logo_url || undefined} icon={<BankOutlined />} className="linked-company-card__logo" />
           <div className="min-w-0">
             <div className="linked-company-card__name"><h2>{company.company_name}</h2></div>
-            <p>{company.address || 'Địa chỉ chưa cập nhật'} <span aria-hidden="true">|</span> {company.company_size ? `${company.company_size} nhân viên` : 'Quy mô chưa cập nhật'}</p>
-            <p className="linked-company-card__fixed-note">Liên kết này là cố định; tài khoản không thể chuyển sang công ty khác.</p>
-            <Link to={employerAppPath('/company-page')} className="company-setting-link">Tuỳ biến trang công khai</Link>
+            <p>{company.address || m.employer_company_address_unknown()} <span aria-hidden="true">|</span> {company.company_size ? m.employer_company_size_employees({ size: company.company_size }) : m.employer_company_size_unknown()}</p>
+            <p className="linked-company-card__fixed-note">{m.employer_company_linked_fixed_note()}</p>
+            <Link to={employerAppPath('/company-page')} className="company-setting-link">{m.employer_company_customize_public_page()}</Link>
           </div>
         </header>
 
         <dl className="linked-company-details">
-          <Detail label="Mã số thuế" value={company.tax_code} />
-          <Detail label="Website" value={company.has_no_website ? 'Không có website' : company.website_url} link={!company.has_no_website} />
-          <Detail label="Lĩnh vực hoạt động" value={(company.industries_detail || []).map((item) => item.name).join(', ')} />
-          <Detail label="Lĩnh vực chính" value={(company.industries_detail || []).find((item) => item.is_primary)?.name} />
-          <Detail label="Thị trường hoạt động" value={formatValue(company.markets)} />
-          <Detail label="Khách hàng mục tiêu" value={formatValue(company.target_customers)} />
-          <Detail label="Quy mô" value={company.company_size ? `${company.company_size} nhân viên` : ''} />
+          <Detail label={m.employer_company_tax_code()} value={company.tax_code} />
+          <Detail label="Website" value={company.has_no_website ? m.employer_company_no_website() : company.website_url} link={!company.has_no_website} />
+          <Detail label={m.employer_company_industries()} value={(company.industries_detail || []).map((item) => item.name).join(', ')} />
+          <Detail label={m.employer_company_primary_industry()} value={(company.industries_detail || []).find((item) => item.is_primary)?.name} />
+          <Detail label={m.employer_company_markets()} value={formatValue(company.markets)} />
+          <Detail label={m.employer_company_target_customers()} value={formatValue(company.target_customers)} />
+          <Detail label={m.employer_company_size()} value={company.company_size ? m.employer_company_size_employees({ size: company.company_size }) : ''} />
           <Detail label="Email" value={company.email} />
-          <Detail label="Số điện thoại" value={company.phone} />
-          <Detail label="Địa chỉ" value={company.address} />
-          <Detail label="Mô tả công ty" html={company.description} />
-          <Detail label="Phúc lợi nhân viên" html={company.employee_benefits} />
-          <Detail label="Hình ảnh công ty" value={company.images?.length ? null : ''}>
-            {company.images?.length > 0 && <div className="linked-company-gallery">{company.images.map((item) => <Image key={item.id} src={item.image_url} alt="Ảnh công ty" />)}</div>}
+          <Detail label={m.employer_company_phone()} value={company.phone} />
+          <Detail label={m.employer_company_address()} value={company.address} />
+          <Detail label={m.employer_company_description()} html={company.description} />
+          <Detail label={m.employer_company_employee_benefits()} html={company.employee_benefits} />
+          <Detail label={m.employer_company_images()} value={company.images?.length ? null : ''}>
+            {company.images?.length > 0 && <div className="linked-company-gallery">{company.images.map((item) => <Image key={item.id} src={item.image_url} alt={m.employer_company_image_alt()} />)}</div>}
           </Detail>
         </dl>
       </section>

@@ -1,4 +1,4 @@
-import { getIntlLocale } from '@/shared/config/i18n'
+import { getIntlLocale, m } from '@/shared/config/i18n'
 function timestampOf(application) {
   const value = application.applied_at
   const timestamp = value ? new Date(value).getTime() : 0
@@ -20,7 +20,7 @@ export function groupApplicationsByCandidate(applications = []) {
     const key = candidateKey(application)
     const current = groups.get(key) || {
       key,
-      candidateName: application.candidate_name || application.candidate_email || 'Ứng viên',
+      candidateName: application.candidate_name || application.candidate_email || m.employer_workspace_app_candidate_fallback(),
       candidateEmail: application.candidate_email || '',
       restricted: Boolean(application.candidate_account_restricted),
       applications: [],

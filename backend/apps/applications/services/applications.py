@@ -5,6 +5,8 @@ from datetime import timedelta
 from django.db import transaction
 from django.db.models import F
 from django.utils import timezone
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 
 from apps.accounts.services import lock_account_for_write
 from apps.campaigns.models import CampaignActivity
@@ -13,6 +15,7 @@ from apps.candidates.services import cancel_candidate_notification, emit_candida
 from apps.cvs.services import create_application_snapshot
 from apps.employers.services import recruiter_readiness_state
 from apps.jobs.models import Job, publicly_available_job_filter
+from common.i18n import recipient_language
 
 from ..models import Application, ApplicationStatusHistory
 from .blocks import BLOCKED_APPLY_MESSAGE, is_candidate_blocked_for_job
@@ -23,7 +26,7 @@ MAX_APPLICATIONS_PER_JOB = 3
 REAPPLICATION_COOLDOWN = timedelta(minutes=5)
 
 
-JOB_UNAVAILABLE_MESSAGE = 'Tin tuyển dụng này hiện không nhận hồ sơ.'
+JOB_UNAVAILABLE_MESSAGE = gettext_lazy('Tin tuyển dụng này hiện không nhận hồ sơ.')
 
 
 class ApplicationNotAllowed(ValueError):
@@ -38,7 +41,7 @@ def job_accepts_applications(job):
     """A job takes applications only while public and while its poster may open them."""
     if not Job.objects.filter(publicly_available_job_filter(), pk=job.pk).exists():
         return False
-    _, readiness = recruiter_readiness_state(job.posted_by)
+    _state, readiness = recruiter_readiness_state(job.posted_by)
     return readiness['candidate_data_access']
 
 
@@ -56,13 +59,13 @@ def reapplication_error(candidate, job, *, now=None):
     visible = current.candidate_visible_status() if current is not None else None
     if current is not None and visible not in Application.REAPPLY_ALLOWED_STATUSES:
         if visible in Application.UNANSWERED_STATUSES:
-            return 'Bạn đã ứng tuyển tin này. Muốn nộp CV khác, hãy rút hồ sơ rồi ứng tuyển lại.'
-        return 'Hồ sơ của bạn đang được nhà tuyển dụng xử lý nên chưa thể nộp lại.'
+            return _('Bạn đã ứng tuyển tin này. Muốn nộp CV khác, hãy rút hồ sơ rồi ứng tuyển lại.')
+        return _('Hồ sơ của bạn đang được nhà tuyển dụng xử lý nên chưa thể nộp lại.')
     if submissions.count() >= MAX_APPLICATIONS_PER_JOB:
-        return 'Bạn đã dùng hết 2 lượt ứng tuyển lại cho công việc này.'
+        return _('Bạn đã dùng hết 2 lượt ứng tuyển lại cho công việc này.')
     latest = submissions.order_by('-applied_at').first()
     if latest and latest.applied_at > now - REAPPLICATION_COOLDOWN:
-        return 'Vui lòng chờ đủ 5 phút kể từ lần ứng tuyển gần nhất trước khi ứng tuyển lại.'
+        return _('Vui lòng chờ đủ 5 phút kể từ lần ứng tuyển gần nhất trước khi ứng tuyển lại.')
     return None
 
 
@@ -175,7 +178,7 @@ def withdraw_application(*, candidate, public_id):
     application = _locked_current_application(candidate, public_id)
     visible = application.candidate_visible_status()
     if visible in Application.TERMINAL_STATUSES:
-        raise ApplicationNotAllowed('Hồ sơ đã có kết quả nên không thể rút.')
+        raise ApplicationNotAllowed(_('Hồ sơ đã có kết quả nên không thể rút.'))
     now = timezone.now()
     _discard_unpublished_decisions(application, candidate_id=candidate.pk, now=now)
     application.status = Application.Status.WITHDRAWN
@@ -200,15 +203,17 @@ def _discard_unpublished_decisions(application, *, candidate_id, now):
         .exclude(pk__in=published)
         .order_by('-created_at', '-id')
     )
+    if hidden:
+        # The recruiter reads this history note, so it is written in their language.
+        with recipient_language(application.job.posted_by):
+            withdrawn_note = _('Ứng viên rút hồ sơ trước khi nhận kết quả.')
     for row in hidden:
         cancel_candidate_notification(recipient_id=candidate_id, dedupe_key=row.notification_key)
         timestamp = STATUS_TIMESTAMP_FIELD.get(row.to_status)
         if timestamp:
             setattr(application, timestamp, None)
         row.reverted_at = now
-        row.note = (
-            row.note + '\n' if row.note else ''
-        ) + 'Ứng viên rút hồ sơ trước khi nhận kết quả.'
+        row.note = (row.note + '\n' if row.note else '') + withdrawn_note
         row.save(update_fields=['reverted_at', 'note'])
     if hidden:
         application.auto_rejected_at = None

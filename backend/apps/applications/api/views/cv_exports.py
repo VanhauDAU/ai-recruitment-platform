@@ -1,6 +1,7 @@
 """Recruiter PDF of an application's immutable CV snapshot: rendered export or submitted file."""
 
 from django.http import FileResponse, Http404
+from django.utils.translation import gettext as _
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
@@ -68,7 +69,7 @@ class RecruiterApplicationCvExportView(APIView):
         application = _snapshot_application(request, public_id)
         if application.submitted_cv_version.source_file_key:
             # Rendering the empty structured document would hand over a blank PDF.
-            raise ValidationError({'detail': 'CV này là tệp tải lên, hãy tải tệp gốc.'})
+            raise ValidationError({'detail': _('CV này là tệp tải lên, hãy tải tệp gốc.')})
         try:
             export, reused = request_application_snapshot_export(
                 version=application.submitted_cv_version, actor=request.user

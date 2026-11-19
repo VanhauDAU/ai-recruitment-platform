@@ -16,6 +16,7 @@ import requests
 from django.conf import settings
 from django.core.cache import cache
 from django.db import transaction
+from django.utils.translation import gettext as _
 from rest_framework.exceptions import ValidationError
 
 from apps.accounts.models import SocialAccount, User
@@ -152,7 +153,7 @@ def redeem_one_time_code(code):
         or identity.get('email') != User.objects.normalize_email(user.email)
     ):
         raise ValidationError(
-            {'detail': 'Mã đăng nhập không hợp lệ hoặc đã hết hạn. Vui lòng thử lại.'}
+            {'detail': _('Mã đăng nhập không hợp lệ hoặc đã hết hạn. Vui lòng thử lại.')}
         )
     return user
 

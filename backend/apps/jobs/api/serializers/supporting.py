@@ -1,3 +1,4 @@
+from django.utils.translation import gettext as _
 from rest_framework import serializers
 
 from apps.locations.models import Location
@@ -69,10 +70,10 @@ class JobCategoryAssignmentSerializer(serializers.ModelSerializer):
             JobCategoryAssignment.Role.DOMAIN_KNOWLEDGE: {JobCategory.CategoryType.DOMAIN},
         }.get(role)
         if category and category.status != JobCategory.Status.ACTIVE:
-            raise serializers.ValidationError({'category': 'Danh mục đã ngừng hoạt động.'})
+            raise serializers.ValidationError({'category': _('Danh mục đã ngừng hoạt động.')})
         if category and expected and category.category_type not in expected:
             raise serializers.ValidationError(
-                {'category': 'Loại danh mục không phù hợp với vai trò đã chọn.'}
+                {'category': _('Loại danh mục không phù hợp với vai trò đã chọn.')}
             )
         return attrs
 
@@ -101,10 +102,10 @@ class JobLocationSerializer(serializers.ModelSerializer):
         is_ward = location.level == Location.Level.WARD and location.parent_id
         if not (is_province or is_ward):
             raise serializers.ValidationError(
-                'Địa điểm làm việc phải là tỉnh/thành hoặc phường/xã hợp lệ.'
+                _('Địa điểm làm việc phải là tỉnh/thành hoặc phường/xã hợp lệ.')
             )
         if not location.is_active:
-            raise serializers.ValidationError('Địa điểm đã ngừng hoạt động.')
+            raise serializers.ValidationError(_('Địa điểm đã ngừng hoạt động.'))
         return location
 
     def validate_address_detail(self, address_detail):
@@ -155,17 +156,19 @@ class JobWorkScheduleSerializer(serializers.ModelSerializer):
             value is not None for value in required_structured
         ):
             raise serializers.ValidationError(
-                'Một khung giờ phải có đủ ngày bắt đầu, ngày kết thúc và giờ bắt đầu.'
+                _('Một khung giờ phải có đủ ngày bắt đầu, ngày kết thúc và giờ bắt đầu.')
             )
         if (
             not any(value is not None for value in required_structured)
             and not attrs.get('note', '').strip()
         ):
-            raise serializers.ValidationError('Cần nhập khung ngày/giờ hoặc ghi chú lịch làm việc.')
+            raise serializers.ValidationError(
+                _('Cần nhập khung ngày/giờ hoặc ghi chú lịch làm việc.')
+            )
         start_time = attrs.get('start_time')
         end_time = attrs.get('end_time')
         if start_time and end_time and not attrs.get('is_overnight') and end_time <= start_time:
-            raise serializers.ValidationError({'end_time': 'Giờ kết thúc phải sau giờ bắt đầu.'})
+            raise serializers.ValidationError({'end_time': _('Giờ kết thúc phải sau giờ bắt đầu.')})
         return attrs
 
 
@@ -193,7 +196,7 @@ class JobBenefitSerializer(serializers.ModelSerializer):
 
     def validate_benefit(self, benefit):
         if not benefit.is_active:
-            raise serializers.ValidationError('Quyền lợi đã ngừng hoạt động.')
+            raise serializers.ValidationError(_('Quyền lợi đã ngừng hoạt động.'))
         return benefit
 
 
@@ -226,7 +229,7 @@ class JobLanguageRequirementSerializer(serializers.ModelSerializer):
 
     def validate_language(self, language):
         if not language.is_active:
-            raise serializers.ValidationError('Ngoại ngữ đã ngừng hoạt động.')
+            raise serializers.ValidationError(_('Ngoại ngữ đã ngừng hoạt động.'))
         return language
 
 
@@ -260,8 +263,8 @@ class JobApplicationContactSerializer(serializers.ModelSerializer):
 
     def validate_emails(self, emails):
         if not 1 <= len(emails) <= 5:
-            raise serializers.ValidationError('Cần từ 1 đến tối đa 5 email nhận hồ sơ.')
+            raise serializers.ValidationError(_('Cần từ 1 đến tối đa 5 email nhận hồ sơ.'))
         normalized = [item['email'].strip().lower() for item in emails]
         if len(normalized) != len(set(normalized)):
-            raise serializers.ValidationError('Email nhận hồ sơ không được trùng nhau.')
+            raise serializers.ValidationError(_('Email nhận hồ sơ không được trùng nhau.'))
         return emails

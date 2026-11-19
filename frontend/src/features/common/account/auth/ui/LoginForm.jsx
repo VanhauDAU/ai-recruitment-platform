@@ -14,6 +14,7 @@ import { getAuthDestination } from '../model/password-login-destination'
 import AuthFormStyles from './AuthFormStyles'
 import AuthMascot from './AuthMascot'
 import LoginSubmitButton from './LoginSubmitButton'
+import { m } from '@/shared/config/i18n'
 
 export { AuthFormStyles }
 
@@ -89,7 +90,7 @@ export default function LoginForm({
     if (submitLockedRef.current) return
     if (!executeRecaptcha) {
       clearPassword()
-      setError('Captcha chưa sẵn sàng, vui lòng thử lại.')
+      setError(m.account_auth_captcha_not_ready())
       return
     }
     submitLockedRef.current = true
@@ -104,18 +105,18 @@ export default function LoginForm({
       if (expectedRoles && !expectedRoles.includes(user.role)) {
         clearPassword()
         logout()
-        setError('Tài khoản không có quyền truy cập cổng này.')
+        setError(m.account_auth_wrong_portal())
         return
       }
-      message.success('Đăng nhập thành công.', toastSoundOptions('done'))
+      message.success(m.account_auth_login_success(), toastSoundOptions('done'))
       if (onSuccess) onSuccess(user)
       else navigateAfterLogin(user)
     } catch (err) {
       clearPassword()
       if (err.response?.status === 429) {
-        setError('Bạn thao tác quá nhanh, vui lòng thử lại sau ít phút.')
+        setError(m.account_auth_rate_limited())
       } else {
-        setError(getApiErrorMessage(err, 'Email hoặc mật khẩu không đúng. Vui lòng thử lại.'))
+        setError(getApiErrorMessage(err, m.account_auth_invalid_credentials()))
       }
     } finally {
       submitLockedRef.current = false
@@ -176,8 +177,8 @@ export default function LoginForm({
             name="email"
             label={<span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Email</span>}
             rules={[
-              { required: true, message: 'Vui lòng nhập email' },
-              { type: 'email', message: 'Email không hợp lệ' },
+              { required: true, message: m.account_auth_email_required() },
+              { type: 'email', message: m.account_auth_email_invalid() },
             ]}
           >
             <Input
@@ -200,7 +201,7 @@ export default function LoginForm({
               htmlFor="login_password"
               className="text-sm font-semibold text-gray-700 dark:text-gray-300 cursor-default"
             >
-              Mật khẩu
+              {m.account_auth_password()}
             </label>
             {forgotPasswordLink && (
               <ForgotLink
@@ -208,7 +209,7 @@ export default function LoginForm({
                 className="text-xs font-medium text-[var(--brand-primary)] hover:text-[var(--brand-primary-hover)] hover:underline underline-offset-2 transition-colors"
                 tabIndex={-1}
               >
-                Quên mật khẩu?
+                {m.account_auth_forgot_password()}
               </ForgotLink>
             )}
             {!forgotPasswordLink && passwordHelp}
@@ -216,7 +217,7 @@ export default function LoginForm({
           <Form.Item
             name="password"
             id="login_password"
-            rules={[{ required: true, message: 'Vui lòng nhập mật khẩu' }]}
+            rules={[{ required: true, message: m.account_auth_password_required() }]}
             className="!mb-4"
           >
             <Input.Password
@@ -224,7 +225,7 @@ export default function LoginForm({
               disabled={loading}
               autoComplete="current-password"
               prefix={<LockOutlined className="text-[var(--brand-primary)]" />}
-              placeholder="Nhập mật khẩu của bạn"
+              placeholder={m.account_auth_password_placeholder()}
               onFocus={() => focusMascotField('password')}
               onBlur={() => setActiveMascotField(null)}
               visibilityToggle={{

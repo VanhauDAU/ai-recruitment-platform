@@ -9,6 +9,7 @@ import {
   AVATAR_ACCEPT, AVATAR_MIN_SIDE, cropToFile, initialCrop, loadImageFile,
   moveCrop, resizeCrop, validateAvatarDimensions, validateAvatarFile,
 } from '../model/avatar-crop'
+import { m } from '@/shared/config/i18n'
 
 const PREVIEW_SIZE = 176
 const HANDLE = 'absolute h-3 w-3 rounded-sm bg-sky-500'
@@ -96,10 +97,10 @@ function AvatarEditor({ onClose }) {
     try {
       const updated = source ? await uploadAvatar(await cropToFile(source.image, crop)) : await deleteAvatar()
       setCurrentUser(updated)
-      message.success(source ? 'Đã cập nhật ảnh đại diện.' : 'Đã xoá ảnh đại diện.')
+      message.success(source ? m.account_avatar_updated() : m.account_avatar_removed())
       onClose()
     } catch (saveError) {
-      message.error(getApiErrorMessage(saveError, 'Không lưu được ảnh đại diện. Vui lòng thử lại.'))
+      message.error(getApiErrorMessage(saveError, m.account_avatar_save_failed()))
     } finally {
       setSaving(false)
     }
@@ -111,34 +112,34 @@ function AvatarEditor({ onClose }) {
   return (
     <>
       <h2 className="m-0 bg-[var(--brand-primary)] px-5 py-3 text-center text-sm font-bold uppercase text-white">
-        Chỉnh sửa ảnh đại diện
+        {m.account_avatar_title()}
       </h2>
       <div className="grid items-start gap-8 p-5 md:grid-cols-[minmax(0,1fr)_11rem]">
         <div className="min-w-0">
-          <p className="mb-3 text-center font-medium text-slate-800">Ảnh gốc</p>
+          <p className="mb-3 text-center font-medium text-slate-800">{m.account_avatar_original()}</p>
           {source ? (
             <CropStage source={source} crop={crop} onChange={setCrop} />
           ) : (
             <Upload.Dragger showUploadList={false} accept={AVATAR_ACCEPT} beforeUpload={beforeUpload} disabled={saving} className="!border-emerald-200 !bg-emerald-50/70">
               <p className="ant-upload-drag-icon"><InboxOutlined className="!text-emerald-600" /></p>
-              <p className="ant-upload-text">Click hoặc kéo thả ảnh để tải lên</p>
-              <p className="ant-upload-hint">JPG, PNG hoặc WebP · tối đa 5 MB · tối thiểu {AVATAR_MIN_SIDE}×{AVATAR_MIN_SIDE} px</p>
+              <p className="ant-upload-text">{m.account_avatar_drop()}</p>
+              <p className="ant-upload-hint">{m.account_avatar_hint({ min: AVATAR_MIN_SIDE })}</p>
             </Upload.Dragger>
           )}
           {error ? (
             <p role="alert" className="mt-3 text-center text-sm text-red-500">{error}</p>
           ) : source && (
-            <p className="mt-3 text-center text-sm text-slate-500">Kéo khung để chọn vùng ảnh, kéo các góc để phóng to hoặc thu nhỏ.</p>
+            <p className="mt-3 text-center text-sm text-slate-500">{m.account_avatar_crop_help()}</p>
           )}
         </div>
 
         <div className="flex flex-col items-center gap-2">
-          <p className="mb-1 text-center font-medium text-slate-800">Ảnh hiển thị</p>
+          <p className="mb-1 text-center font-medium text-slate-800">{m.account_avatar_preview()}</p>
           <div className="relative h-44 w-44 overflow-hidden rounded-full bg-slate-100 shadow-inner">
             {source ? (
               <img
                 src={source.url}
-                alt="Xem trước ảnh đại diện"
+                alt={m.account_avatar_preview_alt()}
                 className="absolute"
                 style={{
                   maxWidth: 'none',
@@ -149,19 +150,19 @@ function AvatarEditor({ onClose }) {
                 }}
               />
             ) : currentUrl ? (
-              <img src={currentUrl} alt="Ảnh đại diện hiện tại" className="h-full w-full object-cover" />
+              <img src={currentUrl} alt={m.account_avatar_current_alt()} className="h-full w-full object-cover" />
             ) : (
               <span className="flex h-full w-full items-center justify-center text-5xl text-slate-300"><UserOutlined /></span>
             )}
           </div>
           <div className="mt-2 flex gap-2">
             <Upload showUploadList={false} accept={AVATAR_ACCEPT} beforeUpload={beforeUpload} disabled={saving}>
-              <Button color="blue" variant="solid" disabled={saving}>Đổi ảnh</Button>
+              <Button color="blue" variant="solid" disabled={saving}>{m.account_avatar_change()}</Button>
             </Upload>
-            <Button color="danger" variant="solid" disabled={saving || (!source && !currentUrl)} onClick={removeImage}>Xóa ảnh</Button>
+            <Button color="danger" variant="solid" disabled={saving || (!source && !currentUrl)} onClick={removeImage}>{m.account_avatar_delete()}</Button>
           </div>
-          <Button type="primary" size="large" block loading={saving} onClick={save}>Xong</Button>
-          <Button type="link" danger disabled={saving} onClick={onClose}>Đóng lại (Không lưu)</Button>
+          <Button type="primary" size="large" block loading={saving} onClick={save}>{m.account_avatar_done()}</Button>
+          <Button type="link" danger disabled={saving} onClick={onClose}>{m.account_avatar_close()}</Button>
         </div>
       </div>
     </>
@@ -217,11 +218,11 @@ function CropStage({ source, crop, onChange }) {
         onPointerUp={end}
         onPointerCancel={end}
       >
-        <img src={source.url} alt="Ảnh gốc để căn chỉnh" draggable={false} className="h-full w-full select-none object-cover" />
+        <img src={source.url} alt={m.account_avatar_original_alt()} draggable={false} className="h-full w-full select-none object-cover" />
         <div
           role="group"
           tabIndex={0}
-          aria-label={`Vùng cắt ${crop.size}×${crop.size} px — dùng phím mũi tên để di chuyển`}
+          aria-label={m.account_avatar_crop_aria({ size: crop.size })}
           className="absolute cursor-move border-2 border-sky-500"
           style={{
             left: `${(crop.x / width) * 100}%`,

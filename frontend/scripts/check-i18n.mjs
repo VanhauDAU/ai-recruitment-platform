@@ -27,7 +27,8 @@ function readMessages(file) {
 }
 
 function placeholders(value) {
-  return [...JSON.stringify(value).matchAll(/\{(\w+)\}/g)].map((match) => match[1]).sort().join(',')
+  // Biến thể số nhiều lặp lại tham số ở mỗi nhánh; so tập tên, không so số lần.
+  return [...new Set([...JSON.stringify(value).matchAll(/\{(\w+)\}/g)].map((match) => match[1]))].sort().join(',')
 }
 
 const knownKeys = new Set()

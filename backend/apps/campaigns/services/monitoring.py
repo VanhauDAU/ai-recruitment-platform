@@ -11,12 +11,14 @@ from django.db import IntegrityError, transaction
 from django.db.models import Count, Q
 from django.template.loader import render_to_string
 from django.utils import timezone
+from django.utils.translation import gettext as _
 
 from apps.applications.models import Application
 from apps.campaigns.models import RecruitmentCampaign
 from apps.employers.models import EmployerNotification
 from apps.employers.services import campaign_weekly_report_email_enabled, emit_employer_event
 from common.email import send_html_email
+from common.i18n import recipient_language
 from common.vietnam_time import vietnam_now, vietnam_today
 
 from ..models import CampaignChannel, CampaignHealthSnapshot, CampaignReportDelivery
@@ -30,20 +32,29 @@ MONITORED = (RecruitmentCampaign.Status.ACTIVE, RecruitmentCampaign.Status.PAUSE
 
 def _alert_message(rule, campaign, health):
     if rule == 'forecast_at_risk':
-        return (
-            f'Dự báo chiến dịch "{campaign.name}" tuyển được khoảng {health["forecast"]:g}/'
-            f'{health["headcount"]} người. Cần khoảng {health["required_velocity"] or 0:g} hồ sơ '
+        return _(
+            'Dự báo chiến dịch "%(campaign)s" tuyển được khoảng %(forecast)s/'
+            '%(headcount)s người. Cần khoảng %(velocity)s hồ sơ '
             'mỗi ngày để kịp chỉ tiêu.'
-        )
+        ) % {
+            'campaign': campaign.name,
+            'forecast': f'{health["forecast"]:g}',
+            'headcount': health['headcount'],
+            'velocity': f'{health["required_velocity"] or 0:g}',
+        }
     if rule == 'backlog':
-        return (
-            f'{health["response"]["backlog"]} hồ sơ của chiến dịch "{campaign.name}" '
-            'chờ quá 48 giờ chưa được xem.'
-        )
+        return _('%(count)s hồ sơ của chiến dịch "%(campaign)s" chờ quá 48 giờ chưa được xem.') % {
+            'count': health['response']['backlog'],
+            'campaign': campaign.name,
+        }
     if rule == 'channel_zero_apply':
         labels = ', '.join(channel['label'] for channel in health['silent_channels'][:3])
-        return f'Kênh {labels} đã đăng nhiều ngày nhưng chưa mang lại hồ sơ nào.'
-    return f'Chi phí chiến dịch "{campaign.name}" đang tiêu nhanh hơn tiến độ thời gian.'
+        return _('Kênh %(channels)s đã đăng nhiều ngày nhưng chưa mang lại hồ sơ nào.') % {
+            'channels': labels
+        }
+    return _('Chi phí chiến dịch "%(campaign)s" đang tiêu nhanh hơn tiến độ thời gian.') % {
+        'campaign': campaign.name
+    }
 
 
 def _previous_alerts(campaign, today):
@@ -67,15 +78,16 @@ def snapshot_campaign(campaign, *, now=None):
         entry = dict(previous.get(rule) or {'since': today.isoformat()})
         notified = entry.get('notified')
         if not notified or today - date.fromisoformat(notified) >= REMIND_EVERY:
-            emit_employer_event(
-                recipient=campaign.owner.user,
-                event_type=EmployerNotification.EventType.CAMPAIGN_HEALTH_ALERT,
-                dedupe_key=f'campaign-health:{campaign.public_id}:{rule}:{today.isoformat()}',
-                message=_alert_message(rule, campaign, health),
-                subject_public_id=campaign.public_id,
-                metadata={'campaign_public_id': campaign.public_id, 'rule': rule},
-                action_path=f'/tuyendung/app/campaigns/{campaign.public_id}?active_tab=health',
-            )
+            with recipient_language(campaign.owner.user):
+                emit_employer_event(
+                    recipient=campaign.owner.user,
+                    event_type=EmployerNotification.EventType.CAMPAIGN_HEALTH_ALERT,
+                    dedupe_key=f'campaign-health:{campaign.public_id}:{rule}:{today.isoformat()}',
+                    message=_alert_message(rule, campaign, health),
+                    subject_public_id=campaign.public_id,
+                    metadata={'campaign_public_id': campaign.public_id, 'rule': rule},
+                    action_path=f'/tuyendung/app/campaigns/{campaign.public_id}?active_tab=health',
+                )
             entry['notified'] = today.isoformat()
         open_alerts[rule] = entry
     CampaignHealthSnapshot.objects.update_or_create(
@@ -125,13 +137,15 @@ def weekly_report_context(campaign, health, *, now):
 
 
 def _send_weekly_report(campaign, *, now):
+    recipient = campaign.owner.user
     context = weekly_report_context(campaign, campaign_health(campaign, now=now), now=now)
-    send_html_email(
-        subject=f'Báo cáo tuần: {campaign.name}',
-        text=render_to_string('campaigns/email/weekly_report.txt', context),
-        html=render_to_string('campaigns/email/weekly_report.html', context),
-        to=campaign.owner.user.email,
-    )
+    with recipient_language(recipient):
+        send_html_email(
+            subject=_('Báo cáo tuần: %(campaign)s') % {'campaign': campaign.name},
+            text=render_to_string('campaigns/email/weekly_report.txt', context),
+            html=render_to_string('campaigns/email/weekly_report.html', context),
+            to=recipient.email,
+        )
 
 
 def send_weekly_reports(*, now=None):

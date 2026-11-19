@@ -3,6 +3,7 @@
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
+from django.utils.translation import gettext_lazy
 
 from common.db.public_id import generate_public_id
 
@@ -17,21 +18,24 @@ class CompanyUpdateRequest(models.Model):
     class ProofType(models.TextChoices):
         BUSINESS_REGISTRATION = (
             'business_registration',
-            'Giấy đăng ký doanh nghiệp hoặc tương đương',
+            gettext_lazy('Giấy đăng ký doanh nghiệp hoặc tương đương'),
         )
-        AUTHORIZATION_AND_ID = 'authorization_and_id', 'Giấy ủy quyền + giấy tờ định danh'
+        AUTHORIZATION_AND_ID = (
+            'authorization_and_id',
+            gettext_lazy('Giấy ủy quyền + giấy tờ định danh'),
+        )
 
     class Status(models.TextChoices):
         # ``pending`` chỉ giữ để đọc dữ liệu/consumer cũ trong cửa sổ rollout.
         # Migration V2 chuyển toàn bộ record hiện hữu sang ``submitted``.
-        PENDING = 'pending', 'Chờ duyệt'
-        SUBMITTED = 'submitted', 'Đã gửi'
-        IN_REVIEW = 'in_review', 'Đang thẩm định'
-        CHANGES_REQUESTED = 'changes_requested', 'Cần chỉnh sửa'
-        APPROVED = 'approved', 'Đã duyệt'
-        REJECTED = 'rejected', 'Từ chối'
-        WITHDRAWN = 'withdrawn', 'Đã rút'
-        CANCELLED = 'cancelled', 'Đã hủy'
+        PENDING = 'pending', gettext_lazy('Chờ duyệt')
+        SUBMITTED = 'submitted', gettext_lazy('Đã gửi')
+        IN_REVIEW = 'in_review', gettext_lazy('Đang thẩm định')
+        CHANGES_REQUESTED = 'changes_requested', gettext_lazy('Cần chỉnh sửa')
+        APPROVED = 'approved', gettext_lazy('Đã duyệt')
+        REJECTED = 'rejected', gettext_lazy('Từ chối')
+        WITHDRAWN = 'withdrawn', gettext_lazy('Đã rút')
+        CANCELLED = 'cancelled', gettext_lazy('Đã hủy')
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='update_requests')
@@ -191,16 +195,16 @@ class CompanyUpdateEvent(models.Model):
     """Append-only audit trail for request lifecycle and attachment decisions."""
 
     class EventType(models.TextChoices):
-        SUBMITTED = 'submitted', 'Đã gửi'
-        RESUBMITTED = 'resubmitted', 'Đã gửi lại'
-        REVISION_CREATED = 'revision_created', 'Đã tạo phiên bản'
-        REVIEW_STARTED = 'review_started', 'Bắt đầu thẩm định'
-        DOCUMENT_REVIEWED = 'document_reviewed', 'Đã xử lý giấy tờ'
-        CHANGES_REQUESTED = 'changes_requested', 'Yêu cầu chỉnh sửa'
-        APPROVED = 'approved', 'Đã duyệt'
-        REJECTED = 'rejected', 'Đã từ chối'
-        WITHDRAWN = 'withdrawn', 'Đã rút'
-        CANCELLED = 'cancelled', 'Đã hủy'
+        SUBMITTED = 'submitted', gettext_lazy('Đã gửi')
+        RESUBMITTED = 'resubmitted', gettext_lazy('Đã gửi lại')
+        REVISION_CREATED = 'revision_created', gettext_lazy('Đã tạo phiên bản')
+        REVIEW_STARTED = 'review_started', gettext_lazy('Bắt đầu thẩm định')
+        DOCUMENT_REVIEWED = 'document_reviewed', gettext_lazy('Đã xử lý giấy tờ')
+        CHANGES_REQUESTED = 'changes_requested', gettext_lazy('Yêu cầu chỉnh sửa')
+        APPROVED = 'approved', gettext_lazy('Đã duyệt')
+        REJECTED = 'rejected', gettext_lazy('Đã từ chối')
+        WITHDRAWN = 'withdrawn', gettext_lazy('Đã rút')
+        CANCELLED = 'cancelled', gettext_lazy('Đã hủy')
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     update_request = models.ForeignKey(

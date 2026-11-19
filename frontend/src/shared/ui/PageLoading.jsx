@@ -1,3 +1,4 @@
+import { m } from '@/shared/config/i18n'
 import BrandLoader from '@/shared/ui/BrandLoader'
 
 export default function PageLoading() {
@@ -9,7 +10,7 @@ export default function PageLoading() {
     >
       <div className="flex flex-col items-center gap-3">
         <BrandLoader size={128} />
-        <p className="text-sm font-medium text-gray-500">Đang tải dữ liệu...</p>
+        <p className="text-sm font-medium text-gray-500">{m.ui_page_loading()}</p>
       </div>
     </div>
   )

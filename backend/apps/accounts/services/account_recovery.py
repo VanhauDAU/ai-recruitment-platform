@@ -2,6 +2,7 @@
 
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
+from django.utils.translation import gettext as _
 
 from apps.accounts.domain.impact_token_rules import decode_impact_token
 
@@ -26,11 +27,13 @@ from .tokens import revoke_refresh_tokens
 def ensure_account_recovery_allowed(actor, user):
     ensure_account_write_allowed(actor, user)
     if actor.pk == user.pk:
-        raise ValidationError('Bạn không thể tự khôi phục danh tính tài khoản của mình.')
+        raise ValidationError(_('Bạn không thể tự khôi phục danh tính tài khoản của mình.'))
     if user.is_deleted:
-        raise ValidationError('Tài khoản đã bị xóa và không thuộc luồng khôi phục này.')
+        raise ValidationError(_('Tài khoản đã bị xóa và không thuộc luồng khôi phục này.'))
     if user.status == User.Status.PENDING:
-        raise ValidationError('Tài khoản đang chờ kích hoạt phải được xử lý qua quy trình lời mời.')
+        raise ValidationError(
+            _('Tài khoản đang chờ kích hoạt phải được xử lý qua quy trình lời mời.')
+        )
 
 
 def _email_recovery_snapshot(user, providers):
@@ -60,13 +63,13 @@ def confirm_account_email(
     verification_evidence = clean_verification_evidence(verification_evidence)
     ensure_account_recovery_allowed(actor, user)
     if User.objects.normalize_email(user.email) == email:
-        raise ValidationError({'email': 'Email mới trùng với email hiện tại.'})
+        raise ValidationError({'email': _('Email mới trùng với email hiện tại.')})
     if User.objects.email_claimed_for_role(
         email,
         user.role,
         exclude_user_id=user.pk,
     ):
-        raise ValidationError({'email': 'Email này đã thuộc một tài khoản cùng loại.'})
+        raise ValidationError({'email': _('Email này đã thuộc một tài khoản cùng loại.')})
 
     with transaction.atomic():
         user = User.objects.select_for_update().get(pk=user.pk)
@@ -102,13 +105,13 @@ def confirm_account_email(
             },
         )
         if before['email'] == email:
-            raise ValidationError({'email': 'Email mới trùng với email hiện tại.'})
+            raise ValidationError({'email': _('Email mới trùng với email hiện tại.')})
         if User.objects.email_claimed_for_role(
             email,
             user.role,
             exclude_user_id=user.pk,
         ):
-            raise ValidationError({'email': 'Email này đã thuộc một tài khoản cùng loại.'})
+            raise ValidationError({'email': _('Email này đã thuộc một tài khoản cùng loại.')})
         assert_audit_revision(claims)
 
         old_email = user.email
@@ -129,7 +132,7 @@ def confirm_account_email(
                 )
         except IntegrityError as error:
             raise ValidationError(
-                {'email': 'Email này đã thuộc một tài khoản cùng loại.'}
+                {'email': _('Email này đã thuộc một tài khoản cùng loại.')}
             ) from error
 
         if social_accounts:

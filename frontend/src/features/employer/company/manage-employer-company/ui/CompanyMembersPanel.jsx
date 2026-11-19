@@ -16,6 +16,7 @@ import {
   transferCompanyOwnership,
 } from '@/entities/account/employer-profile'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
+import { m } from '@/shared/config/i18n'
 import { formatDateTime } from '@/shared/lib/date-time'
 import { message } from '@/shared/lib/toast'
 import useConfirmAction from '@/shared/ui/confirm-action/use-confirm-action'
@@ -24,9 +25,9 @@ import CompanyMemberCard from './CompanyMemberCard'
 import HandoverModal from './HandoverModal'
 
 const FILTERS = [
-  { value: 'all', label: 'Tất cả' },
-  { value: 'verified', label: 'Đã xác thực' },
-  { value: 'unverified', label: 'Chưa xác thực' },
+  { value: 'all', label: m.employer_company_members_filter_all() },
+  { value: 'verified', label: m.employer_company_verified() },
+  { value: 'unverified', label: m.employer_company_unverified() },
 ]
 
 /**
@@ -60,7 +61,7 @@ export default function CompanyMembersPanel({ onRefresh }) {
       message.success(done)
       await (refreshProfile ? onRefresh?.() : refreshMembers())
     },
-    onError: (error) => message.error(getApiErrorMessage(error, 'Không thể thực hiện thao tác này.')),
+    onError: (error) => message.error(getApiErrorMessage(error, m.employer_company_members_action_failed())),
   })
 
   const members = membersQuery.data || []
@@ -70,14 +71,14 @@ export default function CompanyMembersPanel({ onRefresh }) {
   ))
 
   const transfer = (member) => requestConfirmation({
-    title: 'Chuyển quyền quản lý công ty',
-    description: `${member.display_name} sẽ trở thành quản lý công ty: duyệt yêu cầu tham gia, quản lý thành viên và trang công ty. Bạn trở thành thành viên.`,
-    confirmText: 'Chuyển quyền',
+    title: m.employer_company_member_transfer(),
+    description: m.employer_company_members_transfer_description({ name: member.display_name }),
+    confirmText: m.employer_company_members_transfer_confirm(),
     danger: true,
     onConfirm: () => action.mutateAsync({
       member: member.member_id,
       run: () => transferCompanyOwnership(member.member_id),
-      done: 'Đã chuyển quyền quản lý. Bạn hiện là thành viên của công ty.',
+      done: m.employer_company_members_transfer_done(),
       refreshProfile: true,
     }),
   })
@@ -86,43 +87,43 @@ export default function CompanyMembersPanel({ onRefresh }) {
     run: () => (member.page_editor_grant_id
       ? revokeEmployerCompanyPageEditor(member.page_editor_grant_id)
       : grantEmployerCompanyPageEditor(member.member_id)),
-    done: member.page_editor_grant_id ? 'Đã thu hồi quyền biên tập trang công ty.' : 'Đã cấp quyền biên tập trang công ty.',
+    done: member.page_editor_grant_id ? m.employer_company_members_editor_revoked() : m.employer_company_members_editor_granted(),
   })
   const handOver = (source, target) => action.mutateAsync({
     member: source.member_id,
     run: () => handOverCompanyResources(source.member_id, target),
-    done: `Đã giao tin và chiến dịch của ${source.display_name}.`,
+    done: m.employer_company_members_handover_done({ name: source.display_name }),
   }).then(() => setHandoverSource(null), () => {})
   const former = formerQuery.data || []
   const remove = (member, reason) => action.mutateAsync({
     member: member.member_id,
     run: () => removeCompanyMember(member.member_id, reason),
-    done: `Đã gỡ ${member.display_name} khỏi công ty.`,
+    done: m.employer_company_members_removed({ name: member.display_name }),
   })
 
   return (
     <div className="company-members">
       <CompanyJoinRequestsPanel onDecided={refreshMembers} />
 
-      <section className="company-members__section" aria-label="Thành viên công ty">
+      <section className="company-members__section" aria-label={m.employer_company_members_title()}>
         <header className="company-members__header">
           <div>
-            <h2><TeamOutlined /> Thành viên công ty</h2>
+            <h2><TeamOutlined /> {m.employer_company_members_title()}</h2>
             {membersQuery.isSuccess && (
-              <p>{members.length} thành viên · {verified} đã xác thực tài khoản</p>
+              <p>{m.employer_company_members_summary({ count: members.length, verified })}</p>
             )}
           </div>
           {members.length > 1 && <Segmented size="small" value={filter} onChange={setFilter} options={FILTERS} />}
         </header>
         <p className="company-members__hint">
-          Vào công ty xong, mỗi thành viên tự nộp giấy tờ để quản trị viên ProCV xác thực tài khoản. Chỉ thành viên đã xác thực mới được nhận quyền quản lý hoặc biên tập trang công ty.
+          {m.employer_company_members_hint()}
         </p>
         {membersQuery.isLoading && <Skeleton active avatar paragraph={{ rows: 3 }} />}
         {membersQuery.isError && (
-          <Alert type="warning" showIcon title={getApiErrorMessage(membersQuery.error, 'Bạn cần xác thực tài khoản để quản lý thành viên công ty.')} />
+          <Alert type="warning" showIcon title={getApiErrorMessage(membersQuery.error, m.employer_company_members_verify_required())} />
         )}
         {membersQuery.isSuccess && !shown.length && (
-          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Không có thành viên phù hợp" />
+          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={m.employer_company_members_empty()} />
         )}
         <div className="company-members__list">
           {shown.map((member) => (
@@ -140,11 +141,11 @@ export default function CompanyMembersPanel({ onRefresh }) {
       </section>
 
       {former.length > 0 && (
-        <section className="company-members__section" aria-label="Người đã rời công ty">
+        <section className="company-members__section" aria-label={m.employer_company_former_title()}>
           <header className="company-members__header">
             <div>
-              <h2><HistoryOutlined /> Người đã rời công ty</h2>
-              <p>Họ vẫn đứng tên tin tuyển dụng tại công ty. Không ai xem được hồ sơ ứng tuyển của các tin này cho tới khi bạn giao lại.</p>
+              <h2><HistoryOutlined /> {m.employer_company_former_title()}</h2>
+              <p>{m.employer_company_former_hint()}</p>
             </div>
           </header>
           <ul className="company-join-requests">
@@ -156,13 +157,13 @@ export default function CompanyMembersPanel({ onRefresh }) {
                 <span className="company-join-request__info">
                   <strong>{person.display_name}</strong>
                   <span>
-                    {person.job_count} tin ({person.active_job_count} đang tuyển) · {person.unanswered_application_count} hồ sơ chờ phản hồi
-                    {person.open_campaign_count > 0 && ` · ${person.open_campaign_count} chiến dịch`}
+                    {m.employer_company_former_workload({ jobs: person.job_count, active: person.active_job_count, unanswered: person.unanswered_application_count })}
+                    {person.open_campaign_count > 0 && ` · ${m.employer_company_former_campaigns({ count: person.open_campaign_count })}`}
                   </span>
-                  {person.left_at && <small>Rời công ty {formatDateTime(person.left_at)}</small>}
+                  {person.left_at && <small>{m.employer_company_former_left({ date: formatDateTime(person.left_at) })}</small>}
                 </span>
                 <span className="company-join-request__actions">
-                  <Button type="primary" onClick={() => setHandoverSource(person)}>Tiếp quản</Button>
+                  <Button type="primary" onClick={() => setHandoverSource(person)}>{m.employer_company_former_take_over()}</Button>
                 </span>
               </li>
             ))}

@@ -1,5 +1,6 @@
 """Request bodies of the admin verification actions (review, decide, revoke, unlock)."""
 
+from django.utils.translation import gettext as _
 from rest_framework import serializers
 
 from ....models import CompanyDocument, EmployerVerificationCase
@@ -23,7 +24,7 @@ class AdminVerificationDocumentReviewSerializer(serializers.Serializer):
             and not attrs.get('reason', '').strip()
         ):
             raise serializers.ValidationError(
-                {'reason': 'Nhập lý do khi yêu cầu bổ sung hoặc từ chối.'}
+                {'reason': _('Nhập lý do khi yêu cầu bổ sung hoặc từ chối.')}
             )
         return attrs
 
@@ -55,7 +56,7 @@ class AdminVerificationDecisionPreviewSerializer(serializers.Serializer):
             and not attrs.get('reason', '').strip()
         ):
             raise serializers.ValidationError(
-                {'reason': 'Nhập lý do khi yêu cầu bổ sung hoặc từ chối.'}
+                {'reason': _('Nhập lý do khi yêu cầu bổ sung hoặc từ chối.')}
             )
         return attrs
 
@@ -77,7 +78,7 @@ class AdminVerificationLifecycleConfirmationSerializer(AdminVerificationLifecycl
     def validate_reason(self, value):
         value = value.strip()
         if not value:
-            raise serializers.ValidationError('Nhập lý do thay đổi hiệu lực xác thực.')
+            raise serializers.ValidationError(_('Nhập lý do thay đổi hiệu lực xác thực.'))
         return value
 
 
@@ -88,5 +89,5 @@ class AdminVerificationResubmissionUnlockSerializer(serializers.Serializer):
     def validate_reason(self, value):
         value = value.strip()
         if not value:
-            raise serializers.ValidationError('Nhập lý do mở khóa nộp lại.')
+            raise serializers.ValidationError(_('Nhập lý do mở khóa nộp lại.'))
         return value

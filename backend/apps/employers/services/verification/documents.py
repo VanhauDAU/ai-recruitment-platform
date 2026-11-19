@@ -3,6 +3,7 @@
 from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
+from django.utils.translation import gettext
 from rest_framework.exceptions import ValidationError
 
 from apps.accounts.api.permissions import require_admin
@@ -38,7 +39,9 @@ def record_verification_upload(
     if case.resubmission_locked_at is not None:
         workflow_error(
             'VERIFICATION_RESUBMISSION_LOCKED',
-            'Hồ sơ đã hết lượt nộp lại. Vui lòng gửi khiếu nại để được quản trị viên xem xét.',
+            gettext(
+                'Hồ sơ đã hết lượt nộp lại. Vui lòng gửi khiếu nại để được quản trị viên xem xét.'
+            ),
             final_rejection_count=case.final_rejection_count,
             rejection_limit=MAX_FINAL_REJECTIONS,
         )
@@ -51,7 +54,7 @@ def record_verification_upload(
     if document is None:
         workflow_error(
             'VERIFICATION_DOCUMENT_CHANGED',
-            'Giấy tờ không còn thuộc hồ sơ xác thực.',
+            gettext('Giấy tờ không còn thuộc hồ sơ xác thực.'),
         )
     if (
         document.verification_case_id not in {None, case.pk}
@@ -60,7 +63,7 @@ def record_verification_upload(
     ):
         workflow_error(
             'VERIFICATION_DOCUMENT_SCOPE_INVALID',
-            'Giấy tờ không thuộc nhà tuyển dụng hoặc công ty của hồ sơ.',
+            gettext('Giấy tờ không thuộc nhà tuyển dụng hoặc công ty của hồ sơ.'),
         )
     if verification_method:
         case.verification_method = verification_method
@@ -166,7 +169,7 @@ def start_verification_review(case, *, actor):
     }:
         workflow_error(
             'VERIFICATION_INVALID_TRANSITION',
-            'Chỉ hồ sơ đang chờ mới có thể bắt đầu xử lý.',
+            gettext('Chỉ hồ sơ đang chờ mới có thể bắt đầu xử lý.'),
             current_status=case.status,
             allowed_statuses=[EmployerVerificationCase.Status.PENDING],
         )
@@ -198,7 +201,7 @@ def review_verification_document(document, *, actor, decision, reason, lock_vers
     if document.verification_case_id is None:
         workflow_error(
             'VERIFICATION_DOCUMENT_NOT_ATTACHED',
-            'Giấy tờ không thuộc hồ sơ xác thực.',
+            gettext('Giấy tờ không thuộc hồ sơ xác thực.'),
         )
     scope = lock_verification_identity(EmployerVerificationCase(pk=document.verification_case_id))
     case = scope.case
@@ -206,14 +209,14 @@ def review_verification_document(document, *, actor, decision, reason, lock_vers
     if document.verification_case_id != case.pk or not document.is_current:
         workflow_error(
             'VERIFICATION_DOCUMENT_CHANGED',
-            'Giấy tờ đã thay đổi. Vui lòng tải lại.',
+            gettext('Giấy tờ đã thay đổi. Vui lòng tải lại.'),
         )
     if case.lock_version != lock_version:
-        raise StaleImpactToken('Hồ sơ đã thay đổi. Vui lòng tải lại.')
+        raise StaleImpactToken(gettext('Hồ sơ đã thay đổi. Vui lòng tải lại.'))
     if case.status != EmployerVerificationCase.Status.IN_REVIEW:
         workflow_error(
             'VERIFICATION_INVALID_TRANSITION',
-            'Chỉ được xử lý giấy tờ khi hồ sơ đang được review.',
+            gettext('Chỉ được xử lý giấy tờ khi hồ sơ đang được review.'),
             current_status=case.status,
             allowed_statuses=[EmployerVerificationCase.Status.IN_REVIEW],
         )
@@ -222,9 +225,9 @@ def review_verification_document(document, *, actor, decision, reason, lock_vers
         CompanyDocument.Status.CHANGES_REQUESTED,
         CompanyDocument.Status.REJECTED,
     }:
-        raise ValidationError('Kết quả xử lý giấy tờ không hợp lệ.')
+        raise ValidationError(gettext('Kết quả xử lý giấy tờ không hợp lệ.'))
     if decision != CompanyDocument.Status.APPROVED and not reason.strip():
-        raise ValidationError('Cần nhập lý do khi yêu cầu bổ sung hoặc từ chối.')
+        raise ValidationError(gettext('Cần nhập lý do khi yêu cầu bổ sung hoặc từ chối.'))
     normalized_reason = '' if decision == CompanyDocument.Status.APPROVED else reason.strip()
     document.status = decision
     document.reviewed_by = actor

@@ -4,6 +4,7 @@ from copy import copy
 
 from django.db import transaction
 from django.utils import timezone
+from django.utils.translation import gettext
 from rest_framework.exceptions import ValidationError
 
 from ...models import Job, JobApplicationContact, JobApplicationEmail
@@ -65,7 +66,7 @@ def update_employer_job(job, user, data):
         extra_campaign_ids=(requested_campaign.pk if requested_campaign is not None else None,),
     )
     if job.posted_by_id != user.id:
-        raise ValidationError('Bạn không có quyền chỉnh sửa tin này.')
+        raise ValidationError(gettext('Bạn không có quyền chỉnh sửa tin này.'))
     _validate_job_for_write(job, allow_requested_changes=True)
     previous_campaign = locked_campaigns.get(job.campaign_id)
     locked_requested_campaign = _locked_requested_campaign(requested_campaign, locked_campaigns)
@@ -81,7 +82,7 @@ def update_employer_job(job, user, data):
         raise ValidationError(
             {
                 'requested_visibility_days': (
-                    'Dùng thao tác gia hạn để thay đổi thời gian hiển thị của tin đã đăng.'
+                    gettext('Dùng thao tác gia hạn để thay đổi thời gian hiển thị của tin đã đăng.')
                 )
             }
         )
@@ -96,16 +97,18 @@ def assign_job_to_campaign(job, user, campaign):
     recruiter = _locked_recruiter(user)
     job, locked_campaigns = _locked_job(job, extra_campaign_ids=(campaign.pk,))
     if job.posted_by_id != user.id:
-        raise ValidationError('Bạn không có quyền dùng tin này.')
+        raise ValidationError(gettext('Bạn không có quyền dùng tin này.'))
     if job.campaign_id == campaign.pk:
         return job
     previous_campaign = locked_campaigns.get(job.campaign_id)
     if previous_campaign is not None and not previous_campaign.is_terminal:
-        raise ValidationError({'job': 'Tin đang thuộc một chiến dịch khác còn chạy.'})
+        raise ValidationError({'job': gettext('Tin đang thuộc một chiến dịch khác còn chạy.')})
     locked_campaign = _locked_requested_campaign(campaign, locked_campaigns)
     _validate_campaign_for_write(locked_campaign, recruiter=recruiter)
     if locked_campaign.target_date and job.deadline and job.deadline > locked_campaign.target_date:
-        raise ValidationError({'deadline': 'Hạn nhận hồ sơ của tin sau ngày kết thúc chiến dịch.'})
+        raise ValidationError(
+            {'deadline': gettext('Hạn nhận hồ sơ của tin sau ngày kết thúc chiến dịch.')}
+        )
     job.campaign = locked_campaign
     job.save(update_fields=['campaign', 'updated_at'])
     _record_job_assignment(job, previous_campaign=previous_campaign, user=user)
@@ -117,12 +120,12 @@ def duplicate_job(job, user):
     _locked_recruiter(user)
     job, _ = _locked_job(job)
     if job.posted_by_id != user.id:
-        raise ValidationError('Bạn không có quyền sao chép tin này.')
+        raise ValidationError(gettext('Bạn không có quyền sao chép tin này.'))
     if job.policy_hold or job.moderation_hold or (job.campaign_id and job.campaign.policy_hold):
         raise ValidationError(
             {
                 'code': 'RECRUITMENT_HOLD_ACTIVE',
-                'detail': 'Không thể sao chép khi tin hoặc chiến dịch đang bị tạm giữ.',
+                'detail': gettext('Không thể sao chép khi tin hoặc chiến dịch đang bị tạm giữ.'),
             }
         )
     duplicate = copy(job)
@@ -151,7 +154,7 @@ def duplicate_job(job, user):
     duplicate.impression_count = 0
     duplicate.application_count = 0
     duplicate.engagement_tracking_started_at = timezone.now()
-    duplicate.title = f'{job.title} (bản sao)'
+    duplicate.title = gettext('%(title)s (bản sao)') % {'title': job.title}
     duplicate.save()
     _record_job_assignment(duplicate, previous_campaign=None, user=user)
     for relation, model in JOB_RELATIONS.items():
@@ -197,8 +200,8 @@ def delete_job_draft(job, user):
     _locked_recruiter(user)
     job, _ = _locked_job(job)
     if job.posted_by_id != user.id or job.status != Job.Status.DRAFT:
-        raise ValidationError({'detail': 'Chỉ có thể xóa tin nháp của bạn.'})
+        raise ValidationError({'detail': gettext('Chỉ có thể xóa tin nháp của bạn.')})
     if job.submitted_at is not None:
         # A draft that was public before may already own applications.
-        raise ValidationError({'detail': 'Không thể xóa tin đã từng được đăng.'})
+        raise ValidationError({'detail': gettext('Không thể xóa tin đã từng được đăng.')})
     job.delete()

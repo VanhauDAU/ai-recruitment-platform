@@ -1,4 +1,5 @@
 import { Alert, Button } from 'antd'
+import { m } from '@/shared/config/i18n'
 import AccentPalettePicker from './AccentPalettePicker'
 import PinnedJobsPicker from './PinnedJobsPicker'
 import SectionOrderList from './SectionOrderList'
@@ -26,9 +27,9 @@ export default function CompanyLayoutControls({ page, controller, readOnlyReason
       )}
 
       <section aria-labelledby="company-layout-sections">
-        <h2 id="company-layout-sections" className="company-layout-heading">Khối nội dung</h2>
+        <h2 id="company-layout-sections" className="company-layout-heading">{m.employer_company_layout_sections()}</h2>
         <p className="company-layout-hint">
-          Kéo thả hoặc dùng nút mũi tên để sắp xếp cột chính; tắt công tắc để ẩn một khối khỏi trang công khai.
+          {m.employer_company_layout_sections_hint()}
         </p>
         <SectionOrderList
           sections={registry.sections}
@@ -41,7 +42,7 @@ export default function CompanyLayoutControls({ page, controller, readOnlyReason
       </section>
 
       <section aria-labelledby="company-layout-accent">
-        <h2 id="company-layout-accent" className="company-layout-heading">Màu nhấn</h2>
+        <h2 id="company-layout-accent" className="company-layout-heading">{m.employer_company_layout_accent()}</h2>
         <AccentPalettePicker
           accents={registry.accents}
           value={draft.accent}
@@ -51,7 +52,7 @@ export default function CompanyLayoutControls({ page, controller, readOnlyReason
       </section>
 
       <section aria-labelledby="company-layout-pinned">
-        <h2 id="company-layout-pinned" className="company-layout-heading">Tin tuyển dụng nổi bật</h2>
+        <h2 id="company-layout-pinned" className="company-layout-heading">{m.employer_company_layout_pinned()}</h2>
         <PinnedJobsPicker
           jobs={controller.pinnedJobs}
           max={registry.limits?.pinned_jobs ?? 0}
@@ -65,14 +66,14 @@ export default function CompanyLayoutControls({ page, controller, readOnlyReason
         {canEdit ? (
           <>
             <span className="company-layout-hint" role="status">
-              {dirty ? 'Có thay đổi chưa lưu.' : 'Bố cục đang khớp với trang công khai.'}
+              {dirty ? m.employer_company_layout_dirty() : m.employer_company_layout_in_sync()}
             </span>
-            <Button disabled={!dirty || saving} onClick={controller.reset}>Hoàn tác</Button>
-            <Button type="primary" loading={saving} disabled={!dirty} onClick={controller.save}>Lưu thay đổi</Button>
+            <Button disabled={!dirty || saving} onClick={controller.reset}>{m.employer_company_layout_undo()}</Button>
+            <Button type="primary" loading={saving} disabled={!dirty} onClick={controller.save}>{m.employer_company_save_changes()}</Button>
           </>
         ) : (
           <p className="company-layout-hint">
-            {readOnlyReason || 'Bạn chỉ có quyền xem bố cục trang công ty.'}
+            {readOnlyReason || m.employer_company_layout_read_only()}
           </p>
         )}
       </div>

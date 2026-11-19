@@ -4,12 +4,13 @@ import { Grid, Segmented, Switch } from 'antd'
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { CompanyLayoutPreview } from '@/entities/company/company'
 import { getJobBenefits, jobKeys } from '@/entities/job/job'
+import { m } from '@/shared/config/i18n'
 
 // Bề rộng ảo của khung xem trước; khung được thu nhỏ cho vừa chỗ trống.
 const FRAME_WIDTH = { desktop: 1120, mobile: 390 }
 const DEVICE_OPTIONS = [
-  { value: 'desktop', label: 'Máy tính', icon: <DesktopOutlined /> },
-  { value: 'mobile', label: 'Di động', icon: <MobileOutlined /> },
+  { value: 'desktop', label: m.employer_company_preview_desktop(), icon: <DesktopOutlined /> },
+  { value: 'mobile', label: m.employer_company_preview_mobile(), icon: <MobileOutlined /> },
 ]
 const PLACEHOLDER = 'text-sm text-slate-500'
 const NO_BENEFITS = []
@@ -56,15 +57,15 @@ export default function CompanyPagePreview({
   return (
     <div className="employer-company-preview">
       <div className="employer-company-preview__bar">
-        <h2 className="employer-company-preview__title">Xem trước</h2>
+        <h2 className="employer-company-preview__title">{m.employer_company_preview_title()}</h2>
         {pending && (
           <label className="employer-company-preview__toggle">
             <Switch size="small" checked={overlay} onChange={onShowPendingChange} />
-            Xem bản đang chờ duyệt
+            {m.employer_company_preview_show_pending()}
           </label>
         )}
         {lg && (
-          <Segmented size="small" aria-label="Bề rộng xem trước" options={DEVICE_OPTIONS} value={device} onChange={setDevice} />
+          <Segmented size="small" aria-label={m.employer_company_preview_width()} options={DEVICE_OPTIONS} value={device} onChange={setDevice} />
         )}
       </div>
       <div ref={viewportRef} className="employer-company-preview__viewport">
@@ -72,7 +73,7 @@ export default function CompanyPagePreview({
           className="employer-company-preview__frame"
           style={width && { width, zoom: available ? Math.min(1, available / width) : 1 }}
         >
-          <Suspense fallback={<div className="h-40 animate-pulse rounded-xl bg-slate-100" aria-label="Đang tải bản xem trước" />}>
+          <Suspense fallback={<div className="h-40 animate-pulse rounded-xl bg-slate-100" aria-label={m.employer_company_preview_loading()} />}>
             <CompanyLayoutPreview
               content={content}
               layout={layout}
@@ -83,22 +84,22 @@ export default function CompanyPagePreview({
                 jobs: (
                   <>
                     {pinnedJobs.length > 0 && (
-                      <ul className="employer-company-preview__pinned" aria-label="Tin ghim trong bản xem trước">
+                      <ul className="employer-company-preview__pinned" aria-label={m.employer_company_preview_pinned()}>
                         {pinnedJobs.map((job) => (
-                          <li key={job.public_id}><span>Nổi bật</span> {job.title}</li>
+                          <li key={job.public_id}><span>{m.employer_company_preview_featured()}</span> {job.title}</li>
                         ))}
                       </ul>
                     )}
-                    <p className={PLACEHOLDER}>Danh sách việc làm đang tuyển hiển thị tại đây trên trang công khai.</p>
+                    <p className={PLACEHOLDER}>{m.employer_company_preview_jobs_placeholder()}</p>
                   </>
                 ),
-                similar_companies: <p className={PLACEHOLDER}>Công ty cùng lĩnh vực được gợi ý trên trang công khai.</p>,
+                similar_companies: <p className={PLACEHOLDER}>{m.employer_company_preview_similar_placeholder()}</p>,
               }}
             />
           </Suspense>
         </div>
       </div>
-      <p className="employer-company-preview__note">Bản xem trước phản ánh cả những thay đổi chưa lưu.</p>
+      <p className="employer-company-preview__note">{m.employer_company_preview_note()}</p>
     </div>
   )
 }

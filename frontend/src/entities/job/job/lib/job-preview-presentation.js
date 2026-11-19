@@ -1,13 +1,14 @@
+import { m } from '@/shared/config/i18n'
 import { WORK_TYPE_LABELS } from './job-options'
 
 const WEEKDAY_LABELS = {
-  1: 'Thứ 2',
-  2: 'Thứ 3',
-  3: 'Thứ 4',
-  4: 'Thứ 5',
-  5: 'Thứ 6',
-  6: 'Thứ 7',
-  7: 'Chủ nhật',
+  1: m.job_weekday_mon(),
+  2: m.job_weekday_tue(),
+  3: m.job_weekday_wed(),
+  4: m.job_weekday_thu(),
+  5: m.job_weekday_fri(),
+  6: m.job_weekday_sat(),
+  7: m.job_weekday_sun(),
 }
 
 function uniqueLines(lines) {
@@ -46,7 +47,7 @@ function scheduleLine(item) {
     ? WEEKDAY_LABELS[item.weekday_from]
     : `${WEEKDAY_LABELS[item.weekday_from]} - ${WEEKDAY_LABELS[item.weekday_to]}`
   const time = item.start_time && item.end_time
-    ? `${item.start_time.slice(0, 5)} - ${item.end_time.slice(0, 5)}${item.is_overnight ? ' hôm sau' : ''}`
+    ? `${item.start_time.slice(0, 5)} - ${item.end_time.slice(0, 5)}${item.is_overnight ? m.job_schedule_next_day() : ''}`
     : ''
   const note = item.note?.trim() ? ` (${item.note.trim()})` : ''
   return [days, time].filter(Boolean).join(', ') + note
@@ -56,7 +57,7 @@ export function previewScheduleLines(job) {
   const schedules = (job.work_schedules || []).map(scheduleLine)
   const note = jobContentLines(job.work_schedule_note)
   const fallback = schedules.length === 0 && note.length === 0 && job.work_type
-    ? [`Hình thức: ${WORK_TYPE_LABELS[job.work_type] || job.work_type}`]
+    ? [m.job_schedule_work_type({ type: WORK_TYPE_LABELS[job.work_type] || job.work_type })]
     : []
   return uniqueLines([...schedules, ...note, ...fallback])
 }

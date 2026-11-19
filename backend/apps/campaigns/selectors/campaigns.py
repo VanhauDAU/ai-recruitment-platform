@@ -15,6 +15,7 @@ from django.db.models import (
     When,
 )
 from django.db.models.functions import Coalesce, TruncDate
+from django.utils.translation import gettext as _
 
 from apps.applications.models import Application
 from apps.campaigns.models import CampaignActivity, RecruitmentCampaign
@@ -211,7 +212,7 @@ def attach_campaign_candidate_previews(campaigns, *, limit=5):
         previews_by_campaign[campaign_id].append(
             {
                 'public_id': row['candidate__public_id'],
-                'full_name': row['candidate__full_name'] or 'Ứng viên',
+                'full_name': row['candidate__full_name'] or _('Ứng viên'),
                 'avatar_url': row['candidate__avatar_url'],
             }
         )

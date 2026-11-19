@@ -18,10 +18,10 @@ from .prompt import (
     PROMPT_VERSION,
     RESPONSE_SCHEMA,
     SCHEMA_VERSION,
-    SYSTEM_INSTRUCTION,
     USE_CASE,
     approved_company_context,
     generation_prompt,
+    system_instruction,
 )
 from .submission import job_ai_policy
 from .suggestion import normalize_ai_suggestion, validate_generated_draft
@@ -41,7 +41,7 @@ def _call_generate_structured(generation, prompt):
         response_schema=RESPONSE_SCHEMA,
         prompt_version=PROMPT_VERSION,
         schema_version=SCHEMA_VERSION,
-        system_instruction=SYSTEM_INSTRUCTION,
+        system_instruction=system_instruction(generation.locale),
         result_validator=validate_generated_draft,
         model=generation.model,
         correlation_key=generation.public_id,

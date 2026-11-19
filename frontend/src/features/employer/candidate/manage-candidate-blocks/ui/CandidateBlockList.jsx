@@ -6,6 +6,7 @@ import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { formatDateTime } from '@/shared/lib/date-time'
 import { message } from '@/shared/lib/toast'
 import useConfirmAction from '@/shared/ui/confirm-action/use-confirm-action'
+import { m } from '@/shared/config/i18n'
 
 export default function CandidateBlockList() {
   const [page, setPage] = useState(1)
@@ -16,26 +17,26 @@ export default function CandidateBlockList() {
     mutationFn: (publicId) => liftCandidateBlock(publicId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: applicationKeys.all })
-      message.success('Đã gỡ chặn. Ứng viên có thể ứng tuyển lại.')
+      message.success(m.employer_workspace_blocklist_lifted())
     },
-    onError: (error) => message.error(getApiErrorMessage(error, 'Không thể gỡ chặn.')),
+    onError: (error) => message.error(getApiErrorMessage(error, m.employer_workspace_blocklist_lift_error())),
   })
   const blocks = query.data?.results || []
 
   function lift(block) {
     requestConfirmation({
-      title: 'Gỡ chặn ứng viên',
-      description: `${block.candidate_name} sẽ có thể nộp hồ sơ vào các tin của công ty trở lại.`,
-      confirmText: 'Gỡ chặn',
+      title: m.employer_workspace_blocklist_lift_title(),
+      description: m.employer_workspace_blocklist_lift_description({ name: block.candidate_name }),
+      confirmText: m.employer_workspace_blocklist_lift(),
       onConfirm: () => liftMutation.mutateAsync(block.public_id),
     })
   }
 
   if (query.isPending) return <Skeleton active paragraph={{ rows: 6 }} />
   if (query.isError) {
-    return <Alert showIcon type="error" title="Không tải được danh sách đen" description={getApiErrorMessage(query.error, 'Vui lòng thử lại.')} />
+    return <Alert showIcon type="error" title={m.employer_workspace_blocklist_load_error()} description={getApiErrorMessage(query.error, m.employer_workspace_try_again())} />
   }
-  if (!blocks.length) return <Empty description="Công ty chưa chặn ứng viên nào" className="py-10" />
+  if (!blocks.length) return <Empty description={m.employer_workspace_blocklist_empty()} className="py-10" />
 
   return (
     <div className="space-y-3">
@@ -47,14 +48,14 @@ export default function CandidateBlockList() {
               <p className="truncate text-xs text-slate-500">{block.candidate_email}</p>
               <div className="mt-2 flex flex-wrap items-center gap-1.5">
                 <Tag color="red">{block.reason_label}</Tag>
-                {block.source_job_title && <span className="text-[11px] text-slate-500">Từ hồ sơ: {block.source_job_title}</span>}
+                {block.source_job_title && <span className="text-[11px] text-slate-500">{m.employer_workspace_blocklist_from_application({ job: block.source_job_title })}</span>}
               </div>
               {block.note && <p className="mt-1 text-xs text-slate-600">{block.note}</p>}
               <p className="mt-1 text-[11px] text-slate-400">
-                {block.blocked_by_name} chặn lúc {formatDateTime(block.created_at)} · {block.expires_at ? `Hết hạn ${formatDateTime(block.expires_at)}` : 'Không thời hạn'}
+                {m.employer_workspace_blocklist_blocked_by({ name: block.blocked_by_name, date: formatDateTime(block.created_at) })} · {block.expires_at ? m.employer_workspace_expires_on({ date: formatDateTime(block.expires_at) }) : m.employer_workspace_blocklist_no_expiry()}
               </p>
             </div>
-            {block.can_lift && <Button onClick={() => lift(block)}>Gỡ chặn</Button>}
+            {block.can_lift && <Button onClick={() => lift(block)}>{m.employer_workspace_blocklist_lift()}</Button>}
           </li>
         ))}
       </ul>

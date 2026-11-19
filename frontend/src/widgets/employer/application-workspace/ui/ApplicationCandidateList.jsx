@@ -1,6 +1,7 @@
 import { SearchOutlined } from '@ant-design/icons'
 import { Alert, Empty, Input, Pagination, Skeleton } from 'antd'
 import { useEffect, useMemo, useState } from 'react'
+import { m } from '@/shared/config/i18n'
 import ApplicationStatusFilter from './ApplicationStatusFilter'
 import CandidateGroup from './CandidateGroup'
 
@@ -49,17 +50,17 @@ export default function ApplicationCandidateList({
       className="flex min-h-0 min-w-0 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm md:col-span-1 md:col-start-1 md:row-span-2 md:row-start-1 xl:col-span-3 xl:col-start-1 xl:row-span-1 xl:h-full"
     >
       <header className="aw-panel-head">
-        <h2 id="application-candidate-list-title" className="aw-panel-title">Ứng viên</h2>
-        <span className="aw-count">{groups.length} người · {applicationCount} CV</span>
+        <h2 id="application-candidate-list-title" className="aw-panel-title">{m.employer_workspace_app_candidates()}</h2>
+        <span className="aw-count">{m.employer_workspace_app_candidate_count({ count: groups.length })} · {m.employer_workspace_app_cv_count({ count: applicationCount })}</span>
       </header>
 
       <div className="aw-filters border-b border-slate-100 p-3">
         <Input
-          aria-label="Tìm ứng viên hoặc CV"
+          aria-label={m.employer_workspace_app_search()}
           allowClear
           value={keyword}
           prefix={<SearchOutlined className="text-slate-400" />}
-          placeholder="Tên, email, CV"
+          placeholder={m.employer_workspace_app_search_placeholder()}
           onChange={(event) => {
             onKeywordChange(event.target.value)
             if (!event.target.value) onKeywordSubmit('')
@@ -75,14 +76,14 @@ export default function ApplicationCandidateList({
           <Alert
             showIcon
             type="error"
-            message="Không thể tải danh sách CV"
-            action={<button type="button" className="font-semibold text-red-600" onClick={onRetry}>Thử lại</button>}
+            message={m.employer_workspace_app_list_load_error()}
+            action={<button type="button" className="font-semibold text-red-600" onClick={onRetry}>{m.employer_workspace_retry()}</button>}
           />
         )}
         {!loading && !error && groups.length === 0 && (
           <Empty
             image={Empty.PRESENTED_IMAGE_SIMPLE}
-            description="Không tìm thấy CV phù hợp"
+            description={m.employer_workspace_app_list_empty()}
             className="py-8"
           />
         )}

@@ -1,5 +1,6 @@
-import { getIntlLocale } from '@/shared/config/i18n'
-export const money = (value) => `${Number(value || 0).toLocaleString(getIntlLocale())} đ`
+import { getIntlLocale, m } from '@/shared/config/i18n'
+
+export const money = (value) => m.employer_campaign_money({ amount: Number(value || 0).toLocaleString(getIntlLocale()) })
 
 export function postText(content = {}) {
   const tags = (content.hashtags || []).map((tag) => `#${tag.replace(/^#/, '')}`).join(' ')
@@ -9,9 +10,9 @@ export function postText(content = {}) {
 export async function copyText(text, label, message) {
   try {
     await navigator.clipboard.writeText(text)
-    message.success(`Đã sao chép ${label}.`)
+    message.success(m.employer_campaign_copied({ label }))
   } catch {
-    message.error('Trình duyệt chặn sao chép. Hãy chọn và sao chép thủ công.')
+    message.error(m.employer_campaign_copy_blocked())
   }
 }
 

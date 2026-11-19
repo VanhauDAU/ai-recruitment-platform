@@ -15,27 +15,28 @@ import {
   getCampaignPauseImpact,
 } from '@/entities/campaign/campaign'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
+import { m } from '@/shared/config/i18n'
 import { message } from '@/shared/lib/toast'
 
 // Kết thúc chiến dịch đóng mọi tin đang tuyển; hủy lịch đưa chiến dịch về nháp.
 const END_ACTIONS = {
   completed: {
-    title: 'Hoàn tất chiến dịch',
-    okText: 'Hoàn tất',
-    description: 'Các tin đang tuyển trong chiến dịch sẽ chuyển sang ngừng tuyển. Không mở lại được chiến dịch đã hoàn tất.',
-    success: 'Đã hoàn tất chiến dịch và đóng các tin.',
+    title: m.employer_campaign_lifecycle_complete_title(),
+    okText: m.employer_campaign_lifecycle_complete_ok(),
+    description: m.employer_campaign_lifecycle_complete_description(),
+    success: m.employer_campaign_lifecycle_complete_success(),
   },
   cancelled: {
-    title: 'Hủy chiến dịch',
-    okText: 'Hủy chiến dịch',
-    description: 'Chiến dịch dừng hẳn; các tin đang tuyển trong chiến dịch sẽ chuyển sang ngừng tuyển.',
-    success: 'Đã hủy chiến dịch.',
+    title: m.employer_campaign_lifecycle_cancel_title(),
+    okText: m.employer_campaign_lifecycle_cancel_title(),
+    description: m.employer_campaign_lifecycle_cancel_description(),
+    success: m.employer_campaign_lifecycle_cancel_success(),
   },
   draft: {
-    title: 'Hủy lịch kích hoạt',
-    okText: 'Hủy lịch',
-    description: 'Chiến dịch về lại nháp và không tự chạy vào ngày bắt đầu.',
-    success: 'Đã hủy lịch, chiến dịch về nháp.',
+    title: m.employer_campaign_lifecycle_unschedule_title(),
+    okText: m.employer_campaign_lifecycle_unschedule_ok(),
+    description: m.employer_campaign_lifecycle_unschedule_description(),
+    success: m.employer_campaign_lifecycle_unschedule_success(),
   },
 }
 
@@ -63,12 +64,12 @@ export default function CampaignLifecycleActions({ campaign }) {
       message.success(
         END_ACTIONS[variables.status]?.success
           || (variables.status === 'active'
-            ? 'Đã mở lại chiến dịch.'
-            : 'Đã dừng chiến dịch và ẩn các tin đang công khai.'),
+            ? m.employer_campaign_lifecycle_resumed()
+            : m.employer_campaign_lifecycle_paused()),
       )
     },
     onError: (error) => message.error(
-      getApiErrorMessage(error, 'Không thể đổi trạng thái chiến dịch.'),
+      getApiErrorMessage(error, m.employer_campaign_lifecycle_status_error()),
     ),
   })
   const impact = impactQuery.data
@@ -82,7 +83,7 @@ export default function CampaignLifecycleActions({ campaign }) {
   const menuItems = [
     campaign?.status === 'active' && {
       key: 'pause',
-      label: 'Dừng chiến dịch',
+      label: m.employer_campaign_lifecycle_pause(),
       icon: <PauseCircleOutlined aria-hidden />,
     },
     ...endOptions.map((status) => ({
@@ -102,7 +103,7 @@ export default function CampaignLifecycleActions({ campaign }) {
           loading={mutation.isPending}
           onClick={() => mutation.mutate({ status: 'active' })}
         >
-          Mở lại chiến dịch
+          {m.employer_campaign_lifecycle_resume()}
         </Button>
       )}
       {menuItems.length > 0 && (
@@ -113,7 +114,7 @@ export default function CampaignLifecycleActions({ campaign }) {
             onClick: ({ key }) => (key === 'pause' ? setPauseOpen(true) : setEndStatus(key)),
           }}
         >
-          <Button icon={<MoreOutlined aria-hidden />}>Thao tác khác</Button>
+          <Button icon={<MoreOutlined aria-hidden />}>{m.employer_campaign_lifecycle_more()}</Button>
         </Dropdown>
       )}
       <Modal
@@ -121,7 +122,7 @@ export default function CampaignLifecycleActions({ campaign }) {
         open={Boolean(endAction)}
         title={endAction?.title}
         okText={endAction?.okText}
-        cancelText="Đóng"
+        cancelText={m.employer_campaign_close()}
         okButtonProps={{ danger: endStatus !== 'completed' }}
         confirmLoading={mutation.isPending}
         onCancel={() => setEndStatus('')}
@@ -132,9 +133,9 @@ export default function CampaignLifecycleActions({ campaign }) {
       <Modal
         destroyOnHidden
         open={pauseOpen}
-        title="Dừng chiến dịch tuyển dụng"
-        okText="Xác nhận dừng"
-        cancelText="Hủy"
+        title={m.employer_campaign_lifecycle_pause_title()}
+        okText={m.employer_campaign_lifecycle_pause_ok()}
+        cancelText={m.employer_campaign_cancel()}
         okButtonProps={{
           danger: true,
           disabled: confirmationCode !== campaign?.public_id || impactQuery.isLoading,
@@ -154,8 +155,8 @@ export default function CampaignLifecycleActions({ campaign }) {
               type="warning"
               showIcon
               icon={<WarningOutlined />}
-              title={`${impact?.active_public_job_count || 0} tin đang công khai sẽ bị ẩn`}
-              description="Trạng thái của tin không thay đổi. Tin còn hạn sẽ tự hiển thị lại khi mở chiến dịch."
+              title={m.employer_campaign_lifecycle_pause_impact({ count: impact?.active_public_job_count || 0 })}
+              description={m.employer_campaign_lifecycle_pause_impact_description()}
             />
             {(impact?.active_public_jobs || []).length > 0 && (
               <div className="rounded-lg border border-slate-200">
@@ -171,7 +172,9 @@ export default function CampaignLifecycleActions({ campaign }) {
               </div>
             )}
             <label className="block text-sm font-medium text-slate-700">
-              Nhập mã <strong>{campaign?.public_id}</strong> để xác nhận
+              {m.employer_campaign_lifecycle_code_prefix()}
+              <strong>{campaign?.public_id}</strong>
+              {m.employer_campaign_lifecycle_code_suffix()}
               <Input
                 className="mt-2 !h-11 !rounded-xl !border-slate-300 transition-shadow focus-within:!border-rose-400 focus-within:!shadow-[0_0_0_3px_rgba(251,113,133,0.14)]"
                 value={confirmationCode}

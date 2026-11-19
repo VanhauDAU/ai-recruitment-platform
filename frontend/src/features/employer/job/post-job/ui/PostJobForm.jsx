@@ -26,6 +26,7 @@ import JobFormSection from './JobFormSection'
 import JobGeneralFields from './JobGeneralFields'
 import PostingQuotaNotice from './PostingQuotaNotice'
 import './post-job-form.css'
+import { m } from '@/shared/config/i18n'
 
 export default function PostJobForm({
   aiSuggestion,
@@ -174,7 +175,7 @@ export default function PostJobForm({
     updateInvalidSections(errorFields)
     const firstError = errorFields.flatMap((field) => field.errors || []).find(Boolean)
     message.warning(
-      firstError || 'Vui lòng hoàn thiện các trường bắt buộc trước khi đăng tin.',
+      firstError || m.employer_job_form_complete_required(),
       { duration: 5000, id: 'post-job-validation-error' },
     )
   }, [updateInvalidSections])
@@ -205,17 +206,17 @@ export default function PostJobForm({
         </div>
 
         <main className="min-w-0 space-y-3">
-          {errorMessage && <Alert type="error" showIcon title="Chưa thể lưu tin tuyển dụng" description={errorMessage} />}
+          {errorMessage && <Alert type="error" showIcon title={m.employer_job_form_save_failed()} description={errorMessage} />}
           {requiresNewCredit && postingContext && (
             <PostingQuotaNotice postingContext={postingContext} />
           )}
           {(benefitsQuery.isError || languagesQuery.isError || skillsQuery.isError) && (
-            <Alert type="warning" showIcon title="Một số danh mục bổ sung chưa tải được" description="Tải lại trang để chọn đầy đủ quyền lợi, kỹ năng và ngoại ngữ." />
+            <Alert type="warning" showIcon title={m.employer_job_form_catalogs_failed()} description={m.employer_job_form_catalogs_failed_hint()} />
           )}
           <JobFormSection
             id="general"
             number={1}
-            title="Thông tin chung"
+            title={m.employer_job_progress_general()}
             progress={sections[0]}
             invalid={invalidSections.has('general')}
             open={openSections.has('general')}
@@ -227,7 +228,7 @@ export default function PostJobForm({
           <JobFormSection
             id="description"
             number={2}
-            title="Mô tả công việc"
+            title={m.employer_job_progress_description_group()}
             progress={sections[1]}
             invalid={invalidSections.has('description')}
             open={openSections.has('description')}
@@ -239,7 +240,7 @@ export default function PostJobForm({
           <JobFormSection
             id="expectations"
             number={3}
-            title="Kỳ vọng về ứng viên"
+            title={m.employer_job_progress_expectations()}
             progress={sections[2]}
             invalid={invalidSections.has('expectations')}
             open={openSections.has('expectations')}
@@ -251,7 +252,7 @@ export default function PostJobForm({
           <JobFormSection
             id="application"
             number={4}
-            title="Thông tin nhận hồ sơ"
+            title={m.employer_job_progress_application()}
             progress={sections[3]}
             invalid={invalidSections.has('application')}
             open={openSections.has('application')}
@@ -277,14 +278,14 @@ export default function PostJobForm({
                   rules={[{
                     validator: (_, accepted) => (accepted
                       ? Promise.resolve()
-                      : Promise.reject(new Error('Xác nhận cam kết trước khi đăng tin.'))),
+                      : Promise.reject(new Error(m.employer_job_form_commitment_required()))),
                   }]}
                 >
                   <Checkbox>{responsibilityStatement.text}</Checkbox>
                 </Form.Item>
               ) : (
                 <p className="mt-2 text-xs font-semibold text-red-600">
-                  Chưa tải được nội dung cam kết đăng tin. Tải lại trang để đăng tin.
+                  {m.employer_job_form_commitment_failed()}
                 </p>
               )}
             </div>
@@ -297,7 +298,7 @@ export default function PostJobForm({
               loading={submitting}
               onClick={() => onSaveDraft(buildJobPayload(form.getFieldsValue(true)))}
             >
-              {isDraft ? 'Lưu nháp' : 'Lưu thay đổi'}
+              {isDraft ? m.employer_job_form_save_draft() : m.employer_job_form_save_changes()}
             </Button>
             <Button
               size="large"
@@ -310,7 +311,7 @@ export default function PostJobForm({
                 || (isDraft && !responsibilityStatement)
               }
             >
-              {submitLabel || (isDraft ? 'Đăng tin' : 'Lưu và cập nhật')}
+              {submitLabel || (isDraft ? m.employer_job_form_post() : m.employer_job_form_save_and_update())}
             </Button>
           </div>
         </main>

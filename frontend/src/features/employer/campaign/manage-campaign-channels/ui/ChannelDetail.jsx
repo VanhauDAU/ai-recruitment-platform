@@ -12,7 +12,7 @@ import ChannelContentSection from './ChannelContentSection'
 import ChannelCostsPanel from './ChannelCostsPanel'
 import ChannelFacebookPosts from './ChannelFacebookPosts'
 import ChannelLinkSection from './ChannelLinkSection'
-import { getIntlLocale } from '@/shared/config/i18n'
+import { getIntlLocale, m } from '@/shared/config/i18n'
 
 const rate = (part, whole) => (whole ? `${((part * 100) / whole).toLocaleString(getIntlLocale(), { maximumFractionDigits: 1 })}%` : '—')
 
@@ -24,16 +24,16 @@ export default function ChannelDetail({ campaign, channel, editable, onEditConte
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: campaignKeys.channels(campaign.public_id) })
       queryClient.invalidateQueries({ queryKey: campaignKeys.channelReport(campaign.public_id) })
-      message.success(`Đã xóa kênh "${channel.label}".`)
+      message.success(m.employer_campaign_channel_deleted({ label: channel.label }))
     },
-    onError: (error) => message.error(getApiErrorMessage(error, 'Không thể xóa kênh.')),
+    onError: (error) => message.error(getApiErrorMessage(error, m.employer_campaign_channel_delete_error())),
   })
   const facebook = channel.kind === 'facebook_page'
   const sections = [
-    { key: 'content', label: 'Nội dung bài', children: <ChannelContentSection campaign={campaign} channel={channel} editable={editable} onEditContent={onEditContent} /> },
-    facebook && { key: 'facebook', label: 'Đăng Fanpage', children: <ChannelFacebookPosts campaign={campaign} channel={channel} editable={editable} /> },
-    { key: 'link', label: 'Link & QR', children: <ChannelLinkSection channel={channel} /> },
-    { key: 'costs', label: 'Chi phí', children: <ChannelCostsPanel campaign={campaign} channel={channel} editable={editable} /> },
+    { key: 'content', label: m.employer_campaign_channel_tab_content(), children: <ChannelContentSection campaign={campaign} channel={channel} editable={editable} onEditContent={onEditContent} /> },
+    facebook && { key: 'facebook', label: m.employer_campaign_channel_tab_facebook(), children: <ChannelFacebookPosts campaign={campaign} channel={channel} editable={editable} /> },
+    { key: 'link', label: m.employer_campaign_channel_tab_link(), children: <ChannelLinkSection channel={channel} /> },
+    { key: 'costs', label: m.employer_campaign_channel_tab_costs(), children: <ChannelCostsPanel campaign={campaign} channel={channel} editable={editable} /> },
   ].filter(Boolean)
 
   return (
@@ -42,41 +42,41 @@ export default function ChannelDetail({ campaign, channel, editable, onEditConte
         <ChannelIcon kind={channel.kind} size="lg" />
         <div className="ch-detail__title">
           <h3 id={`channel-${channel.public_id}`}>{channel.label}</h3>
-          <span>{channel.kind_label}{channel.posted_at ? ', đã đăng' : ', chưa đăng'}</span>
+          <span>{channel.kind_label}{channel.posted_at ? m.employer_campaign_channel_posted_suffix() : m.employer_campaign_channel_not_posted_suffix()}</span>
         </div>
         {editable && (
           <Dropdown
             trigger={['click']}
             menu={{
               items: [
-                { key: 'content', icon: <EditOutlined />, label: 'Sửa nội dung' },
-                { key: 'delete', icon: <DeleteOutlined />, label: 'Xóa kênh', danger: true },
+                { key: 'content', icon: <EditOutlined />, label: m.employer_campaign_channel_edit_content() },
+                { key: 'delete', icon: <DeleteOutlined />, label: m.employer_campaign_channel_delete(), danger: true },
               ],
               onClick: ({ key }) => {
                 if (key === 'content') onEditContent(channel)
                 if (key === 'delete') {
                   modal.confirm({
-                    title: `Xóa kênh "${channel.label}"?`,
-                    content: 'Link theo dõi ngừng hoạt động. Hồ sơ đã nhận vẫn giữ nguồn là loại kênh này.',
-                    okText: 'Xóa kênh',
+                    title: m.employer_campaign_channel_delete_confirm({ label: channel.label }),
+                    content: m.employer_campaign_channel_delete_confirm_content(),
+                    okText: m.employer_campaign_channel_delete(),
                     okButtonProps: { danger: true },
-                    cancelText: 'Giữ lại',
+                    cancelText: m.employer_campaign_channel_keep(),
                     onOk: () => remove.mutateAsync(),
                   })
                 }
               },
             }}
           >
-            <Button type="text" icon={<MoreOutlined />} aria-label={`Thao tác với kênh ${channel.label}`} />
+            <Button type="text" icon={<MoreOutlined />} aria-label={m.employer_campaign_channel_actions_aria({ label: channel.label })} />
           </Dropdown>
         )}
       </header>
 
       <dl className="ch-kpis">
-        <div><dt>Người bấm link<HelpTip label="Giải thích người bấm link">{HELP.clicks}</HelpTip></dt><dd>{channel.unique_clicks.toLocaleString(getIntlLocale())}</dd></div>
-        <div><dt>Hồ sơ nộp<HelpTip label="Giải thích hồ sơ nộp">{`${HELP.applications} Số nhỏ bên dưới là tỷ lệ nộp: ${HELP.applyRate}`}</HelpTip></dt><dd>{channel.applications}</dd><span>{rate(channel.applications, channel.unique_clicks)} người bấm</span></div>
-        <div><dt>Trúng tuyển<HelpTip label="Giải thích trúng tuyển">{HELP.hires}</HelpTip></dt><dd>{channel.hires}</dd></div>
-        <div><dt>Đã chi<HelpTip label="Giải thích đã chi">{HELP.spent}</HelpTip></dt><dd>{money(channel.cost)}</dd></div>
+        <div><dt>{m.employer_campaign_channel_clickers()}<HelpTip label={m.employer_campaign_channel_clickers_help_label()}>{HELP.clicks}</HelpTip></dt><dd>{channel.unique_clicks.toLocaleString(getIntlLocale())}</dd></div>
+        <div><dt>{m.employer_campaign_channel_applications()}<HelpTip label={m.employer_campaign_channel_applications_help_label()}>{m.employer_campaign_channel_applications_help({ applications: HELP.applications, rate: HELP.applyRate })}</HelpTip></dt><dd>{channel.applications}</dd><span>{m.employer_campaign_channel_rate_of_clickers({ rate: rate(channel.applications, channel.unique_clicks) })}</span></div>
+        <div><dt>{m.employer_campaign_funnel_accepted()}<HelpTip label={m.employer_campaign_channel_hires_help_label()}>{HELP.hires}</HelpTip></dt><dd>{channel.hires}</dd></div>
+        <div><dt>{m.employer_campaign_channel_spent()}<HelpTip label={m.employer_campaign_channel_spent_help_label()}>{HELP.spent}</HelpTip></dt><dd>{money(channel.cost)}</dd></div>
       </dl>
 
       <Tabs className="ch-tabs" items={sections} destroyOnHidden />

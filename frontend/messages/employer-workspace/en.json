@@ -1,0 +1,628 @@
+{
+  "$schema": "https://inlang.com/schema/inlang-message-format",
+  "employer_workspace_title_login": "Employer sign in",
+  "employer_workspace_title_register": "Create an employer account",
+  "employer_workspace_title_forgot_password": "Forgot password",
+  "employer_workspace_title_reset_password": "Reset password",
+  "employer_workspace_title_verify_email": "Verify email",
+  "employer_workspace_title_complete_profile": "Complete your recruiter profile",
+  "employer_workspace_title_recruitment_demand": "Hiring needs",
+  "employer_workspace_title_account_verification": "Account verification",
+  "employer_workspace_title_phone_verify": "Verify phone number",
+  "employer_workspace_title_account_info": "Account information",
+  "employer_workspace_title_change_password": "Change password",
+  "employer_workspace_title_company_info": "Company information",
+  "employer_workspace_title_business_registration": "Business registration certificate",
+  "employer_workspace_title_personal_data_protection": "Personal data processing agreement",
+  "employer_workspace_title_general_settings": "Settings",
+  "employer_workspace_title_integrations": "Social integrations",
+  "employer_workspace_title_oauth_callback": "Verifying your account",
+  "employer_workspace_title_dashboard": "Dashboard",
+  "employer_workspace_title_notifications": "System notifications",
+  "employer_workspace_title_activities": "Activity history",
+  "employer_workspace_title_company_page": "Company page",
+  "employer_workspace_title_campaigns": "Recruitment campaigns",
+  "employer_workspace_title_campaign_new": "Create recruitment campaign",
+  "employer_workspace_title_jobs": "Job postings",
+  "employer_workspace_title_job_new": "Post a job",
+  "employer_workspace_title_applications": "Applications",
+  "employer_workspace_title_candidate_blocks": "Blocklist",
+  "employer_workspace_title_talent_pool": "Talent pool",
+  "employer_workspace_title_job_edit": "Edit job posting",
+  "employer_workspace_title_job_detail": "Job posting details",
+  "employer_workspace_title_campaign_setup": "Set up recruitment campaign",
+  "employer_workspace_title_campaign_detail": "Recruitment campaign details",
+  "employer_workspace_title_application_review": "Candidate review",
+  "employer_workspace_nav_coming_soon": "Soon",
+  "employer_workspace_nav_coming_soon_title": "{label} — Coming soon",
+  "employer_workspace_nav_unread_cv_count": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "{count} new CV not yet viewed",
+        "countPlural=other": "{count} new CVs not yet viewed"
+      }
+    }
+  ],
+  "employer_workspace_nav_has_unread_cv": "New CVs waiting to be viewed",
+  "employer_workspace_nav_ai_recommendations": "AI recommendations",
+  "employer_workspace_nav_cv_recommendations": "Recommended CVs",
+  "employer_workspace_nav_cv_management": "CV management",
+  "employer_workspace_nav_cv_labels": "CV labels",
+  "employer_workspace_nav_cv_connection_requests": "CV connection requests",
+  "employer_workspace_nav_reports": "Recruitment reports",
+  "employer_workspace_nav_account_settings": "Account settings",
+  "employer_workspace_nav_fallback_title": "Employer workspace",
+  "employer_workspace_topbar_coming_tooltip": "{label} — coming in a future release",
+  "employer_workspace_topbar_market_survey": "Market insights",
+  "employer_workspace_topbar_post_job": "Post a job",
+  "employer_workspace_topbar_search_cv": "Find CVs",
+  "employer_workspace_open_account_menu": "Open account menu",
+  "employer_workspace_sign_out": "Sign out",
+  "employer_workspace_expand_menu": "Expand menu",
+  "employer_workspace_collapse_menu": "Collapse menu",
+  "employer_workspace_close_menu": "Close menu",
+  "employer_workspace_back": "Back",
+  "employer_workspace_back_to_job_detail": "Back to job posting",
+  "employer_workspace_back_to_campaign": "Back to campaign",
+  "employer_workspace_compliance_important": "[IMPORTANT]",
+  "employer_workspace_compliance_default": "Candidate data is protected.",
+  "employer_workspace_employer_fallback_name": "Employer",
+  "employer_workspace_employer_code": "Employer ID: {code}",
+  "employer_workspace_verification_level_label": "Account verification:",
+  "employer_workspace_verification_level": "Level {level}/{total}",
+  "employer_workspace_verification_details_button": "View account verification level details",
+  "employer_workspace_support_inbox": "Support inbox",
+  "employer_workspace_campaign_detail_heading": "Campaign details",
+  "employer_workspace_add_campaign": "New campaign",
+  "employer_workspace_verification_popover_label": "Account verification level details",
+  "employer_workspace_verification_step_phone": "Verify your phone number",
+  "employer_workspace_verification_step_company": "Update company information",
+  "employer_workspace_verification_step_business_doc": "Verify business registration certificate",
+  "employer_workspace_verification_instructions": "Complete the verification steps below:",
+  "employer_workspace_verification_info": "Information verification",
+  "employer_workspace_verification_completed": "Completed",
+  "employer_workspace_learn_more": "Learn more",
+  "employer_workspace_auth_visual_title": "Track your entire hiring journey in one place",
+  "employer_workspace_auth_visual_subtitle": "Source, screen, manage your pipeline and measure performance with clear data.",
+  "employer_workspace_auth_visual_campaign": "This month's campaign",
+  "employer_workspace_auth_visual_candidates": "Candidates",
+  "employer_workspace_auth_visual_matched": "Matched",
+  "employer_workspace_auth_visual_interviews": "Interviews",
+  "employer_workspace_auth_footer_tagline": "The recruitment platform for businesses.",
+  "employer_workspace_setup_notice": "Protecting candidate data is a shared responsibility. Complete your account details before you start hiring.",
+  "employer_workspace_dash_priority_eyebrow": "Today's priorities",
+  "employer_workspace_dash_priority_title": "Action items",
+  "employer_workspace_dash_new_applications": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "{count} new application",
+        "countPlural=other": "{count} new applications"
+      }
+    }
+  ],
+  "employer_workspace_dash_new_applications_detail": "Review and update their status",
+  "employer_workspace_dash_unpublished_drafts": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "{count} unpublished draft",
+        "countPlural=other": "{count} unpublished drafts"
+      }
+    }
+  ],
+  "employer_workspace_dash_drafts_detail": "Finish and publish so candidates can see them",
+  "employer_workspace_dash_employer_verified": "Verified employer",
+  "employer_workspace_dash_complete_verification": "Complete verification",
+  "employer_workspace_dash_employer_verified_detail": "Your employer profile has been approved",
+  "employer_workspace_dash_complete_verification_detail": "Unlock more workspace features",
+  "employer_workspace_dash_plan_eyebrow": "Hiring plan",
+  "employer_workspace_dash_plan_title": "Priority need",
+  "employer_workspace_dash_update_need": "Update hiring needs",
+  "employer_workspace_dash_need_headcount": "Headcount",
+  "employer_workspace_dash_need_headcount_value": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "{count} person",
+        "countPlural=other": "{count} people"
+      }
+    }
+  ],
+  "employer_workspace_dash_need_deadline": "Target date",
+  "employer_workspace_dash_need_continuous": "Ongoing",
+  "employer_workspace_dash_need_not_set": "Not set",
+  "employer_workspace_dash_need_level": "Level",
+  "employer_workspace_dash_need_empty": "No priority hiring need yet.",
+  "employer_workspace_dash_need_add": "Add hiring need",
+  "employer_workspace_dash_company_fallback": "Your company",
+  "employer_workspace_dash_company_profile": "Company profile",
+  "employer_workspace_dash_company_size": "{size} employees",
+  "employer_workspace_dash_step_company": "Update company",
+  "employer_workspace_dash_step_representative_docs": "Submit representative documents",
+  "employer_workspace_dash_step_data_processing_doc": "Submit personal data document",
+  "employer_workspace_dash_step_dpa": "Accept the DPA",
+  "employer_workspace_dash_important_notice": "Important notice",
+  "employer_workspace_dash_candidate_data_protected": "Candidate data is protected",
+  "employer_workspace_dash_candidate_data_default": "Complete verification to unlock access to candidate data.",
+  "employer_workspace_dash_journey_title": "Complete your hiring workspace",
+  "employer_workspace_dash_journey_done": "Completed",
+  "employer_workspace_dash_journey_progress": "{completed}/{total} verification steps · Protect your account and candidate data",
+  "employer_workspace_dash_journey_steps": "Verification steps",
+  "employer_workspace_dash_first_job": "Post your first job",
+  "employer_workspace_dash_first_job_cta": "Ready to hire? Post your first job to start receiving applications.",
+  "employer_workspace_dash_job_status_active": "Active",
+  "employer_workspace_dash_job_status_hidden": "Hidden",
+  "employer_workspace_dash_job_status_expired": "Expired",
+  "employer_workspace_dash_job_status_draft": "Draft",
+  "employer_workspace_dash_job_status_closed": "Closed",
+  "employer_workspace_dash_empty_jobs_title": "No job postings yet",
+  "employer_workspace_dash_empty_applications_title": "No applications yet",
+  "employer_workspace_dash_empty_jobs_text": "Create your first job posting to start reaching the right candidates.",
+  "employer_workspace_dash_empty_applications_text": "New applications appear here in real time.",
+  "employer_workspace_dash_new_job": "Post a new job",
+  "employer_workspace_dash_recent_jobs_title": "Recent job postings",
+  "employer_workspace_dash_recent_jobs_description": "Status and performance of each posting",
+  "employer_workspace_dash_view_all": "View all",
+  "employer_workspace_dash_job_created": "Created {date}",
+  "employer_workspace_dash_applications_unit": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "application",
+        "countPlural=other": "applications"
+      }
+    }
+  ],
+  "employer_workspace_dash_views_unit": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "view",
+        "countPlural=other": "views"
+      }
+    }
+  ],
+  "employer_workspace_dash_recent_applications_title": "Latest candidates",
+  "employer_workspace_dash_recent_applications_description": "Applications by date applied",
+  "employer_workspace_dash_pipeline_new": "New",
+  "employer_workspace_dash_pipeline_shortlisted": "Shortlisted",
+  "employer_workspace_dash_pipeline_interviewed": "Interviewing",
+  "employer_workspace_dash_pipeline_other": "Other in progress",
+  "employer_workspace_dash_pipeline_empty": "No applications yet",
+  "employer_workspace_dash_application_count": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "{count} application",
+        "countPlural=other": "{count} applications"
+      }
+    }
+  ],
+  "employer_workspace_dash_pipeline_title": "Application status",
+  "employer_workspace_dash_pipeline_description": "Breakdown across all current applications",
+  "employer_workspace_dash_pipeline_interview_rate": "{rate}% interviewed",
+  "employer_workspace_dash_pipeline_chart": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "Pipeline chart of {count} application",
+        "countPlural=other": "Pipeline chart of {count} applications"
+      }
+    }
+  ],
+  "employer_workspace_dash_total_applications": "Total applications",
+  "employer_workspace_dash_view_all_applications": "View all applications",
+  "employer_workspace_dash_active_jobs": "Active jobs",
+  "employer_workspace_dash_hidden_jobs": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "{count} job hidden from candidates",
+        "countPlural=other": "{count} jobs hidden from candidates"
+      }
+    }
+  ],
+  "employer_workspace_dash_new_applications_to_review": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "{count} new application to review",
+        "countPlural=other": "{count} new applications to review"
+      }
+    }
+  ],
+  "employer_workspace_dash_new_applications_label": "New applications",
+  "employer_workspace_dash_shortlisted_interviewed": "{shortlisted} shortlisted · {interviewed} interviewing",
+  "employer_workspace_dash_job_views": "Job views",
+  "employer_workspace_dash_conversion_rate": "{rate}% view-to-application rate",
+  "employer_workspace_dash_metrics": "Hiring metrics",
+  "employer_workspace_dash_new_applications_unit": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "new application",
+        "countPlural=other": "new applications"
+      }
+    }
+  ],
+  "employer_workspace_dash_activity_title": "Application trends",
+  "employer_workspace_dash_activity_description": "Last 7 days",
+  "employer_workspace_dash_this_week": "This week",
+  "employer_workspace_dash_daily_average": "Daily average",
+  "employer_workspace_dash_activity_chart": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "7-day application trend chart, {count} application in total",
+        "countPlural=other": "7-day application trend chart, {count} applications in total"
+      }
+    }
+  ],
+  "employer_workspace_dash_daily_peak": "Daily peak",
+  "employer_workspace_dash_seven_day_total": "7-day total",
+  "employer_workspace_dash_days_with_applications": "Days with applications",
+  "employer_workspace_dash_verification_in_progress": "Employer verification in progress",
+  "employer_workspace_dash_greeting": "Hello, {name}",
+  "employer_workspace_dash_greeting_subtitle": "See your hiring performance at a glance, prioritize new applications and pick up today's key tasks.",
+  "employer_workspace_dash_manage_applications": "Manage applications",
+  "employer_workspace_dash_load_error": "Couldn't load the employer dashboard.",
+  "employer_workspace_check_connection": "Check your connection and try again.",
+  "employer_workspace_retry": "Try again",
+  "employer_workspace_app_source_applied": "Candidate applied directly",
+  "employer_workspace_app_source_recommended": "System recommendation",
+  "employer_workspace_app_source_invited": "Invited by employer",
+  "employer_workspace_app_blocked_title": "This candidate is on your blocklist",
+  "employer_workspace_app_manage": "Manage",
+  "employer_workspace_app_mass_apply_title": "Possible mass applying",
+  "employer_workspace_app_mass_apply_description": "This candidate applied to {jobs} of your jobs in the past {days} days.",
+  "employer_workspace_app_block": "Block",
+  "employer_workspace_app_inspector_title": "Review application",
+  "employer_workspace_app_select_cv": "Select a CV to view details",
+  "employer_workspace_app_no_email": "No email",
+  "employer_workspace_app_account_restricted_short": "Account restricted",
+  "employer_workspace_app_account_restricted_title": "This candidate's account is restricted",
+  "employer_workspace_app_account_restricted_description": "You can only keep this application as is or move it to Rejected.",
+  "employer_workspace_app_contact": "Contact",
+  "employer_workspace_app_phone": "Phone",
+  "employer_workspace_app_preferred_location": "Preferred location",
+  "employer_workspace_app_no_requirement": "No preference",
+  "employer_workspace_app_application_info": "Application details",
+  "employer_workspace_app_job": "Job posting",
+  "employer_workspace_app_applied_date": "Applied on",
+  "employer_workspace_app_submission": "Submission {number}",
+  "employer_workspace_app_awaiting_response": "Awaiting response",
+  "employer_workspace_app_reminded": "ProCV reminded you to respond to this application on {date}",
+  "employer_workspace_app_source": "Application source",
+  "employer_workspace_app_campaign_channel": "Campaign channel: {channel}",
+  "employer_workspace_app_source_direct": "Direct application",
+  "employer_workspace_app_ai_analysis": "AI analysis",
+  "employer_workspace_app_ai_consented": "Candidate consented",
+  "employer_workspace_app_ai_no_consent": "No consent",
+  "employer_workspace_app_cover_letter": "Cover letter",
+  "employer_workspace_app_candidate_note": "Candidate's note",
+  "employer_workspace_app_history": "Application history",
+  "employer_workspace_app_cv_source_builder": "Created on the platform",
+  "employer_workspace_app_cv_source_uploaded": "Uploaded CV",
+  "employer_workspace_app_cv_source_imported": "Imported CV",
+  "employer_workspace_app_cv_fallback": "Candidate CV",
+  "employer_workspace_app_cv_preview": "CV preview",
+  "employer_workspace_app_cv_actions": "CV actions",
+  "employer_workspace_app_share_disabled_uploaded": "This CV is a file uploaded by the candidate, so contact details can't be hidden for sharing.",
+  "employer_workspace_app_message_coming_soon": "Messaging candidates is coming soon",
+  "employer_workspace_app_message": "Message",
+  "employer_workspace_app_select_cv_left": "Select a CV on the left to view the submitted version",
+  "employer_workspace_app_cv_load_error": "Couldn't load the submitted CV",
+  "employer_workspace_try_again_later": "Please try again later.",
+  "employer_workspace_app_no_cv_preview": "No CV preview available for this application",
+  "employer_workspace_app_cv_uploaded_file": "CV file submitted by the candidate",
+  "employer_workspace_app_cv_snapshot": "CV as submitted by the candidate",
+  "employer_workspace_app_cv_source_fallback": "CV source",
+  "employer_workspace_app_assessment_saved": "Internal assessment saved.",
+  "employer_workspace_app_assessment_save_error": "Couldn't save the assessment.",
+  "employer_workspace_app_assessment_title": "Internal assessment",
+  "employer_workspace_app_assessment_hint": "Only visible to your employer account.",
+  "employer_workspace_app_fit": "Fit",
+  "employer_workspace_app_fit_rating": "Candidate fit rating",
+  "employer_workspace_app_internal_note": "Internal note",
+  "employer_workspace_app_internal_note_placeholder": "Note strengths, things to verify or next steps...",
+  "employer_workspace_app_save_assessment": "Save assessment",
+  "employer_workspace_app_collapse_candidate": "Collapse {name}'s applications",
+  "employer_workspace_app_expand_candidate": "Expand {name}'s applications",
+  "employer_workspace_app_blocked": "Blocked",
+  "employer_workspace_app_cv_count": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "{count} CV",
+        "countPlural=other": "{count} CVs"
+      }
+    }
+  ],
+  "employer_workspace_app_view_cv": "View {name}'s {cvTitle}",
+  "employer_workspace_app_notice_delivered": "Candidate notified {date}",
+  "employer_workspace_app_notice_email_sent": "email sent",
+  "employer_workspace_app_notice_scheduled": "Candidate will be notified at {date}",
+  "employer_workspace_app_notice_superseded": "Not sent: replaced by a later change",
+  "employer_workspace_app_notice_reverted": "Not sent: undone",
+  "employer_workspace_app_history_load_error": "Couldn't load history",
+  "employer_workspace_try_again": "Please try again.",
+  "employer_workspace_app_history_empty": "No status changes yet.",
+  "employer_workspace_app_system": "System",
+  "employer_workspace_app_stage_viewed": "CV viewed",
+  "employer_workspace_app_stage_shortlisted": "Shortlisted",
+  "employer_workspace_app_stage_interviewed": "Interview",
+  "employer_workspace_app_stage_accepted": "Hired",
+  "employer_workspace_app_previous_submissions": "Previous submissions",
+  "employer_workspace_app_submitted_on": "Submitted {date}",
+  "employer_workspace_app_reached_stage": "Reached the {stage} stage",
+  "employer_workspace_app_candidates": "Candidates",
+  "employer_workspace_app_candidate_count": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "{count} candidate",
+        "countPlural=other": "{count} candidates"
+      }
+    }
+  ],
+  "employer_workspace_app_search": "Search candidates or CVs",
+  "employer_workspace_app_search_placeholder": "Name, email, CV",
+  "employer_workspace_app_list_load_error": "Couldn't load CVs",
+  "employer_workspace_app_list_empty": "No matching CVs found",
+  "employer_workspace_app_reviews_from_others": "Reviews from others",
+  "employer_workspace_app_average_score": "Avg. score {score}/5",
+  "employer_workspace_app_strengths": "Strengths:",
+  "employer_workspace_app_concerns": "Concerns:",
+  "employer_workspace_app_filter_all": "All",
+  "employer_workspace_app_filter_status": "Filter by application status",
+  "employer_workspace_app_status_unknown": "Unknown",
+  "employer_workspace_app_candidate_fallback": "Candidate",
+  "employer_workspace_app_mobile_tabs": "Application sections on mobile",
+  "employer_workspace_days": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "{count} day",
+        "countPlural=other": "{count} days"
+      }
+    }
+  ],
+  "employer_workspace_expires_on": "Expires {date}",
+  "employer_workspace_share_status_active": "Active",
+  "employer_workspace_share_status_expired": "Expired",
+  "employer_workspace_share_status_revoked": "Revoked",
+  "employer_workspace_share_mail_subject": "Review request: {candidateName} — {jobTitle}",
+  "employer_workspace_share_mail_body": "Could you review this candidate's application for the {jobTitle} role and share your feedback?\n{url}\n\nThis link is for you only and will expire.",
+  "employer_workspace_share_copied": "Link copied.",
+  "employer_workspace_share_copy_failed": "Couldn't copy. Select the link and copy it manually.",
+  "employer_workspace_share_revoke_title": "Revoke review link",
+  "employer_workspace_share_revoke_description": "{name} will no longer be able to open this application. Any submitted scorecard will be kept.",
+  "employer_workspace_share_revoke": "Revoke",
+  "employer_workspace_share_invite": "Invite reviewer",
+  "employer_workspace_share_modal_title": "Invite someone to review this application",
+  "employer_workspace_share_intro": "Reviewers don't need an account. They see the CV with photo, email, phone number and address hidden, and send back a scorecard.",
+  "employer_workspace_share_recipient": "Reviewer",
+  "employer_workspace_share_recipient_required": "Enter the reviewer's name.",
+  "employer_workspace_share_recipient_placeholder": "E.g. Minh — Head of Engineering",
+  "employer_workspace_share_note": "Message (optional)",
+  "employer_workspace_share_note_placeholder": "Could you check this candidate's SQL experience?",
+  "employer_workspace_share_validity": "Valid for",
+  "employer_workspace_share_create": "Create link",
+  "employer_workspace_share_link_for": "Link for {name}",
+  "employer_workspace_share_copy_link": "Copy link",
+  "employer_workspace_share_send_email": "Send by email",
+  "employer_workspace_share_shown_once": "This link is shown only once. If you lose it, create a new one.",
+  "employer_workspace_share_created_links": "Created links",
+  "employer_workspace_share_no_invites": "No one invited yet",
+  "employer_workspace_share_open_count": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "Opened {count} time",
+        "countPlural=other": "Opened {count} times"
+      }
+    }
+  ],
+  "employer_workspace_share_reviewed": "Scorecard submitted",
+  "employer_workspace_share_create_error": "Couldn't create the review link.",
+  "employer_workspace_share_revoked": "Link revoked. The reviewer can no longer open this application.",
+  "employer_workspace_share_revoke_error": "Couldn't revoke the link.",
+  "employer_workspace_block_until_unblocked": "Until I unblock",
+  "employer_workspace_block_candidate": "Block candidate",
+  "employer_workspace_block_success": "{name} has been blocked and can no longer apply to your company's jobs.",
+  "employer_workspace_block_error": "Couldn't block the candidate.",
+  "employer_workspace_block_title": "Block {name}",
+  "employer_workspace_block_intro": "The candidate won't be able to apply to any of your jobs. They'll only see a generic message and won't know they've been blocked.",
+  "employer_workspace_block_reason": "Reason",
+  "employer_workspace_block_note": "Internal note (optional)",
+  "employer_workspace_block_duration": "Duration",
+  "employer_workspace_block_reject_pending": "Move this candidate's pending applications across all company jobs to \"Rejected\"",
+  "employer_workspace_pool_saved": "{name} saved to your talent pool.",
+  "employer_workspace_pool_save_error": "Couldn't save to the talent pool.",
+  "employer_workspace_pool_in_pool": "In talent pool",
+  "employer_workspace_pool_save": "Save to talent pool",
+  "employer_workspace_pool_save_title": "Save {name} to talent pool",
+  "employer_workspace_pool_save_intro": "Use this when a candidate isn't right for this role but shows potential. When you post a new job, we'll suggest people from your pool again. The candidate is notified and can withdraw; entries expire after 12 months.",
+  "employer_workspace_pool_tags": "Tags (up to 5)",
+  "employer_workspace_pool_tags_placeholder": "E.g. Python, Fluent English",
+  "employer_workspace_pool_note_placeholder": "Why is this candidate worth keeping?",
+  "employer_workspace_pool_invited_success": "{name} has been invited to apply.",
+  "employer_workspace_pool_invite_error": "Couldn't send the invitation.",
+  "employer_workspace_pool_suggestions_title": "Suggestions for an open job",
+  "employer_workspace_pool_suggestions_description": "Ranked by similarity between the job the candidate applied to and the job you select.",
+  "employer_workspace_pool_select_job": "Select a job posting",
+  "employer_workspace_pool_select_job_hint": "Select a job to see suggestions",
+  "employer_workspace_pool_suggestions_error": "Couldn't load suggestions",
+  "employer_workspace_pool_suggestions_empty": "No one in your talent pool matches this job yet",
+  "employer_workspace_pool_applied_before": "Previously applied: {job}",
+  "employer_workspace_pool_score": "{score} pts",
+  "employer_workspace_pool_invited": "Invited",
+  "employer_workspace_pool_invite": "Invite to apply",
+  "employer_workspace_pool_removed": "Removed from talent pool.",
+  "employer_workspace_pool_remove_error": "Couldn't remove from the talent pool.",
+  "employer_workspace_pool_remove_title": "Remove from talent pool",
+  "employer_workspace_pool_remove_description": "{name} will no longer be suggested for new jobs.",
+  "employer_workspace_pool_remove": "Remove",
+  "employer_workspace_pool_search": "Search talent pool",
+  "employer_workspace_pool_search_placeholder": "Name, email, note or job applied to",
+  "employer_workspace_pool_load_error": "Couldn't load the talent pool",
+  "employer_workspace_pool_empty": "Your talent pool is empty",
+  "employer_workspace_pool_source_application": "Application: {job}",
+  "employer_workspace_pool_saved_meta": "Saved {saved} · Expires {expires}",
+  "employer_workspace_pool_page_intro": "People who weren't right for a past role but are worth keeping in touch with. Candidates are notified, can withdraw, and entries expire after 12 months.",
+  "employer_workspace_blocklist_lifted": "Unblocked. The candidate can apply again.",
+  "employer_workspace_blocklist_lift_error": "Couldn't unblock the candidate.",
+  "employer_workspace_blocklist_lift_title": "Unblock candidate",
+  "employer_workspace_blocklist_lift_description": "{name} will be able to apply to your company's jobs again.",
+  "employer_workspace_blocklist_lift": "Unblock",
+  "employer_workspace_blocklist_load_error": "Couldn't load the blocklist",
+  "employer_workspace_blocklist_empty": "Your company hasn't blocked any candidates",
+  "employer_workspace_blocklist_from_application": "From application: {job}",
+  "employer_workspace_blocklist_blocked_by": "Blocked by {name} on {date}",
+  "employer_workspace_blocklist_no_expiry": "No expiry",
+  "employer_workspace_blocklist_page_intro": "Candidates on this list can't apply to any of your company's jobs and aren't told they've been blocked. The person who blocked them and the company owner can unblock them.",
+  "employer_workspace_scorecard_sent": "Review submitted. Thank you!",
+  "employer_workspace_scorecard_send_error": "Couldn't submit your review.",
+  "employer_workspace_scorecard_already_title": "You've submitted a review",
+  "employer_workspace_scorecard_already_description": "Last updated {date}. You can still edit it until the link expires.",
+  "employer_workspace_scorecard_recommendation": "Your recommendation",
+  "employer_workspace_scorecard_recommendation_required": "Choose a recommendation.",
+  "employer_workspace_scorecard_fit": "Fit for the role",
+  "employer_workspace_scorecard_strengths": "Strengths",
+  "employer_workspace_scorecard_strengths_placeholder": "Standout experience and skills...",
+  "employer_workspace_scorecard_concerns": "Concerns",
+  "employer_workspace_scorecard_concerns_placeholder": "Things to clarify in the interview...",
+  "employer_workspace_scorecard_update": "Update review",
+  "employer_workspace_scorecard_submit": "Submit review",
+  "employer_workspace_decision_shortlisted": "Shortlist",
+  "employer_workspace_decision_interviewed": "Interview",
+  "employer_workspace_decision_accepted": "Hire",
+  "employer_workspace_decision_rejected": "Reject",
+  "employer_workspace_decision_group": "Application decision",
+  "employer_workspace_decision_notice_at": "The candidate will be notified at",
+  "employer_workspace_decision_undo": "Undo",
+  "employer_workspace_decision_final": "This application has a final outcome.",
+  "employer_workspace_decision_confirm_accept_title": "Confirm hire",
+  "employer_workspace_decision_confirm_reject_title": "Confirm rejection",
+  "employer_workspace_decision_undone": "Undone. The candidate won't receive this notification.",
+  "employer_workspace_decision_undo_error": "Couldn't undo this change.",
+  "employer_workspace_decision_moved": "Application moved to “{status}”",
+  "employer_workspace_decision_moved_description": "The candidate will be notified at {time}.",
+  "employer_workspace_decision_update_error": "Couldn't update the application status.",
+  "employer_workspace_decision_confirm_description": "{name}'s application will move to “{status}” and can't be changed afterwards. The candidate is only notified after a few minutes, so you can still undo until then.",
+  "employer_workspace_download_tooltip": "The candidate is notified the first time you download their CV.",
+  "employer_workspace_download_downloading": "Downloading…",
+  "employer_workspace_download_generating": "Generating PDF…",
+  "employer_workspace_download_pdf": "Download PDF",
+  "employer_workspace_download_pdf_failed": "Couldn't generate a PDF for this CV.",
+  "employer_workspace_download_pdf_timeout": "Generating the PDF is taking longer than expected. Please try again.",
+  "employer_workspace_download_error": "Couldn't download the CV.",
+  "employer_workspace_activity_actor": "By: {name}",
+  "employer_workspace_activity_description": "A log of important changes made in your employer account.",
+  "employer_workspace_activity_load_error": "Couldn't load activity history",
+  "employer_workspace_activity_empty": "No activity yet",
+  "employer_workspace_notifications_heading": "Notifications",
+  "employer_workspace_notifications_load_error_short": "Couldn't load notifications.",
+  "employer_workspace_notifications_empty": "No notifications yet",
+  "employer_workspace_notifications_description": "Verification updates and important account changes.",
+  "employer_workspace_notifications_mark_all_read": "Mark all as read",
+  "employer_workspace_notifications_load_error": "Couldn't load notifications"
+}

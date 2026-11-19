@@ -2,15 +2,17 @@ import { Alert, Skeleton } from 'antd'
 import { APPLICATION_STATUS_TONES, RECRUITER_APPLICATION_STATUS_LABELS } from '@/entities/application/application'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { formatDateTime } from '@/shared/lib/date-time'
+import { m } from '@/shared/config/i18n'
 
 function noticeText(notice) {
   if (!notice) return null
   if (notice.state === 'delivered') {
-    return `Đã báo ứng viên ${formatDateTime(notice.delivered_at)}${notice.email_sent_at ? ' · đã gửi email' : ''}`
+    const delivered = m.employer_workspace_app_notice_delivered({ date: formatDateTime(notice.delivered_at) })
+    return notice.email_sent_at ? `${delivered} · ${m.employer_workspace_app_notice_email_sent()}` : delivered
   }
-  if (notice.state === 'scheduled') return `Sẽ báo ứng viên lúc ${formatDateTime(notice.deliver_at)}`
-  if (notice.state === 'superseded') return 'Không gửi: đã thay bằng thay đổi sau'
-  return 'Không gửi: đã hoàn tác'
+  if (notice.state === 'scheduled') return m.employer_workspace_app_notice_scheduled({ date: formatDateTime(notice.deliver_at) })
+  if (notice.state === 'superseded') return m.employer_workspace_app_notice_superseded()
+  return m.employer_workspace_app_notice_reverted()
 }
 
 export default function ApplicationHistoryTimeline({ items, loading, error, onRetry }) {
@@ -20,13 +22,13 @@ export default function ApplicationHistoryTimeline({ items, loading, error, onRe
       <Alert
         showIcon
         type="warning"
-        message="Chưa tải được lịch sử"
-        description={getApiErrorMessage(error, 'Vui lòng thử lại.')}
-        action={<button type="button" className="font-semibold text-amber-700" onClick={onRetry}>Thử lại</button>}
+        message={m.employer_workspace_app_history_load_error()}
+        description={getApiErrorMessage(error, m.employer_workspace_try_again())}
+        action={<button type="button" className="font-semibold text-amber-700" onClick={onRetry}>{m.employer_workspace_retry()}</button>}
       />
     )
   }
-  if (!items.length) return <p className="text-xs text-slate-400">Chưa có thay đổi trạng thái.</p>
+  if (!items.length) return <p className="text-xs text-slate-400">{m.employer_workspace_app_history_empty()}</p>
 
   return (
     <ol className="aw-timeline">
@@ -42,7 +44,7 @@ export default function ApplicationHistoryTimeline({ items, loading, error, onRe
             <span className="aw-timeline__dot" aria-hidden />
             <div className="aw-timeline__title">{fromLabel ? `${fromLabel} → ${toLabel}` : toLabel}</div>
             <p className="aw-timeline__meta">
-              {formatDateTime(item.created_at)} · {item.changed_by_name || 'Hệ thống'}
+              {formatDateTime(item.created_at)} · {item.changed_by_name || m.employer_workspace_app_system()}
             </p>
             {notice && (
               <span className={`aw-notice aw-notice--${item.candidate_notice.state}`}>{notice}</span>

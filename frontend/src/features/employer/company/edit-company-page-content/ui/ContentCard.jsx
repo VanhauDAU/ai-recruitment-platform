@@ -1,5 +1,6 @@
 import { Alert, Button, Form, Tag } from 'antd'
 import { useState } from 'react'
+import { m } from '@/shared/config/i18n'
 import { message } from '@/shared/lib/toast'
 import { CONTENT_STATUS, contentCardId, contentSubmitOutcome } from '../model/content-form'
 import { useCompanyContentSubmit } from '../model/use-company-content-submit'
@@ -32,13 +33,13 @@ export default function ContentCard({
   const submit = useCompanyContentSubmit()
   const [statusColor, statusLabel] = CONTENT_STATUS[status] || CONTENT_STATUS.empty
   const headingId = `${contentCardId(card)}-title`
-  const actionLabel = direct ? 'Lưu' : 'Gửi duyệt'
+  const actionLabel = direct ? m.employer_company_content_save() : m.employer_company_content_submit_review()
 
   async function finish(values) {
     const { changes, files = NO_FILES } = toSubmission(values)
     if (!Object.keys(changes).length && !hasFiles(files)) {
       setDirty(false)
-      message.info('Không có thay đổi để lưu.')
+      message.info(m.employer_company_content_no_changes())
       return
     }
     setCardError('')
@@ -46,8 +47,8 @@ export default function ContentCard({
       await submit.mutateAsync({ changes, files })
       setDirty(false)
       message.success(direct
-        ? 'Đã lưu. Nội dung đã hiển thị trên trang công ty.'
-        : 'Đã gửi thay đổi. Nội dung sẽ lên trang sau khi được duyệt.')
+        ? m.employer_company_content_saved_direct()
+        : m.employer_company_content_saved_review())
     } catch (error) {
       const outcome = contentSubmitOutcome(error)
       if (outcome.kind !== 'invalid') {
@@ -58,7 +59,7 @@ export default function ContentCard({
       const mapped = outcome.fields.map((field) => ({ ...field, name: errorName(field.name) }))
       form.setFields(mapped.filter(({ name }) => name && registered.has(JSON.stringify(name))))
       const loose = mapped.filter(({ name }) => !name || !registered.has(JSON.stringify(name)))
-      setCardError(loose.flatMap(({ errors }) => errors).join(' ') || 'Vui lòng kiểm tra các trường được đánh dấu.')
+      setCardError(loose.flatMap(({ errors }) => errors).join(' ') || m.employer_company_content_check_fields())
     }
   }
 
@@ -70,7 +71,7 @@ export default function ContentCard({
       </header>
       {description && <p className="company-content-hint">{description}</p>}
       {status === 'changes_requested' && reviewNote && (
-        <Alert showIcon type="warning" title={`Quản trị viên yêu cầu bổ sung: ${reviewNote}`} />
+        <Alert showIcon type="warning" title={m.employer_company_content_review_note({ note: reviewNote })} />
       )}
       {cardError && <Alert showIcon type="error" title={cardError} />}
       <Form

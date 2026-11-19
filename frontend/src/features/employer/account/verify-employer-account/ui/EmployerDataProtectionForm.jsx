@@ -22,20 +22,20 @@ import CandidateAgreementUploadForm, {
 } from './CandidateAgreementUploadForm'
 import { CandidateAgreementDocumentLink } from './CandidateAgreementDocumentLink'
 import EmployerVerificationLifecycleAlert from './EmployerVerificationLifecycleAlert'
-import { getIntlLocale } from '@/shared/config/i18n'
+import { getIntlLocale, m } from '@/shared/config/i18n'
 
 const CANDIDATE_DPA_GUIDE_URL = 'https://tuyendung.topcv.vn/help/tong-quan/thoa-thuan-xu-ly-du-lieu-ca-nhan-ung-vien/'
 const PLATFORM_DPA_URL = 'https://tuyendung.topcv.vn/data-processing-agreement'
-const CANDIDATE_AGREEMENT_DOCUMENT_NAME = 'Thỏa thuận xử lý DLCN'
+const CANDIDATE_AGREEMENT_DOCUMENT_NAME = m.employer_account_dpa_document_name()
 const OFFICE_EXTENSION_BY_TYPE = {
   'application/msword': '.doc',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '.docx',
 }
 const DOCUMENT_STATUS = {
-  pending: { color: 'gold', label: 'Hệ thống đang xử lý' },
-  changes_requested: { color: 'orange', label: 'Cần bổ sung' },
-  approved: { color: 'green', label: 'Đã duyệt' },
-  rejected: { color: 'red', label: 'Từ chối' },
+  pending: { color: 'gold', label: m.employer_account_dpa_status_pending() },
+  changes_requested: { color: 'orange', label: m.employer_account_docs_status_changes_requested() },
+  approved: { color: 'green', label: m.employer_account_docs_status_approved() },
+  rejected: { color: 'red', label: m.employer_account_docs_status_rejected() },
 }
 
 function StatusTag({ completed, completedLabel, pendingLabel, completedColor = 'green' }) {
@@ -94,8 +94,8 @@ export default function EmployerDataProtectionForm() {
       },
     ),
     onSuccess: async () => {
-      message.success('Thông báo', {
-        description: `Cập nhật thành công. ${siteName} đã nhận được giấy tờ của bạn và tiến hành xử lý sớm.`,
+      message.success(m.employer_account_docs_modal_title(), {
+        description: m.employer_account_dpa_upload_success({ siteName }),
       })
       setFiles([])
       setCandidateAgreementAccepted(false)
@@ -103,7 +103,7 @@ export default function EmployerDataProtectionForm() {
       setUploadState(null)
       await refresh()
     },
-    onError: (error) => message.error(getApiErrorMessage(error, 'Không thể tải văn bản lên.')),
+    onError: (error) => message.error(getApiErrorMessage(error, m.employer_account_dpa_upload_failed())),
   })
   const documentPreviewMutation = useMutation({
     mutationFn: async ({ document, previewWindow }) => ({
@@ -126,23 +126,23 @@ export default function EmployerDataProtectionForm() {
     },
     onError: (error, { previewWindow }) => {
       previewWindow.close()
-      message.error(getApiErrorMessage(error, 'Không thể mở tệp đã nộp. Vui lòng thử lại.'))
+      message.error(getApiErrorMessage(error, m.employer_account_docs_open_failed()))
     },
   })
   const acceptMutation = useMutation({
     mutationFn: (policy) => acceptEmployerDpa(policy),
     onSuccess: async () => {
-      message.success(`Đã xác nhận thỏa thuận xử lý dữ liệu với ${siteName}.`)
+      message.success(m.employer_account_dpa_accept_success({ siteName }))
       setPlatformAgreementAccepted(false)
       await refresh()
     },
-    onError: (error) => message.error(getApiErrorMessage(error, 'Không thể ghi nhận thỏa thuận.')),
+    onError: (error) => message.error(getApiErrorMessage(error, m.employer_account_dpa_accept_failed())),
   })
 
   function openPrivateDocument(document) {
     const previewWindow = window.open('', '_blank')
     if (!previewWindow) {
-      message.error('Trình duyệt đã chặn cửa sổ xem tệp. Hãy cho phép pop-up rồi thử lại.')
+      message.error(m.employer_account_docs_popup_blocked())
       return
     }
     previewWindow.opener = null
@@ -187,20 +187,20 @@ export default function EmployerDataProtectionForm() {
       <section className="min-w-0 rounded-lg border border-slate-200 p-4 sm:p-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h2 className="text-base font-semibold text-slate-800">Văn bản Thỏa thuận xử lý Dữ liệu cá nhân giữa Ứng viên - Nhà tuyển dụng</h2>
+            <h2 className="text-base font-semibold text-slate-800">{m.employer_account_dpa_candidate_heading()}</h2>
           </div>
           <div className="flex w-full flex-wrap items-center gap-3 sm:w-auto sm:justify-end">
             <Tag
               color={candidateAgreementStatusMeta?.color || 'default'}
               className="!m-0 !rounded-full !border-0 !px-3"
             >
-              {candidateAgreementStatusMeta?.label || 'Chưa cập nhật'}
+              {candidateAgreementStatusMeta?.label || m.employer_account_docs_not_updated()}
             </Tag>
-            {candidateAgreementSubmitted && !editingCandidateAgreement && <Button aria-label="Chỉnh sửa văn bản" icon={<EditOutlined />} onClick={() => setEditingCandidateAgreement(true)} className="!border-emerald-500 !text-emerald-600 hover:!border-emerald-600 hover:!text-emerald-700">Chỉnh sửa</Button>}
+            {candidateAgreementSubmitted && !editingCandidateAgreement && <Button aria-label={m.employer_account_dpa_edit_aria()} icon={<EditOutlined />} onClick={() => setEditingCandidateAgreement(true)} className="!border-emerald-500 !text-emerald-600 hover:!border-emerald-600 hover:!text-emerald-700">{m.employer_account_docs_edit()}</Button>}
           </div>
         </div>
 
-        <p className="mt-6 text-sm text-slate-500">Xem mục đích sử dụng và hướng dẫn đăng tải <a href={CANDIDATE_DPA_GUIDE_URL} target="_blank" rel="noreferrer" className="font-medium !text-emerald-600 hover:!text-emerald-700">Tại đây</a></p>
+        <p className="mt-6 text-sm text-slate-500">{m.employer_account_dpa_guide_intro()}<a href={CANDIDATE_DPA_GUIDE_URL} target="_blank" rel="noreferrer" className="font-medium !text-emerald-600 hover:!text-emerald-700">{m.employer_account_docs_guide_link()}</a></p>
 
         {['rejected', 'changes_requested'].includes(candidateAgreementStatus) && (
           <Alert
@@ -208,7 +208,7 @@ export default function EmployerDataProtectionForm() {
             type={candidateAgreementStatus === 'rejected' ? 'error' : 'warning'}
             showIcon
             title={candidateAgreementStatusMeta.label}
-            description={candidateAgreementDocument?.review_note || 'Quản trị viên chưa cung cấp lý do.'}
+            description={candidateAgreementDocument?.review_note || m.employer_account_docs_no_review_note()}
           />
         )}
 
@@ -245,24 +245,24 @@ export default function EmployerDataProtectionForm() {
             </CandidateAgreementDocumentLink>
             <CandidateAgreementTemplate />
           </div>
-        ) : <p className="mt-4 text-sm text-slate-500">Hệ thống đang đồng bộ văn bản của bạn.</p>}
+        ) : <p className="mt-4 text-sm text-slate-500">{m.employer_account_dpa_syncing()}</p>}
       </section>
 
       <section className="min-w-0 rounded-lg border border-slate-200 p-4 sm:p-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
-          <h2 className="text-base font-semibold text-slate-800">Văn bản Thỏa thuận xử lý Dữ liệu cá nhân giữa {siteName} - Nhà tuyển dụng</h2>
-          <StatusTag completed={currentDpaAccepted} completedLabel="Đã xác nhận" pendingLabel="Chưa xác nhận" />
+          <h2 className="text-base font-semibold text-slate-800">{m.employer_account_dpa_platform_heading({ siteName })}</h2>
+          <StatusTag completed={currentDpaAccepted} completedLabel={m.employer_account_dpa_confirmed()} pendingLabel={m.employer_account_dpa_not_confirmed()} />
         </div>
-        <p className="mt-5 text-sm leading-6 text-slate-600">Nhằm tuân thủ Luật Bảo vệ dữ liệu cá nhân số 91/2025/QH15, {siteName} chính thức triển khai Thỏa thuận về xử lý dữ liệu cá nhân trên hệ thống. Thỏa thuận này làm rõ vai trò, trách nhiệm của Quý đơn vị và {siteName} đối với các hồ sơ ứng viên được chuyển vào Không gian làm việc (Workspace) của Quý đơn vị. Vui lòng đọc kỹ và xác nhận đồng ý để đảm bảo tiến trình tuyển dụng diễn ra hợp pháp, minh bạch và không bị gián đoạn.</p>
-        <a href={platformDpaUrl} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1 text-sm font-medium !text-emerald-600 hover:!text-emerald-700">Xem nội dung đầy đủ của văn bản <LinkOutlined /></a>
+        <p className="mt-5 text-sm leading-6 text-slate-600">{m.employer_account_dpa_platform_intro({ siteName })}</p>
+        <a href={platformDpaUrl} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1 text-sm font-medium !text-emerald-600 hover:!text-emerald-700">{m.employer_account_dpa_view_full()} <LinkOutlined /></a>
 
         {dpaStatus === 'grace' && (
           <Alert
             className="mt-4"
             type="warning"
             showIcon
-            title={graceExpiresAt ? `Cần cập nhật DPA trước ${graceExpiresAt}` : 'DPA đang trong thời gian gia hạn cập nhật'}
-            description="Workspace vẫn hoạt động trong thời gian gia hạn. Quyền xem dữ liệu ứng viên và đăng tin chỉ được mở lại sau khi xác nhận DPA hiện hành."
+            title={graceExpiresAt ? m.employer_account_dpa_grace_until({ date: graceExpiresAt }) : m.employer_account_dpa_grace()}
+            description={m.employer_account_dpa_grace_desc()}
           />
         )}
         {dpaStatus === 'hold' && (
@@ -270,13 +270,13 @@ export default function EmployerDataProtectionForm() {
             className="mt-4"
             type="error"
             showIcon
-            title="DPA đã quá hạn cập nhật"
-            description="Hãy đọc và xác nhận DPA hiện hành để gỡ giới hạn do DPA. Các giới hạn xác thực khác, nếu có, vẫn được giữ nguyên."
+            title={m.employer_account_dpa_hold_title()}
+            description={m.employer_account_dpa_hold_desc()}
           />
         )}
 
         {currentDpaAccepted ? (
-          <p className="mt-4 text-sm text-emerald-700">{agreementAcceptedAt ? `Bạn đã xác nhận vào ${agreementAcceptedAt}.` : 'Bạn đã xác nhận thỏa thuận này.'}</p>
+          <p className="mt-4 text-sm text-emerald-700">{agreementAcceptedAt ? m.employer_account_dpa_accepted_at({ date: agreementAcceptedAt }) : m.employer_account_dpa_accepted()}</p>
         ) : (
           <>
             {!dpaPolicyAvailable && (
@@ -284,15 +284,15 @@ export default function EmployerDataProtectionForm() {
                 className="mt-4"
                 type="warning"
                 showIcon
-                title="Phiên bản thỏa thuận hiện hành chưa sẵn sàng"
-                description="Vui lòng tải lại sau. Hệ thống sẽ không ghi nhận xác nhận khi chưa khóa được phiên bản và nội dung văn bản."
+                title={m.employer_account_dpa_policy_unavailable_title()}
+                description={m.employer_account_dpa_policy_unavailable_desc()}
               />
             )}
             <div className="mt-4">
-              <Checkbox disabled={!dpaPolicyAvailable} checked={platformAgreementAccepted} onChange={(event) => setPlatformAgreementAccepted(event.target.checked)} className="!flex !items-start !text-sm !leading-5 !text-slate-600">Xác nhận đồng ý với các điều khoản của <a href={platformDpaUrl} target="_blank" rel="noreferrer" className="font-medium !text-emerald-600 hover:!text-emerald-700">Thỏa thuận về xử lý Dữ liệu cá nhân</a></Checkbox>
+              <Checkbox disabled={!dpaPolicyAvailable} checked={platformAgreementAccepted} onChange={(event) => setPlatformAgreementAccepted(event.target.checked)} className="!flex !items-start !text-sm !leading-5 !text-slate-600">{m.employer_account_dpa_agree_before()}<a href={platformDpaUrl} target="_blank" rel="noreferrer" className="font-medium !text-emerald-600 hover:!text-emerald-700">{m.employer_account_dpa_agree_link()}</a></Checkbox>
             </div>
             <div className="mt-4 flex justify-stretch sm:justify-end">
-              <Button type="primary" size="large" disabled={!dpaPolicyAvailable || !platformAgreementAccepted} loading={acceptMutation.isPending} onClick={() => acceptMutation.mutate(dpaPolicy)} className="w-full !shadow-none sm:!min-w-[112px] sm:w-auto">Xác nhận</Button>
+              <Button type="primary" size="large" disabled={!dpaPolicyAvailable || !platformAgreementAccepted} loading={acceptMutation.isPending} onClick={() => acceptMutation.mutate(dpaPolicy)} className="w-full !shadow-none sm:!min-w-[112px] sm:w-auto">{m.employer_account_dpa_confirm()}</Button>
             </div>
           </>
         )}

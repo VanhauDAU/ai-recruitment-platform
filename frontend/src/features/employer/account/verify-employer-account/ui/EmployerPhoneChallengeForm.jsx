@@ -5,6 +5,7 @@ import {
 } from '@ant-design/icons'
 import { Alert, Button, Form, Input, Modal } from 'antd'
 import { isVietnameseMobile } from '../model/vietnamese-mobile'
+import { m } from '@/shared/config/i18n'
 
 const ACTIVE_DISPATCH_STATES = new Set(['queued', 'dispatching', 'retry_pending'])
 
@@ -14,8 +15,8 @@ function ChallengeStatus({ challenge, error }) {
       <Alert
         type="error"
         showIcon
-        message="Không thể cập nhật trạng thái SMS"
-        description="Vui lòng thử gửi lại mã. Yêu cầu cũ không được dùng để xác thực."
+        message={m.employer_account_phone_status_failed_title()}
+        description={m.employer_account_phone_status_failed_desc()}
       />
     )
   }
@@ -26,8 +27,8 @@ function ChallengeStatus({ challenge, error }) {
         type="info"
         showIcon
         icon={<LoadingOutlined spin />}
-        message="Đang gửi mã qua SMS"
-        description="Ô nhập mã sẽ mở khi tin nhắn được gửi thành công."
+        message={m.employer_account_phone_sending_title()}
+        description={m.employer_account_phone_sending_desc()}
       />
     )
   }
@@ -36,20 +37,20 @@ function ChallengeStatus({ challenge, error }) {
       <Alert
         type="success"
         showIcon
-        message="Mã SMS đã được gửi"
-        description="Mỗi mã chỉ dùng một lần và gắn với đúng yêu cầu này."
+        message={m.employer_account_phone_sent_title()}
+        description={m.employer_account_phone_sent_desc()}
       />
     )
   }
   if (challenge.status === 'verified') {
-    return <Alert type="success" showIcon message="Yêu cầu này đã được xác thực." />
+    return <Alert type="success" showIcon message={m.employer_account_phone_request_verified()} />
   }
   return (
     <Alert
       type="error"
       showIcon
-      message="Không thể sử dụng mã SMS này"
-      description="Mã đã hết hạn hoặc quá trình gửi thất bại. Vui lòng gửi mã mới."
+      message={m.employer_account_phone_unusable_title()}
+      description={m.employer_account_phone_unusable_desc()}
     />
   )
 }
@@ -92,12 +93,12 @@ export default function EmployerPhoneChallengeForm({
               name="phone"
               className="mb-0 flex-1"
               rules={[
-                { required: true, message: 'Nhập số điện thoại' },
+                { required: true, message: m.employer_account_phone_required() },
                 {
                   validator: (_, value) => (
                     isVietnameseMobile(value)
                       ? Promise.resolve()
-                      : Promise.reject(new Error('Nhập số di động Việt Nam hợp lệ'))
+                      : Promise.reject(new Error(m.employer_account_phone_invalid()))
                   ),
                 },
               ]}
@@ -118,7 +119,7 @@ export default function EmployerPhoneChallengeForm({
               disabled={!validPhone}
               className="sm:w-40"
             >
-              Gửi mã SMS
+              {m.employer_account_phone_send_code()}
             </Button>
           </div>
         ) : (
@@ -126,10 +127,10 @@ export default function EmployerPhoneChallengeForm({
             <ChallengeStatus challenge={challenge} error={challengeError} />
             <Form.Item
               name="code"
-              label="Mã SMS gồm 6 chữ số"
+              label={m.employer_account_phone_code_label()}
               rules={[
-                { required: true, message: 'Nhập mã xác thực' },
-                { pattern: /^\d{6}$/, message: 'Nhập đủ 6 chữ số' },
+                { required: true, message: m.employer_account_phone_code_required() },
+                { pattern: /^\d{6}$/, message: m.employer_account_phone_code_digits() },
               ]}
             >
               <Input
@@ -148,14 +149,14 @@ export default function EmployerPhoneChallengeForm({
                 disabled={!canVerify}
                 loading={verifyPending}
               >
-                Xác nhận mã SMS
+                {m.employer_account_phone_confirm_code()}
               </Button>
               <Button size="large" onClick={onOpenPassword} loading={sendPending}>
-                Gửi mã mới
+                {m.employer_account_phone_resend()}
               </Button>
               {flowMode !== 'reverify' && (
                 <Button type="link" onClick={onClearChallenge}>
-                  Đổi số điện thoại
+                  {m.employer_account_phone_change()}
                 </Button>
               )}
             </div>
@@ -164,29 +165,28 @@ export default function EmployerPhoneChallengeForm({
       </Form>
 
       <Modal
-        title="Xác nhận mật khẩu"
+        title={m.employer_account_phone_password_title()}
         open={passwordOpen}
         onOk={onSubmitPassword}
         onCancel={onClosePassword}
-        okText="Xác nhận và gửi SMS"
-        cancelText="Hủy"
+        okText={m.employer_account_phone_password_ok()}
+        cancelText={m.employer_account_docs_cancel()}
         confirmLoading={sendPending}
         destroyOnHidden
       >
         <p className="mb-4 text-sm leading-6 text-slate-500">
-          Nhập mật khẩu hiện tại để gửi mã tới số <b>{phoneValue}</b>.
-          Số đã xác thực trước đó chỉ thay đổi sau khi mã mới hợp lệ.
+          {m.employer_account_phone_password_desc_before()}<b>{phoneValue}</b>{m.employer_account_phone_password_desc_after()}
         </p>
         <Form form={passwordForm} layout="vertical" onFinish={onSubmitPassword}>
           <Form.Item
             name="password"
-            label="Mật khẩu đăng nhập"
-            rules={[{ required: true, message: 'Nhập mật khẩu đăng nhập' }]}
+            label={m.employer_account_phone_password_label()}
+            rules={[{ required: true, message: m.employer_account_phone_password_required() }]}
           >
             <Input.Password
               size="large"
               prefix={<LockOutlined className="text-slate-400" />}
-              placeholder="Mật khẩu"
+              placeholder={m.account_auth_password()}
               autoComplete="current-password"
               autoFocus
             />

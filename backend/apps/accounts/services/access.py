@@ -1,5 +1,6 @@
 """Central account-access policy."""
 
+from django.utils.translation import gettext as _
 from rest_framework.exceptions import PermissionDenied
 
 from ..models import User
@@ -17,6 +18,6 @@ def lock_account_for_write(user):
     locked_user = User.objects.select_for_update().get(pk=user.pk)
     if not is_account_accessible(locked_user):
         raise PermissionDenied(
-            'Tài khoản đang bị hạn chế. Không thể thay đổi dữ liệu cho đến khi được mở lại.'
+            _('Tài khoản đang bị hạn chế. Không thể thay đổi dữ liệu cho đến khi được mở lại.')
         )
     return locked_user
