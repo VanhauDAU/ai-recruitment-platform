@@ -186,7 +186,7 @@ về 0 và gỡ baseline, từ đó mọi vi phạm làm fail CI.
 | 3 | Tầng API: exception handler + `DomainError`, nghiệp vụ ra khỏi view/serializer, GET không ghi DB, `@extend_schema` đủ (OpenAPI 0/0), `parse_bool` |
 | 4 | URL theo cổng (backend + frontend cùng PR), bỏ tên `v2` ở module/lớp/route |
 | 5 | Tách file lớn (settings thành `components/`), gộp code trùng (`common/outbox.py`, chính sách AI, chữ ký file, HTML→text), gỡ legacy media và lệnh chạy một lần, bật rule Django của ruff |
-| 6 | Baseline migration mới (chưa có production) |
+| 6 | Baseline migration mới (chưa có production): `0001_initial` mỗi app, dữ liệu tham chiếu trong `migrations/reference_data.json`, `scripts/reset_local_db.sh` |
 
 ## Hệ quả
 

@@ -8,6 +8,17 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-19
 
+#### Changed — Backend: baseline migration (ADR-0022, GĐ6) — **phải reset DB local**
+
+- 274 migration gộp thành baseline: `0001_initial` mỗi app (thêm `0002_initial`
+  khi FK vòng giữa app) và `00xx_reference_data` nạp dữ liệu tham chiếu từ
+  `migrations/reference_data.json`. Extension `unaccent`, `pg_trgm`, `vector`
+  khai báo trong baseline.
+- Schema mới khớp schema cũ; dọn 4 cột mồ côi của `employers_company` (còn sót
+  từ migration chỉ đổi state); bảng chiến dịch đổi tên thành `campaigns_*`.
+- Gỡ 8 test nâng cấp migration và job CI `backend-migration-tests`.
+- DB local tạo trước mốc này phải dựng lại: `./scripts/reset_local_db.sh [--demo]`.
+
 #### Changed — Backend: dọn chất lượng (ADR-0022, GĐ5)
 
 - Không còn module production nào trên 500 dòng; settings tách thành
