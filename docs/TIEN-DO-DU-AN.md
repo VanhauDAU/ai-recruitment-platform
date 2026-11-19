@@ -45,7 +45,7 @@ mỗi workflow). Mục tiêu: wall-clock mỗi PR ≤ 8 phút, mỗi job ≤ 5 p
 | GĐ1 | DB test dựng một lần rồi clone theo worker xdist (`backend/conftest.py`): setup ~90s/worker trên CI → một lần migrate không coverage; cục bộ lần chạy sau setup 29s → 0,4s, full suite ~45s | 🟨 PR #257 |
 | GĐ2 | Viết lại migration test | ➖ Bỏ — GĐ6 tái cấu trúc backend đã reset baseline và gỡ test migration lịch sử |
 | GĐ3 | Frontend: E2E chạy trong image Playwright theo phiên bản lockfile (bỏ bước cài 16s–7,5 phút); tag `@responsive` cho 71/102 test, tablet/mobile chỉ chạy test có tag (330 → 266 lượt); 105 file test thuần logic chạy môi trường node; sửa các file test chậm nhất (AdminCompanyWorkspace 7,6s → 0,16s, hook onboarding 7,3s → 25ms); unit 4 → 5 shard; script `test:related`, `test:changed` | 🟨 PR #258 |
-| GĐ4 | [Tiêu chuẩn kiểm thử](05-huong-dan/tieu-chuan-kiem-thu.md) + `scripts/check_test_budgets.mjs` (JUnit → cảnh báo vượt ngưỡng mềm, fail khi vượt ngưỡng cứng) chạy ở backend-checks, coverage, e2e-smoke-shard | 🟨 Nhánh `docs/test-standards` |
+| GĐ4 | [Tiêu chuẩn kiểm thử](05-huong-dan/tieu-chuan-kiem-thu.md) + `scripts/check_test_budgets.mjs` (JUnit → cảnh báo vượt ngưỡng mềm, fail khi vượt ngưỡng cứng) chạy ở backend-checks, coverage, e2e-smoke-shard. Cổng này bắt được danh sách tin admin chậm do PostgreSQL JIT (348 → 42ms/request) → tắt JIT ở kết nối Django | 🟨 PR #259 |
 
 ## Tái cấu trúc backend (ADR-0022, 2026-11-19)
 
