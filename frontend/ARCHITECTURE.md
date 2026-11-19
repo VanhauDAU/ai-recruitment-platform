@@ -1101,6 +1101,7 @@ app/router (employerAppPath('/company-page'), trong DashboardLayout)
   trị tiếng Anh rỗng phải fallback về tiếng Việt.
 - **Cổng kiểm tra:** `npm run lint` chạy `scripts/check-i18n.mjs`.
   - Khóa và tham số giữa vi/en phải khớp.
+  - Mọi `m.<khóa>` phải tồn tại trong `messages/`; cấm truy cập động `m[...]`.
   - Ratchet số dòng tiếng Việt viết cứng theo vùng
     (`scripts/i18n-baseline.json`). Di trú xong một vùng thì chạy
     `npm run check:i18n -- --update`.

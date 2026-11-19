@@ -34,7 +34,9 @@ phải tiếp tục chạy.
   không dùng, nên chuỗi của trang nào chỉ nằm trong chunk của trang đó.
   - Runtime cộng thêm khoảng 1,4 KiB vào bundle khởi tạo (đo 19/11: 322,4 →
     323,8 KiB). i18next sẽ tốn khoảng 15 KiB.
-  - Gõ sai tên khóa là lỗi import, không phải chuỗi rỗng lúc chạy.
+  - Dự án là JS, không có TypeScript, nên gõ sai tên khóa không làm build lỗi:
+    `m.khoa_sai()` văng `TypeError` lúc render. `check:i18n` bắt lỗi này từ
+    bước lint (mục 4).
 - Khóa phẳng dạng snake_case, có tiền tố theo vùng sở hữu (`marketing_…`,
   `common_…`). Danh sách và nhãn động là mảng hoặc map các hàm message, không
   ghép khóa bằng template string.
@@ -89,9 +91,11 @@ phải tiếp tục chạy.
 
 ### 4. Cổng kiểm tra
 
-`npm run lint` gọi `scripts/check-i18n.mjs`, kiểm hai việc:
+`npm run lint` gọi `scripts/check-i18n.mjs`, kiểm ba việc:
 
 - Khóa và tham số `{name}` của `vi.json` và `en.json` phải khớp.
+- Mọi `m.<khóa>` trong `src/` (kể cả test) phải có trong `messages/`. Truy cập
+  động `m[...]` bị cấm; danh sách và nhãn động dùng map hàm message.
 - Ratchet số dòng tiếng Việt viết cứng theo từng vùng (`scripts/i18n-baseline.json`).
   - Thêm chuỗi viết cứng mới là lỗi.
   - Di trú xong một vùng thì chạy `npm run check:i18n -- --update` để hạ trần.

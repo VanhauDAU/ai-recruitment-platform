@@ -1,7 +1,10 @@
 // Cổng i18n (ADR-0023):
 // 1. Mỗi khóa trong messages/<vùng>/vi.json phải có ở en.json (và ngược lại),
 //    cùng bộ tham số {name}.
-// 2. Ratchet số dòng còn chữ tiếng Việt viết cứng trong src/ (bỏ test, comment,
+// 2. Mọi `m.<khóa>` trong src/ (kể cả test) phải có trong messages/. Dự án là
+//    JS nên khóa sai chỉ văng TypeError lúc render; bước này bắt nó từ lint.
+//    Không cho truy cập động `m[...]`: danh sách/nhãn động dùng map hàm message.
+// 3. Ratchet số dòng còn chữ tiếng Việt viết cứng trong src/ (bỏ test, comment,
 //    mã sinh). Mỗi vùng chỉ được giảm; giảm rồi thì chạy `--update` để khóa mức
 //    mới. Hết lộ trình di trú, mọi vùng về 0.
 import { readdirSync, readFileSync, writeFileSync } from 'node:fs'
@@ -27,8 +30,10 @@ function placeholders(value) {
   return [...JSON.stringify(value).matchAll(/\{(\w+)\}/g)].map((match) => match[1]).sort().join(',')
 }
 
+const knownKeys = new Set()
 for (const area of readdirSync(MESSAGES_DIR)) {
   const vi = readMessages(path.join(MESSAGES_DIR, area, 'vi.json'))
+  Object.keys(vi).forEach((key) => knownKeys.add(key))
   const en = readMessages(path.join(MESSAGES_DIR, area, 'en.json'))
   for (const key of Object.keys(vi)) {
     if (!(key in en)) errors.push(`messages/${area}/en.json thiếu khóa ${key}`)
@@ -66,12 +71,25 @@ function areaOf(relative) {
   return ['pages', 'widgets', 'features'].includes(layer) && !portal.includes('.') ? `${layer}/${portal}` : layer
 }
 
+// Chỉ xét tệp import `m` từ @/shared/config/i18n để không nhầm biến `m` khác.
+const IMPORTS_MESSAGES = /import\s*\{[^}]*\bm\b[^}]*\}\s*from\s*['"]@\/shared\/config\/i18n['"]/
+function checkMessageUsages(relative, source) {
+  if (!IMPORTS_MESSAGES.test(source)) return
+  for (const [, key] of source.matchAll(/\bm\.(\w+)/g)) {
+    if (!knownKeys.has(key)) errors.push(`${relative}: m.${key} không có trong messages/`)
+  }
+  if (/\bm\[/.test(source)) errors.push(`${relative}: không truy cập động m[...]; dùng map hàm message`)
+}
+
 const counts = {}
 for (const file of walk(SRC_DIR)) {
   const relative = path.relative(FRONTEND_DIR, file).split(path.sep).join('/')
+  if (relative.startsWith('src/shared/config/i18n/paraglide/')) continue
+  const source = readFileSync(file, 'utf8')
+  checkMessageUsages(relative, source)
   if (SKIPPED.some((pattern) => pattern.test(relative))) continue
   const area = areaOf(relative)
-  counts[area] = (counts[area] ?? 0) + countHardcodedLines(readFileSync(file, 'utf8'))
+  counts[area] = (counts[area] ?? 0) + countHardcodedLines(source)
 }
 
 const sorted = Object.fromEntries(Object.entries(counts).sort(([a], [b]) => a.localeCompare(b)))
