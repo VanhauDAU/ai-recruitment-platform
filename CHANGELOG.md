@@ -8,6 +8,19 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-20
 
+#### Changed — README và chính sách bảo vệ `main`
+
+- Viết lại `README.md` theo đúng hệ thống hiện tại: giới thiệu ba cổng, tính
+  năng theo cổng, AI đối sánh CV–JD (`hybrid-v1`, mô hình E5 chạy local), sơ đồ
+  kiến trúc Mermaid, bảng công nghệ, hướng dẫn chạy bằng Docker kèm
+  `scripts/reset_local_db.sh`, cổng kiểm tra và quy trình nhánh. Bỏ các mô tả đã
+  lỗi thời (luyện phỏng vấn, gói dịch vụ/nhãn HOT, mục tài liệu trùng).
+- `quy-trinh-pull-request.md` ghi đúng ruleset `Protect main` đang bật: required
+  checks `quality` và `frontend-final-gate`, không yêu cầu approval, admin được
+  bypass.
+- Dọn repository GitHub: xóa 154 nhánh đã gộp, cache Actions của PR đã đóng và
+  artifact CI cũ; thêm mô tả, topics; tắt Wiki và Projects.
+
 #### Changed — Admin: giao diện chi tiết nhà tuyển dụng
 
 - Hero có dải số liệu (nhu cầu, tin, chiến dịch, giấy tờ, phiên đang mở); tab
