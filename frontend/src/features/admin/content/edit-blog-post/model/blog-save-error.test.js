@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { describe, expect, it } from 'vitest'
 import { isBlogRevisionConflict } from './blog-save-error'
 

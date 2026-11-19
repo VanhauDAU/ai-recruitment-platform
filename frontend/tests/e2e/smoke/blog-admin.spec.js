@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 import { API_ROUTE } from './helpers'
 
-test('admin blog: list is responsive, public links open a new tab and article slug is server-owned', async ({ page }) => {
+test('admin blog: list is responsive, public links open a new tab and article slug is server-owned', { tag: '@responsive' }, async ({ page }) => {
   const adminTags = [
     { public_id: 'ptag_sales', name: 'Sales', slug: 'sales', is_active: true, post_count: 2, working_copy_count: 0, usage_count: 2 },
     { public_id: 'ptag_business', name: 'Nhân viên kinh doanh', slug: 'nhan-vien-kinh-doanh', is_active: true, post_count: 1, working_copy_count: 0, usage_count: 1 },

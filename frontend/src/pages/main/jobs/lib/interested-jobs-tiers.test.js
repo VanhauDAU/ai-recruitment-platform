@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { describe, expect, it } from 'vitest'
 import { SUGGESTION_LIMIT, buildInterestedJobTiers } from './interested-jobs-tiers'
 

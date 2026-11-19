@@ -132,7 +132,7 @@ async function elementContrastRatio(locator) {
   })
 }
 
-test('employer smoke: marketing pages render', async ({ page }) => {
+test('employer smoke: marketing pages render', { tag: '@responsive' }, async ({ page }) => {
   await mockPublicApi(page)
   const isMobile = page.viewportSize().width < 1024
   const expectActiveNav = async (label) => {
@@ -164,7 +164,7 @@ test('employer smoke: marketing pages render', async ({ page }) => {
   await expectNoHorizontalOverflow(page)
 })
 
-test('employer smoke: language switcher renders English copy', async ({ page }) => {
+test('employer smoke: language switcher renders English copy', { tag: '@responsive' }, async ({ page }) => {
   await mockPublicApi(page)
   await page.goto('/tuyendung/gioi-thieu')
 
@@ -179,7 +179,7 @@ test('employer smoke: language switcher renders English copy', async ({ page }) 
   await expect(page.getByRole('heading', { level: 1, name: /Matching the right people/ })).toBeVisible()
 })
 
-test('employer smoke: login loads and dashboard stays role-protected', async ({ page }) => {
+test('employer smoke: login loads and dashboard stays role-protected', { tag: '@responsive' }, async ({ page }) => {
   await mockPublicApi(page)
   await page.goto('/tuyendung/app/login')
   await expect(page.getByRole('heading', { name: 'Chào mừng bạn quay trở lại' })).toBeVisible()
@@ -198,7 +198,7 @@ test('employer smoke: login loads and dashboard stays role-protected', async ({ 
   await expect(page).toHaveURL(/\/tuyendung\/app\/login\?returnUrl=/)
 })
 
-test('employer auth: registration has employer fields and consent-gated Google signup', async ({ page }) => {
+test('employer auth: registration has employer fields and consent-gated Google signup', { tag: '@responsive' }, async ({ page }) => {
   await mockPublicApi(page)
   await page.route('http://localhost:8000/api/auth/register/email-availability/', async (route) => {
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify({ available: true }) })
@@ -278,7 +278,7 @@ async function setEmployerSession(page, overrides = {}) {
   })
 }
 
-test('employer domain verification creates a one-time DNS challenge responsively', async ({ page }) => {
+test('employer domain verification creates a one-time DNS challenge responsively', { tag: '@responsive' }, async ({ page }) => {
   await setEmployerSession(page, {
     email_verified: true,
     employer_onboarding_required: false,
@@ -435,7 +435,7 @@ test('employer auth: verified session completes recruitment need before dashboar
   await expect(page.getByRole('heading', { name: /Xin chào, Nguyễn An/ })).toBeVisible()
 })
 
-test('employer workspace: verification actions stay inside the 100vh app shell', async ({ page }) => {
+test('employer workspace: verification actions stay inside the 100vh app shell', { tag: '@responsive' }, async ({ page }) => {
   await mockPublicApi(page)
   await setEmployerSession(page, {
     email_verified: true,
@@ -584,7 +584,7 @@ test('employer workspace: verification actions stay inside the 100vh app shell',
   await expectNoHorizontalOverflow(page)
 })
 
-test('employer dashboard: charts and action buttons stay visible and responsive', async ({ page }) => {
+test('employer dashboard: charts and action buttons stay visible and responsive', { tag: '@responsive' }, async ({ page }) => {
   await mockPublicApi(page)
   await setEmployerSession(page, {
     email_verified: true,
@@ -632,7 +632,7 @@ test('employer dashboard: charts and action buttons stay visible and responsive'
   await expectNoHorizontalOverflow(page)
 })
 
-test('employer company settings: a new member sees only the personal request state', async ({ page }) => {
+test('employer company settings: a new member sees only the personal request state', { tag: '@responsive' }, async ({ page }) => {
   await mockPublicApi(page)
   await setEmployerSession(page, {
     email_verified: true,
@@ -689,7 +689,7 @@ test('employer company settings: a new member sees only the personal request sta
   await expectNoHorizontalOverflow(page)
 })
 
-test('employer business license: personal scope keeps the summary and displayed file consistent', async ({ page }) => {
+test('employer business license: personal scope keeps the summary and displayed file consistent', { tag: '@responsive' }, async ({ page }) => {
   await mockPublicApi(page)
   await setEmployerSession(page, {
     email_verified: true,
@@ -743,7 +743,7 @@ test('employer business license: personal scope keeps the summary and displayed 
   await expectNoHorizontalOverflow(page)
 })
 
-test('employer company settings: document revision request shows reason and replacement action', async ({ page }) => {
+test('employer company settings: document revision request shows reason and replacement action', { tag: '@responsive' }, async ({ page }) => {
   await mockPublicApi(page)
   await setEmployerSession(page, {
     email_verified: true,
@@ -826,7 +826,7 @@ test('employer company settings: document revision request shows reason and repl
   await expectNoHorizontalOverflow(page)
 })
 
-test('employer workspace: completed verification redirects away from the checklist while keeping the first-job action separate', async ({ page }) => {
+test('employer workspace: completed verification redirects away from the checklist while keeping the first-job action separate', { tag: '@responsive' }, async ({ page }) => {
   await mockPublicApi(page)
   await setEmployerSession(page, {
     email_verified: true,
@@ -863,7 +863,7 @@ test('employer workspace: completed verification redirects away from the checkli
   await expectNoHorizontalOverflow(page)
 })
 
-test('employer workspace: an incomplete account cannot access recruitment operations', async ({ page }) => {
+test('employer workspace: an incomplete account cannot access recruitment operations', { tag: '@responsive' }, async ({ page }) => {
   await mockPublicApi(page)
   await setEmployerSession(page, {
     email_verified: true,
@@ -902,7 +902,7 @@ test('employer workspace: an incomplete account cannot access recruitment operat
   await expectNoHorizontalOverflow(page)
 })
 
-test('employer jobs: compact list keeps candidate previews and contextual actions usable', async ({ page }) => {
+test('employer jobs: compact list keeps candidate previews and contextual actions usable', { tag: '@responsive' }, async ({ page }) => {
   let lastJobsQuery = new URLSearchParams()
   await mockPublicApi(page)
   await setEmployerSession(page, {
@@ -1037,7 +1037,7 @@ test('employer jobs: compact list keeps candidate previews and contextual action
   await expect.poll(() => lastJobsQuery.get('q')).toBe('Frontend')
 })
 
-test('employer jobs: creation chooser leads to the complete manual five-section workflow', async ({ page }, testInfo) => {
+test('employer jobs: creation chooser leads to the complete manual five-section workflow', { tag: '@responsive' }, async ({ page }, testInfo) => {
   const hasDesktopPreview = testInfo.project.name === 'desktop-chromium'
   if (hasDesktopPreview) await page.setViewportSize({ width: 1728, height: 900 })
   let savedDraft = null
@@ -1261,7 +1261,7 @@ test('employer jobs: creation chooser leads to the complete manual five-section 
   if (hasDesktopPreview) await expectJobPreviewPinned(page)
 })
 
-test('employer jobs: direct AI modes preserve campaign, resume generation and attribute the saved draft', async ({ page }) => {
+test('employer jobs: direct AI modes preserve campaign, resume generation and attribute the saved draft', { tag: '@responsive' }, async ({ page }) => {
   let createdGenerationPayload = null
   let savedAiDraft = null
   await mockPublicApi(page)
@@ -1416,7 +1416,7 @@ test('employer jobs: direct AI modes preserve campaign, resume generation and at
   })
 })
 
-test('employer jobs: detail workspace is compact, actionable and responsive', async ({ page }) => {
+test('employer jobs: detail workspace is compact, actionable and responsive', { tag: '@responsive' }, async ({ page }) => {
   await mockPublicApi(page)
   await setEmployerSession(page, {
     email_verified: true,
@@ -1558,7 +1558,7 @@ test('employer jobs: detail workspace is compact, actionable and responsive', as
   await expectNoHorizontalOverflow(page)
 })
 
-test('employer applications: grouped CV workspace is clear across responsive layouts', async ({ page }) => {
+test('employer applications: grouped CV workspace is clear across responsive layouts', { tag: '@responsive' }, async ({ page }) => {
   await mockPublicApi(page)
   await setEmployerSession(page, {
     email_verified: true,
@@ -1737,7 +1737,7 @@ test('employer applications: grouped CV workspace is clear across responsive lay
   await expect(page).toHaveURL('/tuyendung/app/jobs/jb_987ecf21d547')
 })
 
-test('employer campaigns: status tabs and one next action per row', async ({ page }) => {
+test('employer campaigns: status tabs and one next action per row', { tag: '@responsive' }, async ({ page }) => {
   await mockPublicApi(page)
   await setEmployerSession(page, {
     email_verified: true,
@@ -1810,7 +1810,7 @@ test('employer campaigns: status tabs and one next action per row', async ({ pag
   await expect(page.getByRole('link', { name: 'Thêm chiến dịch mới' })).toHaveAttribute('href', '/tuyendung/app/campaigns/new')
 })
 
-test('employer campaign detail: TopCV-style workspace is responsive and uses API data', async ({ page }) => {
+test('employer campaign detail: TopCV-style workspace is responsive and uses API data', { tag: '@responsive' }, async ({ page }) => {
   await mockPublicApi(page)
   await setEmployerSession(page, {
     email_verified: true,
@@ -2116,7 +2116,7 @@ test('employer campaign detail: TopCV-style workspace is responsive and uses API
   await expectNoHorizontalOverflow(page)
 })
 
-test('employer company settings: recent catalogue and full create form are responsive', async ({ page }) => {
+test('employer company settings: recent catalogue and full create form are responsive', { tag: '@responsive' }, async ({ page }) => {
   await mockPublicApi(page)
   await setEmployerSession(page, {
     email_verified: true,
@@ -2183,7 +2183,7 @@ test('employer company settings: recent catalogue and full create form are respo
   await expectNoHorizontalOverflow(page)
 })
 
-test('employer company settings: pending values remain editable without creating another request', async ({ page }) => {
+test('employer company settings: pending values remain editable without creating another request', { tag: '@responsive' }, async ({ page }) => {
   await mockPublicApi(page)
   await setEmployerSession(page, {
     email_verified: true,
@@ -2298,7 +2298,7 @@ test('employer company settings: pending values remain editable without creating
   await expectNoHorizontalOverflow(page)
 })
 
-test('employer company page: hiding a section updates the preview and saves the layout', async ({ page }) => {
+test('employer company page: hiding a section updates the preview and saves the layout', { tag: '@responsive' }, async ({ page }) => {
   await mockPublicApi(page)
   await setEmployerSession(page, {
     email_verified: true,
@@ -2387,7 +2387,7 @@ test('employer company page: hiding a section updates the preview and saves the 
   await expect(save).toBeDisabled()
 })
 
-test('employer company page: editing the headline sends it for review and marks the card pending', async ({ page }) => {
+test('employer company page: editing the headline sends it for review and marks the card pending', { tag: '@responsive' }, async ({ page }) => {
   await mockPublicApi(page)
   await setEmployerSession(page, {
     email_verified: true,
@@ -2474,7 +2474,7 @@ test('employer company page: editing the headline sends it for review and marks 
   await expectNoHorizontalOverflow(page)
 })
 
-test('employer review link: invited reviewer reads a de-identified CV and sends a scorecard', async ({ page }) => {
+test('employer review link: invited reviewer reads a de-identified CV and sends a scorecard', { tag: '@responsive' }, async ({ page }) => {
   await mockPublicApi(page)
   const submitted = []
   await page.route('http://localhost:8000/api/public/application-reviews/expired-token/', async (route) => {
@@ -2523,7 +2523,7 @@ test('employer review link: invited reviewer reads a de-identified CV and sends 
   await expect(page.getByText('Link đánh giá không còn hiệu lực')).toBeVisible()
 })
 
-test('employer blocklist: blocked candidates are listed and can be lifted', async ({ page }) => {
+test('employer blocklist: blocked candidates are listed and can be lifted', { tag: '@responsive' }, async ({ page }) => {
   await mockPublicApi(page)
   await setEmployerSession(page, {
     email_verified: true,
@@ -2559,7 +2559,7 @@ test('employer blocklist: blocked candidates are listed and can be lifted', asyn
   await expect(page.getByText('Công ty chưa chặn ứng viên nào')).toBeVisible()
 })
 
-test('employer talent pool: suggestions for a job and an invitation', async ({ page }) => {
+test('employer talent pool: suggestions for a job and an invitation', { tag: '@responsive' }, async ({ page }) => {
   await mockPublicApi(page)
   await setEmployerSession(page, {
     email_verified: true,

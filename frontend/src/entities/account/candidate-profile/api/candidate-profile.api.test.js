@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { getCandidateProfile, updateCandidateProfile } from './candidate-profile.api'
 const { get, patch } = vi.hoisted(() => ({ get: vi.fn(), patch: vi.fn() }))

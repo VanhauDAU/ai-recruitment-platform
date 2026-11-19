@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-test('knowledgebase admin: explicit save, review and publish workflow', async ({ page }) => {
+test('knowledgebase admin: explicit save, review and publish workflow', { tag: '@responsive' }, async ({ page }) => {
   const pageErrors = []
   page.on('pageerror', (error) => pageErrors.push(error.message))
   const category = {

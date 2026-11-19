@@ -1,7 +1,7 @@
-import { act, renderHook, waitFor } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { act, renderHook } from '@testing-library/react'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { INTERVIEW_STEPS } from './interview-script'
-import { useInterviewChat } from './use-interview-chat'
+import { MIN_SAVING_MS, useInterviewChat } from './use-interview-chat'
 
 const ANSWERS = [
   { desired_specialization_ids: [1] },
@@ -23,7 +23,16 @@ async function answerAll(result) {
   }
 }
 
+/** Bước qua thời gian lưu tối thiểu bằng fake timer thay vì chờ 2,4s thật. */
+async function finishSaving() {
+  await act(() => vi.advanceTimersByTimeAsync(MIN_SAVING_MS))
+}
+
 describe('useInterviewChat', () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
   it('mở đầu bằng lời chào, chỉ vào câu hỏi khi ứng viên bắt chuyện', () => {
     const { result } = renderHook(() => useInterviewChat({ onSubmit: vi.fn(), preference: null }))
 
@@ -57,6 +66,7 @@ describe('useInterviewChat', () => {
   })
 
   it('trả lời hết năm lượt thì gửi đúng payload của form một trang', async () => {
+    vi.useFakeTimers()
     const onSubmit = vi.fn().mockResolvedValue(null)
     const { result } = renderHook(() => useInterviewChat({ onSubmit, preference: null }))
 
@@ -74,7 +84,9 @@ describe('useInterviewChat', () => {
       preferred_skill_ids: [],
       willing_to_relocate: false,
     }))
-    await waitFor(() => expect(result.current.phase).toBe('ready'), { timeout: 5000 })
+    expect(result.current.phase).toBe('saving')
+    await finishSaving()
+    expect(result.current.phase).toBe('ready')
   })
 
   it('sửa đáp án cũ tại chỗ mà không tua lại cuộc trò chuyện', () => {
@@ -114,6 +126,7 @@ describe('useInterviewChat', () => {
   })
 
   it('mở lại đúng lượt hỏi chứa trường bị backend từ chối để gửi lại', async () => {
+    vi.useFakeTimers()
     const onSubmit = vi.fn()
       .mockResolvedValueOnce({ field: 'desired_salary_vnd', text: 'Mức lương chưa hợp lệ.' })
       .mockResolvedValueOnce(null)
@@ -121,14 +134,16 @@ describe('useInterviewChat', () => {
 
     await answerAll(result)
 
-    await waitFor(() => expect(result.current.phase).toBe('retry'), { timeout: 5000 })
+    await finishSaving()
+    expect(result.current.phase).toBe('retry')
     expect(result.current.step.id).toBe('salary')
     expect(result.current.failure.text).toBe('Mức lương chưa hợp lệ.')
 
     await act(async () => { await result.current.send({ desired_salary_vnd: 20_000_000 }) })
 
     expect(onSubmit).toHaveBeenCalledTimes(2)
-    await waitFor(() => expect(result.current.phase).toBe('ready'), { timeout: 5000 })
+    await finishSaving()
+    expect(result.current.phase).toBe('ready')
   })
 
   it('nạp sẵn nhu cầu đã lưu để ứng viên quay lại không phải nhập lại', () => {

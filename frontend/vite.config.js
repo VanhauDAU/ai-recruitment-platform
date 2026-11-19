@@ -82,6 +82,10 @@ export default defineConfig(({ mode }) => {
         jsdom: { url: 'http://localhost/' },
       },
       setupFiles: './src/test/setup.js',
+      // CI runs one worker per shard under coverage, 2–3× slower than a laptop.
+      // Its per-test timeout equals the hard budget enforced on the JUnit report
+      // (scripts/check_test_budgets.mjs); locally the 5s default stays strict.
+      testTimeout: isCI ? 10_000 : 5_000,
       css: false,
       exclude: ['tests/e2e/**', 'node_modules/**', 'dist/**'],
       coverage: {

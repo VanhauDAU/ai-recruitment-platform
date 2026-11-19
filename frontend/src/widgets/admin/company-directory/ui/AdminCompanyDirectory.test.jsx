@@ -1,8 +1,9 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { getTableRow } from '@/test/antd-queries'
 import AdminCompanyDirectory from './AdminCompanyDirectory'
 import AdminCompanyDetail from './AdminCompanyDetail'
 
@@ -222,17 +223,20 @@ describe('admin company directory', () => {
     fireEvent.click(await screen.findByRole('tab', { name: /Nhà tuyển dụng/ }))
 
     expect(await screen.findByText('HR Manager')).toBeInTheDocument()
-    expect(screen.getByLabelText('Ảnh đại diện Owner chính')).toHaveTextContent('OC')
-    expect(screen.getByText('Đã xác thực')).toBeInTheDocument()
-    expect(screen.getByRole('columnheader', { name: 'Thiết lập ban đầu' })).toBeInTheDocument()
+    const row = getTableRow('rec_owner')
+    expect(within(row).getByLabelText('Ảnh đại diện Owner chính')).toHaveTextContent('OC')
+    expect(within(row).getByText('Đã xác thực')).toBeInTheDocument()
+    expect(within(row.closest('.ant-table')).getByRole('columnheader', { name: 'Thiết lập ban đầu' })).toBeInTheDocument()
     expect(screen.getByText('Đã đủ hồ sơ, email và nhu cầu')).toBeInTheDocument()
     await waitFor(() => expect(getAdminCompanyRecruiters).toHaveBeenCalled())
 
-    fireEvent.click(screen.getByRole('button', { name: /Chi tiết/ }))
+    // Text, not role: a role query walks the computed style of every ancestor
+    // up to <body> under antd's injected CSS (2.7s here in jsdom).
+    fireEvent.click(within(row).getByText('Chi tiết').closest('button'))
     expect(screen.getByTestId('location')).toHaveTextContent(
       '/admin/app/recruiters/usr_owner',
     )
-  }, 15_000)
+  })
 
   it('keeps the verification tab scoped to recruiter cases', async () => {
     renderWithApp(

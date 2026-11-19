@@ -3,6 +3,7 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import { App } from 'antd'
 import { MemoryRouter, useLocation } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { findTableRow, getTableRow } from '@/test/antd-queries'
 import CompanyReportQueue from './CompanyReportQueue'
 
 const mocks = vi.hoisted(() => ({
@@ -72,7 +73,7 @@ describe('CompanyReportQueue', () => {
   it('lists pending reports with the related section and a link to the admin company page', async () => {
     renderQueue()
 
-    const company = await screen.findByRole('link', { name: 'FPT Software' })
+    const company = within(await findTableRow('crp_1')).getByRole('link', { name: 'FPT Software' })
     expect(company).toHaveAttribute('href', '/admin/app/companies/co_ab12?tab=public-page')
     expect(screen.getByText('Mạo danh doanh nghiệp khác')).toBeVisible()
     expect(screen.getByText('Phần: Giới thiệu công ty')).toBeVisible()
@@ -91,14 +92,14 @@ describe('CompanyReportQueue', () => {
     renderQueue()
 
     expect(await screen.findByText('Đang tạm ẩn')).toBeVisible()
-    expect(screen.getByRole('link', { name: 'FPT Software' })).toBeVisible()
+    expect(within(getTableRow('crp_1')).getByRole('link', { name: 'FPT Software' })).toBeVisible()
     expect(screen.queryByText(/^Phần:/)).not.toBeInTheDocument()
   })
 
   it('requires a note to uphold a report and can hide the company page with it', async () => {
     renderQueue()
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Xác nhận vi phạm' }))
+    fireEvent.click(within(await findTableRow('crp_1')).getByRole('button', { name: 'Xác nhận vi phạm' }))
     const dialog = screen.getByRole('dialog')
     fireEvent.click(within(dialog).getByRole('button', { name: 'Xác nhận vi phạm' }))
     expect(await within(dialog).findByText('Nhập ghi chú xử lý.')).toBeInTheDocument()
@@ -114,12 +115,12 @@ describe('CompanyReportQueue', () => {
       apply_hold: true,
     }))
     await waitFor(() => expect(mocks.getAdminCompanyReports).toHaveBeenCalledTimes(2))
-  }, 10_000)
+  })
 
   it('dismisses a report with a note and never offers a hold', async () => {
     renderQueue()
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Bác bỏ báo cáo' }))
+    fireEvent.click(within(await findTableRow('crp_1')).getByRole('button', { name: 'Bác bỏ báo cáo' }))
     const dialog = screen.getByRole('dialog')
     expect(within(dialog).queryByRole('checkbox')).not.toBeInTheDocument()
     fireEvent.change(within(dialog).getByLabelText('Ghi chú xử lý'), { target: { value: 'Thông tin trên trang là đúng.' } })
@@ -130,14 +131,14 @@ describe('CompanyReportQueue', () => {
       note: 'Thông tin trên trang là đúng.',
       apply_hold: false,
     }))
-  }, 10_000)
+  })
 
   it.each(['upheld', 'dismissed'])('requires an audit reason before reopening a report that was %s', async (status) => {
     mocks.getAdminCompanyReports.mockResolvedValue(listOf({ ...REPORT, status }))
     mocks.reverseAdminCompanyReport.mockResolvedValue(REPORT)
     renderQueue()
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Gỡ kết luận' }))
+    fireEvent.click(within(await findTableRow('crp_1')).getByRole('button', { name: 'Gỡ kết luận' }))
     const dialog = screen.getByRole('dialog')
     expect(within(dialog).getByText(/quay lại hàng chờ xử lý.*không tự khôi phục trang công ty/)).toBeInTheDocument()
     fireEvent.click(within(dialog).getByRole('button', { name: 'Gỡ kết luận' }))
@@ -155,7 +156,7 @@ describe('CompanyReportQueue', () => {
 
     await waitFor(() => expect(lastParams()).toEqual({ reason: 'scam', q: 'FPT', ordering: 'company_name', page: 2 }))
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Chỉ xem báo cáo của công ty này' }))
+    fireEvent.click(within(await findTableRow('crp_1')).getByRole('button', { name: 'Chỉ xem báo cáo của công ty này' }))
     await waitFor(() => expect(lastParams()).toEqual({
       reason: 'scam',
       company: 'co_ab12',
@@ -166,12 +167,13 @@ describe('CompanyReportQueue', () => {
     expect(screen.getByTestId('location')).toHaveTextContent('company=co_ab12')
     expect(screen.getByTestId('location')).not.toHaveTextContent('page=')
     expect(await screen.findByText('Công ty: FPT Software')).toBeVisible()
-    expect(screen.queryByRole('button', { name: 'Chỉ xem báo cáo của công ty này' })).not.toBeInTheDocument()
+    expect(within(getTableRow('crp_1')).queryByRole('button', { name: 'Chỉ xem báo cáo của công ty này' })).not.toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: /Xóa 4 bộ lọc/ }))
     await waitFor(() => expect(lastParams()).toEqual({ status: 'pending', ordering: '-created_at', page: 1 }))
     expect(screen.getByTestId('location')).toHaveTextContent(ROUTE)
     expect(screen.getByTestId('location')).not.toHaveTextContent('?')
+    // Five URL round trips through antd filters: ~7s on a CI runner under coverage.
   }, 10_000)
 
   it('sorts every data column on the server in both directions', async () => {

@@ -29,6 +29,7 @@
 - [ ] Unit test + coverage gate (FE ratchet toàn src, BE >=84%)
 - [ ] Build
 - [ ] E2E smoke
+- [ ] Không có test mới vượt ngưỡng mềm, không có test flaky mới ([tiêu chuẩn kiểm thử](../docs/05-huong-dan/tieu-chuan-kiem-thu.md))
 
 <!-- Dán lệnh và kết quả thực tế; bổ sung regression/manual evidence khi phù hợp. -->
 

@@ -94,7 +94,7 @@ async function expectHealthyStrip(page, message, header) {
   expect(motionStyle.animationIterationCount).toBe('infinite')
 }
 
-test('announcement strip: candidate and employer marketing headers stay responsive', async ({ page }) => {
+test('announcement strip: candidate and employer marketing headers stay responsive', { tag: '@responsive' }, async ({ page }) => {
   const pageErrors = []
   page.on('pageerror', (error) => pageErrors.push(error.message))
   await enableAnnouncementRollout(page)
@@ -168,7 +168,7 @@ test('announcement strip: equal-tier dismiss reveals the next item without a bla
   expect(pageErrors).toEqual([])
 })
 
-test('announcement strip: employer workspace keeps its measured 100dvh shell', async ({ page }) => {
+test('announcement strip: employer workspace keeps its measured 100dvh shell', { tag: '@responsive' }, async ({ page }) => {
   const pageErrors = []
   page.on('pageerror', (error) => pageErrors.push(error.message))
   await enableAnnouncementRollout(page)
@@ -234,7 +234,7 @@ test('announcement strip: employer workspace keeps its measured 100dvh shell', a
   expect(pageErrors).toEqual([])
 })
 
-test('announcement strip: admin workspace remains below its responsive topbar', async ({ page }) => {
+test('announcement strip: admin workspace remains below its responsive topbar', { tag: '@responsive' }, async ({ page }) => {
   const pageErrors = []
   page.on('pageerror', (error) => pageErrors.push(error.message))
   await enableAnnouncementRollout(page)
@@ -296,7 +296,7 @@ test('announcement strip: admin workspace remains below its responsive topbar', 
   expect(pageErrors).toEqual([])
 })
 
-test('announcement strip: remote kill switch fails closed without breaking public headers', async ({ page }) => {
+test('announcement strip: remote kill switch fails closed without breaking public headers', { tag: '@responsive' }, async ({ page }) => {
   const pageErrors = []
   page.on('pageerror', (error) => pageErrors.push(error.message))
   await enableAnnouncementRollout(page)

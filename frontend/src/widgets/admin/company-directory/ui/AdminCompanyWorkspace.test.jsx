@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -93,7 +93,9 @@ describe('AdminCompanyWorkspace', () => {
   })
 
   it('shows enough context and a clear action for each pending update', async () => {
-    const user = userEvent.setup()
+    // The pointer-events check walks computed styles of every ancestor of the
+    // antd table cell, which costs seconds in jsdom and asserts nothing here.
+    const user = userEvent.setup({ pointerEventsCheck: 0 })
     updateApi.getAdminCompanyUpdateRequests.mockResolvedValue({
       count: 1,
       results: [{
@@ -125,12 +127,17 @@ describe('AdminCompanyWorkspace', () => {
     expect(screen.getByText('Website')).toBeInTheDocument()
     expect(screen.getByText('Thay đổi pháp lý')).toBeInTheDocument()
     expect(screen.getByText('1 tài liệu · Giấy đăng ký doanh nghiệp')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /Mở yêu cầu/ })).toBeInTheDocument()
+    // Find the action by its text inside the request's row. A role query has
+    // to resolve every candidate's computed style against antd's injected CSS,
+    // which took over two seconds here in jsdom.
+    const row = document.querySelector('tr[data-row-key="cur_alpha"]')
+    const open = within(row).getByText('Mở yêu cầu').closest('button')
+    expect(open).toBeEnabled()
 
-    await user.click(screen.getByRole('button', { name: /Mở yêu cầu/ }))
+    await user.click(open)
 
     expect(screen.getByTestId('location')).toHaveTextContent(
       '/admin/app/recruiters/usr_owner?tab=verification&company_update=cur_alpha',
     )
-  }, 30000)
+  })
 })

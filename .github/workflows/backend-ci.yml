@@ -73,7 +73,7 @@ jobs:
     needs: changes
     if: ${{ needs.changes.outputs.backend == 'true' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 50
+    timeout-minutes: 15
     defaults:
       run:
         working-directory: backend
@@ -183,14 +183,28 @@ jobs:
           # containing a TransactionTestCase wiped the seed data for the
           # modules that followed it on the same worker (89 failures, 29
           # errors on run 2). Do not switch to loadfile or worksteal.
-          timeout --signal=TERM --kill-after=30s 47m pytest -vv \
+          #
+          # faulthandler_timeout (120s in pyproject.toml) also counts fixture
+          # setup, so the first test on every worker dumped stacks while the
+          # test database was still being built. Workers died seconds after
+          # such a dump ("node down: Not properly terminated") with plenty of
+          # free memory. In CI the job-level `timeout` below catches real
+          # hangs; the watchdog only fires for a test stuck for 10 minutes.
+          timeout --signal=TERM --kill-after=30s 12m pytest -vv \
             -n "$PYTEST_WORKERS" --dist load \
+            -o faulthandler_timeout=600 \
             --cov \
             --cov-fail-under=84 \
             --cov-report=term-missing \
             --cov-report=json:coverage.json \
             --junitxml=pytest-results.xml \
+            -o junit_duration_report=call \
             2>&1 | tee pytest.log
+
+      - name: Test time budget (docs/05-huong-dan/tieu-chuan-kiem-thu.md)
+        if: ${{ steps.pytest.outcome == 'success' }}
+        working-directory: .
+        run: node scripts/check_test_budgets.mjs --suite backend backend/pytest-results.xml
 
       - name: Publish backend metrics
         if: ${{ always() }}

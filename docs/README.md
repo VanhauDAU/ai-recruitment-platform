@@ -73,6 +73,7 @@ tại; lịch sử kế hoạch và bằng chứng triển khai nằm trong git 
 | [social-login.md](05-huong-dan/social-login.md) | Cấu hình đăng nhập Google, Facebook, LinkedIn |
 | [quan-tri-thong-bao-da-cong.md](05-huong-dan/quan-tri-thong-bao-da-cong.md) | Thao tác quản trị thông báo đa cổng |
 | [quy-trinh-pull-request.md](05-huong-dan/quy-trinh-pull-request.md) | Nhánh, commit, PR và cổng kiểm tra |
+| [tieu-chuan-kiem-thu.md](05-huong-dan/tieu-chuan-kiem-thu.md) | Chuẩn test: tầng đặt test, ngân sách thời gian, chống flaky, lệnh chạy nhanh |
 
 ## 06-deployment
 

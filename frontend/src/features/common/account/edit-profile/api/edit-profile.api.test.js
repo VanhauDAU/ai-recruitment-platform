@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { deleteAvatar, updateProfile } from './edit-profile.api'
 const { patch, del } = vi.hoisted(() => ({ patch: vi.fn(), del: vi.fn() }))

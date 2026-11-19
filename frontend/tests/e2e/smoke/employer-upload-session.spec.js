@@ -44,7 +44,7 @@ async function setEmployerSession(page) {
   })
 }
 
-test('employer legal document is scanned before it is attached', async ({ page }) => {
+test('employer legal document is scanned before it is attached', { tag: '@responsive' }, async ({ page }) => {
   const sequence = []
   await mockPublicApi(page)
   await setEmployerSession(page)

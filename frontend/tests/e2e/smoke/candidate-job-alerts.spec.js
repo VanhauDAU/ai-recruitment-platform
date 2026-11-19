@@ -327,7 +327,7 @@ test('candidate job alerts: job-detail CTA asks a guest to sign in without losin
   ))).toHaveLength(0)
 })
 
-test('candidate job alerts: creates an email alert and keeps global and per-alert switches independent', async ({ page }) => {
+test('candidate job alerts: creates an email alert and keeps global and per-alert switches independent', { tag: '@responsive' }, async ({ page }) => {
   const api = await mockCandidateJobAlertsApi(page)
   await page.goto('/tai-khoan/cai-dat-thong-bao-viec-lam')
 
@@ -507,7 +507,7 @@ test('candidate job alerts: job-list CTA prefills exact filters and every select
   await expect(dialog).toContainText('Toàn thời gian')
 })
 
-test('candidate job alerts: job-detail CTA creates an alert from exact job criteria', async ({ page }) => {
+test('candidate job alerts: job-detail CTA creates an alert from exact job criteria', { tag: '@responsive' }, async ({ page }) => {
   await mockCandidateJobAlertsApi(page)
   await page.goto('/viec-lam/nhan-vien-kinh-doanh')
 

@@ -201,7 +201,7 @@ async function routeAdminApi(page) {
   })
 }
 
-test('announcement admin: create, publish and stale conflict stay responsive', async ({ page }) => {
+test('announcement admin: create, publish and stale conflict stay responsive', { tag: '@responsive' }, async ({ page }) => {
   const pageErrors = []
   page.on('pageerror', (error) => pageErrors.push(error.message))
   await routeAdminApi(page)

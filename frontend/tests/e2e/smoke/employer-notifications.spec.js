@@ -99,7 +99,7 @@ test.beforeEach(async ({ page }) => {
   })
 })
 
-test('employer notification and activity routes are usable and responsive', async ({ page }) => {
+test('employer notification and activity routes are usable and responsive', { tag: '@responsive' }, async ({ page }) => {
   await page.goto('/tuyendung/app/notifications')
   await expect(page.getByRole('heading', { name: 'Thông báo hệ thống' })).toBeVisible()
   await expect(page.getByText('Hồ sơ xác thực cần bổ sung').first()).toBeVisible()
