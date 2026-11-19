@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { Alert, Empty, Result, Skeleton } from 'antd'
-import dayjs from 'dayjs'
+import dayjs from '@/shared/lib/dayjs'
 import { Link, useParams } from 'react-router'
 import { useLoginPrompt } from '@/features/common/account/auth'
 import { campaignKeys, getPublicCampaign } from '@/entities/campaign/campaign'

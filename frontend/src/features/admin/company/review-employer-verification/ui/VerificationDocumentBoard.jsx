@@ -14,6 +14,7 @@ import { HolderOutlined, MoreOutlined, WarningOutlined } from '@ant-design/icons
 import { Button, Dropdown, Empty } from 'antd'
 import { useState } from 'react'
 import { documentStatusMeta } from '@/entities/company/admin-employer-verification'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 const COLUMNS = [
   { status: 'pending', label: 'Chờ duyệt', acceptsDrop: false },
@@ -26,7 +27,7 @@ const REVIEW_DECISIONS = COLUMNS.filter((column) => column.acceptsDrop)
 
 function formatDate(value) {
   if (!value) return 'Chưa có ngày nộp'
-  return new Intl.DateTimeFormat('vi-VN', {
+  return new Intl.DateTimeFormat(getIntlLocale(), {
     dateStyle: 'short',
     timeStyle: 'short',
   }).format(new Date(value))

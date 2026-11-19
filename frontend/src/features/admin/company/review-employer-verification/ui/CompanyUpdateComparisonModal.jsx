@@ -11,10 +11,11 @@ import {
   VALUE_LABELS,
 } from '../model/company-update-fields'
 import TaxLookupEvidenceCard from './TaxLookupEvidenceCard'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 function formatDate(value) {
   if (!value) return 'Chưa có'
-  return new Intl.DateTimeFormat('vi-VN', {
+  return new Intl.DateTimeFormat(getIntlLocale(), {
     dateStyle: 'short',
     timeStyle: 'short',
   }).format(new Date(value))

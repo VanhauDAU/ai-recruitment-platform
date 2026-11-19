@@ -18,6 +18,7 @@ import { usePreviewFitZoom } from '@/shared/hooks/use-preview-fit-zoom'
 import ConfirmActionModal from '@/shared/ui/confirm-action/ConfirmActionModal'
 import { useCvCardActions } from '../model/use-cv-card-actions'
 import UploadedCvThumbnail from './UploadedCvThumbnail'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 export default function UserCvCard({ cv, onRefresh }) {
   const actions = useCvCardActions(cv, onRefresh)
@@ -101,7 +102,7 @@ export default function UserCvCard({ cv, onRefresh }) {
   }
 
   const formattedDate = cv.updated_at
-    ? new Date(cv.updated_at).toLocaleDateString('vi-VN', {
+    ? new Date(cv.updated_at).toLocaleDateString(getIntlLocale(), {
         day: '2-digit',
         month: '2-digit',
         year: 'numeric',

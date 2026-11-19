@@ -24,6 +24,7 @@ import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { message } from '@/shared/lib/toast'
 import AdminCompanyDomainDetailDrawer from './AdminCompanyDomainDetailDrawer'
 import AdminCompanyDomainSummaryCards from './AdminCompanyDomainSummaryCards'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 const STATUS_OPTIONS = [
   { value: '', label: 'Tất cả trạng thái' },
@@ -228,7 +229,7 @@ export default function AdminCompanyDomainReview() {
         <div>
           <h2 className="text-lg font-black text-slate-900">Quản lý xác minh tên miền</h2>
           <p className="mt-1 text-sm text-slate-500">
-            Tổng {Number(summaryQuery.data?.total || 0).toLocaleString('vi-VN')} domain · tự làm mới mỗi 10 giây
+            Tổng {Number(summaryQuery.data?.total || 0).toLocaleString(getIntlLocale())} domain · tự làm mới mỗi 10 giây
           </p>
         </div>
         <Button

@@ -4,6 +4,7 @@ from unittest.mock import patch
 
 from django.core.cache import cache
 from django.test import TestCase
+from django.utils import translation
 from rest_framework.exceptions import NotFound, ValidationError
 
 from ..models import AuthEmailJob, AuthSession, User
@@ -180,3 +181,19 @@ class SessionServiceTests(AuthServiceTestCase):
             revoke_own_session(self.user, foreign.id)
         foreign.refresh_from_db()
         self.assertIsNone(foreign.revoked_at)
+
+
+class PreferredLanguageDefaultTests(TestCase):
+    def test_new_account_inherits_active_ui_language(self):
+        with translation.override('en'):
+            english = User.objects.create_user(email='en@example.com', password='Password@123')
+        vietnamese = User.objects.create_user(email='vi@example.com', password='Password@123')
+
+        self.assertEqual(english.preferred_language, User.Language.EN)
+        self.assertEqual(vietnamese.preferred_language, User.Language.VI)
+
+    def test_unsupported_active_language_falls_back_to_vietnamese(self):
+        with translation.override('fr'):
+            user = User.objects.create_user(email='fr@example.com', password='Password@123')
+
+        self.assertEqual(user.preferred_language, User.Language.VI)

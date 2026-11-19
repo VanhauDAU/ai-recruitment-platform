@@ -7,6 +7,7 @@ import { ConsentProvider } from '@/entities/system/consent'
 import AppToast from '@/shared/ui/toast/AppToast'
 import BrandLoader from '@/shared/ui/BrandLoader'
 import ToastSoundEffect from '@/shared/ui/toast/ToastSoundEffect'
+import { antdLocale } from './ui-locale'
 
 // Mọi <Spin> trong app dùng chung linh vật ProCV. `em` bám token size của Spin;
 // inline style thắng CSS-in-JS của antd mà không kéo rule riêng vào initial CSS.
@@ -26,7 +27,7 @@ function ThemedProviders({ children }) {
   }), [primaryColor])
 
   return (
-    <ConfigProvider theme={theme} spin={spinConfig}>
+    <ConfigProvider theme={theme} spin={spinConfig} locale={antdLocale}>
       <AntApp>
         <ConsentProvider>
           <AppToast />

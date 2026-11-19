@@ -1,6 +1,6 @@
 import { MailOutlined, PhoneOutlined } from '@ant-design/icons'
-import { useTranslation } from 'react-i18next'
 import { settingText, useSiteSettings } from '@/entities/system/site-settings'
+import { m } from '@/shared/config/i18n'
 
 function ContactCard({ icon, label, value, href }) {
   return (
@@ -21,7 +21,6 @@ function ContactCard({ icon, label, value, href }) {
 
 // Band liên hệ cuối trang: hotline 2 miền + email, dữ liệu từ site settings.
 export default function ContactBand() {
-  const { t } = useTranslation('employer')
   const { settings } = useSiteSettings()
 
   const hotline = settingText(settings.hotline)
@@ -36,18 +35,18 @@ export default function ContactBand() {
     <section className="bg-[var(--brand-primary-hover)]">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
         <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-2xl font-bold text-white md:text-3xl">{t('contactBand.title')}</h2>
-          <p className="mt-3 leading-7 text-white/80">{t('contactBand.subtitle')}</p>
+          <h2 className="text-2xl font-bold text-white md:text-3xl">{m.marketing_contact_band_title()}</h2>
+          <p className="mt-3 leading-7 text-white/80">{m.marketing_contact_band_subtitle()}</p>
         </div>
         <div className="mx-auto mt-8 grid max-w-4xl gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {hotlineNorth && (
-            <ContactCard icon={<PhoneOutlined />} label={t('footer.hotlineNorth')} value={hotlineNorth} href={telHref(hotlineNorth)} />
+            <ContactCard icon={<PhoneOutlined />} label={m.marketing_footer_hotline_north()} value={hotlineNorth} href={telHref(hotlineNorth)} />
           )}
           {hotlineSouth && (
-            <ContactCard icon={<PhoneOutlined />} label={t('footer.hotlineSouth')} value={hotlineSouth} href={telHref(hotlineSouth)} />
+            <ContactCard icon={<PhoneOutlined />} label={m.marketing_footer_hotline_south()} value={hotlineSouth} href={telHref(hotlineSouth)} />
           )}
           {email && (
-            <ContactCard icon={<MailOutlined />} label={t('contactBand.supportEmail')} value={email} href={`mailto:${email}`} />
+            <ContactCard icon={<MailOutlined />} label={m.marketing_contact_band_support_email()} value={email} href={`mailto:${email}`} />
           )}
         </div>
       </div>

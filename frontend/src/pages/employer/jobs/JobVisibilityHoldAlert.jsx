@@ -1,5 +1,5 @@
 import { Alert, Button } from 'antd'
-import dayjs from 'dayjs'
+import dayjs from '@/shared/lib/dayjs'
 
 const formatTime = (value) => (value && dayjs(value).isValid() ? dayjs(value).format('DD/MM/YYYY HH:mm') : null)
 

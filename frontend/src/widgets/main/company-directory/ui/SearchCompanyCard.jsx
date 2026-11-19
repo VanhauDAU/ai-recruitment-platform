@@ -5,6 +5,7 @@ import {
 } from '@ant-design/icons'
 import { Link } from 'react-router'
 import { companyDetailPath, companyDisplayName, CompanyLogo } from '@/entities/company/company'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 function activeJobCount(company) {
   const value = Number(company?.active_public_job_count)
@@ -40,7 +41,7 @@ export default function SearchCompanyCard({ company }) {
               </h3>
               <p className="mt-0.5 inline-flex items-center gap-1 text-xs font-semibold text-emerald-700">
                 <SolutionOutlined aria-hidden="true" />
-                Đang tuyển {activeJobCount(company).toLocaleString('vi-VN')} vị trí
+                Đang tuyển {activeJobCount(company).toLocaleString(getIntlLocale())} vị trí
               </p>
             </div>
             <ArrowRightOutlined className="mt-0.5 hidden shrink-0 text-sm text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-emerald-600 sm:block" aria-hidden="true" />

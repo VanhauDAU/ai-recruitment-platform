@@ -12,6 +12,7 @@ import {
   STATUS_OPTIONS,
 } from '../model/account-filter-options'
 import AccountAdvancedFilters from './AccountAdvancedFilters'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 export default function AccountFilters({
   filters,
@@ -141,7 +142,7 @@ export default function AccountFilters({
         <span className="account-filters__count">
           {loading ? 'Đang tải danh sách…' : (
             <>
-              <strong>{Number(total || 0).toLocaleString('vi-VN')}</strong>
+              <strong>{Number(total || 0).toLocaleString(getIntlLocale())}</strong>
               {recruiterOnly ? ' nhà tuyển dụng' : ' tài khoản'}
               {chips.length > 0 ? ' khớp bộ lọc' : ' trong phạm vi được xem'}
             </>

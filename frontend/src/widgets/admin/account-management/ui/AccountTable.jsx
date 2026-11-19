@@ -11,6 +11,7 @@ import {
   InitialOnboardingStatus,
 } from '@/entities/account/admin-account'
 import { AccountRoleTag, AccountStatusTag } from './AccountStatusTag'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 function initials(value) {
   return (value || '?')
@@ -325,7 +326,7 @@ export default function AccountTable({
           total: data.count,
           pageSize: 20,
           showSizeChanger: false,
-          showTotal: (total) => `${total.toLocaleString('vi-VN')} ${resultLabel}`,
+          showTotal: (total) => `${total.toLocaleString(getIntlLocale())} ${resultLabel}`,
         }}
         onChange={(pagination, _, sorter, extra) => {
           if (extra.action === 'sort') {

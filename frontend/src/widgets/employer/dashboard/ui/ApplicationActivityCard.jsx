@@ -8,10 +8,11 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
+import { getIntlLocale } from '@/shared/config/i18n'
 
-const axisDateFormatter = new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit' })
-const fullDateFormatter = new Intl.DateTimeFormat('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit' })
-const numberFormatter = new Intl.NumberFormat('vi-VN')
+const axisDateFormatter = new Intl.DateTimeFormat(getIntlLocale(), { day: '2-digit', month: '2-digit' })
+const fullDateFormatter = new Intl.DateTimeFormat(getIntlLocale(), { weekday: 'long', day: '2-digit', month: '2-digit' })
+const numberFormatter = new Intl.NumberFormat(getIntlLocale())
 
 function parseDate(value) {
   return new Date(`${value}T00:00:00`)

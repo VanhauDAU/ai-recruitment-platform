@@ -2,6 +2,7 @@ import { ExportOutlined } from '@ant-design/icons'
 import { Alert } from 'antd'
 import { Link } from 'react-router'
 import { employerAppPath, MAIN_PORTAL_URL } from '@/shared/config/portals'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 const ACTION_LINK = 'shrink-0 text-sm font-semibold !text-[var(--brand-primary)] hover:underline'
 // Lý do bị chặn mà chính người dùng xử lý được: dẫn tới bước xác thực.
@@ -25,7 +26,7 @@ export default function CompanyPageHeader({ page, completeness }) {
         </div>
         <ul className="employer-company-page__stats" aria-label="Số liệu trang công ty">
           {totals.map(([value, label]) => (
-            <li key={label}><strong>{(Number(value) || 0).toLocaleString('vi-VN')}</strong> {label}</li>
+            <li key={label}><strong>{(Number(value) || 0).toLocaleString(getIntlLocale())}</strong> {label}</li>
           ))}
         </ul>
         {company.is_public ? (

@@ -32,6 +32,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import RichTextImageLibrary from './RichTextImageLibrary'
 import { RichTextImage } from './rich-text-image'
 import './rich-text-editor.css'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 function ToolbarButton({ title, active = false, disabled = false, onClick, children }) {
   return (
@@ -304,7 +305,7 @@ export default function RichTextEditor({ value = '', onChange, maxLength = 10000
         </div>
       )}
       <EditorContent editor={editor} />
-      <div className="company-rich-editor__counter" aria-live="polite">{characters.toLocaleString('vi-VN')}/{maxLength.toLocaleString('vi-VN')}</div>
+      <div className="company-rich-editor__counter" aria-live="polite">{characters.toLocaleString(getIntlLocale())}/{maxLength.toLocaleString(getIntlLocale())}</div>
       {mode === 'blog' && (
         <RichTextImageLibrary
           open={imageLibraryOpen}

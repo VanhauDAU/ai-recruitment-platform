@@ -1,4 +1,4 @@
-import dayjs from 'dayjs'
+import dayjs from '@/shared/lib/dayjs'
 import { CANDIDATE_APPLICATION_STATUS_LABELS } from '@/entities/application/application'
 
 export const APPLICATION_STAGES = [

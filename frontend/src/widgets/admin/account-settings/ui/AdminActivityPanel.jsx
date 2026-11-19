@@ -11,12 +11,13 @@ import {
 } from '@/entities/account/admin-access'
 import { useSession } from '@/entities/account/session'
 import { groupSessions, listSessionHistory } from '@/features/common/account/session-management'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 const PAGE_SIZE = 10
 
 function formatDateTime(value) {
   if (!value) return '—'
-  return new Date(value).toLocaleString('vi-VN', {
+  return new Date(value).toLocaleString(getIntlLocale(), {
     day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit',
   })
 }

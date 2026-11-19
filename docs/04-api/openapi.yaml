@@ -29622,9 +29622,11 @@ components:
           type: string
           format: date-time
           nullable: true
+          title: Lần cuối đăng nhập
         date_joined:
           type: string
           format: date-time
+          title: Ngày tham gia
         updated_at:
           type: string
           format: date-time
@@ -29694,9 +29696,11 @@ components:
           type: string
           format: date-time
           nullable: true
+          title: Lần cuối đăng nhập
         date_joined:
           type: string
           format: date-time
+          title: Ngày tham gia
         updated_at:
           type: string
           format: date-time
@@ -31978,7 +31982,7 @@ components:
     PatchedProfileUpdateRequest:
       type: object
       description: |-
-        Cập nhật thông tin cá nhân ứng viên: chỉ họ tên và số điện thoại.
+        Cập nhật thông tin cá nhân: họ tên, số điện thoại và ngôn ngữ giao diện.
 
         Email KHÔNG đổi ở đây (đổi email đi qua luồng xác thực riêng
         `ChangeEmailSerializer`). Họ tên và SĐT sửa được nhiều lần.
@@ -31991,6 +31995,8 @@ components:
           type: string
           pattern: ^(0|\+84)\d{9,10}$
           maxLength: 20
+        preferred_language:
+          $ref: '#/components/schemas/PreferredLanguageEnum'
     PatchedRecruiterProfileRequest:
       type: object
       properties:
@@ -32351,6 +32357,14 @@ components:
       - public_id
       - thumbnail_url
       - title
+    PreferredLanguageEnum:
+      enum:
+      - vi
+      - en
+      type: string
+      description: |-
+        * `vi` - Tiếng Việt
+        * `en` - English
     PreviousSubmission:
       type: object
       description: 'An earlier, replaced submission: what it was and how it ended,
@@ -35185,6 +35199,10 @@ components:
         email_verified:
           type: boolean
           readOnly: true
+        preferred_language:
+          allOf:
+          - $ref: '#/components/schemas/PreferredLanguageEnum'
+          readOnly: true
         job_preferences_configured:
           type: boolean
           readOnly: true
@@ -35222,6 +35240,7 @@ components:
       - has_usable_password
       - job_preferences_configured
       - phone
+      - preferred_language
       - public_id
       - role
     SharedCvSummary:

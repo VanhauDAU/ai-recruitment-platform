@@ -7,7 +7,7 @@ import {
 } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Alert, Button, Segmented, Skeleton, Tabs } from 'antd'
-import dayjs from 'dayjs'
+import dayjs from '@/shared/lib/dayjs'
 import { useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router'
 import {

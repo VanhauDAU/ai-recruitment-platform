@@ -9,6 +9,7 @@ import {
   STATUS_OPTIONS,
   SURFACE_OPTIONS,
 } from '../model/announcement-options'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 export default function AnnouncementFilters({
   filters,
@@ -25,7 +26,7 @@ export default function AnnouncementFilters({
       <div className="announcement-filters__heading">
         <div>
           <span className="announcement-filters__count">
-            {total.toLocaleString('vi-VN')} thông báo
+            {total.toLocaleString(getIntlLocale())} thông báo
           </span>
           <p>Lọc và sắp xếp được xử lý trên toàn bộ dữ liệu phía server.</p>
         </div>

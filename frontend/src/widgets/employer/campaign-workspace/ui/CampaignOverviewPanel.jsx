@@ -27,6 +27,7 @@ import {
   CAMPAIGN_FUNNEL_STAGES,
   CAMPAIGN_PERFORMANCE_METRICS,
 } from './campaign-overview-options'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 function numericValue(value) {
   if (value == null || value === '') return null
@@ -36,13 +37,13 @@ function numericValue(value) {
 
 function formatNumber(value, fallback = '—') {
   const parsed = numericValue(value)
-  return parsed == null ? fallback : parsed.toLocaleString('vi-VN')
+  return parsed == null ? fallback : parsed.toLocaleString(getIntlLocale())
 }
 
 function formatPerformanceValue(metric, summary) {
   const value = numericValue(summary?.[metric.key])
   if (value == null) return '—'
-  return metric.rate ? `${value.toLocaleString('vi-VN')}%` : formatNumber(value)
+  return metric.rate ? `${value.toLocaleString(getIntlLocale())}%` : formatNumber(value)
 }
 
 export default function CampaignOverviewPanel({ campaign, report, reportLoading = false }) {

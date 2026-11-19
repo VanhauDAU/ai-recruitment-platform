@@ -9,10 +9,11 @@ import {
   STATUS_LABELS,
   SURFACE_LABELS,
 } from '../model/announcement-options'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 function formatDate(value, fallback = 'Không giới hạn') {
   if (!value) return fallback
-  return new Intl.DateTimeFormat('vi-VN', {
+  return new Intl.DateTimeFormat(getIntlLocale(), {
     dateStyle: 'short',
     timeStyle: 'short',
     timeZone: 'Asia/Ho_Chi_Minh',
@@ -125,7 +126,7 @@ export default function AnnouncementTable({
       align: 'right',
       sorter: true,
       sortOrder: sorterOrder(ordering, 'impressions'),
-      render: (_, item) => item.impressions.toLocaleString('vi-VN'),
+      render: (_, item) => item.impressions.toLocaleString(getIntlLocale()),
     },
     {
       title: 'Click',
@@ -134,7 +135,7 @@ export default function AnnouncementTable({
       align: 'right',
       sorter: true,
       sortOrder: sorterOrder(ordering, 'clicks'),
-      render: (_, item) => item.clicks.toLocaleString('vi-VN'),
+      render: (_, item) => item.clicks.toLocaleString(getIntlLocale()),
     },
     {
       title: 'CTR',
@@ -143,7 +144,7 @@ export default function AnnouncementTable({
       align: 'right',
       sorter: true,
       sortOrder: sorterOrder(ordering, 'ctr'),
-      render: (_, item) => `${item.ctr.toLocaleString('vi-VN')}%`,
+      render: (_, item) => `${item.ctr.toLocaleString(getIntlLocale())}%`,
     },
     {
       title: 'Dismiss',
@@ -152,7 +153,7 @@ export default function AnnouncementTable({
       align: 'right',
       sorter: true,
       sortOrder: sorterOrder(ordering, 'dismisses'),
-      render: (_, item) => item.dismisses.toLocaleString('vi-VN'),
+      render: (_, item) => item.dismisses.toLocaleString(getIntlLocale()),
     },
     {
       title: 'Cập nhật',
@@ -206,7 +207,7 @@ export default function AnnouncementTable({
         pageSize: 20,
         total: data.count,
         showSizeChanger: false,
-        showTotal: (total) => `${total.toLocaleString('vi-VN')} thông báo`,
+        showTotal: (total) => `${total.toLocaleString(getIntlLocale())} thông báo`,
       }}
       onChange={onChange}
       onRow={(item) => ({ onDoubleClick: () => onOpen(item.public_id) })}

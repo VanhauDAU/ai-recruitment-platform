@@ -19,7 +19,8 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('axios', () => ({
   default: {
-    create: () => {
+    create: (config) => {
+      mocks.createConfig = config
       mocks.instance.interceptors = {
         request: {
           use: (onFulfilled, onRejected) =>
@@ -62,6 +63,10 @@ describe('HTTP client interceptor', () => {
     mocks.clearTokens.mockClear()
     mocks.notifySessionExpired.mockClear()
     mocks.notifyPermissionDenied.mockClear()
+  })
+
+  it('sends the interface language so the backend localizes its messages', () => {
+    expect(mocks.createConfig.headers).toEqual({ 'Accept-Language': 'vi' })
   })
 
   it('refreshes once and replays the original request on a 401', async () => {

@@ -9,6 +9,7 @@ import { CompanyDirectoryHero, CompanySearchHeader } from './CompanyDirectoryHer
 import SearchCompanyCard from './SearchCompanyCard'
 import TopEmployersSidebar from './TopEmployersSidebar'
 import '../company-directory.css'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 const FEATURED_SKELETON_COUNT = 9
 const SEARCH_SKELETON_COUNT = 5
@@ -129,7 +130,7 @@ export default function CompanyDirectory({
         : totalCount === 0
           ? 'Không tìm thấy công ty phù hợp với yêu cầu của bạn.'
           : Number.isFinite(totalCount)
-            ? `Tìm thấy ${totalCount.toLocaleString('vi-VN')} công ty phù hợp với yêu cầu của bạn.`
+            ? `Tìm thấy ${totalCount.toLocaleString(getIntlLocale())} công ty phù hợp với yêu cầu của bạn.`
             : ''
 
   return (
@@ -158,7 +159,7 @@ export default function CompanyDirectory({
                 <h2 id="company-directory-title" className="mb-2.5 text-sm font-normal text-slate-700 sm:text-base">
                   {Number.isFinite(totalCount)
                     ? (
-                        <>Tìm thấy <span className="text-[var(--brand-primary)]">{totalCount.toLocaleString('vi-VN')}</span> công ty phù hợp với yêu cầu của bạn</>
+                        <>Tìm thấy <span className="text-[var(--brand-primary)]">{totalCount.toLocaleString(getIntlLocale())}</span> công ty phù hợp với yêu cầu của bạn</>
                       )
                     : 'Đang tìm công ty phù hợp với yêu cầu của bạn'}
                 </h2>

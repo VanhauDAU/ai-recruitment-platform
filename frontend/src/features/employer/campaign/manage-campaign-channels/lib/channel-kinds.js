@@ -1,4 +1,5 @@
-export const money = (value) => `${Number(value || 0).toLocaleString('vi-VN')} đ`
+import { getIntlLocale } from '@/shared/config/i18n'
+export const money = (value) => `${Number(value || 0).toLocaleString(getIntlLocale())} đ`
 
 export function postText(content = {}) {
   const tags = (content.hashtags || []).map((tag) => `#${tag.replace(/^#/, '')}`).join(' ')

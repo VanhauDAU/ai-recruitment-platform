@@ -5,10 +5,11 @@ import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import HelpTip from '@/shared/ui/HelpTip'
 import { CHANNEL_METRIC_HELP as HELP } from '../lib/metric-help'
 import './channel-board.css'
+import { getIntlLocale } from '@/shared/config/i18n'
 
-const number = (value) => (value == null ? '—' : Number(value).toLocaleString('vi-VN'))
-const money = (value) => (value == null ? '—' : `${Number(value).toLocaleString('vi-VN')} đ`)
-const percent = (value) => (value == null ? '—' : `${value.toLocaleString('vi-VN')}%`)
+const number = (value) => (value == null ? '—' : Number(value).toLocaleString(getIntlLocale()))
+const money = (value) => (value == null ? '—' : `${Number(value).toLocaleString(getIntlLocale())} đ`)
+const percent = (value) => (value == null ? '—' : `${value.toLocaleString(getIntlLocale())}%`)
 
 // So sánh hiệu quả từng kênh và các nguồn tự nhiên trên ProCV.
 export default function ChannelReport({ campaignId }) {

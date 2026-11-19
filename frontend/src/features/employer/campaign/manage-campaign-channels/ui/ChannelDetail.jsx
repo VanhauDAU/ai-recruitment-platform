@@ -12,8 +12,9 @@ import ChannelContentSection from './ChannelContentSection'
 import ChannelCostsPanel from './ChannelCostsPanel'
 import ChannelFacebookPosts from './ChannelFacebookPosts'
 import ChannelLinkSection from './ChannelLinkSection'
+import { getIntlLocale } from '@/shared/config/i18n'
 
-const rate = (part, whole) => (whole ? `${((part * 100) / whole).toLocaleString('vi-VN', { maximumFractionDigits: 1 })}%` : '—')
+const rate = (part, whole) => (whole ? `${((part * 100) / whole).toLocaleString(getIntlLocale(), { maximumFractionDigits: 1 })}%` : '—')
 
 export default function ChannelDetail({ campaign, channel, editable, onEditContent }) {
   const queryClient = useQueryClient()
@@ -72,7 +73,7 @@ export default function ChannelDetail({ campaign, channel, editable, onEditConte
       </header>
 
       <dl className="ch-kpis">
-        <div><dt>Người bấm link<HelpTip label="Giải thích người bấm link">{HELP.clicks}</HelpTip></dt><dd>{channel.unique_clicks.toLocaleString('vi-VN')}</dd></div>
+        <div><dt>Người bấm link<HelpTip label="Giải thích người bấm link">{HELP.clicks}</HelpTip></dt><dd>{channel.unique_clicks.toLocaleString(getIntlLocale())}</dd></div>
         <div><dt>Hồ sơ nộp<HelpTip label="Giải thích hồ sơ nộp">{`${HELP.applications} Số nhỏ bên dưới là tỷ lệ nộp: ${HELP.applyRate}`}</HelpTip></dt><dd>{channel.applications}</dd><span>{rate(channel.applications, channel.unique_clicks)} người bấm</span></div>
         <div><dt>Trúng tuyển<HelpTip label="Giải thích trúng tuyển">{HELP.hires}</HelpTip></dt><dd>{channel.hires}</dd></div>
         <div><dt>Đã chi<HelpTip label="Giải thích đã chi">{HELP.spent}</HelpTip></dt><dd>{money(channel.cost)}</dd></div>

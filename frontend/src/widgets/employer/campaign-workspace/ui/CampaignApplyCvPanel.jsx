@@ -20,6 +20,7 @@ import { getEmployerJobs, jobKeys } from '@/entities/job/job'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { employerAppPath } from '@/shared/config/portals'
 import { message } from '@/shared/lib/toast'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 const STATUS_COLORS = {
   submitted: 'blue',
@@ -34,7 +35,7 @@ function formatDate(value) {
   if (!value) return '—'
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return '—'
-  return date.toLocaleString('vi-VN', {
+  return date.toLocaleString(getIntlLocale(), {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',

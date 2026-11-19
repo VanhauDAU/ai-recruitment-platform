@@ -17,6 +17,7 @@ import {
 import { jobDetailPath } from '@/entities/job/job'
 import { employerAppPath } from '@/shared/config/portals'
 import CampaignPerformanceChart from './CampaignPerformanceChart'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 const JOB_STATUS = {
   draft: ['Nháp', 'default'],
@@ -36,18 +37,18 @@ function numberValue(value) {
 }
 
 function formatNumber(value) {
-  return numberValue(value).toLocaleString('vi-VN')
+  return numberValue(value).toLocaleString(getIntlLocale())
 }
 
 function formatDate(value) {
   if (!value) return 'Không giới hạn'
   const date = new Date(value)
-  return Number.isNaN(date.getTime()) ? 'Không giới hạn' : date.toLocaleDateString('vi-VN')
+  return Number.isNaN(date.getTime()) ? 'Không giới hạn' : date.toLocaleDateString(getIntlLocale())
 }
 
 function formatRate(value) {
   if (value == null) return '—'
-  return `${numberValue(value).toLocaleString('vi-VN', { maximumFractionDigits: 2 })}%`
+  return `${numberValue(value).toLocaleString(getIntlLocale(), { maximumFractionDigits: 2 })}%`
 }
 
 function JobStatus({ job, campaignPaused = false }) {

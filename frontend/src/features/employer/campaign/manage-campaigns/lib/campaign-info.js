@@ -1,4 +1,4 @@
-import dayjs from 'dayjs'
+import dayjs from '@/shared/lib/dayjs'
 
 const toDay = (value) => (value ? dayjs(value) : null)
 const toIso = (value) => (value ? value.format('YYYY-MM-DD') : null)

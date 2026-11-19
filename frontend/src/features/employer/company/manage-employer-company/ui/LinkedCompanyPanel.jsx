@@ -14,6 +14,7 @@ import { sanitizeHtml } from '@/shared/lib/sanitize-html'
 import { message } from '@/shared/lib/toast'
 import ConfirmAction from '@/shared/ui/confirm-action/ConfirmAction'
 import CompanyForm from './CompanyForm'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 const UPDATE_REQUEST_STATUS = {
   pending: ['processing', 'Đang xử lý'],
@@ -267,5 +268,5 @@ function formatDateTime(value) {
   if (!value) return ''
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return ''
-  return new Intl.DateTimeFormat('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' }).format(date)
+  return new Intl.DateTimeFormat(getIntlLocale(), { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' }).format(date)
 }

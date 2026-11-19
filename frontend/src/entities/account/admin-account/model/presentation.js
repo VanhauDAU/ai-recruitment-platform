@@ -1,3 +1,4 @@
+import { getIntlLocale } from '@/shared/config/i18n'
 export const ACCOUNT_ROLE_LABELS = {
   admin: 'Admin',
   candidate: 'Ứng viên',
@@ -24,7 +25,7 @@ export function adminTierLabel(adminAccess) {
 
 export function formatAdminDate(value, fallback = 'Chưa có') {
   if (!value) return fallback
-  return new Intl.DateTimeFormat('vi-VN', {
+  return new Intl.DateTimeFormat(getIntlLocale(), {
     dateStyle: 'short',
     timeStyle: 'short',
   }).format(new Date(value))

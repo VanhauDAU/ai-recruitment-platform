@@ -1,0 +1,17 @@
+{
+  "$schema": "https://inlang.com/schema/project-settings",
+  "baseLocale": "vi",
+  "locales": [
+    "vi",
+    "en"
+  ],
+  "modules": [
+    "./node_modules/@inlang/plugin-message-format/dist/index.js"
+  ],
+  "plugin.inlang.messageFormat": {
+    "pathPattern": [
+      "./messages/common/{locale}.json",
+      "./messages/employer/{locale}.json"
+    ]
+  }
+}

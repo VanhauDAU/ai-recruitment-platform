@@ -1,4 +1,4 @@
-import dayjs from 'dayjs'
+import dayjs from '@/shared/lib/dayjs'
 import { APPLICATION_STATUS_TONES, RECRUITER_APPLICATION_STATUS_LABELS } from '@/entities/application/application'
 import { jobDetailPath } from '@/entities/job/job'
 import { MAIN_PORTAL_URL } from '@/shared/config/portals'

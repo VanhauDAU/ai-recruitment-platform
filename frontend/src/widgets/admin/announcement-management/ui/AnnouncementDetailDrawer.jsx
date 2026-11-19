@@ -32,10 +32,11 @@ import {
 import AnnouncementPreview from './AnnouncementPreview'
 import { AuditHistory, RevisionHistory } from './AnnouncementHistory'
 import AnnouncementMetrics from './AnnouncementMetrics'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 function formatDate(value) {
   if (!value) return 'Không giới hạn'
-  return new Intl.DateTimeFormat('vi-VN', {
+  return new Intl.DateTimeFormat(getIntlLocale(), {
     dateStyle: 'medium',
     timeStyle: 'short',
     timeZone: 'Asia/Ho_Chi_Minh',

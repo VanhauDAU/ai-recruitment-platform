@@ -1,3 +1,4 @@
+import { getIntlLocale } from '@/shared/config/i18n'
 const ENUM_LABELS = {
   active: 'Đang hoạt động',
   inactive: 'Tạm khóa',
@@ -47,7 +48,7 @@ export function adminJobEnumLabel(value) {
 
 export function formatAdminJobSalary(job) {
   if (!job.salary_type || job.salary_type === 'negotiable') return 'Thỏa thuận'
-  const formatter = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 })
+  const formatter = new Intl.NumberFormat(getIntlLocale(), { maximumFractionDigits: 0 })
   const min = job.salary_min ? formatter.format(Number(job.salary_min)) : ''
   const max = job.salary_max ? formatter.format(Number(job.salary_max)) : ''
   if (min && max) return `${min} – ${max} ${job.currency}`

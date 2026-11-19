@@ -1,7 +1,7 @@
 import { CheckOutlined, CloseOutlined, UserAddOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Alert, Avatar, Badge, Button, Skeleton } from 'antd'
-import dayjs from 'dayjs'
+import dayjs from '@/shared/lib/dayjs'
 import {
   decideCompanyJoinRequest,
   employerProfileKeys,

@@ -11,7 +11,7 @@ import {
   ThunderboltOutlined,
 } from '@ant-design/icons'
 import { Button, Dropdown, Tooltip, Typography } from 'antd'
-import dayjs from 'dayjs'
+import dayjs from '@/shared/lib/dayjs'
 import { Link, useNavigate } from 'react-router'
 import { employerAppPath } from '@/shared/config/portals'
 import JobStatusPill from './JobStatusPill'

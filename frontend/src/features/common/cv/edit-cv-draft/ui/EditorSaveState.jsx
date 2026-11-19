@@ -1,5 +1,6 @@
 import { CheckCircleFilled, CloudSyncOutlined, ExclamationCircleFilled } from '@ant-design/icons'
 import { Alert, Button, Tag } from 'antd'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 const STATE = {
   unsaved: { color: 'gold', icon: <ExclamationCircleFilled />, label: 'Chưa lưu' },
@@ -12,7 +13,7 @@ const STATE = {
 export default function EditorSaveState({ phase, error, onRetry, onReload, savedAt, compact = false }) {
   const state = STATE[phase] || STATE.saving
   const savedLabel = phase === 'saved' && savedAt
-    ? `Đã lưu lúc ${savedAt.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}`
+    ? `Đã lưu lúc ${savedAt.toLocaleTimeString(getIntlLocale(), { hour: '2-digit', minute: '2-digit' })}`
     : state.label
   if (compact) return <Tag title={savedLabel} color={state.color} icon={state.icon} className="m-0 max-w-40 truncate">{savedLabel}</Tag>
   return (

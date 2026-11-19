@@ -1,4 +1,5 @@
 import { adminPath } from '@/shared/config/portals'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 export const DASHBOARD_LINKS = {
   activeJobs: adminPath('/job-moderation?job_scope=active'),
@@ -18,11 +19,11 @@ export const ACTIVITY_METRICS = [
   { key: 'employers', label: 'NTD mới', unit: 'NTD mới' },
 ]
 
-const numberFormat = new Intl.NumberFormat('vi-VN')
-const compactFormat = new Intl.NumberFormat('vi-VN', { notation: 'compact', maximumFractionDigits: 1 })
-const percentFormat = new Intl.NumberFormat('vi-VN', { style: 'percent', maximumFractionDigits: 0 })
-const timeFormat = new Intl.DateTimeFormat('vi-VN', { hour: '2-digit', minute: '2-digit' })
-const dayFormat = new Intl.DateTimeFormat('vi-VN', { weekday: 'long', day: 'numeric', month: 'numeric', year: 'numeric' })
+const numberFormat = new Intl.NumberFormat(getIntlLocale())
+const compactFormat = new Intl.NumberFormat(getIntlLocale(), { notation: 'compact', maximumFractionDigits: 1 })
+const percentFormat = new Intl.NumberFormat(getIntlLocale(), { style: 'percent', maximumFractionDigits: 0 })
+const timeFormat = new Intl.DateTimeFormat(getIntlLocale(), { hour: '2-digit', minute: '2-digit' })
+const dayFormat = new Intl.DateTimeFormat(getIntlLocale(), { weekday: 'long', day: 'numeric', month: 'numeric', year: 'numeric' })
 
 export const formatNumber = (value) => numberFormat.format(Number(value || 0))
 export const formatCompact = (value) => compactFormat.format(Number(value || 0))

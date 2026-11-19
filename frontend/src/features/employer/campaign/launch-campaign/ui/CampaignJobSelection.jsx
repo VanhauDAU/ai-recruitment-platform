@@ -8,8 +8,9 @@ import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { employerAppPath } from '@/shared/config/portals'
 import { message } from '@/shared/lib/toast'
 import './launch-campaign.css'
+import { getIntlLocale } from '@/shared/config/i18n'
 
-const formatDate = (value) => (value ? new Date(value).toLocaleDateString('vi-VN') : 'Chưa đặt hạn nộp')
+const formatDate = (value) => (value ? new Date(value).toLocaleDateString(getIntlLocale()) : 'Chưa đặt hạn nộp')
 const pick = (jobs, action) => new Set(jobs.filter((job) => job.action === action).map((job) => job.public_id))
 
 function JobRow({ job, checked, onToggle, badge, targetDate }) {

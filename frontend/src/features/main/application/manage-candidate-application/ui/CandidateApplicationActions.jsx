@@ -1,7 +1,7 @@
 import { BellOutlined, RollbackOutlined } from '@ant-design/icons'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Button, Tooltip } from 'antd'
-import dayjs from 'dayjs'
+import dayjs from '@/shared/lib/dayjs'
 import {
   applicationKeys,
   remindRecruiterOfApplication,

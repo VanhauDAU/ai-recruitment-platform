@@ -6,9 +6,10 @@ import {
   COMPANY_REPORT_STATUS_LABELS,
 } from '@/entities/company/company-report'
 import { adminPath } from '@/shared/config/portals'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 export function formatDateTime(value) {
-  return value ? new Date(value).toLocaleString('vi-VN') : '—'
+  return value ? new Date(value).toLocaleString(getIntlLocale()) : '—'
 }
 
 function sortOrder(ordering, field) {

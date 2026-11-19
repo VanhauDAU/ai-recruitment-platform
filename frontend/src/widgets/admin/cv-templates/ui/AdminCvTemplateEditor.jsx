@@ -16,6 +16,7 @@ import SectionsCard from './editor/SectionsCard'
 import StyleCard from './editor/StyleCard'
 import TemplatePreview from './editor/TemplatePreview'
 import LayoutPicker from './LayoutPicker'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 const VERSION_STATUS = { draft: ['gold', 'Nháp'], published: ['green', 'Đang dùng'], retired: ['default', 'Đã thay'] }
 
@@ -28,7 +29,7 @@ function VersionHistory({ versions }) {
   return <Table size="small" rowKey="id" pagination={false} dataSource={versions} scroll={{ x: 460 }} columns={[
     { title: 'Phiên bản', dataIndex: 'version_number', render: (number, row) => <span className="flex items-center gap-2">v{number}<Tag color={VERSION_STATUS[row.version_status]?.[0]} className="!mr-0">{VERSION_STATUS[row.version_status]?.[1] || row.version_status}</Tag></span> },
     { title: 'Bố cục', dataIndex: 'renderer_key', render: (key) => RENDERER_CONTRACTS[key]?.label || key },
-    { title: 'Xuất bản', dataIndex: 'published_at', render: (value, row) => (value ? <span className="text-xs">{new Date(value).toLocaleString('vi-VN')}{row.published_by_name && <span className="block text-slate-500">{row.published_by_name}</span>}</span> : '—') },
+    { title: 'Xuất bản', dataIndex: 'published_at', render: (value, row) => (value ? <span className="text-xs">{new Date(value).toLocaleString(getIntlLocale())}{row.published_by_name && <span className="block text-slate-500">{row.published_by_name}</span>}</span> : '—') },
   ]} />
 }
 

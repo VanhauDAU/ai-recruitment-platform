@@ -17,9 +17,10 @@ import {
   EMPLOYER_VERIFY_URL,
   employerAppPath,
 } from '@/shared/config/portals'
+import { getIntlLocale } from '@/shared/config/i18n'
 
-const dateFormatter = new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })
-const numberFormatter = new Intl.NumberFormat('vi-VN')
+const dateFormatter = new Intl.DateTimeFormat(getIntlLocale(), { day: '2-digit', month: '2-digit', year: 'numeric' })
+const numberFormatter = new Intl.NumberFormat(getIntlLocale())
 
 function PriorityAction({ icon, label, detail, tone, to }) {
   const Icon = icon

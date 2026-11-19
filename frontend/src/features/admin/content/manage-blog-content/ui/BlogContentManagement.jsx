@@ -64,6 +64,7 @@ import {
 import { adminPath } from '@/shared/config/portals'
 import { message } from '@/shared/lib/toast'
 import { AdminDataActions } from '@/shared/ui/admin'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 const STATUS_OPTIONS = [
   ['draft', 'Nháp'],
@@ -339,7 +340,7 @@ function PostList() {
     { title: 'Tác giả', dataIndex: ['author', 'name'], width: 180, ...sortable('author'), render: (value) => value || 'Không xác định' },
     { title: 'Trạng thái', width: 190, ...sortable('editorial_state'), render: (_, row) => <Tag color={statusColor(row.editorial_state)}>{row.editorial_state_label}</Tag> },
     { title: 'Hoàn thiện', width: 130, ...sortable('completeness'), render: (_, row) => <Progress percent={row.completeness.score} size="small" /> },
-    { title: 'Lượt xem', dataIndex: 'view_count', width: 110, ...sortable('view_count'), render: (value) => Number(value || 0).toLocaleString('vi-VN') },
+    { title: 'Lượt xem', dataIndex: 'view_count', width: 110, ...sortable('view_count'), render: (value) => Number(value || 0).toLocaleString(getIntlLocale()) },
     {
       title: 'Cập nhật',
       dataIndex: 'updated_at',
@@ -347,7 +348,7 @@ function PostList() {
       ...sortable('updated_at'),
       render: (value) => {
         const date = new Date(value)
-        return <span title={date.toLocaleString('vi-VN')}>{date.toLocaleDateString('vi-VN')}</span>
+        return <span title={date.toLocaleString(getIntlLocale())}>{date.toLocaleDateString(getIntlLocale())}</span>
       },
     },
     {
@@ -401,7 +402,7 @@ function PostList() {
           <div>
             <h2 className="text-lg font-bold text-slate-900">Danh sách bài viết</h2>
             <p className="mt-1 text-sm text-slate-500">
-              {postsQuery.isLoading ? 'Đang tải dữ liệu…' : `${Number(postsQuery.data?.count || 0).toLocaleString('vi-VN')} bài viết phù hợp`}
+              {postsQuery.isLoading ? 'Đang tải dữ liệu…' : `${Number(postsQuery.data?.count || 0).toLocaleString(getIntlLocale())} bài viết phù hợp`}
             </p>
           </div>
           <p className="text-xs text-slate-500">Tên mở trang quản trị; URL của bài đã xuất bản mở trang public trong tab mới.</p>
@@ -537,7 +538,7 @@ function PostList() {
                 </div>
                 <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-slate-500">
                   <span>{row.category?.name || 'Chưa phân loại'}</span>
-                  <span className="text-right">{Number(row.view_count || 0).toLocaleString('vi-VN')} lượt xem</span>
+                  <span className="text-right">{Number(row.view_count || 0).toLocaleString(getIntlLocale())} lượt xem</span>
                 </div>
                 <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
                   <Progress percent={row.completeness.score} size="small" className="min-w-32 flex-1" />

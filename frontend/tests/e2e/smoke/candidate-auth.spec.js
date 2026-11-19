@@ -24,7 +24,7 @@ test('candidate auth mascot clings to the card and follows credential privacy st
   await expect(mascot.locator('.procv-mascot__face-arm')).toHaveCount(2)
   await expect(mascotStage.locator('.auth-mascot-stage__grip')).toHaveCount(0)
 
-  await page.getByRole('button', { name: 'Show' }).click()
+  await page.getByRole('button', { name: 'Hiển thị' }).click()
   await expect(mascot).toHaveAttribute('data-pose', 'peek')
   await expect(mascot.locator('.procv-mascot__face-arm')).toHaveCount(1)
 

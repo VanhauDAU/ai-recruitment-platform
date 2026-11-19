@@ -7,6 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
+| [Song ngữ vi/en cho 3 cổng (ADR-0023)](#song-ngữ-vien-cho-3-cổng-adr-0023-2026-11-19) | 🟨 GĐ0 (nền tảng + marketing NTD) trên nhánh `feat/i18n-foundation`; GĐ1–4 chưa làm |
 | [Chuẩn hóa tiêu đề trang 3 cổng](#chuẩn-hóa-tiêu-đề-trang-3-cổng-2026-11-19) | 🟨 PR #261 (nhánh `feat/page-titles`), chờ gộp |
 | [Hậu kiểm nội dung trang công ty](#hậu-kiểm-nội-dung-trang-công-ty-2026-11-19) | ✅ Gộp vào `dev` (#260) |
 | [Tối ưu và chuẩn hóa test/CI](#tối-ưu-và-chuẩn-hóa-testci-2026-11-19) | 🟨 PR #256, #257, #258, GĐ4 nhánh `docs/test-standards` — chờ gộp |
@@ -34,6 +35,24 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Các epic đã hoàn tất](#các-epic-đã-hoàn-tất) | ✅ |
 | [Lộ trình theo PRD](#lộ-trình-theo-prd) | 🟨 Phần AI lõi (giai đoạn 2–3) còn mở |
 | [Việc còn mở](#việc-còn-mở) | |
+
+## Song ngữ vi/en cho 3 cổng (ADR-0023, 2026-11-19)
+
+Lý do: một số NTD là người nước ngoài. Quyết định và lộ trình nằm ở
+[ADR-0023](02-tong-quan/adr-0023-i18n-vi-en.md).
+
+| GĐ | Phạm vi | Trạng thái |
+|---|---|---|
+| 0 | Nền tảng FE (Paraglide; antd/dayjs/Intl theo locale; `Accept-Language`; bộ chọn lưu vào tài khoản; `check:i18n` + ratchet); backend (`LocaleMiddleware`, `preferred_language`, catalog vi bổ sung cho DRF); chuyển 4 trang marketing NTD khỏi i18next | 🟨 Nhánh `feat/i18n-foundation` |
+| 1 | Cổng NTD: chuỗi FE, thông báo backend, email/thông báo theo ngôn ngữ người nhận, prompt AI theo locale | ⬜ |
+| 2 | Danh mục `name_en` (tỉnh/thành, kỹ năng, ngành nghề, phúc lợi); entities và shared | ⬜ |
+| 3 | Cổng ứng viên | ⬜ |
+| 4 | Cổng quản trị; ratchet về 0 | ⬜ |
+
+Số đo lúc bắt đầu:
+- 8.793 dòng tiếng Việt viết cứng trong `frontend/src` (`scripts/i18n-baseline.json`).
+- Bundle khởi tạo 322,4 → 326,3 KiB, gồm runtime Paraglide khoảng 1,4 KiB và
+  locale vi_VN của antd khoảng 2,2 KiB.
 
 ## Chuẩn hóa tiêu đề trang 3 cổng (2026-11-19)
 

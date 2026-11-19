@@ -1,3 +1,4 @@
+import { getIntlLocale } from '@/shared/config/i18n'
 const STATUS_PRESENTATION = {
   pending: { color: 'processing', label: 'Chờ xác minh DNS' },
   dns_pending: { color: 'processing', label: 'Chờ xác minh DNS' },
@@ -35,5 +36,5 @@ export function formatDomainClaimDate(value) {
   if (!value) return ''
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return ''
-  return date.toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' })
+  return date.toLocaleString(getIntlLocale(), { dateStyle: 'short', timeStyle: 'short' })
 }

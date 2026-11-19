@@ -5,8 +5,9 @@ import { Link } from 'react-router'
 import { adminPath } from '@/shared/config/portals'
 import { buildQueues, formatAge } from '@/entities/dashboard/admin-dashboard'
 import './admin-queue-bell.css'
+import { getIntlLocale } from '@/shared/config/i18n'
 
-const formatNumber = (value) => Number(value || 0).toLocaleString('vi-VN')
+const formatNumber = (value) => Number(value || 0).toLocaleString(getIntlLocale())
 
 /** Header bell: the same urgency-sorted queues as the dashboard, one click away. */
 export default function AdminQueueBell({ summary }) {

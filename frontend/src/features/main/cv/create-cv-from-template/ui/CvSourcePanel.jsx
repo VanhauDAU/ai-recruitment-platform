@@ -3,6 +3,7 @@ import { Select, Spin, Upload } from 'antd'
 import { Link } from 'react-router'
 import { useSiteSettings } from '@/entities/system/site-settings'
 import { getUploadStatePresentation } from '@/shared/api/upload-session'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 function SourceOption({ value, current, onSelect, title, note, disabled, children }) {
   const active = current === value
@@ -160,7 +161,7 @@ export default function CvSourcePanel({ cv, onBack, showActions = true }) {
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm font-semibold text-slate-800">{cv.title}</span>
-                    <span className="block text-xs text-slate-500">{cv.updated_at ? new Date(cv.updated_at).toLocaleDateString('vi-VN') : ''}</span>
+                    <span className="block text-xs text-slate-500">{cv.updated_at ? new Date(cv.updated_at).toLocaleDateString(getIntlLocale()) : ''}</span>
                   </span>
                   <Link to={`/cvs/${cv.public_id}/view`} target="_blank" className="shrink-0 text-xs font-medium text-[#00b14f] hover:text-[#008a3e] cursor-pointer" onClick={(event) => event.stopPropagation()}>
                     (Xem CV)

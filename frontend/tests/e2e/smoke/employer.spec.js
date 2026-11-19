@@ -2376,7 +2376,7 @@ test('employer company page: hiding a section updates the preview and saves the 
   if (!sideBySide) await page.getByRole('button', { name: 'Xem trước' }).click()
   await expect(preview.getByRole('region', { name: 'Giới thiệu công ty' })).toBeVisible()
   await expect(preview.getByRole('region', { name: 'Phúc lợi' })).toHaveCount(0)
-  if (!sideBySide) await preview.getByRole('button', { name: 'Close' }).click()
+  if (!sideBySide) await preview.getByRole('button', { name: 'Đóng' }).click()
   await expectNoHorizontalOverflow(page)
 
   await save.click()

@@ -1,0 +1,18 @@
+{
+  "app": 304,
+  "entities": 567,
+  "features/admin": 1208,
+  "features/common": 391,
+  "features/employer": 1536,
+  "features/main": 659,
+  "pages": 2,
+  "pages/admin": 53,
+  "pages/employer": 339,
+  "pages/main": 792,
+  "shared": 152,
+  "src": 0,
+  "widgets/admin": 1793,
+  "widgets/common": 16,
+  "widgets/employer": 624,
+  "widgets/main": 357
+}

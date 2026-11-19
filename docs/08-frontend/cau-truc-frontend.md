@@ -8,8 +8,8 @@ lặp lại các quy tắc đó.
 ## Stack
 
 React 19 + Vite 8, React Router 8, Ant Design 6 (theme qua `ConfigProvider`),
-Tailwind CSS 4, TanStack Query 5, axios (chỉ trong `shared/api`), i18next cho cổng
-marketing nhà tuyển dụng. Unit test bằng Vitest, E2E smoke bằng Playwright ở ba
+Tailwind CSS 4, TanStack Query 5, axios (chỉ trong `shared/api`), Paraglide JS cho song ngữ
+vi/en (ADR-0023). Unit test bằng Vitest, E2E smoke bằng Playwright ở ba
 viewport (desktop, tablet, mobile).
 
 ## Ba cổng

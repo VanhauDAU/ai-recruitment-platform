@@ -127,6 +127,7 @@ class ProfileUpdateTests(APITestCase):
                 'phone',
                 'avatar_url',
                 'email_verified',
+                'preferred_language',
                 'job_preferences_configured',
                 'has_usable_password',
                 'employer_onboarding_required',
@@ -170,6 +171,30 @@ class ProfileUpdateTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.user.refresh_from_db()
         self.assertEqual(self.user.email, 'candidate@example.com')
+
+    def test_update_preferred_language_alone(self):
+        response = self.client.patch(self.url, {'preferred_language': 'en'})
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['preferred_language'], 'en')
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.preferred_language, 'en')
+        self.assertEqual(self.user.full_name, 'Tên Cũ')
+
+    def test_unsupported_language_rejected(self):
+        response = self.client.patch(self.url, {'preferred_language': 'fr'})
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('preferred_language', response.data)
+
+    def test_validation_message_follows_accept_language(self):
+        vi = self.client.patch(self.url, {'preferred_language': 'fr'})
+        en = self.client.patch(self.url, {'preferred_language': 'fr'}, HTTP_ACCEPT_LANGUAGE='en')
+
+        self.assertEqual(vi.data['preferred_language'], ['"fr" không phải là lựa chọn hợp lệ.'])
+        self.assertEqual(en.data['preferred_language'], ['"fr" is not a valid choice.'])
+        self.assertEqual(en.headers['Content-Language'], 'en')
+        self.assertEqual(vi.headers['Content-Language'], 'vi')
 
     def test_invalid_phone_rejected(self):
         response = self.client.patch(self.url, {'full_name': 'Hợp Lệ', 'phone': 'abc'})

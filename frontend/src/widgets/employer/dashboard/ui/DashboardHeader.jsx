@@ -6,8 +6,9 @@ import {
 } from '@ant-design/icons'
 import { Link } from 'react-router'
 import { employerAppPath } from '@/shared/config/portals'
+import { getIntlLocale } from '@/shared/config/i18n'
 
-const fullDateFormatter = new Intl.DateTimeFormat('vi-VN', {
+const fullDateFormatter = new Intl.DateTimeFormat(getIntlLocale(), {
   weekday: 'long',
   day: '2-digit',
   month: 'long',

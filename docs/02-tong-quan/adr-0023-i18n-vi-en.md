@@ -1,0 +1,124 @@
+# ADR-0023: Song ngữ vi/en cho cả ba cổng
+
+**Trạng thái:** Đã chấp nhận
+**Ngày:** 19/11/2026
+**Owner:** Frontend + Backend
+
+## Bối cảnh
+
+Một số nhà tuyển dụng là người nước ngoài, nhưng hệ thống gần như chỉ có tiếng
+Việt:
+
+- **Frontend:** khoảng 8.800 dòng có chữ tiếng Việt viết cứng trong khoảng 780
+  tệp. Riêng 4 trang marketing NTD dùng i18next; module đó cấm import ở các cổng
+  khác để không kéo khoảng 15 KB gzip runtime vào bundle khởi tạo.
+- **Backend:** không có gettext, `LocaleMiddleware` hay tùy chọn ngôn ngữ của
+  tài khoản. Thông báo do dự án viết là tiếng Việt, còn thông báo có sẵn của
+  DRF/Django ra tiếng Anh vì `LANGUAGE_CODE='en-us'`.
+
+Ràng buộc: bundle JS khởi tạo còn khoảng 6 KiB trước trần 328,5 KiB. Không đổi
+URL, payload API hay khóa token. Khoảng 2.700 truy vấn test theo chữ tiếng Việt
+phải tiếp tục chạy.
+
+## Quyết định
+
+### 1. Frontend dùng Paraglide JS (inlang), bỏ i18next
+
+- Chuỗi nằm ở `frontend/messages/<vùng>/{vi,en}.json` (common, employer, sau
+  này main, admin). `project.inlang/settings.json` liệt kê các vùng trong
+  `pathPattern`. Plugin định dạng được nạp từ `node_modules`, nên lúc build
+  không phải tải gì từ CDN.
+- Plugin Vite biên dịch thành `src/shared/config/i18n/paraglide/`. Thư mục này
+  không commit; `vite`, `vite build` và vitest đều tự sinh lại.
+- Mỗi chuỗi là một hàm ES (`m.marketing_nav_home()`). Bundler bỏ những chuỗi
+  không dùng, nên chuỗi của trang nào chỉ nằm trong chunk của trang đó.
+  - Runtime cộng thêm khoảng 1,4 KiB vào bundle khởi tạo (đo 19/11: 322,4 →
+    323,8 KiB). i18next sẽ tốn khoảng 15 KiB.
+  - Gõ sai tên khóa là lỗi import, không phải chuỗi rỗng lúc chạy.
+- Khóa phẳng dạng snake_case, có tiền tố theo vùng sở hữu (`marketing_…`,
+  `common_…`). Danh sách và nhãn động là mảng hoặc map các hàm message, không
+  ghép khóa bằng template string.
+- Chỉ `@/shared/config/i18n` được import mã sinh (oxlint
+  `no-restricted-imports`). Module này:
+  - đọc ngôn ngữ một lần lúc khởi động (`overwriteGetLocale`), vì runtime mặc
+    định đọc localStorage ở mỗi lần gọi `m.key()`;
+  - chuyển khóa cũ `employer_marketing_lang` sang khóa mới;
+  - xuất `m`, `getLocale`, `getIntlLocale`, `getOgLocale` và `changeLocale`.
+
+### 2. Chọn ngôn ngữ
+
+| Nguồn | Thứ tự ưu tiên | Ghi chú |
+|---|---|---|
+| `preferred_language` của tài khoản | 1 | `SessionProvider` áp dụng khi khôi phục phiên. Đăng nhập ở máy mới vẫn đúng ngôn ngữ. |
+| localStorage `procv_lang` | 2 | Lựa chọn trên thiết bị, cho khách chưa đăng nhập. |
+| `vi` | 3 | Mặc định. |
+
+- **Không đọc `navigator.language`:** người Việt dùng trình duyệt tiếng Anh vẫn
+  phải mặc định tiếng Việt. Playwright cũng chạy với `en-US`.
+- **Không có tiền tố `/en/` trong URL:** route giữ hợp đồng hiện có. SEO shell
+  ở backend vẫn tiếng Việt.
+- **Đổi ngôn ngữ là tải lại trang.** antd (`ConfigProvider locale`), dayjs
+  (`@/shared/lib/dayjs`), `Intl`, cache react-query và dữ liệu API cùng làm
+  mới; không cần provider hay cơ chế render lại.
+  - Nếu không ghi được localStorage, `changeLocale` không tải lại. Như vậy tránh
+    được vòng lặp tải lại khi đồng bộ ngôn ngữ theo tài khoản.
+- **Bộ chọn ngôn ngữ** (`features/common/preferences/switch-language`): khi đã
+  đăng nhập thì PATCH `/api/auth/me/` trước rồi mới đổi. Lưu thất bại thì báo
+  lỗi và giữ nguyên ngôn ngữ.
+- **Tài khoản mới** lấy ngôn ngữ của request đăng ký (`UserManager.create_user`).
+  Vì vậy NTD chọn English rồi đăng ký sẽ không bị trả về tiếng Việt.
+- Lựa chọn ngôn ngữ là lưu trữ "cần thiết" (người dùng chủ động yêu cầu), không
+  phụ thuộc đồng ý nhóm preferences như chế độ màu.
+
+### 3. Backend
+
+- `LANGUAGE_CODE='vi'`, `LANGUAGES` gồm vi/en, và
+  `django.middleware.locale.LocaleMiddleware` sau `SessionMiddleware`.
+  Frontend gửi `Accept-Language` trong mọi request của axios.
+- Chuỗi do dự án viết dùng msgid tiếng Việt, bọc trong `gettext`/`gettext_lazy`
+  khi di trú từng vùng. `locale/en` sẽ dịch chúng sang tiếng Anh.
+- `locale/vi` bổ sung các thông báo DRF mà gói DRF chưa dịch.
+- Docker và CI không có GNU gettext, nên `.mo` được commit cùng `.po`.
+  `common/tests/test_locale_catalogs.py` bắt lỗi quên biên dịch.
+- Email, Celery và thông báo trong ứng dụng render bằng ngôn ngữ của người nhận
+  (`translation.override(user.preferred_language)`) từ giai đoạn di trú cổng
+  tương ứng. Thông báo đã lưu trong DB giữ nguyên.
+- Danh mục cố định (tỉnh/thành, kỹ năng, ngành nghề, phúc lợi) thêm `name_en`
+  và trả tên theo ngôn ngữ của request. Nội dung do người dùng viết (tin, trang
+  công ty, CV, blog) không dịch.
+
+### 4. Cổng kiểm tra
+
+`npm run lint` gọi `scripts/check-i18n.mjs`, kiểm hai việc:
+
+- Khóa và tham số `{name}` của `vi.json` và `en.json` phải khớp.
+- Ratchet số dòng tiếng Việt viết cứng theo từng vùng (`scripts/i18n-baseline.json`).
+  - Thêm chuỗi viết cứng mới là lỗi.
+  - Di trú xong một vùng thì chạy `npm run check:i18n -- --update` để hạ trần.
+  - Lệnh này không bao giờ nâng trần.
+
+### 5. Lộ trình di trú
+
+Mỗi giai đoạn là một PR. Bộ chọn ngôn ngữ chỉ hiện ở vùng đã dịch xong, để
+người dùng không chọn English rồi vẫn thấy tiếng Việt.
+
+| GĐ | Phạm vi |
+|---|---|
+| 0 | Nền tảng; 4 trang marketing NTD (PR này) |
+| 1 | Cổng NTD: frontend, chuỗi backend, email, thông báo, prompt AI |
+| 2 | Danh mục `name_en`; entities/shared dùng chung |
+| 3 | Cổng ứng viên |
+| 4 | Cổng quản trị; ratchet về 0 |
+
+## Hệ quả
+
+- **Bundle:** bundle khởi tạo tăng khoảng 3,9 KiB, chủ yếu vì `antd/locale/vi_VN`
+  (khoảng 2,2 KiB). Trước đây chỉ cổng quản trị nạp gói này, nên cổng ứng viên và
+  NTD đang hiện chữ mặc định tiếng Anh của antd. Chuỗi của các vùng sau nằm
+  trong chunk lười của trang tương ứng.
+- **dayjs:** phải import từ `@/shared/lib/dayjs`; import trực tiếp `dayjs` bị
+  oxlint chặn.
+- **Môi trường phát triển:** mã sinh của Paraglide chỉ có sau khi chạy `vite`,
+  `vite build` hoặc vitest. Editor báo thiếu module cho tới lần chạy đầu.
+- **Nâng cấp:** Paraglide 3.x vừa phát hành (11/2026). Dự án ghim 2.29.3 và
+  nâng cấp sau khi bản 3 ổn định.

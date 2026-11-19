@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Button, Checkbox, DatePicker, Form, Input, InputNumber, Radio, Select } from 'antd'
-import dayjs from 'dayjs'
+import dayjs from '@/shared/lib/dayjs'
 import {
   CAMPAIGN_BUDGET_SOURCE_OPTIONS,
   campaignKeys,

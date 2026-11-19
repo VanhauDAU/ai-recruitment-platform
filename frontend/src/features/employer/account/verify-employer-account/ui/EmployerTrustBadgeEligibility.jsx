@@ -6,12 +6,13 @@ import {
   getEmployerProfile,
   resolveEmployerBadgeEligibility,
 } from '@/entities/account/employer-profile'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 function eligibleDate(value) {
   if (!value) return ''
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return ''
-  return date.toLocaleDateString('vi-VN')
+  return date.toLocaleDateString(getIntlLocale())
 }
 
 export default function EmployerTrustBadgeEligibility({ profile: suppliedProfile, className = '' }) {

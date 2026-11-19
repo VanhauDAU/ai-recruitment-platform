@@ -1,49 +1,86 @@
-// i18n cho CỔNG MARKETING NTD — phần còn lại của site vẫn tiếng Việt thuần.
-// Module này chỉ được import từ chunk employer marketing (layout + pages);
-// import từ main/admin sẽ kéo i18next vào bundle của cổng đó, đừng làm vậy.
-import i18n from 'i18next'
-import { initReactI18next } from 'react-i18next'
+// Nền tảng song ngữ vi/en cho cả ba cổng (Paraglide JS, ADR-0023).
+// Chuỗi nằm ở frontend/messages/<vùng>/{vi,en}.json; plugin Vite biên dịch
+// thành ./paraglide (không commit). Mỗi chuỗi là một hàm `m.key()` nên chunk
+// nào dùng chuỗi nào chỉ chứa chuỗi đó.
+import {
+  baseLocale,
+  getLocale,
+  isLocale,
+  locales,
+  overwriteGetLocale,
+  setLocale,
+} from './paraglide/runtime.js'
 
-import employerVi from './locales/employer-vi.json'
-import employerEn from './locales/employer-en.json'
+export { m } from './paraglide/messages.js'
 
-export const EMPLOYER_NS = 'employer'
-export const LANGUAGE_STORAGE_KEY = 'employer_marketing_lang'
-export const SUPPORTED_LANGUAGES = ['vi', 'en']
+export const SUPPORTED_LOCALES = locales
+export const DEFAULT_LOCALE = baseLocale
+// Trùng `localStorageKey` trong vite.config.js.
+export const LOCALE_STORAGE_KEY = 'procv_lang'
+const LEGACY_STORAGE_KEY = 'employer_marketing_lang'
 
-function readStoredLanguage() {
+const INTL_LOCALES = { vi: 'vi-VN', en: 'en-US' }
+const OG_LOCALES = { vi: 'vi_VN', en: 'en_US' }
+
+// Trước 11/2026 chỉ cổng marketing NTD có i18n và lưu ở khóa riêng; chuyển một
+// lần để người đã chọn tiếng Anh không bị trả về tiếng Việt.
+function migrateLegacyStorage() {
   try {
-    const stored = localStorage.getItem(LANGUAGE_STORAGE_KEY)
-    return SUPPORTED_LANGUAGES.includes(stored) ? stored : 'vi'
+    const legacy = localStorage.getItem(LEGACY_STORAGE_KEY)
+    if (legacy === null) return
+    if (!localStorage.getItem(LOCALE_STORAGE_KEY) && isLocale(legacy)) {
+      localStorage.setItem(LOCALE_STORAGE_KEY, legacy)
+    }
+    localStorage.removeItem(LEGACY_STORAGE_KEY)
   } catch {
-    return 'vi'
+    // localStorage bị chặn: dùng ngôn ngữ mặc định.
   }
 }
 
-if (!i18n.isInitialized) {
-  i18n.use(initReactI18next).init({
-    lng: readStoredLanguage(),
-    fallbackLng: 'vi',
-    ns: [EMPLOYER_NS],
-    defaultNS: EMPLOYER_NS,
-    resources: {
-      vi: { [EMPLOYER_NS]: employerVi },
-      en: { [EMPLOYER_NS]: employerEn },
-    },
-    interpolation: { escapeValue: false },
-  })
-  document.documentElement.lang = i18n.language
-}
-
-export function changeAppLanguage(lang) {
-  if (!SUPPORTED_LANGUAGES.includes(lang)) return
-  i18n.changeLanguage(lang)
-  document.documentElement.lang = lang
+function readStoredLocale() {
   try {
-    localStorage.setItem(LANGUAGE_STORAGE_KEY, lang)
+    const stored = localStorage.getItem(LOCALE_STORAGE_KEY)
+    return isLocale(stored) ? stored : baseLocale
   } catch {
-    // localStorage bị chặn (private mode) — ngôn ngữ vẫn đổi trong phiên.
+    return baseLocale
   }
 }
 
-export default i18n
+migrateLegacyStorage()
+
+// Runtime mặc định đọc localStorage ở MỖI lần gọi m.key(). Đổi ngôn ngữ luôn
+// tải lại trang nên chỉ cần đọc một lần lúc khởi động.
+let currentLocale = readStoredLocale()
+overwriteGetLocale(() => currentLocale)
+if (typeof document !== 'undefined') document.documentElement.lang = currentLocale
+
+export { getLocale }
+
+/** Locale BCP 47 cho Intl/toLocale*: 'vi-VN' | 'en-US'. */
+export function getIntlLocale() {
+  return INTL_LOCALES[getLocale()] ?? INTL_LOCALES[baseLocale]
+}
+
+export function getOgLocale() {
+  return OG_LOCALES[getLocale()] ?? OG_LOCALES[baseLocale]
+}
+
+/**
+ * Đổi ngôn ngữ giao diện: lưu lựa chọn rồi tải lại trang để antd, dayjs, cache
+ * react-query và dữ liệu API (backend dịch theo Accept-Language) cùng làm mới.
+ * `reload: false` chỉ dành cho test.
+ */
+export function changeLocale(locale, { reload = true } = {}) {
+  if (!isLocale(locale) || locale === getLocale()) return false
+  setLocale(locale, { reload: false })
+  // Không lưu được (localStorage bị chặn) thì tải lại sẽ quay về ngôn ngữ cũ và
+  // có thể lặp vô hạn khi đồng bộ theo tài khoản; giữ nguyên trang.
+  if (reload && readStoredLocale() !== locale) return false
+  currentLocale = locale
+  if (reload) {
+    window.location.reload()
+    return true
+  }
+  if (typeof document !== 'undefined') document.documentElement.lang = locale
+  return true
+}

@@ -12,6 +12,7 @@ import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { MAIN_PORTAL_URL } from '@/shared/config/portals'
 import { message } from '@/shared/lib/toast'
 import { CompanyPanel } from './CompanyPanel'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 const REASON_MIN_LENGTH = 10
 const REASON_MAX_LENGTH = 500
@@ -67,7 +68,7 @@ function validateReason(_, value) {
 
 function formatHoldTime(value) {
   return value
-    ? new Date(value).toLocaleString('vi-VN', { dateStyle: 'medium', timeStyle: 'short' })
+    ? new Date(value).toLocaleString(getIntlLocale(), { dateStyle: 'medium', timeStyle: 'short' })
     : ''
 }
 

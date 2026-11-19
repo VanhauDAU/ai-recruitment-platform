@@ -6,10 +6,11 @@ import {
 import { Button, Empty, Space, Table, Tag, Tooltip } from 'antd'
 import { recruiterVerificationMeta } from '@/entities/company/admin-company'
 import CompanyLogo from './CompanyLogo'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 function formatDate(value) {
   if (!value) return 'Chưa cập nhật'
-  return new Intl.DateTimeFormat('vi-VN', {
+  return new Intl.DateTimeFormat(getIntlLocale(), {
     dateStyle: 'short',
     timeStyle: 'short',
   }).format(new Date(value))
@@ -187,7 +188,7 @@ export default function CompanyDirectoryTable({
         pageSize: 20,
         total: companies.count,
         showSizeChanger: false,
-        showTotal: (total) => `${total.toLocaleString('vi-VN')} công ty`,
+        showTotal: (total) => `${total.toLocaleString(getIntlLocale())} công ty`,
       }}
       onChange={onChange}
       onRow={(company) => ({
