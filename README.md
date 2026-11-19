@@ -129,20 +129,21 @@ toán chi tiết ở [`thuat-toan-ai.md`](docs/07-algorithms/thuat-toan-ai.md).
 ## Kiến trúc
 
 ```mermaid
-flowchart TB
+flowchart LR
     U([Trình duyệt]) --> FE[Frontend SPA<br/>React 19 · Vite]
-    FE -->|REST /api · JWT| BE[Backend API<br/>Django 5.1 · DRF]
+    FE -->|REST · JWT| BE[Backend API<br/>Django 5.1 · DRF]
     BE --> DB[(PostgreSQL 16<br/>+ pgvector)]
-    BE --> R[(Redis 7<br/>cache · broker)]
-    R --> W[worker<br/>email · SMS · xuất CV · quét file]
-    R --> AW[ai-worker<br/>AI soạn nội dung]
-    R --> MW[ml-worker<br/>đối sánh CV–JD]
-    B[beat<br/>tác vụ định kỳ] --> R
-    W --> AV[ClamAV<br/>quét mã độc]
-    MW -. đọc mô hình .-> M[[ml/models]]
-    W --> DB
-    AW --> DB
-    MW --> DB
+    BE -->|giao tác vụ| R[(Redis 7<br/>cache · broker)]
+    subgraph CEL [Celery]
+        W[worker<br/>email · SMS · xuất CV · quét file]
+        AW[ai-worker<br/>AI soạn nội dung]
+        MW[ml-worker<br/>đối sánh CV–JD]
+        B[beat<br/>tác vụ định kỳ]
+    end
+    R --> CEL
+    CEL --> DB
+    W --> AV[ClamAV]
+    MW -.-> M[[ml/models]]
 ```
 
 - **Backend** chia theo app nghiệp vụ trong `backend/apps/`, mỗi app cùng một bố
