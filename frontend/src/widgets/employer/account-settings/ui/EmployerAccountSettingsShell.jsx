@@ -9,7 +9,6 @@ import {
   UserOutlined,
 } from '@ant-design/icons'
 import { Select, Tooltip } from 'antd'
-import { useEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router'
 import {
   EMPLOYER_ACCOUNT_SETTINGS_URL,
@@ -21,7 +20,6 @@ import {
   EMPLOYER_PASSWORD_SETTINGS_URL,
   EMPLOYER_RECRUITMENT_DEMAND_URL,
 } from '@/shared/config/portals'
-import { setDocumentTitle } from '@/shared/config/document-title'
 
 const ITEMS = [
   { to: EMPLOYER_PASSWORD_SETTINGS_URL, label: 'Đổi mật khẩu', icon: LockOutlined },
@@ -38,10 +36,6 @@ export default function EmployerAccountSettingsShell({ title, children, hideHead
   const { pathname } = useLocation()
   const navigate = useNavigate()
   const activeItem = ITEMS.find((item) => item.to === pathname)
-
-  useEffect(() => {
-    setDocumentTitle(title, { portal: 'employer' })
-  }, [title])
 
   return (
     <div className="mx-auto max-w-[1256px] overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">

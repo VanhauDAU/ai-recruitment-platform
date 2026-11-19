@@ -1,5 +1,6 @@
 """Search-visible HTML metadata for the public CV template catalogue."""
 
+from django.utils import timezone
 from django.views import View
 
 from apps.cv_templates.selectors.seo import (
@@ -7,7 +8,7 @@ from apps.cv_templates.selectors.seo import (
     seo_catalog_context,
     seo_template_by_slug,
 )
-from apps.sitecontent.services import resolved_seo_settings
+from apps.sitecontent.services import resolved_seo_settings, seo_page_title
 from common.seo import (
     SeoMetadata,
     absolute_url,
@@ -31,7 +32,7 @@ def _metadata(
     settings = resolved_seo_settings()
     allow_index = settings['seo_robots_index']
     return SeoMetadata(
-        title=f'{title} | {settings["site_name"]}',
+        title=seo_page_title(title, settings),
         description=description or settings['seo_default_description'],
         canonical_url=absolute_url(request, canonical_path),
         site_name=settings['site_name'],
@@ -150,7 +151,8 @@ class CvTemplateSeoShellView(View):
                 request,
                 _metadata(
                     request,
-                    title=template.catalog_seo_title or f'Mẫu CV {template.catalog_display_name}',
+                    title=template.catalog_seo_title
+                    or f'Mẫu CV {locale.label} - {template.catalog_display_name}',
                     description=template.catalog_seo_description or template.catalog_description,
                     canonical_path=canonical_path,
                     image=image,
@@ -167,7 +169,9 @@ class CvTemplateSeoShellView(View):
             )
 
         canonical_path = f'{base_path}/{category.slug}' if category else base_path
-        label = category.name if category else f'Mẫu CV {locale.label} chuyên nghiệp'
+        # Khớp H1 của trang danh mục mẫu CV (CatalogHeader) ở frontend.
+        category_label = f' {category.name}' if category else ''
+        label = f'Mẫu CV xin việc {locale.label}{category_label} chuẩn {timezone.localdate().year}'
         description = (
             category.description
             if category

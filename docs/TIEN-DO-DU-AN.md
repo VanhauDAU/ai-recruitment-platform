@@ -7,6 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
+| [Chuẩn hóa tiêu đề trang 3 cổng](#chuẩn-hóa-tiêu-đề-trang-3-cổng-2026-11-19) | 🟨 Xong trên nhánh `feat/page-titles`, chưa mở PR |
 | [Tối ưu và chuẩn hóa test/CI](#tối-ưu-và-chuẩn-hóa-testci-2026-11-19) | 🟨 PR #256, #257, #258, GĐ4 nhánh `docs/test-standards` — chờ gộp |
 | [Tái cấu trúc backend (ADR-0022, GĐ0–GĐ6)](#tái-cấu-trúc-backend-adr-0022-2026-11-19) | ✅ Gộp vào `dev` (#248–#255, 19/11); sau khi pull chạy `scripts/reset_local_db.sh` trước khi start backend |
 | [Tổ chức lại cấu trúc thư mục frontend](#tổ-chức-lại-cấu-trúc-thư-mục-frontend-2026-11-19) | ✅ Gộp vào `dev` (#247) |
@@ -32,6 +33,26 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Các epic đã hoàn tất](#các-epic-đã-hoàn-tất) | ✅ |
 | [Lộ trình theo PRD](#lộ-trình-theo-prd) | 🟨 Phần AI lõi (giai đoạn 2–3) còn mở |
 | [Việc còn mở](#việc-còn-mở) | |
+
+## Chuẩn hóa tiêu đề trang 3 cổng (2026-11-19)
+
+Rà toàn bộ route của 3 cổng, đối chiếu `<title>` với H1/nhãn menu; quy ước ở
+mục "Tiêu đề trang" của `frontend/ARCHITECTURE.md`.
+
+- Thương hiệu theo cổng: `| ProCV`, `| ProCV cho Nhà tuyển dụng` (cả SEO shell
+  marketing NTD), `| Quản trị ProCV`; sinh từ `site_name`.
+- Sửa route bị gán nhầm "Trang không tồn tại" (và `noindex`): `/tai-cv-len`,
+  `/tuyen-dung/:slug`, NTD `/notifications`, `/activities`, `/company-page`,
+  link đánh giá hồ sơ.
+- Tiêu đề SEO kiểu trang tuyển dụng lớn: tin `Tuyển <vị trí> - <công ty>`,
+  danh sách việc làm bỏ nhãn ngày, danh mục mẫu CV khớp H1 có năm, danh mục
+  blog/trợ giúp kèm mục cha, chiến dịch `<tên> - <công ty>`; frontend và SEO
+  shell backend ra cùng chuỗi.
+- Trạng thái lỗi dùng đúng câu đang hiển thị; tiêu đề trang marketing NTD theo
+  ngôn ngữ (vi/en); tiêu đề quản trị khớp H1.
+- Thanh trên cùng workspace NTD dùng chung resolver với tiêu đề tab (trước đây
+  hiện "Không gian nhà tuyển dụng" ở trang đăng/sửa tin).
+- Gỡ `/tuyendung/bao-gia` khỏi SEO shell và sitemap (SPA không có trang này).
 
 ## Tối ưu và chuẩn hóa test/CI (2026-11-19)
 

@@ -14,7 +14,9 @@ import {
   ThunderboltOutlined,
 } from '@ant-design/icons'
 import { createElement } from 'react'
+import { NOT_FOUND_TITLE } from '@/shared/config/document-title'
 import { employerAppPath } from '@/shared/config/portals'
+import { resolveEmployerRouteTitle } from '../router/document-title'
 
 function comingSoonLabel(label) {
   return createElement(
@@ -187,31 +189,10 @@ export function employerNavItems({ unreadApplications = 0 } = {}) {
   ]
 }
 
-const ROUTE_TITLES = [
-  [employerAppPath('/dashboard'), 'Bảng tin'],
-  [employerAppPath('/notifications'), 'Thông báo hệ thống'],
-  [employerAppPath('/activities'), 'Lịch sử hoạt động'],
-  [employerAppPath('/campaigns'), 'Chiến dịch tuyển dụng'],
-  [employerAppPath('/jobs'), 'Tin tuyển dụng'],
-  [employerAppPath('/applications'), 'CV ứng tuyển'],
-  [employerAppPath('/candidate-blocks'), 'Danh sách đen'],
-  [employerAppPath('/talent-pool'), 'Kho ứng viên tiềm năng'],
-  [employerAppPath('/company-page'), 'Trang công ty'],
-  [employerAppPath('/employer-verify'), 'Xác thực tài khoản'],
-  [employerAppPath('/account/phone-verify'), 'Xác thực số điện thoại'],
-  [employerAppPath('/account/settings/account-info'), 'Thông tin tài khoản'],
-  [employerAppPath('/account/settings/password-login'), 'Thay đổi mật khẩu'],
-  [employerAppPath('/account/settings/company'), 'Cài đặt tài khoản'],
-  [employerAppPath('/account/settings/gpkd'), 'Giấy đăng ký doanh nghiệp'],
-  [employerAppPath('/account/settings/personal-data-protection'), 'Văn bản xử lý dữ liệu cá nhân'],
-  [employerAppPath('/account/settings/recruitment-demand'), 'Nhu cầu tuyển dụng'],
-  [employerAppPath('/account/settings/general-setting'), 'Cài đặt'],
-]
-
+// Thanh trên cùng dùng chung nguồn với tiêu đề tab để hai nơi không lệch nhau.
 export function employerRouteTitle(pathname) {
-  return (
-    ROUTE_TITLES.find(([path]) => pathname === path)?.[1] || 'Không gian nhà tuyển dụng'
-  )
+  const title = resolveEmployerRouteTitle(pathname)
+  return title && title !== NOT_FOUND_TITLE ? title : 'Không gian nhà tuyển dụng'
 }
 
 export function employerSelectedMenuKey(pathname) {

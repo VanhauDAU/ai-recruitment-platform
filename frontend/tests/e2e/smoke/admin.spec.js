@@ -772,7 +772,7 @@ test('admin invitation acceptance activates the account with a password', async 
   })
 
   await page.goto('/admin/app/invitation?token=signed-token')
-  await expect(page).toHaveTitle('Hoàn tất tài khoản quản trị | ProCV')
+  await expect(page).toHaveTitle('Hoàn tất tài khoản quản trị | Quản trị ProCV')
   await expect(page.getByRole('heading', { name: 'Hoàn tất tài khoản quản trị' })).toBeVisible()
   await expect(page.getByText('new-admin@example.com')).toBeVisible()
   await page.getByLabel('Mật khẩu mới').fill('StrongPass123')
@@ -806,7 +806,7 @@ test('admin password reset stays on the Admin portal', async ({ page }) => {
   })
 
   await page.goto('/admin/app/reset-password?token=admin-reset-token')
-  await expect(page).toHaveTitle('Đặt lại mật khẩu quản trị | ProCV')
+  await expect(page).toHaveTitle('Đặt lại mật khẩu quản trị | Quản trị ProCV')
   await expect(page.getByRole('heading', { name: 'Đặt lại mật khẩu quản trị' })).toBeVisible()
   await page.getByLabel('Mật khẩu mới').fill('StrongPass123')
   await page.getByLabel('Nhập lại mật khẩu').fill('StrongPass123')
@@ -935,7 +935,7 @@ test('admin job management: list, detail and revision-bound hide workflow', { ta
   await expect(page.getByText('Backend Engineer', { exact: true })).toBeVisible()
   await page.getByRole('button', { name: 'Xem chi tiết' }).click()
   await expect(page).toHaveURL('/admin/app/job-moderation/job_active')
-  await expect(page).toHaveTitle('Chi tiết tin tuyển dụng | ProCV')
+  await expect(page).toHaveTitle('Chi tiết tin tuyển dụng | Quản trị ProCV')
   const contentTab = page.getByRole('tab', { name: 'Nội dung', exact: true })
   const contactTab = page.getByRole('tab', { name: 'Nhận hồ sơ' })
 

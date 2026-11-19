@@ -25,7 +25,7 @@ urlpatterns = [
     ),
     path('chinh-sach-cookie', StaticSeoShellView.as_view(), name='seo-cookie-policy'),
     re_path(
-        r'^tuyendung(?:/(?:gioi-thieu|dich-vu|bao-gia|lien-he|'
+        r'^tuyendung(?:/(?:gioi-thieu|dich-vu|lien-he|'
         r'dieu-khoan-dich-vu|chinh-sach-quyen-rieng))?$',
         StaticSeoShellView.as_view(),
         name='seo-employer-marketing',

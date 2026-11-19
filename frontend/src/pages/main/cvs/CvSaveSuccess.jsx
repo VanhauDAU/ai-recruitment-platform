@@ -1,15 +1,9 @@
-import { useEffect } from 'react'
 import { useLocation, useParams } from 'react-router'
 import { CvSaveSuccessView } from '@/widgets/main/cv-save-success'
-import { setDocumentTitle } from '@/shared/config/document-title'
 
 export default function CvSaveSuccess() {
   const { publicId } = useParams()
   const location = useLocation()
-
-  useEffect(() => {
-    setDocumentTitle('Lưu CV thành công')
-  }, [])
 
   return (
     <CvSaveSuccessView

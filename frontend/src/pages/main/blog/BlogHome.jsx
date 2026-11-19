@@ -74,7 +74,7 @@ export default function BlogHome() {
   useDocumentMetadata(
     tagSlug
       ? {
-          title: `Thẻ: ${tagSlug} — ${pageTitle}`,
+          title: `Bài viết gắn thẻ “${tagSlug}” - ${pageTitle}`,
           description: `Các bài viết cẩm nang gắn thẻ ${tagSlug}.`,
           canonicalPath: `${BLOG_ROOT}?tag=${encodeURIComponent(tagSlug)}`,
         }

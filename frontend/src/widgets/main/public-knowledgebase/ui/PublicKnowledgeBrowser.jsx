@@ -41,8 +41,8 @@ export default function PublicKnowledgeBrowser({ categorySlug }) {
     ? knowledgeCategoryPath(state.activeCategory.slug)
     : KNOWLEDGE_ROOT
   const title = state.notFound
-    ? 'Nội dung trợ giúp không tồn tại'
-    : state.activeCategory?.name || 'Câu hỏi thường gặp'
+    ? 'Chuyên mục trợ giúp không tồn tại'
+    : `${state.activeCategory?.name || 'Câu hỏi thường gặp'} - Trung tâm trợ giúp`
   const description = state.activeCategory?.description
     || 'Giải đáp những câu hỏi thường gặp khi sử dụng ProCV.'
   const allowIndex = !state.notFound

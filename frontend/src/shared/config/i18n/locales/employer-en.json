@@ -1,4 +1,12 @@
 {
+  "meta": {
+    "landing": "Post jobs and hire the right candidates",
+    "about": "About our recruitment platform",
+    "services": "Recruitment services",
+    "contact": "Contact recruitment sales",
+    "terms": "Employer terms of service",
+    "privacy": "Privacy policy"
+  },
   "nav": {
     "home": "Home",
     "about": "About",
@@ -92,7 +100,6 @@
     "workingHours": "Working hours"
   },
   "about": {
-    "metaTitle": "About our recruitment platform",
     "heroEyebrow": "About us",
     "heroTitle": "Matching the right people to the right jobs with AI",
     "heroSubtitle": "We build a smart recruitment platform that helps Vietnamese businesses find the right talent faster, more accurately and at lower cost.",
@@ -117,7 +124,6 @@
     "statsTitle": "The platform in numbers"
   },
   "contact": {
-    "metaTitle": "Contact recruitment sales",
     "heroEyebrow": "Contact",
     "heroTitle": "Talk to our recruitment consultants",
     "heroSubtitle": "Reach us directly via hotline, email or chat — we reply during business hours.",

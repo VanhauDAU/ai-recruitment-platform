@@ -58,7 +58,7 @@ export default function BlogCategory() {
   useDocumentMetadata(
     activeCategory
       ? {
-          title: activeCategory.seo_title || `${activeCategory.name} — ${pageTitle}`,
+          title: activeCategory.seo_title || `${activeCategory.name} - ${pageTitle}`,
           description: activeCategory.description,
           canonicalPath: `/blog/danh-muc/${activeCategory.slug}`,
         }

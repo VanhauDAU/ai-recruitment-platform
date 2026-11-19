@@ -61,9 +61,9 @@ export default function TemplateCatalog() {
 
   useDocumentMetadata(
     {
-      title: activeCategory
-        ? `${activeCategory.name} - Mẫu CV ${localeLabel}`
-        : `Mẫu CV ${localeLabel} chuyên nghiệp`,
+      // Khớp H1 của CatalogHeader và SEO shell server.
+      title: ['Mẫu CV xin việc', localeLabel, activeCategory?.name, 'chuẩn', new Date().getFullYear()]
+        .filter(Boolean).join(' '),
       description: activeCategory
         ? `Khám phá mẫu CV ${localeLabel} ${activeCategory.name}, dễ chỉnh sửa và dùng ngay.`
         : `Khám phá mẫu CV ${localeLabel} chuyên nghiệp, dễ chỉnh sửa và phù hợp nhiều ngành nghề.`,

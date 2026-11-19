@@ -51,6 +51,14 @@ class SiteSeoTests(TestCase):
         self.assertEqual(trailing_slash_response['X-Robots-Tag'], 'index, follow')
         self.assertContains(sitemap, 'http://testserver/cong-ty')
 
+    def test_employer_marketing_titles_carry_the_employer_brand(self):
+        response = self.client.get('/tuyendung/dich-vu')
+        sitemap = self.client.get('/sitemaps/static.xml')
+
+        self.assertContains(response, 'Dịch vụ tuyển dụng | ProCV cho Nhà tuyển dụng</title>')
+        self.assertNotContains(sitemap, '/tuyendung/bao-gia')
+        self.assertEqual(self.client.get('/tuyendung/bao-gia').status_code, 404)
+
     def test_company_search_shell_is_noindex_and_canonicalizes_to_directory(self):
         response = self.client.get('/cong-ty/tim-kiem/?keyword=1')
 

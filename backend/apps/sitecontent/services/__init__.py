@@ -22,7 +22,7 @@ from .announcement_media import upload_announcement_background
 from .announcement_user_state import StaleAnnouncementState, set_announcement_user_state
 from .cache_keys import PUBLIC_SETTINGS_CACHE_KEY, SEO_SETTINGS_CACHE_KEY
 from .feedback import submit_feedback
-from .seo import resolved_seo_settings
+from .seo import resolved_seo_settings, seo_page_title
 from .site_settings import public_setting_values, update_site_settings
 
 __all__ = [
@@ -42,6 +42,7 @@ __all__ = [
     'publish_announcement',
     'record_consented_announcement_events',
     'resolved_seo_settings',
+    'seo_page_title',
     'rename_announcement',
     'reset_announcement_dismissals',
     'resume_announcement',

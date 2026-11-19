@@ -9,7 +9,7 @@ from apps.employers.selectors import (
     public_company_website_url,
     seo_company_by_slug,
 )
-from apps.sitecontent.services import resolved_seo_settings
+from apps.sitecontent.services import resolved_seo_settings, seo_page_title
 from common.html.plain_text import html_plain_text
 from common.seo import (
     SeoMetadata,
@@ -37,7 +37,7 @@ def _metadata(
     settings = resolved_seo_settings()
     allow_index = indexable and settings['seo_robots_index']
     return SeoMetadata(
-        title=f'{title} | {settings["site_name"]}',
+        title=seo_page_title(title, settings),
         description=description,
         canonical_url=absolute_url(request, canonical_path),
         site_name=settings['site_name'],
@@ -113,7 +113,7 @@ class CompanySeoShellView(View):
                 request,
                 _metadata(
                     request,
-                    title='Công ty không tồn tại',
+                    title='Không tìm thấy công ty',
                     description='Trang công ty không tồn tại hoặc đã ngừng hiển thị.',
                     canonical_path=f'/cong-ty/{slug}',
                     indexable=False,

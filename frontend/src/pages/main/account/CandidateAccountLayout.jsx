@@ -1,9 +1,8 @@
 import { MenuOutlined } from '@ant-design/icons'
 import { Drawer } from 'antd'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Outlet, useLocation } from 'react-router'
 import { findActiveAccountItem } from '@/entities/account/account'
-import { setDocumentTitle } from '@/shared/config/document-title'
 import AccountSidebar from './ui/AccountSidebar'
 import ProfileSidebar from './ui/ProfileSidebar'
 
@@ -19,10 +18,6 @@ export default function CandidateAccountLayout() {
   const { pathname } = useLocation()
   const [menuDrawerOpen, setMenuDrawerOpen] = useState(false)
   const activeItem = findActiveAccountItem(pathname)
-
-  useEffect(() => {
-    setDocumentTitle(activeItem ? activeItem.label : 'Quản lý tài khoản')
-  }, [activeItem])
 
   return (
     <div className="min-h-full bg-[#f7f9fc]">

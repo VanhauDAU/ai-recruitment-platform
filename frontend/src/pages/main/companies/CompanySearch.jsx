@@ -27,7 +27,7 @@ export default function CompanySearch() {
     : directRequestKey
 
   useDocumentMetadata({
-    title: keyword ? `Công ty cho “${keyword}”` : 'Tìm kiếm công ty',
+    title: keyword ? `Kết quả tìm kiếm công ty “${keyword}”` : 'Tìm kiếm công ty',
     description: 'Tìm kiếm công ty theo tên và khám phá các vị trí đang tuyển dụng.',
     canonicalPath: COMPANY_DIRECTORY_PATH,
     robots: 'noindex, nofollow',

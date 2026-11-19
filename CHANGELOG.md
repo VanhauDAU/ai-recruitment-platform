@@ -8,6 +8,19 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-19
 
+#### Changed — Tiêu đề trang chuẩn hóa trên 3 cổng
+
+- `<title>` theo dạng `<nội dung trang> | <thương hiệu cổng>`: `ProCV`,
+  `ProCV cho Nhà tuyển dụng`, `Quản trị ProCV`; SEO shell backend dùng chung
+  helper `seo_page_title` và ra cùng chuỗi với frontend.
+- Tin tuyển dụng `Tuyển <vị trí> - <công ty>`; danh sách việc làm
+  `Tuyển dụng <N> việc làm <ngữ cảnh> mới nhất`; danh mục mẫu CV, blog, trợ giúp
+  khớp H1; chiến dịch `<tên> - <công ty>`.
+- Sửa các route bị gán "Trang không tồn tại"/`noindex` (`/tai-cv-len`,
+  `/tuyen-dung/:slug`, thông báo, lịch sử hoạt động, trang công ty của NTD);
+  thanh trên cùng NTD dùng cùng nguồn tiêu đề.
+- Gỡ `/tuyendung/bao-gia` khỏi SEO shell và sitemap.
+
 #### Changed — Backend: baseline migration (ADR-0022, GĐ6) — **phải reset DB local**
 
 - 274 migration gộp thành baseline: `0001_initial` mỗi app (thêm `0002_initial`
