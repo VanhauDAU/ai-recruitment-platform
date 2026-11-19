@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
+import { m } from '@/shared/config/i18n'
 
 const DEFAULT_OMIT = ['impact_token', 'reason', 'tax_override_reason', 'enforcement_evidence']
 
@@ -54,7 +55,7 @@ export default function useImpactConfirmation({
       setImpact(await handlers.current.preview(null))
     } catch (previewError) {
       setImpact(null)
-      setError(getApiErrorMessage(previewError, 'Không thể tải tác động.'))
+      setError(getApiErrorMessage(previewError, m.common_impact_load_failed()))
     } finally {
       setLoading(false)
     }

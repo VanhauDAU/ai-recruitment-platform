@@ -1,4 +1,5 @@
 import { Alert, Button, Skeleton } from 'antd'
+import { m } from '@/shared/config/i18n'
 
 /**
  * Compact impact summary for ActionDialog. `facts` are one-line label/value
@@ -11,7 +12,7 @@ export default function ImpactFacts({
   details,
   error,
   facts = [],
-  heading = 'Tác động',
+  heading = m.common_impact_heading(),
   loading = false,
   notes = [],
   onRetry,
@@ -29,7 +30,7 @@ export default function ImpactFacts({
         showIcon
         type="error"
         title={error}
-        action={onRetry && <Button size="small" onClick={onRetry}>Thử lại</Button>}
+        action={onRetry && <Button size="small" onClick={onRetry}>{m.common_retry()}</Button>}
       />
     )
   }
@@ -37,7 +38,7 @@ export default function ImpactFacts({
     <section className="impact-facts" aria-label={heading} aria-live="polite">
       <h3 className="impact-facts__heading">{heading}</h3>
       {changed && (
-        <Alert showIcon type="warning" title="Tác động vừa thay đổi. Kiểm tra lại rồi xác nhận." />
+        <Alert showIcon type="warning" title={m.common_impact_changed()} />
       )}
       {facts.length > 0 && (
         <dl className="impact-facts__list">
@@ -59,7 +60,7 @@ export default function ImpactFacts({
       ))}
       {details && (
         <details>
-          <summary>Xem chi tiết</summary>
+          <summary>{m.common_show_details()}</summary>
           {details}
         </details>
       )}

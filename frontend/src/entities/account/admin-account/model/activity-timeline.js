@@ -1,12 +1,13 @@
 import { formatRelativeDay, localDayKey } from '@/shared/lib/date-time'
+import { m } from '@/shared/config/i18n'
 
 /** Activity categories in display order (keys match the backend `category`). */
 export const ACTIVITY_CATEGORIES = [
-  { key: 'security', label: 'Bảo mật' },
-  { key: 'account', label: 'Tài khoản' },
-  { key: 'verification', label: 'Xác thực' },
-  { key: 'company', label: 'Công ty' },
-  { key: 'recruitment', label: 'Tuyển dụng' },
+  { key: 'security', label: m.admin_activity_category_security() },
+  { key: 'account', label: m.admin_activity_category_account() },
+  { key: 'verification', label: m.admin_activity_category_verification() },
+  { key: 'company', label: m.admin_activity_category_company() },
+  { key: 'recruitment', label: m.admin_activity_category_recruitment() },
 ]
 
 export const ACTIVITY_CATEGORY_LABELS = Object.fromEntries(
@@ -14,10 +15,10 @@ export const ACTIVITY_CATEGORY_LABELS = Object.fromEntries(
 )
 
 export const ACTIVITY_ACTOR_LABELS = {
-  admin: 'Quản trị viên',
-  self: 'Chính tài khoản',
-  member: 'Thành viên công ty',
-  system: 'Hệ thống',
+  admin: m.admin_activity_actor_admin(),
+  self: m.admin_activity_actor_self(),
+  member: m.admin_activity_actor_member(),
+  system: m.admin_activity_actor_system(),
 }
 
 export function parseActivityCategory(value) {

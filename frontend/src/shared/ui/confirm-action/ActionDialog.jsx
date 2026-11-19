@@ -1,5 +1,6 @@
 import { Button, Modal } from 'antd'
 import './action-dialog.css'
+import { m } from '@/shared/config/i18n'
 
 /**
  * Dialog for an admin action that collects input (reason, evidence) and/or
@@ -9,7 +10,7 @@ import './action-dialog.css'
  * Ctrl/⌘+Enter to submit and a bottom sheet below 640px.
  */
 export default function ActionDialog({
-  cancelLabel = 'Hủy',
+  cancelLabel = m.common_action_cancel(),
   children,
   loading = false,
   onCancel,
@@ -37,7 +38,7 @@ export default function ActionDialog({
       centered
       className="action-dialog"
       rootClassName="action-dialog-root"
-      closable={{ 'aria-label': 'Đóng hộp thoại', disabled: loading }}
+      closable={{ 'aria-label': m.common_dialog_close(), disabled: loading }}
       destroyOnHidden
       footer={null}
       keyboard={!loading}
@@ -54,7 +55,7 @@ export default function ActionDialog({
     >
       <div className="action-dialog__body" onKeyDown={onKeyDown}>{children}</div>
       <div className="action-dialog__footer">
-        <span className="action-dialog__hint" aria-hidden="true">Ctrl + Enter để xác nhận</span>
+        <span className="action-dialog__hint" aria-hidden="true">{m.common_dialog_submit_hint()}</span>
         <Button disabled={loading} onClick={onCancel}>{cancelLabel}</Button>
         <Button
           danger={tone === 'danger'}

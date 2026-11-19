@@ -19,6 +19,7 @@ import {
 } from '../model/activity-timeline'
 import useAccountActivity from '../model/use-account-activity'
 import './account-activity-timeline.css'
+import { m } from '@/shared/config/i18n'
 
 const CATEGORY_ICONS = {
   security: <SafetyOutlined />,
@@ -32,7 +33,7 @@ function EntryDetails({ details }) {
   if (!details?.length) return null
   return (
     <details className="activity-entry__details">
-      <summary>Chi tiết</summary>
+      <summary>{m.admin_activity_details()}</summary>
       <dl>
         {details.map((item) => (
           <div key={item.label}>
@@ -63,7 +64,7 @@ function ActivityEntry({ entry }) {
         {entry.summary && <p className="activity-entry__summary">{entry.summary}</p>}
         <p className="activity-entry__actor">
           <span className={`activity-entry__badge activity-entry__badge--${actor.type}`}>
-            {ACTIVITY_ACTOR_LABELS[actor.type] || 'Hệ thống'}
+            {ACTIVITY_ACTOR_LABELS[actor.type] || ACTIVITY_ACTOR_LABELS.system}
           </span>
           {actor.type === 'admin' || actor.type === 'member' ? <span>{actor.label}</span> : null}
         </p>
@@ -94,10 +95,10 @@ export default function AccountActivityTimeline({ compact = false, limit, public
   }
 
   return (
-    <section className={`activity-timeline${compact ? ' activity-timeline--compact' : ''}`} aria-label="Nhật ký hoạt động">
+    <section className={`activity-timeline${compact ? ' activity-timeline--compact' : ''}`} aria-label={m.admin_activity_title()}>
       {!compact && (
-        <div className="activity-timeline__filters" role="group" aria-label="Lọc nhật ký theo nhóm">
-          {[{ key: '', label: 'Tất cả' }, ...ACTIVITY_CATEGORIES].map((item) => (
+        <div className="activity-timeline__filters" role="group" aria-label={m.admin_activity_filter_label()}>
+          {[{ key: '', label: m.admin_activity_all() }, ...ACTIVITY_CATEGORIES].map((item) => (
             <button
               aria-pressed={category === item.key}
               className="activity-timeline__chip"
@@ -118,21 +119,21 @@ export default function AccountActivityTimeline({ compact = false, limit, public
         <Alert
           showIcon
           type="error"
-          title={getApiErrorMessage(activity.error, 'Không tải được nhật ký hoạt động.')}
-          action={<Button size="small" onClick={() => activity.refetch()}>Thử lại</Button>}
+          title={getApiErrorMessage(activity.error, m.admin_activity_load_failed())}
+          action={<Button size="small" onClick={() => activity.refetch()}>{m.common_retry()}</Button>}
         />
       )}
       {activity.isSuccess && groups.length === 0 && (
         <Empty
           image={Empty.PRESENTED_IMAGE_SIMPLE}
-          description={category ? 'Chưa có hoạt động trong nhóm này' : 'Chưa có hoạt động nào được ghi nhận'}
+          description={category ? m.admin_activity_empty_category() : m.admin_activity_empty()}
         />
       )}
       {groups.map((group) => (
         <section className="activity-day" key={group.key} aria-label={group.label}>
           <h3 className="activity-day__label">
             {group.label}
-            <span>{`${group.entries.length} hoạt động`}</span>
+            <span>{m.admin_activity_day_count({ count: group.entries.length })}</span>
           </h3>
           <ol className="activity-day__list">
             {group.entries.map((entry) => <ActivityEntry entry={entry} key={entry.id} />)}
@@ -146,7 +147,7 @@ export default function AccountActivityTimeline({ compact = false, limit, public
           loading={activity.isFetchingNextPage}
           onClick={() => activity.fetchNextPage()}
         >
-          {activity.isFetchingNextPage ? 'Đang tải…' : 'Tải thêm hoạt động cũ hơn'}
+          {activity.isFetchingNextPage ? m.admin_activity_loading_more() : m.admin_activity_load_more()}
         </Button>
       )}
     </section>

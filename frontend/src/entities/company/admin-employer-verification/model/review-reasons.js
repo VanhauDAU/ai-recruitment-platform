@@ -1,48 +1,50 @@
+import { m } from '@/shared/config/i18n'
+
 /**
  * Quick-pick reasons for verification, company-update and domain decisions.
  * They only pre-fill the reason field; the admin can always edit the text.
  */
 export const DOCUMENT_REVIEW_REASONS = {
   changes_requested: [
-    'Ảnh mờ hoặc bị cắt, cần chụp lại',
-    'Giấy tờ đã hết hiệu lực',
-    'Thông tin không khớp mã số thuế hoặc tên công ty',
-    'Thiếu trang hoặc thiếu dấu xác nhận',
+    m.admin_reason_doc_blurry(),
+    m.admin_reason_doc_expired(),
+    m.admin_reason_doc_mismatch(),
+    m.admin_reason_doc_incomplete(),
   ],
   rejected: [
-    'Sai loại giấy tờ yêu cầu',
-    'Giấy tờ có dấu hiệu chỉnh sửa hoặc giả mạo',
+    m.admin_reason_doc_wrong_type(),
+    m.admin_reason_doc_forged(),
   ],
 }
 
 export const CASE_DECISION_REASONS = {
-  approved: ['Đã đối chiếu đủ giấy tờ và thông tin doanh nghiệp'],
+  approved: [m.admin_reason_case_complete()],
   changes_requested: [
-    'Cần bổ sung giấy tờ còn thiếu',
-    'Thông tin trên giấy tờ không khớp hồ sơ công ty',
-    'Thiếu giấy ủy quyền hợp lệ',
+    m.admin_reason_case_missing(),
+    m.admin_reason_case_mismatch(),
+    m.admin_reason_case_authorization(),
   ],
   rejected: [
-    'Người nộp không phải đại diện hợp lệ của doanh nghiệp',
-    'Doanh nghiệp đã ngừng hoạt động theo tra cứu thuế',
-    'Giấy tờ có dấu hiệu giả mạo',
+    m.admin_reason_case_not_representative(),
+    m.admin_reason_case_closed(),
+    m.admin_reason_case_forged(),
   ],
-  revoked: ['Doanh nghiệp yêu cầu thu hồi', 'Phát hiện giấy tờ không còn hợp lệ'],
-  expired: ['Giấy ủy quyền đã hết hạn'],
-  unlock: ['Khiếu nại của nhà tuyển dụng đã được chấp nhận'],
+  revoked: [m.admin_reason_revoke_requested(), m.admin_reason_revoke_invalid()],
+  expired: [m.admin_reason_expire_authorization()],
+  unlock: [m.admin_reason_unlock_appeal()],
 }
 
 export const COMPANY_UPDATE_REASONS = {
-  approved: ['Đã đối chiếu thay đổi với giấy tờ'],
+  approved: [m.admin_reason_update_checked()],
   changes_requested: [
-    'Thiếu giấy tờ chứng minh thay đổi',
-    'Thông tin mới không khớp giấy tờ',
+    m.admin_reason_update_missing_proof(),
+    m.admin_reason_update_mismatch(),
   ],
-  rejected: ['Thay đổi không có căn cứ pháp lý'],
+  rejected: [m.admin_reason_update_no_basis()],
 }
 
 export const DOMAIN_REVIEW_REASONS = {
-  approve_manual: ['Đã đối chiếu tên miền với giấy tờ doanh nghiệp'],
-  reject_manual: ['Tên miền không thuộc doanh nghiệp', 'Chưa đủ bằng chứng sở hữu tên miền'],
-  revoke: ['Doanh nghiệp không còn sử dụng tên miền'],
+  approve_manual: [m.admin_reason_domain_checked()],
+  reject_manual: [m.admin_reason_domain_not_owned(), m.admin_reason_domain_no_proof()],
+  revoke: [m.admin_reason_domain_unused()],
 }

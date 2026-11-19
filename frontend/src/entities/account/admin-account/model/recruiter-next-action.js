@@ -1,4 +1,5 @@
 import { adminPath } from '@/shared/config/portals'
+import { m } from '@/shared/config/i18n'
 
 /**
  * Presentation of the backend `context.next_action.code` (one rule, computed
@@ -7,34 +8,34 @@ import { adminPath } from '@/shared/config/portals'
  */
 const NEXT_ACTIONS = {
   verification_overdue: {
-    label: 'Hồ sơ quá hạn 72 giờ',
+    label: m.admin_next_overdue(),
     tone: 'critical',
     owner: 'admin',
-    cta: { label: 'Duyệt xác thực', tab: 'verification' },
+    cta: { label: m.admin_next_cta_verify(), tab: 'verification' },
   },
   verification_review: {
-    label: 'Hồ sơ xác thực chờ duyệt',
+    label: m.admin_next_review(),
     tone: 'warning',
     owner: 'admin',
-    cta: { label: 'Duyệt xác thực', tab: 'verification' },
+    cta: { label: m.admin_next_cta_verify(), tab: 'verification' },
   },
   company_update_review: {
-    label: 'Cập nhật công ty chờ duyệt',
+    label: m.admin_next_company_update(),
     tone: 'warning',
     owner: 'admin',
-    cta: { label: 'Duyệt cập nhật', tab: 'verification' },
+    cta: { label: m.admin_next_cta_company_update(), tab: 'verification' },
   },
   account_restricted: {
-    label: 'Tài khoản đang bị hạn chế',
+    label: m.admin_next_restricted(),
     tone: 'info',
     owner: 'admin',
-    cta: { label: 'Xem hạn chế', tab: 'security' },
+    cta: { label: m.admin_next_cta_restricted(), tab: 'security' },
   },
-  awaiting_resubmission: { label: 'Chờ NTD bổ sung hồ sơ', tone: 'muted', owner: 'recruiter' },
-  awaiting_company: { label: 'Chưa liên kết công ty', tone: 'muted', owner: 'recruiter' },
-  awaiting_onboarding: { label: 'Chưa hoàn tất thiết lập', tone: 'muted', owner: 'recruiter' },
-  awaiting_submission: { label: 'Chưa nộp hồ sơ xác thực', tone: 'muted', owner: 'recruiter' },
-  none: { label: 'Không có việc cần làm', tone: 'none', owner: 'none' },
+  awaiting_resubmission: { label: m.admin_next_awaiting_resubmission(), tone: 'muted', owner: 'recruiter' },
+  awaiting_company: { label: m.admin_next_awaiting_company(), tone: 'muted', owner: 'recruiter' },
+  awaiting_onboarding: { label: m.admin_next_awaiting_onboarding(), tone: 'muted', owner: 'recruiter' },
+  awaiting_submission: { label: m.admin_next_awaiting_submission(), tone: 'muted', owner: 'recruiter' },
+  none: { label: m.admin_next_none(), tone: 'none', owner: 'none' },
 }
 
 export function recruiterNextAction(account) {
