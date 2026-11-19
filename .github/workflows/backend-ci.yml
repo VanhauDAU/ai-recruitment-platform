@@ -120,10 +120,12 @@ jobs:
         with:
           python-version: '3.11'
           cache: pip
-          cache-dependency-path: backend/requirements.txt
+          cache-dependency-path: |
+            backend/requirements.txt
+            backend/requirements-dev.txt
 
       - name: Install dependencies
-        run: python -m pip install --disable-pip-version-check -r requirements.txt ruff==0.15.22
+        run: python -m pip install --disable-pip-version-check -r requirements-dev.txt
 
       - name: Tune PostgreSQL for throwaway CI data
         working-directory: .
@@ -147,9 +149,13 @@ jobs:
       - name: Kiến trúc layer (import-linter)
         run: lint-imports
 
-      - name: Layering DRF (services/selectors sạch HTTP machinery)
+      - name: Layering DRF (services/selectors/tasks/signals sạch HTTP machinery)
         working-directory: .
         run: bash scripts/check_backend_layering.sh
+
+      - name: Cấu trúc app + import chéo app (ADR-0022)
+        working-directory: .
+        run: python scripts/check_backend_imports.py
 
       - name: Env example đồng bộ với code
         working-directory: .
@@ -160,6 +166,10 @@ jobs:
 
       - name: Migration state (không được có migration treo)
         run: python manage.py makemigrations --check --dry-run
+
+      - name: OpenAPI schema (khớp docs/04-api/openapi.yaml, cảnh báo không tăng)
+        working-directory: .
+        run: bash scripts/check_openapi_schema.sh
 
       - name: Test suite + coverage gate (ratchet — chỉ được tăng)
         id: pytest
@@ -301,10 +311,12 @@ jobs:
         with:
           python-version: '3.11'
           cache: pip
-          cache-dependency-path: backend/requirements.txt
+          cache-dependency-path: |
+            backend/requirements.txt
+            backend/requirements-dev.txt
 
       - name: Install dependencies
-        run: python -m pip install --disable-pip-version-check -r requirements.txt
+        run: python -m pip install --disable-pip-version-check -r requirements-dev.txt
 
       - name: Tune PostgreSQL for throwaway CI data
         working-directory: .

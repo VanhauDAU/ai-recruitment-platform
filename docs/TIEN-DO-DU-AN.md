@@ -7,7 +7,8 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
-| [Tổ chức lại cấu trúc thư mục frontend](#tổ-chức-lại-cấu-trúc-thư-mục-frontend-2026-11-19) | 🟨 Xong trên nhánh `refactor/portal-groups`, chưa mở PR |
+| [Tái cấu trúc backend (ADR-0022, GĐ0–GĐ6)](#tái-cấu-trúc-backend-adr-0022-2026-11-19) | 🟨 GĐ0 (cổng kiểm tra, ADR) trên nhánh `refactor/backend-gd0-gates`; GĐ1–GĐ6 chưa làm |
+| [Tổ chức lại cấu trúc thư mục frontend](#tổ-chức-lại-cấu-trúc-thư-mục-frontend-2026-11-19) | ✅ Gộp vào `dev` (#247) |
 | [Mô hình hóa yêu cầu cho báo cáo (mục 3.2)](#mô-hình-hóa-yêu-cầu-cho-báo-cáo-mục-32-2026-11-18) | ✅ Nguồn sơ đồ trong `docs/01-phan-tich/mo-hinh-hoa-yeu-cau/` |
 | [Nâng cấp chiến dịch tuyển dụng (4 GĐ)](#nâng-cấp-chiến-dịch-tuyển-dụng-2026-11-18) | ✅ Cả 4 GĐ và đợt làm lại giao diện kênh, Fanpage, chi phí, lịch sử hoạt động đã gộp (#235–#237, #239–#242); sơ đồ phân tích nhóm chiến dịch trên nhánh `docs/campaign-diagrams` |
 | [Ứng tuyển bằng CV tải lên và form ứng tuyển mới](#ứng-tuyển-bằng-cv-tải-lên-và-form-ứng-tuyển-mới-2026-11-18) | ✅ Gộp vào `dev` (#234) |
@@ -30,6 +31,28 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Các epic đã hoàn tất](#các-epic-đã-hoàn-tất) | ✅ |
 | [Lộ trình theo PRD](#lộ-trình-theo-prd) | 🟨 Phần AI lõi (giai đoạn 2–3) còn mở |
 | [Việc còn mở](#việc-còn-mở) | |
+
+## Tái cấu trúc backend (ADR-0022, 2026-11-19)
+
+Rà soát toàn bộ `backend/` (18 app, ~140 nghìn dòng): khung ADR-0010 bị lệch,
+luật không còn được CI kiểm. Quyết định ở
+[ADR-0022](02-tong-quan/adr-0022-backend-structure.md); làm qua 7 giai đoạn, mỗi
+GĐ một PR về `dev`.
+
+| GĐ | Nội dung | Trạng thái |
+| --- | --- | --- |
+| 0 | ADR-0022; cổng import chéo app/module gốc (`check_backend_imports.py`, baseline 148 mục); cổng OpenAPI (baseline 70 lỗi / 340 cảnh báo); tách `requirements-dev.txt`, pin `gunicorn`/`redis`; bắt buộc `DJANGO_SETTINGS_MODULE` | 🟨 Nhánh `refactor/backend-gd0-gates` |
+| 1 | Bố cục chuẩn từng app (`api/urls/`, `seo/`, `tasks/`, `signals/`), tổ chức lại `common/` | ⬜ |
+| 2 | Chuyển model chiến dịch sang `campaigns`, phá vòng `cvs ↔ cv_templates`, baseline import về 0 | ⬜ |
+| 3 | Exception handler, nghiệp vụ ra khỏi view/serializer, phân trang, `@extend_schema` đủ | ⬜ |
+| 4 | URL theo cổng `/api/{auth,public,candidate,employer,admin}/` (kèm frontend) | ⬜ |
+| 5 | Tách file > 500 dòng, gộp code trùng, gỡ legacy và lệnh chạy một lần | ⬜ |
+| 6 | Baseline migration mới, lệnh `seed_all` | ⬜ |
+
+GĐ0 sửa một lỗi cấu hình: `config/__init__.py` nạp `config/celery.py`, file này
+đặt mặc định `config.settings.development`, nên gunicorn production thiếu
+`DJANGO_SETTINGS_MODULE` sẽ âm thầm chạy settings development. Nay thiếu biến là
+dừng ngay; image Docker mặc định production, compose dev khai development.
 
 ## Tổ chức lại cấu trúc thư mục frontend (2026-11-19)
 

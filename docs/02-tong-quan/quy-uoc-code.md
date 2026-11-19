@@ -39,31 +39,38 @@ pages/main/jobs/
 
 ## Backend
 
-Mỗi Django app tự sở hữu nghiệp vụ của mình:
+Bố cục, luật phụ thuộc và URL theo cổng là quyết định của
+[ADR-0022](adr-0022-backend-structure.md). Tóm tắt:
 
 ```text
 apps/jobs/
-  views.py       # HTTP, permission, serializer và response
-  querysets.py   # xây dựng/filter/order QuerySet
-  services.py    # phối hợp nghiệp vụ và tạo payload tổng hợp
-  serializers.py
-  models.py
+  api/urls/<cổng>.py     # route REST theo cổng public/candidate/employer/admin
+  api/views/             # HTTP: parse request → gọi selector/service → response
+  api/serializers/       # validate input, định hình output
+  seo/                   # HTML shell và sitemap ngoài /api
+  models/                # model, choices, QuerySet/Manager
+  selectors/             # đọc: truy vấn, read model, chống N+1
+  services/              # ghi: transaction, tích hợp ngoài, exception nghiệp vụ
+  tasks/                 # Celery: chỉ gọi services
+  signals/               # khai báo Signal + receivers (chỉ gọi services)
 ```
 
-- View không chứa chuỗi truy vấn dài hoặc thuật toán tổng hợp dữ liệu.
-- `querysets.py` chỉ xây dựng truy vấn, không tạo HTTP response.
-- `services.py` không phụ thuộc class-based view; nhận dữ liệu đầu vào rõ ràng và trả object miền nghiệp vụ/payload.
-- `common/` chỉ dành cho hạ tầng dùng qua nhiều Django app, không đưa nghiệp vụ riêng của một app vào đó.
+- View không chứa truy vấn ORM, `transaction` hay thuật toán tổng hợp dữ liệu.
+- `selectors/` chỉ đọc, không tạo HTTP response; GET không được ghi DB.
+- `services/` không phụ thuộc class-based view hay serializer; nhận dữ liệu đầu
+  vào rõ ràng, trả object miền nghiệp vụ, báo lỗi bằng exception nghiệp vụ.
+- App khác chỉ dùng `models`, `services`, `selectors` (cấp package) và
+  `signals`; `common/` chỉ dành cho hạ tầng dùng qua nhiều Django app.
 - Thay đổi schema phải đi kèm migration; không sửa migration đã chạy ở môi trường khác.
 
 ## Kiểm tra trước khi hoàn tất
 
 ```bash
-# Backend
+# Backend (đủ bước xem AGENTS.md)
 cd backend
-python manage.py check
+ruff check . && ruff format --check . && lint-imports
 python manage.py makemigrations --check --dry-run
-python manage.py test
+pytest --cov --cov-fail-under=84
 
 # Frontend
 cd frontend

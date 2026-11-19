@@ -53,7 +53,7 @@ Các biến sau không nằm trong `.env.example` vì runner/CLI sở hữu chú
 
 | Phạm vi | Biến | Nguồn |
 | --- | --- | --- |
-| Backend | `DJANGO_SETTINGS_MODULE` | Entrypoint/CI; phải có trước khi Django nạp settings. Production đặt `config.settings.production` cùng `ENVIRONMENT=production` |
+| Backend | `DJANGO_SETTINGS_MODULE` | Bắt buộc với gunicorn/celery/asgi — thiếu thì `config/celery.py` dừng ngay. Image Docker mặc định `config.settings.production` (đi cùng `ENVIRONMENT=production`); compose dev đặt `config.settings.development`; CI đặt `config.settings.test`. Chỉ `manage.py` tự chọn development/test |
 | Backend | `USER` | Shell; nhãn actor dự phòng của management command |
 | Frontend | `ANALYZE` | `ANALYZE=1 npm run build` sinh treemap bundle (`json` sinh `dist/stats.json`) |
 | Frontend | `PORT` | Tool preview cấp khi 5173 bận |

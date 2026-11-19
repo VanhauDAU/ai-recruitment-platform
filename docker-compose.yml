@@ -4,6 +4,8 @@
 # CELERY_BROKER_URL phải override TƯỜNG MINH: settings chỉ fallback về REDIS_URL
 # khi biến này vắng mặt, mà .env lại set sẵn 127.0.0.1 -> worker không thấy broker.
 x-service-hosts: &service-hosts
+  # Image mặc định production (backend/Dockerfile); compose là môi trường dev.
+  DJANGO_SETTINGS_MODULE: config.settings.development
   DB_HOST: db
   DB_PORT: 5432
   REDIS_URL: redis://redis:6379/1
@@ -32,6 +34,8 @@ x-backend-image: &backend-image
   build:
     context: ./backend
     target: runtime
+    args:
+      INSTALL_DEV: 'true'
 
 services:
   # Named volumes are initially owned by root, while Django deliberately runs

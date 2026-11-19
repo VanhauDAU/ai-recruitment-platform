@@ -87,10 +87,15 @@ classify_path() {
           ;;
       esac
       ;;
+    docs/04-api/openapi.yaml)
+      # Schema commit phải khớp code — cổng OpenAPI chạy trong backend-checks.
+      backend=true
+      docs=true
+      ;;
     docs/*|README.md|CHANGELOG.md|AGENTS.md|CLAUDE.md)
       docs=true
       ;;
-    .github/workflows/backend-ci.yml|scripts/check_backend_layering.sh)
+    .github/workflows/backend-ci.yml|scripts/check_backend_layering.sh|scripts/check_backend_imports.py|scripts/check_openapi_schema.sh)
       backend=true
       ci=true
       if [[ "$changed_path" == .github/workflows/backend-ci.yml ]]; then

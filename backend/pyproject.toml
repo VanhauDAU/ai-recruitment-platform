@@ -23,7 +23,7 @@ known-first-party = ["apps", "common", "config"]
 [tool.ruff.format]
 quote-style = "single"
 
-# ─── import-linter: đóng đinh quy tắc layer của ADR-0010 ───
+# ─── import-linter: đóng đinh quy tắc layer của ADR-0022 ───
 # DRF-trong-services được gác bằng scripts/check_backend_layering.sh (grep) vì
 # import-linter không forbid được subpackage của external package.
 [tool.importlinter]
