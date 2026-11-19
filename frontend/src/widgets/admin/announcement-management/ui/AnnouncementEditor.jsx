@@ -3,7 +3,7 @@ import {
   ArrowRightOutlined,
   CheckOutlined,
 } from '@ant-design/icons'
-import dayjs from 'dayjs'
+import dayjs from '@/shared/lib/dayjs'
 import {
   Alert,
   Button,

@@ -6,6 +6,7 @@ import { RECRUITER_APPLICATION_STATUS_LABELS } from '@/entities/application/appl
 import { CAMPAIGN_STATUS_LABELS, campaignKeys, getCampaignActivities } from '@/entities/campaign/campaign'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { employerAppPath } from '@/shared/config/portals'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 const REPORT_TIME_ZONE = 'Asia/Ho_Chi_Minh'
 
@@ -20,15 +21,15 @@ const REASON_LABELS = {
   account_resource_review_completed: 'Đã hoàn tất rà soát tài nguyên tài khoản',
 }
 
-const dayFormatter = new Intl.DateTimeFormat('vi-VN', {
+const dayFormatter = new Intl.DateTimeFormat(getIntlLocale(), {
   timeZone: REPORT_TIME_ZONE, weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric',
 })
 
-const timeFormatter = new Intl.DateTimeFormat('vi-VN', {
+const timeFormatter = new Intl.DateTimeFormat(getIntlLocale(), {
   timeZone: REPORT_TIME_ZONE, hour: '2-digit', minute: '2-digit',
 })
 
-const dateFormatter = new Intl.DateTimeFormat('vi-VN', {
+const dateFormatter = new Intl.DateTimeFormat(getIntlLocale(), {
   timeZone: REPORT_TIME_ZONE, day: '2-digit', month: '2-digit', year: 'numeric',
 })
 

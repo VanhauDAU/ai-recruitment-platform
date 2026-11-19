@@ -5,6 +5,7 @@ import {
   UsergroupAddOutlined,
 } from '@ant-design/icons'
 import CompanyLogo from './CompanyLogo'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 function HeroStat({ icon, children }) {
   return (
@@ -70,12 +71,12 @@ export default function CompanyHero({ profile, actions, titleAs: Title = 'h1' })
             )}
             <HeroStat icon={<SolutionOutlined />}>
               {jobCount > 0
-                ? `${jobCount.toLocaleString('vi-VN')} việc làm đang tuyển`
+                ? `${jobCount.toLocaleString(getIntlLocale())} việc làm đang tuyển`
                 : 'Chưa có việc làm đang tuyển'}
             </HeroStat>
             {followerCount > 0 && (
               <HeroStat icon={<UsergroupAddOutlined />}>
-                {`${followerCount.toLocaleString('vi-VN')} người theo dõi`}
+                {`${followerCount.toLocaleString(getIntlLocale())} người theo dõi`}
               </HeroStat>
             )}
           </ul>

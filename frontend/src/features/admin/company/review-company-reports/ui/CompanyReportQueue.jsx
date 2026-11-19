@@ -16,6 +16,7 @@ import { message } from '@/shared/lib/toast'
 import { AdminDataActions, AdminPanel } from '@/shared/ui/admin'
 import { companyReportColumns, formatDateTime } from './company-report-columns'
 import CompanyReportDecisionModal from './CompanyReportDecisionModal'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 const PAGE_SIZE = 20
 const DEFAULT_STATUS = 'pending'
@@ -139,7 +140,7 @@ export default function CompanyReportQueue() {
 
   return (
     <AdminPanel
-      description={`${total.toLocaleString('vi-VN')} báo cáo phù hợp. Trang công ty chỉ bị tạm ẩn khi quản trị viên chọn lúc xác nhận vi phạm.`}
+      description={`${total.toLocaleString(getIntlLocale())} báo cáo phù hợp. Trang công ty chỉ bị tạm ẩn khi quản trị viên chọn lúc xác nhận vi phạm.`}
       extra={(
         <AdminDataActions
           allowExport={false}

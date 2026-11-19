@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Alert, Button, Checkbox, DatePicker, Drawer, Form, Input, Segmented, Select, Skeleton } from 'antd'
-import dayjs from 'dayjs'
+import dayjs from '@/shared/lib/dayjs'
 import { Link } from 'react-router'
 import { campaignKeys, getSocialConnections, scheduleChannelPost } from '@/entities/campaign/campaign'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'

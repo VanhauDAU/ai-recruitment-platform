@@ -5,10 +5,11 @@ import { Button, Input, Skeleton } from 'antd'
 import { useState } from 'react'
 import { employerCompanyPageKeys, getEmployerPinnableJobs } from '@/entities/company/employer-company-page'
 import useDebouncedValue from '@/shared/hooks/use-debounced-value'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 function publishedLabel(job) {
   const date = job.published_at ? new Date(job.published_at) : null
-  return date && !Number.isNaN(date.getTime()) ? `Đăng ngày ${date.toLocaleDateString('vi-VN')}` : ''
+  return date && !Number.isNaN(date.getTime()) ? `Đăng ngày ${date.toLocaleDateString(getIntlLocale())}` : ''
 }
 
 /**

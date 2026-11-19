@@ -15,6 +15,7 @@ import {
   Tooltip,
 } from 'antd'
 import { useState } from 'react'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 const RECRUITER_STATUS_OPTIONS = [
   { value: '', label: 'Mọi trạng thái NTD' },
@@ -172,7 +173,7 @@ export default function CompanyDirectoryFilters({
         <span className="company-filters__count">
           {loading ? 'Đang tải danh sách…' : (
             <>
-              <strong>{Number(total || 0).toLocaleString('vi-VN')}</strong>
+              <strong>{Number(total || 0).toLocaleString(getIntlLocale())}</strong>
               {' công ty'}
               {chips.length ? ' khớp bộ lọc' : ' trong hệ thống'}
             </>

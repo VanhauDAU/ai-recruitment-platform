@@ -10,8 +10,9 @@ import { EMPLOYER_VERIFY_URL, employerAppPath } from '@/shared/config/portals'
 import { message } from '@/shared/lib/toast'
 import { CHECK_STEP, jobSelection, SETUP_STEPS } from '../lib/setup-steps'
 import './launch-campaign.css'
+import { getIntlLocale } from '@/shared/config/i18n'
 
-const formatDate = (value) => (value ? new Date(value).toLocaleDateString('vi-VN') : '')
+const formatDate = (value) => (value ? new Date(value).toLocaleDateString(getIntlLocale()) : '')
 const STEP_TITLES = Object.fromEntries(SETUP_STEPS.map((step) => [step.key, step.title]))
 
 function FixAction({ item, onGoToStep }) {

@@ -1,5 +1,5 @@
 import { Button, DatePicker, Form, Input, InputNumber, Modal, Select } from 'antd'
-import dayjs from 'dayjs'
+import dayjs from '@/shared/lib/dayjs'
 import { useState } from 'react'
 
 const FALLBACK_MAX_DEADLINE_DAYS = 90

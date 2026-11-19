@@ -3,10 +3,11 @@ import { Link } from 'react-router'
 import { message } from '@/shared/lib/toast'
 import { cvChoiceStatus, isCvApplicationReady } from '../model/cv-choice'
 import './cv-choice.css'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 function formatCvDate(value) {
   if (!value) return 'Chưa có thời gian cập nhật'
-  return new Date(value).toLocaleString('vi-VN', {
+  return new Date(value).toLocaleString(getIntlLocale(), {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',

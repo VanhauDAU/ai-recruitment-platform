@@ -234,7 +234,7 @@ describe('ApplyForJobModal', () => {
     applicationApi.submitJobApplication.mockRejectedValue({
       response: {
         data: {
-          version_public_id: ['This field is required.'],
+          version_public_id: ['Trường này là bắt buộc.'],
         },
       },
     })
@@ -251,7 +251,7 @@ describe('ApplyForJobModal', () => {
     await user.click(screen.getByRole('checkbox', { name: /Tôi đã đọc và đồng ý/ }))
     await user.click(screen.getByRole('button', { name: 'Nộp hồ sơ ứng tuyển' }))
 
-    expect(await screen.findByText('Phiên bản CV: vui lòng nhập thông tin bắt buộc.')).toBeInTheDocument()
+    expect(await screen.findByText('Phiên bản CV: Trường này là bắt buộc.')).toBeInTheDocument()
   })
 
   it('opens the upload radio form and uploads only when the application is submitted', async () => {

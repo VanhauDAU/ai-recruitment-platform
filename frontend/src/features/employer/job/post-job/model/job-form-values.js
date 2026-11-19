@@ -1,4 +1,4 @@
-import dayjs from 'dayjs'
+import dayjs from '@/shared/lib/dayjs'
 import { normalizeRichTextHtml } from '@/shared/lib/rich-text-html'
 
 export { normalizeRichTextHtml } from '@/shared/lib/rich-text-html'

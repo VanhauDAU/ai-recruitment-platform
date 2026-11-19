@@ -1,3 +1,4 @@
+import { getIntlLocale } from '@/shared/config/i18n'
 export const ADMIN_JOB_STATUS = {
   draft: { label: 'Nháp', color: 'default' },
   active: { label: 'Đang tuyển', color: 'green' },
@@ -42,7 +43,7 @@ export function formatAdminJobDateTime(value) {
   if (!value) return '—'
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return '—'
-  const parts = Object.fromEntries(new Intl.DateTimeFormat('vi-VN', {
+  const parts = Object.fromEntries(new Intl.DateTimeFormat(getIntlLocale(), {
     timeZone: 'Asia/Ho_Chi_Minh',
     day: '2-digit',
     month: '2-digit',
@@ -60,7 +61,7 @@ export function formatAdminJobDate(value) {
   if (isoDate) return `${isoDate[3]}/${isoDate[2]}/${isoDate[1]}`
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return '—'
-  const parts = Object.fromEntries(new Intl.DateTimeFormat('vi-VN', {
+  const parts = Object.fromEntries(new Intl.DateTimeFormat(getIntlLocale(), {
     timeZone: 'Asia/Ho_Chi_Minh',
     day: '2-digit',
     month: '2-digit',

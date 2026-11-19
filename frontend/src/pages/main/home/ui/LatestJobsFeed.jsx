@@ -14,15 +14,16 @@ import { JobImpressionBoundary } from '@/features/main/job/track-job-engagement'
 import { legacyAsset } from '@/shared/config/assets'
 import { DEMAND_COLORS } from '../lib/market-stats-palette'
 import { useLatestJobsFeed } from '../model/use-latest-jobs-feed'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 function formatDate(value) {
   if (!value) return null
-  return new Intl.DateTimeFormat('vi-VN').format(new Date(value))
+  return new Intl.DateTimeFormat(getIntlLocale()).format(new Date(value))
 }
 
 function formatDateTime(value) {
   if (!value) return null
-  return new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(value))
+  return new Intl.DateTimeFormat(getIntlLocale(), { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(value))
 }
 
 function LatestJobTooltip({ job }) {

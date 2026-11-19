@@ -12,6 +12,7 @@ const { getCurrentSessionUser, logoutCurrentPortal, logoutAllDevices } = vi.hois
 }))
 const { navigate } = vi.hoisted(() => ({ navigate: vi.fn() }))
 const { message } = vi.hoisted(() => ({ message: { warning: vi.fn() } }))
+const { changeLocale } = vi.hoisted(() => ({ changeLocale: vi.fn() }))
 
 vi.mock('../api/session.api', () => ({ getCurrentSessionUser, logoutCurrentPortal, logoutAllDevices }))
 vi.mock('react-router', async (importOriginal) => ({
@@ -19,6 +20,10 @@ vi.mock('react-router', async (importOriginal) => ({
   useNavigate: () => navigate,
 }))
 vi.mock('@/shared/lib/toast', () => ({ message }))
+vi.mock('@/shared/config/i18n', async (importOriginal) => ({
+  ...await importOriginal(),
+  changeLocale,
+}))
 
 function wrapper({ children }) {
   return withQueryClient(
@@ -36,6 +41,17 @@ describe('SessionProvider', () => {
     logoutAllDevices.mockReset().mockResolvedValue(undefined)
     navigate.mockReset()
     message.warning.mockReset()
+    changeLocale.mockReset()
+  })
+
+  it('applies the account language once the session is restored', async () => {
+    getCurrentSessionUser.mockResolvedValue({ public_id: 'employer-1', role: 'employer', preferred_language: 'en' })
+
+    const { result } = renderHook(() => useSession(), { wrapper })
+
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    expect(changeLocale).toHaveBeenCalledTimes(1)
+    expect(changeLocale).toHaveBeenCalledWith('en')
   })
 
   it('restores a valid session through the cookie-backed API bootstrap', async () => {

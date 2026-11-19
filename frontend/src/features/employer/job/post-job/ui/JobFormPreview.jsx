@@ -11,7 +11,7 @@ import {
   WalletOutlined,
 } from '@ant-design/icons'
 import { Modal, Radio } from 'antd'
-import dayjs from 'dayjs'
+import dayjs from '@/shared/lib/dayjs'
 import { useMemo, useState } from 'react'
 import {
   EDUCATION_LEVEL_LABELS,

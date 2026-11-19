@@ -5,6 +5,7 @@ import {
 } from '@ant-design/icons'
 import { Empty, Tag, Timeline } from 'antd'
 import { KIND_LABELS, SURFACE_LABELS } from '../model/announcement-options'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 const AUDIT_LABELS = {
   announcement_create: 'Tạo thông báo',
@@ -21,7 +22,7 @@ const AUDIT_LABELS = {
 
 function formatDate(value) {
   if (!value) return 'Chưa ghi nhận'
-  return new Intl.DateTimeFormat('vi-VN', {
+  return new Intl.DateTimeFormat(getIntlLocale(), {
     dateStyle: 'medium',
     timeStyle: 'short',
     timeZone: 'Asia/Ho_Chi_Minh',

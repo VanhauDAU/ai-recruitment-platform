@@ -1,3 +1,5 @@
+import { getIntlLocale } from '@/shared/config/i18n'
+
 function toDate(value) {
   if (!value) return null
   const date = new Date(value)
@@ -8,7 +10,7 @@ function toDate(value) {
 export function formatDateTime(value) {
   const date = toDate(value)
   return date
-    ? new Intl.DateTimeFormat('vi-VN', { dateStyle: 'short', timeStyle: 'short' }).format(date)
+    ? new Intl.DateTimeFormat(getIntlLocale(), { dateStyle: 'short', timeStyle: 'short' }).format(date)
     : '—'
 }
 
@@ -16,6 +18,6 @@ export function formatDateTime(value) {
 export function formatClockTime(value) {
   const date = toDate(value)
   return date
-    ? new Intl.DateTimeFormat('vi-VN', { hour: '2-digit', minute: '2-digit' }).format(date)
+    ? new Intl.DateTimeFormat(getIntlLocale(), { hour: '2-digit', minute: '2-digit' }).format(date)
     : '—'
 }

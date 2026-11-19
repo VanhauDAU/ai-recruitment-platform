@@ -1,5 +1,6 @@
 import { SearchOutlined, SortAscendingOutlined } from '@ant-design/icons'
 import { Button, Input, Select, Tag, Tooltip } from 'antd'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 const ORDERING_OPTIONS = [
   { value: '-updated_at', label: 'Tiếp nhận gần nhất' },
@@ -60,7 +61,7 @@ export default function CompanyUpdateFilters({
         <span className="company-filters__count">
           {loading ? 'Đang tải hàng đợi…' : (
             <>
-              <strong>{Number(total || 0).toLocaleString('vi-VN')}</strong>
+              <strong>{Number(total || 0).toLocaleString(getIntlLocale())}</strong>
               {' yêu cầu theo trạng thái đã chọn'}
             </>
           )}

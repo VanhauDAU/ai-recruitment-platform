@@ -4,6 +4,7 @@ import {
   SALARY_RANGES,
   WORK_TYPE_LABELS,
 } from '@/entities/job/job'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 
 export const JOB_ALERT_SCOPE_OPTIONS = [
@@ -132,7 +133,7 @@ export function labelFor(options, value) {
   return options.find((option) => option.value === value)?.label || ''
 }
 
-const VIETNAM_DELIVERY_FORMATTER = new Intl.DateTimeFormat('vi-VN', {
+const VIETNAM_DELIVERY_FORMATTER = new Intl.DateTimeFormat(getIntlLocale(), {
   timeZone: 'Asia/Ho_Chi_Minh',
   day: '2-digit',
   month: '2-digit',

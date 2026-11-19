@@ -2,6 +2,7 @@ import { ArrowRightOutlined } from '@ant-design/icons'
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
 import { Link } from 'react-router'
 import { employerAppPath } from '@/shared/config/portals'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 const PIPELINE_SEGMENTS = [
   { key: 'applications_new', label: 'Mới nhận', color: '#2563eb' },
@@ -9,7 +10,7 @@ const PIPELINE_SEGMENTS = [
   { key: 'applications_interviewed', label: 'Phỏng vấn', color: '#10b981' },
 ]
 
-const numberFormatter = new Intl.NumberFormat('vi-VN')
+const numberFormatter = new Intl.NumberFormat(getIntlLocale())
 
 function PipelineTooltip({ active, payload }) {
   if (!active || !payload?.length) return null

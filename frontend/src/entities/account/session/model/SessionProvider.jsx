@@ -1,6 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
+import { changeLocale } from '@/shared/config/i18n'
 import { adminPath, employerAppPath, getCurrentPortal } from '@/shared/config/portals'
 import { getCurrentSessionUser, logoutAllDevices, logoutCurrentPortal } from '../api/session.api'
 import SessionContext from './session-context'
@@ -117,6 +118,13 @@ export default function SessionProvider({ children }) {
   useEffect(() => {
     restoreSession()
   }, [restoreSession])
+
+  // Ngôn ngữ lưu theo tài khoản thắng lựa chọn trên thiết bị: đăng nhập ở máy
+  // mới vẫn đúng ngôn ngữ. Trùng ngôn ngữ hiện tại thì changeLocale bỏ qua.
+  const preferredLanguage = user?.preferred_language
+  useEffect(() => {
+    if (preferredLanguage) changeLocale(preferredLanguage)
+  }, [preferredLanguage])
 
   useEffect(
     () => subscribeToSessionLogout(clearSessionState),

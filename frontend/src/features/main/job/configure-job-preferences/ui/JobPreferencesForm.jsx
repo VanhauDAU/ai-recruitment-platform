@@ -17,6 +17,7 @@ import {
 import { useJobPreferenceCatalog } from '../model/use-job-preference-catalog'
 import DesiredPositionTagsInput from './DesiredPositionTagsInput'
 import JobSpecializationPicker from './JobSpecializationPicker'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 const DROPDOWN_CLASS_NAME = '!rounded-2xl !p-1 !shadow-lg [&_.ant-select-item-option]:!rounded-xl'
 
@@ -206,7 +207,7 @@ export default function JobPreferencesForm({ preference, profile, onProfileSaved
                 precision={0}
                 inputMode="numeric"
                 placeholder="0"
-                formatter={(value) => (value == null || value === '' ? '' : new Intl.NumberFormat('vi-VN').format(value))}
+                formatter={(value) => (value == null || value === '' ? '' : new Intl.NumberFormat(getIntlLocale()).format(value))}
                 parser={(value) => {
                   const num = Number(String(value || '').replace(/[^\d]/g, ''))
                   return num > 0 ? num : null

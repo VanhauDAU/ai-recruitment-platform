@@ -1078,17 +1078,35 @@ app/router (employerAppPath('/company-page'), trong DashboardLayout)
   có `public_id` thuộc `pinned_job_public_ids` của khối việc làm; thứ tự do
   `GET /api/public/jobs/?company=` quyết định, frontend không tự xếp lại.
 
-## i18n cổng marketing nhà tuyển dụng
+## i18n vi/en (ADR-0023)
 
-- i18next chỉ được khởi tạo từ `EmployerMarketingLayout`; không import
-  `@/shared/config/i18n` vào `AppProviders`, main portal hoặc admin portal để
-  tránh kéo runtime và resource song ngữ vào các chunk không dùng.
-- Namespace `employer` sở hữu toàn bộ copy của 4 trang marketing (trang chủ,
-  giới thiệu, dịch vụ, liên hệ) và trang pháp lý. Nội dung song ngữ lấy từ site
-  settings đọc trường theo ngôn ngữ; giá trị tiếng Anh rỗng phải fallback về
-  tiếng Việt.
-- Lựa chọn ngôn ngữ được lưu bằng key `employer_marketing_lang`, không thay đổi
-  URL. Route, API payload, auth guard và portal host vẫn dùng contract hiện có.
+- **Thư viện:** Paraglide JS. Chuỗi nằm ở `frontend/messages/<vùng>/{vi,en}.json`.
+  Mỗi vùng thêm mới phải khai trong `project.inlang/settings.json` (`pathPattern`).
+- **Mã sinh:** plugin Vite biên dịch thành `src/shared/config/i18n/paraglide/`
+  (không commit). Chỉ `@/shared/config/i18n` được import mã sinh. Component gọi
+  `m.<khóa>()`; định dạng số/ngày dùng `getIntlLocale()`, không viết cứng `'vi-VN'`.
+- **Đặt khóa:** snake_case phẳng, tiền tố theo vùng sở hữu (`marketing_`,
+  `common_`…). Danh sách và nhãn động là mảng/map hàm message, không ghép khóa
+  bằng template string.
+- **Ngôn ngữ đang dùng:** lấy từ `preferred_language` của tài khoản
+  (`SessionProvider` áp khi khôi phục phiên), rồi localStorage `procv_lang`, rồi
+  `vi`. Không đọc ngôn ngữ trình duyệt và không đổi URL.
+- **Đổi ngôn ngữ:** tải lại trang. Bộ chọn
+  `features/common/preferences/switch-language` lưu vào tài khoản trước nếu đã
+  đăng nhập. Chỉ đặt bộ chọn ở vùng đã dịch xong.
+- **Thư viện UI:** locale antd đặt ở `app/providers/ui-locale.js`. dayjs import
+  từ `@/shared/lib/dayjs` (oxlint chặn import trực tiếp `dayjs`).
+- **Axios:** gửi `Accept-Language`; backend tự dịch thông báo và nhãn `*_label`.
+- **Nội dung từ site settings:** song ngữ đọc trường `<tên>_${getLocale()}`; giá
+  trị tiếng Anh rỗng phải fallback về tiếng Việt.
+- **Cổng kiểm tra:** `npm run lint` chạy `scripts/check-i18n.mjs`.
+  - Khóa và tham số giữa vi/en phải khớp.
+  - Mọi `m.<khóa>` phải tồn tại trong `messages/`; cấm truy cập động `m[...]`.
+  - Ratchet số dòng tiếng Việt viết cứng theo vùng
+    (`scripts/i18n-baseline.json`). Di trú xong một vùng thì chạy
+    `npm run check:i18n -- --update`.
+- **Cổng marketing NTD:** 4 trang (trang chủ, giới thiệu, dịch vụ, liên hệ),
+  trang pháp lý và footer dùng khóa `marketing_*`.
 - Page marketing chỉ compose section; footer lớn ở `widgets/employer/footer`.
   Cổng marketing không có bảng giá hay form lead; CTA dẫn tới đăng ký nhà tuyển
   dụng hoặc `/lien-he`.

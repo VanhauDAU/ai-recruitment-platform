@@ -1,3 +1,4 @@
+import { getIntlLocale } from '@/shared/config/i18n'
 const CARDS = [
   {
     key: 'manual_pending',
@@ -34,7 +35,7 @@ export default function AdminCompanyDomainSummaryCards({ summary, onFilter }) {
         const content = (
           <>
             <span className="block text-2xl font-black">
-              {Number(summary?.[card.key] || 0).toLocaleString('vi-VN')}
+              {Number(summary?.[card.key] || 0).toLocaleString(getIntlLocale())}
             </span>
             <span className="mt-1 block text-xs font-bold uppercase tracking-wide">{card.label}</span>
           </>

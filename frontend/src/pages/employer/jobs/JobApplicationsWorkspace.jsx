@@ -1,7 +1,7 @@
 import { ArrowRightOutlined, DownloadOutlined, ExportOutlined, SearchOutlined } from '@ant-design/icons'
 import { keepPreviousData, useMutation, useQuery } from '@tanstack/react-query'
 import { Alert, Button, Empty, Input, Pagination, Select, Skeleton, Table, Tooltip } from 'antd'
-import dayjs from 'dayjs'
+import dayjs from '@/shared/lib/dayjs'
 import { useState } from 'react'
 import { Link } from 'react-router'
 import {

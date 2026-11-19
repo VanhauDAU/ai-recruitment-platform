@@ -25,6 +25,7 @@ import {
 import KnowledgeEditorFields from './KnowledgeEditorFields'
 import NewRevisionModal from './NewRevisionModal'
 import './knowledge-revision-editor.css'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 function isSameField(left, right) {
   return String(left ?? '') === String(right ?? '')
@@ -96,7 +97,7 @@ export default function KnowledgeRevisionEditor({
         description: (
           <>
             Bạn có muốn khôi phục bản cục bộ từ{' '}
-            <strong>{new Date(local.saved_at).toLocaleString('vi-VN')}</strong> không?
+            <strong>{new Date(local.saved_at).toLocaleString(getIntlLocale())}</strong> không?
             <br />
             Nếu đóng, bản cục bộ vẫn được giữ để bạn quyết định sau.
           </>

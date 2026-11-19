@@ -1,0 +1,7 @@
+{
+  "$schema": "https://inlang.com/schema/inlang-message-format",
+  "common_language_switcher_label": "Đổi ngôn ngữ",
+  "common_language_vi": "Tiếng Việt",
+  "common_language_en": "English",
+  "common_language_save_failed": "Chưa lưu được ngôn ngữ cho tài khoản. Vui lòng thử lại."
+}

@@ -3,6 +3,7 @@ import {
   ClockCircleOutlined,
 } from '@ant-design/icons'
 import { Button, Empty, Space, Table, Tag } from 'antd'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 const CHANGE_FIELD_LABELS = {
   address: 'Địa chỉ',
@@ -42,7 +43,7 @@ const STATUS_PRESENTATION = {
 
 function formatDate(value) {
   if (!value) return 'Chưa gửi'
-  return new Intl.DateTimeFormat('vi-VN', {
+  return new Intl.DateTimeFormat(getIntlLocale(), {
     dateStyle: 'short',
     timeStyle: 'short',
   }).format(new Date(value))
@@ -211,7 +212,7 @@ export default function CompanyUpdateQueueTable({
         pageSize: 20,
         total: data.count,
         showSizeChanger: false,
-        showTotal: (total) => `${total.toLocaleString('vi-VN')} yêu cầu`,
+        showTotal: (total) => `${total.toLocaleString(getIntlLocale())} yêu cầu`,
       }}
       onChange={onChange}
     />

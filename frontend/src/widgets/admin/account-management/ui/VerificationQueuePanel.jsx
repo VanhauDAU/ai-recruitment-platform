@@ -1,7 +1,7 @@
 import { EyeOutlined, SearchOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
 import { Alert, Button, DatePicker, Input, Select, Table, Tag, Typography } from 'antd'
-import dayjs from 'dayjs'
+import dayjs from '@/shared/lib/dayjs'
 import { useDeferredValue, useMemo } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router'
 import {
@@ -11,6 +11,7 @@ import {
 } from '@/entities/company/admin-employer-verification'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { adminPath } from '@/shared/config/portals'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 const STATUS_OPTIONS = [
   { value: 'actionable', label: 'Cần xử lý' },
@@ -62,7 +63,7 @@ function verificationFiltersFromQuery(searchParams) {
 
 function formatDate(value) {
   if (!value) return 'Chưa nộp'
-  return new Intl.DateTimeFormat('vi-VN', {
+  return new Intl.DateTimeFormat(getIntlLocale(), {
     dateStyle: 'short',
     timeStyle: 'short',
   }).format(new Date(value))
@@ -197,7 +198,7 @@ export default function VerificationQueuePanel() {
             pageSize: 20,
             total: query.data?.count || 0,
             showSizeChanger: false,
-            showTotal: (total) => `${total.toLocaleString('vi-VN')} hồ sơ`,
+            showTotal: (total) => `${total.toLocaleString(getIntlLocale())} hồ sơ`,
           }}
           columns={[
             {

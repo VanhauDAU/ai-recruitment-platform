@@ -12,6 +12,7 @@ import { Button, Card, Divider, Form, Image, Input, Progress, Select, Space, Tag
 import { EDITOR_COMPLETION_ITEMS } from '../model/editor-completion'
 import { stateColor } from '../model/editor-options'
 import BlogTagPicker from './BlogTagPicker'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 function CompletionList({ checks }) {
   return (
@@ -111,14 +112,14 @@ export default function BlogEditorSidebar({
           <dl className="space-y-3 text-sm">
             <div><dt className="text-slate-400">Đường dẫn</dt><dd className="mt-1 break-all font-medium text-slate-700">/blog/{slug}</dd></div>
             <div><dt className="text-slate-400">Tác giả</dt><dd className="mt-1 font-medium text-slate-700">{post.author?.name || 'Không xác định'}</dd></div>
-            <div><dt className="text-slate-400">Cập nhật gần nhất</dt><dd className="mt-1 font-medium text-slate-700">{new Date(post.updated_at).toLocaleString('vi-VN')}</dd></div>
+            <div><dt className="text-slate-400">Cập nhật gần nhất</dt><dd className="mt-1 font-medium text-slate-700">{new Date(post.updated_at).toLocaleString(getIntlLocale())}</dd></div>
           </dl>
         </Card>
       )}
 
       {post?.history?.length > 0 && (
         <Card className="border-slate-200 shadow-sm" title="Lịch sử duyệt">
-          <Timeline items={post.history.slice(0, 8).map((item) => ({ content: <div><p className="font-medium text-slate-700">{item.action}</p><p className="text-xs text-slate-500">{item.actor_name} · {new Date(item.created_at).toLocaleString('vi-VN')}</p>{item.note && <p className="mt-1 text-sm text-slate-600">{item.note}</p>}</div> }))} />
+          <Timeline items={post.history.slice(0, 8).map((item) => ({ content: <div><p className="font-medium text-slate-700">{item.action}</p><p className="text-xs text-slate-500">{item.actor_name} · {new Date(item.created_at).toLocaleString(getIntlLocale())}</p>{item.note && <p className="mt-1 text-sm text-slate-600">{item.note}</p>}</div> }))} />
         </Card>
       )}
 

@@ -1,15 +1,16 @@
 import { EditOutlined, GlobalOutlined, PlusOutlined, SettingOutlined } from '@ant-design/icons'
 import { Button } from 'antd'
-import dayjs from 'dayjs'
+import dayjs from '@/shared/lib/dayjs'
 import { Link } from 'react-router'
 import { CAMPAIGN_SETUP_STATUSES, CAMPAIGN_STATUS_LABELS } from '@/entities/campaign/campaign'
 import { CampaignLifecycleActions } from '@/features/employer/campaign/manage-campaigns'
 import { employerAppPath } from '@/shared/config/portals'
 import HelpTip from '@/shared/ui/HelpTip'
 import './campaign-workspace.css'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 const formatDate = (value) => (value ? dayjs(value).format('DD/MM/YYYY') : '')
-const money = (value) => `${Number(value).toLocaleString('vi-VN')} đ`
+const money = (value) => `${Number(value).toLocaleString(getIntlLocale())} đ`
 
 const FACT_HELP = {
   'Chỉ tiêu': 'Tổng số lượng tuyển của các tin trong chiến dịch. Sửa số lượng ở từng tin để đổi chỉ tiêu.',
@@ -25,7 +26,7 @@ function campaignFacts(campaign) {
     ['Chỉ tiêu', campaign.job_count ? `Cần ${campaign.headcount} người (tổng ${campaign.job_count} tin)` : 'Chưa có tin'],
     ['Thời gian', `${formatDate(campaign.start_date) || 'Khi kích hoạt'} đến ${end}`],
     ['Ngân sách', budget],
-    ['Đã chạy', campaign.active_days == null ? 'Chưa kích hoạt' : `${campaign.active_days.toLocaleString('vi-VN')} ngày`],
+    ['Đã chạy', campaign.active_days == null ? 'Chưa kích hoạt' : `${campaign.active_days.toLocaleString(getIntlLocale())} ngày`],
   ]
 }
 

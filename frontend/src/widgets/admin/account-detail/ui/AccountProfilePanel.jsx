@@ -11,6 +11,7 @@ import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { displayProfileValue } from '../model/profile-value'
 import CompanyProfileCard from './CompanyProfileCard'
 import { ProfileFieldGrid } from './profile-field-display'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 const PROFILE_LABELS = {
   position_title: 'Chức danh',
@@ -135,7 +136,7 @@ export default function AccountProfilePanel({
             </Descriptions.Item>
             <Descriptions.Item label="Lương mong muốn">
               {preference.desired_salary_vnd
-                ? `${Number(preference.desired_salary_vnd).toLocaleString('vi-VN')} ₫`
+                ? `${Number(preference.desired_salary_vnd).toLocaleString(getIntlLocale())} ₫`
                 : 'Chưa cập nhật'}
             </Descriptions.Item>
             <Descriptions.Item label="Mức kinh nghiệm">

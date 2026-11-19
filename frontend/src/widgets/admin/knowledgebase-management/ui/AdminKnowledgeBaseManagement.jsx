@@ -32,6 +32,7 @@ import {
   updateKnowledgeListParams,
 } from '../model/list-filters'
 import './admin-knowledgebase-management.css'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 const ORDER_BY_COLUMN = {
   category: 'category',
@@ -70,7 +71,7 @@ export default function AdminKnowledgeBaseManagement() {
   const update = (patch) => setSearchParams(updateKnowledgeListParams(searchParams, patch))
   const ordering = params.ordering || DEFAULT_ORDERING
   const metric = (key) => (
-    summaryQuery.data ? Number(summaryQuery.data[key] || 0).toLocaleString('vi-VN') : '—'
+    summaryQuery.data ? Number(summaryQuery.data[key] || 0).toLocaleString(getIntlLocale()) : '—'
   )
 
   const columns = [
@@ -153,7 +154,7 @@ export default function AdminKnowledgeBaseManagement() {
     <div className="admin-knowledgebase">
       <section className="admin-list-toolbar" data-print-hide="true">
         <p className="admin-list-toolbar__summary">
-          <strong>{(articlesQuery.data?.count || 0).toLocaleString('vi-VN')}</strong>
+          <strong>{(articlesQuery.data?.count || 0).toLocaleString(getIntlLocale())}</strong>
           {' '}nội dung phù hợp · thao tác xuất áp dụng cho trang hiện tại
         </p>
         <Space wrap>

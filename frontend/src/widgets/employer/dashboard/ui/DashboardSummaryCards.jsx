@@ -4,6 +4,7 @@ import {
   InboxOutlined,
   TeamOutlined,
 } from '@ant-design/icons'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 const CARD_DEFINITIONS = [
   {
@@ -45,7 +46,7 @@ const CARD_DEFINITIONS = [
   },
 ]
 
-const numberFormatter = new Intl.NumberFormat('vi-VN')
+const numberFormatter = new Intl.NumberFormat(getIntlLocale())
 
 export default function DashboardSummaryCards({ summary = {} }) {
   return (

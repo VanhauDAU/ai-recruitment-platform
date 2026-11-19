@@ -42,6 +42,7 @@ import { CompanyPanel } from './CompanyPanel'
 import CompanyPublicPage from './CompanyPublicPage'
 import RecruiterStatusTag from './RecruiterStatusTag'
 import '../admin-company-directory.css'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 const EMPTY_PAGE = { count: 0, results: [] }
 const TAB_KEYS = new Set([
@@ -50,7 +51,7 @@ const TAB_KEYS = new Set([
 
 function formatDate(value) {
   if (!value) return '—'
-  return new Intl.DateTimeFormat('vi-VN', {
+  return new Intl.DateTimeFormat(getIntlLocale(), {
     dateStyle: 'medium',
     timeStyle: 'short',
   }).format(new Date(value))

@@ -1,7 +1,7 @@
 import { CalendarOutlined, MinusOutlined, PlusOutlined } from '@ant-design/icons'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { Alert, Button, Checkbox, DatePicker, Form, InputNumber, Radio, Select } from 'antd'
-import dayjs from 'dayjs'
+import dayjs from '@/shared/lib/dayjs'
 import { useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router'
 import { getEmployerRecruitmentNeed, saveEmployerRecruitmentNeed } from '@/entities/account/employer-profile'

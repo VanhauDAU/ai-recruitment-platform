@@ -37,6 +37,7 @@ import { relatedCategoryChips, relatedSearchTerms } from './lib/related-terms'
 import { buildJobListTitle } from './lib/job-page-title'
 import { buildJobAlertPrefill } from './lib/job-alert-prefill'
 import './ui/job-list.css'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 export default function JobList() {
   const [expandedGroups, setExpandedGroups] = useState({})
@@ -205,7 +206,7 @@ export default function JobList() {
   const contextLabel = searchLabel || catName || locationContext
   const fullContextLabel = searchLabel || catName || fullLocationContext
   const isLocationContext = !searchLabel && !catName && Boolean(locationContext)
-  const updateLabel = `[Update ${new Date().toLocaleDateString('vi-VN')}]`
+  const updateLabel = `[Update ${new Date().toLocaleDateString(getIntlLocale())}]`
   const pageTitle = buildJobListTitle({
     count: formatNumber(count),
     contextLabel: searchLabel || catName || (locationSummary ? `tại ${locationSummary}` : ''),

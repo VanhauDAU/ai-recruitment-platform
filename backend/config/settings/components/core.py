@@ -67,6 +67,8 @@ MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'common.http.security.AuthCookieOriginMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    # Chọn ngôn ngữ theo Accept-Language do frontend gửi (vi/en, ADR-0023).
+    'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -146,7 +148,16 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+# Mặc định tiếng Việt; LocaleMiddleware đổi theo Accept-Language của từng request.
+# Không dùng tiền tố ngôn ngữ trong URL: API và route giữ nguyên hợp đồng.
+LANGUAGE_CODE = 'vi'
+
+LANGUAGES = [
+    ('vi', 'Tiếng Việt'),
+    ('en', 'English'),
+]
+
+LOCALE_PATHS = [BASE_DIR / 'locale']
 
 TIME_ZONE = 'UTC'
 

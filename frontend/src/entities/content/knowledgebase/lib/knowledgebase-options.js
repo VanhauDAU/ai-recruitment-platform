@@ -1,3 +1,4 @@
+import { getIntlLocale } from '@/shared/config/i18n'
 export const KNOWLEDGE_ARTICLE_TYPES = [
   { value: 'FAQ', label: 'Câu hỏi thường gặp' },
   { value: 'GUIDE', label: 'Hướng dẫn' },
@@ -33,7 +34,7 @@ export function isKnowledgeConflict(error) {
 
 export function formatKnowledgeDate(value, { withTime = false } = {}) {
   if (!value) return '—'
-  return new Intl.DateTimeFormat('vi-VN', {
+  return new Intl.DateTimeFormat(getIntlLocale(), {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',

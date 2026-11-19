@@ -1,7 +1,7 @@
 import { SearchOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
 import { Alert, Button, Card, Empty, Input, Pagination, Select, Table, Tag } from 'antd'
-import dayjs from 'dayjs'
+import dayjs from '@/shared/lib/dayjs'
 import { useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import {

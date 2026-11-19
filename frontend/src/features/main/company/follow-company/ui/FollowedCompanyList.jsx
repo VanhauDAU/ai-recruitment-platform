@@ -13,6 +13,7 @@ import { getFollowedCompanies } from '../api/follow-company.api'
 import { followCompanyKeys } from '../api/follow-company.keys'
 import { useCompanyFollow } from '../model/use-company-follow'
 import '../follow-company.css'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 const PAGE_SIZE = 10
 const SKELETON_COUNT = 3
@@ -44,9 +45,9 @@ function FollowedCompanyRow({ company }) {
         </Link>
         <p className="mt-0.5 text-xs text-slate-500">
           {jobCount > 0
-            ? `${jobCount.toLocaleString('vi-VN')} việc làm đang tuyển`
+            ? `${jobCount.toLocaleString(getIntlLocale())} việc làm đang tuyển`
             : 'Chưa có việc làm đang tuyển'}
-          {company.followed_at && ` · Theo dõi từ ${new Date(company.followed_at).toLocaleDateString('vi-VN')}`}
+          {company.followed_at && ` · Theo dõi từ ${new Date(company.followed_at).toLocaleDateString(getIntlLocale())}`}
         </p>
       </div>
       <div className="followed-company__actions">
@@ -141,7 +142,7 @@ export default function FollowedCompanyList() {
   return (
     <>
       <p className="mb-3 text-sm text-slate-500" role="status">
-        {`${count.toLocaleString('vi-VN')} công ty đang theo dõi`}
+        {`${count.toLocaleString(getIntlLocale())} công ty đang theo dõi`}
       </p>
       <ul className="space-y-3">
         {companies.map((company) => <FollowedCompanyRow key={company.public_id} company={company} />)}

@@ -8,9 +8,10 @@ import {
   TeamOutlined,
   UserAddOutlined,
 } from '@ant-design/icons'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 const count = (value) => Number(value || 0)
-const vi = (value) => count(value).toLocaleString('vi-VN')
+const vi = (value) => count(value).toLocaleString(getIntlLocale())
 
 function StatCard({ icon, label, value, detail, tone, share, onClick }) {
   return (

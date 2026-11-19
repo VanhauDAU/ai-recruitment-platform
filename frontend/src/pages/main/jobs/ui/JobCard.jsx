@@ -25,12 +25,13 @@ import { JobCompareButton } from '@/features/main/job/compare-jobs'
 import { useSavedJob } from '@/features/main/job/saved-jobs'
 import { useJobImpression } from '@/features/main/job/track-job-engagement'
 import './job-card.css'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 function savedLabel(value) {
   const savedAt = new Date(value)
   if (!value || Number.isNaN(savedAt.getTime())) return null
-  const date = savedAt.toLocaleDateString('vi-VN')
-  const time = savedAt.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+  const date = savedAt.toLocaleDateString(getIntlLocale())
+  const time = savedAt.toLocaleTimeString(getIntlLocale(), { hour: '2-digit', minute: '2-digit' })
   return `Đã lưu ${date} - ${time}`
 }
 

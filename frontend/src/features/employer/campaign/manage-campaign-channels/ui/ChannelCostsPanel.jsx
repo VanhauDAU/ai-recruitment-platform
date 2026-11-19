@@ -1,7 +1,7 @@
 import { DeleteOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Button, DatePicker, Form, Input, InputNumber, Skeleton } from 'antd'
-import dayjs from 'dayjs'
+import dayjs from '@/shared/lib/dayjs'
 import {
   addCampaignChannelCost,
   campaignKeys,
@@ -13,6 +13,7 @@ import { message } from '@/shared/lib/toast'
 import HelpTip from '@/shared/ui/HelpTip'
 import { money } from '../lib/channel-kinds'
 import { CHANNEL_METRIC_HELP as HELP } from '../lib/metric-help'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 const KINDS = ['Chạy quảng cáo', 'In ấn tờ rơi', 'Phí đăng tin', 'Thuê người đăng']
 const AMOUNTS = [500_000, 1_000_000, 2_000_000, 5_000_000]
@@ -64,7 +65,7 @@ export default function ChannelCostsPanel({ campaign, channel, editable }) {
         <div><dt>Chi phí mỗi hồ sơ<HelpTip label="Giải thích chi phí mỗi hồ sơ">{HELP.costPerApplication}</HelpTip></dt><dd>{perApplication == null ? 'Chưa có hồ sơ' : money(Math.round(perApplication))}</dd></div>
         <div>
           <dt>Phần ngân sách chiến dịch<HelpTip label="Giải thích phần ngân sách">{HELP.budgetShare}</HelpTip></dt>
-          <dd>{budgetShare == null ? 'Chưa đặt ngân sách' : `${budgetShare.toLocaleString('vi-VN', { maximumFractionDigits: 1 })}%`}</dd>
+          <dd>{budgetShare == null ? 'Chưa đặt ngân sách' : `${budgetShare.toLocaleString(getIntlLocale(), { maximumFractionDigits: 1 })}%`}</dd>
         </div>
       </dl>
 

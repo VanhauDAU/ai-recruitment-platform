@@ -9,6 +9,7 @@ import {
   POSITION_LEVEL_LABELS,
   WORK_TYPE_LABELS,
 } from '@/entities/job/job'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 export const MISSING_VALUE = 'Chưa cập nhật'
 
@@ -77,7 +78,7 @@ function dateLabel(value) {
   if (!value) return MISSING_VALUE
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return MISSING_VALUE
-  return date.toLocaleDateString('vi-VN')
+  return date.toLocaleDateString(getIntlLocale())
 }
 
 function salaryValue(job) {

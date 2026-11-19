@@ -7,6 +7,7 @@ import {
   MAX_DESIRED_SPECIALIZATIONS,
   normalizeDesiredPositionOthers,
 } from '@/features/main/job/configure-job-preferences'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 const DROPDOWN_CLASS_NAME = 'onboarding-chat__dropdown'
 const SALARY_PRESETS = [8, 10, 15, 20, 30].map((millions) => ({
@@ -103,7 +104,7 @@ export default function InterviewStepFields({ catalog, onQuickAnswer, onSend, se
             value={values.desired_salary_vnd}
             onChange={(value) => setField('desired_salary_vnd', value)}
             onPressEnter={onSend}
-            formatter={(value) => (value == null || value === '' ? '' : new Intl.NumberFormat('vi-VN').format(value))}
+            formatter={(value) => (value == null || value === '' ? '' : new Intl.NumberFormat(getIntlLocale()).format(value))}
             parser={(value) => {
               const num = Number(String(value || '').replace(/[^\d]/g, ''))
               return num > 0 ? num : null

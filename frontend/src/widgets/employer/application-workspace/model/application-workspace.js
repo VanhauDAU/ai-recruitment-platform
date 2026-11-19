@@ -1,3 +1,4 @@
+import { getIntlLocale } from '@/shared/config/i18n'
 function timestampOf(application) {
   const value = application.applied_at
   const timestamp = value ? new Date(value).getTime() : 0
@@ -51,7 +52,7 @@ export function formatApplicationDate(value, withTime = false) {
   if (!value) return '—'
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return '—'
-  return date.toLocaleString('vi-VN', {
+  return date.toLocaleString(getIntlLocale(), {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',

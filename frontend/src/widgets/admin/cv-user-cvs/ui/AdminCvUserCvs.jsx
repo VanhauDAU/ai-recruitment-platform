@@ -8,10 +8,11 @@ import { getAdminUserCvs, lockAdminUserCv, unlockAdminUserCv, viewAdminUserCvCon
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { message } from '@/shared/lib/toast'
 import { AdminPanel } from '@/shared/ui/admin'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 const SOURCES = { builder: 'Tạo trên web', uploaded: 'Tải lên', imported: 'Trích xuất' }
 const STATUSES = { draft: 'Nháp', published: 'Đã lưu', archived: 'Lưu trữ' }
-const formatDate = (value) => (value ? new Date(value).toLocaleDateString('vi-VN') : '—')
+const formatDate = (value) => (value ? new Date(value).toLocaleDateString(getIntlLocale()) : '—')
 
 // Hộp nhập lý do dùng chung cho xem nội dung và khóa CV: lý do được ghi nhật ký.
 function ReasonModal({ action, onCancel, onSubmit, loading }) {

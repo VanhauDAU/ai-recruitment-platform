@@ -11,6 +11,7 @@ import {
 } from '@/entities/company/company'
 import { COMPANY_JOBS_PAGE_SIZE, useCompanyJobs } from '../model/use-company-jobs'
 import CompanyJobCard from './CompanyJobCard'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 const PREVIEW_COUNT = 5
 const SKELETON_COUNT = 3
@@ -143,8 +144,8 @@ export function CompanyJobsTab({ company, q, location, page }) {
           : isError
             ? ''
             : hasFilters
-              ? `Tìm thấy ${count.toLocaleString('vi-VN')} việc làm phù hợp`
-              : `${count.toLocaleString('vi-VN')} việc làm đang tuyển`}
+              ? `Tìm thấy ${count.toLocaleString(getIntlLocale())} việc làm phù hợp`
+              : `${count.toLocaleString(getIntlLocale())} việc làm đang tuyển`}
       </p>
 
       {isPending && <JobListSkeleton />}

@@ -22,6 +22,7 @@ import {
 } from './CompanyProfileStates'
 import SimilarCompanies from './SimilarCompanies'
 import '../public-company-profile.css'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 const BREADCRUMB_LINK = 'shrink-0 font-medium !text-slate-700 transition-colors hover:!text-[var(--brand-primary)]'
 const PRIMARY_LINK = 'items-center justify-center gap-2 rounded-lg !bg-[var(--brand-primary)] text-sm font-bold !text-white shadow-sm transition hover:!bg-[var(--brand-primary-hover)]'
@@ -39,7 +40,7 @@ function CompanyTabs({ ref, slug, isJobsTab, jobCount }) {
   const tabs = [
     { label: 'Tổng quan', to: companyDetailPath(slug), current: !isJobsTab },
     {
-      label: `Việc làm (${jobCount.toLocaleString('vi-VN')})`,
+      label: `Việc làm (${jobCount.toLocaleString(getIntlLocale())})`,
       to: companyDetailPath(slug, { tab: COMPANY_JOBS_TAB }),
       current: isJobsTab,
     },
@@ -161,7 +162,7 @@ function CompanyProfilePage({ profile, tab, q, location, page }) {
           />
           {showJobsLink && (
             <Link to={jobsPath} className={`inline-flex h-11 flex-1 px-4 ${PRIMARY_LINK}`}>
-              Xem việc làm ({jobCount.toLocaleString('vi-VN')})
+              Xem việc làm ({jobCount.toLocaleString(getIntlLocale())})
             </Link>
           )}
         </CompanyMobileCta>

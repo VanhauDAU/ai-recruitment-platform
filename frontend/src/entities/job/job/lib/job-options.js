@@ -1,3 +1,4 @@
+import { getIntlLocale } from '@/shared/config/i18n'
 export const WORK_TYPE_LABELS = {
   onsite: 'Làm việc tại văn phòng / Onsite',
   remote: 'Làm việc từ xa / Remote',
@@ -66,7 +67,7 @@ export const SALARY_CURRENCY_OPTIONS = [
 ]
 
 // Số theo định dạng Việt Nam (dấu chấm ngăn cách hàng nghìn): 3516 -> "3.516".
-export const formatNumber = (n) => (n ?? 0).toLocaleString('vi-VN')
+export const formatNumber = (n) => (n ?? 0).toLocaleString(getIntlLocale())
 
 const COMPANY_PREFIX_RE = /^(Công ty|CP|TNHH|Cổ phần|Tập đoàn|Ngân hàng|Trung tâm)\s*/gi
 // Bỏ tiền tố pháp lý khỏi tên công ty ("Công ty TNHH ABC" -> "ABC").

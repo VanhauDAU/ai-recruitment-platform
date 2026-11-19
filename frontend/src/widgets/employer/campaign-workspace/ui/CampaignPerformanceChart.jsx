@@ -1,14 +1,15 @@
 import { Empty } from 'antd'
 import { useEffect, useId, useMemo, useState } from 'react'
 import { Area, CartesianGrid, ComposedChart, Line, ResponsiveContainer, XAxis, YAxis } from 'recharts'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 const SERIES = [
   { key: 'impressions', label: 'Lượt hiển thị', color: '#059669', axis: 'reach', kind: 'area' },
   { key: 'views', label: 'Lượt xem', color: '#2563eb', axis: 'response', kind: 'line' },
   { key: 'applications', label: 'Lượt ứng tuyển', color: '#7c3aed', axis: 'response', kind: 'line' },
 ]
-const VIETNAMESE_NUMBER = new Intl.NumberFormat('vi-VN')
-const COMPACT_NUMBER = new Intl.NumberFormat('vi-VN', { notation: 'compact', maximumFractionDigits: 1 })
+const VIETNAMESE_NUMBER = new Intl.NumberFormat(getIntlLocale())
+const COMPACT_NUMBER = new Intl.NumberFormat(getIntlLocale(), { notation: 'compact', maximumFractionDigits: 1 })
 const CHART_LABEL = 'Biểu đồ lượt hiển thị, lượt xem và lượt ứng tuyển'
 
 function numberValue(value) {

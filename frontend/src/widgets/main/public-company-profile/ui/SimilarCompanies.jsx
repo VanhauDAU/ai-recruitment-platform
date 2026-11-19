@@ -1,5 +1,6 @@
 import { Link } from 'react-router'
 import { companyDetailPath, companyDisplayName, CompanyLogo } from '@/entities/company/company'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 export default function SimilarCompanies({ companies }) {
   return (
@@ -22,7 +23,7 @@ export default function SimilarCompanies({ companies }) {
                 </span>
                 <span className="mt-0.5 block text-xs text-gray-500">
                   {jobCount > 0
-                    ? `${jobCount.toLocaleString('vi-VN')} việc làm đang tuyển`
+                    ? `${jobCount.toLocaleString(getIntlLocale())} việc làm đang tuyển`
                     : 'Chưa có việc làm đang tuyển'}
                 </span>
               </span>

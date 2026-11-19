@@ -37,9 +37,6 @@ export function requestErrorMessage(error, fallback) {
   const [fieldName, rawError] = fieldEntry
   const fieldLabel = ERROR_FIELD_LABELS[fieldName] || fieldName
   const errorText = Array.isArray(rawError) ? rawError[0] : rawError
-  if (errorText === 'This field is required.') {
-    return `${fieldLabel}: vui lòng nhập thông tin bắt buộc.`
-  }
   return fieldName === 'non_field_errors' ? errorText : `${fieldLabel}: ${errorText}`
 }
 

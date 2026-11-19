@@ -22,6 +22,7 @@ import CandidateAgreementUploadForm, {
 } from './CandidateAgreementUploadForm'
 import { CandidateAgreementDocumentLink } from './CandidateAgreementDocumentLink'
 import EmployerVerificationLifecycleAlert from './EmployerVerificationLifecycleAlert'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 const CANDIDATE_DPA_GUIDE_URL = 'https://tuyendung.topcv.vn/help/tong-quan/thoa-thuan-xu-ly-du-lieu-ca-nhan-ung-vien/'
 const PLATFORM_DPA_URL = 'https://tuyendung.topcv.vn/data-processing-agreement'
@@ -43,7 +44,7 @@ function StatusTag({ completed, completedLabel, pendingLabel, completedColor = '
 
 function formatAgreementAcceptedAt(value) {
   if (!value || Number.isNaN(new Date(value).getTime())) return null
-  const parts = new Intl.DateTimeFormat('vi-VN', {
+  const parts = new Intl.DateTimeFormat(getIntlLocale(), {
     timeZone: 'Asia/Ho_Chi_Minh', hour: '2-digit', minute: '2-digit', second: '2-digit',
     day: '2-digit', month: '2-digit', year: 'numeric', hour12: false,
   }).formatToParts(new Date(value)).reduce((result, part) => ({ ...result, [part.type]: part.value }), {})

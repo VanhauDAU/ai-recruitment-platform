@@ -46,6 +46,7 @@ import VerificationDocumentBoard from './VerificationDocumentBoard'
 import VerificationFinalDecisionPanel from './VerificationFinalDecisionPanel'
 import VerificationJourney from './VerificationJourney'
 import './employer-verification-review.css'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 const DOCUMENT_DECISION_LABELS = {
   approved: 'Đã duyệt',
@@ -55,7 +56,7 @@ const DOCUMENT_DECISION_LABELS = {
 
 function formatDate(value) {
   if (!value) return 'Chưa có'
-  return new Intl.DateTimeFormat('vi-VN', {
+  return new Intl.DateTimeFormat(getIntlLocale(), {
     dateStyle: 'short',
     timeStyle: 'short',
   }).format(new Date(value))

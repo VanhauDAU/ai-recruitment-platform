@@ -10,6 +10,7 @@ import { isDirectPublish } from '../model/content-form'
 import { BenefitsCard, OfficesCard } from './ListContentCards'
 import { GalleryCard, HeroCard, RichTextCard, SocialLinksCard, VideoCard } from './TextContentCards'
 import './edit-company-page-content.css'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 const REQUEST_STATUS = {
   submitted: ['blue', 'Đã gửi, chờ duyệt'],
@@ -23,7 +24,7 @@ const SETTLED_STATUSES = new Set(['published', 'empty'])
 function formatDateTime(value) {
   const date = value ? new Date(value) : null
   return date && !Number.isNaN(date.getTime())
-    ? date.toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' })
+    ? date.toLocaleString(getIntlLocale(), { dateStyle: 'short', timeStyle: 'short' })
     : ''
 }
 

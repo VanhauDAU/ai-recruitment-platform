@@ -1,5 +1,6 @@
-import dayjs from 'dayjs'
+import dayjs from '@/shared/lib/dayjs'
 import { employerAppPath } from '@/shared/config/portals'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 // `countKey` reads `status_counts` of GET /api/employer/jobs/, which counts every
 // tab under the current search so the numbers never depend on the open tab.
@@ -78,7 +79,7 @@ export function jobDeadlineMeta(job, now = dayjs()) {
   return build(daysLeft <= 0 ? 'Hết hạn hôm nay' : `Còn ${daysLeft} ngày`, tone, progress)
 }
 
-const percentFormat = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 1 })
+const percentFormat = new Intl.NumberFormat(getIntlLocale(), { maximumFractionDigits: 1 })
 
 /** Share of views that ended in an application, e.g. "2,5%"; null without views. */
 export function formatApplyRate(applications, views) {
@@ -87,7 +88,7 @@ export function formatApplyRate(applications, views) {
 }
 
 export function formatCount(value) {
-  return (value || 0).toLocaleString('vi-VN')
+  return (value || 0).toLocaleString(getIntlLocale())
 }
 
 export function candidateInitials(name) {

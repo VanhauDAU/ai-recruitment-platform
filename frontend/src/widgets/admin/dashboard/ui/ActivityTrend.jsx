@@ -3,10 +3,11 @@ import { useState } from 'react'
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { AdminPanel } from '@/shared/ui/admin'
 import { ACTIVITY_METRICS, formatNumber } from '../model/dashboard-model'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 const SERIES_COLOR = '#2a78d6'
-const axisDate = new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit' })
-const fullDate = new Intl.DateTimeFormat('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit' })
+const axisDate = new Intl.DateTimeFormat(getIntlLocale(), { day: '2-digit', month: '2-digit' })
+const fullDate = new Intl.DateTimeFormat(getIntlLocale(), { weekday: 'long', day: '2-digit', month: '2-digit' })
 const parseDate = (value) => new Date(`${value}T00:00:00`)
 
 function TrendTooltip({ active, payload, metric }) {

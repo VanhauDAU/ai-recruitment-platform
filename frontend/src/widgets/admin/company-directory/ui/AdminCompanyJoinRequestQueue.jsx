@@ -11,11 +11,12 @@ import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { adminPath } from '@/shared/config/portals'
 import { message } from '@/shared/lib/toast'
 import { CompanyPanel } from './CompanyPanel'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 const EMPTY_PAGE = { count: 0, results: [] }
 
 function formatDate(value) {
-  return value ? new Intl.DateTimeFormat('vi-VN', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value)) : '—'
+  return value ? new Intl.DateTimeFormat(getIntlLocale(), { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value)) : '—'
 }
 
 /**

@@ -23,6 +23,7 @@ import {
 import { JobCompareButton } from '@/features/main/job/compare-jobs'
 import { formatJobDate, isAcceptingApplications } from '../../lib/job-detail-presentation'
 import JobApplicationClosed from './JobApplicationClosed'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 const EMPTY_LABEL = 'Chưa cập nhật'
 
@@ -100,7 +101,7 @@ function LatestApplicationNotice({ application }) {
   const appliedDate = new Date(application.applied_at)
   const formattedDate = Number.isNaN(appliedDate.getTime())
     ? ''
-    : appliedDate.toLocaleDateString('vi-VN')
+    : appliedDate.toLocaleDateString(getIntlLocale())
   return (
     <p className="mt-2 text-xs leading-5 text-slate-500">
       Bạn đã gửi CV cho vị trí này ngày: <strong className="text-slate-700">{formattedDate}.</strong>{' '}

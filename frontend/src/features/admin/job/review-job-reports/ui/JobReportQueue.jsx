@@ -14,7 +14,7 @@ import {
   Tag,
   Tooltip,
 } from 'antd'
-import dayjs from 'dayjs'
+import dayjs from '@/shared/lib/dayjs'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import { jobDetailPath } from '@/entities/job/job'
@@ -32,6 +32,7 @@ import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { message } from '@/shared/lib/toast'
 import { AdminDataActions, AdminPanel } from '@/shared/ui/admin'
 import JobReportDecisionModal from './JobReportDecisionModal'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 const PAGE_SIZE = 20
 const DEFAULT_STATUS = 'pending'
@@ -47,7 +48,7 @@ const REPORT_QUERY_KEYS = [
 ]
 
 function formatDateTime(value) {
-  return value ? new Date(value).toLocaleString('vi-VN') : '—'
+  return value ? new Date(value).toLocaleString(getIntlLocale()) : '—'
 }
 
 function sorterOrder(ordering, field) {
@@ -312,7 +313,7 @@ export default function JobReportQueue() {
   return (
     <AdminPanel
       title="Báo cáo vi phạm"
-      description={`${total.toLocaleString('vi-VN')} báo cáo phù hợp. Chỉ kết luận vi phạm đã xác nhận mới ảnh hưởng huy hiệu người đăng.`}
+      description={`${total.toLocaleString(getIntlLocale())} báo cáo phù hợp. Chỉ kết luận vi phạm đã xác nhận mới ảnh hưởng huy hiệu người đăng.`}
       extra={(
         <AdminDataActions
           allowExport={false}

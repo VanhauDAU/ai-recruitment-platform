@@ -1,4 +1,5 @@
-import dayjs from 'dayjs'
+import dayjs from '@/shared/lib/dayjs'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 // Trạng thái từng bước thiết lập được suy ra từ dữ liệu thật, không từ vị trí bước.
 
@@ -39,7 +40,7 @@ export function jobSelection(overview) {
 export function setupStepStates(campaign, overview, channelCount = 0) {
   const goalDone = Boolean(campaign.is_continuous || campaign.target_date)
   const end = campaign.is_continuous ? 'Tuyển liên tục' : `Đến ${shortDate(campaign.target_date)}`
-  const budget = campaign.budget_max ? `, ngân sách tối đa ${Number(campaign.budget_max).toLocaleString('vi-VN')} đ` : ''
+  const budget = campaign.budget_max ? `, ngân sách tối đa ${Number(campaign.budget_max).toLocaleString(getIntlLocale())} đ` : ''
   const selection = jobSelection(overview)
   const failing = (overview.check?.items || []).filter((item) => !item.ok).length
   const jobParts = [

@@ -35,6 +35,7 @@ class SessionUserSerializer(serializers.ModelSerializer):
             'phone',
             'avatar_url',
             'email_verified',
+            'preferred_language',
             'job_preferences_configured',
             'has_usable_password',
             'employer_onboarding_required',
@@ -142,7 +143,7 @@ class SessionUserSerializer(serializers.ModelSerializer):
 
 
 class ProfileUpdateSerializer(serializers.ModelSerializer):
-    """Cập nhật thông tin cá nhân ứng viên: chỉ họ tên và số điện thoại.
+    """Cập nhật thông tin cá nhân: họ tên, số điện thoại và ngôn ngữ giao diện.
 
     Email KHÔNG đổi ở đây (đổi email đi qua luồng xác thực riêng
     `ChangeEmailSerializer`). Họ tên và SĐT sửa được nhiều lần.
@@ -171,7 +172,7 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['full_name', 'phone']
+        fields = ['full_name', 'phone', 'preferred_language']
 
     def validate_full_name(self, value):
         if len(value.strip()) < 2:

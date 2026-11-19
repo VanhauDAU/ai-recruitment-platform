@@ -10,10 +10,11 @@ import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { message } from '@/shared/lib/toast'
 import ConfirmAction from '@/shared/ui/confirm-action/ConfirmAction'
 import './company-page-editors.css'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 function grantedLabel(grant) {
   const date = grant.granted_at ? new Date(grant.granted_at) : null
-  const day = date && !Number.isNaN(date.getTime()) ? date.toLocaleDateString('vi-VN') : ''
+  const day = date && !Number.isNaN(date.getTime()) ? date.toLocaleDateString(getIntlLocale()) : ''
   return ['Cấp quyền', day && `ngày ${day}`, grant.granted_by_name && `bởi ${grant.granted_by_name}`]
     .filter(Boolean)
     .join(' ')

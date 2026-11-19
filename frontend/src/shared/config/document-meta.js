@@ -1,4 +1,5 @@
 import { formatDocumentTitle } from './document-title'
+import { getLocale, getOgLocale } from './i18n'
 
 function ensureElement(selector, tagName, attributes) {
   let element = document.head.querySelector(selector)
@@ -56,11 +57,11 @@ export function applyDocumentMetadata(metadata, titleOptions) {
   const pageType = metadata.pageType || 'website'
   const siteName = titleOptions?.siteName || 'ProCV'
 
-  document.documentElement.lang = metadata.language || 'vi'
+  document.documentElement.lang = metadata.language || getLocale()
   document.title = title
   setMeta('meta[name="description"]', { name: 'description' }, description)
   setMeta('meta[name="robots"]', { name: 'robots' }, robots)
-  setMeta('meta[property="og:locale"]', { property: 'og:locale' }, 'vi_VN')
+  setMeta('meta[property="og:locale"]', { property: 'og:locale' }, getOgLocale())
   setMeta('meta[property="og:type"]', { property: 'og:type' }, pageType)
   setMeta('meta[property="og:site_name"]', { property: 'og:site_name' }, siteName)
   setMeta('meta[property="og:title"]', { property: 'og:title' }, title)

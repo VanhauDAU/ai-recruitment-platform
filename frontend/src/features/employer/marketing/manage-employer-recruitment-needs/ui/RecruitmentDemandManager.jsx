@@ -1,7 +1,7 @@
 import { DeleteOutlined, DownOutlined, EditOutlined, PlusOutlined, WalletOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Button, DatePicker, Form, InputNumber, Modal, Popover, Radio, Select, Switch } from 'antd'
-import dayjs from 'dayjs'
+import dayjs from '@/shared/lib/dayjs'
 import { useEffect, useMemo, useState } from 'react'
 import {
   createEmployerRecruitmentNeed,
@@ -13,6 +13,7 @@ import { getJobCategories, POSITION_LEVEL_LABELS } from '@/entities/job/job'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { message } from '@/shared/lib/toast'
 import ConfirmAction from '@/shared/ui/confirm-action/ConfirmAction'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 const MIN_BUDGET = 1_000_000
 const CONSULTATION_OPTIONS = [
@@ -22,7 +23,7 @@ const CONSULTATION_OPTIONS = [
   { value: 'other', label: 'Khác' },
 ]
 const levelOptions = Object.entries(POSITION_LEVEL_LABELS).map(([value, label]) => ({ value, label }))
-const money = (value) => value == null ? '' : new Intl.NumberFormat('vi-VN').format(value)
+const money = (value) => value == null ? '' : new Intl.NumberFormat(getIntlLocale()).format(value)
 const moneyFormatter = (value) => value == null ? '' : String(value).replace(/\B(?=(\d{3})+(?!\d))/g, '.')
 const moneyParser = (value) => value?.replace(/\D/g, '') || ''
 

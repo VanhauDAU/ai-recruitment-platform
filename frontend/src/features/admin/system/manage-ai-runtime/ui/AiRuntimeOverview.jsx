@@ -2,6 +2,7 @@ import { ReloadOutlined } from '@ant-design/icons'
 import { Alert, Button, Card, Descriptions, Skeleton, Statistic, Tag } from 'antd'
 import { useCallback, useEffect, useState } from 'react'
 import { getAiRuntimeOverview } from '@/entities/system/ai-runtime'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 const EMPTY_OBJECT = Object.freeze({})
 
@@ -26,7 +27,7 @@ function firstText(...values) {
 }
 
 function formatInteger(value) {
-  return new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 }).format(
+  return new Intl.NumberFormat(getIntlLocale(), { maximumFractionDigits: 0 }).format(
     firstNumber(value),
   )
 }
@@ -43,7 +44,7 @@ function formatUsd(value) {
 function formatRate(value) {
   const numericValue = firstNumber(value)
   const normalized = numericValue > 1 ? numericValue : numericValue * 100
-  return `${new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 1 }).format(normalized)}%`
+  return `${new Intl.NumberFormat(getIntlLocale(), { maximumFractionDigits: 1 }).format(normalized)}%`
 }
 
 function runtimeStatus(runtime) {

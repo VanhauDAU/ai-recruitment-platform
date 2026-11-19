@@ -1,11 +1,9 @@
 import { useState } from 'react'
 import { MenuOutlined, PhoneOutlined } from '@ant-design/icons'
 import { Button, Drawer } from 'antd'
-import { useTranslation } from 'react-i18next'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router'
-import '@/shared/config/i18n'
 import { EmailVerificationBanner } from '@/features/common/account/auth'
-import { LanguageSwitcher } from '@/features/employer/marketing/switch-language'
+import { LanguageSwitcher } from '@/features/common/preferences/switch-language'
 import { ANNOUNCEMENT_SURFACES } from '@/entities/content/announcement'
 import { useSession } from '@/entities/account/session'
 import { BrandLogo, settingText, useSiteSettings } from '@/entities/system/site-settings'
@@ -13,26 +11,26 @@ import { EmployerFooter } from '@/widgets/employer/footer'
 import { AnnouncementStrip } from '@/widgets/common/announcement-strip'
 import { employerAppPath, employerMarketingPath, HOME_BY_ROLE } from '@/shared/config/portals'
 import { useDocumentMetadata } from '@/shared/hooks/use-document-metadata'
+import { getLocale, m } from '@/shared/config/i18n'
 
 // Tiêu đề tab theo ngôn ngữ đang chọn; route-metadata giữ bản tiếng Việt làm mặc định.
-const META_TITLE_KEY_BY_PATH = {
-  [employerMarketingPath('')]: 'landing',
-  [employerMarketingPath('/gioi-thieu')]: 'about',
-  [employerMarketingPath('/dich-vu')]: 'services',
-  [employerMarketingPath('/lien-he')]: 'contact',
-  [employerMarketingPath('/dieu-khoan-dich-vu')]: 'terms',
-  [employerMarketingPath('/chinh-sach-quyen-rieng')]: 'privacy',
+const META_TITLE_BY_PATH = {
+  [employerMarketingPath('')]: m.marketing_meta_landing,
+  [employerMarketingPath('/gioi-thieu')]: m.marketing_meta_about,
+  [employerMarketingPath('/dich-vu')]: m.marketing_meta_services,
+  [employerMarketingPath('/lien-he')]: m.marketing_meta_contact,
+  [employerMarketingPath('/dieu-khoan-dich-vu')]: m.marketing_meta_terms,
+  [employerMarketingPath('/chinh-sach-quyen-rieng')]: m.marketing_meta_privacy,
 }
 
 const NAV_ITEMS = [
-  { key: 'home', to: employerMarketingPath(''), end: true },
-  { key: 'about', to: employerMarketingPath('/gioi-thieu') },
-  { key: 'services', to: employerMarketingPath('/dich-vu') },
-  { key: 'contact', to: employerMarketingPath('/lien-he') },
+  { key: 'home', to: employerMarketingPath(''), end: true, label: m.marketing_nav_home },
+  { key: 'about', to: employerMarketingPath('/gioi-thieu'), label: m.marketing_nav_about },
+  { key: 'services', to: employerMarketingPath('/dich-vu'), label: m.marketing_nav_services },
+  { key: 'contact', to: employerMarketingPath('/lien-he'), label: m.marketing_nav_contact },
 ]
 
 function NavLinks({ className, onNavigate }) {
-  const { t } = useTranslation('employer')
   return (
     <nav className={className}>
       {NAV_ITEMS.map((item) => (
@@ -47,7 +45,7 @@ function NavLinks({ className, onNavigate }) {
               : 'relative cursor-pointer font-semibold !text-slate-600 transition-colors hover:!text-[var(--brand-primary)]'
           )}
         >
-          {t(`nav.${item.key}`)}
+          {item.label()}
         </NavLink>
       ))}
     </nav>
@@ -55,11 +53,10 @@ function NavLinks({ className, onNavigate }) {
 }
 
 export default function EmployerMarketingLayout() {
-  const { i18n, t } = useTranslation('employer')
-  const language = i18n.resolvedLanguage || i18n.language || 'vi'
+  const language = getLocale()
   const { pathname } = useLocation()
-  const metaTitleKey = META_TITLE_KEY_BY_PATH[pathname.replace(/\/+$/, '')]
-  useDocumentMetadata(metaTitleKey ? { language, title: t(`meta.${metaTitleKey}`) } : { language })
+  const metaTitle = META_TITLE_BY_PATH[pathname.replace(/\/+$/, '')]
+  useDocumentMetadata(metaTitle ? { title: metaTitle() } : {})
   const { isAuthenticated, user } = useSession()
   const { settings } = useSiteSettings()
   const navigate = useNavigate()
@@ -71,15 +68,15 @@ export default function EmployerMarketingLayout() {
 
   const authButtons = isEmployer ? (
     <Button type="primary" shape="round" onClick={() => { closeMenu(); navigate(HOME_BY_ROLE.employer) }}>
-      {t('nav.goToDashboard')}
+      {m.marketing_nav_go_to_dashboard()}
     </Button>
   ) : (
     <>
       <Link to={employerAppPath('/login')} onClick={closeMenu}>
-        <Button shape="round">{t('nav.login')}</Button>
+        <Button shape="round">{m.marketing_nav_login()}</Button>
       </Link>
       <Link to={employerAppPath('/register')} onClick={closeMenu}>
-        <Button type="primary" shape="round">{t('nav.postJob')}</Button>
+        <Button type="primary" shape="round">{m.marketing_nav_post_job()}</Button>
       </Link>
     </>
   )
@@ -106,7 +103,7 @@ export default function EmployerMarketingLayout() {
             <div className="hidden items-center gap-2 md:flex">{authButtons}</div>
             <button
               type="button"
-              aria-label={t('nav.openMenu')}
+              aria-label={m.marketing_nav_open_menu()}
               onClick={() => setMenuOpen(true)}
               className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-600 lg:hidden"
             >

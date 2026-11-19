@@ -1,7 +1,7 @@
 import { ClockCircleOutlined } from '@ant-design/icons'
 import { useMutation } from '@tanstack/react-query'
 import { Button, Result } from 'antd'
-import dayjs from 'dayjs'
+import dayjs from '@/shared/lib/dayjs'
 import { cancelMyCompanyJoinRequest } from '@/entities/account/employer-profile'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { message } from '@/shared/lib/toast'

@@ -6,7 +6,7 @@ import {
 } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
 import { Alert, Button, Skeleton } from 'antd'
-import dayjs from 'dayjs'
+import dayjs from '@/shared/lib/dayjs'
 import { Link } from 'react-router'
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { campaignKeys, getCampaignHealth } from '@/entities/campaign/campaign'
@@ -14,11 +14,12 @@ import { CampaignReportExport } from '@/features/employer/campaign/export-campai
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import HelpTip from '@/shared/ui/HelpTip'
 import { CampaignMetric, CampaignSectionTitle } from './CampaignOverviewCards'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 const num = (value, digits = 1) => (
-  value == null ? '—' : Number(value).toLocaleString('vi-VN', { maximumFractionDigits: digits })
+  value == null ? '—' : Number(value).toLocaleString(getIntlLocale(), { maximumFractionDigits: digits })
 )
-const money = (value) => `${Number(value || 0).toLocaleString('vi-VN')} đ`
+const money = (value) => `${Number(value || 0).toLocaleString(getIntlLocale())} đ`
 
 const STATUS = {
   achieved: { label: 'Đã đủ chỉ tiêu', tone: 'good' },

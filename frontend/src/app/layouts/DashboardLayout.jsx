@@ -1,7 +1,6 @@
 import { CloseOutlined } from '@ant-design/icons'
 import { useIsMutating, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Button, ConfigProvider, Drawer, Layout } from 'antd'
-import viVN from 'antd/locale/vi_VN'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { matchPath, Outlet, useLocation, useNavigate } from 'react-router'
 import {
@@ -160,7 +159,6 @@ export default function DashboardLayout() {
 
   return (
     <ConfigProvider
-      locale={viVN}
       theme={{
         token: {
           borderRadius: 10,

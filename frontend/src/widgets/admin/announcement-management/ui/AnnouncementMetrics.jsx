@@ -16,6 +16,7 @@ import {
 } from '@/entities/content/announcement'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { SURFACE_LABELS } from '../model/announcement-options'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 function reportingDate(offsetDays = 0) {
   const date = new Date(Date.now() + offsetDays * 86_400_000)
@@ -30,7 +31,7 @@ function reportingDate(offsetDays = 0) {
 }
 
 function number(value) {
-  return Number(value || 0).toLocaleString('vi-VN')
+  return Number(value || 0).toLocaleString(getIntlLocale())
 }
 
 export default function AnnouncementMetrics({ publicId }) {
@@ -78,7 +79,7 @@ export default function AnnouncementMetrics({ publicId }) {
       dataIndex: 'ctr',
       key: 'ctr',
       sorter: (left, right) => left.ctr - right.ctr,
-      render: (value) => `${value.toLocaleString('vi-VN')}%`,
+      render: (value) => `${value.toLocaleString(getIntlLocale())}%`,
     },
     {
       title: 'Dismiss',

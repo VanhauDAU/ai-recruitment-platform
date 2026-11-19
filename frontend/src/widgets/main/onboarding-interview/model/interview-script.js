@@ -4,6 +4,7 @@
 // `answer` dựng đáp án của ứng viên thành một tin nhắn trong lịch sử hội thoại.
 
 import { EXPERIENCE_OPTIONS, normalizeDesiredPositionOthers } from '@/features/main/job/configure-job-preferences'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 /** Câu trả lời mở đầu cuộc trò chuyện. */
 export const START_REPLY = 'Bắt đầu thôi!'
@@ -51,7 +52,7 @@ export const INTERVIEW_STEPS = [
     question: 'Mức lương mong muốn mỗi tháng của bạn là bao nhiêu?',
     retry: 'Bạn nhập giúp mình mức lương mong muốn nhé.',
     answer: (values) => (values.desired_salary_vnd
-      ? `${new Intl.NumberFormat('vi-VN').format(values.desired_salary_vnd)} VND/tháng`
+      ? `${new Intl.NumberFormat(getIntlLocale()).format(values.desired_salary_vnd)} VND/tháng`
       : ''),
   },
   {
@@ -115,7 +116,7 @@ export function salarySummary(amount) {
   const value = Number(amount)
   if (!Number.isFinite(value) || value < 1) return ''
   if (value % 1_000_000 === 0) return `${value / 1_000_000} triệu`
-  return `${new Intl.NumberFormat('vi-VN').format(value)} đồng`
+  return `${new Intl.NumberFormat(getIntlLocale()).format(value)} đồng`
 }
 
 /** Câu chốt cá nhân hoá, dựng từ chính nhu cầu vừa lưu. */

@@ -7,10 +7,11 @@ import { analysisErrorCopy, isAnalysisActive, requestErrorCopy } from '../model/
 import { useJobFit } from '../model/use-job-fit'
 import JobFitResult from './JobFitResult'
 import './job-fit.css'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 function formatTime(value) {
   return value
-    ? new Date(value).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' })
+    ? new Date(value).toLocaleString(getIntlLocale(), { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' })
     : ''
 }
 
