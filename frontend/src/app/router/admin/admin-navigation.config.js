@@ -1,267 +1,88 @@
+import { m } from '@/shared/config/i18n'
+
+/**
+ * Admin sidebar, at most two levels deep. Top-level items carry a `section`
+ * (rendered as a heading where it changes) and are either a direct link or a
+ * collapsible group of links. Every destination appears exactly once; tabs and
+ * filters that live inside a page (settings groups, CV sub-pages, blog
+ * categories) stay on that page instead of being mirrored here.
+ *
+ * Queue leaves follow `QUEUE_CONFIG` in `entities/dashboard/admin-dashboard`
+ * (same order and destination), so the sidebar, the bell and the dashboard
+ * send an administrator to the same list.
+ */
+export const ADMIN_NAVIGATION_SECTIONS = {
+  operations: m.admin_nav_section_operations(),
+  management: m.admin_nav_section_management(),
+  content: m.admin_nav_section_content(),
+  system: m.admin_nav_section_system(),
+}
+
 export const ADMIN_NAVIGATION = [
   {
     key: 'dashboard',
-    label: 'Trang chủ',
+    label: m.admin_nav_dashboard(),
     iconKey: 'dashboard',
     routeRef: 'dashboard',
   },
   {
-    key: 'companies-employers',
-    label: 'Doanh nghiệp',
+    key: 'queues',
+    section: 'operations',
+    label: m.admin_nav_queues(),
+    iconKey: 'queues',
+    defaultOpen: true,
+    children: [
+      { key: 'queue-job-reports', label: m.admin_nav_queue_job_reports(), badgeKey: 'job_reports', routeRef: 'jobModeration', query: { tab: 'reports' } },
+      { key: 'queue-company-reports', label: m.admin_nav_queue_company_reports(), badgeKey: 'company_reports', routeRef: 'companyReports' },
+      { key: 'queue-company-content', label: m.admin_nav_queue_company_content(), badgeKey: 'company_content_changes', routeRef: 'companies', query: { tab: 'content-changes' } },
+      { key: 'queue-recruiter-verification', label: m.admin_nav_queue_recruiter_verification(), badgeKey: 'recruiter_verification', routeRef: 'recruiters', query: { tab: 'verification' } },
+      { key: 'queue-job-resubmissions', label: m.admin_nav_queue_job_resubmissions(), badgeKey: 'job_resubmissions', routeRef: 'jobModeration', query: { job_scope: 'resubmitted' } },
+      { key: 'queue-domain-verification', label: m.admin_nav_queue_domain_verification(), badgeKey: 'domain_verification', routeRef: 'recruiters', query: { tab: 'domain-verification' } },
+      { key: 'queue-company-joins', label: m.admin_nav_queue_company_joins(), badgeKey: 'company_join_requests', routeRef: 'companies', query: { tab: 'join-requests' } },
+      { key: 'queue-company-updates', label: m.admin_nav_queue_company_updates(), badgeKey: 'company_updates', routeRef: 'companies', query: { tab: 'updates' } },
+      { key: 'queue-blog', label: m.admin_nav_queue_blog(), badgeKey: 'blog_reviews', routeRef: 'blog', query: { status: 'pending' } },
+      { key: 'queue-knowledge-review', label: m.admin_nav_queue_knowledge_review(), badgeKey: 'knowledge_reviews', routeRef: 'knowledgebase', query: { revision_status: 'IN_REVIEW' } },
+      { key: 'queue-knowledge-overdue', label: m.admin_nav_queue_knowledge_overdue(), badgeKey: 'knowledge_overdue', routeRef: 'knowledgebase', query: { review_due: 'overdue' } },
+    ],
+  },
+  {
+    key: 'businesses',
+    section: 'management',
+    label: m.admin_nav_businesses(),
     iconKey: 'companies',
     children: [
-      {
-        key: 'companies',
-        label: 'Công ty',
-        children: [
-          {
-            key: 'company-list',
-            label: 'Tất cả công ty',
-            routeRef: 'companies',
-          },
-          {
-            key: 'company-updates',
-            label: 'Yêu cầu cập nhật',
-            badgeKey: 'company_updates',
-            routeRef: 'companies',
-            query: { tab: 'updates' },
-          },
-          {
-            key: 'company-reports',
-            label: 'Báo cáo công ty',
-            badgeKey: 'company_reports',
-            routeRef: 'companyReports',
-          },
-          {
-            key: 'company-join-requests',
-            label: 'Yêu cầu tham gia',
-            badgeKey: 'company_join_requests',
-            routeRef: 'companies',
-            query: { tab: 'join-requests' },
-          },
-        ],
-      },
-      {
-        key: 'employers',
-        label: 'Nhà tuyển dụng',
-        children: [
-          {
-            key: 'employer-list',
-            label: 'Tất cả NTD',
-            routeRef: 'recruiters',
-          },
-          {
-            key: 'employer-verification',
-            label: 'Chờ xác thực hồ sơ',
-            badgeKey: 'recruiter_verification',
-            routeRef: 'recruiters',
-            query: { tab: 'verification' },
-          },
-          {
-            key: 'employer-domain-verification',
-            label: 'Xác minh tên miền',
-            badgeKey: 'domain_verification',
-            routeRef: 'recruiters',
-            query: { tab: 'domain-verification' },
-          },
-          {
-            key: 'employer-restricted',
-            label: 'NTD bị hạn chế',
-            routeRef: 'recruiters',
-            query: { status: 'inactive,banned' },
-          },
-          {
-            key: 'employer-invitations',
-            label: 'Lời mời tham gia',
-            status: 'comingSoon',
-            access: { superuser: true },
-          },
-        ],
-      },
+      { key: 'company-list', label: m.admin_nav_companies(), routeRef: 'companies' },
+      { key: 'employer-list', label: m.admin_nav_recruiters(), routeRef: 'recruiters' },
+      { key: 'employer-restricted', label: m.admin_nav_recruiters_restricted(), routeRef: 'recruiters', query: { status: 'inactive,banned' } },
+    ],
+  },
+  {
+    key: 'jobs',
+    section: 'management',
+    label: m.admin_nav_jobs(),
+    iconKey: 'jobs',
+    children: [
+      { key: 'job-list', label: m.admin_nav_jobs_all(), routeRef: 'jobModeration' },
+      { key: 'held-jobs', label: m.admin_nav_jobs_held(), routeRef: 'jobModeration', query: { job_scope: 'held' } },
     ],
   },
   {
     key: 'users',
-    label: 'Người dùng',
+    section: 'management',
+    label: m.admin_nav_users(),
     iconKey: 'accounts',
     children: [
-      {
-        key: 'user-accounts',
-        label: 'Tài khoản',
-        children: [
-          {
-            key: 'all-accounts',
-            label: 'Tất cả người dùng',
-            routeRef: 'accounts',
-            access: { superuser: true },
-          },
-          {
-            key: 'candidate-accounts',
-            label: 'Ứng viên',
-            routeRef: 'accounts',
-            query: { tab: 'candidate' },
-          },
-          {
-            key: 'admin-accounts',
-            label: 'Quản trị viên',
-            routeRef: 'accounts',
-            query: { tab: 'admin' },
-            access: { superuser: true },
-          },
-          {
-            key: 'admin-invitations',
-            label: 'Lời mời quản trị',
-            badgeKey: 'admin_invitations',
-            routeRef: 'accounts',
-            query: { tab: 'invitations' },
-            access: { superuser: true },
-          },
-        ],
-      },
-      {
-        key: 'user-control',
-        label: 'Kiểm soát',
-        children: [
-          {
-            key: 'blocked-accounts',
-            label: 'Người dùng bị hạn chế',
-            routeRef: 'accounts',
-            query: { status: 'inactive,banned' },
-          },
-          {
-            key: 'account-activity',
-            label: 'Hoạt động tài khoản',
-            status: 'comingSoon',
-            access: { superuser: true },
-          },
-        ],
-      },
+      { key: 'candidate-accounts', label: m.admin_nav_candidates(), routeRef: 'accounts', query: { tab: 'candidate' } },
+      { key: 'blocked-accounts', label: m.admin_nav_users_restricted(), routeRef: 'accounts', query: { status: 'inactive,banned' } },
+      { key: 'all-accounts', label: m.admin_nav_users_all(), routeRef: 'accounts', access: { superuser: true } },
     ],
   },
-  {
-    key: 'recruitment-cv',
-    label: 'Tuyển dụng & CV',
-    iconKey: 'moderation',
-    children: [
-      {
-        key: 'jobs',
-        label: 'Tin tuyển dụng',
-        children: [
-          {
-            key: 'job-moderation',
-            label: 'Tất cả tin',
-            routeRef: 'jobModeration',
-          },
-          {
-            key: 'reported-jobs',
-            label: 'Tin có báo cáo chờ',
-            routeRef: 'jobModeration',
-            query: { job_scope: 'reported' },
-          },
-          {
-            key: 'resubmitted-jobs',
-            label: 'Tin chờ duyệt lại',
-            badgeKey: 'job_resubmissions',
-            routeRef: 'jobModeration',
-            query: { job_scope: 'resubmitted' },
-          },
-          {
-            key: 'held-jobs',
-            label: 'Tin đang tạm giữ',
-            routeRef: 'jobModeration',
-            query: { job_scope: 'held' },
-          },
-          {
-            key: 'job-reports',
-            label: 'Báo cáo vi phạm',
-            badgeKey: 'job_reports',
-            routeRef: 'jobModeration',
-            query: { tab: 'reports' },
-          },
-        ],
-      },
-      {
-        key: 'cv-portal',
-        label: 'Mẫu CV',
-        children: [
-          { key: 'cv-overview', label: 'Tổng quan', routeRef: 'cvOverview' },
-          { key: 'cv-templates', label: 'Mẫu CV', routeRef: 'cvTemplates' },
-          { key: 'cv-positions', label: 'Nội dung theo vị trí', routeRef: 'cvPositions' },
-          { key: 'cv-library', label: 'Thư viện', routeRef: 'cvLibrary' },
-          { key: 'cv-user-cvs', label: 'CV ứng viên', routeRef: 'cvUserCvs' },
-        ],
-      },
-    ],
-  },
-  {
-    key: 'content-business',
-    label: 'Nội dung',
-    iconKey: 'blog',
-    children: [
-      {
-        key: 'blog',
-        label: 'Cẩm nang nghề nghiệp',
-        children: [
-          { key: 'blog-posts', label: 'Bài viết', badgeKey: 'blog_reviews', routeRef: 'blog' },
-          { key: 'blog-categories', label: 'Danh mục', routeRef: 'blog', query: { tab: 'categories' } },
-          { key: 'blog-tags', label: 'Thẻ', routeRef: 'blog', query: { tab: 'tags' } },
-          { key: 'blog-pins', label: 'Bài ghim', routeRef: 'blog', query: { tab: 'pins' } },
-        ],
-      },
-      {
-        key: 'knowledgebase',
-        label: 'FAQ & hướng dẫn',
-        children: [
-          { key: 'knowledgebase-articles', label: 'Tất cả nội dung', routeRef: 'knowledgebase' },
-          { key: 'knowledgebase-review', label: 'Hàng chờ duyệt', badgeKey: 'knowledge_reviews', routeRef: 'knowledgebase', query: { revision_status: 'IN_REVIEW' } },
-          { key: 'knowledgebase-overdue', label: 'Cần rà soát', badgeKey: 'knowledge_overdue', routeRef: 'knowledgebase', query: { review_due: 'overdue' } },
-        ],
-      },
-      {
-        key: 'announcements',
-        label: 'Thông báo đa cổng',
-        routeRef: 'announcements',
-      },
-    ],
-  },
-  {
-    key: 'system',
-    label: 'Hệ thống',
-    iconKey: 'shield',
-    children: [
-      {
-        key: 'settings',
-        label: 'Cấu hình',
-        children: [
-          { key: 'settings-general', label: 'Chung', routeRef: 'settings' },
-          { key: 'settings-homepage', label: 'Trang chủ', routeRef: 'settings', query: { group: 'homepage' } },
-          { key: 'settings-seo', label: 'SEO', routeRef: 'settings', query: { group: 'seo' } },
-          { key: 'settings-candidate', label: 'Ứng viên', routeRef: 'settings', query: { group: 'candidate' } },
-          { key: 'settings-employer', label: 'Nhà tuyển dụng', routeRef: 'settings', query: { group: 'employer' } },
-          { key: 'settings-jobs', label: 'Tin tuyển dụng', routeRef: 'settings', query: { group: 'jobs' } },
-          { key: 'settings-cv', label: 'CV', routeRef: 'settings', query: { group: 'cv' } },
-          { key: 'settings-email', label: 'Email', routeRef: 'settings', query: { group: 'email' } },
-          { key: 'settings-payment', label: 'Thanh toán', routeRef: 'settings', query: { group: 'payment' } },
-          { key: 'settings-security', label: 'Bảo mật', routeRef: 'settings', query: { group: 'security' } },
-          { key: 'settings-upload', label: 'Tải tệp', routeRef: 'settings', query: { group: 'upload' } },
-          { key: 'settings-footer', label: 'Chân trang', routeRef: 'settings', query: { group: 'footer' } },
-          { key: 'settings-contact', label: 'Liên hệ', routeRef: 'settings', query: { group: 'contact' } },
-          { key: 'settings-ai', label: 'AI', routeRef: 'settings', query: { group: 'ai' } },
-          { key: 'settings-blog', label: 'Cẩm nang', routeRef: 'settings', query: { group: 'blog' } },
-        ],
-      },
-      {
-        key: 'audit-log',
-        label: 'Nhật ký kiểm toán',
-        status: 'comingSoon',
-        access: { superuser: true },
-      },
-    ],
-  },
-  {
-    key: 'personal',
-    label: 'Tài khoản cá nhân',
-    iconKey: 'account',
-    routeRef: 'account',
-  },
+  { key: 'blog', section: 'content', label: m.admin_nav_blog(), iconKey: 'blog', routeRef: 'blog' },
+  { key: 'knowledgebase', section: 'content', label: m.admin_nav_knowledgebase(), iconKey: 'help', routeRef: 'knowledgebase' },
+  { key: 'announcements', section: 'content', label: m.admin_nav_announcements(), iconKey: 'announcements', routeRef: 'announcements' },
+  // Every CV page shares one in-page tab bar, so the whole /cv area lights this item.
+  { key: 'cv-templates', section: 'content', label: m.admin_nav_cv_templates(), iconKey: 'cv', routeRef: 'cvOverview', matchSegment: '/cv' },
+  { key: 'admin-accounts', section: 'system', label: m.admin_nav_admins(), iconKey: 'admins', routeRef: 'accounts', query: { tab: 'admin' }, access: { superuser: true } },
+  { key: 'admin-invitations', section: 'system', label: m.admin_nav_admin_invitations(), iconKey: 'invitations', badgeKey: 'admin_invitations', routeRef: 'accounts', query: { tab: 'invitations' }, access: { superuser: true } },
+  { key: 'settings', section: 'system', label: m.admin_nav_settings(), iconKey: 'settings', routeRef: 'settings' },
 ]

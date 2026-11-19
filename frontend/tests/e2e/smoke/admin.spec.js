@@ -156,10 +156,13 @@ test('admin account management: filters, table actions and quick detail are resp
     await page.getByRole('button', { name: 'Mở điều hướng' }).click()
   }
   const adminNavigation = page.getByRole('navigation', { name: 'Điều hướng quản trị' })
-  await expect(adminNavigation.getByRole('button', { name: 'Trang chủ' })).not
-    .toHaveAttribute('aria-expanded')
-  await expect(adminNavigation.getByRole('button', { name: 'Tài khoản cá nhân' })).not
-    .toHaveAttribute('aria-expanded')
+  await expect(adminNavigation.getByRole('link', { name: 'Tổng quan' }))
+    .toHaveAttribute('href', '/admin/app/dashboard')
+  await expect(adminNavigation.getByRole('button', { name: 'Cần xử lý' }))
+    .toHaveAttribute('aria-expanded', 'true')
+  await expect(adminNavigation.getByRole('button', { name: 'Người dùng' }))
+    .toHaveAttribute('aria-expanded', 'true')
+  await expect(adminNavigation.getByText('Tài khoản cá nhân')).toHaveCount(0)
   if (usesNavigationDrawer) {
     await page.keyboard.press('Escape')
   }
@@ -191,7 +194,8 @@ test('admin account management: filters, table actions and quick detail are resp
   const verificationTab = page.getByRole('tab', { name: /Chờ xác thực NTD/ })
   await expect(verificationTab).toContainText('2')
   await expect(verificationTab).toHaveAttribute('aria-selected', 'true')
-  await expect(page.getByText('Cần xử lý', { exact: true }).filter({ visible: true })).toBeVisible()
+  await expect(page.locator('#admin-main').getByText('Cần xử lý', { exact: true })
+    .filter({ visible: true })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Hồ sơ xác thực nhà tuyển dụng' })).toBeVisible()
   await expect(page.getByText('NTD chờ duyệt')).toBeVisible()
   await expect(page.getByText('NTD đang xử lý')).toBeVisible()

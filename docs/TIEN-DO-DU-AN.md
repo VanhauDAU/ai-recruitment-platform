@@ -7,6 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
+| [Tổ chức lại sidebar quản trị](#tổ-chức-lại-sidebar-quản-trị-2026-11-20) | 🟨 Xong trên nhánh `feat/admin-sidebar-ia`, chờ gộp PR |
 | [Song ngữ vi/en cho 3 cổng (ADR-0023)](#song-ngữ-vien-cho-3-cổng-adr-0023-2026-11-19) | 🟨 GĐ0 đã gộp (#262); GĐ1 (cổng NTD) trên nhánh `feat/i18n-employer`; GĐ2–4 chưa làm |
 | [Chuẩn hóa tiêu đề trang 3 cổng](#chuẩn-hóa-tiêu-đề-trang-3-cổng-2026-11-19) | 🟨 PR #261 (nhánh `feat/page-titles`), chờ gộp |
 | [Hậu kiểm nội dung trang công ty](#hậu-kiểm-nội-dung-trang-công-ty-2026-11-19) | ✅ Gộp vào `dev` (#260) |
@@ -81,6 +82,20 @@ mục "Tiêu đề trang" của `frontend/ARCHITECTURE.md`.
 - Thanh trên cùng workspace NTD dùng chung resolver với tiêu đề tab (trước đây
   hiện "Không gian nhà tuyển dụng" ở trang đăng/sửa tin).
 - Gỡ `/tuyendung/bao-gia` khỏi SEO shell và sitemap (SPA không có trang này).
+
+## Tổ chức lại sidebar quản trị (2026-11-20)
+
+Mục tiêu: admin tới hàng chờ trong 1–2 cú bấm thay vì 3, mỗi trang chỉ có một
+lối vào trên sidebar. Một PR, nhánh `feat/admin-sidebar-ia`.
+
+| Phần | Nội dung |
+| --- | --- |
+| Cấu trúc | Tối đa 2 tầng, chia 4 mục Vận hành · Quản lý · Nội dung · Hệ thống. Nhóm "Cần xử lý" (mở sẵn) gom mọi hàng chờ theo đúng thứ tự và đích đến của `QUEUE_CONFIG` (dashboard, chuông); Doanh nghiệp/Tin/Người dùng chỉ còn danh sách; Mẫu CV, Cẩm nang, FAQ, Thông báo là mục thẳng; Hệ thống (superuser) gồm Quản trị viên, Lời mời quản trị, Cấu hình |
+| Gỡ trùng | Bỏ 15 lá Cấu hình và 5 lá Mẫu CV (trang đã có tab riêng), "Tài khoản cá nhân" (đã ở chân sidebar và menu avatar), các mục "Sắp ra mắt", "Tin có báo cáo chờ" (bộ lọc trong trang) |
+| Tương tác | Mục là liên kết thật (Ctrl/⌘-click mở tab mới); bỏ flyout tầng 3 đè nội dung; mở nhiều nhóm cùng lúc, nhớ nhóm đang mở và trạng thái thu gọn (localStorage); hàng chờ rỗng hiển thị mờ; drawer mobile dùng cùng accordion |
+| Tìm nhanh | Ô "Tìm trang…" + phím ⌘K/Ctrl+K: lọc mọi trang theo tên và nhóm, không phân biệt dấu; superuser tìm được cả từng nhóm cấu hình; tải lười khi mở lần đầu |
+| Hàng chờ mới | `company_content_changes` (hậu kiểm trang công ty, hạn 48 giờ) vào `GET /api/admin/dashboard/queues/` → badge sidebar, chuông, dashboard |
+| Kèm theo | Bộ lọc trạng thái ở danh sách Cẩm nang nằm trên URL (`?status=`) để hàng chờ mở đúng bài chờ duyệt; nhãn sidebar chuyển vào `messages/admin` |
 
 ## Hậu kiểm nội dung trang công ty (2026-11-19)
 

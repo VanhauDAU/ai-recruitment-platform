@@ -1,8 +1,8 @@
 import { CloseOutlined } from '@ant-design/icons'
 import { useIsMutating, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Button, ConfigProvider, Drawer, Layout } from 'antd'
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { matchPath, Outlet, useLocation, useNavigate } from 'react-router'
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
+import { matchPath, Outlet, useLocation } from 'react-router'
 import {
   canAccessAdminRoute,
   useAdminAccess,
@@ -26,10 +26,17 @@ import {
 import AdminNavigation from './AdminNavigation'
 import AdminSidebarFooter from './AdminSidebarFooter'
 import AdminTopbar from './AdminTopbar'
+import {
+  readSidebarPreference,
+  saveSidebarPreference,
+  SIDEBAR_COLLAPSED_KEY,
+} from './admin-sidebar-storage'
 import EmployerWorkspaceLayout from './EmployerWorkspaceLayout'
+import { useAdminCommandPalette } from './use-admin-command-palette'
 import './admin-dashboard.css'
 
 const { Sider, Content } = Layout
+const AdminCommandPalette = lazy(() => import('./AdminCommandPalette'))
 
 function AdminBrand({ collapsed = false, action = null }) {
   return (
@@ -79,10 +86,11 @@ function queueBadgeCounts(summary) {
 export default function DashboardLayout() {
   const { user, logout } = useSession()
   const adminAccess = useAdminAccess(user)
-  const navigate = useNavigate()
   const { pathname, search } = useLocation()
   const mainRef = useRef(null)
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(
+    () => readSidebarPreference(SIDEBAR_COLLAPSED_KEY, false) === true,
+  )
   const [sidebarPeek, setSidebarPeek] = useState(false)
   const [sidebarPeekGroup, setSidebarPeekGroup] = useState('')
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
@@ -96,10 +104,6 @@ export default function DashboardLayout() {
         path: adminPath(route.segment),
       }))
     : [], [adminAccess, user?.role])
-  const items = useMemo(
-    () => availableRoutes.filter((route) => route.showInNav),
-    [availableRoutes],
-  )
   const navigation = useMemo(
     () => buildAdminNavigation(ADMIN_NAVIGATION, ADMIN_ROUTES, adminAccess),
     [adminAccess],
@@ -137,6 +141,13 @@ export default function DashboardLayout() {
     ...queueBadgeCounts(queueSummary.data),
     admin_invitations: { count: usersSummary.data?.queues?.pending_admin_invitations, overdue: 0 },
   }), [navigation, queueSummary.data, usersSummary.data])
+  // Employers share this layout component; the shortcut belongs to admins only.
+  const palette = useAdminCommandPalette({ enabled: user?.role === 'admin' })
+  const openSearch = () => {
+    setMobileNavOpen(false)
+    setSidebarPeek(false)
+    palette.openPalette()
+  }
   const currentRoute = [...availableRoutes]
     .sort((left, right) => right.path.length - left.path.length)
     .find((item) => matchPath({ path: item.path, end: true }, pathname))
@@ -185,8 +196,8 @@ export default function DashboardLayout() {
             navigation={navigationWithBadges}
             pathname={pathname}
             search={search}
-            navigate={navigate}
             collapsed={sidebarCollapsed}
+            onOpenSearch={openSearch}
             onRequestExpand={(key) => {
               setSidebarPeekGroup(key)
               setSidebarPeek(true)
@@ -201,7 +212,7 @@ export default function DashboardLayout() {
                 navigation={navigationWithBadges}
                 pathname={pathname}
                 search={search}
-                navigate={navigate}
+                onOpenSearch={openSearch}
                 requestedOpenKey={sidebarPeekGroup}
                 onNavigate={() => setSidebarPeek(false)}
               />
@@ -234,8 +245,8 @@ export default function DashboardLayout() {
               navigation={navigationWithBadges}
               pathname={pathname}
               search={search}
-              navigate={navigate}
               mobile
+              onOpenSearch={openSearch}
               onNavigate={() => setMobileNavOpen(false)}
             />
             <AdminSidebarFooter user={user} logout={logout} onNavigate={() => setMobileNavOpen(false)} />
@@ -253,7 +264,8 @@ export default function DashboardLayout() {
             onOpenMobileNav={() => setMobileNavOpen(true)}
             onToggleSidebar={() => {
               setSidebarPeek(false)
-              setSidebarCollapsed((value) => !value)
+              saveSidebarPreference(SIDEBAR_COLLAPSED_KEY, !sidebarCollapsed)
+              setSidebarCollapsed(!sidebarCollapsed)
             }}
           />
           <AnnouncementStrip
@@ -263,10 +275,20 @@ export default function DashboardLayout() {
           />
           <Content>
             <div id="admin-main" ref={mainRef} tabIndex={-1} className="admin-main">
-              <Outlet context={{ availableRoutes: items, adminAccess }} />
+              <Outlet context={{ adminAccess }} />
             </div>
           </Content>
         </Layout>
+        {palette.mounted && (
+          <Suspense fallback={null}>
+            <AdminCommandPalette
+              open={palette.open}
+              navigation={navigationWithBadges}
+              isSuperuser={Boolean(adminAccess?.isSuperuser)}
+              onClose={palette.closePalette}
+            />
+          </Suspense>
+        )}
       </Layout>
     </ConfigProvider>
   )

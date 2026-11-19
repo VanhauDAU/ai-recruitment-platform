@@ -1,3 +1,4 @@
+import { m } from '@/shared/config/i18n'
 import { adminPath } from '@/shared/config/portals'
 
 // Ordered by impact on users: trust and safety first, then onboarding, then content.
@@ -11,6 +12,11 @@ export const QUEUE_CONFIG = {
     label: 'Báo cáo công ty',
     hint: 'Phản ánh về thông tin, mạo danh doanh nghiệp',
     to: adminPath('/company-reports'),
+  },
+  company_content_changes: {
+    label: m.admin_queue_company_content_label(),
+    hint: m.admin_queue_company_content_hint(),
+    to: adminPath('/companies?tab=content-changes'),
   },
   recruiter_verification: {
     label: 'Xác thực nhà tuyển dụng',
@@ -40,7 +46,7 @@ export const QUEUE_CONFIG = {
   blog_reviews: {
     label: 'Bài viết chờ duyệt',
     hint: 'Bài mới và bản sửa của bài đã xuất bản',
-    to: adminPath('/blog'),
+    to: adminPath('/blog?status=pending'),
   },
   knowledge_reviews: {
     label: 'FAQ & hướng dẫn chờ duyệt',

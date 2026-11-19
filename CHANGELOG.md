@@ -8,6 +8,19 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-20
 
+#### Changed — Admin: sidebar hai tầng, nhóm "Cần xử lý" và tìm nhanh
+
+- Sidebar còn tối đa 2 tầng, chia mục Vận hành · Quản lý · Nội dung · Hệ thống;
+  mọi hàng chờ gom vào nhóm "Cần xử lý" (mở sẵn, cùng thứ tự với dashboard và
+  chuông); bỏ flyout tầng 3 và các lá trùng với tab trong trang (Cấu hình, Mẫu
+  CV), "Tài khoản cá nhân" và mục "Sắp ra mắt".
+- Mục điều hướng là liên kết thật (mở tab mới được); mở nhiều nhóm cùng lúc,
+  nhớ nhóm đang mở và trạng thái thu gọn; hàng chờ rỗng hiển thị mờ.
+- Tìm trang nhanh bằng ô "Tìm trang…" hoặc ⌘K/Ctrl+K, không phân biệt dấu.
+- **API**: `GET /api/admin/dashboard/queues/` (và dashboard) thêm hàng chờ
+  `company_content_changes` (hậu kiểm trang công ty, hạn 48 giờ).
+- Danh sách Cẩm nang đọc bộ lọc trạng thái từ URL (`?status=`).
+
 #### Changed — README và chính sách bảo vệ `main`
 
 - Viết lại `README.md` theo đúng hệ thống hiện tại: giới thiệu ba cổng, tính
