@@ -24,17 +24,14 @@ export function buildAdminNavigation(navigation, routes, adminAccess) {
       return children.length ? { ...node, children } : null
     }
 
-    const route = node.routeRef ? routesById.get(node.routeRef) : null
-    if (node.routeRef && !route) return null
-    if (route && !canAccessAdminRoute(route, adminAccess)) return null
-    if (!route && node.status === 'comingSoon' && !node.access && !adminAccess.isSuperuser) {
-      return null
-    }
-    const path = route ? adminPath(route.segment) : null
+    const route = routesById.get(node.routeRef)
+    if (!route || !canAccessAdminRoute(route, adminAccess)) return null
+    const path = adminPath(route.segment)
     return {
       ...node,
       path,
-      href: path ? `${path}${queryString(node.query)}` : null,
+      matchPath: node.matchSegment ? adminPath(node.matchSegment) : path,
+      href: `${path}${queryString(node.query)}`,
       route,
     }
   }
@@ -77,13 +74,42 @@ export function findActiveAdminNavigation(navigation, pathname, search = '') {
   const searchParams = new URLSearchParams(search)
   const candidates = flattenAdminNavigation(navigation)
     .filter((leaf) => (
-      leaf.path
-      && (pathname === leaf.path || pathname.startsWith(`${leaf.path}/`))
+      leaf.matchPath
+      && (pathname === leaf.matchPath || pathname.startsWith(`${leaf.matchPath}/`))
       && queryMatches(leaf.query, searchParams)
     ))
     .sort((left, right) => {
       const queryScore = Object.keys(right.query || {}).length - Object.keys(left.query || {}).length
-      return queryScore || right.path.length - left.path.length
+      return queryScore || right.matchPath.length - left.matchPath.length
     })
   return candidates[0] || null
+}
+
+const foldText = (value) => String(value || '')
+  .normalize('NFD')
+  .replace(/[̀-ͯ]/g, '')
+  .replace(/đ/gi, 'd')
+  .toLowerCase()
+  .trim()
+
+/**
+ * Quick-jump results: every query word must appear in the destination's
+ * breadcrumb, accents ignored. Destinations whose label starts with the query
+ * rank first, then those whose label contains it; ties keep navigation order.
+ */
+export function searchAdminDestinations(destinations, query) {
+  const words = foldText(query).split(/\s+/).filter(Boolean)
+  if (!words.length) return destinations
+  const phrase = words.join(' ')
+  return destinations
+    .map((destination, order) => {
+      const label = foldText(destination.label)
+      const haystack = foldText(destination.breadcrumb.join(' '))
+      if (!words.every((word) => haystack.includes(word))) return null
+      const rank = label.startsWith(phrase) ? 0 : label.includes(phrase) ? 1 : 2
+      return { destination, rank, order }
+    })
+    .filter(Boolean)
+    .sort((left, right) => left.rank - right.rank || left.order - right.order)
+    .map(({ destination }) => destination)
 }

@@ -62,7 +62,7 @@ const company = {
   updated_at: '2026-07-02T00:00:00Z',
 }
 
-test('admin company directory: three-level navigation, detail and owner roster', { tag: '@responsive' }, async ({
+test('admin company directory: sidebar navigation, detail and owner roster', { tag: '@responsive' }, async ({
   page,
 }, testInfo) => {
   const usesDrawer = testInfo.project.name !== 'desktop-chromium'
@@ -160,22 +160,17 @@ test('admin company directory: three-level navigation, detail and owner roster',
   await expect(page.getByRole('combobox', { name: 'Lọc trạng thái công ty' })).toHaveCount(0)
   await expect(page.getByLabel('Công ty Alpha chưa cập nhật logo')).toBeVisible()
 
-  if (usesDrawer) {
-    await page.getByRole('button', { name: 'Mở điều hướng' }).click()
-    const drawer = page.getByRole('dialog')
-    await drawer.getByRole('button', { name: 'Doanh nghiệp' }).click()
-    await expect(drawer.getByRole('button', { name: 'Thành viên' })).toHaveCount(0)
-    await drawer.getByRole('button', { name: 'Công ty' }).click()
-  } else {
-    await expect(page.getByRole('navigation', { name: 'Điều hướng quản trị' })
-      .getByRole('button', { name: 'Thành viên' })).toHaveCount(0)
-    await page.getByRole('navigation', { name: 'Điều hướng quản trị' })
-      .getByRole('button', { name: 'Công ty' })
-      .click()
-  }
-  const companyListLeaf = page.getByRole('button', { name: 'Tất cả công ty' })
-  await expect(companyListLeaf).toBeVisible()
-  await companyListLeaf.click()
+  // Two-level sidebar: the open group lists its pages as plain links.
+  if (usesDrawer) await page.getByRole('button', { name: 'Mở điều hướng' }).click()
+  const navigation = usesDrawer
+    ? page.getByRole('dialog').getByRole('navigation', { name: 'Điều hướng quản trị' })
+    : page.getByRole('navigation', { name: 'Điều hướng quản trị' })
+  await expect(navigation.getByRole('button', { name: 'Doanh nghiệp' }))
+    .toHaveAttribute('aria-expanded', 'true')
+  await expect(navigation.getByText('Thành viên')).toHaveCount(0)
+  const companyListLink = navigation.getByRole('link', { name: 'Công ty', exact: true })
+  await expect(companyListLink).toHaveAttribute('aria-current', 'page')
+  await companyListLink.click()
 
   await page.getByRole('button', { name: /Công ty Alpha/ }).click()
   await expect(page).toHaveURL('/admin/app/companies/co_alpha')
@@ -183,7 +178,7 @@ test('admin company directory: three-level navigation, detail and owner roster',
   await expect(page.locator('.company-directory__rich-text strong')).toHaveText('công nghệ')
   await expect(page.locator('.company-directory__rich-text script')).toHaveCount(0)
   await page.getByRole('tab', { name: 'Xác thực NTD' }).click()
-  await expect(page.getByText('Xác thực nhà tuyển dụng')).toBeVisible()
+  await expect(page.locator('#admin-main').getByText('Xác thực nhà tuyển dụng')).toBeVisible()
   await expect(page.getByText('Trạng thái pháp lý công ty')).toHaveCount(0)
   await page.getByRole('tab', { name: /Nhà tuyển dụng/ }).click()
   await expect(page.getByText('HR Manager')).toBeVisible()

@@ -39,6 +39,7 @@ from apps.employers.selectors import (
     admin_company_summary,
     admin_verification_summary,
     pending_join_requests_awaiting_admin,
+    unreviewed_content_changes,
 )
 from apps.jobs.models import (
     Job,
@@ -67,6 +68,8 @@ QUEUE_SLA_HOURS = {
     'domain_verification': 72,
     'company_updates': 72,
     'company_join_requests': 72,
+    # Page content is already public when it lands here (post-moderation).
+    'company_content_changes': 48,
     'job_reports': 48,
     'company_reports': 48,
     'job_resubmissions': 48,
@@ -170,6 +173,7 @@ def _queues(now, job_summary):
             'created_at',
             now,
         ),
+        _queue('company_content_changes', unreviewed_content_changes(), 'created_at', now),
         _queue(
             'job_reports',
             JobReport.objects.filter(status=JobReport.Status.PENDING),

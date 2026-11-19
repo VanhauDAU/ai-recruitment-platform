@@ -52,12 +52,15 @@ def admin_company_content_changes_queryset(*, params=None):
     return queryset
 
 
+def unreviewed_content_changes():
+    """Published changes still waiting for an administrator to look at them."""
+    return CompanyContentChange.objects.filter(
+        status=CompanyContentChange.Status.UNREVIEWED
+    ).exclude(changes={})
+
+
 def unreviewed_content_change_count():
-    return (
-        CompanyContentChange.objects.filter(status=CompanyContentChange.Status.UNREVIEWED)
-        .exclude(changes={})
-        .count()
-    )
+    return unreviewed_content_changes().count()
 
 
 def content_change_labels(changes):

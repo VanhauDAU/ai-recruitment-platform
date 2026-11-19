@@ -12,7 +12,7 @@ from apps.accounts.tests.factories import make_admin
 from apps.applications.models import Application
 from apps.cvs.models import UserCv
 from apps.cvs.services import create_initial_document
-from apps.employers.models import Company
+from apps.employers.models import Company, CompanyContentChange
 from apps.employers.tests.factories import make_employer_ready
 from apps.jobs.models import Job, JobCategory, JobCategoryAssignment, JobReport
 from apps.jobs.tests.factories import open_visibility_window
@@ -103,6 +103,33 @@ class AdminDashboardApiTests(APITestCase):
         self.assertEqual(queue['overdue'], 1)
         self.assertEqual(queue['sla_hours'], 48)
         self.assertLess(queue['oldest_at'], fresh.created_at.isoformat())
+
+    def test_queue_counts_unreviewed_page_content_changes(self):
+        published = {'description': '<p>Mới</p>'}
+        stale = CompanyContentChange.objects.create(
+            company=self.company, actor=self.employer, changes=published
+        )
+        CompanyContentChange.objects.filter(pk=stale.pk).update(
+            created_at=timezone.now() - timedelta(hours=60)
+        )
+        CompanyContentChange.objects.create(
+            company=self.company, actor=self.employer, changes=published
+        )
+        CompanyContentChange.objects.create(
+            company=self.company,
+            actor=self.employer,
+            changes=published,
+            status=CompanyContentChange.Status.REVIEWED,
+        )
+        # A publish whose announced files never arrived has nothing to review.
+        CompanyContentChange.objects.create(company=self.company, actor=self.employer)
+
+        response = self.client.get(reverse('admin-dashboard-queues'))
+
+        queue = next(
+            item for item in response.data['queues'] if item['key'] == 'company_content_changes'
+        )
+        self.assertEqual((queue['count'], queue['overdue'], queue['sla_hours']), (2, 1, 48))
 
     def test_kpis_compare_current_with_previous_period(self):
         previous = timezone.now() - timedelta(days=10)

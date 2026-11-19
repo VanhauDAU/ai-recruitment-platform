@@ -1,4 +1,6 @@
-.admin-shell {
+/* The mobile drawer renders in a portal outside the shell, so it needs the tokens too. */
+.admin-shell,
+.admin-sider--drawer {
   --admin-topbar-height: 76px;
   --admin-primary: var(--brand-primary, #00b14f);
   --admin-primary-hover: var(--brand-primary-hover, #008f40);
@@ -129,15 +131,54 @@
 
 .admin-nav__section-label {
   color: var(--admin-sidebar-muted);
-  font-size: 12px;
-  font-weight: 600;
-  margin: 10px 10px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  margin: 16px 11px 6px;
+  text-transform: uppercase;
+}
+
+.admin-nav__search {
+  align-items: center;
+  background: var(--admin-canvas);
+  border: 1px solid var(--admin-border);
+  border-radius: 10px;
+  color: var(--admin-text-muted);
+  cursor: pointer;
+  display: flex;
+  font: inherit;
+  font-size: 13px;
+  gap: 8px;
+  margin-bottom: 8px;
+  min-height: 38px;
+  padding: 0 10px;
+  transition: border-color 150ms ease, color 150ms ease;
+  width: 100%;
+}
+
+.admin-nav__search-label {
+  flex: 1;
+  text-align: left;
+}
+
+.admin-nav__search kbd {
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  border-radius: 6px;
+  color: var(--admin-text-muted);
+  font-family: inherit;
+  font-size: 11px;
+  padding: 1px 6px;
+}
+
+.admin-nav__search:hover,
+.admin-nav__search:focus-visible {
+  border-color: var(--admin-primary);
+  color: var(--admin-text);
 }
 
 .admin-nav__level-one,
-.admin-nav__level-two,
-.admin-nav__leaf,
-.admin-nav__back {
+.admin-nav__leaf {
   align-items: center;
   background: transparent;
   border: 0;
@@ -146,7 +187,13 @@
   display: flex;
   font: inherit;
   text-align: left;
+  text-decoration: none;
   width: 100%;
+}
+
+.admin-nav__label {
+  flex: 1;
+  min-width: 0;
 }
 
 .admin-nav__level-one {
@@ -163,7 +210,8 @@
   color: var(--admin-text);
 }
 
-.admin-nav__level-one--active {
+.admin-nav__level-one--active,
+.admin-nav__level-one--active:hover {
   background: var(--admin-primary-soft);
   color: #0f5132;
   font-weight: 700;
@@ -182,7 +230,7 @@
   width: 22px;
 }
 
-.admin-nav__level-one .anticon-right {
+.admin-nav__chevron {
   color: var(--admin-sidebar-muted);
   font-size: 11px;
   transition: transform 160ms ease;
@@ -199,106 +247,37 @@
   padding: 3px 0 3px 8px;
 }
 
-.admin-nav__level-two {
-  border-radius: 9px;
-  gap: 8px;
-  justify-content: space-between;
-  min-height: 38px;
-  padding: 7px 10px;
-  transition:
-    background-color 150ms ease,
-    color 150ms ease,
-    transform 150ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.admin-nav__level-two:hover,
-.admin-nav__level-two:focus-visible {
-  background: var(--admin-sidebar-hover);
-  color: var(--admin-text);
-}
-
-.admin-nav__level-two--active {
-  background: var(--admin-sidebar-hover);
-  color: #0f5132;
-}
-
-.admin-nav__level-two:disabled {
-  color: var(--admin-sidebar-muted);
-  cursor: not-allowed;
-}
-
-.admin-nav__level-two--direct {
-  justify-content: flex-start;
-}
-
-.admin-nav__level-two--direct.admin-nav__level-two--active {
-  box-shadow: inset 2px 0 var(--admin-primary);
-}
-
-.admin-nav__level-two:not(:disabled):hover,
-.admin-nav__level-two:not(:disabled):focus-visible {
-  transform: translateX(2px);
-}
-
-.admin-nav__level-two strong {
-  display: block;
-  font-size: 13px;
-  line-height: 1.35;
-}
-
-.admin-nav__level-two > .anticon {
-  color: var(--admin-sidebar-muted);
-  flex: 0 0 auto;
-  font-size: 10px;
-}
-
-.admin-nav__flyout {
-  animation: admin-nav-flyout-in 180ms cubic-bezier(0.22, 1, 0.36, 1);
-  background: #ffffff;
-  border: 1px solid var(--admin-border);
-  border-radius: 0 12px 12px 0;
-  box-shadow: 18px 18px 45px rgba(15, 23, 42, 0.18);
-  color: var(--admin-text);
-  left: 280px;
-  max-height: calc(100dvh - var(--admin-nav-flyout-top, 82px) - 12px);
-  overflow-y: auto;
-  position: fixed;
-  top: var(--admin-nav-flyout-top, 82px);
-  width: 290px;
-  z-index: 55;
-}
-
-.admin-nav__flyout-items {
-  padding: 8px;
-}
-
 .admin-nav__leaf {
   border-radius: 10px;
   color: #334155;
+  font-size: 13px;
+  font-weight: 600;
   gap: 10px;
-  min-height: 40px;
-  padding: 7px 9px;
+  line-height: 1.4;
+  min-height: 36px;
+  padding: 6px 9px;
   transition:
     background-color 150ms ease,
     color 150ms ease,
     transform 150ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.admin-nav__leaf:not(:disabled):hover,
-.admin-nav__leaf:not(:disabled):focus-visible,
+.admin-nav__leaf:hover,
+.admin-nav__leaf:focus-visible,
 .admin-nav__leaf--active {
   background: var(--admin-primary-soft);
   color: #0f5132;
 }
 
-.admin-nav__leaf:disabled {
-  color: #94a3b8;
-  cursor: not-allowed;
+.admin-nav__leaf:hover,
+.admin-nav__leaf:focus-visible {
+  transform: translateX(2px);
 }
 
-.admin-nav__leaf:not(:disabled):hover,
-.admin-nav__leaf:not(:disabled):focus-visible {
-  transform: translateX(2px);
+/* A queue with nothing waiting fades so the eye lands on the ones that do. */
+.admin-nav__leaf--idle:not(.admin-nav__leaf--active) {
+  color: var(--admin-sidebar-muted);
+  font-weight: 500;
 }
 
 .admin-nav__leaf-marker {
@@ -317,13 +296,6 @@
   background: var(--admin-primary);
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--admin-primary) 14%, transparent);
   transform: scale(1.08);
-}
-
-.admin-nav__leaf-label {
-  display: block;
-  font-size: 13px;
-  font-weight: 650;
-  line-height: 1.4;
 }
 
 .admin-nav__coming-soon {
@@ -374,6 +346,14 @@
   padding-inline: 11px;
 }
 
+.admin-nav__divider {
+  background: var(--admin-border);
+  flex: 0 0 auto;
+  height: 1px;
+  margin: 4px 0;
+  width: 32px;
+}
+
 .admin-nav__collapsed-button {
   align-items: center;
   background: transparent;
@@ -382,8 +362,9 @@
   color: var(--admin-text-muted);
   cursor: pointer;
   display: flex;
+  flex: 0 0 auto;
   font-size: 19px;
-  height: 46px;
+  height: 44px;
   justify-content: center;
   position: relative;
   transition:
@@ -408,55 +389,77 @@
 .admin-nav__collapsed-button:focus-visible {
   background: var(--admin-sidebar-hover);
   color: var(--admin-text);
+  transform: translateY(-1px) scale(1.02);
 }
 
-.admin-nav__collapsed-button--active {
+.admin-nav__collapsed-button--active,
+.admin-nav__collapsed-button--active:hover {
   background: var(--admin-primary-soft);
   color: var(--admin-primary-hover);
 }
 
-.admin-nav__collapsed-button:hover,
-.admin-nav__collapsed-button:focus-visible {
-  transform: translateY(-1px) scale(1.02);
+.admin-palette .ant-modal-container {
+  padding: 14px;
 }
 
-.admin-nav--mobile {
-  overflow: visible;
+.admin-palette__results {
+  list-style: none;
+  margin: 10px 0 0;
+  max-height: min(60dvh, 420px);
+  overflow-y: auto;
+  padding: 0;
 }
 
-.admin-nav__mobile-level {
-  animation: admin-nav-mobile-in 180ms cubic-bezier(0.22, 1, 0.36, 1);
+.admin-palette__item {
+  align-items: center;
+  border-radius: 9px;
+  color: var(--admin-text, #0f172a);
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  gap: 10px;
+  min-height: 42px;
+  padding: 6px 10px;
+  text-decoration: none;
 }
 
-.admin-nav__back {
-  border-bottom: 1px solid var(--admin-border);
-  gap: 8px;
-  margin-bottom: 6px;
-  padding: 10px;
-}
-
-.admin-nav__mobile-heading {
-  display: flex;
-  flex-direction: column;
-  padding: 8px 10px;
-}
-
-.admin-nav__mobile-heading strong {
-  color: var(--admin-text);
-  font-size: 18px;
-}
-
-.admin-nav--mobile .admin-nav__leaf {
-  color: var(--admin-sidebar-text);
-}
-
-.admin-nav--mobile .admin-nav__leaf:not(:disabled):hover,
-.admin-nav--mobile .admin-nav__leaf--active {
-  background: var(--admin-primary-soft);
+.admin-palette__item--active,
+.admin-palette__item:hover {
+  background: var(--admin-primary-soft, #e6f8ee);
   color: #0f5132;
+}
+
+.admin-palette__label {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.admin-palette__trail {
+  color: var(--admin-text-muted, #64748b);
+  flex: 1;
+  font-size: 12px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-palette__empty {
+  color: #64748b;
+  margin: 18px 4px 8px;
+  text-align: center;
+}
+
+.admin-palette__hint {
+  border-top: 1px solid #e2e8f0;
+  color: #94a3b8;
+  font-size: 12px;
+  margin: 10px 0 0;
+  padding-top: 8px;
+}
+
+@media (max-width: 640px) {
+  .admin-palette__hint {
+    display: none;
+  }
 }
 
 @keyframes admin-sidebar-peek-in {
@@ -480,30 +483,6 @@
   to {
     opacity: 1;
     transform: translateY(0);
-  }
-}
-
-@keyframes admin-nav-flyout-in {
-  from {
-    opacity: 0;
-    transform: translateX(-8px) scale(0.985);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateX(0) scale(1);
-  }
-}
-
-@keyframes admin-nav-mobile-in {
-  from {
-    opacity: 0;
-    transform: translateX(6px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateX(0);
   }
 }
 

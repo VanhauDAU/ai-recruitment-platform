@@ -244,7 +244,17 @@ function PostList() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [q, setQ] = useState('')
-  const [status, setStatus] = useState()
+  // The status filter lives in the URL so the sidebar queue can open "pending".
+  const [searchParams, setSearchParams] = useSearchParams()
+  const status = STATUS_OPTIONS.some((item) => item.value === searchParams.get('status'))
+    ? searchParams.get('status')
+    : undefined
+  const setStatus = (value) => {
+    const next = new URLSearchParams(searchParams)
+    if (value) next.set('status', value)
+    else next.delete('status')
+    setSearchParams(next, { replace: true })
+  }
   const [category, setCategory] = useState()
   const [ordering, setOrdering] = useState('-updated_at')
   const [page, setPage] = useState(1)
