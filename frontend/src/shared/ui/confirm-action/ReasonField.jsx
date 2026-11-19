@@ -27,7 +27,7 @@ export default function ReasonField({
   return (
     <Form.Item extra={extra} label={label} required={required}>
       {presets.length > 0 && (
-        <div className="reason-field__presets" role="group" aria-label={`Chọn nhanh ${label.toLowerCase()}`}>
+        <div className="reason-field__presets" role="group" aria-label="Gợi ý nhanh">
           {presets.map((preset) => (
             <button
               aria-pressed={value.includes(preset)}

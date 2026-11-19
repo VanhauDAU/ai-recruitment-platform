@@ -1,15 +1,18 @@
 import {
   ArrowRightOutlined,
   ClockCircleOutlined,
+  LeftOutlined,
+  RightOutlined,
   SafetyCertificateOutlined,
   UserOutlined,
 } from '@ant-design/icons'
-import { Avatar, Button, Descriptions, Drawer, Typography } from 'antd'
+import { Avatar, Button, Descriptions, Drawer, Space, Typography } from 'antd'
 import {
   accountSubtitle,
   formatAdminDate,
 } from '@/entities/account/admin-account'
 import { AccountRoleTag, AccountStatusTag } from './AccountStatusTag'
+import RecruiterQuickView from './RecruiterQuickView'
 
 function DetailLine({ icon, label, value }) {
   return (
@@ -23,7 +26,15 @@ function DetailLine({ icon, label, value }) {
   )
 }
 
-export default function AccountQuickDrawer({ account, open, onClose, onOpenDetail }) {
+export default function AccountQuickDrawer({
+  account,
+  open,
+  onClose,
+  onOpenDetail,
+  onStep,
+  originState,
+  recruiterScope = false,
+}) {
   if (!account) return null
 
   return (
@@ -35,15 +46,25 @@ export default function AccountQuickDrawer({ account, open, onClose, onOpenDetai
       title="Thông tin tài khoản"
       onClose={onClose}
       extra={(
-        <Button
-          type="primary"
-          icon={<ArrowRightOutlined />}
-          onClick={() => onOpenDetail(account)}
-        >
-          Chi tiết
-        </Button>
+        <Space size={4}>
+          {onStep && (
+            <>
+              <Button aria-label="Nhà tuyển dụng trước" icon={<LeftOutlined />} onClick={() => onStep(-1)} />
+              <Button aria-label="Nhà tuyển dụng tiếp theo" icon={<RightOutlined />} onClick={() => onStep(1)} />
+            </>
+          )}
+          <Button
+            type="primary"
+            icon={<ArrowRightOutlined />}
+            onClick={() => onOpenDetail(account)}
+          >
+            {recruiterScope ? 'Mở hồ sơ' : 'Chi tiết'}
+          </Button>
+        </Space>
       )}
     >
+      {recruiterScope ? <RecruiterQuickView account={account} originState={originState} /> : (
+      <>
       <div className="account-drawer__hero">
         <Avatar size={64} src={account.avatar_url || undefined} icon={<UserOutlined />} />
         <div className="min-w-0">
@@ -88,7 +109,8 @@ export default function AccountQuickDrawer({ account, open, onClose, onOpenDetai
           <Typography.Text copyable code>{account.public_id}</Typography.Text>
         </Descriptions.Item>
       </Descriptions>
-
+      </>
+      )}
     </Drawer>
   )
 }

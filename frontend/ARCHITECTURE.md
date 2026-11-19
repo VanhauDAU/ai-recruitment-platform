@@ -256,7 +256,17 @@ dụng`, `Quản trị ProCV`. Riêng trang chủ dùng nguyên `seo_default_tit
   trùng và chỉ đóng sau khi thành công. Phân biệt `onDismiss` với
   `onCancel` nếu nút hủy cũng thực hiện một thay đổi dữ liệu.
 - Modal có form, OTP, impact preview, consent hoặc quy trình nhiều bước vẫn
-  thuộc feature sở hữu; không ép vào component xác nhận đơn giản. Cảnh báo
+  thuộc feature sở hữu; không ép vào component xác nhận đơn giản.
+- Popup xử lý của admin có lý do hoặc tác động dựng từ các khối chung trong
+  `shared/ui/confirm-action`: `ActionDialog` (tiêu đề + đối tượng, footer
+  "Hủy" + nút mang đúng động từ, Ctrl/⌘+Enter, bottom sheet dưới 640px; tông
+  `danger` chỉ cho hành động phá hủy), `ReasonField` (chip lý do mẫu + bộ đếm),
+  `ImpactFacts` (fact một dòng, blocker, "Xem chi tiết") và
+  `useImpactConfirmation`. Hook preview tác động ngay khi popup mở (backend
+  nhận preview với lý do trống), khi bấm xác nhận thì preview lại với giá trị
+  cuối rồi xác nhận trong cùng một click; tác động đổi hoặc 409 thì hiện lại
+  và chờ bấm lần hai. Trường nghiệp vụ và lý do mẫu ở lại nơi sở hữu (entity
+  hoặc feature `model/`), không đưa vào `shared`. Cảnh báo
   `beforeunload` khi đóng/reload tab phải dùng hộp thoại native của trình duyệt.
 
 ## Bảng dữ liệu quản trị
@@ -531,6 +541,22 @@ app/router + app/layouts
 - `widgets/admin/account-management` sở hữu hai cấu hình workspace riêng.
   `users` chỉ gồm ứng viên và quản trị viên; `recruiters` chỉ gồm tài khoản nhà
   tuyển dụng. Page chỉ chọn scope và compose widget.
+- Workspace NTD xoay quanh một "việc cần làm" duy nhất cho mỗi tài khoản
+  (`context.next_action.code`), backend tính bằng SQL nên lọc
+  (`next_action=<mã>|admin_queue`), sắp xếp (`ordering=next_action`) và đếm
+  (`summary.next_actions`) luôn khớp nhau. Frontend chỉ ánh xạ mã → nhãn, tông
+  và CTA trong `entities/account/admin-account/model/recruiter-next-action.js`;
+  ô phân khúc (`model/recruiter-segments.js`) là bộ lọc lưu sẵn, số trên ô
+  bằng số dòng sau khi bấm. Bảng NTD giữ 6 cột theo thứ tự quyết định
+  (NTD, Việc cần làm, Xác thực, Công ty, Tài khoản) cộng menu thao tác;
+  `page_size` 20/40/60 nằm trên URL.
+- Nhật ký tài khoản là timeline gộp nhiều nguồn ở backend
+  (`GET /admin/accounts/:id/activity/?category=&before=&limit=`, phân trang con
+  trỏ, `category_counts` ở trang đầu, tiêu đề tiếng Việt do backend trả).
+  `AccountActivityTimeline` trong entity nhóm theo ngày địa phương
+  ("Hôm nay", "Hôm qua", "Thứ Hai, 16/11/2026"), hiện giờ HH:mm và lọc theo
+  nhóm qua `activity_category` trên URL; chế độ `compact` dùng cho tổng quan
+  và xem nhanh. Tab cũ `?tab=profile` của NTD được chuyển về "Tổng quan".
 - Quyền quản trị chỉ có hai cấp: `entities/account/admin-access.useAdminAccess(user)`
   trả `{ isSuperuser }` đọc từ `admin_access.is_superuser` của `/auth/me/`.
   Không có catalog permission, phòng ban hay chức danh. Chỉ superuser thấy tab

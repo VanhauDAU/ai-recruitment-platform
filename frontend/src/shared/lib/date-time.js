@@ -47,7 +47,7 @@ export function formatRelativeDay(value, now = new Date()) {
   if (key === localDayKey(today)) return 'Hôm nay'
   const yesterday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1)
   if (key === localDayKey(yesterday)) return 'Hôm qua'
-  const weekday = new Intl.DateTimeFormat('vi-VN', { weekday: 'long' }).format(date)
-  const day = new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(date)
+  const weekday = new Intl.DateTimeFormat(getIntlLocale(), { weekday: 'long' }).format(date)
+  const day = new Intl.DateTimeFormat(getIntlLocale(), { day: '2-digit', month: '2-digit', year: 'numeric' }).format(date)
   return `${weekday.charAt(0).toUpperCase()}${weekday.slice(1)}, ${day}`
 }

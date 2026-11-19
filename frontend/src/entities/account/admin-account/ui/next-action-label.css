@@ -1,0 +1,22 @@
+/* Next-action label (dot + text) shared by the recruiter list, quick view and detail. */
+.next-action-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  color: #334155;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+.next-action-label i {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #cbd5e1;
+}
+.next-action-label--critical { color: var(--admin-critical, #d03b3b); }
+.next-action-label--critical i { background: var(--admin-critical, #d03b3b); }
+.next-action-label--warning i { background: var(--admin-warning, #b77900); }
+.next-action-label--info i { background: var(--admin-info, #2a78d6); }
+.next-action-label--muted { color: #64748b; font-weight: 500; }

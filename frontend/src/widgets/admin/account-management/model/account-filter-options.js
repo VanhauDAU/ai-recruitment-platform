@@ -13,7 +13,7 @@ export const STATUS_OPTIONS = [
   { value: 'banned', label: 'Đã cấm' },
 ]
 
-export const ORDERING_OPTIONS = [
+export const USER_ORDERING_OPTIONS = [
   { value: '-date_joined', label: 'Mới tạo gần đây' },
   { value: 'date_joined', label: 'Tạo lâu nhất' },
   { value: '-last_login', label: 'Đăng nhập gần nhất' },
@@ -23,14 +23,30 @@ export const ORDERING_OPTIONS = [
   { value: 'role', label: 'Loại tài khoản' },
   { value: 'status', label: 'Trạng thái tài khoản' },
   { value: 'email_verified', label: 'Xác minh email' },
-  { value: 'recruiter_profile__company__company_name', label: 'Công ty A–Z' },
-  { value: 'recruiter_profile__company_role', label: 'Vai trò trong công ty' },
-  {
-    value: 'recruiter_initial_onboarding_completed',
-    label: 'Thiết lập ban đầu',
-  },
-  { value: 'recruiter_profile__verification_case__status', label: 'Xác thực NTD' },
 ]
+
+export const RECRUITER_ORDERING_OPTIONS = [
+  { value: 'next_action', label: 'Việc cần làm (gấp trước)' },
+  { value: '-date_joined', label: 'Mới tham gia gần đây' },
+  { value: 'date_joined', label: 'Tham gia lâu nhất' },
+  { value: '-last_session_seen_at', label: 'Hoạt động gần nhất' },
+  { value: 'full_name', label: 'Tên A–Z' },
+  { value: 'recruiter_profile__company__company_name', label: 'Công ty A–Z' },
+  { value: 'recruiter_profile__verification_case__status', label: 'Trạng thái xác thực' },
+  { value: 'status', label: 'Trạng thái tài khoản' },
+]
+
+export const NEXT_ACTION_FILTER_LABELS = {
+  admin_queue: 'Cần admin duyệt',
+  verification_overdue: 'Quá hạn 72 giờ',
+  verification_review: 'Chờ duyệt xác thực',
+  company_update_review: 'Chờ duyệt cập nhật công ty',
+  account_restricted: 'Bị hạn chế',
+  awaiting_resubmission: 'Chờ NTD bổ sung',
+  awaiting_company: 'Chưa liên kết công ty',
+  awaiting_onboarding: 'Chưa hoàn tất thiết lập',
+  awaiting_submission: 'Chưa nộp hồ sơ',
+}
 
 // Các trường chỉ xuất hiện trong panel nâng cao: dùng cho badge đếm và nút đặt lại.
 export const ADVANCED_KEYS = [

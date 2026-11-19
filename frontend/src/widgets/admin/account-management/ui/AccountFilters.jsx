@@ -7,9 +7,11 @@ import {
   emptyValueOf,
   isFilled,
   labelOf,
-  ORDERING_OPTIONS,
+  NEXT_ACTION_FILTER_LABELS,
+  RECRUITER_ORDERING_OPTIONS,
   rangeText,
   STATUS_OPTIONS,
+  USER_ORDERING_OPTIONS,
 } from '../model/account-filter-options'
 import AccountAdvancedFilters from './AccountAdvancedFilters'
 import { getIntlLocale } from '@/shared/config/i18n'
@@ -41,6 +43,7 @@ export default function AccountFilters({
     ['email_verified', 'Xác minh email', labelOf(BOOLEAN_OPTIONS, filters.email_verified)],
     ['has_active_session', 'Phiên hoạt động', labelOf(BOOLEAN_OPTIONS, filters.has_active_session)],
     ...(recruiterOnly ? [
+      ['next_action', 'Việc cần làm', NEXT_ACTION_FILTER_LABELS[filters.next_action]],
       ['company', 'Mã công ty', filters.company.trim()],
       ['company_state', 'Liên kết công ty', {
         linked: 'Đã liên kết',
@@ -77,7 +80,9 @@ export default function AccountFilters({
           className="account-filters__search"
           size="large"
           prefix={<SearchOutlined className="text-slate-400" />}
-          placeholder="Tìm theo tên, email hoặc mã tài khoản"
+          placeholder={recruiterOnly
+            ? 'Tìm tên, email, công ty, MST hoặc số điện thoại…'
+            : 'Tìm theo tên, email hoặc mã tài khoản'}
           value={filters.q}
           onChange={(event) => patch('q', event.target.value)}
         />
@@ -93,7 +98,7 @@ export default function AccountFilters({
           size="large"
           value={filters.ordering}
           onChange={(value) => patch('ordering', value)}
-          options={ORDERING_OPTIONS}
+          options={recruiterOnly ? RECRUITER_ORDERING_OPTIONS : USER_ORDERING_OPTIONS}
           prefix={<SortAscendingOutlined className="text-slate-400" />}
         />
         {/* Badge phải bọc ngoài Popover: antd v6 không chuyển tiếp handler của

@@ -1,10 +1,8 @@
 import {
   BankOutlined,
   CheckCircleOutlined,
-  LinkOutlined,
   LockOutlined,
   MailOutlined,
-  SafetyCertificateOutlined,
   TeamOutlined,
   UserAddOutlined,
 } from '@ant-design/icons'
@@ -49,7 +47,6 @@ function QueueCard({ icon, label, value, detail, tone, onClick }) {
 
 export default function AccountOverview({
   metrics = {},
-  recruiterSummary,
   pendingInvitations = 0,
   canInvite = false,
   onApplyFilter,
@@ -57,52 +54,6 @@ export default function AccountOverview({
 }) {
   const total = count(metrics.total)
   const share = (value) => (total ? Math.round((count(value) / total) * 100) : 0)
-
-  if (recruiterSummary) {
-    const verification = recruiterSummary.verification || {}
-    return (
-      <section className="account-overview" aria-label="Tổng quan nhà tuyển dụng">
-        <div className="account-stats">
-          <StatCard
-            tone="brand"
-            icon={<TeamOutlined />}
-            label="Tổng nhà tuyển dụng"
-            value={metrics.total}
-            share={100}
-            detail="Trong phạm vi được xem"
-            onClick={() => onApplyFilter('all')}
-          />
-          <StatCard
-            tone="green"
-            icon={<CheckCircleOutlined />}
-            label="Đang hoạt động"
-            value={metrics.active}
-            share={share(metrics.active)}
-            detail={`${share(metrics.active)}% tài khoản NTD`}
-            onClick={() => onApplyFilter('active')}
-          />
-          <StatCard
-            tone="amber"
-            icon={<LinkOutlined />}
-            label="Chưa liên kết công ty"
-            value={recruiterSummary.companyless}
-            share={share(recruiterSummary.companyless)}
-            detail="Cần hoàn thiện quan hệ doanh nghiệp"
-            onClick={() => onApplyFilter('companyless')}
-          />
-          <StatCard
-            tone="amber"
-            icon={<SafetyCertificateOutlined />}
-            label="Chờ xác thực"
-            value={verification.pending}
-            share={share(verification.pending)}
-            detail={`${vi(verification.overdue)} hồ sơ quá hạn 72 giờ`}
-            onClick={() => onOpenQueue('verification')}
-          />
-        </div>
-      </section>
-    )
-  }
 
   return (
     <section className="account-overview" aria-label="Tổng quan tài khoản">

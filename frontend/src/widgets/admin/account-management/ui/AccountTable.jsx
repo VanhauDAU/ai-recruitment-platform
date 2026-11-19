@@ -8,10 +8,10 @@ import { Avatar, Button, Dropdown, Space, Table, Tag, Tooltip, Typography } from
 import {
   accountSubtitle,
   formatAdminDate,
-  InitialOnboardingStatus,
 } from '@/entities/account/admin-account'
 import { AccountRoleTag, AccountStatusTag } from './AccountStatusTag'
 import { getIntlLocale } from '@/shared/config/i18n'
+import { buildRecruiterColumns } from './recruiter-columns'
 
 function initials(value) {
   return (value || '?')
@@ -28,11 +28,12 @@ function sortOrder(ordering, key) {
   return null
 }
 
-function Identity({ row, onQuickView }) {
+function Identity({ row, onQuickView, meta }) {
   return (
     <button
       type="button"
       className="account-identity"
+      aria-label={`Xem nhanh ${row.full_name || row.email}`}
       onClick={() => onQuickView(row)}
     >
       <Avatar src={row.avatar_url || undefined}>{initials(row.full_name || row.email)}</Avatar>
@@ -43,6 +44,7 @@ function Identity({ row, onQuickView }) {
         <Typography.Text type="secondary" ellipsis className="!block !text-xs">
           {row.email}
         </Typography.Text>
+        {meta && <span className="account-identity__meta" title={meta}>{meta}</span>}
       </span>
     </button>
   )
@@ -56,8 +58,15 @@ function ActionCell({
   canEdit,
   canManageSecurity,
   onSecurity,
+  quickView = true,
 }) {
   const menuItems = [
+    ...(!quickView ? [{
+      key: 'open',
+      icon: <SafetyCertificateOutlined />,
+      label: 'Mở hồ sơ',
+      onClick: () => onOpenDetail(row),
+    }] : []),
     ...(canEdit(row) ? [{
       key: 'edit',
       icon: <EditOutlined />,
@@ -73,22 +82,22 @@ function ActionCell({
   ]
   return (
     <Space size={4}>
-      <Tooltip title="Xem nhanh">
+      {quickView && <Tooltip title="Xem nhanh">
         <Button
           type="text"
           aria-label="Xem nhanh"
           icon={<EyeOutlined />}
           onClick={() => onQuickView(row)}
         />
-      </Tooltip>
-      <Tooltip title="Mở trang chi tiết">
+      </Tooltip>}
+      {quickView && <Tooltip title="Mở trang chi tiết">
         <Button
           type="text"
           aria-label="Mở trang chi tiết"
           icon={<SafetyCertificateOutlined />}
           onClick={() => onOpenDetail(row)}
         />
-      </Tooltip>
+      </Tooltip>}
       {menuItems.length > 0 && (
         <Dropdown menu={{ items: menuItems }} trigger={['click']}>
           <Tooltip title="Thao tác khác">
@@ -114,6 +123,9 @@ export default function AccountTable({
   canEdit,
   canManageSecurity,
   onSecurity,
+  originState,
+  pageSize = 20,
+  onPageSizeChange,
   resultLabel = 'tài khoản',
 }) {
   const commonIdentity = {
@@ -128,7 +140,7 @@ export default function AccountTable({
     title: '',
     key: 'actions',
     fixed: 'right',
-    width: 132,
+    width: recruiterOnly ? 56 : 132,
     render: (_, row) => (
       <ActionCell
         row={row}
@@ -138,6 +150,7 @@ export default function AccountTable({
         canEdit={canEdit}
         canManageSecurity={canManageSecurity}
         onSecurity={onSecurity}
+        quickView={!recruiterOnly}
       />
     ),
   }
@@ -203,113 +216,13 @@ export default function AccountTable({
   ]
 
   const recruiterColumns = [
-    commonIdentity,
-    {
-      title: 'Công ty',
-      key: 'recruiter_profile__company__company_name',
-      width: 230,
-      sorter: true,
-      sortOrder: sortOrder(ordering, 'recruiter_profile__company__company_name'),
-      render: (_, row) => (
-        <div>
-          <Typography.Text strong ellipsis className="!block">
-            {row.context?.company?.name || 'Chưa liên kết công ty'}
-          </Typography.Text>
-          <Typography.Text type="secondary" className="!block !text-xs">
-            {row.context?.company?.public_id || 'Chưa liên kết công ty'}
-          </Typography.Text>
-        </div>
-      ),
-    },
-    {
-      title: 'Vai trò & chức danh',
-      key: 'recruiter_profile__company_role',
-      width: 190,
-      sorter: true,
-      sortOrder: sortOrder(ordering, 'recruiter_profile__company_role'),
-      render: (_, row) => (
-        <div className="space-y-1">
-          <Tag color={row.context?.company_role === 'owner' ? 'blue' : 'default'}>
-            {row.context?.company_role_label || 'Chưa có vai trò'}
-          </Tag>
-          <Typography.Text
-            type="secondary"
-            ellipsis
-            className="!block !text-xs"
-            title={row.context?.position_title || 'Nhà tuyển dụng chưa khai báo chức danh tại công ty.'}
-          >
-            {row.context?.position_title || 'Chưa khai báo chức danh tại công ty'}
-          </Typography.Text>
-        </div>
-      ),
-    },
-    {
-      title: 'Tài khoản',
-      dataIndex: 'status',
-      key: 'status',
-      width: 145,
-      sorter: true,
-      sortOrder: sortOrder(ordering, 'status'),
-      render: (status) => <AccountStatusTag status={status} />,
-    },
-    {
-      title: 'Thiết lập ban đầu',
-      key: 'recruiter_initial_onboarding_completed',
-      width: 230,
-      sorter: true,
-      sortOrder: sortOrder(ordering, 'recruiter_initial_onboarding_completed'),
-      render: (_, row) => (
-        <InitialOnboardingStatus
-          onboarding={row.context?.initial_onboarding}
-          completed={row.context?.onboarding_completed}
-        />
-      ),
-    },
-    {
-      title: 'Xác thực đại diện',
-      key: 'recruiter_profile__verification_case__status',
-      width: 185,
-      sorter: true,
-      sortOrder: sortOrder(ordering, 'recruiter_profile__verification_case__status'),
-      render: (_, row) => {
-        const verification = row.context?.verification
-        const colors = {
-          approved: 'green',
-          rejected: 'red',
-          changes_requested: 'orange',
-          in_review: 'blue',
-          pending: 'gold',
-        }
-        return (
-          <div className="account-security-stack">
-            <Tag color={colors[verification?.status] || 'default'}>
-              {verification?.status_label || 'Chưa nộp'}
-            </Tag>
-            <span className="text-slate-500">
-              {`${verification?.missing_step_count ?? 10} bước còn thiếu`}
-            </span>
-          </div>
-        )
-      },
-    },
-    {
-      title: 'Hoạt động gần nhất',
-      dataIndex: 'last_activity_at',
-      key: 'last_session_seen_at',
-      width: 180,
-      sorter: true,
-      sortOrder: sortOrder(ordering, 'last_session_seen_at'),
-      render: (value) => formatAdminDate(value),
-    },
-    {
-      title: 'Ngày tham gia',
-      dataIndex: 'date_joined',
-      key: 'date_joined',
-      width: 155,
-      sorter: true,
-      sortOrder: sortOrder(ordering, 'date_joined'),
-      render: (value) => formatAdminDate(value),
-    },
+    ...buildRecruiterColumns({
+      identity: commonIdentity,
+      ordering,
+      originState,
+      renderIdentity: (row, meta) => <Identity row={row} onQuickView={onQuickView} meta={meta} />,
+      sortOrder,
+    }),
     actionColumn,
   ]
 
@@ -320,12 +233,14 @@ export default function AccountTable({
         loading={loading}
         dataSource={data.results}
         columns={recruiterOnly ? recruiterColumns : userColumns}
-        scroll={{ x: recruiterOnly ? 1530 : 1250 }}
+        scroll={{ x: recruiterOnly ? 940 : 1250 }}
         pagination={{
           current: page,
           total: data.count,
-          pageSize: 20,
-          showSizeChanger: false,
+          pageSize,
+          showSizeChanger: Boolean(onPageSizeChange),
+          pageSizeOptions: [20, 40, 60],
+          locale: { items_per_page: '/ trang' },
           showTotal: (total) => `${total.toLocaleString(getIntlLocale())} ${resultLabel}`,
         }}
         onChange={(pagination, _, sorter, extra) => {
@@ -335,6 +250,10 @@ export default function AccountTable({
               ? `${sorter.order === 'descend' ? '-' : ''}${field}`
               : '-date_joined'
             onOrderingChange(next)
+            return
+          }
+          if (onPageSizeChange && pagination.pageSize !== pageSize) {
+            onPageSizeChange(pagination.pageSize)
             return
           }
           if (pagination.current !== page) onPageChange(pagination.current)

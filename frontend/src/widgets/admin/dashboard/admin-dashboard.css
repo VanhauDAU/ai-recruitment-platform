@@ -2,13 +2,13 @@
    the initial stylesheet. Colors come from the admin tokens plus the data-viz
    reference palette (blue series, ordinal blue ramp, fixed status colors). */
 .admin-home {
-  --home-series: #2a78d6;
-  --home-critical: #d03b3b;
-  --home-critical-soft: #fdf0f0;
-  --home-warning: #b77900;
+  --home-series: var(--admin-info, #2a78d6);
+  --home-critical: var(--admin-critical, #d03b3b);
+  --home-critical-soft: var(--admin-critical-soft, #fdf0f0);
+  --home-warning: var(--admin-warning, #b77900);
   --home-warning-bar: #fab219;
-  --home-good: #0a8a0a;
-  --home-radius: 13px;
+  --home-good: var(--admin-good, #0a8a0a);
+  --home-radius: var(--admin-radius-card, 13px);
   display: grid;
   gap: 16px;
   font-variant-numeric: tabular-nums;
