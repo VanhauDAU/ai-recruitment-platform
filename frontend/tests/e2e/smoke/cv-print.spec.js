@@ -75,7 +75,7 @@ test.beforeEach(async ({ page }, testInfo) => {
 })
 
 for (const key of Object.keys(LAYOUTS)) {
-  test(`cv print: ${key} places identity and columns as registered`, async ({ page }) => {
+  test(`cv print: ${key} places identity and columns as registered`, { tag: '@responsive' }, async ({ page }) => {
     const { pages, identityRegion } = await renderPrint(page, key, 1)
     expect(pages).toBe(1)
 
@@ -109,7 +109,7 @@ for (const key of Object.keys(LAYOUTS)) {
   })
 }
 
-test('cv print: long content breaks between items, never through one', async ({ page }) => {
+test('cv print: long content breaks between items, never through one', { tag: '@responsive' }, async ({ page }) => {
   for (const key of Object.keys(LAYOUTS)) {
     const { pages } = await renderPrint(page, key, 9)
     expect(pages, key).toBeGreaterThan(1)

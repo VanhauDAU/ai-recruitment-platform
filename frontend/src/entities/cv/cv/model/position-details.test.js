@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { describe, expect, it } from 'vitest'
 import { availableSectionKeys } from './document'
 import { applyPositionDetails, formatPositionValue } from './position-details'

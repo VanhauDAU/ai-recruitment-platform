@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test'
 import { ADMIN_ROUTES } from '../../../src/app/router/admin/admin-routes.config.js'
 import { API_ROUTE, expectAnimatedLoginButton, mockPublicApi } from './helpers'
 
-test('admin smoke: login loads and dashboard stays role-protected', async ({ page }) => {
+test('admin smoke: login loads and dashboard stays role-protected', { tag: '@responsive' }, async ({ page }) => {
   // One full navigation per admin route (23 and growing): the budget has to
   // scale with the route table instead of sharing a single 30s test timeout.
   test.slow()
@@ -23,7 +23,7 @@ test('admin smoke: login loads and dashboard stays role-protected', async ({ pag
   }
 })
 
-test('admin account management: filters, table actions and quick detail are responsive', async ({ page }, testInfo) => {
+test('admin account management: filters, table actions and quick detail are responsive', { tag: '@responsive' }, async ({ page }, testInfo) => {
   const pageErrors = []
   let verificationQueueStatus = null
   const isMobile = testInfo.project.name === 'mobile-chromium'
@@ -261,7 +261,7 @@ test('regular admin: candidate accounts only, no admin accounts, invitations or 
   await expect(page).toHaveURL('/admin/app/access-denied')
 })
 
-test('superuser recovers email, then sends password reset', async ({ page }) => {
+test('superuser recovers email, then sends password reset', { tag: '@responsive' }, async ({ page }) => {
   const calls = []
   const adminUser = {
     public_id: 'usr_root',
@@ -436,7 +436,7 @@ test('superuser recovers email, then sends password reset', async ({ page }) => 
   expect(calls[1].payload.impact_token).toBe('email-impact-token')
 })
 
-test('admin employer detail: company media and compact verification comparison render', async ({ page }) => {
+test('admin employer detail: company media and compact verification comparison render', { tag: '@responsive' }, async ({ page }) => {
   const adminUser = {
     public_id: 'usr_root',
     email: 'root@example.com',
@@ -815,7 +815,7 @@ test('admin password reset stays on the Admin portal', async ({ page }) => {
   await expect(page.getByText(/Đăng nhập lại cổng quản trị để tiếp tục/)).toBeVisible()
 })
 
-test('admin job management: list, detail and revision-bound hide workflow', async ({ page }) => {
+test('admin job management: list, detail and revision-bound hide workflow', { tag: '@responsive' }, async ({ page }) => {
   let decisionPayload
   const adminUser = {
     public_id: 'usr_moderator',
@@ -979,7 +979,7 @@ test('admin job management: list, detail and revision-bound hide workflow', asyn
   )
 })
 
-test('admin job reports: deep link, filter and resolve workflow', async ({ page }) => {
+test('admin job reports: deep link, filter and resolve workflow', { tag: '@responsive' }, async ({ page }) => {
   let status = 'pending'
   let resolvePayload
   const adminUser = {
@@ -1061,7 +1061,7 @@ test('admin job reports: deep link, filter and resolve workflow', async ({ page 
   )
 })
 
-test('admin company reports: queue resolves a report and can hide the company page', async ({ page }) => {
+test('admin company reports: queue resolves a report and can hide the company page', { tag: '@responsive' }, async ({ page }) => {
   let status = 'pending'
   let resolvePayload
   const listRequests = []

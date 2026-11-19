@@ -77,7 +77,7 @@ function dashboard(days) {
   }
 }
 
-test('admin dashboard: urgent queues first, period filter and no horizontal overflow', async ({ page }, testInfo) => {
+test('admin dashboard: urgent queues first, period filter and no horizontal overflow', { tag: '@responsive' }, async ({ page }, testInfo) => {
   const pageErrors = []
   const requestedPeriods = []
   page.on('pageerror', (error) => pageErrors.push(error.message))

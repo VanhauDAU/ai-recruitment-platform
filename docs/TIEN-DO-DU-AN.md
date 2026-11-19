@@ -7,7 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
-| [Tối ưu và chuẩn hóa test/CI](#tối-ưu-và-chuẩn-hóa-testci-2026-11-19) | 🟨 GĐ0 PR #256, GĐ1 nhánh `perf/backend-test-db-template` |
+| [Tối ưu và chuẩn hóa test/CI](#tối-ưu-và-chuẩn-hóa-testci-2026-11-19) | 🟨 GĐ0 PR #256, GĐ1 PR #257, GĐ3 nhánh `perf/frontend-tests` |
 | [Tái cấu trúc backend (ADR-0022, GĐ0–GĐ6)](#tái-cấu-trúc-backend-adr-0022-2026-11-19) | ✅ Gộp vào `dev` (#248–#255, 19/11); sau khi pull chạy `scripts/reset_local_db.sh` trước khi start backend |
 | [Tổ chức lại cấu trúc thư mục frontend](#tổ-chức-lại-cấu-trúc-thư-mục-frontend-2026-11-19) | ✅ Gộp vào `dev` (#247) |
 | [Mô hình hóa yêu cầu cho báo cáo (mục 3.2)](#mô-hình-hóa-yêu-cầu-cho-báo-cáo-mục-32-2026-11-18) | ✅ Nguồn sơ đồ trong `docs/01-phan-tich/mo-hinh-hoa-yeu-cau/` |
@@ -42,9 +42,9 @@ mỗi workflow). Mục tiêu: wall-clock mỗi PR ≤ 8 phút, mỗi job ≤ 5 p
 | GĐ | Nội dung | Trạng thái |
 | --- | --- | --- |
 | GĐ0 | Gỡ chặn: test chậm/flaky (CampaignList, báo cáo công ty), watchdog faulthandler làm sập worker pytest, timeout job backend 50 → 15 phút | 🟨 PR #256 |
-| GĐ1 | DB test dựng một lần rồi clone theo worker xdist (`backend/conftest.py`): setup ~90s/worker trên CI → một lần migrate không coverage; cục bộ lần chạy sau setup 29s → 0,4s, full suite ~45s | 🟨 Nhánh `perf/backend-test-db-template` |
+| GĐ1 | DB test dựng một lần rồi clone theo worker xdist (`backend/conftest.py`): setup ~90s/worker trên CI → một lần migrate không coverage; cục bộ lần chạy sau setup 29s → 0,4s, full suite ~45s | 🟨 PR #257 |
 | GĐ2 | Viết lại migration test | ➖ Bỏ — GĐ6 tái cấu trúc backend đã reset baseline và gỡ test migration lịch sử |
-| GĐ3 | Frontend: cache Playwright, tag `@responsive` (luồng chung chỉ desktop), unit test logic chạy môi trường node | ⬜ |
+| GĐ3 | Frontend: E2E chạy trong image Playwright theo phiên bản lockfile (bỏ bước cài 16s–7,5 phút); tag `@responsive` cho 71/102 test, tablet/mobile chỉ chạy test có tag (330 → 266 lượt); 105 file test thuần logic chạy môi trường node; sửa các file test chậm nhất (AdminCompanyWorkspace 7,6s → 0,16s, hook onboarding 7,3s → 25ms); unit 4 → 5 shard; script `test:related`, `test:changed` | 🟨 Nhánh `perf/frontend-tests` |
 | GĐ4 | Chuẩn kiểm thử + `scripts/check_test_budgets.py` kiểm ngân sách thời gian trên CI | ⬜ |
 
 ## Tái cấu trúc backend (ADR-0022, 2026-11-19)

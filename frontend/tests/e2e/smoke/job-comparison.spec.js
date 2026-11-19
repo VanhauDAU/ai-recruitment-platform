@@ -109,7 +109,7 @@ async function mockComparisonApi(page) {
   }
 }
 
-test('guest selects jobs and opens the responsive public comparison', async ({ page }, testInfo) => {
+test('guest selects jobs and opens the responsive public comparison', { tag: '@responsive' }, async ({ page }, testInfo) => {
   await mockComparisonApi(page)
   await page.goto('/viec-lam')
 
@@ -138,7 +138,7 @@ test('guest selects jobs and opens the responsive public comparison', async ({ p
   await expect(page.getByRole('heading', { name: 'Frontend Engineer' }).filter({ visible: true }).first()).toBeVisible()
 })
 
-test('comparison keeps a removed job isolated when another detail is unavailable', async ({ page }, testInfo) => {
+test('comparison keeps a removed job isolated when another detail is unavailable', { tag: '@responsive' }, async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-chromium')
   await mockComparisonApi(page)
   await page.route('**/api/public/jobs/unavailable-job/', (route) => route.fulfill({

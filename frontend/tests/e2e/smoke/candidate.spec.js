@@ -136,7 +136,7 @@ test('candidate smoke: saved jobs remains protected', async ({ page }) => {
   )
 })
 
-test('candidate smoke: personalization pages and compact desktop menu remain usable', async ({ page }, testInfo) => {
+test('candidate smoke: personalization pages and compact desktop menu remain usable', { tag: '@responsive' }, async ({ page }, testInfo) => {
   await mockCandidatePersonalizationApi(page)
 
   await page.goto('/tai-khoan/cai-dat-nhan-email')
@@ -578,7 +578,7 @@ test('candidate smoke: job application submits the selected immutable CV version
   await expect(page.getByRole('dialog').getByRole('alert')).toContainText('Bạn còn 2 lượt ứng tuyển lại')
 })
 
-test('candidate smoke: verified badge and job report modal work on desktop and mobile', async ({ page }) => {
+test('candidate smoke: verified badge and job report modal work on desktop and mobile', { tag: '@responsive' }, async ({ page }) => {
   let reportPayload
   const criteria = [
     { key: 'company_email', label: 'Email tên miền công ty', passed: true },
@@ -812,7 +812,7 @@ test('candidate smoke: applied jobs list every status and say when the employer 
   await expect(page.getByRole('button', { name: 'Ứng tuyển ngay' })).toHaveCount(0)
 })
 
-test('candidate smoke: avatar editor crops a square image before uploading', async ({ page }) => {
+test('candidate smoke: avatar editor crops a square image before uploading', { tag: '@responsive' }, async ({ page }) => {
   let uploadedContentType = ''
   await mockCandidatePersonalizationApi(page)
   await page.route('**/api/auth/avatar/', async (route) => {

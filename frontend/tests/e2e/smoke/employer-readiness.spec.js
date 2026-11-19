@@ -123,7 +123,7 @@ test('job detail keeps aggregate CV count but does not request or render candida
   await expect.poll(() => applicationCalls).toBe(0)
 })
 
-test('campaign sensitive tabs keep their URLs without mounting Apply CV or Activity APIs', async ({ page }) => {
+test('campaign sensitive tabs keep their URLs without mounting Apply CV or Activity APIs', { tag: '@responsive' }, async ({ page }) => {
   let applicationCalls = 0
   let activityCalls = 0
   await page.route(/http:\/\/localhost:8000\/api\/employer\/applications\/.*/, async (route) => {

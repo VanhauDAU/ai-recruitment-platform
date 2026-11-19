@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import OnboardingChat from './OnboardingChat'
 
 const mocks = vi.hoisted(() => ({
@@ -65,7 +65,23 @@ async function answerLocation(user) {
 }
 
 describe('OnboardingChat', () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
   beforeEach(() => {
+    // Reduced motion bỏ nhịp "đang gõ" 420ms và hiệu ứng chạy chữ ở mỗi tin
+    // nhắn; luồng hội thoại được kiểm vẫn y nguyên, chỉ không phải chờ timer thật.
+    vi.spyOn(window, 'matchMedia').mockImplementation((query) => ({
+      matches: query === '(prefers-reduced-motion: reduce)',
+      media: query,
+      onchange: null,
+      addListener() {},
+      removeListener() {},
+      addEventListener() {},
+      removeEventListener() {},
+      dispatchEvent() { return false },
+    }))
     mocks.getJobCategories.mockReset().mockResolvedValue(CATEGORIES)
     mocks.getProvinces.mockReset().mockResolvedValue(PROVINCES)
     mocks.updateCandidateJobPreferences.mockReset()

@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 import { mockPublicApi } from './helpers'
 
-test('candidate auth mascot clings to the card and follows credential privacy states', async ({ page }) => {
+test('candidate auth mascot clings to the card and follows credential privacy states', { tag: '@responsive' }, async ({ page }) => {
   await mockPublicApi(page)
   await page.goto('/login')
 

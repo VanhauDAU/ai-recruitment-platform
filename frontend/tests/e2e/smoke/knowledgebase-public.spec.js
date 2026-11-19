@@ -52,7 +52,7 @@ const privacyArticle = {
   updated_at: '2026-08-05T08:00:00Z',
 }
 
-test('public knowledgebase: simple browse, detail and hidden-content 404 stay responsive', async ({ page }) => {
+test('public knowledgebase: simple browse, detail and hidden-content 404 stay responsive', { tag: '@responsive' }, async ({ page }) => {
   await mockPublicApi(page)
   await page.route(
     (url) => url.pathname === '/api/public/site/settings/',

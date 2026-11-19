@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { findTableRow, getTableRow } from '@/test/table'
 import CampaignList from './CampaignList'
 
 const { getCampaigns, readinessState } = vi.hoisted(() => ({
@@ -58,14 +59,6 @@ function renderPage(initialEntry = '/tuyendung/app/campaigns') {
   )
 }
 
-function findRowNow(publicId) {
-  const row = document.querySelector(`tr[data-row-key="${publicId}"]`)
-  if (!row) throw new Error(`Không thấy dòng chiến dịch ${publicId}`)
-  return row
-}
-
-const findRow = (publicId) => waitFor(() => findRowNow(publicId))
-
 describe('CampaignList', () => {
   beforeEach(() => {
     readinessState.canAccessCandidateData = true
@@ -99,10 +92,8 @@ describe('CampaignList', () => {
   it('shows one next action per campaign and the derived headcount', async () => {
     renderPage()
 
-    // Scope queries to a table row: role queries over the whole antd Table
-    // compute an accessible name for every node and dominate the test time.
-    const live = within(await findRow('camp_live'))
-    const draft = within(findRowNow('camp_draft'))
+    const live = within(await findTableRow('camp_live'))
+    const draft = within(getTableRow('camp_draft'))
     expect(live.getByText('2 tin tuyển dụng')).toBeInTheDocument()
     expect(live.getByText('Cần tuyển 4 người')).toBeInTheDocument()
     expect(live.getByText('01/12/2026 đến 31/12/2026')).toBeInTheDocument()
@@ -119,7 +110,7 @@ describe('CampaignList', () => {
     readinessState.canAccessCandidateData = false
     renderPage()
 
-    const live = within(await findRow('camp_live'))
+    const live = within(await findTableRow('camp_live'))
     expect(live.getByText('3 ứng viên')).toBeInTheDocument()
     expect(live.queryByTitle('Nguyễn Minh Anh')).not.toBeInTheDocument()
     expect(live.queryByRole('link', { name: 'Xem 3 CV mới' })).not.toBeInTheDocument()

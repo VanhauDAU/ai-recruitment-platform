@@ -22,7 +22,7 @@ const featuredPosts = [
   },
 ]
 
-test('candidate blog: two featured posts use a balanced sparse layout', async ({ page }) => {
+test('candidate blog: two featured posts use a balanced sparse layout', { tag: '@responsive' }, async ({ page }) => {
   await mockPublicApi(page)
   await page.route('http://localhost:8000/api/public/blog/**', async (route) => {
     const path = new URL(route.request().url()).pathname

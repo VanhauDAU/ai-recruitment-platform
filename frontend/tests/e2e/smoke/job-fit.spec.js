@@ -77,7 +77,7 @@ async function mockApi(page) {
   })
 }
 
-test('candidate smoke: job fit analyses a CV and explains the result with evidence', async ({ page }, testInfo) => {
+test('candidate smoke: job fit analyses a CV and explains the result with evidence', { tag: '@responsive' }, async ({ page }, testInfo) => {
   await mockApi(page)
   await page.goto(`/viec-lam/${JOB.slug}`)
   await page.getByRole('button', { name: 'Chỉ cookie thiết yếu' }).click()

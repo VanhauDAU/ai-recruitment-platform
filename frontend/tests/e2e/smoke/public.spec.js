@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 import { chooseSelectOption, mockPublicApi } from './helpers'
 
-test('public smoke: home and jobs routes load', async ({ page }, testInfo) => {
+test('public smoke: home and jobs routes load', { tag: '@responsive' }, async ({ page }, testInfo) => {
   await mockPublicApi(page)
   let currentUserRequestCount = 0
   page.on('request', (request) => {
@@ -62,7 +62,7 @@ test('public smoke: home and jobs routes load', async ({ page }, testInfo) => {
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
 })
 
-test('public smoke: company directory separates finite featured results from compact infinite search', async ({ page }, testInfo) => {
+test('public smoke: company directory separates finite featured results from compact infinite search', { tag: '@responsive' }, async ({ page }, testInfo) => {
   await mockPublicApi(page)
   let featuredRequests = 0
   let searchRequests = 0
@@ -267,7 +267,7 @@ test('public smoke: company directory separates finite featured results from com
   )).toBe(false)
 })
 
-test('public smoke: featured companies keep platform stats, the company page link and the logo marquee', async ({ page }) => {
+test('public smoke: featured companies keep platform stats, the company page link and the logo marquee', { tag: '@responsive' }, async ({ page }) => {
   await mockPublicApi(page)
   const logoDataUri = `data:image/svg+xml,${encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40">
@@ -447,7 +447,7 @@ async function expectNoHorizontalOverflow(page) {
   )).toBe(false)
 }
 
-test('public smoke: company page renders from a direct URL with overview, jobs and similar companies', async ({ page }, testInfo) => {
+test('public smoke: company page renders from a direct URL with overview, jobs and similar companies', { tag: '@responsive' }, async ({ page }, testInfo) => {
   await mockPublicApi(page)
   // CP-6: phúc lợi dạng thẻ và video nhấp-để-tải; trình phát của nhà cung cấp được mock.
   await page.route(/^https:\/\/(?:i\.ytimg\.com|www\.youtube-nocookie\.com)\//, (route) => route.fulfill({ status: 200, contentType: 'text/html', body: '<!doctype html><title>player</title>' }))
@@ -536,7 +536,7 @@ test('public smoke: company page renders from a direct URL with overview, jobs a
   await expectNoHorizontalOverflow(page)
 })
 
-test('public smoke: company page keeps the jobs tab, keyword and location in the URL', async ({ page }) => {
+test('public smoke: company page keeps the jobs tab, keyword and location in the URL', { tag: '@responsive' }, async ({ page }) => {
   await mockPublicApi(page)
   const jobRequests = await mockCompanyPage(page, { jobCount: 25 })
 
@@ -579,7 +579,7 @@ test('public smoke: company page keeps the jobs tab, keyword and location in the
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'index, follow')
 })
 
-test('public smoke: company page stays complete for a sparse company and shows a real 404 state', async ({ page }) => {
+test('public smoke: company page stays complete for a sparse company and shows a real 404 state', { tag: '@responsive' }, async ({ page }) => {
   await mockPublicApi(page)
   const sparse = companyPageProfile({
     slug: 'cua-hang-binh-minh',
@@ -647,7 +647,7 @@ async function mockCandidateSession(page) {
   }))
 }
 
-test('public smoke: company page follow asks guests to sign in and toggles for a candidate', async ({ page }, testInfo) => {
+test('public smoke: company page follow asks guests to sign in and toggles for a candidate', { tag: '@responsive' }, async ({ page }, testInfo) => {
   const followRequests = []
   let follow = { following: false, notify_new_jobs: false, follower_count: 12 }
   await mockPublicApi(page)
@@ -702,7 +702,7 @@ test('public smoke: company page follow asks guests to sign in and toggles for a
   expect(followRequests).toEqual(['GET', 'PUT {}', 'PUT {"notify_new_jobs":false}', 'DELETE'])
 })
 
-test('public smoke: company page report submits a reason with its section and explains a duplicate', async ({ page }) => {
+test('public smoke: company page report submits a reason with its section and explains a duplicate', { tag: '@responsive' }, async ({ page }) => {
   const reportPayloads = []
   await mockPublicApi(page)
   await mockCandidateSession(page)
@@ -813,7 +813,7 @@ test('public smoke: reapproval keeps the original posted date on job cards and d
   await expect(page.getByText('Đăng hôm nay')).toHaveCount(0)
 })
 
-test('public smoke: tablet header taps open top-level submenus', async ({ page }, testInfo) => {
+test('public smoke: tablet header taps open top-level submenus', { tag: '@responsive' }, async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'tablet-chromium')
   await mockPublicApi(page)
   await page.goto('/')
@@ -828,7 +828,7 @@ test('public smoke: tablet header taps open top-level submenus', async ({ page }
   await expect(page).toHaveURL('/')
 })
 
-test('public smoke: tablet floating actions stay inside the visual viewport', async ({ page }, testInfo) => {
+test('public smoke: tablet floating actions stay inside the visual viewport', { tag: '@responsive' }, async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'tablet-chromium')
   await page.addInitScript(() => {
     const viewport = new EventTarget()
@@ -863,7 +863,7 @@ test('public smoke: tablet floating actions stay inside the visual viewport', as
   ).toBeGreaterThan(initialSupportBottom + 200)
 })
 
-test('public smoke: CV template colors change preview and detail offers the create flow', async ({ page }) => {
+test('public smoke: CV template colors change preview and detail offers the create flow', { tag: '@responsive' }, async ({ page }) => {
   await mockPublicApi(page)
   const card = {
     public_id: 'tpl_modern',

@@ -62,7 +62,7 @@ const company = {
   updated_at: '2026-07-02T00:00:00Z',
 }
 
-test('admin company directory: three-level navigation, detail and owner roster', async ({
+test('admin company directory: three-level navigation, detail and owner roster', { tag: '@responsive' }, async ({
   page,
 }, testInfo) => {
   const usesDrawer = testInfo.project.name !== 'desktop-chromium'

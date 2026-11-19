@@ -36,7 +36,7 @@ function respond(path) {
   return {}
 }
 
-test('admin CV portal: one-page template editor, publish checklist and position setup stay usable', async ({ page }) => {
+test('admin CV portal: one-page template editor, publish checklist and position setup stay usable', { tag: '@responsive' }, async ({ page }) => {
   const errors = []
   page.on('pageerror', (error) => errors.push(error.message))
   await page.route(API_ROUTE, async (route) => {

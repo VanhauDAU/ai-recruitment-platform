@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { describe, expect, it, vi } from 'vitest'
 import api from '@/shared/api/client'
 import { adminDashboardKeys, getAdminDashboard, getAdminQueueSummary } from './admin-dashboard.api'

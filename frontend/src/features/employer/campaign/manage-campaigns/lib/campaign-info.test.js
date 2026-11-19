@@ -1,3 +1,4 @@
+// @vitest-environment node
 import dayjs from 'dayjs'
 import { describe, expect, it } from 'vitest'
 import { campaignInfoPayload, campaignInfoValues } from './campaign-info'
