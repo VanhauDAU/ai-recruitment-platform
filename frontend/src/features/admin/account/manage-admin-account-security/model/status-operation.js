@@ -28,3 +28,42 @@ export function effectDescription(operation, account) {
   }
   return 'Tài khoản được đăng nhập lại. Chỉ policy hold tạm thời được gỡ; tài nguyên hết hạn hoặc đã đóng vẫn giữ nguyên.'
 }
+
+/** Destructive operations get the danger tone; reopening does not. */
+export function operationTone(operation) {
+  if (operation?.kind === 'sessions') return 'danger'
+  if (operation?.kind === 'status' && operation.status !== 'active' && operation.beforeStatus !== 'banned') {
+    return 'danger'
+  }
+  return 'default'
+}
+
+/** Button label: the verb of the operation. */
+export function operationSubmitLabel(operation) {
+  if (operation?.kind === 'sessions') return 'Thu hồi phiên'
+  if (operation?.kind === 'resource-hold') return 'Gỡ giữ tài nguyên'
+  if (operation?.status === 'banned') return 'Cấm tài khoản'
+  if (operation?.status === 'inactive' && operation?.beforeStatus === 'banned') return 'Bắt đầu khôi phục'
+  if (operation?.status === 'inactive') return 'Tạm khóa'
+  return 'Mở lại tài khoản'
+}
+
+const REASON_PRESETS = {
+  sessions: ['Nghi lộ mật khẩu', 'Theo yêu cầu của chủ tài khoản', 'Thiết bị bị mất hoặc bị đánh cắp'],
+  'resource-hold': ['Đã rà soát tin và chiến dịch, không còn vi phạm'],
+  banned: ['Giả mạo doanh nghiệp', 'Lừa đảo ứng viên', 'Tái phạm sau khi đã bị tạm khóa'],
+  restore: ['Kháng nghị đã được chấp nhận', 'Đã xác minh lại danh tính chủ tài khoản'],
+  inactive: [
+    'Theo yêu cầu của chủ tài khoản',
+    'Phát hiện đăng nhập bất thường',
+    'Đăng tin vi phạm quy định, chờ rà soát',
+    'Nghi ngờ giả mạo doanh nghiệp',
+  ],
+  active: ['Đã xác minh lại chủ tài khoản', 'Đã khắc phục vi phạm', 'Khóa nhầm, mở lại'],
+}
+
+export function operationReasonPresets(operation) {
+  if (operation?.kind !== 'status') return REASON_PRESETS[operation?.kind] || []
+  if (operation.status === 'inactive' && operation.beforeStatus === 'banned') return REASON_PRESETS.restore
+  return REASON_PRESETS[operation.status] || []
+}

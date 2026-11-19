@@ -6,12 +6,13 @@ import {
   ReloadOutlined,
   StopOutlined,
 } from '@ant-design/icons'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Alert, Button, Input, Modal, Pagination, Select, Skeleton, Tag } from 'antd'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { Alert, Button, Form, Input, Pagination, Select, Skeleton, Tag } from 'antd'
 import { useDeferredValue, useMemo, useState } from 'react'
 import {
   adminCompanyDomainClaimKeys,
   decideAdminCompanyDomainClaim,
+  DOMAIN_REVIEW_REASONS,
   getAdminCompanyDomainClaimImpact,
   getAdminCompanyDomainClaims,
   getAdminCompanyDomainClaimSummary,
@@ -22,6 +23,10 @@ import {
 } from '@/entities/account/employer-profile'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { message } from '@/shared/lib/toast'
+import ActionDialog from '@/shared/ui/confirm-action/ActionDialog'
+import ImpactFacts from '@/shared/ui/confirm-action/ImpactFacts'
+import ReasonField from '@/shared/ui/confirm-action/ReasonField'
+import useImpactConfirmation from '@/shared/ui/confirm-action/use-impact-confirmation'
 import AdminCompanyDomainDetailDrawer from './AdminCompanyDomainDetailDrawer'
 import AdminCompanyDomainSummaryCards from './AdminCompanyDomainSummaryCards'
 import { getIntlLocale } from '@/shared/config/i18n'
@@ -43,9 +48,9 @@ const METHOD_OPTIONS = [
   { value: 'legacy_inferred', label: 'Dữ liệu cũ' },
 ]
 const ACTION_COPY = {
-  approve_manual: { title: 'Duyệt xác minh domain thủ công', confirm: 'Xác nhận duyệt', danger: false },
-  reject_manual: { title: 'Từ chối xác minh domain', confirm: 'Xác nhận từ chối', danger: true },
-  revoke: { title: 'Thu hồi xác minh domain', confirm: 'Xác nhận thu hồi', danger: true },
+  approve_manual: { title: 'Duyệt xác minh domain thủ công', confirm: 'Duyệt domain', danger: false },
+  reject_manual: { title: 'Từ chối xác minh domain', confirm: 'Từ chối domain', danger: true },
+  revoke: { title: 'Thu hồi xác minh domain', confirm: 'Thu hồi xác minh', danger: true },
 }
 
 const METHOD_LABELS = Object.fromEntries(METHOD_OPTIONS.map((item) => [item.value, item.label]))
@@ -59,71 +64,69 @@ const LEGAL_STATUS_LABELS = {
   submitted: 'Đã gửi',
 }
 
-function ReviewModal({ review, loading, onClose, onPreview, onConfirm }) {
-  const [reason, setReason] = useState('')
-  if (!review) return null
-  const copy = ACTION_COPY[review.action]
-  const normalizedReason = reason.trim()
-
+function ReviewDialog({ review, onClose, onDone }) {
+  const [form] = Form.useForm()
+  const copy = ACTION_COPY[review?.action] || {}
+  const impactState = useImpactConfirmation({
+    open: Boolean(review),
+    previewKey: review ? `${review.claim.public_id}:${review.action}` : '',
+    preview: (values) => getAdminCompanyDomainClaimImpact(review.claim.public_id, review.action, values?.reason || ''),
+    confirm: (impact, values) => decideAdminCompanyDomainClaim(
+      review.claim.public_id,
+      { action: review.action, reason: values.reason.trim(), impactToken: impact.impact_token },
+    ),
+  })
+  const close = () => {
+    if (impactState.submitting) return
+    form.resetFields()
+    onClose()
+  }
+  const submit = async () => {
+    let values
+    try {
+      values = await form.validateFields()
+    } catch {
+      return
+    }
+    try {
+      if (!(await impactState.submit(values))) return
+      form.resetFields()
+      await onDone()
+    } catch (error) {
+      message.error(getApiErrorMessage(error, 'Không thể áp dụng quyết định.'))
+    }
+  }
+  const impact = impactState.impact
   return (
-    <Modal
-      open
+    <ActionDialog
+      loading={impactState.submitting}
+      onCancel={close}
+      onSubmit={submit}
+      open={Boolean(review)}
+      submitLabel={copy.confirm}
+      target={review && `${review.claim.domain} · ${review.claim.company_name}`}
       title={copy.title}
-      onCancel={loading ? undefined : onClose}
-      footer={null}
-      width={560}
-      destroyOnHidden
+      tone={copy.danger ? 'danger' : 'default'}
     >
-      <p className="text-sm leading-6 text-slate-600">
-        Domain <strong className="break-all text-slate-900">{review.claim.domain}</strong> của{' '}
-        <strong className="text-slate-900">{review.claim.company_name}</strong>.
-      </p>
-      <label htmlFor="domain-review-reason" className="mt-4 block text-sm font-semibold text-slate-800">
-        Lý do quyết định
-      </label>
-      <Input.TextArea
-        id="domain-review-reason"
-        className="mt-2"
-        autoSize={{ minRows: 3, maxRows: 6 }}
-        maxLength={1000}
-        showCount
-        value={reason}
-        disabled={Boolean(review.impact)}
-        onChange={(event) => setReason(event.target.value)}
+      <ImpactFacts
+        changed={impactState.changed}
+        error={impactState.error}
+        facts={impact ? [
+          { label: 'Tên miền', value: impact.domain },
+          { label: 'Trạng thái hiện tại', value: domainClaimStatusPresentation({ status: impact.status }).label || impact.status },
+        ] : []}
+        loading={impactState.loading}
+        onRetry={impactState.reload}
       />
-      {review.impact && (
-        <Alert
-          className="mt-4"
-          type={copy.danger ? 'warning' : 'info'}
-          showIcon
-          title="Tác động đã được máy chủ xác nhận"
-          description={`Trạng thái hiện tại: ${review.impact.status}. Quyết định sẽ áp dụng cho domain ${review.impact.domain}.`}
+      <Form form={form} layout="vertical" initialValues={{ reason: '' }}>
+        <ReasonField
+          label="Lý do quyết định"
+          maxLength={1000}
+          minLength={10}
+          presets={DOMAIN_REVIEW_REASONS[review?.action] || []}
         />
-      )}
-      <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-        <Button disabled={loading} onClick={onClose}>Đóng</Button>
-        {!review.impact ? (
-          <Button
-            type="primary"
-            danger={copy.danger}
-            loading={loading}
-            disabled={normalizedReason.length < 10}
-            onClick={() => onPreview(normalizedReason)}
-          >
-            Xem tác động
-          </Button>
-        ) : (
-          <Button
-            type="primary"
-            danger={copy.danger}
-            loading={loading}
-            onClick={() => onConfirm(normalizedReason)}
-          >
-            {copy.confirm}
-          </Button>
-        )}
-      </div>
-    </Modal>
+      </Form>
+    </ActionDialog>
   )
 }
 
@@ -198,28 +201,6 @@ export default function AdminCompanyDomainReview() {
     refetchOnWindowFocus: 'always',
     staleTime: 0,
   })
-  const impactMutation = useMutation({
-    mutationFn: ({ claim, action, reason }) => getAdminCompanyDomainClaimImpact(
-      claim.public_id,
-      action,
-      reason,
-    ),
-    onSuccess: (impact) => setReview((current) => ({ ...current, impact })),
-    onError: (error) => message.error(getApiErrorMessage(error, 'Không thể đọc tác động quyết định.')),
-  })
-  const decisionMutation = useMutation({
-    mutationFn: ({ claim, action, reason, impact }) => decideAdminCompanyDomainClaim(
-      claim.public_id,
-      { action, reason, impactToken: impact.impact_token },
-    ),
-    onSuccess: async () => {
-      message.success('Đã cập nhật xác minh domain.')
-      setReview(null)
-      await queryClient.invalidateQueries({ queryKey: adminCompanyDomainClaimKeys.all })
-    },
-    onError: (error) => message.error(getApiErrorMessage(error, 'Không thể áp dụng quyết định.')),
-  })
-  const busy = impactMutation.isPending || decisionMutation.isPending
   const result = claimsQuery.data || { count: 0, results: [] }
   const refreshAll = () => Promise.all([claimsQuery.refetch(), summaryQuery.refetch()])
 
@@ -269,7 +250,7 @@ export default function AdminCompanyDomainReview() {
           <ClaimCard
             key={claim.public_id}
             claim={claim}
-            onReview={(item, action) => setReview({ claim: item, action, impact: null })}
+            onReview={(item, action) => setReview({ claim: item, action })}
             onOpenDetail={setSelectedClaimId}
           />
         ))}
@@ -279,13 +260,14 @@ export default function AdminCompanyDomainReview() {
           <Pagination current={filters.page} total={result.count} showSizeChanger={false} onChange={(page) => setFilters((current) => ({ ...current, page }))} />
         </div>
       )}
-      <ReviewModal
-        key={review ? `${review.claim.public_id}:${review.action}` : 'closed'}
+      <ReviewDialog
         review={review}
-        loading={busy}
         onClose={() => setReview(null)}
-        onPreview={(reason) => impactMutation.mutate({ ...review, reason })}
-        onConfirm={(reason) => decisionMutation.mutate({ ...review, reason })}
+        onDone={async () => {
+          message.success('Đã cập nhật xác minh domain.')
+          setReview(null)
+          await queryClient.invalidateQueries({ queryKey: adminCompanyDomainClaimKeys.all })
+        }}
       />
       <AdminCompanyDomainDetailDrawer
         publicId={selectedClaimId}

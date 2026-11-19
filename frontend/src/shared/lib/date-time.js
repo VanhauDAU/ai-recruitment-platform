@@ -21,3 +21,33 @@ export function formatClockTime(value) {
     ? new Intl.DateTimeFormat(getIntlLocale(), { hour: '2-digit', minute: '2-digit' }).format(date)
     : '—'
 }
+
+/** "dưới 1 giờ" / "5 giờ" / "2 ngày" — how long something has been waiting. */
+export function formatElapsed(from, now = Date.now()) {
+  const hours = Math.max(0, (now - new Date(from).getTime()) / 36e5)
+  if (hours < 1) return 'dưới 1 giờ'
+  if (hours < 24) return `${Math.floor(hours)} giờ`
+  return `${Math.floor(hours / 24)} ngày`
+}
+
+/** "2026-11-19" in the viewer's local calendar — the key for grouping by day. */
+export function localDayKey(value) {
+  const date = toDate(value)
+  if (!date) return ''
+  const pad = (number) => String(number).padStart(2, '0')
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+}
+
+/** "Hôm nay" / "Hôm qua" / "Thứ Hai, 17/11/2026" — a day heading in the local calendar. */
+export function formatRelativeDay(value, now = new Date()) {
+  const date = toDate(value)
+  if (!date) return '—'
+  const key = localDayKey(date)
+  const today = new Date(now)
+  if (key === localDayKey(today)) return 'Hôm nay'
+  const yesterday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1)
+  if (key === localDayKey(yesterday)) return 'Hôm qua'
+  const weekday = new Intl.DateTimeFormat('vi-VN', { weekday: 'long' }).format(date)
+  const day = new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(date)
+  return `${weekday.charAt(0).toUpperCase()}${weekday.slice(1)}, ${day}`
+}

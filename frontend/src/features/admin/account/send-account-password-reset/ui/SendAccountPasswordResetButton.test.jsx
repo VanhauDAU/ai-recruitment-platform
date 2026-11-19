@@ -44,21 +44,20 @@ describe('SendAccountPasswordResetButton', () => {
     )
 
     fireEvent.click(screen.getByRole('button', { name: /Gửi đặt lại mật khẩu/i }))
-    expect(await screen.findByText('Đây là thao tác bảo mật nhạy cảm'))
-      .toBeInTheDocument()
+    expect(await screen.findByText(/Liên kết có thời hạn và chỉ dùng một lần/)).toBeInTheDocument()
     expect(screen.getByText(
       'Đối chiếu: Quản trị viên An · admin@example.com · admin-1',
     )).toBeInTheDocument()
     expect(screen.getByText('admin@example.com')).toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Xác nhận gửi' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Gửi email đặt lại' }))
     expect(await screen.findByText('Nhập lý do gửi liên kết.')).toBeInTheDocument()
     expect(mocks.sendAdminAccountPasswordReset).not.toHaveBeenCalled()
 
     fireEvent.change(screen.getByLabelText('Lý do gửi liên kết'), {
       target: { value: 'Đã xác minh danh tính qua quy trình nội bộ' },
     })
-    fireEvent.click(screen.getByRole('button', { name: 'Xác nhận gửi' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Gửi email đặt lại' }))
 
     await waitFor(() => {
       expect(mocks.sendAdminAccountPasswordReset).toHaveBeenCalledWith(

@@ -34,3 +34,9 @@ export {
   verificationStatusMeta,
   VERIFICATION_CHECK_LABELS,
 } from './model/presentation'
+export {
+  CASE_DECISION_REASONS,
+  COMPANY_UPDATE_REASONS,
+  DOCUMENT_REVIEW_REASONS,
+  DOMAIN_REVIEW_REASONS,
+} from './model/review-reasons'

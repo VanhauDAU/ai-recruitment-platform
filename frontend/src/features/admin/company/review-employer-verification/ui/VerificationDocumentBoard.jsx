@@ -10,7 +10,7 @@ import {
   useSensors,
 } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
-import { HolderOutlined, MoreOutlined, WarningOutlined } from '@ant-design/icons'
+import { CheckOutlined, HolderOutlined, MoreOutlined, WarningOutlined } from '@ant-design/icons'
 import { Button, Dropdown, Empty } from 'antd'
 import { useState } from 'react'
 import { documentStatusMeta } from '@/entities/company/admin-employer-verification'
@@ -33,7 +33,7 @@ function formatDate(value) {
   }).format(new Date(value))
 }
 
-function DocumentCard({ document, selected, canReview, onSelect, onDecision }) {
+function DocumentCard({ document, selected, canReview, saving, onSelect, onDecision }) {
   const draggable = useDraggable({
     id: document.public_id,
     data: { document },
@@ -100,11 +100,25 @@ function DocumentCard({ document, selected, canReview, onSelect, onDecision }) {
           </span>
         )}
       </button>
+      {canReview && document.status === 'pending' && (
+        <Button
+          block
+          className="verification-board-card__approve"
+          icon={<CheckOutlined />}
+          loading={saving}
+          onClick={() => onDecision(document, 'approved')}
+          size="small"
+          type="primary"
+          aria-label={`Duyệt ${document.doc_type_label}`}
+        >
+          {saving ? 'Đang lưu…' : 'Duyệt'}
+        </Button>
+      )}
     </article>
   )
 }
 
-function DocumentColumn({ column, documents, selectedDocumentId, canReview, onSelect, onDecision }) {
+function DocumentColumn({ column, documents, selectedDocumentId, canReview, savingDocumentId, onSelect, onDecision }) {
   const droppable = useDroppable({
     id: `document-status:${column.status}`,
     data: { status: column.status },
@@ -128,6 +142,7 @@ function DocumentColumn({ column, documents, selectedDocumentId, canReview, onSe
             document={document}
             selected={selectedDocumentId === document.public_id}
             canReview={canReview}
+            saving={savingDocumentId === document.public_id}
             onSelect={onSelect}
             onDecision={onDecision}
           />
@@ -146,6 +161,7 @@ export default function VerificationDocumentBoard({
   documents,
   selectedDocumentId,
   canReview,
+  savingDocumentId,
   onSelect,
   onDecision,
 }) {
@@ -187,6 +203,7 @@ export default function VerificationDocumentBoard({
             documents={documents.filter((document) => document.status === column.status)}
             selectedDocumentId={selectedDocumentId}
             canReview={canReview}
+            savingDocumentId={savingDocumentId}
             onSelect={onSelect}
             onDecision={onDecision}
           />

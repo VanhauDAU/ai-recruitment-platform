@@ -1,5 +1,5 @@
 import { KeyOutlined } from '@ant-design/icons'
-import { Alert, Button, Form, Input, Modal, Tooltip, Typography } from 'antd'
+import { Button, Form, Tooltip } from 'antd'
 import { useState } from 'react'
 import {
   AccountVerificationSummary,
@@ -7,6 +7,13 @@ import {
 } from '@/entities/account/admin-account'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { message } from '@/shared/lib/toast'
+import ActionDialog from '@/shared/ui/confirm-action/ActionDialog'
+import ReasonField from '@/shared/ui/confirm-action/ReasonField'
+
+const RESET_REASONS = [
+  'Người dùng quên mật khẩu, đã xác minh qua email công ty',
+  'Người dùng quên mật khẩu, đã xác minh qua số điện thoại',
+]
 
 export default function SendAccountPasswordResetButton({
   account,
@@ -65,62 +72,28 @@ export default function SendAccountPasswordResetButton({
           </Button>
         </span>
       </Tooltip>
-      <Modal
-        open={open}
-        width={720}
-        title="Gửi liên kết đặt lại mật khẩu"
-        okText="Xác nhận gửi"
-        cancelText="Hủy"
-        confirmLoading={sending}
-        okButtonProps={{ danger: true }}
-        styles={{
-          body: {
-            maxHeight: 'calc(100vh - 220px)',
-            overflowY: 'auto',
-            paddingRight: 4,
-          },
-        }}
+      <ActionDialog
+        loading={sending}
         onCancel={close}
-        onOk={submit}
-        destroyOnHidden
+        onSubmit={submit}
+        open={open}
+        submitLabel="Gửi email đặt lại"
+        target={account?.email || accountEmail}
+        title="Gửi liên kết đặt lại mật khẩu"
+        width={640}
       >
-        <div className="space-y-4">
-          <AccountVerificationSummary account={account} />
-          <Alert
-            showIcon
-            type="warning"
-            title="Đây là thao tác bảo mật nhạy cảm"
-            description={(
-              <>
-                Hệ thống sẽ gửi liên kết có thời hạn và chỉ dùng một lần
-                {account?.email || accountEmail ? (
-                  <> đến <Typography.Text strong>{account?.email || accountEmail}</Typography.Text></>
-                ) : null}
-                . Mật khẩu hiện tại chưa bị thay đổi ở bước này.
-              </>
-            )}
+        <AccountVerificationSummary account={account} />
+        <p className="action-dialog__lead">
+          Liên kết có thời hạn và chỉ dùng một lần. Mật khẩu hiện tại chưa bị thay đổi ở bước này.
+        </p>
+        <Form form={form} layout="vertical" requiredMark initialValues={{ reason: '' }}>
+          <ReasonField
+            extra="Ghi kênh xác minh và thông tin đã đối chiếu với hồ sơ."
+            label="Lý do gửi liên kết"
+            presets={RESET_REASONS}
           />
-          <Form form={form} layout="vertical" requiredMark>
-            <Form.Item
-              name="reason"
-              label="Lý do gửi liên kết"
-              rules={[
-                { required: true, whitespace: true, message: 'Nhập lý do gửi liên kết.' },
-                { max: 500, message: 'Lý do không được vượt quá 500 ký tự.' },
-              ]}
-            >
-              <Input.TextArea
-                autoFocus
-                size="large"
-                rows={4}
-                maxLength={500}
-                showCount
-                placeholder="Ghi rõ kênh xác minh và các thông tin đã đối chiếu với hồ sơ phía trên."
-              />
-            </Form.Item>
-          </Form>
-        </div>
-      </Modal>
+        </Form>
+      </ActionDialog>
     </>
   )
 }

@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { App } from 'antd'
+import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import VerificationFinalDecisionPanel from './VerificationFinalDecisionPanel'
 
@@ -11,15 +12,23 @@ const api = vi.hoisted(() => ({
   getAdminEmployerDecisionImpact: vi.fn(),
   getAdminEmployerLifecycleImpact: vi.fn(),
   unlockAdminEmployerVerificationResubmission: vi.fn(),
+  getAdminEmployerVerifications: vi.fn(),
+}))
+const navigate = vi.hoisted(() => vi.fn())
+vi.mock('react-router', async (importOriginal) => ({
+  ...(await importOriginal()),
+  useNavigate: () => navigate,
 }))
 
 vi.mock('@/entities/company/admin-employer-verification', () => ({
   ...api,
+  CASE_DECISION_REASONS: { changes_requested: ['Cần bổ sung giấy tờ còn thiếu'] },
+  adminEmployerVerificationKeys: { list: (params) => ['admin-employer-verifications', 'list', params] },
   verificationStatusMeta: (status) => ({ label: status, color: 'blue' }),
 }))
 
 vi.mock('@/shared/lib/toast', () => ({
-  message: { success: vi.fn() },
+  message: { success: vi.fn(), error: vi.fn() },
 }))
 
 const approvedImpact = {
@@ -70,6 +79,7 @@ function renderPanel({
   })
   render(
     <QueryClientProvider client={queryClient}>
+      <MemoryRouter>
       <App>
         <VerificationFinalDecisionPanel
           verificationCase={{
@@ -85,6 +95,7 @@ function renderPanel({
           onChanged={onChanged}
         />
       </App>
+      </MemoryRouter>
     </QueryClientProvider>,
   )
   return { onChanged }
@@ -95,27 +106,28 @@ describe('VerificationFinalDecisionPanel', () => {
     Object.values(api).forEach((mock) => mock.mockReset())
   })
 
-  it('previews impact before confirming a final approval', async () => {
+  it('previews on open, confirms in one click and offers the next case', async () => {
     const user = userEvent.setup()
     api.getAdminEmployerDecisionImpact.mockResolvedValue(approvedImpact)
     api.decideAdminEmployerVerification.mockResolvedValue({ status: 'approved' })
+    api.getAdminEmployerVerifications.mockResolvedValue({
+      count: 4,
+      results: [{ public_id: 'evc_2', user_public_id: 'usr_next' }],
+    })
     const { onChanged } = renderPanel()
 
     await user.click(screen.getByRole('button', { name: 'Duyệt hồ sơ' }))
     const dialog = screen.getByRole('dialog', { name: 'Duyệt hồ sơ' })
-    expect(within(dialog).queryByText(/override kết quả/)).not.toBeInTheDocument()
-
-    await user.click(within(dialog).getByRole('button', { name: 'Kiểm tra trước khi duyệt' }))
+    expect(await within(dialog).findByText('Khớp nguồn thuế')).toBeInTheDocument()
     expect(api.getAdminEmployerDecisionImpact).toHaveBeenCalledWith('evc_1', {
       decision: 'approved',
       reason: '',
       tax_override: false,
       tax_override_reason: '',
     })
-    expect(await within(dialog).findByText(/chỉ áp dụng cho nhà tuyển dụng/))
-      .toBeInTheDocument()
+    expect(within(dialog).getByText(/Chỉ áp dụng cho nhà tuyển dụng này/)).toBeInTheDocument()
 
-    await user.click(within(dialog).getByRole('button', { name: 'Xác nhận duyệt hồ sơ' }))
+    await user.click(within(dialog).getByRole('button', { name: 'Duyệt hồ sơ' }))
     expect(api.decideAdminEmployerVerification).toHaveBeenCalledWith('evc_1', {
       decision: 'approved',
       reason: '',
@@ -124,9 +136,12 @@ describe('VerificationFinalDecisionPanel', () => {
       impact_token: 'decision-token',
     })
     expect(onChanged).toHaveBeenCalledTimes(1)
+
+    await user.click(await screen.findByRole('button', { name: 'Hồ sơ tiếp theo (còn 4)' }))
+    expect(navigate).toHaveBeenCalledWith('/admin/app/recruiters/usr_next?tab=verification', { state: null })
   })
 
-  it('requires an audit reason when an admin confirms manual tax review', async () => {
+  it('waits for the manual tax confirmation and requires its reason', async () => {
     const user = userEvent.setup()
     api.getAdminEmployerDecisionImpact.mockResolvedValue({
       ...approvedImpact,
@@ -137,22 +152,24 @@ describe('VerificationFinalDecisionPanel', () => {
 
     await user.click(screen.getByRole('button', { name: 'Duyệt hồ sơ' }))
     const dialog = screen.getByRole('dialog', { name: 'Duyệt hồ sơ' })
+    expect(api.getAdminEmployerDecisionImpact).not.toHaveBeenCalled()
     await user.click(within(dialog).getByRole('checkbox', {
-      name: 'Tôi đã đối chiếu giấy tờ gốc và muốn tiếp tục duyệt',
+      name: 'Tôi đã đối chiếu giấy tờ gốc và chịu trách nhiệm duyệt thủ công',
     }))
-    await user.click(within(dialog).getByRole('button', { name: 'Kiểm tra trước khi duyệt' }))
-    expect(await within(dialog).findByText('Nhập căn cứ duyệt thủ công để lưu audit.'))
-      .toBeInTheDocument()
+    expect(await within(dialog).findByText('Duyệt thủ công')).toBeInTheDocument()
 
-    await user.type(within(dialog).getByLabelText('Lý do duyệt thủ công'), 'Đã đối chiếu hồ sơ gốc')
-    await user.click(within(dialog).getByRole('button', { name: 'Kiểm tra trước khi duyệt' }))
+    await user.click(within(dialog).getByRole('button', { name: 'Duyệt hồ sơ' }))
+    expect(await within(dialog).findByText('Nhập căn cứ duyệt thủ công.')).toBeInTheDocument()
+    await user.type(within(dialog).getByLabelText('Căn cứ duyệt thủ công'), 'Đã đối chiếu hồ sơ gốc')
+    await user.click(within(dialog).getByRole('button', { name: 'Duyệt hồ sơ' }))
 
-    expect(api.getAdminEmployerDecisionImpact).toHaveBeenCalledWith('evc_1', {
+    expect(api.getAdminEmployerDecisionImpact).toHaveBeenLastCalledWith('evc_1', {
       decision: 'approved',
       reason: '',
       tax_override: true,
       tax_override_reason: 'Đã đối chiếu hồ sơ gốc',
     })
+    expect(api.decideAdminEmployerVerification).toHaveBeenCalled()
   })
 
   it('blocks final approval while tax lookup is pending', () => {
@@ -165,7 +182,7 @@ describe('VerificationFinalDecisionPanel', () => {
     )
   })
 
-  it('shows lifecycle impact for the recruiter and affected resources', async () => {
+  it('shows lifecycle impact as soon as the dialog opens', async () => {
     const user = userEvent.setup()
     api.getAdminEmployerLifecycleImpact.mockResolvedValue(lifecycleImpact)
     api.changeAdminEmployerVerificationLifecycle.mockResolvedValue({ status: 'revoked' })
@@ -173,47 +190,35 @@ describe('VerificationFinalDecisionPanel', () => {
 
     await user.click(screen.getByRole('button', { name: 'Thu hồi xác thực' }))
     const dialog = screen.getByRole('dialog', { name: 'Thu hồi xác thực' })
-    await user.type(within(dialog).getByLabelText('Lý do / ghi chú audit'), 'Giấy ủy quyền không còn hiệu lực')
-    await user.click(within(dialog).getByRole('button', { name: 'Xem tác động' }))
+    expect(await within(dialog).findByText('Tin bị ẩn khỏi trang công khai')).toBeInTheDocument()
+    expect(api.getAdminEmployerLifecycleImpact).toHaveBeenCalledWith('evc_1', 'revoked', { reason: '' })
 
-    expect(api.getAdminEmployerLifecycleImpact).toHaveBeenCalledWith(
-      'evc_1',
-      'revoked',
-      { reason: 'Giấy ủy quyền không còn hiệu lực' },
-    )
-    expect(await within(dialog).findByText(/hồ sơ Công ty không thay đổi/))
-      .toBeInTheDocument()
-    expect(within(dialog).getByText(/3 tin active sẽ bị ẩn/)).toBeInTheDocument()
-
-    await user.click(within(dialog).getByRole('button', { name: 'Xác nhận quyết định' }))
-    expect(api.changeAdminEmployerVerificationLifecycle).toHaveBeenCalledWith(
-      'evc_1',
-      'revoked',
-      {
-        reason: 'Giấy ủy quyền không còn hiệu lực',
-        impact_token: 'lifecycle-token',
-      },
-    )
+    await user.type(within(dialog).getByLabelText('Lý do'), 'Giấy ủy quyền không còn hiệu lực')
+    await user.click(within(dialog).getByRole('button', { name: 'Thu hồi xác thực' }))
+    expect(api.changeAdminEmployerVerificationLifecycle).toHaveBeenCalledWith('evc_1', 'revoked', {
+      reason: 'Giấy ủy quyền không còn hiệu lực',
+      impact_token: 'lifecycle-token',
+    })
   })
 
-  it('fails closed and reloads when confirm reports a stale impact', async () => {
+  it('re-previews and waits for a second click when confirm reports a stale impact', async () => {
     const user = userEvent.setup()
     api.getAdminEmployerDecisionImpact.mockResolvedValue(approvedImpact)
-    api.decideAdminEmployerVerification.mockRejectedValue({
-      response: { status: 409, data: { code: 'admin_resource_changed' } },
-    })
+    api.decideAdminEmployerVerification
+      .mockRejectedValueOnce({ response: { status: 409, data: { code: 'admin_resource_changed' } } })
+      .mockResolvedValue({ status: 'approved' })
     const { onChanged } = renderPanel()
 
     await user.click(screen.getByRole('button', { name: 'Duyệt hồ sơ' }))
     const dialog = screen.getByRole('dialog', { name: 'Duyệt hồ sơ' })
-    await user.click(within(dialog).getByRole('button', { name: 'Kiểm tra trước khi duyệt' }))
-    await within(dialog).findByTestId('verification-impact-summary')
-    await user.click(within(dialog).getByRole('button', { name: 'Xác nhận duyệt hồ sơ' }))
+    await within(dialog).findByText('Khớp nguồn thuế')
+    await user.click(within(dialog).getByRole('button', { name: 'Duyệt hồ sơ' }))
 
-    expect(await within(dialog).findByText(/Hồ sơ hoặc tài nguyên đã thay đổi/))
+    expect(await within(dialog).findByText('Tác động vừa thay đổi. Kiểm tra lại rồi xác nhận.'))
       .toBeInTheDocument()
-    expect(within(dialog).getByRole('button', { name: 'Kiểm tra trước khi duyệt' }))
-      .toBeInTheDocument()
+    expect(onChanged).not.toHaveBeenCalled()
+    await user.click(within(dialog).getByRole('button', { name: 'Duyệt hồ sơ' }))
+    expect(api.decideAdminEmployerVerification).toHaveBeenCalledTimes(2)
     expect(onChanged).toHaveBeenCalledTimes(1)
   })
 
@@ -221,15 +226,12 @@ describe('VerificationFinalDecisionPanel', () => {
     renderPanel({ status: 'rejected' })
 
     expect(screen.getByText('Đang chờ nhà tuyển dụng nộp lại')).toBeVisible()
-    expect(screen.getByText(/Admin có thể nhận xử lý và ra quyết định cuối lần nữa/))
-      .toBeVisible()
   })
 
   it('identifies a resubmitted pending case and directs admin to review it again', () => {
     renderPanel({ status: 'pending', revision: 2 })
 
-    expect(screen.getByText('Nhà tuyển dụng đã nộp lại hồ sơ lần 2')).toBeVisible()
-    expect(screen.getByText(/Hãy nhận xử lý lại ở phần đầu trang/)).toBeVisible()
+    expect(screen.getByText('NTD đã nộp lại lần 2 · nhận xử lý để ra quyết định')).toBeVisible()
   })
 
   it('warns before the third final rejection locks resubmission', async () => {
@@ -248,9 +250,6 @@ describe('VerificationFinalDecisionPanel', () => {
 
     await user.click(screen.getByRole('button', { name: 'Từ chối hồ sơ' }))
     const dialog = screen.getByRole('dialog', { name: 'Từ chối hồ sơ' })
-    await user.type(within(dialog).getByLabelText('Lý do / ghi chú audit'), 'Bằng chứng không hợp lệ')
-    await user.click(within(dialog).getByRole('button', { name: 'Xem tác động' }))
-
     expect(await within(dialog).findByText('3/3')).toBeInTheDocument()
     expect(within(dialog).getByText(/Xác nhận sẽ khóa nộp lại/)).toBeInTheDocument()
   })
@@ -270,15 +269,11 @@ describe('VerificationFinalDecisionPanel', () => {
     expect(screen.getByText('3/3')).toBeVisible()
     await user.click(screen.getByRole('button', { name: /Mở khóa nộp lại/ }))
     const dialog = screen.getByRole('dialog', { name: 'Mở khóa nộp lại' })
-    await user.click(within(dialog).getByRole('button', { name: 'Xác nhận mở khóa' }))
-    expect(await within(dialog).findByText('Nhập lý do trước khi tiếp tục.'))
-      .toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: 'Mở khóa nộp lại' }))
+    expect(await within(dialog).findByText('Nhập lý do.')).toBeInTheDocument()
 
-    await user.type(
-      within(dialog).getByLabelText('Lý do / ghi chú audit'),
-      'Đã xác minh khiếu nại với bản gốc',
-    )
-    await user.click(within(dialog).getByRole('button', { name: 'Xác nhận mở khóa' }))
+    await user.type(within(dialog).getByLabelText('Lý do'), 'Đã xác minh khiếu nại với bản gốc')
+    await user.click(within(dialog).getByRole('button', { name: 'Mở khóa nộp lại' }))
 
     expect(api.unlockAdminEmployerVerificationResubmission).toHaveBeenCalledWith('evc_1', {
       reason: 'Đã xác minh khiếu nại với bản gốc',

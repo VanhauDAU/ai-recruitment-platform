@@ -1,9 +1,11 @@
 import { EyeOutlined, SwapOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Alert, Button, Card, Form, Input, Modal, Skeleton, Space, Tag, Typography } from 'antd'
+import { Alert, Button, Card, Form, Skeleton, Space, Tag, Typography } from 'antd'
 import { useEffect, useState } from 'react'
 import {
   adminEmployerVerificationKeys,
+  COMPANY_UPDATE_REASONS,
+  DOCUMENT_REVIEW_REASONS,
   getAdminCompanyUpdateDocumentContent,
   getAdminCompanyUpdateRequest,
   refreshAdminCompanyUpdateTaxLookup,
@@ -13,33 +15,45 @@ import {
 } from '@/entities/company/admin-employer-verification'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { message } from '@/shared/lib/toast'
+import ActionDialog from '@/shared/ui/confirm-action/ActionDialog'
+import ReasonField from '@/shared/ui/confirm-action/ReasonField'
 import CompanyUpdateComparisonModal from './CompanyUpdateComparisonModal'
 
-function ReviewReasonModal({ state, loading, onCancel, onSubmit }) {
+function ReviewReasonDialog({ state, loading, onCancel, onSubmit }) {
   const [form] = Form.useForm()
+  const submit = async () => {
+    let values
+    try {
+      values = await form.validateFields()
+    } catch {
+      return
+    }
+    await onSubmit(values.reason.trim())
+    form.resetFields()
+  }
   return (
-    <Modal
-      open={Boolean(state)}
-      title={state?.title}
-      confirmLoading={loading}
-      onCancel={onCancel}
-      onOk={async () => {
-        const values = await form.validateFields()
-        await onSubmit(values.reason || '')
+    <ActionDialog
+      loading={loading}
+      onCancel={() => {
         form.resetFields()
+        onCancel()
       }}
-      destroyOnHidden
+      onSubmit={submit}
+      open={Boolean(state)}
+      submitLabel={state?.decision === 'rejected' ? 'Từ chối' : 'Yêu cầu chỉnh sửa'}
+      target={state?.target}
+      title={state?.title}
+      tone={state?.decision === 'rejected' ? 'danger' : 'default'}
     >
-      <Form form={form} layout="vertical">
-        <Form.Item
-          name="reason"
+      <Form form={form} layout="vertical" requiredMark={false} initialValues={{ reason: '' }}>
+        <ReasonField
+          extra="Nhà tuyển dụng sẽ thấy nội dung này để biết cách xử lý."
           label="Lý do"
-          rules={[{ required: true, whitespace: true, message: 'Nhập lý do để nhà tuyển dụng biết cách xử lý.' }]}
-        >
-          <Input.TextArea rows={4} maxLength={2000} showCount />
-        </Form.Item>
+          maxLength={2000}
+          presets={(state?.kind === 'document' ? DOCUMENT_REVIEW_REASONS : COMPANY_UPDATE_REASONS)[state?.decision] || []}
+        />
       </Form>
-    </Modal>
+    </ActionDialog>
   )
 }
 
@@ -276,7 +290,7 @@ export default function CompanyUpdateReviewPanel({
         onApproveRequest={() => requestMutation.mutate({ decision: 'approved' })}
         onRefreshTaxLookup={() => taxLookupMutation.mutate()}
       />
-      <ReviewReasonModal
+      <ReviewReasonDialog
         state={reasonState}
         loading={documentMutation.isPending || requestMutation.isPending}
         onCancel={() => setReasonState(null)}

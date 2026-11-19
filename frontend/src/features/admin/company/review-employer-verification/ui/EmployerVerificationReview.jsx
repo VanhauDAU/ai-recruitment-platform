@@ -12,8 +12,6 @@ import {
   Collapse,
   Empty,
   Form,
-  Input,
-  Modal,
   Skeleton,
   Space,
   Tag,
@@ -24,6 +22,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { adminCompanyKeys } from '@/entities/company/admin-company'
 import {
   adminEmployerVerificationKeys,
+  DOCUMENT_REVIEW_REASONS,
   downloadAdminEmployerDocument,
   getAdminEmployerDocumentContent,
   getAdminEmployerVerification,
@@ -34,6 +33,8 @@ import {
 } from '@/entities/company/admin-employer-verification'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { message } from '@/shared/lib/toast'
+import ActionDialog from '@/shared/ui/confirm-action/ActionDialog'
+import ReasonField from '@/shared/ui/confirm-action/ReasonField'
 import {
   documentPreviewKind,
   resolveDocumentMimeType,
@@ -49,9 +50,8 @@ import './employer-verification-review.css'
 import { getIntlLocale } from '@/shared/config/i18n'
 
 const DOCUMENT_DECISION_LABELS = {
-  approved: 'Đã duyệt',
-  changes_requested: 'Cần bổ sung',
-  rejected: 'Từ chối',
+  changes_requested: 'Yêu cầu bổ sung',
+  rejected: 'Từ chối giấy tờ',
 }
 
 function formatDate(value) {
@@ -261,67 +261,43 @@ function DocumentPreview({ verificationCase, document }) {
   return null
 }
 
-function DecisionModal({ state, lockVersion, onClose, onSubmit, loading }) {
+function DocumentReasonDialog({ state, loading, onClose, onSubmit }) {
   const [form] = Form.useForm()
   const decision = state?.decision
-
-  const reset = () => {
-    form.resetFields()
-    onClose()
-  }
-
   const submit = async () => {
-    const values = await form.validateFields()
-    const payload = { ...values, decision, lock_version: lockVersion }
-    await onSubmit(payload)
-    reset()
+    let values
+    try {
+      values = await form.validateFields()
+    } catch {
+      return
+    }
+    await onSubmit(values.reason.trim())
+    form.resetFields()
   }
 
   return (
-    <Modal
+    <ActionDialog
+      loading={loading}
+      onCancel={() => {
+        form.resetFields()
+        onClose()
+      }}
+      onSubmit={submit}
       open={Boolean(state)}
-      title={`Chuyển sang “${DOCUMENT_DECISION_LABELS[decision] || ''}”`}
-      okText="Xác nhận"
-      cancelText="Hủy"
-      confirmLoading={loading}
-      okButtonProps={{ danger: decision === 'rejected' }}
-      onCancel={reset}
-      onOk={submit}
-      destroyOnHidden
+      submitLabel={DOCUMENT_DECISION_LABELS[decision]}
+      target={state?.document?.doc_type_label}
+      title={decision === 'rejected' ? 'Từ chối giấy tờ' : 'Yêu cầu bổ sung giấy tờ'}
+      tone={decision === 'rejected' ? 'danger' : 'default'}
     >
-      <Form
-        form={form}
-        layout="vertical"
-        requiredMark={false}
-        initialValues={{ reason: '' }}
-        scrollToFirstError={{ focus: true }}
-      >
-        <Alert
-          className="mb-4"
-          type={decision === 'approved' ? 'info' : 'warning'}
-          showIcon
-          title={`${state?.document?.doc_type_label || 'Giấy tờ'} sẽ chuyển sang trạng thái ${DOCUMENT_DECISION_LABELS[decision] || ''}.`}
-          description="Thay đổi chỉ được ghi nhận sau khi bạn xác nhận."
+      <Form form={form} layout="vertical" requiredMark={false} initialValues={{ reason: '' }}>
+        <ReasonField
+          extra="Nhà tuyển dụng sẽ thấy nội dung này để biết cần làm gì tiếp."
+          label="Lý do / hướng dẫn"
+          maxLength={2000}
+          presets={DOCUMENT_REVIEW_REASONS[decision] || []}
         />
-        <Form.Item
-          name="reason"
-          label="Lý do / hướng dẫn bổ sung"
-          rules={[
-            () => ({
-              validator(_, value) {
-                if (decision === 'approved' || value?.trim()) {
-                  return Promise.resolve()
-                }
-                return Promise.reject(new Error('Nhập lý do để NTD biết bước tiếp theo.'))
-              },
-            }),
-            { max: 2000, message: 'Tối đa 2.000 ký tự.' },
-          ]}
-        >
-          <Input.TextArea rows={4} maxLength={2000} showCount />
-        </Form.Item>
       </Form>
-    </Modal>
+    </ActionDialog>
   )
 }
 
@@ -395,11 +371,30 @@ export default function EmployerVerificationReview({
       documentId,
       payload,
     ),
-    onSuccess: async () => {
-      message.success('Đã ghi nhận quyết định giấy tờ.')
+    onSuccess: async (_, { payload }) => {
+      message.success(payload.decision === 'approved' ? 'Đã duyệt giấy tờ.' : 'Đã ghi nhận quyết định giấy tờ.')
       await refresh()
     },
   })
+  // Approving needs no reason, so it saves straight from the card; asking for
+  // changes or rejecting opens the reason dialog.
+  const reviewDocument = async (document, decision, reason = '') => {
+    try {
+      await documentMutation.mutateAsync({
+        documentId: document.public_id,
+        payload: { decision, reason, lock_version: verificationCase.lock_version },
+      })
+      return true
+    } catch (error) {
+      if (error?.response?.status === 409) {
+        message.warning('Hồ sơ vừa thay đổi. Dữ liệu đã được tải lại, hãy kiểm tra rồi thao tác lại.')
+        await refresh()
+      } else {
+        message.error(getApiErrorMessage(error))
+      }
+      return false
+    }
+  }
   if (!casePublicId) {
     return (
       <div className="verification-review-layout">
@@ -456,6 +451,7 @@ export default function EmployerVerificationReview({
           <Space wrap>
             {verificationCase.status === 'pending' && (
               <Button
+                type="primary"
                 icon={<EyeOutlined />}
                 loading={startMutation.isPending}
                 onClick={() => startMutation.mutate()}
@@ -488,8 +484,7 @@ export default function EmployerVerificationReview({
             className="mt-4"
             showIcon
             type="warning"
-            title={`MST trùng với ${verificationCase.company.duplicate_tax_code_company_count} hồ sơ công ty khác`}
-            description="Hãy kiểm tra nhà tuyển dụng đã chọn đúng hồ sơ công ty. Quyết định duyệt chỉ áp dụng cho nhà tuyển dụng hiện tại."
+            title={`MST trùng với ${verificationCase.company.duplicate_tax_code_company_count} hồ sơ công ty khác · kiểm tra NTD đã chọn đúng công ty`}
           />
         )}
         {verificationCase.status === 'pending' && verificationCase.revision > 1 && (
@@ -497,8 +492,7 @@ export default function EmployerVerificationReview({
             className="mt-4"
             showIcon
             type="info"
-            title="Hồ sơ đã đủ điều kiện vào vòng duyệt mới"
-            description="Nhà tuyển dụng đã thay toàn bộ giấy tờ bị yêu cầu sửa hoặc từ chối. Chọn Nhận xử lý lại để đối chiếu và mở quyết định cuối."
+            title="NTD đã thay đủ giấy tờ bị yêu cầu sửa · chọn Nhận xử lý lại để duyệt vòng mới"
           />
         )}
       </Card>
@@ -519,7 +513,7 @@ export default function EmployerVerificationReview({
               className="account-detail-card verification-document-board-card"
               extra={canReviewDocuments && (
                 <Typography.Text type="secondary" className="verification-board-hint">
-                  Kéo thả hoặc dùng menu trên từng giấy tờ
+                  Bấm Duyệt trên giấy tờ đạt, hoặc dùng menu để yêu cầu bổ sung
                 </Typography.Text>
               )}
             >
@@ -527,9 +521,11 @@ export default function EmployerVerificationReview({
                 documents={currentDocuments}
                 selectedDocumentId={selectedDocument?.public_id}
                 canReview={canReviewDocuments}
+                savingDocumentId={documentMutation.isPending ? documentMutation.variables?.documentId : ''}
                 onSelect={setSelectedDocumentId}
                 onDecision={(document, decision) => {
-                  setDocumentDecision({ document, decision })
+                  if (decision === 'approved') reviewDocument(document, decision)
+                  else setDocumentDecision({ document, decision })
                 }}
               />
             </Card>
@@ -629,25 +625,13 @@ export default function EmployerVerificationReview({
         }]}
       />
 
-      <DecisionModal
+      <DocumentReasonDialog
         state={documentDecision}
-        lockVersion={verificationCase.lock_version}
         loading={documentMutation.isPending}
         onClose={() => setDocumentDecision(null)}
-        onSubmit={async (payload) => {
-          try {
-            await documentMutation.mutateAsync({
-              documentId: documentDecision.document.public_id,
-              payload,
-            })
-          } catch (error) {
-            if (error?.response?.status === 409) {
-              message.warning('Hồ sơ đã thay đổi. Vui lòng tải lại trước khi xử lý.')
-              await refresh()
-            } else {
-              message.error(getApiErrorMessage(error))
-            }
-            throw error
+        onSubmit={async (reason) => {
+          if (await reviewDocument(documentDecision.document, documentDecision.decision, reason)) {
+            setDocumentDecision(null)
           }
         }}
       />
