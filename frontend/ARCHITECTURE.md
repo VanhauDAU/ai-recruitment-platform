@@ -557,6 +557,10 @@ app/router + app/layouts
   ("Hôm nay", "Hôm qua", "Thứ Hai, 16/11/2026"), hiện giờ HH:mm và lọc theo
   nhóm qua `activity_category` trên URL; chế độ `compact` dùng cho tổng quan
   và xem nhanh. Tab cũ `?tab=profile` của NTD được chuyển về "Tổng quan".
+- Trang chi tiết tài khoản: tab nằm trên nền trang, mọi khối nội dung dùng
+  `DetailPanel` (lớp `.admin-panel`) của widget, không lồng card trong card.
+  Trường hồ sơ hiển thị bằng `ProfileFieldGrid` (nhãn trên giá trị, lưới tự co);
+  không quay lại `Descriptions bordered` cho hồ sơ dài.
 - Quyền quản trị chỉ có hai cấp: `entities/account/admin-access.useAdminAccess(user)`
   trả `{ isSuperuser }` đọc từ `admin_access.is_superuser` của `/auth/me/`.
   Không có catalog permission, phòng ban hay chức danh. Chỉ superuser thấy tab

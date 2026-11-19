@@ -438,6 +438,8 @@
   display: grid;
   gap: 16px;
   grid-template-columns: minmax(0, 1fr);
+  /* Grid item of the review column: the document board scrolls inside its card. */
+  min-width: 0;
 }
 
 .verification-document-board-card > .ant-card-body {
@@ -1021,7 +1023,7 @@
 
 @media (max-width: 992px) {
   .verification-workbench {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     min-height: 0;
   }
 

@@ -10,7 +10,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Song ngữ vi/en cho 3 cổng (ADR-0023)](#song-ngữ-vien-cho-3-cổng-adr-0023-2026-11-19) | 🟨 GĐ0 (nền tảng + marketing NTD) trên nhánh `feat/i18n-foundation`; GĐ1–4 chưa làm |
 | [Chuẩn hóa tiêu đề trang 3 cổng](#chuẩn-hóa-tiêu-đề-trang-3-cổng-2026-11-19) | 🟨 PR #261 (nhánh `feat/page-titles`), chờ gộp |
 | [Hậu kiểm nội dung trang công ty](#hậu-kiểm-nội-dung-trang-công-ty-2026-11-19) | ✅ Gộp vào `dev` (#260) |
-| [Làm lại trang nhà tuyển dụng của admin](#làm-lại-trang-nhà-tuyển-dụng-của-admin-2026-11-19) | 🟨 PR #263 (nhánh `feat/admin-recruiter-workspace`), chờ gộp |
+| [Làm lại trang nhà tuyển dụng của admin](#làm-lại-trang-nhà-tuyển-dụng-của-admin-2026-11-19) | ✅ Gộp vào `dev` (#263); làm gọn giao diện chi tiết trên nhánh `feat/admin-recruiter-detail-ui`, chưa mở PR |
 | [Tối ưu và chuẩn hóa test/CI](#tối-ưu-và-chuẩn-hóa-testci-2026-11-19) | 🟨 PR #256, #257, #258, GĐ4 nhánh `docs/test-standards` — chờ gộp |
 | [Tái cấu trúc backend (ADR-0022, GĐ0–GĐ6)](#tái-cấu-trúc-backend-adr-0022-2026-11-19) | ✅ Gộp vào `dev` (#248–#255, 19/11); sau khi pull chạy `scripts/reset_local_db.sh` trước khi start backend |
 | [Tổ chức lại cấu trúc thư mục frontend](#tổ-chức-lại-cấu-trúc-thư-mục-frontend-2026-11-19) | ✅ Gộp vào `dev` (#247) |
@@ -102,6 +102,7 @@ dashboard admin; nhật ký hoạt động chia theo nhóm và ngày. Một PR, 
 | Nhật ký | `GET /admin/accounts/:id/activity/` gộp đăng nhập, thao tác admin, đổi trạng thái, xác thực, SĐT, liên kết/cập nhật công ty, hoạt động tuyển dụng; phân trang con trỏ; nhóm Bảo mật/Tài khoản/Xác thực/Công ty/Tuyển dụng có số đếm; giao diện chia theo ngày ("Hôm nay", "Hôm qua", thứ + ngày), giờ HH:mm, người thực hiện, chi tiết thu gọn. Thêm index `admin_audit_target_time_idx`, bỏ phép OR trên JSON |
 | Popup | Mẫu chung `ActionDialog` + `ReasonField` (lý do mẫu) + `ImpactFacts` + `useImpactConfirmation`: tác động tự tải khi mở, xác nhận một click; backend cho preview lý do trống, confirm vẫn bắt buộc lý do (lý do nằm trong token). Áp dụng cho khóa/cấm/thu hồi phiên, quyết định xác thực, vòng đời xác thực, giấy tờ, cập nhật công ty, gỡ liên kết, domain, đặt lại mật khẩu, đổi email |
 | Luồng duyệt | Duyệt giấy tờ đạt = 1 click (không popup); sau quyết định có "Hồ sơ tiếp theo (còn N)" đi thẳng tới ca cũ nhất kế tiếp — từ ~6+3N click và quay lại danh sách còn ~5+N |
+| Giao diện chi tiết (20/11) | Hero kèm dải số liệu; tab trên nền trang, nội dung trong panel; Tổng quan hai cột (hồ sơ · tóm tắt + hoạt động); trường hiển thị nhãn trên giá trị theo lưới tự co, chia nhóm; sửa bảng giấy tờ tràn trên mobile. Nhánh `feat/admin-recruiter-detail-ui` |
 
 ## Tối ưu và chuẩn hóa test/CI (2026-11-19)
 

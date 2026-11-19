@@ -1,7 +1,8 @@
 import { BankOutlined } from '@ant-design/icons'
-import { Card, Empty, Image, Space, Tag, Typography } from 'antd'
+import { Empty, Image, Space, Tag, Typography } from 'antd'
 import { COMPANY_HTML_FIELDS } from '@/entities/account/employer-profile'
-import { ProfileFieldGrid, ProfileRichTextBlock } from './profile-field-display'
+import DetailPanel from './DetailPanel'
+import { ProfileFieldGrid, ProfileFieldSection, ProfileRichTextBlock } from './profile-field-display'
 
 const IDENTITY_LABELS = {
   public_id: 'Mã công ty',
@@ -54,7 +55,7 @@ function CompanyVisual({ company }) {
           {company.logo_url ? <Image src={company.logo_url} alt={`Logo ${companyName}`} /> : <BankOutlined />}
         </div>
         <div>
-          <Typography.Title level={4}>{companyName}</Typography.Title>
+          <Typography.Title level={3}>{companyName}</Typography.Title>
           <Typography.Text type="secondary">{company.legal_name || 'Chưa cập nhật tên pháp lý'}</Typography.Text>
         </div>
       </div>
@@ -64,8 +65,7 @@ function CompanyVisual({ company }) {
 
 function CompanyIndustries({ industries = [] }) {
   return (
-    <section className="account-company-section">
-      <h4>Lĩnh vực hoạt động</h4>
+    <ProfileFieldSection title="Lĩnh vực hoạt động">
       {industries.length > 0 ? (
         <Space wrap size={[6, 6]}>
           {industries.map((industry) => (
@@ -75,17 +75,13 @@ function CompanyIndustries({ industries = [] }) {
           ))}
         </Space>
       ) : <Typography.Text type="secondary">Chưa cập nhật</Typography.Text>}
-    </section>
+    </ProfileFieldSection>
   )
 }
 
 function CompanyGallery({ images = [] }) {
   return (
-    <section className="account-company-section">
-      <div className="account-company-section__heading">
-        <h4>Thư viện ảnh công ty</h4>
-        <Tag>{`${images.length} ảnh`}</Tag>
-      </div>
+    <ProfileFieldSection title="Thư viện ảnh công ty" extra={<Tag>{`${images.length} ảnh`}</Tag>}>
       {images.length > 0 ? (
         <Image.PreviewGroup>
           <div className="account-company-gallery">
@@ -98,20 +94,17 @@ function CompanyGallery({ images = [] }) {
           </div>
         </Image.PreviewGroup>
       ) : <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Chưa cập nhật ảnh thư viện" />}
-    </section>
+    </ProfileFieldSection>
   )
 }
 
-export default function CompanyProfileCard({ company }) {
+export default function CompanyProfileCard({ company, description, extra }) {
   return (
-    <Card
-      className="account-profile__card"
-      title="Thông tin công ty"
-    >
+    <DetailPanel title="Thông tin công ty" description={description} extra={extra}>
       <CompanyVisual company={company} />
-      <section className="account-company-section"><h4>Nhận diện và pháp lý</h4><ProfileFieldGrid data={company} labels={IDENTITY_LABELS} /></section>
-      <section className="account-company-section"><h4>Thông tin liên hệ</h4><ProfileFieldGrid data={company} labels={CONTACT_LABELS} /></section>
-      <section className="account-company-section"><h4>Hoạt động và hiển thị</h4><ProfileFieldGrid data={company} labels={OPERATION_LABELS} /></section>
+      <ProfileFieldSection title="Nhận diện và pháp lý"><ProfileFieldGrid data={company} labels={IDENTITY_LABELS} /></ProfileFieldSection>
+      <ProfileFieldSection title="Thông tin liên hệ"><ProfileFieldGrid data={company} labels={CONTACT_LABELS} /></ProfileFieldSection>
+      <ProfileFieldSection title="Hoạt động và hiển thị"><ProfileFieldGrid data={company} labels={OPERATION_LABELS} /></ProfileFieldSection>
       <CompanyIndustries industries={company.industries} />
       {[...COMPANY_HTML_FIELDS].map((field) => (
         <ProfileRichTextBlock
@@ -121,7 +114,7 @@ export default function CompanyProfileCard({ company }) {
         />
       ))}
       <CompanyGallery images={company.images} />
-      <section className="account-company-section"><h4>Thông tin hệ thống</h4><ProfileFieldGrid data={company} labels={SYSTEM_LABELS} /></section>
-    </Card>
+      <ProfileFieldSection title="Thông tin hệ thống"><ProfileFieldGrid data={company} labels={SYSTEM_LABELS} /></ProfileFieldSection>
+    </DetailPanel>
   )
 }

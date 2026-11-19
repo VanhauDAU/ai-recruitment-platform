@@ -1,6 +1,6 @@
 import { EditOutlined, EyeInvisibleOutlined, EyeOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
-import { Alert, Button, Card, Descriptions, Empty, Skeleton, Space, Typography } from 'antd'
+import { Alert, Button, Empty, Skeleton, Space } from 'antd'
 import { useState } from 'react'
 import {
   adminAccountKeys,
@@ -8,10 +8,11 @@ import {
   InitialOnboardingStatus,
 } from '@/entities/account/admin-account'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
-import { displayProfileValue } from '../model/profile-value'
+import { getIntlLocale, m } from '@/shared/config/i18n'
+import { hasProfileFields } from '../model/profile-value'
 import CompanyProfileCard from './CompanyProfileCard'
-import { ProfileFieldGrid } from './profile-field-display'
-import { getIntlLocale } from '@/shared/config/i18n'
+import DetailPanel from './DetailPanel'
+import { ProfileFieldGrid, ProfileFieldSection } from './profile-field-display'
 
 const PROFILE_LABELS = {
   position_title: 'Chức danh',
@@ -37,6 +38,9 @@ const PROFILE_LABELS = {
   portfolio_url: 'Portfolio',
   github_url: 'GitHub',
   linkedin_url: 'LinkedIn',
+}
+
+const CONSENT_LABELS = {
   registration_completed_at: 'Hoàn tất đăng ký lúc',
   terms_accepted_at: 'Chấp nhận điều khoản lúc',
   terms_policy_version: 'Phiên bản điều khoản',
@@ -45,10 +49,26 @@ const PROFILE_LABELS = {
   marketing_decided_at: 'Quyết định marketing lúc',
 }
 
+const PREFERENCE_LABELS = {
+  desired_position_other: 'Vị trí khác',
+  desired_salary: 'Lương mong muốn',
+  experience_level: 'Mức kinh nghiệm',
+  willing_to_relocate: 'Sẵn sàng chuyển nơi ở',
+  desired_specializations: 'Chuyên môn mong muốn',
+  preferred_provinces: 'Tỉnh/thành mong muốn',
+}
+
+function RevealButton({ reveal, onToggle }) {
+  return (
+    <Button size="small" icon={reveal ? <EyeInvisibleOutlined /> : <EyeOutlined />} onClick={onToggle}>
+      {reveal ? m.admin_account_hide_sensitive() : m.admin_account_reveal_sensitive()}
+    </Button>
+  )
+}
+
 /**
- * `section` chọn phần hồ sơ được render: tab "Hồ sơ NTD" lấy `profile`, tab
- * "Công ty" lấy `company`. Hai tab từng dùng chung một panel nên khối công ty
- * bị lặp ở cả hai nơi.
+ * `section` chọn phần hồ sơ được render: "Tổng quan"/"Hồ sơ cá nhân" lấy
+ * `profile`, tab "Công ty" lấy `company`, để khối công ty không lặp ở hai nơi.
  */
 export default function AccountProfilePanel({
   publicId,
@@ -61,7 +81,9 @@ export default function AccountProfilePanel({
     queryKey: adminAccountKeys.profile(publicId, reveal),
     queryFn: ({ signal }) => getAdminAccountProfile(publicId, { reveal, signal }),
   })
-  if (query.isLoading) return <Skeleton active paragraph={{ rows: 10 }} />
+  if (query.isLoading) {
+    return <DetailPanel><Skeleton active paragraph={{ rows: 8 }} /></DetailPanel>
+  }
   if (query.isError) {
     return (
       <Alert
@@ -74,85 +96,64 @@ export default function AccountProfilePanel({
   }
   const profile = query.data
   const roleProfile = profile?.[account.role]
-  const preference = roleProfile?.job_preference
-  const isCompanySection = section === 'company'
+  const isEmployer = account.role === 'employer'
+  const revealButton = <RevealButton reveal={reveal} onToggle={() => setReveal((value) => !value)} />
 
-  const toolbar = (
-    <div className="account-detail-toolbar">
-      <Typography.Text type="secondary">
-        Dữ liệu nhạy cảm được che mặc định và mọi lần xem đều được ghi audit.
-      </Typography.Text>
-      <Space wrap>
-        <Button
-          icon={reveal ? <EyeInvisibleOutlined /> : <EyeOutlined />}
-          onClick={() => setReveal((value) => !value)}
-        >
-          {reveal ? 'Che dữ liệu' : 'Hiện dữ liệu nhạy cảm'}
-        </Button>
-        {!isCompanySection && onEdit && (
-          <Button icon={<EditOutlined />} onClick={() => onEdit(profile)}>Sửa hồ sơ</Button>
-        )}
-      </Space>
-    </div>
-  )
-
-  if (isCompanySection) {
-    return (
-      <div className="space-y-5">
-        {toolbar}
-        {roleProfile?.company ? (
-          <CompanyProfileCard company={roleProfile.company} />
-        ) : (
-          <Card className="account-profile__card" title="Thông tin công ty">
-            <Empty description="Tài khoản chưa liên kết công ty nào" />
-          </Card>
-        )}
-      </div>
+  if (section === 'company') {
+    return roleProfile?.company ? (
+      <CompanyProfileCard
+        company={roleProfile.company}
+        description={m.admin_account_sensitive_note()}
+        extra={revealButton}
+      />
+    ) : (
+      <DetailPanel title="Thông tin công ty">
+        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Tài khoản chưa liên kết công ty nào" />
+      </DetailPanel>
     )
   }
 
+  const preference = roleProfile?.job_preference
+  const onboarding = isEmployer ? roleProfile?.initial_onboarding : null
+  const salary = preference?.desired_salary_vnd
+    ? `${Number(preference.desired_salary_vnd).toLocaleString(getIntlLocale())} ₫`
+    : null
+
   return (
-    <div className="space-y-5">
-      {toolbar}
-
-      {account.role === 'employer' && roleProfile?.initial_onboarding && (
-        <Card className="account-profile__card" title="Thiết lập ban đầu">
-          <InitialOnboardingStatus onboarding={roleProfile.initial_onboarding} />
-        </Card>
-      )}
-
-      <Card
-        className="account-profile__card"
-        title={account.role === 'employer' ? 'Hồ sơ nhà tuyển dụng' : 'Hồ sơ cá nhân'}
+    <div className="account-detail-stack">
+      <DetailPanel
+        className="account-profile-panel"
+        title={isEmployer ? 'Hồ sơ nhà tuyển dụng' : 'Hồ sơ cá nhân'}
+        description={m.admin_account_sensitive_note()}
+        extra={(
+          <Space wrap size={8}>
+            {revealButton}
+            {onEdit && (
+              <Button size="small" icon={<EditOutlined />} onClick={() => onEdit(profile)}>Sửa hồ sơ</Button>
+            )}
+          </Space>
+        )}
       >
-        <ProfileFieldGrid data={roleProfile} labels={PROFILE_LABELS} />
-      </Card>
+        {onboarding && (
+          <div className="account-onboarding">
+            <span className="account-onboarding__label">{m.admin_recruiter_onboarding()}</span>
+            <InitialOnboardingStatus onboarding={onboarding} />
+          </div>
+        )}
+        <ProfileFieldSection title={m.admin_account_profile_personal()}>
+          <ProfileFieldGrid data={roleProfile} labels={PROFILE_LABELS} />
+        </ProfileFieldSection>
+        {hasProfileFields(roleProfile, CONSENT_LABELS) && (
+          <ProfileFieldSection title={m.admin_account_profile_consents()}>
+            <ProfileFieldGrid data={roleProfile} labels={CONSENT_LABELS} />
+          </ProfileFieldSection>
+        )}
+      </DetailPanel>
 
       {account.role === 'candidate' && preference && (
-        <Card className="account-profile__card" title="Nhu cầu tìm việc có cấu trúc">
-          <Descriptions bordered size="small" className="account-profile__grid" column={{ xs: 1, md: 2 }}>
-            <Descriptions.Item label="Vị trí khác">
-              {displayProfileValue('desired_position_other', preference.desired_position_other)}
-            </Descriptions.Item>
-            <Descriptions.Item label="Lương mong muốn">
-              {preference.desired_salary_vnd
-                ? `${Number(preference.desired_salary_vnd).toLocaleString(getIntlLocale())} ₫`
-                : 'Chưa cập nhật'}
-            </Descriptions.Item>
-            <Descriptions.Item label="Mức kinh nghiệm">
-              {displayProfileValue('experience_level', preference.experience_level)}
-            </Descriptions.Item>
-            <Descriptions.Item label="Sẵn sàng chuyển nơi ở">
-              {displayProfileValue('willing_to_relocate', preference.willing_to_relocate)}
-            </Descriptions.Item>
-            <Descriptions.Item label="Chuyên môn mong muốn">
-              {displayProfileValue('desired_specializations', preference.desired_specializations)}
-            </Descriptions.Item>
-            <Descriptions.Item label="Tỉnh/thành mong muốn">
-              {displayProfileValue('preferred_provinces', preference.preferred_provinces)}
-            </Descriptions.Item>
-          </Descriptions>
-        </Card>
+        <DetailPanel title="Nhu cầu tìm việc có cấu trúc">
+          <ProfileFieldGrid data={{ ...preference, desired_salary: salary }} labels={PREFERENCE_LABELS} />
+        </DetailPanel>
       )}
     </div>
   )
