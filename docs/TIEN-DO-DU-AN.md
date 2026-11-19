@@ -10,7 +10,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Song ngữ vi/en cho 3 cổng (ADR-0023)](#song-ngữ-vien-cho-3-cổng-adr-0023-2026-11-19) | 🟨 GĐ0 (nền tảng + marketing NTD) trên nhánh `feat/i18n-foundation`; GĐ1–4 chưa làm |
 | [Chuẩn hóa tiêu đề trang 3 cổng](#chuẩn-hóa-tiêu-đề-trang-3-cổng-2026-11-19) | 🟨 PR #261 (nhánh `feat/page-titles`), chờ gộp |
 | [Hậu kiểm nội dung trang công ty](#hậu-kiểm-nội-dung-trang-công-ty-2026-11-19) | ✅ Gộp vào `dev` (#260) |
-| [Làm lại trang nhà tuyển dụng của admin](#làm-lại-trang-nhà-tuyển-dụng-của-admin-2026-11-19) | 🟨 Xong trên nhánh `feat/admin-recruiter-workspace`, chờ PR |
+| [Làm lại trang nhà tuyển dụng của admin](#làm-lại-trang-nhà-tuyển-dụng-của-admin-2026-11-19) | 🟨 PR #263 (nhánh `feat/admin-recruiter-workspace`), chờ gộp |
 | [Tối ưu và chuẩn hóa test/CI](#tối-ưu-và-chuẩn-hóa-testci-2026-11-19) | 🟨 PR #256, #257, #258, GĐ4 nhánh `docs/test-standards` — chờ gộp |
 | [Tái cấu trúc backend (ADR-0022, GĐ0–GĐ6)](#tái-cấu-trúc-backend-adr-0022-2026-11-19) | ✅ Gộp vào `dev` (#248–#255, 19/11); sau khi pull chạy `scripts/reset_local_db.sh` trước khi start backend |
 | [Tổ chức lại cấu trúc thư mục frontend](#tổ-chức-lại-cấu-trúc-thư-mục-frontend-2026-11-19) | ✅ Gộp vào `dev` (#247) |
