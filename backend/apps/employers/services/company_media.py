@@ -1,8 +1,9 @@
 """Company logo, cover and gallery images.
 
 Before the first verification case or update request a company publishes media
-directly; afterwards every change is staged in the requester's update request
-and only reaches the page when an administrator approves it.
+directly. Afterwards an image either joins the page content change that
+announced it (published at once, reviewed later) or is staged in the
+requester's update request until an administrator approves it.
 """
 
 from django.conf import settings
@@ -19,6 +20,7 @@ from common.storage.r2 import private_media_storage
 
 from ..models import CompanyImage, CompanyMediaUpload
 from ..models.company_update import REQUESTER_EDITABLE_COMPANY_UPDATE_STATUSES
+from .company_content_changes import publish_content_change_image
 from .company_update_locks import lock_company_update_request
 from .company_update_revisions import snapshot_company_update_request
 from .upload_validation import (
@@ -135,15 +137,17 @@ def save_company_image(
     company,
     kind,
     update_request=None,
+    content_change=None,
     upload=None,
     upload_session_public_id='',
 ):
     """Store a ``logo``/``cover``/``gallery`` image from a raw file or a scanned session.
 
     With ``update_request`` the image is staged there (the request is locked and
-    re-checked); otherwise it is published at once. Returns ``(company,
-    update_request)`` as reloaded under the lock. The stored file is removed if
-    anything fails, and a staged image it replaces is removed after commit.
+    re-checked); with ``content_change`` it is published into that change;
+    otherwise it is published at once. Returns ``(company, update_request)`` as
+    reloaded under the lock. The stored file is removed if anything fails, and
+    a staged image it replaces is removed after commit.
     """
     if kind == 'gallery' and update_request is None and company.images.count() >= GALLERY_LIMIT:
         raise ValidationError({'file': GALLERY_LIMIT_MESSAGE})
@@ -166,7 +170,11 @@ def save_company_image(
                     max_dimensions=IMAGE_MAX_DIMENSIONS,
                 )
 
-            if update_request is None:
+            if content_change is not None:
+                company = publish_content_change_image(
+                    content_change, company=company, kind=kind, path=saved['path']
+                )
+            elif update_request is None:
                 _publish_image(company, kind, saved['path'])
             else:
                 company, update_request = lock_company_update_request(

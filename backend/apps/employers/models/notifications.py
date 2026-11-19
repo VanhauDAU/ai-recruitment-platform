@@ -49,6 +49,10 @@ class EmployerNotification(models.Model):
             'company_page_editor_revoked',
             'Quyền biên tập trang công ty đã bị thu hồi',
         )
+        COMPANY_CONTENT_REVERTED = (
+            'company_content_reverted',
+            'Nội dung trang công ty đã bị hoàn tác',
+        )
         APPLICATION_RECEIVED = 'application_received', 'Có hồ sơ ứng tuyển mới'
         APPLICATION_WITHDRAWN = 'application_withdrawn', 'Ứng viên đã rút hồ sơ'
         APPLICATION_AWAITING_REPLY = 'application_awaiting_reply', 'Hồ sơ đang chờ phản hồi'

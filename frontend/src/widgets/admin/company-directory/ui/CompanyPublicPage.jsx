@@ -4,6 +4,7 @@ import { Suspense, useState } from 'react'
 import {
   adminCompanyKeys,
   getAdminCompanyPublicPage,
+  setAdminCompanyContentReview,
   setAdminCompanyPolicyHold,
 } from '@/entities/company/admin-company'
 import { CompanyProfileView } from '@/entities/company/company'
@@ -27,6 +28,30 @@ const ACTION_COPY = {
     reasonLabel: 'Lý do khôi phục',
     success: 'Đã khôi phục hiển thị trang công ty.',
   },
+  require: {
+    title: 'Bật duyệt trước nội dung',
+    confirm: 'Bật duyệt trước',
+    reasonLabel: 'Lý do bật duyệt trước',
+    success: 'Từ giờ nội dung trang của công ty phải chờ duyệt trước khi lên trang.',
+  },
+  release_review: {
+    title: 'Tắt duyệt trước nội dung',
+    confirm: 'Tắt duyệt trước',
+    reasonLabel: 'Lý do tắt duyệt trước',
+    success: 'Nội dung trang của công ty lại được đăng ngay và hậu kiểm.',
+  },
+}
+const ACTION_DESCRIPTIONS = {
+  apply: (name) => `Trang của ${name} sẽ trả 404 và bị loại khỏi danh bạ, gợi ý và sitemap cho tới khi được khôi phục.`,
+  release: (name) => `Trang của ${name} sẽ hiển thị lại trên các bề mặt công khai.`,
+  require: (name) => `Mỗi lần ${name} sửa nội dung trang sẽ thành yêu cầu cập nhật chờ quản trị viên duyệt.`,
+  release_review: (name) => `${name} sửa nội dung trang sẽ lên trang ngay; quản trị viên xem lại ở mục Thay đổi nội dung.`,
+}
+
+function saveAction(publicId, action, reason) {
+  if (action === 'require') return setAdminCompanyContentReview(publicId, { action: 'require', reason })
+  if (action === 'release_review') return setAdminCompanyContentReview(publicId, { action: 'release', reason })
+  return setAdminCompanyPolicyHold(publicId, { action, reason })
 }
 // Dữ liệu việc làm và công ty tương tự thuộc trang công khai; bản xem trước chỉ đánh dấu vị trí.
 const PREVIEW_SLOTS = {
@@ -61,7 +86,7 @@ export default function CompanyPublicPage({ company, enabled }) {
     enabled,
   })
   const mutation = useMutation({
-    mutationFn: (reason) => setAdminCompanyPolicyHold(company.public_id, { action, reason }),
+    mutationFn: (reason) => saveAction(company.public_id, action, reason),
     onSuccess: (page) => {
       queryClient.setQueryData(queryKey, page)
       message.success(copy.success)
@@ -132,6 +157,14 @@ export default function CompanyPublicPage({ company, enabled }) {
           {hold.active ? 'Khôi phục hiển thị' : 'Tạm ẩn trang'}
         </Button>
       </div>
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+        <Tag color={page.content_review_required ? 'orange' : 'default'}>
+          {page.content_review_required ? 'Nội dung: duyệt trước' : 'Nội dung: đăng ngay, hậu kiểm'}
+        </Tag>
+        <Button onClick={() => setDialog({ action: page.content_review_required ? 'release_review' : 'require', open: true })}>
+          {page.content_review_required ? 'Tắt duyệt trước' : 'Bật duyệt trước'}
+        </Button>
+      </div>
 
       {hold.active && (
         <Alert
@@ -152,7 +185,7 @@ export default function CompanyPublicPage({ company, enabled }) {
         cancelText="Hủy"
         confirmLoading={mutation.isPending}
         destroyOnHidden
-        okButtonProps={{ danger: action === 'apply' }}
+        okButtonProps={{ danger: action === 'apply' || action === 'require' }}
         okText={copy.confirm}
         onCancel={() => {
           if (!mutation.isPending) closeDialog()
@@ -161,11 +194,7 @@ export default function CompanyPublicPage({ company, enabled }) {
         open={dialog.open}
         title={copy.title}
       >
-        <p className="mb-4 text-sm text-slate-500">
-          {action === 'apply'
-            ? `Trang của ${company.company_name} sẽ trả 404 và bị loại khỏi danh bạ, gợi ý và sitemap cho tới khi được khôi phục.`
-            : `Trang của ${company.company_name} sẽ hiển thị lại trên các bề mặt công khai.`}
-        </p>
+        <p className="mb-4 text-sm text-slate-500">{ACTION_DESCRIPTIONS[action](company.company_name)}</p>
         <Form form={form} layout="vertical" preserve={false}>
           <Form.Item label={copy.reasonLabel} name="reason" rules={[{ required: true, validator: validateReason }]}>
             <Input.TextArea autoFocus maxLength={REASON_MAX_LENGTH} rows={4} showCount />

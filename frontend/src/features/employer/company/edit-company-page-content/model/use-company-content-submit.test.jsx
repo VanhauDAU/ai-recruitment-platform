@@ -91,4 +91,15 @@ describe('useCompanyContentSubmit', () => {
     await expect(act(() => result.current.mutateAsync({ changes: { headline: 'B' } }))).rejects.toBeTruthy()
     expect(invalidate).toHaveBeenCalledTimes(1)
   })
+
+  it('uploads into the content change a direct publish returns', async () => {
+    pageApi.submitEmployerCompanyPageContent.mockResolvedValue({ ...SUBMITTED, content_change: 'cch_5' })
+    mediaApi.uploadEmployerCompanyLogo.mockResolvedValue({})
+    const logo = new File(['l'], 'logo.png')
+    const { result } = renderSubmit()
+
+    await act(() => result.current.mutateAsync({ changes: {}, files: { logo } }))
+
+    expect(mediaApi.uploadEmployerCompanyLogo).toHaveBeenCalledWith(logo, { contentChange: 'cch_5' })
+  })
 })

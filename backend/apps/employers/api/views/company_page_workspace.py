@@ -21,6 +21,7 @@ from ...services import (
     CompanyPageLayoutStale,
     CompanyUpdateInReview,
     grant_company_page_editor,
+    publish_company_page_content,
     revoke_company_page_editor,
     submit_validated_company_update,
     update_company_page_layout,
@@ -174,13 +175,18 @@ class CompanyPageEditorDetailView(CompanyPageWorkspaceAPIView):
 
 
 class CompanyPageContentView(CompanyPageWorkspaceAPIView):
-    """Page content goes through moderation: it merges into the caller's request."""
+    """Page content publishes at once and is reviewed afterwards, unless an
+    administrator requires review first: then it merges into the caller's request."""
 
     throttle_scope = 'company_page_content'
     required_capability = 'can_edit_content'
 
     @extend_schema(
-        summary='Gửi nội dung trang công ty vào yêu cầu cập nhật chờ duyệt',
+        summary='Lưu nội dung trang công ty (đăng ngay hoặc gửi duyệt nếu công ty bị duyệt trước)',
+        description=(
+            'Trả workspace kèm `content_change`: mã thay đổi vừa đăng để tải ảnh đã báo '
+            'trước bằng cờ `*_pending`; `null` khi nội dung vào yêu cầu cập nhật chờ duyệt.'
+        ),
         request=CompanyPageContentSerializer,
         responses={**WORKSPACE_RESPONSE, 409: OpenApiTypes.OBJECT},
         tags=['employer'],
@@ -199,13 +205,26 @@ class CompanyPageContentView(CompanyPageWorkspaceAPIView):
             serializer.is_valid(raise_exception=True)
             return serializer.validated_data
 
+        change = None
         try:
-            submit_validated_company_update(
-                company_id=self.recruiter.company_id,
-                requester=request.user,
-                validate=validate,
-                merge=True,
-            )
+            if self.recruiter.company.content_review_required:
+                submit_validated_company_update(
+                    company_id=self.recruiter.company_id,
+                    requester=request.user,
+                    validate=validate,
+                    merge=True,
+                )
+            else:
+                change = publish_company_page_content(
+                    company_id=self.recruiter.company_id,
+                    actor=request.user,
+                    validate=validate,
+                )
         except CompanyUpdateInReview:
             return Response(COMPANY_UPDATE_IN_REVIEW, status=status.HTTP_409_CONFLICT)
-        return self.workspace()
+        return Response(
+            {
+                **company_page_workspace(self.recruiter, self.access, request=request),
+                'content_change': change.public_id if change else None,
+            }
+        )

@@ -248,12 +248,35 @@ Chủ dự án xác nhận ER-D58 đến ER-D64 ngày 14/11/2026. Kiến trúc t
 [ADR-0017](./adr-0017-company-page.md); lộ trình tại
 [kế hoạch trang công ty](../01-phan-tich/ke-hoach-trang-cong-ty.md).
 
+## Session 2026-11-19 — Hậu kiểm nội dung trang công ty
+
+### Bối cảnh
+
+Mỗi thẻ ở tab "Nội dung" có nút "Gửi duyệt" riêng nhưng mọi lần bấm gộp vào
+một yêu cầu duy nhất của người gửi; mỗi lần bấm đặt lại `submitted_at` (yêu cầu
+về cuối hàng đợi, SLA tính lại) và đưa giấy tờ đã duyệt về chờ. Quản trị viên
+phải mở trang xác thực của NTD, nhận thẩm định rồi duyệt cả yêu cầu, không
+duyệt được từng phần. Khối lượng duyệt tăng theo số lần sửa nhân số người biên
+tập, trong khi tin tuyển dụng (rủi ro cao hơn) đã hậu kiểm.
+
+| ID | Quyết định | Hệ quả triển khai |
+| --- | --- | --- |
+| ER-D65 | Thay ER-D60 phần nội dung: người biên tập lưu khối nội dung trang là đăng ngay; quản trị viên hậu kiểm, hoàn tác kèm lý do và có thể bật "duyệt trước" cho từng công ty vi phạm. Thay đổi pháp lý và form hồ sơ công ty vẫn duyệt trước | `CompanyContentChange` (giá trị mới + giá trị bị thay, `unreviewed/reviewed/reverted`); `Company.content_review_required` (mặc định tắt) đưa nội dung về `CompanyUpdateRequest`. Ảnh tải vào `content_change` của lần lưu; tệp bị thay giữ tới khi thay đổi được xem. Hoàn tác từ chối khi đã có thay đổi mới hơn ở cùng trường; người sửa nhận thông báo `company_content_reverted` |
+| ER-D66 | Ảnh (logo, ảnh bìa, thư viện) hậu kiểm như chữ; không có giai đoạn duyệt trước cho công ty mới | Báo cáo công ty và hoàn tác là lớp chặn; công ty đã qua xác thực NTD mới có người biên tập |
+| ER-D67 | Hàng đợi "Yêu cầu cập nhật công ty" của quản trị viên chỉ đếm yêu cầu chờ quản trị viên (`pending/submitted/in_review`); `changes_requested` là việc của NTD | Số đếm và quá hạn SLA trên bảng điều khiển không còn tính yêu cầu đang chờ NTD sửa |
+| ER-D68 | Form hồ sơ công ty chỉ thay các trường của chính nó trong yêu cầu đang mở; nội dung trang đang chờ duyệt trong cùng yêu cầu được giữ | Trước đây gửi form hồ sơ xoá mất khẩu hiệu, văn hoá, phúc lợi, văn phòng… đang chờ duyệt mà không báo |
+
+Chủ dự án chọn hướng hậu kiểm theo rủi ro ngày 19/11/2026; ER-D66 theo khuyến
+nghị kèm theo. Kiến trúc cập nhật tại [ADR-0017](./adr-0017-company-page.md)
+(quyết định 3).
+
 ## Tài liệu/mô tả bị thay thế
 
 | Tài liệu/mô tả cũ | Phần bị thay thế |
 | --- | --- |
 | `ke-hoach-thiet-ke-lai-cong-ty-nha-tuyen-dung.md` | `updated_at` làm ngày gửi; một pending/company; POST upsert cùng record; phone OTP qua email cho account mới |
 | `ke-hoach-trang-cong-ty.md` | Owner-only create request; member không được tạo request riêng |
+| ER-D60, phần nội dung; `ke-hoach-trang-cong-ty.md` CP-6 "nội dung qua kiểm duyệt" | Bị ER-D65 thay thế: nội dung trang đăng ngay và hậu kiểm, duyệt trước chỉ khi quản trị viên bật cho công ty |
 | `TIEN-DO-DU-AN.md` các ghi chú publish tức thì | Tin được tạo/gửi trước approval nhưng chỉ admin approval/publish khi blockers sạch |
 | Guard `verification_completed` tổng | Tách workspace readiness, verification approval, candidate-data access và DPA status; known denial điều hướng về checklist theo ER-D42 |
 | ER-D21, phần company-status của ER-D35/ER-D36 | Bị ER-D52 thay thế: Company không có verification lifecycle; mọi quyết định xác thực thuộc recruiter case |

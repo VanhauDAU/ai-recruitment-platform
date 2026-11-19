@@ -14,6 +14,7 @@ from common.storage.media import delete_local_media_url
 from ..models import Company, CompanyDocument, CompanyUpdateEvent, CompanyUpdateRequest
 from ..models.company_update import ACTIVE_COMPANY_UPDATE_STATUSES
 from .companies import UPDATABLE_COMPANY_FIELDS
+from .company_page_content import PAGE_CONTENT_FIELDS
 from .company_update_review import close_company_update_before_review
 from .company_update_revisions import (
     CompanyUpdateConflict,
@@ -81,10 +82,20 @@ def _merged_changes(company, active_request, incoming):
 
 
 def _replaced_changes(company, active_request, changes):
-    """Changes and base values when the profile form replaces the open request."""
+    """Changes and base values when the profile form replaces the open request.
+
+    The profile form owns its own fields only: page content the page workspace
+    put in the same request stays unless the form sends that key itself.
+    """
     staged_paths_to_delete = []
+    kept_base = {}
     if active_request is not None:
         previous = active_request.changes
+        for field in PAGE_CONTENT_FIELDS & set(previous) - set(changes):
+            changes[field] = previous[field]
+            # Kept keys keep the base they were sent against, like a merge.
+            if field in (active_request.base_values or {}):
+                kept_base[field] = active_request.base_values[field]
         if 'logo_url' in previous and not changes.get('has_no_logo'):
             changes['logo_url'] = previous['logo_url']
         elif 'logo_url' in previous:
@@ -93,7 +104,8 @@ def _replaced_changes(company, active_request, changes):
             changes['cover_image_url'] = previous['cover_image_url']
         if 'gallery_additions' in previous:
             changes['gallery_additions'] = previous['gallery_additions']
-    return changes, capture_company_update_base_values(company, changes), staged_paths_to_delete
+    base_values = {**capture_company_update_base_values(company, changes), **kept_base}
+    return changes, base_values, staged_paths_to_delete
 
 
 def _withdraw_emptied_request(active_request, requester):

@@ -17,7 +17,7 @@ export function HeroCard({ page, readOnly }) {
     <ContentCard
       card="hero"
       title="Đầu trang"
-      description="Khẩu hiệu hiển thị dưới tên công ty; logo và ảnh bìa mới cũng cần được duyệt."
+      description="Khẩu hiệu hiển thị dưới tên công ty, cùng logo và ảnh bìa."
       {...cardStatus(page, 'hero')}
       readOnly={readOnly}
       initialValues={{ headline, logo_file: null, cover_file: null }}

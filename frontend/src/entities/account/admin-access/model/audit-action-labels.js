@@ -75,6 +75,10 @@ export const AUDIT_ACTION_LABELS = {
   // Trang công ty công khai và báo cáo công ty.
   apply_company_page_hold: 'Tạm ẩn trang công ty',
   release_company_page_hold: 'Khôi phục trang công ty',
+  review_company_content_changes: 'Đánh dấu đã xem nội dung trang công ty',
+  revert_company_content_change: 'Hoàn tác nội dung trang công ty',
+  require_company_content_review: 'Bật duyệt trước nội dung trang công ty',
+  release_company_content_review: 'Tắt duyệt trước nội dung trang công ty',
   resolve_company_report: 'Kết luận báo cáo công ty',
   reverse_company_report: 'Gỡ kết luận báo cáo công ty',
 

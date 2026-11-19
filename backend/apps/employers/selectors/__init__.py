@@ -19,6 +19,12 @@ from .companies import (
     search_companies,
     similar_public_companies,
 )
+from .company_content_changes import (
+    admin_company_content_changes_queryset,
+    content_change_labels,
+    unreviewed_content_change_count,
+    uploadable_content_change,
+)
 from .company_follows import company_follow_state, followed_companies_queryset
 from .company_members import company_members_queryset, former_company_members_queryset
 from .company_membership import (
@@ -94,6 +100,10 @@ from .recruitment_needs import (
 )
 
 __all__ = [
+    'admin_company_content_changes_queryset',
+    'content_change_labels',
+    'unreviewed_content_change_count',
+    'uploadable_content_change',
     'company_members_queryset',
     'former_company_members_queryset',
     'admin_company_join_requests_queryset',

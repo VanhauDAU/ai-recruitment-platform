@@ -12,6 +12,13 @@ from .companies import (
     normalize_company_tax_code,
     set_company_industries,
 )
+from .company_content_changes import (
+    mark_company_content_changes_reviewed,
+    publish_company_page_content,
+    publish_content_change_image,
+    revert_company_content_change,
+    set_company_content_review,
+)
 from .company_documents import (
     VERIFICATION_METHOD_DOCUMENT_TYPES,
     save_company_document,
@@ -178,6 +185,11 @@ from .verification import (
 )
 
 __all__ = [
+    'mark_company_content_changes_reviewed',
+    'publish_company_page_content',
+    'publish_content_change_image',
+    'revert_company_content_change',
+    'set_company_content_review',
     'hand_over_recruiter_resources',
     'MEMBER_REMOVAL_BLOCKERS',
     'remove_company_member',

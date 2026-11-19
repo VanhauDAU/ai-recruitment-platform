@@ -13,6 +13,7 @@ from django.db.models import (
 )
 
 from ..models import (
+    ADMIN_PENDING_COMPANY_UPDATE_STATUSES,
     Company,
     CompanyIndustry,
     CompanyUpdateRequest,
@@ -21,6 +22,7 @@ from ..models import (
     RecruitmentNeed,
 )
 from ..models.representation import eligible_owners_queryset
+from .company_content_changes import unreviewed_content_change_count
 
 
 def _company_annotations():
@@ -184,17 +186,13 @@ def admin_companies_queryset(*, params=None):
 def admin_company_summary():
     queryset = _base_companies_queryset()
     pending_update_requests = CompanyUpdateRequest.objects.filter(
-        status__in=[
-            CompanyUpdateRequest.Status.PENDING,
-            CompanyUpdateRequest.Status.SUBMITTED,
-            CompanyUpdateRequest.Status.IN_REVIEW,
-            CompanyUpdateRequest.Status.CHANGES_REQUESTED,
-        ]
+        status__in=ADMIN_PENDING_COMPANY_UPDATE_STATUSES
     ).count()
     companies_without_single_owner = queryset.exclude(owner_count=1).count()
     return {
         'total': queryset.count(),
         'pending_update_requests': pending_update_requests,
+        'unreviewed_content_changes': unreviewed_content_change_count(),
         'companies_without_single_owner': companies_without_single_owner,
     }
 

@@ -11,5 +11,6 @@ export const adminCompanyKeys = {
     params,
   ],
   joinRequests: (params) => [...adminCompanyKeys.all, 'join-requests', params],
+  contentChanges: (params) => [...adminCompanyKeys.all, 'content-changes', params],
   publicPage: (publicId) => [...adminCompanyKeys.detail(publicId), 'public-page'],
 }

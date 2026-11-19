@@ -21,6 +21,19 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
   thanh trên cùng NTD dùng cùng nguồn tiêu đề.
 - Gỡ `/tuyendung/bao-gia` khỏi SEO shell và sitemap.
 
+#### Changed — Nội dung trang công ty đăng ngay, hậu kiểm (ER-D65–ER-D68)
+
+- Người biên tập lưu một khối ở tab "Nội dung" là khối đó lên trang ngay; mỗi
+  lần lưu ghi `CompanyContentChange` (giá trị mới và giá trị bị thay). Migration
+  `employers/0004` thêm bảng này và `Company.content_review_required`.
+- Quản trị viên hậu kiểm ở tab "Thay đổi nội dung" (Công ty): so sánh trước/sau,
+  đánh dấu đã xem hàng loạt, hoàn tác kèm lý do (người sửa nhận thông báo), bật
+  "duyệt trước" cho công ty vi phạm để nội dung quay về yêu cầu cập nhật.
+- Thay đổi pháp lý và form hồ sơ công ty vẫn duyệt trước như cũ.
+- **Sửa lỗi**: gửi form hồ sơ công ty không còn xoá nội dung trang đang chờ duyệt
+  trong cùng yêu cầu; hàng đợi "Yêu cầu cập nhật công ty" không còn đếm yêu cầu
+  đang chờ NTD chỉnh sửa.
+
 #### Changed — Backend: baseline migration (ADR-0022, GĐ6) — **phải reset DB local**
 
 - 274 migration gộp thành baseline: `0001_initial` mỗi app (thêm `0002_initial`

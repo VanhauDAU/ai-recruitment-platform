@@ -2,7 +2,7 @@
 
 from .choices import BudgetSource
 from .company import Company, CompanyImage, CompanyIndustry, CompanyMediaUpload, Industry
-from .company_content import CompanyBenefit, CompanyOffice
+from .company_content import CompanyBenefit, CompanyContentChange, CompanyOffice
 from .company_follow import CompanyFollow
 from .company_page import (
     CompanyPageEditorGrant,
@@ -13,6 +13,7 @@ from .company_page import (
 from .company_report import CompanyReport, CompanyReportResolutionEvent
 from .company_update import (
     ACTIVE_COMPANY_UPDATE_STATUSES,
+    ADMIN_PENDING_COMPANY_UPDATE_STATUSES,
     CompanyUpdateEvent,
     CompanyUpdateRequest,
     CompanyUpdateRevision,
@@ -42,10 +43,12 @@ from .verification import (
 
 __all__ = [
     'ACTIVE_COMPANY_UPDATE_STATUSES',
+    'ADMIN_PENDING_COMPANY_UPDATE_STATUSES',
     'BudgetSource',
     'CompanyJoinRequest',
     'Company',
     'CompanyBenefit',
+    'CompanyContentChange',
     'CompanyOffice',
     'CompanyDocument',
     'CompanyDomainClaim',
