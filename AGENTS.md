@@ -77,6 +77,10 @@ npm run build
 npm run test:e2e:smoke
 ```
 
+Viết test và chọn lệnh chạy theo [tiêu chuẩn kiểm thử](docs/05-huong-dan/tieu-chuan-kiem-thu.md):
+ngân sách thời gian được CI kiểm, test viết nhanh trên antd, tag `@responsive` cho
+E2E. Khi đang sửa, chạy `npm run test:related <file>` thay vì cả bộ.
+
 Không bỏ qua lỗi kiến trúc bằng alias sâu, shim vô thời hạn hoặc whitelist mới
 nếu chưa có ADR và lý do cụ thể. Cập nhật `frontend/ARCHITECTURE.md` khi thêm
 quy tắc, portal hoặc mô hình ownership có tác động lâu dài.

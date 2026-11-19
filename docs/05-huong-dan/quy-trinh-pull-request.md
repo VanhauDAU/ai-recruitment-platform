@@ -82,6 +82,8 @@ không liên quan và migration vào cùng một commit nghiệp vụ.
 - Production build thành công; route bị ảnh hưởng có E2E phù hợp.
 - Coverage không thấp hơn threshold; layer dependency đúng và public contract
   export qua `index.js` khi dùng liên-layer.
+- Test mới nằm dưới ngưỡng mềm của [tiêu chuẩn kiểm thử](tieu-chuan-kiem-thu.md);
+  không thêm test flaky; không nới timeout hay ngưỡng nếu không có số đo.
 
 ### Pull Request
 

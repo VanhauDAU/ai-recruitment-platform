@@ -340,6 +340,9 @@ jobs:
             --outputFile.junit=vitest-results.xml \
             2>&1 | tee coverage.log
 
+      - name: Test time budget (docs/05-huong-dan/tieu-chuan-kiem-thu.md)
+        run: node ../scripts/check_test_budgets.mjs --suite frontend-unit vitest-results.xml
+
       - name: Verify coverage ratchet on merged report
         run: |
           # Independent check against the same thresholds object, so the gate
@@ -485,6 +488,10 @@ jobs:
               --reporter=line,junit \
               --trace=retain-on-failure \
             2>&1 | tee e2e.log
+
+      - name: Test time budget (docs/05-huong-dan/tieu-chuan-kiem-thu.md)
+        if: ${{ steps.e2e.outcome == 'success' }}
+        run: node ../scripts/check_test_budgets.mjs --suite e2e test-results/e2e-results.xml
 
       - name: Publish E2E summary
         if: ${{ always() }}

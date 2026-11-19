@@ -198,7 +198,13 @@ jobs:
             --cov-report=term-missing \
             --cov-report=json:coverage.json \
             --junitxml=pytest-results.xml \
+            -o junit_duration_report=call \
             2>&1 | tee pytest.log
+
+      - name: Test time budget (docs/05-huong-dan/tieu-chuan-kiem-thu.md)
+        if: ${{ steps.pytest.outcome == 'success' }}
+        working-directory: .
+        run: node scripts/check_test_budgets.mjs --suite backend backend/pytest-results.xml
 
       - name: Publish backend metrics
         if: ${{ always() }}
